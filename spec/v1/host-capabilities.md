@@ -1448,9 +1448,19 @@ The host performs the OAuth 2.0 **authorization-code + refresh** dance on a user
 
 **Token lifecycle (normative).** A host advertising `oauth.supported: true` MUST:
 
-1. Perform the advertised grant(s). For `authorization_code`, drive the redirect/callback exchange host-side; the authorization-code, redirect URI, and `state` parameter MUST NOT enter any run-visible surface.
+1. Perform the advertised grant(s). For `authorization_code`, drive the redirect/callback exchange host-side; the authorization-code, redirect URI, `state` parameter and PKCE verifier MUST NOT enter any run-visible surface.
 2. Persist the acquired access + refresh tokens as a `host.credentials` (RFC 0046) entry (scope `user` or `workspace`); the node receives a resolved bearer token **in-sandbox only** — never in `inputs`, variables, events, debug bundles, or replay state (the `credential-payload-redaction` invariant covers it).
-3. Refresh expired access tokens host-side using the stored refresh token, transparently to the node. On terminal refresh failure (revoked/expired refresh token), emit `connector.auth_expired` and fail the node with `connector_auth_expired`.
+3. Refresh expired access tokens host-side using the stored refresh token, transparently to the node. On terminal refresh failure (revoked/expired refresh token), emit `connector.auth_expired` and fail the node with `connector_auth_expired` — unless the host advertises `oauth.credentialInterrupt: true` (RFC 0199 §C), in which case it MUST instead, after emitting `connector.auth_expired`, suspend the node on a `credential` interrupt ([`interrupt.md`](./interrupt.md) §`kind: "credential"`).
+
+**Authorization-code client (normative, RFC 0199 §A–§B).** On every `authorization_code` grant a host advertising `oauth.supported: true` MUST:
+
+1. send PKCE with `S256` (RFC 7636) and never `plain`, omitting PKCE only for a provider advertised with `pkce: "unsupported"`;
+2. send a fresh, unguessable `state` (≥ 128 bits from a CSPRNG, lifetime ≤ 10 minutes) bound to the initiating RFC 0048 `principal` and the provider, and refuse a callback whose `state` is absent, unknown, already consumed or expired — making no token request for it;
+3. complete the callback only for the initiating principal: the credential is stored under the principal bound to `state`, and a callback authenticated as another principal is refused and stores nothing (invariant `oauth-same-user-binding`);
+4. validate `iss` per RFC 9207 §2.4 where the provider's issuer is known (`oauth.providers[].issuer`, or authorization-server metadata) — reject a differing `iss`, and a missing one when the metadata sets `authorization_response_iss_parameter_supported: true`, before any token request — and otherwise give the provider a redirect URI no other provider on the host shares (RFC 9700 §4.4.2.2);
+5. use one fixed redirect URI per provider, registered with the provider and never derived from request input.
+
+Where the provider is reached as an MCP server (`connection-packs.md` §Manifest clause 3a), the host MUST also send `resource` (RFC 8707, the server's canonical URI) in both the authorization and token requests, MUST refuse a provider whose authorization-server metadata does not list `S256` in `code_challenge_methods_supported`, and verifies — never selects — the manifest's endpoints through the server's Protected Resource Metadata (RFC 9728), refusing a mismatch with `connection_auth_metadata_mismatch`.
 
 **Connector-auth declaration.** A node declares `auth: { type: 'oauth2', provider, scopes[] }`. The host matches `provider` against an advertised `oauth.providers[].id` and refuses to register the pack if the provider or a requested scope is not advertised (`oauth_provider_unsupported` / `oauth_scope_unsupported`).
 
@@ -1466,6 +1476,8 @@ The host performs the OAuth 2.0 **authorization-code + refresh** dance on a user
 - `oauth_provider_unsupported` — node's `auth.provider` not in `capabilities.oauth.providers[]`
 - `oauth_scope_unsupported` — a requested scope not in the provider's `scopesSupported`
 - `connector_auth_expired` — stored token's refresh failed terminally
+- `connector_auth_declined` — the user declined a `credential` interrupt (RFC 0199 §C.4)
+- `connection_auth_metadata_mismatch` — discovered authorization metadata disagrees with the connection pack's manifest (RFC 0199 §B.3–§B.4)
 
 **Capability advertisement shape:**
 
@@ -1474,8 +1486,10 @@ The host performs the OAuth 2.0 **authorization-code + refresh** dance on a user
   "oauth": {
     "supported": true,
     "grants": ["authorization_code", "refresh_token"],
+    "credentialInterrupt": true,
     "providers": [
-      { "id": "slack", "authUrl": "https://slack.com/oauth/v2/authorize", "tokenUrl": "https://slack.com/api/oauth.v2.access", "scopesSupported": ["chat:write", "channels:read"] }
+      { "id": "slack", "authUrl": "https://slack.com/oauth/v2/authorize", "tokenUrl": "https://slack.com/api/oauth.v2.access", "scopesSupported": ["chat:write", "channels:read"] },
+      { "id": "google", "authUrl": "https://accounts.google.com/o/oauth2/v2/auth", "tokenUrl": "https://oauth2.googleapis.com/token", "issuer": "https://accounts.google.com", "scopesSupported": ["openid", "email"] }
     ]
   }
 }

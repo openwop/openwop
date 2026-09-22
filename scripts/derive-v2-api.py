@@ -134,6 +134,39 @@ def v2_openapi_and_seams():
         'responses': {'201': {'description': 'Admitted and recorded; `sequence` is the run event that records the envelope.', 'content': {'application/json': {'schema': {'type': 'object', 'additionalProperties': False, 'required': ['sequence'], 'properties': {'sequence': {'type': 'integer', 'minimum': 0}}}}}},
             '400': {'$ref': '#/components/responses/ValidationError'}, '401': {'$ref': '#/components/responses/Unauthenticated'}, '404': {'$ref': '#/components/responses/NotFound'},
             '422': {'description': 'Refused by envelope admission (`unknown_schema_version`, `envelope_invalid`, `unknown_envelope_kind`).', 'content': {'application/json': {'schema': {'$ref': '#/components/schemas/Error'}}}}}}}
+    # RFC 0199 §A–§C witnesses: the OAuth-client seams. The seam supplies the provider's endpoints (the suite's
+    # authorization-server double) and nothing else; the URL, the callback and the refresh are production paths.
+    seams['paths']['/conformance/seams/sample/oauth/authorize-start'] = {'post': {'tags': ['Seams'], 'operationId': 'startOAuthAuthorization',
+        'summary': 'Begin an authorization-code grant for the caller through the production authorization-URL builder — RFC 0199 §A/§B witness',
+        'description': ('Points `provider` at the given endpoints (the suite\'s authorization-server double) — a test-only provider definition, or, with `connection`, '
+            'the connection pack\'s provider through the host\'s PRODUCTION registration path, which runs the RFC 0199 §B.3 discovery and pins its tuple — and then begins an '
+            'authorization-code grant for the AUTHENTICATED caller by calling the host\'s PRODUCTION authorization-URL builder, returning the URL a user agent would be '
+            'redirected to. The builder MUST be the one production uses (PKCE S256, a fresh `state` bound to the caller\'s Subject and the provider, the provider\'s fixed '
+            'redirect URI, `iss` expectations, `resource` for an MCP reach); a seam that assembles its own URL measures a stub, and a bundle citing it MUST say which. The grant '
+            'completes on the host\'s PRODUCTION callback route, which the suite calls as the user agent. `redirectUri` is a probe: the host MUST ignore it (the redirect URI is '
+            'fixed per provider, oauth.md rule 5). A refused grant — an MCP-reach provider with no `issuer`, `pkce: "unsupported"`, or discovered metadata that disagrees with the '
+            'manifest or the pinned tuple — is `422 connection_auth_metadata_mismatch` and no authorization URL is issued. A host that has not wired the seam answers `404`, and the '
+            'scenarios record `blocked`.'),
+        'requestBody': {'required': True, 'content': {'application/json': {'schema': {'type': 'object', 'additionalProperties': False, 'required': ['provider'],
+            'properties': {'provider': {'type': 'string', 'minLength': 1, 'description': 'An advertised `oauth.providers[].id`, or the `provider.id` of `connection`.'},
+                'authUrl': {'type': 'string', 'format': 'uri'}, 'tokenUrl': {'type': 'string', 'format': 'uri'},
+                'issuer': {'type': 'string', 'format': 'uri', 'description': 'The provider\'s issuer identifier; absent ⇒ an issuer-less provider (provider-unique redirect URI).'},
+                'pkce': {'type': 'string', 'enum': ['S256', 'unsupported']},
+                'scopes': {'type': 'array', 'items': {'type': 'string', 'minLength': 1}},
+                'connection': {'$ref': '../schemas/v2/connection-pack-manifest.schema.json', 'description': 'A connection pack whose provider is reached as an MCP server (RFC 0199 §B); registered through the production path.'},
+                'redirectUri': {'type': 'string', 'description': 'A probe the host MUST ignore.'}}}}}},
+        'responses': {'201': {'description': 'The authorization URL the user agent would be sent to.', 'content': {'application/json': {'schema': {'type': 'object', 'additionalProperties': False, 'required': ['authorizationUrl'], 'properties': {'authorizationUrl': {'type': 'string', 'format': 'uri'}}}}}},
+            '400': {'$ref': '#/components/responses/ValidationError'}, '401': {'$ref': '#/components/responses/Unauthenticated'}, '404': {'$ref': '#/components/responses/NotFound'},
+            '422': {'description': 'The grant is refused (`connection_auth_metadata_mismatch`, `oauth_provider_unsupported`); no authorization URL is issued.', 'content': {'application/json': {'schema': {'$ref': '#/components/schemas/Error'}}}}}}}
+    seams['paths']['/conformance/seams/sample/oauth/expire-refresh'] = {'post': {'tags': ['Seams'], 'operationId': 'expireOAuthAccessToken',
+        'summary': 'Expire the caller\'s stored access token for a provider so its next use refreshes — RFC 0199 §C.2(b) / RFC 0047 §C.3 witness',
+        'description': ('Marks the access token of the caller\'s stored credential for `provider` expired. Nothing else: the next node that uses it refreshes through the host\'s '
+            'PRODUCTION refresh path against the provider\'s token endpoint (the suite\'s double, which decides whether the refresh token is still good). A terminal refresh failure then '
+            'follows oauth.md §Token lifecycle — `connector.auth-expired`, and either the node fails `connector_auth_expired` or, under `oauth.credentialInterrupt`, it suspends on a '
+            '`credential` interrupt with `reason: "expired"`. `404` when the caller holds no credential for the provider.'),
+        'requestBody': {'required': True, 'content': {'application/json': {'schema': {'type': 'object', 'additionalProperties': False, 'required': ['provider'],
+            'properties': {'provider': {'type': 'string', 'minLength': 1}}}}}},
+        'responses': {'204': {'description': 'The access token is expired.'}, '400': {'$ref': '#/components/responses/ValidationError'}, '401': {'$ref': '#/components/responses/Unauthenticated'}, '404': {'$ref': '#/components/responses/NotFound'}}}}
     # RFC 0173 read surfaces + hostEvents default address
     paths['/host/effect-seams'] = {'get': {'tags': ['host'], 'operationId': 'getEffectSeamManifest', 'summary': 'The host-declared effect-seam manifest (RFC 0173 §C)', 'description': 'Every outbound effect seam replay suppression covers. A seam omitted here is invisible to the suite; the RFC 0140 R5 audit is the control.', 'responses': {'200': {'description': 'The manifest.', 'content': {'application/json': {'schema': {'$ref': '../../schemas/v2/effect-seam-manifest.schema.json'}}}}, '401': {'$ref': '#/components/responses/Unauthenticated'}}}}
     paths['/runs/{runId}/compensation'] = {'parameters': [{'$ref': '#/components/parameters/RunId'}], 'get': {'tags': ['runs'], 'operationId': 'getRunCompensation', 'summary': 'Compensation plan and attempts for a run (RFC 0173 §C.1)', 'description': 'The read projection that makes compensation a core obligation with a deployed-wire witness (RFC 0151 G9 / RFC 0173 §B).', 'responses': {'200': {'description': 'The projection.', 'content': {'application/json': {'schema': {'$ref': '../../schemas/v2/compensation-projection.schema.json'}}}}, '404': {'$ref': '#/components/responses/NotFound'}}}}

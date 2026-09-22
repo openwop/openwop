@@ -21,6 +21,9 @@
 | `conversation.exchange` | `conversationId`, `prompt` | The resume value MUST validate against `outcomeSchema` when supplied |
 | `conversation.close` | `conversationId` | Gated as above |
 | `low-confidence` | `agentId`, `threshold`, `observed` | An `agent.decided` with `confidence` below the threshold MUST be followed by `node.suspended { reason: 'low-confidence' }`; the per-run threshold is `configurable.run.escalationThreshold` (runs.md) |
+| `credential` | `provider`, `scopes`, `reason`, `connectUrl` | Gated on `oauth.credentialInterrupt` (oauth.md); snapshot status `waiting-input`; the resume value is `{ outcome }` and carries no credential |
+
+An interrupt of any kind MUST NOT solicit credential material; a credential is acquired through `credential`.
 
 `key` is the deterministic re-entry key: a host MUST invoke an interrupt with key `K` at most once for the lifetime of the run. On recovery the engine MUST consult the event log, find the prior `interrupt.resolved`, and return the persisted `resumeValue` without emitting a second `interrupt.requested`; an in-memory cache MAY serve in-process replays but MUST NOT replace the event log for cross-process replays. A host MUST validate the resume value against `resumeSchema` when one is declared and MUST refuse a failing value with `400 validation_error`. `timeoutMs`, when set, is the interrupt's own deadline.
 

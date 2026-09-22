@@ -2,7 +2,7 @@
 
 > **Read this instead of the corpus.** v2 is the current protocol major
 > (`spec/v2/README.md`; corpus tag in `spec/v2/release.json`), and a new host
-> targets it. The normative v2 text is **twenty-four documents in `spec/v2/core/`**,
+> targets it. The normative v2 text is **twenty-five documents in `spec/v2/core/`**,
 > held under a 25,000-word budget by `scripts/check-core-budget.mjs`. Everything
 > under `spec/v2/ext/` is an extension you may ignore until you want it.
 >

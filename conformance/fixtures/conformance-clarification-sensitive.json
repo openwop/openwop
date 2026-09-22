@@ -1,0 +1,49 @@
+{
+  "id": "conformance-clarification-sensitive",
+  "name": "Conformance: Clarification (sensitive field)",
+  "version": "1.0",
+  "description": "RFC 0199 \u00a7D.2(d) probe. Suspends on a clarification whose one answer is a string marked format: password. Bridged as MCP requestedSchema { q1: { type: string, format: password } } it is flat but sensitive, so an MCP mount MUST NOT bridge it in form mode (URL mode when the client declared it, else CallToolResult isError). This fixture exists to be REFUSED by the bridge: authoring such a clarification is itself forbidden by RFC 0199 \u00a7C.6, and it ships only as the machine-checkable probe. See v2-mcp-mount-map.test.ts.",
+  "nodes": [
+    {
+      "id": "ask",
+      "typeId": "core.clarificationGate",
+      "name": "Clarification Gate (sensitive)",
+      "position": {
+        "x": 0,
+        "y": 0
+      },
+      "config": {
+        "questions": [
+          {
+            "id": "q1",
+            "question": "Probe only \u2014 never answered with a real value.",
+            "schema": {
+              "type": "string",
+              "format": "password"
+            }
+          }
+        ]
+      },
+      "inputs": {}
+    }
+  ],
+  "edges": [],
+  "triggers": [
+    {
+      "id": "manual",
+      "type": "manual",
+      "enabled": true
+    }
+  ],
+  "variables": [],
+  "metadata": {
+    "tags": [
+      "conformance",
+      "hitl",
+      "rfc-0199"
+    ]
+  },
+  "settings": {
+    "timeout": 0
+  }
+}

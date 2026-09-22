@@ -464,7 +464,7 @@
     {
       "key": "credentials",
       "kind": "family",
-      "normativeText": ["spec/v1/host-capabilities.md"],
+      "normativeText": ["spec/v2/core/oauth.md"],
       "anchor": "core",
       "section": "core/capabilities.md#credentials",
       "peerDependencyId": "credentials",
@@ -530,7 +530,7 @@
     {
       "key": "oauth",
       "kind": "family",
-      "normativeText": ["spec/v1/host-capabilities.md"],
+      "normativeText": ["spec/v2/core/oauth.md"],
       "anchor": "core",
       "section": "core/capabilities.md#oauth",
       "peerDependencyId": "oauth",
@@ -541,11 +541,13 @@
       },
       "facets": [
         "grants",
-        "providers"
+        "providers",
+        "credentialInterrupt"
       ],
       "floorScenarios": [],
       "requirementIds": [],
-      "owningRfc": "0047"
+      "owningRfc": "0047",
+      "facetsFrom": "spec/v2/facets/oauth.schema.json"
     },
     {
       "key": "authorization",

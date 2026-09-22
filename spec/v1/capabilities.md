@@ -499,6 +499,12 @@ RFC 0013 (`Accepted` 2026-05-18; the matching spec doc [`workflow-chain-packs.md
 
 **Runtime invariance.** The `workflowChainPacks` capability advertises **editor** support only — the runtime engine never sees chain-pack-specific surface (workflows reach the runtime fully expanded into concrete `core.*`/published-vendor typeIds). Hosts that omit the capability still execute workflows containing post-expansion DAGs cleanly; what they can't do is implement the author-time drag-tile flow. There is no runtime refusal contract for this capability — the chain reference is workflow-edit-time only and leaves no surface for the runtime to gate on.
 
+### `oauth`
+
+RFC 0047; amended by RFC 0199. The host performs OAuth 2.0 grants for connector nodes; the behaviour is [`host-capabilities.md` §host.oauth](./host-capabilities.md#hostoauth).
+
+**Field shape:** OPTIONAL `object`; when present, `supported: boolean` is REQUIRED. `grants[]` ⊆ `authorization_code`, `client_credentials`, `refresh_token`. `credentialInterrupt` (OPTIONAL boolean, RFC 0199 §C): `true` ⇒ the host suspends a node on a `credential` interrupt instead of failing it when no credential resolves or refresh fails terminally; absent ⇒ it fails the node with `connector_auth_expired`. `providers[]` members are closed `{ id, authUrl?, tokenUrl?, scopesSupported?, issuer?, pkce? }`: `issuer` (OPTIONAL URI, RFC 0199 §A.4) is the provider's authorization-server issuer identifier, and absent means the host gives the provider a redirect URI no other provider shares; `pkce` (OPTIONAL, `S256` | `unsupported`, RFC 0199 §A.1) — absent or `S256` ⇒ PKCE S256 is sent, `unsupported` makes the weaker posture visible and cannot back an MCP reach.
+
 ### `connections`
 
 RFC 0095 (`Accepted`). When `packsSupported: true`, the host installs `kind: "connection"` registry packs — portable provider definitions ([`connection-packs.md`](./connection-packs.md)) — and MUST implement the [`connection-packs.md`](./connection-packs.md) §Manifest clause 6 resolution contract: an RFC 0045 connector's `auth.provider` (or an RFC 0047 `host.oauth` provider string) resolves against the installed connection pack whose `provider.id` matches, with installed-vs-built-in precedence per SemVer §11 and `connection_provider_unresolved` / `connection_provider_conflict` diagnostics.

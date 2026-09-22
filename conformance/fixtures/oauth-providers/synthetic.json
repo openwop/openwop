@@ -5,7 +5,12 @@
     "id": "synthetic",
     "authUrl": "https://oauth.synthetic.openwop.test/authorize",
     "tokenUrl": "https://oauth.synthetic.openwop.test/token",
-    "scopes": ["openwop.read", "openwop.write"]
+    "scopes": [
+      "openwop.read",
+      "openwop.write"
+    ],
+    "pkce": "S256",
+    "issuer": "https://oauth.synthetic.openwop.test"
   },
   "grant": "authorization_code",
   "exchange": {
@@ -24,8 +29,19 @@
   "expectations": {
     "credentialReferenceReturned": true,
     "connectorAuthorizedEvent": {
-      "carries": ["provider", "credentialRef", "scopes"],
-      "mustNotCarry": ["access_token", "refresh_token", "code", "state", "redirectUri", "codeVerifier"]
+      "carries": [
+        "provider",
+        "credentialRef",
+        "scopes"
+      ],
+      "mustNotCarry": [
+        "access_token",
+        "refresh_token",
+        "code",
+        "state",
+        "redirectUri",
+        "codeVerifier"
+      ]
     },
     "redactedValuesNeverOnAnyRunSurface": [
       "OPENWOP_OAUTH_TOKEN_CANARY_9d4c1f7a",
@@ -34,5 +50,21 @@
       "openwop-synthetic-state-7c2a8d",
       "openwop-synthetic-pkce-verifier-3e9f1b2c5a7d4e8f0a1b2c3d4e5f6a7b"
     ]
-  }
+  },
+  "issuerlessProviders": [
+    {
+      "id": "synthetic-noiss",
+      "scopes": [
+        "openwop.read"
+      ],
+      "note": "RFC 0199 §A.4 — no issuer: the host MUST give it a redirect URI no other provider shares."
+    },
+    {
+      "id": "synthetic-noiss-b",
+      "scopes": [
+        "openwop.read"
+      ],
+      "note": "The second issuer-less provider the distinct-redirect leg compares against."
+    }
+  ]
 }

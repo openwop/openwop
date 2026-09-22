@@ -218,6 +218,20 @@
             "instanceUrlTemplate": {
               "type": "string",
               "description": "For per-account-host providers (Snowflake/NetSuite/ServiceNow): a template the host fills per connection, e.g. `https://{account}.snowflakecomputing.com`. Its presence signals the provider cannot use a single global OAuth app."
+            },
+            "issuer": {
+              "type": "string",
+              "format": "uri",
+              "pattern": "^https://",
+              "description": "RFC 0199 §A.4/§B.3. The authorization server's issuer identifier. Fixed and manifest-declared, like `endpoints`. OPTIONAL in the schema; a host MUST NOT authorize a `reach.mcp` + `oauth2` provider whose manifest omits it (refused `connection_auth_metadata_mismatch` before any authorization URL is issued)."
+            },
+            "pkce": {
+              "type": "string",
+              "enum": [
+                "S256",
+                "unsupported"
+              ],
+              "description": "RFC 0199 §A.1. Absent or `S256` ⇒ the host sends PKCE S256. `unsupported` ⇒ no PKCE; a host MUST NOT authorize such a provider when it is reached as an MCP server (§B.2)."
             }
           }
         },
