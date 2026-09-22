@@ -194,6 +194,13 @@
         "carrier": "metadata.openwop.interrupt.kind"
       },
       {
+        "runStatus": "waiting-input",
+        "interruptKind": "credential",
+        "stored": "auth-required",
+        "wire": "TASK_STATE_AUTH_REQUIRED",
+        "carrier": "metadata.openwop.interrupt.kind; the status message names the provider and carries connectUrl (RFC 0199 §D.1)"
+      },
+      {
         "runStatus": "waiting-external",
         "stored": "input-required",
         "wire": "TASK_STATE_INPUT_REQUIRED",
@@ -231,7 +238,7 @@
       {
         "wire": "TASK_STATE_AUTH_REQUIRED",
         "runStatus": "waiting-input",
-        "note": "reverse only until RFC 0199 lands: waiting-input with metadata.subkind auth; the forward source is RFC 0199's credential interrupt, whose override row RFC 0199 adds to a2a.taskState"
+        "note": "reverse: an external agent's AUTH_REQUIRED projects to waiting-input with metadata.subkind auth; a host MAY instead raise a credential interrupt when it can obtain the peer's credential through oauth (RFC 0199 §D.1). The forward source is the credential interrupt (the a2a.taskState override row)."
       },
       {
         "wire": "TASK_STATE_COMPLETED",
@@ -484,7 +491,7 @@
     "mrtr": [
       {
         "element": "InputRequiredResult (host as server)",
-        "rule": "A run reaching waiting-approval or waiting-input answers the in-flight request with inputRequests { <interruptId>: elicitation/create } and a requestState. Form mode (requestedSchema from the interrupt payload) only for a flat object of primitive properties none of which is writeOnly or format password (MCP Elicitation, restated by RFC 0199 §D.2(d)); a credential interrupt, and any other schema, follow RFC 0199 §D.2 (URL mode when the request declared it, else CallToolResult isError; never form mode). RFC 0199 owns this row's credential and URL-mode clauses."
+        "rule": "A run reaching waiting-approval or waiting-input answers the in-flight request with inputRequests { <interruptId>: elicitation/create } and a requestState. Form mode (requestedSchema from the interrupt payload) only for a flat object of primitive properties none of which is writeOnly or format password (MCP Elicitation, restated by RFC 0199 §D.2(d)). A credential interrupt, and any other schema, uses mode url (url = the credential interrupt's connectUrl, or a host-owned page that resolves that interrupt for the same Subject) when the request declared _meta[io.modelcontextprotocol/clientCapabilities].elicitation.url; otherwise the request is answered CallToolResult isError naming the provider, the run stays suspended and resolvable through the REST and token surfaces, and the host never falls back to form mode (RFC 0199 §D.2)."
       },
       {
         "element": "requestState (host as server)",
@@ -492,7 +499,7 @@
       },
       {
         "element": "inputResponses[key] (host as server)",
-        "rule": "ElicitResult action accept resumes with content, decline takes the decline path, cancel cancels the interrupt; the resolver MUST be an eligible approver (interrupt.md); content never becomes authority."
+        "rule": "ElicitResult action accept resumes with content, decline takes the decline path, cancel cancels the interrupt; the resolver MUST be an eligible approver (interrupt.md); content never becomes authority. For a url-mode request, accept carries no content and causes the credential re-check (RFC 0199 §D.2(c)): a credential that now resolves resolves the interrupt and the run continues; otherwise the host answers input_required again with the same url, not an error."
       },
       {
         "element": "InputRequiredResult (host as client)",
