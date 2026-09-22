@@ -38,7 +38,7 @@ Every kind uses two registered types (events.md): `interrupt.requested`, whose p
 
 A host MUST expose the run-scoped surface and SHOULD expose the signed-token surface for callers not authenticated to the protocol. Every resolve MUST honor `Idempotency-Key` (idempotency.md). Exactly one of two concurrent resolves MUST succeed; the other MUST receive `409 interrupt_already_resolved`.
 
-**Callback delivery (RFC 0196).** `createRun.callbackUrl` names where a host that advertises `interrupt.callbackDelivery: true` delivers notice of an interrupt, so its holder can resolve it through the token surface. The payload, timing and signing are host-defined in this revision. A host advertising the facet MUST refuse at `createRun`, with `400 validation_error` and `details.field: "callbackUrl"`, a URL the `webhooks.md` §SSRF registration guard would refuse, MUST re-validate every resolved address at delivery, and MUST NOT follow a redirect. A host that does not advertise it SHOULD refuse the member and MUST NOT claim delivery it does not perform.
+**Callback delivery (RFC 0196).** `createRun.callbackUrl` names where a host that advertises `interrupt.callbackDelivery: true` delivers notice of an interrupt, so its holder can resolve it through the token surface. The payload, timing and signing are host-defined in this revision. A host advertising the facet MUST refuse at `createRun`, with `400 validation_error` and `details.field: "callbackUrl"`, a URL the `webhooks.md` §Egress registration guard would refuse, MUST re-validate every resolved address at delivery, and MUST NOT follow a redirect. A host that does not advertise it SHOULD refuse the member and MUST NOT claim delivery it does not perform.
 
 | Status | Code | Condition |
 | --- | --- | --- |
@@ -89,4 +89,4 @@ enforce the same eligibility at the store, or MUST NOT expose the record to
 that principal for write: a rule enforced per route is only as complete as the
 census of writers (RFC 0187 §C.1).
 
-Refs are opaque to the engine; the host resolves them against its own identity model. Membership MUST be resolved at decision time and MUST NOT be re-resolved during replay or `forkRun`: the recorded eligibility decision is fixed history (replay.md). A host that does not advertise a ref kind MUST ignore that field. A relaxation of any obligation here is an operator setting recorded in the certification bundle, never a discovery field (security-defaults.md).
+Refs are opaque to the engine; the host resolves them against its own identity model. Membership MUST be resolved at decision time and MUST NOT be re-resolved during replay or `forkRun`: the recorded eligibility decision is fixed history (replay.md). A host that does not advertise a ref kind MUST ignore that field.

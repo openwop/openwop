@@ -5,7 +5,7 @@
 
 ## Why this exists
 
-Every one of the 282 pack versions published under v1 either pins `<2.0.0` or declares no ceiling at all, four peer-dependency grammars were signed into the registry, and two signing conventions shared one word while signing different bytes. This document is the v2 contract for pack manifests, the registry tree, peer-dependency identifiers, and signing. The per-kind rules live in connection-packs.md, form-content-packs.md, and workflow-chain-packs.md; the capability vocabulary a pack requires is capabilities.md.
+The v2 contract for pack manifests, the registry tree, peer-dependency identifiers, and signing. The per-kind rules live in connection-packs.md, form-content-packs.md, and workflow-chain-packs.md; the capability vocabulary a pack requires is capabilities.md.
 
 ## The engine range
 
@@ -20,10 +20,8 @@ client MUST treat an absent record as "this host installs no packs" rather than
 as an unknown.
 
 `testMode` is DEPRECATED and MUST NOT be relied on by a client. It advertises
-the v1 `/v1/packs-test/*` mirror, a conformance seam — and `conformance.md`
-§"The seams profile" places seams in the `openwop-conformance-seams-v2` profile
-and the `/conformance/seams/` path space, not in the capability namespace. It
-remains advertisable through the overlap because hosts already publish it; it is
+the v1 `/v1/packs-test/*` mirror, a conformance seam (`conformance.md`
+§"The seams profile"), and remains advertisable through the overlap because hosts already publish it; it is
 removed at 3.0. A host mounting a test catalog SHOULD advertise the seams
 profile instead, and MUST NOT treat `testMode` as a second way to claim one.
 
@@ -58,7 +56,7 @@ The 13 manifest schemas carry `$id` under `https://openwop.dev/spec/v2/`; the v1
 | `security-advisory` | registry | closed |
 | `prompt-ref` | leaf | none |
 
-Every pack-authored document MUST admit `patternProperties` `^(openwop-|x-|vendor\.)`. The `openwop-` prefix is the v2 spelling of the v1 `x-openwop-*` annotation keys, renamed so annotation keys and wire headers stop sharing a token shape. A consumer that does not recognize a hatch property MUST ignore it and MUST NOT reject the document; the value is pack-authored and therefore untrusted (security-defaults.md).
+Every pack-authored document MUST admit `patternProperties` `^(openwop-|x-|vendor\.)`. A consumer that does not recognize a hatch property MUST ignore it and MUST NOT reject the document; the value is pack-authored and therefore untrusted (security-defaults.md).
 
 ## Signing
 

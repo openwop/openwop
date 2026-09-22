@@ -4,11 +4,11 @@
 
 ## Why this exists
 
-v1 could say a host passed and could not say what it witnessed: test ids were derived from titles, the witness class was recorded on extensions but not requirements, nine test-seam operations sat in the canonical API, and the certification bundle had an open root and no signature. This document is the v2 evidence contract: how a requirement is asserted, how every requirement declares what can witness it, how the seams are mounted, what the suite ships, and what a bundle proves. Profiles are in overview.md; the capability vocabulary the suite gates on is capabilities.md.
+The v2 evidence contract: how a requirement is asserted, how every requirement declares what can witness it, how the seams are mounted, what the suite ships, and what a bundle proves. Profiles are in overview.md; the capability vocabulary the suite gates on is capabilities.md.
 
 ## Requirement ids
 
-`expect(x, req('openwop.<area>.<slug>', '<doc> §<section>', '<requirement>'))` is the only assertion form. A scenario assertion without a requirement id MUST fail the suite's lint. Ids are minted in `conformance/requirements.json`; every test declares its id explicitly. A title reword without a corresponding `requirement-aliases.json` row MUST fail CI, because published bundles cite ids and an orphaned id orphans every bundle that cited it.
+`expect(x, req('openwop.<area>.<slug>', '<doc> §<section>', '<requirement>'))` is the only assertion form. A scenario assertion without a requirement id MUST fail the suite's lint. Ids are minted in `conformance/requirements.json`; every test declares its id explicitly. A title reword without a corresponding `requirement-aliases.json` row MUST fail CI.
 
 The ledger records per `it`, and a bundle's `results.requirements[]` is the per-assertion list. A post-assertion soft-skip MUST record `skipped` for every id not reached and MUST NOT record `pass`.
 
@@ -21,8 +21,7 @@ failure MUST be `blocked`, never `inapplicable`; a suite with a blocked row MUST
 NOT issue a certification (RFC 0168 §E.1).
 
 When more than one gate can skip a test, evaluate host predicates before suite
-predicates. This preserves the most specific truthful reason while ensuring a
-suite failure cannot be hidden as an inapplicable host requirement.
+predicates.
 
 ## Witness class
 
@@ -73,11 +72,11 @@ A certification bundle validates against `schemas/v2/certification-bundle.schema
 
 `signature` is an Ed25519 attestation over the canonical JSON of `{ witnessSha256, host.build, suite.version, discovery.sha256 }`; `over` MUST list exactly those four members. A host that signs bundles MUST publish the corresponding public keys as `signingKeys[]` in its discovery document, and `signature.keyId` MUST name one of them. A verifier MUST resolve `keyId` there — in the discovery document of the host the bundle is *about* — and MUST verify the attestation under the published key.
 
-A signature that cannot be resolved to a published key attests **integrity only**: it proves the bundle was not altered after signing, and proves nothing about who signed it, because a signer can mint a keypair and a key id at will. Such a bundle MUST NOT be read as attributable evidence, and a gate MUST distinguish three outcomes that a presence check collapses into one — *no discovery document was read*, *read and the key is not published*, and *the attestation does not verify*. A retired key MUST stay listed, because removing it silently invalidates every bundle it already signed. `evidenceTier: independent` MUST carry a `verifierKeyId` distinct from the host's signing key; the verifier MUST refuse, not warn, on a missing or self-signed independent claim. A bundle with `totals.blocked > 0` does not certify. At major 2 a requirement a test did not observe records `blocked` even when the test asserted setup facts first; an `executed-pass` carrying a `partial-witness:` detail is reserved for a leg that observed its requirement and skipped an optional extra. `host.relaxations[]` lies outside the attestation, so `witnessSha256` covers it whenever it is non-empty; a verifier recomputing the digest therefore detects a relaxation removed after signing. A verifier MUST derive the operator's opt-outs from the signed `skipped` rows and MUST reject a bundle whose captured discovery document advertises one of them (`opted-out-but-advertised`). A profile that carries an operator relaxation (`host.relaxations[]`) cannot certify. v1 and v2 bundles are never upgraded to v3; a bundle is evidence at its own version.
+A signature that cannot be resolved to a published key attests **integrity only**. Such a bundle MUST NOT be read as attributable evidence, and a gate MUST distinguish three outcomes that a presence check collapses into one — *no discovery document was read*, *read and the key is not published*, and *the attestation does not verify*. A retired key MUST stay listed. `evidenceTier: independent` MUST carry a `verifierKeyId` distinct from the host's signing key; the verifier MUST refuse, not warn, on a missing or self-signed independent claim. A bundle with `totals.blocked > 0` does not certify. At major 2 a requirement a test did not observe records `blocked` even when the test asserted setup facts first; an `executed-pass` carrying a `partial-witness:` detail is reserved for a leg that observed its requirement and skipped an optional extra. A verifier MUST derive the operator's opt-outs from the signed `skipped` rows and MUST reject a bundle whose captured discovery document advertises one of them (`opted-out-but-advertised`). v1 and v2 bundles are never upgraded to v3; a bundle is evidence at its own version.
 
 ### Recovery evidence
 
-RFC 0158 §E publishes a rung and its recovery bounds here instead of in discovery. The attestation covers `witnessSha256`, and `witnessSha256` digests the rows, so the evidence rides on rows: a row's `evidence` enters the digest only when present, and a bundle without it digests as it always did.
+Recovery evidence (RFC 0158 §E) rides on rows, which `witnessSha256` digests: a row's `evidence` enters the digest only when present, and a bundle without it digests as it always did.
 
 | Row | `evidence` member |
 | --- | --- |

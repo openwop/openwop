@@ -5,7 +5,7 @@
 
 ## Why this exists
 
-v1 protected a tenant only when a host volunteered a boolean: fourteen auth-family flags, `replay.sideEffectSuppression`, `webhooks.durable`, `interrupt.approverRouting`, and `sandbox.supported` each gated a MUST. RFC 0164 §22 named the pattern — opt-in security is the pattern the corpus keeps regretting — and RFC 0173 applies that ruling to the whole corpus. This document is the obligation table: which surface binds which behavior, the invariant, and the witness.
+RFC 0173 replaces v1's opt-in security flags (RFC 0164 §22). This document is the obligation table: which surface binds which behavior, the invariant, and the witness.
 
 ## The rule
 
@@ -28,19 +28,19 @@ A host MUST NOT advertise a surface whose obligation it has relaxed (§A.2).
 
 ### Auth lanes
 
-The fourteen gate fields are removed from `schemas/v2/capabilities.schema.json`; `auth.lanes[]` carries `{ lane, issuers[], revocation, minimumAssurance, delegationProofs[] }` as facets. The obligations are stated once in identity.md and bind on advertisement.
+The obligations are identity.md §2 and bind on advertisement.
 
 ### Replay suppression
 
-A host that advertises `replay` MUST suppress external effects during a `replay` fork and MUST publish the effect-seam manifest at `GET /host/effect-seams` (`schemas/v2/effect-seam-manifest.schema.json`, RFC 0173 §C.1). The `replay-side-effect-suppression` scenario asserts every manifest row is suppressed and drives one seam of each kind to observe no re-fire. A host that cannot suppress MUST NOT advertise `replay`. The manifest is a self-declaration: a seam omitted is invisible to the suite, and its completeness is recorded as negative-existence, found by audit rather than witnessed.
+Stated in replay.md §Suppression and §"The effect-seam manifest"; the `replay-side-effect-suppression` scenario witnesses it.
 
 ### Webhook durability
 
-A host that advertises `webhooks` MUST retry a failed delivery per its advertised `retryPolicy` (`maxAttempts`, `backoff`), MUST route an exhausted delivery to the dead-letter sink, and MUST deliver at least once; subscribers dedup on `(OpenWOP-Webhook-Id, runId, sequence)` (webhooks.md). The `webhook-durable-delivery` scenario observes retry then dead-letter.
+Stated in webhooks.md §Durability; the `webhook-durable-delivery` scenario witnesses it.
 
 ### Approver enforcement
 
-A host that surfaces `approversList`, or advertises `refKinds` including `group` or `role`, MUST refuse a resolution from a principal outside the list, group, or role at resolve time. Membership MUST be resolved at decision time and MUST NOT be re-resolved during replay (replay.md). The `approver-enforced` scenario submits a non-listed resolver and observes the refusal.
+Stated in interrupt.md §"Approver enforcement"; the `approver-enforced` scenario witnesses it.
 
 ### Sandbox isolation
 
@@ -50,13 +50,13 @@ The remaining `sandbox` facets name the bound each invariant already carries: `a
 
 ### Compensation
 
-A host that advertises `compensation` MUST serve `GET /runs/{runId}/compensation` (`schemas/v2/compensation-projection.schema.json`): `{ runId, status, plan[], attempts[] }`, the plan carrying `{ nodeId, order, policy?, irreversibleEffect? }` and each attempt `{ nodeId, attempt, outcome, at, reason? }`, keyed on the node and attempt the operator family uses. The trichotomy of §D.1 resolves to core obligation with a declared witness; a host that does not advertise `compensation` has no obligation.
+A host that advertises `compensation` MUST serve `GET /runs/{runId}/compensation` (`schemas/v2/compensation-projection.schema.json`), keyed on the node and attempt the operator family uses; a host that does not advertise `compensation` has no obligation.
 
 The facets bind the policy shape (`schemas/v2/compensation-policy.schema.json`): `compensation.orderingModels` MUST list `reverse-completion` and MAY add `dependency-graph`, and a policy naming a model outside it MUST be refused at registration; `compensation.profileVersion` participates in the inverse-action identity, so a policy naming a different one MUST be refused; `compensation.manualIntervention` is the `manual` status above — a host advertising it records the unwind rather than abandoning it.
 
 ### Layer-2 effect identity
 
-A host that advertises `idempotency` MUST assign a logical effect id once per effect, stable across transport retries, and MUST inject it as the provider's idempotency key (RFC 0150 §B). Where a provider exposes no business key, the v1 activity recipe is the documented fallback. `GET /runs/{runId}/effects` (`schemas/v2/effect-ledger-projection.schema.json`) serves `{ runId, effects[] }`, each `{ effectId, nodeId, attempt, invocationId?, keying: business-identity | activity-recipe, providerKey?, state: claimed | completed | released | escaped, at }`, content-free of provider payloads. Layer-2 retention MUST be at least 14 days (RFC 0170 §D.3). No deployed history holds a v1 recipe key, so no dual-read migration exists (RFC 0147 UQ2).
+A host that advertises `idempotency` MUST serve `GET /runs/{runId}/effects`; the keying, provider-key, retention and projection rules are idempotency.md §"Layer 2: effect identity" (RFC 0150 §B).
 
 ## Relaxations
 
@@ -68,7 +68,7 @@ A relaxation, where one is legitimate — a development deployment, a single-ten
 | `deployment` | Set at deploy time. |
 | `persisted` | Survives restarts and is auditable. |
 
-A bundle that records a relaxation MUST NOT certify the profile the relaxed obligation belongs to; the `relaxation-recorded` scenario verifies it unaided (conformance.md). RFC 0158's ladder is the model: evidence lives in the bundle, and a field that let a host assert a property with nothing behind it is the failure the ladder prevents.
+A bundle that records a relaxation MUST NOT certify the profile the relaxed obligation belongs to; the `relaxation-recorded` scenario verifies it unaided (conformance.md).
 
 ## Three dispositions
 
@@ -97,16 +97,6 @@ The following threat-model artifacts are required:
 
 ## Migration
 
-| Row | v1 | v2 |
-| --- | --- | --- |
-| `C6.1` | fourteen `auth.*` gate flags | obligations of the lane; `auth.lanes[]` facets |
-| `C6.2` | `replay.sideEffectSuppression: none \| recorded-outcome` | suppression is the only replay behavior; the manifest is the witness |
-| `C6.3` | `webhooks.durable` opt-in | durable delivery binds with `webhooks`; undelivered best-effort deliveries are not translated |
-| `C6.4` | `interrupt.approverRouting` gate | enforcement binds with the fields |
-| `C6.5` | `sandbox.supported` gate | isolation binds with pack execution; `node:vm` not a value |
-| `C6.6` | `compensation.supported` with seam-only evidence | core obligation with the read projection; persisted plans and attempts unchanged |
-| `C6.7` | unimplemented activity recipe | business-identity keying; `GET /runs/{runId}/effects` |
-| `C6.8` | none | `host.relaxations[]` in bundle v3 |
-| `C6.9` | five-section replay threat model; no interop model | sibling sections; `threat-model-interop.md` |
+Rows `C6.1`–`C6.9` are `spec/v1/migrations.json` entries.
 
 See also: identity.md, replay.md, webhooks.md, capabilities.md, conformance.md.

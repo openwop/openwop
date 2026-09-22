@@ -5,7 +5,7 @@
 
 ## Why this exists
 
-Polling is inefficient and SSE cannot reach server-to-server consumers. A client registers a URL and an event filter once; the host POSTs matching events, signed, as they happen. In v2 durable delivery binds with the surface — a signed event that may be dropped is not a delivery contract.
+A client registers a URL and an event filter once; the host POSTs matching events, signed, as they happen. In v2 durable delivery binds with the surface — a signed event that may be dropped is not a delivery contract.
 
 ## Surfaces
 
@@ -20,7 +20,7 @@ A subscription MUST receive only events from runs within its tenant scope; cross
 
 ## Delivery
 
-The delivery envelope is generated from the same payload definition as the event itself and the CloudEvents mapping — one source, three renderings (RFC 0171 §A.4). The body is `{ runId, workspaceId?, event }` where `event` is the verbatim run event (events.md), and it MUST validate against `schemas/v2/webhook-delivery.schema.json`. `workspaceId` is present exactly when `RunSnapshot.owner.workspace` is (`identity.md` §1) — a host MUST NOT substitute its tenant id for an absent workspace.
+The delivery envelope is generated from the event's payload definition (events.md §Payloads). The body is `{ runId, workspaceId?, event }` where `event` is the verbatim run event (events.md), and it MUST validate against `schemas/v2/webhook-delivery.schema.json`. `workspaceId` is present exactly when `RunSnapshot.owner.workspace` is (`identity.md` §1) — a host MUST NOT substitute its tenant id for an absent workspace.
 
 The envelope's `runId` MUST use the tenant-bound v2 form defined by
 `identity.md` §5, matching the nested event and every response representation.
@@ -64,6 +64,6 @@ A host MUST NOT deliver events a `replay` fork re-emits as fixed history; replay
 
 ## Egress
 
-At registration a host MUST reject (`400 webhook_url_rejected`) non-`https://` URLs, RFC 1918 and loopback and link-local ranges, IPv6 ULA, cloud metadata hosts, and `localhost`. At delivery time a host MUST re-resolve the hostname, validate every resolved address against the same denied ranges plus its own denylist, connect to the validated address without re-resolving, and refuse to follow redirects (invariant `webhook-delivery-egress-revalidation`, reference-impl tier). An IPv4-mapped IPv6 address (`::ffff:0:0/96`) MUST be judged by the IPv4 address it embeds, whatever its spelling — a URL parser writes `[::ffff:127.0.0.1]` as `::ffff:7f00:1`. An address embedding IPv4 in another standard translation form (IPv4-compatible `::/96`, NAT64 `64:ff9b::/96`, 6to4 `2002::/16`) SHOULD be judged the same way, and those prefixes SHOULD NOT be denied wholesale: an IPv6-only host behind DNS64 is handed `64:ff9b::<public IPv4>` for a public destination. A host SHOULD refuse every destination the IANA special-purpose address registries mark not globally reachable (RFC 0196 §B).
+At registration a host MUST reject (`400 webhook_url_rejected`) non-`https://` URLs, RFC 1918 and loopback and link-local ranges, IPv6 ULA, cloud metadata hosts, and `localhost`. At delivery time a host MUST re-resolve the hostname, validate every resolved address against the same denied ranges plus its own denylist, connect to the validated address without re-resolving, and refuse to follow redirects (invariant `webhook-delivery-egress-revalidation`, reference-impl tier). An IPv4-mapped IPv6 address (`::ffff:0:0/96`) MUST be judged by the IPv4 address it embeds, whatever its spelling. An address embedding IPv4 in another standard translation form (IPv4-compatible `::/96`, NAT64 `64:ff9b::/96`, 6to4 `2002::/16`) SHOULD be judged the same way, and those prefixes SHOULD NOT be denied wholesale. A host SHOULD refuse every destination the IANA special-purpose address registries mark not globally reachable (RFC 0196 §B).
 
 See also: events.md, replay.md, persistence.md, security-defaults.md.
