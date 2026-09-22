@@ -14,6 +14,12 @@
       "revision": "2026-07-28",
       "spec": "https://modelcontextprotocol.io/specification/2026-07-28",
       "schema": "https://github.com/modelcontextprotocol/modelcontextprotocol/blob/main/schema/2026-07-28/schema.ts"
+    },
+    "mcpTasks": {
+      "extension": "io.modelcontextprotocol/tasks",
+      "revision": "2026-07-28",
+      "spec": "https://github.com/modelcontextprotocol/ext-tasks/blob/main/specification/2026-07-28/tasks.md",
+      "schema": "https://github.com/modelcontextprotocol/ext-tasks/blob/main/schema/2026-07-28/schema.ts"
     }
   },
   "a2a": {
@@ -512,6 +518,107 @@
         "element": "every tools/*, prompts/*, resources/* request",
         "rule": "Authenticated and authorized at the OpenWOP boundary before a run starts, a resource is read or a prompt renders; unauthenticated only where anonymousActor is advertised."
       }
-    ]
+    ],
+    "tasks": {
+      "status": [
+        {
+          "runStatus": "pending",
+          "taskStatus": "working"
+        },
+        {
+          "runStatus": "running",
+          "taskStatus": "working"
+        },
+        {
+          "runStatus": "paused",
+          "taskStatus": "working"
+        },
+        {
+          "runStatus": "cancelling",
+          "taskStatus": "working"
+        },
+        {
+          "runStatus": "waiting-external",
+          "taskStatus": "working",
+          "note": "no client input is outstanding"
+        },
+        {
+          "runStatus": "waiting-approval",
+          "taskStatus": "input_required",
+          "note": "inputRequests per the mrtr InputRequiredResult row, one key per open interrupt, keyed by interruptId"
+        },
+        {
+          "runStatus": "waiting-input",
+          "taskStatus": "input_required",
+          "note": "as waiting-approval"
+        },
+        {
+          "runStatus": "completed",
+          "taskStatus": "completed",
+          "note": "result is the CallToolResult tools/call would have returned, isError false"
+        },
+        {
+          "runStatus": "failed",
+          "taskStatus": "completed",
+          "note": "result is CallToolResult isError true; task status failed is reserved for a JSON-RPC error the host itself raises (ext-tasks §Task Execution Errors)"
+        },
+        {
+          "runStatus": "cancelled",
+          "taskStatus": "cancelled"
+        }
+      ],
+      "methods": [
+        {
+          "upstream": "tasks/get",
+          "v2Operation": "getRun",
+          "requires": [
+            "mcp.serverMount"
+          ],
+          "rule": "Projects the run by the status rows. A read: no event is appended. An unknown, purged or unreadable taskId is -32602, identically."
+        },
+        {
+          "upstream": "tasks/update",
+          "v2Operation": "resolveInterruptByRun",
+          "requires": [
+            "mcp.serverMount"
+          ],
+          "rule": "Each inputResponses[<interruptId>] resolves that interrupt exactly as the mrtr inputResponses row does, with the same approver eligibility. A key already answered, never issued, or no longer open resolves nothing; one interrupt is resolved at most once however often it is answered."
+        },
+        {
+          "upstream": "tasks/cancel",
+          "v2Operation": "cancelRun",
+          "requires": [
+            "mcp.serverMount"
+          ],
+          "rule": "Acknowledged with an empty result; the run is cancelled as cancelRun would cancel it. On a terminal run it is acknowledged and nothing is appended."
+        },
+        {
+          "upstream": "notifications/tasks | subscriptions/listen taskIds",
+          "v2Operation": null,
+          "requires": [
+            "mcp.serverMount"
+          ],
+          "rule": "Optional, on subscriptions/listen only; each carries what tasks/get would return at that moment. A requested taskId the caller cannot read is left out of notifications/subscriptions/acknowledged exactly as a nonexistent one, and is never notified."
+        }
+      ],
+      "fields": [
+        {
+          "element": "taskId",
+          "rule": "The run's runId in its projected wire form (identity.md §5). Authorization is decided per request, never by possession of the id."
+        },
+        {
+          "element": "ttlMs",
+          "rule": "null, or not shorter than the host's retention for the run. A host MUST NOT fail or cancel a run because a task's TTL elapsed."
+        },
+        {
+          "element": "statusMessage",
+          "rule": "Content-free with respect to run internals: no model transcript, tool I/O or credential."
+        },
+        {
+          "element": "io.modelcontextprotocol/tasks in clientCapabilities.extensions",
+          "rule": "Required on the tools/call for a CreateTaskResult and on every tasks/* request (else -32021)."
+        }
+      ]
+    }
   }
 }

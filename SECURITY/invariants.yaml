@@ -4460,3 +4460,22 @@ invariants:
       hook and not claimed by the scenario.
     witness: witnessable-gated
     witnessReview: reviewed-2026-09-22
+  - id: mcp-task-tenant-scoped
+    tier: protocol
+    severity: critical
+    threat_model: SECURITY/threat-model-interop.md
+    tests:
+      - conformance/src/scenarios/v2-mcp-tasks.test.ts
+    note: |
+      RFC 0198 §C. An MCP task id (the run's tenant-bound runId, projected)
+      resolves on tasks/get, tasks/update, tasks/cancel and subscriptions/listen
+      only for a Subject that could getRun it. An unreadable id is answered
+      -32602 exactly as a nonexistent one, including a tenant mismatch REST
+      answers 403, and is left out of a listen acknowledgement and never
+      notified. A task id is never a credential: possession grants nothing (a
+      foreign tasks/cancel leaves the run untouched). Non-vacuous only with
+      OPENWOP_TEST_TENANT_B_API_KEY for the cross-caller legs (blocked without
+      it); the forged tenant-segment and fabricated-id legs run with one
+      credential, and each leg carries an owner-reads-it positive control.
+    witness: witnessable-gated
+    witnessReview: initial-mechanical-2026-09-22
