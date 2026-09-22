@@ -1081,7 +1081,7 @@
       "properties": {
         "reason": {
           "type": "string",
-          "description": "`v1_pin_unsupported` (RFC 0176 \u00a7B.1) is a registered reason."
+          "description": "Registered reasons: `v1_pin_unsupported` (RFC 0176 \u00a7B.1); `mcp-request-cancelled` (RFC 0198 \u2014 the MCP request that owned the run was cancelled or disconnected before the host answered it)."
         },
         "cancelledBy": {
           "type": "string",
