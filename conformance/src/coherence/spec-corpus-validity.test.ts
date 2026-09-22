@@ -1423,9 +1423,11 @@ describe.skipIf(FIXTURES_DOC_PATH === null)('spec-corpus: fixtures.json catalog 
   const fixturesDocPath = FIXTURES_DOC_PATH as string;
   const PACK_MANIFEST_FIXTURES_DIR = join(FIXTURES_DIR, 'pack-manifests');
   const PROMPT_TEMPLATE_FIXTURES_DIR = join(FIXTURES_DIR, 'prompt-templates');
+  const INTERRUPT_PAYLOAD_FIXTURES_DIR = join(FIXTURES_DIR, 'interrupt-payloads');
   // Top-level workflow fixtures + pack-manifest fixtures + prompt-
-  // template fixtures from their respective sub-directories. All are
-  // documented in fixtures.md so the regex scan below MUST cover them.
+  // template fixtures + interrupt-payload fixtures (suite 2.36.0) from their
+  // respective sub-directories. All are documented in fixtures.md so the
+  // regex scan below MUST cover them.
   const fixtureJsonFiles = [
     ...readdirSync(FIXTURES_DIR)
       .filter((f) => f.endsWith('.json'))
@@ -1434,6 +1436,9 @@ describe.skipIf(FIXTURES_DOC_PATH === null)('spec-corpus: fixtures.json catalog 
       .filter((f) => f.endsWith('.json'))
       .map((f) => f.replace(/\.json$/, '')),
     ...readdirSync(PROMPT_TEMPLATE_FIXTURES_DIR)
+      .filter((f) => f.endsWith('.json'))
+      .map((f) => f.replace(/\.json$/, '')),
+    ...readdirSync(INTERRUPT_PAYLOAD_FIXTURES_DIR)
       .filter((f) => f.endsWith('.json'))
       .map((f) => f.replace(/\.json$/, '')),
   ].sort();
