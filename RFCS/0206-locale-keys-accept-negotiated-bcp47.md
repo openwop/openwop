@@ -201,12 +201,12 @@ This is a normative change to an explicit, deliberately decided MUST. It is not 
 ## Acceptance criteria
 
 - [x] `Active` (2026-09-22, comment window waived; see `Updated`).
-- [ ] Spec text merged (`localized-content.md` §A–§D, `i18n.md` rule 4).
-- [ ] The three v1 schemas and `api/openapi.yaml` carry §A.1. The v2 twins, `api/v2/openapi.yaml` and the eight `spec-artifacts/` mirrors are regenerated. `derive-v2-schemas`, `derive-v2-api --check` and `generate-spec-artifacts --check` pass. The v2 twins are re-seeded either after `derive-v2-schemas.mjs --write` is fixed so it no longer clobbers hand-edited v2 schemas (the RFC 0186 `onTimeout` edit; 33 files churn today), or by re-seeding only the three localized-content files; a full `--write` on today's generator is not admissible.
-- [ ] Register G5 of RFC 0103 is dispositioned `transferred:RFC 0206`, and `spec/v1/gaps.json` is regenerated.
-- [ ] Every `(corpus)` id in the falsifiability table records `executed-pass` in `evidence/corpus-ledger.json`, minted by the coherence test in `conformance/src/coherence/`. The corpus rows need no host.
+- [x] Spec text merged (`localized-content.md` §A–§D, `i18n.md` rule 4). (implementation PR: `localized-content.md` §A constraint 6, §B, §C script-family step, §D write `locale`, §Conformance; `i18n.md` rule 4 and both facet bullets.)
+- [x] The three v1 schemas and `api/openapi.yaml` carry §A.1. The v2 twins, `api/v2/openapi.yaml` and the eight `spec-artifacts/` mirrors are regenerated. `derive-v2-schemas`, `derive-v2-api --check` and `generate-spec-artifacts --check` pass. The v2 twins are re-seeded either after `derive-v2-schemas.mjs --write` is fixed so it no longer clobbers hand-edited v2 schemas (the RFC 0186 `onTimeout` edit; 33 files churn today), or by re-seeding only the three localized-content files; a full `--write` on today's generator is not admissible. (Evidence: `derive-v2-schemas.mjs --write` after the #1487 fix changed exactly the three localized-content twins; `--check` green; `derive-v2-api.py --check` and `generate-spec-artifacts --check` green; the `0206.wire-agreement` row asserts all twelve pattern sites.)
+- [x] Register G5 of RFC 0103 is dispositioned `transferred:RFC 0206`, and `spec/v1/gaps.json` is regenerated. (`transferred:rfc-0206`; `spec/v1/gaps.json` `openwop.gap.0103.5` regenerated.)
+- [x] Every `(corpus)` id in the falsifiability table records `executed-pass` in `evidence/corpus-ledger.json`, minted by the coherence test in `conformance/src/coherence/`. The corpus rows need no host. (`conformance/src/coherence/locale-key-grammar.test.ts`; all six ids `executed-pass` in `evidence/corpus-ledger.json`; each row's sabotage run once and turned it red.)
 - [ ] `openwop.requirement.0206.delivery-extended-locale` records `executed-pass` on a committed bundle of a host advertising an extended content locale, or the RFC records why no host does and is accepted on the corpus rows alone (tier: corpus gate, the RFC 0189 precedent for rows witnessable unaided in the corpus).
-- [ ] CHANGELOG entry.
+- [x] CHANGELOG entry.
 
 ## References
 
