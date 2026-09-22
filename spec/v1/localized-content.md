@@ -54,6 +54,7 @@ A host that serves this surface advertises a `content` block in `/.well-known/op
 3. The resolvable content locale set is `content.baseLocale ∪ content.supportedLocales`. Every member **MUST** be an element of `capabilities.i18n.supportedLocales` (content may be authored for fewer locales than the host negotiates human-facing text for, never more).
 4. `content.supportedLocales` **MUST NOT** contain `content.baseLocale` (the base locale is carried by section `data`, not a `localizations` entry).
 5. Hosts **SHOULD** advertise only locales that content delivery actually returns; advertising a locale no surface serves is dishonest per the INTEROP-MATRIX honesty rule.
+6. Hosts **SHOULD** advertise `content.baseLocale` and `content.supportedLocales[]` in the case RFC 5646 §2.1.1 recommends. The capabilities pattern stays case-insensitive, so a tag advertised in another case (`pt-br`) still validates there, but it cannot be a `localizations` key (§B) and resolves only through the language-family or base branch of §C. (RFC 0206 §C.6)
 
 A host that omits the `content` block serves no content surface and is unaffected; the conformance scenarios skip cleanly.
 
@@ -82,7 +83,7 @@ The core decision: **content is one section record with a base `data` payload pl
 ```
 
 - `data` (object, REQUIRED): base/default-locale fields, authored in `content.baseLocale`. Open object.
-- `localizations` (object, REQUIRED, MAY be `{}`): keys MUST match `^[a-z]{2}(-[A-Z]{2})?$` and MUST NOT equal `baseLocale`; values are partial overlays of `data`.
+- `localizations` (object, REQUIRED, MAY be `{}`): keys MUST match `^[a-z]{2,3}(-[A-Z][a-z]{3})?(-([A-Z]{2}|[0-9]{3}))?$` (case-canonical BCP 47 subset: lowercase 2–3 letter language, optional titlecase script, optional uppercase or 3-digit region; RFC 0206 §A) and MUST NOT equal `baseLocale`; values are partial overlays of `data`.
 - `status` (`draft|published`, REQUIRED), `enabled` (boolean, REQUIRED), `order` (integer, REQUIRED).
 
 **Page** (`localized-content-page.schema.json`): `{ pageId, slug (^[a-z][a-z0-9-]*$), name, status (draft|published), sectionOrder[], seo? }`.
@@ -105,19 +106,23 @@ resolveSection(section, negotiatedLocale, baseLocale):
       return section.data
   if section.localizations[negotiatedLocale] exists:                       # exact-locale override
       return { ...section.data, ...section.localizations[negotiatedLocale] }
-  if negotiatedLocale contains '-':                                        # language-family override
-      lang = negotiatedLocale.split('-')[0]
-      if section.localizations[lang] exists:
-          return { ...section.data, ...section.localizations[lang] }
+  parts = negotiatedLocale.split('-')
+  if len(parts) >= 3 and parts[1] is four ASCII letters:                   # script-family override (RFC 0206)
+      ls = parts[0] + '-' + parts[1]
+      if section.localizations[ls] exists:
+          return { ...section.data, ...section.localizations[ls] }
+  if len(parts) >= 2:                                                      # language-family override
+      if section.localizations[parts[0]] exists:
+          return { ...section.data, ...section.localizations[parts[0]] }
   return section.data                                                       # base fallback
 ```
 
 - The merge is a **shallow** field overlay (MUST): locale fields override base fields key-by-key; missing locale fields fall through to `data`; nested objects are replaced, not deep-merged.
-- This ordering (exact → family → base) is the section-level analogue of the annex's locale-level fallback. Both are normative so a client sending `Accept-Language: pt-BR` resolves byte-identically on every host. Hosts **MUST** implement `resolveSection` identically; it is shared verbatim with the conformance suite.
+- This ordering (exact → script family → language family → base) is RFC 4647 §3.4 Lookup truncation limited to the subtags §B admits, so `zh-Hant-TW` on `{ zh-Hant, zh }` receives `zh-Hant`. The script-family step fires only on an `ll-Ssss` key, which RFC 0103's grammar never admitted, so every section valid before RFC 0206 resolves exactly as it did. It is the section-level analogue of the annex's locale-level fallback. Both are normative so a client sending `Accept-Language: pt-BR` resolves byte-identically on every host. Hosts **MUST** implement `resolveSection` identically; it is shared verbatim with the conformance suite.
 
 **Positive example.** `Accept-Language: pt-BR`, the §B section → `localizations["pt-BR"]` exists → `{ heading: "Bem-vindo", cta: "Get started" }` (heading overridden, cta falls through to base). `Content-Language: pt-BR`.
 
-**Negative example (fails validation).** A section whose `localizations` contains the base locale (`{ "en": {...} }` with `baseLocale: "en"`) MUST be rejected; a key `EN` or `en_US` (wrong case / underscore) MUST fail the `^[a-z]{2}(-[A-Z]{2})?$` pattern.
+**Negative example (fails validation).** A section whose `localizations` contains the base locale (`{ "en": {...} }` with `baseLocale: "en"`) MUST be rejected; a key `EN`, `en_US` or `en-us` (wrong case / underscore) MUST fail the §B locale-key pattern.
 
 ---
 
@@ -145,7 +150,7 @@ DELETE /v1/content/pages/{pageId}/sections/{sectionId}/locales/{locale}
 GET    /v1/content/settings                   PUT    /v1/content/settings
 ```
 
-Admin *writes* target a locale in the body (`{ locale, data }`): `locale == baseLocale` upserts `data`, otherwise it upserts `localizations[locale]`. Write `locale` is validated `^[a-z]{2}(-[A-Z]{2})?$`. Only *public delivery* negotiates via the header.
+Admin *writes* target a locale in the body (`{ locale, data }`): `locale == baseLocale` upserts `data`, otherwise it upserts `localizations[locale]`. Write `locale` is validated against the same §B locale-key pattern. Only *public delivery* negotiates via the header.
 
 ---
 
@@ -180,6 +185,7 @@ Hosts that advertise `capabilities.content.supported: true` are expected to pass
 
 - The four schemas validate the §B shapes; the negative cases (base locale in `localizations`, bad key case) are rejected.
 - `resolveSection` exact-hit / language-family / default-fallback / partial-translation cases (the §C reference algorithm).
+- RFC 0206: the locale-key grammar, its agreement across the eight wire files, the superset property and the two `resolveSection` properties are corpus rows in `conformance/src/coherence/locale-key-grammar.test.ts`; `v2-content-locale-keys.test.ts` delivers an advertised extended content locale on a live major-2 host.
 - §A capability coherence: `content` requires `i18n`; `baseLocale == i18n.defaultLocale`; `({baseLocale} ∪ supportedLocales) ⊆ i18n.supportedLocales`; `baseLocale ∉ supportedLocales`.
 - Behavioral (live host): malformed `Accept-Language` succeeds with base locale; `Content-Language` reflects the locale used; published-only delivery; tenant isolation + no cross-tenant enumeration.
 

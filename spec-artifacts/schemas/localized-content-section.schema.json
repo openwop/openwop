@@ -2,7 +2,7 @@
   "$schema": "https://json-schema.org/draft/2020-12/schema",
   "$id": "https://openwop.dev/spec/v1/localized-content-section.schema.json",
   "title": "LocalizedContentSection",
-  "description": "RFC 0103 (spec/v1/localized-content.md §B). One section record of an authored content page. A section is ONE record carrying a base `data` payload (authored in the host's `content.baseLocale`) plus a sparse `localizations` map of partial per-locale field overrides — never one record per locale. The negotiated locale's resolved body is computed by the normative per-section field merge (exact-locale → language-family → base `data`, shallow overlay; §C). Body field shapes inside `data`/`localizations` are open and host/section-type-defined; this schema closes the envelope, not the body.",
+  "description": "RFC 0103 (spec/v1/localized-content.md §B). One section record of an authored content page. A section is ONE record carrying a base `data` payload (authored in the host's `content.baseLocale`) plus a sparse `localizations` map of partial per-locale field overrides — never one record per locale. The negotiated locale's resolved body is computed by the normative per-section field merge (exact-locale → script-family (RFC 0206) → language-family → base `data`, shallow overlay; §C). Body field shapes inside `data`/`localizations` are open and host/section-type-defined; this schema closes the envelope, not the body.",
   "type": "object",
   "additionalProperties": false,
   "required": ["sectionId", "sectionType", "data", "localizations", "status", "enabled", "order"],
@@ -24,9 +24,9 @@
     },
     "localizations": {
       "type": "object",
-      "description": "Sparse map of per-locale partial field overrides. MAY be empty (`{}`). Each key is a BCP-47 tag matching `^[a-z]{2}(-[A-Z]{2})?$` and MUST NOT equal `content.baseLocale` (the base locale is carried by `data`). Each value is a partial overlay of `data` fields; missing fields fall through to `data` (per-section merge §C).",
+      "description": "Sparse map of per-locale partial field overrides. MAY be empty (`{}`). Each key is a case-canonical BCP 47 tag (language, optional script, optional region; RFC 0206 §A) matching `^[a-z]{2,3}(-[A-Z][a-z]{3})?(-([A-Z]{2}|[0-9]{3}))?$` and MUST NOT equal `content.baseLocale` (the base locale is carried by `data`). Each value is a partial overlay of `data` fields; missing fields fall through to `data` (per-section merge §C).",
       "propertyNames": {
-        "pattern": "^[a-z]{2}(-[A-Z]{2})?$"
+        "pattern": "^[a-z]{2,3}(-[A-Z][a-z]{3})?(-([A-Z]{2}|[0-9]{3}))?$"
       },
       "additionalProperties": {
         "type": "object",

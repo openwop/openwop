@@ -203,12 +203,12 @@ A later RFC can, behind a capability facet, turn §A.1's SHOULD and §B.6's SHOU
 ## Acceptance criteria
 
 - [x] `Active` (2026-09-22, comment window waived; see `Updated`).
-- [ ] `runs.md` §E text merged. `check-core-budget.mjs` stays under its cap.
-- [ ] `artifact.schema.json` and `part.schema.json` land. Both turn defs gain `parts`. `getArtifact` in `api/v2/openapi.yaml` lists `application/a2a+json`. Both manifest schemas carry §C.9.
-- [ ] `artifact-type-packs.md` carries §C.9–§C.11 and the alias table.
-- [ ] Every `(corpus)` row in the falsifiability table records `executed-pass` in `evidence/corpus-ledger.json`, minted by the coherence test in `conformance/src/coherence/`.
-- [ ] At least one host (MyndHyve, which advertises `artifactTypes` and `conversationPrimitive` in its committed v2 bundle, or the v2 reference host) records `openwop.requirement.0205.artifact-a2a-shape` or `openwop.requirement.0205.turn-parts-emitted` `executed-pass` on a behavioural leg (`turn-parts-shape` is server-free and never satisfies this box). Otherwise the RFC records why no host does and is accepted on the corpus rows (tier: corpus gate).
-- [ ] The CHANGELOG entry is in, and the `RFCS/0071` and `RFCS/0005` headers carry `Amended by` pointers.
+- [x] `runs.md` §E text merged. `check-core-budget.mjs` stays under its cap (implementation PR: +88 exactly, 25,132 → 25,220 / 29,200).
+- [x] `artifact.schema.json` and `part.schema.json` land. Both turn defs gain `parts`. `getArtifact` in `api/v2/openapi.yaml` lists `application/a2a+json`. Both manifest schemas carry §C.9. (`artifactTypeId` under `metadata.openwop` `$ref`s the `typeId` kind, as `check-id-kinds-bound` requires; `a2a.proto` v1.0.1 is vendored and pinned under `conformance/fixtures/upstream/a2a-v1.0.1/`, closing the detection half of register G7.)
+- [x] `artifact-type-packs.md` carries §C.9–§C.11 and the alias table (the fifteen media types re-verified against the IANA CSVs on 2026-09-22).
+- [x] Every `(corpus)` row in the falsifiability table records `executed-pass` in `evidence/corpus-ledger.json`, minted by the coherence test in `conformance/src/coherence/` (`a2a-parts-schemas.test.ts`: `part-schema-upstream`, `turn-parts-shape`, `turn-mirror-sync`, `export-media-type`; each fails under its sabotage).
+- [ ] At least one host (MyndHyve, which advertises `artifactTypes` and `conversationPrimitive` in its committed v2 bundle, or the v2 reference host) records `openwop.requirement.0205.artifact-a2a-shape` or `openwop.requirement.0205.turn-parts-emitted` `executed-pass` on a behavioural leg (`turn-parts-shape` is server-free and never satisfies this box). Otherwise the RFC records why no host does and is accepted on the corpus rows (tier: corpus gate). *Not yet:* the v2 reference host implements both (openwop-examples v2-reference, RFC 0205 host PR) and records `artifact-a2a-shape`, `artifact-id-matches-path` and `turn-parts-emitted` `executed-pass` on a local loopback boot against the unpublished 2.36.0 tree; no committed bundle carries them until a cut on the published suite.
+- [x] The CHANGELOG entry is in, and the `RFCS/0071` and `RFCS/0005` headers carry `Amended by` pointers.
 
 ## References
 

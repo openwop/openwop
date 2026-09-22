@@ -176,6 +176,14 @@ def v2_openapi_and_seams():
             '401': {'$ref': '#/components/responses/Unauthenticated'},
             '403': {'$ref': '#/components/responses/Forbidden'},
             '404': {'$ref': '#/components/responses/NotFound'}}}}
+    # RFC 0205 §A — getArtifact MAY answer the A2A Artifact shape, negotiated by Accept. The
+    # v1 operation keeps its single application/json response (RFC 0205 §A.4); the second
+    # media type is v2-only, so it is added here rather than in api/openapi.yaml.
+    ga = paths['/runs/{runId}/artifacts/{artifactId}']['get']
+    ga['responses']['200']['content']['application/a2a+json'] = {'schema': {'$ref': '../../schemas/v2/artifact.schema.json'}}
+    ga['responses']['200']['description'] = ('Artifact payload. Under `application/json` the shape is implementation-defined; '
+        'under `application/a2a+json` (RFC 0205 \u00a7A, negotiated by `Accept`; a host SHOULD offer it) it is an A2A `Artifact` '
+        'whose `artifactId` equals the path segment, and a `url` Part in it MUST NOT resolve beyond the caller\'s `artifacts:read` authorization.')
     paths['/host/events'] = {'get': {'tags': ['host'], 'operationId': 'streamHostEvents', 'summary': 'Host-scoped events (heartbeat.*) as SSE (RFC 0171 §E.1)', 'description': 'The documented default hostEvents address; a host MAY declare another under `heartbeat.deliveryChannel`. Content-free of run data.', 'responses': {'200': {'description': 'text/event-stream of hostEvents messages.', 'content': {'text/event-stream': {'schema': {'type': 'string'}}}}, '401': {'$ref': '#/components/responses/Unauthenticated'}}}}
     doc['paths'] = paths
     comps = doc.setdefault('components', {})

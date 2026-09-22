@@ -480,6 +480,17 @@ Hosts that don't ship a BYOK SecretResolver MAY return `404` / `422` on the star
 
 ---
 
+## `conformance-artifact-emit` (RFC 0205 — an artifact the suite can read back)
+
+- **Purpose**: give `getArtifact` (`GET /runs/{runId}/artifacts/{artifactId}`) a target. No other fixture emits `artifact.created` with an id the suite can read (RFC 0205 register G2).
+- **Opt-in**: a host advertises the fixture in `fixtures[]` only when it implements `getArtifact`; an unadvertised fixture makes `v2-artifact-a2a-shape.test.ts` record `inapplicable`.
+- **Inputs**: none.
+- **Behavior**:
+  1. The single `conformance.artifact.emit` node produces one artifact of type `config.artifactType` whose JSON payload is `config.data`, and emits `artifact.created` with `artifactId`, `artifactType` and `nodeId`.
+  2. The run reaches `completed`.
+  3. `getArtifact` for that `artifactId` answers `200`. When the request's `Accept` prefers `application/a2a+json` and the host serves it, the body is an A2A `Artifact` (`schemas/v2/artifact.schema.json`) with that `artifactId`, carrying the payload as a `data` Part with `mediaType: application/json` (RFC 0205 §A.2).
+- **Timing**: ≤ 10s.
+
 ## NodeModule registration
 
 The fixtures reference these typeIds:
@@ -493,6 +504,7 @@ The fixtures reference these typeIds:
 | `core.approvalGate`           | approval                                               | Call `ctx.interrupt({kind: 'approval', ...})`                                                                                                                                            |
 | `core.clarificationGate`      | clarification                                          | Call `ctx.interrupt({kind: 'clarification', ...})`                                                                                                                                       |
 | `conformance.requiresMissing` | capability-missing                                     | Declares `requires: ['conformance.never-provided']`; engine MUST refuse dispatch. Opt-in fixture registration is recommended so production deployments don't expose the fixture surface. |
+| `conformance.artifact.emit` | artifact-emit | Opt-in (RFC 0205). Produce one artifact of `config.artifactType` with payload `config.data`; emit `artifact.created` naming it; readable through `getArtifact`. |
 
 An OpenWOP-compliant server's NodeModule registry MUST include implementations for all six core typeIds before seeding fixtures. The `conformance.requiresMissing` fixture node is opt-in — see the row above.
 

@@ -112,7 +112,7 @@ A non-terminal run inherited from v1 continues, or is cancelled `v1_pin_unsuppor
 
 ## Annotations, artifacts, eval summary
 
-`createAnnotation` accepts `schemas/v2/annotation-create.schema.json` and returns `201` with `schemas/v2/annotation.schema.json`; `listAnnotations` returns `{ annotations[] }`. An annotation is a live notification (`run.annotated`), never a run event: it MUST NOT enter the event log and MUST be excluded from fork, replay and diff. `getArtifact` returns the artifact as an implementation-defined JSON object. `getEvalSummary` returns `schemas/v2/eval-summary.schema.json` for a terminal eval run, `409` while it is running, `404` when the run is not an eval run; the summary MUST be content-free of task output, rubric prose and credentials.
+`createAnnotation` accepts `schemas/v2/annotation-create.schema.json` and returns `201` with `schemas/v2/annotation.schema.json`; `listAnnotations` returns `{ annotations[] }`. An annotation is a live notification (`run.annotated`), never a run event: it MUST NOT enter the event log and MUST be excluded from fork, replay and diff. `getArtifact` answers `application/json` with an implementation-defined object or, when `Accept` prefers `application/a2a+json`, an A2A `Artifact` (`schemas/v2/artifact.schema.json`); a host SHOULD offer the latter. A body served as `application/a2a+json` MUST validate against that schema with `artifactId` equal to the path's, and a `url` Part in it MUST NOT resolve beyond the caller's `artifacts:read` authorization. `getEvalSummary` returns `schemas/v2/eval-summary.schema.json` for a terminal eval run, `409` while it is running, `404` when the run is not an eval run; the summary MUST be content-free of task output, rubric prose and credentials.
 
 ## Conversation and residency capabilities
 
@@ -120,6 +120,8 @@ A non-terminal run inherited from v1 continues, or is cancelled `v1_pin_unsuppor
 workflow whose `nodes[].typeId` references `core.conversationGate` MUST be refused by a host that
 does not advertise `conversationPrimitive`, at registration or at run creation, with `422
 capability_required` naming the family in `details.requiredCapability`.
+
+A conversation turn MAY carry `parts`, a non-empty array of A2A `Part` objects (`schemas/v2/part.schema.json`); its presence marks the turn A2A-shaped. A producer SHOULD emit it and keep `content` readable by consumers that predate it. A turn without `parts` stays valid on emission, replay and fork.
 
 A host advertising `dataResidency` MUST honor-or-reject: accept a `residency` constraint naming a
 region in `dataResidency.regions`, refuse one it does not advertise with `residency_unavailable`,
