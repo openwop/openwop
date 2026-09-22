@@ -10,6 +10,7 @@
 | **Updated** | 2026-05-29 (`Draft → Active → Accepted` — the full §A wire surface had landed atomically on `main` (`agent-inventory-response.schema.json`, the gated `GET /v1/agents{,/{agentId}}` OpenAPI paths, `peerDependenciesMeta` in `node-pack-manifest.schema.json`, `node-packs.md` §C, the `host-capabilities.md` §A normative-inventory note, `OpenwopClient.agents.{list,get}`, and `conformance/src/scenarios/agent-manifest-runtime.test.ts`) but the Status was never flipped — a bookkeeping miss made visible by its amendment **RFC 0074 already being `Accepted`** (#290) over a `Draft` base. See [Amendment record](#amendment-record). |
 | **Affects** | `schemas/agent-inventory-response.schema.json` (new), `schemas/node-pack-manifest.schema.json`, `api/openapi.yaml`, `spec/v1/node-packs.md`, `spec/v1/host-capabilities.md`, `conformance/src/scenarios/agent-manifest-runtime.test.ts`, `CHANGELOG.md`, `INTEROP-MATRIX.md` |
 | **Compatibility** | `additive` per `COMPATIBILITY.md` |
+| **Amended by** | [RFC 0202](./0202-per-agent-a2a-agent-cards.md) — the v2 inventory entry gains the optional `a2aTenant`, the routing value of the agent's A2A Agent Card (`spec/v2/core/interop.md` §"Per-agent cards"); no §A MUST changes. |
 | **Supersedes** | — |
 | **Superseded by** | — |
 

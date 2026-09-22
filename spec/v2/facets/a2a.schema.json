@@ -40,6 +40,10 @@
     },
     "durableTasks": {
       "type": "boolean"
+    },
+    "agentCards": {
+      "const": true,
+      "description": "RFC 0202. Present ⇒ each inventory entry with an `a2aTenant` is published as an A2A 1.0 AgentCard through GetExtendedAgentCard with tenant = a2aTenant (interop.md §Per-agent cards). Requires the a2a-1.0 profile and agents.manifestRuntime. Omit when not offered (RFC 0192)."
     }
   },
   "required": [

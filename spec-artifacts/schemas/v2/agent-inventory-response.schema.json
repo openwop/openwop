@@ -164,9 +164,15 @@
               }
             }
           }
+        },
+        "a2aTenant": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 128,
+          "pattern": "^[A-Za-z0-9._~-]+$",
+          "description": "RFC 0202. Opaque A2A routing value for this agent: the `tenant` of its AgentInterface entries and of GetExtendedAgentCard. Stable for the agent and host version; encodes no tenant, workspace or principal. Present only when the host advertises a2a.agentCards and routes at least one workflow to the agent. Path-segment-safe because the A2A HTTP+JSON binding carries it as `/{tenant}/…`."
         }
       }
     }
-  },
-  "x-openwop-seeded-from": "v1"
+  }
 }

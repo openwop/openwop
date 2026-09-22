@@ -75,6 +75,14 @@ A host MAY serve the MCP Tasks extension `io.modelcontextprotocol/tasks` (revisi
 
 `auth-required` remains a member of the persisted A2A task state enum (`schemas/v2/a2a-task-state.schema.json`) for the reverse direction (consuming an external A2A agent). The forward projection MUST emit it, with `interruptKind: credential` and a status message carrying `connectUrl`, for a run suspended on a `credential` interrupt (interrupt.md), and MUST NOT emit it otherwise.
 
+## Per-agent cards
+
+A host advertising `a2a.agentCards` MUST also offer the `a2a-1.0` profile and `agents.manifestRuntime`, and MUST declare `capabilities.extendedAgentCard: true` on its public card. It publishes each entry of a caller's agent inventory (`GET /agents`) as an A2A `AgentCard`, reached through the entry's `a2aTenant`: an opaque routing value `R` the host mints, stable for the agent and host version, that MUST NOT encode a tenant, workspace, or principal.
+
+`GetExtendedAgentCard` with `tenant: R` MUST return that agent's card: `name` is the entry's `persona`, `version` its `packVersion`, `description` its `description` or else `label`; `supportedInterfaces[]` are the host card's interfaces, each carrying `tenant: R`; `capabilities` and `securitySchemes` equal the host card's; `skills[]` holds one skill per workflow the host routes to the agent for this caller. The card MUST NOT carry anything the inventory entry may not, and does not replace it: `degraded[]` and `memoryDegraded` stay on the entry.
+
+**Non-disclosure.** A request carrying `R` MUST be authenticated and authorized as `GET /agents/{agentId}` is, before `R` is resolved. For an `R` naming an agent outside the caller's inventory, every A2A operation MUST return what it returns for an `R` the host never minted, apart from the JSON-RPC `id`. The public card at `agentCardUrl` MUST NOT list any `R`. `R` is a `tenant` value under §"The operation mappings" **Isolation**.
+
 ## gRPC
 
 gRPC is not part of the core wire. Its document lives at `spec/v2/ext/grpc-transport/` with `witness: unwitnessable` and `adoption: none`; its requirements are SHOULDs of that extension. A host MUST NOT advertise a `grpc` capability block — an unwitnessable family is not advertisable — and `api/v2/openapi.yaml` and the AsyncAPI document are the only canonical API descriptions. The extension re-enters core only by a v2.x additive RFC that generates the proto from `spec/v2/declaration.json` and lands a suite client.
