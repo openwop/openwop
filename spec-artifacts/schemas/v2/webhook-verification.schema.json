@@ -1,0 +1,22 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://openwop.dev/spec/v2/webhook-verification.schema.json",
+  "title": "WebhookVerificationRequest (webhooks.md §Standard Webhooks)",
+  "description": "RFC 0201 §D — the one request a host sends to a subscription URL before answering 201 to a registration that opted into `standard-webhooks-1`. It is not a delivery: it carries no `OpenWOP-Event-Type`, and it is signed with the three Standard Webhooks headers under the secret the registration supplied. The endpoint consents by answering 2xx within 10 s with a JSON body whose `challenge` equals the one sent; anything else refuses the registration `400 webhook_endpoint_unverified`. Served for both majors (v1 `webhooks.md` cites the same $id).",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "type",
+    "challenge"
+  ],
+  "properties": {
+    "type": {
+      "const": "openwop.webhook.verification"
+    },
+    "challenge": {
+      "type": "string",
+      "pattern": "^[A-Za-z0-9_-]{22,128}$",
+      "description": "A fresh base64url value with at least 128 bits of entropy (22 characters), minted per registration."
+    }
+  }
+}

@@ -1146,6 +1146,7 @@
       "facets": [
         "deadLetter",
         "retryPolicy",
+        "secretRotation",
         "signatureAlgorithms"
       ],
       "floorScenarios": [],

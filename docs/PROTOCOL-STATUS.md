@@ -9,9 +9,9 @@
 |---|---:|---|
 | Spec prose documents | 61 | `spec/v1/*.md` |
 | JSON Schemas | 81 | `schemas/*.schema.json` |
-| OpenAPI operations | 56 | `api/openapi.yaml` |
+| OpenAPI operations | 57 | `api/openapi.yaml` |
 | AsyncAPI version | 3.1.0 | `api/asyncapi.yaml` |
-| Conformance scenario files | 526 | `conformance/src/scenarios/*.test.ts` |
+| Conformance scenario files | 530 | `conformance/src/scenarios/*.test.ts` |
 | RFCs tracked | 206 | `RFCS/[0-9][0-9][0-9][0-9]-*.md`, excluding template |
 
 ## Artifact Versions
@@ -61,7 +61,7 @@
 
 ## OpenAPI Operations
 
-`bulkCancelRuns`, `cancelRun`, `createAnnotation`, `createContentPage`, `createPromptTemplate`, `createRun`, `createTriggerSubscription`, `deletePromptTemplate`, `deleteTestPackVersion`, `deleteWorkspaceFile`, `diffRun`, `forkRun`, `getA2ATaskState`, `getAgent`, `getAgentOrgChart`, `getAgentOrgChartDepartment`, `getAgentRosterEntry`, `getArtifact`, `getCapabilities`, `getContentPage`, `getContentSettings`, `getEvalSummary`, `getOpenApiSpec`, `getPromptTemplate`, `getRun`, `getRunAncestry`, `getTestPackSignature`, `getTestPackTarball`, `getTool`, `getWorkflow`, `getWorkspaceFile`, `inspectInterruptByToken`, `listAgentDeployments`, `listAgentRoster`, `listAgents`, `listAnnotations`, `listContentPages`, `listPromptTemplates`, `listTools`, `listWorkspaceFiles`, `pauseRun`, `pollRunEvents`, `putContentSection`, `putContentSettings`, `putTestPackTarball`, `putWorkspaceFile`, `registerWebhook`, `renderPromptTemplate`, `resolveInterruptByRun`, `resolveInterruptByToken`, `resumeRun`, `streamRunEvents`, `transitionAgentDeployment`, `unregisterWebhook`, `updatePromptTemplate`, `verifyAuditLog`
+`bulkCancelRuns`, `cancelRun`, `createAnnotation`, `createContentPage`, `createPromptTemplate`, `createRun`, `createTriggerSubscription`, `deletePromptTemplate`, `deleteTestPackVersion`, `deleteWorkspaceFile`, `diffRun`, `forkRun`, `getA2ATaskState`, `getAgent`, `getAgentOrgChart`, `getAgentOrgChartDepartment`, `getAgentRosterEntry`, `getArtifact`, `getCapabilities`, `getContentPage`, `getContentSettings`, `getEvalSummary`, `getOpenApiSpec`, `getPromptTemplate`, `getRun`, `getRunAncestry`, `getTestPackSignature`, `getTestPackTarball`, `getTool`, `getWorkflow`, `getWorkspaceFile`, `inspectInterruptByToken`, `listAgentDeployments`, `listAgentRoster`, `listAgents`, `listAnnotations`, `listContentPages`, `listPromptTemplates`, `listTools`, `listWorkspaceFiles`, `pauseRun`, `pollRunEvents`, `putContentSection`, `putContentSettings`, `putTestPackTarball`, `putWorkspaceFile`, `registerWebhook`, `renderPromptTemplate`, `resolveInterruptByRun`, `resolveInterruptByToken`, `resumeRun`, `rotateWebhookSecret`, `streamRunEvents`, `transitionAgentDeployment`, `unregisterWebhook`, `updatePromptTemplate`, `verifyAuditLog`
 
 ## RFC Status
 
