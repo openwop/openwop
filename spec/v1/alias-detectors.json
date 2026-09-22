@@ -1,7 +1,7 @@
 {
   "$comment": "RFC 0167 §E — the alias inventory as data. Each detector names a literal token that, while present in the named file, proves an alias or legacy spelling is still in the corpus, and the spec/v1/deprecations.json row that must cover it. scripts/check-alias-coverage.mjs fails when a token is present and its row is missing, or when a row's detector token has disappeared (the alias is gone — retire the detector with the surface). Reviewed, not derived: a grep cannot decide what is an alias; this file records the decision.",
   "version": 1,
-  "updated": "2026-09-18",
+  "updated": "2026-09-22",
   "detectors": [
     {
       "alias": "capabilities wrapper object",
@@ -296,6 +296,18 @@
       "file": "schemas/v2/capabilities.schema.json",
       "token": "testSeams",
       "deprecation": "openwop.deprecation.observability-test-seams-facet"
+    },
+    {
+      "alias": "v2 A2UI delta frame schema (RFC 0114 JSON-Patch transport)",
+      "file": "schemas/v2/a2ui-surface-delta-frame.schema.json",
+      "token": "RFC 0114",
+      "deprecation": "openwop.deprecation.v2-a2ui-delta-frame"
+    },
+    {
+      "alias": "v2 a2uiSurface.deltaTransport facet",
+      "file": "spec/v2/declaration.json",
+      "token": "\"deltaTransport\"",
+      "deprecation": "openwop.deprecation.v2-a2ui-delta-transport-facet"
     }
   ]
 }

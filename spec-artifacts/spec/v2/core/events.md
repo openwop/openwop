@@ -51,7 +51,7 @@ rendered” and is witnessed by `v2-run-completed-outputs`.
 
 ## AI envelopes: E1–E5
 
-`schemas/v2/ai-envelope.schema.json` is the shape an LLM emits; the engine records its acceptance as one or more `RunEventDoc`s. In v2 `correlationId` and `meta.source` are REQUIRED on every envelope, and an engine MUST reject an envelope that omits either; nothing is synthesized. An envelope kind MUST be namespaced under the same `<org>.` rule as events, universal kinds excepted.
+`schemas/v2/ai-envelope.schema.json` is the shape an LLM emits; the engine records its acceptance as one or more `RunEventDoc`s. In v2 `correlationId` and `meta.source` are REQUIRED on every envelope, and an engine MUST reject an envelope that omits either; nothing is synthesized. An envelope kind MUST be namespaced under the same `<org>.` rule as events, universal kinds and the core content-primitive families `ui.*` and `media.*` excepted.
 
 | Gap | Contract |
 | --- | --- |
@@ -123,6 +123,7 @@ MUST refuse every non-universal kind rather than admit it unchecked.
 `schemaVersions.kinds` maps a kind to its advertised floor; a kind absent from the map
 has a floor of `0`. An emitted `schemaVersion` ABOVE the floor MUST be refused with
 `unknown_schema_version` whatever the strictness.
+`ui.a2ui-surface` at schema version 2 is specified by `ext/a2uiSurface/README.md`.
 
 `envelopeStrictness.mode` governs drift BELOW the floor only. Under `warn` — the value
 when the seat is absent — an engine MUST validate against the advertised version and
