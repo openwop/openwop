@@ -50,7 +50,7 @@ A host MUST expose the run-scoped surface and SHOULD expose the signed-token sur
 
 ## Tokens
 
-The token grammar is `ow2.<alg>.<kid>.<payload>.<mac>`, defined in identity.md; `alg` MUST be one the host advertises in `interrupt.tokenAlgs[]` (`hs256` at the cut) and `kid` MUST select a secret the host holds, otherwise `401 interrupt_token_invalid`. A v1 two-segment token remains resolvable under `kid: legacy` until its `expiresAt`.
+The token grammar, the `interrupt.tokenAlgs[]` / `kid` check and the v1 drain are identity.md §4 (`401 interrupt_token_invalid`).
 
 | Rule | Requirement |
 | --- | --- |

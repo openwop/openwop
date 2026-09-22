@@ -139,7 +139,7 @@ Template — one row per store:
 | --- | --- | --- |
 | events | v1 vocabulary; `UNIQUE (runId, sequence)` | `translated` |
 | runs | no `eventLogSchemaVersion`; owner fields | `legacy-stamped` |
-| interrupts | two-segment tokens | `drained` |
+| interrupts | un-prefixed (v1) tokens | `drained` |
 | webhook subscriptions and queued deliveries | subscriptions; serialized deliveries | `unchanged`; `drained` |
 | idempotency, invocation, outbox, correlation tables | keyed records | `unchanged` |
 | audit log | audit facts | `never-upgraded` |
@@ -161,9 +161,5 @@ RFC 0158 §A–§D.
 | Poison work (§C.8) | Work that fails deterministically MUST reach a terminal, operator-visible state within a bounded number of attempts. |
 
 A host MAY claim a qualification rung (`durable-single-instance`, `durable-multi-instance`, `multi-region-qualified`; cumulative) only with the evidence named for it, and MUST NOT claim one from tests in which no process was terminated (§D.9). A rung is evidence, not a capability: discovery carries none, and the rung and its bounds are published in the certification bundle (conformance.md §Bundle v3).
-
-## The corpus-tag pin
-
-A consumer that vendors any file from `schemas/`, `api/`, or `spec/` MUST pin to a published `openwop-conformance/vX.Y.Z` tag, MUST record the tag, and MUST refuse a sync from any other ref. A v1.x consumer MUST NOT vendor `schemas/v2/` (RFC 0176 §E.1). The `corpus-tag-pinned` check verifies that each consumer's recorded tag resolves (conformance.md).
 
 See also: overview.md, events.md, replay.md, identity.md, webhooks.md.

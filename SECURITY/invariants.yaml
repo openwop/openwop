@@ -4349,7 +4349,7 @@ invariants:
     note: |
       RFC 0196 §A.3 / spec/v2/core/interrupt.md §Callback delivery. A host that
       advertises `interrupt.callbackDelivery` MUST NOT accept, at createRun, a
-      `callbackUrl` that the webhooks.md §SSRF registration guard would refuse —
+      `callbackUrl` that the webhooks.md §Egress registration guard would refuse —
       loopback, link-local and cloud metadata, RFC 1918, IPv6 ULA, `localhost`,
       non-https — including those addresses written as IPv4-mapped IPv6.
 

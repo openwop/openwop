@@ -73,6 +73,5 @@
       "maxLength": 32,
       "description": "MAY — for `source: \"webhook\"`, an identifier for the signing secret (the `(webhookId, secretFingerprint)` register key). It MUST be a **salted or host-keyed, TRUNCATED** one-way digest (e.g. the first 8–16 hex of `HMAC(hostKey, secret)`) — NOT the raw secret (SR-1) and NOT a full unsalted `SHA256(secret)` (a full unsalted hash of a low-entropy secret is an offline brute-force / confirmation oracle). The `maxLength: 32` ceiling structurally rejects a full 64-hex digest."
     }
-  },
-  "x-openwop-seeded-from": "v1"
+  }
 }

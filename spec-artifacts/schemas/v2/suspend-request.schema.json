@@ -526,6 +526,5 @@
       },
       "additionalProperties": false
     }
-  },
-  "x-openwop-seeded-from": "v1"
+  }
 }

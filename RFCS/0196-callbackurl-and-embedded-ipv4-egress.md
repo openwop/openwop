@@ -8,7 +8,7 @@
 | **Author(s)**     | David Tufts (@davidscotttufts)                                  |
 | **Created**       | 2026-09-21                                                      |
 | **Updated**       | 2026-09-21 (filed `Draft`; **the public comment window runs in full, to 2026-09-28** — RFC 0147 §A.6: this RFC affects external effects, so bootstrap waiver language MUST NOT shorten its window) · 2026-09-21 (later) — `Draft → Active`; **comment window waived** by the steward on 2026-09-21 — an explicit **steward override of RFC 0147 §A.6**, which forbids bootstrap waiver language from shortening the window for an RFC of this risk class; it is outside the `MAINTAINERS.md` waiver grant, recorded there as an override, not as a routine waiver (this RFC affects external effects). · 2026-09-22 — **`Active → Accepted`, provisional pending RFC 0156 §B retrospective review** (it went `Active` under a waived window; the register row stays `not-reviewed`). Evidence tier: tier-2 — MyndHyve `workflow-runtime`, a production host (steward-affiliated), single witness for §A.3: it advertises `interrupt.callbackDelivery: true` (in its signed discovery document and live), and on the published suite 2.35.0 (build `commit:ace23a7e`, verified against its live `/readiness`; nothing relaxed; both profiles certified) `0196.callback-url-guarded` is `executed-pass` — loopback, cloud metadata and hex-mapped loopback `callbackUrl`s each refused `400 validation_error`, `details.field: callbackUrl`. §B.5 is witnessed by `0171.webhook-egress-refused` on both committed bundles. |
-| **Affects**       | `spec/v2/core/runs.md` (`createRun.callbackUrl`), `spec/v2/core/interrupt.md`, `spec/v2/core/webhooks.md` §SSRF, the `interrupt` family's facets, `spec/v1/rest-endpoints.md` (a pointer only), conformance |
+| **Affects**       | `spec/v2/core/runs.md` (`createRun.callbackUrl`), `spec/v2/core/interrupt.md`, `spec/v2/core/webhooks.md` §Egress, the `interrupt` family's facets, `spec/v1/rest-endpoints.md` (a pointer only), conformance |
 | **Compatibility** | `additive` per `COMPATIBILITY.md`                               |
 | **Supersedes**    | —                                                               |
 | **Superseded by** | —                                                               |
@@ -27,9 +27,9 @@
 | openwop-app | `400 validation_error`, `details.field: callbackUrl` |
 | MyndHyve | on an approval interrupt, POSTs a signed approval request to it; now guarded (it was not) |
 
-A client cannot tell these apart, and an outbound request to a caller-chosen URL is the surface `webhooks.md` §SSRF exists for.
+A client cannot tell these apart, and an outbound request to a caller-chosen URL is the surface `webhooks.md` §Egress exists for.
 
-**Embedded IPv4.** `webhooks.md` §SSRF requires refusing loopback, link-local, RFC 1918 and metadata destinations. The WHATWG URL parser normalises `https://[::ffff:127.0.0.1]/` to hostname `::ffff:7f00:1`. A guard that recognised only the dotted mapped form accepted it — measured on the steward's reference host at registration and at delivery (two POSTs reached a real loopback listener), and present in two other hosts' guards. Suite 2.35.0 already adds three hex-mapped probes to `0171.webhook-egress-refused` as enforcement of the existing MUST; this RFC writes the rule down and extends it to the other standard translation forms.
+**Embedded IPv4.** `webhooks.md` §Egress requires refusing loopback, link-local, RFC 1918 and metadata destinations. The WHATWG URL parser normalises `https://[::ffff:127.0.0.1]/` to hostname `::ffff:7f00:1`. A guard that recognised only the dotted mapped form accepted it — measured on the steward's reference host at registration and at delivery (two POSTs reached a real loopback listener), and present in two other hosts' guards. Suite 2.35.0 already adds three hex-mapped probes to `0171.webhook-egress-refused` as enforcement of the existing MUST; this RFC writes the rule down and extends it to the other standard translation forms.
 
 ## Proposal
 
@@ -37,14 +37,14 @@ A client cannot tell these apart, and an outbound request to a caller-chosen URL
 
 1. The `interrupt` family gains an optional boolean facet `interrupt.callbackDelivery`. A host advertises `true` only if it delivers to `callbackUrl`.
 2. A host that does not advertise `interrupt.callbackDelivery: true` SHOULD refuse a `createRun` carrying `callbackUrl` with `400 validation_error` and `details.field: "callbackUrl"`. It MUST NOT advertise delivery it does not perform.
-3. A host that advertises `interrupt.callbackDelivery: true` MUST apply the `webhooks.md` §SSRF guard to `callbackUrl`: at `createRun` it MUST refuse, with `400 validation_error` and `details.field: "callbackUrl"`, a URL the registration guard would refuse; at delivery it MUST re-validate every resolved address and MUST NOT follow a redirect.
+3. A host that advertises `interrupt.callbackDelivery: true` MUST apply the `webhooks.md` §Egress guard to `callbackUrl`: at `createRun` it MUST refuse, with `400 validation_error` and `details.field: "callbackUrl"`, a URL the registration guard would refuse; at delivery it MUST re-validate every resolved address and MUST NOT follow a redirect.
 4. The delivery's payload, timing and signing are host-defined in this revision; a later RFC may specify an interoperable shape. `interrupt.md` says so, and the OpenAPI description of `callbackUrl` points there.
 
 ### §B An address that embeds IPv4
 
-5. An IPv6 address in the IPv4-mapped form (`::ffff:0:0/96`) MUST be judged, everywhere `webhooks.md` §SSRF applies, by the IPv4 address it embeds — whatever its spelling. (It is that IPv4 address; this states the existing rule.)
+5. An IPv6 address in the IPv4-mapped form (`::ffff:0:0/96`) MUST be judged, everywhere `webhooks.md` §Egress applies, by the IPv4 address it embeds — whatever its spelling. (It is that IPv4 address; this states the existing rule.)
 6. An IPv6 address that embeds IPv4 in another standard translation form — IPv4-compatible (`::/96`, other than `::` and `::1`), NAT64 (`64:ff9b::/96`) and 6to4 (`2002::/16`) — SHOULD be judged by the IPv4 address it embeds. A host SHOULD NOT deny those prefixes wholesale: an IPv6-only host behind DNS64 is legitimately handed `64:ff9b::<public IPv4>` for a public destination.
-7. A host SHOULD refuse every destination that the IANA IPv4 and IPv6 Special-Purpose Address Registries mark not globally reachable, in addition to the classes `webhooks.md` §SSRF names.
+7. A host SHOULD refuse every destination that the IANA IPv4 and IPv6 Special-Purpose Address Registries mark not globally reachable, in addition to the classes `webhooks.md` §Egress names.
 
 **Positive examples.** `https://[64:ff9b::5db8:d822]/` (NAT64 of a public address) is accepted; a `callbackUrl` of `https://hooks.example.com/approve` is accepted by a host advertising delivery.
 
@@ -89,10 +89,10 @@ The v2 reference host judges egress by address since openwop-examples#67 (bytes,
 ## Acceptance criteria
 
 - [x] `Active` — 2026-09-21, by steward override of RFC 0147 §A.6 (the window was waived, not run; see `Updated`).
-- [x] Spec text merged: `runs.md`, `interrupt.md` §Callback delivery, `webhooks.md` §SSRF, the `interrupt.callbackDelivery` facet (2026-09-21, 2.35.0).
+- [x] Spec text merged: `runs.md`, `interrupt.md` §Callback delivery, `webhooks.md` §Egress, the `interrupt.callbackDelivery` facet (2026-09-21, 2.35.0).
 - [x] The §A.3 leg ships in a published suite (2.35.0, 2026-09-22).
 - [x] A committed host bundle from a host advertising `interrupt.callbackDelivery: true` carries the §A.3 row at `executed-pass` — MyndHyve (`evidence/v2-host-bundles/myndhyve.json`, suite 2.35.0).
 
 ## References
 
-- openwop#1449; RFC 0147 §A.6; `spec/v2/core/webhooks.md` §SSRF; `spec/v2/core/interrupt.md` §Tokens; IANA IPv4 / IPv6 Special-Purpose Address Registries; RFC 6052 (NAT64), RFC 3056 (6to4), RFC 4291 §2.5.5 (IPv4-mapped / -compatible).
+- openwop#1449; RFC 0147 §A.6; `spec/v2/core/webhooks.md` §Egress; `spec/v2/core/interrupt.md` §Tokens; IANA IPv4 / IPv6 Special-Purpose Address Registries; RFC 6052 (NAT64), RFC 3056 (6to4), RFC 4291 §2.5.5 (IPv4-mapped / -compatible).

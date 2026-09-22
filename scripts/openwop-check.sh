@@ -292,6 +292,9 @@ node "$(dirname "$0")/check-declaration.mjs"
 node "$(dirname "$0")/check-shipped-changelog.mjs"
 node "$(dirname "$0")/generate-error-envelope.mjs" --check
 node "$(dirname "$0")/check-v2-schemas.mjs"
+# The seed set: every file still marked `x-openwop-seeded-from: v1` must equal its
+# derivation, or the next `--write` silently reverts a hand edit (RFC 0186 `onTimeout`).
+node "$(dirname "$0")/derive-v2-schemas.mjs" --check
 node "$(dirname "$0")/check-core-budget.mjs"
 python3 "$(dirname "$0")/derive-v2-api.py" --check
 # Same pinned + cached invocations as steps 2/3: a bare `npx -y @pkg` here re-resolved and reinstalled both CLIs (7 minutes on CI, which timed the job out).
