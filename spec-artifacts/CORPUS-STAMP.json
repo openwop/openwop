@@ -215,7 +215,7 @@
     "spec/v1/operation-path-manifest.json": "5f5f4e3842669371730ebbd1aace3fb794192615f0018dc144f484ba5db82ac3",
     "spec/v1/spec-gaps.json": "eb3bfcb9c7d05c9a6845d4a40ec9493cfaa5a671932daf1af561310136fdabe8",
     "spec/v2/README.md": "9cb641eefa53cd91d88cbe089aa4577286871fff4024b3a9a5c80da93bd1f6b0",
-    "spec/v2/core/capabilities.md": "1364e4eccd629c31c8d7f74e2db7f555966fb8da4653f9365b5fbfcb23422932",
+    "spec/v2/core/capabilities.md": "e22381fed3a93376ad478fa7f07571fdad9653aefd7c05f189a2ef45a49f6c63",
     "spec/v2/core/conformance.md": "4998af6d64dd6073a396715b5d91476304041dc1493a82885c6c91f098e28e81",
     "spec/v2/core/connection-packs.md": "7257339a4fc125011bf89961588c949cb058a0c0f7d9808ad08a5288deb3f8fc",
     "spec/v2/core/conversation.md": "c9a937e410fdb4e092cec2f05a7cab8b5232745090cfb20041c03c70ccbb5cdc",
@@ -229,13 +229,13 @@
     "spec/v2/core/interop.md": "8e1a6cac5a1b4577502c40c73c1d528664e980e6021ae547bdddfb1d2da8e273",
     "spec/v2/core/interrupt.md": "9a3d655b9b814cf8da8be67d1316d26621ac01959137e4edee8617e5b42d877a",
     "spec/v2/core/node-pack-runtimes.md": "c435ad506f618831b6c0a9fd9150d83a5dc6caa1e3d755b949af2ff8949f1140",
-    "spec/v2/core/overview.md": "f2a6e969fb75be23793045c40a86a9eadac80b35ab284242a88861a380074c01",
+    "spec/v2/core/overview.md": "8f9d4a68b6185664e40d226cb82d9a9270a6c6630e3db59bddff300be781947d",
     "spec/v2/core/packs.md": "3107db14f68f36f5c0d8a13a6f0b3ca9ebef7ff890b8133894bfd28a63462d9b",
     "spec/v2/core/persistence.md": "d32736bd74e51df7c552565b4105a8ec801ece6d2292c8676421368ee9bffec1",
     "spec/v2/core/replay.md": "1166ea8dc73f825b3fd1ef083085eea72cc2a2663b5939a61d1c69d8466991b3",
     "spec/v2/core/runs.md": "62efeed7d61d875af78ee018c5387ac40e3cf0c9bfdd6cafc165e0d418f7b155",
     "spec/v2/core/security-defaults.md": "135c0b1c37edf77832d3207f34061bc36adf33ff4703aa7796f36786a58a85a6",
-    "spec/v2/core/versioning.md": "96477d4164f9ae59f191e2b9e7b4c48049dcb921010c501454764312f6c7a659",
+    "spec/v2/core/versioning.md": "0aded71d090c8358c3ce17763c120cfc1cc42531a5eaa1b8a2a7016ed9594069",
     "spec/v2/core/webhooks.md": "af63fdf728d2f6fd174a61d6c711d720c64154a702c9c28fbe1ca190020a4995",
     "spec/v2/core/workflow-chain-packs.md": "ee45d3fede3bb6f0cc6abcf0d6c929c7cd213a0fbe862b738a998f929c4d1102",
     "spec/v2/declaration.json": "41935c8cf8bda10315fcc632590c61cef1507f076245a3b95ca47fa4d7ac4071",
@@ -286,5 +286,5 @@
     "spec/v2/release.json": "5b9a956506b011835f1bd2fec54064d9cc8657d8a45a371314850da377d69069",
     "spec/v2/retention-floors.json": "eaf3722d95c79947af1d4269ef85117e126518c588cfcf1a2b21b97269f51624"
   },
-  "corpusCommit": "d0fac74ace89b390df89fb0f6a7f30434c88adff"
+  "corpusCommit": "e7ed6692df76e3529d69f82c86652614c8f5b0da"
 }
