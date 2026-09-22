@@ -11,6 +11,10 @@
  *   4. document banners: a spec/v1 `Status: Draft` banner whose stated
  *      predicate names an RFC that is Accepted fails (§D.1); a `Status:` banner
  *      that states an RFC status contradicting the RFC's real status fails;
+ *      a `Status: Draft` banner citing only Accepted RFCs must say `Accepted`
+ *      and name its predicate ("spec status Draft pending …") (4b); an inline
+ *      ``RFC NNNN, `S` `` / ``RFC NNNN (`S`) `` / ``[RFC NNNN](…) `S` ``
+ *      marker on any line must match the RFC's real status (4c);
  *   5. stale deferrals: a spec/v1 gap row deferring to `Active → Accepted` of
  *      an RFC that is already Accepted fails (§D.2);
  *   6. schemas/README.md maturity column: a row stating an RFC status that
@@ -114,6 +118,41 @@ for (const f of readdirSync(specDir).filter((f) => f.endsWith('.md'))) {
   const banner = lines.find((l) => /\*\*Status:/.test(l)) ?? '';
   for (const m of banner.matchAll(/RFC (\d{4}) `(Draft|Active|Accepted|Withdrawn|Superseded|Rejected)`/g)) if (status.has(m[1]) && status.get(m[1]) !== m[2]) failures.push(`banner: spec/v1/${f} says RFC ${m[1]} is \`${m[2]}\`; it is \`${status.get(m[1])}\` (RFC 0174 §D.1)`);
   if (/Status:\s*Draft/.test(banner)) for (const m of banner.matchAll(/graduates?[^.]*when RFC (\d{4}) reaches `?Accepted`?/g)) if (status.get(m[1]) === 'Accepted') failures.push(`banner: spec/v1/${f} is Draft "until RFC ${m[1]} reaches Accepted" — it has (RFC 0174 §D.1)`);
+  // 4b. A `Status: Draft` banner resting ONLY on Accepted RFCs must say so and
+  // name the predicate it is still waiting on. `8c562b60` collapsed seven
+  // banners to `Status: Draft · v1.x · RFC NNNN` and deleted each document's
+  // graduation predicate, so a reader could not tell "Draft because the RFC is
+  // unsettled" (false — it is Accepted) from "Draft because a stated predicate
+  // has not fired". The §D.1 clause above matches only "graduates … when RFC N
+  // reaches Accepted" and could no longer fire on any of them. Coherent form:
+  // `RFC NNNN \`Accepted\`; spec status Draft pending <predicate>` (or
+  // `stays Draft until <predicate>`).
+  if (/Status:\s*Draft/.test(banner)) {
+    const cited = [...banner.matchAll(/RFC[ -](\d{4})((?:\s*(?:,|–|-|and)\s*\d{4})*)/g)].flatMap((m) => {
+      const out = [m[1]]; let prev = Number(m[1]);
+      for (const [, sep, n] of m[2].matchAll(/\s*(,|–|-|and)\s*(\d{4})/g)) { // expand `0039–0041` ranges
+        if (sep === '–' || sep === '-') for (let k = prev + 1; k < Number(n); k++) out.push(String(k).padStart(4, '0'));
+        out.push(n); prev = Number(n);
+      }
+      return out;
+    }).filter((n) => status.has(n));
+    if (cited.length > 0 && cited.every((n) => status.get(n) === 'Accepted')) {
+      if (!/`Accepted`/.test(banner)) failures.push(`banner: spec/v1/${f} is \`Status: Draft\` citing RFC ${cited.join(', ')} — all \`Accepted\` — without saying so; write "RFC NNNN \`Accepted\`; spec status Draft pending <predicate>" (RFC 0174 §D.1)`);
+      if (!/Draft pending\b|stays Draft until\b/.test(banner)) failures.push(`banner: spec/v1/${f} is \`Status: Draft\` over Accepted RFC ${cited.join(', ')} but names no graduation predicate ("spec status Draft pending …" / "stays Draft until …") — Draft with no predicate is indistinguishable from stale (RFC 0174 §D.1)`);
+    }
+  }
+  // 4c. Inline status markers on EVERY line, not just the banner. Rule 4 read
+  // only the banner and only the bare ``RFC NNNN `Status` `` form, so section
+  // headings and capability-flag lines reading ``(RFC 0113, `Active`)``,
+  // ``RFC 0095 (`Draft`)`` or ``[RFC 0099](…) `Active` `` went stale silently
+  // when their RFC was Accepted (23 such markers measured when this landed).
+  // A marker is the RFC's CURRENT status; historical prose ("was `Draft` when
+  // …") does not use these adjacent forms.
+  lines.forEach((l, i) => {
+    for (const m of l.matchAll(/RFC[ -](\d{4})(?:\]\([^)\s]*\))?,? \(?`(Draft|Active|Accepted|Withdrawn|Superseded|Rejected)`/g)) {
+      if (status.has(m[1]) && status.get(m[1]) !== m[2]) failures.push(`status marker: spec/v1/${f}:${i + 1} says RFC ${m[1]} is \`${m[2]}\`; it is \`${status.get(m[1])}\` (RFC 0174 §D.1)`);
+    }
+  });
   lines.forEach((l, i) => { if (!l.startsWith('|') || /\*\*Closed/.test(l)) return; for (const m of l.matchAll(/(?:deferred to|lands? at|land in[^|]*at) `Active → Accepted`[^|]*RFC (\d{4})/gi)) if (status.get(m[1]) === 'Accepted') failures.push(`stale deferral: spec/v1/${f}:${i + 1} defers to RFC ${m[1]}'s Active → Accepted, which has happened (RFC 0174 §D.2)`); });
 }
 // 6
