@@ -205,10 +205,14 @@ describe('RFC 0208 — v2-mcp-mount-map (host as MCP 2026-07-28 server, gated on
     if (!m.ok) return skip(m);
     const mine = await call(m.url, 'tools/list', {});
     const theirs = await call(m.url, 'tools/list', {}, { bearer: other });
+    if (mine.status === 200 && theirs.status === 200 && JSON.stringify(mine.result?.['tools']) === JSON.stringify(theirs.result?.['tools'])) {
+      // A byte-identical list may be public; the private-scope rule binds only a
+      // list that differs per caller. Passing here would be a row that cannot fail.
+      return softSkip('inapplicable', 'the tool list is byte-identical for both tenants — the cacheScope private rule has nothing to bind on this host');
+    }
     expect([mine.status, theirs.status], req(R('mcp-cache-scope'), 'interop-map.json mcp.methods tools/list', 'tools/list is served to both callers')).toEqual([200, 200]);
-    const same = JSON.stringify(mine.result?.['tools']) === JSON.stringify(theirs.result?.['tools']);
     const scopes = [mine.result?.['cacheScope'], theirs.result?.['cacheScope']];
-    expect(same || scopes.every((s) => s === 'private'), req(R('mcp-cache-scope'), 'interop-map.json mcp.cache cacheScope', `a list that differs per caller MUST be cacheScope private — public only when byte-identical for every caller (mcp-cache-tenant-scoped); scopes ${JSON.stringify(scopes)}`)).toBe(true);
+    expect(scopes.every((s) => s === 'private'), req(R('mcp-cache-scope'), 'interop-map.json mcp.cache cacheScope', `a list that differs per caller MUST be cacheScope private — public only when byte-identical for every caller (mcp-cache-tenant-scoped); scopes ${JSON.stringify(scopes)}`)).toBe(true);
   });
 
   it('unknown _meta extension keys and capabilities.extensions are opaque: processed normally, granting nothing', async () => {

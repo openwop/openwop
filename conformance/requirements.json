@@ -28133,7 +28133,7 @@
     {
       "id": "openwop.it.v2-mcp-mount-map.unknown-meta-extension-keys-and-capabilities-extensions-are-opaque-processed-nor",
       "file": "v2-mcp-mount-map.test.ts",
-      "line": 214,
+      "line": 218,
       "title": "unknown _meta extension keys and capabilities.extensions are opaque: processed normally, granting nothing",
       "explicitId": null,
       "citations": [
@@ -28151,7 +28151,7 @@
     {
       "id": "openwop.it.v2-mcp-mount-map.an-unauthenticated-request-is-refused-at-the-boundary-unless-anonymousactor-is-a",
       "file": "v2-mcp-mount-map.test.ts",
-      "line": 223,
+      "line": 227,
       "title": "an unauthenticated request is refused at the boundary unless anonymousActor is advertised",
       "explicitId": null,
       "citations": [
