@@ -1345,7 +1345,9 @@ paths:
       operationId: listAgents
       responses:
         '200':
-          description: Installed manifest agents (agentId-sorted).
+          description: 'Installed manifest agents (agentId-sorted). RFC 0202: when the host advertises `a2a.agentCards`, an
+            entry the host routes a workflow to carries `a2aTenant`, the opaque A2A `tenant` value of that agent''s card (interop.md
+            §Per-agent cards).'
           content:
             application/json:
               schema:
@@ -1411,7 +1413,9 @@ paths:
       - $ref: '#/components/parameters/OpenWOPVersion'
       responses:
         '200':
-          description: The agent's inventory entry.
+          description: 'The agent''s inventory entry. RFC 0202: when the host advertises `a2a.agentCards`, an entry the host
+            routes a workflow to carries `a2aTenant`, the opaque A2A `tenant` value of that agent''s card (interop.md §Per-agent
+            cards).'
           content:
             application/json:
               schema:

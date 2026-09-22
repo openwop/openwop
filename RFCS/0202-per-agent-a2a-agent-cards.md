@@ -153,11 +153,11 @@ One new major-2 scenario, `v2-a2a-agent-cards.test.ts`, gated on `a2a.agentCards
 ## Acceptance criteria
 
 - [x] `Active` — 2026-09-22, by steward override of RFC 0147 §A.6 (the window was waived, not run; see `Updated`).
-- [ ] Spec text merged: `interop.md` §"Per-agent cards"; facet and inventory schema fields; declaration facet; regenerated capabilities schema.
+- [x] Spec text merged: `interop.md` §"Per-agent cards"; facet and inventory schema fields; declaration facet; regenerated capabilities schema. — the implementation PR: the §Normative text verbatim (measured +214 by `check-core-budget.mjs`, 26,028 → 26,242), `a2a.agentCards` in `facets/a2a.schema.json` and `declaration.json`, `a2aTenant` on `AgentInventoryEntry`, `capabilities.schema.json` regenerated; the `listAgents`/`getAgent` 200 descriptions name the field through `scripts/derive-v2-api.py` (`api/v2` is generated).
 - [ ] `v2-a2a-agent-cards.test.ts` ships in a published suite, every row sabotage-proven.
 - [ ] A committed v2 host bundle carries every row of the falsifiability table at `executed-pass`, including `.identical-refusal` and `.tenant-of-record` with the second principal provisioned (a bundle with those two `inapplicable` does not satisfy this box).
-- [ ] `agent-card-no-tenant-leak` registered in `SECURITY/invariants.yaml`; `SECURITY/threat-model-interop.md` updated.
-- [ ] CHANGELOG entry; `MAINTAINERS.md` §"Bootstrap-phase RFC waivers" override row; `docs/WAIVER-RETROSPECTIVE-REGISTER.md` row `not-reviewed`.
+- [ ] `agent-card-no-tenant-leak` registered in `SECURITY/invariants.yaml`; `SECURITY/threat-model-interop.md` updated. — half done: the threat-model row and the G7 residual landed with the implementation PR; registration waits for a committed bundle carrying `identical-refusal` at `executed-pass` (G5).
+- [x] CHANGELOG entry; `MAINTAINERS.md` §"Bootstrap-phase RFC waivers" override row; `docs/WAIVER-RETROSPECTIVE-REGISTER.md` row `not-reviewed`. — the two register rows landed with the filing (#1485); the CHANGELOG entry with the implementation PR.
 - [ ] `Accepted` is provisional until the RFC 0156 §B review.
 
 ## References

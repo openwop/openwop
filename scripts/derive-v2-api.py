@@ -184,6 +184,11 @@ def v2_openapi_and_seams():
     ga['responses']['200']['description'] = ('Artifact payload. Under `application/json` the shape is implementation-defined; '
         'under `application/a2a+json` (RFC 0205 \u00a7A, negotiated by `Accept`; a host SHOULD offer it) it is an A2A `Artifact` '
         'whose `artifactId` equals the path segment, and a `url` Part in it MUST NOT resolve beyond the caller\'s `artifacts:read` authorization.')
+    # RFC 0202 — the v2 inventory entry carries the optional `a2aTenant` (v2-only; the v1
+    # operations are unchanged, G2), so the sentence is added here rather than in api/openapi.yaml.
+    for p, desc in (('/agents', 'Installed manifest agents (agentId-sorted).'), ('/agents/{agentId}', "The agent's inventory entry.")):
+        paths[p]['get']['responses']['200']['description'] = (desc + ' RFC 0202: when the host advertises `a2a.agentCards`, an entry '
+            'the host routes a workflow to carries `a2aTenant`, the opaque A2A `tenant` value of that agent\'s card (interop.md §Per-agent cards).')
     paths['/host/events'] = {'get': {'tags': ['host'], 'operationId': 'streamHostEvents', 'summary': 'Host-scoped events (heartbeat.*) as SSE (RFC 0171 §E.1)', 'description': 'The documented default hostEvents address; a host MAY declare another under `heartbeat.deliveryChannel`. Content-free of run data.', 'responses': {'200': {'description': 'text/event-stream of hostEvents messages.', 'content': {'text/event-stream': {'schema': {'type': 'string'}}}}, '401': {'$ref': '#/components/responses/Unauthenticated'}}}}
     doc['paths'] = paths
     comps = doc.setdefault('components', {})
