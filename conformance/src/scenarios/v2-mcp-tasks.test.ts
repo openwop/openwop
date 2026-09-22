@@ -107,10 +107,10 @@ async function mount(): Promise<Mount> {
 }
 
 /** The task legs: the mount must serve the extension. */
-async function taskMount(): Promise<{ url: string; facet: Record<string, unknown> } | undefined> {
+async function taskMount(): Promise<Mount> {
   const m = await mount();
-  if (!m.ok) return softSkip(m.kind, m.reason);
-  if (!m.tasks) return softSkip('inapplicable', `the mount's server/discover does not list ${TASKS} — the host does not serve MCP Tasks (RFC 0198 §A is a MAY)`);
+  if (!m.ok) return m;
+  if (!m.tasks) return { ok: false, kind: 'inapplicable', reason: `the mount's server/discover does not list ${TASKS} — the host does not serve MCP Tasks (RFC 0198 §A is a MAY)` };
   return m;
 }
 
@@ -246,14 +246,14 @@ const ackedIds = (ack: Record<string, unknown> | null): string[] => {
 describe('RFC 0198 — v2-mcp-tasks (MCP Tasks on the server mount; disconnect cancels only the run it owns)', () => {
   it('a mount that lists the Tasks extension in server/discover also lists extensions in mcp.features', async () => {
     const m = await taskMount();
-    if (!m) return;
+    if (!m.ok) return softSkip(m.kind, m.reason);
     const features = Array.isArray(m.facet['features']) ? (m.facet['features'] as unknown[]).map(String) : [];
     expect(features, req(ID_ADVERTISED_VIA_DISCOVER, `${DOC}; RFC 0198 §A.1`, `server/discover lists ${TASKS}, so mcp.features[] MUST list \`extensions\` (one direction only, G9); advertised [${features.join(', ')}]`)).toContain('extensions');
   });
 
   it('a tools/call declaring the extension on a run that is not terminal is answered CreateTaskResult', async () => {
     const m = await taskMount();
-    if (!m) return;
+    if (!m.ok) return softSkip(m.kind, m.reason);
     const missing = needFixtures(['conformance-approval', 'conformance-delay']);
     if (missing) return softSkip('blocked', missing);
     const r = await createTask(m.url, 'conformance-approval');
@@ -273,7 +273,7 @@ describe('RFC 0198 — v2-mcp-tasks (MCP Tasks on the server mount; disconnect c
 
   it('taskId is the run id in its projected wire form, with an opaque segment of at least 22 characters', async () => {
     const m = await taskMount();
-    if (!m) return;
+    if (!m.ok) return softSkip(m.kind, m.reason);
     const missing = needFixtures(['conformance-approval']);
     if (missing) return softSkip('blocked', missing);
     const r = await createTask(m.url, 'conformance-approval');
@@ -289,7 +289,7 @@ describe('RFC 0198 — v2-mcp-tasks (MCP Tasks on the server mount; disconnect c
 
   it('tasks/get projects input_required keyed by interruptId, and a failed run as completed with isError true', async () => {
     const m = await taskMount();
-    if (!m) return;
+    if (!m.ok) return softSkip(m.kind, m.reason);
     const missing = needFixtures(['conformance-approval', 'conformance-failure']);
     if (missing) return softSkip('blocked', missing);
     const r = await createTask(m.url, 'conformance-approval');
@@ -312,7 +312,7 @@ describe('RFC 0198 — v2-mcp-tasks (MCP Tasks on the server mount; disconnect c
 
   it('tasks/update answered twice resolves the interrupt once and the task completes', async () => {
     const m = await taskMount();
-    if (!m) return;
+    if (!m.ok) return softSkip(m.kind, m.reason);
     const missing = needFixtures(['conformance-approval']);
     if (missing) return softSkip('blocked', missing);
     const r = await createTask(m.url, 'conformance-approval');
@@ -332,7 +332,7 @@ describe('RFC 0198 — v2-mcp-tasks (MCP Tasks on the server mount; disconnect c
 
   it('a tasks/update from a caller not in approversList resolves nothing', async () => {
     const m = await taskMount();
-    if (!m) return;
+    if (!m.ok) return softSkip(m.kind, m.reason);
     const missing = needFixtures(['conformance-approval-approvers']);
     if (missing) return softSkip('blocked', missing);
     // The suite's bearer is not `urn:conformance:listed-approver`, so it is the non-listed resolver by construction.
@@ -351,7 +351,7 @@ describe('RFC 0198 — v2-mcp-tasks (MCP Tasks on the server mount; disconnect c
 
   it('tasks/get appends nothing to the run log', async () => {
     const m = await taskMount();
-    if (!m) return;
+    if (!m.ok) return softSkip(m.kind, m.reason);
     const missing = needFixtures(['conformance-approval']);
     if (missing) return softSkip('blocked', missing);
     const r = await createTask(m.url, 'conformance-approval');
@@ -368,7 +368,7 @@ describe('RFC 0198 — v2-mcp-tasks (MCP Tasks on the server mount; disconnect c
     const other = process.env['OPENWOP_TEST_TENANT_B_API_KEY'];
     if (!other) return softSkip('blocked', 'OPENWOP_TEST_TENANT_B_API_KEY (a credential bound to a second tenant) is not set — the cross-caller half cannot run');
     const m = await taskMount();
-    if (!m) return;
+    if (!m.ok) return softSkip(m.kind, m.reason);
     const missing = needFixtures(['conformance-approval']);
     if (missing) return softSkip('blocked', missing);
     const r = await createTask(m.url, 'conformance-approval');
@@ -401,7 +401,7 @@ describe('RFC 0198 — v2-mcp-tasks (MCP Tasks on the server mount; disconnect c
     const other = process.env['OPENWOP_TEST_TENANT_B_API_KEY'];
     if (!other) return softSkip('blocked', 'OPENWOP_TEST_TENANT_B_API_KEY (a credential bound to a second tenant) is not set — the cross-caller half cannot run');
     const m = await taskMount();
-    if (!m) return;
+    if (!m.ok) return softSkip(m.kind, m.reason);
     const missing = needFixtures(['conformance-approval']);
     if (missing) return softSkip('blocked', missing);
     const r = await createTask(m.url, 'conformance-approval');
@@ -421,7 +421,7 @@ describe('RFC 0198 — v2-mcp-tasks (MCP Tasks on the server mount; disconnect c
 
   it('tasks/cancel cancels the run; on a terminal task it is acknowledged and appends nothing', async () => {
     const m = await taskMount();
-    if (!m) return;
+    if (!m.ok) return softSkip(m.kind, m.reason);
     const missing = needFixtures(['conformance-approval']);
     if (missing) return softSkip('blocked', missing);
     const r = await createTask(m.url, 'conformance-approval');
@@ -460,7 +460,7 @@ describe('RFC 0198 — v2-mcp-tasks (MCP Tasks on the server mount; disconnect c
 
   it('a disconnect after CreateTaskResult never affects the run', async () => {
     const m = await taskMount();
-    if (!m) return;
+    if (!m.ok) return softSkip(m.kind, m.reason);
     const missing = needFixtures(['conformance-delay']);
     if (missing) return softSkip('blocked', missing);
     const p = rawPost(m.url, envelope('tools/call', { name: 'conformance-delay', arguments: { delayMs: 2500 } }, TASK_CAPS), { ...headersFor('tools/call', 'conformance-delay', undefined), connection: 'keep-alive' });

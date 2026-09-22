@@ -4477,5 +4477,8 @@ invariants:
       OPENWOP_TEST_TENANT_B_API_KEY for the cross-caller legs (blocked without
       it); the forged tenant-segment and fabricated-id legs run with one
       credential, and each leg carries an owner-reads-it positive control.
+      Witness class reviewed 2026-09-22 by running each leg red against a
+      sabotaged v2-reference build (a -32603 for a swapped tenant segment; a
+      listen that acknowledges every requested id).
     witness: witnessable-gated
-    witnessReview: initial-mechanical-2026-09-22
+    witnessReview: reviewed-2026-09-22
