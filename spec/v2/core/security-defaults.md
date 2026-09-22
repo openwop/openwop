@@ -1,7 +1,7 @@
 # Security Defaults
 
 > **Status: Stable · RFC 0173 (§A–§E), 0164 §22, 0170 §B.**
-> **Normative home:** `sandbox`, `compensation`.
+> **Normative home:** `sandbox`, `compensation`, `purposePropagation`.
 
 ## Why this exists
 
@@ -25,6 +25,8 @@ A host MUST NOT advertise a surface whose obligation it has relaxed (§A.2).
 | `packs` (pack execution) | isolation: the eight `node-pack-sandbox-*` invariants bind for pack code; `sandbox.isolationModel` names the mechanism and never relaxes the property (replaces `sandbox.supported`) | witnessable-gated (eight `sandbox-*` scenarios) | `node-pack-sandbox-*` |
 | `compensation` | the plan, attempt, and inverse-action obligations with the read projection `GET /runs/{runId}/compensation` and the operator action family as canonical wire (replaces `compensation.supported` with seam-only evidence) | witnessable-gated (reads) + seam-gated (operator actions) | `compensation-replay-no-refire`, `compensation-effect-id-retry-stable` |
 | `idempotency` | Layer-2 effect identity keyed on business identity; the activity recipe is the fallback; `GET /runs/{runId}/effects` is the read | witnessable-gated (fixture provider) | `logical-effect-id-retry-stable` |
+| an `oauth2` or `oidc` lane | protected-resource metadata and challenges (identity.md §2.5) | witnessable-gated | `auth-challenge-no-oracle` |
+| any outbound request | no inbound credential on an onward hop (§Onward hops) | seam-gated | `inbound-credential-no-passthrough` |
 
 ### Auth lanes
 
@@ -57,6 +59,12 @@ The facets bind the policy shape (`schemas/v2/compensation-policy.schema.json`):
 ### Layer-2 effect identity
 
 A host that advertises `idempotency` MUST serve `GET /runs/{runId}/effects`; the keying, provider-key, retention and projection rules are idempotency.md §"Layer 2: effect identity" (RFC 0150 §B).
+
+### Onward hops
+
+A host MUST NOT attach a credential it received inbound (an `Authorization`, `Cookie` or `Proxy-Authorization` value, a DPoP proof, an interrupt token, a peer's bearer, or credential material carried in a body) to any outbound request: A2A, MCP, webhook, callback, `httpClient` or connector. Outbound authentication uses only credentials the host holds for that destination (oauth.md). A verified delegation chain is not a passthrough: it carries provenance, never the inbound credential (identity.md §2.4).
+
+A host advertising `purposePropagation` MUST re-emit a `permittedPurposes` label it received (A2A `metadata.openwop.permittedPurposes`, `TriggerEvent.permittedPurposes`) on every onward hop of the same data, narrowing and never widening, and MUST treat `[]` as no onward use; `purposePropagation.propagatesOnward` is `false` only on a host with no onward hop. The family advertises propagation, not enforcement.
 
 ## Relaxations
 

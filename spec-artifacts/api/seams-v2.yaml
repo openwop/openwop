@@ -32,6 +32,13 @@ paths:
 
         '
       operationId: getA2ATaskState
+      security:
+      - ApiKeyAuth:
+        - runs:read
+      - OAuth2:
+        - runs:read
+      - OpenIdConnect:
+        - runs:read
       parameters:
       - name: taskId
         in: path
@@ -72,6 +79,13 @@ paths:
 
         '
       operationId: listWorkspaceFiles
+      security:
+      - ApiKeyAuth:
+        - workspace:read
+      - OAuth2:
+        - workspace:read
+      - OpenIdConnect:
+        - workspace:read
       parameters:
       - $ref: '#/components/parameters/WorkspacePrefix'
       responses:
@@ -112,6 +126,13 @@ paths:
 
         '
       operationId: getWorkspaceFile
+      security:
+      - ApiKeyAuth:
+        - workspace:read
+      - OAuth2:
+        - workspace:read
+      - OpenIdConnect:
+        - workspace:read
       parameters:
       - $ref: '#/components/parameters/WorkspacePath'
       - $ref: '#/components/parameters/WorkspaceVersion'
@@ -152,6 +173,13 @@ paths:
 
         '
       operationId: putWorkspaceFile
+      security:
+      - ApiKeyAuth:
+        - workspace:write
+      - OAuth2:
+        - workspace:write
+      - OpenIdConnect:
+        - workspace:write
       parameters:
       - $ref: '#/components/parameters/WorkspacePath'
       - $ref: '#/components/parameters/IfMatch'
@@ -203,6 +231,13 @@ paths:
 
         '
       operationId: deleteWorkspaceFile
+      security:
+      - ApiKeyAuth:
+        - workspace:write
+      - OAuth2:
+        - workspace:write
+      - OpenIdConnect:
+        - workspace:write
       parameters:
       - $ref: '#/components/parameters/WorkspacePath'
       - $ref: '#/components/parameters/IdempotencyKey'
@@ -259,6 +294,13 @@ paths:
 
         '
       operationId: putTestPackTarball
+      security:
+      - ApiKeyAuth:
+        - packs:publish
+      - OAuth2:
+        - packs:publish
+      - OpenIdConnect:
+        - packs:publish
       parameters:
       - in: header
         name: OpenWOP-Pack-Signing-Method
@@ -367,6 +409,13 @@ paths:
         path is registry-service surface (`registry-operations.md`), not defined in this host document (see the `packs-test`
         tag scope note).'
       operationId: getTestPackTarball
+      security:
+      - ApiKeyAuth:
+        - packs:read
+      - OAuth2:
+        - packs:read
+      - OpenIdConnect:
+        - packs:read
       responses:
         '200':
           description: Tarball bytes.
@@ -424,6 +473,13 @@ paths:
 
         '
       operationId: deleteTestPackVersion
+      security:
+      - ApiKeyAuth:
+        - packs:publish
+      - OAuth2:
+        - packs:publish
+      - OpenIdConnect:
+        - packs:publish
       responses:
         '204':
           description: Version successfully unpublished from the test catalog.
@@ -467,6 +523,13 @@ paths:
 
         '
       operationId: getTestPackSignature
+      security:
+      - ApiKeyAuth:
+        - packs:read
+      - OAuth2:
+        - packs:read
+      - OpenIdConnect:
+        - packs:read
       responses:
         '200':
           description: Signature blob.
@@ -934,6 +997,88 @@ components:
         See `auth.md`.
 
         '
+    OAuth2:
+      type: oauth2
+      description: 'RFC 0200 §F. OAuth 2.0 lanes — v1 `openwop-auth-oauth2-client-credentials`,
+
+        v2 `auth.lanes[].lane: "oauth2"`. Discovery is RFC 9728 Protected Resource
+
+        Metadata at the path-inserted well-known URI (`identity.md` §2.5).
+
+        Placeholder URLs.
+
+        '
+      flows:
+        clientCredentials:
+          tokenUrl: https://issuer.example/oauth2/token
+          scopes:
+            manifest:read: Read workflow / canvas-type / endpoint manifests
+            runs:create: Create new runs
+            runs:read: Read run state and event stream
+            runs:cancel: Cancel an in-flight run
+            runs:annotate: Record a quality annotation on a run
+            artifacts:read: Read artifacts produced by runs
+            webhooks:manage: Register/unregister webhook subscriptions
+            approvals:respond: Respond to HITL approval gates
+            packs:publish: Publish node-pack versions
+            packs:read: Fetch a published node-pack tarball or signature
+            packs:yank: Yank a node-pack version
+            packs:yank-revert: Reinstate a yanked node-pack version
+            audit:read: Verify audit-log integrity
+            workspace:read: Read agent-workspace files
+            workspace:write: Write agent-workspace files
+            prompts:read: Read and render prompt templates
+            prompts:write: Create, update and delete prompt templates
+            content:read: Read authored content pages and locale settings
+            content:write: Create, publish and translate authored content pages
+            deploy:*: Drive an agent deployment state transition
+        authorizationCode:
+          authorizationUrl: https://issuer.example/oauth2/authorize
+          tokenUrl: https://issuer.example/oauth2/token
+          scopes:
+            manifest:read: Read workflow / canvas-type / endpoint manifests
+            runs:create: Create new runs
+            runs:read: Read run state and event stream
+            runs:cancel: Cancel an in-flight run
+            runs:annotate: Record a quality annotation on a run
+            artifacts:read: Read artifacts produced by runs
+            webhooks:manage: Register/unregister webhook subscriptions
+            approvals:respond: Respond to HITL approval gates
+            packs:publish: Publish node-pack versions
+            packs:read: Fetch a published node-pack tarball or signature
+            packs:yank: Yank a node-pack version
+            packs:yank-revert: Reinstate a yanked node-pack version
+            audit:read: Verify audit-log integrity
+            workspace:read: Read agent-workspace files
+            workspace:write: Write agent-workspace files
+            prompts:read: Read and render prompt templates
+            prompts:write: Create, update and delete prompt templates
+            content:read: Read authored content pages and locale settings
+            content:write: Create, publish and translate authored content pages
+            deploy:*: Drive an agent deployment state transition
+    OpenIdConnect:
+      type: openIdConnect
+      openIdConnectUrl: https://issuer.example/.well-known/openid-configuration
+      description: 'RFC 0200 §F. v1 `openwop-auth-oidc-user-bearer` / v2 `auth.lanes[].lane: "oidc"`.
+
+        An ID token MAY be the bearer only when its `aud` equals the host''s configured
+
+        audience (`identity.md` §2.1); any other `aud` is `audience_mismatch`.
+
+        Placeholder URL.
+
+        '
+    MutualTLS:
+      type: mutualTLS
+      description: 'RFC 0200 §F. v1 `openwop-auth-mtls` / v2 `auth.lanes[].lane: "mtls"`. In OpenWOP
+
+        mTLS is required *in addition to* a bearer, never instead of one, so it appears
+
+        in no canonical requirement below: a host that requires it adds `MutualTLS: []`
+
+        inside each requirement object (AND).
+
+        '
   parameters:
     IdempotencyKey:
       in: header
@@ -1017,12 +1162,24 @@ components:
   responses:
     Unauthenticated:
       description: Missing or invalid credential.
+      headers:
+        WWW-Authenticate:
+          description: RFC 0200 §B — `Bearer` challenge; `resource_metadata` and `error="invalid_token"` on a host with an
+            oauth2/oidc lane. Never on a non-disclosure 404.
+          schema:
+            type: string
       content:
         application/json:
           schema:
             $ref: '#/components/schemas/Error'
     Forbidden:
       description: Credential valid but lacks required scope or fails resource binding.
+      headers:
+        WWW-Authenticate:
+          description: RFC 0200 §B — `error="insufficient_scope"` with every required `scope` on a scope refusal; absent on
+            a resource-binding 403.
+          schema:
+            type: string
       content:
         application/json:
           schema:

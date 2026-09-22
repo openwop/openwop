@@ -41,7 +41,7 @@ An end user reaching the host through an A2A peer is `kind: anonymous`, `lane: a
 
 ### 2.1 The pipeline (§B.1)
 
-Every lane MUST: verify the credential against the lane's trust root; bind the verified identity to the request, never to an asserted header; check audience; resolve to a Subject before any authorization decision; and fail closed. The closed reason vocabulary is the family-wide error set in §6. Every lane is advertised as one member of the `auth.lanes[]` facet (`spec/v2/facets/auth.schema.json`):
+Every lane MUST: verify the credential against the lane's trust root; bind the verified identity to the request, never to an asserted header; check audience; resolve to a Subject before any authorization decision; and fail closed. On the `oidc` lane an ID token MAY be a bearer only when its `aud` equals the host's configured audience; any other `aud` is `audience_mismatch`. The closed reason vocabulary is the family-wide error set in §6. Every lane is advertised as one member of the `auth.lanes[]` facet (`spec/v2/facets/auth.schema.json`):
 
 `authorization.failClosed` advertises that rule and MUST be `true` when present; it does not gate it (invariant `authorization-fail-closed`). `authorization.roles` is the host role catalog: a request is authorized when any role-derived scope matches the required scope, under the same scope-match semantics this document applies to a credential.
 
@@ -79,6 +79,12 @@ Each lane MUST advertise `minimumAssurance: bearer | sender-constrained | key-bo
 ### 2.4 Delegation proofs (§B.5)
 
 The proof format is lane-scoped: mTLS key binding or DPoP for the two JWT lanes (`oauth2`, `oidc`), SVID chains for `workload`. A host MUST advertise the proofs it accepts under `auth.lanes[].delegationProofs[]` (`mtls-key-binding | dpop | svid-chain`). A chain with no acceptable proof MUST be refused as `identity_unverified`. The chain rules keep their codes: a chain longer than the bound is `delegation_chain_too_long`, a cyclic chain is `delegation_chain_cyclic`, and a link that widens scope is `delegation_scope_amplified` (invariants `delegation-chain-bounded-acyclic`, `delegation-no-scope-amplification`, `delegation-provenance-not-authorization`).
+
+### 2.5 Protected-resource metadata and challenges (RFC 0200)
+
+A host advertising an `oauth2` or `oidc` lane MUST serve RFC 9728 metadata at the well-known URI formed from its resource identifier, the base URL it serves this API under, with `/.well-known/oauth-protected-resource` inserted before any path (`https://h.example/api` → `https://h.example/.well-known/oauth-protected-resource/api`), unauthenticated. `resource` MUST equal that identifier; `authorization_servers` MUST list exactly the URL-form issuers of those lanes; `scopes_supported` MUST list the scopes the host enforces; `dpop_bound_access_tokens_required` or `tls_client_certificate_bound_access_tokens` MAY be `true` only where every such lane's `minimumAssurance` requires that binding (§2.3).
+
+On such a host a `401` MUST carry `WWW-Authenticate: Bearer resource_metadata="<url>"`, adding `error="invalid_token"` when a credential was presented and no error code when none was, and a `403` for insufficient scope MUST carry `error="insufficient_scope"` with `scope` listing every scope the operation requires; a `403` for resource binding carries no `insufficient_scope`. Other hosts SHOULD send `WWW-Authenticate: Bearer` on a `401`. A challenge attaches only to a response already `401` or `403` and MUST NOT change a status: where a rule requires `404` for an unknown or unauthorized resource, the `404` stands and carries none (invariant `auth-challenge-no-oracle`).
 
 ## 3. The link is a record (RFC 0170 §C; `schemas/v2/subject-link.schema.json`)
 

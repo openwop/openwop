@@ -67,6 +67,20 @@ An OpenWOP-compliant server MUST support the following scope vocabulary at minim
 
 A server MAY define additional scopes for non-protocol surfaces (e.g., `canvas-types:list`, `projects:list` for platform-level keys). Such extensions MUST NOT shadow the names above.
 
+##### Documented extension scopes
+
+These scopes are used by capability-gated surfaces in `rest-endpoints.md` and are part of the documented vocabulary; `scripts/check-openapi-security.mjs` accepts them beside the table above (RFC 0200 §F.4c).
+
+| Scope           | Allows                                                                                                         |
+| --------------- | -------------------------------------------------------------------------------------------------------------- |
+| `deploy:*`      | Drive an agent deployment state transition (RFC 0082 §E)                                                        |
+| `runs:annotate` | Record a quality annotation on a run (RFC 0056; gated on `capabilities.feedback`)                               |
+| `prompts:read`  | Read and render prompt templates (RFC 0027; gated on `capabilities.promptLibrary`)                              |
+| `prompts:write` | Create, update and deprecate prompt templates (RFC 0027)                                                        |
+| `content:read`  | Read authored content pages and locale settings (RFC 0103)                                                      |
+| `content:write` | Create, publish and translate authored content pages (RFC 0103)                                                 |
+| `packs:read`    | Fetch a published node-pack tarball or detached signature from the host's registry mirror (`registry-operations.md`) |
+
 A key MAY hold any subset of scopes. The server MUST enforce scope checks at the endpoint level, not at the resource level — i.e., `runs:cancel` does not imply `runs:read`.
 
 ### 2. User-bearer tokens (human callers)
@@ -187,6 +201,12 @@ Codes:
 - `key_expired` (401)
 - `key_revoked` (401)
 
+### Challenges (RFC 0200 §A, §B)
+
+A host advertising `openwop-auth-oauth2-client-credentials` or `openwop-auth-oidc-user-bearer` SHOULD serve RFC 9728 Protected Resource Metadata and send `WWW-Authenticate` challenges exactly as [`spec/v2/core/identity.md`](../v2/core/identity.md) §2.5 defines them, deriving `authorization_servers` from `capabilities.auth.oauth2.issuer` and `capabilities.auth.oidc.issuers[]`. Every host SHOULD send `WWW-Authenticate: Bearer` on a `401` (RFC 9110 §15.5.2), and MAY add `resource_metadata`, `error` and `scope` parameters. `key_expired` and `key_revoked` map to `error="invalid_token"`.
+
+A challenge MUST NOT change a response's status, and a `404` this specification requires for an unknown **or unauthorized** resource — `tool-catalog.md` §`GET /v1/tools/{toolId}`, the RFC 0074/0072/0086/0087 inventory routes, `capabilities-change-detection.md` — MUST NOT carry `error="insufficient_scope"` or a `scope` parameter. A `403` that fails resource binding (`run_forbidden`, `id_tenant_mismatch`) MUST NOT carry `insufficient_scope`, because no scope would cure it. Invariant `auth-challenge-no-oracle`. The body envelope above is unchanged: `scopeRequired` stays, and the header is its standard mirror.
+
 ## Rate limiting
 
 An OpenWOP-compliant server SHOULD apply per-key rate limits and SHOULD return:
@@ -242,6 +262,14 @@ It does not establish provenance attestations for artifacts (RFC 0154 §E spans 
 ## Audit
 
 An OpenWOP-compliant server SHOULD log every authenticated request with at minimum: keyId, scope used, request method+path, timestamp, response status, latency. Logs MUST NOT include the API key value or any credential material.
+
+## Onward hops (RFC 0200 §E)
+
+A host MUST NOT attach a credential it received on an inbound request to any outbound request. Inbound credentials include an `Authorization`, `Cookie` or `Proxy-Authorization` header value, a DPoP proof, an interrupt resume token, an MCP or A2A peer's bearer, and credential material carried inside a request body. Outbound requests include A2A and MCP calls, webhook delivery, `callbackUrl` delivery, `host.httpClient` / `safeFetch`, and connector and tool egress.
+
+Outbound authentication uses only credentials the host holds for that destination (`host-capabilities.md` §`host.credentials` / §`host.oauth`, bound to their audiences by RFC 0079). This does not forbid a verified delegation chain: RFC 0154 §B carries **provenance** — a `proofRef` digest — and never the inbound credential, and a downstream credential minted by RFC 0154 §C token exchange is a host-held credential. Invariant `inbound-credential-no-passthrough`.
+
+This generalizes [`trigger-bridge.md`](./trigger-bridge.md) §F.1, which forbids the same headers passing into run data, to every outbound request. Upstream: MCP 2026-07-28 Security Considerations §"Access Token Privilege Restriction" ("the MCP server MUST NOT pass through the token it received from the MCP client").
 
 ---
 

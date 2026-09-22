@@ -141,6 +141,13 @@ paths:
       - workflows
       summary: Read a workflow definition.
       operationId: getWorkflow
+      security:
+      - ApiKeyAuth:
+        - manifest:read
+      - OAuth2:
+        - manifest:read
+      - OpenIdConnect:
+        - manifest:read
       parameters:
       - $ref: '#/components/parameters/WorkflowId'
       - $ref: '#/components/parameters/OpenWOPVersion'
@@ -166,6 +173,13 @@ paths:
       - runs
       summary: Create a new run.
       operationId: createRun
+      security:
+      - ApiKeyAuth:
+        - runs:create
+      - OAuth2:
+        - runs:create
+      - OpenIdConnect:
+        - runs:create
       parameters:
       - $ref: '#/components/parameters/IdempotencyKey'
       - in: header
@@ -383,12 +397,26 @@ paths:
           $ref: '#/components/responses/Unauthenticated'
         '404':
           $ref: '#/components/responses/NotFound'
+      security:
+      - ApiKeyAuth:
+        - runs:read
+      - OAuth2:
+        - runs:read
+      - OpenIdConnect:
+        - runs:read
   /runs/{runId}:
     get:
       tags:
       - runs
       summary: Read run state (cached projection).
       operationId: getRun
+      security:
+      - ApiKeyAuth:
+        - runs:read
+      - OAuth2:
+        - runs:read
+      - OpenIdConnect:
+        - runs:read
       parameters:
       - $ref: '#/components/parameters/RunId'
       - in: header
@@ -453,6 +481,13 @@ paths:
       - runs
       summary: SSE stream of run events.
       operationId: streamRunEvents
+      security:
+      - ApiKeyAuth:
+        - runs:read
+      - OAuth2:
+        - runs:read
+      - OpenIdConnect:
+        - runs:read
       parameters:
       - $ref: '#/components/parameters/RunId'
       - in: query
@@ -519,6 +554,13 @@ paths:
       - runs
       summary: Long-poll fallback for non-SSE clients.
       operationId: pollRunEvents
+      security:
+      - ApiKeyAuth:
+        - runs:read
+      - OAuth2:
+        - runs:read
+      - OpenIdConnect:
+        - runs:read
       parameters:
       - $ref: '#/components/parameters/RunId'
       - in: query
@@ -582,6 +624,13 @@ paths:
       - runs
       summary: Cancel an in-flight run.
       operationId: cancelRun
+      security:
+      - ApiKeyAuth:
+        - runs:cancel
+      - OAuth2:
+        - runs:cancel
+      - OpenIdConnect:
+        - runs:cancel
       parameters:
       - $ref: '#/components/parameters/RunId'
       - $ref: '#/components/parameters/IdempotencyKey'
@@ -624,6 +673,13 @@ paths:
       - runs
       summary: Record a non-blocking quality annotation on a run (RFC 0056).
       operationId: createAnnotation
+      security:
+      - ApiKeyAuth:
+        - runs:annotate
+      - OAuth2:
+        - runs:annotate
+      - OpenIdConnect:
+        - runs:annotate
       parameters:
       - $ref: '#/components/parameters/RunId'
       - $ref: '#/components/parameters/IdempotencyKey'
@@ -666,6 +722,13 @@ paths:
       - runs
       summary: List the annotations recorded on a run (RFC 0056).
       operationId: listAnnotations
+      security:
+      - ApiKeyAuth:
+        - runs:read
+      - OAuth2:
+        - runs:read
+      - OpenIdConnect:
+        - runs:read
       parameters:
       - $ref: '#/components/parameters/RunId'
       - $ref: '#/components/parameters/OpenWOPVersion'
@@ -721,6 +784,13 @@ paths:
 
         '
       operationId: createTriggerSubscription
+      security:
+      - ApiKeyAuth:
+        - webhooks:manage
+      - OAuth2:
+        - webhooks:manage
+      - OpenIdConnect:
+        - webhooks:manage
       parameters:
       - $ref: '#/components/parameters/IdempotencyKey'
       - $ref: '#/components/parameters/OpenWOPVersion'
@@ -866,6 +936,13 @@ paths:
 
         '
       operationId: listContentPages
+      security:
+      - ApiKeyAuth:
+        - content:read
+      - OAuth2:
+        - content:read
+      - OpenIdConnect:
+        - content:read
       responses:
         '200':
           description: The caller-tenant's pages.
@@ -899,6 +976,13 @@ paths:
       summary: Create a content page (RFC 0103 §D, admin).
       description: Tenant-scoped page creation. Requires `content.write` scope.
       operationId: createContentPage
+      security:
+      - ApiKeyAuth:
+        - content:write
+      - OAuth2:
+        - content:write
+      - OpenIdConnect:
+        - content:write
       requestBody:
         required: true
         content:
@@ -943,6 +1027,13 @@ paths:
 
         '
       operationId: putContentSection
+      security:
+      - ApiKeyAuth:
+        - content:write
+      - OAuth2:
+        - content:write
+      - OpenIdConnect:
+        - content:write
       parameters:
       - name: pageId
         in: path
@@ -1008,6 +1099,13 @@ paths:
       summary: Read the tenant's content language settings (RFC 0103 §B, admin).
       description: Tenant-scoped read of `{ baseLocale, supportedLocales, autoTranslateOnPublish }`. Requires `content.read`.
       operationId: getContentSettings
+      security:
+      - ApiKeyAuth:
+        - content:read
+      - OAuth2:
+        - content:read
+      - OpenIdConnect:
+        - content:read
       responses:
         '200':
           description: The tenant's language settings.
@@ -1043,6 +1141,13 @@ paths:
 
         '
       operationId: putContentSettings
+      security:
+      - ApiKeyAuth:
+        - content:write
+      - OAuth2:
+        - content:write
+      - OpenIdConnect:
+        - content:write
       requestBody:
         required: true
         content:
@@ -1095,6 +1200,13 @@ paths:
 
         '
       operationId: bulkCancelRuns
+      security:
+      - ApiKeyAuth:
+        - runs:cancel
+      - OAuth2:
+        - runs:cancel
+      - OpenIdConnect:
+        - runs:cancel
       parameters:
       - $ref: '#/components/parameters/IdempotencyKey'
       - $ref: '#/components/parameters/OpenWOPVersion'
@@ -1164,6 +1276,16 @@ paths:
       - runs
       summary: Fork the run for replay or branch (see `replay.md`).
       operationId: forkRun
+      security:
+      - ApiKeyAuth:
+        - runs:create
+        - runs:read
+      - OAuth2:
+        - runs:create
+        - runs:read
+      - OpenIdConnect:
+        - runs:create
+        - runs:read
       parameters:
       - $ref: '#/components/parameters/RunId'
       - $ref: '#/components/parameters/IdempotencyKey'
@@ -1273,6 +1395,13 @@ paths:
 
         '
       operationId: getRunAncestry
+      security:
+      - ApiKeyAuth:
+        - runs:read
+      - OAuth2:
+        - runs:read
+      - OpenIdConnect:
+        - runs:read
       parameters:
       - $ref: '#/components/parameters/RunId'
       - $ref: '#/components/parameters/OpenWOPVersion'
@@ -1343,6 +1472,13 @@ paths:
 
         '
       operationId: listAgents
+      security:
+      - ApiKeyAuth:
+        - runs:read
+      - OAuth2:
+        - runs:read
+      - OpenIdConnect:
+        - runs:read
       responses:
         '200':
           description: 'Installed manifest agents (agentId-sorted). RFC 0202: when the host advertises `a2a.agentCards`, an
@@ -1394,6 +1530,13 @@ paths:
 
         '
       operationId: getAgent
+      security:
+      - ApiKeyAuth:
+        - runs:read
+      - OAuth2:
+        - runs:read
+      - OpenIdConnect:
+        - runs:read
       parameters:
       - in: path
         name: agentId
@@ -1456,6 +1599,13 @@ paths:
 
         '
       operationId: listAgentDeployments
+      security:
+      - ApiKeyAuth:
+        - runs:read
+      - OAuth2:
+        - runs:read
+      - OpenIdConnect:
+        - runs:read
       parameters:
       - in: path
         name: agentId
@@ -1519,6 +1669,13 @@ paths:
 
         '
       operationId: transitionAgentDeployment
+      security:
+      - ApiKeyAuth:
+        - deploy:*
+      - OAuth2:
+        - deploy:*
+      - OpenIdConnect:
+        - deploy:*
       parameters:
       - in: path
         name: agentId
@@ -1603,6 +1760,13 @@ paths:
 
         '
       operationId: listAgentRoster
+      security:
+      - ApiKeyAuth:
+        - runs:read
+      - OAuth2:
+        - runs:read
+      - OpenIdConnect:
+        - runs:read
       responses:
         '200':
           description: The caller's standing roster (rosterId-sorted).
@@ -1644,6 +1808,13 @@ paths:
 
         '
       operationId: getAgentRosterEntry
+      security:
+      - ApiKeyAuth:
+        - runs:read
+      - OAuth2:
+        - runs:read
+      - OpenIdConnect:
+        - runs:read
       parameters:
       - in: path
         name: rosterId
@@ -1691,6 +1862,13 @@ paths:
 
         '
       operationId: getAgentOrgChart
+      security:
+      - ApiKeyAuth:
+        - runs:read
+      - OAuth2:
+        - runs:read
+      - OpenIdConnect:
+        - runs:read
       responses:
         '200':
           description: The caller's org-chart.
@@ -1732,6 +1910,13 @@ paths:
 
         '
       operationId: getAgentOrgChartDepartment
+      security:
+      - ApiKeyAuth:
+        - runs:read
+      - OAuth2:
+        - runs:read
+      - OpenIdConnect:
+        - runs:read
       parameters:
       - in: path
         name: departmentId
@@ -1792,6 +1977,13 @@ paths:
 
         '
       operationId: listTools
+      security:
+      - ApiKeyAuth:
+        - runs:read
+      - OAuth2:
+        - runs:read
+      - OpenIdConnect:
+        - runs:read
       parameters:
       - name: view
         in: query
@@ -1858,6 +2050,13 @@ paths:
 
         '
       operationId: getTool
+      security:
+      - ApiKeyAuth:
+        - runs:read
+      - OAuth2:
+        - runs:read
+      - OpenIdConnect:
+        - runs:read
       parameters:
       - in: path
         name: toolId
@@ -1927,6 +2126,13 @@ paths:
 
         '
       operationId: getEvalSummary
+      security:
+      - ApiKeyAuth:
+        - runs:read
+      - OAuth2:
+        - runs:read
+      - OpenIdConnect:
+        - runs:read
       parameters:
       - $ref: '#/components/parameters/RunId'
       - $ref: '#/components/parameters/OpenWOPVersion'
@@ -1982,6 +2188,13 @@ paths:
 
         '
       operationId: diffRun
+      security:
+      - ApiKeyAuth:
+        - runs:read
+      - OAuth2:
+        - runs:read
+      - OpenIdConnect:
+        - runs:read
       parameters:
       - $ref: '#/components/parameters/RunId'
       - name: against
@@ -2055,6 +2268,13 @@ paths:
 
         '
       operationId: pauseRun
+      security:
+      - ApiKeyAuth:
+        - runs:cancel
+      - OAuth2:
+        - runs:cancel
+      - OpenIdConnect:
+        - runs:cancel
       parameters:
       - $ref: '#/components/parameters/RunId'
       - $ref: '#/components/parameters/IdempotencyKey'
@@ -2127,6 +2347,13 @@ paths:
 
         '
       operationId: resumeRun
+      security:
+      - ApiKeyAuth:
+        - runs:cancel
+      - OAuth2:
+        - runs:cancel
+      - OpenIdConnect:
+        - runs:cancel
       parameters:
       - $ref: '#/components/parameters/RunId'
       - $ref: '#/components/parameters/IdempotencyKey'
@@ -2184,6 +2411,13 @@ paths:
       - hitl
       summary: Resolve an interrupt via the run-scoped surface.
       operationId: resolveInterruptByRun
+      security:
+      - ApiKeyAuth:
+        - approvals:respond
+      - OAuth2:
+        - approvals:respond
+      - OpenIdConnect:
+        - approvals:respond
       parameters:
       - $ref: '#/components/parameters/RunId'
       - in: path
@@ -2337,6 +2571,13 @@ paths:
       - artifacts
       summary: Read a run-produced artifact.
       operationId: getArtifact
+      security:
+      - ApiKeyAuth:
+        - artifacts:read
+      - OAuth2:
+        - artifacts:read
+      - OpenIdConnect:
+        - artifacts:read
       parameters:
       - $ref: '#/components/parameters/RunId'
       - in: path
@@ -2374,6 +2615,13 @@ paths:
       - webhooks
       summary: Register a webhook subscription.
       operationId: registerWebhook
+      security:
+      - ApiKeyAuth:
+        - webhooks:manage
+      - OAuth2:
+        - webhooks:manage
+      - OpenIdConnect:
+        - webhooks:manage
       parameters:
       - $ref: '#/components/parameters/IdempotencyKey'
       - $ref: '#/components/parameters/OpenWOPVersion'
@@ -2470,6 +2718,13 @@ paths:
       - webhooks
       summary: Unregister a webhook.
       operationId: unregisterWebhook
+      security:
+      - ApiKeyAuth:
+        - webhooks:manage
+      - OAuth2:
+        - webhooks:manage
+      - OpenIdConnect:
+        - webhooks:manage
       parameters:
       - in: path
         name: webhookId
@@ -2519,6 +2774,13 @@ paths:
 
         '
       operationId: verifyAuditLog
+      security:
+      - ApiKeyAuth:
+        - audit:read
+      - OAuth2:
+        - audit:read
+      - OpenIdConnect:
+        - audit:read
       parameters:
       - in: query
         name: fromSeq
@@ -2566,6 +2828,13 @@ paths:
       - prompts
       summary: List prompt templates available to the caller.
       operationId: listPromptTemplates
+      security:
+      - ApiKeyAuth:
+        - prompts:read
+      - OAuth2:
+        - prompts:read
+      - OpenIdConnect:
+        - prompts:read
       parameters:
       - in: query
         name: kind
@@ -2655,6 +2924,13 @@ paths:
       - prompts
       summary: Create a new prompt template (mutable libraries only).
       operationId: createPromptTemplate
+      security:
+      - ApiKeyAuth:
+        - prompts:write
+      - OAuth2:
+        - prompts:write
+      - OpenIdConnect:
+        - prompts:write
       parameters:
       - $ref: '#/components/parameters/IdempotencyKey'
       - $ref: '#/components/parameters/OpenWOPVersion'
@@ -2730,6 +3006,13 @@ paths:
       - prompts
       summary: Fetch a single prompt template.
       operationId: getPromptTemplate
+      security:
+      - ApiKeyAuth:
+        - prompts:read
+      - OAuth2:
+        - prompts:read
+      - OpenIdConnect:
+        - prompts:read
       responses:
         '200':
           description: The PromptTemplate.
@@ -2792,6 +3075,13 @@ paths:
       - prompts
       summary: Replace a prompt template (mutable libraries; user-source only).
       operationId: updatePromptTemplate
+      security:
+      - ApiKeyAuth:
+        - prompts:write
+      - OAuth2:
+        - prompts:write
+      - OpenIdConnect:
+        - prompts:write
       parameters:
       - $ref: '#/components/parameters/IdempotencyKey'
       - $ref: '#/components/parameters/OpenWOPVersion'
@@ -2856,6 +3146,13 @@ paths:
       - prompts
       summary: Delete a prompt template (mutable libraries; user-source only).
       operationId: deletePromptTemplate
+      security:
+      - ApiKeyAuth:
+        - prompts:write
+      - OAuth2:
+        - prompts:write
+      - OpenIdConnect:
+        - prompts:write
       responses:
         '204':
           description: Template deleted.
@@ -2918,6 +3215,13 @@ paths:
 
         '
       operationId: renderPromptTemplate
+      security:
+      - ApiKeyAuth:
+        - prompts:read
+      - OAuth2:
+        - prompts:read
+      - OpenIdConnect:
+        - prompts:read
       requestBody:
         required: true
         content:
@@ -3047,6 +3351,13 @@ paths:
           $ref: '#/components/responses/Unauthenticated'
       parameters:
       - $ref: '#/components/parameters/OpenWOPVersion'
+      security:
+      - ApiKeyAuth:
+        - runs:read
+      - OAuth2:
+        - runs:read
+      - OpenIdConnect:
+        - runs:read
   /runs/{runId}/compensation:
     parameters:
     - $ref: '#/components/parameters/RunId'
@@ -3071,6 +3382,13 @@ paths:
           $ref: '#/components/responses/NotFound'
       parameters:
       - $ref: '#/components/parameters/OpenWOPVersion'
+      security:
+      - ApiKeyAuth:
+        - runs:read
+      - OAuth2:
+        - runs:read
+      - OpenIdConnect:
+        - runs:read
   /runs/{runId}/effects:
     parameters:
     - $ref: '#/components/parameters/RunId'
@@ -3094,6 +3412,13 @@ paths:
           $ref: '#/components/responses/NotFound'
       parameters:
       - $ref: '#/components/parameters/OpenWOPVersion'
+      security:
+      - ApiKeyAuth:
+        - runs:read
+      - OAuth2:
+        - runs:read
+      - OpenIdConnect:
+        - runs:read
   /webhooks/{webhookId}/dead-letters:
     get:
       tags:
@@ -3148,6 +3473,13 @@ paths:
           $ref: '#/components/responses/Forbidden'
         '404':
           $ref: '#/components/responses/NotFound'
+      security:
+      - ApiKeyAuth:
+        - webhooks:manage
+      - OAuth2:
+        - webhooks:manage
+      - OpenIdConnect:
+        - webhooks:manage
   /host/events:
     get:
       tags:
@@ -3170,6 +3502,13 @@ paths:
           $ref: '#/components/responses/Unauthenticated'
       parameters:
       - $ref: '#/components/parameters/OpenWOPVersion'
+      security:
+      - ApiKeyAuth:
+        - runs:read
+      - OAuth2:
+        - runs:read
+      - OpenIdConnect:
+        - runs:read
   /webhooks/{webhookId}/rotate-secret:
     post:
       tags:
@@ -3238,6 +3577,13 @@ paths:
           $ref: '#/components/responses/Forbidden'
         '404':
           $ref: '#/components/responses/NotFound'
+      security:
+      - ApiKeyAuth:
+        - webhooks:manage
+      - OAuth2:
+        - webhooks:manage
+      - OpenIdConnect:
+        - webhooks:manage
 components:
   securitySchemes:
     ApiKeyAuth:
@@ -3253,6 +3599,88 @@ components:
         `artifacts:read`, `webhooks:manage`, `approvals:respond`, `audit:read`).
 
         See `auth.md`.
+
+        '
+    OAuth2:
+      type: oauth2
+      description: 'RFC 0200 §F. OAuth 2.0 lanes — v1 `openwop-auth-oauth2-client-credentials`,
+
+        v2 `auth.lanes[].lane: "oauth2"`. Discovery is RFC 9728 Protected Resource
+
+        Metadata at the path-inserted well-known URI (`identity.md` §2.5).
+
+        Placeholder URLs.
+
+        '
+      flows:
+        clientCredentials:
+          tokenUrl: https://issuer.example/oauth2/token
+          scopes:
+            manifest:read: Read workflow / canvas-type / endpoint manifests
+            runs:create: Create new runs
+            runs:read: Read run state and event stream
+            runs:cancel: Cancel an in-flight run
+            runs:annotate: Record a quality annotation on a run
+            artifacts:read: Read artifacts produced by runs
+            webhooks:manage: Register/unregister webhook subscriptions
+            approvals:respond: Respond to HITL approval gates
+            packs:publish: Publish node-pack versions
+            packs:read: Fetch a published node-pack tarball or signature
+            packs:yank: Yank a node-pack version
+            packs:yank-revert: Reinstate a yanked node-pack version
+            audit:read: Verify audit-log integrity
+            workspace:read: Read agent-workspace files
+            workspace:write: Write agent-workspace files
+            prompts:read: Read and render prompt templates
+            prompts:write: Create, update and delete prompt templates
+            content:read: Read authored content pages and locale settings
+            content:write: Create, publish and translate authored content pages
+            deploy:*: Drive an agent deployment state transition
+        authorizationCode:
+          authorizationUrl: https://issuer.example/oauth2/authorize
+          tokenUrl: https://issuer.example/oauth2/token
+          scopes:
+            manifest:read: Read workflow / canvas-type / endpoint manifests
+            runs:create: Create new runs
+            runs:read: Read run state and event stream
+            runs:cancel: Cancel an in-flight run
+            runs:annotate: Record a quality annotation on a run
+            artifacts:read: Read artifacts produced by runs
+            webhooks:manage: Register/unregister webhook subscriptions
+            approvals:respond: Respond to HITL approval gates
+            packs:publish: Publish node-pack versions
+            packs:read: Fetch a published node-pack tarball or signature
+            packs:yank: Yank a node-pack version
+            packs:yank-revert: Reinstate a yanked node-pack version
+            audit:read: Verify audit-log integrity
+            workspace:read: Read agent-workspace files
+            workspace:write: Write agent-workspace files
+            prompts:read: Read and render prompt templates
+            prompts:write: Create, update and delete prompt templates
+            content:read: Read authored content pages and locale settings
+            content:write: Create, publish and translate authored content pages
+            deploy:*: Drive an agent deployment state transition
+    OpenIdConnect:
+      type: openIdConnect
+      openIdConnectUrl: https://issuer.example/.well-known/openid-configuration
+      description: 'RFC 0200 §F. v1 `openwop-auth-oidc-user-bearer` / v2 `auth.lanes[].lane: "oidc"`.
+
+        An ID token MAY be the bearer only when its `aud` equals the host''s configured
+
+        audience (`identity.md` §2.1); any other `aud` is `audience_mismatch`.
+
+        Placeholder URL.
+
+        '
+    MutualTLS:
+      type: mutualTLS
+      description: 'RFC 0200 §F. v1 `openwop-auth-mtls` / v2 `auth.lanes[].lane: "mtls"`. In OpenWOP
+
+        mTLS is required *in addition to* a bearer, never instead of one, so it appears
+
+        in no canonical requirement below: a host that requires it adds `MutualTLS: []`
+
+        inside each requirement object (AND).
 
         '
   parameters:
@@ -3300,12 +3728,24 @@ components:
   responses:
     Unauthenticated:
       description: Missing or invalid credential.
+      headers:
+        WWW-Authenticate:
+          description: RFC 0200 §B — `Bearer` challenge; `resource_metadata` and `error="invalid_token"` on a host with an
+            oauth2/oidc lane. Never on a non-disclosure 404.
+          schema:
+            type: string
       content:
         application/json:
           schema:
             $ref: '#/components/schemas/Error'
     Forbidden:
       description: Credential valid but lacks required scope or fails resource binding.
+      headers:
+        WWW-Authenticate:
+          description: RFC 0200 §B — `error="insufficient_scope"` with every required `scope` on a scope refusal; absent on
+            a resource-binding 403.
+          schema:
+            type: string
       content:
         application/json:
           schema:

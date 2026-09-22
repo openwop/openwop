@@ -170,6 +170,10 @@ paths:
       tags: [workflows]
       summary: Read a workflow definition.
       operationId: getWorkflow
+      security:
+        - ApiKeyAuth: ['manifest:read']
+        - OAuth2: ['manifest:read']
+        - OpenIdConnect: ['manifest:read']
       parameters:
         - $ref: '#/components/parameters/WorkflowId'
       responses:
@@ -189,6 +193,10 @@ paths:
       tags: [runs]
       summary: Create a new run.
       operationId: createRun
+      security:
+        - ApiKeyAuth: ['runs:create']
+        - OAuth2: ['runs:create']
+        - OpenIdConnect: ['runs:create']
       parameters:
         - $ref: '#/components/parameters/IdempotencyKey'
         - in: header
@@ -315,6 +323,10 @@ paths:
       tags: [runs]
       summary: Read run state (cached projection).
       operationId: getRun
+      security:
+        - ApiKeyAuth: ['runs:read']
+        - OAuth2: ['runs:read']
+        - OpenIdConnect: ['runs:read']
       parameters:
         - $ref: '#/components/parameters/RunId'
         - in: header
@@ -357,6 +369,10 @@ paths:
       tags: [runs]
       summary: SSE stream of run events.
       operationId: streamRunEvents
+      security:
+        - ApiKeyAuth: ['runs:read']
+        - OAuth2: ['runs:read']
+        - OpenIdConnect: ['runs:read']
       parameters:
         - $ref: '#/components/parameters/RunId'
         - in: query
@@ -412,6 +428,10 @@ paths:
       tags: [runs]
       summary: Long-poll fallback for non-SSE clients.
       operationId: pollRunEvents
+      security:
+        - ApiKeyAuth: ['runs:read']
+        - OAuth2: ['runs:read']
+        - OpenIdConnect: ['runs:read']
       parameters:
         - $ref: '#/components/parameters/RunId'
         - in: query
@@ -444,6 +464,10 @@ paths:
       tags: [runs]
       summary: Cancel an in-flight run.
       operationId: cancelRun
+      security:
+        - ApiKeyAuth: ['runs:cancel']
+        - OAuth2: ['runs:cancel']
+        - OpenIdConnect: ['runs:cancel']
       parameters:
         - $ref: '#/components/parameters/RunId'
         - $ref: '#/components/parameters/IdempotencyKey'
@@ -478,6 +502,10 @@ paths:
       tags: [runs]
       summary: Record a non-blocking quality annotation on a run (RFC 0056).
       operationId: createAnnotation
+      security:
+        - ApiKeyAuth: ['runs:annotate']
+        - OAuth2: ['runs:annotate']
+        - OpenIdConnect: ['runs:annotate']
       parameters:
         - $ref: '#/components/parameters/RunId'
         - $ref: '#/components/parameters/IdempotencyKey'
@@ -508,6 +536,10 @@ paths:
       tags: [runs]
       summary: List the annotations recorded on a run (RFC 0056).
       operationId: listAnnotations
+      security:
+        - ApiKeyAuth: ['runs:read']
+        - OAuth2: ['runs:read']
+        - OpenIdConnect: ['runs:read']
       parameters:
         - $ref: '#/components/parameters/RunId'
       responses:
@@ -553,6 +585,10 @@ paths:
         TriggerSubscription plus a source-specific `binding`; the binding
         secret/URL is returned ONCE and is not re-fetchable in cleartext.
       operationId: createTriggerSubscription
+      security:
+        - ApiKeyAuth: ['webhooks:manage']
+        - OAuth2: ['webhooks:manage']
+        - OpenIdConnect: ['webhooks:manage']
       parameters:
         - $ref: '#/components/parameters/IdempotencyKey'
       requestBody:
@@ -662,6 +698,10 @@ paths:
         Tenant-scoped admin listing of pages (draft + published). Requires a
         principal with `content.read` scope.
       operationId: listContentPages
+      security:
+        - ApiKeyAuth: ['content:read']
+        - OAuth2: ['content:read']
+        - OpenIdConnect: ['content:read']
       responses:
         '200':
           description: The caller-tenant's pages.
@@ -684,6 +724,10 @@ paths:
       summary: Create a content page (RFC 0103 §D, admin).
       description: Tenant-scoped page creation. Requires `content.write` scope.
       operationId: createContentPage
+      security:
+        - ApiKeyAuth: ['content:write']
+        - OAuth2: ['content:write']
+        - OpenIdConnect: ['content:write']
       requestBody:
         required: true
         content:
@@ -715,6 +759,10 @@ paths:
         section's base `data`; any other (case-canonical BCP 47 subset, RFC 0206) locale upserts
         `localizations[locale]`. Tenant-scoped; requires `content.write`.
       operationId: putContentSection
+      security:
+        - ApiKeyAuth: ['content:write']
+        - OAuth2: ['content:write']
+        - OpenIdConnect: ['content:write']
       parameters:
         - name: pageId
           in: path
@@ -764,6 +812,10 @@ paths:
       summary: Read the tenant's content language settings (RFC 0103 §B, admin).
       description: Tenant-scoped read of `{ baseLocale, supportedLocales, autoTranslateOnPublish }`. Requires `content.read`.
       operationId: getContentSettings
+      security:
+        - ApiKeyAuth: ['content:read']
+        - OAuth2: ['content:read']
+        - OpenIdConnect: ['content:read']
       responses:
         '200':
           description: The tenant's language settings.
@@ -786,6 +838,10 @@ paths:
         Tenant-scoped settings update. The invariant `baseLocale ∉
         supportedLocales` MUST hold (else `400`). Requires `content.write`.
       operationId: putContentSettings
+      security:
+        - ApiKeyAuth: ['content:write']
+        - OAuth2: ['content:write']
+        - OpenIdConnect: ['content:write']
       requestBody:
         required: true
         content:
@@ -824,6 +880,10 @@ paths:
         read surface remains the A2A `tasks/get` JSON-RPC method. Hosts that do
         not advertise `capabilities.a2a.durableTasks` return `501`.
       operationId: getA2ATaskState
+      security:
+        - ApiKeyAuth: ['runs:read']
+        - OAuth2: ['runs:read']
+        - OpenIdConnect: ['runs:read']
       parameters:
         - name: taskId
           in: path
@@ -862,6 +922,10 @@ paths:
         workspace}` per RFC 0059 §C. Optional `?prefix=` filters the flat
         `path` namespace to entries starting with the given prefix.
       operationId: listWorkspaceFiles
+      security:
+        - ApiKeyAuth: ['workspace:read']
+        - OAuth2: ['workspace:read']
+        - OpenIdConnect: ['workspace:read']
       parameters:
         - $ref: '#/components/parameters/WorkspacePrefix'
       responses:
@@ -896,6 +960,10 @@ paths:
         workspace}`. When `capabilities.workspace.versioned: true`, an
         optional `?version=N` returns the historical snapshot at version N.
       operationId: getWorkspaceFile
+      security:
+        - ApiKeyAuth: ['workspace:read']
+        - OAuth2: ['workspace:read']
+        - OpenIdConnect: ['workspace:read']
       parameters:
         - $ref: '#/components/parameters/WorkspacePath'
         - $ref: '#/components/parameters/WorkspaceVersion'
@@ -926,6 +994,10 @@ paths:
         and emits a `workspace.updated` event. A `content` exceeding
         `capabilities.workspace.maxFileBytes` returns `workspace_too_large`.
       operationId: putWorkspaceFile
+      security:
+        - ApiKeyAuth: ['workspace:write']
+        - OAuth2: ['workspace:write']
+        - OpenIdConnect: ['workspace:write']
       parameters:
         - $ref: '#/components/parameters/WorkspacePath'
         - $ref: '#/components/parameters/IfMatch'
@@ -971,6 +1043,10 @@ paths:
         Removes the file at `path` (and, when `versioned: true`, writes a
         tombstone). Emits a `workspace.updated` event on success.
       operationId: deleteWorkspaceFile
+      security:
+        - ApiKeyAuth: ['workspace:write']
+        - OAuth2: ['workspace:write']
+        - OpenIdConnect: ['workspace:write']
       parameters:
         - $ref: '#/components/parameters/WorkspacePath'
         - $ref: '#/components/parameters/IdempotencyKey'
@@ -1000,6 +1076,10 @@ paths:
         Hosts enforce a host-defined cap on the array length (RECOMMENDED
         100); over-cap requests return `400 validation_error`.
       operationId: bulkCancelRuns
+      security:
+        - ApiKeyAuth: ['runs:cancel']
+        - OAuth2: ['runs:cancel']
+        - OpenIdConnect: ['runs:cancel']
       parameters:
         - $ref: '#/components/parameters/IdempotencyKey'
       requestBody:
@@ -1048,6 +1128,10 @@ paths:
       tags: [runs]
       summary: Fork the run for replay or branch (see `replay.md`).
       operationId: forkRun
+      security:
+        - ApiKeyAuth: ['runs:create', 'runs:read']
+        - OAuth2: ['runs:create', 'runs:read']
+        - OpenIdConnect: ['runs:create', 'runs:read']
       parameters:
         - $ref: '#/components/parameters/RunId'
         - $ref: '#/components/parameters/IdempotencyKey'
@@ -1113,6 +1197,10 @@ paths:
         chain by following `parent.wellKnownUrl` per response, one hop at a
         time.
       operationId: getRunAncestry
+      security:
+        - ApiKeyAuth: ['runs:read']
+        - OAuth2: ['runs:read']
+        - OpenIdConnect: ['runs:read']
       parameters:
         - $ref: '#/components/parameters/RunId'
       responses:
@@ -1154,6 +1242,10 @@ paths:
         RFC 0072. A `'tenant'`-scoped host MUST reject unauthenticated/unscoped
         requests per its standard auth contract rather than fall back to a global list.
       operationId: listAgents
+      security:
+        - ApiKeyAuth: ['runs:read']
+        - OAuth2: ['runs:read']
+        - OpenIdConnect: ['runs:read']
       responses:
         '200':
           description: Installed manifest agents (agentId-sorted).
@@ -1183,6 +1275,10 @@ paths:
         approved 404s identically to "not installed", so the surface never
         discloses another tenant's inventory.
       operationId: getAgent
+      security:
+        - ApiKeyAuth: ['runs:read']
+        - OAuth2: ['runs:read']
+        - OpenIdConnect: ['runs:read']
       parameters:
         - in: path
           name: agentId
@@ -1220,6 +1316,10 @@ paths:
         it return 404. Tenant-scoped to the caller's owner triple (RFC 0048/0074)
         when `installScope: 'tenant'`.
       operationId: listAgentDeployments
+      security:
+        - ApiKeyAuth: ['runs:read']
+        - OAuth2: ['runs:read']
+        - OpenIdConnect: ['runs:read']
       parameters:
         - in: path
           name: agentId
@@ -1257,6 +1357,10 @@ paths:
         BEFORE emitting `deployment.promoted`. On success returns the updated
         deployment record and emits the matching content-free `deployment.*` event.
       operationId: transitionAgentDeployment
+      security:
+        - ApiKeyAuth: ['deploy:*']
+        - OAuth2: ['deploy:*']
+        - OpenIdConnect: ['deploy:*']
       parameters:
         - in: path
           name: agentId
@@ -1311,6 +1415,10 @@ paths:
         RFC 0074 — on an `installScope: 'tenant'` host only the caller's
         owner-triple entries are returned. Read-only; content-free (SR-1).
       operationId: listAgentRoster
+      security:
+        - ApiKeyAuth: ['runs:read']
+        - OAuth2: ['runs:read']
+        - OpenIdConnect: ['runs:read']
       responses:
         '200':
           description: The caller's standing roster (rosterId-sorted).
@@ -1336,6 +1444,10 @@ paths:
         caller's owner triple — a cross-tenant entry 404s identically to
         "not found", never disclosing another tenant's roster.
       operationId: getAgentRosterEntry
+      security:
+        - ApiKeyAuth: ['runs:read']
+        - OAuth2: ['runs:read']
+        - OpenIdConnect: ['runs:read']
       parameters:
         - in: path
           name: rosterId
@@ -1367,6 +1479,10 @@ paths:
         advertise it return 404. Tenant-scoped per RFC 0074. DESCRIPTIVE only:
         an org edge confers no authority (§B `org-position-no-authority-escalation`).
       operationId: getAgentOrgChart
+      security:
+        - ApiKeyAuth: ['runs:read']
+        - OAuth2: ['runs:read']
+        - OpenIdConnect: ['runs:read']
       responses:
         '200':
           description: The caller's org-chart.
@@ -1392,6 +1508,10 @@ paths:
         404 when the department is unknown, cross-tenant, or the host doesn't
         advertise `capabilities.agents.orgChart`. The roll-up grants nothing (§B).
       operationId: getAgentOrgChartDepartment
+      security:
+        - ApiKeyAuth: ['runs:read']
+        - OAuth2: ['runs:read']
+        - OpenIdConnect: ['runs:read']
       parameters:
         - in: path
           name: departmentId
@@ -1431,6 +1551,10 @@ paths:
         NOT see another principal's tools (non-disclosure). Read-only; each
         descriptor is content-free of any credential material (SR-1).
       operationId: listTools
+      security:
+        - ApiKeyAuth: ['runs:read']
+        - OAuth2: ['runs:read']
+        - OpenIdConnect: ['runs:read']
       parameters:
         - name: view
           in: query
@@ -1475,6 +1599,10 @@ paths:
         non-disclosure — a cross-principal tool 404s identically to "not
         found"), or the host doesn't advertise `capabilities.toolCatalog`.
       operationId: getTool
+      security:
+        - ApiKeyAuth: ['runs:read']
+        - OAuth2: ['runs:read']
+        - OpenIdConnect: ['runs:read']
       parameters:
         - in: path
           name: toolId
@@ -1522,6 +1650,10 @@ paths:
         `capabilities.agents.evalSuite.supported: true`; hosts that don't advertise
         it return 404. 409 when the run is not yet terminal.
       operationId: getEvalSummary
+      security:
+        - ApiKeyAuth: ['runs:read']
+        - OAuth2: ['runs:read']
+        - OpenIdConnect: ['runs:read']
       parameters:
         - $ref: '#/components/parameters/RunId'
       responses:
@@ -1556,6 +1688,10 @@ paths:
         the two event logs (see `replay.md` determinism contract). Requires
         `runs:read` on BOTH runs. Hosts that don't implement it return 404.
       operationId: diffRun
+      security:
+        - ApiKeyAuth: ['runs:read']
+        - OAuth2: ['runs:read']
+        - OpenIdConnect: ['runs:read']
       parameters:
         - $ref: '#/components/parameters/RunId'
         - name: against
@@ -1602,6 +1738,10 @@ paths:
         Operator-driven pause distinct from cancel (terminal) and HITL suspend (workflow-driven).
         Emits a `run.paused` event when the pause takes effect; exit only via `:resume` or `:cancel`.
       operationId: pauseRun
+      security:
+        - ApiKeyAuth: ['runs:cancel']
+        - OAuth2: ['runs:cancel']
+        - OpenIdConnect: ['runs:cancel']
       parameters:
         - $ref: '#/components/parameters/RunId'
         - $ref: '#/components/parameters/IdempotencyKey'
@@ -1650,6 +1790,10 @@ paths:
       description: |
         Reverses a prior `:pause`. Run transitions from `paused` to `running` and emits `run.resumed`.
       operationId: resumeRun
+      security:
+        - ApiKeyAuth: ['runs:cancel']
+        - OAuth2: ['runs:cancel']
+        - OpenIdConnect: ['runs:cancel']
       parameters:
         - $ref: '#/components/parameters/RunId'
         - $ref: '#/components/parameters/IdempotencyKey'
@@ -1688,6 +1832,10 @@ paths:
       tags: [hitl]
       summary: Resolve an interrupt via the run-scoped surface.
       operationId: resolveInterruptByRun
+      security:
+        - ApiKeyAuth: ['approvals:respond']
+        - OAuth2: ['approvals:respond']
+        - OpenIdConnect: ['approvals:respond']
       parameters:
         - $ref: '#/components/parameters/RunId'
         - in: path
@@ -1794,6 +1942,10 @@ paths:
       tags: [artifacts]
       summary: Read a run-produced artifact.
       operationId: getArtifact
+      security:
+        - ApiKeyAuth: ['artifacts:read']
+        - OAuth2: ['artifacts:read']
+        - OpenIdConnect: ['artifacts:read']
       parameters:
         - $ref: '#/components/parameters/RunId'
         - in: path
@@ -1818,6 +1970,10 @@ paths:
       tags: [webhooks]
       summary: Register a webhook subscription.
       operationId: registerWebhook
+      security:
+        - ApiKeyAuth: ['webhooks:manage']
+        - OAuth2: ['webhooks:manage']
+        - OpenIdConnect: ['webhooks:manage']
       parameters:
         - $ref: '#/components/parameters/IdempotencyKey'
       requestBody:
@@ -1891,6 +2047,10 @@ paths:
       tags: [webhooks]
       summary: Unregister a webhook.
       operationId: unregisterWebhook
+      security:
+        - ApiKeyAuth: ['webhooks:manage']
+        - OAuth2: ['webhooks:manage']
+        - OpenIdConnect: ['webhooks:manage']
       parameters:
         - in: path
           name: webhookId
@@ -1919,6 +2079,10 @@ paths:
         advertise the `openwop-audit-log-integrity` profile MAY omit this
         endpoint entirely (clients SHOULD pre-flight via `/.well-known/openwop`).
       operationId: verifyAuditLog
+      security:
+        - ApiKeyAuth: ['audit:read']
+        - OAuth2: ['audit:read']
+        - OpenIdConnect: ['audit:read']
       parameters:
         - in: query
           name: fromSeq
@@ -1957,6 +2121,10 @@ paths:
       tags: [prompts]
       summary: List prompt templates available to the caller.
       operationId: listPromptTemplates
+      security:
+        - ApiKeyAuth: ['prompts:read']
+        - OAuth2: ['prompts:read']
+        - OpenIdConnect: ['prompts:read']
       parameters:
         - in: query
           name: kind
@@ -2013,6 +2181,10 @@ paths:
       tags: [prompts]
       summary: Create a new prompt template (mutable libraries only).
       operationId: createPromptTemplate
+      security:
+        - ApiKeyAuth: ['prompts:write']
+        - OAuth2: ['prompts:write']
+        - OpenIdConnect: ['prompts:write']
       parameters:
         - $ref: '#/components/parameters/IdempotencyKey'
       requestBody:
@@ -2072,6 +2244,10 @@ paths:
       tags: [prompts]
       summary: Fetch a single prompt template.
       operationId: getPromptTemplate
+      security:
+        - ApiKeyAuth: ['prompts:read']
+        - OAuth2: ['prompts:read']
+        - OpenIdConnect: ['prompts:read']
       responses:
         '200':
           description: The PromptTemplate.
@@ -2112,6 +2288,10 @@ paths:
       tags: [prompts]
       summary: Replace a prompt template (mutable libraries; user-source only).
       operationId: updatePromptTemplate
+      security:
+        - ApiKeyAuth: ['prompts:write']
+        - OAuth2: ['prompts:write']
+        - OpenIdConnect: ['prompts:write']
       parameters:
         - $ref: '#/components/parameters/IdempotencyKey'
       requestBody:
@@ -2157,6 +2337,10 @@ paths:
       tags: [prompts]
       summary: Delete a prompt template (mutable libraries; user-source only).
       operationId: deletePromptTemplate
+      security:
+        - ApiKeyAuth: ['prompts:write']
+        - OAuth2: ['prompts:write']
+        - OpenIdConnect: ['prompts:write']
       responses:
         '204':
           description: Template deleted.
@@ -2195,6 +2379,10 @@ paths:
         host resolves the plaintext internally and never echoes it in
         the `composed` response field per SR-1.
       operationId: renderPromptTemplate
+      security:
+        - ApiKeyAuth: ['prompts:read']
+        - OAuth2: ['prompts:read']
+        - OpenIdConnect: ['prompts:read']
       requestBody:
         required: true
         content:
@@ -2300,6 +2488,10 @@ paths:
         (`registry-operations.md`), not defined in this host document
         (see the `packs-test` tag scope note).
       operationId: putTestPackTarball
+      security:
+        - ApiKeyAuth: ['packs:publish']
+        - OAuth2: ['packs:publish']
+        - OpenIdConnect: ['packs:publish']
       parameters:
         - in: header
           name: X-Pack-Signing-Method
@@ -2372,6 +2564,10 @@ paths:
       summary: Fetch a published test-catalog tarball.
       description: 'Mirror of `GET /v1/packs/{name}/-/{version}.tgz`. Returns the gzipped tarball bytes with `Content-Type: application/tar+gzip` and an `ETag: "sha256-..."` matching the manifest''s `tarballSha256`. The mirrored production path is registry-service surface (`registry-operations.md`), not defined in this host document (see the `packs-test` tag scope note).'
       operationId: getTestPackTarball
+      security:
+        - ApiKeyAuth: ['packs:read']
+        - OAuth2: ['packs:read']
+        - OpenIdConnect: ['packs:read']
       responses:
         '200':
           description: Tarball bytes.
@@ -2412,6 +2608,10 @@ paths:
         defined in this host document (see the `packs-test` tag
         scope note).
       operationId: deleteTestPackVersion
+      security:
+        - ApiKeyAuth: ['packs:publish']
+        - OAuth2: ['packs:publish']
+        - OpenIdConnect: ['packs:publish']
       responses:
         '204':
           description: Version successfully unpublished from the test catalog.
@@ -2446,6 +2646,10 @@ paths:
         registry-service surface (`registry-operations.md`), not defined
         in this host document (see the `packs-test` tag scope note).
       operationId: getTestPackSignature
+      security:
+        - ApiKeyAuth: ['packs:read']
+        - OAuth2: ['packs:read']
+        - OpenIdConnect: ['packs:read']
       responses:
         '200':
           description: Signature blob.
@@ -2496,6 +2700,84 @@ components:
         (`manifest:read`, `runs:create`, `runs:read`, `runs:cancel`,
         `artifacts:read`, `webhooks:manage`, `approvals:respond`, `audit:read`).
         See `auth.md`.
+
+    # RFC 0200 §F. The three lanes below describe auth the corpus already defines
+    # in `auth-profiles.md` (v1) and `spec/v2/core/identity.md` §2 (v2). Declaring
+    # them changes no wire behaviour: an operation's three alternatives carry the
+    # SAME scope, and a host enforces only the lanes it advertises. The URLs are
+    # placeholders, exactly as `servers` uses `api.example.com`; a host serving its
+    # own document replaces them with its advertised issuers and drops the schemes
+    # for lanes it does not advertise (`a2a-integration.md` §AgentCard, §F.5).
+    OAuth2:
+      type: oauth2
+      description: |
+        RFC 0200 §F. OAuth 2.0 lanes — v1 `openwop-auth-oauth2-client-credentials`,
+        v2 `auth.lanes[].lane: "oauth2"`. Discovery is RFC 9728 Protected Resource
+        Metadata at the path-inserted well-known URI (`identity.md` §2.5).
+        Placeholder URLs.
+      flows:
+        clientCredentials:
+          tokenUrl: https://issuer.example/oauth2/token
+          scopes:
+            'manifest:read': Read workflow / canvas-type / endpoint manifests
+            'runs:create': Create new runs
+            'runs:read': Read run state and event stream
+            'runs:cancel': Cancel an in-flight run
+            'runs:annotate': Record a quality annotation on a run
+            'artifacts:read': Read artifacts produced by runs
+            'webhooks:manage': Register/unregister webhook subscriptions
+            'approvals:respond': Respond to HITL approval gates
+            'packs:publish': Publish node-pack versions
+            'packs:read': Fetch a published node-pack tarball or signature
+            'packs:yank': Yank a node-pack version
+            'packs:yank-revert': Reinstate a yanked node-pack version
+            'audit:read': Verify audit-log integrity
+            'workspace:read': Read agent-workspace files
+            'workspace:write': Write agent-workspace files
+            'prompts:read': Read and render prompt templates
+            'prompts:write': Create, update and delete prompt templates
+            'content:read': Read authored content pages and locale settings
+            'content:write': Create, publish and translate authored content pages
+            'deploy:*': Drive an agent deployment state transition
+        authorizationCode:
+          authorizationUrl: https://issuer.example/oauth2/authorize
+          tokenUrl: https://issuer.example/oauth2/token
+          scopes:
+            'manifest:read': Read workflow / canvas-type / endpoint manifests
+            'runs:create': Create new runs
+            'runs:read': Read run state and event stream
+            'runs:cancel': Cancel an in-flight run
+            'runs:annotate': Record a quality annotation on a run
+            'artifacts:read': Read artifacts produced by runs
+            'webhooks:manage': Register/unregister webhook subscriptions
+            'approvals:respond': Respond to HITL approval gates
+            'packs:publish': Publish node-pack versions
+            'packs:read': Fetch a published node-pack tarball or signature
+            'packs:yank': Yank a node-pack version
+            'packs:yank-revert': Reinstate a yanked node-pack version
+            'audit:read': Verify audit-log integrity
+            'workspace:read': Read agent-workspace files
+            'workspace:write': Write agent-workspace files
+            'prompts:read': Read and render prompt templates
+            'prompts:write': Create, update and delete prompt templates
+            'content:read': Read authored content pages and locale settings
+            'content:write': Create, publish and translate authored content pages
+            'deploy:*': Drive an agent deployment state transition
+    OpenIdConnect:
+      type: openIdConnect
+      openIdConnectUrl: https://issuer.example/.well-known/openid-configuration
+      description: |
+        RFC 0200 §F. v1 `openwop-auth-oidc-user-bearer` / v2 `auth.lanes[].lane: "oidc"`.
+        An ID token MAY be the bearer only when its `aud` equals the host's configured
+        audience (`identity.md` §2.1); any other `aud` is `audience_mismatch`.
+        Placeholder URL.
+    MutualTLS:
+      type: mutualTLS
+      description: |
+        RFC 0200 §F. v1 `openwop-auth-mtls` / v2 `auth.lanes[].lane: "mtls"`. In OpenWOP
+        mTLS is required *in addition to* a bearer, never instead of one, so it appears
+        in no canonical requirement below: a host that requires it adds `MutualTLS: []`
+        inside each requirement object (AND).
 
   parameters:
     WorkflowId:
@@ -2582,12 +2864,20 @@ components:
   responses:
     Unauthenticated:
       description: Missing or invalid credential.
+      headers:
+        WWW-Authenticate:
+          description: RFC 0200 §B — `Bearer` challenge; `resource_metadata` and `error="invalid_token"` on a host with an oauth2/oidc lane. Never on a non-disclosure 404.
+          schema: { type: string }
       content:
         application/json:
           schema: { $ref: '#/components/schemas/Error' }
 
     Forbidden:
       description: Credential valid but lacks required scope or fails resource binding.
+      headers:
+        WWW-Authenticate:
+          description: RFC 0200 §B — `error="insufficient_scope"` with every required `scope` on a scope refusal; absent on a resource-binding 403.
+          schema: { type: string }
       content:
         application/json:
           schema: { $ref: '#/components/schemas/Error' }
