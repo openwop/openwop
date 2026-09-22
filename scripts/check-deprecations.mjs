@@ -16,6 +16,10 @@
  *                 carries deprecatedIn: null (the schema enforces the latter)
  *   5. status   — a `deprecated` row cites at least one authority source that is
  *                 an RFC, a spec doc, or a schema (never only the charter)
+ *   6. v2-minor — RFC 0197 §A.2: a row scheduling a removal INSIDE major 2
+ *                 removes at a 2.N, carries a `retirement` block, leaves at
+ *                 least two minors between `deprecatedInMinor` and `removeIn`,
+ *                 and is named by exactly one spec/v2/migrations.json row
  *
  * What it deliberately does NOT do: decide that something IS deprecated. That is
  * an RFC's job. A new `status: deprecated` row must point at the RFC or
@@ -99,6 +103,32 @@ for (const e of entries) {
   if (!grounded) fail(`status: ${e.id} is "deprecated" but cites no RFC, spec doc, or schema source`);
 }
 
+// 6. v2-minor rows — RFC 0197 §A.2. The schema already requires a `retirement`
+//    block beside the trigger; what the schema cannot express is the WINDOW and
+//    the link to the replacement. Both are structural preconditions of R1 and
+//    R2, checked here so a malformed row is refused at the register rather than
+//    reaching check-v2-retirement as a half-evaluable claim.
+const triggersOf = (e) => (Array.isArray(e.removalTrigger) ? e.removalTrigger : e.removalTrigger ? [e.removalTrigger] : []);
+let v2MinorRows = 0;
+let v2Migrations = null;
+try { v2Migrations = JSON.parse(readFileSync(join(ROOT, 'spec', 'v2', 'migrations.json'), 'utf8')); } catch { v2Migrations = null; }
+for (const e of entries) {
+  if (!triggersOf(e).includes('v2-minor')) continue;
+  v2MinorRows++;
+  const [maj, min] = String(e.removeIn ?? '').split('.').map(Number);
+  if (maj !== 2) fail(`v2-minor: ${e.id} removes at ${e.removeIn}; a v2-minor trigger schedules a removal INSIDE major 2 — use v1-end-of-support or no trigger for a 3.0 removal`);
+  const r = e.retirement;
+  if (!r) { fail(`v2-minor: ${e.id} carries the v2-minor trigger but no \`retirement\` block — the gate has nothing to falsify`); continue; }
+  const dep = Number(String(r.deprecatedInMinor ?? '').split('.')[1]);
+  if (!Number.isFinite(dep) || !Number.isFinite(min)) fail(`v2-minor: ${e.id} — removeIn ${e.removeIn} and retirement.deprecatedInMinor ${r.deprecatedInMinor} must both be 2.<minor>`);
+  else if (min - dep < 2) fail(`v2-minor: ${e.id} was deprecated in ${r.deprecatedInMinor} and removes in ${e.removeIn} — ${min - dep} minor(s). RFC 0197 R2 requires at least two released minors; a minor currently ships about daily, which is why the 30-day leg runs beside it.`);
+  if (v2Migrations === null) fail(`v2-minor: ${e.id} — spec/v2/migrations.json is unreadable, so R1's replacement row cannot be resolved`);
+  else {
+    const linked = (v2Migrations.rows ?? []).filter((m) => m.deprecationId === e.id);
+    if (linked.length !== 1) fail(`v2-minor: ${e.id} needs exactly one spec/v2/migrations.json row naming it as deprecationId (R1: the replacement shipped first); found ${linked.length}`);
+  }
+}
+
 const deprecated = entries.filter((e) => e.status === 'deprecated').length;
 const proposed = entries.filter((e) => e.status === 'proposed').length;
 
@@ -107,4 +137,4 @@ if (failures.length > 0) {
   for (const f of failures) console.error(`  ${f}`);
   process.exit(1);
 }
-console.log(`=== check-deprecations OK — ${entries.length} entries (${deprecated} deprecated, ${proposed} proposed), every source still carries its token ===`);
+console.log(`=== check-deprecations OK — ${entries.length} entries (${deprecated} deprecated, ${proposed} proposed), every source still carries its token; ${v2MinorRows} row(s) carry the RFC 0197 v2-minor trigger ===`);
