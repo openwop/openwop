@@ -12,6 +12,7 @@
 | **Compatibility** | `additive` per `COMPATIBILITY.md` §2.1 |
 | **Supersedes** | — |
 | **Superseded by** | — |
+| **Amended by** | RFC 0209 (major 2 only) |
 
 > **Amendment note (2026-06-15).** This RFC was flipped to `Active` and then amended at
 > `Active` the same day — twice — all explicit sole-steward maintainer decisions during the
