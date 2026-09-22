@@ -1,6 +1,6 @@
 # OpenWOP Spec v1 — Multi-Agent Execution Model
 
-> **Status: Draft · v1.x · RFC 0037, 0039–0041, 0061.** Normative execution, handoff, memory, causation, replay, and agent-loop contract.
+> **Status: Draft · v1.x · RFC 0037, 0039–0041, 0061 `Accepted`; spec status Draft pending the open `version: 2`–`4` follow-ups mae-1–mae-9 in `gaps.json`.** Normative execution, handoff, memory, causation, replay, and agent-loop contract.
 
 ## Why this exists
 

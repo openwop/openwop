@@ -1,6 +1,6 @@
 # OpenWOP Spec v1 — Prompt Templates
 
-> **Status: Draft · v1.x · RFC 0027.** Normative shape and resolution rules for portable, versioned prompt templates.
+> **Status: Draft · v1.x · RFC 0027 `Accepted`; spec status Draft pending the open prompt gaps p1–p8 in `gaps.json` (reference-host resolution, `prompt.composed` emission and `/v1/prompts*` endpoints, and a first non-steward host advertising `capabilities.prompts.supported`).** Normative shape and resolution rules for portable, versioned prompt templates.
 
 ---
 
