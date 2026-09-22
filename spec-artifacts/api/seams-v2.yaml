@@ -733,6 +733,68 @@ paths:
           $ref: '#/components/responses/ValidationError'
         '401':
           $ref: '#/components/responses/Unauthenticated'
+  /conformance/seams/sample/a2ui/emit-surface:
+    post:
+      tags:
+      - Seams
+      operationId: emitA2uiSurface
+      summary: Admit one `ui.a2ui-surface` envelope into a run through the production envelope-admission path — RFC 0209 witness
+      description: 'A real `ui.a2ui-surface` envelope is emitted by a model inside a node turn, so the suite cannot choose
+        one from the canonical wire. This seam supplies the envelope ONLY. The host MUST admit it through its PRODUCTION envelope-admission
+        path — the envelope-kind catalog (`supportedEnvelopes`, `schemaVersions`, `envelopeStrictness`, events.md §"The envelope-kind
+        catalog"), validation against the ONE per-kind branch the schema version selects (never the `anyOf` union), the RFC
+        0209 cross-field rules (every message `surfaceId` equals the payload `surfaceId`; a `createSurface.catalogId` equals
+        the payload `catalogId`), the surface-fold guard (spec/v2/ext/a2uiSurface/README.md §"The fold"), trust propagation
+        and SR-1 redaction — and MUST record it exactly as production would. It MUST NOT be a mock that records without those
+        rules. `envelope.nodeId`, when present, binds the surface to that node, so a surface emitted at a node suspended on
+        an `approval` interrupt is the surface whose `resume` action would resolve it (§"Trust": a tainted fold blocks that
+        interrupt). Refusals use the canonical error envelope: `422 unknown_schema_version` above the floor or under `strict`
+        below it, `422 envelope_invalid` for a payload that fails its branch, a cross-field rule or the fold guard, `422 unknown_envelope_kind`
+        when the host does not list the kind; `details` SHOULD name the rule. A host that has not wired the seam answers `404`/`405`,
+        and the scenario records `inapplicable`.'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              additionalProperties: false
+              required:
+              - runId
+              - envelope
+              properties:
+                runId:
+                  $ref: ../schemas/v2/ids.schema.json#/$defs/runId
+                envelope:
+                  $ref: ../schemas/v2/ai-envelope.schema.json
+                  description: A complete AI envelope whose `type` is `ui.a2ui-surface`; `schemaVersion` selects the payload
+                    branch.
+      responses:
+        '201':
+          description: Admitted and recorded; `sequence` is the run event that records the envelope.
+          content:
+            application/json:
+              schema:
+                type: object
+                additionalProperties: false
+                required:
+                - sequence
+                properties:
+                  sequence:
+                    type: integer
+                    minimum: 0
+        '400':
+          $ref: '#/components/responses/ValidationError'
+        '401':
+          $ref: '#/components/responses/Unauthenticated'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '422':
+          description: Refused by envelope admission (`unknown_schema_version`, `envelope_invalid`, `unknown_envelope_kind`).
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
 components:
   securitySchemes:
     ApiKeyAuth:
