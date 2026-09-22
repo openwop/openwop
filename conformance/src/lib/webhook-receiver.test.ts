@@ -24,6 +24,11 @@ import {
   verifyWebhookDelivery,
   signPayload,
   resolveRegistrationUrl,
+  decodeWhsec,
+  standardWebhooksSign,
+  verifyStandardWebhooks,
+  startModalReceiver,
+  hitHeader,
 } from './webhook-receiver.js';
 
 const SECRET = 'shhh-not-a-real-secret';
@@ -261,5 +266,86 @@ describe('webhook-signed-delivery waits for a delivery rather than sleeping a gu
     expect(end).toBeGreaterThan(start);
     expect(src.slice(start, end)).not.toContain('softSkip');
     expect(src.slice(start, end)).toContain('expect(ourDeliveries.length,');
+  });
+});
+
+/**
+ * RFC 0201 — the Standard Webhooks verifier is written from the spec recipe, so
+ * it has to be pinned against something that is NOT this suite: the upstream
+ * reference library's own `sign` test (standard-webhooks/standard-webhooks,
+ * `libraries/javascript/src/webhook.test.ts`, "sign function works"; checked
+ * 2026-09-22 against spec tag v1.0.0, identical on `main`). A verifier that
+ * signed `ts.body`, used the whsec_ string as the key, or hex-encoded would
+ * miss this vector.
+ */
+describe('RFC 0201 — Standard Webhooks 1.0.0 verifier (upstream test vector)', () => {
+  const KEY = 'whsec_MfKQ9r8GKYqrTwjUPD8ILPZIo2LaLaSw';
+  const MSG_ID = 'msg_p5jXN8AQM9LWM0D4loKWxJek';
+  const TS = 1614265330;
+  const PAYLOAD = '{"test": 2432232314}';
+  const EXPECTED = 'v1,g0hM9SsE+OTPJTGt/tmIKtSyZlE3uFJELVlNIOLJ1OE=';
+
+  it('signs the upstream vector byte for byte', () => {
+    expect(decodeWhsec(KEY)?.length).toBe(24);
+    expect(standardWebhooksSign(KEY, MSG_ID, TS, PAYLOAD)).toBe(EXPECTED);
+  });
+
+  it('accepts the vector, and counts each matching entry of a space-separated list', () => {
+    const headers = { 'webhook-id': MSG_ID, 'webhook-timestamp': String(TS), 'webhook-signature': `v1,AAAA ${EXPECTED} v1a,ZZZZ` };
+    const v = verifyStandardWebhooks(PAYLOAD, headers, KEY, { nowSeconds: TS });
+    expect(v.accepted).toBe(true);
+    expect(v.entries.length).toBe(3);
+    expect(v.matched).toBe(1);
+  });
+
+  it('refuses a signature over ts.body (the id is inside the signed bytes)', () => {
+    const tsBody = `v1,${createHmac('sha256', decodeWhsec(KEY)!).update(`${TS}.${PAYLOAD}`).digest('base64')}`;
+    const v = verifyStandardWebhooks(PAYLOAD, { 'webhook-id': MSG_ID, 'webhook-timestamp': String(TS), 'webhook-signature': tsBody }, KEY, { nowSeconds: TS });
+    expect(v.accepted).toBe(false);
+    expect(v.reason).toBe('no_matching_signature');
+  });
+
+  it('refuses a key taken as the whsec_ string rather than its decoded bytes', () => {
+    const wrongKey = `v1,${createHmac('sha256', KEY).update(`${MSG_ID}.${TS}.${PAYLOAD}`).digest('base64')}`;
+    const v = verifyStandardWebhooks(PAYLOAD, { 'webhook-id': MSG_ID, 'webhook-timestamp': String(TS), 'webhook-signature': wrongKey }, KEY, { nowSeconds: TS });
+    expect(v.accepted).toBe(false);
+  });
+
+  it('refuses a timestamp outside the five-minute tolerance, and an id containing a dot', () => {
+    const headers = { 'webhook-id': MSG_ID, 'webhook-timestamp': String(TS), 'webhook-signature': EXPECTED };
+    expect(verifyStandardWebhooks(PAYLOAD, headers, KEY, { nowSeconds: TS + 301 }).reason).toBe('timestamp_out_of_tolerance');
+    expect(verifyStandardWebhooks(PAYLOAD, { ...headers, 'webhook-id': 'msg.x' }, KEY, { nowSeconds: TS }).reason).toBe('malformed_id');
+  });
+
+  it('decodes only whsec_ secrets of 24–64 bytes', () => {
+    expect(decodeWhsec(`whsec_${Buffer.alloc(8).toString('base64')}`)).toBeNull();
+    expect(decodeWhsec(`whsec_${Buffer.alloc(65).toString('base64')}`)).toBeNull();
+    expect(decodeWhsec(Buffer.alloc(32).toString('base64'))).toBeNull();
+    expect(decodeWhsec(`whsec_${Buffer.alloc(64).toString('base64')}`)?.length).toBe(64);
+  });
+});
+
+describe('RFC 0201 — the modal receiver routes by path, so one tunnelled URL can carry every mode', () => {
+  it('echoes, refuses to echo, echoes wrong, redirects, and fails twice per key, each by path', async () => {
+    const r = await startModalReceiver();
+    try {
+      const post = (mode: string, body: unknown): Promise<Response> => fetch(r.urlFor(mode).url, { method: 'POST', headers: { 'Content-Type': 'application/json', 'OpenWOP-Webhook-Id': 't/sub' }, body: JSON.stringify(body), redirect: 'manual' });
+      const challenge = 'c'.repeat(22);
+      const verify = { type: 'openwop.webhook.verification', challenge };
+      expect(await (await post('echo', verify)).json()).toEqual({ challenge });
+      expect(await (await post('no-echo', verify)).json()).toEqual({});
+      expect(((await (await post('wrong-echo', verify)).json()) as { challenge: string }).challenge).not.toBe(challenge);
+      const redirected = await post('redirect', verify);
+      expect(redirected.status).toBe(307);
+      expect(redirected.headers.get('location')).toContain(`/${r.nonce}/redirect-target`);
+      const delivery = { runId: 't/run', event: { sequence: 3 } };
+      const statuses = [];
+      for (let i = 0; i < 3; i++) statuses.push((await post('fail2', delivery)).status);
+      expect(statuses).toEqual([500, 500, 204]);
+      expect(r.hits.filter((h) => h.verification).map((h) => h.mode)).toEqual(['echo', 'no-echo', 'wrong-echo', 'redirect']);
+      expect(hitHeader(r.hits[0]!, 'openwop-webhook-id')).toBe('t/sub');
+    } finally {
+      await r.close();
+    }
   });
 });

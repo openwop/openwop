@@ -4409,3 +4409,49 @@ invariants:
       createRun a MUST and names IPv4-mapped IPv6 (MCP only warns about it).
     witness: witnessable-gated
     witnessReview: reviewed-2026-09-21
+  - id: webhook-endpoint-verification-opt-in
+    tier: protocol
+    severity: high
+    threat_model: SECURITY/threat-model-secret-leakage.md
+    tests:
+      - conformance/src/scenarios/v2-webhook-endpoint-verification.test.ts
+      - conformance/src/scenarios/v2-webhook-standard-webhooks-delivery.test.ts
+    note: |
+      RFC 0201 §D / spec/v2/core/webhooks.md §Standard Webhooks. A registration
+      that opts into `standard-webhooks-1` MUST NOT succeed unless the endpoint
+      echoes a fresh verification challenge (one signed request, no redirect
+      followed, 10 s); a refused registration persists nothing and receives no
+      later delivery. A registration that does NOT opt in MUST NOT be verified.
+
+      Why this is an invariant: a registration is a standing instruction for
+      the host to POST, with durable retries, to a URL the caller chose. Without
+      consent a member of any tenant can aim that traffic at a third party; the
+      egress guard protects the host's network, not the victim's endpoint. The
+      opt-in form closes flooding-by-registration only for subscriptions that
+      ask for it; verification for every subscription would reject
+      registrations that succeed today and is a safety-fix (RFC 0201 UQ3).
+      Witnessed by `v2-webhook-endpoint-verification` (no-echo, wrong-echo and
+      redirect refusals, zero later deliveries) and the opt-in-only control in
+      `v2-webhook-standard-webhooks-delivery` (a non-opted registration against
+      a non-echoing endpoint still gets 201 and no verification request).
+    witness: witnessable-gated
+    witnessReview: reviewed-2026-09-22
+  - id: webhook-message-id-stable
+    tier: protocol
+    severity: medium
+    threat_model: SECURITY/threat-model-secret-leakage.md
+    tests:
+      - conformance/src/scenarios/v2-webhook-message-id-stable.test.ts
+    note: |
+      RFC 0201 §C.10. On a subscription opted into `standard-webhooks-1` the
+      signed `webhook-id` is identical on every attempt of one
+      `(webhookId, runId, sequence)` and distinct across deliveries, and it is
+      not derived from the secret. It is the receiver's authenticated
+      idempotency key: because it is inside the signed bytes, a receiver that
+      dedups on it dedups on a value no one on the path can rewrite. A
+      per-attempt id makes a durable host's retries look like new events; a
+      constant id makes new events look like retries. The restart half (an
+      attempt after a host restart reuses the id) is seam-gated on the RFC 0158
+      hook and not claimed by the scenario.
+    witness: witnessable-gated
+    witnessReview: reviewed-2026-09-22

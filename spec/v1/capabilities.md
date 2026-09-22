@@ -845,6 +845,10 @@ Extension of the existing webhooks block:
 
 When `signatureAlgorithms` is surfaced, it MUST include `"v1"` (the canonical baseline). Hosts that omit the field continue to honor the absence-equals-`v1` rule per `webhooks.md` §"Signature algorithm versioning".
 
+`standard-webhooks-1` (RFC 0201) MAY also be listed, beside `"v1"`: it names the Standard Webhooks 1.0.0 companion scheme a subscriber opts into per subscription (`webhooks.md` §"Standard Webhooks companion scheme (RFC 0201)").
+
+- `webhooks.secretRotation` — optional `{ overlapSeconds }` (integer, 60–604800; RFC 0201 §E). A host that advertises it MUST serve `POST /v1/webhooks/{webhookId}/rotate-secret` for subscriptions opted into `standard-webhooks-1`.
+
 ### `auth.profiles` and `auth.auditLogIntegrity` (Track 13)
 
 Extension of the existing auth advertisement:

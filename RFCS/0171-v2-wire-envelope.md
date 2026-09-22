@@ -12,6 +12,7 @@
 | **Compatibility** | `breaking` (v2). In v1.x this PR edits `spec/v1/event-codemap.json` hand fields (`v2Override`, `status`, `note`) — data no consumer reads in v1.x — and adds codemods and register rows; no wire artifact changes |
 | **Supersedes**    | — (RFC 0021, 0030, 0094, 0140, 0151 §G6 remain the v1 authorities) |
 | **Superseded by** | —                                                               |
+| **Amended by**    | [RFC 0201](./0201-standard-webhooks-signature-scheme.md) — the Standard Webhooks `webhook-id` / `webhook-timestamp` / `webhook-signature` headers keep their standard names on opted-in subscriptions (the one named exception to §C.1) |
 
 ## Summary
 

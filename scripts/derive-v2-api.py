@@ -230,6 +230,47 @@ def v2_openapi_and_seams():
                     'Tenant-bound `<tenantId>/<opaque>` (`identity.md` §5, RFC 0187 §A.1), one path\n'
                     'segment: `~`-projected (RFC 0184) or percent-encoded.\n'
                 )
+    # RFC 0201 — the Standard Webhooks opt-in. The v1 document is the source, so the v2 difference
+    # is applied by name: the item vocabulary is the facet enum (v1 keeps free strings).
+    try:
+        reg_body = paths['/webhooks']['post']['requestBody']['content']['application/json']['schema']['properties']
+        reg_body['signatureAlgorithms']['items'] = {'type': 'string', 'enum': ['v1', 'standard-webhooks-1']}
+    except (KeyError, TypeError):
+        pass
+    # RFC 0201 §E — rotateWebhookSecret, a v2 operation (like RFC 0188's dead-letter read). Its v1
+    # route (`POST /v1/webhooks/{webhookId}/rotate-secret?tenantId=`) is defined in v1 webhooks.md
+    # prose and is NOT added to api/openapi.yaml: a new canonical v1 operation obliges the
+    # openwop-sdks parity manifest, which vendors a published corpus tag.
+    paths['/webhooks/{webhookId}/rotate-secret'] = {'post': {
+        'tags': ['webhooks'],
+        'operationId': 'rotateWebhookSecret',
+        'summary': "Rotate a Standard Webhooks subscription's secret with an overlap (RFC 0201 \u00a7E)",
+        'description': ('Gated on `webhooks.secretRotation`: a host that does not advertise it MUST answer `404 not_found`. '
+            'Only for a subscription that opted into `standard-webhooks-1`; any other subscription gets `400 validation_error` '
+            '(its single `v1` signature cannot overlap). Tenant checks are exactly those of `unregisterWebhook`: '
+            '`403 id_tenant_mismatch` when the id\'s tenant segment is not the caller\'s, checked before the lookup '
+            '(`identity.md` \u00a75); `404` when unknown. For `overlapSeconds` after `rotatedAt`, `webhook-signature` carries '
+            'one entry under the new secret and one under the previous one, and `OpenWOP-Signature` stays on the previous '
+            'secret; at `previousSecretExpiresAt` only the new secret signs. A second rotation inside an overlap retires the '
+            'oldest secret immediately. Rotation does not re-verify the endpoint. The response carries no secret.'),
+        'parameters': [
+            {'name': 'webhookId', 'in': 'path', 'required': True,
+             'schema': {'$ref': '../../schemas/v2/ids.schema.json#/$defs/subscriptionId'},
+             'description': 'Tenant-bound `<tenantId>/<opaque>` (`identity.md` \u00a75, RFC 0187 \u00a7A.1), one path segment: `~`-projected (RFC 0184) or percent-encoded.'},
+            {'$ref': '#/components/parameters/IdempotencyKey'}],
+        'requestBody': {'required': True, 'content': {'application/json': {'schema': {
+            'type': 'object', 'required': ['secret'], 'additionalProperties': False,
+            'properties': {'secret': {'type': 'string', 'pattern': '^whsec_[A-Za-z0-9+/]+={0,2}$',
+                'description': 'The new secret, `whsec_<base64>` decoding to 24\u201364 bytes (RFC 0201 \u00a7B.6).'}}}}}},
+        'responses': {
+            '200': {'description': 'Rotated. No secret is returned.', 'content': {'application/json': {'schema': {
+                'type': 'object', 'required': ['rotatedAt', 'previousSecretExpiresAt'], 'additionalProperties': False,
+                'properties': {'rotatedAt': {'type': 'string', 'format': 'date-time'},
+                    'previousSecretExpiresAt': {'type': 'string', 'format': 'date-time', 'description': '`rotatedAt + overlapSeconds`.'}}}}}},
+            '400': {'$ref': '#/components/responses/ValidationError'},
+            '401': {'$ref': '#/components/responses/Unauthenticated'},
+            '403': {'$ref': '#/components/responses/Forbidden'},
+            '404': {'$ref': '#/components/responses/NotFound'}}}}
     try:
         reg = paths['/webhooks']['post']['responses']['201']['content']['application/json']['schema']['properties']['webhookId']
         reg.clear()
@@ -385,7 +426,7 @@ def headers_doc(doc):
     lines += ['', '## Response headers', '', '| Header | Operations | Meaning |', '| --- | --- | --- |']
     for n in sorted(resp):
         lines.append(f"| `{n}` | {len(resp[n]['ops'])} | {resp[n]['desc']} |")
-    lines += ['', '## Webhook delivery headers', '', 'Declared in `webhooks.md`, not in OpenAPI (the host is the client): `OpenWOP-Webhook-Id`, `OpenWOP-Event-Type`, `OpenWOP-Timestamp`, `OpenWOP-Signature`, `OpenWOP-Signature-Algorithm` (RFC 0165 §C.1). The `X-openwop-*` family is emitted beside them through the overlap and removed at v1 end-of-support (`spec/v1/deprecations.json` `webhook-x-header-family`).', '',
+    lines += ['', '## Webhook delivery headers', '', 'Declared in `webhooks.md`, not in OpenAPI (the host is the client): `OpenWOP-Webhook-Id`, `OpenWOP-Event-Type`, `OpenWOP-Timestamp`, `OpenWOP-Signature`, `OpenWOP-Signature-Algorithm` (RFC 0165 §C.1). The `X-openwop-*` family is emitted beside them through the overlap and removed at v1 end-of-support (`spec/v1/deprecations.json` `webhook-x-header-family`). On a subscription that opted into Standard Webhooks (webhooks.md), that standard\'s `webhook-id`, `webhook-timestamp` and `webhook-signature`, which keep their standard names (RFC 0201 §F).', '',
               '## Removed in v2', '', '`Capabilities-Etag` (the standard `ETag`/`If-None-Match` pair applies to the discovery document), `X-Dedup`, `X-Force-Engine-Version`, `X-Pack-Sha256`, `X-Pack-Signing-Method` (renamed under the one scheme), `X-openwop-*` (webhooks), `openwop-Webhook-Signature` (SDK-only). Each has a `spec/v1/deprecations.json` row with a removal trigger.', '']
     return '\n'.join(lines)
 

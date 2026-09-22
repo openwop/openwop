@@ -271,6 +271,15 @@
       "source": "spec/v2/core/webhooks.md §Egress"
     },
     {
+      "code": "webhook_endpoint_unverified",
+      "httpStatus": 400,
+      "statusSource": "v2 decision",
+      "retriable": false,
+      "details": null,
+      "since": "2.36",
+      "source": "RFC 0201 §D"
+    },
+    {
       "code": "audience_mismatch",
       "httpStatus": 401,
       "statusSource": "v2 decision",

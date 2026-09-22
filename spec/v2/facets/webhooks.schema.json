@@ -4,12 +4,17 @@
     "signatureAlgorithms": {
       "type": "array",
       "minItems": 1,
+      "contains": {
+        "const": "v1"
+      },
       "items": {
         "type": "string",
         "enum": [
-          "v1"
+          "v1",
+          "standard-webhooks-1"
         ]
-      }
+      },
+      "description": "RFC 0201 \u00a7A.3 \u2014 `v1` MUST be listed (schema-enforced by `contains`); `standard-webhooks-1` names the Standard Webhooks 1.0.0 companion scheme a subscriber opts into per subscription at registerWebhook."
     },
     "retryPolicy": {
       "type": "object",
@@ -53,6 +58,22 @@
           "minimum": 1,
           "maximum": 1000,
           "description": "Ceiling the host clamps `limit` to (RFC 0182 \u00a7A.3 page-ceiling idiom)."
+        }
+      }
+    },
+    "secretRotation": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "overlapSeconds"
+      ],
+      "description": "RFC 0201 \u00a7E \u2014 zero-downtime rotation for subscriptions opted into `standard-webhooks-1`; advertised only by a host serving `rotateWebhookSecret` (`POST /webhooks/{webhookId}/rotate-secret`). A host that does not advertise it answers that route `404 not_found`.",
+      "properties": {
+        "overlapSeconds": {
+          "type": "integer",
+          "minimum": 60,
+          "maximum": 604800,
+          "description": "How long after a rotation `webhook-signature` carries an entry under the previous secret beside the new one; `previousSecretExpiresAt = rotatedAt + overlapSeconds`."
         }
       }
     }

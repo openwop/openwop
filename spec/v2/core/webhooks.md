@@ -13,7 +13,7 @@ A host that advertises `webhooks` (capabilities.md) serves `registerWebhook` (`P
 
 | Operation | Request | Response |
 | --- | --- | --- |
-| `registerWebhook` | `{ url, events[], secret?, tags? }`; `url` MUST be `https://`; `events[]` MUST be non-empty v2 event type names (events.md) | `201 { webhookId }` |
+| `registerWebhook` | `{ url, events[], secret?, tags?, signatureAlgorithms? }`; `url` MUST be `https://`; `events[]` MUST be non-empty v2 event type names (events.md) | `201 { webhookId }` |
 | `unregisterWebhook` | path `webhookId` | `204`; `404` when unknown; `403` when the caller is outside the subscription's tenant |
 
 A subscription MUST receive only events from runs within its tenant scope; cross-tenant delivery is a protocol violation whatever the filter says (invariant `webhook-cross-tenant-isolation`). `tags` narrows delivery to runs whose options carry an overlapping tag.
@@ -42,6 +42,18 @@ A host MUST send all five on every delivery. The signed bytes are `{timestamp}.{
 ### Verification
 
 A subscriber MUST verify before acting: reject a timestamp more than ±5 minutes from its clock; compute `HMAC-SHA256({timestamp}.{rawBody}, secret)`; compare in constant time. A subscriber MUST reject an unrecognized `OpenWOP-Signature-Algorithm` value. Subscribers SHOULD track `(OpenWOP-Webhook-Id, runId, sequence)` for at-least-once deduplication. A host MUST NOT log the secret.
+
+### Standard Webhooks
+
+`standard-webhooks-1` names the symmetric scheme of Standard Webhooks 1.0.0 (RFC 0201). Its in-header `v1,` token is that standard's, not the OpenWOP scheme id `v1`; neither is read as the other, and `OpenWOP-Signature-Algorithm` stays `v1`.
+
+**Opt-in.** A subscription carries the scheme only when `registerWebhook` sends `signatureAlgorithms` listing it and `v1`, with a `secret` of the form `whsec_<base64 of 24–64 bytes>`; otherwise, or when the host does not advertise the id, `400 validation_error`. The `201` echoes the applied list. Every other subscription is unchanged.
+
+**Endpoint verification.** Before answering `201`, the host MUST send the request of `schemas/v2/webhook-verification.schema.json` to `url` under §Egress, signed as below, and MUST refuse `400 webhook_endpoint_unverified`, persisting nothing, unless a `2xx` arrives within 10 s whose JSON `challenge` equals the one sent. A host MUST NOT verify a subscription that did not opt in.
+
+**Delivery.** Each delivery to an opted-in subscription adds `webhook-id`, `webhook-timestamp` (equal to `OpenWOP-Timestamp`) and `webhook-signature`: space-separated `v1,<base64 HMAC-SHA256>` entries over `{webhook-id}.{webhook-timestamp}.{rawBody}`, keyed by the decoded secret. `webhook-id` matches `^[A-Za-z0-9_-]{16,128}$`, MUST be identical on every attempt of one `(webhookId, runId, sequence)` and MUST differ across them.
+
+**Rotation.** A host advertising `webhooks.secretRotation` serves `rotateWebhookSecret`. For `overlapSeconds` after a rotation, `webhook-signature` MUST carry one entry per secret and `OpenWOP-Signature` stays on the previous secret; afterwards only the new secret signs.
 
 ### Dual emission through the overlap
 

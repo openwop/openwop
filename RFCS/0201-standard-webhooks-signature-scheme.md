@@ -173,9 +173,9 @@ See the companion implementation plan (not committed with the RFC). The v2 core 
 - [x] `Active` — 2026-09-22, by steward override of RFC 0147 §A.6 (the window was waived, not run; see `Updated`).
 - [ ] Spec text (v1 + v2), facet/schema/OpenAPI/path-manifest/errors changes, generator line, both invariants, and the four scenarios merged in one suite minor, published only after this RFC's review debt is recorded (RFC 0195 precedent).
 - [ ] `Accepted`: a committed host bundle carries `openwop.requirement.0201.opt-in-only`, `.delivery-signed`, `.message-id-stable` and `.endpoint-verification` at `executed-pass`, with nothing relaxed. A second host, or `.secret-rotation`, strengthens the evidence but is not required at tier-1.
-- [ ] Amended-by rows added to RFC 0165 and RFC 0171.
-- [ ] `docs/WAIVER-RETROSPECTIVE-REGISTER.md` row `0201 … not-reviewed`, and `MAINTAINERS.md` waiver row marked **STEWARD OVERRIDE of RFC 0147 §A.6**.
-- [ ] CHANGELOG entry.
+- [x] Amended-by rows added to RFC 0165 and RFC 0171 (the implementation PR, `feat/rfc-0201-standard-webhooks`).
+- [x] `docs/WAIVER-RETROSPECTIVE-REGISTER.md` row `0201 … not-reviewed`, and `MAINTAINERS.md` waiver row marked **STEWARD OVERRIDE of RFC 0147 §A.6** (both landed with the filing PR).
+- [x] CHANGELOG entry (the implementation PR).
 
 ## References
 

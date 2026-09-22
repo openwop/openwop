@@ -12,6 +12,7 @@
 | **Compatibility** | `additive` per `COMPATIBILITY.md` §2.1 — every field is optional and lands on an open root or as a declared optional member of a closed object; no required field, type, event shape, endpoint contract, MUST, or error code changes. The two new MUSTs (§B.3 legacy subject, §B.4 fork copy) bind only hosts that emit the new shape or on previously-undefined behavior — see §Compatibility. **Comment window waived** under `GOVERNANCE.md` §"Sole-steward operation" and recorded in `MAINTAINERS.md` §"Bootstrap-phase RFC waivers"; RFC 0147 §A.6 (identity RFCs complete the full window) is overridden here and says so. |
 | **Supersedes**    | —                                                               |
 | **Superseded by** | —                                                               |
+| **Amended by**    | [RFC 0201](./0201-standard-webhooks-signature-scheme.md) — the Standard Webhooks `webhook-id` / `webhook-timestamp` / `webhook-signature` headers keep their standard names on opted-in subscriptions (the one named exception to §C.1) |
 
 ## Summary
 

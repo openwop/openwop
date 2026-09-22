@@ -15,7 +15,8 @@
  *      implementation; this file is a conformance-suite mirror)
  */
 
-import { createHmac, timingSafeEqual } from 'node:crypto';
+import { createHmac, randomBytes, timingSafeEqual } from 'node:crypto';
+import { createServer, type IncomingMessage, type Server, type ServerResponse } from 'node:http';
 
 /**
  * The `X-openwop-Signature` value prefix, per `webhooks.md` §"Delivery headers"
@@ -342,4 +343,203 @@ export function receiverBinding(): { bind: string; advertise: string } {
   const advertise = process.env['OPENWOP_CONFORMANCE_HARNESS_HOST']?.trim();
   if (!advertise) return { bind: '127.0.0.1', advertise: '127.0.0.1' };
   return { bind: '0.0.0.0', advertise };
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// RFC 0201 — the Standard Webhooks 1.0.0 companion scheme (`standard-webhooks-1`)
+// ─────────────────────────────────────────────────────────────────────────────
+//
+// Implemented FROM THE SPEC RECIPE, not by importing the upstream library, so
+// that a library defect cannot make a leg pass: Standard Webhooks 1.0.0
+// §"Signature scheme" — "the message's: ID, timestamp and body are concatenated
+// … `msg_id.timestamp.payload`", HMAC-SHA256, base64, prefixed `v1,`; the
+// secret is `whsec_` + base64 of 24–64 random bytes, and the KEY is the
+// decoded bytes; §"Webhook headers" — `webhook-signature` is a space-delimited
+// list, and a verifier tries each entry. `webhook-receiver.test.ts` pins this
+// against the upstream reference library's own `sign` test vector.
+
+/** RFC 0201 §C.10 — `webhook-id` grammar (Standard Webhooks forbids `.` in the id). */
+export const STANDARD_WEBHOOKS_ID = /^[A-Za-z0-9_-]{16,128}$/;
+export const WHSEC_PREFIX = 'whsec_';
+
+/** The HMAC key of a `whsec_` secret: its base64 body, decoded. `null` when the secret is not that form or decodes outside 24–64 bytes. */
+export function decodeWhsec(secret: string): Buffer | null {
+  if (!secret.startsWith(WHSEC_PREFIX)) return null;
+  const body = secret.slice(WHSEC_PREFIX.length);
+  if (!/^[A-Za-z0-9+/]+={0,2}$/.test(body)) return null;
+  const key = Buffer.from(body, 'base64');
+  return key.length >= 24 && key.length <= 64 ? key : null;
+}
+
+/** A fresh `whsec_` secret of `bytes` random bytes (default 32). */
+export function mintWhsec(bytes = 32): string {
+  return `${WHSEC_PREFIX}${randomBytes(bytes).toString('base64')}`;
+}
+
+/** One `webhook-signature` entry, `v1,<base64>`, over `{id}.{timestamp}.{rawBody}`. */
+export function standardWebhooksSign(secret: string, id: string, timestamp: string | number, rawBody: string | Buffer): string {
+  const key = decodeWhsec(secret);
+  if (key === null) throw new Error('standardWebhooksSign: secret is not a whsec_ secret of 24–64 bytes');
+  const bodyStr = typeof rawBody === 'string' ? rawBody : rawBody.toString('utf8');
+  return `v1,${createHmac('sha256', key).update(`${id}.${String(timestamp)}.${bodyStr}`, 'utf8').digest('base64')}`;
+}
+
+export type StandardWebhooksRejection =
+  | 'missing_headers'
+  | 'malformed_id'
+  | 'malformed_timestamp'
+  | 'timestamp_out_of_tolerance'
+  | 'no_matching_signature';
+
+export interface StandardWebhooksVerdict {
+  readonly accepted: boolean;
+  readonly reason?: StandardWebhooksRejection;
+  /** Every space-separated entry of `webhook-signature`. */
+  readonly entries: readonly string[];
+  /** How many of `entries` verify under the given secret. */
+  readonly matched: number;
+}
+
+type HeaderBag = Record<string, string | string[] | undefined>;
+
+function header(headers: HeaderBag, name: string): string | undefined {
+  const lower = name.toLowerCase();
+  for (const [k, v] of Object.entries(headers)) {
+    if (k.toLowerCase() === lower) return Array.isArray(v) ? v.join(', ') : v;
+  }
+  return undefined;
+}
+
+/**
+ * Verify a Standard Webhooks delivery the way an unmodified receiver would:
+ * constant-time compare of every `v1,` entry, ±5 minutes tolerance (the
+ * reference library's default, and the window v1/v2 §Verification set).
+ * Non-`v1,` entries (`v1a,` — the asymmetric scheme) are listed but never match.
+ */
+export function verifyStandardWebhooks(
+  rawBody: string | Buffer,
+  headers: HeaderBag,
+  secret: string,
+  options: { toleranceSeconds?: number; nowSeconds?: number } = {},
+): StandardWebhooksVerdict {
+  const id = header(headers, 'webhook-id');
+  const ts = header(headers, 'webhook-timestamp');
+  const sig = header(headers, 'webhook-signature');
+  if (id === undefined || ts === undefined || sig === undefined) return { accepted: false, reason: 'missing_headers', entries: [], matched: 0 };
+  const entries = sig.split(' ').filter((e) => e.length > 0);
+  if (id.includes('.') || id.length === 0) return { accepted: false, reason: 'malformed_id', entries, matched: 0 };
+  if (!/^\d+$/.test(ts)) return { accepted: false, reason: 'malformed_timestamp', entries, matched: 0 };
+  const tolerance = options.toleranceSeconds ?? DEFAULT_FRESHNESS_WINDOW_SECONDS;
+  const now = options.nowSeconds ?? Math.floor(Date.now() / 1000);
+  if (Math.abs(now - Number(ts)) > tolerance) return { accepted: false, reason: 'timestamp_out_of_tolerance', entries, matched: 0 };
+  const expected = Buffer.from(standardWebhooksSign(secret, id, ts, rawBody).slice(3), 'base64');
+  let matched = 0;
+  for (const entry of entries) {
+    const comma = entry.indexOf(',');
+    if (comma < 0 || entry.slice(0, comma) !== 'v1') continue;
+    const given = Buffer.from(entry.slice(comma + 1), 'base64');
+    if (given.length === expected.length && timingSafeEqual(given, expected)) matched += 1;
+  }
+  return matched > 0 ? { accepted: true, entries, matched } : { accepted: false, reason: 'no_matching_signature', entries, matched };
+}
+
+/** One request the modal receiver saw. `mode` is the path segment it was routed by. */
+export interface ModalHit {
+  readonly mode: string;
+  readonly path: string;
+  readonly method: string;
+  readonly headers: HeaderBag;
+  readonly body: string;
+  readonly status: number;
+  readonly verification: boolean;
+  readonly at: number;
+}
+
+/**
+ * RFC 0201 — the suite receiver with a VERIFICATION MODE per path.
+ *
+ * One server, many behaviours, routed by the path segment after a per-scenario
+ * nonce (`/<nonce>/<mode>`), because behind a public front every scenario shares
+ * ONE tunnelled URL and ONE pinned port: the mode has to travel in the URL the
+ * host is given, not in which local server happens to be listening.
+ *
+ *   echo        verification → 200 `{ challenge }`; delivery → 204
+ *   no-echo     verification → 200 `{}`;            delivery → 204
+ *   wrong-echo  verification → 200 `{ challenge: <another value> }`; delivery → 204
+ *   redirect    anything → 307 to `redirect-target` (a host MUST NOT follow it)
+ *   redirect-target  echo, but every hit is recorded so a followed redirect shows
+ *   fail2       verification → echo; delivery → 500 for the first two attempts of
+ *               each `(OpenWOP-Webhook-Id, runId, sequence)`, then 204
+ *
+ * A request is a VERIFICATION when its JSON body's `type` is
+ * `openwop.webhook.verification`; every hit is recorded either way.
+ */
+export async function startModalReceiver(): Promise<{
+  server: Server;
+  nonce: string;
+  hits: ModalHit[];
+  /** The URL to register for `mode` — the public front when `OPENWOP_WEBHOOK_RECEIVER_URL` is set, else loopback. */
+  urlFor: (mode: string) => { url: string; tunnelled: boolean };
+  close: () => Promise<void>;
+}> {
+  const nonce = randomBytes(6).toString('hex');
+  const hits: ModalHit[] = [];
+  const failures = new Map<string, number>();
+  const server = createServer((request: IncomingMessage, res: ServerResponse) => {
+    const chunks: Buffer[] = [];
+    request.on('data', (c: Buffer) => chunks.push(c));
+    request.on('end', () => {
+      const body = Buffer.concat(chunks).toString('utf8');
+      const path = request.url ?? '/';
+      const segs = path.split('?')[0]!.split('/').filter((x) => x.length > 0);
+      const at = segs.indexOf(nonce);
+      const mode = at >= 0 && at + 1 < segs.length ? segs[at + 1]! : '';
+      let parsed: Record<string, unknown> | null = null;
+      try { const j = JSON.parse(body) as unknown; parsed = j && typeof j === 'object' && !Array.isArray(j) ? (j as Record<string, unknown>) : null; } catch { /* not JSON */ }
+      const verification = parsed?.['type'] === 'openwop.webhook.verification';
+      const challenge = typeof parsed?.['challenge'] === 'string' ? (parsed['challenge'] as string) : undefined;
+      const record = (status: number): void => { hits.push({ mode, path, method: request.method ?? '', headers: request.headers, body, status, verification, at: Date.now() }); };
+      const json = (status: number, obj: unknown): void => { record(status); res.writeHead(status, { 'Content-Type': 'application/json' }); res.end(JSON.stringify(obj)); };
+      const empty = (status: number, extra: Record<string, string> = {}): void => { record(status); res.writeHead(status, extra); res.end(); };
+      switch (mode) {
+        case 'echo':
+        case 'redirect-target':
+          return verification ? json(200, { challenge }) : empty(204);
+        case 'no-echo':
+          return verification ? json(200, {}) : empty(204);
+        case 'wrong-echo':
+          return verification ? json(200, { challenge: challenge === undefined ? 'not-the-challenge' : `${challenge}x` }) : empty(204);
+        case 'redirect':
+          return empty(307, { Location: path.replace(`/${nonce}/redirect`, `/${nonce}/redirect-target`) });
+        case 'fail2': {
+          if (verification) return json(200, { challenge });
+          const ev = parsed?.['event'] as { sequence?: unknown } | undefined;
+          const key = `${String(header(request.headers, 'openwop-webhook-id') ?? header(request.headers, 'x-openwop-webhook-id') ?? '')}|${String(parsed?.['runId'] ?? '')}|${String(ev?.sequence ?? '')}`;
+          const n = (failures.get(key) ?? 0) + 1;
+          failures.set(key, n);
+          return empty(n <= 2 ? 500 : 204);
+        }
+        default:
+          return empty(404);
+      }
+    });
+  });
+  const pinned = Number(process.env['OPENWOP_WEBHOOK_RECEIVER_PORT'] ?? '');
+  const bindPort = Number.isInteger(pinned) && pinned > 0 && pinned < 65536 ? pinned : 0;
+  const binding = receiverBinding();
+  await new Promise<void>((resolve) => server.listen(bindPort, binding.bind, () => resolve()));
+  const addr = server.address();
+  if (typeof addr !== 'object' || addr === null) throw new Error('receiver address unavailable');
+  const local = `http://${binding.advertise}:${addr.port}`;
+  const urlFor = (mode: string): { url: string; tunnelled: boolean } => {
+    const front = resolveRegistrationUrl(`${local}/`);
+    return { url: `${front.url.replace(/\/+$/, '')}/${nonce}/${mode}`, tunnelled: front.tunnelled };
+  };
+  const close = (): Promise<void> => new Promise<void>((resolve) => server.close(() => resolve()));
+  return { server, nonce, hits, urlFor, close };
+}
+
+/** Header lookup over a recorded hit, case-insensitive. */
+export function hitHeader(hit: { headers: HeaderBag }, name: string): string | undefined {
+  return header(hit.headers, name);
 }
