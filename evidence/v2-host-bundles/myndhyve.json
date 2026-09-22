@@ -1,6 +1,6 @@
 {
   "bundleVersion": "3",
-  "generatedAt": "2026-09-22T02:46:00.423Z",
+  "generatedAt": "2026-09-22T03:15:19.594Z",
   "suite": {
     "name": "@openwop/openwop-conformance",
     "version": "2.35.0",
@@ -14,13 +14,13 @@
     "vendor": "myndhyve",
     "build": {
       "kind": "commit",
-      "id": "ace23a7e4f5da6caa770fcc751ecac8a0e8f81cf"
+      "id": "bca0e9b903f2c4bed641d1c97bd5400fac9a2b83"
     },
     "signingKeyId": "myndhyve-bundle-2026-09b"
   },
   "discovery": {
     "url": "https://api.myndhyve.ai/.well-known/openwop",
-    "sha256": "e1d9ab0d5806b48de62c22b84143f99027c600a5081a6482c13bfb42aaf5dc39",
+    "sha256": "38a44acf790df00d1d55c2c51edac11b9473c6d899f637fb54800ab8809e7b8c",
     "protocolVersions": [
       "1.0",
       "2.0"
@@ -840,6 +840,16 @@
           "status"
         ]
       },
+      "compensation": {
+        "status": "experimental",
+        "since": "2.0",
+        "until": "2027-03-31",
+        "witness": "seam-gated",
+        "profileVersion": "1",
+        "orderingModels": [
+          "reverse-completion"
+        ]
+      },
       "extensions": {
         "myndhyve.implementation": {
           "name": "workflow-runtime",
@@ -1017,10 +1027,10 @@
   ],
   "results": {
     "totals": {
-      "executedPass": 181,
+      "executedPass": 185,
       "executedFail": 0,
-      "skipped": 20,
-      "inapplicable": 60,
+      "skipped": 17,
+      "inapplicable": 59,
       "blocked": 0
     },
     "requirements": [
@@ -1097,8 +1107,7 @@
         "id": "openwop.scenario.v2-capability-record-shape",
         "scenario": "v2-capability-record-shape.test.ts",
         "result": "executed-pass",
-        "assertions": 205,
-        "detail": "partial-witness: inapplicable: no advertised family record carries an `until` (every record is stable, or none is advertised)"
+        "assertions": 212
       },
       {
         "id": "openwop.scenario.v2-chain-pin-exact",
@@ -1117,9 +1126,8 @@
       {
         "id": "openwop.scenario.v2-compensation-read-projection",
         "scenario": "v2-compensation-read-projection.test.ts",
-        "result": "skipped",
-        "assertions": 0,
-        "detail": "every test returned early through behaviorGate with zero assertions: operator opted the profile or family out (OPENWOP_OPTED_OUT_PROFILES)"
+        "result": "executed-pass",
+        "assertions": 8
       },
       {
         "id": "openwop.scenario.v2-configurable-closed",
@@ -1770,7 +1778,7 @@
           "recovery": {
             "class": "dispatch-hold",
             "boundMs": 45000,
-            "observedMs": 16442
+            "observedMs": 15579
           }
         }
       },
@@ -1783,7 +1791,7 @@
           "recovery": {
             "class": "dispatch-lease",
             "boundMs": 100000,
-            "observedMs": 70833
+            "observedMs": 70361
           }
         }
       },
@@ -1864,20 +1872,19 @@
         "id": "openwop.requirement.0169.capability-record-shape.required-fields",
         "scenario": "v2-capability-record-shape.test.ts",
         "result": "executed-pass",
-        "assertions": 164
+        "assertions": 168
       },
       {
         "id": "openwop.requirement.0169.capability-record-shape.until-iff-not-stable",
         "scenario": "v2-capability-record-shape.test.ts",
         "result": "executed-pass",
-        "assertions": 41
+        "assertions": 43
       },
       {
         "id": "openwop.requirement.0169.capability-record-shape.until-not-past",
         "scenario": "v2-capability-record-shape.test.ts",
-        "result": "inapplicable",
-        "assertions": 0,
-        "detail": "no advertised family record carries an `until` (every record is stable, or none is advertised)"
+        "result": "executed-pass",
+        "assertions": 1
       },
       {
         "id": "openwop.requirement.0169.profiles-derived-only.derivable",
@@ -2273,16 +2280,14 @@
       {
         "id": "openwop.requirement.0173.compensation-read-projection",
         "scenario": "v2-compensation-read-projection.test.ts",
-        "result": "skipped",
-        "assertions": 0,
-        "detail": "operator declared an honest opt-out via OPENWOP_OPTED_OUT_PROFILES"
+        "result": "executed-pass",
+        "assertions": 6
       },
       {
         "id": "openwop.requirement.0173.compensation-read-projection.not-found",
         "scenario": "v2-compensation-read-projection.test.ts",
-        "result": "skipped",
-        "assertions": 0,
-        "detail": "operator declared an honest opt-out via OPENWOP_OPTED_OUT_PROFILES"
+        "result": "executed-pass",
+        "assertions": 2
       },
       {
         "id": "openwop.requirement.0173.effect-identity-business-key",
@@ -2730,8 +2735,8 @@
       }
     ]
   },
-  "witnessSha256": "6156a36f500f8c43c41abd0b5e6a6f1a6be8b766ef548c9650ed1cb1b227c545",
-  "assertionCount": 1856,
+  "witnessSha256": "56545902fb813c866c34ae6ab951b57c66201c030c9076d342a2c045f8c764cd",
+  "assertionCount": 1886,
   "detail": {
     "nonPass": [
       {
@@ -2746,11 +2751,6 @@
       },
       {
         "id": "openwop.scenario.v2-chain-pin-exact",
-        "result": "skipped",
-        "reason": "every test returned early through behaviorGate with zero assertions: operator opted the profile or family out (OPENWOP_OPTED_OUT_PROFILES)"
-      },
-      {
-        "id": "openwop.scenario.v2-compensation-read-projection",
         "result": "skipped",
         "reason": "every test returned early through behaviorGate with zero assertions: operator opted the profile or family out (OPENWOP_OPTED_OUT_PROFILES)"
       },
@@ -2905,11 +2905,6 @@
         "reason": "inapplicable to any host: evidence/corpus-ledger.json is absent from this layout — the subject of this scenario is the corpus, which the published tarball does not ship; it runs in a spec checkout (scripts/check-spec-coherence.mjs) and needs no host"
       },
       {
-        "id": "openwop.requirement.0169.capability-record-shape.until-not-past",
-        "result": "inapplicable",
-        "reason": "no advertised family record carries an `until` (every record is stable, or none is advertised)"
-      },
-      {
         "id": "openwop.requirement.0170.assurance-downgrade-audited.audited",
         "result": "inapplicable",
         "reason": "seams profile not advertised (conformance.seamsProfile !== openwop-conformance-seams-v2) — the assurance floor is seam-gated"
@@ -2943,16 +2938,6 @@
         "id": "openwop.requirement.0171.error-registry.retry-after",
         "result": "inapplicable",
         "reason": "no 429 rate_limited response was observed during the suite's probes — the Retry-After leg is gated on a rate-limited response"
-      },
-      {
-        "id": "openwop.requirement.0173.compensation-read-projection",
-        "result": "skipped",
-        "reason": "operator declared an honest opt-out via OPENWOP_OPTED_OUT_PROFILES"
-      },
-      {
-        "id": "openwop.requirement.0173.compensation-read-projection.not-found",
-        "result": "skipped",
-        "reason": "operator declared an honest opt-out via OPENWOP_OPTED_OUT_PROFILES"
       },
       {
         "id": "openwop.requirement.0173.effect-identity-business-key.retry",
@@ -3142,7 +3127,7 @@
   "signature": {
     "alg": "ed25519",
     "keyId": "myndhyve-bundle-2026-09b",
-    "sig": "hw6Fv6OwI3xDwSAvw5ldBEc4muK69NyO336nZgTJ-Op8Hqb0nbkII0J72-Pf3D54WRGA5HS1SaQWJkcVosxVBw",
+    "sig": "bKpGEcGp_amKJykzVjVItT4eIKcNR36bV__OvcOV0piHlD_AYsblk8hhjHzayqrDjn3edgDiNv12aT3oDZpoCQ",
     "over": [
       "witnessSha256",
       "host.build",
