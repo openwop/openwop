@@ -1,12 +1,12 @@
 {
   "bundleVersion": "3",
-  "generatedAt": "2026-09-22T03:15:19.594Z",
+  "generatedAt": "2026-09-22T10:16:56.098Z",
   "suite": {
     "name": "@openwop/openwop-conformance",
-    "version": "2.35.0",
+    "version": "2.35.1",
     "targetMajor": 2,
-    "specArtifactsVersion": "2.35.0",
-    "stampSha256": "164c05f7216f16c89a05636375b4e5eaebce3c461eb3c24fb5a992750633765e"
+    "specArtifactsVersion": "2.35.1",
+    "stampSha256": "4b3e43f8c7b34b218c358dd8e8bbd8ca06b480346c58962abc297349937f5ae9"
   },
   "host": {
     "name": "workflow-runtime",
@@ -1458,7 +1458,7 @@
         "id": "openwop.scenario.v2-run-list",
         "scenario": "v2-run-list.test.ts",
         "result": "executed-pass",
-        "assertions": 29
+        "assertions": 31
       },
       {
         "id": "openwop.floor.v2-run-options-limits",
@@ -1691,35 +1691,35 @@
         "scenario": "v2-pack-isolation.test.ts",
         "result": "skipped",
         "assertions": 0,
-        "detail": "operator declared an honest opt-out via OPENWOP_OPTED_OUT_PROFILES"
+        "detail": "operator declared an honest opt-out via OPENWOP_OPTED_OUT_PROFILES: family.sandbox"
       },
       {
         "id": "openwop.it.v2-pack-isolation.node-pack-sandbox-fs-gated-a-host-filesystem-write-is-refused",
         "scenario": "v2-pack-isolation.test.ts",
         "result": "skipped",
         "assertions": 0,
-        "detail": "operator declared an honest opt-out via OPENWOP_OPTED_OUT_PROFILES"
+        "detail": "operator declared an honest opt-out via OPENWOP_OPTED_OUT_PROFILES: family.sandbox"
       },
       {
         "id": "openwop.it.v2-pack-isolation.node-pack-sandbox-network-gated-ungated-network-egress-is-refused",
         "scenario": "v2-pack-isolation.test.ts",
         "result": "skipped",
         "assertions": 0,
-        "detail": "operator declared an honest opt-out via OPENWOP_OPTED_OUT_PROFILES"
+        "detail": "operator declared an honest opt-out via OPENWOP_OPTED_OUT_PROFILES: family.sandbox"
       },
       {
         "id": "openwop.it.v2-pack-isolation.node-pack-sandbox-no-env-the-host-environment-does-not-leak",
         "scenario": "v2-pack-isolation.test.ts",
         "result": "skipped",
         "assertions": 0,
-        "detail": "operator declared an honest opt-out via OPENWOP_OPTED_OUT_PROFILES"
+        "detail": "operator declared an honest opt-out via OPENWOP_OPTED_OUT_PROFILES: family.sandbox"
       },
       {
         "id": "openwop.it.v2-pack-isolation.node-pack-sandbox-no-process-host-process-access-is-refused",
         "scenario": "v2-pack-isolation.test.ts",
         "result": "skipped",
         "assertions": 0,
-        "detail": "operator declared an honest opt-out via OPENWOP_OPTED_OUT_PROFILES"
+        "detail": "operator declared an honest opt-out via OPENWOP_OPTED_OUT_PROFILES: family.sandbox"
       },
       {
         "id": "openwop.requirement.0158.bound-is-derived",
@@ -1778,7 +1778,7 @@
           "recovery": {
             "class": "dispatch-hold",
             "boundMs": 45000,
-            "observedMs": 15579
+            "observedMs": 16233
           }
         }
       },
@@ -1791,7 +1791,7 @@
           "recovery": {
             "class": "dispatch-lease",
             "boundMs": 100000,
-            "observedMs": 70361
+            "observedMs": 70425
           }
         }
       },
@@ -2326,35 +2326,35 @@
         "scenario": "v2-pack-isolation.test.ts",
         "result": "skipped",
         "assertions": 0,
-        "detail": "operator declared an honest opt-out via OPENWOP_OPTED_OUT_PROFILES"
+        "detail": "operator declared an honest opt-out via OPENWOP_OPTED_OUT_PROFILES: family.sandbox"
       },
       {
         "id": "openwop.requirement.0173.pack-isolation.isolated-context",
         "scenario": "v2-pack-isolation.test.ts",
         "result": "skipped",
         "assertions": 0,
-        "detail": "operator declared an honest opt-out via OPENWOP_OPTED_OUT_PROFILES"
+        "detail": "operator declared an honest opt-out via OPENWOP_OPTED_OUT_PROFILES: family.sandbox"
       },
       {
         "id": "openwop.requirement.0173.pack-isolation.memory-cap",
         "scenario": "v2-pack-isolation.test.ts",
         "result": "skipped",
         "assertions": 0,
-        "detail": "operator declared an honest opt-out via OPENWOP_OPTED_OUT_PROFILES"
+        "detail": "operator declared an honest opt-out via OPENWOP_OPTED_OUT_PROFILES: family.sandbox"
       },
       {
         "id": "openwop.requirement.0173.pack-isolation.seam",
         "scenario": "v2-pack-isolation.test.ts",
         "result": "skipped",
         "assertions": 0,
-        "detail": "operator declared an honest opt-out via OPENWOP_OPTED_OUT_PROFILES"
+        "detail": "operator declared an honest opt-out via OPENWOP_OPTED_OUT_PROFILES: family.sandbox"
       },
       {
         "id": "openwop.requirement.0173.pack-isolation.timeout",
         "scenario": "v2-pack-isolation.test.ts",
         "result": "skipped",
         "assertions": 0,
-        "detail": "operator declared an honest opt-out via OPENWOP_OPTED_OUT_PROFILES"
+        "detail": "operator declared an honest opt-out via OPENWOP_OPTED_OUT_PROFILES: family.sandbox"
       },
       {
         "id": "openwop.requirement.0173.relaxation-recorded",
@@ -2565,28 +2565,28 @@
         "scenario": "v2-chain-pin-exact.test.ts",
         "result": "skipped",
         "assertions": 0,
-        "detail": "operator declared an honest opt-out via OPENWOP_OPTED_OUT_PROFILES"
+        "detail": "operator declared an honest opt-out via OPENWOP_OPTED_OUT_PROFILES: family.workflowChainPacks"
       },
       {
         "id": "openwop.requirement.0177.chain-pin-exact.external-range-refused",
         "scenario": "v2-chain-pin-exact.test.ts",
         "result": "skipped",
         "assertions": 0,
-        "detail": "operator declared an honest opt-out via OPENWOP_OPTED_OUT_PROFILES"
+        "detail": "operator declared an honest opt-out via OPENWOP_OPTED_OUT_PROFILES: family.workflowChainPacks"
       },
       {
         "id": "openwop.requirement.0177.chain-pin-exact.range-refused",
         "scenario": "v2-chain-pin-exact.test.ts",
         "result": "skipped",
         "assertions": 0,
-        "detail": "operator declared an honest opt-out via OPENWOP_OPTED_OUT_PROFILES"
+        "detail": "operator declared an honest opt-out via OPENWOP_OPTED_OUT_PROFILES: family.workflowChainPacks"
       },
       {
         "id": "openwop.requirement.0177.form-when-reuses-edge-conditions",
         "scenario": "v2-form-when-reuses-edge-conditions.test.ts",
         "result": "skipped",
         "assertions": 0,
-        "detail": "operator declared an honest opt-out via OPENWOP_OPTED_OUT_PROFILES"
+        "detail": "operator declared an honest opt-out via OPENWOP_OPTED_OUT_PROFILES: family.forms"
       },
       {
         "id": "openwop.requirement.0177.manifest-ceiling-refused.unbounded",
@@ -2665,7 +2665,7 @@
         "id": "openwop.requirement.0182.run-list.tenant-scoped",
         "scenario": "v2-run-list.test.ts",
         "result": "executed-pass",
-        "assertions": 25
+        "assertions": 27
       },
       {
         "id": "openwop.requirement.0184.bound-id-path-projection",
@@ -2735,8 +2735,8 @@
       }
     ]
   },
-  "witnessSha256": "56545902fb813c866c34ae6ab951b57c66201c030c9076d342a2c045f8c764cd",
-  "assertionCount": 1886,
+  "witnessSha256": "91b18b13bb5705111a0b084c683bdef4c6270a8f91ba54d6f647c43cd943d8f4",
+  "assertionCount": 1890,
   "detail": {
     "nonPass": [
       {
@@ -2877,27 +2877,27 @@
       {
         "id": "openwop.it.v2-pack-isolation.node-pack-sandbox-fs-gated-a-host-filesystem-read-is-refused",
         "result": "skipped",
-        "reason": "operator declared an honest opt-out via OPENWOP_OPTED_OUT_PROFILES"
+        "reason": "operator declared an honest opt-out via OPENWOP_OPTED_OUT_PROFILES: family.sandbox"
       },
       {
         "id": "openwop.it.v2-pack-isolation.node-pack-sandbox-fs-gated-a-host-filesystem-write-is-refused",
         "result": "skipped",
-        "reason": "operator declared an honest opt-out via OPENWOP_OPTED_OUT_PROFILES"
+        "reason": "operator declared an honest opt-out via OPENWOP_OPTED_OUT_PROFILES: family.sandbox"
       },
       {
         "id": "openwop.it.v2-pack-isolation.node-pack-sandbox-network-gated-ungated-network-egress-is-refused",
         "result": "skipped",
-        "reason": "operator declared an honest opt-out via OPENWOP_OPTED_OUT_PROFILES"
+        "reason": "operator declared an honest opt-out via OPENWOP_OPTED_OUT_PROFILES: family.sandbox"
       },
       {
         "id": "openwop.it.v2-pack-isolation.node-pack-sandbox-no-env-the-host-environment-does-not-leak",
         "result": "skipped",
-        "reason": "operator declared an honest opt-out via OPENWOP_OPTED_OUT_PROFILES"
+        "reason": "operator declared an honest opt-out via OPENWOP_OPTED_OUT_PROFILES: family.sandbox"
       },
       {
         "id": "openwop.it.v2-pack-isolation.node-pack-sandbox-no-process-host-process-access-is-refused",
         "result": "skipped",
-        "reason": "operator declared an honest opt-out via OPENWOP_OPTED_OUT_PROFILES"
+        "reason": "operator declared an honest opt-out via OPENWOP_OPTED_OUT_PROFILES: family.sandbox"
       },
       {
         "id": "openwop.requirement.0168.coherence-not-in-bundle.disjoint-by-construction",
@@ -2952,27 +2952,27 @@
       {
         "id": "openwop.requirement.0173.pack-isolation",
         "result": "skipped",
-        "reason": "operator declared an honest opt-out via OPENWOP_OPTED_OUT_PROFILES"
+        "reason": "operator declared an honest opt-out via OPENWOP_OPTED_OUT_PROFILES: family.sandbox"
       },
       {
         "id": "openwop.requirement.0173.pack-isolation.isolated-context",
         "result": "skipped",
-        "reason": "operator declared an honest opt-out via OPENWOP_OPTED_OUT_PROFILES"
+        "reason": "operator declared an honest opt-out via OPENWOP_OPTED_OUT_PROFILES: family.sandbox"
       },
       {
         "id": "openwop.requirement.0173.pack-isolation.memory-cap",
         "result": "skipped",
-        "reason": "operator declared an honest opt-out via OPENWOP_OPTED_OUT_PROFILES"
+        "reason": "operator declared an honest opt-out via OPENWOP_OPTED_OUT_PROFILES: family.sandbox"
       },
       {
         "id": "openwop.requirement.0173.pack-isolation.seam",
         "result": "skipped",
-        "reason": "operator declared an honest opt-out via OPENWOP_OPTED_OUT_PROFILES"
+        "reason": "operator declared an honest opt-out via OPENWOP_OPTED_OUT_PROFILES: family.sandbox"
       },
       {
         "id": "openwop.requirement.0173.pack-isolation.timeout",
         "result": "skipped",
-        "reason": "operator declared an honest opt-out via OPENWOP_OPTED_OUT_PROFILES"
+        "reason": "operator declared an honest opt-out via OPENWOP_OPTED_OUT_PROFILES: family.sandbox"
       },
       {
         "id": "openwop.requirement.0175.legacy-profiles-absent",
@@ -3067,22 +3067,22 @@
       {
         "id": "openwop.requirement.0177.chain-pin-exact.exact-accepted",
         "result": "skipped",
-        "reason": "operator declared an honest opt-out via OPENWOP_OPTED_OUT_PROFILES"
+        "reason": "operator declared an honest opt-out via OPENWOP_OPTED_OUT_PROFILES: family.workflowChainPacks"
       },
       {
         "id": "openwop.requirement.0177.chain-pin-exact.external-range-refused",
         "result": "skipped",
-        "reason": "operator declared an honest opt-out via OPENWOP_OPTED_OUT_PROFILES"
+        "reason": "operator declared an honest opt-out via OPENWOP_OPTED_OUT_PROFILES: family.workflowChainPacks"
       },
       {
         "id": "openwop.requirement.0177.chain-pin-exact.range-refused",
         "result": "skipped",
-        "reason": "operator declared an honest opt-out via OPENWOP_OPTED_OUT_PROFILES"
+        "reason": "operator declared an honest opt-out via OPENWOP_OPTED_OUT_PROFILES: family.workflowChainPacks"
       },
       {
         "id": "openwop.requirement.0177.form-when-reuses-edge-conditions",
         "result": "skipped",
-        "reason": "operator declared an honest opt-out via OPENWOP_OPTED_OUT_PROFILES"
+        "reason": "operator declared an honest opt-out via OPENWOP_OPTED_OUT_PROFILES: family.forms"
       },
       {
         "id": "openwop.requirement.0177.manifest-ceiling-refused.unbounded",
@@ -3127,7 +3127,7 @@
   "signature": {
     "alg": "ed25519",
     "keyId": "myndhyve-bundle-2026-09b",
-    "sig": "bKpGEcGp_amKJykzVjVItT4eIKcNR36bV__OvcOV0piHlD_AYsblk8hhjHzayqrDjn3edgDiNv12aT3oDZpoCQ",
+    "sig": "uBpMp1wEKbEuPWB65hmsniZyq3mgVfU82j5yr5FvNyf1UWhMuefSuydHLo0GBu3T-oUI7qJwQL8MGmqeA_zzDw",
     "over": [
       "witnessSha256",
       "host.build",
