@@ -38,8 +38,6 @@ Every family in `spec/v2/declaration.json`, every requirement in `conformance/re
 
 A protocol-tier invariant marked `unwitnessable` MUST fail the corpus gate. `tests: []` is expressible only as `unwitnessable`. A bundle disposition `blocked` does not exist as a witness class: what v1 called blocked is `seam-gated` or `unwitnessable`.
 
-The six v1 certification admissions map to one class each: the shape-versus-behavior dual grade is `witnessable-gated` on the behavioral leg, never two grades; "blocked as unobservable" is `seam-gated` or `unwitnessable`; install-time-only extension opacity is `claims-check`; corpus-structural legs run in the spec repo's CI and have no host class; gRPC end-to-end is `unwitnessable` (interop.md); a negative-existence claim is `negative-existence`.
-
 A MUST whose only witness is `seam-gated` MUST either mint a normative observation path before the cut or be demoted to SHOULD. The seam count in `docs/witness-baseline.json` is a ratchet and MUST NOT rise.
 
 ## The seams profile
