@@ -1,0 +1,36 @@
+{
+  "kind": "node",
+  "name": "vendor.acme.salesforce-tools",
+  "version": "1.4.2",
+  "engines": {
+    "openwop": ">=2.0 <3.0.0"
+  },
+  "nodes": [
+    {
+      "typeId": "vendor.acme.salesforce.upsert",
+      "version": "1.4.2",
+      "category": "integration",
+      "role": "side-effect"
+    }
+  ],
+  "runtime": {
+    "language": "remote",
+    "entry": "https://mcp.acme.example/salesforce",
+    "mcpServer": {
+      "name": "io.github.acme/salesforce",
+      "description": "Salesforce objects as MCP tools",
+      "version": "1.4.2",
+      "remotes": [
+        {
+          "type": "streamable-http",
+          "url": "https://mcp.acme.example/salesforce"
+        }
+      ],
+      "_meta": {
+        "io.modelcontextprotocol.registry/publisher-provided": {
+          "tool": "publisher-cli"
+        }
+      }
+    }
+  }
+}

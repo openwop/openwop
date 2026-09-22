@@ -8,7 +8,7 @@ Every error a v2 host returns is a row in one registry. A client routes on `erro
 
 ## The registry
 
-`spec/v2/errors.json` holds one row per code: `{ code, httpStatus, retriable, details, since, deprecated? }` plus the provenance fields `statusSource` and `source`. It registers **101** codes. `schemas/v2/error-envelope.schema.json` is GENERATED from it and MUST NOT be edited by hand.
+`spec/v2/errors.json` holds one row per code: `{ code, httpStatus, retriable, details, since, deprecated? }` plus the provenance fields `statusSource` and `source`. It registers **103** codes. `schemas/v2/error-envelope.schema.json` is GENERATED from it and MUST NOT be edited by hand.
 
 A host MUST return a registered code, or a vendor code, in every error response. A vendor code MUST match `^(?!openwop\.)[a-z][a-z0-9]*(-[a-z0-9]+)*\.[a-z][a-z0-9_]*$` with its first segment an org registered in `spec/v2/declaration.json`; `openwop.` is reserved. The registry grows by overview.md §0.
 
@@ -28,7 +28,7 @@ An interrupt has one code per state: a token or run-scoped resolve against an in
 
 ## Codes by HTTP status
 
-Generated from `spec/v2/errors.json` (101 codes; `retriable` and `statusSource` are in the registry).
+Generated from `spec/v2/errors.json` (103 codes; `retriable` and `statusSource` are in the registry).
 
 Code | Status
 --- | ---
@@ -54,9 +54,11 @@ Code | Status
 `schedule_horizon_exceeded` | 400
 `sub_chain_cycle` | 400
 `sub_chain_depth_exceeded` | 400
+`unsupported_runtime` | 400
 `unsupported_stream_mode` | 400
 `until_in_past` | 400
 `validation_error` | 400
+`webhook_endpoint_unverified` | 400
 `webhook_url_rejected` | 400
 `audience_mismatch` | 401
 `connector_auth_expired` | 401

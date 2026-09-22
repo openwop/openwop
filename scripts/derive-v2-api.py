@@ -125,6 +125,15 @@ def v2_openapi_and_seams():
             'properties': {'secret': {'type': 'string', 'minLength': 1}, 'headers': {'type': 'object', 'additionalProperties': {'type': 'string'}}, 'body': {'type': 'string'}}}}}},
         'responses': {'200': {'description': 'The verifier verdict.', 'content': {'application/json': {'schema': {'type': 'object', 'additionalProperties': False, 'required': ['accepted'], 'properties': {'accepted': {'type': 'boolean'}, 'reason': {'type': 'string'}}}}}},
             '400': {'$ref': '#/components/responses/ValidationError'}, '401': {'$ref': '#/components/responses/Unauthenticated'}}}}
+    # RFC 0209 §A–§C witness: the v2 emit-surface seam (v1 host-sample-test-seams.md §15, re-cut for schema version 2).
+    seams['paths']['/conformance/seams/sample/a2ui/emit-surface'] = {'post': {'tags': ['Seams'], 'operationId': 'emitA2uiSurface',
+        'summary': 'Admit one `ui.a2ui-surface` envelope into a run through the production envelope-admission path — RFC 0209 witness',
+        'description': 'A real `ui.a2ui-surface` envelope is emitted by a model inside a node turn, so the suite cannot choose one from the canonical wire. This seam supplies the envelope ONLY. The host MUST admit it through its PRODUCTION envelope-admission path — the envelope-kind catalog (`supportedEnvelopes`, `schemaVersions`, `envelopeStrictness`, events.md §"The envelope-kind catalog"), validation against the ONE per-kind branch the schema version selects (never the `anyOf` union), the RFC 0209 cross-field rules (every message `surfaceId` equals the payload `surfaceId`; a `createSurface.catalogId` equals the payload `catalogId`), the surface-fold guard (spec/v2/ext/a2uiSurface/README.md §"The fold"), trust propagation and SR-1 redaction — and MUST record it exactly as production would. It MUST NOT be a mock that records without those rules. `envelope.nodeId`, when present, binds the surface to that node, so a surface emitted at a node suspended on an `approval` interrupt is the surface whose `resume` action would resolve it (§"Trust": a tainted fold blocks that interrupt). Refusals use the canonical error envelope: `422 unknown_schema_version` above the floor or under `strict` below it, `422 envelope_invalid` for a payload that fails its branch, a cross-field rule or the fold guard, `422 unknown_envelope_kind` when the host does not list the kind; `details` SHOULD name the rule. A host that has not wired the seam answers `404`/`405`, and the scenario records `inapplicable`.',
+        'requestBody': {'required': True, 'content': {'application/json': {'schema': {'type': 'object', 'additionalProperties': False, 'required': ['runId', 'envelope'],
+            'properties': {'runId': {'$ref': '../schemas/v2/ids.schema.json#/$defs/runId'}, 'envelope': {'$ref': '../schemas/v2/ai-envelope.schema.json', 'description': 'A complete AI envelope whose `type` is `ui.a2ui-surface`; `schemaVersion` selects the payload branch.'}}}}}},
+        'responses': {'201': {'description': 'Admitted and recorded; `sequence` is the run event that records the envelope.', 'content': {'application/json': {'schema': {'type': 'object', 'additionalProperties': False, 'required': ['sequence'], 'properties': {'sequence': {'type': 'integer', 'minimum': 0}}}}}},
+            '400': {'$ref': '#/components/responses/ValidationError'}, '401': {'$ref': '#/components/responses/Unauthenticated'}, '404': {'$ref': '#/components/responses/NotFound'},
+            '422': {'description': 'Refused by envelope admission (`unknown_schema_version`, `envelope_invalid`, `unknown_envelope_kind`).', 'content': {'application/json': {'schema': {'$ref': '#/components/schemas/Error'}}}}}}}
     # RFC 0173 read surfaces + hostEvents default address
     paths['/host/effect-seams'] = {'get': {'tags': ['host'], 'operationId': 'getEffectSeamManifest', 'summary': 'The host-declared effect-seam manifest (RFC 0173 §C)', 'description': 'Every outbound effect seam replay suppression covers. A seam omitted here is invisible to the suite; the RFC 0140 R5 audit is the control.', 'responses': {'200': {'description': 'The manifest.', 'content': {'application/json': {'schema': {'$ref': '../../schemas/v2/effect-seam-manifest.schema.json'}}}}, '401': {'$ref': '#/components/responses/Unauthenticated'}}}}
     paths['/runs/{runId}/compensation'] = {'parameters': [{'$ref': '#/components/parameters/RunId'}], 'get': {'tags': ['runs'], 'operationId': 'getRunCompensation', 'summary': 'Compensation plan and attempts for a run (RFC 0173 §C.1)', 'description': 'The read projection that makes compensation a core obligation with a deployed-wire witness (RFC 0151 G9 / RFC 0173 §B).', 'responses': {'200': {'description': 'The projection.', 'content': {'application/json': {'schema': {'$ref': '../../schemas/v2/compensation-projection.schema.json'}}}}, '404': {'$ref': '#/components/responses/NotFound'}}}}
@@ -221,6 +230,47 @@ def v2_openapi_and_seams():
                     'Tenant-bound `<tenantId>/<opaque>` (`identity.md` §5, RFC 0187 §A.1), one path\n'
                     'segment: `~`-projected (RFC 0184) or percent-encoded.\n'
                 )
+    # RFC 0201 — the Standard Webhooks opt-in. The v1 document is the source, so the v2 difference
+    # is applied by name: the item vocabulary is the facet enum (v1 keeps free strings).
+    try:
+        reg_body = paths['/webhooks']['post']['requestBody']['content']['application/json']['schema']['properties']
+        reg_body['signatureAlgorithms']['items'] = {'type': 'string', 'enum': ['v1', 'standard-webhooks-1']}
+    except (KeyError, TypeError):
+        pass
+    # RFC 0201 §E — rotateWebhookSecret, a v2 operation (like RFC 0188's dead-letter read). Its v1
+    # route (`POST /v1/webhooks/{webhookId}/rotate-secret?tenantId=`) is defined in v1 webhooks.md
+    # prose and is NOT added to api/openapi.yaml: a new canonical v1 operation obliges the
+    # openwop-sdks parity manifest, which vendors a published corpus tag.
+    paths['/webhooks/{webhookId}/rotate-secret'] = {'post': {
+        'tags': ['webhooks'],
+        'operationId': 'rotateWebhookSecret',
+        'summary': "Rotate a Standard Webhooks subscription's secret with an overlap (RFC 0201 \u00a7E)",
+        'description': ('Gated on `webhooks.secretRotation`: a host that does not advertise it MUST answer `404 not_found`. '
+            'Only for a subscription that opted into `standard-webhooks-1`; any other subscription gets `400 validation_error` '
+            '(its single `v1` signature cannot overlap). Tenant checks are exactly those of `unregisterWebhook`: '
+            '`403 id_tenant_mismatch` when the id\'s tenant segment is not the caller\'s, checked before the lookup '
+            '(`identity.md` \u00a75); `404` when unknown. For `overlapSeconds` after `rotatedAt`, `webhook-signature` carries '
+            'one entry under the new secret and one under the previous one, and `OpenWOP-Signature` stays on the previous '
+            'secret; at `previousSecretExpiresAt` only the new secret signs. A second rotation inside an overlap retires the '
+            'oldest secret immediately. Rotation does not re-verify the endpoint. The response carries no secret.'),
+        'parameters': [
+            {'name': 'webhookId', 'in': 'path', 'required': True,
+             'schema': {'$ref': '../../schemas/v2/ids.schema.json#/$defs/subscriptionId'},
+             'description': 'Tenant-bound `<tenantId>/<opaque>` (`identity.md` \u00a75, RFC 0187 \u00a7A.1), one path segment: `~`-projected (RFC 0184) or percent-encoded.'},
+            {'$ref': '#/components/parameters/IdempotencyKey'}],
+        'requestBody': {'required': True, 'content': {'application/json': {'schema': {
+            'type': 'object', 'required': ['secret'], 'additionalProperties': False,
+            'properties': {'secret': {'type': 'string', 'pattern': '^whsec_[A-Za-z0-9+/]+={0,2}$',
+                'description': 'The new secret, `whsec_<base64>` decoding to 24\u201364 bytes (RFC 0201 \u00a7B.6).'}}}}}},
+        'responses': {
+            '200': {'description': 'Rotated. No secret is returned.', 'content': {'application/json': {'schema': {
+                'type': 'object', 'required': ['rotatedAt', 'previousSecretExpiresAt'], 'additionalProperties': False,
+                'properties': {'rotatedAt': {'type': 'string', 'format': 'date-time'},
+                    'previousSecretExpiresAt': {'type': 'string', 'format': 'date-time', 'description': '`rotatedAt + overlapSeconds`.'}}}}}},
+            '400': {'$ref': '#/components/responses/ValidationError'},
+            '401': {'$ref': '#/components/responses/Unauthenticated'},
+            '403': {'$ref': '#/components/responses/Forbidden'},
+            '404': {'$ref': '#/components/responses/NotFound'}}}}
     try:
         reg = paths['/webhooks']['post']['responses']['201']['content']['application/json']['schema']['properties']['webhookId']
         reg.clear()
@@ -376,7 +426,7 @@ def headers_doc(doc):
     lines += ['', '## Response headers', '', '| Header | Operations | Meaning |', '| --- | --- | --- |']
     for n in sorted(resp):
         lines.append(f"| `{n}` | {len(resp[n]['ops'])} | {resp[n]['desc']} |")
-    lines += ['', '## Webhook delivery headers', '', 'Declared in `webhooks.md`, not in OpenAPI (the host is the client): `OpenWOP-Webhook-Id`, `OpenWOP-Event-Type`, `OpenWOP-Timestamp`, `OpenWOP-Signature`, `OpenWOP-Signature-Algorithm` (RFC 0165 §C.1). The `X-openwop-*` family is emitted beside them through the overlap and removed at v1 end-of-support (`spec/v1/deprecations.json` `webhook-x-header-family`).', '',
+    lines += ['', '## Webhook delivery headers', '', 'Declared in `webhooks.md`, not in OpenAPI (the host is the client): `OpenWOP-Webhook-Id`, `OpenWOP-Event-Type`, `OpenWOP-Timestamp`, `OpenWOP-Signature`, `OpenWOP-Signature-Algorithm` (RFC 0165 §C.1). The `X-openwop-*` family is emitted beside them through the overlap and removed at v1 end-of-support (`spec/v1/deprecations.json` `webhook-x-header-family`). On a subscription that opted into Standard Webhooks (webhooks.md), that standard\'s `webhook-id`, `webhook-timestamp` and `webhook-signature`, which keep their standard names (RFC 0201 §F).', '',
               '## Removed in v2', '', '`Capabilities-Etag` (the standard `ETag`/`If-None-Match` pair applies to the discovery document), `X-Dedup`, `X-Force-Engine-Version`, `X-Pack-Sha256`, `X-Pack-Signing-Method` (renamed under the one scheme), `X-openwop-*` (webhooks), `openwop-Webhook-Signature` (SDK-only). Each has a `spec/v1/deprecations.json` row with a removal trigger.', '']
     return '\n'.join(lines)
 

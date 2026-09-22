@@ -3622,6 +3622,8 @@ invariants:
     threat_model: SECURITY/threat-model-prompt-injection.md
     tests:
       - conformance/src/scenarios/a2ui-surface-shape.test.ts
+      - conformance/src/coherence/a2ui-v09-profile.test.ts
+      - conformance/src/scenarios/v2-a2ui-v09-surface.test.ts
     note: |
       RFC 0102 §A.2 / ai-envelope.md §"A2UI surfaces" rule 2. A `ui.a2ui-surface`
       action MUST resolve to exactly one host-allowlisted target — a run interrupt
@@ -3633,6 +3635,10 @@ invariants:
       validation. Public test: the server-free Ajv2020 leg in `a2ui-surface-shape.test.ts`
       asserts a valid resume/exchange action validates and an out-of-enum / extra-prop
       action target is rejected.
+      Schema version 2 (RFC 0209 §B.7): `Button.action` is the A2UI server-event arm only,
+      `event.name` enum `resume`/`exchange`; the `functionCall` arm (client functions, incl.
+      `openUrl`) is excluded by the closed `$defs/action` (corpus gate:
+      `a2ui-v09-profile.test.ts`, which also shows upstream A2UI accepts both negatives).
     witness: claims-check
     witnessReview: reviewed-2026-09-02
 
@@ -3642,6 +3648,7 @@ invariants:
     threat_model: SECURITY/threat-model-prompt-injection.md
     tests:
       - conformance/src/scenarios/a2ui-untrusted-blocks-approval.test.ts
+      - conformance/src/scenarios/v2-a2ui-v09-surface.test.ts
     note: |
       RFC 0102 §A.5. A `ui.a2ui-surface` emitted by a node that consumed untrusted
       MCP/A2A content MUST carry `meta.contentTrust: 'untrusted'`, and the existing
@@ -3650,6 +3657,9 @@ invariants:
       Composition of the existing untrusted-content rule for this kind; public test
       `a2ui-untrusted-blocks-approval.test.ts` asserts an untrusted-marked surface bound
       to an approval interrupt is refused.
+      Schema version 2: trust is sticky across a surface's fold (RFC 0209 §C.12) — one
+      untrusted envelope taints the whole surface and a later trusted update does not
+      launder it (`v2-a2ui-v09-surface.test.ts` taint-sticky leg, seams-gated).
     witness: seam-gated
     witnessReview: reviewed-2026-09-02
 
@@ -3667,6 +3677,7 @@ invariants:
       ALL envelope payloads; the a2ui payload carries only text/label/binding fields
       (closed schema) and no opaque blob field, so there is no secret-bearing channel to
       bypass redaction.
+      Schema version 2 (RFC 0209): the v2 walk covers every `messages[]` item.
     witness: witnessable-gated
     witnessReview: initial-mechanical-2026-09-02
 
@@ -3686,6 +3697,8 @@ invariants:
       0051). The closed `anyOf` `surface` schema (verified server-free in
       `a2ui-surface-shape.test.ts`) is the enabling precondition: a surface that smuggles a
       script-bearing field fails schema validation before it can reach a renderer.
+      Schema version 2 (RFC 0209 §B.6): `FunctionCall` values are excluded except
+      `checks[].condition` → `required` (corpus gate: `a2ui-v09-profile.test.ts`).
     witness: claims-check
     witnessReview: initial-mechanical-2026-09-02
 
@@ -3701,8 +3714,30 @@ invariants:
       Render-side guarantee, reference-app client probe (suite-version requirement). The
       schema's confined `action.target` enum (no arbitrary URL) is the structural
       precondition verified server-free in `a2ui-surface-shape.test.ts`.
+      Schema version 2 (RFC 0209 §B.5–§B.6) excludes `Image`, `Video`, `AudioPlayer` and
+      `createSurface.theme.iconUrl` (corpus gate: `a2ui-v09-profile.test.ts`).
     witness: claims-check
     witnessReview: initial-mechanical-2026-09-02
+
+  - id: a2ui-surface-no-secret-input
+    tier: protocol
+    severity: high
+    threat_model: SECURITY/threat-model-prompt-injection.md
+    tests:
+      - conformance/src/coherence/a2ui-v09-profile.test.ts
+    note: |
+      RFC 0209 §B.8. A `ui.a2ui-surface` (schema version 2) MUST NOT solicit a secret:
+      `TextField.variant: "obscured"` is excluded by the closed profile, so a surface
+      that asks for a password or API key fails per-kind validation (corpus gate:
+      `a2ui-v09-profile.test.ts`; upstream A2UI accepts it). Collected values become an
+      interrupt `resumeValue` in the event log; SR-1 redaction is a backstop, not a
+      licence. Mirrors MCP 2026-07-28 client/elicitation ("Servers MUST NOT use form
+      mode elicitation to request sensitive information"). Witness class reviewed
+      against its structural sibling `a2ui-action-confinement` (claims-check: the closed
+      schema is the enforcement, the corpus gate proves the exclusion, and the "evident
+      purpose" half has no black-box observable).
+    witness: claims-check
+    witnessReview: reviewed-2026-09-22
 
   - id: content-published-cache-no-draft
     tier: protocol
@@ -4379,3 +4414,49 @@ invariants:
       createRun a MUST and names IPv4-mapped IPv6 (MCP only warns about it).
     witness: witnessable-gated
     witnessReview: reviewed-2026-09-21
+  - id: webhook-endpoint-verification-opt-in
+    tier: protocol
+    severity: high
+    threat_model: SECURITY/threat-model-secret-leakage.md
+    tests:
+      - conformance/src/scenarios/v2-webhook-endpoint-verification.test.ts
+      - conformance/src/scenarios/v2-webhook-standard-webhooks-delivery.test.ts
+    note: |
+      RFC 0201 §D / spec/v2/core/webhooks.md §Standard Webhooks. A registration
+      that opts into `standard-webhooks-1` MUST NOT succeed unless the endpoint
+      echoes a fresh verification challenge (one signed request, no redirect
+      followed, 10 s); a refused registration persists nothing and receives no
+      later delivery. A registration that does NOT opt in MUST NOT be verified.
+
+      Why this is an invariant: a registration is a standing instruction for
+      the host to POST, with durable retries, to a URL the caller chose. Without
+      consent a member of any tenant can aim that traffic at a third party; the
+      egress guard protects the host's network, not the victim's endpoint. The
+      opt-in form closes flooding-by-registration only for subscriptions that
+      ask for it; verification for every subscription would reject
+      registrations that succeed today and is a safety-fix (RFC 0201 UQ3).
+      Witnessed by `v2-webhook-endpoint-verification` (no-echo, wrong-echo and
+      redirect refusals, zero later deliveries) and the opt-in-only control in
+      `v2-webhook-standard-webhooks-delivery` (a non-opted registration against
+      a non-echoing endpoint still gets 201 and no verification request).
+    witness: witnessable-gated
+    witnessReview: reviewed-2026-09-22
+  - id: webhook-message-id-stable
+    tier: protocol
+    severity: medium
+    threat_model: SECURITY/threat-model-secret-leakage.md
+    tests:
+      - conformance/src/scenarios/v2-webhook-message-id-stable.test.ts
+    note: |
+      RFC 0201 §C.10. On a subscription opted into `standard-webhooks-1` the
+      signed `webhook-id` is identical on every attempt of one
+      `(webhookId, runId, sequence)` and distinct across deliveries, and it is
+      not derived from the secret. It is the receiver's authenticated
+      idempotency key: because it is inside the signed bytes, a receiver that
+      dedups on it dedups on a value no one on the path can rewrite. A
+      per-attempt id makes a durable host's retries look like new events; a
+      constant id makes new events look like retries. The restart half (an
+      attempt after a host restart reuses the id) is seam-gated on the RFC 0158
+      hook and not claimed by the scenario.
+    witness: witnessable-gated
+    witnessReview: reviewed-2026-09-22

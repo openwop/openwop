@@ -3,7 +3,7 @@
   "t0": "2026-09-18",
   "openAtT0": 66,
   "$openAtT0Comment": "Re-seeded 2026-09-19 from 68 to 66 when the burn-down denominator changed from `v1Dependent + undeclared` to what RFC 0189 §D actually makes fatal (`undeclared + uncarried`). 66 is what `undeclared` was at t0; the 2 v1-dependent families of that day are no longer counted by the calendar. A SNAPSHOT taken at the start of t0, not a running total. `undeclared` + `v1Dependent` below are CURRENT and are already lower \u2014 two commits on t0 retired five families. The difference is real headroom in the burn-down and is intentional; do not 'reconcile' them by lowering openAtT0, which would retroactively steepen a schedule already met.",
-  "v1Dependent": 43,
+  "v1Dependent": 42,
   "undeclared": 0,
   "facetsUncovered": 0,
   "v1Banners": {
@@ -69,7 +69,6 @@
     "agents",
     "production",
     "prompts",
-    "nodePackRuntimes",
     "envelopes",
     "feedback",
     "providerUsage"

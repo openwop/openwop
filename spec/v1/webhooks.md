@@ -42,6 +42,8 @@ Authentication: same as the rest of the canonical surface (`auth.md`). The calle
 | `events`   | string[] | yes      | One or more `RunEventType` values. Empty array → 400.                                                            |
 | `tenantId` | string   | yes      | Workspace under which the subscription lives. Caller MUST be a member. **Takes the RFC 0048 `workspace` value, not `tenant`** — see the note below.                                           |
 | `tags`     | string[] | no       | When set, only runs whose `RunOptions.tags` overlap deliver to this subscription.                                |
+| `secret`   | string   | no       | Client-supplied signing secret. **REQUIRED**, in the form `whsec_<base64>` decoding to 24–64 bytes, when `signatureAlgorithms` lists `standard-webhooks-1` (RFC 0201 §B.6). Never echoed in any response. |
+| `signatureAlgorithms` | string[] | no | RFC 0201 §B. Absent ⇒ `["v1"]`, today's behaviour byte for byte. When present it MUST contain `"v1"`, MUST NOT repeat a value, and every value MUST be listed in the host's `capabilities.webhooks.signatureAlgorithms`; otherwise `400 validation_error`. Listing `"standard-webhooks-1"` opts this subscription into §"Standard Webhooks companion scheme (RFC 0201)", including endpoint verification. The `201` echoes the applied list. |
 
 > **`tenantId` carries the RFC 0048 `workspace`, not the RFC 0048 `tenant`.** The field name
 > predates RFC 0048 and is retained for v1 wire compatibility (renaming a required request
@@ -160,6 +162,18 @@ The signature scheme described above is canonically labeled `v1` (HMAC-SHA256 ov
 
 This is additive: the absence-equals-`v1` rule preserves every existing subscriber implementation.
 
+A *companion* scheme, one whose headers are sent in the same delivery beside an unchanged `v1` signature (`standard-webhooks-1`, RFC 0201), is not "delivering under a new scheme": it needs no dual delivery, and `X-openwop-Signature-Algorithm` stays `v1`.
+
+### Standard Webhooks companion scheme (RFC 0201)
+
+`standard-webhooks-1` names the **symmetric** (HMAC-SHA256) scheme of [Standard Webhooks 1.0.0](https://github.com/standard-webhooks/standard-webhooks/blob/v1.0.0/spec/standard-webhooks.md). A host MAY list it in `capabilities.webhooks.signatureAlgorithms` beside `"v1"`. Every rule below binds **only** a subscription whose registration listed it; a subscription registered without `signatureAlgorithms` is unaffected, its deliveries MUST NOT carry `webhook-*` headers, and its registration MUST NOT be verified.
+
+- **The `v1` collision.** Standard Webhooks prefixes each signature with its own token `v1` (`webhook-signature: v1,<base64>`). That token appears only inside `webhook-signature`; the OpenWOP scheme id `v1` appears only in `X-openwop-Signature-Algorithm` / `OpenWOP-Signature-Algorithm`, `signatureAlgorithms[]` and registration bodies. A host MUST NOT write `standard-webhooks-1` into either algorithm header, which stays `v1` on every delivery. A subscriber MUST NOT read one token as the other.
+- **Delivery.** Every delivery to an opted-in subscription carries, unchanged, every header this document already requires (the `X-openwop-*` family and, per RFC 0165, the `OpenWOP-*` family under scheme `v1`) and MUST also carry `webhook-id`, `webhook-timestamp` (Unix seconds, MUST equal `X-openwop-Timestamp`) and `webhook-signature`: one or more space-separated entries `v1,<base64(HMAC-SHA256(key, "{webhook-id}.{webhook-timestamp}.{rawBody}"))>`, where `key` is the base64 decoding of the secret after `whsec_`. The `v1` scheme keeps the secret string as issued as its HMAC key, so one secret keys both schemes. These three headers keep Standard Webhooks' names (RFC 0201 §F).
+- **The signed delivery id.** `webhook-id` MUST match `^[A-Za-z0-9_-]{16,128}$`, MUST be identical on every attempt of one delivery (`(webhookId, runId, sequence)`), including an attempt after a host restart, MUST differ between distinct deliveries, and MUST NOT be derived from the secret. `X-openwop-Webhook-Id` keeps its meaning (the subscription id) and MUST NOT be set to the `webhook-id` value.
+- **Endpoint verification.** Before answering `201`, the host MUST send one `POST` to `url` with body `{ "type": "openwop.webhook.verification", "challenge": "<c>" }` (`c` a fresh base64url value of at least 128 bits; `schemas/v2/webhook-verification.schema.json`), signed with the three `webhook-*` headers as above and carrying no event-type header, under the same rules as §"Delivery-time egress validation" (re-resolve, pinned connect, no redirects). Unless a `2xx` arrives within 10 seconds whose JSON `challenge` equals `c`, the host MUST refuse `400 webhook_endpoint_unverified` and persist nothing; it MUST NOT retry the request inside one registration. An idempotent replay of the registration returns the cached outcome without re-verifying. A host SHOULD rate-limit opted-in registrations per tenant.
+- **Rotation.** A host MAY advertise `capabilities.webhooks.secretRotation: { overlapSeconds }` (60–604800); one that does MUST serve `POST /v1/webhooks/{webhookId}/rotate-secret?tenantId=…` with body `{ "secret": "whsec_…" }`, answering `200 { rotatedAt, previousSecretExpiresAt }` (no secret), `403` when the caller is not a member of the tenant, `404` when unknown, and `400 validation_error` for a subscription that did not opt in. Until `previousSecretExpiresAt`, `webhook-signature` MUST carry one entry under each secret and `X-openwop-Signature` stays on the previous secret; afterwards only the new secret signs. A second rotation inside an overlap retires the oldest secret immediately. Rotation does not re-verify the endpoint. A host that does not advertise the facet MUST answer `404`.
+
 ### Best-effort delivery
 
 This v1 spec defines **best-effort** delivery semantics:
@@ -213,11 +227,13 @@ Black-box conformance cannot observe a host's resolver behavior, so this contrac
 
 ### Replay attack protection
 
-Including `{timestamp}.{rawBody}` in the signed payload + the ±5min verification window prevents an attacker who captures one delivery from replaying it indefinitely. Subscribers SHOULD also track received `(X-openwop-Webhook-Id, runId, sequence)` tuples for at-least-once-deduplication; the timestamp check catches the bulk of replay attempts.
+Including `{timestamp}.{rawBody}` in the signed payload + the ±5min verification window prevents an attacker who captures one delivery from replaying it indefinitely. Subscribers SHOULD also track received `(X-openwop-Webhook-Id, runId, sequence)` tuples for at-least-once-deduplication; the timestamp check catches the bulk of replay attempts. On a subscription opted into `standard-webhooks-1` the delivery id is inside the signed bytes (`webhook-id`), so dedup on `webhook-id` dedups on an authenticated value.
 
 ### Secret rotation
 
 The current spec does not define a secret-rotation flow. To rotate, delete the subscription and create a new one with the same URL + events; the new secret is returned in the create response. The retired subscription stops receiving deliveries immediately.
+
+A host advertising `capabilities.webhooks.secretRotation` offers zero-downtime rotation for subscriptions that opted into `standard-webhooks-1` (RFC 0201 §E); delete-and-recreate remains the only rotation for every other subscription.
 
 ### Logging discipline
 

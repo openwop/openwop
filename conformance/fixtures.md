@@ -563,6 +563,30 @@ Negative manifests (credential material, mixed kinds, dual reach) are inline tes
 
 ---
 
+## Node-pack runtime fixtures
+
+The `fixtures/node-pack-runtime/` sub-directory holds v2 node-pack manifests for RFC 0203's `runtime.mcpServer` — the inline MCP Registry record a `language: "remote"` runtime may carry. They are read only by the corpus-coherence test `src/coherence/node-pack-mcp-server-record.test.ts` (spec-repo CI; never a host bundle) and validated server-free against `../schemas/v2/node-pack-manifest.schema.json`. None is seeded into a server. Every fixture is the RFC's positive example with one change, so each negative fails for its reason and nothing else (the test asserts every error sits under `/runtime`).
+
+| Fixture | Contract |
+| --- | --- |
+| `positive-rfc-example` | The RFC 0203 positive example, verbatim runtime. MUST validate; its `mcpServer` MUST validate against the vendored upstream schema. |
+| `positive-every-optional-member` | Adds every optional member (`$schema`, `title`, `websiteUrl`, `repository` with `id` + `subfolder`). Same contract. |
+| `negative-sse` | `remotes[0].type: "sse"`. MUST be refused (Streamable HTTP only). |
+| `negative-packages` | A `packages[]` install instruction. MUST be refused. |
+| `negative-headers` | `remotes[0].headers` carrying an `Authorization` value. MUST be refused. |
+| `negative-variables` | `remotes[0].variables` (an `isSecret` input). MUST be refused. |
+| `negative-http` | An `http://` remote URL. MUST be refused. |
+| `negative-templated-url` | `https://{tenant}.acme.example/mcp`. MUST be refused. |
+| `negative-two-remotes` | Two `remotes[]` entries. MUST be refused (exactly one). |
+| `negative-version-range` | `version: "^1.4.0"`. MUST be refused (exact SemVer). |
+| `negative-meta` | `_meta`. MUST be refused. |
+| `negative-icons` | `icons`. MUST be refused. |
+| `negative-non-remote-language` | `mcpServer` under `language: "wasm"`. MUST be refused by the schema's `if`/`else`; the same manifest without `mcpServer` validates. |
+| `negative-entry-mismatch` | `entry` ≠ `remotes[0].url`. Schema-valid (JSON Schema cannot compare two values); MUST be refused by the manifest validator (`src/lib/node-pack-runtime.ts`) with `pack_validation_failed`. |
+| `upstream/mcp-registry-server-2025-12-11.schema.json` | Byte-for-byte copy of `https://static.modelcontextprotocol.io/schemas/2025-12-11/server.schema.json`, sha256 `3fba09590c99f61735d234822279f4223fab9e300c0a81e81c91ab62a4114de0` (fetched 2026-09-22). The test fails if the bytes drift. Re-vendor only with an RFC that re-pins the subset (RFC 0203 G1). |
+
+---
+
 ## Trigger-event fixtures
 
 The `fixtures/trigger-events/` sub-directory holds canonical external-event ingestion documents (RFC 0099) used as schema-level proof points — validated server-free against `../schemas/trigger-event.schema.json` (`trigger-event-*`) and `../schemas/trigger-subscription-registration.schema.json` (`trigger-subscription-registration-*`) by the `fixtures-valid.test.ts` sweep + the `trigger-ingestion.test.ts` scenario. They are NOT seeded into a server.
@@ -633,6 +657,26 @@ Fixture invariants enforced by `fixtures-valid.test.ts`:
 3. Any fixture declaring a `source: "secret"` variable MUST carry the `secret-redaction` tag — the prompt-composed-secret-redaction scenario discovers fixtures by tag, so an untagged fixture would silently bypass redaction assertions.
 
 Prompt-template fixtures are exercised by the server-free `fixtures-valid.test.ts` scenarios — adding one runs the schema validator against it automatically. Capability-gated behavioral scenarios (`prompt-composed-secret-redaction`, `prompt-composed-trust-marker`) skip cleanly when the host doesn't advertise `capabilities.prompts.supported: true` + `observability: "full"`.
+
+---
+
+## A2UI v0.9 surface fixtures (RFC 0209)
+
+The `fixtures/a2ui-v09/` sub-directory (suite 2.36.0) holds `ui.a2ui-surface` payloads at per-kind **schema version 2** — ordered runs of A2UI v0.9 server-to-client messages in the OpenWOP profile of the basic catalog (`schemas/v2/envelopes/ui.a2ui-surface.schema.json` `$defs/payloadV2`; `spec/v2/ext/a2uiSurface/README.md`). They are NOT `WorkflowDefinition`s and are NOT seeded into a server. The corpus gate (`src/coherence/a2ui-v09-profile.test.ts`) validates the positive against the profile and each of its messages against the vendored upstream schemas; each negative must fail the profile AND pass a copy of the profile with only the restriction under test removed, so it can fail for no other reason. `v2-a2ui-v09-surface.test.ts` emits the positive through the v2 emit-surface seam. Like `interrupt-payloads/`, this directory carries deliberately-invalid `negative-` files; the top-level workflow sweep never reads sub-directories.
+
+| Fixture | Expect | Upstream A2UI | Purpose |
+| --- | --- | --- | --- |
+| `positive-approve-brief` | valid | valid | `createSurface` + `updateComponents` (`Column` root, `Text`, `TextField` with a `required` check, `DateTimeInput`, `ChoicePicker`, `CheckBox`, `Button` → `resume` with a bound `context`) + `updateDataModel`. |
+| `negative-functioncall-openurl` | refused | accepted | `Button.action` is the `functionCall` arm calling `openUrl` (`a2ui-action-confinement`). |
+| `negative-event-name-deleteall` | refused | accepted | `event.name: "deleteAll"`, outside `resume` / `exchange`. |
+| `negative-textfield-obscured` | refused | accepted | `TextField.variant: "obscured"` (`a2ui-surface-no-secret-input`). |
+| `negative-image-component` | refused | accepted | an `Image` component (URL fetch; `a2ui-surface-no-network-egress`). |
+| `negative-theme-iconurl` | refused | accepted | `createSurface.theme.iconUrl`. |
+| `negative-formatstring-label` | refused | accepted | a `Text.text` that is a `formatString` FunctionCall (`a2ui-surface-no-code-exec`). |
+| `negative-extra-property` | refused | refused | an `onClick` property on a component (closed objects). |
+| `negative-foreign-catalog` | refused | n/a | a `catalogId` outside the pinned basic catalog. |
+
+The `fixtures/upstream/a2ui-v0.9/` sub-directory vendors `server_to_client.json`, `catalogs/basic/catalog.json` and `common_types.json` from a2ui.org byte for byte, pinned by SHA-256 (RFC 0209 §References; its `README.md` records the URLs, fetch date and the Apache-2.0 notice). They are read only by the corpus gate.
 
 ---
 

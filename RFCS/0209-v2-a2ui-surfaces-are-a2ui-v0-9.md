@@ -265,12 +265,12 @@ Two more are refused by both: an extra property such as `onClick`, and a foreign
 ## Acceptance criteria
 
 - [x] `Active` (2026-09-22), by steward override of RFC 0147 §A.6 (the window was waived, not run; see `Updated`).
-- [ ] Schema, ext README, `events.md` clause and pointer, declaration row, deprecation row and invariant rows merged. `check-v2-schemas`, `check-declaration`, `check-core-budget`, `check-security-invariants.sh` and `check-deprecations` all pass.
+- [x] Schema, ext README, `events.md` clause and pointer, declaration row, deprecation row and invariant rows merged. `check-v2-schemas`, `check-declaration`, `check-core-budget`, `check-security-invariants.sh` and `check-deprecations` all pass. *(The RFC 0209 spec+conformance PR, branch `feat/rfc-0209-a2ui-v09`: all five gates green; core 24,281 → 24,298 words, the stated +17; invariants 203 → 204.)*
 - [ ] `v2-a2ui-v09-surface.test.ts` and the coherence test ship in a published suite. Every `(corpus)` row records `executed-pass` in `evidence/corpus-ledger.json`.
 - [ ] A committed v2 host bundle records `0209.version-selects-branch`, `.fold-guarded` and `.taint-sticky` at `executed-pass`. The expected host is the v2 reference host (tier-1), which gains envelope admission, the fold guard and the v2 emit-surface seam in this RFC's host PR. openwop-app has no v2 A2UI surface; its part is the render probe below.
 - [ ] The reference-app render probe for `render-needs-root` lands next to the existing `a2ui-render-invariants.test.tsx`, as a `reference-impl` witness.
 - [ ] RFC 0156 §B row: `not-reviewed` until a cross-organization review. Acceptance before that is **provisional**.
-- [ ] `RFCS/0102` and `RFCS/0114` headers carry `Amended by: RFC 0209 (major 2 only)`, and the RFC 0102 register rows G5/G7 are dispositioned for v2.
+- [x] `RFCS/0102` and `RFCS/0114` headers carry `Amended by: RFC 0209 (major 2 only)`, and the RFC 0102 register rows G5/G7 are dispositioned for v2. *(Same PR; G5/G7 carry a v2 transfer to this RFC, v1 dispositions unchanged.)*
 
 ## References
 

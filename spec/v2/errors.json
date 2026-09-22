@@ -2,7 +2,7 @@
   "$schema": "https://openwop.dev/spec/v2/errors.schema.json",
   "$comment": "RFC 0171 §B.1 — the error registry: one row per code {code, httpStatus, retriable, details, since, deprecated?}. schemas/v2/error-envelope.schema.json is GENERATED from it (scripts/generate-error-envelope.mjs). Retry timing lives in Retry-After only (§B.2). statusSource records whether the status was stated in v1 prose, a v1 convention, or decided here. details is null until a code's details schema is registered (a null row means details is an open object for that code — closure over details is the RFC 0171 Phase 3 follow-up G-row).",
   "version": "2.0",
-  "updated": "2026-09-18",
+  "updated": "2026-09-22",
   "vendorCodePattern": "^(?!openwop\\.)[a-z][a-z0-9]*(-[a-z0-9]+)*\\.[a-z][a-z0-9_]*$",
   "rows": [
     {
@@ -168,6 +168,15 @@
       "source": "spec/v1/node-packs.md"
     },
     {
+      "code": "unsupported_runtime",
+      "httpStatus": 400,
+      "statusSource": "v1 convention (node-packs.md)",
+      "retriable": false,
+      "details": null,
+      "since": "1.0",
+      "source": "spec/v1/node-packs.md"
+    },
+    {
       "code": "protocol_version_mismatch",
       "httpStatus": 400,
       "statusSource": "v2 decision",
@@ -260,6 +269,15 @@
       "details": null,
       "since": "2.0",
       "source": "spec/v2/core/webhooks.md §Egress"
+    },
+    {
+      "code": "webhook_endpoint_unverified",
+      "httpStatus": 400,
+      "statusSource": "v2 decision",
+      "retriable": false,
+      "details": null,
+      "since": "2.36",
+      "source": "RFC 0201 §D"
     },
     {
       "code": "audience_mismatch",

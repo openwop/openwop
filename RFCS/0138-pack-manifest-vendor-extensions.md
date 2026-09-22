@@ -12,6 +12,7 @@
 | **Compatibility** | `additive` per `COMPATIBILITY.md` §2.1                                                                                                                                                                                                             |
 | **Supersedes**    | —                                                                                                                                                                                                                                                  |
 | **Superseded by** | —                                                                                                                                                                                                                                                  |
+| **Amended by** | [RFC 0203](./0203-remote-runtime-mcp-registry-record.md) — by addition: the MCP server record a `remote` runtime carries is a real schema field (`runtime.mcpServer`), not an `x-` extension, because this RFC forbids canonical handling that depends on one. This RFC's MUSTs are unchanged. |
 
 ## Summary
 

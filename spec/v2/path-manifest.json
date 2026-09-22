@@ -267,6 +267,11 @@
       "operationId": "listWebhookDeadLetters"
     },
     {
+      "method": "POST",
+      "path": "/webhooks/{webhookId}/rotate-secret",
+      "operationId": "rotateWebhookSecret"
+    },
+    {
       "method": "GET",
       "path": "/workflows/{workflowId}",
       "operationId": "getWorkflow"
@@ -283,7 +288,7 @@
     }
   ],
   "counts": {
-    "operations": 53,
+    "operations": 54,
     "channels": 2
   }
 }

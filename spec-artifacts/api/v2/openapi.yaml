@@ -2388,12 +2388,34 @@ paths:
                   description: Event types to subscribe to (see `run-event.schema.json` enum).
                 secret:
                   type: string
-                  description: Server signs payloads with this secret using HMAC-SHA256.
+                  description: 'Server signs payloads with this secret using HMAC-SHA256. REQUIRED in the Standard Webhooks
+                    form `whsec_<base64>` (24–64 decoded bytes) when `signatureAlgorithms` lists `standard-webhooks-1` (RFC
+                    0201 §B.6); never echoed in any response.
+
+                    '
                 tags:
                   type: array
                   items:
                     type: string
                   description: Filter to runs carrying these tags (see `run-options.md`).
+                signatureAlgorithms:
+                  type: array
+                  minItems: 1
+                  uniqueItems: true
+                  contains:
+                    const: v1
+                  items:
+                    type: string
+                    enum:
+                    - v1
+                    - standard-webhooks-1
+                  description: 'RFC 0201 §B — the per-subscription opt-in. Absent means `["v1"]`, today''s behaviour byte
+                    for byte. When present it MUST contain `v1`, MUST NOT repeat a value, and every value MUST be listed in
+                    the host''s `webhooks.signatureAlgorithms`; otherwise `400 validation_error`. Listing `standard-webhooks-1`
+                    opts the subscription into the Standard Webhooks 1.0.0 companion scheme, which runs endpoint verification
+                    before the `201` (`400 webhook_endpoint_unverified` when the endpoint does not echo the challenge).
+
+                    '
               additionalProperties: false
       responses:
         '201':
@@ -2407,11 +2429,28 @@ paths:
                 properties:
                   webhookId:
                     $ref: ../../schemas/v2/ids.schema.json#/$defs/subscriptionId
+                  signatureAlgorithms:
+                    type: array
+                    items:
+                      type: string
+                    description: RFC 0201 §B.7 — the list the dispatcher will apply; present whenever the request carried
+                      `signatureAlgorithms`.
           headers:
             OpenWOP-Version:
               $ref: '#/components/headers/OpenWOPVersion'
         '400':
-          $ref: '#/components/responses/ValidationError'
+          description: '`validation_error` (malformed body, or an invalid `signatureAlgorithms` / `secret` opt-in, RFC 0201
+            §B), `webhook_url_rejected` (egress), or `webhook_endpoint_unverified` (RFC 0201 §D — an opted-in endpoint did
+            not echo the verification challenge; no subscription is persisted).
+
+            '
+          content:
+            application/json:
+              schema:
+                $ref: ../../schemas/v2/error-envelope.schema.json
+          headers:
+            OpenWOP-Version:
+              $ref: '#/components/headers/OpenWOPVersion'
         '401':
           $ref: '#/components/responses/Unauthenticated'
         '403':
@@ -3122,6 +3161,74 @@ paths:
           $ref: '#/components/responses/Unauthenticated'
       parameters:
       - $ref: '#/components/parameters/OpenWOPVersion'
+  /webhooks/{webhookId}/rotate-secret:
+    post:
+      tags:
+      - webhooks
+      operationId: rotateWebhookSecret
+      summary: Rotate a Standard Webhooks subscription's secret with an overlap (RFC 0201 §E)
+      description: 'Gated on `webhooks.secretRotation`: a host that does not advertise it MUST answer `404 not_found`. Only
+        for a subscription that opted into `standard-webhooks-1`; any other subscription gets `400 validation_error` (its
+        single `v1` signature cannot overlap). Tenant checks are exactly those of `unregisterWebhook`: `403 id_tenant_mismatch`
+        when the id''s tenant segment is not the caller''s, checked before the lookup (`identity.md` §5); `404` when unknown.
+        For `overlapSeconds` after `rotatedAt`, `webhook-signature` carries one entry under the new secret and one under the
+        previous one, and `OpenWOP-Signature` stays on the previous secret; at `previousSecretExpiresAt` only the new secret
+        signs. A second rotation inside an overlap retires the oldest secret immediately. Rotation does not re-verify the
+        endpoint. The response carries no secret.'
+      parameters:
+      - name: webhookId
+        in: path
+        required: true
+        schema:
+          $ref: ../../schemas/v2/ids.schema.json#/$defs/subscriptionId
+        description: 'Tenant-bound `<tenantId>/<opaque>` (`identity.md` §5, RFC 0187 §A.1), one path segment: `~`-projected
+          (RFC 0184) or percent-encoded.'
+      - $ref: '#/components/parameters/IdempotencyKey'
+      - $ref: '#/components/parameters/OpenWOPVersion'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+              - secret
+              additionalProperties: false
+              properties:
+                secret:
+                  type: string
+                  pattern: ^whsec_[A-Za-z0-9+/]+={0,2}$
+                  description: The new secret, `whsec_<base64>` decoding to 24–64 bytes (RFC 0201 §B.6).
+      responses:
+        '200':
+          description: Rotated. No secret is returned.
+          content:
+            application/json:
+              schema:
+                type: object
+                required:
+                - rotatedAt
+                - previousSecretExpiresAt
+                additionalProperties: false
+                properties:
+                  rotatedAt:
+                    type: string
+                    format: date-time
+                  previousSecretExpiresAt:
+                    type: string
+                    format: date-time
+                    description: '`rotatedAt + overlapSeconds`.'
+          headers:
+            OpenWOP-Version:
+              $ref: '#/components/headers/OpenWOPVersion'
+        '400':
+          $ref: '#/components/responses/ValidationError'
+        '401':
+          $ref: '#/components/responses/Unauthenticated'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          $ref: '#/components/responses/NotFound'
 components:
   securitySchemes:
     ApiKeyAuth:
