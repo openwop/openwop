@@ -12,6 +12,7 @@
 | **Compatibility** | `additive` current profile with legacy 2025-06-18 deprecation |
 | **Supersedes** | Unqualified MCP support and 2025-06-18 as the current composition profile |
 | **Superseded by** | — |
+| **Amended by** | [RFC 0208](./0208-v2-a2a-mcp-operation-mappings.md) — v2 home for §B–§E as `spec/v2/interop-map.json`, incorporated by `spec/v2/core/interop.md` §"The operation mappings". |
 
 ## Summary
 

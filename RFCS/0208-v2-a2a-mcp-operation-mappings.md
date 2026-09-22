@@ -223,11 +223,11 @@ RFC 0152 and RFC 0153 are RFC 0147 children (SR-6), so this amendment carries th
 ## Acceptance criteria
 
 - [x] `Active` — 2026-09-22, by steward override of RFC 0147 §A.6. The window was waived, not run (see `Updated`).
-- [ ] P2-b (openwop#1481, the v1 correction) merged first, or in the same PR (G2).
+- [x] P2-b (openwop#1481, the v1 correction) merged first, or in the same PR (G2). — merged 2026-09-22 before the spec PR; G2 `closed`.
 - [ ] Spec text merged: `interop.md` §"The operation mappings", `capabilities.md` §3.1/§3.2, `interop-map.json` and its schema, the `implementation` generator case, with `check-interop-map.mjs` in `openwop:check`.
 - [ ] `@openwop/spec-artifacts` and a suite minor published carrying the three scenarios (after `Active`; never before).
 - [ ] A committed, certified v2 bundle from at least one host carries every witnessable row above at `executed-pass`, strict mode, with nothing relaxed (RFC 0147 §A.5). The `a2a-list-scoped` row needs the second credential.
-- [ ] `Amended by` rows added to RFC 0152 and RFC 0153; CHANGELOG entry; the RFC 0156 §B register row added (`not-reviewed`).
+- [x] `Amended by` rows added to RFC 0152 and RFC 0153; CHANGELOG entry; the RFC 0156 §B register row added (`not-reviewed`). — the rows and the CHANGELOG entry land with the spec PR; the register row landed at filing (`docs/WAIVER-RETROSPECTIVE-REGISTER.md`, `not-reviewed`).
 
 ## References
 

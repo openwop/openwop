@@ -498,6 +498,15 @@ An OpenWOP-compliant server's NodeModule registry MUST include implementations f
 
 ---
 
+## Fixtures served over A2A and MCP (RFC 0208)
+
+Two suite requirements (COMPATIBILITY §2.3), not spec MUSTs, let the major-2 interop scenarios drive a host's own A2A interface and MCP mount with the fixtures above:
+
+- **A2A: one routed skill.** An A2A 1.0 `Message` carries no skill selector: the caller picks the agent, and the agent picks the skill. `v2-a2a-operation-map` therefore needs the JSONRPC interface the host's card lists to route exactly one skill, `conformance-approval` (skill id = workflowId, per the `a2a.card` `skills[]` row of `spec/v2/interop-map.json`). A card that lists another skill, or several, records `blocked` — the suite cannot choose one. A host routes a different workflow in production and points its interface at `conformance-approval` for a conformance cut.
+- **MCP: fixtures as tools.** `v2-mcp-mount-map` calls `conformance-noop`, `conformance-failure` and `conformance-approval` as tools on the mount `mcp.serverUrls[0]` names, each under its workflowId. A fixture missing from `fixtures[]` records `blocked` for the leg that calls it.
+
+---
+
 ## Versioning
 
 Each fixture's JSON has its own `version` field. The OpenWOP v1.0 conformance suite targets fixture version 1.0. Fixture spec breaking changes MUST bump the major; the suite MUST refuse to run against an unrecognized fixture version with a clear error message.

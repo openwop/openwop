@@ -163,8 +163,17 @@ jobs:
           # Capture exit + stats; allow non-zero exit because the suite
           # has known feature gaps (registry, stream-modes-buffer,
           # cap-breach). Assert on pass-rate floor instead.
+          # Run only the files registered for this lane's target major (1).
+          # A major-2-only file is inapplicable here (setup.ts skips every one
+          # of its tests), but vitest still counts those skips in the `(total)`
+          # the floor divides by — so every v2 scenario added anywhere lowered
+          # this host's rate with zero change in its passes or failures
+          # (RFC 0208: +19 skipped, 85% -> 84%, passed and failed unchanged).
+          # Selecting the lane's files keeps the denominator to what this host
+          # is actually measured on; it does not hide a failure.
+          V1_FILES=$(node -e 'const m=require("./scenario-majors.json").majors;console.log(Object.keys(m).filter(f=>m[f].includes(1)).map(f=>"src/scenarios/"+f).join(" "))')
           set +e
-          npx vitest run --reporter=default 2>&1 | tee /tmp/conformance.out
+          npx vitest run --reporter=default $V1_FILES 2>&1 | tee /tmp/conformance.out
           set -e
 
           # Extract `N passed | N failed | N skipped` from the summary.

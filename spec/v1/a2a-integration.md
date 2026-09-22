@@ -371,6 +371,8 @@ Rules (RFC 0152 §C, invariant `a2a-card-runtime-consistent` — registered, pro
 
 ### §D — Task and event mapping (translation table)
 
+> **v2 home (informative):** `spec/v2/core/interop.md` §"The operation mappings" and `spec/v2/interop-map.json` ([RFC 0208](../../RFCS/0208-v2-a2a-mcp-operation-mappings.md)) carry these rows for OpenWOP 2.x, pinned to A2A 1.0.1. This section stays the v1 text until v1 end-of-support.
+
 Normative for the `a2a-1.0` profile. Field names are the upstream JSON (ProtoJSON, lowerCamelCase) spellings. "→" reads left-to-right for the stated direction. Anything not in these tables is **opaque**: it **MUST** round-trip where the upstream requires it and **MUST NOT** become authority, a prompt segment, a tool call, or a workflow variable without a declared mapping. The only other declared mappings in the corpus are `metadata.openwop.permittedPurposes` (RFC 0128, §"Purpose-propagation labels") and the `metadata.openwop.interrupt` carrier (RFC 0100).
 
 **D.1 Operations.** 1.0 renamed every operation; the semantics map onto OpenWOP as follows (RFC 0100 durable-task semantics unchanged):

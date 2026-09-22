@@ -12,6 +12,7 @@
 | **Compatibility** | `additive` A2A 1.0 profile with legacy 0.3 deprecation |
 | **Supersedes** | Unqualified A2A support and A2A 0.3 as the current profile |
 | **Superseded by** | — |
+| **Amended by** | [RFC 0208](./0208-v2-a2a-mcp-operation-mappings.md) — v2 home for §C/§D as `spec/v2/interop-map.json`, incorporated by `spec/v2/core/interop.md` §"The operation mappings". A2A rows re-pinned to 1.0.1. |
 
 ## Summary
 

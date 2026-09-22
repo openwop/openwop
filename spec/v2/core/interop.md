@@ -49,9 +49,17 @@ The event is content-free: `peer` MUST be a digest of the peer origin, never the
 
 **Downgrade above the floor.** A host MAY accept an authenticated request for a version between the floor and `preferredVersion`; the event then reports `outcome: downgraded`.
 
+## The operation mappings (RFC 0208)
+
+`spec/v2/interop-map.json` (schema `interop-map.schema.json`) maps each profile's upstream operations, states, fields and errors to the v2 wire, pinned to an upstream release. A host advertising a profile MUST serve every row it implements as the row states, under the caller's Subject with the authorization, tenant scoping and state of the v2 operation the row names; MUST refuse a row whose `requires` facet it does not advertise with the row's error; and MUST list every feature the map requires for that profile. What the map does not name is opaque: it MUST round-trip where upstream requires it and MUST NOT become authority, a prompt segment, a tool call or a workflow variable. A patch release that re-maps a row is a map edit; patch numbers are never negotiated.
+
+**Isolation.** On either interface, a task the caller could not read through `getRun` MUST be answered exactly as a nonexistent one, including a tenant mismatch REST refuses `403`. `ListTasks` MUST return only runs `listRuns` would return to the same Subject, whether or not `runList` is advertised. `contextId`, `tenant` and `_meta` never select a tenant, workspace or principal.
+
+**A2A multi-turn (A2A §3.4.3).** A message carrying `taskId` without `contextId` MUST be answered with the task's `contextId`. A message whose `contextId` is not its task's MUST be refused with its binding's invalid-parameters error and MUST NOT change the run. A message to a retained terminal task MUST be refused `UnsupportedOperationError`; `TaskNotFoundError` is for unknown, purged and unreadable tasks.
+
 ## The MCP round ceiling
 
-`mcp.mrtr.maxRounds` (integer, 1–16) is the advertised ceiling on multi-round tool-result rounds. A host MUST refuse an `input_required` round beyond `maxRounds` with `mcp_mrtr_rounds_exceeded` (`spec/v2/errors.json`). The v1 `requestState` requirements carry over unchanged.
+`mcp.mrtr.maxRounds` (integer, 1–16) is the advertised ceiling on multi-round tool-result rounds. A host MUST refuse an `input_required` round beyond `maxRounds` with `mcp_mrtr_rounds_exceeded` (`spec/v2/errors.json`). The `requestState` rules are the map's `mcp.mrtr` rows.
 
 ## The durable-task projection
 

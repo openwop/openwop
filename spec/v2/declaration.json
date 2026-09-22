@@ -61,7 +61,7 @@
       "key": "implementation",
       "kind": "metadata",
       "schema": "metadata/implementation",
-      "note": null,
+      "note": "RFC 0208 §G",
       "disposition": "kept"
     },
     {

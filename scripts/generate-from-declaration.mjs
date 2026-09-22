@@ -70,6 +70,14 @@ function metadataSchema(key) {
     case 'eventLogSchemaVersion': return { type: 'integer', minimum: 2, description: 'RFC 0176 §A.2 — the era key; a v2 host writes 3.' };
     case 'minClientVersion': return { type: 'string', description: 'RFC 0172 row C5.8 — MUST (426 client_version_unsupported).' };
     case 'configurable': return { $ref: 'configurable.schema.json' };
+    case 'implementation': return {
+      type: 'object', additionalProperties: false,
+      description: 'RFC 0208 §G — self-reported server identity; informational (capabilities.md §3.1): a client SHOULD NOT change behaviour because of it or authorize from it.',
+      properties: {
+        name: { type: 'string' }, version: { type: 'string' }, vendor: { type: 'string' },
+        url: { type: 'string', format: 'uri', description: "The operator's site — A2A AgentProvider.url, MCP Implementation.websiteUrl. Informational." },
+      },
+    };
     case 'conformance': {
       // RFC 0168 §C.1: the seams are a versioned profile a host ADVERTISES; they are never a
       // capability flag. `lib/seams.ts` gates every seam-driven scenario on this exact value,
