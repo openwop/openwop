@@ -70,6 +70,10 @@
           "maximum": 16
         }
       }
+    },
+    "client": {
+      "const": true,
+      "description": "RFC 0204. Present ⇒ the host exposes ctx.mcp.callTool / listTools / readResource / serverHealth to pack code (host-services.md §mcp). Omit when not offered (RFC 0192)."
     }
   },
   "required": [
