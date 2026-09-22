@@ -155,7 +155,17 @@ describe('auth-oauth2-client-credentials: malformed JWT rejected', () => {
 });
 
 describe('auth-oauth2-client-credentials: harness-minted negative cases', () => {
-  it('wrong-audience token returns 401 when host trusts the harness', async () => {
+  /**
+   * RFC 0200 §C — before this RFC, `auth-profiles.md` said only that a wrong-audience
+   * token "uses the canonical error envelope"; the REJECTION itself was assumed by this
+   * very assertion and by the schema description of `capabilities.auth.oauth2.audience`,
+   * and stated nowhere. The profile now carries it as a MUST.
+   *
+   * Major-1 only and NON-GATING: `check-accepted-predicate` rule 4 reads only certified
+   * v2 bundles and no v2 cut reaches this file, so this id carries no rule-4 weight. v2
+   * needs nothing here — `identity.md` §2.1 already requires every lane to check audience.
+   */
+  it('a wrong-audience access token is rejected 401 unauthenticated (RFC 0200 §C)', async () => {
     const auth = await readAuthCaps();
 
     if (!behaviorGate(PROFILE, isProfileAdvertised(auth))) {
@@ -179,7 +189,6 @@ describe('auth-oauth2-client-credentials: harness-minted negative cases', () => 
       algorithm: 'RS256',
     });
 
-    // Wrong audience.
     const wrongAud = issuer.mint({ aud: 'wrong-audience', sub: 'conformance-suite' });
     const wrongAudRes = await driver.post(
       '/v1/runs',
@@ -189,10 +198,42 @@ describe('auth-oauth2-client-credentials: harness-minted negative cases', () => 
         headers: { Authorization: `Bearer ${wrongAud.token}` },
       },
     );
-    expect(wrongAudRes.status, req('openwop.it.auth-oauth2-client-credentials.wrong-audience-token-returns-401-when-host-trusts-the-harness', 
-      'auth-profiles.md §`openwop-auth-oauth2-client-credentials`',
-      'token with wrong aud claim MUST return 401',
+    // RFC 0200 §C made the obligation explicit: before this, `auth-profiles.md` said only
+    // that a wrong-audience token "uses the canonical error envelope", and the rejection
+    // itself was assumed by this very assertion and by the schema description of
+    // `capabilities.auth.oauth2.audience` — never stated. The profile now says the host
+    // MUST reject such a token 401 unauthenticated, before any authorization decision.
+    // Major-1 only and NON-GATING: v2 needs nothing here, because `identity.md` §2.1
+    // already requires every lane to check audience, and no v2 cut reaches this file.
+    expect(wrongAudRes.status, req('openwop.requirement.0200.oauth2cc-wrong-aud-401',
+      'spec/v1/auth-profiles.md §`openwop-auth-oauth2-client-credentials` (RFC 0200 §C.1)',
+      'an access token whose `aud` does not contain the advertised capabilities.auth.oauth2.audience MUST be rejected 401 unauthenticated, before any authorization decision',
     )).toBe(401);
+  });
+
+  it('wrong-audience token returns 401 when host trusts the harness', async () => {
+    const auth = await readAuthCaps();
+
+    if (!behaviorGate(PROFILE, isProfileAdvertised(auth))) {
+      return;
+    }
+
+    if (process.env.OPENWOP_TEST_OAUTH_ISSUER_TRUSTED !== 'true') {
+      // eslint-disable-next-line no-console
+      console.warn(
+        '[auth-oauth2-client-credentials] OPENWOP_TEST_OAUTH_ISSUER_TRUSTED not set; skipping harness-minted negative cases (operator must pre-configure the host to trust the conformance harness)',
+      );
+      return softSkip('blocked', 'precondition not met — `process.env.OPENWOP_TEST_OAUTH_ISSUER_TRUSTED !== \'true\'` returned early ([auth-oauth2-client-credentials] OPENWOP_TEST_OAUTH_ISSUER_TRUSTED not set; skipping harness-minted negative cases (ope…');
+    }
+
+    const issuerUrl =
+      process.env.OPENWOP_TEST_OAUTH_ISSUER_URL ?? 'http://127.0.0.1:0/oauth';
+    const audience = auth?.oauth2?.audience ?? 'openwop-conformance';
+    const issuer = createSyntheticOIDCIssuer({
+      issuer: issuerUrl,
+      audience,
+      algorithm: 'RS256',
+    });
 
     // Expired token.
     const expired = issuer.mint(

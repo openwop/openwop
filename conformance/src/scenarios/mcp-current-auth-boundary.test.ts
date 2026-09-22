@@ -20,6 +20,7 @@ import { describe, it, expect } from 'vitest';
 import { driver } from '../lib/driver.js';
 import { seamAbsent, softSkip } from '../lib/soft-skip.js';
 import { mcpServerMount } from '../lib/mcp-mount.js';
+import { parseChallenge, prmUrlFor } from '../lib/protected-resource.js';
 import { behaviorGate } from '../lib/behavior-gate.js';
 import { capabilityFamily } from '../lib/discovery-capabilities.js';
 import { req } from '../lib/requirement-ids.js';
@@ -80,5 +81,42 @@ describe.skipIf(!process.env.OPENWOP_BASE_URL)('RFC 0153 §E — mcp-current-aut
       [401, 403],
       req('openwop.it.mcp-current-auth-boundary.an-unauthenticated-current-profile-request-is-refused-unless-anonymousactor-is-a', 'mcp-integration.md §E', 'a caller holding only a host-minted anonymous session cookie is still an anonymous principal — refuse (401/403) unless anonymousActor is advertised (S30)'),
     ).toContain(withSession.status);
+  });
+
+  /**
+   * RFC 0200 §A.4 — the mount as its own OAuth protected resource. Upstream makes this a
+   * MUST for an MCP server whose mount requires OAuth ("MCP servers MUST implement one of
+   * the following discovery mechanisms"), and `mcp-integration.md` §E now carries it.
+   *
+   * NON-GATING coverage: this file is major-1 only, and `check-accepted-predicate` rule 4
+   * reads only certified v2 bundles, so a verdict recorded here can never satisfy the
+   * RFC's row. The gating witness is the mount leg of `v2-protected-resource-metadata`,
+   * against the v2 mount. This leg exists so a v1 host that DOES require an OAuth lane on
+   * its mount is measured today.
+   */
+  it('a mount that requires OAuth-lane authentication offers resource_metadata or a path-inserted PRM', async () => {
+    const { mcp, anon } = await disco();
+    const claims = mcp?.supported === true && (mcp.profiles ?? []).includes(PROFILE) && mcp.serverMount?.supported === true;
+    if (!behaviorGate(PROFILE, claims)) return;
+    if (anon?.supported === true) return softSkip('inapplicable', 'anonymousActor is advertised — the mount does not require authentication at all, so §A.4 does not bind it');
+    const mount = await mcpServerMount();
+    const anonymous = await driver.post(mount, REQ, { headers: HDR, authenticated: false });
+    if (anonymous.status !== 401) return softSkip('inapplicable', `the mount answered ${anonymous.status} without credentials, not 401 — §A.4 binds a mount that refuses for want of an OAuth-lane credential`);
+    const challenge = parseChallenge(anonymous.headers.get('www-authenticate'));
+    const viaChallenge = challenge !== null && challenge.scheme === 'bearer' && typeof challenge.params['resource_metadata'] === 'string';
+    let viaWellKnown = false;
+    if (!viaChallenge) {
+      const doc = await driver.get(prmUrlFor(mount.startsWith('http') ? mount : `${process.env['OPENWOP_BASE_URL'] ?? ''}${mount}`), { authenticated: false });
+      viaWellKnown = doc.status === 200 && typeof (doc.json as { resource?: unknown } | null)?.resource === 'string';
+    }
+    if (!viaChallenge && !viaWellKnown) {
+      // A mount that refuses an api-key caller for want of an api-key is not an OAuth
+      // protected resource, and this host's lanes are not readable from here at major 1.
+      return softSkip('inapplicable', 'the mount offers neither discovery mechanism and this host advertises no v1 OAuth/OIDC auth profile reachable from here — §A.4 binds only a mount that requires OAuth-lane authentication');
+    }
+    expect(
+      viaChallenge || viaWellKnown,
+      req('openwop.it.mcp-current-auth-boundary.a-mount-that-requires-oauth-lane-authentication-offers-resource-metadata-or-a-path-inserted-prm', 'spec/v1/mcp-integration.md §E (RFC 0200 §A.4)', 'a mount requiring OAuth-lane authentication MUST implement one of upstream\'s two discovery mechanisms for the mount URL as the resource'),
+    ).toBe(true);
   });
 });
