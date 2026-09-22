@@ -554,6 +554,30 @@ Negative manifests (credential material, mixed kinds, dual reach) are inline tes
 
 ---
 
+## Node-pack runtime fixtures
+
+The `fixtures/node-pack-runtime/` sub-directory holds v2 node-pack manifests for RFC 0203's `runtime.mcpServer` — the inline MCP Registry record a `language: "remote"` runtime may carry. They are read only by the corpus-coherence test `src/coherence/node-pack-mcp-server-record.test.ts` (spec-repo CI; never a host bundle) and validated server-free against `../schemas/v2/node-pack-manifest.schema.json`. None is seeded into a server. Every fixture is the RFC's positive example with one change, so each negative fails for its reason and nothing else (the test asserts every error sits under `/runtime`).
+
+| Fixture | Contract |
+| --- | --- |
+| `positive-rfc-example` | The RFC 0203 positive example, verbatim runtime. MUST validate; its `mcpServer` MUST validate against the vendored upstream schema. |
+| `positive-every-optional-member` | Adds every optional member (`$schema`, `title`, `websiteUrl`, `repository` with `id` + `subfolder`). Same contract. |
+| `negative-sse` | `remotes[0].type: "sse"`. MUST be refused (Streamable HTTP only). |
+| `negative-packages` | A `packages[]` install instruction. MUST be refused. |
+| `negative-headers` | `remotes[0].headers` carrying an `Authorization` value. MUST be refused. |
+| `negative-variables` | `remotes[0].variables` (an `isSecret` input). MUST be refused. |
+| `negative-http` | An `http://` remote URL. MUST be refused. |
+| `negative-templated-url` | `https://{tenant}.acme.example/mcp`. MUST be refused. |
+| `negative-two-remotes` | Two `remotes[]` entries. MUST be refused (exactly one). |
+| `negative-version-range` | `version: "^1.4.0"`. MUST be refused (exact SemVer). |
+| `negative-meta` | `_meta`. MUST be refused. |
+| `negative-icons` | `icons`. MUST be refused. |
+| `negative-non-remote-language` | `mcpServer` under `language: "wasm"`. MUST be refused by the schema's `if`/`else`; the same manifest without `mcpServer` validates. |
+| `negative-entry-mismatch` | `entry` ≠ `remotes[0].url`. Schema-valid (JSON Schema cannot compare two values); MUST be refused by the manifest validator (`src/lib/node-pack-runtime.ts`) with `pack_validation_failed`. |
+| `upstream/mcp-registry-server-2025-12-11.schema.json` | Byte-for-byte copy of `https://static.modelcontextprotocol.io/schemas/2025-12-11/server.schema.json`, sha256 `3fba09590c99f61735d234822279f4223fab9e300c0a81e81c91ab62a4114de0` (fetched 2026-09-22). The test fails if the bytes drift. Re-vendor only with an RFC that re-pins the subset (RFC 0203 G1). |
+
+---
+
 ## Trigger-event fixtures
 
 The `fixtures/trigger-events/` sub-directory holds canonical external-event ingestion documents (RFC 0099) used as schema-level proof points — validated server-free against `../schemas/trigger-event.schema.json` (`trigger-event-*`) and `../schemas/trigger-subscription-registration.schema.json` (`trigger-subscription-registration-*`) by the `fixtures-valid.test.ts` sweep + the `trigger-ingestion.test.ts` scenario. They are NOT seeded into a server.
