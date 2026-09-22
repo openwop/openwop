@@ -992,7 +992,7 @@
       "requirementIds": [],
       "owningRfc": "0078",
       "normativeText": [
-        "spec/v1/tool-catalog.md"
+        "spec/v2/core/tool-catalog.md"
       ]
     },
     {
@@ -1461,7 +1461,7 @@
     {
       "key": "mcp",
       "kind": "family",
-      "normativeText": ["spec/v2/core/interop.md"],
+      "normativeText": ["spec/v2/core/interop.md", "spec/v2/core/host-services.md"],
       "anchor": "core",
       "section": "core/capabilities.md#mcp",
       "peerDependencyId": "mcp",
@@ -1479,7 +1479,8 @@
         "features",
         "serverUrls",
         "serverMount",
-        "mrtr"
+        "mrtr",
+        "client"
       ],
       "floorScenarios": [],
       "requirementIds": [],

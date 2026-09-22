@@ -1050,6 +1050,8 @@ ctx.dataIntegration.applyBinding({
 }>
 ```
 
+**`fetchMCP` (informative, RFC 0204).** `fetchMCP` is superseded for MCP access by `ctx.mcp` (v1 `raw`; v2 `host-services.md` §`mcp`).
+
 **Required methods:** depends on which sub-capabilities the host advertises. The minimal surface for `host.dataIntegration: supported` is `transform` + `applyBinding`. REST/GraphQL/A2A/MCP fetch methods require the respective sub-capabilities (`host.dataIntegration.rest: supported`, etc.).
 
 **Failure modes:**
@@ -1210,7 +1212,7 @@ ctx.mcp.invokeTool({
   toolName: string,
   args?: Record<string, unknown>,
   idempotencyKey: string,
-}) → Promise<{ result: unknown, isError?: boolean }>
+}) → Promise<{ result: unknown, isError?: boolean, raw?: CallToolResult }>
 
 ctx.mcp.listTools({
   serverId: string,
@@ -1234,6 +1236,8 @@ ctx.mcp.serverStatus({
   serverInfo?: { name: string, version: string },
 }>
 ```
+
+**`raw` (RFC 0204).** A host MAY include `raw`, the server's MCP `CallToolResult` for the negotiated revision. When present it MUST be that result unaltered, and `isError` MUST equal `raw.isError === true`.
 
 **Required methods:** all four.
 

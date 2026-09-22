@@ -12,6 +12,7 @@
 | **Compatibility** | `additive` |
 | **Supersedes** | — |
 | **Superseded by** | — |
+| **Amended by** | [RFC 0204](./0204-host-mcp-client-returns-mcp-results.md) — by addition: optional `ToolDescriptor.annotations` (the MCP `ToolAnnotations` projection, derived from host-assigned fields by a fixed table) and the unclassified-MCP default (`safetyTier: "write"`); `toolCatalog` gets its v2 home (`spec/v2/core/tool-catalog.md`), which restates this RFC's §A–§F MUSTs unchanged. |
 
 ## Summary
 

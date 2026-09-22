@@ -23,6 +23,12 @@
  * per RFC 0078 §Conformance — reference host deferred). This scenario asserts the
  * wire contract, not host behavior.
  *
+ * MAJORS [1, 2] since suite 2.36.0 (RFC 0204 G3). At major 2 every leg reads the
+ * v2 schema of the same name (`schemas/v2/…`), the capability leg reads the v2
+ * `toolCatalog` record's facets (no `supported` field exists at major 2 — the
+ * record is the claim) and the event-name leg reads the v2 spellings
+ * (`tool.session-opened` / `tool.session-closed`, `spec/v2/event-codemap.json`).
+ *
  * Spec references:
  *   - https://github.com/openwop/openwop/blob/main/spec/v1/tool-catalog.md
  *   - https://github.com/openwop/openwop/blob/main/RFCS/0078-portable-tool-catalog-and-tool-session-contract.md
@@ -36,14 +42,24 @@ import Ajv2020 from 'ajv/dist/2020.js';
 import addFormats from 'ajv-formats';
 import { SCHEMAS_DIR } from '../lib/paths.js';
 import { req } from '../lib/requirement-ids.js';
+import { targetMajor } from '../lib/seams.js';
+import { v2Validator, v2RefValidator } from '../lib/v2.js';
+
+const V2 = targetMajor() === 2;
 
 function loadSchema(name: string): Record<string, unknown> {
-  return JSON.parse(readFileSync(join(SCHEMAS_DIR, name), 'utf8')) as Record<string, unknown>;
+  return JSON.parse(readFileSync(V2 ? join(SCHEMAS_DIR, 'v2', name) : join(SCHEMAS_DIR, name), 'utf8')) as Record<string, unknown>;
+}
+
+/** A boolean validator for a whole schema file, for the major in play. */
+function fileValidator(name: string): (d: unknown) => boolean {
+  if (V2) { const v = v2Validator(name); return (d) => v(d).ok; }
+  const v = addFormats(new Ajv2020({ strict: false })).compile(loadSchema(name));
+  return (d) => v(d) as boolean;
 }
 
 describe('tool-descriptor-shape: ToolDescriptor (RFC 0078 §C, server-free)', () => {
-  const ajv = addFormats(new Ajv2020({ strict: false }));
-  const validate = ajv.compile(loadSchema('tool-descriptor.schema.json'));
+  const validate = fileValidator('tool-descriptor.schema.json');
 
   it('a conforming descriptor validates', () => {
     expect(
@@ -91,7 +107,7 @@ describe('tool-descriptor-shape: capability advertisement (RFC 0078 §A, server-
       toolCatalog,
       req('openwop.it.tool-descriptor-shape.capabilities-toolcatalog-is-declared-with-its-sub-flags', 'capabilities.md §toolCatalog', 'capabilities.toolCatalog MUST be declared'),
     ).toBeDefined();
-    for (const flag of ['supported', 'sources', 'sessionLifecycle']) {
+    for (const flag of V2 ? ['sources', 'sessionLifecycle', 'compactView'] : ['supported', 'sources', 'sessionLifecycle']) {
       expect(
         toolCatalog?.properties?.[flag],
         req('openwop.it.tool-descriptor-shape.capabilities-toolcatalog-is-declared-with-its-sub-flags', 'tool-catalog.md §A', `capabilities.toolCatalog.${flag} MUST be declared`),
@@ -101,13 +117,16 @@ describe('tool-descriptor-shape: capability advertisement (RFC 0078 §A, server-
 });
 
 describe('tool-descriptor-shape: session lifecycle events (RFC 0078 §D, server-free)', () => {
-  const payloads = loadSchema('run-event-payloads.schema.json');
-  const ajv = addFormats(new Ajv2020({ strict: false }));
-  const compile = (defName: string) => ajv.compile({
-    $schema: 'https://json-schema.org/draft/2020-12/schema',
-    $defs: (payloads as { $defs: Record<string, unknown> }).$defs,
-    $ref: `#/$defs/${defName}`,
-  } as Record<string, unknown>);
+  const compile = (defName: string): ((d: unknown) => boolean) => {
+    if (V2) { const v = v2RefValidator(`run-event-payloads.schema.json#/$defs/${defName}`); return (d) => v(d).ok; }
+    const payloads = loadSchema('run-event-payloads.schema.json');
+    const v = addFormats(new Ajv2020({ strict: false })).compile({
+      $schema: 'https://json-schema.org/draft/2020-12/schema',
+      $defs: (payloads as { $defs: Record<string, unknown> }).$defs,
+      $ref: `#/$defs/${defName}`,
+    } as Record<string, unknown>);
+    return (d) => v(d) as boolean;
+  };
 
   it('tool.session.opened validates a content-free record', () => {
     const v = compile('toolSessionOpened');
@@ -124,8 +143,10 @@ describe('tool-descriptor-shape: session lifecycle events (RFC 0078 §D, server-
 
   it('both session event names appear in the RunEventType enum', () => {
     const runEvent = loadSchema('run-event.schema.json');
-    const enumVals = ((runEvent.$defs as Record<string, { enum?: string[] }>).RunEventType?.enum) ?? [];
-    for (const name of ['tool.session.opened', 'tool.session.closed']) {
+    const enumVals = V2
+      ? (((runEvent.properties as { type?: { oneOf?: Array<{ enum?: string[] }> } }).type?.oneOf ?? []).flatMap((b) => b.enum ?? []))
+      : (((runEvent.$defs as Record<string, { enum?: string[] }>).RunEventType?.enum) ?? []);
+    for (const name of V2 ? ['tool.session-opened', 'tool.session-closed'] : ['tool.session.opened', 'tool.session.closed']) {
       expect(enumVals.includes(name), req('openwop.it.tool-descriptor-shape.both-session-event-names-appear-in-the-runeventtype-enum', 'run-event.schema.json', `${name} MUST be in the RunEventType enum`)).toBe(true);
     }
   });

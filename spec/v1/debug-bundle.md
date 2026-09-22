@@ -67,8 +67,11 @@ The endpoint is intentionally separate from `GET /v1/runs/{runId}` (snapshot) an
   "spans": [
     {
       "name": "openwop.run",
+      "traceId": "string",
       "spanId": "string",
       "parentSpanId": "string | null",
+      "kind": "internal | server | client | producer | consumer",
+      "status": { "code": "unset | ok | error", "message": "string" },
       "startedAt": "ISO 8601",
       "endedAt": "ISO 8601 | null",
       "attributes": { "openwop.run_id": "...", "openwop.workflow_id": "..." }
@@ -127,6 +130,11 @@ Each span includes:
 - `parentSpanId` (16 lowercase hex characters, i.e. 8 bytes, per W3C Trace Context; or null)
 - `startedAt` / `endedAt` (ISO 8601)
 - `attributes` (record of attribute key → value)
+- `traceId` (OPTIONAL; 32 lowercase hex characters, i.e. 16 bytes, per W3C Trace Context / OTLP; never all zeros). **SHOULD** be present on every span the host recorded in a trace; when present it **MUST** equal the trace id of the W3C trace the span belongs to — for a run started with an inbound `traceparent` the host honoured (`observability.md` §"Trace context propagation"), the inbound trace id (RFC 0207 §C)
+- `kind` (OPTIONAL; `internal` | `server` | `client` | `producer` | `consumer` — OTLP `SPAN_KIND_*` 1–5, lowercased; absent means unspecified)
+- `status` (OPTIONAL; closed `{ "code": "unset" | "ok" | "error", "message"? }` — OTLP `Status`; `message` is redacted like every attribute)
+
+These three fields are v1 only: v2 serves no debug-bundle read (RFC 0207 §C.11).
 
 Attribute redaction follows the same rules as event payloads (see §"Redaction guarantees" below).
 

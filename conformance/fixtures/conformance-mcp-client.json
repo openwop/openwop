@@ -1,0 +1,28 @@
+{
+  "id": "conformance-mcp-client",
+  "name": "Conformance: v2 ctx.mcp client",
+  "version": "1.0",
+  "description": "RFC 0204 fixture for `v2-mcp-client-results.test.ts`. One node, `core.conformance.mcp-client` (conformance-RESERVED, like `core.conformance.mcp-invoke`): a host that advertises `mcp.client` maps it to a node that calls its own `ctx.mcp.<method>` with the run's inputs (`method` ∈ callTool | listTools | readResource | serverHealth; `serverId`; `name`, `arguments` for callTool; `cursor` for listTools; `uri` for readResource) and completes with `outputs.result` equal to the resolved value VERBATIM, recorded on its `node.completed` event. A rejection fails the node with the rejection's code (`not_found` for an unknown `serverId`). Operator contract: the host binds `serverId: \"conformance\"` to the suite's fake MCP server and `\"conformance.down\"` to an address nothing answers. A host that does not advertise `mcp.client` MUST NOT advertise this fixture.",
+  "nodes": [
+    {
+      "id": "mcp-client",
+      "typeId": "core.conformance.mcp-client",
+      "name": "Call ctx.mcp",
+      "position": { "x": 0, "y": 0 },
+      "config": {},
+      "inputs": {}
+    }
+  ],
+  "edges": [],
+  "triggers": [{ "id": "manual", "type": "manual", "enabled": true }],
+  "variables": [
+    { "name": "method", "type": "string", "defaultValue": "serverHealth" },
+    { "name": "serverId", "type": "string", "defaultValue": "conformance" },
+    { "name": "name", "type": "string" },
+    { "name": "arguments", "type": "object" },
+    { "name": "cursor", "type": "string" },
+    { "name": "uri", "type": "string" }
+  ],
+  "metadata": { "tags": ["conformance", "mcp", "rfc-0204"] },
+  "settings": { "timeout": 0 }
+}

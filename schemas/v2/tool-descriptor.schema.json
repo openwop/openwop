@@ -45,6 +45,31 @@
       "description": "MAY — JSON Schema for the tool's result.",
       "additionalProperties": true
     },
+    "annotations": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "readOnlyHint",
+        "destructiveHint",
+        "idempotentHint",
+        "openWorldHint"
+      ],
+      "description": "RFC 0204. Projection onto MCP ToolAnnotations (2026-07-28), computed from this descriptor's host-assigned safetyTier / replayPolicy / egress by the table in spec/v2/core/tool-catalog.md — never copied from an MCP server's annotations (untrusted upstream) and never left to MCP defaults. All four REQUIRED when present; `annotations.title` is not emitted (`title` is the display name).",
+      "properties": {
+        "readOnlyHint": {
+          "type": "boolean"
+        },
+        "destructiveHint": {
+          "type": "boolean"
+        },
+        "idempotentHint": {
+          "type": "boolean"
+        },
+        "openWorldHint": {
+          "type": "boolean"
+        }
+      }
+    },
     "auth": {
       "type": "object",
       "additionalProperties": false,
@@ -144,7 +169,226 @@
           "source"
         ]
       }
+    },
+    {
+      "$comment": "RFC 0204 §D.12 (tool-catalog.md §The descriptor): readOnlyHint is true iff safetyTier is pure or read.",
+      "if": {
+        "required": [
+          "annotations"
+        ],
+        "properties": {
+          "safetyTier": {
+            "enum": [
+              "pure",
+              "read"
+            ]
+          }
+        }
+      },
+      "then": {
+        "properties": {
+          "annotations": {
+            "properties": {
+              "readOnlyHint": {
+                "const": true
+              }
+            }
+          }
+        }
+      }
+    },
+    {
+      "$comment": "RFC 0204 §D.12 (tool-catalog.md §The descriptor): readOnlyHint is false for write and exec.",
+      "if": {
+        "required": [
+          "annotations"
+        ],
+        "properties": {
+          "safetyTier": {
+            "enum": [
+              "write",
+              "exec"
+            ]
+          }
+        }
+      },
+      "then": {
+        "properties": {
+          "annotations": {
+            "properties": {
+              "readOnlyHint": {
+                "const": false
+              }
+            }
+          }
+        }
+      }
+    },
+    {
+      "$comment": "RFC 0204 §D.12 (tool-catalog.md §The descriptor): destructiveHint is true iff safetyTier is write or exec (safetyTier does not distinguish additive from destructive writes).",
+      "if": {
+        "required": [
+          "annotations"
+        ],
+        "properties": {
+          "safetyTier": {
+            "enum": [
+              "write",
+              "exec"
+            ]
+          }
+        }
+      },
+      "then": {
+        "properties": {
+          "annotations": {
+            "properties": {
+              "destructiveHint": {
+                "const": true
+              }
+            }
+          }
+        }
+      }
+    },
+    {
+      "$comment": "RFC 0204 §D.12 (tool-catalog.md §The descriptor): destructiveHint is false for pure and read.",
+      "if": {
+        "required": [
+          "annotations"
+        ],
+        "properties": {
+          "safetyTier": {
+            "enum": [
+              "pure",
+              "read"
+            ]
+          }
+        }
+      },
+      "then": {
+        "properties": {
+          "annotations": {
+            "properties": {
+              "destructiveHint": {
+                "const": false
+              }
+            }
+          }
+        }
+      }
+    },
+    {
+      "$comment": "RFC 0204 §D.12 (tool-catalog.md §The descriptor): idempotentHint is true iff replayPolicy is deterministic or idempotent.",
+      "if": {
+        "required": [
+          "replayPolicy"
+        ],
+        "properties": {
+          "replayPolicy": {
+            "enum": [
+              "deterministic",
+              "idempotent"
+            ]
+          }
+        }
+      },
+      "then": {
+        "properties": {
+          "annotations": {
+            "properties": {
+              "idempotentHint": {
+                "const": true
+              }
+            }
+          }
+        }
+      }
+    },
+    {
+      "$comment": "RFC 0204 §D.12 (tool-catalog.md §The descriptor): idempotentHint is false when replayPolicy is absent or non-deterministic.",
+      "if": {
+        "required": [
+          "annotations"
+        ],
+        "not": {
+          "properties": {
+            "replayPolicy": {
+              "enum": [
+                "deterministic",
+                "idempotent"
+              ]
+            }
+          },
+          "required": [
+            "replayPolicy"
+          ]
+        }
+      },
+      "then": {
+        "properties": {
+          "annotations": {
+            "properties": {
+              "idempotentHint": {
+                "const": false
+              }
+            }
+          }
+        }
+      }
+    },
+    {
+      "$comment": "RFC 0204 §D.12 (tool-catalog.md §The descriptor): openWorldHint is false iff egress is none.",
+      "if": {
+        "required": [
+          "egress"
+        ],
+        "properties": {
+          "egress": {
+            "const": "none"
+          }
+        }
+      },
+      "then": {
+        "properties": {
+          "annotations": {
+            "properties": {
+              "openWorldHint": {
+                "const": false
+              }
+            }
+          }
+        }
+      }
+    },
+    {
+      "$comment": "RFC 0204 §D.12 (tool-catalog.md §The descriptor): openWorldHint is true when egress is absent or not none.",
+      "if": {
+        "required": [
+          "annotations"
+        ],
+        "not": {
+          "properties": {
+            "egress": {
+              "const": "none"
+            }
+          },
+          "required": [
+            "egress"
+          ]
+        }
+      },
+      "then": {
+        "properties": {
+          "annotations": {
+            "properties": {
+              "openWorldHint": {
+                "const": true
+              }
+            }
+          }
+        }
+      }
     }
-  ],
-  "x-openwop-seeded-from": "v1"
+  ]
 }

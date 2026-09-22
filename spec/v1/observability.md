@@ -192,7 +192,7 @@ Set on the `openwop.run` span (and MAY be repeated on `openwop.node` spans that 
 
 Rules: `openwop.actor.kind` (RFC 0132, run-level table above) continues to carry the principal's kind. Hosts **MUST NOT** put a raw `subject`, issuer URL, certificate fingerprint, token, proof, or `requestState`-style opaque blob into any of these; a hashed subject, if used for correlation, follows the salt/rotation rule in `auth.md` §D. These attributes describe an _authorization outcome_; a consumer **MUST NOT** treat their presence as authorization evidence — a span is a record, not a grant.
 
-**Trace context across interop boundaries.** `traceparent` / `tracestate` (and `baggage`) propagate across A2A (`a2a-integration.md`), MCP (`mcp-integration.md` §D — the `_meta` keys are the only named MCP extension mapping), dispatch, compensation (`compensation.md`), and interrupt boundaries. They are correlation, **never** authorization evidence, and a host **MUST NOT** derive tenant, principal, or scope from them.
+**Trace context across interop boundaries.** `traceparent` / `tracestate` (and `baggage`) propagate across A2A (`a2a-integration.md`), MCP (`mcp-integration.md` §D — the `_meta` keys are the only named MCP extension mapping), dispatch, compensation (`compensation.md`), and interrupt boundaries. They are correlation, **never** authorization evidence, and a host **MUST NOT** derive tenant, principal, or scope from them. The carriers are named (RFC 0207): MCP `params._meta` (unprefixed keys) or the HTTP `traceparent` header; A2A `Message.metadata.openwop.traceparent` / `.tracestate` or the HTTP header. The in-message carrier is SHOULD, and a receiver prefers it when both are present (`multi-agent-execution.md` §"W3C tracecontext across MCP + A2A composition").
 
 **GenAI semantic-convention projection (RFC 0154 §D, gap G3 / UQ4 — decided as v0, experimental).** The OpenTelemetry GenAI conventions moved to `open-telemetry/semantic-conventions-genai` and, as of 2026-08-16, the agent/tool attributes there carry **Development** stability with no tagged release; the core `semantic-conventions` repo (`v1.44.0`, 2026-08-04) no longer hosts them. Accordingly the first mapping is **v0, optional, and labelled experimental**: a host that emits it **MUST** also emit `openwop.otel.genai_mapping_version: "0"` and `openwop.otel.genai_semconv_ref: "open-telemetry/semantic-conventions-genai@<commit>"`, and core conformance **MUST NOT** require any `gen_ai.*` attribute.
 
@@ -204,6 +204,20 @@ Rules: `openwop.actor.kind` (RFC 0132, run-level table above) continues to carry
 | `openwop.run_id` for a `core.conversation` run         | `gen_ai.conversation.id`                                   | Only for conversation-model runs (RFC 0005).                                                 |
 
 No identity, delegation, or authorization attribute is projected into `gen_ai.*` — the upstream vocabulary has no stable field for them, and inventing one would be exactly the experimental-attribute-as-requirement RFC 0154 §D forbids. Revisit when the GenAI repository tags a release with these fields at Stable.
+
+**MCP semantic-convention projection (RFC 0207 §D — v0, experimental).** A host **MAY** project `openwop.mcp.invocation` (and the MCP calls it makes or serves) onto the OpenTelemetry MCP semantic conventions (`open-telemetry/semantic-conventions-genai` `docs/gen-ai/mcp.md`, **Development** stability, no tagged release). It follows the `gen_ai.*` rule above exactly: a host that emits any `mcp.*` attribute under this projection **MUST** also emit `openwop.otel.mcp_mapping_version: "0"` and `openwop.otel.mcp_semconv_ref: "open-telemetry/semantic-conventions-genai@<commit>"`, and core conformance **MUST NOT** require any `mcp.*` attribute.
+
+| OpenWOP source                                                        | OTel (v0 projection; upstream Development)                          | Rule                                                                                         |
+| --------------------------------------------------------------------- | ------------------------------------------------------------------- | -------------------------------------------------------------------------------------------- |
+| the JSON-RPC method of the call (`tools/call`, …)                     | `mcp.method.name`                                                   | Required by upstream when projecting.                                                        |
+| the tool name                                                         | `gen_ai.tool.name`; span name `{mcp.method.name} {gen_ai.tool.name}` | As upstream.                                                                                 |
+| the negotiated revision (`mcp.revisions[]` / `MCP-Protocol-Version`)  | `mcp.protocol.version`                                              |                                                                                              |
+| the JSON-RPC `id`                                                     | `jsonrpc.request.id`                                                | String form.                                                                                 |
+| `errorCode` when the peer answered a JSON-RPC error                   | `rpc.response.status_code` + span status `ERROR`                    | Status description = `JSONRPCError.message`, redacted.                                      |
+| host as caller / host as mount                                        | span kind `CLIENT` / `SERVER`                                       |                                                                                              |
+| —                                                                     | `mcp.session.id`                                                    | **MUST NOT** be emitted for a 2026-07-28 exchange: that revision is stateless and has no session. |
+| —                                                                     | `gen_ai.tool.call.arguments`, `gen_ai.tool.call.result` (upstream Opt-In) | **MUST NOT** be emitted under this projection: they carry content, and `openwop.mcp.invocation` is content-free. |
+| `tenantId`, `moduleId`, `uid`                                         | —                                                                   | Stay `openwop.*`; never projected into `mcp.*` or `gen_ai.*`.                                |
 
 ## Canonical run lifecycle event names
 
@@ -275,7 +289,7 @@ In addition to OTel metrics (defined in the next section), an OpenWOP-compliant 
 | `openwop.activity.invoked`   | Per external API call                                                             | `runId`, `nodeId`, `provider`, `status`, `latencyMs`, `idempotencyHit?`                         |
 | `openwop.cap.exceeded`       | When `CapabilityLimitExceededError` fires                                         | `runId`, `kind`, `limit`, `observed`                                                            |
 | `openwop.cost.recorded`      | After every billable AI activity (closes O4; see "Cost attribution attributes" §) | `runId`, `nodeId`, `provider`, `tokensInput`, `tokensOutput`, `usd?`, `currency?`, `estimated?` |
-| `openwop.mcp.invocation`     | Per MCP tool call                                                                 | `invocationId`, `tenantId`, `moduleId`, `uid?`, `status`, `errorCode?`, `latencyMs`             |
+| `openwop.mcp.invocation`     | Per MCP tool call (optional OTel projection: §"MCP semantic-convention projection", RFC 0207) | `invocationId`, `tenantId`, `moduleId`, `uid?`, `status`, `errorCode?`, `latencyMs`             |
 
 ---
 
