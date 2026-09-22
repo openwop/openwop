@@ -24,12 +24,12 @@
     "state": {
       "type": "string",
       "enum": ["submitted", "working", "input-required", "auth-required", "completed", "failed", "canceled", "rejected"],
-      "description": "The A2A 0.3 JSON-RPC wire form (lowercase-hyphen — a2a-integration.md §'Wire-shape spelling drift'). Projected from `run.status` per a2a-integration.md §'State projection (forward)': pending→submitted, running→working, paused→working, waiting-approval/waiting-input→input-required, completed→completed, failed→failed, cancelled→canceled. `auth-required` is carried for reverse-direction fidelity only; the forward projection never sets it (openwop has no native auth interrupt — a2a-integration.md drift point #3)."
+      "description": "The canonical stored vocabulary: lowercase-hyphen, the spelling A2A 0.3's JSON-RPC binding uses (a2a-integration.md §'Wire-shape spelling drift'). An A2A 1.0 interface renders it as `TASK_STATE_*` at the boundary through the a2a-integration.md §D.4 bijection; the stored form does not change. Projected from `run.status` per a2a-integration.md §'State projection (forward)' and §D.4: pending→submitted; running, paused and cancelling (RFC 0094, until terminal)→working; waiting-approval, waiting-input and waiting-external→input-required; completed→completed; failed→failed; cancelled→canceled. `auth-required` is carried for reverse-direction fidelity only; the forward projection never sets it (openwop has no native auth interrupt — a2a-integration.md drift point #3)."
     },
     "interruptKind": {
       "type": "string",
       "enum": ["approval", "clarification"],
-      "description": "Present iff `state == 'input-required'`. Disambiguates a2a-integration.md drift point #2 (both approval + clarification project to INPUT_REQUIRED) — carried in `Task.metadata.openwop.interrupt.kind`, the `metadata.openwop.*` shape the doc's Future-work asks to codify."
+      "description": "Present iff `state == 'input-required'` — a rule stated in a2a-integration.md §RFC 0100 prose; this schema does not enforce it (the field is not in `required` and there is no conditional). Disambiguates a2a-integration.md drift point #2 (approval and clarification both project to INPUT_REQUIRED) — carried in `Task.metadata.openwop.interrupt.kind`, the `metadata.openwop.*` shape the doc's Future-work asks to codify. The enum names only `approval` and `clarification`: a `waiting-external` run, which also projects to input-required, has no value here, and its kind is disambiguated by the `metadata.openwop.interrupt.kind` carrier alone."
     },
     "updatedAt": {
       "type": "string",
