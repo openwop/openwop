@@ -29,7 +29,7 @@
     "interruptKind": {
       "type": "string",
       "enum": ["approval", "clarification"],
-      "description": "Present iff `state == 'input-required'` — a rule stated in a2a-integration.md §RFC 0100 prose; this schema does not enforce it (the field is not in `required` and there is no conditional). Disambiguates a2a-integration.md drift point #2 (approval and clarification both project to INPUT_REQUIRED) — carried in `Task.metadata.openwop.interrupt.kind`, the `metadata.openwop.*` shape the doc's Future-work asks to codify. The enum names only `approval` and `clarification`: a `waiting-external` run, which also projects to input-required, has no value here, and its kind is disambiguated by the `metadata.openwop.interrupt.kind` carrier alone."
+      "description": "Present iff `state == 'input-required'` — a rule stated in the prose of a2a-integration.md §'The durable Task projection record'; this schema does not enforce it (the field is not in `required` and there is no conditional). Disambiguates a2a-integration.md drift point #2 (approval and clarification both project to INPUT_REQUIRED) — carried in `Task.metadata.openwop.interrupt.kind`, the `metadata.openwop.*` shape the doc's Future-work asks to codify. The enum names only `approval` and `clarification`: a `waiting-external` run, which also projects to input-required, has no value here, and its kind is disambiguated by the `metadata.openwop.interrupt.kind` carrier alone."
     },
     "updatedAt": {
       "type": "string",
