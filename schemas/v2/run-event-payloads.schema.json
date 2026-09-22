@@ -1279,7 +1279,8 @@
             "conversation.start",
             "conversation.exchange",
             "conversation.close",
-            "low-confidence"
+            "low-confidence",
+            "credential"
           ],
           "description": "RFC 0094 \u00a7E \u2014 the full kind union `interrupt.md` defines (mirrors suspend-request.schema.json). Conversation kinds are gated on the conversation capability per capabilities.md."
         },
@@ -1421,7 +1422,8 @@
             "conversation.start",
             "conversation.exchange",
             "conversation.close",
-            "low-confidence"
+            "low-confidence",
+            "credential"
           ],
           "description": "RFC 0094 \u00a7E \u2014 the full kind union `interrupt.md` defines (mirrors suspend-request.schema.json). Conversation kinds are gated on the conversation capability per capabilities.md."
         },

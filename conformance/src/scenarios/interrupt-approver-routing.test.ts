@@ -95,6 +95,9 @@ describe('interrupt-approver-routing: ApprovalData additive optionality (interru
   const ajv = new Ajv2020({ strict: false, allErrors: true });
   addFormats(ajv);
   const suspend = loadSchema('suspend-request.schema.json');
+  // RFC 0199 added CredentialData, whose `credentialRef` $refs credential-reference.schema.json;
+  // a standalone compile has to register it or the whole document fails to resolve.
+  ajv.addSchema(loadSchema('credential-reference.schema.json'));
   const validate = ajv.compile(suspend);
 
   const baseApproval = {

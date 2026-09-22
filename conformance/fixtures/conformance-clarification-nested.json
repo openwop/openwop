@@ -1,0 +1,53 @@
+{
+  "id": "conformance-clarification-nested",
+  "name": "Conformance: Clarification (nested schema)",
+  "version": "1.0",
+  "description": "RFC 0199 \u00a7D.2(d) probe. Suspends on a clarification whose one answer is an OBJECT. Bridged as MCP requestedSchema { q1: { type: object, \u2026 } } it is not a flat object of primitive properties, so an MCP mount MUST NOT bridge it in form mode (URL mode when the client declared it, else CallToolResult isError). See v2-mcp-mount-map.test.ts.",
+  "nodes": [
+    {
+      "id": "ask",
+      "typeId": "core.clarificationGate",
+      "name": "Clarification Gate (nested)",
+      "position": {
+        "x": 0,
+        "y": 0
+      },
+      "config": {
+        "questions": [
+          {
+            "id": "q1",
+            "question": "Where should the parcel go?",
+            "schema": {
+              "type": "object",
+              "properties": {
+                "street": {
+                  "type": "string"
+                }
+              }
+            }
+          }
+        ]
+      },
+      "inputs": {}
+    }
+  ],
+  "edges": [],
+  "triggers": [
+    {
+      "id": "manual",
+      "type": "manual",
+      "enabled": true
+    }
+  ],
+  "variables": [],
+  "metadata": {
+    "tags": [
+      "conformance",
+      "hitl",
+      "rfc-0199"
+    ]
+  },
+  "settings": {
+    "timeout": 0
+  }
+}

@@ -8,8 +8,8 @@
   "properties": {
     "kind": {
       "type": "string",
-      "enum": ["approval", "clarification", "external-event", "custom", "conversation.start", "conversation.exchange", "conversation.close", "low-confidence"],
-      "description": "Discriminator for resume-time routing + UI rendering + observability. Multi-Agent Shift Phase 4 adds `conversation.start` / `conversation.exchange` / `conversation.close` for multi-turn user interjections (see ConversationStartData / ConversationExchangeData / ConversationCloseData below). Phase 1 adds `low-confidence` for the confidence-escalation contract (orchestrator-supervisor suspends below threshold; see LowConfidenceData)."
+      "enum": ["approval", "clarification", "external-event", "custom", "conversation.start", "conversation.exchange", "conversation.close", "low-confidence", "credential"],
+      "description": "Discriminator for resume-time routing + UI rendering + observability. Multi-Agent Shift Phase 4 adds `conversation.start` / `conversation.exchange` / `conversation.close` for multi-turn user interjections (see ConversationStartData / ConversationExchangeData / ConversationCloseData below). Phase 1 adds `low-confidence` for the confidence-escalation contract (orchestrator-supervisor suspends below threshold; see LowConfidenceData). RFC 0199 adds `credential` (see CredentialData), gated on `oauth.credentialInterrupt`."
     },
     "key": {
       "type": "string",
@@ -36,7 +36,8 @@
         { "$ref": "#/$defs/ConversationStartData" },
         { "$ref": "#/$defs/ConversationExchangeData" },
         { "$ref": "#/$defs/ConversationCloseData" },
-        { "$ref": "#/$defs/LowConfidenceData" }
+        { "$ref": "#/$defs/LowConfidenceData" },
+        { "$ref": "#/$defs/CredentialData" }
       ]
     }
   },
@@ -50,7 +51,8 @@
     { "if": { "properties": { "kind": { "const": "conversation.start" } }, "required": ["kind"] }, "then": { "properties": { "data": { "$ref": "#/$defs/ConversationStartData" } } } },
     { "if": { "properties": { "kind": { "const": "conversation.exchange" } }, "required": ["kind"] }, "then": { "properties": { "data": { "$ref": "#/$defs/ConversationExchangeData" } } } },
     { "if": { "properties": { "kind": { "const": "conversation.close" } }, "required": ["kind"] }, "then": { "properties": { "data": { "$ref": "#/$defs/ConversationCloseData" } } } },
-    { "if": { "properties": { "kind": { "const": "low-confidence" } }, "required": ["kind"] }, "then": { "properties": { "data": { "$ref": "#/$defs/LowConfidenceData" } } } }
+    { "if": { "properties": { "kind": { "const": "low-confidence" } }, "required": ["kind"] }, "then": { "properties": { "data": { "$ref": "#/$defs/LowConfidenceData" } } } },
+    { "if": { "properties": { "kind": { "const": "credential" } }, "required": ["kind"] }, "then": {"required": ["resumeSchema"], "properties": {"data": {"$ref": "#/$defs/CredentialData"}, "resumeSchema": {"const": {"type": "object", "additionalProperties": false, "required": ["outcome"], "properties": {"outcome": {"enum": ["authorized", "declined"]}}}}}} }
   ],
   "$defs": {
     "ApprovalData": {
@@ -212,6 +214,49 @@
         "threshold": { "type": "number", "minimum": 0, "maximum": 1, "description": "Resolved escalation threshold for this run (default 0.7 per Phase-1 disposition; per-run override via `RunOptions.configurable.escalationThreshold`)." },
         "observed": { "type": "number", "minimum": 0, "maximum": 1, "description": "The agent's reported confidence value that triggered the escalation." },
         "decision": { "description": "Optional sketch of the decision the agent WOULD have emitted at threshold-or-above. Lets operators see the un-ratified choice. Shape mirrors `OrchestratorDecision` or the agent's domain-specific decision type." }
+      },
+      "additionalProperties": false
+    },
+    "CredentialData": {
+      "type": "object",
+      "description": "Payload for kind='credential' (RFC 0199 §C.3). Closed: it names the provider, scopes and reason and carries the host-owned `connectUrl`; it NEVER carries credential material, the interrupt's token, or any value that resolves the interrupt. Gated on `oauth.credentialInterrupt`.",
+      "required": [
+        "provider",
+        "scopes",
+        "reason",
+        "connectUrl"
+      ],
+      "properties": {
+        "provider": {
+          "type": "string",
+          "minLength": 1,
+          "description": "An advertised `oauth.providers[].id`."
+        },
+        "scopes": {
+          "type": "array",
+          "items": {
+            "type": "string",
+            "minLength": 1
+          },
+          "uniqueItems": true
+        },
+        "reason": {
+          "enum": [
+            "missing",
+            "expired",
+            "insufficient_scope"
+          ]
+        },
+        "connectUrl": {
+          "type": "string",
+          "format": "uri",
+          "pattern": "^https://",
+          "description": "Host-owned https URL on the host's own origin that begins the authorization-code grant for the interrupt's initiating Subject. MUST NOT be pre-authenticated and MUST NOT embed the interrupt token."
+        },
+        "credentialRef": {
+          "$ref": "credential-reference.schema.json",
+          "description": "The reference being re-authorized; never material."
+        }
       },
       "additionalProperties": false
     }

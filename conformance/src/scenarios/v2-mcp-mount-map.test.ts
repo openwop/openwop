@@ -22,6 +22,7 @@
  * @see spec/v2/core/interop.md §"The operation mappings"
  * @see spec/v2/interop-map.json mcp.features / methods / headers / meta / mrtr / cache / authorization
  * @see RFCS/0208-v2-a2a-mcp-operation-mappings.md §A, §B
+ * @see RFCS/0199-outbound-oauth-client-and-credential-interrupt.md §D.2 (the URL-mode and form-mode legs; interop-map.json mcp.mrtr InputRequiredResult (host as server))
  */
 import { describe, it, expect } from 'vitest';
 import { readFileSync } from 'node:fs';
@@ -33,6 +34,7 @@ import { loadEnv } from '../lib/env.js';
 import { softSkip } from '../lib/soft-skip.js';
 import { SCHEMAS_DIR } from '../lib/paths.js';
 import { req } from '../lib/requirement-ids.js';
+import { SEAMS_PREFIX } from '../lib/seams.js';
 
 export const HOST_CALLBACK_NOT_REQUIRED = 'the suite is the MCP client: every leg POSTs JSON-RPC to the mount the host advertises in mcp.serverUrls; nothing harness-hosted is handed to the host';
 
@@ -236,6 +238,71 @@ describe('RFC 0208 — v2-mcp-mount-map (host as MCP 2026-07-28 server, gated on
     if (cookies.length > 0) {
       const withSession = await call(m.url, 'tools/list', {}, { bearer: null, headers: { Cookie: cookies.map((c) => c.split(';')[0]).join('; ') } });
       expect([401, 403], req(R('mcp-auth-boundary'), 'interop-map.json mcp.authorization', `a host-minted anonymous session is still an anonymous principal (got ${withSession.status})`)).toContain(withSession.status);
+    }
+  });
+
+  // ── RFC 0199 §D.2 — what the bridge sends for a credential interrupt, and what it refuses to send in form mode ──
+
+  it('a credential interrupt is answered in URL mode (url = connectUrl), isError without URL support, and input_required again on an accept retry with no credential', async () => {
+    const id = 'openwop.requirement.0199.mcp-url-mode';
+    const m = await mount();
+    if (!m.ok) return skip(m);
+    const oauth = await familyAdvertised('oauth');
+    if (oauth?.['credentialInterrupt'] !== true) return softSkip('inapplicable', 'oauth.credentialInterrupt is not advertised — the host raises no credential interrupt to bridge (RFC 0199 §C.1)');
+    const missing = needFixtures(['conformance-credential']);
+    if (missing) return softSkip('blocked', missing);
+    const minted = await driver.post(`${SEAMS_PREFIX}/sample/auth/credential/mint`, { lane: 'api-key' }).catch(() => null);
+    const bearer = (minted?.json as { credential?: unknown } | undefined)?.credential;
+    if (typeof bearer !== 'string') return softSkip('blocked', 'the credential mint seam did not mint a fresh Subject — a Subject that may already hold a credential makes the leg vacuous');
+    const TOOL = 'conformance-credential';
+    const urlCaps = { elicitation: { url: {} } };
+    const first = await toolCall(m.url, TOOL, {}, { caps: urlCaps, bearer });
+    expect(first.result?.['resultType'], req(id, 'interop-map.json mcp.mrtr InputRequiredResult (host as server)', `a run suspended on a credential interrupt MUST answer input_required (got ${JSON.stringify(first.error ?? first.result)})`)).toBe('input_required');
+    const requests = (first.result?.['inputRequests'] ?? {}) as Record<string, { method?: string; params?: { mode?: string; url?: string; message?: string } }>;
+    const key = Object.keys(requests)[0];
+    const params = key === undefined ? undefined : requests[key]?.params;
+    expect([requests[key ?? '']?.method, params?.mode], req(id, 'RFC 0199 §D.2(a); interop-map.json mcp.mrtr', `a credential interrupt MUST be elicitation/create in mode url, never form (got ${JSON.stringify(requests)})`)).toEqual(['elicitation/create', 'url']);
+    let connectUrl: string | undefined;
+    if (await familyAdvertised('runList')) {
+      const runs = await driver.get('/runs?workflowId=conformance-credential&limit=5', { authenticated: false, headers: { Authorization: `Bearer ${bearer}` } });
+      const runId = ((runs.json as { runs?: Array<{ runId?: string }> } | undefined)?.runs ?? [])[0]?.runId;
+      if (runId !== undefined) {
+        const poll = await driver.get(`/runs/${encodeURIComponent(runId)}/events/poll?timeout=1`, { authenticated: false, headers: { Authorization: `Bearer ${bearer}` } });
+        connectUrl = ((poll.json as { events?: Array<{ type?: string; payload?: { kind?: string; data?: { connectUrl?: string } } }> } | undefined)?.events ?? []).find((e) => e.type === 'interrupt.requested' && e.payload?.kind === 'credential')?.payload?.data?.connectUrl;
+      }
+    }
+    if (connectUrl !== undefined) {
+      expect(params?.url, req(id, 'RFC 0199 §D.2(a)', 'the url MUST be the credential interrupt\'s connectUrl')).toBe(connectUrl);
+    } else {
+      expect(typeof params?.url === 'string' && params.url.startsWith('https://'), req(id, 'RFC 0199 §D.2(a)', `the url MUST be an https connectUrl (runList unavailable, so it is not compared with the log; got ${params?.url})`)).toBe(true);
+    }
+    const formOnly = await toolCall(m.url, TOOL, {}, { caps: { elicitation: {} }, bearer });
+    expect([formOnly.error, formOnly.result?.['isError'], formOnly.result?.['inputRequests']], req(id, 'RFC 0199 §D.2(b) (an empty elicitation capability is form mode only)', `without elicitation.url the host MUST answer CallToolResult isError true and MUST NOT fall back to form mode (got ${JSON.stringify(formOnly.error ?? formOnly.result)})`)).toEqual([undefined, true, undefined]);
+    const retry = await toolCall(m.url, TOOL, { requestState: first.result?.['requestState'], inputResponses: { [key!]: { action: 'accept' } } }, { caps: urlCaps, bearer });
+    const again = (retry.result?.['inputRequests'] ?? {}) as Record<string, { params?: { mode?: string; url?: string } }>;
+    const againParams = Object.values(again)[0]?.params;
+    expect([retry.error, retry.result?.['resultType'], againParams?.mode, againParams?.url], req(id, 'RFC 0199 §D.2(c); interop-map.json mcp.mrtr inputResponses[key] (host as server)', `an accept retry with no credential MUST answer input_required again with the same url, not an error (got ${JSON.stringify(retry.error ?? retry.result)})`)).toEqual([undefined, 'input_required', 'url', params?.url]);
+  });
+
+  it('form mode is never emitted for a nested schema or a sensitive (format password) field', async () => {
+    const id = 'openwop.requirement.0199.form-mode-no-secret';
+    const m = await mount();
+    if (!m.ok) return skip(m);
+    const missing = needFixtures(['conformance-clarification', 'conformance-clarification-nested', 'conformance-clarification-sensitive']);
+    if (missing) return softSkip('blocked', missing);
+    const modes = (r: Rpc): string[] => Object.values((r.result?.['inputRequests'] ?? {}) as Record<string, { params?: { mode?: string } }>).map((x) => String(x.params?.mode));
+    // Positive control: a flat primitive clarification IS bridged in form mode, so a refusal below is not a bridge that never answers.
+    const flat = await toolCall(m.url, 'conformance-clarification', {}, { caps: { elicitation: {} } });
+    expect([flat.result?.['resultType'], modes(flat)], req(id, 'interop-map.json mcp.mrtr InputRequiredResult (host as server)', `positive control: a flat primitive clarification is bridged in form mode (got ${JSON.stringify(flat.error ?? flat.result)})`)).toEqual(['input_required', ['form']]);
+    for (const tool of ['conformance-clarification-nested', 'conformance-clarification-sensitive']) {
+      for (const caps of [{ elicitation: {} }, { elicitation: { url: {} } }]) {
+        const r = await toolCall(m.url, tool, {}, { caps });
+        expect(r.error, req(id, 'RFC 0199 §D.2(d)', `${tool} MUST be answered with a result, not a JSON-RPC error (got ${JSON.stringify(r.error)})`)).toBeUndefined();
+        expect(modes(r).includes('form'), req(id, 'RFC 0199 §D.2(d); invariant elicitation-form-no-secret (MCP Elicitation §Requested Schema / §User Interaction Model)', `${tool} with ${JSON.stringify(caps)}: form mode MUST NOT be emitted for a non-flat or sensitive schema — URL mode when declared, else isError (got ${JSON.stringify(r.result)})`)).toBe(false);
+        const urlDeclared = (caps.elicitation as Record<string, unknown>)['url'] !== undefined;
+        if (urlDeclared) expect(modes(r), req(id, 'RFC 0199 §D.2(d)', `${tool}: with elicitation.url declared the host emits URL mode (a host-owned resolve page)`)).toEqual(['url']);
+        else expect(r.result?.['isError'], req(id, 'RFC 0199 §D.2(d)/(b)', `${tool}: without elicitation.url the host answers isError true`)).toBe(true);
+      }
     }
   });
 });

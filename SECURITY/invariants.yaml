@@ -4482,3 +4482,44 @@ invariants:
       listen that acknowledges every requested id).
     witness: witnessable-gated
     witnessReview: reviewed-2026-09-22
+
+  - id: oauth-same-user-binding
+    tier: reference-impl
+    severity: critical
+    threat_model: SECURITY/threat-model-auth-profiles.md
+    tests:
+      - conformance/src/scenarios/v2-oauth-client-pkce-state-iss.test.ts
+      - conformance/src/scenarios/v2-credential-interrupt.test.ts
+    note: |
+      RFC 0199 §A.3/§C.3 (spec/v2/core/oauth.md). The Subject that completes an
+      authorization-code callback, or opens a credential interrupt's
+      connectUrl, MUST be the Subject bound to its `state`; otherwise the host
+      refuses and stores nothing. Upstream: MCP 2026-07-28 Client › Elicitation
+      §Phishing ("the user who started the elicitation request … is the same
+      user who completes the authorization flow"). The witness is the suite's
+      authorization-server double: zero token requests for the second
+      Subject's callback, counted by the suite, never read from the host.
+      Needs OPENWOP_TEST_TENANT_B_API_KEY (a second Subject; blocked without
+      it). Reference-impl at Active; graduates to protocol at Accepted only on
+      a non-vacuous executed-pass on a committed bundle.
+    witness: seam-gated
+    witnessReview: reviewed-2026-09-22
+
+  - id: elicitation-form-no-secret
+    tier: reference-impl
+    severity: high
+    threat_model: SECURITY/threat-model-secret-leakage.md
+    tests:
+      - conformance/src/scenarios/v2-mcp-mount-map.test.ts
+    note: |
+      RFC 0199 §D.2(d) (spec/v2/interop-map.json mcp.mrtr InputRequiredResult
+      (host as server)). A host MUST NOT emit MCP form-mode elicitation for a
+      `credential` interrupt, or for a schema that is non-flat or marks a
+      property writeOnly / format "password"; URL mode (when the request
+      declared elicitation.url) or CallToolResult isError instead, never a
+      form fallback. Upstream: MCP 2026-07-28 Client › Elicitation §User
+      Interaction Model ("Servers MUST NOT use form mode elicitation to request
+      sensitive information") and §Requested Schema (flat primitives only).
+      Binds every host with an MCP server mount, not only oauth advertisers.
+    witness: seam-gated
+    witnessReview: reviewed-2026-09-22

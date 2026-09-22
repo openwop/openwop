@@ -58,7 +58,7 @@ interface InterruptPayload<TResume = unknown> {
   kind:
     | 'approval' | 'clarification' | 'external-event' | 'custom'
     | 'conversation.start' | 'conversation.exchange' | 'conversation.close'
-    | 'low-confidence';
+    | 'low-confidence' | 'credential';
 
   /**
    * Deterministic key used to short-circuit on re-entry after process death.
@@ -78,7 +78,7 @@ interface InterruptPayload<TResume = unknown> {
   data:
     | ApprovalData | ClarificationData | ExternalEventData | CustomData
     | ConversationStartData | ConversationExchangeData | ConversationCloseData
-    | LowConfidenceData;
+    | LowConfidenceData | CredentialData;
 }
 ```
 
@@ -317,6 +317,26 @@ type LowConfidenceResume = unknown;  // operator-ratified decision shape (typica
 
 **Conformance pairs with the `agent.decided` event:** when a host emits `agent.decided` with `confidence < threshold`, it MUST follow with a `node.suspended { reason: 'low-confidence' }` per CP-1. The `agentConfidenceEscalation.test.ts` scenario validates this pairing.
 
+### `kind: "credential"` (RFC 0199)
+
+Suspends a node until a user authorizes a third-party credential out of band. Gated on `capabilities.oauth.credentialInterrupt: true` ([`host-capabilities.md` §host.oauth](./host-capabilities.md#hostoauth)); a host that does not advertise it never raises this kind and keeps RFC 0047's fail-the-node rule. A host advertising it MUST raise it, instead of failing the node, when a node declaring `auth: { type: "oauth2", provider, scopes }` is about to execute and no credential resolves for the run's principal, provider and scopes (`reason: "missing"`, or `"insufficient_scope"` when one resolves with fewer scopes), or the refresh failed terminally (`reason: "expired"`, after `connector.auth_expired`). The run's snapshot status is `waiting-input`; no `RunStatus` member is added.
+
+```typescript
+interface CredentialData {            // closed (additionalProperties: false)
+  provider: string;                   // an advertised oauth.providers[].id
+  scopes: string[];
+  reason: 'missing' | 'expired' | 'insufficient_scope';
+  connectUrl: string;                 // https, on the host's own origin
+  credentialRef?: CredentialReference; // the reference being re-authorized; never material
+}
+
+type CredentialResume = { outcome: 'authorized' | 'declined' };  // closed; carries no credential
+```
+
+`resumeSchema` for this kind is fixed to the closed `CredentialResume` shape (`suspend-request.schema.json`), so a credential cannot be submitted through a resume. `connectUrl` begins the host's authorization-code grant for the interrupt's initiating principal; it MUST NOT be pre-authenticated (opening it MUST require the host to authenticate the user and MUST refuse any other user) and MUST NOT embed the interrupt token or any value that resolves the interrupt. **Resolution is host-side:** when the grant completes and a credential resolves, the host resolves the interrupt with `{ outcome: "authorized" }`. A caller's resolve of `authorized` MUST be refused `400 validation_error` (`details.field: "resumeValue"`) unless a credential for the principal, provider and scopes now resolves — the host re-checks, it does not trust the caller. `declined` fails the node with `connector_auth_declined`. The ordinary resolve rules (idempotency, `409` on a concurrent resolve, token expiry) apply unchanged.
+
+**No interrupt collects a secret (binds every host).** A workflow or pack MUST NOT use an interrupt of any kind to solicit credential material — passwords, API keys, access or refresh tokens, payment credentials. Credential acquisition uses `credential` or the host's own vault surface (RFC 0046), never a resume value. The machine-checkable half is enforced at the bridges: MCP form mode ([`mcp-integration.md`](./mcp-integration.md) §C.2, invariant `elicitation-form-no-secret`) and A2UI surfaces (RFC 0209).
+
 ---
 
 ## Wire surface
@@ -334,7 +354,7 @@ When `ctx.interrupt(payload)` is called, the engine MUST emit:
     interruptId: string;
     kind: 'approval' | 'clarification' | 'external-event' | 'custom'
         | 'conversation.start' | 'conversation.exchange' | 'conversation.close'
-        | 'low-confidence'; // full set per RFC 0094
+        | 'low-confidence' | 'credential'; // full set per RFC 0094 (+ RFC 0199)
     key: string;
     data: ApprovalData | ClarificationData | ExternalEventData | CustomData
         | ConversationStartData | ConversationExchangeData | ConversationCloseData

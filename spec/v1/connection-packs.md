@@ -66,6 +66,24 @@ through the same signed-tarball + Ed25519 + SRI pipeline (`node-packs.md` §Sign
    posture `host.oauth` already requires for token endpoints; the actual token POST and any
    MCP connect compose with the host `safeFetch` egress guard, RFC 0076).
 
+3a. **A provider reached as an MCP server (RFC 0199 §B).** When `provider.reach.mcp` is present
+   and `provider.auth.kind` is `oauth2`, a host **MUST NOT** authorize the provider unless the
+   manifest declares `provider.auth.issuer` and `provider.auth.endpoints`, and does not declare
+   `pkce: "unsupported"` — the schema keeps both properties optional, so the refusal is of the
+   *grant*, never of the document, and is `connection_auth_metadata_mismatch` before any
+   authorization URL is issued. The host **MUST** send `resource` (RFC 8707, the canonical URI of
+   `reach.mcp.server.url`) in both the authorization and the token request. It **MUST** fetch the
+   server's Protected Resource Metadata (RFC 9728) only from the well-known URIs derived from
+   `reach.mcp.server.url` (or a same-origin `resource_metadata` challenge URL) through the egress
+   guard, require its `resource` to be that identifier and its `authorization_servers[]` to
+   contain `provider.auth.issuer`, fetch authorization-server metadata only from that issuer and
+   require its `issuer`, `authorization_endpoint` and `token_endpoint` to equal the manifest's and
+   its `code_challenge_methods_supported` to list `S256`. Discovery **verifies and never
+   selects**: any mismatch is refused `connection_auth_metadata_mismatch` and no authorization or
+   token request is sent. The verified tuple `(resource, issuer, authorize, token)` is pinned at
+   registration; a later discovery that disagrees is refused with the same code. Clause 3 is
+   unchanged — every request goes to a manifest-declared endpoint.
+
 4. When `provider.auth.kind` is `oauth2` and `provider.auth.scopeModel` is `groups`,
    `provider.auth.scopes.read` **SHOULD** be present, and `provider.auth.scopes.write` (when
    present) **MUST** be requested as a **separate** consent step — a host **MUST NOT** bundle
@@ -222,6 +240,7 @@ A complete connection pack for GitHub, reached via the official GitHub MCP serve
       "kind": "oauth2",
       "authFlow": "pkce",
       "scopeModel": "groups",
+      "issuer": "https://github.com/login/oauth",
       "endpoints": {
         "authorize": "https://github.com/login/oauth/authorize",
         "token": "https://github.com/login/oauth/access_token"
@@ -252,6 +271,11 @@ Manifests that a host **MUST** reject:
 
 // openapi reach without apiHosts (clause 13) → schema validation failure (conditional MUST)
 { "provider": { "reach": { "openapi": { "ref": "https://api.example.com/openapi.json" } } } }
+
+// reach.mcp + oauth2 with no provider.auth.issuer (clause 3a) → VALIDATES; the host
+// refuses the GRANT with connection_auth_metadata_mismatch and issues no authorization URL
+{ "provider": { "auth": { "kind": "oauth2", "endpoints": { "token": "https://example.com/token" } },
+  "reach": { "mcp": { "server": { "url": "https://mcp.example.com/", "transport": "http" } } } } }
 
 // IP literal in apiHosts (clause 11) → connection_pack_invalid_api_host
 { "provider": { "reach": { "openapi": { "ref": "https://api.example.com/o" } },

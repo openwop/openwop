@@ -367,14 +367,14 @@ Every row below can fail, and the sabotage that makes it fail is named in the co
 ## Acceptance criteria
 
 - [x] `Active`: 2026-09-22, by steward override of RFC 0147 §A.6 (the window was waived, not run; see `Updated`).
-- [ ] Spec text merged: `spec/v2/core/oauth.md` (+ `declaration.json` `normativeText` for `oauth` and `credentials`), `interrupt.md`, `interop.md`; v1 `host-capabilities.md` §host.oauth, `connection-packs.md`, `interrupt.md`, `mcp-integration.md` §C.2, `a2a-integration.md`; RFC 0047 `Amended by` row.
-- [ ] Schemas (v1 + v2 + `spec-artifacts/` regeneration): E.1–E.4; `errors.json` E.5.
-- [ ] `oauth-same-user-binding` and `elicitation-form-no-secret` registered at `reference-impl`.
-- [ ] The scenarios above ship in a published suite, and each is shown able to fail by its named sabotage.
+- [x] Spec text merged (2026-09-22): `spec/v2/core/oauth.md` (+ `declaration.json` `normativeText` for `oauth` and `credentials`), `interrupt.md`, `interop.md`; v1 `host-capabilities.md` §host.oauth, `connection-packs.md`, `interrupt.md`, `mcp-integration.md` §C.2, `a2a-integration.md`; RFC 0047 `Amended by` row.
+- [x] Schemas (v1 + v2 + `spec-artifacts/` regeneration) merged 2026-09-22: E.1–E.4; `errors.json` E.5. `provider.auth.issuer` / `.pkce` stay OPTIONAL (the amended §E.2 host-side rule).
+- [x] `oauth-same-user-binding` and `elicitation-form-no-secret` registered at `reference-impl` (2026-09-22), each naming the major-2 scenario that witnesses it.
+- [ ] The scenarios above ship in a **published** suite (they ride the unpublished 2.36.0), and each is shown able to fail by its named sabotage. **Sabotage done 2026-09-22**: 22 cases run against a deliberately broken v2 reference host, each turning its row red (recorded in the implementation PR); publication is the remaining half.
 - [ ] A committed host bundle carries `openwop.requirement.0199.pkce-s256`, `.state-single-use`, `.same-user-callback`, `.iss-validated` and `.credential-interrupt` at `executed-pass`, nothing relaxed. At least one host must be production (tier-2 MyndHyve, or tier-1 openwop-app if it adopts `oauth`). If the seams run on a 0%-traffic side revision, it is built from the production image and `host.build` records it as a side revision; the bundle notes state that `authorize-start` calls the production authorization-URL builder.
 - [ ] `.mcp-url-mode` and `.form-mode-no-secret` `executed-pass` on a committed **v2** bundle of a host with a v2 MCP mount (the v2 reference host, after RFC 0208's mount). The v1 legs on openwop-app's v1 bridge are supplementary and do not satisfy this box.
 - [ ] RFC 0156 §B retrospective review recorded. Until then, `Accepted` is **provisional** (register row `not-reviewed`).
-- [ ] CHANGELOG entry.
+- [x] CHANGELOG entry (corpus + `conformance/CHANGELOG.md` 2.36.0).
 
 ## References
 

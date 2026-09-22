@@ -24,6 +24,7 @@
  * @see spec/v2/core/interop.md §"The operation mappings" (Isolation, A2A multi-turn)
  * @see spec/v2/interop-map.json a2a.operations / a2a.taskState / a2a.errors
  * @see RFCS/0208-v2-a2a-mcp-operation-mappings.md §C, §D, §E
+ * @see RFCS/0199-outbound-oauth-client-and-credential-interrupt.md §D.1 (the credential leg; interop-map.json a2a.taskState override row)
  */
 import { describe, it, expect } from 'vitest';
 import { readFileSync } from 'node:fs';
@@ -35,6 +36,7 @@ import { isFixtureAdvertised } from '../lib/fixtures.js';
 import { softSkip } from '../lib/soft-skip.js';
 import { SCHEMAS_DIR } from '../lib/paths.js';
 import { req } from '../lib/requirement-ids.js';
+import { SEAMS_PREFIX } from '../lib/seams.js';
 
 export const HOST_CALLBACK_NOT_REQUIRED = 'the suite is the A2A client: every leg POSTs JSON-RPC to the interface the host\'s own card lists; nothing harness-hosted is handed to the host';
 
@@ -48,6 +50,8 @@ interface MapStateRow { runStatus: string; wire: string; interruptKind?: string 
 const MAP = JSON.parse(readFileSync(join(SCHEMAS_DIR, '..', 'spec', 'v2', 'interop-map.json'), 'utf8')) as { a2a: { taskState: MapStateRow[] } };
 /** The map's forward projection (default rows only; an `interruptKind` override needs its interrupt kind). */
 const WIRE_OF = new Map(MAP.a2a.taskState.filter((r) => r.interruptKind === undefined).map((r) => [r.runStatus, r.wire]));
+/** RFC 0199 §D.1 — the override row for a run suspended on a `credential` interrupt. */
+const CREDENTIAL_WIRE = MAP.a2a.taskState.find((r) => r.runStatus === 'waiting-input' && r.interruptKind === 'credential')?.wire;
 
 interface RpcError { code: number; message?: string; data?: unknown }
 interface Rpc { status: number; result?: Record<string, unknown> | undefined; error?: RpcError | undefined }
@@ -268,5 +272,39 @@ describe('RFC 0208 — v2-a2a-operation-map (host as A2A 1.0 server, gated on a2
     expect(peek.error?.code, req(R('a2a-list-scoped'), 'interop.md §"The operation mappings" Isolation', `another tenant's real task MUST be TaskNotFoundError for this caller (got ${JSON.stringify(peek.error ?? peek.result)})`)).toBe(-32001);
     await rpc(t.url, 'CancelTask', { id });
     await rpc(t.url, 'CancelTask', { id: theirId }, { bearer: other });
+  });
+
+  it('a run suspended on a credential interrupt projects to TASK_STATE_AUTH_REQUIRED, naming the provider and carrying connectUrl', async () => {
+    const id = 'openwop.requirement.0199.a2a-auth-required';
+    const t = await target(false);
+    if (!t.ok) return skip(t, id);
+    const oauth = await familyAdvertised('oauth');
+    if (oauth?.['credentialInterrupt'] !== true) return softSkip('inapplicable', 'oauth.credentialInterrupt is not advertised — the host raises no credential interrupt to project (RFC 0199 §C.1)');
+    if (!isFixtureAdvertised('conformance-credential')) return softSkip('blocked', 'fixture conformance-credential is not in the advertised fixtures[]');
+    // A fresh Subject, so no credential another scenario acquired satisfies the node.
+    const minted = await driver.post(`${SEAMS_PREFIX}/sample/auth/credential/mint`, { lane: 'api-key' }).catch(() => null);
+    const bearer = (minted?.json as { credential?: unknown } | undefined)?.credential;
+    if (typeof bearer !== 'string') return softSkip('blocked', 'the credential mint seam did not mint a fresh Subject — a Subject that may already hold a credential makes the leg vacuous');
+    const created = await driver.post('/runs', { workflowId: 'conformance-credential', inputs: {} }, { authenticated: false, headers: { Authorization: `Bearer ${bearer}` } });
+    const runId = (created.json as { runId?: string } | undefined)?.runId;
+    expect(typeof runId, req(id, 'runs.md createRun', `createRun of conformance-credential MUST be accepted (got ${created.status})`)).toBe('string');
+    const end = Date.now() + 8000;
+    let snap = await driver.get(`/runs/${encodeURIComponent(runId!)}`, { authenticated: false, headers: { Authorization: `Bearer ${bearer}` } });
+    while ((snap.json as { status?: string } | undefined)?.status !== 'waiting-input' && Date.now() < end) {
+      await new Promise((ok) => setTimeout(ok, 100));
+      snap = await driver.get(`/runs/${encodeURIComponent(runId!)}`, { authenticated: false, headers: { Authorization: `Bearer ${bearer}` } });
+    }
+    expect((snap.json as { status?: string } | undefined)?.status, req(id, 'oauth.md §The credential interrupt', 'precondition: the run suspends on the credential interrupt (waiting-input)')).toBe('waiting-input');
+    const got = await rpc(t.url, 'GetTask', { id: runId }, { bearer });
+    const task = taskOf(got) as (Task & { status?: { state?: string; message?: { parts?: Array<{ text?: string }> } }; metadata?: { openwop?: { interrupt?: { kind?: string } } } }) | undefined;
+    expect(CREDENTIAL_WIRE, req(id, 'interop-map.json a2a.taskState', 'the map carries the (waiting-input, credential) override row')).toBe('TASK_STATE_AUTH_REQUIRED');
+    expect(task?.status?.state, req(id, 'interop.md §The durable-task projection; interop-map.json a2a.taskState (waiting-input, credential)', `a run suspended on a credential interrupt MUST project to TASK_STATE_AUTH_REQUIRED, not INPUT_REQUIRED (got ${JSON.stringify(got.error ?? task?.status)})`)).toBe(CREDENTIAL_WIRE);
+    expect(task?.metadata?.openwop?.interrupt?.kind, req(id, 'RFC 0199 §D.1', 'metadata.openwop.interrupt.kind (the interruptKind carrier) MUST be credential')).toBe('credential');
+    const text = (task?.status?.message?.parts ?? []).map((p) => p.text ?? '').join(' ');
+    const events = await driver.get(`/runs/${encodeURIComponent(runId!)}/events/poll?timeout=1`, { authenticated: false, headers: { Authorization: `Bearer ${bearer}` } });
+    const asked = ((events.json as { events?: Array<{ type?: string; payload?: { kind?: string; data?: { connectUrl?: string; provider?: string } } }> } | undefined)?.events ?? []).find((e) => e.type === 'interrupt.requested' && e.payload?.kind === 'credential');
+    const connectUrl = asked?.payload?.data?.connectUrl ?? '\u0000';
+    expect(text.includes(connectUrl) && text.includes(asked?.payload?.data?.provider ?? '\u0000'), req(id, 'RFC 0199 §D.1 (A2A v1.0.1 §7.6.1)', `the TaskStatus message MUST name the provider and carry connectUrl (got ${JSON.stringify(text)})`)).toBe(true);
+    await driver.post(`/runs/${encodeURIComponent(runId!)}:cancel`, {}, { authenticated: false, headers: { Authorization: `Bearer ${bearer}` } });
   });
 });

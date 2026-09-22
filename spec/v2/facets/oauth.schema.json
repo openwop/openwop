@@ -1,0 +1,70 @@
+{
+  "$comment": "RFC 0199 §C.1/§E.1 — oauth gains the credentialInterrupt facet (presence semantics, RFC 0192) and providers[] gains issuer + pkce. Hand-decided: grants/providers are otherwise the v1 seed.",
+  "properties": {
+    "grants": {
+      "type": "array",
+      "items": {
+        "type": "string",
+        "enum": [
+          "authorization_code",
+          "client_credentials",
+          "refresh_token"
+        ]
+      },
+      "uniqueItems": true,
+      "description": "OAuth 2.0 grant types the host performs on a node's behalf (oauth.md §Token lifecycle)."
+    },
+    "providers": {
+      "type": "array",
+      "description": "Provider catalog the host can acquire tokens for. A connector node's `auth.provider` MUST match an `id` here.",
+      "items": {
+        "type": "object",
+        "required": [
+          "id"
+        ],
+        "properties": {
+          "id": {
+            "type": "string",
+            "minLength": 1,
+            "description": "Stable provider id, e.g. `slack`, `google`."
+          },
+          "authUrl": {
+            "type": "string",
+            "format": "uri",
+            "description": "Authorization endpoint."
+          },
+          "tokenUrl": {
+            "type": "string",
+            "format": "uri",
+            "description": "Token endpoint."
+          },
+          "scopesSupported": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            },
+            "description": "Scopes this provider exposes."
+          },
+          "issuer": {
+            "type": "string",
+            "format": "uri",
+            "description": "RFC 0199 §A.4. The provider's authorization-server issuer identifier (RFC 8414 / RFC 9207). Absent ⇒ the host uses a provider-unique redirect URI (RFC 9700 §4.4.2.2)."
+          },
+          "pkce": {
+            "type": "string",
+            "enum": [
+              "S256",
+              "unsupported"
+            ],
+            "description": "RFC 0199 §A.1. Absent or `S256` ⇒ the host sends PKCE S256. `unsupported` ⇒ the host sends no PKCE for this provider; such a provider cannot back an MCP reach."
+          }
+        },
+        "additionalProperties": false
+      }
+    },
+    "credentialInterrupt": {
+      "const": true,
+      "description": "RFC 0199 §C.1 (oauth.md §The credential interrupt). Present ⇒ the host suspends a node on a `credential` interrupt instead of failing it when no credential resolves or refresh fails terminally. Absent ⇒ it fails the node with `connector_auth_expired`."
+    }
+  }
+}

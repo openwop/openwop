@@ -73,7 +73,7 @@ A host MAY serve the MCP Tasks extension `io.modelcontextprotocol/tasks` (revisi
 
 ## The durable-task projection
 
-`auth-required` remains a member of the persisted A2A task state enum (`schemas/v2/a2a-task-state.schema.json`) for the reverse direction (consuming an external A2A agent). The forward projection MUST NOT emit it: v2 has no `auth` interrupt kind. Adding one is an additive v2.x RFC, not a host extension.
+`auth-required` remains a member of the persisted A2A task state enum (`schemas/v2/a2a-task-state.schema.json`) for the reverse direction (consuming an external A2A agent). The forward projection MUST emit it, with `interruptKind: credential` and a status message carrying `connectUrl`, for a run suspended on a `credential` interrupt (interrupt.md), and MUST NOT emit it otherwise.
 
 ## gRPC
 

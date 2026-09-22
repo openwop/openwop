@@ -877,6 +877,10 @@
           "uniqueItems": true,
           "description": "OAuth 2.0 grant types the host performs on a node's behalf."
         },
+        "credentialInterrupt": {
+          "type": "boolean",
+          "description": "RFC 0199 §C. The host suspends a node on a `credential` interrupt instead of failing it when no credential resolves or refresh fails terminally. Absent ⇒ RFC 0047 §C.3 (fail the node with `connector_auth_expired`)."
+        },
         "providers": {
           "type": "array",
           "description": "Provider catalog the host can acquire tokens for. A connector node's `auth.provider` MUST match an `id` here.",
@@ -907,6 +911,19 @@
                   "type": "string"
                 },
                 "description": "Scopes this provider exposes."
+              },
+              "issuer": {
+                "type": "string",
+                "format": "uri",
+                "description": "RFC 0199 §A.4. The provider's authorization-server issuer identifier (RFC 8414 / RFC 9207). Absent ⇒ the host uses a provider-unique redirect URI (RFC 9700 §4.4.2.2)."
+              },
+              "pkce": {
+                "type": "string",
+                "enum": [
+                  "S256",
+                  "unsupported"
+                ],
+                "description": "RFC 0199 §A.1. Absent or `S256` ⇒ the host sends PKCE S256. `unsupported` ⇒ the host sends no PKCE for this provider; such a provider cannot back an MCP reach (§B.2)."
               }
             },
             "additionalProperties": false
