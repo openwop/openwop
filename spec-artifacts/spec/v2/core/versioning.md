@@ -26,7 +26,7 @@ Seam and proprietary paths are not manifest operations and need no per-major twi
 
 ### 1.3 The request header
 
-A request on an unversioned path MAY carry `OpenWOP-Version: <major>` or `OpenWOP-Version: <major>.<minor>` — `2` and `2.0` select the same major and a host MUST accept both. Only the major selects; a minor in the header is informational, and what pins a minor is `minClientVersion` plus the additive rules.
+A request on an unversioned path MAY carry `OpenWOP-Version: <major>` or `OpenWOP-Version: <major>.<minor>` — `2` and `2.0` select the same major and a host MUST accept both. Only the major selects; a minor in the header is informational, and what pins a minor is `minClientVersion` plus the additive rules (`COMPATIBILITY.md` §2.4).
 
 | Condition | Host behavior |
 | --- | --- |
