@@ -1,5 +1,9 @@
 # `@openwop/openwop-conformance` Changelog
 
+## [2.36.0] — unreleased — the 2.36.0 cycle is open
+
+- **Version moved ahead of publication, not with it.** `@openwop/openwop-conformance` and its exact-pinned peer `@openwop/spec-artifacts` move to `2.36.0` now, before any 2.36.0 content lands, because `2.35.1` is published and the published-identity gate refuses a tree whose shipped files differ from the tarball at the same version. The scenarios this minor adds are recorded here as they land. Not tagged, not published; npm still serves `2.35.1`.
+
 ## [2.35.1] — 2026-09-22 — the opt-out check could never fire on a real bundle
 
 - **RFC 0195 §3's `opted-out-but-advertised` rule, as shipped in 2.35.0, derived an empty set from every real bundle.** It read `openwop.profile.<name>` rows, and those rows never reach a bundle; the skipped rows that do named no profile. Measured on MyndHyve's committed 2.35.0 bundle, four declared opt-outs: `--verify` printed `opted out: (none)`. The rule's self-tests used synthetic rows that no real bundle contains — a check that cannot fail on the thing it exists to check.
