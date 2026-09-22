@@ -8,7 +8,7 @@
  * output modulo clock fields and freshly minted ids), and `run.started` on the
  * fork MUST carry the legacy Subject (`issuer: urn:openwop:legacy`,
  * identity.md) where the parent had none (`spec/v2/core/replay.md` §Forking a
- * v1 run; persistence.md §Forking a v1 run; RFC 0170 §A.3).
+ * v1 run; RFC 0170 §A.3).
  *
  * The era-2 parent is seeded in v1 vocabulary with a `run.started` that
  * carries no `owner` (a v1 payload) through the event-log seed seam

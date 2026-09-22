@@ -5,7 +5,7 @@
 
 ## Why this exists
 
-RFC 0101 and RFC 0110 are `Accepted`, their wire shapes are frozen in `schemas/v2/`, and conformance covers them — but each deliberately mints no client route for opening a conversation, and so neither was ever given an operative home. The obligation an advertising host takes on is real regardless of who routes the call; it is stated here.
+RFC 0101 and RFC 0110 mint no client route for opening a conversation; the obligation an advertising host takes on is stated here.
 
 ## `multiPartyConversation`
 

@@ -120,12 +120,12 @@ describe('RFC 0173 §B — effect-identity-business-key (gated on idempotency)',
     const keys = new Set(attempts.map((e) => String(e['providerKey'] ?? '')));
     expect(
       keys.size,
-      req('openwop.requirement.0173.effect-identity-business-key.retry', 'spec/v2/core/replay.md §Effect identity', `every attempt of one effect MUST present the same provider key across a transport retry — ${attempts.length} attempt(s) presented ${keys.size} distinct key(s)`),
+      req('openwop.requirement.0173.effect-identity-business-key.retry', 'spec/v2/core/idempotency.md §Layer 2: effect identity', `every attempt of one effect MUST present the same provider key across a transport retry — ${attempts.length} attempt(s) presented ${keys.size} distinct key(s)`),
     ).toBe(1);
     for (const a of attempts) {
       expect(
         a['keying'],
-        req('openwop.requirement.0173.effect-identity-business-key.retry', 'spec/v2/core/replay.md §Effect identity', `a Layer-2 host keys a retried effect on business identity, not the activity recipe (attempt ${String(a['attempt'])})`),
+        req('openwop.requirement.0173.effect-identity-business-key.retry', 'spec/v2/core/idempotency.md §Layer 2: effect identity', `a Layer-2 host keys a retried effect on business identity, not the activity recipe (attempt ${String(a['attempt'])})`),
       ).toBe('business-identity');
     }
   });

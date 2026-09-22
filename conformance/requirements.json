@@ -25961,7 +25961,7 @@
       "explicitId": "openwop.requirement.0168.advertised-fixtures-exist",
       "citations": [
         {
-          "section": "spec/v2/core/conformance.md §Fixtures",
+          "section": "RFC 0168 §C.3",
           "requirement": null,
           "interpolated": true
         }
@@ -26263,7 +26263,7 @@
       "citations": [
         {
           "section": "spec/v2/core/interrupt.md §Callback delivery (RFC 0196 §A.3)",
-          "requirement": "a host advertising interrupt.callbackDelivery MUST refuse at createRun a callbackUrl the webhooks.md §SSRF registration guard would refuse"
+          "requirement": "a host advertising interrupt.callbackDelivery MUST refuse at createRun a callbackUrl the webhooks.md §Egress registration guard would refuse"
         },
         {
           "section": "spec/v2/core/interrupt.md §Callback delivery (RFC 0196 §A.3)",
@@ -26559,19 +26559,19 @@
       "explicitId": "openwop.requirement.0171.configurable-closed.schema",
       "citations": [
         {
-          "section": "spec/v2/core/runs.md §configurable",
+          "section": "spec/v2/core/runs.md §Run options",
           "requirement": "{ version: 1 } is the smallest valid configurable (version REQUIRED, const 1)"
         },
         {
-          "section": "spec/v2/core/runs.md §configurable",
+          "section": "spec/v2/core/runs.md §Run options",
           "requirement": "a dotted key (`ai.provider` as a string key) MUST fail the closed nested schema"
         },
         {
-          "section": "spec/v2/core/runs.md §configurable",
+          "section": "spec/v2/core/runs.md §Run options",
           "requirement": "an unknown root key MUST fail the closed schema (additionalProperties: false in the standalone artifact)"
         },
         {
-          "section": "spec/v2/core/runs.md §configurable",
+          "section": "spec/v2/core/runs.md §Run options",
           "requirement": "a configurable without `version` MUST fail"
         }
       ]
@@ -26584,11 +26584,11 @@
       "explicitId": "openwop.requirement.0171.configurable-closed.dotted-key",
       "citations": [
         {
-          "section": "spec/v2/core/runs.md §configurable",
+          "section": "spec/v2/core/runs.md §Run options",
           "requirement": "a dotted key inside a section MUST be rejected with 400"
         },
         {
-          "section": "spec/v2/core/runs.md §configurable",
+          "section": "spec/v2/core/runs.md §Run options",
           "requirement": "the refusal code MUST be validation_error"
         }
       ]
@@ -26601,11 +26601,11 @@
       "explicitId": "openwop.requirement.0171.configurable-closed.unknown-key",
       "citations": [
         {
-          "section": "spec/v2/core/runs.md §configurable",
+          "section": "spec/v2/core/runs.md §Run options",
           "requirement": "an unknown root key MUST be rejected with 400"
         },
         {
-          "section": "spec/v2/core/runs.md §configurable",
+          "section": "spec/v2/core/runs.md §Run options",
           "requirement": "the refusal code MUST be validation_error"
         }
       ]
@@ -26871,12 +26871,12 @@
       "explicitId": "openwop.requirement.0173.effect-identity-business-key.retry",
       "citations": [
         {
-          "section": "spec/v2/core/replay.md §Effect identity",
+          "section": "spec/v2/core/idempotency.md §Layer 2: effect identity",
           "requirement": null,
           "interpolated": true
         },
         {
-          "section": "spec/v2/core/replay.md §Effect identity",
+          "section": "spec/v2/core/idempotency.md §Layer 2: effect identity",
           "requirement": null,
           "interpolated": true
         }
@@ -28741,7 +28741,7 @@
           "interpolated": true
         },
         {
-          "section": "spec/v2/core/events.md §run.cancelled",
+          "section": "spec/v2/core/runs.md §Cancel",
           "requirement": null,
           "interpolated": true
         }
@@ -28820,12 +28820,12 @@
           "interpolated": true
         },
         {
-          "section": "spec/v2/core/replay.md §Endpoint",
+          "section": "spec/v2/core/replay.md §The surface",
           "requirement": null,
           "interpolated": true
         },
         {
-          "section": "spec/v2/core/replay.md §Endpoint",
+          "section": "spec/v2/core/replay.md §The surface",
           "requirement": null,
           "interpolated": true
         },
@@ -29057,7 +29057,7 @@
           "interpolated": true
         },
         {
-          "section": "spec/v2/core/events.md §run.paused",
+          "section": "spec/v2/core/runs.md §Pause and resume",
           "requirement": null,
           "interpolated": true
         },
@@ -29739,12 +29739,12 @@
       "explicitId": "openwop.requirement.0171.webhook-egress-refused",
       "citations": [
         {
-          "section": "spec/v2/core/webhooks.md §SSRF",
+          "section": "spec/v2/core/webhooks.md §Egress",
           "requirement": null,
           "interpolated": true
         },
         {
-          "section": "spec/v2/core/webhooks.md §SSRF",
+          "section": "spec/v2/core/webhooks.md §Egress",
           "requirement": null,
           "interpolated": true
         }

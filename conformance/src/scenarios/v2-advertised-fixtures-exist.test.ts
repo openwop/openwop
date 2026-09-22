@@ -41,7 +41,7 @@ import { softSkip } from '../lib/soft-skip.js';
 import { req } from '../lib/requirement-ids.js';
 
 const ID = 'openwop.requirement.0168.advertised-fixtures-exist';
-const DOC = 'spec/v2/core/conformance.md §Fixtures';
+const DOC = 'RFC 0168 §C.3';
 /** Creating one run per advertised fixture would be a load test, not a check. */
 const SAMPLE = 5;
 
@@ -58,7 +58,7 @@ function advertisedIds(doc: Record<string, unknown>): string[] {
   return Array.isArray(raw) ? raw.filter((x): x is string => typeof x === 'string') : [];
 }
 
-describe('v2-advertised-fixtures-exist (conformance.md §Fixtures)', () => {
+describe('v2-advertised-fixtures-exist (RFC 0168 §C.3)', () => {
   it('a sampled advertised fixture is actually creatable, not just listed', async () => {
     const doc = await v2Discovery().catch(() => null);
     if (!doc) return softSkip('blocked', 'v2 discovery unreachable');

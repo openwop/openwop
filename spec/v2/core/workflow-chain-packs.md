@@ -5,7 +5,7 @@
 
 ## Why this exists
 
-A workflow-chain pack ships a reusable fragment a host expands into a concrete definition, and may compose other chains as co-registered children. v1 left three lifecycle questions open: which version a chain reference binds to, who owns a shared child, and whether `{{params.*}}` may survive into a persisted definition. v2 decides all three. The manifest is `schemas/v2/workflow-chain-pack-manifest.schema.json`; installation and signing follow packs.md.
+A workflow-chain pack ships a reusable fragment a host expands into a concrete definition, and may compose other chains as co-registered children. The manifest is `schemas/v2/workflow-chain-pack-manifest.schema.json`; installation and signing follow packs.md.
 
 ## Exact pins
 

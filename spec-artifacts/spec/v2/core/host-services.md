@@ -5,7 +5,7 @@
 
 ## Why this exists
 
-`spec/v1/host-capabilities.md` describes these three surfaces with a TypeScript sketch, a `**Required methods:**` label and a failure-mode list, and — unlike its sibling sections, which reach for `MUST` constantly — states no obligation. A lowercase section label is not an RFC 2119 keyword, so the contract a host takes on by advertising these families was never written down. v1 is frozen, so it is written here.
+`spec/v1/host-capabilities.md` describes these three surfaces but states no RFC 2119 obligation; the contract a host takes on by advertising them is written here.
 
 ## `aiEnvelope`
 

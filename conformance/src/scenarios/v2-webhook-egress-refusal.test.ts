@@ -1,7 +1,7 @@
 /**
  * v2-webhook-egress-refusal — the webhook egress guard REFUSES, at major 2.
  *
- * `spec/v2/core/webhooks.md` §SSRF: "At registration a host MUST reject (`400
+ * `spec/v2/core/webhooks.md` §Egress: "At registration a host MUST reject (`400
  * webhook_url_rejected`) non-`https://` URLs, RFC 1918 and loopback and
  * link-local ranges, IPv6 ULA, cloud metadata hosts, and `localhost`."
  *
@@ -39,7 +39,7 @@
  * deleted at once. Delivery-time re-resolution is a separate MUST that needs a
  * resolver the suite controls; it is not claimed here.
  *
- * @see spec/v2/core/webhooks.md §SSRF
+ * @see spec/v2/core/webhooks.md §Egress
  * @see spec/v2/core/security-defaults.md §Relaxations
  */
 
@@ -51,7 +51,7 @@ import { softSkip } from '../lib/soft-skip.js';
 import { req } from '../lib/requirement-ids.js';
 
 const ID = 'openwop.requirement.0171.webhook-egress-refused';
-const DOC = 'spec/v2/core/webhooks.md §SSRF';
+const DOC = 'spec/v2/core/webhooks.md §Egress';
 const EVENTS = ['run.completed'];
 
 /** One destination per class the sentence names. None is ever contacted. */
@@ -70,7 +70,7 @@ const PROBES: ReadonlyArray<{ readonly url: string; readonly cls: string }> = [
   // form let loopback, metadata and RFC 1918 through at registration and at
   // delivery. Measured on the steward's own reference host.
   // These are loopback / link-local / RFC 1918 addresses by any reading of
-  // webhooks.md §SSRF, so they enforce the existing obligation — same id.
+  // webhooks.md §Egress, so they enforce the existing obligation — same id.
   { url: 'https://[::ffff:7f00:1]/openwop-egress-probe', cls: 'loopback as IPv4-mapped IPv6 (hex)' },
   { url: 'https://[::ffff:a9fe:a9fe]/latest/meta-data/', cls: 'cloud metadata as IPv4-mapped IPv6 (hex)' },
   { url: 'https://[::ffff:a00:1]/openwop-egress-probe', cls: 'RFC 1918 (10/8) as IPv4-mapped IPv6 (hex)' },
@@ -88,7 +88,7 @@ function declaredWebhookRelaxations(): string[] {
   }
 }
 
-describe('v2-webhook-egress-refusal (webhooks.md §SSRF — the guard refuses, at major 2)', () => {
+describe('v2-webhook-egress-refusal (webhooks.md §Egress — the guard refuses, at major 2)', () => {
   it('a webhook registration naming a destination the guard MUST refuse is refused 400 webhook_url_rejected', async () => {
     const doc = await v2Discovery();
     if (!doc) return softSkip('blocked', 'v2 discovery unreachable');

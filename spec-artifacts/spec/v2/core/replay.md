@@ -5,24 +5,18 @@
 
 ## Why this exists
 
-The event log makes any past state of a run reconstructible by folding events up to a sequence. `POST /runs/{runId}:fork` turns that into a wire surface: a replay proves that current code reproduces recorded history; a branch explores an alternative from a recorded point. This document states what a fork MUST reproduce, what it MUST NOT re-fire, and how a host proves the second.
+`POST /runs/{runId}:fork` makes any past state of a run re-executable: a replay proves that current code reproduces recorded history; a branch explores an alternative from a recorded point. This document states what a fork MUST reproduce, what it MUST NOT re-fire, and how a host proves the second.
 
 ## The surface
 
 A host that advertises `replay` (capabilities.md) serves `forkRun` (`api/v2/openapi.yaml`, `POST /runs/{runId}:fork`) and `getEffectSeamManifest` (`GET /host/effect-seams`). The `replay` facet (`spec/v2/facets/replay.schema.json`) is `{ modes[], retention?, effectSeamsManifest }`; `modes` enumerates `fork | branch | rerun`; `effectSeamsManifest` is the constant `/host/effect-seams`. There is no `sideEffectSuppression` field: suppression is the only conforming replay behavior (RFC 0173 §B, row `C6.2`) and `none` is not a value.
 
-The request body is `{ mode, fromSeq?, runOptionsOverlay? }`, `mode ∈ replay | branch`. Events with `sequence < fromSeq` are fixed history; events `>= fromSeq` are re-executed.
+The request body, `fromSeq` defaults and `201` response are runs.md §Fork. Events with `sequence < fromSeq` are fixed history; events `>= fromSeq` are re-executed.
 
 | Rule | Requirement |
 | --- | --- |
-| `fromSeq` for `replay` | MAY be omitted; omission means `0` (full re-execution). |
-| `fromSeq` for `branch` | MUST be supplied. |
-| `runOptionsOverlay` | MUST be omitted or empty for `replay`; MAY be supplied for `branch`. |
 | `fromSeq` out of range | `400`; a sequence absent from the source log is `422`. A `fromSeq` greater than the sequence of the source run's terminal run event MUST be refused `422 fork_point_invalid` — the fork would inherit a terminal event and then execute (RFC 0194 §C; binds only where a compensation tail follows the terminal event). |
 | Source run not visible to the caller | `404`. |
-| Response | `201` `{ runId, sourceRunId, fromSeq, mode, status, eventsUrl }`; the fork is a new run with its own log. |
-
-The fork's `owner.tenant` and `owner.subject` MUST be copied verbatim from the source run (RFC 0165 §B.4; identity.md).
 
 ## Modes
 
@@ -34,7 +28,7 @@ The fork's `owner.tenant` and `owner.subject` MUST be copied verbatim from the s
 
 The replay contract is observable-output-sequence determinism, not bit-equivalent execution (RFC 0041 §C):
 
-1. The events at indices `[0, fromSeq)` MUST be byte-equivalent between source and replay, modulo per-region clock fields (RFC 0036 §E) and ULID time-component entropy when ULIDs are minted fresh. The range is half-open, matching §The surface: `sequence < fromSeq` is fixed history, and the event AT `fromSeq` is re-executed — so it is governed by §Divergence, not by this clause.
+1. The events at indices `[0, fromSeq)` MUST be byte-equivalent between source and replay, modulo per-region clock fields (RFC 0036 §E) and ULID time-component entropy when ULIDs are minted fresh. The event at `fromSeq` is governed by §Divergence.
 2. `variables`, `channels`, and `status` of the run snapshot at each index in that range MUST be byte-equivalent.
 3. The bytes on the wire of underlying tool and LLM calls MAY differ, provided the observable state at each index is byte-equivalent.
 
@@ -82,9 +76,9 @@ Pure nodes and LLM calls served from the invocation log MUST re-execute live; ot
 
 A host advertising `replay` MUST publish `schemas/v2/effect-seam-manifest.schema.json`-shaped data at `GET /host/effect-seams` (RFC 0173 §C.1): `{ manifestVersion: "1", host: { name, build }, seams[] }`, one row per outbound effect path its node runtime can reach, `{ seam, kind, guarded: true, guardedBy, branchReFires?, note? }`. The host owns the list. The suite drives one seam of each kind it can reach and observes no re-fire (`effect-seam-manifest`, conformance.md).
 
-`kind` names the outbound **wire mechanism** the seam leaves the host by — not the suite's driving mechanism, and not the business purpose. It MUST be one of `http`, `smtp`, `queue`, `storage`, `provider-sdk`, `webhook-fanout`, `other`. Two seams that a host guards through one code path but that leave by different mechanisms are different `kind`s; two that leave by the same mechanism for different business reasons are one. `other` is the escape for a mechanism this list does not name — raw TCP, gRPC, a filesystem write, a device SDK — and a row using it MUST carry `note` naming that mechanism, so an unnameable seam is still auditable and none can hide behind a vague label.
+`kind` names the outbound **wire mechanism** the seam leaves the host by — not the suite's driving mechanism, and not the business purpose. It MUST be one of `http`, `smtp`, `queue`, `storage`, `provider-sdk`, `webhook-fanout`, `other`. Two seams that a host guards through one code path but that leave by different mechanisms are different `kind`s; two that leave by the same mechanism for different business reasons are one. `other` is the escape for a mechanism this list does not name — raw TCP, gRPC, a filesystem write, a device SDK — and a row using it MUST carry `note` naming that mechanism.
 
-**Completeness outranks driveability.** Every outbound effect path the node runtime can reach MUST be listed, including one the suite has no way to drive: the suite's receiver speaks HTTP, so an `smtp` or `other` row is typically unreachable by it. Such a row is still MUST-list, and the scenario records it `inapplicable` naming the mechanism. A host MUST NOT omit a seam because the suite cannot drive it, and MUST NOT relabel it as a `kind` the suite can drive: an undriveable row that is listed is a known gap in the evidence, while a mislabelled or missing one is a false statement about the host. A seam omitted from the manifest is invisible to the suite: the manifest is a self-declaration whose false negatives are found by audit — negative-existence, not a witness.
+**Completeness outranks driveability.** Every outbound effect path the node runtime can reach MUST be listed, including one the suite cannot drive (typically `smtp` or `other`), which the scenario records `inapplicable` naming the mechanism. A host MUST NOT omit a seam because the suite cannot drive it, and MUST NOT relabel it as a `kind` the suite can drive. The manifest is a self-declaration whose false negatives are found by audit — negative-existence, not a witness.
 
 ## Replay-from-event-log internals
 
