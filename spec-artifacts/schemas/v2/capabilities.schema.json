@@ -39,7 +39,8 @@
     },
     "implementation": {
       "type": "object",
-      "description": "Optional v1 server identity (name + version + vendor).",
+      "additionalProperties": false,
+      "description": "RFC 0208 §G — self-reported server identity; informational (capabilities.md §3.1): a client SHOULD NOT change behaviour because of it or authorize from it.",
       "properties": {
         "name": {
           "type": "string"
@@ -49,10 +50,13 @@
         },
         "vendor": {
           "type": "string"
+        },
+        "url": {
+          "type": "string",
+          "format": "uri",
+          "description": "The operator's site — A2A AgentProvider.url, MCP Implementation.websiteUrl. Informational."
         }
-      },
-      "additionalProperties": false,
-      "x-openwop-seeded-from": "v1"
+      }
     },
     "engineVersion": {
       "type": "integer",

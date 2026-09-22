@@ -12175,8 +12175,8 @@
       "surface": "The dual-major hazard. One A2A interface serves every OpenWOP major. v1 §D.2 requires `TaskNotFoundError` for a terminal task and v1 §D.7 pins the 1.0.0 statuses, while this RFC requires `UnsupportedOperationError` and 1.0.1. A dual-major host cannot satisfy both.",
       "witness": "unclassified",
       "requirementId": null,
-      "disposition": "externally-gated",
-      "target": "openwop-1481",
+      "disposition": "closed",
+      "target": null,
       "sources": [
         {
           "file": "RFCS/registers/0208-v2-a2a-mcp-operation-mappings.gaps.md",
