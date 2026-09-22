@@ -264,16 +264,17 @@ Every row names the sabotage that makes it fail in the companion implementation 
 ## Acceptance criteria
 
 - [x] `Active`: 2026-09-22, by steward override of RFC 0147 §A.6 (the window was waived, not run; see `Updated`).
-- [ ] Spec text merged:
+- [x] Spec text merged:
   - v2 `identity.md` §2.5 + the §2.1 sentence; `security-defaults.md` rows + §Onward hops; `declaration.json` `purposePropagation.normativeText`;
   - v1 `auth.md`, `auth-profiles.md`, `mcp-integration.md` §E, `trigger-bridge.md` pointer, `a2a-integration.md` note.
-- [ ] OpenAPI v1 `securitySchemes` + per-operation `security` + `WWW-Authenticate` headers; v2 regenerated; `headers.md` regenerated; `check-openapi-security.mjs` in `openwop:check`.
-- [ ] `inbound-credential-no-passthrough` and `auth-challenge-no-oracle` registered at `reference-impl`.
-- [ ] Scenarios published, and each shown able to fail by its named sabotage.
-- [ ] A committed v2 host bundle carries `openwop.requirement.0200.prm-served`, `.prm-consistent`, `.challenge-401` and `.no-challenge-on-nondisclosure-404` at `executed-pass` from a host with an `oidc` or `oauth2` lane, nothing relaxed. MyndHyve (tier-2 production) is the expected first witness.
-- [ ] `.inbound-credential-no-passthrough` at `executed-pass` (unaided webhook leg) on at least two hosts.
+  - *§A.3 reads "URL-form issuers" where this RFC says "`https` URL members". The narrower word would exclude a loopback test issuer and make the rule unwitnessable on any local boot; `urn:` trust roots — the api-key, session and anonymous lanes — are excluded either way, which is the clause's purpose. Every production issuer is `https`, so no host's obligation differs.*
+- [x] OpenAPI v1 `securitySchemes` + per-operation `security` + `WWW-Authenticate` headers; v2 regenerated; `headers.md` regenerated; `check-openapi-security.mjs` in `openwop:check`. All 56 v1 and 54 v2 operations declare their scope or `security: []`; `derive-v2-api.py` names the seven v2-only operations' scopes and refuses to generate a document whose operation declares none.
+- [x] `inbound-credential-no-passthrough` and `auth-challenge-no-oracle` registered at `reference-impl` (`SECURITY/invariants.yaml`, 210 → 212), each with the residual risk recorded in its threat model.
+- [x] Scenarios published, and each shown able to fail by its named sabotage. Eight host sabotages (PRM `404`; an issuer no lane names; no challenge on a `401`; an error code on a credential-less `401`; a `403` without `scope`; a scope challenge on the non-disclosure `404`; the inbound `Authorization` forwarded to the webhook; the `oidc` `aud` check removed) and three corpus sabotages (a deleted operation `security`; a scope that disagrees across alternatives; a removed `WWW-Authenticate`) were each run red against the v2 reference host / the gate before the row was cited.
+- [ ] A committed v2 host bundle carries `openwop.requirement.0200.prm-served`, `.prm-consistent`, `.challenge-401` and `.no-challenge-on-nondisclosure-404` at `executed-pass` from a host with an `oidc` or `oauth2` lane, nothing relaxed. **All four are `executed-pass` on a local boot of the v2 reference host under a configured `oidc` lane** (2026-09-22, loopback, `OPENWOP_REQUIRE_BEHAVIOR=true`); the box stays open until a CERTIFIED bundle carrying them is committed, which waits on the 2.36.0 publish and the public-ingress cut.
+- [ ] `.inbound-credential-no-passthrough` at `executed-pass` (unaided webhook leg) on at least two hosts. One so far: the v2 reference host, local boot, 2026-09-22. The second is an openwop-app v2 re-cut (`review/handoff-openwop-app-0200.md`).
 - [ ] RFC 0156 §B retrospective review recorded. Until then, `Accepted` is **provisional** (register row `not-reviewed`).
-- [ ] CHANGELOG entry.
+- [x] CHANGELOG entry.
 
 ## References
 
