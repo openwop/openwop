@@ -101,7 +101,7 @@ describe('v2 run-pause-resume (runs.md §Pause and resume)', () => {
       expect(rb?.status, req(ID, DOC, `the 202 MUST carry status running (got ${String(rb?.status)})`)).toBe('running');
       const types = await eventTypes(c.runId);
       const p = types?.indexOf('run.paused') ?? -1; const r = types?.indexOf('run.resumed') ?? -1;
-      expect(p >= 0 && r > p, req(ID, 'spec/v2/core/events.md §run.paused', `the log MUST carry run.paused then run.resumed (types: ${(types ?? []).join(', ')})`)).toBe(true);
+      expect(p >= 0 && r > p, req(ID, 'spec/v2/core/runs.md §Pause and resume', `the log MUST carry run.paused then run.resumed (types: ${(types ?? []).join(', ')})`)).toBe(true);
       // An immediate pause cuts the executing attempt BETWEEN events: no terminal
       // node event for it, ever — a node.failed here makes a replay fold a
       // failure the source never had (runs.md §Pause and resume; replay.md).

@@ -1,6 +1,6 @@
 /**
  * RFC 0196 §A.3 — a host that advertises `interrupt.callbackDelivery` holds
- * `createRun.callbackUrl` to the `webhooks.md` §SSRF guard at create time
+ * `createRun.callbackUrl` to the `webhooks.md` §Egress guard at create time
  * (`spec/v2/core/interrupt.md` §Callback delivery). Target major 2.
  *
  * `callbackUrl` is an outbound request to a URL the CALLER chooses — the
@@ -47,7 +47,7 @@ describe('v2 callbackUrl egress guard (RFC 0196 §A.3)', () => {
       const field = (r.json as { details?: { field?: unknown } } | null)?.details?.field;
       if (r.status !== 400 || readErrorCode(r.json) !== 'validation_error' || field !== 'callbackUrl') wrong.push(`${p.cls}: ${r.status} ${readErrorCode(r.json) ?? ''} field=${String(field)}`);
     }
-    expect(accepted, req(ID, DOC, 'a host advertising interrupt.callbackDelivery MUST refuse at createRun a callbackUrl the webhooks.md §SSRF registration guard would refuse')).toEqual([]);
+    expect(accepted, req(ID, DOC, 'a host advertising interrupt.callbackDelivery MUST refuse at createRun a callbackUrl the webhooks.md §Egress registration guard would refuse')).toEqual([]);
     expect(wrong, req(ID, DOC, 'the refusal MUST be 400 validation_error naming details.field "callbackUrl"')).toEqual([]);
   });
 });

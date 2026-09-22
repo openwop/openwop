@@ -140,7 +140,7 @@ describe('v2 bound-id kinds (identity.md §5, RFC 0187 §A)', () => {
       const reg = await http(() => driver.post('/webhooks', { url: registration.url, events: ['run.completed'] }));
       if (reg === null) return softSkip('blocked', 'POST /webhooks unreachable (fetch failed)');
       if (reg.status === 400 && readErrorCode(reg.json) === 'webhook_url_rejected') {
-        return softSkip('blocked', `host SSRF guard rejected the suite receiver ${registration.url} (webhooks.md §SSRF requires it) — set OPENWOP_WEBHOOK_RECEIVER_URL to a public https front for the receiver to witness what the host emits`);
+        return softSkip('blocked', `host SSRF guard rejected the suite receiver ${registration.url} (webhooks.md §Egress requires it) — set OPENWOP_WEBHOOK_RECEIVER_URL to a public https front for the receiver to witness what the host emits`);
       }
       const minted = (reg.json as { webhookId?: unknown } | null)?.webhookId;
       if (reg.status !== 201 || typeof minted !== 'string') return softSkip('blocked', `POST /webhooks answered ${reg.status} without a webhookId — the mint leg above owns that obligation; this leg needs an id to compare`);

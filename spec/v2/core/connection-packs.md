@@ -5,7 +5,7 @@
 
 ## Why this exists
 
-A connection pack is a signed provider definition — the endpoints, scope catalog, and reach a connector's `auth.provider` string resolves against. v1 let two definitions claim one `provider.id` and picked between them silently by version. v2 makes the id unique per host and makes a collision fail closed. The manifest is `schemas/v2/connection-pack-manifest.schema.json`; installation and signing follow packs.md.
+A connection pack is a signed provider definition — the endpoints, scope catalog, and reach a connector's `auth.provider` string resolves against. The manifest is `schemas/v2/connection-pack-manifest.schema.json`; installation and signing follow packs.md.
 
 ## Provider identity
 
