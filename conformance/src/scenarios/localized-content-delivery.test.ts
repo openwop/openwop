@@ -10,7 +10,7 @@
  *   A. Always-on, server-free legs — the `content` capability block, the four
  *      content schemas (section / page / language-settings / page-response),
  *      the §A capability-coherence constraints, and the §C per-section field
- *      merge reference algorithm (`resolveSection`, exact → family → base,
+ *      merge reference algorithm (`resolveSection`, exact → script family → language family → base (RFC 0206),
  *      shallow overlay) shared verbatim with hosts.
  *
  *   B. Capability-gated behavioral legs — on a host advertising
@@ -35,6 +35,7 @@ import { SCHEMAS_DIR } from '../lib/paths.js';
 import { behaviorGate } from '../lib/behavior-gate.js';
 import { readCapabilityFamily } from '../lib/discovery-capabilities.js';
 import { req } from '../lib/requirement-ids.js';
+import { resolveSection, resolveSectionRfc0103, type Section } from '../lib/localized-content.js';
 function loadSchema(name: string): Record<string, unknown> {
   return JSON.parse(readFileSync(join(SCHEMAS_DIR, name), 'utf8')) as Record<string, unknown>;
 }
@@ -53,20 +54,8 @@ interface I18nCap {
 const HTTP_SKIP = !process.env.OPENWOP_BASE_URL;
 
 // ── §C reference merge — shared verbatim with conforming hosts ──────────────
-type Section = {
-  data: Record<string, unknown>;
-  localizations: Record<string, Record<string, unknown>>;
-};
-function resolveSection(section: Section, negotiatedLocale: string, baseLocale: string): Record<string, unknown> {
-  const loc = section.localizations ?? {};
-  if (negotiatedLocale === baseLocale || Object.keys(loc).length === 0) return section.data;
-  if (loc[negotiatedLocale]) return { ...section.data, ...loc[negotiatedLocale] };
-  if (negotiatedLocale.includes('-')) {
-    const lang = negotiatedLocale.split('-')[0];
-    if (loc[lang]) return { ...section.data, ...loc[lang] };
-  }
-  return section.data;
-}
+// One copy in src/lib (RFC 0206 register G5), amended by RFC 0206 §B.4; the
+// corpus rows for it live in src/coherence/locale-key-grammar.test.ts.
 
 // ── §A capability-coherence predicate ──────────────────────────────────────
 function contentCoherent(content: ContentCap, i18n: I18nCap): boolean {
@@ -123,6 +112,18 @@ describe('localized-content: schema shapes (localized-content.md §B, server-fre
     expect(section({ ...goodSection, localizations: { EN: { heading: 'x' } } }), req('openwop.it.localized-content-delivery.a-localizations-key-with-wrong-case-underscore-is-rejected', 'RFC 0103 §B', 'a non-BCP-47-subset key MUST be rejected')).toBe(false);
     expect(section({ ...goodSection, localizations: { en_US: { heading: 'x' } } }), req('openwop.it.localized-content-delivery.a-localizations-key-with-wrong-case-underscore-is-rejected', 'RFC 0103 §B', 'an underscore locale key MUST be rejected')).toBe(false);
   });
+  // RFC 0206 §A (supplementary, non-gating here: the gating rows are the corpus
+  // coherence test locale-key-grammar.test.ts).
+  it('case-canonical BCP 47 keys outside the RFC 0103 subset validate (RFC 0206)', () => {
+    for (const key of ['zh-Hans', 'zh-Hant-TW', 'es-419', 'fil']) {
+      expect(section({ ...goodSection, localizations: { [key]: { heading: 'x' } } }), req('openwop.it.localized-content-delivery.case-canonical-bcp-47-keys-outside-the-rfc-0103-subset-validate-rfc-0206', 'RFC 0206 §A.1', `"${key}" MUST validate as a localizations key. Errors: ${JSON.stringify(section.errors)}`)).toBe(true);
+    }
+  });
+  it('non-canonical-case and out-of-subset keys are rejected (RFC 0206)', () => {
+    for (const key of ['en-us', 'zh-hans', 'de-CH-1996']) {
+      expect(section({ ...goodSection, localizations: { [key]: { heading: 'x' } } }), req('openwop.it.localized-content-delivery.non-canonical-case-and-out-of-subset-keys-are-rejected-rfc-0206', 'RFC 0206 §A.1', `"${key}" MUST be rejected as a localizations key`)).toBe(false);
+    }
+  });
   it('a section missing a required field is rejected', () => {
     const { status: _omit, ...noStatus } = goodSection;
     expect(section(noStatus), req('openwop.it.localized-content-delivery.a-section-missing-a-required-field-is-rejected', 'RFC 0103 §B', 'status is REQUIRED')).toBe(false);
@@ -176,6 +177,16 @@ describe('localized-content: per-section field merge (localized-content.md §C, 
   it('language-family fallback applies when exact tag is absent', () => {
     const s: Section = { data: { h: 'Hi' }, localizations: { pt: { h: 'Oi' } } };
     expect(resolveSection(s, 'pt-BR', 'en'), req('openwop.it.localized-content-delivery.language-family-fallback-applies-when-exact-tag-is-absent', 'RFC 0103 §C', 'pt-BR MUST fall back to the pt family override')).toEqual({ h: 'Oi' });
+  });
+  it('script-family fallback applies before the language family (RFC 0206)', () => {
+    const s: Section = { data: { h: 'x' }, localizations: { 'zh-Hant': { h: '繁' }, zh: { h: '简' } } };
+    expect(resolveSection(s, 'zh-Hant-TW', 'en'), req('openwop.it.localized-content-delivery.script-family-fallback-applies-before-the-language-family-rfc-0206', 'RFC 0206 §B.4', 'zh-Hant-TW MUST overlay zh-Hant before zh')).toEqual({ h: '繁' });
+  });
+  it('an RFC 0103-valid section resolves as RFC 0103 resolved it (RFC 0206)', () => {
+    const s: Section = { data: { h: 'x' }, localizations: { 'de-CH': { h: 'ch' }, de: { h: 'de' } } };
+    for (const n of ['de-CH-1996', 'de-CH', 'de-AT', 'en']) {
+      expect(resolveSection(s, n, 'en'), req('openwop.it.localized-content-delivery.an-rfc-0103-valid-section-resolves-as-rfc-0103-resolved-it-rfc-0206', 'RFC 0206 §B.5', `${n}: the amended merge MUST equal RFC 0103's`)).toEqual(resolveSectionRfc0103(s, n, 'en'));
+    }
   });
   it('unsupported/base locale returns base data unchanged', () => {
     expect(resolveSection(section, 'de', 'en'), req('openwop.it.localized-content-delivery.unsupported-base-locale-returns-base-data-unchanged', 'RFC 0103 §C', 'no match MUST return base data')).toEqual(section.data);

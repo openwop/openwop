@@ -125,7 +125,16 @@ describe('category: artifact-type-pack manifest validation', () => {
     const manifest = validManifest();
     manifest.artifactTypes[0]!.exportFormats = ['PPTX']; // uppercase, unprefixed
     const errs = failsWith(manifest, 'pattern');
-    expect(errs.length, req('openwop.it.artifact-type-pack-manifest-validation.negative-a-non-conforming-exportformats-identifier-is-rejected-reserved-core-ven', 'artifact-type-packs.md', 'artifact-type-packs.md: exportFormats identifiers are lowercase core ids OR vendor.*/x- extensions')).toBeGreaterThan(0);
+    expect(errs.length, req('openwop.it.artifact-type-pack-manifest-validation.negative-a-non-conforming-exportformats-identifier-is-rejected-reserved-core-ven', 'artifact-type-packs.md', 'artifact-type-packs.md: exportFormats identifiers are reserved-core + vendor.*/x- + lowercase media type (RFC 0205 §C.9) — PPTX is none of them')).toBeGreaterThan(0);
+  });
+
+  it('positive: lowercase media types validate beside the reserved aliases; Application/PDF does not (RFC 0205 §C.9)', () => {
+    const m = validManifest();
+    m.artifactTypes[0]!.exportFormats = ['application/pdf', 'model/step', 'application/vnd.openxmlformats-officedocument.presentationml.presentation', 'pdf'];
+    expect(validate(m), req('openwop.it.artifact-type-pack-manifest-validation.positive-lowercase-media-types-validate-beside-the-reserved-aliases-application', 'RFC 0205 §C.9', `media types (including the 73-char pptx type) MUST validate beside the aliases. Errors: ${JSON.stringify(validate.errors)}`)).toBe(true);
+    const bad = validManifest();
+    bad.artifactTypes[0]!.exportFormats = ['Application/PDF'];
+    expect(failsWith(bad, 'pattern').length, req('openwop.it.artifact-type-pack-manifest-validation.positive-lowercase-media-types-validate-beside-the-reserved-aliases-application', 'RFC 0205 §C.9', 'a media type MUST be lowercase')).toBeGreaterThan(0);
   });
 
   it('positive: the validation field accepts "open"/"closed" and rejects other values (RFC 0075)', () => {

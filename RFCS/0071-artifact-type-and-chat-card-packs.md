@@ -20,7 +20,7 @@
 > | **Compatibility** | `additive` per `COMPATIBILITY.md` §2.1 |
 > | **Supersedes** | — |
 > | **Superseded by** | — |
-> | **Amended by** | [RFC 0075](./0075-artifact-type-packs-realworld-amendment.md) (artifact-type-packs real-world adoption amendment — host-native registration tier, `additionalProperties` MUST → SHOULD, per-type capability facets) |
+> | **Amended by** | [RFC 0075](./0075-artifact-type-packs-realworld-amendment.md) (artifact-type-packs real-world adoption amendment — host-native registration tier, `additionalProperties` MUST → SHOULD, per-type capability facets); [RFC 0205](./0205-run-artifacts-and-turns-speak-a2a-parts.md) (`exportFormats` accepts lowercase media types beside the reserved aliases, with a normative alias table) |
 
 ## Summary
 
