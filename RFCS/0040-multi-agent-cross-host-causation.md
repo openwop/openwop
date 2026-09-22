@@ -12,6 +12,7 @@
 | **Compatibility** | `additive` |
 | **Supersedes** | — |
 | **Superseded by** | — |
+| **Amended by** | [RFC 0207](./0207-trace-context-across-mcp-and-a2a.md) — names the §B carriers: MCP `params._meta.traceparent` (SEP-414) or, on Streamable HTTP, the HTTP `traceparent` header; A2A `Message.metadata.openwop.traceparent` or the HTTP header. The in-message carrier is SHOULD; the header stays conforming. |
 
 ## Summary
 
@@ -136,7 +137,7 @@ Hosts advertising `multiAgent.executionModel.version: 3` MUST also advertise `cr
 
 - [x] Spec text merged (this file).
 - [x] `spec/v1/multi-agent-execution.md` extended with §"Cross-host causation (Phase 3, normative)" per §A + §B + §C.
-- [ ] `spec/v1/mcp-integration.md` + `spec/v1/a2a-integration.md` extended with §"Tracecontext propagation (RFC 0040)" per §B. (Follow-up — protocol-layer contract is in `multi-agent-execution.md`; the per-composition-doc cross-links are documentation strengthening, not normative gate-blockers.)
+- [x] `spec/v1/mcp-integration.md` + `spec/v1/a2a-integration.md` extended with §"Tracecontext propagation (RFC 0040)" per §B. (Satisfied 2026-09-22 by RFC 0207, which names the carrier in both documents: `mcp-integration.md` §D's `_meta` mapping and `a2a-integration.md`'s declared `metadata.openwop.*` mappings.) (Follow-up — protocol-layer contract is in `multi-agent-execution.md`; the per-composition-doc cross-links are documentation strengthening, not normative gate-blockers.)
 - [x] `schemas/capabilities.schema.json` extends `multiAgent.executionModel` with the `crossHostCausation` block per §D.
 - [x] `schemas/run-event-payloads.schema.json` adds optional `causationHostId` to all listed payload shapes.
 - [x] `api/openapi.yaml` gains `GET /v1/runs/{runId}/ancestry` endpoint per §C; response schema in `schemas/run-ancestry-response.schema.json` (NEW).

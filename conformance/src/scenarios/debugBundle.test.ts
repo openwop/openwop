@@ -22,6 +22,13 @@
  *   5. **Canary safety** — bundles MUST inherit redaction. A canary
  *      injected through workflow inputs MUST NOT echo verbatim in the
  *      bundle response.
+ *   6. **Spans join the trace (RFC 0207 §C, v1 only, non-gating)** — for a
+ *      run started with the suite's `traceparent`, every span's optional
+ *      `traceId` / `kind` / `status` has the schema's shape, and the
+ *      `openwop.run` span's `traceId` is the suite's. A host that returns
+ *      `spans: []` records `inapplicable` ("host emits no spans"), never a
+ *      pass. v2 has no debug-bundle read (RFC 0207 §C.11), so this leg carries
+ *      no requirement id and no Accepted bar.
  *
  * Cross-references SECURITY/invariants.yaml `secret-leakage-debug-bundle`.
  *
@@ -37,6 +44,7 @@ import { CANARY_MARKER, getCanary } from '../lib/canaries.js';
 import { isFixtureAdvertised } from '../lib/fixtures.js';
 import { req } from '../lib/requirement-ids.js';
 import { softSkip } from '../lib/soft-skip.js';
+import { makeTraceparent } from '../lib/trace-context.js';
 
 const NOOP_WORKFLOW_ID = 'conformance-noop';
 const SKIP_NO_NOOP = !isFixtureAdvertised(NOOP_WORKFLOW_ID);
@@ -220,5 +228,38 @@ describe.skipIf(SKIP_NO_NOOP)('debug-bundle: redaction inheritance per SECURITY/
       'SECURITY/invariants.yaml secret-leakage-debug-bundle',
       'canary marker MUST NOT appear in the debug bundle',
     )).toBe(false);
+  });
+});
+
+describe.skipIf(SKIP_NO_NOOP)('debug-bundle: spans join the trace (RFC 0207 §C, v1 only, non-gating)', () => {
+  const LEG = 'openwop.it.debugBundle.spans-join-the-trace';
+  const KINDS = new Set(['internal', 'server', 'client', 'producer', 'consumer']);
+  const CODES = new Set(['unset', 'ok', 'error']);
+  it('span traceId / kind / status have the RFC 0207 shape and the run span joins the caller trace', async () => {
+    if (!(await isAdvertised())) return softSkip('inapplicable', 'debugBundle not advertised by this host');
+    const tp = makeTraceparent();
+    const create = await driver.post('/v1/runs', { workflowId: NOOP_WORKFLOW_ID }, { headers: { traceparent: tp.header } });
+    expect(create.status).toBe(201);
+    const runId = (create.json as { runId: string }).runId;
+    await pollUntilTerminal(runId);
+    const res = await driver.get(`/v1/runs/${encodeURIComponent(runId)}/debug-bundle`);
+    expect(res.status).toBe(200);
+    const spans = ((res.json as DebugBundleShape | undefined)?.spans ?? []) as Array<Record<string, unknown>>;
+    if (spans.length === 0) return softSkip('inapplicable', 'host emits no spans (spans: []) — the RFC 0207 §C trace-join rule has nothing to hold');
+    for (const s of spans) {
+      const where = `span ${String(s['name'])}`;
+      if (s['traceId'] !== undefined) {
+        expect(typeof s['traceId'] === 'string' && /^[0-9a-f]{32}$/.test(s['traceId']) && s['traceId'] !== '0'.repeat(32), req(LEG, 'debug-bundle.md §"spans field" (RFC 0207 §C)', `${where}: traceId MUST be 32 lowercase hex, not all zeros (got ${JSON.stringify(s['traceId'])})`)).toBe(true);
+      }
+      if (s['kind'] !== undefined) expect(KINDS.has(String(s['kind'])), req(LEG, 'debug-bundle.md §"spans field"', `${where}: kind MUST be internal | server | client | producer | consumer (got ${JSON.stringify(s['kind'])})`)).toBe(true);
+      if (s['status'] !== undefined) {
+        const st = s['status'] as Record<string, unknown> | null;
+        const ok = st !== null && typeof st === 'object' && CODES.has(String(st['code'])) && Object.keys(st).every((k) => k === 'code' || (k === 'message' && typeof st['message'] === 'string'));
+        expect(ok, req(LEG, 'debug-bundle.md §"spans field"', `${where}: status MUST be the closed { code: unset | ok | error, message? } (got ${JSON.stringify(st)})`)).toBe(true);
+      }
+    }
+    const run = spans.find((s) => s['name'] === 'openwop.run');
+    if (run === undefined || run['traceId'] === undefined) return softSkip('inapplicable', 'the bundle carries no openwop.run span with a traceId (traceId is SHOULD) — the trace-join half has nothing to compare');
+    expect(run['traceId'], req(LEG, 'debug-bundle.md §"spans field" (RFC 0207 §C)', 'the openwop.run span of a run started with an honoured inbound traceparent MUST carry that trace id')).toBe(tp.traceId);
   });
 });

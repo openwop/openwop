@@ -530,6 +530,8 @@ Two suite requirements (COMPATIBILITY §2.3), not spec MUSTs, let the major-2 in
 - **Operator contract.** The host binds `serverId: "conformance"` to the suite's fake MCP server (`OPENWOP_MCP_FAKE_SERVER=true`; pin `OPENWOP_MCP_FAKE_SERVER_PORT`, or front it with `OPENWOP_MCP_FAKE_SERVER_URL`) and `"conformance.down"` to an address nothing answers. A binding that never reaches the suite's server records `blocked`.
 - **What the fake server serves** (2026-07-28 only): `structured-echo` (a fixed `CallToolResult` with `structuredContent` and the caller's `nonce` in `_meta`), `always-error` (`isError: true`, fixed `content[]`), `conformance_readonly_claim_<nonce>` (annotated `readOnlyHint: true`; the nonce is per suite process), and a six-tool `tools/list` paged 3 + 3 with `nextCursor`, `ttlMs`, `cacheScope: "private"`, `outputSchema` and `annotations`.
 
+RFC 0207's `v2-interop-trace-context` drives the same fixture twice more: its run-path carrier leg starts it with the suite's `traceparent` on `POST /runs`, and its `mcp-server-adopts-meta` leg calls it as a tool on the host's own MCP mount (a mount serves each advertised fixture under its workflowId) with `_meta.traceparent` and a different header, then reads which trace the run's outbound call to the fake server continued. A host whose mount does not list it falls back to the OTLP collector, else `inapplicable`.
+
 For `v2-tool-catalog-annotations`' unclassified-MCP leg, a host that advertises `toolCatalog.sources ∋ "mcp"` projects the same `conformance` server into `GET /tools`.
 
 ---

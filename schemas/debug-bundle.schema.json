@@ -122,7 +122,27 @@
         "required": ["name"],
         "properties": {
           "name": { "type": "string", "minLength": 1 },
+          "traceId": {
+            "type": "string",
+            "pattern": "^[0-9a-f]{32}$",
+            "not": { "const": "00000000000000000000000000000000" },
+            "description": "RFC 0207 §C — W3C Trace Context / OTLP 16-byte trace id (32 lowercase hex) of the trace this span belongs to. SHOULD be present when the span was recorded in a trace; when present it MUST equal that trace's id."
+          },
           "spanId": { "type": "string" },
+          "kind": {
+            "enum": ["internal", "server", "client", "producer", "consumer"],
+            "description": "RFC 0207 §C — OTLP SPAN_KIND_* 1–5, lowercased. Absent means unspecified."
+          },
+          "status": {
+            "type": "object",
+            "required": ["code"],
+            "properties": {
+              "code": { "enum": ["unset", "ok", "error"] },
+              "message": { "type": "string" }
+            },
+            "additionalProperties": false,
+            "description": "RFC 0207 §C — OTLP Status (STATUS_CODE_* 0–2). message is redacted like every attribute."
+          },
           "parentSpanId": {
             "oneOf": [{ "type": "string" }, { "type": "null" }]
           },
