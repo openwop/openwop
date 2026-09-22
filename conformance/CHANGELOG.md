@@ -1,5 +1,12 @@
 # `@openwop/openwop-conformance` Changelog
 
+## [2.35.1] — 2026-09-22 — the opt-out check could never fire on a real bundle
+
+- **RFC 0195 §3's `opted-out-but-advertised` rule, as shipped in 2.35.0, derived an empty set from every real bundle.** It read `openwop.profile.<name>` rows, and those rows never reach a bundle; the skipped rows that do named no profile. Measured on MyndHyve's committed 2.35.0 bundle, four declared opt-outs: `--verify` printed `opted out: (none)`. The rule's self-tests used synthetic rows that no real bundle contains — a check that cannot fail on the thing it exists to check.
+- **The opted-out name now rides on the signed per-test rows' detail** (`…via OPENWOP_OPTED_OUT_PROFILES: <name>`), and the verifier derives the set from that as well as from the old carrier. Measured on the reference host with `connections.packsSupported` opted out: the requirement rows a bundle carries (`0177.provider-conflict.*`) now name it. A regression test uses rows shaped exactly like the committed MyndHyve bundle and pins that they derive nothing without the name.
+- Bundles cut before 2.35.1 carry no names and derive an empty set — honest, not an error. RFC 0195 returns to `Active` until a committed bundle shows the rule deriving real opt-outs.
+- Suite patch; corpus release stays `2.35.0`.
+
 ## [2.35.0] — 2026-09-21 — blocked means blocked, the declarations are signed, and the header a subscriber reads is checked
 
 ### Security

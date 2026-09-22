@@ -105,7 +105,13 @@ export function behaviorGate(profileName: string, advertised: boolean): boolean 
     recordRequirement(
       profileRequirementId(profileName),
       'skipped',
-      'operator declared an honest opt-out via OPENWOP_OPTED_OUT_PROFILES',
+      // 2.35.1: the NAME rides on the detail. This row id never reaches a
+      // bundle; the per-test rows that do inherit this detail, and they are
+      // inside witnessSha256 — so the verifier can derive which profile or
+      // family was opted out from signed rows (RFC 0195 §3). Until 2.35.1 the
+      // detail named nothing and the verifier derived an empty set on every
+      // real bundle.
+      `operator declared an honest opt-out via OPENWOP_OPTED_OUT_PROFILES: ${profileName}`,
     );
     // eslint-disable-next-line no-console
     console.warn(
