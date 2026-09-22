@@ -1,6 +1,6 @@
 # OpenWOP Spec v1 — Front-End Plugin Packs (Sandboxed UI Extensions)
 
-> **Status: Draft · v1.x · RFC 0117.** Capability-gated contract for signed UI plugins isolated behind the `ui-plugin/1` RPC boundary.
+> **Status: Stable · v1.x · RFC 0117.** Capability-gated contract for signed UI plugins isolated behind the `ui-plugin/1` RPC boundary.
 
 ## Why this exists
 

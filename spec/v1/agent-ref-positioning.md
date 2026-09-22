@@ -39,9 +39,9 @@ The shapes target genuinely different concerns. `AgentRef` is small and per-even
 
 When an `AgentRef` resolves to an agent whose canonical identity is a DID:
 
-- The host's `AgentRegistry` MAY map `AgentRef.agentId` → DID (one-way; clients still see only the opaque `agentId`).
+- A host's `AgentRegistry` can map `AgentRef.agentId` → DID (one-way; clients still see only the opaque `agentId`).
 - The DID is the cross-system anchor; `AgentRef.agentId` is the per-host shortcut.
-- For audit and inter-org provenance, hosts SHOULD record the DID alongside the run's event log (typically via `agent-manifest.schema.json` metadata fields under a vendor prefix, e.g., `vendor.openwop.did`).
+- For audit and inter-org provenance, a host typically records the DID alongside the run's event log (typically via `agent-manifest.schema.json` metadata fields under a vendor prefix, e.g., `vendor.openwop.did`).
 
 **Why not put the DID directly on `AgentRef`?** Two reasons:
 
@@ -70,7 +70,7 @@ The composition picture mirrors A2A:
 - The OpenWOP host maps each remote agent to an `AgentRef` with `agentId` like `host:agntcy:<gatewayId>:<remoteAgentId>`.
 - Policy enforcement (rate limits, auth) is done at the gateway; openwop's tool-allowlist mechanism (`agent-manifest.schema.json` `toolAllowlist`) remains the in-run permission gate.
 
-AGNTCY's spec is still evolving; OpenWOP hosts that integrate SHOULD treat the gateway-issued identifier as opaque and record it as metadata, not as the primary `agentId`.
+AGNTCY's spec is still evolving; an integrating OpenWOP host is best served treating the gateway-issued identifier as opaque and recording it as metadata, not as the primary `agentId`.
 
 ---
 
@@ -120,9 +120,9 @@ The three are not interchangeable. An A2A `AgentSkill` that a host advertises is
 
 This addendum does NOT:
 
-- Define a normative DID method for openwop. Hosts that use DIDs SHOULD use existing standardized methods (`did:web`, `did:key`, etc.).
+- Define a normative DID method for openwop. A host that uses DIDs would use an existing standardized method (`did:web`, `did:key`, etc.).
 - Define cross-org auth handshakes. Those are A2A's, AGNTCY's, or the host's responsibility.
-- Mandate any one shape. Hosts MAY ignore DIDs, A2A, and AGNTCY entirely and remain v1-conformant.
+- Mandate any one shape. A host can ignore DIDs, A2A, and AGNTCY entirely and remain v1-conformant.
 
 ---
 
