@@ -306,7 +306,7 @@ If exposed, the server MUST mount MCP at `/v1/mcp` (platform) or `/v1/mcp/{names
 
 ### A2A (Agent-to-Agent)
 
-If exposed, the server MUST mount A2A at `/v1/a2a` (platform) or `/v1/a2a/{namespace}` (namespaced). The agent card is at `/v1/a2a/agent.json`.
+If exposed, the server MUST mount A2A at `/v1/a2a` (platform) or `/v1/a2a/{namespace}` (namespaced). The agent card is served at the URL the host advertises as `capabilities.a2a.agentCardUrl`, canonically the A2A well-known path `/.well-known/agent-card.json` (`a2a-integration.md` §"A2A 1.0 versioned composition" §A — the path is unchanged between A2A 0.3 and 1.0); a host MAY additionally serve it under its A2A mount (e.g. `/v1/a2a/agent.json`). A client that is handed `agentCardUrl` directly needs no path convention at all — direct configuration is one of A2A's own discovery mechanisms.
 
 ## Headers
 
