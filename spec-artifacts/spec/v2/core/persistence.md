@@ -5,7 +5,7 @@
 
 ## Why this exists
 
-The v2 cut renames event types that are persisted, indexed, and unique-keyed in production stores, and fork and replay read those rows verbatim. This document states how a v2 host reads what a v1 host wrote, what happens to a run in flight at the cut, and what each persisted store becomes — so two hosts read one log one way.
+How a v2 host reads what a v1 host wrote, what happens to a run in flight at the cut, and what each persisted store becomes — so two hosts read one log one way.
 
 ## The codemap is data
 
@@ -25,30 +25,14 @@ The v2 cut renames event types that are persisted, indexed, and unique-keyed in 
 Discovery MUST advertise the value the host writes for new runs and nothing else; a host MUST hold one constant for this axis.
 
 **Absent stays era `2` forever; it is never backfilled.** A host MUST NOT rewrite
-historical rows to add an explicit `2`, and a reader MUST NOT require one. The
-trichotomy is sound only because a v2 host stamps `3` on *every* run it creates:
-if any creation path is left unstamped after the cut, the runs it makes are
-indistinguishable from pre-cut runs and every reader will translate them as era
-`2` — a silent wrong read, not an error. So a host with more than one creation
-path MUST begin stamping `3` on **all** of them in the same change; staging that
-across deploys is the failure this rule exists to prevent.
-
-**Collapsing to one constant is a precondition for advertising, not a
-consequence.** A host whose creation paths disagree — one writing `2`, another
-writing nothing — has no single value to advertise, and whatever it publishes is
-false for some of its own runs. Unify the writers first, then advertise. This is
-the same class of constraint as the writer rule below and is ordered the same
-way: the store is made coherent before the wire describes it.
+historical rows to add an explicit `2`, and a reader MUST NOT require one. A host with more than one creation
+path MUST begin stamping `3` on **all** of them in the same change: an unstamped
+path's runs read as era `2`, a silent wrong read.
 
 **The snapshot field is required on the wire, and MAY be synthesized.**
-`schemas/v2/run-snapshot.schema.json` requires `eventLogSchemaVersion`, but an
-era-`2` run predates the key and has nothing stored. The snapshot is a read
-projection, so the host MUST supply `2` from the absent-⇒-`2` rule rather than
-fail the read; a missing *stored* era is not a read error. The consequence is
-worth stating plainly: on the wire this field is never absent, so it cannot
-falsify a host's era handling on its own. What falsifies that is the vocabulary
-of the events themselves, which is why the reader and writer rules below carry
-the obligation and this field only reports it.
+For an era-`2` run with nothing stored, the host MUST supply `2` from the
+absent-⇒-`2` rule rather than fail the read. The field therefore cannot falsify
+era handling on its own; the reader and writer rules below carry the obligation.
 
 ## The `eventLog` family
 
@@ -88,45 +72,30 @@ A writer that emits a property a closed def cannot seat (RFC 0185 §B) MUST
 mark the row with what it could not seat, so the refusal names the writer
 instead of surfacing as an unexplained read failure (RFC 0187 §D.1).
 
-This binds every writer for as long as an era-`2` run stays open, which on a
-host with human-approval interrupts can be days. Draining era-`2` runs before
-serving v2 is not the path — see §"Runs pinned to v1" — so the writer rule is
-what makes an in-flight run safe across the cut. Its witness is
-`v2-era-2-append-vocabulary`.
+This binds every writer for as long as an era-`2` run stays open (§"Runs pinned
+to v1"); its witness is `v2-era-2-append-vocabulary`.
 
 ### The v1 wire of an era-`3` log
 
-The reader rule above is written for a v2 reader of an era-`2` log. Through the
-overlap a host serves BOTH majors (`versioning.md` §5) and v1 operations keep
-their `/v1/…` path keys unchanged (§1.2), so the mirror case is forced and the
-corpus owed it a rule: a run created today is era `3` and its log is stored in
-v2 vocabulary, yet the same log must still be readable on `/v1/…` exactly as it
-was before the cut.
+Through the overlap (`versioning.md` §5) an era-`3` log, stored in v2
+vocabulary, must still read on `/v1/…` exactly as before the cut.
 
 A host serving both majors MUST therefore map an era-`3` log's `type` back to
 its v1 spelling on the v1 read path, through the **same codemap row, inverted**.
-This is well defined and not a private mapping: `spec/v2/event-codemap.json` is
-a bijection — 118 rows, 118 distinct `v1` names, 118 distinct `v2` names, no
-many-to-one fold — so the inverse of a row is exact. A host MUST verify that
-property at load rather than assume it; if a future row folds two v1 names onto
-one v2 name, the inverse stops being a function and the host MUST refuse to
-serve the v1 representation rather than guess which spelling to emit.
+The inverse is exact only while `spec/v2/event-codemap.json` is a bijection; a
+host MUST verify that at load and, if a row folds two v1 names onto one v2 name,
+MUST refuse to serve the v1 representation rather than guess a spelling.
 
 A type with NO codemap row — v2-only vocabulary, anything RFC 0185/0186 seated
 — has no v1 spelling to invert to. A host MUST emit it unchanged on the v1 read
 path, MUST NOT drop the row, and MUST NOT refuse the read for it (RFC 0187
-§B.1): a v1 consumer already tolerates an unknown `type`, and the alternatives
-lose data or make one new row cost an otherwise readable run.
+§B.1).
 
 ### The seat
 
 The adapter MUST sit at the storage boundary every reader passes through — the storage interface's event-list method, not a wrapper some call sites bypass. A host leg MUST name its seat in its ADR.
 
 The seat is a **claims-check** (conformance.md §Witness class): discharged by that disclosure and by audit, never by the wire. The rule binds **every** reader, including the ones the suite has no name for; `run-event.schema.json` records why three passing legs do not discharge it.
-
-### Forking a v1 run
-
-A fork of an era-`2` run MUST produce a prefix byte-equivalent to the translated parent, and its `run.started` MUST carry the legacy Subject where the parent had none (RFC 0176 §A.5; replay.md, identity.md).
 
 ## Runs pinned to v1
 
@@ -136,7 +105,7 @@ A non-terminal run a v2 host inherits carries `version.pinned` events naming cha
 | --- | --- |
 | Every pinned change id is still implemented | The run MUST continue under the reader rule; the pin is honored verbatim and `version.pinned` is never rewritten. |
 | Any pinned change id is no longer implemented | The host MUST cancel the run with `run.cancelled` reason `v1_pin_unsupported` and `cancelledBy: "v2-cutover"`; the certification bundle reports the count. |
-| Suspended on an interrupt at the cut | The run continues under the row above; its outstanding token is resolvable under `kid: legacy` until `expiresAt` (RFC 0170 §E.1), and the run reads through the adapter. |
+| Suspended on an interrupt at the cut | The run continues under the row above; its token drains per §"Everything else a v1 host persisted". |
 
 "Drain" is retired as the only path. Multi-region skew is read-side only: after the cut a v2 region MUST NOT accept an era-`2` write for a run it has already stamped `3` (RFC 0176 §B.3). Discovery's `minClientVersion` rule is RFC 0172 row `C5.8`.
 
@@ -145,8 +114,8 @@ A non-terminal run a v2 host inherits carries `version.pinned` events naming cha
 | Artifact | Requirement |
 | --- | --- |
 | Certification bundles | Never upgraded. A v1 bundle substantiates no new certification after 2026-11-10; every host produces a fresh v2-rc bundle before the cut (conformance.md). |
-| Webhook deliveries | A host advertising both majors MUST dual-emit the `X-openwop-*` and `OpenWOP-*` header families through the overlap; a v2 receiver MUST accept a v1-signed delivery (`X-openwop-*`, scheme `v1`) verifying the same bytes; per-subscription secrets are unchanged; deliveries queued before the cut are drained under their own retry policy with the payload they were serialized with (webhooks.md). |
-| Interrupt resume tokens | Drained: a token that is **not** `ow2.`-prefixed is a v1 token and resolves under `kid: legacy` until `expiresAt`; new tokens carry the `ow2.` prefix (identity.md). The rule is written over the prefix and never over a segment count: the v1 `{token}` path parameter carries no `pattern`, so a conforming v1 token may be a single opaque row key, and a count-based rule leaves such a host with no drain rule at all. |
+| Webhook deliveries | Dual-emitted, and queued deliveries drained, per webhooks.md §"Dual emission through the overlap". |
+| Interrupt resume tokens | Drained: a token that is **not** `ow2.`-prefixed is a v1 token and resolves under `kid: legacy` until `expiresAt`; new tokens carry the `ow2.` prefix (identity.md). The rule is written over the prefix, never a segment count. |
 | Layer-1 and Layer-2 records (idempotency, idempotent responses, invocation claims and logs, effect-escape ledger, dispatch outbox, envelope correlations) | Unchanged; keyed on ids the cut does not rename. `GET /runs/{runId}/effects` and `GET /runs/{runId}/compensation` are new reads over them (security-defaults.md). |
 | Owner stamps | A run without a Subject MUST be legacy-stamped at first v2 read and MUST NOT be rewritten later (RFC 0170 §A.3). A host's stored owner fields are projected to the Subject; the projection is the host's to name. |
 | Audit log | Never upgraded (RFC 0170). |
@@ -181,7 +150,7 @@ The reference hosts' dispositions are recorded in RFC 0176; a host MUST NOT deci
 
 ## Durable acceptance and recovery
 
-RFC 0158 §A–§D, restated because its v1 homes (`idempotency.md`, `storage-adapters.md`) retire with v1. Nothing here is new.
+RFC 0158 §A–§D.
 
 | Clause | Requirement |
 | --- | --- |

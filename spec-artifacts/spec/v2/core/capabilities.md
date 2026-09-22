@@ -4,7 +4,7 @@
 
 ## Why this exists
 
-v1 discovery had 91 root properties on an open root, `supported` in four shapes, and four machine registries with no schema of their own. v2 has one capability record type on a closed root, generated from one declaration file that also mints pack peer-dependency identifiers and the `§` anchors below. Profiles are derived predicates, never a wire field.
+v2 discovery has one capability record type on a closed root, generated from one declaration file that also mints pack peer-dependency identifiers and the `§` anchors below. Profiles are derived predicates, never a wire field.
 
 ## 1. One well-known resource (RFC 0176 §C.1)
 
@@ -58,8 +58,8 @@ Vendor and host extensions live under one key, `extensions`, whose members MUST 
 | Key | Why |
 | --- | --- |
 | `contractProvenance` | an advisory self-declaration the wire cannot falsify (RFC 0169 §A.5) |
-| `supportedTransports` | REST is the wire; there is no transport advertisement — A2A and MCP are compositions advertised by their own facets (RFC 0175 §B.1) |
-| `grpc` | `witness: unwitnessable` (the suite ships no client); an unwitnessable family is not advertisable and its text moves to `spec/v2/ext/grpc-transport/` (RFC 0175 §A.1) |
+| `supportedTransports` | REST is the wire (interop.md; RFC 0175 §B.1) |
+| `grpc` | unwitnessable, so not advertisable (interop.md §gRPC; RFC 0175 §A.1) |
 | `Capabilities-Etag`, `auth.subjectLinking`, `replay.fork`, bare `a2a.supported` / `mcp.supported`, the `openwop-core` alias | absent from the v2 root; rows `C2.1`–`C2.10` in `spec/v1/migrations.json` carry each with its codemod |
 | `host.media`, `host.collaboration` | reserved slots are unrepresentable under a closed root; `host.workspace` is the declared family `workspace` |
 
@@ -75,11 +75,11 @@ Each heading is a `spec/v2/declaration.json` row with `anchor: core`; `scripts/c
 
 ### § supportedEnvelopes
 
-Witness `witnessable-gated`; owner no owning RFC (declaration row).
+Witness `witnessable-gated`; owner RFC 0193; facets `kinds`.
 
 ### § schemaVersions
 
-Witness `witnessable-gated`; owner no owning RFC (declaration row).
+Witness `witnessable-gated`; owner RFC 0193; facets `kinds`.
 
 ### § limits
 
@@ -87,7 +87,7 @@ Witness `witnessable-gated`; owner no owning RFC (declaration row).
 
 ### § envelopeStrictness
 
-Witness `claims-check`; owner no owning RFC (declaration row).
+Witness `claims-check`; owner RFC 0193; facets `mode`.
 
 ### § envelopeContracts
 
@@ -309,11 +309,11 @@ Witness `witnessable-gated`; owner RFC 0019.
 
 ### § workflowChainPacks
 
-Witness `witnessable-gated`; owner RFC 0013.
+Witness `witnessable-gated`; owner RFC 0013; facets `subChains`.
 
 ### § packs
 
-Witness `claims-check`; owner RFC 0025.
+Witness `claims-check`; owner RFC 0025; facets `testMode`.
 
 ### § mcp
 
@@ -396,17 +396,4 @@ The `openwop-core` alias is deleted (row `C2.3`); the canonical discovery-only i
 
 ## 10. Migration rows (RFC 0169)
 
-| Row | v1 | v2 |
-| --- | --- | --- |
-| `C2.1` | `capabilities` wrapper | none (`openwop.codemod.capabilities-wrapper-removal`) |
-| `C2.2` | `host.<family>` dotted mirrors | none |
-| `C2.3` | `openwop-core` | `openwop-discovery-core` |
-| `C2.4` | `contractProvenance` | none |
-| `C2.5` | `auth.subjectLinking` | none; advertising `saml` and `scim` lanes implies the contract (`identity.md`) |
-| `C2.6` | bare `a2a.supported` / `mcp.supported` | `versions[]` / `revisions[]` facets (the codemod refuses when no array is present) |
-| `C2.7` | `replay.fork` boolean | `replay.modes[]` |
-| `C2.8` | the 11 extension-class `host.*` families | `extensions.<org>.<name>` |
-| `C2.9` | `Capabilities-Etag` | standard `ETag` / `If-None-Match` (dual emission through the overlap) |
-| `C2.10` | root `profiles[]` | none — schema-invalid |
-
-Rows `C2.2`–`C2.8` are transformed by `openwop.codemod.discovery-document-v2`; a family with `supported: false` is dropped, and a dotted-only declared family is promoted to its plain key. Certification bundles naming `openwop-core` are never-upgraded and remain valid v1 evidence at their version.
+Rows `C2.1`–`C2.10` are `spec/v1/migrations.json` entries. `C2.2`–`C2.8` are transformed by `openwop.codemod.discovery-document-v2`; a family with `supported: false` is dropped, and a dotted-only declared family is promoted to its plain key. Certification bundles naming `openwop-core` are never-upgraded and remain valid v1 evidence at their version.

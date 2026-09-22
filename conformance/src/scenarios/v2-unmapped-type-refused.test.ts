@@ -34,7 +34,7 @@
  * needs it, never to the file.
  *
  * @see spec/v2/core/persistence.md §The reader rule
- * @see spec/v2/core/events.md §Reading an era-2 log
+ * @see spec/v2/core/events.md §Era-2 logs
  */
 
 import { describe, it, expect } from 'vitest';

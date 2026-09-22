@@ -92,6 +92,6 @@ describe('v2 run-cancel (runs.md §Cancel)', () => {
     const final = await waitFor(c.runId, (x) => x === 'cancelled', 5_000);
     expect(final, req(ID, DOC, `the snapshot MUST read cancelled within 5 s of an accepted cancel (last: ${final ?? 'unreadable'})`)).toBe('cancelled');
     const types = await eventTypes(c.runId);
-    expect(types?.includes('run.cancelled') ?? false, req(ID, 'spec/v2/core/events.md §run.cancelled', `the log MUST carry run.cancelled once the cascade completes (types: ${(types ?? []).join(', ')})`)).toBe(true);
+    expect(types?.includes('run.cancelled') ?? false, req(ID, 'spec/v2/core/runs.md §Cancel', `the log MUST carry run.cancelled once the cascade completes (types: ${(types ?? []).join(', ')})`)).toBe(true);
   }, 30_000);
 });

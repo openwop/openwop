@@ -16,7 +16,7 @@
  * every leg records `blocked` naming it.
  *
  * @see spec/v2/core/persistence.md §The reader rule, §The seat
- * @see spec/v2/core/events.md §Reading an era-2 log
+ * @see spec/v2/core/events.md §Era-2 logs
  */
 
 import { describe, it, expect } from 'vitest';

@@ -19,7 +19,7 @@ import { readErrorCode } from '../lib/error-envelope.js';
 import { softSkip } from '../lib/soft-skip.js';
 import { req } from '../lib/requirement-ids.js';
 
-const DOC = 'spec/v2/core/runs.md §configurable';
+const DOC = 'spec/v2/core/runs.md §Run options';
 const NOOP_WORKFLOW_ID = 'conformance-noop';
 const DOTTED = { version: 1, ai: { 'ai.provider': 'x' } };
 const UNKNOWN = { version: 1, unknownKey: 1 };

@@ -5,7 +5,7 @@
 
 ## Why this exists
 
-v1 advertised a `supportedTransports` list that could only honestly say `rest`, carried two legacy embedded-protocol profiles with dated sunsets, and let an unauthenticated peer steer version negotiation with no floor, no refresh obligation, and no audit record. This document is the v2 contract for the two embedded protocols (A2A and MCP): how a host advertises them, how a version is negotiated, and what every negotiation leaves behind. Capability shapes are in capabilities.md; the peer identity is the Subject of identity.md.
+The v2 contract for the two embedded protocols (A2A and MCP): how a host advertises them, how a version is negotiated, and what every negotiation leaves behind. Capability shapes are in capabilities.md; the peer identity is the Subject of identity.md.
 
 ## REST is the wire
 
@@ -63,4 +63,4 @@ gRPC is not part of the core wire. Its document lives at `spec/v2/ext/grpc-trans
 
 ## Threat model
 
-`SECURITY/threat-model-interop.md` is the threat model for this document: downgrade, card/runtime drift, cross-tenant lookup through a peer, artifact leakage across the boundary, the anonymous end-user actor, and negotiation replay. Its invariants are the two silent-downgrade rows plus `interop-negotiation-authenticated`, `interop-minimum-version-enforced`, and `interop-peer-no-authority-escalation` in `SECURITY/invariants.yaml`. Peer identity and authorization at the boundary are governed by security-defaults.md; a peer MUST NOT gain authority the caller's Subject does not hold.
+`SECURITY/threat-model-interop.md` is the threat model for this document; its invariants are rows of `SECURITY/invariants.yaml`. Peer identity and authorization at the boundary are governed by security-defaults.md; a peer MUST NOT gain authority the caller's Subject does not hold.
