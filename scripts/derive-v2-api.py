@@ -210,34 +210,58 @@ def v2_openapi_and_seams():
     # v1's bare `type: string`: the kind had no HTTP surface and the HTTP
     # surface had no kind, so the §5 `403 id_tenant_mismatch` check had nothing
     # to read. Bind the path parameter and the response property.
-    for wh_key in ('/webhooks/{webhookId}', '/webhooks/{webhookId}/rotate-secret'):
-        wh = paths.get(wh_key, {})
-        for op in wh.values():
-            if not isinstance(op, dict):
-                continue
-            for p in op.get('parameters', []) or []:
-                if isinstance(p, dict) and p.get('name') == 'webhookId' and p.get('in') == 'path':
-                    p['schema'] = {'$ref': '../../schemas/v2/ids.schema.json#/$defs/subscriptionId'}
-                    p['description'] = (
-                        'Tenant-bound `<tenantId>/<opaque>` (`identity.md` §5, RFC 0187 §A.1), one path\n'
-                        'segment: `~`-projected (RFC 0184) or percent-encoded.\n'
-                    )
-    # RFC 0201 — the Standard Webhooks companion scheme. The v1 document is the source, so the
-    # v2 differences are applied by name: the opt-in's item vocabulary is the facet enum (v1 keeps
-    # free strings), and the rotate route is tenant-bound by its id, so v1's `tenantId` query
-    # parameter has no v2 meaning (the v2 register body is closed and carries none either).
+    wh = paths.get('/webhooks/{webhookId}', {})
+    for op in wh.values():
+        if not isinstance(op, dict):
+            continue
+        for p in op.get('parameters', []) or []:
+            if isinstance(p, dict) and p.get('name') == 'webhookId' and p.get('in') == 'path':
+                p['schema'] = {'$ref': '../../schemas/v2/ids.schema.json#/$defs/subscriptionId'}
+                p['description'] = (
+                    'Tenant-bound `<tenantId>/<opaque>` (`identity.md` §5, RFC 0187 §A.1), one path\n'
+                    'segment: `~`-projected (RFC 0184) or percent-encoded.\n'
+                )
+    # RFC 0201 — the Standard Webhooks opt-in. The v1 document is the source, so the v2 difference
+    # is applied by name: the item vocabulary is the facet enum (v1 keeps free strings).
     try:
         reg_body = paths['/webhooks']['post']['requestBody']['content']['application/json']['schema']['properties']
         reg_body['signatureAlgorithms']['items'] = {'type': 'string', 'enum': ['v1', 'standard-webhooks-1']}
     except (KeyError, TypeError):
         pass
-    rot = paths.get('/webhooks/{webhookId}/rotate-secret', {}).get('post')
-    if isinstance(rot, dict):
-        rot['parameters'] = [p for p in rot.get('parameters', []) if not (isinstance(p, dict) and p.get('name') == 'tenantId' and p.get('in') == 'query')]
-        rot['description'] = rot.get('description', '').replace(
-            'Tenant checks are exactly those of `unregisterWebhook`.',
-            'Tenant checks are exactly those of `unregisterWebhook`: `403 id_tenant_mismatch` when the id\'s tenant '
-            'segment is not the caller\'s, checked before the lookup (`identity.md` §5); `404` when unknown.')
+    # RFC 0201 §E — rotateWebhookSecret, a v2 operation (like RFC 0188's dead-letter read). Its v1
+    # route (`POST /v1/webhooks/{webhookId}/rotate-secret?tenantId=`) is defined in v1 webhooks.md
+    # prose and is NOT added to api/openapi.yaml: a new canonical v1 operation obliges the
+    # openwop-sdks parity manifest, which vendors a published corpus tag.
+    paths['/webhooks/{webhookId}/rotate-secret'] = {'post': {
+        'tags': ['webhooks'],
+        'operationId': 'rotateWebhookSecret',
+        'summary': "Rotate a Standard Webhooks subscription's secret with an overlap (RFC 0201 \u00a7E)",
+        'description': ('Gated on `webhooks.secretRotation`: a host that does not advertise it MUST answer `404 not_found`. '
+            'Only for a subscription that opted into `standard-webhooks-1`; any other subscription gets `400 validation_error` '
+            '(its single `v1` signature cannot overlap). Tenant checks are exactly those of `unregisterWebhook`: '
+            '`403 id_tenant_mismatch` when the id\'s tenant segment is not the caller\'s, checked before the lookup '
+            '(`identity.md` \u00a75); `404` when unknown. For `overlapSeconds` after `rotatedAt`, `webhook-signature` carries '
+            'one entry under the new secret and one under the previous one, and `OpenWOP-Signature` stays on the previous '
+            'secret; at `previousSecretExpiresAt` only the new secret signs. A second rotation inside an overlap retires the '
+            'oldest secret immediately. Rotation does not re-verify the endpoint. The response carries no secret.'),
+        'parameters': [
+            {'name': 'webhookId', 'in': 'path', 'required': True,
+             'schema': {'$ref': '../../schemas/v2/ids.schema.json#/$defs/subscriptionId'},
+             'description': 'Tenant-bound `<tenantId>/<opaque>` (`identity.md` \u00a75, RFC 0187 \u00a7A.1), one path segment: `~`-projected (RFC 0184) or percent-encoded.'},
+            {'$ref': '#/components/parameters/IdempotencyKey'}],
+        'requestBody': {'required': True, 'content': {'application/json': {'schema': {
+            'type': 'object', 'required': ['secret'], 'additionalProperties': False,
+            'properties': {'secret': {'type': 'string', 'pattern': '^whsec_[A-Za-z0-9+/]+={0,2}$',
+                'description': 'The new secret, `whsec_<base64>` decoding to 24\u201364 bytes (RFC 0201 \u00a7B.6).'}}}}}},
+        'responses': {
+            '200': {'description': 'Rotated. No secret is returned.', 'content': {'application/json': {'schema': {
+                'type': 'object', 'required': ['rotatedAt', 'previousSecretExpiresAt'], 'additionalProperties': False,
+                'properties': {'rotatedAt': {'type': 'string', 'format': 'date-time'},
+                    'previousSecretExpiresAt': {'type': 'string', 'format': 'date-time', 'description': '`rotatedAt + overlapSeconds`.'}}}}}},
+            '400': {'$ref': '#/components/responses/ValidationError'},
+            '401': {'$ref': '#/components/responses/Unauthenticated'},
+            '403': {'$ref': '#/components/responses/Forbidden'},
+            '404': {'$ref': '#/components/responses/NotFound'}}}}
     try:
         reg = paths['/webhooks']['post']['responses']['201']['content']['application/json']['schema']['properties']['webhookId']
         reg.clear()
