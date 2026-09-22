@@ -129,6 +129,8 @@ The OpenWOP host serves an Agent Card at the well-known A2A path. Each `AgentSki
 
 The A2A client uses the AgentCard to discover `campaign-brief` and any other workflows the host exposes. The mapping is `AgentSkill.id` ↔ openwop `Workflow.id`. A host MAY filter which workflows it advertises (e.g., only those marked `public: true`).
 
+An A2A `AgentSkill` is not an RFC 0131 `role: "skill"` agent manifest or an Agent Skills `SKILL.md` bundle; see [`agent-ref-positioning.md` §"Skill" means three different things](./agent-ref-positioning.md#skill-means-three-different-things) (informative).
+
 ### 2. Skill invocation = OpenWOP run start
 
 The A2A client sends a Message naming the skill:

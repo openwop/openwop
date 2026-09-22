@@ -327,7 +327,7 @@ Normative for any public conformance statement — README, badge, `INTEROP-MATRI
 - Certification bundle v2 (RFC 0148 §C) **MUST** name canonical profile IDs; the deprecated alias MAY appear only as an alias, never as the claimed id.
 - Vendor extensions remain permitted but **MUST NOT** use an `openwop-*` id without an accepted RFC (RFC 0155 §F).
 
-Deprecation guidance for the alias: hosts and SDKs that emit `openwop-core` today keep working for all of v1; they SHOULD add `openwop-discovery-core` beside it now, and consumers SHOULD read the canonical name first and fall back to the alias. Structural invariant `profile-claim-floor-not-overstated` (RFC 0155 §F) is named and not yet registered; the certification-floor gate (`certification-floor-enforcement.test.ts`) is the current mechanism.
+Deprecation guidance for the alias: hosts and SDKs that emit `openwop-core` today keep working for all of v1; they SHOULD add `openwop-discovery-core` beside it now, and consumers SHOULD read the canonical name first and fall back to the alias. Structural invariant `profile-claim-floor-not-overstated` (RFC 0155 §F) is registered in `SECURITY/invariants.yaml`, witnessed by `certification-bundle-non-vacuous.test.ts`; the certification-floor gate (`certification-floor-enforcement.test.ts`) enforces the same floor.
 
 ## Profile semantics
 

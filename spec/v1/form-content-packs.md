@@ -1,6 +1,6 @@
 # OpenWOP Spec v1 — Form-Content Packs
 
-> **Status: Draft · v1.x · RFC 0137.** Normative pack format for declarative, typed form templates.
+> **Status: Draft · v1.x · RFC 0137 `Accepted`; spec status Draft pending a steward stability decision (a Stable flip freezes the field schemas; gaps r1–r5 in `gaps.json` are carried).** Normative pack format for declarative, typed form templates.
 
 ---
 

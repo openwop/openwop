@@ -38,7 +38,7 @@ The host accepts OAuth2 client-credentials access tokens for machine-to-machine 
 
 - The token issuer, audience, and accepted signing algorithms are documented.
 - The token maps to the same `tenant`, `principal`, and `scopes` concepts defined in `auth.md`.
-- Missing, expired, malformed, wrong-audience, and insufficient-scope tokens use the canonical error envelope.
+- Missing, expired, malformed, wrong-audience, and insufficient-scope tokens use the canonical error envelope: `401 unauthenticated` for a missing, expired, malformed, or wrong-audience token.
 - Token introspection, if used, is an implementation detail; clients only depend on bearer-token semantics.
 - Scope strings for OpenWOP operations remain the operation scopes in `auth.md`, even when encoded inside OAuth claims.
 
@@ -66,11 +66,10 @@ This is distinct from `openwop-auth-oauth2-client-credentials` (which authentica
 **Requirements:**
 
 - The host MUST accept `Authorization: Bearer <id-token-or-access-token>` and verify it against the configured OIDC issuer(s).
-- The host MUST verify the standard OIDC ID-token claims: `iss`, `aud`, `exp`, `iat`, and signature against the issuer's JWKS.
+- The host MUST verify the standard OIDC ID-token claims: `iss`, `aud`, `exp`, `iat`, and signature against the issuer's JWKS. Verifying `aud` means the host MUST reject a token whose `aud` does not include the host's configured audience identifier, with `401 unauthenticated`.
 - The host MUST map the verified `sub` (subject) claim to an internal user identity, then resolve that identity to a tenant per the host's user-to-tenant policy.
 - The host MUST enforce openwop scopes (`runs:create`, `approvals:respond`, etc.) on top of the OIDC identity — bearing a valid token is not sufficient; the principal must also hold the relevant scope (via group claims, role mapping, or host-side ACL).
-- The host SHOULD respect `aud` restrictions and reject tokens whose audience does not include the host's configured audience identifier.
-- The host MUST surface OIDC-specific failure modes via the canonical envelope: `unauthenticated` for invalid signature / expired token / wrong issuer; `forbidden` for token-valid-but-scope-insufficient; `key_revoked` for tokens whose `sub` has been disabled in the IdP.
+- The host MUST surface OIDC-specific failure modes via the canonical envelope: `unauthenticated` for invalid signature / expired token / wrong issuer / wrong audience; `forbidden` for token-valid-but-scope-insufficient; `key_revoked` for tokens whose `sub` has been disabled in the IdP.
 - Token caching: hosts SHOULD honor the IdP's `exp` claim and MAY re-introspect the token at intervals not exceeding `min(exp - now, 5 minutes)` to detect IdP-side revocation.
 
 **Optional features hosts MAY support:**

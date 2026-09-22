@@ -1393,7 +1393,7 @@ The plaintext returned by `ctx.secrets.resolve(...)` is the most sensitive value
 
 ## §host.credentials
 
-**Capability flag:** `credentials.supported: true` _(advertised via top-level `Capabilities.credentials`; see [capabilities.md §credentials](capabilities.md#credentials))_ — RFC 0046, `Draft`.
+**Capability flag:** `credentials.supported: true` _(advertised via top-level `Capabilities.credentials`; see [capabilities.md §credentials](capabilities.md#credentials))_ — RFC 0046, `Accepted`.
 
 **Used by:** packs that declare `requiredCredentials[]` (see [node-pack-manifest.schema.json](../../schemas/node-pack-manifest.schema.json)); the RFC 0047 `host.oauth` flow stores acquired tokens here; RFC 0045 connectors point their `auth` declarations at it.
 
@@ -1436,7 +1436,7 @@ Additive — hosts that omit the block ignore it; packs declaring `requiredCrede
 
 ## §host.oauth
 
-**Capability flag:** `oauth.supported: true` _(advertised via top-level `Capabilities.oauth`; see [capabilities.md §oauth](capabilities.md#oauth))_ — RFC 0047, `Draft`.
+**Capability flag:** `oauth.supported: true` _(advertised via top-level `Capabilities.oauth`; see [capabilities.md §oauth](capabilities.md#oauth))_ — RFC 0047, `Accepted`.
 
 **Used by:** connector packs whose nodes declare `auth: { type: 'oauth2', provider, scopes[] }` (see [node-pack-manifest.schema.json](../../schemas/node-pack-manifest.schema.json) `NodeAuth`). RFC 0045 connectors point their `auth` declaration here.
 
@@ -1970,7 +1970,7 @@ A host that advertises `capabilities.sandbox.supported: true` MUST enforce all 8
 
 ## §host.scheduling
 
-**Capability flag:** `scheduling.supported: true` _(advertised via top-level `Capabilities.scheduling`; see [capabilities.md §scheduling](capabilities.md#scheduling))_ — RFC 0052, `Draft`.
+**Capability flag:** `scheduling.supported: true` _(advertised via top-level `Capabilities.scheduling`; see [capabilities.md §scheduling](capabilities.md#scheduling))_ — RFC 0052, `Accepted`.
 
 **Used by:** the `schedule` trigger in `core.openwop.triggers` (cron / delayed / calendar). Promotes the scheduling intent behind RFC 0017 (`host.queueBus`) into a portable, conformance-tested execution contract.
 
@@ -2007,7 +2007,7 @@ Additive — hosts that omit the block advertise no scheduling; `schedule`-trigg
 
 ## §host.heartbeat
 
-**Capability flag:** `heartbeat.supported: true` _(advertised via top-level `Capabilities.heartbeat`; see [capabilities.md §heartbeat](capabilities.md#heartbeat))_ — RFC 0060, `Draft`.
+**Capability flag:** `heartbeat.supported: true` _(advertised via top-level `Capabilities.heartbeat`; see [capabilities.md §heartbeat](capabilities.md#heartbeat))_ — RFC 0060, `Accepted`.
 
 **Used by:** system-managed, predicate-gated polling — the controlled, request-shaped exception to openwop's poll-free design (`positioning.md`). Composes on `host.scheduling` (RFC 0052) for the once-per-tick interval substrate.
 
@@ -2115,7 +2115,7 @@ Additive — a host that omits `egressPolicy` keeps the SSRF guard unchanged. Ve
 
 ## §host.toolHooks
 
-**Capability flag:** `toolHooks.supported: true` _(advertised via top-level `Capabilities.toolHooks`; see [capabilities.md §toolHooks](capabilities.md#toolhooks))_ — RFC 0064, `Active`.
+**Capability flag:** `toolHooks.supported: true` _(advertised via top-level `Capabilities.toolHooks`; see [capabilities.md §toolHooks](capabilities.md#toolhooks))_ — RFC 0064, `Accepted`.
 
 **Used by:** per-tool authorization + rate limiting + a content-free tool-call audit trail, layered on the existing `agent.toolCalled` / `agent.toolReturned` events (RFC 0002). Generalizes the MCP-specific bridges across transports (`mcp` / `http` / `native`) — see [mcp-integration.md](mcp-integration.md). Reuses RFC 0049's `forbidden` error + `authorization-fail-closed` invariant and the existing `rate_limited` error; **no new event type, error code, or SECURITY invariant**.
 
@@ -2148,7 +2148,7 @@ Additive — hosts that omit the block behave exactly as today (the `agent.toolC
 
 ## §host.deadLetter
 
-**Capability flag:** `deadLetter.supported: true` _(advertised via top-level `Capabilities.deadLetter`; see [capabilities.md §deadLetter](capabilities.md#deadletter))_ — RFC 0053, `Draft`.
+**Capability flag:** `deadLetter.supported: true` _(advertised via top-level `Capabilities.deadLetter`; see [capabilities.md §deadLetter](capabilities.md#deadletter))_ — RFC 0053, `Accepted`.
 
 **Used by:** the engine's terminal-failure path. Gives a run/node that exhausts its retry policy a durable, inspectable **sink** instead of being logged and lost — so a poisoned run can be examined and replayed.
 
