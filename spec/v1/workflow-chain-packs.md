@@ -1,6 +1,6 @@
 # OpenWOP Spec v1 — Workflow-Chain Packs
 
-> **Status: Draft · v1.x · RFC 0013.** Normative pack format and expansion rules for reusable workflow fragments.
+> **Status: Draft · v1.x · RFC 0013 `Accepted`; spec status Draft pending (a) the reference host implementing expansion and (b) at least the manifest-validation and expansion conformance scenarios passing on it.** Normative pack format and expansion rules for reusable workflow fragments.
 
 ---
 

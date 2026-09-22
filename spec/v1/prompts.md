@@ -1,6 +1,6 @@
 # OpenWOP Spec v1 — Prompt Templates
 
-> **Status: Draft · v1.x · RFC 0027.** Normative shape and resolution rules for portable, versioned prompt templates.
+> **Status: Draft · v1.x · RFC 0027 `Accepted`; spec status Draft pending the open prompt gaps p1–p8 in `gaps.json` (reference-host resolution, `prompt.composed` emission and `/v1/prompts*` endpoints, and a first non-steward host advertising `capabilities.prompts.supported`).** Normative shape and resolution rules for portable, versioned prompt templates.
 
 ---
 
@@ -421,6 +421,7 @@ A node MAY carry both surfaces independently. The `agent.promptResolved` event e
 - `host-capabilities.md` §host.aiEnvelope — the existing LLM-call surface that prompt resolution feeds.
 - `mcp-integration.md` §"Trust boundary" + RFC 0020 §D — `meta.contentTrust` propagation that `prompt.composed.contentTrust` mirrors.
 - `replay.md` — replay invariants this document extends with `prompt.composed`.
+- [`docs/integrations/mcp.md`](../../docs/integrations/mcp.md) §5 — informative note: an MCP server mount's `prompts/list` exposes `expose-prompt` workflows, not this prompt library.
 - `RFCS/0027-prompt-templates.md` — Phase A wire-shape RFC (this document's source).
 - `RFCS/0028-prompt-library-endpoints.md` — Phase B registry + endpoint surface.
 - `RFCS/0029-prompt-override-hierarchy.md` — Phase C resolution chain + `agent.promptResolved`.

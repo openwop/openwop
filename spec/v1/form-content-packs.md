@@ -1,6 +1,6 @@
 # OpenWOP Spec v1 — Form-Content Packs
 
-> **Status: Draft · v1.x · RFC 0137.** Normative pack format for declarative, typed form templates.
+> **Status: Draft · v1.x · RFC 0137 `Accepted`; spec status Draft pending a steward stability decision (a Stable flip freezes the field schemas; gaps r1–r5 in `gaps.json` are carried).** Normative pack format for declarative, typed form templates.
 
 ---
 
@@ -182,4 +182,5 @@ Because that denormalization is a SHOULD, a registry that validates a form-conte
 - [`host-capabilities.md`](./host-capabilities.md) §host.forms — the capability advertisement.
 - [`ai-envelope.md`](./ai-envelope.md) §"Trust boundary" — `meta.contentTrust` propagation.
 - [`positioning.md`](./positioning.md) — why layout, widgets, and theming are out of scope.
+- [`docs/integrations/mcp.md`](../../docs/integrations/mcp.md) §2 — informative comparison of the field vocabulary and `format` set with MCP elicitation `requestedSchema`.
 - [`form-content-pack-manifest.schema.json`](../../schemas/form-content-pack-manifest.schema.json), [`registry-version-manifest.schema.json`](../../schemas/registry-version-manifest.schema.json).

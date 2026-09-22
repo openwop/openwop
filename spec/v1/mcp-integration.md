@@ -323,5 +323,6 @@ Upstream 2026-07-28 replaced server-initiated requests (`roots/list`, `sampling/
 - `spec/v1/host-extensions.md` — what's in the openwop wire contract vs what's a host extension.
 - `SECURITY/threat-model-prompt-injection.md` — invariants on MCP tool responses.
 - `SECURITY/threat-model-node-packs.md` — sandbox + trust model that MCP servers fit into.
+- [`docs/integrations/mcp.md`](../../docs/integrations/mcp.md) — informative correspondence notes between OpenWOP surfaces (tool catalog, card/form fields, front-end plugins, export formats, prompts) and nearby MCP surfaces.
 - Model Context Protocol: <https://modelcontextprotocol.io> — the canonical MCP source.
 - MCP **2026-07-28** pin for the `mcp-2026-07-28` profile: <https://modelcontextprotocol.io/specification/2026-07-28> and `schema/2026-07-28/schema.ts` in `modelcontextprotocol/modelcontextprotocol`; changelog <https://modelcontextprotocol.io/specification/2026-07-28/changelog>.

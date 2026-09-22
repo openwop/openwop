@@ -1,6 +1,6 @@
 # OpenWOP Spec v1 — Front-End Plugin Packs (Sandboxed UI Extensions)
 
-> **Status: Draft · v1.x · RFC 0117.** Capability-gated contract for signed UI plugins isolated behind the `ui-plugin/1` RPC boundary.
+> **Status: Stable · v1.x · RFC 0117.** Capability-gated contract for signed UI plugins isolated behind the `ui-plugin/1` RPC boundary.
 
 ## Why this exists
 
@@ -182,3 +182,7 @@ Four protocol-tier invariants gate this surface (`SECURITY/invariants.yaml`,
 - **`frontend-plugin-no-byok`** — no BYOK credential material ever crosses the `ui-plugin/1`
   boundary into the sandbox; the plugin operates purely through host-mediated, authz-checked
   RPC.
+
+## See also
+
+- [`docs/integrations/mcp.md`](../../docs/integrations/mcp.md) §3 — informative conceptual comparison with MCP Apps (SEP-1865): `postMessage` channel, sandbox, and `connectSrc` beside `csp.connectDomains`.

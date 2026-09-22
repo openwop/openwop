@@ -85,7 +85,7 @@ Reference-impl notes (non-normative):
 
 **Conformance:** `conformance/src/scenarios/agentMemoryRedactionContract.test.ts` exercises SR-1 via the `conformance-agent-memory-redaction` fixture (resolves a BYOK secret, writes a memory entry containing the plaintext, reads back, asserts `[REDACTED:<secretId>]`).
 
-## Injection budget (RFC 0113, `Active`)
+## Injection budget (RFC 0113, `Accepted`)
 
 **Why this exists.** `MemoryAdapter.list` bounds reads only by entry `limit` and `tag` — there is no token budget, so a host that injects "recent memory" into a turn can inject an unbounded number of tokens (a count `limit` is a poor proxy: one long entry blows the budget). RFC 0062 distillation has a `tokenBudget`, but that governs *background compaction*, not the *live read* that feeds a turn. RFC 0113 adds optional `tokenBudget` + `rank` + `query` to `MemoryListOptions`, letting a host return a token-bounded, optionally relevance-ranked top-k slice for injection. This is the read-path lever the host-internal memory budget (e.g. a Tier-A internal budget) calls through — one contract, not two.
 
@@ -116,7 +116,7 @@ Hosts that implement long-term memory advertise via `capabilities.agents.memoryB
 
 The capability advertisement is a CLAIM. Hosts that advertise long-term memory MUST honor CTI-1 + SR-1 + TTL contracts end-to-end. Conformance scenarios skip cleanly when the advertisement is absent.
 
-## Memory capability model (RFC 0080, `Active`)
+## Memory capability model (RFC 0080, `Accepted`)
 
 **Why this exists.** Memory support is advertised across two unrelated capability blocks (`capabilities.memory.*` and `capabilities.agents.*`) plus this prose and `AgentManifest.memoryShape`. A client building a memory console — or pre-flighting an agent — cannot answer "does this host support *write*? *search*? *forget*?" from one place, and a host that can't satisfy an agent's declared `memoryShape` degrades dispatch with no observable signal. RFC 0080 reconciles the *advertisement* into one coherent, **additive** model: it names eight dimensions, maps each to its existing advertised source, adds the two that had none, and requires the agent inventory to surface degraded memory. No existing flag is moved, renamed, or removed.
 
@@ -162,7 +162,7 @@ This §D constraint and the §C degraded projection above are **two distinct mec
 
 The two are disjoint by construction: §C is "a host lacks a capability a *valid* agent wants"; §D is "the manifest contradicts itself." A `role: "skill"` manifest that would violate §D **cannot reach the inventory at all**, so it can never appear as §C-degraded — the reject strictly precedes any degrade evaluation. `role` is EXPLICIT, never inferred (`handoff` presence does not imply `skill`); an absent `role` or `role: "assistant"` is unconstrained and no profile binds it. SECURITY invariant: `agent-skill-profile-stateless`.
 
-## Scheduled distillation — "dreams" (RFC 0062, `Active`)
+## Scheduled distillation — "dreams" (RFC 0062, `Accepted`)
 
 **Why this exists.** A "dream" is a periodic background run that distills recent transactional memory into long-term artifacts under an explicit token budget, then refreshes a retrieval index the next session loads at startup. openwop already has the halves — RFC 0012 defines host-managed *compaction* (lossy distillation + the `memory.compacted` event) and RFC 0052 defines *scheduled* run initiation — but nothing binds them, pins a token budget, or defines the index. Distillation composes them; it does **not** invent a parallel event.
 
@@ -179,7 +179,7 @@ The two are disjoint by construction: §C is "a host lacks a capability a *valid
 
 Recursive distillation (distilling prior archives) is allowed; each level MUST re-check SR-1. Archives persist for the advertised `archiveRetention` (ISO-8601 duration) before GC. CTI-1 tenant isolation holds for the archive and index exactly as for any memory write.
 
-## Background consolidation (RFC 0068, `Active`)
+## Background consolidation (RFC 0068, `Accepted`)
 
 **Why this exists.** Distillation (RFC 0062) is a *forward funnel* — it collapses recent *transactional* memory into long-term artifacts under a mandatory token budget. It does not address the *standing* problem: a long-term corpus that, over months, accumulates near-duplicate facts, superseded preferences, and contradictions. **Consolidation** is a *reconciliation* pass *within* long-term memory — merge duplicates, supersede stale facts, strengthen corroborated ones — and is not budget-driven. The two are semantically distinct observable behaviors; consolidation emits its own content-free `agent.memory.consolidated` event rather than reusing `memory.compacted`, so an observer can tell "I distilled today's transcript" apart from "I reconciled the standing corpus."
 
@@ -194,7 +194,7 @@ Recursive distillation (distilling prior archives) is allowed; each level MUST r
 
 Consolidation is a read-modify-write of long-term memory; it is NOT a token-budgeted distillation of transactional memory (that is RFC 0062, which emits `memory.compacted`). A host MAY implement both; they are independent capabilities. Deterministic replay (`replay.md`, RFC 0041) holds through a consolidation pass by construction: consolidation is a host-managed background mutation **outside the replay envelope** (resolved in RFC 0068 §"Unresolved questions" #1, confirmed against RFC 0041 §C observable-output-sequence determinism). A run sees consolidated memory only via the deterministic read-snapshot the event log records; `agent.memory.consolidated` is an observability event re-read from the log on replay, never regenerated — a host MUST NOT re-run a consolidation pass at replay time, and a run MUST NOT trigger a pass that mutates its own read-snapshot mid-run.
 
-## Inferred commitments (RFC 0068, `Active`)
+## Inferred commitments (RFC 0068, `Accepted`)
 
 **Why this exists.** A long-running agent forms *standing intentions* ("follow up next Monday", "remind me when the invoice clears") that should fire later without a fresh user turn. Scheduling (RFC 0052) and heartbeat (RFC 0060) can *fire* an arm on a clock or a predicate, but neither models a commitment *inferred from memory* — with the memory provenance that makes it auditable and tenant-bound. An **inferred standing commitment** is a host-derived, durable intention with a fire condition (time or predicate) and a memory provenance; when it fires it MUST be observable but content-free.
 
