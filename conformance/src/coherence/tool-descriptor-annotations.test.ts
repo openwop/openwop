@@ -34,6 +34,10 @@ import { describe, it, expect } from 'vitest';
 import { v2Validator } from '../lib/v2.js';
 import { expectedAnnotations, type ToolDescriptor } from '../lib/toolCatalog.js';
 import { req } from '../lib/requirement-ids.js';
+import { V1_DIR } from '../lib/paths.js';
+import { softSkip } from '../lib/soft-skip.js';
+
+const NOT_A_CHECKOUT = 'inapplicable to any host: the subject is the spec corpus, which this layout does not carry (not a spec checkout)';
 
 const ID = 'openwop.requirement.0204.annotations-schema';
 const SECTION = 'RFC 0204 §D.12; schemas/v2/tool-descriptor.schema.json allOf';
@@ -57,6 +61,7 @@ describe('RFC 0204 §D.12 — the annotation table is enforced by the descriptor
   const validate = v2Validator('tool-descriptor');
 
   it('accepts exactly the derived annotations over the whole input space and refuses every deviation', () => {
+    if (V1_DIR === null) return softSkip('inapplicable', NOT_A_CHECKOUT);
     const all = descriptors();
     expect(all.length).toBe(80);
     for (const d of all) {
@@ -75,6 +80,7 @@ describe('RFC 0204 §D.12 — the annotation table is enforced by the descriptor
   });
 
   it('the negative example the RFC names is refused: a write tool claiming readOnlyHint', () => {
+    if (V1_DIR === null) return softSkip('inapplicable', NOT_A_CHECKOUT);
     const d = { toolId: 'mcp:conformance/readonly-claim', source: 'mcp', safetyTier: 'write', annotations: { readOnlyHint: true, destructiveHint: false, idempotentHint: false, openWorldHint: true } };
     expect(validate(d).ok, req(ID, SECTION, 'a write descriptor carrying readOnlyHint: true MUST fail validation (RFC 0204 negative example)')).toBe(false);
   });

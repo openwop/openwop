@@ -58,7 +58,9 @@ function isExpectCallee(e) {
 function isStringish(node) {
   return node !== undefined && (ts.isStringLiteral(node) || ts.isNoSubstitutionTemplateLiteral(node) || ts.isTemplateExpression(node));
 }
-const GATE_RE = /\b(?:behaviorGate|behaviorGatePresent|experimentalGate)\(/;
+// toolCatalogGate (conformance/src/lib/toolCatalog.ts, RFC 0204 G3) journals on every early exit: behaviorGate at
+// major 1, softSkip('inapplicable', …) at major 2.
+const GATE_RE = /\b(?:behaviorGate|behaviorGatePresent|experimentalGate|toolCatalogGate)\(/;
 /** Is this return the `then`/`else` of an `if` whose condition consults a journaling gate? */
 function isGateGuarded(ret, fn) {
   let p = ret.parent;

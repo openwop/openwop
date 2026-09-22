@@ -23,7 +23,7 @@
  *                            run 2 with that cursor: the server saw the cursor,
  *                            the page is deep-equal and has no `nextCursor`;
  *   server-health            `conformance` → reachable + the DiscoverResult;
- *                            `conformance-down` → unreachable; never
+ *                            `conformance.down` → unreachable; never
  *                            `connected` / `disconnected`;
  *   reject-unknown-server    an unconfigured `serverId` fails the node
  *                            `not_found`.
@@ -66,16 +66,17 @@ const SESSION_WORDS = /"(dis)?connected"/i;
 async function http(fn: () => Promise<OpenWOPResponse>): Promise<OpenWOPResponse | null> { try { return await fn(); } catch { return null; } }
 const enc = (id: string): string => encodeURIComponent(id);
 
-/** The gate: returns the fake server, or records why the leg cannot run. */
-async function gate(): Promise<McpFakeServer | undefined> {
+/** The gate: the fake server, or the recorded reason the leg cannot run. */
+type Gate = { fake: McpFakeServer } | { skip: ['inapplicable' | 'blocked', string] };
+async function gate(): Promise<Gate> {
   const doc = await v2Discovery().catch(() => null);
-  if (!doc) return softSkip('blocked', 'v2 discovery unreachable');
+  if (!doc) return { skip: ['blocked', 'v2 discovery unreachable'] };
   const facet = await familyAdvertised('mcp');
-  if (!facet || facet['client'] !== true) return softSkip('inapplicable', 'mcp.client not advertised — the host exposes no ctx.mcp to pack code (RFC 0204 §A.1)');
-  if (!isFixtureAdvertised(FIXTURE)) return softSkip('blocked', `the host advertises mcp.client but not the ${FIXTURE} fixture — ctx.mcp is claimed and cannot be observed`);
+  if (!facet || facet['client'] !== true) return { skip: ['inapplicable', 'mcp.client not advertised — the host exposes no ctx.mcp to pack code (RFC 0204 §A.1)'] };
+  if (!isFixtureAdvertised(FIXTURE)) return { skip: ['blocked', `the host advertises mcp.client but not the ${FIXTURE} fixture — ctx.mcp is claimed and cannot be observed`] };
   const fake = getMcpFakeServer();
-  if (fake === null) return softSkip('blocked', 'the suite MCP fake server (OPENWOP_MCP_FAKE_SERVER=true) is not started in this run');
-  return fake;
+  if (fake === null) return { skip: ['blocked', 'the suite MCP fake server (OPENWOP_MCP_FAKE_SERVER=true) is not started in this run'] };
+  return { fake };
 }
 
 interface Outcome {
@@ -117,7 +118,8 @@ const paramsOf = (x: McpExchange): Record<string, unknown> => (x.params ?? {}) a
 
 describe('RFC 0204 §A — ctx.mcp returns MCP results (gated on mcp.client)', () => {
   it('callTool resolves to the server CallToolResult unaltered, _meta included', async () => {
-    const fake = await gate(); if (!fake) return;
+    const g = await gate(); if ('skip' in g) return softSkip(...g.skip);
+    const fake = g.fake;
     const nonce = randomUUID();
     const out = await runFixture({ method: 'callTool', serverId: 'conformance', name: 'structured-echo', arguments: { nonce } });
     if ('reason' in out) return softSkip('blocked', out.reason);
@@ -130,7 +132,8 @@ describe('RFC 0204 §A — ctx.mcp returns MCP results (gated on mcp.client)', (
   });
 
   it('callTool resolves (does not reject) a result with isError: true', async () => {
-    const fake = await gate(); if (!fake) return;
+    const g = await gate(); if ('skip' in g) return softSkip(...g.skip);
+    const fake = g.fake;
     const out = await runFixture({ method: 'callTool', serverId: 'conformance', name: 'always-error', arguments: {} });
     if ('reason' in out) return softSkip('blocked', out.reason);
     const sent = lastExchange(fake, (x) => x.method === 'tools/call' && paramsOf(x)['name'] === 'always-error');
@@ -143,7 +146,8 @@ describe('RFC 0204 §A — ctx.mcp returns MCP results (gated on mcp.client)', (
   });
 
   it('listTools resolves one ListToolsResult page unaltered and forwards the cursor', async () => {
-    const fake = await gate(); if (!fake) return;
+    const g = await gate(); if ('skip' in g) return softSkip(...g.skip);
+    const fake = g.fake;
     const first = await runFixture({ method: 'listTools', serverId: 'conformance' });
     if ('reason' in first) return softSkip('blocked', first.reason);
     const sent1 = lastExchange(fake, (x) => x.method === 'tools/list' && paramsOf(x)['cursor'] === undefined);
@@ -155,7 +159,7 @@ describe('RFC 0204 §A — ctx.mcp returns MCP results (gated on mcp.client)', (
     expect(page1?.tools?.some((t) => t['outputSchema'] !== undefined && t['annotations'] !== undefined), req(ID.page, DOC, 'outputSchema and annotations MUST survive')).toBe(true);
     const cursor = page1?.nextCursor;
     expect(typeof cursor, req(ID.page, DOC, 'the first page MUST carry the server\'s nextCursor')).toBe('string');
-    if (typeof cursor !== 'string') return;
+    if (typeof cursor !== 'string') return softSkip('blocked', 'unreachable: the nextCursor assertion above failed');
     const second = await runFixture({ method: 'listTools', serverId: 'conformance', cursor });
     if ('reason' in second) return softSkip('blocked', second.reason);
     const sent2 = lastExchange(fake, (x) => x.method === 'tools/list' && paramsOf(x)['cursor'] === cursor);
@@ -166,7 +170,8 @@ describe('RFC 0204 §A — ctx.mcp returns MCP results (gated on mcp.client)', (
   });
 
   it('serverHealth reports reachability from server/discover, never a session state', async () => {
-    const fake = await gate(); if (!fake) return;
+    const g = await gate(); if ('skip' in g) return softSkip(...g.skip);
+    const fake = g.fake;
     const up = await runFixture({ method: 'serverHealth', serverId: 'conformance' });
     if ('reason' in up) return softSkip('blocked', up.reason);
     expect(up.status, req(ID.health, DOC, `the serverHealth run MUST complete (got ${up.status}, node error ${up.errorCode ?? 'none'})`)).toBe('completed');
@@ -179,16 +184,16 @@ describe('RFC 0204 §A — ctx.mcp returns MCP results (gated on mcp.client)', (
     const sentDiscover = lastExchange(fake, (x) => x.method === 'server/discover');
     if (sentDiscover) expect(h?.discover, req(ID.health, DOC, 'the DiscoverResult MUST be the server\'s, unaltered')).toEqual(sentDiscover.result);
     expect(SESSION_WORDS.test(JSON.stringify(up.result ?? null)), req(ID.health, DOC, 'serverHealth MUST NOT report a connection or session state (connected / disconnected)')).toBe(false);
-    const down = await runFixture({ method: 'serverHealth', serverId: 'conformance-down' });
+    const down = await runFixture({ method: 'serverHealth', serverId: 'conformance.down' });
     if ('reason' in down) return softSkip('blocked', down.reason);
-    if (down.errorCode === 'not_found') return softSkip('blocked', 'the host has no "conformance-down" binding (fixtures.md operator contract) — the unreachable half cannot be observed');
+    if (down.errorCode === 'not_found') return softSkip('blocked', 'the host has no "conformance.down" binding (fixtures.md operator contract) — the unreachable half cannot be observed');
     expect(down.status, req(ID.health, DOC, `serverHealth on an unanswering server resolves, it does not reject (got ${down.status}, node error ${down.errorCode ?? 'none'})`)).toBe('completed');
     expect((down.result as { state?: unknown } | undefined)?.state, req(ID.health, DOC, 'a server nothing answers MUST be unreachable')).toBe('unreachable');
     expect(SESSION_WORDS.test(JSON.stringify(down.result ?? null)), req(ID.health, DOC, 'serverHealth MUST NOT report a connection or session state')).toBe(false);
   });
 
   it('an unknown serverId rejects with not_found', async () => {
-    const fake = await gate(); if (!fake) return;
+    const g = await gate(); if ('skip' in g) return softSkip(...g.skip);
     const out = await runFixture({ method: 'callTool', serverId: `no-such-${randomUUID().slice(0, 8)}`, name: 'echo', arguments: { text: 'x' } });
     if ('reason' in out) return softSkip('blocked', out.reason);
     expect(out.status, req(ID.reject, DOC, `a call to an unconfigured serverId MUST reject, failing the node (got ${out.status})`)).toBe('failed');

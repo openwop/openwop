@@ -1,11 +1,11 @@
 # Tool catalog
 
-> **Status: Stable · RFC 0204, RFC 0078, RFC 0112.**
+> **Status: Stable · RFC 0078, RFC 0112.**
 > **Normative home:** `toolCatalog`.
 
 ## Why this exists
 
-v2 carried the catalog only by pointing at `spec/v1/tool-catalog.md`. This is its v2 contract, plus a projection onto MCP `ToolAnnotations`. The shapes are `schemas/v2/tool-descriptor.schema.json` and `schemas/v2/compact-tool-descriptor.schema.json`.
+v2 carried the catalog only by pointing at `spec/v1/tool-catalog.md`. This is its v2 contract, plus a projection onto MCP `ToolAnnotations` (RFC 0204). The shapes are `schemas/v2/tool-descriptor.schema.json` and `schemas/v2/compact-tool-descriptor.schema.json`.
 
 ## The catalog
 
