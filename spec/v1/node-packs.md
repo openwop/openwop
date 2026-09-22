@@ -129,7 +129,7 @@ Hosts that want to carry additional fields (e.g., aggregate `childOutcome` enum,
 
 **Conformance:** `conformance/src/scenarios/subworkflow.test.ts` and the `conformance-subworkflow-parent`/`conformance-subworkflow-child` fixtures exercise the contract end-to-end.
 
-#### `outputAttestation` — verify-before-merge (RFC 0063, `Active`)
+#### `outputAttestation` — verify-before-merge (RFC 0063, `Accepted`)
 
 **Why this exists.** `outputMapping` merges a child's outputs into the parent the instant the child reaches `completed`, with no integrity check and no gate. For autonomous fan-out — a supervisor dispatching N workers whose artifacts are merged back — blind merge means one compromised or hallucinated child artifact silently enters the parent's state. `outputAttestation` adds opt-in _verification before merge_: a content checksum the parent can verify, and an optional approval gate that suspends before the merge.
 
@@ -155,7 +155,7 @@ Hosts that want to carry additional fields (e.g., aggregate `childOutcome` enum,
 
 **Compatibility.** Additive — an absent `outputAttestation` is identical to today's blind merge; the `attestation` field is an additive optional property on the existing `output.harvested` phase (its `required` array is unchanged; consumers ignore it); the gate reuses RFC 0051's `approval` interrupt with no new kind. **Conformance:** `subrun-attestation-shape.test.ts` (always-on where `core.subWorkflow` is supported) + `subrun-checksum-stable.test.ts` / `subrun-approval-gate.test.ts` / `subrun-approval-fail-closed.test.ts` (gated on `agents.subRunAttestation` + the sub-run attestation seam in [`host-sample-test-seams.md`](./host-sample-test-seams.md) §"Open seams"; soft-skip until a host wires it).
 
-#### `core.dispatch` parallel fan-out and join (RFC 0118, `Active`)
+#### `core.dispatch` parallel fan-out and join (RFC 0118, `Accepted`)
 
 When a `next-worker` `OrchestratorDecision` carries `nextWorkerIds.length > 1`, the `core.dispatch` node's behavior is governed by `DispatchConfig.fanOutPolicy` ([`dispatch-config.schema.json`](../../schemas/dispatch-config.schema.json)). `'sequential'` (default) and `'reject'` are unchanged (RFC 0007). `'parallel'` (RFC 0118) closes the RFC 0007 §K3 deferral: it dispatches **all** `nextWorkerIds[i]` as child runs **concurrently** and joins on their terminals per `joinPolicy`. The parallel path REUSES the `core.subWorkflow` child-construction, lineage (`parentRunId`/`parentNodeId`), attestation (RFC 0063), and ancestry (RFC 0040) machinery unchanged — only the scheduling and the join/merge step are new.
 
@@ -173,7 +173,7 @@ A host that does not advertise `capabilities.dispatch.fanOutSupported: true` MUS
 
 **Compatibility.** Additive — `fanOutPolicy` gains an enum value (existing `'sequential'`/`'reject'` byte-identical, default unchanged); `joinPolicy` / `maxConcurrency` are new optional fields with documented defaults; `core.dispatch.fanOut` / `core.dispatch.join` are new event `$defs` emitted only on the parallel path; `capabilities.dispatch.{fanOutPolicies,joinModes,maxFanOut}` are new optional descriptors. No required field, error code, or HTTP status changes meaning; no existing v1 conformance pass is invalidated.
 
-#### `core.dispatch` per-item input — data-parallel fan-out (RFC 0126, `Active`)
+#### `core.dispatch` per-item input — data-parallel fan-out (RFC 0126, `Accepted`)
 
 RFC 0118 fan-out dispatches a **heterogeneous** worker set (distinct `nextWorkerIds[i]`); RFC 0022's `perWorkerInputMappings` is keyed by workflow id, so N children of _one_ workflow all receive the same input. To run one per-item workflow over each element of a runtime collection (the map-over-collection pattern — e.g. a supervisor resolving a segment to N `contactId`s and running `re-engage-contact` once per contact), a `next-worker` `OrchestratorDecision` MAY carry an OPTIONAL, index-aligned **`nextWorkerInputs`** array ([`orchestrator-decision.schema.json`](../../schemas/orchestrator-decision.schema.json)).
 
@@ -467,7 +467,7 @@ A NodeModule whose execution involves emitting a structured envelope via an LLM 
 
 **Engine semantics.** Before dispatching a node with `requiredModelCapabilities`, the engine MUST follow the four-step dispatch flow in `host-capabilities.md` §"Model-capability declarations." Failures terminate the run with `error.code = capability_not_provided` (existing error code; reused for model-capability gating per RFC 0031 §F).
 
-### `x-openwop-form` UX hints on `configSchema` properties (RFC 0066, `Draft`)
+### `x-openwop-form` UX hints on `configSchema` properties (RFC 0066, `Accepted`)
 
 A pack `configSchema` property MAY carry an `x-openwop-form` annotation hinting to **rendering consumers** (builder apps, low-code editors) that the field should bind to a specific picker UX — model picker, provider picker, credential picker, prompt picker — instead of the schema-default text/select rendering. Hosts MUST NOT read `x-openwop-form`; it has zero effect on host-side validation. The pack `configSchema` itself remains the authoritative validator for what the host accepts.
 

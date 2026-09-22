@@ -288,7 +288,7 @@ Companion to `secrets`. Advertises which AI providers the host's AI-proxy can ro
 
 **B — Capability non-inference (normative).** For a provider id present in `aiProviders.selfHosted[]`, a client MUST NOT infer model capabilities (e.g. `structured-output`, `discriminator-enum`, `function-calling`, `long-context`, `reasoning` per RFC 0031 §C, or input modalities per RFC 0091) from the provider id or from any known-vendor capability mapping. The **only** authoritative source of a self-hosted provider's capabilities is what the host actually advertises and gates on: `capabilities.modelCapabilities.advertised[]` (RFC 0031) and `aiProviders.input.modalities` (RFC 0091). A self-hosted endpoint whose capabilities the host does not advertise is treated as text-only; the host MUST refuse a request for an unadvertised capability or modality per the RFC 0031 model-capability gate (`capability_not_provided`), exactly as for any other provider. This prevents a client from assuming, e.g., that a `selfHosted` id named `ollama` supports vision merely because some public deployment of that engine does. How a host _derives_ a self-hosted endpoint's capabilities — a static declaration captured at configuration time, or a runtime probe — is host-internal and out of scope, exactly as RFC 0031 §C leaves the derivation of the model-capability mapping host-internal.
 
-#### `aiProviders.authModes` — BYOK auth-mode contract (RFC 0067, `Active`)
+#### `aiProviders.authModes` — BYOK auth-mode contract (RFC 0067, `Accepted`)
 
 `supported` and `byok` say _which_ providers the host routes to and _which_ permit BYOK, but not _how_ a client is expected to supply a provider's credential. As the catalog grows beyond API-key providers (OAuth-backed providers, local Ollama/vLLM endpoints, platform-managed providers) the supply mechanism diverges. The optional `authModes` map advertises it so a client can pre-flight the credential UX without trial-and-error.
 
@@ -501,7 +501,7 @@ RFC 0013 (`Accepted` 2026-05-18; the matching spec doc [`workflow-chain-packs.md
 
 ### `connections`
 
-RFC 0095 (`Draft`). When `packsSupported: true`, the host installs `kind: "connection"` registry packs — portable provider definitions ([`connection-packs.md`](./connection-packs.md)) — and MUST implement the [`connection-packs.md`](./connection-packs.md) §Manifest clause 6 resolution contract: an RFC 0045 connector's `auth.provider` (or an RFC 0047 `host.oauth` provider string) resolves against the installed connection pack whose `provider.id` matches, with installed-vs-built-in precedence per SemVer §11 and `connection_provider_unresolved` / `connection_provider_conflict` diagnostics.
+RFC 0095 (`Accepted`). When `packsSupported: true`, the host installs `kind: "connection"` registry packs — portable provider definitions ([`connection-packs.md`](./connection-packs.md)) — and MUST implement the [`connection-packs.md`](./connection-packs.md) §Manifest clause 6 resolution contract: an RFC 0045 connector's `auth.provider` (or an RFC 0047 `host.oauth` provider string) resolves against the installed connection pack whose `provider.id` matches, with installed-vs-built-in precedence per SemVer §11 and `connection_provider_unresolved` / `connection_provider_conflict` diagnostics.
 
 ```json
 "connections": { "packsSupported": true }
@@ -515,7 +515,7 @@ RFC 0095 (`Draft`). When `packsSupported: true`, the host installs `kind: "conne
 
 ### `selfHostedRunner`
 
-RFC 0122 (`Active`). When `supported: true`, the host routes a run's per-step model/tool dispatch to a user-controlled **runner** — a process the user runs on their own machine that dials OUT to the host (a long-lived SSE stream to receive dispatch frames + ordinary POST to return result frames) and holds the local credentials the host cannot reach (a subscription CLI login per RFC 0121, a private endpoint per RFC 0108). The host stays the sole orchestration/persistence/replay authority; the runner is a stateless dispatch executor. See [`self-hosted-runner.md`](./self-hosted-runner.md) for the channel, framing, and normative behavior.
+RFC 0122 (`Accepted`). When `supported: true`, the host routes a run's per-step model/tool dispatch to a user-controlled **runner** — a process the user runs on their own machine that dials OUT to the host (a long-lived SSE stream to receive dispatch frames + ordinary POST to return result frames) and holds the local credentials the host cannot reach (a subscription CLI login per RFC 0121, a private endpoint per RFC 0108). The host stays the sole orchestration/persistence/replay authority; the runner is a stateless dispatch executor. See [`self-hosted-runner.md`](./self-hosted-runner.md) for the channel, framing, and normative behavior.
 
 ```json
 "selfHostedRunner": { "supported": true, "dispatchKinds": ["model"] }
@@ -529,7 +529,7 @@ RFC 0122 (`Active`). When `supported: true`, the host routes a run's per-step mo
 
 ### `purposePropagation`
 
-RFC 0128 (`Active`). When `supported: true`, the host reads and **re-emits** `permittedPurposes`
+RFC 0128 (`Accepted`). When `supported: true`, the host reads and **re-emits** `permittedPurposes`
 labels — opaque purpose strings a sender attaches to subject data via the A2A
 `metadata.openwop.permittedPurposes` extension ([`a2a-integration.md`](./a2a-integration.md)
 §"Purpose-propagation labels") or the `TriggerEvent.permittedPurposes` field
@@ -604,7 +604,7 @@ when absent (hard-fail under `OPENWOP_REQUIRE_BEHAVIOR=true`).
 
 ### `anonymousActor`
 
-RFC 0132 (`Active`). When present, the host honors **anonymous-actor authorization** on a
+RFC 0132 (`Accepted`). When present, the host honors **anonymous-actor authorization** on a
 **public agent surface** — an operator-configured entry point exposed to callers who
 authenticated no identity (an embeddable chat widget, a marketing-site assistant, a logged-out
 visitor). The anonymous actor is a new `principal` kind (`run-snapshot.owner.principalKind:
@@ -775,7 +775,7 @@ Optional sub-block. Hosts that distill many short-lived `MemoryEntry` rows into 
 
 **SR-1 carry-forward (normative).** Hosts advertising `memory.compaction.supported: true` MUST route compacted entry content through the same BYOK redaction harness applied to a fresh `put`. Per RFC 0012 §D, the fact that source entries were SR-1-compliant at original `put` time is NOT evidence to skip redaction on derived content — summarization models can introduce secret-shaped substrings not present in any source. See `SECURITY/invariants.yaml` row `memory-compaction-sr-1-carry-forward`.
 
-#### `memory.distillation` (RFC 0062, `Active`)
+#### `memory.distillation` (RFC 0062, `Accepted`)
 
 **Why this exists.** A "dream" is a periodic background run that distills recent transactional memory into long-term artifacts under an explicit token budget, then refreshes a retrieval index the next session loads at startup. openwop already had the halves — `memory.compaction` (RFC 0012) defines host-managed distillation + the `memory.compacted` event, and `scheduling` (RFC 0052) defines scheduled run initiation — but nothing bound them, pinned a _token budget_, or defined the _index_ that closes the loop back to startup. Distillation composes them; it reuses the `memory.compacted` event (extended with an additive optional `distillation` sub-object) rather than minting a parallel `memory.distilled` event.
 
