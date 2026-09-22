@@ -7,11 +7,11 @@
     "api/.redocly.lint-ignore.yaml": "bf5a8350b88a72fa43f59605ed8d903ed24b6cfccda5e45509c9f6ed9ee4e712",
     "api/asyncapi.yaml": "d5ecb9ee6114582be3b1f662c84bfac9ae96dae7bacb853e461168f70a8e1c7d",
     "api/grpc/openwop.proto": "c3e72bb17cba514ee98feb6434e6c9b6ea6795bfd086489ec69fd882dd1ad977",
-    "api/openapi.yaml": "fb6be5cd9eaee7ac8d67516f7dbe43d6eb8bd178539449c6f018790123dbddb8",
+    "api/openapi.yaml": "537a4fa17bc68782792a6332b88ab04ffe6c249a6828abe4e8127168c30593e3",
     "api/redocly.yaml": "b0604c89b2ca6d5076ec25725c539dad44a741a811fe524439ee6daef8baa09f",
     "api/seams-v2.yaml": "3ce63e8b7bd3b93b7bae997821d4f7f591da89c1045e76c28e7c3bd81561cae9",
     "api/v2/asyncapi.yaml": "91a2b046c8cc3d24d4fca8e74da170f972e03115fa5a467f4f1a7db7113427a4",
-    "api/v2/openapi.yaml": "5ed27a76b34ed586b21a6f738665b5f7b85ac16e38ff22933545d00d48b68d87",
+    "api/v2/openapi.yaml": "aa477a2359506a872d7ce55c58eedee6ecd086c1493e2e504321aa705cbfc7ab",
     "api/v2/redocly.yaml": "1e66b60e6118ad11a823bb620678be464d99dfe50a40e3e6f93ec9429b88b34c",
     "schemas/README.md": "0c0b737ffcf8f30e7d2809cec8a498232de710f41443212922ad8337cdde0b51",
     "schemas/a2a-task-state.schema.json": "7988eedc6a704b3ce0194af4b0fceac475b139f0b8184ffe72226fdef440217a",
@@ -212,7 +212,7 @@
     "spec/v1/gaps.schema.json": "8fd83259f556553c9df0f53e7a82ca8c2a4771d471197f69b4e2ae0ceeacfd66",
     "spec/v1/migrations.json": "8839497d6a4830b53fa7867014a8336f0d725ef2346352e54fb580b7947897af",
     "spec/v1/migrations.schema.json": "886779aa6c22e646db097f5df210adb018a4dd14a7b815465a18c8a7056c8f72",
-    "spec/v1/operation-path-manifest.json": "968c2fceb27cf76acbb14f7d250798f913bbbd3e9789dd3fb2a32c1ef536e771",
+    "spec/v1/operation-path-manifest.json": "5f5f4e3842669371730ebbd1aace3fb794192615f0018dc144f484ba5db82ac3",
     "spec/v1/spec-gaps.json": "eb3bfcb9c7d05c9a6845d4a40ec9493cfaa5a671932daf1af561310136fdabe8",
     "spec/v2/README.md": "8dbfc17b10f373dba95bdd2e8fec0580f35b380a834d304be3e24e7498170185",
     "spec/v2/core/capabilities.md": "95a5395931b709e109994d251d62e40aa24d76fc51619e171964d4a5574cd29e",
@@ -283,5 +283,5 @@
     "spec/v2/release.json": "5b9a956506b011835f1bd2fec54064d9cc8657d8a45a371314850da377d69069",
     "spec/v2/retention-floors.json": "eaf3722d95c79947af1d4269ef85117e126518c588cfcf1a2b21b97269f51624"
   },
-  "corpusCommit": "473526acfc8db2f8ca9095dd3dc87d350e81156e"
+  "corpusCommit": "f8e22f1c0767b3db3f702f194c67c9bebda1b86d"
 }

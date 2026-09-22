@@ -444,14 +444,6 @@
       "class": "canonical"
     },
     {
-      "operationId": "rotateWebhookSecret",
-      "method": "POST",
-      "pathKey": "/v1/webhooks/{webhookId}/rotate-secret",
-      "resolvedPath": "/v1/webhooks/{webhookId}/rotate-secret",
-      "tag": "webhooks",
-      "class": "canonical"
-    },
-    {
       "operationId": "getWorkflow",
       "method": "GET",
       "pathKey": "/v1/workflows/{workflowId}",
@@ -461,10 +453,10 @@
     }
   ],
   "counts": {
-    "total": 57,
-    "canonical": 48,
+    "total": 56,
+    "canonical": 47,
     "hostExtension": 5,
     "testCatalog": 4
   },
-  "digest": "056436682c867c985d8b04c42df64d675718c46dab943a290bb275d2b07ea388"
+  "digest": "ef8c07388acc57ac48c30a7600d5197039cbf32cbf8117a286664dd2388b4a60"
 }
