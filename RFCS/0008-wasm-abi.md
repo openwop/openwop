@@ -12,6 +12,7 @@
 | **Compatibility** | `additive` |
 | **Supersedes** | — |
 | **Superseded by** | — |
+| **Amended by** | [RFC 0203](./0203-remote-runtime-mcp-registry-record.md) — by addition: the `remote` runtime may carry an inline MCP Registry record (`runtime.mcpServer`), and `nodePackRuntimes` gets its v2 home (`spec/v2/core/node-pack-runtimes.md`), which restates this RFC's `wasm` advertisement, ABI-rejection and memory-cap MUSTs unchanged. |
 
 ## Summary
 
