@@ -8,7 +8,7 @@
 
 ## Reading order
 
-1. `overview.md` — axioms, §0, claim vocabulary, `ext/` rule
+1. `overview.md` — axioms, §0, §0a, claim vocabulary, `ext/` rule
 2. `versioning.md` — major negotiation, `OpenWOP-Version`, the 18 axes, release identity
 3. `capabilities.md` — one well-known resource, record type, closed root, derived profiles
 4. `identity.md` — Subject, lanes, `SubjectLink`, id grammars, resume tokens
@@ -31,7 +31,20 @@
 
 ## §0 Closed-enum growth rule (RFC 0171 §A.5)
 
-A registry-backed enum (event types, error codes, envelope kinds, reason vocabularies, lanes) grows by adding a row to its registry and regenerating. Consumers MUST accept an unknown member of a registry-backed enum and MUST NOT act on it. Producers MUST NOT emit an unregistered member. Adding a member is additive in v2.x; removing or renaming one is a major.
+A registry-backed enum (event types, error codes, envelope kinds, reason vocabularies, lanes) grows by adding a row to its registry and regenerating. Consumers MUST accept an unknown member of a registry-backed enum and MUST NOT act on it. Producers MUST NOT emit an unregistered member. Adding a member is additive in v2.x; renaming one is a major, and removing one is a major except under §0a.
+
+## §0a Retiring a v2 surface (RFC 0197)
+
+A 2.x minor MUST NOT change the shape of an existing v2 surface; a new shape is a new surface added beside the old one. A 2.x minor MAY remove a surface only when `scripts/check-v2-retirement.mjs` proves all of the following; otherwise the removal waits for 3.0.
+
+1. Its replacement shipped in an earlier 2.x minor.
+2. A `v2-minor` row in `spec/v1/deprecations.json` named the removal minor at least two minors and 30 days earlier.
+3. No committed v2 host bundle and no published registry manifest carries it.
+4. It is an optional family, facet, enum member or envelope kind, so its absence is already a 2.0 state.
+5. Its family is `experimental` in `spec/v2/declaration.json`.
+6. No independent host is in the INTEROP-MATRIX v2 table.
+
+Readers MUST keep accepting a retired shape on replay, fork and poll; only emission narrows.
 
 ## v1 end-of-support (RFC 0174 §B.4)
 
