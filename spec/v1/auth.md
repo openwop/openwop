@@ -224,7 +224,7 @@ A request MAY carry a verified delegation context, projected as `delegation { ch
 ### §C — Sender constraint and token exchange
 
 - High-value machine credentials **SHOULD** be sender-constrained — mTLS or DPoP (or an equivalent verified key binding) — so a credential observed in transit cannot be replayed by the observer. A host advertises what it accepts in `senderConstraint[]`; a request whose scheme requires a constraint the host advertises but that arrives without it **MUST** be refused (`sender_constraint_missing`).
-- **Bearer fallback** (a scheme accepted without sender constraint) **MUST** be explicitly advertised (an empty or absent `senderConstraint[]` _is_ that advertisement) and policy-controlled, and **MUST NOT** inherit a sender-constrained assurance claim: audit facts and any assurance label **MUST** distinguish a bearer-verified identity from a key-bound one (invariant `sender-constraint-no-bearer-downgrade`, named by RFC 0154 §F — not yet registered).
+- **Bearer fallback** (a scheme accepted without sender constraint) **MUST** be explicitly advertised (an empty or absent `senderConstraint[]` _is_ that advertisement) and policy-controlled, and **MUST NOT** inherit a sender-constrained assurance claim: audit facts and any assurance label **MUST** distinguish a bearer-verified identity from a key-bound one (invariant `sender-constraint-no-bearer-downgrade`, RFC 0154 §F, registered in `SECURITY/invariants.yaml`).
 - **Token exchange / delegation tokens** MAY be used to mint downstream credentials; a downstream credential **MUST NOT** exceed the upstream tenant, audience, scopes, or lifetime.
 
 ### §D — Audit facts and telemetry

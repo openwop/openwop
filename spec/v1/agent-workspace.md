@@ -1,6 +1,6 @@
 # OpenWOP Spec v1 — Agent Workspace (`host.workspace`)
 
-> **Status: Draft · v1.x · RFC 0059.** Normative tenant- and workspace-scoped file service for persistent agent artifacts.
+> **Status: Draft · v1.x · RFC 0059 `Accepted`; spec status Draft pending the open workspace gaps r1–r6 in `gaps.json` (cross-host `path`/`etag` portability, the `WorkspaceAdapter` host-interface contract, per-file authorization, and a SECURITY invariant with behavior tests).** Normative tenant- and workspace-scoped file service for persistent agent artifacts.
 
 ## Why this exists
 

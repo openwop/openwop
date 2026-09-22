@@ -52,7 +52,7 @@ This document does **not** standardize Slack/Discord/email/SMS message formats. 
 
 ## §F — External-event ingestion (RFC 0099)
 
-> **Status: additive over §A–§E (2026-06-14, [RFC 0099](../../RFCS/0099-external-event-trigger-ingestion.md) `Active`).** Extends the bridge so the `webhook` / `email` / `form` sources can deliver an **externally-originated** event → start a run. Schedule + queue + in-app ingestion (§A–§E) is unchanged. Gated on `capabilities.triggerBridge.ingestion`; a host that omits it externally-ingests nothing (today's behavior).
+> **Status: additive over §A–§E (2026-06-14, [RFC 0099](../../RFCS/0099-external-event-trigger-ingestion.md) `Accepted`).** Extends the bridge so the `webhook` / `email` / `form` sources can deliver an **externally-originated** event → start a run. Schedule + queue + in-app ingestion (§A–§E) is unchanged. Gated on `capabilities.triggerBridge.ingestion`; a host that omits it externally-ingests nothing (today's behavior).
 
 ### §F.1 — The `TriggerEvent` envelope
 
@@ -77,7 +77,7 @@ The external-event ingestion path is a network ingress and a replay-injection ve
 
 ### §F.5 — Streaming & CDC sources (RFC 0127)
 
-> **Status: additive over §F (2026-07-06, [RFC 0127](../../RFCS/0127-streaming-and-cdc-trigger-sources.md) `Active`).** Two further externally-originated sources: **`stream`** (a message consumed from a streaming broker — Kafka / Kinesis / Pub-Sub) and **`change`** (a change-data-capture record from a warehouse/database changelog). Both are OPTIONAL: a host that consumes neither omits them from `sources[]` / `ingestion.externalSources[]` (the §D "any one durable source" floor is unchanged).
+> **Status: additive over §F (2026-07-06, [RFC 0127](../../RFCS/0127-streaming-and-cdc-trigger-sources.md) `Accepted`).** Two further externally-originated sources: **`stream`** (a message consumed from a streaming broker — Kafka / Kinesis / Pub-Sub) and **`change`** (a change-data-capture record from a warehouse/database changelog). Both are OPTIONAL: a host that consumes neither omits them from `sources[]` / `ingestion.externalSources[]` (the §D "any one durable source" floor is unchanged).
 
 Both sources reuse §F.1–§F.4 verbatim — the `TriggerEvent` envelope, the SSRF guard, the
 content-free `trigger.*` events, and the §C-1 ≥24h dedup floor; only the `source` vocabulary and
