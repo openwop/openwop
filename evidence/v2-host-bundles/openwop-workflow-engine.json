@@ -1,12 +1,12 @@
 {
   "bundleVersion": "3",
-  "generatedAt": "2026-09-19T20:37:24.112Z",
+  "generatedAt": "2026-09-22T12:42:43.325Z",
   "suite": {
     "name": "@openwop/openwop-conformance",
-    "version": "2.3.3",
+    "version": "2.35.1",
     "targetMajor": 2,
-    "specArtifactsVersion": "2.3.3",
-    "stampSha256": "9f6224ad9ab04be25d40ba336e3992ec1c65ed4675f1b6c10298573ca42177af"
+    "specArtifactsVersion": "2.35.1",
+    "stampSha256": "4b3e43f8c7b34b218c358dd8e8bbd8ca06b480346c58962abc297349937f5ae9"
   },
   "host": {
     "name": "openwop-workflow-engine",
@@ -14,13 +14,13 @@
     "vendor": "openwop-app",
     "build": {
       "kind": "commit",
-      "id": "3080f2f24a0f49e8b56df728ba2224fe054f98d4"
+      "id": "b5066568d8a97c3515bbf1f1521cd5c447b124f9"
     },
-    "signingKeyId": "openwop-app-bundle-1"
+    "signingKeyId": "openwop-app-bundle-2"
   },
   "discovery": {
-    "url": "https://app.openwop.dev/api/.well-known/openwop",
-    "sha256": "6455b2a59a2e808d00b24eddf3dd63acc1bff5114a65c65f3ccd56c3665b8c4e",
+    "url": "https://app.openwop.dev/.well-known/openwop",
+    "sha256": "e743a8cdc248075dde99b78b2a836456973f49a3c812a7a248018b34634e2492",
     "protocolVersions": [
       "1.1",
       "2.0"
@@ -37,10 +37,17 @@
       "eventLogSchemaVersion": 3,
       "signingKeys": [
         {
+          "keyId": "openwop-app-bundle-2",
+          "alg": "ed25519",
+          "publicKey": "WVhUJ8jHoQf9g9b8VPsfMS6kiOjUSbGdjbIAiemOVq4",
+          "use": "certification-bundle"
+        },
+        {
           "keyId": "openwop-app-bundle-1",
           "alg": "ed25519",
           "publicKey": "LScAhSRhmis61ScTN4wgwn8Ul19u01V148PkP7ok5ec",
-          "use": "certification-bundle"
+          "use": "certification-bundle",
+          "retiredAt": "2026-09-21T14:26:59Z"
         },
         {
           "keyId": "openwop-app-self-2026-09-04",
@@ -225,7 +232,7 @@
             {
               "name": "host.kanban",
               "supported": true,
-              "note": "Bridges vendor.myndhyve.kanban to the demo kanban store (kanbanService.ts) — boards/cards shared with the builder UI. boardReview/timelinePlan/resourceMonitor are genuinely computed; automation rules persist in-process.",
+              "note": "Bridges vendor.myndhyve.kanban to the durable core work-item store (kanbanService.ts) — boards/cards are reusable across canvases. boardReview/timelinePlan/resourceMonitor are genuinely computed; automation rejects until a durable workflow-binding implementation is configured.",
               "implementation": "workflow-engine"
             },
             {
@@ -415,7 +422,37 @@
         "authModes": [
           "api-key"
         ],
+        "input": {
+          "modalities": [
+            "text",
+            "image",
+            "document",
+            "audio"
+          ]
+        },
         "selfHosted": false
+      },
+      "memory": {
+        "status": "experimental",
+        "since": "2.0",
+        "until": "2.1",
+        "witness": "witnessable-gated",
+        "attribution": {
+          "emitsWriteEvents": true
+        },
+        "injectionBudget": {
+          "tokenCounter": "chars"
+        }
+      },
+      "envelopes": {
+        "status": "experimental",
+        "since": "2.0",
+        "until": "2.1",
+        "witness": "claims-check",
+        "reasoning": {
+          "promptDirective": "advisory"
+        },
+        "tierOneSubsetCompliance": "warn"
       },
       "idempotency": {
         "status": "experimental",
@@ -483,14 +520,18 @@
         "since": "2.0",
         "until": "2.1",
         "witness": "witnessable-gated",
-        "deferredParameters": {},
-        "subChains": {}
+        "subChains": {
+          "maxDepth": 8
+        }
       },
       "packs": {
         "status": "experimental",
         "since": "2.0",
         "until": "2.1",
         "witness": "witnessable-gated"
+      },
+      "conformance": {
+        "certificationBundleUrl": "https://app.openwop.dev/host/openwop-app/conformance/certification-bundle/major-2"
       }
     }
   },
@@ -504,16 +545,22 @@
     {
       "id": "openwop-core-standard",
       "evidenceTier": "self",
-      "witnessCount": 12,
-      "certified": false
+      "witnessCount": 13,
+      "certified": true
+    },
+    {
+      "id": "openwop-conformance-seams-v2",
+      "evidenceTier": "self",
+      "witnessCount": 2,
+      "certified": true
     }
   ],
   "results": {
     "totals": {
-      "executedPass": 154,
-      "executedFail": 2,
-      "skipped": 0,
-      "inapplicable": 83,
+      "executedPass": 167,
+      "executedFail": 0,
+      "skipped": 19,
+      "inapplicable": 75,
       "blocked": 0
     },
     "requirements": [
@@ -557,6 +604,13 @@
         "detail": "every test returned early through behaviorGate with zero assertions: profile not advertised in the captured discovery set"
       },
       {
+        "id": "openwop.scenario.v2-bound-id-kinds",
+        "scenario": "v2-bound-id-kinds.test.ts",
+        "result": "executed-pass",
+        "assertions": 9,
+        "detail": "partial-witness: inapplicable: [inapplicable] the noop fixture records no effects — no effectId on the wire to read (a host with an effect-producing fixture witnesses this leg); [inapplicable] host does not advertise the webhooks.deadLetter facet — it serves no dead-letter read, and RFC 0188 §A.5 makes that a 404 rather than an obligation"
+      },
+      {
         "id": "openwop.scenario.v2-bound-id-path-projection",
         "scenario": "v2-bound-id-path-projection.test.ts",
         "result": "executed-pass",
@@ -569,6 +623,13 @@
         "assertions": 10
       },
       {
+        "id": "openwop.scenario.v2-callback-url-guarded",
+        "scenario": "v2-callback-url-guarded.test.ts",
+        "result": "inapplicable",
+        "assertions": 0,
+        "detail": "every test returned early through behaviorGate with zero assertions: profile not advertised in the captured discovery set"
+      },
+      {
         "id": "openwop.floor.v2-capabilities-root-closed",
         "scenario": "v2-capabilities-root-closed.test.ts",
         "result": "executed-pass",
@@ -578,7 +639,7 @@
         "id": "openwop.scenario.v2-capability-record-shape",
         "scenario": "v2-capability-record-shape.test.ts",
         "result": "executed-pass",
-        "assertions": 103
+        "assertions": 117
       },
       {
         "id": "openwop.scenario.v2-chain-pin-exact",
@@ -597,9 +658,9 @@
       {
         "id": "openwop.scenario.v2-compensation-read-projection",
         "scenario": "v2-compensation-read-projection.test.ts",
-        "result": "inapplicable",
+        "result": "skipped",
         "assertions": 0,
-        "detail": "every test returned early through behaviorGate with zero assertions: profile not advertised in the captured discovery set"
+        "detail": "every test returned early through behaviorGate with zero assertions: operator opted the profile or family out (OPENWOP_OPTED_OUT_PROFILES)"
       },
       {
         "id": "openwop.scenario.v2-configurable-closed",
@@ -618,6 +679,13 @@
         "scenario": "v2-dual-stack-negotiation.test.ts",
         "result": "executed-pass",
         "assertions": 15
+      },
+      {
+        "id": "openwop.scenario.v2-durability-recovery",
+        "scenario": "v2-durability-recovery.test.ts",
+        "result": "executed-pass",
+        "assertions": 3,
+        "detail": "partial-witness: inapplicable: no RFC 0158 durability seam at /host/durability/kill (HTTP 404) — §E: the seam advertises nothing and a host that never runs the durability exercises exposes no such route, so this host claims no durable-execution rung"
       },
       {
         "id": "openwop.floor.v2-effect-identity-business-key",
@@ -687,9 +755,9 @@
       {
         "id": "openwop.scenario.v2-form-when-reuses-edge-conditions",
         "scenario": "v2-form-when-reuses-edge-conditions.test.ts",
-        "result": "inapplicable",
+        "result": "skipped",
         "assertions": 0,
-        "detail": "every test returned early through behaviorGate with zero assertions: profile not advertised in the captured discovery set"
+        "detail": "every test returned early through behaviorGate with zero assertions: operator opted the profile or family out (OPENWOP_OPTED_OUT_PROFILES)"
       },
       {
         "id": "openwop.scenario.v2-header-scheme",
@@ -701,7 +769,7 @@
         "id": "openwop.scenario.v2-id-grammar",
         "scenario": "v2-id-grammar.test.ts",
         "result": "executed-pass",
-        "assertions": 9
+        "assertions": 11
       },
       {
         "id": "openwop.floor.v2-idempotency-key-grammar",
@@ -798,9 +866,9 @@
       {
         "id": "openwop.scenario.v2-pack-isolation",
         "scenario": "v2-pack-isolation.test.ts",
-        "result": "inapplicable",
+        "result": "skipped",
         "assertions": 0,
-        "detail": "every test returned early through behaviorGate with zero assertions: profile not advertised in the captured discovery set"
+        "detail": "every test returned early through behaviorGate with zero assertions: operator opted the profile or family out (OPENWOP_OPTED_OUT_PROFILES)"
       },
       {
         "id": "openwop.scenario.v2-payload-registry-closed",
@@ -855,9 +923,9 @@
       {
         "id": "openwop.scenario.v2-provider-conflict",
         "scenario": "v2-provider-conflict.test.ts",
-        "result": "inapplicable",
+        "result": "skipped",
         "assertions": 0,
-        "detail": "every test returned early through behaviorGate with zero assertions: profile not advertised in the captured discovery set"
+        "detail": "every test returned early through behaviorGate with zero assertions: operator opted the profile or family out (OPENWOP_OPTED_OUT_PROFILES)"
       },
       {
         "id": "openwop.scenario.v2-refresh-sla",
@@ -870,7 +938,7 @@
         "id": "openwop.scenario.v2-relaxation-recorded",
         "scenario": "v2-relaxation-recorded.test.ts",
         "result": "executed-pass",
-        "assertions": 16
+        "assertions": 21
       },
       {
         "id": "openwop.scenario.v2-revocation-honored",
@@ -926,7 +994,7 @@
         "id": "openwop.scenario.v2-run-list",
         "scenario": "v2-run-list.test.ts",
         "result": "executed-pass",
-        "assertions": 15
+        "assertions": 51
       },
       {
         "id": "openwop.floor.v2-run-options-limits",
@@ -972,6 +1040,13 @@
         "detail": "every test returned early through behaviorGate with zero assertions: profile not advertised in the captured discovery set"
       },
       {
+        "id": "openwop.scenario.v2-terminal-event-once",
+        "scenario": "v2-terminal-event-once.test.ts",
+        "result": "executed-pass",
+        "assertions": 4,
+        "detail": "partial-witness: inapplicable: no RFC 0158 durability test hook at /host/durability/kill (HTTP 404) — a black-box suite cannot make a host redeliver accepted work, so this row needs the hook"
+      },
+      {
         "id": "openwop.scenario.v2-unmapped-type-refused",
         "scenario": "v2-unmapped-type-refused.test.ts",
         "result": "inapplicable",
@@ -1002,15 +1077,21 @@
         "id": "openwop.scenario.v2-webhook-delivery-shape",
         "scenario": "v2-webhook-delivery-shape.test.ts",
         "result": "executed-pass",
-        "assertions": 4,
-        "detail": "partial-witness: blocked: [blocked] no run.started delivery for this run arrived inside 15s — durability is v2-webhook-durable-delivery's claim, not this file's; [blocked] no run.started delivery for this run arrived inside 15s; [inapplicable] seams profile not advertised (conformance.seamsProfile !== openwop-conformance-seams-v2) — an era-2 log can only be seeded through /conformance/seams/sample/event-log/seed"
+        "assertions": 11,
+        "detail": "partial-witness: inapplicable: seams profile not advertised (conformance.seamsProfile !== openwop-conformance-seams-v2) — an era-2 log can only be seeded through /conformance/seams/sample/event-log/seed"
       },
       {
         "id": "openwop.floor.v2-webhook-durable-delivery",
         "scenario": "v2-webhook-durable-delivery.test.ts",
-        "result": "executed-fail",
-        "assertions": 9,
-        "detail": "one or more assertions in the file failed"
+        "result": "executed-pass",
+        "assertions": 10,
+        "detail": "partial-witness: inapplicable: [inapplicable] no advertised retryPolicy.backoff other than none — the spacing leg is not asserted; [inapplicable] host does not advertise the webhooks.deadLetter facet — RFC 0188 §A.5 makes the read a 404 rather than an obligation, so the sink half of §Durability is unwitnessable here (the retry half above passed); [inapplicable] host does not advertise the webhooks.deadLetter facet — RFC 0188 §A.5 makes the read a 404 rather than an obligation"
+      },
+      {
+        "id": "openwop.scenario.v2-webhook-egress-refusal",
+        "scenario": "v2-webhook-egress-refusal.test.ts",
+        "result": "executed-pass",
+        "assertions": 2
       },
       {
         "id": "openwop.scenario.v2-well-known-one-resource",
@@ -1113,7 +1194,7 @@
         "scenario": "memory-attribution-replay-stable.test.ts",
         "result": "inapplicable",
         "assertions": 0,
-        "detail": "profile not advertised in the captured discovery set"
+        "detail": "memory.attribution.emitsWriteEvents not advertised — at major 2 the gate is recorded under openwop.family.memory, so an unadvertised family and an unreadable one are distinguishable in the bundle"
       },
       {
         "id": "openwop.it.v2-negotiation-authenticated.an-unauthenticated-a2a-exchange-cannot-lower-the-version-below-preferredversion",
@@ -1146,37 +1227,71 @@
       {
         "id": "openwop.it.v2-pack-isolation.node-pack-sandbox-fs-gated-a-host-filesystem-read-is-refused",
         "scenario": "v2-pack-isolation.test.ts",
-        "result": "inapplicable",
+        "result": "skipped",
         "assertions": 0,
-        "detail": "profile not advertised in the captured discovery set"
+        "detail": "operator declared an honest opt-out via OPENWOP_OPTED_OUT_PROFILES: family.sandbox"
       },
       {
         "id": "openwop.it.v2-pack-isolation.node-pack-sandbox-fs-gated-a-host-filesystem-write-is-refused",
         "scenario": "v2-pack-isolation.test.ts",
-        "result": "inapplicable",
+        "result": "skipped",
         "assertions": 0,
-        "detail": "profile not advertised in the captured discovery set"
+        "detail": "operator declared an honest opt-out via OPENWOP_OPTED_OUT_PROFILES: family.sandbox"
       },
       {
         "id": "openwop.it.v2-pack-isolation.node-pack-sandbox-network-gated-ungated-network-egress-is-refused",
         "scenario": "v2-pack-isolation.test.ts",
-        "result": "inapplicable",
+        "result": "skipped",
         "assertions": 0,
-        "detail": "profile not advertised in the captured discovery set"
+        "detail": "operator declared an honest opt-out via OPENWOP_OPTED_OUT_PROFILES: family.sandbox"
       },
       {
         "id": "openwop.it.v2-pack-isolation.node-pack-sandbox-no-env-the-host-environment-does-not-leak",
         "scenario": "v2-pack-isolation.test.ts",
-        "result": "inapplicable",
+        "result": "skipped",
         "assertions": 0,
-        "detail": "profile not advertised in the captured discovery set"
+        "detail": "operator declared an honest opt-out via OPENWOP_OPTED_OUT_PROFILES: family.sandbox"
       },
       {
         "id": "openwop.it.v2-pack-isolation.node-pack-sandbox-no-process-host-process-access-is-refused",
         "scenario": "v2-pack-isolation.test.ts",
+        "result": "skipped",
+        "assertions": 0,
+        "detail": "operator declared an honest opt-out via OPENWOP_OPTED_OUT_PROFILES: family.sandbox"
+      },
+      {
+        "id": "openwop.requirement.0158.bound-is-derived",
+        "scenario": "v2-durability-recovery.test.ts",
         "result": "inapplicable",
         "assertions": 0,
-        "detail": "profile not advertised in the captured discovery set"
+        "detail": "no RFC 0158 durability seam at /host/durability/kill (HTTP 404) — §E: the seam advertises nothing and a host that never runs the durability exercises exposes no such route, so this host claims no durable-execution rung"
+      },
+      {
+        "id": "openwop.requirement.0158.duplicate-delivery",
+        "scenario": "v2-durability-recovery.test.ts",
+        "result": "inapplicable",
+        "assertions": 0,
+        "detail": "no RFC 0158 durability seam at /host/durability/kill (HTTP 404) — §E: the seam advertises nothing and a host that never runs the durability exercises exposes no such route, so this host claims no durable-execution rung"
+      },
+      {
+        "id": "openwop.requirement.0158.kill-after-accept",
+        "scenario": "v2-durability-recovery.test.ts",
+        "result": "inapplicable",
+        "assertions": 0,
+        "detail": "no RFC 0158 durability seam at /host/durability/kill (HTTP 404) — §E: the seam advertises nothing and a host that never runs the durability exercises exposes no such route, so this host claims no durable-execution rung"
+      },
+      {
+        "id": "openwop.requirement.0158.kill-during-execution",
+        "scenario": "v2-durability-recovery.test.ts",
+        "result": "inapplicable",
+        "assertions": 0,
+        "detail": "no RFC 0158 durability seam at /host/durability/kill (HTTP 404) — §E: the seam advertises nothing and a host that never runs the durability exercises exposes no such route, so this host claims no durable-execution rung"
+      },
+      {
+        "id": "openwop.requirement.0158.poison-exhaustion",
+        "scenario": "v2-durability-recovery.test.ts",
+        "result": "executed-pass",
+        "assertions": 3
       },
       {
         "id": "openwop.requirement.0168.advertised-fixtures-exist",
@@ -1249,19 +1364,19 @@
         "id": "openwop.requirement.0169.capability-record-shape.required-fields",
         "scenario": "v2-capability-record-shape.test.ts",
         "result": "executed-pass",
-        "assertions": 60
+        "assertions": 68
       },
       {
         "id": "openwop.requirement.0169.capability-record-shape.until-iff-not-stable",
         "scenario": "v2-capability-record-shape.test.ts",
         "result": "executed-pass",
-        "assertions": 29
+        "assertions": 33
       },
       {
         "id": "openwop.requirement.0169.capability-record-shape.until-not-past",
         "scenario": "v2-capability-record-shape.test.ts",
         "result": "executed-pass",
-        "assertions": 14
+        "assertions": 16
       },
       {
         "id": "openwop.requirement.0169.profiles-derived-only.derivable",
@@ -1305,7 +1420,7 @@
         "id": "openwop.requirement.0170.id-grammar.events",
         "scenario": "v2-id-grammar.test.ts",
         "result": "executed-pass",
-        "assertions": 2
+        "assertions": 4
       },
       {
         "id": "openwop.requirement.0170.id-grammar.snapshot",
@@ -1569,6 +1684,12 @@
         "id": "openwop.requirement.0171.webhook-delivery-shape",
         "scenario": "v2-webhook-delivery-shape.test.ts",
         "result": "executed-pass",
+        "assertions": 7
+      },
+      {
+        "id": "openwop.requirement.0171.webhook-egress-refused",
+        "scenario": "v2-webhook-egress-refusal.test.ts",
+        "result": "executed-pass",
         "assertions": 2
       },
       {
@@ -1653,22 +1774,23 @@
       {
         "id": "openwop.requirement.0173.compensation-read-projection",
         "scenario": "v2-compensation-read-projection.test.ts",
-        "result": "inapplicable",
+        "result": "skipped",
         "assertions": 0,
-        "detail": "profile not advertised in the captured discovery set"
+        "detail": "operator declared an honest opt-out via OPENWOP_OPTED_OUT_PROFILES: family.compensation"
       },
       {
         "id": "openwop.requirement.0173.compensation-read-projection.not-found",
         "scenario": "v2-compensation-read-projection.test.ts",
-        "result": "inapplicable",
+        "result": "skipped",
         "assertions": 0,
-        "detail": "profile not advertised in the captured discovery set"
+        "detail": "operator declared an honest opt-out via OPENWOP_OPTED_OUT_PROFILES: family.compensation"
       },
       {
         "id": "openwop.requirement.0173.effect-identity-business-key",
         "scenario": "v2-effect-identity-business-key.test.ts",
         "result": "executed-pass",
-        "assertions": 4
+        "assertions": 4,
+        "detail": "partial-witness: inapplicable: the noop fixture issued no external effect — the per-row keying leg had no rows (an effect-issuing fixture would exercise it)"
       },
       {
         "id": "openwop.requirement.0173.effect-identity-business-key.retry",
@@ -1699,36 +1821,43 @@
       {
         "id": "openwop.requirement.0173.pack-isolation",
         "scenario": "v2-pack-isolation.test.ts",
-        "result": "inapplicable",
+        "result": "skipped",
         "assertions": 0,
-        "detail": "profile not advertised in the captured discovery set"
+        "detail": "operator declared an honest opt-out via OPENWOP_OPTED_OUT_PROFILES: family.sandbox"
       },
       {
         "id": "openwop.requirement.0173.pack-isolation.isolated-context",
         "scenario": "v2-pack-isolation.test.ts",
-        "result": "inapplicable",
+        "result": "skipped",
         "assertions": 0,
-        "detail": "profile not advertised in the captured discovery set"
+        "detail": "operator declared an honest opt-out via OPENWOP_OPTED_OUT_PROFILES: family.sandbox"
       },
       {
         "id": "openwop.requirement.0173.pack-isolation.memory-cap",
         "scenario": "v2-pack-isolation.test.ts",
-        "result": "inapplicable",
+        "result": "skipped",
         "assertions": 0,
-        "detail": "profile not advertised in the captured discovery set"
+        "detail": "operator declared an honest opt-out via OPENWOP_OPTED_OUT_PROFILES: family.sandbox"
+      },
+      {
+        "id": "openwop.requirement.0173.pack-isolation.seam",
+        "scenario": "v2-pack-isolation.test.ts",
+        "result": "skipped",
+        "assertions": 0,
+        "detail": "operator declared an honest opt-out via OPENWOP_OPTED_OUT_PROFILES: family.sandbox"
       },
       {
         "id": "openwop.requirement.0173.pack-isolation.timeout",
         "scenario": "v2-pack-isolation.test.ts",
-        "result": "inapplicable",
+        "result": "skipped",
         "assertions": 0,
-        "detail": "profile not advertised in the captured discovery set"
+        "detail": "operator declared an honest opt-out via OPENWOP_OPTED_OUT_PROFILES: family.sandbox"
       },
       {
         "id": "openwop.requirement.0173.relaxation-recorded",
         "scenario": "v2-relaxation-recorded.test.ts",
         "result": "executed-pass",
-        "assertions": 7
+        "assertions": 8
       },
       {
         "id": "openwop.requirement.0173.relaxation-recorded.durability-closed",
@@ -1737,17 +1866,24 @@
         "assertions": 9
       },
       {
+        "id": "openwop.requirement.0173.relaxation-recorded.owned-by-registry",
+        "scenario": "v2-relaxation-recorded.test.ts",
+        "result": "executed-pass",
+        "assertions": 4
+      },
+      {
         "id": "openwop.requirement.0173.webhook-durable-delivery",
         "scenario": "v2-webhook-durable-delivery.test.ts",
-        "result": "executed-fail",
-        "assertions": 5,
-        "detail": "the test executed and failed: [unknown@unknown] webhooks.md §Durability: a 500 from the subscriber MUST be retried — 1 failed attempt(s) were answered and the host made 1 attempt(s) in total; one attempt is best-effort delivery, which is not a conforming mode (RFC 0173 §B): expected 1 to be greater than 1"
+        "result": "executed-pass",
+        "assertions": 6,
+        "detail": "partial-witness: inapplicable: no advertised retryPolicy.backoff other than none — the spacing leg is not asserted"
       },
       {
         "id": "openwop.requirement.0173.webhook-durable-delivery.dead-letter",
         "scenario": "v2-webhook-durable-delivery.test.ts",
         "result": "executed-pass",
-        "assertions": 4
+        "assertions": 4,
+        "detail": "partial-witness: inapplicable: host does not advertise the webhooks.deadLetter facet — RFC 0188 §A.5 makes the read a 404 rather than an obligation, so the sink half of §Durability is unwitnessable here (the retry half above passed)"
       },
       {
         "id": "openwop.requirement.0175.legacy-profiles-absent",
@@ -1931,6 +2067,13 @@
         "detail": "host does not advertise conformance.seamsProfile: openwop-conformance-seams-v2 — the packs-test publish seam is the only register path the suite can drive (RFC 0168 §C.1)"
       },
       {
+        "id": "openwop.requirement.0177.chain-pin-exact.external-range-refused",
+        "scenario": "v2-chain-pin-exact.test.ts",
+        "result": "inapplicable",
+        "assertions": 0,
+        "detail": "host does not advertise conformance.seamsProfile: openwop-conformance-seams-v2 — the packs-test publish seam is the only register path the suite can drive (RFC 0168 §C.1)"
+      },
+      {
         "id": "openwop.requirement.0177.chain-pin-exact.range-refused",
         "scenario": "v2-chain-pin-exact.test.ts",
         "result": "inapplicable",
@@ -1940,9 +2083,9 @@
       {
         "id": "openwop.requirement.0177.form-when-reuses-edge-conditions",
         "scenario": "v2-form-when-reuses-edge-conditions.test.ts",
-        "result": "inapplicable",
+        "result": "skipped",
         "assertions": 0,
-        "detail": "profile not advertised in the captured discovery set"
+        "detail": "operator declared an honest opt-out via OPENWOP_OPTED_OUT_PROFILES: family.forms"
       },
       {
         "id": "openwop.requirement.0177.manifest-ceiling-refused.unbounded",
@@ -1996,16 +2139,16 @@
       {
         "id": "openwop.requirement.0177.provider-conflict.fail-closed",
         "scenario": "v2-provider-conflict.test.ts",
-        "result": "inapplicable",
+        "result": "skipped",
         "assertions": 0,
-        "detail": "profile not advertised in the captured discovery set"
+        "detail": "operator declared an honest opt-out via OPENWOP_OPTED_OUT_PROFILES: connections.packsSupported"
       },
       {
         "id": "openwop.requirement.0177.provider-conflict.qualified-form",
         "scenario": "v2-provider-conflict.test.ts",
-        "result": "inapplicable",
+        "result": "skipped",
         "assertions": 0,
-        "detail": "profile not advertised in the captured discovery set"
+        "detail": "operator declared an honest opt-out via OPENWOP_OPTED_OUT_PROFILES: connections.packsSupported"
       },
       {
         "id": "openwop.requirement.0182.run-list.cursor-refused",
@@ -2023,7 +2166,7 @@
         "id": "openwop.requirement.0182.run-list.tenant-scoped",
         "scenario": "v2-run-list.test.ts",
         "result": "executed-pass",
-        "assertions": 11
+        "assertions": 47
       },
       {
         "id": "openwop.requirement.0184.bound-id-path-projection",
@@ -2042,11 +2185,63 @@
         "scenario": "v2-payload-seats-0186.test.ts",
         "result": "executed-pass",
         "assertions": 7
+      },
+      {
+        "id": "openwop.requirement.0187.bound-id-kinds.per-kind",
+        "scenario": "v2-bound-id-kinds.test.ts",
+        "result": "executed-pass",
+        "assertions": 1
+      },
+      {
+        "id": "openwop.requirement.0187.bound-id-kinds.webhook",
+        "scenario": "v2-bound-id-kinds.test.ts",
+        "result": "executed-pass",
+        "assertions": 5
+      },
+      {
+        "id": "openwop.requirement.0187.bound-id-kinds.webhook-emitted",
+        "scenario": "v2-bound-id-kinds.test.ts",
+        "result": "executed-pass",
+        "assertions": 2
+      },
+      {
+        "id": "openwop.requirement.0188.dead-letter-content-free",
+        "scenario": "v2-webhook-durable-delivery.test.ts",
+        "result": "inapplicable",
+        "assertions": 0,
+        "detail": "host does not advertise the webhooks.deadLetter facet — RFC 0188 §A.5 makes the read a 404 rather than an obligation"
+      },
+      {
+        "id": "openwop.requirement.0188.dead-letter-read",
+        "scenario": "v2-webhook-durable-delivery.test.ts",
+        "result": "inapplicable",
+        "assertions": 0,
+        "detail": "host does not advertise the webhooks.deadLetter facet — RFC 0188 §A.5 makes the read a 404 rather than an obligation"
+      },
+      {
+        "id": "openwop.requirement.0194.terminal-once",
+        "scenario": "v2-terminal-event-once.test.ts",
+        "result": "executed-pass",
+        "assertions": 4
+      },
+      {
+        "id": "openwop.requirement.0194.terminal-once.duplicate-delivery",
+        "scenario": "v2-terminal-event-once.test.ts",
+        "result": "inapplicable",
+        "assertions": 0,
+        "detail": "no RFC 0158 durability test hook at /host/durability/kill (HTTP 404) — a black-box suite cannot make a host redeliver accepted work, so this row needs the hook"
+      },
+      {
+        "id": "openwop.requirement.0196.callback-url-guarded",
+        "scenario": "v2-callback-url-guarded.test.ts",
+        "result": "inapplicable",
+        "assertions": 0,
+        "detail": "the host does not advertise interrupt.callbackDelivery — it delivers nothing to callbackUrl, so there is no egress to guard (RFC 0196 §A.2: it SHOULD refuse the member)"
       }
     ]
   },
-  "witnessSha256": "668410d3c99f605d3a38b156c0b5c201a7b41aef536e21a0d3307a95435fa531",
-  "assertionCount": 1536,
+  "witnessSha256": "de572976d878045f73491acc284fd586ef4b5a7ea020066662838938f7033b12",
+  "assertionCount": 1699,
   "detail": {
     "nonPass": [
       {
@@ -2065,14 +2260,19 @@
         "reason": "every test returned early through behaviorGate with zero assertions: profile not advertised in the captured discovery set"
       },
       {
+        "id": "openwop.scenario.v2-callback-url-guarded",
+        "result": "inapplicable",
+        "reason": "every test returned early through behaviorGate with zero assertions: profile not advertised in the captured discovery set"
+      },
+      {
         "id": "openwop.scenario.v2-chain-pin-exact",
         "result": "inapplicable",
         "reason": "every test returned early through behaviorGate with zero assertions: profile not advertised in the captured discovery set"
       },
       {
         "id": "openwop.scenario.v2-compensation-read-projection",
-        "result": "inapplicable",
-        "reason": "every test returned early through behaviorGate with zero assertions: profile not advertised in the captured discovery set"
+        "result": "skipped",
+        "reason": "every test returned early through behaviorGate with zero assertions: operator opted the profile or family out (OPENWOP_OPTED_OUT_PROFILES)"
       },
       {
         "id": "openwop.floor.v2-effect-seam-no-refire",
@@ -2091,8 +2291,8 @@
       },
       {
         "id": "openwop.scenario.v2-form-when-reuses-edge-conditions",
-        "result": "inapplicable",
-        "reason": "every test returned early through behaviorGate with zero assertions: profile not advertised in the captured discovery set"
+        "result": "skipped",
+        "reason": "every test returned early through behaviorGate with zero assertions: operator opted the profile or family out (OPENWOP_OPTED_OUT_PROFILES)"
       },
       {
         "id": "openwop.scenario.v2-manifest-ceiling-refused",
@@ -2126,8 +2326,8 @@
       },
       {
         "id": "openwop.scenario.v2-pack-isolation",
-        "result": "inapplicable",
-        "reason": "every test returned early through behaviorGate with zero assertions: profile not advertised in the captured discovery set"
+        "result": "skipped",
+        "reason": "every test returned early through behaviorGate with zero assertions: operator opted the profile or family out (OPENWOP_OPTED_OUT_PROFILES)"
       },
       {
         "id": "openwop.scenario.v2-peer-dependency-declared",
@@ -2141,8 +2341,8 @@
       },
       {
         "id": "openwop.scenario.v2-provider-conflict",
-        "result": "inapplicable",
-        "reason": "every test returned early through behaviorGate with zero assertions: profile not advertised in the captured discovery set"
+        "result": "skipped",
+        "reason": "every test returned early through behaviorGate with zero assertions: operator opted the profile or family out (OPENWOP_OPTED_OUT_PROFILES)"
       },
       {
         "id": "openwop.scenario.v2-refresh-sla",
@@ -2175,14 +2375,9 @@
         "reason": "every test returned early through behaviorGate with zero assertions: profile not advertised in the captured discovery set"
       },
       {
-        "id": "openwop.floor.v2-webhook-durable-delivery",
-        "result": "executed-fail",
-        "reason": "one or more assertions in the file failed"
-      },
-      {
         "id": "openwop.it.memory-attribution-replay-stable.a-replay-mode-fork-introduces-no-memory-written-with-a-new-memoryid",
         "result": "inapplicable",
-        "reason": "profile not advertised in the captured discovery set"
+        "reason": "memory.attribution.emitsWriteEvents not advertised — at major 2 the gate is recorded under openwop.family.memory, so an unadvertised family and an unreadable one are distinguishable in the bundle"
       },
       {
         "id": "openwop.it.v2-negotiation-authenticated.an-unauthenticated-a2a-exchange-cannot-lower-the-version-below-preferredversion",
@@ -2206,28 +2401,48 @@
       },
       {
         "id": "openwop.it.v2-pack-isolation.node-pack-sandbox-fs-gated-a-host-filesystem-read-is-refused",
-        "result": "inapplicable",
-        "reason": "profile not advertised in the captured discovery set"
+        "result": "skipped",
+        "reason": "operator declared an honest opt-out via OPENWOP_OPTED_OUT_PROFILES: family.sandbox"
       },
       {
         "id": "openwop.it.v2-pack-isolation.node-pack-sandbox-fs-gated-a-host-filesystem-write-is-refused",
-        "result": "inapplicable",
-        "reason": "profile not advertised in the captured discovery set"
+        "result": "skipped",
+        "reason": "operator declared an honest opt-out via OPENWOP_OPTED_OUT_PROFILES: family.sandbox"
       },
       {
         "id": "openwop.it.v2-pack-isolation.node-pack-sandbox-network-gated-ungated-network-egress-is-refused",
-        "result": "inapplicable",
-        "reason": "profile not advertised in the captured discovery set"
+        "result": "skipped",
+        "reason": "operator declared an honest opt-out via OPENWOP_OPTED_OUT_PROFILES: family.sandbox"
       },
       {
         "id": "openwop.it.v2-pack-isolation.node-pack-sandbox-no-env-the-host-environment-does-not-leak",
-        "result": "inapplicable",
-        "reason": "profile not advertised in the captured discovery set"
+        "result": "skipped",
+        "reason": "operator declared an honest opt-out via OPENWOP_OPTED_OUT_PROFILES: family.sandbox"
       },
       {
         "id": "openwop.it.v2-pack-isolation.node-pack-sandbox-no-process-host-process-access-is-refused",
+        "result": "skipped",
+        "reason": "operator declared an honest opt-out via OPENWOP_OPTED_OUT_PROFILES: family.sandbox"
+      },
+      {
+        "id": "openwop.requirement.0158.bound-is-derived",
         "result": "inapplicable",
-        "reason": "profile not advertised in the captured discovery set"
+        "reason": "no RFC 0158 durability seam at /host/durability/kill (HTTP 404) — §E: the seam advertises nothing and a host that never runs the durability exercises exposes no such route, so this host claims no durable-execution rung"
+      },
+      {
+        "id": "openwop.requirement.0158.duplicate-delivery",
+        "result": "inapplicable",
+        "reason": "no RFC 0158 durability seam at /host/durability/kill (HTTP 404) — §E: the seam advertises nothing and a host that never runs the durability exercises exposes no such route, so this host claims no durable-execution rung"
+      },
+      {
+        "id": "openwop.requirement.0158.kill-after-accept",
+        "result": "inapplicable",
+        "reason": "no RFC 0158 durability seam at /host/durability/kill (HTTP 404) — §E: the seam advertises nothing and a host that never runs the durability exercises exposes no such route, so this host claims no durable-execution rung"
+      },
+      {
+        "id": "openwop.requirement.0158.kill-during-execution",
+        "result": "inapplicable",
+        "reason": "no RFC 0158 durability seam at /host/durability/kill (HTTP 404) — §E: the seam advertises nothing and a host that never runs the durability exercises exposes no such route, so this host claims no durable-execution rung"
       },
       {
         "id": "openwop.requirement.0168.coherence-not-in-bundle.disjoint-by-construction",
@@ -2281,13 +2496,13 @@
       },
       {
         "id": "openwop.requirement.0173.compensation-read-projection",
-        "result": "inapplicable",
-        "reason": "profile not advertised in the captured discovery set"
+        "result": "skipped",
+        "reason": "operator declared an honest opt-out via OPENWOP_OPTED_OUT_PROFILES: family.compensation"
       },
       {
         "id": "openwop.requirement.0173.compensation-read-projection.not-found",
-        "result": "inapplicable",
-        "reason": "profile not advertised in the captured discovery set"
+        "result": "skipped",
+        "reason": "operator declared an honest opt-out via OPENWOP_OPTED_OUT_PROFILES: family.compensation"
       },
       {
         "id": "openwop.requirement.0173.effect-identity-business-key.retry",
@@ -2301,28 +2516,28 @@
       },
       {
         "id": "openwop.requirement.0173.pack-isolation",
-        "result": "inapplicable",
-        "reason": "profile not advertised in the captured discovery set"
+        "result": "skipped",
+        "reason": "operator declared an honest opt-out via OPENWOP_OPTED_OUT_PROFILES: family.sandbox"
       },
       {
         "id": "openwop.requirement.0173.pack-isolation.isolated-context",
-        "result": "inapplicable",
-        "reason": "profile not advertised in the captured discovery set"
+        "result": "skipped",
+        "reason": "operator declared an honest opt-out via OPENWOP_OPTED_OUT_PROFILES: family.sandbox"
       },
       {
         "id": "openwop.requirement.0173.pack-isolation.memory-cap",
-        "result": "inapplicable",
-        "reason": "profile not advertised in the captured discovery set"
+        "result": "skipped",
+        "reason": "operator declared an honest opt-out via OPENWOP_OPTED_OUT_PROFILES: family.sandbox"
+      },
+      {
+        "id": "openwop.requirement.0173.pack-isolation.seam",
+        "result": "skipped",
+        "reason": "operator declared an honest opt-out via OPENWOP_OPTED_OUT_PROFILES: family.sandbox"
       },
       {
         "id": "openwop.requirement.0173.pack-isolation.timeout",
-        "result": "inapplicable",
-        "reason": "profile not advertised in the captured discovery set"
-      },
-      {
-        "id": "openwop.requirement.0173.webhook-durable-delivery",
-        "result": "executed-fail",
-        "reason": "the test executed and failed: [unknown@unknown] webhooks.md §Durability: a 500 from the subscriber MUST be retried — 1 failed attempt(s) were answered and the host made 1 attempt(s) in total; one attempt is best-effort delivery, which is not a conforming mode (RFC 0173 §B): expected 1 to be greater than 1"
+        "result": "skipped",
+        "reason": "operator declared an honest opt-out via OPENWOP_OPTED_OUT_PROFILES: family.sandbox"
       },
       {
         "id": "openwop.requirement.0175.legacy-profiles-absent",
@@ -2420,14 +2635,19 @@
         "reason": "host does not advertise conformance.seamsProfile: openwop-conformance-seams-v2 — the packs-test publish seam is the only register path the suite can drive (RFC 0168 §C.1)"
       },
       {
+        "id": "openwop.requirement.0177.chain-pin-exact.external-range-refused",
+        "result": "inapplicable",
+        "reason": "host does not advertise conformance.seamsProfile: openwop-conformance-seams-v2 — the packs-test publish seam is the only register path the suite can drive (RFC 0168 §C.1)"
+      },
+      {
         "id": "openwop.requirement.0177.chain-pin-exact.range-refused",
         "result": "inapplicable",
         "reason": "host does not advertise conformance.seamsProfile: openwop-conformance-seams-v2 — the packs-test publish seam is the only register path the suite can drive (RFC 0168 §C.1)"
       },
       {
         "id": "openwop.requirement.0177.form-when-reuses-edge-conditions",
-        "result": "inapplicable",
-        "reason": "profile not advertised in the captured discovery set"
+        "result": "skipped",
+        "reason": "operator declared an honest opt-out via OPENWOP_OPTED_OUT_PROFILES: family.forms"
       },
       {
         "id": "openwop.requirement.0177.manifest-ceiling-refused.unbounded",
@@ -2466,20 +2686,40 @@
       },
       {
         "id": "openwop.requirement.0177.provider-conflict.fail-closed",
-        "result": "inapplicable",
-        "reason": "profile not advertised in the captured discovery set"
+        "result": "skipped",
+        "reason": "operator declared an honest opt-out via OPENWOP_OPTED_OUT_PROFILES: connections.packsSupported"
       },
       {
         "id": "openwop.requirement.0177.provider-conflict.qualified-form",
+        "result": "skipped",
+        "reason": "operator declared an honest opt-out via OPENWOP_OPTED_OUT_PROFILES: connections.packsSupported"
+      },
+      {
+        "id": "openwop.requirement.0188.dead-letter-content-free",
         "result": "inapplicable",
-        "reason": "profile not advertised in the captured discovery set"
+        "reason": "host does not advertise the webhooks.deadLetter facet — RFC 0188 §A.5 makes the read a 404 rather than an obligation"
+      },
+      {
+        "id": "openwop.requirement.0188.dead-letter-read",
+        "result": "inapplicable",
+        "reason": "host does not advertise the webhooks.deadLetter facet — RFC 0188 §A.5 makes the read a 404 rather than an obligation"
+      },
+      {
+        "id": "openwop.requirement.0194.terminal-once.duplicate-delivery",
+        "result": "inapplicable",
+        "reason": "no RFC 0158 durability test hook at /host/durability/kill (HTTP 404) — a black-box suite cannot make a host redeliver accepted work, so this row needs the hook"
+      },
+      {
+        "id": "openwop.requirement.0196.callback-url-guarded",
+        "result": "inapplicable",
+        "reason": "the host does not advertise interrupt.callbackDelivery — it delivers nothing to callbackUrl, so there is no egress to guard (RFC 0196 §A.2: it SHOULD refuse the member)"
       }
     ]
   },
   "signature": {
     "alg": "ed25519",
-    "keyId": "openwop-app-bundle-1",
-    "sig": "FPCpFJ6NFdwZ0-etAmBw-bgsc6kfUB8RM0rkV342JBfbqJ-Xc0LAafDYMaHWMjDOdhnmUbO7GmGkKCfatjMmAw",
+    "keyId": "openwop-app-bundle-2",
+    "sig": "fjymVv1eiQfHU-qS0qGeUW98zavFQtGh7wrAcz179V-NsoydDmIWFKG2gTGneXyEWzPWPKMZwJeYtMeDzORjCQ",
     "over": [
       "witnessSha256",
       "host.build",
