@@ -102,6 +102,20 @@ The `host:` namespace from RFC 0002 §A1 is the catch-all for non-manifest agent
 
 ---
 
+## "Skill" means three different things
+
+> **Informative.** This section adds no requirement. It separates three uses of the word "skill" that meet at OpenWOP's A2A and MCP edges.
+
+| Term | Where it comes from | What it is | OpenWOP counterpart |
+| --- | --- | --- | --- |
+| **A2A `AgentSkill`** | An entry in an A2A `AgentCard`'s `skills[]` | A capability the agent offers to A2A callers: `id`, `name`, `description`, `tags`, plus optional examples, input/output modes and security requirements | An OpenWOP **Workflow**. When a host exposes itself as an A2A agent, `AgentSkill.id` maps to `Workflow.id` and invoking the skill starts a run ([`a2a-integration.md`](./a2a-integration.md) §1–§2). |
+| **Agent Skills / `SKILL.md`** | The Agent Skills packaging format, also surfaced through MCP's skills extension | An instruction bundle: a directory holding a `SKILL.md` file (instructions plus metadata) and supporting files, loaded into a model's context on demand | None defined by the protocol. A host can choose to package such a bundle as an agent manifest, but no conversion is specified, and none is required for conformance. |
+| **`role: "skill"` agent manifest** | RFC 0131 (`agent-manifest.schema.json`) | A composable, task-scoped sub-agent that an assistant or roster agent calls through `handoff`. The Skill profile requires `handoff` and restricts `memoryShape` to scratchpad-only, which keeps dispatch stateless and replay-clean | Itself. See [`node-packs.md`](./node-packs.md) §"Agent-manifest `role` + the Skill profile (RFC 0131)". |
+
+The three are not interchangeable. An A2A `AgentSkill` that a host advertises is backed by a Workflow, not by a `role: "skill"` manifest, though a Workflow can itself dispatch one. A `SKILL.md` bundle is prompt material, not a wire shape OpenWOP validates. Read an unqualified "skill" in OpenWOP prose as the RFC 0131 manifest role unless the text names A2A or Agent Skills.
+
+---
+
 ## What's out of scope
 
 This addendum does NOT:
