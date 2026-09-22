@@ -3,10 +3,10 @@
   "generatedFrom": "src/scenarios/*.test.ts",
   "counts": {
     "files": 621,
-    "tests": 2379,
-    "withStableId": 2379,
+    "tests": 2380,
+    "withStableId": 2380,
     "interpolatedTitles": 0,
-    "explicitIds": 2275
+    "explicitIds": 2276
   },
   "records": [
     {
@@ -28975,7 +28975,7 @@
     {
       "id": "openwop.it.v2-lane-issuer-advertised.every-auth-lanes-member-names-lane-issuers-revocation-and-minimumassurance",
       "file": "v2-lane-issuer-advertised.test.ts",
-      "line": 36,
+      "line": 69,
       "title": "every auth.lanes[] member names lane, issuers[], revocation and minimumAssurance",
       "explicitId": "openwop.requirement.0170.lane-issuer-advertised.members",
       "citations": [
@@ -29009,9 +29009,23 @@
     {
       "id": "openwop.it.v2-lane-issuer-advertised.a-windowed-revocation-rule-advertises-revocationwindowseconds",
       "file": "v2-lane-issuer-advertised.test.ts",
-      "line": 52,
+      "line": 85,
       "title": "a windowed revocation rule advertises revocationWindowSeconds",
       "explicitId": "openwop.requirement.0170.lane-issuer-advertised.window",
+      "citations": [
+        {
+          "section": "spec/v2/core/identity.md §2.2",
+          "requirement": null,
+          "interpolated": true
+        }
+      ]
+    },
+    {
+      "id": "openwop.it.v2-lane-issuer-advertised.a-lane-advertises-only-a-revocation-rule-its-identity-md-2-2-row-lists",
+      "file": "v2-lane-issuer-advertised.test.ts",
+      "line": 96,
+      "title": "a lane advertises only a revocation rule its identity.md §2.2 row lists",
+      "explicitId": "openwop.requirement.0170.lane-issuer-advertised.lane-rule",
       "citations": [
         {
           "section": "spec/v2/core/identity.md §2.2",

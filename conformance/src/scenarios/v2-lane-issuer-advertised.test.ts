@@ -7,6 +7,23 @@
  * `minimumAssurance`; `revocationWindowSeconds` MUST accompany a rule that
  * names a window (`exp-and-recheck`, `short-lived`, `rebind`). A host that does
  * not advertise the `auth` family records `inapplicable`.
+ *
+ * Third leg (suite 2.36.0): a lane advertises only a revocation rule that
+ * `identity.md` §2.2's row FOR THAT LANE lists. §2.2 has stated the per-lane
+ * rule since RFC 0170 §B.3, and until now nothing measured it: the facet schema
+ * relates `revocation` to `lane` nowhere, and the two legs above check only
+ * enum membership and window presence. So any of the nine values passed on any
+ * of the ten lanes, which is how `short-lived` — a rule §2.2 defines only for
+ * `mtls`, as an obligation on the CREDENTIAL ISSUER — came to be advertised on
+ * an `oidc` lane by a host that performs no revocation re-check at all.
+ *
+ * `LANE_RULES` below is the §2.2 table, transcribed. It is not a second
+ * declaration: `scripts/check-lane-revocation-rules.mjs` parses the table out
+ * of `spec/v2/core/identity.md` and fails when this map, the table and the
+ * facet schema's `revocation` enum disagree. `anonymous` is `null` — its §2.2
+ * row's revocation cell is `—` while the facet schema REQUIRES the field, so
+ * the table names no legal value for it; the leg exempts that one lane and
+ * says so in its message rather than inventing a rule (RFC 0210 register G1).
  */
 
 import { describe, it, expect } from 'vitest';
@@ -20,6 +37,22 @@ const REVOCATION = new Set(['next-request', 'exp-and-recheck', 'crl', 'ocsp', 's
 const WINDOWED = new Set(['exp-and-recheck', 'short-lived', 'rebind']);
 const ASSURANCE = new Set(['bearer', 'sender-constrained', 'key-bound']);
 const PROOFS = new Set(['mtls-key-binding', 'dpop', 'svid-chain']);
+
+// LANE_RULES — `spec/v2/core/identity.md` §2.2, `revocation` column, one entry
+// per lane. `null` means the table names no rule for that lane. Parsed by
+// scripts/check-lane-revocation-rules.mjs; keep the literal shape.
+const LANE_RULES: Record<string, string[] | null> = {
+  'api-key': ['next-request'],
+  'oauth2': ['exp-and-recheck'],
+  'oidc': ['exp-and-recheck'],
+  'mtls': ['crl', 'ocsp', 'short-lived'],
+  'saml': ['not-on-or-after'],
+  'scim': ['bound-connection'],
+  'ldap': ['rebind'],
+  'workload': ['delegation-expiry'],
+  'session': ['next-request'],
+  'anonymous': null,
+};
 
 async function lanes(): Promise<Array<Record<string, unknown>> | { reason: string }> {
   let doc: Record<string, unknown> | null;
@@ -57,6 +90,22 @@ describe('v2 lane-issuer-advertised (RFC 0170 §B.2–§B.4)', () => {
     for (const l of windowed) {
       const w = l['revocationWindowSeconds'];
       expect(Number.isInteger(w) && (w as number) >= 1, req('openwop.requirement.0170.lane-issuer-advertised.window', 'spec/v2/core/identity.md §2.2', `lane ${String(l['lane'])} (revocation ${String(l['revocation'])}) MUST advertise revocationWindowSeconds (integer ≥ 1)`)).toBe(true);
+    }
+  });
+
+  it('a lane advertises only a revocation rule its identity.md §2.2 row lists', async () => {
+    const ls = await lanes();
+    if (!Array.isArray(ls)) return softSkip(ls.reason.startsWith('FAIL-SHAPED') ? 'blocked' : 'inapplicable', ls.reason);
+    // Only lanes the table constrains are measured. `anonymous` is exempt
+    // because §2.2 names no rule for it at all (RFC 0210 register G1), not
+    // because any value is acceptable there.
+    const bound = ls.filter((l) => LANE_RULES[String(l['lane'])] != null);
+    if (bound.length === 0) return softSkip('inapplicable', `no advertised lane has a revocation rule stated in identity.md §2.2 (advertised: ${ls.map((l) => String(l['lane'])).join(', ') || 'none'}; the anonymous lane is exempt, its §2.2 revocation cell is "—")`);
+    for (const l of bound) {
+      const name = String(l['lane']);
+      const rule = String(l['revocation']);
+      const allowed = LANE_RULES[name] as string[];
+      expect(allowed.includes(rule), req('openwop.requirement.0170.lane-issuer-advertised.lane-rule', 'spec/v2/core/identity.md §2.2', `lane ${name} advertises revocation "${rule}", which §2.2's row for that lane does not list (it lists ${allowed.map((r) => `"${r}"`).join(' | ')}) — a host MUST NOT advertise a revocation rule its lane's row does not name`)).toBe(true);
     }
   });
 });

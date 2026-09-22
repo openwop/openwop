@@ -12,7 +12,7 @@
 | OpenAPI operations | 56 | `api/openapi.yaml` |
 | AsyncAPI version | 3.1.0 | `api/asyncapi.yaml` |
 | Conformance scenario files | 552 | `conformance/src/scenarios/*.test.ts` |
-| RFCs tracked | 206 | `RFCS/[0-9][0-9][0-9][0-9]-*.md`, excluding template |
+| RFCs tracked | 207 | `RFCS/[0-9][0-9][0-9][0-9]-*.md`, excluding template |
 
 ## Artifact Versions
 
@@ -69,7 +69,7 @@
 |---|---:|
 | Accepted | 189 |
 | Active | 15 |
-| Draft | 1 |
+| Draft | 2 |
 | Superseded | 1 |
 
 | RFC | Title | Status |
@@ -280,6 +280,7 @@
 | RFC 0207 | W3C Trace Context carried in MCP `params._meta` and A2A `Message.metadata.openwop` beside the HTTP header that stays conforming, debug-bundle spans that carry `traceId` / `kind` / `status`, and an optional versioned OTel `mcp.*` projection | Active |
 | RFC 0208 | v2 homes the A2A and MCP operation mappings | Active |
 | RFC 0209 | `ui.a2ui-surface` schema version 2 carries real A2UI v0.9 server-to-client messages (a closed OpenWOP profile of the basic catalog), while the 0.9.1 seven-component tree stays readable forever. The RFC 0114 delta frame is deprecated in v2, and v2 regains the `ui.*`/`media.*` kind carve-out | Active |
+| RFC 0210 | a lane's revocation rule is measured, and a host that only honours `exp` says so | Draft |
 
 ## SDK Helper Coverage
 
@@ -301,7 +302,7 @@ The pack registry now lives in the [`openwop-registry`](https://github.com/openw
 
 ## Active Follow-Ups
 
-- 1 RFC still `Draft` (RFC 0038) — advance with schema/conformance proof or defer.
+- 2 RFCs still `Draft` (RFC 0038, RFC 0210) — advance with schema/conformance proof or defer.
 - 15 RFCs `Active` (RFC 0111, RFC 0121, RFC 0197, RFC 0198, RFC 0199, RFC 0200, RFC 0201, RFC 0202, RFC 0203, RFC 0204, RFC 0205, RFC 0206, RFC 0207, RFC 0208, RFC 0209) — wire-shape MAY shift compatibly within v1.x until promotion to `Accepted`.
 - External audit, non-steward host recruitment, and non-steward maintainer recruitment remain external-action gates.
 - Multi-region idempotency and some optional-profile behavior checks remain lower-confidence than the core wire contract.

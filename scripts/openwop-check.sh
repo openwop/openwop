@@ -306,6 +306,13 @@ npm_config_cache="$NPM_CACHE" npx -y -p @redocly/cli@2.31.4 redocly lint "$SPEC_
 npm_config_cache="$NPM_CACHE" npx -y -p @asyncapi/cli@4.1.1 asyncapi validate "$SPEC_ROOT/api/v2/asyncapi.yaml" 2>&1 | /usr/bin/grep -E "is valid|error" | head -3
 node "$(dirname "$0")/check-path-parity.mjs"
 node "$(dirname "$0")/check-openapi-security.mjs"
+# RFC 0210 §G — the lane -> revocation-rule map lives on three surfaces
+# (identity.md §2.2's table, the auth facet's `revocation` enum, and the suite's
+# LANE_RULES) and nothing kept them in agreement. The schema relates the two
+# fields nowhere, so every member was valid on every lane; that is how
+# `short-lived`, a rule §2.2 states only for `mtls` and only as an obligation on
+# the credential's ISSUER, came to be advertised on a production `oidc` lane.
+node "$(dirname "$0")/check-lane-revocation-rules.mjs"
 node "$(dirname "$0")/check-manifest-top-level-segments.mjs"
 node "$(dirname "$0")/check-id-kinds-bound.mjs"
 node "$(dirname "$0")/generate-deprecation-annotations.mjs" --check
