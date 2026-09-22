@@ -12,6 +12,7 @@
 | **Compatibility** | `additive`                                                                                                                                                                                                   |
 | **Supersedes**    | —                                                                                                                                                                                                            |
 | **Superseded by** | —                                                                                                                                                                                                            |
+| **Amended by**    | [RFC 0205](./0205-run-artifacts-and-turns-speak-a2a-parts.md) (major 2 only: the v2 turn gains an optional A2A `Part[]` `parts` beside the opaque `content`) |
 
 ## Summary
 

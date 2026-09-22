@@ -128,6 +128,8 @@ assertIncludes(conformancePack.name, conformanceFiles, [
   'fixtures/upstream/a2ui-v0.9/catalog.json',
   'fixtures/upstream/a2ui-v0.9/common_types.json',
   'fixtures/upstream/a2ui-v0.9/README.md',
+  // RFC 0205: the artifact-producing fixture a host seeds from the tarball to serve getArtifact.
+  'fixtures/conformance-artifact-emit.json',
 ]);
 
 // Suite 1.156.0 — what the tarball must NOT carry: the suite's own self-tests and
