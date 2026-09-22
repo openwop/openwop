@@ -54,5 +54,5 @@ exact-version peer dependency.
 | --- | --- |
 | Foundation | [`overview`](./core/overview.md), [`versioning`](./core/versioning.md), [`headers`](./core/headers.md), [`identity`](./core/identity.md), [`capabilities`](./core/capabilities.md) |
 | Execution | [`runs`](./core/runs.md), [`events`](./core/events.md), [`interrupt`](./core/interrupt.md), [`persistence`](./core/persistence.md), [`idempotency`](./core/idempotency.md), [`replay`](./core/replay.md) |
-| Integration | [`webhooks`](./core/webhooks.md), [`interop`](./core/interop.md), [`packs`](./core/packs.md), [`connection packs`](./core/connection-packs.md), [`form-content packs`](./core/form-content-packs.md), [`workflow-chain packs`](./core/workflow-chain-packs.md) |
+| Integration | [`webhooks`](./core/webhooks.md), [`interop`](./core/interop.md), [`packs`](./core/packs.md), [`node-pack runtimes`](./core/node-pack-runtimes.md), [`connection packs`](./core/connection-packs.md), [`form-content packs`](./core/form-content-packs.md), [`workflow-chain packs`](./core/workflow-chain-packs.md) |
 | Reliability | [`errors`](./core/errors.md), [`security defaults`](./core/security-defaults.md), [`conformance`](./core/conformance.md) |

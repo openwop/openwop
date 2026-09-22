@@ -168,6 +168,15 @@
       "source": "spec/v1/node-packs.md"
     },
     {
+      "code": "unsupported_runtime",
+      "httpStatus": 400,
+      "statusSource": "v1 convention (node-packs.md)",
+      "retriable": false,
+      "details": null,
+      "since": "1.0",
+      "source": "spec/v1/node-packs.md"
+    },
+    {
       "code": "protocol_version_mismatch",
       "httpStatus": 400,
       "statusSource": "v2 decision",
