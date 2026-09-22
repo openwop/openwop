@@ -14,7 +14,7 @@ Some deployment classes prefer gRPC over REST for protocol-level reasons:
 
 - **Internal microservice networks** that already standardize on gRPC + Protobuf wire format.
 - **Multi-language clients** that benefit from a single `.proto` definition rather than per-language OpenAPI generators.
-- **Bidirectional streaming** for the events surface — REST + SSE works but gRPC's native bidi-stream is more ergonomic in some clients.
+- **Native streaming** for the events surface — REST + SSE works but a gRPC server-streaming RPC is more ergonomic in some clients.
 - **Lower per-request overhead** vs HTTP/1.1 + JSON for high-volume orchestration paths.
 
 The protocol's REST + SSE surface remains the v1 canonical contract. A host that adds gRPC does NOT drop REST; it exposes BOTH surfaces over the same engine. The conformance suite continues to validate REST; gRPC conformance is gated on an additional scenario set that compares per-operation outcomes against the REST surface.
@@ -29,14 +29,14 @@ The protocol's REST + SSE surface remains the v1 canonical contract. A host that
 - Service-name canonical: `openwop.v1.Engine` (one service per protocol version).
 - Method names: 1:1 with `api/openapi.yaml` `operationId` values, normalized to PascalCase.
 - Error-envelope mapping: `error-envelope.schema.json` → gRPC `Status` proto with `details[]` carrying the `error-envelope` JSON.
-- Bidirectional event-stream method (`StreamRunEvents`) replacing SSE.
+- Server-streaming event method (`StreamRunEvents`: one request, a stream of `RunEventEnvelope` responses) replacing SSE.
 - Auth: same bearer-token + scope vocabulary, passed via the gRPC `authorization` metadata key.
 
 **Out of scope:**
 
 - Replacing REST. REST + SSE remains the v1-required surface.
 - Re-spec'ing semantics. Every gRPC method's behavior is identical to its REST counterpart per `rest-endpoints.md`.
-- Streaming primitives beyond `StreamRunEvents` — no bidi for run-create or interrupt-resolve.
+- Streaming primitives beyond `StreamRunEvents` — no client-streaming or bidirectional methods, and no streaming for run-create or interrupt-resolve.
 - gRPC-Web. Hosts MAY expose gRPC-Web alongside; the conformance scenario validates the canonical gRPC-over-HTTP/2 path.
 
 ---
