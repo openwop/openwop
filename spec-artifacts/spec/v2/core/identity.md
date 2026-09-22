@@ -96,7 +96,7 @@ The record and both `SubjectRef`s are closed; `a`, `b`, `keyClass`, `issuer`, `t
 
 An interrupt resume token is `ow2.<alg>.<kid>.<payload>.<mac>`: `alg ∈ {hs256}` at the cut (`interrupt.tokenAlgs[]` advertises it), `kid` (`keyId` grammar) selects the verification secret, `payload` and `mac` as in v1. A host MUST refuse a token whose `alg` it does not advertise or whose `kid` it does not hold with `401` `interrupt_token_invalid`. The `{token}` path parameter carries the grammar (`api/v2/openapi.yaml`).
 
-An issued v1 two-segment token MUST remain resolvable under `kid: legacy` until its `expiresAt`; a run suspended on an interrupt at the cut continues under `persistence.md` and its outstanding token resolves the same way. Interrupt semantics are `interrupt.md`.
+A token the host issued under v1 (any token not `ow2.`-prefixed; the rule is the prefix, never a segment count, persistence.md) MUST remain resolvable under `kid: legacy` until its `expiresAt`; a run suspended on an interrupt at the cut continues under `persistence.md` and its outstanding token resolves the same way. Interrupt semantics are `interrupt.md`.
 
 ## 5. Identifier grammars (`schemas/v2/ids.schema.json`)
 
