@@ -212,7 +212,7 @@
     "spec/v1/gaps.schema.json": "8fd83259f556553c9df0f53e7a82ca8c2a4771d471197f69b4e2ae0ceeacfd66",
     "spec/v1/migrations.json": "8839497d6a4830b53fa7867014a8336f0d725ef2346352e54fb580b7947897af",
     "spec/v1/migrations.schema.json": "886779aa6c22e646db097f5df210adb018a4dd14a7b815465a18c8a7056c8f72",
-    "spec/v1/operation-path-manifest.json": "5f5f4e3842669371730ebbd1aace3fb794192615f0018dc144f484ba5db82ac3",
+    "spec/v1/operation-path-manifest.json": "968c2fceb27cf76acbb14f7d250798f913bbbd3e9789dd3fb2a32c1ef536e771",
     "spec/v1/spec-gaps.json": "eb3bfcb9c7d05c9a6845d4a40ec9493cfaa5a671932daf1af561310136fdabe8",
     "spec/v2/README.md": "8dbfc17b10f373dba95bdd2e8fec0580f35b380a834d304be3e24e7498170185",
     "spec/v2/core/capabilities.md": "95a5395931b709e109994d251d62e40aa24d76fc51619e171964d4a5574cd29e",
@@ -235,7 +235,7 @@
     "spec/v2/core/runs.md": "62efeed7d61d875af78ee018c5387ac40e3cf0c9bfdd6cafc165e0d418f7b155",
     "spec/v2/core/security-defaults.md": "135c0b1c37edf77832d3207f34061bc36adf33ff4703aa7796f36786a58a85a6",
     "spec/v2/core/versioning.md": "96477d4164f9ae59f191e2b9e7b4c48049dcb921010c501454764312f6c7a659",
-    "spec/v2/core/webhooks.md": "65a2a389c8eec50ed27f29e0ba067509dd48c87908c30458930e82dd434cf827",
+    "spec/v2/core/webhooks.md": "af63fdf728d2f6fd174a61d6c711d720c64154a702c9c28fbe1ca190020a4995",
     "spec/v2/core/workflow-chain-packs.md": "ee45d3fede3bb6f0cc6abcf0d6c929c7cd213a0fbe862b738a998f929c4d1102",
     "spec/v2/declaration.json": "7e548a16d3ebfb45b4bd2a28ff721898a85fe46d6f0bffcf7fd23a96a6637d82",
     "spec/v2/declaration.schema.json": "c86e3083fb9789c1958ecb4576cc6f71aa90e6f339521139238543ed08211dd4",
@@ -283,5 +283,5 @@
     "spec/v2/release.json": "5b9a956506b011835f1bd2fec54064d9cc8657d8a45a371314850da377d69069",
     "spec/v2/retention-floors.json": "eaf3722d95c79947af1d4269ef85117e126518c588cfcf1a2b21b97269f51624"
   },
-  "corpusCommit": "0b8348c2e89af483d2d3a37cbc11e76a8d97b0fe"
+  "corpusCommit": "473526acfc8db2f8ca9095dd3dc87d350e81156e"
 }
