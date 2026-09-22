@@ -10808,6 +10808,23 @@
       ]
     },
     {
+      "id": "openwop.gap.0197.9",
+      "rfc": "0197",
+      "local": "G9",
+      "section": "§A.1 / sequencing",
+      "surface": "**A baseline committed mid-cycle would flag the batch's own in-cycle edits as removals** (RFC 0209's `anyOf` root and `$defs` rename, RFC 0199's `CredentialData` binding), because `spec/v2/release.json` still reads 2.35.0 and the baseline cannot be regenerated without a release bump (`review/arch-impl.md` R5).",
+      "witness": "unclassified",
+      "requirementId": null,
+      "disposition": "closed",
+      "target": null,
+      "sources": [
+        {
+          "file": "RFCS/registers/0197-v2-surfaces-retired-never-reshaped.gaps.md",
+          "token": "G9"
+        }
+      ]
+    },
+    {
       "id": "openwop.gap.0198.1",
       "rfc": "0198",
       "local": "G1",
@@ -10999,11 +11016,11 @@
       "rfc": "0199",
       "local": "G3",
       "section": "§D.2",
-      "surface": "**No v2 host has an MCP server mount** (`review/arch-P3.md` ground rules; v2-reference is seam-gated with no `serverMount`). §D.2 can be witnessed only on openwop-app's v1 mount (`/v1/host/openwop-app/mcp`).",
+      "surface": "**No v2 host has an MCP server mount** (`review/arch-P3.md` ground rules; v2-reference is seam-gated with no `serverMount`). Today §D.2 can be exercised only on openwop-app's v1 mount (`/v1/host/openwop-app/mcp`), and a major-1 row can never satisfy `check-accepted-predicate` rule 4.",
       "witness": "unclassified",
       "requirementId": null,
       "disposition": "transferred",
-      "target": "rfc-0198",
+      "target": "rfc-0208",
       "sources": [
         {
           "file": "RFCS/registers/0199-outbound-oauth-client-and-credential-interrupt.gaps.md",
@@ -11016,11 +11033,11 @@
       "rfc": "0199",
       "local": "G4",
       "section": "§B",
-      "surface": "**The census of published `reach.mcp` connection packs has not been run** (§Compatibility C3). If a published pack lacks `provider.auth.issuer`, E.2's schema conditional would reject a document that validates today.",
+      "surface": "**The census of published `reach.mcp` connection packs** (§Compatibility C3). If a published pack lacks `provider.auth.issuer`, a schema conditional would reject a document that validates today.",
       "witness": "unclassified",
       "requirementId": null,
-      "disposition": "transferred",
-      "target": "rfc-0199-spec-pr",
+      "disposition": "closed",
+      "target": null,
       "sources": [
         {
           "file": "RFCS/registers/0199-outbound-oauth-client-and-credential-interrupt.gaps.md",
@@ -11084,7 +11101,7 @@
       "rfc": "0199",
       "local": "G8",
       "section": "Budget",
-      "surface": "**Shared core headroom.** ≈ +162 net words against the 1,725 left (27,275 / 29,000), which is shared with every Phase 3 RFC.",
+      "surface": "**Shared core headroom.** ≈ +162 net words. *Re-measured 2026-09-22 after the #1483 trim:* 24,446 / 29,000, shared with every RFC in the 0197–0209 batch (`review/arch-impl.md` §2; the old 27,275 base is stale).",
       "witness": "unclassified",
       "requirementId": null,
       "disposition": "transferred",
@@ -11110,6 +11127,23 @@
         {
           "file": "RFCS/registers/0199-outbound-oauth-client-and-credential-interrupt.gaps.md",
           "token": "G9"
+        }
+      ]
+    },
+    {
+      "id": "openwop.gap.0199.10",
+      "rfc": "0199",
+      "local": "G10",
+      "section": "§E.2",
+      "surface": "**Six published packs lack `issuer`** (G4). Under the host-side rule a conforming host refuses to authorize them over MCP reach until they declare it.",
+      "witness": "unclassified",
+      "requirementId": null,
+      "disposition": "externally-gated",
+      "target": "openwop-registry",
+      "sources": [
+        {
+          "file": "RFCS/registers/0199-outbound-oauth-client-and-credential-interrupt.gaps.md",
+          "token": "G10"
         }
       ]
     },
@@ -11254,7 +11288,7 @@
       "rfc": "0200",
       "local": "G9",
       "section": "Budget",
-      "surface": "≈ +152 net words against the shared 1,725 headroom.",
+      "surface": "≈ +152 net words. *Re-measured 2026-09-22 after the #1483 trim:* the shared base is 24,446 / 29,000 (`review/arch-impl.md` §2), not the old 1,725 headroom.",
       "witness": "unclassified",
       "requirementId": null,
       "disposition": "transferred",
@@ -12087,7 +12121,7 @@
       "rfc": "0207",
       "local": "G7",
       "section": "§A.3",
-      "surface": "The inbound (host-as-MCP-server) leg needs the v1 MCP server mount **and** OTLP export reaching the suite. No v2 host advertises `mcp.serverMount` (architect P3), and hosts in a separate network namespace cannot call back (`REQUIRES_HOST_CALLBACK`).",
+      "surface": "The inbound (host-as-MCP-server) leg needs an MCP server mount **and** OTLP export reaching the suite. No v2 host advertises `mcp.serverMount` today (architect P3), and hosts in a separate network namespace cannot call back (`REQUIRES_HOST_CALLBACK`).",
       "witness": "unclassified",
       "requirementId": null,
       "disposition": "closed",

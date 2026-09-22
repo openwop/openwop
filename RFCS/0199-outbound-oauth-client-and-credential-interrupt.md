@@ -7,7 +7,7 @@
 | **Status**        | `Active`                                                        |
 | **Author(s)**     | David Tufts (@davidscotttufts)                                  |
 | **Created**       | 2026-09-22                                                      |
-| **Updated**       | 2026-09-22 — filed `Draft → Active`; **comment window waived** by the steward on 2026-09-22 under GOVERNANCE.md §"Sole-steward operation" — an explicit **steward override of RFC 0147 §A.6** (precedent: RFC 0194), which forbids bootstrap waiver language from shortening the window for an RFC of this risk class; it is outside the `MAINTAINERS.md` waiver grant, recorded there as an override, not as a routine waiver (this RFC affects identity and authorization: who may complete a grant, and what a run may ask a user for). Acceptance under this override is provisional and the §B review is owed (RFC 0156 register, `docs/WAIVER-RETROSPECTIVE-REGISTER.md`). |
+| **Updated**       | 2026-09-22 — filed `Draft → Active`; **comment window waived** by the steward on 2026-09-22 under GOVERNANCE.md §"Sole-steward operation" — an explicit **steward override of RFC 0147 §A.6** (precedent: RFC 0194), which forbids bootstrap waiver language from shortening the window for an RFC of this risk class; it is outside the `MAINTAINERS.md` waiver grant, recorded there as an override, not as a routine waiver (this RFC affects identity and authorization: who may complete a grant, and what a run may ask a user for). Acceptance under this override is provisional and the §B review is owed (RFC 0156 register, `docs/WAIVER-RETROSPECTIVE-REGISTER.md`). **Updated 2026-09-22 — amended per implementation review** (`review/arch-impl.md` R1, R3, R9; Status unchanged): §E.2's schema conditional is replaced by the host-side rule of Unresolved question 3, because the G4 census found six published `reach.mcp` + `oauth2` manifests without `issuer`; every Falsifiability id is now minted by a major-2 scenario (the v1 legs stay as non-gating coverage); the `authorize-start` seam must call the production URL builder. |
 | **Affects**       | RFC 0047 §C (amended) · `spec/v1/host-capabilities.md` §host.oauth · `spec/v1/connection-packs.md` §Manifest · `spec/v1/interrupt.md` · `spec/v1/mcp-integration.md` §C.2 · `spec/v1/a2a-integration.md` (drift point #3) · `spec/v1/capabilities.md` §oauth · new `spec/v2/core/oauth.md` (homes `oauth` and `credentials`) · `spec/v2/core/interrupt.md` · `spec/v2/core/interop.md` §The durable-task projection · `spec/v2/declaration.json` · schemas (v1 and v2): `capabilities`, `connection-pack-manifest`, `suspend-request`, `run-event-payloads`, `a2a-task-state` · `spec/v2/errors.json` · `SECURITY/invariants.yaml` (+2) · conformance (four new scenarios, one extended) |
 | **Compatibility** | `additive` per `COMPATIBILITY.md` (§4 rows "New optional capability advertised, off by default" and "New normative requirement on a previously-undefined behavior"; see §Compatibility for each clause) |
 | **Supersedes**    | — (amends RFC 0047 §C and resolves its Unresolved question 1; retires `a2a-integration.md` drift point #3 for the forward direction) |
@@ -85,7 +85,7 @@ When the connection pack resolving a provider declares `provider.reach.mcp` and 
 3. **Discovery verifies; it never selects.** The host MUST obtain the MCP server's Protected Resource Metadata (RFC 9728), because MCP clients "**MUST** use OAuth 2.0 Protected Resource Metadata for authorization server discovery" (Authorization §Overview 4). The host MUST then:
    - (a) fetch it only from the well-known URIs RFC 9728 §3 derives from `reach.mcp.server.url`, or from a `resource_metadata` URL in that server's `401` challenge **whose origin equals the server URL's origin**, through the `httpClient` egress guard (RFC 0076);
    - (b) refuse metadata whose `resource` is not identical to the resource identifier used to form the URL (RFC 9728 §3.3);
-   - (c) require `authorization_servers[]` to contain the manifest's `provider.auth.issuer`, which becomes REQUIRED for this combination (§E.2);
+   - (c) require `authorization_servers[]` to contain the manifest's `provider.auth.issuer`. The host MUST NOT authorize a provider of this combination whose manifest declares no `issuer`: (c) cannot hold, so the grant is refused with `connection_auth_metadata_mismatch` (§E.2; the schema keeps `issuer` optional);
    - (d) fetch authorization-server metadata only from the URIs derived from that issuer, in MCP's order (Authorization Server Discovery §Authorization Server Metadata Discovery), and require its `issuer` to be identical (RFC 8414 §3.3);
    - (e) require its `authorization_endpoint` and `token_endpoint` to equal the manifest's `endpoints.authorize` and `endpoints.token`.
 
@@ -163,7 +163,7 @@ v2 `oauth` gains `credentialInterrupt` as `{ "const": true }`, since a v2 facet 
    } }
 ```
 
-Add one conditional to the manifest's top-level `allOf`: if `provider.reach` has `mcp` and `provider.auth.kind` is `oauth2`, then `provider.auth` requires `issuer` and `endpoints`, and `pkce` MUST NOT be `unsupported`. This conditional **rejects a manifest that validates today** (a `reach.mcp` + `oauth2` pack without `issuer`), which is exactly the case §Compatibility C3 addresses.
+**No schema conditional.** Both properties stay OPTIONAL in both manifest schemas, and no `allOf` branch makes them REQUIRED. The census §Compatibility C3 called for was run on 2026-09-22 (gap G4) and is non-empty: `openwop-registry` `registry/v1/packs/core.openwop.connections.{github,jira,notion}` 1.0.0 and `registry/v2/…` 1.0.1 are all `reach.mcp` + `oauth2` and none declares `issuer`. A `required` would reject six published documents, a narrowing of a published v1 and v2 schema. The rule is therefore **host-side** (Unresolved question 3): for a `reach.mcp` + `oauth2` provider, a host MUST NOT authorize it while its manifest declares no `issuer`, or declares `pkce: "unsupported"`, and refuses the grant with `connection_auth_metadata_mismatch` before any authorization URL is issued (§B.2, §B.3(c)). The rule refuses a *grant*, never a document. The six packs gain `issuer` in a registry patch release (gap G10).
 
 **E.3 `suspend-request.schema.json` (v1 and v2) and the two `kind` enums in each `run-event-payloads.schema.json` (`interruptRequested`, `interruptResolved`).**
 
@@ -228,7 +228,7 @@ It projects to A2A `{ "status": { "state": "auth-required", "message": { "parts"
 **Negative:**
 - `{ "kind": "credential", "data": { "provider": "slack", "scopes": [], "reason": "expired", "connectUrl": "http://host.example/c", "accessToken": "xoxb-…" } }` fails twice: `connectUrl` is not `https`, and `CredentialData` is closed (`accessToken`).
 - A resume of `{ "outcome": "authorized", "token": "…" }` fails `resumeSchema`.
-- A `reach.mcp` + `oauth2` manifest without `provider.auth.issuer` fails E.2's conditional.
+- A `reach.mcp` + `oauth2` manifest without `provider.auth.issuer` **validates** (the schema keeps `issuer` optional), but a host MUST refuse to authorize it: the grant is refused with `connection_auth_metadata_mismatch` and no authorization URL is issued (§E.2 host-side rule).
 - A clarification whose schema has `{ "type": "object", "properties": { "apiKey": { "type": "string", "format": "password" } } }` MUST NOT reach an MCP client as `mode: "form"`.
 
 ## Compatibility
@@ -240,9 +240,10 @@ It projects to A2A `{ "status": { "state": "auth-required", "message": { "parts"
   - RFC 0047 left PKCE, `state` handling, `iss`, redirect handling and callback identity unspecified. It deferred PKCE explicitly (Unresolved question 1).
   - These rules constrain what the *host* sends to a third party. They do not reject any input a protocol client sent that previously succeeded, so the §4 "stricter validation" row, and the 90-day safety-fix window with it, does not apply.
   - A host that sends no PKCE today becomes non-conformant against the new text. That is the ordinary effect of an additive MUST and is surfaced through the suite (§2.3).
-- **C3: E.2's conditional is the one stricter-validation edge**, and it is kept narrow.
-  - It rejects a `reach.mcp` + `oauth2` connection pack without `issuer`.
-  - Census before merge: `registry/` and `packs.openwop.dev` connection packs with `reach.mcp` (today the corpus example is GitHub, `connection-packs.md` §Examples). If any published pack lacks `issuer`, the conditional becomes a **host-side registration rule effective at the next suite minor**, not a schema `required`. That rule is "a host MUST NOT authorize such a provider until `issuer` is declared", and it refuses a *grant*, not a document. Fallback shape: Unresolved question 3.
+- **C3: no schema narrowing; the issuer rule is host-side.**
+  - The census was run on 2026-09-22 (gap G4). Six published manifests (`core.openwop.connections.{github,jira,notion}`, v1 1.0.0 and v2 1.0.1) are `reach.mcp` + `oauth2` with no `issuer`. A schema `required` would make them invalid, which is a narrowing of a published schema (a COMPATIBILITY §4 safety-fix at v1, and a major under RFC 0197 §B.6 at v2).
+  - So §E.2 adds only optional properties, and every document valid before stays valid. The obligation is a host rule, "a host MUST NOT authorize such a provider until `issuer` is declared", effective in the suite release that ships this RFC's scenarios (2.36.0). It refuses a *grant*, not a document. It constrains what the host sends to a third party, so it is C2's class (a new requirement on previously undefined behaviour).
+  - Until the registry republishes the six packs with `issuer` (gap G10), a conforming host refuses to authorize them over MCP reach. That is the intended mix-up posture, not a regression: RFC 0047 never permitted discovery to choose the endpoint.
 - **C4: v2 growth.**
   - Optional properties on closed objects (`oauth`, `providers` items, `provider.auth`) and a new member of an inline, non-registry enum (`kind`, `interruptKind`) are additive under the "every document valid before is valid after" test, by the precedent of RFC 0183, 0186 and 0188 (`review/arch-P3.md` ground rules). No written v2 rule covers either case today; RFC 0197 §B writes the optional-property half down.
   - The two error codes are registry members under `overview.md` §0.
@@ -266,6 +267,13 @@ It projects to A2A `{ "status": { "state": "auth-required", "message": { "parts"
 ## Conformance
 
 A scenario may not cite a `Draft` RFC (`check-rfc-status-coherence.mjs` rule 7). The scenarios below land with or after this RFC's `Active` status, in a suite minor that is published after the steward's release decision (see §Implementation notes). No requirement id enters a `floorScenarios` list or a profile predicate, so this RFC stays out of the §A.6 certification class.
+
+**Where each id is minted (amended 2026-09-22).** `scripts/check-accepted-predicate.mjs` rule 4 reads only certified `evidence/v2-host-bundles/` and the corpus ledger, and a v2 cut never runs a major-1 file. So every id in the Falsifiability table is minted by a **major-2** file, and the v1 legs below are kept as supplementary, **non-gating** coverage of the v1 halves:
+- §A ids: planned `v2-oauth-client-pkce-state-iss`.
+- §B ids (`resource-indicator`, `mcp-pkce-verified`, `mcp-metadata-bound`) and the issuer-less refusal of §E.2: planned `v2-oauth-mcp-reach-discovery` (major 2), the twin of the v1 file below, over `spec/v2/core/connection-packs.md`.
+- §C ids and the C1 regression leg: planned `v2-credential-interrupt`.
+- §D.1 `a2a-auth-required`: an `auth-required` leg in RFC 0208's planned `v2-a2a-operation-map` scenario, against the v2 A2A server RFC 0208 builds on the v2 reference host.
+- §D.2 `mcp-url-mode` and `form-mode-no-secret`: legs in RFC 0208's planned `v2-mcp-mount-map` scenario, against the v2 MCP mount (the `interop-map.json` `mcp.mrtr` row this RFC amends).
 
 - **Extended: `oauth-authorization-code-roundtrip.test.ts`** (RFC 0047 seam). New legs drive the host against a **suite-owned authorization-server double**, `conformance/src/lib/oauth-as-double.ts`, which extends `oidc-issuer.ts` and is served through the same tunnel mechanism as `webhook-receiver.ts`. The double counts token requests. A seam `POST …/oauth/authorize-start` returns the authorization URL the host would send the user to, and the suite plays the user agent against the host's real callback.
 - **New: `oauth-client-pkce-state-iss.test.ts`** (v1; plus `v2-oauth-client-pkce-state-iss.test.ts`). Asserts:
@@ -297,25 +305,25 @@ Every row below can fail, and the sabotage that makes it fail is named in the co
 | Requirement | Observable — what an outside party sees | Who can cause the condition | Verdict |
 | --- | --- | --- | --- |
 | §A.1 PKCE S256 (`openwop.requirement.0199.pkce-s256`) | the authorization URL carries `code_challenge_method=S256`; the verifier at the double's token endpoint hashes to the challenge | the suite, through the `authorize-start` seam and the AS double | seam-gated |
-| §A.2 `state` refused when unknown or replayed (`.state-single-use`) | zero token requests at the double for the forged or replayed callback | the suite (it plays the user agent) | seam-gated |
-| §A.3 same Subject (`.same-user-callback`) | zero token requests, no credential listed for the second Subject | the suite, with two credentials | seam-gated |
-| §A.4 `iss` / mix-up (`.iss-validated`) | zero token requests on a wrong or missing `iss`; for an issuer-less provider, distinct redirect URIs across two providers in the authorization URLs | the suite | seam-gated |
+| §A.2 `state` refused when unknown or replayed (`openwop.requirement.0199.state-single-use`) | zero token requests at the double for the forged or replayed callback | the suite (it plays the user agent) | seam-gated |
+| §A.3 same Subject (`openwop.requirement.0199.same-user-callback`) | zero token requests, no credential listed for the second Subject | the suite, with two credentials | seam-gated |
+| §A.4 `iss` / mix-up (`openwop.requirement.0199.iss-validated`) | zero token requests on a wrong or missing `iss`; for an issuer-less provider, distinct redirect URIs across two providers in the authorization URLs | the suite | seam-gated |
 | §A.5 fixed redirect URI | the same `redirect_uri` on every `authorize-start` for one provider, whatever the request carries | the suite | seam-gated |
-| §B.1 `resource` (`.resource-indicator`) | `resource` present on both requests at the double, equal to the canonical server URI | the suite (fake MCP server + double) | seam-gated |
-| §B.2 refuse missing `S256` (`.mcp-pkce-verified`) | registration or grant refused; zero authorization URLs issued | the suite | seam-gated |
-| §B.3 verify-not-select (`.mcp-metadata-bound`) | `connection_auth_metadata_mismatch`; zero requests to the PRM-named foreign issuer (a second double counts them) | the suite | seam-gated |
+| §B.1 `resource` (`openwop.requirement.0199.resource-indicator`) | `resource` present on both requests at the double, equal to the canonical server URI (major 2: planned `v2-oauth-mcp-reach-discovery`) | the suite (fake MCP server + double) | seam-gated |
+| §B.2 refuse missing `S256` (`openwop.requirement.0199.mcp-pkce-verified`) | registration or grant refused; zero authorization URLs issued | the suite | seam-gated |
+| §B.3 verify-not-select (`openwop.requirement.0199.mcp-metadata-bound`) | `connection_auth_metadata_mismatch`; zero requests to the PRM-named foreign issuer (a second double counts them); an issuer-less `reach.mcp` pack is refused the grant with zero authorization URLs (§E.2) | the suite | seam-gated |
 | §B.4 pinning | a changed PRM after registration is refused on the next grant | the suite (it rewrites its fake server's PRM) | seam-gated |
-| §C.2 suspend instead of fail (`.credential-interrupt`) | `interrupt.requested` `kind: credential`, status `waiting-input` | the suite, with the fixture and a Subject with no credential | witnessable-gated (on `oauth.credentialInterrupt`) |
+| §C.2 suspend instead of fail (`openwop.requirement.0199.credential-interrupt`) | `interrupt.requested` `kind: credential`, status `waiting-input` | the suite, with the fixture and a Subject with no credential | witnessable-gated (on `oauth.credentialInterrupt`) |
 | §C.2(b) `connector.auth_expired` precedes | event order in the log | the suite, via the `expire-refresh` seam | seam-gated |
 | §C.3 `connectUrl` not pre-authenticated | an unauthenticated GET of `connectUrl` does not start a grant (no authorization URL; `401` or a login redirect) | the suite | witnessable-gated |
-| §C.4 re-check on `authorized` (`.credential-resume-rechecked`) | `400 validation_error` while no credential exists | the suite | witnessable-gated |
+| §C.4 re-check on `authorized` (`openwop.requirement.0199.credential-resume-rechecked`) | `400 validation_error` while no credential exists | the suite | witnessable-gated |
 | §C.4 `declined` | node fails with `connector_auth_declined` | the suite | witnessable-gated |
-| C1: default unchanged (`.refresh-failure-fails-node`) | on a host without the facet, the refresh-failure leg fails the node with `connector_auth_expired` and raises no interrupt | the suite, via the `expire-refresh` seam | seam-gated (on `oauth`) |
+| C1: default unchanged (`openwop.requirement.0199.refresh-failure-fails-node`) | on a host without the facet, the refresh-failure leg fails the node with `connector_auth_expired` and raises no interrupt | the suite, via the `expire-refresh` seam | seam-gated (on `oauth`) |
 | §A.2 entropy and lifetime | nothing reliable: entropy cannot be measured from samples, and a 10-minute expiry needs a timed wait | — | **unwitnessable** as stated; its refusal half is `.state-single-use` |
 | §C.6 no interrupt solicits a secret (author rule) | nothing in general: whether a string field is a password is semantic | — | **unwitnessable in general**; its machine-checkable half is §D.2(d) |
-| §D.1 A2A projection (`.a2a-auth-required`) | `auth-required`, `interruptKind: credential`, `connectUrl` in the status message | the suite (A2A client) on a host advertising `a2a` and the facet | seam-gated (`a2a` is seam-gated in v2) |
-| §D.2(a–c) URL mode (`.mcp-url-mode`) | `mode: "url"` with `url` = `connectUrl`; `isError` with no form fallback when only form is declared; `input_required` repeated on an accept retry with no credential | the suite (MCP client) on a host with a mount | seam-gated |
-| §D.2(d) no form for nested or sensitive schemas (`.form-mode-no-secret`) | no `mode: "form"` in `inputRequests` for the two probe schemas | the suite, on a host with a mount and a fixture that raises them | seam-gated |
+| §D.1 A2A projection (`openwop.requirement.0199.a2a-auth-required`) | `auth-required`, `interruptKind: credential`, `connectUrl` in the status message | the suite (A2A client) on a host advertising `a2a` and the facet; major 2: the planned leg in RFC 0208's `v2-a2a-operation-map` | seam-gated (`a2a` is seam-gated in v2) |
+| §D.2(a–c) URL mode (`openwop.requirement.0199.mcp-url-mode`) | `mode: "url"` with `url` = `connectUrl`; `isError` with no form fallback when only form is declared; `input_required` repeated on an accept retry with no credential | the suite (MCP client) on a host with a v2 mount; major 2: the planned leg in RFC 0208's `v2-mcp-mount-map` | seam-gated |
+| §D.2(d) no form for nested or sensitive schemas (`openwop.requirement.0199.form-mode-no-secret`) | no `mode: "form"` in `inputRequests` for the two probe schemas | the suite, on a host with a v2 mount and a fixture that raises them; major 2: the planned leg in RFC 0208's `v2-mcp-mount-map` | seam-gated |
 | §D.3 no `content` for a URL-mode request | the retry's `ElicitResult` at the fake MCP server carries no `content` | the suite (fake MCP server as remote) | seam-gated |
 
 ## Alternatives considered
@@ -334,7 +342,7 @@ Every row below can fail, and the sabotage that makes it fail is named in the co
 
 1. **§D.2(b) answer shape when the client lacks URL mode.** `CallToolResult { isError: true }` tells the client "this call failed" while the run is in fact suspended and resolvable elsewhere. MCP 2026-07-28 retired the `-32042` URL-elicitation-required error (`schema.ts`: "2025-11-25 only", reserved). Should OpenWOP define a structured `isError` content convention so a client can find the REST resolve surface?
 2. **The reverse A2A direction.** Should a host that consumes an external agent in `AUTH_REQUIRED` be *required*, rather than permitted, to raise a `credential` interrupt when the peer's credential is obtainable through `host.oauth`? Left permissive: most peers' credentials are not `host.oauth` providers.
-3. **C3 fallback.** If the census finds published `reach.mcp` packs without `issuer`, the schema conditional becomes a host-side "MUST NOT authorize until `issuer` is declared". Decide at merge from the census.
+3. **C3 fallback.** *Resolved 2026-09-22:* the census found six published `reach.mcp` packs without `issuer`, so the host-side "MUST NOT authorize until `issuer` is declared" rule is the one adopted (§E.2); no schema conditional is added.
 4. **Device-code grant** (RFC 0047 Unresolved question 2). Headless and CLI connectors cannot open a `connectUrl`. The `credential` kind could carry a `user_code` + verification URI instead. Deferred until an adopter asks.
 5. **Incremental scopes** (RFC 0047 Unresolved question 3). `reason: "insufficient_scope"` is now expressible. Whether a host may request only the missing scopes, or must re-consent to all of them, is still open.
 
@@ -353,8 +361,8 @@ Every row below can fail, and the sabotage that makes it fail is named in the co
 - **Witness pole.**
   - MyndHyve is the only `oauth` host (tier-2).
   - v2-reference (tier-1) needs a synthetic `oauth` provider, the facet, and the `authorize-start` seam to witness §A–§C and the A2A projection.
-  - openwop-app's v1 MCP mount can witness §D.2.
-  - No v2 host has an MCP mount (gap G3).
+  - §D.1 and §D.2 are witnessed at major 2 on the v2 reference host's A2A server and MCP mount, which RFC 0208 builds. openwop-app's v1 MCP mount can exercise the v1 legs, which are non-gating (gap G3).
+  - **The `authorize-start` seam sits in the assertion path** of the PKCE, `state`, same-Subject and `iss` legs, which assert on the URL it returns. It is admissible only if it calls the host's production authorization-URL builder, and the bundle's notes say so. A seam that builds its own URL is the host measuring its own stub (GOVERNANCE side-revision rule; `review/arch-impl.md` R9).
 
 ## Acceptance criteria
 
@@ -363,8 +371,8 @@ Every row below can fail, and the sabotage that makes it fail is named in the co
 - [ ] Schemas (v1 + v2 + `spec-artifacts/` regeneration): E.1–E.4; `errors.json` E.5.
 - [ ] `oauth-same-user-binding` and `elicitation-form-no-secret` registered at `reference-impl`.
 - [ ] The scenarios above ship in a published suite, and each is shown able to fail by its named sabotage.
-- [ ] A committed host bundle carries `openwop.requirement.0199.pkce-s256`, `.state-single-use`, `.same-user-callback`, `.iss-validated` and `.credential-interrupt` at `executed-pass`, nothing relaxed. At least one host must be production (tier-2 MyndHyve, or tier-1 openwop-app if it adopts `oauth`).
-- [ ] `.mcp-url-mode` and `.form-mode-no-secret` `executed-pass` on a host with an MCP mount (openwop-app v1).
+- [ ] A committed host bundle carries `openwop.requirement.0199.pkce-s256`, `.state-single-use`, `.same-user-callback`, `.iss-validated` and `.credential-interrupt` at `executed-pass`, nothing relaxed. At least one host must be production (tier-2 MyndHyve, or tier-1 openwop-app if it adopts `oauth`). If the seams run on a 0%-traffic side revision, it is built from the production image and `host.build` records it as a side revision; the bundle notes state that `authorize-start` calls the production authorization-URL builder.
+- [ ] `.mcp-url-mode` and `.form-mode-no-secret` `executed-pass` on a committed **v2** bundle of a host with a v2 MCP mount (the v2 reference host, after RFC 0208's mount). The v1 legs on openwop-app's v1 bridge are supplementary and do not satisfy this box.
 - [ ] RFC 0156 §B retrospective review recorded. Until then, `Accepted` is **provisional** (register row `not-reviewed`).
 - [ ] CHANGELOG entry.
 
