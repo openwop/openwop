@@ -61,6 +61,19 @@ export interface McpInvocation {
   readonly revision: string;
 }
 
+/**
+ * RFC 0204: one request the server answered, with the JSON-RPC `result` (or
+ * `error`) it sent back, byte-for-byte as serialised. `ctx.mcp` rows compare a
+ * host's resolved value to THIS — the expected value is what the suite's server
+ * actually returned, never something read from the host.
+ */
+export interface McpExchange {
+  readonly method: string;
+  readonly params: unknown;
+  readonly result?: unknown;
+  readonly error?: unknown;
+}
+
 /** MCP 2026-07-28 spec-reserved error codes (§error-codes; the -32020..-32099
  *  range is reserved for the specification). */
 export const MCP_ERR = {
@@ -96,6 +109,34 @@ const NEEDS_INPUT_LOOP_TOOL = {
   inputSchema: { type: 'object', properties: { rounds: { type: 'integer', minimum: 1 } }, required: ['rounds'] },
 };
 
+/**
+ * RFC 0204 fixture tools (2026-07-28 only). `structured-echo` returns a fixed
+ * `CallToolResult` carrying `structuredContent` and the caller's `nonce` in
+ * `_meta`, so a host that re-wraps, drops `_meta` or answers from a cache
+ * cannot reproduce it; `always-error` answers `isError: true` with a fixed
+ * `content[]` (a tool error is a result, not a rejection).
+ */
+const STRUCTURED_ECHO_TOOL = {
+  name: 'structured-echo',
+  title: 'Structured echo',
+  description: 'Returns a fixed CallToolResult: text "ok", structuredContent { n: 7, nonce }, and _meta carrying the nonce.',
+  inputSchema: { type: 'object', properties: { nonce: { type: 'string' } }, required: ['nonce'], additionalProperties: false },
+  outputSchema: { type: 'object', properties: { n: { type: 'integer' }, nonce: { type: 'string' } }, required: ['n', 'nonce'], additionalProperties: false },
+  annotations: { readOnlyHint: true, destructiveHint: false, idempotentHint: true, openWorldHint: false },
+  _meta: { 'dev.openwop.conformance/fixture': 'rfc-0204' },
+};
+const ALWAYS_ERROR_TOOL = {
+  name: 'always-error',
+  description: 'Always answers a CallToolResult with isError: true and a fixed content[].',
+  inputSchema: { type: 'object', properties: {}, additionalProperties: false },
+  annotations: { readOnlyHint: true, destructiveHint: false, idempotentHint: true, openWorldHint: false },
+};
+export const ALWAYS_ERROR_CONTENT = [{ type: 'text', text: 'conformance: always-error is a tool error, reported inside the result' }] as const;
+/** RFC 0204 §D.11: the server claims read-only; a host MUST NOT believe it. */
+export const READONLY_CLAIM_PREFIX = 'conformance_readonly_claim_';
+/** Tools per `tools/list` page under 2026-07-28 (RFC 0204 §A.4: the host returns ONE page and forwards the cursor). */
+export const TOOLS_PAGE_SIZE = 3;
+
 export class McpFakeServer {
   private _server: Server | null = null;
   private _boundPort = 0;
@@ -105,6 +146,9 @@ export class McpFakeServer {
   /** RFC 0153 §D witness hook: when set, tool results carry an extension
    *  `_meta` key asserting authority the host MUST treat as opaque. */
   private _nextResultAssertsAuthority = false;
+  private readonly _exchanges: McpExchange[] = [];
+  /** Per-instance, so no host can have classified the read-only-claim tool in advance. */
+  private readonly _claimNonce = Math.random().toString(36).slice(2, 10);
 
   /**
    * @param opts.protocolVersions revisions spoken. Default `['2026-07-28',
@@ -166,7 +210,29 @@ export class McpFakeServer {
     return this._invocations;
   }
 
+  /** RFC 0204: every answered request with the result/error it was sent. */
+  exchanges(): readonly McpExchange[] {
+    return this._exchanges;
+  }
+
+  /** RFC 0204 §D.11: the name of the tool this server annotates `readOnlyHint: true` (unknowable before start). */
+  readonlyClaimToolName(): string {
+    return `${READONLY_CLAIM_PREFIX}${this._claimNonce}`;
+  }
+
+  /** The 2026-07-28 `tools/list` catalogue, in page order. */
+  currentTools(): ReadonlyArray<Record<string, unknown>> {
+    const claim = {
+      name: this.readonlyClaimToolName(),
+      description: 'Claims to be read-only. It is not classified by any host; RFC 0204 §D.11 makes it safetyTier "write".',
+      inputSchema: { type: 'object', properties: {}, additionalProperties: false },
+      annotations: { readOnlyHint: true, destructiveHint: false },
+    };
+    return [ECHO_TOOL, STRUCTURED_ECHO_TOOL, ALWAYS_ERROR_TOOL, claim, NEEDS_INPUT_TOOL, NEEDS_INPUT_LOOP_TOOL];
+  }
+
   reset(): void {
+    this._exchanges.length = 0;
     this._invocations.length = 0;
     this._stateCounter = 0;
     this._nextResultAssertsAuthority = false;
@@ -235,11 +301,23 @@ export class McpFakeServer {
     }
 
     if (revision === CURRENT) {
-      json(...this._respondCurrent(rpc, headers));
+      const [status, payload] = this._respondCurrent(rpc, headers);
+      if (typeof rpc.method === 'string') {
+        // Recorded as the client will parse it (a JSON round trip), so a
+        // deep-equal against a host's resolved value compares like with like.
+        const wire = JSON.parse(JSON.stringify(payload)) as { result?: unknown; error?: unknown };
+        this._exchanges.push({ method: rpc.method, params: rpc.params ?? null, ...('result' in wire ? { result: wire.result } : {}), ...('error' in wire ? { error: wire.error } : {}) });
+      }
+      json(status, payload);
       return;
     }
     // legacy (2025-06-18 handshake, or an explicit legacy header)
-    json(200, this._respondLegacy(rpc));
+    const legacy = this._respondLegacy(rpc);
+    if (typeof rpc.method === 'string') {
+      const wire = JSON.parse(JSON.stringify(legacy)) as { result?: unknown; error?: unknown };
+      this._exchanges.push({ method: rpc.method, params: rpc.params ?? null, ...('result' in wire ? { result: wire.result } : {}), ...('error' in wire ? { error: wire.error } : {}) });
+    }
+    json(200, legacy);
   }
 
   // ─── MCP 2026-07-28 ────────────────────────────────────────────────────────
@@ -282,8 +360,21 @@ export class McpFakeServer {
           cacheScope: 'public',
         });
 
-      case 'tools/list':
-        return ok({ resultType: 'complete', tools: [ECHO_TOOL, NEEDS_INPUT_TOOL, NEEDS_INPUT_LOOP_TOOL], ttlMs: 60_000, cacheScope: 'public' });
+      case 'tools/list': {
+        // RFC 0204 §A.4: paged, so a host that merges pages or drops the
+        // cursor is visible. The cursor is opaque to the client; an unknown
+        // one is refused, never silently read as page 1.
+        const tools = this.currentTools();
+        const cursor = params['cursor'];
+        let start = 0;
+        if (cursor !== undefined) {
+          const m = typeof cursor === 'string' ? /^fake-page:(\d+)$/.exec(cursor) : null;
+          if (m === null || Number(m[1]) <= 0 || Number(m[1]) >= tools.length) return err(200, -32602, `Invalid cursor: ${JSON.stringify(cursor)}`);
+          start = Number(m[1]);
+        }
+        const end = Math.min(tools.length, start + TOOLS_PAGE_SIZE);
+        return ok({ resultType: 'complete', tools: tools.slice(start, end), ...(end < tools.length ? { nextCursor: `fake-page:${end}` } : {}), ttlMs: 60_000, cacheScope: 'private' });
+      }
 
       case 'tools/call': {
         const name = params['name'];
@@ -297,6 +388,16 @@ export class McpFakeServer {
             : {};
           this._nextResultAssertsAuthority = false;
           return ok({ resultType: 'complete', content: [{ type: 'text', text }], isError: false, ...extra });
+        }
+        if (name === 'structured-echo') {
+          const nonce = String(((params['arguments'] ?? {}) as { nonce?: unknown }).nonce ?? '');
+          return ok({ resultType: 'complete', content: [{ type: 'text', text: 'ok' }], structuredContent: { n: 7, nonce }, _meta: { 'dev.openwop.conformance/nonce': nonce } });
+        }
+        if (name === 'always-error') {
+          return ok({ resultType: 'complete', content: [...ALWAYS_ERROR_CONTENT], isError: true });
+        }
+        if (name === this.readonlyClaimToolName()) {
+          return ok({ resultType: 'complete', content: [{ type: 'text', text: 'this tool claimed to be read-only' }] });
         }
         if (name === 'needs_input_loop') {
           // The ceiling fixture (RFC 0175 §E.1): re-issues `input_required` for

@@ -27,6 +27,11 @@ The v1 description,
 standalone v2 interoperability contract. A future revision can replace this
 boundary with normative behavior, schemas, and a behavioral witness.
 
+For MCP access, the v1 `ctx.dataIntegration.fetchMCP` operation is superseded
+by `ctx.mcp` ([`host-services.md`](../../core/host-services.md) §`mcp`, RFC 0204),
+which returns MCP results unaltered. Retiring `fetchMCP` from an organization's
+`dataIntegration` record is that organization's decision.
+
 ## Conformance
 
 The current `claims-check` witness validates only that the discovery claim is

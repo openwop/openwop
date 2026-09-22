@@ -26,6 +26,11 @@
  *   5. BY-ID — `GET /v1/tools/{toolId}?view=compact` returns one schema-valid
  *      CompactToolDescriptor.
  *
+ * MAJORS [1, 2] since suite 2.36.0 (RFC 0204 G3): `spec/v2/core/tool-catalog.md`
+ * §Views and sessions restates §compact; the gate and paths resolve the major
+ * (`toolCatalogGate(…, 'compactView')`, `toolsPath`) and the schema is the v2
+ * `compact-tool-descriptor.schema.json` at major 2.
+ *
  * Spec references:
  *   - https://github.com/openwop/openwop/blob/main/spec/v1/tool-catalog.md (§compact)
  *   - https://github.com/openwop/openwop/blob/main/RFCS/0112-compact-tool-projection.md
@@ -37,10 +42,12 @@ import { join } from 'node:path';
 import Ajv2020 from 'ajv/dist/2020.js';
 import addFormats from 'ajv-formats';
 import { driver } from '../lib/driver.js';
-import { behaviorGate } from '../lib/behavior-gate.js';
 import { SCHEMAS_DIR } from '../lib/paths.js';
+import { targetMajor } from '../lib/seams.js';
+import { v2Validator } from '../lib/v2.js';
 import {
-  readToolCatalogCap,
+  toolCatalogGate,
+  toolsPath,
   listToolsCompact,
   COMPACT_DROPPED_FIELDS,
   findBannedInputSchemaKeyword,
@@ -51,6 +58,15 @@ import { softSkip } from '../lib/soft-skip.js';
 
 function loadSchema(name: string): Record<string, unknown> {
   return JSON.parse(readFileSync(join(SCHEMAS_DIR, name), 'utf8')) as Record<string, unknown>;
+}
+
+/** The CompactToolDescriptor validator for the major in play. */
+function compactValidator(): (d: unknown) => { ok: boolean; errors: string } {
+  if (targetMajor() === 2) return v2Validator('compact-tool-descriptor');
+  const ajv = new Ajv2020({ strict: false, allErrors: true });
+  addFormats(ajv);
+  const validate = ajv.compile(loadSchema('compact-tool-descriptor.schema.json'));
+  return (d: unknown) => ({ ok: validate(d) as boolean, errors: ajv.errorsText(validate.errors) });
 }
 
 /** Extract the `toolId` set from a `GET /v1/tools` body, tolerating both the
@@ -73,12 +89,8 @@ function toolIdSet(body: unknown): Set<string> {
 
 describe('tool-catalog-compact-projection (RFC 0112 §compact)', () => {
   it('serves the { tools: CompactToolDescriptor[] } projection — closed shape, bounded inputSchema, same toolId set as standard', async () => {
-    const cap = await readToolCatalogCap();
-    if (!behaviorGate('openwop-tool-catalog-compact', cap?.compactView === true)) return;
-
-    const ajv = new Ajv2020({ strict: false, allErrors: true });
-    addFormats(ajv);
-    const validate = ajv.compile(loadSchema('compact-tool-descriptor.schema.json'));
+    if (!(await toolCatalogGate('openwop-tool-catalog-compact', 'compactView'))) return;
+    const validate = compactValidator();
 
     // ---- Leg 1: the compact envelope (§compact) -------------------------
     const compact = await listToolsCompact();
@@ -86,9 +98,10 @@ describe('tool-catalog-compact-projection (RFC 0112 §compact)', () => {
 
     for (const t of compact) {
       // ---- Leg 2: schema validity + heavy fields dropped ----------------
+      const v = validate(t);
       expect(
-        validate(t),
-        req('openwop.it.tool-catalog-compact-projection.serves-the-tools-compacttooldescriptor-projection-closed-shape-bounded-inputsche', 'compact-tool-descriptor.schema.json', `each CompactToolDescriptor MUST validate (${ajv.errorsText(validate.errors)})`),
+        v.ok,
+        req('openwop.it.tool-catalog-compact-projection.serves-the-tools-compacttooldescriptor-projection-closed-shape-bounded-inputsche', 'compact-tool-descriptor.schema.json', `each CompactToolDescriptor MUST validate (${v.errors})`),
       ).toBe(true);
       for (const f of COMPACT_DROPPED_FIELDS) {
         expect(
@@ -115,7 +128,7 @@ describe('tool-catalog-compact-projection (RFC 0112 §compact)', () => {
     }
 
     // ---- Leg 4: projection completeness vs the standard view -------------
-    const standardRes = await driver.get('/v1/tools');
+    const standardRes = await driver.get(toolsPath());
     const standardIds = toolIdSet(standardRes.json);
     const compactIds = new Set<string>();
     for (const t of compact) {
@@ -134,11 +147,12 @@ describe('tool-catalog-compact-projection (RFC 0112 §compact)', () => {
     // ---- Leg 5: by-id compact round-trip --------------------------------
     if (compact.length > 0 && typeof compact[0]!.toolId === 'string') {
       const id = compact[0]!.toolId;
-      const one = await driver.get(`/v1/tools/${encodeURIComponent(id)}?view=compact`);
+      const one = await driver.get(toolsPath(`/${encodeURIComponent(id)}?view=compact`));
       if (one.status === 200) {
+        const v1 = validate(one.json);
         expect(
-          validate(one.json),
-          req('openwop.it.tool-catalog-compact-projection.serves-the-tools-compacttooldescriptor-projection-closed-shape-bounded-inputsche', 'compact-tool-descriptor.schema.json', `GET /v1/tools/{toolId}?view=compact MUST return a valid CompactToolDescriptor (${ajv.errorsText(validate.errors)})`),
+          v1.ok,
+          req('openwop.it.tool-catalog-compact-projection.serves-the-tools-compacttooldescriptor-projection-closed-shape-bounded-inputsche', 'compact-tool-descriptor.schema.json', `GET /v1/tools/{toolId}?view=compact MUST return a valid CompactToolDescriptor (${v1.errors})`),
         ).toBe(true);
         const got = one.json;
         expect(

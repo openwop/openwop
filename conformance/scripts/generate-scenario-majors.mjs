@@ -19,7 +19,10 @@ const OUT = join(CONF, 'scenario-majors.json');
 // from an unadvertised family in the bundle) or its paths are hard-coded `/v1/`
 // (a suite 404 reported as a host defect). See the docblock of
 // memory-attribution-replay-stable for the pattern.
-const BOTH_MAJORS = new Set(['fixtures-valid.test.ts', 'memory-attribution-replay-stable.test.ts']);
+// RFC 0204 G3: the three tool-catalog files, once their gate (toolCatalogGate)
+// and paths (toolsPath) resolve the major — spec/v2/core/tool-catalog.md
+// restates every v1 MUST they check.
+const BOTH_MAJORS = new Set(['fixtures-valid.test.ts', 'memory-attribution-replay-stable.test.ts', 'tool-catalog-compact-projection.test.ts', 'tool-catalog-projection.test.ts', 'tool-descriptor-shape.test.ts']);
 
 /**
  * A third half-requirement, and it fires at the only moment it can be caught.

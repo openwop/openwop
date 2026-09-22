@@ -60,3 +60,9 @@ export function v2Validator(name: string): (doc: unknown) => { ok: boolean; erro
   const validate = a.getSchema(id) ?? a.compile(JSON.parse(readFileSync(join(SCHEMAS_DIR, 'v2', ...name.split('/')), 'utf8')) as Record<string, unknown>);
   return (doc: unknown) => ({ ok: validate(doc) as boolean, errors: a.errorsText(validate.errors, { separator: '; ' }) });
 }
+/** A validator for a `$ref` into the v2 tree (`<file>.schema.json#/$defs/<name>`), resolved against the registered v2 schemas. */
+export function v2RefValidator(ref: string): (doc: unknown) => { ok: boolean; errors: string } {
+  const a = v2Ajv();
+  const validate = a.getSchema(`https://openwop.dev/spec/v2/${ref}`) ?? a.compile({ $ref: `https://openwop.dev/spec/v2/${ref}` });
+  return (doc: unknown) => ({ ok: validate(doc) as boolean, errors: a.errorsText(validate.errors, { separator: '; ' }) });
+}
