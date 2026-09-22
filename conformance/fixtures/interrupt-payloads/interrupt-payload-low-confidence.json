@@ -1,0 +1,1 @@
+{ "kind": "low-confidence", "key": "run-1:supervisor:0", "data": { "agentId": "core.orchestrator.supervisor", "threshold": 0.7, "observed": 0.42 } }

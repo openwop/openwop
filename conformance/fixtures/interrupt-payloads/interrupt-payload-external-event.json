@@ -1,0 +1,1 @@
+{ "kind": "external-event", "key": "run-1:wait:0", "data": { "eventType": "stripe.checkout.completed", "correlation": { "sessionId": "cs_1" } } }
