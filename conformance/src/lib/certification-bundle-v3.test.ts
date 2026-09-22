@@ -231,3 +231,25 @@ describe('opt-outs are derived from signed rows and checked against the signed d
     expect(v.rejections.map((r) => r.kind)).not.toContain('opted-out-but-advertised');
   });
 });
+
+describe('opt-outs derive from rows shaped like a REAL bundle (2.35.1)', () => {
+  // Exactly the shapes MyndHyve's committed 2.35.0 bundle carries: a file row
+  // and per-test rows, never an openwop.profile.* row.
+  const OLD = 'operator declared an honest opt-out via OPENWOP_OPTED_OUT_PROFILES';
+  const FILE = 'every test returned early through behaviorGate with zero assertions: operator opted the profile or family out (OPENWOP_OPTED_OUT_PROFILES)';
+  it('pins the defect: a 2.35.0-shaped bundle names nothing, so nothing is derived', () => {
+    expect(optedOutFromRows([
+      { id: 'openwop.scenario.v2-pack-isolation', result: 'skipped', detail: FILE },
+      { id: 'openwop.it.v2-pack-isolation.fs-read', result: 'skipped', detail: OLD },
+    ])).toEqual([]);
+  });
+  it('derives the names a 2.35.1 per-test row carries, deduplicated', () => {
+    expect(optedOutFromRows([
+      { id: 'openwop.scenario.v2-pack-isolation', result: 'skipped', detail: FILE },
+      { id: 'openwop.it.v2-pack-isolation.fs-read', result: 'skipped', detail: `${OLD}: family.sandbox` },
+      { id: 'openwop.it.v2-pack-isolation.fs-write', result: 'skipped', detail: `${OLD}: family.sandbox` },
+      { id: 'openwop.it.v2-forms.when', result: 'skipped', detail: `${OLD}: family.forms` },
+      { id: 'openwop.it.v2-x.pass', result: 'executed-pass', detail: `${OLD}: family.ignored` },
+    ])).toEqual(['family.forms', 'family.sandbox']);
+  });
+});

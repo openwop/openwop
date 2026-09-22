@@ -163,11 +163,25 @@ export interface V3Verdict {
 
 const OPT_OUT_ROW = 'openwop.profile.';
 /** The opt-outs a bundle's signed rows record. */
+/**
+ * 2.35.1. The 2.35.0 version read only `openwop.profile.<name>` rows — which
+ * never reach a bundle — so on MyndHyve's real bundle (four declared opt-outs)
+ * it derived NOTHING, and `opted-out-but-advertised` could not fire: a rule
+ * pinned only by synthetic self-test rows. The name now rides on the signed
+ * per-test rows' detail (`…OPENWOP_OPTED_OUT_PROFILES: <name>`); both carriers
+ * are read. A bundle cut before 2.35.1 carries no names and derives an empty set.
+ */
+const OPT_OUT_DETAIL = /OPENWOP_OPTED_OUT_PROFILES: ([a-z][A-Za-z0-9_.-]*)/;
 export function optedOutFromRows(rows: ReadonlyArray<{ readonly id: string; readonly result: string; readonly detail?: string }>): string[] {
-  return rows
-    .filter((r) => r.id.startsWith(OPT_OUT_ROW) && r.result === 'skipped' && (r.detail ?? '').includes('OPENWOP_OPTED_OUT_PROFILES'))
-    .map((r) => r.id.slice(OPT_OUT_ROW.length))
-    .sort();
+  const names = new Set<string>();
+  for (const r of rows) {
+    if (r.result !== 'skipped') continue;
+    const d = r.detail ?? '';
+    if (r.id.startsWith(OPT_OUT_ROW) && d.includes('OPENWOP_OPTED_OUT_PROFILES')) names.add(r.id.slice(OPT_OUT_ROW.length));
+    const m = OPT_OUT_DETAIL.exec(d);
+    if (m) names.add(m[1] as string);
+  }
+  return [...names].sort();
 }
 
 export function verifyBundleV3(bundle: BundleV3, opts: VerifyV3Options = {}): V3Verdict {
