@@ -12474,6 +12474,125 @@
       ]
     },
     {
+      "id": "openwop.gap.0210.1",
+      "rfc": "0210",
+      "local": "G1",
+      "section": "§D.10",
+      "surface": "`identity.md` §2.2's `anonymous` row has `—` in the `revocation` column, while `auth.schema.json` REQUIRES `revocation` on every lane member. An `anonymous` lane therefore must advertise a value the table does not name; openwop-app advertises `next-request` (`evidence/v2-host-bundles/openwop-workflow-engine.json`). The §D.9 leg leaves `anonymous` unconstrained for exactly this reason, which is a hole in an assertion whose whole point is to have no holes.",
+      "witness": "unclassified",
+      "requirementId": null,
+      "disposition": "transferred",
+      "target": "spec/v2/core/identity.md",
+      "sources": [
+        {
+          "file": "RFCS/registers/0210-lane-revocation-rule-is-measured.gaps.md",
+          "token": "G1"
+        }
+      ]
+    },
+    {
+      "id": "openwop.gap.0210.2",
+      "rfc": "0210",
+      "local": "G2",
+      "section": "§E.11",
+      "surface": "`revocation` has **no registry file**. Unlike `spec/v2/errors.json` and `spec/v2/event-codemap.json` it lives inline in the facet schema, so `overview.md` §0's \"adding a row to its registry and regenerating\" has no literal referent, and the unknown-member tolerance rule attaches to it only by RFC 0197 §A.2 R4's wording \"registry-backed **or advertised** enum\". §E.11 states the rule explicitly to close that reading; it does not create the file.",
+      "witness": "unclassified",
+      "requirementId": null,
+      "disposition": "transferred",
+      "target": "spec/v2/facets/auth.schema.json",
+      "sources": [
+        {
+          "file": "RFCS/registers/0210-lane-revocation-rule-is-measured.gaps.md",
+          "token": "G2"
+        }
+      ]
+    },
+    {
+      "id": "openwop.gap.0210.3",
+      "rfc": "0210",
+      "local": "G3",
+      "section": "Unresolved question 2",
+      "surface": "`revocationWindowSeconds` is not conditionally REQUIRED by `auth.schema.json` — only by `identity.md` §2.2's prose and by one suite leg. A lane advertising `exp-and-recheck` with no window is schema-valid today and is caught only by the suite. This RFC does not fix it, for the same reason it keeps the full lane → rule binding out of the schema.",
+      "witness": "unclassified",
+      "requirementId": null,
+      "disposition": "transferred",
+      "target": "COMPATIBILITY.md",
+      "sources": [
+        {
+          "file": "RFCS/registers/0210-lane-revocation-rule-is-measured.gaps.md",
+          "token": "G3"
+        }
+      ]
+    },
+    {
+      "id": "openwop.gap.0210.4",
+      "rfc": "0210",
+      "local": "G4",
+      "section": "§B.4 / Conformance",
+      "surface": "The `v2-lane-exp-only-bound` legs need an issuer the suite controls, so it can mint a correctly signed token with an arbitrary `iat`/`exp` pair against a JWKS the host trusts. That is the existing `OPENWOP_TEST_OIDC_ISSUER_URL` harness seam, which means the four §B rows are **harness-gated**, never unaided. A host that does not run the harness records them `inapplicable`.",
+      "witness": "unclassified",
+      "requirementId": null,
+      "disposition": "externally-gated",
+      "target": "host-runs-oidc-issuer-harness",
+      "sources": [
+        {
+          "file": "RFCS/registers/0210-lane-revocation-rule-is-measured.gaps.md",
+          "token": "G4"
+        }
+      ]
+    },
+    {
+      "id": "openwop.gap.0210.5",
+      "rfc": "0210",
+      "local": "G5",
+      "section": "§F.13",
+      "surface": "MyndHyve's committed bundle (`evidence/v2-host-bundles/myndhyve.json:488`) advertises `short-lived` / 3600 on `oidc` while the host performs no revocation re-check, and `INTEROP-MATRIX.md` row 18 certifies that bundle for `openwop-discovery-core` **and** `openwop-core-standard`. The §D.9 leg fails that advertisement from the suite minor that ships it, so MyndHyve's next cut is red until the host is corrected.",
+      "witness": "unclassified",
+      "requirementId": null,
+      "disposition": "externally-gated",
+      "target": "myndhyve-revocation-correction",
+      "sources": [
+        {
+          "file": "RFCS/registers/0210-lane-revocation-rule-is-measured.gaps.md",
+          "token": "G5"
+        }
+      ]
+    },
+    {
+      "id": "openwop.gap.0210.6",
+      "rfc": "0210",
+      "local": "G6",
+      "section": "§Motivation 2",
+      "surface": "openwop-app advertises `openwop-auth-oidc-user-bearer` at v1 (`routes/discovery.ts:436–442`) and omits the `oidc` lane at v2 — a **capability that disappears between majors on a truthful host**. `exp-only` removes the cause, but nothing in the corpus notices a v1 profile with no v2 lane, so the next vocabulary gap produces the same regression silently.",
+      "witness": "unclassified",
+      "requirementId": null,
+      "disposition": "transferred",
+      "target": "conformance/src/scenarios",
+      "sources": [
+        {
+          "file": "RFCS/registers/0210-lane-revocation-rule-is-measured.gaps.md",
+          "token": "G6"
+        }
+      ]
+    },
+    {
+      "id": "openwop.gap.0210.7",
+      "rfc": "0210",
+      "local": "G7",
+      "section": "§B.7",
+      "surface": "The SHOULD ceiling of one hour is a judgement, not a derivation: no upstream document states a maximum access-token lifetime (RFC 9068, OAuth 2.1, MCP and RFC 9728 were read in full for one). One hour is Firebase's ID-token lifetime and the number both hosts would advertise, which makes it a description of current practice rather than a standard.",
+      "witness": "unclassified",
+      "requirementId": null,
+      "disposition": "closed",
+      "target": null,
+      "sources": [
+        {
+          "file": "RFCS/registers/0210-lane-revocation-rule-is-measured.gaps.md",
+          "token": "G7"
+        }
+      ]
+    },
+    {
       "id": "openwop.gap.spec.a2a-integration.g1",
       "rfc": "0152",
       "local": "G1",
