@@ -4,7 +4,7 @@
 
 ## Why this exists
 
-v1 negotiated on one scalar, could not advertise two majors, split `engineVersion` across two types, and presumed a `/v2/` path space that the `/v1/v1` defect already showed is the wrong model. This document is the one place a v2 host reads to learn how a major is selected, what each version axis means, and what a release is.
+How a v2 host selects a major, what each version axis means, and what a release is.
 
 ## 1. Major negotiation (RFC 0172 §A)
 
@@ -12,19 +12,17 @@ v1 negotiated on one scalar, could not advertise two majors, split `engineVersio
 
 A v2 host MUST advertise `protocolVersions[]` (grammar `^(0|[1-9][0-9]*)\.(0|[1-9][0-9]*)$` per member) containing every `<major>.<minor>` it serves, and a root `preferredVersion` that MUST be a member of `protocolVersions[]`. Both are REQUIRED root metadata in `schemas/v2/capabilities.schema.json` (see `capabilities.md`). Through the overlap a host serves `["1.<n>", "2.<m>"]`; after v1 end-of-support it serves `["2.<m>"]`.
 
-**Through the overlap `preferredVersion` MUST name a 1.x member.** A header-less request is a v1 client's request: `capabilities.md` §1 makes the header-less representation the v1 document, and §1.3 makes the header-less default `preferredVersion`'s major, so on a host whose `protocolVersions[]` contains any `1.x` member the two rules agree only when `preferredVersion` is that `1.x`. A host that drops v1 from `protocolVersions[]` advertises a `2.x` `preferredVersion` and its header-less representation becomes the closed v2 root. On a host serving a single major, `preferredVersion` MUST equal `protocolVersion` (RFC 0179 §A.1). A v2 consumer reads `preferredVersion` as the header-less default; when it is absent on a v1 document the consumer's default is `max(protocolVersions[])`, else `protocolVersion` (RFC 0179 §A.2). The suite's `--target-major` defaults from it (RFC 0168 §D.3).
+**Through the overlap `preferredVersion` MUST name a 1.x member**, because a header-less request is a v1 client's (`capabilities.md` §1; §1.3). A host that drops v1 from `protocolVersions[]` advertises a `2.x` `preferredVersion` and its header-less representation becomes the closed v2 root. On a host serving a single major, `preferredVersion` MUST equal `protocolVersion` (RFC 0179 §A.1). A v2 consumer reads `preferredVersion` as the header-less default; when it is absent on a v1 document the consumer's default is `max(protocolVersions[])`, else `protocolVersion` (RFC 0179 §A.2). The suite's `--target-major` defaults from it (RFC 0168 §D.3).
 
 ### 1.2 Paths
 
 v1 operations keep their `/v1/…` path keys unchanged through the overlap. v2 operations are unversioned path keys on a bare origin (`servers[].url = https://{host}`): `/runs`, `/runs/{runId}`, `/.well-known/openwop`. There is no `/v2/` path space. An unversioned path is the v2 surface; the v1 MUST that servers answer `400` for unversioned roots is retracted for v2.
 
-A host that advertises a major in `protocolVersions[]` MUST reach, under that major, every operation **named in `spec/v2/path-manifest.json`** that it serves under the other. Advertising a major is a claim about the **path space**, not about `/.well-known/openwop` alone — that resource's representation is *selected* by the request header (§1.3), so it answers correctly for a host that has mounted nothing else, and every discovery-level probe of the advertisement passes with it. Concretely: if `/v1/<op>` answers and the unversioned `/<op>` returns `404` under the advertised major, the advertisement overstates what the host serves and the host MUST NOT advertise that major until the surface is reachable. The pairing is normative because a lone `404` cannot distinguish *"this host does not serve that operation"* from *"this host serves it and did not mount it under this major"*, and only the second is a defect.
+A host that advertises a major in `protocolVersions[]` MUST reach, under that major, every operation **named in `spec/v2/path-manifest.json`** that it serves under the other: advertising a major is a claim about the **path space**, not about `/.well-known/openwop` alone (§1.3 selects that resource's representation). If `/v1/<op>` answers and the unversioned `/<op>` returns `404` under the advertised major, the host MUST NOT advertise that major until the surface is reachable.
 
-The manifest defines the scope of this pairing rule. Seam paths and proprietary
-paths are not manifest operations and do not require a per-major twin. The
-canonical OpenAPI therefore contains no conformance-seam operation.
+Seam and proprietary paths are not manifest operations and need no per-major twin.
 
-`spec/v2/path-manifest.json` (generated) carries operations (`method`, `path`, `operationId`) and channels (`name`, `address`) on a bare origin, and **every path in it is unversioned** — there are no `/v1` rows. The `/v1` twin of a manifest row is derived by prefixing, which is what the pairing above compares. OpenAPI (`api/v2/openapi.yaml`), AsyncAPI (`api/v2/asyncapi.yaml`), and any kept proto MUST resolve to identical absolute paths for the shared event stream (`scripts/check-path-parity.mjs`); the canonical OpenAPI MUST contain no seam or test-mode operation (those live in the seams profile, see `conformance.md`).
+`spec/v2/path-manifest.json` (generated) carries operations (`method`, `path`, `operationId`) and channels (`name`, `address`) on a bare origin, and **every path in it is unversioned** — there are no `/v1` rows. The `/v1` twin of a manifest row is derived by prefixing, which is what the pairing above compares. OpenAPI (`api/v2/openapi.yaml`), AsyncAPI (`api/v2/asyncapi.yaml`), and any kept proto MUST resolve to identical absolute paths for the shared event stream (`scripts/check-path-parity.mjs`) (seams: `conformance.md`).
 
 ### 1.3 The request header
 
@@ -62,10 +60,6 @@ Otherwise the page MUST move off the shared name.
 
 When both majors are advertised, a v2 client MUST select the highest major it implements that the host lists; a v1 client (no header, `/v1/` paths) is unaffected. `minClientVersion` (axis 15, grammar as axis 1) is a MUST: a host MAY refuse a client below it with `426` `client_version_unsupported`.
 
-`OpenWOP-Version` selects by major. The `<major>.<minor>` spelling is accepted so
-a client may echo a `protocolVersions[]` member. Minor compatibility is governed
-by `minClientVersion` and the additive-change rules.
-
 ## 2. The 18 version axes (RFC 0172 §B; RFC 0167 §E.1)
 
 `unify` = one type and grammar with a codemod; `first-class` = own schema-enforced grammar and negotiation rule; `retire` = absorbed into the capability record's `{status, since, until?}`; `delete` = removed with a register row.
@@ -99,7 +93,7 @@ One grammar covers protocol, envelope-kind, and pack axes wherever a version is 
 
 ### 2.2 `eventLogSchemaVersion` (axis 4; RFC 0176 §A.2)
 
-`eventLogSchemaVersion` is the era key. A v2 host MUST stamp `3` on every run it creates. A run document without the field on a store that has ever been written by a v1 host MUST read as `2` (v1 era). The v1 rule for `< 2` (snapshot fallback, no projection write-through) is unchanged. Discovery advertises the value the host writes for new runs and nothing else; the schema floor is `minimum 2`. The reader contract is `persistence.md`.
+`eventLogSchemaVersion` is the era key; the schema floor is `minimum 2`. Its stamping, absent-⇒-`2` and discovery rules are `persistence.md` §"The era key"; the reader contract is `persistence.md`.
 
 ## 3. Where v2 lives (RFC 0172 §C)
 
@@ -117,12 +111,11 @@ Through the overlap a host MUST advertise both majors (§1.1), MUST emit `OpenWO
 
 **A run minted under major 1 and read under major 2 MUST use the tenant-bound
 projection** `<tenantId>/<v1-id>` (`identity.md` §5). A host MUST NOT return a
-bare v1 id in a major-2 response. The tenant segment is required for the
-`id_tenant_mismatch` check; `ids.schema.json` has no legacy unprefixed branch.
+bare v1 id in a major-2 response.
 
 The overlap ends at v1 end-of-support (`overview.md`), when `protocolVersions[]` drops the `1.<n>` member and every alias carrying the `v1-end-of-support` trigger is removed.
 
-**Retirement is atomic, and that is a consequence of §1.1 rather than a separate rule.** Through the overlap `preferredVersion` MUST name a `1.x` member; a host that drops v1 from `protocolVersions[]` advertises a `2.x` `preferredVersion`. There is no legal intermediate state in which both majors are advertised and `2.x` is preferred, so flipping `preferredVersion` ahead of the drop is not a smaller first step — it is the same step. Dropping v1 therefore retires the whole `/v1` path space at once, not incrementally.
+**Retirement is atomic.** §1.1 admits no state in which both majors are advertised and `2.x` is preferred, so dropping v1 retires the whole `/v1` path space at once.
 
 **Retirement changes every header-less request's default contract.** Before
 end-of-support, a header-less unversioned request uses major 1; afterward it uses
@@ -134,15 +127,4 @@ colliding route or apply §1.4 content negotiation.
 
 ## 6. Migration rows (RFC 0172)
 
-| Row | v1 | v2 |
-| --- | --- | --- |
-| `C5.1` | `engineVersion` integer at root, string on five carriers | integer everywhere; codemod `engine-version-unify` |
-| `C5.3` | — | root `preferredVersion` |
-| `C5.4` | — | `OpenWOP-Version` request/response header; three error codes |
-| `C5.5` | `/v1/<op>` path keys | unversioned `/<op>` keys (v1 keys retained through the overlap) |
-| `C5.6` | `400` for unversioned roots | unversioned roots are the v2 surface |
-| `C5.7` | `$id` base `/spec/v1/` | `/spec/v2/` (new files; v1 `$id`s immutable) |
-| `C5.8` | `minClientVersion` advisory | MUST (§1.5) |
-| `C5.9` | `info.version` hand-maintained | generated from the corpus tag |
-
-Row `C5.2` (channel state-key prefixes → typed channels) is owned by `events.md`. Every row is a `spec/v1/migrations.json` entry; the persisted-data disposition for each is `not-persisted` except `C5.1` (legacy-stamped) and `C5.7` (never-upgraded).
+Rows `C5.1`–`C5.9` are `spec/v1/migrations.json` entries (`C5.2` is owned by `events.md`); the persisted-data disposition for each is `not-persisted` except `C5.1` (legacy-stamped) and `C5.7` (never-upgraded).

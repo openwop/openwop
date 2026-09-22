@@ -5,11 +5,11 @@
 
 ## Why this exists
 
-A form-content pack ships declarative form templates a host renders in its own chrome. v1 templates had no conditional visibility, no localization, and no validation beyond `required` and `format`. v2 adds all three by reusing constructs the corpus already defines. The manifest is `schemas/v2/form-content-pack-manifest.schema.json`; installation and signing follow packs.md.
+A form-content pack ships declarative form templates a host renders in its own chrome. The manifest is `schemas/v2/form-content-pack-manifest.schema.json`; installation and signing follow packs.md.
 
 ## Conditional visibility
 
-A field MAY carry `when: <EdgeCondition>`. The grammar is the `WorkflowEdge.condition` object `{ type, left, right }` of `schemas/v2/workflow-definition.schema.json`, with the operator set of workflow-chain-packs.md §"Edge conditions": `type` is one of `expression`, `equals`, `notEquals`, `contains`, `regex`, `truthy`, `falsy`; `truthy` and `falsy` take `left` only. A host MUST evaluate `when` with its edge-condition semantics and MUST NOT accept any other expression language for visibility.
+A field MAY carry `when: <EdgeCondition>`. The grammar is the `WorkflowEdge.condition` object `{ type, left, right }` of `schemas/v2/workflow-definition.schema.json`, with the operator set of workflow-chain-packs.md §"Edge conditions". A host MUST evaluate `when` with its edge-condition semantics and MUST NOT accept any other expression language for visibility.
 
 ```jsonc
 { "id": "region", "type": "select", "label": "Region",

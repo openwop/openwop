@@ -14,9 +14,9 @@
 4. `identity.md` — Subject, lanes, `SubjectLink`, id grammars, resume tokens
 5. `runs.md` — create / get / cancel / fork, `configurable`, snapshot, owner
 6. `events.md`, `errors.md`, `headers.md` — event `oneOf`, payload and error registries, `OpenWOP-*`
-7. `streams.md`, `interrupt.md`, `idempotency.md`, `replay.md` — run-side surfaces
+7. `interrupt.md`, `idempotency.md`, `replay.md`, `conversation.md` — run-side surfaces
 8. `persistence.md` — era key, v1 reader rule, pinned runs
-9. `security-defaults.md`, `webhooks.md`, `interop.md` — obligations of a surface, signatures, A2A / MCP
+9. `security-defaults.md`, `webhooks.md`, `interop.md`, `host-services.md` — obligations of a surface, signatures, A2A / MCP, host services
 10. `packs.md`, `connection-packs.md`, `form-content-packs.md`, `workflow-chain-packs.md` — pack identity, engines ceiling
 11. `conformance.md` — requirement ids, witness classes, bundle v3, seams profile
 
@@ -51,8 +51,8 @@ Normative for any public conformance statement:
 
 ## What is `ext/` (RFC 0174 §E.2; RFC 0169 §B.3)
 
-`spec/v2/core/` is under 25,000 words (`scripts/check-core-budget.mjs`). Every `spec/v2/ext/<key>/` document MUST declare `witness` and both maturity axes (`technical`, `adoption`) in its header. A MUST with `witness: unwitnessable` MUST NOT appear in `core/`; a document whose only witness is "deferred to Active → Accepted" enters `ext/` or is deleted. An `ext/` family is advertised only under a wire-legal witness class (see `capabilities.md`).
+`spec/v2/core/` stays within the word budget `scripts/check-core-budget.mjs` enforces (RFC 0190). Every `spec/v2/ext/<key>/` document MUST declare `witness` and both maturity axes (`technical`, `adoption`) in its header. A MUST with `witness: unwitnessable` MUST NOT appear in `core/`; a document whose only witness is "deferred to Active → Accepted" enters `ext/` or is deleted. An `ext/` family is advertised only under a wire-legal witness class (see `capabilities.md`).
 
 ## What a MUST means (RFC 0168 §B.1; Axiom 1)
 
-Every MUST, SHOULD, and MAY in `core/` is a requirement with an id in `requirements.json` and a `witness` from `witnessable-unaided | witnessable-gated | seam-gated | claims-check | negative-existence`. A seam-gated MUST MUST mint a normative observation path before the cut or is demoted to SHOULD (RFC 0168 §B.3; see `conformance.md`).
+Every MUST, SHOULD, and MAY in `core/` is a requirement with an id in `requirements.json` and a `witness` from `witnessable-unaided | witnessable-gated | seam-gated | claims-check | negative-existence`. A seam-gated MUST is governed by `conformance.md` §"Witness class".

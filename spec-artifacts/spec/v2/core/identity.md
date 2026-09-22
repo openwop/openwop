@@ -5,7 +5,7 @@
 
 ## Why this exists
 
-v1 carried a `principal` beside an optional Subject, a legacy rule that was advisory, a `SubjectLink` with no schema, and resume tokens with no scheme. v2 makes the Subject the owner of every run, binds every lane to a trust root and a revocation rule, gives the link and every id a grammar, and prefixes tokens so a host can rotate them. Idempotency-key grammar is `idempotency.md`.
+v2 makes the Subject the owner of every run, binds every lane to a trust root and a revocation rule, gives the link and every id a grammar, and prefixes tokens so a host can rotate them. Idempotency-key grammar is `idempotency.md`.
 
 ## 1. The Subject is the owner (RFC 0170 §A)
 
@@ -90,7 +90,7 @@ The proof format is lane-scoped: mTLS key binding or DPoP for the two JWT lanes 
 
 The record and both `SubjectRef`s are closed; `a`, `b`, `keyClass`, `issuer`, `tenant`, `formedAt` are REQUIRED. A link MUST be tenant-scoped, MUST join exactly two subjects whose `issuer` values are bound to one IdP entityID (`issuer` on the record), and MUST NOT include a legacy (`urn:openwop:legacy` is schema-rejected) or anonymous subject. Deactivation sets `deniedAt`; the SAML decision path MUST consult it (the leaver contract). The link is a reference, not a merge: nothing rewrites a subject already stamped on a run.
 
-`auth.subjectLinking` is removed (`capabilities.md` row `C2.5`): advertising both `saml` and `scim` lanes implies the contract. Lanes stay separate facets; there is no single "enterprise identity" profile. The `auth.subjectLinkKey` facet (`opaque-idp | configured-immutable`) names the key class the host forms links under. Invariant `subject-link-record-shape` is registered with its scenario.
+`auth.subjectLinking` is removed (migration row `C2.5`): advertising both `saml` and `scim` lanes implies the contract. Lanes stay separate facets; there is no single "enterprise identity" profile. The `auth.subjectLinkKey` facet (`opaque-idp | configured-immutable`) names the key class the host forms links under.
 
 ## 4. Resume tokens (RFC 0170 §E.1; RFC 0176 §B.2)
 
@@ -113,13 +113,13 @@ Every id field in every v2 schema and every `api/v2/openapi.yaml` parameter and 
 | `nodeId`, `workflowId`, `agentId`, `chainId`, `pluginId`, `templateId`, `libraryId` | `^[A-Za-z0-9._~:-]{1,128}$` | author |
 | `typeId` | `^[a-z][a-z0-9_-]*(\.[a-z][a-zA-Z0-9_-]*)+$`, maxLength 256 | author |
 
-`scripts/check-id-kinds-bound.mjs` enforces this against `spec/v2/id-field-bindings.json`, which sorts every `*Id` property in a v2 schema into two sets: it **is** a kind above (and MUST `$ref` it), or nothing here governs it (reason recorded). Neither **fails**, so no id field lands without someone deciding which it is. A map rather than a name rule because only 20 of 88 `*Id` properties share a name with a kind: `childRunId` sat as `{type: string, minLength: 1}` in the file where `parentRunId` was bound, and a name-keyed check reports green over that. *Every id field*, not every matching name.
+`scripts/check-id-kinds-bound.mjs` enforces this against `spec/v2/id-field-bindings.json`, which sorts every `*Id` property in a v2 schema into two sets: it **is** a kind above (and MUST `$ref` it), or nothing here governs it (reason recorded); a field in neither set fails. *Every id field*, not every matching name.
 
 A host MUST reject a tenant-bound id whose tenant segment is not the caller's with `403` `id_tenant_mismatch`. A host-minted opaque segment MUST match `^[A-Za-z0-9._~-]{16,128}$`.
 
-**On the wire a tenant-bound id is one path segment, projected** (RFC 0184): every UTF-8 byte outside `[A-Za-z0-9._-]` becomes `~` plus two uppercase hex digits, so `acme/r-9f3c…` travels as `acme~2Fr-9f3c…`. A host MUST emit it in every link and MUST accept it on every tenant-bound parameter; it MUST still accept `tenant%2Fopaque`, and MUST decode either before matching the grammar. A host MUST NOT mint a tenant-bound id containing `~`; ids already minted MUST still resolve. A host MUST project exactly once, where an id leaves it, and MUST NOT re-encode its own output. `~` is the escape, not `%`, because RFC 3986 §2.3 makes it unreserved — no intermediary may rewrite it (`ids.schema.json` records what `%2F` costs).
+**On the wire a tenant-bound id is one path segment, projected** (RFC 0184): every UTF-8 byte outside `[A-Za-z0-9._-]` becomes `~` plus two uppercase hex digits, so `acme/r-9f3c…` travels as `acme~2Fr-9f3c…`. A host MUST emit it in every link and MUST accept it on every tenant-bound parameter; it MUST still accept `tenant%2Fopaque`, and MUST decode either before matching the grammar. A host MUST NOT mint a tenant-bound id containing `~`; ids already minted MUST still resolve. A host MUST project exactly once, where an id leaves it, and MUST NOT re-encode its own output.
 
-**Through the overlap the bare form is admitted on a major-2 path parameter** — an affordance with an expiry, not a branch of the grammar. A parameter carrying only the opaque segment (what a `/v1/` create hands out) MUST resolve under the caller's tenant and never another's, and the response MUST name the resource bound (`versioning.md` §5); the credential supplies the segment the `403` check would read. Once a host advertises no `1.x` member it MUST refuse the bare form `400 validation_error` (not `id_tenant_mismatch`, not `not_found`). Ids in documents and bodies are bound, always. A client MAY bind at its request seam. Handle grammars (`memoryRef`, workspace `path`/`etag`, the plugin version token) and their `resolvability` class are specified where each handle is used; an importer MUST re-mint every `host`-scoped handle (`spec/v2/ext/portability/`).
+**Through the overlap the bare form is admitted on a major-2 path parameter**. A parameter carrying only the opaque segment (what a `/v1/` create hands out) MUST resolve under the caller's tenant and never another's, and the response MUST name the resource bound (`versioning.md` §5); the credential supplies the segment the `403` check would read. Once a host advertises no `1.x` member it MUST refuse the bare form `400 validation_error` (not `id_tenant_mismatch`, not `not_found`). Ids in documents and bodies are bound, always. A client MAY bind at its request seam. Handle grammars (`memoryRef`, workspace `path`/`etag`, the plugin version token) and their `resolvability` class are specified where each handle is used; an importer MUST re-mint every `host`-scoped handle (`spec/v2/ext/portability/`).
 
 ## 6. Identity error codes (`spec/v2/errors.json`)
 
@@ -143,4 +143,4 @@ Every code below is a row with `since: "2.0"`, `retriable: false`, and no `detai
 
 ## 7. Invariants (RFC 0170 §E.2)
 
-`workload-identity-cryptographically-bound`, `delegation-provenance-not-authorization`, `delegation-no-scope-amplification`, `delegation-chain-bounded-acyclic`, `sender-constraint-no-bearer-downgrade`, `provenance-attestation-digest-bound`, `subject-link-record-shape`, and `subject-required-on-owner` are registered in `SECURITY/invariants.yaml` with their scenarios; an invariant that reaches the cut without a witness is demoted from `protocol` tier and recorded.
+The RFC 0170 §E.2 invariants are registered in `SECURITY/invariants.yaml` with their scenarios; an invariant that reaches the cut without a witness is demoted from `protocol` tier and recorded.

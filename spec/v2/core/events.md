@@ -5,7 +5,7 @@
 
 ## Why this exists
 
-A run is its append-only event log; every snapshot, stream, poll, fork and diff is a projection of it. v2 has one event envelope, one closed type registry with one naming rule, one payload registry, one ordering field, one events channel and one poll cursor, so that a typo is a validation failure and not a silently ignored event.
+A run is its append-only event log; every snapshot, stream, poll, fork and diff is a projection of it. v2 has one closed envelope, type registry, payload registry, ordering field, events channel and poll cursor.
 
 ## The envelope
 
@@ -24,7 +24,7 @@ A consumer MUST NOT throw on an event whose `type` it does not know; it folds wh
 
 ## Types
 
-`type` is `oneOf` a closed enum of registered protocol types and a vendor pattern. The enum is GENERATED from `spec/v2/event-codemap.json` (117 rows, every row `decided`) and MUST NOT be edited by hand. The vendor branch is exactly:
+`type` is `oneOf` a closed enum of registered protocol types and a vendor pattern. The enum is GENERATED from `spec/v2/event-codemap.json` (118 rows, every row `decided`) and MUST NOT be edited by hand. The vendor branch is exactly:
 
 ```text
 ^(?!openwop\.)[a-z][a-z0-9]*(-[a-z0-9]+)*\.[a-z][a-z0-9]*(-[a-z0-9]+)*(\.[a-z][a-z0-9]*(-[a-z0-9]+)*)?$
@@ -43,8 +43,7 @@ A consumer MUST NOT throw on an event whose `type` it does not know; it folds wh
 
 The CloudEvents mapping and the webhook delivery envelope are GENERATED from the same definition (one source, three renderings): the event's `type`, `eventId`, `sequence` and `payload` are byte-identical across the run stream, a CloudEvents rendering and a webhook delivery.
 
-`run.started` carries `owner { tenant, workspace?, subject }`, the same closed
-block as `RunSnapshot.owner` with `subject` REQUIRED (runs.md, identity.md).
+`run.started` carries the `owner` block (identity.md §1.1).
 `run.cancelled` carries `reason`, `cancelledBy`, `durationMs`, and `parentRunId`.
 `run.completed` MUST carry `outputs` as an object; an empty object is valid, but
 an absent key is not. This distinguishes “no outputs” from “outputs not
@@ -61,14 +60,6 @@ rendered” and is witnessed by `v2-run-completed-outputs`.
 | E3 vendor kinds | The registry of vendor kinds is `spec/v2/declaration.json`; a kind whose org is not registered is invalid. |
 | E4 sub-typing | `$ref` composition, as in the payload registry above. |
 | E5 refusal × retry | `configurable.ai.maxRefusals` (runs.md) is the ceiling on `envelope.refusal` events a run records. A host MUST NOT retry the emission that produced a refusal. |
-
-Worked example (E5), `maxRefusals: 2`:
-
-```text
-seq 7  envelope.refusal   nodeId n1  (refusal 1; the run's retry policy re-dispatches n1)
-seq 9  envelope.refusal   nodeId n1  (refusal 2 = ceiling)
-seq 10 node.failed        error.code envelope_refusal; n1 is not re-dispatched
-```
 
 ## The events channel
 
@@ -121,17 +112,13 @@ An `eventLogSchemaVersion` of `2` means v1-written. Every reader (poll, stream, 
 ## The envelope-kind catalog
 
 `supportedEnvelopes`, `schemaVersions` and `envelopeStrictness` are one flow, read in
-that order on every inbound envelope. v1 carried them as an array, a map and an enum;
-a v2 capability record is an object, so each holds its value in a named seat.
+that order on every inbound envelope.
 
 `supportedEnvelopes.kinds` is the catalog. A host advertising it MUST refuse an
 emitted `type` that is neither universal nor a member, with `unknown_envelope_kind`.
 **An absent `kinds` is not an empty catalog and is not an unrestricted one**: a host
 advertising `supportedEnvelopes` without it has made no catalog claim, and an engine
-MUST refuse every non-universal kind rather than admit it unchecked. Absence that
-reads as "unrestricted" would let a record claiming `stable` admit any kind an
-attacker can name, which is precisely what `prompt-injection-envelope-typecheck`
-forbids.
+MUST refuse every non-universal kind rather than admit it unchecked.
 
 `schemaVersions.kinds` maps a kind to its advertised floor; a kind absent from the map
 has a floor of `0`. An emitted `schemaVersion` ABOVE the floor MUST be refused with

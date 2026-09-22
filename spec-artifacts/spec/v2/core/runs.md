@@ -37,7 +37,7 @@ Every operation accepts `OpenWOP-Version` (overview.md); every mutating operatio
 
 ## Create
 
-The `createRun` body is closed at the composition (`unevaluatedProperties: false`): `workflowId` (REQUIRED unless `mode: eval`), `inputs`, `residency`, `tenantId`, `scopeId`, `callbackUrl` (interrupt.md §Callback delivery: a host that does not advertise `interrupt.callbackDelivery: true` SHOULD refuse it with `400 validation_error`, `details.field: "callbackUrl"`; one that does MUST hold it to the `webhooks.md` §SSRF guard at create time and at delivery), `mode`, `evalSuiteRef`, `agentId`, and the `RunOptions` fields `configurable`, `tags`, `metadata`. A body without `RunOptions` MUST be accepted as if it were `{}`.
+The `createRun` body is closed at the composition (`unevaluatedProperties: false`): `workflowId` (REQUIRED unless `mode: eval`), `inputs`, `residency`, `tenantId`, `scopeId`, `callbackUrl` (interrupt.md §Callback delivery; a refusal is `400 validation_error`, `details.field: "callbackUrl"`), `mode`, `evalSuiteRef`, `agentId`, and the `RunOptions` fields `configurable`, `tags`, `metadata`. A body without `RunOptions` MUST be accepted as if it were `{}`.
 
 | Header | Rule |
 | --- | --- |
@@ -75,7 +75,7 @@ An unknown root key, an unknown key inside a section, or a dotted key (`ai.provi
 | --- | --- |
 | `owner` | `{ tenant, workspace?, subject }`, closed, `subject` REQUIRED (`schemas/v2/subject.schema.json`). `principal` and `principalKind` do not exist. A run created before the host emitted subjects reads with the legacy subject rule (identity.md), stamped at first read and never rewritten. |
 | `status` | `pending`, `running`, `paused`, `waiting-approval`, `waiting-input`, `waiting-external`, `completed`, `failed`, `cancelling`, `cancelled`. `waiting-external` MUST be used when the suspended interrupt's `kind` is `external-event`. `cancelling` is the state between an accepted cancel and the terminal `cancelled`. The vocabulary grows by overview.md §0. |
-| `eventLogSchemaVersion` | The era key, integer ≥ 2. A v2 host MUST stamp `3` on every run it creates; a v1-era run reads as `2` (events.md). |
+| `eventLogSchemaVersion` | The era key, integer ≥ 2 (persistence.md §"The era key"). |
 | `engineVersion` | Integer. |
 | `compensationStatus` | `none`, `pending`, `running`, `completed`, `partial`, `failed`, `manual`. A host that does not advertise `compensation` MUST omit it; a host that does MUST include it on every snapshot, `none` when never requested. |
 | `currentNodeId` | Set while suspended; names the node holding the interrupt. |
@@ -94,13 +94,13 @@ The `200` SHOULD carry a strong `ETag` derived from the latest persisted `sequen
 
 `cancelRun` accepts `{ reason? }` and answers `200 { runId, status }` with `status` `cancelling` or `cancelled`; the cascade MAY be asynchronous and the run emits `run.cancelled` when it completes. A cancel on a run that is already terminal (`completed`, `failed`, `cancelled`) MUST be refused `409 run_terminal`; a `200` whose `status` echoes the terminal state is outside this grammar. Cancelling a parent MUST NOT silently abandon an active compensation (security-defaults.md). `run.cancelled.parentRunId` with `reason: parent-cancelled` records a cascade from a parent.
 
-A non-terminal run a v2 host inherits from v1 whose `version.pinned` change ids the host still implements MUST continue under the era-2 reader; the pin is never rewritten. When any pinned change id is no longer implemented the host MUST cancel the run with `run.cancelled { reason: 'v1_pin_unsupported', cancelledBy: 'v2-cutover' }` and MUST NOT follow code it no longer has (RFC 0176 §B.1). A run suspended on an interrupt at the cut continues, its token resolvable under `kid: legacy` until `expiresAt` (interrupt.md).
+A non-terminal run inherited from v1 continues, or is cancelled `v1_pin_unsupported`, per persistence.md §"Runs pinned to v1" (RFC 0176 §B.1).
 
 `bulkCancelRuns` accepts `{ runIds[1..100], reason? }`; over the host's cap (RECOMMENDED 100) it MUST return `400 validation_error` with `details.maxRunIds`. The host MUST process each id independently, MUST return `200 { results[] }` in request order even when every id failed, and MUST enforce authorization per id: a run the caller cannot see yields `ok: false` with an error envelope in that entry, never a top-level `403` — `id_tenant_mismatch` (or `not_found` where existence is not leaked) when the id's tenant segment is not the caller's (identity.md §5 applies inside an entry exactly as on a path), `run_forbidden` for a run in the caller's tenant the caller may not cancel, `run_terminal` for a run already terminal. `ok: true` carries `status` `cancelling` or `cancelled`; `ok: false` carries the error envelope (errors.md).
 
 ## Pause and resume
 
-`pauseRun` accepts `{ reason?, drainPolicy? }` with `drainPolicy` `immediate` (snapshot between events) or `drain-current-node` (default; the executing node reaches a terminal first) and answers `202 { runId, status: 'paused', pausedAt? }`; the transition emits `run.paused`, whose payload echoes the request's `drainPolicy` word. With `immediate`, the attempt that was executing is cut between events: it has no terminal node event, a host MUST NOT record `node.failed` (or any terminal node event) for it, and the resumed run's `node.started` begins a fresh attempt — a `node.failed` here would make a replay fold a failure the source never had (replay.md). The record of the interruption is `run.paused` itself; its payload MAY carry `interruptedNodeId` and `interruptedAttempt` so a `debug` consumer can see which attempt was cut. A run already paused, terminal, or otherwise unpausable MUST receive `409`: `run_terminal` when the run is terminal, else `run_state_conflict` with `details.runStatus` naming the status that refused it. `resumeRun` accepts `{ reason? }`, answers `202 { runId, status: 'running', resumedAt? }`, emits `run.resumed`, and MUST return `409` when the run is not paused — `run_terminal` or `run_state_conflict` by the same rule. Pause is operator-driven and distinct from cancel (terminal) and from an interrupt (`waiting-*`); only `resumeRun` or a cancel exits `paused`. A replay MUST fold `run.paused` and `run.resumed` as no-ops for projected state.
+`pauseRun` accepts `{ reason?, drainPolicy? }` with `drainPolicy` `immediate` (snapshot between events) or `drain-current-node` (default; the executing node reaches a terminal first) and answers `202 { runId, status: 'paused', pausedAt? }`; the transition emits `run.paused`, whose payload echoes the request's `drainPolicy` word. With `immediate`, the attempt that was executing is cut between events: it has no terminal node event, a host MUST NOT record `node.failed` (or any terminal node event) for it, and the resumed run's `node.started` begins a fresh attempt. The record of the interruption is `run.paused` itself; its payload MAY carry `interruptedNodeId` and `interruptedAttempt` so a `debug` consumer can see which attempt was cut. A run already paused, terminal, or otherwise unpausable MUST receive `409`: `run_terminal` when the run is terminal, else `run_state_conflict` with `details.runStatus` naming the status that refused it. `resumeRun` accepts `{ reason? }`, answers `202 { runId, status: 'running', resumedAt? }`, emits `run.resumed`, and MUST return `409` when the run is not paused — `run_terminal` or `run_state_conflict` by the same rule. Only `resumeRun` or a cancel exits `paused`. A replay MUST fold `run.paused` and `run.resumed` as no-ops for projected state.
 
 ## Fork
 
@@ -123,6 +123,5 @@ capability_required` naming the family in `details.requiredCapability`.
 
 A host advertising `dataResidency` MUST honor-or-reject: accept a `residency` constraint naming a
 region in `dataResidency.regions`, refuse one it does not advertise with `residency_unavailable`,
-and MUST NOT silently accept-and-ignore. Advertising `regions` while accepting an unadvertised
-region is a hollow advertisement. A host that does not advertise `dataResidency` MAY ignore or
+and MUST NOT silently accept-and-ignore. A host that does not advertise `dataResidency` MAY ignore or
 reject a `residency` constraint but MUST NOT claim to honor it.

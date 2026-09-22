@@ -1,5 +1,5 @@
 /**
- * `spec/v2/core/replay.md` §Endpoint — the fork prefix boundary is EXCLUSIVE
+ * `spec/v2/core/replay.md` §The surface — the fork prefix boundary is EXCLUSIVE
  * (suite 2.0.0, target major 2; unaided; gated on `replay`; two runs created).
  *
  * "Events with `sequence < fromSeq` are fixed history; events `>= fromSeq` are
@@ -99,7 +99,7 @@
  * The leg runs LAST, after the boundary assertion, so a host that fails this
  * stricter new check still reports the boundary verdict the file was cut for.
  *
- * @see spec/v2/core/replay.md §Endpoint
+ * @see spec/v2/core/replay.md §The surface
  * @see spec/v2/core/replay.md §Byte-equivalence of the prefix
  * @see spec/v2/core/runs.md §Fork
  * @see spec/v2/core/runs.md §Diff and ancestry
@@ -114,7 +114,7 @@ import { softSkip } from '../lib/soft-skip.js';
 import { req } from '../lib/requirement-ids.js';
 
 const ID = 'openwop.requirement.0170.fork-prefix-boundary';
-const DOC = 'spec/v2/core/replay.md §Endpoint';
+const DOC = 'spec/v2/core/replay.md §The surface';
 const BYTES = 'spec/v2/core/replay.md §Byte-equivalence of the prefix';
 const MULTI = 'conformance-multi-node';
 const TERMINAL = new Set(['completed', 'failed', 'cancelled']);
@@ -168,7 +168,7 @@ async function settle(runId: string, ms = 20_000): Promise<string | null> {
   return status;
 }
 
-describe('v2 run-fork-prefix (replay.md §Endpoint — the boundary is exclusive)', () => {
+describe('v2 run-fork-prefix (replay.md §The surface — the boundary is exclusive)', () => {
   it('a replay fork inherits exactly [0, fromSeq): the event at fromSeq is re-executed, never carried over', async () => {
     if (!(await discovery())) return softSkip('blocked', 'v2 discovery unreachable');
     if (!(await gateFamily('replay'))) return softSkip('inapplicable', 'replay family not advertised (gate recorded under openwop.family.replay) — forkRun is gated on replay (runs.md §Surface)');
