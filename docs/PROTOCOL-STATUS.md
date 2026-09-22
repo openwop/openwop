@@ -67,8 +67,8 @@
 
 | Status | Count |
 |---|---:|
-| Accepted | 188 |
-| Active | 3 |
+| Accepted | 189 |
+| Active | 2 |
 | Draft | 1 |
 | Superseded | 1 |
 
@@ -266,7 +266,7 @@
 | RFC 0193 | the three envelope families whose payload the v2 generator dropped in silence, the live `stable` record with nothing in it, and the guard that stops the fourth | Accepted |
 | RFC 0194 | a run's terminal event is emitted once and ends its forward execution | Accepted |
 | RFC 0195 | a certification bundle's declarations are signed, and an unobserved requirement is `blocked` | Accepted |
-| RFC 0196 | `callbackUrl` is refused or delivered under the egress guard, and an embedded IPv4 address is judged as IPv4 | Active |
+| RFC 0196 | `callbackUrl` is refused or delivered under the egress guard, and an embedded IPv4 address is judged as IPv4 | Accepted |
 
 ## SDK Helper Coverage
 
@@ -289,7 +289,7 @@ The pack registry now lives in the [`openwop-registry`](https://github.com/openw
 ## Active Follow-Ups
 
 - 1 RFC still `Draft` (RFC 0038) — advance with schema/conformance proof or defer.
-- 3 RFCs `Active` (RFC 0111, RFC 0121, RFC 0196) — wire-shape MAY shift compatibly within v1.x until promotion to `Accepted`.
+- 2 RFCs `Active` (RFC 0111, RFC 0121) — wire-shape MAY shift compatibly within v1.x until promotion to `Accepted`.
 - External audit, non-steward host recruitment, and non-steward maintainer recruitment remain external-action gates.
 - Multi-region idempotency and some optional-profile behavior checks remain lower-confidence than the core wire contract.
 
