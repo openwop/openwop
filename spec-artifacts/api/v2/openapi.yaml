@@ -937,7 +937,7 @@ paths:
       summary: Upsert a section's base or per-locale fields (RFC 0103 §D, admin).
       description: 'Locale-targeted write: `locale == content.baseLocale` upserts the
 
-        section''s base `data`; any other (BCP-47-subset) locale upserts
+        section''s base `data`; any other (case-canonical BCP 47 subset, RFC 0206) locale upserts
 
         `localizations[locale]`. Tenant-scoped; requires `content.write`.
 
@@ -970,7 +970,7 @@ paths:
               properties:
                 locale:
                   type: string
-                  pattern: ^[a-z]{2}(-[A-Z]{2})?$
+                  pattern: ^[a-z]{2,3}(-[A-Z][a-z]{3})?(-([A-Z]{2}|[0-9]{3}))?$
                   description: Target locale; baseLocale upserts `data`, else `localizations[locale]`.
                 data:
                   type: object

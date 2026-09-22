@@ -62,7 +62,7 @@
             "properties": {
               "locale": {
                 "type": "string",
-                "pattern": "^[a-z]{2}(-[A-Z]{2})?$"
+                "pattern": "^[a-z]{2,3}(-[A-Z][a-z]{3})?(-([A-Z]{2}|[0-9]{3}))?$"
               },
               "href": {
                 "type": "string",
@@ -76,7 +76,7 @@
           "description": "og:locale:alternate values.",
           "items": {
             "type": "string",
-            "pattern": "^[a-z]{2}(-[A-Z]{2})?$"
+            "pattern": "^[a-z]{2,3}(-[A-Z][a-z]{3})?(-([A-Z]{2}|[0-9]{3}))?$"
           },
           "uniqueItems": true
         }

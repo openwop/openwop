@@ -3624,8 +3624,8 @@
       "surface": "`localizations` keys + write `locale` use the subset `^[a-z]{2}(-[A-Z]{2})?$`, not the annex's full BCP-47 pattern. Confirm or widen (widening is additive).",
       "witness": "unclassified",
       "requirementId": null,
-      "disposition": "carried",
-      "target": "openwop.gap.0103.5",
+      "disposition": "transferred",
+      "target": "rfc-0206",
       "sources": [
         {
           "file": "RFCS/registers/0103-localized-content-surface.gaps.md",
