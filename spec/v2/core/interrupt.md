@@ -38,6 +38,8 @@ Every kind uses two registered types (events.md): `interrupt.requested`, whose p
 
 A host MUST expose the run-scoped surface and SHOULD expose the signed-token surface for callers not authenticated to the protocol. Every resolve MUST honor `Idempotency-Key` (idempotency.md). Exactly one of two concurrent resolves MUST succeed; the other MUST receive `409 interrupt_already_resolved`.
 
+**Callback delivery (RFC 0196).** `createRun.callbackUrl` names where a host that advertises `interrupt.callbackDelivery: true` delivers notice of an interrupt, so its holder can resolve it through the token surface. The payload, timing and signing are host-defined in this revision. A host advertising the facet MUST refuse at `createRun`, with `400 validation_error` and `details.field: "callbackUrl"`, a URL the `webhooks.md` §SSRF registration guard would refuse, MUST re-validate every resolved address at delivery, and MUST NOT follow a redirect. A host that does not advertise it SHOULD refuse the member and MUST NOT claim delivery it does not perform.
+
 | Status | Code | Condition |
 | --- | --- | --- |
 | `400` | `validation_error` | `resumeValue` fails `resumeSchema` or the approval action is not in `actions` |

@@ -37,7 +37,7 @@ Every operation accepts `OpenWOP-Version` (overview.md); every mutating operatio
 
 ## Create
 
-The `createRun` body is closed at the composition (`unevaluatedProperties: false`): `workflowId` (REQUIRED unless `mode: eval`), `inputs`, `residency`, `tenantId`, `scopeId`, `callbackUrl` (the signed-token callback, interrupt.md), `mode`, `evalSuiteRef`, `agentId`, and the `RunOptions` fields `configurable`, `tags`, `metadata`. A body without `RunOptions` MUST be accepted as if it were `{}`.
+The `createRun` body is closed at the composition (`unevaluatedProperties: false`): `workflowId` (REQUIRED unless `mode: eval`), `inputs`, `residency`, `tenantId`, `scopeId`, `callbackUrl` (interrupt.md §Callback delivery: a host that does not advertise `interrupt.callbackDelivery: true` SHOULD refuse it with `400 validation_error`, `details.field: "callbackUrl"`; one that does MUST hold it to the `webhooks.md` §SSRF guard at create time and at delivery), `mode`, `evalSuiteRef`, `agentId`, and the `RunOptions` fields `configurable`, `tags`, `metadata`. A body without `RunOptions` MUST be accepted as if it were `{}`.
 
 | Header | Rule |
 | --- | --- |

@@ -124,3 +124,6 @@ to land — and until then the zero is visibly a blocked obligation rather than 
 | 0191 | The reciprocal normative-home marker, and why no regex over prose decides a semantic claim | in-scope-pending-assessment | — | — | `not-reviewed` |
 | 0192 | A facet is advertised by the presence of its key; the 26 descriptions that gated on a retired field | in-scope-pending-assessment | — | — | `not-reviewed` |
 | 0193 | A capability record is an object, so a v1 array needs a seat; the three envelope families whose payload the generator dropped in silence | in-scope-pending-assessment | — | — | `not-reviewed` |
+| 0194 | a run's terminal event is emitted once and ends its forward execution (replay; Active by steward override of RFC 0147 §A.6) | in-scope-pending-assessment | — | — | `not-reviewed` |
+| 0195 | a certification bundle's declarations are signed, and an unobserved requirement is `blocked` (certification; Active by steward override of RFC 0147 §A.6) | in-scope-pending-assessment | — | — | `not-reviewed` |
+| 0196 | `callbackUrl` refused or delivered under the egress guard; embedded IPv4 judged as IPv4 (external effects; Active by steward override of RFC 0147 §A.6) | in-scope-pending-assessment | — | — | `not-reviewed` |
