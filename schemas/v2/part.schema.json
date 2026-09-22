@@ -1,0 +1,81 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://openwop.dev/spec/v2/part.schema.json",
+  "title": "Part",
+  "description": "RFC 0205 §D. An A2A v1.0.1 `Part`, transcribed from `specification/a2a.proto` `message Part` at tag v1.0.1 with the JSON member names A2A spec §5.5 requires (camelCase). Exactly one of `text`, `raw`, `url`, `data` is present: member presence is the discriminator (A2A spec §14 \"Current Pattern (v1.0)\"), and the v0.3 `kind` member is not part of the shape. A2A commits no JSON Schema of its own (`specification/json/README.md`: `a2a.json` is a non-normative build artifact), so this file is the corpus's transcription. `oneOf` is deliberate: this schema describes a host-emitted wire object, not an LLM-emitted envelope payload (ai-envelope.md §\"Schema discipline\" scopes its `oneOf` ban to the latter).",
+  "type": "object",
+  "additionalProperties": false,
+  "properties": {
+    "text": {
+      "type": "string",
+      "description": "a2a.proto: \"The string content of the `text` part.\""
+    },
+    "raw": {
+      "type": "string",
+      "contentEncoding": "base64",
+      "description": "a2a.proto: \"The `raw` byte content of a file. In JSON serialization, this is encoded as a base64 string.\" Bounded by host policy (a2a-integration.md D.3)."
+    },
+    "url": {
+      "type": "string",
+      "format": "uri",
+      "description": "a2a.proto: \"A `url` pointing to the file's content.\" On an OpenWOP read it MUST NOT resolve beyond the caller's authorization (RFC 0205 §A.3; a2a-integration.md D.3); a consumer MUST NOT auto-fetch it without an egress decision (a2a-integration.md D.3 inbound)."
+    },
+    "data": {
+      "description": "a2a.proto: \"Arbitrary structured `data` as a JSON value (object, array, string, number, boolean, or null).\""
+    },
+    "metadata": {
+      "type": "object",
+      "description": "a2a.proto: \"Optional. metadata associated with this part.\" OpenWOP fields live under `metadata.openwop.*` (a2a-integration.md).",
+      "additionalProperties": {}
+    },
+    "filename": {
+      "type": "string",
+      "maxLength": 1024,
+      "description": "a2a.proto: \"An optional `filename` for the file (e.g., \\\"document.pdf\\\").\""
+    },
+    "mediaType": {
+      "type": "string",
+      "minLength": 3,
+      "maxLength": 255,
+      "description": "a2a.proto: \"The `media_type` (MIME type) of the part content … available for all part types.\" Any RFC 6838 spelling is accepted on input; a host SHOULD emit lowercase."
+    }
+  },
+  "oneOf": [
+    {
+      "required": [
+        "text"
+      ]
+    },
+    {
+      "required": [
+        "raw"
+      ]
+    },
+    {
+      "required": [
+        "url"
+      ]
+    },
+    {
+      "required": [
+        "data"
+      ]
+    }
+  ],
+  "examples": [
+    {
+      "text": "Hello, world!"
+    },
+    {
+      "raw": "iVBORw0KGgo=",
+      "filename": "diagram.png",
+      "mediaType": "image/png"
+    },
+    {
+      "data": {
+        "approve": true
+      },
+      "mediaType": "application/json"
+    }
+  ]
+}

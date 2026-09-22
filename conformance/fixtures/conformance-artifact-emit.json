@@ -1,0 +1,28 @@
+{
+  "id": "conformance-artifact-emit",
+  "name": "Conformance: Artifact Emit",
+  "version": "1.0",
+  "description": "RFC 0205 (register G2). One conformance.artifact.emit node produces one artifact and emits artifact.created naming it, so the suite can read it back through getArtifact (GET /runs/{runId}/artifacts/{artifactId}). Opt-in: a host advertises this fixture only when it implements getArtifact. See conformance/fixtures.md and v2-artifact-a2a-shape.test.ts.",
+  "nodes": [
+    {
+      "id": "emit",
+      "typeId": "conformance.artifact.emit",
+      "name": "Emit artifact",
+      "position": { "x": 0, "y": 0 },
+      "config": {
+        "artifactType": "conformance.artifact.brief",
+        "name": "Conformance brief",
+        "summary": "The one artifact RFC 0205's read legs name.",
+        "data": { "title": "Conformance brief", "items": ["one", "two"] }
+      },
+      "inputs": {}
+    }
+  ],
+  "edges": [],
+  "triggers": [
+    { "id": "manual", "type": "manual", "enabled": true }
+  ],
+  "variables": [],
+  "metadata": { "tags": ["conformance", "artifacts", "rfc-0205"] },
+  "settings": { "timeout": 10000 }
+}

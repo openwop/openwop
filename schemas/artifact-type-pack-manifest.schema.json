@@ -142,11 +142,11 @@
           "items": {
             "type": "string",
             "minLength": 1,
-            "maxLength": 64,
-            "pattern": "^([a-z][a-z0-9]*|vendor\\.[a-z][a-z0-9-]*\\.[a-z][a-z0-9-]*|x-[a-z][a-z0-9-]*)$"
+            "maxLength": 255,
+            "pattern": "^([a-z][a-z0-9]*|vendor\\.[a-z][a-z0-9-]*\\.[a-z][a-z0-9-]*|x-[a-z][a-z0-9-]*|[a-z0-9][a-z0-9!#$&^_.+-]{0,126}/[a-z0-9][a-z0-9!#$&^_.+-]{0,126})$"
           },
           "uniqueItems": true,
-          "description": "Export-format identifiers (hints) a renderer MAY offer. Spec-reserved core identifiers carry interoperable meaning (the lowercase file-extension / common name): `pdf`, `pptx`, `docx`, `xlsx`, `md`, `html`, `txt`, `csv`, `json`, `png`, `svg`, `jpeg`, `step`, `stl`, `dxf`. Domain-specific formats outside the core set MUST be `vendor.<org>.<format>`- or `x-<format>`-prefixed (mirrors the `requiredModelCapabilities` reserved-core + extension idiom). Advisory: this spec assigns no byte-level production semantics to any identifier — it standardizes the identifier so two hosts agree what `pptx` names, not how the bytes are produced."
+          "description": "Export-format identifiers (hints) a renderer MAY offer. Spec-reserved core identifiers carry interoperable meaning (the lowercase file-extension / common name): `pdf`, `pptx`, `docx`, `xlsx`, `md`, `html`, `txt`, `csv`, `json`, `png`, `svg`, `jpeg`, `step`, `stl`, `dxf`. Domain-specific formats outside the core set MUST be `vendor.<org>.<format>`- or `x-<format>`-prefixed (mirrors the `requiredModelCapabilities` reserved-core + extension idiom). An entry MAY instead be a lowercase RFC 6838 media type (`type/subtype`, no parameters; RFC 0205 §C); each reserved alias names exactly one media type per artifact-type-packs.md §\"Export-format aliases\", and a consumer MUST treat the two spellings as one format. Advisory: this spec assigns no byte-level production semantics to any identifier — it standardizes the identifier so two hosts agree what `pptx` names, not how the bytes are produced."
         },
         "syncOn": {
           "type": "string",
