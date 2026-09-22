@@ -578,6 +578,16 @@ invariants:
       - conformance/src/scenarios/auth.test.ts
     note: |
       Canonical error envelope's message field MUST NOT leak material.
+      Upstream (cite checked live 2026-09-22; informative, the OpenWOP rule
+      above is what binds): A2A v1.0.1 §13.4 "General Security Best Practices"
+      ("Logs MUST NOT include sensitive information (credentials, personal
+      data)") https://a2a-protocol.org/v1.0.1/specification/; MCP 2026-07-28
+      Authorization Security Considerations §"Token Theft" (tokens "cached or
+      logged on the server")
+      https://modelcontextprotocol.io/specification/2026-07-28/basic/authorization/security-considerations.
+      Relation: STRENGTHENS by analogy. Both upstream rules reach logs/storage;
+      neither reaches the wire error body. OpenWOP applies the same
+      no-credential-material rule to a caller-visible response.
     witness: witnessable-unaided
     witnessReview: reviewed-2026-09-02
 
@@ -589,6 +599,14 @@ invariants:
       - conformance/src/scenarios/auth.test.ts
     note: |
       Auth-middleware log lines must not echo Bearer header content.
+      Upstream (cite checked live 2026-09-22; informative, the OpenWOP rule
+      above is what binds): A2A v1.0.1 §13.4 "General Security Best Practices"
+      ("Logs MUST NOT include sensitive information (credentials ...)")
+      https://a2a-protocol.org/v1.0.1/specification/; MCP 2026-07-28
+      Authorization Security Considerations §"Token Theft"
+      https://modelcontextprotocol.io/specification/2026-07-28/basic/authorization/security-considerations.
+      Relation: EQUALS (restates the A2A MUST for the auth-middleware log path).
+      Kept as its own row because it carries an OpenWOP-side witness.
     witness: witnessable-unaided
     witnessReview: reviewed-2026-09-02
 
@@ -1605,6 +1623,15 @@ invariants:
       `openwop-examples:examples/hosts/postgres/test/http-client.test.ts`; this
       protocol-tier invariant asserts the advertisement contract so
       independent implementers cannot ship a partial guard silently.
+      Upstream (cite checked live 2026-09-22; informative, the OpenWOP rule
+      above is what binds): MCP 2026-07-28 Security Best Practices §"Server-Side
+      Request Forgery (SSRF)" > "Block Private IP Ranges" (clients SHOULD block
+      private/reserved ranges per RFC 9728 §7.7)
+      https://modelcontextprotocol.io/docs/2026-07-28/tutorials/security/security_best_practices.
+      Relation: STRENGTHENS. Upstream is a SHOULD scoped to OAuth-discovery
+      fetches; OpenWOP makes an advertised guard plus a body-size cap a MUST for
+      every `core.http.request` egress. The range list is RFC 9728 §7.7's; this
+      row references it rather than restating it.
 
   # ===== Idempotency-Key determinism (1.1.2 safety-fix) =====
     witness: witnessable-unaided
@@ -2074,6 +2101,17 @@ invariants:
       The negative leg carries the weight: a host that merely echoes its
       input satisfies every positive assertion, and only `audience_mismatch`
       distinguishes a verifier from a passthrough.
+      Upstream (cite checked live 2026-09-22; informative, the OpenWOP rule
+      above is what binds): MCP 2026-07-28 Authorization §"Token Handling"
+      (servers MUST validate that access tokens were issued for them as the
+      intended audience, RFC 8707 §2)
+      https://modelcontextprotocol.io/specification/2026-07-28/basic/authorization;
+      Authorization Security Considerations §"Access Token Privilege
+      Restriction" (MUST reject tokens that do not include them in the audience
+      claim)
+      https://modelcontextprotocol.io/specification/2026-07-28/basic/authorization/security-considerations.
+      Relation: EQUALS in rule (audience-bound, reject otherwise), applied to
+      RFC 0154 delegation proofs rather than OAuth access tokens.
     witness: seam-gated
     witnessReview: reviewed-2026-09-02
 
@@ -2564,6 +2602,14 @@ invariants:
       failClosed` is `const: true`. A deny SHOULD emit an `authorization.
       decided { allowed: false }` event. Tested against any host advertising
       `capabilities.authorization.supported`; skips cleanly otherwise.
+      Upstream (cite checked live 2026-09-22; informative, the OpenWOP rule
+      above is what binds): A2A v1.0.1 §13.1 "Data Access and Authorization
+      Scoping" ("Servers MUST implement authorization checks on every A2A
+      Protocol Operations request")
+      https://a2a-protocol.org/v1.0.1/specification/. Relation: STRENGTHENS. A2A
+      requires a check on every request and leaves the model agent-defined; it
+      says nothing about error paths. OpenWOP adds that an absent, unseeded or
+      unresolvable role (cache miss, resolver error) MUST deny.
 
   # ===== RFC 0028 Tier-2 prompt workspace-membership (read + write) =====
     witness: witnessable-gated
@@ -2713,6 +2759,16 @@ invariants:
       `openwop-examples:examples/hosts/postgres/test/auth-rotation-scoped.test.ts` §6
       asserts the rejected-token canary doesn't appear in the
       response body.
+      Upstream (cite checked live 2026-09-22; informative, the OpenWOP rule
+      above is what binds): MCP 2026-07-28 Authorization §"Token Handling"
+      (invalid or expired tokens MUST receive HTTP 401)
+      https://modelcontextprotocol.io/specification/2026-07-28/basic/authorization;
+      Authorization Security Considerations §"Token Theft"
+      https://modelcontextprotocol.io/specification/2026-07-28/basic/authorization/security-considerations;
+      A2A v1.0.1 §13.4 (logs MUST NOT include credentials)
+      https://a2a-protocol.org/v1.0.1/specification/. Relation: STRENGTHENS.
+      Upstream sets the 401 and protects stored/logged tokens; neither forbids
+      echoing the rejected token in the 401 body.
 
   # ===== RFC 0041 Phase 4 — replay-determinism portability =====
     witness: witnessable-gated
@@ -2879,6 +2935,19 @@ invariants:
       non-vacuously under OPENWOP_REQUIRE_BEHAVIOR=true (out-of-audience → denied +
       credentialAttached:false; provenance-unevaluable → denied fail-closed) — the
       RFC 0035 sandbox-invariant precedent.
+      Upstream (cite checked live 2026-09-22; informative, the OpenWOP rule
+      above is what binds): MCP 2026-07-28 Authorization Security Considerations
+      §"Access Token Privilege Restriction" (the MCP server "MUST NOT pass
+      through the token it received from the MCP client") and §"Confused Deputy
+      Problem"
+      https://modelcontextprotocol.io/specification/2026-07-28/basic/authorization/security-considerations;
+      A2A v1.0.1 §7.6.3 "In-Task Authorization Security Considerations"
+      ("Credentials SHOULD be bound to the agent which originated the request")
+      https://a2a-protocol.org/v1.0.1/specification/. Relation: STRENGTHENS
+      (motivated-by). MCP's audience rule covers tokens issued to the MCP
+      server; A2A's binding is a SHOULD. OpenWOP binds every host-issued
+      THIRD-PARTY credential to an explicit `audiences` list and fails closed on
+      unevaluable provenance or expiry.
 
   # ===== Anonymous-actor authorization (RFC 0132) =====
   # All five are BEHAVIORAL guarantees requiring a live tool-enabled public
@@ -3458,6 +3527,16 @@ invariants:
       forbids handing the run a fetchable URL); the capability-gated behavioral
       leg (`triggerBridge.ingestion`) asserts an ingestion-path fetch to a
       private address is refused, reusing the `http-client-ssrf-guard` posture.
+      Upstream (cite checked live 2026-09-22; informative, the OpenWOP rule
+      above is what binds): MCP 2026-07-28 Security Best Practices §"Server-Side
+      Request Forgery (SSRF)" > "Block Private IP Ranges" (SHOULD, per RFC 9728
+      §7.7)
+      https://modelcontextprotocol.io/docs/2026-07-28/tutorials/security/security_best_practices;
+      A2A v1.0.1 §14.1.1 `application/a2a+json` security considerations ("File
+      references within A2A messages MUST be validated to prevent server-side
+      request forgery") https://a2a-protocol.org/v1.0.1/specification/.
+      Relation: STRENGTHENS the MCP SHOULD; EQUALS the A2A file-reference MUST,
+      applied to trigger-ingestion attachment fetches.
     witness: seam-gated
     witnessReview: initial-mechanical-2026-09-02
 
@@ -3525,6 +3604,13 @@ invariants:
       over `http` is refused (scheme arm). Two legs, because the previous single
       `http://10.0.0.5` probe is refused by EITHER arm alone and so witnessed
       neither — an assertion that passes on half an implementation.
+      Upstream (cite checked live 2026-09-22; informative, the OpenWOP rule
+      above is what binds): A2A v1.0.1 §13.2 "Push Notification Security"
+      ("Agents SHOULD validate webhook URLs to prevent SSRF": reject private
+      IPv4 ranges, localhost, link-local)
+      https://a2a-protocol.org/v1.0.1/specification/. Relation: STRENGTHENS.
+      OpenWOP makes it a MUST, adds the scheme arm (non-https refused), and
+      covers IPv6 ULA and IPv4-mapped IPv6, which the A2A list omits.
 
   # ===== RFC 0102 — A2UI agent-authored interface surfaces =====
     witness: seam-gated
@@ -4011,6 +4097,14 @@ invariants:
       -32022 — agreement precedes selection, stated in mcp-integration.md
       §B), the method/name half in mcp-stateless-request (added 1.123.0).
       Witnessed 3/3 under strict against the first 2026-07-28 host.
+      Upstream (cite checked live 2026-09-22; informative, the OpenWOP rule
+      above is what binds): MCP 2026-07-28 Streamable HTTP §"Request Metadata" >
+      "Server Validation" (servers MUST reject header/body mismatch on
+      MCP-Protocol-Version, Mcp-Method, Mcp-Name with 400 Bad Request and
+      JSON-RPC -32020 HeaderMismatch)
+      https://modelcontextprotocol.io/specification/2026-07-28/basic/transports/streamable-http.
+      Relation: EQUALS. This row is upstream MCP conformance witnessed by
+      OpenWOP, not an OpenWOP invention.
     witness: seam-gated
     witnessReview: initial-mechanical-2026-09-02
   - id: subject-record-opaque
@@ -4269,5 +4363,14 @@ invariants:
       advertises it today. Delivery-time re-validation and the no-redirect
       rule are not visible on the wire (the reference-impl invariant
       `webhook-delivery-egress-revalidation` states the same limit).
+      Upstream (cite checked live 2026-09-22; informative, the OpenWOP rule
+      above is what binds): MCP 2026-07-28 Security Best Practices §"Server-Side
+      Request Forgery (SSRF)" > "Block Private IP Ranges" (SHOULD, per RFC 9728
+      §7.7)
+      https://modelcontextprotocol.io/docs/2026-07-28/tutorials/security/security_best_practices;
+      A2A v1.0.1 §13.2 "Push Notification Security" (webhook URLs SHOULD be
+      validated) https://a2a-protocol.org/v1.0.1/specification/. Relation:
+      STRENGTHENS. Both upstream rules are SHOULD; OpenWOP makes refusal at
+      createRun a MUST and names IPv4-mapped IPv6 (MCP only warns about it).
     witness: witnessable-gated
     witnessReview: reviewed-2026-09-21
