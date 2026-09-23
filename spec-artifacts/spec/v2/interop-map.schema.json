@@ -424,6 +424,11 @@
           "type": "string",
           "description": "A code in spec/v2/errors.json (gate-checked)."
         },
+        "reason": {
+          "type": "string",
+          "pattern": "^[A-Z][A-Z0-9_]*$",
+          "description": "RFC 0211 §A. The google.rpc.ErrorInfo reason: the upstream error name in UPPER_SNAKE_CASE without the `Error` suffix (A2A §10.6). Absent on a parenthesized non-A2A row, which has no A2A name. Gate-checked against `upstream`."
+        },
         "note": {
           "type": "string"
         }
