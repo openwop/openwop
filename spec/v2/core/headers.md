@@ -25,7 +25,7 @@ RFC 0171 §C.1: every non-standard header is `OpenWOP-<Name>` and every header i
 | `Cache-Control` | 2 |  |
 | `Content-Encoding` | 1 | RFC 0115. Present only when the host negotiated compression |
 | `Content-Language` | 1 | The BCP-47 locale actually used (equals the response `locale`). |
-| `ETag` | 3 | Optional probe handle for mid-session capability change detection. Deprecated toward v2 (RFC 0165 §C.2). |
+| `ETag` | 3 | Standard HTTP validator (RFC 9110 §8.8.3). The obligation is per operation: MUST on the discovery document (capabilities.md §1), SHOULD on the run snapshot (runs.md §Snapshot), a content hash on a prompt template (getPromptTemplate); see each operation. |
 | `Location` | 1 | Canonical URI of the new template. |
 | `OpenWOP-Idempotent-Replay` | 1 | Set when the response was served from the idempotency cache. |
 | `OpenWOP-Version` | 54 | RFC 0172 §A.4 — the contract that produced this response; MUST equal the one used. |

@@ -63,16 +63,11 @@ operations:
 components:
   securitySchemes:
     ApiKeyAuth:
-      type: httpApiKey
-      in: header
-      name: Authorization
-      description: 'Bearer-style API key. Format implementation-defined; reference
-
-        impl uses `hk_`/`hk_test_` prefixes. Required scopes:
-
-        `runs:read` to subscribe. See `auth.md`.
-
-        '
+      type: http
+      scheme: bearer
+      bearerFormat: API key
+      description: 'Bearer API key, the same scheme as api/v2/openapi.yaml `ApiKeyAuth` (RFC 0200 §F). Required scope: `runs:read`
+        to subscribe.'
   parameters:
     RunId:
       description: The run to subscribe to. Format opaque; clients MUST treat as a string.
@@ -95,7 +90,7 @@ components:
     EvalCompleted:
       name: eval.completed
       title: Eval run completed (RFC 0081)
-      summary: An eval run finished. Content-free aggregate scalars; the full scorecard is the run output, read via GET /v1/runs/{runId}/eval-summary.
+      summary: An eval run finished. Content-free aggregate scalars; the full scorecard is the run output, read via GET /runs/{runId}/eval-summary.
       contentType: application/json
       payload:
         $ref: '#/components/schemas/EvalCompletedPayload'
@@ -115,14 +110,14 @@ components:
       payload:
         $ref: '#/components/schemas/DeploymentRolledBackPayload'
     DeploymentCanaryAdjusted:
-      name: deployment.canary.adjusted
+      name: deployment.canary-adjusted
       title: Deployment canary adjusted (RFC 0082)
       summary: An active version's canary traffic share changed. Content-free; recorded-fact; audit-logged.
       contentType: application/json
       payload:
         $ref: '#/components/schemas/DeploymentCanaryAdjustedPayload'
     DeploymentStateChanged:
-      name: deployment.state.changed
+      name: deployment.state-changed
       title: Deployment state changed (RFC 0082)
       summary: A non-promotion lifecycle transition (pause / resume / deprecate). Content-free; recorded-fact; audit-logged.
       contentType: application/json
@@ -233,7 +228,7 @@ components:
       payload:
         $ref: '#/components/schemas/RunEventDoc'
     CompensationManualInterventionRequired:
-      name: compensation.manual_intervention_required
+      name: compensation.manual-intervention-required
       title: Compensation needs an operator (RFC 0151 §C/§E)
       summary: The host cannot proceed unaided. Recorded explicitly because an unwind that stops without saying so is indistinguishable
         from one that finished.
@@ -316,7 +311,7 @@ components:
       payload:
         $ref: '#/components/schemas/RunEventDoc'
     DispatchFanOut:
-      name: core.dispatch.fanOut
+      name: dispatch.fanned-out
       title: core.dispatch began a parallel fan-out wave (RFC 0118)
       summary: Emitted when a fanOutPolicy=parallel wave begins; payload $defs.dispatchFanOut carries childCount/maxConcurrency/joinMode.
         Parallel path only.
@@ -324,7 +319,7 @@ components:
       payload:
         $ref: '#/components/schemas/RunEventDoc'
     DispatchJoin:
-      name: core.dispatch.join
+      name: dispatch.joined
       title: core.dispatch parallel join satisfied (RFC 0118)
       summary: Emitted when a fanOutPolicy=parallel join is satisfied/failed; payload $defs.dispatchJoin carries joinOutcome
         + the replay-deterministic mergeOrder.
@@ -439,7 +434,7 @@ components:
       payload:
         $ref: '#/components/schemas/RunEventDoc'
     VoiceSpeechStart:
-      name: voice.speech_start
+      name: voice.speech-start
       title: Inbound user speech onset detected
       contentType: application/json
       payload:
@@ -451,25 +446,25 @@ components:
       payload:
         $ref: '#/components/schemas/RunEventDoc'
     VoiceEndpointCandidate:
-      name: voice.endpoint_candidate
+      name: voice.endpoint-candidate
       title: Likely end-of-turn boundary (semantic turn detection)
       contentType: application/json
       payload:
         $ref: '#/components/schemas/RunEventDoc'
     VoiceTurnCommit:
-      name: voice.turn_commit
+      name: voice.turn-commit
       title: User yielded the floor (callTranscriber Promise resolves here)
       contentType: application/json
       payload:
         $ref: '#/components/schemas/RunEventDoc'
     VoiceSynthesisChunk:
-      name: voice.synthesis_chunk
+      name: voice.synthesis-chunk
       title: Clause-boundary streaming-synthesis chunk (metadata only)
       contentType: application/json
       payload:
         $ref: '#/components/schemas/RunEventDoc'
     VoiceBargeIn:
-      name: voice.barge_in
+      name: voice.barge-in
       title: User speech overlapped active assistant playback
       contentType: application/json
       payload:

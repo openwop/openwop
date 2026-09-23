@@ -18,13 +18,33 @@ name: Postgres host — conformance regression gate
 #     edit too.
 #
 #   external-suite — boots the host via `npm run start:pglite` (the
-#     pglite-backed entry point) and runs the FULL conformance suite
-#     against it via `npx vitest run` in `conformance/`. Asserts pass-
-#     rate ≥85% — the Postgres host's empirical baseline as of
-#     2026-05-11 was 86.2% (588/682), matching the SQLite host's 87%.
+#     pglite-backed entry point) and runs this lane's (major-1)
+#     conformance scenario files against it via `npx vitest run` in
+#     `conformance/`. Asserts a pass-rate floor.
 #
-# A drop below 85% means a genuine regression slipped in; the gate
-# fires and the merge is blocked.
+# The floor's history, because a floor is only meaningful next to the
+# number it was set against:
+#
+#   85%  (2026-05-11) — set against a then-measured 86.2% (588/682),
+#        when the denominator was the whole suite INCLUDING the tests
+#        `setup.ts` skips. Every major-2 scenario added anywhere
+#        therefore lowered this host's rate with zero change to its
+#        passes or failures, and the floor had to sit far below reality
+#        to absorb that drift.
+#   92%  (2026-09-23, this change) — #1492 cut the denominator to the
+#        lane's own files, so the measured rate stepped 84% -> 94% with
+#        no change in host behaviour. 25 consecutive runs between
+#        2026-09-22T17:01Z and 2026-09-23T11:26Z measured 94% every
+#        time (exact range 94.21%-94.41%, min 1758/1866). An 85% floor
+#        against a 94% reality tolerates ~176 newly-failing tests
+#        before it says anything; 92% tolerates ~45 — enough headroom
+#        for a spec-first RFC landing scenarios the reference host has
+#        not implemented yet, not enough to hide a regression.
+#
+# A drop below the floor means a genuine regression slipped in; the
+# gate fires and the merge is blocked. The step also prints the margin
+# above the floor on every run, so a slow slide is visible BEFORE it
+# trips rather than only on the run that breaks it.
 #
 # @see examples/hosts/postgres/conformance-full.md — the public-result
 #   evidence this workflow renews on every push.
@@ -104,7 +124,7 @@ jobs:
         run: npm test
 
   external-suite:
-    name: Postgres host — full conformance suite (pass-rate ≥85%)
+    name: Postgres host — full conformance suite (pass-rate ≥92%)
     runs-on: ubuntu-latest
     timeout-minutes: 30
 
@@ -215,6 +235,13 @@ jobs:
           # ride for 16 days.
           FAILED=$(grep -oE '[0-9]+ failed' /tmp/conformance.plain | tail -1 | awk '{print $1}')
           FAILED=${FAILED:-0}
+          # Scoped to the `Tests` summary line, not a bare tail -1: vitest omits
+          # the `skipped` clause entirely when nothing was skipped, and a loose
+          # match would then silently report the `Test Files` skip count as if
+          # it were a test count.
+          SKIPPED=$(grep -E '^[[:space:]]*Tests[[:space:]]' /tmp/conformance.plain \
+                    | tail -1 | grep -oE '[0-9]+ skipped' | awk '{print $1}')
+          SKIPPED=${SKIPPED:-0}
           NAMED_N=$(printf '%s' "$NAMED" | grep -c . || true)
           if [ "$FAILED" -gt 0 ] && [ "$NAMED_N" -eq 0 ]; then
             echo "::warning::vitest reports ${FAILED} failing test(s) but this step named none — the matcher is broken, not the run clean."
@@ -223,11 +250,42 @@ jobs:
           fi
           echo "--- end failing scenarios ---"
 
-          # Floor: 85% pass rate. Drop below = regression.
+          # Recorded known-failure set, so a CHANGE in the set is visible as a
+          # change and not just as a number that still clears the floor. As of
+          # 2026-09-23 (suite 2.36.1, host openwop-examples@main) it is 8 tests
+          # in 3 files, identical in every run since 2026-09-22T17:01Z:
+          #   era-key-stamped-v1.test.ts  (2) engineVersion / eventLogSchemaVersion
+          #                                   not stamped on a freshly-created run
+          #   interrupt-approval.test.ts  (4) RFC 0183 edit-accept + refine
+          #                                   resolutions not implemented
+          #   pause-resume.test.ts        (2) second-:pause 409 idempotency and
+          #                                   drain-current-node event ordering
+          # These are host gaps against the spec, not suite defects; they are
+          # named above on every run. This check does NOT gate — it asks a human
+          # to look at the list rather than letting the set drift silently under
+          # a rate that happens to stay green.
+          KNOWN_FAILING=8
+          if [ "$FAILED" -ne "$KNOWN_FAILING" ]; then
+            echo "::notice::Failing-test count is ${FAILED}, recorded baseline is ${KNOWN_FAILING}. Diff the named list above against the set recorded in this workflow and update it deliberately — do not absorb the difference into the floor."
+          fi
+
+          # Floor. Drop below = regression. See the header comment for how this
+          # number was chosen and what it was measured against.
+          FLOOR=92
           RATE=$((PASSED * 100 / TOTAL))
-          echo "passed=$PASSED total=$TOTAL pass-rate=${RATE}%"
-          if [ "$RATE" -lt 85 ]; then
-            echo "::error::Postgres host conformance pass-rate dropped below 85% floor: ${RATE}%"
+          # Headroom, stated twice, because a gate that only speaks when it
+          # trips cannot show a slow slide. MIN_PASSED is the integer ceiling
+          # of FLOOR% of TOTAL — the smallest pass count that still clears.
+          MARGIN=$((RATE - FLOOR))
+          MIN_PASSED=$(( (FLOOR * TOTAL + 99) / 100 ))
+          SLACK=$((PASSED - MIN_PASSED))
+          echo "passed=$PASSED failed=$FAILED skipped=$SKIPPED total=$TOTAL pass-rate=${RATE}% floor=${FLOOR}%"
+          echo "margin: ${MARGIN} point(s) above the floor — ${SLACK} further test(s) may fail before it trips"
+          if [ "$RATE" -ge "$FLOOR" ] && [ "$MARGIN" -le 1 ]; then
+            echo "::warning::Postgres host conformance pass-rate is ${RATE}%, only ${MARGIN} point(s) (${SLACK} test(s)) above the ${FLOOR}% floor. Fix the named failures above; the next scenario batch trips this gate."
+          fi
+          if [ "$RATE" -lt "$FLOOR" ]; then
+            echo "::error::Postgres host conformance pass-rate dropped below ${FLOOR}% floor: ${RATE}% (passed=$PASSED total=$TOTAL, $((MIN_PASSED - PASSED)) test(s) short). The failing scenarios are named above — fix them; do not lower the floor."
             exit 1
           fi
 
