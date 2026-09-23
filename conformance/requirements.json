@@ -5956,7 +5956,7 @@
     {
       "id": "openwop.it.auth-subject-link.subjectlinking-true-is-only-claimed-alongside-both-saml-and-scim-profiles",
       "file": "auth-subject-link.test.ts",
-      "line": 61,
+      "line": 62,
       "title": "subjectLinking:true is only claimed alongside both SAML and SCIM profiles",
       "explicitId": "openwop.it.auth-subject-link.subjectlinking-true-is-only-claimed-alongside-both-saml-and-scim-profiles",
       "citations": [
@@ -5969,7 +5969,7 @@
     {
       "id": "openwop.it.auth-subject-link.advertising-both-profiles-requires-subjectlinking-true-a-subjectlinkkey-rfc-0164",
       "file": "auth-subject-link.test.ts",
-      "line": 76,
+      "line": 77,
       "title": "advertising BOTH profiles REQUIRES subjectLinking:true + a subjectLinkKey (RFC 0164 — the vulnerable shape fails, never inapplicable)",
       "explicitId": "openwop.it.auth-subject-link.advertising-both-profiles-requires-subjectlinking-true-a-subjectlinkkey-rfc-0164",
       "citations": [
@@ -5987,7 +5987,7 @@
     {
       "id": "openwop.it.auth-subject-link.a-scim-deactivation-fail-closes-the-linked-saml-identity",
       "file": "auth-subject-link.test.ts",
-      "line": 106,
+      "line": 107,
       "title": "a SCIM deactivation fail-closes the linked SAML identity",
       "explicitId": "openwop.it.auth-subject-link.a-scim-deactivation-fail-closes-the-linked-saml-identity",
       "citations": [
@@ -6012,7 +6012,7 @@
     {
       "id": "openwop.it.auth-subject-link.a-mutable-pii-link-key-email-never-produces-a-cross-lane-pass",
       "file": "auth-subject-link.test.ts",
-      "line": 152,
+      "line": 169,
       "title": "a mutable/PII link key (email) never produces a cross-lane pass",
       "explicitId": "openwop.it.auth-subject-link.a-mutable-pii-link-key-email-never-produces-a-cross-lane-pass",
       "citations": [
@@ -6029,7 +6029,7 @@
     {
       "id": "openwop.it.auth-subject-link.a-scim-deactivation-does-not-deny-a-saml-login-whose-run-subject-is-legacy-issue",
       "file": "auth-subject-link.test.ts",
-      "line": 202,
+      "line": 219,
       "title": "a SCIM deactivation does not deny a SAML login whose run subject is legacy-issued",
       "explicitId": null,
       "citations": []
@@ -25733,7 +25733,7 @@
     {
       "id": "openwop.it.trigger-bridge-delivery.de-dups-by-dedupkey-retries-to-dead-letter-and-links-delivery-run-causation",
       "file": "trigger-bridge-delivery.test.ts",
-      "line": 54,
+      "line": 55,
       "title": "de-dups by dedupKey, retries to dead-letter, and links delivery→run causation",
       "explicitId": "openwop.it.trigger-bridge-delivery.de-dups-by-dedupkey-retries-to-dead-letter-and-links-delivery-run-causation",
       "citations": [
@@ -27151,7 +27151,7 @@
     {
       "id": "openwop.it.v2-bound-id-kinds.subscriptionid-the-webhookid-a-host-emits-on-a-delivery-is-the-one-it-minted",
       "file": "v2-bound-id-kinds.test.ts",
-      "line": 132,
+      "line": 140,
       "title": "subscriptionId: the webhookId a host EMITS on a delivery is the one it minted",
       "explicitId": "openwop.requirement.0187.bound-id-kinds.webhook-emitted",
       "citations": [
@@ -27170,7 +27170,7 @@
     {
       "id": "openwop.it.v2-bound-id-kinds.interruptid-the-id-a-suspension-puts-on-the-wire-is-bound",
       "file": "v2-bound-id-kinds.test.ts",
-      "line": 179,
+      "line": 192,
       "title": "interruptId: the id a suspension puts on the wire is bound",
       "explicitId": null,
       "citations": []
@@ -27178,7 +27178,7 @@
     {
       "id": "openwop.it.v2-bound-id-kinds.effectid-every-row-get-runs-runid-effects-serves-is-bound",
       "file": "v2-bound-id-kinds.test.ts",
-      "line": 200,
+      "line": 213,
       "title": "effectId: every row GET /runs/{runId}/effects serves is bound",
       "explicitId": "openwop.requirement.0187.bound-id-kinds.per-kind",
       "citations": [
@@ -27191,7 +27191,7 @@
     {
       "id": "openwop.it.v2-bound-id-kinds.deliveryid-every-record-in-the-dead-letter-read-carries-a-bound-id-in-the-caller",
       "file": "v2-bound-id-kinds.test.ts",
-      "line": 215,
+      "line": 228,
       "title": "deliveryId: every record in the dead-letter read carries a bound id in the caller's tenant",
       "explicitId": "openwop.requirement.0187.bound-id-kinds.per-kind",
       "citations": [
@@ -32452,7 +32452,7 @@
     {
       "id": "openwop.it.v2-webhook-delivery-shape.a-major-2-subscriber-receives-the-v2-rendering-the-delivery-validates-and-run-st",
       "file": "v2-webhook-delivery-shape.test.ts",
-      "line": 220,
+      "line": 217,
       "title": "a major-2 subscriber receives the v2 rendering: the delivery validates, and run.started.owner carries subject, never principal",
       "explicitId": "openwop.requirement.0171.webhook-delivery-shape",
       "citations": [
@@ -32483,7 +32483,7 @@
     {
       "id": "openwop.it.v2-webhook-delivery-shape.a-major-1-subscriber-still-receives-the-v1-rendering-the-v1-wire-does-not-move-m",
       "file": "v2-webhook-delivery-shape.test.ts",
-      "line": 240,
+      "line": 237,
       "title": "a major-1 subscriber still receives the v1 rendering — the v1 wire does not move mid-overlap",
       "explicitId": "openwop.requirement.0171.webhook-delivery-shape",
       "citations": [
@@ -32501,7 +32501,7 @@
     {
       "id": "openwop.it.v2-webhook-delivery-shape.a-seeded-era-2-run-is-delivered-projected-too-the-fan-out-branch-a-fresh-run-can",
       "file": "v2-webhook-delivery-shape.test.ts",
-      "line": 264,
+      "line": 261,
       "title": "a seeded era-2 run is delivered projected too — the fan-out branch a fresh run cannot reach (seam-gated)",
       "explicitId": "openwop.requirement.0171.webhook-delivery-shape",
       "citations": [
@@ -32519,7 +32519,7 @@
     {
       "id": "openwop.it.v2-webhook-durable-delivery.a-failed-attempt-is-retried-and-the-event-is-delivered-at-least-once",
       "file": "v2-webhook-durable-delivery.test.ts",
-      "line": 235,
+      "line": 238,
       "title": "a failed attempt is retried and the event is delivered at least once",
       "explicitId": "openwop.requirement.0173.webhook-durable-delivery",
       "citations": [
@@ -32529,7 +32529,8 @@
         },
         {
           "section": "webhooks.md §Durability",
-          "requirement": "the host MUST attempt delivery of run.completed for THIS run to the registered subscriber"
+          "requirement": null,
+          "interpolated": true
         },
         {
           "section": "webhooks.md §Durability",
@@ -32550,7 +32551,7 @@
     {
       "id": "openwop.it.v2-webhook-durable-delivery.an-exhausted-delivery-is-dead-lettered-never-dropped",
       "file": "v2-webhook-durable-delivery.test.ts",
-      "line": 323,
+      "line": 339,
       "title": "an exhausted delivery is dead-lettered, never dropped",
       "explicitId": "openwop.requirement.0173.webhook-durable-delivery.dead-letter",
       "citations": [
@@ -32584,7 +32585,7 @@
     {
       "id": "openwop.it.v2-webhook-durable-delivery.the-dead-letter-read-is-served-and-its-records-carry-no-payload",
       "file": "v2-webhook-durable-delivery.test.ts",
-      "line": 417,
+      "line": 433,
       "title": "the dead-letter read is served and its records carry no payload",
       "explicitId": "openwop.requirement.0188.dead-letter-read",
       "citations": [
@@ -32597,7 +32598,7 @@
     {
       "id": "openwop.it.v2-webhook-durable-delivery.a-dead-letter-record-carries-no-delivered-payload",
       "file": "v2-webhook-durable-delivery.test.ts",
-      "line": 438,
+      "line": 454,
       "title": "a dead-letter record carries no delivered payload",
       "explicitId": "openwop.requirement.0188.dead-letter-content-free",
       "citations": [
@@ -33724,7 +33725,7 @@
     {
       "id": "openwop.it.webhook-signed-delivery.host-posts-run-events-to-subscriber-with-valid-x-openwop-signature",
       "file": "webhook-signed-delivery.test.ts",
-      "line": 169,
+      "line": 168,
       "title": "host POSTs run events to subscriber with valid X-openwop-Signature",
       "explicitId": "openwop.it.webhook-signed-delivery.host-posts-run-events-to-subscriber-with-valid-x-openwop-signature",
       "citations": [
@@ -33775,7 +33776,7 @@
     {
       "id": "openwop.it.webhook-signed-delivery.control-with-a-tunnel-wired-the-host-still-refuses-the-loopback-receiver",
       "file": "webhook-signed-delivery.test.ts",
-      "line": 410,
+      "line": 423,
       "title": "control: with a tunnel wired, the host still refuses the loopback receiver",
       "explicitId": "openwop.it.webhook-signed-delivery.control-with-a-tunnel-wired-the-host-still-refuses-the-loopback-receiver",
       "citations": [
