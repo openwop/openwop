@@ -117,13 +117,11 @@ Class-3 correction. The prior text defined no algorithm, so no host could confor
 
 Sabotage, each run on 2026-09-23 and each turning a leg red for the reason named:
 
-| Sabotage | Red leg(s) |
-| --- | --- |
-| `a.id.localeCompare(b.id, 'cs')` in `witnessDigest` | coherence census (the committed bundles DO reorder under Czech collation) + comparator leg; `jcs-vectors` ordering leg |
-| rebuild-object canonicalizer (`JSON.stringify` of a key-sorted rebuilt object) | `integer-like-keys`, `rfc8785-3.2.3-sort` |
-| NaN → `null` coercion | value-boundary refusal leg |
-| last-duplicate-wins parser | `duplicate-name` refusal |
-| `localeCompare` in the recipe's `tools[]` sort | `tools-code-unit-order`, `tools-code-unit-order-reversed`, and the relationship leg |
+- `a.id.localeCompare(b.id, 'cs')` in `witnessDigest` → the coherence census (the committed bundles DO reorder under Czech collation) and the comparator leg; the `jcs-vectors` ordering leg.
+- a rebuild-object canonicalizer (`JSON.stringify` of a key-sorted rebuilt object) → `integer-like-keys`, `rfc8785-3.2.3-sort`.
+- NaN → `null` coercion → the value-boundary refusal leg.
+- a last-duplicate-wins parser → the `duplicate-name` refusal.
+- `localeCompare` in the recipe's `tools[]` sort → `tools-code-unit-order`, `tools-code-unit-order-reversed`, and the relationship leg.
 
 ## Alternatives considered
 
