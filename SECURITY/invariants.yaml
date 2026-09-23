@@ -4627,3 +4627,25 @@ invariants:
       non-vacuous executed-pass on a committed bundle.
     witness: witnessable-gated
     witnessReview: reviewed-2026-09-22
+
+  - id: a2a-error-no-existence-oracle
+    tier: reference-impl
+    severity: high
+    threat_model: SECURITY/threat-model-interop.md
+    tests:
+      - conformance/src/scenarios/v2-a2a-operation-map.test.ts
+    note: |
+      RFC 0211 §D (spec/v2/core/interop.md §"The operation mappings",
+      Isolation and A2A error details). On an A2A 1.0 interface a task the
+      caller cannot read MUST be answered exactly as a nonexistent one — the
+      JSON-RPC code (-32001) AND the error details: after removing an echo of
+      the requested id, the normalised ErrorInfo entries (`@type`, `reason`,
+      `domain`, sorted metadata keys) MUST be equal between an unknown id and
+      a foreign-tenant id. The leg previously compared Object.keys(error.data),
+      which is ["0"] for any one-element array once `data` follows A2A §9.5 —
+      vacuous; the comparator is now per-element with a positive control that
+      at least one entry exists. Sabotage: metadata.scope set only on the
+      foreign answer. Reference-impl at Active; graduates to protocol at
+      Accepted on a non-vacuous executed-pass on a committed bundle.
+    witness: witnessable-gated
+    witnessReview: reviewed-2026-09-23
