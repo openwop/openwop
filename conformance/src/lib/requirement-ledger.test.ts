@@ -73,3 +73,63 @@ describe('requirement-ledger: recording precedence', () => {
     expect(hasRequirement(ID)).toBe(false);
   });
 });
+
+/**
+ * `fold: true` — the per-`it` path (2.37.0).
+ *
+ * MEASURED, `v2-run-bulk-cancel.test.ts` on a tier-2 host, both rows from ONE
+ * run: `openwop.floor.v2-run-bulk-cancel` `executed-fail`, 10 assertions;
+ * `openwop.requirement.0170.run-bulk-cancel` `executed-pass`, 3. The file has
+ * two `it`s and both hand `req()` the same module-level `const ID` — leg 1
+ * passed with 3 assertions, leg 2 failed on its 7th. `setup.ts` computed the
+ * failing row, `recordRequirement` threw on the conflict, and `setup.ts`'s
+ * "never fail a test for bookkeeping" catch swallowed it. The verdict never
+ * reached the ledger OR the JSONL sink, so the requirement read as a clean pass
+ * while its own file read as a failure, and the message naming what the host
+ * had actually returned was destroyed.
+ *
+ * 27 scenario files share one explicit id across several `it`s this way (the
+ * `check-req-only` duplicate-id rule reads only STRING LITERALS at the call
+ * site, so a `const` is invisible to it), so this was never one file's bug.
+ */
+describe('requirement-ledger: fold (several `it` legs, one requirement id)', () => {
+  it('a FAILING leg after a passing one wins the row and keeps its message', () => {
+    recordRequirement(ID, 'executed-pass', undefined, { assertionCount: 3, fold: true });
+    recordRequirement(ID, 'executed-fail', 'the test executed and failed in "results[] come back in request order": an own entry MUST be ok: true', { assertionCount: 7, fold: true });
+    expect(dispositionOf(ID)).toBe('executed-fail');
+    expect(entryOf(ID).detail).toMatch(/an own entry MUST be ok: true/);
+    // Both legs really did assert for this one requirement — the count sums,
+    // and now agrees with the file row's 10 instead of reporting leg 1's 3.
+    expect(entryOf(ID).assertionCount).toBe(10);
+  });
+
+  it('order does not decide the verdict: passing leg SECOND reads the same', () => {
+    recordRequirement(ID, 'executed-fail', 'leg 2 failed', { assertionCount: 7, fold: true });
+    recordRequirement(ID, 'executed-pass', undefined, { assertionCount: 3, fold: true });
+    expect(dispositionOf(ID)).toBe('executed-fail');
+    expect(entryOf(ID).detail).toBe('leg 2 failed');
+    expect(entryOf(ID).assertionCount).toBe(10);
+  });
+
+  it('folds by CERTIFIABILITY, the same rank readLedgerFile applies across workers', () => {
+    // blocked (1) beats executed-pass (2): a requirement one leg could not
+    // observe does not certify on the strength of another leg (RFC 0168 §E.1).
+    recordRequirement(ID, 'executed-pass', undefined, { assertionCount: 2, fold: true });
+    recordRequirement(ID, 'blocked', 'the seam answered 404', { assertionCount: 0, fold: true });
+    expect(dispositionOf(ID)).toBe('blocked');
+    expect(entryOf(ID).detail).toBe('the seam answered 404');
+
+    resetLedger();
+    // executed-pass (2) beats inapplicable (4): a leg that did not apply must
+    // not erase a leg that was genuinely witnessed.
+    recordRequirement(ID, 'inapplicable', 'facet not advertised', { assertionCount: 0, fold: true });
+    recordRequirement(ID, 'executed-pass', undefined, { assertionCount: 5, fold: true });
+    expect(dispositionOf(ID)).toBe('executed-pass');
+    expect(entryOf(ID).assertionCount).toBe(5);
+  });
+
+  it('WITHOUT fold the conflict still throws — a scenario that classifies itself twice is an authoring bug', () => {
+    recordRequirement(ID, 'executed-pass', undefined, { assertionCount: 4 });
+    expect(() => recordRequirement(ID, 'executed-fail', 'and again')).toThrow(/already recorded/);
+  });
+});
