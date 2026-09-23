@@ -67,8 +67,8 @@
 
 | Status | Count |
 |---|---:|
-| Accepted | 189 |
-| Active | 17 |
+| Accepted | 190 |
+| Active | 16 |
 | Draft | 1 |
 | Superseded | 1 |
 
@@ -273,7 +273,7 @@
 | RFC 0200 | the host as an OAuth protected resource | Active |
 | RFC 0201 | Standard Webhooks 1.0.0 as an opt-in, per-subscription companion signature scheme (`standard-webhooks-1`): a signed, retry-stable delivery id, multi-signature secret rotation, and endpoint verification for opted-in subscriptions only | Active |
 | RFC 0202 | each inventoried agent is published as an A2A Agent Card, reached by an opaque routing value, without making the card an existence oracle across tenants | Active |
-| RFC 0203 | a remote node-pack runtime may name its MCP server by an inline MCP Registry record (Streamable HTTP only, no install packages, no header values), and `nodePackRuntimes` gets its v2 home | Active |
+| RFC 0203 | a remote node-pack runtime may name its MCP server by an inline MCP Registry record (Streamable HTTP only, no install packages, no header values), and `nodePackRuntimes` gets its v2 home | Accepted |
 | RFC 0204 | the v2 host MCP client returns MCP results unaltered, reports reachability instead of a session, and the tool catalog projects onto MCP `ToolAnnotations` by an explicit mapping; `toolCatalog` gets its v2 home | Active |
 | RFC 0205 | A named A2A `Artifact` / `Part` schema for `getArtifact` (negotiated by `application/a2a+json`) and for conversation turns (by `parts` presence), and media types accepted beside the reserved `exportFormats` aliases | Active |
 | RFC 0206 | Localized-content locale keys use a case-canonical BCP 47 subset (language, optional script, optional region) instead of `ll(-RR)`, so a host can author content for every tag its `i18n` annex negotiates | Active |
@@ -304,7 +304,7 @@ The pack registry now lives in the [`openwop-registry`](https://github.com/openw
 ## Active Follow-Ups
 
 - 1 RFC still `Draft` (RFC 0038) — advance with schema/conformance proof or defer.
-- 17 RFCs `Active` (RFC 0111, RFC 0121, RFC 0197, RFC 0198, RFC 0199, RFC 0200, RFC 0201, RFC 0202, RFC 0203, RFC 0204, RFC 0205, RFC 0206, RFC 0207, RFC 0208, RFC 0209, RFC 0210, RFC 0211) — wire-shape MAY shift compatibly within v1.x until promotion to `Accepted`.
+- 16 RFCs `Active` (RFC 0111, RFC 0121, RFC 0197, RFC 0198, RFC 0199, RFC 0200, RFC 0201, RFC 0202, RFC 0204, RFC 0205, RFC 0206, RFC 0207, RFC 0208, RFC 0209, RFC 0210, RFC 0211) — wire-shape MAY shift compatibly within v1.x until promotion to `Accepted`.
 - External audit, non-steward host recruitment, and non-steward maintainer recruitment remain external-action gates.
 - Multi-region idempotency and some optional-profile behavior checks remain lower-confidence than the core wire contract.
 

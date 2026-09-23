@@ -38,8 +38,9 @@
  * @see https://a2a-protocol.org/v0.3.0/specification
  */
 
-import { resolvePublicFront } from './webhook-receiver.js';
-import { createServer, type Server } from 'node:http';
+import { randomBytes } from 'node:crypto';
+import { createServer, type IncomingMessage, type Server, type ServerResponse } from 'node:http';
+import { frontedEndpoint, registerBehindFront, routeFronted, unregisterBehindFront } from './front-mux.js';
 import type { AddressInfo } from 'node:net';
 
 export type A2ATaskState =
@@ -155,6 +156,8 @@ export function a2aErrorInfo(reason: string, metadata: Record<string, string> = 
 export class A2AFakePeer {
   private _server: Server | null = null;
   private _boundPort = 0;
+  /** This fake's path segment behind a shared public front (`lib/front-mux.ts`). */
+  private readonly _nonce = randomBytes(9).toString('hex');
   private readonly _tasks = new Map<string, A2ATask>();
   private readonly _invocations: A2APeerInvocation[] = [];
   private _nextStateOverride: A2ATaskState | null = null;
@@ -183,19 +186,26 @@ export class A2AFakePeer {
 
   async start(port: number = 0): Promise<void> {
     return new Promise((resolve, reject) => {
-      const server = createServer((req, res) => {
+      const dispatch = (req: IncomingMessage, res: ServerResponse): void => {
         this._handle(req, res).catch((err) => {
           if (!res.headersSent) {
             res.writeHead(500, { 'Content-Type': 'application/json' });
             res.end(JSON.stringify({ error: String(err) }));
           }
         });
+      };
+      // Whichever fake owns the pinned port also carries every other fake's
+      // nonce-pathed traffic (`lib/front-mux.ts`) — ask that first.
+      const server = createServer((req, res) => {
+        if (routeFronted('OPENWOP_A2A_FAKE_PEER_URL', req, res)) return;
+        dispatch(req, res);
       });
       server.on('error', reject);
       server.listen(port, '127.0.0.1', () => {
         const addr = server.address() as AddressInfo;
         this._server = server;
         this._boundPort = addr.port;
+        registerBehindFront('OPENWOP_A2A_FAKE_PEER_URL', this._nonce, dispatch);
         resolve();
       });
     });
@@ -205,6 +215,7 @@ export class A2AFakePeer {
     if (!this._server) return;
     const server = this._server;
     this._server = null;
+    unregisterBehindFront('OPENWOP_A2A_FAKE_PEER_URL', this._nonce);
     return new Promise((resolve, reject) => {
       server.close((err) => (err ? reject(err) : resolve()));
     });
@@ -223,7 +234,7 @@ export class A2AFakePeer {
    * fixed port to forward to.
    */
   hostFacingEndpoint(): string {
-    return resolvePublicFront('OPENWOP_A2A_FAKE_PEER_URL', this.endpoint()).url;
+    return frontedEndpoint('OPENWOP_A2A_FAKE_PEER_URL', 'OPENWOP_A2A_FAKE_PEER_PORT', this.endpoint(), this._boundPort, this._nonce);
   }
 
   /**
