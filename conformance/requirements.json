@@ -3,8 +3,8 @@
   "generatedFrom": "src/scenarios/*.test.ts",
   "counts": {
     "files": 624,
-    "tests": 2391,
-    "withStableId": 2391,
+    "tests": 2392,
+    "withStableId": 2392,
     "interpolatedTitles": 0,
     "explicitIds": 2282
   },
@@ -29531,7 +29531,7 @@
     {
       "id": "openwop.it.v2-mcp-mount-map.a-host-claiming-mcp-2026-07-28-lists-every-feature-the-map-requires-for-it",
       "file": "v2-mcp-mount-map.test.ts",
-      "line": 94,
+      "line": 97,
       "title": "a host claiming mcp-2026-07-28 lists every feature the map requires for it",
       "explicitId": null,
       "citations": [
@@ -29545,7 +29545,7 @@
     {
       "id": "openwop.it.v2-mcp-mount-map.server-discover-supportedversions-equals-mcp-revisions-with-resulttype-and-cache",
       "file": "v2-mcp-mount-map.test.ts",
-      "line": 101,
+      "line": 104,
       "title": "server/discover supportedVersions equals mcp.revisions, with resultType and cache hints",
       "explicitId": null,
       "citations": [
@@ -29575,7 +29575,7 @@
     {
       "id": "openwop.it.v2-mcp-mount-map.header-body-disagreement-fails-closed-32020-before-version-selection-an-unsuppor",
       "file": "v2-mcp-mount-map.test.ts",
-      "line": 113,
+      "line": 116,
       "title": "header/body disagreement fails closed -32020 before version selection; an unsupported revision is -32022",
       "explicitId": null,
       "citations": [
@@ -29608,7 +29608,7 @@
     {
       "id": "openwop.it.v2-mcp-mount-map.tools-list-needs-no-initialize-and-no-session-results-carry-cache-hints-and-agre",
       "file": "v2-mcp-mount-map.test.ts",
-      "line": 128,
+      "line": 131,
       "title": "tools/list needs no initialize and no session; results carry cache hints and agree across requests",
       "explicitId": null,
       "citations": [
@@ -29646,7 +29646,7 @@
     {
       "id": "openwop.it.v2-mcp-mount-map.tools-call-answers-a-completed-run-iserror-false-and-a-failed-run-iserror-true-n",
       "file": "v2-mcp-mount-map.test.ts",
-      "line": 144,
+      "line": 147,
       "title": "tools/call answers a completed run isError false and a failed run isError true, never a JSON-RPC error",
       "explicitId": null,
       "citations": [
@@ -29678,7 +29678,7 @@
     {
       "id": "openwop.it.v2-mcp-mount-map.a-run-started-by-tools-call-records-run-started-transport-mcp",
       "file": "v2-mcp-mount-map.test.ts",
-      "line": 159,
+      "line": 162,
       "title": "a run started by tools/call records run.started.transport mcp",
       "explicitId": null,
       "citations": [
@@ -29696,7 +29696,7 @@
     {
       "id": "openwop.it.v2-mcp-mount-map.a-suspending-tool-answers-inputrequiredresult-the-retry-resolves-it-requeststate",
       "file": "v2-mcp-mount-map.test.ts",
-      "line": 178,
+      "line": 181,
       "title": "a suspending tool answers InputRequiredResult; the retry resolves it; requestState is single use and forgery-proof",
       "explicitId": null,
       "citations": [
@@ -29736,9 +29736,48 @@
       ]
     },
     {
+      "id": "openwop.it.v2-mcp-mount-map.the-mrtr-input-request-key-is-the-open-interrupt-s-interruptid-never-the-node-it",
+      "file": "v2-mcp-mount-map.test.ts",
+      "line": 206,
+      "title": "the MRTR input-request key is the open interrupt’s interruptId, never the node it suspended on",
+      "explicitId": null,
+      "citations": [
+        {
+          "section": "interop-map.json mcp.mrtr InputRequiredResult (host as server)",
+          "requirement": null,
+          "interpolated": true
+        },
+        {
+          "section": "interop-map.json mcp.tasks.status waiting-approval",
+          "requirement": null,
+          "interpolated": true
+        },
+        {
+          "section": "interop-map.json mcp.mrtr InputRequiredResult (host as server); schemas/v2/ids.schema.json interruptId",
+          "requirement": null,
+          "interpolated": true
+        },
+        {
+          "section": "interop-map.json mcp.mrtr InputRequiredResult (host as server)",
+          "requirement": null,
+          "interpolated": true
+        },
+        {
+          "section": "interop-map.json mcp.mrtr InputRequiredResult (host as server); runs.md node.suspended",
+          "requirement": null,
+          "interpolated": true
+        },
+        {
+          "section": "interop-map.json mcp.mrtr inputResponses[key] (host as server)",
+          "requirement": null,
+          "interpolated": true
+        }
+      ]
+    },
+    {
       "id": "openwop.it.v2-mcp-mount-map.a-list-that-differs-per-caller-is-cachescope-private",
       "file": "v2-mcp-mount-map.test.ts",
-      "line": 203,
+      "line": 244,
       "title": "a list that differs per caller is cacheScope private",
       "explicitId": null,
       "citations": [
@@ -29756,7 +29795,7 @@
     {
       "id": "openwop.it.v2-mcp-mount-map.unknown-meta-extension-keys-and-capabilities-extensions-are-opaque-processed-nor",
       "file": "v2-mcp-mount-map.test.ts",
-      "line": 220,
+      "line": 261,
       "title": "unknown _meta extension keys and capabilities.extensions are opaque: processed normally, granting nothing",
       "explicitId": null,
       "citations": [
@@ -29774,7 +29813,7 @@
     {
       "id": "openwop.it.v2-mcp-mount-map.an-unauthenticated-request-is-refused-at-the-boundary-unless-anonymousactor-is-a",
       "file": "v2-mcp-mount-map.test.ts",
-      "line": 229,
+      "line": 270,
       "title": "an unauthenticated request is refused at the boundary unless anonymousActor is advertised",
       "explicitId": null,
       "citations": [
@@ -29797,7 +29836,7 @@
     {
       "id": "openwop.it.v2-mcp-mount-map.a-credential-interrupt-is-answered-in-url-mode-url-connecturl-iserror-without-ur",
       "file": "v2-mcp-mount-map.test.ts",
-      "line": 246,
+      "line": 287,
       "title": "a credential interrupt is answered in URL mode (url = connectUrl), isError without URL support, and input_required again on an accept retry with no credential",
       "explicitId": null,
       "citations": [
@@ -29835,7 +29874,7 @@
     {
       "id": "openwop.it.v2-mcp-mount-map.form-mode-is-never-emitted-for-a-nested-schema-or-a-sensitive-format-password-fi",
       "file": "v2-mcp-mount-map.test.ts",
-      "line": 287,
+      "line": 328,
       "title": "form mode is never emitted for a nested schema or a sensitive (format password) field",
       "explicitId": null,
       "citations": [
