@@ -42,6 +42,7 @@
             "enum": [
               "next-request",
               "exp-and-recheck",
+              "exp-only",
               "crl",
               "ocsp",
               "short-lived",
@@ -72,6 +73,29 @@
                 "dpop",
                 "svid-chain"
               ]
+            }
+          }
+        },
+        "$comment": "RFC 0210 §C — `exp-only` MUST NOT be advertised on `api-key` or `session`: there the host issued the credential itself, so revocation is in its own hands. The antecedent is the NEW member only, so no document that validates today can be invalidated by it. The full lane -> rule binding is deliberately NOT here (it would retroactively invalidate a committed bundle); it lives in the suite, and scripts/check-lane-revocation-rules.mjs keeps the table, this enum and the suite map in lockstep.",
+        "if": {
+          "properties": {
+            "revocation": {
+              "const": "exp-only"
+            }
+          },
+          "required": [
+            "revocation"
+          ]
+        },
+        "then": {
+          "properties": {
+            "lane": {
+              "not": {
+                "enum": [
+                  "api-key",
+                  "session"
+                ]
+              }
             }
           }
         }

@@ -5,7 +5,7 @@
  * Witness class: witnessable — unaided. Every member of `auth.lanes[]` MUST
  * name `lane`, `issuers[]` (min 1, the realm), `revocation` and
  * `minimumAssurance`; `revocationWindowSeconds` MUST accompany a rule that
- * names a window (`exp-and-recheck`, `short-lived`, `rebind`). A host that does
+ * names a window (`exp-and-recheck`, `exp-only`, `short-lived`, `rebind`). A host that does
  * not advertise the `auth` family records `inapplicable`.
  *
  * Third leg (suite 2.36.0): a lane advertises only a revocation rule that
@@ -33,8 +33,8 @@ import { req } from '../lib/requirement-ids.js';
 
 const DOC = 'spec/v2/core/identity.md §2.1';
 const LANES = new Set(['api-key', 'oauth2', 'oidc', 'mtls', 'saml', 'scim', 'ldap', 'workload', 'session', 'anonymous']);
-const REVOCATION = new Set(['next-request', 'exp-and-recheck', 'crl', 'ocsp', 'short-lived', 'not-on-or-after', 'bound-connection', 'rebind', 'delegation-expiry']);
-const WINDOWED = new Set(['exp-and-recheck', 'short-lived', 'rebind']);
+const REVOCATION = new Set(['next-request', 'exp-and-recheck', 'exp-only', 'crl', 'ocsp', 'short-lived', 'not-on-or-after', 'bound-connection', 'rebind', 'delegation-expiry']);
+const WINDOWED = new Set(['exp-and-recheck', 'exp-only', 'short-lived', 'rebind']);
 const ASSURANCE = new Set(['bearer', 'sender-constrained', 'key-bound']);
 const PROOFS = new Set(['mtls-key-binding', 'dpop', 'svid-chain']);
 
@@ -43,8 +43,8 @@ const PROOFS = new Set(['mtls-key-binding', 'dpop', 'svid-chain']);
 // scripts/check-lane-revocation-rules.mjs; keep the literal shape.
 const LANE_RULES: Record<string, string[] | null> = {
   'api-key': ['next-request'],
-  'oauth2': ['exp-and-recheck'],
-  'oidc': ['exp-and-recheck'],
+  'oauth2': ['exp-and-recheck', 'exp-only'],
+  'oidc': ['exp-and-recheck', 'exp-only'],
   'mtls': ['crl', 'ocsp', 'short-lived'],
   'saml': ['not-on-or-after'],
   'scim': ['bound-connection'],
