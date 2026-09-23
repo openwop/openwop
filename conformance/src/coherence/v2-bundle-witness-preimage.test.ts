@@ -17,22 +17,28 @@
  * comparator from `localeCompare` to code units changed no committed digest.
  * It fails if it compares fewer bundles than the directory holds.
  *
- * Sabotage: replace `codeUnitCompare` in `witnessDigest` with
- * `(a, b) => a.id.localeCompare(b.id, 'cs')` — the ids below (`chain-…` after
- * `h…` in Czech collation) turn the comparator leg red.
+ * Sabotage (run 2026-09-23): replace `codeUnitCompare` in `witnessDigest` with
+ * `(a, b) => a.id.localeCompare(b.id, 'cs')` — BOTH legs go red: the committed
+ * bundles themselves reorder under Czech collation (the locale bug is live, not
+ * hypothetical), and the fixture ids below order differently.
  */
 
 import { describe, it, expect } from 'vitest';
 import { createHash } from 'node:crypto';
 import { existsSync, readdirSync, readFileSync } from 'node:fs';
 import { join } from 'node:path';
-import { SCHEMAS_DIR } from '../lib/paths.js';
+import { SCHEMAS_DIR, V1_DIR } from '../lib/paths.js';
 import { canonicalJSON, codeUnitCompare, parseIJson } from '../lib/jcs.js';
 import { witnessDigest, type BundleV3, type BundleV3Requirement } from '../lib/certification-bundle-v3.js';
 import { req } from '../lib/requirement-ids.js';
 import { softSkip } from '../lib/soft-skip.js';
 
 const DIR = join(SCHEMAS_DIR, '..', 'evidence', 'v2-host-bundles');
+
+/** The corpus gate every coherence scenario takes: the published package ships
+ *  no `evidence/`, and this file is about the spec repo, not about any host —
+ *  `inapplicable`, never `blocked`. */
+const corpusAbsent = (): boolean => V1_DIR === null;
 const SPEC = 'RFC 0212 §C · spec/v2/core/conformance.md §"Canonical JSON"';
 
 /** §C, read literally. Deliberately does not call `witnessDigest`. */
@@ -51,17 +57,18 @@ function proseDigest(b: BundleV3): string {
   return createHash('sha256').update(canonicalJSON(preimage), 'utf8').digest('hex');
 }
 
-const files = existsSync(DIR) ? readdirSync(DIR).filter((f) => f.endsWith('.json')).sort(codeUnitCompare) : [];
+const files = !corpusAbsent() && existsSync(DIR) ? readdirSync(DIR).filter((f) => f.endsWith('.json')).sort(codeUnitCompare) : [];
 const bundles = files
   .map((f) => ({ f, b: parseIJson(readFileSync(join(DIR, f), 'utf8')) as BundleV3 }))
   .filter(({ b }) => b.bundleVersion === '3');
 
 describe('RFC 0212 §C — witnessSha256 preimage', () => {
   it('every committed v3 bundle re-derives its witnessSha256 from the prose preimage', () => {
-    if (files.length === 0) {
-      softSkip('inapplicable', 'evidence/v2-host-bundles is not present in this layout (published package)');
+    if (corpusAbsent()) {
+      softSkip('inapplicable', 'corpus not present in this layout (published package) — evidence/v2-host-bundles ships only in the spec repo');
       return;
     }
+    expect(files.length, req('openwop.it.v2-bundle-witness-preimage.every-committed-v3-bundle-re-derives-its-witnesssha256-from-the-prose-preimage', SPEC, 'the spec repo MUST carry committed v3 bundles for this census to mean anything')).toBeGreaterThan(0);
     // Every file in the directory is a v3 bundle today; comparing fewer than the
     // directory holds would let a bundle fall out of the census unnoticed.
     expect(bundles.length, req('openwop.it.v2-bundle-witness-preimage.every-committed-v3-bundle-re-derives-its-witnesssha256-from-the-prose-preimage', SPEC, 'the census MUST cover every committed v3 bundle')).toBe(files.length);

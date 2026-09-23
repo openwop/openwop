@@ -40232,10 +40232,14 @@
     {
       "id": "openwop.it.v2-bundle-witness-preimage.every-committed-v3-bundle-re-derives-its-witnesssha256-from-the-prose-preimage",
       "file": "v2-bundle-witness-preimage.test.ts",
-      "line": 60,
+      "line": 66,
       "title": "every committed v3 bundle re-derives its witnessSha256 from the prose preimage",
       "explicitId": "openwop.it.v2-bundle-witness-preimage.every-committed-v3-bundle-re-derives-its-witnesssha256-from-the-prose-preimage",
       "citations": [
+        {
+          "section": "RFC 0212 §C · spec/v2/core/conformance.md §\"Canonical JSON\"",
+          "requirement": "the spec repo MUST carry committed v3 bundles for this census to mean anything"
+        },
         {
           "section": "RFC 0212 §C · spec/v2/core/conformance.md §\"Canonical JSON\"",
           "requirement": "the census MUST cover every committed v3 bundle"
@@ -40255,7 +40259,7 @@
     {
       "id": "openwop.it.v2-bundle-witness-preimage.the-row-comparator-is-code-unit-order-which-a-locale-collation-contradicts",
       "file": "v2-bundle-witness-preimage.test.ts",
-      "line": 74,
+      "line": 81,
       "title": "the row comparator is code-unit order, which a locale collation contradicts",
       "explicitId": "openwop.it.v2-bundle-witness-preimage.the-row-comparator-is-code-unit-order-which-a-locale-collation-contradicts",
       "citations": [
