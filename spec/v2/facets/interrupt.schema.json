@@ -24,7 +24,7 @@
     },
     "callbackDelivery": {
       "type": "boolean",
-      "description": "RFC 0196 \u00a7A.1 \u2014 true only if the host delivers to createRun.callbackUrl (interrupt.md \u00a7Callback delivery). A host advertising it MUST hold callbackUrl to the webhooks.md \u00a7SSRF guard at create time and at delivery."
+      "description": "RFC 0196 \u00a7A.1 \u2014 true only if the host delivers to createRun.callbackUrl (interrupt.md \u00a7Callback delivery). A host advertising it MUST hold callbackUrl to the webhooks.md \u00a7Egress guard at create time and at delivery."
     }
   },
   "required": [
