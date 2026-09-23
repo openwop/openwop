@@ -240,6 +240,7 @@ The signed-token surface (`/v1/interrupts/{token}`) is for asynchronous HITL whe
 | -------- | -------------------------- | ------- | ----------------- | ----------------------- |
 | `POST`   | `/v1/webhooks`             | API key | `webhooks:manage` | Register a subscription |
 | `DELETE` | `/v1/webhooks/{webhookId}` | API key | `webhooks:manage` | Unregister              |
+| `POST`   | `/v1/webhooks/{webhookId}/rotate-secret` | API key | `webhooks:manage` | Rotate the signing secret with an overlap (RFC 0201 §E.18; gated on `webhooks.secretRotation`, `404` when unadvertised) |
 
 ### Audit-log integrity (gated on profile)
 
