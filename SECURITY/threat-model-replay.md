@@ -80,6 +80,12 @@ A fork inherits the source's history but not its authority. Fork creation is a d
 
 **Control.** RFC 0185 §C: a projection MUST carry the property — the 56 narrowed defs hatch `^(openwop-|x-|vendor\.)` opaquely — or fail. Invariant `projection-carry-or-fail`; witness `v2-payload-vendor-hatch.test.ts`.
 
+### 3.6 `signed-preimage-jcs-locale-independent` — two verifiers read one digest differently
+
+**Threat.** A replay cache key, a fork's output checksum and a certification bundle's `witnessSha256` are digests two parties compute independently and compare. If the bytes depend on something other than the value — the computing machine's collation locale, or a signer that coerces a value JSON cannot hold — the two digests disagree with no error on either side. A locale comparator sorts `ch` after `h` in Czech and `get_weather` before `getWeather` in English; a JavaScript signer rounds `9007199254740993` to `…992` and turns NaN into `null`, where a Python verifier keeps the integer exact and refuses NaN. The result is a replay that misses its own cache, or a certification bundle that verifies on one machine and is rejected as tampered on another.
+
+**Control.** RFC 0212: every signed or hashed preimage is RFC 8785 JCS over I-JSON; rows and `tools[]` sort by UTF-16 code units; a canonicalizer refuses non-I-JSON rather than coercing it. Invariant `signed-preimage-jcs-locale-independent`; witnesses `jcs-vectors.test.ts` (the normative `conformance/vectors/jcs-v1.json`) and `v2-bundle-witness-preimage.test.ts` (every committed v3 bundle re-derives from the prose preimage).
+
 ## 4. A property of the evidence, not a caveat about it
 
 `replay-fanout-suppression.test.ts` observes the MUST NOT by **being the subscriber**: it boots a loopback HTTP receiver and registers it via `POST /v1/webhooks`.

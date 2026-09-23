@@ -855,7 +855,7 @@
         },
         "attestation": {
           "type": "object",
-          "description": "RFC 0063 (when `capabilities.agents.subRunAttestation: true` AND the `core.subWorkflow` node sets `outputAttestation.checksum: true`). A content checksum over the child's harvested output object, computed BEFORE `outputMapping` is applied so the parent (or a downstream node) can verify integrity \u2014 host-independent because the recipe is RFC 8785 JCS canonicalization + SHA-256 (the `replay.md` recipe, RFC 0041), enabling verification of a child that ran on a different host (RFC 0040). Advisory: the host does NOT itself reject on checksum mismatch; that is parent policy.",
+          "description": "RFC 0063 (when `capabilities.agents.subRunAttestation: true` AND the `core.subWorkflow` node sets `outputAttestation.checksum: true`). A content checksum over the child's harvested output object, computed BEFORE `outputMapping` is applied so the parent (or a downstream node) can verify integrity \u2014 host-independent because the recipe is RFC 8785 JCS canonicalization + SHA-256 (the `replay.md` recipe, RFC 0041; the input MUST be I-JSON, RFC 0212), enabling verification of a child that ran on a different host (RFC 0040). Advisory: the host does NOT itself reject on checksum mismatch; that is parent policy.",
           "additionalProperties": false,
           "required": [
             "checksum",
@@ -2639,7 +2639,7 @@
         },
         "argsHash": {
           "type": "string",
-          "description": "RFC 0064 (when `capabilities.toolHooks.prePostEvents`). SHA-256 over RFC 8785 JCS-canonicalized args with resolved secrets already redacted (SR-1) \u2014 the SIEM-safe, content-free alternative to `inputs`. Raw key material MUST NOT enter the hash input."
+          "description": "RFC 0064 (when `capabilities.toolHooks.prePostEvents`). SHA-256 over RFC 8785 JCS-canonicalized args with resolved secrets already redacted (SR-1) \u2014 the SIEM-safe, content-free alternative to `inputs`. Raw key material MUST NOT enter the hash input. The args MUST be I-JSON (RFC 0212)."
         },
         "principal": {
           "type": "string",

@@ -21,6 +21,7 @@ import { createHash, createPrivateKey, createPublicKey, sign as edSign, verify a
 import { profileDerivable, type DiscoveryPayload } from './profiles.js';
 import { checkRungClaim, type DurabilityRung, type RowEvidence } from './durability-evidence.js';
 import { profilesDeniedByObservedRelaxation, profilesRelaxedBy, v2RegistryAvailable } from './v2-profiles.js';
+import { canonicalJSON, codeUnitCompare } from './jcs.js';
 
 export type BundleV3Result = 'executed-pass' | 'executed-fail' | 'skipped' | 'inapplicable' | 'blocked';
 
@@ -78,14 +79,12 @@ export interface BundleV3 {
 
 export const SIGNATURE_OVER = ['witnessSha256', 'host.build', 'suite.version', 'discovery.sha256'] as const;
 
-/** Deterministic JSON: keys sorted at every level, no whitespace. */
-export function canonicalJSON(value: unknown): string {
-  if (Array.isArray(value)) return `[${value.map(canonicalJSON).join(',')}]`;
-  if (value !== null && typeof value === 'object') {
-    return `{${Object.keys(value as Record<string, unknown>).sort().map((k) => `${JSON.stringify(k)}:${canonicalJSON((value as Record<string, unknown>)[k])}`).join(',')}}`;
-  }
-  return JSON.stringify(value);
-}
+/**
+ * RFC 0212 §A — the bytes every attestation and digest here covers are RFC 8785
+ * (JCS), and a non-I-JSON value is refused, never coerced. Re-exported so
+ * existing importers keep one name for one algorithm.
+ */
+export { canonicalJSON } from './jcs.js';
 
 /**
  * RFC 0148 §C — the digest over the reporter record (the requirement rows),
@@ -100,9 +99,16 @@ export function canonicalJSON(value: unknown): string {
  * committed bundles digest unchanged, pinned in durability-evidence.test.ts),
  * and `{ rows, relaxations }` otherwise. An older verifier fails closed on a
  * 2.35.0 bundle that declares relaxations — `witness-digest`, never a pass.
+ *
+ * RFC 0212 §C — rows sort by `id` in UTF-16 code-unit order. This was
+ * `localeCompare` in the process default locale: a bundle cut on a machine
+ * whose locale is Czech, Slovak, Lithuanian or Hawaiian digested differently
+ * from the same bundle anywhere else (Czech sorts `ch` after `h`). Every
+ * committed bundle's ids are `[a-z0-9.-]`, where the two orders coincide, so no
+ * stored digest changes (v2-bundle-witness-preimage.test.ts pins that).
  */
 export function witnessDigest(rows: readonly BundleV3Requirement[], relaxations?: readonly BundleV3Relaxation[]): string {
-  const canonicalRows = [...rows].sort((a, b) => a.id.localeCompare(b.id)).map((r) => ({ id: r.id, scenario: r.scenario, result: r.result, ...(r.assertions === undefined ? {} : { assertions: r.assertions }), ...(r.detail === undefined ? {} : { detail: r.detail }),
+  const canonicalRows = [...rows].sort((a, b) => codeUnitCompare(a.id, b.id)).map((r) => ({ id: r.id, scenario: r.scenario, result: r.result, ...(r.assertions === undefined ? {} : { assertions: r.assertions }), ...(r.detail === undefined ? {} : { detail: r.detail }),
     // ONLY WHEN PRESENT: every bundle cut before 2.34.0 has no `evidence` and digests byte-identically.
     ...(r.evidence === undefined ? {} : { evidence: r.evidence }) }));
   const preimage = relaxations !== undefined && relaxations.length > 0 ? { rows: canonicalRows, relaxations } : canonicalRows;
