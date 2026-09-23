@@ -141,3 +141,4 @@ to land — and until then the zero is visibly a blocked obligation rather than 
 | 0208 | v2 homes the A2A and MCP operation mappings (isolation; Active by steward override of RFC 0147 §A.6) | in-scope-pending-assessment | — | — | `not-reviewed` |
 | 0209 | v2 A2UI surfaces are A2UI v0.9 (authorization and replay; Active by steward override of RFC 0147 §A.6) | in-scope-pending-assessment | — | — | `not-reviewed` |
 | 0210 | a lane's revocation rule is measured, and a host that only honours `exp` says so (identity and authorization; Active by steward override of RFC 0147 §A.6) | in-scope-pending-assessment | — | — | `not-reviewed` |
+| 0214 | an A2A push credential is a destination credential, and a push is an egress like any webhook (authorization, external effects and replay; Active by steward override of RFC 0147 §A.6) | in-scope-pending-assessment | — | — | `not-reviewed` |

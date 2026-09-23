@@ -109,7 +109,7 @@
         "requires": [
           "a2a.pushNotifications"
         ],
-        "rule": "Persists A2ATaskState.pushConfig. url MUST pass the webhooks.md egress guard, scheme and address arms both; token and authentication.credentials are secrets held by reference and MUST NOT enter the event log, the persisted A2ATaskState or a debug bundle. Unadvertised: PushNotificationNotSupportedError."
+        "rule": "Persists A2ATaskState.pushConfig. url MUST pass the webhooks.md egress guard at registration (scheme and address arms both) and again at delivery (interop.md §\"A2A push delivery\"); token and authentication.credentials are a destination credential held by reference (security-defaults.md §\"Onward hops\"), MUST NOT enter the event log, the persisted A2ATaskState or a debug bundle, and are sent only to the registered origin. Unadvertised: PushNotificationNotSupportedError."
       },
       {
         "upstream": "GetTaskPushNotificationConfig | ListTaskPushNotificationConfigs | DeleteTaskPushNotificationConfig",
@@ -119,7 +119,7 @@
         "requires": [
           "a2a.pushNotifications"
         ],
-        "rule": "Reads or deletes the persisted configs of a task the caller can read; secrets are never returned."
+        "rule": "Reads or deletes the persisted configs of a task the caller can read; secrets are never returned. An unreadable task or a configId that is not the task's is answered as an unknown id; delete is idempotent. Unadvertised: PushNotificationNotSupportedError."
       },
       {
         "upstream": "GetExtendedAgentCard",

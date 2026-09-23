@@ -68,7 +68,7 @@ For a fork with `mode: replay`:
 
 Pure nodes and LLM calls served from the invocation log MUST re-execute live; otherwise divergence detection is vacuous.
 
-**Fan-out.** A host that projects its log outward — webhook delivery, outbound streams, analytics or audit sinks — MUST NOT deliver events a replay re-emits as fixed history. Replay-ness MUST be read from the run, never from the event type; the fork's own log MUST still carry the re-emitted events (webhooks.md).
+**Fan-out.** A host that projects its log outward — webhook delivery, A2A push, outbound streams, analytics or audit sinks — MUST NOT deliver events a replay re-emits as fixed history, and a fork of either mode MUST NOT inherit its source's A2A push configs. Replay-ness MUST be read from the run, never from the event type; the fork's own log MUST still carry the re-emitted events (webhooks.md).
 
 **Branch.** A branch re-fires effects for sequences `>= fromSeq`; those are effects the operator asked for. A host MAY suppress branch effects and MUST NOT report that as replay suppression. A host SHOULD surface the re-fire in operator-facing fork UI.
 

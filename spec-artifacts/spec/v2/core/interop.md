@@ -75,6 +75,12 @@ A host MAY serve the MCP Tasks extension `io.modelcontextprotocol/tasks` (revisi
 
 `auth-required` remains a member of the persisted A2A task state enum (`schemas/v2/a2a-task-state.schema.json`) for the reverse direction (consuming an external A2A agent). The forward projection MUST emit it, with `interruptKind: credential` and a status message carrying `connectUrl`, for a run suspended on a `credential` interrupt (interrupt.md), and MUST NOT emit it otherwise.
 
+## A2A push delivery (RFC 0214)
+
+A host advertising `a2a.pushNotifications` treats each push as a webhook egress: webhooks.md §Egress binds at delivery time as well as registration, a `3xx` is a failed delivery, and the push credential is bound as security-defaults.md §"Onward hops" states. It MUST attempt each push at least once; a host that retries follows `webhooks.md` `retryPolicy` semantics. The body is an A2A 1.0 `StreamResponse` sent as `application/a2a+json`, carrying `Authorization: {scheme} {credentials}` from the config, or `Authorization: Bearer <token>` when only `token` is set. A host MUST NOT add an OpenWOP signature. Push dead-letters are not visible to A2A clients; a client recovers with `GetTask`.
+
+A `replay` fork MUST NOT push re-emitted history, and no fork inherits a source run's push configs. A push-config read or delete on a task the caller cannot read, or naming a `configId` that is not that task's, MUST answer exactly as for an unknown id, apart from the JSON-RPC `id`; a `configId` MUST NOT encode a tenant, workspace or principal, and delete is idempotent.
+
 ## Per-agent cards
 
 A host advertising `a2a.agentCards` MUST also offer the `a2a-1.0` profile and `agents.manifestRuntime`, and MUST declare `capabilities.extendedAgentCard: true` on its public card. It publishes each entry of a caller's agent inventory (`GET /agents`) as an A2A `AgentCard`, reached through the entry's `a2aTenant`: an opaque routing value `R` the host mints, stable for the agent and host version, that MUST NOT encode a tenant, workspace, or principal.

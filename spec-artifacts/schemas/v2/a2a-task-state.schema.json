@@ -69,12 +69,12 @@
         "url": {
           "type": "string",
           "format": "uri",
-          "description": "Caller-registered push target. The host MUST validate it through the RFC 0093 webhook-egress SSRF guard before any push (no private/loopback/link-local target) — SECURITY invariant `a2a-push-egress-ssrf`."
+          "description": "Caller-registered push target. The host MUST validate it through the webhooks.md egress guard in full — scheme arm (non-https:// refused) and address arm (no private/loopback/link-local/ULA/metadata target) — at registration, and again at delivery (RFC 0214) — SECURITY invariant `a2a-push-egress-ssrf`."
         },
         "tokenFingerprint": {
           "type": "string",
           "maxLength": 32,
-          "description": "MAY — a truncated/salted digest of the caller's push-auth token (NEVER the raw token; same SR-1 rule as RFC 0083's `secretFingerprint`). The A2A push HMAC details (A2A §4.3.3) stay inside the A2A layer per a2a-integration.md."
+          "description": "MAY — a truncated/salted digest of the caller's push-auth token (NEVER the raw token; same SR-1 rule as RFC 0083's `secretFingerprint`). The token itself is a destination credential held by reference (RFC 0214)."
         }
       }
     }
