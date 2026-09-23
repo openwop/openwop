@@ -65,8 +65,7 @@ const bundles = files
 describe('RFC 0212 §C — witnessSha256 preimage', () => {
   it('every committed v3 bundle re-derives its witnessSha256 from the prose preimage', () => {
     if (corpusAbsent()) {
-      softSkip('inapplicable', 'corpus not present in this layout (published package) — evidence/v2-host-bundles ships only in the spec repo');
-      return;
+      return softSkip('inapplicable', 'corpus not present in this layout (published package) — evidence/v2-host-bundles ships only in the spec repo');
     }
     expect(files.length, req('openwop.it.v2-bundle-witness-preimage.every-committed-v3-bundle-re-derives-its-witnesssha256-from-the-prose-preimage', SPEC, 'the spec repo MUST carry committed v3 bundles for this census to mean anything')).toBeGreaterThan(0);
     // Every file in the directory is a v3 bundle today; comparing fewer than the

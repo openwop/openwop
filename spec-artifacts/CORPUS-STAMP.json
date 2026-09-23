@@ -117,7 +117,7 @@
     "schemas/v2/audit-verify-result.schema.json": "a748dfadb5155adfde8a91045e76b0db6695005fe559035d71670fdd55edb3ba",
     "schemas/v2/budget-policy.schema.json": "c7449daeb6e1d95e7a047b8c2814d3d54748697c27046972834874867d9b5f4c",
     "schemas/v2/capabilities.schema.json": "79ddbbda4686fe66ec5b0aaf9bafb2385e2f8ccbb1ee39087d75cef9fd1f1628",
-    "schemas/v2/certification-bundle.schema.json": "9f36d36ede6bf587dc89e9ca22b86e219952c2afaf31a9dd0a698c62ea6db186",
+    "schemas/v2/certification-bundle.schema.json": "bc53b41c86f079b894c4349f06918272d3cae7d097b44fe8b9f6892235bed224",
     "schemas/v2/channel-presence-payload.schema.json": "4eeb224910e6f7eee3ab5e7c3899559c25c83a26d0022e0ad195c4672611977a",
     "schemas/v2/channel-written-payload.schema.json": "ccecff3c71a3275ad8db035ac0e04db25e6f8d23cf091ddbcd5a60d1be1cbb6b",
     "schemas/v2/chat-card-pack-manifest.schema.json": "92a57db2fd4b2463f14ef155fef8e3f18afc78960b646459dcf32efc79ff6bf5",
@@ -296,5 +296,5 @@
     "spec/v2/retention-floors.json": "eaf3722d95c79947af1d4269ef85117e126518c588cfcf1a2b21b97269f51624",
     "spec/v2/surface-baseline.json": "efdb4e5e0eb16689e20dea2be6f326971bb5707990c31896ca4cf24c6a5bbfed"
   },
-  "corpusCommit": "de1607c6d110f8d6b2ece3d8321b750dbb13bf58"
+  "corpusCommit": "431662b001d2146d61a4d9bdd784f74f1473cdae"
 }
