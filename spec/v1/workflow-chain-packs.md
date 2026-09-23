@@ -1,6 +1,6 @@
 # OpenWOP Spec v1 — Workflow-Chain Packs
 
-> **Status: Draft · v1.x · RFC 0013 `Accepted`; spec status Draft pending (a) the reference host implementing expansion and (b) at least the manifest-validation and expansion conformance scenarios passing on it.** Normative pack format and expansion rules for reusable workflow fragments.
+> **Status: Draft · v1.x · RFC 0013 `Accepted`; spec status Draft pending the open chain gap WCP3 in `gaps.json` (reference-host expansion) — no host expands the sample pack outside a test seam. `workflow-chain-host-expansion.test.ts` gates on `workflowChainPacks.hostExpansionSeam`, which no deployed origin advertises (`app.openwop.dev` advertises `workflowChainPacks { supported, deferredParameters, subChains }` and no seam flag, re-probed 2026-09-23) and for which no committed bundle in `evidence/v2-host-bundles/` carries a row; the manifest-validation and expansion legs that do pass are server-free (the schema and the `expandChain()` reference library), so they witness the contract, not a host.** Normative pack format and expansion rules for reusable workflow fragments.
 
 ---
 
