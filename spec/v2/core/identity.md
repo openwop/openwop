@@ -60,8 +60,8 @@ Every lane MUST name its trust root as `subject.issuer` and MUST advertise it in
 | Lane | `subject.issuer` (trust root) | Revocation MUST | `revocation` |
 | --- | --- | --- | --- |
 | `api-key` | the key realm (`urn:<host>:api-key` or a host-chosen URI) | refuse a revoked key on the next request (`credential_revoked`) | `next-request` |
-| `oauth2` | the token issuer | honor `exp`; re-check the issuer within the advertised `revocationWindowSeconds` | `exp-and-recheck` |
-| `oidc` | `iss` | as `oauth2` | `exp-and-recheck` |
+| `oauth2` | the token issuer | honor `exp` and re-check the issuer within the advertised `revocationWindowSeconds`; or honor `exp` alone under an enforced lifetime bound (`exp-only`, below) | `exp-and-recheck \| exp-only` |
+| `oidc` | `iss` | as `oauth2` | `exp-and-recheck \| exp-only` |
 | `mtls` | the CA subject | check CRL or OCSP, or issue certificates whose lifetime is at most the advertised window | `crl \| ocsp \| short-lived` |
 | `saml` | the IdP entityID (`<saml:Issuer>`) | honor `NotOnOrAfter`; consult the SCIM link deny-set when both lanes are advertised (§3) | `not-on-or-after` |
 | `scim` | the SCIM connection id bound at configuration to one IdP entityID | bind each client credential to one IdP entityID; refuse an unbound request | `bound-connection` |
@@ -70,7 +70,11 @@ Every lane MUST name its trust root as `subject.issuer` and MUST advertise it in
 | `session` | `urn:<host>:session` | refuse a revoked session on the next request (`credential_revoked`) | `next-request` |
 | `anonymous` | `urn:<host>:anon-surface` | — | — |
 
-`revocationWindowSeconds` (integer ≥ 1) MUST be advertised wherever the rule names a window (`exp-and-recheck`, `short-lived`, `rebind`).
+`revocationWindowSeconds` (integer ≥ 1) MUST be advertised wherever the rule names a window — `exp-and-recheck`, `exp-only`, `short-lived`, `rebind`. On every lane it is **an upper bound on the interval between a revocation at the trust root and the host's first refusal**, and a host MUST NOT advertise a window it does not enforce.
+
+A host MUST NOT advertise a `revocation` value the row above for its lane does not list. A consumer meeting an unrecognized value MUST NOT act on it: it MUST read the lane as stating no revocation latency, never as `next-request` or any other member (`overview.md` §0).
+
+**`exp-only` (RFC 0210).** `exp-only` names a host that honors `exp` and re-checks revocation never: it consults no introspection endpoint, no userinfo endpoint, no revocation list and no host-side epoch or `validAfter` record, so a credential revoked at the trust root is accepted until its own `exp`. Its window is therefore the only bound there is, and it is enforced rather than described. A host advertising `exp-only` on a lane MUST refuse a credential presented on that lane when **either** `exp − iat` (total lifetime) **or** `exp − now` (remaining lifetime) exceeds the advertised `revocationWindowSeconds`, with `401 credential_lifetime_exceeded`; a credential carrying no `iat` MUST be refused with the same code, because the first bound cannot be evaluated without it (§2.1 fail-closed). Both bounds are load-bearing: `exp − iat` alone admits a ten-year token minted ten years ago, `exp − now` alone admits a freshly minted ten-year token in its ninth year. A host that cannot enforce both MUST NOT advertise `exp-only`. `exp-only` SHOULD be advertised with a window of one hour or less; the corpus states no maximum, because no upstream specification does. `exp-only` MUST NOT be advertised on the `api-key` or `session` lane — there the host issued the credential itself, so revocation is in its own hands — and `auth.schema.json` refuses that pairing (invariant `lane-exp-only-lifetime-bounded`).
 
 ### 2.3 Minimum assurance (§B.4)
 
@@ -129,7 +133,7 @@ A host MUST reject a tenant-bound id whose tenant segment is not the caller's wi
 
 ## 6. Identity error codes (`spec/v2/errors.json`)
 
-Every code below is a row with `since: "2.0"`, `retriable: false`, and no `details` contract; the envelope is `errors.md`.
+Every code below is a row with `retriable: false` and no `details` contract; the envelope is `errors.md`. All are `since: "2.0"` except `credential_lifetime_exceeded` (`since: "2.36"`, RFC 0210).
 
 | Code | HTTP | Raised when |
 | --- | --- | --- |
@@ -137,6 +141,7 @@ Every code below is a row with `since: "2.0"`, `retriable: false`, and no `detai
 | `identity_unresolvable` | 401 | a verified identity resolves to no Subject |
 | `audience_mismatch` | 401 | the credential's audience is not this host |
 | `credential_revoked` | 401 | a revoked key or session is presented (§2.2) |
+| `credential_lifetime_exceeded` | 401 | a credential on an `exp-only` lane exceeds the advertised lifetime bound, or carries no `iat` (§2.2) |
 | `delegation_expired` | 401 | a delegation or workload credential is past its lifetime |
 | `sender_constraint_missing` | 401 | the request is below the lane's `minimumAssurance` (§2.3) |
 | `delegation_chain_too_long` | 400 | the actor chain exceeds depth 4 |

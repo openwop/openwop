@@ -4250,6 +4250,30 @@ invariants:
     witness: seam-gated
     witnessReview: reviewed-2026-09-03
 
+  - id: lane-exp-only-lifetime-bounded
+    tier: protocol
+    severity: high
+    threat_model: SECURITY/threat-model-auth-profiles.md
+    tests:
+      - conformance/src/scenarios/v2-lane-exp-only-bound.test.ts
+    note: |
+      RFC 0210 §B / `identity.md` §2.2. A host advertising `exp-only` on a
+      lane honors `exp` and re-checks the trust root never, so the advertised
+      `revocationWindowSeconds` is the ONLY bound on how long a subject
+      revoked upstream keeps access. It MUST therefore refuse a credential
+      whose total lifetime (`exp − iat`) or remaining lifetime (`exp − now`)
+      exceeds that window, with `401 credential_lifetime_exceeded`, and MUST
+      refuse one carrying no `iat` at all (§2.1 fail-closed). Both bounds are
+      load-bearing and neither implies the other. `exp-only` MUST NOT be
+      advertised on `api-key` or `session`, where the host issued the
+      credential itself; `auth.schema.json` refuses that pairing. Seam-gated
+      on an advertised `exp-only` lane plus `OPENWOP_TEST_OIDC_ISSUER_URL`;
+      `blocked` (named) without the harness issuer, because a refusal with no
+      accepted control witnesses nothing. The scenario carries that control
+      leg in the same run as the two refusals.
+    witness: seam-gated
+    witnessReview: reviewed-2026-09-23
+
   - id: sender-constraint-no-bearer-downgrade
     tier: protocol
     severity: high
