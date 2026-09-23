@@ -30,6 +30,17 @@
  *      reason — RFC 0148 §A: an unwitnessed requirement is blocked, never a
  *      pass — and the leg returns without asserting.
  *
+ *      Coverage is measured against the SDK repository's OWN PIN, not against
+ *      this tree. `openwop-sdks` vendors `api/openapi.yaml` at the published
+ *      corpus tag in its `CORPUS_TAG` and re-vendors in a deliberate PR (RFC
+ *      0176 §E.1 — the guard never follows `main`). So between a corpus merge
+ *      that adds an operation and that re-vendor, the SDK repository CANNOT
+ *      declare it: its own contract has never seen it. Failing there convicts
+ *      the sibling of obeying its pinning rule. An operation absent from the
+ *      sibling's VENDORED contract is therefore reported as pin lag — named in
+ *      the ledger detail, never silent — while an operation the pin DOES carry
+ *      and the expectations file does not declare still fails.
+ *
  * Server-free (reads files only). Legs 1–2 always-on.
  */
 
@@ -265,9 +276,19 @@ describe('RFC 0149 §A — SDK operation URLs match the resolved OpenAPI paths (
     const byId = new Map(rows.map((r) => [r.operationId, r] as const));
     const expById = new Map(exp.operations.map((e) => [e.operationId, e] as const));
 
-    // (a) every canonical operation is declared, with the same method and RESOLVED path
-    const missing = rows.filter((r) => r.class === 'canonical' && !expById.has(r.operationId)).map((r) => r.operationId);
-    expect(missing, req('openwop.it.openapi-asyncapi-sdk-parity.sdk-parity-expectations-json-covers-every-canonical-operation-with-the-same-meth', 'RFC 0149 §A', 'canonical operations with no SDK parity declaration')).toEqual([]);
+    // (a) every canonical operation THE SIBLING'S PIN CARRIES is declared, with
+    //     the same method and RESOLVED path. The pinned, vendored contract is
+    //     read from the sibling itself — measured, never assumed — so an
+    //     operation this tree has and that tree's tag does not is pin lag, and
+    //     one the tag DOES carry is still a missing declaration.
+    const vendoredPath = join(dir, 'api', 'openapi.yaml');
+    const vendoredIds: Set<string> | null = existsSync(vendoredPath)
+      ? new Set([...readFileSync(vendoredPath, 'utf8').matchAll(/^\s{6}operationId:\s*([A-Za-z0-9_]+)/gm)].map((m) => m[1] ?? ''))
+      : null;
+    const undeclared = rows.filter((r) => r.class === 'canonical' && !expById.has(r.operationId)).map((r) => r.operationId);
+    const pinLag = vendoredIds === null ? [] : undeclared.filter((id) => !vendoredIds.has(id));
+    const missing = undeclared.filter((id) => !pinLag.includes(id));
+    expect(missing, req('openwop.it.openapi-asyncapi-sdk-parity.sdk-parity-expectations-json-covers-every-canonical-operation-with-the-same-meth', 'RFC 0149 §A', `canonical operations the SDK repository's pinned contract carries but its parity expectations do not declare${pinLag.length ? ` (${pinLag.length} further operation(s) are pin lag, not drift: ${pinLag.join(', ')})` : ''}`)).toEqual([]);
     const drift: string[] = [];
     for (const r of rows) {
       const e = expById.get(r.operationId);
@@ -306,6 +327,13 @@ describe('RFC 0149 §A — SDK operation URLs match the resolved OpenAPI paths (
     const unknown = [...new Set(issued)].filter((p) => ![...known].some((k) => p.startsWith(k.replace(/\/$/, ''))) && !p.startsWith('/v1/host/'));
     expect(unknown, req('openwop.it.openapi-asyncapi-sdk-parity.sdk-parity-expectations-json-covers-every-canonical-operation-with-the-same-meth', 'RFC 0149 §A', 'the host client issues /v1 paths the contract does not define (outside /v1/host/* extensions)')).toEqual([]);
 
-    recordRequirement(SDK_PATH_PARITY_REQUIREMENT, 'executed-pass', undefined, { assertionCount: 6 });
+    recordRequirement(
+      SDK_PATH_PARITY_REQUIREMENT,
+      'executed-pass',
+      pinLag.length
+        ? `${pinLag.length} canonical operation(s) postdate the SDK repository's CORPUS_TAG and are excluded from the coverage assertion until it re-vendors (RFC 0176 §E.1): ${pinLag.join(', ')}`
+        : undefined,
+      { assertionCount: 6 },
+    );
   });
 });
