@@ -98,7 +98,8 @@ Class-3 correction. The prior text defined no algorithm, so no host could confor
 
 - **Bundles:** all 5 committed v3 bundles (`evidence/v2-host-bundles/*.json`, `../openwop-examples/examples/hosts/v2-reference/bundle-v3.json`, the openwop-app major-2 fixture) re-derive their stored `witnessSha256` under §C's code-unit order. Every id in them is `[a-z0-9.-]`, where code-unit and `en` order coincide.
 - **Packs:** all 156 `../openwop-registry/packs/*/pack.json` canonicalize identically under JCS (625 non-ASCII strings, 44 non-integer numbers, 0 integer-like keys, 0 out-of-range integers). Pack verifiers check raw signed bytes and never re-canonicalize, so no published signature changes.
-- **Behavior change:** §B turns silent coercion into refusal. No committed input triggers it.
+- **Behavior change:** §B turns silent coercion into refusal. No committed input triggers it. Two places a caller will see it: `openwop-conformance --certify` refuses (exit 2) a host whose live discovery document carries a duplicate member name or an out-of-range integer literal, where it used to hash whatever `resp.json()` produced; and `verifyBundleV3` returns a `witness-digest`, `discovery-digest` or `signature-invalid` rejection for a bundle whose values are not I-JSON, rather than digesting coerced bytes.
+- **RFC 0150 digest:** a host that sorted `tools[]` with a locale comparator computes a different digest from the suite only when two tool names differ in case or in `_`/`-` placement; the suite's seam-driven replay legs send no `tools` at all, so no existing leg moves.
 
 ## Conformance
 
