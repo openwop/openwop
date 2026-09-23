@@ -28100,7 +28100,7 @@
     {
       "id": "openwop.it.v2-durability-recovery.accepted-work-survives-a-kill-before-dispatch-and-dispatches-on-resume",
       "file": "v2-durability-recovery.test.ts",
-      "line": 292,
+      "line": 280,
       "title": "accepted work survives a kill before dispatch and dispatches on resume",
       "explicitId": "openwop.requirement.0158.kill-after-accept",
       "citations": [
@@ -28114,7 +28114,7 @@
     {
       "id": "openwop.it.v2-durability-recovery.work-executing-at-a-real-process-death-is-never-reported-complete-and-resumes",
       "file": "v2-durability-recovery.test.ts",
-      "line": 346,
+      "line": 334,
       "title": "work executing at a real process death is never reported complete, and resumes",
       "explicitId": "openwop.requirement.0158.kill-during-execution",
       "citations": [
@@ -28133,7 +28133,7 @@
     {
       "id": "openwop.it.v2-durability-recovery.the-same-accepted-work-delivered-twice-fires-each-effect-exactly-once",
       "file": "v2-durability-recovery.test.ts",
-      "line": 402,
+      "line": 390,
       "title": "the same accepted work delivered twice fires each effect exactly once",
       "explicitId": "openwop.requirement.0158.duplicate-delivery",
       "citations": [
@@ -28152,7 +28152,7 @@
     {
       "id": "openwop.it.v2-durability-recovery.the-declared-recovery-bound-is-derived-from-the-mechanism-that-enforces-it",
       "file": "v2-durability-recovery.test.ts",
-      "line": 476,
+      "line": 524,
       "title": "the declared recovery bound is derived from the mechanism that enforces it",
       "explicitId": "openwop.requirement.0158.bound-is-derived",
       "citations": [
@@ -28166,7 +28166,7 @@
     {
       "id": "openwop.it.v2-durability-recovery.deterministically-failing-work-reaches-a-terminal-state-and-stops-being-retried",
       "file": "v2-durability-recovery.test.ts",
-      "line": 507,
+      "line": 555,
       "title": "deterministically failing work reaches a terminal state and stops being retried",
       "explicitId": "openwop.requirement.0158.poison-exhaustion",
       "citations": [
@@ -32195,7 +32195,7 @@
     {
       "id": "openwop.it.v2-terminal-event-once.every-run-observed-to-a-terminal-state-has-exactly-one-terminal-event-and-no-for",
       "file": "v2-terminal-event-once.test.ts",
-      "line": 71,
+      "line": 81,
       "title": "every run observed to a terminal state has exactly one terminal event and no forward execution after it",
       "explicitId": "openwop.requirement.0194.terminal-once",
       "citations": [
@@ -32213,7 +32213,7 @@
     {
       "id": "openwop.it.v2-terminal-event-once.work-delivered-twice-still-leaves-one-terminal-event-and-no-forward-execution-af",
       "file": "v2-terminal-event-once.test.ts",
-      "line": 99,
+      "line": 109,
       "title": "work delivered twice still leaves one terminal event and no forward execution after it",
       "explicitId": "openwop.requirement.0194.terminal-once.duplicate-delivery",
       "citations": [
