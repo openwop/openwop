@@ -15,10 +15,20 @@
  * finish after the first terminal event. Growth after a terminal event is the
  * violation's own evidence, not an inconclusive read.
  *
+ * 2.37.0 — the duplicate-delivery leg takes its receiver from
+ * `lib/effect-receiver.ts` rather than a local copy. Both this file and
+ * `v2-durability-recovery.test.ts` drive the same host seam, and both handed it
+ * the SAME destination URL; on a tunnelled cut that is one byte-identical
+ * string, so the two exercises shared one Layer-2 effect identity and a
+ * conformant host deduplicated the second one away. This leg survived it (it
+ * asserts on the LOG, and tolerates zero arrivals); `0158.duplicate-delivery`,
+ * which counts arrivals, did not, and flapped with vitest's file order. The
+ * shared receiver mints a per-exercise nonce so the collision cannot recur.
+ *
  * @see spec/v2/core/events.md §The terminal event
+ * @see spec/v1/idempotency.md §"Layer 2 Keying"
  * @see RFCS/0194-terminal-event-ends-forward-execution.md
  */
-import { createServer, type IncomingMessage, type Server, type ServerResponse } from 'node:http';
 import { describe, expect, it } from 'vitest';
 import { driver } from '../lib/driver.js';
 import { v2Discovery } from '../lib/v2.js';
@@ -26,7 +36,7 @@ import { isFixtureAdvertised } from '../lib/fixtures.js';
 import { softSkip } from '../lib/soft-skip.js';
 import { scaledTimeoutMs } from '../lib/polling.js';
 import { req } from '../lib/requirement-ids.js';
-import { receiverBinding, resolveRegistrationUrl } from '../lib/webhook-receiver.js';
+import { startEffectReceiver, waitForFirstArrival } from '../lib/effect-receiver.js';
 import { terminalShapeViolation, TERMINAL_RUN_EVENTS } from '../lib/terminal-shape.js';
 
 const ONCE = 'openwop.requirement.0194.terminal-once';
@@ -104,35 +114,19 @@ describe('v2 terminal event (RFC 0194 §A)', () => {
     if (probe.status === 404 || probe.status === 405) return softSkip('inapplicable', `no RFC 0158 durability test hook at ${KILL_SEAM} (HTTP ${probe.status}) — a black-box suite cannot make a host redeliver accepted work, so this row needs the hook`);
     const rx = await startEffectReceiver();
     try {
-      const target = resolveRegistrationUrl(rx.url);
-      const fired = await http(() => driver.post(KILL_SEAM, { mode: 'duplicate-delivery', effectUrl: target.url }));
+      const fired = await http(() => driver.post(KILL_SEAM, { mode: 'duplicate-delivery', effectUrl: rx.url }));
       const runId = (fired?.json as { runId?: unknown } | null)?.runId;
       if (fired === null || fired.status >= 400 || typeof runId !== 'string') return softSkip('blocked', `the durability hook answered ${fired?.status ?? 'no response'} for mode=duplicate-delivery — no redelivered run to read`);
       const s = await waitStatus(runId, (x) => TERMINAL_STATUS.has(x), 60_000);
       if (s === null || !TERMINAL_STATUS.has(s)) return softSkip('blocked', `the redelivered run did not reach a terminal status (last: ${s ?? 'unreadable'})`);
-      const deadline = Date.now() + scaledTimeoutMs(20_000);
-      while (rx.arrivals === 0 && Date.now() < deadline) await new Promise((r) => setTimeout(r, 250));
+      await waitForFirstArrival(rx, scaledTimeoutMs(20_000));
       const types = await settledLog(runId);
       if (types === null) return softSkip('blocked', 'GET /runs/{runId}/events/poll did not answer — the log is unobservable');
       expect(types.some((t) => TERMINAL_RUN_EVENTS.has(t)), req(DUP, DOC, 'the redelivered run\'s log reached a terminal event')).toBe(true);
       expect(terminalShapeViolation(types), req(DUP, DOC, `work delivered twice MUST leave exactly one terminal run event and nothing forward after it — log: ${types.join(' ')}`)).toBeNull();
     } finally {
-      await new Promise<void>((ok) => rx.server.close(() => ok()));
+      await rx.close();
     }
   }, 180_000);
 });
 
-async function startEffectReceiver(): Promise<{ server: Server; url: string; arrivals: number }> {
-  const state = { arrivals: 0 };
-  const server = createServer((request: IncomingMessage, res: ServerResponse) => {
-    request.on('data', () => { /* drain */ });
-    request.on('end', () => { state.arrivals++; res.writeHead(204); res.end(); });
-  });
-  const pinned = Number(process.env['OPENWOP_WEBHOOK_RECEIVER_PORT'] ?? '');
-  const bindPort = Number.isInteger(pinned) && pinned > 0 && pinned < 65536 ? pinned : 0;
-  const binding = receiverBinding();
-  await new Promise<void>((resolve) => server.listen(bindPort, binding.bind, () => resolve()));
-  const addr = server.address();
-  const out = { server, url: `http://${binding.advertise}:${typeof addr === 'object' && addr ? addr.port : 0}/effect`, get arrivals() { return state.arrivals; } };
-  return out;
-}
