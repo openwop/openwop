@@ -101,6 +101,12 @@ describe('RFC 0175 §D.1 — negotiation-authenticated (gated on a2a/mcp + seams
     try {
       const res = await driver.post(`${SEAMS_PREFIX}/sample/a2a/invoke`, { peerUrl: peer.hostFacingEndpoint(), authenticated: false, peerOffersOnly: A2A_LOWER });
       if (res.status === 404 || res.status === 403 || res.status === 405) return seamAbsent(`host advertises a2a but ${SEAMS_PREFIX}/sample/a2a/invoke answered ${res.status} (host-sample-test-seams.md §22)`);
+      // A SUCCESS is only evidence if the host negotiated with THIS peer — the
+      // one that offers only the lower version. Before 2.37.0, on a tunnelled
+      // cut, the host reached the shared fake instead and this leg read an
+      // untouched peer (`lib/front-mux.ts`). A refusal needs no contact (not
+      // calling satisfies the MUST NOT); a success with none is `blocked`.
+      if (res.status < 400 && peer.invocations().length === 0) return softSkip('blocked', `the seam answered ${res.status} and the lower-version suite peer at ${peer.hostFacingEndpoint()} received no request — the exchange this row measures did not reach it`);
       const wire = peer.invocations().filter((i) => i.method !== 'GET').map((i) => String(i.headers['a2a-version'] ?? ''));
       await assertNotLowered('openwop.requirement.0175.negotiation-authenticated', preferred, A2A_LOWER, res, wire);
     } finally {
@@ -121,6 +127,13 @@ describe('RFC 0175 §D.1 — negotiation-authenticated (gated on a2a/mcp + seams
     try {
       const res = await driver.post(`${SEAMS_PREFIX}/sample/mcp/invoke`, { serverUrl: server.hostFacingEndpoint(), authenticated: false });
       if (res.status === 404 || res.status === 403 || res.status === 405) return seamAbsent(`host advertises mcp but ${SEAMS_PREFIX}/sample/mcp/invoke answered ${res.status} (host-sample-test-seams.md §23)`);
+      // This leg has no seam knob forcing the lower offer: the ONLY thing that
+      // makes the exchange unauthenticated-and-lower is this server. Before
+      // 2.37.0 a tunnelled cut sent the host to the shared fake, which offers
+      // preferredVersion, so the leg passed having measured nothing
+      // (`lib/front-mux.ts`). A refusal needs no contact; a success with none
+      // is `blocked`, never a pass.
+      if (res.status < 400 && server.invocations().length === 0) return softSkip('blocked', `the seam answered ${res.status} and the lower-revision suite server at ${server.hostFacingEndpoint()} received no request — the exchange this row measures did not reach it`);
       const wire = server.invocations().map((i) => String(i.headers['mcp-protocol-version'] ?? ''));
       await assertNotLowered('openwop.requirement.0175.negotiation-authenticated.mcp', preferred, MCP_LOWER, res, wire);
     } finally {
