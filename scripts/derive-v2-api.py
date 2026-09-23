@@ -60,6 +60,11 @@ def rewrite(node, depth_prefix='../../schemas/v2/'):
                     raise SystemExit(f'derive-v2-api: {v} names a schema the v2 tree does not carry ({file})')
                 out[k] = depth_prefix + rel
             elif k in HEADER_RENAME and isinstance(v, dict):
+                # A rename onto a header the same map already declares (v1 `Capabilities-Etag`
+                # beside the standard `ETag`) is a removal, never an overwrite: the retired
+                # header's description must not replace the surviving one (D2, 2.36.2).
+                if HEADER_RENAME[k] in node:
+                    continue
                 out[HEADER_RENAME[k]] = rewrite(v, depth_prefix)
             else:
                 out[k] = rewrite(v, depth_prefix)
@@ -358,6 +363,13 @@ def v2_openapi_and_seams():
             for code, resp in op.get('responses', {}).items():
                 if isinstance(resp, dict) and '$ref' not in resp:
                     resp.setdefault('headers', {})['OpenWOP-Version'] = {'$ref': '#/components/headers/OpenWOPVersion'}
+                    etag = (resp.get('headers') or {}).get('ETag')
+                    if op.get('operationId') == 'getCapabilities' and code == '200' and isinstance(etag, dict):
+                        # capabilities.md §1 is a MUST in v2; the v1 text said SHOULD and named the
+                        # retired `Capabilities-Etag` (D2, 2.36.2). The obligation is per operation.
+                        etag['description'] = ('capabilities.md §1 (RFC 0165 §C.2). Standard strong validator for the discovery document: '
+                                               'a v2 host MUST send it and MUST honor `If-None-Match` with `304`; a host that changes semantics '
+                                               'without changing the bytes is non-conformant.')
             if op.get('operationId') == 'pollRunEvents':
                 ok = op['responses'].get('200', {})
                 ok['content'] = {'application/json': {'schema': {'type': 'object', 'additionalProperties': False, 'required': ['runId', 'events', 'lastSequence', 'status', 'isTerminal'], 'properties': {'runId': {'$ref': '../../schemas/v2/ids.schema.json#/$defs/runId'}, 'events': {'type': 'array', 'items': {'$ref': '../../schemas/v2/run-event.schema.json'}}, 'lastSequence': {'type': 'integer', 'minimum': -1, 'description': 'The highest sequence in the log at the time of the response (one meaning); -1 when the log is empty.'}, 'status': {'type': 'string'}, 'isTerminal': {'type': 'boolean'}}}}}
@@ -397,8 +409,26 @@ def v2_openapi_and_seams():
     seams = rewrite(seams, '../schemas/v2/')  # api/seams-v2.yaml lives one level up from api/v2/
     return doc, seams
 
+CODEMAP = json.loads((ROOT / 'spec' / 'v2' / 'event-codemap.json').read_text())
+V1_TO_V2_EVENT = {r['v1']: r['v2'] for r in CODEMAP['rows']}
+
 def v2_asyncapi():
     comps = rewrite(copy.deepcopy(A1.get('components', {})))
+    # Run-event message names are the v2 `type` (events.md §SSE frames: `event:` is the v2
+    # type), so a v1 spelling copied from api/asyncapi.yaml is translated through the
+    # codemap. Host events (heartbeat.*) are not run events and are not in the codemap;
+    # they keep their names (events.md §Host events, RFC 0060). D5, 2.36.2.
+    for msg in comps.get('messages', {}).values():
+        if isinstance(msg, dict) and msg.get('name') in V1_TO_V2_EVENT:
+            msg['name'] = V1_TO_V2_EVENT[msg['name']]
+        for field in ('description', 'summary'):
+            if isinstance(msg, dict) and isinstance(msg.get(field), str):
+                msg[field] = msg[field].replace('/v1/runs/', '/runs/')
+    # One authentication scheme across the two documents: the v2 OpenAPI ApiKeyAuth is an
+    # HTTP bearer (RFC 0200 §F); v1's AsyncAPI declared an httpApiKey in `Authorization`.
+    if 'ApiKeyAuth' in comps.get('securitySchemes', {}):
+        comps['securitySchemes']['ApiKeyAuth'] = {'type': 'http', 'scheme': 'bearer', 'bearerFormat': 'API key',
+                                                  'description': 'Bearer API key, the same scheme as api/v2/openapi.yaml `ApiKeyAuth` (RFC 0200 §F). Required scope: `runs:read` to subscribe.'}
     comps.setdefault('messages', {})['RunEvent'] = {'name': 'runEvent', 'title': 'Run event (RFC 0171 §A)', 'contentType': 'text/event-stream', 'payload': {'$ref': '../../schemas/v2/run-event.schema.json'}, 'description': 'One SSE frame per run event; `event:` is the v2 type, `id:` is the sequence (RFC 0171 §A.3).'}
     return {
         'asyncapi': A1['asyncapi'],
@@ -495,8 +525,11 @@ def headers_doc(doc):
     for n in sorted(req):
         lines.append(f"| `{n}` | {len(req[n]['ops'])} | {req[n]['desc']} |")
     lines += ['', '## Response headers', '', '| Header | Operations | Meaning |', '| --- | --- | --- |']
+    # A standard header shared by operations with different obligations gets one neutral
+    # row; the MUST/SHOULD lives on each operation (D2, 2.36.2).
+    shared = {'ETag': 'Standard HTTP validator (RFC 9110 §8.8.3). The obligation is per operation: MUST on the discovery document (capabilities.md §1), SHOULD on the run snapshot (runs.md §Snapshot), a content hash on a prompt template (getPromptTemplate); see each operation.'}
     for n in sorted(resp):
-        lines.append(f"| `{n}` | {len(resp[n]['ops'])} | {resp[n]['desc']} |")
+        lines.append(f"| `{n}` | {len(resp[n]['ops'])} | {shared.get(n, resp[n]['desc'])} |")
     lines += ['', '## Webhook delivery headers', '', 'Declared in `webhooks.md`, not in OpenAPI (the host is the client): `OpenWOP-Webhook-Id`, `OpenWOP-Event-Type`, `OpenWOP-Timestamp`, `OpenWOP-Signature`, `OpenWOP-Signature-Algorithm` (RFC 0165 §C.1). The `X-openwop-*` family is emitted beside them through the overlap and removed at v1 end-of-support (`spec/v1/deprecations.json` `webhook-x-header-family`). On a subscription that opted into Standard Webhooks (webhooks.md), that standard\'s `webhook-id`, `webhook-timestamp` and `webhook-signature`, which keep their standard names (RFC 0201 §F).', '',
               '## Removed in v2', '', '`Capabilities-Etag` (the standard `ETag`/`If-None-Match` pair applies to the discovery document), `X-Dedup`, `X-Force-Engine-Version`, `X-Pack-Sha256`, `X-Pack-Signing-Method` (renamed under the one scheme), `X-openwop-*` (webhooks), `openwop-Webhook-Signature` (SDK-only). Each has a `spec/v1/deprecations.json` row with a removal trigger.', '']
     return '\n'.join(lines)
