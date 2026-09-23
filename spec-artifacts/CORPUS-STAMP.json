@@ -98,7 +98,7 @@
     "schemas/trigger-subscription-registration.schema.json": "929d628bad08e1def696e47e9a148aba00fa801e28d49bbd0dc2360b08673435",
     "schemas/trigger-subscription.schema.json": "4f7b067f20032073b140c4bb15dc9a9914c4f6421a252ff1ff261cbdd8edf270",
     "schemas/ui-plugin-message.schema.json": "346638babf1f8ea7b161cde75c0038b518cd2cc5bf0631772e20a9b74c96b5dd",
-    "schemas/v2/a2a-task-state.schema.json": "ae890f99d4c3ae1aa78bf43ff215efe1357a779f9f2413a9543a7f6047d2b378",
+    "schemas/v2/a2a-task-state.schema.json": "1810363e2d9bddb5997923bdac4044cc17c6f46ec5a40515d2ff21d9c82c1ad9",
     "schemas/v2/a2ui-surface-delta-frame.schema.json": "6889c5da3fe7e76cb614038c0eea6774776fa640448558b258eb87fb50cb9b64",
     "schemas/v2/agent-deployment-transition.schema.json": "93a334ff042d51378c89fdd7134664271bf9592419bb5e3e00821ed06bc1904e",
     "schemas/v2/agent-deployment.schema.json": "d59b43fb62b522005ee22bc3bc53775a6777493e5e42d71812abc347625fa7fe",
@@ -296,5 +296,5 @@
     "spec/v2/retention-floors.json": "eaf3722d95c79947af1d4269ef85117e126518c588cfcf1a2b21b97269f51624",
     "spec/v2/surface-baseline.json": "efdb4e5e0eb16689e20dea2be6f326971bb5707990c31896ca4cf24c6a5bbfed"
   },
-  "corpusCommit": "b36f34a0cbd7273f7d68cf11aa5be6920db34329"
+  "corpusCommit": "0e6348d1d1ce438ff6d72a5666ef41a7ac7563bc"
 }
