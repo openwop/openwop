@@ -99,7 +99,7 @@
           "a2a.streaming",
           "a2a.durableTasks"
         ],
-        "rule": "First event is the current Task; read-only re-attachment that MUST NOT re-execute or re-accept a message; a terminal task is UnsupportedOperationError."
+        "rule": "First event is the current Task; read-only re-attachment that MUST NOT re-execute or re-accept a message; a terminal task is UnsupportedOperationError. The HTTP+JSON verb is an upstream conflict: the A2A v1.0.1 proto binds `GET /tasks/{id=*}:subscribe` while the specification prose (§5.3, §11.3.2) and the a2a-js and a2a-python REST clients send POST; a host that lists an HTTP+JSON interface SHOULD accept both."
       },
       {
         "upstream": "CreateTaskPushNotificationConfig",

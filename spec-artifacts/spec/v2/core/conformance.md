@@ -42,7 +42,7 @@ A MUST whose only witness is `seam-gated` MUST either mint a normative observati
 
 ## The seams profile
 
-Test seams are the profile `openwop-conformance-seams-v2` (`spec/v2/profiles.json`), described by `api/seams-v2.yaml` with schemas under `schemas/v2/seams/`, in the path space `/conformance/seams/…`. The seam schemas `$ref` the canonical error and event schemas with no tolerance path. A host that mounts the seams MUST advertise the profile in `profiles[]`; a `testSeams` capability flag does not exist and MUST NOT be advertised. `api/v2/openapi.yaml` and `spec/v2/path-manifest.json` MUST contain no seam or sample-host operation; an SDK generated from the canonical document has no seam method. The profile is versioned with the suite (`seams-v2` for 2.x).
+Test seams are the profile `openwop-conformance-seams-v2` (`spec/v2/profiles.json`), described by `api/seams-v2.yaml` with schemas under `schemas/v2/seams/`, in the path space `/conformance/seams/…`. The seam schemas `$ref` the canonical error and event schemas with no tolerance path. A host that mounts the seams MUST advertise the profile as `conformance.seamsProfile: "openwop-conformance-seams-v2"` at the discovery root (RFC 0168 §C.1, erratum 2026-09-05; the closed root has no `profiles[]`, capabilities.md §3); a `testSeams` capability flag does not exist and MUST NOT be advertised. `api/v2/openapi.yaml` and `spec/v2/path-manifest.json` MUST contain no seam or sample-host operation; an SDK generated from the canonical document has no seam method. The profile is versioned with the suite (`seams-v2` for 2.x).
 
 ## Two products, two ledgers
 

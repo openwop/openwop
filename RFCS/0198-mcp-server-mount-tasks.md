@@ -50,7 +50,7 @@ This RFC keeps what UQ4 protected: **the run stays the one durable unit.** An MC
 
 ### §C Identity and isolation
 
-5. `taskId` MUST be the run's `runId` in its projected wire form (identity.md §5). Its opaque segment MUST carry at least 128 bits of entropy (ext-tasks §Security: "Servers MUST generate them with sufficient entropy that a third party cannot enumerate or guess them"). Upstream permits using task ids as bearer tokens. OpenWOP does not: **a `taskId` is never a credential.**
+5. `taskId` MUST be the run's `runId` in its projected wire form (identity.md §5). Its opaque segment MUST carry at least 128 bits of entropy (ext-tasks §Security: "Servers MUST generate them with sufficient entropy that a third party cannot enumerate or guess them"). Upstream lets a server use a task id as a bearer handle to its stored state ("A server MAY use task IDs as bearer tokens"), while still requiring authentication and authorization on every task request; on a server with no authorization, which MCP permits, the handle is the only credential. OpenWOP does not: **a `taskId` is never a credential.** (Reworded 2026-09-23 in place; the prior text read the upstream MAY as if it waived per-request authorization. The normative sentence is unchanged.)
 6. `tasks/get`, `tasks/update` and `tasks/cancel` are authorized as `getRun`, `resolveInterruptByRun` and `cancelRun` for the caller's Subject (the RFC 0208 §B incorporation rule). A task the caller cannot read gets `-32602`, the same response a nonexistent task gets, including when REST would answer a tenant mismatch with `403` (RFC 0208 §C). A `subscriptions/listen` request for such a task id leaves it out of the acknowledgement in the same way (map row).
 
 ### §D Status projection (`mcp.tasks.status`)
