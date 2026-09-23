@@ -40798,7 +40798,7 @@
     {
       "id": "openwop.it.v2-push-credential-coherent.the-push-credential-exception-is-stated-wherever-the-rule-it-excepts-is-read-and",
       "file": "v2-push-credential-coherent.test.ts",
-      "line": 70,
+      "line": 71,
       "title": "the push-credential exception is stated wherever the rule it excepts is read, and each regression is refused",
       "explicitId": "openwop.requirement.0214.push-credential-coherent",
       "citations": [

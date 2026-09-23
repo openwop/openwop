@@ -17,8 +17,9 @@
 import { describe, it, expect } from 'vitest';
 import { readFileSync } from 'node:fs';
 import { join } from 'node:path';
-import { SCHEMAS_DIR } from '../lib/paths.js';
+import { SCHEMAS_DIR, V1_DIR } from '../lib/paths.js';
 import { req } from '../lib/requirement-ids.js';
+import { softSkip } from '../lib/soft-skip.js';
 
 const ROOT = join(SCHEMAS_DIR, '..');
 const ID = 'openwop.requirement.0214.push-credential-coherent';
@@ -68,6 +69,7 @@ const SABOTAGE: Array<[string, (c: Corpus) => Corpus]> = [
 
 describe('RFC 0214 — v2-push-credential-coherent (corpus)', () => {
   it('the push-credential exception is stated wherever the rule it excepts is read, and each regression is refused', () => {
+    if (V1_DIR === null) return softSkip('inapplicable', 'not a spec checkout — the core prose and interop map live in the corpus repository');
     const corpus = load();
     expect(missing(corpus), req(ID, DOC, 'every clause of the RFC 0214 correction is present in the tracked corpus')).toEqual([]);
     for (const [label, mutate] of SABOTAGE) {
