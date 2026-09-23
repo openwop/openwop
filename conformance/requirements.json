@@ -30231,7 +30231,7 @@
     {
       "id": "openwop.it.v2-negotiation-authenticated.an-unauthenticated-mcp-exchange-cannot-lower-the-revision-below-preferredversion",
       "file": "v2-negotiation-authenticated.test.ts",
-      "line": 111,
+      "line": 117,
       "title": "an unauthenticated MCP exchange cannot lower the revision below preferredVersion",
       "explicitId": null,
       "citations": []
