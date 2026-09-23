@@ -58,7 +58,7 @@ Writes from within a run go through the same `PUT` contract and are visible to *
 
 ## §E — Invariants (normative)
 
-The following are normative MUST / MUST NOT prose. Their protocol-tier SECURITY invariant entries (`SECURITY/invariants.yaml`) and public conformance tests land at implementation (the behavior milestone), per RFC 0059's acceptance criteria — they are NOT yet registered in `invariants.yaml`.
+The following are normative MUST / MUST NOT prose. **WCT-1 is registered**: `workspace-cross-tenant-isolation` is a `protocol`-tier, `critical` entry in `SECURITY/invariants.yaml` with two backing scenarios (`workspace-cross-tenant-isolation.test.ts` on the `/v1/host/sample/workspace/op` seam and `workspace-cross-tenant-isolation-blackbox.test.ts` driving the normative §C endpoints with two operator credentials). **WSR-1 is not**: it has no `invariants.yaml` entry and no conformance test of its own; its entry and tests land at implementation (the behavior milestone), per RFC 0059's acceptance criteria.
 
 ### WCT-1 — Cross-Tenant Isolation (normative)
 
@@ -70,7 +70,7 @@ In practice (mirrors CTI-1 in `agent-memory.md`):
 2. Cross-instance leak protection: when multiple workspace adapters share a backing store, each MUST gate by the owner triple, not by trusting the store.
 3. Errors MUST NOT leak file contents or the existence of another tenant's file (`404` over `403` is acceptable to avoid existence disclosure).
 
-This is the proposed protocol-tier SECURITY invariant `workspace-cross-tenant-isolation`, landing with its conformance test at implementation.
+This is the protocol-tier SECURITY invariant [`workspace-cross-tenant-isolation`](../../SECURITY/invariants.yaml), registered with its two conformance tests.
 
 ### WSR-1 — Secret Redaction (normative)
 
