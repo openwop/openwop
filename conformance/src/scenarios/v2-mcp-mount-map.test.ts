@@ -47,6 +47,9 @@ const META_C = 'io.modelcontextprotocol/clientCapabilities';
 const ERR = { HEADER_MISMATCH: -32020, MISSING_CAPABILITY: -32021, UNSUPPORTED_VERSION: -32022, INVALID_PARAMS: -32602 } as const;
 
 const MAP = JSON.parse(readFileSync(join(SCHEMAS_DIR, '..', 'spec', 'v2', 'interop-map.json'), 'utf8')) as { mcp: { features: Array<{ id: string; requiredFor: string[] }> } };
+// `interruptId` is host-minted and tenant-bound (`<tenant>/<opaque>`); `nodeId` is author-chosen
+// inside a workflow definition and carries no `/`, so the two grammars cannot both admit one string.
+const INTERRUPT_ID = new RegExp((JSON.parse(readFileSync(join(SCHEMAS_DIR, 'v2', 'ids.schema.json'), 'utf8')) as { $defs: { interruptId: { pattern: string } } }).$defs.interruptId.pattern);
 const REQUIRED_FEATURES = MAP.mcp.features.filter((f) => f.requiredFor.includes(PROFILE)).map((f) => f.id).sort();
 
 interface RpcError { code: number; message?: string; data?: Record<string, unknown> }
@@ -198,6 +201,44 @@ describe('RFC 0208 — v2-mcp-mount-map (host as MCP 2026-07-28 server, gated on
     expect(again.error !== undefined || again.status >= 400, req(id, 'interop-map.json mcp.mrtr requestState (host as server)', `requestState is single use: a second retry with it MUST fail (got ${again.status} ${JSON.stringify(again.result)})`)).toBe(true);
     const forged = await toolCall(m.url, TOOL, { requestState: `${String(state)}x`, inputResponses: { [key!]: { action: 'accept', content: { action: 'accept' } } } }, { caps });
     expect(forged.error !== undefined || forged.status >= 400, req(id, 'interop-map.json mcp.mrtr requestState (host as server)', `a requestState that fails integrity verification MUST be refused (got ${forged.status} ${JSON.stringify(forged.result)})`)).toBe(true);
+  });
+
+  it('the MRTR input-request key is the open interrupt’s interruptId, never the node it suspended on', async () => {
+    const m = await mount();
+    if (!m.ok) return skip(m);
+    const missing = needFixtures(['conformance-approval']);
+    if (missing) return softSkip('blocked', missing);
+    const id = R('mcp-mrtr-input-request-key');
+    const TOOL = 'conformance-approval';
+    const caps = { elicitation: {} };
+    const runs = async (): Promise<string[]> => ((((await driver.get(`/runs?workflowId=${TOOL}&limit=50`)).json as { runs?: Array<{ runId?: string }> } | undefined)?.runs ?? []).map((x) => String(x.runId)));
+    const listable = await familyAdvertised('runList');
+    const before = listable ? await runs() : [];
+    // TWO runs of ONE workflow: both suspend at the SAME node, so a node-keyed host
+    // advertises the SAME key for two different outstanding interrupts and the key stops
+    // naming the request. (`tasks/get` projects this same key — mcp.tasks.status.)
+    const a = await toolCall(m.url, TOOL, {}, { caps });
+    const b = await toolCall(m.url, TOOL, {}, { caps });
+    expect([a.result?.['resultType'], b.result?.['resultType']], req(id, 'interop-map.json mcp.mrtr InputRequiredResult (host as server)', `both calls MUST answer InputRequiredResult (got ${JSON.stringify([a.error ?? a.result, b.error ?? b.result])})`)).toEqual(['input_required', 'input_required']);
+    const keys = [a, b].map((r) => Object.keys((r.result?.['inputRequests'] ?? {}) as Record<string, unknown>));
+    expect(keys.map((k) => k.length), req(id, 'interop-map.json mcp.tasks.status waiting-approval', `inputRequests carries exactly one key per open interrupt (got ${JSON.stringify(keys)})`)).toEqual([1, 1]);
+    const [ka, kb] = [keys[0]![0]!, keys[1]![0]!];
+    expect([INTERRUPT_ID.test(ka), INTERRUPT_ID.test(kb)], req(id, 'interop-map.json mcp.mrtr InputRequiredResult (host as server); schemas/v2/ids.schema.json interruptId', `the key MUST be the interrupt’s interruptId, which is tenant-bound (${INTERRUPT_ID.source}) and so can never be an author-chosen nodeId (got ${JSON.stringify([ka, kb])})`)).toEqual([true, true]);
+    expect(ka === kb, req(id, 'interop-map.json mcp.mrtr InputRequiredResult (host as server)', `two outstanding interrupts MUST NOT share a key — these runs suspend at the same node, so an equal key is that node’s id, not either interrupt’s (got ${ka})`)).toBe(false);
+    if (listable) {
+      // The positive tie: the key is an id the run’s own log minted, not merely a well-formed
+      // string. Runs another leg started in parallel only widen the pool, never narrow it.
+      const minted = new Set<string>();
+      for (const runId of (await runs()).filter((r) => !before.includes(r))) {
+        const poll = await driver.get(`/runs/${encodeURIComponent(runId)}/events/poll?timeout=1`);
+        for (const e of ((poll.json as { events?: Array<{ type?: string; payload?: { interruptId?: unknown } }> } | undefined)?.events ?? [])) if (e.type === 'node.suspended' && typeof e.payload?.interruptId === 'string') minted.add(e.payload.interruptId);
+      }
+      expect([minted.has(ka), minted.has(kb)], req(id, 'interop-map.json mcp.mrtr InputRequiredResult (host as server); runs.md node.suspended', `each key MUST be an interruptId the run’s own node.suspended carries (keys ${JSON.stringify([ka, kb])}; minted ${JSON.stringify([...minted])})`)).toEqual([true, true]);
+    }
+    // …and that key is the one the retry answers: the state minted beside it resolves the run.
+    const done = await toolCall(m.url, TOOL, { requestState: a.result?.['requestState'], inputResponses: { [ka]: { action: 'accept', content: { action: 'accept' } } } }, { caps });
+    expect([done.error, done.result?.['resultType'], done.result?.['isError']], req(id, 'interop-map.json mcp.mrtr inputResponses[key] (host as server)', `the interruptId key MUST be the key inputResponses is read under (got ${JSON.stringify(done.error ?? done.result)})`)).toEqual([undefined, 'complete', false]);
+    await toolCall(m.url, TOOL, { requestState: b.result?.['requestState'], inputResponses: { [kb]: { action: 'decline' } } }, { caps });
   });
 
   it('a list that differs per caller is cacheScope private', async () => {
