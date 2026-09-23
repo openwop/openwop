@@ -114,14 +114,29 @@ describe('RFC 0153 §B — the suite MCP server speaks 2026-07-28 (dual-era McpF
     const r = await call(server.endpoint(), 'tools/list', {}, { version: '2026-07-28', mcpMethod: 'tools/list' });
     expect(r.result?.['resultType'], req('openwop.it.mcp-2026-07-28-discover.tools-list-2026-07-28-carries-resulttype-cacheableresult-hints-and-lists-the-mrt', 'RFC 0153 §B', 'tools/list @2026-07-28 carries resultType + CacheableResult hints and lists the MRTR tool')).toBe('complete');
     expect(typeof r.result?.['ttlMs']).toBe('number');
-    expect(r.result?.['cacheScope']).toBe('public');
+    // `private`, not `public`, and the difference is normative: mcp-integration.md §D
+    // says `cacheScope` MUST be `private` whenever a result depends on the caller's
+    // tenant, workspace, principal or authorization — "which for `tools/list` on a
+    // multi-tenant host is always" — and permits `public` ONLY when the result is
+    // byte-identical for every caller. The fake server was corrected to `private` in
+    // 2.36.0 (RFC 0204, #1497); this assertion was left demanding `public`, so the leg
+    // convicted every host of a rule the spec does not have. Same drift the note below
+    // records for `needs_input_loop`: the fixture moved, the assertion did not.
+    expect(r.result?.['cacheScope']).toBe('private');
     const names = (r.result?.['tools'] as Array<{ name: string }>).map((t) => t.name);
-    // `needs_input_loop` is the MRTR tool this `it` is named for — it was added to the
-    // fake server in 2.4.0 so the mrtr-rounds-ceiling leg could reach a ceiling >= 1,
-    // and this assertion was never moved with it. A host that proxies the fake server
-    // faithfully returns all three, so the leg red on every certify run while the
-    // corpus gate quarantined it locally.
-    expect(names).toEqual(['echo', 'needs_input', 'needs_input_loop']);
+    // The MRTR tool this `it` is named for is `needs_input`, and it is NOT on page one.
+    // The fixture grew to six tools and paginates at TOOLS_PAGE_SIZE (RFC 0204 added
+    // `structured-echo`, `always-error` and the read-only-claim tool), so an assertion
+    // naming three tools in one page had been describing a fixture that no longer
+    // existed. Follow the cursor and assert what the leg is actually for: the catalogue
+    // is paged deterministically and the MRTR tool is reachable through it.
+    expect(names).toEqual(['echo', 'structured-echo', 'always-error']);
+    const cursor = r.result?.['nextCursor'];
+    expect(typeof cursor, req('openwop.it.mcp-2026-07-28-discover.tools-list-2026-07-28-carries-resulttype-cacheableresult-hints-and-lists-the-mrt', 'mcp-integration.md §D', 'a truncated tools/list MUST carry a pagination cursor')).toBe('string');
+    const page2 = await call(server.endpoint(), 'tools/list', { cursor }, { version: '2026-07-28', mcpMethod: 'tools/list' });
+    const rest = (page2.result?.['tools'] as Array<{ name: string }>).map((t) => t.name);
+    expect(rest).toEqual([server.readonlyClaimToolName(), 'needs_input', 'needs_input_loop']);
+    expect(page2.result?.['nextCursor'], req('openwop.it.mcp-2026-07-28-discover.tools-list-2026-07-28-carries-resulttype-cacheableresult-hints-and-lists-the-mrt', 'mcp-integration.md §D', 'the last page of tools/list MUST NOT advertise a further cursor')).toBeUndefined();
     // legacy list does NOT carry the current-revision fields
     const legacy = await call(server.endpoint(), 'tools/list', {});
     expect(legacy.result?.['ttlMs']).toBeUndefined();
