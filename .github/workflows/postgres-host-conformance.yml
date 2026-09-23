@@ -235,7 +235,12 @@ jobs:
           # ride for 16 days.
           FAILED=$(grep -oE '[0-9]+ failed' /tmp/conformance.plain | tail -1 | awk '{print $1}')
           FAILED=${FAILED:-0}
-          SKIPPED=$(grep -oE '[0-9]+ skipped' /tmp/conformance.plain | tail -1 | awk '{print $1}')
+          # Scoped to the `Tests` summary line, not a bare tail -1: vitest omits
+          # the `skipped` clause entirely when nothing was skipped, and a loose
+          # match would then silently report the `Test Files` skip count as if
+          # it were a test count.
+          SKIPPED=$(grep -E '^[[:space:]]*Tests[[:space:]]' /tmp/conformance.plain \
+                    | tail -1 | grep -oE '[0-9]+ skipped' | awk '{print $1}')
           SKIPPED=${SKIPPED:-0}
           NAMED_N=$(printf '%s' "$NAMED" | grep -c . || true)
           if [ "$FAILED" -gt 0 ] && [ "$NAMED_N" -eq 0 ]; then
