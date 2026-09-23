@@ -2063,6 +2063,80 @@ paths:
         '403': { $ref: '#/components/responses/Forbidden' }
         '404': { $ref: '#/components/responses/NotFound' }
 
+  # RFC 0201 §E.18 — zero-downtime secret rotation. Gated on
+  # `capabilities.webhooks.secretRotation`; the v2 twin is
+  # `rotateWebhookSecret` in api/v2/openapi.yaml.
+  /v1/webhooks/{webhookId}/rotate-secret:
+    post:
+      tags: [webhooks]
+      summary: Rotate a Standard Webhooks subscription's secret with an overlap.
+      description: >
+        Per `spec/v1/webhooks.md` §"Standard Webhooks companion scheme" →
+        **Rotation** (RFC 0201 §E.18). Gated on
+        `capabilities.webhooks.secretRotation: { overlapSeconds }`: a host that does
+        not advertise the facet MUST answer `404`. Only for a subscription whose
+        registration listed `standard-webhooks-1`; any other subscription gets
+        `400 validation_error`, because its single `v1` signature cannot overlap.
+        `403` when the caller is not a member of the tenant; `404` when the
+        subscription is unknown. Until `previousSecretExpiresAt`,
+        `webhook-signature` MUST carry one entry under each secret and
+        `X-openwop-Signature` stays on the previous secret; afterwards only the new
+        secret signs. A second rotation inside an overlap retires the oldest secret
+        immediately. Rotation does not re-verify the endpoint, and the response
+        carries no secret.
+      operationId: rotateWebhookSecret
+      security:
+        - ApiKeyAuth: ['webhooks:manage']
+        - OAuth2: ['webhooks:manage']
+        - OpenIdConnect: ['webhooks:manage']
+      parameters:
+        - in: path
+          name: webhookId
+          required: true
+          schema: { type: string, minLength: 1 }
+        - in: query
+          name: tenantId
+          required: true
+          schema: { type: string, minLength: 1 }
+          description: >
+            Required, exactly as on `unregisterWebhook` — the route is not
+            path-nested under workspaces (`spec/v1/webhooks.md` §Unregister).
+        - $ref: '#/components/parameters/IdempotencyKey'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [secret]
+              additionalProperties: false
+              properties:
+                secret:
+                  type: string
+                  pattern: '^whsec_[A-Za-z0-9+/]+={0,2}$'
+                  description: >
+                    The new secret, `whsec_<base64>` decoding to 24–64 bytes
+                    (RFC 0201 §B.6). Never echoed in any response.
+      responses:
+        '200':
+          description: Rotated. No secret is returned.
+          content:
+            application/json:
+              schema:
+                type: object
+                required: [rotatedAt, previousSecretExpiresAt]
+                additionalProperties: false
+                properties:
+                  rotatedAt: { type: string, format: date-time }
+                  previousSecretExpiresAt:
+                    type: string
+                    format: date-time
+                    description: '`rotatedAt + overlapSeconds`.'
+        '400': { $ref: '#/components/responses/ValidationError' }
+        '401': { $ref: '#/components/responses/Unauthenticated' }
+        '403': { $ref: '#/components/responses/Forbidden' }
+        '404': { $ref: '#/components/responses/NotFound' }
+
   # ── Audit-log integrity verification (gated on profile) ────────────────
   /v1/audit/verify:
     get:

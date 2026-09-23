@@ -2750,6 +2750,81 @@ paths:
           $ref: '#/components/responses/Forbidden'
         '404':
           $ref: '#/components/responses/NotFound'
+  /webhooks/{webhookId}/rotate-secret:
+    post:
+      tags:
+      - webhooks
+      operationId: rotateWebhookSecret
+      summary: Rotate a Standard Webhooks subscription's secret with an overlap (RFC 0201 §E)
+      description: 'Gated on `webhooks.secretRotation`: a host that does not advertise it MUST answer `404 not_found`. Only
+        for a subscription that opted into `standard-webhooks-1`; any other subscription gets `400 validation_error` (its
+        single `v1` signature cannot overlap). Tenant checks are exactly those of `unregisterWebhook`: `403 id_tenant_mismatch`
+        when the id''s tenant segment is not the caller''s, checked before the lookup (`identity.md` §5); `404` when unknown.
+        For `overlapSeconds` after `rotatedAt`, `webhook-signature` carries one entry under the new secret and one under the
+        previous one, and `OpenWOP-Signature` stays on the previous secret; at `previousSecretExpiresAt` only the new secret
+        signs. A second rotation inside an overlap retires the oldest secret immediately. Rotation does not re-verify the
+        endpoint. The response carries no secret.'
+      parameters:
+      - name: webhookId
+        in: path
+        required: true
+        schema:
+          $ref: ../../schemas/v2/ids.schema.json#/$defs/subscriptionId
+        description: 'Tenant-bound `<tenantId>/<opaque>` (`identity.md` §5, RFC 0187 §A.1), one path segment: `~`-projected
+          (RFC 0184) or percent-encoded.'
+      - $ref: '#/components/parameters/IdempotencyKey'
+      - $ref: '#/components/parameters/OpenWOPVersion'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+              - secret
+              additionalProperties: false
+              properties:
+                secret:
+                  type: string
+                  pattern: ^whsec_[A-Za-z0-9+/]+={0,2}$
+                  description: The new secret, `whsec_<base64>` decoding to 24–64 bytes (RFC 0201 §B.6).
+      responses:
+        '200':
+          description: Rotated. No secret is returned.
+          content:
+            application/json:
+              schema:
+                type: object
+                required:
+                - rotatedAt
+                - previousSecretExpiresAt
+                additionalProperties: false
+                properties:
+                  rotatedAt:
+                    type: string
+                    format: date-time
+                  previousSecretExpiresAt:
+                    type: string
+                    format: date-time
+                    description: '`rotatedAt + overlapSeconds`.'
+          headers:
+            OpenWOP-Version:
+              $ref: '#/components/headers/OpenWOPVersion'
+        '400':
+          $ref: '#/components/responses/ValidationError'
+        '401':
+          $ref: '#/components/responses/Unauthenticated'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          $ref: '#/components/responses/NotFound'
+      security:
+      - ApiKeyAuth:
+        - webhooks:manage
+      - OAuth2:
+        - webhooks:manage
+      - OpenIdConnect:
+        - webhooks:manage
   /audit/verify:
     get:
       tags:
@@ -3510,81 +3585,6 @@ paths:
         - runs:read
       - OpenIdConnect:
         - runs:read
-  /webhooks/{webhookId}/rotate-secret:
-    post:
-      tags:
-      - webhooks
-      operationId: rotateWebhookSecret
-      summary: Rotate a Standard Webhooks subscription's secret with an overlap (RFC 0201 §E)
-      description: 'Gated on `webhooks.secretRotation`: a host that does not advertise it MUST answer `404 not_found`. Only
-        for a subscription that opted into `standard-webhooks-1`; any other subscription gets `400 validation_error` (its
-        single `v1` signature cannot overlap). Tenant checks are exactly those of `unregisterWebhook`: `403 id_tenant_mismatch`
-        when the id''s tenant segment is not the caller''s, checked before the lookup (`identity.md` §5); `404` when unknown.
-        For `overlapSeconds` after `rotatedAt`, `webhook-signature` carries one entry under the new secret and one under the
-        previous one, and `OpenWOP-Signature` stays on the previous secret; at `previousSecretExpiresAt` only the new secret
-        signs. A second rotation inside an overlap retires the oldest secret immediately. Rotation does not re-verify the
-        endpoint. The response carries no secret.'
-      parameters:
-      - name: webhookId
-        in: path
-        required: true
-        schema:
-          $ref: ../../schemas/v2/ids.schema.json#/$defs/subscriptionId
-        description: 'Tenant-bound `<tenantId>/<opaque>` (`identity.md` §5, RFC 0187 §A.1), one path segment: `~`-projected
-          (RFC 0184) or percent-encoded.'
-      - $ref: '#/components/parameters/IdempotencyKey'
-      - $ref: '#/components/parameters/OpenWOPVersion'
-      requestBody:
-        required: true
-        content:
-          application/json:
-            schema:
-              type: object
-              required:
-              - secret
-              additionalProperties: false
-              properties:
-                secret:
-                  type: string
-                  pattern: ^whsec_[A-Za-z0-9+/]+={0,2}$
-                  description: The new secret, `whsec_<base64>` decoding to 24–64 bytes (RFC 0201 §B.6).
-      responses:
-        '200':
-          description: Rotated. No secret is returned.
-          content:
-            application/json:
-              schema:
-                type: object
-                required:
-                - rotatedAt
-                - previousSecretExpiresAt
-                additionalProperties: false
-                properties:
-                  rotatedAt:
-                    type: string
-                    format: date-time
-                  previousSecretExpiresAt:
-                    type: string
-                    format: date-time
-                    description: '`rotatedAt + overlapSeconds`.'
-          headers:
-            OpenWOP-Version:
-              $ref: '#/components/headers/OpenWOPVersion'
-        '400':
-          $ref: '#/components/responses/ValidationError'
-        '401':
-          $ref: '#/components/responses/Unauthenticated'
-        '403':
-          $ref: '#/components/responses/Forbidden'
-        '404':
-          $ref: '#/components/responses/NotFound'
-      security:
-      - ApiKeyAuth:
-        - webhooks:manage
-      - OAuth2:
-        - webhooks:manage
-      - OpenIdConnect:
-        - webhooks:manage
 components:
   securitySchemes:
     ApiKeyAuth:
