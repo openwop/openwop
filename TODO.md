@@ -35,10 +35,10 @@
 
 | Phase | Items | Class | RFC | Versions |
 |---|---|---|---|---|
-| 1 | D1–D5, V4, V5, L1-alt, L2-sentence, D7 suite-peer fix | editorial / Class-2 / in-place amends | amend 0198, 0205, 0208 | 2.36.2 patch |
+| 1 | D1–D5, V4, V5, L1-alt, L2-sentence, D7 suite-peer fix | editorial / Class-2 / in-place amends | amend 0198, 0205, 0208 | rides open 2.37.0 cycle |
 | 2 | file 0211–0214 Drafts together | Draft RFCs | 0211–0214 | — |
 | 3 | sibling fixes H1–H5, registry signer, example comments | impl-only | — | — |
-| 4 | Active flips, normative text, scenarios, invariants | additive + Class-3 | 0211–0214 | 2.37.0 minor |
+| 4 | Active flips, normative text, scenarios, invariants | additive + Class-3 | 0211–0214 | open cycle (2.37.0, or next minor if 2.37.0 publishes first) |
 | 5 | witnesses → Accepted | status | 0211–0214 | — |
 | 6 | upstream drafts (David sends) | out-of-repo | — | — |
 
@@ -90,8 +90,9 @@
 - [ ] **Gate** new `scripts/check-asyncapi-codemap.mjs` in `openwop-check.sh` stage 10
       (exempt `hostEvents`, cite `events.md:91` + RFC 0060). Sabotage: re-insert a v1 name;
       re-insert `/v1/`; add `run.stateChanged`; remove the exemption.
-- [ ] Versions: spec-artifacts + suite **2.36.2** in the first PR; regenerate
-      `CORPUS-STAMP.json`; CHANGELOG; COMPATIBILITY §3.
+- [ ] Versions: #1508 (2026-09-23) opened the **2.37.0** cycle (suite + spec-artifacts 2.37.0,
+      unpublished). Phase 1 rides it — no separate patch; regenerate `CORPUS-STAMP.json`;
+      CHANGELOG; COMPATIBILITY §3.
 - [ ] Follow-up: `openwop-sdks` re-vendor PR (`check-vendored-sync` goes red on api/v2).
 - Gates: full `npm run openwop:check`, `generate-spec-artifacts --check`,
   `derive-v2-api.py --check`, `protocol:status:check`, rule 7.
@@ -223,8 +224,8 @@ code-unit order ⇒ Class-3, no bundle version bump.
 ## Phase 4 — Active flips + suite 2.37.0
 
 - [ ] Each RFC `Draft → Active` with normative text, schema, invariants, scenarios.
-- [ ] Suite + spec-artifacts + `spec/v2/release.json` → **2.37.0** (one combined minor if all
-      four land within a week; else sequential minors).
+- [ ] Suite + spec-artifacts + `spec/v2/release.json` ride the open cycle (2.37.0 while
+      unpublished; if 2.37.0 publishes first, open 2.38.0).
 - [ ] Re-count tallies from the live tree; `node scripts/generate-protocol-status.mjs --write`.
 - [ ] Run every sabotage against v2-reference and an openwop-app memory boot.
 - Gates: full `openwop:check` (stage 10 incl. `generate-error-envelope --check` zero diff,
@@ -269,5 +270,5 @@ code-unit order ⇒ Class-3, no bundle version bump.
 | D5 | Comment windows | David's 2026-09-23 directive: shorten via a **recorded steward override of §A.6** per RFC (0194 precedent: RFC `Updated` field + MAINTAINERS.md override row + §B retrospective owed), not a silent waiver. Evidence bar (§A.5) is not overridable | Keeps the governance record honest and reviewable; matches 0197–0210 practice |
 | D6 | openwop-app audit-chain `canonVersion` | Do it, last, as a host-extension hardening (era marker; absent ⇒ legacy recompute) | Cheap; stops a latent integer-key divergence; not a protocol obligation |
 | D7 | `idempotency_in_flight` `retriable: false` | Leave the value; state in 0213 §B prose that `retriable` means "retriable without waiting" | Flipping it changes a code's meaning (R4); prose clarification is Class-3-safe |
-| D8 | Publishing / deploys | Publish 2.36.2 after Phase 1 merges and 2.37.0 once after Phase 4; batch openwop-app deploy after Phase 3. Each still needs David's go | npm publish is irreversible; deploy ordering is backend-first |
+| D8 | Publishing / deploys | Publish the open 2.37.0 cycle once after Phase 4 (or after Phase 1 if a host needs the corrected fake peer sooner); batch openwop-app deploy after Phase 3. Each still needs David's go | npm publish is irreversible; deploy ordering is backend-first |
 | D9 | Upstream | Draft all; David sends bugs 1–3 first, proposals after 0213 lands | Outward-facing; bugs carry no claims |
