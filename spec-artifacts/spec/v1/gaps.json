@@ -13361,7 +13361,7 @@
       "requirementId": null,
       "disposition": "open",
       "target": null,
-      "note": "`workspace-cross-tenant-isolation` (WCT-1) + WSR-1 + CRUD/ETag/snapshot conformance land at the behavior milestone, not at this DRAFT. Shape-only conformance (`workspace-capability-shape.test.ts`) ships now.",
+      "note": "WCT-1's half has landed: `workspace-cross-tenant-isolation` is registered in `SECURITY/invariants.yaml` (protocol tier, critical) and two scenarios back it — the seam one and the black-box one that drives the normative §C endpoints with two operator credentials. Still open: WSR-1, which has neither an `invariants.yaml` entry nor a scenario of its own, plus CRUD/ETag/snapshot conformance; both land at the behavior milestone, not at this DRAFT. Shape-only conformance (`workspace-capability-shape.test.ts`) ships now.",
       "sources": [
         {
           "file": "spec/v1/spec-gaps.json",
@@ -14431,12 +14431,11 @@
       "rfc": "0117",
       "local": "r5",
       "section": "spec/v1/frontend-plugin-packs.md",
-      "surface": "`Active → Accepted`",
+      "surface": "**Closed (2026-09-23).** RFC 0117 reached `Accepted` on 2026-07-06 (steward single-witness waiver + the tier-1 reference host openwop-app advertising `uiPlugins {supported:true, isolation:\"cross-origin-iframe\"}` live), and openwop#1479 flipped `spec/v1/frontend-plugin-packs.md` to `Status: Stable` on 2026-09-22 because that predicate had fired. Original: `Active → Accepted`.",
       "witness": "witnessable-gated",
       "requirementId": null,
-      "disposition": "open",
+      "disposition": "closed",
       "target": null,
-      "note": "Pending a host advertising `capabilities.uiPlugins.supported` + passing the gated scenarios non-vacuously (dual-witness per the graduation rule).",
       "sources": [
         {
           "file": "spec/v1/spec-gaps.json",
