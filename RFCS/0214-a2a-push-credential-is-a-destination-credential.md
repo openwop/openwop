@@ -53,7 +53,7 @@ A push delivery is subject to `webhooks.md` §Egress **at delivery time** — re
 
 ### §C Delivery semantics
 
-A host MUST attempt each push at least once. A host that retries MUST follow `webhooks.md` `retryPolicy` semantics (bounded attempts, backoff). Push dead-letters are not visible to A2A clients (`GET /webhooks/{id}/dead-letters` is keyed by a subscription id a push config is not); a client recovers state with `GetTask`. The body is an A2A 1.0 `StreamResponse` with `Content-Type: application/a2a+json`. A host MUST NOT add an OpenWOP signature to an A2A push: an A2A client has no way to learn the secret. When `authentication` is absent and `token` is present, the host MUST send `token` as `Authorization: Bearer <token>`; otherwise `token` is not sent.
+A host MUST attempt each push at least once. A host that retries MUST follow `webhooks.md` `retryPolicy` semantics (bounded attempts, backoff). Push dead-letters are not visible to A2A clients (`GET /webhooks/{id}/dead-letters` is keyed by a subscription id a push config is not); a client recovers state with `GetTask`. The body is an A2A 1.0 `StreamResponse` with `Content-Type: application/a2a+json`. A host MUST NOT add an OpenWOP signature to an A2A push: an A2A client has no way to learn the secret. When `authentication` is absent and `token` is present, the host SHOULD send `token` as `Authorization: Bearer <token>`; otherwise `token` is not sent. SHOULD, not MUST: A2A v1.0.1 does not define the carriage and the SDKs disagree (a2a-js may use `X-A2A-Notification-Token`), so a MUST here could fail a receiver that follows an SDK (Unresolved question 1).
 
 ### §D Replay forks never push
 
@@ -120,7 +120,7 @@ The host leg `a2a-push-unadvertised-refused` was run before merge against a suit
 
 ## Unresolved questions
 
-1. A2A v1.0.1 does not say how `token` is carried. §C picks `Authorization: Bearer` when `authentication` is absent; raise upstream (program Phase 6).
+1. A2A v1.0.1 does not say how `token` is carried. §C recommends (SHOULD) `Authorization: Bearer` when `authentication` is absent; tighten to MUST only once upstream settles it (program Phase 6).
 
 ## Editorial
 

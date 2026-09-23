@@ -244,7 +244,7 @@ describe('RFC 0208 — v2-a2a-operation-map (host as A2A 1.0 server, gated on a2
 
   it('a host not advertising a2a.pushNotifications refuses all four push-config operations with PushNotificationNotSupportedError', async () => {
     const rid = 'openwop.requirement.0214.a2a-push-unadvertised-refused';
-    const pushDoc = 'interop-map.json a2a.operations push-config rows ("Unadvertised: PushNotificationNotSupportedError"); RFC 0214';
+    const pushDoc = 'interop-map.json a2a.errors PushNotificationNotSupportedError (serverWhen: push config without a2a.pushNotifications) and the push-config operation rows; A2A v1.0.1 §3.3.4';
     const t = await target(true);
     if (!t.ok) return skip(t, rid);
     const a2a = (await familyAdvertised('a2a'))!;
