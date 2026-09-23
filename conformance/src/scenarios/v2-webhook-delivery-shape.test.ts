@@ -44,14 +44,13 @@
  * @see spec/v2/core/versioning.md §1.2
  */
 import { afterEach, describe, it, expect } from 'vitest';
-import { createServer, type IncomingMessage, type Server, type ServerResponse } from 'node:http';
 import { readFileSync, readdirSync, statSync } from 'node:fs';
 import { join } from 'node:path';
 import { Ajv2020 } from 'ajv/dist/2020.js';
 import addFormats from 'ajv-formats';
 import { driver } from '../lib/driver.js';
 import { v2Discovery, gateFamily } from '../lib/v2.js';
-import { receiverBinding, resolveRegistrationUrl } from '../lib/webhook-receiver.js';
+import { noDeliveryCause, startScopedReceiver, type ScopedReceiver } from '../lib/scoped-receiver.js';
 import { readErrorCode } from '../lib/error-envelope.js';
 import { softSkip } from '../lib/soft-skip.js';
 import { req } from '../lib/requirement-ids.js';
@@ -67,32 +66,23 @@ const EVENT_TYPE = 'run.started';
 type Delivery = { body: string; headers: Record<string, string | string[] | undefined> };
 type Validator = (doc: unknown) => { ok: boolean; errors: string };
 
-async function startReceiver(): Promise<{ server: Server; url: string; deliveries: Delivery[] }> {
+async function startReceiver(): Promise<ScopedReceiver & { deliveries: Delivery[] }> {
   const deliveries: Delivery[] = [];
-  const server = createServer((request: IncomingMessage, res: ServerResponse) => {
-    const chunks: Buffer[] = [];
-    request.on('data', (c: Buffer) => chunks.push(c));
-    request.on('end', () => {
-      deliveries.push({ body: Buffer.concat(chunks).toString('utf8'), headers: request.headers });
-      res.writeHead(204); res.end();
-    });
-  });
-  // Honour OPENWOP_WEBHOOK_RECEIVER_PORT like `v2-webhook-durable-delivery`
-  // does. Without it, a tunnelled run registers the tunnel URL here and the
+  // `startScopedReceiver` (2.37.0) replaces this file's own `createServer` +
+  // pinned-port binding. The comment that stood here described the collision
+  // from the inside: "a tunnelled run registers the tunnel URL here and the
   // tunnel forwards to the PINNED port — held by the other receiver, which
   // answers 500 by design — so this file's `deliveries` stays empty, its legs
   // soft-skip, and (because `register()` already asserted) the rows resolve
-  // `executed-pass`. A wire-shape scenario that never opened a delivery body
-  // went green. Two major-2 files now want the same pinned port, so the
-  // webhook lane MUST run with `--max-workers 1`, which is already the
-  // certification setting.
-  const pinned = Number(process.env['OPENWOP_WEBHOOK_RECEIVER_PORT'] ?? '');
-  const bindPort = Number.isInteger(pinned) && pinned > 0 && pinned < 65536 ? pinned : 0;
-  const binding = receiverBinding();
-  await new Promise<void>((resolve) => server.listen(bindPort, binding.bind, () => resolve()));
-  const addr = server.address();
-  const port = typeof addr === 'object' && addr ? addr.port : 0;
-  return { server, url: `http://${binding.advertise}:${port}/hook`, deliveries };
+  // `executed-pass`." Four files registered that one byte-identical URL. Each
+  // now registers its own nonce path, and `front-mux` routes a delivery to the
+  // exercise it was addressed to whichever listener holds the port.
+  const rx = await startScopedReceiver((hit, res) => {
+    deliveries.push({ body: hit.body, headers: hit.headers });
+    res.writeHead(204);
+    res.end();
+  });
+  return { ...rx, deliveries };
 }
 
 /**
@@ -103,8 +93,11 @@ async function startReceiver(): Promise<{ server: Server; url: string; deliverie
  * for leg 2, not a failure: there is no v1 wire to keep still.
  */
 async function register(url: string, major: 1 | 2): Promise<string | null> {
-  const registration = resolveRegistrationUrl(url);
-  const reg = await driver.post(major === 2 ? '/webhooks' : '/v1/webhooks', { url: registration.url, events: [EVENT_TYPE] }, { headers: { 'OpenWOP-Version': major === 2 ? '2.0' : '1.0' } });
+  // `url` is already the destination for THIS exercise — the public front (when
+  // one is wired) plus this receiver's nonce path. It is no longer run through
+  // `resolveRegistrationUrl`, which returned the front VERBATIM and so dropped
+  // the path that makes the subscription this exercise's.
+  const reg = await driver.post(major === 2 ? '/webhooks' : '/v1/webhooks', { url, events: [EVENT_TYPE] }, { headers: { 'OpenWOP-Version': major === 2 ? '2.0' : '1.0' } });
   if (major === 1 && reg.status === 404) {
     softSkip('inapplicable', 'host serves no 1.x webhook surface (POST /v1/webhooks not_found) — no v1 wire to keep still');
     return null;
@@ -214,18 +207,22 @@ const V2 = 'https://openwop.dev/spec/v2/';
 const V1 = 'https://openwop.dev/spec/v1/';
 
 describe('webhook delivery shape is per-contract (webhooks.md §Delivery, versioning.md §1.2)', () => {
-  let active: Server | null = null;
-  afterEach(async () => { await unregisterAll(); const s = active; active = null; if (s) await new Promise<void>((r) => s.close(() => r())); });
+  // Closed through the receiver, not the raw server: `close()` also drops this
+  // exercise's nonce from the front-mux registry, so a retry that arrives after
+  // the leg has finished is answered 404 by whoever holds the port rather than
+  // being handed to the next exercise's recorder.
+  let active: ScopedReceiver | null = null;
+  afterEach(async () => { await unregisterAll(); const rx = active; active = null; if (rx) await rx.close(); });
 
   it('a major-2 subscriber receives the v2 rendering: the delivery validates, and run.started.owner carries subject, never principal', async () => {
     if (!(await v2Discovery())) return softSkip('blocked', 'v2 discovery unreachable');
     if (!(await gateFamily('webhooks'))) return softSkip('inapplicable', 'webhooks family not advertised (gate recorded under openwop.family.webhooks)');
-    const receiver = await startReceiver(); active = receiver.server;
+    const receiver = await startReceiver(); active = receiver;
     const webhookId = await register(receiver.url, 2);
     if (webhookId === null) return softSkip('blocked', 'registration refused (reason recorded above)');
     const runId = await driveRun();
     const d = await waitFor(() => deliveryFor(receiver.deliveries, runId, webhookId), 15_000);
-    if (!d) return softSkip('blocked', `no ${EVENT_TYPE} delivery for this run arrived inside 15s — durability is v2-webhook-durable-delivery's claim, not this file's`);
+    if (!d) return softSkip('blocked', `no ${EVENT_TYPE} delivery for this run arrived inside 15s — durability is v2-webhook-durable-delivery's claim, not this file's. ${noDeliveryCause(receiver, `${EVENT_TYPE} delivery`)}`);
     const v2 = validators(2);
     const envelope = v2.ref(`${V2}webhook-delivery.schema.json`)(d.envelope);
     expect(envelope.ok, req(ID, DOC, `a major-2 delivery MUST validate against webhook-delivery.schema.json (v2) — { runId, workspaceId?, event } with event the verbatim v2 run event. ${envelope.errors}`)).toBe(true);
@@ -245,12 +242,12 @@ describe('webhook delivery shape is per-contract (webhooks.md §Delivery, versio
     // `versions.supported` that no discovery document has, so this leg was inapplicable on every host.
     const versions = Array.isArray(disc?.['protocolVersions']) ? (disc?.['protocolVersions'] as unknown[]).map(String) : [];
     if (!versions.some((v) => v.startsWith('1.'))) return softSkip('inapplicable', `host advertises [${versions.join(', ') || 'no protocolVersions'}] — no 1.x member, so there is no v1 wire to keep still`);
-    const receiver = await startReceiver(); active = receiver.server;
+    const receiver = await startReceiver(); active = receiver;
     const webhookId = await register(receiver.url, 1);
     if (webhookId === null) return softSkip('blocked', 'registration refused or inapplicable (disposition recorded above)');
     const runId = await driveRun();
     const d = await waitFor(() => deliveryFor(receiver.deliveries, runId, webhookId), 15_000);
-    if (!d) return softSkip('blocked', `no ${EVENT_TYPE} delivery for this run arrived inside 15s`);
+    if (!d) return softSkip('blocked', `no ${EVENT_TYPE} delivery for this run arrived inside 15s. ${noDeliveryCause(receiver, `${EVENT_TYPE} delivery`)}`);
     // The v1 definition is the discriminator, not the owner's keys: v1's owner admits `subject` (RFC 0165
     // §B, echoed verbatim when present) alongside `principal`, so a v2 owner is ALSO a valid v1 owner.
     // What the v1 wire cannot carry is the v2 payload's integer `engineVersion` (string on v1) — a fan-out
@@ -269,7 +266,7 @@ describe('webhook delivery shape is per-contract (webhooks.md §Delivery, versio
     // read null as absence, so this leg was inapplicable on exactly the hosts that could witness it.
     const gate = era2Gate(disc);
     if (gate !== null && !gate.ok) return softSkip(gate.kind, gate.reason);
-    const receiver = await startReceiver(); active = receiver.server;
+    const receiver = await startReceiver(); active = receiver;
     const webhookId = await register(receiver.url, 2);
     if (webhookId === null) return softSkip('blocked', 'registration refused (reason recorded above)');
     const log = await seedEra2Log(v1FixtureLog(FIXTURE), 'completed');
@@ -279,7 +276,7 @@ describe('webhook delivery shape is per-contract (webhooks.md §Delivery, versio
     // The seam appends HISTORY — rows that already happened — and a host MAY not fan out history (the
     // reference host's seam appends with fan-out suppressed by design). No delivery inside 15s means the
     // era-2 fan-out branch is unobservable on this host, not that a measurement failed: inapplicable.
-    if (!d) return softSkip('inapplicable', `no ${EVENT_TYPE} delivery for the seeded era-2 run inside 15s — this host does not fan out seeded history, so the era-2 fan-out branch is unobservable here (recorded under openwop.family.conformance)`);
+    if (!d) return softSkip('inapplicable', `no ${EVENT_TYPE} delivery for the seeded era-2 run inside 15s — this host does not fan out seeded history, so the era-2 fan-out branch is unobservable here (recorded under openwop.family.conformance). ${noDeliveryCause(receiver, `${EVENT_TYPE} delivery`)}`);
     const payload = validators(2).ref(`${V2}run-event-payloads.schema.json#/$defs/runStarted`)(d.event['payload']);
     expect(payload.ok, req(ID, DOC, `an era-2 row delivered to a major-2 subscriber MUST be projected — the read projection applies at the fan-out as at poll/SSE (events.md §Era-2). ${payload.errors}`)).toBe(true);
     const owner = ownerOf(d.event);

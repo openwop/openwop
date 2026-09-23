@@ -36,7 +36,14 @@ import { resolvePublicFront } from './webhook-receiver.js';
 
 type Handler = (req: IncomingMessage, res: ServerResponse) => void;
 
-const PREFIX = '/fx/';
+/**
+ * The path prefix a fronted nonce lives under. Exported so a caller that mints
+ * its OWN destination (`scoped-receiver.ts`, which needs the nonce
+ * unconditionally rather than only when it loses the pinned port) spells the
+ * path the same way `routeFronted` parses it.
+ */
+export const FRONT_MUX_PREFIX = '/fx/';
+const PREFIX = FRONT_MUX_PREFIX;
 const registry = new Map<string, Map<string, Handler>>();
 
 function pinnedPort(portEnv: string): number {

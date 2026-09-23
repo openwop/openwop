@@ -28,11 +28,10 @@
  */
 
 import { afterEach, describe, it, expect } from 'vitest';
-import { createServer, type IncomingMessage, type Server, type ServerResponse } from 'node:http';
 import { driver } from '../lib/driver.js';
 import { v2Discovery, gateFamily } from '../lib/v2.js';
 import { projectBoundId } from '../lib/bound-id.js';
-import { receiverBinding, resolveRegistrationUrl } from '../lib/webhook-receiver.js';
+import { absenceIsUnmeasured, noDeliveryCause, startScopedReceiver, type ScopedReceiver } from '../lib/scoped-receiver.js';
 import { readErrorCode } from '../lib/error-envelope.js';
 import { blockedDespiteAssertions, softSkip } from '../lib/soft-skip.js';
 import { req } from '../lib/requirement-ids.js';
@@ -48,47 +47,48 @@ interface Attempt { readonly key: string; readonly runId: string | null; readonl
  * (`Infinity` ⇒ always fails). The key is `(webhookId, runId, sequence)` —
  * the dedup triple webhooks.md §Verification names.
  */
-async function startReceiver(failFirst: number): Promise<{ server: Server; url: string; attempts: Attempt[] }> {
+async function startReceiver(failFirst: number): Promise<ScopedReceiver & { attempts: Attempt[] }> {
   const attempts: Attempt[] = [];
   const seen = new Map<string, number>();
-  const server = createServer((request: IncomingMessage, res: ServerResponse) => {
-    const chunks: Buffer[] = [];
-    request.on('data', (c: Buffer) => chunks.push(c));
-    request.on('end', () => {
-      const body = Buffer.concat(chunks).toString('utf8');
-      let runId: string | null = null;
-      let sequence: unknown = null;
-      try {
-        const parsed = JSON.parse(body) as { runId?: unknown; event?: { sequence?: unknown } };
-        runId = typeof parsed.runId === 'string' ? parsed.runId : null;
-        sequence = parsed.event?.sequence ?? null;
-      } catch { /* not JSON — still an attempt */ }
-      const h = request.headers;
-      const webhookId = String(h['openwop-webhook-id'] ?? h['x-openwop-webhook-id'] ?? '');
-      const key = `${webhookId}|${runId ?? ''}|${String(sequence)}`;
-      const n = (seen.get(key) ?? 0) + 1;
-      seen.set(key, n);
-      const status = n <= failFirst ? 500 : 204;
-      attempts.push({ key, runId, webhookId, status, at: Date.now() });
-      res.writeHead(status);
-      res.end();
-    });
+  // `startScopedReceiver` (2.37.0). This receiver answers 500 BY DESIGN, and
+  // until now it advertised the same byte-identical destination as the other
+  // three webhook files on a tunnelled cut — so on a shared pinned port the
+  // exercise that happened to register alongside it saw failures it never
+  // caused. The `ours()` filter below was the workaround; the nonce removes the
+  // cause. The measured case is in that filter's own comment: a tier-2 host
+  // counted 6 attempts against a maxAttempts of 5 because another scenario's
+  // subscription delivered into this budget.
+  const rx = await startScopedReceiver((hit, res) => {
+    let runId: string | null = null;
+    let sequence: unknown = null;
+    try {
+      const parsed = JSON.parse(hit.body) as { runId?: unknown; event?: { sequence?: unknown } };
+      runId = typeof parsed.runId === 'string' ? parsed.runId : null;
+      sequence = parsed.event?.sequence ?? null;
+    } catch { /* not JSON — still an attempt */ }
+    const h = hit.headers;
+    const webhookId = String(h['openwop-webhook-id'] ?? h['x-openwop-webhook-id'] ?? '');
+    const key = `${webhookId}|${runId ?? ''}|${String(sequence)}`;
+    const n = (seen.get(key) ?? 0) + 1;
+    seen.set(key, n);
+    const status = n <= failFirst ? 500 : 204;
+    attempts.push({ key, runId, webhookId, status, at: Date.now() });
+    res.writeHead(status);
+    res.end();
   });
-  const pinned = Number(process.env['OPENWOP_WEBHOOK_RECEIVER_PORT'] ?? '');
-  const bindPort = Number.isInteger(pinned) && pinned > 0 && pinned < 65536 ? pinned : 0;
-  const binding = receiverBinding();
-  await new Promise<void>((resolve) => server.listen(bindPort, binding.bind, () => resolve()));
-  const addr = server.address();
-  if (typeof addr !== 'object' || addr === null) throw new Error('receiver address unavailable');
-  return { server, url: `http://${binding.advertise}:${addr.port}/`, attempts };
+  return { ...rx, attempts };
 }
 
-let active: Server | null = null;
+// Closed through the receiver: `close()` also drops this exercise's nonce from
+// the front-mux registry, so the retries this file deliberately provokes are
+// answered 404 by whoever next holds the port instead of being handed to the
+// next exercise's recorder.
+let active: ScopedReceiver | null = null;
 afterEach(async () => {
   if (active) {
-    const s = active;
+    const rx = active;
     active = null;
-    await new Promise<void>((resolve) => s.close(() => resolve()));
+    await rx.close();
   }
 });
 
@@ -215,15 +215,18 @@ const RETRY_TEST_TIMEOUT_MS = RETRY_WAIT_CAP_MS + WAIT_SLACK_MS;
 const DEAD_LETTER_TEST_TIMEOUT_MS = RETRY_WAIT_CAP_MS * 2 + WAIT_SLACK_MS;
 
 /** Register the suite receiver; null (with a note) when the host's SSRF guard refuses a loopback URL. */
-async function register(url: string): Promise<{ webhookId: string } | null> {
-  const registration = resolveRegistrationUrl(url);
-  const reg = await driver.post('/webhooks', { url: registration.url, events: ['run.completed'] });
+async function register(rx: ScopedReceiver): Promise<{ webhookId: string } | null> {
+  // `rx.url` is this exercise's own destination already — the front (when
+  // wired) plus this receiver's nonce path. It is no longer run through
+  // `resolveRegistrationUrl`, which returned the front VERBATIM and so dropped
+  // the path that makes the subscription ours.
+  const reg = await driver.post('/webhooks', { url: rx.url, events: ['run.completed'] });
   if (reg.status === 400 && readErrorCode(reg.json) === 'webhook_url_rejected') {
-    if (!registration.tunnelled) {
+    if (!rx.tunnelled) {
       softSkip('blocked', 'host SSRF guard rejected the loopback receiver (webhooks.md §Egress requires it); set OPENWOP_WEBHOOK_RECEIVER_URL to a public https tunnel in front of the suite receiver');
       return null;
     }
-    expect.fail(`host rejected the operator-supplied public https receiver (${registration.url}) with webhook_url_rejected — a public https destination is legitimate under webhooks.md §Egress`);
+    expect.fail(`host rejected the operator-supplied public https receiver (${rx.url}) with webhook_url_rejected — a public https destination is legitimate under webhooks.md §Egress`);
   }
   expect(reg.status, req('openwop.requirement.0173.webhook-durable-delivery', 'webhooks.md §Surfaces', 'POST /webhooks MUST answer 201 { webhookId }')).toBe(201);
   const webhookId = (reg.json as { webhookId?: unknown } | null)?.webhookId;
@@ -239,8 +242,8 @@ describe('RFC 0173 §B — webhook-durable-delivery (gated on webhooks)', () => 
     if (!fixtureAdvertised(doc, FIXTURE)) return softSkip('inapplicable', `${FIXTURE} fixture not advertised — no run to deliver`);
 
     const receiver = await startReceiver(FAIL_FIRST); // 500, 500, then 204
-    active = receiver.server;
-    const sub = await register(receiver.url);
+    active = receiver;
+    const sub = await register(receiver);
     if (sub === null) return softSkip('blocked', 'registration refused (reason recorded above)');
 
     const create = await driver.post('/runs', { workflowId: FIXTURE });
@@ -258,9 +261,22 @@ describe('RFC 0173 §B — webhook-durable-delivery (gated on webhooks)', () => 
     const ours = () => receiver.attempts.filter((a) => a.runId === runId && a.webhookId === sub.webhookId);
     const retried = await waitFor(() => ours().some((a) => a.status === 204), retryWaitMs(doc));
     const attempts = ours();
+    // A zero that is PROVABLY not a verdict about the host records `blocked`
+    // with its cause, not `executed-fail` (2.37.0). `absenceIsUnmeasured` is
+    // true only when other traffic reached this listener — the path from the
+    // host to this process works, so what is absent is this exercise's
+    // IDENTITY, not delivery. That was the ordinary case on a tunnelled cut
+    // until this file stopped sharing one byte-identical destination with three
+    // others. `blocked` denies certification exactly as a failure does (RFC
+    // 0168 §E.1), so nothing is softened. When nothing reached the listener at
+    // all the reading is still ambiguous, and the hard assertion below stands —
+    // now carrying the address it was waiting on.
+    if (attempts.length === 0 && absenceIsUnmeasured(receiver)) {
+      return blockedDespiteAssertions(noDeliveryCause(receiver, 'run.completed attempt for this run'));
+    }
     expect(
       attempts.length,
-      req('openwop.requirement.0173.webhook-durable-delivery', 'webhooks.md §Durability', 'the host MUST attempt delivery of run.completed for THIS run to the registered subscriber'),
+      req('openwop.requirement.0173.webhook-durable-delivery', 'webhooks.md §Durability', `the host MUST attempt delivery of run.completed for THIS run to the registered subscriber — ${noDeliveryCause(receiver, 'run.completed attempt for this run')}`),
     ).toBeGreaterThan(0);
     const failedThenSucceeded = attempts.filter((a) => a.status === 500).length;
     expect(
@@ -327,8 +343,8 @@ describe('RFC 0173 §B — webhook-durable-delivery (gated on webhooks)', () => 
     if (!fixtureAdvertised(doc, FIXTURE)) return softSkip('inapplicable', `${FIXTURE} fixture not advertised — no run to deliver`);
 
     const receiver = await startReceiver(Number.POSITIVE_INFINITY); // never succeeds
-    active = receiver.server;
-    const sub = await register(receiver.url);
+    active = receiver;
+    const sub = await register(receiver);
     if (sub === null) return softSkip('blocked', 'registration refused (reason recorded above)');
 
     // The row id is the FIRST thing this leg names: `register()` asserts under
@@ -459,8 +475,8 @@ describe('RFC 0173 §B — webhook-durable-delivery (gated on webhooks)', () => 
     if (!fixtureAdvertised(doc, FIXTURE)) return softSkip('inapplicable', `${FIXTURE} fixture not advertised — no delivery to exhaust`);
 
     const receiver = await startReceiver(Number.POSITIVE_INFINITY); // never succeeds
-    active = receiver.server;
-    const sub = await register(receiver.url);
+    active = receiver;
+    const sub = await register(receiver);
     if (sub === null) return softSkip('blocked', 'registration refused (reason recorded above)');
     // Same two traps as the leg above (2.34.1): `register()` asserts under the base
     // id, so name this row first; and every `blocked` after it must STAND rather
