@@ -20,9 +20,15 @@
  *      the frame count;
  *   2. `Last-Event-ID: abc` ⇒ if refused, `400 validation_error` (SHOULD: a
  *      host that ignores it is recorded, not failed);
- *   3. an unknown own-tenant runId and a foreign-tenant runId answer the same
- *      status and error code with and without the header — a host that reads
- *      the cursor before authorizing answers them differently.
+ *   3. an unknown own-tenant runId and a forged foreign-tenant runId answer the
+ *      same status and error code with and without the header; and — the
+ *      threat itself — an EXISTING run of a second tenant
+ *      (`OPENWOP_TEST_TENANT_B_API_KEY`) answers the same with no header, a
+ *      cursor inside its log and a cursor past it. A host that reads the
+ *      cursor before authorizing can only be told apart on a run that
+ *      exists; without the second credential the leg records
+ *      `partial-witness`, because the nonexistent-run comparisons cannot
+ *      catch that host.
  *
  * @see spec/v2/core/events.md §SSE frames
  * @see RFCS/0213-three-unstated-v2-outcomes.md §A
@@ -49,14 +55,15 @@ async function http(fn: () => Promise<OpenWOPResponse>): Promise<OpenWOPResponse
 const enc = (id: string): string => encodeURIComponent(id);
 function seqOf(f: SseEvent): number | null { if (f.id === null || f.id === '') return null; const n = Number.parseInt(f.id, 10); return Number.isFinite(n) ? n : null; }
 
-async function createSettled(): Promise<{ runId: string } | { reason: string }> {
-  const res = await http(() => driver.post('/runs', { workflowId: NOOP }));
+async function createSettled(bearer?: string): Promise<{ runId: string } | { reason: string }> {
+  const as = bearer === undefined ? {} : { authenticated: false, headers: { Authorization: `Bearer ${bearer}` } };
+  const res = await http(() => driver.post('/runs', { workflowId: NOOP }, as));
   if (res === null) return { reason: 'POST /runs unreachable (fetch failed)' };
   const runId = (res.json as { runId?: unknown } | null)?.runId;
   if (res.status !== 201 || typeof runId !== 'string') return { reason: `POST /runs answered ${res.status} ${readErrorCode(res.json) ?? ''}`.trim() };
   const t0 = Date.now();
   while (Date.now() - t0 < 10_000) {
-    const s = await http(() => driver.get(`/runs/${enc(runId)}`));
+    const s = await http(() => driver.get(`/runs/${enc(runId)}`, as));
     if (s?.status === 200 && ['completed', 'failed', 'cancelled'].includes(String((s.json as { status?: unknown }).status))) return { runId };
     await new Promise((r) => setTimeout(r, 250));
   }
@@ -110,6 +117,17 @@ describe('v2 sse-last-event-id-cursor (events.md §SSE frames, RFC 0213 §A)', (
       const cursor = await answer(path, '0');
       expect(bare.status, req(ID_AUTHZ, 'spec/v2/core/runs.md §Identity', `a ${label} MUST NOT be streamed (got ${bare.status})`)).not.toBe(200);
       expect({ status: cursor.status, code: cursor.code }, req(ID_AUTHZ, DOC, `for a ${label} the answer with Last-Event-ID (${cursor.status} ${String(cursor.code)}) MUST equal the answer without it (${bare.status} ${String(bare.code)})`)).toEqual({ status: bare.status, code: bare.code });
+    }
+    const other = process.env.OPENWOP_TEST_TENANT_B_API_KEY;
+    if (!other) return softSkip('blocked', 'OPENWOP_TEST_TENANT_B_API_KEY is not set — the existing-foreign-run comparison, the only one a cursor-first host fails, did not run');
+    const theirs = await createSettled(other); if ('reason' in theirs) return softSkip('blocked', `tenant B could not create a run: ${theirs.reason}`);
+    if (theirs.runId.slice(0, theirs.runId.indexOf('/')) === c.runId.slice(0, slash)) return softSkip('blocked', 'OPENWOP_TEST_TENANT_B_API_KEY binds the same tenant as OPENWOP_API_KEY — the leg needs a second tenant');
+    const path = `/runs/${enc(theirs.runId)}/events?streamMode=debug`;
+    const bare = await answer(path);
+    expect(bare.status, req(ID_AUTHZ, 'spec/v2/core/runs.md §Identity', `another tenant's existing run MUST NOT be streamed (got ${bare.status})`)).not.toBe(200);
+    for (const cur of ['0', '1000']) {
+      const got = await answer(path, cur);
+      expect({ status: got.status, code: got.code }, req(ID_AUTHZ, DOC, `for another tenant's existing run the answer with Last-Event-ID ${cur} (${got.status} ${String(got.code)}) MUST equal the answer without it (${bare.status} ${String(bare.code)})`)).toEqual({ status: bare.status, code: bare.code });
     }
   }, 45_000);
 });

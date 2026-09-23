@@ -32037,7 +32037,7 @@
     {
       "id": "openwop.it.v2-sse-last-event-id-cursor.a-last-event-id-past-the-log-is-an-exclusive-cursor-a-terminal-run-answers-200-w",
       "file": "v2-sse-last-event-id-cursor.test.ts",
-      "line": 77,
+      "line": 84,
       "title": "a Last-Event-ID past the log is an exclusive cursor: a terminal run answers 200 with no frame and closes",
       "explicitId": "openwop.requirement.0213.last-event-id-exclusive-cursor",
       "citations": [
@@ -32060,7 +32060,7 @@
     {
       "id": "openwop.it.v2-sse-last-event-id-cursor.a-last-event-id-that-is-not-a-non-negative-integer-when-refused-is-400-validatio",
       "file": "v2-sse-last-event-id-cursor.test.ts",
-      "line": 92,
+      "line": 99,
       "title": "a Last-Event-ID that is not a non-negative integer, when refused, is 400 validation_error",
       "explicitId": "openwop.requirement.0213.last-event-id-malformed",
       "citations": [
@@ -32079,10 +32079,20 @@
     {
       "id": "openwop.it.v2-sse-last-event-id-cursor.the-cursor-never-changes-the-answer-for-a-run-the-caller-cannot-read",
       "file": "v2-sse-last-event-id-cursor.test.ts",
-      "line": 101,
+      "line": 108,
       "title": "the cursor never changes the answer for a run the caller cannot read",
       "explicitId": "openwop.requirement.0213.last-event-id-after-authorization",
       "citations": [
+        {
+          "section": "spec/v2/core/runs.md §Identity",
+          "requirement": null,
+          "interpolated": true
+        },
+        {
+          "section": "spec/v2/core/events.md §SSE frames",
+          "requirement": null,
+          "interpolated": true
+        },
         {
           "section": "spec/v2/core/runs.md §Identity",
           "requirement": null,

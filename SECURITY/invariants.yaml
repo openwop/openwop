@@ -4644,7 +4644,11 @@ invariants:
       differently depending on whether the cursor is past its log (a
       future-id close vs a refusal), which discloses the run's existence and
       log length. The scenario compares the with/without-header answers for
-      an unknown own-tenant run and a forged foreign-tenant run. Sabotage:
-      evaluate the cursor before the ownership check — the two answers differ.
+      an unknown own-tenant run, a forged foreign-tenant run, and an EXISTING
+      run of a second tenant (`OPENWOP_TEST_TENANT_B_API_KEY`; without it the
+      file records partial-witness, since only an existing run can tell a
+      cursor-first host apart). Sabotage (v2-reference, 2026-09-23): evaluate
+      the cursor on the store before the ownership check — the existing
+      foreign run answers 200 with a cursor past its log and 403 without.
     witness: witnessable-unaided
     witnessReview: reviewed-2026-09-23
