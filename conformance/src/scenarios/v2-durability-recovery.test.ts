@@ -64,7 +64,6 @@
  * @see RFCS/0158-durable-execution-and-disaster-recovery-qualification.md §B.4 §D.9 §E
  */
 
-import { createServer, type IncomingMessage, type Server, type ServerResponse } from 'node:http';
 import { describe, expect, it } from 'vitest';
 import { driver } from '../lib/driver.js';
 import { v2Discovery } from '../lib/v2.js';
@@ -72,7 +71,7 @@ import { isFixtureAdvertised } from '../lib/fixtures.js';
 import { softSkip } from '../lib/soft-skip.js';
 import { pollUntilTerminal, scaledTimeoutMs } from '../lib/polling.js';
 import { req } from '../lib/requirement-ids.js';
-import { receiverBinding, resolveRegistrationUrl } from '../lib/webhook-receiver.js';
+import { startEffectReceiver, waitForFirstArrival } from '../lib/effect-receiver.js';
 import { watchForResumption, type Observation, type Watch } from '../lib/durability-watch.js';
 import { noteEvidence, parseRecoveryBounds, EVIDENCE_NAME_PATTERN } from '../lib/durability-evidence.js';
 
@@ -267,26 +266,15 @@ function watch(runId: string, budgetMs: number, resumed: (o: Observation) => boo
 }
 
 /**
- * The suite's own destination for the one staged effect. Every request that
- * reaches it is an INVOCATION — the thing §C says to count. Honours
- * OPENWOP_WEBHOOK_RECEIVER_PORT so a tunnelled cut forwards here (the
- * certification setting is already `--max-workers 1`, so the pinned port is
- * not contended by the webhook files).
+ * How long to wait for the ONE legitimate arrival before concluding none came.
+ *
+ * Separate from `QUIET_WINDOW_MS`, and for the opposite reason: this is a wait
+ * FOR something that must happen, so a generous bound weakens nothing, while
+ * the quiet window that follows is a wait for something that must NOT happen.
+ * Collapsing the two into one blind sleep made the row measure the host's
+ * effect latency under load — see `lib/effect-receiver.ts`.
  */
-async function startEffectReceiver(): Promise<{ server: Server; url: string; arrivals: Array<{ method: string; at: number }> }> {
-  const arrivals: Array<{ method: string; at: number }> = [];
-  const server = createServer((request: IncomingMessage, res: ServerResponse) => {
-    request.on('data', () => { /* drain */ });
-    request.on('end', () => { arrivals.push({ method: request.method ?? '', at: Date.now() }); res.writeHead(204); res.end(); });
-  });
-  const pinned = Number(process.env['OPENWOP_WEBHOOK_RECEIVER_PORT'] ?? '');
-  const bindPort = Number.isInteger(pinned) && pinned > 0 && pinned < 65536 ? pinned : 0;
-  const binding = receiverBinding();
-  await new Promise<void>((resolve) => server.listen(bindPort, binding.bind, () => resolve()));
-  const addr = server.address();
-  const port = typeof addr === 'object' && addr ? addr.port : 0;
-  return { server, url: `http://${binding.advertise}:${port}/effect`, arrivals };
-}
+const FIRST_ARRIVAL_BUDGET_MS = 20_000;
 
 describe('v2-durability-recovery (RFC 0158 §B.4, §D.9, §E — the durable-single-instance rows)', () => {
   it('accepted work survives a kill before dispatch and dispatches on resume', async () => {
@@ -421,12 +409,29 @@ describe('v2-durability-recovery (RFC 0158 §B.4, §D.9, §E — the durable-sin
     // (`conformance-noop` records none). The seam is host test infrastructure
     // (§E) and chooses the work; it MUST stage work that performs EXACTLY ONE
     // outbound effect, addressed to `effectUrl`, and deliver it twice.
+    //
+    // 2.37.0 — THE DESTINATION CARRIES A PER-EXERCISE NONCE, and that is what
+    // makes this row deterministic. An effect's Layer-2 identity is its
+    // BUSINESS identity (idempotency.md §"Layer 2 Keying"): tenant, workflow,
+    // node, request digest — and the destination URL is part of that digest,
+    // while the runId deliberately is not. Until 2.37.0 this leg and
+    // `0194.terminal-once.duplicate-delivery` both handed the seam
+    // `resolveRegistrationUrl(...)`, which on a tunnelled cut is
+    // OPENWOP_WEBHOOK_RECEIVER_URL verbatim — the same string for both. Same
+    // fixture, same node, same URL ⇒ SAME effect identity, so a CONFORMANT
+    // host resolved the second exercise to the first's recorded outcome and
+    // called out zero times. Whichever leg vitest ran second read zero
+    // arrivals: `blocked` on loopback, a hard `executed-fail` on a tunnelled
+    // cut. Measured on the v2 reference host — exercise 2's ledger row read
+    // `invocationId: "deduplicated-of:<run 1>"`. Nothing but the file order
+    // differed between a pass and a fail, and the row was measuring
+    // cross-exercise deduplication rather than §C's within-exercise
+    // exactly-once. The nonce gives every exercise its own identity.
     const rx = await startEffectReceiver();
     try {
-      const target = resolveRegistrationUrl(rx.url);
-      const fired = await driver.post(KILL_SEAM, { mode: 'duplicate-delivery', effectUrl: target.url });
+      const fired = await driver.post(KILL_SEAM, { mode: 'duplicate-delivery', effectUrl: rx.url });
       if (fired.status >= 400) {
-        return softSkip('blocked', `the durability seam answered ${fired.status} for mode=duplicate-delivery with effectUrl ${target.tunnelled ? '(tunnelled)' : rx.url} — the host exposes the route but could not stage a double delivery; if its egress guard refused the receiver, the operator precondition is the webhook rows' own: a publicly-resolvable https front (OPENWOP_WEBHOOK_RECEIVER_URL) or a host run with its private-egress relaxation recorded`);
+        return softSkip('blocked', `the durability seam answered ${fired.status} for mode=duplicate-delivery with effectUrl ${rx.tunnelled ? '(tunnelled front)' : rx.url} — the host exposes the route but could not stage a double delivery; if its egress guard refused the receiver, the operator precondition is the webhook rows' own: a publicly-resolvable https front (OPENWOP_WEBHOOK_RECEIVER_URL) or a host run with its private-egress relaxation recorded`);
       }
       const runId = (fired.json as { runId?: unknown } | null)?.runId;
       if (typeof runId !== 'string') {
@@ -434,28 +439,71 @@ describe('v2-durability-recovery (RFC 0158 §B.4, §D.9, §E — the durable-sin
       }
 
       await pollUntilTerminal(runId, { timeoutMs: scaledTimeoutMs(60_000) });
-      // A LONGER wait is a STRONGER claim: this is a wait for a second arrival
-      // that must not happen, and the second delivery may trail the first.
+      // Wait FOR the one legitimate arrival, then wait OUT the quiet window for
+      // a second that must not come. A single blind sleep conflated the two and
+      // made a slow-but-correct host read as zero.
+      await waitForFirstArrival(rx, scaledTimeoutMs(FIRST_ARRIVAL_BUDGET_MS));
       await new Promise((r) => setTimeout(r, scaledTimeoutMs(QUIET_WINDOW_MS)));
 
-      const arrivals = rx.arrivals.length;
-      if (arrivals === 0 && !target.tunnelled) {
-        return softSkip('blocked', `the staged work's effect never reached the suite's receiver at ${rx.url} — for mode=duplicate-delivery the seam MUST aim exactly one outbound effect at the given effectUrl; with nothing landed there is no invocation to count, and the ledger alone cannot witness a double-fire`);
+      // Read the host's OWN account first, so a zero can SAY WHY. The two
+      // zeroes are different facts and must not share one disposition: nothing
+      // was ever sent, or the host resolved this work to an outcome it had
+      // already recorded (a `deduplicated-of:` / `replay-of:` invocation) —
+      // correct Layer-2 behaviour that leaves §C unmeasured, not refuted.
+      const eff = await driver.get(`/runs/${encodeURIComponent(runId)}/effects`);
+      const effects = eff.status === 200 ? ((eff.json as { effects?: Array<Record<string, unknown>> } | null)?.effects ?? []) : [];
+      const resolvedElsewhere = effects.filter((e) => /^(deduplicated-of|replay-of):/.test(String(e['invocationId'] ?? '')));
+      // An effect the host ATTEMPTED and whose transport failed. `released` is
+      // the state persistence.md gives a claim that was taken and given back;
+      // a host that names it is telling us the invocation was tried and never
+      // reached the destination. That is a THIRD kind of zero and it must not
+      // be reported as either of the others.
+      const attemptedAndFailed = effects.filter((e) => String(e['state'] ?? '') === 'released');
+      const arrivals = rx.arrivals();
+      if (arrivals === 0) {
+        // A BARE FAIL ON ZERO IS UNINFORMATIVE, so the zero is classified from
+        // the host's own ledger before any disposition is chosen. Three states
+        // wear the same symptom and only one of them is about §C:
+        //   (a) resolved to an outcome the host had ALREADY recorded — correct
+        //       Layer-2 keying, and this exercise simply performed no
+        //       invocation to count;
+        //   (b) attempted and the transport failed — a missed fire, which is
+        //       the opposite of a double fire and cannot refute exactly-once;
+        //   (c) nothing in the ledger at all — the seam never staged the one
+        //       effect the mode requires, so the exercise did not happen.
+        // None of the three is evidence AGAINST §C, so none of them is an
+        // `executed-fail`; each is `blocked` with its own cause named. The only
+        // thing this row ever fails on is a count that is not 1 with at least
+        // one real invocation observed.
+        const why = resolvedElsewhere.length > 0
+          ? `the host resolved the staged effect to an outcome it had ALREADY RECORDED (${resolvedElsewhere.map((e) => String(e['invocationId'])).join(', ')}) — correct Layer-2 keying (idempotency.md §"Layer 2 Keying"), but it means no invocation happened in THIS exercise, so §C's exactly-once is unmeasured here rather than violated. The destination this suite minted carries a per-exercise nonce precisely so this cannot happen; a host that keys on something coarser than the request MUST stage a fresh business identity per exercise`
+          : attemptedAndFailed.length > 0
+            ? `the host ATTEMPTED the staged effect and its transport failed — ${attemptedAndFailed.length} ledger row(s) in state \`released\`${attemptedAndFailed.map((e) => ` (${String(e['effectId'] ?? '?')} attempt ${String(e['attempt'] ?? '?')})`).join('')}. A MISSED fire is not an exactly-once violation, so this is not a refutation of §C and is not recorded as one; the operator precondition is a destination the host can actually reach inside its own effect timeout, and a host whose staged work takes no transport retry will show this whenever the round trip exceeds that timeout`
+            : `the staged work's effect never reached the suite's receiver at ${rx.localUrl}${rx.tunnelled ? ` (fronted as ${rx.url})` : ''} within ${FIRST_ARRIVAL_BUDGET_MS}ms of terminal, and the host's own effect ledger records no attempt — for mode=duplicate-delivery the seam MUST aim exactly one outbound effect at the given effectUrl; with nothing landed there is no invocation to count, and the ledger alone cannot witness a double-fire${rx.foreign() > 0 ? `. ${rx.foreign()} request(s) DID reach this listener without this exercise's nonce, so the front is wired but the host addressed something else` : ''}`;
+        // Zero is never a pass, and — since 2.37.0 — never a bare fail either.
+        // Until now a tunnelled cut turned every zero into `executed-fail`
+        // ("a mis-wired tunnel must not read as a pass"), which is right about
+        // the pass and wrong about the fail: it convicted a host of violating
+        // exactly-once on the evidence that it fired too FEW times. The
+        // mis-wired tunnel it was defending against is now the `foreign()`
+        // count — a front that reaches this listener but carries someone
+        // else's nonce — which the reason above names. `blocked` is not a
+        // softening: a blocked row DENIES certification (RFC 0168 §E.1)
+        // exactly as a failed one does, so the rung is still refused; what
+        // changes is that the bundle says which of the three zeroes happened
+        // instead of asserting a violation that was never observed.
+        return softSkip('blocked', why);
       }
-      // With a tunnel declared, zero arrivals is a hard failure, never a skip
-      // (webhook-receiver.ts): a mis-wired tunnel must not read as a pass.
       expect(
         arrivals,
-        req('openwop.requirement.0158.duplicate-delivery', 'RFC 0158 §C', `the same accepted work delivered twice MUST fire each effect exactly once, counted at the effect's destination — the suite's receiver observed ${arrivals} arrival(s) of the one staged effect for run ${runId}`),
+        req('openwop.requirement.0158.duplicate-delivery', 'RFC 0158 §C', `the same accepted work delivered twice MUST fire each effect exactly once, counted at the effect's destination — the suite's receiver observed ${arrivals} arrival(s) bearing this exercise's nonce ${rx.nonce} for run ${runId}${rx.foreign() > 0 ? ` (and ${rx.foreign()} unrelated request(s), not counted)` : ''}`),
       ).toBe(1);
 
       // Secondary, and labelled for what it is: the host's own account agrees
       // with what landed. On an identity-keyed ledger this can never exceed one
       // row per identity, so it witnesses that the PROJECTION IS CONSISTENT, not
       // that no double-fire happened — the arrival count above owns that.
-      const eff = await driver.get(`/runs/${encodeURIComponent(runId)}/effects`);
       if (eff.status === 200) {
-        const effects = (eff.json as { effects?: Array<Record<string, unknown>> } | null)?.effects ?? [];
         const byIdentity = new Map<string, number>();
         for (const e of effects) {
           const id = String(e['effectId'] ?? e['keying'] ?? '');
@@ -469,7 +517,7 @@ describe('v2-durability-recovery (RFC 0158 §B.4, §D.9, §E — the durable-sin
         ).toBe(true);
       }
     } finally {
-      await new Promise<void>((r) => rx.server.close(() => r()));
+      await rx.close();
     }
   }, 180_000);
 
