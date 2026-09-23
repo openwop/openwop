@@ -138,6 +138,20 @@ export interface A2APeerInvocation {
   readonly headers: Readonly<Record<string, string>>;
 }
 
+/**
+ * A2A 1.0.1 §9.5: a JSON-RPC error's `data` is an ARRAY of ProtoJSON `Any` objects,
+ * each carrying `@type`; §10.6/§11.6 name `google.rpc.ErrorInfo` with the error type in
+ * UPPER_SNAKE (no "Error" suffix) as `reason` and `a2a-protocol.org` as `domain`.
+ * `ErrorInfo.metadata` is `map<string,string>`, so list values travel comma-joined.
+ * Through suite 2.36.1 this peer emitted a bare `{ reason, domain }` object, a shape no
+ * upstream SDK sends (a2a-js 1.2.0 and a2a-python 1.1.5 both send the array).
+ */
+export function a2aErrorInfo(reason: string, metadata: Record<string, string> = {}): Array<Record<string, unknown>> {
+  const info: Record<string, unknown> = { '@type': 'type.googleapis.com/google.rpc.ErrorInfo', reason, domain: 'a2a-protocol.org' };
+  if (Object.keys(metadata).length > 0) info['metadata'] = metadata;
+  return [info];
+}
+
 export class A2AFakePeer {
   private _server: Server | null = null;
   private _boundPort = 0;
@@ -436,15 +450,15 @@ export class A2AFakePeer {
           error: {
             code: A2A10_ERR.VERSION_NOT_SUPPORTED,
             message: `A2A protocol version ${requested} is not supported by this agent`,
-            data: { reason: 'VERSION_NOT_SUPPORTED', domain: 'a2a-protocol.org', requested, supportedVersions: [...this._protocolVersions] },
+            data: a2aErrorInfo('VERSION_NOT_SUPPORTED', { requested, supportedVersions: this._protocolVersions.join(',') }),
           },
         });
         return;
       }
       const version: A2AProtocolVersion = requested as A2AProtocolVersion;
       const ok = (result: unknown) => json(200, { jsonrpc: '2.0', id: rpcId, result });
-      const err = (code: number, message: string, reason: string, extra: Record<string, unknown> = {}) =>
-        json(200, { jsonrpc: '2.0', id: rpcId, error: { code, message, data: { reason, domain: 'a2a-protocol.org', ...extra } } });
+      const err = (code: number, message: string, reason: string, metadata: Record<string, string> = {}) =>
+        json(200, { jsonrpc: '2.0', id: rpcId, error: { code, message, data: a2aErrorInfo(reason, metadata) } });
 
       if (version === '1.0') {
         // ── A2A 1.0 JSON-RPC binding (spec §9.4) ──

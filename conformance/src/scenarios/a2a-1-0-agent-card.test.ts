@@ -15,7 +15,7 @@
  *   - a legacy-only peer serves the 0.3 card (so the shape follows the revision,
  *     not the calendar);
  *   - `A2A-Version` absent ⇒ 0.3 semantics; unsupported ⇒ `-32009`
- *     `VERSION_NOT_SUPPORTED` with `supportedVersions[]`; a 1.0-only peer
+ *     `VERSION_NOT_SUPPORTED` with the supported versions (in `error.data`, an array of `Any` per A2A 1.0.1 §9.5: `google.rpc.ErrorInfo` `metadata.supportedVersions`, comma-joined); a 1.0-only peer
  *     rejects header-less requests;
  *   - `SendMessage` returns `{ task }` (the `SendMessageResponse` oneof) with
  *     `TASK_STATE_*`, `ROLE_*`, `Part` as a `oneof` (no `kind`), `status.timestamp`;
@@ -42,9 +42,19 @@ async function rpc(endpoint: string, method: string, params: unknown, version?: 
   const headers: Record<string, string> = { 'content-type': 'application/json' };
   if (version !== undefined) headers['A2A-Version'] = version;
   const res = await fetch(`${endpoint}/a2a/jsonrpc`, { method: 'POST', headers, body: JSON.stringify({ jsonrpc: '2.0', id, method, params }) });
-  const body = (await res.json()) as { result?: Record<string, unknown>; error?: { code: number; message: string; data?: Record<string, unknown> } };
+  const body = (await res.json()) as { result?: Record<string, unknown>; error?: { code: number; message: string; data?: unknown } };
   return { status: res.status, ...body };
 }
+
+/**
+ * A2A 1.0.1 §9.5: `error.data` is an array of ProtoJSON `Any`; the error type is the
+ * `google.rpc.ErrorInfo` element's `reason` (§10.6/§11.6). Returns that element, or
+ * undefined when `data` is not such an array (so a bare-object `data` fails the leg).
+ */
+const errorInfo = (e: { data?: unknown } | undefined): { reason?: string; domain?: string; metadata?: Record<string, string> } | undefined => {
+  if (!Array.isArray(e?.data)) return undefined;
+  return (e!.data as Array<Record<string, unknown>>).find((d) => d['@type'] === 'type.googleapis.com/google.rpc.ErrorInfo') as { reason?: string; domain?: string; metadata?: Record<string, string> } | undefined;
+};
 
 describe('RFC 0152 — the suite peer speaks A2A 1.0 (dual-era A2AFakePeer)', () => {
   // Explicit 1.0-first so a header-less GET returns the 1.0 card (the default
@@ -115,8 +125,10 @@ describe('RFC 0152 — the suite peer speaks A2A 1.0 (dual-era A2AFakePeer)', ()
     const r = await rpc(peer.endpoint(), 'SendMessage', { message: { messageId: 'm2', role: 'ROLE_USER', parts: [{ text: 'hi' }] } }, '99.0');
     expect(r.status, req('openwop.it.a2a-1-0-agent-card.an-unsupported-version-fails-32009-version-not-supported-with-supportedversions', 'RFC 0152 §A/§B/§C/§D', 'an unsupported version fails -32009 VERSION_NOT_SUPPORTED with supportedVersions[] (HTTP 400)')).toBe(400);
     expect(r.error?.code).toBe(-32009);
-    expect(r.error?.data?.['reason']).toBe('VERSION_NOT_SUPPORTED');
-    expect(r.error?.data?.['supportedVersions']).toEqual(['1.0', '0.3']); // constructor order
+    expect(Array.isArray(r.error?.data), req('openwop.it.a2a-1-0-agent-card.an-unsupported-version-fails-32009-version-not-supported-with-supportedversions', 'RFC 0152 §A/§B/§C/§D; A2A 1.0.1 §9.5', 'error.data is an array of Any carrying google.rpc.ErrorInfo')).toBe(true);
+    expect(errorInfo(r.error)?.reason).toBe('VERSION_NOT_SUPPORTED');
+    expect(errorInfo(r.error)?.domain).toBe('a2a-protocol.org');
+    expect(errorInfo(r.error)?.metadata?.['supportedVersions']).toBe('1.0,0.3'); // constructor order; ErrorInfo.metadata is map<string,string>
   });
 
   it('a 1.0-only peer rejects a header-less request (which is 0.3 by rule)', async () => {
@@ -125,7 +137,7 @@ describe('RFC 0152 — the suite peer speaks A2A 1.0 (dual-era A2AFakePeer)', ()
     try {
       const r = await rpc(only10.endpoint(), 'message/send', { message: { parts: [] } });
       expect(r.error?.code, req('openwop.it.a2a-1-0-agent-card.a-1-0-only-peer-rejects-a-header-less-request-which-is-0-3-by-rule', 'RFC 0152 §A/§B/§C/§D', 'a 1.0-only peer rejects a header-less request (which is 0.3 by rule)')).toBe(-32009);
-      expect(r.error?.data?.['requested']).toBe('0.3');
+      expect(errorInfo(r.error)?.metadata?.['requested']).toBe('0.3');
     } finally {
       await only10.stop();
     }
@@ -161,10 +173,10 @@ describe('RFC 0152 — the suite peer speaks A2A 1.0 (dual-era A2AFakePeer)', ()
     expect((cancelled.result as { status: { state: string } }).status.state).toBe('TASK_STATE_CANCELED');
     const again = await rpc(peer.endpoint(), 'CancelTask', { id }, '1.0');
     expect(again.error?.code).toBe(-32002);
-    expect(again.error?.data?.['reason']).toBe('TASK_NOT_CANCELABLE');
+    expect(errorInfo(again.error)?.reason).toBe('TASK_NOT_CANCELABLE');
     const missing = await rpc(peer.endpoint(), 'GetTask', { id: 'nope' }, '1.0');
     expect(missing.error?.code).toBe(-32001);
-    expect(missing.error?.data?.['reason']).toBe('TASK_NOT_FOUND');
+    expect(errorInfo(missing.error)?.reason).toBe('TASK_NOT_FOUND');
   });
 
   it('a 0.3 method name under a 1.0 header is method-not-found — loudly', async () => {

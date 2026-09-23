@@ -23,7 +23,15 @@
  *      of A2A 1.0.1 §3.3.2 (plus parenthesized non-A2A rows, e.g. invalid
  *      parameters), and no other unparenthesized row;
  *   8. every `mcp.features[].requiredFor[]` value matches
- *      spec/v2/facets/mcp.schema.json `profiles.items.pattern`.
+ *      spec/v2/facets/mcp.schema.json `profiles.items.pattern`;
+ *   9. every `a2a.operations[].http` value (verb + path) equals the primary
+ *      `google.api.http` binding of the same rpc in the vendored upstream proto
+ *      (conformance/fixtures/upstream/a2a-v1.0.1/a2a.proto), path parameters
+ *      compared by position (`{id=*}` ≡ `{id}` ≡ `{task_id=*}`), a compound row
+ *      (`A | B | C`, verbs `X | Y | Z`, optional `[/segment]`) expanded per rpc,
+ *      and every rpc that has a binding covered by some row. A row may differ
+ *      from the proto only through HTTP_EXCEPTIONS, each of which names the
+ *      upstream conflict it records (2.36.2, D1).
  *
  *   --map <path>   check another map file against the same corpus (the
  *                  coherence test's sabotage legs use it); default the
@@ -124,6 +132,47 @@ for (const n of A2A_ERRORS) if ((errCount.get(n) ?? 0) !== 1) failures.push(`a2a
 const profilePattern = new RegExp(read('spec/v2/facets/mcp.schema.json').properties?.profiles?.items?.pattern ?? '^$');
 for (const f of map.mcp?.features ?? []) for (const p of f.requiredFor ?? []) if (!profilePattern.test(p)) failures.push(`mcp.features ${f.id}: requiredFor \`${p}\` does not match the mcp profiles pattern ${profilePattern}`);
 
+// 9. `http` column against the vendored A2A proto
+const PROTO = join(ROOT, 'conformance', 'fixtures', 'upstream', 'a2a-v1.0.1', 'a2a.proto');
+// Documented disagreements between the upstream proto and the upstream prose. The row
+// follows the prose; the rule text of the row says a host SHOULD accept both (RFC 0208,
+// amended in place 2026-09-23).
+const HTTP_EXCEPTIONS = {
+  SubscribeToTask: { row: 'POST', proto: 'GET', why: 'A2A v1.0.1 proto binds GET; prose §5.3/§11.3.2 and the a2a-js/a2a-python REST clients send POST' },
+};
+const protoText = readFileSync(PROTO, 'utf8');
+const bindings = new Map();
+for (const m of protoText.matchAll(/rpc\s+(\w+)\s*\([^)]*\)\s*returns\s*\([^)]*\)\s*\{\s*option\s*\(google\.api\.http\)\s*=\s*\{\s*(get|post|put|patch|delete)\s*:\s*"([^"]+)"/g)) {
+  bindings.set(m[1], { verb: m[2].toUpperCase(), path: m[3] });
+}
+const normPath = (p) => p.replace(/\{[^}]*\}/g, '{}');
+const covered = new Set();
+let compared = 0;
+for (const r of map.a2a?.operations ?? []) {
+  if (typeof r.http !== 'string') { failures.push(`a2a.operations ${r.upstream}: no \`http\` value to check`); continue; }
+  const names = r.upstream.split('|').map((x) => x.trim());
+  const sp = r.http.indexOf('/');
+  const verbs = r.http.slice(0, sp).split('|').map((x) => x.trim());
+  const rawPath = r.http.slice(sp).trim();
+  const opt = rawPath.match(/^(.*)\[(.*)\]$/);
+  const paths = opt ? [opt[1], opt[1] + opt[2]] : [rawPath];
+  if (verbs.length !== names.length) { failures.push(`a2a.operations ${r.upstream}: ${names.length} upstream name(s) but ${verbs.length} verb(s) in \`${r.http}\``); continue; }
+  names.forEach((name, i) => {
+    const b = bindings.get(name);
+    if (!b) { failures.push(`a2a.operations ${name}: the vendored proto has no google.api.http binding for this rpc`); return; }
+    covered.add(name);
+    const ex = HTTP_EXCEPTIONS[name];
+    const verbOk = verbs[i] === b.verb || (ex && verbs[i] === ex.row && b.verb === ex.proto);
+    if (!verbOk) failures.push(`a2a.operations ${name}: verb ${verbs[i]} ≠ proto ${b.verb} (${b.path})${ex ? '' : ' — no documented exception'}`);
+    if (!paths.some((p) => normPath(p) === normPath(b.path))) failures.push(`a2a.operations ${name}: path \`${rawPath}\` ≠ proto \`${b.path}\``);
+  });
+  compared += 1;
+}
+for (const name of bindings.keys()) if (!covered.has(name)) failures.push(`a2a.operations: proto rpc ${name} has an HTTP binding but no row covers it`);
+if (compared !== (map.a2a?.operations ?? []).length) failures.push(`a2a.operations: compared ${compared} of ${(map.a2a?.operations ?? []).length} row(s)`);
+if (bindings.size === 0) failures.push(`${PROTO}: parsed no google.api.http bindings — the check would be vacuous`);
+for (const name of Object.keys(HTTP_EXCEPTIONS)) if (!bindings.has(name)) failures.push(`HTTP_EXCEPTIONS names ${name}, which the proto does not bind — a stale exception`);
+
 const label = mapPath === join(ROOT, 'spec', 'v2', 'interop-map.json') ? 'spec/v2/interop-map.json' : mapPath;
 if (failures.length > 0) {
   console.error(`=== check-interop-map FAILED — ${failures.length} problem(s) in ${label} ===`);
@@ -132,4 +181,4 @@ if (failures.length > 0) {
 }
 const a2aRows = (map.a2a.operations.length + map.a2a.card.length + map.a2a.taskState.length + map.a2a.taskStateReverse.length + map.a2a.errors.length + map.a2a.fields.length);
 const mcpRows = ['features', 'methods', 'headers', 'meta', 'mrtr', 'cache', 'authorization'].reduce((n, k) => n + (map.mcp[k]?.length ?? 0), 0);
-console.log(`=== check-interop-map OK — ${label}: ${a2aRows} a2a row(s), ${mcpRows} mcp row(s); operations, error codes, run statuses and facets agree with the v2 wire ===`);
+console.log(`=== check-interop-map OK — ${label}: ${a2aRows} a2a row(s), ${mcpRows} mcp row(s); operations, error codes, run statuses and facets agree with the v2 wire; ${compared} operation row(s) match ${bindings.size} proto HTTP binding(s) ===`);

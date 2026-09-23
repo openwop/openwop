@@ -85,8 +85,9 @@ paths:
             ETag:
               schema:
                 type: string
-              description: Optional probe handle for mid-session capability change detection. Deprecated toward v2 (RFC 0165
-                §C.2).
+              description: 'capabilities.md §1 (RFC 0165 §C.2). Standard strong validator for the discovery document: a v2
+                host MUST send it and MUST honor `If-None-Match` with `304`; a host that changes semantics without changing
+                the bytes is non-conformant.'
             OpenWOP-Version:
               $ref: '#/components/headers/OpenWOPVersion'
           content:

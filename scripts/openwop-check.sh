@@ -300,6 +300,9 @@ node "$(dirname "$0")/check-v2-schemas.mjs"
 node "$(dirname "$0")/derive-v2-schemas.mjs" --check
 node "$(dirname "$0")/check-core-budget.mjs"
 python3 "$(dirname "$0")/derive-v2-api.py" --check
+# 2.36.2 (D5): the generated AsyncAPI names v2 event types, never a v1 spelling copied
+# from api/asyncapi.yaml; host events are exempt (events.md §Host events, RFC 0060).
+python3 "$(dirname "$0")/check-asyncapi-codemap.py"
 # Same pinned + cached invocations as steps 2/3: a bare `npx -y @pkg` here re-resolved and reinstalled both CLIs (7 minutes on CI, which timed the job out).
 ( cd "$SPEC_ROOT/api/v2" && npm_config_cache="$NPM_CACHE" npx -y -p @redocly/cli@2.31.4 redocly lint openapi.yaml --format=summary 2>&1 | tail -2 )
 npm_config_cache="$NPM_CACHE" npx -y -p @redocly/cli@2.31.4 redocly lint "$SPEC_ROOT/api/seams-v2.yaml" --config "$SPEC_ROOT/api/v2/redocly.yaml" --format=summary 2>&1 | tail -2

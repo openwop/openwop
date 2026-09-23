@@ -3,8 +3,8 @@
   "generatedFrom": "src/scenarios/*.test.ts",
   "counts": {
     "files": 624,
-    "tests": 2388,
-    "withStableId": 2388,
+    "tests": 2389,
+    "withStableId": 2389,
     "interpolatedTitles": 0,
     "explicitIds": 2283
   },
@@ -12,7 +12,7 @@
     {
       "id": "openwop.it.a2a-1-0-agent-card.the-agent-card-is-1-0-shaped-supportedinterfaces-no-top-level-url-protocolversio",
       "file": "a2a-1-0-agent-card.test.ts",
-      "line": 56,
+      "line": 66,
       "title": "the Agent Card is 1.0-shaped: supportedInterfaces[], no top-level url/protocolVersion",
       "explicitId": "openwop.it.a2a-1-0-agent-card.the-agent-card-is-1-0-shaped-supportedinterfaces-no-top-level-url-protocolversio",
       "citations": [
@@ -42,7 +42,7 @@
     {
       "id": "openwop.it.a2a-1-0-agent-card.the-card-shape-follows-the-era-asked-for-a2a-version-0-3-on-the-get-returns-the",
       "file": "a2a-1-0-agent-card.test.ts",
-      "line": 75,
+      "line": 85,
       "title": "the card shape follows the era asked for: A2A-Version: 0.3 on the GET returns the 0.3 card from the same peer",
       "explicitId": "openwop.it.a2a-1-0-agent-card.the-card-shape-follows-the-era-asked-for-a2a-version-0-3-on-the-get-returns-the",
       "citations": [
@@ -55,7 +55,7 @@
     {
       "id": "openwop.it.a2a-1-0-agent-card.a-legacy-only-peer-serves-the-0-3-card-shape-follows-revision-not-calendar",
       "file": "a2a-1-0-agent-card.test.ts",
-      "line": 94,
+      "line": 104,
       "title": "a legacy-only peer serves the 0.3 card — shape follows revision, not calendar",
       "explicitId": "openwop.it.a2a-1-0-agent-card.a-legacy-only-peer-serves-the-0-3-card-shape-follows-revision-not-calendar",
       "citations": [
@@ -68,7 +68,7 @@
     {
       "id": "openwop.it.a2a-1-0-agent-card.a2a-version-absent-0-3-semantics-message-send-returns-a-0-3-task",
       "file": "a2a-1-0-agent-card.test.ts",
-      "line": 107,
+      "line": 117,
       "title": "A2A-Version absent ⇒ 0.3 semantics; message/send returns a 0.3 task",
       "explicitId": "openwop.it.a2a-1-0-agent-card.a2a-version-absent-0-3-semantics-message-send-returns-a-0-3-task",
       "citations": [
@@ -81,20 +81,24 @@
     {
       "id": "openwop.it.a2a-1-0-agent-card.an-unsupported-version-fails-32009-version-not-supported-with-supportedversions",
       "file": "a2a-1-0-agent-card.test.ts",
-      "line": 114,
+      "line": 124,
       "title": "an unsupported version fails -32009 VERSION_NOT_SUPPORTED with supportedVersions[] (HTTP 400)",
       "explicitId": "openwop.it.a2a-1-0-agent-card.an-unsupported-version-fails-32009-version-not-supported-with-supportedversions",
       "citations": [
         {
           "section": "RFC 0152 §A/§B/§C/§D",
           "requirement": "an unsupported version fails -32009 VERSION_NOT_SUPPORTED with supportedVersions[] (HTTP 400)"
+        },
+        {
+          "section": "RFC 0152 §A/§B/§C/§D; A2A 1.0.1 §9.5",
+          "requirement": "error.data is an array of Any carrying google.rpc.ErrorInfo"
         }
       ]
     },
     {
       "id": "openwop.it.a2a-1-0-agent-card.a-1-0-only-peer-rejects-a-header-less-request-which-is-0-3-by-rule",
       "file": "a2a-1-0-agent-card.test.ts",
-      "line": 122,
+      "line": 134,
       "title": "a 1.0-only peer rejects a header-less request (which is 0.3 by rule)",
       "explicitId": "openwop.it.a2a-1-0-agent-card.a-1-0-only-peer-rejects-a-header-less-request-which-is-0-3-by-rule",
       "citations": [
@@ -107,7 +111,7 @@
     {
       "id": "openwop.it.a2a-1-0-agent-card.sendmessage-1-0-returns-task-with-task-state-role-part-oneof-no-kind-status-time",
       "file": "a2a-1-0-agent-card.test.ts",
-      "line": 134,
+      "line": 146,
       "title": "SendMessage @1.0 returns { task } with TASK_STATE_*, ROLE_*, Part oneof, no kind, status.timestamp",
       "explicitId": "openwop.it.a2a-1-0-agent-card.sendmessage-1-0-returns-task-with-task-state-role-part-oneof-no-kind-status-time",
       "citations": [
@@ -128,7 +132,7 @@
     {
       "id": "openwop.it.a2a-1-0-agent-card.gettask-canceltask-listtasks-per-d-1-incl-task-not-cancelable-on-a-terminal-task",
       "file": "a2a-1-0-agent-card.test.ts",
-      "line": 152,
+      "line": 164,
       "title": "GetTask / CancelTask / ListTasks per §D.1, incl. TASK_NOT_CANCELABLE on a terminal task",
       "explicitId": "openwop.it.a2a-1-0-agent-card.gettask-canceltask-listtasks-per-d-1-incl-task-not-cancelable-on-a-terminal-task",
       "citations": [
@@ -141,7 +145,7 @@
     {
       "id": "openwop.it.a2a-1-0-agent-card.a-0-3-method-name-under-a-1-0-header-is-method-not-found-loudly",
       "file": "a2a-1-0-agent-card.test.ts",
-      "line": 170,
+      "line": 182,
       "title": "a 0.3 method name under a 1.0 header is method-not-found — loudly",
       "explicitId": "openwop.it.a2a-1-0-agent-card.a-0-3-method-name-under-a-1-0-header-is-method-not-found-loudly",
       "citations": [
@@ -154,7 +158,7 @@
     {
       "id": "openwop.it.a2a-1-0-agent-card.streaming-is-honestly-unsupported-subscribetotask-unsupported-operation-matching",
       "file": "a2a-1-0-agent-card.test.ts",
-      "line": 176,
+      "line": 188,
       "title": "streaming is honestly unsupported: SubscribeToTask ⇒ UNSUPPORTED_OPERATION, matching capabilities.streaming=false",
       "explicitId": "openwop.it.a2a-1-0-agent-card.streaming-is-honestly-unsupported-subscribetotask-unsupported-operation-matching",
       "citations": [
@@ -29413,7 +29417,7 @@
     {
       "id": "openwop.it.v2-mcp-mount-map.a-host-claiming-mcp-2026-07-28-lists-every-feature-the-map-requires-for-it",
       "file": "v2-mcp-mount-map.test.ts",
-      "line": 94,
+      "line": 97,
       "title": "a host claiming mcp-2026-07-28 lists every feature the map requires for it",
       "explicitId": null,
       "citations": [
@@ -29427,7 +29431,7 @@
     {
       "id": "openwop.it.v2-mcp-mount-map.server-discover-supportedversions-equals-mcp-revisions-with-resulttype-and-cache",
       "file": "v2-mcp-mount-map.test.ts",
-      "line": 101,
+      "line": 104,
       "title": "server/discover supportedVersions equals mcp.revisions, with resultType and cache hints",
       "explicitId": null,
       "citations": [
@@ -29457,7 +29461,7 @@
     {
       "id": "openwop.it.v2-mcp-mount-map.header-body-disagreement-fails-closed-32020-before-version-selection-an-unsuppor",
       "file": "v2-mcp-mount-map.test.ts",
-      "line": 113,
+      "line": 116,
       "title": "header/body disagreement fails closed -32020 before version selection; an unsupported revision is -32022",
       "explicitId": null,
       "citations": [
@@ -29490,7 +29494,7 @@
     {
       "id": "openwop.it.v2-mcp-mount-map.tools-list-needs-no-initialize-and-no-session-results-carry-cache-hints-and-agre",
       "file": "v2-mcp-mount-map.test.ts",
-      "line": 128,
+      "line": 131,
       "title": "tools/list needs no initialize and no session; results carry cache hints and agree across requests",
       "explicitId": null,
       "citations": [
@@ -29528,7 +29532,7 @@
     {
       "id": "openwop.it.v2-mcp-mount-map.tools-call-answers-a-completed-run-iserror-false-and-a-failed-run-iserror-true-n",
       "file": "v2-mcp-mount-map.test.ts",
-      "line": 144,
+      "line": 147,
       "title": "tools/call answers a completed run isError false and a failed run isError true, never a JSON-RPC error",
       "explicitId": null,
       "citations": [
@@ -29560,7 +29564,7 @@
     {
       "id": "openwop.it.v2-mcp-mount-map.a-run-started-by-tools-call-records-run-started-transport-mcp",
       "file": "v2-mcp-mount-map.test.ts",
-      "line": 159,
+      "line": 162,
       "title": "a run started by tools/call records run.started.transport mcp",
       "explicitId": null,
       "citations": [
@@ -29578,7 +29582,7 @@
     {
       "id": "openwop.it.v2-mcp-mount-map.a-suspending-tool-answers-inputrequiredresult-the-retry-resolves-it-requeststate",
       "file": "v2-mcp-mount-map.test.ts",
-      "line": 178,
+      "line": 181,
       "title": "a suspending tool answers InputRequiredResult; the retry resolves it; requestState is single use and forgery-proof",
       "explicitId": null,
       "citations": [
@@ -29618,9 +29622,48 @@
       ]
     },
     {
+      "id": "openwop.it.v2-mcp-mount-map.the-mrtr-input-request-key-is-the-open-interrupt-s-interruptid-never-the-node-it",
+      "file": "v2-mcp-mount-map.test.ts",
+      "line": 206,
+      "title": "the MRTR input-request key is the open interrupt’s interruptId, never the node it suspended on",
+      "explicitId": null,
+      "citations": [
+        {
+          "section": "interop-map.json mcp.mrtr InputRequiredResult (host as server)",
+          "requirement": null,
+          "interpolated": true
+        },
+        {
+          "section": "interop-map.json mcp.tasks.status waiting-approval",
+          "requirement": null,
+          "interpolated": true
+        },
+        {
+          "section": "interop-map.json mcp.mrtr InputRequiredResult (host as server); schemas/v2/ids.schema.json interruptId",
+          "requirement": null,
+          "interpolated": true
+        },
+        {
+          "section": "interop-map.json mcp.mrtr InputRequiredResult (host as server)",
+          "requirement": null,
+          "interpolated": true
+        },
+        {
+          "section": "interop-map.json mcp.mrtr InputRequiredResult (host as server); runs.md node.suspended",
+          "requirement": null,
+          "interpolated": true
+        },
+        {
+          "section": "interop-map.json mcp.mrtr inputResponses[key] (host as server)",
+          "requirement": null,
+          "interpolated": true
+        }
+      ]
+    },
+    {
       "id": "openwop.it.v2-mcp-mount-map.a-list-that-differs-per-caller-is-cachescope-private",
       "file": "v2-mcp-mount-map.test.ts",
-      "line": 203,
+      "line": 244,
       "title": "a list that differs per caller is cacheScope private",
       "explicitId": null,
       "citations": [
@@ -29638,7 +29681,7 @@
     {
       "id": "openwop.it.v2-mcp-mount-map.unknown-meta-extension-keys-and-capabilities-extensions-are-opaque-processed-nor",
       "file": "v2-mcp-mount-map.test.ts",
-      "line": 220,
+      "line": 261,
       "title": "unknown _meta extension keys and capabilities.extensions are opaque: processed normally, granting nothing",
       "explicitId": null,
       "citations": [
@@ -29656,7 +29699,7 @@
     {
       "id": "openwop.it.v2-mcp-mount-map.an-unauthenticated-request-is-refused-at-the-boundary-unless-anonymousactor-is-a",
       "file": "v2-mcp-mount-map.test.ts",
-      "line": 229,
+      "line": 270,
       "title": "an unauthenticated request is refused at the boundary unless anonymousActor is advertised",
       "explicitId": null,
       "citations": [
@@ -29679,7 +29722,7 @@
     {
       "id": "openwop.it.v2-mcp-mount-map.a-credential-interrupt-is-answered-in-url-mode-url-connecturl-iserror-without-ur",
       "file": "v2-mcp-mount-map.test.ts",
-      "line": 246,
+      "line": 287,
       "title": "a credential interrupt is answered in URL mode (url = connectUrl), isError without URL support, and input_required again on an accept retry with no credential",
       "explicitId": null,
       "citations": [
@@ -29717,7 +29760,7 @@
     {
       "id": "openwop.it.v2-mcp-mount-map.form-mode-is-never-emitted-for-a-nested-schema-or-a-sensitive-format-password-fi",
       "file": "v2-mcp-mount-map.test.ts",
-      "line": 287,
+      "line": 328,
       "title": "form mode is never emitted for a nested schema or a sensitive (format password) field",
       "explicitId": null,
       "citations": [
@@ -40529,7 +40572,7 @@
     {
       "id": "openwop.it.v2-interop-map-coherent.the-map-agrees-with-the-v2-wire-and-the-gate-refuses-each-defect-it-exists-to-ca",
       "file": "v2-interop-map-coherent.test.ts",
-      "line": 54,
+      "line": 58,
       "title": "the map agrees with the v2 wire, and the gate refuses each defect it exists to catch",
       "explicitId": "openwop.requirement.0208.map-coherent",
       "citations": [

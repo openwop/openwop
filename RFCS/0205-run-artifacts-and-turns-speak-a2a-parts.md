@@ -192,6 +192,7 @@ A later RFC can, behind a capability facet, turn §A.1's SHOULD and §B.6's SHOU
 2. How should a `system` turn project to A2A, which has only `ROLE_USER` and `ROLE_AGENT`? Candidates are omitting it, or projecting it as `ROLE_AGENT` with `metadata.openwop.role: "system"`. This belongs to the A2A mapping registry (RFC 0208's `a2a.fields` Message rows), not here.
 3. Should the named `Part` schema also type `conversation.opened.initialTurn` and `conversation.closed.finalTurn`? Both already `$ref` the same `ConversationTurn` def, so they inherit `parts`. Is that intended for every turn-bearing payload?
 4. Should `mediaType` inside a Part be constrained to lowercase? A2A does not constrain it. This RFC accepts any RFC 6838 spelling on input and recommends lowercase on emission.
+5. What happens at v3? Recorded 2026-09-23 (amended in place; no host relies on it): `ConversationTurn.content` is REQUIRED, so RFC 0197 R4 keeps it through 2.x, and the native artifact object stays beside the A2A one. The intended v3 shape makes `parts` the required turn and artifact shape and removes `content` and the implementation-defined native artifact. A later v3 RFC decides it; nothing here binds a 2.x host.
 
 ## Implementation notes (non-normative)
 
