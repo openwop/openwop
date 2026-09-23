@@ -125,7 +125,7 @@ describe('RFC 0152 — the suite peer speaks A2A 1.0 (dual-era A2AFakePeer)', ()
     const r = await rpc(peer.endpoint(), 'SendMessage', { message: { messageId: 'm2', role: 'ROLE_USER', parts: [{ text: 'hi' }] } }, '99.0');
     expect(r.status, req('openwop.it.a2a-1-0-agent-card.an-unsupported-version-fails-32009-version-not-supported-with-supportedversions', 'RFC 0152 §A/§B/§C/§D', 'an unsupported version fails -32009 VERSION_NOT_SUPPORTED with supportedVersions[] (HTTP 400)')).toBe(400);
     expect(r.error?.code).toBe(-32009);
-    expect(Array.isArray(r.error?.data), 'A2A 1.0.1 §9.5: error.data is an array of Any').toBe(true);
+    expect(Array.isArray(r.error?.data), req('openwop.it.a2a-1-0-agent-card.an-unsupported-version-fails-32009-version-not-supported-with-supportedversions', 'RFC 0152 §A/§B/§C/§D; A2A 1.0.1 §9.5', 'error.data is an array of Any carrying google.rpc.ErrorInfo')).toBe(true);
     expect(errorInfo(r.error)?.reason).toBe('VERSION_NOT_SUPPORTED');
     expect(errorInfo(r.error)?.domain).toBe('a2a-protocol.org');
     expect(errorInfo(r.error)?.metadata?.['supportedVersions']).toBe('1.0,0.3'); // constructor order; ErrorInfo.metadata is map<string,string>
