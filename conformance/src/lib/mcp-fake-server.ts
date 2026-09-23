@@ -34,8 +34,9 @@
  * @see SECURITY/threat-model-prompt-injection.md §"UNTRUSTED marker"
  */
 
-import { resolvePublicFront } from './webhook-receiver.js';
-import { createServer, type Server } from 'node:http';
+import { randomBytes } from 'node:crypto';
+import { createServer, type IncomingMessage, type Server, type ServerResponse } from 'node:http';
+import { frontedEndpoint, registerBehindFront, routeFronted, unregisterBehindFront } from './front-mux.js';
 import type { AddressInfo } from 'node:net';
 
 export interface McpInvocation {
@@ -140,6 +141,8 @@ export const TOOLS_PAGE_SIZE = 3;
 export class McpFakeServer {
   private _server: Server | null = null;
   private _boundPort = 0;
+  /** This fake's path segment behind a shared public front (`lib/front-mux.ts`). */
+  private readonly _nonce = randomBytes(9).toString('hex');
   private readonly _invocations: McpInvocation[] = [];
   private readonly _revisions: readonly McpRevision[];
   private _stateCounter = 0;
@@ -170,12 +173,19 @@ export class McpFakeServer {
 
   async start(port: number = 0): Promise<void> {
     return new Promise((resolve, reject) => {
-      const server = createServer((req, res) => this._handle(req, res));
+      const dispatch = (req: IncomingMessage, res: ServerResponse): void => { void this._handle(req, res); };
+      // Whichever fake owns the pinned port also carries every other fake's
+      // nonce-pathed traffic (`lib/front-mux.ts`) — ask that first.
+      const server = createServer((req, res) => {
+        if (routeFronted('OPENWOP_MCP_FAKE_SERVER_URL', req, res)) return;
+        dispatch(req, res);
+      });
       server.on('error', reject);
       server.listen(port, '127.0.0.1', () => {
         const addr = server.address() as AddressInfo;
         this._server = server;
         this._boundPort = addr.port;
+        registerBehindFront('OPENWOP_MCP_FAKE_SERVER_URL', this._nonce, dispatch);
         resolve();
       });
     });
@@ -185,6 +195,7 @@ export class McpFakeServer {
     if (!this._server) return;
     const server = this._server;
     this._server = null;
+    unregisterBehindFront('OPENWOP_MCP_FAKE_SERVER_URL', this._nonce);
     return new Promise((resolve, reject) => {
       server.close((err) => (err ? reject(err) : resolve()));
     });
@@ -203,7 +214,7 @@ export class McpFakeServer {
    * fixed port to forward to.
    */
   hostFacingEndpoint(): string {
-    return resolvePublicFront('OPENWOP_MCP_FAKE_SERVER_URL', this.endpoint()).url;
+    return frontedEndpoint('OPENWOP_MCP_FAKE_SERVER_URL', 'OPENWOP_MCP_FAKE_SERVER_PORT', this.endpoint(), this._boundPort, this._nonce);
   }
 
   invocations(): readonly McpInvocation[] {
