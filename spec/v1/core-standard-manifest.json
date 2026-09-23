@@ -86,6 +86,7 @@
     "resolveInterruptByRun",
     "resolveInterruptByToken",
     "resumeRun",
+    "rotateWebhookSecret",
     "streamRunEvents",
     "transitionAgentDeployment",
     "unregisterWebhook",
@@ -419,5 +420,5 @@
       "$id": "https://openwop.dev/spec/v1/workspace-file.schema.json"
     }
   ],
-  "digest": "c57af8c2aa0fbbac9db3e2df333ae1ae3d3fdd6008e8d90e16cb8058d9d87c05"
+  "digest": "a9aa087c773fd926ea86bb5c108714f6023ff9a24768870ac07e962cb51c4531"
 }
