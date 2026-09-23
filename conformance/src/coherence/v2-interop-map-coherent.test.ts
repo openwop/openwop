@@ -8,7 +8,7 @@
  * carries the row the falsifiability table names.
  *
  * An exit-0 wrapper around a gate that is already green witnesses nothing, so
- * the same `it` also feeds the gate eight sabotaged copies of the map — each one
+ * the same `it` also feeds the gate eleven sabotaged copies of the map — each one
  * a defect the gate exists to catch — and asserts every one is REFUSED. The
  * copies are written to a scratch directory (`--map`); the tracked file is never
  * mutated.
@@ -30,7 +30,7 @@ const ID = 'openwop.requirement.0208.map-coherent';
 const DOC = 'RFCS/0208 §A; spec/v2/core/interop.md §"The operation mappings"';
 const GATE = join(ROOT, 'scripts', 'check-interop-map.mjs');
 
-interface Row { runStatus?: string; v2Operation?: string | null; upstream?: string; clientProjection?: string; requires?: string[] }
+interface Row { http?: string; runStatus?: string; v2Operation?: string | null; upstream?: string; clientProjection?: string; requires?: string[] }
 interface MapDoc { a2a: { operations: Row[]; taskState: Row[]; errors: Row[] }; mcp: { tasks: { status: Row[]; methods: Row[] } } }
 
 const run = (args: string[] = []): { status: number | null; out: string } => {
@@ -48,6 +48,10 @@ const SABOTAGE: Array<[string, (m: MapDoc) => void, RegExp]> = [
   ['the waiting-external mcp.tasks.status row deleted', (m) => { m.mcp.tasks.status = m.mcp.tasks.status.filter((r) => r.runStatus !== 'waiting-external'); }, /mcp\.tasks\.status: run status `waiting-external` has 0 default row/],
   ['tasks/update mapped to resolveInterrupt', (m) => { for (const r of m.mcp.tasks.methods) if (r.upstream === 'tasks/update') r.v2Operation = 'resolveInterrupt'; }, /tasks\/update: v2Operation `resolveInterrupt` is not an operationId/],
   ['ContentTypeNotSupportedError removed', (m) => { m.a2a.errors = m.a2a.errors.filter((e) => e.upstream !== 'ContentTypeNotSupportedError'); }, /`ContentTypeNotSupportedError` has 0 row/],
+  // 2.36.2: the `http` column is held to the vendored A2A v1.0.1 proto.
+  ['GetTask bound to POST', (m) => { m.a2a.operations.find((r) => r.upstream === 'GetTask')!.http = 'POST /tasks/{id}'; }, /GetTask: verb POST ≠ proto GET/],
+  ['GetTask path misspelled', (m) => { m.a2a.operations.find((r) => r.upstream === 'GetTask')!.http = 'GET /task/{id}'; }, /GetTask: path `\/task\/\{id\}` ≠ proto/],
+  ['the GetExtendedAgentCard row deleted', (m) => { m.a2a.operations = m.a2a.operations.filter((r) => r.upstream !== 'GetExtendedAgentCard'); }, /proto rpc GetExtendedAgentCard has an HTTP binding but no row covers it/],
 ];
 
 describe('RFC 0208 §A — v2 interop map coherence (corpus gate)', () => {

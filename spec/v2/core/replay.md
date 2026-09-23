@@ -9,7 +9,7 @@
 
 ## The surface
 
-A host that advertises `replay` (capabilities.md) serves `forkRun` (`api/v2/openapi.yaml`, `POST /runs/{runId}:fork`) and `getEffectSeamManifest` (`GET /host/effect-seams`). The `replay` facet (`spec/v2/facets/replay.schema.json`) is `{ modes[], retention?, effectSeamsManifest }`; `modes` enumerates `fork | branch | rerun`; `effectSeamsManifest` is the constant `/host/effect-seams`. There is no `sideEffectSuppression` field: suppression is the only conforming replay behavior (RFC 0173 §B, row `C6.2`) and `none` is not a value.
+A host that advertises `replay` (capabilities.md) serves `forkRun` (`api/v2/openapi.yaml`, `POST /runs/{runId}:fork`) and `getEffectSeamManifest` (`GET /host/effect-seams`). The `replay` facet (`spec/v2/facets/replay.schema.json`) is `{ modes[], retention?, effectSeamsManifest }`; `modes` enumerates `replay | branch` (the `forkRun` `mode` values); `effectSeamsManifest` is the constant `/host/effect-seams`. There is no `sideEffectSuppression` field: suppression is the only conforming replay behavior (RFC 0173 §B, row `C6.2`) and `none` is not a value.
 
 The request body, `fromSeq` defaults and `201` response are runs.md §Fork. Events with `sequence < fromSeq` are fixed history; events `>= fromSeq` are re-executed.
 

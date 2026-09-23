@@ -37,6 +37,23 @@ If upstream changes, the upstream text wins and this page is stale.
 | `approval` | no counterpart | `approval` is on the authorization axis (RFC 0051), and `tool-catalog.md` §C keeps it separate from `safetyTier`. `ToolAnnotations` has no approval field. |
 | `source`, `auth`, `costHint`, `latencyHint` | no counterpart in `ToolAnnotations` | These describe origin, credential needs and planning hints. MCP carries none of them in annotations. |
 
+
+### Reading the whole descriptor as an MCP `Tool`
+
+A v2 `ToolDescriptor` ([`schemas/v2/tool-descriptor.schema.json`](../../schemas/v2/tool-descriptor.schema.json), [`spec/v2/core/tool-catalog.md`](../../spec/v2/core/tool-catalog.md)) already carries most of an MCP `Tool`, including an `annotations` block derived from its host-assigned fields (RFC 0204). No OpenWOP operation serves the catalog in MCP shape, and none is planned: MCP has no media type to negotiate on, and a catalog entry in an invocable shape would invite `tools/call` against a name the host does not serve there. For readers comparing the two:
+
+| MCP `Tool` member | `ToolDescriptor` | Gap |
+| --- | --- | --- |
+| `name` | `toolId` | `toolId` is scoped (`openwop:…`, `mcp:…`, `connector:…`). The colon is outside the character set the 2026-07-28 tools page recommends for names (a SHOULD, `[A-Za-z0-9_.-]`), so a projection would need an escape rule, and `.` collides with dotted vendor ids. |
+| `title`, `description` | `title`, `description` | None. |
+| `inputSchema` | `inputSchema` | MCP requires an object with `type: "object"` at the root. A descriptor's `inputSchema` is optional, and its absence means the arguments are opaque to the catalog; inventing `{ "type": "object" }` would misstate that contract. |
+| `outputSchema` | `outputSchema` | MCP adds a rule the catalog does not: a server that declares one MUST return conforming `structuredContent`. |
+| `annotations` | `annotations` | Same four hints, derived as §1 describes, never copied from an upstream server. |
+| `_meta` | — | `safetyTier`, `source`, `replayPolicy`, `egress`, `approval`, `auth`, `costHint` and `latencyHint` have no MCP member. A reverse-DNS `_meta` key would be the place for them; none is defined. |
+| list `ttlMs` / `cacheScope` | — | MCP list results carry caching hints; `GET /tools` uses HTTP caching instead. |
+
+**The catalog is not callable on the MCP mount.** A host's MCP `tools/list` lists the *workflows* it exposes (`spec/v2/interop-map.json`, the `tools/list` row), and `tools/call` starts a run of one. A `toolId` from `GET /tools` is not a mount tool name.
+
 ---
 
 ## 2. Card and form field vocabulary and MCP elicitation `requestedSchema`
@@ -79,6 +96,8 @@ Chat-card `inputs[]` ([`chat-card-packs.md`](../../spec/v1/chat-card-packs.md) �
 ## 3. Front-end plugin packs and MCP Apps (SEP-1865)
 
 [`frontend-plugin-packs.md`](../../spec/v1/frontend-plugin-packs.md) (RFC 0117, amended by RFC 0119) and MCP Apps both let a third party ship interactive UI that a host runs in isolation and talks to through a message channel. The correspondence is conceptual. The two wires differ in envelope, in what is distributed and in how UI is linked to tools, and neither is defined in terms of the other.
+
+**A2UI is not an MCP App.** OpenWOP's `ui.a2ui-surface` envelope kind ([`spec/v2/ext/a2uiSurface/README.md`](../../spec/v2/ext/a2uiSurface/README.md), RFC 0209) is a closed profile of declarative A2UI v0.9 components carried in the run's event stream. MCP Apps (`io.modelcontextprotocol/ui`) ships executable HTML (`text/html;profile=mcp-app`) attached to a tool and rendered in a sandboxed iframe. The two differ in payload, attachment and channel, and MCP Apps lists no declarative-component content type, so there is no bridge between them; the correspondence on this page is with front-end plugin packs only.
 
 A binding between the two surfaces is proposed separately. This section takes no position on whether the `ui-plugin/1` wire should converge with MCP Apps, and it is expected to be revised when that proposal is decided.
 
