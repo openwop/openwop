@@ -118,7 +118,13 @@ describe('RFC 0199 §A — v2-oauth-client-pkce-state-iss (host as OAuth client,
     n = d.codeExchanges().length;
     const replay = await userAgentGet(cbA!, key);
     expect([replay.status >= 400, d.codeExchanges().length], req(id, `${DOC} rule 2`, `a replayed (already consumed) state MUST be refused with no token request (got ${replay.status})`)).toEqual([true, n]);
-  });
+    // 120 s, not the 30 s default (2.38.0): this leg makes eight sequential
+    // round trips — two grants, two consents, four callbacks — and on a public
+    // cut every one crosses the operator's tunnel to the AS double. The
+    // 2026-09-24 public v2-reference cut on 2.37.1 timed out here at 30 s while
+    // the sibling legs (pkce-s256, iss-validated, same-user-callback), which
+    // make fewer trips, passed. No assertion or window inside the leg changes.
+  }, 120_000);
 
   it('a callback authenticated as another Subject makes no token request and stores nothing', async () => {
     const r = await ready();
