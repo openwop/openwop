@@ -49,7 +49,7 @@
 
 import { randomBytes } from 'node:crypto';
 import { createServer, type IncomingMessage, type Server, type ServerResponse } from 'node:http';
-import { FRONT_MUX_PREFIX, registerBehindFront, routeFronted, unregisterBehindFront } from './front-mux.js';
+import { FRONT_MUX_PREFIX, registerBehindFront, routeFronted, unregisterBehindFront, withoutFrontPath } from './front-mux.js';
 import { receiverBinding, resolvePublicFront } from './webhook-receiver.js';
 
 /** The operator's public front for the suite's webhook receiver. */
@@ -122,7 +122,7 @@ export async function startScopedReceiver(
     // Counted BEFORE routing: `routeFronted` answers an unknown nonce itself and
     // cannot report that it did, and a request that is not this exercise's must
     // still be visible in the failure detail.
-    if (!(request.url ?? '/').startsWith(`${FRONT_MUX_PREFIX}${nonce}`)) foreign += 1;
+    if (!withoutFrontPath(WEBHOOK_FRONT_ENV, request.url ?? '/').startsWith(`${FRONT_MUX_PREFIX}${nonce}`)) foreign += 1;
     if (routeFronted(WEBHOOK_FRONT_ENV, request, res)) return;
     // Not an `/fx/` path at all: a stranger, or a host that dropped the path it
     // was given. Answered, never recorded — a receiver that counts what it was
