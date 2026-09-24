@@ -84,7 +84,7 @@ describe('oidc-issuer: harness construction', () => {
       audience: 'openwop',
     });
     expect(issuer.algorithm).toBe('RS256');
-    expect(issuer.keyId).toBe('openwop-conformance-key-1');
+    expect(issuer.keyId).toMatch(/^openwop-conformance-key-[0-9a-f]{12}-1$/);
     expect(issuer.issuer).toBe('https://harness.example');
     expect(issuer.audience).toBe('openwop');
   });
@@ -298,7 +298,7 @@ describe('oidc-issuer: key rotation', () => {
     const firstKid = issuer.keyId;
     issuer.rotateKey();
     expect(issuer.keyId).not.toBe(firstKid);
-    expect(issuer.keyId).toBe('openwop-conformance-key-2');
+    expect(issuer.keyId).toBe(firstKid.replace(/-1$/, '-2'));
   });
 
   it('tokens minted before rotation no longer verify against new JWKS', () => {
@@ -324,5 +324,42 @@ describe('oidc-issuer: key rotation', () => {
     const afterRotation = issuer.mint({ sub: 'test-sub' });
     const verified = verifyToken(afterRotation.token, issuer.jwksJson, 'RS256');
     expect(verified).toBe(true);
+  });
+});
+
+describe('oidc-issuer: two instances at one issuer URL (2.37.0)', () => {
+  /**
+   * A host verifier that caches JWKS keys by kid and re-fetches only on an
+   * UNKNOWN kid — the ordinary RFC 7517 §4.5 behaviour. `fetchJwks` returns
+   * whatever the issuer URL is publishing right now.
+   */
+  function kidCachingVerifier(fetchJwks: () => string): (token: string) => boolean {
+    const cache = new Map<string, JsonWebKey>();
+    return (token) => {
+      const kid = String(decodeJwt(token).header.kid);
+      if (!cache.has(kid)) {
+        for (const k of (JSON.parse(fetchJwks()) as { keys: JsonWebKey[] }).keys) cache.set(String(k.kid), k);
+      }
+      const key = cache.get(kid);
+      if (!key) return false;
+      return verifyToken(token, JSON.stringify({ keys: [key] }), 'RS256');
+    };
+  }
+
+  it('gives every instance its own kid, so a kid-caching host re-fetches for the second one', () => {
+    const url = 'https://harness.example';
+    const first = createSyntheticOIDCIssuer({ issuer: url, audience: 'openwop' });
+    const second = createSyntheticOIDCIssuer({ issuer: url, audience: 'openwop' });
+    expect(second.keyId).not.toBe(first.keyId);
+
+    // The URL publishes the first scenario's JWKS, then the second's —
+    // exactly what two scenarios sharing OPENWOP_TEST_OIDC_ISSUER_URL do.
+    let publishing = first;
+    const verify = kidCachingVerifier(() => publishing.jwksJson);
+    expect(verify(first.mint({ sub: 'a' }).token)).toBe(true);
+    publishing = second;
+    // Before 2.37.0 both kids were `openwop-conformance-key-1`: the cache hit
+    // returned the FIRST key and this valid control token failed.
+    expect(verify(second.mint({ sub: 'b' }).token)).toBe(true);
   });
 });

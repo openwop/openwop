@@ -21,6 +21,11 @@
  * `Content-Language` names the tag (case-insensitively, RFC 5646 §2.1.1) and
  * the section carries the overlay.
  *
+ * Gate: the family is advertised by the PRESENCE of its record
+ * (`familyAdvertised`, RFC 0169 §A.2) — never by a `supported` flag, which the
+ * closed v2 `content` record cannot carry. `v2-family-gate-no-supported.test.ts`
+ * (a suite self-test) keeps that gate from coming back.
+ *
  * Sabotage: a host that 400s the extended-tag write, or that serves only the
  * base locale for it, fails the leg (write status / `Content-Language` /
  * overlay assertion respectively).
@@ -52,7 +57,11 @@ describe('v2-content-locale-keys (RFC 0206)', () => {
     const doc = await v2Discovery().catch(() => null);
     if (doc === null) return softSkip('blocked', 'v2 discovery unreachable');
     const content = await familyAdvertised('content');
-    if (content === null || content['supported'] !== true) return softSkip('inapplicable', 'the host does not advertise the content family (no content surface to deliver an extended locale from)');
+    // RFC 0169 §A.2: at major 2 the record's presence IS the claim. The v2
+    // `content` record is closed and has no `supported` field, so a gate on
+    // `supported === true` recorded `inapplicable` on every conforming host and
+    // this row could never execute (corrected 2026-09-24).
+    if (content === null) return softSkip('inapplicable', 'the host does not advertise the content family (no content surface to deliver an extended locale from)');
     const base = typeof content['baseLocale'] === 'string' ? content['baseLocale'] : null;
     const supported = Array.isArray(content['supportedLocales']) ? content['supportedLocales'].filter((x): x is string => typeof x === 'string') : [];
     const keyRe = new RegExp(LOCALE_KEY_PATTERN);

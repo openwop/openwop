@@ -9,6 +9,22 @@
 > Tick a box only when the change is merged on `main`. Keep this file current as phases
 > land; delete it when every phase is closed.
 
+## Progress (updated 2026-09-24)
+
+| Item | State |
+|---|---|
+| Phase 1 corrections + drift gates | **merged** #1510 (rode 2.37.0) |
+| **Phase 4b — certification path** | **NEW 2026-09-24.** All 15 Active cohort RFCs measured against `check-accepted-predicate`: all fail, on evidence not on the window. One `blocked` row is bundle-wide fatal (§E.1) and an uncertified bundle witnesses nothing (§B.1), so blocked must reach 0 BEFORE a cut is spent. Owners: myndhyve-55 (keys + `0199` seams), openwop-77 (`0207`, `message-id-stable`) |
+| RFC 0211 A2A errors are ErrorInfo | **Active** #1514 (override of §A.6 recorded); v2-reference implements it (openwop-examples#83); Accepted ⇐ certified v2-reference bundle on published 2.37.1 (openwop-75 holds the one approved ingress cut) |
+| RFC 0213 three unstated outcomes | **Active** #1517; §B leg fixed to partial-witness (#1525, opens 2.37.1); §A/§C witnessed on v2-reference loopback; Accepted ⇐ same bundle (§B box stays partial-witness) |
+| RFC 0214 A2A push credentials | PR #1519 open — waits for 2.37.1 publish, then opens 2.38.0; Accepted blocked on deferred push implementation (D2) |
+| RFC 0212 JCS / preimages | PR #1518 open — same queue as 0214; Accepted ⇐ host verifier (openwop-app H4) + vectors |
+| Suite | 2.37.0 on npm (#1523); 2.37.1 cycle open on main (#1525); publish needs David |
+| Siblings | registry#74 merged (signer refuses non-I-JSON); examples#82 merged (audit comments); examples#83 merged (v2-reference 0211); openwop-app#4097 (ADR 0744: H1–H4, H6) driven + deployed by openwop-app-ce |
+| Upstream | wave 1 posted: ext-tasks#23, A2A#1574 comment, A2A#1685 comment; wave 2 when 0214 Active; wave 3 ≥ 2026-09-26 |
+| Watch | A2A PR #2068 (SubscribeToTask prose POST→GET) — if merged, revisit interop-map D1 exception |
+| Blocked | openwop-sdks re-vendor: its sync gate follows a published corpus tag, so it waits for the next corpus tag |
+
 ## Binding constraints
 
 - RFC 0147 §A.1 freeze is **SPENT** (`RFCS/0147-…:42`) — do not plan around it.
@@ -48,49 +64,49 @@
 
 `/architect`: proceed with changes (all applied below). No CRITICAL.
 
-- [ ] **D3** `spec/v2/core/conformance.md:45` — carry RFC 0168's 2026-09-05 erratum: seams
+- [x] **D3** `spec/v2/core/conformance.md:45` — carry RFC 0168's 2026-09-05 erratum: seams
       profile is `conformance.seamsProfile`, never root `profiles[]` (closed root,
       `capabilities.md:46,374`).
-- [ ] **D4** `spec/v2/core/replay.md:12` — facet modes `replay | branch` (facet schema,
+- [x] **D4** `spec/v2/core/replay.md:12` — facet modes `replay | branch` (facet schema,
       openapi `forkRun`, and the reference host already say so; `rerun` exists nowhere).
-- [ ] **D2** `scripts/derive-v2-api.py` — `HEADER_RENAME` (`:49`, applied `:62-63`) lets
+- [x] **D2** `scripts/derive-v2-api.py` — `HEADER_RENAME` (`:49`, applied `:62-63`) lets
       v1 `Capabilities-Etag` overwrite the real `ETag` description. Drop instead of rename;
       neutral `headers.md` row ("standard HTTP validator; obligation per operation"); put
       MUST (discovery) / SHOULD (runs) in per-operation descriptions. Do **not** add
       `required: true` (a reshape the monotone gate can't see). Regenerate.
-- [ ] **D5** `scripts/derive-v2-api.py` `v2_asyncapi()` — translate the 10 v1-spelled
+- [x] **D5** `scripts/derive-v2-api.py` `v2_asyncapi()` — translate the 10 v1-spelled
       message names through the codemap v2 column, rewrite the `/v1/` path (`:98`), copy
       OpenAPI security schemes. Messages are unreferenced components ⇒ **Class 2**
       (COMPATIBILITY §3 editorial entry, no corrections row). **Keep `heartbeat.stateChanged`**
       — host event, not in the codemap, renaming = RFC 0197 reshape.
-- [ ] **D1** `spec/v2/interop-map.json:94-95` — keep `POST /tasks/{id}:subscribe` as a
+- [x] **D1** `spec/v2/interop-map.json:94-95` — keep `POST /tasks/{id}:subscribe` as a
       documented upstream-prose exception (A2A proto `a2a.proto:76-80` says GET; prose
       §5.3/§11.3.2 and both SDK clients say POST); rule text adds "servers SHOULD also
       accept GET". Amend RFC 0208 in place (no host routes HTTP+JSON). Fix
       `spec/v1/a2a-integration.md:389`.
-- [ ] **V4** `RFCS/0198-…:53` — reword "Upstream permits using task ids as bearer tokens"
+- [x] **V4** `RFCS/0198-…:53` — reword "Upstream permits using task ids as bearer tokens"
       (ext-tasks `tasks.md:900-905`: MAY be bearer handles, but per-request authz MUST).
       Bolded normative sentence stays byte-identical.
-- [ ] **V5** `spec/v1/agent-ref-positioning.md:105-115` — name `io.modelcontextprotocol/skills`
+- [x] **V5** `spec/v1/agent-ref-positioning.md:105-115` — name `io.modelcontextprotocol/skills`
       (SEP-2640, Final) as a naming collision with `role:"skill"`; `docs/integrations/mcp.md`
       — ext-apps (`io.modelcontextprotocol/ui`) has no A2UI bridge.
-- [ ] **L1-alt** `docs/integrations/mcp.md` — informative "Reading a ToolDescriptor as an MCP
+- [x] **L1-alt** `docs/integrations/mcp.md` — informative "Reading a ToolDescriptor as an MCP
       Tool" table; note the opaque-`inputSchema` gap and that the catalog is not callable
       on the mount.
-- [ ] **L2-sentence** `RFCS/0205-…` Unresolved questions — "in v3 `parts` becomes the
+- [x] **L2-sentence** `RFCS/0205-…` Unresolved questions — "in v3 `parts` becomes the
       required turn/artifact shape and `content` is removed."
-- [ ] **D7 suite-peer** `conformance/src/lib/a2a-fake-peer.ts:439,447` emits `error.data` as
+- [x] **D7 suite-peer** `conformance/src/lib/a2a-fake-peer.ts:439,447` emits `error.data` as
       `Any[]` with ErrorInfo (A2A §9.5); fix self-tests `a2a-1-0-agent-card.test.ts:118,164,167`.
       Cite upstream §9.5 + `interop.md`, never 0211. Convicts no host (tests hit the suite's
       own peer).
-- [ ] **Gate** `scripts/check-interop-map.mjs` — check A2A rows' `http` verb+path against the
+- [x] **Gate** `scripts/check-interop-map.mjs` — check A2A rows' `http` verb+path against the
       vendored proto (`conformance/fixtures/upstream/a2a-v1.0.1/a2a.proto`); expand compound
       values; `{id=*}`↔`{id}`; documented-exception list. Sabotage: GetTask→POST; delete the
       Subscribe exception; `/task/{id}`. Prove the unmodified map compares all 12 rows.
-- [ ] **Gate** new `scripts/check-asyncapi-codemap.mjs` in `openwop-check.sh` stage 10
+- [x] **Gate** new `scripts/check-asyncapi-codemap.mjs` in `openwop-check.sh` stage 10
       (exempt `hostEvents`, cite `events.md:91` + RFC 0060). Sabotage: re-insert a v1 name;
       re-insert `/v1/`; add `run.stateChanged`; remove the exemption.
-- [ ] Versions: #1508 (2026-09-23) opened the **2.37.0** cycle (suite + spec-artifacts 2.37.0,
+- [x] Versions: #1508 (2026-09-23) opened the **2.37.0** cycle (suite + spec-artifacts 2.37.0,
       unpublished). Phase 1 rides it — no separate patch; regenerate `CORPUS-STAMP.json`;
       CHANGELOG; COMPATIBILITY §3.
 - [ ] Follow-up: `openwop-sdks` re-vendor PR (`check-vendored-sync` goes red on api/v2).
@@ -232,8 +248,85 @@ code-unit order ⇒ Class-3, no bundle version bump.
   `check-v2-surface-monotone`, `check-accepted-predicate`), `check-security-invariants.sh`,
   `protocol:status:check`, `spec-corpus-validity`, `tsc`, published-layout run.
 
+## Phase 4b — the certification path (the gate Phase 5 actually waits on)
+
+> Measured 2026-09-24: all fifteen Active cohort RFCs were flipped in a throwaway
+> worktree and `check-accepted-predicate.mjs` run against the result. **All fifteen
+> fail** — rule 1 (unticked acceptance boxes whose conditions are unmet) and rule 3
+> (no `Evidence tier:` in `Updated`). 0203 was the sole pass and is now Accepted
+> (#1521). The blocker is EVIDENCE, not the comment window: RFC 0197's box reads
+> "**Evidence (never waived):** at least one committed v2 host bundle carries …".
+> A steward override of §A.6 waives the wait; it does not waive this.
+
+**The constraint that orders everything below.** RFC 0168 §E.1 makes ONE `blocked`
+row bundle-wide fatal — every claimed profile goes `certified: false`. RFC 0174 §B.1
+then refuses an uncertified bundle as acceptance evidence, and the predicate's reader
+was deliberately hardened so "an acceptance may not rest on evidence the evidence
+format itself refuses". So a re-cut landing `certified: false` moves ZERO RFCs however
+few failures it shows, and a spent cut cannot be un-spent. Reach blocked = 0 BEFORE
+cutting, not during.
+
+`inapplicable` is free; `blocked` is fatal. Every blocked row is exactly one of three
+kinds, and they have different fixes:
+
+| Kind | What it means | Fix | Owner |
+|---|---|---|---|
+| **A — operator precondition missing** | the suite needs a credential or fixture the operator did not supply | supply it | host operator |
+| **B — advertised but unanswerable** | the host claims a capability whose seam does not answer | build the seam, or stop advertising until you do | host |
+| **C — wrongly blocked** | the host never claimed the thing, so §C.1 says `inapplicable` | fix the SCENARIO | suite |
+
+Kind C is not hypothetical: RFC 0168 §C.1 records the corpus fixing exactly this once
+— a scenario recording `blocked` on an absent advert "denied certification of every
+profile to hosts that had merely not mounted the seams".
+
+- [ ] **A — MyndHyve mints `OPENWOP_TEST_LOW_SCOPE_KEY` and `OPENWOP_TEST_TENANT_B_API_KEY`.**
+      Clears ~6 of its 9 blocked rows (`0200.challenge-403-scope` + four tenant-B rows)
+      with no product change. Highest value per unit of work in the whole program.
+      *Owner: myndhyve-55.*
+- [ ] **B — MyndHyve resolves `0199.*` ×5 + `credential-interrupt`.** Blocked because it
+      advertises `oauth` while the two conformance seams do not exist. Either build them
+      or stop advertising. **A seam that builds its own authorization URL is forbidden**
+      (RFC 0199 R9): it would measure a stub and turn a blocked row into a meaningless
+      pass. *Owner: myndhyve-55.*
+- [ ] **C — audit each remaining blocked row against §C.1** before spending product work:
+      a row blocked on something the host never advertised is a SUITE bug, and fixing it
+      is free certification. *Owner: whoever cuts.*
+- [ ] **v2-reference: `0207.a2a-traceparent-carried`.** #1520 (front-mux, in 2.37.0) is
+      expected to clear it; the host was measured on loopback to send the carrier, so the
+      earlier "real host gap" reading is withdrawn. *Owner: openwop-77.*
+- [ ] **v2-reference: `v2-webhook-message-id-stable`.** Recorded "no test executed and no
+      disposition recorded" on one cut having passed the previous one. Likely EADDRINUSE
+      on the shared pinned receiver port — the same family as the #1513 identity
+      collision. *Owner: openwop-77.*
+- [ ] **Then, and only then, cut.** A bundle with `certified: true` on published 2.37.x,
+      committed to `evidence/v2-host-bundles/`. Re-run the predicate dry-run against the
+      committed bundle and flip whatever is then tickable, writing `Evidence tier:` into
+      each `Updated`.
+
+**Which host gates what.** MyndHyve is the only committed host advertising an `oidc`
+lane, RFC 9728 PRM, `artifactTypes`, `conversationPrimitive` or the `content` family, so
+**0205, 0210, 0200 and probably 0201/0209 can only be witnessed there** — no amount of
+reference-host work substitutes. 0206 is externally gated regardless (decision D14: no
+host serves an extended content locale; the row stays honestly unticked).
+
+**Retracted 2026-09-24 — there is no such defect; do not spend time on it.** This file
+briefly claimed that ten scenarios (`agent-loop` ×3, `distillation` ×4, `heartbeat` ×3,
+`runtime-requires-install-gate`) record `blocked` for "seam absent" where §C.1 requires
+`inapplicable`. **Checked, and they are correct.** Each gates on the ADVERT first and
+returns `inapplicable` when the capability or profile is not advertised; the `blocked`
+branch is reached only when the host DOES advertise and the seam then fails to answer —
+kind B, legitimately fatal. `heartbeat-fires-once-per-tick.test.ts:19-21` is the pattern,
+and the other three were spot-checked. The grep that produced the claim matched the
+`blocked` string without reading the guard above it.
+
+Kept as a worked example of the taxonomy rather than deleted: "records `blocked` when a
+seam is absent" is kind B or kind C depending entirely on whether an advert gate runs
+first, and only reading the scenario tells you which. A grep cannot.
+
 ## Phase 5 — Accepted
 
+- [ ] **Depends on Phase 4b.** A host row only counts from a bundle whose profiles read
+      `certified: true` (RFC 0174 §B.1); an uncertified one supplies nothing.
 - [ ] 0211, 0212, 0213 (per-section boxes), 0214 (correction only) → `Accepted` when a
       tier-1/tier-2 host row exists from non-vacuous legs (§A.5). A2A/MCP tier-3 upstream
       peers remain externally gated — state it, don't claim it.

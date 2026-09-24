@@ -44,7 +44,7 @@ mean ratified" applied one level up. Do not narrow this column mechanically.
 cross-organization review, and recording one as `ratified` would be precisely the substitution the last
 clause of §B forbids.
 
-**So 0 of 45 is the correct number today, not a backlog anyone here can burn down.** It is gated on the
+**So zero discharged is the correct number today, not a backlog anyone here can burn down.** (The denominator is not written here because it grows with every waived RFC; `check-waiver-retrospective.mjs` prints the live tally.) It is gated on the
 same tripwire as the rest of the governance program. What this register changes is that the gap is now
 per-RFC and recordable rather than a single aggregate, so the day a reviewer exists the work has somewhere
 to land — and until then the zero is visibly a blocked obligation rather than an unstarted chore.
@@ -142,3 +142,6 @@ to land — and until then the zero is visibly a blocked obligation rather than 
 | 0209 | v2 A2UI surfaces are A2UI v0.9 (authorization and replay; Active by steward override of RFC 0147 §A.6) | in-scope-pending-assessment | — | — | `not-reviewed` |
 | 0210 | a lane's revocation rule is measured, and a host that only honours `exp` says so (identity and authorization; Active by steward override of RFC 0147 §A.6) | in-scope-pending-assessment | — | — | `not-reviewed` |
 | 0212 | canonical JSON is RFC 8785 JCS, and a certification preimage does not depend on the machine that computed it (certification and replay; Active by steward override of RFC 0147 §A.6) | in-scope-pending-assessment | — | — | `not-reviewed` |
+| 0214 | an A2A push credential is a destination credential, and a push is an egress like any webhook (authorization, external effects and replay; Active by steward override of RFC 0147 §A.6) | in-scope-pending-assessment | — | — | `not-reviewed` |
+| 0211 | an A2A error's details are an ErrorInfo, and an A2A interface never answers in the OpenWOP envelope (isolation; Active by steward override of RFC 0147 §A.6) | in-scope-pending-assessment | — | — | `not-reviewed` |
+| 0213 | three outcomes the v2 core never stated — a resume cursor past the log, the loser of a same-key race, and a resolve after the run ended (replay, idempotency and authorization; Active by steward override of RFC 0147 §A.6) | in-scope-pending-assessment | — | — | `not-reviewed` |

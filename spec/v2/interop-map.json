@@ -1,8 +1,8 @@
 {
   "$schema": "./interop-map.schema.json",
-  "$comment": "RFC 0208 (RFC 0198 adds mcp.tasks). Normative: spec/v2/core/interop.md §\"The operation mappings\" incorporates every row. Hand-maintained; checked by scripts/check-interop-map.mjs against api/v2/openapi.yaml operationIds, spec/v2/errors.json codes, the RunSnapshot.status enum and the spec/v2/facets/ schemas. Upstream names are verbatim; `v2Operation` is an operationId in api/v2/openapi.yaml or null when no v2 operation serves the row. Ships in @openwop/spec-artifacts.",
+  "$comment": "RFC 0208 (RFC 0198 adds mcp.tasks; RFC 0211 adds a2a.errors[].reason). Normative: spec/v2/core/interop.md §\"The operation mappings\" incorporates every row. Hand-maintained; checked by scripts/check-interop-map.mjs against api/v2/openapi.yaml operationIds, spec/v2/errors.json codes, the RunSnapshot.status enum and the spec/v2/facets/ schemas. Upstream names are verbatim; `v2Operation` is an operationId in api/v2/openapi.yaml or null when no v2 operation serves the row. Ships in @openwop/spec-artifacts.",
   "version": 1,
-  "updated": "2026-09-22",
+  "updated": "2026-09-23",
   "pins": {
     "a2a": {
       "release": "1.0.1",
@@ -109,7 +109,7 @@
         "requires": [
           "a2a.pushNotifications"
         ],
-        "rule": "Persists A2ATaskState.pushConfig. url MUST pass the webhooks.md egress guard, scheme and address arms both; token and authentication.credentials are secrets held by reference and MUST NOT enter the event log, the persisted A2ATaskState or a debug bundle. Unadvertised: PushNotificationNotSupportedError."
+        "rule": "Persists A2ATaskState.pushConfig. url MUST pass the webhooks.md egress guard at registration (scheme and address arms both) and again at delivery (interop.md §\"A2A push delivery\"); token and authentication.credentials are a destination credential held by reference (security-defaults.md §\"Onward hops\"), MUST NOT enter the event log, the persisted A2ATaskState or a debug bundle, and are sent only to the registered origin. Unadvertised: PushNotificationNotSupportedError."
       },
       {
         "upstream": "GetTaskPushNotificationConfig | ListTaskPushNotificationConfigs | DeleteTaskPushNotificationConfig",
@@ -119,7 +119,7 @@
         "requires": [
           "a2a.pushNotifications"
         ],
-        "rule": "Reads or deletes the persisted configs of a task the caller can read; secrets are never returned."
+        "rule": "Reads or deletes the persisted configs of a task the caller can read; secrets are never returned. An unreadable task or a configId that is not the task's is answered as an unknown id; delete is idempotent. Unadvertised: PushNotificationNotSupportedError."
       },
       {
         "upstream": "GetExtendedAgentCard",
@@ -270,7 +270,8 @@
         "grpc": "NOT_FOUND",
         "http": 404,
         "serverWhen": "unknown, purged, or not readable by the caller (identically, including a tenant mismatch)",
-        "clientProjection": "not_found"
+        "clientProjection": "not_found",
+        "reason": "TASK_NOT_FOUND"
       },
       {
         "upstream": "TaskNotCancelableError",
@@ -278,7 +279,8 @@
         "grpc": "FAILED_PRECONDITION",
         "http": 400,
         "serverWhen": "CancelTask on a terminal run",
-        "clientProjection": "run_terminal"
+        "clientProjection": "run_terminal",
+        "reason": "TASK_NOT_CANCELABLE"
       },
       {
         "upstream": "PushNotificationNotSupportedError",
@@ -286,7 +288,8 @@
         "grpc": "FAILED_PRECONDITION",
         "http": 400,
         "serverWhen": "push config without a2a.pushNotifications",
-        "clientProjection": "capability_required"
+        "clientProjection": "capability_required",
+        "reason": "PUSH_NOTIFICATION_NOT_SUPPORTED"
       },
       {
         "upstream": "UnsupportedOperationError",
@@ -294,7 +297,8 @@
         "grpc": "FAILED_PRECONDITION",
         "http": 400,
         "serverWhen": "an unimplemented operation or option; a message to a retained terminal task; SubscribeToTask on a terminal task",
-        "clientProjection": "capability_required"
+        "clientProjection": "capability_required",
+        "reason": "UNSUPPORTED_OPERATION"
       },
       {
         "upstream": "ContentTypeNotSupportedError",
@@ -302,7 +306,8 @@
         "grpc": "INVALID_ARGUMENT",
         "http": 400,
         "serverWhen": "a part mediaType or acceptedOutputModes entry the skill cannot handle, at request time",
-        "clientProjection": "validation_error"
+        "clientProjection": "validation_error",
+        "reason": "CONTENT_TYPE_NOT_SUPPORTED"
       },
       {
         "upstream": "InvalidAgentResponseError",
@@ -311,6 +316,7 @@
         "http": 500,
         "serverWhen": null,
         "clientProjection": "validation_error",
+        "reason": "INVALID_AGENT_RESPONSE",
         "note": "the malformed body MUST NOT enter run state"
       },
       {
@@ -319,7 +325,8 @@
         "grpc": "FAILED_PRECONDITION",
         "http": 400,
         "serverWhen": "GetExtendedAgentCard with capabilities.extendedAgentCard not true",
-        "clientProjection": "not_found"
+        "clientProjection": "not_found",
+        "reason": "EXTENDED_AGENT_CARD_NOT_CONFIGURED"
       },
       {
         "upstream": "ExtensionSupportRequiredError",
@@ -327,7 +334,8 @@
         "grpc": "FAILED_PRECONDITION",
         "http": 400,
         "serverWhen": "only for a required:true extension the client did not declare",
-        "clientProjection": "validation_error"
+        "clientProjection": "validation_error",
+        "reason": "EXTENSION_SUPPORT_REQUIRED"
       },
       {
         "upstream": "VersionNotSupportedError",
@@ -335,7 +343,8 @@
         "grpc": "FAILED_PRECONDITION",
         "http": 400,
         "serverWhen": "an A2A-Version the interface does not serve",
-        "clientProjection": "interop_version_unsupported"
+        "clientProjection": "interop_version_unsupported",
+        "reason": "VERSION_NOT_SUPPORTED"
       },
       {
         "upstream": "(invalid parameters)",
@@ -343,7 +352,8 @@
         "grpc": "INVALID_ARGUMENT",
         "http": 400,
         "serverWhen": "a message whose contextId is not its task's (A2A §3.4.3); no run state changes",
-        "clientProjection": "validation_error"
+        "clientProjection": "validation_error",
+        "note": "No A2A reason; the error SHOULD carry a google.rpc.BadRequest (RFC 0211 §A)."
       }
     ],
     "fields": [

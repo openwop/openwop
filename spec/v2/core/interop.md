@@ -57,6 +57,8 @@ The event is content-free: `peer` MUST be a digest of the peer origin, never the
 
 **A2A multi-turn (A2A §3.4.3).** A message carrying `taskId` without `contextId` MUST be answered with the task's `contextId`. A message whose `contextId` is not its task's MUST be refused with its binding's invalid-parameters error and MUST NOT change the run. A message to a retained terminal task MUST be refused `UnsupportedOperationError`; `TaskNotFoundError` is for unknown, purged and unreadable tasks.
 
+**A2A error details (RFC 0211).** On a 1.0 `JSONRPC` interface, an A2A error's `error.data` MUST be an array of objects each carrying `@type`, including exactly one `type.googleapis.com/google.rpc.ErrorInfo` whose `reason` is the map row's `reason` and whose `domain` is `a2a-protocol.org` (a tightening of A2A §9.5's SHOULD). An `HTTP+JSON` interface MUST answer A2A §11.6's `google.rpc.Status`. A response on an interface URL the card lists, including a refusal before dispatch, MUST NOT be the OpenWOP error envelope. `TaskNotFoundError` details MUST NOT differ between an unknown task and an unreadable one, apart from an echo of the requested id. On `VersionNotSupportedError` a host SHOULD set `metadata.supportedVersions` to a comma-joined list; a client falls back to the card's `supportedInterfaces[].protocolVersion`. A client MUST identify an error by code or by the ErrorInfo `reason`, MUST accept `data` as an array, and SHOULD accept a `data` object carrying `reason` through 2.x.
+
 ## MCP tasks and cancellation (RFC 0198)
 
 A host MAY serve the MCP Tasks extension `io.modelcontextprotocol/tasks` (revision `2026-07-28`) on its server mount. It advertises it in its `server/discover` `capabilities.extensions` and by listing `extensions` in `mcp.features[]`, and nowhere else. A host that advertises it MUST implement the extension as published and the map's `mcp.tasks` rows, and:
@@ -74,6 +76,12 @@ A host MAY serve the MCP Tasks extension `io.modelcontextprotocol/tasks` (revisi
 ## The durable-task projection
 
 `auth-required` remains a member of the persisted A2A task state enum (`schemas/v2/a2a-task-state.schema.json`) for the reverse direction (consuming an external A2A agent). The forward projection MUST emit it, with `interruptKind: credential` and a status message carrying `connectUrl`, for a run suspended on a `credential` interrupt (interrupt.md), and MUST NOT emit it otherwise.
+
+## A2A push delivery (RFC 0214)
+
+A host advertising `a2a.pushNotifications` treats each push as a webhook egress: webhooks.md §Egress binds at delivery time as well as registration, a `3xx` is a failed delivery, and the push credential is bound as security-defaults.md §"Onward hops" states. It MUST attempt each push at least once; a host that retries follows `webhooks.md` `retryPolicy` semantics. The body is an A2A 1.0 `StreamResponse` sent as `application/a2a+json`, carrying `Authorization: {scheme} {credentials}` from the config; when only `token` is set a host SHOULD send it as `Authorization: Bearer <token>` (A2A v1.0.1 leaves its carriage undefined). A host MUST NOT add an OpenWOP signature. Push dead-letters are not visible to A2A clients; a client recovers with `GetTask`.
+
+A `replay` fork MUST NOT push re-emitted history, and no fork inherits a source run's push configs. A push-config read or delete on a task the caller cannot read, or naming a `configId` that is not that task's, MUST answer exactly as for an unknown id, apart from the JSON-RPC `id`; a `configId` MUST NOT encode a tenant, workspace or principal, and delete is idempotent.
 
 ## Per-agent cards
 

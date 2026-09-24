@@ -708,11 +708,11 @@
     {
       "code": "interrupt_cancelled",
       "httpStatus": 410,
-      "statusSource": "v1 prose",
+      "statusSource": "registry (v1 prose said 422, run-scoped; RFC 0213 §C)",
       "retriable": false,
       "details": null,
       "since": "1.0",
-      "source": "spec/v1/interrupt.md (the run was cancelled while suspended)"
+      "source": "spec/v1/interrupt.md:434 (422, run-scoped). The v2 core resolve surfaces do not emit it — RFC 0171 C4.6 one code per state; RFC 0213 §C."
     },
     {
       "code": "interrupt_expired",
