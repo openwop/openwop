@@ -251,12 +251,12 @@ Hosts MUST compute the cache key as follows:
 
 1. **Build a canonical object** with the fields above, applying these normalization rules:
    - Omit `tools`, `temperature`, `topP`, `topK`, `responseFormat` when absent (do NOT emit `null` / default placeholders).
-   - Sort `tools[]` by `name` ascending.
+   - Sort `tools[]` by `name` in UTF-16 code-unit order (RFC 8785 §3.2.3; RFC 0212 §D). A locale-sensitive comparator MUST NOT be used.
    - For each tool, sort `parameters.properties` keys ascending recursively (RFC 8785 JCS over the tool definition).
    - Preserve `messages[]` order — order is semantically significant and MUST NOT be reordered.
    - Preserve `messages[i].content` shape verbatim (string or array of content blocks) without coalescing.
    - Place any provider option not named above into a closed, namespaced `providerOptions` object (`vendor.<provider>.<option>`) **before** hashing. **Silently dropping an unknown option is nonconformant** — a dropped option that alters output is exactly the collision this recipe exists to prevent, and dropping it is indistinguishable from the option never having been set.
-2. **Canonicalize to bytes** via RFC 8785 JCS (JSON Canonicalization Scheme). Hosts without a JCS library MUST emit JSON with: object keys sorted lexicographically (recursively); no whitespace; no trailing commas; numbers serialized per IEEE 754 round-trip.
+2. **Canonicalize to bytes** via RFC 8785 JCS (JSON Canonicalization Scheme), with the I-JSON refusal set of `spec/v2/core/conformance.md` §"Canonical JSON" (RFC 0212). `conformance/vectors/jcs-v1.json` is the test of an implementation.
 
    **Implementations MUST NOT apply Unicode normalization outside JCS.** JCS does not perform NFC, so a fallback that adds it produces **different bytes for the same input** whenever a string is not already normalized — which breaks the cross-host portability §D asserts as a normative invariant.
 

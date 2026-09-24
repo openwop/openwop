@@ -125,3 +125,28 @@ describe('scoped-receiver — a zero says which zero it is', () => {
     expect(noDeliveryCause(a)).toContain(a.localUrl);
   });
 });
+
+describe('scoped-receiver — a front that carries a PATH (2.38.0)', () => {
+  it('a delivery through a path-bearing front reaches its exercise, not "addressed elsewhere"', async () => {
+    // Exactly the shape `cut-public.sh` wires: the receiver fronted at `…/hook`.
+    // A tunnel forwards the whole path, so the listener sees `/hook/fx/<nonce>`.
+    process.env['OPENWOP_WEBHOOK_RECEIVER_URL'] = 'https://front.example.com/hook';
+    const a = await receiver();
+    expect(a.url).toBe(`https://front.example.com/hook/fx/${a.nonce}`);
+    const origin = a.localUrl.replace(`/fx/${a.nonce}`, '');
+    const forwarded = `${origin}${new URL(a.url).pathname}`;
+    expect(await post(forwarded)).toBe(204);
+    expect(a.seen).toEqual(['/']);
+    expect(a.foreign()).toBe(0);
+  });
+
+  it('a sibling behind the same path-bearing front is routed to the sibling', async () => {
+    process.env['OPENWOP_WEBHOOK_RECEIVER_URL'] = 'https://front.example.com/hook';
+    const a = await receiver();
+    const b = await receiver();
+    const origin = a.localUrl.replace(`/fx/${a.nonce}`, '');
+    expect(await post(`${origin}/hook/fx/${b.nonce}/x`)).toBe(204);
+    expect(b.seen).toEqual(['/x']);
+    expect(a.seen).toEqual([]);
+  });
+});

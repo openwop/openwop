@@ -25,6 +25,7 @@
  * @see spec/v2/interop-map.json a2a.operations / a2a.taskState / a2a.errors
  * @see RFCS/0208-v2-a2a-mcp-operation-mappings.md §C, §D, §E
  * @see RFCS/0199-outbound-oauth-client-and-credential-interrupt.md §D.1 (the credential leg; interop-map.json a2a.taskState override row)
+ * @see RFCS/0214-a2a-push-credential-is-a-destination-credential.md (the push-config refusal leg; invariants a2a-push-credential-destination-bound, a2a-push-secrets-not-returned)
  * @see RFCS/0211-a2a-error-details-are-errorinfo.md §A–§E (the error-details legs; the isolation comparator)
  */
 import { describe, it, expect } from 'vitest';
@@ -246,6 +247,33 @@ describe('RFC 0208 — v2-a2a-operation-map (host as A2A 1.0 server, gated on a2
     expect(typeof id, req(R('row-requires-refused'), DOC, 'SendMessage MUST start a task')).toBe('string');
     const sub = await rpc(t.url, 'SubscribeToTask', { id });
     expect(sub.error?.code, req(R('row-requires-refused'), 'interop.md §"The operation mappings"; a2a.operations SubscribeToTask requires a2a.streaming', `a host not advertising a2a.streaming MUST refuse SubscribeToTask with UnsupportedOperationError -32004 (got ${JSON.stringify(sub.error ?? sub.result)})`)).toBe(-32004);
+    await rpc(t.url, 'CancelTask', { id });
+  });
+
+  it('a host not advertising a2a.pushNotifications refuses all four push-config operations with PushNotificationNotSupportedError', async () => {
+    const rid = 'openwop.requirement.0214.a2a-push-unadvertised-refused';
+    const pushDoc = 'interop-map.json a2a.errors PushNotificationNotSupportedError (serverWhen: push config without a2a.pushNotifications) and the push-config operation rows; A2A v1.0.1 §3.3.4';
+    const t = await target(true);
+    if (!t.ok) return skip(t, rid);
+    const a2a = (await familyAdvertised('a2a'))!;
+    if (a2a['pushNotifications'] === true) return softSkip('inapplicable', 'a2a.pushNotifications is advertised — the push-config rows are served here, not refused');
+    const first = await startApprovalTask(t.url);
+    const id = first.task?.id;
+    expect(typeof id, req(rid, DOC, `SendMessage MUST start a task: ${JSON.stringify(first.rpc.error)}`)).toBe('string');
+    // Positive control: the task is readable, so a -32001 below could not be masking the refusal under test.
+    const read = await rpc(t.url, 'GetTask', { id });
+    expect(read.error, req(rid, 'a2a.operations GetTask', `positive control: the task the suite just started MUST be readable (got ${JSON.stringify(read.error)})`)).toBeUndefined();
+    const configId = `conf-0214-${randomBytes(6).toString('hex')}`;
+    const calls: Array<[string, Record<string, unknown>]> = [
+      ['CreateTaskPushNotificationConfig', { taskId: id, url: 'https://push.example.com/openwop-conformance' }],
+      ['GetTaskPushNotificationConfig', { taskId: id, id: configId }],
+      ['ListTaskPushNotificationConfigs', { taskId: id }],
+      ['DeleteTaskPushNotificationConfig', { taskId: id, id: configId }],
+    ];
+    for (const [method, params] of calls) {
+      const r = await rpc(t.url, method, params);
+      expect(r.error?.code, req(rid, pushDoc, `${method} on a host not advertising a2a.pushNotifications MUST be refused PushNotificationNotSupportedError -32003 — not method-not-found -32601 (got ${JSON.stringify(r.error ?? r.result)})`)).toBe(-32003);
+    }
     await rpc(t.url, 'CancelTask', { id });
   });
 

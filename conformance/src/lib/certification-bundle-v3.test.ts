@@ -158,6 +158,15 @@ describe('certification bundle v3 (RFC 0168 §E)', () => {
     const v = verifyBundleV3(tampered, { hostPublicKeyPem: hostPub });
     expect(v.rejections.map((r) => r.kind)).toContain('witness-digest');
   });
+  it('a non-I-JSON row is a witness-digest rejection, not an exception (RFC 0212 §B)', () => {
+    // JSON.parse accepts the escape "\ud800"; the canonicalizer refuses a lone
+    // surrogate. The verifier MUST fail verification — as a verdict.
+    const u = unsigned(good); const b: BundleV3 = { ...u, signature: signBundleV3(u, pem(host.privateKey), 'host-key-1') };
+    const parsed = JSON.parse(JSON.stringify(b).replace('"executed-pass"', '"executed-pass","detail":"x\\ud800"')) as BundleV3;
+    let kinds: string[] = [];
+    expect(() => { kinds = verifyBundleV3(parsed, { hostPublicKeyPem: hostPub }).rejections.map((r) => r.kind); }).not.toThrow();
+    expect(kinds).toContain('witness-digest');
+  });
   it('refuses a signature that does not verify under the host key', () => {
     const u = unsigned(good); const other = generateKeyPairSync('ed25519');
     const b: BundleV3 = { ...u, signature: signBundleV3(u, pem(other.privateKey), 'host-key-1') };

@@ -44,6 +44,7 @@ const CATALOG = 'https://a2ui.org/specification/v0_9/catalogs/basic/catalog.json
 const clone = <T>(o: T): T => JSON.parse(JSON.stringify(o)) as T;
 const POSITIVE = JSON.parse(readFileSync(join(FIXTURES_DIR, 'a2ui-v09', 'positive-approve-brief.json'), 'utf8')) as Json;
 const V1_SURFACE: Json = { catalogVersion: '0.9.1', surface: { title: 'Kickoff', components: [{ component: 'heading', text: 'Kickoff', level: 2 }, { component: 'action.button', id: 'go', label: 'Go', action: { target: 'resume' } }] } };
+const V1_LATER: Json = { catalogVersion: '0.9.1', surface: { title: 'Kickoff, later', components: [{ component: 'heading', text: 'Kickoff, later', level: 2 }] } };
 
 let seq = 0;
 const nonce = `${Date.now().toString(36)}-${Math.random().toString(36).slice(2, 8)}`;
@@ -217,8 +218,16 @@ describe('RFC 0209 §C.11 — recorded surfaces are returned as recorded (seam-g
       const sequence = (r.json as { sequence: number }).sequence;
       const events = await eventsOf(runId);
       expect(carries(events, payload), req('openwop.it.v2-a2ui-v09-surface.recorded-as-recorded', 'RFC 0209 §C.11', 'the run\'s poll MUST return the recorded surface payload byte-equal — no surface is regenerated')).toBe(true);
-      const fork = await driver.post(`/runs/${encodeURIComponent(runId)}:fork`, { mode: 'replay', fromSeq: sequence + 1 });
-      expect(fork.status, req('openwop.it.v2-a2ui-v09-surface.recorded-as-recorded', 'RFC 0209 §C.11', `POST :fork at fromSeq ${sequence + 1} MUST answer 201, got ${code(fork)}`)).toBe(201);
+      // The surface is the last event of the suspended run, so `sequence + 1`
+      // names no event and runs.md §Fork REQUIRES 422 fork_point_invalid for it.
+      // Record one more envelope on the same surface and fork AT that event:
+      // the surface (sequence < fromSeq) is fixed history, the later one re-executes.
+      const later = await emit(runId, envelope(2, v2(sid('rec'), [dataMsg()])));
+      expect(later.status, req('openwop.it.v2-a2ui-v09-surface.recorded-as-recorded', 'RFC 0209 §C.9', `an updateDataModel on the live surface MUST be admitted (it supplies the fork point), got ${code(later)}`)).toBe(201);
+      const fromSeq = (later.json as { sequence: number }).sequence;
+      expect(fromSeq > sequence, req('openwop.it.v2-a2ui-v09-surface.recorded-as-recorded', 'api/seams-v2.yaml emitA2uiSurface', `a later recording names a later sequence (surface ${sequence}, update ${fromSeq})`)).toBe(true);
+      const fork = await driver.post(`/runs/${encodeURIComponent(runId)}:fork`, { mode: 'replay', fromSeq });
+      expect(fork.status, req('openwop.it.v2-a2ui-v09-surface.recorded-as-recorded', 'RFC 0209 §C.11', `POST :fork at fromSeq ${fromSeq} (a recorded event after the surface) MUST answer 201, got ${code(fork)}`)).toBe(201);
       const forkId = (fork.json as { runId: string }).runId;
       expect(carries(await eventsOf(forkId), payload), req('openwop.it.v2-a2ui-v09-surface.recorded-as-recorded', 'RFC 0209 §C.11', 'a fork at a fromSeq after the surface MUST carry it unchanged')).toBe(true);
       await done(forkId);
@@ -234,8 +243,13 @@ describe('RFC 0209 §C.11 — recorded surfaces are returned as recorded (seam-g
       expect(r.status, req('openwop.requirement.0209.legacy-readable', 'RFC 0209 §C.11', `a version-1 surface at floor 1 MUST be admitted, got ${code(r)}`)).toBe(201);
       const sequence = (r.json as { sequence: number }).sequence;
       expect(carries(await eventsOf(runId), V1_SURFACE), req('openwop.requirement.0209.legacy-readable', 'RFC 0209 §C.11', 'the poll MUST return the version-1 surface byte-equal')).toBe(true);
-      const fork = await driver.post(`/runs/${encodeURIComponent(runId)}:fork`, { mode: 'replay', fromSeq: sequence + 1 });
-      expect(fork.status, req('openwop.requirement.0209.legacy-readable', 'RFC 0209 §C.11', `POST :fork MUST answer 201, got ${code(fork)}`)).toBe(201);
+      // As in the version-2 leg: fork at a recorded event after the surface, never at `sequence + 1` (no such event; 422 fork_point_invalid).
+      const later = await emit(runId, envelope(1, V1_LATER));
+      expect(later.status, req('openwop.requirement.0209.legacy-readable', 'RFC 0209 §C.11', `a second version-1 surface at floor 1 MUST be admitted (it supplies the fork point), got ${code(later)}`)).toBe(201);
+      const fromSeq = (later.json as { sequence: number }).sequence;
+      expect(fromSeq > sequence, req('openwop.requirement.0209.legacy-readable', 'api/seams-v2.yaml emitA2uiSurface', `a later recording names a later sequence (surface ${sequence}, next ${fromSeq})`)).toBe(true);
+      const fork = await driver.post(`/runs/${encodeURIComponent(runId)}:fork`, { mode: 'replay', fromSeq });
+      expect(fork.status, req('openwop.requirement.0209.legacy-readable', 'RFC 0209 §C.11', `POST :fork at fromSeq ${fromSeq} (a recorded event after the surface) MUST answer 201, got ${code(fork)}`)).toBe(201);
       const forkId = (fork.json as { runId: string }).runId;
       expect(carries(await eventsOf(forkId), V1_SURFACE), req('openwop.requirement.0209.legacy-readable', 'RFC 0209 §C.11', 'a fork at a later fromSeq MUST carry the version-1 surface unchanged')).toBe(true);
       await done(forkId);

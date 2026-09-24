@@ -142,6 +142,58 @@
       "digest": "afb590dd7bf6c78915852e15318fd4c9d6d6e0d473288283f413e5e425ba0cd6"
     },
     {
+      "id": "tools-code-unit-order",
+      "why": "RFC 0212 §D: tools sort by name in UTF-16 code units. `getWeather` (W = 0x57) precedes `get_weather` (_ = 0x5F); English collation ignores `_` and a Czech/English localeCompare orders them the other way, which is why `alpha`/`zeta` could not catch it.",
+      "input": {
+        "provider": "anthropic",
+        "model": "claude-x",
+        "messages": [
+          {
+            "role": "user",
+            "content": "hello"
+          }
+        ],
+        "tools": [
+          {
+            "name": "get_weather",
+            "parameters": {}
+          },
+          {
+            "name": "getWeather",
+            "parameters": {}
+          }
+        ]
+      },
+      "canonical": "{\"model\":\"claude-x\",\"provider\":\"anthropic\",\"recipe\":\"openwop-semantic-request-v2\",\"request\":{\"messages\":[{\"content\":\"hello\",\"role\":\"user\"}],\"tools\":[{\"name\":\"getWeather\",\"parameters\":{}},{\"name\":\"get_weather\",\"parameters\":{}}]}}",
+      "digest": "8ddc711c24f17c75efa8fd61e4060573461973ed0ae3fc79c056533d6bb1d0d0"
+    },
+    {
+      "id": "tools-code-unit-order-reversed",
+      "why": "Same two tools, opposite input order. MUST equal the previous vector.",
+      "input": {
+        "provider": "anthropic",
+        "model": "claude-x",
+        "messages": [
+          {
+            "role": "user",
+            "content": "hello"
+          }
+        ],
+        "tools": [
+          {
+            "name": "getWeather",
+            "parameters": {}
+          },
+          {
+            "name": "get_weather",
+            "parameters": {}
+          }
+        ]
+      },
+      "canonical": "{\"model\":\"claude-x\",\"provider\":\"anthropic\",\"recipe\":\"openwop-semantic-request-v2\",\"request\":{\"messages\":[{\"content\":\"hello\",\"role\":\"user\"}],\"tools\":[{\"name\":\"getWeather\",\"parameters\":{}},{\"name\":\"get_weather\",\"parameters\":{}}]}}",
+      "digest": "8ddc711c24f17c75efa8fd61e4060573461973ed0ae3fc79c056533d6bb1d0d0"
+    },
+    {
       "id": "message-order-is-semantic",
       "why": "Message order IS semantic and MUST NOT be sorted — this must differ from a reordered twin.",
       "input": {

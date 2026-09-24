@@ -86,7 +86,7 @@ describe('RFC 0175 §E.1 — mrtr-rounds-ceiling (gated on mcp + mrtr)', () => {
       return softSkip('blocked', `the suite MCP fake server cannot loop — its only MRTR tool (needs_input) completes on the first retry; a \`${LOOP_TOOL}\` fixture tool that re-issues input_required ${rounds} times is required to drive maxRounds + 1`);
     }
     // The failure message carries the host's code, the fake's count and the
-    // body (2.37.2). The 2026-09-24 public v2-reference cut on 2.37.1 recorded
+    // body (2.38.0). The 2026-09-24 public v2-reference cut on 2.37.1 recorded
     // `expected 400 to be 422` and nothing else — the same leg passes on every
     // loopback run of that host — so whether the 400 was the host refusing a
     // round the fake answered, or a round the tunnel failed to carry, could not
