@@ -194,7 +194,7 @@ RFC 0153 is an RFC 0147 child (SR-6), so this amendment carries the five-lens pa
 
 - [x] `Active` — 2026-09-22, by steward override of RFC 0147 §A.6. The window was waived, not run (see `Updated`).
 - [x] RFC 0208's spec PR merged first (#1492). Then this RFC's `interop.md` section, `mcp.tasks` rows, the `runCancelled.reason` description and the invariant row merged, with `check-interop-map.mjs` green (and its two `mcp.tasks` sabotages, a deleted `waiting-external` row and `tasks/update → resolveInterrupt`, refused by `v2-interop-map-coherent`).
-- [ ] `v2-mcp-tasks.test.ts` ships in a published suite minor, and its tarball is verified.
+- [x] `v2-mcp-tasks.test.ts` ships in a published suite minor, and its tarball is verified. — Verified 2026-09-24 against the PUBLISHED tarball, not the checkout: `npm pack @openwop/openwop-conformance@2.37.0` carries `src/scenarios/v2-mcp-tasks.test.ts`.
 - [ ] A committed, certified v2 bundle from at least one host carries every witnessable row at `executed-pass` in strict mode, with nothing relaxed and no `partial-witness:` detail. `task-unreadable-not-found` and `listen-omits-unreadable` are exercised with the second credential.
 - [x] `Amended by` row on RFC 0153; informative pointer in `spec/v1/mcp-integration.md` §D; CHANGELOG entry; RFC 0156 §B register row (`not-reviewed`, filed with the RFC).
 
