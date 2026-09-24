@@ -85,7 +85,13 @@ describe('RFC 0175 §E.1 — mrtr-rounds-ceiling (gated on mcp + mrtr)', () => {
     if (!loopKnown) {
       return softSkip('blocked', `the suite MCP fake server cannot loop — its only MRTR tool (needs_input) completes on the first retry; a \`${LOOP_TOOL}\` fixture tool that re-issues input_required ${rounds} times is required to drive maxRounds + 1`);
     }
-    expect(res.status, req('openwop.requirement.0175.mrtr-rounds-ceiling.refused', 'interop.md §The MCP round ceiling', `round ${rounds} (maxRounds + 1) MUST be refused with 422`)).toBe(422);
+    // The failure message carries the host's code, the fake's count and the
+    // body (2.38.0). The 2026-09-24 public v2-reference cut on 2.37.1 recorded
+    // `expected 400 to be 422` and nothing else — the same leg passes on every
+    // loopback run of that host — so whether the 400 was the host refusing a
+    // round the fake answered, or a round the tunnel failed to carry, could not
+    // be read from the record.
+    expect(res.status, req('openwop.requirement.0175.mrtr-rounds-ceiling.refused', 'interop.md §The MCP round ceiling', `round ${rounds} (maxRounds + 1) MUST be refused with 422 (got ${res.status} ${String(readErrorCode(res.json))}; the fake served ${served.length} tools/call; body ${res.text.slice(0, 400)})`)).toBe(422);
     expect(readErrorCode(res.json), req('openwop.requirement.0175.mrtr-rounds-ceiling.refused', 'errors.json mcp_mrtr_rounds_exceeded', `the refusal MUST carry ${CODE}`)).toBe(CODE);
     expect(
       served.length,
