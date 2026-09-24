@@ -11,9 +11,36 @@
  *   (c) an `it` body contains a bare `return;` / `return undefined;` that is not
  *       `return softSkip(...)` / `return seamAbsent(...)` — RFC 0148 G8: an
  *       unclassified return records a pass / blocked row with no reason;
- *   (d) two `it`s in one file cite different explicit ids in one body, or two
- *       `it`s share the same explicit id — the ledger keys on the id, so the two
- *       rows would overwrite each other.
+ *   (d) one `it` body cites two different explicit ids — the ledger keys on the
+ *       id and keeps only the LAST, so one of the two requirements gets no row.
+ *
+ * (d) resolves a module-level `const ID = '…'` handed to `req()`, which is how
+ * almost every scenario in the corpus writes it. Until 2.37.0 it compared only
+ * STRING LITERALS at the call site, so it saw nothing in 27 of the files it was
+ * meant to police.
+ *
+ * What (d) no longer flags is two `it`s SHARING one explicit id. That is a
+ * deliberate and widespread pattern — one requirement, several legs — and since
+ * 2.37.0 `recordRequirement`'s `fold` makes the shared row the least certifiable
+ * of the legs instead of silently dropping all but the first. Before the fold, a
+ * passing leg followed by a failing one recorded the requirement as
+ * `executed-pass` while its own file recorded `executed-fail`.
+ *
+ * What (b) deliberately does NOT reach, and why that is not the attribution
+ * hole it looks like: an `expect(...)` with NO message argument at all. There
+ * are 1,281 of those across `scenarios/` + `coherence/` today, against 4,824
+ * that carry `req(...)`. They are not unattributed requirements, because
+ * ATTRIBUTION IS PER-`it`, NOT PER-ASSERTION: `req()` sets one module-level
+ * `explicitId` that `setup.ts` takes once per test (`requirement-ids.ts`,
+ * `takeExplicitRequirementId`), and `assertionCount` is a count of `expect`
+ * calls in that test whatever their message. So every assertion in an `it`
+ * already belongs to that `it`'s requirement id; a missing message costs the
+ * READER a sentence, never the row its id. Banning them would be a 1,281-site
+ * sweep of mostly in-process schema assertions whose vitest diff ("expected
+ * false to be true") is already the whole story — and since 2.37.0 the record
+ * carries the failing case's NAME alongside that diff
+ * (`scenario-disposition.ts` `failureDetail`), which is the part that was
+ * actually missing.
  *
  * Only `it` callbacks are inspected for (b) and (c); a `return` inside a nested
  * function (a `.find(x => ...)` predicate, say) is that function's return, not
@@ -78,7 +105,18 @@ for (const dir of DIRS) {
     const src = ts.createSourceFile(full, readFileSync(full, 'utf8'), ts.ScriptTarget.Latest, true);
     files++;
     const at = (node) => `${rel}:${src.getLineAndCharacterOfPosition(node.getStart(src)).line + 1}`;
-    const explicitByIt = new Map(); // id → first it location
+    // `const ID = 'openwop.requirement.…'` at module scope, so `req(ID, …)`
+    // resolves. Without this, rule (d) compared only call-site literals and was
+    // blind to the form nearly every scenario actually uses.
+    const constIds = new Map();
+    const collectConsts = (node) => {
+      if (ts.isVariableDeclaration(node) && ts.isIdentifier(node.name) && node.initializer !== undefined &&
+          (ts.isStringLiteral(node.initializer) || ts.isNoSubstitutionTemplateLiteral(node.initializer))) {
+        constIds.set(node.name.text, node.initializer.text);
+      }
+      ts.forEachChild(node, collectConsts);
+    };
+    collectConsts(src);
 
     // (a) anywhere in the file — helpers included.
     const visitAll = (node) => {
@@ -110,7 +148,9 @@ for (const dir of DIRS) {
           }
           if (ts.isIdentifier(node.expression) && node.expression.text === 'req') {
             const a = node.arguments[0];
-            if (a !== undefined && (ts.isStringLiteral(a) || ts.isNoSubstitutionTemplateLiteral(a))) idsHere.add(a.text);
+            if (a === undefined) { /* no id to read */ }
+            else if (ts.isStringLiteral(a) || ts.isNoSubstitutionTemplateLiteral(a)) idsHere.add(a.text);
+            else if (ts.isIdentifier(a) && constIds.has(a.text)) idsHere.add(constIds.get(a.text));
           }
         }
         if (ts.isReturnStatement(node) && !inNested) {
@@ -126,11 +166,6 @@ for (const dir of DIRS) {
       };
       walk(fn.body ?? fn, false);
       if (idsHere.size > 1) failures.push(`${at(itNode)}: one it() cites ${idsHere.size} different explicit ids (${[...idsHere].join(', ')}) — the ledger keeps the LAST one`);
-      for (const id of idsHere) {
-        const prior = explicitByIt.get(id);
-        if (prior !== undefined && prior !== itNode) failures.push(`${at(itNode)}: explicit id ${id} is already used by the it() at ${at(prior)}`);
-        else explicitByIt.set(id, itNode);
-      }
     }
 
     visitAll(src);

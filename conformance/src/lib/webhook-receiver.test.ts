@@ -191,10 +191,19 @@ describe('receiverBinding: loopback by default, operator-declared otherwise', ()
 
 describe('receiverBinding: every scenario receiver actually uses it', () => {
   /**
-   * The three scenarios that stand up their own HTTP receiver and hand the host
-   * a URL. Any future one belongs here too — a receiver that hard-codes
-   * loopback is unwitnessable off-process, and records a `fail` rather than a
-   * missing precondition while being so.
+   * The scenarios that stand up an HTTP receiver and hand the host a URL. Any
+   * future one belongs here too — a receiver that hard-codes loopback is
+   * unwitnessable off-process, and records a `fail` rather than a missing
+   * precondition while being so.
+   *
+   * Since 2.37.0 most of them do not stand up their OWN listener: they take it
+   * from `scoped-receiver.ts`, which binds through `receiverBinding()` and adds
+   * a per-exercise nonce path, because on a tunnelled cut four of these files
+   * registered one byte-identical destination. So the guard now asks each file
+   * for one of the two shapes — its own `receiverBinding()` listener, or the
+   * shared helper — and, either way, that no loopback literal survives. Naming
+   * the helper as an accepted shape is not a loosening: `scoped-receiver.ts`
+   * is itself checked below, and a file that used neither would still fail.
    */
   const RECEIVER_SCENARIOS = [
     'webhook-signed-delivery.test.ts',
@@ -204,16 +213,22 @@ describe('receiverBinding: every scenario receiver actually uses it', () => {
     // here too"; `v2-webhook-delivery-shape` landed at suite 2.3.1 and was not
     // added, and it then ignored the port pin for four releases.
     'v2-webhook-delivery-shape.test.ts',
+    // Added 2026-09-23 with the same reasoning: it registers a subscription and
+    // reads the delivery the host emits.
+    'v2-bound-id-kinds.test.ts',
   ] as const;
 
   const here = dirname(fileURLToPath(import.meta.url));
 
   for (const name of RECEIVER_SCENARIOS) {
-    it(`${name} binds and advertises via receiverBinding(), not a literal`, () => {
+    it(`${name} reaches the host through receiverBinding(), not a literal`, () => {
       const src = readFileSync(join(here, '..', 'scenarios', name), 'utf8');
-      expect(src).toContain('receiverBinding');
-      expect(src).toMatch(/server\.listen\([^)]*binding\.bind/);
-      expect(src).toContain('http://${binding.advertise}:');
+      const viaHelper = src.includes("from '../lib/scoped-receiver.js'") && src.includes('startScopedReceiver');
+      if (!viaHelper) {
+        expect(src).toContain('receiverBinding');
+        expect(src).toMatch(/server\.listen\([^)]*binding\.bind/);
+        expect(src).toContain('http://${binding.advertise}:');
+      }
       // The literal must be gone from BOTH places, not just the one that is
       // easier to notice. A receiver that advertises the right name while
       // bound to loopback is still unreachable, and the failure looks
@@ -222,6 +237,29 @@ describe('receiverBinding: every scenario receiver actually uses it', () => {
       expect(src).not.toContain('url: `http://127.0.0.1:');
     });
   }
+
+  it('the shared receiver binds through receiverBinding() — the helper the scenarios now delegate to', () => {
+    const src = readFileSync(join(here, 'scoped-receiver.ts'), 'utf8');
+    expect(src).toContain('receiverBinding');
+    expect(src).toMatch(/server\.listen\([^)]*binding\.bind/);
+    expect(src).toContain('http://${binding.advertise}:');
+    expect(src).not.toMatch(/server\.listen\([^)]*'127\.0\.0\.1'/);
+  });
+
+  it('no webhook scenario mints its destination with resolveRegistrationUrl — that is one identity for every exercise', () => {
+    // The 2.37.0 regression, guarded at the source. `resolveRegistrationUrl`
+    // returns `OPENWOP_WEBHOOK_RECEIVER_URL` UNCHANGED, so every file that
+    // registered its result pointed at one byte-identical destination and so
+    // shared one subscription identity — across files, and across time, because
+    // a subscription outlives the leg that made it. A destination belongs to one
+    // exercise: `startScopedReceiver().url` when the leg wants the delivery,
+    // `unservedDestination()` when it only wants the mint.
+    for (const name of RECEIVER_SCENARIOS) {
+      const src = readFileSync(join(here, '..', 'scenarios', name), 'utf8');
+      const line = src.split('\n').findIndex((l) => l.includes('resolveRegistrationUrl(')) + 1;
+      expect(line, `${name}:${line} mints its destination with resolveRegistrationUrl, which returns the operator's front verbatim — use startScopedReceiver().url or unservedDestination()`).toBe(0);
+    }
+  });
 });
 
 describe('webhook-signed-delivery waits for a delivery rather than sleeping a guess', () => {

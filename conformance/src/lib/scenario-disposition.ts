@@ -118,8 +118,13 @@ export function resolveItRecord(
    * sites were not measured and v1 bundles are read through its EOS.
    */
   blockedStands = false,
+  /** The `it` title, so a failed row says WHICH leg of the requirement failed. */
+  testName?: string,
 ): { disposition: Disposition; detail?: string } {
-  if (state === 'fail') return { disposition: 'executed-fail', detail: `the test executed and failed: ${(firstError ?? 'no message').slice(0, 300)}` };
+  if (state === 'fail') {
+    const where = testName === undefined || testName.trim() === '' ? '' : ` in "${testName.slice(0, 120)}"`;
+    return { disposition: 'executed-fail', detail: `the test executed and failed${where}: ${(firstError ?? 'no message').slice(0, 300)}` };
+  }
   if (state === 'pass' && assertionCalls > 0) {
     // `blockedDespiteAssertions` (soft-skip.ts): the leg says its setup
     // assertions are not the requirement, and the requirement went unobserved.
@@ -142,14 +147,45 @@ export function resolveItRecord(
   return { disposition: 'skipped', detail: 'vitest skipped the test (ctx.skip / it.skip) without a recorded gate reason' };
 }
 
+/** One failed `it` in a file: its title and its first error message. */
+export interface TestFailure {
+  readonly name: string;
+  readonly message?: string;
+}
+
+/**
+ * The `executed-fail` detail for a file row: WHICH cases failed, and what the
+ * first one said.
+ *
+ * Until 2.37.0 this was the fixed string "one or more assertions in the file
+ * failed". A tier-2 host read exactly that for `v2-run-bulk-cancel` — 10
+ * assertions, no case name, no message, and nothing else in the record for that
+ * file — and had to hand-probe every assertion in the file against production to
+ * find out what had happened. A bundle row whose only detail is that sentence is
+ * undiagnosable by construction, and every future flicker in any scenario had
+ * the same problem.
+ */
+export function failureDetail(failures: readonly TestFailure[], failedCount: number): string {
+  if (failures.length === 0) {
+    return `${failedCount} test(s) in the file failed; the runner captured no message`;
+  }
+  const head = failures[0]!;
+  const named = failures.slice(0, 3).map((f) => `"${f.name.slice(0, 120)}"`).join(', ');
+  const more = failures.length > 3 ? ` (+${failures.length - 3} more)` : '';
+  const msg = head.message === undefined || head.message.trim() === '' ? 'no message' : head.message.slice(0, 400);
+  return `${failures.length} test(s) failed — ${named}${more}; first failure: ${msg}`;
+}
+
 /** Worker half: fold a file's per-test states (+ any gate-recorded reason) into
  *  the ONE disposition the file records. */
 export function fileDisposition(
   states: readonly FileTestState[],
   gateReason: 'inapplicable' | 'skipped' | undefined,
   assertionCount?: number,
+  failures: readonly TestFailure[] = [],
 ): { disposition: Disposition; detail?: string } {
-  if (states.some((s) => s === 'fail')) return { disposition: 'executed-fail', detail: 'one or more assertions in the file failed' };
+  const failed = states.filter((s) => s === 'fail').length;
+  if (failed > 0) return { disposition: 'executed-fail', detail: failureDetail(failures, failed) };
   if (states.some((s) => s === 'pass')) {
     // A test that early-returned through `behaviorGate` is reported by vitest
     // as a pass with zero assertions. When EVERY passing test in the file did
@@ -195,6 +231,8 @@ export function resolveFileRecord(
   assertionCount: number,
   noted: { kind: 'inapplicable' | 'skipped' | 'blocked'; reason: string } | null,
   specCoherenceFile?: string,
+  /** The failed cases, so an `executed-fail` row NAMES them (2.37.0). */
+  failures: readonly TestFailure[] = [],
 ): { disposition: Disposition; detail?: string } {
   // A scenario whose subject is the CORPUS, skipped because the published
   // tarball does not bundle spec/v1/. RFC 0148 §A: `blocked` is defined over
@@ -211,7 +249,7 @@ export function resolveFileRecord(
   ) {
     return { disposition: 'inapplicable', detail: SPEC_COHERENCE_DETAIL };
   }
-  let { disposition, detail } = fileDisposition(states, gateReason, assertionCount);
+  let { disposition, detail } = fileDisposition(states, gateReason, assertionCount, failures);
   if (disposition === 'executed-pass' && assertionCount === 0) {
     if (noted !== null) {
       disposition = noted.kind;

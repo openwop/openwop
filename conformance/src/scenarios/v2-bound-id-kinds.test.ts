@@ -27,12 +27,11 @@
  * @see RFCS/0187-host-found-bindings.md §A
  */
 import { describe, it, expect } from 'vitest';
-import { createServer, type IncomingMessage, type Server, type ServerResponse } from 'node:http';
 import { driver, type OpenWOPResponse } from '../lib/driver.js';
 import { v2Discovery, gateFamily } from '../lib/v2.js';
 import { readErrorCode } from '../lib/error-envelope.js';
 import { softSkip } from '../lib/soft-skip.js';
-import { receiverBinding, resolveRegistrationUrl } from '../lib/webhook-receiver.js';
+import { noDeliveryCause, startScopedReceiver, unservedDestination, type ScopedReceiver } from '../lib/scoped-receiver.js';
 import { scaledTimeoutMs } from '../lib/polling.js';
 import { req } from '../lib/requirement-ids.js';
 import { projectBoundId, BOUND_ID } from '../lib/bound-id.js';
@@ -50,20 +49,21 @@ const PER_KIND = 'openwop.requirement.0187.bound-id-kinds.per-kind';
 const WEBHOOK_EMITTED = 'openwop.requirement.0187.bound-id-kinds.webhook-emitted';
 
 type Delivery = { body: string; headers: Record<string, string | string[] | undefined> };
-/** The suite's receiver, bound the way every webhook scenario binds it (pinned port / public front honoured). */
-async function startReceiver(): Promise<{ server: Server; url: string; deliveries: Delivery[] }> {
+/**
+ * The suite's receiver for THIS exercise — pinned port and public front
+ * honoured, plus a per-exercise nonce path (2.37.0). Four webhook files used to
+ * register the same byte-identical front URL, and a webhook subscription
+ * outlives the file that made it, so a sibling's leftovers arrived here
+ * indistinguishable from this run's deliveries.
+ */
+async function startReceiver(): Promise<ScopedReceiver & { deliveries: Delivery[] }> {
   const deliveries: Delivery[] = [];
-  const server = createServer((request: IncomingMessage, res: ServerResponse) => {
-    const chunks: Buffer[] = [];
-    request.on('data', (c: Buffer) => chunks.push(c));
-    request.on('end', () => { deliveries.push({ body: Buffer.concat(chunks).toString('utf8'), headers: request.headers }); res.writeHead(204); res.end(); });
+  const rx = await startScopedReceiver((hit, res) => {
+    deliveries.push({ body: hit.body, headers: hit.headers });
+    res.writeHead(204);
+    res.end();
   });
-  const pinned = Number(process.env['OPENWOP_WEBHOOK_RECEIVER_PORT'] ?? '');
-  const bindPort = Number.isInteger(pinned) && pinned > 0 && pinned < 65536 ? pinned : 0;
-  const binding = receiverBinding();
-  await new Promise<void>((resolve) => server.listen(bindPort, binding.bind, () => resolve()));
-  const addr = server.address();
-  return { server, url: `http://${binding.advertise}:${typeof addr === 'object' && addr ? addr.port : 0}/hook`, deliveries };
+  return { ...rx, deliveries };
 }
 const header = (d: Delivery, name: string): string | undefined => { const v = d.headers[name]; return Array.isArray(v) ? v[0] : v; };
 
@@ -89,13 +89,21 @@ describe('v2 bound-id kinds (identity.md §5, RFC 0187 §A)', () => {
   it('subscriptionId: POST /webhooks mints a bound webhookId, the projected segment is accepted, and a foreign tenant segment is refused 403', async () => {
     if (!(await v2Discovery())) return softSkip('blocked', 'v2 discovery unreachable');
     if (!(await gateFamily('webhooks'))) return softSkip('inapplicable', 'webhooks family not advertised — no subscription to mint (gate recorded under openwop.family.webhooks)');
-    // Route the mint through `resolveRegistrationUrl` so an operator who sets
+    // Route the mint through the operator's front so an operator who sets
     // OPENWOP_WEBHOOK_RECEIVER_URL actually gets a reachable registration here.
-    // Before this, the blocked note TOLD them to set that variable and this file
+    // Before that, the blocked note TOLD them to set the variable and this file
     // never read it — inoperative advice in a suite where one blocked row denies
     // every claimed profile (RFC 0168 §E.1). The fallback stays a reserved
     // `.invalid` host: this leg only needs the mint, never a delivery.
-    const registration = resolveRegistrationUrl('https://subscriber.invalid/hook');
+    //
+    // `unservedDestination`, not `resolveRegistrationUrl` (2.37.0): the latter
+    // returns the front VERBATIM, so this subscription had the same identity as
+    // every other exercise's, and it is live from the 201 until the DELETE
+    // below. Anything the host fanned out in that window landed on whichever
+    // listener held the pinned port and was read as THAT exercise's traffic. The
+    // nonce is served by nobody on purpose — this leg wants no delivery, and a
+    // delivery to it is now answered 404 instead of absorbed.
+    const registration = unservedDestination('https://subscriber.invalid/hook');
     const reg = await http(() => driver.post('/webhooks', { url: registration.url, events: ['run.completed'] }));
     if (reg === null) return softSkip('blocked', 'POST /webhooks unreachable (fetch failed)');
     if (reg.status === 400 && readErrorCode(reg.json) === 'webhook_url_rejected') return softSkip('blocked', `host SSRF guard rejected the registration URL ${registration.url}${registration.tunnelled ? ' (from OPENWOP_WEBHOOK_RECEIVER_URL)' : ' — set OPENWOP_WEBHOOK_RECEIVER_URL to a public https receiver, which THIS leg now honours'}`);
@@ -136,11 +144,14 @@ describe('v2 bound-id kinds (identity.md §5, RFC 0187 §A)', () => {
     const rx = await startReceiver();
     let webhookId: string | null = null;
     try {
-      const registration = resolveRegistrationUrl(rx.url);
-      const reg = await http(() => driver.post('/webhooks', { url: registration.url, events: ['run.completed'] }));
+      // `rx.url` is already this exercise's destination — the front (when
+      // wired) plus its nonce path — so it is not run through
+      // `resolveRegistrationUrl`, which returns the front VERBATIM and would
+      // drop the path that makes the subscription ours.
+      const reg = await http(() => driver.post('/webhooks', { url: rx.url, events: ['run.completed'] }));
       if (reg === null) return softSkip('blocked', 'POST /webhooks unreachable (fetch failed)');
       if (reg.status === 400 && readErrorCode(reg.json) === 'webhook_url_rejected') {
-        return softSkip('blocked', `host SSRF guard rejected the suite receiver ${registration.url} (webhooks.md §Egress requires it) — set OPENWOP_WEBHOOK_RECEIVER_URL to a public https front for the receiver to witness what the host emits`);
+        return softSkip('blocked', `host SSRF guard rejected the suite receiver ${rx.url} (webhooks.md §Egress requires it) — set OPENWOP_WEBHOOK_RECEIVER_URL to a public https front for the receiver to witness what the host emits`);
       }
       const minted = (reg.json as { webhookId?: unknown } | null)?.webhookId;
       if (reg.status !== 201 || typeof minted !== 'string') return softSkip('blocked', `POST /webhooks answered ${reg.status} without a webhookId — the mint leg above owns that obligation; this leg needs an id to compare`);
@@ -155,7 +166,7 @@ describe('v2 bound-id kinds (identity.md §5, RFC 0187 §A)', () => {
       const deadline = Date.now() + scaledTimeoutMs(20_000);
       while (ours().length === 0 && Date.now() < deadline) await new Promise((r) => setTimeout(r, 250));
       const delivery = ours()[0];
-      if (delivery === undefined) return softSkip('blocked', `no delivery for run ${runId} reached the suite receiver within ${scaledTimeoutMs(20_000)}ms — what the host emits was not observed`);
+      if (delivery === undefined) return softSkip('blocked', `no delivery for run ${runId} reached the suite receiver within ${scaledTimeoutMs(20_000)}ms — what the host emits was not observed. ${noDeliveryCause(rx, `run.completed delivery for run ${runId}`)}`);
       expect(
         header(delivery, 'openwop-webhook-id'),
         req(WEBHOOK_EMITTED, 'webhooks.md §Headers (RFC 0187 §A.1)', `the delivery's OpenWOP-Webhook-Id MUST equal the tenant-bound webhookId the host minted (${minted}) — a subscriber identifies its deliveries by the header, not by the 201 it received once`),
@@ -172,7 +183,9 @@ describe('v2 bound-id kinds (identity.md §5, RFC 0187 §A)', () => {
       }
     } finally {
       if (webhookId !== null) await http(() => driver.delete(`/webhooks/${projectBoundId(webhookId as string)}`));
-      await new Promise<void>((ok) => rx.server.close(() => ok()));
+      // Closed through the receiver: `close()` also drops this exercise's
+      // nonce from the front-mux registry.
+      await rx.close();
     }
   });
 

@@ -23,6 +23,7 @@
  * @see spec/v1/auth-profiles.md §"Subject linking (SAML ⟷ SCIM)"
  */
 
+import { randomBytes } from 'node:crypto';
 import { describe, it, expect } from 'vitest';
 import { softSkip, seamAbsent } from '../lib/soft-skip.js';
 import { driver } from '../lib/driver.js';
@@ -109,7 +110,23 @@ describe('auth-subject-link: cross-lane deactivation (RFC 0159 §A.3 — opt-in)
     if (!idpUrl || !scimUrl) return softSkip('inapplicable', 'opt-in: SAML IdP and/or SCIM endpoint not provided');
 
     // 1. Provision a SCIM user carrying an opaque, IdP-stable externalId.
-    const externalId = 'idp-op-8f3a';
+    //
+    // MINTED PER EXERCISE (2.37.0). This was the literal `'idp-op-8f3a'`, and
+    // the SCIM directory it is provisioned into is the OPERATOR's
+    // (`OPENWOP_TEST_SCIM_URL`) — durable state outside this process. Step 3
+    // DEACTIVATES that user, and deactivation is the whole point of the leg, so
+    // the second run of this file against the same directory provisions an
+    // externalId that is already present and already deactivated. Step 2 then
+    // asserts "a valid linked SAML assertion authenticates before deactivation"
+    // against a subject the host is CORRECT to refuse: cold directory passes,
+    // warm directory fails, nothing about the host having changed. Same shape as
+    // the shared effect identity in `lib/effect-receiver.ts` (openwop#1513) and
+    // the fixed trigger-bridge dedup key.
+    //
+    // Unwitnessed: both opt-in variables are unset in every cut this suite has
+    // run, so the leg has never executed and the collision has never fired. It
+    // is read off the code, and the fix costs nothing if the reading is wrong.
+    const externalId = `idp-op-${randomBytes(6).toString('hex')}`;
     const provision = await driver.post('/v1/host/sample/auth/scim/provision', {
       scimUrl,
       op: 'create-user',

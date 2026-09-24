@@ -142,9 +142,9 @@
   },
   "versions": {
     "source": "conformance/package.json, CHANGELOG.md",
-    "conformanceSuite": "2.37.0",
-    "corpusRelease": "2.36.0",
-    "corpusReleaseDate": "2026-09-23"
+    "conformanceSuite": "2.38.0",
+    "corpusRelease": "2.37.1",
+    "corpusReleaseDate": "2026-09-24"
   },
   "risks": {
     "source": "RFCS/registers/*.risks.md + RFCS/*.risks.md (RFC 0166 tokens)",

@@ -103,14 +103,14 @@
  */
 
 import { afterEach, describe, expect, it } from 'vitest';
-import { softSkip } from '../lib/soft-skip.js';
+import { blockedDespiteAssertions, softSkip } from '../lib/soft-skip.js';
 import { createHmac } from 'node:crypto';
-import { createServer, type IncomingMessage, type Server, type ServerResponse } from 'node:http';
 import { driver } from '../lib/driver.js';
 import { discoveryFamilies } from '../lib/discovery-capabilities.js';
 import { pollUntilTerminal } from '../lib/polling.js';
 import { isFixtureAdvertised } from '../lib/fixtures.js';
-import { discoverOwnedTenant, receiverBinding, resolveRegistrationUrl } from '../lib/webhook-receiver.js';
+import { discoverOwnedTenant } from '../lib/webhook-receiver.js';
+import { absenceIsUnmeasured, noDeliveryCause, startScopedReceiver, type ScopedReceiver } from '../lib/scoped-receiver.js';
 import { req } from '../lib/requirement-ids.js';
 
 interface DeliveredRequest {
@@ -118,44 +118,43 @@ interface DeliveredRequest {
   readonly body: string;
 }
 
-async function startReceiver(): Promise<{ server: Server; url: string; received: DeliveredRequest[] }> {
+async function startReceiver(): Promise<ScopedReceiver & { received: DeliveredRequest[] }> {
   const received: DeliveredRequest[] = [];
-  const server = createServer((reqBody: IncomingMessage, res: ServerResponse) => {
-    const chunks: Buffer[] = [];
-    reqBody.on('data', (c: Buffer) => chunks.push(c));
-    reqBody.on('end', () => {
-      const body = Buffer.concat(chunks).toString('utf8');
-      const headers: Record<string, string> = {};
-      for (const [k, v] of Object.entries(reqBody.headers)) {
-        if (typeof v === 'string') headers[k.toLowerCase()] = v;
-        else if (Array.isArray(v)) headers[k.toLowerCase()] = v.join(',');
-      }
-      received.push({ headers, body });
-      res.writeHead(204);
-      res.end();
-    });
-  });
-  // Port 0 (ephemeral) by default — nothing outside this process needs to find
-  // it. But OPENWOP_WEBHOOK_RECEIVER_URL fronts THIS receiver through a tunnel,
-  // and a tunnel has to be pointed at a port the operator knows in ADVANCE. An
+  // `startScopedReceiver` (2.37.0) supplies the listening, the pinned-port
+  // binding described below, the public front, AND a nonce path that makes this
+  // exercise's destination its own. Four webhook files registered the SAME
+  // byte-identical front URL before that, and a webhook subscription outlives
+  // the file that made it — so a sibling's retries (one of those files answers
+  // 500 by design) arrived here indistinguishable from this run's deliveries.
+  //
+  // The pinned port is still honoured, and still for the reason it was added:
+  // OPENWOP_WEBHOOK_RECEIVER_URL fronts THIS receiver through a tunnel, and a
+  // tunnel has to be pointed at a port the operator knows in ADVANCE. An
   // ephemeral port makes that variable unusable by anyone not reading the port
   // out of a running process — a gap found by standing up a real TLS front and
-  // trying to use the feature, not by reading the code. OPENWOP_WEBHOOK_RECEIVER_PORT
-  // pins it so `ngrok http <port>` (or a proxy) has a stable target.
-  const pinned = Number(process.env['OPENWOP_WEBHOOK_RECEIVER_PORT'] ?? '');
-  const bindPort = Number.isInteger(pinned) && pinned > 0 && pinned < 65536 ? pinned : 0;
-  const binding = receiverBinding();
-  await new Promise<void>((resolve) => server.listen(bindPort, binding.bind, () => resolve()));
-  const addr = server.address();
-  if (typeof addr !== 'object' || addr === null) throw new Error('receiver address unavailable');
-  return { server, url: `http://${binding.advertise}:${addr.port}/`, received };
+  // trying to use the feature, not by reading the code.
+  const rx = await startScopedReceiver((hit, res) => {
+    const headers: Record<string, string> = {};
+    for (const [k, v] of Object.entries(hit.headers)) {
+      if (typeof v === 'string') headers[k.toLowerCase()] = v;
+      else if (Array.isArray(v)) headers[k.toLowerCase()] = v.join(',');
+    }
+    received.push({ headers, body: hit.body });
+    res.writeHead(204);
+    res.end();
+  });
+  return { ...rx, received };
 }
 
-let activeServer: Server | null = null;
+// Closed through the receiver: `close()` also drops this exercise's nonce from
+// the front-mux registry, so a delivery that arrives after the leg has finished
+// is answered 404 rather than handed to the next exercise's recorder.
+let activeServer: ScopedReceiver | null = null;
 afterEach(async () => {
   if (activeServer) {
-    await new Promise<void>((resolve) => activeServer!.close(() => resolve()));
+    const rx = activeServer;
     activeServer = null;
+    await rx.close();
   }
 });
 
@@ -179,7 +178,7 @@ describe('webhook-signed-delivery: end-to-end HMAC v1', () => {
     }
 
     const receiver = await startReceiver();
-    activeServer = receiver.server;
+    activeServer = receiver;
 
     // Register the webhook.
     // webhooks.md §Register: `events` + `tenantId` are REQUIRED (empty events → 400).
@@ -190,9 +189,12 @@ describe('webhook-signed-delivery: end-to-end HMAC v1', () => {
     // tenantId is 403'd by a host that scopes subscriptions by membership
     // (RFC 0093). Single-tenant hosts return undefined ⇒ omit tenantId.
     const ownedTenant = await discoverOwnedTenant(driver);
-    const registration = resolveRegistrationUrl(receiver.url);
+    // `receiver.url` is this exercise's own destination — the public front (when
+    // wired) plus this receiver's nonce path. It is no longer run through
+    // `resolveRegistrationUrl`, which returned the front VERBATIM and so dropped
+    // the path that makes the subscription ours.
     const reg = await driver.post('/v1/webhooks', {
-      url: registration.url,
+      url: receiver.url,
       events: ['run.completed'],
       ...(ownedTenant ? { tenantId: ownedTenant } : {}),
     });
@@ -212,7 +214,7 @@ describe('webhook-signed-delivery: end-to-end HMAC v1', () => {
     if (reg.status === 400) {
       const body = reg.json as { error?: string };
       if (body.error === 'webhook_url_rejected') {
-        if (!registration.tunnelled) {
+        if (!receiver.tunnelled) {
           // eslint-disable-next-line no-console
           console.warn(
             '[webhook-signed-delivery] host SSRF guard rejected the loopback receiver; ' +
@@ -222,7 +224,7 @@ describe('webhook-signed-delivery: end-to-end HMAC v1', () => {
           return softSkip('blocked', 'precondition not met — `body.error === \'webhook_url_rejected\'` returned early (seam, prior step, or fixture unavailable)');
         }
         expect.fail(
-          `host rejected the operator-supplied public https receiver (${registration.url}) with ` +
+          `host rejected the operator-supplied public https receiver (${receiver.url}) with ` +
             'webhook_url_rejected. A public https destination is legitimate under ' +
             'webhooks.md §"SSRF protection" and RFC 0093 §"Delivery-time egress validation"; ' +
             'rejecting it is a host defect, not an unmet precondition.',
@@ -307,15 +309,26 @@ describe('webhook-signed-delivery: end-to-end HMAC v1', () => {
     // has a subscriber; if nothing arrived HERE, the delivery went somewhere
     // this process cannot see and every assertion below it would be vacuous.
     // It fails — it must never soft-skip.
+    //
+    // The ONE exception, and it is not a softening (2.37.0): when other traffic
+    // DID reach this listener, the path from the host to this process demonstrably
+    // works, so a zero is the absence of this exercise's IDENTITY and not of
+    // delivery — unmeasured, not unmet. That is recorded `blocked`, which denies
+    // certification exactly as a failure does (RFC 0168 §E.1), so the mis-wired
+    // front this assertion guards against still cannot read as a pass; a
+    // mis-wired front produces no traffic here at all and still fails below.
+    if (ourDeliveries.length === 0 && absenceIsUnmeasured(receiver)) {
+      return blockedDespiteAssertions(noDeliveryCause(receiver, 'run event for this run'));
+    }
     expect(ourDeliveries.length, req('openwop.it.webhook-signed-delivery.host-posts-run-events-to-subscriber-with-valid-x-openwop-signature', 
       'webhooks.md §"Delivery"',
-      registration.tunnelled
+      receiver.tunnelled
         ? 'host MUST POST at least one event for THIS run to the registered subscriber. ' +
           'Registration was accepted, so zero deliveries observed on the local receiver means ' +
           'either the host did not deliver, or OPENWOP_WEBHOOK_RECEIVER_URL does not actually ' +
-          'front this process. Both are failures; neither is a skip.'
+          `front this process. Both are failures; neither is a skip. ${noDeliveryCause(receiver, 'run event for this run')}`
         : 'host MUST POST at least one event for THIS run to a registered subscriber within '
-          + `${DELIVERY_DEADLINE_MS}ms of run.completed`,
+          + `${DELIVERY_DEADLINE_MS}ms of run.completed. ${noDeliveryCause(receiver, 'run event for this run')}`,
     )).toBeGreaterThan(0);
 
     // Validate the FIRST delivery's signature contract. Other deliveries
@@ -418,7 +431,7 @@ describe('webhook-signed-delivery: end-to-end HMAC v1', () => {
     }
 
     const receiver = await startReceiver();
-    activeServer = receiver.server;
+    activeServer = receiver;
 
     const ownedTenant = await discoverOwnedTenant(driver);
     const reg = await driver.post('/v1/webhooks', {
