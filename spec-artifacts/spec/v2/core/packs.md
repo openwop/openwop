@@ -64,7 +64,7 @@ There is one signing scheme. `signing` on a version manifest (`schemas/v2/regist
 
 | Field | Rule |
 | --- | --- |
-| `scheme` | MUST be `ed25519-canonical-json`: a detached 64-byte Ed25519 signature over the canonical-JSON `pack.json` inside a deterministic tarball |
+| `scheme` | MUST be `ed25519-canonical-json`: a detached 64-byte Ed25519 signature over the RFC 8785 (JCS) bytes of `pack.json` inside a deterministic tarball; the input MUST satisfy `conformance.md` §"Canonical JSON" (RFC 0212) |
 | `keyId` | the signing key id; `publicKeyRef` does not exist |
 | `method` | does not exist; a manifest carrying it fails validation |
 

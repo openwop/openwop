@@ -46,6 +46,7 @@ import { deriveRung, emittedByNewerSuite, type RowEvidence } from './lib/durabil
 import { deriveRequirementDispositions } from './lib/scenario-disposition.js';
 import { scrubEvidence, evidenceSecretsFromEnv, verifyBundleV2 } from './lib/certification-bundle-verify.js';
 import { publicKeyFromPrivate, signBundleV3, verifierSign, verifyBundleV3, witnessDigest, type BundleV3, type BundleV3Requirement } from './lib/certification-bundle-v3.js';
+import { canonicalJSON, parseIJson } from './lib/jcs.js';
 import {
   deriveProfiles,
   isCoreStandard,
@@ -330,19 +331,6 @@ function suiteVersion(): string {
   return typeof pkg.version === 'string' ? pkg.version : '0.0.0';
 }
 
-/**
- * Deterministic canonical-JSON serialization (RFC 8785 spirit): object keys
- * sorted lexicographically at every level, arrays preserved in order. Used to
- * compute `discovery.sha256` so a verifier can re-derive the same digest from
- * a live `/.well-known/openwop` fetch regardless of incidental key order.
- */
-function canonicalJSON(value: unknown): string {
-  if (value === null || typeof value !== 'object') return JSON.stringify(value);
-  if (Array.isArray(value)) return `[${value.map(canonicalJSON).join(',')}]`;
-  const obj = value as Record<string, unknown>;
-  const keys = Object.keys(obj).sort();
-  return `{${keys.map((k) => `${JSON.stringify(k)}:${canonicalJSON(obj[k])}`).join(',')}}`;
-}
 
 /**
  * The full set of profiles a discovery document derives — the closed
@@ -503,7 +491,11 @@ async function runCertify(args: ParsedArgs, baseUrl: string, apiKey: string): Pr
       );
       process.exit(2);
     }
-    document = (await resp.json()) as DiscoveryPayload;
+    // RFC 0212 §B — read the TEXT through the I-JSON parser: `resp.json()`
+    // keeps the last of two duplicate names and rounds an out-of-range integer,
+    // and `discovery.sha256` would then attest to a document other verifiers
+    // read differently.
+    document = parseIJson(await resp.text()) as DiscoveryPayload;
   } catch (err) {
     process.stderr.write(
       `openwop-conformance --certify: failed to fetch ${discoveryUrl}: ${String(err)}\n`,
@@ -939,9 +931,9 @@ async function main(): Promise<never> {
     }
     let bundle: BundleV3;
     try {
-      bundle = JSON.parse(readFileSync(args.verifyPath, 'utf8')) as BundleV3;
+      bundle = parseIJson(readFileSync(args.verifyPath, 'utf8')) as BundleV3;
     } catch (e) {
-      process.stderr.write(`openwop-conformance --verify: ${args.verifyPath} is not readable JSON — ${(e as Error).message}\n`);
+      process.stderr.write(`openwop-conformance --verify: ${args.verifyPath} is not readable I-JSON (RFC 0212 §B) — ${(e as Error).message}\n`);
       process.exit(3);
     }
     const hostKey = args.verifyHostKeyPath !== undefined ? readFileSync(args.verifyHostKeyPath, 'utf8') : undefined;

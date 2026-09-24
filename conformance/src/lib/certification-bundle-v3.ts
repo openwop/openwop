@@ -21,6 +21,7 @@ import { createHash, createPrivateKey, createPublicKey, sign as edSign, verify a
 import { profileDerivable, type DiscoveryPayload } from './profiles.js';
 import { checkRungClaim, type DurabilityRung, type RowEvidence } from './durability-evidence.js';
 import { profilesDeniedByObservedRelaxation, profilesRelaxedBy, v2RegistryAvailable } from './v2-profiles.js';
+import { canonicalJSON, codeUnitCompare, JcsRefusal } from './jcs.js';
 
 export type BundleV3Result = 'executed-pass' | 'executed-fail' | 'skipped' | 'inapplicable' | 'blocked';
 
@@ -78,14 +79,12 @@ export interface BundleV3 {
 
 export const SIGNATURE_OVER = ['witnessSha256', 'host.build', 'suite.version', 'discovery.sha256'] as const;
 
-/** Deterministic JSON: keys sorted at every level, no whitespace. */
-export function canonicalJSON(value: unknown): string {
-  if (Array.isArray(value)) return `[${value.map(canonicalJSON).join(',')}]`;
-  if (value !== null && typeof value === 'object') {
-    return `{${Object.keys(value as Record<string, unknown>).sort().map((k) => `${JSON.stringify(k)}:${canonicalJSON((value as Record<string, unknown>)[k])}`).join(',')}}`;
-  }
-  return JSON.stringify(value);
-}
+/**
+ * RFC 0212 §A — the bytes every attestation and digest here covers are RFC 8785
+ * (JCS), and a non-I-JSON value is refused, never coerced. Re-exported so
+ * existing importers keep one name for one algorithm.
+ */
+export { canonicalJSON } from './jcs.js';
 
 /**
  * RFC 0148 §C — the digest over the reporter record (the requirement rows),
@@ -100,9 +99,16 @@ export function canonicalJSON(value: unknown): string {
  * committed bundles digest unchanged, pinned in durability-evidence.test.ts),
  * and `{ rows, relaxations }` otherwise. An older verifier fails closed on a
  * 2.35.0 bundle that declares relaxations — `witness-digest`, never a pass.
+ *
+ * RFC 0212 §C — rows sort by `id` in UTF-16 code-unit order. This was
+ * `localeCompare` in the process default locale: a bundle cut on a machine
+ * whose locale is Czech, Slovak, Lithuanian or Hawaiian digested differently
+ * from the same bundle anywhere else (Czech sorts `ch` after `h`). Every
+ * committed bundle's ids are `[a-z0-9.-]`, where the two orders coincide, so no
+ * stored digest changes (v2-bundle-witness-preimage.test.ts pins that).
  */
 export function witnessDigest(rows: readonly BundleV3Requirement[], relaxations?: readonly BundleV3Relaxation[]): string {
-  const canonicalRows = [...rows].sort((a, b) => a.id.localeCompare(b.id)).map((r) => ({ id: r.id, scenario: r.scenario, result: r.result, ...(r.assertions === undefined ? {} : { assertions: r.assertions }), ...(r.detail === undefined ? {} : { detail: r.detail }),
+  const canonicalRows = [...rows].sort((a, b) => codeUnitCompare(a.id, b.id)).map((r) => ({ id: r.id, scenario: r.scenario, result: r.result, ...(r.assertions === undefined ? {} : { assertions: r.assertions }), ...(r.detail === undefined ? {} : { detail: r.detail }),
     // ONLY WHEN PRESENT: every bundle cut before 2.34.0 has no `evidence` and digests byte-identically.
     ...(r.evidence === undefined ? {} : { evidence: r.evidence }) }));
   const preimage = relaxations !== undefined && relaxations.length > 0 ? { rows: canonicalRows, relaxations } : canonicalRows;
@@ -184,6 +190,21 @@ export function optedOutFromRows(rows: ReadonlyArray<{ readonly id: string; read
   return [...names].sort();
 }
 
+/**
+ * RFC 0212 §B — a verifier that meets non-I-JSON in a value it must
+ * re-canonicalize MUST fail verification. The canonicalizer throws; a verifier
+ * returns a verdict, so the refusal becomes a rejection of the named kind rather
+ * than an exception out of `verifyBundleV3` (a library caller that parsed the
+ * bundle with `JSON.parse` can still hand it a lone surrogate).
+ */
+function refusedAs<T>(rejections: V3Rejection[], kind: string, what: string, fn: () => T): T | undefined {
+  try { return fn(); } catch (e) {
+    if (!(e instanceof JcsRefusal)) throw e;
+    rejections.push({ kind, detail: `${what} is not I-JSON, so it has no canonical bytes (RFC 0212 §B): ${e.message}` });
+    return undefined;
+  }
+}
+
 export function verifyBundleV3(bundle: BundleV3, opts: VerifyV3Options = {}): V3Verdict {
   const rejections: V3Rejection[] = [];
   if (bundle.bundleVersion !== '3') rejections.push({ kind: 'not-v3', detail: `bundleVersion is ${JSON.stringify(bundle.bundleVersion)}, expected "3"` });
@@ -198,8 +219,8 @@ export function verifyBundleV3(bundle: BundleV3, opts: VerifyV3Options = {}): V3
   const count = (d: BundleV3Result): number => rows.filter((r) => r.result === d).length;
   const expected = { executedPass: count('executed-pass'), executedFail: count('executed-fail'), skipped: count('skipped'), inapplicable: count('inapplicable'), blocked: count('blocked') };
   for (const k of Object.keys(expected) as (keyof typeof expected)[]) if (bundle.results?.totals?.[k] !== expected[k]) rejections.push({ kind: 'totals-mismatch', detail: `totals.${k} is ${String(bundle.results?.totals?.[k])} but the rows count ${expected[k]}` });
-  const digest = witnessDigest(rows, bundle.host?.relaxations);
-  if (bundle.witnessSha256 !== digest) rejections.push({ kind: 'witness-digest', detail: `witnessSha256 ${String(bundle.witnessSha256).slice(0, 12)} does not equal the digest of the rows and declared relaxations (${digest.slice(0, 12)})` });
+  const digest = refusedAs(rejections, 'witness-digest', 'the rows or declared relaxations', () => witnessDigest(rows, bundle.host?.relaxations));
+  if (digest !== undefined && bundle.witnessSha256 !== digest) rejections.push({ kind: 'witness-digest', detail: `witnessSha256 ${String(bundle.witnessSha256).slice(0, 12)} does not equal the digest of the rows and declared relaxations (${digest.slice(0, 12)})` });
   const assertions = rows.reduce((n, r) => n + (r.assertions ?? 0), 0);
   if (bundle.assertionCount !== assertions) rejections.push({ kind: 'assertion-count', detail: `assertionCount is ${String(bundle.assertionCount)} but the rows sum to ${assertions}` });
   const nonPass = rows.filter((r) => r.result !== 'executed-pass');
@@ -213,8 +234,9 @@ export function verifyBundleV3(bundle: BundleV3, opts: VerifyV3Options = {}): V3
   else if (JSON.stringify(sig.over) !== JSON.stringify(SIGNATURE_OVER)) rejections.push({ kind: 'signature-over', detail: `signature.over must be ${JSON.stringify(SIGNATURE_OVER)}` });
   else if (opts.hostPublicKeyPem) {
     const key: KeyObject = createPublicKey(opts.hostPublicKeyPem);
-    signatureVerified = edVerify(null, attestationPayload(bundle), key, fromBase64url(sig.sig));
-    if (!signatureVerified) rejections.push({ kind: 'signature-invalid', detail: 'the attestation does not verify under the host key' });
+    const payload = refusedAs(rejections, 'signature-invalid', 'the attested members', () => attestationPayload(bundle));
+    signatureVerified = payload !== undefined && edVerify(null, payload, key, fromBase64url(sig.sig));
+    if (payload !== undefined && !signatureVerified) rejections.push({ kind: 'signature-invalid', detail: 'the attestation does not verify under the host key' });
   }
   // Independent tier
   let verifierSignatureVerified = false;
@@ -224,8 +246,9 @@ export function verifyBundleV3(bundle: BundleV3, opts: VerifyV3Options = {}): V3
     if (!vs || !vs.keyId || !vs.sig) rejections.push({ kind: 'independent-unsigned', detail: 'evidenceTier independent requires a verifierSignature (RFC 0168 §E.2)' });
     else if (vs.keyId === sig?.keyId || vs.keyId === bundle.host?.signingKeyId) rejections.push({ kind: 'independent-self-signed', detail: 'the verifier key must be distinct from the host key (RFC 0148 R5)' });
     else if (opts.verifierPublicKeyPem) {
-      verifierSignatureVerified = edVerify(null, attestationPayload(bundle), createPublicKey(opts.verifierPublicKeyPem), fromBase64url(vs.sig));
-      if (!verifierSignatureVerified) rejections.push({ kind: 'verifier-signature-invalid', detail: 'the verifier attestation does not verify' });
+      const payload = refusedAs(rejections, 'verifier-signature-invalid', 'the attested members', () => attestationPayload(bundle));
+      verifierSignatureVerified = payload !== undefined && edVerify(null, payload, createPublicKey(opts.verifierPublicKeyPem), fromBase64url(vs.sig));
+      if (payload !== undefined && !verifierSignatureVerified) rejections.push({ kind: 'verifier-signature-invalid', detail: 'the verifier attestation does not verify' });
     } else rejections.push({ kind: 'independent-unverifiable', detail: 'an independent claim needs the verifier public key to verify; refused, not assumed' });
   }
   // Relaxations: a relaxed obligation's profile cannot certify (RFC 0173 §A.2).
@@ -263,8 +286,10 @@ export function verifyBundleV3(bundle: BundleV3, opts: VerifyV3Options = {}): V3
   const document = bundle.discovery?.document;
   let derivabilityChecked = false;
   if (document !== undefined) {
-    const digest = createHash('sha256').update(canonicalJSON(document)).digest('hex');
-    if (digest !== bundle.discovery?.sha256) {
+    const digest = refusedAs(rejections, 'discovery-digest', 'discovery.document', () => createHash('sha256').update(canonicalJSON(document)).digest('hex'));
+    if (digest === undefined) {
+      // Already rejected as non-I-JSON; nothing derivable from a document with no canonical bytes.
+    } else if (digest !== bundle.discovery?.sha256) {
       rejections.push({ kind: 'discovery-digest', detail: `discovery.document hashes to ${digest.slice(0, 12)} but discovery.sha256 is ${String(bundle.discovery?.sha256).slice(0, 12)} — the captured document is not the one the signature attests to` });
     } else {
       // WHICH catalog decides derivability is the bundle's own `targetMajor`,
