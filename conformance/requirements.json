@@ -27114,7 +27114,7 @@
     {
       "id": "openwop.it.v2-a2a-push-delivery.b-a-3xx-from-the-destination-is-a-failed-delivery-the-redirect-target-receives-n",
       "file": "v2-a2a-push-delivery.test.ts",
-      "line": 169,
+      "line": 170,
       "title": "§B — a 3xx from the destination is a failed delivery: the redirect target receives nothing, credential or not",
       "explicitId": null,
       "citations": [
@@ -27138,7 +27138,7 @@
     {
       "id": "openwop.it.v2-a2a-push-delivery.a-after-delete-no-further-push-reaches-that-destination-while-a-live-config-on-t",
       "file": "v2-a2a-push-delivery.test.ts",
-      "line": 190,
+      "line": 192,
       "title": "§A — after Delete no further push reaches that destination, while a live config on the same task still receives",
       "explicitId": null,
       "citations": [
@@ -27167,7 +27167,7 @@
     {
       "id": "openwop.it.v2-a2a-push-delivery.d-a-replay-fork-of-a-pushed-run-delivers-nothing-to-the-source-run-s-destination",
       "file": "v2-a2a-push-delivery.test.ts",
-      "line": 215,
+      "line": 218,
       "title": "§D — a replay fork of a pushed run delivers nothing to the source run's destination",
       "explicitId": null,
       "citations": [
