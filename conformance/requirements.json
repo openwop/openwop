@@ -41134,7 +41134,7 @@
     {
       "id": "openwop.it.v2-lane-exp-only-schema.the-gate-refuses-an-enum-member-with-no-2-2-row-and-a-suite-map-the-table-does-n",
       "file": "v2-lane-exp-only-schema.test.ts",
-      "line": 117,
+      "line": 127,
       "title": "the gate refuses an enum member with no §2.2 row, and a suite map the table does not license",
       "explicitId": null,
       "citations": [

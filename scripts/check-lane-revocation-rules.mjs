@@ -97,6 +97,26 @@ if (table) {
     fail(`the \`revocation\` enum is not the union of §2.2's rules — in the schema only: [${only(fRules, union).join(', ') || 'none'}]; in the table only: [${only(union, fRules).join(', ') || 'none'}]. A member the table names for no lane is a value no host may legally advertise anywhere; a rule the table names that the schema lacks is unadvertisable.`);
   }
 
+  // 4. `revocation` is optional on EXACTLY the lanes whose row reads "—".
+  // identity.md §2.2 also says a host MUST NOT advertise a value its lane's row
+  // does not list; a schema that required `revocation` on a "—" lane made that
+  // lane unsatisfiable against both at once (the `anonymous` lane, until
+  // 2026-09-24). Read statically: a top-level `required` naming it binds every
+  // lane; otherwise an `allOf` member `{ if: lane ∈ X, else: required
+  // [revocation] }` makes it optional on exactly X.
+  const items = facet.properties?.lanes?.items ?? {};
+  let optional = [];
+  if (!(items.required ?? []).includes('revocation')) {
+    const member = (items.allOf ?? []).find((m) => (m?.else?.required ?? []).includes('revocation') && m?.if?.properties?.lane);
+    if (!member) fail('auth.schema.json: `revocation` is required on no lane at all — the lanes §2.2 gives a rule would stop being bound to advertise one');
+    else {
+      const l = member.if.properties.lane;
+      optional = (l.const !== undefined ? [l.const] : l.enum ?? []).slice().sort();
+    }
+  }
+  const dash = Object.entries(table).filter(([, r]) => r === null).map(([l]) => l).sort();
+  if (JSON.stringify(optional) !== JSON.stringify(dash)) fail(`\`revocation\` is optional on [${optional.join(', ') || 'no lane'}] in auth.schema.json but §2.2's "—" rows are [${dash.join(', ') || 'none'}] — a "—" lane that must advertise a value cannot also advertise none, and a rule-bearing lane that may omit it states no latency`);
+
   // 3. the suite enforces the table, exactly
   if (suite) {
     for (const lane of new Set([...Object.keys(table), ...Object.keys(suite)])) {
