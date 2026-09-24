@@ -26976,7 +26976,7 @@
     {
       "id": "openwop.it.v2-a2ui-v09-surface.a-version-2-envelope-carrying-a-version-1-body-is-refused-the-positive-is-admitt",
       "file": "v2-a2ui-v09-surface.test.ts",
-      "line": 128,
+      "line": 129,
       "title": "a version-2 envelope carrying a version-1 body is refused; the positive is admitted; above the floor is refused; below it follows envelopeStrictness",
       "explicitId": "openwop.requirement.0209.version-selects-branch",
       "citations": [
@@ -27020,7 +27020,7 @@
     {
       "id": "openwop.it.v2-a2ui-v09-surface.no-first-createsurface-a-message-after-deletesurface-and-a-second-createsurface",
       "file": "v2-a2ui-v09-surface.test.ts",
-      "line": 154,
+      "line": 155,
       "title": "no first createSurface, a message after deleteSurface, and a second createSurface are each refused; the valid steps are admitted",
       "explicitId": "openwop.requirement.0209.fold-guarded",
       "citations": [
@@ -27034,7 +27034,7 @@
     {
       "id": "openwop.it.v2-a2ui-v09-surface.a-createsurface-catalogid-differing-from-the-payload-catalogid-is-refused",
       "file": "v2-a2ui-v09-surface.test.ts",
-      "line": 179,
+      "line": 180,
       "title": "a createSurface.catalogId differing from the payload catalogId is refused",
       "explicitId": "openwop.requirement.0209.catalog-equality",
       "citations": [
@@ -27052,7 +27052,7 @@
     {
       "id": "openwop.it.v2-a2ui-v09-surface.a-message-whose-surfaceid-differs-from-the-payload-surfaceid-is-refused",
       "file": "v2-a2ui-v09-surface.test.ts",
-      "line": 193,
+      "line": 194,
       "title": "a message whose surfaceId differs from the payload surfaceId is refused",
       "explicitId": "openwop.it.v2-a2ui-v09-surface.surface-id-equality",
       "citations": [
@@ -27070,7 +27070,7 @@
     {
       "id": "openwop.it.v2-a2ui-v09-surface.a-recorded-version-2-surface-is-returned-byte-equal-on-poll-and-carried-by-a-for",
       "file": "v2-a2ui-v09-surface.test.ts",
-      "line": 209,
+      "line": 210,
       "title": "a recorded version-2 surface is returned byte-equal on poll and carried by a fork at a later fromSeq",
       "explicitId": "openwop.it.v2-a2ui-v09-surface.recorded-as-recorded",
       "citations": [
@@ -27082,6 +27082,16 @@
         {
           "section": "RFC 0209 §C.11",
           "requirement": "the run's poll MUST return the recorded surface payload byte-equal — no surface is regenerated"
+        },
+        {
+          "section": "RFC 0209 §C.9",
+          "requirement": null,
+          "interpolated": true
+        },
+        {
+          "section": "api/seams-v2.yaml emitA2uiSurface",
+          "requirement": null,
+          "interpolated": true
         },
         {
           "section": "RFC 0209 §C.11",
@@ -27097,7 +27107,7 @@
     {
       "id": "openwop.it.v2-a2ui-v09-surface.a-version-1-surface-recorded-at-floor-1-is-returned-byte-equal-on-poll-and-carri",
       "file": "v2-a2ui-v09-surface.test.ts",
-      "line": 228,
+      "line": 237,
       "title": "a version-1 surface recorded at floor 1 is returned byte-equal on poll and carried by a fork",
       "explicitId": "openwop.requirement.0209.legacy-readable",
       "citations": [
@@ -27116,6 +27126,16 @@
           "interpolated": true
         },
         {
+          "section": "api/seams-v2.yaml emitA2uiSurface",
+          "requirement": null,
+          "interpolated": true
+        },
+        {
+          "section": "RFC 0209 §C.11",
+          "requirement": null,
+          "interpolated": true
+        },
+        {
           "section": "RFC 0209 §C.11",
           "requirement": "a fork at a later fromSeq MUST carry the version-1 surface unchanged"
         }
@@ -27124,7 +27144,7 @@
     {
       "id": "openwop.it.v2-a2ui-v09-surface.one-untrusted-update-taints-a-trusted-surface-a-later-trusted-update-does-not-la",
       "file": "v2-a2ui-v09-surface.test.ts",
-      "line": 247,
+      "line": 261,
       "title": "one untrusted update taints a trusted surface, a later trusted update does not launder it, and the approval does not advance; an all-trusted surface does",
       "explicitId": "openwop.requirement.0209.taint-sticky",
       "citations": [
