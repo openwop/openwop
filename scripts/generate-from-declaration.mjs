@@ -27,6 +27,7 @@ import { readFileSync, writeFileSync, existsSync, mkdirSync } from 'node:fs';
 import { join, dirname, resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { unversionManifestSpellings } from './v2-path-spellings.mjs';
+import { carriesUnspliceablePayload } from './v2-unspliceable.mjs';
 
 const ROOT = resolve(dirname(fileURLToPath(import.meta.url)), '..');
 const DECL = join(ROOT, 'spec', 'v2', 'declaration.json');
@@ -82,7 +83,7 @@ function metadataSchema(key) {
       // RFC 0168 §C.1: the seams are a versioned profile a host ADVERTISES; they are never a
       // capability flag. `lib/seams.ts` gates every seam-driven scenario on this exact value,
       // so the key has to exist in the closed root or the profile is unadvertisable.
-      const seeded = stripSupported(v1.properties.conformance);
+      const seeded = projectV1FacetSchema(v1.properties.conformance);
       return { ...seeded, additionalProperties: false, properties: { ...seeded.properties,
         seamsProfile: { const: 'openwop-conformance-seams-v2', description: 'RFC 0168 §C.1 — the host serves the conformance seams profile (api/seams-v2.yaml) at /conformance/seams/…. Absent means the seam-driven scenarios record `blocked`, never a pass.' } },
         'x-openwop-seeded-from': 'v1' };
@@ -98,7 +99,7 @@ function metadataSchema(key) {
       // generate-deprecation-annotations.mjs: both write this file, and these are
       // the first discovery-field rows sourced to schemas/v2/, so that ordering
       // had never been exercised and the two generators fought.
-      const seeded = stripSupported(v1.properties.observability);
+      const seeded = projectV1FacetSchema(v1.properties.observability);
       const ts = seeded.properties?.testSeams;
       return { ...seeded, additionalProperties: false, properties: { ...seeded.properties,
         ...(ts ? { testSeams: { ...ts, deprecated: true, 'x-openwop-remove-in': '3.0' } } : {}) },
@@ -108,7 +109,7 @@ function metadataSchema(key) {
     default: {
       const p = v1.properties[key];
       if (!p) throw new Error(`metadata key ${key} has no v1 property to seed from`);
-      const seeded = stripSupported(p);
+      const seeded = projectV1FacetSchema(p);
       if (seeded.type === 'object' && seeded.additionalProperties === undefined) seeded.additionalProperties = false; // closed until the owning child decides (configurable → C.4's schema in P3-B)
       return { ...seeded, 'x-openwop-seeded-from': 'v1' };
     }
@@ -174,12 +175,19 @@ const rewriteSupportedProse = (d) => {
   return out;
 };
 
-function stripSupported(schema) {
+// NOT the same contract as `stripSupportedFlag` in conformance/src/lib/v2-projection.ts,
+// and the two must not be merged. That one removes the retired `supported` flag and
+// nothing else. This one projects a seeded v1 facet SCHEMA into the closed v2 record's
+// facet schema: it also drops `tier`/`experimentalUntil` (absorbed by the record's
+// `status`/`until`), folds `supported`-gated if/then into unconditional `required`
+// (RFC 0192 §A), closes objects, and rewrites `supported` prose (RFC 0192 §B). It was
+// named `stripSupported` until 2.38.x; the shared name hid those differences.
+function projectV1FacetSchema(schema) {
   if (!schema || typeof schema !== 'object' || Array.isArray(schema)) return schema;
   const out = { ...schema };
   if (typeof out.description === 'string') out.description = rewriteSupportedProse(unversionManifestSpellings(out.description));
   if (out.properties) {
-    out.properties = Object.fromEntries(Object.entries(out.properties).filter(([k]) => !['supported', 'tier', 'experimentalUntil'].includes(k)).map(([k, v]) => [k, stripSupported(v)]));
+    out.properties = Object.fromEntries(Object.entries(out.properties).filter(([k]) => !['supported', 'tier', 'experimentalUntil'].includes(k)).map(([k, v]) => [k, projectV1FacetSchema(v)]));
   }
   if (Array.isArray(out.required)) { out.required = out.required.filter((k) => !['supported', 'tier', 'experimentalUntil'].includes(k)); if (!out.required.length) delete out.required; }
   // A conditional is deleted ONLY when it gates on `supported`, the field v2
@@ -217,29 +225,13 @@ function stripSupported(schema) {
   for (const k of ['allOf', 'anyOf', 'oneOf']) {
     if (!Array.isArray(out[k])) continue;
     for (const c of out[k]) if (gatesOnSupported(c)) foldSupportedGate(c);
-    const kept = out[k].filter((c) => !gatesOnSupported(c)).map((c) => stripSupported(c));
+    const kept = out[k].filter((c) => !gatesOnSupported(c)).map((c) => projectV1FacetSchema(c));
     if (kept.length) out[k] = kept; else delete out[k];
   }
   if (gatesOnSupported(out.if)) { foldSupportedGate(out); delete out.if; delete out.then; delete out.else; }
-  else { for (const k of ['if', 'then', 'else']) if (out[k]) out[k] = stripSupported(out[k]); }
+  else { for (const k of ['if', 'then', 'else']) if (out[k]) out[k] = projectV1FacetSchema(out[k]); }
   if (out.type === 'object' && out.additionalProperties === undefined) out.additionalProperties = false;
   return out;
-}
-
-// RFC 0193 §B — a v1 property carries payload the family record cannot splice
-// when it has no `properties` of its own but is not merely a presence flag.
-// `boolean` is exempt: presence of the record IS the claim in v2 (RFC 0192), so
-// a v1 boolean loses nothing. An open object (`additionalProperties: true`, or
-// absent with no properties) is exempt for the same reason — it asserted no shape.
-function carriesUnspliceablePayload(p) {
-  if (!p || typeof p !== 'object') return false;
-  if (p.properties && Object.keys(p.properties).length) return false;
-  if (p.type === 'boolean') return false;
-  if (Array.isArray(p.enum)) return true;
-  if (p.type === 'array') return true;
-  if (p.type === 'string' || p.type === 'integer' || p.type === 'number') return true;
-  if (p.type === 'object' && p.additionalProperties && typeof p.additionalProperties === 'object') return true;
-  return false;
 }
 
 function describeShape(p) {
@@ -256,7 +248,7 @@ function familyRecord(f) {
   const overridePath = join(ROOT, 'spec', 'v2', 'facets', `${f.key}.schema.json`);
   const override = existsSync(overridePath) ? JSON.parse(readFileSync(overridePath, 'utf8')) : null;
   const v1p = v1.properties[f.key] ?? {};
-  const facets = override ?? stripSupported(v1p);
+  const facets = override ?? projectV1FacetSchema(v1p);
 
   // RFC 0193 §B — the silent payload drop.
   //
@@ -293,7 +285,7 @@ function familyRecord(f) {
   };
   return {
     // `facets.required` is the SEEDED family's own required[] (minus `supported`,
-    // which stripSupported already removed). Dropping it lost a non-`supported`
+    // which projectV1FacetSchema already removed). Dropping it lost a non-`supported`
     // required field on eight families — anonymousActor.tiers, dataResidency.regions,
     // content.{baseLocale,supportedLocales}, limits.{clarificationRounds,schemaRounds,
     // envelopesPerTurn}, nondeterminismPolicy.declared (a floor predicate),
@@ -303,7 +295,7 @@ function familyRecord(f) {
     // The two status/until clauses are INJECTED; the seeded family's own
     // surviving conditionals are carried alongside them. Overwriting `allOf`
     // here is what actually dropped RFC 0132 §B.2 on anonymousActor — even once
-    // stripSupported stopped deleting it, this assignment threw it away again.
+    // projectV1FacetSchema stopped deleting it, this assignment threw it away again.
     allOf: [
       { if: { properties: { status: { const: 'stable' } } }, then: { not: { required: ['until'] } } },
       { if: { properties: { status: { enum: ['experimental', 'deprecated'] } } }, then: { required: ['until'] } },

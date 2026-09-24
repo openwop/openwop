@@ -1,5 +1,6 @@
 /**
- * Project a v1 capability value into its v2 shape.
+ * Remove the retired `supported` flag from a v1 capability schema fragment
+ * (or an advertised value), and flag payload a v2 record cannot splice.
  *
  * WHY THIS EXISTS, in three measured instances from one week:
  *
@@ -24,17 +25,36 @@
  * It deliberately does NOT invent shape. If a v1 value carries payload a v2
  * record cannot hold, that is RFC 0193's named-seat problem and needs a person
  * to name the seat; this function will not paper over it.
+ *
+ * ── What it is NOT ──────────────────────────────────────────────────────────
+ * It is not the corpus's v2 facet projection. `projectV1FacetSchema` in
+ * scripts/generate-from-declaration.mjs builds schemas/v2/capabilities.schema.json
+ * and does four more things this does not:
+ *
+ *   - drops `tier` and `experimentalUntil` (the record's `status`/`until`
+ *     absorb them — mapping a v1 tier onto a v2 status is a decision, not a strip);
+ *   - folds `supported`-gated if/then into unconditional `required` (RFC 0192 §A);
+ *     here the conditional stays, its `if` reduced to an always-true
+ *     `{ properties: {} }` — the same verdict, but not the same schema;
+ *   - closes objects (`additionalProperties: false`);
+ *   - rewrites `supported` prose in descriptions (RFC 0192 §B).
+ *
+ * So `multiAgent.executionModel` passed through this still carries `tier` and
+ * `experimentalUntil`. Both functions were named `stripSupported` until suite
+ * 2.38.x, which hid that difference; do not merge them — they have different
+ * contracts. `carriesUnspliceablePayload` IS the same predicate as
+ * scripts/v2-unspliceable.mjs, and a self-test holds the two copies equal.
  */
 
-/** Recursively drop `supported` — at every depth, and out of any `required[]`. */
-export function stripSupported<T>(value: T): T {
-  if (Array.isArray(value)) return value.map((v) => stripSupported(v)) as unknown as T;
+/** Recursively drop `supported` — at every depth, and out of any `required[]`. Nothing else. */
+export function stripSupportedFlag<T>(value: T): T {
+  if (Array.isArray(value)) return value.map((v) => stripSupportedFlag(v)) as unknown as T;
   if (value === null || typeof value !== 'object') return value;
 
   const out: Record<string, unknown> = {};
   for (const [k, v] of Object.entries(value as Record<string, unknown>)) {
     if (k === 'supported') continue;
-    out[k] = stripSupported(v);
+    out[k] = stripSupportedFlag(v);
   }
   // A `required` list naming `supported` keeps a retired field mandatory, which
   // is how a closed v2 record ends up unsatisfiable by any honest host.

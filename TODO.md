@@ -398,7 +398,7 @@ direction that silently relaxes a schema.
 
 **Falsifiable instance, measured 2026-09-24:** run the lib's `stripSupported` over every root key
 of `schemas/capabilities.schema.json` — **`multiAgent`** comes back still carrying `tier` and
-`experimentalUntil`. Corpus-wide the divergent surface is small (2 × `tier`, 1 ×
+`experimentalUntil` (on its `executionModel` facet, one level down). Corpus-wide the divergent surface is small (2 × `tier`, 1 ×
 `experimentalUntil`, 3 × `supported`-gated `if/then`), which is why it has not bitten yet.
 
 **Why this matters beyond tidiness:** the lib is the **host-facing** artifact — it ships in the
@@ -411,12 +411,21 @@ applies to itself.
 **Do NOT merge them.** They should not agree. The fix is to make the distinction impossible to
 miss:
 
-- [ ] Rename by contract, not by mechanism — the lib projects a *value*, the generator projects a
+- [x] Rename by contract, not by mechanism — the lib projects a *value*, the generator projects a
       *schema*. Nothing imports the lib yet, so renaming is free now and not later.
-- [ ] Cross-reference both, each naming the other and why they differ.
-- [ ] `carriesUnspliceablePayload` **is** a true duplicate and the two are behaviourally
+- [x] Cross-reference both, each naming the other and why they differ.
+- [x] `carriesUnspliceablePayload` **is** a true duplicate and the two are behaviourally
       identical on every input (verified: `null`, arrays, boolean, enum, array, map, scalar,
       object-with-properties). Either dedupe it or add a parity test — it will land green.
+
+**Done (S1):** the lib's export is `stripSupportedFlag` and the generator's is `projectV1FacetSchema`,
+each with a comment naming the other. The generator's predicate moved to
+`scripts/v2-unspliceable.mjs` (+ `.d.mts`, so the self-test imports it without `allowJs`), and
+`v2-projection.test.ts` holds the two copies equal on every schema node of the v1 capabilities
+schema, not just root keys. It is sabotage-proved. A second test pins the documented divergence on
+`multiAgent.executionModel`. Seen along the way, not fixed: the generator keeps executionModel's
+`tier`-gated if/then (it gates on `tier`, not `supported`) and strips its properties, so v2 carries a
+no-op `if: {properties: {}}, then: {}`. It is harmless, but it is residue.
 
 **Three options were measured before recommending the rename; record so nobody re-derives them:**
 
