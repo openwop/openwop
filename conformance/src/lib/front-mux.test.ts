@@ -113,3 +113,27 @@ describe('front-mux — a scenario-owned fake is reachable through the shared fr
     expect(own.hostFacingEndpoint()).toBe(own.endpoint());
   });
 });
+
+describe('front-mux — a front that carries a PATH (2.38.0)', () => {
+  it('routes `${frontPath}/fx/<nonce>` to the registered fake, and gives the owner its own traffic without the prefix', async () => {
+    const pinned = await freePort();
+    process.env['OPENWOP_A2A_FAKE_PEER_URL'] = `${FRONT}/peer`;
+    process.env['OPENWOP_A2A_FAKE_PEER_PORT'] = String(pinned);
+    const shared = new A2AFakePeer({ protocolVersions: ['1.0'] });
+    await shared.start(pinned);
+    stops.push(() => shared.stop());
+    const own = new A2AFakePeer({ protocolVersions: ['0.3'] });
+    await own.start();
+    stops.push(() => own.stop());
+
+    expect(own.hostFacingEndpoint()).toMatch(/^https:\/\/front\.example\.com\/peer\/fx\/[0-9a-f]{18}$/);
+    const ownCard = await fetch(`${viaTunnel(pinned, own.hostFacingEndpoint())}/.well-known/agent-card.json`);
+    expect(ownCard.status).toBe(200);
+    expect(own.invocations().map((i) => i.path)).toEqual(['/.well-known/agent-card.json']);
+
+    // The owner's own card, through the same path-bearing front.
+    const sharedCard = await fetch(`http://127.0.0.1:${pinned}/peer/.well-known/agent-card.json`);
+    expect(sharedCard.status).toBe(200);
+    expect(shared.invocations().map((i) => i.path)).toEqual(['/.well-known/agent-card.json']);
+  });
+});

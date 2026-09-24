@@ -67,8 +67,43 @@ export function unregisterBehindFront(frontEnv: string, nonce: string): void {
  * did (the caller then does nothing else). The prefix is stripped so the
  * target sees exactly the path it would have seen on its own listener.
  */
+/**
+ * The PATH of the operator's front, without a trailing slash — `''` when the
+ * front is unset or names only an origin.
+ *
+ * A tunnel forwards the whole request path, so a front of
+ * `https://x.trycloudflare.com/hook` delivers `/hook/fx/<nonce>` to the pinned
+ * listener. Until 2.38.0 routing matched only paths STARTING with `/fx/`, so
+ * on a path-bearing front every delivery was answered as addressed elsewhere —
+ * measured on the 2026-09-24 public v2-reference cut, where `cut-public.sh`
+ * fronts the webhook receiver at `…/hook` and four webhook rows failed. A
+ * loopback cut cannot show it: there is no front, so there is no prefix.
+ */
+export function frontPath(frontEnv: string): string {
+  const raw = process.env[frontEnv]?.trim();
+  if (!raw) return '';
+  try {
+    return new URL(raw).pathname.replace(/\/+$/, '');
+  } catch {
+    return '';
+  }
+}
+
+/** `url` with the front's own path prefix removed, when it carries it. */
+export function withoutFrontPath(frontEnv: string, url: string): string {
+  const pre = frontPath(frontEnv);
+  if (pre === '') return url;
+  if (url === pre) return '/';
+  if (url.startsWith(`${pre}/`) || url.startsWith(`${pre}?`)) return url.slice(pre.length).replace(/^(?=\?)/, '/');
+  return url;
+}
+
 export function routeFronted(frontEnv: string, req: IncomingMessage, res: ServerResponse): boolean {
-  const url = req.url ?? '/';
+  // Strip the front's own path first, and leave the request rewritten either
+  // way: the pinned owner's OWN traffic arrives through the same front and
+  // must see the path it would see on a bare listener.
+  const url = withoutFrontPath(frontEnv, req.url ?? '/');
+  req.url = url;
   if (!url.startsWith(PREFIX)) return false;
   const rest = url.slice(PREFIX.length);
   const slash = rest.indexOf('/');
