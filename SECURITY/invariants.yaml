@@ -4684,7 +4684,7 @@ invariants:
     witnessReview: reviewed-2026-09-22
 
   - id: a2a-error-no-existence-oracle
-    tier: reference-impl
+    tier: protocol
     severity: high
     threat_model: SECURITY/threat-model-interop.md
     tests:
