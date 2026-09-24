@@ -93,8 +93,18 @@ describe('v2-lane-exp-only-schema (RFC 0210 §C, §G)', () => {
     // The clause under test, removed and nothing else — the control that proves each
     // negative below fails for §C.8 and not for some unrelated defect in the fixture.
     const relaxedSrc = JSON.parse(raw) as { properties: { lanes: { items: Record<string, unknown> } } };
-    delete relaxedSrc.properties.lanes.items['if'];
-    delete relaxedSrc.properties.lanes.items['then'];
+    // §C.8's clause is the conditional whose antecedent is `revocation:
+    // exp-only`. It sat at the item's top level until 2.38.0 and now shares an
+    // `allOf` with the anonymous-lane optionality (identity.md §2.2), so it is
+    // removed by IDENTITY rather than by position — removing whatever happens
+    // to sit at `if` would strip the wrong clause, or nothing.
+    const items = relaxedSrc.properties.lanes.items;
+    const isExpOnly = (c: unknown): boolean => {
+      const rev = (c as { if?: { properties?: { revocation?: { const?: unknown } } } } | null)?.if?.properties?.revocation;
+      return rev?.const === 'exp-only';
+    };
+    if (isExpOnly(items)) { delete items['if']; delete items['then']; }
+    if (Array.isArray(items['allOf'])) items['allOf'] = (items['allOf'] as unknown[]).filter((c) => !isExpOnly(c));
     const relaxed = validator(relaxedSrc.properties.lanes.items);
 
     for (const name of ['api-key', 'session']) {

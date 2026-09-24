@@ -10,7 +10,6 @@
         "required": [
           "lane",
           "issuers",
-          "revocation",
           "minimumAssurance"
         ],
         "properties": {
@@ -77,28 +76,50 @@
           }
         },
         "$comment": "RFC 0210 §C — `exp-only` MUST NOT be advertised on `api-key` or `session`: there the host issued the credential itself, so revocation is in its own hands. The antecedent is the NEW member only, so no document that validates today can be invalidated by it. The full lane -> rule binding is deliberately NOT here (it would retroactively invalidate a committed bundle); it lives in the suite, and scripts/check-lane-revocation-rules.mjs keeps the table, this enum and the suite map in lockstep.",
-        "if": {
-          "properties": {
-            "revocation": {
-              "const": "exp-only"
-            }
-          },
-          "required": [
-            "revocation"
-          ]
-        },
-        "then": {
-          "properties": {
-            "lane": {
-              "not": {
-                "enum": [
-                  "api-key",
-                  "session"
-                ]
+        "allOf": [
+          {
+            "if": {
+              "properties": {
+                "revocation": {
+                  "const": "exp-only"
+                }
+              },
+              "required": [
+                "revocation"
+              ]
+            },
+            "then": {
+              "properties": {
+                "lane": {
+                  "not": {
+                    "enum": [
+                      "api-key",
+                      "session"
+                    ]
+                  }
+                }
               }
             }
+          },
+          {
+            "$comment": "identity.md §2.2: every lane names a revocation rule EXCEPT `anonymous`, whose row reads \"—\" (an RFC 0132 public surface has no credential to revoke), and a host MUST NOT advertise a value its lane's row does not list. Requiring `revocation` on every lane made the anonymous lane unsatisfiable against both at once. Loosening only: every document valid before stays valid.",
+            "if": {
+              "properties": {
+                "lane": {
+                  "const": "anonymous"
+                }
+              },
+              "required": [
+                "lane"
+              ]
+            },
+            "else": {
+              "required": [
+                "revocation"
+              ]
+            }
           }
-        }
+        ]
       }
     },
     "subjectLinkKey": {
