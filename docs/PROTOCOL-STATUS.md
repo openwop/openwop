@@ -67,8 +67,8 @@
 
 | Status | Count |
 |---|---:|
-| Accepted | 191 |
-| Active | 18 |
+| Accepted | 197 |
+| Active | 12 |
 | Draft | 1 |
 | Superseded | 1 |
 
@@ -268,16 +268,16 @@
 | RFC 0195 | a certification bundle's declarations are signed, and an unobserved requirement is `blocked` | Accepted |
 | RFC 0196 | `callbackUrl` is refused or delivered under the egress guard, and an embedded IPv4 address is judged as IPv4 | Accepted |
 | RFC 0197 | v2 surfaces are retired, never reshaped | Active |
-| RFC 0198 | the MCP server mount maps long runs to MCP Tasks, and a disconnect cancels only the run it owns | Active |
+| RFC 0198 | the MCP server mount maps long runs to MCP Tasks, and a disconnect cancels only the run it owns | Accepted |
 | RFC 0199 | the host as an OAuth client, and the `credential` interrupt | Active |
 | RFC 0200 | the host as an OAuth protected resource | Active |
-| RFC 0201 | Standard Webhooks 1.0.0 as an opt-in, per-subscription companion signature scheme (`standard-webhooks-1`): a signed, retry-stable delivery id, multi-signature secret rotation, and endpoint verification for opted-in subscriptions only | Active |
-| RFC 0202 | each inventoried agent is published as an A2A Agent Card, reached by an opaque routing value, without making the card an existence oracle across tenants | Active |
+| RFC 0201 | Standard Webhooks 1.0.0 as an opt-in, per-subscription companion signature scheme (`standard-webhooks-1`): a signed, retry-stable delivery id, multi-signature secret rotation, and endpoint verification for opted-in subscriptions only | Accepted |
+| RFC 0202 | each inventoried agent is published as an A2A Agent Card, reached by an opaque routing value, without making the card an existence oracle across tenants | Accepted |
 | RFC 0203 | a remote node-pack runtime may name its MCP server by an inline MCP Registry record (Streamable HTTP only, no install packages, no header values), and `nodePackRuntimes` gets its v2 home | Accepted |
-| RFC 0204 | the v2 host MCP client returns MCP results unaltered, reports reachability instead of a session, and the tool catalog projects onto MCP `ToolAnnotations` by an explicit mapping; `toolCatalog` gets its v2 home | Active |
+| RFC 0204 | the v2 host MCP client returns MCP results unaltered, reports reachability instead of a session, and the tool catalog projects onto MCP `ToolAnnotations` by an explicit mapping; `toolCatalog` gets its v2 home | Accepted |
 | RFC 0205 | A named A2A `Artifact` / `Part` schema for `getArtifact` (negotiated by `application/a2a+json`) and for conversation turns (by `parts` presence), and media types accepted beside the reserved `exportFormats` aliases | Active |
-| RFC 0206 | Localized-content locale keys use a case-canonical BCP 47 subset (language, optional script, optional region) instead of `ll(-RR)`, so a host can author content for every tag its `i18n` annex negotiates | Active |
-| RFC 0207 | W3C Trace Context carried in MCP `params._meta` and A2A `Message.metadata.openwop` beside the HTTP header that stays conforming, debug-bundle spans that carry `traceId` / `kind` / `status`, and an optional versioned OTel `mcp.*` projection | Active |
+| RFC 0206 | Localized-content locale keys use a case-canonical BCP 47 subset (language, optional script, optional region) instead of `ll(-RR)`, so a host can author content for every tag its `i18n` annex negotiates | Accepted |
+| RFC 0207 | W3C Trace Context carried in MCP `params._meta` and A2A `Message.metadata.openwop` beside the HTTP header that stays conforming, debug-bundle spans that carry `traceId` / `kind` / `status`, and an optional versioned OTel `mcp.*` projection | Accepted |
 | RFC 0208 | v2 homes the A2A and MCP operation mappings | Active |
 | RFC 0209 | `ui.a2ui-surface` schema version 2 carries real A2UI v0.9 server-to-client messages (a closed OpenWOP profile of the basic catalog), while the 0.9.1 seven-component tree stays readable forever. The RFC 0114 delta frame is deprecated in v2, and v2 regains the `ui.*`/`media.*` kind carve-out | Active |
 | RFC 0210 | a lane's revocation rule is measured, and a host that only honours `exp` says so | Active |
@@ -307,7 +307,7 @@ The pack registry now lives in the [`openwop-registry`](https://github.com/openw
 ## Active Follow-Ups
 
 - 1 RFC still `Draft` (RFC 0038) — advance with schema/conformance proof or defer.
-- 18 RFCs `Active` (RFC 0111, RFC 0121, RFC 0197, RFC 0198, RFC 0199, RFC 0200, RFC 0201, RFC 0202, RFC 0204, RFC 0205, RFC 0206, RFC 0207, RFC 0208, RFC 0209, RFC 0210, RFC 0211, RFC 0213, RFC 0214) — wire-shape MAY shift compatibly within v1.x until promotion to `Accepted`.
+- 12 RFCs `Active` (RFC 0111, RFC 0121, RFC 0197, RFC 0199, RFC 0200, RFC 0205, RFC 0208, RFC 0209, RFC 0210, RFC 0211, RFC 0213, RFC 0214) — wire-shape MAY shift compatibly within v1.x until promotion to `Accepted`.
 - External audit, non-steward host recruitment, and non-steward maintainer recruitment remain external-action gates.
 - Multi-region idempotency and some optional-profile behavior checks remain lower-confidence than the core wire contract.
 
