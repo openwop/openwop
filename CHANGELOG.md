@@ -170,6 +170,15 @@ Format follows [Keep a Changelog](https://keepachangelog.com/en/1/) loosely. Ver
 - **The remaining eleven stay `Active`, each for a stated reason** rather than for lack of attention. The eight RFC 0167 program children name a certified openwop-app bundle in their own acceptance criteria and the committed one reads `certified: false` (3 blocked rows, RFC 0168 §E.1). RFC 0173 additionally carries the program's only `open` gap row. RFC 0179's sole criterion is unmet — 2.4.2 stopped the gate reading "(Phase 4 leg)" as an excuse for it. RFC 0187 names three requirement ids that no scenario mints. RFC 0167 itself flips **last**, which 2.4.2 made a rule: the moment the umbrella stops being `Active`, every child still `Active` becomes permanently ineligible.
 - **The interrupt `data` union is bound to `kind`** (MCP/A2A review P3-H7, Class 3 correction — COMPATIBILITY.md §3). `schemas/suspend-request.schema.json` and its v2 twin typed `data` as an unbound `oneOf`, so the minimal `conversation.start` and `conversation.close` payloads (`{ conversationId }`, which satisfies both shapes) failed validation in v1 and v2, and a payload carrying another kind's `data` passed. `data` is now an `anyOf` and a root `allOf` binds each kind to its own shape with one `if`/`then`; no per-kind shape or `$id` changed. Witnessed by `conformance/fixtures/interrupt-payloads/` (suite 2.36.0).
 
+## [2.39.0] — 2026-09-24 — an A2A push is measured at a receiver the suite owns
+
+A suite minor: RFC 0214 adds legs and a scenario file. It makes no wire, schema or `MUST` change beyond what RFC 0214 already states (`COMPATIBILITY.md` §2.1). The corpus tag moves because `@openwop/openwop-conformance` and `@openwop/spec-artifacts` publish together on it (RFC 0172 §D).
+
+### Conformance
+
+- **RFC 0214: a host that advertises `a2a.pushNotifications` is now measured, not only a host that refuses it (#1546).** `v2-a2a-operation-map` gains three push-config legs. The new `v2-a2a-push-delivery` checks registration SSRF refusal, config isolation, secrets never returned, authenticated delivery with no `OpenWOP-Signature`, no redirect following, discard on delete, and no push from a fork. Each delivery is counted at a suite-owned, nonce-scoped receiver; on a public cut, a missing delivery is a failure, not a skip.
+- **Suite `2.39.0`**: 559 scenario files. `@openwop/spec-artifacts` moves in lockstep at the same exact pin.
+
 ## [2.38.0] — 2026-09-24 — two RFCs add legs, and six rows that could not pass on a conforming host now can
 
 A suite minor: RFC 0212 and RFC 0214 add legs and a scenario file. One v2 schema correction is a pure loosening; every document valid under 2.37.1 stays valid (`COMPATIBILITY.md` §2.1). The corpus tag moves because `@openwop/openwop-conformance` and `@openwop/spec-artifacts` publish together on it (RFC 0172 §D).

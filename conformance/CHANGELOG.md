@@ -1,8 +1,9 @@
 # `@openwop/openwop-conformance` Changelog
 
-## [2.39.0] — unreleased — the 2.39.0 cycle is open (RFC 0214's push legs and a new delivery scenario)
+## [2.39.0] — 2026-09-24 — an A2A push is measured at a receiver the suite owns
 
 - **RFC 0214 — the push legs land, and a host that advertises `a2a.pushNotifications` is now measured, not just the one that refuses.** `v2-a2a-operation-map` gains three legs gated on `pushNotifications: true`: `0214.a2a-push-register-ssrf` (a non-https, private, loopback or link-local destination is not registered), `0214.a2a-push-config-isolation` (a config read under another tenant's task, another of the caller's tasks, or an unknown id is answered byte-identically; a foreign delete deletes nothing; delete is idempotent) and `0214.a2a-push-secrets-not-returned` (the registered token and credentials are absent from Create/Get/List, `GetTask`, the run snapshot and the event log). New scenario `v2-a2a-push-delivery` measures delivery at a SUITE-OWNED scoped receiver behind the operator's public front (the RFC 0158 receiver): `0214.a2a-push-delivery-authenticated` (§A/§C — at least one POST, `Authorization: {scheme} {credentials}`, `application/a2a+json`, a `StreamResponse` naming the task), `0214.a2a-push-no-openwop-signature`, `0214.a2a-push-no-redirect` (§B — a 307 target receives nothing), `0214.a2a-push-discard-on-delete` (§A, with a live-config positive control) and `0214.a2a-push-fork-no-push` (§D). Every leg suspends its task at INPUT_REQUIRED BEFORE registering, so none can pass on a push nobody owed; without a public https front the legs record `blocked` (a conforming host refuses a loopback destination), never a pass and never a relaxed guard. Stated limit: the delivery-time DNS re-resolve arm is host-unit-tested; the suite does not control the host's resolver.
+- **Suite `2.39.0`**: 559 scenario files. `@openwop/spec-artifacts` moves in lockstep at the same exact pin.
 
 ## [2.38.0] — 2026-09-24 — two RFCs add legs, and six rows that could not pass on a conforming host now can
 
