@@ -72,6 +72,10 @@ describe('v2 idempotency-in-flight (idempotency.md Concurrency, RFC 0213 §B)', 
       const ra = r.headers.get('retry-after');
       if (ra !== null) expect(parsesRetryAfter(ra), req(ID_LOSER, DOC, `a Retry-After that is present MUST parse (got ${ra})`)).toBe(true);
     }
-    if (refusals.length === 0) return softSkip('blocked', `no loser was refused in flight — all ${N} answers were successes, so the 409 branch did not run on this host`);
+    // Every loser replayed the winner: RFC 0213 §B permits exactly this (a
+    // loser MAY wait and receive a final outcome, marked). The 409 branch did
+    // not run, so the row is a partial witness — never `blocked`, which would
+    // deny certification (RFC 0168 §E.1) to a host that did nothing wrong.
+    if (refusals.length === 0) return softSkip('inapplicable', `no loser was refused in flight — all ${N} answers were successes (each loser a marked replay, which §B permits), so the 409 branch did not run on this host`);
   }, 60_000);
 });
