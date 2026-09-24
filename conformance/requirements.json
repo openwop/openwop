@@ -3,10 +3,10 @@
   "generatedFrom": "src/scenarios/*.test.ts",
   "counts": {
     "files": 628,
-    "tests": 2401,
-    "withStableId": 2401,
+    "tests": 2402,
+    "withStableId": 2402,
     "interpolatedTitles": 0,
-    "explicitIds": 2291
+    "explicitIds": 2292
   },
   "records": [
     {
@@ -28883,10 +28883,10 @@
       ]
     },
     {
-      "id": "openwop.it.v2-idempotency-in-flight.concurrent-same-key-creates-yield-one-run-each-loser-is-a-marked-replay-of-a-fin",
+      "id": "openwop.it.v2-idempotency-in-flight.concurrent-same-key-creates-yield-exactly-one-run",
       "file": "v2-idempotency-in-flight.test.ts",
-      "line": 47,
-      "title": "concurrent same-key creates yield one run; each loser is a marked replay of a final outcome or 409 idempotency_in_flight with no retry timing in details",
+      "line": 101,
+      "title": "concurrent same-key creates yield exactly one run",
       "explicitId": "openwop.requirement.0213.in-flight-one-winner",
       "citations": [
         {
@@ -28898,7 +28898,16 @@
           "section": "spec/v2/core/idempotency.md Concurrency",
           "requirement": null,
           "interpolated": true
-        },
+        }
+      ]
+    },
+    {
+      "id": "openwop.it.v2-idempotency-in-flight.each-loser-is-a-marked-replay-of-a-final-outcome-or-409-idempotency-in-flight-wi",
+      "file": "v2-idempotency-in-flight.test.ts",
+      "line": 109,
+      "title": "each loser is a marked replay of a final outcome, or 409 idempotency_in_flight with no retry timing in details",
+      "explicitId": "openwop.requirement.0213.in-flight-loser-outcome",
+      "citations": [
         {
           "section": "spec/v2/core/idempotency.md Concurrency",
           "requirement": null,
