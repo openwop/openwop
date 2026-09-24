@@ -3612,10 +3612,60 @@ invariants:
       https://a2a-protocol.org/v1.0.1/specification/. Relation: STRENGTHENS.
       OpenWOP makes it a MUST, adds the scheme arm (non-https refused), and
       covers IPv6 ULA and IPv4-mapped IPv6, which the A2A list omits.
-
-  # ===== RFC 0102 — A2UI agent-authored interface surfaces =====
+      RFC 0214 §B (2026-09-23): the guard also binds at DELIVERY time —
+      re-resolve, validate every resolved address, connect without
+      re-resolving, refuse redirects (webhooks.md §Egress) — so a URL public
+      at registration and private at delivery, or a 307 to a metadata host,
+      never receives a push or its credential. The delivery-time arm is
+      witnessable only on a host advertising a2a.pushNotifications with a
+      suite-owned public HTTPS receiver; none does today.
     witness: seam-gated
     witnessReview: initial-mechanical-2026-09-02
+
+  - id: a2a-push-credential-destination-bound
+    tier: reference-impl
+    severity: critical
+    threat_model: SECURITY/threat-model-secret-leakage.md
+    tests:
+      - conformance/src/scenarios/v2-a2a-operation-map.test.ts
+    note: |
+      RFC 0214 §A; spec/v2/core/security-defaults.md §"Onward hops";
+      spec/v2/core/interop.md §"A2A push delivery". An A2A push-config
+      credential (authentication.credentials, token) is a destination
+      credential: sent only on a push delivery to the registered URL's
+      origin, never after a redirect, never on any other request, discarded
+      on config delete or the task's final push, and never in the event log,
+      run state, debug bundle or any response. Resolves the contradiction with
+      the body-credential clause of inbound-credential-no-passthrough, which
+      made A2A v1.0.1 §4.3.3 push unsatisfiable. Witnessable only on a host
+      advertising a2a.pushNotifications, with a suite-owned public HTTPS
+      receiver counting Authorization at the registered origin and its
+      absence at a 307 target. NO committed host advertises push
+      (2026-09-23): the listed test carries only the unadvertised-refusal leg
+      and the corpus-coherence check, so this invariant has no host witness
+      yet. Reference-impl at Active; graduates to protocol only on a
+      non-vacuous executed-pass on a deployed host advertising push.
+    witness: witnessable-gated
+    witnessReview: reviewed-2026-09-23
+
+  - id: a2a-push-secrets-not-returned
+    tier: reference-impl
+    severity: high
+    threat_model: SECURITY/threat-model-secret-leakage.md
+    tests:
+      - conformance/src/scenarios/v2-a2a-operation-map.test.ts
+    note: |
+      RFC 0214 §A; spec/v2/interop-map.json a2a.operations push-config rows.
+      Get/List of a push config MUST NOT return authentication.credentials or
+      token, and a sentinel credential registered by the suite MUST be absent
+      from GetTask, the run's event log and its debug bundle. Gated on
+      a2a.pushNotifications; no committed host advertises it (2026-09-23), so
+      there is no host witness yet. Reference-impl at Active; graduates to
+      protocol only on a non-vacuous executed-pass on a deployed host.
+    witness: witnessable-gated
+    witnessReview: reviewed-2026-09-23
+
+  # ===== RFC 0102 — A2UI agent-authored interface surfaces =====
 
   - id: a2ui-action-confinement
     tier: protocol
@@ -4601,6 +4651,9 @@ invariants:
       committed host advertises (RFC 0200 §Falsifiability, residual risk).
       Reference-impl at Active; graduates to protocol only on a non-vacuous
       executed-pass on two committed bundles.
+      Exception (RFC 0214 §A, 2026-09-23): an A2A push-config credential is a
+      destination credential bound to its registered push origin — see
+      a2a-push-credential-destination-bound; the two do not conflict.
     witness: seam-gated
     witnessReview: reviewed-2026-09-22
 
