@@ -309,11 +309,19 @@ lane, RFC 9728 PRM, `artifactTypes`, `conversationPrimitive` or the `content` fa
 reference-host work substitutes. 0206 is externally gated regardless (decision D14: no
 host serves an extended content locale; the row stays honestly unticked).
 
-**Known, off this path:** ten scenarios (`agent-loop` ×3, `distillation` ×4, `heartbeat`
-×3, `runtime-requires-install-gate`) record `blocked` for "seam absent", which §C.1 says
-must be `inapplicable`. **Zero of them reach a v2 cut**, so they cannot affect this
-program — but on a major-1 cut they would deny certification to any v1 host that has not
-mounted those seams, which is precisely the failure §C.1 was written to stop. Unclaimed.
+**Retracted 2026-09-24 — there is no such defect; do not spend time on it.** This file
+briefly claimed that ten scenarios (`agent-loop` ×3, `distillation` ×4, `heartbeat` ×3,
+`runtime-requires-install-gate`) record `blocked` for "seam absent" where §C.1 requires
+`inapplicable`. **Checked, and they are correct.** Each gates on the ADVERT first and
+returns `inapplicable` when the capability or profile is not advertised; the `blocked`
+branch is reached only when the host DOES advertise and the seam then fails to answer —
+kind B, legitimately fatal. `heartbeat-fires-once-per-tick.test.ts:19-21` is the pattern,
+and the other three were spot-checked. The grep that produced the claim matched the
+`blocked` string without reading the guard above it.
+
+Kept as a worked example of the taxonomy rather than deleted: "records `blocked` when a
+seam is absent" is kind B or kind C depending entirely on whether an advert gate runs
+first, and only reading the scenario tells you which. A grep cannot.
 
 ## Phase 5 — Accepted
 
