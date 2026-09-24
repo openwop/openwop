@@ -221,15 +221,15 @@
     "spec/v2/core/conformance.md": "975bf95049247530d723e81051b6e64bd2a1f9d150183dec391cae48e35af7cc",
     "spec/v2/core/connection-packs.md": "7257339a4fc125011bf89961588c949cb058a0c0f7d9808ad08a5288deb3f8fc",
     "spec/v2/core/conversation.md": "c9a937e410fdb4e092cec2f05a7cab8b5232745090cfb20041c03c70ccbb5cdc",
-    "spec/v2/core/errors.md": "0210177647748efc5fe9affe29a9029152c4f983248ca88c6375601d7e636591",
-    "spec/v2/core/events.md": "ee0f7d2cff5bfa29c38b77f73269d7d755b8036cb1a5c7b08f02de92c54f3490",
+    "spec/v2/core/errors.md": "619cd74381c41acf33d012eb1afd834e148ac292663a1a6fa6744dbaff9661d9",
+    "spec/v2/core/events.md": "3df1866a89fb765c78adf79b8d51f96c59584dee9aa88d59179b88a681d827da",
     "spec/v2/core/form-content-packs.md": "55ea021b5f676f5851f420b3597262fbf6642108bddeb726922f8c5dd96c968b",
     "spec/v2/core/headers.md": "38c03524e3aeea30862432d203faffb8b0b05ec65136d223e96ab06941c3717b",
     "spec/v2/core/host-services.md": "c3ff93201d642edf835e9ae84f06a17edd207f9d351f8bfd70572be05bbfd894",
-    "spec/v2/core/idempotency.md": "a8492ec66569c00f6f559b75b80d93adbbc0e964a24e8dfedfe4057e47d69a9f",
+    "spec/v2/core/idempotency.md": "b61d4a200526485937897dd7ebca092e68424a80624e0be7a0b7db8cdbd54403",
     "spec/v2/core/identity.md": "d15667552019f64316be9b65c6e5696c10766581405f05da3907fb47f36e6459",
     "spec/v2/core/interop.md": "ec8239d6d430e0d6df4db51d23bcbbbf9bc989bdb7e487e8312a104485ab6d16",
-    "spec/v2/core/interrupt.md": "e0199472da7d0412721ab487a07c82fe78cbc9b60612bfcfc3cb876dc1a8c96f",
+    "spec/v2/core/interrupt.md": "1dc94f7c791dd5a547b1abafde6a8a76acd3d2993d288057f302f57911dc83bf",
     "spec/v2/core/node-pack-runtimes.md": "c435ad506f618831b6c0a9fd9150d83a5dc6caa1e3d755b949af2ff8949f1140",
     "spec/v2/core/oauth.md": "08e558a742259e75cfb2123f4c364d238dc4c57eea1a3c25d8f420ab4dff8244",
     "spec/v2/core/overview.md": "8f9d4a68b6185664e40d226cb82d9a9270a6c6630e3db59bddff300be781947d",
@@ -246,7 +246,7 @@
     "spec/v2/corrections.schema.json": "4ac595b9a6d7f66d53de03fe0edbe0dc58de46426932387bfdc0ceb3cf949a3e",
     "spec/v2/declaration.json": "84bd247804e625b0a5d66f2011726626e8a9b21e55c479cc9ba239e6b5c358a6",
     "spec/v2/declaration.schema.json": "881c08b455aa12c41a0a0ec43a960ab78b75ff1302188f7eaaa43074ed4cff7a",
-    "spec/v2/errors.json": "769e77369aa9bae7ba9c3728fc8ce04795d20ca4baa2a22056b70d0f5a2c4801",
+    "spec/v2/errors.json": "287a8bb487be96a2938b2101dd737ee87336440b3777a37dd44954726ed891b1",
     "spec/v2/event-codemap.json": "37869a03cdfd8758b57e6f350641a6ebbd383231cebda51f5473ad85f94ab74c",
     "spec/v2/event-codemap.schema.json": "b173f2a9bcc0bf9b62a474ce3b91e1431d597e64fd1560fc58662cd8606eaf9c",
     "spec/v2/ext/README.md": "ff91a503e0795e1b898e37d9e445add2d5975529723f7b32b2599b60a24c1ae3",
@@ -296,5 +296,5 @@
     "spec/v2/retention-floors.json": "eaf3722d95c79947af1d4269ef85117e126518c588cfcf1a2b21b97269f51624",
     "spec/v2/surface-baseline.json": "efdb4e5e0eb16689e20dea2be6f326971bb5707990c31896ca4cf24c6a5bbfed"
   },
-  "corpusCommit": "7674056af48a7c25116b28d464485928b8929935"
+  "corpusCommit": "a8662d842fc2ef6d9931971587d5d9a43cfc7b91"
 }
