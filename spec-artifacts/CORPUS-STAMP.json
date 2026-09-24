@@ -116,7 +116,7 @@
     "schemas/v2/artifact.schema.json": "85b9dc284d39b99d2a66fa8cbf47f2dd3d8526d3bd6cc411ad315b372de38975",
     "schemas/v2/audit-verify-result.schema.json": "a748dfadb5155adfde8a91045e76b0db6695005fe559035d71670fdd55edb3ba",
     "schemas/v2/budget-policy.schema.json": "c7449daeb6e1d95e7a047b8c2814d3d54748697c27046972834874867d9b5f4c",
-    "schemas/v2/capabilities.schema.json": "79ddbbda4686fe66ec5b0aaf9bafb2385e2f8ccbb1ee39087d75cef9fd1f1628",
+    "schemas/v2/capabilities.schema.json": "740944d7f0a00c91308449f3a3f52fa7b91b16b8fd36a0171b917afe9f4b0f09",
     "schemas/v2/certification-bundle.schema.json": "67ac56bbf5f8deeec58b32e8d7bc9ce854a6a8c3cd81693e65192e5c3b726154",
     "schemas/v2/channel-presence-payload.schema.json": "4eeb224910e6f7eee3ab5e7c3899559c25c83a26d0022e0ad195c4672611977a",
     "schemas/v2/channel-written-payload.schema.json": "ccecff3c71a3275ad8db035ac0e04db25e6f8d23cf091ddbcd5a60d1be1cbb6b",
@@ -270,7 +270,7 @@
     "spec/v2/ext/webResearch/README.md": "e74fbe55a8c00040f1f87b5448259ee4eb3a26769d607f7d2dd9a671a2e2832b",
     "spec/v2/facets/a2a.schema.json": "b68bf5e29e455e46c2ad7cfcccf5963730ec2310ff9db81884550d8df30fd6ef",
     "spec/v2/facets/aiProviders.schema.json": "81fb39b6698564d9d07a0d10525ecb6360c152fe3f3a5ea0439112509ca130e2",
-    "spec/v2/facets/auth.schema.json": "668f183fc15a6fb058c53635d3457db5a821f551a90141d08676a7a28917b0a9",
+    "spec/v2/facets/auth.schema.json": "7d98bc81a0f7d307460d039eebfebd21388091bfe1d538762583940f94c0bd2a",
     "spec/v2/facets/envelopeStrictness.schema.json": "28be0a27f880bd45ec1222a16155f5e9167bbca57bf0322970fe1eb2654562aa",
     "spec/v2/facets/heartbeat.schema.json": "81d7fa1895a8b0241bd07cf00a7e7905bef0fd14eb3427325261c62eee5746a6",
     "spec/v2/facets/interrupt.schema.json": "2110ef32c3f880bf706475ef4cf8ddf97ff06871b8e6003a5edbcf4439f1fb70",
@@ -296,5 +296,5 @@
     "spec/v2/retention-floors.json": "eaf3722d95c79947af1d4269ef85117e126518c588cfcf1a2b21b97269f51624",
     "spec/v2/surface-baseline.json": "13cfe5c31c3727a2e36980aa3e5a42f8ce1474b35beb99c5b71f487db006e71a"
   },
-  "corpusCommit": "a0ee68a955f79772ac266609dea7a823ba9e8148"
+  "corpusCommit": "32f377f039d74895d99a87c3d099dd2e8d390192"
 }
