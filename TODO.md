@@ -412,7 +412,8 @@ applies to itself.
 miss:
 
 - [x] Rename by contract, not by mechanism — the lib projects a *value*, the generator projects a
-      *schema*. Nothing imports the lib yet, so renaming is free now and not later.
+      *schema*. ~~Nothing imports the lib yet, so renaming is free now and not later.~~ **Wrong:**
+      openwop-app imports it (see S2), so the old name stays as a `@deprecated` alias.
 - [x] Cross-reference both, each naming the other and why they differ.
 - [x] `carriesUnspliceablePayload` **is** a true duplicate and the two are behaviourally
       identical on every input (verified: `null`, arrays, boolean, enum, array, map, scalar,
@@ -435,7 +436,18 @@ no-op `if: {properties: {}}, then: {}`. It is harmless, but it is residue.
 | `.mjs` single source + `.ts` re-export | **Rejected.** TS *does* resolve a sibling `.mjs` (probed), but only under `nodenext` + `allowJs`; conformance is `moduleResolution: Bundler` with `allowJs` off. Turning `allowJs` on touches the whole package build. |
 | rename + cross-reference + parity-gate the one true duplicate | **Recommended.** No runtime coupling, no engine risk, no shared-build change, and it closes the hazard that actually bit — undetected divergence. |
 
-## S2 — `v2-projection` is adopted by nothing · **blocked on S1**
+## S2 — ~~`v2-projection` is adopted by nothing~~ · **CLOSED 2026-09-24: premise false**
+
+**Adopted by openwop-app since its `WHD-7`.** `backend/typescript/test/whd7-v2-projection-parity.test.ts`
+imports `stripSupported`/`carriesUnspliceablePayload` from `…/src/lib/v2-projection.js` and pins its
+hand-written discovery projection (`routes/discovery.ts`) to them. It found a fifth drift
+(`workflowChainPacks.subChains`), and its `KNOWN_UNPROJECTED` list is openwop-app's `WHD-17`. It is a
+parity pin, not a runtime import, because the suite is a devDependency that the `--omit=dev` image
+lacks. The grep below looked only at this repo. That is the "failed grep treated as proof of absence"
+shape openwop-app's `HANDOFF-4` warns about. Nothing is left to wire, and deleting the lib would break
+that test.
+
+*Original text, kept for the record:*
 
 `grep -rl v2-projection conformance/src scripts` returns only the lib and its own test. The
 generator has its own inline `carriesUnspliceablePayload`, so the helper written to stop sessions

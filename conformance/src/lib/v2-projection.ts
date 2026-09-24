@@ -41,7 +41,8 @@
  *
  * So `multiAgent.executionModel` passed through this still carries `tier` and
  * `experimentalUntil`. Both functions were named `stripSupported` until suite
- * 2.38.x, which hid that difference; do not merge them — they have different
+ * 2.38.x, which hid that difference (the old name survives as a deprecated
+ * alias for openwop-app's parity test); do not merge them — they have different
  * contracts. `carriesUnspliceablePayload` IS the same predicate as
  * scripts/v2-unspliceable.mjs, and a self-test holds the two copies equal.
  */
@@ -65,6 +66,14 @@ export function stripSupportedFlag<T>(value: T): T {
   }
   return out as T;
 }
+
+/**
+ * @deprecated Renamed `stripSupportedFlag` in suite 2.38.x; the old name was shared
+ * with the generator's full schema projection and hid the difference. Kept because
+ * openwop-app's `backend/typescript/test/whd7-v2-projection-parity.test.ts` imports
+ * it by this name. Remove at the next suite major.
+ */
+export const stripSupported = stripSupportedFlag;
 
 /**
  * True when a v1 value carries payload a uniform v2 record cannot splice —

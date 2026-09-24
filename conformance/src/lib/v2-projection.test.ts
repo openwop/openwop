@@ -6,7 +6,7 @@ import { describe, it, expect } from 'vitest';
 import { readFileSync } from 'node:fs';
 import { dirname, join } from 'node:path';
 import { fileURLToPath } from 'node:url';
-import { stripSupportedFlag, carriesUnspliceablePayload } from './v2-projection.js';
+import { stripSupportedFlag, stripSupported, carriesUnspliceablePayload } from './v2-projection.js';
 import { carriesUnspliceablePayload as generatorPredicate } from '../../../scripts/v2-unspliceable.mjs';
 
 const V1_CAPABILITIES = join(dirname(fileURLToPath(import.meta.url)), '..', '..', '..', 'schemas', 'capabilities.schema.json');
@@ -84,5 +84,10 @@ describe('v2-projection', () => {
     expect(Object.keys(facet?.properties ?? {})).not.toContain('supported');
     expect(facet?.required ?? []).not.toContain('supported');
     expect(Object.keys(facet?.properties ?? {})).toEqual(expect.arrayContaining(['tier', 'experimentalUntil']));
+  });
+
+  // openwop-app imports the pre-rename name (whd7-v2-projection-parity.test.ts).
+  it('keeps the deprecated `stripSupported` alias pointing at stripSupportedFlag', () => {
+    expect(stripSupported).toBe(stripSupportedFlag);
   });
 });
