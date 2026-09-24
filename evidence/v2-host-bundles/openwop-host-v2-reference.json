@@ -1,12 +1,12 @@
 {
   "bundleVersion": "3",
-  "generatedAt": "2026-09-22T02:23:58.971Z",
+  "generatedAt": "2026-09-24T19:56:18.328Z",
   "suite": {
     "name": "@openwop/openwop-conformance",
-    "version": "2.35.0",
+    "version": "2.38.0",
     "targetMajor": 2,
-    "specArtifactsVersion": "2.35.0",
-    "stampSha256": "164c05f7216f16c89a05636375b4e5eaebce3c461eb3c24fb5a992750633765e"
+    "specArtifactsVersion": "2.38.0",
+    "stampSha256": "ad88f149547eb38bb873fa63e1d18e06e8810e6427d61a72fac94c32c5e28603"
   },
   "host": {
     "name": "openwop-host-v2-reference",
@@ -14,13 +14,13 @@
     "vendor": "openwop (reference example)",
     "build": {
       "kind": "commit",
-      "id": "8477d75fd4b465344cbe9e3b714108b341b6b3da"
+      "id": "1157625fe1a7f37bc0b6eea00f04aef40614d72b"
     },
     "signingKeyId": "v2-reference-4"
   },
   "discovery": {
     "url": "http://127.0.0.1:3838/.well-known/openwop",
-    "sha256": "f120b4d69ac0b8da1ef6b71d512055d62dc9bf4b4fea22cfc1fbe8158e2cb951",
+    "sha256": "c71ccf4bbc72e1889b2c1cad4ddd73e644a1c2da578cc792e8422b56ffc2beca",
     "protocolVersions": [
       "1.11",
       "2.0"
@@ -51,13 +51,19 @@
       "fixtures": [
         "conformance-approval",
         "conformance-approval-approvers",
+        "conformance-artifact-emit",
         "conformance-cancellable",
         "conformance-clarification",
+        "conformance-clarification-nested",
+        "conformance-clarification-sensitive",
+        "conformance-conversation-lifecycle",
+        "conformance-credential",
         "conformance-delay",
         "conformance-failure",
         "conformance-http-effect",
         "conformance-idempotent",
         "conformance-interrupt-external-event",
+        "conformance-mcp-client",
         "conformance-multi-node",
         "conformance-noop"
       ],
@@ -138,7 +144,8 @@
         "until": "2.1",
         "witness": "witnessable-gated",
         "signatureAlgorithms": [
-          "v1"
+          "v1",
+          "standard-webhooks-1"
         ],
         "retryPolicy": {
           "maxAttempts": 5,
@@ -147,6 +154,9 @@
         "deadLetter": {
           "retentionDays": 7,
           "maxPageSize": 100
+        },
+        "secretRotation": {
+          "overlapSeconds": 60
         }
       },
       "idempotency": {
@@ -206,7 +216,12 @@
         "refreshedAt": "2026-09-18",
         "streaming": false,
         "pushNotifications": false,
-        "durableTasks": false
+        "durableTasks": false,
+        "profiles": [
+          "a2a-1.0"
+        ],
+        "agentCardUrl": "http://127.0.0.1:3838/.well-known/agent-card.json",
+        "agentCards": true
       },
       "mcp": {
         "status": "experimental",
@@ -221,7 +236,35 @@
         "refreshedAt": "2026-09-18",
         "mrtr": {
           "maxRounds": 4
-        }
+        },
+        "profiles": [
+          "mcp-2026-07-28"
+        ],
+        "features": [
+          "server-discover",
+          "mrtr",
+          "cacheable-lists",
+          "extensions"
+        ],
+        "serverMount": {
+          "transports": [
+            "streamable-http"
+          ]
+        },
+        "serverUrls": [
+          "http://127.0.0.1:3838/mcp"
+        ],
+        "client": true
+      },
+      "toolCatalog": {
+        "status": "experimental",
+        "since": "2.0",
+        "until": "2.1",
+        "witness": "witnessable-gated",
+        "sources": [
+          "node-pack",
+          "mcp"
+        ]
       },
       "workflowChainPacks": {
         "status": "experimental",
@@ -322,6 +365,81 @@
         ],
         "subjectLinkKey": "opaque-idp"
       },
+      "conversationPrimitive": {
+        "status": "experimental",
+        "since": "2.0",
+        "until": "2.1",
+        "witness": "claims-check"
+      },
+      "oauth": {
+        "status": "experimental",
+        "since": "2.0",
+        "until": "2.1",
+        "witness": "witnessable-gated",
+        "grants": [
+          "authorization_code",
+          "refresh_token"
+        ],
+        "providers": [
+          {
+            "id": "synthetic",
+            "scopesSupported": [
+              "openwop.read",
+              "openwop.write"
+            ],
+            "pkce": "S256"
+          },
+          {
+            "id": "synthetic-noiss",
+            "scopesSupported": [
+              "openwop.read",
+              "openwop.write"
+            ],
+            "pkce": "S256"
+          },
+          {
+            "id": "synthetic-noiss-b",
+            "scopesSupported": [
+              "openwop.read",
+              "openwop.write"
+            ],
+            "pkce": "S256"
+          }
+        ]
+      },
+      "agents": {
+        "status": "experimental",
+        "since": "2.0",
+        "until": "2.1",
+        "witness": "witnessable-gated",
+        "manifestRuntime": {
+          "installScope": "tenant",
+          "handoffValidation": false
+        }
+      },
+      "supportedEnvelopes": {
+        "status": "stable",
+        "since": "2.0",
+        "witness": "witnessable-gated",
+        "kinds": [
+          "ui.a2ui-surface"
+        ]
+      },
+      "schemaVersions": {
+        "status": "stable",
+        "since": "2.0",
+        "witness": "witnessable-gated",
+        "kinds": {
+          "ui.a2ui-surface": 2
+        }
+      },
+      "envelopeStrictness": {
+        "status": "experimental",
+        "since": "2.0",
+        "until": "2.1",
+        "witness": "claims-check",
+        "mode": "warn"
+      },
       "conformance": {
         "seamsProfile": "openwop-conformance-seams-v2"
       }
@@ -349,18 +467,36 @@
   ],
   "results": {
     "totals": {
-      "executedPass": 246,
+      "executedPass": 385,
       "executedFail": 0,
       "skipped": 7,
-      "inapplicable": 8,
+      "inapplicable": 42,
       "blocked": 0
     },
     "requirements": [
       {
+        "id": "openwop.scenario.auth-challenge-no-oracle",
+        "scenario": "auth-challenge-no-oracle.test.ts",
+        "result": "executed-pass",
+        "assertions": 6
+      },
+      {
         "id": "openwop.scenario.fixtures-valid",
         "scenario": "fixtures-valid.test.ts",
         "result": "executed-pass",
-        "assertions": 301
+        "assertions": 374
+      },
+      {
+        "id": "openwop.scenario.inbound-credential-no-passthrough",
+        "scenario": "inbound-credential-no-passthrough.test.ts",
+        "result": "executed-pass",
+        "assertions": 1
+      },
+      {
+        "id": "openwop.scenario.jcs-vectors",
+        "scenario": "jcs-vectors.test.ts",
+        "result": "executed-pass",
+        "assertions": 65
       },
       {
         "id": "openwop.scenario.memory-attribution-replay-stable",
@@ -368,6 +504,58 @@
         "result": "skipped",
         "assertions": 0,
         "detail": "every test returned early through behaviorGate with zero assertions: operator opted the profile or family out (OPENWOP_OPTED_OUT_PROFILES)"
+      },
+      {
+        "id": "openwop.scenario.otel-mcp-semconv-projection",
+        "scenario": "otel-mcp-semconv-projection.test.ts",
+        "result": "inapplicable",
+        "assertions": 0,
+        "detail": "every test returned early through behaviorGate with zero assertions: profile not advertised in the captured discovery set"
+      },
+      {
+        "id": "openwop.scenario.tool-catalog-compact-projection",
+        "scenario": "tool-catalog-compact-projection.test.ts",
+        "result": "inapplicable",
+        "assertions": 0,
+        "detail": "every test returned early through behaviorGate with zero assertions: profile not advertised in the captured discovery set"
+      },
+      {
+        "id": "openwop.scenario.tool-catalog-projection",
+        "scenario": "tool-catalog-projection.test.ts",
+        "result": "executed-pass",
+        "assertions": 103
+      },
+      {
+        "id": "openwop.floor.tool-descriptor-shape",
+        "scenario": "tool-descriptor-shape.test.ts",
+        "result": "executed-pass",
+        "assertions": 16
+      },
+      {
+        "id": "openwop.scenario.v2-a2a-agent-cards",
+        "scenario": "v2-a2a-agent-cards.test.ts",
+        "result": "executed-pass",
+        "assertions": 48
+      },
+      {
+        "id": "openwop.scenario.v2-a2a-client-error-details",
+        "scenario": "v2-a2a-client-error-details.test.ts",
+        "result": "executed-pass",
+        "assertions": 2
+      },
+      {
+        "id": "openwop.scenario.v2-a2a-operation-map",
+        "scenario": "v2-a2a-operation-map.test.ts",
+        "result": "executed-pass",
+        "assertions": 55,
+        "detail": "partial-witness: inapplicable: [inapplicable] the card lists no HTTP+JSON interface at 1.0 — RFC 0211 §B binds only a host that lists one; [inapplicable] oauth.credentialInterrupt is not advertised — the host raises no credential interrupt to project (RFC 0199 §C.1)"
+      },
+      {
+        "id": "openwop.scenario.v2-a2ui-v09-surface",
+        "scenario": "v2-a2ui-v09-surface.test.ts",
+        "result": "executed-pass",
+        "assertions": 34,
+        "detail": "partial-witness: inapplicable: schemaVersions.kinds[\"ui.a2ui-surface\"] is 2; this leg needs a floor of exactly 1 — a host whose floor is 2 has no admission path for a version-1 surface, and the suite cannot seed one (RFC 0209 §C.11 holds for what it recorded before raising the floor)"
       },
       {
         "id": "openwop.scenario.v2-advertised-fixtures-exist",
@@ -388,10 +576,24 @@
         "assertions": 6
       },
       {
+        "id": "openwop.scenario.v2-artifact-a2a-shape",
+        "scenario": "v2-artifact-a2a-shape.test.ts",
+        "result": "executed-pass",
+        "assertions": 5,
+        "detail": "partial-witness: inapplicable: the artifact carries no url Part (the host emits data/text/raw Parts only; RFC 0205 register G3)"
+      },
+      {
         "id": "openwop.scenario.v2-assurance-downgrade-audited",
         "scenario": "v2-assurance-downgrade-audited.test.ts",
         "result": "executed-pass",
         "assertions": 4
+      },
+      {
+        "id": "openwop.scenario.v2-auth-challenge",
+        "scenario": "v2-auth-challenge.test.ts",
+        "result": "inapplicable",
+        "assertions": 0,
+        "detail": "every test returned early through behaviorGate with zero assertions: profile not advertised in the captured discovery set"
       },
       {
         "id": "openwop.scenario.v2-bound-id-kinds",
@@ -426,10 +628,16 @@
         "assertions": 5
       },
       {
+        "id": "openwop.scenario.v2-capability-maturity-bounded",
+        "scenario": "v2-capability-maturity-bounded.test.ts",
+        "result": "executed-pass",
+        "assertions": 26
+      },
+      {
         "id": "openwop.scenario.v2-capability-record-shape",
         "scenario": "v2-capability-record-shape.test.ts",
         "result": "executed-pass",
-        "assertions": 117
+        "assertions": 162
       },
       {
         "id": "openwop.scenario.v2-chain-pin-exact",
@@ -457,10 +665,30 @@
         "assertions": 8
       },
       {
+        "id": "openwop.scenario.v2-content-locale-keys",
+        "scenario": "v2-content-locale-keys.test.ts",
+        "result": "inapplicable",
+        "assertions": 0,
+        "detail": "every test returned early through behaviorGate with zero assertions: profile not advertised in the captured discovery set"
+      },
+      {
+        "id": "openwop.scenario.v2-conversation-turn-parts",
+        "scenario": "v2-conversation-turn-parts.test.ts",
+        "result": "executed-pass",
+        "assertions": 1
+      },
+      {
         "id": "openwop.scenario.v2-created-run-readable",
         "scenario": "v2-created-run-readable.test.ts",
         "result": "executed-pass",
         "assertions": 5
+      },
+      {
+        "id": "openwop.scenario.v2-credential-interrupt",
+        "scenario": "v2-credential-interrupt.test.ts",
+        "result": "executed-pass",
+        "assertions": 6,
+        "detail": "partial-witness: inapplicable: [inapplicable] oauth.credentialInterrupt is not advertised — the host keeps RFC 0047 §C.3 (the regression leg below covers it); [inapplicable] oauth.credentialInterrupt is not advertised"
       },
       {
         "id": "openwop.scenario.v2-dual-stack-negotiation",
@@ -556,10 +784,36 @@
         "assertions": 15
       },
       {
+        "id": "openwop.scenario.v2-idempotency-in-flight",
+        "scenario": "v2-idempotency-in-flight.test.ts",
+        "result": "executed-pass",
+        "assertions": 3,
+        "detail": "partial-witness: inapplicable: no loser was refused in flight — all 5 answers were successes (each loser a marked replay, which §B permits), so the 409 branch did not run on this host"
+      },
+      {
         "id": "openwop.floor.v2-idempotency-key-grammar",
         "scenario": "v2-idempotency-key-grammar.test.ts",
         "result": "executed-pass",
         "assertions": 4
+      },
+      {
+        "id": "openwop.scenario.v2-implementation-informational",
+        "scenario": "v2-implementation-informational.test.ts",
+        "result": "executed-pass",
+        "assertions": 3
+      },
+      {
+        "id": "openwop.scenario.v2-interop-trace-context",
+        "scenario": "v2-interop-trace-context.test.ts",
+        "result": "executed-pass",
+        "assertions": 11,
+        "detail": "partial-witness: inapplicable: the suite OTLP collector is not started — the inbound A2A adopt rule is observable only through exported spans (REQUIRES_HOST_CALLBACK)"
+      },
+      {
+        "id": "openwop.scenario.v2-interrupt-resolve-terminal",
+        "scenario": "v2-interrupt-resolve-terminal.test.ts",
+        "result": "executed-pass",
+        "assertions": 3
       },
       {
         "id": "openwop.floor.v2-interrupt-token-scheme",
@@ -568,17 +822,24 @@
         "assertions": 4
       },
       {
+        "id": "openwop.scenario.v2-lane-exp-only-bound",
+        "scenario": "v2-lane-exp-only-bound.test.ts",
+        "result": "inapplicable",
+        "assertions": 0,
+        "detail": "every test returned early through behaviorGate with zero assertions: profile not advertised in the captured discovery set"
+      },
+      {
         "id": "openwop.scenario.v2-lane-issuer-advertised",
         "scenario": "v2-lane-issuer-advertised.test.ts",
         "result": "executed-pass",
-        "assertions": 21,
+        "assertions": 26,
         "detail": "partial-witness: inapplicable: no advertised lane uses a windowed revocation rule (exp-and-recheck | short-lived | rebind)"
       },
       {
         "id": "openwop.scenario.v2-legacy-profiles-absent",
         "scenario": "v2-legacy-profiles-absent.test.ts",
         "result": "executed-pass",
-        "assertions": 3
+        "assertions": 7
       },
       {
         "id": "openwop.scenario.v2-malformed-body-envelope",
@@ -599,6 +860,25 @@
         "assertions": 2
       },
       {
+        "id": "openwop.scenario.v2-mcp-client-results",
+        "scenario": "v2-mcp-client-results.test.ts",
+        "result": "executed-pass",
+        "assertions": 27
+      },
+      {
+        "id": "openwop.scenario.v2-mcp-mount-map",
+        "scenario": "v2-mcp-mount-map.test.ts",
+        "result": "executed-pass",
+        "assertions": 55,
+        "detail": "partial-witness: inapplicable: [inapplicable] the tool list is byte-identical for both tenants — the cacheScope private rule has nothing to bind on this host; [inapplicable] oauth.credentialInterrupt is not advertised — the host raises no credential interrupt to bridge (RFC 0199 §C.1)"
+      },
+      {
+        "id": "openwop.scenario.v2-mcp-tasks",
+        "scenario": "v2-mcp-tasks.test.ts",
+        "result": "executed-pass",
+        "assertions": 49
+      },
+      {
         "id": "openwop.scenario.v2-min-client-version",
         "scenario": "v2-min-client-version.test.ts",
         "result": "executed-pass",
@@ -608,7 +888,7 @@
         "id": "openwop.scenario.v2-minimum-version-refused",
         "scenario": "v2-minimum-version-refused.test.ts",
         "result": "executed-pass",
-        "assertions": 14
+        "assertions": 15
       },
       {
         "id": "openwop.scenario.v2-mrtr-rounds-ceiling",
@@ -620,7 +900,7 @@
         "id": "openwop.scenario.v2-negotiation-authenticated",
         "scenario": "v2-negotiation-authenticated.test.ts",
         "result": "executed-pass",
-        "assertions": 6
+        "assertions": 7
       },
       {
         "id": "openwop.scenario.v2-negotiation-decided-emitted",
@@ -633,6 +913,25 @@
         "scenario": "v2-no-transport-advertisement.test.ts",
         "result": "executed-pass",
         "assertions": 5
+      },
+      {
+        "id": "openwop.scenario.v2-oauth-client-pkce-state-iss",
+        "scenario": "v2-oauth-client-pkce-state-iss.test.ts",
+        "result": "executed-pass",
+        "assertions": 38
+      },
+      {
+        "id": "openwop.scenario.v2-oauth-mcp-reach-discovery",
+        "scenario": "v2-oauth-mcp-reach-discovery.test.ts",
+        "result": "executed-pass",
+        "assertions": 15
+      },
+      {
+        "id": "openwop.scenario.v2-oidc-id-token-audience",
+        "scenario": "v2-oidc-id-token-audience.test.ts",
+        "result": "inapplicable",
+        "assertions": 0,
+        "detail": "every test returned early through behaviorGate with zero assertions: profile not advertised in the captured discovery set"
       },
       {
         "id": "openwop.scenario.v2-owner-subject-required",
@@ -694,6 +993,13 @@
         "scenario": "v2-profiles-derived-only.test.ts",
         "result": "executed-pass",
         "assertions": 11
+      },
+      {
+        "id": "openwop.scenario.v2-protected-resource-metadata",
+        "scenario": "v2-protected-resource-metadata.test.ts",
+        "result": "inapplicable",
+        "assertions": 0,
+        "detail": "every test returned early through behaviorGate with zero assertions: profile not advertised in the captured discovery set"
       },
       {
         "id": "openwop.scenario.v2-provider-conflict",
@@ -788,6 +1094,13 @@
         "assertions": 5
       },
       {
+        "id": "openwop.scenario.v2-sse-last-event-id-cursor",
+        "scenario": "v2-sse-last-event-id-cursor.test.ts",
+        "result": "executed-pass",
+        "assertions": 10,
+        "detail": "partial-witness: inapplicable: the host accepted Last-Event-ID: abc (the refusal is a SHOULD — recorded, not failed)"
+      },
+      {
         "id": "openwop.floor.v2-sse-last-event-id",
         "scenario": "v2-sse-last-event-id.test.ts",
         "result": "executed-pass",
@@ -818,6 +1131,12 @@
         "assertions": 6
       },
       {
+        "id": "openwop.scenario.v2-tool-catalog-annotations",
+        "scenario": "v2-tool-catalog-annotations.test.ts",
+        "result": "executed-pass",
+        "assertions": 89
+      },
+      {
         "id": "openwop.scenario.v2-unmapped-type-refused",
         "scenario": "v2-unmapped-type-refused.test.ts",
         "result": "executed-pass",
@@ -846,7 +1165,7 @@
         "scenario": "v2-webhook-delivery-shape.test.ts",
         "result": "executed-pass",
         "assertions": 12,
-        "detail": "partial-witness: inapplicable: no run.started delivery for the seeded era-2 run inside 15s — this host does not fan out seeded history, so the era-2 fan-out branch is unobservable here (recorded under openwop.family.conformance)"
+        "detail": "partial-witness: inapplicable: no run.started delivery for the seeded era-2 run inside 15s — this host does not fan out seeded history, so the era-2 fan-out branch is unobservable here (recorded under openwop.family.conformance). no run.started delivery bearing this exercise's nonce ce74a64cc9dddeb15f arrived, and nothing else reached this listener either — the registered destination is the public front https://scott-medications-generated-develops.trycloudflare.com/hook/fx/ce74a64cc9dddeb15f (OPENWOP_WEBHOOK_RECEIVER_URL) and this listener answers on http://127.0.0.1:3841/fx/ce74a64cc9dddeb15f, port 3841"
       },
       {
         "id": "openwop.floor.v2-webhook-durable-delivery",
@@ -861,6 +1180,30 @@
         "assertions": 2
       },
       {
+        "id": "openwop.scenario.v2-webhook-endpoint-verification",
+        "scenario": "v2-webhook-endpoint-verification.test.ts",
+        "result": "executed-pass",
+        "assertions": 34
+      },
+      {
+        "id": "openwop.scenario.v2-webhook-message-id-stable",
+        "scenario": "v2-webhook-message-id-stable.test.ts",
+        "result": "executed-pass",
+        "assertions": 14
+      },
+      {
+        "id": "openwop.scenario.v2-webhook-secret-rotation",
+        "scenario": "v2-webhook-secret-rotation.test.ts",
+        "result": "executed-pass",
+        "assertions": 17
+      },
+      {
+        "id": "openwop.scenario.v2-webhook-standard-webhooks-delivery",
+        "scenario": "v2-webhook-standard-webhooks-delivery.test.ts",
+        "result": "executed-pass",
+        "assertions": 62
+      },
+      {
         "id": "openwop.scenario.v2-well-known-one-resource",
         "scenario": "v2-well-known-one-resource.test.ts",
         "result": "executed-pass",
@@ -870,19 +1213,19 @@
         "id": "openwop.it.fixtures-valid.connection-packs-validates-against-connection-pack-manifest-schema-json",
         "scenario": "fixtures-valid.test.ts",
         "result": "executed-pass",
-        "assertions": 1
+        "assertions": 3
       },
       {
         "id": "openwop.it.fixtures-valid.every-fixture-has-a-manual-trigger-so-the-conformance-driver-can-start-it",
         "scenario": "fixtures-valid.test.ts",
         "result": "executed-pass",
-        "assertions": 88
+        "assertions": 93
       },
       {
         "id": "openwop.it.fixtures-valid.every-fixture-id-matches-its-filename",
         "scenario": "fixtures-valid.test.ts",
         "result": "executed-pass",
-        "assertions": 88
+        "assertions": 93
       },
       {
         "id": "openwop.it.fixtures-valid.every-fixture-templateid-matches-its-filename",
@@ -927,16 +1270,28 @@
         "assertions": 1
       },
       {
+        "id": "openwop.it.fixtures-valid.interrupt-payloads-mismatched-kind-data-refused",
+        "scenario": "fixtures-valid.test.ts",
+        "result": "executed-pass",
+        "assertions": 41
+      },
+      {
+        "id": "openwop.it.fixtures-valid.interrupt-payloads-positive-per-kind-validates",
+        "scenario": "fixtures-valid.test.ts",
+        "result": "executed-pass",
+        "assertions": 17
+      },
+      {
         "id": "openwop.it.fixtures-valid.pack-manifests-validates-against-its-kind-s-manifest-schema",
         "scenario": "fixtures-valid.test.ts",
         "result": "executed-pass",
-        "assertions": 1
+        "assertions": 2
       },
       {
         "id": "openwop.it.fixtures-valid.prompt-templates-validates-against-prompt-template-schema-json",
         "scenario": "fixtures-valid.test.ts",
         "result": "executed-pass",
-        "assertions": 1
+        "assertions": 7
       },
       {
         "id": "openwop.it.fixtures-valid.the-private-scope-fixture-exercises-the-v1-0-private-pack-pattern",
@@ -948,20 +1303,205 @@
         "id": "openwop.it.fixtures-valid.trigger-events-validates-against-its-schema",
         "scenario": "fixtures-valid.test.ts",
         "result": "executed-pass",
-        "assertions": 1
+        "assertions": 4
       },
       {
         "id": "openwop.it.fixtures-valid.validates-against-workflow-definition-schema-json",
         "scenario": "fixtures-valid.test.ts",
         "result": "executed-pass",
-        "assertions": 1
+        "assertions": 93
+      },
+      {
+        "id": "openwop.it.jcs-vectors.a-non-i-json-native-value-is-refused-at-the-value-boundary",
+        "scenario": "jcs-vectors.test.ts",
+        "result": "executed-pass",
+        "assertions": 9
+      },
+      {
+        "id": "openwop.it.jcs-vectors.document-s-canonicalizes-and-hashes",
+        "scenario": "jcs-vectors.test.ts",
+        "result": "executed-pass",
+        "assertions": 20
+      },
+      {
+        "id": "openwop.it.jcs-vectors.member-names-and-certification-rows-sort-by-utf-16-code-units-not-by-locale",
+        "scenario": "jcs-vectors.test.ts",
+        "result": "executed-pass",
+        "assertions": 2
+      },
+      {
+        "id": "openwop.it.jcs-vectors.number-s-serializes-per-rfc-8785-appendix-b",
+        "scenario": "jcs-vectors.test.ts",
+        "result": "executed-pass",
+        "assertions": 24
+      },
+      {
+        "id": "openwop.it.jcs-vectors.text-s-is-refused-not-coerced",
+        "scenario": "jcs-vectors.test.ts",
+        "result": "executed-pass",
+        "assertions": 7
+      },
+      {
+        "id": "openwop.it.jcs-vectors.the-vector-set-is-present-and-non-trivial",
+        "scenario": "jcs-vectors.test.ts",
+        "result": "executed-pass",
+        "assertions": 3
       },
       {
         "id": "openwop.it.memory-attribution-replay-stable.a-replay-mode-fork-introduces-no-memory-written-with-a-new-memoryid",
         "scenario": "memory-attribution-replay-stable.test.ts",
         "result": "skipped",
         "assertions": 0,
-        "detail": "operator declared an honest opt-out via OPENWOP_OPTED_OUT_PROFILES"
+        "detail": "operator declared an honest opt-out via OPENWOP_OPTED_OUT_PROFILES: family.memory"
+      },
+      {
+        "id": "openwop.it.tool-catalog-compact-projection.serves-the-tools-compacttooldescriptor-projection-closed-shape-bounded-inputsche",
+        "scenario": "tool-catalog-compact-projection.test.ts",
+        "result": "inapplicable",
+        "assertions": 0,
+        "detail": "toolCatalog.compactView not advertised at major 2"
+      },
+      {
+        "id": "openwop.it.tool-catalog-projection.advisory-should-an-unchanged-catalog-reads-identically-sorted-by-toolid",
+        "scenario": "tool-catalog-projection.test.ts",
+        "result": "executed-pass",
+        "assertions": 1
+      },
+      {
+        "id": "openwop.it.tool-catalog-projection.lists-schema-valid-tooldescriptors-serves-by-id-404s-is-auth-gated-and-never-dis",
+        "scenario": "tool-catalog-projection.test.ts",
+        "result": "executed-pass",
+        "assertions": 102
+      },
+      {
+        "id": "openwop.it.tool-descriptor-shape.a-conforming-descriptor-validates",
+        "scenario": "tool-descriptor-shape.test.ts",
+        "result": "executed-pass",
+        "assertions": 1
+      },
+      {
+        "id": "openwop.it.tool-descriptor-shape.a-descriptor-missing-the-required-safetytier-is-rejected",
+        "scenario": "tool-descriptor-shape.test.ts",
+        "result": "executed-pass",
+        "assertions": 1
+      },
+      {
+        "id": "openwop.it.tool-descriptor-shape.both-session-event-names-appear-in-the-runeventtype-enum",
+        "scenario": "tool-descriptor-shape.test.ts",
+        "result": "executed-pass",
+        "assertions": 2
+      },
+      {
+        "id": "openwop.it.tool-descriptor-shape.capabilities-toolcatalog-is-declared-with-its-sub-flags",
+        "scenario": "tool-descriptor-shape.test.ts",
+        "result": "executed-pass",
+        "assertions": 4
+      },
+      {
+        "id": "openwop.it.tool-descriptor-shape.enforces-exec-host-extension-rfc-0069-c-1-f-4",
+        "scenario": "tool-descriptor-shape.test.ts",
+        "result": "executed-pass",
+        "assertions": 2
+      },
+      {
+        "id": "openwop.it.tool-descriptor-shape.rejects-an-unknown-property-additionalproperties-false",
+        "scenario": "tool-descriptor-shape.test.ts",
+        "result": "executed-pass",
+        "assertions": 1
+      },
+      {
+        "id": "openwop.it.tool-descriptor-shape.tool-session-closed-validates-enforces-the-closed-outcome-enum",
+        "scenario": "tool-descriptor-shape.test.ts",
+        "result": "executed-pass",
+        "assertions": 3
+      },
+      {
+        "id": "openwop.it.tool-descriptor-shape.tool-session-opened-validates-a-content-free-record",
+        "scenario": "tool-descriptor-shape.test.ts",
+        "result": "executed-pass",
+        "assertions": 2
+      },
+      {
+        "id": "openwop.it.v2-a2a-operation-map.a-run-suspended-on-a-credential-interrupt-projects-to-task-state-auth-required-n",
+        "scenario": "v2-a2a-operation-map.test.ts",
+        "result": "inapplicable",
+        "assertions": 0,
+        "detail": "oauth.credentialInterrupt is not advertised — the host raises no credential interrupt to project (RFC 0199 §C.1)"
+      },
+      {
+        "id": "openwop.it.v2-a2a-operation-map.an-http-json-interface-answers-an-a2a-error-with-google-rpc-status-carrying-the",
+        "scenario": "v2-a2a-operation-map.test.ts",
+        "result": "inapplicable",
+        "assertions": 0,
+        "detail": "the card lists no HTTP+JSON interface at 1.0 — RFC 0211 §B binds only a host that lists one"
+      },
+      {
+        "id": "openwop.it.v2-a2ui-v09-surface.recorded-as-recorded",
+        "scenario": "v2-a2ui-v09-surface.test.ts",
+        "result": "executed-pass",
+        "assertions": 6
+      },
+      {
+        "id": "openwop.it.v2-a2ui-v09-surface.surface-id-equality",
+        "scenario": "v2-a2ui-v09-surface.test.ts",
+        "result": "executed-pass",
+        "assertions": 2
+      },
+      {
+        "id": "openwop.it.v2-credential-interrupt.a-caller-resolve-of-authorized-is-refused-while-no-credential-resolves-and-a-res",
+        "scenario": "v2-credential-interrupt.test.ts",
+        "result": "inapplicable",
+        "assertions": 0,
+        "detail": "oauth.credentialInterrupt is not advertised"
+      },
+      {
+        "id": "openwop.it.v2-credential-interrupt.a-node-with-no-credential-suspends-on-a-credential-interrupt-with-a-closed-crede",
+        "scenario": "v2-credential-interrupt.test.ts",
+        "result": "inapplicable",
+        "assertions": 0,
+        "detail": "oauth.credentialInterrupt is not advertised — the host keeps RFC 0047 §C.3 (the regression leg below covers it)"
+      },
+      {
+        "id": "openwop.it.v2-credential-interrupt.a-terminal-refresh-failure-emits-connector-auth-expired-then-suspends-with-reaso",
+        "scenario": "v2-credential-interrupt.test.ts",
+        "result": "inapplicable",
+        "assertions": 0,
+        "detail": "oauth.credentialInterrupt is not advertised"
+      },
+      {
+        "id": "openwop.it.v2-credential-interrupt.connecturl-is-not-pre-authenticated-and-begins-the-grant-only-for-the-initiating",
+        "scenario": "v2-credential-interrupt.test.ts",
+        "result": "inapplicable",
+        "assertions": 0,
+        "detail": "oauth.credentialInterrupt is not advertised"
+      },
+      {
+        "id": "openwop.it.v2-credential-interrupt.declined-fails-the-node-with-connector-auth-declined",
+        "scenario": "v2-credential-interrupt.test.ts",
+        "result": "inapplicable",
+        "assertions": 0,
+        "detail": "oauth.credentialInterrupt is not advertised"
+      },
+      {
+        "id": "openwop.it.v2-credential-interrupt.the-grant-completes-through-connecturl-the-host-resolves-the-interrupt-itself-an",
+        "scenario": "v2-credential-interrupt.test.ts",
+        "result": "inapplicable",
+        "assertions": 0,
+        "detail": "oauth.credentialInterrupt is not advertised"
+      },
+      {
+        "id": "openwop.it.v2-mcp-mount-map.a-credential-interrupt-is-answered-in-url-mode-url-connecturl-iserror-without-ur",
+        "scenario": "v2-mcp-mount-map.test.ts",
+        "result": "inapplicable",
+        "assertions": 0,
+        "detail": "oauth.credentialInterrupt is not advertised — the host raises no credential interrupt to bridge (RFC 0199 §C.1)"
+      },
+      {
+        "id": "openwop.it.v2-mcp-mount-map.a-list-that-differs-per-caller-is-cachescope-private",
+        "scenario": "v2-mcp-mount-map.test.ts",
+        "result": "inapplicable",
+        "assertions": 0,
+        "detail": "the tool list is byte-identical for both tenants — the cacheScope private rule has nothing to bind on this host"
       },
       {
         "id": "openwop.requirement.0158.bound-is-derived",
@@ -1002,7 +1542,7 @@
           "recovery": {
             "class": "single-instance-restart",
             "boundMs": 6000,
-            "observedMs": 1380
+            "observedMs": 2228
           }
         }
       },
@@ -1015,7 +1555,7 @@
           "recovery": {
             "class": "single-instance-restart",
             "boundMs": 6000,
-            "observedMs": 1368
+            "observedMs": 2086
           }
         }
       },
@@ -1096,19 +1636,19 @@
         "id": "openwop.requirement.0169.capability-record-shape.required-fields",
         "scenario": "v2-capability-record-shape.test.ts",
         "result": "executed-pass",
-        "assertions": 68
+        "assertions": 96
       },
       {
         "id": "openwop.requirement.0169.capability-record-shape.until-iff-not-stable",
         "scenario": "v2-capability-record-shape.test.ts",
         "result": "executed-pass",
-        "assertions": 33
+        "assertions": 45
       },
       {
         "id": "openwop.requirement.0169.capability-record-shape.until-not-past",
         "scenario": "v2-capability-record-shape.test.ts",
         "result": "executed-pass",
-        "assertions": 16
+        "assertions": 21
       },
       {
         "id": "openwop.requirement.0169.profiles-derived-only.derivable",
@@ -1189,6 +1729,12 @@
         "assertions": 2
       },
       {
+        "id": "openwop.requirement.0170.lane-issuer-advertised.lane-rule",
+        "scenario": "v2-lane-issuer-advertised.test.ts",
+        "result": "executed-pass",
+        "assertions": 5
+      },
+      {
         "id": "openwop.requirement.0170.lane-issuer-advertised.members",
         "scenario": "v2-lane-issuer-advertised.test.ts",
         "result": "executed-pass",
@@ -1229,13 +1775,13 @@
         "id": "openwop.requirement.0170.run-bulk-cancel",
         "scenario": "v2-run-bulk-cancel.test.ts",
         "result": "executed-pass",
-        "assertions": 3
+        "assertions": 11
       },
       {
         "id": "openwop.requirement.0170.run-cancel",
         "scenario": "v2-run-cancel.test.ts",
         "result": "executed-pass",
-        "assertions": 2
+        "assertions": 7
       },
       {
         "id": "openwop.requirement.0170.run-diff-identical",
@@ -1254,7 +1800,7 @@
         "id": "openwop.requirement.0170.run-pause-resume",
         "scenario": "v2-run-pause-resume.test.ts",
         "result": "executed-pass",
-        "assertions": 4
+        "assertions": 15
       },
       {
         "id": "openwop.requirement.0170.run-snapshot-etag",
@@ -1387,7 +1933,7 @@
         "id": "openwop.requirement.0171.run-options-limits",
         "scenario": "v2-run-options-limits.test.ts",
         "result": "executed-pass",
-        "assertions": 6
+        "assertions": 9
       },
       {
         "id": "openwop.requirement.0171.sse-last-event-id",
@@ -1399,7 +1945,7 @@
         "id": "openwop.requirement.0171.stream-mode-refusal",
         "scenario": "v2-stream-mode-refusal.test.ts",
         "result": "executed-pass",
-        "assertions": 7
+        "assertions": 15
       },
       {
         "id": "openwop.requirement.0171.stream-sse-projection",
@@ -1411,7 +1957,8 @@
         "id": "openwop.requirement.0171.webhook-delivery-shape",
         "scenario": "v2-webhook-delivery-shape.test.ts",
         "result": "executed-pass",
-        "assertions": 7
+        "assertions": 12,
+        "detail": "partial-witness: inapplicable: no run.started delivery for the seeded era-2 run inside 15s — this host does not fan out seeded history, so the era-2 fan-out branch is unobservable here (recorded under openwop.family.conformance). no run.started delivery bearing this exercise's nonce ce74a64cc9dddeb15f arrived, and nothing else reached this listener either — the registered destination is the public front https://scott-medications-generated-develops.trycloudflare.com/hook/fx/ce74a64cc9dddeb15f (OPENWOP_WEBHOOK_RECEIVER_URL) and this listener answers on http://127.0.0.1:3841/fx/ce74a64cc9dddeb15f, port 3841"
       },
       {
         "id": "openwop.requirement.0171.webhook-egress-refused",
@@ -1459,7 +2006,7 @@
         "id": "openwop.requirement.0172.malformed-body-envelope",
         "scenario": "v2-malformed-body-envelope.test.ts",
         "result": "executed-pass",
-        "assertions": 5
+        "assertions": 10
       },
       {
         "id": "openwop.requirement.0172.min-client-version",
@@ -1489,7 +2036,7 @@
         "id": "openwop.requirement.0172.version-header-honored",
         "scenario": "v2-version-header-honored.test.ts",
         "result": "executed-pass",
-        "assertions": 1
+        "assertions": 4
       },
       {
         "id": "openwop.requirement.0173.approver-enforced",
@@ -1634,7 +2181,7 @@
         "id": "openwop.requirement.0175.legacy-profiles-absent",
         "scenario": "v2-legacy-profiles-absent.test.ts",
         "result": "executed-pass",
-        "assertions": 2
+        "assertions": 6
       },
       {
         "id": "openwop.requirement.0175.legacy-profiles-absent.no-root-profiles",
@@ -1652,7 +2199,7 @@
         "id": "openwop.requirement.0175.minimum-version-refused.mcp",
         "scenario": "v2-minimum-version-refused.test.ts",
         "result": "executed-pass",
-        "assertions": 7
+        "assertions": 8
       },
       {
         "id": "openwop.requirement.0175.mrtr-rounds-ceiling",
@@ -1676,7 +2223,7 @@
         "id": "openwop.requirement.0175.negotiation-authenticated.mcp",
         "scenario": "v2-negotiation-authenticated.test.ts",
         "result": "executed-pass",
-        "assertions": 3
+        "assertions": 4
       },
       {
         "id": "openwop.requirement.0175.negotiation-decided-emitted",
@@ -1706,7 +2253,7 @@
         "id": "openwop.requirement.0176.era-2-append-vocabulary",
         "scenario": "v2-era-2-append-vocabulary.test.ts",
         "result": "executed-pass",
-        "assertions": 5
+        "assertions": 6
       },
       {
         "id": "openwop.requirement.0176.era-key",
@@ -1724,7 +2271,7 @@
         "id": "openwop.requirement.0176.era-stamp-universal",
         "scenario": "v2-era-stamp-universal.test.ts",
         "result": "executed-pass",
-        "assertions": 3
+        "assertions": 4
       },
       {
         "id": "openwop.requirement.0176.fork-a-v1-run.legacy-subject",
@@ -1833,7 +2380,7 @@
         "scenario": "v2-form-when-reuses-edge-conditions.test.ts",
         "result": "skipped",
         "assertions": 0,
-        "detail": "operator declared an honest opt-out via OPENWOP_OPTED_OUT_PROFILES"
+        "detail": "operator declared an honest opt-out via OPENWOP_OPTED_OUT_PROFILES: family.forms"
       },
       {
         "id": "openwop.requirement.0177.manifest-ceiling-refused.unbounded",
@@ -1883,14 +2430,14 @@
         "scenario": "v2-provider-conflict.test.ts",
         "result": "skipped",
         "assertions": 0,
-        "detail": "operator declared an honest opt-out via OPENWOP_OPTED_OUT_PROFILES"
+        "detail": "operator declared an honest opt-out via OPENWOP_OPTED_OUT_PROFILES: connections.packsSupported"
       },
       {
         "id": "openwop.requirement.0177.provider-conflict.qualified-form",
         "scenario": "v2-provider-conflict.test.ts",
         "result": "skipped",
         "assertions": 0,
-        "detail": "operator declared an honest opt-out via OPENWOP_OPTED_OUT_PROFILES"
+        "detail": "operator declared an honest opt-out via OPENWOP_OPTED_OUT_PROFILES: connections.packsSupported"
       },
       {
         "id": "openwop.requirement.0182.run-list.cursor-refused",
@@ -1926,13 +2473,14 @@
         "id": "openwop.requirement.0186.payload-seats",
         "scenario": "v2-payload-seats-0186.test.ts",
         "result": "executed-pass",
-        "assertions": 7
+        "assertions": 18
       },
       {
         "id": "openwop.requirement.0187.bound-id-kinds.per-kind",
         "scenario": "v2-bound-id-kinds.test.ts",
         "result": "executed-pass",
-        "assertions": 1
+        "assertions": 3,
+        "detail": "partial-witness: inapplicable: the noop fixture records no effects — no effectId on the wire to read (a host with an effect-producing fixture witnesses this leg)"
       },
       {
         "id": "openwop.requirement.0187.bound-id-kinds.webhook",
@@ -1976,11 +2524,664 @@
         "result": "inapplicable",
         "assertions": 0,
         "detail": "the host does not advertise interrupt.callbackDelivery — it delivers nothing to callbackUrl, so there is no egress to guard (RFC 0196 §A.2: it SHOULD refuse the member)"
+      },
+      {
+        "id": "openwop.requirement.0197.maturity-not-overstated",
+        "scenario": "v2-capability-maturity-bounded.test.ts",
+        "result": "executed-pass",
+        "assertions": 26
+      },
+      {
+        "id": "openwop.requirement.0198.advertised-via-discover",
+        "scenario": "v2-mcp-tasks.test.ts",
+        "result": "executed-pass",
+        "assertions": 1
+      },
+      {
+        "id": "openwop.requirement.0198.disconnect-cancels-run",
+        "scenario": "v2-mcp-tasks.test.ts",
+        "result": "executed-pass",
+        "assertions": 3
+      },
+      {
+        "id": "openwop.requirement.0198.listen-omits-unreadable",
+        "scenario": "v2-mcp-tasks.test.ts",
+        "result": "executed-pass",
+        "assertions": 4
+      },
+      {
+        "id": "openwop.requirement.0198.no-server-cancelled",
+        "scenario": "v2-mcp-tasks.test.ts",
+        "result": "executed-pass",
+        "assertions": 4
+      },
+      {
+        "id": "openwop.requirement.0198.task-cancel-cancels-run",
+        "scenario": "v2-mcp-tasks.test.ts",
+        "result": "executed-pass",
+        "assertions": 5
+      },
+      {
+        "id": "openwop.requirement.0198.task-get-read-only",
+        "scenario": "v2-mcp-tasks.test.ts",
+        "result": "executed-pass",
+        "assertions": 1
+      },
+      {
+        "id": "openwop.requirement.0198.task-id-is-run-id",
+        "scenario": "v2-mcp-tasks.test.ts",
+        "result": "executed-pass",
+        "assertions": 3
+      },
+      {
+        "id": "openwop.requirement.0198.task-status-projection",
+        "scenario": "v2-mcp-tasks.test.ts",
+        "result": "executed-pass",
+        "assertions": 5
+      },
+      {
+        "id": "openwop.requirement.0198.task-survives-disconnect",
+        "scenario": "v2-mcp-tasks.test.ts",
+        "result": "executed-pass",
+        "assertions": 2
+      },
+      {
+        "id": "openwop.requirement.0198.task-unreadable-not-found",
+        "scenario": "v2-mcp-tasks.test.ts",
+        "result": "executed-pass",
+        "assertions": 7
+      },
+      {
+        "id": "openwop.requirement.0198.task-update-approver-checked",
+        "scenario": "v2-mcp-tasks.test.ts",
+        "result": "executed-pass",
+        "assertions": 4
+      },
+      {
+        "id": "openwop.requirement.0198.task-update-resolves-once",
+        "scenario": "v2-mcp-tasks.test.ts",
+        "result": "executed-pass",
+        "assertions": 4
+      },
+      {
+        "id": "openwop.requirement.0198.task-when-nonterminal",
+        "scenario": "v2-mcp-tasks.test.ts",
+        "result": "executed-pass",
+        "assertions": 6
+      },
+      {
+        "id": "openwop.requirement.0199.form-mode-no-secret",
+        "scenario": "v2-mcp-mount-map.test.ts",
+        "result": "executed-pass",
+        "assertions": 13
+      },
+      {
+        "id": "openwop.requirement.0199.iss-validated",
+        "scenario": "v2-oauth-client-pkce-state-iss.test.ts",
+        "result": "executed-pass",
+        "assertions": 11
+      },
+      {
+        "id": "openwop.requirement.0199.mcp-metadata-bound",
+        "scenario": "v2-oauth-mcp-reach-discovery.test.ts",
+        "result": "executed-pass",
+        "assertions": 9
+      },
+      {
+        "id": "openwop.requirement.0199.mcp-pkce-verified",
+        "scenario": "v2-oauth-mcp-reach-discovery.test.ts",
+        "result": "executed-pass",
+        "assertions": 2
+      },
+      {
+        "id": "openwop.requirement.0199.pkce-s256",
+        "scenario": "v2-oauth-client-pkce-state-iss.test.ts",
+        "result": "executed-pass",
+        "assertions": 9
+      },
+      {
+        "id": "openwop.requirement.0199.redirect-uri-fixed",
+        "scenario": "v2-oauth-client-pkce-state-iss.test.ts",
+        "result": "executed-pass",
+        "assertions": 4
+      },
+      {
+        "id": "openwop.requirement.0199.refresh-failure-fails-node",
+        "scenario": "v2-credential-interrupt.test.ts",
+        "result": "executed-pass",
+        "assertions": 6
+      },
+      {
+        "id": "openwop.requirement.0199.resource-indicator",
+        "scenario": "v2-oauth-mcp-reach-discovery.test.ts",
+        "result": "executed-pass",
+        "assertions": 4
+      },
+      {
+        "id": "openwop.requirement.0199.same-user-callback",
+        "scenario": "v2-oauth-client-pkce-state-iss.test.ts",
+        "result": "executed-pass",
+        "assertions": 5
+      },
+      {
+        "id": "openwop.requirement.0199.state-single-use",
+        "scenario": "v2-oauth-client-pkce-state-iss.test.ts",
+        "result": "executed-pass",
+        "assertions": 9
+      },
+      {
+        "id": "openwop.requirement.0200.challenge-401",
+        "scenario": "v2-auth-challenge.test.ts",
+        "result": "inapplicable",
+        "assertions": 0,
+        "detail": "no auth.lanes[] member has lane oauth2 or oidc — RFC 0200 §A.1 does not bind this host (serving the metadata anyway is RECOMMENDED, not required, and is not measured here)"
+      },
+      {
+        "id": "openwop.requirement.0200.challenge-403-scope",
+        "scenario": "v2-auth-challenge.test.ts",
+        "result": "inapplicable",
+        "assertions": 0,
+        "detail": "no auth.lanes[] member has lane oauth2 or oidc — RFC 0200 §A.1 does not bind this host (serving the metadata anyway is RECOMMENDED, not required, and is not measured here)"
+      },
+      {
+        "id": "openwop.requirement.0200.id-token-aud",
+        "scenario": "v2-oidc-id-token-audience.test.ts",
+        "result": "inapplicable",
+        "assertions": 0,
+        "detail": "no auth.lanes[] member has lane oauth2 or oidc — RFC 0200 §A.1 does not bind this host (serving the metadata anyway is RECOMMENDED, not required, and is not measured here)"
+      },
+      {
+        "id": "openwop.requirement.0200.inbound-credential-no-passthrough",
+        "scenario": "inbound-credential-no-passthrough.test.ts",
+        "result": "executed-pass",
+        "assertions": 1
+      },
+      {
+        "id": "openwop.requirement.0200.mcp-mount-prm",
+        "scenario": "v2-protected-resource-metadata.test.ts",
+        "result": "inapplicable",
+        "assertions": 0,
+        "detail": "no auth.lanes[] member has lane oauth2 or oidc — RFC 0200 §A.1 does not bind this host (serving the metadata anyway is RECOMMENDED, not required, and is not measured here)"
+      },
+      {
+        "id": "openwop.requirement.0200.no-challenge-on-nondisclosure-404",
+        "scenario": "auth-challenge-no-oracle.test.ts",
+        "result": "executed-pass",
+        "assertions": 6
+      },
+      {
+        "id": "openwop.requirement.0200.prm-consistent",
+        "scenario": "v2-protected-resource-metadata.test.ts",
+        "result": "inapplicable",
+        "assertions": 0,
+        "detail": "no auth.lanes[] member has lane oauth2 or oidc — RFC 0200 §A.1 does not bind this host (serving the metadata anyway is RECOMMENDED, not required, and is not measured here)"
+      },
+      {
+        "id": "openwop.requirement.0200.prm-served",
+        "scenario": "v2-protected-resource-metadata.test.ts",
+        "result": "inapplicable",
+        "assertions": 0,
+        "detail": "no auth.lanes[] member has lane oauth2 or oidc — RFC 0200 §A.1 does not bind this host (serving the metadata anyway is RECOMMENDED, not required, and is not measured here)"
+      },
+      {
+        "id": "openwop.requirement.0201.delivery-signed",
+        "scenario": "v2-webhook-standard-webhooks-delivery.test.ts",
+        "result": "executed-pass",
+        "assertions": 14
+      },
+      {
+        "id": "openwop.requirement.0201.endpoint-verification",
+        "scenario": "v2-webhook-endpoint-verification.test.ts",
+        "result": "executed-pass",
+        "assertions": 34
+      },
+      {
+        "id": "openwop.requirement.0201.message-id-stable",
+        "scenario": "v2-webhook-message-id-stable.test.ts",
+        "result": "executed-pass",
+        "assertions": 14
+      },
+      {
+        "id": "openwop.requirement.0201.opt-in-only",
+        "scenario": "v2-webhook-standard-webhooks-delivery.test.ts",
+        "result": "executed-pass",
+        "assertions": 6
+      },
+      {
+        "id": "openwop.requirement.0201.registration-validated",
+        "scenario": "v2-webhook-standard-webhooks-delivery.test.ts",
+        "result": "executed-pass",
+        "assertions": 42
+      },
+      {
+        "id": "openwop.requirement.0201.secret-rotation",
+        "scenario": "v2-webhook-secret-rotation.test.ts",
+        "result": "executed-pass",
+        "assertions": 17
+      },
+      {
+        "id": "openwop.requirement.0202.advertisement",
+        "scenario": "v2-a2a-agent-cards.test.ts",
+        "result": "executed-pass",
+        "assertions": 3
+      },
+      {
+        "id": "openwop.requirement.0202.auth-before-resolve",
+        "scenario": "v2-a2a-agent-cards.test.ts",
+        "result": "executed-pass",
+        "assertions": 3
+      },
+      {
+        "id": "openwop.requirement.0202.card-projection",
+        "scenario": "v2-a2a-agent-cards.test.ts",
+        "result": "executed-pass",
+        "assertions": 12
+      },
+      {
+        "id": "openwop.requirement.0202.card-sr1",
+        "scenario": "v2-a2a-agent-cards.test.ts",
+        "result": "executed-pass",
+        "assertions": 3
+      },
+      {
+        "id": "openwop.requirement.0202.identical-refusal",
+        "scenario": "v2-a2a-agent-cards.test.ts",
+        "result": "executed-pass",
+        "assertions": 5
+      },
+      {
+        "id": "openwop.requirement.0202.public-card-no-r",
+        "scenario": "v2-a2a-agent-cards.test.ts",
+        "result": "executed-pass",
+        "assertions": 10
+      },
+      {
+        "id": "openwop.requirement.0202.routing-value",
+        "scenario": "v2-a2a-agent-cards.test.ts",
+        "result": "executed-pass",
+        "assertions": 8
+      },
+      {
+        "id": "openwop.requirement.0202.tenant-of-record",
+        "scenario": "v2-a2a-agent-cards.test.ts",
+        "result": "executed-pass",
+        "assertions": 4
+      },
+      {
+        "id": "openwop.requirement.0204.annotations-derived",
+        "scenario": "v2-tool-catalog-annotations.test.ts",
+        "result": "executed-pass",
+        "assertions": 88
+      },
+      {
+        "id": "openwop.requirement.0204.call-tool-iserror-resolves",
+        "scenario": "v2-mcp-client-results.test.ts",
+        "result": "executed-pass",
+        "assertions": 4
+      },
+      {
+        "id": "openwop.requirement.0204.call-tool-verbatim",
+        "scenario": "v2-mcp-client-results.test.ts",
+        "result": "executed-pass",
+        "assertions": 4
+      },
+      {
+        "id": "openwop.requirement.0204.list-tools-page",
+        "scenario": "v2-mcp-client-results.test.ts",
+        "result": "executed-pass",
+        "assertions": 9
+      },
+      {
+        "id": "openwop.requirement.0204.mcp-unclassified-write",
+        "scenario": "v2-tool-catalog-annotations.test.ts",
+        "result": "executed-pass",
+        "assertions": 1
+      },
+      {
+        "id": "openwop.requirement.0204.reject-unknown-server",
+        "scenario": "v2-mcp-client-results.test.ts",
+        "result": "executed-pass",
+        "assertions": 2
+      },
+      {
+        "id": "openwop.requirement.0204.server-health",
+        "scenario": "v2-mcp-client-results.test.ts",
+        "result": "executed-pass",
+        "assertions": 8
+      },
+      {
+        "id": "openwop.requirement.0205.artifact-a2a-shape",
+        "scenario": "v2-artifact-a2a-shape.test.ts",
+        "result": "executed-pass",
+        "assertions": 3
+      },
+      {
+        "id": "openwop.requirement.0205.artifact-id-matches-path",
+        "scenario": "v2-artifact-a2a-shape.test.ts",
+        "result": "executed-pass",
+        "assertions": 2
+      },
+      {
+        "id": "openwop.requirement.0205.artifact-url-part-scoped",
+        "scenario": "v2-artifact-a2a-shape.test.ts",
+        "result": "inapplicable",
+        "assertions": 0,
+        "detail": "the artifact carries no url Part (the host emits data/text/raw Parts only; RFC 0205 register G3)"
+      },
+      {
+        "id": "openwop.requirement.0205.turn-parts-emitted",
+        "scenario": "v2-conversation-turn-parts.test.ts",
+        "result": "executed-pass",
+        "assertions": 1
+      },
+      {
+        "id": "openwop.requirement.0206.delivery-extended-locale",
+        "scenario": "v2-content-locale-keys.test.ts",
+        "result": "inapplicable",
+        "assertions": 0,
+        "detail": "the host does not advertise the content family (no content surface to deliver an extended locale from)"
+      },
+      {
+        "id": "openwop.requirement.0207.a2a-inbound-adopts",
+        "scenario": "v2-interop-trace-context.test.ts",
+        "result": "inapplicable",
+        "assertions": 0,
+        "detail": "the suite OTLP collector is not started — the inbound A2A adopt rule is observable only through exported spans (REQUIRES_HOST_CALLBACK)"
+      },
+      {
+        "id": "openwop.requirement.0207.a2a-malformed-ignored",
+        "scenario": "v2-interop-trace-context.test.ts",
+        "result": "executed-pass",
+        "assertions": 2
+      },
+      {
+        "id": "openwop.requirement.0207.a2a-traceparent-carried",
+        "scenario": "v2-interop-trace-context.test.ts",
+        "result": "executed-pass",
+        "assertions": 1
+      },
+      {
+        "id": "openwop.requirement.0207.mcp-malformed-ignored",
+        "scenario": "v2-interop-trace-context.test.ts",
+        "result": "executed-pass",
+        "assertions": 3
+      },
+      {
+        "id": "openwop.requirement.0207.mcp-semconv-stamped",
+        "scenario": "otel-mcp-semconv-projection.test.ts",
+        "result": "inapplicable",
+        "assertions": 0,
+        "detail": "the mcp.* projection is optional and observable only through OTLP export to the suite collector, which is not started in this run (OPENWOP_OTEL_COLLECTOR) — no mcp.* span can arrive"
+      },
+      {
+        "id": "openwop.requirement.0207.mcp-server-adopts-meta",
+        "scenario": "v2-interop-trace-context.test.ts",
+        "result": "executed-pass",
+        "assertions": 3
+      },
+      {
+        "id": "openwop.requirement.0207.mcp-traceparent-carried",
+        "scenario": "v2-interop-trace-context.test.ts",
+        "result": "executed-pass",
+        "assertions": 2
+      },
+      {
+        "id": "openwop.requirement.0208.a2a-context-inferred",
+        "scenario": "v2-a2a-operation-map.test.ts",
+        "result": "executed-pass",
+        "assertions": 5
+      },
+      {
+        "id": "openwop.requirement.0208.a2a-context-mismatch-refused",
+        "scenario": "v2-a2a-operation-map.test.ts",
+        "result": "executed-pass",
+        "assertions": 4
+      },
+      {
+        "id": "openwop.requirement.0208.a2a-error-codes",
+        "scenario": "v2-a2a-operation-map.test.ts",
+        "result": "executed-pass",
+        "assertions": 3
+      },
+      {
+        "id": "openwop.requirement.0208.a2a-list-scoped",
+        "scenario": "v2-a2a-operation-map.test.ts",
+        "result": "executed-pass",
+        "assertions": 5
+      },
+      {
+        "id": "openwop.requirement.0208.a2a-state-projection",
+        "scenario": "v2-a2a-operation-map.test.ts",
+        "result": "executed-pass",
+        "assertions": 5
+      },
+      {
+        "id": "openwop.requirement.0208.a2a-terminal-unsupported",
+        "scenario": "v2-a2a-operation-map.test.ts",
+        "result": "executed-pass",
+        "assertions": 4
+      },
+      {
+        "id": "openwop.requirement.0208.implementation-shape",
+        "scenario": "v2-implementation-informational.test.ts",
+        "result": "executed-pass",
+        "assertions": 3
+      },
+      {
+        "id": "openwop.requirement.0208.mcp-auth-boundary",
+        "scenario": "v2-mcp-mount-map.test.ts",
+        "result": "executed-pass",
+        "assertions": 2
+      },
+      {
+        "id": "openwop.requirement.0208.mcp-discover-revisions",
+        "scenario": "v2-mcp-mount-map.test.ts",
+        "result": "executed-pass",
+        "assertions": 5
+      },
+      {
+        "id": "openwop.requirement.0208.mcp-extension-opacity",
+        "scenario": "v2-mcp-mount-map.test.ts",
+        "result": "executed-pass",
+        "assertions": 2
+      },
+      {
+        "id": "openwop.requirement.0208.mcp-features-required",
+        "scenario": "v2-mcp-mount-map.test.ts",
+        "result": "executed-pass",
+        "assertions": 1
+      },
+      {
+        "id": "openwop.requirement.0208.mcp-header-body-consistent",
+        "scenario": "v2-mcp-mount-map.test.ts",
+        "result": "executed-pass",
+        "assertions": 5
+      },
+      {
+        "id": "openwop.requirement.0208.mcp-mrtr-input-request-key",
+        "scenario": "v2-mcp-mount-map.test.ts",
+        "result": "executed-pass",
+        "assertions": 6
+      },
+      {
+        "id": "openwop.requirement.0208.mcp-mrtr-server",
+        "scenario": "v2-mcp-mount-map.test.ts",
+        "result": "executed-pass",
+        "assertions": 7
+      },
+      {
+        "id": "openwop.requirement.0208.mcp-run-transport",
+        "scenario": "v2-mcp-mount-map.test.ts",
+        "result": "executed-pass",
+        "assertions": 2
+      },
+      {
+        "id": "openwop.requirement.0208.mcp-stateless",
+        "scenario": "v2-mcp-mount-map.test.ts",
+        "result": "executed-pass",
+        "assertions": 7
+      },
+      {
+        "id": "openwop.requirement.0208.mcp-tool-outcome",
+        "scenario": "v2-mcp-mount-map.test.ts",
+        "result": "executed-pass",
+        "assertions": 5
+      },
+      {
+        "id": "openwop.requirement.0208.row-requires-refused",
+        "scenario": "v2-a2a-operation-map.test.ts",
+        "result": "executed-pass",
+        "assertions": 2
+      },
+      {
+        "id": "openwop.requirement.0209.catalog-equality",
+        "scenario": "v2-a2ui-v09-surface.test.ts",
+        "result": "executed-pass",
+        "assertions": 2
+      },
+      {
+        "id": "openwop.requirement.0209.fold-guarded",
+        "scenario": "v2-a2ui-v09-surface.test.ts",
+        "result": "executed-pass",
+        "assertions": 7
+      },
+      {
+        "id": "openwop.requirement.0209.legacy-readable",
+        "scenario": "v2-a2ui-v09-surface.test.ts",
+        "result": "inapplicable",
+        "assertions": 0,
+        "detail": "schemaVersions.kinds[\"ui.a2ui-surface\"] is 2; this leg needs a floor of exactly 1 — a host whose floor is 2 has no admission path for a version-1 surface, and the suite cannot seed one (RFC 0209 §C.11 holds for what it recorded before raising the floor)"
+      },
+      {
+        "id": "openwop.requirement.0209.taint-sticky",
+        "scenario": "v2-a2ui-v09-surface.test.ts",
+        "result": "executed-pass",
+        "assertions": 10
+      },
+      {
+        "id": "openwop.requirement.0209.version-selects-branch",
+        "scenario": "v2-a2ui-v09-surface.test.ts",
+        "result": "executed-pass",
+        "assertions": 7
+      },
+      {
+        "id": "openwop.requirement.0210.credential-lifetime-code",
+        "scenario": "v2-lane-exp-only-bound.test.ts",
+        "result": "inapplicable",
+        "assertions": 0,
+        "detail": "no advertised lane names revocation \"exp-only\" (advertised: api-key=next-request, session=next-request, saml=not-on-or-after, scim=bound-connection, workload=delegation-expiry) — §B binds the host that advertises the member and binds no other"
+      },
+      {
+        "id": "openwop.requirement.0210.exp-only-control-accepted",
+        "scenario": "v2-lane-exp-only-bound.test.ts",
+        "result": "inapplicable",
+        "assertions": 0,
+        "detail": "no advertised lane names revocation \"exp-only\" (advertised: api-key=next-request, session=next-request, saml=not-on-or-after, scim=bound-connection, workload=delegation-expiry) — §B binds the host that advertises the member and binds no other"
+      },
+      {
+        "id": "openwop.requirement.0210.exp-only-lifetime-bound",
+        "scenario": "v2-lane-exp-only-bound.test.ts",
+        "result": "inapplicable",
+        "assertions": 0,
+        "detail": "no advertised lane names revocation \"exp-only\" (advertised: api-key=next-request, session=next-request, saml=not-on-or-after, scim=bound-connection, workload=delegation-expiry) — §B binds the host that advertises the member and binds no other"
+      },
+      {
+        "id": "openwop.requirement.0210.exp-only-remaining-bound",
+        "scenario": "v2-lane-exp-only-bound.test.ts",
+        "result": "inapplicable",
+        "assertions": 0,
+        "detail": "no advertised lane names revocation \"exp-only\" (advertised: api-key=next-request, session=next-request, saml=not-on-or-after, scim=bound-connection, workload=delegation-expiry) — §B binds the host that advertises the member and binds no other"
+      },
+      {
+        "id": "openwop.requirement.0211.a2a-client-reads-either-shape",
+        "scenario": "v2-a2a-client-error-details.test.ts",
+        "result": "executed-pass",
+        "assertions": 2
+      },
+      {
+        "id": "openwop.requirement.0211.a2a-error-data-shape",
+        "scenario": "v2-a2a-operation-map.test.ts",
+        "result": "executed-pass",
+        "assertions": 9
+      },
+      {
+        "id": "openwop.requirement.0211.a2a-no-openwop-envelope",
+        "scenario": "v2-a2a-operation-map.test.ts",
+        "result": "executed-pass",
+        "assertions": 4
+      },
+      {
+        "id": "openwop.requirement.0211.a2a-unreadable-not-found-details",
+        "scenario": "v2-a2a-operation-map.test.ts",
+        "result": "executed-pass",
+        "assertions": 5
+      },
+      {
+        "id": "openwop.requirement.0211.a2a-version-not-supported-shape",
+        "scenario": "v2-a2a-operation-map.test.ts",
+        "result": "executed-pass",
+        "assertions": 3
+      },
+      {
+        "id": "openwop.requirement.0213.in-flight-loser-outcome",
+        "scenario": "v2-idempotency-in-flight.test.ts",
+        "result": "executed-pass",
+        "assertions": 1,
+        "detail": "partial-witness: inapplicable: no loser was refused in flight — all 5 answers were successes (each loser a marked replay, which §B permits), so the 409 branch did not run on this host"
+      },
+      {
+        "id": "openwop.requirement.0213.in-flight-one-winner",
+        "scenario": "v2-idempotency-in-flight.test.ts",
+        "result": "executed-pass",
+        "assertions": 2
+      },
+      {
+        "id": "openwop.requirement.0213.last-event-id-after-authorization",
+        "scenario": "v2-sse-last-event-id-cursor.test.ts",
+        "result": "executed-pass",
+        "assertions": 7
+      },
+      {
+        "id": "openwop.requirement.0213.last-event-id-exclusive-cursor",
+        "scenario": "v2-sse-last-event-id-cursor.test.ts",
+        "result": "executed-pass",
+        "assertions": 3
+      },
+      {
+        "id": "openwop.requirement.0213.last-event-id-malformed",
+        "scenario": "v2-sse-last-event-id-cursor.test.ts",
+        "result": "inapplicable",
+        "assertions": 0,
+        "detail": "the host accepted Last-Event-ID: abc (the refusal is a SHOULD — recorded, not failed)"
+      },
+      {
+        "id": "openwop.requirement.0213.resolve-after-cancel",
+        "scenario": "v2-interrupt-resolve-terminal.test.ts",
+        "result": "executed-pass",
+        "assertions": 1
+      },
+      {
+        "id": "openwop.requirement.0213.resolve-after-complete",
+        "scenario": "v2-interrupt-resolve-terminal.test.ts",
+        "result": "executed-pass",
+        "assertions": 1
+      },
+      {
+        "id": "openwop.requirement.0213.resolve-unknown-run",
+        "scenario": "v2-interrupt-resolve-terminal.test.ts",
+        "result": "executed-pass",
+        "assertions": 1
+      },
+      {
+        "id": "openwop.requirement.0214.a2a-push-unadvertised-refused",
+        "scenario": "v2-a2a-operation-map.test.ts",
+        "result": "executed-pass",
+        "assertions": 6
       }
     ]
   },
-  "witnessSha256": "5562d7c57609e752ee9c8f1b57c5c806f1f4116d0470837c49829e472fb179b9",
-  "assertionCount": 2032,
+  "witnessSha256": "669d926abf454bfad8d89b8e96c97d87112c64352677111b1236c4d2eddacea6",
+  "assertionCount": 4048,
   "detail": {
     "nonPass": [
       {
@@ -1989,7 +3190,27 @@
         "reason": "every test returned early through behaviorGate with zero assertions: operator opted the profile or family out (OPENWOP_OPTED_OUT_PROFILES)"
       },
       {
+        "id": "openwop.scenario.otel-mcp-semconv-projection",
+        "result": "inapplicable",
+        "reason": "every test returned early through behaviorGate with zero assertions: profile not advertised in the captured discovery set"
+      },
+      {
+        "id": "openwop.scenario.tool-catalog-compact-projection",
+        "result": "inapplicable",
+        "reason": "every test returned early through behaviorGate with zero assertions: profile not advertised in the captured discovery set"
+      },
+      {
+        "id": "openwop.scenario.v2-auth-challenge",
+        "result": "inapplicable",
+        "reason": "every test returned early through behaviorGate with zero assertions: profile not advertised in the captured discovery set"
+      },
+      {
         "id": "openwop.scenario.v2-callback-url-guarded",
+        "result": "inapplicable",
+        "reason": "every test returned early through behaviorGate with zero assertions: profile not advertised in the captured discovery set"
+      },
+      {
+        "id": "openwop.scenario.v2-content-locale-keys",
         "result": "inapplicable",
         "reason": "every test returned early through behaviorGate with zero assertions: profile not advertised in the captured discovery set"
       },
@@ -1997,6 +3218,21 @@
         "id": "openwop.scenario.v2-form-when-reuses-edge-conditions",
         "result": "skipped",
         "reason": "every test returned early through behaviorGate with zero assertions: operator opted the profile or family out (OPENWOP_OPTED_OUT_PROFILES)"
+      },
+      {
+        "id": "openwop.scenario.v2-lane-exp-only-bound",
+        "result": "inapplicable",
+        "reason": "every test returned early through behaviorGate with zero assertions: profile not advertised in the captured discovery set"
+      },
+      {
+        "id": "openwop.scenario.v2-oidc-id-token-audience",
+        "result": "inapplicable",
+        "reason": "every test returned early through behaviorGate with zero assertions: profile not advertised in the captured discovery set"
+      },
+      {
+        "id": "openwop.scenario.v2-protected-resource-metadata",
+        "result": "inapplicable",
+        "reason": "every test returned early through behaviorGate with zero assertions: profile not advertised in the captured discovery set"
       },
       {
         "id": "openwop.scenario.v2-provider-conflict",
@@ -2011,7 +3247,62 @@
       {
         "id": "openwop.it.memory-attribution-replay-stable.a-replay-mode-fork-introduces-no-memory-written-with-a-new-memoryid",
         "result": "skipped",
-        "reason": "operator declared an honest opt-out via OPENWOP_OPTED_OUT_PROFILES"
+        "reason": "operator declared an honest opt-out via OPENWOP_OPTED_OUT_PROFILES: family.memory"
+      },
+      {
+        "id": "openwop.it.tool-catalog-compact-projection.serves-the-tools-compacttooldescriptor-projection-closed-shape-bounded-inputsche",
+        "result": "inapplicable",
+        "reason": "toolCatalog.compactView not advertised at major 2"
+      },
+      {
+        "id": "openwop.it.v2-a2a-operation-map.a-run-suspended-on-a-credential-interrupt-projects-to-task-state-auth-required-n",
+        "result": "inapplicable",
+        "reason": "oauth.credentialInterrupt is not advertised — the host raises no credential interrupt to project (RFC 0199 §C.1)"
+      },
+      {
+        "id": "openwop.it.v2-a2a-operation-map.an-http-json-interface-answers-an-a2a-error-with-google-rpc-status-carrying-the",
+        "result": "inapplicable",
+        "reason": "the card lists no HTTP+JSON interface at 1.0 — RFC 0211 §B binds only a host that lists one"
+      },
+      {
+        "id": "openwop.it.v2-credential-interrupt.a-caller-resolve-of-authorized-is-refused-while-no-credential-resolves-and-a-res",
+        "result": "inapplicable",
+        "reason": "oauth.credentialInterrupt is not advertised"
+      },
+      {
+        "id": "openwop.it.v2-credential-interrupt.a-node-with-no-credential-suspends-on-a-credential-interrupt-with-a-closed-crede",
+        "result": "inapplicable",
+        "reason": "oauth.credentialInterrupt is not advertised — the host keeps RFC 0047 §C.3 (the regression leg below covers it)"
+      },
+      {
+        "id": "openwop.it.v2-credential-interrupt.a-terminal-refresh-failure-emits-connector-auth-expired-then-suspends-with-reaso",
+        "result": "inapplicable",
+        "reason": "oauth.credentialInterrupt is not advertised"
+      },
+      {
+        "id": "openwop.it.v2-credential-interrupt.connecturl-is-not-pre-authenticated-and-begins-the-grant-only-for-the-initiating",
+        "result": "inapplicable",
+        "reason": "oauth.credentialInterrupt is not advertised"
+      },
+      {
+        "id": "openwop.it.v2-credential-interrupt.declined-fails-the-node-with-connector-auth-declined",
+        "result": "inapplicable",
+        "reason": "oauth.credentialInterrupt is not advertised"
+      },
+      {
+        "id": "openwop.it.v2-credential-interrupt.the-grant-completes-through-connecturl-the-host-resolves-the-interrupt-itself-an",
+        "result": "inapplicable",
+        "reason": "oauth.credentialInterrupt is not advertised"
+      },
+      {
+        "id": "openwop.it.v2-mcp-mount-map.a-credential-interrupt-is-answered-in-url-mode-url-connecturl-iserror-without-ur",
+        "result": "inapplicable",
+        "reason": "oauth.credentialInterrupt is not advertised — the host raises no credential interrupt to bridge (RFC 0199 §C.1)"
+      },
+      {
+        "id": "openwop.it.v2-mcp-mount-map.a-list-that-differs-per-caller-is-cachescope-private",
+        "result": "inapplicable",
+        "reason": "the tool list is byte-identical for both tenants — the cacheScope private rule has nothing to bind on this host"
       },
       {
         "id": "openwop.requirement.0168.coherence-not-in-bundle.disjoint-by-construction",
@@ -2036,7 +3327,7 @@
       {
         "id": "openwop.requirement.0177.form-when-reuses-edge-conditions",
         "result": "skipped",
-        "reason": "operator declared an honest opt-out via OPENWOP_OPTED_OUT_PROFILES"
+        "reason": "operator declared an honest opt-out via OPENWOP_OPTED_OUT_PROFILES: family.forms"
       },
       {
         "id": "openwop.requirement.0177.peer-dependency-declared.alias-overlap",
@@ -2046,17 +3337,97 @@
       {
         "id": "openwop.requirement.0177.provider-conflict.fail-closed",
         "result": "skipped",
-        "reason": "operator declared an honest opt-out via OPENWOP_OPTED_OUT_PROFILES"
+        "reason": "operator declared an honest opt-out via OPENWOP_OPTED_OUT_PROFILES: connections.packsSupported"
       },
       {
         "id": "openwop.requirement.0177.provider-conflict.qualified-form",
         "result": "skipped",
-        "reason": "operator declared an honest opt-out via OPENWOP_OPTED_OUT_PROFILES"
+        "reason": "operator declared an honest opt-out via OPENWOP_OPTED_OUT_PROFILES: connections.packsSupported"
       },
       {
         "id": "openwop.requirement.0196.callback-url-guarded",
         "result": "inapplicable",
         "reason": "the host does not advertise interrupt.callbackDelivery — it delivers nothing to callbackUrl, so there is no egress to guard (RFC 0196 §A.2: it SHOULD refuse the member)"
+      },
+      {
+        "id": "openwop.requirement.0200.challenge-401",
+        "result": "inapplicable",
+        "reason": "no auth.lanes[] member has lane oauth2 or oidc — RFC 0200 §A.1 does not bind this host (serving the metadata anyway is RECOMMENDED, not required, and is not measured here)"
+      },
+      {
+        "id": "openwop.requirement.0200.challenge-403-scope",
+        "result": "inapplicable",
+        "reason": "no auth.lanes[] member has lane oauth2 or oidc — RFC 0200 §A.1 does not bind this host (serving the metadata anyway is RECOMMENDED, not required, and is not measured here)"
+      },
+      {
+        "id": "openwop.requirement.0200.id-token-aud",
+        "result": "inapplicable",
+        "reason": "no auth.lanes[] member has lane oauth2 or oidc — RFC 0200 §A.1 does not bind this host (serving the metadata anyway is RECOMMENDED, not required, and is not measured here)"
+      },
+      {
+        "id": "openwop.requirement.0200.mcp-mount-prm",
+        "result": "inapplicable",
+        "reason": "no auth.lanes[] member has lane oauth2 or oidc — RFC 0200 §A.1 does not bind this host (serving the metadata anyway is RECOMMENDED, not required, and is not measured here)"
+      },
+      {
+        "id": "openwop.requirement.0200.prm-consistent",
+        "result": "inapplicable",
+        "reason": "no auth.lanes[] member has lane oauth2 or oidc — RFC 0200 §A.1 does not bind this host (serving the metadata anyway is RECOMMENDED, not required, and is not measured here)"
+      },
+      {
+        "id": "openwop.requirement.0200.prm-served",
+        "result": "inapplicable",
+        "reason": "no auth.lanes[] member has lane oauth2 or oidc — RFC 0200 §A.1 does not bind this host (serving the metadata anyway is RECOMMENDED, not required, and is not measured here)"
+      },
+      {
+        "id": "openwop.requirement.0205.artifact-url-part-scoped",
+        "result": "inapplicable",
+        "reason": "the artifact carries no url Part (the host emits data/text/raw Parts only; RFC 0205 register G3)"
+      },
+      {
+        "id": "openwop.requirement.0206.delivery-extended-locale",
+        "result": "inapplicable",
+        "reason": "the host does not advertise the content family (no content surface to deliver an extended locale from)"
+      },
+      {
+        "id": "openwop.requirement.0207.a2a-inbound-adopts",
+        "result": "inapplicable",
+        "reason": "the suite OTLP collector is not started — the inbound A2A adopt rule is observable only through exported spans (REQUIRES_HOST_CALLBACK)"
+      },
+      {
+        "id": "openwop.requirement.0207.mcp-semconv-stamped",
+        "result": "inapplicable",
+        "reason": "the mcp.* projection is optional and observable only through OTLP export to the suite collector, which is not started in this run (OPENWOP_OTEL_COLLECTOR) — no mcp.* span can arrive"
+      },
+      {
+        "id": "openwop.requirement.0209.legacy-readable",
+        "result": "inapplicable",
+        "reason": "schemaVersions.kinds[\"ui.a2ui-surface\"] is 2; this leg needs a floor of exactly 1 — a host whose floor is 2 has no admission path for a version-1 surface, and the suite cannot seed one (RFC 0209 §C.11 holds for what it recorded before raising the floor)"
+      },
+      {
+        "id": "openwop.requirement.0210.credential-lifetime-code",
+        "result": "inapplicable",
+        "reason": "no advertised lane names revocation \"exp-only\" (advertised: api-key=next-request, session=next-request, saml=not-on-or-after, scim=bound-connection, workload=delegation-expiry) — §B binds the host that advertises the member and binds no other"
+      },
+      {
+        "id": "openwop.requirement.0210.exp-only-control-accepted",
+        "result": "inapplicable",
+        "reason": "no advertised lane names revocation \"exp-only\" (advertised: api-key=next-request, session=next-request, saml=not-on-or-after, scim=bound-connection, workload=delegation-expiry) — §B binds the host that advertises the member and binds no other"
+      },
+      {
+        "id": "openwop.requirement.0210.exp-only-lifetime-bound",
+        "result": "inapplicable",
+        "reason": "no advertised lane names revocation \"exp-only\" (advertised: api-key=next-request, session=next-request, saml=not-on-or-after, scim=bound-connection, workload=delegation-expiry) — §B binds the host that advertises the member and binds no other"
+      },
+      {
+        "id": "openwop.requirement.0210.exp-only-remaining-bound",
+        "result": "inapplicable",
+        "reason": "no advertised lane names revocation \"exp-only\" (advertised: api-key=next-request, session=next-request, saml=not-on-or-after, scim=bound-connection, workload=delegation-expiry) — §B binds the host that advertises the member and binds no other"
+      },
+      {
+        "id": "openwop.requirement.0213.last-event-id-malformed",
+        "result": "inapplicable",
+        "reason": "the host accepted Last-Event-ID: abc (the refusal is a SHOULD — recorded, not failed)"
       }
     ]
   },
@@ -2066,7 +3437,7 @@
   "signature": {
     "alg": "ed25519",
     "keyId": "v2-reference-4",
-    "sig": "6ouHBozJgH7C5zDzZZ_raORat6bO-FWbD34qnuvsOxwqkunWDanh5VytmkOVqjwykSXOZZ-ggYm4PJPSmTD6CQ",
+    "sig": "irjQv3JQCgDs3hpEmTD2K_TML1vXMK1M_5K2rxPdhr5AbofFlnOx2Zaqe5-vF6AH31HsPywRbqnPIgIMGOmrDw",
     "over": [
       "witnessSha256",
       "host.build",
