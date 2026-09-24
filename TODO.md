@@ -365,3 +365,128 @@ first, and only reading the scenario tells you which. A grep cannot.
 | D7 | `idempotency_in_flight` `retriable: false` | Leave the value; state in 0213 §B prose that `retriable` means "retriable without waiting" | Flipping it changes a code's meaning (R4); prose clarification is Class-3-safe |
 | D8 | Publishing / deploys | Publish the open 2.37.0 cycle once after Phase 4 (or after Phase 1 if a host needs the corrected fake peer sooner); batch openwop-app deploy after Phase 3. Each still needs David's go | npm publish is irreversible; deploy ordering is backend-first |
 | D9 | Upstream | Draft all; David sends bugs 1–3 first, proposals after 0213 lands | Outward-facing; bugs carry no claims |
+
+---
+
+# TODO — steward follow-ups from the 2026-09-19 gap-closure program
+
+> **Separate program from the MCP/A2A phases above, and it outlives them.** That record says
+> "delete it when every phase is closed" — this section is not part of it. Added 2026-09-24 by
+> `openwop-1`, reviewing corpus `2.38.0` (HEAD `752d46d5`) against work shipped in 2.24.0–2.31.0.
+>
+> Everything shipped in that program survived and is doing its job: RFC 0158 is `Accepted`,
+> witnessed by the five `durable-single-instance` rows on **two** hosts; the
+> `inapplicable`-vs-`blocked` disposition rule is why `openwop-workflow-engine` certifies on all
+> three profiles while recording four of those rows `inapplicable`; `v2-front-door-counts`
+> caught the `spec/v2/core/` count when it grew 22 → 25. The items below are what did **not**
+> close.
+
+## S1 — `v2-projection` is a FALSE duplicate, not a duplicate · **highest value, not urgent**
+
+`conformance/src/lib/v2-projection.ts` and `scripts/generate-from-declaration.mjs` both export a
+`stripSupported`. **They do different jobs under the same name**, which is worse than two copies
+of one function: a reader who finds one and assumes the other matches will be wrong in the
+direction that silently relaxes a schema.
+
+| | generator (`scripts/generate-from-declaration.mjs:177`) | lib (`conformance/src/lib/v2-projection.ts`) |
+|---|---|---|
+| input | a JSON **Schema** | a host's advertised capability **value** |
+| strips | `supported`, **`tier`, `experimentalUntil`** | `supported` only |
+| conditionals | **folds** `supported`-gated `if/then` into unconditional `required` (RFC 0192 §A) | leaves them |
+| objects | sets `additionalProperties: false` | leaves open |
+| prose | rewrites `description` via `rewriteSupportedProse` | — |
+
+**Falsifiable instance, measured 2026-09-24:** run the lib's `stripSupported` over every root key
+of `schemas/capabilities.schema.json` — **`multiAgent`** comes back still carrying `tier` and
+`experimentalUntil`. Corpus-wide the divergent surface is small (2 × `tier`, 1 ×
+`experimentalUntil`, 3 × `supported`-gated `if/then`), which is why it has not bitten yet.
+
+**Why this matters beyond tidiness:** the lib is the **host-facing** artifact — it ships in the
+npm package (`files: ["src", …]`) and openwop-app asked for it after three sessions hand-derived
+the same projection and each got it wrong in a different direction (their `selfHosted`
+`string[]` → `boolean`; my `aiProviders.input` and `.policies` flattened to
+`additionalProperties: true`). A host importing it today gets a **weaker** strip than the corpus
+applies to itself.
+
+**Do NOT merge them.** They should not agree. The fix is to make the distinction impossible to
+miss:
+
+- [ ] Rename by contract, not by mechanism — the lib projects a *value*, the generator projects a
+      *schema*. Nothing imports the lib yet, so renaming is free now and not later.
+- [ ] Cross-reference both, each naming the other and why they differ.
+- [ ] `carriesUnspliceablePayload` **is** a true duplicate and the two are behaviourally
+      identical on every input (verified: `null`, arrays, boolean, enum, array, map, scalar,
+      object-with-properties). Either dedupe it or add a parity test — it will land green.
+
+**Three options were measured before recommending the rename; record so nobody re-derives them:**
+
+| option | verdict |
+|---|---|
+| generator imports the `.ts` directly | **Rejected.** Node 22.22/24 strip types fine and CI is on 24 — but `conformance/package.json` declares `engines: node >= 20`, where type stripping does not exist. Coupling the corpus gate to a Node-24-only feature is a real regression for a cosmetic win. |
+| `.mjs` single source + `.ts` re-export | **Rejected.** TS *does* resolve a sibling `.mjs` (probed), but only under `nodenext` + `allowJs`; conformance is `moduleResolution: Bundler` with `allowJs` off. Turning `allowJs` on touches the whole package build. |
+| rename + cross-reference + parity-gate the one true duplicate | **Recommended.** No runtime coupling, no engine risk, no shared-build change, and it closes the hazard that actually bit — undetected divergence. |
+
+## S2 — `v2-projection` is adopted by nothing · **blocked on S1**
+
+`grep -rl v2-projection conformance/src scripts` returns only the lib and its own test. The
+generator has its own inline `carriesUnspliceablePayload`, so the helper written to stop sessions
+re-deriving the projection is currently **a fourth copy of it**.
+
+- [ ] After S1's rename, wire at least one real consumer, or delete the lib and say so. An
+      unadopted helper shipped to hosts is a promise that nothing keeps.
+
+## S3 — `webhooks.md` has tenant isolation and no DELIVERY isolation · **RFC, mine**
+
+Surfaced by openwop-app's WHD-1 (now fixed on their side). Their delivery worker processed a
+claimed batch strictly sequentially — `CLAIM_BATCH=5` × `DELIVERY_TIMEOUT_MS=10s` — so a handful
+of dead subscribers delayed a **healthy** subscriber's first delivery to **5.5 minutes** against a
+configured backoff of 2s. Their host was conformant *to the letter* the whole time.
+
+`spec/v2/core/webhooks.md` carries exactly one isolation property:
+
+> *"A subscription MUST receive only events from runs within its tenant scope … (invariant
+> `webhook-cross-tenant-isolation`)."*
+
+That is the **confidentiality** half. There is nothing — v1 or v2 — saying a subscription's
+delivery MUST NOT be degraded by an unrelated subscription's failures.
+
+- [ ] File the RFC. Falsifiable form ≈ *"a delivery's latency MUST NOT be a function of unrelated
+      subscriptions' failures"*; openwop-app's own attempt timestamps show how to measure it.
+- [ ] Decide whether it is a new invariant beside `webhook-cross-tenant-isolation` (availability
+      analogue of a property the corpus already cares about) or a §Durability clause.
+
+## S4 — two defect patterns from my RFC 0158 rows, both found by hosts · **pattern check, no code owed**
+
+Both are fixed on `main`; recorded because the *shapes* recur and a new scenario should be read
+against them.
+
+- **A transport failure is an unreadable observation, not a verdict** (`323400a2`, 2.34.2). My
+  kill rows read status through `driver.get` calls that **threw** when the host died after its
+  seam answered. I wrapped `waitBack()` in try/catch and left the watch reads bare — and
+  `kill-during-execution` dies seconds later, squarely in that window. Measured at openwop-app's
+  production image under a real supervisor: **four of five rows failed on `UND_ERR_SOCKET`,
+  twice.**
+- **Two scenarios can share one effect identity** (`2ae74ee6`, 2.37.0). My `duplicate-delivery`
+  leg and `v2-terminal-event-once` both drove `POST /host/durability/kill` with the same
+  registration URL. Layer-2 identity is *business* identity — tenant, workflow, node, request
+  digest, deliberately **no `runId`** — so a conformant host resolved the second exercise to the
+  first's recorded outcome and called out zero times. Whichever leg vitest ran second saw nothing.
+
+- [ ] When adding a scenario that drives a seam at an operator-supplied URL, check whether another
+      scenario drives the same seam: identical URL ⇒ identical effect identity ⇒ the second
+      exercise is legitimately deduplicated to zero.
+
+## Standing context (not tasks)
+
+- **RFC 0111 / 0121 stay `Active` (Parked)** with named tripwires. 0121's is
+  `externally-gated:provider-tos-clearance` — a legal question no spec text answers. **Do not
+  withdraw it**; `Withdrawn` would lose the tripwire. 0111 has **zero** open gap rows.
+- **Tier-3 host tripwire** is unownable and stated honestly — `INTEROP-MATRIX.md` says
+  *"no independent-organization row exists"* and every graduation records its tier.
+- **330 open risk rows**, ratcheted at `docs/witness-baseline.json` `openRisks: 330`. Zero is
+  deliberately NOT the baseline (an open *risk* is a legitimate standing state; an open *gap* is
+  work owed). The summary names the baseline it checks against.
+- **`npm run openwop:check` cannot complete without network** — steps shelling to `npx -y`
+  (redocly, asyncapi) fail `ETIMEDOUT` in a sandboxed run. Corpus-only checks
+  (`check-spec-coherence`, `check-declaration`, `check-registers`) run offline and were green at
+  `752d46d5`.
