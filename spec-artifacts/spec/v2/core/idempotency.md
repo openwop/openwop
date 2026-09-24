@@ -19,7 +19,7 @@ The header keeps its standard name (RFC 0171 §C.1) and applies to every mutatin
 | Retryable outcomes | `429` and `5xx` MUST NOT be replayed from cache; a same-key retry MUST re-execute, and a later final outcome replaces the record. |
 | Not cached | `400 idempotency_key_invalid`, `400 validation_error`, `401` and `403` MUST NOT be cached. |
 | Digest mismatch | A different request digest under the same record key MUST fail with `409 idempotency_key_mismatch` and MUST NOT return the cached body. This is the only mismatch code. |
-| Concurrency | Of two concurrent same-key requests a host MUST process exactly one to completion and MUST NOT process both. Retry timing travels in `Retry-After` only. |
+| Concurrency | Of two concurrent same-key requests a host MUST process exactly one to completion and MUST NOT process both. The other MAY wait, bounded by the host's request timeout, and receive the winner's response only if it is a final outcome (one this record caches), marked `OpenWOP-Idempotent-Replay: true`. Otherwise the host MUST answer `409 idempotency_in_flight` with no retry timing in `details`, and SHOULD set `Retry-After`. The code's registry `retriable: false` means not retryable without waiting (RFC 0213 §B). |
 | Replay marker | A response served from cache MUST carry `OpenWOP-Idempotent-Replay: true`. |
 | Retention | A record MUST be retained for at least 24 hours. |
 | Keyspace | Host-minted identifiers MUST NOT share the caller idempotency store. Logs and spans MUST NOT expose keys. |

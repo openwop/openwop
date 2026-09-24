@@ -162,6 +162,7 @@ export class A2AFakePeer {
   private readonly _invocations: A2APeerInvocation[] = [];
   private _nextStateOverride: A2ATaskState | null = null;
   private _nextPeerAssertsAuthority = false;
+  private _legacyErrorData = false;
   private _taskIdCounter = 0;
   private readonly _protocolVersions: readonly A2AProtocolVersion[];
 
@@ -236,11 +237,28 @@ export class A2AFakePeer {
     return frontedEndpoint('OPENWOP_A2A_FAKE_PEER_URL', 'OPENWOP_A2A_FAKE_PEER_PORT', this.endpoint(), this._boundPort, this._nonce);
   }
 
+  /**
+   * RFC 0211 §F: answer errors with the pre-2.37.0 bare `{ reason, domain, metadata }`
+   * object instead of the upstream `Any[]`, so a scenario can hold a host's A2A client
+   * to reading BOTH shapes through 2.x. Cleared by `reset()`.
+   */
+  setLegacyErrorData(on: boolean): void {
+    this._legacyErrorData = on;
+  }
+
+  private _errorData(reason: string, metadata: Record<string, string>): unknown {
+    const arr = a2aErrorInfo(reason, metadata);
+    if (!this._legacyErrorData) return arr;
+    const { ['@type']: _t, ...rest } = arr[0]!;
+    return rest;
+  }
+
   reset(): void {
     this._tasks.clear();
     this._invocations.length = 0;
     this._nextStateOverride = null;
     this._nextPeerAssertsAuthority = false;
+    this._legacyErrorData = false;
     this._taskIdCounter = 0;
   }
 
@@ -461,7 +479,7 @@ export class A2AFakePeer {
           error: {
             code: A2A10_ERR.VERSION_NOT_SUPPORTED,
             message: `A2A protocol version ${requested} is not supported by this agent`,
-            data: a2aErrorInfo('VERSION_NOT_SUPPORTED', { requested, supportedVersions: this._protocolVersions.join(',') }),
+            data: this._errorData('VERSION_NOT_SUPPORTED', { requested, supportedVersions: this._protocolVersions.join(',') }),
           },
         });
         return;
@@ -469,7 +487,7 @@ export class A2AFakePeer {
       const version: A2AProtocolVersion = requested as A2AProtocolVersion;
       const ok = (result: unknown) => json(200, { jsonrpc: '2.0', id: rpcId, result });
       const err = (code: number, message: string, reason: string, metadata: Record<string, string> = {}) =>
-        json(200, { jsonrpc: '2.0', id: rpcId, error: { code, message, data: a2aErrorInfo(reason, metadata) } });
+        json(200, { jsonrpc: '2.0', id: rpcId, error: { code, message, data: this._errorData(reason, metadata) } });
 
       if (version === '1.0') {
         // ── A2A 1.0 JSON-RPC binding (spec §9.4) ──

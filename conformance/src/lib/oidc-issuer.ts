@@ -19,6 +19,7 @@
 import {
   createSign,
   generateKeyPairSync,
+  randomBytes,
   type KeyObject,
 } from 'node:crypto';
 
@@ -166,10 +167,22 @@ export function createSyntheticOIDCIssuer(
     throw new Error('[oidc-issuer] issuer and audience are required');
   }
 
+  // The kid is unique PER INSTANCE, not just per rotation (2.37.0). Every
+  // instance generates a fresh key, and two scenarios can publish at the same
+  // OPENWOP_TEST_OIDC_ISSUER_URL (v2-oidc-id-token-audience and
+  // v2-lane-exp-only-bound both do). With a per-instance counter alone every
+  // instance minted `openwop-conformance-key-1`, so a host that caches JWKS by
+  // kid — RFC 7517 §4.5 says a kid identifies ONE key — verified the second
+  // scenario's tokens against the first scenario's key and rejected its VALID
+  // control as `invalid_signature`. Measured on openwop-app (suite 2.36.1):
+  // 4/4 red in a full run, 4/4 green filtered. A new kid over a new key lets a
+  // conformant host see an unknown kid and re-fetch, as it must.
+  const instance = randomBytes(6).toString('hex');
+  const kidFor = (n: number): string => `openwop-conformance-key-${instance}-${n}`;
   let rotationCounter = 1;
   let material = generateKeyMaterial(
     algorithm,
-    opts.keyId ?? `openwop-conformance-key-${rotationCounter}`,
+    opts.keyId ?? kidFor(rotationCounter),
   );
 
   return {
@@ -232,10 +245,7 @@ export function createSyntheticOIDCIssuer(
 
     rotateKey(): void {
       rotationCounter += 1;
-      material = generateKeyMaterial(
-        algorithm,
-        `openwop-conformance-key-${rotationCounter}`,
-      );
+      material = generateKeyMaterial(algorithm, kidFor(rotationCounter));
     },
   };
 }

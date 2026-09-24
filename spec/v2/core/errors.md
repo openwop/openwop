@@ -24,7 +24,7 @@ Retry timing lives in the `Retry-After` header only. `details.retryAfter`, `deta
 
 ## One code per state
 
-An interrupt has one code per state: a token or run-scoped resolve against an interrupt that is already resolved, or whose run is cancelled or completed, MUST return `409 interrupt_already_resolved`; a signed token past its `expiresAt` MUST return `410 interrupt_expired`; a token whose `alg` or `kid` the host does not accept MUST return `401 interrupt_token_invalid` (see interrupt.md, identity.md). The idempotency mismatch code is `idempotency_key_mismatch` only (idempotency.md).
+An interrupt has one code per state: a token or run-scoped resolve against an interrupt that is already resolved, or whose run is cancelled or completed, MUST return `409 interrupt_already_resolved`; a signed token past its `expiresAt` MUST return `410 interrupt_expired`; a token whose `alg` or `kid` the host does not accept MUST return `401 interrupt_token_invalid` (see interrupt.md, identity.md). The idempotency mismatch code is `idempotency_key_mismatch` only (idempotency.md). `interrupt_cancelled` is registered and names no state of the core resolve surfaces; a host MUST NOT emit it from `resolveInterruptByRun`, `inspectInterruptByToken` or `resolveInterruptByToken` (RFC 0213 §C).
 
 ## Codes by HTTP status
 

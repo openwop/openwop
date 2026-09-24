@@ -22,6 +22,8 @@
  *   7. `a2a.errors` has exactly one row for each of the nine A2A-specific errors
  *      of A2A 1.0.1 §3.3.2 (plus parenthesized non-A2A rows, e.g. invalid
  *      parameters), and no other unparenthesized row;
+ *   7a. every named `a2a.errors` row carries `reason` = UPPER_SNAKE(upstream
+ *      minus `Error`), and a parenthesized row carries none (RFC 0211 §A);
  *   8. every `mcp.features[].requiredFor[]` value matches
  *      spec/v2/facets/mcp.schema.json `profiles.items.pattern`;
  *   9. every `a2a.operations[].http` value (verb + path) equals the primary
@@ -127,6 +129,20 @@ for (const e of map.a2a?.errors ?? []) {
   errCount.set(e.upstream, (errCount.get(e.upstream) ?? 0) + 1);
 }
 for (const n of A2A_ERRORS) if ((errCount.get(n) ?? 0) !== 1) failures.push(`a2a.errors: \`${n}\` has ${errCount.get(n) ?? 0} row(s); exactly one`);
+
+// 7a. RFC 0211 §A — every named A2A error row carries `reason` = UPPER_SNAKE(upstream minus
+// "Error") (the google.rpc.ErrorInfo reason, A2A §10.6); a parenthesized row carries none.
+const snake = (n) => n.replace(/Error$/, '').replace(/([a-z0-9])([A-Z])/g, '$1_$2').toUpperCase();
+let reasonRows = 0;
+for (const e of map.a2a?.errors ?? []) {
+  if (/^\(.*\)$/.test(e.upstream)) {
+    if (e.reason !== undefined) failures.push(`a2a.errors ${e.upstream}: a parenthesized (non-A2A) row MUST NOT carry a reason (RFC 0211 §A)`);
+    continue;
+  }
+  reasonRows += 1;
+  if (e.reason !== snake(e.upstream)) failures.push(`a2a.errors ${e.upstream}: reason MUST be ${snake(e.upstream)} (RFC 0211 §A; got ${JSON.stringify(e.reason)})`);
+}
+if (reasonRows !== A2A_ERRORS.length) failures.push(`a2a.errors: the reason rule visited ${reasonRows} named rows; expected ${A2A_ERRORS.length}`);
 
 // 8. requiredFor values match the mcp profile grammar
 const profilePattern = new RegExp(read('spec/v2/facets/mcp.schema.json').properties?.profiles?.items?.pattern ?? '^$');
