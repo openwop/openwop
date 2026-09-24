@@ -9,6 +9,21 @@
 > Tick a box only when the change is merged on `main`. Keep this file current as phases
 > land; delete it when every phase is closed.
 
+## Progress (updated 2026-09-24)
+
+| Item | State |
+|---|---|
+| Phase 1 corrections + drift gates | **merged** #1510 (rode 2.37.0) |
+| RFC 0211 A2A errors are ErrorInfo | **Active** #1514 (override of §A.6 recorded); v2-reference implements it (openwop-examples#83); Accepted ⇐ certified v2-reference bundle on published 2.37.1 (openwop-75 holds the one approved ingress cut) |
+| RFC 0213 three unstated outcomes | **Active** #1517; §B leg fixed to partial-witness (#1525, opens 2.37.1); §A/§C witnessed on v2-reference loopback; Accepted ⇐ same bundle (§B box stays partial-witness) |
+| RFC 0214 A2A push credentials | PR #1519 open — waits for 2.37.1 publish, then opens 2.38.0; Accepted blocked on deferred push implementation (D2) |
+| RFC 0212 JCS / preimages | PR #1518 open — same queue as 0214; Accepted ⇐ host verifier (openwop-app H4) + vectors |
+| Suite | 2.37.0 on npm (#1523); 2.37.1 cycle open on main (#1525); publish needs David |
+| Siblings | registry#74 merged (signer refuses non-I-JSON); examples#82 merged (audit comments); examples#83 merged (v2-reference 0211); openwop-app#4097 (ADR 0744: H1–H4, H6) driven + deployed by openwop-app-ce |
+| Upstream | wave 1 posted: ext-tasks#23, A2A#1574 comment, A2A#1685 comment; wave 2 when 0214 Active; wave 3 ≥ 2026-09-26 |
+| Watch | A2A PR #2068 (SubscribeToTask prose POST→GET) — if merged, revisit interop-map D1 exception |
+| Blocked | openwop-sdks re-vendor: its sync gate follows a published corpus tag, so it waits for the next corpus tag |
+
 ## Binding constraints
 
 - RFC 0147 §A.1 freeze is **SPENT** (`RFCS/0147-…:42`) — do not plan around it.
@@ -48,49 +63,49 @@
 
 `/architect`: proceed with changes (all applied below). No CRITICAL.
 
-- [ ] **D3** `spec/v2/core/conformance.md:45` — carry RFC 0168's 2026-09-05 erratum: seams
+- [x] **D3** `spec/v2/core/conformance.md:45` — carry RFC 0168's 2026-09-05 erratum: seams
       profile is `conformance.seamsProfile`, never root `profiles[]` (closed root,
       `capabilities.md:46,374`).
-- [ ] **D4** `spec/v2/core/replay.md:12` — facet modes `replay | branch` (facet schema,
+- [x] **D4** `spec/v2/core/replay.md:12` — facet modes `replay | branch` (facet schema,
       openapi `forkRun`, and the reference host already say so; `rerun` exists nowhere).
-- [ ] **D2** `scripts/derive-v2-api.py` — `HEADER_RENAME` (`:49`, applied `:62-63`) lets
+- [x] **D2** `scripts/derive-v2-api.py` — `HEADER_RENAME` (`:49`, applied `:62-63`) lets
       v1 `Capabilities-Etag` overwrite the real `ETag` description. Drop instead of rename;
       neutral `headers.md` row ("standard HTTP validator; obligation per operation"); put
       MUST (discovery) / SHOULD (runs) in per-operation descriptions. Do **not** add
       `required: true` (a reshape the monotone gate can't see). Regenerate.
-- [ ] **D5** `scripts/derive-v2-api.py` `v2_asyncapi()` — translate the 10 v1-spelled
+- [x] **D5** `scripts/derive-v2-api.py` `v2_asyncapi()` — translate the 10 v1-spelled
       message names through the codemap v2 column, rewrite the `/v1/` path (`:98`), copy
       OpenAPI security schemes. Messages are unreferenced components ⇒ **Class 2**
       (COMPATIBILITY §3 editorial entry, no corrections row). **Keep `heartbeat.stateChanged`**
       — host event, not in the codemap, renaming = RFC 0197 reshape.
-- [ ] **D1** `spec/v2/interop-map.json:94-95` — keep `POST /tasks/{id}:subscribe` as a
+- [x] **D1** `spec/v2/interop-map.json:94-95` — keep `POST /tasks/{id}:subscribe` as a
       documented upstream-prose exception (A2A proto `a2a.proto:76-80` says GET; prose
       §5.3/§11.3.2 and both SDK clients say POST); rule text adds "servers SHOULD also
       accept GET". Amend RFC 0208 in place (no host routes HTTP+JSON). Fix
       `spec/v1/a2a-integration.md:389`.
-- [ ] **V4** `RFCS/0198-…:53` — reword "Upstream permits using task ids as bearer tokens"
+- [x] **V4** `RFCS/0198-…:53` — reword "Upstream permits using task ids as bearer tokens"
       (ext-tasks `tasks.md:900-905`: MAY be bearer handles, but per-request authz MUST).
       Bolded normative sentence stays byte-identical.
-- [ ] **V5** `spec/v1/agent-ref-positioning.md:105-115` — name `io.modelcontextprotocol/skills`
+- [x] **V5** `spec/v1/agent-ref-positioning.md:105-115` — name `io.modelcontextprotocol/skills`
       (SEP-2640, Final) as a naming collision with `role:"skill"`; `docs/integrations/mcp.md`
       — ext-apps (`io.modelcontextprotocol/ui`) has no A2UI bridge.
-- [ ] **L1-alt** `docs/integrations/mcp.md` — informative "Reading a ToolDescriptor as an MCP
+- [x] **L1-alt** `docs/integrations/mcp.md` — informative "Reading a ToolDescriptor as an MCP
       Tool" table; note the opaque-`inputSchema` gap and that the catalog is not callable
       on the mount.
-- [ ] **L2-sentence** `RFCS/0205-…` Unresolved questions — "in v3 `parts` becomes the
+- [x] **L2-sentence** `RFCS/0205-…` Unresolved questions — "in v3 `parts` becomes the
       required turn/artifact shape and `content` is removed."
-- [ ] **D7 suite-peer** `conformance/src/lib/a2a-fake-peer.ts:439,447` emits `error.data` as
+- [x] **D7 suite-peer** `conformance/src/lib/a2a-fake-peer.ts:439,447` emits `error.data` as
       `Any[]` with ErrorInfo (A2A §9.5); fix self-tests `a2a-1-0-agent-card.test.ts:118,164,167`.
       Cite upstream §9.5 + `interop.md`, never 0211. Convicts no host (tests hit the suite's
       own peer).
-- [ ] **Gate** `scripts/check-interop-map.mjs` — check A2A rows' `http` verb+path against the
+- [x] **Gate** `scripts/check-interop-map.mjs` — check A2A rows' `http` verb+path against the
       vendored proto (`conformance/fixtures/upstream/a2a-v1.0.1/a2a.proto`); expand compound
       values; `{id=*}`↔`{id}`; documented-exception list. Sabotage: GetTask→POST; delete the
       Subscribe exception; `/task/{id}`. Prove the unmodified map compares all 12 rows.
-- [ ] **Gate** new `scripts/check-asyncapi-codemap.mjs` in `openwop-check.sh` stage 10
+- [x] **Gate** new `scripts/check-asyncapi-codemap.mjs` in `openwop-check.sh` stage 10
       (exempt `hostEvents`, cite `events.md:91` + RFC 0060). Sabotage: re-insert a v1 name;
       re-insert `/v1/`; add `run.stateChanged`; remove the exemption.
-- [ ] Versions: #1508 (2026-09-23) opened the **2.37.0** cycle (suite + spec-artifacts 2.37.0,
+- [x] Versions: #1508 (2026-09-23) opened the **2.37.0** cycle (suite + spec-artifacts 2.37.0,
       unpublished). Phase 1 rides it — no separate patch; regenerate `CORPUS-STAMP.json`;
       CHANGELOG; COMPATIBILITY §3.
 - [ ] Follow-up: `openwop-sdks` re-vendor PR (`check-vendored-sync` goes red on api/v2).
