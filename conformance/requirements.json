@@ -27815,7 +27815,7 @@
     {
       "id": "openwop.it.v2-content-locale-keys.an-advertised-extended-content-locale-is-written-and-delivered",
       "file": "v2-content-locale-keys.test.ts",
-      "line": 51,
+      "line": 56,
       "title": "an advertised extended content locale is written and delivered",
       "explicitId": "openwop.requirement.0206.delivery-extended-locale",
       "citations": [
