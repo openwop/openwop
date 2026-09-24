@@ -80,6 +80,12 @@ A fork inherits the source's history but not its authority. Fork creation is a d
 
 **Control.** RFC 0185 §C: a projection MUST carry the property — the 56 narrowed defs hatch `^(openwop-|x-|vendor\.)` opaquely — or fail. Invariant `projection-carry-or-fail`; witness `v2-payload-vendor-hatch.test.ts`.
 
+### 3.6 `event-cursor-after-authorization` — a resume cursor that probes a run it cannot read
+
+**Threat.** `Last-Event-ID` resumes the event log at a sequence. A host that evaluates the cursor before it authorizes the caller answers a run the caller cannot read in a way that depends on the cursor: a well-formed id past the log closes an empty stream, one inside it is refused or streams. The difference discloses that a foreign run exists and how long its log is, without reading an event.
+
+**Control.** RFC 0213 §A (`spec/v2/core/events.md` §SSE frames): the header is evaluated only after the caller is authorized to read the run, and for a run the caller cannot read the response MUST be the one the host gives without the header (`404 not_found`, or `403 id_tenant_mismatch` for a foreign tenant segment). Invariant `event-cursor-after-authorization`; witness `v2-sse-last-event-id-cursor.test.ts`, which compares the with/without-header answers for an unknown own-tenant run and a forged foreign-tenant run.
+
 ## 4. A property of the evidence, not a caveat about it
 
 `replay-fanout-suppression.test.ts` observes the MUST NOT by **being the subscriber**: it boots a loopback HTTP receiver and registers it via `POST /v1/webhooks`.

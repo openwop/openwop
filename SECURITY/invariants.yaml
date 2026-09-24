@@ -1669,6 +1669,7 @@ invariants:
     tests:
       - conformance/src/scenarios/idempotency.test.ts
       - conformance/src/scenarios/idempotencyRetry.test.ts
+      - conformance/src/scenarios/v2-idempotency-in-flight.test.ts
     note: |
       RFC 0150 §A / `spec/v1/idempotency.md` §"Record shape, digest, and
       lease". The Layer-1 record MUST be keyed by
@@ -4627,3 +4628,49 @@ invariants:
       non-vacuous executed-pass on a committed bundle.
     witness: witnessable-gated
     witnessReview: reviewed-2026-09-22
+
+  - id: a2a-error-no-existence-oracle
+    tier: reference-impl
+    severity: high
+    threat_model: SECURITY/threat-model-interop.md
+    tests:
+      - conformance/src/scenarios/v2-a2a-operation-map.test.ts
+    note: |
+      RFC 0211 §D (spec/v2/core/interop.md §"The operation mappings",
+      Isolation and A2A error details). On an A2A 1.0 interface a task the
+      caller cannot read MUST be answered exactly as a nonexistent one — the
+      JSON-RPC code (-32001) AND the error details: after removing an echo of
+      the requested id, the normalised ErrorInfo entries (`@type`, `reason`,
+      `domain`, sorted metadata keys) MUST be equal between an unknown id and
+      a foreign-tenant id. The leg previously compared Object.keys(error.data),
+      which is ["0"] for any one-element array once `data` follows A2A §9.5 —
+      vacuous; the comparator is now per-element with a positive control that
+      at least one entry exists. Sabotage: metadata.scope set only on the
+      foreign answer. Reference-impl at Active; graduates to protocol at
+      Accepted on a non-vacuous executed-pass on a committed bundle.
+    witness: witnessable-gated
+
+  - id: event-cursor-after-authorization
+    tier: protocol
+    severity: high
+    threat_model: SECURITY/threat-model-replay.md
+    tests:
+      - conformance/src/scenarios/v2-sse-last-event-id-cursor.test.ts
+    note: |
+      RFC 0213 §A / `spec/v2/core/events.md` §SSE frames. `Last-Event-ID` is
+      evaluated only after the caller is authorized to read the run: for a
+      run the caller cannot read, the response MUST be the one the host gives
+      without the header (`404 not_found` for an unknown or unreadable run,
+      `403 id_tenant_mismatch` for a foreign tenant segment, `runs.md`
+      §Identity). A host that reads the cursor first can answer a foreign run
+      differently depending on whether the cursor is past its log (a
+      future-id close vs a refusal), which discloses the run's existence and
+      log length. The scenario compares the with/without-header answers for
+      an unknown own-tenant run, a forged foreign-tenant run, and an EXISTING
+      run of a second tenant (`OPENWOP_TEST_TENANT_B_API_KEY`; without it the
+      file records partial-witness, since only an existing run can tell a
+      cursor-first host apart). Sabotage (v2-reference, 2026-09-23): evaluate
+      the cursor on the store before the ownership check — the existing
+      foreign run answers 200 with a cursor past its log and 403 without.
+    witness: witnessable-unaided
+    witnessReview: reviewed-2026-09-23

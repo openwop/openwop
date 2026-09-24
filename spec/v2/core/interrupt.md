@@ -48,7 +48,7 @@ A host MUST expose the run-scoped surface and SHOULD expose the signed-token sur
 | `400` | `validation_error` | `resumeValue` fails `resumeSchema` or the approval action is not in `actions` |
 | `401` | `interrupt_token_invalid` | MAC, `alg` or `kid` not accepted |
 | `404` | `not_found` | No such run or node |
-| `409` | `interrupt_already_resolved` | Already resolved; or a token invalidated by resolution, cancellation or completion |
+| `409` | `interrupt_already_resolved` | Already resolved, or the run is cancelled or completed (both surfaces); or a token invalidated by resolution, cancellation or completion |
 | `410` | `interrupt_expired` | Token past `expiresAt` (token surface only) |
 
 ## Tokens
