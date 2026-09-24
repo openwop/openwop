@@ -2056,6 +2056,16 @@ paths:
           name: webhookId
           required: true
           schema: { type: string, minLength: 1 }
+        - in: query
+          name: tenantId
+          required: true
+          schema: { type: string, minLength: 1 }
+          description: >
+            Required — the route is not path-nested under workspaces
+            (`spec/v1/webhooks.md` §Unregister: "`tenantId` query parameter is
+            required"). The prose has stated this since v1; the contract did
+            not declare it until 2.37.1, so a client generated from this file
+            omitted it.
       responses:
         '204':
           description: Unregistered.

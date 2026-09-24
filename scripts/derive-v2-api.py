@@ -274,6 +274,12 @@ def v2_openapi_and_seams():
     for op in wh.values():
         if not isinstance(op, dict):
             continue
+        # v1 names the tenant in a REQUIRED `tenantId` query parameter because
+        # the route is not path-nested (webhooks.md §Unregister); v2 carries it
+        # IN the tenant-bound id, so the v1 query parameter is dropped — as
+        # rotateWebhookSecret's v2 twin below never had it.
+        op['parameters'] = [p for p in op.get('parameters', []) or []
+                            if not (isinstance(p, dict) and p.get('in') == 'query' and p.get('name') == 'tenantId')]
         for p in op.get('parameters', []) or []:
             if isinstance(p, dict) and p.get('name') == 'webhookId' and p.get('in') == 'path':
                 p['schema'] = {'$ref': '../../schemas/v2/ids.schema.json#/$defs/subscriptionId'}

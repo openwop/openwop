@@ -7,7 +7,7 @@
     "api/.redocly.lint-ignore.yaml": "bf5a8350b88a72fa43f59605ed8d903ed24b6cfccda5e45509c9f6ed9ee4e712",
     "api/asyncapi.yaml": "d5ecb9ee6114582be3b1f662c84bfac9ae96dae7bacb853e461168f70a8e1c7d",
     "api/grpc/openwop.proto": "c3e72bb17cba514ee98feb6434e6c9b6ea6795bfd086489ec69fd882dd1ad977",
-    "api/openapi.yaml": "df108919a368e0a593f8f3dc8e2150a07d394e8971e1f91a3d6301e2e19cb132",
+    "api/openapi.yaml": "6366b5514be71098e9ea41fc81ff52bc39db1a547b353c0b344cc2a2bf5370aa",
     "api/redocly.yaml": "b0604c89b2ca6d5076ec25725c539dad44a741a811fe524439ee6daef8baa09f",
     "api/seams-v2.yaml": "02711723089859b95144d788c0caabf215305570c7d48be1da5d2a5e21eff4e1",
     "api/v2/asyncapi.yaml": "d492342046d1ec3a2dc43a28c4cf6d821d6319c30a8552cbc8fcd13806f7b2df",
@@ -117,7 +117,7 @@
     "schemas/v2/audit-verify-result.schema.json": "a748dfadb5155adfde8a91045e76b0db6695005fe559035d71670fdd55edb3ba",
     "schemas/v2/budget-policy.schema.json": "c7449daeb6e1d95e7a047b8c2814d3d54748697c27046972834874867d9b5f4c",
     "schemas/v2/capabilities.schema.json": "79ddbbda4686fe66ec5b0aaf9bafb2385e2f8ccbb1ee39087d75cef9fd1f1628",
-    "schemas/v2/certification-bundle.schema.json": "168a1e79097a755f6da57e4671586f4f2ddfaba26cb4ec2d5de3774517f4ac64",
+    "schemas/v2/certification-bundle.schema.json": "cb8ddf29a008b1c2e731fd61f855bf072790b700e458c702c40434b6fd47ba73",
     "schemas/v2/channel-presence-payload.schema.json": "4eeb224910e6f7eee3ab5e7c3899559c25c83a26d0022e0ad195c4672611977a",
     "schemas/v2/channel-written-payload.schema.json": "ccecff3c71a3275ad8db035ac0e04db25e6f8d23cf091ddbcd5a60d1be1cbb6b",
     "schemas/v2/chat-card-pack-manifest.schema.json": "f7cf09b30d3e1d2251620d84ea9f65541438d015ab44aec10d1dcfe68d8bd496",
@@ -296,5 +296,5 @@
     "spec/v2/retention-floors.json": "eaf3722d95c79947af1d4269ef85117e126518c588cfcf1a2b21b97269f51624",
     "spec/v2/surface-baseline.json": "13cfe5c31c3727a2e36980aa3e5a42f8ce1474b35beb99c5b71f487db006e71a"
   },
-  "corpusCommit": "057fe88e8a6793a52d54b958446214deb667de51"
+  "corpusCommit": "0d370019eaaa841491be58d196e6d7a6934c71f0"
 }
