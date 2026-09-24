@@ -39,9 +39,10 @@ import { softSkip } from '../lib/soft-skip.js';
 import { SCHEMAS_DIR } from '../lib/paths.js';
 import { req } from '../lib/requirement-ids.js';
 import { SEAMS_PREFIX } from '../lib/seams.js';
+import { unservedDestination } from '../lib/scoped-receiver.js';
 import { errorInfos, normaliseErrorData, isOpenwopEnvelope, A2A_ERROR_DOMAIN } from '../lib/a2a-error-info.js';
 
-export const HOST_CALLBACK_NOT_REQUIRED = 'the suite is the A2A client: every leg POSTs JSON-RPC to the interface the host\'s own card lists; nothing harness-hosted is handed to the host';
+export const HOST_CALLBACK_NOT_REQUIRED = 'the suite is the A2A client: every leg POSTs JSON-RPC to the interface the host\'s own card lists; the RFC 0214 push-config legs register an UNSERVED destination (lib/scoped-receiver unservedDestination) whose deliveries are neither required nor read — delivery is v2-a2a-push-delivery\'s claim';
 
 const DOC = 'spec/v2/core/interop.md §"The operation mappings" (RFC 0208)';
 const PROFILE = 'a2a-1.0';
@@ -274,6 +275,106 @@ describe('RFC 0208 — v2-a2a-operation-map (host as A2A 1.0 server, gated on a2
       const r = await rpc(t.url, method, params);
       expect(r.error?.code, req(rid, pushDoc, `${method} on a host not advertising a2a.pushNotifications MUST be refused PushNotificationNotSupportedError -32003 — not method-not-found -32601 (got ${JSON.stringify(r.error ?? r.result)})`)).toBe(-32003);
     }
+    await rpc(t.url, 'CancelTask', { id });
+  });
+
+  // ── RFC 0214 — push-config legs on a host that ADVERTISES a2a.pushNotifications ──
+  // Delivery itself (credential at the destination, no redirect, discard, fork) needs
+  // a public receiver and lives in v2-a2a-push-delivery.test.ts; these three need none.
+
+  it('RFC 0214 — CreateTaskPushNotificationConfig refuses a non-https or private destination', async () => {
+    const rid = 'openwop.requirement.0214.a2a-push-register-ssrf';
+    const doc = 'interop-map.json a2a.operations CreateTaskPushNotificationConfig ("the url MUST pass the webhooks.md egress guard"); webhooks.md §Egress; RFC 0214 §B';
+    const t = await target(true);
+    if (!t.ok) return skip(t, rid);
+    const a2a = (await familyAdvertised('a2a'))!;
+    if (a2a['pushNotifications'] !== true) return softSkip('inapplicable', 'a2a.pushNotifications is not advertised — the refusal row (a2a-push-unadvertised-refused) applies instead');
+    const first = await startApprovalTask(t.url);
+    const id = first.task?.id;
+    expect(typeof id, req(rid, DOC, `SendMessage MUST start a task: ${JSON.stringify(first.rpc.error)}`)).toBe('string');
+    for (const bad of ['http://push.example.com/openwop-conformance', 'https://10.0.0.1/openwop-conformance', 'https://127.0.0.1/openwop-conformance', 'https://169.254.169.254/latest/meta-data']) {
+      const r = await rpc(t.url, 'CreateTaskPushNotificationConfig', { taskId: id, url: bad });
+      expect(r.result, req(rid, doc, `a push destination the egress guard refuses (${bad}) MUST NOT be registered (got result ${JSON.stringify(r.result)})`)).toBeUndefined();
+      expect(typeof r.error?.code, req(rid, doc, `the refusal of ${bad} MUST be a JSON-RPC error (got ${JSON.stringify(r)})`)).toBe('number');
+    }
+    await rpc(t.url, 'CancelTask', { id });
+  });
+
+  it('RFC 0214 §E — a push config of another tenant\'s task, of another task, or unknown, is answered identically', async () => {
+    const rid = 'openwop.requirement.0214.a2a-push-config-isolation';
+    const doc = 'interop.md §"A2A push delivery" (RFC 0214 §E); interop.md §"The operation mappings" Isolation';
+    const t = await target(true);
+    if (!t.ok) return skip(t, rid);
+    const a2a = (await familyAdvertised('a2a'))!;
+    if (a2a['pushNotifications'] !== true) return softSkip('inapplicable', 'a2a.pushNotifications is not advertised — no push config can exist to isolate');
+    const one = (await startApprovalTask(t.url)).task?.id;
+    const two = (await startApprovalTask(t.url)).task?.id;
+    expect(typeof one === 'string' && typeof two === 'string' && one.includes('/'), req(rid, DOC, 'SendMessage MUST start two tasks with tenant-bound ids')).toBe(true);
+    const dest = unservedDestination('https://example.com/openwop-conformance-push');
+    const created = await rpc(t.url, 'CreateTaskPushNotificationConfig', { taskId: one, url: dest.url });
+    const cfg = (created.result ?? {}) as { id?: string };
+    if (created.error !== undefined && !dest.tunnelled) {
+      await rpc(t.url, 'CancelTask', { id: one }); await rpc(t.url, 'CancelTask', { id: two });
+      return softSkip('blocked', `Create was refused for ${dest.url} and no public front (OPENWOP_WEBHOOK_RECEIVER_URL) is wired — the isolation leg needs one config to exist (${JSON.stringify(created.error)})`);
+    }
+    expect(typeof cfg.id, req(rid, doc, `positive control: Create on the caller's own task with a public destination MUST return a config id (got ${JSON.stringify(created.error ?? created.result)})`)).toBe('string');
+    const own = await rpc(t.url, 'GetTaskPushNotificationConfig', { taskId: one, id: cfg.id });
+    expect(own.error, req(rid, doc, `positive control: the caller MUST read its own config back (got ${JSON.stringify(own.error)})`)).toBeUndefined();
+    const opaque = one!.slice(one!.indexOf('/') + 1);
+    const foreignTask = `zz-conformance-foreign/${opaque}`;
+    const unknownId = `pnc-${randomBytes(12).toString('hex')}`;
+    const answers: Array<[string, Rpc, string]> = [
+      ['unknown config id', await rpc(t.url, 'GetTaskPushNotificationConfig', { taskId: one, id: unknownId }), unknownId],
+      ['config id under another of the caller\'s tasks', await rpc(t.url, 'GetTaskPushNotificationConfig', { taskId: two, id: cfg.id }), cfg.id!],
+      ['config id under another tenant\'s task segment', await rpc(t.url, 'GetTaskPushNotificationConfig', { taskId: foreignTask, id: cfg.id }), cfg.id!],
+    ];
+    const shape = (r: Rpc, echo: string): string => JSON.stringify({ status: r.status, code: r.error?.code, message: (r.error?.message ?? '').split(echo).join('<id>'), data: normaliseErrorData(r.error?.data, echo), result: r.result });
+    const base = shape(answers[0]![1], answers[0]![2]);
+    expect(answers[0]![1].error?.code, req(rid, doc, `an unknown config id MUST be refused (got ${JSON.stringify(answers[0]![1].result)})`)).toBeTypeOf('number');
+    for (const [what, r, echo] of answers.slice(1)) {
+      expect(shape(r, echo), req(rid, doc, `a read of a ${what} MUST be answered exactly as an unknown id — same status, code, message and error details (minus an echo of the requested id)`)).toBe(base);
+    }
+    const foreignDelete = await rpc(t.url, 'DeleteTaskPushNotificationConfig', { taskId: foreignTask, id: cfg.id });
+    expect(foreignDelete.result === undefined || JSON.stringify(foreignDelete.result) === '{}', req(rid, doc, `a delete naming another tenant's task MUST NOT disclose anything beyond the idempotent answer (got ${JSON.stringify(foreignDelete)})`)).toBe(true);
+    const still = await rpc(t.url, 'GetTaskPushNotificationConfig', { taskId: one, id: cfg.id });
+    expect(still.error, req(rid, doc, 'a delete naming another tenant\'s task MUST NOT delete the caller\'s config')).toBeUndefined();
+    await rpc(t.url, 'DeleteTaskPushNotificationConfig', { taskId: one, id: cfg.id });
+    const again = await rpc(t.url, 'DeleteTaskPushNotificationConfig', { taskId: one, id: cfg.id });
+    expect(again.error, req(rid, 'A2A v1.0.1 §3.1.10 ("MUST be idempotent")', `a second delete of the same config MUST succeed idempotently (got ${JSON.stringify(again.error)})`)).toBeUndefined();
+    await rpc(t.url, 'CancelTask', { id: one }); await rpc(t.url, 'CancelTask', { id: two });
+  });
+
+  it('RFC 0214 §A — a push config\'s token and credentials are never returned, and never reach task, events or state', async () => {
+    const rid = 'openwop.requirement.0214.a2a-push-secrets-not-returned';
+    const doc = 'interop-map.json a2a.operations push rows ("secrets are never returned"); security-defaults.md §"Onward hops" (RFC 0214 §A)';
+    const t = await target(true);
+    if (!t.ok) return skip(t, rid);
+    const a2a = (await familyAdvertised('a2a'))!;
+    if (a2a['pushNotifications'] !== true) return softSkip('inapplicable', 'a2a.pushNotifications is not advertised — no push credential can be registered');
+    const first = await startApprovalTask(t.url);
+    const id = first.task?.id;
+    expect(typeof id, req(rid, DOC, `SendMessage MUST start a task: ${JSON.stringify(first.rpc.error)}`)).toBe('string');
+    const credSentinel = `owcred${randomBytes(12).toString('hex')}`;
+    const tokenSentinel = `owtok${randomBytes(12).toString('hex')}`;
+    const dest = unservedDestination('https://example.com/openwop-conformance-push');
+    const created = await rpc(t.url, 'CreateTaskPushNotificationConfig', { taskId: id, url: dest.url, token: tokenSentinel, authentication: { scheme: 'Bearer', credentials: credSentinel } });
+    if (created.error !== undefined && !dest.tunnelled) {
+      await rpc(t.url, 'CancelTask', { id });
+      return softSkip('blocked', `Create was refused for ${dest.url} and no public front (OPENWOP_WEBHOOK_RECEIVER_URL) is wired (${JSON.stringify(created.error)})`);
+    }
+    const cfgId = (created.result as { id?: string } | undefined)?.id;
+    expect(typeof cfgId, req(rid, doc, `positive control: Create with a credential MUST succeed (got ${JSON.stringify(created.error ?? created.result)})`)).toBe('string');
+    const leaks = (what: string, v: unknown): void => {
+      const text = JSON.stringify(v ?? null);
+      expect(text.includes(credSentinel) || text.includes(tokenSentinel), req(rid, doc, `${what} MUST NOT carry the registered token or credentials`)).toBe(false);
+    };
+    leaks('the Create response', created.result);
+    leaks('GetTaskPushNotificationConfig', (await rpc(t.url, 'GetTaskPushNotificationConfig', { taskId: id, id: cfgId })).result);
+    leaks('ListTaskPushNotificationConfigs', (await rpc(t.url, 'ListTaskPushNotificationConfigs', { taskId: id })).result);
+    leaks('GetTask', (await rpc(t.url, 'GetTask', { id })).result);
+    leaks('the run snapshot (getRun)', (await driver.get(`/runs/${encodeURIComponent(id!)}`)).json);
+    leaks('the run event log (pollRunEvents)', (await driver.get(`/runs/${encodeURIComponent(id!)}/events/poll?timeout=1`)).json);
+    await rpc(t.url, 'DeleteTaskPushNotificationConfig', { taskId: id, id: cfgId });
     await rpc(t.url, 'CancelTask', { id });
   });
 

@@ -3628,6 +3628,7 @@ invariants:
     threat_model: SECURITY/threat-model-secret-leakage.md
     tests:
       - conformance/src/scenarios/v2-a2a-operation-map.test.ts
+      - conformance/src/scenarios/v2-a2a-push-delivery.test.ts
     note: |
       RFC 0214 §A; spec/v2/core/security-defaults.md §"Onward hops";
       spec/v2/core/interop.md §"A2A push delivery". An A2A push-config
