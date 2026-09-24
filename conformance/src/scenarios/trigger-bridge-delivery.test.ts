@@ -38,6 +38,7 @@ import {
 } from '../lib/triggerBridge.js';
 import { queryTestEvents, requireEvents, isEventLogSeamAvailable, resetTestSeam } from '../lib/event-log-query.js';
 import { req } from '../lib/requirement-ids.js';
+import { freshDedupKey } from '../lib/triggerBridge.js';
 
 const CONTENT_FREE_FORBIDDEN = ['body', 'headers', 'payload', 'secret', 'credentials', 'token', 'apiKey'];
 
@@ -56,7 +57,21 @@ describe('trigger-bridge-delivery (RFC 0083 §C)', () => {
     if (!(await isEventLogSeamAvailable())) return seamAbsent('host advertises openwop-trigger-bridge but the event-log seam is absent');
 
     // ---- Leg 1: dedup → effectively-once (§C-1) ---------------------------
-    const dedup = await driveDelivery({ scenario: 'dedup', dedupKey: 'conformance-dedup-key', source: 'queue' });
+    //
+    // The dedupKey is MINTED PER EXERCISE, and that is load-bearing (2.37.0).
+    // It used to be the literal `'conformance-dedup-key'`, and §C-1's dedup
+    // window is a ≥24h FLOOR — so the second run of this file against the same
+    // host, any time that day, hands the bridge a key it has already delivered.
+    // A CONFORMANT host then collapses the whole exercise into the first run's
+    // outcome and emits ZERO `delivered` attempts under this run's id, and the
+    // `=== 1` below convicts it. Cold host passes, warm host fails, nothing
+    // about the host having changed — the same shape as the RFC 0158 row that
+    // shared one effect identity between two files (`lib/effect-receiver.ts`).
+    // The REPETITION that §C-1 is about happens INSIDE `driveDelivery`'s
+    // `scenario: 'dedup'`, so a fresh key per exercise removes the cross-run
+    // collision without weakening the clause.
+    const dedupKey = freshDedupKey('queue');
+    const dedup = await driveDelivery({ scenario: 'dedup', dedupKey, source: 'queue' });
     if (dedup === null) return seamAbsent('host advertises openwop-trigger-bridge but the delivery seam is unwired');
 
     // The profile is derived AND the seam is wired — missing evidence is a
@@ -68,7 +83,7 @@ describe('trigger-bridge-delivery (RFC 0083 §C)', () => {
       'trigger.delivery.attempted (dedup)',
     );
     const deliveredForKey = dedupEvents.filter(
-      (e) => e.payload.dedupKey === 'conformance-dedup-key' && e.payload.outcome === 'delivered',
+      (e) => e.payload.dedupKey === dedupKey && e.payload.outcome === 'delivered',
     );
     expect(
       deliveredForKey.length === 1,

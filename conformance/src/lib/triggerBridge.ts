@@ -20,6 +20,7 @@
  * @see spec/v1/trigger-bridge.md
  * @see spec/v1/profiles.md (§openwop-trigger-bridge)
  */
+import { randomBytes, randomInt } from 'node:crypto';
 import { driver } from './driver.js';
 import { deriveProfiles, type DiscoveryPayload } from './profiles.js';
 
@@ -68,6 +69,54 @@ export async function driveDelivery(
   const res = await driver.post('/v1/host/sample/trigger-bridge/deliver', body);
   if (res.status === 404 || res.status === 405) return null;
   return (res.json as DeliveryResult | undefined) ?? {};
+}
+
+/**
+ * A dedup key that belongs to ONE exercise (2.37.0).
+ *
+ * `trigger-bridge.md` §C-1 makes the dedup window a ≥24h FLOOR, so a LITERAL
+ * dedup key is not a fixture — it is a durable identity the host is required to
+ * remember across runs of this suite. Two exercises that hand the bridge the
+ * same key are ONE delivery by the spec's own rule, and the second one's row
+ * reads zero deliveries on a host doing exactly what it MUST. That is a suite
+ * defect and not a host defect, and it is the same failure the RFC 0158
+ * duplicate-delivery row had when two scenario files shared one effect identity
+ * (`lib/effect-receiver.ts`).
+ *
+ * `prefix` keeps a key readable in a host's own log; the random half is what
+ * makes it this exercise's. `randomBytes`, not `Date.now()`: two vitest workers
+ * can enter the same line in the same millisecond.
+ */
+export function freshDedupKey(prefix: string): string {
+  return `openwop-conformance-${prefix}-${randomBytes(9).toString('hex')}`;
+}
+
+/**
+ * The same per-exercise mint for a `stream` source, in the COORDINATE shape
+ * §F.5 keys on (2.37.0).
+ *
+ * `trigger-stream-cdc-sources.test.ts` handed the seam the literal
+ * `'events:3:99001'` and then asserted `deliveredCount === 1 || outcome ===
+ * 'delivered'` — the identical defect `freshDedupKey` above was written for,
+ * one file over, found when the enumeration was re-run against the merged
+ * tree. §C-1's window is a ≥24h floor and §F.5 reuses it verbatim, so the
+ * second run of that file against the same host, any time that day, hands the
+ * bridge broker coordinates it has already delivered; a CONFORMANT host
+ * collapses the exercise into the first run's outcome and the assertion
+ * convicts it. Cold host passes, warm host fails.
+ *
+ * `freshDedupKey` would not do here, and the difference is not cosmetic: §F.5
+ * says a stream event's dedup key SHOULD derive from
+ * `(topic, partition, offset)`, and the leg's own `req()` message asserts over
+ * exactly that keying. An opaque token would make the message describe
+ * something the call no longer does. So topic and partition stay fixed and the
+ * OFFSET is minted — which is precisely what makes a real broker's message a
+ * different message.
+ */
+export function freshStreamDedupKey(topic = 'events', partition = 3): string {
+  // A 2^44 offset space: distinct across every run this suite will make, and
+  // still a plausible broker offset rather than an opaque token.
+  return `${topic}:${partition}:${randomInt(2 ** 44)}`;
 }
 
 export const SUBSCRIPTION_STATES = ['active', 'paused', 'failed', 'dead-lettered'];

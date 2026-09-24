@@ -47,7 +47,7 @@ import { SCHEMAS_DIR, FIXTURES_DIR } from '../lib/paths.js';
 import { driver } from '../lib/driver.js';
 import { behaviorGate } from '../lib/behavior-gate.js';
 import { readCapabilityFamily } from '../lib/discovery-capabilities.js';
-import { driveDelivery } from '../lib/triggerBridge.js';
+import { driveDelivery, freshStreamDedupKey } from '../lib/triggerBridge.js';
 import { req } from '../lib/requirement-ids.js';
 import { softSkip } from '../lib/soft-skip.js';
 
@@ -203,7 +203,22 @@ describe.skipIf(HTTP_SKIP)('trigger-stream-cdc: behavioral ingestion + dedup (ca
     const external = tb?.ingestion?.externalSources ?? [];
     if (!behaviorGate('triggerBridge.ingestion', (external.length ?? 0) > 0)) return;
 
-    const first = await driveDelivery({ scenario: 'dedup', dedupKey: 'events:3:99001', source: 'stream' });
+    // The broker coordinates are MINTED PER EXERCISE (2.37.x), and that is
+    // load-bearing. This was the literal `'events:3:99001'`, and §F.5 reuses
+    // §C-1's dedup window — a ≥24h FLOOR — verbatim, so the second run of this
+    // file against the same host, any time that day, hands the bridge an offset
+    // it has already delivered. A CONFORMANT host then collapses the exercise
+    // into the first run's outcome and reports neither a `deliveredCount` of 1
+    // nor `outcome: 'delivered'` under this run, and the assertion below
+    // convicts it: cold host passes, warm host fails, nothing about the host
+    // having changed. The repetition §C-1 is about happens INSIDE the seam's
+    // `scenario: 'dedup'` (it delivers the key TWICE), so a fresh offset per
+    // exercise removes the cross-run collision without weakening the clause.
+    // Same defect and same fix as `trigger-bridge-delivery`'s dedup key; the
+    // offset rather than an opaque token, because the `(topic,partition,offset)`
+    // keying is what the `req()` message below asserts over.
+    const dedupKey = freshStreamDedupKey();
+    const first = await driveDelivery({ scenario: 'dedup', dedupKey, source: 'stream' });
     if (first === null) return softSkip('blocked', 'precondition not met — `first === null` returned early (delivery seam unwired — soft-skip) (seam, prior step, or fixture unavailable)'); // delivery seam unwired — soft-skip
     if (first.outcome === undefined && !external.includes('stream')) return softSkip('blocked', 'precondition not met — `first.outcome === undefined && !external.includes(\'stream\')` returned early (pre-0127 host — soft-skip) (seam, prior step, or fixture unavailable)'); // pre-0127 host — soft-skip
     expect(

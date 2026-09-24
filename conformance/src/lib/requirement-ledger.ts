@@ -87,15 +87,68 @@ const journal: LedgerEntry[] = [];
  * dispositions throws: RFC 0148 §A says **exactly one** disposition per
  * requirement, and a silent last-write-wins would let a later soft-skip
  * overwrite an earlier real failure — the failure mode in reverse.
+ *
+ * `extras.fold` is the one exception, for the per-`it` rows `setup.ts` records
+ * when several `it` legs witness ONE requirement id; see its docblock below.
  */
+/**
+ * How certifiable each disposition is, least first. `readLedgerFile` has always
+ * resolved a cross-worker disagreement this way — "one worker said it failed"
+ * outranks "another said it passed", and an unresolvable disagreement must never
+ * round toward certification. `fold` below applies the SAME rule in-worker.
+ */
+const CERTIFIABILITY_RANK: Record<Disposition, number> = {
+  'executed-fail': 0,
+  blocked: 1,
+  'executed-pass': 2,
+  skipped: 3,
+  inapplicable: 4,
+};
+
 export function recordRequirement(
   requirementId: string,
   disposition: Disposition,
   detail?: string,
-  extras?: { assertionCount?: number; scenarioFile?: string; evidence?: RowEvidence },
+  extras?: {
+    assertionCount?: number;
+    scenarioFile?: string;
+    evidence?: RowEvidence;
+    /**
+     * FOLD instead of throw when this id already has a disposition (2.37.0).
+     *
+     * The strict contract above — one disposition per requirement per run,
+     * contradiction throws — is right for a scenario that classifies ITSELF:
+     * two hand-written verdicts for one id is an authoring bug, and the throw
+     * is how it surfaces.
+     *
+     * It is wrong for the per-`it` rows `setup.ts` records, because the corpus
+     * deliberately witnesses ONE requirement with SEVERAL `it` legs: 27
+     * scenario files hand `req()` a module-level `const ID`, so every leg in
+     * the file records under the same id. There the throw is not a guard —
+     * `setup.ts` wraps the call in `try {} catch {}` ("never fail a test for
+     * bookkeeping"), so the second verdict was silently DISCARDED, and, worse,
+     * discarded before it reached the JSONL sink.
+     *
+     * MEASURED, `v2-run-bulk-cancel.test.ts` on a tier-2 host: leg 1 passed
+     * (3 assertions), leg 2 failed on its 7th. The file row recorded
+     * `executed-fail` with 10 assertions and the detail "one or more assertions
+     * in the file failed"; `openwop.requirement.0170.run-bulk-cancel` recorded
+     * `executed-pass` with 3. The failing leg's message — which names the
+     * requirement AND prints the offending entry — existed, was computed by
+     * `resolveItRecord`, and was thrown away here. The operator had to
+     * hand-probe every assertion in the file against production to find out
+     * what had failed.
+     *
+     * Folding by `CERTIFIABILITY_RANK` makes the surviving row the least
+     * certifiable of the legs, carrying THAT leg's detail, with the legs'
+     * assertion counts summed — the same answer `readLedgerFile` would reach
+     * from the sink lines, so the in-memory ledger and the file agree.
+     */
+    fold?: true;
+  },
 ): void {
   const prior = ledger.get(requirementId);
-  if (prior !== undefined && prior.disposition !== disposition) {
+  if (prior !== undefined && prior.disposition !== disposition && extras?.fold !== true) {
     throw new Error(
       `RFC 0148 §A: ${requirementId} already recorded as '${prior.disposition}', now '${disposition}'. ` +
         'Exactly one disposition per requirement per run.',
@@ -107,7 +160,7 @@ export function recordRequirement(
         'Anything other than executed-pass MUST say why, or the ledger records an outcome nobody can act on.',
     );
   }
-  const entry: LedgerEntry = {
+  let entry: LedgerEntry = {
     requirementId,
     disposition,
     ...(detail === undefined ? {} : { detail }),
@@ -115,6 +168,27 @@ export function recordRequirement(
     ...(extras?.scenarioFile === undefined ? {} : { scenarioFile: extras.scenarioFile }),
     ...(extras?.evidence === undefined || disposition !== 'executed-pass' ? {} : { evidence: extras.evidence }),
   };
+  if (prior !== undefined && extras?.fold === true) {
+    // The least-certifiable leg wins the disposition and keeps its own detail;
+    // a tie keeps whichever side actually said something. Counts sum, because
+    // both legs really did assert against the target for this one requirement.
+    const keepPrior = CERTIFIABILITY_RANK[prior.disposition] <= CERTIFIABILITY_RANK[disposition];
+    const winner = keepPrior ? prior : entry;
+    const loser = keepPrior ? entry : prior;
+    const count = (prior.assertionCount ?? 0) + (extras?.assertionCount ?? 0);
+    const keptDetail = winner.detail ?? loser.detail;
+    const hasCount = prior.assertionCount !== undefined || extras?.assertionCount !== undefined;
+    entry = {
+      requirementId,
+      disposition: winner.disposition,
+      ...(keptDetail === undefined ? {} : { detail: keptDetail }),
+      ...(hasCount ? { assertionCount: count } : {}),
+      ...(winner.scenarioFile === undefined ? {} : { scenarioFile: winner.scenarioFile }),
+      // `evidence` is only meaningful on a pass; a fold that lands anywhere
+      // else drops it, exactly as the constructor above does.
+      ...(winner.disposition === 'executed-pass' && winner.evidence !== undefined ? { evidence: winner.evidence } : {}),
+    };
+  }
   ledger.set(requirementId, entry);
   journal.push(entry);
   // File sink (RFC 0148 acceptance item 2, S6). The in-memory map lives in a
@@ -159,7 +233,11 @@ export function readLedgerFile(path: string): readonly LedgerEntry[] {
     }
     if (typeof e.requirementId !== 'string' || !DISPOSITIONS.includes(e.disposition)) continue;
     const prior = merged.get(e.requirementId);
-    if (prior === undefined || rank[e.disposition] < rank[prior.disposition]) merged.set(e.requirementId, e);
+    // `<=`, not `<`: a per-`it` FOLD (2.37.0) appends the cumulative row after
+    // the leg rows it folded, so on an equal disposition the LAST line is the
+    // one carrying the summed `assertionCount`. For genuinely duplicate lines
+    // the two are identical and the choice is a no-op.
+    if (prior === undefined || rank[e.disposition] <= rank[prior.disposition]) merged.set(e.requirementId, e);
   }
   return [...merged.values()].sort((a, b) => a.requirementId.localeCompare(b.requirementId));
 }

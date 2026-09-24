@@ -36,7 +36,7 @@ import { basename, join } from 'node:path';
 import { existsSync, readFileSync } from 'node:fs';
 import { PKG_ROOT_PATH } from './lib/paths.js';
 import { recordRequirement, hasRequirement, journalLength, journalSince } from './lib/requirement-ledger.js';
-import { requirementIdForFile, resolveFileRecord, resolveItRecord, type FileTestState } from './lib/scenario-disposition.js';
+import { requirementIdForFile, resolveFileRecord, resolveItRecord, type FileTestState, type TestFailure } from './lib/scenario-disposition.js';
 import { softSkipDisposition, softSkipDispositionSince, softSkipMark } from './lib/soft-skip.js';
 import { ItIdAllocator, takeExplicitRequirementId } from './lib/requirement-ids.js';
 import { SPEC_COHERENCE_SCENARIOS, SPEC_COHERENCE_DETAIL } from './lib/spec-coherence.js';
@@ -248,6 +248,8 @@ await maybeStartA2AFakePeer();
 // Setup-file hooks apply to every file in the worker; state is keyed by file.
 const _fileStates = new Map<string, FileTestState[]>();
 const _fileAssertions = new Map<string, number>();
+/** Per file: the failing cases, so the file row can NAME them (2.37.0). */
+const _fileFailures = new Map<string, TestFailure[]>();
 const _ledgerMarks = new Map<string, number>();
 // Per-`it` recording (v2 charter Phase 1, suite 1.153.0 — the durable G8 fix
 // named in scenario-disposition.ts). Each test gets its own ledger row under
@@ -415,6 +417,17 @@ afterEach(({ task }) => {
   const arr = _fileStates.get(file) ?? [];
   arr.push(state === 'pass' ? 'pass' : state === 'fail' ? 'fail' : 'skip');
   _fileStates.set(file, arr);
+  // Which leg failed, and why (2.37.0). The file row used to say only "one or
+  // more assertions in the file failed" — a detail that names no case, quotes no
+  // message, and cannot be acted on. A tier-2 operator read exactly that row for
+  // `v2-run-bulk-cancel` and had to hand-probe every assertion in the file
+  // against production to find out what the host had done.
+  if (state === 'fail') {
+    const msg = ((task.result?.errors ?? [])[0] as { message?: string } | undefined)?.message;
+    const fails = _fileFailures.get(file) ?? [];
+    fails.push({ name: task.name, ...(msg === undefined ? {} : { message: msg }) });
+    _fileFailures.set(file, fails);
+  }
   // RFC 0148 §C assertionCount: how many `expect` calls this test actually made.
   // A leg that early-returns from a gate makes zero, and a file of such legs is
   // an `executed-pass` with assertionCount 0 — visible, and unclassified for a
@@ -470,13 +483,19 @@ afterEach(({ task }) => {
     // `inapplicable` came out `blocked` — which denies certification bundle-wide).
     const noted = softSkipDispositionSince(file, _itSoftSkipMarks.get(file) ?? 0);
     const err = (task.result?.errors ?? [])[0] as { message?: string } | undefined;
-    const rec = resolveItRecord(state === 'pass' ? 'pass' : state === 'fail' ? 'fail' : 'skip', calls, gate, noted, err?.message, targetMajor() === 2);
+    const rec = resolveItRecord(state === 'pass' ? 'pass' : state === 'fail' ? 'fail' : 'skip', calls, gate, noted, err?.message, targetMajor() === 2, task.name);
     disposition = rec.disposition;
     detail = rec.detail;
   }
   try {
     const evidence = takeNotedEvidence();
-    recordRequirement(itId, disposition, detail, { assertionCount: calls, scenarioFile: file, ...(evidence === null ? {} : { evidence }) });
+    // `fold: true` — several `it` legs of one file legitimately share ONE
+    // explicit id (27 files do, via a module-level `const ID` handed to
+    // `req()`). Without the fold the second leg's verdict hit
+    // `recordRequirement`'s one-disposition-per-run throw, was swallowed by the
+    // catch below, and never reached the JSONL sink: a file could record
+    // `executed-fail` while its own requirement row read `executed-pass`.
+    recordRequirement(itId, disposition, detail, { assertionCount: calls, scenarioFile: file, fold: true, ...(evidence === null ? {} : { evidence }) });
   } catch {
     /* never fail a test for bookkeeping */
   }
@@ -503,7 +522,7 @@ afterAll(({}, suite) => {
   // the marker detail — never to a pass. Floors still REJECT that row, so the
   // honest bundle row and the pressure to say why both survive. The rule is
   // `resolveFileRecord` (pinned by conformance-execution-witness.test.ts).
-  const { disposition, detail } = resolveFileRecord(states, gateReason, assertionCount, softSkipDisposition(file), file);
+  const { disposition, detail } = resolveFileRecord(states, gateReason, assertionCount, softSkipDisposition(file), file, _fileFailures.get(file) ?? []);
   const fileRequirementId = requirementIdForFile(file);
   // A scenario that classified ITSELF wins outright — including its `detail` and
   // its `assertionCount`.
@@ -530,6 +549,7 @@ afterAll(({}, suite) => {
   }
   _fileStates.delete(file);
   _fileAssertions.delete(file);
+  _fileFailures.delete(file);
   _ledgerMarks.delete(file);
   _itAllocators.delete(file);
   _itMarks.delete(file);
