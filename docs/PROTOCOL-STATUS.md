@@ -67,8 +67,8 @@
 
 | Status | Count |
 |---|---:|
-| Accepted | 191 |
-| Active | 18 |
+| Accepted | 192 |
+| Active | 17 |
 | Draft | 1 |
 | Superseded | 1 |
 
@@ -281,7 +281,7 @@
 | RFC 0208 | v2 homes the A2A and MCP operation mappings | Active |
 | RFC 0209 | `ui.a2ui-surface` schema version 2 carries real A2UI v0.9 server-to-client messages (a closed OpenWOP profile of the basic catalog), while the 0.9.1 seven-component tree stays readable forever. The RFC 0114 delta frame is deprecated in v2, and v2 regains the `ui.*`/`media.*` kind carve-out | Active |
 | RFC 0210 | a lane's revocation rule is measured, and a host that only honours `exp` says so | Active |
-| RFC 0211 | an A2A error's details are an ErrorInfo, and an A2A interface never answers in the OpenWOP envelope | Active |
+| RFC 0211 | an A2A error's details are an ErrorInfo, and an A2A interface never answers in the OpenWOP envelope | Accepted |
 | RFC 0212 | canonical JSON is RFC 8785 JCS, and a certification preimage does not depend on the machine that computed it | Accepted |
 | RFC 0213 | three outcomes the v2 core never stated - a resume cursor past the log, the loser of a same-key race, and a resolve after the run ended | Active |
 | RFC 0214 | an A2A push credential is a destination credential, and a push is an egress like any webhook | Active |
@@ -307,7 +307,7 @@ The pack registry now lives in the [`openwop-registry`](https://github.com/openw
 ## Active Follow-Ups
 
 - 1 RFC still `Draft` (RFC 0038) — advance with schema/conformance proof or defer.
-- 18 RFCs `Active` (RFC 0111, RFC 0121, RFC 0197, RFC 0198, RFC 0199, RFC 0200, RFC 0201, RFC 0202, RFC 0204, RFC 0205, RFC 0206, RFC 0207, RFC 0208, RFC 0209, RFC 0210, RFC 0211, RFC 0213, RFC 0214) — wire-shape MAY shift compatibly within v1.x until promotion to `Accepted`.
+- 17 RFCs `Active` (RFC 0111, RFC 0121, RFC 0197, RFC 0198, RFC 0199, RFC 0200, RFC 0201, RFC 0202, RFC 0204, RFC 0205, RFC 0206, RFC 0207, RFC 0208, RFC 0209, RFC 0210, RFC 0213, RFC 0214) — wire-shape MAY shift compatibly within v1.x until promotion to `Accepted`.
 - External audit, non-steward host recruitment, and non-steward maintainer recruitment remain external-action gates.
 - Multi-region idempotency and some optional-profile behavior checks remain lower-confidence than the core wire contract.
 
