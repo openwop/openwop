@@ -14,6 +14,7 @@
 | Item | State |
 |---|---|
 | Phase 1 corrections + drift gates | **merged** #1510 (rode 2.37.0) |
+| **Phase 4b — certification path** | **NEW 2026-09-24.** All 15 Active cohort RFCs measured against `check-accepted-predicate`: all fail, on evidence not on the window. One `blocked` row is bundle-wide fatal (§E.1) and an uncertified bundle witnesses nothing (§B.1), so blocked must reach 0 BEFORE a cut is spent. Owners: myndhyve-55 (keys + `0199` seams), openwop-77 (`0207`, `message-id-stable`) |
 | RFC 0211 A2A errors are ErrorInfo | **Active** #1514 (override of §A.6 recorded); v2-reference implements it (openwop-examples#83); Accepted ⇐ certified v2-reference bundle on published 2.37.1 (openwop-75 holds the one approved ingress cut) |
 | RFC 0213 three unstated outcomes | **Active** #1517; §B leg fixed to partial-witness (#1525, opens 2.37.1); §A/§C witnessed on v2-reference loopback; Accepted ⇐ same bundle (§B box stays partial-witness) |
 | RFC 0214 A2A push credentials | PR #1519 open — waits for 2.37.1 publish, then opens 2.38.0; Accepted blocked on deferred push implementation (D2) |
@@ -247,8 +248,77 @@ code-unit order ⇒ Class-3, no bundle version bump.
   `check-v2-surface-monotone`, `check-accepted-predicate`), `check-security-invariants.sh`,
   `protocol:status:check`, `spec-corpus-validity`, `tsc`, published-layout run.
 
+## Phase 4b — the certification path (the gate Phase 5 actually waits on)
+
+> Measured 2026-09-24: all fifteen Active cohort RFCs were flipped in a throwaway
+> worktree and `check-accepted-predicate.mjs` run against the result. **All fifteen
+> fail** — rule 1 (unticked acceptance boxes whose conditions are unmet) and rule 3
+> (no `Evidence tier:` in `Updated`). 0203 was the sole pass and is now Accepted
+> (#1521). The blocker is EVIDENCE, not the comment window: RFC 0197's box reads
+> "**Evidence (never waived):** at least one committed v2 host bundle carries …".
+> A steward override of §A.6 waives the wait; it does not waive this.
+
+**The constraint that orders everything below.** RFC 0168 §E.1 makes ONE `blocked`
+row bundle-wide fatal — every claimed profile goes `certified: false`. RFC 0174 §B.1
+then refuses an uncertified bundle as acceptance evidence, and the predicate's reader
+was deliberately hardened so "an acceptance may not rest on evidence the evidence
+format itself refuses". So a re-cut landing `certified: false` moves ZERO RFCs however
+few failures it shows, and a spent cut cannot be un-spent. Reach blocked = 0 BEFORE
+cutting, not during.
+
+`inapplicable` is free; `blocked` is fatal. Every blocked row is exactly one of three
+kinds, and they have different fixes:
+
+| Kind | What it means | Fix | Owner |
+|---|---|---|---|
+| **A — operator precondition missing** | the suite needs a credential or fixture the operator did not supply | supply it | host operator |
+| **B — advertised but unanswerable** | the host claims a capability whose seam does not answer | build the seam, or stop advertising until you do | host |
+| **C — wrongly blocked** | the host never claimed the thing, so §C.1 says `inapplicable` | fix the SCENARIO | suite |
+
+Kind C is not hypothetical: RFC 0168 §C.1 records the corpus fixing exactly this once
+— a scenario recording `blocked` on an absent advert "denied certification of every
+profile to hosts that had merely not mounted the seams".
+
+- [ ] **A — MyndHyve mints `OPENWOP_TEST_LOW_SCOPE_KEY` and `OPENWOP_TEST_TENANT_B_API_KEY`.**
+      Clears ~6 of its 9 blocked rows (`0200.challenge-403-scope` + four tenant-B rows)
+      with no product change. Highest value per unit of work in the whole program.
+      *Owner: myndhyve-55.*
+- [ ] **B — MyndHyve resolves `0199.*` ×5 + `credential-interrupt`.** Blocked because it
+      advertises `oauth` while the two conformance seams do not exist. Either build them
+      or stop advertising. **A seam that builds its own authorization URL is forbidden**
+      (RFC 0199 R9): it would measure a stub and turn a blocked row into a meaningless
+      pass. *Owner: myndhyve-55.*
+- [ ] **C — audit each remaining blocked row against §C.1** before spending product work:
+      a row blocked on something the host never advertised is a SUITE bug, and fixing it
+      is free certification. *Owner: whoever cuts.*
+- [ ] **v2-reference: `0207.a2a-traceparent-carried`.** #1520 (front-mux, in 2.37.0) is
+      expected to clear it; the host was measured on loopback to send the carrier, so the
+      earlier "real host gap" reading is withdrawn. *Owner: openwop-77.*
+- [ ] **v2-reference: `v2-webhook-message-id-stable`.** Recorded "no test executed and no
+      disposition recorded" on one cut having passed the previous one. Likely EADDRINUSE
+      on the shared pinned receiver port — the same family as the #1513 identity
+      collision. *Owner: openwop-77.*
+- [ ] **Then, and only then, cut.** A bundle with `certified: true` on published 2.37.x,
+      committed to `evidence/v2-host-bundles/`. Re-run the predicate dry-run against the
+      committed bundle and flip whatever is then tickable, writing `Evidence tier:` into
+      each `Updated`.
+
+**Which host gates what.** MyndHyve is the only committed host advertising an `oidc`
+lane, RFC 9728 PRM, `artifactTypes`, `conversationPrimitive` or the `content` family, so
+**0205, 0210, 0200 and probably 0201/0209 can only be witnessed there** — no amount of
+reference-host work substitutes. 0206 is externally gated regardless (decision D14: no
+host serves an extended content locale; the row stays honestly unticked).
+
+**Known, off this path:** ten scenarios (`agent-loop` ×3, `distillation` ×4, `heartbeat`
+×3, `runtime-requires-install-gate`) record `blocked` for "seam absent", which §C.1 says
+must be `inapplicable`. **Zero of them reach a v2 cut**, so they cannot affect this
+program — but on a major-1 cut they would deny certification to any v1 host that has not
+mounted those seams, which is precisely the failure §C.1 was written to stop. Unclaimed.
+
 ## Phase 5 — Accepted
 
+- [ ] **Depends on Phase 4b.** A host row only counts from a bundle whose profiles read
+      `certified: true` (RFC 0174 §B.1); an uncertified one supplies nothing.
 - [ ] 0211, 0212, 0213 (per-section boxes), 0214 (correction only) → `Accepted` when a
       tier-1/tier-2 host row exists from non-vacuous legs (§A.5). A2A/MCP tier-3 upstream
       peers remain externally gated — state it, don't claim it.
