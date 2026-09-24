@@ -75,15 +75,15 @@ A `replay` fork MUST NOT deliver an A2A push for re-emitted history, and no fork
 
 ## Conformance
 
-Honest statement first: **every host-behavior requirement here binds only a host that advertises `a2a.pushNotifications`, and none does.** The legs below are the ones witnessable **without** a push implementation, and they witness the refusal path and the corpus, not §A–§E themselves.
+Honest statement first: **every host-behavior requirement here binds only a host that advertises `a2a.pushNotifications`, and at filing none did.** (Since 2026-09-24 v2-reference advertises it on `PUBLIC=1` cuts — openwop-examples#85 — and the delivery legs below have landed.) The legs below are the ones witnessable **without** a push implementation, and they witness the refusal path and the corpus, not §A–§E themselves.
 
 | Leg (in `v2-a2a-operation-map.test.ts`) | Gate | Assertion | Sabotage | Applicable today? |
 | --- | --- | --- | --- | --- |
 | `a2a-push-unadvertised-refused` | `a2a` 1.0 advertised, `pushNotifications` not `true` | all four push-config operations answer `-32003 PushNotificationNotSupportedError` (map `:104-123` "else PushNotificationNotSupportedError") | host answers `-32601` (openwop-app today for Get/List/Delete) | **yes** — the one host-witnessable leg; it witnesses an existing map row, not this RFC's new MUSTs |
-| `a2a-push-register-ssrf` *(specified; lands with the implementation)* | `pushNotifications: true` | Create with `http://` and a private-address URL ⇒ refused (moves the seam-driven check onto the real operation) | accept `http://push.example.com/` | no host |
-| `a2a-push-config-isolation` *(specified; lands with the implementation)* | `pushNotifications: true` | foreign `configId` / foreign task ⇒ same bytes as unknown | leak a distinct reason | no host |
-| `a2a-push-secrets-not-returned` *(specified; lands with the implementation)* | `pushNotifications: true` | Get/List never echo `credentials` or `token`; a sentinel credential is absent from `GetTask`, the event log and the debug bundle | echo it | no host |
-| delivery legs (§B redirect refusal, §C auth header, §D fork no-push) | `pushNotifications: true` + a public HTTPS receiver | — | — | **deferred** with the implementation |
+| `a2a-push-register-ssrf` *(landed 2026-09-24)* | `pushNotifications: true` | Create with `http://` and a private-address URL ⇒ refused (moves the seam-driven check onto the real operation) | accept `http://push.example.com/` | no host |
+| `a2a-push-config-isolation` *(landed 2026-09-24)* | `pushNotifications: true` | foreign `configId` / foreign task ⇒ same bytes as unknown | leak a distinct reason | no host |
+| `a2a-push-secrets-not-returned` *(landed 2026-09-24)* | `pushNotifications: true` | Get/List never echo `credentials` or `token`; a sentinel credential is absent from `GetTask`, the event log and the debug bundle | echo it | no host |
+| delivery legs in `v2-a2a-push-delivery.test.ts` (landed 2026-09-24): `a2a-push-delivery-authenticated` (§A/§C), `a2a-push-no-openwop-signature` (§C), `a2a-push-no-redirect` (§B), `a2a-push-discard-on-delete` (§A), `a2a-push-fork-no-push` (§D) | `pushNotifications: true` + a public HTTPS receiver (`lib/scoped-receiver.ts`, the RFC 0158 receiver) | registered `Authorization`, no `OpenWOP-Signature`, 0 hits at a 307 target, 0 hits after Delete, count unchanged across a `replay` fork | follow the redirect; keep the deleted config; copy configs onto the fork | v2-reference with `OPENWOP_A2A_PUSH=1` on a `PUBLIC=1` cut (openwop-examples#85) |
 
 Corpus coherence (lands with this RFC, `conformance/src/coherence/v2-push-credential-coherent.test.ts`, requirement `openwop.requirement.0214.push-credential-coherent`): the carve-out sentence in `security-defaults.md`, `interop.md` §"A2A push delivery", `webhooks.md` §Egress, `replay.md` Fan-out and the rule text of both push-config map rows each carry their clause; the same `it` feeds seven sabotaged copies (each clause removed) and asserts every one is refused. It witnesses the text, not host behavior.
 
@@ -93,14 +93,14 @@ The host leg `a2a-push-unadvertised-refused` was run before merge against a suit
 
 | Requirement | Observable | Who can cause the condition | Verdict |
 | --- | --- | --- | --- |
-| §A credential only to registered origin | `Authorization` at a suite-owned receiver; absence at a redirect target | the suite, with a public HTTPS receiver | witnessable-gated (no host advertises push) |
-| §A discard on delete/terminal | no further authenticated POST after Delete | the suite | witnessable-gated |
-| §A never in log/state/response | sentinel absent from `GetTask`, events, debug bundle | the suite | witnessable-gated |
-| §B delivery-time egress, no redirect | receiver answers `307` → no request at the target | the suite (public receiver) | witnessable-gated |
-| §C at least one attempt | receiver count ≥ 1 per transition | the suite | witnessable-gated |
-| §C no OpenWOP signature | absence of `OpenWOP-Signature` at the receiver | the suite | witnessable-gated |
-| §D replay fork never pushes | receiver count unchanged across a `replay` fork | the suite (needs `replay`) | witnessable-gated |
-| §E isolation | byte comparison of two answers | the suite | witnessable-gated |
+| §A credential only to registered origin — `openwop.requirement.0214.a2a-push-delivery-authenticated`, `openwop.requirement.0214.a2a-push-no-redirect` | `Authorization` at a suite-owned receiver; absence at a redirect target | the suite, with a public HTTPS receiver | witnessable |
+| §A discard on delete/terminal — `openwop.requirement.0214.a2a-push-discard-on-delete` | no further authenticated POST after Delete | the suite | witnessable |
+| §A never in log/state/response — `openwop.requirement.0214.a2a-push-secrets-not-returned` | sentinel absent from Create/Get/List, `GetTask`, the run snapshot and event log (v2 exposes no debug-bundle read) | the suite | witnessable |
+| §B delivery-time egress, no redirect — `openwop.requirement.0214.a2a-push-no-redirect`, `openwop.requirement.0214.a2a-push-register-ssrf` | receiver answers `307` → no request at the target; private/non-https registration refused (the DNS re-resolve arm is host-unit-tested — the suite does not control the host's resolver) | the suite (public receiver) | witnessable |
+| §C at least one attempt — `openwop.requirement.0214.a2a-push-delivery-authenticated` | receiver count ≥ 1 after a transition | the suite | witnessable |
+| §C no OpenWOP signature — `openwop.requirement.0214.a2a-push-no-openwop-signature` | absence of `OpenWOP-Signature` at the receiver | the suite | witnessable |
+| §D replay fork never pushes — `openwop.requirement.0214.a2a-push-fork-no-push` | receiver count unchanged across a `replay` fork | the suite (needs `replay`) | witnessable |
+| §E isolation — `openwop.requirement.0214.a2a-push-config-isolation` | byte comparison of the answers | the suite | witnessable |
 | existing row: unadvertised ⇒ `-32003` | JSON-RPC error code | the suite, unaided | witnessable |
 
 ## Security
@@ -116,7 +116,7 @@ The host leg `a2a-push-unadvertised-refused` was run before merge against a suit
 - **Require the host to mint its own push credential and ignore the client's.** Rejected: an A2A client verifies pushes with the credential it registered (§4.3.3 "Clients MUST validate webhook authenticity using the provided authentication credentials"); a host-minted one cannot be verified.
 - **Add OpenWOP HMAC signing to pushes.** Rejected: A2A defines no secret exchange, so the client cannot verify it.
 - **Map the rows to `registerWebhook`.** Rejected: different scope (tenant vs task) and body (`webhook-delivery` vs `StreamResponse`).
-- **Implement push now.** Deferred (program decision D2): optional upstream, no v2 host advertises it, the reference host has it off, and a delivery witness needs a public-receiver harness.
+- **Implement push now.** Deferred at filing (program decision D2): optional upstream, no v2 host advertises it, the reference host has it off, and a delivery witness needs a public-receiver harness. **Reversed 2026-09-24:** the public-receiver harness already existed (`lib/scoped-receiver.ts`, the RFC 0158 receiver), so v2-reference implemented push behind `OPENWOP_A2A_PUSH` (openwop-examples#85) and the delivery legs landed; no test seam relaxes the §B guard.
 
 ## Unresolved questions
 
