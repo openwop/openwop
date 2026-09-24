@@ -152,6 +152,28 @@ Format follows [Keep a Changelog](https://keepachangelog.com/en/1/) loosely. Ver
 - **The remaining eleven stay `Active`, each for a stated reason** rather than for lack of attention. The eight RFC 0167 program children name a certified openwop-app bundle in their own acceptance criteria and the committed one reads `certified: false` (3 blocked rows, RFC 0168 §E.1). RFC 0173 additionally carries the program's only `open` gap row. RFC 0179's sole criterion is unmet — 2.4.2 stopped the gate reading "(Phase 4 leg)" as an excuse for it. RFC 0187 names three requirement ids that no scenario mints. RFC 0167 itself flips **last**, which 2.4.2 made a rule: the moment the umbrella stops being `Active`, every child still `Active` becomes permanently ineligible.
 - **The interrupt `data` union is bound to `kind`** (MCP/A2A review P3-H7, Class 3 correction — COMPATIBILITY.md §3). `schemas/suspend-request.schema.json` and its v2 twin typed `data` as an unbound `oneOf`, so the minimal `conversation.start` and `conversation.close` payloads (`{ conversationId }`, which satisfies both shapes) failed validation in v1 and v2, and a payload carrying another kind's `data` passed. `data` is now an `anyOf` and a root `allOf` binds each kind to its own shape with one `if`/`then`; no per-kind shape or `$id` changed. Witnessed by `conformance/fixtures/interrupt-payloads/` (suite 2.36.0).
 
+## [2.37.0] — 2026-09-23 — rows that measured nothing now measure, and a contract catches up with its prose
+
+A corrections release. It changes no wire shape, no `MUST`, no error code and no RFC's requirements. It fixes conformance legs that could pass or disagree without measuring what they name, and it brings generated and hand-kept artifacts back in line with the prose they serve. The only additive surface is RFC 0201 §E.18's v1 route, which the prose already mandated (`COMPATIBILITY.md` §2.1). The certified public cut that the MCP/A2A RFCs (0197–0202, 0204–0210) wait on is taken on this suite.
+
+### Changed
+
+- **A scenario's own suite fake is reachable through the operator's public front (conformance, #1520).** Six legs build a version-pinned A2A peer or MCP server of their own on an ephemeral port. Since suite 2.33.0 they had handed the host the operator's front, which forwards to the shared fake on the pinned port, so the host never contacted the fake the leg built. They now route through a nonce path the shared listener forwards. `0175.negotiation-authenticated.mcp` was affected: it recorded `executed-pass` on the committed reference-host bundle having measured nothing. It can now fail.
+- **`0158.duplicate-delivery` is deterministic (conformance, #1513).** `v2-durability-recovery` and `v2-terminal-event-once` passed the same receiver URL, so on a tunnelled cut both legs resolved to one Layer-2 effect identity, and the row gave different verdicts on repeated runs of one host cut. Each leg now has its own identity.
+- **The MRTR input-request key is the interrupt's (conformance, #1511).** New leg `0208.mcp-mrtr-input-request-key` runs two suspensions of one workflow, so a host that keys `inputRequests` by node id instead of `interruptId` now fails.
+- **v2 drift corrections (#1510, editorial, `COMPATIBILITY.md` §3 entry of 2026-09-23).** Seven generated or hand-kept artifacts that disagreed with the prose they serve are corrected, and the two gates that would have caught them are added.
+- **RFC 0201 §E.18's v1 half: `POST /v1/webhooks/{webhookId}/rotate-secret` is in `api/openapi.yaml` (#1512, additive).** `spec/v1/webhooks.md` and `capabilities.md` had required the route for two releases while the v1 contract did not define it. New coherence test `v1-webhook-rotation-contract` holds prose and contract together.
+
+### Governance and evidence
+
+- **RFC 0203 `Active → Accepted`, provisional pending RFC 0156 §B (#1521).** The corpus gate closed with openwop-registry#73. Every rule is a manifest property witnessed by ledger rows, and no host behaviour is claimed.
+- **An RFC 0175 acceptance row is recorded as a false positive (#1522).** RFC 0175 stays `Accepted`. The correction is stated against the committed bundle rather than fixed forward, and the clause no committed bundle has exercised is named.
+- **Postgres CI floor 85% → 92% (#1507).** A measured 94% across 25 runs had left the old floor able to absorb 176 new failures. **The RFC 0156 waiver register** now prints its own denominator (#1515).
+
+### Conformance
+
+- **Suite `2.37.0`**: 553 scenario files and 71 corpus-coherence tests (one new). `@openwop/spec-artifacts` moves in lockstep at the same exact pin. Per-scenario detail is in `conformance/CHANGELOG.md`.
+
 ## [2.36.0] — 2026-09-23 — the MCP and A2A surfaces OpenWOP composes with get their v2 homes, and a v2 surface is retired rather than reshaped
 
 Ships the MCP/A2A alignment program — RFCs 0197–0209, all thirteen filed `Active` and all thirteen implemented in this cycle — plus RFC 0210 `Active` and the review corrections that preceded them. Every wire shape is additive per `COMPATIBILITY.md` §2.1 / §4 except RFC 0197's governance amendment (a `breaking` class with no wire change) and RFC 0197 §C's maturity ceiling, which `COMPATIBILITY.md` §2.4 states as a tightening that binds by suite release. v1 is untouched except where a v1 half is named. Tally **Accepted 189 · Active 16 · Draft 1**.
