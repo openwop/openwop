@@ -10060,6 +10060,40 @@
       ]
     },
     {
+      "id": "openwop.gap.0175.5",
+      "rfc": "0175",
+      "local": "G5",
+      "section": "§D.1",
+      "surface": "The committed reference-host bundle records `openwop.requirement.0175.negotiation-authenticated.mcp` `executed-pass` having measured the harness: the leg's own single-era MCP server is unreachable behind the shared public front, and §23 has no lever that makes a server offer only a lower revision. The bundle is owed a re-cut on the corrected suite.",
+      "witness": "seam-gated",
+      "requirementId": null,
+      "disposition": "externally-gated",
+      "target": "v2-reference-recut",
+      "sources": [
+        {
+          "file": "RFCS/registers/0175-v2-transports-and-embedded-protocols.gaps.md",
+          "token": "G5"
+        }
+      ]
+    },
+    {
+      "id": "openwop.gap.0175.6",
+      "rfc": "0175",
+      "local": "G6",
+      "section": "§D.1",
+      "surface": "The unauthenticated clause is reachable only when a negotiated version can land below `preferredVersion` and at or above the floor; the only host that witnesses these ids advertises `preferredVersion` equal to its floor on both protocols, so no committed bundle has ever exercised it.",
+      "witness": "seam-gated",
+      "requirementId": null,
+      "disposition": "externally-gated",
+      "target": "host-floor-below-preferred",
+      "sources": [
+        {
+          "file": "RFCS/registers/0175-v2-transports-and-embedded-protocols.gaps.md",
+          "token": "G6"
+        }
+      ]
+    },
+    {
       "id": "openwop.gap.0176.1",
       "rfc": "0176",
       "local": "G1",

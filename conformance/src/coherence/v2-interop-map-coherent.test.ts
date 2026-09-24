@@ -30,7 +30,7 @@ const ID = 'openwop.requirement.0208.map-coherent';
 const DOC = 'RFCS/0208 §A; spec/v2/core/interop.md §"The operation mappings"';
 const GATE = join(ROOT, 'scripts', 'check-interop-map.mjs');
 
-interface Row { http?: string; runStatus?: string; v2Operation?: string | null; upstream?: string; clientProjection?: string; requires?: string[] }
+interface Row { http?: string; runStatus?: string; v2Operation?: string | null; upstream?: string; clientProjection?: string; requires?: string[]; reason?: string }
 interface MapDoc { a2a: { operations: Row[]; taskState: Row[]; errors: Row[] }; mcp: { tasks: { status: Row[]; methods: Row[] } } }
 
 const run = (args: string[] = []): { status: number | null; out: string } => {
@@ -52,6 +52,10 @@ const SABOTAGE: Array<[string, (m: MapDoc) => void, RegExp]> = [
   ['GetTask bound to POST', (m) => { m.a2a.operations.find((r) => r.upstream === 'GetTask')!.http = 'POST /tasks/{id}'; }, /GetTask: verb POST ≠ proto GET/],
   ['GetTask path misspelled', (m) => { m.a2a.operations.find((r) => r.upstream === 'GetTask')!.http = 'GET /task/{id}'; }, /GetTask: path `\/task\/\{id\}` ≠ proto/],
   ['the GetExtendedAgentCard row deleted', (m) => { m.a2a.operations = m.a2a.operations.filter((r) => r.upstream !== 'GetExtendedAgentCard'); }, /proto rpc GetExtendedAgentCard has an HTTP binding but no row covers it/],
+  // RFC 0211 §A: every named A2A error carries its ErrorInfo reason.
+  ['TaskNotFoundError reason misspelled', (m) => { m.a2a.errors.find((e) => e.upstream === 'TaskNotFoundError')!.reason = 'TASK_NOTFOUND'; }, /TaskNotFoundError: reason MUST be TASK_NOT_FOUND/],
+  ['VersionNotSupportedError reason removed', (m) => { delete m.a2a.errors.find((e) => e.upstream === 'VersionNotSupportedError')!.reason; }, /VersionNotSupportedError: reason MUST be VERSION_NOT_SUPPORTED/],
+  ['a reason on the invalid-parameters row', (m) => { m.a2a.errors.find((e) => e.upstream === '(invalid parameters)')!.reason = 'INVALID_PARAMETERS'; }, /\(invalid parameters\): a parenthesized \(non-A2A\) row MUST NOT carry a reason/],
 ];
 
 describe('RFC 0208 §A — v2 interop map coherence (corpus gate)', () => {

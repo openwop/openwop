@@ -86,7 +86,7 @@ Shape tests use official A2A 1.0 fixtures. Behavioral acceptance requires at lea
 1. Exact 0.3 adopter population and ~~deprecation date~~. **Date resolved 2026-08-16:** 2027-03-12 (`a2a-integration.md` §A). Population still unknown (G1).
 2. Which official A2A SDK/peer becomes the CI real-peer witness?
 3. ~~Which A2A 1.0 interface variants are mandatory for OpenWOP's floor?~~ **Resolved 2026-08-16:** the JSON-RPC binding at 1.0 is the floor for the `a2a-1.0` profile; HTTP+JSON and gRPC are optional additional `supportedInterfaces` (`a2a-integration.md` §C; gap G4 closed).
-4. ~~How are upstream error details redacted in OpenWOP audit events?~~ **Resolved 2026-08-16:** they are not redacted in place — they are dropped. Only the closed upstream `reason` (and `supportedVersions[]` for version errors) is projected; the boundary envelope is `interop_version_unsupported` / the D.7 table, and `message` never carries the peer's body (`a2a-integration.md` §D.7).
+4. ~~How are upstream error details redacted in OpenWOP audit events?~~ **Resolved 2026-08-16:** they are not redacted in place — they are dropped. Only the closed upstream `reason` (and `supportedVersions[]` for version errors) is projected; the boundary envelope is `interop_version_unsupported` / the D.7 table, and `message` never carries the peer's body (`a2a-integration.md` §D.7). _Erratum 2026-09-23 (RFC 0211 §E): `supportedVersions[]` cannot sit in `google.rpc.ErrorInfo.metadata`, which is `map<string,string>`. It travels as `metadata.supportedVersions`, a comma-joined string, at SHOULD; the card's `supportedInterfaces[].protocolVersion` is authoritative._
 
 ## Implementation notes (non-normative)
 
