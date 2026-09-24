@@ -86,6 +86,12 @@ A fork inherits the source's history but not its authority. Fork creation is a d
 
 **Control.** RFC 0213 §A (`spec/v2/core/events.md` §SSE frames): the header is evaluated only after the caller is authorized to read the run, and for a run the caller cannot read the response MUST be the one the host gives without the header (`404 not_found`, or `403 id_tenant_mismatch` for a foreign tenant segment). Invariant `event-cursor-after-authorization`; witness `v2-sse-last-event-id-cursor.test.ts`, which compares the with/without-header answers for an unknown own-tenant run and a forged foreign-tenant run.
 
+### 3.7 `signed-preimage-jcs-locale-independent` — two verifiers read one digest differently
+
+**Threat.** A replay cache key, a fork's output checksum and a certification bundle's `witnessSha256` are digests two parties compute independently and compare. If the bytes depend on something other than the value — the computing machine's collation locale, or a signer that coerces a value JSON cannot hold — the two digests disagree with no error on either side. A locale comparator sorts `ch` after `h` in Czech and `get_weather` before `getWeather` in English; a JavaScript signer rounds `9007199254740993` to `…992` and turns NaN into `null`, where a Python verifier keeps the integer exact and refuses NaN. The result is a replay that misses its own cache, or a certification bundle that verifies on one machine and is rejected as tampered on another.
+
+**Control.** RFC 0212: every signed or hashed preimage is RFC 8785 JCS over I-JSON; rows and `tools[]` sort by UTF-16 code units; a canonicalizer refuses non-I-JSON rather than coercing it. Invariant `signed-preimage-jcs-locale-independent`; witnesses `jcs-vectors.test.ts` (the normative `conformance/vectors/jcs-v1.json`) and `v2-bundle-witness-preimage.test.ts` (every committed v3 bundle re-derives from the prose preimage).
+
 ## 4. A property of the evidence, not a caveat about it
 
 `replay-fanout-suppression.test.ts` observes the MUST NOT by **being the subscriber**: it boots a loopback HTTP receiver and registers it via `POST /v1/webhooks`.
@@ -111,7 +117,6 @@ An assertion that nothing arrived is worthless unless something could have. The 
 Falsification was demonstrated rather than assumed: with the host's suppression removed, leg 2 fails with the array it should not have received.
 
 Two techniques from that run are worth reusing. **Wall-clock refutes disposition:** the scenario cannot honestly pass in under ~7.5s (grace plus quiet window), so a green at 41ms was arithmetically impossible for a run that happened — where a scenario has a known floor on its own runtime, duration is a free vacuity check needing no instrumentation. And **the requirement records its own disposition** at every exit path, because a file-level `executed-pass` earned by leg 1's control would otherwise certify a MUST NOT that never ran (`conformance-certification.md` gap G8).
-
 
 ## 6. Residual risks
 

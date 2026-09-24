@@ -61,16 +61,22 @@ A certification bundle validates against `schemas/v2/certification-bundle.schema
 | `discovery` | `url`, `sha256`, `protocolVersions`, `preferredVersion` REQUIRED |
 | `claimedProfiles[]` | `id`, `evidenceTier` (`self` \| `steward` \| `independent`), `witnessCount`, `certified` REQUIRED |
 | `results` | `totals` and the per-requirement list REQUIRED |
-| `witnessSha256` | REQUIRED; covers the reporter record and, when any are declared, `host.relaxations[]` |
+| `witnessSha256` | REQUIRED; SHA-256 of the preimage in §"Canonical JSON" |
 | `assertionCount` | REQUIRED, ≥ 1 |
 | `detail.nonPass[]` | REQUIRED when any total other than `executedPass` is non-zero |
 | `results.requirements[].evidence` | OPTIONAL, closed; structured evidence on an `executed-pass` row (below) |
 | `durability.rung` | OPTIONAL; a claim the verifier re-derives (below) |
 | `signature` | REQUIRED |
 
-`signature` is an Ed25519 attestation over the canonical JSON of `{ witnessSha256, host.build, suite.version, discovery.sha256 }`; `over` MUST list exactly those four members. A host that signs bundles MUST publish the corresponding public keys as `signingKeys[]` in its discovery document, and `signature.keyId` MUST name one of them. A verifier MUST resolve `keyId` there — in the discovery document of the host the bundle is *about* — and MUST verify the attestation under the published key.
+`signature` is an Ed25519 attestation over the JCS bytes (§"Canonical JSON") of `{ witnessSha256, host.build, suite.version, discovery.sha256 }`; `over` MUST list exactly those four members. A host that signs bundles MUST publish the corresponding public keys as `signingKeys[]` in its discovery document, and `signature.keyId` MUST name one of them. A verifier MUST resolve `keyId` there — in the discovery document of the host the bundle is *about* — and MUST verify the attestation under the published key.
 
 A signature that cannot be resolved to a published key attests **integrity only**. Such a bundle MUST NOT be read as attributable evidence, and a gate MUST distinguish three outcomes that a presence check collapses into one — *no discovery document was read*, *read and the key is not published*, and *the attestation does not verify*. A retired key MUST stay listed. `evidenceTier: independent` MUST carry a `verifierKeyId` distinct from the host's signing key; the verifier MUST refuse, not warn, on a missing or self-signed independent claim. A bundle with `totals.blocked > 0` does not certify. At major 2 a requirement a test did not observe records `blocked` even when the test asserted setup facts first; an `executed-pass` carrying a `partial-witness:` detail is reserved for a leg that observed its requirement and skipped an optional extra. A verifier MUST derive the operator's opt-outs from the signed `skipped` rows and MUST reject a bundle whose captured discovery document advertises one of them (`opted-out-but-advertised`). v1 and v2 bundles are never upgraded to v3; a bundle is evidence at its own version.
+
+### Canonical JSON
+
+Every signature and digest in this corpus is over the RFC 8785 (JCS) serialization, UTF-8 encoded (RFC 0212). The value MUST be I-JSON (RFC 7493): a signer or hasher MUST refuse, not coerce, a value with duplicate member names, a lone surrogate, a non-finite number, an integer literal whose magnitude exceeds 2^53 − 1, or a non-JSON value, and a verifier that meets one in a document it must re-canonicalize MUST fail verification. `conformance/vectors/jcs-v1.json` is normative.
+
+`witnessSha256` is SHA-256 over the JCS bytes of the rows — one object per `results.requirements[]` entry with exactly `id`, `scenario`, `result` and, each only when present, `assertions`, `detail`, `evidence`, sorted by `id` in UTF-16 code-unit order — or, only when `host.relaxations[]` is non-empty, of `{ "rows": …, "relaxations": … }` with relaxations in the order carried. A locale-sensitive comparator MUST NOT be used. `discovery.sha256` is SHA-256 over the JCS bytes of the captured document.
 
 ### Recovery evidence
 

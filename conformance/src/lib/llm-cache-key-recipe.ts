@@ -10,30 +10,20 @@
  *     RFC 0041 §E SECURITY-invariant probe (intra-host reproducibility +
  *     non-recipe-field invariance + Phase 4 advertisement alignment).
  *
- * `canonicalize` mirrors RFC 8785 JCS-style output (sorted keys, no
- * whitespace, preserved array order). Hosts that have a real JCS library
- * available SHOULD prefer it; this helper is for the conformance side,
- * not the host side. Keep in sync with `spec/v1/replay.md` §B.
+ * `canonicalize` is RFC 8785 JCS with the RFC 0212 I-JSON refusal set (the
+ * suite's one implementation, `./jcs.ts`), and `tools[]` sorts by UTF-16 code
+ * units — never `localeCompare`, which orders `get_weather` / `getWeather`
+ * differently per locale and so breaks the TS/Python/Go agreement RFC 0150 §C
+ * asks for. Keep in sync with `spec/v1/replay.md` §B.
  */
 
 import { createHash } from 'node:crypto';
 import { driver } from './driver.js';
+import { canonicalJSON, codeUnitCompare } from './jcs.js';
 
-/** RFC 8785 JCS-style canonicalization (subset suitable for the recipe
- *  fields). Sorted keys recursively; no whitespace; preserved array order;
- *  strings JSON-encoded verbatim (no NFC normalization — the recipe
- *  inputs in our test seam are ASCII). */
+/** RFC 8785 JCS (RFC 0212). Throws `JcsRefusal` on a non-I-JSON value. */
 export function canonicalize(value: unknown): string {
-  if (value === null) return 'null';
-  if (typeof value === 'boolean' || typeof value === 'number') return JSON.stringify(value);
-  if (typeof value === 'string') return JSON.stringify(value);
-  if (Array.isArray(value)) return '[' + value.map((v) => canonicalize(v)).join(',') + ']';
-  if (typeof value === 'object') {
-    const obj = value as Record<string, unknown>;
-    const keys = Object.keys(obj).sort();
-    return '{' + keys.map((k) => `${JSON.stringify(k)}:${canonicalize(obj[k])}`).join(',') + '}';
-  }
-  return JSON.stringify(value);
+  return canonicalJSON(value);
 }
 
 /** @deprecated RETIRED v1 projection (pre RFC 0150 §C). Kept ONLY so a
@@ -44,7 +34,7 @@ export function canonicalize(value: unknown): string {
 export function projectRecipe(raw: Record<string, unknown>): Record<string, unknown> {
   const out: Record<string, unknown> = { provider: raw.provider, model: raw.model, messages: raw.messages };
   if (Array.isArray(raw.tools) && raw.tools.length > 0) {
-    out.tools = [...(raw.tools as Array<{ name: string }>)].sort((a, b) => a.name.localeCompare(b.name));
+    out.tools = [...(raw.tools as Array<{ name: string }>)].sort((a, b) => codeUnitCompare(a.name, b.name));
   }
   if (typeof raw.temperature === 'number') out.temperature = raw.temperature;
   if (typeof raw.topP === 'number') out.topP = raw.topP;
@@ -76,7 +66,7 @@ export const SEMANTIC_REQUEST_RECIPE_V2 = 'openwop-semantic-request-v2';
 export function projectSemanticRequestV2(raw: Record<string, unknown>): Record<string, unknown> {
   const request: Record<string, unknown> = { messages: raw.messages };
   if (Array.isArray(raw.tools) && raw.tools.length > 0) {
-    request.tools = [...(raw.tools as Array<{ name: string }>)].sort((a, b) => a.name.localeCompare(b.name));
+    request.tools = [...(raw.tools as Array<{ name: string }>)].sort((a, b) => codeUnitCompare(a.name, b.name));
   }
   for (const k of ['temperature', 'topP', 'topK', 'maxOutputTokens', 'seed'] as const) {
     if (typeof raw[k] === 'number') request[k] = raw[k];

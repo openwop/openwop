@@ -110,6 +110,14 @@ describe('RFC 0150 §C — semantic request digest golden vectors', () => {
     expect(digest('tools-sorted-by-name'), req('openwop.it.semantic-digest-vectors.tool-order-is-not-semantic-sorted-and-reversed-agree', 'RFC 0150 §C', 'tool order is not semantic — sorted and reversed agree')).toBe(digest('tools-reversed-same-digest'));
   });
 
+  it('tool order uses UTF-16 code units, where a locale comparator disagrees', () => {
+    // RFC 0212 §D. `alpha`/`zeta` order the same under every comparator, so the
+    // pair above cannot catch a `localeCompare` sort; `getWeather`/`get_weather`
+    // can — English collation ignores `_` and puts them the other way round.
+    expect(digest('tools-code-unit-order'), req('openwop.it.semantic-digest-vectors.tool-order-uses-utf-16-code-units-where-a-locale-comparator-disagrees', 'RFC 0212 §D · RFC 0150 §C', 'tools[] MUST sort by name in UTF-16 code-unit order')).toBe(digest('tools-code-unit-order-reversed'));
+    expect(canonicalize(projectSemanticRequestV2(byId.get('tools-code-unit-order')?.input ?? {})), req('openwop.it.semantic-digest-vectors.tool-order-uses-utf-16-code-units-where-a-locale-comparator-disagrees', 'RFC 0212 §D · RFC 0150 §C', 'getWeather (0x57) MUST precede get_weather (0x5F)')).toContain('"tools":[{"name":"getWeather"');
+  });
+
   it('message order IS semantic — reversing changes the digest', () => {
     expect(
       digest('message-order-is-semantic'),

@@ -28,7 +28,9 @@ const OUT = join(CONF, 'scenario-majors.json');
 // Both rules are stated in BOTH majors (spec/v1/auth.md §Challenges + §"Onward hops";
 // spec/v2/core/identity.md §2.5 + security-defaults.md §"Onward hops"), neither file
 // reads a `.supported` seat, and both resolve their paths through targetMajor().
-const BOTH_MAJORS = new Set(['auth-challenge-no-oracle.test.ts', 'fixtures-valid.test.ts', 'inbound-credential-no-passthrough.test.ts', 'memory-attribution-replay-stable.test.ts', 'otel-mcp-semconv-projection.test.ts', 'tool-catalog-compact-projection.test.ts', 'tool-catalog-projection.test.ts', 'tool-descriptor-shape.test.ts']);
+// RFC 0212: jcs-vectors is server-free — the canonical-JSON rule governs signatures
+// and digests in both majors (v1 replay.md §B, v2 conformance.md §Canonical JSON).
+const BOTH_MAJORS = new Set(['auth-challenge-no-oracle.test.ts', 'fixtures-valid.test.ts', 'inbound-credential-no-passthrough.test.ts', 'jcs-vectors.test.ts', 'memory-attribution-replay-stable.test.ts', 'otel-mcp-semconv-projection.test.ts', 'tool-catalog-compact-projection.test.ts', 'tool-catalog-projection.test.ts', 'tool-descriptor-shape.test.ts']);
 
 /**
  * A third half-requirement, and it fires at the only moment it can be caught.
