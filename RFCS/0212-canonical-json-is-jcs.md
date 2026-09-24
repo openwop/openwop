@@ -4,10 +4,10 @@
 | ----------------- | --------------------------------------------------------------- |
 | **RFC**           | 0212                                                            |
 | **Title**         | canonical JSON is RFC 8785 JCS, and a certification preimage does not depend on the machine that computed it |
-| **Status**        | `Active`                                                        |
+| **Status**        | `Accepted`                                                      |
 | **Author(s)**     | David Tufts (@davidscotttufts)                                  |
 | **Created**       | 2026-09-23                                                      |
-| **Updated**       | 2026-09-23 — filed and moved `Draft → Active` the same day; the public **comment window waived** by the steward on 2026-09-23 — an explicit **steward override of RFC 0147 §A.6**, which forbids bootstrap waiver language from shortening the public window for an RFC affecting **certification** and **replay**. This RFC is in both classes: it defines the bytes a certification bundle's signature and `witnessSha256` cover, and the bytes the RFC 0150 replay request digest hashes. The override is recorded in `MAINTAINERS.md` as an override row, not as a routine waiver. It is **not** folded under any earlier override. What the override does not touch: the evidence gate (RFC 0147 §A.5) — `Accepted` still requires the vectors to pass on the suite and on one host verifier, and an `executed-pass` from the coherence test over every committed bundle. **Acceptance is provisional and the RFC 0156 §B retrospective review is owed** (register row `not-reviewed`). |
+| **Updated**       | 2026-09-24 — `Active → Accepted`. Evidence tier: tier-1 — steward-verified: openwop-app `bundle-v3-verify.mjs`/`certificationEvidence.ts` at `4d433452d` (run locally; verifier, not a served surface) and openwop-registry `scripts/test-jcs.mjs` at `c15d3d6`; suite legs (`jcs-vectors`, `semantic-digest-vectors`, coherence `v2-bundle-witness-preimage` in `evidence/corpus-ledger.json`) as corpus-gate evidence. Provisional: RFC 0156 §B review owed (register row 0212, `not-reviewed`). Earlier: 2026-09-23 — filed and moved `Draft → Active` the same day; the public **comment window waived** by the steward on 2026-09-23 — an explicit **steward override of RFC 0147 §A.6**, which forbids bootstrap waiver language from shortening the public window for an RFC affecting **certification** and **replay**. This RFC is in both classes: it defines the bytes a certification bundle's signature and `witnessSha256` cover, and the bytes the RFC 0150 replay request digest hashes. The override is recorded in `MAINTAINERS.md` as an override row, not as a routine waiver. It is **not** folded under any earlier override. What the override does not touch: the evidence gate (RFC 0147 §A.5) — `Accepted` still requires the vectors to pass on the suite and on one host verifier, and an `executed-pass` from the coherence test over every committed bundle. **Acceptance is provisional and the RFC 0156 §B retrospective review is owed** (register row `not-reviewed`). |
 | **Affects**       | `spec/v2/core/packs.md` §Signing (one table cell, one paragraph) · `spec/v2/core/conformance.md` §Bundle (one row, one paragraph) · the `scheme` description in 8 schemas (below) · `schemas/v2/certification-bundle.schema.json` (3 descriptions) · `schemas/v2/run-event-payloads.schema.json` (2 descriptions) · `spec/v1/replay.md` §"LLM cache-key recipe" (2 bullets) · new `conformance/vectors/jcs-v1.json` (+ two pairs in `semantic-request-digest-v2.json`) · new `conformance/src/lib/jcs.ts` (the suite's one canonicalizer) · new scenario `jcs-vectors.test.ts` · new coherence test `v2-bundle-witness-preimage.test.ts` · `conformance/src/lib/{certification-bundle-v3,llm-cache-key-recipe}.ts`, `conformance/src/cli.ts` · `SECURITY/threat-model-replay.md` §3.7 · `SECURITY/invariants.yaml` (+1) · `COMPATIBILITY.md` §3 (one Class-3 entry) |
 | **Compatibility** | Conformance-affecting correction (W3C Process Class 3, `COMPATIBILITY.md` §3). No shape moves; no `spec/v2/corrections.json` row. Census: 5 committed v3 bundles, 156 registry `pack.json`, **0 affected** |
 | **Supersedes**    | —                                                               |
@@ -113,7 +113,7 @@ Class-3 correction. The prior text defined no algorithm, so no host could confor
 | --- | --- | --- | --- |
 | §A JCS bytes | digest/signature of a vector input | the suite, unaided | witnessable |
 | §B refusal | canonicalizer throws on each refusal vector | the suite, unaided | witnessable |
-| §C preimage + order | recomputed `witnessSha256` equals stored | the suite over committed bundles | witnessable |
+| §C preimage + order | recomputed `witnessSha256` equals stored | the suite over committed bundles | witnessable (corpus) — `openwop.it.v2-bundle-witness-preimage.every-committed-v3-bundle-re-derives-its-witnesssha256-from-the-prose-preimage`, `openwop.it.v2-bundle-witness-preimage.the-row-comparator-is-code-unit-order-which-a-locale-collation-contradicts` |
 | §D `tools[]` order | digest of the `get_weather`/`getWeather` vector | the suite, unaided | witnessable |
 
 Sabotage, each run on 2026-09-23 and each turning a leg red for the reason named:
@@ -136,11 +136,11 @@ Sabotage, each run on 2026-09-23 and each turning a leg red for the reason named
 
 ## Acceptance criteria
 
-- [ ] `jcs-vectors.test.ts` green on the suite with every sabotage above turning it red.
-- [ ] Coherence test green over every committed v3 bundle (count asserted).
-- [ ] One host-side verifier (openwop-app `bundle-v3-verify.mjs` or `certificationEvidence.ts`) reproduces the vectors and verifies the committed bundles under §C.
-- [ ] Registry signer refuses the §B vectors.
-- [ ] RFC 0156 §B retrospective review row filed `not-reviewed`.
+- [x] `jcs-vectors.test.ts` green on the suite with every sabotage above turning it red. — #1518 (2026-09-24): 65 requirements `executed-pass` across `jcs-vectors` + `semantic-digest-vectors`; each of the five sabotages above turned its named leg red and was restored.
+- [x] Coherence test green over every committed v3 bundle (count asserted). — `v2-bundle-witness-preimage` `executed-pass` in `evidence/corpus-ledger.json` over the **3** bundles in `evidence/v2-host-bundles/` (myndhyve, openwop-host-v2-reference, openwop-workflow-engine). The other two v3 bundles in the filing census (examples `bundle-v3.json`, the openwop-app fixture) were covered by that census, not by this evidence.
+- [x] One host-side verifier (openwop-app `bundle-v3-verify.mjs` or `certificationEvidence.ts`) reproduces the vectors and verifies the committed bundles under §C. — openwop-app#4099 (merged `4d433452d`, 2026-09-24), run locally by the steward session against merged code (the host is a VERIFIER here; no served surface is claimed): `rfc0212-jcs-vectors` 17/17 — all `jcs-v1` objects and numbers reproduce, every §B refusal vector is refused (it previously coerced, e.g. `{"a":1,"a":2}` → `{"a":2}`), `witnessSha256` re-derives for the 3 committed bundles and for the served `ea9cd39ee` major-2 bundle.
+- [x] Registry signer refuses the §B vectors. — openwop-registry#74 (merged); `scripts/test-jcs.mjs` at openwop-registry `c15d3d6` 4/4 pass (2026-09-24, steward session).
+- [x] RFC 0156 §B retrospective review row filed `not-reviewed`. — `docs/WAIVER-RETROSPECTIVE-REGISTER.md` row 0212.
 
 ## References
 
