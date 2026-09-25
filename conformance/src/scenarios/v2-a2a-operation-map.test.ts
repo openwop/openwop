@@ -190,6 +190,27 @@ describe('RFC 0208 — v2-a2a-operation-map (host as A2A 1.0 server, gated on a2
     const b = await rpc(t.url, 'GetTask', { id: foreign });
     expect(a.error?.code, req(R('a2a-unreadable-not-found'), 'a2a.errors TaskNotFoundError', `an unknown task MUST be TaskNotFoundError -32001 (got ${JSON.stringify(a.error ?? a.result)})`)).toBe(-32001);
     expect(b.error?.code, req(R('a2a-unreadable-not-found'), 'interop.md §"The operation mappings" Isolation', `a task the caller cannot read — here a foreign tenant segment REST refuses 403 — MUST be answered exactly as a nonexistent one, -32001 (got ${JSON.stringify(b.error ?? b.result)}, HTTP ${b.status})`)).toBe(-32001);
+    await rpc(t.url, 'CancelTask', { id });
+  });
+
+  // RFC 0211's detail comparison gets its OWN it(): an it() that cites two ids
+  // records only the LAST one in the ledger, and until 2.39.2 this setup lived in
+  // one it() with 0208's assertions — so `0208.a2a-unreadable-not-found` never
+  // reached a bundle (absent from the certified 2.38.0 v2-reference cut, the only
+  // row keeping RFC 0208 from Accepted). Same class as openwop#1552.
+  it('an unknown task and another tenant\'s task carry equivalent ErrorInfo details (RFC 0211 §D)', async () => {
+    const t = await target(true);
+    if (!t.ok) return skip(t, R11('a2a-unreadable-not-found-details'));
+    const first = await startApprovalTask(t.url);
+    const id = first.task?.id;
+    expect(typeof id === 'string' && id.includes('/'), req(R11('a2a-unreadable-not-found-details'), 'identity.md §5; a2a.operations GetTask', `Task.id is the tenant-bound runId <tenant>/<opaque> (got ${JSON.stringify(id)})`)).toBe(true);
+    const [tenant, opaque] = [id!.slice(0, id!.indexOf('/')), id!.slice(id!.indexOf('/') + 1)];
+    const fabricated = `${tenant}/${randomBytes(16).toString('base64url').replace(/[^A-Za-z0-9]/g, 'x').slice(0, 22)}`;
+    const foreign = `zz-conformance-foreign/${opaque}`;
+    const a = await rpc(t.url, 'GetTask', { id: fabricated });
+    const b = await rpc(t.url, 'GetTask', { id: foreign });
+    expect(a.error?.code, req(R11('a2a-unreadable-not-found-details'), 'a2a.errors TaskNotFoundError', `an unknown task MUST be TaskNotFoundError -32001 (got ${JSON.stringify(a.error ?? a.result)})`)).toBe(-32001);
+    expect(b.error?.code, req(R11('a2a-unreadable-not-found-details'), 'interop.md §"The operation mappings" Isolation', `a task the caller cannot read — here a foreign tenant segment REST refuses 403 — MUST be answered exactly as a nonexistent one, -32001 (got ${JSON.stringify(b.error ?? b.result)}, HTTP ${b.status})`)).toBe(-32001);
     // RFC 0211 §D: compare the details per element. `Object.keys(data)` of a one-element
     // array is ["0"] whatever the element discloses, so a key comparison is vacuous.
     const na = normaliseErrorData(a.error?.data, fabricated);
