@@ -3,8 +3,8 @@
   "generatedFrom": "src/scenarios/*.test.ts",
   "counts": {
     "files": 633,
-    "tests": 2422,
-    "withStableId": 2422,
+    "tests": 2423,
+    "withStableId": 2423,
     "interpolatedTitles": 0,
     "explicitIds": 2304
   },
@@ -27072,15 +27072,10 @@
     {
       "id": "openwop.it.v2-a2a-push-delivery.a-c-a-transition-after-registration-is-posted-to-the-registered-destination-with",
       "file": "v2-a2a-push-delivery.test.ts",
-      "line": 140,
-      "title": "§A/§C — a transition after registration is POSTed to the registered destination with the registered Authorization and no OpenWOP signature",
+      "line": 189,
+      "title": "§A/§C — a transition after registration is POSTed to the registered destination with the registered Authorization",
       "explicitId": null,
       "citations": [
-        {
-          "section": "spec/v2/core/interop.md §\"A2A push delivery\" (RFC 0214)",
-          "requirement": null,
-          "interpolated": true
-        },
         {
           "section": null,
           "requirement": null,
@@ -27103,6 +27098,19 @@
           "section": "A2A v1.0.1 §4.3.3 (StreamResponse)",
           "requirement": null,
           "interpolated": true
+        }
+      ]
+    },
+    {
+      "id": "openwop.it.v2-a2a-push-delivery.c-an-a2a-push-carries-no-openwop-signature",
+      "file": "v2-a2a-push-delivery.test.ts",
+      "line": 203,
+      "title": "§C — an A2A push carries no OpenWOP signature",
+      "explicitId": null,
+      "citations": [
+        {
+          "section": "spec/v2/core/interop.md §\"A2A push delivery\" (RFC 0214)",
+          "requirement": "positive control: at least one push arrived to read headers from"
         },
         {
           "section": null,
@@ -27114,7 +27122,7 @@
     {
       "id": "openwop.it.v2-a2a-push-delivery.b-a-3xx-from-the-destination-is-a-failed-delivery-the-redirect-target-receives-n",
       "file": "v2-a2a-push-delivery.test.ts",
-      "line": 170,
+      "line": 215,
       "title": "§B — a 3xx from the destination is a failed delivery: the redirect target receives nothing, credential or not",
       "explicitId": null,
       "citations": [
@@ -27138,7 +27146,7 @@
     {
       "id": "openwop.it.v2-a2a-push-delivery.a-after-delete-no-further-push-reaches-that-destination-while-a-live-config-on-t",
       "file": "v2-a2a-push-delivery.test.ts",
-      "line": 192,
+      "line": 237,
       "title": "§A — after Delete no further push reaches that destination, while a live config on the same task still receives",
       "explicitId": null,
       "citations": [
@@ -27167,7 +27175,7 @@
     {
       "id": "openwop.it.v2-a2a-push-delivery.d-a-replay-fork-of-a-pushed-run-delivers-nothing-to-the-source-run-s-destination",
       "file": "v2-a2a-push-delivery.test.ts",
-      "line": 218,
+      "line": 263,
       "title": "§D — a replay fork of a pushed run delivers nothing to the source run's destination",
       "explicitId": null,
       "citations": [
