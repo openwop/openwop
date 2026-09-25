@@ -143,7 +143,7 @@
   },
   "versions": {
     "source": "conformance/package.json, CHANGELOG.md",
-    "conformanceSuite": "2.39.1",
+    "conformanceSuite": "2.39.2",
     "corpusRelease": "2.39.1",
     "corpusReleaseDate": "2026-09-25"
   },

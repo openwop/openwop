@@ -1,5 +1,10 @@
 # `@openwop/openwop-conformance` Changelog
 
+## [2.39.2] — unreleased — the 2.39.2 cycle is open
+
+- **`0208.a2a-unreadable-not-found` records its own row.** In `v2-a2a-operation-map`, one `it()` cited both RFC 0208's `a2a-unreadable-not-found` and RFC 0211's `a2a-unreadable-not-found-details`. The per-`it` ledger keeps only the last id, so the 0208 row never reached a bundle: it is absent from the certified 2.38.0 v2-reference cut, and it is the one row keeping RFC 0208 from `Accepted` (the other 18 pass). This is the same class as openwop#1552. RFC 0211's detail comparison now has its own `it()` with its own setup, so each id records once. `scripts/check-req-only.mjs` already failed an `it()` citing two LITERAL ids, but it read helper-built ids (`R('x')`, `R11('x')`) as no id at all, which is how this one passed. It now counts each (helper, slug) as an id, fails against the 2.39.1 scenario, and finds no other case in 633 scenario files.
+- **Version moved ahead of publication.** `@openwop/openwop-conformance` and its exact-pinned peer `@openwop/spec-artifacts` move to `2.39.2` because `2.39.1` is tagged and publishing. Not tagged, not published.
+
 ## [2.39.1] — 2026-09-25 — the RFC 0214 delivery legs survive a tunnel, and each one leaves its own row
 
 - **`v2-a2a-push-delivery` — every requirement now records a row, and the budgets fit a public front.** The 2.39.0 public push-on cut of the v2 reference host lost three legs (§A after-Delete, §B 3xx redirect, §D replay fork) to vitest's per-test timeout, not to an assertion — deliveries were arriving through the front (`no-openwop-signature` passed). Budgets now scale when `OPENWOP_WEBHOOK_RECEIVER_URL` is wired (arrival 60 s, settle 45 s, leg 240 s, fork leg 300 s; loopback unchanged), the #1537 precedent. Separately, `0214.a2a-push-delivery-authenticated` vanished from that bundle because its `it()` also cited `0214.a2a-push-no-openwop-signature` and the ledger keeps the LAST id an `it()` cites: the delivery is now made once and read by two legs, one id each, and when the delivery cannot be made the signature leg records `blocked` with the reason instead of disappearing.
