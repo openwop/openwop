@@ -1,6 +1,6 @@
 # `@openwop/openwop-conformance` Changelog
 
-## [2.39.2] — unreleased — the 2.39.2 cycle is open
+## [2.39.2] — 2026-09-25 — RFC 0208's unreadable-task leg records its own row
 
 - **`0208.a2a-unreadable-not-found` records its own row.** In `v2-a2a-operation-map`, one `it()` cited both RFC 0208's `a2a-unreadable-not-found` and RFC 0211's `a2a-unreadable-not-found-details`. The per-`it` ledger keeps only the last id, so the 0208 row never reached a bundle: it is absent from the certified 2.38.0 v2-reference cut, and it is the one row keeping RFC 0208 from `Accepted` (the other 18 pass). This is the same class as openwop#1552. RFC 0211's detail comparison now has its own `it()` with its own setup, so each id records once. `scripts/check-req-only.mjs` already failed an `it()` citing two LITERAL ids, but it read helper-built ids (`R('x')`, `R11('x')`) as no id at all, which is how this one passed. It now counts each (helper, slug) as an id, fails against the 2.39.1 scenario, and finds no other case in 633 scenario files.
 - **Version moved ahead of publication.** `@openwop/openwop-conformance` and its exact-pinned peer `@openwop/spec-artifacts` move to `2.39.2` because `2.39.1` is tagged and publishing. Not tagged, not published.
