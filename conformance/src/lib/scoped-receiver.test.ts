@@ -150,3 +150,50 @@ describe('scoped-receiver — a front that carries a PATH (2.38.0)', () => {
     expect(a.seen).toEqual([]);
   });
 });
+
+describe('scoped-receiver — a PINNED port is shared, never re-bound (2.39.3)', () => {
+  async function freePort(): Promise<number> {
+    const { createServer } = await import('node:net');
+    return new Promise((resolve) => { const s = createServer(); s.listen(0, '127.0.0.1', () => { const a = s.address(); s.close(() => resolve(typeof a === 'object' && a ? a.port : 0)); }); });
+  }
+  afterEach(() => { delete process.env['OPENWOP_WEBHOOK_RECEIVER_PORT']; });
+
+  it('two concurrent receivers on the pinned port both start, each gets its own traffic, and foreign is counted per receiver', async () => {
+    const port = await freePort();
+    process.env['OPENWOP_WEBHOOK_RECEIVER_PORT'] = String(port);
+    const a = await receiver();
+    const b = await receiver();
+    expect(a.port).toBe(port);
+    expect(b.port).toBe(port);
+    expect(await post(`${a.localUrl}/x`)).toBe(204);
+    expect(await post(`${b.localUrl}/y`)).toBe(204);
+    expect(a.seen).toEqual(['/x']);
+    expect(b.seen).toEqual(['/y']);
+    expect(a.foreign()).toBe(1);
+    expect(b.foreign()).toBe(1);
+  });
+
+  it('closing one receiver keeps its sibling serving on the shared port', async () => {
+    const port = await freePort();
+    process.env['OPENWOP_WEBHOOK_RECEIVER_PORT'] = String(port);
+    const a = await receiver();
+    const b = await receiver();
+    await a.close();
+    expect(await post(`${b.localUrl}/still`)).toBe(204);
+    expect(b.seen).toEqual(['/still']);
+    expect(await post(`${a.localUrl}/gone`)).toBe(404);
+  });
+
+  it('a pinned port another process holds REJECTS fast with a clear message instead of hanging', async () => {
+    const { createServer } = await import('node:http');
+    const squatter = createServer((_q, r) => { r.end(); });
+    const port = await freePort();
+    await new Promise<void>((ok) => squatter.listen(port, '127.0.0.1', () => ok()));
+    try {
+      process.env['OPENWOP_WEBHOOK_RECEIVER_PORT'] = String(port);
+      const started = Date.now();
+      await expect(startScopedReceiver((_h, res) => { res.end(); })).rejects.toThrow(/could not bind/);
+      expect(Date.now() - started).toBeLessThan(5_000);
+    } finally { await new Promise<void>((ok) => squatter.close(() => ok())); }
+  });
+});
