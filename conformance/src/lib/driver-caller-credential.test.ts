@@ -1,7 +1,7 @@
 /**
  * The driver sends the credential a scenario chose.
  *
- * Until 2.39.0 `driver.request` set `Authorization: Bearer <OPENWOP_API_KEY>`
+ * Until 2.39.1 `driver.request` set `Authorization: Bearer <OPENWOP_API_KEY>`
  * AFTER spreading the caller's headers unless the caller also passed
  * `authenticated: false`. So a scenario that sent a second tenant's key (or a
  * low-scope key) as a header actually sent the owner's full key:

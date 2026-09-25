@@ -117,6 +117,17 @@ if (table) {
   const dash = Object.entries(table).filter(([, r]) => r === null).map(([l]) => l).sort();
   if (JSON.stringify(optional) !== JSON.stringify(dash)) fail(`\`revocation\` is optional on [${optional.join(', ') || 'no lane'}] in auth.schema.json but §2.2's "—" rows are [${dash.join(', ') || 'none'}] — a "—" lane that must advertise a value cannot also advertise none, and a rule-bearing lane that may omit it states no latency`);
 
+  // 5. the suite's per-lane `.members` leg must not demand `revocation` on a
+  // "—" lane either. Until suite 2.39.1 it asserted `revocation` on EVERY lane,
+  // so after the schema made it optional on `anonymous` (openwop#1540) a host
+  // that followed the schema and the prose failed the suite — measured on
+  // openwop-app. Checks 1-4 read the schema and LANE_RULES and could not see it.
+  {
+    const src = readFileSync(SCENARIO, 'utf8');
+    const guarded = /if \(!\(LANE_RULES\[name\] === null && l\['revocation'\] === undefined\)\)\s*\{\s*expect\(REVOCATION\.has/.test(src);
+    if (dash.length > 0 && !guarded) fail(`${SCENARIO}: the \`.members\` leg asserts \`revocation\` on every lane — it must exempt the §2.2 "—" lanes [${dash.join(', ')}] when they omit it, or a host following the schema and the prose fails the suite`);
+  }
+
   // 3. the suite enforces the table, exactly
   if (suite) {
     for (const lane of new Set([...Object.keys(table), ...Object.keys(suite)])) {

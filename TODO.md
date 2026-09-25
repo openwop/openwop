@@ -9,21 +9,20 @@
 > Tick a box only when the change is merged on `main`. Keep this file current as phases
 > land; delete it when every phase is closed.
 
-## Progress (updated 2026-09-24)
+## Progress (updated 2026-09-24, evening)
 
 | Item | State |
 |---|---|
-| Phase 1 corrections + drift gates | **merged** #1510 (rode 2.37.0) |
-| **Phase 4b — certification path** | **NEW 2026-09-24.** All 15 Active cohort RFCs measured against `check-accepted-predicate`: all fail, on evidence not on the window. One `blocked` row is bundle-wide fatal (§E.1) and an uncertified bundle witnesses nothing (§B.1), so blocked must reach 0 BEFORE a cut is spent. Owners: myndhyve-55 (keys + `0199` seams), openwop-77 (`0207`, `message-id-stable`) |
-| RFC 0211 A2A errors are ErrorInfo | **Active** #1514 (override of §A.6 recorded); v2-reference implements it (openwop-examples#83); Accepted ⇐ certified v2-reference bundle on published 2.37.1 (openwop-75 holds the one approved ingress cut) |
-| RFC 0213 three unstated outcomes | **Active** #1517; §B leg fixed to partial-witness (#1525, opens 2.37.1); §A/§C witnessed on v2-reference loopback; Accepted ⇐ same bundle (§B box stays partial-witness) |
-| RFC 0214 A2A push credentials | PR #1519 open — waits for 2.37.1 publish, then opens 2.38.0; Accepted blocked on deferred push implementation (D2) |
-| RFC 0212 JCS / preimages | PR #1518 open — same queue as 0214; Accepted ⇐ host verifier (openwop-app H4) + vectors |
-| Suite | 2.37.0 on npm (#1523); 2.37.1 cycle open on main (#1525); publish needs David |
-| Siblings | registry#74 merged (signer refuses non-I-JSON); examples#82 merged (audit comments); examples#83 merged (v2-reference 0211); openwop-app#4097 (ADR 0744: H1–H4, H6) driven + deployed by openwop-app-ce |
-| Upstream | wave 1 posted: ext-tasks#23, A2A#1574 comment, A2A#1685 comment; wave 2 when 0214 Active; wave 3 ≥ 2026-09-26 |
-| Watch | A2A PR #2068 (SubscribeToTask prose POST→GET) — if merged, revisit interop-map D1 exception |
-| Blocked | openwop-sdks re-vendor: its sync gate follows a published corpus tag, so it waits for the next corpus tag |
+| Phase 1 corrections + drift gates | **merged** #1510 |
+| RFC 0211 A2A errors are ErrorInfo | **Accepted** #1548 — tier-1: certified public v2-reference cut on published 2.38.0 (#1542); invariant `a2a-error-no-existence-oracle` → protocol |
+| RFC 0212 JCS / preimages | **Accepted** #1539 — tier-1 steward-verified: openwop-app verifiers `4d433452d` (#4099, now refuse non-I-JSON) + registry signer `c15d3d6`; corpus-gate suite rows |
+| RFC 0213 three unstated outcomes | **Active** #1517. §A/§C witnessed on v2-reference 2.38.0; **§B blocked**: v2-reference serializes same-key creates (partial-witness). Needs a certified openwop-app cut on 2.38.0+ (409 branch) — openwop-app-ce: #4106 (0200 challenge-401) → deploy → TENANT_B export fix → cut |
+| RFC 0214 A2A push credentials | **Active** #1519. D2 **reversed 2026-09-24** (receiver harness existed): v2-reference implements push (examples#85), suite legs + `v2-a2a-push-delivery` landed (#1546, opens 2.39.0). Accepted ⇐ David's go on 2.39.0 publish + one public push-on cut (openwop-77 asking) |
+| Suite | 2.38.0 published (latest); 2.39.0 cycle open on main |
+| Siblings | registry#74; examples#82, #83 (v2-ref 0211), #85 (v2-ref push); openwop-app#4097 (ADR 0744, deployed ea9cd39ee), #4099 (verifier I-JSON refusal); openwop-sdks re-vendor to v2.38.0 in flight |
+| Upstream | wave 1: ext-tasks#23, A2A#1574, #1685 · wave 2: A2A#1988, #1986, #1987 · wave 3 (≥ 2026-09-26): new ext-tasks listen-reconnect issue, A2A#2103 |
+| Watch | A2A PR #2068 (SubscribeToTask POST→GET prose) |
+| Open check | RFC 0058 run-timeout leg red once under load in openwop-app#4099 CI; re-run on a quiet machine pending (code-read says unrelated) |
 
 ## Binding constraints
 

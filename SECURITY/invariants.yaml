@@ -4237,6 +4237,26 @@ invariants:
 
   # ===== v2 cut (RFC 0170 §E.2, RFC 0175 §F.1) — registered with their scenarios =====
 
+  - id: agent-card-no-tenant-leak
+    tier: protocol
+    severity: high
+    threat_model: SECURITY/threat-model-interop.md
+    tests:
+      - conformance/src/scenarios/v2-a2a-agent-cards.test.ts
+    note: |
+      RFC 0202 §Invariant / `interop.md` §"Per-agent cards". A per-agent A2A
+      card, and every A2A operation addressed by a per-agent routing value,
+      MUST NOT disclose whether an agent outside the caller's inventory
+      exists: a foreign routing value and a never-issued one answer with an
+      identical status, code and body (`.identical-refusal`), and a resolved
+      card carries the caller's tenant of record (`.tenant-of-record`).
+      Registered 2026-09-24, once a committed certified bundle (the v2
+      reference host on suite 2.38.0) carried `.identical-refusal` at
+      executed-pass with the second principal provisioned (RFC 0202 G5).
+      Timing is out of scope (G7, threat-model-interop.md).
+    witness: witnessable-gated
+    witnessReview: reviewed-2026-09-24
+
   - id: interop-negotiation-authenticated
     tier: protocol
     severity: high

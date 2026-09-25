@@ -44,7 +44,7 @@ async function workspaceSupported(): Promise<boolean> {
 
 const tenantBKey = process.env.OPENWOP_TEST_TENANT_B_API_KEY;
 // `authenticated: false` so the driver adds no default (owner-A) credential. Until
-// 2.39.0 it overwrote this header, so every "tenant B" request below was owner A
+// 2.39.1 it overwrote this header, so every "tenant B" request below was owner A
 // reading its own file — a false leak (200) on any host that set the key.
 const asTenantB = { authenticated: false, headers: { Authorization: `Bearer ${tenantBKey ?? ''}` } };
 

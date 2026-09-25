@@ -58,7 +58,7 @@ class OpenWOPDriver {
     }
     // A caller-supplied Authorization header (any case) is the credential the
     // scenario chose — a second tenant's key, a low-scope key — and is sent as
-    // given. Until 2.39.0 the default key overwrote it unless the caller also
+    // given. Until 2.39.1 the default key overwrote it unless the caller also
     // passed `authenticated: false`, so "tenant B reads A's file" was really the
     // owner reading its own file (200 → a false cross-tenant leak), and a
     // low-scope resolve was really a full-scope one (a false 403 miss).
