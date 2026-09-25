@@ -29648,7 +29648,7 @@
     {
       "id": "openwop.it.v2-lane-issuer-advertised.a-windowed-revocation-rule-advertises-revocationwindowseconds",
       "file": "v2-lane-issuer-advertised.test.ts",
-      "line": 85,
+      "line": 93,
       "title": "a windowed revocation rule advertises revocationWindowSeconds",
       "explicitId": "openwop.requirement.0170.lane-issuer-advertised.window",
       "citations": [
@@ -29662,7 +29662,7 @@
     {
       "id": "openwop.it.v2-lane-issuer-advertised.a-lane-advertises-only-a-revocation-rule-its-identity-md-2-2-row-lists",
       "file": "v2-lane-issuer-advertised.test.ts",
-      "line": 96,
+      "line": 104,
       "title": "a lane advertises only a revocation rule its identity.md §2.2 row lists",
       "explicitId": "openwop.requirement.0170.lane-issuer-advertised.lane-rule",
       "citations": [
