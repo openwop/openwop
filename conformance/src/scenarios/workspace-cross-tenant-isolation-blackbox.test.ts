@@ -19,6 +19,8 @@
  * Gating: soft-skips unless `capabilities.workspace.supported` AND
  * `OPENWOP_TEST_TENANT_B_API_KEY` (a credential for a SECOND, distinct
  * tenant·workspace) is supplied — the suite cannot mint a second tenant itself.
+ * A key equal to OPENWOP_API_KEY, or one the host refuses 401, is `blocked`
+ * before any assertion: neither can measure a second-tenant read.
  *
  * @see RFCS/0059-agent-workspace.md §E WCT-1
  * @see SECURITY/invariants.yaml workspace-cross-tenant-isolation
@@ -27,6 +29,7 @@ import { describe, it, expect } from 'vitest';
 import { softSkip } from '../lib/soft-skip.js';
 import { randomUUID } from 'node:crypto';
 import { driver } from '../lib/driver.js';
+import { loadEnv } from '../lib/env.js';
 import { capabilityFamily } from '../lib/discovery-capabilities.js';
 import { req } from '../lib/requirement-ids.js';
 
@@ -40,7 +43,10 @@ async function workspaceSupported(): Promise<boolean> {
 }
 
 const tenantBKey = process.env.OPENWOP_TEST_TENANT_B_API_KEY;
-const asTenantB = { headers: { Authorization: `Bearer ${tenantBKey ?? ''}` } };
+// `authenticated: false` so the driver adds no default (owner-A) credential. Until
+// 2.39.0 it overwrote this header, so every "tenant B" request below was owner A
+// reading its own file — a false leak (200) on any host that set the key.
+const asTenantB = { authenticated: false, headers: { Authorization: `Bearer ${tenantBKey ?? ''}` } };
 
 describe('workspace-cross-tenant-isolation (black-box): a §C file MUST NOT leak across owners (RFC 0059 §E WCT-1)', () => {
   it('a file written by owner A is unreadable + un-enumerable by a second-tenant credential', async () => {
@@ -50,6 +56,13 @@ describe('workspace-cross-tenant-isolation (black-box): a §C file MUST NOT leak
       console.warn('[workspace-cross-tenant-isolation-blackbox] OPENWOP_TEST_TENANT_B_API_KEY not supplied; skipping the production-path cross-tenant assertion');
       return softSkip('blocked', '[workspace-cross-tenant-isolation-blackbox] OPENWOP_TEST_TENANT_B_API_KEY not supplied; skipping the production-path cross-tenant assertion');
     }
+
+    if (tenantBKey.trim() === loadEnv().apiKey) return softSkip('blocked', 'OPENWOP_TEST_TENANT_B_API_KEY equals OPENWOP_API_KEY — the second credential must resolve to a DIFFERENT tenant·workspace, or the leg measures nothing');
+
+    // Decided before any assertion: a tenant-B key the host refuses 401 is a
+    // harness precondition, not an isolation verdict either way.
+    const probeB = await driver.get('/v1/host/workspace/files', asTenantB);
+    if (probeB.status === 401) return softSkip('blocked', 'OPENWOP_TEST_TENANT_B_API_KEY was refused 401 — it does not authenticate on this host, so no second-tenant read can be measured');
 
     const path = `wct-blackbox-${randomUUID()}.md`;
     const secret = `WCT1-BLACKBOX-SECRET-${randomUUID()}`;

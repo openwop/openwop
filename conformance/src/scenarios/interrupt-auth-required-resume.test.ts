@@ -76,7 +76,8 @@ describe.skipIf(SKIP)('interrupt: auth-required — insufficient scope returns 4
     const resolve = await driver.post(
       `/v1/runs/${encodeURIComponent(runId)}/interrupts/${encodeURIComponent(NODE_ID)}`,
       { resumeValue: { action: 'accept' } },
-      { headers: { Authorization: `Bearer ${lowScopeKey}` } },
+      // `authenticated: false`: the low-scope key alone, never the full-scope default.
+      { authenticated: false, headers: { Authorization: `Bearer ${lowScopeKey}` } },
     );
     expect(resolve.status, req('openwop.it.interrupt-auth-required-resume.bearer-without-approvals-respond-scope-is-rejected', 
       'auth.md §scopes + interrupt-profiles.md §openwop-interrupt-auth-required',
