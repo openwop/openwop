@@ -470,10 +470,15 @@ configured backoff of 2s. Their host was conformant *to the letter* the whole ti
 That is the **confidentiality** half. There is nothing — v1 or v2 — saying a subscription's
 delivery MUST NOT be degraded by an unrelated subscription's failures.
 
-- [ ] File the RFC. Falsifiable form ≈ *"a delivery's latency MUST NOT be a function of unrelated
-      subscriptions' failures"*; openwop-app's own attempt timestamps show how to measure it.
-- [ ] Decide whether it is a new invariant beside `webhook-cross-tenant-isolation` (availability
-      analogue of a property the corpus already cares about) or a §Durability clause.
+- [x] File the RFC: **RFC 0215 `Draft`** (2026-09-24). It is stated as an isolation rule, not a
+      latency bound (its Alternative 2 says why), with a floor of 8 unanswered attempts. It also
+      picked up a second gap from openwop-app `WHD-16`: unregistering did not stop pending
+      attempts, and ~1,600 signed POSTs went to a withdrawn URL.
+- [x] Decide invariant vs §Durability clause: **both**. The text goes in §Durability, and two
+      invariant rows (`webhook-delivery-isolation`, `webhook-unregister-stops-delivery`) are
+      filed at `Active`. Reasons are in RFC 0215 §"Proposed invariants".
+- [ ] Take RFC 0215 to `Active`: comment window, the prior-art survey (its G6), and a threat-model
+      home for the availability invariant (its G3).
 
 ## S4 — two defect patterns from my RFC 0158 rows, both found by hosts · **pattern check, no code owed**
 
