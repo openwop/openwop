@@ -4339,10 +4339,16 @@ invariants:
       load-bearing and neither implies the other. `exp-only` MUST NOT be
       advertised on `api-key` or `session`, where the host issued the
       credential itself; `auth.schema.json` refuses that pairing. Seam-gated
-      on an advertised `exp-only` lane plus `OPENWOP_TEST_OIDC_ISSUER_URL`;
-      `blocked` (named) without the harness issuer, because a refusal with no
-      accepted control witnesses nothing. The scenario carries that control
-      leg in the same run as the two refusals.
+      on an advertised `exp-only` lane whose `issuers[]` lists
+      `OPENWOP_TEST_OIDC_ISSUER_URL`. A lane that does not list the harness
+      issuer (every production host, which must never trust a test issuer)
+      records `inapplicable` naming the issuers it does trust, RFC 0168 §C.1's
+      reading for an unclaimed suite instrument (corrected 2026-09-25; it read
+      `blocked`, which denied certification to every honest production
+      bundle). A lane that lists the harness but cannot be served a token it
+      accepts stays `blocked`, because a refusal with no accepted control
+      witnesses nothing. The scenario carries that control leg in the same run
+      as the two refusals.
     witness: seam-gated
     witnessReview: reviewed-2026-09-23
 

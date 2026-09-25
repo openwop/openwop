@@ -6,7 +6,7 @@
     "tests": 2424,
     "withStableId": 2424,
     "interpolatedTitles": 0,
-    "explicitIds": 2304
+    "explicitIds": 2318
   },
   "records": [
     {
@@ -26810,7 +26810,7 @@
       "file": "v2-a2a-operation-map.test.ts",
       "line": 275,
       "title": "a host not advertising a2a.pushNotifications refuses all four push-config operations with PushNotificationNotSupportedError",
-      "explicitId": null,
+      "explicitId": "openwop.requirement.0214.a2a-push-unadvertised-refused",
       "citations": [
         {
           "section": "spec/v2/core/interop.md §\"The operation mappings\" (RFC 0208)",
@@ -26823,7 +26823,7 @@
           "interpolated": true
         },
         {
-          "section": null,
+          "section": "interop-map.json a2a.errors PushNotificationNotSupportedError (serverWhen: push config without a2a.pushNotifications) and the push-config operation rows; A2A v1.0.1 §3.3.4",
           "requirement": null,
           "interpolated": true
         }
@@ -26834,7 +26834,7 @@
       "file": "v2-a2a-operation-map.test.ts",
       "line": 306,
       "title": "RFC 0214 — CreateTaskPushNotificationConfig refuses a non-https or private destination",
-      "explicitId": null,
+      "explicitId": "openwop.requirement.0214.a2a-push-register-ssrf",
       "citations": [
         {
           "section": "spec/v2/core/interop.md §\"The operation mappings\" (RFC 0208)",
@@ -26842,12 +26842,12 @@
           "interpolated": true
         },
         {
-          "section": null,
+          "section": "interop-map.json a2a.operations CreateTaskPushNotificationConfig (\"the url MUST pass the webhooks.md egress guard\"); webhooks.md §Egress; RFC 0214 §B",
           "requirement": null,
           "interpolated": true
         },
         {
-          "section": null,
+          "section": "interop-map.json a2a.operations CreateTaskPushNotificationConfig (\"the url MUST pass the webhooks.md egress guard\"); webhooks.md §Egress; RFC 0214 §B",
           "requirement": null,
           "interpolated": true
         }
@@ -26858,41 +26858,40 @@
       "file": "v2-a2a-operation-map.test.ts",
       "line": 324,
       "title": "RFC 0214 §E — a push config of another tenant's task, of another task, or unknown, is answered identically",
-      "explicitId": null,
+      "explicitId": "openwop.requirement.0214.a2a-push-config-isolation",
       "citations": [
         {
           "section": "spec/v2/core/interop.md §\"The operation mappings\" (RFC 0208)",
           "requirement": "SendMessage MUST start two tasks with tenant-bound ids"
         },
         {
-          "section": null,
+          "section": "interop.md §\"A2A push delivery\" (RFC 0214 §E); interop.md §\"The operation mappings\" Isolation",
           "requirement": null,
           "interpolated": true
         },
         {
-          "section": null,
+          "section": "interop.md §\"A2A push delivery\" (RFC 0214 §E); interop.md §\"The operation mappings\" Isolation",
           "requirement": null,
           "interpolated": true
         },
         {
-          "section": null,
+          "section": "interop.md §\"A2A push delivery\" (RFC 0214 §E); interop.md §\"The operation mappings\" Isolation",
           "requirement": null,
           "interpolated": true
         },
         {
-          "section": null,
+          "section": "interop.md §\"A2A push delivery\" (RFC 0214 §E); interop.md §\"The operation mappings\" Isolation",
           "requirement": null,
           "interpolated": true
         },
         {
-          "section": null,
+          "section": "interop.md §\"A2A push delivery\" (RFC 0214 §E); interop.md §\"The operation mappings\" Isolation",
           "requirement": null,
           "interpolated": true
         },
         {
-          "section": null,
-          "requirement": "a delete naming another tenant's task MUST NOT delete the caller's config",
-          "interpolated": true
+          "section": "interop.md §\"A2A push delivery\" (RFC 0214 §E); interop.md §\"The operation mappings\" Isolation",
+          "requirement": "a delete naming another tenant's task MUST NOT delete the caller's config"
         },
         {
           "section": "A2A v1.0.1 §3.1.10 (\"MUST be idempotent\")",
@@ -26906,7 +26905,7 @@
       "file": "v2-a2a-operation-map.test.ts",
       "line": 368,
       "title": "RFC 0214 §A — a push config's token and credentials are never returned, and never reach task, events or state",
-      "explicitId": null,
+      "explicitId": "openwop.requirement.0214.a2a-push-secrets-not-returned",
       "citations": [
         {
           "section": "spec/v2/core/interop.md §\"The operation mappings\" (RFC 0208)",
@@ -26914,12 +26913,12 @@
           "interpolated": true
         },
         {
-          "section": null,
+          "section": "interop-map.json a2a.operations push rows (\"secrets are never returned\"); security-defaults.md §\"Onward hops\" (RFC 0214 §A)",
           "requirement": null,
           "interpolated": true
         },
         {
-          "section": null,
+          "section": "interop-map.json a2a.operations push rows (\"secrets are never returned\"); security-defaults.md §\"Onward hops\" (RFC 0214 §A)",
           "requirement": null,
           "interpolated": true
         }
@@ -27062,7 +27061,7 @@
       "file": "v2-a2a-operation-map.test.ts",
       "line": 509,
       "title": "a run suspended on a credential interrupt projects to TASK_STATE_AUTH_REQUIRED, naming the provider and carrying connectUrl",
-      "explicitId": null,
+      "explicitId": "openwop.requirement.0199.a2a-auth-required",
       "citations": [
         {
           "section": "runs.md createRun",
@@ -29585,7 +29584,7 @@
     {
       "id": "openwop.it.v2-lane-exp-only-bound.a-credential-inside-the-advertised-window-is-accepted-the-control-the-two-refusa",
       "file": "v2-lane-exp-only-bound.test.ts",
-      "line": 150,
+      "line": 152,
       "title": "a credential inside the advertised window is accepted — the control the two refusals rest on",
       "explicitId": "openwop.requirement.0210.exp-only-control-accepted",
       "citations": [
@@ -29599,7 +29598,7 @@
     {
       "id": "openwop.it.v2-lane-exp-only-bound.a-credential-whose-total-lifetime-exceeds-the-window-is-refused-401-and-so-is-on",
       "file": "v2-lane-exp-only-bound.test.ts",
-      "line": 165,
+      "line": 167,
       "title": "a credential whose TOTAL lifetime exceeds the window is refused 401, and so is one carrying no iat",
       "explicitId": "openwop.requirement.0210.exp-only-lifetime-bound",
       "citations": [
@@ -29618,7 +29617,7 @@
     {
       "id": "openwop.it.v2-lane-exp-only-bound.the-over-lifetime-refusal-names-credential-lifetime-exceeded-not-a-generic-unaut",
       "file": "v2-lane-exp-only-bound.test.ts",
-      "line": 200,
+      "line": 202,
       "title": "the over-lifetime refusal names credential_lifetime_exceeded, not a generic unauthenticated",
       "explicitId": "openwop.requirement.0210.credential-lifetime-code",
       "citations": [
@@ -29632,7 +29631,7 @@
     {
       "id": "openwop.it.v2-lane-exp-only-bound.a-credential-whose-remaining-lifetime-exceeds-the-window-is-refused-though-its-t",
       "file": "v2-lane-exp-only-bound.test.ts",
-      "line": 218,
+      "line": 220,
       "title": "a credential whose REMAINING lifetime exceeds the window is refused, though its total lifetime does not",
       "explicitId": "openwop.requirement.0210.exp-only-remaining-bound",
       "citations": [
@@ -30322,7 +30321,7 @@
       "file": "v2-mcp-mount-map.test.ts",
       "line": 287,
       "title": "a credential interrupt is answered in URL mode (url = connectUrl), isError without URL support, and input_required again on an accept retry with no credential",
-      "explicitId": null,
+      "explicitId": "openwop.requirement.0199.mcp-url-mode",
       "citations": [
         {
           "section": "interop-map.json mcp.mrtr InputRequiredResult (host as server)",
@@ -30360,7 +30359,7 @@
       "file": "v2-mcp-mount-map.test.ts",
       "line": 328,
       "title": "form mode is never emitted for a nested schema or a sensitive (format password) field",
-      "explicitId": null,
+      "explicitId": "openwop.requirement.0199.form-mode-no-secret",
       "citations": [
         {
           "section": "interop-map.json mcp.mrtr InputRequiredResult (host as server)",
@@ -31179,7 +31178,7 @@
     {
       "id": "openwop.it.v2-oidc-id-token-audience.a-same-audience-id-token-is-admissible-and-one-minted-for-another-relying-party",
       "file": "v2-oidc-id-token-audience.test.ts",
-      "line": 75,
+      "line": 68,
       "title": "a same-audience ID token is admissible, and one minted for another relying party is audience_mismatch",
       "explicitId": "openwop.requirement.0200.id-token-aud",
       "citations": [
@@ -33306,7 +33305,7 @@
       "file": "v2-webhook-endpoint-verification.test.ts",
       "line": 64,
       "title": "no-echo, wrong-echo and a redirect are refused and persist nothing; an echo is accepted",
-      "explicitId": null,
+      "explicitId": "openwop.requirement.0201.endpoint-verification",
       "citations": [
         {
           "section": "RFC 0201 §D.14",
@@ -33374,7 +33373,7 @@
       "file": "v2-webhook-message-id-stable.test.ts",
       "line": 69,
       "title": "every attempt of one delivery carries one webhook-id, and distinct deliveries carry distinct ids",
-      "explicitId": null,
+      "explicitId": "openwop.requirement.0201.message-id-stable",
       "citations": [
         {
           "section": "RFC 0201 §C.10",
@@ -33407,7 +33406,7 @@
       "file": "v2-webhook-secret-rotation.test.ts",
       "line": 67,
       "title": "a rotation dual-signs for overlapSeconds, keeps OpenWOP-Signature on the previous secret, and is tenant-checked",
-      "explicitId": null,
+      "explicitId": "openwop.requirement.0201.secret-rotation",
       "citations": [
         {
           "section": "RFC 0201 §E.18 / identity.md §5",
@@ -33490,7 +33489,7 @@
       "file": "v2-webhook-standard-webhooks-delivery.test.ts",
       "line": 77,
       "title": "a subscription that did not opt in is neither verified nor given webhook-* headers",
-      "explicitId": null,
+      "explicitId": "openwop.requirement.0201.opt-in-only",
       "citations": [
         {
           "section": "RFC 0201 §B.8 / §D.15",
@@ -33524,7 +33523,7 @@
       "file": "v2-webhook-standard-webhooks-delivery.test.ts",
       "line": 110,
       "title": "the opt-in is validated, its 201 echoes the applied list, and no response carries the secret",
-      "explicitId": null,
+      "explicitId": "openwop.requirement.0201.registration-validated",
       "citations": [
         {
           "section": "RFC 0201 §B.5–§B.6",
@@ -33556,7 +33555,7 @@
       "file": "v2-webhook-standard-webhooks-delivery.test.ts",
       "line": 155,
       "title": "an opted-in delivery is dual-signed and its Standard Webhooks signature covers the id",
-      "explicitId": null,
+      "explicitId": "openwop.requirement.0201.delivery-signed",
       "citations": [
         {
           "section": "RFC 0201 §B",
@@ -41378,7 +41377,7 @@
       "file": "v2-lane-exp-only-schema.test.ts",
       "line": 127,
       "title": "the gate refuses an enum member with no §2.2 row, and a suite map the table does not license",
-      "explicitId": null,
+      "explicitId": "openwop.requirement.0210.lane-rule-surfaces-agree",
       "citations": [
         {
           "section": "scripts/check-lane-revocation-rules.mjs",

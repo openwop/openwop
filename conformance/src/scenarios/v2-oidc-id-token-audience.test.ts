@@ -10,10 +10,14 @@
  * ID-token case explicitly as admissible under the audience MUST `identity.md` §2.1
  * already carries, and refuses everything else.
  *
- * **Gate:** an advertised `oidc` lane AND `OPENWOP_TEST_OIDC_ISSUER_URL` naming a
- * synthetic issuer the host trusts as that lane's trust root. Without the harness issuer
- * the suite cannot mint a token the host would ever accept, so the leg is `blocked` — an
- * assertion that a random string is refused would witness nothing.
+ * **Gate:** an advertised `oidc` lane whose `issuers[]` lists `OPENWOP_TEST_OIDC_ISSUER_URL`,
+ * the synthetic issuer the suite holds the key for. A lane that does not list it (every
+ * production host, which must not trust a test issuer) records `inapplicable`, naming the
+ * issuers it does trust — the harness is a suite instrument the host claims by advertising
+ * it, RFC 0168 §C.1's reading for the seams profile (lib/harness-issuer.ts; corrected in
+ * 2.39.3, when this was `blocked` and denied certification to every production bundle).
+ * A claimed harness that cannot be served, or whose same-audience control is refused, is
+ * `blocked`: an assertion that a random string is refused would witness nothing.
  *
  * `HOST_CALLBACK_NOT_REQUIRED`: the suite stands the issuer up itself and the host reaches
  * it for JWKS; nothing calls back into the suite's own API.
@@ -29,13 +33,14 @@
 
 import { afterAll, describe, it, expect } from 'vitest';
 import { randomBytes } from 'node:crypto';
-import { createServer, type Server } from 'node:http';
+import type { Server } from 'node:http';
 import { driver } from '../lib/driver.js';
 import { softSkip } from '../lib/soft-skip.js';
 import { req } from '../lib/requirement-ids.js';
 import { readErrorCode } from '../lib/error-envelope.js';
 import { createSyntheticOIDCIssuer, type SyntheticOIDCIssuer } from '../lib/oidc-issuer.js';
 import { prmGate } from '../lib/protected-resource.js';
+import { harnessClaimed, serveHarnessIssuer } from '../lib/harness-issuer.js';
 
 export const HOST_CALLBACK_NOT_REQUIRED =
   'the suite stands up the synthetic OIDC issuer and the host fetches its JWKS; no request returns to the suite\'s own API, so no host-reachable callback is needed';
@@ -50,23 +55,11 @@ afterAll(async () => {
   issuer = null;
 });
 
-/** Stand the issuer up on the URL the operator told the host to trust. */
-async function harness(audience: string): Promise<{ url: string; issuer: SyntheticOIDCIssuer } | null> {
-  const url = process.env['OPENWOP_TEST_OIDC_ISSUER_URL']?.trim();
-  if (!url) return null;
+/** Stand the issuer up on the URL the host's oidc lane lists (the claim is checked by the caller). */
+async function harness(url: string, audience: string): Promise<{ url: string; issuer: SyntheticOIDCIssuer } | string> {
   if (issuer !== null) return { url, issuer };
   const made = createSyntheticOIDCIssuer({ issuer: url, audience, algorithm: 'RS256' });
-  const parsed = new URL(url);
-  const srv = createServer((r, res) => {
-    if (r.url === '/.well-known/jwks.json') { res.writeHead(200, { 'Content-Type': 'application/json' }); res.end(made.jwksJson); return; }
-    if (r.url === '/.well-known/openid-configuration') { res.writeHead(200, { 'Content-Type': 'application/json' }); res.end(made.discoveryJson); return; }
-    res.writeHead(404); res.end();
-  });
-  await new Promise<void>((resolve, reject) => {
-    srv.once('error', reject);
-    srv.listen(parsed.port ? Number.parseInt(parsed.port, 10) : 80, '127.0.0.1', () => resolve());
-  });
-  server = srv;
+  try { server = await serveHarnessIssuer(made, url); } catch (e) { return `the harness issuer could not be served for ${url}: ${(e as Error).message}`; }
   issuer = made;
   return { url, issuer: made };
 }
@@ -77,9 +70,16 @@ describe('RFC 0200 §D — v2-oidc-id-token-audience (gated on an oidc lane and 
     if (!g.ok) return softSkip(g.kind, g.reason);
     const oidc = g.lanes.find((l) => l.lane === 'oidc');
     if (oidc === undefined) return softSkip('inapplicable', 'no oidc lane advertised — §D names the ID-token case ON that lane and binds no other');
+    // The harness is an instrument the host claims by listing it in the lane's issuers[]
+    // (RFC 0168 §C.1's reading; lib/harness-issuer.ts). A production host lists its real
+    // IdP and must never list a test issuer, so that host records `inapplicable` with the
+    // issuers it does trust, not `blocked` — before 2.39.3 this was `blocked` and denied
+    // certification to every honest production bundle with an oidc lane.
+    const claim = harnessClaimed(oidc as unknown as Record<string, unknown>, process.env['OPENWOP_TEST_OIDC_ISSUER_URL']);
+    if (!claim.ok) return softSkip(claim.kind, claim.reason);
     const audience = process.env['OPENWOP_TEST_OIDC_AUDIENCE']?.trim() ?? 'openwop-conformance';
-    const h = await harness(audience);
-    if (h === null) return softSkip('blocked', 'OPENWOP_TEST_OIDC_ISSUER_URL is not set — without an issuer the host trusts, no minted token could ever be accepted and the admissible half of §D cannot run');
+    const h = await harness(claim.url, audience);
+    if (typeof h === 'string') return softSkip('blocked', `the oidc lane lists the harness issuer, but ${h}`);
 
     // An ID token, not an access token: `nonce` and `auth_time` are what make it one.
     const good = h.issuer.mint({ sub: `conformance-${randomBytes(6).toString('hex')}`, nonce: randomBytes(8).toString('hex'), auth_time: Math.floor(Date.now() / 1000) });
@@ -91,7 +91,7 @@ describe('RFC 0200 §D — v2-oidc-id-token-audience (gated on an oidc lane and 
     // acceptance DOES establish, once it holds, is that the refusal below is caused by the
     // audience and by nothing else: same issuer, same key, same token shape.
     if (probe.status === 401) {
-      return softSkip('blocked', `a same-audience ID token from ${h.url} was refused (401 ${readErrorCode(probe.json) ?? ''}) — either the host does not trust the harness issuer as its oidc lane trust root, or OPENWOP_TEST_OIDC_AUDIENCE does not name the audience it is configured with; with no accepted token the foreign-audience refusal would prove nothing`);
+      return softSkip('blocked', `a same-audience ID token from ${h.url} was refused (401 ${readErrorCode(probe.json) ?? ''}) although the oidc lane lists that issuer — either the host's trust configuration does not match its advertisement, or OPENWOP_TEST_OIDC_AUDIENCE does not name the audience it is configured with; with no accepted token the foreign-audience refusal would prove nothing`);
     }
 
     const foreign = h.issuer.mint({ sub: `conformance-${randomBytes(6).toString('hex')}`, aud: `other-client-${randomBytes(6).toString('hex')}`, nonce: randomBytes(8).toString('hex'), auth_time: Math.floor(Date.now() / 1000) });
