@@ -397,7 +397,7 @@ direction that silently relaxes a schema.
 
 **Falsifiable instance, measured 2026-09-24:** run the lib's `stripSupported` over every root key
 of `schemas/capabilities.schema.json` — **`multiAgent`** comes back still carrying `tier` and
-`experimentalUntil`. Corpus-wide the divergent surface is small (2 × `tier`, 1 ×
+`experimentalUntil` (on its `executionModel` facet, one level down). Corpus-wide the divergent surface is small (2 × `tier`, 1 ×
 `experimentalUntil`, 3 × `supported`-gated `if/then`), which is why it has not bitten yet.
 
 **Why this matters beyond tidiness:** the lib is the **host-facing** artifact — it ships in the
@@ -410,12 +410,22 @@ applies to itself.
 **Do NOT merge them.** They should not agree. The fix is to make the distinction impossible to
 miss:
 
-- [ ] Rename by contract, not by mechanism — the lib projects a *value*, the generator projects a
-      *schema*. Nothing imports the lib yet, so renaming is free now and not later.
-- [ ] Cross-reference both, each naming the other and why they differ.
-- [ ] `carriesUnspliceablePayload` **is** a true duplicate and the two are behaviourally
+- [x] Rename by contract, not by mechanism — the lib projects a *value*, the generator projects a
+      *schema*. ~~Nothing imports the lib yet, so renaming is free now and not later.~~ **Wrong:**
+      openwop-app imports it (see S2), so the old name stays as a `@deprecated` alias.
+- [x] Cross-reference both, each naming the other and why they differ.
+- [x] `carriesUnspliceablePayload` **is** a true duplicate and the two are behaviourally
       identical on every input (verified: `null`, arrays, boolean, enum, array, map, scalar,
       object-with-properties). Either dedupe it or add a parity test — it will land green.
+
+**Done (S1):** the lib's export is `stripSupportedFlag` and the generator's is `projectV1FacetSchema`,
+each with a comment naming the other. The generator's predicate moved to
+`scripts/v2-unspliceable.mjs` (+ `.d.mts`, so the self-test imports it without `allowJs`), and
+`v2-projection.test.ts` holds the two copies equal on every schema node of the v1 capabilities
+schema, not just root keys. It is sabotage-proved. A second test pins the documented divergence on
+`multiAgent.executionModel`. Seen along the way, not fixed: the generator keeps executionModel's
+`tier`-gated if/then (it gates on `tier`, not `supported`) and strips its properties, so v2 carries a
+no-op `if: {properties: {}}, then: {}`. It is harmless, but it is residue.
 
 **Three options were measured before recommending the rename; record so nobody re-derives them:**
 
@@ -425,7 +435,18 @@ miss:
 | `.mjs` single source + `.ts` re-export | **Rejected.** TS *does* resolve a sibling `.mjs` (probed), but only under `nodenext` + `allowJs`; conformance is `moduleResolution: Bundler` with `allowJs` off. Turning `allowJs` on touches the whole package build. |
 | rename + cross-reference + parity-gate the one true duplicate | **Recommended.** No runtime coupling, no engine risk, no shared-build change, and it closes the hazard that actually bit — undetected divergence. |
 
-## S2 — `v2-projection` is adopted by nothing · **blocked on S1**
+## S2 — ~~`v2-projection` is adopted by nothing~~ · **CLOSED 2026-09-24: premise false**
+
+**Adopted by openwop-app since its `WHD-7`.** `backend/typescript/test/whd7-v2-projection-parity.test.ts`
+imports `stripSupported`/`carriesUnspliceablePayload` from `…/src/lib/v2-projection.js` and pins its
+hand-written discovery projection (`routes/discovery.ts`) to them. It found a fifth drift
+(`workflowChainPacks.subChains`), and its `KNOWN_UNPROJECTED` list is openwop-app's `WHD-17`. It is a
+parity pin, not a runtime import, because the suite is a devDependency that the `--omit=dev` image
+lacks. The grep below looked only at this repo. That is the "failed grep treated as proof of absence"
+shape openwop-app's `HANDOFF-4` warns about. Nothing is left to wire, and deleting the lib would break
+that test.
+
+*Original text, kept for the record:*
 
 `grep -rl v2-projection conformance/src scripts` returns only the lib and its own test. The
 generator has its own inline `carriesUnspliceablePayload`, so the helper written to stop sessions
@@ -449,10 +470,15 @@ configured backoff of 2s. Their host was conformant *to the letter* the whole ti
 That is the **confidentiality** half. There is nothing — v1 or v2 — saying a subscription's
 delivery MUST NOT be degraded by an unrelated subscription's failures.
 
-- [ ] File the RFC. Falsifiable form ≈ *"a delivery's latency MUST NOT be a function of unrelated
-      subscriptions' failures"*; openwop-app's own attempt timestamps show how to measure it.
-- [ ] Decide whether it is a new invariant beside `webhook-cross-tenant-isolation` (availability
-      analogue of a property the corpus already cares about) or a §Durability clause.
+- [x] File the RFC: **RFC 0215 `Draft`** (2026-09-24). It is stated as an isolation rule, not a
+      latency bound (its Alternative 2 says why), with a floor of 8 unanswered attempts. It also
+      picked up a second gap from openwop-app `WHD-16`: unregistering did not stop pending
+      attempts, and ~1,600 signed POSTs went to a withdrawn URL.
+- [x] Decide invariant vs §Durability clause: **both**. The text goes in §Durability, and two
+      invariant rows (`webhook-delivery-isolation`, `webhook-unregister-stops-delivery`) are
+      filed at `Active`. Reasons are in RFC 0215 §"Proposed invariants".
+- [ ] Take RFC 0215 to `Active`: comment window, the prior-art survey (its G6), and a threat-model
+      home for the availability invariant (its G3).
 
 ## S4 — two defect patterns from my RFC 0158 rows, both found by hosts · **pattern check, no code owed**
 
