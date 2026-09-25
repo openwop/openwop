@@ -178,6 +178,17 @@ Format follows [Keep a Changelog](https://keepachangelog.com/en/1/) loosely. Ver
 - **The remaining eleven stay `Active`, each for a stated reason** rather than for lack of attention. The eight RFC 0167 program children name a certified openwop-app bundle in their own acceptance criteria and the committed one reads `certified: false` (3 blocked rows, RFC 0168 §E.1). RFC 0173 additionally carries the program's only `open` gap row. RFC 0179's sole criterion is unmet — 2.4.2 stopped the gate reading "(Phase 4 leg)" as an excuse for it. RFC 0187 names three requirement ids that no scenario mints. RFC 0167 itself flips **last**, which 2.4.2 made a rule: the moment the umbrella stops being `Active`, every child still `Active` becomes permanently ineligible.
 - **The interrupt `data` union is bound to `kind`** (MCP/A2A review P3-H7, Class 3 correction — COMPATIBILITY.md §3). `schemas/suspend-request.schema.json` and its v2 twin typed `data` as an unbound `oneOf`, so the minimal `conversation.start` and `conversation.close` payloads (`{ conversationId }`, which satisfies both shapes) failed validation in v1 and v2, and a payload carrying another kind's `data` passed. `data` is now an `anyOf` and a root `allOf` binds each kind to its own shape with one `if`/`then`; no per-kind shape or `$id` changed. Witnessed by `conformance/fixtures/interrupt-payloads/` (suite 2.36.0).
 
+## [2.39.3] — 2026-09-25 — a pinned receiver port is shared, and tenant B really is tenant B
+
+A suite patch: no new scenario file, no wire, schema or `MUST` change (`COMPATIBILITY.md` §2.1). The corpus tag moves because `@openwop/openwop-conformance` and `@openwop/spec-artifacts` move together.
+
+### Conformance
+
+- **A pinned receiver port is shared, never re-bound (#1559).** On a public cut `OPENWOP_WEBHOOK_RECEIVER_PORT` is pinned; each scoped receiver bound it itself, so a second concurrent receiver hit `EADDRINUSE` with no error handler and hung to the test timeout — the cause of RFC 0214's `v2-a2a-push-delivery` §A-delete, §B-redirect and §D-fork failures on the 2.39.0 and 2.39.2 public cuts (loopback uses ephemeral ports, so rehearsals never showed it). Receivers on a pinned port now share one ref-counted listener; a bind failure rejects at once.
+- **The driver sends the credential a scenario chose (#1557)** — tenant-B legs now really run as tenant B.
+- **RFC 0215's gap rows ship in the contract peer (#1547; RFC 0215 is `Draft`).**
+- **Suite `2.39.3`**: 559 scenario files. `@openwop/spec-artifacts` moves in lockstep at the same exact pin.
+
 ## [2.39.2] — 2026-09-25 — RFC 0208's unreadable-task leg records its own row
 
 A suite patch: no new scenario file, no wire, schema or `MUST` change (`COMPATIBILITY.md` §2.1). The corpus tag moves because `@openwop/openwop-conformance` and `@openwop/spec-artifacts` move together.
