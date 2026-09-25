@@ -3,8 +3,8 @@
   "generatedFrom": "src/scenarios/*.test.ts",
   "counts": {
     "files": 633,
-    "tests": 2423,
-    "withStableId": 2423,
+    "tests": 2424,
+    "withStableId": 2424,
     "interpolatedTitles": 0,
     "explicitIds": 2304
   },
@@ -26705,6 +26705,30 @@
           "section": "interop.md §\"The operation mappings\" Isolation",
           "requirement": null,
           "interpolated": true
+        }
+      ]
+    },
+    {
+      "id": "openwop.it.v2-a2a-operation-map.an-unknown-task-and-another-tenant-s-task-carry-equivalent-errorinfo-details-rfc",
+      "file": "v2-a2a-operation-map.test.ts",
+      "line": 201,
+      "title": "an unknown task and another tenant's task carry equivalent ErrorInfo details (RFC 0211 §D)",
+      "explicitId": null,
+      "citations": [
+        {
+          "section": "identity.md §5; a2a.operations GetTask",
+          "requirement": null,
+          "interpolated": true
+        },
+        {
+          "section": "a2a.errors TaskNotFoundError",
+          "requirement": null,
+          "interpolated": true
+        },
+        {
+          "section": "interop.md §\"The operation mappings\" Isolation",
+          "requirement": null,
+          "interpolated": true
         },
         {
           "section": "spec/v2/core/interop.md §\"The operation mappings\", A2A error details (RFC 0211)",
@@ -26720,7 +26744,7 @@
     {
       "id": "openwop.it.v2-a2a-operation-map.task-status-state-is-the-map-s-projection-of-the-run-status-at-every-observed-st",
       "file": "v2-a2a-operation-map.test.ts",
-      "line": 202,
+      "line": 223,
       "title": "Task.status.state is the map's projection of the run status at every observed state",
       "explicitId": null,
       "citations": [
@@ -26743,7 +26767,7 @@
     {
       "id": "openwop.it.v2-a2a-operation-map.the-json-rpc-error-codes-the-suite-can-cause-are-the-a2a-1-0-1-codes",
       "file": "v2-a2a-operation-map.test.ts",
-      "line": 227,
+      "line": 248,
       "title": "the JSON-RPC error codes the suite can cause are the A2A 1.0.1 codes",
       "explicitId": null,
       "citations": [
@@ -26766,7 +26790,7 @@
     {
       "id": "openwop.it.v2-a2a-operation-map.a-row-whose-requires-facet-is-not-advertised-is-refused-with-the-row-s-error",
       "file": "v2-a2a-operation-map.test.ts",
-      "line": 241,
+      "line": 262,
       "title": "a row whose requires facet is not advertised is refused with the row's error",
       "explicitId": null,
       "citations": [
@@ -26784,7 +26808,7 @@
     {
       "id": "openwop.it.v2-a2a-operation-map.a-host-not-advertising-a2a-pushnotifications-refuses-all-four-push-config-operat",
       "file": "v2-a2a-operation-map.test.ts",
-      "line": 254,
+      "line": 275,
       "title": "a host not advertising a2a.pushNotifications refuses all four push-config operations with PushNotificationNotSupportedError",
       "explicitId": null,
       "citations": [
@@ -26808,7 +26832,7 @@
     {
       "id": "openwop.it.v2-a2a-operation-map.rfc-0214-createtaskpushnotificationconfig-refuses-a-non-https-or-private-destina",
       "file": "v2-a2a-operation-map.test.ts",
-      "line": 285,
+      "line": 306,
       "title": "RFC 0214 — CreateTaskPushNotificationConfig refuses a non-https or private destination",
       "explicitId": null,
       "citations": [
@@ -26832,7 +26856,7 @@
     {
       "id": "openwop.it.v2-a2a-operation-map.rfc-0214-e-a-push-config-of-another-tenant-s-task-of-another-task-or-unknown-is",
       "file": "v2-a2a-operation-map.test.ts",
-      "line": 303,
+      "line": 324,
       "title": "RFC 0214 §E — a push config of another tenant's task, of another task, or unknown, is answered identically",
       "explicitId": null,
       "citations": [
@@ -26880,7 +26904,7 @@
     {
       "id": "openwop.it.v2-a2a-operation-map.rfc-0214-a-a-push-config-s-token-and-credentials-are-never-returned-and-never-re",
       "file": "v2-a2a-operation-map.test.ts",
-      "line": 347,
+      "line": 368,
       "title": "RFC 0214 §A — a push config's token and credentials are never returned, and never reach task, events or state",
       "explicitId": null,
       "citations": [
@@ -26904,7 +26928,7 @@
     {
       "id": "openwop.it.v2-a2a-operation-map.listtasks-returns-only-what-listruns-returns-to-the-same-subject-tenant-and-cont",
       "file": "v2-a2a-operation-map.test.ts",
-      "line": 381,
+      "line": 402,
       "title": "ListTasks returns only what listRuns returns to the same Subject; tenant and contextId never select",
       "explicitId": null,
       "citations": [
@@ -26941,7 +26965,7 @@
     {
       "id": "openwop.it.v2-a2a-operation-map.an-a2a-error-s-data-is-an-array-carrying-one-errorinfo-with-the-map-row-s-reason",
       "file": "v2-a2a-operation-map.test.ts",
-      "line": 414,
+      "line": 435,
       "title": "an A2A error's data is an array carrying one ErrorInfo with the map row's reason and the A2A domain",
       "explicitId": null,
       "citations": [
@@ -26975,7 +26999,7 @@
     {
       "id": "openwop.it.v2-a2a-operation-map.no-response-on-the-card-s-json-rpc-interface-url-is-the-openwop-error-envelope",
       "file": "v2-a2a-operation-map.test.ts",
-      "line": 435,
+      "line": 456,
       "title": "no response on the card's JSON-RPC interface URL is the OpenWOP error envelope",
       "explicitId": null,
       "citations": [
@@ -26993,7 +27017,7 @@
     {
       "id": "openwop.it.v2-a2a-operation-map.versionnotsupportederror-carries-errorinfo-version-not-supported-and-supportedve",
       "file": "v2-a2a-operation-map.test.ts",
-      "line": 455,
+      "line": 476,
       "title": "VersionNotSupportedError carries ErrorInfo VERSION_NOT_SUPPORTED, and supportedVersions is a comma-joined subset of the card",
       "explicitId": null,
       "citations": [
@@ -27017,7 +27041,7 @@
     {
       "id": "openwop.it.v2-a2a-operation-map.an-http-json-interface-answers-an-a2a-error-with-google-rpc-status-carrying-the",
       "file": "v2-a2a-operation-map.test.ts",
-      "line": 473,
+      "line": 494,
       "title": "an HTTP+JSON interface answers an A2A error with google.rpc.Status carrying the ErrorInfo",
       "explicitId": null,
       "citations": [
@@ -27036,7 +27060,7 @@
     {
       "id": "openwop.it.v2-a2a-operation-map.a-run-suspended-on-a-credential-interrupt-projects-to-task-state-auth-required-n",
       "file": "v2-a2a-operation-map.test.ts",
-      "line": 488,
+      "line": 509,
       "title": "a run suspended on a credential interrupt projects to TASK_STATE_AUTH_REQUIRED, naming the provider and carrying connectUrl",
       "explicitId": null,
       "citations": [
