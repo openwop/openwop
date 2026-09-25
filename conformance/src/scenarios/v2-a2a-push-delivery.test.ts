@@ -30,7 +30,7 @@
  * @see spec/v2/core/interop.md §"A2A push delivery"
  * @see spec/v2/core/security-defaults.md §"Onward hops"
  */
-import { describe, it, expect } from 'vitest';
+import { afterAll, describe, it, expect } from 'vitest';
 import { randomBytes } from 'node:crypto';
 import type { ServerResponse } from 'node:http';
 import { driver } from '../lib/driver.js';
@@ -103,13 +103,26 @@ async function until(pred: () => boolean, ms: number): Promise<boolean> {
   return pred();
 }
 const wait = (ms: number): Promise<void> => new Promise((ok) => setTimeout(ok, ms));
+
+/**
+ * Budgets. On a public cut every step crosses the operator's tunnel (suite → host
+ * front, host → receiver front), and the 2.39.0 public cut lost three legs to
+ * vitest's per-test timeout — not to an assertion — while deliveries were in
+ * fact arriving (#1537 precedent: the RFC 0199 state leg). Loopback keeps the
+ * tight budgets; a fronted run gets room for the round trips.
+ */
+const FRONTED = Boolean(process.env.OPENWOP_WEBHOOK_RECEIVER_URL);
+const ARRIVAL_MS = FRONTED ? 60_000 : 20_000;
+const SETTLE_MS = FRONTED ? 45_000 : 10_000;
+const LEG_MS = FRONTED ? 240_000 : 60_000;
+const FORK_LEG_MS = FRONTED ? 300_000 : 90_000;
 const header = (h: ScopedHit, name: string): string | undefined => { const v = h.headers[name.toLowerCase()]; return Array.isArray(v) ? v.join(',') : v; };
 
 async function runStatus(taskId: string): Promise<string | undefined> {
   const r = await driver.get(`/runs/${encodeURIComponent(taskId)}`);
   return r.status === 200 ? ((r.json as { status?: string }).status) : undefined;
 }
-async function settle(taskId: string, want: (s: string | undefined) => boolean, ms = 10000): Promise<string | undefined> {
+async function settle(taskId: string, want: (s: string | undefined) => boolean, ms = SETTLE_MS): Promise<string | undefined> {
   const end = Date.now() + ms;
   let s = await runStatus(taskId);
   while (!want(s) && Date.now() < end) { await wait(150); s = await runStatus(taskId); }
@@ -136,36 +149,68 @@ function unmeasurable(rx: ScopedReceiver, created: Rpc): string | null {
   return null;
 }
 
-describe('RFC 0214 — v2-a2a-push-delivery (host POSTs A2A push to a suite-owned receiver)', () => {
-  it('§A/§C — a transition after registration is POSTed to the registered destination with the registered Authorization and no OpenWOP signature', async () => {
-    const id = R('a2a-push-delivery-authenticated');
+/**
+ * One delivery, read by two legs. Each leg cites exactly one requirement id —
+ * the ledger keeps the LAST id an it() cites, so the 2.39.0 cut, whose single
+ * §A/§C it() cited both, recorded `no-openwop-signature` and silently dropped
+ * `delivery-authenticated`. The delivery runs once (lazily, in the first leg)
+ * and the second leg reads the same hits; when the delivery cannot be made the
+ * second leg records `blocked` with the reason instead of vanishing.
+ */
+type Delivery =
+  | { kind: 'measured'; hits: ScopedHit[]; taskId: string; cred: string; rx: ScopedReceiver }
+  | { kind: 'skip'; skip: 'inapplicable' | 'blocked'; reason: string };
+let delivery: Promise<Delivery> | undefined;
+let deliveryRx: ScopedReceiver | undefined;
+function deliverOnce(id: string = R('a2a-push-delivery-authenticated')): Promise<Delivery> {
+  delivery ??= (async (): Promise<Delivery> => {
     const g = await gate();
-    if (!g.ok) return softSkip(g.kind, g.reason);
+    if (!g.ok) return { kind: 'skip', skip: g.kind, reason: g.reason };
     const { rx, hits } = await receiver();
-    try {
-      const taskId = await suspendedTask(g.url, id);
-      const cred = `owpush${randomBytes(12).toString('hex')}`;
-      const created = await create(g.url, taskId, rx.url, { authentication: { scheme: 'Bearer', credentials: cred } });
-      const why = unmeasurable(rx, created);
-      if (why !== null) { await rpc(g.url, 'CancelTask', { id: taskId }); return softSkip('blocked', why); }
-      expect(created.error, req(id, DOC, `Create on a suspended task with the public receiver MUST succeed (got ${JSON.stringify(created.error)})`)).toBeUndefined();
-      await rpc(g.url, 'SendMessage', { message: acceptMessage(taskId) });
-      await settle(taskId, (s) => s !== undefined && TERMINAL.has(s));
-      const arrived = await until(() => hits.length > 0, 20000);
-      if (!arrived && absenceIsUnmeasured(rx)) return softSkip('blocked', noDeliveryCause(rx, 'A2A push'));
-      expect(hits.length, req(id, `${DOC} §C ("at least one attempt")`, `a transition after registration MUST be POSTed at least once to the registered destination — ${noDeliveryCause(rx, 'A2A push')}`)).toBeGreaterThan(0);
-      const h = hits[0]!;
-      expect(h.method, req(id, 'A2A v1.0.1 §4.3.3', 'a push is an HTTP POST')).toBe('POST');
-      expect(header(h, 'authorization'), req(id, `${DOC} §A (A2A v1.0.1 §4.3.3 "MUST include authentication credentials")`, 'the push MUST carry the registered credential as Authorization: {scheme} {credentials}')).toBe(`Bearer ${cred}`);
-      expect((header(h, 'content-type') ?? '').split(';')[0]!.trim(), req(id, 'A2A v1.0.1 §4.3.3', 'the push body is application/a2a+json')).toBe('application/a2a+json');
-      const body = JSON.parse(h.body || '{}') as { statusUpdate?: { taskId?: string; status?: { state?: string } } };
-      expect(body.statusUpdate?.taskId, req(id, 'A2A v1.0.1 §4.3.3 (StreamResponse)', `the push body MUST be a StreamResponse statusUpdate naming the task (got ${h.body.slice(0, 200)})`)).toBe(taskId);
-      const sigId = R('a2a-push-no-openwop-signature');
-      for (const x of hits) {
-        expect(header(x, 'openwop-signature'), req(sigId, `${DOC} §C ("no OpenWOP signature")`, 'an A2A push MUST NOT carry an OpenWOP-Signature — A2A defines no secret exchange to verify it')).toBeUndefined();
-      }
-    } finally { await rx.close(); }
-  }, 60_000);
+    deliveryRx = rx;
+    const taskId = await suspendedTask(g.url, id);
+    const cred = `owpush${randomBytes(12).toString('hex')}`;
+    const created = await create(g.url, taskId, rx.url, { authentication: { scheme: 'Bearer', credentials: cred } });
+    const why = unmeasurable(rx, created);
+    if (why !== null) { await rpc(g.url, 'CancelTask', { id: taskId }); return { kind: 'skip', skip: 'blocked', reason: why }; }
+    expect(created.error, req(id, DOC, `Create on a suspended task with the public receiver MUST succeed (got ${JSON.stringify(created.error)})`)).toBeUndefined();
+    await rpc(g.url, 'SendMessage', { message: acceptMessage(taskId) });
+    await settle(taskId, (s) => s !== undefined && TERMINAL.has(s));
+    const arrived = await until(() => hits.length > 0, ARRIVAL_MS);
+    if (!arrived && absenceIsUnmeasured(rx)) return { kind: 'skip', skip: 'blocked', reason: noDeliveryCause(rx, 'A2A push') };
+    return { kind: 'measured', hits, taskId, cred, rx };
+  })();
+  return delivery;
+}
+
+describe('RFC 0214 — v2-a2a-push-delivery (host POSTs A2A push to a suite-owned receiver)', () => {
+  afterAll(async () => { await deliveryRx?.close(); });
+
+  it('§A/§C — a transition after registration is POSTed to the registered destination with the registered Authorization', async () => {
+    const id = R('a2a-push-delivery-authenticated');
+    const d = await deliverOnce(id);
+    if (d.kind === 'skip') return softSkip(d.skip, d.reason);
+    const { hits, taskId, cred, rx } = d;
+    expect(hits.length, req(id, `${DOC} §C ("at least one attempt")`, `a transition after registration MUST be POSTed at least once to the registered destination — ${noDeliveryCause(rx, 'A2A push')}`)).toBeGreaterThan(0);
+    const h = hits[0]!;
+    expect(h.method, req(id, 'A2A v1.0.1 §4.3.3', 'a push is an HTTP POST')).toBe('POST');
+    expect(header(h, 'authorization'), req(id, `${DOC} §A (A2A v1.0.1 §4.3.3 "MUST include authentication credentials")`, 'the push MUST carry the registered credential as Authorization: {scheme} {credentials}')).toBe(`Bearer ${cred}`);
+    expect((header(h, 'content-type') ?? '').split(';')[0]!.trim(), req(id, 'A2A v1.0.1 §4.3.3', 'the push body is application/a2a+json')).toBe('application/a2a+json');
+    const body = JSON.parse(h.body || '{}') as { statusUpdate?: { taskId?: string; status?: { state?: string } } };
+    expect(body.statusUpdate?.taskId, req(id, 'A2A v1.0.1 §4.3.3 (StreamResponse)', `the push body MUST be a StreamResponse statusUpdate naming the task (got ${h.body.slice(0, 200)})`)).toBe(taskId);
+  }, LEG_MS);
+
+  it('§C — an A2A push carries no OpenWOP signature', async () => {
+    const id = R('a2a-push-no-openwop-signature');
+    let d: Delivery;
+    try { d = await deliverOnce(); }
+    catch (err) { return softSkip('blocked', `the delivery this leg reads was not made — the §A/§C leg failed first: ${err instanceof Error ? err.message.slice(0, 200) : String(err)}`); }
+    if (d.kind === 'skip') return softSkip(d.skip, d.reason);
+    expect(d.hits.length, req(id, DOC, 'positive control: at least one push arrived to read headers from')).toBeGreaterThan(0);
+    for (const x of d.hits) {
+      expect(header(x, 'openwop-signature'), req(id, `${DOC} §C ("no OpenWOP signature")`, 'an A2A push MUST NOT carry an OpenWOP-Signature — A2A defines no secret exchange to verify it')).toBeUndefined();
+    }
+  }, LEG_MS);
 
   it('§B — a 3xx from the destination is a failed delivery: the redirect target receives nothing, credential or not', async () => {
     const id = R('a2a-push-no-redirect');
@@ -181,13 +226,13 @@ describe('RFC 0214 — v2-a2a-push-delivery (host POSTs A2A push to a suite-owne
       expect(created.error, req(id, DOC, `Create MUST succeed (got ${JSON.stringify(created.error)})`)).toBeUndefined();
       await rpc(g.url, 'SendMessage', { message: acceptMessage(taskId) });
       await settle(taskId, (s) => s !== undefined && TERMINAL.has(s));
-      const arrived = await until(() => origin.hits.length > 0, 20000);
+      const arrived = await until(() => origin.hits.length > 0, ARRIVAL_MS);
       if (!arrived && absenceIsUnmeasured(origin.rx)) return softSkip('blocked', noDeliveryCause(origin.rx, 'A2A push'));
       expect(origin.hits.length, req(id, DOC, `positive control: the registered destination MUST receive the push it then redirects — ${noDeliveryCause(origin.rx, 'A2A push')}`)).toBeGreaterThan(0);
       await wait(4000); // any retry or followed redirect lands in this window
       expect(target.hits.length, req(id, `${DOC} §B; webhooks.md §Egress ("refuse to follow redirects")`, 'the redirect target MUST receive nothing: a 3xx is a delivery failure and the credential MUST NOT be sent after a redirect')).toBe(0);
     } finally { await origin.rx.close(); await target.rx.close(); }
-  }, 60_000);
+  }, LEG_MS);
 
   it('§A — after Delete no further push reaches that destination, while a live config on the same task still receives', async () => {
     const id = R('a2a-push-discard-on-delete');
@@ -207,13 +252,13 @@ describe('RFC 0214 — v2-a2a-push-delivery (host POSTs A2A push to a suite-owne
       expect(del.error, req(id, DOC, `Delete of the caller's own config MUST succeed (got ${JSON.stringify(del.error)})`)).toBeUndefined();
       await rpc(g.url, 'SendMessage', { message: acceptMessage(taskId) });
       await settle(taskId, (s) => s !== undefined && TERMINAL.has(s));
-      const arrived = await until(() => kept.hits.length > 0, 20000);
+      const arrived = await until(() => kept.hits.length > 0, ARRIVAL_MS);
       if (!arrived && absenceIsUnmeasured(kept.rx)) return softSkip('blocked', noDeliveryCause(kept.rx, 'A2A push'));
       expect(kept.hits.length, req(id, DOC, `positive control: the config that was NOT deleted MUST still receive the push — ${noDeliveryCause(kept.rx, 'A2A push')}`)).toBeGreaterThan(0);
       await wait(3000);
       expect(dropped.hits.length, req(id, `${DOC} §A ("dropped when the config is deleted")`, 'a deleted config MUST receive nothing further — its destination credential is discarded with it')).toBe(0);
     } finally { await kept.rx.close(); await dropped.rx.close(); }
-  }, 60_000);
+  }, LEG_MS);
 
   it('§D — a replay fork of a pushed run delivers nothing to the source run\'s destination', async () => {
     const id = R('a2a-push-fork-no-push');
@@ -230,7 +275,7 @@ describe('RFC 0214 — v2-a2a-push-delivery (host POSTs A2A push to a suite-owne
       if (why !== null) { await rpc(g.url, 'CancelTask', { id: taskId }); return softSkip('blocked', why); }
       await rpc(g.url, 'SendMessage', { message: acceptMessage(taskId) });
       await settle(taskId, (s) => s !== undefined && TERMINAL.has(s));
-      const arrived = await until(() => hits.length > 0, 20000);
+      const arrived = await until(() => hits.length > 0, ARRIVAL_MS);
       if (!arrived && absenceIsUnmeasured(rx)) return softSkip('blocked', noDeliveryCause(rx, 'A2A push'));
       expect(hits.length, req(id, DOC, `positive control: the source run MUST have pushed before the fork — ${noDeliveryCause(rx, 'A2A push')}`)).toBeGreaterThan(0);
       await wait(3000);
@@ -238,9 +283,9 @@ describe('RFC 0214 — v2-a2a-push-delivery (host POSTs A2A push to a suite-owne
       const fork = await driver.post(`/runs/${encodeURIComponent(taskId)}:fork`, { mode: 'replay' });
       if (fork.status < 200 || fork.status >= 300) return softSkip('blocked', `replay is advertised but forkRun answered ${fork.status} ${JSON.stringify(fork.json)} — the fork leg is unmeasured`);
       const child = (fork.json as { runId?: string } | undefined)?.runId;
-      if (typeof child === 'string') await settle(child, (s) => s !== undefined && TERMINAL.has(s), 15000);
+      if (typeof child === 'string') await settle(child, (s) => s !== undefined && TERMINAL.has(s));
       await wait(4000);
       expect(hits.length, req(id, `${DOC} §D; replay.md §Suppression ("MUST NOT deliver events a replay re-emits")`, `a replay fork MUST NOT push to the source run's destination (deliveries ${before} before the fork, ${hits.length} after)`)).toBe(before);
     } finally { await rx.close(); }
-  }, 90_000);
+  }, FORK_LEG_MS);
 });
