@@ -35853,7 +35853,7 @@
     {
       "id": "openwop.it.workspace-cross-tenant-isolation-blackbox.a-file-written-by-owner-a-is-unreadable-un-enumerable-by-a-second-tenant-credent",
       "file": "workspace-cross-tenant-isolation-blackbox.test.ts",
-      "line": 46,
+      "line": 52,
       "title": "a file written by owner A is unreadable + un-enumerable by a second-tenant credential",
       "explicitId": "openwop.it.workspace-cross-tenant-isolation-blackbox.a-file-written-by-owner-a-is-unreadable-un-enumerable-by-a-second-tenant-credent",
       "citations": [
