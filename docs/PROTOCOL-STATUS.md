@@ -67,8 +67,8 @@
 
 | Status | Count |
 |---|---:|
-| Accepted | 198 |
-| Active | 11 |
+| Accepted | 199 |
+| Active | 10 |
 | Draft | 2 |
 | Superseded | 1 |
 
@@ -278,7 +278,7 @@
 | RFC 0205 | A named A2A `Artifact` / `Part` schema for `getArtifact` (negotiated by `application/a2a+json`) and for conversation turns (by `parts` presence), and media types accepted beside the reserved `exportFormats` aliases | Active |
 | RFC 0206 | Localized-content locale keys use a case-canonical BCP 47 subset (language, optional script, optional region) instead of `ll(-RR)`, so a host can author content for every tag its `i18n` annex negotiates | Accepted |
 | RFC 0207 | W3C Trace Context carried in MCP `params._meta` and A2A `Message.metadata.openwop` beside the HTTP header that stays conforming, debug-bundle spans that carry `traceId` / `kind` / `status`, and an optional versioned OTel `mcp.*` projection | Accepted |
-| RFC 0208 | v2 homes the A2A and MCP operation mappings | Active |
+| RFC 0208 | v2 homes the A2A and MCP operation mappings | Accepted |
 | RFC 0209 | `ui.a2ui-surface` schema version 2 carries real A2UI v0.9 server-to-client messages (a closed OpenWOP profile of the basic catalog), while the 0.9.1 seven-component tree stays readable forever. The RFC 0114 delta frame is deprecated in v2, and v2 regains the `ui.*`/`media.*` kind carve-out | Active |
 | RFC 0210 | a lane's revocation rule is measured, and a host that only honours `exp` says so | Active |
 | RFC 0211 | an A2A error's details are an ErrorInfo, and an A2A interface never answers in the OpenWOP envelope | Accepted |
@@ -308,7 +308,7 @@ The pack registry now lives in the [`openwop-registry`](https://github.com/openw
 ## Active Follow-Ups
 
 - 2 RFCs still `Draft` (RFC 0038, RFC 0215) — advance with schema/conformance proof or defer.
-- 11 RFCs `Active` (RFC 0111, RFC 0121, RFC 0197, RFC 0199, RFC 0200, RFC 0205, RFC 0208, RFC 0209, RFC 0210, RFC 0213, RFC 0214) — wire-shape MAY shift compatibly within v1.x until promotion to `Accepted`.
+- 10 RFCs `Active` (RFC 0111, RFC 0121, RFC 0197, RFC 0199, RFC 0200, RFC 0205, RFC 0209, RFC 0210, RFC 0213, RFC 0214) — wire-shape MAY shift compatibly within v1.x until promotion to `Accepted`.
 - External audit, non-steward host recruitment, and non-steward maintainer recruitment remain external-action gates.
 - Multi-region idempotency and some optional-profile behavior checks remain lower-confidence than the core wire contract.
 
