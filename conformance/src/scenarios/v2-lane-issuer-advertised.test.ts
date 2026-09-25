@@ -74,7 +74,15 @@ describe('v2 lane-issuer-advertised (RFC 0170 §B.2–§B.4)', () => {
       expect(LANES.has(name), req('openwop.requirement.0170.lane-issuer-advertised.members', DOC, `auth.lanes[].lane MUST be one of the ten lanes (got ${name})`)).toBe(true);
       const issuers = l['issuers'];
       expect(Array.isArray(issuers) && issuers.length > 0 && issuers.every((i) => typeof i === 'string' && i.length > 0), req('openwop.requirement.0170.lane-issuer-advertised.members', 'spec/v2/core/identity.md §2.2', `lane ${name} MUST advertise its trust root in issuers[] (min 1, non-empty strings)`)).toBe(true);
-      expect(REVOCATION.has(String(l['revocation'])), req('openwop.requirement.0170.lane-issuer-advertised.members', 'spec/v2/core/identity.md §2.2', `lane ${name} MUST name its revocation rule`)).toBe(true);
+      // identity.md §2.2: a lane whose row reads "—" (`anonymous`) has no
+      // revocation rule, so it MAY omit `revocation` — the schema made it
+      // optional there in 2.38.0 (openwop#1540), and until 2.39.1 this leg
+      // still demanded it, failing a host that followed the schema and the
+      // prose (measured on openwop-app). If such a lane does advertise one,
+      // it must still be a known member. Every other lane MUST name its rule.
+      if (!(LANE_RULES[name] === null && l['revocation'] === undefined)) {
+        expect(REVOCATION.has(String(l['revocation'])), req('openwop.requirement.0170.lane-issuer-advertised.members', 'spec/v2/core/identity.md §2.2', `lane ${name} MUST name its revocation rule`)).toBe(true);
+      }
       expect(ASSURANCE.has(String(l['minimumAssurance'])), req('openwop.requirement.0170.lane-issuer-advertised.members', 'spec/v2/core/identity.md §2.3', `lane ${name} MUST advertise minimumAssurance: bearer | sender-constrained | key-bound`)).toBe(true);
       if (l['delegationProofs'] !== undefined) {
         expect(Array.isArray(l['delegationProofs']) && (l['delegationProofs'] as unknown[]).every((p) => PROOFS.has(String(p))), req('openwop.requirement.0170.lane-issuer-advertised.members', 'spec/v2/core/identity.md §2.4', `lane ${name}: delegationProofs[] MUST be drawn from mtls-key-binding | dpop | svid-chain`)).toBe(true);
