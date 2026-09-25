@@ -11,7 +11,7 @@
 # --legacy-peer-deps is REQUIRED, not optional: the exact peer pin is what npm's
 # default resolver refuses. npm 10.9 fails outright with
 # "Cannot read properties of null (reading 'edgesOut')" — use npm >= 11.
-npm install --legacy-peer-deps @openwop/openwop-conformance@2.39.2 @openwop/spec-artifacts@2.39.2
+npm install --legacy-peer-deps @openwop/openwop-conformance@2.39.3 @openwop/spec-artifacts@2.39.3
 # or run without install:
 npx @openwop/openwop-conformance --base-url https://api.example.com --api-key hk_test_...
 ```
