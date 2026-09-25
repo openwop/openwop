@@ -151,6 +151,13 @@ for (const dir of DIRS) {
             if (a === undefined) { /* no id to read */ }
             else if (ts.isStringLiteral(a) || ts.isNoSubstitutionTemplateLiteral(a)) idsHere.add(a.text);
             else if (ts.isIdentifier(a) && constIds.has(a.text)) idsHere.add(constIds.get(a.text));
+            // A helper that builds the id from a literal slug — `R('x')`, `R11('x')` —
+            // names one id per (helper, slug). Until 2.39.2 only literal ids were
+            // counted here, so an it() citing R('a2a-unreadable-not-found') and
+            // R11('a2a-unreadable-not-found-details') passed this gate while the
+            // ledger kept only the second: 0208.a2a-unreadable-not-found never
+            // reached a bundle (RFC 0208's one missing acceptance row).
+            else if (ts.isCallExpression(a) && ts.isIdentifier(a.expression) && a.arguments.length === 1 && (ts.isStringLiteral(a.arguments[0]) || ts.isNoSubstitutionTemplateLiteral(a.arguments[0]))) idsHere.add(`${a.expression.text}(${a.arguments[0].text})`);
           }
         }
         if (ts.isReturnStatement(node) && !inNested) {
