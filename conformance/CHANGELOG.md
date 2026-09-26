@@ -1,8 +1,11 @@
 # `@openwop/openwop-conformance` Changelog
 
-## [2.39.4] — unreleased — RFC 0215's survey and threat-model rows close in the contract peer
+## [2.39.4] — unreleased — the 2.39.4 cycle is open
 
-- **Version moved ahead of publication.** `@openwop/openwop-conformance` and its exact-pinned peer `@openwop/spec-artifacts` move to `2.39.4`, because `2.39.3` is tagged and published and closing RFC 0215 gaps G3 and G6 changes `spec/v1/gaps.json`, which `@openwop/spec-artifacts` ships. No scenario change.
+- **`--certify` refuses pinned fixture ports unless `--max-workers 1`.** Every fixture reached through an operator's public front listens on a pinned `*_PORT`, and the registry that routes a nonce-pathed request to its exercise lives in one vitest worker. With more than one worker, only one can own each port, and an exercise in another worker loses the host's traffic. `cut-bundle.sh` always passed `--max-workers 1`, but nothing enforced it: an openwop-app production cut run with 2 workers recorded `0173.webhook-durable-delivery` and `0187.bound-id-kinds.webhook-emitted` as timeouts for deliveries the host had made, and the same host passed both single-worker (measured by openwop-app-ce, 2026-09-25). The CLI now exits 2 before running (`src/lib/pinned-ports.ts`, with a self-test), naming the pinned variables it found, including the OAuth doubles' runtime-derived ports.
+- **`v2-webhook-durable-delivery` refuses only as many attempts as the host's advertised policy allows.** The receiver refused 2 attempts regardless, but `webhooks.retryPolicy.maxAttempts` is schema-valid from 1, so a host honestly advertising `maxAttempts: 2` never reached its 204 and failed a leg it conformed to. It now refuses `maxAttempts − 1`, capped at 2, with a minimum of 1. A host with no policy is measured as before, and `maxAttempts: 1` still refuses the first attempt, so a host that never retries still fails (webhooks.md §Durability: best-effort delivery is not a conforming mode).
+- **RFC 0215 gaps G3 and G6 close in the contract peer.** `@openwop/spec-artifacts`' `spec/v1/gaps.json` records the prior-art survey and the threat-model home (`threat-model-secret-leakage.md` §4.12). No scenario change.
+- **Version moved ahead of publication.** `@openwop/openwop-conformance` and its exact-pinned peer `@openwop/spec-artifacts` move to `2.39.4` because `2.39.3` is tagged and published. Not tagged, not published.
 
 ## [2.39.3] — 2026-09-25 — a pinned receiver port is shared, and tenant B really is tenant B
 
