@@ -3,6 +3,7 @@
 ## [2.42.1] — unreleased — the 2.42.1 cycle is open
 
 - **`v2-mcp-mount-map`'s run-transport leg identifies its own run.** It diffed `listRuns` around one `tools/call` and required exactly one new `conformance-noop` run, but the suite runs files concurrently and that fixture is every file's smallest run: the v2 reference host's CI (4 workers) failed "got 2 new run(s)" on a host whose `tools/call` started exactly one, and `fresh[0]` could have been a sibling's run read for the wrong transport. The leg now requires at least one new run and reads the transport of the run the result names (when `listRuns` shows it), else the only new run, else passes if any new run in the window started `mcp`.
+- **`spec/v2/core/webhooks.md`'s `Stable` banner cites RFC 0217**, now `Accepted` on the v2 reference host's certified 2.42.0 cut. No scenario change.
 - **Version moved ahead of publication.** `@openwop/openwop-conformance` and its exact-pinned peer `@openwop/spec-artifacts` move to `2.42.1` because `2.42.0` is tagged. Not tagged, not published.
 
 ## [2.42.0] — 2026-09-26 — `replay_context_summary_unavailable` is a registered code, and an unregistered subscription has no sink
