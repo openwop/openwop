@@ -3,10 +3,10 @@
   "generatedFrom": "src/scenarios/*.test.ts",
   "counts": {
     "files": 635,
-    "tests": 2427,
-    "withStableId": 2427,
+    "tests": 2430,
+    "withStableId": 2430,
     "interpolatedTitles": 0,
-    "explicitIds": 2307
+    "explicitIds": 2310
   },
   "records": [
     {
@@ -27218,7 +27218,7 @@
     {
       "id": "openwop.it.v2-a2ui-v09-surface.a-version-2-envelope-carrying-a-version-1-body-is-refused-the-positive-is-admitt",
       "file": "v2-a2ui-v09-surface.test.ts",
-      "line": 129,
+      "line": 137,
       "title": "a version-2 envelope carrying a version-1 body is refused; the positive is admitted; above the floor is refused; below it follows envelopeStrictness",
       "explicitId": "openwop.requirement.0209.version-selects-branch",
       "citations": [
@@ -27262,7 +27262,7 @@
     {
       "id": "openwop.it.v2-a2ui-v09-surface.no-first-createsurface-a-message-after-deletesurface-and-a-second-createsurface",
       "file": "v2-a2ui-v09-surface.test.ts",
-      "line": 155,
+      "line": 163,
       "title": "no first createSurface, a message after deleteSurface, and a second createSurface are each refused; the valid steps are admitted",
       "explicitId": "openwop.requirement.0209.fold-guarded",
       "citations": [
@@ -27276,7 +27276,7 @@
     {
       "id": "openwop.it.v2-a2ui-v09-surface.a-createsurface-catalogid-differing-from-the-payload-catalogid-is-refused",
       "file": "v2-a2ui-v09-surface.test.ts",
-      "line": 180,
+      "line": 188,
       "title": "a createSurface.catalogId differing from the payload catalogId is refused",
       "explicitId": "openwop.requirement.0209.catalog-equality",
       "citations": [
@@ -27294,7 +27294,7 @@
     {
       "id": "openwop.it.v2-a2ui-v09-surface.a-message-whose-surfaceid-differs-from-the-payload-surfaceid-is-refused",
       "file": "v2-a2ui-v09-surface.test.ts",
-      "line": 194,
+      "line": 202,
       "title": "a message whose surfaceId differs from the payload surfaceId is refused",
       "explicitId": "openwop.it.v2-a2ui-v09-surface.surface-id-equality",
       "citations": [
@@ -27312,7 +27312,7 @@
     {
       "id": "openwop.it.v2-a2ui-v09-surface.a-recorded-version-2-surface-is-returned-byte-equal-on-poll-and-carried-by-a-for",
       "file": "v2-a2ui-v09-surface.test.ts",
-      "line": 210,
+      "line": 218,
       "title": "a recorded version-2 surface is returned byte-equal on poll and carried by a fork at a later fromSeq",
       "explicitId": "openwop.it.v2-a2ui-v09-surface.recorded-as-recorded",
       "citations": [
@@ -27349,7 +27349,7 @@
     {
       "id": "openwop.it.v2-a2ui-v09-surface.a-version-1-surface-recorded-at-floor-1-is-returned-byte-equal-on-poll-and-carri",
       "file": "v2-a2ui-v09-surface.test.ts",
-      "line": 237,
+      "line": 245,
       "title": "a version-1 surface recorded at floor 1 is returned byte-equal on poll and carried by a fork",
       "explicitId": "openwop.requirement.0209.legacy-readable",
       "citations": [
@@ -27386,7 +27386,7 @@
     {
       "id": "openwop.it.v2-a2ui-v09-surface.one-untrusted-update-taints-a-trusted-surface-a-later-trusted-update-does-not-la",
       "file": "v2-a2ui-v09-surface.test.ts",
-      "line": 261,
+      "line": 269,
       "title": "one untrusted update taints a trusted surface, a later trusted update does not launder it, and the approval does not advance; an all-trusted surface does",
       "explicitId": "openwop.requirement.0209.taint-sticky",
       "citations": [
@@ -27394,6 +27394,19 @@
           "section": "RFC 0209 §C.12",
           "requirement": null,
           "interpolated": true
+        }
+      ]
+    },
+    {
+      "id": "openwop.it.v2-a2ui-v09-surface.records-why-render-needs-root-has-no-server-side-witness-and-where-its-witness-l",
+      "file": "v2-a2ui-v09-surface.test.ts",
+      "line": 308,
+      "title": "records why render-needs-root has no server-side witness, and where its witness lives",
+      "explicitId": "openwop.requirement.0209.render-needs-root",
+      "citations": [
+        {
+          "section": "RFC 0209 §C.9",
+          "requirement": "a renderer does not render a surface before its root component exists"
         }
       ]
     },
@@ -27467,7 +27480,7 @@
     {
       "id": "openwop.it.v2-artifact-a2a-shape.a-getartifact-answered-as-application-a2a-json-validates-against-artifact-schema",
       "file": "v2-artifact-a2a-shape.test.ts",
-      "line": 80,
+      "line": 87,
       "title": "a getArtifact answered as application/a2a+json validates against artifact.schema.json",
       "explicitId": "openwop.requirement.0205.artifact-a2a-shape",
       "citations": [
@@ -27491,7 +27504,7 @@
     {
       "id": "openwop.it.v2-artifact-a2a-shape.the-artifactid-of-an-application-a2a-json-body-equals-the-artifactid-path-segmen",
       "file": "v2-artifact-a2a-shape.test.ts",
-      "line": 92,
+      "line": 99,
       "title": "the artifactId of an application/a2a+json body equals the {artifactId} path segment",
       "explicitId": "openwop.requirement.0205.artifact-id-matches-path",
       "citations": [
@@ -27508,7 +27521,7 @@
     {
       "id": "openwop.it.v2-artifact-a2a-shape.the-url-of-a-url-part-answers-no-2xx-to-a-second-tenant-or-to-no-credential",
       "file": "v2-artifact-a2a-shape.test.ts",
-      "line": 103,
+      "line": 110,
       "title": "the url of a url Part answers no 2xx to a second tenant or to no credential",
       "explicitId": "openwop.requirement.0205.artifact-url-part-scoped",
       "citations": [
@@ -27521,6 +27534,19 @@
           "section": "RFC 0205 §A.3",
           "requirement": null,
           "interpolated": true
+        }
+      ]
+    },
+    {
+      "id": "openwop.it.v2-artifact-a2a-shape.records-why-export-alias-equivalence-has-no-wire-witness",
+      "file": "v2-artifact-a2a-shape.test.ts",
+      "line": 132,
+      "title": "records why export-alias-equivalence has no wire witness",
+      "explicitId": "openwop.requirement.0205.export-alias-equivalence",
+      "citations": [
+        {
+          "section": "RFC 0205 §C.11",
+          "requirement": "an export alias and its media type name one format"
         }
       ]
     },
@@ -27912,7 +27938,7 @@
     {
       "id": "openwop.it.v2-capability-maturity-bounded.no-family-record-advertises-stable-above-its-corpus-declaration-row",
       "file": "v2-capability-maturity-bounded.test.ts",
-      "line": 69,
+      "line": 92,
       "title": "no family record advertises `stable` above its corpus declaration row",
       "explicitId": "openwop.requirement.0197.maturity-not-overstated",
       "citations": [
@@ -27928,6 +27954,20 @@
         },
         {
           "section": "spec/v2/core/capabilities.md §8",
+          "requirement": null,
+          "interpolated": true
+        }
+      ]
+    },
+    {
+      "id": "openwop.it.v2-capability-maturity-bounded.no-run-emits-a-persisted-member-the-release-has-retired",
+      "file": "v2-capability-maturity-bounded.test.ts",
+      "line": 134,
+      "title": "no run emits a persisted member the release has retired",
+      "explicitId": "openwop.requirement.0197.retired-not-emitted",
+      "citations": [
+        {
+          "section": "RFC 0197 §A.3",
           "requirement": null,
           "interpolated": true
         }
