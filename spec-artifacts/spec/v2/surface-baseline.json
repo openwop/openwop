@@ -4,7 +4,7 @@
     "schemas/v2/**/*.json",
     "spec/v2/path-manifest.json"
   ],
-  "release": "2.41.1",
+  "release": "2.42.0",
   "kinds": {
     "union": [
       "channel",
@@ -18,7 +18,7 @@
       "type"
     ]
   },
-  "count": 7960,
+  "count": 7961,
   "surfaces": [
     "schemas/v2/a2a-task-state.schema.json#/contextId|type|string",
     "schemas/v2/a2a-task-state.schema.json#/interruptKind|enum-member|\"approval\"",
@@ -4883,6 +4883,7 @@
     "schemas/v2/error-envelope.schema.json#/error|enum-member|\"protocol_version_unsupported\"",
     "schemas/v2/error-envelope.schema.json#/error|enum-member|\"rate_limited\"",
     "schemas/v2/error-envelope.schema.json#/error|enum-member|\"recursion_limit_exceeded\"",
+    "schemas/v2/error-envelope.schema.json#/error|enum-member|\"replay_context_summary_unavailable\"",
     "schemas/v2/error-envelope.schema.json#/error|enum-member|\"replay_diverged_at_refusal\"",
     "schemas/v2/error-envelope.schema.json#/error|enum-member|\"replay_memory_snapshot_unavailable\"",
     "schemas/v2/error-envelope.schema.json#/error|enum-member|\"replay_source_missing\"",
