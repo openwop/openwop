@@ -157,7 +157,11 @@ function siblingVersionRows() {
     rows.push({ artifact: 'openwop-sdks corpus pin', version: s.corpusTag ?? 'unpinned', source: 'openwop-sdks `CORPUS_TAG`', cadence: 'bumped only by a re-vendor PR (RFC 0176 §E.1)' });
   }
   const c = v['openwop-cli'];
-  if (c) rows.push({ artifact: 'CLI `@openwop/cli`', version: c.version ?? 'unrecorded', source: 'openwop-cli `package.json`', cadence: c.dependsOnSdk ? 'SDK consumer' : 'speaks the v1 wire directly; frozen v1-only (RFC 0167 §F, decided 2026-09-03)' });
+  if (c) rows.push({ artifact: 'CLI `@openwop/cli`', version: c.version ?? 'unrecorded', source: 'openwop-cli `package.json`', cadence: c.dependsOnSdk ? 'SDK consumer' : (Number(String(c.version ?? '0').split('.')[0]) >= 1
+    // CLI 1.0.0 reversed RFC 0167 §F's 2026-09-03 "frozen v1-only" decision: it negotiates major 2
+    // (unversioned paths + OpenWOP-Version: 2.0); the v1-only 0.18.x line lives on branch cli-v1-frozen.
+    ? 'speaks the wire directly; negotiates major 2 since 1.0.0 (the v1-only 0.18.x line is frozen on branch `cli-v1-frozen`)'
+    : 'speaks the v1 wire directly; frozen v1-only (RFC 0167 §F, decided 2026-09-03)') });
   const r = v['openwop-registry'];
   if (r) { rows.push({ artifact: 'Registry `registryVersion` / `protocolVersion`', version: `${r.registryVersion ?? '?'} / ${r.protocolVersion ?? '?'}`, source: 'openwop-registry `.well-known/openwop-registry.json`', cadence: 'RFC 0172 §B #18; versioned by tree at v2 (RFC 0177 §A.3)' }); rows.push({ artifact: 'openwop-registry corpus pin', version: r.corpusTag ?? 'unpinned', source: 'openwop-registry `CORPUS_TAG`', cadence: 'as the SDK pin' }); }
   const a = v['openwop-app'];
