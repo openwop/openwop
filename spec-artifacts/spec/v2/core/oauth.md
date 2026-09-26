@@ -20,8 +20,8 @@ A host advertising `oauth` MUST perform only the grants in `oauth.grants` and MU
 On every `authorization_code` grant the host MUST:
 
 1. send PKCE with `S256` and never `plain`, omitting PKCE only for a provider advertised with `pkce: "unsupported"`;
-2. send a fresh, unguessable `state` bound to the initiating Subject, and refuse a callback whose `state` is absent, unknown, reused or expired, making no token request for it;
-3. complete the callback only for the initiating Subject (invariant `oauth-same-user-binding`);
+2. send a fresh `state` of at least 128 bits from a CSPRNG, bound host-side to the initiating Subject and the provider, with a lifetime of at most 10 minutes, and refuse a callback whose `state` is absent, unknown, reused or expired, making no token request for it;
+3. complete the callback only for the initiating Subject (invariant `oauth-same-user-binding`): store the credential under the Subject bound to `state`, and if the Subject authenticated on the callback request (session or bearer) differs from it, refuse and store nothing;
 4. validate `iss` per RFC 9207 §2.4 where the provider's issuer is known (`oauth.providers[].issuer`), and otherwise give the provider a redirect URI no other provider shares (RFC 9700 §4.4.2);
 5. use one fixed, registered redirect URI per provider.
 
@@ -29,4 +29,4 @@ Where the provider is reached as an MCP server, the host MUST also send `resourc
 
 ## The credential interrupt
 
-A host advertising `oauth.credentialInterrupt` MUST suspend the node with a `credential` interrupt (interrupt.md) instead of failing it when no credential resolves for the Subject or refresh failed terminally. `connectUrl` MUST be host-owned, MUST NOT be pre-authenticated, and MUST complete only for the initiating Subject. The host resolves the interrupt when the grant completes; a resolve of `authorized` MUST be refused `400 validation_error` unless a credential now resolves, and `declined` fails the node with `connector_auth_declined`.
+A host advertising `oauth.credentialInterrupt` MUST suspend the node with a `credential` interrupt (interrupt.md) instead of failing it when a node declaring `auth: { type: "oauth2", provider, scopes }` is about to run and no credential resolves for the Subject, provider and scopes (`reason: "missing"`), one resolves with fewer scopes (`"insufficient_scope"`), or refresh failed terminally (`"expired"`). `connectUrl` MUST be host-owned, MUST NOT be pre-authenticated, and MUST complete only for the initiating Subject. The host resolves the interrupt when the grant completes; a resolve of `authorized` MUST be refused `400 validation_error` unless a credential now resolves, and `declined` fails the node with `connector_auth_declined`.
