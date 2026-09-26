@@ -1,5 +1,9 @@
 # `@openwop/openwop-conformance` Changelog
 
+## [2.42.2] — unreleased — the 2.42.2 cycle is open
+
+- **Version moved ahead of publication.** `@openwop/openwop-conformance` and its exact-pinned peer `@openwop/spec-artifacts` move to `2.42.2` because `2.42.1` is tagged, and this cycle changes a shipped file: `spec/v1/gaps.json` records RFC 0111 gap G5 `closed` (RFC 0111 `Accepted`, witnessed by MyndHyve on 2.42.1). No scenario, schema or `MUST` change. Not tagged, not published.
+
 ## [2.42.1] — 2026-09-26 — RFC 0111's live witness scenarios outlast a real host, and the MCP run-transport leg identifies its own run
 
 - **RFC 0111's live scenarios no longer die at vitest's 30 s default.** `context-budget-transcript-bound` and `context-summarization-replay` drive the live-model fixture `conformance-context-budget-live` (six real model turns and six child runs; 30–40 s per run on MyndHyve production, 2026-09-26), and the global `testTimeout: 30_000` killed both before any assertion — which `OPENWOP_POLL_TIMEOUT_SCALE` could not reach. Each now carries a per-test timeout from `liveScenarioTimeoutMs(runs)` (`src/lib/polling.ts`: the scaled sum of `LIVE_RUN_POLL_MS` = 180 s per run plus 60 s for seam reads — 240 s / 420 s at scale 1) and polls with `{ timeoutMs: LIVE_RUN_POLL_MS }`, so the named poll deadline always fires before the test deadline, at every scale. The global timeout is unchanged. Self-test: `src/lib/polling.test.ts` (3 new); an unscaled helper fails 2 of them and a 30 s helper 3.
