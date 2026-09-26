@@ -980,6 +980,104 @@ paths:
           $ref: '#/components/responses/Unauthenticated'
         '404':
           $ref: '#/components/responses/NotFound'
+  /conformance/seams/sample/auth/credential/mint:
+    post:
+      tags:
+      - Seams
+      operationId: mintLaneCredential
+      summary: Mint a fresh credential on an advertised lane for the caller's tenant — RFC 0170 §B.3 witness
+      description: 'Issues a new credential on `lane` (an advertised `auth.lanes[].lane` whose `revocation` is `next-request`;
+        absent ⇒ `api-key`) for the AUTHENTICATED caller''s tenant, through the host''s PRODUCTION issuance path, so the credential
+        it returns authenticates on the canonical API exactly as an ordinary one does. The suite uses it only to hold a credential
+        it can then revoke: the revocation, and the refusal on the next request (`401 credential_revoked`), are production
+        behaviour the seam does not simulate. A host that has not wired the seam answers `404`, and the scenario records the
+        requirement unobserved.'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              additionalProperties: false
+              properties:
+                lane:
+                  type: string
+                  minLength: 1
+                  description: An advertised `auth.lanes[].lane`; absent ⇒ `api-key`.
+      responses:
+        '201':
+          description: The minted credential.
+          content:
+            application/json:
+              schema:
+                type: object
+                additionalProperties: false
+                required:
+                - lane
+                - credential
+                properties:
+                  lane:
+                    type: string
+                  credential:
+                    type: string
+                    minLength: 1
+                    description: 'The bearer credential, presented as `Authorization: Bearer <credential>`.'
+                  subjectId:
+                    type: string
+                    description: The Subject the credential authenticates as, when the host names one.
+        '400':
+          $ref: '#/components/responses/ValidationError'
+        '401':
+          $ref: '#/components/responses/Unauthenticated'
+        '404':
+          $ref: '#/components/responses/NotFound'
+  /conformance/seams/sample/auth/credential/revoke:
+    post:
+      tags:
+      - Seams
+      operationId: revokeLaneCredential
+      summary: Revoke a credential the mint seam issued — RFC 0170 §B.3 witness
+      description: Revokes `credential` through the host's PRODUCTION revocation path. On a `next-request` lane the very next
+        request presenting it MUST be refused `401 credential_revoked` (identity.md §2.2); the suite observes that on the
+        canonical API, not through this seam. `404` when no active credential matches.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              additionalProperties: false
+              required:
+              - credential
+              properties:
+                lane:
+                  type: string
+                  minLength: 1
+                credential:
+                  type: string
+                  minLength: 1
+      responses:
+        '200':
+          description: The credential is revoked.
+          content:
+            application/json:
+              schema:
+                type: object
+                additionalProperties: false
+                required:
+                - revoked
+                properties:
+                  revoked:
+                    type: boolean
+                    const: true
+                  lane:
+                    type: string
+        '400':
+          $ref: '#/components/responses/ValidationError'
+        '401':
+          $ref: '#/components/responses/Unauthenticated'
+        '404':
+          $ref: '#/components/responses/NotFound'
 components:
   securitySchemes:
     ApiKeyAuth:
