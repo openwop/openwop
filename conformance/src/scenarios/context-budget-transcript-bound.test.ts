@@ -104,7 +104,7 @@ describe('context-budget-transcript-bound (RFC 0111 §"Context economy")', () =>
     if (typeof budget !== 'number') return softSkip('inapplicable', 'transcriptTokenBudget not advertised');
     if (!isFixtureAdvertised(FIXTURE)) return softSkip('inapplicable', `the live fixture ${FIXTURE} is not advertised — the scripted multiturn fixture drives a mock supervisor, which RFC 0111 §Scope forbids from advertising contextBudget`);
     expect(typeof advertisedCounter === 'string', req(ID, 'RFC 0111', 'tokenCounter MUST be advertised when transcriptTokenBudget is present (schema if/then)')).toBe(true);
-    if (typeof advertisedCounter !== 'string') return undefined;
+    if (typeof advertisedCounter !== 'string') return softSkip('blocked', 'contextBudget.tokenCounter is not advertised (the assertion above records the failure)');
 
     const create = await driver.post(runsPath(), { workflowId: FIXTURE });
     expect(create.status, req(ID, 'RFC 0111', `POST ${runsPath()} MUST create the live-fixture run`)).toBe(201);
@@ -124,7 +124,7 @@ describe('context-budget-transcript-bound (RFC 0111 §"Context economy")', () =>
       expect(res.status, req(ID, 'host-sample-test-seams.md §14', `iteration ${iteration}: the transcript-window seam MUST return 200 for a valid iteration`)).toBe(200);
       const window = parseTranscriptWindow(res.json);
       expect(window, req(ID, 'host-sample-test-seams.md §14', `iteration ${iteration}: the seam MUST return { tokenCounter, tokenCount, eventIds, summarizedRanges, entries? } with a well-formed entries[] when present`)).toBeDefined();
-      if (window === undefined) return undefined;
+      if (window === undefined) return softSkip('blocked', `iteration ${iteration}: the seam answer was malformed (the assertion above records the failure)`);
       windows.push({ iteration, window });
     }
     expect(windows.length, req(ID, 'host-sample-test-seams.md §14', 'a wired transcript-window seam MUST report at least one orchestrator iteration')).toBeGreaterThan(0);
@@ -152,7 +152,6 @@ describe('context-budget-transcript-bound (RFC 0111 §"Context economy")', () =>
     }
 
     if (log === null) return softSkip('blocked', 'the run event-log seam is unavailable, so the real-event, recent-tail and pressure rules were not measured');
-    if (!pressure) return softSkip('inapplicable', `no iteration shows budget pressure — every eligible event fit under transcriptTokenBudget ${budget}, so the bound was never exercised (a budget the run never reaches is not a witness)`);
-    return undefined;
+    if (!pressure) softSkip('inapplicable', `no iteration shows budget pressure — every eligible event fit under transcriptTokenBudget ${budget}, so the bound was never exercised (a budget the run never reaches is not a witness)`);
   });
 });
