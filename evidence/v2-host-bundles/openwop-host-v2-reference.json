@@ -1,12 +1,12 @@
 {
   "bundleVersion": "3",
-  "generatedAt": "2026-09-26T08:56:18.590Z",
+  "generatedAt": "2026-09-26T09:40:45.436Z",
   "suite": {
     "name": "@openwop/openwop-conformance",
-    "version": "2.40.0",
+    "version": "2.40.1",
     "targetMajor": 2,
-    "specArtifactsVersion": "2.40.0",
-    "stampSha256": "f65c56d3a36eb7301c4baceef9ce0899091151fb12bc72c1508eb7a7d7b4ca4c"
+    "specArtifactsVersion": "2.40.1",
+    "stampSha256": "1fb5733bb565913ac21afc3e5179ea3cb4d1b98ab39f543fb3c70f9a936453bd"
   },
   "host": {
     "name": "openwop-host-v2-reference",
@@ -471,7 +471,7 @@
       "executedPass": 403,
       "executedFail": 0,
       "skipped": 7,
-      "inapplicable": 36,
+      "inapplicable": 39,
       "blocked": 0
     },
     "requirements": [
@@ -562,7 +562,7 @@
         "scenario": "v2-a2ui-v09-surface.test.ts",
         "result": "executed-pass",
         "assertions": 34,
-        "detail": "partial-witness: inapplicable: schemaVersions.kinds[\"ui.a2ui-surface\"] is 2; this leg needs a floor of exactly 1 — a host whose floor is 2 has no admission path for a version-1 surface, and the suite cannot seed one (RFC 0209 §C.11 holds for what it recorded before raising the floor)"
+        "detail": "partial-witness: inapplicable: [inapplicable] schemaVersions.kinds[\"ui.a2ui-surface\"] is 2; this leg needs a floor of exactly 1 — a host whose floor is 2 has no admission path for a version-1 surface, and the suite cannot seed one (RFC 0209 §C.11 holds for what it recorded before raising the floor); [inapplicable] unwitnessable by this suite (RFC 0209 §C.9 Falsifiability verdict): a render-side guarantee, and a server-oriented suite cannot observe a renderer. The fold guard the server CAN observe is openwop.requirement.0209.fold-guarded, above. The render half is witnessed as a reference-app client probe (tier: reference-impl, the a2ui-surface-no-code-exec precedent): openwop/openwop-app frontend/react/src/chat/a2ui/__tests__/a2ui-v09-render-needs-root.test.tsx (openwop-app#4121, ADR 0749). Removing the `if (!state.renderable)` guard in frontend/react/src/chat/a2ui/v09/A2uiV09Surface.tsx turns 2 of its 4 cases red. This row records that the suite reached the requirement, and it is not a pass."
       },
       {
         "id": "openwop.scenario.v2-advertised-fixtures-exist",
@@ -587,7 +587,7 @@
         "scenario": "v2-artifact-a2a-shape.test.ts",
         "result": "executed-pass",
         "assertions": 5,
-        "detail": "partial-witness: inapplicable: the artifact carries no url Part (the host emits data/text/raw Parts only; RFC 0205 register G3)"
+        "detail": "partial-witness: inapplicable: [inapplicable] the artifact carries no url Part (the host emits data/text/raw Parts only; RFC 0205 register G3); [inapplicable] unwitnessable on the wire (RFC 0205 §C.11 Falsifiability verdict): the equivalence binds a consumer's format-matching logic and the pack author's host.artifactTypes.export call, and neither is on the wire. The advertised spellings are readable, but a mismatch between them is legal, so no host response can falsify the row. No wire witness exists; this row records that the suite reached the requirement, and it is not a pass."
       },
       {
         "id": "openwop.scenario.v2-assurance-downgrade-audited",
@@ -638,7 +638,8 @@
         "id": "openwop.scenario.v2-capability-maturity-bounded",
         "scenario": "v2-capability-maturity-bounded.test.ts",
         "result": "executed-pass",
-        "assertions": 26
+        "assertions": 26,
+        "detail": "partial-witness: inapplicable: unwitnessable until the first persisted-class retirement row is due (RFC 0197 §A.3 Falsifiability): corpus 2.40.1: 0 persisted-class v2-minor retirement row(s), 0 v2→v2 migration row(s) — no retired member exists for a post-2.N event to carry. Before one does, a scenario would be vacuous, and a row that cannot fail is not a witness. This leg asserts the moment such a row falls due."
       },
       {
         "id": "openwop.scenario.v2-capability-record-shape",
@@ -870,7 +871,7 @@
         "id": "openwop.scenario.v2-mcp-client-results",
         "scenario": "v2-mcp-client-results.test.ts",
         "result": "executed-pass",
-        "assertions": 26
+        "assertions": 27
       },
       {
         "id": "openwop.scenario.v2-mcp-mount-map",
@@ -1080,7 +1081,7 @@
         "id": "openwop.scenario.v2-run-list",
         "scenario": "v2-run-list.test.ts",
         "result": "executed-pass",
-        "assertions": 11
+        "assertions": 9
       },
       {
         "id": "openwop.floor.v2-run-options-limits",
@@ -1178,7 +1179,7 @@
         "scenario": "v2-webhook-delivery-shape.test.ts",
         "result": "executed-pass",
         "assertions": 12,
-        "detail": "partial-witness: inapplicable: no run.started delivery for the seeded era-2 run inside 15s — this host does not fan out seeded history, so the era-2 fan-out branch is unobservable here (recorded under openwop.family.conformance). no run.started delivery bearing this exercise's nonce 60d98d83377ccc1391 arrived, and nothing else reached this listener either — the registered destination is the public front https://lions-submitting-ruled-buses.trycloudflare.com/hook/fx/60d98d83377ccc1391 (OPENWOP_WEBHOOK_RECEIVER_URL) and this listener answers on http://127.0.0.1:3841/fx/60d98d83377ccc1391, port 3841"
+        "detail": "partial-witness: inapplicable: no run.started delivery for the seeded era-2 run inside 15s — this host does not fan out seeded history, so the era-2 fan-out branch is unobservable here (recorded under openwop.family.conformance). no run.started delivery bearing this exercise's nonce 19d2cc47dc058b3c35 arrived, and nothing else reached this listener either — the registered destination is the public front https://permalink-icons-ken-initially.trycloudflare.com/hook/fx/19d2cc47dc058b3c35 (OPENWOP_WEBHOOK_RECEIVER_URL) and this listener answers on http://127.0.0.1:3841/fx/19d2cc47dc058b3c35, port 3841"
       },
       {
         "id": "openwop.floor.v2-webhook-durable-delivery",
@@ -1519,7 +1520,7 @@
           "recovery": {
             "class": "single-instance-restart",
             "boundMs": 6000,
-            "observedMs": 2120
+            "observedMs": 1703
           }
         }
       },
@@ -1532,7 +1533,7 @@
           "recovery": {
             "class": "single-instance-restart",
             "boundMs": 6000,
-            "observedMs": 2499
+            "observedMs": 1788
           }
         }
       },
@@ -1935,7 +1936,7 @@
         "scenario": "v2-webhook-delivery-shape.test.ts",
         "result": "executed-pass",
         "assertions": 12,
-        "detail": "partial-witness: inapplicable: no run.started delivery for the seeded era-2 run inside 15s — this host does not fan out seeded history, so the era-2 fan-out branch is unobservable here (recorded under openwop.family.conformance). no run.started delivery bearing this exercise's nonce 60d98d83377ccc1391 arrived, and nothing else reached this listener either — the registered destination is the public front https://lions-submitting-ruled-buses.trycloudflare.com/hook/fx/60d98d83377ccc1391 (OPENWOP_WEBHOOK_RECEIVER_URL) and this listener answers on http://127.0.0.1:3841/fx/60d98d83377ccc1391, port 3841"
+        "detail": "partial-witness: inapplicable: no run.started delivery for the seeded era-2 run inside 15s — this host does not fan out seeded history, so the era-2 fan-out branch is unobservable here (recorded under openwop.family.conformance). no run.started delivery bearing this exercise's nonce 19d2cc47dc058b3c35 arrived, and nothing else reached this listener either — the registered destination is the public front https://permalink-icons-ken-initially.trycloudflare.com/hook/fx/19d2cc47dc058b3c35 (OPENWOP_WEBHOOK_RECEIVER_URL) and this listener answers on http://127.0.0.1:3841/fx/19d2cc47dc058b3c35, port 3841"
       },
       {
         "id": "openwop.requirement.0171.webhook-egress-refused",
@@ -2432,7 +2433,7 @@
         "id": "openwop.requirement.0182.run-list.tenant-scoped",
         "scenario": "v2-run-list.test.ts",
         "result": "executed-pass",
-        "assertions": 7
+        "assertions": 5
       },
       {
         "id": "openwop.requirement.0184.bound-id-path-projection",
@@ -2507,6 +2508,13 @@
         "scenario": "v2-capability-maturity-bounded.test.ts",
         "result": "executed-pass",
         "assertions": 26
+      },
+      {
+        "id": "openwop.requirement.0197.retired-not-emitted",
+        "scenario": "v2-capability-maturity-bounded.test.ts",
+        "result": "inapplicable",
+        "assertions": 0,
+        "detail": "unwitnessable until the first persisted-class retirement row is due (RFC 0197 §A.3 Falsifiability): corpus 2.40.1: 0 persisted-class v2-minor retirement row(s), 0 v2→v2 migration row(s) — no retired member exists for a post-2.N event to carry. Before one does, a scenario would be vacuous, and a row that cannot fail is not a witness. This leg asserts the moment such a row falls due."
       },
       {
         "id": "openwop.requirement.0198.advertised-via-discover",
@@ -2848,7 +2856,7 @@
         "id": "openwop.requirement.0204.server-health",
         "scenario": "v2-mcp-client-results.test.ts",
         "result": "executed-pass",
-        "assertions": 7
+        "assertions": 8
       },
       {
         "id": "openwop.requirement.0205.artifact-a2a-shape",
@@ -2868,6 +2876,13 @@
         "result": "inapplicable",
         "assertions": 0,
         "detail": "the artifact carries no url Part (the host emits data/text/raw Parts only; RFC 0205 register G3)"
+      },
+      {
+        "id": "openwop.requirement.0205.export-alias-equivalence",
+        "scenario": "v2-artifact-a2a-shape.test.ts",
+        "result": "inapplicable",
+        "assertions": 0,
+        "detail": "unwitnessable on the wire (RFC 0205 §C.11 Falsifiability verdict): the equivalence binds a consumer's format-matching logic and the pack author's host.artifactTypes.export call, and neither is on the wire. The advertised spellings are readable, but a mismatch between them is legal, so no host response can falsify the row. No wire witness exists; this row records that the suite reached the requirement, and it is not a pass."
       },
       {
         "id": "openwop.requirement.0205.turn-parts-emitted",
@@ -3060,6 +3075,13 @@
         "detail": "schemaVersions.kinds[\"ui.a2ui-surface\"] is 2; this leg needs a floor of exactly 1 — a host whose floor is 2 has no admission path for a version-1 surface, and the suite cannot seed one (RFC 0209 §C.11 holds for what it recorded before raising the floor)"
       },
       {
+        "id": "openwop.requirement.0209.render-needs-root",
+        "scenario": "v2-a2ui-v09-surface.test.ts",
+        "result": "inapplicable",
+        "assertions": 0,
+        "detail": "unwitnessable by this suite (RFC 0209 §C.9 Falsifiability verdict): a render-side guarantee, and a server-oriented suite cannot observe a renderer. The fold guard the server CAN observe is openwop.requirement.0209.fold-guarded, above. The render half is witnessed as a reference-app client probe (tier: reference-impl, the a2ui-surface-no-code-exec precedent): openwop/openwop-app frontend/react/src/chat/a2ui/__tests__/a2ui-v09-render-needs-root.test.tsx (openwop-app#4121, ADR 0749). Removing the `if (!state.renderable)` guard in frontend/react/src/chat/a2ui/v09/A2uiV09Surface.tsx turns 2 of its 4 cases red. This row records that the suite reached the requirement, and it is not a pass."
+      },
+      {
         "id": "openwop.requirement.0209.taint-sticky",
         "scenario": "v2-a2ui-v09-surface.test.ts",
         "result": "executed-pass",
@@ -3247,8 +3269,8 @@
       }
     ]
   },
-  "witnessSha256": "f1b77199fb31eebd3e1325eb53a23b6505dd0bfb8ad570fcc92fb9abf7d90a8d",
-  "assertionCount": 4302,
+  "witnessSha256": "d8750e4b8117162fb301d04cdc61957dc2cf822fcce14180d3bb0289c1e7f94e",
+  "assertionCount": 4300,
   "detail": {
     "nonPass": [
       {
@@ -3387,6 +3409,11 @@
         "reason": "the host does not advertise interrupt.callbackDelivery — it delivers nothing to callbackUrl, so there is no egress to guard (RFC 0196 §A.2: it SHOULD refuse the member)"
       },
       {
+        "id": "openwop.requirement.0197.retired-not-emitted",
+        "result": "inapplicable",
+        "reason": "unwitnessable until the first persisted-class retirement row is due (RFC 0197 §A.3 Falsifiability): corpus 2.40.1: 0 persisted-class v2-minor retirement row(s), 0 v2→v2 migration row(s) — no retired member exists for a post-2.N event to carry. Before one does, a scenario would be vacuous, and a row that cannot fail is not a witness. This leg asserts the moment such a row falls due."
+      },
+      {
         "id": "openwop.requirement.0200.challenge-401",
         "result": "inapplicable",
         "reason": "no auth.lanes[] member has lane oauth2 or oidc — RFC 0200 §A.1 does not bind this host (serving the metadata anyway is RECOMMENDED, not required, and is not measured here)"
@@ -3422,6 +3449,11 @@
         "reason": "the artifact carries no url Part (the host emits data/text/raw Parts only; RFC 0205 register G3)"
       },
       {
+        "id": "openwop.requirement.0205.export-alias-equivalence",
+        "result": "inapplicable",
+        "reason": "unwitnessable on the wire (RFC 0205 §C.11 Falsifiability verdict): the equivalence binds a consumer's format-matching logic and the pack author's host.artifactTypes.export call, and neither is on the wire. The advertised spellings are readable, but a mismatch between them is legal, so no host response can falsify the row. No wire witness exists; this row records that the suite reached the requirement, and it is not a pass."
+      },
+      {
         "id": "openwop.requirement.0206.delivery-extended-locale",
         "result": "inapplicable",
         "reason": "the host does not advertise the content family (no content surface to deliver an extended locale from)"
@@ -3440,6 +3472,11 @@
         "id": "openwop.requirement.0209.legacy-readable",
         "result": "inapplicable",
         "reason": "schemaVersions.kinds[\"ui.a2ui-surface\"] is 2; this leg needs a floor of exactly 1 — a host whose floor is 2 has no admission path for a version-1 surface, and the suite cannot seed one (RFC 0209 §C.11 holds for what it recorded before raising the floor)"
+      },
+      {
+        "id": "openwop.requirement.0209.render-needs-root",
+        "result": "inapplicable",
+        "reason": "unwitnessable by this suite (RFC 0209 §C.9 Falsifiability verdict): a render-side guarantee, and a server-oriented suite cannot observe a renderer. The fold guard the server CAN observe is openwop.requirement.0209.fold-guarded, above. The render half is witnessed as a reference-app client probe (tier: reference-impl, the a2ui-surface-no-code-exec precedent): openwop/openwop-app frontend/react/src/chat/a2ui/__tests__/a2ui-v09-render-needs-root.test.tsx (openwop-app#4121, ADR 0749). Removing the `if (!state.renderable)` guard in frontend/react/src/chat/a2ui/v09/A2uiV09Surface.tsx turns 2 of its 4 cases red. This row records that the suite reached the requirement, and it is not a pass."
       },
       {
         "id": "openwop.requirement.0210.credential-lifetime-code",
@@ -3474,7 +3511,7 @@
   "signature": {
     "alg": "ed25519",
     "keyId": "v2-reference-4",
-    "sig": "X_7Mq3Rzev-8io0zSge-SjTDMzPRkIkuuXx_qsRN2VcqL6qhvhx47TivhCfao0VhcTiE6u4Z_h_Gx-m7MCAgCA",
+    "sig": "SdmGgw53skL8CRjnYWRSrqgQrIoYr9Eeo9GRDdPCfHkfft8feNO6zaADCzR-eK8LTIqWrl21aL4n82xpWn8EBg",
     "over": [
       "witnessSha256",
       "host.build",
