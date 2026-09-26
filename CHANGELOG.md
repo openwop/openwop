@@ -213,6 +213,15 @@ Format follows [Keep a Changelog](https://keepachangelog.com/en/1/) loosely. Ver
 - **The remaining eleven stay `Active`, each for a stated reason** rather than for lack of attention. The eight RFC 0167 program children name a certified openwop-app bundle in their own acceptance criteria and the committed one reads `certified: false` (3 blocked rows, RFC 0168 §E.1). RFC 0173 additionally carries the program's only `open` gap row. RFC 0179's sole criterion is unmet — 2.4.2 stopped the gate reading "(Phase 4 leg)" as an excuse for it. RFC 0187 names three requirement ids that no scenario mints. RFC 0167 itself flips **last**, which 2.4.2 made a rule: the moment the umbrella stops being `Active`, every child still `Active` becomes permanently ineligible.
 - **The interrupt `data` union is bound to `kind`** (MCP/A2A review P3-H7, Class 3 correction — COMPATIBILITY.md §3). `schemas/suspend-request.schema.json` and its v2 twin typed `data` as an unbound `oneOf`, so the minimal `conversation.start` and `conversation.close` payloads (`{ conversationId }`, which satisfies both shapes) failed validation in v1 and v2, and a payload carrying another kind's `data` passed. `data` is now an `anyOf` and a root `allOf` binds each kind to its own shape with one `if`/`then`; no per-kind shape or `$id` changed. Witnessed by `conformance/fixtures/interrupt-payloads/` (suite 2.36.0).
 
+## [2.41.1] — 2026-09-26 — an SSE projection row no longer depends on a host's front forwarding headers early
+
+A suite patch: no new scenario file, no wire, schema or `MUST` change (`COMPATIBILITY.md` §2.1). The corpus tag moves because `@openwop/openwop-conformance` and `@openwop/spec-artifacts` move together.
+
+### Conformance
+
+- **`v2-stream-sse-projection` reads a terminal run's stream (#1612).** Streaming a still-queued run let a buffering public front (openwop-app's Firebase Hosting) hold the response headers past the suite's 8 s budget, and the row recorded `blocked` on a conforming production host. The row tests how every frame names its run, and a terminal run's finite backlog witnesses that fully.
+- **Suite `2.41.1`**: no scenario file added. `@openwop/spec-artifacts` moves in lockstep at the same exact pin.
+
 ## [2.41.0] — 2026-09-26 — RFC 0111's context-budget witness can fail, and RFC 0121 names its first cleared provider
 
 A suite minor: one new fixture (`conformance-context-budget-live`), two scenarios promoted to major 2, and a Class-3 correction of an assertion no host could satisfy — no wire change and no host `MUST` moved (`COMPATIBILITY.md` §2.1, and its 2026-09-26 correction on record). The seams contract gains one optional response member. The corpus tag moves because `@openwop/openwop-conformance` and `@openwop/spec-artifacts` move together.
