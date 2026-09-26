@@ -47,7 +47,7 @@ describe('v2 revocation-honored (RFC 0170 §B.3 — seam-gated)', () => {
     for (const lane of nextRequest) {
       const minted = await http(() => driver.post(MINT, { lane }));
       if (minted === null) return softSkip('blocked', `${MINT} unreachable (fetch failed)`);
-      if (minted.status === 404 || minted.status === 403) return seamAbsent(`${MINT} not mounted (${minted.status}) — the per-lane revoke seam RFC 0170 §B.3 names is not specified in host-sample-test-seams.md and this host does not serve it`);
+      if (minted.status === 404 || minted.status === 403) return seamAbsent(`${MINT} not mounted (${minted.status}) — the host advertises the seams profile but does not serve the RFC 0170 §B.3 credential mint/revoke seams (api/seams-v2.yaml mintLaneCredential / revokeLaneCredential; host-sample-test-seams.md)`);
       const credential = (minted.json as { credential?: unknown } | undefined)?.credential;
       expect(typeof credential, req('openwop.requirement.0170.revocation-honored', DOC, `the mint seam MUST answer { credential } for lane ${lane}`)).toBe('string');
 

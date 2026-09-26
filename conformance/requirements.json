@@ -3,10 +3,10 @@
   "generatedFrom": "src/scenarios/*.test.ts",
   "counts": {
     "files": 633,
-    "tests": 2424,
-    "withStableId": 2424,
+    "tests": 2425,
+    "withStableId": 2425,
     "interpolatedTitles": 0,
-    "explicitIds": 2304
+    "explicitIds": 2305
   },
   "records": [
     {
@@ -29279,7 +29279,7 @@
     {
       "id": "openwop.it.v2-idempotency-in-flight.concurrent-same-key-creates-yield-exactly-one-run",
       "file": "v2-idempotency-in-flight.test.ts",
-      "line": 101,
+      "line": 105,
       "title": "concurrent same-key creates yield exactly one run",
       "explicitId": "openwop.requirement.0213.in-flight-one-winner",
       "citations": [
@@ -29298,7 +29298,7 @@
     {
       "id": "openwop.it.v2-idempotency-in-flight.each-loser-is-a-marked-replay-of-a-final-outcome-or-409-idempotency-in-flight-wi",
       "file": "v2-idempotency-in-flight.test.ts",
-      "line": 109,
+      "line": 113,
       "title": "each loser is a marked replay of a final outcome, or 409 idempotency_in_flight with no retry timing in details",
       "explicitId": "openwop.requirement.0213.in-flight-loser-outcome",
       "citations": [
@@ -29321,6 +29321,38 @@
           "section": "spec/v2/core/idempotency.md Concurrency",
           "requirement": null,
           "interpolated": true
+        }
+      ]
+    },
+    {
+      "id": "openwop.it.v2-idempotency-in-flight.while-the-seam-holds-the-claim-a-same-key-create-is-refused-409-idempotency-in-f",
+      "file": "v2-idempotency-in-flight.test.ts",
+      "line": 138,
+      "title": "while the seam holds the claim, a same-key create is refused 409 idempotency_in_flight by the host and the held create still wins",
+      "explicitId": "openwop.requirement.0213.in-flight-refused-under-hold",
+      "citations": [
+        {
+          "section": "spec/v2/core/idempotency.md Concurrency",
+          "requirement": null,
+          "interpolated": true
+        },
+        {
+          "section": "spec/v2/core/errors.md §Retry timing",
+          "requirement": "retry timing MUST NOT travel in details"
+        },
+        {
+          "section": "spec/v2/core/idempotency.md Concurrency",
+          "requirement": null,
+          "interpolated": true
+        },
+        {
+          "section": "spec/v2/core/idempotency.md Concurrency",
+          "requirement": null,
+          "interpolated": true
+        },
+        {
+          "section": "spec/v2/core/idempotency.md Concurrency",
+          "requirement": "after the held create completes, a same-key create is a marked replay of the one run"
         }
       ]
     },
