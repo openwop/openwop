@@ -28889,7 +28889,7 @@
     {
       "id": "openwop.it.v2-effect-seam-no-refire.driving-one-seam-of-each-kind-observes-no-re-fire-on-replay",
       "file": "v2-effect-seam-no-refire.test.ts",
-      "line": 42,
+      "line": 44,
       "title": "driving one seam of each kind observes no re-fire on replay",
       "explicitId": "openwop.requirement.0173.effect-seam-no-refire",
       "citations": [
