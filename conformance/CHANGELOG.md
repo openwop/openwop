@@ -1,5 +1,9 @@
 # `@openwop/openwop-conformance` Changelog
 
+## [2.40.2] — unreleased — the 2.40.2 cycle is open
+
+- **Version moved ahead of publication.** `@openwop/openwop-conformance` and its exact-pinned peer `@openwop/spec-artifacts` move to `2.40.2` because `2.40.1` is released, and `spec-artifacts` now carries a changed `spec/v2/core/oauth.md` (RFC 0199's text restored; editorial, `COMPATIBILITY.md` §3 entry of 2026-09-26). No scenario changes. Not tagged, not published.
+
 ## [2.40.1] — 2026-09-26 — three declared-unwitnessable rows are reached and say why
 
 - **Three Falsifiability rows declared non-executable now have a leg that records the reason** (RFC 0174 §B.1 rule 4, second branch: "the suite must reach the leg and record a reason"). Each RFC's table declares one of these rows unwitnessable, but no suite leg referenced it, so no bundle could account for it. Each of RFCs 0197, 0205 and 0209 was held from `Accepted` by that one row. No leg can record `executed-pass` without observing the requirement.
