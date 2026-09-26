@@ -16,7 +16,7 @@ RFC 0171 §C.1: every non-standard header is `OpenWOP-<Name>` and every header i
 | `Last-Event-ID` | 1 | Resume from sequence after this ID. |
 | `OpenWOP-Dedup` | 1 | When set, server cross-host claim system rejects duplicate `(tenantId, scopeId)` pairs with `409 Conflict`. |
 | `OpenWOP-Force-Engine-Version` | 1 | **Test-keys-only.** When set, the server emits events for this run AS IF it |
-| `OpenWOP-Version` | 54 | RFC 0172 §A.3 — selects a listed major.minor; absent ⇒ the host's `preferredVersion`; unlisted ⇒ 406 protocol_version_unsupported. |
+| `OpenWOP-Version` | 55 | RFC 0172 §A.3 — selects a listed major.minor; absent ⇒ the host's `preferredVersion`; unlisted ⇒ 406 protocol_version_unsupported. |
 
 ## Response headers
 
@@ -28,9 +28,9 @@ RFC 0171 §C.1: every non-standard header is `OpenWOP-<Name>` and every header i
 | `ETag` | 3 | Standard HTTP validator (RFC 9110 §8.8.3). The obligation is per operation: MUST on the discovery document (capabilities.md §1), SHOULD on the run snapshot (runs.md §Snapshot), a content hash on a prompt template (getPromptTemplate); see each operation. |
 | `Location` | 1 | Canonical URI of the new template. |
 | `OpenWOP-Idempotent-Replay` | 1 | Set when the response was served from the idempotency cache. |
-| `OpenWOP-Version` | 54 | RFC 0172 §A.4 — the contract that produced this response; MUST equal the one used. |
+| `OpenWOP-Version` | 55 | RFC 0172 §A.4 — the contract that produced this response; MUST equal the one used. |
 | `Retry-After` | 1 | Seconds until the active claim is stale-eligible. |
-| `WWW-Authenticate` | 47 | RFC 0200 §B — `Bearer` challenge; `resource_metadata` and `error="invalid_token"` on a host with an oauth2/oidc lane. Never on a non-disclosure 404. |
+| `WWW-Authenticate` | 48 | RFC 0200 §B — `Bearer` challenge; `resource_metadata` and `error="invalid_token"` on a host with an oauth2/oidc lane. Never on a non-disclosure 404. |
 
 ## Webhook delivery headers
 
