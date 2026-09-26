@@ -3,8 +3,9 @@
  * on `replay`, driven through the seams profile).
  *
  * A guarded manifest row that states `branchReFires: false` MUST NOT be fired
- * again by a replay fork: the fork's Layer-2 effect ledger cannot grow past the
- * parent's for that seam. The witness is the host's own ledger, reached by
+ * again by a replay fork: the fork's Layer-2 effect ledger records no attempt
+ * the parent did not make (suite 2.42.2; until then "cannot grow past the
+ * parent's", which a one-attempt source let a re-firing host pass at 1 ≤ 1). The witness is the host's own ledger, reached by
  * firing a named manifest row inside a run through the catalogued seam
  * (`api/seams-v2.yaml` `fireEffectSeam`), forking in `replay` mode, and reading
  * `GET /runs/{runId}/effects` on both.
@@ -28,6 +29,7 @@ import { v2Discovery, gateFamily } from '../lib/v2.js';
 import { seamsProfileAdvertised, SEAMS_PREFIX } from '../lib/seams.js';
 import { softSkip } from '../lib/soft-skip.js';
 import { req } from '../lib/requirement-ids.js';
+import { refiredAttempts, type EffectRow } from '../lib/effect-refire.js';
 
 const MANIFEST_PATH = '/host/effect-seams';
 
@@ -115,9 +117,20 @@ describe('RFC 0173 §C.2 — effect-seam-no-refire (gated on replay, seam-driven
     }
     const forkEffects = await driver.get(`/runs/${encodeURIComponent(String(forkBody.runId))}/effects`);
     if (forkEffects.status !== 200) return softSkip('blocked', `GET /runs/{runId}/effects answered ${forkEffects.status} on the replay fork`);
+    // Not a count comparison. The seam fires ONE attempt, so a host that
+    // re-fires on replay reads 1 on the fork and `fork <= parent` passed it:
+    // measured, openwop-app with `sideEffecting` dropped still passed (suite
+    // 2.42.2). The witness is whether the fork records any attempt the parent
+    // never made (lib/effect-refire.ts): inherited history repeats a parent
+    // attempt, a re-fire is a new one.
+    const rowsOf = (r: OpenWOPResponse): EffectRow[] => {
+      const b = r.json as { effects?: unknown } | null;
+      return Array.isArray(b?.effects) ? (b.effects as EffectRow[]) : [];
+    };
+    const refired = refiredAttempts(rowsOf(parentEffects), rowsOf(forkEffects));
     expect(
-      countOf(forkEffects),
-      req('openwop.requirement.0173.effect-seam-no-refire', 'spec/v2/core/replay.md §Suppression', `seam ${String(target.seam)} is guarded, so a replay fork MUST NOT issue a further attempt through it — suppression is unconditional for mode: replay (§Suppression rule 1) and does not depend on branchReFires, which states only what a BRANCH may re-fire (§Branch: a host "MUST NOT report that as replay suppression"). The fork's effect ledger (${countOf(forkEffects)}) cannot exceed the parent's (${countOf(parentEffects)})`),
-    ).toBeLessThanOrEqual(countOf(parentEffects));
+      refired.length,
+      req('openwop.requirement.0173.effect-seam-no-refire', 'spec/v2/core/replay.md §Suppression', `seam ${String(target.seam)} is guarded, so a replay fork MUST NOT issue a further attempt through it — suppression is unconditional for mode: replay (§Suppression rule 1) and does not depend on branchReFires, which states only what a BRANCH may re-fire (§Branch: a host "MUST NOT report that as replay suppression"). The fork's ledger records ${refired.length} attempt(s) the parent never made: ${JSON.stringify(refired).slice(0, 300)}`),
+    ).toBe(0);
   });
 });
