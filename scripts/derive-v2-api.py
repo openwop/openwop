@@ -123,6 +123,15 @@ def v2_openapi_and_seams():
             'properties': {'providerUrl': {'type': 'string', 'format': 'uri', 'description': "The suite's fixture provider; it records each attempt's idempotency key."}}}}}},
         'responses': {'201': {'description': 'The run and effect that were retried.', 'content': {'application/json': {'schema': {'type': 'object', 'additionalProperties': False, 'required': ['runId', 'effectId'], 'properties': {'runId': {'$ref': '../schemas/v2/ids.schema.json#/$defs/runId'}, 'effectId': {'type': 'string', 'minLength': 1}}}}}},
             '400': {'$ref': '#/components/responses/ValidationError'}, '401': {'$ref': '#/components/responses/Unauthenticated'}}}}
+    # RFC 0213 §B witness (host-sample-test-seams.md §26): arms a single-use hold on the caller's next real create.
+    seams['paths']['/conformance/seams/sample/test/idempotency/hold'] = {'post': {'tags': ['Seams'], 'operationId': 'armIdempotencyHold',
+        'summary': "Hold the caller's next same-key create in flight — RFC 0213 §B witness",
+        'description': "Arms a single-use hold: the caller tenant's next real `POST /runs` carrying `key` as its Idempotency-Key keeps its Layer-1 claim in flight for `holdMs` after claiming, then completes normally. The seam MUST NOT answer a create or emit a 409: the refusal a concurrent same-key create receives while the claim is held comes from the host's production in-flight branch (idempotency.md §Concurrency). Keyed by (tenant, key); single-use; an unarmed key is never delayed.",
+        'requestBody': {'required': True, 'content': {'application/json': {'schema': {'type': 'object', 'additionalProperties': False, 'required': ['key', 'holdMs'],
+            'properties': {'key': {'type': 'string', 'pattern': '^[A-Za-z0-9._~-]{22,128}$'}, 'holdMs': {'type': 'integer', 'minimum': 1, 'maximum': 10000}}}}}},
+        'responses': {'201': {'description': 'The hold is armed.', 'content': {'application/json': {'schema': {'type': 'object', 'additionalProperties': False, 'required': ['key', 'holdMs'],
+            'properties': {'key': {'type': 'string'}, 'holdMs': {'type': 'integer'}}}}}},
+            '400': {'$ref': '#/components/responses/ValidationError'}, '401': {'$ref': '#/components/responses/Unauthenticated'}}}}
     seams['paths']['/conformance/seams/sample/webhooks/receive'] = {'post': {'tags': ['Seams'], 'operationId': 'receiveWebhookDelivery',
         'summary': 'Run a webhook delivery through the host\'s inbound receiver — RFC 0176 §D.2 witness',
         'description': 'The v2 host as a subscriber. The host verifies `headers` + `body` with its production verifier using `secret` as the subscription secret and reports the verdict; an `X-openwop-*`-only scheme-`v1` delivery over `{timestamp}.{rawBody}` MUST be accepted (`v2-v1-signed-webhook-accepted`), and a tampered signature MUST be refused.',

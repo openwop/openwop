@@ -91,6 +91,7 @@ Three new scenarios, off the core-standard floor (`v2-sse-last-event-id` is a fl
 | §A authz-first | same status + code with/without header, unknown run | the suite | witnessable; the foreign-tenant variant needs a second credential, else `blocked` |
 | §B one winner | distinct `runId` count | the suite (concurrency) | witnessable; overlap not guaranteed ⇒ `partial-witness` |
 | §B final-only handover | loser never receives a 429/5xx replay | host (needs a retryable winner) | seam-gated — recorded, not claimed |
+| §B in-flight refusal under a held claim (`openwop.requirement.0213.in-flight-refused-under-hold`) | a same-key create while the seam holds the claim is `409 idempotency_in_flight`, no retry timing in `details`; the held create wins | the suite, through the seams profile (`armIdempotencyHold`, host-sample-test-seams.md §26 — the seam only arms a hold; the 409 is the host's own path) | witnessable-gated (seam) — an additional witness; the unaided `§B one winner` row keeps §B off the seam-only ratchet |
 | §C one code | status of resolve after cancel | the suite | witnessable |
 
 ## Alternatives considered
@@ -103,7 +104,7 @@ Three new scenarios, off the core-standard floor (`v2-sse-last-event-id` is a fl
 ## Acceptance criteria
 
 - [ ] **§A** — `v2-sse-last-event-id-cursor` `executed-pass` on v2-reference and an openwop-app memory boot, with each sabotage red.
-- [ ] **§B** — `v2-idempotency-in-flight` `executed-pass` (not `partial-witness`) on one host. The record is in flight only while the winning *create request* is handled, so on a host that answers create in milliseconds the `409` branch rarely runs (v2-reference 2026-09-23: 5 of 5 answers were the winner plus four marked replays — `partial-witness`). The one-winner and replay-marker legs execute there; the `409` branch needs a host whose create handling overlaps, or a seam that holds a claim.
+- [ ] **§B** — `v2-idempotency-in-flight` `executed-pass` (not `partial-witness`) on one host. **Seam route (2026-09-26):** `0213.in-flight-refused-under-hold` drives the 409 branch deterministically through `armIdempotencyHold` (host-sample-test-seams.md §26) on a host that mounts the seams profile — an `executed-pass` on it satisfies this box. The record is in flight only while the winning *create request* is handled, so on a host that answers create in milliseconds the `409` branch rarely runs (v2-reference 2026-09-23: 5 of 5 answers were the winner plus four marked replays — `partial-witness`). The one-winner and replay-marker legs execute there; the `409` branch needs a host whose create handling overlaps, or a seam that holds a claim.
 - [ ] **§C** — `v2-interrupt-resolve-terminal` `executed-pass` on v2-reference; openwop-app ADR fix merged (run-scoped v2 ⇒ 409).
 - [ ] Invariant `event-cursor-after-authorization` resolves to a test.
 - [ ] RFC 0156 §B retrospective review row filed `not-reviewed`.
