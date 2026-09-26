@@ -599,6 +599,7 @@ Conformance: `multi-agent-memory-lifecycle.test.ts` (the MAE-3 behavioral assert
 - **Credential resolution + redaction seam** (RFC 0046) — `POST /v1/host/sample/credentials/echo`. Gated on `capabilities.credentials.supported`. Contract: resolve a seeded credential whose plaintext is a known canary, run an echo node, and return the run's observable surfaces (events + inputs + variables + channels + snapshot + debug bundle). The behavioral assertion in `credential-payload-redaction.test.ts` asserts the canary is absent from every returned surface (SECURITY invariant `credential-payload-redaction`); soft-skips on `404` until a credentials-advertising host wires the seam.
 - **OAuth connector-echo seam** (RFC 0047) — `POST /v1/host/sample/oauth/connector-echo`. Gated on `capabilities.oauth.supported`. Contract: a synthetic provider issues a token whose value is a known canary; a connector node runs; the run's observable surfaces (including the `connector.authorized` event) are returned. `oauth-connector-redaction.test.ts` asserts the token canary is absent from every surface and that `connector.authorized` carries the credential reference, not the token (reuses the `credential-payload-redaction` invariant); soft-skips on `404`.
 - **OAuth client seams** (RFC 0199 §A–§C) — `POST /v1/host/sample/oauth/authorize-start` (`{ provider, authUrl?, tokenUrl?, issuer?, pkce?, scopes?, connection?, redirectUri? }` → `201 { authorizationUrl }`) and `POST /v1/host/sample/oauth/expire-refresh` (`{ provider }` → `204`); v2 twins at `/conformance/seams/sample/oauth/…` (`api/seams-v2.yaml`, the normative seam contract). Gated on `oauth` + `authorization_code`. `authorize-start` points the provider at the suite's authorization-server double and MUST call the host's **production** authorization-URL builder (a seam that builds its own URL measures a stub); the grant completes on the host's production callback, and `redirectUri` is a probe the host ignores. `expire-refresh` only expires the stored access token, so the next use exercises the production refresh path. Witnessed by `v2-oauth-client-pkce-state-iss`, `v2-oauth-mcp-reach-discovery` and `v2-credential-interrupt`; the suite's double counts every token request, so no leg reads the host's own ledger.
+- **Credential mint/revoke seams** (RFC 0170 §B.3) — `POST /v1/host/sample/auth/credential/mint` (`{ lane? }` → `201 { lane, credential, subjectId? }`; `lane` absent ⇒ `api-key`) and `POST /v1/host/sample/auth/credential/revoke` (`{ credential, lane? }` → `200 { revoked: true, lane? }`, `404` when no active credential matches); v2 twins at `/conformance/seams/sample/auth/credential/…` (`api/seams-v2.yaml`, the normative seam contract). Gated on an advertised lane whose `revocation` is `next-request`. Both MUST use the host's **production** issuance and revocation paths; the refusal the witness reads (`401 credential_revoked` on the next request) is observed on the canonical API, never through the seam. Added to the contract in 2.39.5: `v2-revocation-honored` already drove them, and the v2 reference host already served them, but a host reading this document could not know it owed them.
 - **Run-ownership seam** (RFC 0048) — `GET /v1/host/sample/identity/owned-run`. Contract: return a `RunSnapshot` that carries an `owner` triple. `cross-workspace-isolation.test.ts` asserts the owner echo carries a non-empty `tenant`; soft-skips on `404` (or when `owner` is omitted by a single-tenant host).
 - **Cross-workspace isolation seam** (RFC 0048 §D) — `POST /v1/host/sample/identity/cross-workspace-read`. Contract: a `principal` scoped to workspace A attempts to read a run owned by workspace B. `cross-workspace-isolation.test.ts` asserts the read fails closed with `run_forbidden` / `not_found` (no existence leak); soft-skips on `404` until a workspace-ownership host wires the seam.
 - **Authorization-decision seam** (RFC 0049 §C) — `POST /v1/host/sample/authorization/decide`. Gated on `capabilities.authorization.supported`. Contract: request a decision (`{ principal, action, resource }`) for a principal whose role is absent/unseeded; the host MUST return `{ allowed: false }` (fail-closed). `authorization-fail-closed.test.ts` asserts the deny (SECURITY invariant `authorization-fail-closed`); soft-skips on `404` until an authorization-advertising host wires the seam.
@@ -1044,3 +1045,28 @@ makes that failure visible instead of green.
 A host that does not mount this seam leaves the scenario recording `blocked` (unwitnessed), never
 `inapplicable`: the requirement applies to every host, so its absence is missing evidence rather
 than a requirement that does not bind.
+
+### 26. Idempotency hold — `POST /conformance/seams/sample/test/idempotency/hold` (RFC 0213 §B)
+
+| Field                     | Value                                                                                |
+| ------------------------- | ------------------------------------------------------------------------------------ |
+| Method + path             | `POST /conformance/seams/sample/test/idempotency/hold` (v2 only; `api/seams-v2.yaml` `armIdempotencyHold`) |
+| Capability gate           | none — the obligation is unconditional (`spec/v2/core/idempotency.md` §Concurrency) |
+| Profile gate              | `conformance.seamsProfile: "openwop-conformance-seams-v2"`                            |
+| Introduced                | RFC 0213 §B witness. The unaided leg (`v2-idempotency-in-flight`) records `partial-witness` on a host whose create answers in milliseconds: five concurrent same-key creates never overlap, so the `409 idempotency_in_flight` branch never runs. |
+
+OPTIONAL. Request `{ key, holdMs }` — `key` an Idempotency-Key (`^[A-Za-z0-9._~-]{22,128}$`),
+`holdMs` an integer in `1..10000` — answers `201 { key, holdMs }`. It **arms a single-use hold**:
+the caller tenant's **next real `POST /runs`** carrying that Idempotency-Key keeps its Layer-1
+claim in flight for `holdMs` after claiming, then runs normally and completes as the winner.
+
+The seam **MUST NOT** answer a create, emit a `409`, or synthesize claim state of its own: the
+refusal a concurrent same-key create receives while the claim is held **MUST** come from the
+host's production in-flight branch (`409 idempotency_in_flight`, no retry timing in `details`,
+`Retry-After` when set). A hold is keyed by `(tenant, key)`, is consumed by the one create it
+arms, and expires unconsumed; a key that was never armed is never delayed — the production
+path is unchanged.
+
+Consumed by `v2-idempotency-in-flight` leg `0213.in-flight-refused-under-hold`. A host that
+advertises the seams profile but does not serve the path records that leg `blocked`; a host
+that does not advertise the profile records it `inapplicable`.

@@ -32,6 +32,7 @@
  *   2   suite couldn't start (missing required args, etc)
  */
 
+import { pinnedPortWorkerConflict } from './lib/pinned-ports.js';
 import { spawnSync } from 'node:child_process';
 import { fileURLToPath } from 'node:url';
 import { dirname, resolve as resolvePath, join } from 'node:path';
@@ -907,6 +908,13 @@ async function runCertify(args: ParsedArgs, baseUrl: string, apiKey: string): Pr
 
 async function main(): Promise<never> {
   const args = parseArgs(process.argv.slice(2));
+  // Refused before anything runs: a pinned-port certification that is not
+  // single-worker loses the host's traffic to a worker nobody reads (lib/pinned-ports.ts).
+  const pinnedConflict = pinnedPortWorkerConflict(process.env, args.maxWorkers, args.certify !== undefined);
+  if (pinnedConflict !== null) {
+    process.stderr.write(`openwop-conformance: ${pinnedConflict}\n`);
+    process.exit(2);
+  }
 
   if (args.help) {
     process.stdout.write(HELP_TEXT);

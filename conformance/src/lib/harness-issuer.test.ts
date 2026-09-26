@@ -44,19 +44,18 @@ describe('harnessClaimed', () => {
 });
 
 describe('serveHarnessIssuer', () => {
-  it('listens on OPENWOP_CONFORMANCE_OIDC_PORT when set, and serves the issuer the URL names', async () => {
+  it('binds 0.0.0.0 under OPENWOP_CONFORMANCE_HARNESS_HOST (loopback otherwise) and serves the issuer the URL names', async () => {
     const issuer = createSyntheticOIDCIssuer({ issuer: 'http://harness.invalid:9', audience: 'a' });
-    vi.stubEnv('OPENWOP_CONFORMANCE_OIDC_PORT', '0');
-    // Port 0 is not a pin (out of range), so it falls back to the URL port; use a free pin instead.
-    const probe = await serveHarnessIssuer(issuer, 'http://127.0.0.1:0');
-    const free = (probe.address() as { port: number }).port;
-    await new Promise<void>((r) => probe.close(() => r()));
-    vi.stubEnv('OPENWOP_CONFORMANCE_OIDC_PORT', String(free));
-    const srv = await serveHarnessIssuer(issuer, 'http://harness.invalid:9');
-    try {
-      expect((srv.address() as { port: number }).port).toBe(free);
-      const doc = await (await fetch(`http://127.0.0.1:${free}/.well-known/openid-configuration`)).json() as { issuer: string };
-      expect(doc.issuer).toBe('http://harness.invalid:9');
-    } finally { await new Promise<void>((r) => srv.close(() => r())); }
+    for (const [harnessHost, want] of [[undefined, '127.0.0.1'], ['host.docker.internal', '0.0.0.0']] as const) {
+      if (harnessHost !== undefined) vi.stubEnv('OPENWOP_CONFORMANCE_HARNESS_HOST', harnessHost);
+      vi.stubEnv('OPENWOP_TEST_OIDC_ISSUER_PORT', '');
+      const srv = await serveHarnessIssuer(issuer, 'http://127.0.0.1:0');
+      try {
+        const addr = srv.address() as { address: string; port: number };
+        expect(addr.address).toBe(want);
+        const doc = await (await fetch(`http://127.0.0.1:${addr.port}/.well-known/openid-configuration`)).json() as { issuer: string };
+        expect(doc.issuer).toBe('http://harness.invalid:9');
+      } finally { await new Promise<void>((r) => srv.close(() => r())); vi.unstubAllEnvs(); }
+    }
   });
 });

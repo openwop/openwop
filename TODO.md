@@ -9,20 +9,26 @@
 > Tick a box only when the change is merged on `main`. Keep this file current as phases
 > land; delete it when every phase is closed.
 
-## Progress (updated 2026-09-24, evening)
+## Status: PROGRAM COMPLETE (2026-09-26)
 
-| Item | State |
-|---|---|
-| Phase 1 corrections + drift gates | **merged** #1510 |
-| RFC 0211 A2A errors are ErrorInfo | **Accepted** #1548 — tier-1: certified public v2-reference cut on published 2.38.0 (#1542); invariant `a2a-error-no-existence-oracle` → protocol |
-| RFC 0212 JCS / preimages | **Accepted** #1539 — tier-1 steward-verified: openwop-app verifiers `4d433452d` (#4099, now refuse non-I-JSON) + registry signer `c15d3d6`; corpus-gate suite rows |
-| RFC 0213 three unstated outcomes | **Active** #1517. §A/§C witnessed on v2-reference 2.38.0; **§B blocked**: v2-reference serializes same-key creates (partial-witness). Needs a certified openwop-app cut on 2.38.0+ (409 branch) — openwop-app-ce: #4106 (0200 challenge-401) → deploy → TENANT_B export fix → cut |
-| RFC 0214 A2A push credentials | **Active** #1519. D2 **reversed 2026-09-24** (receiver harness existed): v2-reference implements push (examples#85), suite legs + `v2-a2a-push-delivery` landed (#1546, opens 2.39.0). Accepted ⇐ David's go on 2.39.0 publish + one public push-on cut (openwop-77 asking) |
-| Suite | 2.38.0 published (latest); 2.39.0 cycle open on main |
-| Siblings | registry#74; examples#82, #83 (v2-ref 0211), #85 (v2-ref push); openwop-app#4097 (ADR 0744, deployed ea9cd39ee), #4099 (verifier I-JSON refusal); openwop-sdks re-vendor to v2.38.0 in flight |
-| Upstream | wave 1: ext-tasks#23, A2A#1574, #1685 · wave 2: A2A#1988, #1986, #1987 · wave 3 (≥ 2026-09-26): new ext-tasks listen-reconnect issue, A2A#2103 |
-| Watch | A2A PR #2068 (SubscribeToTask POST→GET prose) |
-| Open check | RFC 0058 run-timeout leg red once under load in openwop-app#4099 CI; re-run on a quiet machine pending (code-read says unrelated) |
+All four program RFCs are **Accepted** (provisional, RFC 0156 §B review owed, as every overridden-window RFC is):
+
+| RFC | Accepted | Evidence |
+|---|---|---|
+| 0211 A2A error details are ErrorInfo | #1548 | certified public v2-reference cut, published 2.38.0 (#1542) |
+| 0212 canonical JSON is JCS | #1539 | openwop-app verifiers (#4099) + registry signer (registry#74); corpus-gate suite rows |
+| 0213 three unstated outcomes | #1579 | certified public v2-reference cut, published 2.39.5 (#1575) incl. §B via the seams-profile claim hold (#1572, examples#88); openwop-app colocated companion (#1577) |
+| 0214 A2A push credentials | #1579 | refusal leg: #1542 (push off); all eight §A–§E legs: #1575 (push on, suite-owned public receiver) — D2 reversed 2026-09-24, push built in examples#85 |
+
+Phases: 1 (#1510) · 2+4 (Active flips #1514/#1517/#1519/#1518) · 3 (openwop-app#4097/#4099, examples#83/#85/#88, registry#74, sdks#49) · 5 (above) · 6 (upstream waves 1–3: ext-tasks#23/#24, A2A#1574/#1685/#1986/#1987/#1988/#2103). Suite releases along the way: 2.37.0 → 2.39.5.
+
+**Residuals owned elsewhere (not this program):**
+- RFC 0199 needs a PRODUCTION witness for its box 374 (15/15 on v2-reference, #1575) — openwop-77, raised with David.
+- RFC 0210 needs its tier-2 box (MyndHyve advertisement fix) — openwop-77.
+- Promote `v2-sse-last-event-id-cursor` onto the core-standard floor after measuring all three bundle hosts.
+- Audit-entry export shape → a future `auditLogIntegrity` RFC.
+- openwop-sdks#50: 1.x SDKs' unregisterWebhook never sends the required `tenantId` (Go signature decision).
+- Watch A2A PR #2068 (SubscribeToTask POST→GET prose) → revisit the interop-map D1 exception if it merges.
 
 ## Binding constraints
 
@@ -477,8 +483,14 @@ delivery MUST NOT be degraded by an unrelated subscription's failures.
 - [x] Decide invariant vs §Durability clause: **both**. The text goes in §Durability, and two
       invariant rows (`webhook-delivery-isolation`, `webhook-unregister-stops-delivery`) are
       filed at `Active`. Reasons are in RFC 0215 §"Proposed invariants".
-- [ ] Take RFC 0215 to `Active`: comment window, the prior-art survey (its G6), and a threat-model
-      home for the availability invariant (its G3).
+- [x] Prior-art survey (G6) and a threat-model home for the availability invariant (G3), both
+      done 2026-09-25: RFC 0215 §Prior art; `threat-model-secret-leakage.md` §4.12.
+- [x] RFC 0215 `Active` 2026-09-25, window waived by steward override of RFC 0147 §A.6
+      (suite 2.40.0): the `webhooks.md` text, both invariant rows citing §4.12, and both
+      scenarios, sabotage-proved on the v2 reference host.
+- [ ] Publish 2.40.0, then take RFC 0215 to `Accepted` on certified bundles from two hosts, at
+      least one deployed (openwop-app is replacing its batch barrier; MyndHyve is fixing §B;
+      the v2 reference host already passes). The RFC 0156 §B review stays owed.
 
 ## S4 — two defect patterns from my RFC 0158 rows, both found by hosts · **pattern check, no code owed**
 

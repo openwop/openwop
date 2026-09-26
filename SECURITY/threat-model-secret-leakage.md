@@ -199,6 +199,18 @@ The delivery-time guard is what contains this: a host that correctly implements 
 
 **Residual.** Subscriptions that do not opt in keep the flooding vector open; the RFC names it and defers the mandatory form.
 
+### 4.12 Starvation by registration, and delivery after withdrawal (RFC 0215) — `webhook-delivery-isolation`, `webhook-unregister-stops-delivery`
+
+This is an availability threat on the delivery surface that §4.11 already models. It sits here because §4.11 is where registration-as-abuse is analysed. No threat model in `SECURITY/` covers availability or a noisy neighbour, and RFC 0215 gap G3 records that as the reason for this placement.
+
+**Threat — starvation (§A).** The attacker holds the same capability as in §4.11: a member of any tenant, with `webhooks:manage` on its own subscriptions. It registers subscriptions to receivers that accept the connection and never answer. On a host that shares delivery capacity, each attempt holds a worker until the host's own timeout. A host that works through a claimed batch in sequence therefore delays every other subscription behind it, in every tenant, for as long as the dead receivers are due. Every retry re-arms the hold. The attacker needs no other tenant's credential and sends nothing a host would refuse. openwop-app measured this failure while conformant to the letter (WHD-1): a healthy subscription's first attempt started about 5.5 minutes after its event, against a 2 s backoff.
+
+**Threat — delivery after withdrawal (§B).** An unregistered URL is one its owner no longer vouches for. An expired tunnel hostname or a lapsed domain can be claimed by someone else. A host that keeps the pending attempts of an unregistered subscription keeps POSTing signed run events there, so whoever holds the name next receives run data the owner told the host to stop sending. openwop-app measured about 1,600 such attempts to one withdrawn tunnel (WHD-16).
+
+**Control (RFC 0215, `Active` 2026-09-25; `webhooks.md` §Durability).** §A: an attempt to one subscription does not wait for an attempt to a different subscription to finish, sustained with at least 8 attempts outstanding and unanswered. A host SHOULD NOT let one tenant's unanswered attempts occupy capacity another tenant's deliveries need. §B: after `unregisterWebhook` answers `204`, the host starts no further attempt for that subscription, retries included; an attempt whose request was already being sent MAY complete. Witnessed by invariants `webhook-delivery-isolation` and `webhook-unregister-stops-delivery` (both `witnessable-gated`, suite 2.40.0), which cite this section.
+
+**Residual.** §A binds only up to its floor. Past 8 unanswered attempts a bounded host may fill, and the cross-tenant half is a SHOULD witnessed only with an operator-supplied second-tenant credential. §B stops attempts *started* after the `204`. An attempt already in flight may still arrive, and nothing recalls what was delivered while the subscription was live. A name that changes hands *before* its owner unregisters is outside §B entirely, because the host has no signal that the destination changed.
+
 ## 6. Residual risks
 
 - **Host-internal memory.** A reference impl that holds decrypted secrets in process memory remains vulnerable to OS-level attacks (core dumps, swap, debug attach). Out of scope for protocol-level threat model; handled by host operator policy.

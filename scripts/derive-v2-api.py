@@ -123,6 +123,15 @@ def v2_openapi_and_seams():
             'properties': {'providerUrl': {'type': 'string', 'format': 'uri', 'description': "The suite's fixture provider; it records each attempt's idempotency key."}}}}}},
         'responses': {'201': {'description': 'The run and effect that were retried.', 'content': {'application/json': {'schema': {'type': 'object', 'additionalProperties': False, 'required': ['runId', 'effectId'], 'properties': {'runId': {'$ref': '../schemas/v2/ids.schema.json#/$defs/runId'}, 'effectId': {'type': 'string', 'minLength': 1}}}}}},
             '400': {'$ref': '#/components/responses/ValidationError'}, '401': {'$ref': '#/components/responses/Unauthenticated'}}}}
+    # RFC 0213 §B witness (host-sample-test-seams.md §26): arms a single-use hold on the caller's next real create.
+    seams['paths']['/conformance/seams/sample/test/idempotency/hold'] = {'post': {'tags': ['Seams'], 'operationId': 'armIdempotencyHold',
+        'summary': "Hold the caller's next same-key create in flight — RFC 0213 §B witness",
+        'description': "Arms a single-use hold: the caller tenant's next real `POST /runs` carrying `key` as its Idempotency-Key keeps its Layer-1 claim in flight for `holdMs` after claiming, then completes normally. The seam MUST NOT answer a create or emit a 409: the refusal a concurrent same-key create receives while the claim is held comes from the host's production in-flight branch (idempotency.md §Concurrency). Keyed by (tenant, key); single-use; an unarmed key is never delayed.",
+        'requestBody': {'required': True, 'content': {'application/json': {'schema': {'type': 'object', 'additionalProperties': False, 'required': ['key', 'holdMs'],
+            'properties': {'key': {'type': 'string', 'pattern': '^[A-Za-z0-9._~-]{22,128}$'}, 'holdMs': {'type': 'integer', 'minimum': 1, 'maximum': 10000}}}}}},
+        'responses': {'201': {'description': 'The hold is armed.', 'content': {'application/json': {'schema': {'type': 'object', 'additionalProperties': False, 'required': ['key', 'holdMs'],
+            'properties': {'key': {'type': 'string'}, 'holdMs': {'type': 'integer'}}}}}},
+            '400': {'$ref': '#/components/responses/ValidationError'}, '401': {'$ref': '#/components/responses/Unauthenticated'}}}}
     seams['paths']['/conformance/seams/sample/webhooks/receive'] = {'post': {'tags': ['Seams'], 'operationId': 'receiveWebhookDelivery',
         'summary': 'Run a webhook delivery through the host\'s inbound receiver — RFC 0176 §D.2 witness',
         'description': 'The v2 host as a subscriber. The host verifies `headers` + `body` with its production verifier using `secret` as the subscription secret and reports the verdict; an `X-openwop-*`-only scheme-`v1` delivery over `{timestamp}.{rawBody}` MUST be accepted (`v2-v1-signed-webhook-accepted`), and a tampered signature MUST be refused.',
@@ -172,6 +181,31 @@ def v2_openapi_and_seams():
         'requestBody': {'required': True, 'content': {'application/json': {'schema': {'type': 'object', 'additionalProperties': False, 'required': ['provider'],
             'properties': {'provider': {'type': 'string', 'minLength': 1}}}}}},
         'responses': {'204': {'description': 'The access token is expired.'}, '400': {'$ref': '#/components/responses/ValidationError'}, '401': {'$ref': '#/components/responses/Unauthenticated'}, '404': {'$ref': '#/components/responses/NotFound'}}}}
+    # RFC 0170 §B.3 witness: the per-lane credential mint/revoke pair `v2-revocation-honored` drives. Named by the RFC and
+    # served by the v2 reference host since 2.x, but absent from this contract until 2.39.5 — so a host advertising the
+    # seams profile could not know it owed them, and under --require-behavior their absence was a hard fail. The shape is
+    # the one the reference host already serves (examples v2-reference src/seams.ts), not a new one.
+    seams['paths']['/conformance/seams/sample/auth/credential/mint'] = {'post': {'tags': ['Seams'], 'operationId': 'mintLaneCredential',
+        'summary': 'Mint a fresh credential on an advertised lane for the caller\'s tenant — RFC 0170 §B.3 witness',
+        'description': ('Issues a new credential on `lane` (an advertised `auth.lanes[].lane` whose `revocation` is `next-request`; absent ⇒ `api-key`) for the AUTHENTICATED '
+            'caller\'s tenant, through the host\'s PRODUCTION issuance path, so the credential it returns authenticates on the canonical API exactly as an ordinary one does. The '
+            'suite uses it only to hold a credential it can then revoke: the revocation, and the refusal on the next request (`401 credential_revoked`), are production '
+            'behaviour the seam does not simulate. A host that has not wired the seam answers `404`, and the scenario records the requirement unobserved.'),
+        'requestBody': {'required': True, 'content': {'application/json': {'schema': {'type': 'object', 'additionalProperties': False,
+            'properties': {'lane': {'type': 'string', 'minLength': 1, 'description': 'An advertised `auth.lanes[].lane`; absent ⇒ `api-key`.'}}}}}},
+        'responses': {'201': {'description': 'The minted credential.', 'content': {'application/json': {'schema': {'type': 'object', 'additionalProperties': False, 'required': ['lane', 'credential'],
+                'properties': {'lane': {'type': 'string'}, 'credential': {'type': 'string', 'minLength': 1, 'description': 'The bearer credential, presented as `Authorization: Bearer <credential>`.'},
+                    'subjectId': {'type': 'string', 'description': 'The Subject the credential authenticates as, when the host names one.'}}}}}},
+            '400': {'$ref': '#/components/responses/ValidationError'}, '401': {'$ref': '#/components/responses/Unauthenticated'}, '404': {'$ref': '#/components/responses/NotFound'}}}}
+    seams['paths']['/conformance/seams/sample/auth/credential/revoke'] = {'post': {'tags': ['Seams'], 'operationId': 'revokeLaneCredential',
+        'summary': 'Revoke a credential the mint seam issued — RFC 0170 §B.3 witness',
+        'description': ('Revokes `credential` through the host\'s PRODUCTION revocation path. On a `next-request` lane the very next request presenting it MUST be refused '
+            '`401 credential_revoked` (identity.md §2.2); the suite observes that on the canonical API, not through this seam. `404` when no active credential matches.'),
+        'requestBody': {'required': True, 'content': {'application/json': {'schema': {'type': 'object', 'additionalProperties': False, 'required': ['credential'],
+            'properties': {'lane': {'type': 'string', 'minLength': 1}, 'credential': {'type': 'string', 'minLength': 1}}}}}},
+        'responses': {'200': {'description': 'The credential is revoked.', 'content': {'application/json': {'schema': {'type': 'object', 'additionalProperties': False, 'required': ['revoked'],
+                'properties': {'revoked': {'type': 'boolean', 'const': True}, 'lane': {'type': 'string'}}}}}},
+            '400': {'$ref': '#/components/responses/ValidationError'}, '401': {'$ref': '#/components/responses/Unauthenticated'}, '404': {'$ref': '#/components/responses/NotFound'}}}}
     # RFC 0173 read surfaces + hostEvents default address
     paths['/host/effect-seams'] = {'get': {'tags': ['host'], 'operationId': 'getEffectSeamManifest', 'summary': 'The host-declared effect-seam manifest (RFC 0173 §C)', 'description': 'Every outbound effect seam replay suppression covers. A seam omitted here is invisible to the suite; the RFC 0140 R5 audit is the control.', 'responses': {'200': {'description': 'The manifest.', 'content': {'application/json': {'schema': {'$ref': '../../schemas/v2/effect-seam-manifest.schema.json'}}}}, '401': {'$ref': '#/components/responses/Unauthenticated'}}}}
     paths['/runs/{runId}/compensation'] = {'parameters': [{'$ref': '#/components/parameters/RunId'}], 'get': {'tags': ['runs'], 'operationId': 'getRunCompensation', 'summary': 'Compensation plan and attempts for a run (RFC 0173 §C.1)', 'description': 'The read projection that makes compensation a core obligation with a deployed-wire witness (RFC 0151 G9 / RFC 0173 §B).', 'responses': {'200': {'description': 'The projection.', 'content': {'application/json': {'schema': {'$ref': '../../schemas/v2/compensation-projection.schema.json'}}}}, '404': {'$ref': '#/components/responses/NotFound'}}}}

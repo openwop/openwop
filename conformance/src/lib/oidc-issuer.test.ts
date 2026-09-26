@@ -16,9 +16,9 @@
  * @see RFCS/0010-auth-profile-conformance.md §E
  */
 
-import { describe, it, expect } from 'vitest';
+import { afterEach, describe, it, expect } from 'vitest';
 import { createPublicKey, createVerify, type JsonWebKey } from 'node:crypto';
-import { createSyntheticOIDCIssuer } from './oidc-issuer.js';
+import { createSyntheticOIDCIssuer, issuerListenPort } from './oidc-issuer.js';
 
 function base64UrlDecode(input: string): Buffer {
   const pad = input.length % 4 === 0 ? 0 : 4 - (input.length % 4);
@@ -361,5 +361,31 @@ describe('oidc-issuer: two instances at one issuer URL (2.37.0)', () => {
     // Before 2.37.0 both kids were `openwop-conformance-key-1`: the cache hit
     // returned the FIRST key and this valid control token failed.
     expect(verify(second.mint({ sub: 'b' }).token)).toBe(true);
+  });
+});
+
+describe('issuerListenPort — the local bind port is separate from the URL the host trusts (2.39.4)', () => {
+  const KEY = 'OPENWOP_TEST_OIDC_ISSUER_PORT';
+  afterEach(() => { delete process.env[KEY]; });
+
+  it('a tunnelled https issuer with no port binds OPENWOP_TEST_OIDC_ISSUER_PORT, not :80', () => {
+    // The regression: `https://x.trycloudflare.com` parsed to :80, and a
+    // non-root operator got EACCES binding it (openwop-app-ce, 2026-09-25).
+    process.env[KEY] = '3839';
+    expect(issuerListenPort('https://x.trycloudflare.com')).toBe(3839);
+  });
+  it('the explicit port wins even when the URL names one (the front forwards to the local port)', () => {
+    process.env[KEY] = '4455';
+    expect(issuerListenPort('http://127.0.0.1:9000')).toBe(4455);
+  });
+  it('unset, the old rule is unchanged: the URL\'s port, else 80', () => {
+    expect(issuerListenPort('http://127.0.0.1:9000')).toBe(9000);
+    expect(issuerListenPort('https://issuer.example.com')).toBe(80);
+  });
+  it('a malformed port is refused loudly rather than silently falling back', () => {
+    process.env[KEY] = 'eighty';
+    expect(() => issuerListenPort('https://x.example.com')).toThrow(/OPENWOP_TEST_OIDC_ISSUER_PORT/);
+    process.env[KEY] = '70000';
+    expect(() => issuerListenPort('https://x.example.com')).toThrow(/1\.\.65535/);
   });
 });

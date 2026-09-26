@@ -3623,7 +3623,7 @@ invariants:
     witnessReview: initial-mechanical-2026-09-02
 
   - id: a2a-push-credential-destination-bound
-    tier: reference-impl
+    tier: protocol
     severity: critical
     threat_model: SECURITY/threat-model-secret-leakage.md
     tests:
@@ -3646,11 +3646,15 @@ invariants:
       and the corpus-coherence check, so this invariant has no host witness
       yet. Reference-impl at Active; graduates to protocol only on a
       non-vacuous executed-pass on a deployed host advertising push.
+      GRADUATED 2026-09-26 at RFC 0214 Accepted: the certified public
+      v2-reference cut on published 2.39.5 (openwop#1575, push advertised,
+      suite-owned public HTTPS receiver) records a2a-push-delivery-authenticated
+      and a2a-push-no-redirect executed-pass.
     witness: witnessable-gated
-    witnessReview: reviewed-2026-09-23
+    witnessReview: reviewed-2026-09-26
 
   - id: a2a-push-secrets-not-returned
-    tier: reference-impl
+    tier: protocol
     severity: high
     threat_model: SECURITY/threat-model-secret-leakage.md
     tests:
@@ -3663,8 +3667,11 @@ invariants:
       a2a.pushNotifications; no committed host advertises it (2026-09-23), so
       there is no host witness yet. Reference-impl at Active; graduates to
       protocol only on a non-vacuous executed-pass on a deployed host.
+      GRADUATED 2026-09-26 at RFC 0214 Accepted: openwop#1575 (certified
+      public v2-reference cut on published 2.39.5, push advertised) records
+      a2a-push-secrets-not-returned executed-pass.
     witness: witnessable-gated
-    witnessReview: reviewed-2026-09-23
+    witnessReview: reviewed-2026-09-26
 
   # ===== RFC 0102 — A2UI agent-authored interface surfaces =====
 
@@ -4781,3 +4788,50 @@ invariants:
       pass a refusal vector.
     witness: witnessable-unaided
     witnessReview: reviewed-2026-09-23
+
+  - id: webhook-delivery-isolation
+    tier: protocol
+    severity: high
+    threat_model: SECURITY/threat-model-secret-leakage.md
+    tests:
+      - conformance/src/scenarios/v2-webhook-delivery-isolation.test.ts
+    note: |
+      RFC 0215 §A (`spec/v2/core/webhooks.md` §Durability). The start of an
+      attempt to one subscription MUST NOT wait for an attempt to a different
+      subscription to finish, sustained while at least 8 subscriptions have
+      attempts outstanding that their receivers have not answered. The
+      availability counterpart of `webhook-cross-tenant-isolation`: on a host
+      with shared delivery capacity, a tenant that registers black-hole
+      receivers otherwise delays every other tenant's deliveries
+      (threat-model-secret-leakage.md §4.12, starvation by registration).
+      Measured on openwop-app before its fix: a sequential claimed batch held
+      healthy retries for minutes (RFC 0215 §Motivation 1). Witnessed with 8
+      held receivers filtering run.started and one healthy receiver filtering
+      run.completed of a 2 s delay run, so contention exists before the
+      healthy delivery falls due. Sabotage (v2-reference host): a sequential
+      worker and a 5-slot pool each fail the row.
+    witness: witnessable-gated
+    witnessReview: reviewed-2026-09-25
+
+  - id: webhook-unregister-stops-delivery
+    tier: protocol
+    severity: high
+    threat_model: SECURITY/threat-model-secret-leakage.md
+    tests:
+      - conformance/src/scenarios/v2-webhook-unregister-stops-delivery.test.ts
+    note: |
+      RFC 0215 §B (`spec/v2/core/webhooks.md` §Durability). After
+      `unregisterWebhook` answers 204 the host MUST NOT start any further
+      attempt for that subscription, including retries already scheduled. An
+      unregistered URL is one its owner no longer vouches for; an expired
+      tunnel or lapsed domain can be re-registered by someone else, and
+      continuing to deliver signed run events there hands them run data after
+      the owner said stop (threat-model-secret-leakage.md §4.12; openwop-app
+      measured ~1,600 signed attempts to a withdrawn tunnel, RFC 0215
+      §Motivation 2). Witnessed against a CONTROL subscription on the same run
+      that is not unregistered, so the target's silence counts only when a
+      retry demonstrably would have come. Sabotage (v2-reference host): an
+      attempt that falls back to a cached subscription after the delete fails
+      the row.
+    witness: witnessable-gated
+    witnessReview: reviewed-2026-09-25

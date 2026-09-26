@@ -1,7 +1,7 @@
 {
   "$schema": "./gaps.schema.json",
   "version": 1,
-  "updated": "2026-09-24",
+  "updated": "2026-09-26",
   "witnessClasses": [
     "witnessable-unaided",
     "witnessable-gated",
@@ -12668,8 +12668,8 @@
       "surface": "No `SECURITY/threat-model-*.md` covers availability or noisy-neighbour abuse. `webhook-delivery-isolation` has no threat model to cite, and `secret-leakage` does not fit a delay.",
       "witness": "unclassified",
       "requirementId": null,
-      "disposition": "transferred",
-      "target": "SECURITY/invariants.yaml",
+      "disposition": "closed",
+      "target": null,
       "sources": [
         {
           "file": "RFCS/registers/0215-webhook-delivery-isolation.gaps.md",
@@ -12685,8 +12685,8 @@
       "surface": "The cross-tenant leg needs tenant A to hold at least the §A.2 floor of attempts open while tenant B's delivery is observed. Its pass condition is a SHOULD, so it reports. Whether a reporting leg belongs in the certified bundle, or only in the run log, is not decided.",
       "witness": "unclassified",
       "requirementId": null,
-      "disposition": "transferred",
-      "target": "conformance/src/scenarios",
+      "disposition": "closed",
+      "target": null,
       "sources": [
         {
           "file": "RFCS/registers/0215-webhook-delivery-isolation.gaps.md",
@@ -12719,8 +12719,8 @@
       "surface": "The floor of 8 is chosen to exceed the one measured claim batch (openwop-app, 5), not derived from prior art. Hosted webhook services' published delivery designs were not surveyed.",
       "witness": "unclassified",
       "requirementId": null,
-      "disposition": "transferred",
-      "target": "rfc-0215",
+      "disposition": "closed",
+      "target": null,
       "sources": [
         {
           "file": "RFCS/registers/0215-webhook-delivery-isolation.gaps.md",

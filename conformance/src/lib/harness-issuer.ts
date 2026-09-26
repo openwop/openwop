@@ -7,7 +7,7 @@
  * one issuer, the one it stands up at `OPENWOP_TEST_OIDC_ISSUER_URL`.
  *
  * ── Why the gate reads the host's lane, not only the environment ────────────
- * Until 2.39.3 both files recorded `blocked` whenever the harness was not the
+ * Until 2.40.1 both files recorded `blocked` whenever the harness was not the
  * host's trust root. A PRODUCTION host MUST NOT trust a test issuer — a deployed
  * service that accepts tokens signed by a key living on a test runner has an
  * authentication bypass — so every honest production bundle advertising an
@@ -36,19 +36,20 @@
  * a colocated boot of the same release image.
  *
  * ── Reachability ─────────────────────────────────────────────────────────────
- * The issuer listens where the webhook receiver and the OAuth doubles do:
- * `receiverBinding()` (loopback, or `0.0.0.0` when
+ * The PORT is `issuerListenPort()` (2.39.4: `OPENWOP_TEST_OIDC_ISSUER_PORT`,
+ * else the URL's port). The BIND is `receiverBinding()`, as for the webhook
+ * receiver and the OAuth doubles: loopback, or `0.0.0.0` when
  * `OPENWOP_CONFORMANCE_HARNESS_HOST` says the host is in a container or on
- * another box), on `OPENWOP_CONFORMANCE_OIDC_PORT` when set, else the issuer
- * URL's own port. The URL itself is what the host was configured with and is
- * what `iss` and the discovery document carry; only the listening socket moves.
- * Before 2.39.3 the issuer bound `127.0.0.1` at the URL's port, so an issuer
- * URL naming `host.docker.internal` from a Linux container reached nothing.
+ * another box. Until 2.40.1 the issuer always bound `127.0.0.1`, so a host in a
+ * Linux container reaching it through `host-gateway` found nothing listening on
+ * the interface it arrived at (openwop-app ADR 0745 defect 2). The URL is what
+ * the host was configured with and is what `iss` and discovery carry; only the
+ * listening socket moves.
  */
 
 import { createServer, type Server } from 'node:http';
 import { receiverBinding } from './webhook-receiver.js';
-import type { SyntheticOIDCIssuer } from './oidc-issuer.js';
+import { issuerListenPort, type SyntheticOIDCIssuer } from './oidc-issuer.js';
 
 const norm = (u: string): string => u.trim().replace(/\/+$/, '');
 
@@ -76,11 +77,7 @@ export function harnessClaimed(lane: Readonly<Record<string, unknown>>, harnessU
 
 /** Serve `issuer`'s discovery + JWKS for the host to fetch. Resolves to the listening server. */
 export async function serveHarnessIssuer(issuer: SyntheticOIDCIssuer, url: string): Promise<Server> {
-  const parsed = new URL(url);
-  const pinned = Number(process.env['OPENWOP_CONFORMANCE_OIDC_PORT'] ?? '');
-  const port = Number.isInteger(pinned) && pinned > 0 && pinned < 65536
-    ? pinned
-    : parsed.port ? Number.parseInt(parsed.port, 10) : parsed.protocol === 'https:' ? 443 : 80;
+  const port = issuerListenPort(url);
   const { bind } = receiverBinding();
   const srv = createServer((r, res) => {
     if (r.url === '/.well-known/jwks.json') { res.writeHead(200, { 'Content-Type': 'application/json' }); res.end(issuer.jwksJson); return; }

@@ -28,7 +28,7 @@
  * that does not list it records `inapplicable` naming the issuers it does trust: the
  * harness is a suite instrument the host claims by advertising it (RFC 0168 §C.1's reading
  * for the seams profile; lib/harness-issuer.ts), and a production host must never trust a
- * test issuer. Corrected in 2.39.3; this was `blocked`, which denied certification to
+ * test issuer. Corrected in 2.40.1; this was `blocked`, which denied certification to
  * every honest production bundle. A claimed harness that cannot be served is `blocked` —
  * without a token the host would ever accept, "it refused a string" witnesses nothing.
  * A window under 120 s is `blocked`: the control token needs room inside it.
@@ -122,7 +122,7 @@ async function gate(): Promise<Gate | { readonly kind: 'inapplicable' | 'blocked
   // The harness is an instrument the host claims by listing it in THIS lane's issuers[]
   // (RFC 0168 §C.1's reading; lib/harness-issuer.ts). A production host lists its real
   // IdP and must never list a test issuer, so it records `inapplicable` naming the issuers
-  // it does trust. Before 2.39.3 this was `blocked`, which denied certification to every
+  // it does trust. Before 2.40.1 this was `blocked`, which denied certification to every
   // honest production bundle advertising an exp-only lane.
   const claim = harnessClaimed(lane, process.env['OPENWOP_TEST_OIDC_ISSUER_URL']);
   if (!claim.ok) return { kind: claim.kind, reason: claim.reason };

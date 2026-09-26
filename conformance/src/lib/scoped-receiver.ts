@@ -97,11 +97,76 @@ export interface ScopedReceiver {
  * with the nonce prefix stripped — exactly what it would see on a listener of
  * its own. It owns the response.
  */
+/**
+ * The listener behind every scoped receiver.
+ *
+ * On a public cut the operator PINS the receiver port (`OPENWOP_WEBHOOK_RECEIVER_PORT`,
+ * the one the front forwards to), so every receiver alive at once must share ONE
+ * server on it: routing is already per-nonce (`routeFronted`), so the listener
+ * only has to exist. Until 2.39.3 each receiver bound the pinned port itself; a
+ * second concurrent receiver hit EADDRINUSE with no `error` listener attached,
+ * its `listen` promise never settled, and the leg hung to vitest's timeout — the
+ * three `v2-a2a-push-delivery` legs lost on the 2.39.0 and 2.39.2 public cuts.
+ * Loopback runs bind ephemeral ports, which is why no rehearsal ever showed it.
+ *
+ * Unpinned, each receiver keeps a listener of its own (ephemeral port).
+ */
+interface Listener { server: Server; port: number; origin: string; members: Set<Member> }
+interface Member { nonce: string; foreign: number }
+/**
+ * A pinned port's shared listener and its claim count. The claim is taken
+ * SYNCHRONOUSLY, before the first await (2.39.4): a sibling that read the entry
+ * and was still awaiting the bind used to be invisible to a closing holder, which
+ * dropped the count to zero and shut the server under it.
+ */
+interface Shared { listening: Promise<Listener>; refs: number }
+const sharedByPort = new Map<string, Shared>();
+
+function handlerFor(members: Set<Member>) {
+  return (request: IncomingMessage, res: ServerResponse): void => {
+    // Counted BEFORE routing, per live receiver: `routeFronted` answers an
+    // unknown nonce itself and cannot report that it did, and a request that is
+    // not an exercise's own must still be visible in that exercise's failure detail.
+    const path = withoutFrontPath(WEBHOOK_FRONT_ENV, request.url ?? '/');
+    for (const m of members) if (!path.startsWith(`${FRONT_MUX_PREFIX}${m.nonce}`)) m.foreign += 1;
+    if (routeFronted(WEBHOOK_FRONT_ENV, request, res)) return;
+    // Not an `/fx/` path at all: a stranger, or a host that dropped the path it
+    // was given. Answered, never recorded — a receiver that counts what it was
+    // not addressed to is the defect this helper exists to remove.
+    request.resume();
+    res.writeHead(404, { 'Content-Type': 'application/json' });
+    res.end(JSON.stringify({ error: 'this receiver serves one conformance exercise; address its nonce path' }));
+  };
+}
+
+async function listen(port: number, binding: { bind: string; advertise: string }): Promise<Listener> {
+  const members = new Set<Member>();
+  const server = createServer(handlerFor(members));
+  await new Promise<void>((resolve, reject) => {
+    const onError = (err: Error): void => {
+      reject(new Error(`scoped receiver could not bind ${binding.bind}:${port} — ${err.message}. A pinned OPENWOP_WEBHOOK_RECEIVER_PORT must be free for this process (another process holds it?)`));
+    };
+    server.once('error', onError);
+    server.listen(port, binding.bind, () => { server.off('error', onError); resolve(); });
+  });
+  const addr = server.address();
+  if (typeof addr !== 'object' || addr === null) throw new Error('receiver address unavailable');
+  return { server, port: addr.port, origin: `http://${binding.advertise}:${addr.port}`, members };
+}
+
+function shut(server: Server): Promise<void> {
+  return new Promise<void>((resolve) => {
+    // A keep-alive socket held open through a tunnel must not keep close() pending.
+    (server as Server & { closeIdleConnections?: () => void }).closeIdleConnections?.();
+    server.close(() => resolve());
+    (server as Server & { closeAllConnections?: () => void }).closeAllConnections?.();
+  });
+}
+
 export async function startScopedReceiver(
   respond: (hit: ScopedHit, res: ServerResponse) => void,
 ): Promise<ScopedReceiver> {
   const nonce = randomBytes(9).toString('hex');
-  let foreign = 0;
   const own = (request: IncomingMessage, res: ServerResponse): void => {
     const chunks: Buffer[] = [];
     request.on('data', (c: Buffer) => chunks.push(c));
@@ -117,41 +182,53 @@ export async function startScopedReceiver(
       );
     });
   };
-  registerBehindFront(WEBHOOK_FRONT_ENV, nonce, own);
-  const server = createServer((request: IncomingMessage, res: ServerResponse) => {
-    // Counted BEFORE routing: `routeFronted` answers an unknown nonce itself and
-    // cannot report that it did, and a request that is not this exercise's must
-    // still be visible in the failure detail.
-    if (!withoutFrontPath(WEBHOOK_FRONT_ENV, request.url ?? '/').startsWith(`${FRONT_MUX_PREFIX}${nonce}`)) foreign += 1;
-    if (routeFronted(WEBHOOK_FRONT_ENV, request, res)) return;
-    // Not an `/fx/` path at all: a stranger, or a host that dropped the path it
-    // was given. Answered, never recorded — a receiver that counts what it was
-    // not addressed to is the defect this helper exists to remove.
-    request.resume();
-    res.writeHead(404, { 'Content-Type': 'application/json' });
-    res.end(JSON.stringify({ error: 'this receiver serves one conformance exercise; address its nonce path' }));
-  });
   const pinned = Number(process.env['OPENWOP_WEBHOOK_RECEIVER_PORT'] ?? '');
-  const bindPort = Number.isInteger(pinned) && pinned > 0 && pinned < 65536 ? pinned : 0;
+  const isPinned = Number.isInteger(pinned) && pinned > 0 && pinned < 65536;
   const binding = receiverBinding();
-  await new Promise<void>((resolve) => server.listen(bindPort, binding.bind, () => resolve()));
-  const addr = server.address();
-  if (typeof addr !== 'object' || addr === null) throw new Error('receiver address unavailable');
-  const origin = `http://${binding.advertise}:${addr.port}`;
-  const front = resolvePublicFront(WEBHOOK_FRONT_ENV, origin);
+  let listener: Listener;
+  let shared: Shared | undefined;
+  let key: string | undefined;
+  if (isPinned) {
+    key = `${binding.bind}:${pinned}`;
+    shared = sharedByPort.get(key);
+    if (!shared) {
+      const listening = listen(pinned, binding);
+      shared = { listening, refs: 0 };
+      sharedByPort.set(key, shared);
+      const entry = shared;
+      listening.catch(() => { if (sharedByPort.get(key!) === entry) sharedByPort.delete(key!); });
+    }
+    shared.refs += 1; // claimed before any await — a closing sibling now sees this receiver
+    try { listener = await shared.listening; }
+    catch (err) { shared.refs -= 1; throw err; }
+  } else {
+    listener = await listen(0, binding);
+  }
+  const member: Member = { nonce, foreign: 0 };
+  listener.members.add(member);
+  registerBehindFront(WEBHOOK_FRONT_ENV, nonce, own);
+  const front = resolvePublicFront(WEBHOOK_FRONT_ENV, listener.origin);
+  let closed = false;
   return {
-    server,
+    server: listener.server,
     url: `${front.url.replace(/\/+$/, '')}${FRONT_MUX_PREFIX}${nonce}`,
     tunnelled: front.tunnelled,
-    localUrl: `${origin}${FRONT_MUX_PREFIX}${nonce}`,
+    localUrl: `${listener.origin}${FRONT_MUX_PREFIX}${nonce}`,
     nonce,
-    port: addr.port,
-    foreign: () => foreign,
-    close: () =>
-      new Promise<void>((resolve) => {
-        unregisterBehindFront(WEBHOOK_FRONT_ENV, nonce);
-        server.close(() => resolve());
-      }),
+    port: listener.port,
+    foreign: () => member.foreign,
+    close: async () => {
+      if (closed) return;
+      closed = true;
+      unregisterBehindFront(WEBHOOK_FRONT_ENV, nonce);
+      listener.members.delete(member);
+      if (shared !== undefined) {
+        shared.refs -= 1;
+        if (shared.refs > 0) return;
+        if (key !== undefined && sharedByPort.get(key) === shared) sharedByPort.delete(key);
+      }
+      await shut(listener.server);
+    },
   };
 }
 

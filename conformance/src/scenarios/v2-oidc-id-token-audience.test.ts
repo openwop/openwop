@@ -15,7 +15,7 @@
  * production host, which must not trust a test issuer) records `inapplicable`, naming the
  * issuers it does trust — the harness is a suite instrument the host claims by advertising
  * it, RFC 0168 §C.1's reading for the seams profile (lib/harness-issuer.ts; corrected in
- * 2.39.3, when this was `blocked` and denied certification to every production bundle).
+ * 2.40.1, when this was `blocked` and denied certification to every production bundle).
  * A claimed harness that cannot be served, or whose same-audience control is refused, is
  * `blocked`: an assertion that a random string is refused would witness nothing.
  *
@@ -73,7 +73,7 @@ describe('RFC 0200 §D — v2-oidc-id-token-audience (gated on an oidc lane and 
     // The harness is an instrument the host claims by listing it in the lane's issuers[]
     // (RFC 0168 §C.1's reading; lib/harness-issuer.ts). A production host lists its real
     // IdP and must never list a test issuer, so that host records `inapplicable` with the
-    // issuers it does trust, not `blocked` — before 2.39.3 this was `blocked` and denied
+    // issuers it does trust, not `blocked` — before 2.40.1 this was `blocked` and denied
     // certification to every honest production bundle with an oidc lane.
     const claim = harnessClaimed(oidc as unknown as Record<string, unknown>, process.env['OPENWOP_TEST_OIDC_ISSUER_URL']);
     if (!claim.ok) return softSkip(claim.kind, claim.reason);
