@@ -13,6 +13,7 @@ Format follows [Keep a Changelog](https://keepachangelog.com/en/1/) loosely. Ver
 
 ## [Unreleased]
 
+- **The 2.39.5 cycle is open, and the RFC 0170 credential mint/revoke seams join the seams contract** (conformance 2.39.5; additive to the seams profile, no canonical-API change). The seams were named by RFC 0170 §B.3, driven by `v2-revocation-honored` and served by the v2 reference host, but absent from `api/seams-v2.yaml` and `host-sample-test-seams.md`. A seams-advertising host therefore could not know it owed them. No committed bundle's verdict changes.
 - **RFC 0199's credential rows can run on a host with a public front** (conformance 2.39.4; no wire change). `v2-credential-interrupt` required `connectUrl` on `--base-url`'s origin, which a loopback-driven cut can never be. The new `OPENWOP_HOST_PUBLIC_URL` declares the host's public front, verified by comparing discovery through it with discovery over `--base-url`. Unset, nothing changes.
 - **A remote host can now execute the synthetic-OIDC-issuer rows** (conformance 2.39.4; no wire or spec change). New operator variable `OPENWOP_TEST_OIDC_ISSUER_PORT` separates the issuer's local bind port from the public URL the host trusts. Before this, a tunnelled issuer URL made the suite bind :80, which fails for a non-root operator, so the RFC 0200 / RFC 0210 issuer legs could never run against a remote host.
 - **Suite 2.39.4 cycle opens: a scoped receiver starting while its sibling closes keeps a live listener** (`conformance` only). See `conformance/CHANGELOG.md` [2.39.4].
