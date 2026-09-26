@@ -28290,7 +28290,7 @@
     {
       "id": "openwop.it.v2-credential-interrupt.a-node-with-no-credential-suspends-on-a-credential-interrupt-with-a-closed-crede",
       "file": "v2-credential-interrupt.test.ts",
-      "line": 108,
+      "line": 109,
       "title": "a node with no credential suspends on a credential interrupt with a closed CredentialData, status waiting-input",
       "explicitId": null,
       "citations": [
@@ -28327,7 +28327,7 @@
     {
       "id": "openwop.it.v2-credential-interrupt.a-caller-resolve-of-authorized-is-refused-while-no-credential-resolves-and-a-res",
       "file": "v2-credential-interrupt.test.ts",
-      "line": 128,
+      "line": 135,
       "title": "a caller resolve of authorized is refused while no credential resolves, and a resume value cannot carry a credential",
       "explicitId": null,
       "citations": [
@@ -28358,7 +28358,7 @@
     {
       "id": "openwop.it.v2-credential-interrupt.connecturl-is-not-pre-authenticated-and-begins-the-grant-only-for-the-initiating",
       "file": "v2-credential-interrupt.test.ts",
-      "line": 145,
+      "line": 152,
       "title": "connectUrl is not pre-authenticated and begins the grant only for the initiating Subject",
       "explicitId": null,
       "citations": [
@@ -28391,7 +28391,7 @@
     {
       "id": "openwop.it.v2-credential-interrupt.the-grant-completes-through-connecturl-the-host-resolves-the-interrupt-itself-an",
       "file": "v2-credential-interrupt.test.ts",
-      "line": 168,
+      "line": 175,
       "title": "the grant completes through connectUrl, the host resolves the interrupt itself and the run continues",
       "explicitId": null,
       "citations": [
@@ -28423,7 +28423,7 @@
     {
       "id": "openwop.it.v2-credential-interrupt.declined-fails-the-node-with-connector-auth-declined",
       "file": "v2-credential-interrupt.test.ts",
-      "line": 188,
+      "line": 195,
       "title": "declined fails the node with connector_auth_declined",
       "explicitId": null,
       "citations": [
@@ -28450,7 +28450,7 @@
     {
       "id": "openwop.it.v2-credential-interrupt.a-terminal-refresh-failure-emits-connector-auth-expired-then-suspends-with-reaso",
       "file": "v2-credential-interrupt.test.ts",
-      "line": 203,
+      "line": 210,
       "title": "a terminal refresh failure emits connector.auth-expired, then suspends with reason expired",
       "explicitId": null,
       "citations": [
@@ -28487,7 +28487,7 @@
     {
       "id": "openwop.it.v2-credential-interrupt.without-oauth-credentialinterrupt-a-terminal-refresh-failure-fails-the-node-conn",
       "file": "v2-credential-interrupt.test.ts",
-      "line": 231,
+      "line": 238,
       "title": "without oauth.credentialInterrupt, a terminal refresh failure fails the node connector_auth_expired and raises no interrupt",
       "explicitId": null,
       "citations": [
