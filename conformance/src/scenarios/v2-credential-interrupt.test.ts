@@ -27,6 +27,7 @@
 import { describe, it, expect, afterAll } from 'vitest';
 import { driver, type OpenWOPResponse } from '../lib/driver.js';
 import { loadEnv } from '../lib/env.js';
+import { hostPublicOrigin } from '../lib/host-public-origin.js';
 import { isFixtureAdvertised } from '../lib/fixtures.js';
 import { softSkip, seamAbsent } from '../lib/soft-skip.js';
 import { req } from '../lib/requirement-ids.js';
@@ -121,7 +122,13 @@ describe('RFC 0199 §C — v2-credential-interrupt (gated on oauth + provider sy
     expect([data['provider'], data['reason']], req(id, DOC, 'data names the provider and reason missing')).toEqual([PROVIDER, 'missing']);
     const connect = new URL(String(data['connectUrl']));
     expect(connect.protocol, req(id, DOC, 'connectUrl MUST be https')).toBe('https:');
-    expect(connect.origin, req(id, `${DOC} (connectUrl is host-owned)`, `connectUrl MUST be on the host's own origin (${new URL(loadEnv().baseUrl).origin})`)).toBe(new URL(loadEnv().baseUrl).origin);
+    // The host's own origin is where a USER AGENT reaches it: --base-url, or the
+    // operator-declared OPENWOP_HOST_PUBLIC_URL once shown to serve this host
+    // (lib/host-public-origin.ts, 2.39.4). A declared front that is not shown to
+    // serve it records `blocked`, never a pass on some other origin.
+    const own = await hostPublicOrigin(loadEnv().baseUrl);
+    if (!own.ok) return softSkip('blocked', own.reason);
+    expect(connect.origin, req(id, `${DOC} (connectUrl is host-owned)`, `connectUrl MUST be on the host's own origin (${own.origin}${own.declared ? ', declared via OPENWOP_HOST_PUBLIC_URL and verified to serve this host' : ''})`)).toBe(own.origin);
     await driver.post(`/runs/${encodeURIComponent(runId)}:cancel`, {}, auth(r.bearer));
   });
 
