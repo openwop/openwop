@@ -3,10 +3,10 @@
   "generatedFrom": "src/scenarios/*.test.ts",
   "counts": {
     "files": 636,
-    "tests": 2438,
-    "withStableId": 2438,
+    "tests": 2439,
+    "withStableId": 2439,
     "interpolatedTitles": 0,
-    "explicitIds": 2332
+    "explicitIds": 2333
   },
   "records": [
     {
@@ -33406,9 +33406,36 @@
       ]
     },
     {
-      "id": "openwop.it.v2-webhook-durable-delivery.a-dead-letter-record-carries-no-delivered-payload",
+      "id": "openwop.it.v2-webhook-durable-delivery.after-unregister-the-dead-letter-read-answers-404-not-found-as-for-a-subscriptio",
       "file": "v2-webhook-durable-delivery.test.ts",
       "line": 475,
+      "title": "after unregister, the dead-letter read answers 404 not_found, as for a subscription that never existed",
+      "explicitId": "openwop.requirement.0217.dead-letter-read-after-unregister",
+      "citations": [
+        {
+          "section": "RFC 0188 §A.1",
+          "requirement": "while the subscription exists, its dead-letter read MUST answer 200 (the control for the comparison below)"
+        },
+        {
+          "section": "webhooks.md §Surfaces",
+          "requirement": "unregisterWebhook MUST answer 204 for the caller's own subscription"
+        },
+        {
+          "section": "webhooks.md §Durability (RFC 0217 §A)",
+          "requirement": null,
+          "interpolated": true
+        },
+        {
+          "section": "webhooks.md §Durability (RFC 0217 §A)",
+          "requirement": null,
+          "interpolated": true
+        }
+      ]
+    },
+    {
+      "id": "openwop.it.v2-webhook-durable-delivery.a-dead-letter-record-carries-no-delivered-payload",
+      "file": "v2-webhook-durable-delivery.test.ts",
+      "line": 508,
       "title": "a dead-letter record carries no delivered payload",
       "explicitId": "openwop.requirement.0188.dead-letter-content-free",
       "citations": [
