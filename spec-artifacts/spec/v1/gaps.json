@@ -5120,8 +5120,8 @@
       "surface": "No confirmed provider terms-of-service permits API-shaped third-party automation under a reused consumer-subscription login, for any vendor.",
       "witness": "unclassified",
       "requirementId": null,
-      "disposition": "externally-gated",
-      "target": "provider-tos-clearance",
+      "disposition": "closed",
+      "target": null,
       "sources": [
         {
           "file": "RFCS/registers/0121-subscription-provider-auth.gaps.md",
