@@ -27686,7 +27686,7 @@
     {
       "id": "openwop.it.v2-bound-id-kinds.subscriptionid-post-webhooks-mints-a-bound-webhookid-the-projected-segment-is-ac",
       "file": "v2-bound-id-kinds.test.ts",
-      "line": 89,
+      "line": 91,
       "title": "subscriptionId: POST /webhooks mints a bound webhookId, the projected segment is accepted, and a foreign tenant segment is refused 403",
       "explicitId": "openwop.requirement.0187.bound-id-kinds.webhook",
       "citations": [
@@ -27713,7 +27713,7 @@
     {
       "id": "openwop.it.v2-bound-id-kinds.subscriptionid-the-webhookid-a-host-emits-on-a-delivery-is-the-one-it-minted",
       "file": "v2-bound-id-kinds.test.ts",
-      "line": 140,
+      "line": 142,
       "title": "subscriptionId: the webhookId a host EMITS on a delivery is the one it minted",
       "explicitId": "openwop.requirement.0187.bound-id-kinds.webhook-emitted",
       "citations": [
@@ -27732,7 +27732,7 @@
     {
       "id": "openwop.it.v2-bound-id-kinds.interruptid-the-id-a-suspension-puts-on-the-wire-is-bound",
       "file": "v2-bound-id-kinds.test.ts",
-      "line": 192,
+      "line": 194,
       "title": "interruptId: the id a suspension puts on the wire is bound",
       "explicitId": null,
       "citations": []
@@ -27740,7 +27740,7 @@
     {
       "id": "openwop.it.v2-bound-id-kinds.effectid-every-row-get-runs-runid-effects-serves-is-bound",
       "file": "v2-bound-id-kinds.test.ts",
-      "line": 213,
+      "line": 215,
       "title": "effectId: every row GET /runs/{runId}/effects serves is bound",
       "explicitId": "openwop.requirement.0187.bound-id-kinds.per-kind",
       "citations": [
@@ -27753,7 +27753,7 @@
     {
       "id": "openwop.it.v2-bound-id-kinds.deliveryid-every-record-in-the-dead-letter-read-carries-a-bound-id-in-the-caller",
       "file": "v2-bound-id-kinds.test.ts",
-      "line": 228,
+      "line": 230,
       "title": "deliveryId: every record in the dead-letter read carries a bound id in the caller's tenant",
       "explicitId": "openwop.requirement.0187.bound-id-kinds.per-kind",
       "citations": [
@@ -28676,7 +28676,7 @@
     {
       "id": "openwop.it.v2-durability-recovery.accepted-work-survives-a-kill-before-dispatch-and-dispatches-on-resume",
       "file": "v2-durability-recovery.test.ts",
-      "line": 280,
+      "line": 282,
       "title": "accepted work survives a kill before dispatch and dispatches on resume",
       "explicitId": "openwop.requirement.0158.kill-after-accept",
       "citations": [
@@ -28690,7 +28690,7 @@
     {
       "id": "openwop.it.v2-durability-recovery.work-executing-at-a-real-process-death-is-never-reported-complete-and-resumes",
       "file": "v2-durability-recovery.test.ts",
-      "line": 334,
+      "line": 336,
       "title": "work executing at a real process death is never reported complete, and resumes",
       "explicitId": "openwop.requirement.0158.kill-during-execution",
       "citations": [
@@ -28709,7 +28709,7 @@
     {
       "id": "openwop.it.v2-durability-recovery.the-same-accepted-work-delivered-twice-fires-each-effect-exactly-once",
       "file": "v2-durability-recovery.test.ts",
-      "line": 390,
+      "line": 392,
       "title": "the same accepted work delivered twice fires each effect exactly once",
       "explicitId": "openwop.requirement.0158.duplicate-delivery",
       "citations": [
@@ -28728,7 +28728,7 @@
     {
       "id": "openwop.it.v2-durability-recovery.the-declared-recovery-bound-is-derived-from-the-mechanism-that-enforces-it",
       "file": "v2-durability-recovery.test.ts",
-      "line": 524,
+      "line": 526,
       "title": "the declared recovery bound is derived from the mechanism that enforces it",
       "explicitId": "openwop.requirement.0158.bound-is-derived",
       "citations": [
@@ -28742,7 +28742,7 @@
     {
       "id": "openwop.it.v2-durability-recovery.deterministically-failing-work-reaches-a-terminal-state-and-stops-being-retried",
       "file": "v2-durability-recovery.test.ts",
-      "line": 555,
+      "line": 557,
       "title": "deterministically failing work reaches a terminal state and stops being retried",
       "explicitId": "openwop.requirement.0158.poison-exhaustion",
       "citations": [
@@ -32964,7 +32964,7 @@
     {
       "id": "openwop.it.v2-terminal-event-once.every-run-observed-to-a-terminal-state-has-exactly-one-terminal-event-and-no-for",
       "file": "v2-terminal-event-once.test.ts",
-      "line": 81,
+      "line": 83,
       "title": "every run observed to a terminal state has exactly one terminal event and no forward execution after it",
       "explicitId": "openwop.requirement.0194.terminal-once",
       "citations": [
@@ -32982,7 +32982,7 @@
     {
       "id": "openwop.it.v2-terminal-event-once.work-delivered-twice-still-leaves-one-terminal-event-and-no-forward-execution-af",
       "file": "v2-terminal-event-once.test.ts",
-      "line": 109,
+      "line": 111,
       "title": "work delivered twice still leaves one terminal event and no forward execution after it",
       "explicitId": "openwop.requirement.0194.terminal-once.duplicate-delivery",
       "citations": [
@@ -33221,7 +33221,7 @@
     {
       "id": "openwop.requirement.0215.no-head-of-line",
       "file": "v2-webhook-delivery-isolation.test.ts",
-      "line": 109,
+      "line": 111,
       "title": null,
       "explicitId": "openwop.requirement.0215.no-head-of-line",
       "citations": [
@@ -33262,7 +33262,7 @@
     {
       "id": "openwop.it.v2-webhook-delivery-shape.a-major-2-subscriber-receives-the-v2-rendering-the-delivery-validates-and-run-st",
       "file": "v2-webhook-delivery-shape.test.ts",
-      "line": 217,
+      "line": 219,
       "title": "a major-2 subscriber receives the v2 rendering: the delivery validates, and run.started.owner carries subject, never principal",
       "explicitId": "openwop.requirement.0171.webhook-delivery-shape",
       "citations": [
@@ -33293,7 +33293,7 @@
     {
       "id": "openwop.it.v2-webhook-delivery-shape.a-major-1-subscriber-still-receives-the-v1-rendering-the-v1-wire-does-not-move-m",
       "file": "v2-webhook-delivery-shape.test.ts",
-      "line": 237,
+      "line": 239,
       "title": "a major-1 subscriber still receives the v1 rendering — the v1 wire does not move mid-overlap",
       "explicitId": "openwop.requirement.0171.webhook-delivery-shape",
       "citations": [
@@ -33311,7 +33311,7 @@
     {
       "id": "openwop.it.v2-webhook-delivery-shape.a-seeded-era-2-run-is-delivered-projected-too-the-fan-out-branch-a-fresh-run-can",
       "file": "v2-webhook-delivery-shape.test.ts",
-      "line": 261,
+      "line": 263,
       "title": "a seeded era-2 run is delivered projected too — the fan-out branch a fresh run cannot reach (seam-gated)",
       "explicitId": "openwop.requirement.0171.webhook-delivery-shape",
       "citations": [
@@ -33329,7 +33329,7 @@
     {
       "id": "openwop.it.v2-webhook-durable-delivery.a-failed-attempt-is-retried-and-the-event-is-delivered-at-least-once",
       "file": "v2-webhook-durable-delivery.test.ts",
-      "line": 256,
+      "line": 258,
       "title": "a failed attempt is retried and the event is delivered at least once",
       "explicitId": "openwop.requirement.0173.webhook-durable-delivery",
       "citations": [
@@ -33361,7 +33361,7 @@
     {
       "id": "openwop.it.v2-webhook-durable-delivery.an-exhausted-delivery-is-dead-lettered-never-dropped",
       "file": "v2-webhook-durable-delivery.test.ts",
-      "line": 358,
+      "line": 360,
       "title": "an exhausted delivery is dead-lettered, never dropped",
       "explicitId": "openwop.requirement.0173.webhook-durable-delivery.dead-letter",
       "citations": [
@@ -33395,7 +33395,7 @@
     {
       "id": "openwop.it.v2-webhook-durable-delivery.the-dead-letter-read-is-served-and-its-records-carry-no-payload",
       "file": "v2-webhook-durable-delivery.test.ts",
-      "line": 452,
+      "line": 454,
       "title": "the dead-letter read is served and its records carry no payload",
       "explicitId": "openwop.requirement.0188.dead-letter-read",
       "citations": [
@@ -33408,7 +33408,7 @@
     {
       "id": "openwop.it.v2-webhook-durable-delivery.a-dead-letter-record-carries-no-delivered-payload",
       "file": "v2-webhook-durable-delivery.test.ts",
-      "line": 473,
+      "line": 475,
       "title": "a dead-letter record carries no delivered payload",
       "explicitId": "openwop.requirement.0188.dead-letter-content-free",
       "citations": [
@@ -33752,7 +33752,7 @@
     {
       "id": "openwop.it.v2-webhook-unregister-stops-delivery.no-attempt-for-an-unregistered-subscription-starts-after-the-204-while-its-contr",
       "file": "v2-webhook-unregister-stops-delivery.test.ts",
-      "line": 83,
+      "line": 85,
       "title": "no attempt for an unregistered subscription starts after the 204, while its control keeps being retried",
       "explicitId": "openwop.requirement.0215.unregister-stops-delivery",
       "citations": [
@@ -34566,7 +34566,7 @@
     {
       "id": "openwop.it.webhook-signed-delivery.host-posts-run-events-to-subscriber-with-valid-x-openwop-signature",
       "file": "webhook-signed-delivery.test.ts",
-      "line": 168,
+      "line": 170,
       "title": "host POSTs run events to subscriber with valid X-openwop-Signature",
       "explicitId": "openwop.it.webhook-signed-delivery.host-posts-run-events-to-subscriber-with-valid-x-openwop-signature",
       "citations": [
@@ -34617,7 +34617,7 @@
     {
       "id": "openwop.it.webhook-signed-delivery.control-with-a-tunnel-wired-the-host-still-refuses-the-loopback-receiver",
       "file": "webhook-signed-delivery.test.ts",
-      "line": 423,
+      "line": 425,
       "title": "control: with a tunnel wired, the host still refuses the loopback receiver",
       "explicitId": "openwop.it.webhook-signed-delivery.control-with-a-tunnel-wired-the-host-still-refuses-the-loopback-receiver",
       "citations": [

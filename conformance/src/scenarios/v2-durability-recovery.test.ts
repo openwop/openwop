@@ -75,6 +75,8 @@ import { startEffectReceiver, waitForFirstArrival } from '../lib/effect-receiver
 import { watchForResumption, type Observation, type Watch } from '../lib/durability-watch.js';
 import { noteEvidence, parseRecoveryBounds, EVIDENCE_NAME_PATTERN } from '../lib/durability-evidence.js';
 
+export const REQUIRES_HOST_CALLBACK = 'the host makes an outbound effect call to the suite-owned effect receiver (OPENWOP_WEBHOOK_RECEIVER_PORT)';
+
 const FIXTURE = 'conformance-noop';
 const FAILURE_FIXTURE = 'conformance-failure';
 

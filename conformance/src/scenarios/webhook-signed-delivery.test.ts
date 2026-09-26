@@ -113,6 +113,8 @@ import { discoverOwnedTenant } from '../lib/webhook-receiver.js';
 import { absenceIsUnmeasured, noDeliveryCause, startScopedReceiver, type ScopedReceiver } from '../lib/scoped-receiver.js';
 import { req } from '../lib/requirement-ids.js';
 
+export const REQUIRES_HOST_CALLBACK = 'the host POSTs a signed webhook delivery to the suite-owned scoped receiver behind OPENWOP_WEBHOOK_RECEIVER_URL';
+
 interface DeliveredRequest {
   readonly headers: Record<string, string>;
   readonly body: string;

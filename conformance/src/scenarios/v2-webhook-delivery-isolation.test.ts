@@ -55,6 +55,8 @@ import { blockedDespiteAssertions, softSkip } from '../lib/soft-skip.js';
 import { req } from '../lib/requirement-ids.js';
 import { RETRY_WAIT_FLOOR_MS } from '../lib/webhook-retry-window.js';
 
+export const REQUIRES_HOST_CALLBACK = 'the host POSTs webhook deliveries to nine suite-owned subscriptions on the scoped receiver behind OPENWOP_WEBHOOK_RECEIVER_URL, eight of which the suite holds open';
+
 const ID = 'openwop.requirement.0215.no-head-of-line';
 const DOC = 'webhooks.md §Durability (RFC 0215 §A.1, §A.2)';
 const FIXTURE = 'conformance-delay';

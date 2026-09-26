@@ -57,6 +57,8 @@ import { req } from '../lib/requirement-ids.js';
 import { era2Gate, seedEra2Log, v1FixtureLog } from '../lib/era2-seed.js';
 import { SCHEMAS_DIR } from '../lib/paths.js';
 
+export const REQUIRES_HOST_CALLBACK = 'the host POSTs a webhook delivery to the suite-owned scoped receiver behind OPENWOP_WEBHOOK_RECEIVER_URL';
+
 const ID = 'openwop.requirement.0171.webhook-delivery-shape';
 const DOC = 'spec/v2/core/webhooks.md §Delivery';
 const FIXTURE = 'conformance-noop';

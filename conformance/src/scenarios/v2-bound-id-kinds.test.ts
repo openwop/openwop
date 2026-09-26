@@ -36,6 +36,8 @@ import { scaledTimeoutMs } from '../lib/polling.js';
 import { req } from '../lib/requirement-ids.js';
 import { projectBoundId, BOUND_ID } from '../lib/bound-id.js';
 
+export const REQUIRES_HOST_CALLBACK = 'the host POSTs a webhook delivery to the suite-owned scoped receiver behind OPENWOP_WEBHOOK_RECEIVER_URL';
+
 const DOC = 'spec/v2/core/identity.md §5 (RFC 0187 §A)';
 const WEBHOOK_ID = 'openwop.requirement.0187.bound-id-kinds.webhook';
 const PER_KIND = 'openwop.requirement.0187.bound-id-kinds.per-kind';
