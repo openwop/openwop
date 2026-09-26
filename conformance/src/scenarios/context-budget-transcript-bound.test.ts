@@ -55,7 +55,7 @@
 
 import { describe, it, expect } from 'vitest';
 import { driver } from '../lib/driver.js';
-import { pollUntilTerminal } from '../lib/polling.js';
+import { LIVE_RUN_POLL_MS, liveScenarioTimeoutMs, pollUntilTerminal } from '../lib/polling.js';
 import { behaviorGate } from '../lib/behavior-gate.js';
 import { isFixtureAdvertised } from '../lib/fixtures.js';
 import { readCapabilityFamily } from '../lib/discovery-capabilities.js';
@@ -111,7 +111,7 @@ describe('context-budget-transcript-bound (RFC 0111 §"Context economy")', () =>
     const runId = runIdOf(create.json);
     expect(runId, req(ID, 'RFC 0111', 'the create response MUST carry a runId')).toBeDefined();
     if (runId === undefined) return softSkip('blocked', 'no runId');
-    await pollUntilTerminal(runId);
+    await pollUntilTerminal(runId, { timeoutMs: LIVE_RUN_POLL_MS });
 
     const windows: Array<{ iteration: number; window: TranscriptWindow }> = [];
     for (let iteration = 1; iteration <= MAX_ITERATIONS_PROBED; iteration += 1) {
@@ -153,5 +153,5 @@ describe('context-budget-transcript-bound (RFC 0111 §"Context economy")', () =>
 
     if (log === null) return softSkip('blocked', 'the run event-log seam is unavailable, so the real-event, recent-tail and pressure rules were not measured');
     if (!pressure) softSkip('inapplicable', `no iteration shows budget pressure — every eligible event fit under transcriptTokenBudget ${budget}, so the bound was never exercised (a budget the run never reaches is not a witness)`);
-  });
+  }, liveScenarioTimeoutMs(1));
 });

@@ -71,6 +71,27 @@ export function scaledTimeoutMs(timeoutMs: number): number {
   return scale === 1 ? timeoutMs : Math.ceil(timeoutMs * scale);
 }
 
+/**
+ * Live-model scenarios (RFC 0111's `conformance-context-budget-live`) drive real
+ * model turns and child runs; one run takes 30–40 s on a production host
+ * (MyndHyve, 2026-09-26), so vitest's global 30 s `testTimeout` killed them
+ * before any assertion — a suite defect that looks like a host failure.
+ *
+ * `LIVE_RUN_POLL_MS` is the base bound for ONE live run to reach a terminal
+ * status (below the fixture's own `settings.timeout` of 300 s); pass it as
+ * `pollUntilTerminal(runId, { timeoutMs: LIVE_RUN_POLL_MS })` — `pollUntil`
+ * scales it. `liveScenarioTimeoutMs(runs)` is the per-test vitest timeout: the
+ * scaled sum of the scenario's poll bounds plus 60 s for its seam reads, so the
+ * poll deadline always fires first and a hung host fails with a named poll
+ * message, never a bare vitest timeout. Both scale with
+ * `OPENWOP_POLL_TIMEOUT_SCALE`, so their order holds at every scale.
+ */
+export const LIVE_RUN_POLL_MS = 180_000;
+
+export function liveScenarioTimeoutMs(runs: number): number {
+  return scaledTimeoutMs(runs * LIVE_RUN_POLL_MS + 60_000);
+}
+
 const TERMINAL = new Set(['completed', 'failed', 'cancelled']);
 
 export async function getRun(runId: string): Promise<RunSnapshot> {

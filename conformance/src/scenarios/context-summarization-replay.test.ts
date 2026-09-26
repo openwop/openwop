@@ -38,7 +38,7 @@
 
 import { describe, it, expect } from 'vitest';
 import { driver } from '../lib/driver.js';
-import { pollUntilTerminal } from '../lib/polling.js';
+import { LIVE_RUN_POLL_MS, liveScenarioTimeoutMs, pollUntilTerminal } from '../lib/polling.js';
 import { behaviorGate } from '../lib/behavior-gate.js';
 import { isFixtureAdvertised } from '../lib/fixtures.js';
 import { readCapabilityFamily } from '../lib/discovery-capabilities.js';
@@ -125,7 +125,7 @@ describe('context-summarization-replay (RFC 0111 §"Replay determinism")', () =>
     const sourceRunId = runIdOf(create.json);
     expect(sourceRunId, req(ID, 'rest-endpoints.md POST /v1/runs', 'the create response MUST carry a runId')).toBeDefined();
     if (sourceRunId === undefined) return softSkip('blocked', 'no runId');
-    await pollUntilTerminal(sourceRunId);
+    await pollUntilTerminal(sourceRunId, { timeoutMs: LIVE_RUN_POLL_MS });
 
     const sourceQ = await queryTestEvents(sourceRunId);
     if (!sourceQ.ok) return softSkip('blocked', 'the run event-log seam is unavailable');
@@ -141,7 +141,7 @@ describe('context-summarization-replay (RFC 0111 §"Replay determinism")', () =>
     const forkRunId = runIdOf(fork.json);
     expect(forkRunId, req(ID, 'rest-endpoints.md POST /v1/runs/{runId}:fork', 'replay fork MUST return a runId')).toBeDefined();
     if (forkRunId === undefined) return softSkip('blocked', 'no fork runId');
-    await pollUntilTerminal(forkRunId);
+    await pollUntilTerminal(forkRunId, { timeoutMs: LIVE_RUN_POLL_MS });
 
     const forkQ = await queryTestEvents(forkRunId);
     if (!forkQ.ok) return softSkip('blocked', 'the event-log seam is unavailable for the fork');
@@ -153,5 +153,5 @@ describe('context-summarization-replay (RFC 0111 §"Replay determinism")', () =>
     if (sourceTexts === null || forkTexts === null) return softSkip('inapplicable', 'the transcript-window seam serves no entries[] for these runs, so the model-facing summary text was not compared (summaryRef reuse was)');
     expect(sourceTexts.length, req(ID, 'RFC 0111 §"Replay determinism"', 'the source run summarized, so its transcript windows MUST carry the summary text it fed')).toBeGreaterThan(0);
     expect(forkTexts, req(ID, 'RFC 0111 §"Replay determinism"', 'the replay MUST feed the model the recorded summary text, byte for byte — never a re-summarization')).toEqual(sourceTexts);
-  });
+  }, liveScenarioTimeoutMs(2));
 });
