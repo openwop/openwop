@@ -212,6 +212,20 @@ Format follows [Keep a Changelog](https://keepachangelog.com/en/1/) loosely. Ver
 - **The remaining eleven stay `Active`, each for a stated reason** rather than for lack of attention. The eight RFC 0167 program children name a certified openwop-app bundle in their own acceptance criteria and the committed one reads `certified: false` (3 blocked rows, RFC 0168 §E.1). RFC 0173 additionally carries the program's only `open` gap row. RFC 0179's sole criterion is unmet — 2.4.2 stopped the gate reading "(Phase 4 leg)" as an excuse for it. RFC 0187 names three requirement ids that no scenario mints. RFC 0167 itself flips **last**, which 2.4.2 made a rule: the moment the umbrella stops being `Active`, every child still `Active` becomes permanently ineligible.
 - **The interrupt `data` union is bound to `kind`** (MCP/A2A review P3-H7, Class 3 correction — COMPATIBILITY.md §3). `schemas/suspend-request.schema.json` and its v2 twin typed `data` as an unbound `oneOf`, so the minimal `conversation.start` and `conversation.close` payloads (`{ conversationId }`, which satisfies both shapes) failed validation in v1 and v2, and a payload carrying another kind's `data` passed. `data` is now an `anyOf` and a root `allOf` binds each kind to its own shape with one `if`/`then`; no per-kind shape or `$id` changed. Witnessed by `conformance/fixtures/interrupt-payloads/` (suite 2.36.0).
 
+## [2.41.0] — 2026-09-26 — RFC 0111's context-budget witness can fail, and the suite's host-callback self-check passes on its own files
+
+A suite minor: no new scenario file, but two scenarios now run at major 2 (v2-applicable files 121 → 123) and one fixture is new. No wire or `MUST` change for a served host (`COMPATIBILITY.md` §2.1). The corpus tag moves because `@openwop/openwop-conformance` and `@openwop/spec-artifacts` move together.
+
+### Conformance
+
+- **The suite passes its own host-callback self-check again (#1610).** In 2.40.3, `host-callback-declaration` › "nothing declares a callback it does not make" failed on the published tarball's own `v2-a2a-push-delivery.test.ts`. The failure was host-independent, and because `--certify` disables quarantine it refused every certify run pinned to 2.40.3. `scoped-receiver` and `effect-receiver` now count as harness doubles, and eight scenarios that take a host callback through them now declare `REQUIRES_HOST_CALLBACK`.
+- **RFC 0111's context-budget witness can fail in the ways the RFC names (#1606):** `context-budget-transcript-bound` and `context-summarization-replay` run at both majors against the new live fixture `conformance-context-budget-live`.
+- **Suite `2.41.0`**. `@openwop/spec-artifacts` moves in lockstep at the same exact pin.
+
+### Spec
+
+- **RFC 0121's hold is lifted for GitHub Copilot individual plans only (#1604, #1607)**, and its gap G1 closes in the contract peer. **RFC 0156 §B** gets a generated reviewer packet, plus a public call for cross-organization reviewers (#1608, openwop#1609).
+
 ## [2.40.3] — 2026-09-26 — a cookie-borne lane can be revoke-witnessed, and a secret-named setting no longer corrupts the discovery digest
 
 A suite patch: no new scenario file, no wire or `MUST` change for a served host (`COMPATIBILITY.md` §2.1). The seams contract gains one optional response member. The corpus tag moves because `@openwop/openwop-conformance` and `@openwop/spec-artifacts` move together.
