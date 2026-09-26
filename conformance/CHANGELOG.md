@@ -2,6 +2,7 @@
 
 ## [2.40.2] — unreleased — the 2.40.2 cycle is open
 
+- **RFC 0216: `--as-colocated-companion`, and a companion witnesses only the harness-trust-anchor rows.** The flag marks a v3 bundle `host.deployment: "colocated-companion"`. It is refused without `--certify` and bundle version 3. `witnessDigest` takes the marker into the preimage when present (`{ rows, relaxations?, deployment }`), so a signed companion cannot shed it: `--verify` then refuses with `witness-digest`. New coherence scenario `v2-colocated-companion` (7 legs, one id each) drives `scripts/check-harness-trust-anchors.mjs` and `scripts/check-companion-pairing.mjs` on tmpdir fixtures signed by the suite's own `signBundleV3`. Five sabotages were each run red.
 - **Version moved ahead of publication.** `@openwop/openwop-conformance` and its exact-pinned peer `@openwop/spec-artifacts` move to `2.40.2` because `2.40.1` is released, and `spec-artifacts` now carries a changed `spec/v2/core/oauth.md` (RFC 0199's text restored; editorial, `COMPATIBILITY.md` §3 entry of 2026-09-26). No scenario changes. Not tagged, not published.
 
 ## [2.40.1] — 2026-09-26 — three declared-unwitnessable rows are reached and say why
