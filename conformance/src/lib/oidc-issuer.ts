@@ -152,6 +152,33 @@ function signCompact(
   return base64UrlEncode(signature);
 }
 
+/**
+ * The LOCAL port a scenario binds the synthetic issuer's JWKS/discovery
+ * listener on (2.39.4).
+ *
+ * `OPENWOP_TEST_OIDC_ISSUER_URL` is the URL the HOST is told to trust — for a
+ * remote host a public https front (a tunnel), which carries no port. Until
+ * 2.39.4 every scenario bound `127.0.0.1` at the port PARSED from that URL, so a
+ * tunnelled issuer (`https://x.trycloudflare.com`) bound :80 and a non-root
+ * operator got EACCES: measured by openwop-app-ce on 2026-09-25 against a remote
+ * openwop-app instance. No remote host could then execute the RFC 0200 / 0210
+ * issuer rows, and none could certify. The webhook receiver has always
+ * separated the two (`OPENWOP_WEBHOOK_RECEIVER_URL` + `_PORT`); this is the same
+ * split: `OPENWOP_TEST_OIDC_ISSUER_PORT`, when set, is the local port the
+ * operator's front forwards to. Unset, the old rule stands unchanged (the URL's
+ * port, else 80), so a loopback operator whose URL names its port is unaffected.
+ */
+export function issuerListenPort(issuerUrl: string): number {
+  const raw = process.env['OPENWOP_TEST_OIDC_ISSUER_PORT']?.trim();
+  if (raw !== undefined && raw !== '') {
+    const n = Number(raw);
+    if (!Number.isInteger(n) || n < 1 || n > 65535) throw new Error(`OPENWOP_TEST_OIDC_ISSUER_PORT must be an integer port 1..65535 (got ${JSON.stringify(raw)})`);
+    return n;
+  }
+  const parsed = new URL(issuerUrl);
+  return parsed.port ? Number.parseInt(parsed.port, 10) : 80;
+}
+
 export function createSyntheticOIDCIssuer(
   opts: SyntheticOIDCIssuerOptions,
 ): SyntheticOIDCIssuer {

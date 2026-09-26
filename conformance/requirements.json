@@ -5706,7 +5706,7 @@
     {
       "id": "openwop.it.auth-oidc-user-bearer.host-claiming-oidc-profile-advertises-required-fields",
       "file": "auth-oidc-user-bearer.test.ts",
-      "line": 92,
+      "line": 93,
       "title": "host claiming OIDC profile advertises required fields",
       "explicitId": "openwop.it.auth-oidc-user-bearer.host-claiming-oidc-profile-advertises-required-fields",
       "citations": [
@@ -29585,7 +29585,7 @@
     {
       "id": "openwop.it.v2-lane-exp-only-bound.a-credential-inside-the-advertised-window-is-accepted-the-control-the-two-refusa",
       "file": "v2-lane-exp-only-bound.test.ts",
-      "line": 150,
+      "line": 149,
       "title": "a credential inside the advertised window is accepted — the control the two refusals rest on",
       "explicitId": "openwop.requirement.0210.exp-only-control-accepted",
       "citations": [
@@ -29599,7 +29599,7 @@
     {
       "id": "openwop.it.v2-lane-exp-only-bound.a-credential-whose-total-lifetime-exceeds-the-window-is-refused-401-and-so-is-on",
       "file": "v2-lane-exp-only-bound.test.ts",
-      "line": 165,
+      "line": 164,
       "title": "a credential whose TOTAL lifetime exceeds the window is refused 401, and so is one carrying no iat",
       "explicitId": "openwop.requirement.0210.exp-only-lifetime-bound",
       "citations": [
@@ -29618,7 +29618,7 @@
     {
       "id": "openwop.it.v2-lane-exp-only-bound.the-over-lifetime-refusal-names-credential-lifetime-exceeded-not-a-generic-unaut",
       "file": "v2-lane-exp-only-bound.test.ts",
-      "line": 200,
+      "line": 199,
       "title": "the over-lifetime refusal names credential_lifetime_exceeded, not a generic unauthenticated",
       "explicitId": "openwop.requirement.0210.credential-lifetime-code",
       "citations": [
@@ -29632,7 +29632,7 @@
     {
       "id": "openwop.it.v2-lane-exp-only-bound.a-credential-whose-remaining-lifetime-exceeds-the-window-is-refused-though-its-t",
       "file": "v2-lane-exp-only-bound.test.ts",
-      "line": 218,
+      "line": 217,
       "title": "a credential whose REMAINING lifetime exceeds the window is refused, though its total lifetime does not",
       "explicitId": "openwop.requirement.0210.exp-only-remaining-bound",
       "citations": [
@@ -31179,7 +31179,7 @@
     {
       "id": "openwop.it.v2-oidc-id-token-audience.a-same-audience-id-token-is-admissible-and-one-minted-for-another-relying-party",
       "file": "v2-oidc-id-token-audience.test.ts",
-      "line": 75,
+      "line": 74,
       "title": "a same-audience ID token is admissible, and one minted for another relying party is audience_mismatch",
       "explicitId": "openwop.requirement.0200.id-token-aud",
       "citations": [
