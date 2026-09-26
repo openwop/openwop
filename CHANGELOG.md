@@ -182,6 +182,18 @@ Format follows [Keep a Changelog](https://keepachangelog.com/en/1/) loosely. Ver
 - **The remaining eleven stay `Active`, each for a stated reason** rather than for lack of attention. The eight RFC 0167 program children name a certified openwop-app bundle in their own acceptance criteria and the committed one reads `certified: false` (3 blocked rows, RFC 0168 §E.1). RFC 0173 additionally carries the program's only `open` gap row. RFC 0179's sole criterion is unmet — 2.4.2 stopped the gate reading "(Phase 4 leg)" as an excuse for it. RFC 0187 names three requirement ids that no scenario mints. RFC 0167 itself flips **last**, which 2.4.2 made a rule: the moment the umbrella stops being `Active`, every child still `Active` becomes permanently ineligible.
 - **The interrupt `data` union is bound to `kind`** (MCP/A2A review P3-H7, Class 3 correction — COMPATIBILITY.md §3). `schemas/suspend-request.schema.json` and its v2 twin typed `data` as an unbound `oneOf`, so the minimal `conversation.start` and `conversation.close` payloads (`{ conversationId }`, which satisfies both shapes) failed validation in v1 and v2, and a payload carrying another kind's `data` passed. `data` is now an `anyOf` and a root `allOf` binds each kind to its own shape with one `if`/`then`; no per-kind shape or `$id` changed. Witnessed by `conformance/fixtures/interrupt-payloads/` (suite 2.36.0).
 
+## [2.39.4] — 2026-09-25 — RFC 0199 can be witnessed behind a public front, and the pinned-port claim is race-free
+
+A suite patch: no new scenario file, no wire, schema or `MUST` change (`COMPATIBILITY.md` §2.1). The corpus tag moves because `@openwop/openwop-conformance` and `@openwop/spec-artifacts` move together.
+
+### Conformance
+
+- **RFC 0199's credential legs can be witnessed on a host with a public front (#1567).** `OPENWOP_HOST_PUBLIC_URL` declares the host's own https front (validated like the other fronts; verified by fetching discovery through it and comparing with loopback); `connectUrl` may be on that origin. Inert when unset.
+- **The shared pinned-port listener's claim is taken before the first `await` (#1563)** — a receiver starting while a sibling closes keeps a live listener (race introduced by #1559, reproduced as `ECONNREFUSED`).
+- **`--certify` refuses pinned fixture ports unless `--max-workers 1`, and `v2-webhook-durable-delivery` is sized to the host's advertised `retryPolicy.maxAttempts` (#1562).**
+- **The synthetic OIDC issuer binds the port the operator names (#1565)**, not the port parsed from the URL the host trusts.
+- **Suite `2.39.4`**: 559 scenario files. `@openwop/spec-artifacts` moves in lockstep at the same exact pin.
+
 ## [2.39.3] — 2026-09-25 — a pinned receiver port is shared, and tenant B really is tenant B
 
 A suite patch: no new scenario file, no wire, schema or `MUST` change (`COMPATIBILITY.md` §2.1). The corpus tag moves because `@openwop/openwop-conformance` and `@openwop/spec-artifacts` move together.
