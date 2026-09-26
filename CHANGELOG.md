@@ -213,6 +213,30 @@ Format follows [Keep a Changelog](https://keepachangelog.com/en/1/) loosely. Ver
 - **The remaining eleven stay `Active`, each for a stated reason** rather than for lack of attention. The eight RFC 0167 program children name a certified openwop-app bundle in their own acceptance criteria and the committed one reads `certified: false` (3 blocked rows, RFC 0168 §E.1). RFC 0173 additionally carries the program's only `open` gap row. RFC 0179's sole criterion is unmet — 2.4.2 stopped the gate reading "(Phase 4 leg)" as an excuse for it. RFC 0187 names three requirement ids that no scenario mints. RFC 0167 itself flips **last**, which 2.4.2 made a rule: the moment the umbrella stops being `Active`, every child still `Active` becomes permanently ineligible.
 - **The interrupt `data` union is bound to `kind`** (MCP/A2A review P3-H7, Class 3 correction — COMPATIBILITY.md §3). `schemas/suspend-request.schema.json` and its v2 twin typed `data` as an unbound `oneOf`, so the minimal `conversation.start` and `conversation.close` payloads (`{ conversationId }`, which satisfies both shapes) failed validation in v1 and v2, and a payload carrying another kind's `data` passed. `data` is now an `anyOf` and a root `allOf` binds each kind to its own shape with one `if`/`then`; no per-kind shape or `$id` changed. Witnessed by `conformance/fixtures/interrupt-payloads/` (suite 2.36.0).
 
+## [2.41.2] — 2026-09-26 — corrections an openwop.dev sweep found in the spec itself
+
+A corrections release. It changes no wire shape, `MUST`, error code or RFC status. openwop-site's reconciliation of openwop.dev against the corpus (spec 2.2 → 2.41.1) found three places where the spec disagreed with itself.
+
+### Changed
+
+- **`spec/v2/core/node-pack-runtimes.md` labelled RFC 0203 `Active`**; it has been `Accepted` since openwop#1521. A sweep of every inline `RFC NNNN (\`Status\`)` label under `spec/`, `docs/` and the root docs against each RFC's own Status line finds no other disagreement (CHANGELOG history lines are left as written).
+- **INTEROP-MATRIX no longer contradicts itself.** The v2 reference row's "How to read" paragraph described the rc.58 cut (42 inapplicable, `a2a`/`mcp` not advertised) as if current, under a row that records the 2.40.1 cut (39 inapplicable, A2A push on); it is now marked superseded. The `@a2a-js/sdk@0.3.13` partner row and the `a2a-0.3-legacy` / `mcp-2025-06-18-legacy` profile rows are labelled as v1-era, because `spec/v2/core/interop.md` §"Legacy profiles are absent" says those profiles do not exist in v2.
+
+- **README and PROTOCOL-STATUS stop describing the corpus as it was.**
+  - The "What OpenWOP Gives You" table links nine concerns to their v2 core homes, and notes the four with no single v2 page yet.
+  - A leftover "open cycle… npm serves 2.40.1" note and "`2.3.3` is on npm" are gone.
+  - The hosts line lists all six `openwop-examples` hosts, and the banner separates the four v1 hosts from the v2 reference host.
+  - The CLI row no longer says "frozen v1-only". openwop-cli 1.0.0 reversed RFC 0167 §F's 2026-09-03 decision and negotiates major 2, and the v1-only 0.18.x line lives on branch `cli-v1-frozen`. The generator now derives that from the CLI's major version. MAINTAINERS §v2-cut step 11 records the decision.
+- **INTEROP-MATRIX cells match the committed bundles.**
+  - The MyndHyve row's Bundle and Certified cells described earlier cuts (2.40.0 and 2.1.7). They now lead with the certified 2.40.2 bundle (file `370c2ac0ba66…`, 2 of 21 floor rows partial witnesses), with older figures marked historical.
+  - The openwop-app row's suite, totals and Certified cells described suite 2.0.11 under a heading naming the 2.35.1 bundle. They now lead with 2.35.1 (167 / 0 / 0 / 75 / 19, all three profiles certified).
+  - The v2 section heading said "corpus v2.2.1".
+  - "Last updated" reflects all of the above.
+
+### Conformance
+
+- **Suite `2.41.2`**: no scenario changes. `@openwop/spec-artifacts` moves in lockstep because it ships the corrected `node-pack-runtimes.md`.
+
 ## [2.41.1] — 2026-09-26 — an SSE projection row no longer depends on a host's front forwarding headers early
 
 A suite patch: no new scenario file, no wire, schema or `MUST` change (`COMPATIBILITY.md` §2.1). The corpus tag moves because `@openwop/openwop-conformance` and `@openwop/spec-artifacts` move together.

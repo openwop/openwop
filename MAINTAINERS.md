@@ -287,7 +287,7 @@ Rewritten 2026-09-02 from the v2 charter's downstream audit: the earlier text po
 
 **In `openwop/openwop-examples`, `openwop/openwop-cli`:**
 
-11. The four reference hosts pass the 2.0.0 floor and commit fresh v3 bundles; the CLI's disposition (rewritten onto SDK 2, or frozen v1-only) is recorded in its README.
+11. The four reference hosts pass the 2.0.0 floor and commit fresh v3 bundles; the CLI's disposition (rewritten onto SDK 2, or frozen v1-only) is recorded in its README. *(CLI: decided. 1.0.0 negotiates major 2, and the frozen v1-only 0.18.x line lives on branch `cli-v1-frozen`; recorded in the openwop-cli README.)*
 
 **Hosts (`INTEROP-MATRIX.md`):**
 
