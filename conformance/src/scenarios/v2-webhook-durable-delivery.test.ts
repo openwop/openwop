@@ -208,6 +208,24 @@ function retryWaitMs(doc: Record<string, unknown>): number {
  */
 const FAIL_FIRST = 2;
 
+/**
+ * How many attempts THIS host's advertised policy leaves room to refuse
+ * (suite 2.39.4). The constant above assumed at least three attempts, but
+ * `webhooks.retryPolicy.maxAttempts` is schema-valid from 1, so a host that
+ * honestly advertised `maxAttempts: 2` was refused twice, never reached its
+ * 204, and failed a leg it conformed to. The receiver now refuses
+ * `maxAttempts − 1` attempts, at most FAIL_FIRST and at least 1. A host with no
+ * advertised policy is measured exactly as before (FAIL_FIRST), and
+ * `maxAttempts: 1` still refuses the first attempt, so a host that never
+ * retries still fails: webhooks.md §Durability says best-effort delivery is
+ * not a conforming mode.
+ */
+function failFirstFor(policy: { maxAttempts?: number } | null): number {
+  const m = policy?.maxAttempts;
+  if (typeof m !== 'number' || !Number.isInteger(m)) return FAIL_FIRST;
+  return Math.max(1, Math.min(FAIL_FIRST, m - 1));
+}
+
 const WAIT_SLACK_MS = 30_000;
 /** One `retryWaitMs` wait (the retry leg). */
 const RETRY_TEST_TIMEOUT_MS = RETRY_WAIT_CAP_MS + WAIT_SLACK_MS;
@@ -241,7 +259,8 @@ describe('RFC 0173 §B — webhook-durable-delivery (gated on webhooks)', () => 
     if (!(await gateFamily('webhooks'))) return softSkip('inapplicable', 'webhooks family not advertised (gate recorded under openwop.family.webhooks)');
     if (!fixtureAdvertised(doc, FIXTURE)) return softSkip('inapplicable', `${FIXTURE} fixture not advertised — no run to deliver`);
 
-    const receiver = await startReceiver(FAIL_FIRST); // 500, 500, then 204
+    const failFirst = failFirstFor(advertisedRetryPolicy(doc));
+    const receiver = await startReceiver(failFirst); // 500 × failFirst, then 204
     active = receiver;
     const sub = await register(receiver);
     if (sub === null) return softSkip('blocked', 'registration refused (reason recorded above)');
@@ -287,8 +306,8 @@ describe('RFC 0173 §B — webhook-durable-delivery (gated on webhooks)', () => 
     // inside our window this records `blocked`, NOT `executed-fail` — suite
     // 2.0.3, and this is the third time this file has had to learn it.
     //
-    // The receiver answers 204 only on attempt `FAIL_FIRST + 1`, so reaching it
-    // costs the SUM of the first FAIL_FIRST backoff intervals, not the largest
+    // The receiver answers 204 only on attempt `failFirst + 1`, so reaching it
+    // costs the SUM of the first failFirst backoff intervals, not the largest
     // one. On an exponential-from-30s policy that is 30 + 60 = 90 s, which is
     // exactly RETRY_WAIT_CAP_MS — a host loses by the width of one delivery.
     // The obvious fix is to derive the wait from the intervals, and it cannot
@@ -312,7 +331,7 @@ describe('RFC 0173 §B — webhook-durable-delivery (gated on webhooks)', () => 
     // only in a changelog.
     if (!retried) {
       const policyNote = advertisedRetryPolicy(doc);
-      return softSkip('blocked', `the retry was observed (${attempts.length} attempts) but the receiver's 204 did not land inside the ${retryWaitMs(doc)}ms window: it answers 204 only on attempt ${FAIL_FIRST + 1}, which costs the SUM of the first ${FAIL_FIRST} backoff intervals, and webhooks.retryPolicy carries only { maxAttempts, backoff${policyNote ? `: ${String(policyNote.backoff)}` : ''} } — the base interval is not advertised, so the suite cannot derive how long to wait. Unmeasured, not unmet (RFC 0148 §A).`);
+      return softSkip('blocked', `the retry was observed (${attempts.length} attempts) but the receiver's 204 did not land inside the ${retryWaitMs(doc)}ms window: it answers 204 only on attempt ${failFirst + 1}, which costs the SUM of the first ${failFirst} backoff intervals, and webhooks.retryPolicy carries only { maxAttempts, backoff${policyNote ? `: ${String(policyNote.backoff)}` : ''} } — the base interval is not advertised, so the suite cannot derive how long to wait. Unmeasured, not unmet (RFC 0148 §A).`);
     }
     // Backoff: the retry MUST NOT be a tight loop — consecutive attempts for one
     // key are spaced. Only asserted when the host advertises a non-`none` backoff.
