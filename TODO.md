@@ -22,12 +22,14 @@ All four program RFCs are **Accepted** (provisional, RFC 0156 §B review owed, a
 
 Phases: 1 (#1510) · 2+4 (Active flips #1514/#1517/#1519/#1518) · 3 (openwop-app#4097/#4099, examples#83/#85/#88, registry#74, sdks#49) · 5 (above) · 6 (upstream waves 1–3: ext-tasks#23/#24, A2A#1574/#1685/#1986/#1987/#1988/#2103). Suite releases along the way: 2.37.0 → 2.39.5.
 
+**Follow-on flips (2026-09-26):** RFCs **0197, 0205, 0209** `Accepted` (provisional) in #1591 — the certified public v2-reference cut on published 2.40.1 carries the three declared-unwitnessable accounting rows added by #1582; 0197's MyndHyve leg is #1585 (certified 2.39.5, G1 closed) and #1595; 0209's render-side witness is openwop-app#4121's `render-needs-root` probe (sabotage-checked).
+
 **Residuals owned elsewhere (not this program):**
 - RFC 0199 needs a PRODUCTION witness for its box 374 (15/15 on v2-reference, #1575) — openwop-77, raised with David.
 - RFC 0210 needs its tier-2 box (MyndHyve advertisement fix) — openwop-77.
 - Promote `v2-sse-last-event-id-cursor` onto the core-standard floor after measuring all three bundle hosts.
 - Audit-entry export shape → a future `auditLogIntegrity` RFC.
-- openwop-sdks#50: 1.x SDKs' unregisterWebhook never sends the required `tenantId` (Go signature decision).
+- ~~openwop-sdks#50~~ — fixed by openwop-sdks#51 (merged; issue closed).
 - Watch A2A PR #2068 (SubscribeToTask POST→GET prose) → revisit the interop-map D1 exception if it merges.
 
 ## Binding constraints
