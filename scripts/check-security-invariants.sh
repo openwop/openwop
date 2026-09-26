@@ -242,7 +242,7 @@ TM_UNTRACED=$(echo "$STATS" | node -e 'let d=""; process.stdin.on("data",c=>d+=c
 # Ratchet baseline — the number of invariants whose `threat_model:` file exists
 # but never names the invariant. Measured 2026-08-19: 79 of 183. This number MUST
 # NOT grow. When you trace one, lower it; the gate tells you to.
-THREAT_MODEL_UNTRACED_BASELINE=79
+THREAT_MODEL_UNTRACED_BASELINE=78
 
 echo "Invariants tracked:"
 echo "  total:          $TOTAL"
