@@ -111,9 +111,16 @@ export interface ScopedReceiver {
  *
  * Unpinned, each receiver keeps a listener of its own (ephemeral port).
  */
-interface Listener { server: Server; port: number; origin: string; members: Set<Member>; refs: number }
+interface Listener { server: Server; port: number; origin: string; members: Set<Member> }
 interface Member { nonce: string; foreign: number }
-const sharedByPort = new Map<string, Promise<Listener>>();
+/**
+ * A pinned port's shared listener and its claim count. The claim is taken
+ * SYNCHRONOUSLY, before the first await (2.39.4): a sibling that read the entry
+ * and was still awaiting the bind used to be invisible to a closing holder, which
+ * dropped the count to zero and shut the server under it.
+ */
+interface Shared { listening: Promise<Listener>; refs: number }
+const sharedByPort = new Map<string, Shared>();
 
 function handlerFor(members: Set<Member>) {
   return (request: IncomingMessage, res: ServerResponse): void => {
@@ -144,7 +151,7 @@ async function listen(port: number, binding: { bind: string; advertise: string }
   });
   const addr = server.address();
   if (typeof addr !== 'object' || addr === null) throw new Error('receiver address unavailable');
-  return { server, port: addr.port, origin: `http://${binding.advertise}:${addr.port}`, members, refs: 0 };
+  return { server, port: addr.port, origin: `http://${binding.advertise}:${addr.port}`, members };
 }
 
 function shut(server: Server): Promise<void> {
@@ -179,22 +186,26 @@ export async function startScopedReceiver(
   const isPinned = Number.isInteger(pinned) && pinned > 0 && pinned < 65536;
   const binding = receiverBinding();
   let listener: Listener;
+  let shared: Shared | undefined;
   let key: string | undefined;
   if (isPinned) {
     key = `${binding.bind}:${pinned}`;
-    let p = sharedByPort.get(key);
-    if (!p) {
-      p = listen(pinned, binding);
-      sharedByPort.set(key, p);
-      p.catch(() => { if (sharedByPort.get(key!) === p) sharedByPort.delete(key!); });
+    shared = sharedByPort.get(key);
+    if (!shared) {
+      const listening = listen(pinned, binding);
+      shared = { listening, refs: 0 };
+      sharedByPort.set(key, shared);
+      const entry = shared;
+      listening.catch(() => { if (sharedByPort.get(key!) === entry) sharedByPort.delete(key!); });
     }
-    listener = await p;
+    shared.refs += 1; // claimed before any await — a closing sibling now sees this receiver
+    try { listener = await shared.listening; }
+    catch (err) { shared.refs -= 1; throw err; }
   } else {
     listener = await listen(0, binding);
   }
   const member: Member = { nonce, foreign: 0 };
   listener.members.add(member);
-  listener.refs += 1;
   registerBehindFront(WEBHOOK_FRONT_ENV, nonce, own);
   const front = resolvePublicFront(WEBHOOK_FRONT_ENV, listener.origin);
   let closed = false;
@@ -211,9 +222,11 @@ export async function startScopedReceiver(
       closed = true;
       unregisterBehindFront(WEBHOOK_FRONT_ENV, nonce);
       listener.members.delete(member);
-      listener.refs -= 1;
-      if (listener.refs > 0) return;
-      if (key !== undefined && sharedByPort.get(key) !== undefined) sharedByPort.delete(key);
+      if (shared !== undefined) {
+        shared.refs -= 1;
+        if (shared.refs > 0) return;
+        if (key !== undefined && sharedByPort.get(key) === shared) sharedByPort.delete(key);
+      }
       await shut(listener.server);
     },
   };

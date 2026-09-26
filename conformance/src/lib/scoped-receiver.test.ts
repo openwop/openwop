@@ -173,6 +173,21 @@ describe('scoped-receiver — a PINNED port is shared, never re-bound (2.39.3)',
     expect(b.foreign()).toBe(1);
   });
 
+  it('a sibling that is STARTING while the last holder closes still gets a live listener (2.39.4)', async () => {
+    // The race: B reads the shared listener's promise and awaits it; before B
+    // resumes, A closes, drops refs to 0 and shuts the server. B then counted
+    // itself onto a listener that was already closed — "delivery never arrived".
+    const port = await freePort();
+    process.env['OPENWOP_WEBHOOK_RECEIVER_PORT'] = String(port);
+    const a = await receiver();
+    const seenB: string[] = [];
+    const bStarting = receiver(seenB);   // B takes its claim synchronously, then awaits
+    await a.close();                     // A closes while B is between get and resume
+    const b = await bStarting;
+    expect(await post(`${b.localUrl}/after-race`)).toBe(204);
+    expect(b.seen).toEqual(['/after-race']);
+  });
+
   it('closing one receiver keeps its sibling serving on the shared port', async () => {
     const port = await freePort();
     process.env['OPENWOP_WEBHOOK_RECEIVER_PORT'] = String(port);
