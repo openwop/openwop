@@ -172,10 +172,26 @@ describe('RFC 0208 — v2-mcp-mount-map (host as MCP 2026-07-28 server, gated on
     const before = new Set(await list());
     const ok = await toolCall(m.url, 'conformance-noop');
     const fresh = (await list()).filter((x) => !before.has(x));
-    expect(fresh.length, req(R('mcp-run-transport'), 'interop-map.json mcp.methods tools/call', `tools/call MUST start a run (v2Operation createRun) that listRuns shows the same Subject (got ${fresh.length} new run(s); result ${JSON.stringify(ok.error ?? ok.result)})`)).toBe(1);
-    const poll = await driver.get(`/runs/${encodeURIComponent(fresh[0]!)}/events/poll?timeout=1`);
-    const started = ((poll.json as { events?: Array<{ type?: string; payload?: { transport?: string } }> } | undefined)?.events ?? []).find((e) => e.type === 'run.started');
-    expect(started?.payload?.transport, req(R('mcp-run-transport'), 'interop-map.json mcp.methods tools/call; runs.md run.started', 'the run starts with run.started.transport mcp')).toBe('mcp');
+    expect(fresh.length, req(R('mcp-run-transport'), 'interop-map.json mcp.methods tools/call', `tools/call MUST start a run (v2Operation createRun) that listRuns shows the same Subject (got ${fresh.length} new run(s); result ${JSON.stringify(ok.error ?? ok.result)})`)).toBeGreaterThanOrEqual(1);
+    // WHICH new run is ours (2.42.1). The leg counted `fresh.length === 1`, but
+    // the suite runs files concurrently and conformance-noop is every file's
+    // smallest run, so a sibling's run landed in the same window: the v2
+    // reference host's CI (4 workers) failed "got 2 new run(s)" on a host whose
+    // own tools/call started exactly one, and `fresh[0]` could have been the
+    // sibling's run, read for the wrong transport. Ours is the runId the result
+    // names when it names one listRuns shows, else the only new run; when the
+    // window stays ambiguous, the requirement holds if any new run started mcp.
+    const named = ((): string | null => {
+      const m = /"runId"\s*:\s*"([^"]+)"/.exec(JSON.stringify(ok.result ?? ''));
+      return m && fresh.includes(m[1]!) ? m[1]! : null;
+    })();
+    const transportOf = async (runId: string): Promise<string | undefined> => {
+      const poll = await driver.get(`/runs/${encodeURIComponent(runId)}/events/poll?timeout=1`);
+      return ((poll.json as { events?: Array<{ type?: string; payload?: { transport?: string } }> } | undefined)?.events ?? []).find((e) => e.type === 'run.started')?.payload?.transport;
+    };
+    const ours = named ?? (fresh.length === 1 ? fresh[0]! : null);
+    const transports = ours !== null ? [await transportOf(ours)] : await Promise.all(fresh.map(transportOf));
+    expect(transports.includes('mcp') ? 'mcp' : transports[0], req(R('mcp-run-transport'), 'interop-map.json mcp.methods tools/call; runs.md run.started', `the run starts with run.started.transport mcp (${ours !== null ? `run ${ours}` : `${fresh.length} runs started in the window, none named by the result`}; transports ${JSON.stringify(transports)})`)).toBe('mcp');
   });
 
   it('a suspending tool answers InputRequiredResult; the retry resolves it; requestState is single use and forgery-proof', async () => {
