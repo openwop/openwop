@@ -1,6 +1,6 @@
 {
   "bundleVersion": "3",
-  "generatedAt": "2026-09-26T01:42:56.867Z",
+  "generatedAt": "2026-09-26T03:02:28.918Z",
   "suite": {
     "name": "@openwop/openwop-conformance",
     "version": "2.38.0",
@@ -14,13 +14,13 @@
     "vendor": "openwop-app",
     "build": {
       "kind": "commit",
-      "id": "3b1f0b59c8f83fd827209eaefce5c8d419d8e54d"
+      "id": "bc0f13f1c0094fe2b81680c76a5003045fd17ff3"
     },
-    "signingKeyId": "openwop-app-colocated-companion-20260926014049"
+    "signingKeyId": "openwop-app-colocated-companion-20260926025953"
   },
   "discovery": {
     "url": "http://127.0.0.1:18099/.well-known/openwop",
-    "sha256": "4b033721e66330eafd00ebb48a863b19b1c00abec7028a530de2853ea3644cd7",
+    "sha256": "4c307ea0eefe8edc64873ec8023baab38d53b790b8df59045c71723bf5d3a8ab",
     "protocolVersions": [
       "1.1",
       "2.0"
@@ -37,9 +37,9 @@
       "eventLogSchemaVersion": 3,
       "signingKeys": [
         {
-          "keyId": "openwop-app-colocated-companion-20260926014049",
+          "keyId": "openwop-app-colocated-companion-20260926025953",
           "alg": "ed25519",
-          "publicKey": "3-FBqccjZseIX6cwNCl_yAdyFyRiU_mViynbYMxfkxY",
+          "publicKey": "tuugoJOaCtolQh97FlXjmCe9exi4eKtt1Llpq5exlxE",
           "use": "certification-bundle"
         }
       ],
@@ -379,6 +379,16 @@
         "maxTemplateBytes": 65536,
         "observability": "full"
       },
+      "toolCatalog": {
+        "status": "experimental",
+        "since": "2.0",
+        "until": "2.1",
+        "witness": "witnessable-gated",
+        "sources": [
+          "mcp"
+        ],
+        "compactView": true
+      },
       "secrets": {
         "status": "experimental",
         "since": "2.0",
@@ -496,6 +506,12 @@
         "until": "2.1",
         "witness": "witnessable-unaided"
       },
+      "conversationPrimitive": {
+        "status": "experimental",
+        "since": "2.0",
+        "until": "2.1",
+        "witness": "claims-check"
+      },
       "feedback": {
         "status": "experimental",
         "since": "2.0",
@@ -546,10 +562,10 @@
   ],
   "results": {
     "totals": {
-      "executedPass": 215,
-      "executedFail": 4,
+      "executedPass": 226,
+      "executedFail": 0,
       "skipped": 19,
-      "inapplicable": 200,
+      "inapplicable": 193,
       "blocked": 0
     },
     "requirements": [
@@ -557,8 +573,7 @@
         "id": "openwop.scenario.auth-challenge-no-oracle",
         "scenario": "auth-challenge-no-oracle.test.ts",
         "result": "executed-pass",
-        "assertions": 4,
-        "detail": "partial-witness: inapplicable: toolCatalog not advertised at major 2 — the host publishes no catalog"
+        "assertions": 6
       },
       {
         "id": "openwop.scenario.fixtures-valid",
@@ -595,16 +610,14 @@
       {
         "id": "openwop.scenario.tool-catalog-compact-projection",
         "scenario": "tool-catalog-compact-projection.test.ts",
-        "result": "inapplicable",
-        "assertions": 0,
-        "detail": "every test returned early through behaviorGate with zero assertions: profile not advertised in the captured discovery set"
+        "result": "executed-pass",
+        "assertions": 1
       },
       {
         "id": "openwop.scenario.tool-catalog-projection",
         "scenario": "tool-catalog-projection.test.ts",
-        "result": "inapplicable",
-        "assertions": 0,
-        "detail": "every test returned early through behaviorGate with zero assertions: profile not advertised in the captured discovery set"
+        "result": "executed-pass",
+        "assertions": 3
       },
       {
         "id": "openwop.floor.tool-descriptor-shape",
@@ -676,9 +689,8 @@
       {
         "id": "openwop.scenario.v2-auth-challenge",
         "scenario": "v2-auth-challenge.test.ts",
-        "result": "executed-fail",
-        "assertions": 8,
-        "detail": "1 test(s) failed — \"a 403 for insufficient scope names every scope the operation requires\"; first failure: [unknown@unknown] spec/v2/core/identity.md §2.5 (RFC 0200 §B.1): a credential that lacks runs:create MUST be refused 403, not 401 and not 201 (got 201) — OPENWOP_TEST_LOW_SCOPE_KEY names a key without it: expected 201 to be 403 // Object.is equality"
+        "result": "executed-pass",
+        "assertions": 10
       },
       {
         "id": "openwop.scenario.v2-bound-id-kinds",
@@ -716,13 +728,13 @@
         "id": "openwop.scenario.v2-capability-maturity-bounded",
         "scenario": "v2-capability-maturity-bounded.test.ts",
         "result": "executed-pass",
-        "assertions": 19
+        "assertions": 21
       },
       {
         "id": "openwop.scenario.v2-capability-record-shape",
         "scenario": "v2-capability-record-shape.test.ts",
         "result": "executed-pass",
-        "assertions": 117
+        "assertions": 131
       },
       {
         "id": "openwop.scenario.v2-chain-pin-exact",
@@ -761,9 +773,8 @@
       {
         "id": "openwop.scenario.v2-conversation-turn-parts",
         "scenario": "v2-conversation-turn-parts.test.ts",
-        "result": "inapplicable",
-        "assertions": 0,
-        "detail": "every test returned early through behaviorGate with zero assertions: profile not advertised in the captured discovery set"
+        "result": "executed-pass",
+        "assertions": 2
       },
       {
         "id": "openwop.scenario.v2-created-run-readable",
@@ -1030,9 +1041,8 @@
       {
         "id": "openwop.scenario.v2-oidc-id-token-audience",
         "scenario": "v2-oidc-id-token-audience.test.ts",
-        "result": "executed-fail",
-        "assertions": 2,
-        "detail": "1 test(s) failed — \"a same-audience ID token is admissible, and one minted for another relying party is audience_mismatch\"; first failure: [unknown@unknown] spec/v2/core/identity.md §2.1 (RFC 0200 §D); spec/v2/errors.json: the refusal code MUST be audience_mismatch — the credential verified, its audience is not this host: expected 'unauthenticated' to be 'audience_mismatch' // Object.is equality"
+        "result": "executed-pass",
+        "assertions": 2
       },
       {
         "id": "openwop.scenario.v2-owner-subject-required",
@@ -1101,7 +1111,7 @@
         "id": "openwop.scenario.v2-protected-resource-metadata",
         "scenario": "v2-protected-resource-metadata.test.ts",
         "result": "executed-pass",
-        "assertions": 4,
+        "assertions": 5,
         "detail": "partial-witness: inapplicable: no mcp.serverUrls[] — this host mounts no MCP server, so §A.4 does not bind it"
       },
       {
@@ -1472,23 +1482,20 @@
       {
         "id": "openwop.it.tool-catalog-compact-projection.serves-the-tools-compacttooldescriptor-projection-closed-shape-bounded-inputsche",
         "scenario": "tool-catalog-compact-projection.test.ts",
-        "result": "inapplicable",
-        "assertions": 0,
-        "detail": "toolCatalog not advertised at major 2 — the host publishes no catalog"
+        "result": "executed-pass",
+        "assertions": 1
       },
       {
         "id": "openwop.it.tool-catalog-projection.advisory-should-an-unchanged-catalog-reads-identically-sorted-by-toolid",
         "scenario": "tool-catalog-projection.test.ts",
-        "result": "inapplicable",
-        "assertions": 0,
-        "detail": "toolCatalog not advertised at major 2 — the host publishes no catalog"
+        "result": "executed-pass",
+        "assertions": 1
       },
       {
         "id": "openwop.it.tool-catalog-projection.lists-schema-valid-tooldescriptors-serves-by-id-404s-is-auth-gated-and-never-dis",
         "scenario": "tool-catalog-projection.test.ts",
-        "result": "inapplicable",
-        "assertions": 0,
-        "detail": "toolCatalog not advertised at major 2 — the host publishes no catalog"
+        "result": "executed-pass",
+        "assertions": 2
       },
       {
         "id": "openwop.it.tool-descriptor-shape.a-conforming-descriptor-validates",
@@ -2175,19 +2182,19 @@
         "id": "openwop.requirement.0169.capability-record-shape.required-fields",
         "scenario": "v2-capability-record-shape.test.ts",
         "result": "executed-pass",
-        "assertions": 68
+        "assertions": 76
       },
       {
         "id": "openwop.requirement.0169.capability-record-shape.until-iff-not-stable",
         "scenario": "v2-capability-record-shape.test.ts",
         "result": "executed-pass",
-        "assertions": 33
+        "assertions": 37
       },
       {
         "id": "openwop.requirement.0169.capability-record-shape.until-not-past",
         "scenario": "v2-capability-record-shape.test.ts",
         "result": "executed-pass",
-        "assertions": 16
+        "assertions": 18
       },
       {
         "id": "openwop.requirement.0169.profiles-derived-only.derivable",
@@ -3059,7 +3066,7 @@
         "id": "openwop.requirement.0197.maturity-not-overstated",
         "scenario": "v2-capability-maturity-bounded.test.ts",
         "result": "executed-pass",
-        "assertions": 19
+        "assertions": 21
       },
       {
         "id": "openwop.requirement.0198.advertised-via-discover",
@@ -3161,16 +3168,14 @@
       {
         "id": "openwop.requirement.0200.challenge-403-scope",
         "scenario": "v2-auth-challenge.test.ts",
-        "result": "executed-fail",
-        "assertions": 1,
-        "detail": "the test executed and failed in \"a 403 for insufficient scope names every scope the operation requires\": [unknown@unknown] spec/v2/core/identity.md §2.5 (RFC 0200 §B.1): a credential that lacks runs:create MUST be refused 403, not 401 and not 201 (got 201) — OPENWOP_TEST_LOW_SCOPE_KEY names a key without it: expected 201 to be 403 // Object.is equality"
+        "result": "executed-pass",
+        "assertions": 3
       },
       {
         "id": "openwop.requirement.0200.id-token-aud",
         "scenario": "v2-oidc-id-token-audience.test.ts",
-        "result": "executed-fail",
-        "assertions": 2,
-        "detail": "the test executed and failed in \"a same-audience ID token is admissible, and one minted for another relying party is audience_mismatch\": [unknown@unknown] spec/v2/core/identity.md §2.1 (RFC 0200 §D); spec/v2/errors.json: the refusal code MUST be audience_mismatch — the credential verified, its audience is not this host: expected 'unauthenticated' to be 'audience_mismatch' // Object.is equality"
+        "result": "executed-pass",
+        "assertions": 2
       },
       {
         "id": "openwop.requirement.0200.inbound-credential-no-passthrough",
@@ -3189,14 +3194,13 @@
         "id": "openwop.requirement.0200.no-challenge-on-nondisclosure-404",
         "scenario": "auth-challenge-no-oracle.test.ts",
         "result": "executed-pass",
-        "assertions": 4,
-        "detail": "toolCatalog not advertised at major 2 — the host publishes no catalog"
+        "assertions": 6
       },
       {
         "id": "openwop.requirement.0200.prm-consistent",
         "scenario": "v2-protected-resource-metadata.test.ts",
         "result": "executed-pass",
-        "assertions": 2
+        "assertions": 3
       },
       {
         "id": "openwop.requirement.0200.prm-served",
@@ -3209,14 +3213,14 @@
         "scenario": "v2-tool-catalog-annotations.test.ts",
         "result": "inapplicable",
         "assertions": 0,
-        "detail": "toolCatalog not advertised — the host publishes no catalog"
+        "detail": "none of the 0 descriptors carries annotations — §D.12 binds only a host that publishes them"
       },
       {
         "id": "openwop.requirement.0204.mcp-unclassified-write",
         "scenario": "v2-tool-catalog-annotations.test.ts",
         "result": "inapplicable",
         "assertions": 0,
-        "detail": "toolCatalog not advertised — the host publishes no catalog"
+        "detail": "the suite MCP fake server (OPENWOP_MCP_FAKE_SERVER=true) is not started in this run, so there is no suite server for the host to project"
       },
       {
         "id": "openwop.requirement.0205.artifact-a2a-shape",
@@ -3242,9 +3246,8 @@
       {
         "id": "openwop.requirement.0205.turn-parts-emitted",
         "scenario": "v2-conversation-turn-parts.test.ts",
-        "result": "inapplicable",
-        "assertions": 0,
-        "detail": "host does not advertise conversationPrimitive"
+        "result": "executed-pass",
+        "assertions": 2
       },
       {
         "id": "openwop.requirement.0206.delivery-extended-locale",
@@ -3425,8 +3428,8 @@
       }
     ]
   },
-  "witnessSha256": "191517f834621ed4017a6fb6022765ac5d55ba4fb47393f2c2e9203a85480129",
-  "assertionCount": 2244,
+  "witnessSha256": "c1d336b74698e5c44895201893ae09c8d0017fe1b8ed0dfdbf87c3436c10068e",
+  "assertionCount": 2298,
   "detail": {
     "nonPass": [
       {
@@ -3436,16 +3439,6 @@
       },
       {
         "id": "openwop.scenario.otel-mcp-semconv-projection",
-        "result": "inapplicable",
-        "reason": "every test returned early through behaviorGate with zero assertions: profile not advertised in the captured discovery set"
-      },
-      {
-        "id": "openwop.scenario.tool-catalog-compact-projection",
-        "result": "inapplicable",
-        "reason": "every test returned early through behaviorGate with zero assertions: profile not advertised in the captured discovery set"
-      },
-      {
-        "id": "openwop.scenario.tool-catalog-projection",
         "result": "inapplicable",
         "reason": "every test returned early through behaviorGate with zero assertions: profile not advertised in the captured discovery set"
       },
@@ -3485,11 +3478,6 @@
         "reason": "every test returned early through behaviorGate with zero assertions: profile not advertised in the captured discovery set"
       },
       {
-        "id": "openwop.scenario.v2-auth-challenge",
-        "result": "executed-fail",
-        "reason": "1 test(s) failed — \"a 403 for insufficient scope names every scope the operation requires\"; first failure: [unknown@unknown] spec/v2/core/identity.md §2.5 (RFC 0200 §B.1): a credential that lacks runs:create MUST be refused 403, not 401 and not 201 (got 201) — OPENWOP_TEST_LOW_SCOPE_KEY names a key without it: expected 201 to be 403 // Object.is equality"
-      },
-      {
         "id": "openwop.scenario.v2-callback-url-guarded",
         "result": "inapplicable",
         "reason": "every test returned early through behaviorGate with zero assertions: profile not advertised in the captured discovery set"
@@ -3506,11 +3494,6 @@
       },
       {
         "id": "openwop.scenario.v2-content-locale-keys",
-        "result": "inapplicable",
-        "reason": "every test returned early through behaviorGate with zero assertions: profile not advertised in the captured discovery set"
-      },
-      {
-        "id": "openwop.scenario.v2-conversation-turn-parts",
         "result": "inapplicable",
         "reason": "every test returned early through behaviorGate with zero assertions: profile not advertised in the captured discovery set"
       },
@@ -3600,11 +3583,6 @@
         "reason": "every test returned early through behaviorGate with zero assertions: profile not advertised in the captured discovery set"
       },
       {
-        "id": "openwop.scenario.v2-oidc-id-token-audience",
-        "result": "executed-fail",
-        "reason": "1 test(s) failed — \"a same-audience ID token is admissible, and one minted for another relying party is audience_mismatch\"; first failure: [unknown@unknown] spec/v2/core/identity.md §2.1 (RFC 0200 §D); spec/v2/errors.json: the refusal code MUST be audience_mismatch — the credential verified, its audience is not this host: expected 'unauthenticated' to be 'audience_mismatch' // Object.is equality"
-      },
-      {
         "id": "openwop.scenario.v2-pack-isolation",
         "result": "skipped",
         "reason": "every test returned early through behaviorGate with zero assertions: operator opted the profile or family out (OPENWOP_OPTED_OUT_PROFILES)"
@@ -3683,21 +3661,6 @@
         "id": "openwop.it.memory-attribution-replay-stable.a-replay-mode-fork-introduces-no-memory-written-with-a-new-memoryid",
         "result": "inapplicable",
         "reason": "memory.attribution.emitsWriteEvents not advertised — at major 2 the gate is recorded under openwop.family.memory, so an unadvertised family and an unreadable one are distinguishable in the bundle"
-      },
-      {
-        "id": "openwop.it.tool-catalog-compact-projection.serves-the-tools-compacttooldescriptor-projection-closed-shape-bounded-inputsche",
-        "result": "inapplicable",
-        "reason": "toolCatalog not advertised at major 2 — the host publishes no catalog"
-      },
-      {
-        "id": "openwop.it.tool-catalog-projection.advisory-should-an-unchanged-catalog-reads-identically-sorted-by-toolid",
-        "result": "inapplicable",
-        "reason": "toolCatalog not advertised at major 2 — the host publishes no catalog"
-      },
-      {
-        "id": "openwop.it.tool-catalog-projection.lists-schema-valid-tooldescriptors-serves-by-id-404s-is-auth-gated-and-never-dis",
-        "result": "inapplicable",
-        "reason": "toolCatalog not advertised at major 2 — the host publishes no catalog"
       },
       {
         "id": "openwop.it.v2-a2a-agent-cards.a-task-started-through-r-is-a-run-in-the-caller-s-tenant-of-record",
@@ -4430,16 +4393,6 @@
         "reason": "mcp not advertised at major 2"
       },
       {
-        "id": "openwop.requirement.0200.challenge-403-scope",
-        "result": "executed-fail",
-        "reason": "the test executed and failed in \"a 403 for insufficient scope names every scope the operation requires\": [unknown@unknown] spec/v2/core/identity.md §2.5 (RFC 0200 §B.1): a credential that lacks runs:create MUST be refused 403, not 401 and not 201 (got 201) — OPENWOP_TEST_LOW_SCOPE_KEY names a key without it: expected 201 to be 403 // Object.is equality"
-      },
-      {
-        "id": "openwop.requirement.0200.id-token-aud",
-        "result": "executed-fail",
-        "reason": "the test executed and failed in \"a same-audience ID token is admissible, and one minted for another relying party is audience_mismatch\": [unknown@unknown] spec/v2/core/identity.md §2.1 (RFC 0200 §D); spec/v2/errors.json: the refusal code MUST be audience_mismatch — the credential verified, its audience is not this host: expected 'unauthenticated' to be 'audience_mismatch' // Object.is equality"
-      },
-      {
         "id": "openwop.requirement.0200.mcp-mount-prm",
         "result": "inapplicable",
         "reason": "no mcp.serverUrls[] — this host mounts no MCP server, so §A.4 does not bind it"
@@ -4447,12 +4400,12 @@
       {
         "id": "openwop.requirement.0204.annotations-derived",
         "result": "inapplicable",
-        "reason": "toolCatalog not advertised — the host publishes no catalog"
+        "reason": "none of the 0 descriptors carries annotations — §D.12 binds only a host that publishes them"
       },
       {
         "id": "openwop.requirement.0204.mcp-unclassified-write",
         "result": "inapplicable",
-        "reason": "toolCatalog not advertised — the host publishes no catalog"
+        "reason": "the suite MCP fake server (OPENWOP_MCP_FAKE_SERVER=true) is not started in this run, so there is no suite server for the host to project"
       },
       {
         "id": "openwop.requirement.0205.artifact-a2a-shape",
@@ -4468,11 +4421,6 @@
         "id": "openwop.requirement.0205.artifact-url-part-scoped",
         "result": "inapplicable",
         "reason": "no artifact-producing fixture: the host does not advertise conformance-artifact-emit (RFC 0205 register G2)"
-      },
-      {
-        "id": "openwop.requirement.0205.turn-parts-emitted",
-        "result": "inapplicable",
-        "reason": "host does not advertise conversationPrimitive"
       },
       {
         "id": "openwop.requirement.0206.delivery-extended-locale",
@@ -4548,8 +4496,8 @@
   },
   "signature": {
     "alg": "ed25519",
-    "keyId": "openwop-app-colocated-companion-20260926014049",
-    "sig": "CmiDbfpdGWwd_DbF589ZCM16OrUvMB6W2Pr35F5BBrGrnIpBKVJ3yYJLhA-Ega0pehv9ulL33Hjpmno5Z-gUBw",
+    "keyId": "openwop-app-colocated-companion-20260926025953",
+    "sig": "O7Vlp1qRKh7FOOcGiShPLHDqaqVqONSStm48NQat_lfhKViIEO7sSfHGienGoxTWoh8pBegRrI621glFXO-RBA",
     "over": [
       "witnessSha256",
       "host.build",
