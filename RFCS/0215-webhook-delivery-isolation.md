@@ -4,11 +4,11 @@
 | ----------------- | --------------------------------------------------------------- |
 | **RFC**           | 0215                                                            |
 | **Title**         | a webhook delivery does not wait on another subscription's receiver, and an unregistered subscription gets no further attempts |
-| **Status**        | `Draft`                                                         |
+| **Status**        | `Active`                                                        |
 | **Author(s)**     | David Tufts (@davidscotttufts)                                  |
 | **Created**       | 2026-09-24                                                      |
-| **Updated**       | 2026-09-25 — prior-art survey done (§Prior art; gap G6 closed) and the availability invariant given a threat-model home (`threat-model-secret-leakage.md` §4.12; gap G3 closed). **The public comment window runs in full, to 2026-10-01** (RFC 0147 §A.6: an isolation RFC takes the whole window). · 2026-09-24 — filed `Draft` |
-| **Affects**       | `spec/v2/core/webhooks.md` §Durability (two new bullets) and §Surfaces (one sentence on `unregisterWebhook`) · `SECURITY/invariants.yaml` (+2, proposed below; added at `Active`) · conformance (2 new scenarios, `webhooks`-gated) |
+| **Updated**       | 2026-09-25 (`Draft → Active`) — moved `Active` the day after filing; **comment window waived** by an explicit **steward override of RFC 0147 §A.6**, which forbids bootstrap waiver language from shortening the public window for an RFC affecting **isolation** and **external effects** (§A is the availability half of tenant isolation; §B governs signed deliveries to an external destination). The steward decided on 2026-09-25 to waive it ("waive the comment window and move 0215 to Active"). Recorded in `MAINTAINERS.md` as an override row, not a routine waiver; the RFC 0156 §B retrospective review is owed (`docs/WAIVER-RETROSPECTIVE-REGISTER.md`), so any acceptance is provisional until it is recorded. The evidence gate (RFC 0147 §A.5) is not overridden. An architecture review before the flip decided the open questions (§Resolved questions) and changed both scenarios' shape (§Conformance): §A now establishes contention before the healthy delivery falls due, and §B is judged against a control subscription. Spec text, both scenarios (sabotage-proved on the v2 reference host) and both invariant rows land in suite 2.40.0. · 2026-09-25 — prior-art survey done (§Prior art; gap G6 closed) and the availability invariant given a threat-model home (`threat-model-secret-leakage.md` §4.12; gap G3 closed). **The public comment window runs in full, to 2026-10-01** (RFC 0147 §A.6: an isolation RFC takes the whole window). · 2026-09-24 — filed `Draft` |
+| **Affects**       | `spec/v2/core/webhooks.md` §Durability (two new bullets) and §Surfaces (one sentence on `unregisterWebhook`) · `SECURITY/invariants.yaml` (+2, added at `Active`) · conformance (2 new scenarios, `webhooks`-gated, suite 2.40.0) |
 | **Compatibility** | `additive` — a new normative requirement on a previously undefined behavior (`COMPATIBILITY.md` §4). No wire, schema, error-code or event change |
 | **Supersedes**    | —                                                               |
 | **Superseded by** | —                                                               |
@@ -49,7 +49,7 @@ New bullets in `spec/v2/core/webhooks.md` §Durability, after the at-least-once 
 > - sustain §A.1 while at least **8** subscriptions have attempts outstanding that their receivers have not answered. A host MAY bound concurrent attempts beyond that, and SHOULD NOT let one tenant's unanswered attempts occupy capacity that another tenant's deliveries need.
 
 - **§A.1 (MUST NOT).** It is a head-of-line rule and says nothing about mechanism. A per-subscription lane, a concurrent pool, or async I/O all satisfy it. A sequential loop over a batch does not.
-- **§A.2 (floor, MUST).** Without a number, §A.1 is unsatisfiable by any bounded host (with enough dead receivers, every pool fills), and a host could argue any bound it has meets it. The floor makes the rule satisfiable and testable: at 8 outstanding unanswered attempts, a ninth subscription's attempt still starts. The number is a Draft proposal (Unresolved question 1).
+- **§A.2 (floor, MUST).** Without a number, §A.1 is unsatisfiable by any bounded host (with enough dead receivers, every pool fills), and a host could argue any bound it has meets it. The floor makes the rule satisfiable and testable: at 8 outstanding unanswered attempts, a ninth subscription's attempt still starts. The number was decided at `Active` (§Resolved questions 1).
 - **§A.3 (cross-tenant, SHOULD).** This is the availability analogue of `webhook-cross-tenant-isolation`. It is a SHOULD because the fair-share mechanism is a real design cost for a host, and because the only way to observe it needs an operator-supplied second-tenant credential (Falsifiability).
 
 Scope: §A governs *when an attempt starts*. It does not bound how long after an event becomes due its first attempt must start. That is a latency SLO, not an isolation property (gap register G2).
@@ -58,9 +58,9 @@ Scope: §A governs *when an attempt starts*. It does not bound how long after an
 
 One sentence appended to the `unregisterWebhook` row's surrounding text in `webhooks.md` §Surfaces, and one bullet in §Durability:
 
-> After `unregisterWebhook` answers `204`, the host MUST NOT start any further attempt for that subscription, including attempts already scheduled for retry. An attempt already in flight when the `204` is sent MAY complete. Undelivered events are not dead-lettered by the unregister; the subscription no longer exists to own them.
+> After `unregisterWebhook` answers `204`, the host MUST NOT start any further attempt for that subscription, including attempts already scheduled for retry. An attempt whose request the host had begun sending before the `204` MAY complete. The unregister does not oblige the host to route that subscription's undelivered events to the dead-letter sink.
 
-The last sentence resolves the one interaction with §Durability: "route an exhausted delivery to the dead-letter sink, rather than drop it" governs deliveries of a *live* subscription. Unregistering is the owner withdrawing the subscription, not a delivery failure. The `webhooks.deadLetter` read (RFC 0188) is keyed by `webhookId`, and nothing in the corpus says whether it still answers once that subscription is unregistered. Records written *by* the unregister would depend on an answer nobody has given. Whether *existing* dead-letter records outlive the unregister is the same unstated question, and it is gap register G5, not this RFC.
+The last sentence resolves the one interaction with §Durability: "route an exhausted delivery to the dead-letter sink, rather than drop it" governs deliveries of a *live* subscription. It is a permission, not a prohibition (architecture review, 2026-09-25): the Draft said undelivered events "are not dead-lettered", which no client can observe, since the dead-letter read is keyed by a `webhookId` that no longer exists, and which the v2 reference host's store violates harmlessly by marking orphaned rows `dead-lettered` internally. An unobservable prohibition is not a rule. Unregistering is the owner withdrawing the subscription, not a delivery failure. The `webhooks.deadLetter` read (RFC 0188) is keyed by `webhookId`, and nothing in the corpus says whether it still answers once that subscription is unregistered. Records written *by* the unregister would depend on an answer nobody has given. Whether *existing* dead-letter records outlive the unregister is the same unstated question, and it is gap register G5, not this RFC.
 
 ### Examples
 
@@ -72,14 +72,14 @@ The last sentence resolves the one interaction with §Durability: "route an exha
 
 **Non-conforming (§B).** The retry arrives, signed, after the `204`: openwop-app before #4083.
 
-### Proposed invariants (added to `SECURITY/invariants.yaml` at `Active`)
+### Invariants (added to `SECURITY/invariants.yaml` at `Active`, 2026-09-25)
 
 | id | tier | severity | threat model | test |
 | --- | --- | --- | --- | --- |
-| `webhook-delivery-isolation` | protocol | high | `SECURITY/threat-model-secret-leakage.md` §4.12 (starvation by registration; gap register G3) | `v2-webhook-delivery-isolation.test.ts` (planned) |
-| `webhook-unregister-stops-delivery` | protocol | high | `SECURITY/threat-model-secret-leakage.md` §4.12 (signed run data to a withdrawn destination) | `v2-webhook-unregister-stops-delivery.test.ts` (planned) |
+| `webhook-delivery-isolation` | protocol | high | `SECURITY/threat-model-secret-leakage.md` §4.12 (starvation by registration; gap register G3) | `v2-webhook-delivery-isolation.test.ts` |
+| `webhook-unregister-stops-delivery` | protocol | high | `SECURITY/threat-model-secret-leakage.md` §4.12 (signed run data to a withdrawn destination) | `v2-webhook-unregister-stops-delivery.test.ts` |
 
-**Decision on TODO S3's question** ("a new invariant beside `webhook-cross-tenant-isolation`, or a §Durability clause?"): **both, for different reasons.** The normative text belongs in §Durability, because it is an obligation of the delivery surface, which RFC 0173 §B already made durable. The invariant rows exist because each failure crosses a trust boundary: §A across tenants, §B across the owner's withdrawal. The invariant catalogue is where the corpus records properties an attacker would target. Neither row is added to `invariants.yaml` at `Draft`, because a row without a runnable test would count against the unwitnessable ratchet for as long as this RFC is in comment.
+**Decision on TODO S3's question** ("a new invariant beside `webhook-cross-tenant-isolation`, or a §Durability clause?"): **both, for different reasons.** The normative text belongs in §Durability, because it is an obligation of the delivery surface, which RFC 0173 §B already made durable. The invariant rows exist because each failure crosses a trust boundary: §A across tenants, §B across the owner's withdrawal. The invariant catalogue is where the corpus records properties an attacker would target. Neither row was added at `Draft`, because a row without a runnable test would count against the unwitnessable ratchet for as long as this RFC was in comment. Both landed at `Active` with their scenarios, `witnessable-gated`.
 
 ## Compatibility
 
@@ -93,27 +93,33 @@ The last sentence resolves the one interaction with §Durability: "route an exha
 
 **Existing coverage.** `v2-webhook-durable-delivery.test.ts` (retry, at-least-once, dead-letter), `webhook-tenant-isolation.test.ts` (confidentiality), `v2-webhook-egress-refusal.test.ts`. None creates contention between subscriptions, and none unregisters with a retry pending.
 
-**New scenarios** (both gated on `webhooks`, both built on `startScopedReceiver`, whose `respond` callback owns the response and can therefore hold one open):
+**New scenarios** (suite 2.40.0; both gated on `webhooks`, both built on `startScopedReceiver`, whose `respond` callback owns the response and can therefore hold one open). The Draft's shapes were revised by the architecture review before `Active`; the Draft text is in this file's history.
 
-1. `v2-webhook-delivery-isolation.test.ts` (planned).
-   - **Control leg:** one healthy subscription, one run; its delivery arrives. If it does not, every other leg records `blocked` with `noDeliveryCause`, never a failure.
-   - **§A leg:** register 8 subscriptions whose receivers accept and never answer (held until the leg ends), then one healthy subscription, all matching one run.
-     - Pass: the healthy attempt arrives within `RETRY_WAIT_FLOOR_MS` while no held attempt has been abandoned.
-     - Fail: it arrives only after the host abandoned a held attempt, or not at all.
-     - `partial-witness`: it arrives before *any* held attempt was even started. The host may simply have dispatched the healthy one first, so nothing was contended.
-   - Registration order puts the held subscriptions first, which a FIFO host will dispatch first.
-2. `v2-webhook-unregister-stops-delivery.test.ts` (planned). The receiver answers `500` to every attempt. Wait for the first attempt, unregister (`204`), and record the time. Any attempt for that `webhookId` arriving more than 5 s after the `204`, within `retryWaitFor(policy, cap)`, fails the row. A host advertising `retryPolicy.maxAttempts: 1` has no retry to observe and records `inapplicable`.
+1. `v2-webhook-delivery-isolation.test.ts`, requirement `openwop.requirement.0215.no-head-of-line` (§A.1 and §A.2: one observation at the floor).
+   - **Contention first.** 8 *held* subscriptions filter `run.started`; their receivers accept each attempt and never answer until the leg ends. One *healthy* subscription filters `run.completed` and answers `204`. One `conformance-delay` run of 2 s: `run.started` makes the 8 held attempts due at t0, `run.completed` makes the healthy one due at t0 + 2 s, when 8 are outstanding. The host's dispatch order cannot decide the row, so the Draft's "healthy attempt arrived first" `partial-witness` case no longer exists.
+   - **Pass:** the healthy attempt arrives while all 8 held attempts are open.
+   - **Fail:** the held attempts were still open when the run was terminal, and the healthy attempt arrived only once the host released one, or never within `RETRY_WAIT_FLOOR_MS`. A host that never opened 8 at once, and whose held attempts had not timed out by then, also fails: that is a bounded dispatcher below the floor.
+   - **`partial-witness`:** the host's own delivery timeout closed held attempts before the run was terminal. The timeout is the host's to choose; a host whose timeout is shorter than 2 s is not measured by this instrument.
+   - **`blocked`:** no attempt for any of the nine subscriptions arrived (`noDeliveryCause`).
+   - Sabotage (v2 reference host, 2026-09-25): a sequential worker fails ("1 held attempt(s) arrived … the healthy attempt did not arrive within 20000ms"); a 5-slot pool fails ("5 held … the healthy attempt arrived 3053ms after it, with 3 held open"). Unsabotaged, it passes.
+2. `v2-webhook-unregister-stops-delivery.test.ts`, requirement `openwop.requirement.0215.unregister-stops-delivery` (§B).
+   - **Against a control.** Absence alone proves nothing: `webhooks.retryPolicy` carries no interval, so "no retry arrived" cannot distinguish a host that stopped from one whose next retry lies beyond the window. Two subscriptions on one receiver filter `run.completed`, and every attempt is answered `500`. The *target* is unregistered as soon as its first attempt has been answered. The *control* is left alone, and its retries are the ones the target's would have been.
+   - **Pass:** the control is retried after the `204` + 5 s and the target is not.
+   - **Fail:** an attempt for the target arrives after the `204` + 5 s.
+   - **`partial-witness`:** neither is retried after that point within `retryWaitFor(policy, cap)`.
+   - **`inapplicable`:** the host advertises `retryPolicy.maxAttempts: 1`.
+   - Sabotage (v2 reference host, 2026-09-25): an attempt that falls back to a cached subscription after the delete fails ("target …: 5 attempt(s), 1 after the 204 + 5000ms; control …: 5 attempt(s), 1 after that point"). Unsabotaged, it passes.
 
-A public front (`OPENWOP_WEBHOOK_RECEIVER_URL`) may time out a held request itself: a cloudflared tunnel does so at ~100 s. That is longer than the §A window, so the front cannot be mistaken for the host abandoning the attempt. The scenario still records which side closed.
+A public front (`OPENWOP_WEBHOOK_RECEIVER_URL`) may time out a held request itself: a cloudflared tunnel does so at ~100 s. That is longer than the §A leg holds an attempt, so the front cannot be mistaken for the host abandoning the attempt. The scenario still records which side closed.
 
 ### Falsifiability
 
 | Requirement | Observable | Who can cause it | Verdict |
 | --- | --- | --- | --- |
-| §A.1 no head-of-line across subscriptions | healthy attempt arrives while 8 held attempts stay open (`v2-webhook-delivery-isolation.test.ts`, planned) | the suite (holds its own receivers open) | witnessable — gated (on `webhooks`); dispatch order not controllable ⇒ `partial-witness` when nothing contended |
-| §A.2 floor of 8 | same leg, at exactly 8 held | the suite | witnessable — gated (on `webhooks`) |
-| §A.3 cross-tenant fair share (SHOULD) | tenant B's delivery arrives while tenant A holds attempts open past its floor | the suite, with an operator-supplied `OPENWOP_TEST_TENANT_B_API_KEY` | witnessable — gated (on `webhooks` and the tenant-B key; absent key ⇒ `inapplicable`). A SHOULD, so the leg reports and never fails; the leg's shape is gap register G4 |
-| §B no attempt after `204` | an attempt for the unregistered `webhookId` arrives > 5 s after `204` (`v2-webhook-unregister-stops-delivery.test.ts`, planned) | the suite (fails every attempt, then unregisters) | witnessable — gated (on `webhooks`) |
+| §A.1 no head-of-line across subscriptions (`openwop.requirement.0215.no-head-of-line`) | the healthy attempt arrives while 8 held attempts stay open (`v2-webhook-delivery-isolation.test.ts`) | the suite (holds its own receivers open) | witnessable — gated (on `webhooks`); contention is established before the healthy delivery falls due |
+| §A.2 floor of 8 (`openwop.requirement.0215.no-head-of-line`) | same leg, at exactly 8 held | the suite | witnessable — gated (on `webhooks`); one observation with §A.1, so one id |
+| §A.3 cross-tenant fair share (SHOULD) | tenant B's delivery arrives while tenant A holds attempts open past its floor | the suite, with an operator-supplied `OPENWOP_TEST_TENANT_B_API_KEY` | witnessable — gated (on `webhooks` and the tenant-B key); a SHOULD, so no row is minted (gap register G4, decided): a row that cannot fail does not belong in a certification bundle |
+| §B no attempt after `204` (`openwop.requirement.0215.unregister-stops-delivery`) | an attempt for the unregistered `webhookId` arrives > 5 s after `204`, while a control subscription on the same run is still retried (`v2-webhook-unregister-stops-delivery.test.ts`) | the suite (fails every attempt, then unregisters) | witnessable — gated (on `webhooks`); no control retry in the window ⇒ `partial-witness` |
 
 ## Alternatives considered
 
@@ -121,29 +127,32 @@ A public front (`OPENWOP_WEBHOOK_RECEIVER_URL`) may time out a held request itse
 2. **A latency bound instead of an isolation rule** ("the first attempt MUST start within N s of the event"). It is simpler to state, but it is the wrong property. It convicts a host that is merely busy and acquits one whose queue is idle today. It also puts a number on the wire that every host would have to meet under any load. Isolation is what failed, so isolation is what is stated. A latency SLO is gap register G2.
 3. **§A as a SHOULD.** A SHOULD cannot fail a row, and the whole motivation is a host that passed every row while starving its subscribers. A SHOULD is right for the cross-tenant fairness mechanism (§A.3) and wrong for head-of-line blocking (§A.1).
 4. **Dead-letter pending attempts at unregister instead of dropping them (§B).** Rejected in §B: the sink is read per `webhookId`, and whether that read survives an unregister is unstated (G5). Writing records into a sink that may be unreadable is worse than a stated drop.
-5. **An advertised concurrency facet** (`webhooks.maxOutstanding`) instead of a fixed floor. It would let each host state its own bound. But an advertised bound of 1 would make a sequential host conforming, which re-admits the defect. A floor with no field is stricter and needs no schema change. Unresolved question 1 keeps the number open.
+5. **An advertised concurrency facet** (`webhooks.maxOutstanding`) instead of a fixed floor. It would let each host state its own bound. But an advertised bound of 1 would make a sequential host conforming, which re-admits the defect. A floor with no field is stricter and needs no schema change. §Resolved questions 1 decided the number.
 
-## Unresolved questions
+## Resolved questions
 
-1. **Is 8 the right floor?** It is chosen to exceed the one measured claim batch (openwop-app, 5), so the scenario reaches the case that host's own test does not. The prior-art survey (§Prior art) found no published number to derive it from. The services that state an isolation design state it as a *mechanism* (a work unit per endpoint, per-endpoint concurrency caps, circuit breakers), and that mechanism meets any floor. So 8 stays a testability floor chosen from measurement, and it remains open to comment until `Active`.
-2. **Should §B also cover a subscription whose `url` is later rejected at delivery time by §Egress?** Today that is a delivery failure retried under the policy. It is arguably the same "destination no longer valid" case, and it is scoped out here. The receiver-side version of the question has prior art: the Standard Webhooks specification says a sender receiving `410 Gone` "should disable the webhook endpoint, and stop sending it messages". A `410` rule would be a separate RFC, because it changes what a *delivery* response means, not what unregistering does.
-3. **Should the §B grace be 5 s?** It must cover an attempt the host had already started when it answered `204`. A host with a 30 s delivery timeout may still be in the middle of an earlier attempt, but that attempt's request has already *arrived* at the receiver, and the scenario keys on arrivals. So 5 s covers network transit only.
-4. **Should the corpus ever bound first-attempt latency?** §A is deliberately an isolation rule, not an SLO (Alternative 2, gap register G2). openwop-app's WHD-1 retries were each due within seconds and not claimed for minutes. That is covered by §A when other subscribers caused it, and uncovered when an idle queue simply polled slowly.
+Decided at `Active` by the architecture review of 2026-09-25, in place of the comment window the steward waived.
+
+1. **Is 8 the right floor? Yes.** Nothing published contradicts or derives a number (§Prior art), and every described isolation mechanism meets any floor. 8 exceeds the one measured claim batch (openwop-app, 5), costs the suite nine concurrent connections through a tunnel, and both deployed hosts can meet it: MyndHyve dispatches one task per `(subscription, event)` with no module-level serialization, and openwop-app is replacing its batch barrier with a lane per subscription.
+2. **Should §B also cover a subscription whose `url` is later rejected by §Egress? No.** It stays a delivery failure retried under the policy. A Standard Webhooks-style `410 Gone` rule would change what a delivery *response* means and needs its own RFC.
+3. **Should the §B grace be 5 s? The spec states no number.** The normative text allows "an attempt whose request the host had begun sending before the `204`", and the receiver keys on arrival, so the grace covers transit of a request already on the wire. 5 s is the scenario's instrument setting, like `RETRY_WAIT_FLOOR_MS`, and can change in a suite patch.
+4. **Should the corpus ever bound first-attempt latency? Not here.** §A is an isolation rule, not an SLO (Alternative 2, gap register G2).
 
 ## Implementation notes (non-normative)
 
 - openwop-app: #4052 (concurrent claimed batch, bounded by `CLAIM_BATCH`) and #4083 (atomic pending-row drop on delete) are the two fixes. With `CLAIM_BATCH = 5`, §A.2 at 8 likely needs either a larger batch or a claim that skips subscriptions with an attempt already outstanding. Risk R1 records this as expected, not measured.
 - A design that meets §A for any number of dead receivers: each subscription's attempts are serialized in its own lane, and lanes share nothing but the socket pool. A concurrent pool bounded at ≥ 8 meets the floor but not the SHOULD in §A.2, because one tenant can fill it.
-- Sequencing: spec text + scenarios in one suite minor; invariant rows at `Active`; `Accepted` on a certified bundle from each of two hosts carrying both rows `executed-pass`.
+- Sequencing: spec text, scenarios and invariant rows together at `Active` (suite 2.40.0); `Accepted` on certified bundles from two hosts, at least one of them deployed, each carrying both rows `executed-pass`.
 
 ## Acceptance criteria
 
-- [ ] Spec text merged (`webhooks.md` §Durability, §Surfaces).
-- [ ] Schema / OpenAPI / AsyncAPI updated where applicable — **none applicable**: no wire change.
-- [ ] `v2-webhook-delivery-isolation.test.ts` and `v2-webhook-unregister-stops-delivery.test.ts` in the suite, sabotage-proved against a sequential worker and against a delete that leaves pending rows.
-- [ ] `SECURITY/invariants.yaml` rows `webhook-delivery-isolation` and `webhook-unregister-stops-delivery`.
-- [ ] CHANGELOG entry under the suite minor that ships the scenarios.
-- [ ] Two hosts' certified bundles record both rows `executed-pass` (openwop-app; MyndHyve per G1).
+- [x] `Active` — 2026-09-25, by steward override of RFC 0147 §A.6. The window was waived, not run (see `Updated`).
+- [x] Spec text merged (`webhooks.md` §Durability, §Surfaces).
+- [x] Schema / OpenAPI / AsyncAPI updated where applicable — **none applicable**: no wire change.
+- [x] `v2-webhook-delivery-isolation.test.ts` and `v2-webhook-unregister-stops-delivery.test.ts` in the suite, sabotage-proved against a sequential worker, a 5-slot pool, and a delete that leaves pending attempts live.
+- [x] `SECURITY/invariants.yaml` rows `webhook-delivery-isolation` and `webhook-unregister-stops-delivery`.
+- [x] CHANGELOG entry under the suite minor that ships the scenarios (2.40.0).
+- [ ] Certified bundles from two hosts, at least one of them deployed, record `openwop.requirement.0215.no-head-of-line` and `openwop.requirement.0215.unregister-stops-delivery` `executed-pass` (candidates: openwop-app, MyndHyve per G1, the v2 reference host). Amended at `Active` from "openwop-app; MyndHyve": MyndHyve's production deploys are gated on its own operator, and GOVERNANCE's evidence tiers already admit the reference host as a witness.
 
 ## Prior art
 
@@ -160,7 +169,7 @@ Surveyed 2026-09-25 (gap register G6), from each system's own documentation.
 
 **What the survey changes.**
 - **§B is established practice.** Both hosted senders that document the case (Stripe, Svix) stop pending retries when an endpoint is deleted. Stripe drops the undelivered events rather than dead-lettering them, which is the choice §B makes (Alternative 4). §B stays as written.
-- **§A is established design, not established contract.** Every service that describes its isolation describes a mechanism. None publishes a guarantee a subscriber could test, and none gives a number. So nothing here contradicts 8, and nothing derives it (Unresolved question 1). The survey supports the lane design in §Implementation notes, which Svix describes almost word for word, and it supports keeping §A a head-of-line rule rather than a latency bound (Alternative 2). No surveyed service promises a first-attempt latency either.
+- **§A is established design, not established contract.** Every service that describes its isolation describes a mechanism. None publishes a guarantee a subscriber could test, and none gives a number. So nothing here contradicts 8, and nothing derives it (§Resolved questions 1). The survey supports the lane design in §Implementation notes, which Svix describes almost word for word, and it supports keeping §A a head-of-line rule rather than a latency bound (Alternative 2). No surveyed service promises a first-attempt latency either.
 - **Hookdeck's delivery groups are a working instance of §A.3**, which shows that the fair-share SHOULD has a known implementation.
 
 ## References
@@ -170,3 +179,4 @@ Surveyed 2026-09-25 (gap register G6), from each system's own documentation.
 - `spec/v2/core/webhooks.md` §Surfaces, §Durability; `spec/v1/webhooks.md` §Unregister.
 - RFC 0093 (webhook delivery hardening; `webhook-cross-tenant-isolation`), RFC 0173 §B (durable delivery binds with the surface), RFC 0188 (delivery dead-letter read route).
 - Prior art: §Prior art (surveyed 2026-09-25; gap register G6).
+- RFC 0147 §A.6 (the window this RFC's `Active` overrides); RFC 0156 §B (the review owed); RFC 0194 (override precedent).
