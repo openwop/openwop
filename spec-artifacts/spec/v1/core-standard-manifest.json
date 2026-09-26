@@ -42,6 +42,7 @@
     "createPromptTemplate",
     "createRun",
     "createTriggerSubscription",
+    "deleteContentPage",
     "deletePromptTemplate",
     "deleteTestPackVersion",
     "deleteWorkspaceFile",
@@ -420,5 +421,5 @@
       "$id": "https://openwop.dev/spec/v1/workspace-file.schema.json"
     }
   ],
-  "digest": "8f18423e68a0380fd4993c44e289e75ded0c605180e10b30744d62ce6946081b"
+  "digest": "a904ebbb9db1cc3488bbdabaf5d3f1fc7cb72c54aa04f80e1c9353b0214257b1"
 }
