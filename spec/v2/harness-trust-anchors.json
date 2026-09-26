@@ -1,0 +1,50 @@
+{
+  "$schema": "./harness-trust-anchors.schema.json",
+  "$comment": "RFC 0216 §A — the rows a colocated companion may witness. Closed by scripts/check-harness-trust-anchors.mjs; extend only under an RFC that carries its own `### Harness-trust-anchor rows` table, and under the RFC 0147 §A.6 full window.",
+  "version": 1,
+  "updated": "2026-09-26",
+  "rows": [
+    {
+      "requirementId": "openwop.requirement.0210.exp-only-control-accepted",
+      "scenario": "v2-lane-exp-only-bound.test.ts",
+      "anchor": "oidc-test-issuer",
+      "rfc": "0216"
+    },
+    {
+      "requirementId": "openwop.requirement.0210.exp-only-lifetime-bound",
+      "scenario": "v2-lane-exp-only-bound.test.ts",
+      "anchor": "oidc-test-issuer",
+      "rfc": "0216"
+    },
+    {
+      "requirementId": "openwop.requirement.0210.exp-only-remaining-bound",
+      "scenario": "v2-lane-exp-only-bound.test.ts",
+      "anchor": "oidc-test-issuer",
+      "rfc": "0216"
+    },
+    {
+      "requirementId": "openwop.requirement.0210.credential-lifetime-code",
+      "scenario": "v2-lane-exp-only-bound.test.ts",
+      "anchor": "oidc-test-issuer",
+      "rfc": "0216"
+    },
+    {
+      "requirementId": "openwop.scenario.v2-lane-exp-only-bound",
+      "scenario": "v2-lane-exp-only-bound.test.ts",
+      "anchor": "oidc-test-issuer",
+      "rfc": "0216"
+    },
+    {
+      "requirementId": "openwop.requirement.0200.id-token-aud",
+      "scenario": "v2-oidc-id-token-audience.test.ts",
+      "anchor": "oidc-test-issuer",
+      "rfc": "0216"
+    },
+    {
+      "requirementId": "openwop.scenario.v2-oidc-id-token-audience",
+      "scenario": "v2-oidc-id-token-audience.test.ts",
+      "anchor": "oidc-test-issuer",
+      "rfc": "0216"
+    }
+  ]
+}

@@ -1,0 +1,29 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://openwop.dev/spec/v2/harness-trust-anchors.schema.json",
+  "title": "OpenWOP v2 harness-trust-anchor rows",
+  "description": "Shape of spec/v2/harness-trust-anchors.json (RFC 0216 §A). Each entry names a requirement whose observation needs the host to trust key material the conformance suite holds — a precondition a host serving production traffic MUST NOT meet. A bundle marked `host.deployment: \"colocated-companion\"` is acceptance evidence for these rows only (RFC 0216 §C). scripts/check-harness-trust-anchors.mjs keeps the list closed: exact ids, a closed anchor enum, agreement with the Active/Accepted RFCs' `### Harness-trust-anchor rows` tables, a scenario that mints the id and gates on the anchor, and no floor scenario. Data, not a wire artifact.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["$schema", "version", "updated", "rows"],
+  "properties": {
+    "$schema": { "type": "string", "const": "./harness-trust-anchors.schema.json" },
+    "$comment": { "type": "string" },
+    "version": { "type": "integer", "const": 1 },
+    "updated": { "type": "string", "pattern": "^[0-9]{4}-[0-9]{2}-[0-9]{2}$" },
+    "rows": { "type": "array", "minItems": 1, "items": { "$ref": "#/$defs/row" } }
+  },
+  "$defs": {
+    "row": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["requirementId", "scenario", "anchor", "rfc"],
+      "properties": {
+        "requirementId": { "type": "string", "pattern": "^openwop\\.(requirement|scenario)\\.[a-z0-9.-]+$", "description": "An exact requirement or scenario id. No wildcard or prefix form." },
+        "scenario": { "type": "string", "pattern": "^[a-z0-9-]+\\.test\\.ts$", "description": "The conformance scenario file (conformance/src/scenarios/) that mints the id." },
+        "anchor": { "type": "string", "enum": ["oidc-test-issuer"], "description": "The closed anchor vocabulary. `oidc-test-issuer`: the host lists OPENWOP_TEST_OIDC_ISSUER_URL among the `issuers` of an advertised `oidc` lane. Adding a member is a schema change under its own RFC." },
+        "rfc": { "type": "string", "pattern": "^[0-9]{4}$", "description": "The Active or Accepted RFC whose `### Harness-trust-anchor rows` table lists this id." }
+      }
+    }
+  }
+}
