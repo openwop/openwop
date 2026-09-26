@@ -1,5 +1,10 @@
 # `@openwop/openwop-conformance` Changelog
 
+## [2.40.4] — unreleased — the 2.40.4 cycle is open
+
+- **RFC 0121 gap G1 closes** (UQ1 resolved for GitHub Copilot individual plans): `spec/v1/gaps.json` in `@openwop/spec-artifacts` moves. No scenario changes.
+- **Version moved ahead of publication.** `@openwop/openwop-conformance` and its exact-pinned peer `@openwop/spec-artifacts` move to `2.40.4` because `2.40.3` is published. Not tagged, not published.
+
 ## [2.40.3] — 2026-09-26 — a cookie-borne lane can be revoke-witnessed, and a secret-named setting no longer corrupts the discovery digest
 
 - **`v2-revocation-honored` presents a cookie-lane credential as a cookie.** When the mint seam answers `presentation: { kind: "cookie", name }`, the probe sends `Cookie: <name>=<credential>` instead of a bearer token. The seams contract's `mintLaneCredential` response gains that optional member. Bearer stays the default when `presentation` is absent. The cookie branch is unexercised until a host serves it; openwop-app's `session` lane is the first expected.
