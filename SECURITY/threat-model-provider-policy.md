@@ -122,6 +122,17 @@ A host advertising `aiProviders.promptPrefixCache` honors the AI-envelope `gener
 
 The `(tenant, cachePrefixId)` key mirrors the `kv` / `queue` / `workspace` cross-tenant isolation invariants: the owner binding comes from the authenticated identity, isolation is fail-closed, and the public conformance test (`conformance/src/scenarios/prompt-prefix-cache.test.ts`) proves the non-share via the cost-only cache-token witness.
 
+### 4.8 Subscription-derived credentials (RFC 0121)
+
+The one provider cleared for `aiProviders.authModes: "subscription"` (GitHub Copilot, RFC 0121 UQ1, 2026-09-26) issues its credential as a **GitHub OAuth user token**. That token is not a model-only key: depending on the scopes an OAuth App requests, it can read or write the user's GitHub account.
+
+| STRIDE | Threat | Control |
+|---|---|---|
+| Elevation of privilege | The host holds a user token whose scopes reach far beyond model calls; a host compromise or a misrouted call exposes the user's GitHub account | A host **SHOULD** request the least scope the provider's SDK accepts, determined empirically (GitHub's Copilot SDK guide names no scopes), and **SHOULD NOT** use the token for anything but the provider call path |
+| Information disclosure | The token is shared across users of a tenant | Already a protocol MUST: `subscription-credential-user-scope-only` (§B.8, bound at `scope: "user"`) |
+
+This is host guidance, not a new protocol invariant: token scope is host-internal and no black-box scenario can witness it, so a MUST here would be a requirement nothing can test.
+
 ## 5. Invariants (MUST NOT)
 
 | ID                                              | Statement                                                                                                                                                                |

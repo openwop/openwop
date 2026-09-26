@@ -6,7 +6,8 @@
 - **`context-summarization-replay` compares the summary text the model saw.** Equal `summaryRef`s showed the fork cited the same artifact. When the seam serves `entries[]` for both runs, the fork's fed summary text must now equal the source's byte for byte.
 - **Both scenarios run at major 2.** They are added to `BOTH_MAJORS`, so v2-applicable files go from 121 to 123. At major 2 they read the `multiAgent` record by presence and record `inapplicable` when `contextBudget` or `summarization` is absent. That is never a strict-mode failure, so no currently certified host is affected. Paths resolve through `runsPath()` and the driver's seam rewrite, and the seam is added to `api/seams-v2.yaml` at `/conformance/seams/sample/agent/transcript-window`.
 - **New fixture `conformance-context-budget-live`.** A supervisor driven by the host's live model, with no mock keys and bounded by `settings.maxLoopbackIterations: 8`. Both scenarios gate on it. `conformance-context-budget-multiturn` is kept but no longer gates anything: it scripts a mock supervisor, which RFC 0111 §Scope forbids from advertising `contextBudget`.
-- **Version moved ahead of publication.** `@openwop/openwop-conformance` and its exact-pinned peer `@openwop/spec-artifacts` move to `2.41.0`. Not tagged, not published.
+- **RFC 0121 gap G1 closes** (UQ1 resolved for GitHub Copilot individual plans): `spec/v1/gaps.json` in `@openwop/spec-artifacts` moves. No scenario changes.
+- **Version moved ahead of publication.** `@openwop/openwop-conformance` and its exact-pinned peer `@openwop/spec-artifacts` move to `2.41.0`, absorbing the unpublished `2.40.4` cycle (its one entry, RFC 0121 G1, is above): the major-2 scenario promotion makes this a minor. Not tagged, not published.
 
 ## [2.40.3] — 2026-09-26 — a cookie-borne lane can be revoke-witnessed, and a secret-named setting no longer corrupts the discovery digest
 
