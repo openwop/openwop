@@ -39,10 +39,14 @@ import { v2Discovery } from '../lib/v2.js';
 import { readErrorCode } from '../lib/error-envelope.js';
 import { softSkip } from '../lib/soft-skip.js';
 import { req } from '../lib/requirement-ids.js';
+import { seamsProfileAdvertised, SEAMS_PREFIX } from '../lib/seams.js';
 
 const DOC = 'spec/v2/core/idempotency.md Concurrency';
 const ID_ONE = 'openwop.requirement.0213.in-flight-one-winner';
 const ID_LOSER = 'openwop.requirement.0213.in-flight-loser-outcome';
+const ID_HELD = 'openwop.requirement.0213.in-flight-refused-under-hold';
+const HOLD_SEAM = `${SEAMS_PREFIX}/sample/test/idempotency/hold`;
+const HOLD_MS = 4000;
 const FIXTURE = 'conformance-delay';
 const N = 5;
 
@@ -129,4 +133,31 @@ describe('v2 idempotency-in-flight (idempotency.md Concurrency, RFC 0213 §B)', 
     // on a row shared with the winner clause.)
     if (r.refusals.length === 0) return softSkip('inapplicable', `no loser was refused in flight — all ${N} answers were successes (each loser a marked replay, which §B permits), so the 409 branch did not run on this host`);
   }, 60_000);
+  // The deterministic §B witness (host-sample-test-seams.md §26): the seam only
+  // ARMS a hold on the next real create; the 409 is the host's own in-flight branch.
+  it('while the seam holds the claim, a same-key create is refused 409 idempotency_in_flight by the host and the held create still wins', async () => {
+    const doc = await discovery();
+    if (!doc) return softSkip('blocked', 'v2 discovery unreachable');
+    if (!seamsProfileAdvertised(doc)) return softSkip('inapplicable', 'the held-claim leg is driven through the seams profile (RFC 0213 §B) — seams profile not advertised; the unaided leg above is this host\'s witness');
+    const key = `openwopconf-held-${Date.now().toString(36)}-${Math.random().toString(36).slice(2, 10)}`;
+    const armed = await http(() => driver.post(HOLD_SEAM, { key, holdMs: HOLD_MS }));
+    if (armed === null) return softSkip('blocked', `${HOLD_SEAM} unreachable (fetch failed)`);
+    if (armed.status === 404 || armed.status === 405 || armed.status === 403) return softSkip('blocked', `the host advertises the seams profile but does not serve ${HOLD_SEAM} (answered ${armed.status}) — the held-claim leg cannot run`);
+    if (armed.status !== 201) return softSkip('blocked', `${HOLD_SEAM} answered ${armed.status} ${JSON.stringify(armed.json)} — the seam contract (api/seams-v2.yaml armIdempotencyHold) is 201 { key, holdMs }`);
+    const body = { workflowId: 'conformance-noop' };
+    const winner = http(() => driver.post('/runs', body, { headers: { 'Idempotency-Key': key } }));
+    await new Promise((ok) => setTimeout(ok, 750));
+    const loser = await http(() => driver.post('/runs', body, { headers: { 'Idempotency-Key': key } }));
+    const won = await winner;
+    if (loser === null || won === null) return softSkip('blocked', 'POST /runs unreachable (fetch failed)');
+    expect({ status: loser.status, code: readErrorCode(loser.json) }, req(ID_HELD, DOC, `a same-key create while the claim is in flight MUST be refused 409 idempotency_in_flight (got ${loser.status} ${String(readErrorCode(loser.json))})`)).toEqual({ status: 409, code: 'idempotency_in_flight' });
+    const details = (loser.json as { details?: Record<string, unknown> } | null)?.details ?? {};
+    expect(Object.keys(details).filter((k) => /^retryAfter/i.test(k)), req(ID_HELD, 'spec/v2/core/errors.md §Retry timing', 'retry timing MUST NOT travel in details')).toEqual([]);
+    const ra = loser.headers.get('retry-after');
+    if (ra !== null) expect(parsesRetryAfter(ra), req(ID_HELD, DOC, `a Retry-After that is present MUST parse (got ${ra})`)).toBe(true);
+    expect(won.status >= 200 && won.status < 300, req(ID_HELD, DOC, `the held create MUST complete as the one winner (got ${won.status})`)).toBe(true);
+    const replay = await http(() => driver.post('/runs', body, { headers: { 'Idempotency-Key': key } }));
+    if (replay === null) return softSkip('blocked', 'POST /runs unreachable after the hold (fetch failed)');
+    expect({ replay: replay.headers.get('openwop-idempotent-replay'), runId: (replay.json as { runId?: unknown } | null)?.runId }, req(ID_HELD, DOC, 'after the held create completes, a same-key create is a marked replay of the one run')).toEqual({ replay: 'true', runId: (won.json as { runId?: unknown } | null)?.runId });
+  }, 30_000);
 });

@@ -747,6 +747,55 @@ paths:
           $ref: '#/components/responses/ValidationError'
         '401':
           $ref: '#/components/responses/Unauthenticated'
+  /conformance/seams/sample/test/idempotency/hold:
+    post:
+      tags:
+      - Seams
+      operationId: armIdempotencyHold
+      summary: Hold the caller's next same-key create in flight — RFC 0213 §B witness
+      description: 'Arms a single-use hold: the caller tenant''s next real `POST /runs` carrying `key` as its Idempotency-Key
+        keeps its Layer-1 claim in flight for `holdMs` after claiming, then completes normally. The seam MUST NOT answer a
+        create or emit a 409: the refusal a concurrent same-key create receives while the claim is held comes from the host''s
+        production in-flight branch (idempotency.md §Concurrency). Keyed by (tenant, key); single-use; an unarmed key is never
+        delayed.'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              additionalProperties: false
+              required:
+              - key
+              - holdMs
+              properties:
+                key:
+                  type: string
+                  pattern: ^[A-Za-z0-9._~-]{22,128}$
+                holdMs:
+                  type: integer
+                  minimum: 1
+                  maximum: 10000
+      responses:
+        '201':
+          description: The hold is armed.
+          content:
+            application/json:
+              schema:
+                type: object
+                additionalProperties: false
+                required:
+                - key
+                - holdMs
+                properties:
+                  key:
+                    type: string
+                  holdMs:
+                    type: integer
+        '400':
+          $ref: '#/components/responses/ValidationError'
+        '401':
+          $ref: '#/components/responses/Unauthenticated'
   /conformance/seams/sample/webhooks/receive:
     post:
       tags:

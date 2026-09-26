@@ -1045,3 +1045,28 @@ makes that failure visible instead of green.
 A host that does not mount this seam leaves the scenario recording `blocked` (unwitnessed), never
 `inapplicable`: the requirement applies to every host, so its absence is missing evidence rather
 than a requirement that does not bind.
+
+### 26. Idempotency hold — `POST /conformance/seams/sample/test/idempotency/hold` (RFC 0213 §B)
+
+| Field                     | Value                                                                                |
+| ------------------------- | ------------------------------------------------------------------------------------ |
+| Method + path             | `POST /conformance/seams/sample/test/idempotency/hold` (v2 only; `api/seams-v2.yaml` `armIdempotencyHold`) |
+| Capability gate           | none — the obligation is unconditional (`spec/v2/core/idempotency.md` §Concurrency) |
+| Profile gate              | `conformance.seamsProfile: "openwop-conformance-seams-v2"`                            |
+| Introduced                | RFC 0213 §B witness. The unaided leg (`v2-idempotency-in-flight`) records `partial-witness` on a host whose create answers in milliseconds: five concurrent same-key creates never overlap, so the `409 idempotency_in_flight` branch never runs. |
+
+OPTIONAL. Request `{ key, holdMs }` — `key` an Idempotency-Key (`^[A-Za-z0-9._~-]{22,128}$`),
+`holdMs` an integer in `1..10000` — answers `201 { key, holdMs }`. It **arms a single-use hold**:
+the caller tenant's **next real `POST /runs`** carrying that Idempotency-Key keeps its Layer-1
+claim in flight for `holdMs` after claiming, then runs normally and completes as the winner.
+
+The seam **MUST NOT** answer a create, emit a `409`, or synthesize claim state of its own: the
+refusal a concurrent same-key create receives while the claim is held **MUST** come from the
+host's production in-flight branch (`409 idempotency_in_flight`, no retry timing in `details`,
+`Retry-After` when set). A hold is keyed by `(tenant, key)`, is consumed by the one create it
+arms, and expires unconsumed; a key that was never armed is never delayed — the production
+path is unchanged.
+
+Consumed by `v2-idempotency-in-flight` leg `0213.in-flight-refused-under-hold`. A host that
+advertises the seams profile but does not serve the path records that leg `blocked`; a host
+that does not advertise the profile records it `inapplicable`.
