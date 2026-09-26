@@ -1,6 +1,6 @@
 {
   "bundleVersion": "3",
-  "generatedAt": "2026-09-26T20:38:44.544Z",
+  "generatedAt": "2026-09-26T20:30:02.866Z",
   "suite": {
     "name": "@openwop/openwop-conformance",
     "version": "2.41.0",
@@ -16,12 +16,11 @@
       "kind": "image-digest",
       "id": "sha256:c13b9998860f753859bb13cb48619d6e2696fc8ac5f98590cc4df4397cfa3d9a"
     },
-    "signingKeyId": "openwop-app-companion-1",
-    "deployment": "colocated-companion"
+    "signingKeyId": "openwop-app-bundle-2"
   },
   "discovery": {
-    "url": "http://127.0.0.1:18099/.well-known/openwop",
-    "sha256": "00645a644ef21f2ded15a55ece0a6f3869fded151d80532774f98b9d53c0a79c",
+    "url": "https://app.openwop.dev/.well-known/openwop",
+    "sha256": "6eb73894cf17892f906c69282b96b55e90acdc6f619a6baad1e8bd4532600c87",
     "protocolVersions": [
       "1.1",
       "2.0"
@@ -400,7 +399,7 @@
           {
             "lane": "oidc",
             "issuers": [
-              "http://host.docker.internal:18102"
+              "https://securetoken.google.com/openwop-dev"
             ],
             "revocation": "exp-only",
             "revocationWindowSeconds": 3600,
@@ -615,10 +614,10 @@
   ],
   "results": {
     "totals": {
-      "executedPass": 242,
-      "executedFail": 0,
+      "executedPass": 232,
+      "executedFail": 2,
       "skipped": 19,
-      "inapplicable": 199,
+      "inapplicable": 207,
       "blocked": 0
     },
     "requirements": [
@@ -678,13 +677,14 @@
         "id": "openwop.scenario.tool-catalog-compact-projection",
         "scenario": "tool-catalog-compact-projection.test.ts",
         "result": "executed-pass",
-        "assertions": 1
+        "assertions": 193
       },
       {
         "id": "openwop.scenario.tool-catalog-projection",
         "scenario": "tool-catalog-projection.test.ts",
         "result": "executed-pass",
-        "assertions": 3
+        "assertions": 174,
+        "detail": "partial-witness: inapplicable: advisory SHOULD not met (RFC 0204 §D.13, tool-catalog.md §The catalog): tools are not sorted by toolId — recorded, never failed"
       },
       {
         "id": "openwop.floor.tool-descriptor-shape",
@@ -841,8 +841,9 @@
       {
         "id": "openwop.scenario.v2-content-locale-keys",
         "scenario": "v2-content-locale-keys.test.ts",
-        "result": "executed-pass",
-        "assertions": 5
+        "result": "executed-fail",
+        "assertions": 3,
+        "detail": "1 test(s) failed — \"an advertised extended content locale is written and delivered\"; first failure: [openwop-workflow-engine@0.1.0] RFC 0206 §A.1; localized-content.md §C, §D: Content-Language MUST name the negotiated extended locale \"es-419\" (compared case-insensitively): expected 'es' to be 'es-419' // Object.is equality"
       },
       {
         "id": "openwop.scenario.v2-conversation-turn-parts",
@@ -958,14 +959,14 @@
         "id": "openwop.scenario.v2-id-grammar",
         "scenario": "v2-id-grammar.test.ts",
         "result": "executed-pass",
-        "assertions": 17
+        "assertions": 13
       },
       {
         "id": "openwop.scenario.v2-idempotency-in-flight",
         "scenario": "v2-idempotency-in-flight.test.ts",
         "result": "executed-pass",
-        "assertions": 3,
-        "detail": "partial-witness: inapplicable: [inapplicable] no loser was refused in flight — all 5 answers were successes (each loser a marked replay, which §B permits), so the 409 branch did not run on this host; [inapplicable] the held-claim leg is driven through the seams profile (RFC 0213 §B) — seams profile not advertised; the unaided leg above is this host's witness"
+        "assertions": 15,
+        "detail": "partial-witness: inapplicable: the held-claim leg is driven through the seams profile (RFC 0213 §B) — seams profile not advertised; the unaided leg above is this host's witness"
       },
       {
         "id": "openwop.floor.v2-idempotency-key-grammar",
@@ -1001,8 +1002,9 @@
       {
         "id": "openwop.scenario.v2-lane-exp-only-bound",
         "scenario": "v2-lane-exp-only-bound.test.ts",
-        "result": "executed-pass",
-        "assertions": 5
+        "result": "inapplicable",
+        "assertions": 0,
+        "detail": "every test returned early through behaviorGate with zero assertions: profile not advertised in the captured discovery set"
       },
       {
         "id": "openwop.scenario.v2-lane-issuer-advertised",
@@ -1115,8 +1117,9 @@
       {
         "id": "openwop.scenario.v2-oidc-id-token-audience",
         "scenario": "v2-oidc-id-token-audience.test.ts",
-        "result": "executed-pass",
-        "assertions": 2
+        "result": "inapplicable",
+        "assertions": 0,
+        "detail": "every test returned early through behaviorGate with zero assertions: profile not advertised in the captured discovery set"
       },
       {
         "id": "openwop.scenario.v2-owner-subject-required",
@@ -1262,7 +1265,7 @@
         "id": "openwop.scenario.v2-run-list",
         "scenario": "v2-run-list.test.ts",
         "result": "executed-pass",
-        "assertions": 9
+        "assertions": 103
       },
       {
         "id": "openwop.floor.v2-run-options-limits",
@@ -1580,19 +1583,20 @@
         "id": "openwop.it.tool-catalog-compact-projection.serves-the-tools-compacttooldescriptor-projection-closed-shape-bounded-inputsche",
         "scenario": "tool-catalog-compact-projection.test.ts",
         "result": "executed-pass",
-        "assertions": 1
+        "assertions": 193
       },
       {
         "id": "openwop.it.tool-catalog-projection.advisory-should-an-unchanged-catalog-reads-identically-sorted-by-toolid",
         "scenario": "tool-catalog-projection.test.ts",
-        "result": "executed-pass",
-        "assertions": 1
+        "result": "inapplicable",
+        "assertions": 0,
+        "detail": "advisory SHOULD not met (RFC 0204 §D.13, tool-catalog.md §The catalog): tools are not sorted by toolId — recorded, never failed"
       },
       {
         "id": "openwop.it.tool-catalog-projection.lists-schema-valid-tooldescriptors-serves-by-id-404s-is-auth-gated-and-never-dis",
         "scenario": "tool-catalog-projection.test.ts",
         "result": "executed-pass",
-        "assertions": 2
+        "assertions": 174
       },
       {
         "id": "openwop.it.tool-descriptor-shape.a-conforming-descriptor-validates",
@@ -2307,7 +2311,7 @@
         "id": "openwop.requirement.0170.id-grammar.events",
         "scenario": "v2-id-grammar.test.ts",
         "result": "executed-pass",
-        "assertions": 10
+        "assertions": 6
       },
       {
         "id": "openwop.requirement.0170.id-grammar.snapshot",
@@ -3058,7 +3062,7 @@
         "id": "openwop.requirement.0182.run-list.tenant-scoped",
         "scenario": "v2-run-list.test.ts",
         "result": "executed-pass",
-        "assertions": 5
+        "assertions": 99
       },
       {
         "id": "openwop.requirement.0184.bound-id-path-projection",
@@ -3271,8 +3275,9 @@
       {
         "id": "openwop.requirement.0200.id-token-aud",
         "scenario": "v2-oidc-id-token-audience.test.ts",
-        "result": "executed-pass",
-        "assertions": 2
+        "result": "inapplicable",
+        "assertions": 0,
+        "detail": "lane oidc trusts https://securetoken.google.com/openwop-dev, and no harness issuer is configured (OPENWOP_TEST_OIDC_ISSUER_URL unset): the suite holds a signing key for none of the host's trust roots, so no token it mints could be accepted. A host claims the harness by listing it in the lane's issuers[] (RFC 0168 §C.1's reading for suite instruments)"
       },
       {
         "id": "openwop.requirement.0200.inbound-credential-no-passthrough",
@@ -3347,7 +3352,7 @@
         "scenario": "v2-tool-catalog-annotations.test.ts",
         "result": "inapplicable",
         "assertions": 0,
-        "detail": "none of the 0 descriptors carries annotations — §D.12 binds only a host that publishes them"
+        "detail": "none of the 19 descriptors carries annotations — §D.12 binds only a host that publishes them"
       },
       {
         "id": "openwop.requirement.0204.mcp-unclassified-write",
@@ -3393,8 +3398,9 @@
       {
         "id": "openwop.requirement.0206.delivery-extended-locale",
         "scenario": "v2-content-locale-keys.test.ts",
-        "result": "executed-pass",
-        "assertions": 5
+        "result": "executed-fail",
+        "assertions": 3,
+        "detail": "the test executed and failed in \"an advertised extended content locale is written and delivered\": [openwop-workflow-engine@0.1.0] RFC 0206 §A.1; localized-content.md §C, §D: Content-Language MUST name the negotiated extended locale \"es-419\" (compared case-insensitively): expected 'es' to be 'es-419' // Object.is equality"
       },
       {
         "id": "openwop.requirement.0207.a2a-inbound-adopts",
@@ -3496,26 +3502,30 @@
       {
         "id": "openwop.requirement.0210.credential-lifetime-code",
         "scenario": "v2-lane-exp-only-bound.test.ts",
-        "result": "executed-pass",
-        "assertions": 1
+        "result": "inapplicable",
+        "assertions": 0,
+        "detail": "lane oidc trusts https://securetoken.google.com/openwop-dev, and no harness issuer is configured (OPENWOP_TEST_OIDC_ISSUER_URL unset): the suite holds a signing key for none of the host's trust roots, so no token it mints could be accepted. A host claims the harness by listing it in the lane's issuers[] (RFC 0168 §C.1's reading for suite instruments)"
       },
       {
         "id": "openwop.requirement.0210.exp-only-control-accepted",
         "scenario": "v2-lane-exp-only-bound.test.ts",
-        "result": "executed-pass",
-        "assertions": 1
+        "result": "inapplicable",
+        "assertions": 0,
+        "detail": "lane oidc trusts https://securetoken.google.com/openwop-dev, and no harness issuer is configured (OPENWOP_TEST_OIDC_ISSUER_URL unset): the suite holds a signing key for none of the host's trust roots, so no token it mints could be accepted. A host claims the harness by listing it in the lane's issuers[] (RFC 0168 §C.1's reading for suite instruments)"
       },
       {
         "id": "openwop.requirement.0210.exp-only-lifetime-bound",
         "scenario": "v2-lane-exp-only-bound.test.ts",
-        "result": "executed-pass",
-        "assertions": 2
+        "result": "inapplicable",
+        "assertions": 0,
+        "detail": "lane oidc trusts https://securetoken.google.com/openwop-dev, and no harness issuer is configured (OPENWOP_TEST_OIDC_ISSUER_URL unset): the suite holds a signing key for none of the host's trust roots, so no token it mints could be accepted. A host claims the harness by listing it in the lane's issuers[] (RFC 0168 §C.1's reading for suite instruments)"
       },
       {
         "id": "openwop.requirement.0210.exp-only-remaining-bound",
         "scenario": "v2-lane-exp-only-bound.test.ts",
-        "result": "executed-pass",
-        "assertions": 1
+        "result": "inapplicable",
+        "assertions": 0,
+        "detail": "lane oidc trusts https://securetoken.google.com/openwop-dev, and no harness issuer is configured (OPENWOP_TEST_OIDC_ISSUER_URL unset): the suite holds a signing key for none of the host's trust roots, so no token it mints could be accepted. A host claims the harness by listing it in the lane's issuers[] (RFC 0168 §C.1's reading for suite instruments)"
       },
       {
         "id": "openwop.requirement.0211.a2a-client-reads-either-shape",
@@ -3528,8 +3538,7 @@
         "id": "openwop.requirement.0213.in-flight-loser-outcome",
         "scenario": "v2-idempotency-in-flight.test.ts",
         "result": "executed-pass",
-        "assertions": 1,
-        "detail": "partial-witness: inapplicable: no loser was refused in flight — all 5 answers were successes (each loser a marked replay, which §B permits), so the 409 branch did not run on this host"
+        "assertions": 13
       },
       {
         "id": "openwop.requirement.0213.in-flight-one-winner",
@@ -3622,8 +3631,8 @@
       }
     ]
   },
-  "witnessSha256": "c506a96fb1e8d6d4229995c257754c5bcc57f2bb63ad1dc43fd807a1bfda96d3",
-  "assertionCount": 2642,
+  "witnessSha256": "2ee8a445b9c9f55c9d70654ae6a25ee0ac4540342a6f81db7a0c3235b7cef5b3",
+  "assertionCount": 3554,
   "detail": {
     "nonPass": [
       {
@@ -3702,6 +3711,11 @@
         "reason": "every test returned early through behaviorGate with zero assertions: operator opted the profile or family out (OPENWOP_OPTED_OUT_PROFILES)"
       },
       {
+        "id": "openwop.scenario.v2-content-locale-keys",
+        "result": "executed-fail",
+        "reason": "1 test(s) failed — \"an advertised extended content locale is written and delivered\"; first failure: [openwop-workflow-engine@0.1.0] RFC 0206 §A.1; localized-content.md §C, §D: Content-Language MUST name the negotiated extended locale \"es-419\" (compared case-insensitively): expected 'es' to be 'es-419' // Object.is equality"
+      },
+      {
         "id": "openwop.scenario.v2-credential-interrupt",
         "result": "inapplicable",
         "reason": "every test returned early through behaviorGate with zero assertions: profile not advertised in the captured discovery set"
@@ -3728,6 +3742,11 @@
       },
       {
         "id": "openwop.scenario.v2-interop-trace-context",
+        "result": "inapplicable",
+        "reason": "every test returned early through behaviorGate with zero assertions: profile not advertised in the captured discovery set"
+      },
+      {
+        "id": "openwop.scenario.v2-lane-exp-only-bound",
         "result": "inapplicable",
         "reason": "every test returned early through behaviorGate with zero assertions: profile not advertised in the captured discovery set"
       },
@@ -3783,6 +3802,11 @@
       },
       {
         "id": "openwop.scenario.v2-oauth-mcp-reach-discovery",
+        "result": "inapplicable",
+        "reason": "every test returned early through behaviorGate with zero assertions: profile not advertised in the captured discovery set"
+      },
+      {
+        "id": "openwop.scenario.v2-oidc-id-token-audience",
         "result": "inapplicable",
         "reason": "every test returned early through behaviorGate with zero assertions: profile not advertised in the captured discovery set"
       },
@@ -3855,6 +3879,11 @@
         "id": "openwop.it.memory-attribution-replay-stable.a-replay-mode-fork-introduces-no-memory-written-with-a-new-memoryid",
         "result": "inapplicable",
         "reason": "memory.attribution.emitsWriteEvents not advertised — at major 2 the gate is recorded under openwop.family.memory, so an unadvertised family and an unreadable one are distinguishable in the bundle"
+      },
+      {
+        "id": "openwop.it.tool-catalog-projection.advisory-should-an-unchanged-catalog-reads-identically-sorted-by-toolid",
+        "result": "inapplicable",
+        "reason": "advisory SHOULD not met (RFC 0204 §D.13, tool-catalog.md §The catalog): tools are not sorted by toolId — recorded, never failed"
       },
       {
         "id": "openwop.it.v2-a2a-agent-cards.a-task-started-through-r-is-a-run-in-the-caller-s-tenant-of-record",
@@ -4587,6 +4616,11 @@
         "reason": "mcp not advertised at major 2"
       },
       {
+        "id": "openwop.requirement.0200.id-token-aud",
+        "result": "inapplicable",
+        "reason": "lane oidc trusts https://securetoken.google.com/openwop-dev, and no harness issuer is configured (OPENWOP_TEST_OIDC_ISSUER_URL unset): the suite holds a signing key for none of the host's trust roots, so no token it mints could be accepted. A host claims the harness by listing it in the lane's issuers[] (RFC 0168 §C.1's reading for suite instruments)"
+      },
+      {
         "id": "openwop.requirement.0200.mcp-mount-prm",
         "result": "inapplicable",
         "reason": "no mcp.serverUrls[] — this host mounts no MCP server, so §A.4 does not bind it"
@@ -4594,7 +4628,7 @@
       {
         "id": "openwop.requirement.0204.annotations-derived",
         "result": "inapplicable",
-        "reason": "none of the 0 descriptors carries annotations — §D.12 binds only a host that publishes them"
+        "reason": "none of the 19 descriptors carries annotations — §D.12 binds only a host that publishes them"
       },
       {
         "id": "openwop.requirement.0204.mcp-unclassified-write",
@@ -4620,6 +4654,11 @@
         "id": "openwop.requirement.0205.export-alias-equivalence",
         "result": "inapplicable",
         "reason": "unwitnessable on the wire (RFC 0205 §C.11 Falsifiability verdict): the equivalence binds a consumer's format-matching logic and the pack author's host.artifactTypes.export call, and neither is on the wire. The advertised spellings are readable, but a mismatch between them is legal, so no host response can falsify the row. No wire witness exists; this row records that the suite reached the requirement, and it is not a pass."
+      },
+      {
+        "id": "openwop.requirement.0206.delivery-extended-locale",
+        "result": "executed-fail",
+        "reason": "the test executed and failed in \"an advertised extended content locale is written and delivered\": [openwop-workflow-engine@0.1.0] RFC 0206 §A.1; localized-content.md §C, §D: Content-Language MUST name the negotiated extended locale \"es-419\" (compared case-insensitively): expected 'es' to be 'es-419' // Object.is equality"
       },
       {
         "id": "openwop.requirement.0207.a2a-inbound-adopts",
@@ -4687,6 +4726,26 @@
         "reason": "host does not advertise conformance.seamsProfile: openwop-conformance-seams-v2 — the emit-surface seam is the only way the suite can choose an envelope (RFC 0209 Falsifiability)"
       },
       {
+        "id": "openwop.requirement.0210.credential-lifetime-code",
+        "result": "inapplicable",
+        "reason": "lane oidc trusts https://securetoken.google.com/openwop-dev, and no harness issuer is configured (OPENWOP_TEST_OIDC_ISSUER_URL unset): the suite holds a signing key for none of the host's trust roots, so no token it mints could be accepted. A host claims the harness by listing it in the lane's issuers[] (RFC 0168 §C.1's reading for suite instruments)"
+      },
+      {
+        "id": "openwop.requirement.0210.exp-only-control-accepted",
+        "result": "inapplicable",
+        "reason": "lane oidc trusts https://securetoken.google.com/openwop-dev, and no harness issuer is configured (OPENWOP_TEST_OIDC_ISSUER_URL unset): the suite holds a signing key for none of the host's trust roots, so no token it mints could be accepted. A host claims the harness by listing it in the lane's issuers[] (RFC 0168 §C.1's reading for suite instruments)"
+      },
+      {
+        "id": "openwop.requirement.0210.exp-only-lifetime-bound",
+        "result": "inapplicable",
+        "reason": "lane oidc trusts https://securetoken.google.com/openwop-dev, and no harness issuer is configured (OPENWOP_TEST_OIDC_ISSUER_URL unset): the suite holds a signing key for none of the host's trust roots, so no token it mints could be accepted. A host claims the harness by listing it in the lane's issuers[] (RFC 0168 §C.1's reading for suite instruments)"
+      },
+      {
+        "id": "openwop.requirement.0210.exp-only-remaining-bound",
+        "result": "inapplicable",
+        "reason": "lane oidc trusts https://securetoken.google.com/openwop-dev, and no harness issuer is configured (OPENWOP_TEST_OIDC_ISSUER_URL unset): the suite holds a signing key for none of the host's trust roots, so no token it mints could be accepted. A host claims the harness by listing it in the lane's issuers[] (RFC 0168 §C.1's reading for suite instruments)"
+      },
+      {
         "id": "openwop.requirement.0211.a2a-client-reads-either-shape",
         "result": "inapplicable",
         "reason": "a2a is not advertised at major 2 — the host has no A2A client to hold"
@@ -4720,8 +4779,8 @@
   },
   "signature": {
     "alg": "ed25519",
-    "keyId": "openwop-app-companion-1",
-    "sig": "lHuM0e--4sEq1t9ttN_IBeUL7ScgMOgWR9Fkt0ybwB8p1PQ-yL6GJfC9bP9XF6cSrNlofqH0rFn7ZARQtYM8BA",
+    "keyId": "openwop-app-bundle-2",
+    "sig": "F7FDwFgUib9u7iCSTMmBVQB3B1vVejT_QS-wKb4DXtEuud36KLV3UiYccprSmZf7-aN2r2bOr-JkyUfk6gtkCg",
     "over": [
       "witnessSha256",
       "host.build",

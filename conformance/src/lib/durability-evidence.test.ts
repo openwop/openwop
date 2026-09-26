@@ -55,7 +55,10 @@ describe('row evidence is inside the witness digest, and absent evidence changes
     expect(files.length).toBeGreaterThanOrEqual(3);
     for (const f of files) {
       const b = JSON.parse(readFileSync(join(dir, f), 'utf8')) as BundleV3;
-      expect(witnessDigest(b.results.requirements), f).toBe(b.witnessSha256);
+      // The full preimage: relaxations (RFC 0173) and a colocated companion's
+      // `host.deployment` (RFC 0216 §B.7) enter it when present. Rows alone
+      // matched only while no committed bundle carried either.
+      expect(witnessDigest(b.results.requirements, b.host.relaxations, b.host.deployment), f).toBe(b.witnessSha256);
     }
   });
 
