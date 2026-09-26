@@ -67,8 +67,8 @@
 
 | Status | Count |
 |---|---:|
-| Accepted | 208 |
-| Active | 4 |
+| Accepted | 209 |
+| Active | 3 |
 | Draft | 1 |
 | Superseded | 1 |
 
@@ -280,7 +280,7 @@
 | RFC 0207 | W3C Trace Context carried in MCP `params._meta` and A2A `Message.metadata.openwop` beside the HTTP header that stays conforming, debug-bundle spans that carry `traceId` / `kind` / `status`, and an optional versioned OTel `mcp.*` projection | Accepted |
 | RFC 0208 | v2 homes the A2A and MCP operation mappings | Accepted |
 | RFC 0209 | `ui.a2ui-surface` schema version 2 carries real A2UI v0.9 server-to-client messages (a closed OpenWOP profile of the basic catalog), while the 0.9.1 seven-component tree stays readable forever. The RFC 0114 delta frame is deprecated in v2, and v2 regains the `ui.*`/`media.*` kind carve-out | Accepted |
-| RFC 0210 | a lane's revocation rule is measured, and a host that only honours `exp` says so | Active |
+| RFC 0210 | a lane's revocation rule is measured, and a host that only honours `exp` says so | Accepted |
 | RFC 0211 | an A2A error's details are an ErrorInfo, and an A2A interface never answers in the OpenWOP envelope | Accepted |
 | RFC 0212 | canonical JSON is RFC 8785 JCS, and a certification preimage does not depend on the machine that computed it | Accepted |
 | RFC 0213 | three outcomes the v2 core never stated - a resume cursor past the log, the loser of a same-key race, and a resolve after the run ended | Accepted |
@@ -310,7 +310,7 @@ The pack registry now lives in the [`openwop-registry`](https://github.com/openw
 ## Active Follow-Ups
 
 - 1 RFC still `Draft` (RFC 0038) — advance with schema/conformance proof or defer.
-- 4 RFCs `Active` (RFC 0111, RFC 0121, RFC 0199, RFC 0210) — wire-shape MAY shift compatibly within v1.x until promotion to `Accepted`.
+- 3 RFCs `Active` (RFC 0111, RFC 0121, RFC 0199) — wire-shape MAY shift compatibly within v1.x until promotion to `Accepted`.
 - External audit, non-steward host recruitment, and non-steward maintainer recruitment remain external-action gates.
 - Multi-region idempotency and some optional-profile behavior checks remain lower-confidence than the core wire contract.
 
