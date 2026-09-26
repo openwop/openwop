@@ -67,8 +67,8 @@
 
 | Status | Count |
 |---|---:|
-| Accepted | 201 |
-| Active | 10 |
+| Accepted | 202 |
+| Active | 9 |
 | Draft | 1 |
 | Superseded | 1 |
 
@@ -270,7 +270,7 @@
 | RFC 0197 | v2 surfaces are retired, never reshaped | Active |
 | RFC 0198 | the MCP server mount maps long runs to MCP Tasks, and a disconnect cancels only the run it owns | Accepted |
 | RFC 0199 | the host as an OAuth client, and the `credential` interrupt | Active |
-| RFC 0200 | the host as an OAuth protected resource | Active |
+| RFC 0200 | the host as an OAuth protected resource | Accepted |
 | RFC 0201 | Standard Webhooks 1.0.0 as an opt-in, per-subscription companion signature scheme (`standard-webhooks-1`): a signed, retry-stable delivery id, multi-signature secret rotation, and endpoint verification for opted-in subscriptions only | Accepted |
 | RFC 0202 | each inventoried agent is published as an A2A Agent Card, reached by an opaque routing value, without making the card an existence oracle across tenants | Accepted |
 | RFC 0203 | a remote node-pack runtime may name its MCP server by an inline MCP Registry record (Streamable HTTP only, no install packages, no header values), and `nodePackRuntimes` gets its v2 home | Accepted |
@@ -309,7 +309,7 @@ The pack registry now lives in the [`openwop-registry`](https://github.com/openw
 ## Active Follow-Ups
 
 - 1 RFC still `Draft` (RFC 0038) — advance with schema/conformance proof or defer.
-- 10 RFCs `Active` (RFC 0111, RFC 0121, RFC 0197, RFC 0199, RFC 0200, RFC 0205, RFC 0209, RFC 0210, RFC 0215, RFC 0216) — wire-shape MAY shift compatibly within v1.x until promotion to `Accepted`.
+- 9 RFCs `Active` (RFC 0111, RFC 0121, RFC 0197, RFC 0199, RFC 0205, RFC 0209, RFC 0210, RFC 0215, RFC 0216) — wire-shape MAY shift compatibly within v1.x until promotion to `Accepted`.
 - External audit, non-steward host recruitment, and non-steward maintainer recruitment remain external-action gates.
 - Multi-region idempotency and some optional-profile behavior checks remain lower-confidence than the core wire contract.
 
