@@ -186,6 +186,17 @@ Format follows [Keep a Changelog](https://keepachangelog.com/en/1/) loosely. Ver
 - **The remaining eleven stay `Active`, each for a stated reason** rather than for lack of attention. The eight RFC 0167 program children name a certified openwop-app bundle in their own acceptance criteria and the committed one reads `certified: false` (3 blocked rows, RFC 0168 §E.1). RFC 0173 additionally carries the program's only `open` gap row. RFC 0179's sole criterion is unmet — 2.4.2 stopped the gate reading "(Phase 4 leg)" as an excuse for it. RFC 0187 names three requirement ids that no scenario mints. RFC 0167 itself flips **last**, which 2.4.2 made a rule: the moment the umbrella stops being `Active`, every child still `Active` becomes permanently ineligible.
 - **The interrupt `data` union is bound to `kind`** (MCP/A2A review P3-H7, Class 3 correction — COMPATIBILITY.md §3). `schemas/suspend-request.schema.json` and its v2 twin typed `data` as an unbound `oneOf`, so the minimal `conversation.start` and `conversation.close` payloads (`{ conversationId }`, which satisfies both shapes) failed validation in v1 and v2, and a payload carrying another kind's `data` passed. `data` is now an `anyOf` and a root `allOf` binds each kind to its own shape with one `if`/`then`; no per-kind shape or `$id` changed. Witnessed by `conformance/fixtures/interrupt-payloads/` (suite 2.36.0).
 
+## [2.39.5] — 2026-09-26 — RFC 0213 §B has a deterministic witness, and a host front whose URLs follow the request origin verifies
+
+A suite patch: no new scenario file, no wire, schema or `MUST` change (`COMPATIBILITY.md` §2.1). The corpus tag moves because `@openwop/openwop-conformance` and `@openwop/spec-artifacts` move together.
+
+### Conformance
+
+- **RFC 0213 §B has a deterministic witness (#1572).** A seams-profile hold (`POST /conformance/seams/sample/test/idempotency/hold`) keeps the host's next same-key create in flight; the new leg `0213.in-flight-refused-under-hold` requires the host's real create path to refuse the concurrent request `409 idempotency_in_flight`. The seam never answers a create itself (host side: openwop-examples#88).
+- **`OPENWOP_HOST_PUBLIC_URL` verifies a host whose advertised URLs follow the request origin (#1571)** — both origins are normalised in both discovery documents before the structural compare (fixes #1567's byte-equality, which refused RFC 0199's credential leg on the 2.39.4 public cut).
+- **The RFC 0170 credential mint/revoke seams are in the seams contract (#1569).**
+- **Suite `2.39.5`**: 559 scenario files. `@openwop/spec-artifacts` moves in lockstep at the same exact pin.
+
 ## [2.39.4] — 2026-09-25 — RFC 0199 can be witnessed behind a public front, and the pinned-port claim is race-free
 
 A suite patch: no new scenario file, no wire, schema or `MUST` change (`COMPATIBILITY.md` §2.1). The corpus tag moves because `@openwop/openwop-conformance` and `@openwop/spec-artifacts` move together.
