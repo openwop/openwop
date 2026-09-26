@@ -37,6 +37,8 @@ import { blockedDespiteAssertions, softSkip } from '../lib/soft-skip.js';
 import { req } from '../lib/requirement-ids.js';
 import { retryWaitCapMs, retryWaitFor, windowClosedNote } from '../lib/webhook-retry-window.js';
 
+export const REQUIRES_HOST_CALLBACK = 'the host POSTs and retries webhook deliveries to the suite-owned scoped receiver behind OPENWOP_WEBHOOK_RECEIVER_URL';
+
 const FIXTURE = 'conformance-noop';
 const TERMINAL = new Set(['completed', 'failed', 'cancelled']);
 

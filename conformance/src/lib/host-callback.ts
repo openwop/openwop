@@ -74,9 +74,17 @@
  */
 export const HARNESS_DOUBLE_MODULES: readonly string[] = [
   'a2a-fake-peer',
+  // The two receiver modules whose only job is a server the HOST calls (2.40.4).
+  // They were missing, so `v2-a2a-push-delivery`'s correct declaration read as a
+  // callback it "does not make" and Conformance Soak went red on every run from
+  // #1546 (2026-09-24) on, while eight webhook/effect scenarios that DO take a
+  // host callback declared nothing. `webhook-receiver` stays off the list: it is
+  // mostly verification helpers, and importing it proves nothing.
+  'effect-receiver',
   'mcp-fake-server',
   'oidc-issuer',
   'otel-collector',
+  'scoped-receiver',
 ];
 
 /**

@@ -39,6 +39,8 @@ import { req } from '../lib/requirement-ids.js';
 import { startEffectReceiver, waitForFirstArrival } from '../lib/effect-receiver.js';
 import { terminalShapeViolation, TERMINAL_RUN_EVENTS } from '../lib/terminal-shape.js';
 
+export const REQUIRES_HOST_CALLBACK = 'the host makes an outbound effect call to the suite-owned effect receiver (OPENWOP_WEBHOOK_RECEIVER_PORT)';
+
 const ONCE = 'openwop.requirement.0194.terminal-once';
 const DUP = 'openwop.requirement.0194.terminal-once.duplicate-delivery';
 const DOC = 'spec/v2/core/events.md §The terminal event (RFC 0194 §A)';
