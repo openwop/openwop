@@ -26,6 +26,9 @@ export const PINNED_PORT_ENVS = [
   'OPENWOP_OAUTH_RESOURCE_PORT',
   'OPENWOP_OTEL_COLLECTOR_PORT',
   'OPENWOP_OTEL_COLLECTOR_GRPC_PORT',
+  // 2.39.4: the synthetic OIDC issuer's local bind port (`issuerListenPort`,
+  // oidc-issuer.ts). Two scenarios stand an issuer up on it.
+  'OPENWOP_TEST_OIDC_ISSUER_PORT',
 ] as const;
 
 /**
