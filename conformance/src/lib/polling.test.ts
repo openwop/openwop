@@ -5,7 +5,7 @@
  */
 import { afterEach, describe, expect, it, vi } from 'vitest';
 import { driver } from './driver.js';
-import { getRun, scaledTimeoutMs } from './polling.js';
+import { getRun, LIVE_RUN_POLL_MS, liveScenarioTimeoutMs, scaledTimeoutMs } from './polling.js';
 
 const SCALE_KEY = 'OPENWOP_POLL_TIMEOUT_SCALE';
 
@@ -84,5 +84,32 @@ describe('polling path follows the selected protocol major', () => {
 
     await getRun(major === '2' ? 'default/run-1' : 'run-1');
     expect(get).toHaveBeenCalledWith(expectedPath);
+  });
+});
+
+describe('polling: live-model scenario timeouts (RFC 0111, 2.42.1)', () => {
+  it('outlasts vitest\'s global 30 s testTimeout, which killed the live scenarios before any assertion', () => {
+    withScale(undefined, () => {
+      expect(liveScenarioTimeoutMs(1)).toBe(240_000);
+      expect(liveScenarioTimeoutMs(2)).toBe(420_000);
+      expect(liveScenarioTimeoutMs(1)).toBeGreaterThan(30_000);
+    });
+  });
+
+  it('scales with OPENWOP_POLL_TIMEOUT_SCALE — the knob an operator reaches for on a slow host', () => {
+    withScale('3', () => {
+      expect(liveScenarioTimeoutMs(1)).toBe(720_000);
+      expect(liveScenarioTimeoutMs(2)).toBe(1_260_000);
+    });
+  });
+
+  it('keeps every scaled poll deadline inside the test deadline, at every scale', () => {
+    for (const scale of [undefined, '1', '0.5', '2', '6']) {
+      withScale(scale, () => {
+        for (const runs of [1, 2]) {
+          expect(runs * scaledTimeoutMs(LIVE_RUN_POLL_MS)).toBeLessThan(liveScenarioTimeoutMs(runs));
+        }
+      });
+    }
   });
 });
