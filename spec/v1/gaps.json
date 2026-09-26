@@ -4423,8 +4423,8 @@
       "surface": "No host with a real orchestrator loop advertises `contextBudget` yet",
       "witness": "unclassified",
       "requirementId": null,
-      "disposition": "externally-gated",
-      "target": "real-orchestrator-host",
+      "disposition": "closed",
+      "target": null,
       "sources": [
         {
           "file": "RFCS/registers/0111-context-economy.gaps.md",

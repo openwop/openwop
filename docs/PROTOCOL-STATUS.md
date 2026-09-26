@@ -21,7 +21,7 @@
 | Artifact | Version | Source | Cadence |
 |---|---|---|---|
 | Spec corpus (root) | 1.1.0 | `package.json` | bumps only on a coordinated spec release |
-| Conformance suite `@openwop/openwop-conformance` | 2.42.1 | `conformance/package.json` | minor on scenario add/remove |
+| Conformance suite `@openwop/openwop-conformance` | 2.42.2 | `conformance/package.json` | minor on scenario add/remove |
 | OpenAPI `info.version` | 1.1.0 | `api/openapi.yaml` | hand-maintained in v1.x; generated from the corpus tag at v2 (RFC 0172 sectionB #14) |
 | AsyncAPI `info.version` | 1.1.0 | `api/asyncapi.yaml` | as above |
 | TypeScript SDK `@openwop/openwop` | 1.9.0 | openwop-sdks `sdk/typescript/package.json` (via `evidence/cross-repo-manifests.json`) | tracks the spec major (PUBLISHING.md) |
@@ -67,8 +67,8 @@
 
 | Status | Count |
 |---|---:|
-| Accepted | 209 |
-| Active | 3 |
+| Accepted | 210 |
+| Active | 2 |
 | Draft | 1 |
 | Superseded | 1 |
 
@@ -184,7 +184,7 @@
 | RFC 0108 | Self-hosted / OpenAI-compatible provider-class advertisement - `aiProviders.selfHosted[]`, the capability-non-inference rule, and the endpoint-non-disclosure invariant | Accepted |
 | RFC 0109 | Conversation-turn model provenance (`agent.model`) | Accepted |
 | RFC 0110 | Channel presence (online + typing) | Accepted |
-| RFC 0111 | Context Economy - Transcript Token Budget & Declared Summarization | Active |
+| RFC 0111 | Context Economy - Transcript Token Budget & Declared Summarization | Accepted |
 | RFC 0112 | Compact Tool Projection | Accepted |
 | RFC 0113 | Memory Injection Budget | Accepted |
 | RFC 0114 | A2UI Surface Deltas | Accepted |
@@ -310,7 +310,7 @@ The pack registry now lives in the [`openwop-registry`](https://github.com/openw
 ## Active Follow-Ups
 
 - 1 RFC still `Draft` (RFC 0038) — advance with schema/conformance proof or defer.
-- 3 RFCs `Active` (RFC 0111, RFC 0121, RFC 0199) — wire-shape MAY shift compatibly within v1.x until promotion to `Accepted`.
+- 2 RFCs `Active` (RFC 0121, RFC 0199) — wire-shape MAY shift compatibly within v1.x until promotion to `Accepted`.
 - External audit, non-steward host recruitment, and non-steward maintainer recruitment remain external-action gates.
 - Multi-region idempotency and some optional-profile behavior checks remain lower-confidence than the core wire contract.
 
