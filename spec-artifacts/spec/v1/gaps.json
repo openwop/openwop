@@ -12729,6 +12729,125 @@
       ]
     },
     {
+      "id": "openwop.gap.0216.1",
+      "rfc": "0216",
+      "local": "G1",
+      "section": "§C.10",
+      "surface": "The committed companion `openwop-app-colocated-companion.json` is unmarked, `commit`-kind, and signed with a throwaway key, and the gate counts all of its rows.",
+      "witness": "unclassified",
+      "requirementId": null,
+      "disposition": "closed",
+      "target": null,
+      "sources": [
+        {
+          "file": "RFCS/registers/0216-colocated-witness-for-harness-trust-anchor-rows.gaps.md",
+          "token": "G1"
+        }
+      ]
+    },
+    {
+      "id": "openwop.gap.0216.2",
+      "rfc": "0216",
+      "local": "G2",
+      "section": "§C.9(c)",
+      "surface": "Whether a companion must be signed under a key the production host publishes, or whether a citation by digest from P is enough.",
+      "witness": "unclassified",
+      "requirementId": null,
+      "disposition": "closed",
+      "target": null,
+      "sources": [
+        {
+          "file": "RFCS/registers/0216-colocated-witness-for-harness-trust-anchor-rows.gaps.md",
+          "token": "G2"
+        }
+      ]
+    },
+    {
+      "id": "openwop.gap.0216.3",
+      "rfc": "0216",
+      "local": "G3",
+      "section": "§C.9(d) / Unresolved 1–2",
+      "surface": "Discovery equivalence covers only what discovery exposes, and the normalisation set has not been measured on a real production/companion pair of one image.",
+      "witness": "unclassified",
+      "requirementId": null,
+      "disposition": "transferred",
+      "target": "rfc-0216",
+      "sources": [
+        {
+          "file": "RFCS/registers/0216-colocated-witness-for-harness-trust-anchor-rows.gaps.md",
+          "token": "G3"
+        }
+      ]
+    },
+    {
+      "id": "openwop.gap.0216.4",
+      "rfc": "0216",
+      "local": "G4",
+      "section": "Acceptance (deferred box)",
+      "surface": "openwop-app does not yet record its production image digest in `host.build`, and advertises no `oidc` lane at v2 in production. Both need a production deploy, which waits on the steward's `gcloud` re-auth.",
+      "witness": "unclassified",
+      "requirementId": null,
+      "disposition": "externally-gated",
+      "target": "openwop-app-production-deploy",
+      "sources": [
+        {
+          "file": "RFCS/registers/0216-colocated-witness-for-harness-trust-anchor-rows.gaps.md",
+          "token": "G4"
+        }
+      ]
+    },
+    {
+      "id": "openwop.gap.0216.5",
+      "rfc": "0216",
+      "local": "G5",
+      "section": "§A",
+      "surface": "`auth-oidc-user-bearer.test.ts` reads the issuer and is not on the list.",
+      "witness": "unclassified",
+      "requirementId": null,
+      "disposition": "closed",
+      "target": null,
+      "sources": [
+        {
+          "file": "RFCS/registers/0216-colocated-witness-for-harness-trust-anchor-rows.gaps.md",
+          "token": "G5"
+        }
+      ]
+    },
+    {
+      "id": "openwop.gap.0216.6",
+      "rfc": "0216",
+      "local": "G6",
+      "section": "Alternatives 2",
+      "surface": "Nothing binds the served digest to the served surface. `host.build` is the operator's assertion, as for every bundle. `implementation.build` was struck under the RFC 0147 §A freeze on new optional wire members.",
+      "witness": "unclassified",
+      "requirementId": null,
+      "disposition": "transferred",
+      "target": "rfc-0147-freeze",
+      "sources": [
+        {
+          "file": "RFCS/registers/0216-colocated-witness-for-harness-trust-anchor-rows.gaps.md",
+          "token": "G6"
+        }
+      ]
+    },
+    {
+      "id": "openwop.gap.0216.7",
+      "rfc": "0216",
+      "local": "G7",
+      "section": "§D",
+      "surface": "The premise that a served host must not trust a harness issuer was only an openwop-app ADR (0745 D4).",
+      "witness": "unclassified",
+      "requirementId": null,
+      "disposition": "closed",
+      "target": null,
+      "sources": [
+        {
+          "file": "RFCS/registers/0216-colocated-witness-for-harness-trust-anchor-rows.gaps.md",
+          "token": "G7"
+        }
+      ]
+    },
+    {
       "id": "openwop.gap.spec.a2a-integration.g1",
       "rfc": "0152",
       "local": "G1",
