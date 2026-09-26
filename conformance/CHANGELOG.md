@@ -1,9 +1,12 @@
 # `@openwop/openwop-conformance` Changelog
 
-## [2.40.1] — 2026-09-26 — RFC 0216 filed `Draft`; its gap rows enter the contract peer
+## [2.40.1] — unreleased — the 2.40.1 cycle is open: three declared-unwitnessable rows are reached and say why
 
-- **RFC 0216's seven gap rows are in `@openwop/spec-artifacts`' `spec/v1/gaps.json`.** RFC 0216 (the `witnessed-colocated` disposition for harness-trust-anchor rows) is `Draft`, so nothing it proposes binds and no scenario, schema or suite behaviour changes.
-- **Version moved ahead of publication.** `@openwop/openwop-conformance` and its exact-pinned peer `@openwop/spec-artifacts` move to `2.40.1` because `2.40.0` is published and the peer's contents changed. Not tagged, not published.
+- **Three Falsifiability rows declared non-executable now have a leg that records the reason** (RFC 0174 §B.1 rule 4, second branch: "the suite must reach the leg and record a reason"). Each RFC's table declares one of these rows unwitnessable, but no suite leg referenced it, so no bundle could account for it. Each of RFCs 0197, 0205 and 0209 was held from `Accepted` by that one row. No leg can record `executed-pass` without observing the requirement.
+  - `openwop.requirement.0197.retired-not-emitted` (`v2-capability-maturity-bounded`, new describe) is **conditional, not constant**. It reads `spec/v1/deprecations.json`, `spec/v2/migrations.json` and `spec/v2/release.json` from the shipped corpus. While no `v2-minor` row with `retirement.persistence: "persisted"` is due, it records `inapplicable` with RFC 0197 §A.3's reason; that is today's state, with 0 rows. Once one is due, it locates the member by the schema's `x-openwop-retired-in` annotation (a property name, or a `const` / single-`enum` value). It then drives a `conformance-noop` run and fails on any event that carries the member. A due row whose member it cannot locate records `blocked`. The branches no host can reach yet are self-tested in `src/lib/v2-retired-members.test.ts` (due / not-due / advertised-class / unannotated / caught emission / clean event).
+  - `openwop.requirement.0205.export-alias-equivalence` (`v2-artifact-a2a-shape`, new describe) records `inapplicable` on every host, before any request, with RFC 0205 §C.11's verdict: consumer matching logic and a pack-author call, neither on the wire.
+  - `openwop.requirement.0209.render-needs-root` (`v2-a2ui-v09-surface`, new describe) records `inapplicable` on every host, before any request or seam gate, with RFC 0209 §C.9's verdict. It names the reference-impl witness: openwop-app `frontend/react/src/chat/a2ui/__tests__/a2ui-v09-render-needs-root.test.tsx` (openwop-app#4121).
+- **Version moved ahead of publication.** `@openwop/openwop-conformance` and its exact-pinned peer `@openwop/spec-artifacts` move to `2.40.1` because `2.40.0` is tagged. Not tagged, not published. 561 scenario files, unchanged, so this is a patch.
 
 ## [2.40.0] — 2026-09-26 — RFC 0215: one subscription's dead receiver cannot hold another's delivery, and unregistering stops the retries
 
