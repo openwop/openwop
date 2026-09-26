@@ -1,6 +1,6 @@
 # `@openwop/openwop-conformance` Changelog
 
-## [2.40.1] — unreleased — the 2.40.1 cycle is open: three declared-unwitnessable rows are reached and say why
+## [2.40.1] — 2026-09-26 — three declared-unwitnessable rows are reached and say why
 
 - **Three Falsifiability rows declared non-executable now have a leg that records the reason** (RFC 0174 §B.1 rule 4, second branch: "the suite must reach the leg and record a reason"). Each RFC's table declares one of these rows unwitnessable, but no suite leg referenced it, so no bundle could account for it. Each of RFCs 0197, 0205 and 0209 was held from `Accepted` by that one row. No leg can record `executed-pass` without observing the requirement.
   - `openwop.requirement.0197.retired-not-emitted` (`v2-capability-maturity-bounded`, new describe) is **conditional, not constant**. It reads `spec/v1/deprecations.json`, `spec/v2/migrations.json` and `spec/v2/release.json` from the shipped corpus. While no `v2-minor` row with `retirement.persistence: "persisted"` is due, it records `inapplicable` with RFC 0197 §A.3's reason; that is today's state, with 0 rows. Once one is due, it locates the member by the schema's `x-openwop-retired-in` annotation (a property name, or a `const` / single-`enum` value). It then drives a `conformance-noop` run and fails on any event that carries the member. A due row whose member it cannot locate records `blocked`. The branches no host can reach yet are self-tested in `src/lib/v2-retired-members.test.ts` (due / not-due / advertised-class / unannotated / caught emission / clean event).
