@@ -2,6 +2,7 @@
 
 ## [2.42.0] — unreleased — `replay_context_summary_unavailable` is a registered code
 
+- **RFC 0217: after unregister, the dead-letter read answers `404 not_found`, as for a subscription that never existed.** `v2-webhook-durable-delivery` gains `openwop.requirement.0217.dead-letter-read-after-unregister`, gated on `webhooks.deadLetter`: read the sink (`200`, the control), unregister (`204`), read again, and read a never-minted same-tenant id; both later reads must be `404 not_found`. Closes RFC 0215's gap G5. Sabotage: a v2 reference host whose read answers `200 { deliveries: [] }` for an unknown id fails the row.
 - **Version moved ahead of publication.** `@openwop/openwop-conformance` and its exact-pinned peer `@openwop/spec-artifacts` move to `2.42.0` because `2.41.1` is published and this cycle changes shipped spec files (`spec/v2/errors.json`, the generated `schemas/v2/error-envelope.schema.json`). A minor: a new registered error code is an additive wire member. No scenario changes — no conformance leg asserts the code (a black-box suite cannot make a host's summary artifact unavailable at `fromSeq`; RFC 0111 amendment).
 
 ## [2.41.1] — 2026-09-26 — an SSE projection row no longer depends on a host's front forwarding headers early
