@@ -479,9 +479,12 @@ delivery MUST NOT be degraded by an unrelated subscription's failures.
       filed at `Active`. Reasons are in RFC 0215 §"Proposed invariants".
 - [x] Prior-art survey (G6) and a threat-model home for the availability invariant (G3), both
       done 2026-09-25: RFC 0215 §Prior art; `threat-model-secret-leakage.md` §4.12.
-- [ ] Take RFC 0215 to `Active` once the comment window closes on **2026-10-01**. At the flip,
-      add the two invariant rows citing §4.12, land the `webhooks.md` text, and write the two
-      scenarios.
+- [x] RFC 0215 `Active` 2026-09-25, window waived by steward override of RFC 0147 §A.6
+      (suite 2.40.0): the `webhooks.md` text, both invariant rows citing §4.12, and both
+      scenarios, sabotage-proved on the v2 reference host.
+- [ ] Publish 2.40.0, then take RFC 0215 to `Accepted` on certified bundles from two hosts, at
+      least one deployed (openwop-app is replacing its batch barrier; MyndHyve is fixing §B;
+      the v2 reference host already passes). The RFC 0156 §B review stays owed.
 
 ## S4 — two defect patterns from my RFC 0158 rows, both found by hosts · **pattern check, no code owed**
 

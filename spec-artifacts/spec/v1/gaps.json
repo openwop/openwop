@@ -12685,8 +12685,8 @@
       "surface": "The cross-tenant leg needs tenant A to hold at least the §A.2 floor of attempts open while tenant B's delivery is observed. Its pass condition is a SHOULD, so it reports. Whether a reporting leg belongs in the certified bundle, or only in the run log, is not decided.",
       "witness": "unclassified",
       "requirementId": null,
-      "disposition": "transferred",
-      "target": "conformance/src/scenarios",
+      "disposition": "closed",
+      "target": null,
       "sources": [
         {
           "file": "RFCS/registers/0215-webhook-delivery-isolation.gaps.md",
