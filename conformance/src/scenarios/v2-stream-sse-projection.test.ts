@@ -48,15 +48,46 @@ async function createRun(): Promise<{ runId: string } | { reason: string }> {
   return { runId };
 }
 
+const TERMINAL = new Set(['completed', 'failed', 'cancelled']);
+/** How long the noop run gets to finish before the stream is read. */
+const TERMINAL_WAIT_MS = 30_000;
+
+/**
+ * Read the stream of a TERMINAL run (2.41.0). The requirement is how every
+ * frame names its run, and a terminal run's backlog carries every frame the
+ * projector renders, the batch flush included. Streaming a run that is still
+ * queued made the row depend on something it does not test: whether the host's
+ * public front forwards response headers before the stream ends. A front that
+ * buffers SSE (openwop-app's Firebase Hosting) holds the headers of an open
+ * stream, so during a loaded certification cut the noop run queued, the stream
+ * stayed open, streamEvents' 8 s budget ran out before any header arrived, and
+ * the row recorded `blocked` ("answered 0") on a host whose quiet-machine time
+ * to first byte for the same request is 0.19 s. A terminal run's stream is
+ * finite (the host closes it at the terminal event, events.md §SSE), so any
+ * front can deliver it.
+ */
+async function waitTerminal(runId: string): Promise<string | null> {
+  const deadline = Date.now() + TERMINAL_WAIT_MS;
+  for (;;) {
+    const r = await http(() => driver.get(`/runs/${encodeURIComponent(runId)}`));
+    const status = r !== null && r.status === 200 ? String((r.json as { status?: unknown } | null)?.status ?? '') : '';
+    if (TERMINAL.has(status)) return status;
+    if (Date.now() > deadline) return null;
+    await new Promise((res) => setTimeout(res, 250));
+  }
+}
+
 describe('v2 stream-sse-projection (events.md §SSE frames)', () => {
   it('every data: frame on the major-2 stream carries the tenant-bound runId of the run it belongs to', async () => {
     const c = await createRun();
     if ('reason' in c) return softSkip('blocked', c.reason);
     expect(RUN_ID.test(c.runId), req(ID, 'spec/v2/core/identity.md §5', `the created runId MUST be tenant-bound before the stream can be held to it (got ${c.runId})`)).toBe(true);
 
+    if ((await waitTerminal(c.runId)) === null) return softSkip('blocked', `the ${NOOP_WORKFLOW_ID} run ${c.runId} did not reach a terminal status within ${TERMINAL_WAIT_MS}ms, so its stream is not a finite backlog yet — nothing was read`);
     const s = await streamEvents(c.runId);
     if (s === null) return softSkip('blocked', 'GET /runs/{runId}/events (SSE, OpenWOP-Version: 2.0) unreachable (fetch failed)');
-    if (s.status !== 200) return softSkip('blocked', `GET /runs/{runId}/events (SSE) answered ${s.status} for the run just created`);
+    if (s.status === 0) return softSkip('blocked', 'GET /runs/{runId}/events (SSE) for a TERMINAL run returned no response headers within 8 s — the host closes a terminal run\'s stream (events.md §SSE), so a front that buffers the response should still have delivered it');
+    if (s.status !== 200) return softSkip('blocked', `GET /runs/{runId}/events (SSE) answered ${s.status} for a terminal run`);
     if (s.events.length === 0) return softSkip('blocked', 'the stream delivered no data: frames within the window — nothing to hold to the grammar');
 
     const validate = v2Validator('run-event');

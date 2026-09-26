@@ -1,5 +1,10 @@
 # `@openwop/openwop-conformance` Changelog
 
+## [2.41.1] — unreleased — the 2.41.1 cycle is open
+
+- **`v2-stream-sse-projection` reads a terminal run's stream.** It streamed the noop run the moment it was created, so on a loaded certification cut the run was still queued and the stream stayed open. A public front that buffers SSE (openwop-app's Firebase Hosting) withholds the headers of an open stream, `streamEvents`' 8 s budget ran out before any header arrived, and `0171.stream-sse-projection` recorded `blocked` ("answered 0") on both of openwop-app's 2.40.3 production cuts. Quiet-machine time to first byte for the same request was 0.19 s. No rule bounds time to headers. The row tests how every frame names its run, and a terminal run's backlog carries every frame, so the leg now waits up to 30 s for the run to finish before it reads the stream (the host closes a terminal run's stream, events.md §SSE), and a missing response now says which of the two it was.
+- **Version moved ahead of publication.** `@openwop/openwop-conformance` and its exact-pinned peer `@openwop/spec-artifacts` move to `2.41.1` because `2.41.0` is tagged. Not tagged, not published.
+
 ## [2.41.0] — 2026-09-26 — RFC 0111's context-budget witness can fail
 
 - **Conformance Soak is green again: the receiver modules count as harness doubles.** `host-callback-declaration` keys on imports of modules that stand up a server the host must reach, and its list omitted `scoped-receiver` and `effect-receiver`. So `v2-a2a-push-delivery`'s correct `REQUIRES_HOST_CALLBACK` read as a callback it "does not make", and the post-merge Soak failed on every run from #1546 (2026-09-24) on, which no PR check saw. Both modules join the list, and the eight scenarios that take a host callback through them now declare it (`v2-bound-id-kinds`, `v2-webhook-delivery-isolation`, `v2-webhook-delivery-shape`, `v2-webhook-durable-delivery`, `v2-webhook-unregister-stops-delivery`, `webhook-signed-delivery`, `v2-durability-recovery`, `v2-terminal-event-once`), so an off-process consumer can list them before running. Sabotage: dropping `scoped-receiver` again reproduces the Soak failure.
