@@ -1,6 +1,6 @@
 # `@openwop/openwop-conformance` Changelog
 
-## [2.40.3] — unreleased — the 2.40.3 cycle is open
+## [2.40.3] — 2026-09-26 — a cookie-borne lane can be revoke-witnessed, and a secret-named setting no longer corrupts the discovery digest
 
 - **`v2-revocation-honored` presents a cookie-lane credential as a cookie.** When the mint seam answers `presentation: { kind: "cookie", name }`, the probe sends `Cookie: <name>=<credential>` instead of a bearer token. The seams contract's `mintLaneCredential` response gains that optional member. Bearer stays the default when `presentation` is absent. The cookie branch is unexercised until a host serves it; openwop-app's `session` lane is the first expected.
 - **RFC 0215 gap G1 closes in the contract peer.** `@openwop/spec-artifacts`' `spec/v1/gaps.json` records MyndHyve's measurement (openwop#1595), and `spec/v2/core/webhooks.md`'s `Stable` banner cites RFC 0215 now that it is `Accepted`. No scenario change.

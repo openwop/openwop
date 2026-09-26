@@ -208,6 +208,20 @@ Format follows [Keep a Changelog](https://keepachangelog.com/en/1/) loosely. Ver
 - **The remaining eleven stay `Active`, each for a stated reason** rather than for lack of attention. The eight RFC 0167 program children name a certified openwop-app bundle in their own acceptance criteria and the committed one reads `certified: false` (3 blocked rows, RFC 0168 §E.1). RFC 0173 additionally carries the program's only `open` gap row. RFC 0179's sole criterion is unmet — 2.4.2 stopped the gate reading "(Phase 4 leg)" as an excuse for it. RFC 0187 names three requirement ids that no scenario mints. RFC 0167 itself flips **last**, which 2.4.2 made a rule: the moment the umbrella stops being `Active`, every child still `Active` becomes permanently ineligible.
 - **The interrupt `data` union is bound to `kind`** (MCP/A2A review P3-H7, Class 3 correction — COMPATIBILITY.md §3). `schemas/suspend-request.schema.json` and its v2 twin typed `data` as an unbound `oneOf`, so the minimal `conversation.start` and `conversation.close` payloads (`{ conversationId }`, which satisfies both shapes) failed validation in v1 and v2, and a payload carrying another kind's `data` passed. `data` is now an `anyOf` and a root `allOf` binds each kind to its own shape with one `if`/`then`; no per-kind shape or `$id` changed. Witnessed by `conformance/fixtures/interrupt-payloads/` (suite 2.36.0).
 
+## [2.40.3] — 2026-09-26 — a cookie-borne lane can be revoke-witnessed, and a secret-named setting no longer corrupts the discovery digest
+
+A suite patch: no new scenario file, no wire or `MUST` change for a served host (`COMPATIBILITY.md` §2.1). The seams contract gains one optional response member. The corpus tag moves because `@openwop/openwop-conformance` and `@openwop/spec-artifacts` move together.
+
+### Conformance
+
+- **The credential mint seam can present a lane credential as a cookie (#1602).** `mintLaneCredential` may answer `presentation: { kind: "cookie", name }`, and `v2-revocation-honored` then sends `Cookie: <name>=<credential>`. A host whose `session` lane is cookie-borne and revokes on the next request can now be witnessed without advertising a weaker rule. Bearer stays the default.
+- **A setting that names a secret is not scrubbed as one (#1599).** A short `OPENWOP_*` config value whose name mentions a key or token no longer gets rewritten inside the captured discovery document, which had corrupted `discovery.sha256`.
+- **Suite `2.40.3`**: 561 scenario files. `@openwop/spec-artifacts` moves in lockstep at the same exact pin.
+
+### Spec
+
+- **RFC 0215 `Accepted`** (provisional; #1597), and its gap G1 closes in the contract peer. **RFC 0197, 0205 and 0209 `Accepted`** (#1591). **RFC 0199 §B.3(c)** treats an `https` issuer's empty path as `/` (#1596). **RFC 0216** requires a companion to be signed with a dedicated published key, never the production bundle key (#1598).
+
 ## [2.40.2] — 2026-09-26 — production bundles stop carrying harness-issuer blocked rows, and a colocated companion is marked
 
 A suite patch: no new scenario file, no wire or `MUST` change for a served host (`COMPATIBILITY.md` §2.1). Bundle v3 gains one optional member, `host.deployment`, which enters the witness preimage only when present, so every existing bundle digests unchanged. The corpus tag moves because `@openwop/openwop-conformance` and `@openwop/spec-artifacts` move together.
