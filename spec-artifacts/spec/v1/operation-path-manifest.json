@@ -108,6 +108,14 @@
       "class": "canonical"
     },
     {
+      "operationId": "deleteContentPage",
+      "method": "DELETE",
+      "pathKey": "/v1/content/pages/{slug}",
+      "resolvedPath": "/v1/content/pages/{slug}",
+      "tag": "content",
+      "class": "canonical"
+    },
+    {
       "operationId": "getContentPage",
       "method": "GET",
       "pathKey": "/v1/content/pages/{slug}",
@@ -461,10 +469,10 @@
     }
   ],
   "counts": {
-    "total": 57,
-    "canonical": 48,
+    "total": 58,
+    "canonical": 49,
     "hostExtension": 5,
     "testCatalog": 4
   },
-  "digest": "056436682c867c985d8b04c42df64d675718c46dab943a290bb275d2b07ea388"
+  "digest": "ab5e46df62da2401d3e119accef5378b564b0b3d679a5b05cc131d483b84762a"
 }
