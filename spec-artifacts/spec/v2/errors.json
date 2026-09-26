@@ -651,7 +651,7 @@
     {
       "code": "replay_memory_snapshot_unavailable",
       "httpStatus": 409,
-      "statusSource": "v1 convention",
+      "statusSource": "v2 decision (v1 host-sample-test-seams.md §MAE-3 stated 422; the v1 error list states no status)",
       "retriable": false,
       "details": null,
       "since": "1.0",
