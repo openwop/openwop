@@ -46,6 +46,7 @@ import { isFixtureAdvertised } from '../lib/fixtures.js';
 import {
   createSyntheticOIDCIssuer,
   type SyntheticOIDCIssuer,
+  issuerListenPort,
 } from '../lib/oidc-issuer.js';
 import { capabilityFamily } from '../lib/discovery-capabilities.js';
 import { req } from '../lib/requirement-ids.js';
@@ -174,8 +175,7 @@ describe('auth-oidc-user-bearer: harness-driven token validation', () => {
 
     // Bind the harness's JWKS + discovery endpoints so the host can
     // fetch them when validating tokens.
-    const parsed = new URL(harnessUrl);
-    const port = parsed.port ? Number.parseInt(parsed.port, 10) : 80;
+    const port = issuerListenPort(harnessUrl);
 
     server = createServer((reqBody, res) => {
       if (!issuer) {

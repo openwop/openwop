@@ -30,3 +30,13 @@ describe('pinnedPortWorkerConflict — a pinned-port certification is single-wor
     expect(msg).toContain('OPENWOP_A2A_FAKE_PEER_PORT');
   });
 });
+
+describe('the synthetic OIDC issuer port is a pinned fixture port (2.39.4)', () => {
+  it('OPENWOP_TEST_OIDC_ISSUER_PORT alone refuses a multi-worker --certify', () => {
+    const msg = pinnedPortWorkerConflict({ OPENWOP_TEST_OIDC_ISSUER_PORT: '3839' }, 4, true);
+    expect(msg).toMatch(/OPENWOP_TEST_OIDC_ISSUER_PORT/);
+  });
+  it('and is accepted single-worker', () => {
+    expect(pinnedPortWorkerConflict({ OPENWOP_TEST_OIDC_ISSUER_PORT: '3839' }, 1, true)).toBeNull();
+  });
+});

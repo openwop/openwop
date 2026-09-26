@@ -60,7 +60,7 @@ import { softSkip } from '../lib/soft-skip.js';
 import { req } from '../lib/requirement-ids.js';
 import { readErrorCode } from '../lib/error-envelope.js';
 import { v2Discovery, familyAdvertised } from '../lib/v2.js';
-import { createSyntheticOIDCIssuer, type SyntheticOIDCIssuer } from '../lib/oidc-issuer.js';
+import { createSyntheticOIDCIssuer, issuerListenPort, type SyntheticOIDCIssuer } from '../lib/oidc-issuer.js';
 
 export const HOST_CALLBACK_NOT_REQUIRED =
   'the suite stands up the synthetic OIDC issuer and the host fetches its JWKS; no request returns to the suite\'s own API, so no host-reachable callback is needed';
@@ -120,7 +120,6 @@ async function gate(): Promise<Gate | { readonly kind: 'inapplicable' | 'blocked
   const audience = process.env['OPENWOP_TEST_OIDC_AUDIENCE']?.trim() ?? 'openwop-conformance';
   if (issuer === null) {
     const made = createSyntheticOIDCIssuer({ issuer: url, audience, algorithm: 'RS256' });
-    const parsed = new URL(url);
     const srv = createServer((r, res) => {
       if (r.url === '/.well-known/jwks.json') { res.writeHead(200, { 'Content-Type': 'application/json' }); res.end(made.jwksJson); return; }
       if (r.url === '/.well-known/openid-configuration') { res.writeHead(200, { 'Content-Type': 'application/json' }); res.end(made.discoveryJson); return; }
@@ -128,7 +127,7 @@ async function gate(): Promise<Gate | { readonly kind: 'inapplicable' | 'blocked
     });
     await new Promise<void>((resolve, reject) => {
       srv.once('error', reject);
-      srv.listen(parsed.port ? Number.parseInt(parsed.port, 10) : 80, '127.0.0.1', () => resolve());
+      srv.listen(issuerListenPort(url), '127.0.0.1', () => resolve());
     });
     server = srv;
     issuer = made;
