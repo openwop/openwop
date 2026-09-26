@@ -1,12 +1,12 @@
 {
   "bundleVersion": "3",
-  "generatedAt": "2026-09-26T12:02:52.648Z",
+  "generatedAt": "2026-09-26T21:14:29.393Z",
   "suite": {
     "name": "@openwop/openwop-conformance",
-    "version": "2.40.2",
+    "version": "2.42.0",
     "targetMajor": 2,
-    "specArtifactsVersion": "2.40.2",
-    "stampSha256": "5b784776f9088d58f1fd29e14efa113715876aac5940b728f775a779c59a962a"
+    "specArtifactsVersion": "2.42.0",
+    "stampSha256": "99ce95950e5c5c127286091e76b7569eeb6eb05ec752c853b23eb548c0a755f9"
   },
   "host": {
     "name": "workflow-runtime",
@@ -14,13 +14,13 @@
     "vendor": "myndhyve",
     "build": {
       "kind": "commit",
-      "id": "d721c6c62bcde3c01d96926bca14cd1c15ced207"
+      "id": "e609c63723426cc7c7fbb72f7e2472fab10df1f2"
     },
     "signingKeyId": "myndhyve-bundle-2026-09b"
   },
   "discovery": {
     "url": "https://api.myndhyve.ai/.well-known/openwop",
-    "sha256": "34440440d437626f2ea008638295443b1f51b1a75944f5dba6771b64b64f014a",
+    "sha256": "1be01ffe13aded8f47a37e6086175efcde39ec4245735a87f4c009f1808aa5e7",
     "protocolVersions": [
       "1.0",
       "2.0"
@@ -97,7 +97,8 @@
         "conformance-agent-channel-dispatch",
         "conformance-phase4-nondet-tool",
         "conformance-replay-side-effect",
-        "conformance-durability-effect"
+        "conformance-durability-effect",
+        "conformance-context-budget-live"
       ],
       "signingKeys": [
         {
@@ -163,6 +164,13 @@
           "statefulResume": true,
           "verifier": {
             "gating": true
+          },
+          "contextBudget": {
+            "transcriptTokenBudget": 520,
+            "tokenCounter": "chars",
+            "summarization": {
+              "keepLastTurns": 2
+            }
           },
           "confidenceEscalationFloor": 0.5,
           "confidenceEscalationInterruptKind": "x-host-myndhyve-low-confidence",
@@ -1065,10 +1073,10 @@
   ],
   "results": {
     "totals": {
-      "executedPass": 237,
+      "executedPass": 238,
       "executedFail": 0,
       "skipped": 17,
-      "inapplicable": 202,
+      "inapplicable": 206,
       "blocked": 0
     },
     "requirements": [
@@ -1079,10 +1087,24 @@
         "assertions": 6
       },
       {
+        "id": "openwop.scenario.context-budget-transcript-bound",
+        "scenario": "context-budget-transcript-bound.test.ts",
+        "result": "inapplicable",
+        "assertions": 0,
+        "detail": "every test returned early through behaviorGate with zero assertions: profile not advertised in the captured discovery set"
+      },
+      {
+        "id": "openwop.scenario.context-summarization-replay",
+        "scenario": "context-summarization-replay.test.ts",
+        "result": "inapplicable",
+        "assertions": 0,
+        "detail": "every test returned early through behaviorGate with zero assertions: profile not advertised in the captured discovery set"
+      },
+      {
         "id": "openwop.scenario.fixtures-valid",
         "scenario": "fixtures-valid.test.ts",
         "result": "executed-pass",
-        "assertions": 374
+        "assertions": 377
       },
       {
         "id": "openwop.scenario.inbound-credential-no-passthrough",
@@ -1237,7 +1259,7 @@
         "scenario": "v2-capability-maturity-bounded.test.ts",
         "result": "executed-pass",
         "assertions": 44,
-        "detail": "partial-witness: inapplicable: unwitnessable until the first persisted-class retirement row is due (RFC 0197 §A.3 Falsifiability): corpus 2.40.2: 0 persisted-class v2-minor retirement row(s), 0 v2→v2 migration row(s) — no retired member exists for a post-2.N event to carry. Before one does, a scenario would be vacuous, and a row that cannot fail is not a witness. This leg asserts the moment such a row falls due."
+        "detail": "partial-witness: inapplicable: unwitnessable until the first persisted-class retirement row is due (RFC 0197 §A.3 Falsifiability): corpus 2.42.0: 0 persisted-class v2-minor retirement row(s), 0 v2→v2 migration row(s) — no retired member exists for a post-2.N event to carry. Before one does, a scenario would be vacuous, and a row that cannot fail is not a witness. This leg asserts the moment such a row falls due."
       },
       {
         "id": "openwop.scenario.v2-capability-record-shape",
@@ -1398,7 +1420,7 @@
         "id": "openwop.scenario.v2-idempotency-in-flight",
         "scenario": "v2-idempotency-in-flight.test.ts",
         "result": "executed-pass",
-        "assertions": 15,
+        "assertions": 12,
         "detail": "partial-witness: inapplicable: the held-claim leg is driven through the seams profile (RFC 0213 §B) — seams profile not advertised; the unaided leg above is this host's witness"
       },
       {
@@ -1697,7 +1719,7 @@
         "id": "openwop.scenario.v2-run-list",
         "scenario": "v2-run-list.test.ts",
         "result": "executed-pass",
-        "assertions": 31
+        "assertions": 35
       },
       {
         "id": "openwop.floor.v2-run-options-limits",
@@ -1806,7 +1828,7 @@
         "id": "openwop.floor.v2-webhook-durable-delivery",
         "scenario": "v2-webhook-durable-delivery.test.ts",
         "result": "executed-pass",
-        "assertions": 18
+        "assertions": 22
       },
       {
         "id": "openwop.scenario.v2-webhook-egress-refusal",
@@ -1855,6 +1877,20 @@
         "assertions": 11
       },
       {
+        "id": "openwop.it.context-budget-transcript-bound.bounds-the-per-turn-transcript-to-transcripttokenbudget-with-an-internally-consi",
+        "scenario": "context-budget-transcript-bound.test.ts",
+        "result": "inapplicable",
+        "assertions": 0,
+        "detail": "the transcript-window seam is in the seams profile — conformance.seamsProfile is not openwop-conformance-seams-v2"
+      },
+      {
+        "id": "openwop.it.context-summarization-replay.replay-reuses-the-recorded-context-summarized-summaryref-never-re-summarizes",
+        "scenario": "context-summarization-replay.test.ts",
+        "result": "inapplicable",
+        "assertions": 0,
+        "detail": "the run event-log is read through the seams profile — conformance.seamsProfile is not openwop-conformance-seams-v2"
+      },
+      {
         "id": "openwop.it.fixtures-valid.connection-packs-validates-against-connection-pack-manifest-schema-json",
         "scenario": "fixtures-valid.test.ts",
         "result": "executed-pass",
@@ -1864,13 +1900,13 @@
         "id": "openwop.it.fixtures-valid.every-fixture-has-a-manual-trigger-so-the-conformance-driver-can-start-it",
         "scenario": "fixtures-valid.test.ts",
         "result": "executed-pass",
-        "assertions": 93
+        "assertions": 94
       },
       {
         "id": "openwop.it.fixtures-valid.every-fixture-id-matches-its-filename",
         "scenario": "fixtures-valid.test.ts",
         "result": "executed-pass",
-        "assertions": 93
+        "assertions": 94
       },
       {
         "id": "openwop.it.fixtures-valid.every-fixture-templateid-matches-its-filename",
@@ -1954,7 +1990,7 @@
         "id": "openwop.it.fixtures-valid.validates-against-workflow-definition-schema-json",
         "scenario": "fixtures-valid.test.ts",
         "result": "executed-pass",
-        "assertions": 93
+        "assertions": 94
       },
       {
         "id": "openwop.it.jcs-vectors.a-non-i-json-native-value-is-refused-at-the-value-boundary",
@@ -2626,7 +2662,7 @@
           "recovery": {
             "class": "dispatch-hold",
             "boundMs": 45000,
-            "observedMs": 15452
+            "observedMs": 15337
           }
         }
       },
@@ -2639,7 +2675,7 @@
           "recovery": {
             "class": "dispatch-lease",
             "boundMs": 100000,
-            "observedMs": 70628
+            "observedMs": 71067
           }
         }
       },
@@ -3520,7 +3556,7 @@
         "id": "openwop.requirement.0182.run-list.tenant-scoped",
         "scenario": "v2-run-list.test.ts",
         "result": "executed-pass",
-        "assertions": 27
+        "assertions": 31
       },
       {
         "id": "openwop.requirement.0184.bound-id-path-projection",
@@ -3600,7 +3636,7 @@
         "scenario": "v2-capability-maturity-bounded.test.ts",
         "result": "inapplicable",
         "assertions": 0,
-        "detail": "unwitnessable until the first persisted-class retirement row is due (RFC 0197 §A.3 Falsifiability): corpus 2.40.2: 0 persisted-class v2-minor retirement row(s), 0 v2→v2 migration row(s) — no retired member exists for a post-2.N event to carry. Before one does, a scenario would be vacuous, and a row that cannot fail is not a witness. This leg asserts the moment such a row falls due."
+        "detail": "unwitnessable until the first persisted-class retirement row is due (RFC 0197 §A.3 Falsifiability): corpus 2.42.0: 0 persisted-class v2-minor retirement row(s), 0 v2→v2 migration row(s) — no retired member exists for a post-2.N event to carry. Before one does, a scenario would be vacuous, and a row that cannot fail is not a witness. This leg asserts the moment such a row falls due."
       },
       {
         "id": "openwop.requirement.0198.advertised-via-discover",
@@ -3998,7 +4034,7 @@
         "id": "openwop.requirement.0213.in-flight-loser-outcome",
         "scenario": "v2-idempotency-in-flight.test.ts",
         "result": "executed-pass",
-        "assertions": 13
+        "assertions": 10
       },
       {
         "id": "openwop.requirement.0213.in-flight-one-winner",
@@ -4089,13 +4125,29 @@
         "scenario": "v2-webhook-unregister-stops-delivery.test.ts",
         "result": "executed-pass",
         "assertions": 7
+      },
+      {
+        "id": "openwop.requirement.0217.dead-letter-read-after-unregister",
+        "scenario": "v2-webhook-durable-delivery.test.ts",
+        "result": "executed-pass",
+        "assertions": 4
       }
     ]
   },
-  "witnessSha256": "de1e60e6ede8ca25db643570f09c4b8011f607f183383e4c7208f7a03dfb5afe",
-  "assertionCount": 2814,
+  "witnessSha256": "a634cdcc69f03d5672221266232b5ee963896e8fee377702f2718d9fe68ea437",
+  "assertionCount": 2830,
   "detail": {
     "nonPass": [
+      {
+        "id": "openwop.scenario.context-budget-transcript-bound",
+        "result": "inapplicable",
+        "reason": "every test returned early through behaviorGate with zero assertions: profile not advertised in the captured discovery set"
+      },
+      {
+        "id": "openwop.scenario.context-summarization-replay",
+        "result": "inapplicable",
+        "reason": "every test returned early through behaviorGate with zero assertions: profile not advertised in the captured discovery set"
+      },
       {
         "id": "openwop.scenario.memory-attribution-replay-stable",
         "result": "inapplicable",
@@ -4320,6 +4372,16 @@
         "id": "openwop.scenario.v2-webhook-standard-webhooks-delivery",
         "result": "inapplicable",
         "reason": "every test returned early through behaviorGate with zero assertions: profile not advertised in the captured discovery set"
+      },
+      {
+        "id": "openwop.it.context-budget-transcript-bound.bounds-the-per-turn-transcript-to-transcripttokenbudget-with-an-internally-consi",
+        "result": "inapplicable",
+        "reason": "the transcript-window seam is in the seams profile — conformance.seamsProfile is not openwop-conformance-seams-v2"
+      },
+      {
+        "id": "openwop.it.context-summarization-replay.replay-reuses-the-recorded-context-summarized-summaryref-never-re-summarizes",
+        "result": "inapplicable",
+        "reason": "the run event-log is read through the seams profile — conformance.seamsProfile is not openwop-conformance-seams-v2"
       },
       {
         "id": "openwop.it.memory-attribution-replay-stable.a-replay-mode-fork-introduces-no-memory-written-with-a-new-memoryid",
@@ -4909,7 +4971,7 @@
       {
         "id": "openwop.requirement.0197.retired-not-emitted",
         "result": "inapplicable",
-        "reason": "unwitnessable until the first persisted-class retirement row is due (RFC 0197 §A.3 Falsifiability): corpus 2.40.2: 0 persisted-class v2-minor retirement row(s), 0 v2→v2 migration row(s) — no retired member exists for a post-2.N event to carry. Before one does, a scenario would be vacuous, and a row that cannot fail is not a witness. This leg asserts the moment such a row falls due."
+        "reason": "unwitnessable until the first persisted-class retirement row is due (RFC 0197 §A.3 Falsifiability): corpus 2.42.0: 0 persisted-class v2-minor retirement row(s), 0 v2→v2 migration row(s) — no retired member exists for a post-2.N event to carry. Before one does, a scenario would be vacuous, and a row that cannot fail is not a witness. This leg asserts the moment such a row falls due."
       },
       {
         "id": "openwop.requirement.0198.advertised-via-discover",
@@ -5199,7 +5261,7 @@
   "signature": {
     "alg": "ed25519",
     "keyId": "myndhyve-bundle-2026-09b",
-    "sig": "I5eY5CBKiB-cxDmy7hnV4jFJBjnvT0-jnaYvMYjG_Q8qv3B7ZsJKIjFuWF9JY3E0FJ26c-gf_OR73KBQiauCAA",
+    "sig": "bimXPWBijhH39bfYhT86TK3lt6P4ILFTGmvzhiXuKRy4_Gysz49STb_hqq8HbOTVAMPCpYqqWZfKkLJYM11ZCw",
     "over": [
       "witnessSha256",
       "host.build",
