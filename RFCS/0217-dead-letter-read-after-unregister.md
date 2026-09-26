@@ -4,10 +4,10 @@
 | ----------------- | --------------------------------------------------------------- |
 | **RFC**           | 0217                                                            |
 | **Title**         | after a subscription is unregistered, its dead-letter read answers as though it never existed |
-| **Status**        | `Active`                                                        |
+| **Status**        | `Accepted`                                                      |
 | **Author(s)**     | David Tufts (@davidscotttufts)                                  |
 | **Created**       | 2026-09-26                                                      |
-| **Updated**       | 2026-09-26 — filed and moved `Draft → Active` in the filing PR. **Comment window waived** (additive, 7-day) by the steward under `GOVERNANCE.md` §"Sole-steward operation", logged in `MAINTAINERS.md` §"Bootstrap-phase RFC waivers". RFC 0147 §A.6 does not apply: no identity or authorization surface is narrowed, and the only new answer is one `identity.md` §5 already gives for an unknown id. Filed as its own RFC rather than as an edit to RFC 0188 because RFC 0188 is `Accepted`, and an `Accepted` RFC may carry only requirements a certified bundle has witnessed (RFC 0174 §B.1 rule 4) |
+| **Updated**       | 2026-09-26 — **`Active → Accepted`, provisional pending RFC 0156 §B retrospective review** (it went `Active` under a waived window; register row `not-reviewed`). Evidence tier: tier-1 — the v2 reference host (openwop-examples), a reference example and not a production host; single witness. Its certified public cut on published 2.42.0 (build `commit:7faf641`, witness `b9f3806921b8`, signed `v2-reference-4`, 404 pass / 0 fail / 0 blocked, relaxations `[]`, all three profiles certified; `--verify` → VERIFIED) records `openwop.requirement.0217.dead-letter-read-after-unregister` `executed-pass`. MyndHyve's production cut on ≥ 2.42.0, after its `not_found` fix deploys (gap G1), will corroborate at tier 2. · 2026-09-26 — filed and moved `Draft → Active` in the filing PR. **Comment window waived** (additive, 7-day) by the steward under `GOVERNANCE.md` §"Sole-steward operation", logged in `MAINTAINERS.md` §"Bootstrap-phase RFC waivers". RFC 0147 §A.6 does not apply: no identity or authorization surface is narrowed, and the only new answer is one `identity.md` §5 already gives for an unknown id. Filed as its own RFC rather than as an edit to RFC 0188 because RFC 0188 is `Accepted`, and an `Accepted` RFC may carry only requirements a certified bundle has witnessed (RFC 0174 §B.1 rule 4) |
 | **Affects**       | `spec/v2/core/webhooks.md` §Durability (one sentence on the dead-letter read) · conformance (one leg in `v2-webhook-durable-delivery.test.ts`, suite 2.42.0) · amends RFC 0188 §A (the read) |
 | **Compatibility** | `additive` — a new normative requirement on a previously undefined behavior (`COMPATIBILITY.md` §4). No wire, schema, error-code or event change |
 | **Supersedes**    | — amends RFC 0188 §A; RFC 0188 stands                           |
@@ -71,7 +71,7 @@ None.
 ## Acceptance criteria
 
 - [x] `Active`: the `webhooks.md` sentence and the leg (suite 2.42.0), sabotage-proved against a tombstone host.
-- [ ] `openwop.requirement.0217.dead-letter-read-after-unregister` `executed-pass` on a certified host bundle — reason: minted in suite 2.42.0, which is not yet published; the first certified cut of a host advertising `webhooks.deadLetter` on ≥ 2.42.0 (the v2 reference host, or MyndHyve after its error-code fix) witnesses it.
+- [x] `openwop.requirement.0217.dead-letter-read-after-unregister` `executed-pass` on a certified host bundle — the v2 reference host's certified public cut on published 2.42.0 (build `commit:7faf641`, witness `b9f3806921b8`).
 
 ## References
 

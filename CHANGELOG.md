@@ -13,6 +13,7 @@ Format follows [Keep a Changelog](https://keepachangelog.com/en/1/) loosely. Ver
 
 ## [Unreleased]
 
+- **RFC 0217 `Active → Accepted` (provisional; tier-1)**: after unregister, the dead-letter read answers as though the subscription never existed. The v2 reference host's certified public cut on published 2.42.0 (witness `b9f3806921b8`, 404 / 0 / 0, relaxations `[]`) records `0217.dead-letter-read-after-unregister` `executed-pass`, and both RFC 0215 rows again. Provisional pending the RFC 0156 §B review. `webhooks.md`'s `Stable` banner now cites 0217.
 - **Corrections an openwop.dev sweep found in the spec itself** (editorial; no wire, `MUST`, code or status change). openwop-site's reconciliation of the site against spec 2.2 → 2.41.1 found places where the corpus disagreed with itself:
   - `node-pack-runtimes.md` labelled RFC 0203 `Active`; it is `Accepted`. A sweep of every inline RFC status label finds no other disagreement.
   - INTEROP-MATRIX: the reference row's rc.58 "How to read" paragraph is marked superseded, and the a2a-js 0.3.13 and `-legacy` profile rows are labelled v1-era (`interop.md` §"Legacy profiles are absent"). The MyndHyve and openwop-app rows now lead with their committed certified bundles (2.40.2 and 2.35.1), with older figures marked historical; the v2 heading and "Last updated" are current.

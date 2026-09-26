@@ -240,7 +240,7 @@
     "spec/v2/core/security-defaults.md": "500471a8db7af9b776ac40b4a9a278c9f3d45e1c1dead880114e7fadc7bee37d",
     "spec/v2/core/tool-catalog.md": "35f1a3fd509db0fc0490ddf400686fe94dc4b20c98064d5ebe776da516153e60",
     "spec/v2/core/versioning.md": "0aded71d090c8358c3ce17763c120cfc1cc42531a5eaa1b8a2a7016ed9594069",
-    "spec/v2/core/webhooks.md": "221fc8f3222c34ee094723602f286f1b2acad7931188cad6c3611189c9c6acbb",
+    "spec/v2/core/webhooks.md": "78d7e237866bf1ee95bbfa9d5b62b619ca2f8ec677d1b752ba96ed5efcfc77ef",
     "spec/v2/core/workflow-chain-packs.md": "ee45d3fede3bb6f0cc6abcf0d6c929c7cd213a0fbe862b738a998f929c4d1102",
     "spec/v2/corrections.json": "cc74ffde74384b0f261a4f625871d922e8661d654d647a8534e21036595cb280",
     "spec/v2/corrections.schema.json": "4ac595b9a6d7f66d53de03fe0edbe0dc58de46426932387bfdc0ceb3cf949a3e",
@@ -298,5 +298,5 @@
     "spec/v2/retention-floors.json": "eaf3722d95c79947af1d4269ef85117e126518c588cfcf1a2b21b97269f51624",
     "spec/v2/surface-baseline.json": "fbf584bd7cb6905f0f8280d7d7ae6746fd30f948dc08b4f80aac0afc760f22ce"
   },
-  "corpusCommit": "bb35ff0f896edfbc7300c5c71e4e33a678e7f815"
+  "corpusCommit": "084238a860678498d410828ff654dd4c52a264d8"
 }

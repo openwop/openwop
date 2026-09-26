@@ -1,12 +1,12 @@
 {
   "bundleVersion": "3",
-  "generatedAt": "2026-09-26T09:40:45.436Z",
+  "generatedAt": "2026-09-26T18:03:52.750Z",
   "suite": {
     "name": "@openwop/openwop-conformance",
-    "version": "2.40.1",
+    "version": "2.42.0",
     "targetMajor": 2,
-    "specArtifactsVersion": "2.40.1",
-    "stampSha256": "1fb5733bb565913ac21afc3e5179ea3cb4d1b98ab39f543fb3c70f9a936453bd"
+    "specArtifactsVersion": "2.42.0",
+    "stampSha256": "99ce95950e5c5c127286091e76b7569eeb6eb05ec752c853b23eb548c0a755f9"
   },
   "host": {
     "name": "openwop-host-v2-reference",
@@ -14,7 +14,7 @@
     "vendor": "openwop (reference example)",
     "build": {
       "kind": "commit",
-      "id": "265fca713d27d75ce9fd180b2701c1bb4a4104f8"
+      "id": "7faf64115de937eaa0826241eb6f58c4459dbfd7"
     },
     "signingKeyId": "v2-reference-4"
   },
@@ -468,10 +468,10 @@
   ],
   "results": {
     "totals": {
-      "executedPass": 403,
+      "executedPass": 404,
       "executedFail": 0,
       "skipped": 7,
-      "inapplicable": 39,
+      "inapplicable": 43,
       "blocked": 0
     },
     "requirements": [
@@ -482,10 +482,24 @@
         "assertions": 6
       },
       {
+        "id": "openwop.scenario.context-budget-transcript-bound",
+        "scenario": "context-budget-transcript-bound.test.ts",
+        "result": "inapplicable",
+        "assertions": 0,
+        "detail": "every test returned early through behaviorGate with zero assertions: profile not advertised in the captured discovery set"
+      },
+      {
+        "id": "openwop.scenario.context-summarization-replay",
+        "scenario": "context-summarization-replay.test.ts",
+        "result": "inapplicable",
+        "assertions": 0,
+        "detail": "every test returned early through behaviorGate with zero assertions: profile not advertised in the captured discovery set"
+      },
+      {
         "id": "openwop.scenario.fixtures-valid",
         "scenario": "fixtures-valid.test.ts",
         "result": "executed-pass",
-        "assertions": 374
+        "assertions": 377
       },
       {
         "id": "openwop.scenario.inbound-credential-no-passthrough",
@@ -639,7 +653,7 @@
         "scenario": "v2-capability-maturity-bounded.test.ts",
         "result": "executed-pass",
         "assertions": 26,
-        "detail": "partial-witness: inapplicable: unwitnessable until the first persisted-class retirement row is due (RFC 0197 §A.3 Falsifiability): corpus 2.40.1: 0 persisted-class v2-minor retirement row(s), 0 v2→v2 migration row(s) — no retired member exists for a post-2.N event to carry. Before one does, a scenario would be vacuous, and a row that cannot fail is not a witness. This leg asserts the moment such a row falls due."
+        "detail": "partial-witness: inapplicable: unwitnessable until the first persisted-class retirement row is due (RFC 0197 §A.3 Falsifiability): corpus 2.42.0: 0 persisted-class v2-minor retirement row(s), 0 v2→v2 migration row(s) — no retired member exists for a post-2.N event to carry. Before one does, a scenario would be vacuous, and a row that cannot fail is not a witness. This leg asserts the moment such a row falls due."
       },
       {
         "id": "openwop.scenario.v2-capability-record-shape",
@@ -871,7 +885,7 @@
         "id": "openwop.scenario.v2-mcp-client-results",
         "scenario": "v2-mcp-client-results.test.ts",
         "result": "executed-pass",
-        "assertions": 27
+        "assertions": 26
       },
       {
         "id": "openwop.scenario.v2-mcp-mount-map",
@@ -1081,7 +1095,7 @@
         "id": "openwop.scenario.v2-run-list",
         "scenario": "v2-run-list.test.ts",
         "result": "executed-pass",
-        "assertions": 9
+        "assertions": 11
       },
       {
         "id": "openwop.floor.v2-run-options-limits",
@@ -1179,13 +1193,13 @@
         "scenario": "v2-webhook-delivery-shape.test.ts",
         "result": "executed-pass",
         "assertions": 12,
-        "detail": "partial-witness: inapplicable: no run.started delivery for the seeded era-2 run inside 15s — this host does not fan out seeded history, so the era-2 fan-out branch is unobservable here (recorded under openwop.family.conformance). no run.started delivery bearing this exercise's nonce 19d2cc47dc058b3c35 arrived, and nothing else reached this listener either — the registered destination is the public front https://permalink-icons-ken-initially.trycloudflare.com/hook/fx/19d2cc47dc058b3c35 (OPENWOP_WEBHOOK_RECEIVER_URL) and this listener answers on http://127.0.0.1:3841/fx/19d2cc47dc058b3c35, port 3841"
+        "detail": "partial-witness: inapplicable: no run.started delivery for the seeded era-2 run inside 15s — this host does not fan out seeded history, so the era-2 fan-out branch is unobservable here (recorded under openwop.family.conformance). no run.started delivery bearing this exercise's nonce 478407712aa6f926dc arrived, and nothing else reached this listener either — the registered destination is the public front https://employee-portsmouth-listening-nitrogen.trycloudflare.com/hook/fx/478407712aa6f926dc (OPENWOP_WEBHOOK_RECEIVER_URL) and this listener answers on http://127.0.0.1:3841/fx/478407712aa6f926dc, port 3841"
       },
       {
         "id": "openwop.floor.v2-webhook-durable-delivery",
         "scenario": "v2-webhook-durable-delivery.test.ts",
         "result": "executed-pass",
-        "assertions": 18
+        "assertions": 22
       },
       {
         "id": "openwop.scenario.v2-webhook-egress-refusal",
@@ -1230,6 +1244,20 @@
         "assertions": 11
       },
       {
+        "id": "openwop.it.context-budget-transcript-bound.bounds-the-per-turn-transcript-to-transcripttokenbudget-with-an-internally-consi",
+        "scenario": "context-budget-transcript-bound.test.ts",
+        "result": "inapplicable",
+        "assertions": 0,
+        "detail": "multiAgent.executionModel.contextBudget.transcriptTokenBudget is not advertised at major 2"
+      },
+      {
+        "id": "openwop.it.context-summarization-replay.replay-reuses-the-recorded-context-summarized-summaryref-never-re-summarizes",
+        "scenario": "context-summarization-replay.test.ts",
+        "result": "inapplicable",
+        "assertions": 0,
+        "detail": "multiAgent.executionModel.contextBudget.summarization is not advertised at major 2"
+      },
+      {
         "id": "openwop.it.fixtures-valid.connection-packs-validates-against-connection-pack-manifest-schema-json",
         "scenario": "fixtures-valid.test.ts",
         "result": "executed-pass",
@@ -1239,13 +1267,13 @@
         "id": "openwop.it.fixtures-valid.every-fixture-has-a-manual-trigger-so-the-conformance-driver-can-start-it",
         "scenario": "fixtures-valid.test.ts",
         "result": "executed-pass",
-        "assertions": 93
+        "assertions": 94
       },
       {
         "id": "openwop.it.fixtures-valid.every-fixture-id-matches-its-filename",
         "scenario": "fixtures-valid.test.ts",
         "result": "executed-pass",
-        "assertions": 93
+        "assertions": 94
       },
       {
         "id": "openwop.it.fixtures-valid.every-fixture-templateid-matches-its-filename",
@@ -1329,7 +1357,7 @@
         "id": "openwop.it.fixtures-valid.validates-against-workflow-definition-schema-json",
         "scenario": "fixtures-valid.test.ts",
         "result": "executed-pass",
-        "assertions": 93
+        "assertions": 94
       },
       {
         "id": "openwop.it.jcs-vectors.a-non-i-json-native-value-is-refused-at-the-value-boundary",
@@ -1442,13 +1470,6 @@
         "assertions": 2
       },
       {
-        "id": "openwop.it.v2-a2a-operation-map.a-host-not-advertising-a2a-pushnotifications-refuses-all-four-push-config-operat",
-        "scenario": "v2-a2a-operation-map.test.ts",
-        "result": "inapplicable",
-        "assertions": 0,
-        "detail": "a2a.pushNotifications is advertised — the push-config rows are served here, not refused"
-      },
-      {
         "id": "openwop.it.v2-a2a-operation-map.an-http-json-interface-answers-an-a2a-error-with-google-rpc-status-carrying-the",
         "scenario": "v2-a2a-operation-map.test.ts",
         "result": "inapplicable",
@@ -1520,7 +1541,7 @@
           "recovery": {
             "class": "single-instance-restart",
             "boundMs": 6000,
-            "observedMs": 1703
+            "observedMs": 5328
           }
         }
       },
@@ -1533,7 +1554,7 @@
           "recovery": {
             "class": "single-instance-restart",
             "boundMs": 6000,
-            "observedMs": 1788
+            "observedMs": 5912
           }
         }
       },
@@ -1936,7 +1957,7 @@
         "scenario": "v2-webhook-delivery-shape.test.ts",
         "result": "executed-pass",
         "assertions": 12,
-        "detail": "partial-witness: inapplicable: no run.started delivery for the seeded era-2 run inside 15s — this host does not fan out seeded history, so the era-2 fan-out branch is unobservable here (recorded under openwop.family.conformance). no run.started delivery bearing this exercise's nonce 19d2cc47dc058b3c35 arrived, and nothing else reached this listener either — the registered destination is the public front https://permalink-icons-ken-initially.trycloudflare.com/hook/fx/19d2cc47dc058b3c35 (OPENWOP_WEBHOOK_RECEIVER_URL) and this listener answers on http://127.0.0.1:3841/fx/19d2cc47dc058b3c35, port 3841"
+        "detail": "partial-witness: inapplicable: no run.started delivery for the seeded era-2 run inside 15s — this host does not fan out seeded history, so the era-2 fan-out branch is unobservable here (recorded under openwop.family.conformance). no run.started delivery bearing this exercise's nonce 478407712aa6f926dc arrived, and nothing else reached this listener either — the registered destination is the public front https://employee-portsmouth-listening-nitrogen.trycloudflare.com/hook/fx/478407712aa6f926dc (OPENWOP_WEBHOOK_RECEIVER_URL) and this listener answers on http://127.0.0.1:3841/fx/478407712aa6f926dc, port 3841"
       },
       {
         "id": "openwop.requirement.0171.webhook-egress-refused",
@@ -2433,7 +2454,7 @@
         "id": "openwop.requirement.0182.run-list.tenant-scoped",
         "scenario": "v2-run-list.test.ts",
         "result": "executed-pass",
-        "assertions": 5
+        "assertions": 7
       },
       {
         "id": "openwop.requirement.0184.bound-id-path-projection",
@@ -2514,7 +2535,7 @@
         "scenario": "v2-capability-maturity-bounded.test.ts",
         "result": "inapplicable",
         "assertions": 0,
-        "detail": "unwitnessable until the first persisted-class retirement row is due (RFC 0197 §A.3 Falsifiability): corpus 2.40.1: 0 persisted-class v2-minor retirement row(s), 0 v2→v2 migration row(s) — no retired member exists for a post-2.N event to carry. Before one does, a scenario would be vacuous, and a row that cannot fail is not a witness. This leg asserts the moment such a row falls due."
+        "detail": "unwitnessable until the first persisted-class retirement row is due (RFC 0197 §A.3 Falsifiability): corpus 2.42.0: 0 persisted-class v2-minor retirement row(s), 0 v2→v2 migration row(s) — no retired member exists for a post-2.N event to carry. Before one does, a scenario would be vacuous, and a row that cannot fail is not a witness. This leg asserts the moment such a row falls due."
       },
       {
         "id": "openwop.requirement.0198.advertised-via-discover",
@@ -2856,7 +2877,7 @@
         "id": "openwop.requirement.0204.server-health",
         "scenario": "v2-mcp-client-results.test.ts",
         "result": "executed-pass",
-        "assertions": 8
+        "assertions": 7
       },
       {
         "id": "openwop.requirement.0205.artifact-a2a-shape",
@@ -3256,6 +3277,13 @@
         "assertions": 8
       },
       {
+        "id": "openwop.requirement.0214.a2a-push-unadvertised-refused",
+        "scenario": "v2-a2a-operation-map.test.ts",
+        "result": "inapplicable",
+        "assertions": 0,
+        "detail": "a2a.pushNotifications is advertised — the push-config rows are served here, not refused"
+      },
+      {
         "id": "openwop.requirement.0215.no-head-of-line",
         "scenario": "v2-webhook-delivery-isolation.test.ts",
         "result": "executed-pass",
@@ -3266,13 +3294,29 @@
         "scenario": "v2-webhook-unregister-stops-delivery.test.ts",
         "result": "executed-pass",
         "assertions": 7
+      },
+      {
+        "id": "openwop.requirement.0217.dead-letter-read-after-unregister",
+        "scenario": "v2-webhook-durable-delivery.test.ts",
+        "result": "executed-pass",
+        "assertions": 4
       }
     ]
   },
-  "witnessSha256": "d8750e4b8117162fb301d04cdc61957dc2cf822fcce14180d3bb0289c1e7f94e",
-  "assertionCount": 4300,
+  "witnessSha256": "b9f3806921b8cd07b55827625c9175c268ea8ac01b382464e558d269557a7879",
+  "assertionCount": 4316,
   "detail": {
     "nonPass": [
+      {
+        "id": "openwop.scenario.context-budget-transcript-bound",
+        "result": "inapplicable",
+        "reason": "every test returned early through behaviorGate with zero assertions: profile not advertised in the captured discovery set"
+      },
+      {
+        "id": "openwop.scenario.context-summarization-replay",
+        "result": "inapplicable",
+        "reason": "every test returned early through behaviorGate with zero assertions: profile not advertised in the captured discovery set"
+      },
       {
         "id": "openwop.scenario.memory-attribution-replay-stable",
         "result": "skipped",
@@ -3334,6 +3378,16 @@
         "reason": "every test returned early through behaviorGate with zero assertions: profile not advertised in the captured discovery set"
       },
       {
+        "id": "openwop.it.context-budget-transcript-bound.bounds-the-per-turn-transcript-to-transcripttokenbudget-with-an-internally-consi",
+        "result": "inapplicable",
+        "reason": "multiAgent.executionModel.contextBudget.transcriptTokenBudget is not advertised at major 2"
+      },
+      {
+        "id": "openwop.it.context-summarization-replay.replay-reuses-the-recorded-context-summarized-summaryref-never-re-summarizes",
+        "result": "inapplicable",
+        "reason": "multiAgent.executionModel.contextBudget.summarization is not advertised at major 2"
+      },
+      {
         "id": "openwop.it.memory-attribution-replay-stable.a-replay-mode-fork-introduces-no-memory-written-with-a-new-memoryid",
         "result": "skipped",
         "reason": "operator declared an honest opt-out via OPENWOP_OPTED_OUT_PROFILES: family.memory"
@@ -3342,11 +3396,6 @@
         "id": "openwop.it.tool-catalog-compact-projection.serves-the-tools-compacttooldescriptor-projection-closed-shape-bounded-inputsche",
         "result": "inapplicable",
         "reason": "toolCatalog.compactView not advertised at major 2"
-      },
-      {
-        "id": "openwop.it.v2-a2a-operation-map.a-host-not-advertising-a2a-pushnotifications-refuses-all-four-push-config-operat",
-        "result": "inapplicable",
-        "reason": "a2a.pushNotifications is advertised — the push-config rows are served here, not refused"
       },
       {
         "id": "openwop.it.v2-a2a-operation-map.an-http-json-interface-answers-an-a2a-error-with-google-rpc-status-carrying-the",
@@ -3411,7 +3460,7 @@
       {
         "id": "openwop.requirement.0197.retired-not-emitted",
         "result": "inapplicable",
-        "reason": "unwitnessable until the first persisted-class retirement row is due (RFC 0197 §A.3 Falsifiability): corpus 2.40.1: 0 persisted-class v2-minor retirement row(s), 0 v2→v2 migration row(s) — no retired member exists for a post-2.N event to carry. Before one does, a scenario would be vacuous, and a row that cannot fail is not a witness. This leg asserts the moment such a row falls due."
+        "reason": "unwitnessable until the first persisted-class retirement row is due (RFC 0197 §A.3 Falsifiability): corpus 2.42.0: 0 persisted-class v2-minor retirement row(s), 0 v2→v2 migration row(s) — no retired member exists for a post-2.N event to carry. Before one does, a scenario would be vacuous, and a row that cannot fail is not a witness. This leg asserts the moment such a row falls due."
       },
       {
         "id": "openwop.requirement.0200.challenge-401",
@@ -3502,6 +3551,11 @@
         "id": "openwop.requirement.0213.last-event-id-malformed",
         "result": "inapplicable",
         "reason": "the host accepted Last-Event-ID: abc (the refusal is a SHOULD — recorded, not failed)"
+      },
+      {
+        "id": "openwop.requirement.0214.a2a-push-unadvertised-refused",
+        "result": "inapplicable",
+        "reason": "a2a.pushNotifications is advertised — the push-config rows are served here, not refused"
       }
     ]
   },
@@ -3511,7 +3565,7 @@
   "signature": {
     "alg": "ed25519",
     "keyId": "v2-reference-4",
-    "sig": "SdmGgw53skL8CRjnYWRSrqgQrIoYr9Eeo9GRDdPCfHkfft8feNO6zaADCzR-eK8LTIqWrl21aL4n82xpWn8EBg",
+    "sig": "6zqUUwN1rxTCCLrywvMkm06tnxV9LLHso0aEPjHMZT3GETBR4o5TDQj3SkymlJr3g1mHruQFHs6BD0B-n8T5CA",
     "over": [
       "witnessSha256",
       "host.build",
