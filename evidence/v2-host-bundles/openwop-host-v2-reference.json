@@ -1,12 +1,12 @@
 {
   "bundleVersion": "3",
-  "generatedAt": "2026-09-25T15:06:19.558Z",
+  "generatedAt": "2026-09-26T02:57:16.106Z",
   "suite": {
     "name": "@openwop/openwop-conformance",
-    "version": "2.39.2",
+    "version": "2.39.5",
     "targetMajor": 2,
-    "specArtifactsVersion": "2.39.2",
-    "stampSha256": "d3e9417fe0ae348a07cf66c1167cefe100d1dcd43e053c238b82195c77699e9f"
+    "specArtifactsVersion": "2.39.5",
+    "stampSha256": "db86d304e8d1c9042e51cc62a10c3d952826f9f3d8eddbcee08c29128c4e4252"
   },
   "host": {
     "name": "openwop-host-v2-reference",
@@ -14,13 +14,13 @@
     "vendor": "openwop (reference example)",
     "build": {
       "kind": "commit",
-      "id": "5aa8686ecdfb042ad47dc9d6150bdab1f0fae4b9"
+      "id": "2c6fc3c0dfe0e028ef2b2059dbc8582c2bc7a898"
     },
     "signingKeyId": "v2-reference-4"
   },
   "discovery": {
     "url": "http://127.0.0.1:3838/.well-known/openwop",
-    "sha256": "d14776292b08b7a84bf2bbf81165ebaa8345715229e18483363fad1f5f1bee46",
+    "sha256": "4b8d99c002a061a0255e8224ee683162007febadd251b2d171b47c0849695315",
     "protocolVersions": [
       "1.11",
       "2.0"
@@ -405,7 +405,8 @@
             ],
             "pkce": "S256"
           }
-        ]
+        ],
+        "credentialInterrupt": true
       },
       "agents": {
         "status": "experimental",
@@ -467,10 +468,10 @@
   ],
   "results": {
     "totals": {
-      "executedPass": 390,
-      "executedFail": 4,
+      "executedPass": 399,
+      "executedFail": 0,
       "skipped": 7,
-      "inapplicable": 43,
+      "inapplicable": 36,
       "blocked": 0
     },
     "requirements": [
@@ -547,15 +548,14 @@
         "id": "openwop.scenario.v2-a2a-operation-map",
         "scenario": "v2-a2a-operation-map.test.ts",
         "result": "executed-pass",
-        "assertions": 78,
-        "detail": "partial-witness: inapplicable: [inapplicable] a2a.pushNotifications is advertised — the push-config rows are served here, not refused; [inapplicable] the card lists no HTTP+JSON interface at 1.0 — RFC 0211 §B binds only a host that lists one; [inapplicable] oauth.credentialInterrupt is not advertised — the host raises no credential interrupt to project (RFC 0199 §C.1)"
+        "assertions": 84,
+        "detail": "partial-witness: inapplicable: [inapplicable] a2a.pushNotifications is advertised — the push-config rows are served here, not refused; [inapplicable] the card lists no HTTP+JSON interface at 1.0 — RFC 0211 §B binds only a host that lists one"
       },
       {
         "id": "openwop.scenario.v2-a2a-push-delivery",
         "scenario": "v2-a2a-push-delivery.test.ts",
-        "result": "executed-fail",
-        "assertions": 11,
-        "detail": "3 test(s) failed — \"§B — a 3xx from the destination is a failed delivery: the redirect target receives nothing, credential or not\", \"§A — after Delete no further push reaches that destination, while a live config on the same task still receives\", \"§D — a replay fork of a pushed run delivers nothing to the source run's destination\"; first failure: Test timed out in 240000ms.\nIf this is a long-running test, pass a timeout value as the last argument or configure it globally with \"testTimeout\"."
+        "result": "executed-pass",
+        "assertions": 26
       },
       {
         "id": "openwop.scenario.v2-a2ui-v09-surface",
@@ -694,8 +694,8 @@
         "id": "openwop.scenario.v2-credential-interrupt",
         "scenario": "v2-credential-interrupt.test.ts",
         "result": "executed-pass",
-        "assertions": 6,
-        "detail": "partial-witness: inapplicable: [inapplicable] oauth.credentialInterrupt is not advertised — the host keeps RFC 0047 §C.3 (the regression leg below covers it); [inapplicable] oauth.credentialInterrupt is not advertised"
+        "assertions": 37,
+        "detail": "partial-witness: inapplicable: oauth.credentialInterrupt is advertised — the host suspends instead (the legs above)"
       },
       {
         "id": "openwop.scenario.v2-dual-stack-negotiation",
@@ -794,7 +794,7 @@
         "id": "openwop.scenario.v2-idempotency-in-flight",
         "scenario": "v2-idempotency-in-flight.test.ts",
         "result": "executed-pass",
-        "assertions": 3,
+        "assertions": 8,
         "detail": "partial-witness: inapplicable: no loser was refused in flight — all 5 answers were successes (each loser a marked replay, which §B permits), so the 409 branch did not run on this host"
       },
       {
@@ -876,8 +876,8 @@
         "id": "openwop.scenario.v2-mcp-mount-map",
         "scenario": "v2-mcp-mount-map.test.ts",
         "result": "executed-pass",
-        "assertions": 55,
-        "detail": "partial-witness: inapplicable: [inapplicable] the tool list is byte-identical for both tenants — the cacheScope private rule has nothing to bind on this host; [inapplicable] oauth.credentialInterrupt is not advertised — the host raises no credential interrupt to bridge (RFC 0199 §C.1)"
+        "assertions": 60,
+        "detail": "partial-witness: inapplicable: the tool list is byte-identical for both tenants — the cacheScope private rule has nothing to bind on this host"
       },
       {
         "id": "openwop.scenario.v2-mcp-tasks",
@@ -1172,7 +1172,7 @@
         "scenario": "v2-webhook-delivery-shape.test.ts",
         "result": "executed-pass",
         "assertions": 12,
-        "detail": "partial-witness: inapplicable: no run.started delivery for the seeded era-2 run inside 15s — this host does not fan out seeded history, so the era-2 fan-out branch is unobservable here (recorded under openwop.family.conformance). no run.started delivery bearing this exercise's nonce 405528d9e44993dfdf arrived, and nothing else reached this listener either — the registered destination is the public front https://lifetime-proceeds-census-playlist.trycloudflare.com/hook/fx/405528d9e44993dfdf (OPENWOP_WEBHOOK_RECEIVER_URL) and this listener answers on http://127.0.0.1:3841/fx/405528d9e44993dfdf, port 3841"
+        "detail": "partial-witness: inapplicable: no run.started delivery for the seeded era-2 run inside 15s — this host does not fan out seeded history, so the era-2 fan-out branch is unobservable here (recorded under openwop.family.conformance). no run.started delivery bearing this exercise's nonce ca36a8ced2dbeac109 arrived, and nothing else reached this listener either — the registered destination is the public front https://powered-marilyn-atomic-linked.trycloudflare.com/hook/fx/ca36a8ced2dbeac109 (OPENWOP_WEBHOOK_RECEIVER_URL) and this listener answers on http://127.0.0.1:3841/fx/ca36a8ced2dbeac109, port 3841"
       },
       {
         "id": "openwop.floor.v2-webhook-durable-delivery",
@@ -1436,39 +1436,11 @@
         "detail": "a2a.pushNotifications is advertised — the push-config rows are served here, not refused"
       },
       {
-        "id": "openwop.it.v2-a2a-operation-map.a-run-suspended-on-a-credential-interrupt-projects-to-task-state-auth-required-n",
-        "scenario": "v2-a2a-operation-map.test.ts",
-        "result": "inapplicable",
-        "assertions": 0,
-        "detail": "oauth.credentialInterrupt is not advertised — the host raises no credential interrupt to project (RFC 0199 §C.1)"
-      },
-      {
         "id": "openwop.it.v2-a2a-operation-map.an-http-json-interface-answers-an-a2a-error-with-google-rpc-status-carrying-the",
         "scenario": "v2-a2a-operation-map.test.ts",
         "result": "inapplicable",
         "assertions": 0,
         "detail": "the card lists no HTTP+JSON interface at 1.0 — RFC 0211 §B binds only a host that lists one"
-      },
-      {
-        "id": "openwop.it.v2-a2a-push-delivery.a-after-delete-no-further-push-reaches-that-destination-while-a-live-config-on-t",
-        "scenario": "v2-a2a-push-delivery.test.ts",
-        "result": "executed-fail",
-        "assertions": 0,
-        "detail": "the test executed and failed in \"§A — after Delete no further push reaches that destination, while a live config on the same task still receives\": Test timed out in 240000ms.\nIf this is a long-running test, pass a timeout value as the last argument or configure it globally with \"testTimeout\"."
-      },
-      {
-        "id": "openwop.it.v2-a2a-push-delivery.b-a-3xx-from-the-destination-is-a-failed-delivery-the-redirect-target-receives-n",
-        "scenario": "v2-a2a-push-delivery.test.ts",
-        "result": "executed-fail",
-        "assertions": 0,
-        "detail": "the test executed and failed in \"§B — a 3xx from the destination is a failed delivery: the redirect target receives nothing, credential or not\": Test timed out in 240000ms.\nIf this is a long-running test, pass a timeout value as the last argument or configure it globally with \"testTimeout\"."
-      },
-      {
-        "id": "openwop.it.v2-a2a-push-delivery.d-a-replay-fork-of-a-pushed-run-delivers-nothing-to-the-source-run-s-destination",
-        "scenario": "v2-a2a-push-delivery.test.ts",
-        "result": "executed-fail",
-        "assertions": 0,
-        "detail": "the test executed and failed in \"§D — a replay fork of a pushed run delivers nothing to the source run's destination\": Test timed out in 300000ms.\nIf this is a long-running test, pass a timeout value as the last argument or configure it globally with \"testTimeout\"."
       },
       {
         "id": "openwop.it.v2-a2ui-v09-surface.recorded-as-recorded",
@@ -1483,53 +1455,11 @@
         "assertions": 2
       },
       {
-        "id": "openwop.it.v2-credential-interrupt.a-caller-resolve-of-authorized-is-refused-while-no-credential-resolves-and-a-res",
+        "id": "openwop.it.v2-credential-interrupt.without-oauth-credentialinterrupt-a-terminal-refresh-failure-fails-the-node-conn",
         "scenario": "v2-credential-interrupt.test.ts",
         "result": "inapplicable",
         "assertions": 0,
-        "detail": "oauth.credentialInterrupt is not advertised"
-      },
-      {
-        "id": "openwop.it.v2-credential-interrupt.a-node-with-no-credential-suspends-on-a-credential-interrupt-with-a-closed-crede",
-        "scenario": "v2-credential-interrupt.test.ts",
-        "result": "inapplicable",
-        "assertions": 0,
-        "detail": "oauth.credentialInterrupt is not advertised — the host keeps RFC 0047 §C.3 (the regression leg below covers it)"
-      },
-      {
-        "id": "openwop.it.v2-credential-interrupt.a-terminal-refresh-failure-emits-connector-auth-expired-then-suspends-with-reaso",
-        "scenario": "v2-credential-interrupt.test.ts",
-        "result": "inapplicable",
-        "assertions": 0,
-        "detail": "oauth.credentialInterrupt is not advertised"
-      },
-      {
-        "id": "openwop.it.v2-credential-interrupt.connecturl-is-not-pre-authenticated-and-begins-the-grant-only-for-the-initiating",
-        "scenario": "v2-credential-interrupt.test.ts",
-        "result": "inapplicable",
-        "assertions": 0,
-        "detail": "oauth.credentialInterrupt is not advertised"
-      },
-      {
-        "id": "openwop.it.v2-credential-interrupt.declined-fails-the-node-with-connector-auth-declined",
-        "scenario": "v2-credential-interrupt.test.ts",
-        "result": "inapplicable",
-        "assertions": 0,
-        "detail": "oauth.credentialInterrupt is not advertised"
-      },
-      {
-        "id": "openwop.it.v2-credential-interrupt.the-grant-completes-through-connecturl-the-host-resolves-the-interrupt-itself-an",
-        "scenario": "v2-credential-interrupt.test.ts",
-        "result": "inapplicable",
-        "assertions": 0,
-        "detail": "oauth.credentialInterrupt is not advertised"
-      },
-      {
-        "id": "openwop.it.v2-mcp-mount-map.a-credential-interrupt-is-answered-in-url-mode-url-connecturl-iserror-without-ur",
-        "scenario": "v2-mcp-mount-map.test.ts",
-        "result": "inapplicable",
-        "assertions": 0,
-        "detail": "oauth.credentialInterrupt is not advertised — the host raises no credential interrupt to bridge (RFC 0199 §C.1)"
+        "detail": "oauth.credentialInterrupt is advertised — the host suspends instead (the legs above)"
       },
       {
         "id": "openwop.it.v2-mcp-mount-map.a-list-that-differs-per-caller-is-cachescope-private",
@@ -1577,7 +1507,7 @@
           "recovery": {
             "class": "single-instance-restart",
             "boundMs": 6000,
-            "observedMs": 1685
+            "observedMs": 1658
           }
         }
       },
@@ -1590,7 +1520,7 @@
           "recovery": {
             "class": "single-instance-restart",
             "boundMs": 6000,
-            "observedMs": 1724
+            "observedMs": 1651
           }
         }
       },
@@ -1993,7 +1923,7 @@
         "scenario": "v2-webhook-delivery-shape.test.ts",
         "result": "executed-pass",
         "assertions": 12,
-        "detail": "partial-witness: inapplicable: no run.started delivery for the seeded era-2 run inside 15s — this host does not fan out seeded history, so the era-2 fan-out branch is unobservable here (recorded under openwop.family.conformance). no run.started delivery bearing this exercise's nonce 405528d9e44993dfdf arrived, and nothing else reached this listener either — the registered destination is the public front https://lifetime-proceeds-census-playlist.trycloudflare.com/hook/fx/405528d9e44993dfdf (OPENWOP_WEBHOOK_RECEIVER_URL) and this listener answers on http://127.0.0.1:3841/fx/405528d9e44993dfdf, port 3841"
+        "detail": "partial-witness: inapplicable: no run.started delivery for the seeded era-2 run inside 15s — this host does not fan out seeded history, so the era-2 fan-out branch is unobservable here (recorded under openwop.family.conformance). no run.started delivery bearing this exercise's nonce ca36a8ced2dbeac109 arrived, and nothing else reached this listener either — the registered destination is the public front https://powered-marilyn-atomic-linked.trycloudflare.com/hook/fx/ca36a8ced2dbeac109 (OPENWOP_WEBHOOK_RECEIVER_URL) and this listener answers on http://127.0.0.1:3841/fx/ca36a8ced2dbeac109, port 3841"
       },
       {
         "id": "openwop.requirement.0171.webhook-egress-refused",
@@ -2645,6 +2575,30 @@
         "assertions": 6
       },
       {
+        "id": "openwop.requirement.0199.a2a-auth-required",
+        "scenario": "v2-a2a-operation-map.test.ts",
+        "result": "executed-pass",
+        "assertions": 6
+      },
+      {
+        "id": "openwop.requirement.0199.credential-declined",
+        "scenario": "v2-credential-interrupt.test.ts",
+        "result": "executed-pass",
+        "assertions": 5
+      },
+      {
+        "id": "openwop.requirement.0199.credential-interrupt",
+        "scenario": "v2-credential-interrupt.test.ts",
+        "result": "executed-pass",
+        "assertions": 26
+      },
+      {
+        "id": "openwop.requirement.0199.credential-resume-rechecked",
+        "scenario": "v2-credential-interrupt.test.ts",
+        "result": "executed-pass",
+        "assertions": 6
+      },
+      {
         "id": "openwop.requirement.0199.form-mode-no-secret",
         "scenario": "v2-mcp-mount-map.test.ts",
         "result": "executed-pass",
@@ -2669,6 +2623,12 @@
         "assertions": 2
       },
       {
+        "id": "openwop.requirement.0199.mcp-url-mode",
+        "scenario": "v2-mcp-mount-map.test.ts",
+        "result": "executed-pass",
+        "assertions": 5
+      },
+      {
         "id": "openwop.requirement.0199.pkce-s256",
         "scenario": "v2-oauth-client-pkce-state-iss.test.ts",
         "result": "executed-pass",
@@ -2679,12 +2639,6 @@
         "scenario": "v2-oauth-client-pkce-state-iss.test.ts",
         "result": "executed-pass",
         "assertions": 4
-      },
-      {
-        "id": "openwop.requirement.0199.refresh-failure-fails-node",
-        "scenario": "v2-credential-interrupt.test.ts",
-        "result": "executed-pass",
-        "assertions": 6
       },
       {
         "id": "openwop.requirement.0199.resource-indicator",
@@ -3177,6 +3131,12 @@
         "assertions": 2
       },
       {
+        "id": "openwop.requirement.0213.in-flight-refused-under-hold",
+        "scenario": "v2-idempotency-in-flight.test.ts",
+        "result": "executed-pass",
+        "assertions": 5
+      },
+      {
         "id": "openwop.requirement.0213.last-event-id-after-authorization",
         "scenario": "v2-sse-last-event-id-cursor.test.ts",
         "result": "executed-pass",
@@ -3226,10 +3186,28 @@
         "assertions": 8
       },
       {
+        "id": "openwop.requirement.0214.a2a-push-discard-on-delete",
+        "scenario": "v2-a2a-push-delivery.test.ts",
+        "result": "executed-pass",
+        "assertions": 6
+      },
+      {
+        "id": "openwop.requirement.0214.a2a-push-fork-no-push",
+        "scenario": "v2-a2a-push-delivery.test.ts",
+        "result": "executed-pass",
+        "assertions": 4
+      },
+      {
         "id": "openwop.requirement.0214.a2a-push-no-openwop-signature",
         "scenario": "v2-a2a-push-delivery.test.ts",
         "result": "executed-pass",
         "assertions": 3
+      },
+      {
+        "id": "openwop.requirement.0214.a2a-push-no-redirect",
+        "scenario": "v2-a2a-push-delivery.test.ts",
+        "result": "executed-pass",
+        "assertions": 5
       },
       {
         "id": "openwop.requirement.0214.a2a-push-register-ssrf",
@@ -3245,8 +3223,8 @@
       }
     ]
   },
-  "witnessSha256": "cb0486af6a39ef982540ba24a947bfebcac8fafca5e8b2ed5c1046844dae6c00",
-  "assertionCount": 4126,
+  "witnessSha256": "09587c853ea2ac4dcc17c3c5a42a0e779a7c92ed2163af75a7ead49c794792c0",
+  "assertionCount": 4250,
   "detail": {
     "nonPass": [
       {
@@ -3263,11 +3241,6 @@
         "id": "openwop.scenario.tool-catalog-compact-projection",
         "result": "inapplicable",
         "reason": "every test returned early through behaviorGate with zero assertions: profile not advertised in the captured discovery set"
-      },
-      {
-        "id": "openwop.scenario.v2-a2a-push-delivery",
-        "result": "executed-fail",
-        "reason": "3 test(s) failed — \"§B — a 3xx from the destination is a failed delivery: the redirect target receives nothing, credential or not\", \"§A — after Delete no further push reaches that destination, while a live config on the same task still receives\", \"§D — a replay fork of a pushed run delivers nothing to the source run's destination\"; first failure: Test timed out in 240000ms.\nIf this is a long-running test, pass a timeout value as the last argument or configure it globally with \"testTimeout\"."
       },
       {
         "id": "openwop.scenario.v2-auth-challenge",
@@ -3330,64 +3303,14 @@
         "reason": "a2a.pushNotifications is advertised — the push-config rows are served here, not refused"
       },
       {
-        "id": "openwop.it.v2-a2a-operation-map.a-run-suspended-on-a-credential-interrupt-projects-to-task-state-auth-required-n",
-        "result": "inapplicable",
-        "reason": "oauth.credentialInterrupt is not advertised — the host raises no credential interrupt to project (RFC 0199 §C.1)"
-      },
-      {
         "id": "openwop.it.v2-a2a-operation-map.an-http-json-interface-answers-an-a2a-error-with-google-rpc-status-carrying-the",
         "result": "inapplicable",
         "reason": "the card lists no HTTP+JSON interface at 1.0 — RFC 0211 §B binds only a host that lists one"
       },
       {
-        "id": "openwop.it.v2-a2a-push-delivery.a-after-delete-no-further-push-reaches-that-destination-while-a-live-config-on-t",
-        "result": "executed-fail",
-        "reason": "the test executed and failed in \"§A — after Delete no further push reaches that destination, while a live config on the same task still receives\": Test timed out in 240000ms.\nIf this is a long-running test, pass a timeout value as the last argument or configure it globally with \"testTimeout\"."
-      },
-      {
-        "id": "openwop.it.v2-a2a-push-delivery.b-a-3xx-from-the-destination-is-a-failed-delivery-the-redirect-target-receives-n",
-        "result": "executed-fail",
-        "reason": "the test executed and failed in \"§B — a 3xx from the destination is a failed delivery: the redirect target receives nothing, credential or not\": Test timed out in 240000ms.\nIf this is a long-running test, pass a timeout value as the last argument or configure it globally with \"testTimeout\"."
-      },
-      {
-        "id": "openwop.it.v2-a2a-push-delivery.d-a-replay-fork-of-a-pushed-run-delivers-nothing-to-the-source-run-s-destination",
-        "result": "executed-fail",
-        "reason": "the test executed and failed in \"§D — a replay fork of a pushed run delivers nothing to the source run's destination\": Test timed out in 300000ms.\nIf this is a long-running test, pass a timeout value as the last argument or configure it globally with \"testTimeout\"."
-      },
-      {
-        "id": "openwop.it.v2-credential-interrupt.a-caller-resolve-of-authorized-is-refused-while-no-credential-resolves-and-a-res",
+        "id": "openwop.it.v2-credential-interrupt.without-oauth-credentialinterrupt-a-terminal-refresh-failure-fails-the-node-conn",
         "result": "inapplicable",
-        "reason": "oauth.credentialInterrupt is not advertised"
-      },
-      {
-        "id": "openwop.it.v2-credential-interrupt.a-node-with-no-credential-suspends-on-a-credential-interrupt-with-a-closed-crede",
-        "result": "inapplicable",
-        "reason": "oauth.credentialInterrupt is not advertised — the host keeps RFC 0047 §C.3 (the regression leg below covers it)"
-      },
-      {
-        "id": "openwop.it.v2-credential-interrupt.a-terminal-refresh-failure-emits-connector-auth-expired-then-suspends-with-reaso",
-        "result": "inapplicable",
-        "reason": "oauth.credentialInterrupt is not advertised"
-      },
-      {
-        "id": "openwop.it.v2-credential-interrupt.connecturl-is-not-pre-authenticated-and-begins-the-grant-only-for-the-initiating",
-        "result": "inapplicable",
-        "reason": "oauth.credentialInterrupt is not advertised"
-      },
-      {
-        "id": "openwop.it.v2-credential-interrupt.declined-fails-the-node-with-connector-auth-declined",
-        "result": "inapplicable",
-        "reason": "oauth.credentialInterrupt is not advertised"
-      },
-      {
-        "id": "openwop.it.v2-credential-interrupt.the-grant-completes-through-connecturl-the-host-resolves-the-interrupt-itself-an",
-        "result": "inapplicable",
-        "reason": "oauth.credentialInterrupt is not advertised"
-      },
-      {
-        "id": "openwop.it.v2-mcp-mount-map.a-credential-interrupt-is-answered-in-url-mode-url-connecturl-iserror-without-ur",
-        "result": "inapplicable",
-        "reason": "oauth.credentialInterrupt is not advertised — the host raises no credential interrupt to bridge (RFC 0199 §C.1)"
+        "reason": "oauth.credentialInterrupt is advertised — the host suspends instead (the legs above)"
       },
       {
         "id": "openwop.it.v2-mcp-mount-map.a-list-that-differs-per-caller-is-cachescope-private",
@@ -3527,7 +3450,7 @@
   "signature": {
     "alg": "ed25519",
     "keyId": "v2-reference-4",
-    "sig": "-KgW3XhWsCyxAqwRp6JBMjKsex-drU0F_J8aXGA-yNP16jx-8aSHSK53HfXXZDbbH5RKE51YIJCgFslz0iZVCQ",
+    "sig": "stu47kmUnnhKnX0jctYu9GISx9XlWWXC9PPRrFZch1zMu_d78GffpgAvDMFwNokNl4PaIuxIo7Wzu1GZ0W5mAQ",
     "over": [
       "witnessSha256",
       "host.build",
