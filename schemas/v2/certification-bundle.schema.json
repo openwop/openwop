@@ -132,6 +132,13 @@
             }
           },
           "description": "RFC 0173 §A.2 — operator relaxations; a relaxed obligation's profile cannot certify."
+        },
+        "deployment": {
+          "type": "string",
+          "enum": [
+            "colocated-companion"
+          ],
+          "description": "RFC 0216 §B — present only on a bundle cut from a colocated companion (the served host's image, run beside the suite so it can trust a suite-held trust anchor). Inside the witnessSha256 preimage when present. Absent: the bundle measures the served host. A companion is acceptance evidence only for spec/v2/harness-trust-anchors.json rows, and only when it pairs with a served-host bundle (RFC 0216 §C)."
         }
       }
     },

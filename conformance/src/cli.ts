@@ -83,6 +83,8 @@ interface ParsedArgs {
   readonly verifyPath: string | undefined;
   /** `--host-key <pem>` — the key `--verify` checks the host signature under. Absent ⇒ the verdict is INCOMPLETE, not clean. */
   readonly verifyHostKeyPath: string | undefined;
+  /** RFC 0216 §B — `--as-colocated-companion`. */
+  readonly colocatedCompanion: boolean;
   readonly verifierKeyId: string | undefined;
   /**
    * S43 (2026-08-18) — cap on concurrently running scenario FILES, forwarded to
@@ -112,6 +114,7 @@ function parseArgs(argv: readonly string[]): ParsedArgs {
   let signingKeyPath: string | undefined, signingKeyId: string | undefined, verifierKeyPath: string | undefined, verifierKeyId: string | undefined;
   let targetMajor: 1 | 2 | undefined;
   let maxWorkers: number | undefined = parseMaxWorkers(process.env.OPENWOP_MAX_WORKERS, 'OPENWOP_MAX_WORKERS');
+  let colocatedCompanion = false;
 
   for (let i = 0; i < argv.length; i++) {
     const arg = argv[i] ?? '';
@@ -202,6 +205,12 @@ function parseArgs(argv: readonly string[]): ParsedArgs {
       case '--host-key':
         verifyHostKeyPath = nextValue();
         break;
+      // RFC 0216 §B — marks the bundle as cut from a colocated companion (the
+      // served host's image beside the suite, trusting a suite-held anchor).
+      // The marker is inside witnessSha256, so a signed companion cannot shed it.
+      case '--as-colocated-companion':
+        colocatedCompanion = true;
+        break;
       case '--require-behavior':
         process.env['OPENWOP_REQUIRE_BEHAVIOR'] = 'true';
         break;
@@ -240,6 +249,7 @@ function parseArgs(argv: readonly string[]): ParsedArgs {
     maxWorkers,
     verifyPath,
     verifyHostKeyPath,
+    colocatedCompanion,
   };
 }
 
@@ -288,6 +298,10 @@ Certification (RFC 0089):
                         §C) records per-requirement DISPOSITIONS instead of pass/fail/skip
                         file lists, so "we could not check" stops being indistinguishable
                         from "checked and it holds". See the note it prints.
+  --as-colocated-companion  v3 (RFC 0216): mark the bundle as cut from a colocated companion — the
+                        served host's image run beside the suite so it can trust a suite-held
+                        trust anchor. Signed (inside witnessSha256). A companion is acceptance
+                        evidence only for spec/v2/harness-trust-anchors.json rows.
   --max-workers <n>     Cap concurrently running scenario files (vitest --maxWorkers).
                         Default: one worker per CPU. Use a small number against a
                         rate-limited production origin so 429s don't read as failures.
@@ -709,7 +723,7 @@ async function runCertify(args: ParsedArgs, baseUrl: string, apiKey: string): Pr
       bundleVersion: '3',
       generatedAt: new Date().toISOString(),
       suite: { name: '@openwop/openwop-conformance', version, targetMajor: target.major, specArtifactsVersion: lock?.version ?? 'repo-layout', ...(lock ? { stampSha256: lock.stampSha256 } : {}) },
-      host: { name: host.name, version: host.version, ...(host.vendor ? { vendor: host.vendor } : {}), build, signingKeyId: keyId, ...(relaxations && relaxations.length ? { relaxations } : {}) },
+      host: { name: host.name, version: host.version, ...(host.vendor ? { vendor: host.vendor } : {}), build, signingKeyId: keyId, ...(relaxations && relaxations.length ? { relaxations } : {}), ...(args.colocatedCompanion ? { deployment: 'colocated-companion' as const } : {}) },
       // `document` is what makes `claimedProfiles[].certified` checkable by
       // someone other than this process (RFC 0148 §B(1)); v2 carried it and v3
       // dropped it. `sha256` is a digest of `canonicalJSON(document)`, so the
@@ -717,7 +731,7 @@ async function runCertify(args: ParsedArgs, baseUrl: string, apiKey: string): Pr
       discovery: { url: discoveryUrl, sha256, protocolVersions, preferredVersion, document },
       claimedProfiles: claimed3,
       results: { totals: totals3, requirements: rows3 },
-      witnessSha256: witnessDigest(rows3, relaxations),
+      witnessSha256: witnessDigest(rows3, relaxations, args.colocatedCompanion ? 'colocated-companion' : undefined),
       assertionCount: rows3.reduce((n, r) => n + (r.assertions ?? 0), 0),
       ...(nonPass.length ? { detail: { nonPass: nonPass.map((r) => ({ id: r.id, result: r.result, reason: r.detail ?? '' })) } } : {}),
       // RFC 0158 §D: claimed ONLY when these rows support it. The verifier
@@ -908,6 +922,10 @@ async function runCertify(args: ParsedArgs, baseUrl: string, apiKey: string): Pr
 
 async function main(): Promise<never> {
   const args = parseArgs(process.argv.slice(2));
+  if (args.colocatedCompanion && (!args.certify || args.bundleVersion !== '3')) {
+    process.stderr.write('openwop-conformance: --as-colocated-companion marks a v3 certification bundle; it needs --certify with bundle version 3 (RFC 0216 §B)\n');
+    process.exit(2);
+  }
   // Refused before anything runs: a pinned-port certification that is not
   // single-worker loses the host's traffic to a worker nobody reads (lib/pinned-ports.ts).
   const pinnedConflict = pinnedPortWorkerConflict(process.env, args.maxWorkers, args.certify !== undefined);
