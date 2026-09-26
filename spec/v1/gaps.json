@@ -3736,6 +3736,23 @@
       ]
     },
     {
+      "id": "openwop.gap.0103.12",
+      "rfc": "0103",
+      "local": "G12",
+      "section": "§D / contract",
+      "surface": "**Four §D admin operations have no contract entry.** `localized-content.md` §D lists `PATCH /v1/content/pages/{pageId}`, `POST /v1/content/pages/{pageId}/sections`, `DELETE /v1/content/pages/{pageId}/sections/{sectionId}/locales/{locale}` and the delivery read `GET /v1/content/sections/{sectionId}`, but neither `api/openapi.yaml` nor the derived `api/v2/openapi.yaml` declares them. The prose names each route without a request body, a response body or a status code, so the contract cannot be completed from it without inventing a shape. `DELETE /v1/content/pages/{pageId}` was added on 2026-09-26 (`deleteContentPage`, `204` with no body, following the corpus's other admin deletes). `v2-content-locale-keys` uses it for cleanup.",
+      "witness": "unclassified",
+      "requirementId": null,
+      "disposition": "carried",
+      "target": "openwop.gap.0103.12",
+      "sources": [
+        {
+          "file": "RFCS/registers/0103-localized-content-surface.gaps.md",
+          "token": "G12"
+        }
+      ]
+    },
+    {
       "id": "openwop.gap.0104.0",
       "rfc": "0104",
       "local": "G0",
@@ -4423,8 +4440,8 @@
       "surface": "No host with a real orchestrator loop advertises `contextBudget` yet",
       "witness": "unclassified",
       "requirementId": null,
-      "disposition": "externally-gated",
-      "target": "real-orchestrator-host",
+      "disposition": "closed",
+      "target": null,
       "sources": [
         {
           "file": "RFCS/registers/0111-context-economy.gaps.md",

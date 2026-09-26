@@ -196,7 +196,7 @@ No requirement id enters `floorScenarios` or a profile predicate.
 - [x] `v2-colocated-companion.test.ts` (openwop#1592) mints every `openwop.requirement.0216.*` id in §Falsifiability, with each sabotage run and recorded, and `evidence/corpus-ledger.json` carries each `executed-pass`.
 - [x] CHANGELOG entry.
 - [x] RFC 0156 §B retrospective review row filed `not-reviewed` — `docs/WAIVER-RETROSPECTIVE-REGISTER.md` row 0216. Until the review is recorded, `Accepted` is **provisional**.
-- [ ] deferred: a real production/companion pair from openwop-app, committed and counted by the gate. Reason: it needs a production deploy that records the image digest (gap G4, which waits on the steward's `gcloud` re-auth). The mechanism is corpus-side and is witnessed by the corpus rows above. The pair is adoption, not correctness.
+- [x] A real production/companion pair from openwop-app, committed and counted by the gate. **Met 2026-09-26:** `openwop-workflow-engine-2.41.0-image-digest.json` + `openwop-app-colocated-companion-2.41.0.json` pair on every §C.9 condition, with a dedicated published companion key. `check-accepted-predicate` credits the companion's seven anchor rows and discards its 216 other passes. The first cut of the companion was uncertified (webhook 500s: the local container could not reach Cloud KMS), and the gate credited nothing until it was re-cut certified. That is the rule working.
 
 ## References
 

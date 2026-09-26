@@ -72,6 +72,11 @@
       "operationId": "putContentSection"
     },
     {
+      "method": "DELETE",
+      "path": "/content/pages/{slug}",
+      "operationId": "deleteContentPage"
+    },
+    {
       "method": "GET",
       "path": "/content/pages/{slug}",
       "operationId": "getContentPage"
@@ -288,7 +293,7 @@
     }
   ],
   "counts": {
-    "operations": 54,
+    "operations": 55,
     "channels": 2
   }
 }

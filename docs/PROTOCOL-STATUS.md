@@ -9,7 +9,7 @@
 |---|---:|---|
 | Spec prose documents | 61 | `spec/v1/*.md` |
 | JSON Schemas | 81 | `schemas/*.schema.json` |
-| OpenAPI operations | 57 | `api/openapi.yaml` |
+| OpenAPI operations | 58 | `api/openapi.yaml` |
 | AsyncAPI version | 3.1.0 | `api/asyncapi.yaml` |
 | Conformance scenario files | 561 | `conformance/src/scenarios/*.test.ts` |
 | RFCs tracked | 214 | `RFCS/[0-9][0-9][0-9][0-9]-*.md`, excluding template |
@@ -21,7 +21,7 @@
 | Artifact | Version | Source | Cadence |
 |---|---|---|---|
 | Spec corpus (root) | 1.1.0 | `package.json` | bumps only on a coordinated spec release |
-| Conformance suite `@openwop/openwop-conformance` | 2.42.1 | `conformance/package.json` | minor on scenario add/remove |
+| Conformance suite `@openwop/openwop-conformance` | 2.42.2 | `conformance/package.json` | minor on scenario add/remove |
 | OpenAPI `info.version` | 1.1.0 | `api/openapi.yaml` | hand-maintained in v1.x; generated from the corpus tag at v2 (RFC 0172 sectionB #14) |
 | AsyncAPI `info.version` | 1.1.0 | `api/asyncapi.yaml` | as above |
 | TypeScript SDK `@openwop/openwop` | 1.9.0 | openwop-sdks `sdk/typescript/package.json` (via `evidence/cross-repo-manifests.json`) | tracks the spec major (PUBLISHING.md) |
@@ -61,14 +61,14 @@
 
 ## OpenAPI Operations
 
-`bulkCancelRuns`, `cancelRun`, `createAnnotation`, `createContentPage`, `createPromptTemplate`, `createRun`, `createTriggerSubscription`, `deletePromptTemplate`, `deleteTestPackVersion`, `deleteWorkspaceFile`, `diffRun`, `forkRun`, `getA2ATaskState`, `getAgent`, `getAgentOrgChart`, `getAgentOrgChartDepartment`, `getAgentRosterEntry`, `getArtifact`, `getCapabilities`, `getContentPage`, `getContentSettings`, `getEvalSummary`, `getOpenApiSpec`, `getPromptTemplate`, `getRun`, `getRunAncestry`, `getTestPackSignature`, `getTestPackTarball`, `getTool`, `getWorkflow`, `getWorkspaceFile`, `inspectInterruptByToken`, `listAgentDeployments`, `listAgentRoster`, `listAgents`, `listAnnotations`, `listContentPages`, `listPromptTemplates`, `listTools`, `listWorkspaceFiles`, `pauseRun`, `pollRunEvents`, `putContentSection`, `putContentSettings`, `putTestPackTarball`, `putWorkspaceFile`, `registerWebhook`, `renderPromptTemplate`, `resolveInterruptByRun`, `resolveInterruptByToken`, `resumeRun`, `rotateWebhookSecret`, `streamRunEvents`, `transitionAgentDeployment`, `unregisterWebhook`, `updatePromptTemplate`, `verifyAuditLog`
+`bulkCancelRuns`, `cancelRun`, `createAnnotation`, `createContentPage`, `createPromptTemplate`, `createRun`, `createTriggerSubscription`, `deleteContentPage`, `deletePromptTemplate`, `deleteTestPackVersion`, `deleteWorkspaceFile`, `diffRun`, `forkRun`, `getA2ATaskState`, `getAgent`, `getAgentOrgChart`, `getAgentOrgChartDepartment`, `getAgentRosterEntry`, `getArtifact`, `getCapabilities`, `getContentPage`, `getContentSettings`, `getEvalSummary`, `getOpenApiSpec`, `getPromptTemplate`, `getRun`, `getRunAncestry`, `getTestPackSignature`, `getTestPackTarball`, `getTool`, `getWorkflow`, `getWorkspaceFile`, `inspectInterruptByToken`, `listAgentDeployments`, `listAgentRoster`, `listAgents`, `listAnnotations`, `listContentPages`, `listPromptTemplates`, `listTools`, `listWorkspaceFiles`, `pauseRun`, `pollRunEvents`, `putContentSection`, `putContentSettings`, `putTestPackTarball`, `putWorkspaceFile`, `registerWebhook`, `renderPromptTemplate`, `resolveInterruptByRun`, `resolveInterruptByToken`, `resumeRun`, `rotateWebhookSecret`, `streamRunEvents`, `transitionAgentDeployment`, `unregisterWebhook`, `updatePromptTemplate`, `verifyAuditLog`
 
 ## RFC Status
 
 | Status | Count |
 |---|---:|
-| Accepted | 208 |
-| Active | 4 |
+| Accepted | 210 |
+| Active | 2 |
 | Draft | 1 |
 | Superseded | 1 |
 
@@ -184,7 +184,7 @@
 | RFC 0108 | Self-hosted / OpenAI-compatible provider-class advertisement - `aiProviders.selfHosted[]`, the capability-non-inference rule, and the endpoint-non-disclosure invariant | Accepted |
 | RFC 0109 | Conversation-turn model provenance (`agent.model`) | Accepted |
 | RFC 0110 | Channel presence (online + typing) | Accepted |
-| RFC 0111 | Context Economy - Transcript Token Budget & Declared Summarization | Active |
+| RFC 0111 | Context Economy - Transcript Token Budget & Declared Summarization | Accepted |
 | RFC 0112 | Compact Tool Projection | Accepted |
 | RFC 0113 | Memory Injection Budget | Accepted |
 | RFC 0114 | A2UI Surface Deltas | Accepted |
@@ -280,7 +280,7 @@
 | RFC 0207 | W3C Trace Context carried in MCP `params._meta` and A2A `Message.metadata.openwop` beside the HTTP header that stays conforming, debug-bundle spans that carry `traceId` / `kind` / `status`, and an optional versioned OTel `mcp.*` projection | Accepted |
 | RFC 0208 | v2 homes the A2A and MCP operation mappings | Accepted |
 | RFC 0209 | `ui.a2ui-surface` schema version 2 carries real A2UI v0.9 server-to-client messages (a closed OpenWOP profile of the basic catalog), while the 0.9.1 seven-component tree stays readable forever. The RFC 0114 delta frame is deprecated in v2, and v2 regains the `ui.*`/`media.*` kind carve-out | Accepted |
-| RFC 0210 | a lane's revocation rule is measured, and a host that only honours `exp` says so | Active |
+| RFC 0210 | a lane's revocation rule is measured, and a host that only honours `exp` says so | Accepted |
 | RFC 0211 | an A2A error's details are an ErrorInfo, and an A2A interface never answers in the OpenWOP envelope | Accepted |
 | RFC 0212 | canonical JSON is RFC 8785 JCS, and a certification preimage does not depend on the machine that computed it | Accepted |
 | RFC 0213 | three outcomes the v2 core never stated - a resume cursor past the log, the loser of a same-key race, and a resolve after the run ended | Accepted |
@@ -310,7 +310,7 @@ The pack registry now lives in the [`openwop-registry`](https://github.com/openw
 ## Active Follow-Ups
 
 - 1 RFC still `Draft` (RFC 0038) — advance with schema/conformance proof or defer.
-- 4 RFCs `Active` (RFC 0111, RFC 0121, RFC 0199, RFC 0210) — wire-shape MAY shift compatibly within v1.x until promotion to `Accepted`.
+- 2 RFCs `Active` (RFC 0121, RFC 0199) — wire-shape MAY shift compatibly within v1.x until promotion to `Accepted`.
 - External audit, non-steward host recruitment, and non-steward maintainer recruitment remain external-action gates.
 - Multi-region idempotency and some optional-profile behavior checks remain lower-confidence than the core wire contract.
 

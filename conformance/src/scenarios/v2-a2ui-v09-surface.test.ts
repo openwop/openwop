@@ -42,6 +42,7 @@ import { readErrorCode } from '../lib/error-envelope.js';
 import { FIXTURES_DIR } from '../lib/paths.js';
 import { softSkip } from '../lib/soft-skip.js';
 import { req } from '../lib/requirement-ids.js';
+import { carriesPayload } from '../lib/carries-payload.js';
 
 type Json = Record<string, unknown>;
 const KIND = 'ui.a2ui-surface';
@@ -117,16 +118,9 @@ async function gate(want: (floor: number) => boolean, wantText: string): Promise
 }
 async function done(runId: string): Promise<void> { await driver.post(`/runs/${encodeURIComponent(runId)}/cancel`, {}); }
 
-/** Every subtree of `v`, depth-first. */
-function* subtrees(v: unknown): Generator<unknown> {
-  yield v;
-  if (Array.isArray(v)) for (const x of v) yield* subtrees(x);
-  else if (v && typeof v === 'object') for (const x of Object.values(v)) yield* subtrees(x);
-}
-const carries = (events: unknown[], payload: unknown): boolean => {
-  const want = JSON.stringify(payload);
-  return events.some((e) => [...subtrees((e as Json)['payload'])].some((s) => JSON.stringify(s) === want));
-};
+// RFC 0209 §C.11 compares as JSON, not as text: member order carries no meaning
+// (RFC 8259 §4), and a JSONB host re-sorts it. See lib/carries-payload.ts.
+const carries = carriesPayload;
 async function eventsOf(runId: string): Promise<unknown[]> {
   const r = await driver.get(`/runs/${encodeURIComponent(runId)}/events/poll?timeout=1`);
   const ev = (r.json as { events?: unknown } | null)?.events;
@@ -215,6 +209,8 @@ describe('RFC 0209 §A.2 — the cross-field rules are checked at admission (sea
 });
 
 describe('RFC 0209 §C.11 — recorded surfaces are returned as recorded (seam-gated)', () => {
+  // "byte-equal" in these two titles means JCS-equal (lib/carries-payload.ts). The titles
+  // are kept because they mint the rows' title ids.
   it('a recorded version-2 surface is returned byte-equal on poll and carried by a fork at a later fromSeq', async () => {
     const g = await gate((f) => f >= 2, 'a floor of at least 2');
     if (!g.ok) return softSkip(g.kind, g.reason);
@@ -225,7 +221,7 @@ describe('RFC 0209 §C.11 — recorded surfaces are returned as recorded (seam-g
       expect(r.status, req('openwop.it.v2-a2ui-v09-surface.recorded-as-recorded', 'RFC 0209 §C.11', `the positive surface MUST be admitted, got ${code(r)}`)).toBe(201);
       const sequence = (r.json as { sequence: number }).sequence;
       const events = await eventsOf(runId);
-      expect(carries(events, payload), req('openwop.it.v2-a2ui-v09-surface.recorded-as-recorded', 'RFC 0209 §C.11', 'the run\'s poll MUST return the recorded surface payload byte-equal — no surface is regenerated')).toBe(true);
+      expect(carries(events, payload), req('openwop.it.v2-a2ui-v09-surface.recorded-as-recorded', 'RFC 0209 §C.11', 'the run\'s poll MUST return the recorded surface payload unchanged as JSON (JCS-equal; member order carries no meaning) — no surface is regenerated')).toBe(true);
       // The surface is the last event of the suspended run, so `sequence + 1`
       // names no event and runs.md §Fork REQUIRES 422 fork_point_invalid for it.
       // Record one more envelope on the same surface and fork AT that event:
@@ -250,7 +246,7 @@ describe('RFC 0209 §C.11 — recorded surfaces are returned as recorded (seam-g
       const r = await emit(runId, envelope(1, V1_SURFACE));
       expect(r.status, req('openwop.requirement.0209.legacy-readable', 'RFC 0209 §C.11', `a version-1 surface at floor 1 MUST be admitted, got ${code(r)}`)).toBe(201);
       const sequence = (r.json as { sequence: number }).sequence;
-      expect(carries(await eventsOf(runId), V1_SURFACE), req('openwop.requirement.0209.legacy-readable', 'RFC 0209 §C.11', 'the poll MUST return the version-1 surface byte-equal')).toBe(true);
+      expect(carries(await eventsOf(runId), V1_SURFACE), req('openwop.requirement.0209.legacy-readable', 'RFC 0209 §C.11', 'the poll MUST return the version-1 surface unchanged as JSON (JCS-equal)')).toBe(true);
       // As in the version-2 leg: fork at a recorded event after the surface, never at `sequence + 1` (no such event; 422 fork_point_invalid).
       const later = await emit(runId, envelope(1, V1_LATER));
       expect(later.status, req('openwop.requirement.0209.legacy-readable', 'RFC 0209 §C.11', `a second version-1 surface at floor 1 MUST be admitted (it supplies the fork point), got ${code(later)}`)).toBe(201);

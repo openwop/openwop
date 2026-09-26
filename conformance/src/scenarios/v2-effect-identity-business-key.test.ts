@@ -122,11 +122,25 @@ describe('RFC 0173 §B — effect-identity-business-key (gated on idempotency)',
       keys.size,
       req('openwop.requirement.0173.effect-identity-business-key.retry', 'spec/v2/core/idempotency.md §Layer 2: effect identity', `every attempt of one effect MUST present the same provider key across a transport retry — ${attempts.length} attempt(s) presented ${keys.size} distinct key(s)`),
     ).toBe(1);
+    // idempotency.md §Layer 2: business identity is the rule, and the activity
+    // recipe is "the fallback for a provider with no business key". The seam's
+    // effect is a POST to a suite-chosen providerUrl, which has no business key,
+    // so `activity-recipe` is the CONFORMANT keying here. Until 2.42.2 this leg
+    // demanded `business-identity` on every attempt, which is stricter than the
+    // spec, and a host honestly declaring the fallback failed. What the spec does
+    // require of a retry is one effect, one key: every attempt carries a documented
+    // keying, and the SAME one. A host that switches modes between attempts has
+    // re-derived the effect's identity mid-flight.
+    const keyings = new Set(attempts.map((a) => String(a['keying'])));
     for (const a of attempts) {
       expect(
-        a['keying'],
-        req('openwop.requirement.0173.effect-identity-business-key.retry', 'spec/v2/core/idempotency.md §Layer 2: effect identity', `a Layer-2 host keys a retried effect on business identity, not the activity recipe (attempt ${String(a['attempt'])})`),
-      ).toBe('business-identity');
+        KEYING,
+        req('openwop.requirement.0173.effect-identity-business-key.retry', 'spec/v2/core/idempotency.md §Layer 2: effect identity', `every attempt MUST declare a documented keying — business-identity, or activity-recipe for a provider with no business key (attempt ${String(a['attempt'])} declares ${String(a['keying'])})`),
+      ).toContain(a['keying']);
     }
+    expect(
+      keyings.size,
+      req('openwop.requirement.0173.effect-identity-business-key.retry', 'spec/v2/core/idempotency.md §Layer 2: effect identity', `every attempt of one effect MUST declare the same keying — ${attempts.length} attempt(s) declared ${[...keyings].join(', ')}`),
+    ).toBe(1);
   });
 });
