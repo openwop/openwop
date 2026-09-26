@@ -2,7 +2,7 @@
   "$schema": "https://openwop.dev/spec/v2/errors.schema.json",
   "$comment": "RFC 0171 §B.1 — the error registry: one row per code {code, httpStatus, retriable, details, since, deprecated?}. schemas/v2/error-envelope.schema.json is GENERATED from it (scripts/generate-error-envelope.mjs). Retry timing lives in Retry-After only (§B.2). statusSource records whether the status was stated in v1 prose, a v1 convention, or decided here. details is null until a code's details schema is registered (a null row means details is an open object for that code — closure over details is the RFC 0171 Phase 3 follow-up G-row).",
   "version": "2.0",
-  "updated": "2026-09-23",
+  "updated": "2026-09-26",
   "vendorCodePattern": "^(?!openwop\\.)[a-z][a-z0-9]*(-[a-z0-9]+)*\\.[a-z][a-z0-9_]*$",
   "rows": [
     {
@@ -629,6 +629,15 @@
       "details": null,
       "since": "1.0",
       "source": "spec/v1/node-packs.md"
+    },
+    {
+      "code": "replay_context_summary_unavailable",
+      "httpStatus": 409,
+      "statusSource": "v2 decision (sibling of replay_memory_snapshot_unavailable)",
+      "retriable": false,
+      "details": null,
+      "since": "2.42",
+      "source": "RFC 0111"
     },
     {
       "code": "replay_diverged_at_refusal",
