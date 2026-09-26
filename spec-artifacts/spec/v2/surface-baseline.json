@@ -4,7 +4,7 @@
     "schemas/v2/**/*.json",
     "spec/v2/path-manifest.json"
   ],
-  "release": "2.40.1",
+  "release": "2.40.2",
   "kinds": {
     "union": [
       "channel",
@@ -18,7 +18,7 @@
       "type"
     ]
   },
-  "count": 7957,
+  "count": 7960,
   "surfaces": [
     "schemas/v2/a2a-task-state.schema.json#/contextId|type|string",
     "schemas/v2/a2a-task-state.schema.json#/interruptKind|enum-member|\"approval\"",
@@ -3323,6 +3323,8 @@
     "schemas/v2/certification-bundle.schema.json#/host/build|required|id",
     "schemas/v2/certification-bundle.schema.json#/host/build|required|kind",
     "schemas/v2/certification-bundle.schema.json#/host/build|type|object",
+    "schemas/v2/certification-bundle.schema.json#/host/deployment|enum-member|\"colocated-companion\"",
+    "schemas/v2/certification-bundle.schema.json#/host/deployment|type|string",
     "schemas/v2/certification-bundle.schema.json#/host/name|type|string",
     "schemas/v2/certification-bundle.schema.json#/host/relaxations/[]/durability|enum-member|\"deployment\"",
     "schemas/v2/certification-bundle.schema.json#/host/relaxations/[]/durability|enum-member|\"persisted\"",
@@ -3343,6 +3345,7 @@
     "schemas/v2/certification-bundle.schema.json#/host/version|type|string",
     "schemas/v2/certification-bundle.schema.json#/host|closed|true",
     "schemas/v2/certification-bundle.schema.json#/host|property|build",
+    "schemas/v2/certification-bundle.schema.json#/host|property|deployment",
     "schemas/v2/certification-bundle.schema.json#/host|property|name",
     "schemas/v2/certification-bundle.schema.json#/host|property|relaxations",
     "schemas/v2/certification-bundle.schema.json#/host|property|signingKeyId",
