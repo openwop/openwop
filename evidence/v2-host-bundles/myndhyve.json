@@ -1,12 +1,12 @@
 {
   "bundleVersion": "3",
-  "generatedAt": "2026-09-26T09:36:20.079Z",
+  "generatedAt": "2026-09-26T12:02:52.648Z",
   "suite": {
     "name": "@openwop/openwop-conformance",
-    "version": "2.40.0",
+    "version": "2.40.2",
     "targetMajor": 2,
-    "specArtifactsVersion": "2.40.0",
-    "stampSha256": "f65c56d3a36eb7301c4baceef9ce0899091151fb12bc72c1508eb7a7d7b4ca4c"
+    "specArtifactsVersion": "2.40.2",
+    "stampSha256": "5b784776f9088d58f1fd29e14efa113715876aac5940b728f775a779c59a962a"
   },
   "host": {
     "name": "workflow-runtime",
@@ -14,7 +14,7 @@
     "vendor": "myndhyve",
     "build": {
       "kind": "commit",
-      "id": "ff36553cf574414dfe9393d2875202bae1b68f4f"
+      "id": "d721c6c62bcde3c01d96926bca14cd1c15ced207"
     },
     "signingKeyId": "myndhyve-bundle-2026-09b"
   },
@@ -1065,10 +1065,10 @@
   ],
   "results": {
     "totals": {
-      "executedPass": 239,
+      "executedPass": 237,
       "executedFail": 0,
-      "skipped": 0,
-      "inapplicable": 214,
+      "skipped": 17,
+      "inapplicable": 202,
       "blocked": 0
     },
     "requirements": [
@@ -1236,7 +1236,8 @@
         "id": "openwop.scenario.v2-capability-maturity-bounded",
         "scenario": "v2-capability-maturity-bounded.test.ts",
         "result": "executed-pass",
-        "assertions": 44
+        "assertions": 44,
+        "detail": "partial-witness: inapplicable: unwitnessable until the first persisted-class retirement row is due (RFC 0197 §A.3 Falsifiability): corpus 2.40.2: 0 persisted-class v2-minor retirement row(s), 0 v2→v2 migration row(s) — no retired member exists for a post-2.N event to carry. Before one does, a scenario would be vacuous, and a row that cannot fail is not a witness. This leg asserts the moment such a row falls due."
       },
       {
         "id": "openwop.scenario.v2-capability-record-shape",
@@ -1247,9 +1248,9 @@
       {
         "id": "openwop.scenario.v2-chain-pin-exact",
         "scenario": "v2-chain-pin-exact.test.ts",
-        "result": "inapplicable",
+        "result": "skipped",
         "assertions": 0,
-        "detail": "every test returned early through behaviorGate with zero assertions: profile not advertised in the captured discovery set"
+        "detail": "every test returned early through behaviorGate with zero assertions: operator opted the profile or family out (OPENWOP_OPTED_OUT_PROFILES)"
       },
       {
         "id": "openwop.scenario.v2-coherence-not-in-bundle",
@@ -1377,9 +1378,9 @@
       {
         "id": "openwop.scenario.v2-form-when-reuses-edge-conditions",
         "scenario": "v2-form-when-reuses-edge-conditions.test.ts",
-        "result": "inapplicable",
+        "result": "skipped",
         "assertions": 0,
-        "detail": "every test returned early through behaviorGate with zero assertions: profile not advertised in the captured discovery set"
+        "detail": "every test returned early through behaviorGate with zero assertions: operator opted the profile or family out (OPENWOP_OPTED_OUT_PROFILES)"
       },
       {
         "id": "openwop.scenario.v2-header-scheme",
@@ -1397,7 +1398,7 @@
         "id": "openwop.scenario.v2-idempotency-in-flight",
         "scenario": "v2-idempotency-in-flight.test.ts",
         "result": "executed-pass",
-        "assertions": 6,
+        "assertions": 15,
         "detail": "partial-witness: inapplicable: the held-claim leg is driven through the seams profile (RFC 0213 §B) — seams profile not advertised; the unaided leg above is this host's witness"
       },
       {
@@ -1549,8 +1550,9 @@
       {
         "id": "openwop.scenario.v2-oidc-id-token-audience",
         "scenario": "v2-oidc-id-token-audience.test.ts",
-        "result": "executed-pass",
-        "assertions": 2
+        "result": "inapplicable",
+        "assertions": 0,
+        "detail": "every test returned early through behaviorGate with zero assertions: profile not advertised in the captured discovery set"
       },
       {
         "id": "openwop.scenario.v2-owner-subject-required",
@@ -1561,9 +1563,9 @@
       {
         "id": "openwop.scenario.v2-pack-isolation",
         "scenario": "v2-pack-isolation.test.ts",
-        "result": "inapplicable",
+        "result": "skipped",
         "assertions": 0,
-        "detail": "every test returned early through behaviorGate with zero assertions: profile not advertised in the captured discovery set"
+        "detail": "every test returned early through behaviorGate with zero assertions: operator opted the profile or family out (OPENWOP_OPTED_OUT_PROFILES)"
       },
       {
         "id": "openwop.scenario.v2-payload-registry-closed",
@@ -2120,13 +2122,6 @@
         "detail": "a2a not advertised at major 2"
       },
       {
-        "id": "openwop.it.v2-a2a-operation-map.a-host-not-advertising-a2a-pushnotifications-refuses-all-four-push-config-operat",
-        "scenario": "v2-a2a-operation-map.test.ts",
-        "result": "inapplicable",
-        "assertions": 0,
-        "detail": "a2a not advertised at major 2"
-      },
-      {
         "id": "openwop.it.v2-a2a-operation-map.a-message-carrying-taskid-without-contextid-is-answered-with-the-task-s-contexti",
         "scenario": "v2-a2a-operation-map.test.ts",
         "result": "inapplicable",
@@ -2149,13 +2144,6 @@
       },
       {
         "id": "openwop.it.v2-a2a-operation-map.a-row-whose-requires-facet-is-not-advertised-is-refused-with-the-row-s-error",
-        "scenario": "v2-a2a-operation-map.test.ts",
-        "result": "inapplicable",
-        "assertions": 0,
-        "detail": "a2a not advertised at major 2"
-      },
-      {
-        "id": "openwop.it.v2-a2a-operation-map.a-run-suspended-on-a-credential-interrupt-projects-to-task-state-auth-required-n",
         "scenario": "v2-a2a-operation-map.test.ts",
         "result": "inapplicable",
         "assertions": 0,
@@ -2198,27 +2186,6 @@
       },
       {
         "id": "openwop.it.v2-a2a-operation-map.no-response-on-the-card-s-json-rpc-interface-url-is-the-openwop-error-envelope",
-        "scenario": "v2-a2a-operation-map.test.ts",
-        "result": "inapplicable",
-        "assertions": 0,
-        "detail": "a2a not advertised at major 2"
-      },
-      {
-        "id": "openwop.it.v2-a2a-operation-map.rfc-0214-a-a-push-config-s-token-and-credentials-are-never-returned-and-never-re",
-        "scenario": "v2-a2a-operation-map.test.ts",
-        "result": "inapplicable",
-        "assertions": 0,
-        "detail": "a2a not advertised at major 2"
-      },
-      {
-        "id": "openwop.it.v2-a2a-operation-map.rfc-0214-createtaskpushnotificationconfig-refuses-a-non-https-or-private-destina",
-        "scenario": "v2-a2a-operation-map.test.ts",
-        "result": "inapplicable",
-        "assertions": 0,
-        "detail": "a2a not advertised at major 2"
-      },
-      {
-        "id": "openwop.it.v2-a2a-operation-map.rfc-0214-e-a-push-config-of-another-tenant-s-task-of-another-task-or-unknown-is",
         "scenario": "v2-a2a-operation-map.test.ts",
         "result": "inapplicable",
         "assertions": 0,
@@ -2379,13 +2346,6 @@
         "detail": "mcp.client not advertised — the host exposes no ctx.mcp to pack code (RFC 0204 §A.1)"
       },
       {
-        "id": "openwop.it.v2-mcp-mount-map.a-credential-interrupt-is-answered-in-url-mode-url-connecturl-iserror-without-ur",
-        "scenario": "v2-mcp-mount-map.test.ts",
-        "result": "inapplicable",
-        "assertions": 0,
-        "detail": "mcp not advertised at major 2"
-      },
-      {
         "id": "openwop.it.v2-mcp-mount-map.a-host-claiming-mcp-2026-07-28-lists-every-feature-the-map-requires-for-it",
         "scenario": "v2-mcp-mount-map.test.ts",
         "result": "inapplicable",
@@ -2415,13 +2375,6 @@
       },
       {
         "id": "openwop.it.v2-mcp-mount-map.an-unauthenticated-request-is-refused-at-the-boundary-unless-anonymousactor-is-a",
-        "scenario": "v2-mcp-mount-map.test.ts",
-        "result": "inapplicable",
-        "assertions": 0,
-        "detail": "mcp not advertised at major 2"
-      },
-      {
-        "id": "openwop.it.v2-mcp-mount-map.form-mode-is-never-emitted-for-a-nested-schema-or-a-sensitive-format-password-fi",
         "scenario": "v2-mcp-mount-map.test.ts",
         "result": "inapplicable",
         "assertions": 0,
@@ -2584,79 +2537,37 @@
       {
         "id": "openwop.it.v2-pack-isolation.node-pack-sandbox-fs-gated-a-host-filesystem-read-is-refused",
         "scenario": "v2-pack-isolation.test.ts",
-        "result": "inapplicable",
+        "result": "skipped",
         "assertions": 0,
-        "detail": "profile not advertised in the captured discovery set"
+        "detail": "operator declared an honest opt-out via OPENWOP_OPTED_OUT_PROFILES: family.sandbox"
       },
       {
         "id": "openwop.it.v2-pack-isolation.node-pack-sandbox-fs-gated-a-host-filesystem-write-is-refused",
         "scenario": "v2-pack-isolation.test.ts",
-        "result": "inapplicable",
+        "result": "skipped",
         "assertions": 0,
-        "detail": "profile not advertised in the captured discovery set"
+        "detail": "operator declared an honest opt-out via OPENWOP_OPTED_OUT_PROFILES: family.sandbox"
       },
       {
         "id": "openwop.it.v2-pack-isolation.node-pack-sandbox-network-gated-ungated-network-egress-is-refused",
         "scenario": "v2-pack-isolation.test.ts",
-        "result": "inapplicable",
+        "result": "skipped",
         "assertions": 0,
-        "detail": "profile not advertised in the captured discovery set"
+        "detail": "operator declared an honest opt-out via OPENWOP_OPTED_OUT_PROFILES: family.sandbox"
       },
       {
         "id": "openwop.it.v2-pack-isolation.node-pack-sandbox-no-env-the-host-environment-does-not-leak",
         "scenario": "v2-pack-isolation.test.ts",
-        "result": "inapplicable",
+        "result": "skipped",
         "assertions": 0,
-        "detail": "profile not advertised in the captured discovery set"
+        "detail": "operator declared an honest opt-out via OPENWOP_OPTED_OUT_PROFILES: family.sandbox"
       },
       {
         "id": "openwop.it.v2-pack-isolation.node-pack-sandbox-no-process-host-process-access-is-refused",
         "scenario": "v2-pack-isolation.test.ts",
-        "result": "inapplicable",
+        "result": "skipped",
         "assertions": 0,
-        "detail": "profile not advertised in the captured discovery set"
-      },
-      {
-        "id": "openwop.it.v2-webhook-endpoint-verification.no-echo-wrong-echo-and-a-redirect-are-refused-and-persist-nothing-an-echo-is-acc",
-        "scenario": "v2-webhook-endpoint-verification.test.ts",
-        "result": "inapplicable",
-        "assertions": 0,
-        "detail": "webhooks.signatureAlgorithms does not list standard-webhooks-1 (RFC 0201 §A.3) — the companion scheme is not offered"
-      },
-      {
-        "id": "openwop.it.v2-webhook-message-id-stable.every-attempt-of-one-delivery-carries-one-webhook-id-and-distinct-deliveries-car",
-        "scenario": "v2-webhook-message-id-stable.test.ts",
-        "result": "inapplicable",
-        "assertions": 0,
-        "detail": "webhooks.signatureAlgorithms does not list standard-webhooks-1 (RFC 0201 §A.3) — the companion scheme is not offered"
-      },
-      {
-        "id": "openwop.it.v2-webhook-secret-rotation.a-rotation-dual-signs-for-overlapseconds-keeps-openwop-signature-on-the-previous",
-        "scenario": "v2-webhook-secret-rotation.test.ts",
-        "result": "inapplicable",
-        "assertions": 0,
-        "detail": "webhooks.signatureAlgorithms does not list standard-webhooks-1 (RFC 0201 §A.3) — the companion scheme is not offered"
-      },
-      {
-        "id": "openwop.it.v2-webhook-standard-webhooks-delivery.a-subscription-that-did-not-opt-in-is-neither-verified-nor-given-webhook-headers",
-        "scenario": "v2-webhook-standard-webhooks-delivery.test.ts",
-        "result": "inapplicable",
-        "assertions": 0,
-        "detail": "webhooks.signatureAlgorithms does not list standard-webhooks-1 (RFC 0201 §A.3) — the companion scheme is not offered"
-      },
-      {
-        "id": "openwop.it.v2-webhook-standard-webhooks-delivery.an-opted-in-delivery-is-dual-signed-and-its-standard-webhooks-signature-covers-t",
-        "scenario": "v2-webhook-standard-webhooks-delivery.test.ts",
-        "result": "inapplicable",
-        "assertions": 0,
-        "detail": "webhooks.signatureAlgorithms does not list standard-webhooks-1 (RFC 0201 §A.3) — the companion scheme is not offered"
-      },
-      {
-        "id": "openwop.it.v2-webhook-standard-webhooks-delivery.the-opt-in-is-validated-its-201-echoes-the-applied-list-and-no-response-carries",
-        "scenario": "v2-webhook-standard-webhooks-delivery.test.ts",
-        "result": "inapplicable",
-        "assertions": 0,
-        "detail": "webhooks.signatureAlgorithms does not list standard-webhooks-1 (RFC 0201 §A.3) — the companion scheme is not offered"
+        "detail": "operator declared an honest opt-out via OPENWOP_OPTED_OUT_PROFILES: family.sandbox"
       },
       {
         "id": "openwop.requirement.0158.bound-is-derived",
@@ -2715,7 +2626,7 @@
           "recovery": {
             "class": "dispatch-hold",
             "boundMs": 45000,
-            "observedMs": 15763
+            "observedMs": 15452
           }
         }
       },
@@ -2728,7 +2639,7 @@
           "recovery": {
             "class": "dispatch-lease",
             "boundMs": 100000,
-            "observedMs": 71002
+            "observedMs": 70628
           }
         }
       },
@@ -3268,37 +3179,37 @@
       {
         "id": "openwop.requirement.0173.pack-isolation",
         "scenario": "v2-pack-isolation.test.ts",
-        "result": "inapplicable",
+        "result": "skipped",
         "assertions": 0,
-        "detail": "profile not advertised in the captured discovery set"
+        "detail": "operator declared an honest opt-out via OPENWOP_OPTED_OUT_PROFILES: family.sandbox"
       },
       {
         "id": "openwop.requirement.0173.pack-isolation.isolated-context",
         "scenario": "v2-pack-isolation.test.ts",
-        "result": "inapplicable",
+        "result": "skipped",
         "assertions": 0,
-        "detail": "profile not advertised in the captured discovery set"
+        "detail": "operator declared an honest opt-out via OPENWOP_OPTED_OUT_PROFILES: family.sandbox"
       },
       {
         "id": "openwop.requirement.0173.pack-isolation.memory-cap",
         "scenario": "v2-pack-isolation.test.ts",
-        "result": "inapplicable",
+        "result": "skipped",
         "assertions": 0,
-        "detail": "profile not advertised in the captured discovery set"
+        "detail": "operator declared an honest opt-out via OPENWOP_OPTED_OUT_PROFILES: family.sandbox"
       },
       {
         "id": "openwop.requirement.0173.pack-isolation.seam",
         "scenario": "v2-pack-isolation.test.ts",
-        "result": "inapplicable",
+        "result": "skipped",
         "assertions": 0,
-        "detail": "profile not advertised in the captured discovery set"
+        "detail": "operator declared an honest opt-out via OPENWOP_OPTED_OUT_PROFILES: family.sandbox"
       },
       {
         "id": "openwop.requirement.0173.pack-isolation.timeout",
         "scenario": "v2-pack-isolation.test.ts",
-        "result": "inapplicable",
+        "result": "skipped",
         "assertions": 0,
-        "detail": "profile not advertised in the captured discovery set"
+        "detail": "operator declared an honest opt-out via OPENWOP_OPTED_OUT_PROFILES: family.sandbox"
       },
       {
         "id": "openwop.requirement.0173.relaxation-recorded",
@@ -3507,30 +3418,30 @@
       {
         "id": "openwop.requirement.0177.chain-pin-exact.exact-accepted",
         "scenario": "v2-chain-pin-exact.test.ts",
-        "result": "inapplicable",
+        "result": "skipped",
         "assertions": 0,
-        "detail": "profile not advertised in the captured discovery set"
+        "detail": "operator declared an honest opt-out via OPENWOP_OPTED_OUT_PROFILES: family.workflowChainPacks"
       },
       {
         "id": "openwop.requirement.0177.chain-pin-exact.external-range-refused",
         "scenario": "v2-chain-pin-exact.test.ts",
-        "result": "inapplicable",
+        "result": "skipped",
         "assertions": 0,
-        "detail": "profile not advertised in the captured discovery set"
+        "detail": "operator declared an honest opt-out via OPENWOP_OPTED_OUT_PROFILES: family.workflowChainPacks"
       },
       {
         "id": "openwop.requirement.0177.chain-pin-exact.range-refused",
         "scenario": "v2-chain-pin-exact.test.ts",
-        "result": "inapplicable",
+        "result": "skipped",
         "assertions": 0,
-        "detail": "profile not advertised in the captured discovery set"
+        "detail": "operator declared an honest opt-out via OPENWOP_OPTED_OUT_PROFILES: family.workflowChainPacks"
       },
       {
         "id": "openwop.requirement.0177.form-when-reuses-edge-conditions",
         "scenario": "v2-form-when-reuses-edge-conditions.test.ts",
-        "result": "inapplicable",
+        "result": "skipped",
         "assertions": 0,
-        "detail": "profile not advertised in the captured discovery set"
+        "detail": "operator declared an honest opt-out via OPENWOP_OPTED_OUT_PROFILES: family.forms"
       },
       {
         "id": "openwop.requirement.0177.manifest-ceiling-refused.unbounded",
@@ -3685,6 +3596,13 @@
         "assertions": 44
       },
       {
+        "id": "openwop.requirement.0197.retired-not-emitted",
+        "scenario": "v2-capability-maturity-bounded.test.ts",
+        "result": "inapplicable",
+        "assertions": 0,
+        "detail": "unwitnessable until the first persisted-class retirement row is due (RFC 0197 §A.3 Falsifiability): corpus 2.40.2: 0 persisted-class v2-minor retirement row(s), 0 v2→v2 migration row(s) — no retired member exists for a post-2.N event to carry. Before one does, a scenario would be vacuous, and a row that cannot fail is not a witness. This leg asserts the moment such a row falls due."
+      },
+      {
         "id": "openwop.requirement.0198.advertised-via-discover",
         "scenario": "v2-mcp-tasks.test.ts",
         "result": "inapplicable",
@@ -3776,6 +3694,27 @@
         "detail": "mcp not advertised at major 2"
       },
       {
+        "id": "openwop.requirement.0199.a2a-auth-required",
+        "scenario": "v2-a2a-operation-map.test.ts",
+        "result": "inapplicable",
+        "assertions": 0,
+        "detail": "a2a not advertised at major 2"
+      },
+      {
+        "id": "openwop.requirement.0199.form-mode-no-secret",
+        "scenario": "v2-mcp-mount-map.test.ts",
+        "result": "inapplicable",
+        "assertions": 0,
+        "detail": "mcp not advertised at major 2"
+      },
+      {
+        "id": "openwop.requirement.0199.mcp-url-mode",
+        "scenario": "v2-mcp-mount-map.test.ts",
+        "result": "inapplicable",
+        "assertions": 0,
+        "detail": "mcp not advertised at major 2"
+      },
+      {
         "id": "openwop.requirement.0200.challenge-401",
         "scenario": "v2-auth-challenge.test.ts",
         "result": "executed-pass",
@@ -3790,8 +3729,9 @@
       {
         "id": "openwop.requirement.0200.id-token-aud",
         "scenario": "v2-oidc-id-token-audience.test.ts",
-        "result": "executed-pass",
-        "assertions": 2
+        "result": "inapplicable",
+        "assertions": 0,
+        "detail": "lane oidc trusts https://securetoken.google.com/myndhyve-prod, https://accounts.google.com, and no harness issuer is configured (OPENWOP_TEST_OIDC_ISSUER_URL unset): the suite holds a signing key for none of the host's trust roots, so no token it mints could be accepted. A host claims the harness by listing it in the lane's issuers[] (RFC 0168 §C.1's reading for suite instruments)"
       },
       {
         "id": "openwop.requirement.0200.inbound-credential-no-passthrough",
@@ -3823,6 +3763,48 @@
         "scenario": "v2-protected-resource-metadata.test.ts",
         "result": "executed-pass",
         "assertions": 2
+      },
+      {
+        "id": "openwop.requirement.0201.delivery-signed",
+        "scenario": "v2-webhook-standard-webhooks-delivery.test.ts",
+        "result": "inapplicable",
+        "assertions": 0,
+        "detail": "webhooks.signatureAlgorithms does not list standard-webhooks-1 (RFC 0201 §A.3) — the companion scheme is not offered"
+      },
+      {
+        "id": "openwop.requirement.0201.endpoint-verification",
+        "scenario": "v2-webhook-endpoint-verification.test.ts",
+        "result": "inapplicable",
+        "assertions": 0,
+        "detail": "webhooks.signatureAlgorithms does not list standard-webhooks-1 (RFC 0201 §A.3) — the companion scheme is not offered"
+      },
+      {
+        "id": "openwop.requirement.0201.message-id-stable",
+        "scenario": "v2-webhook-message-id-stable.test.ts",
+        "result": "inapplicable",
+        "assertions": 0,
+        "detail": "webhooks.signatureAlgorithms does not list standard-webhooks-1 (RFC 0201 §A.3) — the companion scheme is not offered"
+      },
+      {
+        "id": "openwop.requirement.0201.opt-in-only",
+        "scenario": "v2-webhook-standard-webhooks-delivery.test.ts",
+        "result": "inapplicable",
+        "assertions": 0,
+        "detail": "webhooks.signatureAlgorithms does not list standard-webhooks-1 (RFC 0201 §A.3) — the companion scheme is not offered"
+      },
+      {
+        "id": "openwop.requirement.0201.registration-validated",
+        "scenario": "v2-webhook-standard-webhooks-delivery.test.ts",
+        "result": "inapplicable",
+        "assertions": 0,
+        "detail": "webhooks.signatureAlgorithms does not list standard-webhooks-1 (RFC 0201 §A.3) — the companion scheme is not offered"
+      },
+      {
+        "id": "openwop.requirement.0201.secret-rotation",
+        "scenario": "v2-webhook-secret-rotation.test.ts",
+        "result": "inapplicable",
+        "assertions": 0,
+        "detail": "webhooks.signatureAlgorithms does not list standard-webhooks-1 (RFC 0201 §A.3) — the companion scheme is not offered"
       },
       {
         "id": "openwop.requirement.0204.annotations-derived",
@@ -3858,6 +3840,13 @@
         "result": "inapplicable",
         "assertions": 0,
         "detail": "no artifact-producing fixture: the host does not advertise conformance-artifact-emit (RFC 0205 register G2)"
+      },
+      {
+        "id": "openwop.requirement.0205.export-alias-equivalence",
+        "scenario": "v2-artifact-a2a-shape.test.ts",
+        "result": "inapplicable",
+        "assertions": 0,
+        "detail": "unwitnessable on the wire (RFC 0205 §C.11 Falsifiability verdict): the equivalence binds a consumer's format-matching logic and the pack author's host.artifactTypes.export call, and neither is on the wire. The advertised spellings are readable, but a mismatch between them is legal, so no host response can falsify the row. No wire witness exists; this row records that the suite reached the requirement, and it is not a pass."
       },
       {
         "id": "openwop.requirement.0205.turn-parts-emitted",
@@ -3950,6 +3939,13 @@
         "detail": "host does not advertise conformance.seamsProfile: openwop-conformance-seams-v2 — the emit-surface seam is the only way the suite can choose an envelope (RFC 0209 Falsifiability)"
       },
       {
+        "id": "openwop.requirement.0209.render-needs-root",
+        "scenario": "v2-a2ui-v09-surface.test.ts",
+        "result": "inapplicable",
+        "assertions": 0,
+        "detail": "unwitnessable by this suite (RFC 0209 §C.9 Falsifiability verdict): a render-side guarantee, and a server-oriented suite cannot observe a renderer. The fold guard the server CAN observe is openwop.requirement.0209.fold-guarded, above. The render half is witnessed as a reference-app client probe (tier: reference-impl, the a2ui-surface-no-code-exec precedent): openwop/openwop-app frontend/react/src/chat/a2ui/__tests__/a2ui-v09-render-needs-root.test.tsx (openwop-app#4121, ADR 0749). Removing the `if (!state.renderable)` guard in frontend/react/src/chat/a2ui/v09/A2uiV09Surface.tsx turns 2 of its 4 cases red. This row records that the suite reached the requirement, and it is not a pass."
+      },
+      {
         "id": "openwop.requirement.0209.taint-sticky",
         "scenario": "v2-a2ui-v09-surface.test.ts",
         "result": "inapplicable",
@@ -4002,7 +3998,7 @@
         "id": "openwop.requirement.0213.in-flight-loser-outcome",
         "scenario": "v2-idempotency-in-flight.test.ts",
         "result": "executed-pass",
-        "assertions": 4
+        "assertions": 13
       },
       {
         "id": "openwop.requirement.0213.in-flight-one-winner",
@@ -4055,6 +4051,34 @@
         "assertions": 1
       },
       {
+        "id": "openwop.requirement.0214.a2a-push-config-isolation",
+        "scenario": "v2-a2a-operation-map.test.ts",
+        "result": "inapplicable",
+        "assertions": 0,
+        "detail": "a2a not advertised at major 2"
+      },
+      {
+        "id": "openwop.requirement.0214.a2a-push-register-ssrf",
+        "scenario": "v2-a2a-operation-map.test.ts",
+        "result": "inapplicable",
+        "assertions": 0,
+        "detail": "a2a not advertised at major 2"
+      },
+      {
+        "id": "openwop.requirement.0214.a2a-push-secrets-not-returned",
+        "scenario": "v2-a2a-operation-map.test.ts",
+        "result": "inapplicable",
+        "assertions": 0,
+        "detail": "a2a not advertised at major 2"
+      },
+      {
+        "id": "openwop.requirement.0214.a2a-push-unadvertised-refused",
+        "scenario": "v2-a2a-operation-map.test.ts",
+        "result": "inapplicable",
+        "assertions": 0,
+        "detail": "a2a not advertised at major 2"
+      },
+      {
         "id": "openwop.requirement.0215.no-head-of-line",
         "scenario": "v2-webhook-delivery-isolation.test.ts",
         "result": "executed-pass",
@@ -4068,8 +4092,8 @@
       }
     ]
   },
-  "witnessSha256": "3dda5af695f1dcd29acd9ebc84f73d63615a2706efc3e4c21bdf25e8eb801846",
-  "assertionCount": 2800,
+  "witnessSha256": "de1e60e6ede8ca25db643570f09c4b8011f607f183383e4c7208f7a03dfb5afe",
+  "assertionCount": 2814,
   "detail": {
     "nonPass": [
       {
@@ -4119,8 +4143,8 @@
       },
       {
         "id": "openwop.scenario.v2-chain-pin-exact",
-        "result": "inapplicable",
-        "reason": "every test returned early through behaviorGate with zero assertions: profile not advertised in the captured discovery set"
+        "result": "skipped",
+        "reason": "every test returned early through behaviorGate with zero assertions: operator opted the profile or family out (OPENWOP_OPTED_OUT_PROFILES)"
       },
       {
         "id": "openwop.scenario.v2-content-locale-keys",
@@ -4154,8 +4178,8 @@
       },
       {
         "id": "openwop.scenario.v2-form-when-reuses-edge-conditions",
-        "result": "inapplicable",
-        "reason": "every test returned early through behaviorGate with zero assertions: profile not advertised in the captured discovery set"
+        "result": "skipped",
+        "reason": "every test returned early through behaviorGate with zero assertions: operator opted the profile or family out (OPENWOP_OPTED_OUT_PROFILES)"
       },
       {
         "id": "openwop.scenario.v2-interop-trace-context",
@@ -4223,9 +4247,14 @@
         "reason": "every test returned early through behaviorGate with zero assertions: profile not advertised in the captured discovery set"
       },
       {
-        "id": "openwop.scenario.v2-pack-isolation",
+        "id": "openwop.scenario.v2-oidc-id-token-audience",
         "result": "inapplicable",
         "reason": "every test returned early through behaviorGate with zero assertions: profile not advertised in the captured discovery set"
+      },
+      {
+        "id": "openwop.scenario.v2-pack-isolation",
+        "result": "skipped",
+        "reason": "every test returned early through behaviorGate with zero assertions: operator opted the profile or family out (OPENWOP_OPTED_OUT_PROFILES)"
       },
       {
         "id": "openwop.scenario.v2-peer-dependency-declared",
@@ -4338,11 +4367,6 @@
         "reason": "a2a not advertised at major 2"
       },
       {
-        "id": "openwop.it.v2-a2a-operation-map.a-host-not-advertising-a2a-pushnotifications-refuses-all-four-push-config-operat",
-        "result": "inapplicable",
-        "reason": "a2a not advertised at major 2"
-      },
-      {
         "id": "openwop.it.v2-a2a-operation-map.a-message-carrying-taskid-without-contextid-is-answered-with-the-task-s-contexti",
         "result": "inapplicable",
         "reason": "a2a not advertised at major 2"
@@ -4359,11 +4383,6 @@
       },
       {
         "id": "openwop.it.v2-a2a-operation-map.a-row-whose-requires-facet-is-not-advertised-is-refused-with-the-row-s-error",
-        "result": "inapplicable",
-        "reason": "a2a not advertised at major 2"
-      },
-      {
-        "id": "openwop.it.v2-a2a-operation-map.a-run-suspended-on-a-credential-interrupt-projects-to-task-state-auth-required-n",
         "result": "inapplicable",
         "reason": "a2a not advertised at major 2"
       },
@@ -4394,21 +4413,6 @@
       },
       {
         "id": "openwop.it.v2-a2a-operation-map.no-response-on-the-card-s-json-rpc-interface-url-is-the-openwop-error-envelope",
-        "result": "inapplicable",
-        "reason": "a2a not advertised at major 2"
-      },
-      {
-        "id": "openwop.it.v2-a2a-operation-map.rfc-0214-a-a-push-config-s-token-and-credentials-are-never-returned-and-never-re",
-        "result": "inapplicable",
-        "reason": "a2a not advertised at major 2"
-      },
-      {
-        "id": "openwop.it.v2-a2a-operation-map.rfc-0214-createtaskpushnotificationconfig-refuses-a-non-https-or-private-destina",
-        "result": "inapplicable",
-        "reason": "a2a not advertised at major 2"
-      },
-      {
-        "id": "openwop.it.v2-a2a-operation-map.rfc-0214-e-a-push-config-of-another-tenant-s-task-of-another-task-or-unknown-is",
         "result": "inapplicable",
         "reason": "a2a not advertised at major 2"
       },
@@ -4523,11 +4527,6 @@
         "reason": "mcp.client not advertised — the host exposes no ctx.mcp to pack code (RFC 0204 §A.1)"
       },
       {
-        "id": "openwop.it.v2-mcp-mount-map.a-credential-interrupt-is-answered-in-url-mode-url-connecturl-iserror-without-ur",
-        "result": "inapplicable",
-        "reason": "mcp not advertised at major 2"
-      },
-      {
         "id": "openwop.it.v2-mcp-mount-map.a-host-claiming-mcp-2026-07-28-lists-every-feature-the-map-requires-for-it",
         "result": "inapplicable",
         "reason": "mcp not advertised at major 2"
@@ -4549,11 +4548,6 @@
       },
       {
         "id": "openwop.it.v2-mcp-mount-map.an-unauthenticated-request-is-refused-at-the-boundary-unless-anonymousactor-is-a",
-        "result": "inapplicable",
-        "reason": "mcp not advertised at major 2"
-      },
-      {
-        "id": "openwop.it.v2-mcp-mount-map.form-mode-is-never-emitted-for-a-nested-schema-or-a-sensitive-format-password-fi",
         "result": "inapplicable",
         "reason": "mcp not advertised at major 2"
       },
@@ -4669,58 +4663,28 @@
       },
       {
         "id": "openwop.it.v2-pack-isolation.node-pack-sandbox-fs-gated-a-host-filesystem-read-is-refused",
-        "result": "inapplicable",
-        "reason": "profile not advertised in the captured discovery set"
+        "result": "skipped",
+        "reason": "operator declared an honest opt-out via OPENWOP_OPTED_OUT_PROFILES: family.sandbox"
       },
       {
         "id": "openwop.it.v2-pack-isolation.node-pack-sandbox-fs-gated-a-host-filesystem-write-is-refused",
-        "result": "inapplicable",
-        "reason": "profile not advertised in the captured discovery set"
+        "result": "skipped",
+        "reason": "operator declared an honest opt-out via OPENWOP_OPTED_OUT_PROFILES: family.sandbox"
       },
       {
         "id": "openwop.it.v2-pack-isolation.node-pack-sandbox-network-gated-ungated-network-egress-is-refused",
-        "result": "inapplicable",
-        "reason": "profile not advertised in the captured discovery set"
+        "result": "skipped",
+        "reason": "operator declared an honest opt-out via OPENWOP_OPTED_OUT_PROFILES: family.sandbox"
       },
       {
         "id": "openwop.it.v2-pack-isolation.node-pack-sandbox-no-env-the-host-environment-does-not-leak",
-        "result": "inapplicable",
-        "reason": "profile not advertised in the captured discovery set"
+        "result": "skipped",
+        "reason": "operator declared an honest opt-out via OPENWOP_OPTED_OUT_PROFILES: family.sandbox"
       },
       {
         "id": "openwop.it.v2-pack-isolation.node-pack-sandbox-no-process-host-process-access-is-refused",
-        "result": "inapplicable",
-        "reason": "profile not advertised in the captured discovery set"
-      },
-      {
-        "id": "openwop.it.v2-webhook-endpoint-verification.no-echo-wrong-echo-and-a-redirect-are-refused-and-persist-nothing-an-echo-is-acc",
-        "result": "inapplicable",
-        "reason": "webhooks.signatureAlgorithms does not list standard-webhooks-1 (RFC 0201 §A.3) — the companion scheme is not offered"
-      },
-      {
-        "id": "openwop.it.v2-webhook-message-id-stable.every-attempt-of-one-delivery-carries-one-webhook-id-and-distinct-deliveries-car",
-        "result": "inapplicable",
-        "reason": "webhooks.signatureAlgorithms does not list standard-webhooks-1 (RFC 0201 §A.3) — the companion scheme is not offered"
-      },
-      {
-        "id": "openwop.it.v2-webhook-secret-rotation.a-rotation-dual-signs-for-overlapseconds-keeps-openwop-signature-on-the-previous",
-        "result": "inapplicable",
-        "reason": "webhooks.signatureAlgorithms does not list standard-webhooks-1 (RFC 0201 §A.3) — the companion scheme is not offered"
-      },
-      {
-        "id": "openwop.it.v2-webhook-standard-webhooks-delivery.a-subscription-that-did-not-opt-in-is-neither-verified-nor-given-webhook-headers",
-        "result": "inapplicable",
-        "reason": "webhooks.signatureAlgorithms does not list standard-webhooks-1 (RFC 0201 §A.3) — the companion scheme is not offered"
-      },
-      {
-        "id": "openwop.it.v2-webhook-standard-webhooks-delivery.an-opted-in-delivery-is-dual-signed-and-its-standard-webhooks-signature-covers-t",
-        "result": "inapplicable",
-        "reason": "webhooks.signatureAlgorithms does not list standard-webhooks-1 (RFC 0201 §A.3) — the companion scheme is not offered"
-      },
-      {
-        "id": "openwop.it.v2-webhook-standard-webhooks-delivery.the-opt-in-is-validated-its-201-echoes-the-applied-list-and-no-response-carries",
-        "result": "inapplicable",
-        "reason": "webhooks.signatureAlgorithms does not list standard-webhooks-1 (RFC 0201 §A.3) — the companion scheme is not offered"
+        "result": "skipped",
+        "reason": "operator declared an honest opt-out via OPENWOP_OPTED_OUT_PROFILES: family.sandbox"
       },
       {
         "id": "openwop.requirement.0168.coherence-not-in-bundle.disjoint-by-construction",
@@ -4774,28 +4738,28 @@
       },
       {
         "id": "openwop.requirement.0173.pack-isolation",
-        "result": "inapplicable",
-        "reason": "profile not advertised in the captured discovery set"
+        "result": "skipped",
+        "reason": "operator declared an honest opt-out via OPENWOP_OPTED_OUT_PROFILES: family.sandbox"
       },
       {
         "id": "openwop.requirement.0173.pack-isolation.isolated-context",
-        "result": "inapplicable",
-        "reason": "profile not advertised in the captured discovery set"
+        "result": "skipped",
+        "reason": "operator declared an honest opt-out via OPENWOP_OPTED_OUT_PROFILES: family.sandbox"
       },
       {
         "id": "openwop.requirement.0173.pack-isolation.memory-cap",
-        "result": "inapplicable",
-        "reason": "profile not advertised in the captured discovery set"
+        "result": "skipped",
+        "reason": "operator declared an honest opt-out via OPENWOP_OPTED_OUT_PROFILES: family.sandbox"
       },
       {
         "id": "openwop.requirement.0173.pack-isolation.seam",
-        "result": "inapplicable",
-        "reason": "profile not advertised in the captured discovery set"
+        "result": "skipped",
+        "reason": "operator declared an honest opt-out via OPENWOP_OPTED_OUT_PROFILES: family.sandbox"
       },
       {
         "id": "openwop.requirement.0173.pack-isolation.timeout",
-        "result": "inapplicable",
-        "reason": "profile not advertised in the captured discovery set"
+        "result": "skipped",
+        "reason": "operator declared an honest opt-out via OPENWOP_OPTED_OUT_PROFILES: family.sandbox"
       },
       {
         "id": "openwop.requirement.0175.legacy-profiles-absent",
@@ -4889,23 +4853,23 @@
       },
       {
         "id": "openwop.requirement.0177.chain-pin-exact.exact-accepted",
-        "result": "inapplicable",
-        "reason": "profile not advertised in the captured discovery set"
+        "result": "skipped",
+        "reason": "operator declared an honest opt-out via OPENWOP_OPTED_OUT_PROFILES: family.workflowChainPacks"
       },
       {
         "id": "openwop.requirement.0177.chain-pin-exact.external-range-refused",
-        "result": "inapplicable",
-        "reason": "profile not advertised in the captured discovery set"
+        "result": "skipped",
+        "reason": "operator declared an honest opt-out via OPENWOP_OPTED_OUT_PROFILES: family.workflowChainPacks"
       },
       {
         "id": "openwop.requirement.0177.chain-pin-exact.range-refused",
-        "result": "inapplicable",
-        "reason": "profile not advertised in the captured discovery set"
+        "result": "skipped",
+        "reason": "operator declared an honest opt-out via OPENWOP_OPTED_OUT_PROFILES: family.workflowChainPacks"
       },
       {
         "id": "openwop.requirement.0177.form-when-reuses-edge-conditions",
-        "result": "inapplicable",
-        "reason": "profile not advertised in the captured discovery set"
+        "result": "skipped",
+        "reason": "operator declared an honest opt-out via OPENWOP_OPTED_OUT_PROFILES: family.forms"
       },
       {
         "id": "openwop.requirement.0177.manifest-ceiling-refused.unbounded",
@@ -4941,6 +4905,11 @@
         "id": "openwop.requirement.0177.peer-dependency-declared.undefined-key",
         "result": "inapplicable",
         "reason": "host does not advertise conformance.seamsProfile: openwop-conformance-seams-v2 — the packs-test publish seam is the only install path the suite can drive (RFC 0168 §C.1)"
+      },
+      {
+        "id": "openwop.requirement.0197.retired-not-emitted",
+        "result": "inapplicable",
+        "reason": "unwitnessable until the first persisted-class retirement row is due (RFC 0197 §A.3 Falsifiability): corpus 2.40.2: 0 persisted-class v2-minor retirement row(s), 0 v2→v2 migration row(s) — no retired member exists for a post-2.N event to carry. Before one does, a scenario would be vacuous, and a row that cannot fail is not a witness. This leg asserts the moment such a row falls due."
       },
       {
         "id": "openwop.requirement.0198.advertised-via-discover",
@@ -5008,9 +4977,59 @@
         "reason": "mcp not advertised at major 2"
       },
       {
+        "id": "openwop.requirement.0199.a2a-auth-required",
+        "result": "inapplicable",
+        "reason": "a2a not advertised at major 2"
+      },
+      {
+        "id": "openwop.requirement.0199.form-mode-no-secret",
+        "result": "inapplicable",
+        "reason": "mcp not advertised at major 2"
+      },
+      {
+        "id": "openwop.requirement.0199.mcp-url-mode",
+        "result": "inapplicable",
+        "reason": "mcp not advertised at major 2"
+      },
+      {
+        "id": "openwop.requirement.0200.id-token-aud",
+        "result": "inapplicable",
+        "reason": "lane oidc trusts https://securetoken.google.com/myndhyve-prod, https://accounts.google.com, and no harness issuer is configured (OPENWOP_TEST_OIDC_ISSUER_URL unset): the suite holds a signing key for none of the host's trust roots, so no token it mints could be accepted. A host claims the harness by listing it in the lane's issuers[] (RFC 0168 §C.1's reading for suite instruments)"
+      },
+      {
         "id": "openwop.requirement.0200.mcp-mount-prm",
         "result": "inapplicable",
         "reason": "no mcp.serverUrls[] — this host mounts no MCP server, so §A.4 does not bind it"
+      },
+      {
+        "id": "openwop.requirement.0201.delivery-signed",
+        "result": "inapplicable",
+        "reason": "webhooks.signatureAlgorithms does not list standard-webhooks-1 (RFC 0201 §A.3) — the companion scheme is not offered"
+      },
+      {
+        "id": "openwop.requirement.0201.endpoint-verification",
+        "result": "inapplicable",
+        "reason": "webhooks.signatureAlgorithms does not list standard-webhooks-1 (RFC 0201 §A.3) — the companion scheme is not offered"
+      },
+      {
+        "id": "openwop.requirement.0201.message-id-stable",
+        "result": "inapplicable",
+        "reason": "webhooks.signatureAlgorithms does not list standard-webhooks-1 (RFC 0201 §A.3) — the companion scheme is not offered"
+      },
+      {
+        "id": "openwop.requirement.0201.opt-in-only",
+        "result": "inapplicable",
+        "reason": "webhooks.signatureAlgorithms does not list standard-webhooks-1 (RFC 0201 §A.3) — the companion scheme is not offered"
+      },
+      {
+        "id": "openwop.requirement.0201.registration-validated",
+        "result": "inapplicable",
+        "reason": "webhooks.signatureAlgorithms does not list standard-webhooks-1 (RFC 0201 §A.3) — the companion scheme is not offered"
+      },
+      {
+        "id": "openwop.requirement.0201.secret-rotation",
+        "result": "inapplicable",
+        "reason": "webhooks.signatureAlgorithms does not list standard-webhooks-1 (RFC 0201 §A.3) — the companion scheme is not offered"
       },
       {
         "id": "openwop.requirement.0204.annotations-derived",
@@ -5036,6 +5055,11 @@
         "id": "openwop.requirement.0205.artifact-url-part-scoped",
         "result": "inapplicable",
         "reason": "no artifact-producing fixture: the host does not advertise conformance-artifact-emit (RFC 0205 register G2)"
+      },
+      {
+        "id": "openwop.requirement.0205.export-alias-equivalence",
+        "result": "inapplicable",
+        "reason": "unwitnessable on the wire (RFC 0205 §C.11 Falsifiability verdict): the equivalence binds a consumer's format-matching logic and the pack author's host.artifactTypes.export call, and neither is on the wire. The advertised spellings are readable, but a mismatch between them is legal, so no host response can falsify the row. No wire witness exists; this row records that the suite reached the requirement, and it is not a pass."
       },
       {
         "id": "openwop.requirement.0205.turn-parts-emitted",
@@ -5098,6 +5122,11 @@
         "reason": "host does not advertise conformance.seamsProfile: openwop-conformance-seams-v2 — the emit-surface seam is the only way the suite can choose an envelope (RFC 0209 Falsifiability)"
       },
       {
+        "id": "openwop.requirement.0209.render-needs-root",
+        "result": "inapplicable",
+        "reason": "unwitnessable by this suite (RFC 0209 §C.9 Falsifiability verdict): a render-side guarantee, and a server-oriented suite cannot observe a renderer. The fold guard the server CAN observe is openwop.requirement.0209.fold-guarded, above. The render half is witnessed as a reference-app client probe (tier: reference-impl, the a2ui-surface-no-code-exec precedent): openwop/openwop-app frontend/react/src/chat/a2ui/__tests__/a2ui-v09-render-needs-root.test.tsx (openwop-app#4121, ADR 0749). Removing the `if (!state.renderable)` guard in frontend/react/src/chat/a2ui/v09/A2uiV09Surface.tsx turns 2 of its 4 cases red. This row records that the suite reached the requirement, and it is not a pass."
+      },
+      {
         "id": "openwop.requirement.0209.taint-sticky",
         "result": "inapplicable",
         "reason": "host does not advertise conformance.seamsProfile: openwop-conformance-seams-v2 — the emit-surface seam is the only way the suite can choose an envelope (RFC 0209 Falsifiability)"
@@ -5141,6 +5170,26 @@
         "id": "openwop.requirement.0213.last-event-id-malformed",
         "result": "inapplicable",
         "reason": "the host accepted Last-Event-ID: abc (the refusal is a SHOULD — recorded, not failed)"
+      },
+      {
+        "id": "openwop.requirement.0214.a2a-push-config-isolation",
+        "result": "inapplicable",
+        "reason": "a2a not advertised at major 2"
+      },
+      {
+        "id": "openwop.requirement.0214.a2a-push-register-ssrf",
+        "result": "inapplicable",
+        "reason": "a2a not advertised at major 2"
+      },
+      {
+        "id": "openwop.requirement.0214.a2a-push-secrets-not-returned",
+        "result": "inapplicable",
+        "reason": "a2a not advertised at major 2"
+      },
+      {
+        "id": "openwop.requirement.0214.a2a-push-unadvertised-refused",
+        "result": "inapplicable",
+        "reason": "a2a not advertised at major 2"
       }
     ]
   },
@@ -5150,7 +5199,7 @@
   "signature": {
     "alg": "ed25519",
     "keyId": "myndhyve-bundle-2026-09b",
-    "sig": "qUue_-MHgzAmZXDoO4MAf_5mrzggFC7KtskBQP1MYIrjT71mnAy5lBc2wCdtb4FeQ0BfC8WFltRKmpA5Ad5nAg",
+    "sig": "I5eY5CBKiB-cxDmy7hnV4jFJBjnvT0-jnaYvMYjG_Q8qv3B7ZsJKIjFuWF9JY3E0FJ26c-gf_OR73KBQiauCAA",
     "over": [
       "witnessSha256",
       "host.build",
