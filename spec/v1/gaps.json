@@ -12634,8 +12634,8 @@
       "surface": "MyndHyve's webhook delivery worker has not been measured against §A or §B. Both motivating instances are openwop-app's.",
       "witness": "unclassified",
       "requirementId": null,
-      "disposition": "externally-gated",
-      "target": "myndhyve-webhook-isolation-cut",
+      "disposition": "closed",
+      "target": null,
       "sources": [
         {
           "file": "RFCS/registers/0215-webhook-delivery-isolation.gaps.md",

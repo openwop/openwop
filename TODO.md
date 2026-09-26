@@ -488,9 +488,11 @@ delivery MUST NOT be degraded by an unrelated subscription's failures.
 - [x] RFC 0215 `Active` 2026-09-25, window waived by steward override of RFC 0147 §A.6
       (suite 2.40.0): the `webhooks.md` text, both invariant rows citing §4.12, and both
       scenarios, sabotage-proved on the v2 reference host.
-- [ ] Publish 2.40.0, then take RFC 0215 to `Accepted` on certified bundles from two hosts, at
-      least one deployed (openwop-app is replacing its batch barrier; MyndHyve is fixing §B;
-      the v2 reference host already passes). The RFC 0156 §B review stays owed.
+- [x] RFC 0215 `Accepted` 2026-09-26 (provisional): 2.40.0 published (#1576); certified
+      witnesses MyndHyve production (#1595, tier-2) and the v2 reference host (#1587, tier-1).
+- [ ] RFC 0215's RFC 0156 §B retrospective review (register row `not-reviewed`). §A.3's per-tenant
+      fair share is unmet on both deployed hosts (a SHOULD; openwop-app needs a tenant_id on
+      delivery rows, ADR 0752).
 
 ## S4 — two defect patterns from my RFC 0158 rows, both found by hosts · **pattern check, no code owed**
 
