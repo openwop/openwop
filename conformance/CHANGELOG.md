@@ -1,5 +1,10 @@
 # `@openwop/openwop-conformance` Changelog
 
+## [2.40.3] — unreleased — the 2.40.3 cycle is open
+
+- **RFC 0215 gap G1 closes in the contract peer.** `@openwop/spec-artifacts`' `spec/v1/gaps.json` records MyndHyve's measurement (openwop#1595), and `spec/v2/core/webhooks.md`'s `Stable` banner cites RFC 0215 now that it is `Accepted`. No scenario change.
+- **Version moved ahead of publication.** `@openwop/openwop-conformance` and its exact-pinned peer `@openwop/spec-artifacts` move to `2.40.3` because `2.40.2` is tagged. Not tagged, not published.
+
 ## [2.40.2] — 2026-09-26 — production bundles stop carrying harness-issuer blocked rows, and a colocated companion is marked
 
 - **RFC 0216: `--as-colocated-companion`, and a companion witnesses only the harness-trust-anchor rows.** The flag marks a v3 bundle `host.deployment: "colocated-companion"`. It is refused without `--certify` and bundle version 3. `witnessDigest` takes the marker into the preimage when present (`{ rows, relaxations?, deployment }`), so a signed companion cannot shed it: `--verify` then refuses with `witness-digest`. New coherence scenario `v2-colocated-companion` (7 legs, one id each) drives `scripts/check-harness-trust-anchors.mjs` and `scripts/check-companion-pairing.mjs` on tmpdir fixtures signed by the suite's own `signBundleV3`. Five sabotages were each run red.
