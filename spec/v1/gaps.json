@@ -12729,6 +12729,125 @@
       ]
     },
     {
+      "id": "openwop.gap.0216.1",
+      "rfc": "0216",
+      "local": "G1",
+      "section": "§Motivation 3 / Unresolved question 6",
+      "surface": "The committed companion `evidence/v2-host-bundles/openwop-app-colocated-companion.json` is unmarked, records `host.build.kind: \"commit\"` rather than the image digest its matrix note cites, and is signed with a throwaway key published only in its own loopback discovery. `check-accepted-predicate` counts all of its `executed-pass` rows today, including four public-surface RFC 0200 rows it could not have witnessed through the served front. No Accepted RFC rests on it alone (measured: the predicate stays green with it removed), and RFC 0213's `Updated` field cites it as a second witness.",
+      "witness": "unclassified",
+      "requirementId": null,
+      "disposition": "transferred",
+      "target": "rfc-0216",
+      "sources": [
+        {
+          "file": "RFCS/registers/0216-colocated-witness-for-harness-trust-anchor-rows.gaps.md",
+          "token": "G1"
+        }
+      ]
+    },
+    {
+      "id": "openwop.gap.0216.2",
+      "rfc": "0216",
+      "local": "G2",
+      "section": "§C.10(e) / Unresolved question 1",
+      "surface": "Whether a companion must be signed under a key the production host publishes (option A, this draft), or whether P's signature over the cited `companionWitnessSha256` is enough (option B, incorporation by digest).",
+      "witness": "unclassified",
+      "requirementId": null,
+      "disposition": "transferred",
+      "target": "rfc-0216",
+      "sources": [
+        {
+          "file": "RFCS/registers/0216-colocated-witness-for-harness-trust-anchor-rows.gaps.md",
+          "token": "G2"
+        }
+      ]
+    },
+    {
+      "id": "openwop.gap.0216.3",
+      "rfc": "0216",
+      "local": "G3",
+      "section": "§C.10(g) / Unresolved question 4",
+      "surface": "Discovery equivalence catches only the configuration discovery exposes. Two instances of one image can differ by an environment flag that never appears in discovery. Whether to require a declared configuration diff is undecided, and the substitutable set (`oidc` lane `issuers` only) has not been measured against a real production/companion pair of documents.",
+      "witness": "unclassified",
+      "requirementId": null,
+      "disposition": "transferred",
+      "target": "rfc-0216",
+      "sources": [
+        {
+          "file": "RFCS/registers/0216-colocated-witness-for-harness-trust-anchor-rows.gaps.md",
+          "token": "G3"
+        }
+      ]
+    },
+    {
+      "id": "openwop.gap.0216.4",
+      "rfc": "0216",
+      "local": "G4",
+      "section": "§Implementation notes",
+      "surface": "openwop-app does not yet serve `implementation.build`, and advertises no `oidc` lane at v2 in production. Both need a production deploy, and deploys currently wait on the steward's `gcloud` re-auth.",
+      "witness": "unclassified",
+      "requirementId": null,
+      "disposition": "externally-gated",
+      "target": "openwop-app-production-deploy",
+      "sources": [
+        {
+          "file": "RFCS/registers/0216-colocated-witness-for-harness-trust-anchor-rows.gaps.md",
+          "token": "G4"
+        }
+      ]
+    },
+    {
+      "id": "openwop.gap.0216.5",
+      "rfc": "0216",
+      "local": "G5",
+      "section": "§Motivation 2",
+      "surface": "`auth-oidc-user-bearer.test.ts` also reads `OPENWOP_TEST_OIDC_ISSUER_URL`, and is not on the list.",
+      "witness": "unclassified",
+      "requirementId": null,
+      "disposition": "closed",
+      "target": null,
+      "sources": [
+        {
+          "file": "RFCS/registers/0216-colocated-witness-for-harness-trust-anchor-rows.gaps.md",
+          "token": "G5"
+        }
+      ]
+    },
+    {
+      "id": "openwop.gap.0216.6",
+      "rfc": "0216",
+      "local": "G6",
+      "section": "§D.13",
+      "surface": "`implementation.build` is an operator's claim on the served surface, not an attestation. A container cannot contain its own digest. Binding the served digest cryptographically (SLSA provenance, a platform attestation) would remove the residual trust §D.13 names.",
+      "witness": "unclassified",
+      "requirementId": null,
+      "disposition": "transferred",
+      "target": "rfc-0216",
+      "sources": [
+        {
+          "file": "RFCS/registers/0216-colocated-witness-for-harness-trust-anchor-rows.gaps.md",
+          "token": "G6"
+        }
+      ]
+    },
+    {
+      "id": "openwop.gap.0216.7",
+      "rfc": "0216",
+      "local": "G7",
+      "section": "§A.1 / Unresolved question 5",
+      "surface": "The premise that a production host SHOULD NOT trust a harness issuer is an openwop-app ADR (0745 D4), not a corpus statement.",
+      "witness": "unclassified",
+      "requirementId": null,
+      "disposition": "transferred",
+      "target": "rfc-0216",
+      "sources": [
+        {
+          "file": "RFCS/registers/0216-colocated-witness-for-harness-trust-anchor-rows.gaps.md",
+          "token": "G7"
+        }
+      ]
+    },
+    {
       "id": "openwop.gap.spec.a2a-integration.g1",
       "rfc": "0152",
       "local": "G1",

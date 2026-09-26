@@ -1,5 +1,10 @@
 # `@openwop/openwop-conformance` Changelog
 
+## [2.40.1] — 2026-09-26 — RFC 0216 filed `Draft`; its gap rows enter the contract peer
+
+- **RFC 0216's seven gap rows are in `@openwop/spec-artifacts`' `spec/v1/gaps.json`.** RFC 0216 (the `witnessed-colocated` disposition for harness-trust-anchor rows) is `Draft`, so nothing it proposes binds and no scenario, schema or suite behaviour changes.
+- **Version moved ahead of publication.** `@openwop/openwop-conformance` and its exact-pinned peer `@openwop/spec-artifacts` move to `2.40.1` because `2.40.0` is published and the peer's contents changed. Not tagged, not published.
+
 ## [2.40.0] — 2026-09-26 — RFC 0215: one subscription's dead receiver cannot hold another's delivery, and unregistering stops the retries
 
 - **Two new scenarios, gated on `webhooks` (RFC 0215, `Active` 2026-09-25).** `v2-webhook-delivery-isolation` (`openwop.requirement.0215.no-head-of-line`) holds 8 subscriptions' attempts unanswered, then checks that a ninth subscription's attempt still starts. The 8 filter `run.started` and the ninth `run.completed` of a 2 s `conformance-delay` run, so contention exists before the healthy delivery falls due and the host's dispatch order cannot decide the row. It fails when the held attempts were still open at the due time and the healthy one waited for the host to release one. It records `partial-witness` when the host's own delivery timeout closed them first. `v2-webhook-unregister-stops-delivery` (`openwop.requirement.0215.unregister-stops-delivery`) answers `500` to two subscriptions on one run, unregisters one after its first attempt, and fails if that one is attempted more than 5 s after the `204`. It passes only when the other, the control, was retried after that point: a silence counts only when a retry demonstrably would have come. Sabotage on the v2 reference host: a sequential worker and a 5-slot pool each fail the first scenario, and an attempt that falls back to a cached subscription after the delete fails the second.

@@ -144,13 +144,13 @@
   },
   "versions": {
     "source": "conformance/package.json, CHANGELOG.md",
-    "conformanceSuite": "2.40.0",
+    "conformanceSuite": "2.40.1",
     "corpusRelease": "2.40.0",
     "corpusReleaseDate": "2026-09-26"
   },
   "risks": {
     "source": "RFCS/registers/*.risks.md + RFCS/*.risks.md (RFC 0166 tokens)",
-    "rowsScanned": 440,
+    "rowsScanned": 446,
     "openCriticalOrHigh": [
       {
         "rfc": "0058",
