@@ -7,7 +7,7 @@
 | **Status**        | `Draft`                                                         |
 | **Author(s)**     | David Tufts (@davidscotttufts)                                  |
 | **Created**       | 2026-09-24                                                      |
-| **Updated**       | 2026-09-24                                                      |
+| **Updated**       | 2026-09-25 — prior-art survey done (§Prior art; gap G6 closed) and the availability invariant given a threat-model home (`threat-model-secret-leakage.md` §4.12; gap G3 closed). **The public comment window runs in full, to 2026-10-01** (RFC 0147 §A.6: an isolation RFC takes the whole window). · 2026-09-24 — filed `Draft` |
 | **Affects**       | `spec/v2/core/webhooks.md` §Durability (two new bullets) and §Surfaces (one sentence on `unregisterWebhook`) · `SECURITY/invariants.yaml` (+2, proposed below; added at `Active`) · conformance (2 new scenarios, `webhooks`-gated) |
 | **Compatibility** | `additive` — a new normative requirement on a previously undefined behavior (`COMPATIBILITY.md` §4). No wire, schema, error-code or event change |
 | **Supersedes**    | —                                                               |
@@ -76,8 +76,8 @@ The last sentence resolves the one interaction with §Durability: "route an exha
 
 | id | tier | severity | threat model | test |
 | --- | --- | --- | --- | --- |
-| `webhook-delivery-isolation` | protocol | high | none fits — see gap register G3 | `v2-webhook-delivery-isolation.test.ts` (planned) |
-| `webhook-unregister-stops-delivery` | protocol | high | `SECURITY/threat-model-secret-leakage.md` (signed run data to a withdrawn destination) | `v2-webhook-unregister-stops-delivery.test.ts` (planned) |
+| `webhook-delivery-isolation` | protocol | high | `SECURITY/threat-model-secret-leakage.md` §4.12 (starvation by registration; gap register G3) | `v2-webhook-delivery-isolation.test.ts` (planned) |
+| `webhook-unregister-stops-delivery` | protocol | high | `SECURITY/threat-model-secret-leakage.md` §4.12 (signed run data to a withdrawn destination) | `v2-webhook-unregister-stops-delivery.test.ts` (planned) |
 
 **Decision on TODO S3's question** ("a new invariant beside `webhook-cross-tenant-isolation`, or a §Durability clause?"): **both, for different reasons.** The normative text belongs in §Durability, because it is an obligation of the delivery surface, which RFC 0173 §B already made durable. The invariant rows exist because each failure crosses a trust boundary: §A across tenants, §B across the owner's withdrawal. The invariant catalogue is where the corpus records properties an attacker would target. Neither row is added to `invariants.yaml` at `Draft`, because a row without a runnable test would count against the unwitnessable ratchet for as long as this RFC is in comment.
 
@@ -125,8 +125,8 @@ A public front (`OPENWOP_WEBHOOK_RECEIVER_URL`) may time out a held request itse
 
 ## Unresolved questions
 
-1. **Is 8 the right floor?** It is chosen to exceed the one measured claim batch (openwop-app, 5), so the scenario reaches the case that host's own test does not. It is not derived from any upstream standard, and hosted webhook services' published designs have not been surveyed for a number (gap register G6).
-2. **Should §B also cover a subscription whose `url` is later rejected at delivery time by §Egress?** Today that is a delivery failure retried under the policy. It is arguably the same "destination no longer valid" case, and it is scoped out here.
+1. **Is 8 the right floor?** It is chosen to exceed the one measured claim batch (openwop-app, 5), so the scenario reaches the case that host's own test does not. The prior-art survey (§Prior art) found no published number to derive it from. The services that state an isolation design state it as a *mechanism* (a work unit per endpoint, per-endpoint concurrency caps, circuit breakers), and that mechanism meets any floor. So 8 stays a testability floor chosen from measurement, and it remains open to comment until `Active`.
+2. **Should §B also cover a subscription whose `url` is later rejected at delivery time by §Egress?** Today that is a delivery failure retried under the policy. It is arguably the same "destination no longer valid" case, and it is scoped out here. The receiver-side version of the question has prior art: the Standard Webhooks specification says a sender receiving `410 Gone` "should disable the webhook endpoint, and stop sending it messages". A `410` rule would be a separate RFC, because it changes what a *delivery* response means, not what unregistering does.
 3. **Should the §B grace be 5 s?** It must cover an attempt the host had already started when it answered `204`. A host with a 30 s delivery timeout may still be in the middle of an earlier attempt, but that attempt's request has already *arrived* at the receiver, and the scenario keys on arrivals. So 5 s covers network transit only.
 4. **Should the corpus ever bound first-attempt latency?** §A is deliberately an isolation rule, not an SLO (Alternative 2, gap register G2). openwop-app's WHD-1 retries were each due within seconds and not claimed for minutes. That is covered by §A when other subscribers caused it, and uncovered when an idle queue simply polled slowly.
 
@@ -145,10 +145,28 @@ A public front (`OPENWOP_WEBHOOK_RECEIVER_URL`) may time out a held request itse
 - [ ] CHANGELOG entry under the suite minor that ships the scenarios.
 - [ ] Two hosts' certified bundles record both rows `executed-pass` (openwop-app; MyndHyve per G1).
 
+## Prior art
+
+Surveyed 2026-09-25 (gap register G6), from each system's own documentation.
+
+| System | Isolation between endpoints (§A) | Deleting an endpoint (§B) |
+| --- | --- | --- |
+| [Standard Webhooks](https://github.com/standard-webhooks/standard-webhooks/blob/main/spec/standard-webhooks.md) (the scheme RFC 0201 adopts) | Silent. It recommends a 15–30 s request timeout and a multi-day exponential retry schedule with jitter, but says nothing about one endpoint's attempts delaying another's. | Silent on pending attempts. A `410 Gone` response means the sender "should disable the webhook endpoint, and stop sending it messages". |
+| [Stripe](https://docs.stripe.com/webhooks) | Not stated. | "If your destination has been disabled or deleted when we attempt a retry, we prevent future retries of that event." The event is dropped, not dead-lettered. |
+| [Svix](https://docs.svix.com/retries) | Stated as a design principle ([fan-out](https://www.svix.com/resources/glossary/webhook-fanout/)): "one queued work item per endpoint per event, rather than a worker iterating over subscribers", so "one slow or broken subscriber cannot hold up the rest", with "per-endpoint concurrency and rate limits, so one customer's burst cannot starve another's". No number. | "If an endpoint is removed or disabled delivery attempts to the endpoint will be disabled as well." |
+| [Convoy](https://www.getconvoy.io/blog/circuit-breaker-in-golang) | Names the failure: "zombie endpoints … clog up your queues, create back pressure, and delay event delivery to legitimate webhook endpoints". Its control is a per-endpoint circuit breaker with configurable thresholds. No fixed number. | Not surveyed. |
+| [Hookdeck](https://hookdeck.com/docs/delivery-groups) | Per-tenant sub-queues within one destination ("delivery groups"), rotated so that a burst from one group "does not delay the others". "Idle groups do not reserve capacity." That is the shape of §A.3's fair-share SHOULD. | Not surveyed. |
+| [Shopify](https://shopify.dev/docs/apps/build/webhooks/troubleshooting-webhooks) | Not stated. 5 s response timeout. | Removes a subscription after persistent failure. "Removed webhook subscriptions won't receive any deliveries unless you create them again." Silent on attempts already queued. |
+
+**What the survey changes.**
+- **§B is established practice.** Both hosted senders that document the case (Stripe, Svix) stop pending retries when an endpoint is deleted. Stripe drops the undelivered events rather than dead-lettering them, which is the choice §B makes (Alternative 4). §B stays as written.
+- **§A is established design, not established contract.** Every service that describes its isolation describes a mechanism. None publishes a guarantee a subscriber could test, and none gives a number. So nothing here contradicts 8, and nothing derives it (Unresolved question 1). The survey supports the lane design in §Implementation notes, which Svix describes almost word for word, and it supports keeping §A a head-of-line rule rather than a latency bound (Alternative 2). No surveyed service promises a first-attempt latency either.
+- **Hookdeck's delivery groups are a working instance of §A.3**, which shows that the fair-share SHOULD has a known implementation.
+
 ## References
 
 - openwop-app `docs/steward/TODO.md` `WHD-1` (#4052), `WHD-3`, `WHD-16` (#4083), at `020867cbb`.
 - openwop `TODO.md` §S3 (steward follow-ups from the 2026-09-19 gap-closure program).
 - `spec/v2/core/webhooks.md` §Surfaces, §Durability; `spec/v1/webhooks.md` §Unregister.
 - RFC 0093 (webhook delivery hardening; `webhook-cross-tenant-isolation`), RFC 0173 §B (durable delivery binds with the surface), RFC 0188 (delivery dead-letter read route).
-- Prior art: not surveyed at `Draft` (gap register G6).
+- Prior art: §Prior art (surveyed 2026-09-25; gap register G6).

@@ -477,8 +477,11 @@ delivery MUST NOT be degraded by an unrelated subscription's failures.
 - [x] Decide invariant vs §Durability clause: **both**. The text goes in §Durability, and two
       invariant rows (`webhook-delivery-isolation`, `webhook-unregister-stops-delivery`) are
       filed at `Active`. Reasons are in RFC 0215 §"Proposed invariants".
-- [ ] Take RFC 0215 to `Active`: comment window, the prior-art survey (its G6), and a threat-model
-      home for the availability invariant (its G3).
+- [x] Prior-art survey (G6) and a threat-model home for the availability invariant (G3), both
+      done 2026-09-25: RFC 0215 §Prior art; `threat-model-secret-leakage.md` §4.12.
+- [ ] Take RFC 0215 to `Active` once the comment window closes on **2026-10-01**. At the flip,
+      add the two invariant rows citing §4.12, land the `webhooks.md` text, and write the two
+      scenarios.
 
 ## S4 — two defect patterns from my RFC 0158 rows, both found by hosts · **pattern check, no code owed**
 
