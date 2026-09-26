@@ -9179,7 +9179,7 @@
     {
       "id": "openwop.it.context-budget-transcript-bound.bounds-the-per-turn-transcript-to-transcripttokenbudget-with-an-internally-consi",
       "file": "context-budget-transcript-bound.test.ts",
-      "line": 135,
+      "line": 89,
       "title": "bounds the per-turn transcript to transcriptTokenBudget with an internally-consistent, recent-tail accounting",
       "explicitId": "openwop.it.context-budget-transcript-bound.bounds-the-per-turn-transcript-to-transcripttokenbudget-with-an-internally-consi",
       "citations": [
@@ -9189,42 +9189,29 @@
         },
         {
           "section": "RFC 0111",
-          "requirement": "POST /v1/runs MUST return a runId"
+          "requirement": null,
+          "interpolated": true
+        },
+        {
+          "section": "RFC 0111",
+          "requirement": "the create response MUST carry a runId"
         },
         {
           "section": "host-sample-test-seams.md §14",
-          "requirement": "the transcript-window seam MUST return 200 for a valid iteration"
+          "requirement": null,
+          "interpolated": true
         },
         {
           "section": "host-sample-test-seams.md §14",
-          "requirement": "the seam MUST return { tokenCounter, tokenCount, eventIds, summarizedRanges }"
+          "requirement": null,
+          "interpolated": true
         },
         {
           "section": "host-sample-test-seams.md §14",
           "requirement": "a wired transcript-window seam MUST report at least one orchestrator iteration"
         },
         {
-          "section": "RFC 0111",
-          "requirement": null,
-          "interpolated": true
-        },
-        {
-          "section": "RFC 0111",
-          "requirement": null,
-          "interpolated": true
-        },
-        {
-          "section": "RFC 0111 §\"Conformance seam\"",
-          "requirement": null,
-          "interpolated": true
-        },
-        {
-          "section": "RFC 0111 §\"Conformance seam\"",
-          "requirement": null,
-          "interpolated": true
-        },
-        {
-          "section": "RFC 0111",
+          "section": "RFC 0111 §\"Conformance seam\" (b)/(c), host-sample-test-seams.md §14",
           "requirement": null,
           "interpolated": true
         },
@@ -9238,13 +9225,18 @@
     {
       "id": "openwop.it.context-summarization-replay.replay-reuses-the-recorded-context-summarized-summaryref-never-re-summarizes",
       "file": "context-summarization-replay.test.ts",
-      "line": 99,
+      "line": 106,
       "title": "replay reuses the recorded context.summarized summaryRef — never re-summarizes",
       "explicitId": "openwop.it.context-summarization-replay.replay-reuses-the-recorded-context-summarized-summaryref-never-re-summarizes",
       "citations": [
         {
-          "section": "rest-endpoints.md POST /v1/runs/{runId}:fork",
-          "requirement": "POST /v1/runs MUST return a runId"
+          "section": "RFC 0111",
+          "requirement": null,
+          "interpolated": true
+        },
+        {
+          "section": "rest-endpoints.md POST /v1/runs",
+          "requirement": "the create response MUST carry a runId"
         },
         {
           "section": "rest-endpoints.md POST /v1/runs/{runId}:fork",
@@ -9257,6 +9249,14 @@
         {
           "section": "RFC 0111 §\"Replay determinism\"",
           "requirement": "a replay fork MUST reuse the recorded context.summarized summaryRef (never re-summarize to a different transcript)"
+        },
+        {
+          "section": "RFC 0111 §\"Replay determinism\"",
+          "requirement": "the source run summarized, so its transcript windows MUST carry the summary text it fed"
+        },
+        {
+          "section": "RFC 0111 §\"Replay determinism\"",
+          "requirement": "the replay MUST feed the model the recorded summary text, byte for byte — never a re-summarization"
         }
       ]
     },

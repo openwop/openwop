@@ -3,7 +3,7 @@
   "counts": {
     "files": 561,
     "v1": 449,
-    "v2": 121
+    "v2": 123
   },
   "majors": {
     "a2a-1-0-agent-card.test.ts": [
@@ -410,10 +410,12 @@
       1
     ],
     "context-budget-transcript-bound.test.ts": [
-      1
+      1,
+      2
     ],
     "context-summarization-replay.test.ts": [
-      1
+      1,
+      2
     ],
     "contract-provenance.test.ts": [
       1

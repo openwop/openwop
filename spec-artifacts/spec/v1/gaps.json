@@ -4420,11 +4420,11 @@
       "rfc": "0111",
       "local": "G5",
       "section": "Conformance",
-      "surface": "No non-steward host advertises `contextBudget` yet",
+      "surface": "No host with a real orchestrator loop advertises `contextBudget` yet",
       "witness": "unclassified",
       "requirementId": null,
       "disposition": "externally-gated",
-      "target": "non-steward-host",
+      "target": "real-orchestrator-host",
       "sources": [
         {
           "file": "RFCS/registers/0111-context-economy.gaps.md",

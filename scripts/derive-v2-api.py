@@ -210,6 +210,25 @@ def v2_openapi_and_seams():
         'responses': {'200': {'description': 'The credential is revoked.', 'content': {'application/json': {'schema': {'type': 'object', 'additionalProperties': False, 'required': ['revoked'],
                 'properties': {'revoked': {'type': 'boolean', 'const': True}, 'lane': {'type': 'string'}}}}}},
             '400': {'$ref': '#/components/responses/ValidationError'}, '401': {'$ref': '#/components/responses/Unauthenticated'}, '404': {'$ref': '#/components/responses/NotFound'}}}}
+    # RFC 0111 (host-sample-test-seams.md §14; corrected 2026-09-26, suite 2.41.0): the transcript-window accounting seam,
+    # additive at major 2. `entries[]` is the text the host fed; REQUIRED for tokenCounter `chars`, the only recountable unit.
+    seams['paths']['/conformance/seams/sample/agent/transcript-window'] = {'get': {'tags': ['Seams'], 'operationId': 'getTranscriptWindow',
+        'summary': "The host's own accounting of what it fed the model on one orchestrator turn — RFC 0111 witness",
+        'description': 'The orchestrator transcript a host assembles each iteration is host-internal and never crosses the wire. This seam returns what the host fed the model on turn `iteration` of `runId`: `tokenCount` in the advertised `contextBudget.tokenCounter` unit (MUST be ≤ `transcriptTokenBudget`), `eventIds` (the verbatim recent tail, in event-log order), `summarizedRanges`, and `entries[] { eventId, rendered }` — the exact text fed per item, REQUIRED when `tokenCounter` is `chars` so the suite can sum the rendered Unicode code points and require it to equal `tokenCount`. A summary substitution\'s entry names its `context.summarized` event and renders the summary text. Served in test mode only; `rendered` MUST NOT carry secret material (SR-1). The ceiling is advertise-and-attest: the seam proves the declared accounting is consistent and bounded, not that nothing else reached the model. A turn past the run\'s last answers `400`/`422`; an unwired seam answers `404`/`405`.',
+        'parameters': [
+            {'name': 'runId', 'in': 'query', 'required': True, 'schema': {'$ref': '../schemas/v2/ids.schema.json#/$defs/runId'}},
+            {'name': 'iteration', 'in': 'query', 'required': True, 'description': 'The 1-based `runOrchestrator.decided.iteration` of the turn.', 'schema': {'type': 'integer', 'minimum': 1}}],
+        'responses': {'200': {'description': "The host's accounting for that turn.", 'content': {'application/json': {'schema': {'type': 'object', 'additionalProperties': False,
+            'required': ['tokenCounter', 'tokenCount', 'eventIds', 'summarizedRanges'],
+            'properties': {
+                'tokenCounter': {'type': 'string', 'enum': ['o200k_base', 'cl100k_base', 'chars', 'host-defined']},
+                'tokenCount': {'type': 'integer', 'minimum': 0},
+                'eventIds': {'type': 'array', 'items': {'type': 'string', 'minLength': 1}},
+                'summarizedRanges': {'type': 'array', 'items': {'type': 'object', 'additionalProperties': False, 'required': ['summaryRef', 'replacedTurns'],
+                    'properties': {'summaryRef': {'type': 'string', 'minLength': 1}, 'replacedTurns': {'type': 'array', 'items': {'type': 'string', 'minLength': 1}}}}},
+                'entries': {'type': 'array', 'items': {'type': 'object', 'additionalProperties': False, 'required': ['eventId', 'rendered'],
+                    'properties': {'eventId': {'type': 'string', 'minLength': 1}, 'rendered': {'type': 'string'}}}}}}}}},
+            '400': {'$ref': '#/components/responses/ValidationError'}, '401': {'$ref': '#/components/responses/Unauthenticated'}, '404': {'$ref': '#/components/responses/NotFound'}}}}
     # RFC 0173 read surfaces + hostEvents default address
     paths['/host/effect-seams'] = {'get': {'tags': ['host'], 'operationId': 'getEffectSeamManifest', 'summary': 'The host-declared effect-seam manifest (RFC 0173 §C)', 'description': 'Every outbound effect seam replay suppression covers. A seam omitted here is invisible to the suite; the RFC 0140 R5 audit is the control.', 'responses': {'200': {'description': 'The manifest.', 'content': {'application/json': {'schema': {'$ref': '../../schemas/v2/effect-seam-manifest.schema.json'}}}}, '401': {'$ref': '#/components/responses/Unauthenticated'}}}}
     paths['/runs/{runId}/compensation'] = {'parameters': [{'$ref': '#/components/parameters/RunId'}], 'get': {'tags': ['runs'], 'operationId': 'getRunCompensation', 'summary': 'Compensation plan and attempts for a run (RFC 0173 §C.1)', 'description': 'The read projection that makes compensation a core obligation with a deployed-wire witness (RFC 0151 G9 / RFC 0173 §B).', 'responses': {'200': {'description': 'The projection.', 'content': {'application/json': {'schema': {'$ref': '../../schemas/v2/compensation-projection.schema.json'}}}}, '404': {'$ref': '#/components/responses/NotFound'}}}}

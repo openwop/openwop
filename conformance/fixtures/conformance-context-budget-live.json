@@ -1,0 +1,44 @@
+{
+  "id": "conformance-context-budget-live",
+  "name": "Conformance: Context-Budget Live Orchestrator (RFC 0111)",
+  "version": "1.0",
+  "description": "RFC 0111, the witness fixture (suite 2.41.0). A `core.orchestrator.supervisor` loop driven by the host's LIVE model — no `mockDecisions`, `mockDispatchPlan` or `mockPendingDecision` — because RFC 0111 §Scope forbids a mock supervisor from advertising `contextBudget`. The supervisor receives `config.instructions` as its objective and dispatches `conformance-noop` until it terminates, bounded by `settings.maxLoopbackIterations`. Each iteration's transcript grows; a host advertising `multiAgent.executionModel.contextBudget` reports what it fed the model through `GET /v1/host/sample/agent/transcript-window` (`host-sample-test-seams.md` §14), including `entries[] { eventId, rendered }`. For a full witness the run MUST put the budget under pressure (an older eligible event evicted or summarized); a host whose advertised budget this run never reaches records `partial-witness`. Hosts SHOULD run the live supervisor at temperature 0 with structured output so the decision shape is stable; the scenario asserts the host's accounting, never the model's words.",
+  "nodes": [
+    {
+      "id": "supervisor",
+      "typeId": "core.orchestrator.supervisor",
+      "name": "Supervisor",
+      "position": { "x": 0, "y": 0 },
+      "config": {
+        "instructions": "You are testing a transcript budget. Dispatch the worker conformance-noop once per turn. After it has completed six times, terminate with reason goal-reached. Do not ask the user anything."
+      },
+      "inputs": {},
+      "agent": {
+        "agentId": "core.conformance.supervisor",
+        "modelClass": "reasoning"
+      }
+    },
+    {
+      "id": "dispatch",
+      "typeId": "core.dispatch",
+      "name": "Dispatch",
+      "position": { "x": 200, "y": 0 },
+      "config": {
+        "askUserRouting": "auto",
+        "workerDispatchModel": "child-run",
+        "fanOutPolicy": "sequential"
+      },
+      "inputs": {}
+    }
+  ],
+  "edges": [
+    { "id": "e1", "sourceNodeId": "supervisor", "targetNodeId": "dispatch" },
+    { "id": "e2", "sourceNodeId": "dispatch", "targetNodeId": "supervisor" }
+  ],
+  "triggers": [
+    { "id": "manual", "type": "manual", "enabled": true }
+  ],
+  "variables": [],
+  "metadata": { "tags": ["conformance", "multi-agent", "orchestrator", "context-budget", "rfc-0111", "live-model"] },
+  "settings": { "timeout": 300000, "maxLoopbackIterations": 8 }
+}

@@ -1155,6 +1155,100 @@ paths:
           $ref: '#/components/responses/Unauthenticated'
         '404':
           $ref: '#/components/responses/NotFound'
+  /conformance/seams/sample/agent/transcript-window:
+    get:
+      tags:
+      - Seams
+      operationId: getTranscriptWindow
+      summary: The host's own accounting of what it fed the model on one orchestrator turn — RFC 0111 witness
+      description: 'The orchestrator transcript a host assembles each iteration is host-internal and never crosses the wire.
+        This seam returns what the host fed the model on turn `iteration` of `runId`: `tokenCount` in the advertised `contextBudget.tokenCounter`
+        unit (MUST be ≤ `transcriptTokenBudget`), `eventIds` (the verbatim recent tail, in event-log order), `summarizedRanges`,
+        and `entries[] { eventId, rendered }` — the exact text fed per item, REQUIRED when `tokenCounter` is `chars` so the
+        suite can sum the rendered Unicode code points and require it to equal `tokenCount`. A summary substitution''s entry
+        names its `context.summarized` event and renders the summary text. Served in test mode only; `rendered` MUST NOT carry
+        secret material (SR-1). The ceiling is advertise-and-attest: the seam proves the declared accounting is consistent
+        and bounded, not that nothing else reached the model. A turn past the run''s last answers `400`/`422`; an unwired
+        seam answers `404`/`405`.'
+      parameters:
+      - name: runId
+        in: query
+        required: true
+        schema:
+          $ref: ../schemas/v2/ids.schema.json#/$defs/runId
+      - name: iteration
+        in: query
+        required: true
+        description: The 1-based `runOrchestrator.decided.iteration` of the turn.
+        schema:
+          type: integer
+          minimum: 1
+      responses:
+        '200':
+          description: The host's accounting for that turn.
+          content:
+            application/json:
+              schema:
+                type: object
+                additionalProperties: false
+                required:
+                - tokenCounter
+                - tokenCount
+                - eventIds
+                - summarizedRanges
+                properties:
+                  tokenCounter:
+                    type: string
+                    enum:
+                    - o200k_base
+                    - cl100k_base
+                    - chars
+                    - host-defined
+                  tokenCount:
+                    type: integer
+                    minimum: 0
+                  eventIds:
+                    type: array
+                    items:
+                      type: string
+                      minLength: 1
+                  summarizedRanges:
+                    type: array
+                    items:
+                      type: object
+                      additionalProperties: false
+                      required:
+                      - summaryRef
+                      - replacedTurns
+                      properties:
+                        summaryRef:
+                          type: string
+                          minLength: 1
+                        replacedTurns:
+                          type: array
+                          items:
+                            type: string
+                            minLength: 1
+                  entries:
+                    type: array
+                    items:
+                      type: object
+                      additionalProperties: false
+                      required:
+                      - eventId
+                      - rendered
+                      properties:
+                        eventId:
+                          type: string
+                          minLength: 1
+                        rendered:
+                          type: string
+        '400':
+          $ref: '#/components/responses/ValidationError'
+        '401':
+          $ref: '#/components/responses/Unauthenticated'
+        '404':
+          $ref: '#/components/responses/NotFound'
 components:
   securitySchemes:
     ApiKeyAuth:
