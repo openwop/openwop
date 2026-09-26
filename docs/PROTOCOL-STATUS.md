@@ -28,7 +28,7 @@
 | Python SDK `openwop-client` | 1.7.0 | openwop-sdks `sdk/python/pyproject.toml` | as above |
 | Go SDK `github.com/openwop/openwop-sdks/go` | 1.5.0 | openwop-sdks `go/CHANGELOG.md` head (tag-versioned; no version file) | as above |
 | openwop-sdks corpus pin | v2.38.0 | openwop-sdks `CORPUS_TAG` | bumped only by a re-vendor PR (RFC 0176 sectionE.1) |
-| CLI `@openwop/cli` | 1.0.1 | openwop-cli `package.json` | speaks the v1 wire directly; frozen v1-only (RFC 0167 sectionF, decided 2026-09-03) |
+| CLI `@openwop/cli` | 1.0.1 | openwop-cli `package.json` | speaks the wire directly; negotiates major 2 since 1.0.0 (the v1-only 0.18.x line is frozen on branch `cli-v1-frozen`) |
 | Registry `registryVersion` / `protocolVersion` | 1.0.0 / 1.0 | openwop-registry `.well-known/openwop-registry.json` | RFC 0172 sectionB #18; versioned by tree at v2 (RFC 0177 sectionA.3) |
 | openwop-registry corpus pin | v2.34.0 | openwop-registry `CORPUS_TAG` | as the SDK pin |
 | openwop-app corpus pin / suite pin | v2.38.0 / ^2.38.0 | openwop-app `schemas/CORPUS_TAG`, `backend/typescript/package.json` | tier-1 host; both must agree (RFC 0176 sectionE.1) |

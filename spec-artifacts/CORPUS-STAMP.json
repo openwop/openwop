@@ -230,7 +230,7 @@
     "spec/v2/core/identity.md": "d15667552019f64316be9b65c6e5696c10766581405f05da3907fb47f36e6459",
     "spec/v2/core/interop.md": "9a6b37e07c0235856199ace6b3a84f592fa5903fcf6c442f8a18f4d6b6aa5525",
     "spec/v2/core/interrupt.md": "1dc94f7c791dd5a547b1abafde6a8a76acd3d2993d288057f302f57911dc83bf",
-    "spec/v2/core/node-pack-runtimes.md": "c435ad506f618831b6c0a9fd9150d83a5dc6caa1e3d755b949af2ff8949f1140",
+    "spec/v2/core/node-pack-runtimes.md": "b6de99daf90a72f08ce0e311e63988198964f99346591e466529d9e95dc4b6d9",
     "spec/v2/core/oauth.md": "38ec0e70d46f328430138559095f261ae4fcd3d32c2d994a2d3e630a062c0e6c",
     "spec/v2/core/overview.md": "8f9d4a68b6185664e40d226cb82d9a9270a6c6630e3db59bddff300be781947d",
     "spec/v2/core/packs.md": "91cd577b4a636c1587ef78742e583a203244b8508b289b01a18a8ef2ef0a9b3e",
@@ -298,5 +298,5 @@
     "spec/v2/retention-floors.json": "eaf3722d95c79947af1d4269ef85117e126518c588cfcf1a2b21b97269f51624",
     "spec/v2/surface-baseline.json": "b0c9d00354358f46f032b26d889d7fc4a71765833d2f1f21a6d822a5868780ad"
   },
-  "corpusCommit": "b65e7e2654dcff30920c7dac4b80cb69686a0d0e"
+  "corpusCommit": "368811ae96c015481c234bce9d3f6a6c6a0a9eca"
 }
