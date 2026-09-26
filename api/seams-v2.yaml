@@ -1070,7 +1070,35 @@ paths:
                   credential:
                     type: string
                     minLength: 1
-                    description: 'The bearer credential, presented as `Authorization: Bearer <credential>`.'
+                    description: 'The credential. Presented as `Authorization: Bearer <credential>` unless `presentation`
+                      says otherwise.'
+                  presentation:
+                    type: object
+                    additionalProperties: false
+                    required:
+                    - kind
+                    description: 'How the suite presents `credential` on the canonical API. Absent ⇒ bearer. A lane whose
+                      production credential is cookie-borne (a `session` lane) answers `{ kind: "cookie", name }`, and the
+                      suite sends `Cookie: <name>=<credential>`. Added so a cookie lane that honours `next-request` revocation
+                      can be witnessed without advertising a false rule.'
+                    properties:
+                      kind:
+                        type: string
+                        enum:
+                        - bearer
+                        - cookie
+                      name:
+                        type: string
+                        pattern: ^[!#$%&'*+.^_`|~0-9A-Za-z-]+$
+                        description: The cookie name (RFC 6265 token). Required when `kind` is `cookie`.
+                    if:
+                      properties:
+                        kind:
+                          const: cookie
+                    then:
+                      required:
+                      - kind
+                      - name
                   subjectId:
                     type: string
                     description: The Subject the credential authenticates as, when the host names one.

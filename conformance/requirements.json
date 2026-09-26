@@ -32109,7 +32109,7 @@
     {
       "id": "openwop.it.v2-revocation-honored.a-revoked-next-request-credential-is-refused-on-the-next-request-with-credential",
       "file": "v2-revocation-honored.test.ts",
-      "line": 38,
+      "line": 40,
       "title": "a revoked next-request credential is refused on the next request with credential_revoked",
       "explicitId": "openwop.requirement.0170.revocation-honored",
       "citations": [

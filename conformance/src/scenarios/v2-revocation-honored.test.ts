@@ -11,7 +11,9 @@
  * drives `POST /conformance/seams/sample/auth/credential/{mint,revoke}` (the
  * v1-shaped address `/v1/host/sample/auth/credential/…` through `seamPath()`)
  * with `{ lane }` / `{ lane, credential }` and records `blocked` when the host
- * does not mount it. Windowed lanes (`exp-and-recheck`, `short-lived`, `rebind`)
+ * does not mount it. A mint answer carrying `presentation: { kind: "cookie", name }`
+ * (2.40.3) is presented as `Cookie: <name>=<credential>`, so a cookie-borne
+ * `session` lane is witnessed as its production credential travels; bearer otherwise. Windowed lanes (`exp-and-recheck`, `short-lived`, `rebind`)
  * have no wire-observable "next request" and record `inapplicable`.
  */
 
@@ -48,17 +50,22 @@ describe('v2 revocation-honored (RFC 0170 §B.3 — seam-gated)', () => {
       const minted = await http(() => driver.post(MINT, { lane }));
       if (minted === null) return softSkip('blocked', `${MINT} unreachable (fetch failed)`);
       if (minted.status === 404 || minted.status === 403) return seamAbsent(`${MINT} not mounted (${minted.status}) — the host advertises the seams profile but does not serve the RFC 0170 §B.3 credential mint/revoke seams (api/seams-v2.yaml mintLaneCredential / revokeLaneCredential; host-sample-test-seams.md)`);
-      const credential = (minted.json as { credential?: unknown } | undefined)?.credential;
+      const body = minted.json as { credential?: unknown; presentation?: { kind?: unknown; name?: unknown } } | undefined;
+      const credential = body?.credential;
+      // 2.40.3 — a cookie-borne lane (a `session` lane) is presented the way its
+      // production credential is, `Cookie: <name>=<credential>`. Bearer otherwise.
+      const cookieName = body?.presentation?.kind === 'cookie' && typeof body.presentation.name === 'string' ? body.presentation.name : null;
+      const present = (c: unknown): Record<string, string> => (cookieName ? { Cookie: `${cookieName}=${String(c)}` } : { Authorization: `Bearer ${String(c)}` });
       expect(typeof credential, req('openwop.requirement.0170.revocation-honored', DOC, `the mint seam MUST answer { credential } for lane ${lane}`)).toBe('string');
 
       // Positive control — the minted credential authenticates before revocation.
-      const before = await http(() => driver.get('/runs/openwop-conformance-tenant/revocationprobe0123456789', { authenticated: false, headers: { Authorization: `Bearer ${String(credential)}` } }));
+      const before = await http(() => driver.get('/runs/openwop-conformance-tenant/revocationprobe0123456789', { authenticated: false, headers: present(credential) }));
       expect(before !== null && before.status !== 401, req('openwop.requirement.0170.revocation-honored', DOC, `a freshly minted ${lane} credential MUST authenticate before revocation (got ${before?.status ?? 'no response'})`)).toBe(true);
 
       const revoked = await http(() => driver.post(REVOKE, { lane, credential }));
       expect(revoked !== null && revoked.status < 400, req('openwop.requirement.0170.revocation-honored', DOC, `the revoke seam MUST accept the credential it minted for lane ${lane} (got ${revoked?.status ?? 'no response'})`)).toBe(true);
 
-      const after = await http(() => driver.get('/runs/openwop-conformance-tenant/revocationprobe0123456789', { authenticated: false, headers: { Authorization: `Bearer ${String(credential)}` } }));
+      const after = await http(() => driver.get('/runs/openwop-conformance-tenant/revocationprobe0123456789', { authenticated: false, headers: present(credential) }));
       expect(after?.status, req('openwop.requirement.0170.revocation-honored', DOC, `lane ${lane} MUST refuse a revoked credential on the next request with 401`)).toBe(401);
       expect(readErrorCode(after?.json), req('openwop.requirement.0170.revocation-honored', DOC, `the refusal code MUST be credential_revoked (lane ${lane})`)).toBe('credential_revoked');
     }
