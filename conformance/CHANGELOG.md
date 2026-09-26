@@ -1,5 +1,9 @@
 # `@openwop/openwop-conformance` Changelog
 
+## [2.39.4] — unreleased — RFC 0215's survey and threat-model rows close in the contract peer
+
+- **Version moved ahead of publication.** `@openwop/openwop-conformance` and its exact-pinned peer `@openwop/spec-artifacts` move to `2.39.4`, because `2.39.3` is tagged and published and closing RFC 0215 gaps G3 and G6 changes `spec/v1/gaps.json`, which `@openwop/spec-artifacts` ships. No scenario change.
+
 ## [2.39.3] — 2026-09-25 — a pinned receiver port is shared, and tenant B really is tenant B
 
 - **A pinned receiver port is shared, never re-bound — the public-cut hang behind three RFC 0214 legs.** On a public cut `OPENWOP_WEBHOOK_RECEIVER_PORT` is pinned (the port the front forwards to), and `lib/scoped-receiver.ts` had every receiver call `server.listen` on it. A second receiver alive at the same time — the §B redirect and §A after-Delete legs start two, and the §A/§C delivery receiver stays open until `afterAll` — hit `EADDRINUSE` with no `error` listener attached, so its `listen` promise never settled and the leg hung to vitest's timeout: `v2-a2a-push-delivery` §A-delete, §B-redirect and §D-fork on both the 2.39.0 and 2.39.2 public cuts of the v2 reference host. Loopback binds ephemeral ports, which is why no rehearsal showed it. All receivers on a pinned port now share one ref-counted listener (routing was already per nonce); a bind failure now rejects at once with a message naming the port; `close()` no longer waits on keep-alive sockets. Three lib self-tests pin it (two concurrent receivers; close one, the sibling keeps serving; a squatted port rejects in < 5 s) — reverting to per-receiver `listen` fails the first two in milliseconds.
