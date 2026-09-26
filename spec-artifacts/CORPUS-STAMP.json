@@ -117,7 +117,7 @@
     "schemas/v2/audit-verify-result.schema.json": "a748dfadb5155adfde8a91045e76b0db6695005fe559035d71670fdd55edb3ba",
     "schemas/v2/budget-policy.schema.json": "c7449daeb6e1d95e7a047b8c2814d3d54748697c27046972834874867d9b5f4c",
     "schemas/v2/capabilities.schema.json": "740944d7f0a00c91308449f3a3f52fa7b91b16b8fd36a0171b917afe9f4b0f09",
-    "schemas/v2/certification-bundle.schema.json": "67ac56bbf5f8deeec58b32e8d7bc9ce854a6a8c3cd81693e65192e5c3b726154",
+    "schemas/v2/certification-bundle.schema.json": "82ce31a1ed6c7e21b0ba88ff62a7b8b768fc3b176b1d06fce023203830b94725",
     "schemas/v2/channel-presence-payload.schema.json": "4eeb224910e6f7eee3ab5e7c3899559c25c83a26d0022e0ad195c4672611977a",
     "schemas/v2/channel-written-payload.schema.json": "ccecff3c71a3275ad8db035ac0e04db25e6f8d23cf091ddbcd5a60d1be1cbb6b",
     "schemas/v2/chat-card-pack-manifest.schema.json": "92a57db2fd4b2463f14ef155fef8e3f18afc78960b646459dcf32efc79ff6bf5",
@@ -218,7 +218,7 @@
     "spec/v1/spec-gaps.json": "ea9612af55bea9dae3e82223d4f714243f8f590b0193f1188257b13491a38afc",
     "spec/v2/README.md": "ccfed7d978ce7293a6d8f3c0f6045835dfb7e488f2b67a68f6b04d67c4b0cfc9",
     "spec/v2/core/capabilities.md": "e22381fed3a93376ad478fa7f07571fdad9653aefd7c05f189a2ef45a49f6c63",
-    "spec/v2/core/conformance.md": "38ebc9e56a830d0ee0ade429b81b0cd302c23e49a13647b1b902275262d6610d",
+    "spec/v2/core/conformance.md": "e4d3b34ef5b7c6a34675ed59a086143e8bfd0e00d0d04ce0f2a2ec6245275084",
     "spec/v2/core/connection-packs.md": "7257339a4fc125011bf89961588c949cb058a0c0f7d9808ad08a5288deb3f8fc",
     "spec/v2/core/conversation.md": "c9a937e410fdb4e092cec2f05a7cab8b5232745090cfb20041c03c70ccbb5cdc",
     "spec/v2/core/errors.md": "619cd74381c41acf33d012eb1afd834e148ac292663a1a6fa6744dbaff9661d9",
@@ -284,6 +284,8 @@
     "spec/v2/facets/supportedEnvelopes.schema.json": "644f22cc2236e30a611b5b7f1ba0458ff1925d68b94c514d9672583224e126bd",
     "spec/v2/facets/webhooks.schema.json": "2fac635ee5fbc10a14a1a46cf512a11bac660bfbabe0aea79f6c7b657ecb9e4e",
     "spec/v2/facets/workflowChainPacks.schema.json": "ea625ce818fbeb746478f00f31f96ee9613d538e4409c258c1bfb517acdeaba9",
+    "spec/v2/harness-trust-anchors.json": "6007b92eae16a070fbc3777424efb0abfe865fda89d096963109b96282b91205",
+    "spec/v2/harness-trust-anchors.schema.json": "372b5d92337c893d3449eff3f6bfd009ac09fdac285296d8bdbe0a08fff9e34c",
     "spec/v2/id-field-bindings.json": "9f6fd280250447e26a6704811c352bb8f2ff6c4bd242befe3da0ba38962370e9",
     "spec/v2/interop-map.json": "02255dafe7eb55f61ca7f9ae7c21f079d1848a6756991343088975ac9d184b8d",
     "spec/v2/interop-map.schema.json": "0017c882df34ee215e2e0729de051490e09d43aac3d2c949285698ed51832f12",
@@ -296,5 +298,5 @@
     "spec/v2/retention-floors.json": "eaf3722d95c79947af1d4269ef85117e126518c588cfcf1a2b21b97269f51624",
     "spec/v2/surface-baseline.json": "72d51a1bd81cbe3cee07f9ad0ab7b481b60d4e74e651704e9b3242c49c93ec11"
   },
-  "corpusCommit": "591b72d735fe9c5c59b611b483c3a2cde2966b51"
+  "corpusCommit": "e5578459ed7431109863a44942a716bda26ea5d9"
 }

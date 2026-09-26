@@ -23,9 +23,14 @@
  * test.
  *
  * **Gate:** an advertised `auth.lanes[]` member with `revocation: "exp-only"`
- * (`inapplicable`, naming that, otherwise) AND `OPENWOP_TEST_OIDC_ISSUER_URL` naming a
- * synthetic issuer the operator has configured that lane to trust (`blocked` otherwise —
- * without a token the host would ever accept, "it refused a string" witnesses nothing).
+ * (`inapplicable`, naming that, otherwise) whose `issuers[]` lists
+ * `OPENWOP_TEST_OIDC_ISSUER_URL`, the synthetic issuer the suite holds the key for. A lane
+ * that does not list it records `inapplicable` naming the issuers it does trust: the
+ * harness is a suite instrument the host claims by advertising it (RFC 0168 §C.1's reading
+ * for the seams profile; lib/harness-issuer.ts), and a production host must never trust a
+ * test issuer. Corrected in 2.40.1; this was `blocked`, which denied certification to
+ * every honest production bundle. A claimed harness that cannot be served is `blocked` —
+ * without a token the host would ever accept, "it refused a string" witnesses nothing.
  * A window under 120 s is `blocked`: the control token needs room inside it.
  *
  * **Each refusal leg is skewed so it isolates ONE bound.** A token minted at `now` with
@@ -54,13 +59,14 @@
 
 import { afterAll, describe, it, expect } from 'vitest';
 import { randomBytes } from 'node:crypto';
-import { createServer, type Server } from 'node:http';
+import type { Server } from 'node:http';
 import { driver } from '../lib/driver.js';
 import { softSkip } from '../lib/soft-skip.js';
 import { req } from '../lib/requirement-ids.js';
 import { readErrorCode } from '../lib/error-envelope.js';
 import { v2Discovery, familyAdvertised } from '../lib/v2.js';
-import { createSyntheticOIDCIssuer, issuerListenPort, type SyntheticOIDCIssuer } from '../lib/oidc-issuer.js';
+import { createSyntheticOIDCIssuer, type SyntheticOIDCIssuer } from '../lib/oidc-issuer.js';
+import { harnessClaimed, serveHarnessIssuer } from '../lib/harness-issuer.js';
 
 export const HOST_CALLBACK_NOT_REQUIRED =
   'the suite stands up the synthetic OIDC issuer and the host fetches its JWKS; no request returns to the suite\'s own API, so no host-reachable callback is needed';
@@ -113,23 +119,20 @@ async function gate(): Promise<Gate | { readonly kind: 'inapplicable' | 'blocked
   if (window < 2 * MARGIN) {
     return { kind: 'blocked', reason: `lane ${String(lane['lane'])} advertises a ${window}s window; the control token needs ${MARGIN}s of room inside it and the sabotage tokens ${MARGIN}s outside, so a window under ${2 * MARGIN}s cannot be probed without the two cases overlapping` };
   }
-  const url = process.env['OPENWOP_TEST_OIDC_ISSUER_URL']?.trim();
-  if (!url) {
-    return { kind: 'blocked', reason: 'OPENWOP_TEST_OIDC_ISSUER_URL is not set — without an issuer the host is configured to trust, every minted token is refused for the wrong reason and the control leg (which is what makes the refusals non-vacuous) cannot run' };
-  }
+  // The harness is an instrument the host claims by listing it in THIS lane's issuers[]
+  // (RFC 0168 §C.1's reading; lib/harness-issuer.ts). A production host lists its real
+  // IdP and must never list a test issuer, so it records `inapplicable` naming the issuers
+  // it does trust. Before 2.40.1 this was `blocked`, which denied certification to every
+  // honest production bundle advertising an exp-only lane.
+  const claim = harnessClaimed(lane, process.env['OPENWOP_TEST_OIDC_ISSUER_URL']);
+  if (!claim.ok) return { kind: claim.kind, reason: claim.reason };
+  const url = claim.url;
   const audience = process.env['OPENWOP_TEST_OIDC_AUDIENCE']?.trim() ?? 'openwop-conformance';
   if (issuer === null) {
     const made = createSyntheticOIDCIssuer({ issuer: url, audience, algorithm: 'RS256' });
-    const srv = createServer((r, res) => {
-      if (r.url === '/.well-known/jwks.json') { res.writeHead(200, { 'Content-Type': 'application/json' }); res.end(made.jwksJson); return; }
-      if (r.url === '/.well-known/openid-configuration') { res.writeHead(200, { 'Content-Type': 'application/json' }); res.end(made.discoveryJson); return; }
-      res.writeHead(404); res.end();
-    });
-    await new Promise<void>((resolve, reject) => {
-      srv.once('error', reject);
-      srv.listen(issuerListenPort(url), '127.0.0.1', () => resolve());
-    });
-    server = srv;
+    try { server = await serveHarnessIssuer(made, url); } catch (e) {
+      return { kind: 'blocked', reason: `lane ${String(lane['lane'])} lists the harness issuer, but it could not be served for ${url}: ${(e as Error).message}` };
+    }
     issuer = made;
   }
   return { issuer, url, window, lane: String(lane['lane']) };
