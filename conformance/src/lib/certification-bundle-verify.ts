@@ -354,6 +354,26 @@ export function scrubEvidence<T>(value: T, secrets: readonly string[]): ScrubRes
  * are excluded, and a caller may name values that MUST stay visible (`except`)
  * regardless of which variable carried them.
  */
+/**
+ * Whether an environment VALUE can be a credential at all (suite 2.40.3).
+ *
+ * The name filter above matches settings ABOUT secrets as well as secrets:
+ * openwop-app's `OPENWOP_WEBHOOK_SECRET_ROTATION_OVERLAP_S=60` (RFC 0201's
+ * rotation overlap) was swept in, and `scrubEvidence` then rewrote every "60"
+ * in the bundle — including the one inside `discovery.sha256`, which stopped
+ * matching `^[0-9a-f]{64}$` and failed the host's own deploy certify. A short
+ * value occurs by chance inside digests, counts and timestamps, so scrubbing it
+ * corrupts the evidence without protecting anything: no credential is a bare
+ * integer or under 8 characters (NIST SP 800-63B's floor for a memorized
+ * secret). The floor applies only to values GUESSED from variable names; a
+ * credential the emitter hands over explicitly (`extra`) is always scrubbed,
+ * whatever its shape.
+ */
+export function credentialShaped(v: string): boolean {
+  const t = v.trim();
+  return t.length >= 8 && !/^\d+$/.test(t);
+}
+
 export function evidenceSecretsFromEnv(
   env: NodeJS.ProcessEnv,
   extra: readonly (string | undefined)[] = [],
@@ -365,7 +385,9 @@ export function evidenceSecretsFromEnv(
     if (!k.startsWith('OPENWOP_')) continue;
     if (!/(KEY|TOKEN|SECRET|PASSWORD|CREDENTIAL)/.test(k)) continue;
     if (/_ID$/.test(k)) continue; // a key's identifier is published, not secret
-    if (v !== undefined && v.trim() !== '' && !keep.has(v)) out.add(v);
+    if (v === undefined || v.trim() === '' || keep.has(v)) continue;
+    if (!credentialShaped(v)) continue; // a setting that names a secret, not a secret
+    out.add(v);
   }
   for (const s of extra) if (s !== undefined && s.trim() !== '' && !keep.has(s)) out.add(s);
   out.add(CONFORMANCE_SECRET_CANARY);

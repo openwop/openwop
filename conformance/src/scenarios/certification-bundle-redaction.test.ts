@@ -141,17 +141,40 @@ describe('RFC 0148 §C — certification-bundle-redaction: secret canaries never
 
   it('evidenceSecretsFromEnv selects OPENWOP_* key/token/secret/password variables, the handed credential, and ALWAYS the canary', () => {
     const env = {
-      OPENWOP_API_KEY: 'k1',
-      OPENWOP_MESSAGING_BRIDGE_TOKEN: 't1',
-      OPENWOP_DB_PASSWORD: 'p1',
-      OPENWOP_CLIENT_SECRET: 's1',
+      OPENWOP_API_KEY: 'k1-api-key-value',
+      OPENWOP_MESSAGING_BRIDGE_TOKEN: 't1-bridge-token',
+      OPENWOP_DB_PASSWORD: 'p1-db-password',
+      OPENWOP_CLIENT_SECRET: 's1-client-secret',
       OPENWOP_BASE_URL: 'https://example.invalid', // not a secret
       OPENWOP_REQUIRE_BEHAVIOR: 'true',
       PATH: '/usr/bin',
       SOME_OTHER_TOKEN: 'not-ours',
     } as NodeJS.ProcessEnv;
     const secrets = evidenceSecretsFromEnv(env, [API_KEY, undefined, '']);
-    expect(secrets.sort(), req('openwop.it.certification-bundle-redaction.evidencesecretsfromenv-selects-openwop-key-token-secret-password-variables-the-h', 'RFC 0148 §C', 'evidenceSecretsFromEnv selects OPENWOP_* key/token/secret/password variables, the handed credential, and ALWAYS the canary')).toEqual([API_KEY, 'k1', 'p1', 's1', 't1', CONFORMANCE_SECRET_CANARY].sort());
+    expect(secrets.sort(), req('openwop.it.certification-bundle-redaction.evidencesecretsfromenv-selects-openwop-key-token-secret-password-variables-the-h', 'RFC 0148 §C', 'evidenceSecretsFromEnv selects OPENWOP_* key/token/secret/password variables, the handed credential, and ALWAYS the canary')).toEqual([API_KEY, 'k1-api-key-value', 'p1-db-password', 's1-client-secret', 't1-bridge-token', CONFORMANCE_SECRET_CANARY].sort());
+  });
+
+  it('evidenceSecretsFromEnv never treats a setting ABOUT a secret as one: a bare integer or a value under 8 characters is not swept from the environment', () => {
+    // Suite 2.40.2: openwop-app set OPENWOP_WEBHOOK_SECRET_ROTATION_OVERLAP_S=60,
+    // the name matched SECRET, and scrubEvidence rewrote the "60" inside
+    // discovery.sha256 — the bundle failed ^[0-9a-f]{64}$ and main could not deploy.
+    const digest = '4b8d99c002a061a0255e8224ee683162007febadd251b2d171b47c0849695315';
+    const env = {
+      OPENWOP_WEBHOOK_SECRET_ROTATION_OVERLAP_S: '60',
+      OPENWOP_TOKEN_TTL_SECONDS_KEY: '86400000',
+      OPENWOP_SHORT_KEY: 'abc1234',
+      OPENWOP_REAL_SECRET: 'whsec_c2VjcmV0LXZhbHVl',
+    } as NodeJS.ProcessEnv;
+    const secrets = evidenceSecretsFromEnv(env, ['k9']);
+    const R = 'openwop.it.certification-bundle-redaction.setting-about-a-secret-not-swept';
+    expect(secrets, req(R, 'RFC 0148 §C', 'a bare-integer setting whose NAME mentions a secret (a rotation overlap, a TTL) MUST NOT be swept as a credential')).not.toContain('60');
+    expect(secrets).not.toContain('86400000');
+    expect(secrets, req(R, 'RFC 0148 §C', 'a value under 8 characters is not credential-shaped and is not swept from the environment')).not.toContain('abc1234');
+    expect(secrets, req(R, 'RFC 0148 §C', 'a credential-shaped value is still swept')).toContain('whsec_c2VjcmV0LXZhbHVl');
+    expect(secrets, req(R, 'RFC 0148 §C', 'a credential the emitter hands over explicitly is scrubbed whatever its shape')).toContain('k9');
+    const { value } = scrubEvidence({ discovery: { sha256: digest } }, secrets);
+    expect(value.discovery.sha256, req(R, 'RFC 0148 §C', 'scrubbing MUST NOT corrupt a digest the bundle carries')).toBe(digest);
+    expect(value.discovery.sha256).toMatch(/^[0-9a-f]{64}$/);
   });
 
   it('evidenceSecretsFromEnv never scrubs a key IDENTIFIER: *_ID variables are excluded and `except` values stay visible whichever variable carried them', () => {
@@ -162,14 +185,14 @@ describe('RFC 0148 §C — certification-bundle-redaction: secret canaries never
       OPENWOP_BUNDLE_SIGNING_KEY: '-----BEGIN PRIVATE KEY-----\nsecret\n-----END PRIVATE KEY-----',
       OPENWOP_BUNDLE_SIGNING_KEY_ID: 'myndhyve-bundle-2026-09',
       OPENWOP_BUNDLE_VERIFIER_KEY_ID: 'steward-verifier-1',
-      OPENWOP_API_KEY: 'k1',
+      OPENWOP_API_KEY: 'k1-api-key-value',
       OPENWOP_ODDLY_NAMED_KEY: 'published-key-id-in-a-secret-shaped-variable',
     } as NodeJS.ProcessEnv;
     const secrets = evidenceSecretsFromEnv(env, [], ['published-key-id-in-a-secret-shaped-variable']);
     expect(secrets, req('openwop.it.certification-bundle-redaction.key-identifier-never-scrubbed', 'RFC 0168 §E.2', 'the keyId a host publishes in discovery.document.signingKeys[] MUST survive evidence scrubbing — a *_ID variable is an identifier, not a secret')).not.toContain('myndhyve-bundle-2026-09');
     expect(secrets).not.toContain('steward-verifier-1');
     expect(secrets, req('openwop.it.certification-bundle-redaction.key-identifier-never-scrubbed', 'RFC 0168 §E.2', 'a value the emitter names as `except` (the keyId it is about to publish) is never scrubbed, whichever variable carried it')).not.toContain('published-key-id-in-a-secret-shaped-variable');
-    expect(secrets).toContain('k1');
+    expect(secrets).toContain('k1-api-key-value');
     expect(secrets.some((s) => s.includes('BEGIN PRIVATE KEY'))).toBe(true);
     expect(secrets).toContain(CONFORMANCE_SECRET_CANARY);
   });
