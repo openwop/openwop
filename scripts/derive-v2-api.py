@@ -194,7 +194,11 @@ def v2_openapi_and_seams():
         'requestBody': {'required': True, 'content': {'application/json': {'schema': {'type': 'object', 'additionalProperties': False,
             'properties': {'lane': {'type': 'string', 'minLength': 1, 'description': 'An advertised `auth.lanes[].lane`; absent ⇒ `api-key`.'}}}}}},
         'responses': {'201': {'description': 'The minted credential.', 'content': {'application/json': {'schema': {'type': 'object', 'additionalProperties': False, 'required': ['lane', 'credential'],
-                'properties': {'lane': {'type': 'string'}, 'credential': {'type': 'string', 'minLength': 1, 'description': 'The bearer credential, presented as `Authorization: Bearer <credential>`.'},
+                'properties': {'lane': {'type': 'string'}, 'credential': {'type': 'string', 'minLength': 1, 'description': 'The credential. Presented as `Authorization: Bearer <credential>` unless `presentation` says otherwise.'},
+                    'presentation': {'type': 'object', 'additionalProperties': False, 'required': ['kind'],
+                        'description': 'How the suite presents `credential` on the canonical API. Absent ⇒ bearer. A lane whose production credential is cookie-borne (a `session` lane) answers `{ kind: "cookie", name }`, and the suite sends `Cookie: <name>=<credential>`. Added so a cookie lane that honours `next-request` revocation can be witnessed without advertising a false rule.',
+                        'properties': {'kind': {'type': 'string', 'enum': ['bearer', 'cookie']}, 'name': {'type': 'string', 'pattern': '^[!#$%&\'*+.^_`|~0-9A-Za-z-]+$', 'description': 'The cookie name (RFC 6265 token). Required when `kind` is `cookie`.'}},
+                        'if': {'properties': {'kind': {'const': 'cookie'}}}, 'then': {'required': ['kind', 'name']}},
                     'subjectId': {'type': 'string', 'description': 'The Subject the credential authenticates as, when the host names one.'}}}}}},
             '400': {'$ref': '#/components/responses/ValidationError'}, '401': {'$ref': '#/components/responses/Unauthenticated'}, '404': {'$ref': '#/components/responses/NotFound'}}}}
     seams['paths']['/conformance/seams/sample/auth/credential/revoke'] = {'post': {'tags': ['Seams'], 'operationId': 'revokeLaneCredential',
