@@ -1,5 +1,10 @@
 # `@openwop/openwop-conformance` Changelog
 
+## [2.42.3] — unreleased — the 2.42.3 cycle is open
+
+- **RFC 0217 gap G1 closes in the contract peer.** `spec/v1/gaps.json` records MyndHyve's certified production witness of `0217.dead-letter-read-after-unregister` (openwop#1631). No scenario change.
+- **Version moved ahead of publication.** `@openwop/openwop-conformance` and its exact-pinned peer `@openwop/spec-artifacts` move to `2.42.3` because `2.42.2` is tagged. Not tagged, not published.
+
 ## [2.42.2] — 2026-09-26 — four conformance legs now measure what their spec says: effect re-fire, keying fallback, A2UI JSON values, digest-safe scrubbing
 
 - **`0173.effect-seam-no-refire` can detect a re-fire.** The leg asserted that the replay fork's ledger count was at most the parent's. The seam fires one attempt on the source run, so a host that re-fires on replay read 1 ≤ 1 and passed, over exactly the defect the leg exists for. ws3 measured it: openwop-app with `sideEffecting` dropped still passed. The leg now fails if the fork records any attempt the parent never made, using the new `lib/effect-refire.ts`. An inherited row repeats a parent attempt's `(nodeId, attempt, at)`, while a re-fire is a new attempt, and one parent row covers at most one fork row. A host whose fork projection is empty passes, as does one that projects the parent's attempts as history. The `effect-ledger-projection` schema description, which said the scenario "compares row COUNTS", is corrected. New suite self-test `src/lib/effect-refire.test.ts` uses a re-firing host stub as its first leg. It is sabotage-proved: with the old count rule restored, that leg fails.
