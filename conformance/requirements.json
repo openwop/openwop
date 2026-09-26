@@ -36701,10 +36701,10 @@
       ]
     },
     {
-      "id": "openwop.it.bundle-maturity-gate.the-committed-corpus-is-green-and-the-report-names-the-overstated-families-and-t",
+      "id": "openwop.it.bundle-maturity-gate.the-committed-corpus-is-green-and-the-gate-states-when-c-7-binds",
       "file": "bundle-maturity-gate.test.ts",
-      "line": 76,
-      "title": "the committed corpus is green, and the report NAMES the overstated families and the gap row",
+      "line": 85,
+      "title": "the committed corpus is green, and the gate states when §C.7 binds",
       "explicitId": "openwop.requirement.0197.bundle-maturity-bound",
       "citations": [
         {
@@ -36714,23 +36714,15 @@
         },
         {
           "section": "spec/v2/core/capabilities.md §8 (RFC 0197 §C.7)",
-          "requirement": "a \"reported\" disposition that printed nothing would be indistinguishable from a clean tree; the report MUST name the gap row that owes the re-cut"
-        },
-        {
-          "section": "spec/v2/core/capabilities.md §8 (RFC 0197 §C.7)",
-          "requirement": "the report MUST name the families by key, not just count them — a number nobody can act on is not a report"
-        },
-        {
-          "section": "spec/v2/core/capabilities.md §8 (RFC 0197 §C.7)",
           "requirement": "the gate MUST state which suite version makes §C.7 binding, so \"reported\" has a visible end date"
         }
       ]
     },
     {
-      "id": "openwop.it.bundle-maturity-gate.the-same-committed-bundle-re-labelled-onto-the-rfc-s-suite-fails-naming-every-ov",
+      "id": "openwop.it.bundle-maturity-gate.the-superseded-myndhyve-bundle-re-labelled-onto-the-rfc-s-suite-fails-naming-eve",
       "file": "bundle-maturity-gate.test.ts",
-      "line": 86,
-      "title": "the same committed bundle re-labelled onto the RFC’s suite FAILS, naming every overstated family",
+      "line": 93,
+      "title": "the superseded MyndHyve bundle re-labelled onto the RFC’s suite FAILS, naming every overstated family",
       "explicitId": "openwop.requirement.0197.bundle-maturity-bound",
       "citations": [
         {
@@ -36752,7 +36744,7 @@
     {
       "id": "openwop.it.bundle-maturity-gate.the-count-is-derived-promoting-one-family-in-the-declaration-drops-38-to-37",
       "file": "bundle-maturity-gate.test.ts",
-      "line": 95,
+      "line": 102,
       "title": "the count is DERIVED — promoting one family in the declaration drops 38 to 37",
       "explicitId": "openwop.requirement.0197.bundle-maturity-bound",
       "citations": [
@@ -36770,7 +36762,7 @@
     {
       "id": "openwop.it.bundle-maturity-gate.a-bundle-whose-suite-is-below-the-rfc-s-is-reported-not-failed-even-with-the-sam",
       "file": "bundle-maturity-gate.test.ts",
-      "line": 103,
+      "line": 110,
       "title": "a bundle whose suite is BELOW the RFC’s is reported, not failed, even with the same 38",
       "explicitId": "openwop.requirement.0197.bundle-maturity-bound",
       "citations": [
@@ -36786,6 +36778,14 @@
         {
           "section": "spec/v2/core/capabilities.md §8 (RFC 0197 §C.7)",
           "requirement": "the reported row must cite COMPATIBILITY.md §2.3 — an old pass stays a measurement at the suite that measured it"
+        },
+        {
+          "section": "spec/v2/core/capabilities.md §8 (RFC 0197 §C.7)",
+          "requirement": "a \"reported\" disposition that printed nothing would be indistinguishable from a clean tree; the report MUST name the gap row that owes the re-cut"
+        },
+        {
+          "section": "spec/v2/core/capabilities.md §8 (RFC 0197 §C.7)",
+          "requirement": "the report MUST name the families by key, not just count them — a number nobody can act on is not a report"
         }
       ]
     },
