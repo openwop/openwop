@@ -212,6 +212,21 @@ Format follows [Keep a Changelog](https://keepachangelog.com/en/1/) loosely. Ver
 - **The remaining eleven stay `Active`, each for a stated reason** rather than for lack of attention. The eight RFC 0167 program children name a certified openwop-app bundle in their own acceptance criteria and the committed one reads `certified: false` (3 blocked rows, RFC 0168 §E.1). RFC 0173 additionally carries the program's only `open` gap row. RFC 0179's sole criterion is unmet — 2.4.2 stopped the gate reading "(Phase 4 leg)" as an excuse for it. RFC 0187 names three requirement ids that no scenario mints. RFC 0167 itself flips **last**, which 2.4.2 made a rule: the moment the umbrella stops being `Active`, every child still `Active` becomes permanently ineligible.
 - **The interrupt `data` union is bound to `kind`** (MCP/A2A review P3-H7, Class 3 correction — COMPATIBILITY.md §3). `schemas/suspend-request.schema.json` and its v2 twin typed `data` as an unbound `oneOf`, so the minimal `conversation.start` and `conversation.close` payloads (`{ conversationId }`, which satisfies both shapes) failed validation in v1 and v2, and a payload carrying another kind's `data` passed. `data` is now an `anyOf` and a root `allOf` binds each kind to its own shape with one `if`/`then`; no per-kind shape or `$id` changed. Witnessed by `conformance/fixtures/interrupt-payloads/` (suite 2.36.0).
 
+## [2.41.0] — 2026-09-26 — RFC 0111's context-budget witness can fail, and RFC 0121 names its first cleared provider
+
+A suite minor: one new fixture (`conformance-context-budget-live`), two scenarios promoted to major 2, and a Class-3 correction of an assertion no host could satisfy — no wire change and no host `MUST` moved (`COMPATIBILITY.md` §2.1, and its 2026-09-26 correction on record). The seams contract gains one optional response member. The corpus tag moves because `@openwop/openwop-conformance` and `@openwop/spec-artifacts` move together.
+
+### Conformance
+
+- **RFC 0111's context-budget witness can fail (#1606).** RFC 0111 (b) asked the harness to recount the tokens of the events a host fed, and events are content-free, so no suite could. The transcript-window seam now serves `entries[] { eventId, rendered }` (test mode only), and for `tokenCounter: "chars"` the suite recounts code points and requires the sum to equal `tokenCount`; the fed window must be a contiguous recent tail; and a run whose budget never binds records `partial-witness`, never a pass. The replay leg compares the summary text fed on the fork byte for byte. A new live-model fixture, `conformance-context-budget-live`, replaces the scripted one as the gate (§Scope forbids a mock supervisor), both scenarios run at major 2, and RFC 0111 gap G5 is retargeted to a host with a real orchestrator loop (tier-1/2).
+- **Conformance Soak is green again (#1610)** — the receiver modules count as harness doubles in `host-callback-declaration`.
+- **Suite `2.41.0`**: 561 scenario files (123 applicable at major 2). `@openwop/spec-artifacts` moves in lockstep at the same exact pin.
+
+### Spec and governance
+
+- **RFC 0121 is un-parked (#1604, #1607).** Unresolved question 1 is resolved for GitHub Copilot individual plans by the steward's named go, citing GitHub's own Copilot SDK authentication guide — not a legal review; Anthropic and Google consumer terms prohibit the pattern and OpenAI's are silent, so none of them is cleared. Gap G2's ruling is applied: the mechanism is the official-client subprocess shape, with no wire label.
+- **A generated RFC 0156 §B review packet (#1608)** for a cross-organization reviewer.
+
 ## [2.40.3] — 2026-09-26 — a cookie-borne lane can be revoke-witnessed, and a secret-named setting no longer corrupts the discovery digest
 
 A suite patch: no new scenario file, no wire or `MUST` change for a served host (`COMPATIBILITY.md` §2.1). The seams contract gains one optional response member. The corpus tag moves because `@openwop/openwop-conformance` and `@openwop/spec-artifacts` move together.
