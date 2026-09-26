@@ -3623,7 +3623,7 @@ invariants:
     witnessReview: initial-mechanical-2026-09-02
 
   - id: a2a-push-credential-destination-bound
-    tier: reference-impl
+    tier: protocol
     severity: critical
     threat_model: SECURITY/threat-model-secret-leakage.md
     tests:
@@ -3646,11 +3646,15 @@ invariants:
       and the corpus-coherence check, so this invariant has no host witness
       yet. Reference-impl at Active; graduates to protocol only on a
       non-vacuous executed-pass on a deployed host advertising push.
+      GRADUATED 2026-09-26 at RFC 0214 Accepted: the certified public
+      v2-reference cut on published 2.39.5 (openwop#1575, push advertised,
+      suite-owned public HTTPS receiver) records a2a-push-delivery-authenticated
+      and a2a-push-no-redirect executed-pass.
     witness: witnessable-gated
-    witnessReview: reviewed-2026-09-23
+    witnessReview: reviewed-2026-09-26
 
   - id: a2a-push-secrets-not-returned
-    tier: reference-impl
+    tier: protocol
     severity: high
     threat_model: SECURITY/threat-model-secret-leakage.md
     tests:
@@ -3663,8 +3667,11 @@ invariants:
       a2a.pushNotifications; no committed host advertises it (2026-09-23), so
       there is no host witness yet. Reference-impl at Active; graduates to
       protocol only on a non-vacuous executed-pass on a deployed host.
+      GRADUATED 2026-09-26 at RFC 0214 Accepted: openwop#1575 (certified
+      public v2-reference cut on published 2.39.5, push advertised) records
+      a2a-push-secrets-not-returned executed-pass.
     witness: witnessable-gated
-    witnessReview: reviewed-2026-09-23
+    witnessReview: reviewed-2026-09-26
 
   # ===== RFC 0102 — A2UI agent-authored interface surfaces =====
 
