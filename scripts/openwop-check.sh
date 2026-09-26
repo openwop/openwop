@@ -231,6 +231,8 @@ node "$(dirname "$0")/check-waiver-ledger.mjs"
 # review whose outcome was `withdrawn` or `corrective-rfc-required` counted
 # exactly like a `ratified` one. Only `ratified` discharges.
 node "$(dirname "$0")/check-waiver-retrospective.mjs"
+# RFC 0156 §B — the reviewer-facing packet is regenerated from the register; stale fails.
+node "$(dirname "$0")/generate-review-packet.mjs" --check
 # Every v2 core family must have a normative home that survives v1 end-of-support.
 # `section` names the DECLARATION site — for most core families a stub naming an
 # owning RFC — not where the behaviour is written. For 35 of 72 that is a document

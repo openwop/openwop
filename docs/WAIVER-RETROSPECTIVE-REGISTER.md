@@ -49,6 +49,8 @@ same tripwire as the rest of the governance program. What this register changes 
 per-RFC and recordable rather than a single aggregate, so the day a reviewer exists the work has somewhere
 to land — and until then the zero is visibly a blocked obligation rather than an unstarted chore.
 
+**For a reviewer:** start at [`SECTION-B-REVIEW-PACKET.md`](./SECTION-B-REVIEW-PACKET.md), a generated reading guide that groups every row by §B area with its status, waiver and evidence tier, and says how to record an outcome.
+
 ## Register
 
 | RFC | Title | §B scope | Reviewer org | Date | Outcome |
