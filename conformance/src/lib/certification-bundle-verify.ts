@@ -298,6 +298,9 @@ export interface ScrubResult<T> {
   readonly redactedAt: readonly string[];
 }
 
+/** A whole-string hex digest: `sha256:`-prefixed or bare, 32+ hex characters. */
+const HEX_DIGEST = /^(sha256:)?[0-9a-f]{32,}$/i;
+
 /**
  * Replace every occurrence of every secret in every string of `value` (keys
  * included) with `redactionMarker(secret)`. Empty / whitespace-only secrets
@@ -312,6 +315,16 @@ export function scrubEvidence<T>(value: T, secrets: readonly string[]): ScrubRes
   const redactedAt: string[] = [];
   if (live.length === 0) return { value, redactedAt };
   const scrubString = (s: string, path: string): string => {
+    // A string that is wholly a hex digest (a sha256, a key fingerprint) is
+    // scrubbed only when it IS a secret, never for a secret found inside it.
+    // A secret inside a digest is a coincidence, not a leak: the digest does
+    // not disclose it. Rewriting it only corrupts the evidence. Suite 2.40.3
+    // floored the env sweep after openwop-app's `…_ROTATION_OVERLAP_S=60`
+    // rewrote the "60" inside `discovery.sha256`, but an explicitly handed
+    // credential is still scrubbed whatever its shape, so a short one (or any
+    // hex one) could still hit a digest at random. This closes that class at
+    // the scrub instead of at each source of secrets.
+    if (HEX_DIGEST.test(s) && !live.includes(s)) return s;
     let out = s;
     let hit = false;
     for (const secret of live) {
