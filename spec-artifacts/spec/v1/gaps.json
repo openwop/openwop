@@ -10713,8 +10713,8 @@
       "surface": "MyndHyve's committed v2 bundle (suite 2.35.1, 2026-09-22) advertises 38 families `stable` that `spec/v2/declaration.json` calls `experimental`. §C makes that non-conforming for bundles cut on the first suite release that ships this RFC.",
       "witness": "unclassified",
       "requirementId": null,
-      "disposition": "externally-gated",
-      "target": "myndhyve-recut",
+      "disposition": "closed",
+      "target": null,
       "sources": [
         {
           "file": "RFCS/registers/0197-v2-surfaces-retired-never-reshaped.gaps.md",

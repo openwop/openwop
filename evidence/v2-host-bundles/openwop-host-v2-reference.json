@@ -1,12 +1,12 @@
 {
   "bundleVersion": "3",
-  "generatedAt": "2026-09-26T02:57:16.106Z",
+  "generatedAt": "2026-09-26T08:56:18.590Z",
   "suite": {
     "name": "@openwop/openwop-conformance",
-    "version": "2.39.5",
+    "version": "2.40.0",
     "targetMajor": 2,
-    "specArtifactsVersion": "2.39.5",
-    "stampSha256": "db86d304e8d1c9042e51cc62a10c3d952826f9f3d8eddbcee08c29128c4e4252"
+    "specArtifactsVersion": "2.40.0",
+    "stampSha256": "f65c56d3a36eb7301c4baceef9ce0899091151fb12bc72c1508eb7a7d7b4ca4c"
   },
   "host": {
     "name": "openwop-host-v2-reference",
@@ -14,7 +14,7 @@
     "vendor": "openwop (reference example)",
     "build": {
       "kind": "commit",
-      "id": "2c6fc3c0dfe0e028ef2b2059dbc8582c2bc7a898"
+      "id": "265fca713d27d75ce9fd180b2701c1bb4a4104f8"
     },
     "signingKeyId": "v2-reference-4"
   },
@@ -468,7 +468,7 @@
   ],
   "results": {
     "totals": {
-      "executedPass": 399,
+      "executedPass": 403,
       "executedFail": 0,
       "skipped": 7,
       "inapplicable": 36,
@@ -870,7 +870,7 @@
         "id": "openwop.scenario.v2-mcp-client-results",
         "scenario": "v2-mcp-client-results.test.ts",
         "result": "executed-pass",
-        "assertions": 27
+        "assertions": 26
       },
       {
         "id": "openwop.scenario.v2-mcp-mount-map",
@@ -1168,11 +1168,17 @@
         "assertions": 4
       },
       {
+        "id": "openwop.scenario.v2-webhook-delivery-isolation",
+        "scenario": "v2-webhook-delivery-isolation.test.ts",
+        "result": "executed-pass",
+        "assertions": 20
+      },
+      {
         "id": "openwop.scenario.v2-webhook-delivery-shape",
         "scenario": "v2-webhook-delivery-shape.test.ts",
         "result": "executed-pass",
         "assertions": 12,
-        "detail": "partial-witness: inapplicable: no run.started delivery for the seeded era-2 run inside 15s — this host does not fan out seeded history, so the era-2 fan-out branch is unobservable here (recorded under openwop.family.conformance). no run.started delivery bearing this exercise's nonce ca36a8ced2dbeac109 arrived, and nothing else reached this listener either — the registered destination is the public front https://powered-marilyn-atomic-linked.trycloudflare.com/hook/fx/ca36a8ced2dbeac109 (OPENWOP_WEBHOOK_RECEIVER_URL) and this listener answers on http://127.0.0.1:3841/fx/ca36a8ced2dbeac109, port 3841"
+        "detail": "partial-witness: inapplicable: no run.started delivery for the seeded era-2 run inside 15s — this host does not fan out seeded history, so the era-2 fan-out branch is unobservable here (recorded under openwop.family.conformance). no run.started delivery bearing this exercise's nonce 60d98d83377ccc1391 arrived, and nothing else reached this listener either — the registered destination is the public front https://lions-submitting-ruled-buses.trycloudflare.com/hook/fx/60d98d83377ccc1391 (OPENWOP_WEBHOOK_RECEIVER_URL) and this listener answers on http://127.0.0.1:3841/fx/60d98d83377ccc1391, port 3841"
       },
       {
         "id": "openwop.floor.v2-webhook-durable-delivery",
@@ -1209,6 +1215,12 @@
         "scenario": "v2-webhook-standard-webhooks-delivery.test.ts",
         "result": "executed-pass",
         "assertions": 62
+      },
+      {
+        "id": "openwop.scenario.v2-webhook-unregister-stops-delivery",
+        "scenario": "v2-webhook-unregister-stops-delivery.test.ts",
+        "result": "executed-pass",
+        "assertions": 7
       },
       {
         "id": "openwop.scenario.v2-well-known-one-resource",
@@ -1507,7 +1519,7 @@
           "recovery": {
             "class": "single-instance-restart",
             "boundMs": 6000,
-            "observedMs": 1658
+            "observedMs": 2120
           }
         }
       },
@@ -1520,7 +1532,7 @@
           "recovery": {
             "class": "single-instance-restart",
             "boundMs": 6000,
-            "observedMs": 1651
+            "observedMs": 2499
           }
         }
       },
@@ -1923,7 +1935,7 @@
         "scenario": "v2-webhook-delivery-shape.test.ts",
         "result": "executed-pass",
         "assertions": 12,
-        "detail": "partial-witness: inapplicable: no run.started delivery for the seeded era-2 run inside 15s — this host does not fan out seeded history, so the era-2 fan-out branch is unobservable here (recorded under openwop.family.conformance). no run.started delivery bearing this exercise's nonce ca36a8ced2dbeac109 arrived, and nothing else reached this listener either — the registered destination is the public front https://powered-marilyn-atomic-linked.trycloudflare.com/hook/fx/ca36a8ced2dbeac109 (OPENWOP_WEBHOOK_RECEIVER_URL) and this listener answers on http://127.0.0.1:3841/fx/ca36a8ced2dbeac109, port 3841"
+        "detail": "partial-witness: inapplicable: no run.started delivery for the seeded era-2 run inside 15s — this host does not fan out seeded history, so the era-2 fan-out branch is unobservable here (recorded under openwop.family.conformance). no run.started delivery bearing this exercise's nonce 60d98d83377ccc1391 arrived, and nothing else reached this listener either — the registered destination is the public front https://lions-submitting-ruled-buses.trycloudflare.com/hook/fx/60d98d83377ccc1391 (OPENWOP_WEBHOOK_RECEIVER_URL) and this listener answers on http://127.0.0.1:3841/fx/60d98d83377ccc1391, port 3841"
       },
       {
         "id": "openwop.requirement.0171.webhook-egress-refused",
@@ -2836,7 +2848,7 @@
         "id": "openwop.requirement.0204.server-health",
         "scenario": "v2-mcp-client-results.test.ts",
         "result": "executed-pass",
-        "assertions": 8
+        "assertions": 7
       },
       {
         "id": "openwop.requirement.0205.artifact-a2a-shape",
@@ -3220,11 +3232,23 @@
         "scenario": "v2-a2a-operation-map.test.ts",
         "result": "executed-pass",
         "assertions": 8
+      },
+      {
+        "id": "openwop.requirement.0215.no-head-of-line",
+        "scenario": "v2-webhook-delivery-isolation.test.ts",
+        "result": "executed-pass",
+        "assertions": 20
+      },
+      {
+        "id": "openwop.requirement.0215.unregister-stops-delivery",
+        "scenario": "v2-webhook-unregister-stops-delivery.test.ts",
+        "result": "executed-pass",
+        "assertions": 7
       }
     ]
   },
-  "witnessSha256": "09587c853ea2ac4dcc17c3c5a42a0e779a7c92ed2163af75a7ead49c794792c0",
-  "assertionCount": 4250,
+  "witnessSha256": "f1b77199fb31eebd3e1325eb53a23b6505dd0bfb8ad570fcc92fb9abf7d90a8d",
+  "assertionCount": 4302,
   "detail": {
     "nonPass": [
       {
@@ -3450,7 +3474,7 @@
   "signature": {
     "alg": "ed25519",
     "keyId": "v2-reference-4",
-    "sig": "stu47kmUnnhKnX0jctYu9GISx9XlWWXC9PPRrFZch1zMu_d78GffpgAvDMFwNokNl4PaIuxIo7Wzu1GZ0W5mAQ",
+    "sig": "X_7Mq3Rzev-8io0zSge-SjTDMzPRkIkuuXx_qsRN2VcqL6qhvhx47TivhCfao0VhcTiE6u4Z_h_Gx-m7MCAgCA",
     "over": [
       "witnessSha256",
       "host.build",

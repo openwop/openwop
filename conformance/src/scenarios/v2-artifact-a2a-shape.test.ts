@@ -21,6 +21,13 @@
  * The server-free legs (the schemas against A2A v1.0.1) are corpus rows in
  * `src/coherence/a2a-parts-schemas.test.ts`.
  *
+ * The last describe accounts for §C.11's `export-alias-equivalence`, whose
+ * Falsifiability verdict is `unwitnessable`. It records `inapplicable` with that
+ * verdict's reason on EVERY host, before any request, and never asserts. The
+ * row exists so a bundle says the suite reached the requirement and why it
+ * cannot observe it (`check-accepted-predicate` rule 4, second branch). It is
+ * not a witness and cannot become one.
+ *
  * @see RFCS/0205-run-artifacts-and-turns-speak-a2a-parts.md
  * @see spec/v2/core/runs.md §"Annotations, artifacts, eval summary"
  */
@@ -118,5 +125,12 @@ describe('RFC 0205 §A.3 — a url Part does not resolve beyond the caller\'s au
       const anon = await fetch(abs, { redirect: 'manual' });
       expect(anon.status >= 200 && anon.status < 300, req('openwop.requirement.0205.artifact-url-part-scoped', 'RFC 0205 §A.3', `${abs} MUST NOT answer 2xx with no credential (got ${anon.status})`)).toBe(false);
     }
+  });
+});
+
+describe('RFC 0205 §C.11 — an export alias and its media type name one format (declared unwitnessable)', () => {
+  it('records why export-alias-equivalence has no wire witness', () => {
+    req('openwop.requirement.0205.export-alias-equivalence', 'RFC 0205 §C.11', 'an export alias and its media type name one format');
+    return softSkip('inapplicable', 'unwitnessable on the wire (RFC 0205 §C.11 Falsifiability verdict): the equivalence binds a consumer\'s format-matching logic and the pack author\'s host.artifactTypes.export call, and neither is on the wire. The advertised spellings are readable, but a mismatch between them is legal, so no host response can falsify the row. No wire witness exists; this row records that the suite reached the requirement, and it is not a pass.');
   });
 });

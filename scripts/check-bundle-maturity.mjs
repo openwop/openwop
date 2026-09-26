@@ -18,9 +18,10 @@
  * is not decoration — it names every overstated family and the gap row that
  * owes the re-cut, so "reported" cannot quietly become "forgotten".
  *
- * MyndHyve's committed bundle (suite 2.35.1) overstates 38 families. That is
- * the whole population of the problem, it is printed in full on every run, and
- * `openwop.gap.0197.1` (G1) is the row that closes when it re-cuts.
+ * MyndHyve's 2.35.1 bundle overstated 38 families — the whole population of
+ * the problem — and `openwop.gap.0197.1` (G1) owed its re-cut. The 2.39.5
+ * re-cut (2026-09-26) overstates none, so G1 is closed; the 2.35.1 document is
+ * kept at evidence/fixtures/ as the coherence test's sabotage subject.
  *
  * Test seams: OPENWOP_V2_BUNDLES_DIR, OPENWOP_V2_DECLARATION_FILE,
  * OPENWOP_V2_CAPABILITIES_SCHEMA, OPENWOP_0197_FIRST_SUITE.

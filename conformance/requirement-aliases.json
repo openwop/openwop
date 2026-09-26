@@ -167,6 +167,8 @@
     "openwop.it.v2-security-defaults-table.the-obligation-table-has-a-witness-column-and-no-row-is-unwitnessable": "openwop.requirement.0173.security-defaults-table",
     "openwop.it.v2-spec-artifacts-digest.the-corpus-gate-script-exits-0": "openwop.requirement.0168.spec-artifacts-digest",
     "openwop.it.v2-threat-model-template.the-corpus-gate-script-exits-0": "openwop.requirement.0173.threat-model-template",
-    "openwop.it.v2-witness-required.the-corpus-gate-script-exits-0": "openwop.requirement.0168.witness-required"
+    "openwop.it.v2-witness-required.the-corpus-gate-script-exits-0": "openwop.requirement.0168.witness-required",
+    "openwop.it.bundle-maturity-gate.the-committed-corpus-is-green-and-the-report-names-the-overstated-families-and-t": "openwop.it.bundle-maturity-gate.the-committed-corpus-is-green-and-the-gate-states-when-c-7-binds",
+    "openwop.it.bundle-maturity-gate.the-same-committed-bundle-re-labelled-onto-the-rfc-s-suite-fails-naming-every-ov": "openwop.it.bundle-maturity-gate.the-superseded-myndhyve-bundle-re-labelled-onto-the-rfc-s-suite-fails-naming-eve"
   }
 }

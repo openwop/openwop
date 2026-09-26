@@ -7,7 +7,7 @@
  * one issuer, the one it stands up at `OPENWOP_TEST_OIDC_ISSUER_URL`.
  *
  * ── Why the gate reads the host's lane, not only the environment ────────────
- * Until 2.40.1 both files recorded `blocked` whenever the harness was not the
+ * Until 2.40.2 both files recorded `blocked` whenever the harness was not the
  * host's trust root. A PRODUCTION host MUST NOT trust a test issuer — a deployed
  * service that accepts tokens signed by a key living on a test runner has an
  * authentication bypass — so every honest production bundle advertising an
@@ -40,7 +40,7 @@
  * else the URL's port). The BIND is `receiverBinding()`, as for the webhook
  * receiver and the OAuth doubles: loopback, or `0.0.0.0` when
  * `OPENWOP_CONFORMANCE_HARNESS_HOST` says the host is in a container or on
- * another box. Until 2.40.1 the issuer always bound `127.0.0.1`, so a host in a
+ * another box. Until 2.40.2 the issuer always bound `127.0.0.1`, so a host in a
  * Linux container reaching it through `host-gateway` found nothing listening on
  * the interface it arrived at (openwop-app ADR 0745 defect 2). The URL is what
  * the host was configured with and is what `iss` and discovery carry; only the
