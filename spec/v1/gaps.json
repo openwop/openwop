@@ -12872,8 +12872,8 @@
       "surface": "MyndHyve's not-found branch answers the unregistered code `subscription_not_found`.",
       "witness": "unclassified",
       "requirementId": null,
-      "disposition": "externally-gated",
-      "target": "myndhyve-not-found-code",
+      "disposition": "closed",
+      "target": null,
       "sources": [
         {
           "file": "RFCS/registers/0217-dead-letter-read-after-unregister.gaps.md",
