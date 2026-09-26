@@ -4,7 +4,7 @@
     "schemas/v2/**/*.json",
     "spec/v2/path-manifest.json"
   ],
-  "release": "2.42.1",
+  "release": "2.42.2",
   "kinds": {
     "union": [
       "channel",
@@ -18,7 +18,7 @@
       "type"
     ]
   },
-  "count": 7961,
+  "count": 7962,
   "surfaces": [
     "schemas/v2/a2a-task-state.schema.json#/contextId|type|string",
     "schemas/v2/a2a-task-state.schema.json#/interruptKind|enum-member|\"approval\"",
@@ -7927,6 +7927,7 @@
     "schemas/v2/workspace-file.schema.json#|type|object",
     "spec/v2/path-manifest.json#|channel|/host/events",
     "spec/v2/path-manifest.json#|channel|/runs/{runId}/events",
+    "spec/v2/path-manifest.json#|operation|DELETE /content/pages/{slug}",
     "spec/v2/path-manifest.json#|operation|DELETE /prompts/{templateId}",
     "spec/v2/path-manifest.json#|operation|DELETE /webhooks/{webhookId}",
     "spec/v2/path-manifest.json#|operation|GET /.well-known/openwop",
