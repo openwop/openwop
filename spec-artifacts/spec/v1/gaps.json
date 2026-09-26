@@ -12702,8 +12702,8 @@
       "surface": "Whether `GET /webhooks/{webhookId}/dead-letters` (RFC 0188) still answers after that subscription is unregistered, and whether existing dead-letter records outlive the unregister, is unstated. RFC 0188 requires `404 not_found` only when the facet is not advertised.",
       "witness": "unclassified",
       "requirementId": null,
-      "disposition": "transferred",
-      "target": "RFCS/0188-webhook-dead-letter-read.md",
+      "disposition": "closed",
+      "target": null,
       "sources": [
         {
           "file": "RFCS/registers/0215-webhook-delivery-isolation.gaps.md",
@@ -12844,6 +12844,40 @@
         {
           "file": "RFCS/registers/0216-colocated-witness-for-harness-trust-anchor-rows.gaps.md",
           "token": "G7"
+        }
+      ]
+    },
+    {
+      "id": "openwop.gap.0217.1",
+      "rfc": "0217",
+      "local": "G1",
+      "section": "§Compatibility",
+      "surface": "MyndHyve's not-found branch answers the unregistered code `subscription_not_found`.",
+      "witness": "unclassified",
+      "requirementId": null,
+      "disposition": "externally-gated",
+      "target": "myndhyve-not-found-code",
+      "sources": [
+        {
+          "file": "RFCS/registers/0217-dead-letter-read-after-unregister.gaps.md",
+          "token": "G1"
+        }
+      ]
+    },
+    {
+      "id": "openwop.gap.0217.2",
+      "rfc": "0217",
+      "local": "G2",
+      "section": "§Compatibility",
+      "surface": "`subscription_not_found` is asserted by the major-1 scenario `webhook-negative` but appears in no v1 or v2 registry.",
+      "witness": "unclassified",
+      "requirementId": null,
+      "disposition": "transferred",
+      "target": "spec/v1",
+      "sources": [
+        {
+          "file": "RFCS/registers/0217-dead-letter-read-after-unregister.gaps.md",
+          "token": "G2"
         }
       ]
     },

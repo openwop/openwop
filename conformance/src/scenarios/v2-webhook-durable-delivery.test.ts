@@ -472,6 +472,39 @@ describe('RFC 0173 §B — webhook-durable-delivery (gated on webhooks)', () => 
     ).toBe(200);
   }, DEAD_LETTER_TEST_TIMEOUT_MS);
 
+  it('after unregister, the dead-letter read answers 404 not_found, as for a subscription that never existed', async () => {
+    // RFC 0217 (amends RFC 0188 §A; suite 2.42.0; RFC 0215 gap G5). The read
+    // is path-scoped to a subscription, and identity.md §5 already says an
+    // unknown id is 404. What was unstated is the id that WAS known: after
+    // unregisterWebhook's 204 a host MUST answer exactly as for a same-tenant id
+    // it never minted, so the subscription's existence is not recoverable
+    // through the sink, and a host MAY discard the records at the unregister.
+    const ID = 'openwop.requirement.0217.dead-letter-read-after-unregister';
+    if (!(await v2Discovery())) return softSkip('blocked', 'v2 discovery unreachable');
+    const fam = await gateFamily('webhooks');
+    if (!fam) return softSkip('inapplicable', 'webhooks family not advertised');
+    if (!fam['deadLetter']) return softSkip('inapplicable', 'host does not advertise the webhooks.deadLetter facet — RFC 0188 §A.5 makes the read a 404 for every subscription, so there is no before/after to compare');
+    const reg = await driver.post('/webhooks', { url: 'https://subscriber.invalid/hook', events: ['run.completed'] });
+    if (reg.status !== 201) return softSkip('blocked', `POST /webhooks answered ${reg.status} — no subscription to unregister`);
+    const webhookId = (reg.json as { webhookId?: unknown } | null)?.webhookId;
+    if (typeof webhookId !== 'string' || !webhookId.includes('/')) return softSkip('blocked', `the mint returned ${JSON.stringify(webhookId)}, not a tenant-bound id`);
+    const live = await driver.get(`/webhooks/${projectBoundId(webhookId)}/dead-letters`);
+    const del = await driver.delete(`/webhooks/${encodeURIComponent(webhookId)}`);
+    expect(live.status, req(ID, 'RFC 0188 §A.1', 'while the subscription exists, its dead-letter read MUST answer 200 (the control for the comparison below)')).toBe(200);
+    expect(del.status, req(ID, 'webhooks.md §Surfaces', 'unregisterWebhook MUST answer 204 for the caller\'s own subscription')).toBe(204);
+    const after = await driver.get(`/webhooks/${projectBoundId(webhookId)}/dead-letters`);
+    const tenant = webhookId.slice(0, webhookId.indexOf('/'));
+    const never = await driver.get(`/webhooks/${projectBoundId(`${tenant}/never-${Date.now().toString(36)}${Math.random().toString(36).slice(2, 10)}`)}/dead-letters`);
+    expect(
+      [after.status, readErrorCode(after.json)],
+      req(ID, 'webhooks.md §Durability (RFC 0217 §A)', `after unregisterWebhook answers 204, GET /webhooks/{webhookId}/dead-letters MUST answer 404 not_found — the subscription no longer exists to own a sink (got ${after.status} ${readErrorCode(after.json) ?? ''})`),
+    ).toEqual([404, 'not_found']);
+    expect(
+      [after.status, readErrorCode(after.json)],
+      req(ID, 'webhooks.md §Durability (RFC 0217 §A)', `the answer for an unregistered subscription MUST be indistinguishable from a same-tenant id the host never minted (that one answered ${never.status} ${readErrorCode(never.json) ?? ''})`),
+    ).toEqual([never.status, readErrorCode(never.json)]);
+  }, DEAD_LETTER_TEST_TIMEOUT_MS);
+
   it('a dead-letter record carries no delivered payload', async () => {
     // Its own `it`: RFC 0168 §A.1 allows one explicit requirement id per it(),
     // and `check-req-only` enforces it.
