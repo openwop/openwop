@@ -23,6 +23,29 @@ describe('hostPublicOrigin — the origin a user agent reaches the host on', () 
     expect(r).toEqual({ ok: true, origin: FRONT, declared: true });
   });
 
+  it('a host that derives its advertised URLs from the REQUEST origin still verifies (2.39.5)', async () => {
+    process.env[HOST_FRONT_ENV] = FRONT;
+    // Measured shape: the loopback fetch embeds the loopback origin, the fronted one the tunnel origin.
+    const doc = (origin: string): string => JSON.stringify({ protocolVersions: ['2.0'], capabilities: { a2a: { agentCardUrl: `${origin}/.well-known/agent-card.json` }, mcp: { serverUrls: [`${origin}/mcp`] } } });
+    const r = await hostPublicOrigin(BASE, async (u) => ({ status: 200, text: u.startsWith(FRONT) ? doc(FRONT) : doc(BASE) }));
+    expect(r).toEqual({ ok: true, origin: FRONT, declared: true });
+  });
+
+  it('a host with a public base that embeds the FRONT origin in both documents still verifies', async () => {
+    process.env[HOST_FRONT_ENV] = FRONT;
+    const both = JSON.stringify({ capabilities: { oauth: { connect: `${FRONT}/oauth/connect` } } });
+    const r = await hostPublicOrigin(BASE, async () => ({ status: 200, text: both }));
+    expect(r.ok).toBe(true);
+  });
+
+  it('SABOTAGE: a different host whose URLs differ only by origin but whose content differs is still refused', async () => {
+    process.env[HOST_FRONT_ENV] = FRONT;
+    const a = JSON.stringify({ protocolVersions: ['2.0'], capabilities: { a2a: { agentCardUrl: `${BASE}/card` } } });
+    const b = JSON.stringify({ protocolVersions: ['2.0'], capabilities: { a2a: { agentCardUrl: `${FRONT}/card` }, extra: true } });
+    const r = await hostPublicOrigin(BASE, async (u) => ({ status: 200, text: u.startsWith(FRONT) ? b : a }));
+    expect(r.ok).toBe(false);
+  });
+
   it('SABOTAGE: a front serving a different host is refused, never trusted', async () => {
     process.env[HOST_FRONT_ENV] = FRONT;
     const other = JSON.stringify({ protocolVersions: ['2.0'], capabilities: {} });
