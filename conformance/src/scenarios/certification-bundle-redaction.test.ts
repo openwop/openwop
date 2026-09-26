@@ -158,7 +158,7 @@ describe('RFC 0148 §C — certification-bundle-redaction: secret canaries never
     // Suite 2.40.2: openwop-app set OPENWOP_WEBHOOK_SECRET_ROTATION_OVERLAP_S=60,
     // the name matched SECRET, and scrubEvidence rewrote the "60" inside
     // discovery.sha256 — the bundle failed ^[0-9a-f]{64}$ and main could not deploy.
-    const digest = '4b8d99c002a061a0255e8224ee683162007febadd251b2d171b47c0849695315';
+    const digest = '4b8d99c002a061a0255e8224ee683160007febadd251b2d171b47c0849695315';
     const env = {
       OPENWOP_WEBHOOK_SECRET_ROTATION_OVERLAP_S: '60',
       OPENWOP_TOKEN_TTL_SECONDS_KEY: '86400000',

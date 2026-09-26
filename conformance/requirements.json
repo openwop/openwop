@@ -28818,6 +28818,11 @@
           "section": "spec/v2/core/idempotency.md §Layer 2: effect identity",
           "requirement": null,
           "interpolated": true
+        },
+        {
+          "section": "spec/v2/core/idempotency.md §Layer 2: effect identity",
+          "requirement": null,
+          "interpolated": true
         }
       ]
     },
