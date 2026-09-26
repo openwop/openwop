@@ -1,5 +1,9 @@
 # `@openwop/openwop-conformance` Changelog
 
+## [2.42.0] — unreleased — `replay_context_summary_unavailable` is a registered code
+
+- **Version moved ahead of publication.** `@openwop/openwop-conformance` and its exact-pinned peer `@openwop/spec-artifacts` move to `2.42.0` because `2.41.1` is published and this cycle changes shipped spec files (`spec/v2/errors.json`, the generated `schemas/v2/error-envelope.schema.json`). A minor: a new registered error code is an additive wire member. No scenario changes — no conformance leg asserts the code (a black-box suite cannot make a host's summary artifact unavailable at `fromSeq`; RFC 0111 amendment).
+
 ## [2.41.1] — 2026-09-26 — an SSE projection row no longer depends on a host's front forwarding headers early
 
 - **`v2-stream-sse-projection` reads a terminal run's stream.** It streamed the noop run the moment it was created, so on a loaded certification cut the run was still queued and the stream stayed open. A public front that buffers SSE (openwop-app's Firebase Hosting) withholds the headers of an open stream, `streamEvents`' 8 s budget ran out before any header arrived, and `0171.stream-sse-projection` recorded `blocked` ("answered 0") on both of openwop-app's 2.40.3 production cuts. Quiet-machine time to first byte for the same request was 0.19 s. No rule bounds time to headers. The row tests how every frame names its run, and a terminal run's backlog carries every frame, so the leg now waits up to 30 s for the run to finish before it reads the stream (the host closes a terminal run's stream, events.md §SSE), and a missing response now says which of the two it was.
