@@ -19,6 +19,14 @@
  * Every refusal leg carries an admitted control in the same run, so a host that
  * refuses everything fails as surely as one that refuses nothing.
  *
+ * The last describe accounts for §C.9's `render-needs-root`, whose
+ * Falsifiability verdict is `unwitnessable`: the guarantee is render-side, and
+ * a server-oriented suite cannot observe a renderer. It records `inapplicable`
+ * on EVERY host, before any request and before the seam gate, and names where
+ * the real witness lives: a reference-app client probe, `tier: reference-impl`,
+ * following the `a2ui-surface-no-code-exec` precedent. It never asserts and
+ * cannot become a pass.
+ *
  * @see RFCS/0209-v2-a2ui-surfaces-are-a2ui-v0-9.md
  * @see spec/v2/ext/a2uiSurface/README.md
  * @see spec/v2/core/events.md §"The envelope-kind catalog"
@@ -293,5 +301,12 @@ describe('RFC 0209 §C.12 — trust is sticky across the fold (seam-gated)', () 
       await done(runId);
       if (controlRun) await done(controlRun);
     }
+  });
+});
+
+describe('RFC 0209 §C.9 — no render before root (declared unwitnessable here; reference-impl witness)', () => {
+  it('records why render-needs-root has no server-side witness, and where its witness lives', () => {
+    req('openwop.requirement.0209.render-needs-root', 'RFC 0209 §C.9', 'a renderer does not render a surface before its root component exists');
+    return softSkip('inapplicable', 'unwitnessable by this suite (RFC 0209 §C.9 Falsifiability verdict): a render-side guarantee, and a server-oriented suite cannot observe a renderer. The fold guard the server CAN observe is openwop.requirement.0209.fold-guarded, above. The render half is witnessed as a reference-app client probe (tier: reference-impl, the a2ui-surface-no-code-exec precedent): openwop/openwop-app frontend/react/src/chat/a2ui/__tests__/a2ui-v09-render-needs-root.test.tsx (openwop-app#4121, ADR 0749). Removing the `if (!state.renderable)` guard in frontend/react/src/chat/a2ui/v09/A2uiV09Surface.tsx turns 2 of its 4 cases red. This row records that the suite reached the requirement, and it is not a pass.');
   });
 });
