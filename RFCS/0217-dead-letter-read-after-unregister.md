@@ -8,7 +8,7 @@
 | **Author(s)**     | David Tufts (@davidscotttufts)                                  |
 | **Created**       | 2026-09-26                                                      |
 | **Updated**       | 2026-09-26 — filed and moved `Draft → Active` in the filing PR. **Comment window waived** (additive, 7-day) by the steward under `GOVERNANCE.md` §"Sole-steward operation", logged in `MAINTAINERS.md` §"Bootstrap-phase RFC waivers". RFC 0147 §A.6 does not apply: no identity or authorization surface is narrowed, and the only new answer is one `identity.md` §5 already gives for an unknown id. Filed as its own RFC rather than as an edit to RFC 0188 because RFC 0188 is `Accepted`, and an `Accepted` RFC may carry only requirements a certified bundle has witnessed (RFC 0174 §B.1 rule 4) |
-| **Affects**       | `spec/v2/core/webhooks.md` §Durability (one sentence on the dead-letter read) · conformance (one leg in `v2-webhook-durable-delivery.test.ts`, suite 2.41.2) · amends RFC 0188 §A (the read) |
+| **Affects**       | `spec/v2/core/webhooks.md` §Durability (one sentence on the dead-letter read) · conformance (one leg in `v2-webhook-durable-delivery.test.ts`, suite 2.42.0) · amends RFC 0188 §A (the read) |
 | **Compatibility** | `additive` — a new normative requirement on a previously undefined behavior (`COMPATIBILITY.md` §4). No wire, schema, error-code or event change |
 | **Supersedes**    | — amends RFC 0188 §A; RFC 0188 stands                           |
 | **Superseded by** | —                                                               |
@@ -70,8 +70,8 @@ None.
 
 ## Acceptance criteria
 
-- [x] `Active`: the `webhooks.md` sentence and the leg (suite 2.41.2), sabotage-proved against a tombstone host.
-- [ ] `openwop.requirement.0217.dead-letter-read-after-unregister` `executed-pass` on a certified host bundle — reason: minted in suite 2.41.2, which is not yet published; the first certified cut of a host advertising `webhooks.deadLetter` on ≥ 2.41.2 (the v2 reference host, or MyndHyve after its error-code fix) witnesses it.
+- [x] `Active`: the `webhooks.md` sentence and the leg (suite 2.42.0), sabotage-proved against a tombstone host.
+- [ ] `openwop.requirement.0217.dead-letter-read-after-unregister` `executed-pass` on a certified host bundle — reason: minted in suite 2.42.0, which is not yet published; the first certified cut of a host advertising `webhooks.deadLetter` on ≥ 2.42.0 (the v2 reference host, or MyndHyve after its error-code fix) witnesses it.
 
 ## References
 

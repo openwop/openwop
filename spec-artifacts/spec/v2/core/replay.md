@@ -52,6 +52,7 @@ When a replayed node produces an event different from the source at the same seq
 | `replay_diverged_at_refusal` | fork fails, `409` | The source obtained a valid envelope and the replay a refusal, or the reverse. The host MUST NOT substitute silently; it MUST emit `replay.diverged-at-refusal` naming the node and both envelope kinds and fail the replay with this code (RFC 0041 §B). |
 | `replay_source_missing` | `node.failed` payload; the fork request still returns `201` | A side-effecting node reached with no recorded source outcome for `(nodeId, attempt)` (§Suppression). |
 | `replay_memory_snapshot_unavailable` | fork refused, `409` | The host cannot serve memory state as-of `fromSeq`. It MUST refuse rather than substitute current memory; `details.fromSeq` SHOULD name the index (RFC 0039 §B). |
+| `replay_context_summary_unavailable` | fork refused, `409` | The host advertises `multiAgent.executionModel.contextBudget.summarization` and cannot serve, as-of `fromSeq`, a summary artifact (`context.summarized.summaryRef`) the replay would reuse. It MUST refuse rather than re-summarize; `details.fromSeq` SHOULD name the index (RFC 0111). |
 
 ## Suppression
 

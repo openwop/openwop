@@ -473,7 +473,7 @@ describe('RFC 0173 §B — webhook-durable-delivery (gated on webhooks)', () => 
   }, DEAD_LETTER_TEST_TIMEOUT_MS);
 
   it('after unregister, the dead-letter read answers 404 not_found, as for a subscription that never existed', async () => {
-    // RFC 0217 (amends RFC 0188 §A; suite 2.41.2; RFC 0215 gap G5). The read
+    // RFC 0217 (amends RFC 0188 §A; suite 2.42.0; RFC 0215 gap G5). The read
     // is path-scoped to a subscription, and identity.md §5 already says an
     // unknown id is 404. What was unstated is the id that WAS known: after
     // unregisterWebhook's 204 a host MUST answer exactly as for a same-tenant id
