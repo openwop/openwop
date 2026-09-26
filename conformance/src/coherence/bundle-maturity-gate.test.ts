@@ -13,16 +13,25 @@
  * without any host having done anything. The corpus leg gets its own id, and
  * the host leg stays owed.
  *
- * The three legs, each a run:
- *   1. the committed corpus — green, and the REPORT names MyndHyve's 38
- *      overstated families and the gap row that owes the re-cut. A "reported"
- *      disposition that printed nothing would be indistinguishable from a
- *      clean tree, which is how a backlog becomes invisible.
- *   2. the SAME MyndHyve document, re-labelled with a suite version at or
- *      above the RFC's, FAILS with 38 — the sabotage the RFC names.
+ * The legs, each a run:
+ *   1. the committed corpus — green, and the gate states which suite makes
+ *      §C.7 binding.
+ *   2. MyndHyve's superseded 2.35.1 document, re-labelled with a suite version
+ *      at or above the RFC's, FAILS with 38 — the sabotage the RFC names.
  *   3. flipping one family to `stable` in a fixture declaration drops the
  *      count to 37, so the number is derived from the comparison rather than
  *      from a constant somebody typed.
+ *   4. the same document at its own suite is REPORTED, not failed, and the
+ *      report names the families and the gap row. A "reported" disposition
+ *      that printed nothing would be indistinguishable from a clean tree,
+ *      which is how a backlog becomes invisible.
+ *
+ * WHY THE SUBJECT IS A FROZEN FIXTURE. Legs 2–4 need a document that really
+ * overstates. Until 2026-09-26 that was the committed MyndHyve bundle; its
+ * 2.39.5 re-cut advertises nothing above the declaration (G1 closed), so the
+ * committed bundle can no longer be the sabotage subject. The 2.35.1 document
+ * is kept byte-for-byte at `evidence/fixtures/0197-myndhyve-2.35.1-overstated.json`
+ * — outside `evidence/v2-host-bundles/`, so no gate reads it as evidence.
  *
  * @see scripts/check-bundle-maturity.mjs
  * @see spec/v2/core/capabilities.md §8
@@ -42,7 +51,7 @@ const root = join(SCHEMAS_DIR, '..');
 const SCRIPT = join(root, 'scripts', 'check-bundle-maturity.mjs');
 const ID = 'openwop.requirement.0197.bundle-maturity-bound';
 const DOC = 'spec/v2/core/capabilities.md §8 (RFC 0197 §C.7)';
-const SOURCE = join(root, 'evidence', 'v2-host-bundles', 'myndhyve.json');
+const SOURCE = join(root, 'evidence', 'fixtures', '0197-myndhyve-2.35.1-overstated.json');
 
 interface Run { status: number | null; out: string; overstated: number | null }
 
@@ -73,19 +82,17 @@ function relabelled(suiteVersion: string, flipFamilyToStable?: string): Run {
 }
 
 describe('bundle-maturity-gate (RFC 0197 §C.7 / D1)', () => {
-  it('the committed corpus is green, and the report NAMES the overstated families and the gap row', () => {
+  it('the committed corpus is green, and the gate states when §C.7 binds', () => {
     if (V1_DIR === null) return softSkip('inapplicable', 'not a spec checkout');
     const r = spawnSync('node', [SCRIPT], { cwd: root, encoding: 'utf8', maxBuffer: 32 * 1024 * 1024 });
     const out = String(r.stdout ?? '') + String(r.stderr ?? '');
     expect(r.status, req(ID, DOC, `D1: a bundle cut before the first suite release shipping this RFC stays a valid measurement at its own suite, so the committed corpus MUST be green — it exited ${r.status}: ${out.slice(-600)}`)).toBe(0);
-    expect(out, req(ID, DOC, 'a "reported" disposition that printed nothing would be indistinguishable from a clean tree; the report MUST name the gap row that owes the re-cut')).toMatch(/openwop\.gap\.0197\.1 \(G1\)/);
-    expect(out, req(ID, DOC, 'the report MUST name the families by key, not just count them — a number nobody can act on is not a report')).toMatch(/packs\(corpus:experimental\)/);
     expect(out, req(ID, DOC, 'the gate MUST state which suite version makes §C.7 binding, so "reported" has a visible end date')).toMatch(/binds bundles cut on suite \d+\.\d+\.\d+ or later/);
   }, 120_000);
 
-  it('the same committed bundle re-labelled onto the RFC’s suite FAILS, naming every overstated family', () => {
+  it('the superseded MyndHyve bundle re-labelled onto the RFC’s suite FAILS, naming every overstated family', () => {
     if (V1_DIR === null) return softSkip('inapplicable', 'not a spec checkout');
-    if (!existsSync(SOURCE)) return softSkip('blocked', 'evidence/v2-host-bundles/myndhyve.json is absent, so the sabotage has no subject');
+    if (!existsSync(SOURCE)) return softSkip('blocked', 'evidence/fixtures/0197-myndhyve-2.35.1-overstated.json is absent, so the sabotage has no subject');
     const r = relabelled('2.36.0');
     expect(r.status, req(ID, DOC, `§C.7 is a MUST for a bundle cut on the first suite release that ships this RFC; the ONLY difference from the green run is the suite label — it exited ${r.status}: ${r.out.slice(-600)}`)).not.toBe(0);
     expect(r.overstated, req(ID, DOC, `the count must be the real one measured from the real document (38), not a constant — it read ${r.overstated}`)).toBe(38);
@@ -94,7 +101,7 @@ describe('bundle-maturity-gate (RFC 0197 §C.7 / D1)', () => {
 
   it('the count is DERIVED — promoting one family in the declaration drops 38 to 37', () => {
     if (V1_DIR === null) return softSkip('inapplicable', 'not a spec checkout');
-    if (!existsSync(SOURCE)) return softSkip('blocked', 'evidence/v2-host-bundles/myndhyve.json is absent, so the sabotage has no subject');
+    if (!existsSync(SOURCE)) return softSkip('blocked', 'evidence/fixtures/0197-myndhyve-2.35.1-overstated.json is absent, so the sabotage has no subject');
     const r = relabelled('2.36.0', 'packs');
     expect(r.overstated, req(ID, DOC, `with \`packs\` promoted to stable in the declaration the count MUST fall by exactly one; a gate reading a hard-coded 38 would not move. It read ${r.overstated}`)).toBe(37);
     expect(r.out, req(ID, DOC, 'the promoted family must no longer be named in the overstated list')).not.toMatch(/packs\(corpus:experimental\)/);
@@ -102,10 +109,12 @@ describe('bundle-maturity-gate (RFC 0197 §C.7 / D1)', () => {
 
   it('a bundle whose suite is BELOW the RFC’s is reported, not failed, even with the same 38', () => {
     if (V1_DIR === null) return softSkip('inapplicable', 'not a spec checkout');
-    if (!existsSync(SOURCE)) return softSkip('blocked', 'evidence/v2-host-bundles/myndhyve.json is absent, so the sabotage has no subject');
+    if (!existsSync(SOURCE)) return softSkip('blocked', 'evidence/fixtures/0197-myndhyve-2.35.1-overstated.json is absent, so the sabotage has no subject');
     const r = relabelled('2.35.1');
     expect(r.status, req(ID, DOC, `the positive control for D1: identical content, an earlier suite label, and the gate MUST NOT fail — otherwise "reported" is a fiction. It exited ${r.status}: ${r.out.slice(-400)}`)).toBe(0);
     expect(r.overstated, req(ID, DOC, 'the same 38 are still counted and printed; reported is not the same as unmeasured')).toBe(38);
     expect(r.out, req(ID, DOC, 'the reported row must cite COMPATIBILITY.md §2.3 — an old pass stays a measurement at the suite that measured it')).toMatch(/stays a valid measurement at its own suite/);
+    expect(r.out, req(ID, DOC, 'a "reported" disposition that printed nothing would be indistinguishable from a clean tree; the report MUST name the gap row that owes the re-cut')).toMatch(/openwop\.gap\.0197\.1 \(G1\)/);
+    expect(r.out, req(ID, DOC, 'the report MUST name the families by key, not just count them — a number nobody can act on is not a report')).toMatch(/packs\(corpus:experimental\)/);
   }, 120_000);
 });
