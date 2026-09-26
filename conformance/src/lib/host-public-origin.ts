@@ -35,6 +35,25 @@ const defaultFetch: Fetcher = async (url) => {
   return { status: res.status, text: await res.text() };
 };
 
+/**
+ * Replace every occurrence of either origin with one placeholder, in every
+ * string value. A host that derives its advertised URLs (`agentCardUrl`, MCP
+ * `serverUrls`, …) from the REQUEST origin embeds `http://127.0.0.1:…` in the
+ * document fetched over loopback and the tunnel origin in the one fetched
+ * through the front — so byte equality could never hold on exactly the hosts
+ * this helper exists for (measured on the v2-reference public cut on suite
+ * 2.39.4, openwop-1f: the only blocked row). A host with a public base may also
+ * embed EITHER origin in EITHER response, so both origins are normalised in both
+ * documents. Everything else must still match: a front serving another host
+ * differs in far more than its origin.
+ */
+function withoutOrigins(v: unknown, origins: readonly string[]): unknown {
+  if (typeof v === 'string') return origins.reduce((acc, o) => acc.split(o).join('<origin>'), v);
+  if (Array.isArray(v)) return v.map((x) => withoutOrigins(x, origins));
+  if (v !== null && typeof v === 'object') return Object.fromEntries(Object.entries(v as Record<string, unknown>).map(([k, x]) => [k, withoutOrigins(x, origins)]));
+  return v;
+}
+
 /** Key-order-independent JSON equality — the two fetches may serialise differently. */
 function canonical(v: unknown): string {
   if (Array.isArray(v)) return `[${v.map(canonical).join(',')}]`;
@@ -63,9 +82,10 @@ export async function hostPublicOrigin(baseUrl: string, fetcher: Fetcher = defau
     return { ok: false, reason: `discovery answered ${viaFront.status} through ${HOST_FRONT_ENV}=${frontOrigin} and ${viaBase.status} over --base-url — the declared front is not shown to serve the host under test` };
   }
   let same = false;
-  try { same = canonical(JSON.parse(viaFront.text)) === canonical(JSON.parse(viaBase.text)); } catch { same = false; }
+  const origins = [frontOrigin, base.origin];
+  try { same = canonical(withoutOrigins(JSON.parse(viaFront.text), origins)) === canonical(withoutOrigins(JSON.parse(viaBase.text), origins)); } catch { same = false; }
   if (!same) {
-    return { ok: false, reason: `the discovery document through ${HOST_FRONT_ENV}=${frontOrigin} differs from the one over --base-url — the front does not serve the host under test, so an origin claim through it would witness some other host` };
+    return { ok: false, reason: `the discovery document through ${HOST_FRONT_ENV}=${frontOrigin} differs from the one over --base-url beyond their origins — the front does not serve the host under test, so an origin claim through it would witness some other host` };
   }
   return { ok: true, origin: frontOrigin, declared: true };
 }
