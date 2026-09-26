@@ -192,6 +192,15 @@ Format follows [Keep a Changelog](https://keepachangelog.com/en/1/) loosely. Ver
 - **The remaining eleven stay `Active`, each for a stated reason** rather than for lack of attention. The eight RFC 0167 program children name a certified openwop-app bundle in their own acceptance criteria and the committed one reads `certified: false` (3 blocked rows, RFC 0168 §E.1). RFC 0173 additionally carries the program's only `open` gap row. RFC 0179's sole criterion is unmet — 2.4.2 stopped the gate reading "(Phase 4 leg)" as an excuse for it. RFC 0187 names three requirement ids that no scenario mints. RFC 0167 itself flips **last**, which 2.4.2 made a rule: the moment the umbrella stops being `Active`, every child still `Active` becomes permanently ineligible.
 - **The interrupt `data` union is bound to `kind`** (MCP/A2A review P3-H7, Class 3 correction — COMPATIBILITY.md §3). `schemas/suspend-request.schema.json` and its v2 twin typed `data` as an unbound `oneOf`, so the minimal `conversation.start` and `conversation.close` payloads (`{ conversationId }`, which satisfies both shapes) failed validation in v1 and v2, and a payload carrying another kind's `data` passed. `data` is now an `anyOf` and a root `allOf` binds each kind to its own shape with one `if`/`then`; no per-kind shape or `$id` changed. Witnessed by `conformance/fixtures/interrupt-payloads/` (suite 2.36.0).
 
+## [2.40.1] — 2026-09-26 — three declared-unwitnessable rows are reached and say why
+
+A suite patch: no new scenario file, no wire, schema or `MUST` change (`COMPATIBILITY.md` §2.1). The corpus tag moves because `@openwop/openwop-conformance` and `@openwop/spec-artifacts` move together.
+
+### Conformance
+
+- **Three Falsifiability rows that RFCs 0197, 0205 and 0209 declare non-executable now have a leg that records why (#1582)** — RFC 0174 §B.1 rule 4, second branch. `0197.retired-not-emitted` (in `v2-capability-maturity-bounded`, conditional on a retired member existing), `0205.export-alias-equivalence` (in `v2-artifact-a2a-shape`) and `0209.render-needs-root` (in `v2-a2ui-v09-surface`, citing the renderer test in openwop-app#4121) each reach the leg and record its reason; none can record `executed-pass` without observing the requirement.
+- **Suite `2.40.1`**: 561 scenario files. `@openwop/spec-artifacts` moves in lockstep at the same exact pin.
+
 ## [2.40.0] — 2026-09-26 — one subscription's dead receiver cannot hold another's delivery, and unregistering stops the retries
 
 A suite minor: two new scenario files, no wire, schema, event or error-code change (`additive` under `COMPATIBILITY.md` §4). The corpus tag moves because `@openwop/openwop-conformance` and `@openwop/spec-artifacts` move together.
