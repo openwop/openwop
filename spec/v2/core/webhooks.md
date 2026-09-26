@@ -1,6 +1,6 @@
 # Webhooks
 
-> **Status: Stable · RFC 0165 §C.1, 0173 §B, 0176 §D.2, 0171 §A.4.**
+> **Status: Stable · RFC 0165 §C.1, 0173 §B, 0176 §D.2, 0171 §A.4, 0215.**
 > **Normative home:** `webhooks`.
 
 ## Why this exists
@@ -15,6 +15,8 @@ A host that advertises `webhooks` (capabilities.md) serves `registerWebhook` (`P
 | --- | --- | --- |
 | `registerWebhook` | `{ url, events[], secret?, tags?, signatureAlgorithms? }`; `url` MUST be `https://`; `events[]` MUST be non-empty v2 event type names (events.md) | `201 { webhookId }` |
 | `unregisterWebhook` | path `webhookId` | `204`; `404` when unknown; `403` when the caller is outside the subscription's tenant |
+
+A `204` from `unregisterWebhook` ends the subscription's deliveries, including retries already scheduled (§Durability; RFC 0215 §B).
 
 A subscription MUST receive only events from runs within its tenant scope; cross-tenant delivery is a protocol violation whatever the filter says (invariant `webhook-cross-tenant-isolation`). `tags` narrows delivery to runs whose options carry an overlapping tag.
 
@@ -66,6 +68,9 @@ Durable delivery is an obligation of the `webhooks` surface (RFC 0173 §B; secur
 - retry a failed attempt per its advertised `retryPolicy` (`maxAttempts`, `backoff ∈ none | fixed | exponential`) with backoff between attempts;
 - route a delivery whose retries are exhausted to the dead-letter sink, rather than drop it. A host advertising `webhooks.deadLetter` MUST serve `GET /webhooks/{webhookId}/dead-letters` (RFC 0188), and that record MUST NOT carry the delivered body, the delivery headers, or the subscription secret — a dead-letter read names a delivery, it does not replay one. This sink is the DELIVERY sink; the `deadLetter` family (RFC 0053) is the RUN sink and is a different thing;
 - deliver each matching event at least once; a receiver MAY observe the same event more than once;
+- not make the start of an attempt to one subscription wait for an attempt to a *different* subscription to finish (answered, failed, or timed out): one subscription's slow or dead receiver MUST NOT delay another subscription's deliveries (invariant `webhook-delivery-isolation`, RFC 0215 §A.1). The rule is about when an attempt starts, not how soon after an event it must start, and it names no mechanism: a lane per subscription, a concurrent pool or asynchronous I/O all meet it, and a sequential loop over a batch does not;
+- sustain that while at least **8** subscriptions have attempts outstanding that their receivers have not answered (RFC 0215 §A.2). A host MAY bound concurrent attempts beyond that, and SHOULD NOT let one tenant's unanswered attempts occupy capacity another tenant's deliveries need (§A.3);
+- after `unregisterWebhook` answers `204`, not start any further attempt for that subscription, including attempts already scheduled for retry (invariant `webhook-unregister-stops-delivery`, RFC 0215 §B). An attempt whose request the host had begun sending before the `204` MAY complete. The unregister does not oblige the host to route that subscription's undelivered events to the dead-letter sink: the exhaustion rule above governs deliveries of a live subscription;
 - dead-letter a `payload_unprojectable` delivery (events.md §Era-2) on the first attempt, never retry it.
 
 Best-effort delivery is not a conforming mode. A `3xx` response is a delivery failure, retried under the same policy. `webhook-durable-delivery` witnesses it.
