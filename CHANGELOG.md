@@ -13,6 +13,7 @@ Format follows [Keep a Changelog](https://keepachangelog.com/en/1/) loosely. Ver
 
 ## [Unreleased]
 
+- **`v2-mcp-mount-map` no longer counts a sibling scenario's run as its own** (conformance 2.42.1; no wire change). The run-transport leg required exactly one new run across a concurrent window and failed the v2 reference host's CI with two; it now identifies the run its `tools/call` started.
 - **Corrections an openwop.dev sweep found in the spec itself** (editorial; no wire, `MUST`, code or status change). openwop-site's reconciliation of the site against spec 2.2 → 2.41.1 found places where the corpus disagreed with itself:
   - `node-pack-runtimes.md` labelled RFC 0203 `Active`; it is `Accepted`. A sweep of every inline RFC status label finds no other disagreement.
   - INTEROP-MATRIX: the reference row's rc.58 "How to read" paragraph is marked superseded, and the a2a-js 0.3.13 and `-legacy` profile rows are labelled v1-era (`interop.md` §"Legacy profiles are absent"). The MyndHyve and openwop-app rows now lead with their committed certified bundles (2.40.2 and 2.35.1), with older figures marked historical; the v2 heading and "Last updated" are current.
