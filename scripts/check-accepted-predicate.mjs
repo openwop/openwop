@@ -17,6 +17,7 @@
 import { readFileSync, readdirSync, existsSync } from 'node:fs';
 import { join, dirname, resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
+import { companionWitness, isCompanion } from './lib/companion-pairing.mjs';
 const ROOT = resolve(dirname(fileURLToPath(import.meta.url)), '..');
 const RFCS = join(ROOT, 'RFCS');
 const ledgerPath = join(ROOT, 'evidence', 'corpus-ledger.json');
@@ -48,11 +49,19 @@ const bundleRows = new Set();
 const uncertified = [];
 const accountedRows = new Map();
 const partialRows = new Map();
+const companionNotes = [];
 {
+  const loaded = [];
   const dir = join(dirname(fileURLToPath(import.meta.url)), '..', 'evidence', 'v2-host-bundles');
   if (existsSync(dir)) for (const b of readdirSync(dir)) {
     if (!b.endsWith('.json')) continue;
     const doc = JSON.parse(readFileSync(join(dir, b), 'utf8'));
+    loaded.push({ name: b, bundle: doc });
+    // RFC 0216 §C — a colocated companion is read AFTER every bundle is loaded,
+    // because what it may witness depends on the served-host bundle it pairs
+    // with. It never reaches the general reader below: its public-surface rows
+    // were measured on loopback, beside the harness, not through the served front.
+    if (isCompanion(doc)) continue;
     // §B.1 says "a CITED bundle". The old reader took an executed-pass row from
     // any file in this directory, certified or not — so a bundle whose own
     // profile claims read `certified: false` (one blocked row is enough, RFC
@@ -79,6 +88,15 @@ const partialRows = new Map();
       // accounts for a declared non-executable verdict. Silence never does.
       else if (typeof r.detail === 'string' && r.detail.trim() !== '') accountedRows.set(rid, `${r.result} — ${r.detail.trim()}`);
     }
+  }
+  const anchorsPath = join(ROOT, 'spec', 'v2', 'harness-trust-anchors.json');
+  const anchorIds = new Set(existsSync(anchorsPath) ? JSON.parse(readFileSync(anchorsPath, 'utf8')).rows.map((r) => r.requirementId) : []);
+  for (const c of loaded.filter((x) => isCompanion(x.bundle))) {
+    const w = companionWitness(c, loaded, anchorIds);
+    for (const id of w.counted) bundleRows.add(id);
+    companionNotes.push(w.pairedWith
+      ? `${c.name}: colocated companion paired with ${w.pairedWith} — ${w.counted.size} harness-trust-anchor row(s) counted, ${w.discarded.length} other executed-pass row(s) not counted (RFC 0216 §C)`
+      : `${c.name}: colocated companion pairs with no certified served-host bundle (${Object.entries(w.failures).map(([n, f]) => `${n}: ${f.join('+')}`).join('; ') || 'none of the same host'}) — none of its ${w.discarded.length} executed-pass row(s) counted (RFC 0216 §C)`);
   }
 } let checked = 0;
 for (const f of readdirSync(RFCS).filter((n) => /^\d{4}-.*\.md$/.test(n)).sort()) {
@@ -206,5 +224,6 @@ if (hostGapsUnique.length) {
   }
 }
 if (uncertified.length) console.error(`  note: ${uncertified.length} bundle(s) supply no acceptance witness because they are not certified — ${uncertified.join('; ')}`);
+for (const n of companionNotes) console.error(`  note: ${n}`);
 if (failures.length) { console.error('=== check-accepted-predicate FAILED ===\n  ' + failures.join('\n  ')); process.exit(1); }
 console.log(`=== check-accepted-predicate OK — ${checked} v2-era Accepted RFC(s) satisfy RFC 0174 §B.1 ===`);

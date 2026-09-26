@@ -9,8 +9,8 @@
  * a comparator change in `witnessDigest` would be matched by a re-cut and never
  * noticed as a spec question. This file builds the preimage from §C's words
  * (members `id`, `scenario`, `result`, then `assertions`/`detail`/`evidence`
- * only when present; UTF-16 code-unit order by `id`; `{rows, relaxations}` only
- * when relaxations are non-empty) and requires the stored digest, `witnessDigest`
+ * only when present; UTF-16 code-unit order by `id`; `{rows, relaxations?,
+ * deployment?}` only when relaxations are non-empty or RFC 0216's marker is present) and requires the stored digest, `witnessDigest`
  * and the prose to agree.
  *
  * The census leg is the compatibility claim RFC 0212 makes: switching the row
@@ -53,7 +53,10 @@ function proseDigest(b: BundleV3): string {
       return row;
     });
   const relaxations = b.host.relaxations ?? [];
-  const preimage = relaxations.length > 0 ? { rows, relaxations } : rows;
+  const deployment = b.host.deployment;
+  const preimage = relaxations.length > 0 || deployment !== undefined
+    ? { rows, ...(relaxations.length > 0 ? { relaxations } : {}), ...(deployment !== undefined ? { deployment } : {}) }
+    : rows;
   return createHash('sha256').update(canonicalJSON(preimage), 'utf8').digest('hex');
 }
 
@@ -73,7 +76,7 @@ describe('RFC 0212 §C — witnessSha256 preimage', () => {
     expect(bundles.length, req('openwop.it.v2-bundle-witness-preimage.every-committed-v3-bundle-re-derives-its-witnesssha256-from-the-prose-preimage', SPEC, 'the census MUST cover every committed v3 bundle')).toBe(files.length);
     for (const { f, b } of bundles) {
       expect(proseDigest(b), req('openwop.it.v2-bundle-witness-preimage.every-committed-v3-bundle-re-derives-its-witnesssha256-from-the-prose-preimage', SPEC, `${f}: the stored witnessSha256 MUST equal SHA-256 of the JCS bytes of the §C preimage`)).toBe(b.witnessSha256);
-      expect(witnessDigest(b.results.requirements, b.host.relaxations), req('openwop.it.v2-bundle-witness-preimage.every-committed-v3-bundle-re-derives-its-witnesssha256-from-the-prose-preimage', SPEC, `${f}: the suite's witnessDigest MUST compute the §C preimage`)).toBe(b.witnessSha256);
+      expect(witnessDigest(b.results.requirements, b.host.relaxations, b.host.deployment), req('openwop.it.v2-bundle-witness-preimage.every-committed-v3-bundle-re-derives-its-witnesssha256-from-the-prose-preimage', SPEC, `${f}: the suite's witnessDigest MUST compute the §C preimage`)).toBe(b.witnessSha256);
     }
   });
 

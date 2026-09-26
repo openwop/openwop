@@ -67,8 +67,8 @@
 
 | Status | Count |
 |---|---:|
-| Accepted | 205 |
-| Active | 6 |
+| Accepted | 206 |
+| Active | 5 |
 | Draft | 1 |
 | Superseded | 1 |
 
@@ -286,7 +286,7 @@
 | RFC 0213 | three outcomes the v2 core never stated - a resume cursor past the log, the loser of a same-key race, and a resolve after the run ended | Accepted |
 | RFC 0214 | an A2A push credential is a destination credential, and a push is an egress like any webhook | Accepted |
 | RFC 0215 | a webhook delivery does not wait on another subscription's receiver, and an unregistered subscription gets no further attempts | Active |
-| RFC 0216 | a colocated companion bundle is marked, and witnesses only the rows that need the suite's own issuer | Active |
+| RFC 0216 | a colocated companion bundle is marked, and witnesses only the rows that need the suite's own issuer | Accepted |
 
 ## SDK Helper Coverage
 
@@ -309,7 +309,7 @@ The pack registry now lives in the [`openwop-registry`](https://github.com/openw
 ## Active Follow-Ups
 
 - 1 RFC still `Draft` (RFC 0038) — advance with schema/conformance proof or defer.
-- 6 RFCs `Active` (RFC 0111, RFC 0121, RFC 0199, RFC 0210, RFC 0215, RFC 0216) — wire-shape MAY shift compatibly within v1.x until promotion to `Accepted`.
+- 5 RFCs `Active` (RFC 0111, RFC 0121, RFC 0199, RFC 0210, RFC 0215) — wire-shape MAY shift compatibly within v1.x until promotion to `Accepted`.
 - External audit, non-steward host recruitment, and non-steward maintainer recruitment remain external-action gates.
 - Multi-region idempotency and some optional-profile behavior checks remain lower-confidence than the core wire contract.
 

@@ -58,6 +58,7 @@ A certification bundle validates against `schemas/v2/certification-bundle.schema
 | --- | --- |
 | `suite` | `name`, `version`, `targetMajor`, `specArtifactsVersion` REQUIRED |
 | `host` | `name`, `version`, `build.{kind, id}` REQUIRED; `kind` is `image-digest`, `commit`, or `artifact-sha256` |
+| `host.deployment` | OPTIONAL; `colocated-companion` only (below). Absent: the bundle measures the served host |
 | `discovery` | `url`, `sha256`, `protocolVersions`, `preferredVersion` REQUIRED |
 | `claimedProfiles[]` | `id`, `evidenceTier` (`self` \| `steward` \| `independent`), `witnessCount`, `certified` REQUIRED |
 | `results` | `totals` and the per-requirement list REQUIRED |
@@ -72,11 +73,13 @@ A certification bundle validates against `schemas/v2/certification-bundle.schema
 
 A signature that cannot be resolved to a published key attests **integrity only**. Such a bundle MUST NOT be read as attributable evidence, and a gate MUST distinguish three outcomes that a presence check collapses into one — *no discovery document was read*, *read and the key is not published*, and *the attestation does not verify*. A retired key MUST stay listed. `evidenceTier: independent` MUST carry a `verifierKeyId` distinct from the host's signing key; the verifier MUST refuse, not warn, on a missing or self-signed independent claim. A bundle with `totals.blocked > 0` does not certify. At major 2 a requirement a test did not observe records `blocked` even when the test asserted setup facts first; an `executed-pass` carrying a `partial-witness:` detail is reserved for a leg that observed its requirement and skipped an optional extra. A verifier MUST derive the operator's opt-outs from the signed `skipped` rows and MUST reject a bundle whose captured discovery document advertises one of them (`opted-out-but-advertised`). v1 and v2 bundles are never upgraded to v3; a bundle is evidence at its own version.
 
+A bundle cut from a *colocated companion* — the served host's image, run beside the suite so it can trust a suite-held trust anchor — MUST carry `host.deployment: "colocated-companion"`, which the preimage covers (§"Canonical JSON"). A host serving production traffic MUST NOT list a suite-held trust anchor among the trust roots it advertises. A companion is evidence only for the requirements in `spec/v2/harness-trust-anchors.json`, and only when it pairs with a certified served-host bundle of the same `image-digest` build, signed under a key that bundle's discovery publishes, whose discovery document is equal once each document's origin and the `oidc` lane's `issuers` are set aside (RFC 0216).
+
 ### Canonical JSON
 
 Every signature and digest in this corpus is over the RFC 8785 (JCS) serialization, UTF-8 encoded (RFC 0212). The value MUST be I-JSON (RFC 7493): a signer or hasher MUST refuse, not coerce, a value with duplicate member names, a lone surrogate, a non-finite number, an integer literal whose magnitude exceeds 2^53 − 1, or a non-JSON value, and a verifier that meets one in a document it must re-canonicalize MUST fail verification. `conformance/vectors/jcs-v1.json` is normative.
 
-`witnessSha256` is SHA-256 over the JCS bytes of the rows — one object per `results.requirements[]` entry with exactly `id`, `scenario`, `result` and, each only when present, `assertions`, `detail`, `evidence`, sorted by `id` in UTF-16 code-unit order — or, only when `host.relaxations[]` is non-empty, of `{ "rows": …, "relaxations": … }` with relaxations in the order carried. A locale-sensitive comparator MUST NOT be used. `discovery.sha256` is SHA-256 over the JCS bytes of the captured document.
+`witnessSha256` is SHA-256 over the JCS bytes of the rows — one object per `results.requirements[]` entry with exactly `id`, `scenario`, `result` and, each only when present, `assertions`, `detail`, `evidence`, sorted by `id` in UTF-16 code-unit order — or, only when `host.relaxations[]` is non-empty or `host.deployment` is present, of `{ "rows": …, "relaxations": …, "deployment": … }` carrying each of the last two only when so, with relaxations in the order carried. A locale-sensitive comparator MUST NOT be used. `discovery.sha256` is SHA-256 over the JCS bytes of the captured document.
 
 ### Recovery evidence
 

@@ -41,12 +41,14 @@ export interface BundleV3Profile {
   readonly certified: boolean;
 }
 export interface BundleV3Relaxation { readonly obligation: string; readonly durability: 'session' | 'deployment' | 'persisted'; readonly reason: string }
+/** RFC 0216 §B — absent means the bundle measures the served host. */
+export type BundleV3Deployment = 'colocated-companion';
 export interface BundleV3Signature { readonly alg: 'ed25519'; readonly keyId: string; readonly sig: string; readonly over: readonly string[]; readonly verifierKeyId?: string }
 export interface BundleV3 {
   bundleVersion: '3';
   generatedAt: string;
   suite: { name: '@openwop/openwop-conformance'; version: string; targetMajor: 1 | 2; specArtifactsVersion: string; stampSha256?: string };
-  host: { name: string; version: string; vendor?: string; build: { kind: 'image-digest' | 'commit' | 'artifact-sha256'; id: string }; signingKeyId?: string; relaxations?: BundleV3Relaxation[] };
+  host: { name: string; version: string; vendor?: string; build: { kind: 'image-digest' | 'commit' | 'artifact-sha256'; id: string }; signingKeyId?: string; relaxations?: BundleV3Relaxation[]; deployment?: BundleV3Deployment };
   /**
    * `document` is the captured `/.well-known/openwop` payload, OPTIONAL.
    *
@@ -106,12 +108,20 @@ export { canonicalJSON } from './jcs.js';
  * from the same bundle anywhere else (Czech sorts `ch` after `h`). Every
  * committed bundle's ids are `[a-z0-9.-]`, where the two orders coincide, so no
  * stored digest changes (v2-bundle-witness-preimage.test.ts pins that).
+ *
+ * RFC 0216 §B.7 — a colocated companion's `host.deployment` joins the preimage
+ * the same way, ONLY WHEN PRESENT (`{ rows, relaxations?, deployment }`), so a
+ * signed companion cannot shed the marker and pass as a served-host bundle, and
+ * every bundle without it digests exactly as before.
  */
-export function witnessDigest(rows: readonly BundleV3Requirement[], relaxations?: readonly BundleV3Relaxation[]): string {
+export function witnessDigest(rows: readonly BundleV3Requirement[], relaxations?: readonly BundleV3Relaxation[], deployment?: BundleV3Deployment): string {
   const canonicalRows = [...rows].sort((a, b) => codeUnitCompare(a.id, b.id)).map((r) => ({ id: r.id, scenario: r.scenario, result: r.result, ...(r.assertions === undefined ? {} : { assertions: r.assertions }), ...(r.detail === undefined ? {} : { detail: r.detail }),
     // ONLY WHEN PRESENT: every bundle cut before 2.34.0 has no `evidence` and digests byte-identically.
     ...(r.evidence === undefined ? {} : { evidence: r.evidence }) }));
-  const preimage = relaxations !== undefined && relaxations.length > 0 ? { rows: canonicalRows, relaxations } : canonicalRows;
+  const relaxed = relaxations !== undefined && relaxations.length > 0;
+  const preimage = relaxed || deployment !== undefined
+    ? { rows: canonicalRows, ...(relaxed ? { relaxations } : {}), ...(deployment !== undefined ? { deployment } : {}) }
+    : canonicalRows;
   return createHash('sha256').update(canonicalJSON(preimage), 'utf8').digest('hex');
 }
 
@@ -219,8 +229,8 @@ export function verifyBundleV3(bundle: BundleV3, opts: VerifyV3Options = {}): V3
   const count = (d: BundleV3Result): number => rows.filter((r) => r.result === d).length;
   const expected = { executedPass: count('executed-pass'), executedFail: count('executed-fail'), skipped: count('skipped'), inapplicable: count('inapplicable'), blocked: count('blocked') };
   for (const k of Object.keys(expected) as (keyof typeof expected)[]) if (bundle.results?.totals?.[k] !== expected[k]) rejections.push({ kind: 'totals-mismatch', detail: `totals.${k} is ${String(bundle.results?.totals?.[k])} but the rows count ${expected[k]}` });
-  const digest = refusedAs(rejections, 'witness-digest', 'the rows or declared relaxations', () => witnessDigest(rows, bundle.host?.relaxations));
-  if (digest !== undefined && bundle.witnessSha256 !== digest) rejections.push({ kind: 'witness-digest', detail: `witnessSha256 ${String(bundle.witnessSha256).slice(0, 12)} does not equal the digest of the rows and declared relaxations (${digest.slice(0, 12)})` });
+  const digest = refusedAs(rejections, 'witness-digest', 'the rows or declared relaxations', () => witnessDigest(rows, bundle.host?.relaxations, bundle.host?.deployment));
+  if (digest !== undefined && bundle.witnessSha256 !== digest) rejections.push({ kind: 'witness-digest', detail: `witnessSha256 ${String(bundle.witnessSha256).slice(0, 12)} does not equal the digest of the rows, declared relaxations and deployment marker (${digest.slice(0, 12)})` });
   const assertions = rows.reduce((n, r) => n + (r.assertions ?? 0), 0);
   if (bundle.assertionCount !== assertions) rejections.push({ kind: 'assertion-count', detail: `assertionCount is ${String(bundle.assertionCount)} but the rows sum to ${assertions}` });
   const nonPass = rows.filter((r) => r.result !== 'executed-pass');

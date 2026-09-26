@@ -333,6 +333,9 @@ node "$(dirname "$0")/check-v2-surface-monotone.mjs"
 # (decisions log D1); the report names them so "reported" stays visible.
 node "$(dirname "$0")/check-bundle-maturity.mjs"
 node "$(dirname "$0")/check-retention-floors.mjs"
+# RFC 0216 §A.3 — the harness-trust-anchor list is closed: a colocated companion
+# witnesses these rows and no others, so the list is the door and this is its lock.
+node "$(dirname "$0")/check-harness-trust-anchors.mjs"
 node "$(dirname "$0")/check-accepted-predicate.mjs"
 node "$(dirname "$0")/check-threat-model-template.mjs"
 echo

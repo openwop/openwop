@@ -98,7 +98,30 @@ function constStrings(src) {
   return consts;
 }
 
-function collectCitations(body, src, consts = new Map()) {
+/**
+ * `const NAME = '<literal>'` bindings declared INSIDE a test body, layered over
+ * the module-level ones. `v2-lane-exp-only-schema`'s gate leg declares its
+ * `const ID = 'openwop.requirement.0210.lane-rule-surfaces-agree'` inside the
+ * `it()`, so a module-only scan recorded `explicitId: null` and the id was
+ * absent from requirements.json while the corpus ledger carried it (ADR 0745
+ * corpus defect 4, openwop-app). Same failure as the module-level case above.
+ */
+function localConsts(body, consts) {
+  const out = new Map(consts);
+  const visit = (node) => {
+    if (ts.isVariableDeclaration(node) && ts.isIdentifier(node.name) && node.initializer !== undefined
+      && ts.isVariableDeclarationList(node.parent) && (node.parent.flags & ts.NodeFlags.Const) !== 0) {
+      const text = literalText(node.initializer);
+      if (text !== null) out.set(node.name.text, text);
+    }
+    ts.forEachChild(node, visit);
+  };
+  visit(body);
+  return out;
+}
+
+function collectCitations(body, src, moduleConsts = new Map()) {
+  const consts = localConsts(body, moduleConsts);
   const literalOrConst = (node) => {
     const direct = literalText(node);
     if (direct !== null) return direct;
