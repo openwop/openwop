@@ -11,7 +11,7 @@
 | JSON Schemas | 81 | `schemas/*.schema.json` |
 | OpenAPI operations | 58 | `api/openapi.yaml` |
 | AsyncAPI version | 3.1.0 | `api/asyncapi.yaml` |
-| Conformance scenario files | 566 | `conformance/src/scenarios/*.test.ts` |
+| Conformance scenario files | 567 | `conformance/src/scenarios/*.test.ts` |
 | RFCs tracked | 218 | `RFCS/[0-9][0-9][0-9][0-9]-*.md`, excluding template |
 
 ## Artifact Versions
@@ -68,8 +68,8 @@
 | Status | Count |
 |---|---:|
 | Accepted | 211 |
-| Active | 3 |
-| Draft | 3 |
+| Active | 4 |
+| Draft | 2 |
 | Superseded | 1 |
 
 | RFC | Title | Status |
@@ -289,7 +289,7 @@
 | RFC 0216 | a colocated companion bundle is marked, and witnesses only the rows that need the suite's own issuer | Accepted |
 | RFC 0217 | after a subscription is unregistered, its dead-letter read answers as though it never existed | Accepted |
 | RFC 0218 | an audit checkpoint signs its Merkle root, and the root is pinned | Active |
-| RFC 0219 | a client announces the protocol version it implements in `OpenWOP-Client-Version` | Draft |
+| RFC 0219 | a client announces the protocol version it implements in `OpenWOP-Client-Version` | Active |
 | RFC 0220 | an extension family graduates on evidence a script can read | Draft |
 | RFC 0221 | a webhook secret the host generates is returned once | Active |
 
@@ -315,8 +315,8 @@ The pack registry now lives in the [`openwop-registry`](https://github.com/openw
 
 ## Active Follow-Ups
 
-- 3 RFCs still `Draft` (RFC 0038, RFC 0219, RFC 0220) — advance with schema/conformance proof or defer.
-- 3 RFCs `Active` (RFC 0121, RFC 0218, RFC 0221) — wire-shape MAY shift compatibly within v1.x until promotion to `Accepted`.
+- 2 RFCs still `Draft` (RFC 0038, RFC 0220) — advance with schema/conformance proof or defer.
+- 4 RFCs `Active` (RFC 0121, RFC 0218, RFC 0219, RFC 0221) — wire-shape MAY shift compatibly within v1.x until promotion to `Accepted`.
 - External audit, non-steward host recruitment, and non-steward maintainer recruitment remain external-action gates.
 - Multi-region idempotency and some optional-profile behavior checks remain lower-confidence than the core wire contract.
 

@@ -19,7 +19,7 @@ Every error a v2 host returns is a row in one registry. A client routes on `erro
 Every error response body MUST be `{ error, message, details? }` and nothing else (`additionalProperties: false`).
 
 - `error` is the registered code or a vendor code. `message` is a non-empty string.
-- `details` is an object shaped by the row's `details` schema. A row whose `details` is `null` accepts any object. When a row registers a schema, the generated envelope becomes a `oneOf` discriminated on `error`.
+- `details` is an object shaped by the row's `details` schema. A row whose `details` is `null` accepts any object. When a row registers a schema, the generated envelope applies it to `details` only when `error` names that code.
 - Contextual data (conflict refs, trace ids, validation paths) MUST live under `details`, never at a new top level.
 - When present, `details.correlationId` MUST be a non-empty string.
 
