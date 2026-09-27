@@ -26,7 +26,7 @@ import { driver } from '../lib/driver.js';
 import { pollUntilTerminal } from '../lib/polling.js';
 import { isFixtureAdvertised } from '../lib/fixtures.js';
 import { req } from '../lib/requirement-ids.js';
-import { softSkip } from '../lib/soft-skip.js';
+import { softSkip, blockedDespiteAssertions } from '../lib/soft-skip.js';
 
 const PARENT = 'conformance-dispatch-cross-worker-handoff';
 const CHILD_A = 'conformance-dispatch-cross-worker-handoff-child-a';
@@ -106,7 +106,7 @@ describe.skipIf(SKIP)('dispatch-cross-worker-handoff: sequential child→parent�
     const events = ((eventsRes.json as { events?: RunEvent[] } | undefined)?.events ?? []);
     const dispatchedA = events.find((e) => e.type === 'node.dispatched' && e.payload?.childWorkflowId === CHILD_A);
     const dispatchedB = events.find((e) => e.type === 'node.dispatched' && e.payload?.childWorkflowId === CHILD_B);
-    if (!dispatchedA || !dispatchedB) return softSkip('blocked', 'precondition not met — `!dispatchedA || !dispatchedB` returned early (seam, prior step, or fixture unavailable)');
+    if (!dispatchedA || !dispatchedB) return blockedDespiteAssertions('the advertised fixture\'s parent run emitted no node.dispatched for child-a and child-b — per-worker mapping precedence is unobserved');
 
     const childARes = await driver.get(`/v1/runs/${encodeURIComponent(dispatchedA.payload!.childRunId!)}`);
     const childBRes = await driver.get(`/v1/runs/${encodeURIComponent(dispatchedB.payload!.childRunId!)}`);

@@ -309,7 +309,7 @@ describe('RFC 0198 — v2-mcp-tasks (MCP Tasks on the server mount; disconnect c
     if (f.result?.['resultType'] === 'task') terminal = await pollTask(m.url, String(f.result['taskId']), (s) => ['completed', 'failed', 'cancelled'].includes(s), 10_000);
     else {
       // unfailable-leg audit wave 2, 2026-09-27: this branch returned
-      // softSkip('inapplicable') after the input_required asserts — a
+      // an inapplicable soft-skip after the input_required asserts — a
       // partial-witness PASS at both majors even when the synchronous answer
       // was NOT a tool-error outcome. The synchronous CallToolResult of a
       // failed run MUST still carry isError true; the task projection itself

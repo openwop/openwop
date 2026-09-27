@@ -159,7 +159,7 @@ describe.skipIf(HTTP_SKIP)('media-url-inline-cap: advertisement shape (RFC 0055 
             typeof ev.payload?.url === 'string' && ev.payload?.base64 === undefined,
             req('openwop.it.media-url-inline-cap.a-media-payload-in-a-run-debug-bundle-is-referenced-by-url-not-inlined-rfc-0055', 'ai-envelope.md §"Media reference payloads"', 'a media.* payload in a debug bundle MUST be a URL reference, never inlined binary'),
           ).toBe(true);
-          return softSkip('blocked', 'precondition not met — `typeof ev.type === \'string\' && ev.type.startsWith(\'media.\')` returned early (asserted one — contract proven) (seam, prior step, or fixture unavailable)'); // asserted one — contract proven
+          return; // one media.* payload asserted by URL — the §C rule-3 requirement was observed
         }
       }
     }

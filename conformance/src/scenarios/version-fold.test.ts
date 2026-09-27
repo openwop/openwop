@@ -34,7 +34,7 @@
  */
 
 import { describe, it, expect } from 'vitest';
-import { softSkip } from '../lib/soft-skip.js';
+import { softSkip, blockedDespiteAssertions } from '../lib/soft-skip.js';
 import { driver, type OpenWOPResponse } from '../lib/driver.js';
 import { pollUntilTerminal } from '../lib/polling.js';
 import { isFixtureAdvertised } from '../lib/fixtures.js';
@@ -106,7 +106,7 @@ describe.skipIf(SKIP_NO_FIXTURE)('version-fold: forced engine versions fold-best
       if (create.status === 403 && errCode(create.json) === 'force_engine_version_forbidden') {
         // eslint-disable-next-line no-console
         console.warn('[version-fold] API key is production-scoped (403 force_engine_version_forbidden); skipping');
-        return softSkip('blocked', '[version-fold] API key is production-scoped (403 force_engine_version_forbidden); skipping (create.status === 403 && errCode(create.json) === \'force_engine_version_forbidden\')');
+        return blockedDespiteAssertions('[version-fold] API key is production-scoped (403 force_engine_version_forbidden) — the advertised forceEngineVersionRange cannot be exercised; run with a test key');
       }
       expect(
         create.status,

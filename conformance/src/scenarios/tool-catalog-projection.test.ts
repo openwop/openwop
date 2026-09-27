@@ -84,13 +84,6 @@ describe('tool-catalog-projection (RFC 0078 §B/§F)', () => {
     if (!(await toolCatalogGate('openwop-tool-catalog'))) return;
     const validate = descriptorValidator();
 
-    // ---- Leg 3: auth-gated (unauthenticated list MUST be 401) -------------
-    const unauth = await driver.get(toolsPath(), { authenticated: false });
-    expect(
-      unauth.status === 401,
-      req('openwop.it.tool-catalog-projection.lists-schema-valid-tooldescriptors-serves-by-id-404s-is-auth-gated-and-never-dis', 'tool-catalog.md §B', `GET ${toolsPath()} MUST require authentication (401 unauthenticated)`),
-    ).toBe(true);
-
     // ---- Leg 1: the list (§B) -------------------------------------------
     // unfailable-leg audit wave 2, 2026-09-27: a host that ADVERTISES the
     // catalog but 404s the list (or answers 500 / a non-list 200, which the
@@ -99,7 +92,17 @@ describe('tool-catalog-projection (RFC 0078 §B/§F)', () => {
     // fails under OPENWOP_REQUIRE_BEHAVIOR=true), and any other non-200 or
     // non-list body FAILS.
     const read = await listTools();
+    // The unserved check runs before any assertion: after the 401 assertion below,
+    // seamAbsent's `blocked` note recorded a partial-witness pass at major 1.
     if (read.unserved) return seamAbsent(`host advertises toolCatalog but ${toolsPath()} answered ${read.status}`);
+
+    // ---- Leg 3: auth-gated (unauthenticated list MUST be 401) -------------
+    const unauth = await driver.get(toolsPath(), { authenticated: false });
+    expect(
+      unauth.status === 401,
+      req('openwop.it.tool-catalog-projection.lists-schema-valid-tooldescriptors-serves-by-id-404s-is-auth-gated-and-never-dis', 'tool-catalog.md §B', `GET ${toolsPath()} MUST require authentication (401 unauthenticated)`),
+    ).toBe(true);
+
     expect(
       read.status,
       req('openwop.it.tool-catalog-projection.lists-schema-valid-tooldescriptors-serves-by-id-404s-is-auth-gated-and-never-dis', 'tool-catalog.md §B', `GET ${toolsPath()} MUST return 200 to an authenticated caller on a host advertising toolCatalog`),

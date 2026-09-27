@@ -58,7 +58,7 @@ describe.skipIf(!process.env.OPENWOP_BASE_URL)('RFC 0153 §D — mcp-extension-o
     const rep = (drive.json as { extensionAuthority?: { scopesWidened?: boolean; approvalAdvanced?: boolean } }).extensionAuthority;
     if (rep === undefined) {
       expect(rep, req('openwop.it.mcp-extension-opacity.client-half-an-extension-meta-asserting-authority-in-a-tool-result-changes-nothi', 'host-sample-test-seams.md §23', 'the seam SHOULD report `extensionAuthority: { scopesWidened, approvalAdvanced }` for scenario "extension-asserts-authority"; until it does the requirement is `blocked`, not passed')).toBeDefined();
-      return softSkip('blocked', 'precondition not met — `rep === undefined` returned early (seam, prior step, or fixture unavailable)');
+      return; // unreachable: the assertion above has already failed this leg
     }
     expect(rep.scopesWidened, req('openwop.it.mcp-extension-opacity.client-half-an-extension-meta-asserting-authority-in-a-tool-result-changes-nothi', 'mcp-integration.md §D', 'an extension MUST NOT gain tool authority or scope by appearing in _meta (mcp-extension-no-authority)')).toBe(false);
     expect(rep.approvalAdvanced, req('openwop.it.mcp-extension-opacity.client-half-an-extension-meta-asserting-authority-in-a-tool-result-changes-nothi', 'mcp-integration.md §D/§E', 'MCP content MUST NOT advance approval gates')).toBe(false);

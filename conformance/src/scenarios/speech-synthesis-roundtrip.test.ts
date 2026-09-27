@@ -58,7 +58,7 @@ describe('speech-synthesis-roundtrip (RFC 0105 §A)', () => {
       audio !== undefined,
       req('openwop.it.speech-synthesis-roundtrip.synthesizes-an-audio-asset-with-exactly-one-of-url-base64-and-echoes-the-voiceid', 'RFC 0105 §A', 'the response MUST carry an `audio` object'),
     ).toBe(true);
-    if (!audio) return softSkip('blocked', 'precondition not met — `!audio` returned early (seam, prior step, or fixture unavailable)');
+    if (!audio) return; // unreachable: the assertion above has already failed this leg
 
     const hasUrl = typeof audio.url === 'string' && (audio.url as string).length > 0;
     const hasBase64 = typeof audio.base64 === 'string' && (audio.base64 as string).length > 0;

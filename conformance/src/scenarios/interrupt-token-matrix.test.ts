@@ -31,7 +31,7 @@ import { driver } from '../lib/driver.js';
 import { pollUntilStatus } from '../lib/polling.js';
 import { isFixtureAdvertised } from '../lib/fixtures.js';
 import { req } from '../lib/requirement-ids.js';
-import { softSkip } from '../lib/soft-skip.js';
+import { blockedDespiteAssertions } from '../lib/soft-skip.js';
 
 const FIXTURE = 'conformance-interrupt-external-event';
 const SKIP = !isFixtureAdvertised(FIXTURE);
@@ -72,26 +72,38 @@ describe.skipIf(SKIP)('interrupt-token-matrix: POST /v1/interrupts/{token} negat
     expect(create.status).toBe(201);
     const runId = (create.json as { runId: string }).runId;
 
-    await pollUntilStatus(runId, 'waiting-external-event', { timeoutMs: 10_000 }).catch(() => null);
+    // softskip ratchet, 2026-09-27: this leg polled for `waiting-external-event`, a
+    // status that does not exist, and read `snapshot.interrupts[].token`, a field the
+    // snapshot does not carry. It found no token on any host, so it never reached the
+    // replay assertion and recorded a partial-witness pass on the 201 alone. It now
+    // reads the token the way interrupt-external-event-correlation does
+    // (`interrupt.interruptToken`, else the `/v1/interrupts/{token}` segment of
+    // `interrupt.callbackUrl`) once the run reaches `waiting-external`.
+    await pollUntilStatus(runId, 'waiting-external', { timeoutMs: 10_000 }).catch(() => null);
 
     const snap = await driver.get(`/v1/runs/${encodeURIComponent(runId)}`);
-    const interrupts =
-      ((snap.json as { interrupts?: Array<{ token?: string }> }).interrupts ?? [])
-        .filter((i) => typeof i.token === 'string');
-    const token = interrupts[0]?.token;
+    const interrupt = (snap.json as { interrupt?: { interruptToken?: string; callbackUrl?: string } } | undefined)?.interrupt;
+    const fromCallback = interrupt?.callbackUrl?.match(/\/v1\/interrupts\/([^/?]+)/)?.[1];
+    const token = interrupt?.interruptToken ?? (fromCallback === undefined ? undefined : decodeURIComponent(fromCallback));
     if (typeof token !== 'string') {
       // eslint-disable-next-line no-console
       console.warn('[interrupt-token-matrix] host did not surface an interrupt token; skipping replay subtest');
       await driver.post(`/v1/runs/${encodeURIComponent(runId)}/cancel`, {
         reason: 'conformance-cleanup',
       });
-      return softSkip('blocked', 'precondition not met — `typeof token !== \'string\'` returned early ([interrupt-token-matrix] host did not surface an interrupt token; skipping replay subtest) (seam, prior step, or fixture unavailable)');
+      // interrupt-external-event-correlation holds token exposure as a MUST for this
+      // fixture, so a missing token leaves the replay rule unobserved: blocked.
+      return blockedDespiteAssertions('the suspended conformance-interrupt-external-event run exposed no signed token (interrupt.interruptToken or interrupt.callbackUrl) — replay of a resolved token is unobserved');
     }
 
+    // The fixture's correlation is {orderId: 'fixture-order-1', status: 'completed'}; a
+    // mismatched payload is refused 422 (interrupt-external-event-correlation), so the
+    // first resolve must match or the replay rule is never reached.
+    const MATCHING = { orderId: 'fixture-order-1', status: 'completed', externalReference: 'conformance-token-matrix' };
     const resolve1 = await driver.post(`/v1/interrupts/${encodeURIComponent(token)}`, {
-      correlation: { orderId: 'order-token-matrix', status: 'accepted' },
+      resumeValue: MATCHING,
     });
-    if (resolve1.status !== 200 && resolve1.status !== 202) {
+    if (resolve1.status < 200 || resolve1.status >= 300) {
       // eslint-disable-next-line no-console
       console.warn(
         `[interrupt-token-matrix] first resolve returned ${resolve1.status}; can't exercise replay path. Skipping.`,
@@ -99,11 +111,12 @@ describe.skipIf(SKIP)('interrupt-token-matrix: POST /v1/interrupts/{token} negat
       await driver.post(`/v1/runs/${encodeURIComponent(runId)}/cancel`, {
         reason: 'conformance-cleanup',
       });
-      return softSkip('blocked', 'precondition not met — `resolve1.status !== 200 && resolve1.status !== 202` returned early ([interrupt-token-matrix] first resolve returned …; can\'t exercise replay path. Skipping.) (seam, prior step, or fixture unava…');
+      // interrupt-external-event-correlation holds a matching resolve to 2xx as a MUST.
+      return blockedDespiteAssertions(`the first resolve of the token answered ${resolve1.status}, not 2xx — replay of a resolved token is unobserved`);
     }
 
     const resolve2 = await driver.post(`/v1/interrupts/${encodeURIComponent(token)}`, {
-      correlation: { orderId: 'order-token-matrix', status: 'accepted' },
+      resumeValue: MATCHING,
     });
     expect([404, 409, 410], req('openwop.it.interrupt-token-matrix.replay-after-successful-resolve-returns-409-or-404', 
       'rest-endpoints.md POST /v1/interrupts/{token}',

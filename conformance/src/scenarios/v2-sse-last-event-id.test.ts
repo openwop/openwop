@@ -92,6 +92,8 @@ describe('v2 sse-last-event-id (events.md §SSE frames)', () => {
     // values: resumption MUST emit a state.snapshot first — only where the host serves values.
     const probe = await http(() => driver.get(`/runs/${enc(c.runId)}/events?streamMode=bogus`, { headers: { Accept: 'text/event-stream' } }));
     const supported = (probe?.json as { details?: { supported?: unknown } } | null)?.details?.supported;
+    // partial-witness-ok: every Last-Event-ID MUST was asserted above on the debug stream; the
+    // state.snapshot-first rule binds only a host serving values mode.
     if (!Array.isArray(supported) || !supported.includes('values')) return softSkip('inapplicable', `values mode not served (details.supported: ${JSON.stringify(supported)}) — the state.snapshot-first resumption leg does not apply`);
     const values = await subscribe(`/runs/${enc(c.runId)}/events?streamMode=values`, { timeoutMs: 8_000, extraHeaders: V2, lastEventId: String(first) });
     expect(values.status, req(ID, DOC, `a values resume MUST answer 200 — got ${values.status}`)).toBe(200);

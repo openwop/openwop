@@ -81,7 +81,10 @@ describe.skipIf(SKIP_NO_FIXTURE)('byok: end-to-end credentialRef resolution roun
       // Host doesn't expose node outputs in variables/outputs map —
       // some hosts only expose them on the events stream. Skip the
       // shape check; the run-completed assertion above is sufficient.
-      return softSkip('blocked', 'precondition not met — `!candidate || typeof candidate !== \'object\'` returned early (Host doesn\'t expose node outputs in variables/outputs map — some hosts only expose them on the events stream. Skip the shape check; …');
+      // partial-witness-ok: the run reached `completed`, which is the secret-resolution witness
+      // (a failed resolve fails the run); surfacing node outputs on variables/outputs is a MAY,
+      // so the SHA-256 shape check is an optional extra.
+      return softSkip('inapplicable', 'the host does not surface node outputs on variables/outputs (a MAY) — the SHA-256 shape check is not run; the completed run was asserted');
     }
 
     if ('secretSha256' in candidate && typeof candidate.secretSha256 === 'string') {

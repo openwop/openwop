@@ -26,7 +26,7 @@ import { pollUntilTerminal } from '../lib/polling.js';
 import { isFixtureAdvertised } from '../lib/fixtures.js';
 import { setHostCapability, resetHostCapabilities, isToggleAvailable } from '../lib/host-toggle.js';
 import { req } from '../lib/requirement-ids.js';
-import { softSkip } from '../lib/soft-skip.js';
+import { softSkip, blockedDespiteAssertions } from '../lib/soft-skip.js';
 
 const PARENT = 'conformance-dispatch-input-mapping';
 const CHILD = 'conformance-dispatch-input-mapping-child';
@@ -100,7 +100,7 @@ describe.skipIf(SKIP)('dispatch-input-mapping: parent → child variable project
     const dispatched = events.find(
       (e) => e.type === 'node.dispatched' && e.payload?.childWorkflowId === CHILD,
     );
-    if (!dispatched) return softSkip('blocked', 'precondition not met — `!dispatched` returned early (host doesn\'t emit node.dispatched — soft-skip) (seam, prior step, or fixture unavailable)'); // host doesn't emit node.dispatched — soft-skip
+    if (!dispatched) return blockedDespiteAssertions('the advertised fixture\'s parent run emitted no node.dispatched — the unset-variable projection is unobserved');
     const childRunId = dispatched.payload?.childRunId;
 
     const childRes = await driver.get(`/v1/runs/${encodeURIComponent(childRunId!)}`);

@@ -17,7 +17,7 @@ import { describe, it, expect } from 'vitest';
 import { driver } from '../lib/driver.js';
 import { discoveryFamilies } from '../lib/discovery-capabilities.js';
 import { req } from '../lib/requirement-ids.js';
-import { softSkip } from '../lib/soft-skip.js';
+import { softSkip, blockedDespiteAssertions } from '../lib/soft-skip.js';
 
 interface DiscoveryDoc {
   capabilities?: Record<string, unknown>;
@@ -84,7 +84,7 @@ describe('blob-presign-expiry: behavioral (RFC 0019 §B point 1)', () => {
 
     // Fetch within the window — MUST return 200 + the bytes
     const within = await driver.get(body.url!);
-    if (within.status === 404) return softSkip('blocked', 'precondition not met — `within.status === 404` returned early (host doesn\'t expose the resolver route — soft-skip the expiry side too) (seam, prior step, or fixture unavailable)'); // host doesn't expose the resolver route — soft-skip the expiry side too
+    if (within.status === 404) return blockedDespiteAssertions('the presigned URL answered 404 inside its TTL — neither the in-window resolve nor the post-expiry 403 is observable');
     expect(
       within.status,
       req('openwop.it.blob-presign-expiry.presigned-url-must-resolve-to-the-blob-inside-its-ttl-window-and-return-403-afte', 'RFC 0019 §B point 1', 'presigned URL MUST resolve to 200 within its TTL window'),

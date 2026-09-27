@@ -88,16 +88,11 @@ describe('RFC 0153 §A/§B — MCP revision negotiation', () => {
     server.reset();
     const drive = await driver.post('/v1/host/sample/mcp/invoke', { serverUrl: server.hostFacingEndpoint() });
     if (drive.status === 404 || drive.status === 403) {
-      expect(
-        drive.status,
-        req('openwop.it.mcp-version-negotiation.outbound-calls-carry-mcp-protocol-version-in-date-form', 
-          'RFCS/0153 §B',
-          'a host advertising MCP revisions MUST expose an invoke seam so the negotiated revision ' +
-            'is observable. Without it the requirement resolves to `blocked` per RFC 0148 §A — not ' +
-            'to a pass.',
-        ),
-      ).not.toBe(404);
-      return softSkip('blocked', 'precondition not met — `drive.status === 404 || drive.status === 403` returned early (seam, prior step, or fixture unavailable)');
+      // A host advertising MCP revisions MUST expose the invoke seam so the negotiated
+      // version is observable. Default mode records `blocked` (RFC 0148 §A); strict mode
+      // fails (RFC 0148 §B). This was a not-404 assert followed by a blocked note, so a 403
+      // recorded a partial-witness pass at major 1.
+      return seamAbsent(`host advertises MCP revisions but the invoke seam /v1/host/sample/mcp/invoke answered ${drive.status}`);
     }
     const calls = server.invocations();
     expect(calls.length, req('openwop.it.mcp-version-negotiation.outbound-calls-carry-mcp-protocol-version-in-date-form', 'RFCS/0153 §B', 'the host MUST have called the server')).toBeGreaterThan(0);

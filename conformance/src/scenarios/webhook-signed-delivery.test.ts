@@ -390,6 +390,8 @@ describe('webhook-signed-delivery: end-to-end HMAC v1', () => {
     // `X-openwop-*` counterpart and the signature verifies reading either.
     const dual = first.headers['openwop-signature'];
     if (dual === undefined) {
+      // partial-witness-ok: every X-openwop-* delivery MUST was asserted above; dual-emitting
+      // the OpenWOP-* family is an RFC 0165 §C.1 SHOULD.
       softSkip('inapplicable', 'host does not yet dual-emit the OpenWOP-* webhook header family (RFC 0165 §C.1 — SHOULD)');
     } else {
       for (const [neu, old] of [

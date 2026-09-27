@@ -23,7 +23,7 @@ import { driver } from '../lib/driver.js';
 import { pollUntilTerminal } from '../lib/polling.js';
 import { isFixtureAdvertised } from '../lib/fixtures.js';
 import { req } from '../lib/requirement-ids.js';
-import { softSkip } from '../lib/soft-skip.js';
+import { softSkip, blockedDespiteAssertions } from '../lib/soft-skip.js';
 
 const PARENT = 'conformance-dispatch-output-mapping';
 const CHILD = 'conformance-dispatch-output-mapping-child';
@@ -140,7 +140,7 @@ describe.skipIf(!isFixtureAdvertised('conformance-dispatch-cancellable-child'))(
       }
       await new Promise((r) => setTimeout(r, 250));
     }
-    if (!childRunId) return softSkip('blocked', 'precondition not met — `!childRunId` returned early (dispatch didn\'t surface child run id — soft-skip) (seam, prior step, or fixture unavailable)'); // dispatch didn't surface child run id — soft-skip
+    if (!childRunId) return blockedDespiteAssertions('no node.dispatched surfaced a childRunId within 10s — the cancelled-child outputMapping skip is unobserved');
     const cancelRes = await driver.post(`/v1/runs/${encodeURIComponent(childRunId)}/cancel`, { reason: 'hvmap-1b-cancelled test' });
     expect(cancelRes.status === 200 || cancelRes.status === 202).toBe(true);
 

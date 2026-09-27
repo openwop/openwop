@@ -52,6 +52,8 @@ describe('runtime-capabilities: /.well-known/openwop forward-compat shape', () =
       // of v1 hosts will omit it. Assertion passes trivially; don't
       // force a value on a host that doesn't advertise any.
       expect(caps).toBeUndefined();
+      // partial-witness-ok: discovery answered 200 and runtimeCapabilities is OPTIONAL; when
+      // absent, the IF-present MUSTs below bind nothing.
       return softSkip('inapplicable', 'capability or profile not advertised by this host — gate `caps === undefined` returned early');
     }
 

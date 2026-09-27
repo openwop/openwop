@@ -116,7 +116,12 @@ describe('a2a-task-roundtrip: AgentCard + task lifecycle', () => {
       );
       return softSkip('blocked', 'precondition not met — `!probe` returned early (seam, prior step, or fixture unavailable)');
     }
-    if (!probe.isReal) getA2AFakePeer()!.reset();
+    // softskip ratchet, 2026-09-27: with only the in-process fake configured, this
+    // leg probed the SUITE'S OWN fake A2A peer and recorded `executed-pass`. The
+    // host under test was never contacted, so every host passed it. The fake-path
+    // self-check is now `inapplicable` before any assertion, as mcp-tool-roundtrip's
+    // is; the drift-point legs below are the ones that drive the host against the fake.
+    if (!probe.isReal) return softSkip('inapplicable', 'suite fixture self-test — host not exercised (only the in-process A2A fake is configured; set OPENWOP_A2A_REAL_PEER_URL for real-peer interop evidence)');
 
     // AgentCard at the A2A v0.3 well-known path
     // (`AGENT_CARD_PATH` from @a2a-js/sdk: `.well-known/agent-card.json`).
@@ -182,40 +187,7 @@ describe('a2a-task-roundtrip: AgentCard + task lifecycle', () => {
         `[a2a-task-roundtrip] real-peer interop OK against ${probe.url} ` +
           `(skill=${firstSkill?.id ?? firstSkill?.name}, kind=${kind})`,
       );
-      return softSkip('blocked', 'precondition not met — `probe.isReal` returned early (seam, prior step, or fixture unavailable)');
     }
-
-    // Fake-peer path: deterministic state forcing, assert verbatim.
-    const fake = getA2AFakePeer()!;
-    const sendRes = await rpc(
-      rpcUrl,
-      'message/send',
-      {
-        message: {
-          kind: 'message',
-          messageId: 'probe-fake-1',
-          role: 'user',
-          parts: [{ kind: 'text', text: 'hello' }],
-        },
-      },
-      1,
-    );
-    expect(sendRes.status).toBe(200);
-    expect(sendRes.error).toBeUndefined();
-    const task = sendRes.result as { id?: string; kind?: string; status?: { state?: string } };
-    expect(task.kind).toBe('task');
-    expect(typeof task.id).toBe('string');
-
-    // Advance through WORKING → COMPLETED via the fake's internal API.
-    fake.advanceTask(task.id!, 'WORKING');
-    fake.advanceTask(task.id!, 'COMPLETED');
-
-    const getRes = await rpc(rpcUrl, 'tasks/get', { id: task.id }, 2);
-    expect(getRes.status).toBe(200);
-    expect(getRes.error).toBeUndefined();
-    const finalTask = getRes.result as { status?: { state?: string } };
-    // A2A v0.3 wire form uses lowercase-hyphen state names.
-    expect(finalTask.status?.state).toBe('completed');
   });
 });
 

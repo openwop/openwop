@@ -29,7 +29,7 @@ import { SCHEMAS_DIR } from '../lib/paths.js';
 import { queryTestEvents, isEventLogSeamAvailable, resetTestSeam } from '../lib/event-log-query.js';
 import { capabilityFamily } from '../lib/discovery-capabilities.js';
 import { req } from '../lib/requirement-ids.js';
-import { softSkip } from '../lib/soft-skip.js';
+import { softSkip, blockedDespiteAssertions } from '../lib/soft-skip.js';
 
 interface DiscoveryDoc {
   capabilities?: {
@@ -145,7 +145,7 @@ describe('provider-usage: event presence via emit-seam + event-log query (RFC 00
     expect(emit.status).toBe(200);
 
     const events = await queryTestEvents(runId, { type: 'provider.usage' });
-    if (!events.ok) return softSkip('blocked', 'precondition not met — `!events.ok` returned early (seam, prior step, or fixture unavailable)');
+    if (!events.ok) return blockedDespiteAssertions('the event-log seam is advertised but the provider.usage query failed — the projection is unobserved');
     expect(
       events.events.length,
       req('openwop.it.provider-usage.emit-seam-projects-exactly-one-provider-usage-event-with-required-fields-populat', 'RFC 0026 §B', 'emit-seam MUST project exactly one provider.usage event'),

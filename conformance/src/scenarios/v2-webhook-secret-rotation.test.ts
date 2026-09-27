@@ -117,6 +117,10 @@ describe('RFC 0201 §E — secret rotation overlaps, then retires (gated on webh
     // After the overlap: only when it fits the operator's wait cap.
     const expiresAt = Date.parse(body.previousSecretExpiresAt ?? '');
     if (expiresAt - Date.now() > CAP_MS) {
+      // partial-witness-ok: the tenant check, the rotate response and the dual signature during
+      // the overlap were asserted above. The post-overlap half waits overlapSeconds, which the
+      // suite's wait cap bounds, not host behaviour; raise OPENWOP_WEBHOOK_RETRY_WAIT_MS to
+      // witness it.
       return softSkip('inapplicable', `the post-overlap leg is not observed: overlapSeconds (${overlapSeconds}) exceeds the suite wait cap (${CAP_MS}ms; raise OPENWOP_WEBHOOK_RETRY_WAIT_MS to witness it)`);
     }
     await new Promise((r) => setTimeout(r, Math.max(0, expiresAt - Date.now()) + 1_500));

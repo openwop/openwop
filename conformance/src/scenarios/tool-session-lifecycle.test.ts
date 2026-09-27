@@ -50,7 +50,7 @@ describe('tool-session-lifecycle (RFC 0078 §D)', () => {
       opened.length >= 1 && closed.length >= 1,
       req('openwop.it.tool-session-lifecycle.brackets-the-call-events-with-tool-session-opened-first-closed-last-one-sessioni', 'tool-catalog.md §D', 'a tool session MUST emit tool.session.opened + tool.session.closed'),
     ).toBe(true);
-    if (opened.length === 0 || closed.length === 0) return softSkip('blocked', 'precondition not met — `opened.length === 0 || closed.length === 0` returned early (seam, prior step, or fixture unavailable)');
+    if (opened.length === 0 || closed.length === 0) return; // unreachable: the assertion above has already failed this leg
 
     const open = opened[0]!;
     const close = closed[closed.length - 1]!;

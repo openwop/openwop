@@ -191,7 +191,7 @@ import { queryTestSpans, isOtelSeamAvailable } from '../lib/otel-scrape.js';
 import { resetTestSeam } from '../lib/event-log-query.js';
 import { capabilityFamily, discoveryFamilies } from '../lib/discovery-capabilities.js';
 import { req } from '../lib/requirement-ids.js';
-import { softSkip } from '../lib/soft-skip.js';
+import { softSkip, blockedDespiteAssertions } from '../lib/soft-skip.js';
 
 describe('aiEnvelope.schemaDrift: OTel drift attribute projection (E.2)', () => {
   it('below-floor + strictness:warn → OTel span MUST carry envelope_schema_version_drift attribute', async () => {
@@ -216,7 +216,7 @@ describe('aiEnvelope.schemaDrift: OTel drift attribute projection (E.2)', () => 
     expect(r.body.status).toBe('accepted');
 
     const spans = await queryTestSpans({ runId });
-    if (!spans.ok) return softSkip('blocked', 'precondition not met — `!spans.ok` returned early (seam, prior step, or fixture unavailable)');
+    if (!spans.ok) return blockedDespiteAssertions('the OTel span seam is advertised but the span query failed — envelope_schema_version_drift is unobserved');
     expect(
       spans.data.some((s) => s.attributes.envelope_schema_version_drift === true),
       req('openwop.it.aiEnvelope.schemaDrift.below-floor-strictness-warn-otel-span-must-carry-envelope-schema-version-drift-a', 
