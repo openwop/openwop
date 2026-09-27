@@ -1,5 +1,5 @@
 /**
- * RFC 0150 §B / `idempotency.md` §"Concurrent duplicates (Layer 2)" — the
+ * RFC 0150 §B / `spec/v1/idempotency.md` §"Concurrent duplicates (Layer 2)" — the
  * atomic-claim witness. Gap **G17**.
  *
  * The rule: the persist that guards a side effect MUST be an **atomic claim** —
@@ -102,7 +102,7 @@ describe('idempotency-concurrent-claim: two executors of one run, one effect (RF
     expect(
       unique.size,
       req('openwop.it.idempotency-concurrent-claim.every-executor-mints-the-same-logicalinvocationid-without-this-one-delivery-prov', 
-        'idempotency.md §"Idempotency key composition" (Across a recovery boundary)',
+        'spec/v1/idempotency.md §"Idempotency key composition" (Across a recovery boundary)',
         'all executors MUST mint one identity — differing ids mean they never collided, so a single delivery is a vacuous pass rather than a working claim',
       ),
     ).toBe(1);
@@ -119,7 +119,7 @@ describe('idempotency-concurrent-claim: two executors of one run, one effect (RF
     expect(
       out.delivered,
       req('openwop.it.idempotency-concurrent-claim.exactly-one-effect-escapes-however-many-executors-attempt-it', 
-        'idempotency.md §"Concurrent duplicates (Layer 2)"',
+        'spec/v1/idempotency.md §"Concurrent duplicates (Layer 2)"',
         'the engine MUST ensure at most one concurrent executor performs the external effect — the guarding persist MUST be an atomic claim, not a read-then-write',
       ),
     ).toBe(1);
@@ -156,7 +156,7 @@ describe('idempotency-concurrent-claim: two executors of one run, one effect (RF
     expect(
       out.delivered,
       req('openwop.it.idempotency-concurrent-claim.the-race-is-real-at-higher-concurrency-too-a-claim-that-only-holds-at-2-is-not-a', 
-        'idempotency.md §"Concurrent duplicates (Layer 2)"',
+        'spec/v1/idempotency.md §"Concurrent duplicates (Layer 2)"',
         'exactly one effect regardless of how many executors race — at most one wins the compare-and-set, the rest observe the hit',
       ),
     ).toBe(1);
@@ -167,7 +167,7 @@ describe('idempotency-concurrent-claim: two executors of one run, one effect (RF
     ).toBe(out.attempted);
     expect(
       new Set(ids.map((x) => JSON.stringify(x))).size,
-      req('openwop.it.idempotency-concurrent-claim.the-race-is-real-at-higher-concurrency-too-a-claim-that-only-holds-at-2-is-not-a', 'idempotency.md §"Idempotency key composition"', 'one identity across all executors at any concurrency'),
+      req('openwop.it.idempotency-concurrent-claim.the-race-is-real-at-higher-concurrency-too-a-claim-that-only-holds-at-2-is-not-a', 'spec/v1/idempotency.md §"Idempotency key composition"', 'one identity across all executors at any concurrency'),
     ).toBe(1);
   });
 });

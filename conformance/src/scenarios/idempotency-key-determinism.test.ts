@@ -135,7 +135,7 @@ describe('category: core.openwop.http.idempotency-key — determinism contract',
     };
     const a = await idempotencyKey(ctx);
     const b = await idempotencyKey(ctx);
-    expect(a.outputs.key, req('openwop.it.idempotency-key-determinism.default-mode-composite-identical-runid-nodeid-payload-produces-identical-keys', 'idempotency.md §"Idempotency-Key', 'idempotency.md §Idempotency-Key: same logical request MUST produce same key')).toBe(b.outputs.key);
+    expect(a.outputs.key, req('openwop.it.idempotency-key-determinism.default-mode-composite-identical-runid-nodeid-payload-produces-identical-keys', 'spec/v1/idempotency.md §"Idempotency-Key', 'spec/v1/idempotency.md §Idempotency-Key: same logical request MUST produce same key')).toBe(b.outputs.key);
     expect(a.outputs.key).toMatch(KEY_PATTERN);
   });
 
@@ -144,7 +144,7 @@ describe('category: core.openwop.http.idempotency-key — determinism contract',
     const baseCtx = { runId: 'run-1', nodeId: 'node-1' };
     const a = await idempotencyKey({ ...baseCtx, inputs: { payload: { hello: 'world' } } });
     const b = await idempotencyKey({ ...baseCtx, inputs: { payload: { hello: 'CHANGED' } } });
-    expect(a.outputs.key, req('openwop.it.idempotency-key-determinism.payload-sensitivity-different-payload-produces-different-key', 'idempotency.md §"Idempotency-Key', 'payload sensitivity — different payload produces different key')).not.toBe(b.outputs.key);
+    expect(a.outputs.key, req('openwop.it.idempotency-key-determinism.payload-sensitivity-different-payload-produces-different-key', 'spec/v1/idempotency.md §"Idempotency-Key', 'payload sensitivity — different payload produces different key')).not.toBe(b.outputs.key);
   });
 
   it('run isolation — different runId produces different key', async () => {
@@ -152,7 +152,7 @@ describe('category: core.openwop.http.idempotency-key — determinism contract',
     const payload = { hello: 'world' };
     const a = await idempotencyKey({ runId: 'run-1', nodeId: 'node-1', inputs: { payload } });
     const b = await idempotencyKey({ runId: 'run-2', nodeId: 'node-1', inputs: { payload } });
-    expect(a.outputs.key, req('openwop.it.idempotency-key-determinism.run-isolation-different-runid-produces-different-key', 'idempotency.md §"Idempotency-Key', 'run isolation — different runId produces different key')).not.toBe(b.outputs.key);
+    expect(a.outputs.key, req('openwop.it.idempotency-key-determinism.run-isolation-different-runid-produces-different-key', 'spec/v1/idempotency.md §"Idempotency-Key', 'run isolation — different runId produces different key')).not.toBe(b.outputs.key);
   });
 
   it('node isolation — different nodeId produces different key', async () => {
@@ -160,7 +160,7 @@ describe('category: core.openwop.http.idempotency-key — determinism contract',
     const payload = { hello: 'world' };
     const a = await idempotencyKey({ runId: 'run-1', nodeId: 'node-A', inputs: { payload } });
     const b = await idempotencyKey({ runId: 'run-1', nodeId: 'node-B', inputs: { payload } });
-    expect(a.outputs.key, req('openwop.it.idempotency-key-determinism.node-isolation-different-nodeid-produces-different-key', 'idempotency.md §"Idempotency-Key', 'node isolation — different nodeId produces different key')).not.toBe(b.outputs.key);
+    expect(a.outputs.key, req('openwop.it.idempotency-key-determinism.node-isolation-different-nodeid-produces-different-key', 'spec/v1/idempotency.md §"Idempotency-Key', 'node isolation — different nodeId produces different key')).not.toBe(b.outputs.key);
   });
 
   it('hash mode is deterministic in the payload alone (run/node ignored)', async () => {
@@ -168,7 +168,7 @@ describe('category: core.openwop.http.idempotency-key — determinism contract',
     const payload = { request: 'payload-here', id: 42 };
     const a = await idempotencyKey({ config: { mode: 'hash' }, runId: 'run-1', nodeId: 'node-1', inputs: { payload } });
     const b = await idempotencyKey({ config: { mode: 'hash' }, runId: 'run-2', nodeId: 'node-2', inputs: { payload } });
-    expect(a.outputs.key, req('openwop.it.idempotency-key-determinism.hash-mode-is-deterministic-in-the-payload-alone-run-node-ignored', 'idempotency.md §"Idempotency-Key', 'hash mode MUST ignore run/node — useful for global remote-dedup caches')).toBe(b.outputs.key);
+    expect(a.outputs.key, req('openwop.it.idempotency-key-determinism.hash-mode-is-deterministic-in-the-payload-alone-run-node-ignored', 'spec/v1/idempotency.md §"Idempotency-Key', 'hash mode MUST ignore run/node — useful for global remote-dedup caches')).toBe(b.outputs.key);
     expect(a.outputs.key).toMatch(KEY_PATTERN);
   });
 
@@ -183,7 +183,7 @@ describe('category: core.openwop.http.idempotency-key — determinism contract',
     ];
     for (const ctx of samples) {
       const result = await idempotencyKey(ctx);
-      expect(result.outputs.key, req('openwop.it.idempotency-key-determinism.output-shape-every-emitted-key-matches-openwop-sha256-prefix-16', 'idempotency.md §"Idempotency-Key', `key shape for ctx=${JSON.stringify(ctx)}`)).toMatch(KEY_PATTERN);
+      expect(result.outputs.key, req('openwop.it.idempotency-key-determinism.output-shape-every-emitted-key-matches-openwop-sha256-prefix-16', 'spec/v1/idempotency.md §"Idempotency-Key', `key shape for ctx=${JSON.stringify(ctx)}`)).toMatch(KEY_PATTERN);
     }
   });
 
@@ -197,7 +197,7 @@ describe('category: core.openwop.http.idempotency-key — determinism contract',
     } catch (err) {
       caught = err;
     }
-    expect(caught, req('openwop.it.idempotency-key-determinism.uuid-mode-rejects-with-config-invalid-safety-fix-per-1-1-2', 'idempotency.md §"Idempotency-Key', 'mode: uuid MUST be rejected — the 1.1.0/1.1.1 non-deterministic default was removed')).toBeInstanceOf(Error);
+    expect(caught, req('openwop.it.idempotency-key-determinism.uuid-mode-rejects-with-config-invalid-safety-fix-per-1-1-2', 'spec/v1/idempotency.md §"Idempotency-Key', 'mode: uuid MUST be rejected — the 1.1.0/1.1.1 non-deterministic default was removed')).toBeInstanceOf(Error);
     expect((caught as Error & { code?: string }).code).toBe('CONFIG_INVALID');
     expect((caught as Error).message).toMatch(/uuid.*removed|safety-fix/i);
   });
@@ -223,7 +223,7 @@ describe('category: core.openwop.http.idempotency-key — determinism contract',
       const expected = canonicalCompositeKey(v.runId, v.nodeId, v.payload);
       expect(
         packed.outputs.key,
-        req('openwop.it.idempotency-key-determinism.cross-impl-invariant-pack-output-equals-canonical-sha-256-formula', 'idempotency.md §"Idempotency-Key', `vector ${JSON.stringify(v)} — pack output MUST match canonical sha256(runId\\0nodeId\\0JSON(payload))`),
+        req('openwop.it.idempotency-key-determinism.cross-impl-invariant-pack-output-equals-canonical-sha-256-formula', 'spec/v1/idempotency.md §"Idempotency-Key', `vector ${JSON.stringify(v)} — pack output MUST match canonical sha256(runId\\0nodeId\\0JSON(payload))`),
       ).toBe(expected);
     }
 

@@ -1,0 +1,883 @@
+# Readable text for the description / summary / title strings that api/v2/openapi.yaml,
+# api/v2/asyncapi.yaml and api/seams-v2.yaml inherit from the frozen v1 documents
+# (api/openapi.yaml, api/asyncapi.yaml). scripts/derive-v2-api.py applies it to the
+# derived documents; the v1 documents are never edited.
+#
+# Each row replaces every inherited string equal to `was` (as it reads in the generated
+# v2 file) with `now`. A row may also carry `description`: used only on a `summary` row,
+# it moves a paragraph-long summary into the operation's description, which must be absent.
+# Text only: a row never changes a schema, a path, a parameter, a status code or a header.
+# derive-v2-api.py fails when a row matches nothing, so a stale row cannot linger.
+- was: openwop spec v1 corpus
+  now: OpenWOP specification (v1 corpus)
+- was: openwop-compliant server
+  now: An OpenWOP server.
+- was: Manifest-agent inventory (RFC 0072 §A). Read-only; gated on capabilities.agents.manifestRuntime. Dispatch rides the run surface
+    (WorkflowNode.agent + POST /v1/runs).
+  now: Manifest-agent inventory. Read-only; gated on `capabilities.agents.manifestRuntime`. Dispatch uses the run surface (`WorkflowNode.agent`
+    + `POST /runs`).
+- was: Portable tool catalog (RFC 0078 §B). Read-only ToolDescriptor projection across tool sources (node-pack / workflow / mcp / connector
+    / host-extension); gated on capabilities.toolCatalog; authorization-scoped per §F-2.
+  now: 'Portable tool catalog: a read-only `ToolDescriptor` projection across tool sources (node-pack, workflow, mcp, connector, host-extension).
+    Gated on `capabilities.toolCatalog`; scoped to the tools the caller is authorized to invoke.'
+- was: Durable trigger-bridge subscriptions (RFC 0083). RFC 0099 adds the external-event create surface (`POST /v1/trigger-subscriptions`);
+    gated on `capabilities.triggerBridge.ingestion.registrationEndpoint`.
+  now: Durable trigger-bridge subscriptions. The external-event create surface (`POST /trigger-subscriptions`) is gated on `capabilities.triggerBridge.ingestion.registrationEndpoint`.
+- was: Prompt-template library — list, fetch, render, mutate (RFC 0028; gated on `capabilities.prompts.*`).
+  now: 'Prompt-template library: list, fetch, render, mutate. Gated on `capabilities.prompts.*`.'
+- was: Localized authored content — public delivery + tenant-scoped admin CRUD (RFC 0103; gated on `capabilities.content.supported`).
+  now: 'Localized authored content: public delivery and tenant-scoped admin CRUD. Gated on `capabilities.content.supported`.'
+- was: Host-capability resources — e.g. the RFC 0059 agent workspace file store (gated on `capabilities.workspace.*`).
+  now: Host-capability resources, such as the agent workspace file store (gated on `capabilities.workspace.*`).
+- was: RFC 0165 §C.2 — `If-None-Match` matched the current `ETag`; the body is unchanged.
+  now: '`If-None-Match` matched the current `ETag`; the body is unchanged.'
+- was: When set, server cross-host claim system rejects duplicate `(tenantId, scopeId)` pairs with `409 Conflict`.
+  now: When set, the host's cross-host claim system rejects a duplicate `(tenantId, scopeId)` pair with `409 Conflict`.
+- was: |
+    **Test-keys-only.** When set, the server emits events for this run AS IF it
+    were running the specified engine version (must be within the server's
+    advertised `Capabilities.testing.forceEngineVersionRange`). Used by the
+    conformance suite to verify version-negotiation fold-best-effort tolerance
+    across the spec's forward-compat matrix. Servers MUST reject on production
+    API keys with `403 force_engine_version_forbidden`. Closes F5.
+  now: Test keys only. The server emits this run's events as if it ran the given engine version, which must be within
+    `Capabilities.testing.forceEngineVersionRange`. Servers MUST reject it on production API keys with `403 force_engine_version_forbidden`.
+- was: Tenant scoping. Server typically defaults from API key.
+  now: Tenant scope. A host typically derives it from the API key.
+- was: Opaque correlation ID for `X-Dedup` semantics.
+  now: Opaque correlation ID for `OpenWOP-Dedup`.
+- was: |
+    RFC 0081 §B. When `eval`, this run is an eval-suite projection
+    (not a workflow run): the host runs the `evalSuiteRef` against
+    `agentId`, emits the content-free `eval.*` family, and terminates
+    with an `EvalSummary` readable via `GET /v1/runs/{runId}/eval-summary`.
+    Capability-gated on `capabilities.agents.evalSuite.supported`; a
+    host that omits it rejects `mode: "eval"` with 501. Omit for a
+    normal workflow run.
+  now: 'Set to `eval` to run an eval-suite projection instead of a workflow run: the host runs the `evalSuiteRef` against `agentId`,
+    emits the content-free `eval.*` family, and terminates with an `EvalSummary` readable at `GET /runs/{runId}/eval-summary`. Gated
+    on `capabilities.agents.evalSuite.supported`; a host that omits it rejects `mode: "eval"` with 501. Omit for a normal workflow run.'
+- was: RFC 0081 — URI of the `AgentEvalSuite` to run. Required when mode is `eval`.
+  now: URI of the `AgentEvalSuite` to run. Required when mode is `eval`.
+- was: RFC 0081 — the manifest agent the eval suite targets. Required when mode is `eval`.
+  now: The manifest agent the eval suite targets. Required when mode is `eval`.
+- was: '`X-Dedup` collision OR concurrent `Idempotency-Key` collision.'
+  now: An `OpenWOP-Dedup` collision, or a concurrent `Idempotency-Key` collision.
+- was: |
+    RFC 0115. Strong validator derived from the run's latest
+    persisted event-log sequence number; changes on every
+    observable state transition, stable while none occurs.
+  now: Strong validator derived from the run's latest persisted event-log sequence number. It changes on every observable state transition
+    and is stable while none occurs.
+- was: |
+    RFC 0115. Present only when the host negotiated compression
+    from `Accept-Encoding`; pairs with `Vary: Accept-Encoding`.
+    The decoded body is byte-identical to the identity body.
+  now: 'Present only when the host negotiated compression from `Accept-Encoding`; pairs with `Vary: Accept-Encoding`. The decoded body
+    is byte-identical to the identity body.'
+- was: RFC 0115. Not Modified — `If-None-Match` matched the current `ETag`. Empty body.
+  now: 'Not Modified: `If-None-Match` matched the current `ETag`. Empty body.'
+- was: |
+    Optional batching hint per S3 closure. When set, the server
+    accumulates events for up to N ms (or until a forced-flush
+    trigger fires — terminal events, suspensions, connection close)
+    and emits a single SSE event with `event: batch` and `data:` as
+    a JSON array of `RunEventDoc`. Range 0..5000; `0` = no buffering.
+    See `stream-modes.md` §Aggregation hint.
+  now: 'Optional batching hint. When set, the server accumulates events for up to N ms, or until a forced-flush trigger fires (terminal
+    events, suspensions, connection close), and emits a single SSE event with `event: batch` and `data:` as a JSON array of `RunEventDoc`.
+    Range 0..5000; `0` means no buffering. See `stream-modes.md` §Aggregation hint.'
+- was: Events since `lastSequence`.
+  now: Events after `afterSequence`.
+- was: Record a non-blocking quality annotation on a run (RFC 0056).
+  now: Record a non-blocking quality annotation on a run.
+- was: Host does not advertise capabilities.feedback.supported (RFC 0056).
+  now: Host does not advertise `capabilities.feedback.supported`.
+- was: List the annotations recorded on a run (RFC 0056).
+  now: List the annotations recorded on a run.
+- was: Register an external-event trigger subscription (RFC 0099).
+  now: Register an external-event trigger subscription.
+- was: |
+    Creates an external-event (`webhook`/`email`/`form`) TriggerSubscription
+    bound to a workflow, with a dedup config and a source-authenticity
+    verification policy (RFC 0099 §F.2). The `workflowId` MUST resolve under
+    the caller's RFC 0048 owner triple. The response carries the created
+    TriggerSubscription plus a source-specific `binding`; the binding
+    secret/URL is returned ONCE and is not re-fetchable in cleartext.
+  now: Creates an external-event (`webhook`/`email`/`form`) TriggerSubscription bound to a workflow, with a dedup config and a source-authenticity
+    verification policy. The `workflowId` MUST resolve under the caller's owner triple. The response carries the created TriggerSubscription
+    plus a source-specific `binding`; the binding secret or URL is returned once and cannot be re-fetched in cleartext.
+- was: |
+    Source-specific binding the caller needs to wire the external
+    source. For `webhook`: `{ ingestUrl, secretFingerprint }`; for
+    `email`: `{ ingestAddress }`; for `form`: `{ ingestUrl }`. The
+    secret is returned once at creation (SR-1).
+  now: 'Source-specific binding the caller needs to wire the external source. For `webhook`: `{ ingestUrl, secretFingerprint }`; for
+    `email`: `{ ingestAddress }`; for `form`: `{ ingestUrl }`. The secret is returned once, at creation (SR-1).'
+- was: Host does not advertise capabilities.triggerBridge.ingestion.registrationEndpoint (RFC 0099).
+  now: Host does not advertise `capabilities.triggerBridge.ingestion.registrationEndpoint`.
+- was: Deliver a published content page resolved for the negotiated locale (RFC 0103 §D).
+  now: Deliver a published content page resolved for the negotiated locale.
+- was: |
+    Resolves the published page `slug` for the locale negotiated from
+    `Accept-Language` (i18n.md fallback: q-value order → language family →
+    `content.baseLocale`), applies the per-section field merge
+    (`localized-content.md` §C), and returns the already-merged sections in
+    render order. Sets `Content-Language` to the locale used,
+    `Vary: Accept-Language, Accept-Encoding`, and
+    `Cache-Control: public, max-age=300, stale-while-revalidate=3600`.
+    Serves `status: "published"` content only. Tenant is host-resolved
+    (`localized-content.md` §F): credential-derived when authenticated,
+    host-defined (e.g. domain) when anonymous. A `slug` absent for the
+    resolved tenant returns the same `404` as a nonexistent slug (no
+    cross-tenant enumeration).
+  now: |-
+    Returns the published page `slug` for the locale negotiated from `Accept-Language`, with its sections already merged, in render order. Locale fallback follows i18n.md: q-value order, then language family, then `content.baseLocale`. Sections are merged field by field (`localized-content.md` §C).
+
+    The response sets `Content-Language` to the locale used, `Vary: Accept-Language, Accept-Encoding`, and `Cache-Control: public, max-age=300, stale-while-revalidate=3600`. Only `status: "published"` content is served.
+
+    The tenant is host-resolved (`localized-content.md` §F): from the credential when authenticated, host-defined (for example by domain) when anonymous. A `slug` absent for the resolved tenant returns the same `404` as a nonexistent slug, so tenants cannot be enumerated.
+- was: BCP-47 preference list; authoritative for locale selection (i18n.md). A malformed value MUST NOT 400.
+  now: BCP-47 preference list; authoritative for locale selection (i18n.md). A malformed value MUST NOT produce a 400.
+- was: Host does not advertise capabilities.content.supported (RFC 0103).
+  now: Host does not advertise `capabilities.content.supported`.
+- was: Delete a content page (RFC 0103 §D, admin).
+  now: Delete a content page (admin).
+- was: |
+    `localized-content.md` §D lists `DELETE …/content/pages/{pageId}` among
+    the admin CRUD operations: tenant-scoped, requires `content.write`, and
+    removes the page with its sections and every locale overlay. The path
+    segment is the page's **`pageId`**, not its slug. It shares this path
+    item with public delivery, which addresses the same segment by `slug`,
+    because OpenAPI 3.1 treats two templates that differ only in the
+    parameter name as identical and forbids them; the parameter keeps
+    delivery's name for that reason alone. A `pageId` absent for the
+    caller's tenant returns the same `404` as a nonexistent one
+    (`localized-content.md` §F, no cross-tenant enumeration).
+  now: |-
+    Deletes a page with its sections and every locale overlay: the `DELETE …/content/pages/{pageId}` admin operation of `localized-content.md` §D. Tenant-scoped; requires `content.write`.
+
+    The path segment is the page's `pageId`, not its slug. The operation shares this path item with public delivery, which addresses the same segment by `slug`, and OpenAPI 3.1 forbids two templates that differ only in parameter name, so the parameter keeps delivery's name. A `pageId` absent for the caller's tenant returns the same `404` as a nonexistent one (`localized-content.md` §F), so tenants cannot be enumerated.
+- was: For this operation, the page's `pageId` (§D). See the operation description for why the name is shared.
+  now: For this operation, the page's `pageId`, not its slug; the operation description explains the shared name.
+- was: List content pages for the caller's tenant (RFC 0103 §D, admin).
+  now: List content pages for the caller's tenant (admin).
+- was: |
+    Tenant-scoped admin listing of pages (draft + published). Requires a
+    principal with `content.read` scope.
+  now: Tenant-scoped admin listing of pages, draft and published. Requires a principal with `content.read` scope.
+- was: Create a content page (RFC 0103 §D, admin).
+  now: Create a content page (admin).
+- was: Invalid request (e.g. baseLocale in supportedLocales, or a malformed locale/slug).
+  now: Invalid request (for example `baseLocale` in `supportedLocales`, or a malformed locale or slug).
+- was: Upsert a section's base or per-locale fields (RFC 0103 §D, admin).
+  now: Upsert a section's base or per-locale fields (admin).
+- was: |
+    Locale-targeted write: `locale == content.baseLocale` upserts the
+    section's base `data`; any other (case-canonical BCP 47 subset, RFC 0206) locale upserts
+    `localizations[locale]`. Tenant-scoped; requires `content.write`.
+  now: Locale-targeted write. `locale == content.baseLocale` upserts the section's base `data`; any other locale (case-canonical BCP
+    47 subset) upserts `localizations[locale]`. Tenant-scoped; requires `content.write`.
+- was: Target locale; baseLocale upserts `data`, else `localizations[locale]`.
+  now: Target locale. `baseLocale` upserts `data`; any other locale upserts `localizations[locale]`.
+- was: Read the tenant's content language settings (RFC 0103 §B, admin).
+  now: Read the tenant's content language settings (admin).
+- was: Update the tenant's content language settings (RFC 0103 §B, admin).
+  now: Update the tenant's content language settings (admin).
+- was: |
+    Tenant-scoped settings update. The invariant `baseLocale ∉
+    supportedLocales` MUST hold (else `400`). Requires `content.write`.
+  now: Tenant-scoped settings update. The invariant `baseLocale ∉ supportedLocales` MUST hold, else `400`. Requires `content.write`.
+- was: |
+    Per `spec/v1/rest-endpoints.md` §"POST /v1/runs:bulk-cancel". Accepts
+    a non-empty array of runIds and processes each cancellation
+    independently. Returns `200` with a per-id results array even when
+    some individual cancellations fail; the top-level operation succeeds
+    when the request reached the host, regardless of per-id outcomes.
+    Hosts enforce a host-defined cap on the array length (RECOMMENDED
+    100); over-cap requests return `400 validation_error`.
+  now: 'Accepts a non-empty array of runIds and cancels each one independently. Returns `200` with a per-id results array even when
+    some cancellations fail: the operation succeeds when the request reached the host, whatever the per-id outcomes. Hosts enforce a
+    host-defined cap on the array length (RECOMMENDED 100); an over-cap request returns `400 validation_error`.'
+- was: |
+    Inclusive — events `< fromSeq` are fixed history; `>= fromSeq` are re-executed.
+    Required for `branch` (the branch point). Optional for `replay`; when omitted,
+    defaults to `0` (full re-execution from source-run start) per `replay.md`
+    §"Replay-mode defaults".
+  now: 'Inclusive: events `< fromSeq` are fixed history and events `>= fromSeq` are re-executed. Required for `branch` (the branch point).
+    Optional for `replay`, where it defaults to `0`, full re-execution from the start of the source run (`replay.md` §"Replay-mode defaults").'
+- was: For `branch` mode only — caller-supplied `RunOptions` to overlay.
+  now: '`branch` mode only: caller-supplied `RunOptions` to overlay.'
+- was: Invalid `fromSeq`, `replay` with non-empty `runOptionsOverlay`, etc.
+  now: Invalid `fromSeq`, `replay` with a non-empty `runOptionsOverlay`, and similar.
+- was: '`fromSeq` references a sequence number that doesn''t exist in the source run''s event log.'
+  now: '`fromSeq` names a sequence number that does not exist in the source run''s event log.'
+- was: |
+    RFC 0040 §C — return the run's immediate parent in the cross-host
+    composition chain. Capability-gated on
+    `capabilities.multiAgent.executionModel.crossHostCausation.ancestryEndpointSupported: true`;
+    hosts that don't advertise return 404 not_found. Clients walk the full
+    chain by following `parent.wellKnownUrl` per response, one hop at a
+    time.
+  now: Read a run's parent in the cross-host composition chain
+  description: 'Returns the run''s immediate parent in the cross-host composition chain. Gated on `capabilities.multiAgent.executionModel.crossHostCausation.ancestryEndpointSupported:
+    true`; a host that does not advertise it returns 404 not_found. Clients walk the full chain one hop at a time by following `parent.wellKnownUrl`
+    in each response.'
+- was: |
+    Run's immediate parent (or `parent: null` for top-level runs).
+  now: 'The run''s immediate parent (`parent: null` for a top-level run).'
+- was: |
+    Either the run doesn't exist, OR the host doesn't advertise
+    `crossHostCausation.ancestryEndpointSupported: true` and treats
+    the endpoint as absent. Clients can disambiguate by inspecting
+    the host's discovery doc.
+  now: 'The run does not exist, or the host does not advertise `crossHostCausation.ancestryEndpointSupported: true` and treats the endpoint
+    as absent. Clients can tell the two apart from the host''s discovery document.'
+- was: |
+    RFC 0072 §A — list the manifest agents this host has installed into its
+    AgentRegistry (RFC 0070). Capability-gated on
+    `capabilities.agents.manifestRuntime.supported: true`; hosts that don't
+    advertise it return 404. Read-only projection — never carries the
+    system-prompt body, resolved handoff schemas, or credential material (SR-1).
+    Dispatch is not a bespoke endpoint: a manifest agent is invoked as a run
+    whose node pins it via `WorkflowNode.agent` + `POST /v1/runs` (RFC 0072 §B).
+    RFC 0074 — the result is scoped to the authenticated principal's owner
+    triple (RFC 0048). When `capabilities.agents.manifestRuntime.installScope`
+    is `'tenant'`, only the agents available to the caller's tenant·workspace
+    are returned (an agent another workspace installed is absent, never
+    disclosed); when `'host'` (default) the inventory is host-global as in
+    RFC 0072. A `'tenant'`-scoped host MUST reject unauthenticated/unscoped
+    requests per its standard auth contract rather than fall back to a global list.
+  now: List installed manifest agents
+  description: |-
+    Lists the manifest agents installed in this host's AgentRegistry. Gated on `capabilities.agents.manifestRuntime.supported: true`; a host that does not advertise it returns 404. The projection is read-only and never carries the system-prompt body, resolved handoff schemas, or credential material (SR-1). There is no dispatch endpoint: a manifest agent is invoked as a run whose node pins it with `WorkflowNode.agent` + `POST /runs`.
+
+    The result is scoped to the authenticated principal's owner triple. When `capabilities.agents.manifestRuntime.installScope` is `'tenant'`, only the agents available to the caller's tenant and workspace are returned; an agent another workspace installed is absent, never disclosed. When it is `'host'` (the default), the inventory is host-global. A `'tenant'`-scoped host MUST reject unauthenticated or unscoped requests under its standard auth contract rather than fall back to a global list.
+- was: |
+    Host does not advertise `capabilities.agents.manifestRuntime` and
+    treats the endpoint as absent.
+  now: Host does not advertise `capabilities.agents.manifestRuntime` and treats the endpoint as absent.
+- was: |
+    RFC 0072 §A — return one installed manifest agent's inventory entry, or
+    404 when no such agent is installed (or the host doesn't advertise
+    `capabilities.agents.manifestRuntime`). RFC 0074 — resolved within the
+    authenticated principal's owner triple (RFC 0048): on an
+    `installScope: 'tenant'` host an agent the caller's workspace has not
+    approved 404s identically to "not installed", so the surface never
+    discloses another tenant's inventory.
+  now: Read one installed manifest agent
+  description: 'Returns one installed manifest agent''s inventory entry, or 404 when no such agent is installed or the host does not
+    advertise `capabilities.agents.manifestRuntime`. The lookup is resolved within the authenticated principal''s owner triple: on an
+    `installScope: ''tenant''` host, an agent the caller''s workspace has not approved returns the same 404 as "not installed", so another
+    tenant''s inventory is never disclosed.'
+- was: |
+    The manifest agentId. MUST NOT be the reserved literals `roster` or
+    `org-chart` — those name the sibling collection routes
+    (`/v1/agents/roster`, `/v1/agents/org-chart`), so excluding them here
+    keeps `/v1/agents/{agentId}` unambiguous against them.
+  now: The manifest agentId. MUST NOT be the reserved literals `roster` or `org-chart`, which name the sibling collection routes (`/agents/roster`,
+    `/agents/org-chart`), so `/agents/{agentId}` stays unambiguous.
+- was: |
+    RFC 0082 §C/§E — list the deployment records (per-(agentId, version)) for
+    a manifest agent: the lifecycle `state`, the named `channels`, the canary
+    share, the rollback pointer, and the last-transition provenance. Read-only,
+    content-free of any manifest body or credential (SR-1). Capability-gated on
+    `capabilities.agents.deployment.supported: true`; hosts that don't advertise
+    it return 404. Tenant-scoped to the caller's owner triple (RFC 0048/0074)
+    when `installScope: 'tenant'`.
+  now: List an agent's deployment records
+  description: 'Lists the deployment records, one per `(agentId, version)`, for a manifest agent: the lifecycle `state`, the named `channels`,
+    the canary share, the rollback pointer, and the last-transition provenance. Read-only and content-free of any manifest body or credential
+    (SR-1). Gated on `capabilities.agents.deployment.supported: true`; a host that does not advertise it returns 404. Tenant-scoped
+    to the caller''s owner triple when `installScope: ''tenant''`.'
+- was: |
+    The manifest agentId. MUST NOT be the reserved literals `roster` or
+    `org-chart` — those name the sibling collection routes
+    (`/v1/agents/roster/{rosterId}`, `/v1/agents/org-chart/{departmentId}`),
+    so excluding them here keeps `/v1/agents/{agentId}/deployments`
+    unambiguous against them.
+  now: The manifest agentId. MUST NOT be the reserved literals `roster` or `org-chart`, which name the sibling collection routes (`/agents/roster/{rosterId}`,
+    `/agents/org-chart/{departmentId}`), so `/agents/{agentId}/deployments` stays unambiguous.
+- was: |
+    RFC 0082 §E — request a deployment state transition (promote / pause /
+    deprecate / rollback / adjust-canary). The host MUST authorize fail-closed
+    against the RFC 0049 `deploy:*` scope (absent/unseeded role denies), run any
+    configured RFC 0051 approvalGate, and — when the gate carries `requiredEval`
+    — verify the referenced RFC 0081 eval run is terminal and `EvalSummary.passed`
+    BEFORE emitting `deployment.promoted`. On success returns the updated
+    deployment record and emits the matching content-free `deployment.*` event.
+  now: Request a deployment state transition
+  description: 'Requests a transition: promote, pause, deprecate, rollback, or adjust-canary. The host MUST authorize fail-closed against
+    the `deploy:*` scope (an absent or unseeded role denies), run any configured approvalGate, and, when the gate carries `requiredEval`,
+    verify that the referenced eval run is terminal and `EvalSummary.passed` before emitting `deployment.promoted`. On success it returns
+    the updated deployment record and emits the matching content-free `deployment.*` event.'
+- was: |
+    Validation error, or a transition that the host's advertised
+    `states`/`canary` cannot satisfy, or `no_active_deployment` when a
+    referenced channel resolves to no active version.
+  now: A validation error; a transition the host's advertised `states`/`canary` cannot satisfy; or `no_active_deployment` when a referenced
+    channel resolves to no active version.
+- was: |
+    Fail-closed authorization denial (the principal lacks the required
+    `deploy:*` scope — RFC 0049), or `eval_gate_unmet` when a `requiredEval`
+    gate's referenced eval run is not terminal-and-passed (RFC 0081).
+  now: Fail-closed authorization denial (the principal lacks the required `deploy:*` scope), or `eval_gate_unmet` when a `requiredEval`
+    gate's referenced eval run is not terminal and passed.
+- was: |
+    RFC 0086 §B — list the standing agent roster (named "digital-twin
+    employee" instances + their workflow portfolios) visible to the
+    caller. Capability-gated on `capabilities.agents.roster.supported:
+    true`; hosts that don't advertise it return 404. Tenant-scoped per
+    RFC 0074 — on an `installScope: 'tenant'` host only the caller's
+    owner-triple entries are returned. Read-only; content-free (SR-1).
+  now: List the standing agent roster
+  description: 'Lists the standing agent roster visible to the caller: named "digital-twin employee" instances and their workflow portfolios.
+    Gated on `capabilities.agents.roster.supported: true`; a host that does not advertise it returns 404. Tenant-scoped: on an `installScope:
+    ''tenant''` host only the caller''s owner-triple entries are returned. Read-only; content-free (SR-1).'
+- was: |
+    RFC 0086 §B — return one standing roster entry, or 404 when no such
+    entry exists, the host doesn't advertise `capabilities.agents.roster`,
+    or (on an `installScope: 'tenant'` host) the entry is outside the
+    caller's owner triple — a cross-tenant entry 404s identically to
+    "not found", never disclosing another tenant's roster.
+  now: Read one standing roster entry
+  description: 'Returns one standing roster entry, or 404 when no such entry exists, the host does not advertise `capabilities.agents.roster`,
+    or (on an `installScope: ''tenant''` host) the entry is outside the caller''s owner triple. A cross-tenant entry returns the same
+    404 as "not found", so another tenant''s roster is never disclosed.'
+- was: |
+    RFC 0087 §C — return the caller's agent org-chart (departments + roles
+    + `reportsTo` edges over roster members). Capability-gated on
+    `capabilities.agents.orgChart.supported: true`; hosts that don't
+    advertise it return 404. Tenant-scoped per RFC 0074. DESCRIPTIVE only:
+    an org edge confers no authority (§B `org-position-no-authority-escalation`).
+  now: Read the caller's agent org chart
+  description: 'Returns the caller''s agent org chart: departments, roles, and `reportsTo` edges over roster members. Gated on `capabilities.agents.orgChart.supported:
+    true`; a host that does not advertise it returns 404. Tenant-scoped. The chart is descriptive only: an org edge confers no authority
+    (`org-position-no-authority-escalation`).'
+- was: |
+    RFC 0087 §D — one department's subtree + responsibility roll-up (the
+    union of its members' RFC 0086 portfolios). `?recursive=false` narrows
+    the roll-up to direct members without changing the response shape.
+    404 when the department is unknown, cross-tenant, or the host doesn't
+    advertise `capabilities.agents.orgChart`. The roll-up grants nothing (§B).
+  now: Read one department's subtree and responsibility roll-up
+  description: Returns one department's subtree and responsibility roll-up (the union of its members' portfolios). `?recursive=false`
+    narrows the roll-up to direct members without changing the response shape. Returns 404 when the department is unknown or cross-tenant,
+    or the host does not advertise `capabilities.agents.orgChart`. The roll-up grants nothing.
+- was: The department id to root the subtree + roll-up at.
+  now: The department id to root the subtree and roll-up at.
+- was: |
+    RFC 0078 §B — list the portable `ToolDescriptor`s visible to the caller
+    across every tool source (node-pack / workflow / mcp / connector /
+    host-extension). Capability-gated on
+    `capabilities.toolCatalog.supported: true`; hosts that don't advertise
+    it return 404. §F-2 — the projection is authorization-scoped: a
+    principal sees only the tools it may invoke, and a second principal MUST
+    NOT see another principal's tools (non-disclosure). Read-only; each
+    descriptor is content-free of any credential material (SR-1).
+  now: List the tools the caller may invoke
+  description: 'Lists the portable `ToolDescriptor`s visible to the caller across every tool source (node-pack, workflow, mcp, connector,
+    host-extension). Gated on `capabilities.toolCatalog.supported: true`; a host that does not advertise it returns 404. The projection
+    is authorization-scoped: a principal sees only the tools it may invoke, and a second principal MUST NOT see another principal''s
+    tools. Read-only; no descriptor carries credential material (SR-1).'
+- was: |
+    RFC 0112. `compact` returns the `{ tools: CompactToolDescriptor[] }` projection — heavy descriptor fields omitted and `inputSchema` bounded to the compact structural subset — when the host advertises `capabilities.toolCatalog.compactView: true`. Defaults to `standard`; a host that does not advertise `compactView` treats `view=compact` as any unknown query param and returns the standard view.
+  now: '`compact` returns the `{ tools: CompactToolDescriptor[] }` projection (heavy descriptor fields omitted, `inputSchema` bounded
+    to the compact structural subset) when the host advertises `capabilities.toolCatalog.compactView: true`. Defaults to `standard`.
+    A host that does not advertise `compactView` treats `view=compact` like any unknown query parameter and returns the standard view.'
+- was: |
+    RFC 0078 §B — return one `ToolDescriptor` by its stable `toolId`, or 404
+    when no such tool exists, the caller isn't authorized for it (§F-2
+    non-disclosure — a cross-principal tool 404s identically to "not
+    found"), or the host doesn't advertise `capabilities.toolCatalog`.
+  now: Read one tool descriptor
+  description: Returns one `ToolDescriptor` by its stable `toolId`, or 404 when no such tool exists, the caller is not authorized for
+    it, or the host does not advertise `capabilities.toolCatalog`. A tool the caller may not see returns the same 404 as "not found".
+- was: |
+    RFC 0112. `compact` returns one `CompactToolDescriptor` (heavy fields omitted; `inputSchema` bounded to the compact structural subset) when the host advertises `capabilities.toolCatalog.compactView: true`. Defaults to `standard`; a host that does not advertise `compactView` treats `view=compact` as any unknown query param.
+  now: '`compact` returns one `CompactToolDescriptor` (heavy fields omitted, `inputSchema` bounded to the compact structural subset)
+    when the host advertises `capabilities.toolCatalog.compactView: true`. Defaults to `standard`. A host that does not advertise `compactView`
+    treats `view=compact` like any unknown query parameter.'
+- was: |
+    RFC 0081 §C — return the `EvalSummary` scorecard for a terminal eval run
+    (a run started with `mode: "eval"`): aggregate + per-task scores, cost,
+    latency, schema-validity, and redaction-safe safety findings, plus the
+    suite provenance and (regression mode) the score delta vs a baseline.
+    Content-free of task output / rubric prose / credentials (SR-1; the
+    `eval-summary-no-content-leak` invariant). Capability-gated on
+    `capabilities.agents.evalSuite.supported: true`; hosts that don't advertise
+    it return 404. 409 when the run is not yet terminal.
+  now: Read the scorecard of a terminal eval run
+  description: 'Returns the `EvalSummary` scorecard for a terminal eval run (one started with `mode: "eval"`): aggregate and per-task
+    scores, cost, latency, schema validity, redaction-safe safety findings, the suite provenance, and, in regression mode, the score
+    delta against a baseline. It carries no task output, rubric prose, or credentials (SR-1; `eval-summary-no-content-leak`). Gated
+    on `capabilities.agents.evalSuite.supported: true`; a host that does not advertise it returns 404. Returns 409 while the run is
+    not yet terminal.'
+- was: |
+    No such run, the run is not an eval run, or the host doesn't advertise
+    `capabilities.agents.evalSuite`.
+  now: No such run, the run is not an eval run, or the host does not advertise `capabilities.agents.evalSuite`.
+- was: |
+    RFC 0054 — return a deterministic, replay-aware structured diff of
+    two runs (typically a run and its RFC 0011 fork): `divergedAtSeq` +
+    ordered `eventDiffs[]` + `stateDiff`. The diff is a pure function of
+    the two event logs (see `replay.md` determinism contract). Requires
+    `runs:read` on BOTH runs. Hosts that don't implement it return 404.
+  now: Diff two runs
+  description: 'Returns a deterministic, replay-aware structured diff of two runs, typically a run and its fork: `divergedAtSeq`, ordered
+    `eventDiffs[]`, and `stateDiff`. The diff is a pure function of the two event logs (see the `replay.md` determinism contract). Requires
+    `runs:read` on both runs. A host that does not implement it returns 404.'
+- was: |
+    Structured diff of the two runs. `divergedAtSeq: null` + empty
+    `eventDiffs` when the logs are identical.
+  now: 'Structured diff of the two runs. `divergedAtSeq: null` and an empty `eventDiffs` when the logs are identical.'
+- was: |
+    Caller lacks `runs:read` on `{runId}` and/or on `against`
+    (`forbidden`); composes with RFC 0048 cross-workspace
+    isolation.
+  now: The caller lacks `runs:read` on `{runId}` or on `against` (`forbidden`); composes with cross-workspace isolation.
+- was: |
+    Either run doesn't exist, OR the host doesn't implement the diff
+    endpoint and treats the path as absent.
+  now: Either run does not exist, or the host does not implement the diff endpoint and treats the path as absent.
+- was: Administratively pause an in-flight run (RFC Track 13).
+  now: Administratively pause an in-flight run.
+- was: |
+    Operator-driven pause distinct from cancel (terminal) and HITL suspend (workflow-driven).
+    Emits a `run.paused` event when the pause takes effect; exit only via `:resume` or `:cancel`.
+  now: An operator-driven pause, distinct from cancel (terminal) and from a HITL suspend (workflow-driven). Emits a `run.paused` event
+    when the pause takes effect. The run leaves `paused` only through `:resume` or `:cancel`.
+- was: |
+    `immediate` snapshots between events; `drain-current-node` lets the running node
+    reach a terminal before transitioning to `paused`.
+  now: '`immediate` snapshots between events; `drain-current-node` lets the running node reach a terminal state before the run transitions
+    to `paused`.'
+- was: Pause requested; transition emits `run.paused` when complete.
+  now: Pause requested; the transition emits `run.paused` when complete.
+- was: Resume a paused run (RFC Track 13).
+  now: Resume a paused run.
+- was: |
+    Reverses a prior `:pause`. Run transitions from `paused` to `running` and emits `run.resumed`.
+  now: 'Reverses a prior `:pause`: the run transitions from `paused` to `running` and emits `run.resumed`.'
+- was: Concurrent resolve — only one wins.
+  now: Concurrent resolve; only one wins.
+- was: Run was cancelled while interrupt was pending.
+  now: The run was cancelled while the interrupt was pending.
+- was: |
+    Server signs payloads with this secret using HMAC-SHA256. REQUIRED in the Standard Webhooks form `whsec_<base64>` (24–64 decoded bytes) when `signatureAlgorithms` lists `standard-webhooks-1` (RFC 0201 §B.6); never echoed in any response.
+  now: The host signs payloads with this secret using HMAC-SHA256. REQUIRED in the Standard Webhooks form `whsec_<base64>` (24–64 decoded
+    bytes) when `signatureAlgorithms` lists `standard-webhooks-1`. Never echoed in any response.
+- was: |
+    RFC 0201 §B — the per-subscription opt-in. Absent means `["v1"]`, today's behaviour byte for byte. When present it MUST contain `v1`, MUST NOT repeat a value, and every value MUST be listed in the host's `webhooks.signatureAlgorithms`; otherwise `400 validation_error`. Listing `standard-webhooks-1` opts the subscription into the Standard Webhooks 1.0.0 companion scheme, which runs endpoint verification before the `201` (`400 webhook_endpoint_unverified` when the endpoint does not echo the challenge).
+  now: |-
+    The per-subscription signature opt-in. Absent means `["v1"]`. When present it MUST contain `v1`, MUST NOT repeat a value, and every value MUST be listed in the host's `webhooks.signatureAlgorithms`; otherwise `400 validation_error`.
+
+    Listing `standard-webhooks-1` opts the subscription into the Standard Webhooks 1.0.0 companion scheme, which runs endpoint verification before the `201` (`400 webhook_endpoint_unverified` when the endpoint does not echo the challenge).
+- was: RFC 0201 §B.7 — the list the dispatcher will apply; present whenever the request carried `signatureAlgorithms`.
+  now: The list the dispatcher will apply; present whenever the request carried `signatureAlgorithms`.
+- was: |
+    `validation_error` (malformed body, or an invalid `signatureAlgorithms` / `secret` opt-in, RFC 0201 §B), `webhook_url_rejected` (egress), or `webhook_endpoint_unverified` (RFC 0201 §D — an opted-in endpoint did not echo the verification challenge; no subscription is persisted).
+  now: '`validation_error` (malformed body, or an invalid `signatureAlgorithms` or `secret` opt-in), `webhook_url_rejected` (egress),
+    or `webhook_endpoint_unverified` (an opted-in endpoint did not echo the verification challenge; no subscription is persisted).'
+- was: |
+    Per `spec/v1/auth-profiles.md` §`openwop-audit-log-integrity` §4. The
+    verifier re-walks audit-log entries in the requested range,
+    re-computes each entry's `prevHash` from the canonical RFC 8785 JCS
+    serialization of the prior entry, verifies signed checkpoints
+    against the host's advertised `auditLogIntegrity.checkpointPublicKey`,
+    and returns `chainValid` + an enumeration of any anomalies.
+    Hosts MUST require the `audit:read` scope. Hosts that do NOT
+    advertise the `openwop-audit-log-integrity` profile MAY omit this
+    endpoint entirely (clients SHOULD pre-flight via `/.well-known/openwop`).
+  now: Re-walks the audit-log entries in the requested range, recomputes each entry's `prevHash` from the canonical RFC 8785 JCS serialization
+    of the prior entry, verifies signed checkpoints against the host's advertised `auditLogIntegrity.checkpointPublicKey`, and returns
+    `chainValid` with any anomalies. Hosts MUST require the `audit:read` scope. Hosts that do not advertise the `openwop-audit-log-integrity`
+    profile MAY omit this endpoint entirely; clients SHOULD check `/.well-known/openwop` first. See `spec/v1/auth-profiles.md` §`openwop-audit-log-integrity`
+    §4.
+- was: |
+    Filter to templates whose `tags[]` contains this exact tag.
+    Hosts MAY accept the parameter multiple times; the semantic
+    when repeated is AND (every named tag must be present).
+  now: Filter to templates whose `tags[]` contains this exact tag. Hosts MAY accept the parameter more than once; repeated values combine
+    with AND (every named tag must be present).
+- was: Host does not advertise capabilities.prompts.endpointsSupported. (RFC 0028 §A — supported gates Phase A node-execution composition;
+    endpointsSupported gates this REST surface independently.)
+  now: Host does not advertise `capabilities.prompts.endpointsSupported`. (`supported` gates node-execution composition; `endpointsSupported`
+    gates this REST surface independently.)
+- was: Host does not advertise capabilities.prompts.mutableLibrary.
+  now: Host does not advertise `capabilities.prompts.mutableLibrary`.
+- was: PromptTemplate.templateId per RFC 0027.
+  now: '`PromptTemplate.templateId`.'
+- was: |
+    Disambiguate when multiple installed packs ship the same
+    templateId. Hosts MUST return `prompt_ref_ambiguous` if
+    ambiguous and libraryId is omitted.
+  now: Disambiguates when several installed packs ship the same templateId. Hosts MUST return `prompt_ref_ambiguous` when the reference
+    is ambiguous and libraryId is omitted.
+- was: '`prompt_ref_ambiguous` when libraryId disambiguation is required.'
+  now: '`prompt_ref_ambiguous` when `libraryId` disambiguation is required.'
+- was: |
+    Returns the composed body + sha256 hash + per-variable hashes.
+    The response's `hash` MUST equal the `hash` that a matching
+    `prompt.composed` event would carry at dispatch time for the
+    same `(ref, variables, contentTrust)` inputs (RFC 0028 §A
+    deterministic-render invariant; RFC 0027 §F replay invariant).
+    Does NOT dispatch an LLM call. Secret-source variable values
+    MUST be supplied as `[REDACTED:<credentialRef>]` markers; the
+    host resolves the plaintext internally and never echoes it in
+    the `composed` response field per SR-1.
+  now: Returns the composed body, its sha256 hash, and per-variable hashes. Does not dispatch an LLM call. The response's `hash` MUST
+    equal the `hash` a matching `prompt.composed` event would carry at dispatch time for the same `(ref, variables, contentTrust)` inputs,
+    so rendering is deterministic and replay-safe. Secret-source variable values MUST be supplied as `[REDACTED:<credentialRef>]` markers;
+    the host resolves the plaintext internally and never echoes it in the `composed` response field (SR-1).
+- was: |
+    Variable bindings keyed by `PromptVariable.name`.
+    Secret-source bindings carry `[REDACTED:<credentialRef>]`
+    markers; the host resolves the real value internally.
+  now: Variable bindings keyed by `PromptVariable.name`. Secret-source bindings carry `[REDACTED:<credentialRef>]` markers; the host
+    resolves the real value internally.
+- was: |
+    Aggregate trust marker for the supplied bindings,
+    propagated through composition per RFC 0027 §E.
+  now: Aggregate trust marker for the supplied bindings, propagated through composition.
+- was: |
+    `prompt_variable_unresolved` (required variable missing),
+    `prompt_variable_type_mismatch` (bound type vs. declared type),
+    or `prompt_ref_invalid` (malformed PromptRef).
+  now: '`prompt_variable_unresolved` (a required variable is missing), `prompt_variable_type_mismatch` (bound type differs from declared
+    type), or `prompt_ref_invalid` (malformed PromptRef).'
+- was: |
+    openwop API key. Format implementation-defined; reference impl uses `hk_`/`hk_test_` prefixes.
+    Each key carries one or more scopes from the canonical vocabulary
+    (`manifest:read`, `runs:create`, `runs:read`, `runs:cancel`,
+    `artifacts:read`, `webhooks:manage`, `approvals:respond`, `audit:read`).
+    See `auth.md`.
+  now: OpenWOP API key. The format is implementation-defined; the reference implementation uses `hk_`/`hk_test_` prefixes. Each key
+    carries one or more scopes from the canonical vocabulary (`manifest:read`, `runs:create`, `runs:read`, `runs:cancel`, `artifacts:read`,
+    `webhooks:manage`, `approvals:respond`, `audit:read`). See `auth.md`.
+- was: |
+    RFC 0200 §F. OAuth 2.0 lanes — v1 `openwop-auth-oauth2-client-credentials`,
+    v2 `auth.lanes[].lane: "oauth2"`. Discovery is RFC 9728 Protected Resource
+    Metadata at the path-inserted well-known URI (`identity.md` §2.5).
+    Placeholder URLs.
+  now: 'The OAuth 2.0 lane (`auth.lanes[].lane: "oauth2"`). Discovery is RFC 9728 Protected Resource Metadata at the path-inserted well-known
+    URI (`identity.md` §2.5). The URLs are placeholders.'
+- was: |
+    RFC 0200 §F. v1 `openwop-auth-oidc-user-bearer` / v2 `auth.lanes[].lane: "oidc"`.
+    An ID token MAY be the bearer only when its `aud` equals the host's configured
+    audience (`identity.md` §2.1); any other `aud` is `audience_mismatch`.
+    Placeholder URL.
+  now: 'The OpenID Connect lane (`auth.lanes[].lane: "oidc"`). An ID token MAY be the bearer only when its `aud` equals the host''s
+    configured audience (`identity.md` §2.1); any other `aud` is `audience_mismatch`. The URL is a placeholder.'
+- was: |
+    RFC 0200 §F. v1 `openwop-auth-mtls` / v2 `auth.lanes[].lane: "mtls"`. In OpenWOP
+    mTLS is required *in addition to* a bearer, never instead of one, so it appears
+    in no canonical requirement below: a host that requires it adds `MutualTLS: []`
+    inside each requirement object (AND).
+  now: 'The mTLS lane (`auth.lanes[].lane: "mtls"`). mTLS is required *in addition to* a bearer, never instead of one, so it appears
+    in no canonical requirement below. A host that requires it adds `MutualTLS: []` inside each requirement object (AND).'
+- was: |
+    Per-mutation idempotency token (see `idempotency.md` Layer 1).
+    Server caches `(tenantId, endpoint, key)` → response for ≥24h.
+    Duplicate requests return the cached response with header
+    `OpenWOP-Idempotent-Replay: true`.
+  now: 'Per-mutation idempotency token (`idempotency.md` Layer 1). The server caches `(tenantId, endpoint, key)` → response for ≥24h.
+    A duplicate request returns the cached response with `OpenWOP-Idempotent-Replay: true`.'
+- was: RFC 0200 §B — `Bearer` challenge; `resource_metadata` and `error="invalid_token"` on a host with an oauth2/oidc lane. Never on
+    a non-disclosure 404.
+  now: A `Bearer` challenge. On a host with an oauth2 or oidc lane it carries `resource_metadata` and `error="invalid_token"`. Never
+    sent on a non-disclosure 404.
+- was: RFC 0200 §B — `error="insufficient_scope"` with every required `scope` on a scope refusal; absent on a resource-binding 403.
+  now: On a scope refusal, `error="insufficient_scope"` with every required `scope`. Absent on a resource-binding 403.
+- was: Eval run started (RFC 0081)
+  now: Eval run started
+- was: An eval run began. Content-free — suite provenance + counts only. Gated on capabilities.agents.evalSuite.supported.
+  now: 'An eval run began. Content-free: suite provenance and counts only. Gated on `capabilities.agents.evalSuite.supported`.'
+- was: Eval task scored (RFC 0081)
+  now: Eval task scored
+- was: One eval task was scored (emitted per task, after its terminal agent.decided). Content-free — taskId + score + scalars only,
+    never task output (eval-summary-no-content-leak).
+  now: 'One eval task was scored, emitted per task after its terminal `agent.decided`. Content-free: `taskId`, score and scalars only,
+    never task output (`eval-summary-no-content-leak`).'
+- was: Eval run completed (RFC 0081)
+  now: Eval run completed
+- was: An eval run finished. Content-free aggregate scalars; the full scorecard is the run output, read via GET /runs/{runId}/eval-summary.
+  now: An eval run finished. Content-free aggregate scalars; the full scorecard is the run output, read with `GET /runs/{runId}/eval-summary`.
+- was: Deployment promoted (RFC 0082)
+  now: Deployment promoted
+- was: A version was promoted into a new lifecycle state (gated by RFC 0049 deploy:* + RFC 0051 approvalGate + RFC 0081 requiredEval).
+    Content-free (deployment-event-no-content-leak). Principal-stamped + audit-logged.
+  now: A version was promoted into a new lifecycle state, gated by the `deploy:*` scope, the approvalGate, and `requiredEval`. Content-free
+    (`deployment-event-no-content-leak`); principal-stamped and audit-logged.
+- was: Deployment rolled back (RFC 0082)
+  now: Deployment rolled back
+- was: Deployment canary adjusted (RFC 0082)
+  now: Deployment canary adjusted
+- was: Deployment state changed (RFC 0082)
+  now: Deployment state changed
+- was: A non-promotion lifecycle transition (pause / resume / deprecate). Content-free; recorded-fact; audit-logged.
+  now: A non-promotion lifecycle transition (pause, resume, deprecate). Content-free; recorded-fact; audit-logged.
+- was: Proposal created (RFC 0096)
+  now: Proposal created
+- was: The host synthesized a reviewable-learning draft. Content-free — ids/kind/refs only, never the artifact body or rationale (proposal-inert-until-applied).
+    Emitted only when capabilities.agents.proposals is advertised.
+  now: 'The host synthesized a reviewable-learning draft. Content-free: ids, kind and refs only, never the artifact body or rationale
+    (`proposal-inert-until-applied`). Emitted only when `capabilities.agents.proposals` is advertised.'
+- was: Proposal activated (RFC 0096)
+  now: Proposal activated
+- was: A proposal was applied (RFC 0051/0049-gated). Content-free; the installed artifact byte-matches the last-persisted draft (proposal-no-resynthesis).
+  now: A proposal was applied, through its approval gate and authorization check. Content-free; the installed artifact byte-matches
+    the last-persisted draft (`proposal-no-resynthesis`).
+- was: Goal evaluated (RFC 0097)
+  now: Goal evaluated
+- was: A judge check ran against a standing goal. Content-free — no objective text; the verdict is recorded (not recomputed on replay).
+  now: 'A judge check ran against a standing goal. Content-free: no objective text. The verdict is recorded, not recomputed on replay.'
+- was: Goal closed (RFC 0097)
+  now: Goal closed
+- was: A standing goal stopped continuation (satisfied / escalated / abandoned / bound-exceeded). Content-free.
+  now: A standing goal stopped continuation (satisfied, escalated, abandoned, or bound-exceeded). Content-free.
+- was: Import applied (RFC 0098)
+  now: Import applied
+- was: An estate import was applied. Content-free — counts + refs only, never item payloads or secret values (export-bundle-no-credential-material).
+  now: 'An estate import was applied. Content-free: counts and refs only, never item payloads or secret values (`export-bundle-no-credential-material`).'
+- was: Compensation plan persisted (RFC 0151 §C/§D)
+  now: Compensation plan persisted
+- was: The unwind plan is durable. §C requires this BEFORE the first inverse action executes — a host that starts unwinding first cannot
+    resume after a crash, and the crash is when resumption matters.
+  now: 'The unwind plan is durable. This event is required before the first inverse action executes: a host that starts unwinding first
+    cannot resume after a crash, and a crash is when resumption matters.'
+- was: First inverse action started (RFC 0151 §D)
+  now: First inverse action started
+- was: Compensation began executing. MUST follow compensation.requested.
+  now: Compensation began executing. MUST follow `compensation.requested`.
+- was: Compensation completed (RFC 0151 §D)
+  now: Compensation completed
+- was: Compensation failed (RFC 0151 §D)
+  now: Compensation failed
+- was: An inverse action exhausted its retries. Compensation is a second effect, not an undo — it can fail, and the run's compensationStatus
+    records that rather than the run silently reporting success.
+  now: 'An inverse action exhausted its retries. Compensation is a second effect, not an undo: it can fail, and the run''s `compensationStatus`
+    records that rather than the run silently reporting success.'
+- was: Compensation paused for authorized intervention (RFC 0151 §C)
+  now: Compensation paused for authorized intervention
+- was: Compensation needs an operator (RFC 0151 §C/§E)
+  now: Compensation needs an operator
+- was: The host cannot proceed unaided. Recorded explicitly because an unwind that stops without saying so is indistinguishable from
+    one that finished.
+  now: The host cannot proceed unaided. Recorded explicitly, because an unwind that stops without saying so is indistinguishable from
+    one that finished.
+- was: Run annotated (RFC 0056)
+  now: Run annotated
+- was: A non-blocking quality annotation was recorded for the run. Live notification ONLY — NOT a replayable run-event-log entry; its
+    payload is an Annotation (not a RunEventDoc), so it is excluded from fork/replay (RFC 0056 §B/§D).
+  now: 'A non-blocking quality annotation was recorded for the run. Live notification only, not a replayable run-event-log entry: its
+    payload is an `Annotation`, not a `RunEventDoc`, so it is excluded from fork and replay.'
+- was: Workspace file updated (RFC 0059)
+  now: Workspace file updated
+- was: A workspace file was created, replaced, or deleted via the host.workspace store. Content-free — carries the file path + resulting
+    version only (the body is served by the read-side, SR-1-redacted). A replayable run-event-log entry (re-read from the log on replay,
+    never regenerated); gated on capabilities.workspace.supported.
+  now: 'A workspace file was created, replaced, or deleted through the `host.workspace` store. Content-free: it carries the file path
+    and resulting version only; the body is served by the read side, SR-1-redacted. A replayable run-event-log entry, re-read from the
+    log on replay and never regenerated. Gated on `capabilities.workspace.supported`.'
+- was: Heartbeat evaluated (RFC 0060)
+  now: Heartbeat evaluated
+- was: A heartbeat predicate was evaluated this tick (status + changed flag). Heartbeat-scoped observability.
+  now: A heartbeat predicate was evaluated this tick (status and a changed flag). Heartbeat-scoped observability.
+- was: Heartbeat state changed (RFC 0060)
+  now: Heartbeat state changed
+- was: A heartbeat predicate's state transitioned; emitted ONLY on change (never on an unchanged tick). Heartbeat-scoped.
+  now: A heartbeat predicate's state transitioned. Emitted only on a change, never on an unchanged tick. Heartbeat-scoped.
+- was: core.dispatch spawned a child workflow (RFC 0007 §D + RFC 0022 §A)
+  now: '`core.dispatch` spawned a child workflow'
+- was: core.dispatch began a parallel fan-out wave (RFC 0118)
+  now: '`core.dispatch` began a parallel fan-out wave'
+- was: Emitted when a fanOutPolicy=parallel wave begins; payload $defs.dispatchFanOut carries childCount/maxConcurrency/joinMode. Parallel
+    path only.
+  now: Emitted when a `fanOutPolicy=parallel` wave begins; the payload (`$defs.dispatchFanOut`) carries `childCount`, `maxConcurrency`
+    and `joinMode`. Parallel path only.
+- was: core.dispatch parallel join satisfied (RFC 0118)
+  now: '`core.dispatch` parallel join satisfied'
+- was: Emitted when a fanOutPolicy=parallel join is satisfied/failed; payload $defs.dispatchJoin carries joinOutcome + the replay-deterministic
+    mergeOrder.
+  now: Emitted when a `fanOutPolicy=parallel` join is satisfied or failed; the payload (`$defs.dispatchJoin`) carries `joinOutcome`
+    and the replay-deterministic `mergeOrder`.
+- was: |
+    The discriminated-union form of the full `interrupt.md` kind union
+    (RFC 0094 §E): approval / clarification / external-event / custom /
+    conversation.start / conversation.exchange / conversation.close /
+    low-confidence.
+    Servers emitting `interrupt.requested` SHOULD also emit the legacy
+    kind-specific event (`approval.requested` etc) for backward compat
+    until consumers migrate.
+  now: 'The discriminated-union form of the full `interrupt.md` kind union: approval, clarification, external-event, custom, conversation.start,
+    conversation.exchange, conversation.close, low-confidence. Servers emitting `interrupt.requested` SHOULD also emit the kind-specific
+    event (`approval.requested` etc.) until consumers migrate.'
+- was: |
+    Synthesized event emitted by the server in `values` mode after
+    each `updates`-tier transition. NOT a member of the canonical
+    `RunEventType` enum — this is a per-mode synthetic.
+  now: Synthesized event the server emits in `values` mode after each `updates`-tier transition. It is not a member of the canonical
+    `RunEventType` enum; it is a per-mode synthetic.
+- was: |
+    Type-erased handler for `debug` mode — discriminate on the
+    `type` field per the `RunEventType` enum in the run-event
+    JSON Schema (the authoritative, exhaustive event list; the
+    named messages above are a curated `updates`-tier subset).
+    Includes events filtered out of `updates`: `log.appended`,
+    `variable.changed`, `version.pinned`, `lease.*`, `node.retried`,
+    `replay.diverged`, `connector.authorized`,
+    `connector.auth_expired` (RFC 0047), `authorization.decided`
+    (RFC 0049), `approval.granted` / `approval.rejected` /
+    `approval.overridden` (RFC 0051), etc.
+  now: 'Type-erased handler for `debug` mode. Discriminate on the `type` field using the `RunEventType` enum in the run-event JSON Schema,
+    the authoritative and exhaustive event list; the named messages above are a curated `updates`-tier subset. Includes events filtered
+    out of `updates`: `log.appended`, `variable.changed`, `version.pinned`, `lease.*`, `node.retried`, `replay.diverged`, `connector.authorized`,
+    `connector.auth_expired`, `authorization.decided`, `approval.granted` / `approval.rejected` / `approval.overridden`, etc.'
+- was: Read the persisted durable A2A task projection (RFC 0100, host-extension).
+  now: Read the persisted durable A2A task projection (host extension).
+- was: |
+    Returns the persisted `A2ATaskState` for `taskId` (== the backing
+    `runId`) per RFC 0100 §2 — a host-extension convenience read of the
+    durable projection that survives caller disconnect. The normative A2A
+    read surface remains the A2A `tasks/get` JSON-RPC method. Hosts that do
+    not advertise `capabilities.a2a.durableTasks` return `501`.
+  now: 'Returns the persisted `A2ATaskState` for `taskId` (equal to the backing `runId`): a host-extension convenience read of the durable
+    projection, which survives caller disconnect. The normative A2A read surface remains the A2A `tasks/get` JSON-RPC method. Hosts
+    that do not advertise `capabilities.a2a.durableTasks` return `501`.'
+- was: Host does not advertise capabilities.a2a.durableTasks (RFC 0100).
+  now: Host does not advertise `capabilities.a2a.durableTasks`.
+- was: List workspace file metadata for the caller's tenant·workspace (RFC 0059).
+  now: List workspace file metadata for the caller's tenant·workspace.
+- was: |
+    Returns file metadata (no bodies) for the caller's `{tenant,
+    workspace}` per RFC 0059 §C. Optional `?prefix=` filters the flat
+    `path` namespace to entries starting with the given prefix.
+  now: Returns file metadata, without bodies, for the caller's `{tenant, workspace}`. An optional `?prefix=` filters the flat `path`
+    namespace to entries starting with that prefix.
+- was: Host does not advertise capabilities.workspace.supported (RFC 0059).
+  now: Host does not advertise `capabilities.workspace.supported`.
+- was: Read one workspace file (RFC 0059).
+  now: Read one workspace file.
+- was: |
+    Returns the `WorkspaceFile` at `path` for the caller's `{tenant,
+    workspace}`. When `capabilities.workspace.versioned: true`, an
+    optional `?version=N` returns the historical snapshot at version N.
+  now: 'Returns the `WorkspaceFile` at `path` for the caller''s `{tenant, workspace}`. When `capabilities.workspace.versioned: true`,
+    an optional `?version=N` returns the historical snapshot at version N.'
+- was: Atomic create/replace of a workspace file (RFC 0059).
+  now: Atomically create or replace a workspace file.
+- was: |
+    Atomically creates or replaces the file at `path` per RFC 0059 §C.
+    MUST honor `If-Match: <etag>` — a stale token returns `409
+    workspace_conflict` (`details.currentVersion` carries the live
+    version). On success the host bumps `version`, recomputes `etag`,
+    and emits a `workspace.updated` event. A `content` exceeding
+    `capabilities.workspace.maxFileBytes` returns `workspace_too_large`.
+  now: 'Atomically creates or replaces the file at `path`. MUST honor `If-Match: <etag>`: a stale token returns `409 workspace_conflict`,
+    with `details.currentVersion` carrying the live version. On success the host bumps `version`, recomputes `etag`, and emits a `workspace.updated`
+    event. A `content` exceeding `capabilities.workspace.maxFileBytes` returns `workspace_too_large`.'
+- was: Delete a workspace file (RFC 0059).
+  now: Delete a workspace file.
+- was: |
+    Removes the file at `path` (and, when `versioned: true`, writes a
+    tombstone). Emits a `workspace.updated` event on success.
+  now: 'Removes the file at `path` (and, when `versioned: true`, writes a tombstone). Emits a `workspace.updated` event on success.'
+- was: |
+    Mirror of `PUT /v1/packs/{name}/-/{version}.tgz` per
+    `spec/v1/node-packs.md` §"PUT /v1/packs/{name}/-/{version}.tgz".
+    Request shape, response shape, status codes, and the 19-code
+    publish error catalog (`invalid_pack_scope`, `invalid_pack_name`,
+    `invalid_version`, `invalid_body`, eight `tarball_*` codes,
+    `invalid_manifest`, `manifest_mismatch` (or the granular
+    `manifest_name_mismatch` / `manifest_version_mismatch` pair),
+    `pack_integrity_failure`, `unsupported_runtime`, `forbidden`,
+    `conflict`/`version_conflict`) MUST be served verbatim. The
+    test catalog MUST be isolated per RFC 0025 §C — a pack PUT'd
+    here MUST NOT appear in `GET /v1/packs/{name}` listings.
+    The mirrored production path is registry-service surface
+    (`registry-operations.md`), not defined in this host document
+    (see the `packs-test` tag scope note).
+  now: |-
+    Mirrors the registry's `PUT /v1/packs/{name}/-/{version}.tgz` (`spec/v1/node-packs.md`). The request shape, response shape, status codes, and publish error catalog MUST be served verbatim: `invalid_pack_scope`, `invalid_pack_name`, `invalid_version`, `invalid_body`, eight `tarball_*` codes, `invalid_manifest`, `manifest_mismatch` (or the granular `manifest_name_mismatch` / `manifest_version_mismatch` pair), `pack_integrity_failure`, `unsupported_runtime`, `forbidden`, `conflict`/`version_conflict`.
+
+    The test catalog MUST be isolated: a pack PUT here MUST NOT appear in `GET /v1/packs/{name}` listings. The mirrored production path is registry-service surface (`registry-operations.md`), not defined in this document.
+- was: |
+    One of the 17 spec-documented 400-class publish error codes:
+    URL/scope (`invalid_pack_scope`, `invalid_pack_name`, `invalid_version`),
+    body shape (`invalid_body`),
+    tarball extraction (`tarball_gunzip_failed`, `tarball_too_large`,
+    `tarball_manifest_missing`, `tarball_manifest_too_large`,
+    `tarball_manifest_not_json`, `tarball_entry_missing`,
+    `tarball_entry_too_large`, `tarball_path_traversal`,
+    `tarball_tar_parse_failed`),
+    manifest contents (`invalid_manifest`, `manifest_mismatch` or
+    the granular `manifest_name_mismatch` / `manifest_version_mismatch` pair,
+    `pack_integrity_failure`, `unsupported_runtime`).
+  now: 'One of the documented 400-class publish error codes: URL or scope (`invalid_pack_scope`, `invalid_pack_name`, `invalid_version`),
+    body shape (`invalid_body`), tarball extraction (`tarball_gunzip_failed`, `tarball_too_large`, `tarball_manifest_missing`, `tarball_manifest_too_large`,
+    `tarball_manifest_not_json`, `tarball_entry_missing`, `tarball_entry_too_large`, `tarball_path_traversal`, `tarball_tar_parse_failed`),
+    or manifest contents (`invalid_manifest`, `manifest_mismatch` or the granular `manifest_name_mismatch` / `manifest_version_mismatch`
+    pair, `pack_integrity_failure`, `unsupported_runtime`).'
+- was: 'Mirror of `GET /v1/packs/{name}/-/{version}.tgz`. Returns the gzipped tarball bytes with `Content-Type: application/tar+gzip`
+    and an `ETag: "sha256-..."` matching the manifest''s `tarballSha256`. The mirrored production path is registry-service surface (`registry-operations.md`),
+    not defined in this host document (see the `packs-test` tag scope note).'
+  now: 'Mirrors the registry''s `GET /v1/packs/{name}/-/{version}.tgz`. Returns the gzipped tarball bytes with `Content-Type: application/tar+gzip`
+    and an `ETag: "sha256-..."` matching the manifest''s `tarballSha256`. The mirrored production path is registry-service surface (`registry-operations.md`),
+    not defined in this document.'
+- was: Unpublish a test-catalog version (mirrors unpublish-window semantics).
+  now: Unpublish a test-catalog version (same unpublish-window semantics as the registry).
+- was: |
+    Mirror of `DELETE /v1/packs/{name}/-/{version}` per
+    `spec/v1/node-packs.md`. Returns `400 unpublish_window_expired`
+    for versions older than the registry's unpublish window
+    (default 72h). Test-mode implementations MAY shorten the
+    window for tractable conformance fixtures but MUST surface
+    the same error code. The mirrored production path is
+    registry-service surface (`registry-operations.md`), not
+    defined in this host document (see the `packs-test` tag
+    scope note).
+  now: Mirrors the registry's `DELETE /v1/packs/{name}/-/{version}` (`spec/v1/node-packs.md`). Returns `400 unpublish_window_expired`
+    for versions older than the registry's unpublish window (default 72h). Test-mode implementations MAY shorten the window for tractable
+    conformance fixtures but MUST surface the same error code. The mirrored production path is registry-service surface (`registry-operations.md`),
+    not defined in this document.
+- was: |
+    Mirror of `GET /v1/packs/{name}/-/{version}.sig`. Returns the
+    signature blob over `pack.json` for this version. MAY 302-redirect
+    to a storage-backend signed URL. The mirrored production path is
+    registry-service surface (`registry-operations.md`), not defined
+    in this host document (see the `packs-test` tag scope note).
+  now: Mirrors the registry's `GET /v1/packs/{name}/-/{version}.sig`. Returns the signature blob over `pack.json` for this version.
+    MAY 302-redirect to a storage-backend signed URL. The mirrored production path is registry-service surface (`registry-operations.md`),
+    not defined in this document.
+- was: |
+    `signature_not_available` — version is missing, yanked,
+    unsigned at publish time, OR the registry's storage backend
+    is unwired. The four cases are intentionally
+    indistinguishable per spec/v1/node-packs.md §"GET /v1/packs/{name}/-/{version}.sig".
+    Also returned when the host does not advertise
+    `capabilities.packs.testMode.supported: true`.
+  now: '`signature_not_available`: the version is missing, yanked, or unsigned at publish time, or the registry''s storage backend is
+    unwired. The four cases are intentionally indistinguishable (spec/v1/node-packs.md). Also returned when the host does not advertise
+    `capabilities.packs.testMode.supported: true`.'
+- was: |
+    RFC 0059 workspace-relative file path. Flat namespace with
+    `/`-in-names; no `..`, no leading `/`. Matches
+    `workspace-file.schema.json#path`.
+  now: Workspace-relative file path in a flat namespace that allows `/` in names; no `..` and no leading `/`. Matches `workspace-file.schema.json#path`.
+- was: RFC 0059. Optional prefix filter over the flat `path` namespace for `listWorkspaceFiles`.
+  now: Optional prefix filter over the flat `path` namespace for `listWorkspaceFiles`.
+- was: |
+    RFC 0059. When `capabilities.workspace.versioned: true`, request the
+    historical snapshot at this version. Absent = latest.
+  now: 'When `capabilities.workspace.versioned: true`, requests the historical snapshot at this version. Absent means latest.'
+- was: |
+    RFC 0059 optimistic-concurrency token — the file's current `etag`.
+    A `PUT` carrying a stale `If-Match` returns `409 workspace_conflict`.
+  now: 'Optimistic-concurrency token: the file''s current `etag`. A `PUT` carrying a stale `If-Match` returns `409 workspace_conflict`.'
+- was: |
+    Response body for a successful publish against the test-mode
+    registry namespace (RFC 0025). Mirror of the production publish
+    record returned by `PUT /v1/packs/{name}/-/{version}.tgz`.
+  now: Response body for a successful publish to the test-mode registry namespace. Mirrors the production publish record returned by
+    `PUT /v1/packs/{name}/-/{version}.tgz`.

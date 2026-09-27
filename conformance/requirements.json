@@ -14314,19 +14314,19 @@
       "explicitId": "openwop.it.highConcurrency.10-parallel-requests-with-same-key-yield-one-runid-and-9-replays",
       "citations": [
         {
-          "section": "idempotency.md §Concurrent duplicates",
+          "section": "spec/v1/idempotency.md §Concurrent duplicates",
           "requirement": "every concurrent request MUST resolve to either the cached response or a deterministic 409"
         },
         {
-          "section": "idempotency.md §Layer 1",
+          "section": "spec/v1/idempotency.md §Layer 1",
           "requirement": "same idempotency key MUST yield exactly ONE runId across all successful responses"
         },
         {
-          "section": "idempotency.md",
+          "section": "spec/v1/idempotency.md",
           "requirement": "409 on parallel idempotency-keyed retry MUST carry error=\"idempotency_in_flight\""
         },
         {
-          "section": "idempotency.md",
+          "section": "spec/v1/idempotency.md",
           "requirement": "409 idempotency_in_flight MUST include a numeric retryAfter"
         }
       ]
@@ -14343,7 +14343,7 @@
           "requirement": "concurrent POST /v1/runs requests MUST resolve to either success or rate-limited"
         },
         {
-          "section": "idempotency.md §Layer 1",
+          "section": "spec/v1/idempotency.md §Layer 1",
           "requirement": "distinct idempotency keys MUST yield distinct runIds (Layer 1 dedup is keyed)"
         },
         {
@@ -14364,15 +14364,15 @@
           "requirement": "host MUST handle ≥5 retries with same key 100ms apart without losing the cached response"
         },
         {
-          "section": "idempotency.md §Layer 1",
+          "section": "spec/v1/idempotency.md §Layer 1",
           "requirement": "all 5 retries with same key MUST resolve to the same runId"
         },
         {
-          "section": "idempotency.md §Server responsibilities",
+          "section": "spec/v1/idempotency.md §Server responsibilities",
           "requirement": "first request with new key MUST NOT be marked as replay"
         },
         {
-          "section": "idempotency.md §Server responsibilities #2",
+          "section": "spec/v1/idempotency.md §Server responsibilities #2",
           "requirement": "replay responses SHOULD set openwop-Idempotent-Replay: true"
         }
       ]
@@ -14389,7 +14389,7 @@
           "requirement": "limits MUST be advertised in discovery"
         },
         {
-          "section": "idempotency.md",
+          "section": "spec/v1/idempotency.md",
           "requirement": "limits.idempotencyAckTimeoutSec MUST be integer ≥5 when advertised"
         }
       ]
@@ -14579,7 +14579,7 @@
           "requirement": "fewer than two executors is not a race and cannot witness the rule"
         },
         {
-          "section": "idempotency.md §\"Idempotency key composition\" (Across a recovery boundary)",
+          "section": "spec/v1/idempotency.md §\"Idempotency key composition\" (Across a recovery boundary)",
           "requirement": "all executors MUST mint one identity — differing ids mean they never collided, so a single delivery is a vacuous pass rather than a working claim"
         }
       ]
@@ -14596,7 +14596,7 @@
           "requirement": "the seam MUST report how many executors attempted the effect"
         },
         {
-          "section": "idempotency.md §\"Concurrent duplicates (Layer 2)\"",
+          "section": "spec/v1/idempotency.md §\"Concurrent duplicates (Layer 2)\"",
           "requirement": "the engine MUST ensure at most one concurrent executor performs the external effect — the guarding persist MUST be an atomic claim, not a read-then-write"
         }
       ]
@@ -14617,7 +14617,7 @@
           "requirement": "the seam MUST report mintedIds, one per executor"
         },
         {
-          "section": "idempotency.md §\"Concurrent duplicates (Layer 2)\"",
+          "section": "spec/v1/idempotency.md §\"Concurrent duplicates (Layer 2)\"",
           "requirement": "exactly one effect regardless of how many executors race — at most one wins the compare-and-set, the rest observe the hit"
         },
         {
@@ -14625,7 +14625,7 @@
           "requirement": "mintedIds length MUST equal attempted"
         },
         {
-          "section": "idempotency.md §\"Idempotency key composition\"",
+          "section": "spec/v1/idempotency.md §\"Idempotency key composition\"",
           "requirement": "one identity across all executors at any concurrency"
         }
       ]
@@ -14646,8 +14646,8 @@
       "explicitId": "openwop.it.idempotency-key-determinism.default-mode-composite-identical-runid-nodeid-payload-produces-identical-keys",
       "citations": [
         {
-          "section": "idempotency.md §\"Idempotency-Key",
-          "requirement": "idempotency.md §Idempotency-Key: same logical request MUST produce same key"
+          "section": "spec/v1/idempotency.md §\"Idempotency-Key",
+          "requirement": "spec/v1/idempotency.md §Idempotency-Key: same logical request MUST produce same key"
         }
       ]
     },
@@ -14659,7 +14659,7 @@
       "explicitId": "openwop.it.idempotency-key-determinism.payload-sensitivity-different-payload-produces-different-key",
       "citations": [
         {
-          "section": "idempotency.md §\"Idempotency-Key",
+          "section": "spec/v1/idempotency.md §\"Idempotency-Key",
           "requirement": "payload sensitivity — different payload produces different key"
         }
       ]
@@ -14672,7 +14672,7 @@
       "explicitId": "openwop.it.idempotency-key-determinism.run-isolation-different-runid-produces-different-key",
       "citations": [
         {
-          "section": "idempotency.md §\"Idempotency-Key",
+          "section": "spec/v1/idempotency.md §\"Idempotency-Key",
           "requirement": "run isolation — different runId produces different key"
         }
       ]
@@ -14685,7 +14685,7 @@
       "explicitId": "openwop.it.idempotency-key-determinism.node-isolation-different-nodeid-produces-different-key",
       "citations": [
         {
-          "section": "idempotency.md §\"Idempotency-Key",
+          "section": "spec/v1/idempotency.md §\"Idempotency-Key",
           "requirement": "node isolation — different nodeId produces different key"
         }
       ]
@@ -14698,7 +14698,7 @@
       "explicitId": "openwop.it.idempotency-key-determinism.hash-mode-is-deterministic-in-the-payload-alone-run-node-ignored",
       "citations": [
         {
-          "section": "idempotency.md §\"Idempotency-Key",
+          "section": "spec/v1/idempotency.md §\"Idempotency-Key",
           "requirement": "hash mode MUST ignore run/node — useful for global remote-dedup caches"
         }
       ]
@@ -14711,7 +14711,7 @@
       "explicitId": "openwop.it.idempotency-key-determinism.output-shape-every-emitted-key-matches-openwop-sha256-prefix-16",
       "citations": [
         {
-          "section": "idempotency.md §\"Idempotency-Key",
+          "section": "spec/v1/idempotency.md §\"Idempotency-Key",
           "requirement": null,
           "interpolated": true
         }
@@ -14725,7 +14725,7 @@
       "explicitId": "openwop.it.idempotency-key-determinism.uuid-mode-rejects-with-config-invalid-safety-fix-per-1-1-2",
       "citations": [
         {
-          "section": "idempotency.md §\"Idempotency-Key",
+          "section": "spec/v1/idempotency.md §\"Idempotency-Key",
           "requirement": "mode: uuid MUST be rejected — the 1.1.0/1.1.1 non-deterministic default was removed"
         }
       ]
@@ -14738,7 +14738,7 @@
       "explicitId": "openwop.it.idempotency-key-determinism.cross-impl-invariant-pack-output-equals-canonical-sha-256-formula",
       "citations": [
         {
-          "section": "idempotency.md §\"Idempotency-Key",
+          "section": "spec/v1/idempotency.md §\"Idempotency-Key",
           "requirement": null,
           "interpolated": true
         }
@@ -14756,11 +14756,11 @@
           "requirement": "first POST /v1/runs MUST return 201"
         },
         {
-          "section": "idempotency.md §Layer 1",
+          "section": "spec/v1/idempotency.md §Layer 1",
           "requirement": "replay request with same key + same body MUST return success status (200/201)"
         },
         {
-          "section": "idempotency.md §Layer 1",
+          "section": "spec/v1/idempotency.md §Layer 1",
           "requirement": "replay MUST return the SAME runId (no new run created)"
         },
         {
@@ -14777,16 +14777,16 @@
       "explicitId": "openwop.it.idempotency.returns-409-when-the-body-changes-under-the-same-key",
       "citations": [
         {
-          "section": "idempotency.md §Layer 1",
+          "section": "spec/v1/idempotency.md §Layer 1",
           "requirement": "same Idempotency-Key with a different body MUST return 409"
         },
         {
-          "section": "idempotency.md §\"Record shape, digest, and lease\"",
+          "section": "spec/v1/idempotency.md §\"Record shape, digest, and lease\"",
           "requirement": null,
           "interpolated": true
         },
         {
-          "section": "idempotency.md §\"Record shape, digest, and lease\"",
+          "section": "spec/v1/idempotency.md §\"Record shape, digest, and lease\"",
           "requirement": "a digest mismatch MUST NOT return the cached body (no runId on the 409)"
         }
       ]
@@ -14803,19 +14803,19 @@
           "requirement": "first POST /v1/runs returns 201"
         },
         {
-          "section": "idempotency.md §Server responsibilities",
+          "section": "spec/v1/idempotency.md §Server responsibilities",
           "requirement": "openwop-Idempotent-Replay value MUST be \"true\" or \"false\""
         },
         {
-          "section": "idempotency.md §Layer 1",
+          "section": "spec/v1/idempotency.md §Layer 1",
           "requirement": "replay returns 200 or 201"
         },
         {
-          "section": "idempotency.md §Server responsibilities #2",
+          "section": "spec/v1/idempotency.md §Server responsibilities #2",
           "requirement": "openwop-Idempotent-Replay SHOULD be set on idempotent replay responses"
         },
         {
-          "section": "idempotency.md §Server responsibilities #2",
+          "section": "spec/v1/idempotency.md §Server responsibilities #2",
           "requirement": "openwop-Idempotent-Replay on replay MUST be \"true\""
         }
       ]
@@ -14832,7 +14832,7 @@
           "requirement": "host MUST handle ≥5 retries 100ms apart without losing the cached response"
         },
         {
-          "section": "idempotency.md §Layer 1",
+          "section": "spec/v1/idempotency.md §Layer 1",
           "requirement": "5 retries with same key MUST collapse to exactly one runId"
         }
       ]
@@ -14845,11 +14845,11 @@
       "explicitId": "openwop.it.idempotencyRetry.host-advertising-idempotencyacktimeoutsec-sets-integer-5",
       "citations": [
         {
-          "section": "idempotency.md",
+          "section": "spec/v1/idempotency.md",
           "requirement": "limits.idempotencyAckTimeoutSec MUST be an integer when advertised"
         },
         {
-          "section": "idempotency.md",
+          "section": "spec/v1/idempotency.md",
           "requirement": "limits.idempotencyAckTimeoutSec MUST be ≥ 5"
         }
       ]
@@ -18109,11 +18109,11 @@
       "explicitId": "openwop.it.multi-region-idempotency-behavior.two-region-conflict-resolves-to-the-lex-min-runid-per-annex-convergence-rule",
       "citations": [
         {
-          "section": "idempotency.md §\"Multi-region idempotency annex\"",
+          "section": "spec/v1/idempotency.md §\"Multi-region idempotency annex\"",
           "requirement": "simulate-partition seam MUST return 200 when ≥2 conflicting claims are submitted"
         },
         {
-          "section": "idempotency.md §\"Convergence rule\"",
+          "section": "spec/v1/idempotency.md §\"Convergence rule\"",
           "requirement": "winner MUST be the lex-min runId (run-a-west < run-b-east)"
         }
       ]
@@ -18126,11 +18126,11 @@
       "explicitId": "openwop.it.multi-region-idempotency-behavior.three-region-partition-resolves-to-a-single-winner",
       "citations": [
         {
-          "section": "idempotency.md §\"Convergence rule\"",
+          "section": "spec/v1/idempotency.md §\"Convergence rule\"",
           "requirement": "winner MUST be the lex-min runId across all conflicting claims"
         },
         {
-          "section": "idempotency.md §\"Convergence rule\"",
+          "section": "spec/v1/idempotency.md §\"Convergence rule\"",
           "requirement": "losers array MUST contain N-1 entries when N claims conflict"
         }
       ]
@@ -18143,11 +18143,11 @@
       "explicitId": "openwop.it.multi-region-idempotency-behavior.every-region-gets-a-cache-redirect-entry-pointing-at-the-winner",
       "citations": [
         {
-          "section": "idempotency.md §\"Convergence rule\"",
+          "section": "spec/v1/idempotency.md §\"Convergence rule\"",
           "requirement": "cacheRedirects MUST contain one entry per claim (including the winner)"
         },
         {
-          "section": "idempotency.md §\"Convergence rule\"",
+          "section": "spec/v1/idempotency.md §\"Convergence rule\"",
           "requirement": "every cache redirect MUST point at the winner runId"
         }
       ]
@@ -18160,7 +18160,7 @@
       "explicitId": "openwop.it.multi-region-idempotency-behavior.loser-cancel-reason-must-be-the-canonical-cross-region-dedup-loss-string",
       "citations": [
         {
-          "section": "idempotency.md §\"Convergence rule\"",
+          "section": "spec/v1/idempotency.md §\"Convergence rule\"",
           "requirement": "loserCancelReason MUST be the canonical `cross_region_dedup_loss` string"
         }
       ]
@@ -18173,7 +18173,7 @@
       "explicitId": "openwop.it.multi-region-idempotency-behavior.resolver-is-order-invariant-shuffled-inputs-produce-the-same-winner",
       "citations": [
         {
-          "section": "idempotency.md §\"Convergence rule\" — determinism",
+          "section": "spec/v1/idempotency.md §\"Convergence rule\" — determinism",
           "requirement": "resolver MUST be order-invariant; all permutations MUST produce the same lex-min winner"
         }
       ]
@@ -18186,7 +18186,7 @@
       "explicitId": "openwop.it.multi-region-idempotency-behavior.mismatched-tuple-rejects-with-400-validation-error",
       "citations": [
         {
-          "section": "idempotency.md §\"Convergence rule\"",
+          "section": "spec/v1/idempotency.md §\"Convergence rule\"",
           "requirement": "claims with non-matching (tenantId, endpoint, key) MUST be rejected — it would be a programming error in the caller"
         }
       ]
@@ -18199,7 +18199,7 @@
       "explicitId": "openwop.it.multi-region-idempotency.idempotency-crossregion-when-advertised-must-be-one-of-the-closed-enum",
       "citations": [
         {
-          "section": "idempotency.md §\"Multi-region idempotency\" §\"Capability advertisement\"",
+          "section": "spec/v1/idempotency.md §\"Multi-region idempotency\" §\"Capability advertisement\"",
           "requirement": "crossRegion MUST be one of {\"single-region\",\"reconciled-records\",\"fenced-effects\"}"
         }
       ]
@@ -18212,7 +18212,7 @@
       "explicitId": "openwop.it.multi-region-idempotency.multi-region-hosts-should-expose-the-cross-region-conflict-counter-per-operator",
       "citations": [
         {
-          "section": "idempotency.md §\"Operator surface\"",
+          "section": "spec/v1/idempotency.md §\"Operator surface\"",
           "requirement": null,
           "interpolated": true
         }
