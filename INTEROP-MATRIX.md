@@ -22,7 +22,7 @@ Each row shows the host's newest certified bundle and the suite version that mea
 
 Notes on the rows:
 - **openwop-app** was cut on its production image (by digest), on a 0%-traffic side revision with the conformance seams switched on. That measures the seams profile without exposing seams in production.
-- **openwop-app**'s newest cut through the public front (suite 2.41.1, 232 / 2 / 0 / 207 / 19) has two failures. Both come from the hosting front reducing `Accept-Language: es-419` to `es` before the request reaches the host (RFC 0206), not from host code.
+- **openwop-app**'s newest cut through the public front (suite **2.42.2**, build `commit:6f7b5e90a`, **232 / 0 / 19 / 210 / 0**, pass / fail / skipped / inapplicable / blocked) certifies both claimed profiles, `openwop-discovery-core` and `openwop-core-standard`, with **zero failures and zero blocked** ([`openwop-workflow-engine-2.42.2.json`](./evidence/v2-host-bundles/openwop-workflow-engine-2.42.2.json), signed `openwop-app-bundle-2`, served bytes equal to the upload). It replaces the 2.41.1 cut, whose two RFC 0206 failures came from the hosting front reducing `Accept-Language: es-419` to `es`: production stopped advertising `es-419`, so those rows are now `inapplicable`. Both RFC 0215 rows remain `executed-pass`.
 - **MyndHyve** is closed source. Its bundle is verified against the key its live discovery document publishes.
 - **Evidence tier** is the bundle's own field (RFC 0148). Every bundle here is `self`: the host operator cut it.
 
