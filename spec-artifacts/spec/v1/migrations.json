@@ -1039,6 +1039,24 @@
       "note": "Envelopes are transient; a persisted envelope.* event is read through the adapter."
     },
     {
+      "id": "openwop.migration.C4.17",
+      "child": "C4",
+      "kind": "remove",
+      "v1": {
+        "surface": "optional `locale` on `InterruptPayload.data` and on the resume payload (i18n.md §\"`locale` field on `InterruptPayload`\")",
+        "path": "spec/v1/i18n.md"
+      },
+      "v2": {
+        "surface": "none — interrupt data and resume bodies are closed; the rendered locale is request-scoped (`Content-Language`, spec/v2/core/i18n.md)"
+      },
+      "codemod": "openwop.codemod.interrupt-locale-drop",
+      "persistedData": "translated",
+      "requirementIds": [],
+      "gapIds": [],
+      "deprecationId": "openwop.deprecation.interrupt-locale-field",
+      "note": "Recorded 2026-09-27: the v2 schema closure (C4.9) left the v1 field no place, and it is dropped rather than re-added. A v1 `interrupt.requested` event carrying `data.locale` is read through the C.9 adapter like any other extra key."
+    },
+    {
       "id": "openwop.migration.C6.1",
       "child": "C6",
       "kind": "behavior",

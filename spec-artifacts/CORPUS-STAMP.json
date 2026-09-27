@@ -116,7 +116,7 @@
     "schemas/v2/artifact.schema.json": "85b9dc284d39b99d2a66fa8cbf47f2dd3d8526d3bd6cc411ad315b372de38975",
     "schemas/v2/audit-verify-result.schema.json": "2a4bfc42976717f78c10468fdba756ca6b19e49762699e6dffd418ffff08e55d",
     "schemas/v2/budget-policy.schema.json": "c7449daeb6e1d95e7a047b8c2814d3d54748697c27046972834874867d9b5f4c",
-    "schemas/v2/capabilities.schema.json": "65bd0b18b4c00708bc582af9fb4399fd3009c4d452401c6c8ad26695b00b7235",
+    "schemas/v2/capabilities.schema.json": "959b7a1b8e40aeafb8b9702bd0e4b220c0beb02a6afa3ca64fe9b04b95ae3df5",
     "schemas/v2/certification-bundle.schema.json": "82ce31a1ed6c7e21b0ba88ff62a7b8b768fc3b176b1d06fce023203830b94725",
     "schemas/v2/channel-presence-payload.schema.json": "4eeb224910e6f7eee3ab5e7c3899559c25c83a26d0022e0ad195c4672611977a",
     "schemas/v2/channel-written-payload.schema.json": "ccecff3c71a3275ad8db035ac0e04db25e6f8d23cf091ddbcd5a60d1be1cbb6b",
@@ -202,17 +202,17 @@
     "schemas/workload-identity.schema.json": "64ed93e12cc9f0657e56ff9b8f045e5d68d397df5276d103c07f42c7f34f0579",
     "schemas/workspace-file-create.schema.json": "70a23b92c2958c0165d7d29aea9020a045dc7816af82c80c5f50d0aac19c4856",
     "schemas/workspace-file.schema.json": "464de85c2a068243084ee9c1d969bc7cd5d8f7948574e58450d6493c38a0e1e4",
-    "spec/v1/alias-detectors.json": "2401fcb1c18cdd688c018b3d716ae6bca85c5e356220ee2b793bd9d81872412d",
+    "spec/v1/alias-detectors.json": "29f21e0fb2c7a232a92a5c19b4cba3a86bc3b5e16f06780452f0421c66c6ec38",
     "spec/v1/capability-declaration-classes.json": "e7729aed5c4b4e1dd02abab0530f14cc95f5d4070fe51fb139e7f5cccefa00c6",
     "spec/v1/core-standard-manifest.json": "1359a69ad091b8bd3fb8fb7b641b32496d0d7a70d40cb0d1b93c6f171566276e",
-    "spec/v1/deprecations.json": "2d03f4729810280147ea08c630ea65434f2dc5370567d0aac41c3595f8337d40",
+    "spec/v1/deprecations.json": "46df807fb4adf0aae24671c20f69975cf3496e3bc3a521cb7e6ea556bdce563c",
     "spec/v1/deprecations.schema.json": "3e393c405d2a41b467d8c5e3c468549078df1ce6a6d2588fc488097b95d9b55b",
     "spec/v1/event-codemap.json": "3da60d884157793a360da532a9fcbbfb5285636db325a74cec94b34622186d97",
     "spec/v1/event-codemap.schema.json": "d05933b2e88103aff51a2f774df97b9bda065e0fc88dbd9b114cc47a32189174",
     "spec/v1/extensions.json": "79a60754aa16cbdbdb604f8e5c00038af535a1690a4d07bd5ff7c38f0256a7bc",
     "spec/v1/gaps.json": "456f3453ce453f0149f3d95c1ac26e669ae7d2bf2541a26320860105c4d55566",
     "spec/v1/gaps.schema.json": "8fd83259f556553c9df0f53e7a82ca8c2a4771d471197f69b4e2ae0ceeacfd66",
-    "spec/v1/migrations.json": "8839497d6a4830b53fa7867014a8336f0d725ef2346352e54fb580b7947897af",
+    "spec/v1/migrations.json": "2efcd9064b2bc65a84a3b3d281aa86a91efd002690c1f4f14e8335c4a18194d1",
     "spec/v1/migrations.schema.json": "886779aa6c22e646db097f5df210adb018a4dd14a7b815465a18c8a7056c8f72",
     "spec/v1/operation-path-manifest.json": "fada0342815fb129c1ae61f1829bd6e34417717408ce86fcc54280f373c19e74",
     "spec/v1/spec-gaps.json": "ea9612af55bea9dae3e82223d4f714243f8f590b0193f1188257b13491a38afc",
@@ -301,5 +301,5 @@
     "spec/v2/retention-floors.json": "eaf3722d95c79947af1d4269ef85117e126518c588cfcf1a2b21b97269f51624",
     "spec/v2/surface-baseline.json": "549832c2de97b7c7aed07934c1c73c2709ac226dc0cb71fc8c141010bc4928f1"
   },
-  "corpusCommit": "583cbc5eff20cbfb95e885343e53b37f601ba815"
+  "corpusCommit": "2ef5c3fb106dea2b0355c20876f642ab6c1e061c"
 }
