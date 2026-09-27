@@ -1,6 +1,6 @@
 # `@openwop/openwop-conformance` Changelog
 
-## [2.42.8] — unreleased
+## [2.42.8] — 2026-09-27 — RFC 0221, a closed audit schema again, and a dispatch race fixed
 
 - **RFC 0221: a webhook secret the host generates is returned once.** New `v2-webhook-generated-secret.test.ts` (target major 2, gated on the `webhooks` family and `conformance-noop`). It registers without a secret, and the `201` must carry the generated `secret`. A real `run.completed` delivery must then verify under it (`OpenWOP-Signature`, scheme `v1`), and a supplied secret must not be echoed. Witnessed on the v2 reference host with openwop-examples #98; its previous code, which withheld the secret, fails the row.
 - **The 2.42.8 cycle opens.** RFC 0189 (#1675) changed the packed `@openwop/spec-artifacts` tree (`spec/v2/core/i18n.md`, `spec/v2/core/portability.md`, `declaration.json`) after `v2.42.7` was tagged. The published-identity gate correctly refused to call that tree 2.42.7.
