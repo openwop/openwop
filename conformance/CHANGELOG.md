@@ -1,6 +1,6 @@
 # `@openwop/openwop-conformance` Changelog
 
-## [2.42.6] — unreleased — the era-2 writer rule is witnessable again
+## [2.42.6] — 2026-09-27 — the era-2 writer rule is witnessable again
 
 - **`0176.era-2-append-vocabulary` is a real witness again on a host that serves the new seam.** New OPTIONAL seams-profile seam `appendEra2Event` (`POST /conformance/seams/sample/event-log/append`, `api/seams-v2.yaml`; `host-sample-test-seams.md` §27) appends ONE v2-named event to a seeded era-2 run through the host's PRODUCTION writer; the leg appends `agent.reasoning-delta` (a codemap-renamed type, stored v1 `agent.reasoning.delta`) and requires the translated read to return the v2 name. Sabotaged: a host whose writer stores v2 names fails the read `500 event_type_unmapped` → `executed-fail`. Dispositions: seam served → a real assertion (the 2.42.5 `partial-witness-ok` annotation is gone for that path); seam served but contract broken → `blocked`; seam NOT served → the 2.42.5 partial witness, never `blocked` (an optional seam newer than the leg must not take away a certification); seams profile not claimed → `inapplicable`.
 - **Suite `2.42.6`**. `@openwop/spec-artifacts` moves in lockstep at the same exact pin.

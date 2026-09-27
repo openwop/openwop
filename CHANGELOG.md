@@ -239,6 +239,15 @@ Format follows [Keep a Changelog](https://keepachangelog.com/en/1/) loosely. Ver
 - **The remaining eleven stay `Active`, each for a stated reason** rather than for lack of attention. The eight RFC 0167 program children name a certified openwop-app bundle in their own acceptance criteria and the committed one reads `certified: false` (3 blocked rows, RFC 0168 §E.1). RFC 0173 additionally carries the program's only `open` gap row. RFC 0179's sole criterion is unmet — 2.4.2 stopped the gate reading "(Phase 4 leg)" as an excuse for it. RFC 0187 names three requirement ids that no scenario mints. RFC 0167 itself flips **last**, which 2.4.2 made a rule: the moment the umbrella stops being `Active`, every child still `Active` becomes permanently ineligible.
 - **The interrupt `data` union is bound to `kind`** (MCP/A2A review P3-H7, Class 3 correction — COMPATIBILITY.md §3). `schemas/suspend-request.schema.json` and its v2 twin typed `data` as an unbound `oneOf`, so the minimal `conversation.start` and `conversation.close` payloads (`{ conversationId }`, which satisfies both shapes) failed validation in v1 and v2, and a payload carrying another kind's `data` passed. `data` is now an `anyOf` and a root `allOf` binds each kind to its own shape with one `if`/`then`; no per-kind shape or `$id` changed. Witnessed by `conformance/fixtures/interrupt-payloads/` (suite 2.36.0).
 
+## [2.42.6] — 2026-09-27 — RFC 0176 §A's writer rule is witnessable again
+
+A suite patch: no new scenario file, no canonical wire, schema or `MUST` change (`COMPATIBILITY.md` §2.1). One optional seams-profile seam is added. The corpus tag moves because `@openwop/openwop-conformance` and `@openwop/spec-artifacts` move together.
+
+### Conformance
+
+- **`appendEra2Event` seam, and `0176.era-2-append-vocabulary` is a real witness again (#1648).** The new optional seam (`POST /conformance/seams/sample/event-log/append`, `host-sample-test-seams.md` §27) appends one v2-named event to a seeded era-2 run through the host's production writer; the leg appends a codemap-renamed type and requires the translated read to return the v2 name. A host that stores v2 names in an era-2 log now fails (`event_type_unmapped`). A host without the seam keeps 2.42.5's partial witness and is never `blocked`. The v2 reference host serves it (openwop-examples#95).
+- **Suite `2.42.6`**: 561 scenario files. `@openwop/spec-artifacts` moves in lockstep at the same exact pin.
+
 ## [2.42.5] — 2026-09-27 — hotfix: a host can certify again
 
 A suite hotfix, with no wire, schema or `MUST` change. **Suites 2.42.3 and 2.42.4 could not certify any host.** The audit made `0176.era-2-append-vocabulary` record `blocked` everywhere, because no seam exists to witness its writer rule, and a `blocked` row is bundle-fatal. It now records a partial witness that names the unwitnessed rule, until the seam lands. Hosts should cut on 2.42.5, not on 2.42.3 or 2.42.4.
