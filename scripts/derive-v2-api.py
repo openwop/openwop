@@ -381,7 +381,7 @@ def v2_openapi_and_seams():
                                                                                                                                                                                 'no run data.'), 'responses': {'200': {'description': '`text/event-stream` of `hostEvents` messages.', 'content': {'text/event-stream': {'schema': {'type': 'string'}}}}, '401': {'$ref': '#/components/responses/Unauthenticated'}}}}
     doc['paths'] = paths
     comps = doc.setdefault('components', {})
-    comps.setdefault('parameters', {})['OpenWOPVersion'] = {'name': 'OpenWOP-Version', 'in': 'header', 'required': False, 'schema': {'type': 'string', 'pattern': '^(0|[1-9][0-9]*)\\.(0|[1-9][0-9]*)$'}, 'description': ("Selects one of the host's listed major.minor versions. Absent, the host uses its `preferredVersion`; an "
+    comps.setdefault('parameters', {})['OpenWOPVersion'] = {'name': 'OpenWOP-Version', 'in': 'header', 'required': False, 'schema': {'type': 'string', 'pattern': '^(0|[1-9][0-9]*)\\.(0|[1-9][0-9]*)$'}, 'description': ("Selects one of the host's listed major.minor versions. Absent, `/.well-known/openwop` uses `preferredVersion` and every other unversioned path is v2; an "
                                                                                                                                                                                                                           'unlisted value is 406 protocol_version_unsupported.')}
     # RFC 0219: the client announces the protocol version it implements (versioning.md §1.5).
     comps['parameters']['OpenWOPClientVersion'] = {'name': 'OpenWOP-Client-Version', 'in': 'header', 'required': False, 'schema': {'type': 'string'},
