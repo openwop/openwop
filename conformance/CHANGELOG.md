@@ -1,5 +1,10 @@
 # `@openwop/openwop-conformance` Changelog
 
+## [2.42.5] — 2026-09-27 — hotfix: a host can certify again
+
+- **`0176.era-2-append-vocabulary` no longer blocks every host.** 2.42.3's unfailable-leg audit made this leg `blockedDespiteAssertions` whenever a host's appended types are spelled the same in v1 and v2. No catalogued seam lets any host make a seeded era-2 run append a type the codemap renames, so the row recorded `blocked` on every host, and one `blocked` row denies the whole bundle (RFC 0168 §E.1). **No host could certify on 2.42.3 or 2.42.4.** The leg now records a partial witness whose detail says the codemap-renaming writer rule is unwitnessed. The append, the read-back and the sequence rules are observed, and the acceptance predicate still refuses a partial-witness row. It is annotated `partial-witness-ok` for the softskip gate. openwop-1f is adding the seam that makes the rule witnessable. Verified on the v2 reference host: the row now records `executed-pass` with that detail.
+- **Suite `2.42.5`**. `@openwop/spec-artifacts` moves in lockstep at the same exact pin.
+
 ## [2.42.4] — 2026-09-27 — unfailable-leg audit wave 2, an on-the-wire Idempotency-Key witness, and a gate so the class stops growing
 
 - **Wave 2 of the unfailable-leg audit.** `scripts/audit-unfailable-legs.mjs --all` widened the scan from Accepted-RFC ids to every leg, and added a sixth shape: *asserts, then soft-skips*. At major 2 an `inapplicable` or `skipped` note after an assertion records `executed-pass` with a `partial-witness:` detail; at major 1 a `blocked` note does too. Certification counts both.
