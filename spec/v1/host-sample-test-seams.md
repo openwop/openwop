@@ -1071,3 +1071,41 @@ path is unchanged.
 Consumed by `v2-idempotency-in-flight` leg `0213.in-flight-refused-under-hold`. A host that
 advertises the seams profile but does not serve the path records that leg `blocked`; a host
 that does not advertise the profile records it `inapplicable`.
+
+### 27. Era-2 append — `POST /conformance/seams/sample/event-log/append` (RFC 0176 §A)
+
+| Field                     | Value                                                                                |
+| ------------------------- | ------------------------------------------------------------------------------------ |
+| Method + path             | `POST /conformance/seams/sample/event-log/append` (v2 only; `api/seams-v2.yaml` `appendEra2Event`) |
+| Capability gate           | none — the writer rule is unconditional (`spec/v2/core/persistence.md` §The writer rule) |
+| Profile gate              | `conformance.seamsProfile: "openwop-conformance-seams-v2"`                            |
+| Introduced                | RFC 0176 §A writer-rule witness. No canonical mutation is pinned to append a type the codemap renames (cancel, pause and resume append names spelled identically in v1 and v2; `run.resuming` carries no MUST), so without this seam the writer rule is unobservable on every host. |
+
+OPTIONAL. Request `{ runId, type, payload }` — `type` a **v2** event type name (the closed
+`schemas/v2/run-event.schema.json` `type` enum), `payload` its v2 payload — answers
+`202 { runId, sequence }`. It appends that one event to a run created by `seedEra2EventLog`
+(§ the event-log seed seam) **through the host's production writer**.
+
+The seam **MUST** route the append through the same writer the host's own code uses for that
+run — the storage boundary that applies the writer rule — and **MUST NOT** branch on being a
+seam call: in an era-`2` run the stored row carries the event's **v1** spelling (the codemap's
+v1 side), and the production read (`GET /runs/{runId}/events/poll` under major 2) translates it
+back to the v2 name given here. It **MUST** refuse a `runId` the seed seam did not create with
+`404`, exactly as for an unknown run, so it can never inject an event into a real run; a
+terminal run answers `409 run_terminal`; a `type` outside the v2 registry answers `400`.
+
+**Ceiling (advertise-and-attest).** A host that hard-codes the v1 spelling inside this seam
+alone, while its production writer stores v2 names, would pass: the black-box suite observes
+the seam's append and the production read, not which code path wrote the row. The seam's
+contract is that it IS the production writer; the witness is real for the storage boundary it
+exercises and for the reader's translation of what was stored.
+
+Consumed by `v2-era-2-append-vocabulary` (`openwop.requirement.0176.era-2-append-vocabulary`).
+A host that serves the seam gets a real witness: `executed-pass` when the appended event reads
+back under its v2 name, `executed-fail` when the era-2 read refuses it or leaks the v1 spelling.
+A host that serves it but breaks its contract (anything but `202 { runId, sequence }`) records
+`blocked`. A host that does **not** serve it — the seam is OPTIONAL and newer than the leg —
+records the pre-seam partial witness (the writer rule unobserved, the acceptance predicate
+refusing the row), **never** `blocked`: adding an optional seam MUST NOT take away a
+certification a host held before it existed. A host that does not advertise the seams profile
+records `inapplicable`.

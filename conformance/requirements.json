@@ -29109,10 +29109,15 @@
     {
       "id": "openwop.it.v2-era-2-append-vocabulary.a-host-append-to-an-open-era-2-run-keeps-the-log-in-v1-vocabulary-so-the-whole-l",
       "file": "v2-era-2-append-vocabulary.test.ts",
-      "line": 48,
+      "line": 50,
       "title": "a host append to an open era-2 run keeps the log in v1 vocabulary, so the whole log still reads",
       "explicitId": "openwop.requirement.0176.era-2-append-vocabulary",
       "citations": [
+        {
+          "section": "spec/v2/core/persistence.md §The writer rule",
+          "requirement": null,
+          "interpolated": true
+        },
         {
           "section": "spec/v2/core/persistence.md §The writer rule",
           "requirement": null,
@@ -29138,7 +29143,7 @@
     {
       "id": "openwop.it.v2-era-2-append-vocabulary.the-run-keeps-the-era-it-was-created-with-an-append-does-not-promote-it-to-era-3",
       "file": "v2-era-2-append-vocabulary.test.ts",
-      "line": 174,
+      "line": 188,
       "title": "the run keeps the era it was created with; an append does not promote it to era 3",
       "explicitId": "openwop.requirement.0176.era-2-append-vocabulary",
       "citations": [
