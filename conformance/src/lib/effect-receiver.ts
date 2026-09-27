@@ -50,6 +50,20 @@ export interface EffectArrival {
   readonly at: number;
   /** False when the path carried some other exercise's nonce (or none). */
   readonly mine: boolean;
+  /** The `Idempotency-Key` header the host presented on this attempt, if any. */
+  readonly idempotencyKey?: string;
+  /** True when this receiver cut the connection instead of answering (a forced transport failure). */
+  readonly reset: boolean;
+}
+
+export interface EffectReceiverOptions {
+  /**
+   * Destroy the connection, without answering, on the first `failFirst` arrivals
+   * that carry this exercise's nonce. The host sees a genuine transport failure,
+   * not an HTTP status, so a host that retries only at the transport layer (as
+   * RFC 0173 §D.2 G4's seam describes) retries. Default 0.
+   */
+  readonly failFirst?: number;
 }
 
 export interface EffectReceiver {
@@ -98,7 +112,8 @@ export async function waitForFirstArrival(rx: EffectReceiver, budgetMs: number):
  * distinct per exercise whether the port is pinned, ephemeral, or replaced by
  * an operator's public front.
  */
-export async function startEffectReceiver(): Promise<EffectReceiver> {
+export async function startEffectReceiver(opts: EffectReceiverOptions = {}): Promise<EffectReceiver> {
+  const failFirst = Math.max(0, Math.floor(opts.failFirst ?? 0));
   const nonce = randomBytes(9).toString('hex');
   const path = `/effect/${nonce}`;
   const seen: EffectArrival[] = [];
@@ -108,7 +123,13 @@ export async function startEffectReceiver(): Promise<EffectReceiver> {
       const requestPath = request.url ?? '';
       // Matched by CONTAINMENT, not equality: a TLS-terminating front may add
       // or strip a prefix, and the nonce is what identifies the exercise.
-      seen.push({ path: requestPath, method: request.method ?? '', at: Date.now(), mine: requestPath.includes(nonce) });
+      const mine = requestPath.includes(nonce);
+      const key = request.headers['idempotency-key'];
+      const reset = mine && seen.filter((a) => a.mine).length < failFirst;
+      seen.push({ path: requestPath, method: request.method ?? '', at: Date.now(), mine, reset, ...(typeof key === 'string' ? { idempotencyKey: key } : {}) });
+      // The key is recorded BEFORE the cut, so a failed attempt still counts as
+      // an attempt the provider saw.
+      if (reset) { request.socket.destroy(); return; }
       res.writeHead(204);
       res.end();
     });
