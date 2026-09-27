@@ -5,18 +5,25 @@
 > and 0199 was the last (#1650). Its phase record was deleted as it asked. It is in git history
 > at `7f97b724:TODO.md`, and the 2026-09-19 gap-closure follow-ups (S1–S4) are there too.
 >
+> Updated 2026-09-27: §3 and §4 worked (details below), `INTEROP-MATRIX.md` rewritten, and the
+> quickstarts moved to v2.
+>
 > Tick a box only when the change is merged on `main`. Delete an item once it is closed.
 
-## State at spin-down
+## State (2026-09-27)
 
-- **RFCs:** every RFC is `Accepted` except **0121** (`Active`) and **0038** (`Draft`, Parked).
-  Every Accepted RFC whose window was waived is **provisional**: its RFC 0156 §B review is owed,
-  and `docs/SECTION-B-REVIEW-PACKET.md` lists them.
-- **Suite:** `@openwop/openwop-conformance` and `@openwop/spec-artifacts` **2.42.6** are published,
-  with GitHub release `v2.42.6`. No cycle is open.
-- **Hosts:** openwop-app certified RFC 0199 on published 2.42.2
-  (`evidence/v2-host-bundles/openwop-workflow-engine-side-rev-rfc0199-2.42.2.json`). It was asked
-  to pin 2.42.6, which adds the `appendEra2Event` seam.
+- **RFCs:** every RFC is `Accepted` except **0121** and **0218** (`Active`) and **0038** (`Draft`,
+  Parked). Every Accepted RFC whose window was waived is **provisional**: its RFC 0156 §B review
+  is owed, and `docs/SECTION-B-REVIEW-PACKET.md` lists them.
+- **Suite:** 2.42.6 is published. The **2.42.7 cycle is open and unreleased** (#1652). It holds:
+  - the SSE cursor floor promotion;
+  - the surface-monotone gate fix;
+  - RFC 0218's vectors and signature leg;
+  - the softskip ratchet: #1655–#1660, baseline 172 → 1, the gate parser fixed in #1657;
+  - whatever audit-budget lands.
+
+  Cut it with the release recipe once audit-budget's PRs are in.
+- **Site:** openwop.dev is pinned at `bad18fceb915` (openwop-site #125) and deployed.
 
 ## 1 — RFC 0121 subscription-rail witness · **owner openwop-77 (paused)**
 
@@ -41,33 +48,52 @@ works through the CLI. Buying a plan is not covered by any autonomy grant, so as
 
 ## 3 — Audit follow-ups (unfailable-leg audit, waves 1–2)
 
-- [ ] **Ratchet debt:** `conformance/softskip-after-assert.baseline.json` holds **172** sites that
-      assert and then `softSkip()`, so each records `executed-pass` with a `partial-witness:`
-      detail. `scripts/check-softskip-after-assert.mjs` stops the count growing. Work it down:
-      each site becomes `blocked` **only if a conforming host could have made the requirement
-      observable**. Otherwise it becomes inapplicable before the first assertion, or an annotated
-      `// partial-witness-ok:`. The wave-2 over-corrections (dead-letter, backpressure) show what
-      the wrong call looks like. Lower the baseline with `--write` as sites close.
-- [ ] **Per-attempt budget seam:** an effect-budget leg cannot tell per-attempt spend from per-run
-      spend without a seam. The envelope fixture's `maxTokens` also needs a value the leg can
-      assert against.
-- [ ] **Audit checkpoint signature preimage contradiction:** `spec/v1/auth-profiles.md` §3 signs a
-      `merkleRoot`, but the checkpoint schema signs canonical JSON of the checkpoint. Pick one,
-      treating it as a corpus erratum or an RFC, and fix the scenario to match.
-- [ ] **Postgres reference host** emits audit fields beyond the closed schema. The audit-log leg
-      relaxes the schema in-test to tolerate them, and says so. Either the host drops them or
-      the schema names them.
-- [ ] Audit-entry export shape → a future `auditLogIntegrity` RFC.
+- [x] Ratchet debt: 172 → 1 (#1655, #1656, #1658–#1660). The old gate miscounted in both
+      directions; #1657 blanks comments and strings before scanning. The one site left is
+      `audit-log-integrity`, owned by the audit-budget work below. Checked on openwop-app at
+      major 1 before release: #1659 reverted the one row that had wrongly gone `blocked`.
+- [x] Audit checkpoint preimage contradiction and export shape: **RFC 0218 `Active`** (#1653).
+  - [ ] RFC 0218 `Accepted` needs a committed host bundle carrying
+        `openwop.requirement.0218.checkpoint-signature-over-root`. It was witnessed live on the
+        SQLite reference host, and a host that signs the object instead of the root fails it.
+- [ ] **Postgres extra audit fields** (openwop-examples #96) and **per-attempt budget seam**:
+      in progress with the `audit-budget` agent on branch `fix/audit-extra-fields-budget-seam`.
+- [ ] **Rotation overlap seam.** `v2-webhook-secret-rotation`'s post-overlap leg cannot observe
+      the old secret stopping when the advertised `overlapSeconds` exceeds the suite's wait cap.
+      It is annotated, not `blocked`, by ruling. A seam that shortens the overlap under test would
+      make it witnessable.
 
 ## 4 — Smaller residuals
 
-- [ ] Promote `v2-sse-last-event-id-cursor` onto the core-standard floor after measuring all
-      three bundle hosts.
-- [ ] Watch A2A PR #2068 (SubscribeToTask POST→GET prose). If it merges, revisit the interop-map
-      D1 exception.
-- [ ] Generator residue (S1): `projectV1FacetSchema` keeps `multiAgent.executionModel`'s
-      `tier`-gated `if/then` while stripping its properties. v2 therefore carries a no-op
-      `if: {properties: {}}, then: {}`. It is harmless, but tidy it.
+- [x] `v2-sse-last-event-id-cursor` is on the core-standard floor (#1652).
+- [x] The generator no-op `if/then` is gone (#1652). Found along the way:
+      `check-v2-surface-monotone` was blind to a tightened object carrying an `if`, which covered
+      every capability family. Fixed and sabotage-proved, and the baseline gained 540 tuples.
+- [ ] Watch A2A PR #2068 (SubscribeToTask POST→GET prose), still open on 2026-09-27. If it
+      merges, revisit the interop-map D1 exception.
+
+## 5 — Found while rewriting the quickstarts for v2 (#1654)
+
+Spec problems:
+- [ ] **When is a request v2?** `versioning.md` §1.2 says an unversioned path is the v2 surface.
+      §1.3 says a header-less request gets `preferredVersion`'s major, which is 1.x through the
+      overlap. The v2 reference host follows §1.2 for `/runs` and §1.3 only for `/.well-known`.
+- [ ] **A webhook secret can be lost.** `registerWebhook` makes `secret` optional, and v2 never
+      echoes one (`webhooks.md` §Surfaces, `api/v2/openapi.yaml`). A client that omits it can
+      never verify a delivery; v1 returned a host-generated secret once.
+- [ ] `runs.md` §Surface and the OpenAPI `ApiKeyAuth` description cite an `auth.md` that does
+      not exist in v2. The scope vocabulary exists only in the OpenAPI security schemes.
+- [ ] `capabilities.md` §3.1 says "Metadata keys (17)" and omits `signingKeys`. The declaration
+      has 18.
+- [ ] v2 has no counterpart to `spec/v1/registry-operations.md` (yank, rotation, submission).
+
+Defects outside the spec:
+- [ ] v2-reference sends `workspaceId: "default"` in webhook deliveries when the run has no
+      workspace, which `webhooks.md` §Delivery forbids.
+- [ ] openwop-registry: `scripts/new-pack.mjs` fails ("template dir missing"), the README says
+      only CI can build the v2 tree, and `npm run check` covers only the v1 tree.
+- [ ] openwop-examples: the `vendor-template` and `rust-hello` packs are v1-shaped, and
+      `tiny-workflow` and `streaming-client` are v1-only.
 
 ## Pattern checks (no code owed; read new scenarios against these)
 
@@ -82,6 +108,12 @@ works through the CLI. Buying a plan is not covered by any autonomy grant, so as
 
 ## Operating notes
 
+- **Before a release that changes dispositions,** diff the changed files on openwop-app at major 1,
+  base against head. Use its in-process harness: a fresh openwop-app worktree, `npm install` in
+  `backend/typescript`, swap `node_modules/@openwop/openwop-conformance` for the working
+  `conformance/`, then run `node node_modules/tsx/dist/cli.mjs conformance/run.ts --certify <dir>`
+  with `OPENWOP_CONFORMANCE_ROOT` set. The v2 reference host alone missed a conversion to
+  `blocked` that openwop-app caught (#1659).
 - **v2-reference cuts:** the template is `/tmp/claude-501/cut2401.sh`, signed with key
   `v2-reference-4`. Boot from a fresh openwop-examples worktree after `npm install`, because the
   shared checkout has no deps. Pinned fake ports need `--max-workers 1`. Run
