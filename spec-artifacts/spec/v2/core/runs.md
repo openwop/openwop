@@ -16,7 +16,7 @@ Every id `$ref`s `schemas/v2/ids.schema.json` ([identity.md](identity.md)). A `r
 
 ## Surface
 
-Every operation accepts `OpenWOP-Version` ([overview.md](overview.md)) and every response carries it. Every mutating operation accepts `Idempotency-Key` ([idempotency.md](idempotency.md)). Scopes are the `auth.md` vocabulary.
+Every operation accepts `OpenWOP-Version` ([overview.md](overview.md)) and every response carries it. Every mutating operation accepts `Idempotency-Key` ([idempotency.md](idempotency.md)). Scopes are the vocabulary listed in `api/v2/openapi.yaml`'s security schemes, matched as [identity.md](identity.md) §2.1 describes.
 
 | Operation | Method and path | Scope | Gate |
 | --- | --- | --- | --- |
