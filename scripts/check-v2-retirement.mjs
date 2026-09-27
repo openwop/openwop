@@ -326,8 +326,12 @@ for (const c of corrections.rows ?? []) {
   if (census.manifests === null || census.manifests === undefined) problems.push('priorShapeCensus.manifests is null — no census was run, and a missing census is a failure, not a zero');
   else if (census.manifests !== 0) problems.push(`priorShapeCensus.manifests is ${census.manifests}, not 0`);
   if (census.manifestsScanned !== null && census.manifestsScanned !== undefined && census.manifestsScanned === 0 && census.manifests === 0) problems.push('priorShapeCensus scanned 0 manifests — 0 of 0 witnesses nothing');
+  // A §3 correction's prose entry lives in COMPATIBILITY.md or, since 2026-09-27, in the
+  // corrections log that §3 points to.
   const compatPath = join(ROOT, 'COMPATIBILITY.md');
-  if (existsSync(compatPath) && c.compatibilityEntry && !readFileSync(compatPath, 'utf8').includes(c.compatibilityEntry)) {
+  const logPath = join(ROOT, 'docs', 'COMPATIBILITY-CORRECTIONS-LOG.md');
+  const compatText = [compatPath, logPath].filter((f) => existsSync(f)).map((f) => readFileSync(f, 'utf8')).join('\n');
+  if (existsSync(compatPath) && c.compatibilityEntry && !compatText.includes(c.compatibilityEntry)) {
     problems.push(`COMPATIBILITY.md no longer contains ${JSON.stringify(c.compatibilityEntry)} — the correction's prose entry has drifted away from its register row`);
   }
   if (problems.length > 0) failures.push(`${c.id}: ${problems.join(' | ')}`);

@@ -1,10 +1,10 @@
 # OpenWOP Governance
 
-> **Status:** Initial maintainer-driven model (swept 2026-08-16 under RFC 0147 criterion 11: security-response policy reconciled to `SECURITY.md` §3; SDK locations corrected; evidence-tier rule extended to bundle v2). This will evolve toward a working group / steering committee as the contributor base grows. RFC 0147 §I lists the standards-readiness gates that depend on this document — two unaffiliated maintainers, working-group activation, retirement of the bootstrap RFC-waiver mechanism, and retrospective cross-organization review of waived cohorts — none of which has fired as of 2026-08-16.
+> **Status:** Initial maintainer-driven model. It will evolve toward a working group / steering committee as the contributor base grows. RFC 0147 §I lists the standards-readiness gates that depend on this document: two unaffiliated maintainers, working-group activation, retirement of the bootstrap RFC-waiver mechanism, and retrospective cross-organization review of waived cohorts. None has fired.
 
 ## Repository
 
-The canonical openwop repository is `github.com/openwop/openwop`. The host name reflects the project's incubation under its original steward; a move to a vendor-neutral org (e.g., `openwop-spec`) is on the roadmap and will be announced via a CHANGELOG entry and a redirect on the original URL. See `MAINTAINERS.md` for the affiliation column that drives the migration tripwire in `ROADMAP.md`.
+The canonical openwop repository is `github.com/openwop/openwop`, named for the project's incubation under its original steward. A move to a vendor-neutral org (e.g., `openwop-spec`) is on the roadmap and will be announced via a CHANGELOG entry and a redirect on the original URL. The affiliation column in `MAINTAINERS.md` drives the migration tripwire in `ROADMAP.md`.
 
 ## Mission
 
@@ -34,19 +34,25 @@ The default decision rule is **lazy consensus**: a proposal is adopted if no mai
 
 For decisions that require explicit signoff (see "Spec change process"), the rule is **two maintainer approvals** with no outstanding objections.
 
-Tiebreaker for unresolved disagreement: the lead maintainer (the first entry in the maintainer list) holds final authority. This is a transitional rule and is expected to be replaced by a steering committee vote once the maintainer set has at least three independent organizations represented. **The replacement working-group charter is filed as [`RFCS/0038-working-group-charter.md`](./RFCS/0038-working-group-charter.md) at `Status: Draft`** — it ratifies and replaces this section the moment the tripwire defined at §"Path to working group" below fires.
+Tiebreaker for unresolved disagreement: the lead maintainer (the first entry in the maintainer list) holds final authority. This is a transitional rule, to be replaced by a steering committee vote once the maintainer set has at least three independent organizations represented.
+
+The replacement working-group charter is [`RFCS/0038-working-group-charter.md`](./RFCS/0038-working-group-charter.md), at `Status: Draft`. It ratifies and replaces this section the moment the tripwire in §"Path to working group" below fires.
 
 ## Spec change process
 
 Changes are categorized by impact on the wire contract per `COMPATIBILITY.md`:
 
-| Category                                     | Examples                                                                               | Process                                                                                                                                                                                                                            |
-| -------------------------------------------- | -------------------------------------------------------------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| **Editorial**                                | Typo fixes, prose clarifications that don't change normative meaning, link fixes       | One maintainer approval. Merge directly.                                                                                                                                                                                           |
-| **Non-normative addition**                   | New examples, new non-normative reference impl notes, new optional capability profiles | One maintainer approval. Merge directly. CHANGELOG entry required.                                                                                                                                                                 |
-| **Normative addition (backward-compatible)** | New optional fields, new SHOULD recommendations, new event types in additive position  | RFC required (see `RFCS/`) + two maintainer approvals + 7-day comment window. CHANGELOG entry. Conformance suite update if applicable.                                                                                             |
-| **Safety-fix break**                         | A correctness or security fix that cannot be expressed additively                      | RFC required + 90-day public comment window unless under embargoed coordinated disclosure (`SECURITY.md`). Ships with migration tooling. Per `COMPATIBILITY.md` §3 — the only exception to v1.x's additive-only rule.              |
-| **Breaking change**                          | Any other change that invalidates an existing v1 conformance pass                      | New major version — or, for v2, a `COMPATIBILITY.md` §3a retirement of an unevidenced surface (RFC 0197). Requires public RFC, 30-day comment window, two maintainer approvals from different organizations once that's possible. The v1 contract is **locked**; breaking changes ship as v2.0+ in parallel, not as v1.X. |
+| Category | Examples | Process |
+| --- | --- | --- |
+| **Editorial** | Typo fixes, prose clarifications that don't change normative meaning, link fixes | One maintainer approval. Merge directly. |
+| **Non-normative addition** | New examples, new non-normative reference impl notes, new optional capability profiles | One maintainer approval. Merge directly. CHANGELOG entry required. |
+| **Normative addition (backward-compatible)** | New optional fields, new SHOULD recommendations, new event types in additive position | RFC + two maintainer approvals + 7-day comment window |
+| **Safety-fix break** | A correctness or security fix that cannot be expressed additively | RFC + 90-day public comment window, per `COMPATIBILITY.md` §3 |
+| **Breaking change** | Any other change that invalidates an existing conformance pass | New major version, or for v2 a `COMPATIBILITY.md` §3a retirement |
+
+- **Normative addition.** RFC required (see `RFCS/`). Also a CHANGELOG entry, and a conformance suite update if applicable.
+- **Safety-fix break.** The 90-day window does not apply under embargoed coordinated disclosure (`SECURITY.md`). The change ships with migration tooling. It is the only exception to v1.x's additive-only rule.
+- **Breaking change.** A §3a retirement applies only to an unevidenced v2 surface (RFC 0197). Every breaking change requires a public RFC, a 30-day comment window, and two maintainer approvals from different organizations once that's possible. The v1 contract is **locked**; breaking changes ship as v2.0+ in parallel, not as v1.X.
 
 The formal RFC mechanism is defined in `RFCS/0001-rfc-process.md`. RFCs live at `RFCS/NNNN-short-title.md`; the authoring template is at `RFCS/0000-template.md`.
 
@@ -54,7 +60,7 @@ Every spec change must:
 
 1. Pass the CI gates documented in `CONTRIBUTING.md` (schema validation, OpenAPI/AsyncAPI lint, link check).
 2. Update the CHANGELOG.
-3. Update `@openwop/openwop-conformance` if the change introduces new testable behavior. Conformance scenarios for new optional surfaces ship as minor releases of the suite (`1.X.0`) against the unchanged v1 protocol.
+3. Update `@openwop/openwop-conformance` if the change introduces new testable behavior. Conformance scenarios for new optional surfaces ship as minor releases of the suite against the unchanged protocol major.
 4. For normative-addition, safety-fix, and breaking changes: file an RFC per `RFCS/0001-rfc-process.md` before opening the spec PR.
 
 ### Acceptance evidence tiers
@@ -62,55 +68,57 @@ Every spec change must:
 An RFC's `Active → Accepted` flip is backed by implementation evidence from a host. That evidence comes in three tiers, in increasing order of independence:
 
 1. **Tier 1 — steward-verified.** The steward's own host (a reference host in `openwop-examples`, or the steward-operated demo app) implements and passes the gated scenarios.
-2. **Tier 2 — steward-affiliated sibling host.** A separate deployment operated by the same maintainer organization — a genuinely distinct codebase and production environment, but not independent change control. Today this is **MyndHyve** (`api.myndhyve.ai`), the sibling host whose advertisements drove the RFC 0078–0092 graduations.
+2. **Tier 2 — steward-affiliated sibling host.** A separate deployment operated by the same maintainer organization — a genuinely distinct codebase and production environment, but not independent change control. Today this is **MyndHyve** (`api.myndhyve.ai`).
 3. **Tier 3 — independent-organization host.** A host built and operated by an organization with no affiliation to the steward.
 
-A fourth label exists for RFCs whose every normative requirement is a property of the corpus or the suite rather than of a host (the RFC 0167 machinery children — RFC 0169's declaration file, RFC 0174's governance predicates, RFC 0178's registers): **corpus gate — no host tier.** Such an RFC's falsifiability rows are `witnessable — unaided (corpus)` and its evidence is `evidence/corpus-ledger.json`, the per-requirement ledger `scripts/check-spec-coherence.mjs` emits (RFC 0168 §D.1; v2 charter Phase 3 plan §11). The label MUST appear in the `Updated` field in place of a tier; `scripts/check-accepted-predicate.mjs` accepts `(corpus)` rows only from that ledger. It is not a host tier and MUST NOT be cited for any requirement a host can witness.
+A fourth label, **corpus gate — no host tier**, exists for RFCs whose every normative requirement is a property of the corpus or the suite rather than of a host (for example RFC 0169's declaration file, RFC 0174's governance predicates, RFC 0178's registers).
 
-**Deployed, not merged.** Every tier above says "host", and a host is a thing
-that serves traffic. Evidence for a criterion phrased as a live-surface claim —
-*advertises*, *emits*, *refuses* — is a bundle from the DEPLOYED revision, never
-a merged pull request. A merge is a promise; only a deployment is a witness.
+- Such an RFC's falsifiability rows are `witnessable — unaided (corpus)`. Its evidence is `evidence/corpus-ledger.json`, the per-requirement ledger `scripts/check-spec-coherence.mjs` emits (RFC 0168 §D.1).
+- The label MUST appear in the `Updated` field in place of a tier; `scripts/check-accepted-predicate.mjs` accepts `(corpus)` rows only from that ledger.
+- It is not a host tier and MUST NOT be cited for any requirement a host can witness.
 
-This is not a hypothetical distinction. RFC 0165 was flipped `Accepted` on two
-merged host PRs on 2026-09-03; on 2026-09-04, fetching the two hosts showed neither
-served the shapes. The tier-2 host was ten days behind its own main branch, and
-the tier-1 host had not shipped it either. A revert to `Active` was drafted but
-never landed: the acceptance was instead re-grounded on witnessed evidence from
-the deployed revisions (#1222). The gated scenarios record `inapplicable` rather
-than fail when a shape is absent, so a bundle built against such a host looks
-clean while witnessing nothing. The evidence machinery cannot catch this on its
-own, because absent evidence and excused evidence look the same to it. What
-catches it is fetching the host.
+**Deployed, not merged.** Every tier above says "host", and a host is a thing that serves traffic. Evidence for a criterion phrased as a live-surface claim — *advertises*, *emits*, *refuses* — is a bundle from the DEPLOYED revision, never a merged pull request. A merge is a promise; only a deployment is a witness.
 
-So: an acceptance citing host evidence names the DEPLOYED revision (an image
-digest, or a commit the deployment records), and the flip is checked against the
-live `/.well-known/openwop` at the moment of the flip.
+The evidence machinery cannot tell the difference on its own. Gated scenarios record `inapplicable` rather than fail when a shape is absent, so a bundle cut against a host that never deployed the change looks clean while witnessing nothing. RFC 0165's acceptance had to be re-grounded on deployed evidence for exactly this reason (#1222). What catches it is fetching the host.
+
+So an acceptance citing host evidence names the DEPLOYED revision (an image digest, or a commit the deployment records), and the flip is checked against the live `/.well-known/openwop` at the moment of the flip.
 
 Rules:
 
 - An `Active → Accepted` flip **MUST name the tier of its evidence** in the RFC's `Updated` field (and the CHANGELOG graduation entry SHOULD repeat it).
 - During the bootstrap phase, **tier-2 evidence is sufficient** to graduate an RFC — it proves the wire shape cross-implements outside the reference tree. But the corpus **MUST NOT describe tier-2 evidence as "non-steward" or "independent"**: a sibling host under the same maintainer org is neither. The honest label is "steward-affiliated sibling host."
 - **Re-verification by a tier-3 host remains a `ROADMAP.md` gate** (the "second independent host implementation" line): tier-2 graduations are not retroactively invalidated when a tier-3 host arrives, but the working-group tripwires and the INTEROP-MATRIX "first non-steward row" milestone fire only on tier-3 evidence.
-- **Evidence is a bundle, not a sentence (RFC 0148, 2026-08-16).** From suite `1.114.0` the certification bundle v2 records a disposition per requirement (`executed-pass` / `executed-fail` / `skipped` / `inapplicable` / `blocked`) with a witnessed assertion count, and `--certify` rejects a claim whose floor requirement returned unclassified. An `Active → Accepted` flip that cites host evidence SHOULD cite the host's bundle v2 (or the equivalent ledger output) rather than a pass count; a claim with no v2 bundle is a self-declaration under `INTEROP-MATRIX.md`'s evidence vocabulary. RFC 0147 §A additionally forbids citing an RFC's own `Accepted` status as evidence for anything.
+- **Evidence is a bundle, not a sentence (RFC 0148).** From suite `1.114.0` the certification bundle v2 records a disposition per requirement (`executed-pass` / `executed-fail` / `skipped` / `inapplicable` / `blocked`) with a witnessed assertion count, and `--certify` rejects a claim whose floor requirement returned unclassified.
+  - An `Active → Accepted` flip that cites host evidence SHOULD cite the host's bundle v2 (or the equivalent ledger output) rather than a pass count.
+  - A claim with no v2 bundle is a self-declaration under `INTEROP-MATRIX.md`'s evidence vocabulary.
+  - RFC 0147 §A forbids citing an RFC's own `Accepted` status as evidence for anything.
 
-- **A seam-gated requirement may be witnessed on a side revision when the seam is a PRECONDITION, not when it is in the path being asserted on.** Several v2 scenarios need a test seam to establish a state the assertion then examines — `fork-a-v1-run` plants an era-2 log so that there is something to fork. The code under test is the host's own fork implementation, running from the same image. A revision differing from production only by an env var that mounts a fixture-planting route therefore measures the same implementation production runs, and `host.build` carries the same commit, so the distinction stays visible rather than laundered. **The line is where the seam sits relative to the assertion:** seeding a log is scaffolding; a seam that answered the fork request itself would be the host measuring its own stub and MUST NOT be cited. A bundle citing a side revision MUST record it in `host.build` and MUST NOT describe it as the production revision.
-- **A harness trust anchor is a precondition in the same sense. It is witnessed on a colocated companion of the deployed image, never on the deployed instance.** A requirement whose observation needs the host to trust key material the suite holds (`spec/v2/harness-trust-anchors.json`) cannot be witnessed on a production instance without making that instance accept credentials a test runner can mint. A companion booted from the deployed image digest, trusting the suite's anchor and configured otherwise identically, runs the same verifier code production runs. It satisfies this section for the listed rows **only**, never for a row whose path runs through the served front. It MUST be cut with `--as-colocated-companion`, which puts `host.deployment: "colocated-companion"` inside the signed digest. A companion MUST NOT be reachable from the public internet, and MUST NOT be given production data stores or production credentials other than its own companion signing key, which production discovery publishes beside, never instead of, the production bundle key. `check-accepted-predicate.mjs` enforces the row restriction and the pairing with a certified served-host bundle of the same `image-digest` build, key and discovery (RFC 0216 §C). The network and data rule is the operator's obligation.
-- **"The seam is not mounted" and "the seam does not exist" are different facts and MUST NOT be recorded as the same one.** A host that has built a seam and declines to mount it in production can witness the requirement on another revision. A host that has never built the seam cannot witness it on any revision, and the gap is a **build task**, not a deployment choice. Recording the second as the first understates the work and makes a schedule out of an unwritten feature. Measured 2026-09-04: a tier-1 host's seams live entirely in its host-extension namespace and the canonical `/conformance/seams` surface was never built, so advertising the seams profile would have claimed routes that answer `404` — the advertise-versus-serve gap this corpus already forbids.
+- **A seam-gated requirement may be witnessed on a side revision when the seam is a PRECONDITION, not when it is in the path being asserted on.** Some v2 scenarios need a test seam to establish a state the assertion then examines: `fork-a-v1-run` plants an era-2 log so that there is something to fork, and the code under test is the host's own fork implementation from the same image.
+  - A revision differing from production only by an env var that mounts a fixture-planting route measures the same implementation production runs. `host.build` carries the same commit, so the distinction stays visible.
+  - **The line is where the seam sits relative to the assertion.** Seeding a log is scaffolding. A seam that answered the fork request itself would be the host measuring its own stub and MUST NOT be cited.
+  - A bundle citing a side revision MUST record it in `host.build` and MUST NOT describe it as the production revision.
+- **A harness trust anchor is a precondition in the same sense. It is witnessed on a colocated companion of the deployed image, never on the deployed instance.** A requirement whose observation needs the host to trust key material the suite holds (`spec/v2/harness-trust-anchors.json`) cannot be witnessed on a production instance without making that instance accept credentials a test runner can mint.
+  - A companion booted from the deployed image digest, trusting the suite's anchor and configured otherwise identically, runs the same verifier code production runs. It satisfies this section for the listed rows **only**, never for a row whose path runs through the served front.
+  - It MUST be cut with `--as-colocated-companion`, which puts `host.deployment: "colocated-companion"` inside the signed digest.
+  - A companion MUST NOT be reachable from the public internet, and MUST NOT be given production data stores or production credentials other than its own companion signing key. Production discovery publishes that key beside, never instead of, the production bundle key.
+  - `check-accepted-predicate.mjs` enforces the row restriction and the pairing with a certified served-host bundle of the same `image-digest` build, key and discovery (RFC 0216 §C). The network and data rule is the operator's obligation.
+- **"The seam is not mounted" and "the seam does not exist" are different facts and MUST NOT be recorded as the same one.** A host that has built a seam and declines to mount it in production can witness the requirement on another revision. A host that has never built the seam cannot witness it on any revision; the gap is a **build task**, not a deployment choice. Advertising the seams profile without the canonical `/conformance/seams` surface would claim routes that answer `404` — the advertise-versus-serve gap this corpus already forbids.
 
-> **Historical wording note.** Acceptance evidence recorded before 2026-06-11 (the RFC `Updated` fields and CHANGELOG entries for the RFC 0021–0092 graduations) frequently uses the phrase "non-steward host" for MyndHyve; that wording refers to **tier-2** evidence under this taxonomy and is not rewritten retroactively.
+> **Reading older records.** Acceptance evidence recorded before 2026-06-11 (the RFC 0021–0092 graduations) often calls MyndHyve a "non-steward host". That wording means **tier-2** evidence under this taxonomy and is not rewritten retroactively.
 
 ## Release process
 
-- **Spec corpus** ships as named tags (`v1.0.0`, `v1.1.0`, …). Major versions are reserved for breaking changes.
-- **SDKs** (`@openwop/openwop` (npm), `openwop-client` (PyPI), `github.com/openwop/openwop-sdks/go` (Go modules) — all in [`openwop/openwop-sdks`](https://github.com/openwop/openwop-sdks) since 2026-06) ship independently with semantic versioning. SDK majors track the spec major they target.
+- **Spec corpus** ships as named tags (`v2.0.0`, `v2.1.0`, …). Major versions are reserved for breaking changes.
+- **SDKs** (`@openwop/openwop` (npm), `openwop-client` (PyPI), `github.com/openwop/openwop-sdks/go` (Go modules), all in [`openwop/openwop-sdks`](https://github.com/openwop/openwop-sdks)) ship independently with semantic versioning. SDK majors track the spec major they target.
 - **Conformance suite** (`@openwop/openwop-conformance`) ships independently. Suite majors track the spec major; minors add scenarios for the same spec major.
 
 A release requires: passing CI on `main`, a CHANGELOG entry, and a maintainer cutting the tag. The release workflow at `.github/workflows/release.yml` automates package publication once the tag is pushed.
 
 ## Security
 
-Security disclosures follow the process documented in `SECURITY.md`, which is the **single** security-response commitment of the project: acknowledgment within 3 business days, triage within 10, remediation timeline within 20 business days of triage, 90-day coordinated disclosure (`SECURITY.md` §3). This section previously read that "firm SLAs are deferred until a maintainer rotation is in place" while `SECURITY.md` §3 already committed to firm targets — two policies, reconciled 2026-08-16 under RFC 0147 §I to the one `SECURITY.md` states. The maintainer set is currently a single person (`MAINTAINERS.md`); `SECURITY.md` §3's revised-timeline clause and §10's proactive-revision rule are how that reality is carried, not a second, softer policy. Embargoed coordinated disclosure is the default for vulnerabilities that affect deployed implementations.
+Security disclosures follow the process documented in `SECURITY.md`, which is the **single** security-response commitment of the project: acknowledgment within 3 business days, triage within 10, remediation timeline within 20 business days of triage, 90-day coordinated disclosure (`SECURITY.md` §3).
+
+The maintainer set is currently a single person (`MAINTAINERS.md`). `SECURITY.md` §3's revised-timeline clause and §10's proactive-revision rule carry that fact; they are not a second, softer policy. Embargoed coordinated disclosure is the default for vulnerabilities that affect deployed implementations.
 
 ## Trademark
 
@@ -126,16 +134,16 @@ This document anticipates a transition from maintainer-driven governance to a wo
 
 When those conditions are met, a working group charter will be filed as an RFC and ratified by lazy consensus among the current maintainers. The charter will define voting rules, term limits, and the succession model for the lead-maintainer role.
 
-Working-group activation also ratifies the registry and extension policy in [`RFCS/0043-registry-and-extension-policy.md`](./RFCS/0043-registry-and-extension-policy.md) (currently `Draft`, auditable today): the WG's first ballot is to ratify RFC 0043 §B/§C verbatim or amend, flipping it to `Accepted`. The policy index is [`docs/governance/registry-policy.md`](./docs/governance/registry-policy.md).
+Working-group activation also ratifies the registry and extension policy in [`RFCS/0043-registry-and-extension-policy.md`](./RFCS/0043-registry-and-extension-policy.md), currently `Draft`. The WG's first ballot is to ratify RFC 0043 §B/§C verbatim or amend, flipping it to `Accepted`. The policy index is [`docs/governance/registry-policy.md`](./docs/governance/registry-policy.md).
 
 ## Sole-steward operation
 
 Recorded 2026-09-02, to be retired when the "Path to working group" conditions above are met.
 
-The project currently has **one maintainer and one organization**. The only conforming hosts are the steward's own: the tier-1 reference host (`openwop-app`) and the steward-affiliated tier-2 host (MyndHyve `workflow-runtime`), per `INTEROP-MATRIX.md`. No independent-organization host, maintainer, or user exists to wait for. Under that fact the project operates as follows, and says so rather than performing a review it cannot have:
+The project currently has **one maintainer and one organization**. The only conforming hosts are the steward's own: tier-1 hosts (`openwop-app` and the v2 reference host) and the steward-affiliated tier-2 host (MyndHyve `workflow-runtime`), per `INTEROP-MATRIX.md`. No independent-organization host, maintainer, or user exists to wait for. So the project operates as follows, and says so rather than performing a review it cannot have:
 
-- **Comment windows may be waived and every waiver is recorded** in `MAINTAINERS.md` §"Bootstrap-phase RFC waivers", including the 30-day breaking-change window for the v2 major. The RFC 0001 §5 note that the cross-organization approval rule is not yet active is carried into each such RFC's header, together with any rule the RFC overrides (for example RFC 0147 §A.6).
-- **The two-approval requirement in §"Amendments" is waived and recorded while one maintainer exists** (RFC 0174 §B.3, 2026-09-03), with the same retirement condition as the window waiver; an RFC that amends the decision rule names the waiver in its header and `scripts/check-waiver-authority.mjs` fails one that does not.
+- **Comment windows may be waived and every waiver is recorded** in `MAINTAINERS.md` §"Bootstrap-phase RFC waivers", including the 30-day breaking-change window for the v2 major. Each such RFC's header carries the RFC 0001 §5 note that the cross-organization approval rule is not yet active, together with any rule the RFC overrides (for example RFC 0147 §A.6).
+- **The two-approval requirement in §"Amendments" is waived and recorded while one maintainer exists** (RFC 0174 §B.3), with the same retirement condition as the window waiver. An RFC that amends the decision rule names the waiver in its header, and `scripts/check-waiver-authority.mjs` fails one that does not.
 - **Evidence gates are never waived.** `Active → Accepted` remains a witnessed, non-vacuous conformance pass on a deployed host per §"Acceptance evidence tiers"; the tier is stated in the RFC. A status can be waived; a bundle cannot.
 - **Adopter-facing machinery is built even though no external adopter exists**: the deprecation register (`COMPATIBILITY.md` §7), migration guides, codemods with negative controls, and dual-major conformance scenarios. A future implementer inherits a protocol that migrated itself on the record.
 - **The v1 deprecation clock is the host inventory**, per `COMPATIBILITY.md` §5, with a calendar floor that activates only when an independent host is in the matrix.
@@ -148,6 +156,6 @@ This document is amended via the same process as a non-normative addition (one m
 
 - `MAINTAINERS.md` — current maintainer set, promotion process, removal rules, affiliation policy.
 - `RFCS/` — formal RFC mechanism, including `RFCS/0001-rfc-process.md` (the meta-RFC for the process itself) and `RFCS/0000-template.md` (the authoring template).
-- `COMPATIBILITY.md` — v1.x compatibility commitment + safety-fix exception that gates breaking changes.
+- `COMPATIBILITY.md` — the compatibility commitment + safety-fix exception that gates breaking changes.
 - `SECURITY.md` — vulnerability disclosure process referenced by the safety-fix change category.
 - `ROADMAP.md` — vendor-neutral org migration tripwire that depends on the maintainer set.
