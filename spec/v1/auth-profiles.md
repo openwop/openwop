@@ -267,13 +267,41 @@ A host advertising the profile MUST:
    {
      "checkpoint": "string (host-issued id)",
      "atSequence": "integer (audit-log sequence at checkpoint)",
-     "merkleRoot": "string (hex, SHA-256 of all entries up to atSequence)",
-     "signature": "string (Ed25519 signature over the merkleRoot, by the host's audit-signing key)",
+     "merkleRoot": "string (lowercase hex, the root over the entries this checkpoint anchors; see below)",
+     "signature": "string (base64 Ed25519 signature over the 32 bytes merkleRoot hex-decodes to, by the host's audit-signing key)",
      "ts": "ISO 8601 timestamp"
    }
    ```
 
+   **The checkpoint preimage (RFC 0218).** A checkpoint anchors the entries with sequence in `(P, atSequence]`, where `P` is the previous checkpoint's `atSequence`, or `0` for the first. It MUST anchor at least one entry.
+   - **Leaves.** The leaves are those entries' hashes in sequence order. Each is the lowercase-hex SHA-256 of the entry's RFC 8785 JCS serialization, the same value the next entry carries as `prevHash` (step 2).
+   - **Root.** The root is built one level at a time. Each pair of adjacent nodes is replaced by the lowercase-hex SHA-256 of the ASCII bytes of `left ‖ right`, both lowercase hex. A last odd node is promoted to the next level unchanged, never duplicated. `merkleRoot` is the one node left.
+   - **Signature.** `signature` is the Ed25519 signature over the 32 bytes `merkleRoot` hex-decodes to, not over its hex text and not over the checkpoint object, encoded base64 (RFC 4648 §4, padded).
+   - **Verifiers.** The tree has no leaf/interior domain separation, so a verifier that recomputes a root MUST hold the leaf count to `atSequence − P` and refuse any other. With the count fixed the tree shape is fixed, so interior nodes cannot pass as leaves.
+
+   `conformance/vectors/audit-checkpoint-v1.json` carries entries, roots and signatures a producer or verifier MUST reproduce.
+
    Checkpoints SHOULD be exported to an out-of-band store (operator-managed, separate trust boundary). Verifiers compare the live chain against the last anchored checkpoint to detect rewinds.
+
+   **The checkpoint export (RFC 0218 §B).** A host claiming the profile MAY publish its checkpoints as a portable export for such a verifier. When it does, the export MUST be this JSON document:
+
+   ```json
+   {
+     "bundleVersion": "1",
+     "exportedAt": "ISO 8601 timestamp",
+     "host": { "name": "string", "version": "string" },
+     "signingKey": { "keyId": "string", "algorithm": "ed25519", "publicKeyPEM": "PEM SPKI public key" },
+     "checkpoints": [
+       { "checkpointId": "string", "atSequence": 1000, "merkleRoot": "hex", "signature": "base64", "signedAt": "ISO 8601 timestamp", "signingKeyId": "string" }
+     ]
+   }
+   ```
+
+   - `host` is OPTIONAL. Every other member shown is REQUIRED.
+   - `checkpointId` is the checkpoint's id (`checkpoint` above and in the verification result), and `signedAt` is its `ts`.
+   - Every checkpoint's `signingKeyId` MUST equal `signingKey.keyId`. A host that dual-signs during a key rotation publishes one export per key.
+   - The export carries no entries. A verifier can check every signature and the monotonic `atSequence` order, but not a root.
+   - `scripts/verify-audit-checkpoints.mjs` is the reference consumer.
 
 4. **Verification endpoint.** Hosts MUST expose `GET /v1/audit/verify?fromSeq=&toSeq=` (auth: `audit:read` scope, REQUIRED-when-profile-claimed) that returns:
 
@@ -320,7 +348,7 @@ The audit-signing Ed25519 key:
 A host claims the profile by:
 
 - Advertising `capabilities.auth.profiles` includes `openwop-audit-log-integrity`.
-- Passing the black-box suite scenario `audit-log-integrity.test.ts`: profile shape, and `GET /v1/audit/verify` returning a body that validates against `audit-verify-result.schema.json`'s required members (`chainValid`, `checkpoints`, `anomalies`) with `chainValid: true`. A checkpoint's `signature` is checked for presence and length only. The suite does not re-walk `checkpointsValid` or verify checkpoint signatures, because the signed preimage is not yet stated consistently (see the Ed25519 paragraph above and the schema's `signature` description); cryptographic verification is the out-of-band verifier's job below. *(Corrected 2026-09-27: this line claimed a `checkpointsValid` re-walk and a signed-checkpoint requirement the scenario never performed.)*
+- Passing the black-box suite scenario `audit-log-integrity.test.ts`: profile shape, and `GET /v1/audit/verify` returning a body that validates against `audit-verify-result.schema.json`'s required members (`chainValid`, `checkpoints`, `anomalies`) with `chainValid: true`. A checkpoint's `signature` is checked for presence and length there, and `audit-checkpoint-signature.test.ts` (RFC 0218) verifies every returned checkpoint's signature under the advertised `checkpointPublicKey` over its hex-decoded `merkleRoot`. The root cannot be recomputed from outside, because the entries are not on the wire. It is held by the vectors (`audit-checkpoint-vectors.test.ts`), the host-internal tamper tests below and the out-of-band verifier. *(Updated 2026-09-27 by RFC 0218: this line had said the suite could not verify signatures because the preimage was not stated consistently.)* *(Corrected 2026-09-27: this line claimed a `checkpointsValid` re-walk and a signed-checkpoint requirement the scenario never performed.)*
 - Tamper detection — mutating an entry or forging a checkpoint signature and asserting `chainValid: false` — requires admin access to the audit store, so it is covered **host-internally** (`examples/hosts/{sqlite,postgres}/test/audit-tamper.test.ts`) rather than by the black-box suite.
 - Cross-host re-anchoring — an out-of-band verifier checking an exported checkpoint bundle's Ed25519 signatures independently of the host — is exercised by the standalone `scripts/verify-audit-checkpoints.mjs` against the export producer `examples/hosts/postgres/src/audit-export.ts` (round-trip in `examples/hosts/postgres/test/audit-checkpoint-export.test.ts`; the verifier is regression-guarded in `openwop:check` against the committed sample bundles in `conformance/audit-export-samples/`).
 
