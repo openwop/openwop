@@ -35,7 +35,7 @@ import { driver } from '../lib/driver.js';
 import { behaviorGate } from '../lib/behavior-gate.js';
 import { readCapabilityFamily } from '../lib/discovery-capabilities.js';
 import { req } from '../lib/requirement-ids.js';
-import { softSkip } from '../lib/soft-skip.js';
+import { softSkip, blockedDespiteAssertions } from '../lib/soft-skip.js';
 
 const FIXTURE_PATH = join(FIXTURES_DIR, 'connection-packs', 'connection-pack-github.json');
 
@@ -117,7 +117,7 @@ describe('connection-provider-resolution (RFC 0095 §B.6/§B.8)', () => {
       provider: 'conformance-prerelease-probe',
       simulateBuiltinVersion: '1.0.0',
     });
-    if (res.status === 404 || res.status === 403) return softSkip('blocked', 'precondition not met — `res.status === 404 || res.status === 403` returned early (simulate knob unwired — soft-skip) (seam, prior step, or fixture unavailable)'); // simulate knob unwired — soft-skip
+    if (res.status === 404 || res.status === 403) return blockedDespiteAssertions('the resolve seam (simulateBuiltinVersion) answered 404/403 — the prerelease-vs-release conflict is unobserved');
     const body = res.json as ResolveResult | undefined;
     expect(
       body?.code,

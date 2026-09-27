@@ -38,12 +38,14 @@ describe('RFC 0175 §D.4 — refresh-sla (unaided; gated on a2a or mcp)', () => 
       { family: 'a2a', offered: 'versions', preferred: 'preferredVersion', floor: 'minimumVersion' },
       { family: 'mcp', offered: 'revisions', preferred: 'preferredVersion', floor: 'minimumRevision' },
     ];
-    let checked = 0;
-    const now = Date.now();
+    const advertised: Array<{ f: (typeof facets)[number]; rec: Record<string, unknown> }> = [];
     for (const f of facets) {
       const rec = await familyAdvertised(f.family);
-      if (!rec) continue;
-      checked++;
+      if (rec) advertised.push({ f, rec });
+    }
+    if (advertised.length === 0) return softSkip('inapplicable', 'host advertises neither a2a nor mcp — no refreshedAt to check');
+    const now = Date.now();
+    for (const { f, rec } of advertised) {
       const refreshedAt = rec['refreshedAt'];
       expect(
         typeof refreshedAt === 'string' && DATE.test(refreshedAt),
@@ -73,6 +75,5 @@ describe('RFC 0175 §D.4 — refresh-sla (unaided; gated on a2a or mcp)', () => 
         req('openwop.requirement.0175.refresh-sla', 'interop.md §The facets', `${f.family}.${f.floor} MUST be one of the offered ${f.offered}[] — a floor below every offer refuses nothing`),
       ).toContain(rec[f.floor]);
     }
-    if (checked === 0) return softSkip('inapplicable', 'host advertises neither a2a nor mcp — no refreshedAt to check');
   });
 });

@@ -41,11 +41,10 @@ describe('RFC 0175 §C.1 — legacy-profiles-absent (unaided)', () => {
   it('no -legacy id appears in a2a.profiles or mcp.profiles and each id matches its facet pattern', async () => {
     const doc = await discovery();
     if (!doc) return softSkip('blocked', 'discovery unreachable');
-    let checked = 0;
-    for (const family of ['a2a', 'mcp'] as const) {
-      const profiles = profilesOf(doc, family);
-      if (profiles === null) continue;
-      checked++;
+    const families = (['a2a', 'mcp'] as const).filter((family) => profilesOf(doc, family) !== null);
+    if (families.length === 0) return softSkip('inapplicable', 'host advertises neither a2a nor mcp — no profiles[] to check for a -legacy id');
+    for (const family of families) {
+      const profiles = profilesOf(doc, family)!;
       for (const id of profiles) {
         expect(
           /-legacy$/.test(id),
@@ -64,7 +63,6 @@ describe('RFC 0175 §C.1 — legacy-profiles-absent (unaided)', () => {
         req('openwop.requirement.0175.legacy-profiles-absent', `facets/${family}.schema.json`, `the ${family} facet MUST validate against its facet schema (capabilities.schema.json ${family}): ${check.errors}`),
       ).toBe(true);
     }
-    if (checked === 0) softSkip('inapplicable', 'host advertises neither a2a nor mcp — no profiles[] to check for a -legacy id');
   });
 
   it('no root profiles[] exists in the v2 representation', async () => {

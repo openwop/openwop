@@ -147,6 +147,9 @@ describe('v2 idempotency-in-flight (idempotency.md Concurrency, RFC 0213 §B)', 
     // (#1525's fix, kept verbatim; `r.refusals` is the split form's spelling of
     // its `refusals`, and it now lands on the LOSER id it is about rather than
     // on a row shared with the winner clause.)
+    // partial-witness-ok: the winner/replay clauses were asserted above; RFC 0213 §B lets every
+    // loser wait for a marked replay, so the 409 branch is an outcome this host did not take,
+    // not an unobserved obligation.
     if (r.refusals.length === 0) return softSkip('inapplicable', `no loser was refused in flight — all ${N} answers were successes (each loser a marked replay, which §B permits), so the 409 branch did not run on this host`);
   }, 60_000);
   // The deterministic §B witness (host-sample-test-seams.md §26): the seam only

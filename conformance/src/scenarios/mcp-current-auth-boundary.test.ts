@@ -50,15 +50,15 @@ describe.skipIf(!process.env.OPENWOP_BASE_URL)('RFC 0153 §E — mcp-current-aut
     const { mcp, anon } = await disco();
     const claims = mcp?.supported === true && (mcp.profiles ?? []).includes(PROFILE) && mcp.serverMount?.supported === true;
     if (!behaviorGate(PROFILE, claims)) return;
+    // Anonymous access is permitted through the RFC 0132 surface when anonymousActor is
+    // advertised, so the refusal this leg checks does not apply. Known from discovery, so it
+    // is decided before any assertion (it used to follow the authenticated-call assert and
+    // record a partial-witness pass).
+    if (anon?.supported === true) return softSkip('inapplicable', 'anonymousActor is advertised — an anonymous current-profile request may be served through the RFC 0132 surface, so the refusal rule does not apply');
     const authed = await driver.post(await mcpServerMount(), REQ, { headers: HDR });
     if (authed.status === 404 || authed.status === 403) return seamAbsent(`host advertises an MCP server mount but the mount (capabilities.mcp.serverUrls[0], else /v1/host/sample/mcp) answered ${authed.status} — RFC 0153 §B is unobservable at the path the host itself advertised`);
     expect(authed.status, req('openwop.it.mcp-current-auth-boundary.an-unauthenticated-current-profile-request-is-refused-unless-anonymousactor-is-a', 'mcp-integration.md §E', 'the authenticated call MUST succeed at the same path, so a refusal below is not a wrong path')).toBe(200);
     const anonymous = await driver.post(await mcpServerMount(), REQ, { headers: HDR, authenticated: false });
-    if (anon?.supported === true) {
-      // Anonymous is permitted only through the RFC 0132 surface; a 200 here is that surface answering.
-      expect([200, 401, 403]).toContain(anonymous.status);
-      return softSkip('inapplicable', 'capability or profile not advertised by this host — gate `anon?.supported === true` returned early');
-    }
     expect(
       [401, 403],
       req('openwop.it.mcp-current-auth-boundary.an-unauthenticated-current-profile-request-is-refused-unless-anonymousactor-is-a', 'mcp-integration.md §E', 'an anonymous MCP principal MUST NOT be the production default for an advertised current profile — refuse (401/403) or advertise anonymousActor'),
@@ -74,7 +74,10 @@ describe.skipIf(!process.env.OPENWOP_BASE_URL)('RFC 0153 §E — mcp-current-aut
       ...setCookies(anonymous.headers),
       ...setCookies((await driver.get('/.well-known/openwop', { authenticated: false })).headers),
     ];
-    if (minted.length === 0) return softSkip('blocked', 'precondition not met — `minted.length === 0` returned early (host mints no anonymous session; the bare probe was the whole observation) (seam, prior step, or fixture unavailable)'); // host mints no anonymous session; the bare probe was the whole observation
+    // partial-witness-ok: the bare anonymous probe, the requirement, was refused and asserted
+    // above. The S30 replay binds only a host that mints an anonymous session, and this one
+    // minted none.
+    if (minted.length === 0) return softSkip('inapplicable', 'the host minted no anonymous session, so the bare-probe refusal asserted above was the whole observation');
     const cookie = minted.map((c) => c.split(';')[0]).join('; ');
     const withSession = await driver.post(await mcpServerMount(), REQ, { headers: { ...HDR, Cookie: cookie }, authenticated: false });
     expect(

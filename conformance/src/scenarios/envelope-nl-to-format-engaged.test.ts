@@ -29,7 +29,7 @@ import { driver } from '../lib/driver.js';
 import { pollUntilTerminal } from '../lib/polling.js';
 import { isFixtureAdvertised } from '../lib/fixtures.js';
 import { req } from '../lib/requirement-ids.js';
-import { softSkip } from '../lib/soft-skip.js';
+import { softSkip, blockedDespiteAssertions } from '../lib/soft-skip.js';
 
 const HTTP_SKIP = !process.env.OPENWOP_BASE_URL;
 const FIXTURE = 'conformance-envelope-nl-to-format-engaged';
@@ -77,7 +77,7 @@ describe.skipIf(HTTP_SKIP)('envelope-nl-to-format-engaged: runtime behavior (RFC
     expect(seed.status).toBe(200);
 
     const events = await runAndReadEvents();
-    if (events === null) return softSkip('blocked', 'precondition not met — `events === null` returned early (seam, prior step, or fixture unavailable)');
+    if (events === null) return blockedDespiteAssertions('the advertised fixture run did not start (≠201) or its event log did not read (≠200) — envelope.nlToFormat.engaged is unobserved');
     const engagements = events.filter((e) => e.type === 'envelope.nlToFormat.engaged');
     expect(
       engagements.length,

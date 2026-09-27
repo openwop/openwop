@@ -11,7 +11,7 @@
  */
 
 import { describe, it, expect } from 'vitest';
-import { softSkip } from '../lib/soft-skip.js';
+import { softSkip, blockedDespiteAssertions } from '../lib/soft-skip.js';
 import { readDistillationCap, invokeDistill } from '../lib/distillation.js';
 import { req } from '../lib/requirement-ids.js';
 
@@ -33,7 +33,7 @@ describe('distillation-token-budget (RFC 0062 §B)', () => {
 
     // A budget too small to distill the corpus MUST fail closed, no partial archive.
     const tooSmall = await invokeDistill({ memoryRef: 'conformance-distill', tokenBudget: 1 });
-    if (tooSmall === null) return softSkip('blocked', 'precondition not met — `tooSmall === null` returned early (seam, prior step, or fixture unavailable)');
+    if (tooSmall === null) return blockedDespiteAssertions('the distill seam answered the in-budget call but not the un-meetable one — the atomic token_budget_exceeded failure is unobserved');
     expect(
       tooSmall.status >= 400 && tooSmall.body.error === 'token_budget_exceeded',
       req('openwop.it.distillation-token-budget.within-budget-tokensused-tokenbudget-an-un-meetable-budget-fails-atomically', 'RFC 0062 §B', 'an un-meetable budget MUST fail with token_budget_exceeded'),

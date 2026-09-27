@@ -116,7 +116,7 @@ import { pollUntilTerminal } from '../lib/polling.js';
 import { isFixtureAdvertised } from '../lib/fixtures.js';
 import { capabilityFamily } from '../lib/discovery-capabilities.js';
 import { req } from '../lib/requirement-ids.js';
-import { softSkip } from '../lib/soft-skip.js';
+import { softSkip, blockedDespiteAssertions } from '../lib/soft-skip.js';
 
 const FIXTURE = 'conformance-envelope-retry-attempted';
 const NODE_ID = 'retry-attempted-structured-call';
@@ -165,7 +165,7 @@ describe.skipIf(HTTP_SKIP)('envelope-retry-attempted: runtime behavior (RFC 0032
     expect(seed.status).toBe(200);
 
     const events = await startRunAndRead();
-    if (events === null) return softSkip('blocked', 'precondition not met — `events === null` returned early (seam, prior step, or fixture unavailable)');
+    if (events === null) return blockedDespiteAssertions('the advertised fixture run did not start (≠201) or its event log did not read (≠200) — envelope.retry.attempted is unobserved');
     const retries = events.filter((e) => e.type === 'envelope.retry.attempted');
     expect(
       retries.length,

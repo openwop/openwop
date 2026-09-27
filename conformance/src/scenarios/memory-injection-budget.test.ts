@@ -116,7 +116,7 @@ describe('memory-injection-budget (RFC 0113)', () => {
 
     const v = await driveFixtureVariables();
     expect(v, req('openwop.it.memory-injection-budget.token-bounds-the-injection-read-omits-the-over-budget-entry-and-preserves-sr-1-c', 'RFC 0113', 'fixture MUST surface run variables')).toBeDefined();
-    if (v === undefined) return softSkip('blocked', 'precondition not met — `v === undefined` returned early (seam, prior step, or fixture unavailable)');
+    if (v === undefined) throw new Error('unreachable: the assertion above has already failed this leg');
 
     // ── tokenBudget bound (the new lever) ──────────────────────────────
     const tokenBudget = numberOf(v['tokenBudget']);
@@ -177,7 +177,7 @@ describe('memory-injection-budget (RFC 0113)', () => {
 
     const v = await driveFixtureVariables();
     expect(v, req('openwop.it.memory-injection-budget.rank-relevance-reorders-vs-recency-only-when-memory-search-semantic-is-also-adve', 'RFC 0113', 'fixture MUST surface run variables')).toBeDefined();
-    if (v === undefined) return softSkip('blocked', 'precondition not met — `v === undefined` returned early (seam, prior step, or fixture unavailable)');
+    if (v === undefined) throw new Error('unreachable: the assertion above has already failed this leg');
 
     const recencyOrder = stringArrayOf(v['recencyOrder']);
     const relevanceOrder = stringArrayOf(v['relevanceOrder']);

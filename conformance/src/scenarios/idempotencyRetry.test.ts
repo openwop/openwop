@@ -116,12 +116,17 @@ describe('idempotency-retry: limits.idempotencyAckTimeoutSec contract per idempo
     expect(res.status).toBe(200);
 
     const limits = (res.json as { limits?: Record<string, unknown> })?.limits;
-    if (!limits) return softSkip('blocked', 'precondition not met — `!limits` returned early (limits required per capabilities.md §3 — covered elsewhere) (seam, prior step, or fixture unavailable)'); // limits required per capabilities.md §3 — covered elsewhere
+    // partial-witness-ok: discovery answered 200; `limits` presence is its own requirement,
+    // asserted by the capabilities scenarios, and this leg's IF-advertised clause binds nothing
+    // without it.
+    if (!limits) return softSkip('inapplicable', 'discovery carries no limits object — its presence is asserted elsewhere; nothing for this IF-advertised leg to check');
     const ack = limits.idempotencyAckTimeoutSec;
     if (ack === undefined) {
       // Per idempotency.md, the field is optional; absence implies the
       // 5-second floor. Nothing to assert.
-      return softSkip('blocked', 'precondition not met — `ack === undefined` returned early (Per idempotency.md, the field is optional; absence implies the 5-second floor. Nothing to assert.) (seam, prior step, or fixture unavailable)');
+      // partial-witness-ok: idempotencyAckTimeoutSec is optional and absence means the 5-second
+      // floor; the IF-advertised MUSTs below bind nothing.
+      return softSkip('inapplicable', 'limits.idempotencyAckTimeoutSec not advertised (optional; the 5-second floor applies) — nothing to check');
     }
     expect(typeof ack === 'number' && Number.isInteger(ack), req('openwop.it.idempotencyRetry.host-advertising-idempotencyacktimeoutsec-sets-integer-5', 
       'idempotency.md',

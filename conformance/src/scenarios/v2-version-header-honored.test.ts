@@ -168,6 +168,9 @@ describe('v2-version-header-honored (RFC 0172 §A.3)', () => {
         },
         req(ID, DOC, `a host that does not serve major 2 MUST refuse OpenWOP-Version: 2.0 with 406 protocol_version_unsupported and details.protocolVersions[] echoing [${advertised.join(', ')}]; a host that LISTS a 2.x member MUST serve it (§1.3 row 1), not refuse it`),
       ).toEqual({ status: 406, code: 'protocol_version_unsupported', echoed: [...advertised].sort(), listsMajor2: false });
+      // partial-witness-ok: the 406 refusal was held to §1.3 row 2 in full above. It is a
+      // complete, correct answer, and there is no second representation to compare bytes
+      // against.
       return softSkip('inapplicable', 'the host refused major 2 with the specified 406 — a correct answer, and there is no second representation to compare bytes against');
     }
     if (asked.status !== 200) {
