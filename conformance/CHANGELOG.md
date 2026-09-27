@@ -1,6 +1,6 @@
 # `@openwop/openwop-conformance` Changelog
 
-## [2.42.4] — unreleased — unfailable-leg audit wave 2, and a gate so the class stops growing
+## [2.42.4] — 2026-09-27 — unfailable-leg audit wave 2, an on-the-wire Idempotency-Key witness, and a gate so the class stops growing
 
 - **Wave 2 of the unfailable-leg audit.** `scripts/audit-unfailable-legs.mjs --all` widened the scan from Accepted-RFC ids to every leg, and added a sixth shape: *asserts, then soft-skips*. At major 2 an `inapplicable` or `skipped` note after an assertion records `executed-pass` with a `partial-witness:` detail; at major 1 a `blocked` note does too. Certification counts both.
   - **Reviewed:** 111 new candidates in four parallel reviews: 38 confirmed, 18 plausible. Most are fixed; each fix names the non-conforming host it now catches.
