@@ -1,5 +1,10 @@
 # `@openwop/openwop-conformance` Changelog
 
+## [2.42.8] — unreleased
+
+- **The 2.42.8 cycle opens.** RFC 0189 (#1675) changed the packed `@openwop/spec-artifacts` tree (`spec/v2/core/i18n.md`, `spec/v2/core/portability.md`, `declaration.json`) after `v2.42.7` was tagged. The published-identity gate correctly refused to call that tree 2.42.7.
+- **Suite `2.42.8`**. `@openwop/spec-artifacts` moves in lockstep at the same exact pin.
+
 ## [2.42.7] — 2026-09-27 — audit residuals, and extension families can graduate on evidence
 
 - **`v2-sse-last-event-id-cursor` joins the core-standard floor.** It was held off until the three bundle hosts were measured. All three record it `executed-pass`: the v2 reference host on 2.42.2, MyndHyve on 2.42.0 and openwop-app on 2.42.2. Two carry `partial-witness` only on the SHOULD leg (a malformed `Last-Event-ID` is accepted, which is recorded rather than failed). No existing claim moves.
