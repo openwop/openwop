@@ -69,7 +69,7 @@ function metadataSchema(key) {
     case 'protocolVersion': return { type: 'string', pattern: VERSION_RE, description: 'RFC 0172 §B axis 1 — kept as preferredVersion\'s twin for v1 readers through the overlap; removed after Phase 5.' };
     case 'engineVersion': return { type: 'integer', minimum: 0, description: 'RFC 0172 §B axis 3 — integer everywhere (openwop.codemod.engine-version-unify).' };
     case 'eventLogSchemaVersion': return { type: 'integer', minimum: 2, description: 'RFC 0176 §A.2 — the era key; a v2 host writes 3.' };
-    case 'minClientVersion': return { type: 'string', description: 'RFC 0172 row C5.8 — MUST (426 client_version_unsupported).' };
+    case 'minClientVersion': return { type: 'string', pattern: VERSION_RE, description: 'Optional. The lowest <major>.<minor> client this host serves (versioning.md §1.5). A host MAY refuse a client below it; a refusal MUST be 426 client_version_unsupported.' };
     case 'configurable': return { $ref: 'configurable.schema.json' };
     case 'implementation': return {
       type: 'object', additionalProperties: false,
@@ -331,7 +331,7 @@ function buildProfiles() {
   return {
     $comment: 'GENERATED from spec/v2/declaration.json (RFC 0169 §C.1). A profile is a predicate over the declaration: every listed family present as a record (and every listed metadata key present). No profiles[] exists at the v2 root.',
     generatedFrom: 'spec/v2/declaration.json',
-    profiles: decl.profiles.map((p) => ({ id: p.id, predicate: p.predicate, floorScenarios: p.floorScenarios ?? [], requirementIds: p.requirementIds ?? [], ...(p.note ? { note: p.note } : {}) })),
+    profiles: decl.profiles.map((p) => ({ id: p.id, ...(p.summary ? { summary: p.summary } : {}), predicate: p.predicate, floorScenarios: p.floorScenarios ?? [], requirementIds: p.requirementIds ?? [], ...(p.note ? { note: p.note } : {}) })),
   };
 }
 

@@ -1,0 +1,12 @@
+# RFC 0219 — Gap register
+
+Open design gaps found while authoring RFC 0219 (the `OpenWOP-Client-Version` request header). Rows are keyed to the RFC. Each has an owner and a resolution path.
+
+| ID | Section | Question / Missing Input | Owner | Resolution Path | Blocks |
+| --- | --- | --- | --- | --- | --- |
+| G1 | §Compatibility / §C.2 | Two of the three certified hosts read a malformed value as `0.0` and refuse it (`openwop-examples` v2 reference host `router.ts`, openwop-app `protocolVersion.ts`). Under §C.2 both fail the planned `malformed-not-refused` leg. | Conformance Architect | `transferred:rfc-0219` — §Acceptance criteria, the `Active` row "both hosts measured on the malformed leg before it ships". Each host replaces the `'0.0'` fallback with "not below" and uses a full-match grammar, so the leg does not ship red against a host that has not been told. | `Active` |
+| G2 | §A / Unresolved question 1 | Whether the value names the corpus release the client implements (this RFC) or a product version (v1's `openwop-sdk/<v>`). | Spec Architect | `transferred:rfc-0219` — Unresolved question 1, decided in the comment window. The RFC's argument is Alternative 2. | `Active` |
+| G3 | Unresolved question 3 | RFC 9110 §15.5.22 requires `Upgrade` on every `426`; none of the three hosts sends it and no v2 text names a value. | Spec Architect | `transferred:spec/v2/core/versioning.md` — the `426` is RFC 0172 row C5.8's decision and `versioning.md` §1.5 owns it. This RFC flags it; it does not decide it. | Nothing in this RFC. |
+| G4 | Unresolved question 5 | `client_version_unsupported` has `details: null`. Two hosts send `details.minClientVersion`, MyndHyve sends none. | Schema Architect | `transferred:spec/v2/core/errors.md` — registering a `details` shape is an `errors.json` change owned by `errors.md`. | Nothing in this RFC. |
+| G5 | Unresolved question 2 | The header's meaning on a `/v1/…` path during the overlap. The reference host applies the floor there; openwop-app does not. | Compatibility Architect | `transferred:rfc-0219` — Unresolved question 2, decided at `Active`. v1 is frozen and names `User-Agent`; the likely answer is that this RFC stays silent on `/v1/`. | `Active` |
+| G6 | §Implementation notes | No v2 SDK sends the header today (`openwop-sdks`: `sdk/typescript-v2`, `sdk/python-v2`, Go). | Compatibility Architect | `transferred:rfc-0219` — §Acceptance criteria, "at least one v2 SDK sends the header": an `openwop-sdks` change after `Active`, with a `sdk/PARITY.md` row. | `Accepted` |

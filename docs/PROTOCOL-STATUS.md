@@ -12,7 +12,7 @@
 | OpenAPI operations | 58 | `api/openapi.yaml` |
 | AsyncAPI version | 3.1.0 | `api/asyncapi.yaml` |
 | Conformance scenario files | 563 | `conformance/src/scenarios/*.test.ts` |
-| RFCs tracked | 215 | `RFCS/[0-9][0-9][0-9][0-9]-*.md`, excluding template |
+| RFCs tracked | 216 | `RFCS/[0-9][0-9][0-9][0-9]-*.md`, excluding template |
 
 ## Artifact Versions
 
@@ -54,7 +54,7 @@
 | 12 | MCP `protocolVersions[]`/`preferredVersion` | first-class facet | date | C.8 |
 | 13 | `multiAgent.executionModel.version` | first-class | integer with a schema `maximum` read by the suite | C.4 |
 | 14 | OpenAPI/AsyncAPI `info.version` | **generated** from the corpus tag; PROTOCOL-STATUS rows | semver | this RFC |
-| 15 | `minClientVersion` | first-class MUST (sectionA.5) | as #1 | this RFC |
+| 15 | `minClientVersion` | first-class: grammar MUST when advertised; refusal MAY, as `426` (sectionA.5; corrected 2026-09-27) | as #1 | this RFC |
 | 16 | channel `schemaVersion`/`compatibleWith` | first-class | integer / range | C.4 |
 | 17 | webhook signature scheme | retire into `deprecations.json` | - | C.4 |
 | 18 | pack `engines.openwop` + `registryVersion` | first-class with the absent-ceiling rule | semver range / semver | C.10 |
@@ -69,7 +69,7 @@
 |---|---:|
 | Accepted | 211 |
 | Active | 2 |
-| Draft | 1 |
+| Draft | 2 |
 | Superseded | 1 |
 
 | RFC | Title | Status |
@@ -289,6 +289,7 @@
 | RFC 0216 | a colocated companion bundle is marked, and witnesses only the rows that need the suite's own issuer | Accepted |
 | RFC 0217 | after a subscription is unregistered, its dead-letter read answers as though it never existed | Accepted |
 | RFC 0218 | an audit checkpoint signs its Merkle root, and the root is pinned | Active |
+| RFC 0219 | a client announces the protocol version it implements in `OpenWOP-Client-Version` | Draft |
 
 ## SDK Helper Coverage
 
@@ -312,7 +313,7 @@ The pack registry now lives in the [`openwop-registry`](https://github.com/openw
 
 ## Active Follow-Ups
 
-- 1 RFC still `Draft` (RFC 0038) — advance with schema/conformance proof or defer.
+- 2 RFCs still `Draft` (RFC 0038, RFC 0219) — advance with schema/conformance proof or defer.
 - 2 RFCs `Active` (RFC 0121, RFC 0218) — wire-shape MAY shift compatibly within v1.x until promotion to `Accepted`.
 - External audit, non-steward host recruitment, and non-steward maintainer recruitment remain external-action gates.
 - Multi-region idempotency and some optional-profile behavior checks remain lower-confidence than the core wire contract.

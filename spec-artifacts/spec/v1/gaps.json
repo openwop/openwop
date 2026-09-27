@@ -12916,6 +12916,108 @@
       ]
     },
     {
+      "id": "openwop.gap.0219.1",
+      "rfc": "0219",
+      "local": "G1",
+      "section": "§Compatibility / §C.2",
+      "surface": "Two of the three certified hosts read a malformed value as `0.0` and refuse it (`openwop-examples` v2 reference host `router.ts`, openwop-app `protocolVersion.ts`). Under §C.2 both fail the planned `malformed-not-refused` leg.",
+      "witness": "unclassified",
+      "requirementId": null,
+      "disposition": "transferred",
+      "target": "rfc-0219",
+      "sources": [
+        {
+          "file": "RFCS/registers/0219-client-version-header.gaps.md",
+          "token": "G1"
+        }
+      ]
+    },
+    {
+      "id": "openwop.gap.0219.2",
+      "rfc": "0219",
+      "local": "G2",
+      "section": "§A / Unresolved question 1",
+      "surface": "Whether the value names the corpus release the client implements (this RFC) or a product version (v1's `openwop-sdk/<v>`).",
+      "witness": "unclassified",
+      "requirementId": null,
+      "disposition": "transferred",
+      "target": "rfc-0219",
+      "sources": [
+        {
+          "file": "RFCS/registers/0219-client-version-header.gaps.md",
+          "token": "G2"
+        }
+      ]
+    },
+    {
+      "id": "openwop.gap.0219.3",
+      "rfc": "0219",
+      "local": "G3",
+      "section": "Unresolved question 3",
+      "surface": "RFC 9110 §15.5.22 requires `Upgrade` on every `426`; none of the three hosts sends it and no v2 text names a value.",
+      "witness": "unclassified",
+      "requirementId": null,
+      "disposition": "transferred",
+      "target": "spec/v2/core/versioning.md",
+      "sources": [
+        {
+          "file": "RFCS/registers/0219-client-version-header.gaps.md",
+          "token": "G3"
+        }
+      ]
+    },
+    {
+      "id": "openwop.gap.0219.4",
+      "rfc": "0219",
+      "local": "G4",
+      "section": "Unresolved question 5",
+      "surface": "`client_version_unsupported` has `details: null`. Two hosts send `details.minClientVersion`, MyndHyve sends none.",
+      "witness": "unclassified",
+      "requirementId": null,
+      "disposition": "transferred",
+      "target": "spec/v2/core/errors.md",
+      "sources": [
+        {
+          "file": "RFCS/registers/0219-client-version-header.gaps.md",
+          "token": "G4"
+        }
+      ]
+    },
+    {
+      "id": "openwop.gap.0219.5",
+      "rfc": "0219",
+      "local": "G5",
+      "section": "Unresolved question 2",
+      "surface": "The header's meaning on a `/v1/…` path during the overlap. The reference host applies the floor there; openwop-app does not.",
+      "witness": "unclassified",
+      "requirementId": null,
+      "disposition": "transferred",
+      "target": "rfc-0219",
+      "sources": [
+        {
+          "file": "RFCS/registers/0219-client-version-header.gaps.md",
+          "token": "G5"
+        }
+      ]
+    },
+    {
+      "id": "openwop.gap.0219.6",
+      "rfc": "0219",
+      "local": "G6",
+      "section": "§Implementation notes",
+      "surface": "No v2 SDK sends the header today (`openwop-sdks`: `sdk/typescript-v2`, `sdk/python-v2`, Go).",
+      "witness": "unclassified",
+      "requirementId": null,
+      "disposition": "transferred",
+      "target": "rfc-0219",
+      "sources": [
+        {
+          "file": "RFCS/registers/0219-client-version-header.gaps.md",
+          "token": "G6"
+        }
+      ]
+    },
+    {
       "id": "openwop.gap.spec.a2a-integration.g1",
       "rfc": "0152",
       "local": "G1",
