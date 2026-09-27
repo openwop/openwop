@@ -1,15 +1,19 @@
 # Conversation surfaces
 
-> **Status: Stable · v2.0 · RFC 0101, 0109, 0110.** Normative contract for the multi-party conversation families.
+> **Status: Stable.**
 > **Normative home:** `multiPartyConversation`, `channelPresence`, `conversationTurnModelProvenance`.
 
 ## Why this exists
 
-RFC 0101 and RFC 0110 mint no client route for opening a conversation; the obligation an advertising host takes on is stated here.
+No client route opens a conversation. This document states the obligations a host takes on by advertising a multi-party conversation family.
 
 ## `multiPartyConversation`
 
-A host advertising `multiPartyConversation` MUST accept an optional `participants` array of agent references on conversation creation, and MUST refuse a turn from a principal absent from that roster rather than silently accepting it. It MUST refuse a roster that exceeds `multiPartyConversation.maxParticipants` at creation rather than truncating it.
+A host advertising `multiPartyConversation`:
+
+- MUST accept an optional `participants` array of agent references on conversation creation;
+- MUST refuse a turn from a principal absent from that roster, rather than silently accepting it;
+- MUST refuse, at creation, a roster that exceeds `multiPartyConversation.maxParticipants`, rather than truncating it.
 
 ## `channelPresence`
 
@@ -17,4 +21,6 @@ A host advertising `channelPresence` MUST report present members as a subset of 
 
 ## `conversationTurnModelProvenance`
 
-A host that stamps model provenance on an agent turn MUST advertise `conversationTurnModelProvenance`. The stamp is non-secret and non-PII — provider and model identifiers only — and a host MUST NOT place prompt or completion content in it.
+A host that stamps model provenance on an agent turn MUST advertise `conversationTurnModelProvenance`. The stamp is non-secret and non-PII (provider and model identifiers only), and a host MUST NOT place prompt or completion content in it.
+
+*Sources: RFC 0101, RFC 0109, RFC 0110.*

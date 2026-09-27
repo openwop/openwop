@@ -1,17 +1,17 @@
 # Identity
 
-> **Status: Stable · RFC 0170, 0165, 0176.**
+> **Status: Stable.**
 > **Normative home:** `auth`, `authorization`.
 
 ## Why this exists
 
-v2 makes the Subject the owner of every run, binds every lane to a trust root and a revocation rule, gives the link and every id a grammar, and prefixes tokens so a host can rotate them. Idempotency-key grammar is `idempotency.md`.
+The Subject owns every run. Every lane binds to a trust root and a revocation rule, the link and every id have a grammar, and tokens carry a prefix so a host can rotate them. Idempotency-key grammar is in [idempotency.md](idempotency.md).
 
-## 1. The Subject is the owner (RFC 0170 §A)
+## 1. The Subject is the owner
 
 ### 1.1 Shape (`schemas/v2/subject.schema.json`)
 
-`RunSnapshot.owner` is `{ tenant, workspace?, subject }` with `subject` REQUIRED; `principal` and `principalKind` are removed (`subject.subjectId` and `subject.kind` carry them). `run.started` MUST echo the same block (`runs.md`, `events.md`). The Subject is closed (`additionalProperties: false`):
+`RunSnapshot.owner` is `{ tenant, workspace?, subject }` with `subject` REQUIRED. `run.started` MUST echo the same block ([runs.md](runs.md), [events.md](events.md)). The Subject is closed (`additionalProperties: false`):
 
 | Field | Rule |
 | --- | --- |
@@ -23,27 +23,37 @@ v2 makes the Subject the owner of every run, binds every lane to a trust root an
 | `keyClass` | `opaque-idp \| configured-immutable`; MUST be present iff `lane ∈ {saml, scim}` |
 | `actor` | OPTIONAL; a nested Subject that acts on this subject's behalf; depth bounded at four |
 
-`kind: anonymous` REQUIRES `lane: anonymous` and `lane: anonymous` REQUIRES `kind: anonymous`. The `actor` depth bound (4) is a four-level `$ref` chain (`actor1`…`actor4`) rather than a recursive `$ref`; a fifth level MUST fail validation. `session` is a host-native credential the host itself issued (a durable login session, a local password); `anonymous` is an RFC 0132 public surface. The lane enum grows only under `overview.md` §0.
+- `kind: anonymous` REQUIRES `lane: anonymous`, and `lane: anonymous` REQUIRES `kind: anonymous`.
+- The `actor` depth bound (4) is a four-level `$ref` chain (`actor1`…`actor4`), not a recursive `$ref`. A fifth level MUST fail validation.
+- `session` is a host-native credential the host itself issued (a durable login session, a local password). `anonymous` is a public surface.
+- The lane enum grows only under [overview.md](overview.md) §0.
 
-### 1.2 The legacy subject rule (RFC 0170 §A.3)
+### 1.2 The legacy subject rule
 
-On every read of a run created before the host began emitting subjects, the host MUST stamp `issuer: "urn:openwop:legacy"`, `lane` as attested else `api-key`, `kind` as recorded else `user`. A host MUST stamp the legacy subject at first read and MUST NOT rewrite it later. A legacy subject MUST NOT participate in a link (§3), an actor chain, or a delegation decision.
+A run created before the host began emitting subjects has a legacy subject:
 
-### 1.3 Fork (RFC 0170 §A.4)
+- On every read, the host MUST stamp `issuer: "urn:openwop:legacy"`, `lane` as attested else `api-key`, and `kind` as recorded else `user`.
+- A host MUST stamp the legacy subject at first read and MUST NOT rewrite it later.
+- A legacy subject MUST NOT participate in a link (§3), an actor chain, or a delegation decision.
 
-On fork the host MUST copy `owner` verbatim onto the child: `tenant`, `workspace`, and `subject`. There is no `principal` asymmetry.
+### 1.3 Fork
 
-### 1.4 A2A anonymous end users (RFC 0170 §A.5)
+On fork the host MUST copy `owner` verbatim onto the child: `tenant`, `workspace` and `subject`.
 
-An end user reaching the host through an A2A peer is `kind: anonymous`, `lane: anonymous`, with the forwarding peer's subject as `actor`; such a subject MUST NOT be linked.
+### 1.4 A2A anonymous end users
 
-## 2. One binding pipeline, every lane (RFC 0170 §B)
+An end user reaching the host through an A2A peer is `kind: anonymous`, `lane: anonymous`, with the forwarding peer's subject as `actor`. Such a subject MUST NOT be linked.
 
-### 2.1 The pipeline (§B.1)
+## 2. One binding pipeline, every lane
 
-Every lane MUST: verify the credential against the lane's trust root; bind the verified identity to the request, never to an asserted header; check audience; resolve to a Subject before any authorization decision; and fail closed. On the `oidc` lane an ID token MAY be a bearer only when its `aud` equals the host's configured audience; any other `aud` is `audience_mismatch`. The closed reason vocabulary is the family-wide error set in §6. Every lane is advertised as one member of the `auth.lanes[]` facet (`spec/v2/facets/auth.schema.json`):
+### 2.1 The pipeline
 
-`authorization.failClosed` advertises that rule and MUST be `true` when present; it does not gate it (invariant `authorization-fail-closed`). `authorization.roles` is the host role catalog: a request is authorized when any role-derived scope matches the required scope, under the same scope-match semantics this document applies to a credential.
+Every lane MUST verify the credential against the lane's trust root; bind the verified identity to the request, never to an asserted header; check audience; resolve to a Subject before any authorization decision; and fail closed.
+
+- On the `oidc` lane an ID token MAY be a bearer only when its `aud` equals the host's configured audience; any other `aud` is `audience_mismatch`.
+- The closed reason vocabulary is the family-wide error set in §6.
+
+Every lane is advertised as one member of the `auth.lanes[]` facet (`spec/v2/facets/auth.schema.json`):
 
 ```json
 { "lane": "oidc", "issuers": ["https://idp.example"], "revocation": "exp-and-recheck",
@@ -51,9 +61,11 @@ Every lane MUST: verify the credential against the lane's trust root; bind the v
   "delegationProofs": ["dpop"] }
 ```
 
-`lane`, `issuers[]` (min 1), `revocation`, and `minimumAssurance` are REQUIRED on each member. `auth.lanes[].issuers[]` is the realm; the v1 `auth.profiles` facet is replaced by it (`capabilities.md`).
+`lane`, `issuers[]` (min 1), `revocation` and `minimumAssurance` are REQUIRED on each member. `auth.lanes[].issuers[]` is the realm ([capabilities.md](capabilities.md)).
 
-### 2.2 Trust roots and revocation (§B.2, §B.3)
+`authorization.failClosed` advertises the fail-closed rule and MUST be `true` when present; it does not gate it (invariant `authorization-fail-closed`). `authorization.roles` is the host role catalog: a request is authorized when any role-derived scope matches the required scope, under the same scope-match semantics this document applies to a credential.
+
+### 2.2 Trust roots and revocation
 
 Every lane MUST name its trust root as `subject.issuer` and MUST advertise it in `issuers[]`. Revocation exists for every lane; the `revocation` value names the rule.
 
@@ -70,27 +82,54 @@ Every lane MUST name its trust root as `subject.issuer` and MUST advertise it in
 | `session` | `urn:<host>:session` | refuse a revoked session on the next request (`credential_revoked`) | `next-request` |
 | `anonymous` | `urn:<host>:anon-surface` | — | — |
 
-`revocationWindowSeconds` (integer ≥ 1) MUST be advertised wherever the rule names a window — `exp-and-recheck`, `exp-only`, `short-lived`, `rebind`. On every lane it is **an upper bound on the interval between a revocation at the trust root and the host's first refusal**, and a host MUST NOT advertise a window it does not enforce.
+- `revocationWindowSeconds` (integer ≥ 1) MUST be advertised wherever the rule names a window: `exp-and-recheck`, `exp-only`, `short-lived`, `rebind`. On every lane it is an upper bound on the interval between a revocation at the trust root and the host's first refusal. A host MUST NOT advertise a window it does not enforce.
+- A host MUST NOT advertise a `revocation` value the row above for its lane does not list.
+- A consumer meeting an unrecognized value MUST NOT act on it: it MUST read the lane as stating no revocation latency, never as `next-request` or any other member ([overview.md](overview.md) §0).
 
-A host MUST NOT advertise a `revocation` value the row above for its lane does not list. A consumer meeting an unrecognized value MUST NOT act on it: it MUST read the lane as stating no revocation latency, never as `next-request` or any other member (`overview.md` §0).
+#### `exp-only`
 
-**`exp-only` (RFC 0210).** `exp-only` names a host that honors `exp` and re-checks revocation never: it consults no introspection endpoint, no userinfo endpoint, no revocation list and no host-side epoch or `validAfter` record, so a credential revoked at the trust root is accepted until its own `exp`. Its window is therefore the only bound there is, and it is enforced rather than described. A host advertising `exp-only` on a lane MUST refuse a credential presented on that lane when **either** `exp − iat` (total lifetime) **or** `exp − now` (remaining lifetime) exceeds the advertised `revocationWindowSeconds`, with `401 credential_lifetime_exceeded`; a credential carrying no `iat` MUST be refused with the same code, because the first bound cannot be evaluated without it (§2.1 fail-closed). Both bounds are load-bearing: `exp − iat` alone admits a ten-year token minted ten years ago, `exp − now` alone admits a freshly minted ten-year token in its ninth year. A host that cannot enforce both MUST NOT advertise `exp-only`. `exp-only` SHOULD be advertised with a window of one hour or less; the corpus states no maximum, because no upstream specification does. `exp-only` MUST NOT be advertised on the `api-key` or `session` lane — there the host issued the credential itself, so revocation is in its own hands — and `auth.schema.json` refuses that pairing (invariant `lane-exp-only-lifetime-bounded`).
+`exp-only` names a host that honors `exp` and never re-checks revocation: it consults no introspection endpoint, no userinfo endpoint, no revocation list and no host-side epoch or `validAfter` record. A credential revoked at the trust root is accepted until its own `exp`, so the window is the only bound, and it is enforced.
 
-### 2.3 Minimum assurance (§B.4)
+- A host advertising `exp-only` on a lane MUST refuse a credential presented on that lane with `401 credential_lifetime_exceeded` when **either** `exp − iat` (total lifetime) **or** `exp − now` (remaining lifetime) exceeds the advertised `revocationWindowSeconds`. Both bounds matter: `exp − iat` alone admits a ten-year token minted ten years ago; `exp − now` alone admits a fresh ten-year token in its ninth year.
+- A credential carrying no `iat` MUST be refused with the same code, because the first bound cannot be evaluated without it (§2.1 fail-closed).
+- A host that cannot enforce both bounds MUST NOT advertise `exp-only`.
+- `exp-only` SHOULD be advertised with a window of one hour or less. No maximum is set.
+- `exp-only` MUST NOT be advertised on the `api-key` or `session` lane, where the host issued the credential and controls revocation itself. `auth.schema.json` refuses that pairing (invariant `lane-exp-only-lifetime-bounded`).
 
-Each lane MUST advertise `minimumAssurance: bearer | sender-constrained | key-bound`. A request below the lane's floor MUST be refused with `sender_constraint_missing`. An audit fact MUST record the assurance actually used. A bearer fallback MUST NOT inherit a sender-constrained label (invariant `sender-constraint-no-bearer-downgrade`, `SECURITY/invariants.yaml`).
+### 2.3 Minimum assurance
 
-### 2.4 Delegation proofs (§B.5)
+- Each lane MUST advertise `minimumAssurance: bearer | sender-constrained | key-bound`.
+- A request below the lane's floor MUST be refused with `sender_constraint_missing`.
+- An audit fact MUST record the assurance actually used.
+- A bearer fallback MUST NOT inherit a sender-constrained label (invariant `sender-constraint-no-bearer-downgrade`, `SECURITY/invariants.yaml`).
 
-The proof format is lane-scoped: mTLS key binding or DPoP for the two JWT lanes (`oauth2`, `oidc`), SVID chains for `workload`. A host MUST advertise the proofs it accepts under `auth.lanes[].delegationProofs[]` (`mtls-key-binding | dpop | svid-chain`). A chain with no acceptable proof MUST be refused as `identity_unverified`. The chain rules keep their codes: a chain longer than the bound is `delegation_chain_too_long`, a cyclic chain is `delegation_chain_cyclic`, and a link that widens scope is `delegation_scope_amplified` (invariants `delegation-chain-bounded-acyclic`, `delegation-no-scope-amplification`, `delegation-provenance-not-authorization`).
+### 2.4 Delegation proofs
 
-### 2.5 Protected-resource metadata and challenges (RFC 0200)
+The proof format is lane-scoped: mTLS key binding or DPoP for the two JWT lanes (`oauth2`, `oidc`), SVID chains for `workload`.
 
-A host advertising an `oauth2` or `oidc` lane MUST serve RFC 9728 metadata at the well-known URI formed from its resource identifier, the base URL it serves this API under, with `/.well-known/oauth-protected-resource` inserted before any path (`https://h.example/api` → `https://h.example/.well-known/oauth-protected-resource/api`), unauthenticated. `resource` MUST equal that identifier; `authorization_servers` MUST list exactly the URL-form issuers of those lanes; `scopes_supported` MUST list the scopes the host enforces; `dpop_bound_access_tokens_required` or `tls_client_certificate_bound_access_tokens` MAY be `true` only where every such lane's `minimumAssurance` requires that binding (§2.3).
+- A host MUST advertise the proofs it accepts under `auth.lanes[].delegationProofs[]` (`mtls-key-binding | dpop | svid-chain`).
+- A chain with no acceptable proof MUST be refused as `identity_unverified`.
+- A chain longer than the bound is `delegation_chain_too_long`, a cyclic chain is `delegation_chain_cyclic`, and a link that widens scope is `delegation_scope_amplified` (invariants `delegation-chain-bounded-acyclic`, `delegation-no-scope-amplification`, `delegation-provenance-not-authorization`).
 
-On such a host a `401` MUST carry `WWW-Authenticate: Bearer resource_metadata="<url>"`, adding `error="invalid_token"` when a credential was presented and no error code when none was, and a `403` for insufficient scope MUST carry `error="insufficient_scope"` with `scope` listing every scope the operation requires; a `403` for resource binding carries no `insufficient_scope`. Other hosts SHOULD send `WWW-Authenticate: Bearer` on a `401`. A challenge attaches only to a response already `401` or `403` and MUST NOT change a status: where a rule requires `404` for an unknown or unauthorized resource, the `404` stands and carries none (invariant `auth-challenge-no-oracle`).
+### 2.5 Protected-resource metadata and challenges
 
-## 3. The link is a record (RFC 0170 §C; `schemas/v2/subject-link.schema.json`)
+A host advertising an `oauth2` or `oidc` lane MUST serve RFC 9728 metadata, unauthenticated, at the well-known URI formed from its resource identifier (the base URL it serves this API under) with `/.well-known/oauth-protected-resource` inserted before any path: `https://h.example/api` → `https://h.example/.well-known/oauth-protected-resource/api`.
+
+- `resource` MUST equal that identifier.
+- `authorization_servers` MUST list exactly the URL-form issuers of those lanes.
+- `scopes_supported` MUST list the scopes the host enforces.
+- `dpop_bound_access_tokens_required` or `tls_client_certificate_bound_access_tokens` MAY be `true` only where every such lane's `minimumAssurance` requires that binding (§2.3).
+
+Challenges on such a host:
+
+- A `401` MUST carry `WWW-Authenticate: Bearer resource_metadata="<url>"`, adding `error="invalid_token"` when a credential was presented and no error code when none was.
+- A `403` for insufficient scope MUST carry `error="insufficient_scope"` with `scope` listing every scope the operation requires. A `403` for resource binding carries no `insufficient_scope`.
+
+Other hosts SHOULD send `WWW-Authenticate: Bearer` on a `401`. A challenge attaches only to a response already `401` or `403` and MUST NOT change a status: where a rule requires `404` for an unknown or unauthorized resource, the `404` stands and carries none (invariant `auth-challenge-no-oracle`).
+
+## 3. The link is a record
+
+A subject link is a `schemas/v2/subject-link.schema.json` record:
 
 ```json
 { "a": { "issuer": "…", "subjectId": "…" }, "b": { "issuer": "…", "subjectId": "…" },
@@ -98,19 +137,31 @@ On such a host a `401` MUST carry `WWW-Authenticate: Bearer resource_metadata="<
   "tenant": "<tenantId>", "formedAt": "<date-time>", "deniedAt"?: "<date-time>" }
 ```
 
-The record and both `SubjectRef`s are closed; `a`, `b`, `keyClass`, `issuer`, `tenant`, `formedAt` are REQUIRED. A link MUST be tenant-scoped, MUST join exactly two subjects whose `issuer` values are bound to one IdP entityID (`issuer` on the record), and MUST NOT include a legacy (`urn:openwop:legacy` is schema-rejected) or anonymous subject. Deactivation sets `deniedAt`; the SAML decision path MUST consult it (the leaver contract). The link is a reference, not a merge: nothing rewrites a subject already stamped on a run.
+The record and both `SubjectRef`s are closed; `a`, `b`, `keyClass`, `issuer`, `tenant`, `formedAt` are REQUIRED. A link:
 
-`auth.subjectLinking` is removed (migration row `C2.5`): advertising both `saml` and `scim` lanes implies the contract. Lanes stay separate facets; there is no single "enterprise identity" profile. The `auth.subjectLinkKey` facet (`opaque-idp | configured-immutable`) names the key class the host forms links under.
+- MUST be tenant-scoped;
+- MUST join exactly two subjects whose `issuer` values are bound to one IdP entityID (`issuer` on the record);
+- MUST NOT include a legacy (`urn:openwop:legacy` is schema-rejected) or anonymous subject.
 
-## 4. Resume tokens (RFC 0170 §E.1; RFC 0176 §B.2)
+Deactivation sets `deniedAt`; the SAML decision path MUST consult it (the leaver contract). The link is a reference, not a merge: nothing rewrites a subject already stamped on a run.
 
-An interrupt resume token is `ow2.<alg>.<kid>.<payload>.<mac>`: `alg ∈ {hs256}` at the cut (`interrupt.tokenAlgs[]` advertises it), `kid` (`keyId` grammar) selects the verification secret, `payload` and `mac` as in v1. A host MUST refuse a token whose `alg` it does not advertise or whose `kid` it does not hold with `401` `interrupt_token_invalid`. The `{token}` path parameter carries the grammar (`api/v2/openapi.yaml`).
+Advertising both `saml` and `scim` lanes implies the link contract; there is no `auth.subjectLinking` flag. Lanes stay separate facets, with no single "enterprise identity" profile. The `auth.subjectLinkKey` facet (`opaque-idp | configured-immutable`) names the key class the host forms links under.
 
-A token the host issued under v1 (any token not `ow2.`-prefixed; the rule is the prefix, never a segment count, persistence.md) MUST remain resolvable under `kid: legacy` until its `expiresAt`; a run suspended on an interrupt at the cut continues under `persistence.md` and its outstanding token resolves the same way. Interrupt semantics are `interrupt.md`.
+## 4. Resume tokens
+
+An interrupt resume token is `ow2.<alg>.<kid>.<payload>.<mac>`:
+
+- `alg ∈ {hs256}`, advertised in `interrupt.tokenAlgs[]`;
+- `kid` (`keyId` grammar) selects the verification secret;
+- `payload` and `mac` are as in v1.
+
+A host MUST refuse a token whose `alg` it does not advertise or whose `kid` it does not hold with `401` `interrupt_token_invalid`. The `{token}` path parameter carries the grammar (`api/v2/openapi.yaml`). Interrupt semantics are in [interrupt.md](interrupt.md).
+
+A token not `ow2.`-prefixed was issued under v1; the rule is the prefix, never a segment count. Such a token MUST remain resolvable under `kid: legacy` until its `expiresAt`. A run suspended on an interrupt at the cut continues under [persistence.md](persistence.md), and its outstanding token resolves the same way.
 
 ## 5. Identifier grammars (`schemas/v2/ids.schema.json`)
 
-Every id field in every v2 schema and every `api/v2/openapi.yaml` parameter and response body MUST `$ref` its kind. `x-openwop-minted` records who mints the id: `host` (opaque and checkable), `author` (chosen in a workflow or pack; the v1 grammar stands), or `registry`.
+Every id field in every v2 schema and every `api/v2/openapi.yaml` parameter and response body MUST `$ref` its kind. `x-openwop-minted` records who mints the id: `host` (opaque and checkable), `author` (chosen in a workflow or pack), or `registry`.
 
 | Kinds | Grammar | Minted |
 | --- | --- | --- |
@@ -123,17 +174,32 @@ Every id field in every v2 schema and every `api/v2/openapi.yaml` parameter and 
 | `nodeId`, `workflowId`, `agentId`, `chainId`, `pluginId`, `templateId`, `libraryId` | `^[A-Za-z0-9._~:-]{1,128}$` | author |
 | `typeId` | `^[a-z][a-z0-9_-]*(\.[a-z][a-zA-Z0-9_-]*)+$`, maxLength 256 | author |
 
-`scripts/check-id-kinds-bound.mjs` enforces this against `spec/v2/id-field-bindings.json`, which sorts every `*Id` property in a v2 schema into two sets: it **is** a kind above (and MUST `$ref` it), or nothing here governs it (reason recorded); a field in neither set fails. *Every id field*, not every matching name.
+`spec/v2/id-field-bindings.json` sorts every `*Id` property in a v2 schema into two sets: it **is** a kind above (and MUST `$ref` it), or nothing here governs it (reason recorded).
 
-A host MUST reject a tenant-bound id whose tenant segment is not the caller's with `403` `id_tenant_mismatch`. A host-minted opaque segment MUST match `^[A-Za-z0-9._~-]{16,128}$`.
+- A host MUST reject a tenant-bound id whose tenant segment is not the caller's with `403` `id_tenant_mismatch`.
+- A host-minted opaque segment MUST match `^[A-Za-z0-9._~-]{16,128}$`.
+- Ids in documents and bodies are bound, always. A client MAY bind at its request seam.
+- Handle grammars (`memoryRef`, workspace `path`/`etag`, the plugin version token) and their `resolvability` class are specified where each handle is used. An importer MUST re-mint every `host`-scoped handle (`spec/v2/ext/portability/`).
 
-**On the wire a tenant-bound id is one path segment, projected** (RFC 0184): every UTF-8 byte outside `[A-Za-z0-9._-]` becomes `~` plus two uppercase hex digits, so `acme/r-9f3c…` travels as `acme~2Fr-9f3c…`. A host MUST emit it in every link and MUST accept it on every tenant-bound parameter; it MUST still accept `tenant%2Fopaque`, and MUST decode either before matching the grammar. A host MUST NOT mint a tenant-bound id containing `~`; ids already minted MUST still resolve. A host MUST project exactly once, where an id leaves it, and MUST NOT re-encode its own output.
+### Wire form
 
-**Through the overlap the bare form is admitted on a major-2 path parameter**. A parameter carrying only the opaque segment (what a `/v1/` create hands out) MUST resolve under the caller's tenant and never another's, and the response MUST name the resource bound (`versioning.md` §5); the credential supplies the segment the `403` check would read. Once a host advertises no `1.x` member it MUST refuse the bare form `400 validation_error` (not `id_tenant_mismatch`, not `not_found`). Ids in documents and bodies are bound, always. A client MAY bind at its request seam. Handle grammars (`memoryRef`, workspace `path`/`etag`, the plugin version token) and their `resolvability` class are specified where each handle is used; an importer MUST re-mint every `host`-scoped handle (`spec/v2/ext/portability/`).
+On the wire a tenant-bound id is one path segment, projected: every UTF-8 byte outside `[A-Za-z0-9._-]` becomes `~` plus two uppercase hex digits, so `acme/r-9f3c…` travels as `acme~2Fr-9f3c…`.
+
+- A host MUST emit the projected form in every link and MUST accept it on every tenant-bound parameter.
+- It MUST still accept `tenant%2Fopaque`, and MUST decode either form before matching the grammar.
+- A host MUST NOT mint a tenant-bound id containing `~`; ids already minted MUST still resolve.
+- A host MUST project exactly once, where an id leaves it, and MUST NOT re-encode its own output.
+
+### Bare ids during the v1 overlap
+
+Through the overlap the bare form is admitted on a major-2 path parameter.
+
+- A parameter carrying only the opaque segment (what a `/v1/` create hands out) MUST resolve under the caller's tenant and never another's, and the response MUST name the resource bound ([versioning.md](versioning.md) §5). The credential supplies the segment the `403` check would read.
+- Once a host advertises no `1.x` member it MUST refuse the bare form `400 validation_error` (not `id_tenant_mismatch`, not `not_found`).
 
 ## 6. Identity error codes (`spec/v2/errors.json`)
 
-Every code below is a row with `retriable: false` and no `details` contract; the envelope is `errors.md`. All are `since: "2.0"` except `credential_lifetime_exceeded` (`since: "2.36"`, RFC 0210).
+Every code below is a row with `retriable: false` and no `details` contract; the envelope is in [errors.md](errors.md).
 
 | Code | HTTP | Raised when |
 | --- | --- | --- |
@@ -150,8 +216,10 @@ Every code below is a row with `retriable: false` and no `details` contract; the
 | `id_tenant_mismatch` | 403 | a tenant-bound id's tenant segment is not the caller's (§5) |
 | `interrupt_token_invalid` | 401 | an unadvertised `alg` or an unheld `kid` (§4) |
 
-`unauthenticated` and `run_forbidden` keep their v1 rows. Every code is a registry member under `overview.md` §0.
+`unauthenticated` and `run_forbidden` also apply. Every code is a registry member under [overview.md](overview.md) §0.
 
-## 7. Invariants (RFC 0170 §E.2)
+## 7. Invariants
 
-The RFC 0170 §E.2 invariants are registered in `SECURITY/invariants.yaml` with their scenarios; an invariant that reaches the cut without a witness is demoted from `protocol` tier and recorded.
+The identity invariants are registered in `SECURITY/invariants.yaml` with their scenarios. An invariant without a witness is demoted from `protocol` tier.
+
+*Sources: RFC 0132, RFC 0165, RFC 0170, RFC 0176, RFC 0184, RFC 0200, RFC 0210.*
