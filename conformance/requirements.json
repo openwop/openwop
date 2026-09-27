@@ -780,14 +780,6 @@
       "explicitId": "openwop.it.a2ui-surface-delta-transport.drives-the-emit-surface-seam-a-a2uidelta-1-subscriber-reconstruction-equals-the",
       "citations": [
         {
-          "section": "RFC 0114 §15",
-          "requirement": "the emit-surface seam MUST record the baseline full surface"
-        },
-        {
-          "section": "RFC 0114 §15",
-          "requirement": "the second emit MUST succeed"
-        },
-        {
           "section": "RFC 0114",
           "requirement": "a delta frame catalogVersion MUST equal the referenced full surface"
         },
@@ -804,7 +796,7 @@
     {
       "id": "openwop.it.a2ui-surface-delta-transport.the-emit-surface-seam-rejects-an-out-of-catalog-surface-fail-closed-real-catalog",
       "file": "a2ui-surface-delta-transport.test.ts",
-      "line": 575,
+      "line": 584,
       "title": "the emit-surface seam rejects an out-of-catalog surface fail-closed (real catalog gate)",
       "explicitId": "openwop.it.a2ui-surface-delta-transport.the-emit-surface-seam-rejects-an-out-of-catalog-surface-fail-closed-real-catalog",
       "citations": [
@@ -8420,7 +8412,7 @@
     {
       "id": "openwop.it.compensation-behavior.compensation-events-carry-no-provider-bodies-or-credentials",
       "file": "compensation-behavior.test.ts",
-      "line": 208,
+      "line": 211,
       "title": "compensation events carry no provider bodies or credentials",
       "explicitId": "openwop.it.compensation-behavior.compensation-events-carry-no-provider-bodies-or-credentials",
       "citations": [
@@ -8434,7 +8426,7 @@
     {
       "id": "openwop.it.compensation-behavior.a-healthy-run-that-declares-a-compensator-reports-compensationstatus-none-sp-11a",
       "file": "compensation-behavior.test.ts",
-      "line": 230,
+      "line": 233,
       "title": "a healthy run that DECLARES a compensator reports compensationStatus `none` (SP-11a)",
       "explicitId": "openwop.it.compensation-behavior.a-healthy-run-that-declares-a-compensator-reports-compensationstatus-none-sp-11a",
       "citations": [
@@ -10450,7 +10442,7 @@
     {
       "id": "openwop.it.debugBundle.canary-in-workflow-inputs-must-not-appear-verbatim-in-the-bundle-response",
       "file": "debugBundle.test.ts",
-      "line": 204,
+      "line": 206,
       "title": "canary in workflow inputs MUST NOT appear verbatim in the bundle response",
       "explicitId": "openwop.it.debugBundle.canary-in-workflow-inputs-must-not-appear-verbatim-in-the-bundle-response",
       "citations": [
@@ -10467,7 +10459,7 @@
     {
       "id": "openwop.it.debugBundle.span-traceid-kind-status-have-the-rfc-0207-shape-and-the-run-span-joins-the-call",
       "file": "debugBundle.test.ts",
-      "line": 238,
+      "line": 240,
       "title": "span traceId / kind / status have the RFC 0207 shape and the run span joins the caller trace",
       "explicitId": null,
       "citations": [
@@ -12682,7 +12674,7 @@
     {
       "id": "openwop.it.eventOrdering.events-from-a-single-poll-have-non-decreasing-sequence-numbers",
       "file": "eventOrdering.test.ts",
-      "line": 46,
+      "line": 53,
       "title": "events from a single poll have non-decreasing sequence numbers",
       "explicitId": "openwop.it.eventOrdering.events-from-a-single-poll-have-non-decreasing-sequence-numbers",
       "citations": [
@@ -12696,7 +12688,7 @@
     {
       "id": "openwop.it.eventOrdering.repeated-polls-of-a-terminal-run-yield-identical-event-sequences",
       "file": "eventOrdering.test.ts",
-      "line": 71,
+      "line": 78,
       "title": "repeated polls of a terminal run yield identical event sequences",
       "explicitId": "openwop.it.eventOrdering.repeated-polls-of-a-terminal-run-yield-identical-event-sequences",
       "citations": [
@@ -12714,7 +12706,7 @@
     {
       "id": "openwop.it.eventOrdering.event-stream-contains-exactly-one-of-run-completed-run-failed-run-cancelled",
       "file": "eventOrdering.test.ts",
-      "line": 103,
+      "line": 110,
       "title": "event stream contains exactly one of run.completed / run.failed / run.cancelled",
       "explicitId": "openwop.it.eventOrdering.event-stream-contains-exactly-one-of-run-completed-run-failed-run-cancelled",
       "citations": [
@@ -12727,7 +12719,7 @@
     {
       "id": "openwop.it.eventOrdering.the-terminal-event-is-the-last-event-in-the-stream",
       "file": "eventOrdering.test.ts",
-      "line": 124,
+      "line": 131,
       "title": "the terminal event is the LAST event in the stream",
       "explicitId": "openwop.it.eventOrdering.the-terminal-event-is-the-last-event-in-the-stream",
       "citations": [
@@ -19441,7 +19433,7 @@
     {
       "id": "openwop.it.pause-resume.pause-transitions-to-paused-resume-returns-the-run-to-running",
       "file": "pause-resume.test.ts",
-      "line": 62,
+      "line": 81,
       "title": "pause transitions to paused; resume returns the run to running",
       "explicitId": "openwop.it.pause-resume.pause-transitions-to-paused-resume-returns-the-run-to-running",
       "citations": [
@@ -19458,7 +19450,7 @@
     {
       "id": "openwop.it.pause-resume.resuming-a-running-not-paused-run-returns-409-with-details-runstatus",
       "file": "pause-resume.test.ts",
-      "line": 110,
+      "line": 129,
       "title": "resuming a running (not paused) run returns 409 with details.runStatus",
       "explicitId": "openwop.it.pause-resume.resuming-a-running-not-paused-run-returns-409-with-details-runstatus",
       "citations": [
@@ -19475,7 +19467,7 @@
     {
       "id": "openwop.it.pause-resume.pause-on-an-already-paused-run-returns-409-with-details-runstatus-paused-unless",
       "file": "pause-resume.test.ts",
-      "line": 144,
+      "line": 163,
       "title": ":pause on an already-paused run returns 409 with details.runStatus paused, unless the request carries the original Idempotency-Key",
       "explicitId": "openwop.it.pause-resume.pause-on-an-already-paused-run-returns-409-with-details-runstatus-paused-unless",
       "citations": [
@@ -19504,7 +19496,7 @@
     {
       "id": "openwop.it.pause-resume.pause-on-a-completed-cancelled-failed-run-must-return-409",
       "file": "pause-resume.test.ts",
-      "line": 205,
+      "line": 224,
       "title": ":pause on a completed/cancelled/failed run MUST return 409",
       "explicitId": "openwop.it.pause-resume.pause-on-a-completed-cancelled-failed-run-must-return-409",
       "citations": [
@@ -19517,7 +19509,7 @@
     {
       "id": "openwop.it.pause-resume.under-drain-current-node-node-completed-precedes-run-paused-in-the-log",
       "file": "pause-resume.test.ts",
-      "line": 229,
+      "line": 248,
       "title": "under drain-current-node node.completed precedes run.paused in the log",
       "explicitId": "openwop.it.pause-resume.under-drain-current-node-node-completed-precedes-run-paused-in-the-log",
       "citations": [
@@ -19535,7 +19527,7 @@
     {
       "id": "openwop.it.pause-resume.pause-must-not-silently-override-an-active-interrupt-suspend",
       "file": "pause-resume.test.ts",
-      "line": 268,
+      "line": 287,
       "title": ":pause MUST NOT silently override an active interrupt suspend",
       "explicitId": "openwop.it.pause-resume.pause-must-not-silently-override-an-active-interrupt-suspend",
       "citations": [
@@ -19552,7 +19544,7 @@
     {
       "id": "openwop.it.pause-resume.every-drainpolicy-advertised-by-the-host-is-accepted-on-pause",
       "file": "pause-resume.test.ts",
-      "line": 324,
+      "line": 343,
       "title": "every drainPolicy advertised by the host is accepted on :pause",
       "explicitId": "openwop.it.pause-resume.every-drainpolicy-advertised-by-the-host-is-accepted-on-pause",
       "citations": [
@@ -20867,17 +20859,21 @@
     {
       "id": "openwop.it.prompt-read-workspace-membership-enforced.get-v1-prompts-workspaceid-non-member-must-refuse-or-return-empty-templates-neve",
       "file": "prompt-read-workspace-membership-enforced.test.ts",
-      "line": 101,
+      "line": 102,
       "title": "GET /v1/prompts?workspaceId=<non-member> MUST refuse OR return empty templates[] — never another workspace's content",
       "explicitId": "openwop.it.prompt-read-workspace-membership-enforced.get-v1-prompts-workspaceid-non-member-must-refuse-or-return-empty-templates-neve",
       "citations": [
         {
-          "section": "spec/v1/rest-endpoints.md §Common error codes — workspace_membership_required",
+          "section": "spec/v1/prompts.md §Workspace membership on workspace-scoped reads and writes",
           "requirement": null,
           "interpolated": true
         },
         {
           "section": "spec/v1/prompts.md §Workspace membership on workspace-scoped reads and writes",
+          "requirement": "a workspace-scoped read for a non-member workspace MUST be refused (4xx) or return no templates"
+        },
+        {
+          "section": "spec/v1/rest-endpoints.md §Common error codes — workspace_membership_required",
           "requirement": null,
           "interpolated": true
         }
@@ -22083,7 +22079,7 @@
     {
       "id": "openwop.it.redaction.aiproviders-is-well-formed-when-present-byok-supported",
       "file": "redaction.test.ts",
-      "line": 117,
+      "line": 119,
       "title": "aiProviders is well-formed when present (byok ⊆ supported)",
       "explicitId": "openwop.it.redaction.aiproviders-is-well-formed-when-present-byok-supported",
       "citations": [
@@ -22097,7 +22093,7 @@
     {
       "id": "openwop.it.redaction.canary-s-planted-in-authorization-header-is-not-echoed-in-401-body",
       "file": "redaction.test.ts",
-      "line": 148,
+      "line": 150,
       "title": "canary \"%s\" planted in Authorization header is not echoed in 401 body",
       "explicitId": null,
       "citations": []
@@ -22105,7 +22101,7 @@
     {
       "id": "openwop.it.redaction.the-marker-substring-alone-never-appears-in-a-401-body-universal",
       "file": "redaction.test.ts",
-      "line": 172,
+      "line": 174,
       "title": "the marker substring alone never appears in a 401 body (universal)",
       "explicitId": "openwop.it.redaction.the-marker-substring-alone-never-appears-in-a-401-body-universal",
       "citations": [
@@ -22118,7 +22114,7 @@
     {
       "id": "openwop.it.redaction.skips-when-host-does-not-advertise-secrets-supported",
       "file": "redaction.test.ts",
-      "line": 189,
+      "line": 191,
       "title": "skips when host does NOT advertise secrets.supported",
       "explicitId": "openwop.it.redaction.skips-when-host-does-not-advertise-secrets-supported",
       "citations": [
@@ -22335,7 +22331,7 @@
     {
       "id": "openwop.it.replay-divergence-at-refusal.phase-4-host-must-emit-replay-divergedatrefusal-fail-with-replay-diverged-at-ref~2",
       "file": "replay-divergence-at-refusal.test.ts",
-      "line": 320,
+      "line": 323,
       "title": "Phase 4 host MUST emit replay.divergedAtRefusal + fail with replay_diverged_at_refusal when original=refusal + replay=valid (symmetric case)",
       "explicitId": "openwop.it.replay-divergence-at-refusal.phase-4-host-must-emit-replay-divergedatrefusal-fail-with-replay-diverged-at-ref~2",
       "citations": [
@@ -22963,7 +22959,7 @@
     {
       "id": "openwop.it.replayDeterminism.branch-mode-does-not-need-to-produce-identical-event-sequences-negative-control",
       "file": "replayDeterminism.test.ts",
-      "line": 156,
+      "line": 161,
       "title": "branch mode does NOT need to produce identical event sequences (negative-control)",
       "explicitId": "openwop.it.replayDeterminism.branch-mode-does-not-need-to-produce-identical-event-sequences-negative-control",
       "citations": [
@@ -23617,7 +23613,7 @@
     {
       "id": "openwop.it.runner-ledger.files-that-finished-before-this-one-appear-in-the-ledger-file-with-an-assertion",
       "file": "runner-ledger.test.ts",
-      "line": 270,
+      "line": 274,
       "title": "files that finished before this one appear in the ledger file with an assertion count",
       "explicitId": "openwop.it.runner-ledger.files-that-finished-before-this-one-appear-in-the-ledger-file-with-an-assertion",
       "citations": [
@@ -35544,7 +35540,7 @@
     {
       "id": "openwop.it.workflow-chain-host-expansion.positive-2-node-chain-matches-the-reference-library-edge-rewrite-capability-prop",
       "file": "workflow-chain-host-expansion.test.ts",
-      "line": 205,
+      "line": 208,
       "title": "positive — 2-node chain matches the reference library (edge rewrite + capability propagation)",
       "explicitId": "openwop.it.workflow-chain-host-expansion.positive-2-node-chain-matches-the-reference-library-edge-rewrite-capability-prop",
       "citations": [
@@ -35561,7 +35557,7 @@
     {
       "id": "openwop.it.workflow-chain-host-expansion.negative-unknown-pack-returns-404-pack-not-found",
       "file": "workflow-chain-host-expansion.test.ts",
-      "line": 237,
+      "line": 240,
       "title": "negative — unknown pack returns 404 pack_not_found",
       "explicitId": "openwop.it.workflow-chain-host-expansion.negative-unknown-pack-returns-404-pack-not-found",
       "citations": [
@@ -35574,7 +35570,7 @@
     {
       "id": "openwop.it.workflow-chain-host-expansion.negative-known-pack-but-unknown-chainid-returns-404-chain-not-found",
       "file": "workflow-chain-host-expansion.test.ts",
-      "line": 249,
+      "line": 252,
       "title": "negative — known pack but unknown chainId returns 404 chain_not_found",
       "explicitId": "openwop.it.workflow-chain-host-expansion.negative-known-pack-but-unknown-chainid-returns-404-chain-not-found",
       "citations": [
@@ -35587,7 +35583,7 @@
     {
       "id": "openwop.it.workflow-chain-host-expansion.negative-malformed-request-body-returns-422-invalid-request",
       "file": "workflow-chain-host-expansion.test.ts",
-      "line": 261,
+      "line": 264,
       "title": "negative — malformed request body returns 422 invalid_request",
       "explicitId": "openwop.it.workflow-chain-host-expansion.negative-malformed-request-body-returns-422-invalid-request",
       "citations": [
@@ -35600,7 +35596,7 @@
     {
       "id": "openwop.it.workflow-chain-host-expansion.rfc-0157-a-compensating-chain-expands-through-the-live-path-with-compensation-an",
       "file": "workflow-chain-host-expansion.test.ts",
-      "line": 269,
+      "line": 272,
       "title": "RFC 0157 — a compensating chain expands through the live path with `compensation` and `irreversibleEffect` carried verbatim onto the expanded nodes",
       "explicitId": "openwop.it.workflow-chain-host-expansion.rfc-0157-a-compensating-chain-expands-through-the-live-path-with-compensation-an",
       "citations": [
@@ -35628,7 +35624,7 @@
     {
       "id": "openwop.it.workflow-chain-host-expansion.rfc-0157-a-chain-carrying-an-unwind-policy-is-refused-with-capability-required-o",
       "file": "workflow-chain-host-expansion.test.ts",
-      "line": 308,
+      "line": 311,
       "title": "RFC 0157 — a chain carrying an unwind POLICY is refused with capability_required on a host that does not advertise compensation, and expands on one that does",
       "explicitId": "openwop.it.workflow-chain-host-expansion.rfc-0157-a-chain-carrying-an-unwind-policy-is-refused-with-capability-required-o",
       "citations": [

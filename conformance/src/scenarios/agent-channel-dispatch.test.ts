@@ -153,8 +153,9 @@ describe.skipIf(HTTP_SKIP)('agent-channel-dispatch (RFC 0082 §B): production ru
       { fromSeq: 0, mode: 'replay' },
     );
     if (forkDeclined(fork1.status, 'channel-dispatch replay fork 1')) {
-      ctx.skip();
-      return softSkip('blocked', 'precondition not met — `forkDeclined(fork1.status, \'channel-dispatch replay fork 1\')` returned early (seam, prior step, or fixture unavailable)');
+      // forkDeclined() already noted `blocked` with the status; ctx.skip()
+      // throws, so the row is `blocked` — nothing after it runs.
+      return ctx.skip();
     }
     expect(
       fork1.status,
@@ -198,6 +199,10 @@ describe.skipIf(HTTP_SKIP)('agent-channel-dispatch (RFC 0082 §B): production ru
       // evidence; the cross-move proof needs the seam. Honest skip of Leg 3.
       // eslint-disable-next-line no-console
       console.warn('[agent-channel-dispatch] deployment seam absent — skipping the channel-move non-re-resolution leg (Leg 3)');
+      // partial-witness-ok: Legs 1+2 observed the §B pin on a real run and the
+      // replay re-reading it; the deployment-transition seam is OPTIONAL
+      // (conformance-only), so a conforming host without it cannot show the
+      // channel-move half.
       return softSkip('blocked', 'precondition not met — `moved === null` returned early ([agent-channel-dispatch] deployment seam absent — skipping the channel-move non-re-resolution leg (Leg 3)) (seam, prior step, or fixture unavailable)');
     }
     // Confirm the move is OBSERVABLE: a fresh channel-bound run must now resolve
@@ -209,6 +214,9 @@ describe.skipIf(HTTP_SKIP)('agent-channel-dispatch (RFC 0082 §B): production ru
     if (typeof movedVersion !== 'string' || movedVersion === pinnedVersion) {
       // eslint-disable-next-line no-console
       console.warn('[agent-channel-dispatch] channel did not observably move — skipping Leg 3 strict assertion');
+      // partial-witness-ok: Legs 1+2 observed the §B pin and its replay
+      // re-read; a promote that does not move the head (canary split, no-op)
+      // is conforming, and without a moved head non-re-resolution has no contrast.
       return softSkip('blocked', 'precondition not met — `typeof movedVersion !== \'string\' || movedVersion === pinnedVersion` returned early ([agent-channel-dispatch] channel did not observably move — skipping Leg 3 strict assertion) (seam, prior step…');
     }
     const fork2 = await driver.post(
@@ -216,8 +224,9 @@ describe.skipIf(HTTP_SKIP)('agent-channel-dispatch (RFC 0082 §B): production ru
       { fromSeq: 0, mode: 'replay' },
     );
     if (forkDeclined(fork2.status, 'channel-dispatch replay fork 2')) {
-      ctx.skip();
-      return softSkip('blocked', 'precondition not met — `forkDeclined(fork2.status, \'channel-dispatch replay fork 2\')` returned early (seam, prior step, or fixture unavailable)');
+      // forkDeclined() already noted `blocked` with the status; ctx.skip()
+      // throws, so the row is `blocked` — nothing after it runs.
+      return ctx.skip();
     }
     expect(
       fork2.status,

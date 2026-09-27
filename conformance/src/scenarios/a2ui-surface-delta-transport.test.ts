@@ -48,7 +48,7 @@ import { SCHEMAS_DIR } from '../lib/paths.js';
 import { driver } from '../lib/driver.js';
 import { capabilityFamily } from '../lib/discovery-capabilities.js';
 import { req } from '../lib/requirement-ids.js';
-import { softSkip } from '../lib/soft-skip.js';
+import { blockedDespiteAssertions, softSkip } from '../lib/soft-skip.js';
 
 const ajv = new Ajv2020({ strict: false, allErrors: true });
 
@@ -518,28 +518,33 @@ describe.skipIf(HTTP_SKIP)('a2ui-surface-delta-transport: live host delta transp
     const surfaceB = fullSurfaceMaterializedAfterUpdates();
 
     // Baseline (surface A) through the host's REAL surface-emit path.
+    // The two emits and the JSON event read are SETUP for this leg, and each is
+    // an early return rather than an assertion, so that a host on which the
+    // agreement is unobservable records that honestly instead of a
+    // partial-witness PASS (until 2026-09-27 the emit statuses were asserted
+    // first). JSON content negotiation on the events endpoint is OPTIONAL
+    // (stream-modes.md §"Content negotiation") and delivering a delta frame is
+    // MAY even under the advertisement (§"A2UI delta transport"), so an
+    // SSE-only host, or one that sends no frame, is conformant and out of reach
+    // of this leg: `inapplicable`, never `blocked`.
     const emitA = await driver.post('/v1/host/sample/a2ui/emit-surface', { runId, surface: surfaceA });
     if (emitA.status === 404 || emitA.status === 405) return softSkip('blocked', 'precondition not met — `emitA.status === 404 || emitA.status === 405` returned early (seam absent — soft-skip the live leg) (seam, prior step, or fixture unavailable)'); // seam absent — soft-skip the live leg
-    expect(
-      emitA.status,
-      req('openwop.it.a2ui-surface-delta-transport.drives-the-emit-surface-seam-a-a2uidelta-1-subscriber-reconstruction-equals-the', 'RFC 0114 §15', 'the emit-surface seam MUST record the baseline full surface'),
-    ).toBeLessThan(300);
+    if (emitA.status >= 300) return softSkip('blocked', `the emit-surface seam refused the baseline full surface (${emitA.status}) — it MUST record it (RFC 0114 §15), and nothing was transported`);
 
     // Second full surface (surface B) — recorded full AND transported as a delta
     // to any ?a2uiDelta=1 subscriber.
     const emitB = await driver.post('/v1/host/sample/a2ui/emit-surface', { runId, surface: surfaceB });
-    if (emitB.status === 404 || emitB.status === 405) return softSkip('blocked', 'precondition not met — `emitB.status === 404 || emitB.status === 405` returned early (seam, prior step, or fixture unavailable)');
-    expect(emitB.status, req('openwop.it.a2ui-surface-delta-transport.drives-the-emit-surface-seam-a-a2uidelta-1-subscriber-reconstruction-equals-the', 'RFC 0114 §15', 'the second emit MUST succeed')).toBeLessThan(300);
+    if (emitB.status >= 300) return softSkip('blocked', `the emit-surface seam accepted the baseline surface, then answered ${emitB.status} for the second — no update was transported`);
     const refB = (emitB.json as EmitSurfaceResponse)?.surfaceRef;
 
     // ?a2uiDelta=1 subscriber: locate the delta frame the host transported.
     const deltaEvents = await getEvents(runId, true);
-    if (deltaEvents === null) return softSkip('blocked', 'precondition not met — `deltaEvents === null` returned early (events stream unavailable in JSON — soft-skip) (seam, prior step, or fixture unavailable)'); // events stream unavailable in JSON — soft-skip
+    if (deltaEvents === null) return softSkip('inapplicable', 'GET /v1/runs/{runId}/events?a2uiDelta=1 with Accept: application/json did not answer a JSON 200 — the host serves the events endpoint as SSE only, which is conformant (stream-modes.md §"Content negotiation"), and this leg reads JSON');
     const frames = collectMatching(deltaEvents, validateFrame)
       .map(readFrame)
       .filter((f): f is { surfaceRef: string; catalogVersion: string; patch: PatchOp[] } => f !== null)
       .filter((f) => refB === undefined || f.surfaceRef === refB);
-    if (frames.length === 0) return softSkip('blocked', 'precondition not met — `frames.length === 0` returned early (host streams SSE-only or buffered the frame — soft-skip) (seam, prior step, or fixture unavailable)'); // host streams SSE-only or buffered the frame — soft-skip
+    if (frames.length === 0) return softSkip('inapplicable', 'the ?a2uiDelta=1 JSON read carried no delta frame for the update — delivering one is MAY (stream-modes.md §"A2UI delta transport"), so there is nothing to reconstruct');
     const frame = frames[frames.length - 1];
 
     // catalogVersion on the delta MUST equal the baseline full surface's.
@@ -557,9 +562,13 @@ describe.skipIf(HTTP_SKIP)('a2ui-surface-delta-transport: live host delta transp
 
     // Non-negotiating subscriber: the host materializes the FULL surface for the same update.
     const fullEvents = await getEvents(runId, false);
-    if (fullEvents === null) return softSkip('blocked', 'precondition not met — `fullEvents === null` returned early (seam, prior step, or fixture unavailable)');
+    // The same endpoint just answered JSON for the ?a2uiDelta=1 read, so the host
+    // negotiates JSON; failing the plain read leaves the agreement unobserved.
+    if (fullEvents === null) return blockedDespiteAssertions('the non-negotiating GET /v1/runs/{runId}/events did not answer 200 with JSON — the materialized full surface was never read');
     const fulls = collectMatching(fullEvents, validateRecorded);
-    if (fulls.length === 0) return softSkip('blocked', 'precondition not met — `fulls.length === 0` returned early (soft-skip — no full surface observed on the non-delta stream) (seam, prior step, or fixture unavailable)'); // soft-skip — no full surface observed on the non-delta stream
+    // ai-envelope.md §"Delta transport": without ?a2uiDelta=1 the host MUST
+    // deliver the materialized full surface, so a conforming host always has one here.
+    if (fulls.length === 0) return blockedDespiteAssertions('the non-negotiating event read carried no full ui.a2ui-surface — the delta reconstruction had nothing to be compared against');
     const materializedFull = fulls[fulls.length - 1];
 
     // delta and full agree — the core RFC 0114 transport guarantee, witnessed live.
@@ -590,7 +599,9 @@ describe.skipIf(HTTP_SKIP)('a2ui-surface-delta-transport: live host delta transp
       surface: { components: [{ component: 'iframe', src: 'https://evil.example/x' }] },
     };
     const rejected = await driver.post('/v1/host/sample/a2ui/emit-surface', { runId, surface: outOfCatalog });
-    if (rejected.status === 404 || rejected.status === 405) return softSkip('blocked', 'precondition not met — `rejected.status === 404 || rejected.status === 405` returned early (seam, prior step, or fixture unavailable)');
+    // The seam accepted the baseline (asserted above), so a 404/405 here is the
+    // seam vanishing, not absent: the fail-closed rejection was never observed.
+    if (rejected.status === 404 || rejected.status === 405) return blockedDespiteAssertions(`the emit-surface seam accepted the baseline surface, then answered ${rejected.status} for the out-of-catalog one — the fail-closed rejection was never observed`);
     expect(
       rejected.status,
       req('openwop.it.a2ui-surface-delta-transport.the-emit-surface-seam-rejects-an-out-of-catalog-surface-fail-closed-real-catalog', 

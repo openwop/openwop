@@ -46,7 +46,8 @@
  *     diagnostic log. Indicates the host doesn't recognize `?workspaceId=`
  *     on this endpoint (e.g., host-only template library with no
  *     workspace dimension).
- *   - 5xx — PASS (refused; envelope shape unconstrained).
+ *   - 5xx — `blocked`: a server error is not a readable refusal (a crash
+ *     also answers 5xx), so enforcement was not observed.
  *
  * Why a random workspaceId is sufficient: the assertion is negative-space.
  * A host that correctly enforces membership MUST refuse for ANY workspace
@@ -118,27 +119,17 @@ describe.skipIf(HTTP_SKIP)(
         `/v1/prompts?workspaceId=${encodeURIComponent(nonMemberWorkspaceId)}`,
       );
 
-      // 4xx — refused. Acceptable shape for the membership-required failure
-      // (and any other refusal mode the host chooses: 401, 404 for
-      // existence-disclosure avoidance, etc).
-      if (res.status >= 400 && res.status < 500) {
-        // Canonical envelope on 403 per rest-endpoints.md §"Common error codes".
-        if (res.status === 403) {
-          const body = res.json as { error?: unknown } | null;
-          expect(
-            body?.error,
-            req('openwop.it.prompt-read-workspace-membership-enforced.get-v1-prompts-workspaceid-non-member-must-refuse-or-return-empty-templates-neve', 
-              'spec/v1/rest-endpoints.md §Common error codes — workspace_membership_required',
-              `403 refusal of a workspace-scoped read MUST carry error: "workspace_membership_required"; got error: ${JSON.stringify(body?.error)}`,
-            ),
-          ).toBe('workspace_membership_required');
-        }
-        return softSkip('blocked', 'precondition not met — `res.status >= 400 && res.status < 500` returned early (4xx — refused. Acceptable shape for the membership-required failure (and any other refusal mode the host chooses: 401, 404 for existence-d…');
-      }
+      const ID = 'openwop.it.prompt-read-workspace-membership-enforced.get-v1-prompts-workspaceid-non-member-must-refuse-or-return-empty-templates-neve';
 
-      // 5xx — refused (infrastructure failure is acceptable; envelope shape
-      // unconstrained).
-      if (res.status >= 500) return softSkip('blocked', 'precondition not met — `res.status >= 500` returned early (5xx — refused (infrastructure failure is acceptable; envelope shape unconstrained).) (seam, prior step, or fixture unavailable)');
+      // 5xx — not a refusal the suite can read as enforcement (a crash also
+      // answers 5xx). Checked first so it returns before any assertion.
+      if (res.status >= 500) return softSkip('blocked', `GET /v1/prompts?workspaceId=<non-member> answered ${res.status} — a server error is neither a refusal nor an empty result, so membership enforcement was not observed`);
+
+      // Other status codes (1xx, 3xx) — not a clear signal either way.
+      if (res.status < 200 || (res.status >= 300 && res.status < 400)) {
+        softSkip('skipped', `GET /v1/prompts?workspaceId=… answered ${res.status} — neither a refusal nor a list`);
+        return ctx.skip();
+      }
 
       // 2xx — must inspect the response body. The failure mode this
       // invariant guards against is a 200 response that LEAKS templates
@@ -152,35 +143,53 @@ describe.skipIf(HTTP_SKIP)(
         ) {
           // Host doesn't recognize `?workspaceId=` on this endpoint
           // (response shape doesn't include the documented `templates[]`
-          // field). Soft-skip: this scenario probes hosts that expose
+          // field). Skip: this scenario probes hosts that expose
           // workspace-scoped reads, and a host without that surface is
-          // simply out of scope.
-          ctx.skip();
-          return softSkip('blocked', 'precondition not met — `body === null || typeof body !== \'object\' || !(\'templates\' in body)` returned early (seam, prior step, or fixture unavailable)');
+          // simply out of scope. The note is written BEFORE ctx.skip(),
+          // which throws.
+          softSkip('skipped', 'GET /v1/prompts?workspaceId=… answered 2xx without a templates field — the host does not expose workspace-scoped prompt reads');
+          return ctx.skip();
         }
         const templates = body.templates;
         if (!Array.isArray(templates)) {
           // Same: unrecognized shape, skip.
-          ctx.skip();
-          return softSkip('blocked', 'precondition not met — `!Array.isArray(templates)` returned early (seam, prior step, or fixture unavailable)');
+          softSkip('skipped', 'GET /v1/prompts?workspaceId=… answered 2xx with a non-array templates field — the host does not expose workspace-scoped prompt reads');
+          return ctx.skip();
         }
 
         // A random non-member workspaceId can never legitimately contain
         // templates the caller is authorized to see. Any non-empty result
-        // is a cross-tenant data leak.
+        // is a cross-tenant data leak. An empty result IS the requirement
+        // observed, so the leg ends as a plain pass.
         expect(
           templates.length,
-          req('openwop.it.prompt-read-workspace-membership-enforced.get-v1-prompts-workspaceid-non-member-must-refuse-or-return-empty-templates-neve', 
+          req(ID,
             'spec/v1/prompts.md §Workspace membership on workspace-scoped reads and writes',
             `GET /v1/prompts?workspaceId=<random-non-member> MUST NOT return any templates; got ${templates.length} templates which is a cross-tenant data leak (the random workspaceId is freshly generated per probe and cannot legitimately contain authorized content)`,
           ),
         ).toBe(0);
-        return softSkip('blocked', 'precondition not met — `res.status >= 200 && res.status < 300` returned early (2xx — must inspect the response body. The failure mode this invariant guards against is a 200 response that LEAKS templates from a workspa…');
+      } else {
+        // 4xx — refused. Acceptable shape for the membership-required failure
+        // (and any other refusal mode the host chooses: 401, 404 for
+        // existence-disclosure avoidance, etc). The refusal IS the requirement
+        // observed; until 2026-09-27 this branch ended in a blocked soft-skip,
+        // recording a refused read as blocked (401/404) or a partial witness (403).
+        expect(
+          res.status,
+          req(ID, 'spec/v1/prompts.md §Workspace membership on workspace-scoped reads and writes', 'a workspace-scoped read for a non-member workspace MUST be refused (4xx) or return no templates'),
+        ).toBeGreaterThanOrEqual(400);
+        // Canonical envelope on 403 per rest-endpoints.md §"Common error codes".
+        if (res.status === 403) {
+          const body = res.json as { error?: unknown } | null;
+          expect(
+            body?.error,
+            req(ID,
+              'spec/v1/rest-endpoints.md §Common error codes — workspace_membership_required',
+              `403 refusal of a workspace-scoped read MUST carry error: "workspace_membership_required"; got error: ${JSON.stringify(body?.error)}`,
+            ),
+          ).toBe('workspace_membership_required');
+        }
       }
-
-      // Other status codes (1xx, 3xx) — soft-skip with note. Not a clear
-      // signal either way.
-      ctx.skip();
     });
   },
 );
