@@ -11,8 +11,27 @@
 import { readFileSync, writeFileSync, existsSync } from 'node:fs';
 import { join, dirname, resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
+import { createRequire } from 'node:module';
 const ROOT = resolve(dirname(fileURLToPath(import.meta.url)), '..');
 const reg = JSON.parse(readFileSync(join(ROOT, 'spec', 'v2', 'errors.json'), 'utf8'));
+
+// The registry declares `$schema: https://openwop.dev/spec/v2/errors.schema.json`.
+// Validate it here, in both modes, so a malformed row cannot reach the
+// generated envelope. Codes must also be unique, which a schema cannot say.
+{
+  const require = createRequire(join(ROOT, 'conformance', 'package.json'));
+  const { Ajv2020 } = require('ajv/dist/2020.js');
+  const addFormats = require('ajv-formats');
+  const ajv = new Ajv2020({ allErrors: true, strict: false }); addFormats(ajv);
+  const regSchema = JSON.parse(readFileSync(join(ROOT, 'spec', 'v2', 'errors.schema.json'), 'utf8'));
+  const problems = [];
+  if (reg.$schema !== regSchema.$id) problems.push(`$schema is ${reg.$schema}, expected ${regSchema.$id}`);
+  const validate = ajv.compile(regSchema);
+  if (!validate(reg)) problems.push(ajv.errorsText(validate.errors, { separator: '; ' }));
+  const seen = new Set();
+  for (const r of reg.rows ?? []) { if (seen.has(r.code)) problems.push(`duplicate code ${r.code}`); seen.add(r.code); }
+  if (problems.length) { console.error(`generate-error-envelope: spec/v2/errors.json does not validate against spec/v2/errors.schema.json — ${problems.join(' | ')}`); process.exit(1); }
+}
 const OUT = join(ROOT, 'schemas', 'v2', 'error-envelope.schema.json');
 const withDetails = reg.rows.filter((r) => r.details);
 const schema = {

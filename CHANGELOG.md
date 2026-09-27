@@ -17,16 +17,23 @@ Format follows [Keep a Changelog](https://keepachangelog.com/en/1/) loosely. Ver
   - No scenario recorded the `openwop.family.<key>` pass the predicate needs.
   - The ext READMEs named camelCase keys (`extensions.<org>.restTransport`) that `extensionsKeyPattern` rejects.
   - The checker ignored the README's tier-2 bar.
-  - Four of the pages are notes, not families.
+  - Four of the pages are not families: three notes and `portability`, which #1671 retired as a core family.
 
   What changed:
   - Each ext declaration row carries a kebab `extensionName`, and each README header now agrees with its row (both checked by `check-declaration.mjs`).
   - `restTransport` is `witnessable-gated` (new `v2-ext-rest-transport`), `a2uiSurface` is `seam-gated` (a family leg in `v2-a2ui-v09-surface`), and the 11 reservations are witnessed by `v2-ext-family-claims`.
   - New `evidence/host-tiers.json`: `check-ext-status-coherence.mjs` counts only certified tier-2+ bundles and reports tier-1-only witnesses as `NOT YET`.
-  - The four notes read `Status: Note.`.
+  - The three notes (`grpc-transport`, `provider-idempotency`, `sandbox-runtime-notes`) read `Status: Note.`.
   - `capabilities.md` §3.2/§6 and `runs.md` §"Caching and encoding" use the real key spelling.
 
   No page changes status in this PR. Each promotion is its own PR with a 7-day window, once a certified MyndHyve bundle carries the row.
+- **v2 corrections from an architect review.** Each item names its change class.
+  - **`minClientVersion` has a grammar in the schema** (Class 3 correction, register row `openwop.correction.v2.2`). `schemas/v2/capabilities.schema.json` now carries the `<major>.<minor>` pattern that `versioning.md` §1.5 and the `v2-min-client-version` scenario already required. All 8 committed v2 host bundles advertise a conforming value. RFC 0172 §A.5, its axis row 15 and row C5.8 are amended in place: they said the field "becomes a MUST" while making refusal a MAY. `versioning.md`'s axis row 15 drops the same stray MUST.
+  - **RFC 0169 §C.1 amended in place.** It said `a2a.profiles` and `mcp.profiles` were replaced; RFC 0175 §B.1 kept both as facets without `-legacy` ids. The RFC gains an `Amended by` row.
+  - **`spec/v2/ext/portability/` is Retired** (editorial). It contradicted the declaration: `portability` is a core family. The page now points to `capabilities.md` § portability.
+  - **Run snapshot `If-None-Match`** (editorial). `runs.md` §Snapshot and the generated `If-None-Match` description now say the `304` MUST applies when the host sent an `ETag`, which the snapshot only SHOULD send.
+  - **Profiles carry a `summary`** (non-normative addition). `spec/v2/declaration.json` profiles gain a one-line plain-English `summary`, admitted by its schema and carried into `spec/v2/profiles.json`.
+  - **`spec/v2/errors.schema.json` exists** (non-normative addition). `errors.json` declared a `$schema` that did not exist. The new schema closes the row shape; `scripts/generate-error-envelope.mjs` validates the registry against it, and rejects a duplicate code, in both `--write` and `--check`. Every row gains an optional one-line `meaning`.
 - **The project docs openwop.dev renders read cleanly** (editorial; no rule changes). `COMPATIBILITY.md`, `ROADMAP.md`, `GOVERNANCE.md`, `MAINTAINERS.md`, `CONTRIBUTING.md`, `QUICKSTART-10MIN.md` and `INTEROP-MATRIX.md` drop v1-era history, break long paragraphs into bullets and treat v2 as current. The dated corrections on record under `COMPATIBILITY.md` §3 move verbatim to `docs/COMPATIBILITY-CORRECTIONS-LOG.md`, and `check-v2-retirement.mjs` reads a correction's entry from either file. The v1 reference examples' profile lists move verbatim to `docs/INTEROP-EVIDENCE-LOG.md`.
 - **The v2 spec stays readable** (tooling; no spec change). New gate `scripts/check-spec-readability.mjs` (in `openwop:check`, with a self-test) fails a `spec/v2` doc that names an OpenWOP RFC in its Status banner, a heading or running text (citations go on one `*Sources:*` line), has a paragraph or list item over 90 words or a table cell over 40, or raises the count of `v1` mentions (baseline 128). `scripts/spec-fingerprint.mjs` diffs the prose against a git ref by RFC 2119 keyword counts, backticked identifiers, status codes and headings, to prove an editorial pass changed no rule. The `/spec-readability` skill is the procedure that uses both.
 - **The v2 API contract reads cleanly** (descriptions only; no wire change). The `description`, `summary` and prose `title` strings in `api/v2/openapi.yaml`, `api/v2/asyncapi.yaml` and `api/seams-v2.yaml` (and the generated `spec/v2/core/headers.md` rows) drop leading RFC citations, tracker tags, v1 history and shouted emphasis, and paragraph-long operation summaries become a short summary plus a description. Inherited v1 strings are rewritten from `scripts/derive-v2-api-prose.yaml`; `api/openapi.yaml` is unchanged.

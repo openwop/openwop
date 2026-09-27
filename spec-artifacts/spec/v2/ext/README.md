@@ -61,8 +61,7 @@ The check works both ways:
 A directory with no declared family is an implementation or migration note. It
 carries `Status: Note.` and MUST say it is not a declared family. It is outside
 this maturity rule and never becomes `Stable`. Today the notes are
-`grpc-transport`, `portability`, `provider-idempotency`, and
-`sandbox-runtime-notes`.
+`grpc-transport`, `provider-idempotency`, and `sandbox-runtime-notes`.
 
 ## What this does not decide
 

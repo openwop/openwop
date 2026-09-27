@@ -495,10 +495,11 @@ def v2_openapi_and_seams():
                     p.update({'name': 'afterSequence', 'schema': {'type': 'integer', 'minimum': 0}, 'description': 'Return events with `sequence > afterSequence`. Omitted, the poll starts from the first event (sequence 0).'})
                 if isinstance(p, dict) and p.get('name') == 'If-None-Match' and p.get('in') == 'header':
                     # v1 scoped the note to the discovery document; runs.md §Snapshot applies the
-                    # same conditional GET to the run snapshot with a MUST (rc.49, finding 5).
-                    p['description'] = ('Standard conditional request for any resource that carries an `ETag`: the discovery document '
-                                        '(capabilities.md §1) and the run snapshot (runs.md §Snapshot). A matching value MUST yield '
-                                        '`304 Not Modified` with no body. The 304 carries `OpenWOP-Version` like every response (versioning.md §1.4).')
+                    # same conditional GET to the run snapshot (rc.49, finding 5). The 304 MUST binds only
+                    # where the host sent an ETag, which is a SHOULD on the snapshot.
+                    p['description'] = ('Conditional request on the discovery document (capabilities.md §1) and the run snapshot (runs.md §Snapshot). '
+                                        'A value matching the `ETag` the host sent MUST yield `304 Not Modified` with no body. '
+                                        'The 304 carries `OpenWOP-Version` like every response (versioning.md §1.4).')
                 if isinstance(p, dict) and p.get('name') == 'token' and p.get('in') == 'path':
                     p['schema'] = {'type': 'string', 'pattern': '^(ow2\\.hs256\\.[A-Za-z0-9._~-]{1,128}\\.[A-Za-z0-9_-]+\\.[A-Za-z0-9_-]+|[A-Za-z0-9_-]+\\.[A-Za-z0-9_-]+)$'}
                     p['description'] = '`ow2.<alg>.<kid>.<payload>.<mac>`. The v1 two-segment form is accepted under kid legacy until its expiresAt.'

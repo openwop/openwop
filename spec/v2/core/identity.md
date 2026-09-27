@@ -179,7 +179,7 @@ Every id field in every v2 schema and every `api/v2/openapi.yaml` parameter and 
 - A host MUST reject a tenant-bound id whose tenant segment is not the caller's with `403` `id_tenant_mismatch`.
 - A host-minted opaque segment MUST match `^[A-Za-z0-9._~-]{16,128}$`.
 - Ids in documents and bodies are bound, always. A client MAY bind at its request seam.
-- Handle grammars (`memoryRef`, workspace `path`/`etag`, the plugin version token) and their `resolvability` class are specified where each handle is used. An importer MUST re-mint every `host`-scoped handle (`spec/v2/ext/portability/`).
+- Handle grammars (`memoryRef`, workspace `path`/`etag`, the plugin version token) and their `resolvability` class are specified where each handle is used. An importer MUST re-mint every `host`-scoped handle ([capabilities.md § portability](capabilities.md)).
 
 ### Wire form
 

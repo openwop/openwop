@@ -8,7 +8,7 @@
 | **Author(s)**     | David Tufts (@davidscotttufts)                                  |
 | **Created**       | 2026-09-27                                                      |
 | **Updated**       | 2026-09-27: filed `Draft`. The 7-day comment window runs to 2026-10-04 and is **not waived**, because §D changes which bundles count as maturity evidence. The mechanism lands with this filing. It only makes `check-ext-status-coherence` stricter and records new rows, so it changes no status on its own. |
-| **Affects**       | `spec/v2/declaration.json` + `declaration.schema.json` (`extensionName` on the 13 `anchor: ext` rows; `restTransport` witness `claims-check` → `witnessable-gated`, adoption `none` → `single-witness`; `a2uiSurface` witness `claims-check` → `seam-gated`) · `spec/v2/core/capabilities.md` §3.2 and §6 · `spec/v2/core/runs.md` §"Caching and encoding" (one key spelling) · `spec/v2/ext/README.md` (the tier half of `Stable`; the `Note` label) · the 13 ext family READMEs and the 4 note READMEs · new `evidence/host-tiers.json` · `scripts/check-ext-status-coherence.mjs`, `scripts/check-declaration.mjs` · conformance: new `lib/ext-claims.ts` (+ self-test), new scenarios `v2-ext-family-claims`, `v2-ext-rest-transport`, one new leg in `v2-a2ui-v09-surface` (suite 2.42.7) |
+| **Affects**       | `spec/v2/declaration.json` + `declaration.schema.json` (`extensionName` on the 13 `anchor: ext` rows; `restTransport` witness `claims-check` → `witnessable-gated`, adoption `none` → `single-witness`; `a2uiSurface` witness `claims-check` → `seam-gated`) · `spec/v2/core/capabilities.md` §3.2 and §6 · `spec/v2/core/runs.md` §"Caching and encoding" (one key spelling) · `spec/v2/ext/README.md` (the tier half of `Stable`; the `Note` label) · the 13 ext family READMEs and the 3 note READMEs · new `evidence/host-tiers.json` · `scripts/check-ext-status-coherence.mjs`, `scripts/check-declaration.mjs` · conformance: new `lib/ext-claims.ts` (+ self-test), new scenarios `v2-ext-family-claims`, `v2-ext-rest-transport`, one new leg in `v2-a2ui-v09-surface` (suite 2.42.7) |
 | **Compatibility** | `additive`, plus a Class 3 correction (§A). No wire shape, error code or status changes. §D makes a corpus gate stricter and fail closed. |
 | **Supersedes**    | —                                                               |
 | **Superseded by** | —                                                               |
@@ -20,7 +20,7 @@
 - The predicate needs an `executed-pass` row under `openwop.family.<key>`. No scenario records one, for any family, core or ext. `gateFamily` records only `inapplicable` or `skipped`, under `openwop.profile.family.<key>`.
 - The ext READMEs say to advertise `extensions.<org>.<key>` with a camelCase key such as `restTransport`. `extensionsKeyPattern` is kebab-case, so no host can emit that key. The two hosts that serve a family already use the kebab form: MyndHyve's `myndhyve.rest-transport` and `myndhyve.chat`.
 - The README requires a host at evidence tier 2 or better. The checker accepts any certified bundle, including a loopback reference host.
-- Four of the 17 pages are notes, not families, so they are outside the rule. They still said `Draft`, which promised a graduation they can never have.
+- Four of the 17 pages are not families. Three are notes, outside the rule; `portability` is a core family, and #1671 retired its page. The notes still said `Draft`, which promised a graduation they can never have.
 
 This RFC does four things:
 
@@ -91,7 +91,7 @@ It also enforces these rules:
 
 ### §E. Notes
 
-A directory under `spec/v2/ext/` with no declared family carries `Status: Note.` and says it is not a declared family. A note is outside the maturity rule and never `Stable`. A declared family is never a note. The four notes are `grpc-transport`, `portability`, `provider-idempotency` and `sandbox-runtime-notes`.
+A directory under `spec/v2/ext/` with no declared family carries `Status: Note.` and says it is not a declared family. A note is outside the maturity rule and never `Stable`. A declared family is never a note. The three notes are `grpc-transport`, `provider-idempotency` and `sandbox-runtime-notes`. A retired page with no family (today `portability`) carries a `Superseded by:` or `Retired by:` line.
 
 ## Compatibility
 

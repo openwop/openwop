@@ -83,6 +83,7 @@ for (const dir of readdirSync(EXT)) {
   if (!fam) {
     if (status !== 'Note' && status !== 'Retired') problems.push(`${dir}: no declared ext family, so its status is Note, not ${status} — a note is outside the maturity rule and a Draft label promises a graduation it can never have (RFC 0220 §E)`);
     if (status === 'Note' && !/not a (declared )?(extension )?family|notes?, not a family|outside this rule/i.test(text)) problems.push(`${dir}: a Note MUST say it is not a declared family`);
+    if (status === 'Retired' && !/^(Superseded by|Retired by):/m.test(text)) problems.push(`${dir}: Retired, but no \`Superseded by:\` or \`Retired by:\` line names what replaced it`);
     notes++;
     continue;
   }
@@ -100,4 +101,4 @@ for (const dir of readdirSync(EXT)) {
 for (const g of graduable) console.warn(`  GRADUABLE (Draft with tier-2+ certified evidence — act on it): ${g}`);
 for (const n of notYet) console.warn(`  NOT YET (witnessed, but no tier-2+ host): ${n}`);
 if (problems.length) { console.error(`=== check-ext-status-coherence FAILED — ${problems.length} problem(s):`); for (const p of problems) console.error(`  ${p}`); process.exit(1); }
-console.log(`=== check-ext-status-coherence OK — ${checked} ext famil(y/ies) checked, ${notes} note(s); ${qualifying.size} tier-2+ witnessed, ${tierOneOnly.size} tier-1 only; ${graduable.length} graduable ===`);
+console.log(`=== check-ext-status-coherence OK — ${checked} ext famil(y/ies) checked, ${notes} non-family page(s); ${qualifying.size} tier-2+ witnessed, ${tierOneOnly.size} tier-1 only; ${graduable.length} graduable ===`);
