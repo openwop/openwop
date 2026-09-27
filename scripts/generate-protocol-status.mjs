@@ -225,7 +225,9 @@ const INTEROP_PASS_RATE_HEADER =
   /^\|\s*Host\s*\|\s*Passed\s*\|\s*Failed\s*\|\s*Skipped\s*\|\s*Todo\s*\|\s*Total\s*\|\s*Pass rate/;
 
 function parseInteropPassRates() {
-  const text = read('INTEROP-MATRIX.md');
+  // The v1-era pass-rate table moved with the rest of the measurement history to
+  // docs/INTEROP-EVIDENCE-LOG.md when INTEROP-MATRIX.md was rewritten (2026-09-27).
+  const text = read('docs/INTEROP-EVIDENCE-LOG.md');
   const rows = [];
   let inPassRateTable = false;
   for (const line of text.split('\n')) {
@@ -604,6 +606,8 @@ function generateStatus() {
   lines.push('The TypeScript / Python / Go SDKs live in the [`openwop-sdks`](https://github.com/openwop/openwop-sdks) repo. Per-SDK helper coverage (typed / raw-only / unreachable surfaces) is tracked in that repo\'s `sdk/PARITY.md` and machine-enforced by its `scripts/check-sdk-parity.mjs` against the OpenAPI operation set.');
   lines.push('');
   lines.push('## Reference Host Conformance Evidence');
+  lines.push('');
+  lines.push('Historical: v1 reference-host pass rates at suite 1.22.0–1.29.0 (2026-06), from [`docs/INTEROP-EVIDENCE-LOG.md`](./INTEROP-EVIDENCE-LOG.md). The current v2 state of every host is its certified bundle in [`INTEROP-MATRIX.md`](../INTEROP-MATRIX.md).');
   lines.push('');
   lines.push('| Host | Passed | Failed | Skipped | Todo | Total | Pass rate |');
   lines.push('|---|---:|---:|---:|---:|---:|---|');
