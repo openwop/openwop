@@ -9,9 +9,9 @@
     "api/grpc/openwop.proto": "c3e72bb17cba514ee98feb6434e6c9b6ea6795bfd086489ec69fd882dd1ad977",
     "api/openapi.yaml": "69464bc0e1e71ef3b543a73d4fa4f67202343d2603c80af8033f6c3619ef1b30",
     "api/redocly.yaml": "b0604c89b2ca6d5076ec25725c539dad44a741a811fe524439ee6daef8baa09f",
-    "api/seams-v2.yaml": "08ffa4813e7c3ed9b47d77e6be6b9b05963449721f2a4a885030cdbd09c4ffbc",
+    "api/seams-v2.yaml": "c8758cf999fb00f802ab07c90aa338bae99357417382cc19a114efd7de9b4010",
     "api/v2/asyncapi.yaml": "a7a442826ad9641640b2cc6b9ce1de9beef93b9290f19cd17cf2254ea94c932b",
-    "api/v2/openapi.yaml": "cbe578c1c7178ca04f22bd0c3cd0be1fc4d6f733411f9f66edaf27536ba4d6b3",
+    "api/v2/openapi.yaml": "d782395c9501649c8215c7ccf7ecca59c77715c53b889212fe30058c011aeb72",
     "api/v2/redocly.yaml": "1e66b60e6118ad11a823bb620678be464d99dfe50a40e3e6f93ec9429b88b34c",
     "schemas/README.md": "0c0b737ffcf8f30e7d2809cec8a498232de710f41443212922ad8337cdde0b51",
     "schemas/a2a-task-state.schema.json": "75d5049dea8bd873ff0e7546f1c60c8d36c219bec7084264360be54a8be30ae1",
@@ -238,7 +238,7 @@
     "spec/v2/core/persistence.md": "bba672ed3bf6d83af6e4e65c0f4f480fc21fe12207811e321306af2108d9010d",
     "spec/v2/core/portability.md": "a35fbe66b8b5ccf63cf0216157d4b61d4c47f6dc8e757c830569ddf244e21e8a",
     "spec/v2/core/replay.md": "a5be4e05242f25f8b5a8a4fb31bd359d5abb4bf34fa8e536403a8ee5779ab876",
-    "spec/v2/core/runs.md": "26b459d522901ccf752470c6c9c902af435d7e9690755438ddb24c150424341d",
+    "spec/v2/core/runs.md": "72a94c27d884036d84290e9b108702e98b0c6b2fb598213bbda44fba9c9f860d",
     "spec/v2/core/security-defaults.md": "179fdd2efcc1454453243f8ab6473335dfd4389e70cbbc2669f5b83714092973",
     "spec/v2/core/tool-catalog.md": "6b54b8ce221107de19c718f374a720123c6a5f55db4054e6625f73d06e0a442f",
     "spec/v2/core/versioning.md": "000fa2db433039fc4f2b0ad7dc2cbf7aadc10eae60322018727da6f99eda4dc3",
@@ -301,5 +301,5 @@
     "spec/v2/retention-floors.json": "eaf3722d95c79947af1d4269ef85117e126518c588cfcf1a2b21b97269f51624",
     "spec/v2/surface-baseline.json": "549832c2de97b7c7aed07934c1c73c2709ac226dc0cb71fc8c141010bc4928f1"
   },
-  "corpusCommit": "d07fef778717fa604869ca8ceeabd444818165fb"
+  "corpusCommit": "bfe4a8ea91c3f428a7ffcc73180a307831b66b7d"
 }
