@@ -13069,6 +13069,23 @@
       ]
     },
     {
+      "id": "openwop.gap.0221.1",
+      "rfc": "0221",
+      "local": "G1",
+      "section": "§Implementation notes",
+      "surface": "MyndHyve's behaviour for a secret-less registration is unmeasured.",
+      "witness": "unclassified",
+      "requirementId": null,
+      "disposition": "externally-gated",
+      "target": "myndhyve-next-cut",
+      "sources": [
+        {
+          "file": "RFCS/registers/0221-generated-webhook-secret-returned-once.gaps.md",
+          "token": "G1"
+        }
+      ]
+    },
+    {
       "id": "openwop.gap.spec.a2a-integration.g1",
       "rfc": "0152",
       "local": "G1",

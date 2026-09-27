@@ -152,3 +152,4 @@ to land — and until then the zero is visibly a blocked obligation rather than 
 | 0217 | after a subscription is unregistered, its dead-letter read answers as though it never existed (amends RFC 0188 §A; bootstrap waiver, not a §A.6 override) | in-scope-pending-assessment | — | — | `not-reviewed` |
 | 0218 | an audit checkpoint signs its Merkle root, and the root is pinned (Class 3 correction + additive; bootstrap waiver, not a §A.6 override) | in-scope-pending-assessment | — | — | `not-reviewed` |
 | 0219 | a client announces the protocol version it implements in `OpenWOP-Client-Version` (additive; bootstrap waiver, not a §A.6 override) | in-scope-pending-assessment | — | — | `not-reviewed` |
+| 0221 | a webhook secret the host generates is returned once (additive; STEWARD OVERRIDE of RFC 0147 §A.6) | in-scope-pending-assessment | — | — | `not-reviewed` |

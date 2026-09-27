@@ -466,7 +466,8 @@
 - was: |
     Server signs payloads with this secret using HMAC-SHA256. REQUIRED in the Standard Webhooks form `whsec_<base64>` (24–64 decoded bytes) when `signatureAlgorithms` lists `standard-webhooks-1` (RFC 0201 §B.6); never echoed in any response.
   now: The host signs payloads with this secret using HMAC-SHA256. REQUIRED in the Standard Webhooks form `whsec_<base64>` (24–64 decoded
-    bytes) when `signatureAlgorithms` lists `standard-webhooks-1`. Never echoed in any response.
+    bytes) when `signatureAlgorithms` lists `standard-webhooks-1`. Never echoed in any response. When omitted, the host generates one
+    and returns it once in the `201` (RFC 0221).
 - was: |
     RFC 0201 §B — the per-subscription opt-in. Absent means `["v1"]`, today's behaviour byte for byte. When present it MUST contain `v1`, MUST NOT repeat a value, and every value MUST be listed in the host's `webhooks.signatureAlgorithms`; otherwise `400 validation_error`. Listing `standard-webhooks-1` opts the subscription into the Standard Webhooks 1.0.0 companion scheme, which runs endpoint verification before the `201` (`400 webhook_endpoint_unverified` when the endpoint does not echo the challenge).
   now: |-

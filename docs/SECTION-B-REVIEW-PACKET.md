@@ -6,7 +6,7 @@
 
 RFC 0156 §B: RFCs affecting auth, identity, tenant isolation, secrets, packs, execution sandboxing, idempotency, replay, external effects, conformance/certification, or governance **MUST** receive a retrospective **cross-organization** review. Every RFC below was accepted with its public comment window shortened, either under the bootstrap waiver or by explicit steward override of RFC 0147 §A.6. Each such acceptance is **provisional** until a reviewer from an organization other than the steward's records an outcome.
 
-This packet is for that reviewer. **97 RFCs are listed; 97 have no discharging outcome.** The steward, the steward's sessions, and steward-affiliated hosts (MyndHyve is tier-2, not independent) cannot supply the review. Recording one of their reviews as `ratified` is the substitution §B's last clause forbids.
+This packet is for that reviewer. **98 RFCs are listed; 98 have no discharging outcome.** The steward, the steward's sessions, and steward-affiliated hosts (MyndHyve is tier-2, not independent) cannot supply the review. Recording one of their reviews as `ratified` is the substitution §B's last clause forbids.
 
 ## How to review one RFC
 
@@ -48,6 +48,12 @@ Grouping below is a reading aid only: it assigns each RFC to the risk class its 
 | [0208](../RFCS/0208-v2-a2a-mcp-operation-mappings.md) | v2 homes the A2A and MCP operation mappings | `Accepted` | steward override of RFC 0147 §A.6 | tier-1 — the v2 reference host | `not-reviewed` |
 | [0211](../RFCS/0211-a2a-error-details-are-errorinfo.md) | an A2A error's details are an ErrorInfo, and an A2A interface never answers in the OpenWOP envelope | `Accepted` | steward override of RFC 0147 §A.6 | tier-1 — the v2 reference host | `not-reviewed` |
 | [0215](../RFCS/0215-webhook-delivery-isolation.md) | a webhook delivery does not wait on another subscription's receiver, and an unregistered subscription gets no… | `Accepted` | steward override of RFC 0147 §A.6 | tier-2 — MyndHyve | `not-reviewed` |
+
+## Secrets (1)
+
+| RFC | Title | Status | Waiver | Evidence tier | Outcome |
+| --- | --- | --- | --- | --- | --- |
+| [0221](../RFCS/0221-generated-webhook-secret-returned-once.md) | a webhook secret the host generates is returned once | `Active` | steward override of RFC 0147 §A.6 | not declared (predates RFC 0174 §B.1, or not yet Accepted) | `not-reviewed` |
 
 ## Packs and registry (8)
 
