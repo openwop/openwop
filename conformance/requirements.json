@@ -29138,7 +29138,7 @@
     {
       "id": "openwop.it.v2-era-2-append-vocabulary.the-run-keeps-the-era-it-was-created-with-an-append-does-not-promote-it-to-era-3",
       "file": "v2-era-2-append-vocabulary.test.ts",
-      "line": 165,
+      "line": 174,
       "title": "the run keeps the era it was created with; an append does not promote it to era 3",
       "explicitId": "openwop.requirement.0176.era-2-append-vocabulary",
       "citations": [
