@@ -47,7 +47,9 @@ describe('artifact-auth: unauthenticated artifact requests are rejected', () => 
     } catch {
       // Some hosts return a bare 401 with no body — acceptable. Skip the
       // envelope-shape assertion in that case.
-      return softSkip('blocked', 'precondition not met — an earlier step threw (Some hosts return a bare 401 with no body — acceptable. Skip the envelope-shape assertion in that case.) (seam, prior step, or fixture unavailable)');
+      // partial-witness-ok: the 401 refusal, the MUST, was asserted above; the
+      // `error: "unauthenticated"` envelope is a SHOULD and a bare 401 has no body.
+      return softSkip('inapplicable', 'the 401 carried no JSON body (acceptable), so the SHOULD envelope shape was not checked');
     }
     if (typeof body.error === 'string') {
       expect(body.error, req('openwop.it.artifact-auth.get-v1-runs-runid-artifacts-artifactid-without-authorization-returns-401', 

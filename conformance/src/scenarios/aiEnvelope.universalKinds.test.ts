@@ -168,7 +168,7 @@ describe('aiEnvelope.universalKinds: behavioral accept via /v1/host/sample/envel
 import { queryTestEvents, isEventLogSeamAvailable, resetTestSeam } from '../lib/event-log-query.js';
 import { capabilityFamily, discoveryFamilies } from '../lib/discovery-capabilities.js';
 import { req } from '../lib/requirement-ids.js';
-import { softSkip } from '../lib/soft-skip.js';
+import { softSkip, blockedDespiteAssertions } from '../lib/soft-skip.js';
 
 describe('aiEnvelope.universalKinds: engine projection via event-log seam', () => {
   it('clarification.request MUST be lifted to interrupt.requested { kind: "clarification" } per interrupt.md', async () => {
@@ -188,7 +188,7 @@ describe('aiEnvelope.universalKinds: engine projection via event-log seam', () =
     if (r.status === 404) return softSkip('blocked', 'precondition not met — `r.status === 404` returned early (seam, prior step, or fixture unavailable)');
     expect(r.body.status).toBe('accepted');
     const events = await queryTestEvents(runId, { type: 'interrupt.requested' });
-    if (!events.ok) return softSkip('blocked', 'precondition not met — `!events.ok` returned early (seam, prior step, or fixture unavailable)');
+    if (!events.ok) return blockedDespiteAssertions('the event-log seam is advertised but the interrupt.requested query failed — the clarification lift is unobserved');
     expect(
       events.events.length,
       req('openwop.it.aiEnvelope.universalKinds.clarification-request-must-be-lifted-to-interrupt-requested-kind-clarification-p', 'ai-envelope.md §"Universal kinds"', 'accepted clarification.request MUST project to interrupt.requested per interrupt.md'),

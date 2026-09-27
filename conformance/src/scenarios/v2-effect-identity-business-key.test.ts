@@ -73,6 +73,9 @@ describe('RFC 0173 §B — effect-identity-business-key (gated on idempotency)',
     const body = res.json as { runId?: unknown; effects?: Array<{ effectId?: unknown; keying?: unknown; providerKey?: unknown }> } | null;
     const effects = body?.effects ?? [];
     if (res.status === 200 && check.ok && body?.runId === runId && effects.length === 0) {
+      // partial-witness-ok: no assertion has passed at runtime. The only earlier
+      // expect runs solely when the create is not 201, and then it throws, so this
+      // skip is a zero-assertion `inapplicable` (the gate reads source order).
       return softSkip('inapplicable', 'the noop fixture issued no external effect — the ledger read is well-formed but the per-row keying leg had no rows (an effect-issuing fixture would exercise it)');
     }
     expect(

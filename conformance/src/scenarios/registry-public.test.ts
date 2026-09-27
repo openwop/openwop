@@ -215,7 +215,11 @@ describe('registry-public: tarball + signature + Ed25519 verify roundtrip', () =
     // `method=ed25519` — the simpler path. Extending to `manual` would
     // require the tarball extractor from registry/scripts/verify-
     // signatures.mjs which is intentionally out of scope here.
-    if (method !== 'ed25519') return softSkip('blocked', 'precondition not met — `method !== \'ed25519\'` returned early (seam, prior step, or fixture unavailable)');
+    // partial-witness-ok: tarball, signature, public key and SRI were asserted
+    // above. `manual` is a conforming signing method whose pack.json-in-tarball
+    // verification this scenario does not implement, a suite limitation, not a
+    // host shortfall.
+    if (method !== 'ed25519') return softSkip('inapplicable', `${PACK_NAME} is signed method=manual; this scenario verifies only method=ed25519 signatures`);
 
     const verified = cryptoVerify(null, tarball.bytes, publicKey, sig.bytes);
     expect(verified, req('openwop.it.registry-public.tarball-sig-public-key-all-retrievable-sri-matches-ed25519-verifies-for', 'spec/v1/registry-operations.md', `Ed25519 signature over ${PACK_NAME}@${PACK_VERSION}.tgz MUST verify against ${manifest.signing!.keyId}`))
