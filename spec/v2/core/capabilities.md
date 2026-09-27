@@ -65,13 +65,13 @@ The root of `schemas/v2/capabilities.schema.json` is `additionalProperties: fals
 
 Any other key MUST fail validation: no dotted key, no wrapper, no mirror, no root `profiles[]`.
 
-### 3.1 Metadata keys (17)
+### 3.1 Metadata keys (18)
 
-`protocolVersion`, `protocolVersions`, `preferredVersion`, `extensions`, `implementation`, `engineVersion`, `eventLogSchemaVersion`, `configurable`, `observability`, `minClientVersion`, `runtimeCapabilities`, `testing`, `conformance`, `fixtures`, `compliance`, `discovery`, and `supportedTransports`.
+`protocolVersion`, `protocolVersions`, `preferredVersion`, `extensions`, `implementation`, `engineVersion`, `eventLogSchemaVersion`, `configurable`, `observability`, `minClientVersion`, `runtimeCapabilities`, `testing`, `conformance`, `fixtures`, `compliance`, `signingKeys`, `discovery`, and `supportedTransports`.
 
 - Each is declared as metadata, with its own schema, in `spec/v2/declaration.json`. A metadata key is not a record and carries no `status` or `witness`.
 - `supportedTransports` is declared only to record its deletion (§4).
-- The version-axis keys are specified in [`versioning.md`](versioning.md); `configurable` in [`runs.md`](runs.md).
+- The version-axis keys are specified in [`versioning.md`](versioning.md); `configurable` in [`runs.md`](runs.md); `signingKeys` in [`conformance.md`](conformance.md).
 - `implementation` (`name`, `version`, `vendor`, `url`) is self-reported: a client SHOULD NOT change behaviour because of it or authorize from it.
 
 ### 3.2 `extensions.<org>.<name>`
@@ -307,7 +307,7 @@ Witness `witnessable-gated`.
 
 ### § a2a
 
-Witness `seam-gated`. Facets: `versions`, `preferredVersion`, `minimumVersion`, `refreshedAt`, `profiles`, `agentCardUrl`, `streaming`, `pushNotifications`, `durableTasks`.
+Witness `seam-gated`. Facets: `versions`, `preferredVersion`, `minimumVersion`, `refreshedAt`, `profiles`, `agentCardUrl`, `streaming`, `pushNotifications`, `durableTasks`, `agentCards`.
 
 A facet MAY name a URL on another origin; that is a claim about the facet, not the origin. `agentCardUrl` (and `mcp.serverUrls[]`) are `format: uri` with no origin constraint.
 
@@ -366,7 +366,7 @@ Witness `claims-check`. Facets: `testMode`.
 
 ### § mcp
 
-Witness `seam-gated`. Facets: `revisions`, `preferredVersion`, `minimumRevision`, `refreshedAt`, `profiles`, `features`, `serverUrls`, `serverMount`, `mrtr`.
+Witness `seam-gated`. Facets: `revisions`, `preferredVersion`, `minimumRevision`, `refreshedAt`, `profiles`, `features`, `serverUrls`, `serverMount`, `mrtr`, `client`.
 
 `serverUrls[]` MAY name other origins; the off-origin rule under § a2a applies.
 
@@ -433,7 +433,8 @@ A profile is a predicate over the declaration file, published in `spec/v2/profil
 | `openwop-conformance-seams-v2` | The seams profile ([`conformance.md`](conformance.md)); forbidden from the capability namespace |
 
 - The v2 root has no `profiles[]`; a host that emits one MUST fail schema validation (§3).
-- The facets `auth.lanes[]` ([`identity.md`](identity.md)), `a2a.versions[]` and `mcp.revisions[]` ([`interop.md`](interop.md)) replace `auth.profiles`, `a2a.profiles`, and `mcp.profiles`.
+- The facet `auth.lanes[]` ([`identity.md`](identity.md)) replaces `auth.profiles`.
+- `a2a.profiles[]` and `mcp.profiles[]` are facets that admit no `-legacy` id; the offered versions are `a2a.versions[]` and `mcp.revisions[]` ([`interop.md`](interop.md)).
 - The discovery-only id is `openwop-discovery-core`; the `openwop-core` alias is deleted (row `C2.3`).
 - The claim vocabulary is in [`overview.md`](overview.md). The invariant `profile-claim-floor-not-overstated` is registered in `SECURITY/invariants.yaml` with its test.
 

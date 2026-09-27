@@ -46,7 +46,7 @@ A request on an unversioned path MAY carry `OpenWOP-Version: <major>` or `OpenWO
 | Header absent on an unversioned path | MUST serve `preferredVersion`'s major |
 | `/v1/…` path with `OpenWOP-Version` other than `1` | MUST answer `400` `protocol_version_mismatch` |
 
-A request on a `/v1/…` path key MUST NOT carry `OpenWOP-Version` with a value other than `1`. All three codes are rows in `spec/v2/errors.json` ([errors.md](errors.md)).
+A request on a `/v1/…` path key MUST NOT carry `OpenWOP-Version` with a value other than `1`. `protocol_version_unsupported`, `protocol_version_mismatch` and `client_version_unsupported` (§1.5) are rows in `spec/v2/errors.json` ([errors.md](errors.md)).
 
 ### 1.4 The response header
 
@@ -75,7 +75,10 @@ Otherwise the page MUST move off the shared name.
 
 When both majors are advertised, a v2 client MUST select the highest major it implements that the host lists. A v1 client (no header, `/v1/` paths) is unaffected.
 
-`minClientVersion` (axis 15, grammar as axis 1) is a MUST: a host MAY refuse a client below it with `426` `client_version_unsupported`.
+`minClientVersion` (axis 15) is optional. When a host advertises it:
+
+- It MUST use the axis-1 grammar.
+- A host MAY refuse a client below it. A refusal MUST be `426` `client_version_unsupported`.
 
 ## 2. The 18 version axes
 

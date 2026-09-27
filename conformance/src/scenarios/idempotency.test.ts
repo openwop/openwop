@@ -47,14 +47,14 @@ describe.skipIf(SKIP_NO_FIXTURE)('idempotency: same key + same body replays per 
     expect(
       [200, 201].includes(replay.status),
       req('openwop.it.idempotency.returns-same-runid-twice-and-sets-openwop-idempotent-replay-on-the-replay', 
-        'idempotency.md §Layer 1',
+        'spec/v1/idempotency.md §Layer 1',
         'replay request with same key + same body MUST return success status (200/201)',
       ),
     ).toBe(true);
 
     const replayRunId = (replay.json as { runId: string }).runId;
     expect(replayRunId, req('openwop.it.idempotency.returns-same-runid-twice-and-sets-openwop-idempotent-replay-on-the-replay', 
-      'idempotency.md §Layer 1',
+      'spec/v1/idempotency.md §Layer 1',
       'replay MUST return the SAME runId (no new run created)',
     )).toBe(firstRunId);
 
@@ -84,7 +84,7 @@ describe.skipIf(SKIP_NO_FIXTURE)('idempotency: same key + different body conflic
     );
 
     expect(conflict.status, req('openwop.it.idempotency.returns-409-when-the-body-changes-under-the-same-key', 
-      'idempotency.md §Layer 1',
+      'spec/v1/idempotency.md §Layer 1',
       'same Idempotency-Key with a different body MUST return 409',
     )).toBe(409);
 
@@ -98,7 +98,7 @@ describe.skipIf(SKIP_NO_FIXTURE)('idempotency: same key + different body conflic
     // `idempotency_key_replay_mismatch` — a spelling in no corpus artifact at
     // all. This leg asserted the status alone, so every one of them passed.
     //
-    // `idempotency_key_mismatch` is canonical (idempotency.md §"Record shape,
+    // `idempotency_key_mismatch` is canonical (spec/v1/idempotency.md §"Record shape,
     // digest, and lease"): the only spelling already in more than one shipped
     // artifact. The two legacy spellings are TOLERATED here through the first
     // minor after 2026-11-10 so a converging host is not red on a rename it is
@@ -109,7 +109,7 @@ describe.skipIf(SKIP_NO_FIXTURE)('idempotency: same key + different body conflic
     expect(
       code === 'idempotency_key_mismatch' || LEGACY.includes(code ?? ''),
       req('openwop.it.idempotency.returns-409-when-the-body-changes-under-the-same-key', 
-        'idempotency.md §"Record shape, digest, and lease"',
+        'spec/v1/idempotency.md §"Record shape, digest, and lease"',
         `a different request digest under the same scoped key MUST fail with the canonical ` +
           `\`idempotency_key_mismatch\` (legacy \`${LEGACY.join('` / `')}\` tolerated through the ` +
           `first minor after 2026-11-10); got \`${code ?? '<none>'}\``,
@@ -122,7 +122,7 @@ describe.skipIf(SKIP_NO_FIXTURE)('idempotency: same key + different body conflic
     expect(
       conflictRunId,
       req('openwop.it.idempotency.returns-409-when-the-body-changes-under-the-same-key', 
-        'idempotency.md §"Record shape, digest, and lease"',
+        'spec/v1/idempotency.md §"Record shape, digest, and lease"',
         'a digest mismatch MUST NOT return the cached body (no runId on the 409)',
       ),
     ).toBeUndefined();

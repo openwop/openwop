@@ -83,7 +83,7 @@ describe.skipIf(SKIP)(
         expect(
           succeeded.length + conflicted.length,
           req('openwop.it.highConcurrency.10-parallel-requests-with-same-key-yield-one-runid-and-9-replays', 
-            'idempotency.md §Concurrent duplicates',
+            'spec/v1/idempotency.md §Concurrent duplicates',
             'every concurrent request MUST resolve to either the cached response or a deterministic 409',
           ),
         ).toBe(10);
@@ -92,7 +92,7 @@ describe.skipIf(SKIP)(
         expect(
           runIds.size,
           req('openwop.it.highConcurrency.10-parallel-requests-with-same-key-yield-one-runid-and-9-replays', 
-            'idempotency.md §Layer 1',
+            'spec/v1/idempotency.md §Layer 1',
             'same idempotency key MUST yield exactly ONE runId across all successful responses',
           ),
         ).toBe(1);
@@ -103,7 +103,7 @@ describe.skipIf(SKIP)(
           expect(
             c.errorCode === 'idempotency_in_flight' || c.errorCode === undefined,
             req('openwop.it.highConcurrency.10-parallel-requests-with-same-key-yield-one-runid-and-9-replays', 
-              'idempotency.md',
+              'spec/v1/idempotency.md',
               '409 on parallel idempotency-keyed retry MUST carry error="idempotency_in_flight"',
             ),
           ).toBe(true);
@@ -111,7 +111,7 @@ describe.skipIf(SKIP)(
             expect(
               c.retryAfter,
               req('openwop.it.highConcurrency.10-parallel-requests-with-same-key-yield-one-runid-and-9-replays', 
-                'idempotency.md',
+                'spec/v1/idempotency.md',
                 '409 idempotency_in_flight MUST include a numeric retryAfter',
               ),
             ).toBeGreaterThan(0);
@@ -150,7 +150,7 @@ describe.skipIf(SKIP)(
         expect(
           uniqueRunIds.size,
           req('openwop.it.highConcurrency.10-parallel-requests-with-distinct-keys-yield-10-distinct-runids', 
-            'idempotency.md §Layer 1',
+            'spec/v1/idempotency.md §Layer 1',
             'distinct idempotency keys MUST yield distinct runIds (Layer 1 dedup is keyed)',
           ),
         ).toBe(succeededRunIds.length);
@@ -195,7 +195,7 @@ describe.skipIf(SKIP)(
         expect(
           runIds.size,
           req('openwop.it.highConcurrency.5-sequential-retries-with-same-key-100ms-apart-all-succeed-idempotency-cache-sur', 
-            'idempotency.md §Layer 1',
+            'spec/v1/idempotency.md §Layer 1',
             'all 5 retries with same key MUST resolve to the same runId',
           ),
         ).toBe(1);
@@ -204,7 +204,7 @@ describe.skipIf(SKIP)(
         expect(
           results[0]!.replay,
           req('openwop.it.highConcurrency.5-sequential-retries-with-same-key-100ms-apart-all-succeed-idempotency-cache-sur', 
-            'idempotency.md §Server responsibilities',
+            'spec/v1/idempotency.md §Server responsibilities',
             'first request with new key MUST NOT be marked as replay',
           ),
         ).toBe(false);
@@ -216,7 +216,7 @@ describe.skipIf(SKIP)(
         expect(
           someReplay,
           req('openwop.it.highConcurrency.5-sequential-retries-with-same-key-100ms-apart-all-succeed-idempotency-cache-sur', 
-            'idempotency.md §Server responsibilities #2',
+            'spec/v1/idempotency.md §Server responsibilities #2',
             'replay responses SHOULD set openwop-Idempotent-Replay: true',
           ),
         ).toBe(true);
@@ -252,7 +252,7 @@ describe.skipIf(SKIP)(
           expect(
             typeof ackTimeout === 'number' && Number.isInteger(ackTimeout) && ackTimeout >= 5,
             req('openwop.it.highConcurrency.concurrent-distinct-key-requests-respect-advertised-idempotency-cache-retention', 
-              'idempotency.md',
+              'spec/v1/idempotency.md',
               'limits.idempotencyAckTimeoutSec MUST be integer ≥5 when advertised',
             ),
           ).toBe(true);

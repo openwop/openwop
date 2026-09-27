@@ -58,7 +58,7 @@ for (const dir of readdirSync(EXT)) {
   const status = st[1][0].toUpperCase() + st[1].slice(1).toLowerCase();
   const fam = extFamilies.has(dir) ? dir : null;
   if (!fam) {
-    if (!/not a (declared )?family|notes?, not a family|outside this rule/i.test(text)) problems.push(`${dir}: no declared ext family and the header does not say it is outside the rule`);
+    if (!/not a (declared )?(extension )?family|notes?, not a family|outside this rule/i.test(text)) problems.push(`${dir}: no declared ext family and the header does not say it is outside the rule`);
     continue;
   }
   checked++;
