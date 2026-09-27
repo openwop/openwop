@@ -18,6 +18,9 @@
  *      `pack_peer_dependency_undefined` rule, run against the inventory, not a
  *      sibling checkout);
  *   8. requirement ids are real (conformance/requirements.json) or `planned:`.
+ *   (RFC 0220 §A) every ext family carries extensionName = kebab(key), no core
+ *   family carries one, and each ext README header agrees with its row by value
+ *   (witness, technical, adoption) and names `extensions.<org>.<extensionName>`.
  */
 import { readFileSync, existsSync, readdirSync } from 'node:fs';
 import { execFileSync } from 'node:child_process';
@@ -50,6 +53,12 @@ for (const f of decl.families) {
   if (f.disposition === 'externally-gated' && f.maturity.technical === 'stable') failures.push(`${f.key}: externally-gated MUST NOT be stable (RFC 0169 §C.4)`);
   const expected = f.anchor === 'core' ? `core/capabilities.md#${f.key}` : `ext/${f.key}/`;
   if (f.section !== expected) failures.push(`${f.key}: section ${f.section} ≠ ${expected}`);
+  // RFC 0220 §A — the extensions key an ext family is advertised under. The
+  // family key is camelCase and can never match extensionsKeyPattern, so the
+  // <name> half is the kebab-case form, written down once, here.
+  const kebab = f.key.replace(/[A-Z]/g, (c) => `-${c.toLowerCase()}`);
+  if (f.anchor === 'ext' && f.extensionName !== kebab) failures.push(`${f.key}: an ext family MUST carry extensionName "${kebab}" (the kebab-case key), got ${JSON.stringify(f.extensionName)} (RFC 0220 §A)`);
+  if (f.anchor === 'core' && f.extensionName !== undefined) failures.push(`${f.key}: extensionName is for ext families only — a core family is a root member, not an extensions record (RFC 0220 §A)`);
 }
 
 const capsMd = join(ROOT, 'spec', 'v2', 'core', 'capabilities.md');
@@ -67,6 +76,15 @@ if (existsSync(extDir)) {
     const readme = join(extDir, f.key, 'README.md');
     const text = existsSync(readme) ? readFileSync(readme, 'utf8') : '';
     for (const field of ['witness:', 'technical:', 'adoption:']) if (!text.includes(field)) failures.push(`spec/v2/ext/${f.key}/README.md header lacks \`${field}\` (RFC 0169 §C.2)`);
+    // RFC 0220 §A — the header states what the declaration says, not a copy
+    // that drifts: witness and both maturity axes by value, and the advertised
+    // key by its real spelling.
+    const cell = (label) => new RegExp(`\\|\\s*\\*\\*${label}\\*\\*\\s*\\|\\s*\`([^\`]+)\``).exec(text)?.[1];
+    for (const [label, want] of [['witness:', f.witness], ['technical:', f.maturity.technical], ['adoption:', f.maturity.adoption]]) {
+      const got = cell(label);
+      if (got !== undefined && got !== want) failures.push(`spec/v2/ext/${f.key}/README.md says ${label} \`${got}\` but the declaration says \`${want}\` (RFC 0220 §A)`);
+    }
+    if (f.extensionName && !text.includes(`extensions.<org>.${f.extensionName}\``)) failures.push(`spec/v2/ext/${f.key}/README.md does not name its advertised key \`extensions.<org>.${f.extensionName}\` (RFC 0220 §A)`);
   }
 }
 

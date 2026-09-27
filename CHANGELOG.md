@@ -15,6 +15,20 @@ Format follows [Keep a Changelog](https://keepachangelog.com/en/1/) loosely. Ver
 
 - **The working-group tripwire counts a conformance pass on a currently supported major, not on v1** (governance; no wire change). `GOVERNANCE.md` §"Path to working group" condition 2 and RFC 0038 §E (still `Draft`, parked) now read "pass `@openwop/openwop-conformance` for a currently supported major". While v1 and v2 are both supported this counts the same hosts as before; once v1 support ends, only a v2 pass counts. The two-approval requirement is waived under `GOVERNANCE.md` §"Sole-steward operation", and RFC 0038 names the waiver in its header.
 - **RFC 0219 filed `Draft`: a client announces the protocol version it implements in `OpenWOP-Client-Version`** (`additive`; no wire change until `Active`; `@openwop/spec-artifacts` 2.42.7 cycle — its `spec/v1/gaps.json` gains the six gap rows). RFC 0172 §A.5 lets a host refuse a client below `minClientVersion` with `426 client_version_unsupported`, but no v2 document says how a host learns the client's version. The suite and all three certified v2 hosts already use `OpenWOP-Client-Version`, which `headers.md` does not declare, and they disagree on its grammar and on a malformed value. Proposed for `versioning.md` §1.5: optional on every operation; `<major>.<minor>[.<patch>]`, the corpus release the client implements; compared with the floor on major and minor only; a `426` only for a well-formed value below an advertised floor; a malformed value treated as absent and never a `400`; never an authentication input. Gap and risk registers under `RFCS/registers/`.
+- **RFC 0220 filed (`Draft`, window to 2026-10-04): an extension family graduates on evidence a script can read** (suite 2.42.7 cycle; no wire change). All 17 extension pages on openwop.dev/spec/v2/ read `Draft`, and none could become `Stable`, for four reasons:
+  - No scenario recorded the `openwop.family.<key>` pass the predicate needs.
+  - The ext READMEs named camelCase keys (`extensions.<org>.restTransport`) that `extensionsKeyPattern` rejects.
+  - The checker ignored the README's tier-2 bar.
+  - Four of the pages are not families: three notes and `portability`, which #1671 retired as a core family.
+
+  What changed:
+  - Each ext declaration row carries a kebab `extensionName`, and each README header now agrees with its row (both checked by `check-declaration.mjs`).
+  - `restTransport` is `witnessable-gated` (new `v2-ext-rest-transport`), `a2uiSurface` is `seam-gated` (a family leg in `v2-a2ui-v09-surface`), and the 11 reservations are witnessed by `v2-ext-family-claims`.
+  - New `evidence/host-tiers.json`: `check-ext-status-coherence.mjs` counts only certified tier-2+ bundles and reports tier-1-only witnesses as `NOT YET`.
+  - The three notes (`grpc-transport`, `provider-idempotency`, `sandbox-runtime-notes`) read `Status: Note.`.
+  - `capabilities.md` §3.2/§6 and `runs.md` §"Caching and encoding" use the real key spelling.
+
+  No page changes status in this PR. Each promotion is its own PR with a 7-day window, once a certified MyndHyve bundle carries the row.
 - **v2 corrections from an architect review.** Each item names its change class.
   - **`minClientVersion` has a grammar in the schema** (Class 3 correction, register row `openwop.correction.v2.2`). `schemas/v2/capabilities.schema.json` now carries the `<major>.<minor>` pattern that `versioning.md` §1.5 and the `v2-min-client-version` scenario already required. All 8 committed v2 host bundles advertise a conforming value. RFC 0172 §A.5, its axis row 15 and row C5.8 are amended in place: they said the field "becomes a MUST" while making refusal a MAY. `versioning.md`'s axis row 15 drops the same stray MUST.
   - **RFC 0169 §C.1 amended in place.** It said `a2a.profiles` and `mcp.profiles` were replaced; RFC 0175 §B.1 kept both as facets without `-legacy` ids. The RFC gains an `Amended by` row.

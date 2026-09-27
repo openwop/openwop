@@ -6,11 +6,11 @@ The normative contract for the `ui.a2ui-surface` envelope kind at per-kind schem
 
 | Field | Value |
 | --- | --- |
-| **witness:** | `claims-check` |
+| **witness:** | `seam-gated` |
 | **technical:** | `experimental` |
 | **adoption:** | `none` |
 | **peer-dependency id** | `a2uiSurface` |
-| **advertised as** | `extensions.<org>.a2uiSurface` |
+| **advertised as** | `schemaVersions.kinds["ui.a2ui-surface"]: 2`; the deprecated facet only under `extensions.<org>.a2ui-surface` |
 | **declared facets** | `deltaTransport` (deprecated) |
 
 ## Versions
@@ -128,6 +128,6 @@ The rows carry `removeIn: "3.0"`. An earlier removal takes the `v2-minor` path o
 - **`conformance/src/scenarios/v2-a2ui-v09-surface.test.ts`** (major 2, seams-gated on `POST /conformance/seams/sample/a2ui/emit-surface` in `api/seams-v2.yaml`): version selects branch, fold guarded, catalog equality, legacy readable and sticky taint. A host without the seam records `inapplicable`.
 - **No render before `root`** is a renderer guarantee the server-oriented suite cannot observe. A reference-app client probe witnesses it (`tier: reference-impl`).
 
-The `claims-check` witness above is the discovery claim of `extensions.<org>.a2uiSurface`.
+The family witness is `openwop.family.a2uiSurface`. It is the last leg of `v2-a2ui-v09-surface`: a version-2 surface is admitted and a version-1 body under schema version 2 is refused, in the same run. It shares the seam gate, so a host without the seam records `inapplicable`.
 
-*Sources: RFC 0102, RFC 0114, RFC 0197, RFC 0209.*
+*Sources: RFC 0102, RFC 0114, RFC 0197, RFC 0209, RFC 0220.*

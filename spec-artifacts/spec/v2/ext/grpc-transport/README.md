@@ -1,6 +1,6 @@
 # gRPC transport notes
 
-> **Status: Draft.**
+> **Status: Note.**
 
 A non-normative note, not a declared family. v2 has no normative gRPC transport, because the conformance suite has no gRPC client or behavioral witness.
 

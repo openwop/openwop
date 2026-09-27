@@ -13018,6 +13018,57 @@
       ]
     },
     {
+      "id": "openwop.gap.0220.1",
+      "rfc": "0220",
+      "local": "G1",
+      "section": "§C.2",
+      "surface": "`a2uiSurface` has no tier-2 witness path. MyndHyve's v2 discovery drops `schemaVersions.kinds`, it serves no `POST /conformance/seams/sample/a2ui/emit-surface`, and its seams profile is off.",
+      "witness": "unclassified",
+      "requirementId": null,
+      "disposition": "transferred",
+      "target": "myndhyve/services/workflow-runtime",
+      "sources": [
+        {
+          "file": "RFCS/registers/0220-ext-families-graduate-on-evidence.gaps.md",
+          "token": "G1"
+        }
+      ]
+    },
+    {
+      "id": "openwop.gap.0220.2",
+      "rfc": "0220",
+      "local": "G2",
+      "section": "§B",
+      "surface": "The 11 reservations have no portable contract, so their `Stable` means \"advertised correctly by a tier-2 host\", not interoperation.",
+      "witness": "unclassified",
+      "requirementId": null,
+      "disposition": "externally-gated",
+      "target": "cross-host-demand",
+      "sources": [
+        {
+          "file": "RFCS/registers/0220-ext-families-graduate-on-evidence.gaps.md",
+          "token": "G2"
+        }
+      ]
+    },
+    {
+      "id": "openwop.gap.0220.3",
+      "rfc": "0220",
+      "local": "G3",
+      "section": "§D",
+      "surface": "`evidence/host-tiers.json` has no tier-3 row; the first independent host adds one.",
+      "witness": "unclassified",
+      "requirementId": null,
+      "disposition": "externally-gated",
+      "target": "tier-3-host",
+      "sources": [
+        {
+          "file": "RFCS/registers/0220-ext-families-graduate-on-evidence.gaps.md",
+          "token": "G3"
+        }
+      ]
+    },
+    {
       "id": "openwop.gap.spec.a2a-integration.g1",
       "rfc": "0152",
       "local": "G1",

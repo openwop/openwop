@@ -147,7 +147,7 @@ Field rules:
 
 - The `200` SHOULD carry a strong `ETag` derived from the latest persisted `sequence`. When present it MUST change on every observable transition and be stable otherwise.
 - When the host sends an `ETag`, a request whose `If-None-Match` matches it MUST receive `304` with no body.
-- A host MAY compress (`gzip` baseline; `br` and `zstd` only where advertised under `restTransport.contentEncodings`). It MUST then set `Content-Encoding` and `Vary: Accept-Encoding`. The decoded body is byte-identical.
+- A host MAY compress (`gzip` baseline; `br` and `zstd` only where advertised under `extensions["<org>.rest-transport"].contentEncodings`, [ext/restTransport](../ext/restTransport/README.md)). It MUST then set `Content-Encoding` and `Vary: Accept-Encoding`. The decoded body is byte-identical.
 
 ## List
 
