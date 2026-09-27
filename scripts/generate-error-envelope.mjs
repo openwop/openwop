@@ -3,7 +3,7 @@
  * RFC 0171 §B.1 — schemas/v2/error-envelope.schema.json is GENERATED from
  * spec/v2/errors.json: `error` is the closed enum of registered codes plus the
  * positive vendor pattern; `details` is the registered details schema per
- * code (a `oneOf` discriminated on `error`) where one is registered, else an
+ * code (an `if error == code then details` rule) where one is registered, else an
  * explicitly open object. The flat shape {error, message, details?} stays;
  * retry timing lives in Retry-After only (§B.2).
  *   --write / --check
@@ -43,8 +43,14 @@ const schema = {
   properties: {
     error: { oneOf: [{ type: 'string', enum: reg.rows.map((r) => r.code) }, { type: 'string', pattern: reg.vendorCodePattern }] },
     message: { type: 'string', minLength: 1 },
-    details: withDetails.length ? { oneOf: [...withDetails.map((r) => ({ ...r.details, 'x-openwop-error': r.code })), { type: 'object', additionalProperties: true }] } : { type: 'object', additionalProperties: true, description: 'Error-specific contextual data. No code has registered a details schema yet (errors.json rows carry details: null); when one does, this becomes a oneOf discriminated on error.' },
+    details: { type: 'object', additionalProperties: true, description: 'Error-specific contextual data. A code that registers a details schema in errors.json constrains it through the allOf below, selected by `error`; every other code accepts any object.' },
   },
+  // Discriminated on `error`, not on shape. The earlier `oneOf` over every registered
+  // details schema plus an open fallback matched a conforming body TWICE (the
+  // registered branch and the fallback), so every envelope carrying registered
+  // details failed validation. `if error == code then details: <schema>` binds each
+  // schema to its own code only.
+  ...(withDetails.length ? { allOf: withDetails.map((r) => ({ if: { properties: { error: { const: r.code } }, required: ['error'] }, then: { properties: { details: { ...r.details, 'x-openwop-error': r.code } } } })) } : {}),
   'x-openwop-http-status': Object.fromEntries(reg.rows.map((r) => [r.code, r.httpStatus])),
   'x-openwop-retriable': reg.rows.filter((r) => r.retriable).map((r) => r.code),
 };

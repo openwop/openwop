@@ -12940,8 +12940,8 @@
       "surface": "Whether the value names the corpus release the client implements (this RFC) or a product version (v1's `openwop-sdk/<v>`).",
       "witness": "unclassified",
       "requirementId": null,
-      "disposition": "transferred",
-      "target": "rfc-0219",
+      "disposition": "closed",
+      "target": null,
       "sources": [
         {
           "file": "RFCS/registers/0219-client-version-header.gaps.md",
@@ -12974,8 +12974,8 @@
       "surface": "`client_version_unsupported` has `details: null`. Two hosts send `details.minClientVersion`, MyndHyve sends none.",
       "witness": "unclassified",
       "requirementId": null,
-      "disposition": "transferred",
-      "target": "spec/v2/core/errors.md",
+      "disposition": "closed",
+      "target": null,
       "sources": [
         {
           "file": "RFCS/registers/0219-client-version-header.gaps.md",
@@ -12991,8 +12991,8 @@
       "surface": "The header's meaning on a `/v1/…` path during the overlap. The reference host applies the floor there; openwop-app does not.",
       "witness": "unclassified",
       "requirementId": null,
-      "disposition": "transferred",
-      "target": "rfc-0219",
+      "disposition": "closed",
+      "target": null,
       "sources": [
         {
           "file": "RFCS/registers/0219-client-version-header.gaps.md",
