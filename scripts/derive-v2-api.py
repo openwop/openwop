@@ -473,6 +473,12 @@ def v2_openapi_and_seams():
         reg = paths['/webhooks']['post']['responses']['201']['content']['application/json']['schema']['properties']['webhookId']
         reg.clear()
         reg['$ref'] = '../../schemas/v2/ids.schema.json#/$defs/subscriptionId'
+        # RFC 0221: a secret the host generated (the request omitted `secret`) is returned
+        # here, once. A supplied secret is never echoed (RFC 0201 §B.6).
+        paths['/webhooks']['post']['responses']['201']['content']['application/json']['schema']['properties']['secret'] = {
+            'type': 'string', 'minLength': 1,
+            'description': 'Present only when the request omitted `secret`: the secret the host generated, returned this once. '
+                           'A supplied secret is never echoed.'}
     except (KeyError, TypeError):
         pass
     bc = paths.get('/runs:bulk-cancel', {}).get('post', {})

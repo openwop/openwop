@@ -2411,7 +2411,7 @@ paths:
                   type: string
                   description: The host signs payloads with this secret using HMAC-SHA256. REQUIRED in the Standard Webhooks
                     form `whsec_<base64>` (24–64 decoded bytes) when `signatureAlgorithms` lists `standard-webhooks-1`. Never
-                    echoed in any response.
+                    echoed in any response. When omitted, the host generates one and returns it once in the `201` (RFC 0221).
                 tags:
                   type: array
                   items:
@@ -2454,6 +2454,11 @@ paths:
                     items:
                       type: string
                     description: The list the dispatcher will apply; present whenever the request carried `signatureAlgorithms`.
+                  secret:
+                    type: string
+                    minLength: 1
+                    description: 'Present only when the request omitted `secret`: the secret the host generated, returned
+                      this once. A supplied secret is never echoed.'
           headers:
             OpenWOP-Version:
               $ref: '#/components/headers/OpenWOPVersion'

@@ -11,7 +11,7 @@
     "api/redocly.yaml": "b0604c89b2ca6d5076ec25725c539dad44a741a811fe524439ee6daef8baa09f",
     "api/seams-v2.yaml": "32ff503cc953a0d824789241295f08504db7d8a167bd2a2d9f489bcb7cb015e8",
     "api/v2/asyncapi.yaml": "a7a442826ad9641640b2cc6b9ce1de9beef93b9290f19cd17cf2254ea94c932b",
-    "api/v2/openapi.yaml": "4d631c452aeec8eea96c03ea85f14fc56ea73ca476433bf98cc9c4bf0984e820",
+    "api/v2/openapi.yaml": "cbe578c1c7178ca04f22bd0c3cd0be1fc4d6f733411f9f66edaf27536ba4d6b3",
     "api/v2/redocly.yaml": "1e66b60e6118ad11a823bb620678be464d99dfe50a40e3e6f93ec9429b88b34c",
     "schemas/README.md": "0c0b737ffcf8f30e7d2809cec8a498232de710f41443212922ad8337cdde0b51",
     "schemas/a2a-task-state.schema.json": "75d5049dea8bd873ff0e7546f1c60c8d36c219bec7084264360be54a8be30ae1",
@@ -210,7 +210,7 @@
     "spec/v1/event-codemap.json": "3da60d884157793a360da532a9fcbbfb5285636db325a74cec94b34622186d97",
     "spec/v1/event-codemap.schema.json": "d05933b2e88103aff51a2f774df97b9bda065e0fc88dbd9b114cc47a32189174",
     "spec/v1/extensions.json": "79a60754aa16cbdbdb604f8e5c00038af535a1690a4d07bd5ff7c38f0256a7bc",
-    "spec/v1/gaps.json": "456f3453ce453f0149f3d95c1ac26e669ae7d2bf2541a26320860105c4d55566",
+    "spec/v1/gaps.json": "59176da696d3b15170d573b3072b931fecc76001aaac2e33ccfa3268ac130410",
     "spec/v1/gaps.schema.json": "8fd83259f556553c9df0f53e7a82ca8c2a4771d471197f69b4e2ae0ceeacfd66",
     "spec/v1/migrations.json": "2efcd9064b2bc65a84a3b3d281aa86a91efd002690c1f4f14e8335c4a18194d1",
     "spec/v1/migrations.schema.json": "886779aa6c22e646db097f5df210adb018a4dd14a7b815465a18c8a7056c8f72",
@@ -242,7 +242,7 @@
     "spec/v2/core/security-defaults.md": "179fdd2efcc1454453243f8ab6473335dfd4389e70cbbc2669f5b83714092973",
     "spec/v2/core/tool-catalog.md": "6b54b8ce221107de19c718f374a720123c6a5f55db4054e6625f73d06e0a442f",
     "spec/v2/core/versioning.md": "000fa2db433039fc4f2b0ad7dc2cbf7aadc10eae60322018727da6f99eda4dc3",
-    "spec/v2/core/webhooks.md": "0398db27b2ddd97bc2a9a9b1236b5139451765462789dee9c3a8cc6b7b81e666",
+    "spec/v2/core/webhooks.md": "78fe97ab5bdee20218183efe32abf5ba1996705d757cb37c8d6a4d808c44199f",
     "spec/v2/core/workflow-chain-packs.md": "35a957f1dd22016febd76bf2c4dfb79cda58b95d8efd8893b5e5babda9f79cf3",
     "spec/v2/corrections.json": "b19f8a80fce7e6473012a20a216e358dd38ae7411e6a348f8031e325ed1a0a01",
     "spec/v2/corrections.schema.json": "46bbffb954d13bd9995aebc912ceeb2544f7064331abf25fd6ab85c81a5cec94",
@@ -301,5 +301,5 @@
     "spec/v2/retention-floors.json": "eaf3722d95c79947af1d4269ef85117e126518c588cfcf1a2b21b97269f51624",
     "spec/v2/surface-baseline.json": "549832c2de97b7c7aed07934c1c73c2709ac226dc0cb71fc8c141010bc4928f1"
   },
-  "corpusCommit": "2ef5c3fb106dea2b0355c20876f642ab6c1e061c"
+  "corpusCommit": "f337a44a18c2157330d6cbb4cb198faeb017e376"
 }
