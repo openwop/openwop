@@ -55,7 +55,7 @@ import {
   TOOL_CONTENT_FORBIDDEN,
 } from '../lib/toolCatalog.js';
 import { req } from '../lib/requirement-ids.js';
-import { softSkip } from '../lib/soft-skip.js';
+import { softSkip, seamAbsent } from '../lib/soft-skip.js';
 
 function loadSchema(name: string): Record<string, unknown> {
   return JSON.parse(readFileSync(join(SCHEMAS_DIR, name), 'utf8')) as Record<string, unknown>;
@@ -92,8 +92,23 @@ describe('tool-catalog-projection (RFC 0078 §B/§F)', () => {
     ).toBe(true);
 
     // ---- Leg 1: the list (§B) -------------------------------------------
-    const tools = await listTools();
-    if (tools === null) return softSkip('inapplicable', 'capability or profile not advertised by this host — gate `tools === null` returned early (host advertises the cap but doesn\'t serve the read — soft-skip the rest)'); // host advertises the cap but doesn't serve the read — soft-skip the rest
+    // unfailable-leg audit wave 2, 2026-09-27: a host that ADVERTISES the
+    // catalog but 404s the list (or answers 500 / a non-list 200, which the
+    // old `listTools` read as `[]`) previously recorded a partial-witness pass
+    // after the 401 assertion. An unserved read is now `seamAbsent` (blocked;
+    // fails under OPENWOP_REQUIRE_BEHAVIOR=true), and any other non-200 or
+    // non-list body FAILS.
+    const read = await listTools();
+    if (read.unserved) return seamAbsent(`host advertises toolCatalog but ${toolsPath()} answered ${read.status}`);
+    expect(
+      read.status,
+      req('openwop.it.tool-catalog-projection.lists-schema-valid-tooldescriptors-serves-by-id-404s-is-auth-gated-and-never-dis', 'tool-catalog.md §B', `GET ${toolsPath()} MUST return 200 to an authenticated caller on a host advertising toolCatalog`),
+    ).toBe(200);
+    expect(
+      read.tools !== null,
+      req('openwop.it.tool-catalog-projection.lists-schema-valid-tooldescriptors-serves-by-id-404s-is-auth-gated-and-never-dis', 'tool-catalog.md §B', `GET ${toolsPath()} MUST return a ToolDescriptor[]`),
+    ).toBe(true);
+    const tools = read.tools ?? [];
 
     for (const t of tools) {
       const v = validate(t);
@@ -116,12 +131,18 @@ describe('tool-catalog-projection (RFC 0078 §B/§F)', () => {
     if (tools.length > 0 && typeof tools[0]!.toolId === 'string') {
       const id = tools[0]!.toolId as string;
       const one = await getTool(id);
-      if (one.status === 200) {
-        expect(
-          one.descriptor?.toolId === id,
-          req('openwop.it.tool-catalog-projection.lists-schema-valid-tooldescriptors-serves-by-id-404s-is-auth-gated-and-never-dis', 'tool-catalog.md §B', 'GET /v1/tools/{toolId} MUST return the requested descriptor'),
-        ).toBe(true);
-      }
+      // unfailable-leg audit wave 2, 2026-09-27: the by-id check used to run
+      // only `if (one.status === 200)`, so a host that 404'd (or 500'd) the
+      // by-id read of a tool its own list returned passed. A listed tool is
+      // one the caller may see; its by-id read MUST serve it.
+      expect(
+        one.status,
+        req('openwop.it.tool-catalog-projection.lists-schema-valid-tooldescriptors-serves-by-id-404s-is-auth-gated-and-never-dis', 'tool-catalog.md §B', 'GET /v1/tools/{toolId} MUST return 200 for a toolId the caller\'s own list returned'),
+      ).toBe(200);
+      expect(
+        one.descriptor?.toolId === id,
+        req('openwop.it.tool-catalog-projection.lists-schema-valid-tooldescriptors-serves-by-id-404s-is-auth-gated-and-never-dis', 'tool-catalog.md §B', 'GET /v1/tools/{toolId} MUST return the requested descriptor'),
+      ).toBe(true);
     }
     const unknown = await getTool('__conformance_nonexistent_tool__');
     expect(
@@ -142,9 +163,11 @@ describe('tool-catalog-projection (RFC 0078 §B/§F)', () => {
 
   it('advisory (SHOULD): an unchanged catalog reads identically, sorted by toolId', async () => {
     if (!(await toolCatalogGate('openwop-tool-catalog'))) return;
-    const a = await listTools();
-    const b = await listTools();
-    if (a === null || b === null) return softSkip('inapplicable', 'the host advertises the catalog but does not serve the list read');
+    const ra = await listTools();
+    const rb = await listTools();
+    const a = ra.tools;
+    const b = rb.tools;
+    if (a === null || b === null) return softSkip('inapplicable', `the list read did not return a ToolDescriptor[] (status ${ra.status}/${rb.status}); the normative leg above records that — this advisory leg is never failed`);
     const ids = (l: ReadonlyArray<{ toolId?: unknown }>) => l.map((t) => String(t.toolId));
     const first = ids(a); const second = ids(b);
     const sorted = [...first].sort((x, y) => (x < y ? -1 : x > y ? 1 : 0));

@@ -132,6 +132,33 @@ describe.skipIf(SKIP_NO_FIXTURE)('stream-modes: debug emits at least as many eve
       'debug stream event count MUST be >= updates stream event count',
     )).toBeGreaterThanOrEqual(updatesResult.events.length);
 
+    // unfailable-leg audit wave 2, 2026-09-27: superset-by-COUNT alone passed a
+    // host whose debug stream dropped canonical types (e.g. no run.completed)
+    // as long as it padded the count with other frames (log.appended,
+    // keep-alive-ish events). The mapping table is per TYPE: every type the
+    // updates stream carried MUST appear in debug, and debug MUST carry
+    // node.started (✅ debug / — updates) — the conformance-delay fixture has
+    // one node (`wait`), so a debug stream without node.started is filtering.
+    const typeOf = (e: SseEvent): string => {
+      if (e.event !== 'message') return e.event;
+      try {
+        const t = (JSON.parse(e.data) as { type?: unknown }).type;
+        return typeof t === 'string' ? t : e.event;
+      } catch {
+        return e.event;
+      }
+    };
+    const debugTypes = new Set(debugResult.events.map(typeOf));
+    const missingFromDebug = [...new Set(updatesResult.events.map(typeOf))].filter((t) => !debugTypes.has(t));
+    expect(missingFromDebug, req('openwop.it.stream-modes.debug-stream-is-a-superset-of-updates-per-stream-modes-md-mode-mapping', 
+      'stream-modes.md §Mode-to-event mapping',
+      'every event type emitted in updates mode is also ✅ in debug mode — debug MUST carry each of them',
+    )).toEqual([]);
+    expect([...debugTypes], req('openwop.it.stream-modes.debug-stream-is-a-superset-of-updates-per-stream-modes-md-mode-mapping', 
+      'stream-modes.md §Mode-to-event mapping',
+      'debug mode MUST emit node.started (✅ debug) for the fixture\'s node',
+    )).toContain('node.started');
+
     expect(debugResult.closedBy, req('openwop.it.stream-modes.debug-stream-is-a-superset-of-updates-per-stream-modes-md-mode-mapping', 
       'stream-modes.md §debug',
       'debug stream MUST close on terminal event',

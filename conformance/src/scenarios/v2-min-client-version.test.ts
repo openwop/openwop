@@ -18,7 +18,7 @@ import { describe, it, expect } from 'vitest';
 import { driver, type OpenWOPResponse } from '../lib/driver.js';
 import { v2Discovery, v2Validator } from '../lib/v2.js';
 import { readErrorCode } from '../lib/error-envelope.js';
-import { softSkip } from '../lib/soft-skip.js';
+import { blockedDespiteAssertions, softSkip } from '../lib/soft-skip.js';
 import { req } from '../lib/requirement-ids.js';
 
 const DOC = 'spec/v2/core/versioning.md §1.5';
@@ -40,6 +40,16 @@ describe('v2 min-client-version (RFC 0172 §A.5 — gated on minClientVersion)',
     expect(typeof floor === 'string' && VERSION.test(floor), req('openwop.requirement.0172.min-client-version', DOC, 'minClientVersion MUST use the <major>.<minor> grammar (axis 15, as axis 1)')).toBe(true);
     const res = await http(() => driver.get('/.well-known/openwop', { authenticated: false, headers: { 'OpenWOP-Client-Version': '0.0.1' } }));
     if (res === null) return softSkip('blocked', 'GET /.well-known/openwop with OpenWOP-Client-Version unreachable (fetch failed)');
+    // unfailable-leg audit wave 2, 2026-09-27: every non-426 answer — including
+    // a 4xx/5xx that refused the client in an unregistered form — recorded
+    // `inapplicable` AFTER the grammar assert, i.e. a partial-witness PASS of
+    // the 426 refusal row. Only a SERVED request (2xx) is the MAY exercised; any
+    // other non-426 answer is `blocked`. Not asserted as a failure:
+    // `OpenWOP-Client-Version` is not yet declared in api/v2/openapi.yaml /
+    // headers.md, so a non-2xx here is not provably a version refusal.
+    if (res.status !== 426 && (res.status < 200 || res.status >= 300)) {
+      return blockedDespiteAssertions(`the host advertises minClientVersion ${String(floor)} and answered ${res.status} to a client announcing 0.0.1 — neither served (the MAY) nor refused with the registered 426 client_version_unsupported; the refusal form was not observed`);
+    }
     if (res.status !== 426) return softSkip('inapplicable', `the host advertises minClientVersion ${String(floor)} but served a client announcing 0.0.1 (${res.status}) — refusal is a MAY; nothing further is observable`);
     expect(readErrorCode(res.json), req('openwop.requirement.0172.min-client-version', DOC, 'a 426 refusal MUST carry client_version_unsupported')).toBe('client_version_unsupported');
     const r = v2Validator('error-envelope')(res.json);

@@ -145,10 +145,29 @@ describe('v2-version-header-honored (RFC 0172 §A.3)', () => {
     // A refusal is a correct answer and ends the check: the host has told the
     // truth about not serving major 2.
     if (asked.status === 406) {
+      // unfailable-leg audit wave 2, 2026-09-27: this branch asserted only the
+      // status it had just branched on (`406 === 406`), so ANY 406 passed — a
+      // host that lists `2.x` in protocolVersions[] and still refuses it
+      // (§1.3 row 1: MUST serve a listed major), or one answering 406 with a
+      // bare `{}` body. The refusal is now held to §1.3 row 2 exactly as the
+      // retired-host branch above is: code `protocol_version_unsupported`,
+      // `details.protocolVersions[]` echoing the list, and major 2 NOT listed.
+      let refusal: unknown;
+      try {
+        refusal = JSON.parse(asked.body);
+      } catch {
+        refusal = undefined;
+      }
+      const echoed406 = (refusal as { details?: { protocolVersions?: unknown } } | undefined)?.details?.protocolVersions;
       expect(
-        asked.status,
-        req(ID, DOC, 'a host that does not serve major 2 MUST refuse with 406 protocol_version_unsupported, which it did'),
-      ).toBe(406);
+        {
+          status: asked.status,
+          code: readErrorCode(refusal),
+          echoed: Array.isArray(echoed406) ? [...echoed406].map(String).sort() : echoed406,
+          listsMajor2: majors.has('2'),
+        },
+        req(ID, DOC, `a host that does not serve major 2 MUST refuse OpenWOP-Version: 2.0 with 406 protocol_version_unsupported and details.protocolVersions[] echoing [${advertised.join(', ')}]; a host that LISTS a 2.x member MUST serve it (§1.3 row 1), not refuse it`),
+      ).toEqual({ status: 406, code: 'protocol_version_unsupported', echoed: [...advertised].sort(), listsMajor2: false });
       return softSkip('inapplicable', 'the host refused major 2 with the specified 406 — a correct answer, and there is no second representation to compare bytes against');
     }
     if (asked.status !== 200) {

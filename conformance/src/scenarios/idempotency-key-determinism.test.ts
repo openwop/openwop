@@ -116,10 +116,14 @@ describe('category: core.openwop.http.idempotency-key — determinism contract',
     // — the scenario soft-skips rather than failing.
     if (!packAvailable) {
       console.warn(`[idempotency-key-determinism] packs/core.openwop.http/index.mjs not present; skipping`);
-      expect(packAvailable, req('openwop.it.idempotency-key-determinism.skips-cleanly-when-packs-is-not-bundled', 'idempotency.md §"Idempotency-Key', 'skips cleanly when packs/ is not bundled')).toBe(false);
+      // unfailable-leg audit wave 2, 2026-09-27: this leg asserted
+      // `packAvailable === false` inside `if (!packAvailable)` (and `=== true`
+      // in the else) — tautologies that turned a sentinel into an
+      // `executed-pass` row measuring nothing. It now records `inapplicable`
+      // with zero assertions either way.
       return softSkip('inapplicable', 'capability or profile not advertised by this host — gate `!packAvailable` returned early ([idempotency-key-determinism] packs/core.openwop.http/index.mjs not present; skipping)');
     }
-    expect(packAvailable).toBe(true);
+    return softSkip('inapplicable', 'sentinel leg — pack source is present; the behavioural legs in this file carry the assertions');
   });
 
   it('default mode (composite) — identical (runId, nodeId, payload) produces identical keys', async () => {

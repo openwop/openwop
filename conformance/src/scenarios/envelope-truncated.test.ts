@@ -21,7 +21,7 @@ import { driver } from '../lib/driver.js';
 import { pollUntilTerminal } from '../lib/polling.js';
 import { isFixtureAdvertised } from '../lib/fixtures.js';
 import { req } from '../lib/requirement-ids.js';
-import { softSkip } from '../lib/soft-skip.js';
+import { softSkip, blockedDespiteAssertions } from '../lib/soft-skip.js';
 
 const HTTP_SKIP = !process.env.OPENWOP_BASE_URL;
 const FIXTURE = 'conformance-envelope-truncated';
@@ -67,7 +67,11 @@ describe.skipIf(HTTP_SKIP)('envelope-truncated: runtime behavior (RFC 0032 §B.4
     expect(seed.status).toBe(200);
 
     const result = await startRunAndRead();
-    if (result === null) return softSkip('blocked', 'precondition not met — `result === null` returned early (seam, prior step, or fixture unavailable)');
+    // unfailable-leg audit wave 2, 2026-09-27: after the seed assertion above a
+    // plain softSkip('blocked') records a partial-witness PASS at major 1, so a
+    // host whose run create / event read failed passed this leg without the
+    // envelope.truncated count ever being observed.
+    if (result === null) return blockedDespiteAssertions('the run create or event-log read failed after the mock was seeded — the envelope.truncated count was never observed');
     const truncated = result.events.filter((e) => e.type === 'envelope.truncated');
     expect(
       truncated.length,

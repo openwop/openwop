@@ -43,7 +43,7 @@ import {
   type TestEvent,
 } from '../lib/event-log-query.js';
 import { req } from '../lib/requirement-ids.js';
-import { softSkip } from '../lib/soft-skip.js';
+import { blockedDespiteAssertions } from '../lib/soft-skip.js';
 
 const ROSTER_ID_RE = /^host:[a-z0-9][a-z0-9._-]*$/;
 
@@ -67,13 +67,23 @@ describe('agent-roster-attribution (RFC 0086 §B/§C)', () => {
     ).toBe(true);
 
     // ---- Leg 1: normative read (black-box on any roster host) -------------
+    // unfailable-leg audit wave 2, 2026-09-27: a host that ADVERTISED
+    // agents.roster.supported but 404/405/501'd the normative read used to
+    // soft-skip 'inapplicable' after the installScope assert — a partial-witness
+    // PASS. Advertised ⇒ the normative read MUST be served, so it now fails.
+    // Likewise `body.roster ?? []` made a body with NO roster[] pass the
+    // "MUST return a roster[] array" assert; the raw field is checked now.
     const body = await listRoster();
-    if (body === null) return softSkip('inapplicable', 'capability or profile not advertised by this host — gate `body === null` returned early (host advertises roster but doesn\'t serve the read yet — soft-skip)'); // host advertises roster but doesn't serve the read yet — soft-skip
-    const roster = body.roster ?? [];
     expect(
-      Array.isArray(roster),
+      body !== null,
+      req('openwop.it.agent-roster-attribution.serves-the-normative-roster-attributes-a-portfolio-fire-content-free-ordered-and', 'agent-roster.md §B', 'a host advertising agents.roster.supported MUST serve GET /v1/agents/roster (got 404/405/501)'),
+    ).toBe(true);
+    if (body === null) return;
+    expect(
+      Array.isArray(body.roster),
       req('openwop.it.agent-roster-attribution.serves-the-normative-roster-attributes-a-portfolio-fire-content-free-ordered-and', 'agent-roster.md §B', 'GET /v1/agents/roster MUST return a roster[] array'),
     ).toBe(true);
+    const roster = Array.isArray(body.roster) ? body.roster : [];
     expect(
       body.total === roster.length,
       req('openwop.it.agent-roster-attribution.serves-the-normative-roster-attributes-a-portfolio-fire-content-free-ordered-and', 'agent-roster-response.schema.json', 'total MUST equal roster.length'),
@@ -103,12 +113,22 @@ describe('agent-roster-attribution (RFC 0086 §B/§C)', () => {
     }
 
     // ---- Leg 2: attribution + ordering (seam-gated) ----------------------
+    // unfailable-leg audit wave 2, 2026-09-27: when the event-log seam, the
+    // fire seam, or the event query was absent, this leg fell through with
+    // nothing observed and the whole `it` (named for attribution + ordering)
+    // recorded a full pass on the leg-1 read alone. Track whether attribution
+    // was actually observed; if not, the row records `blocked`.
+    let attributionObserved = false;
+    let attributionGap = 'event-log seam /v1/host/sample/test-events not available';
     if (await isEventLogSeamAvailable()) {
+      attributionGap = 'roster fire seam /v1/host/sample/roster/fire unwired (404/405) or returned no runId';
       // Scheduled portfolio fire.
       const fired = await fireRosterPortfolio({ triggerSource: 'schedule' });
       if (fired?.runId) {
         const q = await queryTestEvents(fired.runId);
+        attributionGap = 'event-log query for the fired run failed';
         if (q.ok) {
+          attributionObserved = true;
           const init = firstOf(q.events, ['roster.run.initiated']);
           expect(
             init !== undefined,
@@ -175,6 +195,10 @@ describe('agent-roster-attribution (RFC 0086 §B/§C)', () => {
         probe.status === 404,
         req('openwop.it.agent-roster-attribution.serves-the-normative-roster-attributes-a-portfolio-fire-content-free-ordered-and', 'agent-roster.md §B / RFC 0074', "GET /v1/agents/roster/{id} for a cross-tenant id MUST 404 (no cross-tenant disclosure)"),
       ).toBe(true);
+    }
+
+    if (!attributionObserved) {
+      return blockedDespiteAssertions(`roster attribution + ordering (RFC 0086 §C) not observed — ${attributionGap}`);
     }
   });
 });

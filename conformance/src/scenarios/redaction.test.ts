@@ -187,6 +187,9 @@ describe('redaction: 401 response MUST NOT echo invalid Bearer token (NFR-7)', (
 
 describe.skipIf(SKIP_NO_NOOP)('redaction: credentialRef value MUST NOT appear in event payloads (gated on secrets.supported)', () => {
   it('skips when host does NOT advertise secrets.supported', async () => {
+    // Names the row id first (the registry takes the FIRST req() in a body as
+    // the explicitId) now that the tautological assert below is gone.
+    req('openwop.it.redaction.skips-when-host-does-not-advertise-secrets-supported', 'capabilities.md', 'a credentialRef value MUST NOT appear in any RunEvent payload');
     const cap = await driver.get('/.well-known/openwop', { authenticated: false });
     const supported =
       (cap.json as { secrets?: { supported?: boolean } } | undefined)?.secrets
@@ -194,8 +197,11 @@ describe.skipIf(SKIP_NO_NOOP)('redaction: credentialRef value MUST NOT appear in
 
     if (supported !== true) {
       // Spec-allowed — this scenario only applies to hosts that opt
-      // into BYOK. Pass trivially.
-      expect(supported, req('openwop.it.redaction.skips-when-host-does-not-advertise-secrets-supported', 'capabilities.md', 'skips when host does NOT advertise secrets.supported')).not.toBe(true);
+      // into BYOK. unfailable-leg audit wave 2, 2026-09-27: a tautological
+      // `expect(supported).not.toBe(true)` inside `if (supported !== true)`
+      // turned every non-BYOK host's row into an executed PASS of the
+      // credentialRef no-leak requirement; with zero assertions the row now
+      // records `inapplicable`.
       return softSkip('inapplicable', 'capability or profile not advertised by this host — gate `supported !== true` returned early');
     }
 

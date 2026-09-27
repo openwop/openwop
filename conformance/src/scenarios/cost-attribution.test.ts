@@ -163,6 +163,18 @@ describe.skipIf(SKIP_NO_COST_EMIT)('cost-attribution: end-to-end roundtrip via c
       'metrics.openwopCost MUST be populated after a node calls ctx.recordCost()',
     )).toBeDefined();
 
+    // unfailable-leg audit wave 2, 2026-09-27: every field check below is
+    // `if (field in openwopCost)` — a host returning `openwopCost: {}` (or one
+    // carrying only provider/model) passed the whole leg with no cost recorded.
+    // The canary records a cost, so at least one of usd / tokens MUST surface.
+    expect(
+      (openwopCost !== undefined && openwopCost !== null) && ('usd' in openwopCost || ('tokens' in openwopCost && openwopCost.tokens !== undefined && openwopCost.tokens !== null)),
+      req('openwop.it.cost-attribution.metrics-openwopcost-must-carry-the-canary-cost-shape-after-the-fixture-node-runs',
+        'run-snapshot.schema.json §metrics.openwopCost / observability.md §Cost attribution attributes',
+        'metrics.openwopCost MUST carry the recorded cost — at least one of usd or tokens — after ctx.recordCost()',
+      ),
+    ).toBe(true);
+
     // Provider — the fixture canary is a stable string. Host-defined
     // overrides are spec-allowed; we assert shape rather than exact match.
     if ('provider' in openwopCost!) {

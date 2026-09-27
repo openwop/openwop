@@ -35,7 +35,13 @@ describe.skipIf(SKIP)('conversationLifecycle: open → exchange → close round-
 
     // The fixture's exchange step requires resume input. Host-internal
     // mock auto-resumes for conformance.
-    await pollUntilTerminal(runId);
+    const terminal = await pollUntilTerminal(runId);
+    // unfailable-leg audit wave 2, 2026-09-27: the leg never checked the
+    // exchange happened or the run finished — a host emitting only
+    // `conversation.opened` + `conversation.closed` (zero exchanges, so the CO-3
+    // "no exchange after close" check is vacuous) in a run that FAILED passed.
+    // The fixture performs exactly one exchange (mockAutoResume) and completes.
+    expect(terminal.status, req('openwop.it.conversationLifecycle.emits-all-three-lifecycle-events-with-matching-conversationid-no-exchanges-after', 'RFCS/0005-conversation.md', 'the open → exchange → close fixture run MUST terminate `completed`')).toBe('completed');
 
     const events = await driver.get(`/v1/runs/${encodeURIComponent(runId)}/events`);
     const list = (events.json as { events?: Array<{ type: string; payload?: Record<string, unknown> }> })
@@ -47,6 +53,7 @@ describe.skipIf(SKIP)('conversationLifecycle: open → exchange → close round-
 
     expect(opened.length).toBeGreaterThan(0);
     expect(closed.length).toBeGreaterThan(0);
+    expect(exchanged.length, req('openwop.it.conversationLifecycle.emits-all-three-lifecycle-events-with-matching-conversationid-no-exchanges-after', 'RFCS/0005-conversation.md', '`conversation.exchanged` MUST be emitted for the fixture\'s one exchange turn')).toBeGreaterThan(0);
 
     // All three event types MUST share the same conversationId for the
     // fixture's single conversation.
@@ -62,5 +69,9 @@ describe.skipIf(SKIP)('conversationLifecycle: open → exchange → close round-
       .slice(closedIdx + 1)
       .filter((e) => e.type === 'conversation.exchanged' && e.payload?.conversationId === convId);
     expect(exchangedAfterClose.length).toBe(0);
+    // ...and the exchange this run DID emit precedes the close (open → exchange → close).
+    let lastExchangedIdx = -1;
+    list.forEach((e, i) => { if (e.type === 'conversation.exchanged' && e.payload?.conversationId === convId) lastExchangedIdx = i; });
+    expect(lastExchangedIdx >= 0 && lastExchangedIdx < closedIdx, req('openwop.it.conversationLifecycle.emits-all-three-lifecycle-events-with-matching-conversationid-no-exchanges-after', 'RFCS/0005-conversation.md (CO-3)', `the last conversation.exchanged (index ${lastExchangedIdx}) MUST precede conversation.closed (index ${closedIdx})`)).toBe(true);
   });
 });

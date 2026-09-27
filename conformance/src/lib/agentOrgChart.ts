@@ -51,12 +51,29 @@ export interface ResponsibilityView {
   responsibilities?: string[];
 }
 
-/** GET the NORMATIVE org-chart (RFC 0087 §A `GET /v1/agents/org-chart`);
- *  null when the host doesn't serve it (404/405/501). */
-export async function getOrgChart(): Promise<OrgChart | null> {
+/** GET the NORMATIVE org-chart (RFC 0087 §A `GET /v1/agents/org-chart`) and
+ *  return the raw status alongside the parsed body, so a scenario can assert
+ *  on the status itself (with a `req()` id) instead of a helper that folds it. */
+export async function getOrgChartResponse(): Promise<{ status: number; chart: OrgChart | undefined }> {
   const res = await driver.get('/v1/agents/org-chart');
-  if (res.status === 404 || res.status === 405 || res.status === 501) return null;
-  return (res.json as OrgChart | undefined) ?? {};
+  const body = res.json;
+  return { status: res.status, chart: body && typeof body === 'object' ? (body as OrgChart) : undefined };
+}
+
+/** GET the NORMATIVE org-chart (RFC 0087 §A `GET /v1/agents/org-chart`);
+ *  null when the host doesn't serve it (404/405/501).
+ *
+ *  unfailable-leg audit wave 2, 2026-09-27: every other status used to fold to
+ *  `{}` — an advertised host answering 500/403 read as an EMPTY chart, which
+ *  the tree/member loops then passed vacuously. Any other non-200 (or a 200
+ *  with no object body) now throws, failing the calling leg. */
+export async function getOrgChart(): Promise<OrgChart | null> {
+  const { status, chart } = await getOrgChartResponse();
+  if (status === 404 || status === 405 || status === 501) return null;
+  if (status !== 200 || chart === undefined) {
+    throw new Error(`RFC 0087 §A: GET /v1/agents/org-chart MUST return 200 with the org-chart object on a host advertising agents.orgChart — got HTTP ${status}${chart === undefined ? ' with no JSON object body' : ''}`);
+  }
+  return chart;
 }
 
 /** GET a department's §D responsibility roll-up. `recursive` defaults to the

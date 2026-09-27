@@ -44,7 +44,7 @@ import { isFixtureAdvertised } from '../lib/fixtures.js';
 import { readCapabilityFamily } from '../lib/discovery-capabilities.js';
 import { queryTestEvents, type TestEvent } from '../lib/event-log-query.js';
 import { req } from '../lib/requirement-ids.js';
-import { softSkip } from '../lib/soft-skip.js';
+import { softSkip, blockedDespiteAssertions } from '../lib/soft-skip.js';
 import { seamsProfileAdvertised, targetMajor } from '../lib/seams.js';
 import { familyAdvertised, v2Discovery } from '../lib/v2.js';
 import { runsPath } from '../lib/memoryAttribution.js';
@@ -120,31 +120,40 @@ describe('context-summarization-replay (RFC 0111 §"Replay determinism")', () =>
     }
     if (!isFixtureAdvertised(FIXTURE)) return softSkip('inapplicable', `the live fixture ${FIXTURE} is not advertised — RFC 0111 §Scope forbids a mock supervisor from advertising contextBudget`);
 
+    // unfailable-leg audit wave 2, 2026-09-27: the replay-mode gate moved ABOVE the
+    // create — after the 201 assert it recorded a partial-witness `executed-pass`
+    // for a host that never replayed anything.
+    if (!replayModesOf(wellKnown).includes('replay')) return softSkip('inapplicable', 'the host advertises no replay fork mode');
+
     const create = await driver.post(runsPath(), { workflowId: FIXTURE });
     expect(create.status, req(ID, 'RFC 0111', `POST ${runsPath()} MUST create the live-fixture run`)).toBe(201);
     const sourceRunId = runIdOf(create.json);
     expect(sourceRunId, req(ID, 'rest-endpoints.md POST /v1/runs', 'the create response MUST carry a runId')).toBeDefined();
-    if (sourceRunId === undefined) return softSkip('blocked', 'no runId');
+    if (sourceRunId === undefined) return blockedDespiteAssertions('no runId');
     await pollUntilTerminal(sourceRunId, { timeoutMs: LIVE_RUN_POLL_MS });
+    // unfailable-leg audit wave 2, 2026-09-27: every early return below follows the
+    // create's 201 assert, so a plain softSkip recorded a partial-witness
+    // `executed-pass` — a host whose event log was unreadable, that never
+    // summarized, or whose fork 404'd passed without the replay requirement
+    // (reuse of the recorded summaryRef) ever being observed. Now `blocked`.
 
     const sourceQ = await queryTestEvents(sourceRunId);
-    if (!sourceQ.ok) return softSkip('blocked', 'the run event-log seam is unavailable');
+    if (!sourceQ.ok) return blockedDespiteAssertions('the run event-log seam is unavailable — summaryRef reuse unobserved');
     const sourceFingerprints = summaryFingerprints(sourceQ.events);
     if (sourceFingerprints.length === 0) {
-      return softSkip('blocked', 'the live run produced no context.summarized event — a host advertising summarization must summarize this fixture for reuse to be observable');
+      return blockedDespiteAssertions('the live run produced no context.summarized event — a host advertising summarization must summarize this fixture for reuse to be observable');
     }
-    if (!replayModesOf(wellKnown).includes('replay')) return softSkip('inapplicable', 'the host advertises no replay fork mode');
 
     const fork = await driver.post(`${runsPath()}/${encodeURIComponent(sourceRunId)}:fork`, { fromSeq: 0, mode: 'replay' });
-    if (fork.status === 501 || fork.status === 404) return softSkip('blocked', `replay fork answered ${fork.status}`);
+    if (fork.status === 501 || fork.status === 404) return blockedDespiteAssertions(`replay fork answered ${fork.status} — summaryRef reuse unobserved`);
     expect(fork.status, req(ID, 'rest-endpoints.md POST /v1/runs/{runId}:fork', 'replay fork MUST return 201')).toBe(201);
     const forkRunId = runIdOf(fork.json);
     expect(forkRunId, req(ID, 'rest-endpoints.md POST /v1/runs/{runId}:fork', 'replay fork MUST return a runId')).toBeDefined();
-    if (forkRunId === undefined) return softSkip('blocked', 'no fork runId');
+    if (forkRunId === undefined) return blockedDespiteAssertions('no fork runId');
     await pollUntilTerminal(forkRunId, { timeoutMs: LIVE_RUN_POLL_MS });
 
     const forkQ = await queryTestEvents(forkRunId);
-    if (!forkQ.ok) return softSkip('blocked', 'the event-log seam is unavailable for the fork');
+    if (!forkQ.ok) return blockedDespiteAssertions('the event-log seam is unavailable for the fork — summaryRef reuse unobserved');
     expect(summaryFingerprints(forkQ.events), req(ID, 'RFC 0111 §"Replay determinism"', 'a replay fork MUST reuse the recorded context.summarized summaryRef (never re-summarize to a different transcript)')).toEqual(sourceFingerprints);
 
     // The model-facing half: the summary TEXT the host fed on the fork.

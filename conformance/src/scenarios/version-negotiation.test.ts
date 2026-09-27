@@ -74,7 +74,18 @@ describe('version-negotiation: Capabilities advertises a protocolVersion', () =>
       'capabilities.md §3 + version-negotiation.md',
       'Capabilities.protocolVersion MUST be a non-empty string',
     )).toBe('string');
-    expect(String(caps.protocolVersion).length).toBeGreaterThan(0);
+    // unfailable-leg audit wave 2, 2026-09-27: only non-emptiness was checked,
+    // so `v1.0`, `1.0.0`, `1` and `banana` passed. RFC 0149 §C constrains
+    // protocolVersion to ASCII `<major>.<minor>` with no leading zeros —
+    // capabilities.schema.json `protocolVersion.pattern` (the same grammar
+    // lib/profiles.ts PROTOCOL_VERSION_GRAMMAR applies to the core predicate).
+    expect(
+      typeof caps.protocolVersion === 'string' && /^(0|[1-9][0-9]*)\.(0|[1-9][0-9]*)$/.test(caps.protocolVersion),
+      req('openwop.it.version-negotiation.get-well-known-openwop-returns-capabilities-with-protocolversion-string',
+        'RFC 0149 §C; capabilities.schema.json protocolVersion.pattern',
+        `Capabilities.protocolVersion MUST be ASCII <major>.<minor> with no leading zeros (got ${JSON.stringify(caps.protocolVersion)})`,
+      ),
+    ).toBe(true);
   });
 });
 

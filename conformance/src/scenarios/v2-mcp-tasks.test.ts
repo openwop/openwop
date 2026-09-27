@@ -307,7 +307,16 @@ describe('RFC 0198 — v2-mcp-tasks (MCP Tasks on the server mount; disconnect c
     const f = await createTask(m.url, 'conformance-failure');
     let terminal: Rpc;
     if (f.result?.['resultType'] === 'task') terminal = await pollTask(m.url, String(f.result['taskId']), (s) => ['completed', 'failed', 'cancelled'].includes(s), 10_000);
-    else return softSkip('inapplicable', 'conformance-failure finished before the host answered, so it was answered CallToolResult (RFC 0198 §B.4) — no task to project');
+    else {
+      // unfailable-leg audit wave 2, 2026-09-27: this branch returned
+      // softSkip('inapplicable') after the input_required asserts — a
+      // partial-witness PASS at both majors even when the synchronous answer
+      // was NOT a tool-error outcome. The synchronous CallToolResult of a
+      // failed run MUST still carry isError true; the task projection itself
+      // was not observed, so the row is `blocked` (stands at major 2).
+      expect((f.result as { isError?: unknown } | undefined)?.isError, req(ID_TASK_STATUS_PROJECTION, 'RFC 0198 §B.4; ext-tasks §Task Execution Errors', `a failed run answered synchronously is a CallToolResult with isError true (got ${JSON.stringify(f.error ?? f.result)})`)).toBe(true);
+      return softSkip('blocked', 'conformance-failure finished before the host answered, so it was answered CallToolResult (RFC 0198 §B.4) — the failed-run task-status projection was not observed');
+    }
     expect([terminal.result?.['status'], (terminal.result?.['result'] as { isError?: unknown } | undefined)?.isError], req(ID_TASK_STATUS_PROJECTION, 'interop-map.json mcp.tasks.status failed; ext-tasks §Task Execution Errors', `a failed run is a tool outcome: completed with result.isError true, never failed (got ${JSON.stringify(terminal.result)})`)).toEqual(['completed', true]);
   });
 
@@ -497,13 +506,18 @@ describe('RFC 0198 — v2-mcp-tasks (MCP Tasks on the server mount; disconnect c
     const ac = new AbortController();
     const resP = fetch(m.url, { method: 'POST', signal: ac.signal, headers: headersFor('tools/call', 'conformance-cancellable', undefined, 'text/event-stream, application/json'), body: JSON.stringify(envelope('tools/call', { name: 'conformance-cancellable', arguments: { delayMs: 20_000 } }, {})) });
     const runId = await freshRun('conformance-cancellable', before, 3000);
-    expect(runId, req(ID_NO_SERVER_CANCELLED, 'interop-map.json mcp.methods tools/call', 'the tools/call started a run listRuns shows')).not.toBeNull();
     const res = await resP;
+    // unfailable-leg audit wave 2, 2026-09-27: the runId assert used to run
+    // BEFORE this content-type gate, so a JSON-answering mount (which cannot
+    // carry notifications/cancelled at all) recorded a partial-witness PASS
+    // for "carries no notifications/cancelled". The gate now precedes any
+    // assertion, so the JSON mount is cleanly inapplicable.
     if (!(res.headers.get('content-type') ?? '').includes('text/event-stream')) {
       ac.abort();
-      await driver.post(`/runs/${encodeURIComponent(runId!)}/cancel`, {});
+      if (runId !== null) await driver.post(`/runs/${encodeURIComponent(runId)}/cancel`, {});
       return softSkip('inapplicable', 'the mount answered the blocking call as JSON, not SSE — a JSON response cannot carry a notifications/cancelled frame');
     }
+    expect(runId, req(ID_NO_SERVER_CANCELLED, 'interop-map.json mcp.methods tools/call', 'the tools/call started a run listRuns shows')).not.toBeNull();
     const cancel = await driver.post(`/runs/${encodeURIComponent(runId!)}/cancel`, {});
     expect(cancel.status, req(ID_NO_SERVER_CANCELLED, 'runs.md §Cancel', `REST cancelRun is accepted (got ${cancel.status})`)).toBeLessThan(300);
     const msgs: Array<Record<string, unknown>> = [];

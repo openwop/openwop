@@ -176,7 +176,7 @@ Existing scenarios touching the area:
 
 New scenarios required for `Accepted`:
 
-- `orchestrator-ordering.test.ts` — exercises CO-1 across all three decision kinds.
+- `orchestrator-ordering.test.ts` — exercises CO-1 across all three decision kinds. *(Corrected 2026-09-27, unfailable-leg audit: this file was never written, so CO-1 had no witness. `orchestratorDispatch.test.ts` now asserts CO-1 for the `next-worker` decision: the decision's sequence is lower than the dispatched worker's `node.started`. The other two decision kinds remain unwitnessed.)*
 - `orchestrator-identity-stability.test.ts` — exercises CO-2 (rejects mismatched agentId).
 - `orchestrator-iteration-cap.test.ts` — exercises CO-3 (cap breach fires `cap.breached` + failure).
 - `orchestrator-replay.test.ts` — exercises §F (replay re-folds without re-invocation).

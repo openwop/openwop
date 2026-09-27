@@ -194,7 +194,13 @@ describe('mcp-tool-roundtrip: server wire shape', () => {
       );
       return softSkip('blocked', 'precondition not met — `!probe` returned early (seam, prior step, or fixture unavailable)');
     }
-    if (!probe.isReal) getMcpFakeServer()!.reset();
+    // unfailable-leg audit wave 2, 2026-09-27: with only the in-process fake
+    // configured, this leg probed the SUITE'S OWN fake MCP server and recorded
+    // `executed-pass` — every host passed it, conforming or not, because the
+    // host under test was never contacted. The fake-path self-check is now
+    // `inapplicable` before any assertion (the host-mediated leg below is the
+    // one that exercises the host against the fake).
+    if (!probe.isReal) return softSkip('inapplicable', 'suite fixture self-test — host not exercised (only the in-process MCP fake is configured; set OPENWOP_MCP_REAL_SERVER_URL for real-server interop evidence)');
 
     // Per MCP `initialize` spec, params MUST carry protocolVersion +
     // capabilities + clientInfo. The in-process fake accepts empty
@@ -258,26 +264,6 @@ describe('mcp-tool-roundtrip: server wire shape', () => {
         `[mcp-tool-roundtrip] real-server interop OK against ${probe.url} ` +
           `(tool=${first?.name}, isError=${callResult.isError === true})`,
       );
-    } else {
-      // Fake-server path: deterministic echo tool, assert verbatim.
-      expect(listResult.tools?.some((t) => t.name === 'echo')).toBe(true);
-
-      const call = await postJsonRpc(
-        probe.url,
-        'tools/call',
-        { name: 'echo', arguments: { text: 'hello-from-conformance' } },
-        3,
-      );
-      expect(call.status).toBe(200);
-      const callResult = (call.json.result ?? {}) as {
-        content?: ReadonlyArray<{ type?: string; text?: string }>;
-      };
-      expect(callResult.content?.[0]?.type).toBe('text');
-      expect(callResult.content?.[0]?.text).toBe('hello-from-conformance');
-
-      const fake = getMcpFakeServer()!;
-      const methods = fake.invocations().map((i) => i.method);
-      expect(methods).toEqual(['initialize', 'tools/list', 'tools/call']);
     }
   });
 });

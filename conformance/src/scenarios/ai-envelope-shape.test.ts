@@ -68,15 +68,16 @@ describe.skipIf(HTTP_SKIP)('ai-envelope-shape: advertisement contract (RFC 0021 
   it('capabilities.supportedEnvelopes is an array of strings (when present)', async () => {
     const d = await readDiscovery();
     if (d === null) return softSkip('blocked', 'precondition not met — `d === null` returned early (seam, prior step, or fixture unavailable)');
-    const env = supportedEnvelopes(d);
-    // No assertion if absent — the field is optional. When present, each entry MUST be a string.
-    for (const k of env) {
-      expect(typeof k, req('openwop.it.ai-envelope-shape.capabilities-supportedenvelopes-is-an-array-of-strings-when-present', 'capabilities.md §supportedEnvelopes', 'each entry MUST be a string')).toBe('string');
-    }
-    // Re-affirm shape: array if present (root-first per RFC 0073).
+    // unfailable-leg audit wave 2, 2026-09-27: this loop used to iterate
+    // `supportedEnvelopes(d)`, which had ALREADY filtered out every non-string
+    // entry — so a host advertising `supportedEnvelopes: [42, {}]` passed the
+    // "each entry MUST be a string" assertion. Iterate the RAW advertised array.
     const advertised = capabilityFamily<unknown>(d, 'supportedEnvelopes');
-    if (advertised !== undefined) {
-      expect(Array.isArray(advertised), req('openwop.it.ai-envelope-shape.capabilities-supportedenvelopes-is-an-array-of-strings-when-present', 'capabilities.md §supportedEnvelopes', 'supportedEnvelopes MUST be an array')).toBe(true);
+    // The field is optional: absent is not a violation, but nothing is observed.
+    if (advertised === undefined) return softSkip('inapplicable', 'host does not advertise supportedEnvelopes (optional field)');
+    expect(Array.isArray(advertised), req('openwop.it.ai-envelope-shape.capabilities-supportedenvelopes-is-an-array-of-strings-when-present', 'capabilities.md §supportedEnvelopes', 'supportedEnvelopes MUST be an array')).toBe(true);
+    for (const k of advertised as unknown[]) {
+      expect(typeof k, req('openwop.it.ai-envelope-shape.capabilities-supportedenvelopes-is-an-array-of-strings-when-present', 'capabilities.md §supportedEnvelopes', 'each entry MUST be a string')).toBe('string');
     }
   });
 });

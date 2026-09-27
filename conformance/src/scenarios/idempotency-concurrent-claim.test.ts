@@ -52,7 +52,7 @@
  */
 import { describe, it, expect } from 'vitest';
 import { driver } from '../lib/driver.js';
-import { softSkip } from '../lib/soft-skip.js';
+import { softSkip, blockedDespiteAssertions } from '../lib/soft-skip.js';
 import { req } from '../lib/requirement-ids.js';
 
 const SEAM = '/v1/host/sample/test/idempotency/concurrent-claim';
@@ -133,10 +133,26 @@ describe('idempotency-concurrent-claim: two executors of one run, one effect (RF
     // A host MAY cap `executors`; what it MUST NOT do is deliver more than once.
     // Say so — an unclassified return records `blocked` with no reason, which is
     // the same thing this file exists to stop happening to the requirement.
+    // unfailable-leg audit wave 2, 2026-09-27: the `executors: 5` probe runs after
+    // seamPresent's 200 assert, so a plain softSkip here recorded a partial-
+    // witness `executed-pass` — a host whose seam refused the in-range request
+    // (§25: range 2..8) passed without the higher-concurrency race ever running.
     if (res.status !== 200) {
-      return softSkip('skipped', `${SEAM} declined executors: 5 (status ${res.status}) — a host MAY cap concurrency`);
+      return blockedDespiteAssertions(`${SEAM} declined executors: 5 (status ${res.status}) — §25 accepts 2..8; the higher-concurrency race was not observed`);
     }
     const out = res.json as ClaimResult;
+    // unfailable-leg audit wave 2, 2026-09-27: previously the identity check below
+    // was guarded by `ids.length >= 2` and `mintedIds` defaulted to [] — a host
+    // that raced ≤2 executors, or omitted/garbled mintedIds, passed on
+    // `delivered === 1` alone, the exact vacuous pass §25 names. Now unguarded.
+    expect(
+      typeof out.attempted === 'number' && (out.attempted as number) >= 3,
+      req('openwop.it.idempotency-concurrent-claim.the-race-is-real-at-higher-concurrency-too-a-claim-that-only-holds-at-2-is-not-a', 'host-sample-test-seams.md §25', 'with executors: 5 at least three executors MUST reach the chokepoint — otherwise this leg repeats the two-executor case and witnesses nothing new'),
+    ).toBe(true);
+    expect(
+      Array.isArray(out.mintedIds),
+      req('openwop.it.idempotency-concurrent-claim.the-race-is-real-at-higher-concurrency-too-a-claim-that-only-holds-at-2-is-not-a', 'host-sample-test-seams.md §25', 'the seam MUST report mintedIds, one per executor'),
+    ).toBe(true);
     expect(
       out.delivered,
       req('openwop.it.idempotency-concurrent-claim.the-race-is-real-at-higher-concurrency-too-a-claim-that-only-holds-at-2-is-not-a', 
@@ -144,12 +160,14 @@ describe('idempotency-concurrent-claim: two executors of one run, one effect (RF
         'exactly one effect regardless of how many executors race — at most one wins the compare-and-set, the rest observe the hit',
       ),
     ).toBe(1);
-    const ids = Array.isArray(out.mintedIds) ? (out.mintedIds as unknown[]) : [];
-    if (ids.length >= 2) {
-      expect(
-        new Set(ids.map((x) => JSON.stringify(x))).size,
-        req('openwop.it.idempotency-concurrent-claim.the-race-is-real-at-higher-concurrency-too-a-claim-that-only-holds-at-2-is-not-a', 'idempotency.md §"Idempotency key composition"', 'one identity across all executors at any concurrency'),
-      ).toBe(1);
-    }
+    const ids = out.mintedIds as unknown[];
+    expect(
+      ids.length,
+      req('openwop.it.idempotency-concurrent-claim.the-race-is-real-at-higher-concurrency-too-a-claim-that-only-holds-at-2-is-not-a', 'host-sample-test-seams.md §25', 'mintedIds length MUST equal attempted'),
+    ).toBe(out.attempted);
+    expect(
+      new Set(ids.map((x) => JSON.stringify(x))).size,
+      req('openwop.it.idempotency-concurrent-claim.the-race-is-real-at-higher-concurrency-too-a-claim-that-only-holds-at-2-is-not-a', 'idempotency.md §"Idempotency key composition"', 'one identity across all executors at any concurrency'),
+    ).toBe(1);
   });
 });

@@ -69,6 +69,13 @@ describe('v2 sse-last-event-id (events.md §SSE frames)', () => {
     expect(ids.every((n) => n !== null), req(ID, DOC, `every frame MUST carry id: = its sequence (frames without a parseable id: ${ids.filter((n) => n === null).length} of ${ids.length})`)).toBe(true);
     const seqs = ids as number[];
     expect([...seqs].sort((a, b) => a - b), req(ID, DOC, 'frames MUST arrive in log order')).toEqual(seqs);
+    // unfailable-leg audit wave 2, 2026-09-27: with a single frame, `first` ===
+    // `last` and the mid-stream resume leg compared two empty sets — a host
+    // that ignored Last-Event-ID on a resume with backlog could not fail it. A
+    // completed run's log holds at least `run.started` (events.md: it carries
+    // the owner block) and its terminal event (§The terminal event), and debug
+    // mode streams every event, so ≥2 frames is required, not assumed.
+    expect(seqs.length, req(ID, DOC, `a completed run's debug stream MUST carry at least run.started and its terminal event (got ${seqs.length} frame(s))`)).toBeGreaterThanOrEqual(2);
     const first = seqs[0]!; const last = seqs[seqs.length - 1]!;
 
     const resumed = await subscribe(path, { timeoutMs: 8_000, extraHeaders: V2, lastEventId: String(first) });

@@ -69,12 +69,36 @@ export interface ToolDescriptor {
   [k: string]: unknown;
 }
 
-/** GET the NORMATIVE tool catalog (RFC 0078 §B `GET /v1/tools`); null when the
- *  host doesn't serve it (404/405/501). */
-export async function listTools(): Promise<ToolDescriptor[] | null> {
+/** The outcome of one `GET /v1/tools` read (see `listTools`). */
+export interface ToolListRead {
+  /** HTTP status of the read. */
+  readonly status: number;
+  /** `true` when the host does not serve the read at all (404/405/501). */
+  readonly unserved: boolean;
+  /** The descriptor list when the read was a `200` carrying a list; `null` otherwise. */
+  readonly tools: ToolDescriptor[] | null;
+}
+
+/** GET the NORMATIVE tool catalog (RFC 0078 §B `GET /v1/tools`).
+ *
+ *  unfailable-leg audit wave 2, 2026-09-27: this used to return `json ?? []`
+ *  for ANY status other than 404/405/501, so a host answering `500`, `403`, or
+ *  `200` with a non-list body read as "an empty catalog" and every per-
+ *  descriptor assertion ran over zero items. Now `tools` is non-null only for a
+ *  `200` whose body is a `ToolDescriptor[]` — the bare array `openapi.yaml`,
+ *  `spec/v2/core/tool-catalog.md`, and the reference host serve, or (major 1
+ *  only) the `{ tools: ToolDescriptor[] }` envelope `spec/v1/tool-catalog.md`
+ *  §B prose names — and the caller asserts on `status` / `tools`. */
+export async function listTools(): Promise<ToolListRead> {
   const res = await driver.get(toolsPath());
-  if (res.status === 404 || res.status === 405 || res.status === 501) return null;
-  return (res.json as ToolDescriptor[] | undefined) ?? [];
+  const unserved = res.status === 404 || res.status === 405 || res.status === 501;
+  if (res.status !== 200) return { status: res.status, unserved, tools: null };
+  const body = res.json;
+  if (Array.isArray(body)) return { status: res.status, unserved, tools: body as ToolDescriptor[] };
+  if (targetMajor() !== 2 && body !== null && typeof body === 'object' && Array.isArray((body as { tools?: unknown }).tools)) {
+    return { status: res.status, unserved, tools: (body as { tools: ToolDescriptor[] }).tools };
+  }
+  return { status: res.status, unserved, tools: null };
 }
 
 /** GET one tool by id (RFC 0078 §B `GET /v1/tools/{toolId}`); returns

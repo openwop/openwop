@@ -61,7 +61,7 @@ import { isFixtureAdvertised } from '../lib/fixtures.js';
 import { readCapabilityFamily } from '../lib/discovery-capabilities.js';
 import { queryTestEvents } from '../lib/event-log-query.js';
 import { req } from '../lib/requirement-ids.js';
-import { softSkip, seamAbsent } from '../lib/soft-skip.js';
+import { blockedDespiteAssertions, softSkip, seamAbsent } from '../lib/soft-skip.js';
 import { seamsProfileAdvertised, targetMajor } from '../lib/seams.js';
 import { familyAdvertised, v2Discovery } from '../lib/v2.js';
 import { runsPath } from '../lib/memoryAttribution.js';
@@ -117,7 +117,11 @@ describe('context-budget-transcript-bound (RFC 0111 §"Context economy")', () =>
     for (let iteration = 1; iteration <= MAX_ITERATIONS_PROBED; iteration += 1) {
       const res = await driver.get(`/v1/host/sample/agent/transcript-window?runId=${encodeURIComponent(runId)}&iteration=${iteration}`);
       if (res.status === 404 || res.status === 405) {
-        if (iteration === 1) return major === 2 ? seamAbsent(`contextBudget is advertised but the transcript-window seam answered ${res.status} (host-sample-test-seams.md §14)`) : softSkip('blocked', `the transcript-window seam answered ${res.status} (host-sample-test-seams.md §14)`);
+        // unfailable-leg audit wave 2, 2026-09-27: the major-1 branch was
+        // `softSkip('blocked')` after the create/runId asserts, which records a
+        // partial-witness PASS — a host with no transcript-window seam passed
+        // the transcript bound without a single window being read.
+        if (iteration === 1) return major === 2 ? seamAbsent(`contextBudget is advertised but the transcript-window seam answered ${res.status} (host-sample-test-seams.md §14)`) : blockedDespiteAssertions(`the transcript-window seam answered ${res.status} (host-sample-test-seams.md §14)`);
         break;
       }
       if (res.status === 400 || res.status === 422) break;
@@ -151,7 +155,13 @@ describe('context-budget-transcript-bound (RFC 0111 §"Context economy")', () =>
       }
     }
 
-    if (log === null) return softSkip('blocked', 'the run event-log seam is unavailable, so the real-event, recent-tail and pressure rules were not measured');
-    if (!pressure) softSkip('inapplicable', `no iteration shows budget pressure — every eligible event fit under transcriptTokenBudget ${budget}, so the bound was never exercised (a budget the run never reaches is not a witness)`);
+    // unfailable-leg audit wave 2, 2026-09-27: both returns below were plain
+    // soft-skips after assertions, i.e. partial-witness PASSES. A host whose
+    // event log was unreadable (real-event / recent-tail rules unmeasured), or
+    // whose run never put the budget under pressure (the bound never
+    // exercised — any host "fits" a budget it never reaches), certified the
+    // transcript bound it was never observed to enforce.
+    if (log === null) return blockedDespiteAssertions('the run event-log seam is unavailable, so the real-event, recent-tail and pressure rules were not measured');
+    if (!pressure) return blockedDespiteAssertions(`no iteration shows budget pressure — every eligible event fit under transcriptTokenBudget ${budget}, so the bound was never exercised (a budget the run never reaches is not a witness)`);
   }, liveScenarioTimeoutMs(1));
 });

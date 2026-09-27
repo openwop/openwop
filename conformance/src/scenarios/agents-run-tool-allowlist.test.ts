@@ -85,10 +85,14 @@ describe('category: core.openwop.agents.run — tool-allowlist enforcement (OPEN
   it('skips cleanly when pack source is not bundled', () => {
     if (!packAvailable) {
       console.warn('[agents-run-tool-allowlist] pack source not present; skipping');
-      expect(packAvailable, req('openwop.it.agents-run-tool-allowlist.skips-cleanly-when-pack-source-is-not-bundled', 'threat-model-prompt-injection.md', 'skips cleanly when pack source is not bundled')).toBe(false);
+      // unfailable-leg audit wave 2, 2026-09-27: this leg asserted
+      // `packAvailable === false` inside `if (!packAvailable)` (and `=== true`
+      // in the else) — tautologies that turned a sentinel into an
+      // `executed-pass` row measuring nothing. It now records `inapplicable`
+      // with zero assertions either way.
       return softSkip('inapplicable', 'capability or profile not advertised by this host — gate `!packAvailable` returned early ([agents-run-tool-allowlist] pack source not present; skipping)');
     }
-    expect(packAvailable).toBe(true);
+    return softSkip('inapplicable', 'sentinel leg — pack source is present; the behavioural legs in this file carry the assertions');
   });
 
   it('rejects function-typed tool.handler (the defect path)', async () => {
