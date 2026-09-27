@@ -74,7 +74,7 @@ describe.skipIf(!process.env.OPENWOP_BASE_URL)('RFC 0153 §C — mcp-mrtr-roundt
     const mrtr = (drive.json as { mrtr?: { inputRequiredSeen?: boolean; retried?: boolean; requestStateEchoed?: boolean; result?: unknown } }).mrtr;
     if (mrtr === undefined) {
       expect(mrtr, req('openwop.it.mcp-mrtr-roundtrip.input-required-gather-retry-with-inputresponses-echoed-requeststate-as-one-logic', 'host-sample-test-seams.md §23', 'the invoke seam SHOULD report `mrtr: { inputRequiredSeen, retried, requestStateEchoed, result }` for tool "needs_input"; until it does this requirement is unobservable and resolves to `blocked`')).toBeDefined();
-      return; // unreachable: the assertion above has already failed this leg
+      throw new Error('unreachable: the assertion above has already failed this leg');
     }
     expect(mrtr.inputRequiredSeen, req('openwop.it.mcp-mrtr-roundtrip.input-required-gather-retry-with-inputresponses-echoed-requeststate-as-one-logic', 'mcp-integration.md §C.1', 'the host MUST recognise resultType input_required')).toBe(true);
     expect(mrtr.retried, req('openwop.it.mcp-mrtr-roundtrip.input-required-gather-retry-with-inputresponses-echoed-requeststate-as-one-logic', 'mcp-integration.md §C.1', 'the host MUST retry the ORIGINAL request with inputResponses (a live callback is not the current profile)')).toBe(true);

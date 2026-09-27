@@ -50,7 +50,7 @@ describe('agent-live-invocation-bracket (RFC 0077 §E)', () => {
       started.length >= 1 && completed.length >= 1,
       req('openwop.it.agent-live-invocation-bracket.brackets-a-live-invocation-with-started-first-completed-last-matching-invocation', 'multi-agent-execution.md §"Live manifest dispatch"', 'a live invocation MUST emit agent.invocation.started + agent.invocation.completed'),
     ).toBe(true);
-    if (started.length === 0 || completed.length === 0) return; // unreachable: the assertion above has already failed this leg
+    if (started.length === 0 || completed.length === 0) throw new Error('unreachable: the assertion above has already failed this leg');
 
     const start = started[0]!;
     const end = completed[completed.length - 1]!;

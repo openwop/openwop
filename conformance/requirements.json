@@ -366,7 +366,7 @@
     {
       "id": "openwop.it.a2a-task-roundtrip.host-consuming-an-a2a-peer-that-returns-auth-required-projects-to-waiting-input",
       "file": "a2a-task-roundtrip.test.ts",
-      "line": 223,
+      "line": 195,
       "title": "host consuming an A2A peer that returns AUTH_REQUIRED projects to waiting-input with metadata.subkind=auth",
       "explicitId": "openwop.it.a2a-task-roundtrip.host-consuming-an-a2a-peer-that-returns-auth-required-projects-to-waiting-input",
       "citations": [
@@ -379,7 +379,7 @@
     {
       "id": "openwop.it.a2a-task-roundtrip.host-consuming-an-a2a-peer-that-returns-rejected-projects-to-failed-with-rejecte",
       "file": "a2a-task-roundtrip.test.ts",
-      "line": 263,
+      "line": 235,
       "title": "host consuming an A2A peer that returns REJECTED projects to failed with rejected_by_remote",
       "explicitId": "openwop.it.a2a-task-roundtrip.host-consuming-an-a2a-peer-that-returns-rejected-projects-to-failed-with-rejecte",
       "citations": [
@@ -396,7 +396,7 @@
     {
       "id": "openwop.it.a2a-task-roundtrip.a-conforming-a2ataskstate-validates-with-the-lowercase-hyphen-state-enum-and-tas",
       "file": "a2a-task-roundtrip.test.ts",
-      "line": 315,
+      "line": 287,
       "title": "a conforming A2ATaskState validates with the lowercase-hyphen state enum and taskId == runId",
       "explicitId": "openwop.it.a2a-task-roundtrip.a-conforming-a2ataskstate-validates-with-the-lowercase-hyphen-state-enum-and-tas",
       "citations": [
@@ -410,7 +410,7 @@
     {
       "id": "openwop.it.a2a-task-roundtrip.an-uppercase-state-fails-the-persisted-wire-form-is-the-a2a-v0-3-lowercase-hyphe",
       "file": "a2a-task-roundtrip.test.ts",
-      "line": 330,
+      "line": 302,
       "title": "an UPPERCASE state fails (the persisted/wire form is the A2A v0.3 lowercase-hyphen variant)",
       "explicitId": "openwop.it.a2a-task-roundtrip.an-uppercase-state-fails-the-persisted-wire-form-is-the-a2a-v0-3-lowercase-hyphe",
       "citations": [
@@ -423,7 +423,7 @@
     {
       "id": "openwop.it.a2a-task-roundtrip.an-a2ataskstate-carrying-run-inputs-artifacts-inline-fails-additionalproperties",
       "file": "a2a-task-roundtrip.test.ts",
-      "line": 337,
+      "line": 309,
       "title": "an A2ATaskState carrying run inputs/artifacts inline fails (additionalProperties:false; SR-1)",
       "explicitId": "openwop.it.a2a-task-roundtrip.an-a2ataskstate-carrying-run-inputs-artifacts-inline-fails-additionalproperties",
       "citations": [
@@ -436,7 +436,7 @@
     {
       "id": "openwop.it.a2a-task-roundtrip.a-pushconfig-requires-url-and-structurally-rejects-a-raw-non-truncated-push-toke",
       "file": "a2a-task-roundtrip.test.ts",
-      "line": 350,
+      "line": 322,
       "title": "a PushConfig requires `url` and structurally rejects a raw (non-truncated) push token",
       "explicitId": "openwop.it.a2a-task-roundtrip.a-pushconfig-requires-url-and-structurally-rejects-a-raw-non-truncated-push-toke",
       "citations": [
@@ -457,7 +457,7 @@
     {
       "id": "openwop.it.a2a-task-roundtrip.the-capabilities-a2a-block-shape-is-declared-supported-agentcardurl-required-thr",
       "file": "a2a-task-roundtrip.test.ts",
-      "line": 366,
+      "line": 338,
       "title": "the capabilities.a2a block shape is declared (supported + agentCardUrl required; three optional booleans)",
       "explicitId": "openwop.it.a2a-task-roundtrip.the-capabilities-a2a-block-shape-is-declared-supported-agentcardurl-required-thr",
       "citations": [
@@ -479,7 +479,7 @@
     {
       "id": "openwop.it.a2a-task-roundtrip.a-paused-at-hitl-run-projects-a-live-input-required-task-on-a-later-tasks-get-re",
       "file": "a2a-task-roundtrip.test.ts",
-      "line": 380,
+      "line": 352,
       "title": "a paused-at-HITL run projects a live input-required task on a later tasks/get read",
       "explicitId": "openwop.it.a2a-task-roundtrip.a-paused-at-hitl-run-projects-a-live-input-required-task-on-a-later-tasks-get-re",
       "citations": [
@@ -496,7 +496,7 @@
     {
       "id": "openwop.it.a2a-task-roundtrip.address-arm-an-https-pushconfig-url-at-a-private-address-is-refused",
       "file": "a2a-task-roundtrip.test.ts",
-      "line": 451,
+      "line": 423,
       "title": "ADDRESS arm: an https pushConfig.url at a private address is refused",
       "explicitId": "openwop.it.a2a-task-roundtrip.address-arm-an-https-pushconfig-url-at-a-private-address-is-refused",
       "citations": [
@@ -509,7 +509,7 @@
     {
       "id": "openwop.it.a2a-task-roundtrip.scheme-arm-an-http-pushconfig-url-at-a-public-host-is-refused",
       "file": "a2a-task-roundtrip.test.ts",
-      "line": 465,
+      "line": 437,
       "title": "SCHEME arm: an http pushConfig.url at a public host is refused",
       "explicitId": "openwop.it.a2a-task-roundtrip.scheme-arm-an-http-pushconfig-url-at-a-public-host-is-refused",
       "citations": [
@@ -543,11 +543,6 @@
       "citations": [
         {
           "section": "RFCS/0152 §B",
-          "requirement": null,
-          "interpolated": true
-        },
-        {
-          "section": "RFCS/0152 §B",
           "requirement": "the host MUST have called the peer"
         },
         {
@@ -560,7 +555,7 @@
     {
       "id": "openwop.it.a2a-version-negotiation.an-authenticated-request-is-not-silently-downgraded",
       "file": "a2a-version-negotiation.test.ts",
-      "line": 109,
+      "line": 103,
       "title": "an authenticated request is not silently downgraded",
       "explicitId": "openwop.it.a2a-version-negotiation.an-authenticated-request-is-not-silently-downgraded",
       "citations": [
@@ -578,7 +573,7 @@
     {
       "id": "openwop.it.a2a-version-negotiation.an-unsupported-version-fails-through-the-canonical-interop-error-envelope",
       "file": "a2a-version-negotiation.test.ts",
-      "line": 149,
+      "line": 143,
       "title": "an unsupported version fails through the canonical interop error envelope",
       "explicitId": "openwop.it.a2a-version-negotiation.an-unsupported-version-fails-through-the-canonical-interop-error-envelope",
       "citations": [
@@ -6068,7 +6063,7 @@
     {
       "id": "openwop.it.auth-subject-link.a-scim-deactivation-does-not-deny-a-saml-login-whose-run-subject-is-legacy-issue",
       "file": "auth-subject-link.test.ts",
-      "line": 219,
+      "line": 220,
       "title": "a SCIM deactivation does not deny a SAML login whose run subject is legacy-issued",
       "explicitId": null,
       "citations": []
@@ -6668,7 +6663,7 @@
     {
       "id": "openwop.it.byok-roundtrip.byok-fixture-run-must-emit-a-node-completed-event-for-the-resolve-step",
       "file": "byok-roundtrip.test.ts",
-      "line": 101,
+      "line": 104,
       "title": "BYOK fixture run MUST emit a node.completed event for the resolve step",
       "explicitId": "openwop.it.byok-roundtrip.byok-fixture-run-must-emit-a-node-completed-event-for-the-resolve-step",
       "citations": [
@@ -6681,7 +6676,7 @@
     {
       "id": "openwop.it.byok-roundtrip.byok-fixture-run-event-log-must-not-echo-the-resolved-secret-value-redaction",
       "file": "byok-roundtrip.test.ts",
-      "line": 127,
+      "line": 130,
       "title": "BYOK fixture run event log MUST NOT echo the resolved secret value (redaction)",
       "explicitId": "openwop.it.byok-roundtrip.byok-fixture-run-event-log-must-not-echo-the-resolved-secret-value-redaction",
       "citations": [
@@ -8564,7 +8559,7 @@
     {
       "id": "openwop.it.conformance-advertised-seam-required.the-sanctioned-escape-is-an-explicit-opt-out-which-records-skipped-with-the-reas",
       "file": "conformance-advertised-seam-required.test.ts",
-      "line": 110,
+      "line": 116,
       "title": "the sanctioned escape is an explicit opt-out, which records skipped with the reason — still never a pass",
       "explicitId": "openwop.it.conformance-advertised-seam-required.the-sanctioned-escape-is-an-explicit-opt-out-which-records-skipped-with-the-reas",
       "citations": [
@@ -9692,7 +9687,7 @@
     {
       "id": "openwop.it.cost-attribution.metrics-openwopcost-must-carry-the-canary-cost-shape-after-the-fixture-node-runs",
       "file": "cost-attribution.test.ts",
-      "line": 134,
+      "line": 136,
       "title": "metrics.openwopCost MUST carry the canary cost shape after the fixture node runs",
       "explicitId": "openwop.it.cost-attribution.metrics-openwopcost-must-carry-the-canary-cost-shape-after-the-fixture-node-runs",
       "citations": [
@@ -9733,7 +9728,7 @@
     {
       "id": "openwop.it.cost-attribution.cost-emit-fixture-run-must-emit-a-node-completed-event-for-the-cost-emitting-nod",
       "file": "cost-attribution.test.ts",
-      "line": 221,
+      "line": 223,
       "title": "cost-emit fixture run MUST emit a node.completed event for the cost-emitting node",
       "explicitId": "openwop.it.cost-attribution.cost-emit-fixture-run-must-emit-a-node-completed-event-for-the-cost-emitting-nod",
       "citations": [
@@ -9746,7 +9741,7 @@
     {
       "id": "openwop.it.cost-attribution.only-allowlisted-openwop-cost-attributes-reach-the-otel-span-g6-close-criteria-a",
       "file": "cost-attribution.test.ts",
-      "line": 260,
+      "line": 262,
       "title": "only allowlisted openwop.cost.* attributes reach the OTel span (G6 close criteria — allowlist enforcement)",
       "explicitId": "openwop.it.cost-attribution.only-allowlisted-openwop-cost-attributes-reach-the-otel-span-g6-close-criteria-a",
       "citations": [
@@ -9763,7 +9758,7 @@
     {
       "id": "openwop.it.cost-attribution.credential-shaped-canaries-do-not-leak-to-any-otel-attribute-g6-close-criteria-r",
       "file": "cost-attribution.test.ts",
-      "line": 299,
+      "line": 301,
       "title": "credential-shaped canaries do NOT leak to any OTel attribute (G6 close criteria — redaction)",
       "explicitId": "openwop.it.cost-attribution.credential-shaped-canaries-do-not-leak-to-any-otel-attribute-g6-close-criteria-r",
       "citations": [
@@ -10519,7 +10514,7 @@
     {
       "id": "openwop.it.discovery.declares-non-zero-limits-per-capabilities-md-3-capabilitylimiter-shape",
       "file": "discovery.test.ts",
-      "line": 84,
+      "line": 86,
       "title": "declares non-zero limits per capabilities.md §3 (CapabilityLimiter shape)",
       "explicitId": "openwop.it.discovery.declares-non-zero-limits-per-capabilities-md-3-capabilitylimiter-shape",
       "citations": [
@@ -10542,7 +10537,7 @@
     {
       "id": "openwop.it.discovery.if-fixtures-is-present-it-must-be-a-string-of-unique-non-empty-entries",
       "file": "discovery.test.ts",
-      "line": 108,
+      "line": 110,
       "title": "IF fixtures is present, it MUST be a string[] of unique non-empty entries",
       "explicitId": "openwop.it.discovery.if-fixtures-is-present-it-must-be-a-string-of-unique-non-empty-entries",
       "citations": [
@@ -10567,7 +10562,7 @@
     {
       "id": "openwop.it.discovery.returns-200-with-a-parseable-openapi-3-1-document",
       "file": "discovery.test.ts",
-      "line": 148,
+      "line": 152,
       "title": "returns 200 with a parseable OpenAPI 3.1 document",
       "explicitId": "openwop.it.discovery.returns-200-with-a-parseable-openapi-3-1-document",
       "citations": [
@@ -10584,7 +10579,7 @@
     {
       "id": "openwop.it.discovery.host-claiming-auth-scoped-discovery-advertises-required-fields",
       "file": "discovery.test.ts",
-      "line": 207,
+      "line": 211,
       "title": "host claiming auth-scoped discovery advertises required fields",
       "explicitId": "openwop.it.discovery.host-claiming-auth-scoped-discovery-advertises-required-fields",
       "citations": [
@@ -10605,7 +10600,7 @@
     {
       "id": "openwop.it.discovery.authenticated-discovery-preserves-required-capabilities-fields",
       "file": "discovery.test.ts",
-      "line": 243,
+      "line": 247,
       "title": "authenticated discovery preserves required Capabilities fields",
       "explicitId": "openwop.it.discovery.authenticated-discovery-preserves-required-capabilities-fields",
       "citations": [
@@ -10627,7 +10622,7 @@
     {
       "id": "openwop.it.discovery.unauthorized-key-must-not-reveal-capabilities-outside-its-authorization",
       "file": "discovery.test.ts",
-      "line": 284,
+      "line": 288,
       "title": "unauthorized key MUST NOT reveal capabilities outside its authorization",
       "explicitId": "openwop.it.discovery.unauthorized-key-must-not-reveal-capabilities-outside-its-authorization",
       "citations": [
@@ -15308,7 +15303,7 @@
     {
       "id": "openwop.it.interrupt-token-matrix.unknown-token-returns-404-on-post",
       "file": "interrupt-token-matrix.test.ts",
-      "line": 118,
+      "line": 131,
       "title": "unknown token returns 404 on POST",
       "explicitId": "openwop.it.interrupt-token-matrix.unknown-token-returns-404-on-post",
       "citations": [
@@ -16196,7 +16191,7 @@
     {
       "id": "openwop.it.mcp-current-auth-boundary.a-mount-that-requires-oauth-lane-authentication-offers-resource-metadata-or-a-pa",
       "file": "mcp-current-auth-boundary.test.ts",
-      "line": 97,
+      "line": 100,
       "title": "a mount that requires OAuth-lane authentication offers resource_metadata or a path-inserted PRM",
       "explicitId": "openwop.it.mcp-current-auth-boundary.a-mount-that-requires-oauth-lane-authentication-offers-resource-metadata-or-a-path-inserted-prm",
       "citations": [
@@ -16746,11 +16741,6 @@
       "citations": [
         {
           "section": "RFCS/0153 §B",
-          "requirement": null,
-          "interpolated": true
-        },
-        {
-          "section": "RFCS/0153 §B",
           "requirement": "the host MUST have called the server"
         },
         {
@@ -16767,7 +16757,7 @@
     {
       "id": "openwop.it.mcp-version-negotiation.the-negotiated-revision-is-one-the-host-advertises",
       "file": "mcp-version-negotiation.test.ts",
-      "line": 122,
+      "line": 117,
       "title": "the negotiated revision is one the host advertises",
       "explicitId": "openwop.it.mcp-version-negotiation.the-negotiated-revision-is-one-the-host-advertises",
       "citations": [
@@ -16781,7 +16771,7 @@
     {
       "id": "openwop.it.mcp-version-negotiation.an-unsupported-revision-fails-through-the-canonical-interop-envelope",
       "file": "mcp-version-negotiation.test.ts",
-      "line": 146,
+      "line": 141,
       "title": "an unsupported revision fails through the canonical interop envelope",
       "explicitId": "openwop.it.mcp-version-negotiation.an-unsupported-revision-fails-through-the-canonical-interop-envelope",
       "citations": [
@@ -22056,7 +22046,7 @@
     {
       "id": "openwop.it.redactionAdversarial.jwt-shaped-canary-in-workflowid-of-a-404-failing-request-must-not-echo-verbatim",
       "file": "redactionAdversarial.test.ts",
-      "line": 97,
+      "line": 98,
       "title": "JWT-shaped canary in workflowId of a 404-failing request MUST NOT echo verbatim in error response",
       "explicitId": "openwop.it.redactionAdversarial.jwt-shaped-canary-in-workflowid-of-a-404-failing-request-must-not-echo-verbatim",
       "citations": [
@@ -22073,7 +22063,7 @@
     {
       "id": "openwop.it.redactionAdversarial.anthropic-shaped-canary-embedded-in-non-credential-input-must-not-appear-verbati",
       "file": "redactionAdversarial.test.ts",
-      "line": 123,
+      "line": 124,
       "title": "Anthropic-shaped canary embedded in non-credential input MUST NOT appear verbatim in events",
       "explicitId": "openwop.it.redactionAdversarial.anthropic-shaped-canary-embedded-in-non-credential-input-must-not-appear-verbati",
       "citations": [
@@ -22086,7 +22076,7 @@
     {
       "id": "openwop.it.redactionAdversarial.every-canary-in-canaries-has-the-marker-substring",
       "file": "redactionAdversarial.test.ts",
-      "line": 152,
+      "line": 153,
       "title": "every canary in CANARIES has the marker substring",
       "explicitId": "openwop.it.redactionAdversarial.every-canary-in-canaries-has-the-marker-substring",
       "citations": [
@@ -23614,7 +23604,7 @@
     {
       "id": "openwop.it.runtime-capabilities.terminates-the-run-with-error-code-capability-not-provided",
       "file": "runtime-capabilities.test.ts",
-      "line": 92,
+      "line": 94,
       "title": "terminates the run with error.code = capability_not_provided",
       "explicitId": "openwop.it.runtime-capabilities.terminates-the-run-with-error-code-capability-not-provided",
       "citations": [
@@ -25729,7 +25719,7 @@
     {
       "id": "openwop.it.tool-catalog-projection.advisory-should-an-unchanged-catalog-reads-identically-sorted-by-toolid",
       "file": "tool-catalog-projection.test.ts",
-      "line": 164,
+      "line": 167,
       "title": "advisory (SHOULD): an unchanged catalog reads identically, sorted by toolId",
       "explicitId": "openwop.it.tool-catalog-projection.advisory-should-an-unchanged-catalog-reads-identically-sorted-by-toolid",
       "citations": [
@@ -29572,7 +29562,7 @@
     {
       "id": "openwop.it.v2-idempotency-in-flight.while-the-seam-holds-the-claim-a-same-key-create-is-refused-409-idempotency-in-f",
       "file": "v2-idempotency-in-flight.test.ts",
-      "line": 154,
+      "line": 157,
       "title": "while the seam holds the claim, a same-key create is refused 409 idempotency_in_flight by the host and the held create still wins",
       "explicitId": "openwop.requirement.0213.in-flight-refused-under-hold",
       "citations": [
@@ -30019,7 +30009,7 @@
     {
       "id": "openwop.it.v2-legacy-profiles-absent.no-root-profiles-exists-in-the-v2-representation",
       "file": "v2-legacy-profiles-absent.test.ts",
-      "line": 70,
+      "line": 68,
       "title": "no root profiles[] exists in the v2 representation",
       "explicitId": "openwop.requirement.0175.legacy-profiles-absent.no-root-profiles",
       "citations": [
@@ -33407,7 +33397,7 @@
     {
       "id": "openwop.it.v2-version-header-honored.a-host-advertising-two-majors-serves-two-different-representations",
       "file": "v2-version-header-honored.test.ts",
-      "line": 185,
+      "line": 188,
       "title": "a host advertising two majors serves two different representations",
       "explicitId": "openwop.requirement.0172.version-header-honored",
       "citations": [
@@ -33576,7 +33566,7 @@
     {
       "id": "openwop.it.v2-webhook-durable-delivery.an-exhausted-delivery-is-dead-lettered-never-dropped",
       "file": "v2-webhook-durable-delivery.test.ts",
-      "line": 376,
+      "line": 378,
       "title": "an exhausted delivery is dead-lettered, never dropped",
       "explicitId": "openwop.requirement.0173.webhook-durable-delivery.dead-letter",
       "citations": [
@@ -33610,7 +33600,7 @@
     {
       "id": "openwop.it.v2-webhook-durable-delivery.the-dead-letter-read-is-served-and-its-records-carry-no-payload",
       "file": "v2-webhook-durable-delivery.test.ts",
-      "line": 478,
+      "line": 480,
       "title": "the dead-letter read is served and its records carry no payload",
       "explicitId": "openwop.requirement.0188.dead-letter-read",
       "citations": [
@@ -33623,7 +33613,7 @@
     {
       "id": "openwop.it.v2-webhook-durable-delivery.after-unregister-the-dead-letter-read-answers-404-not-found-as-for-a-subscriptio",
       "file": "v2-webhook-durable-delivery.test.ts",
-      "line": 499,
+      "line": 501,
       "title": "after unregister, the dead-letter read answers 404 not_found, as for a subscription that never existed",
       "explicitId": "openwop.requirement.0217.dead-letter-read-after-unregister",
       "citations": [
@@ -33650,7 +33640,7 @@
     {
       "id": "openwop.it.v2-webhook-durable-delivery.a-dead-letter-record-carries-no-delivered-payload",
       "file": "v2-webhook-durable-delivery.test.ts",
-      "line": 532,
+      "line": 534,
       "title": "a dead-letter record carries no delivered payload",
       "explicitId": "openwop.requirement.0188.dead-letter-content-free",
       "citations": [
@@ -34875,7 +34865,7 @@
     {
       "id": "openwop.it.webhook-signed-delivery.control-with-a-tunnel-wired-the-host-still-refuses-the-loopback-receiver",
       "file": "webhook-signed-delivery.test.ts",
-      "line": 440,
+      "line": 442,
       "title": "control: with a tunnel wired, the host still refuses the loopback receiver",
       "explicitId": "openwop.it.webhook-signed-delivery.control-with-a-tunnel-wired-the-host-still-refuses-the-loopback-receiver",
       "citations": [
@@ -36132,7 +36122,7 @@
     {
       "id": "openwop.it.workload-identity-chain-bounds.a-later-hop-claiming-a-scope-the-previous-hop-did-not-hold-is-refused",
       "file": "workload-identity-chain-bounds.test.ts",
-      "line": 121,
+      "line": 124,
       "title": "a later hop claiming a scope the previous hop did not hold is refused",
       "explicitId": null,
       "citations": []
@@ -36140,7 +36130,7 @@
     {
       "id": "openwop.it.workload-identity-chain-bounds.a-well-formed-bounded-acyclic-non-amplifying-chain-still-resolves-the-negatives",
       "file": "workload-identity-chain-bounds.test.ts",
-      "line": 130,
+      "line": 133,
       "title": "a well-formed bounded, acyclic, non-amplifying chain still resolves (the negatives are not a blanket refusal)",
       "explicitId": "openwop.it.workload-identity-chain-bounds.a-well-formed-bounded-acyclic-non-amplifying-chain-still-resolves-the-negatives",
       "citations": [
