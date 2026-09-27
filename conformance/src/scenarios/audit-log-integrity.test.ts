@@ -27,23 +27,14 @@ import { join } from 'node:path';
 import { SCHEMAS_DIR } from '../lib/paths.js';
 
 /**
- * audit-verify-result.schema.json with every `additionalProperties: false`
- * relaxed: the REQUIRED members and their types are enforced, extra members
- * are not (the reference postgres host emits `checkpointsValid` and a
- * per-checkpoint `verified` bit; convicting extras is a separate decision).
+ * audit-verify-result.schema.json, CLOSED: every `additionalProperties: false`
+ * is enforced. (Until 2026-09-27 the suite stripped them because the reference
+ * postgres/sqlite hosts emitted a per-checkpoint `verified` bit the schema does
+ * not name; the hosts now keep that bit host-internal. The aggregate verdict is
+ * the schema's OPTIONAL `checkpointsValid`.)
  */
-function relaxAdditional(node: unknown): unknown {
-  if (Array.isArray(node)) return node.map(relaxAdditional);
-  if (node === null || typeof node !== 'object') return node;
-  const out: Record<string, unknown> = {};
-  for (const [k, v] of Object.entries(node as Record<string, unknown>)) {
-    if (k === 'additionalProperties' && v === false) continue;
-    out[k] = relaxAdditional(v);
-  }
-  return out;
-}
-const VERIFY_RESULT_SCHEMA = relaxAdditional(
-  JSON.parse(readFileSync(join(SCHEMAS_DIR, 'audit-verify-result.schema.json'), 'utf8')),
+const VERIFY_RESULT_SCHEMA = JSON.parse(
+  readFileSync(join(SCHEMAS_DIR, 'audit-verify-result.schema.json'), 'utf8'),
 ) as Record<string, unknown>;
 
 interface AuditIntegrityCaps {

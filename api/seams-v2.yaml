@@ -705,6 +705,56 @@ paths:
           $ref: '#/components/responses/NotFound'
         '409':
           description: The run is terminal (`run_terminal`).
+  /conformance/seams/sample/test/mock-ai/dispatch-budgets:
+    get:
+      tags:
+      - Seams
+      operationId: getMockDispatchBudgets
+      summary: Per-attempt output budgets the conformance mock provider received for one node — RFC 0033 §C witness
+      description: 'One entry per call the host''s conformance mock provider received for `nodeId` since its program was last
+        seeded (seeding clears the history), in call order; `maxTokens` is the output budget THAT call carried to the provider,
+        or `null` when it carried none. Each entry is per attempt: it MUST NOT be accumulated across attempts, the node or
+        the run, and MUST record what reached the provider, not what the retry router intended. An unseeded `nodeId` answers
+        an empty `attempts`. OPTIONAL; consumed by `envelope-completion-distinguishes-truncation` (RFC 0033 §C: a schema-violation
+        retry SHALL NOT carry an increased budget). An unserved seam leaves that leg a partial witness, never `blocked`.'
+      parameters:
+      - name: nodeId
+        in: query
+        required: true
+        schema:
+          type: string
+          minLength: 1
+      responses:
+        '200':
+          description: The per-attempt budgets.
+          content:
+            application/json:
+              schema:
+                type: object
+                additionalProperties: false
+                required:
+                - nodeId
+                - attempts
+                properties:
+                  nodeId:
+                    type: string
+                  attempts:
+                    type: array
+                    items:
+                      type: object
+                      additionalProperties: false
+                      required:
+                      - maxTokens
+                      properties:
+                        maxTokens:
+                          type:
+                          - integer
+                          - 'null'
+                          minimum: 0
+        '400':
+          $ref: '#/components/responses/ValidationError'
+        '401':
+          $ref: '#/components/responses/Unauthenticated'
   /conformance/seams/sample/effect-seams/fire:
     post:
       tags:

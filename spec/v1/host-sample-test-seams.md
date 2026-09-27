@@ -1109,3 +1109,41 @@ records the pre-seam partial witness (the writer rule unobserved, the acceptance
 refusing the row), **never** `blocked`: adding an optional seam MUST NOT take away a
 certification a host held before it existed. A host that does not advertise the seams profile
 records `inapplicable`.
+
+### 28. Per-attempt dispatch budgets — `GET /v1/host/sample/test/mock-ai/dispatch-budgets?nodeId=…` (RFC 0033 §C)
+
+| Field                     | Value                                                                                |
+| ------------------------- | ------------------------------------------------------------------------------------ |
+| Method + path             | `GET /v1/host/sample/test/mock-ai/dispatch-budgets?nodeId=<nodeId>` (v2: `GET /conformance/seams/sample/test/mock-ai/dispatch-budgets`, `api/seams-v2.yaml` `getMockDispatchBudgets`) |
+| Capability gate           | the fixture gate of the consuming scenario (`conformance-envelope-retry-attempted` advertised) |
+| Profile gate              | v2: `conformance.seamsProfile: "openwop-conformance-seams-v2"`                        |
+| Introduced                | RFC 0033 §C witness. The mock-AI companion seam `GET …/test/mock-ai/last-dispatch-budget` reports only the MOST RECENT call's `maxTokens`, so the budget of the call before it is lost and "the retry's budget is not larger than the attempt before it" cannot be compared on any host. |
+
+OPTIONAL. Answers `200 { nodeId, attempts: [{ maxTokens }] }`: one entry per call the host's
+conformance mock provider received for `nodeId` since the program for `nodeId` was last seeded
+(`POST …/test/mock-ai/program`, §5 — seeding clears the history), **in call order**. `maxTokens`
+is the output budget **that call** carried to the provider (an integer), or `null` when the call
+carried none. An unseeded `nodeId` answers `200 { nodeId, attempts: [] }`; a missing `nodeId`
+answers `400`.
+
+Each entry is **per attempt**: the value the provider request itself carried. It **MUST NOT** be
+accumulated across attempts, the node or the run (a running total, a remaining-run budget, or
+tokens spent so far are all per-run quantities and are not this seam), and the seam **MUST**
+record what reached the provider, not what the retry router intended to send.
+
+Consumed by `envelope-completion-distinguishes-truncation` (schema-violation leg,
+`openwop.it.envelope-completion-distinguishes-truncation.schema-violation-retry-budget-unchanged-from-initial-no-budget-multiplication-on`).
+RFC 0033 §C: "Schema-violation retries SHALL NOT include an increased output budget." The
+fixture sets `maxTokens: 256` so attempt 1 carries a concrete budget. A host that serves the seam
+gets a real witness: `executed-pass` when no retry's budget exceeds the attempt before it,
+`executed-fail` when one does (for example a host that sizes a retry from the run's accumulated
+budget instead of the failed attempt's). A host that serves it but breaks its contract (not
+`200` with an `attempts` array of `{ maxTokens: integer | null }`, or fewer entries than the
+calls its own `envelope.retry.attempted` events show) records `blocked`. A host that does
+**not** serve it (`404`/`405`/`501`) — or whose calls carried no budget to compare — records the
+pre-seam partial witness (the most recent budget below the truncation-path range, the acceptance
+predicate refusing the row), **never** `blocked`: the seam is newer than the leg.
+
+**Ceiling.** The seam reports the mock provider's view; a host that routes the fixture through
+a different code path from its real providers would pass here and not in production. Same
+advertise-and-attest ceiling as §27.
