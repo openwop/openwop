@@ -73,7 +73,7 @@ For an honest comparison of OpenWOP vs **Temporal, Airflow, Argo Workflows, AWS 
 >
 > **Status: v1.0 core locked (2026-05-12); v1.x extension surfaces in motion.** The v1.0 core spec corpus is locked and evolves additively per [`COMPATIBILITY.md`](./COMPATIBILITY.md); `Active` / `Draft` RFCs are gated behind capability advertisement, so a v1.0-only host passes the locked-core suite. Authoritative per-doc + per-RFC maturity: [`docs/PROTOCOL-STATUS.md`](./docs/PROTOCOL-STATUS.md).
 >
-> **RFC status (214 RFCs excluding template):** RFCs that are `Accepted` (211), that are `Active` (1 — RFC 0121), and that are `Draft` (1 — RFC 0038 Parked). Full per-RFC table in [`docs/PROTOCOL-STATUS.md`](./docs/PROTOCOL-STATUS.md); graduation history in each RFC's `Updated` field + [`CHANGELOG.md`](./CHANGELOG.md).
+> **RFC status (215 RFCs excluding template):** RFCs that are `Accepted` (211), that are `Active` (2 — RFC 0121, RFC 0218), and that are `Draft` (1 — RFC 0038 Parked). Full per-RFC table in [`docs/PROTOCOL-STATUS.md`](./docs/PROTOCOL-STATUS.md); graduation history in each RFC's `Updated` field + [`CHANGELOG.md`](./CHANGELOG.md).
 >
 > **SECURITY surface:** 221 invariants in [`SECURITY/invariants.yaml`](./SECURITY/invariants.yaml) — 184 protocol-tier (verified at the spec gate; every one has at least one public test in [`conformance/src/scenarios/`](./conformance/src/scenarios/)), 35 reference-impl-tier (verified by reference impls' CI), 2 advisory. Every protocol-tier MUST-NOT has at least one public conformance test. Strict-mode behavioral conformance runs under `OPENWOP_REQUIRE_BEHAVIOR=true`.
 >
@@ -173,7 +173,7 @@ This repository is the canonical source for the **protocol contract** — the sp
 - [`docs/IMPLEMENTATION-CERTIFICATION.md`](./docs/IMPLEMENTATION-CERTIFICATION.md) — how a host author publishes a conformance claim that third parties can audit + reproduce + pin to a commit.
 - [`docs/PRODUCTION-RUNBOOK.md`](./docs/PRODUCTION-RUNBOOK.md) — operator playbook for booting an OpenWOP host that honors `openwop-production` per RFC 0009.
 - [`docs/SECURITY-OPERATOR-GUIDE.md`](./docs/SECURITY-OPERATOR-GUIDE.md) — operator-side configuration for auth profiles, BYOK redaction, webhook signing, audit-log integrity, mTLS, MCP trust boundary, and node-pack supply-chain.
-- [`docs/PACK-AUTHOR-QUICKSTART.md`](./docs/PACK-AUTHOR-QUICKSTART.md) — end-to-end path for third-party pack authors: skeleton → signing key → tarball + signature + SBOM → schema validation → local-host smoke → publish PR → lifecycle (versioning, deprecate, yank, key rotation).
+- [`docs/PACK-AUTHOR-QUICKSTART.md`](./docs/PACK-AUTHOR-QUICKSTART.md) — end-to-end path for third-party pack authors: v2 manifest → signing key → build check → stage the registry's v2 tree (tarball + signature + SBOM + index) → verify → publish PR → lifecycle (versioning, deprecate, yank, key rotation).
 - [`docs/integrations/durable-runtimes.md`](./docs/integrations/durable-runtimes.md) — implementation guide for hosts built on Temporal / Restate / DBOS / Inngest.
 - [`docs/integrations/serverless-workflow-and-bpmn.md`](./docs/integrations/serverless-workflow-and-bpmn.md) — bridging OpenWOP to / from CNCF Serverless Workflow and OMG BPMN. Honest about what round-trips and what stays host-specific.
 - [`docs/integrations/mcp.md`](./docs/integrations/mcp.md) — informative correspondence notes between today's OpenWOP surfaces and nearby MCP ones: `ToolDescriptor` safety fields beside `ToolAnnotations`, card/form fields beside elicitation `requestedSchema`, front-end plugins beside MCP Apps, `exportFormats` beside IANA media types, and the prompt library beside `prompts/list`. Defines no mapping.
@@ -196,8 +196,8 @@ history belongs in
 
 New to OpenWOP? Two paths:
 
-- **[`QUICKSTART-10MIN.md`](./QUICKSTART-10MIN.md)** — fastest possible "what is OpenWOP and how do I run one?" Boots the in-memory reference host on your laptop, runs a workflow via curl + SDK + SSE. No vendor SDK, no managed-service setup. Just Node 20+ and a clone of this repo.
-- **[`QUICKSTART.md`](./QUICKSTART.md)** — end-to-end walkthrough against any OpenWOP-compliant host: auth + create run + read snapshot, SSE + webhooks, fork + replay, node packs, conformance.
+- **[`QUICKSTART-10MIN.md`](./QUICKSTART-10MIN.md)** — fastest possible "what is OpenWOP and how do I run one?" Boots the v2 reference host on your laptop, runs a workflow via curl + SDK + SSE on the v2 wire. No vendor SDK, no managed-service setup. Just Node 20+ and a clone of [`openwop-examples`](https://github.com/openwop/openwop-examples).
+- **[`QUICKSTART.md`](./QUICKSTART.md)** — end-to-end v2 walkthrough against any OpenWOP v2 host: discovery + auth + create run + read snapshot, SSE + poll + webhooks, fork + replay, node packs, conformance.
 
 For the full workflow-engine demo app, use the **OpenWOP CLI** (`@openwop/cli`), which lives in its own repo, [`openwop/openwop-cli`](https://github.com/openwop/openwop-cli):
 
@@ -407,7 +407,7 @@ See [CHANGELOG.md](./CHANGELOG.md) — `[1] — 2026-05-08 — OpenWOP v1 FINAL 
 The current in-motion cohort is the **agent-platform arc (RFCs 0077–0087)** — agent run lifecycle + live manifest dispatch, portable tool catalog, credential-provenance/egress policy, memory reconciliation, evaluation & scorecards, deployment lifecycle, durable trigger/channel bridge, budget/quota policy, the agent-platform meta-profile, and the standing agent roster + org-chart. See [`docs/PROTOCOL-STATUS.md`](./docs/PROTOCOL-STATUS.md) for which of these are `Active` vs `Draft` today.
 
 **v1 Foundation (2026-04-27):**
-Current generated state: 61 prose specs (50 Stable + 11 Draft) · 81 JSON Schemas · 58 OpenAPI operations · AsyncAPI 3.1 · 561 conformance scenario files · 3 reference SDKs. See [docs/PROTOCOL-STATUS.md](./docs/PROTOCOL-STATUS.md) for the machine-generated snapshot.
+Current generated state: 61 prose specs (50 Stable + 11 Draft) · 81 JSON Schemas · 58 OpenAPI operations · AsyncAPI 3.1 · 563 conformance scenario files · 3 reference SDKs. See [docs/PROTOCOL-STATUS.md](./docs/PROTOCOL-STATUS.md) for the machine-generated snapshot.
 
 - **Protocol corpus** — Normative REST, SSE, discovery, auth, idempotency, replay/fork, interruption, observability, node-pack, host-extension, and version-negotiation contracts are frozen for v1.
 - **Machine-readable contracts** — OpenAPI 3.1, AsyncAPI 3.1, and JSON Schemas are bundled and cross-validated by the conformance corpus.

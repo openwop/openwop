@@ -6,7 +6,7 @@
 
 RFC 0156 §B: RFCs affecting auth, identity, tenant isolation, secrets, packs, execution sandboxing, idempotency, replay, external effects, conformance/certification, or governance **MUST** receive a retrospective **cross-organization** review. Every RFC below was accepted with its public comment window shortened, either under the bootstrap waiver or by explicit steward override of RFC 0147 §A.6. Each such acceptance is **provisional** until a reviewer from an organization other than the steward's records an outcome.
 
-This packet is for that reviewer. **95 RFCs are listed; 95 have no discharging outcome.** The steward, the steward's sessions, and steward-affiliated hosts (MyndHyve is tier-2, not independent) cannot supply the review. Recording one of their reviews as `ratified` is the substitution §B's last clause forbids.
+This packet is for that reviewer. **96 RFCs are listed; 96 have no discharging outcome.** The steward, the steward's sessions, and steward-affiliated hosts (MyndHyve is tier-2, not independent) cannot supply the review. Recording one of their reviews as `ratified` is the substitution §B's last clause forbids.
 
 ## How to review one RFC
 
@@ -69,12 +69,13 @@ Grouping below is a reading aid only: it assigns each RFC to the risk class its 
 | [0093](../RFCS/0093-protocol-hardening-webhooks-tokens-idempotency.md) | protocol hardening webhooks tokens idempotency | `Accepted` | bootstrap waiver | not declared (predates RFC 0174 §B.1, or not yet Accepted) | `not-reviewed` |
 | [0201](../RFCS/0201-standard-webhooks-signature-scheme.md) | Standard Webhooks as an opt-in companion signature scheme, with a signed delivery id, multi-signature rotatio… | `Accepted` | steward override of RFC 0147 §A.6 | tier-1 — the v2 reference host | `not-reviewed` |
 
-## Replay (2)
+## Replay (3)
 
 | RFC | Title | Status | Waiver | Evidence tier | Outcome |
 | --- | --- | --- | --- | --- | --- |
 | [0194](../RFCS/0194-terminal-event-ends-forward-execution.md) | a run's terminal event is emitted once and ends its forward execution | `Accepted` | steward override of RFC 0147 §A.6 | tier-1 — the v2 reference host | `not-reviewed` |
 | [0212](../RFCS/0212-canonical-json-is-jcs.md) | canonical JSON is RFC 8785 JCS, and a certification preimage does not depend on the machine that computed it | `Accepted` | steward override of RFC 0147 §A.6 | tier-1 — steward-verified: openwop-app `bundle-v3-verify | `not-reviewed` |
+| [0218](../RFCS/0218-audit-checkpoint-preimage.md) | an audit checkpoint signs its Merkle root, and the root is pinned | `Active` | bootstrap waiver | not declared (predates RFC 0174 §B.1, or not yet Accepted) | `not-reviewed` |
 
 ## External effects (10)
 
