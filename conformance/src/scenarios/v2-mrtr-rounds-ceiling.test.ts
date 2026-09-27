@@ -97,5 +97,16 @@ describe('RFC 0175 §E.1 — mrtr-rounds-ceiling (gated on mcp + mrtr)', () => {
       served.length,
       req('openwop.requirement.0175.mrtr-rounds-ceiling.refused', 'interop.md §The MCP round ceiling', `the host MUST NOT issue a retry beyond the ceiling — the server saw ${served.length} tools/call for a ceiling of ${String(maxRounds)}`),
     ).toBeLessThanOrEqual((maxRounds as number) + 1);
+    // unfailable-leg audit, 2026-09-26: only the upper bound was enforced, so a
+    // host that answered 422 mcp_mrtr_rounds_exceeded at round 1 (or refused
+    // every MRTR tool result outright) passed. Under the fake's counting, call
+    // k (k = 1..maxRounds+1) answers the k-th input_required; a host honouring
+    // the ceiling answers the first maxRounds of them (maxRounds retries) and
+    // refuses the (maxRounds + 1)-th — exactly maxRounds + 1 tools/call. Fewer
+    // means the refusal came BEFORE the ceiling.
+    expect(
+      served.length,
+      req('openwop.requirement.0175.mrtr-rounds-ceiling.refused', 'interop.md §The MCP round ceiling', `the refusal MUST come at the ceiling, not before: rounds 1..${String(maxRounds)} are within maxRounds and MUST be answered, so the server MUST see ${rounds} tools/call (the initial call + ${String(maxRounds)} retries) — it saw ${served.length}`),
+    ).toBeGreaterThanOrEqual(rounds);
   });
 });

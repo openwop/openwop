@@ -221,9 +221,14 @@ describe('v2 bound-id kinds (identity.md §5, RFC 0187 §A)', () => {
     const res = await http(() => driver.get(`/runs/${projectBoundId(runId)}/effects`));
     if (res === null) return softSkip('blocked', 'GET /runs/{runId}/effects unreachable (fetch failed)');
     if (res.status === 404 || res.status === 405) return softSkip('inapplicable', `the host advertises idempotency but serves no effect ledger at /runs/{runId}/effects (${res.status})`);
-    expect(res.status, req(PER_KIND, 'security-defaults.md §Layer-2 effect identity', 'GET /runs/{runId}/effects MUST answer 200')).toBe(200);
     const effects = ((res.json as { effects?: Array<Record<string, unknown>> } | null)?.effects ?? []);
-    if (effects.length === 0) return softSkip('inapplicable', 'the noop fixture records no effects — no effectId on the wire to read (a host with an effect-producing fixture witnesses this leg)');
+    // Unfailable-leg audit (2026-09-26): the status assert used to precede this
+    // empty check, so on every host (the noop fixture records no effects) the
+    // leg asserted 200 then soft-skipped — `executed-pass` partial-witness folded
+    // into the shared per-kind row with no effectId ever read. The empty 200 now
+    // returns before any assertion.
+    if (res.status === 200 && effects.length === 0) return softSkip('inapplicable', 'the noop fixture records no effects — no effectId on the wire to read (a host with an effect-producing fixture witnesses this leg)');
+    expect(res.status, req(PER_KIND, 'security-defaults.md §Layer-2 effect identity', 'GET /runs/{runId}/effects MUST answer 200')).toBe(200);
     for (const e of effects) expectBound(e['effectId'], 'effectId', 'GET /runs/{runId}/effects', PER_KIND);
   });
 
@@ -244,9 +249,13 @@ describe('v2 bound-id kinds (identity.md §5, RFC 0187 §A)', () => {
     try {
     const res = await http(() => driver.get(`/webhooks/${projectBoundId(webhookId)}/dead-letters`));
     if (res === null) return softSkip('blocked', 'GET /webhooks/{webhookId}/dead-letters unreachable (fetch failed)');
-    expect(res.status, req(PER_KIND, 'RFC 0188 §A.1', 'a host advertising webhooks.deadLetter MUST serve the dead-letter read (200)')).toBe(200);
     const rows = ((res.json as { deliveries?: Array<Record<string, unknown>> } | null)?.deliveries ?? []);
-    if (rows.length === 0) return softSkip('inapplicable', 'the subscription has no dead-lettered delivery in this run — the read is served and the shape is unwitnessed here; v2-webhook-durable-delivery drives an exhaustion and asserts the record');
+    // Unfailable-leg audit (2026-09-26): as with effectId above, the 200 assert
+    // preceded the empty check, so a fresh subscription (always empty) recorded
+    // `executed-pass` partial-witness with no deliveryId read. Empty-200 now
+    // returns before any assertion.
+    if (res.status === 200 && rows.length === 0) return softSkip('inapplicable', 'the subscription has no dead-lettered delivery in this run — the read is served and the shape is unwitnessed here; v2-webhook-durable-delivery drives an exhaustion and asserts the record');
+    expect(res.status, req(PER_KIND, 'RFC 0188 §A.1', 'a host advertising webhooks.deadLetter MUST serve the dead-letter read (200)')).toBe(200);
     for (const r of rows) expectBound(r['deliveryId'], 'deliveryId', 'GET /webhooks/{webhookId}/dead-letters', PER_KIND);
     } finally {
       await http(() => driver.delete(`/webhooks/${projectBoundId(webhookId)}`));

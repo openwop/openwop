@@ -42,6 +42,7 @@ import { softSkip } from '../lib/soft-skip.js';
 import { req } from '../lib/requirement-ids.js';
 import { targetMajor } from '../lib/seams.js';
 import { startModalReceiver } from '../lib/webhook-receiver.js';
+import { deliveriesFor } from '../lib/standard-webhooks.js';
 import { projectBoundId } from '../lib/bound-id.js';
 
 const DOC = 'spec/v1/auth.md §"Onward hops"; spec/v2/core/security-defaults.md §"Onward hops" (RFC 0200 §E)';
@@ -93,9 +94,19 @@ describe('RFC 0200 §E — inbound-credential-no-passthrough (the caller\'s cred
     });
     if (created.status !== 201) return softSkip('blocked', `could not start ${FIXTURE} (${created.status}) — no run, no delivery, nothing to inspect`);
 
-    const delivered = await waitFor(() => rx.hits.some((h) => !h.verification), WAIT_MS);
+    // Unfailable-leg audit, 2026-09-26: the wait accepted ANY non-verification
+    // hit, so a foreign run.completed (a parallel scenario's run) could end it
+    // before THIS run's delivery — the one carrying the canaries' run — arrived.
+    // The wait now requires a delivery for this run; every hit is still scanned.
+    const runId = (created.json as { runId?: unknown } | null)?.runId;
+    if (typeof runId !== 'string' || runId === '') return softSkip('blocked', `POST ${runsPath()} answered 201 without a runId — this run's delivery cannot be told apart from another run's`);
+    const ours = (): number => (subscriptionId !== null
+      ? deliveriesFor(rx.hits, subscriptionId, runId)
+      : rx.hits.filter((h) => { if (h.verification) return false; try { return (JSON.parse(h.body) as { runId?: unknown }).runId === runId; } catch { return false; } })
+    ).length;
+    const delivered = await waitFor(() => ours() > 0, WAIT_MS);
     // A hop that never happened leaks nothing: this is `blocked`, not a pass.
-    if (!delivered) return softSkip('blocked', `no delivery reached the suite-owned receiver within ${WAIT_MS}ms — an unmade hop cannot witness that a credential did not cross it`);
+    if (!delivered) return softSkip('blocked', `no delivery for run ${runId} reached the suite-owned receiver within ${WAIT_MS}ms (${rx.hits.filter((h) => !h.verification).length} other capture(s)) — an unmade hop cannot witness that a credential did not cross it`);
 
     const canaries: Array<[string, string]> = [['the suite\'s own API key', env.apiKey], ['the Cookie canary', c1], ['the Proxy-Authorization canary', c2]];
     const found: string[] = [];

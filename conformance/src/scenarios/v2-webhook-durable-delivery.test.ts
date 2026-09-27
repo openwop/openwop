@@ -348,6 +348,22 @@ describe('RFC 0173 §B — webhook-durable-delivery (gated on webhooks)', () => 
             req('openwop.requirement.0173.webhook-durable-delivery', 'webhooks.md §Durability', `retry attempts for ${key} MUST be spaced by the advertised ${policy.backoff} backoff (attempt ${i + 1} followed attempt ${i} after ${times[i]! - times[i - 1]!}ms)`),
           ).toBeGreaterThan(0);
         }
+        // Unfailable-leg audit (2026-09-26): `> 0 ms` alone let a host advertising
+        // `backoff: exponential` that retried in a tight loop (any constant
+        // spacing, even a few ms) pass. An exponential backoff MUST widen, so with
+        // three or more attempts the second gap is at least 1.5x the first (not
+        // 2x: jitter tolerance). Only the first two gaps are compared, so a host
+        // whose schedule hits its cap later is not convicted. `fixed` gets no
+        // equivalent: its base interval is not on the wire (see the comment above
+        // the `!retried` branch), so there is no floor to measure against.
+        if (policy.backoff === 'exponential' && times.length >= 3) {
+          const gap1 = times[1]! - times[0]!;
+          const gap2 = times[2]! - times[1]!;
+          expect(
+            gap2,
+            req('openwop.requirement.0173.webhook-durable-delivery', 'webhooks.md §Durability', `retry attempts for ${key} MUST follow the advertised exponential backoff — the second gap (${gap2}ms) MUST be at least 1.5x the first (${gap1}ms); a constant spacing is not exponential`),
+          ).toBeGreaterThanOrEqual(1.5 * gap1);
+        }
       }
     } else {
       softSkip('inapplicable', 'no advertised retryPolicy.backoff other than none — the spacing leg is not asserted');

@@ -95,15 +95,9 @@ describe('RFC 0173 §C.1 — effect-seam-manifest (gated on replay)', () => {
         ).toBe(true);
       }
     }
-    // One row per kind the host declares: the set of kinds the manifest names is
-    // the host's declaration, and each named kind is backed by at least one row.
-    const declared = new Set(rows.map((r) => String(r.kind)));
-    for (const kind of declared) {
-      expect(
-        rows.filter((r) => r.kind === kind).length,
-        req('openwop.requirement.0173.effect-seam-manifest', 'RFC 0173 §C.1', `at least one manifest row per declared kind (${kind})`),
-      ).toBeGreaterThanOrEqual(1);
-    }
+    // Unfailable-leg audit (2026-09-26): a "one row per declared kind" loop stood
+    // here, but it built the declared set FROM the rows, so every host passed it.
+    // The manifest has no kind declaration independent of its rows; removed.
     // RFC 0140 G6: a `branch` re-fire is stated as a permission, and a permission
     // for a mode the host does not offer is a claim about nothing.
     const modes = Array.isArray(replay['modes']) ? (replay['modes'] as unknown[]) : [];

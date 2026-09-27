@@ -2,6 +2,30 @@
 
 ## [2.42.3] — unreleased — the 2.42.3 cycle is open
 
+- **The unfailable-leg audit: 19 legs that a non-conforming host could pass now measure their requirement.** A scanner (`scripts/audit-unfailable-legs.mjs`, an audit aid, not a gate) flagged 66 legs that witness an Accepted RFC's Falsifiability row and have a shape this corpus has shipped as a defect before: satisfiable bounds (the 1 ≤ 1 no-refire leg), loops over a possibly empty list, `if`-guarded assertions, always-defined checks, and the host's own ledger as the only witness. A reviewer judged each one against a single bar: would a host that breaks the rule record `executed-pass`?
+  - **Confirmed and fixed (12):**
+    - `0173.effect-identity-business-key`: a no-op run's empty ledger passed on setup asserts.
+    - `.retry`: an omitted `providerKey` folded to `''`, so "one distinct key" passed.
+    - `0205.artifact-url-part-scoped`: a 3xx to a public pre-signed URL passed.
+    - `0176.era-2-append-vocabulary`: cancel appends names that are the same in v1 and v2, so the writer rule was never tested. It now records `blocked` unless a renamed type is appended. Its `era` leg now requires `eventLogSchemaVersion`.
+    - `0171.poll-cursor-v2.shape`: `lastSequence` must equal the log's highest sequence, and `status`/`isTerminal` must say terminal.
+    - `0173.webhook-durable-delivery`: exponential backoff must actually grow, second gap ≥ 1.5× the first.
+    - `0175.mrtr-rounds-ceiling.refused`: the refusal must come at the ceiling, not before it.
+    - `0215.no-head-of-line`: a serial dispatcher with a short timeout passed as a partial witness. It now fails below the concurrency floor and is otherwise `blocked`.
+    - `0187.bound-id-kinds.per-kind`, effectId/deliveryId: no-op runs record `inapplicable` before any assertion.
+    - `0173.effect-seam-manifest`: removed a loop that could not fail.
+    - RFC 0173 cites `effect-seam-no-refire` for replay suppression.
+    - RFC 0186 says its row is a schema-validation witness.
+  - **Plausible, tightened (7):**
+    - `0201.message-id-stable`: all four delivery keys are required, otherwise `blocked`.
+    - `0169.profiles-derived-only`: records need `status`, `since` and `witness`; a tautology is removed.
+    - `0200.inbound-credential-no-passthrough`: waits for THIS run's delivery.
+    - `0168.advertised-fixtures-exist`: samples across the whole list.
+    - `0198.task-update-approver-checked`: polls about 3 s rather than one 750 ms read.
+    - `0201.endpoint-verification`: a late echo control and a scaled grace; a missing control is `blocked`.
+    - `0207.a2a-malformed-ignored`: the task must not fail or be rejected.
+  - **Not defects:** 47 of the 66 flags; each reviewer recorded its reason.
+  - **Measured against the v2 reference host** (loopback regression lane) before merge.
 - **RFC 0217 gap G1 closes in the contract peer.** `spec/v1/gaps.json` records MyndHyve's certified production witness of `0217.dead-letter-read-after-unregister` (openwop#1631). No scenario change.
 - **Version moved ahead of publication.** `@openwop/openwop-conformance` and its exact-pinned peer `@openwop/spec-artifacts` move to `2.42.3` because `2.42.2` is tagged. Not tagged, not published.
 
