@@ -66,15 +66,17 @@ const SKIP_NO_NOOP = !isFixtureAdvertised(NOOP_WORKFLOW_ID);
 describe('redaction: /.well-known/openwop secrets+aiProviders shape contract', () => {
   it('secrets is well-formed regardless of supported value', async () => {
     const res = await driver.get('/.well-known/openwop', { authenticated: false });
-    expect(res.status).toBe(200);
-
     const body = res.json as { secrets?: unknown } | undefined;
     const secrets = body?.secrets;
 
-    if (secrets === undefined) {
-      // Optional v1 field — hosts MAY omit. Spec-allowed; nothing to assert.
-      return softSkip('blocked', 'precondition not met — `secrets === undefined` returned early (Optional v1 field — hosts MAY omit. Spec-allowed; nothing to assert.) (seam, prior step, or fixture unavailable)');
+    if (res.status === 200 && secrets === undefined) {
+      // Optional v1 field — hosts MAY omit. Spec-allowed; nothing to assert,
+      // so the leg returns before any assertion and records `inapplicable`
+      // (it was a `blocked` note after the status assertion until 2026-09-27,
+      // i.e. a partial-witness pass).
+      return softSkip('inapplicable', '`secrets` is omitted from discovery — an OPTIONAL v1 field, so there is no shape to check');
     }
+    expect(res.status).toBe(200);
 
     // Per capabilities.schema.json: `secrets.supported` is REQUIRED
     // when secrets is present.

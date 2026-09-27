@@ -37,7 +37,7 @@ import { capabilityFamily } from '../lib/discovery-capabilities.js';
 import { pollUntilStatus, pollUntilTerminal } from '../lib/polling.js';
 import { isFixtureAdvertised } from '../lib/fixtures.js';
 import { req } from '../lib/requirement-ids.js';
-import { softSkip } from '../lib/soft-skip.js';
+import { blockedDespiteAssertions, softSkip } from '../lib/soft-skip.js';
 
 const FIXTURE =
   (isFixtureAdvertised('conformance-cancellable') && 'conformance-cancellable') ||
@@ -58,6 +58,11 @@ async function eventTypes(runId: string): Promise<string[]> {
   return Array.isArray(events) ? events.map((e) => String((e as { type?: unknown }).type)) : [];
 }
 
+// A 404 on :pause / :resume after the run-create assertion is
+// `blockedDespiteAssertions`: rest-endpoints.md §"Required endpoints" lists both
+// routes for every host, so a conforming host always makes the leg observable.
+// Until 2026-09-27 a plain softSkip here recorded a partial-witness PASS for a
+// host that never paused anything.
 describe.skipIf(SKIP)('pause/resume: running → paused → running → terminal', () => {
   it('pause transitions to paused; resume returns the run to running', async () => {
     const create = await driver.post('/v1/runs', {
@@ -84,7 +89,7 @@ describe.skipIf(SKIP)('pause/resume: running → paused → running → terminal
     });
     if (pause.status === 404) {
       await cancel(runId);
-      return softSkip('blocked', 'precondition not met — `pause.status === 404` returned early ([pause-resume] host returned 404 for :pause — endpoint not implemented; skipping rest) (seam, prior step, or fixture unavailable)');
+      return blockedDespiteAssertions('precondition not met — `pause.status === 404` returned early ([pause-resume] host returned 404 for :pause — endpoint not implemented; skipping rest) (seam, prior step, or fixture unavailable)');
     }
     expect(pause.status, req('openwop.it.pause-resume.pause-transitions-to-paused-resume-returns-the-run-to-running',
       DOC_PAUSE,
@@ -120,7 +125,7 @@ describe.skipIf(SKIP)('pause/resume: :resume on a non-paused run returns 409', (
     const resume = await driver.post(`/v1/runs/${encodeURIComponent(runId)}:resume`, {});
     if (resume.status === 404) {
       await cancel(runId);
-      return softSkip('blocked', 'precondition not met — `resume.status === 404` returned early (seam, prior step, or fixture unavailable)');
+      return blockedDespiteAssertions('precondition not met — `resume.status === 404` returned early (seam, prior step, or fixture unavailable)');
     }
     expect(resume.status, req('openwop.it.pause-resume.resuming-a-running-not-paused-run-returns-409-with-details-runstatus',
       DOC_RESUME,
@@ -153,7 +158,7 @@ describe.skipIf(SKIP)('pause/resume: a second :pause is 409 without a matching I
     const first = await driver.post(`/v1/runs/${encodeURIComponent(runId)}:pause`, { drainPolicy: 'immediate' });
     if (first.status === 404) {
       await cancel(runId);
-      return softSkip('blocked', 'precondition not met — `first.status === 404` returned early (seam, prior step, or fixture unavailable)');
+      return blockedDespiteAssertions('precondition not met — `first.status === 404` returned early (seam, prior step, or fixture unavailable)');
     }
     expect(first.status, req('openwop.it.pause-resume.pause-on-an-already-paused-run-returns-409-with-details-runstatus-paused-unless',
       DOC_PAUSE,
@@ -245,7 +250,7 @@ describe.skipIf(SKIP)('pause/resume: drain-current-node lets the executing node 
     });
     if (pause.status === 404) {
       await cancel(runId);
-      return softSkip('blocked', 'precondition not met — `pause.status === 404` returned early (seam, prior step, or fixture unavailable)');
+      return blockedDespiteAssertions('precondition not met — `pause.status === 404` returned early (seam, prior step, or fixture unavailable)');
     }
     expect(pause.status, req('openwop.it.pause-resume.under-drain-current-node-node-completed-precedes-run-paused-in-the-log',
       DOC_PAUSE,
@@ -290,7 +295,7 @@ describe.skipIf(SKIP)('pause/resume: :pause-during-suspend race', () => {
     });
     if (pause.status === 404) {
       await cancel(runId);
-      return softSkip('blocked', 'precondition not met — `pause.status === 404` returned early (seam, prior step, or fixture unavailable)');
+      return blockedDespiteAssertions('precondition not met — `pause.status === 404` returned early (seam, prior step, or fixture unavailable)');
     }
 
     // Either rejection (preferred) or stacked-pause is OK; silent override is not.

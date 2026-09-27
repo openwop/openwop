@@ -283,8 +283,8 @@ describe('replay-fanout-suppression: a replay fork MUST NOT fan out re-emitted e
         'host does not advertise `replay.supported: true`, so a replay fork cannot occur and this MUST NOT '
           + 'has nothing to constrain on this host',
       );
-      ctx.skip();
-      return softSkip('inapplicable', 'capability or profile not advertised by this host — gate `replayCap?.supported !== true` returned early');
+      // recordRequirement above carries the disposition; ctx.skip() throws.
+      return ctx.skip();
     }
 
     // ── LEG 2 — THE MUST NOT. A replay fork re-emits; it must not deliver. ───
@@ -308,8 +308,8 @@ describe('replay-fanout-suppression: a replay fork MUST NOT fan out re-emitted e
         `replay fork returned ${replay.status} — the re-emission this requirement is stated over never happened, `
           + 'so the absence of deliveries below would prove nothing',
       );
-      ctx.skip();
-      return softSkip('blocked', 'precondition not met — `forkDeclined(replay.status, \'fanout-suppression replay fork\')` returned early (seam, prior step, or fixture unavailable)');
+      // recordRequirement above carries the disposition; ctx.skip() throws.
+      return ctx.skip();
     }
     expect(replay.status, req('openwop.it.replay-fanout-suppression.delivers-for-a-live-run-suppresses-for-a-replay-fork-and-delivers-again-for-a-br', 'webhooks.md §"Register"', 'replay fork should be accepted')).toBe(201);
     const replayRunId = (replay.json as { runId: string }).runId;
@@ -373,6 +373,9 @@ describe('replay-fanout-suppression: a replay fork MUST NOT fan out re-emitted e
     });
     if (branch.status === 501 || branch.status === 400) {
       // branch not offered on this range — leg 2 still stands on its own.
+      // partial-witness-ok: the MUST NOT (leg 2) was observed and recorded
+      // executed-pass above; leg 3 only pins the out-of-scope boundary, on a
+      // fork mode the host may not offer.
       return softSkip('blocked', 'precondition not met — `branch.status === 501 || branch.status === 400` returned early (branch not offered on this range — leg 2 still stands on its own.) (seam, prior step, or fixture unavailable)');
     }
     expect(branch.status, req('openwop.it.replay-fanout-suppression.delivers-for-a-live-run-suppresses-for-a-replay-fork-and-delivers-again-for-a-br', 'replay.md §"Host-initiated fan-out is an external effect"', 'branch fork should be accepted')).toBe(201);

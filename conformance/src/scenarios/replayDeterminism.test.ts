@@ -18,7 +18,7 @@
 
 import { describe, it, expect } from 'vitest';
 import { driver } from '../lib/driver.js';
-import { softSkip } from '../lib/soft-skip.js';
+import { blockedDespiteAssertions, softSkip } from '../lib/soft-skip.js';
 import { forkDeclined } from '../lib/fork-availability.js';
 import { pollUntilTerminal } from '../lib/polling.js';
 import { isFixtureAdvertised } from '../lib/fixtures.js';
@@ -121,7 +121,10 @@ describe.skipIf(SKIP_NO_NOOP)('replay-determinism: same fromSeq + same workflow 
         mode: 'replay',
         fromSeq: 0,
       });
-      if (forkDeclined(fork2.status, 'determinism fork 2')) return softSkip('blocked', 'precondition not met — `forkDeclined(fork2.status, \'determinism fork 2\')` returned early (seam, prior step, or fixture unavailable)');
+      // Fork 1 of the same run was accepted (asserted above), so a decline here
+      // leaves the determinism comparison unobserved on a host that can fork:
+      // `blocked`, not the partial-witness pass a plain softSkip records.
+      if (forkDeclined(fork2.status, 'determinism fork 2')) return blockedDespiteAssertions(`the second replay fork of ${originalRunId} was declined (${fork2.status}) after the first was accepted — there is no second event list to compare`);
       expect(fork2.status).toBe(201);
       const fork2Id = (fork2.json as { runId: string }).runId;
       await pollUntilTerminal(fork2Id, { timeoutMs: 10_000 });
@@ -129,11 +132,13 @@ describe.skipIf(SKIP_NO_NOOP)('replay-determinism: same fromSeq + same workflow 
       // Phase 4: fetch both fork event streams.
       const fork1Events = await driver.get(`/v1/runs/${encodeURIComponent(fork1Id)}/events/poll`);
       const fork2Events = await driver.get(`/v1/runs/${encodeURIComponent(fork2Id)}/events/poll`);
-      if (fork1Events.status !== 200 || fork2Events.status !== 200) return softSkip('blocked', 'precondition not met — `fork1Events.status !== 200 || fork2Events.status !== 200` returned early (seam, prior step, or fixture unavailable)');
+      // rest-endpoints.md §"Required endpoints": /events/poll is a MUST, so a
+      // conforming host always makes the two event lists readable.
+      if (fork1Events.status !== 200 || fork2Events.status !== 200) return blockedDespiteAssertions(`GET /events/poll for the forks answered ${fork1Events.status} / ${fork2Events.status} — the event lists were never compared`);
 
       const fork1Body = fork1Events.json as { events?: RawEvent[] };
       const fork2Body = fork2Events.json as { events?: RawEvent[] };
-      if (!fork1Body.events || !fork2Body.events) return softSkip('blocked', 'precondition not met — `!fork1Body.events || !fork2Body.events` returned early (seam, prior step, or fixture unavailable)');
+      if (!fork1Body.events || !fork2Body.events) return blockedDespiteAssertions('a fork /events/poll body carried no events[] — the event lists were never compared');
 
       // Phase 5: assert structural identity (modulo timestamps + IDs).
       expect(fork1Body.events.length, req('openwop.it.replayDeterminism.two-replay-forks-of-the-same-point-produce-structurally-identical-event-lists', 

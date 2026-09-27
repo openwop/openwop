@@ -43,7 +43,7 @@ import { pollUntilTerminal } from '../lib/polling.js';
 import { CANARY_MARKER, getCanary } from '../lib/canaries.js';
 import { isFixtureAdvertised } from '../lib/fixtures.js';
 import { req } from '../lib/requirement-ids.js';
-import { softSkip } from '../lib/soft-skip.js';
+import { blockedDespiteAssertions, softSkip } from '../lib/soft-skip.js';
 import { makeTraceparent } from '../lib/trace-context.js';
 
 const NOOP_WORKFLOW_ID = 'conformance-noop';
@@ -188,7 +188,9 @@ describe.skipIf(SKIP_NO_NOOP)('debug-bundle: invariants per debug-bundle.md', ()
 
     const bundleRes = await driver.get(`/v1/runs/${encodeURIComponent(runId)}/debug-bundle`);
     const eventsRes = await driver.get(`/v1/runs/${encodeURIComponent(runId)}/events/poll`);
-    if (eventsRes.status !== 200) return softSkip('blocked', 'precondition not met — `eventsRes.status !== 200` returned early (host without polling) (seam, prior step, or fixture unavailable)'); // host without polling
+    // rest-endpoints.md §"Required endpoints": every host MUST expose
+    // /events/poll, so a conforming host always makes this comparison observable.
+    if (eventsRes.status !== 200) return blockedDespiteAssertions(`GET /v1/runs/{runId}/events/poll answered ${eventsRes.status} — the bundle/poll agreement was never observed`);
 
     const bundle = bundleRes.json as DebugBundleShape;
     const polledEvents = (eventsRes.json as { events?: unknown[] }).events ?? [];
@@ -238,12 +240,15 @@ describe.skipIf(SKIP_NO_NOOP)('debug-bundle: spans join the trace (RFC 0207 §C,
   it('span traceId / kind / status have the RFC 0207 shape and the run span joins the caller trace', async () => {
     if (!(await isAdvertised())) return softSkip('inapplicable', 'debugBundle not advertised by this host');
     const tp = makeTraceparent();
+    // Run create and the bundle read are asserted by the legs above; here they
+    // are setup, and returning before any assertion lets a host that emits no
+    // spans record `inapplicable` rather than a partial-witness pass.
     const create = await driver.post('/v1/runs', { workflowId: NOOP_WORKFLOW_ID }, { headers: { traceparent: tp.header } });
-    expect(create.status).toBe(201);
+    if (create.status !== 201) return softSkip('blocked', `POST /v1/runs answered ${create.status} — no run to read spans from`);
     const runId = (create.json as { runId: string }).runId;
     await pollUntilTerminal(runId);
     const res = await driver.get(`/v1/runs/${encodeURIComponent(runId)}/debug-bundle`);
-    expect(res.status).toBe(200);
+    if (res.status !== 200) return softSkip('blocked', `GET /v1/runs/{runId}/debug-bundle answered ${res.status} — no spans to read`);
     const spans = ((res.json as DebugBundleShape | undefined)?.spans ?? []) as Array<Record<string, unknown>>;
     if (spans.length === 0) return softSkip('inapplicable', 'host emits no spans (spans: []) — the RFC 0207 §C trace-join rule has nothing to hold');
     for (const s of spans) {
@@ -259,6 +264,9 @@ describe.skipIf(SKIP_NO_NOOP)('debug-bundle: spans join the trace (RFC 0207 §C,
       }
     }
     const run = spans.find((s) => s['name'] === 'openwop.run');
+    // partial-witness-ok: the span shape rules above were observed on every
+    // span; the trace-join half needs an openwop.run span with a traceId, which
+    // is SHOULD, so its absence is recorded rather than failed.
     if (run === undefined || run['traceId'] === undefined) return softSkip('inapplicable', 'the bundle carries no openwop.run span with a traceId (traceId is SHOULD) — the trace-join half has nothing to compare');
     expect(run['traceId'], req(LEG, 'debug-bundle.md §"spans field" (RFC 0207 §C)', 'the openwop.run span of a run started with an honoured inbound traceparent MUST carry that trace id')).toBe(tp.traceId);
   });

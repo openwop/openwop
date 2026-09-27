@@ -61,6 +61,9 @@ describe('agent-manifest-runtime (RFC 0070)', () => {
       // Empty is conformant; the cross-tenant no-disclosure 404 is covered by the
       // owner-triple isolation harness (RFC 0048/0059), not re-probed here. Nothing
       // to dispatch.
+      // partial-witness-ok: installScope, the served inventory and its array
+      // shape were observed; an empty tenant-scoped inventory is conformant,
+      // so the dispatch half has nothing to dispatch on this host.
       return softSkip('inapplicable', 'capability or profile not advertised by this host — gate `agents.length === 0` returned early (RFC 0074 §A + Unresolved Q3 — tenant-scoped: GET /v1/agents is the authenticated principal\'s workspace set, which MAY be e…');
     }
 

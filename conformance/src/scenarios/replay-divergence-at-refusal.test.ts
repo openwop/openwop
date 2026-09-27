@@ -45,7 +45,7 @@
  */
 
 import { describe, it, expect } from 'vitest';
-import { softSkip } from '../lib/soft-skip.js';
+import { blockedDespiteAssertions, softSkip } from '../lib/soft-skip.js';
 import { driver } from '../lib/driver.js';
 import { capabilityFamily } from '../lib/discovery-capabilities.js';
 import { req } from '../lib/requirement-ids.js';
@@ -246,9 +246,12 @@ describe.skipIf(HTTP_SKIP)('replay-divergence-at-refusal: behavioral (RFC 0041 �
       workflowId: 'conformance-phase4-replay-divergence',
     });
     if (createRes.status === 404 || createRes.status === 422) {
-      softSkip('blocked', 'precondition not met — `createRes.status === 404 || createRes.status === 422` returned early (seam, prior step, or fixture unavailable)');
-      ctx.skip(); // fixture not advertised
-      return softSkip('blocked', 'precondition not met — `createRes.status === 404 || createRes.status === 422` returned early (seam, prior step, or fixture unavailable)');
+      // The host advertises refusalDivergenceEmission and its mock seam took the
+      // program (asserted above), but the fixture run would not start: the
+      // requirement was never observed. ctx.skip() throws, so this note is the
+      // row's disposition (`blocked`), exactly as before 2026-09-27.
+      blockedDespiteAssertions('the mock-AI seam accepted the program but POST /v1/runs of conformance-phase4-replay-divergence answered 404/422 — the fixture is not seeded, so no divergence was driven');
+      return ctx.skip();
     }
     expect(createRes.status).toBe(201);
     const sourceRunId = (createRes.json as { runId: string }).runId;
@@ -336,9 +339,9 @@ describe.skipIf(HTTP_SKIP)('replay-divergence-at-refusal: behavioral (RFC 0041 �
       workflowId: 'conformance-phase4-replay-divergence',
     });
     if (createRes.status === 404 || createRes.status === 422) {
-      softSkip('blocked', 'precondition not met — `createRes.status === 404 || createRes.status === 422` returned early (seam, prior step, or fixture unavailable)');
-      ctx.skip();
-      return softSkip('blocked', 'precondition not met — `createRes.status === 404 || createRes.status === 422` returned early (seam, prior step, or fixture unavailable)');
+      // As in the first case: ctx.skip() throws, so the note is the disposition.
+      blockedDespiteAssertions('the mock-AI seam accepted the program but POST /v1/runs of conformance-phase4-replay-divergence answered 404/422 — the fixture is not seeded, so no divergence was driven');
+      return ctx.skip();
     }
     expect(createRes.status).toBe(201);
     const sourceRunId = (createRes.json as { runId: string }).runId;
