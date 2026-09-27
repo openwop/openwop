@@ -41,7 +41,7 @@ describe('agent-manifest-runtime (RFC 0070)', () => {
       inv,
       req('openwop.it.agent-manifest-runtime.lists-installed-manifest-agents-and-dispatches-one-with-attributed-events', 'RFC 0072 §A / node-packs.md §Agent inventory', 'a host advertising agents.manifestRuntime.supported MUST serve GET /v1/agents (it answered 404/405/501)'),
     ).not.toBeNull();
-    if (inv === null) return;
+    if (inv === null) throw new Error("unreachable: the assertion above fails first");
     const agents = inv.agents ?? [];
     expect(
       Array.isArray(agents),

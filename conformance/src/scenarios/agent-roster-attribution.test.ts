@@ -78,7 +78,7 @@ describe('agent-roster-attribution (RFC 0086 §B/§C)', () => {
       body !== null,
       req('openwop.it.agent-roster-attribution.serves-the-normative-roster-attributes-a-portfolio-fire-content-free-ordered-and', 'agent-roster.md §B', 'a host advertising agents.roster.supported MUST serve GET /v1/agents/roster (got 404/405/501)'),
     ).toBe(true);
-    if (body === null) return;
+    if (body === null) throw new Error("unreachable: the assertion above fails first");
     expect(
       Array.isArray(body.roster),
       req('openwop.it.agent-roster-attribution.serves-the-normative-roster-attributes-a-portfolio-fire-content-free-ordered-and', 'agent-roster.md §B', 'GET /v1/agents/roster MUST return a roster[] array'),

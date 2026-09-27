@@ -338,6 +338,10 @@ node "$(dirname "$0")/check-retention-floors.mjs"
 # RFC 0216 §A.3 — the harness-trust-anchor list is closed: a colocated companion
 # witnesses these rows and no others, so the list is the door and this is its lock.
 node "$(dirname "$0")/check-harness-trust-anchors.mjs"
+# The unfailable-leg audits: a soft-skip after an assertion records a partial-witness
+# PASS that certification counts. New sites must be blockedDespiteAssertions or carry a
+# `partial-witness-ok:` reason; existing ones are a baseline that only goes down.
+node "$(dirname "$0")/check-softskip-after-assert.mjs"
 node "$(dirname "$0")/check-accepted-predicate.mjs"
 node "$(dirname "$0")/check-threat-model-template.mjs"
 echo

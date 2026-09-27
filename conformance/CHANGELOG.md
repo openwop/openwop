@@ -1,5 +1,22 @@
 # `@openwop/openwop-conformance` Changelog
 
+## [2.42.4] — unreleased — unfailable-leg audit wave 2, and a gate so the class stops growing
+
+- **Wave 2 of the unfailable-leg audit.** `scripts/audit-unfailable-legs.mjs --all` widened the scan from Accepted-RFC ids to every leg, and added a sixth shape: *asserts, then soft-skips*. At major 2 an `inapplicable` or `skipped` note after an assertion records `executed-pass` with a `partial-witness:` detail; at major 1 a `blocked` note does too. Certification counts both.
+  - **Reviewed:** 111 new candidates in four parallel reviews: 38 confirmed, 18 plausible. Most are fixed; each fix names the non-conforming host it now catches.
+  - **Fixes that only make a leg check what its title already promised:** exact error codes, required schema members, sequence order, per-type (not per-count) supersets, positive controls.
+  - **Changed dispositions:** where a leg asserted setup and then never observed its requirement, it now calls `blockedDespiteAssertions`.
+  - **Guard against over-correction:** a `blocked` row denies the whole bundle, so every new `blocked` was checked against the committed certified bundles. None of them locks out a conforming host. Three changes were reverted to the honest form:
+    - the dead-letter sink half without the optional `deadLetter` read is an annotated partial witness (RFC 0188 §A.5);
+    - backpressure without an advertised `inflightCap` is `inapplicable` before any assertion;
+    - a SHOULD-level `traceId` and an optional `settings` echo are left untouched.
+  - **Left as they are, with reasons:** fixes that need a per-attempt budget seam, a fixture change, or a spec decision (the audit-verify checkpoint signature preimage is stated two different ways).
+- **The RFC 0173 retry leg counts the key on the wire.** `lib/effect-receiver.ts` gains a fail-first mode: it cuts the first attempt's connection, a genuine transport failure, after recording its `Idempotency-Key`. `v2-effect-identity-business-key`'s retry leg now requires the provider to see one key across attempts, equal to the ledger's. The seam contract always said "the suite fixture provider records the idempotency key of each attempt"; until now the leg sent the host to an address nothing listened on. Checked on the v2 reference host, which passes. Sabotaged with a fresh key per attempt behind a constant ledger key: it fails with "2 attempt(s) on the wire carried 2 distinct key(s)".
+- **New gate `scripts/check-softskip-after-assert.mjs`** in `openwop:check`.
+  - A soft-skip after an assertion must be `blockedDespiteAssertions` or carry a `// partial-witness-ok: <why the requirement was already observed>` reason.
+  - Existing sites are a per-file baseline (`conformance/softskip-after-assert.baseline.json`). The baseline is unreviewed debt, not approval, and `--write` refuses to raise it without `--allow-raise`.
+- **Version moved ahead of publication.** `@openwop/openwop-conformance` and its exact-pinned peer `@openwop/spec-artifacts` move to `2.42.4` because `2.42.3` is tagged. Not tagged, not published.
+
 ## [2.42.3] — 2026-09-27 — the unfailable-leg audit: 19 legs a non-conforming host could pass now measure their requirement
 
 - **The unfailable-leg audit: 19 legs that a non-conforming host could pass now measure their requirement.** A scanner (`scripts/audit-unfailable-legs.mjs`, an audit aid, not a gate) flagged 66 legs that witness an Accepted RFC's Falsifiability row and have a shape this corpus has shipped as a defect before: satisfiable bounds (the 1 ≤ 1 no-refire leg), loops over a possibly empty list, `if`-guarded assertions, always-defined checks, and the host's own ledger as the only witness. A reviewer judged each one against a single bar: would a host that breaks the rule record `executed-pass`?
