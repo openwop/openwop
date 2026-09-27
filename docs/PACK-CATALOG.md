@@ -2,13 +2,13 @@
 
 > Categorized snapshot of the signed packs published at [`packs.openwop.dev`](https://packs.openwop.dev) as of **2026-06-24**. Grouped by domain (not alphabetical) so workflow authors can find what they need by use case; the live [`/v1/index.json`](https://packs.openwop.dev/v1/index.json) is the authoritative, complete list (the grouped tables below are a curated view and may lag the registry). Authoring guide: [`docs/AUTHORING-CANVAS-PACKS.md`](AUTHORING-CANVAS-PACKS.md). Architecture rationale: [`docs/CANVAS-PACKS-INVENTORY.md`](CANVAS-PACKS-INVENTORY.md).
 
-**Catalog status:** 156 packs published (as of 2026-08-05). All signed under one of four keychains (`openwop-registry-root` for framework + community packs, `myndhyve-internal-1` for `vendor.myndhyve.*`, `vendor.openwop.*` for the rust-hello demo, `openwop-team-1` for `vendor.openwop-app.*`). Catalog updates on each merged pack-publishing PR.
+**Catalog status:** 156 packs, 282 published versions (registry as of 2026-09-26). Every version is signed under one of four keys. `openwop-team-1` signs 239 (230 `core.openwop.*` plus 9 `vendor.openwop*`), `myndhyve-internal-1` signs the 40 `vendor.myndhyve.*` versions, `openwop-registry-root` signs 2 (one core, one `vendor.openwop.*`), and `community-openwop-team-demo-1` signs the 1 community demo. The registry's `signingKeys[]` permits both `openwop-registry-root` and `openwop-team-1` for `core.openwop.*`, so both kinds of core signature verify. Catalog updates on each merged pack-publishing PR.
 
 ---
 
 ## Framework primitives (`core.openwop.*`)
 
-Spec-canonical typeIds. Required by most non-trivial workflows. Signed by `openwop-registry-root`.
+Spec-canonical typeIds. Required by most non-trivial workflows. Signed by `openwop-team-1` (230 of 231 core versions; one by `openwop-registry-root`).
 
 | Pack                                                                                                       | Version                    | Purpose                                                                                                                                                                                                                                                                                                                                                                                       |
 | ---------------------------------------------------------------------------------------------------------- | -------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
@@ -60,7 +60,7 @@ Declarative connection packs (RFC 0095) — each ships an OAuth2 provider defini
 
 ## Workflow packs (`core.openwop.workflows.*`)
 
-Declarative workflow-chain packs (RFC 0013) — each ships one or more ready-to-run workflow templates ("chains") that expand and run over published node + agent packs. `kind: workflow-chain`, signed by `openwop-registry-root`. External sends stay behind a human approval gate; in-app notifications are direct. All tenant values are replay-deterministic run parameters.
+Declarative workflow-chain packs (RFC 0013) — each ships one or more ready-to-run workflow templates ("chains") that expand and run over published node + agent packs. `kind: workflow-chain`, signed by `openwop-team-1`. External sends stay behind a human approval gate; in-app notifications are direct. All tenant values are replay-deterministic run parameters.
 
 | Pack | Version | Chains | Purpose |
 | ---- | ------- | ------ | ------- |
@@ -83,7 +83,7 @@ Declarative workflow-chain packs (RFC 0013) — each ships one or more ready-to-
 
 ## Reference + declarative packs
 
-Reference packs that prove the non-node declarative pack tiers (artifact-type / chat-card / prompt / workflow-chain) publish + resolve end-to-end. `core.openwop.*` signed by `openwop-registry-root`; `vendor.openwop.*` signed by the `vendor.openwop` key.
+Reference packs that prove the non-node declarative pack tiers (artifact-type / chat-card / prompt / workflow-chain) publish + resolve end-to-end. `core.openwop.*` signed by `openwop-team-1`; `vendor.openwop.*` signed by `openwop-team-1` (one version by `openwop-registry-root`).
 
 | Pack                                                                                                                     | Version | Kind            | Purpose                                                                                                                                            |
 | ---------------------------------------------------------------------------------------------------------------------- | ------- | --------------- | ------------------------------------------------------------------------------------------------------------------------------------------------ |
