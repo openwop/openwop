@@ -29,6 +29,15 @@ import { softSkip, blockedDespiteAssertions } from '../lib/soft-skip.js';
 import { startEffectReceiver } from '../lib/effect-receiver.js';
 import { req } from '../lib/requirement-ids.js';
 
+/**
+ * The retry leg hands the host the address of the suite's OWN receiver
+ * (`lib/effect-receiver.ts`, since 2.42.4) and the host calls it — a connection
+ * the host originates back to the harness. `host-callback-declaration` requires
+ * that to be declared; 2.42.4 added the receiver and not the declaration, so
+ * the self-check failed on every host that runs the full catalog.
+ */
+export const REQUIRES_HOST_CALLBACK = 'the host makes the retried outbound effect call to the suite-owned effect receiver (OPENWOP_WEBHOOK_RECEIVER_PORT)';
+
 const FIXTURE = 'conformance-noop';
 const KEYING = ['business-identity', 'activity-recipe'];
 const TERMINAL = new Set(['completed', 'failed', 'cancelled']);
