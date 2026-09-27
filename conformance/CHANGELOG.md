@@ -1,6 +1,6 @@
 # `@openwop/openwop-conformance` Changelog
 
-## [2.42.3] — unreleased — the 2.42.3 cycle is open
+## [2.42.3] — 2026-09-27 — the unfailable-leg audit: 19 legs a non-conforming host could pass now measure their requirement
 
 - **The unfailable-leg audit: 19 legs that a non-conforming host could pass now measure their requirement.** A scanner (`scripts/audit-unfailable-legs.mjs`, an audit aid, not a gate) flagged 66 legs that witness an Accepted RFC's Falsifiability row and have a shape this corpus has shipped as a defect before: satisfiable bounds (the 1 ≤ 1 no-refire leg), loops over a possibly empty list, `if`-guarded assertions, always-defined checks, and the host's own ledger as the only witness. A reviewer judged each one against a single bar: would a host that breaks the rule record `executed-pass`?
   - **Confirmed and fixed (12):**
