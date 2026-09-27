@@ -227,7 +227,7 @@
     "spec/v2/core/headers.md": "89839a4e1ad793e565afe672c8e003ab3852ab7be89145a2510860ac5ca4de5c",
     "spec/v2/core/host-services.md": "15923cceb95cba148a32e0944f6a2d1d25e9cc36b0c169b67ee42d483bcac800",
     "spec/v2/core/idempotency.md": "21830b7d23dd03e9e8ba4b0de253dd001fc960f166310d6b6b60b1c33cf60b30",
-    "spec/v2/core/identity.md": "ebd448c2b1b0a7d12d69e26969e5f4dfff1de4f8ec302adfd62f927d758dafea",
+    "spec/v2/core/identity.md": "fb6606a322a9167b8ab91402cf7214b6ced3e439eb4b6f9240a0739d9a3e58f1",
     "spec/v2/core/interop.md": "3cfa2af70ae6ba1f4b4268447d46d1d2f5fb65f7917f15bad159d9779d25b1a6",
     "spec/v2/core/interrupt.md": "b31b3f3be7888043ef38c82367a8d743a775c2b6bd499f7da44355ff00452435",
     "spec/v2/core/node-pack-runtimes.md": "d52966319c53aaa03575025915b73b470a42832c039c41d73aff6931758630cb",
