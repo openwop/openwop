@@ -18,7 +18,7 @@ Standard headers keep their standard names: `Idempotency-Key`, `ETag`, `If-None-
 | `Last-Event-ID` | 1 | Resume from sequence after this ID. |
 | `OpenWOP-Dedup` | 1 | When set, the host's cross-host claim system rejects a duplicate `(tenantId, scopeId)` pair with `409 Conflict`. |
 | `OpenWOP-Force-Engine-Version` | 1 | Test keys only. The server emits this run's events as if it ran the given engine version, which must be within `Capabilities.testing.forceEngineVersionRange`. Servers MUST reject it on production API keys with `403 force_engine_version_forbidden`. |
-| `OpenWOP-Version` | 55 | Selects one of the host's listed major.minor versions. Absent, the host uses its `preferredVersion`; an unlisted value is 406 protocol_version_unsupported. |
+| `OpenWOP-Version` | 55 | Selects one of the host's listed major.minor versions. Absent, `/.well-known/openwop` uses `preferredVersion` and every other unversioned path is v2; an unlisted value is 406 protocol_version_unsupported. |
 
 ## Response headers
 

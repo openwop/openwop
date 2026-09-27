@@ -43,8 +43,11 @@ A request on an unversioned path MAY carry `OpenWOP-Version: <major>` or `OpenWO
 | --- | --- |
 | Header names a major in `protocolVersions[]` | MUST serve that major |
 | Header names a major not in `protocolVersions[]` | MUST answer `406` `protocol_version_unsupported`, with `details.protocolVersions[]` echoing the list |
-| Header absent on an unversioned path | MUST serve `preferredVersion`'s major |
+| Header absent on `/.well-known/openwop` | MUST serve `preferredVersion`'s major |
+| Header absent on any other unversioned path | MUST serve major 2: the path is the v2 surface (§1.2) |
 | `/v1/…` path with `OpenWOP-Version` other than `1` | MUST answer `400` `protocol_version_mismatch` |
+
+`/.well-known/openwop` is the one resource both majors serve at the same unversioned path, so it is the only place a header-less request can come from a client of the earlier major.
 
 A request on a `/v1/…` path key MUST NOT carry `OpenWOP-Version` with a value other than `1`. `protocol_version_unsupported`, `protocol_version_mismatch` and `client_version_unsupported` (§1.5) are rows in `spec/v2/errors.json` ([errors.md](errors.md)).
 
