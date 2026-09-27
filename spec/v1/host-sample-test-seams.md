@@ -1101,5 +1101,11 @@ contract is that it IS the production writer; the witness is real for the storag
 exercises and for the reader's translation of what was stored.
 
 Consumed by `v2-era-2-append-vocabulary` (`openwop.requirement.0176.era-2-append-vocabulary`).
-A host that advertises the seams profile but does not serve the path records that leg
-`blocked`; a host that does not advertise the profile records it `inapplicable`.
+A host that serves the seam gets a real witness: `executed-pass` when the appended event reads
+back under its v2 name, `executed-fail` when the era-2 read refuses it or leaks the v1 spelling.
+A host that serves it but breaks its contract (anything but `202 { runId, sequence }`) records
+`blocked`. A host that does **not** serve it — the seam is OPTIONAL and newer than the leg —
+records the pre-seam partial witness (the writer rule unobserved, the acceptance predicate
+refusing the row), **never** `blocked`: adding an optional seam MUST NOT take away a
+certification a host held before it existed. A host that does not advertise the seams profile
+records `inapplicable`.

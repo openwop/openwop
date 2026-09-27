@@ -1,5 +1,10 @@
 # `@openwop/openwop-conformance` Changelog
 
+## [2.42.6] — unreleased — the era-2 writer rule is witnessable again
+
+- **`0176.era-2-append-vocabulary` is a real witness again on a host that serves the new seam.** New OPTIONAL seams-profile seam `appendEra2Event` (`POST /conformance/seams/sample/event-log/append`, `api/seams-v2.yaml`; `host-sample-test-seams.md` §27) appends ONE v2-named event to a seeded era-2 run through the host's PRODUCTION writer; the leg appends `agent.reasoning-delta` (a codemap-renamed type, stored v1 `agent.reasoning.delta`) and requires the translated read to return the v2 name. Sabotaged: a host whose writer stores v2 names fails the read `500 event_type_unmapped` → `executed-fail`. Dispositions: seam served → a real assertion (the 2.42.5 `partial-witness-ok` annotation is gone for that path); seam served but contract broken → `blocked`; seam NOT served → the 2.42.5 partial witness, never `blocked` (an optional seam newer than the leg must not take away a certification); seams profile not claimed → `inapplicable`.
+- **Suite `2.42.6`**. `@openwop/spec-artifacts` moves in lockstep at the same exact pin.
+
 ## [2.42.5] — 2026-09-27 — hotfix: a host can certify again
 
 - **`0176.era-2-append-vocabulary` no longer blocks every host.** 2.42.3's unfailable-leg audit made this leg `blockedDespiteAssertions` whenever a host's appended types are spelled the same in v1 and v2. No catalogued seam lets any host make a seeded era-2 run append a type the codemap renames, so the row recorded `blocked` on every host, and one `blocked` row denies the whole bundle (RFC 0168 §E.1). **No host could certify on 2.42.3 or 2.42.4.** The leg now records a partial witness whose detail says the codemap-renaming writer rule is unwitnessed. The append, the read-back and the sequence rules are observed, and the acceptance predicate still refuses a partial-witness row. It is annotated `partial-witness-ok` for the softskip gate. openwop-1f is adding the seam that makes the rule witnessable. Verified on the v2 reference host: the row now records `executed-pass` with that detail.

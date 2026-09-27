@@ -31,10 +31,12 @@ import { v2Discovery } from '../lib/v2.js';
 import { softSkip } from '../lib/soft-skip.js';
 import { req } from '../lib/requirement-ids.js';
 import { readErrorCode } from '../lib/error-envelope.js';
-import { codemapV1toV2, era2Gate, eventsOf, pollEvents, seedEra2Log, v1FixtureLog, type ReadEvent } from '../lib/era2-seed.js';
+import { appendEra2Event, codemapV1toV2, era2Gate, eventsOf, pollEvents, seedEra2Log, v1FixtureLog, type ReadEvent } from '../lib/era2-seed.js';
 
 const ID = 'openwop.requirement.0176.era-2-append-vocabulary';
 const DOC = 'spec/v2/core/persistence.md §The writer rule';
+/** A type the codemap renames (v1 `agent.reasoning.delta`); artifact event, no projection effect. */
+const WITNESS_TYPE = 'agent.reasoning-delta';
 
 async function http(fn: () => Promise<OpenWOPResponse>): Promise<OpenWOPResponse | null> {
   try {
@@ -88,20 +90,30 @@ describe('v2-era-2-append-vocabulary (RFC 0176 §A — the writer rule)', () => 
     // Neither answer is asserted: the resume transition's event set is not
     // pinned to a renamed type, and a seeded run's pause is host latitude. If
     // no renamed type is appended, the leg records `blocked` below, not a pass.
+    // 2.42.6: the writer-rule witness proper. `appendEra2Event` (host-sample-test-
+    // seams.md §27) hands the host ONE event of a type the codemap RENAMES
+    // (`agent.reasoning-delta`, stored v1 `agent.reasoning.delta`) and the host's
+    // production writer chooses the stored spelling; the read below is the witness.
+    // It is an artifact event, so it moves no projection. A host that claims the
+    // seams profile but does not serve the seam records `blocked` — the gate above
+    // already made a host without the profile `inapplicable`.
+    const appended = await appendEra2Event(runId, WITNESS_TYPE, { agentId: 'conformance', delta: 'era-2 writer-rule witness', sequence: 0 });
+    // A served seam that breaks its contract is `blocked`. An UNSERVED seam is not:
+    // §27 is optional and newer than this leg, so its absence falls through to the
+    // pre-seam path and ends in the partial witness below — it never denies a
+    // host certification it held before the seam existed.
+    if (!appended.ok && !appended.unserved) return softSkip(appended.kind, appended.reason);
+    const seamServed = appended.ok;
+
     const enc = encodeURIComponent(runId);
     const paused = await http(() => driver.post(`/runs/${enc}:pause`, { reason: 'conformance', drainPolicy: 'immediate' }));
-    const resumed = paused?.status === 202 ? await http(() => driver.post(`/runs/${enc}:resume`, { reason: 'conformance' })) : null;
+    if (paused?.status === 202) await http(() => driver.post(`/runs/${enc}:resume`, { reason: 'conformance' }));
 
-    // One canonical mutation so the HOST's own writer appends. Cancel is the
-    // universally available terminal transition; a host that refuses it on a
-    // seeded run records `blocked` rather than a pass — unless the pause and
-    // resume above were both accepted, which already drove the host's writer.
-    const cancelled = await http(() => driver.post(`/runs/${enc}/cancel`, {}));
-    const cancelOk = cancelled !== null && (cancelled.status === 200 || cancelled.status === 202 || cancelled.status === 204);
-    const pauseResumeOk = paused?.status === 202 && resumed?.status === 202;
-    if (!cancelOk && !pauseResumeOk) {
-      return softSkip('blocked', `POST /runs/{runId}/cancel answered ${cancelled?.status ?? 'no response'} on a seeded era-2 run (pause ${paused?.status ?? 'no response'}, resume ${resumed?.status ?? 'not attempted'}) — no canonical mutation drove the host's writer, so the append is unwitnessed`);
-    }
+    // A canonical mutation as well, so the host's own lifecycle writer appends
+    // beside the seam's append. The seam append above already drove the
+    // production writer, so a host that refuses cancel on a SEEDED run no longer
+    // leaves the rule unwitnessed — the answer is not asserted here.
+    await http(() => driver.post(`/runs/${enc}/cancel`, {}));
 
     const after = await pollEvents(runId);
     if (after === null) return softSkip('blocked', 'the event read failed after the append');
@@ -157,18 +169,22 @@ describe('v2-era-2-append-vocabulary (RFC 0176 §A — the writer rule)', () => 
     // writer rule is unobserved.
     const renamedV2 = new Set([...codemapV1toV2()].filter(([v1, v2]) => v1 !== v2).map(([, v2]) => v2));
     const appendedTypes = rows.slice(seedCount).map((r) => String(r.type ?? ''));
-    if (!appendedTypes.some((t) => renamedV2.has(t))) {
-      // partial-witness-ok: HOTFIX 2.42.5 (2026-09-27). 2.42.3 and 2.42.4 made this
-      // `blockedDespiteAssertions`, which is bundle-fatal (RFC 0168 §E.1). No catalogued
-      // seam lets ANY host make a seeded era-2 run append a type the codemap renames,
-      // so the row blocked on every host and no host could certify. That is the suite's
-      // gap, not a host's. The append, the read-back and the sequence rules above ARE
-      // observed. The codemap-renaming writer rule is NOT, and this partial witness says
-      // so in its detail; the acceptance predicate refuses a partial-witness row. The
-      // seams-contract addition that makes the rule witnessable is in progress
-      // (openwop-1f); when it lands, this becomes a real assertion again.
-      return softSkip('inapplicable', `partial witness — the codemap-renaming writer rule is UNWITNESSED: every type the host appended to the era-2 log (${appendedTypes.join(', ') || 'none'}) is spelled identically in v1 and v2 (spec/v2/event-codemap.json), so a host writing v2 names reads back the same as one writing v1 names — the writer rule is unobserved. The leg needs a canonical mutation that appends a renamed type (e.g. run.resuming → run.resume-started); pause ${paused?.status ?? 'no response'} / resume ${resumed?.status ?? 'not attempted'} on the seeded run appended none, and the seed seam (api/seams-v2.yaml seedEra2EventLog) cannot seed a paused or interrupt-suspended era-2 run to resume. A seams-contract addition to seed one is in progress.`);
+    if (!seamServed) {
+      // partial-witness-ok: the host does not serve the optional appendEra2Event
+      // seam (host-sample-test-seams.md §27), and no canonical mutation is pinned
+      // to append a codemap-RENAMED type, so the writer rule is unobserved here.
+      // The append, the read-back and the sequence rules above ARE observed. This
+      // is the 2.42.5 disposition, kept for hosts without the seam; the
+      // acceptance predicate refuses a partial-witness row.
+      if (!appendedTypes.some((t) => renamedV2.has(t))) {
+        return softSkip('inapplicable', `partial witness — the codemap-renaming writer rule is UNWITNESSED: ${appended.ok ? '' : appended.reason}; every type the host appended to the era-2 log (${appendedTypes.join(', ') || 'none'}) is spelled identically in v1 and v2 (spec/v2/event-codemap.json)`);
+      }
+      return;
     }
+    expect(
+      appendedTypes.includes(WITNESS_TYPE),
+      req(ID, DOC, `the event appended through appendEra2Event (${WITNESS_TYPE}, a codemap-RENAMED type) MUST read back under its v2 name through the translated read — it read as ${appendedTypes.join(', ') || 'nothing'}: a host that stored the v2 spelling in an era-2 log makes the reader map it a second time (event_type_unmapped), and one that bypassed the storage boundary leaks the v1 spelling`),
+    ).toBe(true);
   });
 
   it('the run keeps the era it was created with; an append does not promote it to era 3', async () => {
