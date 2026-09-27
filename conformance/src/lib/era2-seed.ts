@@ -85,6 +85,33 @@ export function era2Gate(doc: Record<string, unknown> | null): Seeded | null {
   return null;
 }
 
+export const APPEND_PATH_V1 = '/v1/host/sample/event-log/append';
+export const APPEND_PATH = seamPath(APPEND_PATH_V1);
+
+export type Appended =
+  | { readonly ok: true; readonly sequence: number }
+  | { readonly ok: false; readonly kind: 'blocked'; readonly reason: string };
+
+/**
+ * Append ONE v2-named event to a seeded era-2 run through the host's production
+ * writer (host-sample-test-seams.md §27, `appendEra2Event`). The seam is only
+ * the trigger: which spelling is STORED is the host writer's decision, and the
+ * production read is what the caller asserts on. Absent or refusing ⇒ blocked
+ * (the caller has already passed `era2Gate`, so the seams profile is claimed).
+ */
+export async function appendEra2Event(runId: string, type: string, payload: Record<string, unknown>): Promise<Appended> {
+  const res = await http(() => driver.post(APPEND_PATH_V1, { runId, type, payload }));
+  if (res === null) return { ok: false, kind: 'blocked', reason: `${APPEND_PATH} unreachable (fetch failed)` };
+  if (res.status === 404 || res.status === 405 || res.status === 501) {
+    return { ok: false, kind: 'blocked', reason: `${APPEND_PATH} answered ${res.status} — the host claims the seams profile but does not serve appendEra2Event (host-sample-test-seams.md §27), so no host-written append of a codemap-renamed type can be driven and the writer rule is unwitnessed` };
+  }
+  const sequence = (res.json as { sequence?: unknown } | undefined)?.sequence;
+  if (res.status !== 202 || typeof sequence !== 'number') {
+    return { ok: false, kind: 'blocked', reason: `${APPEND_PATH} answered ${res.status} ${readErrorCode(res.json) ?? ''} without a 202 { runId, sequence } — the append contract is not honoured`.trim() };
+  }
+  return { ok: true, sequence };
+}
+
 /** Seed an era-2 log in v1 vocabulary; the reason names the seam when it is absent. */
 export async function seedEra2Log(events: readonly SeedEvent[], status: 'completed' | 'running' | 'paused' = 'completed'): Promise<Seeded> {
   const res = await http(() => driver.post(SEED_PATH_V1, { eventLogSchemaVersion: 2, status, events }));
