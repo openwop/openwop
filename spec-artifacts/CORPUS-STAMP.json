@@ -11,7 +11,7 @@
     "api/redocly.yaml": "b0604c89b2ca6d5076ec25725c539dad44a741a811fe524439ee6daef8baa09f",
     "api/seams-v2.yaml": "7e9569d7410302fbd477380bcce97cd2f08b0f5b701b7b158fe3c48f593c70ab",
     "api/v2/asyncapi.yaml": "9b01e2545e5234a4f4056271ce5d0d2b9dfaca5ba7e27b40485f39ac128e8db6",
-    "api/v2/openapi.yaml": "e87321db5a508474987c71e4513c04b83b089e153692e8a1405dd21d870e6eb1",
+    "api/v2/openapi.yaml": "21f0002f9c115aa7dda0e359f92b29581ec762a7c2681efc94050ae2613cea61",
     "api/v2/redocly.yaml": "1e66b60e6118ad11a823bb620678be464d99dfe50a40e3e6f93ec9429b88b34c",
     "schemas/README.md": "0c0b737ffcf8f30e7d2809cec8a498232de710f41443212922ad8337cdde0b51",
     "schemas/a2a-task-state.schema.json": "75d5049dea8bd873ff0e7546f1c60c8d36c219bec7084264360be54a8be30ae1",
@@ -224,7 +224,7 @@
     "spec/v2/core/errors.md": "dd0b980a8143d6832e381d6da42d17a9c6606bc0dd8d30858fd68026a16d5b7c",
     "spec/v2/core/events.md": "234338deb97be648731e8ab2126a90b7b8ad0a7070d98ffc85ee4689ff059791",
     "spec/v2/core/form-content-packs.md": "347b1c649864360bf2731e6e047a3e26b0783530201185827e85359e90f0b233",
-    "spec/v2/core/headers.md": "c48088b75f97867e0b1f04a47079727abb03397f40fad9b9cb12beec428f5344",
+    "spec/v2/core/headers.md": "3185bd45c829c0962145861c36a59be7c28a802b01df23172fd603a48bd09018",
     "spec/v2/core/host-services.md": "15923cceb95cba148a32e0944f6a2d1d25e9cc36b0c169b67ee42d483bcac800",
     "spec/v2/core/idempotency.md": "21830b7d23dd03e9e8ba4b0de253dd001fc960f166310d6b6b60b1c33cf60b30",
     "spec/v2/core/identity.md": "ebd448c2b1b0a7d12d69e26969e5f4dfff1de4f8ec302adfd62f927d758dafea",
@@ -298,5 +298,5 @@
     "spec/v2/retention-floors.json": "eaf3722d95c79947af1d4269ef85117e126518c588cfcf1a2b21b97269f51624",
     "spec/v2/surface-baseline.json": "f850d3149a897641abaf4cec48fa2b6deb82b48ca1fea28a789b734d7844e590"
   },
-  "corpusCommit": "456d70376de30033e108ddb552cc798ee98fa1b7"
+  "corpusCommit": "22281d237f848f11cd3e1c70c530d8b536abf600"
 }
