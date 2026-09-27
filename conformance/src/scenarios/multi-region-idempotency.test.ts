@@ -64,7 +64,7 @@ describe('multi-region-idempotency: capability shape', () => {
     }
 
     expect(ALLOWED.has(idem.crossRegion), req('openwop.it.multi-region-idempotency.idempotency-crossregion-when-advertised-must-be-one-of-the-closed-enum', 
-      'idempotency.md §"Multi-region idempotency" §"Capability advertisement"',
+      'spec/v1/idempotency.md §"Multi-region idempotency" §"Capability advertisement"',
       'crossRegion MUST be one of {"single-region","reconciled-records","fenced-effects"}',
     )).toBe(true);
 
@@ -90,7 +90,7 @@ describe('multi-region-idempotency: capability shape', () => {
     const advertised = new Set(observability?.metrics?.names ?? []);
     for (const name of REQUIRED_METRICS_WHEN_MULTI_REGION) {
       expect(advertised.has(name), req('openwop.it.multi-region-idempotency.multi-region-hosts-should-expose-the-cross-region-conflict-counter-per-operator', 
-        'idempotency.md §"Operator surface"',
+        'spec/v1/idempotency.md §"Operator surface"',
         `multi-region hosts SHOULD advertise metric "${name}" so operators can monitor conflict frequency`,
       )).toBe(true);
     }
