@@ -105,7 +105,7 @@ Dispositions:
 | 12 | MCP `revisions[]` / `preferredVersion` | first-class facet of `mcp` | date | `interop.md` |
 | 13 | `multiAgent.executionModel.version` | first-class | integer with a schema `maximum` the suite reads | `events.md` |
 | 14 | OpenAPI / AsyncAPI `info.version` | generated from the corpus tag | semver | this document |
-| 15 | `minClientVersion` | first-class MUST (§1.5) | as #1 | this document |
+| 15 | `minClientVersion` | first-class (§1.5) | as #1 | this document |
 | 16 | channel `schemaVersion` / `compatibleWith` | first-class | integer / range | `events.md` |
 | 17 | webhook signature scheme | retire into `deprecations.json` | — | `webhooks.md` |
 | 18 | pack `engines.openwop` + `registryVersion` | first-class with the absent-ceiling rule | semver range / semver | `packs.md` |

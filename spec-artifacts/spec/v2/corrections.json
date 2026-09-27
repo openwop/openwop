@@ -2,7 +2,7 @@
   "$schema": "./corrections.schema.json",
   "$comment": "RFC 0197 §A.4 — v2 Class-3 corrections. Seeded with P3 only. The 2.8.2 removal of `workflowChainPacks.deferredParameters` and `.hostExpansionSeam` (P1) is deliberately NOT seeded: a committed bundle carried `deferredParameters` and then failed `capabilities-root-closed`, so the row would fail R3 — which is the point. P1 is recorded as the motivating defect in COMPATIBILITY.md §3a, not laundered into this register.",
   "version": 1,
-  "updated": "2026-09-22",
+  "updated": "2026-09-27",
   "rows": [
     {
       "id": "openwop.correction.v2.1",
@@ -26,6 +26,22 @@
         "manifests": 0,
         "manifestsScanned": 190,
         "note": "The prior shape is a manifest shape, not a discovery shape, so no bundle could carry it and the bundle leg is 0 by construction. The registry leg was measured at the correction: 0 of 190 published v2 pack.json documents validated against the schemas BEFORE the change and 185 of 190 after, so no published document carried the `{ publicKeyRef, signatureRef, method }` block the schemas described. `spec/v2/core/packs.md` §Signing, RFC 0177 §C.3 and migration row openwop.migration.C10.1 had already replaced it with `{ keyId, scheme }`; the schemas were the outlier against the prose, the Accepted RFC and the registry at once. `signing` stays OPTIONAL on a bare manifest, so no previously-valid unsigned document is invalidated. FragmentNode.config was closed by the v1→v2 seed against its own description, failing 73 of 81 published chain packs; reopening it narrows nothing."
+      }
+    },
+    {
+      "id": "openwop.correction.v2.2",
+      "date": "2026-09-27",
+      "class": "w3c-class-3",
+      "rfc": "0172",
+      "pointers": [
+        "schemas/v2/capabilities.schema.json#/minClientVersion"
+      ],
+      "compatibilityEntry": "the v2 `minClientVersion` grammar",
+      "priorShapeCensus": {
+        "bundles": 0,
+        "manifests": 0,
+        "manifestsScanned": 156,
+        "note": "The prior shape is any string; the corrected shape is the axis-1 `<major>.<minor>` grammar that spec/v2/core/versioning.md §1.5 and the v2-min-client-version scenario already required of an advertised value. Bundle leg: all 8 committed evidence/v2-host-bundles/*.json advertise minClientVersion, and every value conforms (seven \"1.0\", MyndHyve \"0.1\"), so 0 carry a value the pattern rejects. The one \"0.1.0\" in the corpus is a major-1 witness under evidence/rfc-witnesses/, not a v2 bundle. Registry leg: minClientVersion is a discovery field, not a manifest field; 0 of 156 pack.json documents on openwop-registry origin/main (c15d3d6) carry it. The schema added a pattern only, so no property, type or required entry moved and check-v2-surface-monotone sees no change."
       }
     }
   ]

@@ -14,7 +14,7 @@ Standard headers keep their standard names: `Idempotency-Key`, `ETag`, `If-None-
 | --- | --- | --- |
 | `Accept-Language` | 1 | BCP-47 preference list; authoritative for locale selection (i18n.md). A malformed value MUST NOT produce a 400. |
 | `Idempotency-Key` | 15 | Per-mutation idempotency token (`idempotency.md` Layer 1). The server caches `(tenantId, endpoint, key)` → response for ≥24h. A duplicate request returns the cached response with `OpenWOP-Idempotent-Replay: true`. |
-| `If-None-Match` | 2 | Standard conditional request for any resource that carries an `ETag`: the discovery document (capabilities.md §1) and the run snapshot (runs.md §Snapshot). A matching value MUST yield `304 Not Modified` with no body. The 304 carries `OpenWOP-Version` like every response (versioning.md §1.4). |
+| `If-None-Match` | 2 | Conditional request on the discovery document (capabilities.md §1) and the run snapshot (runs.md §Snapshot). A value matching the `ETag` the host sent MUST yield `304 Not Modified` with no body. The 304 carries `OpenWOP-Version` like every response (versioning.md §1.4). |
 | `Last-Event-ID` | 1 | Resume from sequence after this ID. |
 | `OpenWOP-Dedup` | 1 | When set, the host's cross-host claim system rejects a duplicate `(tenantId, scopeId)` pair with `409 Conflict`. |
 | `OpenWOP-Force-Engine-Version` | 1 | Test keys only. The server emits this run's events as if it ran the given engine version, which must be within `Capabilities.testing.forceEngineVersionRange`. Servers MUST reject it on production API keys with `403 force_engine_version_forbidden`. |

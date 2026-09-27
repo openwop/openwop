@@ -54,7 +54,7 @@
 | 12 | MCP `protocolVersions[]`/`preferredVersion` | first-class facet | date | C.8 |
 | 13 | `multiAgent.executionModel.version` | first-class | integer with a schema `maximum` read by the suite | C.4 |
 | 14 | OpenAPI/AsyncAPI `info.version` | **generated** from the corpus tag; PROTOCOL-STATUS rows | semver | this RFC |
-| 15 | `minClientVersion` | first-class MUST (sectionA.5) | as #1 | this RFC |
+| 15 | `minClientVersion` | first-class: grammar MUST when advertised; refusal MAY, as `426` (sectionA.5; corrected 2026-09-27) | as #1 | this RFC |
 | 16 | channel `schemaVersion`/`compatibleWith` | first-class | integer / range | C.4 |
 | 17 | webhook signature scheme | retire into `deprecations.json` | - | C.4 |
 | 18 | pack `engines.openwop` + `registryVersion` | first-class with the absent-ceiling rule | semver range / semver | C.10 |
