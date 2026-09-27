@@ -70,12 +70,12 @@
         "merkleRoot": {
           "type": "string",
           "minLength": 1,
-          "description": "Hex-encoded SHA-256 Merkle root over the canonicalized entries 0..atSequence inclusive. Verifiers re-compute and compare; mismatch implies chain mutation between two checkpoints."
+          "description": "Lowercase-hex Merkle root over the entries this checkpoint anchors: sequence in (P, atSequence], P the previous checkpoint's atSequence or 0. Leaves are the entries' hashes (SHA-256 of RFC 8785 JCS) in sequence order; a parent is SHA-256 of the ASCII bytes left ‖ right; a last odd node is promoted unchanged (auth-profiles.md §Audit-log integrity 3, RFC 0218). Verifiers re-compute and compare, holding the leaf count to atSequence − P; a mismatch implies chain mutation since the previous checkpoint."
         },
         "signature": {
           "type": "string",
           "minLength": 1,
-          "description": "Base64-encoded Ed25519 signature over the checkpoint's canonical JSON (excluding the `signature` field itself), produced with the host's advertised `auditLogIntegrity.checkpointPublicKey`."
+          "description": "Base64-encoded Ed25519 signature over the 32 bytes `merkleRoot` hex-decodes to (not its hex text, not the checkpoint object), verifiable with the host's advertised `auditLogIntegrity.checkpointPublicKey` (RFC 0218)."
         }
       },
       "additionalProperties": false

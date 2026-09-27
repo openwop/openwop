@@ -86,7 +86,8 @@ echo "[1/9] Conformance suite (typecheck + server-free scenarios)..."
     src/scenarios/artifact-type-pack-manifest-validation.test.ts \
     src/scenarios/chat-card-pack-manifest-validation.test.ts \
     src/scenarios/x-openwop-form-pack-manifest.test.ts \
-    src/scenarios/anonymous-actor-shape.test.ts
+    src/scenarios/anonymous-actor-shape.test.ts \
+    src/scenarios/audit-checkpoint-vectors.test.ts
   # Suite 2.0.0 (RFC 0168 §D.1): the corpus-coherence scenarios live in
   # src/coherence/ (spec-corpus-validity, artifact-schema-compile-bounded,
   # form-content-packs, … 29 files) and run here through their own config,
