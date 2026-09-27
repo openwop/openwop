@@ -1734,10 +1734,11 @@
       "anchor": "ext",
       "section": "ext/restTransport/",
       "peerDependencyId": "restTransport",
-      "witness": "claims-check",
+      "extensionName": "rest-transport",
+      "witness": "witnessable-gated",
       "maturity": {
         "technical": "experimental",
-        "adoption": "none"
+        "adoption": "single-witness"
       },
       "facets": [
         "conditionalRunGet",
@@ -1746,7 +1747,7 @@
       "floorScenarios": [],
       "requirementIds": [],
       "owningRfc": "0115",
-      "reason": "RFC 0169 \u00a7C.5 (claims-check; ext/ unless a behavioral witness lands)"
+      "reason": "RFC 0169 \u00a7C.5 moved it to ext/ as claims-check; RFC 0220 \u00a7C lands the behavioral witness (v2-ext-rest-transport), so the witness is witnessable-gated on the extensions.<org>.rest-transport claim. It stays ext/: becoming core takes its own RFC (ext/README.md)."
     },
     {
       "key": "a2uiSurface",
@@ -1754,7 +1755,8 @@
       "anchor": "ext",
       "section": "ext/a2uiSurface/",
       "peerDependencyId": "a2uiSurface",
-      "witness": "claims-check",
+      "extensionName": "a2ui-surface",
+      "witness": "seam-gated",
       "maturity": {
         "technical": "experimental",
         "adoption": "none"
@@ -1765,7 +1767,7 @@
       "floorScenarios": [],
       "requirementIds": [],
       "owningRfc": "0209",
-      "reason": "RFC 0169 \u00a7C.5 (claims-check; ext/); RFC 0209: the ext README is the v2 contract for `ui.a2ui-surface` schema version 2; facet `deltaTransport` deprecated for v2 (RFC 0197 retirement path)"
+      "reason": "RFC 0169 \u00a7C.5 (ext/); RFC 0220 \u00a7C: the witness is seam-gated (v2-a2ui-v09-surface drives the emit-surface seam; the family row is its family-witness leg); RFC 0209: the ext README is the v2 contract for `ui.a2ui-surface` schema version 2; facet `deltaTransport` deprecated for v2 (RFC 0197 retirement path)"
     },
     {
       "key": "brand",
@@ -1773,6 +1775,7 @@
       "anchor": "ext",
       "section": "ext/brand/",
       "peerDependencyId": "brand",
+      "extensionName": "brand",
       "witness": "claims-check",
       "maturity": {
         "technical": "experimental",
@@ -1790,6 +1793,7 @@
       "anchor": "ext",
       "section": "ext/canvas/",
       "peerDependencyId": "canvas",
+      "extensionName": "canvas",
       "witness": "claims-check",
       "maturity": {
         "technical": "experimental",
@@ -1807,6 +1811,7 @@
       "anchor": "ext",
       "section": "ext/chat/",
       "peerDependencyId": "chat",
+      "extensionName": "chat",
       "witness": "claims-check",
       "maturity": {
         "technical": "experimental",
@@ -1824,6 +1829,7 @@
       "anchor": "ext",
       "section": "ext/coordination/",
       "peerDependencyId": "coordination",
+      "extensionName": "coordination",
       "witness": "claims-check",
       "maturity": {
         "technical": "experimental",
@@ -1841,6 +1847,7 @@
       "anchor": "ext",
       "section": "ext/dataIntegration/",
       "peerDependencyId": "dataIntegration",
+      "extensionName": "data-integration",
       "witness": "claims-check",
       "maturity": {
         "technical": "experimental",
@@ -1858,6 +1865,7 @@
       "anchor": "ext",
       "section": "ext/entities/",
       "peerDependencyId": "entities",
+      "extensionName": "entities",
       "witness": "claims-check",
       "maturity": {
         "technical": "experimental",
@@ -1875,6 +1883,7 @@
       "anchor": "ext",
       "section": "ext/kanban/",
       "peerDependencyId": "kanban",
+      "extensionName": "kanban",
       "witness": "claims-check",
       "maturity": {
         "technical": "experimental",
@@ -1892,6 +1901,7 @@
       "anchor": "ext",
       "section": "ext/knowledge/",
       "peerDependencyId": "knowledge",
+      "extensionName": "knowledge",
       "witness": "claims-check",
       "maturity": {
         "technical": "experimental",
@@ -1909,6 +1919,7 @@
       "anchor": "ext",
       "section": "ext/launchStudio/",
       "peerDependencyId": "launchStudio",
+      "extensionName": "launch-studio",
       "witness": "claims-check",
       "maturity": {
         "technical": "experimental",
@@ -1926,6 +1937,7 @@
       "anchor": "ext",
       "section": "ext/messaging/",
       "peerDependencyId": "messaging",
+      "extensionName": "messaging",
       "witness": "claims-check",
       "maturity": {
         "technical": "experimental",
@@ -1943,6 +1955,7 @@
       "anchor": "ext",
       "section": "ext/webResearch/",
       "peerDependencyId": "webResearch",
+      "extensionName": "web-research",
       "witness": "claims-check",
       "maturity": {
         "technical": "experimental",

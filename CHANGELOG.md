@@ -13,6 +13,20 @@ Format follows [Keep a Changelog](https://keepachangelog.com/en/1/) loosely. Ver
 
 ## [Unreleased]
 
+- **RFC 0220 filed (`Draft`, window to 2026-10-04): an extension family graduates on evidence a script can read** (suite 2.42.7 cycle; no wire change). All 17 extension pages on openwop.dev/spec/v2/ read `Draft`, and none could become `Stable`, for four reasons:
+  - No scenario recorded the `openwop.family.<key>` pass the predicate needs.
+  - The ext READMEs named camelCase keys (`extensions.<org>.restTransport`) that `extensionsKeyPattern` rejects.
+  - The checker ignored the README's tier-2 bar.
+  - Four of the pages are notes, not families.
+
+  What changed:
+  - Each ext declaration row carries a kebab `extensionName`, and each README header now agrees with its row (both checked by `check-declaration.mjs`).
+  - `restTransport` is `witnessable-gated` (new `v2-ext-rest-transport`), `a2uiSurface` is `seam-gated` (a family leg in `v2-a2ui-v09-surface`), and the 11 reservations are witnessed by `v2-ext-family-claims`.
+  - New `evidence/host-tiers.json`: `check-ext-status-coherence.mjs` counts only certified tier-2+ bundles and reports tier-1-only witnesses as `NOT YET`.
+  - The four notes read `Status: Note.`.
+  - `capabilities.md` §3.2/§6 and `runs.md` §"Caching and encoding" use the real key spelling.
+
+  No page changes status in this PR. Each promotion is its own PR with a 7-day window, once a certified MyndHyve bundle carries the row.
 - **The project docs openwop.dev renders read cleanly** (editorial; no rule changes). `COMPATIBILITY.md`, `ROADMAP.md`, `GOVERNANCE.md`, `MAINTAINERS.md`, `CONTRIBUTING.md`, `QUICKSTART-10MIN.md` and `INTEROP-MATRIX.md` drop v1-era history, break long paragraphs into bullets and treat v2 as current. The dated corrections on record under `COMPATIBILITY.md` §3 move verbatim to `docs/COMPATIBILITY-CORRECTIONS-LOG.md`, and `check-v2-retirement.mjs` reads a correction's entry from either file. The v1 reference examples' profile lists move verbatim to `docs/INTEROP-EVIDENCE-LOG.md`.
 - **The v2 spec stays readable** (tooling; no spec change). New gate `scripts/check-spec-readability.mjs` (in `openwop:check`, with a self-test) fails a `spec/v2` doc that names an OpenWOP RFC in its Status banner, a heading or running text (citations go on one `*Sources:*` line), has a paragraph or list item over 90 words or a table cell over 40, or raises the count of `v1` mentions (baseline 128). `scripts/spec-fingerprint.mjs` diffs the prose against a git ref by RFC 2119 keyword counts, backticked identifiers, status codes and headings, to prove an editorial pass changed no rule. The `/spec-readability` skill is the procedure that uses both.
 - **The v2 API contract reads cleanly** (descriptions only; no wire change). The `description`, `summary` and prose `title` strings in `api/v2/openapi.yaml`, `api/v2/asyncapi.yaml` and `api/seams-v2.yaml` (and the generated `spec/v2/core/headers.md` rows) drop leading RFC citations, tracker tags, v1 history and shouted emphasis, and paragraph-long operation summaries become a short summary plus a description. Inherited v1 strings are rewritten from `scripts/derive-v2-api-prose.yaml`; `api/openapi.yaml` is unchanged.

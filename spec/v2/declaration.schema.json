@@ -179,6 +179,11 @@
               "peerDependencyId": {
                 "type": "string"
               },
+              "extensionName": {
+                "type": "string",
+                "pattern": "^[a-z][a-z0-9]*(-[a-z0-9]+)*$",
+                "description": "RFC 0220 \u00a7A \u2014 ext families only (scripts/check-declaration.mjs requires it on every anchor: ext row and forbids it on core rows). The <name> half of the extensions key the family is advertised under, extensions[\"<org>.<extensionName>\"] (core/capabilities.md \u00a73.2). It is the kebab-case form of `key`: the family key is camelCase and cannot match extensionsKeyPattern, so a README that said `extensions.<org>.<key>` named a key no host could emit."
+              },
               "witness": {
                 "enum": [
                   "witnessable-unaided",

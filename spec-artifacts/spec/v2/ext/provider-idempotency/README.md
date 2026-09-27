@@ -1,6 +1,6 @@
 # Provider idempotency registry
 
-> **Status: Draft.**
+> **Status: Note.**
 
 A supporting registry, not a declared family.
 

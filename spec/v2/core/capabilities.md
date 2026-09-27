@@ -80,7 +80,7 @@ Vendor and host extensions live under one key, `extensions`. Its members MUST ma
 
 - The orgs in `spec/v2/declaration.json` `reservedOrgs` — `openwop`, `vendor`, `effect-seams` and `events` — are reserved: a host MUST NOT use any of them.
 - An extension record's shape is the org's own (`additionalProperties: true` inside the record).
-- The 11 extension-class families of §6 are advertised as `extensions.openwop-app.*` by the host that serves them.
+- An extension family of §6 is advertised as `extensions["<org>.<extensionName>"]`, where `extensionName` is the kebab-case name its declaration row carries (for example `rest-transport`). The family key itself MUST NOT appear at the root.
 - A change to an extension that would break an existing reader MUST ship under a new key.
 - A host MUST NOT read one key's record as another's (A2A §4.6.3).
 
@@ -419,8 +419,9 @@ Witness `witnessable-gated`. Facets: `maxPageSize`, `filters` ([runs.md](runs.md
 
 Rows with `anchor: ext` are documented under `spec/v2/ext/<key>/`. Each document MUST declare `witness` and both maturity axes in its header ([`overview.md`](overview.md)). The families are `restTransport`, `a2uiSurface`, `brand`, `canvas`, `chat`, `coordination`, `dataIntegration`, `entities`, `kanban`, `knowledge`, `launchStudio`, `messaging`, `webResearch`.
 
-- `restTransport` and `a2uiSurface` (`witness: claims-check`) stay in `ext/` unless a behavioral witness lands.
-- The other 11 are extension-class families, advertised as `extensions.openwop-app.<name>` (§3.2).
+- Each is advertised under `extensions` (§3.2), never at the root. `a2uiSurface` is the exception: its contract is admitted through `schemaVersions.kinds`, and only its deprecated facet is an `extensions` record.
+- `restTransport` (`witnessable-gated`) and `a2uiSurface` (`seam-gated`) have behavioral witnesses. The other 11 are discovery-only reservations checked by `claims-check`.
+- An ext document's `Draft`/`Stable` label is a predicate over certified evidence ([`../ext/README.md`](../ext/README.md)). Becoming core takes its own RFC.
 
 ## 7. Profiles
 

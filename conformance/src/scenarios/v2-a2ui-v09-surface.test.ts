@@ -306,3 +306,18 @@ describe('RFC 0209 §C.9 — no render before root (declared unwitnessable here;
     return softSkip('inapplicable', 'unwitnessable by this suite (RFC 0209 §C.9 Falsifiability verdict): a render-side guarantee, and a server-oriented suite cannot observe a renderer. The fold guard the server CAN observe is openwop.requirement.0209.fold-guarded, above. The render half is witnessed as a reference-app client probe (tier: reference-impl, the a2ui-surface-no-code-exec precedent): openwop/openwop-app frontend/react/src/chat/a2ui/__tests__/a2ui-v09-render-needs-root.test.tsx (openwop-app#4121, ADR 0749). Removing the `if (!state.renderable)` guard in frontend/react/src/chat/a2ui/v09/A2uiV09Surface.tsx turns 2 of its 4 cases red. This row records that the suite reached the requirement, and it is not a pass.');
   });
 });
+
+describe('RFC 0220 §C — the a2uiSurface family witness (seam-gated)', () => {
+  it('a version-2 surface is admitted and a version-1 body under schema version 2 is refused, in the same run', async () => {
+    const g = await gate((f) => f >= 2, 'a floor of at least 2');
+    if (!g.ok) return softSkip(g.kind, g.reason);
+    const { runId } = g.ctx;
+    const R = (why: string) => req('openwop.family.a2uiSurface', 'spec/v2/ext/a2uiSurface/README.md §Conformance', why);
+    try {
+      const good = await emit(runId, envelope(2, v2(sid('fam-good'), (POSITIVE['messages'] as Json[]))));
+      expect(good.status, R(`the positive version-2 surface MUST be admitted (201), got ${code(good)}`)).toBe(201);
+      const mixed = await emit(runId, envelope(2, V1_SURFACE));
+      expect(code(mixed), R('a version-1 body under schema version 2 MUST be refused with envelope_invalid (control: a host that admits everything fails here)')).toBe('422 envelope_invalid');
+    } finally { await done(runId); }
+  });
+});

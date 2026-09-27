@@ -1,6 +1,6 @@
 # Sandbox runtime notes
 
-> **Status: Draft.**
+> **Status: Note.**
 
 A non-normative note, not a declared family.
 

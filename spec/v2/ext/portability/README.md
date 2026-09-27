@@ -1,6 +1,6 @@
 # Portability notes
 
-> **Status: Draft.**
+> **Status: Note.**
 
 Notes on organization-specific portability extensions. This page is not a declared extension family: `portability` is a core family ([capabilities.md § portability](../../core/capabilities.md)).
 

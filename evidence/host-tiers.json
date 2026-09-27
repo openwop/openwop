@@ -1,0 +1,23 @@
+{
+  "$comment": "RFC 0220 §D — the GOVERNANCE.md §\"Acceptance evidence tiers\" table, keyed by the origin a bundle's discovery.url names, so scripts/check-ext-status-coherence.mjs can apply the ext/README.md `Stable` predicate (tier 2 or better) instead of trusting any certified bundle. An origin not listed here is unknown and never qualifies: a side revision, a tunnel or a loopback reference host is not a deployed tier-2 host. Adding a row is a governance act: cite the GOVERNANCE.md line that places the host.",
+  "hosts": [
+    {
+      "name": "myndhyve",
+      "origins": ["https://api.myndhyve.ai"],
+      "tier": 2,
+      "source": "GOVERNANCE.md §\"Acceptance evidence tiers\" — Tier 2, steward-affiliated sibling host: MyndHyve (api.myndhyve.ai)"
+    },
+    {
+      "name": "openwop-app",
+      "origins": ["https://app.openwop.dev"],
+      "tier": 1,
+      "source": "GOVERNANCE.md §\"Acceptance evidence tiers\" — Tier 1, the steward-operated demo app"
+    },
+    {
+      "name": "openwop-host-v2-reference",
+      "origins": ["http://127.0.0.1:3838"],
+      "tier": 1,
+      "source": "GOVERNANCE.md §\"Acceptance evidence tiers\" — Tier 1, a reference host in openwop-examples"
+    }
+  ]
+}
