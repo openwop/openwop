@@ -1012,7 +1012,7 @@
       "authority": "RFCS/0171-v2-wire-envelope.md §Migration table, row openwop.migration.C4.17",
       "removeIn": "2.0",
       "replacement": "none; the locale a host rendered in is request-scoped (`Content-Language`, spec/v2/core/i18n.md)",
-      "codemod": null,
+      "codemod": "openwop.codemod.interrupt-locale-drop",
       "sources": [
         {
           "file": "RFCS/0171-v2-wire-envelope.md",

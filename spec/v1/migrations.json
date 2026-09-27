@@ -1049,7 +1049,7 @@
       "v2": {
         "surface": "none — interrupt data and resume bodies are closed; the rendered locale is request-scoped (`Content-Language`, spec/v2/core/i18n.md)"
       },
-      "codemod": null,
+      "codemod": "openwop.codemod.interrupt-locale-drop",
       "persistedData": "translated",
       "requirementIds": [],
       "gapIds": [],
