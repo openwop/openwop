@@ -13,10 +13,12 @@ A host that advertises `webhooks` ([capabilities.md](capabilities.md)) serves `r
 
 | Operation | Request | Response |
 | --- | --- | --- |
-| `registerWebhook` | `{ url, events[], secret?, tags?, signatureAlgorithms? }` | `201 { webhookId }` |
+| `registerWebhook` | `{ url, events[], secret?, tags?, signatureAlgorithms? }` | `201 { webhookId, secret? }` |
 | `unregisterWebhook` | path `webhookId` | `204`; `404` when unknown; `403` when the caller is outside the subscription's tenant |
 
 On `registerWebhook`, `url` MUST be `https://` and `events[]` MUST be non-empty v2 event type names ([events.md](events.md)).
+
+When `registerWebhook` omits `secret`, the host MUST generate one and return it as `secret` in the `201`. That response is the only one that carries it. A supplied secret MUST NOT be echoed.
 
 A `204` from `unregisterWebhook` ends the subscription's deliveries, including retries already scheduled (§Durability).
 
