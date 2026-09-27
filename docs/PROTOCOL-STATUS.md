@@ -296,6 +296,8 @@ The TypeScript / Python / Go SDKs live in the [`openwop-sdks`](https://github.co
 
 ## Reference Host Conformance Evidence
 
+Historical: v1 reference-host pass rates at suite 1.22.0–1.29.0 (2026-06), from [`docs/INTEROP-EVIDENCE-LOG.md`](./INTEROP-EVIDENCE-LOG.md). The current v2 state of every host is its certified bundle in [`INTEROP-MATRIX.md`](../INTEROP-MATRIX.md).
+
 | Host | Passed | Failed | Skipped | Todo | Total | Pass rate |
 |---|---:|---:|---:|---:|---:|---|
 | Workflow-engine reference (in-process, 1.29.0) | 2059 | 0 | 89 | 0 | 2148 | 95.9% |
