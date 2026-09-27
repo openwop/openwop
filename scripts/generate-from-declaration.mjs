@@ -230,6 +230,11 @@ function projectV1FacetSchema(schema) {
   }
   if (gatesOnSupported(out.if)) { foldSupportedGate(out); delete out.if; delete out.then; delete out.else; }
   else { for (const k of ['if', 'then', 'else']) if (out[k]) out[k] = projectV1FacetSchema(out[k]); }
+  // A conditional whose branches both project to nothing is a no-op. It happens when the
+  // antecedent and consequent name only fields this projection retires. multiAgent.executionModel's
+  // `tier: experimental ⇒ experimentalUntil` became `if: {properties: {}}, then: {}`.
+  const isEmpty = (n) => n === undefined || (n && typeof n === 'object' && !Array.isArray(n) && Object.keys(n).length === 0);
+  if (out.if && isEmpty(out.then) && isEmpty(out.else)) { delete out.if; delete out.then; delete out.else; }
   if (out.type === 'object' && out.additionalProperties === undefined) out.additionalProperties = false;
   return out;
 }
