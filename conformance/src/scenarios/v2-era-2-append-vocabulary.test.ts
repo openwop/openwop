@@ -169,19 +169,17 @@ describe('v2-era-2-append-vocabulary (RFC 0176 §A — the writer rule)', () => 
     // writer rule is unobserved.
     const renamedV2 = new Set([...codemapV1toV2()].filter(([v1, v2]) => v1 !== v2).map(([, v2]) => v2));
     const appendedTypes = rows.slice(seedCount).map((r) => String(r.type ?? ''));
-    if (!seamServed) {
+    if (!seamServed && !appendedTypes.some((t) => renamedV2.has(t))) {
       // partial-witness-ok: the host does not serve the optional appendEra2Event
-      // seam (host-sample-test-seams.md §27), and no canonical mutation is pinned
-      // to append a codemap-RENAMED type, so the writer rule is unobserved here.
-      // The append, the read-back and the sequence rules above ARE observed. This
-      // is the 2.42.5 disposition, kept for hosts without the seam; the
-      // acceptance predicate refuses a partial-witness row.
-      if (!appendedTypes.some((t) => renamedV2.has(t))) {
-        return softSkip('inapplicable', `partial witness — the codemap-renaming writer rule is UNWITNESSED: ${appended.ok ? '' : appended.reason}; every type the host appended to the era-2 log (${appendedTypes.join(', ') || 'none'}) is spelled identically in v1 and v2 (spec/v2/event-codemap.json)`);
-      }
-      return;
+      // seam (host-sample-test-seams.md §27), and none of its own appends was a
+      // codemap-RENAMED type, so the writer rule is unobserved here. The append,
+      // the read-back and the sequence rules above ARE observed. This is the
+      // 2.42.5 disposition, kept for hosts without the seam; the acceptance
+      // predicate refuses a partial-witness row. (A host without the seam whose
+      // own pause/resume appended a renamed type falls through: that IS a witness.)
+      return softSkip('inapplicable', `partial witness — the codemap-renaming writer rule is UNWITNESSED: ${appended.ok ? '' : appended.reason}; every type the host appended to the era-2 log (${appendedTypes.join(', ') || 'none'}) is spelled identically in v1 and v2 (spec/v2/event-codemap.json)`);
     }
-    expect(
+    if (seamServed) expect(
       appendedTypes.includes(WITNESS_TYPE),
       req(ID, DOC, `the event appended through appendEra2Event (${WITNESS_TYPE}, a codemap-RENAMED type) MUST read back under its v2 name through the translated read — it read as ${appendedTypes.join(', ') || 'nothing'}: a host that stored the v2 spelling in an era-2 log makes the reader map it a second time (event_type_unmapped), and one that bypassed the storage boundary leaks the v1 spelling`),
     ).toBe(true);
