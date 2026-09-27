@@ -125,6 +125,12 @@ describe.skipIf(HTTP_SKIP)(
       // answers 5xx). Checked first so it returns before any assertion.
       if (res.status >= 500) return softSkip('blocked', `GET /v1/prompts?workspaceId=<non-member> answered ${res.status} — a server error is neither a refusal nor an empty result, so membership enforcement was not observed`);
 
+      // Other status codes (1xx, 3xx) — not a clear signal either way.
+      if (res.status < 200 || (res.status >= 300 && res.status < 400)) {
+        softSkip('skipped', `GET /v1/prompts?workspaceId=… answered ${res.status} — neither a refusal nor a list`);
+        return ctx.skip();
+      }
+
       // 2xx — must inspect the response body. The failure mode this
       // invariant guards against is a 200 response that LEAKS templates
       // from a workspace the principal isn't a member of.
@@ -162,15 +168,12 @@ describe.skipIf(HTTP_SKIP)(
             `GET /v1/prompts?workspaceId=<random-non-member> MUST NOT return any templates; got ${templates.length} templates which is a cross-tenant data leak (the random workspaceId is freshly generated per probe and cannot legitimately contain authorized content)`,
           ),
         ).toBe(0);
-        return;
-      }
-
-      // 4xx — refused. Acceptable shape for the membership-required failure
-      // (and any other refusal mode the host chooses: 401, 404 for
-      // existence-disclosure avoidance, etc). The refusal IS the requirement
-      // observed; until 2026-09-27 this branch ended in a blocked soft-skip,
-      // recording a refused read as blocked (401/404) or a partial witness (403).
-      if (res.status >= 400 && res.status < 500) {
+      } else {
+        // 4xx — refused. Acceptable shape for the membership-required failure
+        // (and any other refusal mode the host chooses: 401, 404 for
+        // existence-disclosure avoidance, etc). The refusal IS the requirement
+        // observed; until 2026-09-27 this branch ended in a blocked soft-skip,
+        // recording a refused read as blocked (401/404) or a partial witness (403).
         expect(
           res.status,
           req(ID, 'spec/v1/prompts.md §Workspace membership on workspace-scoped reads and writes', 'a workspace-scoped read for a non-member workspace MUST be refused (4xx) or return no templates'),
@@ -186,12 +189,7 @@ describe.skipIf(HTTP_SKIP)(
             ),
           ).toBe('workspace_membership_required');
         }
-        return;
       }
-
-      // Other status codes (1xx, 3xx) — soft-skip with note. Not a clear
-      // signal either way.
-      ctx.skip();
     });
   },
 );
