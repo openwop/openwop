@@ -1,15 +1,15 @@
 # Form Content Packs
 
-> **Status: Stable · RFC 0177, RFC 0137.**
+> **Status: Stable.**
 > **Normative home:** `forms`.
 
 ## Why this exists
 
-A form-content pack ships declarative form templates a host renders in its own chrome. The manifest is `schemas/v2/form-content-pack-manifest.schema.json`; installation and signing follow packs.md.
+A form-content pack ships declarative form templates a host renders in its own chrome. The manifest is `schemas/v2/form-content-pack-manifest.schema.json`; installation and signing follow [packs.md](packs.md).
 
 ## Conditional visibility
 
-A field MAY carry `when: <EdgeCondition>`. The grammar is the `WorkflowEdge.condition` object `{ type, left, right }` of `schemas/v2/workflow-definition.schema.json`, with the operator set of workflow-chain-packs.md §"Edge conditions". A host MUST evaluate `when` with its edge-condition semantics and MUST NOT accept any other expression language for visibility.
+A field MAY carry `when: <EdgeCondition>`. The grammar is the `WorkflowEdge.condition` object `{ type, left, right }` of `schemas/v2/workflow-definition.schema.json`, with the operator set of [workflow-chain-packs.md §"Edge conditions"](workflow-chain-packs.md). A host MUST evaluate `when` with its edge-condition semantics and MUST NOT accept any other expression language for visibility.
 
 ```jsonc
 { "id": "region", "type": "select", "label": "Region",
@@ -18,15 +18,11 @@ A field MAY carry `when: <EdgeCondition>`. The grammar is the `WorkflowEdge.cond
 
 ## Instantiation
 
-A form instantiated from a pack advertised through `forms.contentPacks` MUST be
-created through the same path a hand-authored form uses, and MUST remain
-editable afterwards: the pack is a starting point, not a managed object. A host
-MUST degrade an unrecognized field type to plain text rather than failing the
-instantiation, and MUST NOT execute anything carried by the pack. A pack-authored
-string, and any value collected through an instantiated template, is untrusted
-input: when one is interpolated into a prompt, the composed envelope MUST carry
-`meta.contentTrust: "untrusted"`, so a downstream reader can tell authored text
-from pack-supplied text.
+A form instantiated from a pack advertised through `forms.contentPacks` MUST be created through the same path a hand-authored form uses, and MUST remain editable afterwards: the pack is a starting point, not a managed object.
+
+- A host MUST degrade an unrecognized field type to plain text rather than failing the instantiation.
+- A host MUST NOT execute anything carried by the pack.
+- A pack-authored string, and any value collected through an instantiated template, is untrusted input. When one is interpolated into a prompt, the composed envelope MUST carry `meta.contentTrust: "untrusted"`, so a downstream reader can tell authored text from pack-supplied text.
 
 ## Localized strings
 
@@ -43,3 +39,5 @@ from pack-supplied text.
 | `pattern` | `text`, `longtext` | a host MUST reject a non-matching value |
 
 The five spec-reserved `format` values are the core set. A host that recognizes a format SHOULD apply it; one that does not MUST ignore it and accept plain text. A host MUST ignore `format` on any type other than `text` or `longtext`.
+
+*Sources: RFC 0137, RFC 0177.*
