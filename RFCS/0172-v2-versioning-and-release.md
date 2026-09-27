@@ -11,6 +11,7 @@
 | **Affects**       | **Part of: RFC 0167 — child C5.** v2: NEW `spec/v2/core/versioning.md`; `schemas/v2/capabilities.schema.json` root `preferredVersion`; the `OpenWOP-Version` request header; generated `api/v2/openapi.yaml`, `asyncapi.yaml`, proto (if C.8 keeps it) with identical absolute paths; `spec/v2/path-manifest.json`; retraction of `rest-endpoints.md` §Versioning bullets 1–3, `grpc-transport.md` §"One service per protocol major version", AsyncAPI `servers.production.pathname: /v1`; `docs/PROTOCOL-STATUS.md` rows for every axis. v1.x (this PR, data only): `spec/v1/migrations.json` rows `openwop.migration.C5.1`–`C5.9`; NEW codemod `openwop.codemod.engine-version-unify`; register rows |
 | **Compatibility** | `breaking` (v2). Nothing in v1.x changes in this PR. A v1.x additive follow-up (root `preferredVersion` as an optional field with `protocolVersions[]` semantics) is filed separately under RFC 0165 §A's grammar so hosts can advertise it before the cut |
 | **Supersedes**    | — (RFC 0149 §A/§C remain the v1 authorities)                    |
+| **Amended by**    | [RFC 0219](./0219-client-version-header.md) — by addition: the `OpenWOP-Client-Version` request header is the input `minClientVersion`'s refusal compares (§A.5), and `client_version_unsupported` registers OPTIONAL `details.minClientVersion` |
 | **Superseded by** | —                                                               |
 
 ## Summary

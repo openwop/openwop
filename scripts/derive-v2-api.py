@@ -383,6 +383,10 @@ def v2_openapi_and_seams():
     comps = doc.setdefault('components', {})
     comps.setdefault('parameters', {})['OpenWOPVersion'] = {'name': 'OpenWOP-Version', 'in': 'header', 'required': False, 'schema': {'type': 'string', 'pattern': '^(0|[1-9][0-9]*)\\.(0|[1-9][0-9]*)$'}, 'description': ("Selects one of the host's listed major.minor versions. Absent, `/.well-known/openwop` uses `preferredVersion` and every other unversioned path is v2; an "
                                                                                                                                                                                                                           'unlisted value is 406 protocol_version_unsupported.')}
+    # RFC 0219: the client announces the protocol version it implements (versioning.md §1.5).
+    comps['parameters']['OpenWOPClientVersion'] = {'name': 'OpenWOP-Client-Version', 'in': 'header', 'required': False, 'schema': {'type': 'string'},
+                                                   'description': ('The protocol version the client implements (versioning.md §1.5). Compared with `minClientVersion` on major.minor. '
+                                                                   'A malformed value is treated as absent and MUST NOT produce a 400. Never selects a contract.')}
     comps.setdefault('headers', {})['OpenWOPVersion'] = {'schema': {'type': 'string'}, 'description': 'The contract that produced this response. It MUST equal the one used.', 'required': True}
     # Re-bind every id path parameter to its v2 KIND.
     #
@@ -505,6 +509,8 @@ def v2_openapi_and_seams():
             params = op.setdefault('parameters', [])
             if not any(isinstance(p, dict) and p.get('$ref') == '#/components/parameters/OpenWOPVersion' for p in params):
                 params.append({'$ref': '#/components/parameters/OpenWOPVersion'})
+            if not any(isinstance(p, dict) and p.get('$ref') == '#/components/parameters/OpenWOPClientVersion' for p in params):
+                params.append({'$ref': '#/components/parameters/OpenWOPClientVersion'})
             for p in params:
                 if isinstance(p, dict) and p.get('name') == 'lastSequence':
                     p.update({'name': 'afterSequence', 'schema': {'type': 'integer', 'minimum': 0}, 'description': 'Return events with `sequence > afterSequence`. Omitted, the poll starts from the first event (sequence 0).'})

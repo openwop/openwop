@@ -9,16 +9,19 @@
  * any advertised floor) is sent; when the host refuses, the refusal MUST be the
  * registered code at its registered status in the closed envelope; a host that
  * exercises the MAY by serving the request records `inapplicable` with that
- * reason. `OpenWOP-Client-Version` is the `OpenWOP-<Name>` header this
- * scenario uses to announce the client; it is not yet declared in
- * `api/v2/openapi.yaml` / `headers.md`.
+ * reason. `OpenWOP-Client-Version` is declared in `api/v2/openapi.yaml` /
+ * `headers.md` and specified in versioning.md §1.5 (RFC 0219), so a non-`2xx`,
+ * non-`426` answer to a well-formed below-floor value is a refusal in an
+ * unregistered form: a failure, not `blocked` (RFC 0219, Unresolved question 4,
+ * decided 2026-09-27). The header's other legs (at-floor, absent, malformed, no
+ * floor) are `v2-client-version-header`.
  */
 
 import { describe, it, expect } from 'vitest';
 import { driver, type OpenWOPResponse } from '../lib/driver.js';
 import { v2Discovery, v2Validator } from '../lib/v2.js';
 import { readErrorCode } from '../lib/error-envelope.js';
-import { blockedDespiteAssertions, softSkip } from '../lib/soft-skip.js';
+import { softSkip } from '../lib/soft-skip.js';
 import { req } from '../lib/requirement-ids.js';
 
 const DOC = 'spec/v2/core/versioning.md §1.5';
@@ -40,21 +43,22 @@ describe('v2 min-client-version (RFC 0172 §A.5 — gated on minClientVersion)',
     expect(typeof floor === 'string' && VERSION.test(floor), req('openwop.requirement.0172.min-client-version', DOC, 'minClientVersion MUST use the <major>.<minor> grammar (axis 15, as axis 1)')).toBe(true);
     const res = await http(() => driver.get('/.well-known/openwop', { authenticated: false, headers: { 'OpenWOP-Client-Version': '0.0.1' } }));
     if (res === null) return softSkip('blocked', 'GET /.well-known/openwop with OpenWOP-Client-Version unreachable (fetch failed)');
-    // unfailable-leg audit wave 2, 2026-09-27: every non-426 answer — including
-    // a 4xx/5xx that refused the client in an unregistered form — recorded
-    // `inapplicable` AFTER the grammar assert, i.e. a partial-witness PASS of
-    // the 426 refusal row. Only a SERVED request (2xx) is the MAY exercised; any
-    // other non-426 answer is `blocked`. Not asserted as a failure:
-    // `OpenWOP-Client-Version` is not yet declared in api/v2/openapi.yaml /
-    // headers.md, so a non-2xx here is not provably a version refusal.
-    if (res.status !== 426 && (res.status < 200 || res.status >= 300)) {
-      return blockedDespiteAssertions(`the host advertises minClientVersion ${String(floor)} and answered ${res.status} to a client announcing 0.0.1 — neither served (the MAY) nor refused with the registered 426 client_version_unsupported; the refusal form was not observed`);
-    }
+    // RFC 0219 Q4 (2026-09-27): the header is declared, so a host that answers a
+    // well-formed below-floor value with anything but 2xx (the MAY: served) or
+    // 426 client_version_unsupported refuses a declared header in an
+    // unregistered form. That is a failure. Before RFC 0219 it recorded `blocked`.
+    expect(res.status === 426 || (res.status >= 200 && res.status < 300), req('openwop.requirement.0172.min-client-version', DOC, `a client announcing 0.0.1 below minClientVersion ${String(floor)} MUST be served or refused with 426 client_version_unsupported — the host answered ${res.status}`)).toBe(true);
     // partial-witness-ok: the minClientVersion grammar MUST was asserted above; refusing a
     // below-floor client is a MAY and this host served it, so the 426 shape binds nothing.
     if (res.status !== 426) return softSkip('inapplicable', `the host advertises minClientVersion ${String(floor)} but served a client announcing 0.0.1 (${res.status}) — refusal is a MAY; nothing further is observable`);
     expect(readErrorCode(res.json), req('openwop.requirement.0172.min-client-version', DOC, 'a 426 refusal MUST carry client_version_unsupported')).toBe('client_version_unsupported');
     const r = v2Validator('error-envelope')(res.json);
     expect(r.ok, req('openwop.requirement.0172.min-client-version', 'spec/v2/core/errors.md §The envelope', `the refusal MUST be the closed error envelope (${r.errors})`)).toBe(true);
+    // RFC 0219 Q5: details.minClientVersion is OPTIONAL; when a host sends it, it names the floor
+    // (errors.json registers its grammar, which the envelope validator above already checked).
+    const details = (res.json as { details?: { minClientVersion?: unknown } } | null)?.details;
+    if (details && details.minClientVersion !== undefined) {
+      expect(details.minClientVersion, req('openwop.requirement.0172.min-client-version', DOC, `a refusal's details.minClientVersion MUST name the advertised floor ${String(floor)}`)).toBe(floor);
+    }
   });
 });
