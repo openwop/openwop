@@ -20,7 +20,7 @@ import { driver } from '../lib/driver.js';
 import { pollUntilTerminal } from '../lib/polling.js';
 import { isFixtureAdvertised } from '../lib/fixtures.js';
 import { req } from '../lib/requirement-ids.js';
-import { softSkip } from '../lib/soft-skip.js';
+import { blockedDespiteAssertions } from '../lib/soft-skip.js';
 
 const NOOP_WORKFLOW_ID = 'conformance-noop';
 const SKIP_NO_NOOP = !isFixtureAdvertised(NOOP_WORKFLOW_ID);
@@ -42,6 +42,13 @@ function getSeq(event: RawEvent): number | null {
   return null;
 }
 
+// Every early return below follows the run-create assertion, so each is
+// `blockedDespiteAssertions`: rest-endpoints.md §"Required endpoints" makes
+// /events/poll a MUST on every host, and observability.md makes run.started and
+// exactly one terminal event MUSTs, so a completed noop run on a conforming host
+// always yields a readable events[] of at least two. A host that does not was
+// never observed ordering anything — until 2026-09-27 these recorded a
+// partial-witness PASS.
 describe.skipIf(SKIP_NO_NOOP)('event-ordering: polling returns events in monotonic order', () => {
   it('events from a single poll have non-decreasing sequence numbers', async () => {
     const create = await driver.post('/v1/runs', { workflowId: NOOP_WORKFLOW_ID });
@@ -50,11 +57,11 @@ describe.skipIf(SKIP_NO_NOOP)('event-ordering: polling returns events in monoton
     await pollUntilTerminal(runId);
 
     const res = await driver.get(`/v1/runs/${encodeURIComponent(runId)}/events/poll`);
-    if (res.status !== 200) return softSkip('blocked', 'precondition not met — `res.status !== 200` returned early (seam, prior step, or fixture unavailable)');
+    if (res.status !== 200) return blockedDespiteAssertions('precondition not met — `res.status !== 200` returned early (seam, prior step, or fixture unavailable)');
 
     const body = res.json as { events?: RawEvent[] } | undefined;
-    if (!body?.events) return softSkip('blocked', 'precondition not met — `!body?.events` returned early (seam, prior step, or fixture unavailable)');
-    if (body.events.length < 2) return softSkip('blocked', 'precondition not met — `body.events.length < 2` returned early (single-event runs have no ordering to verify) (seam, prior step, or fixture unavailable)'); // single-event runs have no ordering to verify
+    if (!body?.events) return blockedDespiteAssertions('precondition not met — `!body?.events` returned early (seam, prior step, or fixture unavailable)');
+    if (body.events.length < 2) return blockedDespiteAssertions('precondition not met — `body.events.length < 2` returned early (single-event runs have no ordering to verify) (seam, prior step, or fixture unavailable)'); // single-event runs have no ordering to verify
 
     const seqs = body.events.map(getSeq);
     for (let i = 1; i < seqs.length; i++) {
@@ -76,11 +83,11 @@ describe.skipIf(SKIP_NO_NOOP)('event-ordering: polling returns events in monoton
 
     const a = await driver.get(`/v1/runs/${encodeURIComponent(runId)}/events/poll`);
     const b = await driver.get(`/v1/runs/${encodeURIComponent(runId)}/events/poll`);
-    if (a.status !== 200 || b.status !== 200) return softSkip('blocked', 'precondition not met — `a.status !== 200 || b.status !== 200` returned early (seam, prior step, or fixture unavailable)');
+    if (a.status !== 200 || b.status !== 200) return blockedDespiteAssertions('precondition not met — `a.status !== 200 || b.status !== 200` returned early (seam, prior step, or fixture unavailable)');
 
     const aBody = a.json as { events?: RawEvent[] } | undefined;
     const bBody = b.json as { events?: RawEvent[] } | undefined;
-    if (!aBody?.events || !bBody?.events) return softSkip('blocked', 'precondition not met — `!aBody?.events || !bBody?.events` returned early (seam, prior step, or fixture unavailable)');
+    if (!aBody?.events || !bBody?.events) return blockedDespiteAssertions('precondition not met — `!aBody?.events || !bBody?.events` returned early (seam, prior step, or fixture unavailable)');
 
     expect(aBody.events.length, req('openwop.it.eventOrdering.repeated-polls-of-a-terminal-run-yield-identical-event-sequences', 
       'observability.md',
@@ -107,10 +114,10 @@ describe.skipIf(SKIP_NO_NOOP)('event-ordering: terminal run has at most one term
     await pollUntilTerminal(runId);
 
     const res = await driver.get(`/v1/runs/${encodeURIComponent(runId)}/events/poll`);
-    if (res.status !== 200) return softSkip('blocked', 'precondition not met — `res.status !== 200` returned early (seam, prior step, or fixture unavailable)');
+    if (res.status !== 200) return blockedDespiteAssertions('precondition not met — `res.status !== 200` returned early (seam, prior step, or fixture unavailable)');
 
     const body = res.json as { events?: RawEvent[] } | undefined;
-    if (!body?.events) return softSkip('blocked', 'precondition not met — `!body?.events` returned early (seam, prior step, or fixture unavailable)');
+    if (!body?.events) return blockedDespiteAssertions('precondition not met — `!body?.events` returned early (seam, prior step, or fixture unavailable)');
 
     const TERMINAL_TYPES = new Set(['run.completed', 'run.failed', 'run.cancelled']);
     const terminalCount = body.events.filter((e) => typeof e.type === 'string' && TERMINAL_TYPES.has(e.type)).length;
@@ -128,10 +135,10 @@ describe.skipIf(SKIP_NO_NOOP)('event-ordering: terminal run has at most one term
     await pollUntilTerminal(runId);
 
     const res = await driver.get(`/v1/runs/${encodeURIComponent(runId)}/events/poll`);
-    if (res.status !== 200) return softSkip('blocked', 'precondition not met — `res.status !== 200` returned early (seam, prior step, or fixture unavailable)');
+    if (res.status !== 200) return blockedDespiteAssertions('precondition not met — `res.status !== 200` returned early (seam, prior step, or fixture unavailable)');
 
     const body = res.json as { events?: RawEvent[] } | undefined;
-    if (!body?.events || body.events.length === 0) return softSkip('blocked', 'precondition not met — `!body?.events || body.events.length === 0` returned early (seam, prior step, or fixture unavailable)');
+    if (!body?.events || body.events.length === 0) return blockedDespiteAssertions('precondition not met — `!body?.events || body.events.length === 0` returned early (seam, prior step, or fixture unavailable)');
 
     const TERMINAL_TYPES = new Set(['run.completed', 'run.failed', 'run.cancelled']);
     const lastEvent = body.events[body.events.length - 1]!;

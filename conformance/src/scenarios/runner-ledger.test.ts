@@ -251,10 +251,14 @@ describe('RFC 0148 §A (S6) — the runner derivation', () => {
 describe('RFC 0148 §A — softSkip notes the reason for an early return, per file', () => {
   it('notes are keyed to the current test file, worst-first when mixed, and read back with joined reasons', () => {
     resetSoftSkips();
+    // partial-witness-ok: not a skip — this leg unit-tests softSkip itself, and
+    // resetSoftSkips() below clears every note it writes before the leg ends.
     expect(softSkip('inapplicable', 'host does not advertise X'), req('openwop.it.runner-ledger.notes-are-keyed-to-the-current-test-file-worst-first-when-mixed-and-read-back-wi', 'RFC 0148 §A', 'notes are keyed to the current test file, worst-first when mixed, and read back with joined reasons')).toBeUndefined();
+    // partial-witness-ok: not a skip — the subject under test (de-duplication).
     softSkip('inapplicable', 'host does not advertise X'); // de-duplicated
     let d = softSkipDisposition('runner-ledger.test.ts');
     expect(d).toEqual({ kind: 'inapplicable', reason: 'host does not advertise X' });
+    // partial-witness-ok: not a skip — the subject under test (worst-first fold).
     softSkip('blocked', 'seam not mounted');
     d = softSkipDisposition('runner-ledger.test.ts');
     expect(d?.kind).toBe('blocked');

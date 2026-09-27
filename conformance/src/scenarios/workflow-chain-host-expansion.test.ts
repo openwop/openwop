@@ -169,7 +169,10 @@ describe('workflow-chain-host-expansion: live host wraps expansion algorithm cor
       const [fm, fn] = PACK.version.split('.').map(Number);
       const older = hm! < fm! || (hm === fm && hn! < fn!);
       expect(older, req('openwop.it.workflow-chain-host-expansion.positive-1-node-chain-expansion-matches-the-reference-library-for-the-bundled-pa', 'workflow-chain-host-expansion', `host bundles workflow-chain-sample ${body.packVersion}; this suite's fixture is ${PACK.version} — a host pack NEWER than the suite is unaccounted for`)).toBe(true);
-      softSkip('blocked', `host bundles workflow-chain-sample ${body.packVersion} (suite fixture ${PACK.version}) — the RFC 0157 chains are absent there until its conformance pin catches up`);
+      // No note here (until 2026-09-27 a blocked soft-skip turned this leg into
+      // a partial-witness pass): the chain this leg expands is identical in the
+      // older pack, so the comparison below is complete. The RFC 0157 legs,
+      // whose chains an older pack lacks, record their own `blocked`.
     }
     expect(typeof body.expansionId).toBe('string');
     expect(body.expansionId.length).toBeGreaterThan(0);
@@ -321,6 +324,9 @@ describe('workflow-chain-host-expansion: live host wraps expansion algorithm cor
       // the sign flipped.
       expect(res.status >= 400, req('openwop.it.workflow-chain-host-expansion.rfc-0157-a-chain-carrying-an-unwind-policy-is-refused-with-capability-required-o', 'compensation.md §"Workflow policy"', 'a non-advertising host MUST refuse a chain carrying `compensation` (policy) — 4xx, not 200')).toBe(true);
       expect(readErrorCode(res.json), req('openwop.it.workflow-chain-host-expansion.rfc-0157-a-chain-carrying-an-unwind-policy-is-refused-with-capability-required-o', 'capabilities.md §"Unsupported capability — refusal contract"', '`capability_required`')).toBe('capability_required');
+      // partial-witness-ok: the half of this requirement that binds a
+      // non-advertising host — refuse with capability_required — was observed
+      // above; the expand-on-an-advertiser half does not apply to this host.
       return softSkip('inapplicable', 'capability or profile not advertised by this host — gate `!advertises` returned early');
     }
     expect(res.status, req('openwop.it.workflow-chain-host-expansion.rfc-0157-a-chain-carrying-an-unwind-policy-is-refused-with-capability-required-o', 'workflow-chain-packs.md §"Compensation (RFC 0157)"', 'an advertising host expands the policy-carrying chain')).toBe(200);
@@ -338,6 +344,9 @@ describe('workflow-chain-host-expansion: live host wraps expansion algorithm cor
     if (body.settings?.compensation !== undefined) {
       expect(body.settings.compensation, req('openwop.it.workflow-chain-host-expansion.rfc-0157-a-chain-carrying-an-unwind-policy-is-refused-with-capability-required-o', 'workflow-chain-packs.md §"Compensation (RFC 0157)" rule 9b', 'the chain policy becomes settings.compensation, copied verbatim')).toEqual(expected.settingsCompensation);
     } else {
+      // partial-witness-ok: the node carry was observed above; echoing
+      // `settings` on the expand seam is host-optional, so the rule 9b policy
+      // carry is unobservable through it on a conforming host.
       softSkip('blocked', 'the expand seam does not echo `settings`, so the policy → settings.compensation carry (rule 9b) is unobservable through it; the node carry above was witnessed');
     }
   });

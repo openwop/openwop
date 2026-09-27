@@ -52,6 +52,25 @@ async function cancel(runId: string): Promise<void> {
   await driver.post(`/v1/runs/${encodeURIComponent(runId)}/cancel`, { reason: 'conformance-cleanup' });
 }
 
+/**
+ * A 404 on :pause / :resume. The routes are capability-gated
+ * (capabilities.md §`runs.pauseResume`), so a host that does not advertise the
+ * family is out of scope (`inapplicable`), and one that advertises it and 404s
+ * has made a claim the suite cannot check (`blocked`).
+ *
+ * Every leg reaches this before its first assertion — the run create is an
+ * early return, not an `expect` — so neither case records the partial-witness
+ * PASS that a note after the create assertion recorded until 2026-09-27. A
+ * host that serves the routes without advertising them still runs every leg.
+ */
+async function routeAbsent(route: ':pause' | ':resume'): Promise<undefined> {
+  const disco = await driver.get('/.well-known/openwop');
+  const advertised = capabilityFamily<{ pauseResume?: { supported?: unknown } }>(disco.json, 'runs')?.pauseResume?.supported === true;
+  return advertised
+    ? softSkip('blocked', `${route} answered 404 on a host advertising runs.pauseResume.supported — the advertised route is not served`)
+    : softSkip('inapplicable', `${route} answered 404 and the host does not advertise runs.pauseResume (capabilities.md §runs.pauseResume) — pause/resume is out of scope for it`);
+}
+
 async function eventTypes(runId: string): Promise<string[]> {
   const res = await driver.get(`/v1/runs/${encodeURIComponent(runId)}/events/poll?timeout=1`);
   const events = (res.json as { events?: unknown } | null)?.events;
@@ -70,7 +89,7 @@ describe.skipIf(SKIP)('pause/resume: running → paused → running → terminal
       // `running`, so 3 s is ample for the pause to land first.
       inputs: { delayMs: 3_000 },
     });
-    expect(create.status).toBe(201);
+    if (create.status !== 201) return softSkip('blocked', `POST /v1/runs answered ${create.status} — no run to pause`);
     const runId = (create.json as { runId: string }).runId;
 
     await pollUntilStatus(runId, 'running', { timeoutMs: 10_000 });
@@ -84,7 +103,7 @@ describe.skipIf(SKIP)('pause/resume: running → paused → running → terminal
     });
     if (pause.status === 404) {
       await cancel(runId);
-      return softSkip('blocked', 'precondition not met — `pause.status === 404` returned early ([pause-resume] host returned 404 for :pause — endpoint not implemented; skipping rest) (seam, prior step, or fixture unavailable)');
+      return routeAbsent(':pause');
     }
     expect(pause.status, req('openwop.it.pause-resume.pause-transitions-to-paused-resume-returns-the-run-to-running',
       DOC_PAUSE,
@@ -112,7 +131,7 @@ describe.skipIf(SKIP)('pause/resume: :resume on a non-paused run returns 409', (
       workflowId: FIXTURE!,
       inputs: { delayMs: 30_000 },
     });
-    expect(create.status).toBe(201);
+    if (create.status !== 201) return softSkip('blocked', `POST /v1/runs answered ${create.status} — no run to pause`);
     const runId = (create.json as { runId: string }).runId;
 
     await pollUntilStatus(runId, 'running', { timeoutMs: 10_000 });
@@ -120,7 +139,7 @@ describe.skipIf(SKIP)('pause/resume: :resume on a non-paused run returns 409', (
     const resume = await driver.post(`/v1/runs/${encodeURIComponent(runId)}:resume`, {});
     if (resume.status === 404) {
       await cancel(runId);
-      return softSkip('blocked', 'precondition not met — `resume.status === 404` returned early (seam, prior step, or fixture unavailable)');
+      return routeAbsent(':resume');
     }
     expect(resume.status, req('openwop.it.pause-resume.resuming-a-running-not-paused-run-returns-409-with-details-runstatus',
       DOC_RESUME,
@@ -146,14 +165,14 @@ describe.skipIf(SKIP)('pause/resume: a second :pause is 409 without a matching I
       workflowId: FIXTURE!,
       inputs: { delayMs: 30_000 },
     });
-    expect(create.status).toBe(201);
+    if (create.status !== 201) return softSkip('blocked', `POST /v1/runs answered ${create.status} — no run to pause`);
     const runId = (create.json as { runId: string }).runId;
     await pollUntilStatus(runId, 'running', { timeoutMs: 10_000 });
 
     const first = await driver.post(`/v1/runs/${encodeURIComponent(runId)}:pause`, { drainPolicy: 'immediate' });
     if (first.status === 404) {
       await cancel(runId);
-      return softSkip('blocked', 'precondition not met — `first.status === 404` returned early (seam, prior step, or fixture unavailable)');
+      return routeAbsent(':pause');
     }
     expect(first.status, req('openwop.it.pause-resume.pause-on-an-already-paused-run-returns-409-with-details-runstatus-paused-unless',
       DOC_PAUSE,
@@ -211,7 +230,7 @@ describe.skipIf(SKIP)('pause/resume: :pause on a terminal run returns 409', () =
     await pollUntilTerminal(runId, { timeoutMs: 10_000 });
 
     const pause = await driver.post(`/v1/runs/${encodeURIComponent(runId)}:pause`, {});
-    if (pause.status === 404) return softSkip('blocked', 'precondition not met — `pause.status === 404` returned early (seam, prior step, or fixture unavailable)');
+    if (pause.status === 404) return routeAbsent(':pause');
     expect(pause.status, req('openwop.it.pause-resume.pause-on-a-completed-cancelled-failed-run-must-return-409',
       DOC_PAUSE,
       ':pause on a terminal run MUST return 409',
@@ -235,7 +254,7 @@ describe.skipIf(SKIP)('pause/resume: drain-current-node lets the executing node 
       workflowId: FIXTURE!,
       inputs: { delayMs: 3_000 },
     });
-    expect(create.status).toBe(201);
+    if (create.status !== 201) return softSkip('blocked', `POST /v1/runs answered ${create.status} — no run to pause`);
     const runId = (create.json as { runId: string }).runId;
     await pollUntilStatus(runId, 'running', { timeoutMs: 10_000 });
 
@@ -245,7 +264,7 @@ describe.skipIf(SKIP)('pause/resume: drain-current-node lets the executing node 
     });
     if (pause.status === 404) {
       await cancel(runId);
-      return softSkip('blocked', 'precondition not met — `pause.status === 404` returned early (seam, prior step, or fixture unavailable)');
+      return routeAbsent(':pause');
     }
     expect(pause.status, req('openwop.it.pause-resume.under-drain-current-node-node-completed-precedes-run-paused-in-the-log',
       DOC_PAUSE,
@@ -281,7 +300,7 @@ describe.skipIf(SKIP)('pause/resume: :pause-during-suspend race', () => {
       return softSkip('inapplicable', 'capability or profile not advertised by this host — gate `!isFixtureAdvertised(\'conformance-approval\')` returned early ([pause-resume] conformance-approval not advertised; skipping :pause-during-suspend race subtest)');
     }
     const create = await driver.post('/v1/runs', { workflowId: 'conformance-approval' });
-    expect(create.status).toBe(201);
+    if (create.status !== 201) return softSkip('blocked', `POST /v1/runs answered ${create.status} — no run to pause`);
     const runId = (create.json as { runId: string }).runId;
     await pollUntilStatus(runId, 'waiting-approval', { timeoutMs: 10_000 });
 
@@ -290,7 +309,7 @@ describe.skipIf(SKIP)('pause/resume: :pause-during-suspend race', () => {
     });
     if (pause.status === 404) {
       await cancel(runId);
-      return softSkip('blocked', 'precondition not met — `pause.status === 404` returned early (seam, prior step, or fixture unavailable)');
+      return routeAbsent(':pause');
     }
 
     // Either rejection (preferred) or stacked-pause is OK; silent override is not.

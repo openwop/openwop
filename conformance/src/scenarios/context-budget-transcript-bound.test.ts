@@ -104,13 +104,13 @@ describe('context-budget-transcript-bound (RFC 0111 §"Context economy")', () =>
     if (typeof budget !== 'number') return softSkip('inapplicable', 'transcriptTokenBudget not advertised');
     if (!isFixtureAdvertised(FIXTURE)) return softSkip('inapplicable', `the live fixture ${FIXTURE} is not advertised — the scripted multiturn fixture drives a mock supervisor, which RFC 0111 §Scope forbids from advertising contextBudget`);
     expect(typeof advertisedCounter === 'string', req(ID, 'RFC 0111', 'tokenCounter MUST be advertised when transcriptTokenBudget is present (schema if/then)')).toBe(true);
-    if (typeof advertisedCounter !== 'string') return softSkip('blocked', 'contextBudget.tokenCounter is not advertised (the assertion above records the failure)');
+    if (typeof advertisedCounter !== 'string') throw new Error('unreachable: the assertion above fails first');
 
     const create = await driver.post(runsPath(), { workflowId: FIXTURE });
     expect(create.status, req(ID, 'RFC 0111', `POST ${runsPath()} MUST create the live-fixture run`)).toBe(201);
     const runId = runIdOf(create.json);
     expect(runId, req(ID, 'RFC 0111', 'the create response MUST carry a runId')).toBeDefined();
-    if (runId === undefined) return softSkip('blocked', 'no runId');
+    if (runId === undefined) throw new Error('unreachable: the assertion above fails first');
     await pollUntilTerminal(runId, { timeoutMs: LIVE_RUN_POLL_MS });
 
     const windows: Array<{ iteration: number; window: TranscriptWindow }> = [];
@@ -121,6 +121,10 @@ describe('context-budget-transcript-bound (RFC 0111 §"Context economy")', () =>
         // `softSkip('blocked')` after the create/runId asserts, which records a
         // partial-witness PASS — a host with no transcript-window seam passed
         // the transcript bound without a single window being read.
+        // partial-witness-ok: not a partial witness at either major — seamAbsent
+        // runs only when major === 2, where a blocked note after assertions
+        // stands as `blocked` (2.35.0) and strict mode fails it; major 1 takes
+        // blockedDespiteAssertions.
         if (iteration === 1) return major === 2 ? seamAbsent(`contextBudget is advertised but the transcript-window seam answered ${res.status} (host-sample-test-seams.md §14)`) : blockedDespiteAssertions(`the transcript-window seam answered ${res.status} (host-sample-test-seams.md §14)`);
         break;
       }
@@ -128,7 +132,7 @@ describe('context-budget-transcript-bound (RFC 0111 §"Context economy")', () =>
       expect(res.status, req(ID, 'host-sample-test-seams.md §14', `iteration ${iteration}: the transcript-window seam MUST return 200 for a valid iteration`)).toBe(200);
       const window = parseTranscriptWindow(res.json);
       expect(window, req(ID, 'host-sample-test-seams.md §14', `iteration ${iteration}: the seam MUST return { tokenCounter, tokenCount, eventIds, summarizedRanges, entries? } with a well-formed entries[] when present`)).toBeDefined();
-      if (window === undefined) return softSkip('blocked', `iteration ${iteration}: the seam answer was malformed (the assertion above records the failure)`);
+      if (window === undefined) throw new Error('unreachable: the assertion above fails first');
       windows.push({ iteration, window });
     }
     expect(windows.length, req(ID, 'host-sample-test-seams.md §14', 'a wired transcript-window seam MUST report at least one orchestrator iteration')).toBeGreaterThan(0);
