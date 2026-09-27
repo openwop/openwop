@@ -554,7 +554,7 @@
     See `auth.md`.
   now: OpenWOP API key. The format is implementation-defined; the reference implementation uses `hk_`/`hk_test_` prefixes. Each key
     carries one or more scopes from the canonical vocabulary (`manifest:read`, `runs:create`, `runs:read`, `runs:cancel`, `artifacts:read`,
-    `webhooks:manage`, `approvals:respond`, `audit:read`). See `auth.md`.
+    `webhooks:manage`, `approvals:respond`, `audit:read`). Scope matching is in `spec/v2/core/identity.md` §2.1.
 - was: |
     RFC 0200 §F. OAuth 2.0 lanes — v1 `openwop-auth-oauth2-client-credentials`,
     v2 `auth.lanes[].lane: "oauth2"`. Discovery is RFC 9728 Protected Resource
