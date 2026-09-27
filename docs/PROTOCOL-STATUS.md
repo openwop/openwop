@@ -12,7 +12,7 @@
 | OpenAPI operations | 58 | `api/openapi.yaml` |
 | AsyncAPI version | 3.1.0 | `api/asyncapi.yaml` |
 | Conformance scenario files | 565 | `conformance/src/scenarios/*.test.ts` |
-| RFCs tracked | 216 | `RFCS/[0-9][0-9][0-9][0-9]-*.md`, excluding template |
+| RFCs tracked | 217 | `RFCS/[0-9][0-9][0-9][0-9]-*.md`, excluding template |
 
 ## Artifact Versions
 
@@ -69,7 +69,7 @@
 |---|---:|
 | Accepted | 211 |
 | Active | 2 |
-| Draft | 2 |
+| Draft | 3 |
 | Superseded | 1 |
 
 | RFC | Title | Status |
@@ -289,6 +289,7 @@
 | RFC 0216 | a colocated companion bundle is marked, and witnesses only the rows that need the suite's own issuer | Accepted |
 | RFC 0217 | after a subscription is unregistered, its dead-letter read answers as though it never existed | Accepted |
 | RFC 0218 | an audit checkpoint signs its Merkle root, and the root is pinned | Active |
+| RFC 0219 | a client announces the protocol version it implements in `OpenWOP-Client-Version` | Draft |
 | RFC 0220 | an extension family graduates on evidence a script can read | Draft |
 
 ## SDK Helper Coverage
@@ -313,7 +314,7 @@ The pack registry now lives in the [`openwop-registry`](https://github.com/openw
 
 ## Active Follow-Ups
 
-- 2 RFCs still `Draft` (RFC 0038, RFC 0220) — advance with schema/conformance proof or defer.
+- 3 RFCs still `Draft` (RFC 0038, RFC 0219, RFC 0220) — advance with schema/conformance proof or defer.
 - 2 RFCs `Active` (RFC 0121, RFC 0218) — wire-shape MAY shift compatibly within v1.x until promotion to `Accepted`.
 - External audit, non-steward host recruitment, and non-steward maintainer recruitment remain external-action gates.
 - Multi-region idempotency and some optional-profile behavior checks remain lower-confidence than the core wire contract.

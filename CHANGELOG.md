@@ -13,6 +13,7 @@ Format follows [Keep a Changelog](https://keepachangelog.com/en/1/) loosely. Ver
 
 ## [Unreleased]
 
+- **RFC 0219 filed `Draft`: a client announces the protocol version it implements in `OpenWOP-Client-Version`** (`additive`; no wire change until `Active`; `@openwop/spec-artifacts` 2.42.7 cycle — its `spec/v1/gaps.json` gains the six gap rows). RFC 0172 §A.5 lets a host refuse a client below `minClientVersion` with `426 client_version_unsupported`, but no v2 document says how a host learns the client's version. The suite and all three certified v2 hosts already use `OpenWOP-Client-Version`, which `headers.md` does not declare, and they disagree on its grammar and on a malformed value. Proposed for `versioning.md` §1.5: optional on every operation; `<major>.<minor>[.<patch>]`, the corpus release the client implements; compared with the floor on major and minor only; a `426` only for a well-formed value below an advertised floor; a malformed value treated as absent and never a `400`; never an authentication input. Gap and risk registers under `RFCS/registers/`.
 - **RFC 0220 filed (`Draft`, window to 2026-10-04): an extension family graduates on evidence a script can read** (suite 2.42.7 cycle; no wire change). All 17 extension pages on openwop.dev/spec/v2/ read `Draft`, and none could become `Stable`, for four reasons:
   - No scenario recorded the `openwop.family.<key>` pass the predicate needs.
   - The ext READMEs named camelCase keys (`extensions.<org>.restTransport`) that `extensionsKeyPattern` rejects.
