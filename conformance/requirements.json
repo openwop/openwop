@@ -29695,7 +29695,7 @@
     {
       "id": "openwop.it.v2-id-grammar.every-id-on-the-run-snapshot-matches-its-ids-schema-json-kind",
       "file": "v2-id-grammar.test.ts",
-      "line": 53,
+      "line": 55,
       "title": "every id on the run snapshot matches its ids.schema.json kind",
       "explicitId": "openwop.requirement.0170.id-grammar.snapshot",
       "citations": [
@@ -29714,7 +29714,7 @@
     {
       "id": "openwop.it.v2-id-grammar.every-id-on-the-run-events-matches-its-ids-schema-json-kind",
       "file": "v2-id-grammar.test.ts",
-      "line": 63,
+      "line": 65,
       "title": "every id on the run events matches its ids.schema.json kind",
       "explicitId": "openwop.requirement.0170.id-grammar.events",
       "citations": [
@@ -29732,7 +29732,7 @@
     {
       "id": "openwop.it.v2-id-grammar.a-run-id-whose-tenant-segment-is-not-the-caller-s-is-refused",
       "file": "v2-id-grammar.test.ts",
-      "line": 78,
+      "line": 90,
       "title": "a run id whose tenant segment is not the caller's is refused",
       "explicitId": "openwop.requirement.0170.id-grammar.tenant-binding",
       "citations": [
@@ -29755,7 +29755,7 @@
     {
       "id": "openwop.it.v2-id-grammar.a-bare-unbound-run-id-in-a-major-2-path-admitted-under-the-caller-s-tenant-throu",
       "file": "v2-id-grammar.test.ts",
-      "line": 88,
+      "line": 100,
       "title": "a bare (unbound) run id in a major-2 path: admitted under the caller's tenant through the overlap, refused 400 validation_error after it",
       "explicitId": "openwop.requirement.0170.id-grammar.bare-id",
       "citations": [
