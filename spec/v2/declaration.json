@@ -1624,7 +1624,7 @@
     {
       "key": "i18n",
       "kind": "family",
-      "normativeText": ["spec/v1/i18n.md"],
+      "normativeText": ["spec/v2/core/i18n.md"],
       "anchor": "core",
       "section": "core/capabilities.md#i18n",
       "peerDependencyId": "i18n",
@@ -1664,7 +1664,7 @@
     {
       "key": "portability",
       "kind": "family",
-      "normativeText": ["spec/v1/portability.md"],
+      "normativeText": ["spec/v2/core/portability.md"],
       "anchor": "core",
       "section": "core/capabilities.md#portability",
       "peerDependencyId": "portability",

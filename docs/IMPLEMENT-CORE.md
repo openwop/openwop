@@ -2,8 +2,8 @@
 
 > **Read this instead of the corpus.** v2 is the current protocol major
 > (`spec/v2/README.md`; corpus tag in `spec/v2/release.json`), and a new host
-> targets it. The normative v2 text is **twenty-five documents in `spec/v2/core/`**,
-> held under a 25,000-word budget by `scripts/check-core-budget.mjs`. Everything
+> targets it. The normative v2 text is **twenty-seven documents in `spec/v2/core/`**,
+> held under the kernel word budget that `scripts/check-core-budget.mjs` enforces (it grows as core families gain v2 homes). Everything
 > under `spec/v2/ext/` is an extension you may ignore until you want it.
 >
 > The size of the corpus, not its content, has been the main barrier to an
