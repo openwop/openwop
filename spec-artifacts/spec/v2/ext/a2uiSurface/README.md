@@ -120,7 +120,7 @@ The SR-1 harness walks every message.
 
 A v2 host SHOULD NOT advertise the facet. Incremental updates are version-2 envelopes carrying `updateComponents` / `updateDataModel`, recorded and replayable by the fold.
 
-The rows carry `removeIn: "3.0"` until the retirement rule in [overview.md §0a](../../core/overview.md) is `Accepted`; removal then follows its `v2-minor` path.
+The rows carry `removeIn: "3.0"`. An earlier removal takes the `v2-minor` path of [overview.md §0a](../../core/overview.md): a migration row for the replacement, and a row rescheduled to name the removal minor at least two minors and 30 days ahead.
 
 ## Conformance
 

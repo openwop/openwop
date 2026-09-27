@@ -2,7 +2,7 @@
 
 > **Status: Draft.**
 
-A non-core note, not a declared family.
+Notes on organization-specific portability extensions. This page is not a declared extension family: `portability` is a core family ([capabilities.md § portability](../../core/capabilities.md)).
 
 | Field | Value |
 | --- | --- |

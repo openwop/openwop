@@ -87,14 +87,14 @@ describe.skipIf(HTTP_SKIP)('multi-region-idempotency-behavior: convergence rule 
     expect(
       probe.status,
       req('openwop.it.multi-region-idempotency-behavior.two-region-conflict-resolves-to-the-lex-min-runid-per-annex-convergence-rule', 
-        'idempotency.md §"Multi-region idempotency annex"',
+        'spec/v1/idempotency.md §"Multi-region idempotency annex"',
         'simulate-partition seam MUST return 200 when ≥2 conflicting claims are submitted',
       ),
     ).toBe(200);
     expect(
       probe.body.winner?.runId,
       req('openwop.it.multi-region-idempotency-behavior.two-region-conflict-resolves-to-the-lex-min-runid-per-annex-convergence-rule', 
-        'idempotency.md §"Convergence rule"',
+        'spec/v1/idempotency.md §"Convergence rule"',
         'winner MUST be the lex-min runId (run-a-west < run-b-east)',
       ),
     ).toBe('run-a-west');
@@ -115,14 +115,14 @@ describe.skipIf(HTTP_SKIP)('multi-region-idempotency-behavior: convergence rule 
     expect(
       probe.body.winner?.runId,
       req('openwop.it.multi-region-idempotency-behavior.three-region-partition-resolves-to-a-single-winner', 
-        'idempotency.md §"Convergence rule"',
+        'spec/v1/idempotency.md §"Convergence rule"',
         'winner MUST be the lex-min runId across all conflicting claims',
       ),
     ).toBe('aaa-1');
     expect(
       probe.body.losers?.length,
       req('openwop.it.multi-region-idempotency-behavior.three-region-partition-resolves-to-a-single-winner', 
-        'idempotency.md §"Convergence rule"',
+        'spec/v1/idempotency.md §"Convergence rule"',
         'losers array MUST contain N-1 entries when N claims conflict',
       ),
     ).toBe(2);
@@ -143,7 +143,7 @@ describe.skipIf(HTTP_SKIP)('multi-region-idempotency-behavior: convergence rule 
     expect(
       redirects.length,
       req('openwop.it.multi-region-idempotency-behavior.every-region-gets-a-cache-redirect-entry-pointing-at-the-winner', 
-        'idempotency.md §"Convergence rule"',
+        'spec/v1/idempotency.md §"Convergence rule"',
         'cacheRedirects MUST contain one entry per claim (including the winner)',
       ),
     ).toBe(2);
@@ -151,7 +151,7 @@ describe.skipIf(HTTP_SKIP)('multi-region-idempotency-behavior: convergence rule 
       expect(
         redirect.redirectToRunId,
         req('openwop.it.multi-region-idempotency-behavior.every-region-gets-a-cache-redirect-entry-pointing-at-the-winner', 
-          'idempotency.md §"Convergence rule"',
+          'spec/v1/idempotency.md §"Convergence rule"',
           'every cache redirect MUST point at the winner runId',
         ),
       ).toBe('run-a');
@@ -172,7 +172,7 @@ describe.skipIf(HTTP_SKIP)('multi-region-idempotency-behavior: convergence rule 
     expect(
       probe.body.loserCancelReason,
       req('openwop.it.multi-region-idempotency-behavior.loser-cancel-reason-must-be-the-canonical-cross-region-dedup-loss-string', 
-        'idempotency.md §"Convergence rule"',
+        'spec/v1/idempotency.md §"Convergence rule"',
         'loserCancelReason MUST be the canonical `cross_region_dedup_loss` string',
       ),
     ).toBe('cross_region_dedup_loss');
@@ -198,7 +198,7 @@ describe.skipIf(HTTP_SKIP)('multi-region-idempotency-behavior: convergence rule 
     expect(
       p1.body.winner?.runId,
       req('openwop.it.multi-region-idempotency-behavior.resolver-is-order-invariant-shuffled-inputs-produce-the-same-winner', 
-        'idempotency.md §"Convergence rule" — determinism',
+        'spec/v1/idempotency.md §"Convergence rule" — determinism',
         'resolver MUST be order-invariant; all permutations MUST produce the same lex-min winner',
       ),
     ).toBe('a');
@@ -219,7 +219,7 @@ describe.skipIf(HTTP_SKIP)('multi-region-idempotency-behavior: convergence rule 
     expect(
       probe.status,
       req('openwop.it.multi-region-idempotency-behavior.mismatched-tuple-rejects-with-400-validation-error', 
-        'idempotency.md §"Convergence rule"',
+        'spec/v1/idempotency.md §"Convergence rule"',
         'claims with non-matching (tenantId, endpoint, key) MUST be rejected — it would be a programming error in the caller',
       ),
     ).toBe(400);

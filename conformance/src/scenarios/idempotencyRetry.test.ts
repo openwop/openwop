@@ -6,7 +6,7 @@
  * additions documented in idempotency.md:
  *
  *   1. openwop-Idempotent-Replay header is present on every keyed response
- *      (idempotency.md §Server responsibilities).
+ *      (spec/v1/idempotency.md §Server responsibilities).
  *   2. Retry-budget floor — hosts handle ≥5 retries 100ms apart with
  *      the cached response (scale-profiles.md §"Retry semantics").
  *   3. Same-key replay returns same runId across the budget.
@@ -53,7 +53,7 @@ describe.skipIf(SKIP_NO_FIXTURE)('idempotency-retry: openwop-Idempotent-Replay h
     // Permissive assertion: if present, MUST be "false" or "true".
     if (firstReplay !== null) {
       expect(['false', 'true'].includes(firstReplay), req('openwop.it.idempotencyRetry.first-request-with-new-key-returns-false-or-absent-should-per-current-spec-repla', 
-        'idempotency.md §Server responsibilities',
+        'spec/v1/idempotency.md §Server responsibilities',
         'openwop-Idempotent-Replay value MUST be "true" or "false"',
       )).toBe(true);
     }
@@ -61,19 +61,19 @@ describe.skipIf(SKIP_NO_FIXTURE)('idempotency-retry: openwop-Idempotent-Replay h
     const replay = await driver.post('/v1/runs', body, { headers: { 'Idempotency-Key': key } });
     expect(
       [200, 201].includes(replay.status),
-      req('openwop.it.idempotencyRetry.first-request-with-new-key-returns-false-or-absent-should-per-current-spec-repla', 'idempotency.md §Layer 1', 'replay returns 200 or 201'),
+      req('openwop.it.idempotencyRetry.first-request-with-new-key-returns-false-or-absent-should-per-current-spec-repla', 'spec/v1/idempotency.md §Layer 1', 'replay returns 200 or 201'),
     ).toBe(true);
 
     const replayHeader = replay.headers.get('openwop-idempotent-replay');
-    // Per idempotency.md §Server responsibilities #2: SHOULD be set.
+    // Per spec/v1/idempotency.md §Server responsibilities #2: SHOULD be set.
     // RFC 0002 §1 promotes to MUST. Today's strictness: present on replay.
     expect(replayHeader, req('openwop.it.idempotencyRetry.first-request-with-new-key-returns-false-or-absent-should-per-current-spec-repla', 
-      'idempotency.md §Server responsibilities #2',
+      'spec/v1/idempotency.md §Server responsibilities #2',
       'openwop-Idempotent-Replay SHOULD be set on idempotent replay responses',
     )).not.toBeNull();
     if (replayHeader !== null) {
       expect(replayHeader, req('openwop.it.idempotencyRetry.first-request-with-new-key-returns-false-or-absent-should-per-current-spec-repla', 
-        'idempotency.md §Server responsibilities #2',
+        'spec/v1/idempotency.md §Server responsibilities #2',
         'openwop-Idempotent-Replay on replay MUST be "true"',
       )).toBe('true');
     }
@@ -104,7 +104,7 @@ describe.skipIf(SKIP_NO_FIXTURE)('idempotency-retry: 5-retry budget per scale-pr
 
     const runIds = new Set(responses.map((r) => (r.json as { runId?: string })?.runId));
     expect(runIds.size, req('openwop.it.idempotencyRetry.5-retries-100ms-apart-with-same-key-all-return-the-same-runid', 
-      'idempotency.md §Layer 1',
+      'spec/v1/idempotency.md §Layer 1',
       '5 retries with same key MUST collapse to exactly one runId',
     )).toBe(1);
   });
@@ -129,11 +129,11 @@ describe('idempotency-retry: limits.idempotencyAckTimeoutSec contract per idempo
       return softSkip('inapplicable', 'limits.idempotencyAckTimeoutSec not advertised (optional; the 5-second floor applies) — nothing to check');
     }
     expect(typeof ack === 'number' && Number.isInteger(ack), req('openwop.it.idempotencyRetry.host-advertising-idempotencyacktimeoutsec-sets-integer-5', 
-      'idempotency.md',
+      'spec/v1/idempotency.md',
       'limits.idempotencyAckTimeoutSec MUST be an integer when advertised',
     )).toBe(true);
     expect(ack as number, req('openwop.it.idempotencyRetry.host-advertising-idempotencyacktimeoutsec-sets-integer-5', 
-      'idempotency.md',
+      'spec/v1/idempotency.md',
       'limits.idempotencyAckTimeoutSec MUST be ≥ 5',
     )).toBeGreaterThanOrEqual(5);
   });
