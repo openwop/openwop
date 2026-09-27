@@ -118,10 +118,13 @@ describe('RFC 0201 §E — secret rotation overlaps, then retires (gated on webh
     const expiresAt = Date.parse(body.previousSecretExpiresAt ?? '');
     if (expiresAt - Date.now() > CAP_MS) {
       // partial-witness-ok: the tenant check, the rotate response and the dual signature during
-      // the overlap were asserted above. The post-overlap half waits overlapSeconds, which the
-      // suite's wait cap bounds, not host behaviour; raise OPENWOP_WEBHOOK_RETRY_WAIT_MS to
-      // witness it.
-      return softSkip('inapplicable', `the post-overlap leg is not observed: overlapSeconds (${overlapSeconds}) exceeds the suite wait cap (${CAP_MS}ms; raise OPENWOP_WEBHOOK_RETRY_WAIT_MS to witness it)`);
+      // the overlap were asserted above. "The previous secret MUST NOT sign after
+      // previousSecretExpiresAt" cannot be observed inside a bounded run when the host's
+      // advertised webhooks.secretRotation.overlapSeconds outlasts the suite's wait cap, and
+      // blocking every long-overlap host would deny certification to conforming hosts
+      // (steward ruling, 2026-09-27). The row detail names both numbers. Raise
+      // OPENWOP_WEBHOOK_RETRY_WAIT_MS past the overlap to witness it.
+      return softSkip('inapplicable', `the post-overlap leg is not observed: the advertised webhooks.secretRotation.overlapSeconds is ${overlapSeconds}s (expiry ${new Date(expiresAt).toISOString()}) and the suite wait cap is ${CAP_MS}ms; raise OPENWOP_WEBHOOK_RETRY_WAIT_MS past the overlap to witness it`);
     }
     await new Promise((r) => setTimeout(r, Math.max(0, expiresAt - Date.now()) + 1_500));
     const after = await oneDelivery(rx, webhookId);
