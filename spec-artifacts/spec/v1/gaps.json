@@ -12923,8 +12923,8 @@
       "surface": "Two of the three certified hosts read a malformed value as `0.0` and refuse it (`openwop-examples` v2 reference host `router.ts`, openwop-app `protocolVersion.ts`). Under §C.2 both fail the planned `malformed-not-refused` leg.",
       "witness": "unclassified",
       "requirementId": null,
-      "disposition": "transferred",
-      "target": "rfc-0219",
+      "disposition": "closed",
+      "target": null,
       "sources": [
         {
           "file": "RFCS/registers/0219-client-version-header.gaps.md",
