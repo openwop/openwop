@@ -219,7 +219,7 @@ describe('envelope-tier-one-subset-static: universal-kind schemas satisfy load-b
     it(`${kind}.schema.json satisfies load-bearing Tier-1 rules (no oneOf/allOf/not/prefixItems/propertyNames anywhere)`, () => {
       const schema = loadLocalSchema(kind);
       expect(schema, req('openwop.it.envelope-tier-one-subset-static.schema-json-satisfies-load-bearing-tier-1-rules-no-oneof-allof-not-prefixitems-p', 'RFC 0030 §B', `schemas/envelopes/${kind}.schema.json MUST exist`)).not.toBeNull();
-      if (schema === null) return softSkip('blocked', 'precondition not met — `schema === null` returned early (seam, prior step, or fixture unavailable)');
+      if (schema === null) throw new Error('unreachable: the assertion above has already failed this leg');
       const violations: Violation[] = [];
       const propCount = { n: 0 };
       walkSchema(schema, `#`, 0, propCount, violations, 'load-bearing');

@@ -330,9 +330,10 @@ describe('pack-registry: keychain shape (when present)', () => {
       authenticated: false,
     });
     // 200 with `{keys: []}` and 404 are both spec-allowed (keychain is
-    // optional; not every namespace publishes one).
+    // optional; not every namespace publishes one). A 404 is decided before
+    // any assertion, so the row is `inapplicable`, not a partial-witness pass.
+    if (res.status === 404) return softSkip('inapplicable', `${first} publishes no keychain (optional) — there are no key entries to check`);
     expect([200, 404]).toContain(res.status);
-    if (res.status === 404) return softSkip('blocked', 'precondition not met — `res.status === 404` returned early (seam, prior step, or fixture unavailable)');
 
     const body = res.json as { keys?: unknown; namespace?: unknown } | undefined;
     expect(Array.isArray(body?.keys), req('openwop.it.pack-registry.get-v1-packs-name-keychain-returns-well-formed-key-entries-when-present', 

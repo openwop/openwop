@@ -143,7 +143,7 @@ describe('aiEnvelope.contractRefusal: behavioral accept-gate (FINAL v1.1)', () =
 // E.1 engine-projection via the test-only event-log seam.
 import { queryTestEvents, isEventLogSeamAvailable, resetTestSeam } from '../lib/event-log-query.js';
 import { req } from '../lib/requirement-ids.js';
-import { softSkip } from '../lib/soft-skip.js';
+import { softSkip, blockedDespiteAssertions } from '../lib/soft-skip.js';
 
 describe('aiEnvelope.contractRefusal: engine projection via event-log seam', () => {
   it('gated (fail-node) → node.failed { error.code: "envelope_contract_violation" }', async () => {
@@ -167,7 +167,7 @@ describe('aiEnvelope.contractRefusal: engine projection via event-log seam', () 
     if (r.status === 404) return softSkip('blocked', 'precondition not met — `r.status === 404` returned early (seam, prior step, or fixture unavailable)');
     expect(r.body.status).toBe('gated');
     const events = await queryTestEvents(runId, { type: 'node.failed' });
-    if (!events.ok || events.events.length === 0) return softSkip('blocked', 'precondition not met — `!events.ok || events.events.length === 0` returned early (seam, prior step, or fixture unavailable)');
+    if (!events.ok || events.events.length === 0) return blockedDespiteAssertions('the gated outcome was accepted but no node.failed was read back from the event-log seam — the envelope_contract_violation projection is unobserved');
     const err = events.events[0]!.payload.error as { code?: string; details?: { refusedType?: string; acceptedTypes?: string[] } };
     expect(
       err.code,

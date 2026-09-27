@@ -168,7 +168,7 @@ describe('aiEnvelope.capBreached: behavioral cap enforcement (FINAL v1.1)', () =
 import { queryTestEvents, isEventLogSeamAvailable, resetTestSeam } from '../lib/event-log-query.js';
 import { capabilityFamily } from '../lib/discovery-capabilities.js';
 import { req } from '../lib/requirement-ids.js';
-import { softSkip } from '../lib/soft-skip.js';
+import { softSkip, blockedDespiteAssertions } from '../lib/soft-skip.js';
 
 describe('aiEnvelope.capBreached: engine projection via event-log seam (capabilities.md §"cap.breached")', () => {
   it('breached outcome projects to cap.breached { kind: "envelopes" } event with causationId chain', async () => {
@@ -193,7 +193,7 @@ describe('aiEnvelope.capBreached: engine projection via event-log seam (capabili
     expect(r.body.status).toBe('breached');
 
     const events = await queryTestEvents(runId, { type: 'cap.breached' });
-    if (!events.ok) return softSkip('blocked', 'precondition not met — `!events.ok` returned early (seam, prior step, or fixture unavailable)');
+    if (!events.ok) return blockedDespiteAssertions('the event-log seam is advertised but the cap.breached query failed — the projection is unobserved');
     expect(
       events.events.length,
       req('openwop.it.aiEnvelope.capBreached.breached-outcome-projects-to-cap-breached-kind-envelopes-event-with-causationid', 'capabilities.md §"Engine-enforced limits and the cap.breached event"', 'breached outcome MUST project to exactly one cap.breached event'),
