@@ -235,6 +235,20 @@ Format follows [Keep a Changelog](https://keepachangelog.com/en/1/) loosely. Ver
 - **The remaining eleven stay `Active`, each for a stated reason** rather than for lack of attention. The eight RFC 0167 program children name a certified openwop-app bundle in their own acceptance criteria and the committed one reads `certified: false` (3 blocked rows, RFC 0168 §E.1). RFC 0173 additionally carries the program's only `open` gap row. RFC 0179's sole criterion is unmet — 2.4.2 stopped the gate reading "(Phase 4 leg)" as an excuse for it. RFC 0187 names three requirement ids that no scenario mints. RFC 0167 itself flips **last**, which 2.4.2 made a rule: the moment the umbrella stops being `Active`, every child still `Active` becomes permanently ineligible.
 - **The interrupt `data` union is bound to `kind`** (MCP/A2A review P3-H7, Class 3 correction — COMPATIBILITY.md §3). `schemas/suspend-request.schema.json` and its v2 twin typed `data` as an unbound `oneOf`, so the minimal `conversation.start` and `conversation.close` payloads (`{ conversationId }`, which satisfies both shapes) failed validation in v1 and v2, and a payload carrying another kind's `data` passed. `data` is now an `anyOf` and a root `allOf` binds each kind to its own shape with one `if`/`then`; no per-kind shape or `$id` changed. Witnessed by `conformance/fixtures/interrupt-payloads/` (suite 2.36.0).
 
+## [2.42.3] — 2026-09-27 — the unfailable-leg audit: 19 legs a non-conforming host could pass now measure their requirement
+
+A suite patch: no new scenario file, and no wire or `MUST` change for a served host (`COMPATIBILITY.md` §2.1). Several legs that used to record `executed-pass` (sometimes as a partial witness) now either measure their requirement or record `blocked`. A host re-cut on this version may therefore see rows move from pass to `blocked` or `fail` where it was never really witnessed. The corpus tag moves because `@openwop/openwop-conformance` and `@openwop/spec-artifacts` move together.
+
+### Conformance
+
+- **Unfailable-leg audit (#1641).** A scanner (`scripts/audit-unfailable-legs.mjs`) flagged 66 legs witnessing Accepted RFCs, and review judged them: 12 confirmed and 7 plausible, all fixed; 47 not defects. The work was measured against the v2 reference host with a loopback regression cut plus three sabotages. It exposed a real re-fire on replay in that host (`0173.effect-seam-no-refire`), whose fix is in progress.
+- **RFC 0217 gap G1 closes** in the contract peer (MyndHyve's certified production witness, #1631).
+- **Suite `2.42.3`**: 561 scenario files. `@openwop/spec-artifacts` moves in lockstep at the same exact pin.
+
+### Spec
+
+- **RFC 0173's §B replay-suppression row cites `effect-seam-no-refire`**, and records the reference host's measured failure. **RFC 0186's row** is worded as the schema-validation witness it is.
+
 ## [2.42.2] — 2026-09-26 — four conformance legs now measure what their spec says: effect re-fire, keying fallback, A2UI JSON values, digest-safe scrubbing
 
 A suite patch: no new scenario file, no wire or `MUST` change for a served host (`COMPATIBILITY.md` §2.1). The contract gains one previously prose-only operation. The corpus tag moves because `@openwop/openwop-conformance` and `@openwop/spec-artifacts` move together.
