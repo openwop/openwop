@@ -1,12 +1,12 @@
 {
   "bundleVersion": "3",
-  "generatedAt": "2026-09-26T18:03:52.750Z",
+  "generatedAt": "2026-09-27T01:01:44.857Z",
   "suite": {
     "name": "@openwop/openwop-conformance",
-    "version": "2.42.0",
+    "version": "2.42.2",
     "targetMajor": 2,
-    "specArtifactsVersion": "2.42.0",
-    "stampSha256": "99ce95950e5c5c127286091e76b7569eeb6eb05ec752c853b23eb548c0a755f9"
+    "specArtifactsVersion": "2.42.2",
+    "stampSha256": "1410563585447c32dced7e6679caf5968a68e9de88c39a5188d527336b86e784"
   },
   "host": {
     "name": "openwop-host-v2-reference",
@@ -14,7 +14,7 @@
     "vendor": "openwop (reference example)",
     "build": {
       "kind": "commit",
-      "id": "7faf64115de937eaa0826241eb6f58c4459dbfd7"
+      "id": "03c0d97f2d3018c84b0b4a8fec4f176563d2ad07"
     },
     "signingKeyId": "v2-reference-4"
   },
@@ -653,7 +653,7 @@
         "scenario": "v2-capability-maturity-bounded.test.ts",
         "result": "executed-pass",
         "assertions": 26,
-        "detail": "partial-witness: inapplicable: unwitnessable until the first persisted-class retirement row is due (RFC 0197 §A.3 Falsifiability): corpus 2.42.0: 0 persisted-class v2-minor retirement row(s), 0 v2→v2 migration row(s) — no retired member exists for a post-2.N event to carry. Before one does, a scenario would be vacuous, and a row that cannot fail is not a witness. This leg asserts the moment such a row falls due."
+        "detail": "partial-witness: inapplicable: unwitnessable until the first persisted-class retirement row is due (RFC 0197 §A.3 Falsifiability): corpus 2.42.2: 0 persisted-class v2-minor retirement row(s), 0 v2→v2 migration row(s) — no retired member exists for a post-2.N event to carry. Before one does, a scenario would be vacuous, and a row that cannot fail is not a witness. This leg asserts the moment such a row falls due."
       },
       {
         "id": "openwop.scenario.v2-capability-record-shape",
@@ -728,7 +728,7 @@
         "id": "openwop.floor.v2-effect-identity-business-key",
         "scenario": "v2-effect-identity-business-key.test.ts",
         "result": "executed-pass",
-        "assertions": 7,
+        "assertions": 8,
         "detail": "partial-witness: inapplicable: the noop fixture issued no external effect — the per-row keying leg had no rows (an effect-issuing fixture would exercise it)"
       },
       {
@@ -885,7 +885,7 @@
         "id": "openwop.scenario.v2-mcp-client-results",
         "scenario": "v2-mcp-client-results.test.ts",
         "result": "executed-pass",
-        "assertions": 26
+        "assertions": 27
       },
       {
         "id": "openwop.scenario.v2-mcp-mount-map",
@@ -1193,7 +1193,7 @@
         "scenario": "v2-webhook-delivery-shape.test.ts",
         "result": "executed-pass",
         "assertions": 12,
-        "detail": "partial-witness: inapplicable: no run.started delivery for the seeded era-2 run inside 15s — this host does not fan out seeded history, so the era-2 fan-out branch is unobservable here (recorded under openwop.family.conformance). no run.started delivery bearing this exercise's nonce 478407712aa6f926dc arrived, and nothing else reached this listener either — the registered destination is the public front https://employee-portsmouth-listening-nitrogen.trycloudflare.com/hook/fx/478407712aa6f926dc (OPENWOP_WEBHOOK_RECEIVER_URL) and this listener answers on http://127.0.0.1:3841/fx/478407712aa6f926dc, port 3841"
+        "detail": "partial-witness: inapplicable: no run.started delivery for the seeded era-2 run inside 15s — this host does not fan out seeded history, so the era-2 fan-out branch is unobservable here (recorded under openwop.family.conformance). no run.started delivery bearing this exercise's nonce 250a65018aaa8205c2 arrived, and nothing else reached this listener either — the registered destination is the public front https://remedy-penny-contracting-dawn.trycloudflare.com/hook/fx/250a65018aaa8205c2 (OPENWOP_WEBHOOK_RECEIVER_URL) and this listener answers on http://127.0.0.1:3841/fx/250a65018aaa8205c2, port 3841"
       },
       {
         "id": "openwop.floor.v2-webhook-durable-delivery",
@@ -1541,7 +1541,7 @@
           "recovery": {
             "class": "single-instance-restart",
             "boundMs": 6000,
-            "observedMs": 5328
+            "observedMs": 1665
           }
         }
       },
@@ -1554,7 +1554,7 @@
           "recovery": {
             "class": "single-instance-restart",
             "boundMs": 6000,
-            "observedMs": 5912
+            "observedMs": 1661
           }
         }
       },
@@ -1957,7 +1957,7 @@
         "scenario": "v2-webhook-delivery-shape.test.ts",
         "result": "executed-pass",
         "assertions": 12,
-        "detail": "partial-witness: inapplicable: no run.started delivery for the seeded era-2 run inside 15s — this host does not fan out seeded history, so the era-2 fan-out branch is unobservable here (recorded under openwop.family.conformance). no run.started delivery bearing this exercise's nonce 478407712aa6f926dc arrived, and nothing else reached this listener either — the registered destination is the public front https://employee-portsmouth-listening-nitrogen.trycloudflare.com/hook/fx/478407712aa6f926dc (OPENWOP_WEBHOOK_RECEIVER_URL) and this listener answers on http://127.0.0.1:3841/fx/478407712aa6f926dc, port 3841"
+        "detail": "partial-witness: inapplicable: no run.started delivery for the seeded era-2 run inside 15s — this host does not fan out seeded history, so the era-2 fan-out branch is unobservable here (recorded under openwop.family.conformance). no run.started delivery bearing this exercise's nonce 250a65018aaa8205c2 arrived, and nothing else reached this listener either — the registered destination is the public front https://remedy-penny-contracting-dawn.trycloudflare.com/hook/fx/250a65018aaa8205c2 (OPENWOP_WEBHOOK_RECEIVER_URL) and this listener answers on http://127.0.0.1:3841/fx/250a65018aaa8205c2, port 3841"
       },
       {
         "id": "openwop.requirement.0171.webhook-egress-refused",
@@ -2066,7 +2066,7 @@
         "id": "openwop.requirement.0173.effect-identity-business-key.retry",
         "scenario": "v2-effect-identity-business-key.test.ts",
         "result": "executed-pass",
-        "assertions": 3
+        "assertions": 4
       },
       {
         "id": "openwop.requirement.0173.effect-seam-manifest",
@@ -2535,7 +2535,7 @@
         "scenario": "v2-capability-maturity-bounded.test.ts",
         "result": "inapplicable",
         "assertions": 0,
-        "detail": "unwitnessable until the first persisted-class retirement row is due (RFC 0197 §A.3 Falsifiability): corpus 2.42.0: 0 persisted-class v2-minor retirement row(s), 0 v2→v2 migration row(s) — no retired member exists for a post-2.N event to carry. Before one does, a scenario would be vacuous, and a row that cannot fail is not a witness. This leg asserts the moment such a row falls due."
+        "detail": "unwitnessable until the first persisted-class retirement row is due (RFC 0197 §A.3 Falsifiability): corpus 2.42.2: 0 persisted-class v2-minor retirement row(s), 0 v2→v2 migration row(s) — no retired member exists for a post-2.N event to carry. Before one does, a scenario would be vacuous, and a row that cannot fail is not a witness. This leg asserts the moment such a row falls due."
       },
       {
         "id": "openwop.requirement.0198.advertised-via-discover",
@@ -2877,7 +2877,7 @@
         "id": "openwop.requirement.0204.server-health",
         "scenario": "v2-mcp-client-results.test.ts",
         "result": "executed-pass",
-        "assertions": 7
+        "assertions": 8
       },
       {
         "id": "openwop.requirement.0205.artifact-a2a-shape",
@@ -3303,8 +3303,8 @@
       }
     ]
   },
-  "witnessSha256": "b9f3806921b8cd07b55827625c9175c268ea8ac01b382464e558d269557a7879",
-  "assertionCount": 4316,
+  "witnessSha256": "d94ad6ec7baf5933ca16887686a918a6673d4c99ad313f1b3b42e10bf0615e8e",
+  "assertionCount": 4320,
   "detail": {
     "nonPass": [
       {
@@ -3460,7 +3460,7 @@
       {
         "id": "openwop.requirement.0197.retired-not-emitted",
         "result": "inapplicable",
-        "reason": "unwitnessable until the first persisted-class retirement row is due (RFC 0197 §A.3 Falsifiability): corpus 2.42.0: 0 persisted-class v2-minor retirement row(s), 0 v2→v2 migration row(s) — no retired member exists for a post-2.N event to carry. Before one does, a scenario would be vacuous, and a row that cannot fail is not a witness. This leg asserts the moment such a row falls due."
+        "reason": "unwitnessable until the first persisted-class retirement row is due (RFC 0197 §A.3 Falsifiability): corpus 2.42.2: 0 persisted-class v2-minor retirement row(s), 0 v2→v2 migration row(s) — no retired member exists for a post-2.N event to carry. Before one does, a scenario would be vacuous, and a row that cannot fail is not a witness. This leg asserts the moment such a row falls due."
       },
       {
         "id": "openwop.requirement.0200.challenge-401",
@@ -3565,7 +3565,7 @@
   "signature": {
     "alg": "ed25519",
     "keyId": "v2-reference-4",
-    "sig": "6zqUUwN1rxTCCLrywvMkm06tnxV9LLHso0aEPjHMZT3GETBR4o5TDQj3SkymlJr3g1mHruQFHs6BD0B-n8T5CA",
+    "sig": "y9Z8oD46H5dpWyMqPjhsJDmNghTy8rz0fX05ZOp1EAWhryWG6iBD_LgoqAVplMN5yo9YxVLXe4jaCEaPQK8eBA",
     "over": [
       "witnessSha256",
       "host.build",
