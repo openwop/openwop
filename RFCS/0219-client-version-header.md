@@ -4,11 +4,11 @@
 | ----------------- | --------------------------------------------------------------- |
 | **RFC**           | 0219                                                            |
 | **Title**         | a client announces the protocol version it implements in `OpenWOP-Client-Version` |
-| **Status**        | `Draft`                                                         |
+| **Status**        | `Active`                                                        |
 | **Author(s)**     | David Tufts (@davidscotttufts)                                  |
 | **Created**       | 2026-09-27                                                      |
-| **Updated**       | 2026-09-27 — filed `Draft`. Nothing binds until `Active`; the spec, OpenAPI and scenario changes in §Implementation notes land with the status flip |
-| **Affects**       | `spec/v2/core/versioning.md` §1.5 (the header, its grammar, the comparison, when a `426` is permitted) · `api/v2/openapi.yaml` via `scripts/derive-v2-api.py` (one optional request header on every operation) and the generated `spec/v2/core/headers.md` · conformance: `v2-min-client-version.test.ts` (header comment only) and one new scenario, `v2-client-version-header.test.ts` · `openwop-sdks` (each v2 SDK sends the header) · extends RFC 0172 §A.5 |
+| **Updated**       | 2026-09-27 — filed `Draft`. · 2026-09-27 — `Draft → Active`. **Comment window waived** (7-day) by the steward under `GOVERNANCE.md` §"Sole-steward operation", logged in `MAINTAINERS.md` §"Bootstrap-phase RFC waivers". RFC 0147 §A.6 does not apply: the header neither authenticates nor selects a contract, and no replay, external-effect or certification preimage covers it. The six Unresolved questions are decided by the maintainer (§Decisions). The spec, OpenAPI, `errors.json` and scenario changes in §Implementation notes land with the flip; the malformed leg's hosts are measured before the PR merges |
+| **Affects**       | `spec/v2/core/versioning.md` §1.5 (the header, its grammar, the comparison, when a `426` is permitted) · `api/v2/openapi.yaml` via `scripts/derive-v2-api.py` (one optional request header on every operation) and the generated `spec/v2/core/headers.md` · `spec/v2/errors.json` `client_version_unsupported` `details` (decision 5) and the generated `schemas/v2/error-envelope.schema.json` · conformance: `v2-min-client-version.test.ts` (decisions 4 and 5) and one new scenario, `v2-client-version-header.test.ts` · `openwop-sdks` (each v2 SDK sends the header) · extends RFC 0172 §A.5 |
 | **Compatibility** | `additive` — a new optional request header (`COMPATIBILITY.md` §2.1) and new normative requirements on previously undefined behavior (§4). Measured against all three certified v2 hosts: none refuses a request without the header; two refuse a malformed value today and would change one line each (§Compatibility) |
 | **Supersedes**    | — extends RFC 0172 §A.5; RFC 0172 stands                        |
 | **Superseded by** | —                                                               |
@@ -110,12 +110,11 @@ One optional request header, injected by `scripts/derive-v2-api.py` beside `Open
 +      required: false
 +      schema:
 +        type: string
-+        pattern: ^(0|[1-9][0-9]*)\.(0|[1-9][0-9]*)(\.(0|[1-9][0-9]*))?$
 +      description: The protocol version the client implements (versioning.md §1.5). Compared with minClientVersion on
 +        major and minor. A malformed value is treated as absent and MUST NOT produce a 400. Never selects a contract.
 ```
 
-The `pattern` states what a client sends; the description states what a host does with anything else. No schema, error code, status, event or discovery field changes. `426` is not added to each operation's `responses`, matching `406 protocol_version_unsupported`, which is declared in `versioning.md` §1.3 and `errors.json` rather than per operation.
+The schema carries no `pattern` (changed 2026-09-27, before `Active` merged): a host that validates requests against the OpenAPI document would otherwise answer `400` to a malformed value, which this RFC forbids. The grammar lives in the description and `versioning.md` §1.5. No schema, error code, status, event or discovery field changes. `426` is not added to each operation's `responses`, matching `406 protocol_version_unsupported`, which is declared in `versioning.md` §1.3 and `errors.json` rather than per operation.
 
 ### Examples
 
@@ -165,12 +164,13 @@ Host advertises `"minClientVersion": "1.0"`.
 
 **Changes at `Active`.**
 
-1. `v2-min-client-version.test.ts`: the header comment drops "not yet declared". Its `blocked` branch (a non-`2xx`, non-`426` answer) may then become a failure, since the header is declared: a host that answers `0.0.1` with some other `4xx` is refusing a declared header in an unregistered form. Decided at `Active` (Unresolved question 4).
+1. `v2-min-client-version.test.ts`: the header comment drops "not yet declared". Its `blocked` branch (a non-`2xx`, non-`426` answer) is a failure, since the header is declared: a host that answers `0.0.1` with some other `4xx` is refusing a declared header in an unregistered form (decision 4). When a refusal carries `details.minClientVersion`, it must name the advertised floor (decision 5).
 2. New `v2-client-version-header.test.ts` (with its row in `conformance/scenario-majors.json`, without which it never runs), all legs against `GET /.well-known/openwop` under `OpenWOP-Version: 2.0`:
    - **Floor-exact leg** (gated on `minClientVersion`): send `<floor>` and `<floor>.0`. Neither may be `426`.
    - **Malformed leg** (gated on `minClientVersion`): send `not-a-version`, `1`, `01.0`, `1.0-rc.1`. None may be `426` or `400`. Control: the same request with `0.0.1`. If the control is served, the host does not exercise the refusal at all, and the leg records `inapplicable` (nothing the host refuses can be compared).
    - **No-floor leg** (hosts that advertise no `minClientVersion`): send `0.0.1`. It may not be `426`. The three certified hosts all advertise a floor, so this leg records `inapplicable` on each today.
-   - **Absent leg** (gated on `minClientVersion`, with the control served `426`): the same request without the header is served.
+   - **Absent leg**: on every host, a header-less request is never `426`; on a host whose control `0.0.1` is `426`, it is also served.
+   - **Floor-exact leg**, as landed, also sends `<floor>.99` (the patch never decides) and requires each to be served, since the header's presence alone never makes a request fail (§A).
 
 ### Falsifiability — one row per normative requirement
 
@@ -193,14 +193,20 @@ Host advertises `"minClientVersion": "1.0"`.
 5. **Compare the full three-part value**, with the floor gaining an optional patch. Rejected: it changes axis 15's grammar, which three hosts advertise, and a corpus patch has no wire change to gate on.
 6. **Do nothing.** The scenario keeps using an undeclared header that `headers.md` says is not part of the protocol, a second host or SDK has to reverse-engineer the name from test code, and two hosts keep refusing clients over a formatting slip. The refusal RFC 0172 §A.5 made first-class stays without an input.
 
+## Decisions
+
+Decided by the maintainer on 2026-09-27, at the `Draft → Active` flip. Each was an Unresolved question in the `Draft`.
+
+1. **What the value names** (was question 1). The protocol (corpus) release the client implements, `<major>.<minor>[.<patch>]`, compared on major.minor. It is not an SDK package version. §A stands as written; gap G2 is closed.
+2. **`/v1/` paths** (was question 2). This RFC is silent on them. The frozen v1 text (`User-Agent`) governs `/v1/` requests during the overlap. `versioning.md` §1.5 says the header rule binds requests served under major 2. Gap G5 is closed.
+3. **`Upgrade` on a `426`** (was question 3). Transferred to `spec/v2/core/versioning.md` §1.5, which records it as an open gap: the `426` floor departs from RFC 9110 §15.5.22's `Upgrade` MUST, and no `Upgrade` value is defined yet. Gap G3 records the transfer.
+4. **The existing scenario's `blocked` branch** (was question 4). Once the header is declared, a non-`2xx`, non-`426` answer to a below-floor client is a failure in `v2-min-client-version.test.ts`, not `blocked`. Landed with the flip.
+5. **`details.minClientVersion` on the refusal** (was question 5). Registered: `client_version_unsupported` carries OPTIONAL `details: { minClientVersion }`, the floor in the axis-1 grammar. Owned by `errors.md` and `spec/v2/errors.json`; the generated `schemas/v2/error-envelope.schema.json` now binds a registered `details` schema to its own code (`if error == code then details`). The previous `oneOf` over every registered schema plus an open fallback matched a conforming body twice, so any envelope carrying registered `details` failed validation. Gap G4 records the landing.
+6. **Refusing the discovery document** (was question 6). Not exempt. A client refused at discovery learns the floor from `details.minClientVersion` (decision 5). `versioning.md` §1.5 says so.
+
 ## Unresolved questions
 
-1. **What the value names** (§A). This RFC says the corpus release the client implements, with the arguments in Alternative 2. The v1 text named an SDK's product version. Confirm before `Active`.
-2. **`/v1/` paths.** This RFC defines the header for requests served under major 2; a `/v1/…` request is governed by the frozen v1 text, which names `User-Agent`. The reference host also applies the floor on `/v1/` paths; openwop-app does not. Should §C.1's "never refuse without a well-formed value below the floor" also bind a `/v1/` path during the overlap, or stay silent there?
-3. **`Upgrade` on a `426`.** RFC 9110 §15.5.22 says a server "MUST send an `Upgrade` header field in a 426 response". None of the three hosts does, and no v2 text mentions it. `426` for an application-level version floor is RFC 0172's decision (row C5.8, "v2 decision"), not this RFC's. Either `versioning.md` §1.5 names an `Upgrade` value, or the corpus records why it departs from RFC 9110. Owned by `versioning.md` §1.5; this RFC flags it.
-4. **The existing scenario's `blocked` branch.** Once the header is declared, is a non-`2xx`, non-`426` answer to `0.0.1` a failure rather than `blocked`? (§Conformance, change 1.)
-5. **`details.minClientVersion` on the refusal.** openwop-app and the reference host put the floor in `details`; MyndHyve sends no `details`. The `errors.json` row has `details: null` (any object). Should the row register `{ minClientVersion }`, so a refused client learns the floor without a second request? That is an `errors.json` change, owned by `errors.md`.
-6. **Refusing the discovery document.** All three hosts refuse `GET /.well-known/openwop` for a below-floor client, and the scenario probes exactly that path. A client refused at discovery cannot read `minClientVersion` from it unless question 5 puts it in `details`. Should discovery be exempt from the refusal?
+None open. See §Decisions.
 
 ## Implementation notes (non-normative)
 
@@ -215,9 +221,9 @@ All of this lands at `Active`, not in the filing PR, following the Draft convent
 
 ## Acceptance criteria
 
-- [ ] `Active`: `versioning.md` §1.5 text and the OpenAPI header merged; `v2-client-version-header.test.ts` in the suite with its `scenario-majors.json` row, each leg sabotage-proved.
-- [ ] `Active`: Unresolved questions 1, 2 and 4 decided; 3, 5 and 6 decided or transferred to their owning doc.
-- [ ] `Active`: the v2 reference host and openwop-app measured on the malformed leg before it ships (gap G1, risk R1).
+- [x] `Active`: `versioning.md` §1.5 text and the OpenAPI header merged; `v2-client-version-header.test.ts` in the suite with its `scenario-majors.json` row, each leg sabotage-proved (2026-09-27, against a stub host implementing §1.5 exactly and one sabotage per leg; suite 2.42.8).
+- [x] `Active`: Unresolved questions 1, 2 and 4 decided; 3, 5 and 6 decided or transferred to their owning doc (§Decisions, 2026-09-27).
+- [x] `Active`: the v2 reference host and openwop-app measured on the malformed leg before it ships (gap G1, risk R1). Measured 2026-09-27: v2 reference (openwop-examples#97, `134f4f7e`, local run) and openwop-app (#4173, `55b7d8a3`, production revision `openwop-app-backend-00773-jq5`) both serve `abc`, `1.0abc`, `1.0.7` and a header-less request with `200`, and refuse `0.0.1` with `426 client_version_unsupported`, `details.minClientVersion: "1.0"`.
 - [ ] `Accepted`: `openwop.requirement.0219.floor-comparison`, `.absent-not-refused` and `.malformed-not-refused` `executed-pass` on a certified host bundle.
 - [ ] `Accepted`: at least one v2 SDK sends the header, with a test pinning the corpus version it sends (gap G6, risk R3).
 - [ ] CHANGELOG entry at each status flip.
