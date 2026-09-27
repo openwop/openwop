@@ -21,7 +21,7 @@ All three conditions must hold (§E, tracked against [`GOVERNANCE.md`](../../GOV
 | # | Condition | Status today |
 |---|---|---|
 | 1 | At least **three independent organizations** have a maintainer in good standing (`MAINTAINERS.md`) | **Not met — one.** A single maintainer, one organization. |
-| 2 | At least **two host implementations**, one of which is **not** the steward's reference, pass `@openwop/openwop-conformance` v1 | **Not met.** Adopters exist; the non-steward *maintainer* bar is what is unmet. |
+| 2 | At least **two host implementations**, one of which is **not** the steward's reference, pass `@openwop/openwop-conformance` for a currently supported major | **Not met in intent.** Three hosts hold certified v2 bundles (`evidence/v2-host-bundles/`), but all are run by the steward or a steward-affiliated organization. No independent host exists yet. |
 | 3 | The maintainer set agrees by **lazy consensus** that the project has outgrown maintainer-driven governance | **Not reachable.** Lazy consensus among one person is not consensus. |
 
 Condition 1 is the binding one. The other two cannot be assessed independently of it.
