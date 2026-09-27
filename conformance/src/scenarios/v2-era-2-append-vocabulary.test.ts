@@ -94,9 +94,10 @@ describe('v2-era-2-append-vocabulary (RFC 0176 §A — the writer rule)', () => 
     // seams.md §27) hands the host ONE event of a type the codemap RENAMES
     // (`agent.reasoning-delta`, stored v1 `agent.reasoning.delta`) and the host's
     // production writer chooses the stored spelling; the read below is the witness.
-    // It is an artifact event, so it moves no projection. A host that claims the
-    // seams profile but does not serve the seam records `blocked` — the gate above
-    // already made a host without the profile `inapplicable`.
+    // It is an artifact event, so it moves no projection. A host that does not
+    // serve the seam falls through to the pre-seam path below and ends in the
+    // annotated partial witness, never `blocked` (see the next comment); the gate
+    // above already made a host without the seams profile `inapplicable`.
     const appended = await appendEra2Event(runId, WITNESS_TYPE, { agentId: 'conformance', delta: 'era-2 writer-rule witness', sequence: 0 });
     // A served seam that breaks its contract is `blocked`. An UNSERVED seam is not:
     // §27 is optional and newer than this leg, so its absence falls through to the
