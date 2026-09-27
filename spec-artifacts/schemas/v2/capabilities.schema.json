@@ -7910,7 +7910,7 @@
         "export": {
           "type": "boolean",
           "default": false,
-          "description": "Host can emit an export bundle for the caller's tenant/workspace via `GET /export`."
+          "description": "Host can emit an export bundle for the caller's tenant or workspace (portability.md)."
         },
         "import": {
           "type": "boolean",
@@ -7937,7 +7937,7 @@
         "dryRun": {
           "type": "boolean",
           "default": true,
-          "description": "Import supports a no-write plan preview (`POST /import?dryRun=true`). MUST be true if `import` is true."
+          "description": "Import supports a no-write plan preview. MUST be true if `import` is true."
         }
       },
       "allOf": [

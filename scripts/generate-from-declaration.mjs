@@ -172,8 +172,20 @@ const SUPPORTED_REWRITES = [
 const rewriteSupportedProse = (d) => {
   let out = d;
   for (const [from, to] of SUPPORTED_REWRITES) out = out.split(from).join(to);
+  for (const [from, to] of V1_PATH_REWRITES) out = out.split(from).join(to);
   return out;
 };
+
+// Seeded descriptions that name a v1 route. v2 defines no protocol path for
+// portability export or import (spec/v2/core/portability.md §Routes); `GET
+// /export` and `POST /import?dryRun=true` were v1 conformance-seam spellings.
+// Keyed by the exact v1 sentence, like SUPPORTED_REWRITES above.
+const V1_PATH_REWRITES = [
+  ["Host can emit an export bundle for the caller's tenant/workspace via `GET /export`.",
+   "Host can emit an export bundle for the caller's tenant or workspace (portability.md)."],
+  ['Import supports a no-write plan preview (`POST /import?dryRun=true`). MUST be true if `import` is true.',
+   'Import supports a no-write plan preview. MUST be true if `import` is true.'],
+];
 
 // NOT the same contract as `stripSupportedFlag` in conformance/src/lib/v2-projection.ts,
 // and the two must not be merged. That one removes the retired `supported` flag and
