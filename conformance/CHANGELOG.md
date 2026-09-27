@@ -1,6 +1,6 @@
 # `@openwop/openwop-conformance` Changelog
 
-## [2.42.7] — unreleased — audit residuals
+## [2.42.7] — 2026-09-27 — audit residuals, and extension families can graduate on evidence
 
 - **`v2-sse-last-event-id-cursor` joins the core-standard floor.** It was held off until the three bundle hosts were measured. All three record it `executed-pass`: the v2 reference host on 2.42.2, MyndHyve on 2.42.0 and openwop-app on 2.42.2. Two carry `partial-witness` only on the SHOULD leg (a malformed `Last-Event-ID` is accepted, which is recorded rather than failed). No existing claim moves.
 - **The v2 capabilities schema loses a no-op conditional.** `multiAgent.executionModel`'s `tier: experimental ⇒ experimentalUntil` rule projected to `if: {properties: {}}, then: {}` once both fields were retired. The generator now drops a conditional whose branches both project to nothing. Validation is unchanged.
