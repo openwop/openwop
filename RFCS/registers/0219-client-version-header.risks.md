@@ -1,0 +1,7 @@
+# RFC 0219 — Risk register
+
+| ID | Risk | Likelihood | Impact | Score | Mitigation | Owner | Status |
+| --- | --- | --- | --- | --- | --- | --- | --- |
+| R1 | The planned malformed leg turns two certified hosts' bundles red at their first cut on the suite minor that ships it. | H | M | High | Gap G1: tell both hosts at `Active`, before the leg ships; the fix is one line each. The leg is gated on a host that refuses `0.0.1`, so a host that does not exercise the refusal is unaffected. | Steward | `transferred:rfc-0219` — the `Active` acceptance row that measures both hosts before the leg ships (gap G1). |
+| R2 | A host reads the header as an access signal (for example, enabling a beta surface for "new" clients), and a forged value unlocks it. | L | M | Low | §C.4 forbids it and §Security considerations says why; unwitnessable, recorded in the falsifiability table. | Security Architect | `accepted` — a forged value can only reach what a host wrongly gates on it, and §C.4 makes that host non-conforming; no probe can find it. |
+| R3 | An SDK sends its package version (`2.3.0`) rather than the corpus version, and a host with a `2.x` floor refuses it. | M | M | Medium | §A says what the value names; `sdk/PARITY.md` gains the row, and each SDK's test pins the value sent. | Compatibility Architect | `transferred:rfc-0219` — the `Accepted` row "at least one v2 SDK sends the header", whose SDK test pins the corpus version. |
