@@ -129,8 +129,10 @@ The maintainer set is currently a single person (`MAINTAINERS.md`). `SECURITY.md
 This document anticipates a transition from maintainer-driven governance to a working-group model once the project meets these conditions:
 
 1. At least three independent organizations have a maintainer in good standing.
-2. At least two host implementations (one of which is not the original steward's reference) pass `@openwop/openwop-conformance` v1.
+2. At least two host implementations (one of which is not the original steward's reference) pass `@openwop/openwop-conformance` for a currently supported major.
 3. The maintainer set agrees by lazy consensus that the project has outgrown maintainer-driven governance.
+
+Condition 2 names "a currently supported major" rather than a fixed version, per [RFC 0038](./RFCS/0038-working-group-charter.md) §E. That amendment was made under the two-approval waiver in §"Sole-steward operation".
 
 When those conditions are met, a working group charter will be filed as an RFC and ratified by lazy consensus among the current maintainers. The charter will define voting rules, term limits, and the succession model for the lead-maintainer role.
 
