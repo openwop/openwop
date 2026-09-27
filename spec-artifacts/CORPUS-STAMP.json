@@ -301,5 +301,5 @@
     "spec/v2/retention-floors.json": "eaf3722d95c79947af1d4269ef85117e126518c588cfcf1a2b21b97269f51624",
     "spec/v2/surface-baseline.json": "549832c2de97b7c7aed07934c1c73c2709ac226dc0cb71fc8c141010bc4928f1"
   },
-  "corpusCommit": "d07fef778717fa604869ca8ceeabd444818165fb"
+  "corpusCommit": "6b44f777d3f8f17a830e733c021191d23a6f16bf"
 }
