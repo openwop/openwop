@@ -72,9 +72,9 @@ paths:
         required: false
         schema:
           type: string
-        description: 'Standard conditional request for any resource that carries an `ETag`: the discovery document (capabilities.md
-          §1) and the run snapshot (runs.md §Snapshot). A matching value MUST yield `304 Not Modified` with no body. The 304
-          carries `OpenWOP-Version` like every response (versioning.md §1.4).'
+        description: Conditional request on the discovery document (capabilities.md §1) and the run snapshot (runs.md §Snapshot).
+          A value matching the `ETag` the host sent MUST yield `304 Not Modified` with no body. The 304 carries `OpenWOP-Version`
+          like every response (versioning.md §1.4).
       - $ref: '#/components/parameters/OpenWOPVersion'
       responses:
         '200':
@@ -408,9 +408,9 @@ paths:
         required: false
         schema:
           type: string
-        description: 'Standard conditional request for any resource that carries an `ETag`: the discovery document (capabilities.md
-          §1) and the run snapshot (runs.md §Snapshot). A matching value MUST yield `304 Not Modified` with no body. The 304
-          carries `OpenWOP-Version` like every response (versioning.md §1.4).'
+        description: Conditional request on the discovery document (capabilities.md §1) and the run snapshot (runs.md §Snapshot).
+          A value matching the `ETag` the host sent MUST yield `304 Not Modified` with no body. The 304 carries `OpenWOP-Version`
+          like every response (versioning.md §1.4).
       - $ref: '#/components/parameters/OpenWOPVersion'
       responses:
         '200':

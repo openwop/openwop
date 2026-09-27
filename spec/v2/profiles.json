@@ -4,6 +4,7 @@
   "profiles": [
     {
       "id": "openwop-discovery-core",
+      "summary": "The host publishes a valid v2 discovery document and negotiates the protocol version; it makes no claim about running workflows.",
       "predicate": {
         "families": [],
         "metadata": [
@@ -21,6 +22,7 @@
     },
     {
       "id": "openwop-core-standard",
+      "summary": "The host runs workflows to the executable floor: interrupts, replay, webhooks, idempotency and the event log. This is what an unqualified \"OpenWOP conformant\" claim means.",
       "predicate": {
         "families": [
           "interrupt",
@@ -51,6 +53,7 @@
     },
     {
       "id": "openwop-conformance-seams-v2",
+      "summary": "The host mounts the conformance test seams under /conformance/seams/ so the suite can drive seam-based scenarios; it is a testing surface, not a production feature.",
       "predicate": {
         "families": [],
         "metadata": [
