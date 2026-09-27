@@ -5534,7 +5534,7 @@
     {
       "id": "openwop.it.audit-log-integrity.host-that-claims-the-profile-advertises-required-capability-fields",
       "file": "audit-log-integrity.test.ts",
-      "line": 69,
+      "line": 60,
       "title": "host that claims the profile advertises required capability fields",
       "explicitId": "openwop.it.audit-log-integrity.host-that-claims-the-profile-advertises-required-capability-fields",
       "citations": [
@@ -5551,7 +5551,7 @@
     {
       "id": "openwop.it.audit-log-integrity.get-v1-audit-verify-on-a-recent-range-reports-chainvalid-true",
       "file": "audit-log-integrity.test.ts",
-      "line": 92,
+      "line": 83,
       "title": "GET /v1/audit/verify on a recent range reports chainValid: true",
       "explicitId": "openwop.it.audit-log-integrity.get-v1-audit-verify-on-a-recent-range-reports-chainvalid-true",
       "citations": [
@@ -11541,7 +11541,7 @@
     {
       "id": "openwop.it.envelope-completion-distinguishes-truncation.capabilities-envelopes-reliability-completion-when-present-conforms-to-rfc-0033",
       "file": "envelope-completion-distinguishes-truncation.test.ts",
-      "line": 103,
+      "line": 104,
       "title": "capabilities.envelopes.reliability.completion (when present) conforms to RFC 0033 §E",
       "explicitId": "openwop.it.envelope-completion-distinguishes-truncation.capabilities-envelopes-reliability-completion-when-present-conforms-to-rfc-0033",
       "citations": [
@@ -11558,7 +11558,7 @@
     {
       "id": "openwop.it.envelope-completion-distinguishes-truncation.truncation-emits-envelope-truncated-envelope-retry-attempted-with-reason-truncat",
       "file": "envelope-completion-distinguishes-truncation.test.ts",
-      "line": 126,
+      "line": 127,
       "title": "truncation: emits envelope.truncated + envelope.retry.attempted with reason: \"truncation\"",
       "explicitId": "openwop.it.envelope-completion-distinguishes-truncation.truncation-emits-envelope-truncated-envelope-retry-attempted-with-reason-truncat",
       "citations": [
@@ -11579,7 +11579,7 @@
     {
       "id": "openwop.it.envelope-completion-distinguishes-truncation.truncation-retry-budget-strictly-greater-than-initial-rfc-0033-b-truncationbudge",
       "file": "envelope-completion-distinguishes-truncation.test.ts",
-      "line": 151,
+      "line": 152,
       "title": "truncation: retry budget strictly greater than initial (RFC 0033 §B truncationBudgetMultiplier)",
       "explicitId": "openwop.it.envelope-completion-distinguishes-truncation.truncation-retry-budget-strictly-greater-than-initial-rfc-0033-b-truncationbudge",
       "citations": [
@@ -11592,7 +11592,7 @@
     {
       "id": "openwop.it.envelope-completion-distinguishes-truncation.schema-violation-no-envelope-truncated-envelope-retry-attempted-reason-schema-vi",
       "file": "envelope-completion-distinguishes-truncation.test.ts",
-      "line": 175,
+      "line": 176,
       "title": "schema-violation: NO envelope.truncated; envelope.retry.attempted reason ∈ {schema-violation, parse-error}",
       "explicitId": "openwop.it.envelope-completion-distinguishes-truncation.schema-violation-no-envelope-truncated-envelope-retry-attempted-reason-schema-vi",
       "citations": [
@@ -11609,13 +11609,18 @@
     {
       "id": "openwop.it.envelope-completion-distinguishes-truncation.schema-violation-retry-budget-unchanged-from-initial-no-budget-multiplication-on",
       "file": "envelope-completion-distinguishes-truncation.test.ts",
-      "line": 205,
+      "line": 206,
       "title": "schema-violation: retry budget UNCHANGED from initial (no budget multiplication on this path)",
       "explicitId": "openwop.it.envelope-completion-distinguishes-truncation.schema-violation-retry-budget-unchanged-from-initial-no-budget-multiplication-on",
       "citations": [
         {
           "section": "RFCS/0033-envelope-completion-contract.md §C",
           "requirement": "schema-violation retry MUST NOT multiply maxTokens — budget stays at the original value (host default)"
+        },
+        {
+          "section": "RFCS/0033-envelope-completion-contract.md §C",
+          "requirement": null,
+          "interpolated": true
         }
       ]
     },
