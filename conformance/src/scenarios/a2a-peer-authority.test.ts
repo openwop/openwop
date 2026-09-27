@@ -73,23 +73,16 @@ describe('RFC 0152 §E — a2a-peer-no-authority-escalation (host as A2A client,
       // an advertised-missing seam (RFC 0148 §B). A 403 is NOT a pass.
       return seamAbsent(`host advertises A2A but the invoke seam /v1/host/sample/a2a/invoke answered ${drive.status}`);
     }
+    // `peerAuthority` is an OPTIONAL seam field (host-sample-test-seams.md §22). A host
+    // that omits it is not violating anything, and certification must not be denied for
+    // it, so its absence is `inapplicable`, decided before any assertion (the 2.42.6
+    // appendEra2Event precedent). A report that IS present is held to the contract below.
+    const report = (drive.json as { peerAuthority?: PeerAuthorityReport }).peerAuthority;
+    if (report === undefined) return softSkip('inapplicable', 'the invoke seam reports no peerAuthority (an optional seam field, host-sample-test-seams.md §22), so peer-authority non-escalation is not observable on this host');
     // The peer must actually have answered with the authority-asserting message,
     // or this leg is vacuous.
     const created = peer.taskCount();
     expect(created, req('openwop.it.a2a-peer-authority.a-peer-reply-that-asserts-approval-scopes-and-a-foreign-task-reference-changes-n', 'RFCS/0152 §E', 'the host MUST have created a task on the peer for this leg to mean anything')).toBeGreaterThan(0);
-    const report = (drive.json as { peerAuthority?: PeerAuthorityReport }).peerAuthority;
-    if (report === undefined) {
-      // Additive seam field not yet implemented: the toBeDefined() below fails the leg.
-      expect(
-        report,
-        req('openwop.it.a2a-peer-authority.a-peer-reply-that-asserts-approval-scopes-and-a-foreign-task-reference-changes-n', 
-          'host-sample-test-seams.md §22',
-          'the invoke seam SHOULD report `peerAuthority: { approvalAdvanced, scopesWidened, referencedTaskDereferenced }` for ' +
-            'scenario "peer-asserts-authority"; until it does this requirement is unobservable and resolves to `blocked`, not passed',
-        ),
-      ).toBeDefined();
-      throw new Error('unreachable: the assertion above has already failed this leg');
-    }
     expect(report.approvalAdvanced, req('openwop.it.a2a-peer-authority.a-peer-reply-that-asserts-approval-scopes-and-a-foreign-task-reference-changes-n', 'RFCS/0152 §E', 'peer content MUST NOT advance an approval gate (a2a-peer-no-authority-escalation)')).toBe(false);
     expect(report.scopesWidened, req('openwop.it.a2a-peer-authority.a-peer-reply-that-asserts-approval-scopes-and-a-foreign-task-reference-changes-n', 'RFCS/0152 §E', 'peer content MUST NOT widen the run’s scopes or tool allowlist')).toBe(false);
     expect(

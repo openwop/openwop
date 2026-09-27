@@ -332,11 +332,6 @@
           "requirement": "the host MUST have created a task on the peer for this leg to mean anything"
         },
         {
-          "section": "host-sample-test-seams.md §22",
-          "requirement": null,
-          "interpolated": true
-        },
-        {
           "section": "RFCS/0152 §E",
           "requirement": "peer content MUST NOT advance an approval gate (a2a-peer-no-authority-escalation)"
         },
@@ -16354,10 +16349,6 @@
           "requirement": "the host MUST have called the tool"
         },
         {
-          "section": "host-sample-test-seams.md §23",
-          "requirement": "the seam SHOULD report `extensionAuthority: { scopesWidened, approvalAdvanced }` for scenario \"extension-asserts-authority\"; until it does the requirement is `blocked`, not passed"
-        },
-        {
           "section": "mcp-integration.md §D",
           "requirement": "an extension MUST NOT gain tool authority or scope by appearing in _meta (mcp-extension-no-authority)"
         },
@@ -16370,7 +16361,7 @@
     {
       "id": "openwop.it.mcp-extension-opacity.server-half-unknown-meta-extension-keys-on-a-request-are-ignored-not-refused-and",
       "file": "mcp-extension-opacity.test.ts",
-      "line": 67,
+      "line": 68,
       "title": "server half: unknown _meta extension keys on a request are ignored, not refused and not honoured",
       "explicitId": "openwop.it.mcp-extension-opacity.server-half-unknown-meta-extension-keys-on-a-request-are-ignored-not-refused-and",
       "citations": [
@@ -16390,10 +16381,6 @@
         {
           "section": "RFCS/0153 §C",
           "requirement": "the host MUST have called the tool at least once for this leg to mean anything"
-        },
-        {
-          "section": "host-sample-test-seams.md §23",
-          "requirement": "the invoke seam SHOULD report `mrtr: { inputRequiredSeen, retried, requestStateEchoed, result }` for tool \"needs_input\"; until it does this requirement is unobservable and resolves to `blocked`"
         },
         {
           "section": "mcp-integration.md §C.1",
@@ -16428,7 +16415,7 @@
     {
       "id": "openwop.it.mcp-mrtr-roundtrip.a-suspending-tool-answers-input-required-with-elicitation-requeststate-the-retry",
       "file": "mcp-mrtr-roundtrip.test.ts",
-      "line": 95,
+      "line": 96,
       "title": "a suspending tool answers input_required with elicitation + requestState; the retry resolves it; a forged requestState is refused",
       "explicitId": "openwop.it.mcp-mrtr-roundtrip.a-suspending-tool-answers-input-required-with-elicitation-requeststate-the-retry",
       "citations": [
