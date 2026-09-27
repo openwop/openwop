@@ -173,7 +173,7 @@ This repository is the canonical source for the **protocol contract** — the sp
 - [`docs/IMPLEMENTATION-CERTIFICATION.md`](./docs/IMPLEMENTATION-CERTIFICATION.md) — how a host author publishes a conformance claim that third parties can audit + reproduce + pin to a commit.
 - [`docs/PRODUCTION-RUNBOOK.md`](./docs/PRODUCTION-RUNBOOK.md) — operator playbook for booting an OpenWOP host that honors `openwop-production` per RFC 0009.
 - [`docs/SECURITY-OPERATOR-GUIDE.md`](./docs/SECURITY-OPERATOR-GUIDE.md) — operator-side configuration for auth profiles, BYOK redaction, webhook signing, audit-log integrity, mTLS, MCP trust boundary, and node-pack supply-chain.
-- [`docs/PACK-AUTHOR-QUICKSTART.md`](./docs/PACK-AUTHOR-QUICKSTART.md) — end-to-end path for third-party pack authors: skeleton → signing key → tarball + signature + SBOM → schema validation → local-host smoke → publish PR → lifecycle (versioning, deprecate, yank, key rotation).
+- [`docs/PACK-AUTHOR-QUICKSTART.md`](./docs/PACK-AUTHOR-QUICKSTART.md) — end-to-end path for third-party pack authors: v2 manifest → signing key → build check → stage the registry's v2 tree (tarball + signature + SBOM + index) → verify → publish PR → lifecycle (versioning, deprecate, yank, key rotation).
 - [`docs/integrations/durable-runtimes.md`](./docs/integrations/durable-runtimes.md) — implementation guide for hosts built on Temporal / Restate / DBOS / Inngest.
 - [`docs/integrations/serverless-workflow-and-bpmn.md`](./docs/integrations/serverless-workflow-and-bpmn.md) — bridging OpenWOP to / from CNCF Serverless Workflow and OMG BPMN. Honest about what round-trips and what stays host-specific.
 - [`docs/integrations/mcp.md`](./docs/integrations/mcp.md) — informative correspondence notes between today's OpenWOP surfaces and nearby MCP ones: `ToolDescriptor` safety fields beside `ToolAnnotations`, card/form fields beside elicitation `requestedSchema`, front-end plugins beside MCP Apps, `exportFormats` beside IANA media types, and the prompt library beside `prompts/list`. Defines no mapping.
@@ -196,8 +196,8 @@ history belongs in
 
 New to OpenWOP? Two paths:
 
-- **[`QUICKSTART-10MIN.md`](./QUICKSTART-10MIN.md)** — fastest possible "what is OpenWOP and how do I run one?" Boots the in-memory reference host on your laptop, runs a workflow via curl + SDK + SSE. No vendor SDK, no managed-service setup. Just Node 20+ and a clone of this repo.
-- **[`QUICKSTART.md`](./QUICKSTART.md)** — end-to-end walkthrough against any OpenWOP-compliant host: auth + create run + read snapshot, SSE + webhooks, fork + replay, node packs, conformance.
+- **[`QUICKSTART-10MIN.md`](./QUICKSTART-10MIN.md)** — fastest possible "what is OpenWOP and how do I run one?" Boots the v2 reference host on your laptop, runs a workflow via curl + SDK + SSE on the v2 wire. No vendor SDK, no managed-service setup. Just Node 20+ and a clone of [`openwop-examples`](https://github.com/openwop/openwop-examples).
+- **[`QUICKSTART.md`](./QUICKSTART.md)** — end-to-end v2 walkthrough against any OpenWOP v2 host: discovery + auth + create run + read snapshot, SSE + poll + webhooks, fork + replay, node packs, conformance.
 
 For the full workflow-engine demo app, use the **OpenWOP CLI** (`@openwop/cli`), which lives in its own repo, [`openwop/openwop-cli`](https://github.com/openwop/openwop-cli):
 
