@@ -171,8 +171,13 @@ describe('RFC 0215 §B — unregistering stops the attempts (gated on webhooks)'
       targetLate.length,
       req(ID, DOC, `after unregisterWebhook answers 204 the host MUST NOT start another attempt for that subscription, including retries already scheduled — ${detail}`),
     ).toBe(0);
+    // unfailable-leg audit wave 2, 2026-09-27: a plain softSkip after the
+    // `targetLate === 0` assert recorded a partial-witness `executed-pass`, so a
+    // host that KEPT delivering to an unregistered subscription — but whose
+    // retries fell outside the window — certified. Without a late control
+    // attempt the target's silence proves nothing: `blocked`.
     if (controlLate.length === 0) {
-      return softSkip('skipped', `partial-witness: the control subscription was not retried after the 204 + ${GRACE_MS}ms within ${windowMs}ms either, so the target's silence shows nothing — the schedule finished inside the grace or runs past the window (raise OPENWOP_WEBHOOK_RETRY_WAIT_MS above the host's backoff sum) — ${detail}`);
+      return blockedDespiteAssertions(`the control subscription was not retried after the 204 + ${GRACE_MS}ms within ${windowMs}ms either, so the target's silence shows nothing — the schedule finished inside the grace or runs past the window (raise OPENWOP_WEBHOOK_RETRY_WAIT_MS above the host's backoff sum) — ${detail}`);
     }
   }, CAP_MS * 2 + 90_000);
 });

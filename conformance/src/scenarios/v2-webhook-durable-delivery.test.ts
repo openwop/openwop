@@ -459,6 +459,14 @@ describe('RFC 0173 §B — webhook-durable-delivery (gated on webhooks)', () => 
       ).toBeLessThanOrEqual(policy.maxAttempts);
     }
     if (inSink === null) {
+      // partial-witness-ok: the retry half of §Durability is observed above
+      // (retried, and capped at maxAttempts). The sink half has no read on a
+      // host without the webhooks.deadLetter facet (RFC 0188 §A.5 makes the read
+      // a 404, not an obligation), so it is unwitnessable here BY DESIGN. It is
+      // not a harness gap that `blocked` would honestly name: a bundle-fatal
+      // `blocked` would deny certification to every conforming host that
+      // declines the optional read. Reviewed in the unfailable-leg audit wave 2
+      // (2026-09-27); the acceptance predicate still refuses this row.
       return softSkip('inapplicable', 'host does not advertise the webhooks.deadLetter facet — RFC 0188 §A.5 makes the read a 404 rather than an obligation, so the sink half of §Durability is unwitnessable here (the retry half above passed)');
     }
     expect(

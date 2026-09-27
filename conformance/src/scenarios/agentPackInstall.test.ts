@@ -16,6 +16,11 @@
  */
 
 import { describe, it, expect } from 'vitest';
+import { readFileSync } from 'node:fs';
+import { join } from 'node:path';
+import Ajv2020 from 'ajv/dist/2020.js';
+import addFormats from 'ajv-formats';
+import { SCHEMAS_DIR } from '../lib/paths.js';
 import { driver } from '../lib/driver.js';
 import { isFixtureAdvertised } from '../lib/fixtures.js';
 import { isAgentSupported } from '../lib/multi-agent-capabilities.js';
@@ -24,6 +29,26 @@ import { req } from '../lib/requirement-ids.js';
 
 const FIXTURE = 'conformance-agent-pack-install';
 const SKIP = !isAgentSupported() || !isFixtureAdvertised(FIXTURE);
+
+/**
+ * The AgentManifest validator (major 1 — this file is `[1]` in
+ * scenario-majors.json). Peers are pre-loaded exactly as `fixtures-valid`
+ * does: agent-manifest → prompt-ref → prompt-kind, under both the canonical
+ * `$id` and the relative file name.
+ */
+function agentManifestValidator(): (doc: unknown) => { ok: boolean; errors: string } {
+  const load = (n: string): Record<string, unknown> => JSON.parse(readFileSync(join(SCHEMAS_DIR, n), 'utf8')) as Record<string, unknown>;
+  const ajv = new Ajv2020({ allErrors: true, strict: false });
+  addFormats(ajv);
+  const promptRef = load('prompt-ref.schema.json');
+  const promptKind = load('prompt-kind.schema.json');
+  ajv.addSchema(promptRef, 'prompt-ref.schema.json');
+  ajv.addSchema(promptRef, './prompt-ref.schema.json');
+  ajv.addSchema(promptKind, 'prompt-kind.schema.json');
+  ajv.addSchema(promptKind, './prompt-kind.schema.json');
+  const validate = ajv.compile(load('agent-manifest.schema.json'));
+  return (doc: unknown) => ({ ok: validate(doc) as boolean, errors: ajv.errorsText(validate.errors, { separator: '; ' }) });
+}
 
 describe.skipIf(SKIP)('agentPackInstall: pack agents[] entries surface as AgentManifest', () => {
   it('host exposes installed agent manifests with required AgentManifest fields', async () => {
@@ -45,9 +70,16 @@ describe.skipIf(SKIP)('agentPackInstall: pack agents[] entries surface as AgentM
     const allAgents = packs.flatMap((p) => p.agents ?? []);
 
     expect(allAgents.length).toBeGreaterThan(0);
+    // unfailable-leg audit wave 2, 2026-09-27: only a >=3-char string agentId
+    // was checked, so a host listing `agents: [{ agentId: 'abc' }]` passed a
+    // leg named "required AgentManifest fields". Each surfaced agents[] entry
+    // now validates against schemas/agent-manifest.schema.json.
+    const validate = agentManifestValidator();
     for (const a of allAgents) {
       expect(typeof a.agentId).toBe('string');
       expect(a.agentId!.length).toBeGreaterThanOrEqual(3);
+      const v = validate(a);
+      expect(v.ok, req('openwop.it.agentPackInstall.host-exposes-installed-agent-manifests-with-required-agentmanifest-fields', 'schemas/agent-manifest.schema.json', `pack agents[] entry ${String(a.agentId)} MUST validate as an AgentManifest (${v.errors})`)).toBe(true);
     }
   });
 });

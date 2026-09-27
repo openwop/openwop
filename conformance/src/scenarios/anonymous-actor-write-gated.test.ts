@@ -24,7 +24,7 @@ import { describe, it, expect } from 'vitest';
 import { behaviorGate } from '../lib/behavior-gate.js';
 import { readAnonymousActorCap, anonDispatch } from '../lib/anonymousActor.js';
 import { req } from '../lib/requirement-ids.js';
-import { softSkip } from '../lib/soft-skip.js';
+import { softSkip, blockedDespiteAssertions } from '../lib/soft-skip.js';
 
 const PROFILE = 'openwop-anonymous-actor';
 
@@ -74,11 +74,17 @@ describe('anonymous-actor-write-gated (RFC 0132 §C.3)', () => {
       decided?.allowed === false || res.status === 403 || res.status === 429,
       req('openwop.it.anonymous-actor-write-gated.an-anon-write-with-no-resolvable-control-is-denied-with-a-machine-reason', 'SECURITY anon-actor-write-egress-gated', 'an anon write with no resolvable control MUST be denied'),
     ).toBe(true);
-    if (decided && decided.allowed === false) {
-      expect(
-        decided.reason,
-        req('openwop.it.anonymous-actor-write-gated.an-anon-write-with-no-resolvable-control-is-denied-with-a-machine-reason', 'RFC 0132 §C.3', 'an ungated anon write denial carries a machine reason'),
-      ).toBe('anon-write-ungated');
+    // unfailable-leg audit wave 2, 2026-09-27: when the seam surfaced no
+    // `authorizationDecided` denial (a bare 403/429), the machine-reason check
+    // was silently skipped and the leg passed — a host whose denial carried NO
+    // reason (or the wrong one) passed "denied with a machine reason". The
+    // reason is now either asserted or the leg records `blocked`.
+    if (!decided || decided.allowed !== false) {
+      return blockedDespiteAssertions('the denial surfaced no authorizationDecided { allowed: false } payload, so the machine reason (anon-write-ungated) was not observed');
     }
+    expect(
+      decided.reason,
+      req('openwop.it.anonymous-actor-write-gated.an-anon-write-with-no-resolvable-control-is-denied-with-a-machine-reason', 'RFC 0132 §C.3', 'an ungated anon write denial carries a machine reason'),
+    ).toBe('anon-write-ungated');
   });
 });

@@ -208,7 +208,14 @@ describe('pack-registry: read-endpoint shape contracts', () => {
       'node-packs.md §"GET /v1/packs/{name}/-/{version}.sig"',
       '404 response MUST carry a string `error` field — `signature_not_available` is the canonical code',
     )).toBe('string');
-    expect((body?.error as string).length).toBeGreaterThan(0);
+    // unfailable-leg audit wave 2, 2026-09-27: any non-empty `error` string
+    // (e.g. `not_found`) previously passed; node-packs.md names
+    // `404 signature_not_available` for all four cases (missing / yanked /
+    // unsigned / storage-unwired), intentionally indistinguishable.
+    expect(body?.error, req('openwop.it.pack-registry.get-v1-packs-name-version-sig-returns-404-signature-not-available-for-nonexisten', 
+      'node-packs.md §"GET /v1/packs/{name}/-/{version}.sig"',
+      'nonexistent (name, version) MUST return 404 `signature_not_available`',
+    )).toBe('signature_not_available');
   });
 
   it('GET /v1/packs/{bad-name}/-/{version}.json returns 400 invalid_pack_name', async () => {

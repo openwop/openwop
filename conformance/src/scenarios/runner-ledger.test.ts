@@ -270,11 +270,16 @@ describe('RFC 0148 §A (S6) — the live sink, when this run was given one', () 
   it('files that finished before this one appear in the ledger file with an assertion count', () => {
     const path = process.env['OPENWOP_LEDGER_PATH'];
     if (!path || !existsSync(path)) return softSkip('blocked', 'precondition not met — `!path || !existsSync(path)` returned early (not a --certify run; nothing to inspect) (seam, prior step, or fixture unavailable)'); // not a --certify run; nothing to inspect
-    const entries = readLedgerFile(path);
     // At least the in-memory ledger of THIS worker has file-level entries for
     // earlier files (setup.ts afterAll), and each carries assertionCount.
+    //
+    // unfailable-leg audit wave 2, 2026-09-27: the leg ended with
+    // `expect(entries.length).toBeGreaterThanOrEqual(0)` — a tautology (and a
+    // bare expect with no req()) that made the leg an `executed-pass` even when
+    // `fileEntries` was empty and the loop asserted nothing. Removed; an empty
+    // set now says so instead of passing vacuously.
     const fileEntries = snapshot().filter((e) => e.requirementId.startsWith('openwop.scenario.') || e.requirementId.startsWith('openwop.floor.'));
+    if (fileEntries.length === 0) return softSkip('inapplicable', 'no file-level ledger entries recorded in this worker before this leg — nothing to inspect');
     for (const e of fileEntries) expect(typeof e.assertionCount, req('openwop.it.runner-ledger.files-that-finished-before-this-one-appear-in-the-ledger-file-with-an-assertion', 'RFC 0148 §A', 'files that finished before this one appear in the ledger file with an assertion count')).toBe('number');
-    expect(entries.length).toBeGreaterThanOrEqual(0);
   });
 });

@@ -21,6 +21,30 @@ import { behaviorGate } from '../lib/behavior-gate.js';
 import { capabilityFamily } from '../lib/discovery-capabilities.js';
 import { req } from '../lib/requirement-ids.js';
 import { softSkip } from '../lib/soft-skip.js';
+import Ajv2020 from 'ajv/dist/2020.js';
+import { readFileSync } from 'node:fs';
+import { join } from 'node:path';
+import { SCHEMAS_DIR } from '../lib/paths.js';
+
+/**
+ * audit-verify-result.schema.json with every `additionalProperties: false`
+ * relaxed: the REQUIRED members and their types are enforced, extra members
+ * are not (the reference postgres host emits `checkpointsValid` and a
+ * per-checkpoint `verified` bit; convicting extras is a separate decision).
+ */
+function relaxAdditional(node: unknown): unknown {
+  if (Array.isArray(node)) return node.map(relaxAdditional);
+  if (node === null || typeof node !== 'object') return node;
+  const out: Record<string, unknown> = {};
+  for (const [k, v] of Object.entries(node as Record<string, unknown>)) {
+    if (k === 'additionalProperties' && v === false) continue;
+    out[k] = relaxAdditional(v);
+  }
+  return out;
+}
+const VERIFY_RESULT_SCHEMA = relaxAdditional(
+  JSON.parse(readFileSync(join(SCHEMAS_DIR, 'audit-verify-result.schema.json'), 'utf8')),
+) as Record<string, unknown>;
 
 interface AuditIntegrityCaps {
   hashChain?: boolean;
@@ -89,6 +113,19 @@ describe('audit-log-integrity: verify endpoint returns chainValid', () => {
       checkpoints?: Array<{ checkpoint?: string; merkleRoot?: string; signature?: string }>;
       anomalies?: unknown[];
     };
+
+    // unfailable-leg audit wave 2, 2026-09-27: a body that OMITTED
+    // `checkpoints` (or sent malformed checkpoint objects) passed — the
+    // signature check below ran only `if (Array.isArray(body.checkpoints) &&
+    // length > 0)`. The body is now validated against
+    // audit-verify-result.schema.json (checkpoints[] + anomalies[] required;
+    // each checkpoint needs checkpoint/atSequence/merkleRoot/signature).
+    const validate = new Ajv2020({ strict: false, allErrors: true }).compile(VERIFY_RESULT_SCHEMA);
+    const shapeOk = validate(body);
+    expect(shapeOk, req('openwop.it.audit-log-integrity.get-v1-audit-verify-on-a-recent-range-reports-chainvalid-true',
+      'audit-verify-result.schema.json',
+      `GET /v1/audit/verify MUST return the AuditVerifyResult shape: ${JSON.stringify(validate.errors ?? [])}`,
+    )).toBe(true);
 
     expect(body.chainValid, req('openwop.it.audit-log-integrity.get-v1-audit-verify-on-a-recent-range-reports-chainvalid-true', 
       'auth-profiles.md §"Audit-log integrity"',

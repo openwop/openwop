@@ -12,7 +12,10 @@
  * `schemas/v2/run-diff-response.schema.json` and echo both ids in `a` / `b`
  * (a host answering `{}` to any pair fails there); and, when
  * `conformance-failure` is advertised, a noop-vs-failure diff MUST diverge.
- * Without that fixture the divergence control records `inapplicable`.
+ * Without that fixture the divergence control cannot run and the leg records
+ * `blocked` (`blockedDespiteAssertions`): a host answering a constant
+ * `{a, b, divergedAtSeq: null, eventDiffs: []}` to every pair would otherwise
+ * pass on the identical-logs assertions alone.
  *
  * @see spec/v2/core/runs.md §Diff and ancestry
  * @see schemas/v2/run-diff-response.schema.json
@@ -23,7 +26,7 @@ import { driver, type OpenWOPResponse } from '../lib/driver.js';
 import { v2Discovery, v2Validator } from '../lib/v2.js';
 import { isFixtureAdvertised } from '../lib/fixtures.js';
 import { readErrorCode } from '../lib/error-envelope.js';
-import { softSkip } from '../lib/soft-skip.js';
+import { softSkip, blockedDespiteAssertions } from '../lib/soft-skip.js';
 import { req } from '../lib/requirement-ids.js';
 
 const ID = 'openwop.requirement.0170.run-diff-identical';
@@ -65,10 +68,15 @@ describe('v2 run-diff-identical (runs.md §Diff and ancestry)', () => {
     expect([d.a, d.b], req(ID, DOC, 'the response MUST name the two runs it compared')).toEqual([a.runId, b.runId]);
     expect(d.divergedAtSeq, req(ID, DOC, `identical logs MUST yield divergedAtSeq: null (got ${String(d.divergedAtSeq)}) — eventId, runId, timestamp and other run-scoped fields MUST be excluded from the comparison`)).toBeNull();
     expect(d.eventDiffs, req(ID, DOC, 'identical logs MUST yield empty eventDiffs')).toEqual([]);
-    if (!isFixtureAdvertised(FAILURE)) return softSkip('inapplicable', `${FAILURE} fixture not advertised — the divergence control (a noop-vs-failure diff MUST diverge) cannot run`);
-    const f = await createSettled(FAILURE); if ('reason' in f) return softSkip('blocked', f.reason);
+    // unfailable-leg audit wave 2, 2026-09-27: without the divergence control,
+    // these returns were plain softSkips AFTER the identical-logs asserts, so a
+    // host answering a constant `divergedAtSeq: null, eventDiffs: []` to every
+    // pair recorded a (partial-witness) pass. The identical-logs result is only
+    // evidence once a different pair is seen to diverge — else `blocked`.
+    if (!isFixtureAdvertised(FAILURE)) return blockedDespiteAssertions(`${FAILURE} fixture not advertised — the divergence control (a noop-vs-failure diff MUST diverge) cannot run, so the identical-logs result is not evidence`);
+    const f = await createSettled(FAILURE); if ('reason' in f) return blockedDespiteAssertions(f.reason);
     const dv = await http(() => driver.get(`/runs/${enc(a.runId)}:diff?against=${enc(f.runId)}`));
-    if (dv === null || dv.status !== 200) return softSkip('blocked', `the divergence control diff answered ${dv?.status ?? 'no response'}`);
+    if (dv === null || dv.status !== 200) return blockedDespiteAssertions(`the divergence control diff answered ${dv?.status ?? 'no response'}`);
     const x = dv.json as Diff;
     expect(typeof x.divergedAtSeq === 'number' && Array.isArray(x.eventDiffs) && x.eventDiffs.length > 0, req(ID, DOC, `a noop log and a failure log MUST diverge (divergedAtSeq ${String(x.divergedAtSeq)}, ${Array.isArray(x.eventDiffs) ? x.eventDiffs.length : 0} diff(s)) — the identical-logs pass above is only evidence if a different pair does not also read identical`)).toBe(true);
   }, 45_000);

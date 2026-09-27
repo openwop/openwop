@@ -30,9 +30,8 @@
 
 import { describe, it, expect } from 'vitest';
 import { behaviorGate } from '../lib/behavior-gate.js';
-import { readOrgChartCap, getOrgChart, getDepartmentView } from '../lib/agentOrgChart.js';
+import { readOrgChartCap, getOrgChartResponse, getDepartmentView, type OrgChart } from '../lib/agentOrgChart.js';
 import { req } from '../lib/requirement-ids.js';
-import { softSkip } from '../lib/soft-skip.js';
 
 const ROSTER_ID_RE = /^host:[a-z0-9][a-z0-9._-]*$/;
 
@@ -48,8 +47,22 @@ describe('agent-org-chart-scoping (RFC 0087 §A/§C/§D)', () => {
     ).toBe(true);
 
     // ---- Leg 1: normative read (black-box) -------------------------------
-    const chart = await getOrgChart();
-    if (chart === null) return softSkip('inapplicable', 'capability or profile not advertised by this host — gate `chart === null` returned early (advertised but read not served yet — soft-skip)'); // advertised but read not served yet — soft-skip
+    // unfailable-leg audit wave 2, 2026-09-27: a host that ADVERTISES
+    // agents.orgChart but 404s the normative read (or answers 500/403, which
+    // getOrgChart used to fold into an empty `{}` chart) previously passed —
+    // the 404 as `inapplicable`, the error status as a vacuous empty tree.
+    // The behaviorGate above already established the advertisement, so the
+    // read MUST now be served: any non-200 fails here.
+    const chartRes = await getOrgChartResponse();
+    expect(
+      chartRes.status,
+      req('openwop.it.agent-org-chart-scoping.serves-the-normative-org-chart-responsibility-roll-up-tree-shaped-and-tenant-sco', 'agent-org-chart.md §A / §E', 'a host advertising agents.orgChart.supported MUST serve GET /v1/agents/org-chart with 200'),
+    ).toBe(200);
+    expect(
+      chartRes.chart !== undefined,
+      req('openwop.it.agent-org-chart-scoping.serves-the-normative-org-chart-responsibility-roll-up-tree-shaped-and-tenant-sco', 'agent-org-chart.schema.json', 'GET /v1/agents/org-chart MUST return a JSON org-chart object'),
+    ).toBe(true);
+    const chart: OrgChart = chartRes.chart ?? {};
     const departments = chart.departments ?? [];
     const members = chart.members ?? [];
     expect(
@@ -100,6 +113,16 @@ describe('agent-org-chart-scoping (RFC 0087 §A/§C/§D)', () => {
     const probeDeptId = departments[0]?.departmentId;
     if (typeof probeDeptId === 'string') {
       const { status, view } = await getDepartmentView(probeDeptId);
+      // unfailable-leg audit wave 2, 2026-09-27: a host advertising
+      // `responsibilityView: true` whose GET /v1/agents/org-chart/{id} errored
+      // or 404'd for a department IN ITS OWN chart previously skipped the whole
+      // roll-up leg silently. The advertised view MUST be served.
+      if (cap?.responsibilityView === true) {
+        expect(
+          status,
+          req('openwop.it.agent-org-chart-scoping.serves-the-normative-org-chart-responsibility-roll-up-tree-shaped-and-tenant-sco', 'agent-org-chart.md §D / §E', 'a host advertising agents.orgChart.responsibilityView MUST serve GET /v1/agents/org-chart/{departmentId} with 200 for a department in the caller\'s chart'),
+        ).toBe(200);
+      }
       if (status === 200 && view) {
         expect(
           Array.isArray(view.responsibilities),

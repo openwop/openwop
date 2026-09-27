@@ -88,7 +88,7 @@
 
 import { afterEach, describe, expect, it } from 'vitest';
 import { createServer, type IncomingMessage, type Server, type ServerResponse } from 'node:http';
-import { softSkip } from '../lib/soft-skip.js';
+import { softSkip, blockedDespiteAssertions } from '../lib/soft-skip.js';
 import { driver } from '../lib/driver.js';
 import { forkDeclined } from '../lib/fork-availability.js';
 import { discoveryFamilies, readCapabilityFamily } from '../lib/discovery-capabilities.js';
@@ -313,7 +313,7 @@ describe('replay-fanout-suppression: a replay fork MUST NOT fan out re-emitted e
     }
     expect(replay.status, req('openwop.it.replay-fanout-suppression.delivers-for-a-live-run-suppresses-for-a-replay-fork-and-delivers-again-for-a-br', 'webhooks.md §"Register"', 'replay fork should be accepted')).toBe(201);
     const replayRunId = (replay.json as { runId: string }).runId;
-    await pollUntilTerminal(replayRunId, { timeoutMs: FORK_POLL_MS });
+    const replayTerminal = await pollUntilTerminal(replayRunId, { timeoutMs: FORK_POLL_MS });
     await quietWindow(SUPPRESSION_WINDOW_MS);
 
     expect(
@@ -341,6 +341,22 @@ describe('replay-fanout-suppression: a replay fork MUST NOT fan out re-emitted e
           + 'so an empty fork log means leg 2 proved nothing',
       ),
     ).toBeGreaterThan(0);
+
+    // unfailable-leg audit wave 2, 2026-09-27: a non-empty fork log was the
+    // only re-emission check, so a replay fork that FAILED (or never reached
+    // `run.completed`, the one event the webhook subscribes to) delivered
+    // nothing because it never re-emitted the subscribed event — and was
+    // recorded `executed-pass` for the suppression MUST NOT. The fork must
+    // terminate `completed` with `run.completed` in its own log before the
+    // absence of deliveries is evidence; otherwise `blocked`.
+    const forkReemittedCompleted = forkEventList.some((e) => e.type === 'run.completed');
+    if (replayTerminal.status !== 'completed' || !forkReemittedCompleted) {
+      const why = `replay fork ${replayRunId} terminated ${String(replayTerminal.status)}`
+        + `${forkReemittedCompleted ? '' : ' without run.completed in its event log'} — the subscribed event was never re-emitted, `
+        + 'so the absence of deliveries proves nothing';
+      recordRequirement(REQUIREMENT_ID, 'blocked', why);
+      return blockedDespiteAssertions(why);
+    }
 
     // The MUST NOT has now been exercised against wiring proven to deliver, on a
     // fork proven to have re-emitted. Recorded here rather than after leg 3,

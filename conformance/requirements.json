@@ -6,7 +6,7 @@
     "tests": 2439,
     "withStableId": 2439,
     "interpolatedTitles": 0,
-    "explicitIds": 2333
+    "explicitIds": 2331
   },
   "records": [
     {
@@ -1902,6 +1902,10 @@
           "requirement": "agents.manifestRuntime.installScope (when present) MUST be 'host' or 'tenant'"
         },
         {
+          "section": "RFC 0072 §A / node-packs.md §Agent inventory",
+          "requirement": "a host advertising agents.manifestRuntime.supported MUST serve GET /v1/agents (it answered 404/405/501)"
+        },
+        {
           "section": "RFC 0072 §A",
           "requirement": "GET /v1/agents MUST return an agents[] array"
         },
@@ -1926,13 +1930,21 @@
     {
       "id": "openwop.it.agent-org-chart-scoping.serves-the-normative-org-chart-responsibility-roll-up-tree-shaped-and-tenant-sco",
       "file": "agent-org-chart-scoping.test.ts",
-      "line": 40,
+      "line": 39,
       "title": "serves the normative org-chart + responsibility roll-up, tree-shaped and tenant-scoped",
       "explicitId": "openwop.it.agent-org-chart-scoping.serves-the-normative-org-chart-responsibility-roll-up-tree-shaped-and-tenant-sco",
       "citations": [
         {
           "section": "RFC 0087 §E / RFC 0074",
           "requirement": "agents.orgChart.installScope (when present) MUST be 'host' or 'tenant'"
+        },
+        {
+          "section": "agent-org-chart.md §A / §E",
+          "requirement": "a host advertising agents.orgChart.supported MUST serve GET /v1/agents/org-chart with 200"
+        },
+        {
+          "section": "agent-org-chart.schema.json",
+          "requirement": "GET /v1/agents/org-chart MUST return a JSON org-chart object"
         },
         {
           "section": "agent-org-chart.schema.json",
@@ -1953,6 +1965,10 @@
         {
           "section": "agent-org-chart.md §A",
           "requirement": "a member's departmentId MUST be a department in the chart"
+        },
+        {
+          "section": "agent-org-chart.md §D / §E",
+          "requirement": "a host advertising agents.orgChart.responsibilityView MUST serve GET /v1/agents/org-chart/{departmentId} with 200 for a department in the caller's chart"
         },
         {
           "section": "agent-org-chart.md §D",
@@ -2304,6 +2320,10 @@
         {
           "section": "RFC 0086 §F / RFC 0074 §B",
           "requirement": "agents.roster.installScope (when present) MUST be 'host' or 'tenant'"
+        },
+        {
+          "section": "agent-roster.md §B",
+          "requirement": "a host advertising agents.roster.supported MUST serve GET /v1/agents/roster (got 404/405/501)"
         },
         {
           "section": "agent-roster.md §B",
@@ -2802,13 +2822,18 @@
     {
       "id": "openwop.it.agentPackExport.exported-manifests-contain-required-agentmanifest-fields",
       "file": "agentPackExport.test.ts",
-      "line": 28,
+      "line": 53,
       "title": "exported manifests contain required AgentManifest fields",
       "explicitId": "openwop.it.agentPackExport.exported-manifests-contain-required-agentmanifest-fields",
       "citations": [
         {
           "section": "RFCS/0003-agent-packs.md",
           "requirement": "exported manifests contain required AgentManifest fields"
+        },
+        {
+          "section": "schemas/agent-manifest.schema.json",
+          "requirement": null,
+          "interpolated": true
         }
       ]
     },
@@ -2858,13 +2883,18 @@
     {
       "id": "openwop.it.agentPackInstall.host-exposes-installed-agent-manifests-with-required-agentmanifest-fields",
       "file": "agentPackInstall.test.ts",
-      "line": 29,
+      "line": 54,
       "title": "host exposes installed agent manifests with required AgentManifest fields",
       "explicitId": "openwop.it.agentPackInstall.host-exposes-installed-agent-manifests-with-required-agentmanifest-fields",
       "citations": [
         {
           "section": "RFCS/0003-agent-packs.md",
           "requirement": "host exposes installed agent manifests with required AgentManifest fields"
+        },
+        {
+          "section": "schemas/agent-manifest.schema.json",
+          "requirement": null,
+          "interpolated": true
         }
       ]
     },
@@ -2889,7 +2919,16 @@
       "explicitId": "openwop.it.agentReasoningEvents.host-emits-at-least-one-canonical-agent-event-during-a-reasoning-fixture-run",
       "citations": [
         {
+          "section": "schemas/run-event-payloads.schema.json#/$defs/agentToolReturned",
+          "requirement": "agent.toolReturned MUST carry a callId (schema-required)"
+        },
+        {
           "section": "schemas/run-event-payloads.schema.json",
+          "requirement": null,
+          "interpolated": true
+        },
+        {
+          "section": "schemas/run-event.schema.json",
           "requirement": null,
           "interpolated": true
         },
@@ -2990,18 +3029,13 @@
       "file": "agents-run-tool-allowlist.test.ts",
       "line": 85,
       "title": "skips cleanly when pack source is not bundled",
-      "explicitId": "openwop.it.agents-run-tool-allowlist.skips-cleanly-when-pack-source-is-not-bundled",
-      "citations": [
-        {
-          "section": "threat-model-prompt-injection.md",
-          "requirement": "skips cleanly when pack source is not bundled"
-        }
-      ]
+      "explicitId": null,
+      "citations": []
     },
     {
       "id": "openwop.it.agents-run-tool-allowlist.rejects-function-typed-tool-handler-the-defect-path",
       "file": "agents-run-tool-allowlist.test.ts",
-      "line": 94,
+      "line": 98,
       "title": "rejects function-typed tool.handler (the defect path)",
       "explicitId": null,
       "citations": []
@@ -3009,7 +3043,7 @@
     {
       "id": "openwop.it.agents-run-tool-allowlist.rejects-tool-declaration-missing-a-name",
       "file": "agents-run-tool-allowlist.test.ts",
-      "line": 113,
+      "line": 117,
       "title": "rejects tool declaration missing a name",
       "explicitId": null,
       "citations": []
@@ -3017,7 +3051,7 @@
     {
       "id": "openwop.it.agents-run-tool-allowlist.rejects-tool-declaration-missing-a-kind-discriminator",
       "file": "agents-run-tool-allowlist.test.ts",
-      "line": 122,
+      "line": 126,
       "title": "rejects tool declaration missing a kind discriminator",
       "explicitId": null,
       "citations": []
@@ -3025,7 +3059,7 @@
     {
       "id": "openwop.it.agents-run-tool-allowlist.rejects-tool-driven-runs-when-host-does-not-provide-agentruntime",
       "file": "agents-run-tool-allowlist.test.ts",
-      "line": 131,
+      "line": 135,
       "title": "rejects tool-driven runs when host does not provide agentRuntime",
       "explicitId": null,
       "citations": []
@@ -3033,7 +3067,7 @@
     {
       "id": "openwop.it.agents-run-tool-allowlist.tool-less-run-succeeds-via-callaiwithtools-safe-fallback-preserved",
       "file": "agents-run-tool-allowlist.test.ts",
-      "line": 145,
+      "line": 149,
       "title": "tool-less run succeeds via callAIWithTools (safe fallback preserved)",
       "explicitId": "openwop.it.agents-run-tool-allowlist.tool-less-run-succeeds-via-callaiwithtools-safe-fallback-preserved",
       "citations": [
@@ -3046,7 +3080,7 @@
     {
       "id": "openwop.it.agents-run-tool-allowlist.agentruntime-run-path-threads-through-unchanged-when-host-provides-it",
       "file": "agents-run-tool-allowlist.test.ts",
-      "line": 162,
+      "line": 166,
       "title": "agentRuntime.run path threads through unchanged when host provides it",
       "explicitId": "openwop.it.agents-run-tool-allowlist.agentruntime-run-path-threads-through-unchanged-when-host-provides-it",
       "citations": [
@@ -3065,18 +3099,18 @@
       "citations": [
         {
           "section": "capabilities.md §supportedEnvelopes",
-          "requirement": "each entry MUST be a string"
+          "requirement": "supportedEnvelopes MUST be an array"
         },
         {
           "section": "capabilities.md §supportedEnvelopes",
-          "requirement": "supportedEnvelopes MUST be an array"
+          "requirement": "each entry MUST be a string"
         }
       ]
     },
     {
       "id": "openwop.it.ai-envelope-shape.top-level-ai-envelope-schema-json-compiles-under-ajv2020",
       "file": "ai-envelope-shape.test.ts",
-      "line": 90,
+      "line": 91,
       "title": "top-level ai-envelope.schema.json compiles under Ajv2020",
       "explicitId": "openwop.it.ai-envelope-shape.top-level-ai-envelope-schema-json-compiles-under-ajv2020",
       "citations": [
@@ -3089,7 +3123,7 @@
     {
       "id": "openwop.it.ai-envelope-shape.universal-kind-schema-envelopes-schema-json-compiles-under-ajv2020",
       "file": "ai-envelope-shape.test.ts",
-      "line": 97,
+      "line": 98,
       "title": null,
       "explicitId": "openwop.it.ai-envelope-shape.universal-kind-schema-envelopes-schema-json-compiles-under-ajv2020",
       "citations": [
@@ -3103,7 +3137,7 @@
     {
       "id": "openwop.it.ai-envelope-shape.accepts-a-positive-aienvelope-fixture",
       "file": "ai-envelope-shape.test.ts",
-      "line": 113,
+      "line": 114,
       "title": "accepts a positive AIEnvelope fixture",
       "explicitId": "openwop.it.ai-envelope-shape.accepts-a-positive-aienvelope-fixture",
       "citations": [
@@ -3117,7 +3151,7 @@
     {
       "id": "openwop.it.ai-envelope-shape.rejects-a-negative-aienvelope-fixture-missing-required-meta",
       "file": "ai-envelope-shape.test.ts",
-      "line": 132,
+      "line": 133,
       "title": "rejects a negative AIEnvelope fixture missing required `meta`",
       "explicitId": "openwop.it.ai-envelope-shape.rejects-a-negative-aienvelope-fixture-missing-required-meta",
       "citations": [
@@ -3130,7 +3164,7 @@
     {
       "id": "openwop.it.ai-envelope-shape.rejects-an-envelope-with-unknown-top-level-property-additionalproperties-false",
       "file": "ai-envelope-shape.test.ts",
-      "line": 145,
+      "line": 146,
       "title": "rejects an envelope with unknown top-level property (additionalProperties:false)",
       "explicitId": "openwop.it.ai-envelope-shape.rejects-an-envelope-with-unknown-top-level-property-additionalproperties-false",
       "citations": [
@@ -3143,7 +3177,7 @@
     {
       "id": "openwop.it.ai-envelope-shape.valid-clarification-request-envelope-status-accepted",
       "file": "ai-envelope-shape.test.ts",
-      "line": 161,
+      "line": 162,
       "title": "valid clarification.request envelope → status: accepted",
       "explicitId": "openwop.it.ai-envelope-shape.valid-clarification-request-envelope-status-accepted",
       "citations": [
@@ -3156,7 +3190,7 @@
     {
       "id": "openwop.it.ai-envelope-shape.envelope-missing-required-meta-block-status-invalid",
       "file": "ai-envelope-shape.test.ts",
-      "line": 181,
+      "line": 182,
       "title": "envelope missing required meta block → status: invalid",
       "explicitId": "openwop.it.ai-envelope-shape.envelope-missing-required-meta-block-status-invalid",
       "citations": [
@@ -3173,7 +3207,7 @@
     {
       "id": "openwop.it.ai-envelope-shape.vendor-namespaced-kind-not-in-supportedenvelopes-status-gated",
       "file": "ai-envelope-shape.test.ts",
-      "line": 202,
+      "line": 203,
       "title": "vendor-namespaced kind not in supportedEnvelopes → status: gated",
       "explicitId": "openwop.it.ai-envelope-shape.vendor-namespaced-kind-not-in-supportedenvelopes-status-gated",
       "citations": [
@@ -3190,7 +3224,7 @@
     {
       "id": "openwop.it.ai-envelope-shape.counter-at-cap-status-breached",
       "file": "ai-envelope-shape.test.ts",
-      "line": 224,
+      "line": 225,
       "title": "counter at cap → status: breached",
       "explicitId": "openwop.it.ai-envelope-shape.counter-at-cap-status-breached",
       "citations": [
@@ -3203,7 +3237,7 @@
     {
       "id": "openwop.it.ai-envelope-shape.accepted-outcome-carries-normalizedmeta-contenttrust-per-rfc-0021-a-point-6",
       "file": "ai-envelope-shape.test.ts",
-      "line": 246,
+      "line": 247,
       "title": "accepted outcome carries normalizedMeta.contentTrust per RFC 0021 §A point 6",
       "explicitId": "openwop.it.ai-envelope-shape.accepted-outcome-carries-normalizedmeta-contenttrust-per-rfc-0021-a-point-6",
       "citations": [
@@ -3216,7 +3250,7 @@
     {
       "id": "openwop.it.ai-envelope-shape.envelope-supplied-meta-contenttrust-takes-precedence-over-runtrustboundary",
       "file": "ai-envelope-shape.test.ts",
-      "line": 273,
+      "line": 274,
       "title": "envelope-supplied meta.contentTrust takes precedence over runTrustBoundary",
       "explicitId": "openwop.it.ai-envelope-shape.envelope-supplied-meta-contenttrust-takes-precedence-over-runtrustboundary",
       "citations": [
@@ -3229,7 +3263,7 @@
     {
       "id": "openwop.it.ai-envelope-shape.non-iso-8601-meta-ts-status-invalid-format-defense-in-depth",
       "file": "ai-envelope-shape.test.ts",
-      "line": 297,
+      "line": 298,
       "title": "non-ISO-8601 meta.ts → status: invalid (format defense-in-depth)",
       "explicitId": "openwop.it.ai-envelope-shape.non-iso-8601-meta-ts-status-invalid-format-defense-in-depth",
       "citations": [
@@ -3242,7 +3276,7 @@
     {
       "id": "openwop.it.ai-envelope-shape.universal-kind-allowed-regardless-of-nodeallowedkinds-always-allowed-per-univers",
       "file": "ai-envelope-shape.test.ts",
-      "line": 314,
+      "line": 315,
       "title": "universal kind allowed regardless of nodeAllowedKinds (always-allowed per §\"Universal kinds\")",
       "explicitId": "openwop.it.ai-envelope-shape.universal-kind-allowed-regardless-of-nodeallowedkinds-always-allowed-per-univers",
       "citations": [
@@ -3255,7 +3289,7 @@
     {
       "id": "openwop.it.ai-envelope-shape.host-advertising-any-universal-kind-has-a-matching-schema-on-disk",
       "file": "ai-envelope-shape.test.ts",
-      "line": 340,
+      "line": 341,
       "title": "host advertising any universal kind has a matching schema on disk",
       "explicitId": "openwop.it.ai-envelope-shape.host-advertising-any-universal-kind-has-a-matching-schema-on-disk",
       "citations": [
@@ -5412,7 +5446,7 @@
     {
       "id": "openwop.it.audit-log-integrity.host-that-claims-the-profile-advertises-required-capability-fields",
       "file": "audit-log-integrity.test.ts",
-      "line": 45,
+      "line": 69,
       "title": "host that claims the profile advertises required capability fields",
       "explicitId": "openwop.it.audit-log-integrity.host-that-claims-the-profile-advertises-required-capability-fields",
       "citations": [
@@ -5429,13 +5463,18 @@
     {
       "id": "openwop.it.audit-log-integrity.get-v1-audit-verify-on-a-recent-range-reports-chainvalid-true",
       "file": "audit-log-integrity.test.ts",
-      "line": 68,
+      "line": 92,
       "title": "GET /v1/audit/verify on a recent range reports chainValid: true",
       "explicitId": "openwop.it.audit-log-integrity.get-v1-audit-verify-on-a-recent-range-reports-chainvalid-true",
       "citations": [
         {
           "section": "auth-profiles.md §\"Audit-log integrity\" §\"Verification endpoint\"",
           "requirement": "claiming openwop-audit-log-integrity profile REQUIRES exposing GET /v1/audit/verify"
+        },
+        {
+          "section": "audit-verify-result.schema.json",
+          "requirement": null,
+          "interpolated": true
         },
         {
           "section": "auth-profiles.md §\"Audit-log integrity\"",
@@ -9489,19 +9528,44 @@
         {
           "section": "RFCS/0005-conversation.md",
           "requirement": "emits all three lifecycle events with matching conversationId; no exchanges after close"
+        },
+        {
+          "section": "RFCS/0005-conversation.md",
+          "requirement": "the open → exchange → close fixture run MUST terminate `completed`"
+        },
+        {
+          "section": "RFCS/0005-conversation.md",
+          "requirement": "`conversation.exchanged` MUST be emitted for the fixture's one exchange turn"
+        },
+        {
+          "section": "RFCS/0005-conversation.md (CO-3)",
+          "requirement": null,
+          "interpolated": true
         }
       ]
     },
     {
       "id": "openwop.it.conversationReplayDeterminism.forked-run-yields-byte-equal-conversation-channel-projection",
       "file": "conversationReplayDeterminism.test.ts",
-      "line": 29,
+      "line": 30,
       "title": "forked run yields byte-equal conversation channel projection",
       "explicitId": "openwop.it.conversationReplayDeterminism.forked-run-yields-byte-equal-conversation-channel-projection",
       "citations": [
         {
           "section": "RFCS/0005-conversation.md",
           "requirement": "forked run yields byte-equal conversation channel projection"
+        },
+        {
+          "section": "RFCS/0005-conversation.md",
+          "requirement": "the source run of a conversation fixture MUST project a non-empty channels object"
+        },
+        {
+          "section": "spec/v1/replay.md",
+          "requirement": "a host advertising replay.modes [\"replay\"] MUST accept a mode:\"replay\" fork (404/501 is a failure)"
+        },
+        {
+          "section": "RFCS/0005-conversation.md",
+          "requirement": "a replay-forked run MUST yield a byte-equal conversation channel projection"
         }
       ]
     },
@@ -9645,6 +9709,10 @@
           "requirement": "metrics.openwopCost MUST be populated after a node calls ctx.recordCost()"
         },
         {
+          "section": "run-snapshot.schema.json §metrics.openwopCost / observability.md §Cost attribution attributes",
+          "requirement": "metrics.openwopCost MUST carry the recorded cost — at least one of usd or tokens — after ctx.recordCost()"
+        },
+        {
           "section": "observability.md §openwop.cost.tokens.input",
           "requirement": "tokens.input MUST be a non-negative integer"
         },
@@ -9665,7 +9733,7 @@
     {
       "id": "openwop.it.cost-attribution.cost-emit-fixture-run-must-emit-a-node-completed-event-for-the-cost-emitting-nod",
       "file": "cost-attribution.test.ts",
-      "line": 209,
+      "line": 221,
       "title": "cost-emit fixture run MUST emit a node.completed event for the cost-emitting node",
       "explicitId": "openwop.it.cost-attribution.cost-emit-fixture-run-must-emit-a-node-completed-event-for-the-cost-emitting-nod",
       "citations": [
@@ -9678,7 +9746,7 @@
     {
       "id": "openwop.it.cost-attribution.only-allowlisted-openwop-cost-attributes-reach-the-otel-span-g6-close-criteria-a",
       "file": "cost-attribution.test.ts",
-      "line": 248,
+      "line": 260,
       "title": "only allowlisted openwop.cost.* attributes reach the OTel span (G6 close criteria — allowlist enforcement)",
       "explicitId": "openwop.it.cost-attribution.only-allowlisted-openwop-cost-attributes-reach-the-otel-span-g6-close-criteria-a",
       "citations": [
@@ -9695,7 +9763,7 @@
     {
       "id": "openwop.it.cost-attribution.credential-shaped-canaries-do-not-leak-to-any-otel-attribute-g6-close-criteria-r",
       "file": "cost-attribution.test.ts",
-      "line": 287,
+      "line": 299,
       "title": "credential-shaped canaries do NOT leak to any OTel attribute (G6 close criteria — redaction)",
       "explicitId": "openwop.it.cost-attribution.credential-shaped-canaries-do-not-leak-to-any-otel-attribute-g6-close-criteria-r",
       "citations": [
@@ -10157,6 +10225,11 @@
         {
           "section": "debug-bundle.md §\"Bundle size limits\"",
           "requirement": "baseline bundle MUST NOT be truncated"
+        },
+        {
+          "section": "debug-bundle.md §\"Bundle size limits\"",
+          "requirement": null,
+          "interpolated": true
         },
         {
           "section": "debug-bundle.md §\"Bundle size limits\"",
@@ -11058,7 +11131,7 @@
     {
       "id": "openwop.it.distillation-shape.capabilities-memory-distillation-is-absent-or-a-well-formed-object",
       "file": "distillation-shape.test.ts",
-      "line": 20,
+      "line": 40,
       "title": "capabilities.memory.distillation is absent or a well-formed object",
       "explicitId": "openwop.it.distillation-shape.capabilities-memory-distillation-is-absent-or-a-well-formed-object",
       "citations": [
@@ -11069,6 +11142,11 @@
         {
           "section": "capabilities.schema.json §memory.distillation",
           "requirement": "maxTokenBudget MUST be a positive integer when present"
+        },
+        {
+          "section": "capabilities.schema.json §memory.distillation",
+          "requirement": null,
+          "interpolated": true
         },
         {
           "section": "capabilities.schema.json §memory.distillation",
@@ -12270,7 +12348,7 @@
     {
       "id": "openwop.it.envelope-truncated.payload-includes-nodeid-provider-model-partialpayloadavailable-boolean",
       "file": "envelope-truncated.test.ts",
-      "line": 82,
+      "line": 86,
       "title": "payload includes nodeId + provider + model + partialPayloadAvailable boolean",
       "explicitId": "openwop.it.envelope-truncated.payload-includes-nodeid-provider-model-partialpayloadavailable-boolean",
       "citations": [
@@ -12283,7 +12361,7 @@
     {
       "id": "openwop.it.envelope-truncated.retry-attempt-receives-a-maxtokens-value-strictly-greater-than-the-previous-atte",
       "file": "envelope-truncated.test.ts",
-      "line": 101,
+      "line": 105,
       "title": "retry attempt receives a maxTokens value strictly greater than the previous attempt (RFC 0033 §B truncationBudgetMultiplier)",
       "explicitId": "openwop.it.envelope-truncated.retry-attempt-receives-a-maxtokens-value-strictly-greater-than-the-previous-atte",
       "citations": [
@@ -12296,7 +12374,7 @@
     {
       "id": "openwop.it.envelope-truncated.run-terminates-completed-after-the-second-attempt-succeeds",
       "file": "envelope-truncated.test.ts",
-      "line": 126,
+      "line": 130,
       "title": "run terminates `completed` after the second attempt succeeds",
       "explicitId": "openwop.it.envelope-truncated.run-terminates-completed-after-the-second-attempt-succeeds",
       "citations": [
@@ -12887,10 +12965,30 @@
     {
       "id": "openwop.it.feedback-fork-not-copied.a-fork-of-an-annotated-run-starts-with-zero-annotations",
       "file": "feedback-fork-not-copied.test.ts",
-      "line": 18,
+      "line": 19,
       "title": "a fork of an annotated run starts with zero annotations",
       "explicitId": "openwop.it.feedback-fork-not-copied.a-fork-of-an-annotated-run-starts-with-zero-annotations",
       "citations": [
+        {
+          "section": "RFC 0056 §B",
+          "requirement": "POST /v1/runs/{runId}/annotations MUST return 201"
+        },
+        {
+          "section": "RFC 0056 §B",
+          "requirement": "GET /v1/runs/{runId}/annotations MUST return 200"
+        },
+        {
+          "section": "RFC 0056 §B",
+          "requirement": "positive control: the source run MUST list the annotation just posted"
+        },
+        {
+          "section": "RFC 0056 §B",
+          "requirement": "GET /v1/runs/{forkId}/annotations MUST return 200 for the fork"
+        },
+        {
+          "section": "RFC 0056 §B",
+          "requirement": "the annotation list MUST carry an annotations[] array"
+        },
         {
           "section": "RFC 0056 §D",
           "requirement": "annotations are a side-store and MUST NOT be copied into a fork"
@@ -14423,8 +14521,20 @@
       "explicitId": "openwop.it.idempotency-concurrent-claim.the-race-is-real-at-higher-concurrency-too-a-claim-that-only-holds-at-2-is-not-a",
       "citations": [
         {
+          "section": "host-sample-test-seams.md §25",
+          "requirement": "with executors: 5 at least three executors MUST reach the chokepoint — otherwise this leg repeats the two-executor case and witnesses nothing new"
+        },
+        {
+          "section": "host-sample-test-seams.md §25",
+          "requirement": "the seam MUST report mintedIds, one per executor"
+        },
+        {
           "section": "idempotency.md §\"Concurrent duplicates (Layer 2)\"",
           "requirement": "exactly one effect regardless of how many executors race — at most one wins the compare-and-set, the rest observe the hit"
+        },
+        {
+          "section": "host-sample-test-seams.md §25",
+          "requirement": "mintedIds length MUST equal attempted"
         },
         {
           "section": "idempotency.md §\"Idempotency key composition\"",
@@ -14437,18 +14547,13 @@
       "file": "idempotency-key-determinism.test.ts",
       "line": 113,
       "title": "skips cleanly when packs/ is not bundled",
-      "explicitId": "openwop.it.idempotency-key-determinism.skips-cleanly-when-packs-is-not-bundled",
-      "citations": [
-        {
-          "section": "idempotency.md §\"Idempotency-Key",
-          "requirement": "skips cleanly when packs/ is not bundled"
-        }
-      ]
+      "explicitId": null,
+      "citations": []
     },
     {
       "id": "openwop.it.idempotency-key-determinism.default-mode-composite-identical-runid-nodeid-payload-produces-identical-keys",
       "file": "idempotency-key-determinism.test.ts",
-      "line": 125,
+      "line": 129,
       "title": "default mode (composite) — identical (runId, nodeId, payload) produces identical keys",
       "explicitId": "openwop.it.idempotency-key-determinism.default-mode-composite-identical-runid-nodeid-payload-produces-identical-keys",
       "citations": [
@@ -14461,7 +14566,7 @@
     {
       "id": "openwop.it.idempotency-key-determinism.payload-sensitivity-different-payload-produces-different-key",
       "file": "idempotency-key-determinism.test.ts",
-      "line": 138,
+      "line": 142,
       "title": "payload sensitivity — different payload produces different key",
       "explicitId": "openwop.it.idempotency-key-determinism.payload-sensitivity-different-payload-produces-different-key",
       "citations": [
@@ -14474,7 +14579,7 @@
     {
       "id": "openwop.it.idempotency-key-determinism.run-isolation-different-runid-produces-different-key",
       "file": "idempotency-key-determinism.test.ts",
-      "line": 146,
+      "line": 150,
       "title": "run isolation — different runId produces different key",
       "explicitId": "openwop.it.idempotency-key-determinism.run-isolation-different-runid-produces-different-key",
       "citations": [
@@ -14487,7 +14592,7 @@
     {
       "id": "openwop.it.idempotency-key-determinism.node-isolation-different-nodeid-produces-different-key",
       "file": "idempotency-key-determinism.test.ts",
-      "line": 154,
+      "line": 158,
       "title": "node isolation — different nodeId produces different key",
       "explicitId": "openwop.it.idempotency-key-determinism.node-isolation-different-nodeid-produces-different-key",
       "citations": [
@@ -14500,7 +14605,7 @@
     {
       "id": "openwop.it.idempotency-key-determinism.hash-mode-is-deterministic-in-the-payload-alone-run-node-ignored",
       "file": "idempotency-key-determinism.test.ts",
-      "line": 162,
+      "line": 166,
       "title": "hash mode is deterministic in the payload alone (run/node ignored)",
       "explicitId": "openwop.it.idempotency-key-determinism.hash-mode-is-deterministic-in-the-payload-alone-run-node-ignored",
       "citations": [
@@ -14513,7 +14618,7 @@
     {
       "id": "openwop.it.idempotency-key-determinism.output-shape-every-emitted-key-matches-openwop-sha256-prefix-16",
       "file": "idempotency-key-determinism.test.ts",
-      "line": 171,
+      "line": 175,
       "title": "output shape — every emitted key matches openwop-<sha256-prefix-16>",
       "explicitId": "openwop.it.idempotency-key-determinism.output-shape-every-emitted-key-matches-openwop-sha256-prefix-16",
       "citations": [
@@ -14527,7 +14632,7 @@
     {
       "id": "openwop.it.idempotency-key-determinism.uuid-mode-rejects-with-config-invalid-safety-fix-per-1-1-2",
       "file": "idempotency-key-determinism.test.ts",
-      "line": 186,
+      "line": 190,
       "title": "uuid mode rejects with CONFIG_INVALID (safety-fix per 1.1.2)",
       "explicitId": "openwop.it.idempotency-key-determinism.uuid-mode-rejects-with-config-invalid-safety-fix-per-1-1-2",
       "citations": [
@@ -14540,7 +14645,7 @@
     {
       "id": "openwop.it.idempotency-key-determinism.cross-impl-invariant-pack-output-equals-canonical-sha-256-formula",
       "file": "idempotency-key-determinism.test.ts",
-      "line": 201,
+      "line": 205,
       "title": "cross-impl invariant — pack output equals canonical SHA-256 formula",
       "explicitId": "openwop.it.idempotency-key-determinism.cross-impl-invariant-pack-output-equals-canonical-sha-256-formula",
       "citations": [
@@ -16435,7 +16540,7 @@
     {
       "id": "openwop.it.mcp-server-untrusted-args.capabilities-mcp-servermount-is-well-formed-when-present",
       "file": "mcp-server-untrusted-args.test.ts",
-      "line": 67,
+      "line": 71,
       "title": "capabilities.mcp.serverMount is well-formed when present",
       "explicitId": "openwop.it.mcp-server-untrusted-args.capabilities-mcp-servermount-is-well-formed-when-present",
       "citations": [
@@ -16448,7 +16553,7 @@
     {
       "id": "openwop.it.mcp-server-untrusted-args.tools-call-with-malformed-arguments-is-rejected-with-json-rpc-32602-before-workf",
       "file": "mcp-server-untrusted-args.test.ts",
-      "line": 75,
+      "line": 79,
       "title": "tools/call with malformed arguments is rejected with JSON-RPC -32602 BEFORE workflow start",
       "explicitId": "openwop.it.mcp-server-untrusted-args.tools-call-with-malformed-arguments-is-rejected-with-json-rpc-32602-before-workf",
       "citations": [
@@ -16469,13 +16574,21 @@
     {
       "id": "openwop.it.mcp-server-untrusted-args.tools-call-with-valid-arguments-is-accepted",
       "file": "mcp-server-untrusted-args.test.ts",
-      "line": 96,
+      "line": 100,
       "title": "tools/call with valid arguments is accepted",
       "explicitId": "openwop.it.mcp-server-untrusted-args.tools-call-with-valid-arguments-is-accepted",
       "citations": [
         {
           "section": "RFC 0020 §D",
-          "requirement": "valid args MUST NOT trigger -32602"
+          "requirement": "the JSON-RPC envelope MUST answer 200"
+        },
+        {
+          "section": "RFC 0020 §D",
+          "requirement": "valid args MUST NOT be rejected with any JSON-RPC error"
+        },
+        {
+          "section": "RFC 0020 §D",
+          "requirement": "an accepted tools/call MUST return a JSON-RPC result"
         }
       ]
     },
@@ -16554,7 +16667,7 @@
     {
       "id": "openwop.it.mcp-tool-roundtrip.host-invokes-the-configured-mcp-server-and-surfaces-the-tool-response-in-the-eve",
       "file": "mcp-tool-roundtrip.test.ts",
-      "line": 286,
+      "line": 272,
       "title": "host invokes the configured MCP server and surfaces the tool response in the event log",
       "explicitId": "openwop.it.mcp-tool-roundtrip.host-invokes-the-configured-mcp-server-and-surfaces-the-tool-response-in-the-eve",
       "citations": [
@@ -16571,7 +16684,7 @@
     {
       "id": "openwop.it.mcp-tool-roundtrip.raw-when-present-is-the-server-calltoolresult-unaltered-and-iserror-agrees",
       "file": "mcp-tool-roundtrip.test.ts",
-      "line": 344,
+      "line": 330,
       "title": "raw, when present, is the server CallToolResult unaltered and isError agrees",
       "explicitId": "openwop.it.mcp-tool-roundtrip.raw-when-present-is-the-server-calltoolresult-unaltered-and-iserror-agrees",
       "citations": [
@@ -18300,6 +18413,14 @@
         {
           "section": "RFCS/0006-orchestrator.md",
           "requirement": "fixture emits at least one kind:next-worker decision"
+        },
+        {
+          "section": "RFCS/0006-orchestrator.md",
+          "requirement": "the dispatch node MUST emit node.started after the supervisor decides next-worker"
+        },
+        {
+          "section": "RFCS/0006-orchestrator.md",
+          "requirement": "runOrchestrator.decided{next-worker} MUST precede node.started{dispatch} in event-log sequence"
         }
       ]
     },
@@ -19127,13 +19248,17 @@
         {
           "section": "node-packs.md §\"GET /v1/packs/{name}/-/{version}.sig\"",
           "requirement": "404 response MUST carry a string `error` field — `signature_not_available` is the canonical code"
+        },
+        {
+          "section": "node-packs.md §\"GET /v1/packs/{name}/-/{version}.sig\"",
+          "requirement": "nonexistent (name, version) MUST return 404 `signature_not_available`"
         }
       ]
     },
     {
       "id": "openwop.it.pack-registry.get-v1-packs-bad-name-version-json-returns-400-invalid-pack-name",
       "file": "pack-registry.test.ts",
-      "line": 214,
+      "line": 221,
       "title": "GET /v1/packs/{bad-name}/-/{version}.json returns 400 invalid_pack_name",
       "explicitId": "openwop.it.pack-registry.get-v1-packs-bad-name-version-json-returns-400-invalid-pack-name",
       "citations": [
@@ -19150,7 +19275,7 @@
     {
       "id": "openwop.it.pack-registry.get-v1-packs-name-bad-version-json-returns-400-invalid-version",
       "file": "pack-registry.test.ts",
-      "line": 234,
+      "line": 241,
       "title": "GET /v1/packs/{name}/-/{bad-version}.json returns 400 invalid_version",
       "explicitId": "openwop.it.pack-registry.get-v1-packs-name-bad-version-json-returns-400-invalid-version",
       "citations": [
@@ -19163,7 +19288,7 @@
     {
       "id": "openwop.it.pack-registry.get-v1-packs-name-catalog-records-validate-against-the-documented-shape",
       "file": "pack-registry.test.ts",
-      "line": 254,
+      "line": 261,
       "title": "GET /v1/packs/{name} catalog records validate against the documented shape",
       "explicitId": "openwop.it.pack-registry.get-v1-packs-name-catalog-records-validate-against-the-documented-shape",
       "citations": [
@@ -19195,7 +19320,7 @@
     {
       "id": "openwop.it.pack-registry.get-v1-packs-name-keychain-returns-well-formed-key-entries-when-present",
       "file": "pack-registry.test.ts",
-      "line": 309,
+      "line": 316,
       "title": "GET /v1/packs/{name}/-/keychain returns well-formed key entries when present",
       "explicitId": "openwop.it.pack-registry.get-v1-packs-name-keychain-returns-well-formed-key-entries-when-present",
       "citations": [
@@ -19493,14 +19618,10 @@
     {
       "id": "openwop.it.production-backpressure.get-well-known-openwop-returns-200-even-when-inflight-is-saturated",
       "file": "production-backpressure.test.ts",
-      "line": 312,
+      "line": 318,
       "title": "GET /.well-known/openwop returns 200 even when inflight is saturated",
       "explicitId": "openwop.it.production-backpressure.get-well-known-openwop-returns-200-even-when-inflight-is-saturated",
       "citations": [
-        {
-          "section": "production-profile.md §Backpressure",
-          "requirement": "discovery MUST answer regardless of load"
-        },
         {
           "section": "production-profile.md §Backpressure",
           "requirement": "discovery MUST bypass the inflight cap (health probes always answer)"
@@ -21907,7 +22028,7 @@
       "citations": [
         {
           "section": "capabilities.md",
-          "requirement": "skips when host does NOT advertise secrets.supported"
+          "requirement": "a credentialRef value MUST NOT appear in any RunEvent payload"
         }
       ]
     },
@@ -24946,6 +25067,14 @@
           "requirement": "debug stream event count MUST be >= updates stream event count"
         },
         {
+          "section": "stream-modes.md §Mode-to-event mapping",
+          "requirement": "every event type emitted in updates mode is also ✅ in debug mode — debug MUST carry each of them"
+        },
+        {
+          "section": "stream-modes.md §Mode-to-event mapping",
+          "requirement": "debug mode MUST emit node.started (✅ debug) for the fixture's node"
+        },
+        {
           "section": "stream-modes.md §debug",
           "requirement": "debug stream MUST close on terminal event"
         }
@@ -25557,6 +25686,16 @@
           "interpolated": true
         },
         {
+          "section": "tool-catalog.md §B",
+          "requirement": null,
+          "interpolated": true
+        },
+        {
+          "section": "tool-catalog.md §B",
+          "requirement": null,
+          "interpolated": true
+        },
+        {
           "section": "tool-descriptor.schema.json",
           "requirement": null,
           "interpolated": true
@@ -25568,6 +25707,10 @@
         {
           "section": "tool-catalog.md §C",
           "requirement": "ToolDescriptor.safetyTier MUST be pure|read|write|exec"
+        },
+        {
+          "section": "tool-catalog.md §B",
+          "requirement": "GET /v1/tools/{toolId} MUST return 200 for a toolId the caller's own list returned"
         },
         {
           "section": "tool-catalog.md §B",
@@ -25586,7 +25729,7 @@
     {
       "id": "openwop.it.tool-catalog-projection.advisory-should-an-unchanged-catalog-reads-identically-sorted-by-toolid",
       "file": "tool-catalog-projection.test.ts",
-      "line": 143,
+      "line": 164,
       "title": "advisory (SHOULD): an unchanged catalog reads identically, sorted by toolId",
       "explicitId": "openwop.it.tool-catalog-projection.advisory-should-an-unchanged-catalog-reads-identically-sorted-by-toolid",
       "citations": [
@@ -28765,7 +28908,7 @@
     {
       "id": "openwop.it.v2-effect-identity-business-key.get-runs-runid-effects-validates-and-every-row-is-keyed-on-business-identity-or",
       "file": "v2-effect-identity-business-key.test.ts",
-      "line": 49,
+      "line": 50,
       "title": "GET /runs/{runId}/effects validates and every row is keyed on business identity or the activity recipe",
       "explicitId": "openwop.requirement.0173.effect-identity-business-key",
       "citations": [
@@ -28805,7 +28948,7 @@
     {
       "id": "openwop.it.v2-effect-identity-business-key.the-same-provider-key-is-presented-across-two-transport-retries",
       "file": "v2-effect-identity-business-key.test.ts",
-      "line": 107,
+      "line": 108,
       "title": "the same provider key is presented across two transport retries",
       "explicitId": "openwop.requirement.0173.effect-identity-business-key.retry",
       "citations": [
@@ -28828,6 +28971,20 @@
           "section": "spec/v2/core/idempotency.md §Layer 2: effect identity",
           "requirement": null,
           "interpolated": true
+        },
+        {
+          "section": "spec/v2/core/idempotency.md §Layer 2: effect identity",
+          "requirement": null,
+          "interpolated": true
+        },
+        {
+          "section": "spec/v2/core/idempotency.md §Layer 2: effect identity",
+          "requirement": null,
+          "interpolated": true
+        },
+        {
+          "section": "spec/v2/core/idempotency.md §Layer 2: effect identity",
+          "requirement": "the key the ledger records MUST be the key the provider received — a ledger that disagrees with the wire is not a witness"
         }
       ]
     },
@@ -29365,16 +29522,26 @@
           "section": "spec/v2/core/idempotency.md Concurrency",
           "requirement": null,
           "interpolated": true
+        },
+        {
+          "section": "spec/v2/core/idempotency.md Concurrency",
+          "requirement": null,
+          "interpolated": true
         }
       ]
     },
     {
       "id": "openwop.it.v2-idempotency-in-flight.each-loser-is-a-marked-replay-of-a-final-outcome-or-409-idempotency-in-flight-wi",
       "file": "v2-idempotency-in-flight.test.ts",
-      "line": 113,
+      "line": 119,
       "title": "each loser is a marked replay of a final outcome, or 409 idempotency_in_flight with no retry timing in details",
       "explicitId": "openwop.requirement.0213.in-flight-loser-outcome",
       "citations": [
+        {
+          "section": "spec/v2/core/idempotency.md Concurrency",
+          "requirement": null,
+          "interpolated": true
+        },
         {
           "section": "spec/v2/core/idempotency.md Concurrency",
           "requirement": null,
@@ -29400,7 +29567,7 @@
     {
       "id": "openwop.it.v2-idempotency-in-flight.while-the-seam-holds-the-claim-a-same-key-create-is-refused-409-idempotency-in-f",
       "file": "v2-idempotency-in-flight.test.ts",
-      "line": 138,
+      "line": 154,
       "title": "while the seam holds the claim, a same-key create is refused 409 idempotency_in_flight by the host and the held create still wins",
       "explicitId": "openwop.requirement.0213.in-flight-refused-under-hold",
       "citations": [
@@ -30608,6 +30775,11 @@
           "requirement": "the entry is projected as the MRTR row projects it (elicitation/create)"
         },
         {
+          "section": "RFC 0198 §B.4; ext-tasks §Task Execution Errors",
+          "requirement": null,
+          "interpolated": true
+        },
+        {
           "section": "interop-map.json mcp.tasks.status failed; ext-tasks §Task Execution Errors",
           "requirement": null,
           "interpolated": true
@@ -30617,7 +30789,7 @@
     {
       "id": "openwop.it.v2-mcp-tasks.tasks-update-answered-twice-resolves-the-interrupt-once-and-the-task-completes",
       "file": "v2-mcp-tasks.test.ts",
-      "line": 314,
+      "line": 323,
       "title": "tasks/update answered twice resolves the interrupt once and the task completes",
       "explicitId": "openwop.requirement.0198.task-update-resolves-once",
       "citations": [
@@ -30645,7 +30817,7 @@
     {
       "id": "openwop.it.v2-mcp-tasks.a-tasks-update-from-a-caller-not-in-approverslist-resolves-nothing",
       "file": "v2-mcp-tasks.test.ts",
-      "line": 334,
+      "line": 343,
       "title": "a tasks/update from a caller not in approversList resolves nothing",
       "explicitId": "openwop.requirement.0198.task-update-approver-checked",
       "citations": [
@@ -30673,7 +30845,7 @@
     {
       "id": "openwop.it.v2-mcp-tasks.tasks-get-appends-nothing-to-the-run-log",
       "file": "v2-mcp-tasks.test.ts",
-      "line": 365,
+      "line": 374,
       "title": "tasks/get appends nothing to the run log",
       "explicitId": "openwop.requirement.0198.task-get-read-only",
       "citations": [
@@ -30687,7 +30859,7 @@
     {
       "id": "openwop.it.v2-mcp-tasks.an-unreadable-task-is-answered-32602-exactly-as-a-nonexistent-one",
       "file": "v2-mcp-tasks.test.ts",
-      "line": 380,
+      "line": 389,
       "title": "an unreadable task is answered -32602 exactly as a nonexistent one",
       "explicitId": "openwop.requirement.0198.task-unreadable-not-found",
       "citations": [
@@ -30719,7 +30891,7 @@
     {
       "id": "openwop.it.v2-mcp-tasks.a-subscriptions-listen-acknowledgement-leaves-out-a-task-the-caller-cannot-read",
       "file": "v2-mcp-tasks.test.ts",
-      "line": 413,
+      "line": 422,
       "title": "a subscriptions/listen acknowledgement leaves out a task the caller cannot read",
       "explicitId": "openwop.requirement.0198.listen-omits-unreadable",
       "citations": [
@@ -30747,7 +30919,7 @@
     {
       "id": "openwop.it.v2-mcp-tasks.tasks-cancel-cancels-the-run-on-a-terminal-task-it-is-acknowledged-and-appends-n",
       "file": "v2-mcp-tasks.test.ts",
-      "line": 435,
+      "line": 444,
       "title": "tasks/cancel cancels the run; on a terminal task it is acknowledged and appends nothing",
       "explicitId": "openwop.requirement.0198.task-cancel-cancels-run",
       "citations": [
@@ -30779,7 +30951,7 @@
     {
       "id": "openwop.it.v2-mcp-tasks.a-client-disconnect-before-the-host-answers-a-task-less-tools-call-cancels-the-r",
       "file": "v2-mcp-tasks.test.ts",
-      "line": 454,
+      "line": 463,
       "title": "a client disconnect before the host answers a task-less tools/call cancels the run it started",
       "explicitId": "openwop.requirement.0198.disconnect-cancels-run",
       "citations": [
@@ -30802,7 +30974,7 @@
     {
       "id": "openwop.it.v2-mcp-tasks.a-disconnect-after-createtaskresult-never-affects-the-run",
       "file": "v2-mcp-tasks.test.ts",
-      "line": 474,
+      "line": 483,
       "title": "a disconnect after CreateTaskResult never affects the run",
       "explicitId": "openwop.requirement.0198.task-survives-disconnect",
       "citations": [
@@ -30821,7 +30993,7 @@
     {
       "id": "openwop.it.v2-mcp-tasks.a-blocking-tools-call-on-an-sse-stream-whose-run-is-cancelled-carries-no-notific",
       "file": "v2-mcp-tasks.test.ts",
-      "line": 489,
+      "line": 498,
       "title": "a blocking tools/call on an SSE stream whose run is cancelled carries no notifications/cancelled and ends isError true",
       "explicitId": "openwop.requirement.0198.no-server-cancelled",
       "citations": [
@@ -32345,7 +32517,7 @@
     {
       "id": "openwop.it.v2-run-diff-identical.two-identical-logs-diff-to-divergedatseq-null-and-empty-eventdiffs-in-a-response",
       "file": "v2-run-diff-identical.test.ts",
-      "line": 54,
+      "line": 57,
       "title": "two identical logs diff to divergedAtSeq null and empty eventDiffs, in a response that validates and echoes both ids",
       "explicitId": "openwop.requirement.0170.run-diff-identical",
       "citations": [
@@ -32585,7 +32757,7 @@
     {
       "id": "openwop.it.v2-run-pause-resume.a-running-run-pauses-202-paused-refuses-a-second-pause-409-resumes-202-running-a",
       "file": "v2-run-pause-resume.test.ts",
-      "line": 77,
+      "line": 80,
       "title": "a running run pauses (202 paused), refuses a second pause (409), resumes (202 running), and the log carries run.paused then run.resumed",
       "explicitId": "openwop.requirement.0170.run-pause-resume",
       "citations": [
@@ -32777,6 +32949,11 @@
         {
           "section": "spec/v2/core/events.md §SSE frames",
           "requirement": "frames MUST arrive in log order"
+        },
+        {
+          "section": "spec/v2/core/events.md §SSE frames",
+          "requirement": null,
+          "interpolated": true
         },
         {
           "section": "spec/v2/core/events.md §SSE frames",
@@ -33213,7 +33390,8 @@
         },
         {
           "section": "spec/v2/core/versioning.md §1.3",
-          "requirement": "a host that does not serve major 2 MUST refuse with 406 protocol_version_unsupported, which it did"
+          "requirement": null,
+          "interpolated": true
         },
         {
           "section": "spec/v2/core/versioning.md §1.3",
@@ -33224,7 +33402,7 @@
     {
       "id": "openwop.it.v2-version-header-honored.a-host-advertising-two-majors-serves-two-different-representations",
       "file": "v2-version-header-honored.test.ts",
-      "line": 166,
+      "line": 185,
       "title": "a host advertising two majors serves two different representations",
       "explicitId": "openwop.requirement.0172.version-header-honored",
       "citations": [
@@ -33427,7 +33605,7 @@
     {
       "id": "openwop.it.v2-webhook-durable-delivery.the-dead-letter-read-is-served-and-its-records-carry-no-payload",
       "file": "v2-webhook-durable-delivery.test.ts",
-      "line": 470,
+      "line": 478,
       "title": "the dead-letter read is served and its records carry no payload",
       "explicitId": "openwop.requirement.0188.dead-letter-read",
       "citations": [
@@ -33440,7 +33618,7 @@
     {
       "id": "openwop.it.v2-webhook-durable-delivery.after-unregister-the-dead-letter-read-answers-404-not-found-as-for-a-subscriptio",
       "file": "v2-webhook-durable-delivery.test.ts",
-      "line": 491,
+      "line": 499,
       "title": "after unregister, the dead-letter read answers 404 not_found, as for a subscription that never existed",
       "explicitId": "openwop.requirement.0217.dead-letter-read-after-unregister",
       "citations": [
@@ -33467,7 +33645,7 @@
     {
       "id": "openwop.it.v2-webhook-durable-delivery.a-dead-letter-record-carries-no-delivered-payload",
       "file": "v2-webhook-durable-delivery.test.ts",
-      "line": 524,
+      "line": 532,
       "title": "a dead-letter record carries no delivered payload",
       "explicitId": "openwop.requirement.0188.dead-letter-content-free",
       "citations": [
@@ -34043,13 +34221,18 @@
         {
           "section": "capabilities.md §3 + version-negotiation.md",
           "requirement": "Capabilities.protocolVersion MUST be a non-empty string"
+        },
+        {
+          "section": "RFC 0149 §C; capabilities.schema.json protocolVersion.pattern",
+          "requirement": null,
+          "interpolated": true
         }
       ]
     },
     {
       "id": "openwop.it.version-negotiation.every-event-has-the-6-required-runeventdoc-fields-per-run-event-schema-json",
       "file": "version-negotiation.test.ts",
-      "line": 82,
+      "line": 93,
       "title": "every event has the 6 required RunEventDoc fields per run-event.schema.json",
       "explicitId": "openwop.it.version-negotiation.every-event-has-the-6-required-runeventdoc-fields-per-run-event-schema-json",
       "citations": [
@@ -34090,7 +34273,7 @@
     {
       "id": "openwop.it.version-negotiation.event-sequences-within-a-run-are-strictly-monotonic",
       "file": "version-negotiation.test.ts",
-      "line": 126,
+      "line": 137,
       "title": "event sequences within a run are strictly monotonic",
       "explicitId": "openwop.it.version-negotiation.event-sequences-within-a-run-are-strictly-monotonic",
       "citations": [
@@ -34104,7 +34287,7 @@
     {
       "id": "openwop.it.version-negotiation.events-poll-with-lastsequence-past-current-end-returns-empty-events-iscomplete",
       "file": "version-negotiation.test.ts",
-      "line": 154,
+      "line": 165,
       "title": "events/poll with lastSequence past current end returns empty events + isComplete",
       "explicitId": "openwop.it.version-negotiation.events-poll-with-lastsequence-past-current-end-returns-empty-events-iscomplete",
       "citations": [
@@ -34630,7 +34813,7 @@
     {
       "id": "openwop.it.webhook-signed-delivery.host-posts-run-events-to-subscriber-with-valid-x-openwop-signature",
       "file": "webhook-signed-delivery.test.ts",
-      "line": 170,
+      "line": 172,
       "title": "host POSTs run events to subscriber with valid X-openwop-Signature",
       "explicitId": "openwop.it.webhook-signed-delivery.host-posts-run-events-to-subscriber-with-valid-x-openwop-signature",
       "citations": [
@@ -34657,7 +34840,13 @@
         },
         {
           "section": "webhooks.md §\"Delivery headers\"",
-          "requirement": "X-openwop-Timestamp MUST be a Unix-seconds integer string"
+          "requirement": null,
+          "interpolated": true
+        },
+        {
+          "section": "webhooks.md §\"Delivery headers\"; §\"Verification recipe\" step 1 (±5 minutes)",
+          "requirement": null,
+          "interpolated": true
         },
         {
           "section": "webhooks.md §\"Delivery headers\"",
@@ -34681,7 +34870,7 @@
     {
       "id": "openwop.it.webhook-signed-delivery.control-with-a-tunnel-wired-the-host-still-refuses-the-loopback-receiver",
       "file": "webhook-signed-delivery.test.ts",
-      "line": 425,
+      "line": 440,
       "title": "control: with a tunnel wired, the host still refuses the loopback receiver",
       "explicitId": "openwop.it.webhook-signed-delivery.control-with-a-tunnel-wired-the-host-still-refuses-the-loopback-receiver",
       "citations": [

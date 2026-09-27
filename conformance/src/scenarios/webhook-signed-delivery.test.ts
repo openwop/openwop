@@ -118,6 +118,8 @@ export const REQUIRES_HOST_CALLBACK = 'the host POSTs a signed webhook delivery 
 interface DeliveredRequest {
   readonly headers: Record<string, string>;
   readonly body: string;
+  /** Suite clock (ms) when the receiver recorded the delivery. */
+  readonly receivedAtMs: number;
 }
 
 async function startReceiver(): Promise<ScopedReceiver & { received: DeliveredRequest[] }> {
@@ -141,7 +143,7 @@ async function startReceiver(): Promise<ScopedReceiver & { received: DeliveredRe
       if (typeof v === 'string') headers[k.toLowerCase()] = v;
       else if (Array.isArray(v)) headers[k.toLowerCase()] = v.join(',');
     }
-    received.push({ headers, body: hit.body });
+    received.push({ headers, body: hit.body, receivedAtMs: Date.now() });
     res.writeHead(204);
     res.end();
   });
@@ -352,10 +354,23 @@ describe('webhook-signed-delivery: end-to-end HMAC v1', () => {
     ).toBe(sub.webhookId);
 
     const timestamp = first.headers['x-openwop-timestamp'];
+    // unfailable-leg audit wave 2, 2026-09-27: this only required a non-empty
+    // string, so an ISO-8601 date, a milliseconds value, or a stale constant
+    // passed "MUST be a Unix-seconds integer" (the HMAC below signs whatever
+    // string was sent, so it could not catch it). Now: digits only (≤ 11 —
+    // seconds, not ms) and within the ±5 min window webhooks.md §"Verification
+    // recipe" tells every subscriber to enforce (a delivery outside it is
+    // rejected by a conforming subscriber, so the host's "when the dispatcher
+    // signed the body" value must fall inside it at receipt).
     expect(
-      typeof timestamp === 'string' && timestamp.length > 0,
-      req('openwop.it.webhook-signed-delivery.host-posts-run-events-to-subscriber-with-valid-x-openwop-signature', 'webhooks.md §"Delivery headers"', 'X-openwop-Timestamp MUST be a Unix-seconds integer string'),
+      typeof timestamp === 'string' && /^\d{1,11}$/.test(timestamp),
+      req('openwop.it.webhook-signed-delivery.host-posts-run-events-to-subscriber-with-valid-x-openwop-signature', 'webhooks.md §"Delivery headers"', `X-openwop-Timestamp MUST be a Unix-seconds integer string (got ${JSON.stringify(timestamp)})`),
     ).toBe(true);
+    const skewSeconds = Math.abs(Number(timestamp) - first.receivedAtMs / 1000);
+    expect(
+      skewSeconds,
+      req('openwop.it.webhook-signed-delivery.host-posts-run-events-to-subscriber-with-valid-x-openwop-signature', 'webhooks.md §"Delivery headers"; §"Verification recipe" step 1 (±5 minutes)', `X-openwop-Timestamp MUST be the signing time — within ±300 s of receipt (off by ${Math.round(skewSeconds)} s)`),
+    ).toBeLessThan(300);
 
     const signature = first.headers['x-openwop-signature'] ?? '';
     expect(

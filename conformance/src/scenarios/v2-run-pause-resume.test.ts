@@ -71,7 +71,10 @@ describe('v2 run-pause-resume (runs.md §Pause and resume)', () => {
     if (resume === null) return softSkip('blocked', 'POST /runs/{runId}:resume unreachable (fetch failed)');
     expect(resume.status, req(ID, DOC, `resume on a run that is not paused MUST answer 409 — got ${resume.status} ${readErrorCode(resume.json) ?? ''}`.trim())).toBe(409);
     expect(readErrorCode(resume.json), req(ID, DOC, `a resume refused because the run is terminal MUST carry run_terminal (got ${String(readErrorCode(resume.json))})`)).toBe('run_terminal');
-    if (!isFixtureAdvertised(DELAY)) return softSkip('inapplicable', `${DELAY} fixture not advertised — the positive pause/resume leg cannot run, so the two 409s above are witnessed without their control (a host answering 409 to everything would pass them)`);
+    // unfailable-leg audit wave 2, 2026-09-27: 'inapplicable' after the 409
+    // asserts resolved to a partial-witness PASS — a host answering 409 to
+    // every pause/resume passed. `blocked` stands at major 2.
+    if (!isFixtureAdvertised(DELAY)) return softSkip('blocked', `${DELAY} fixture not advertised — the positive pause/resume leg cannot run, so the two 409s above are witnessed without their control (a host answering 409 to everything would pass them)`);
   });
 
   it('a running run pauses (202 paused), refuses a second pause (409), resumes (202 running), and the log carries run.paused then run.resumed', async () => {

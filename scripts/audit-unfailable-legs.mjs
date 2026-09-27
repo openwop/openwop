@@ -16,6 +16,13 @@
  *   H5 ledger — the only witness is the host's own ledger/projection read back
  *               (`/effects`, `/events`, `/ledger`), with no suite-owned receiver count.
  *
+ *   H6 skip-after — the block asserts, then calls softSkip(...) (returned or not) on a
+ *               path: at major 2 that records `executed-pass` with a `partial-witness:`
+ *               detail, which certification counts although the requirement went unobserved.
+ *
+ * `--all` widens the scope from Accepted-RFC Falsifiability ids to every leg in
+ * conformance/src/scenarios (v1-era RFCs mostly name no requirement ids).
+ *
  * Output: JSON lines { rfc, requirementId, file, line, title, shapes[] } on stdout.
  */
 import { readFileSync, readdirSync } from 'node:fs';
@@ -52,12 +59,13 @@ function block(text, line) {
   return out.join('\n');
 }
 
+const ALL = process.argv.includes('--all');
 const covered = (id, ex) => ex === id || ex.startsWith(`${id}.`);
 let n = 0;
 for (const rec of records) {
-  if (!rec.explicitId || !rec.file) continue;
-  const rfcId = [...accepted.keys()].find((id) => covered(id, rec.explicitId));
-  if (!rfcId) continue;
+  if (!rec.file) continue;
+  const rfcId = rec.explicitId ? [...accepted.keys()].find((id) => covered(id, rec.explicitId)) : undefined;
+  if (!rfcId && !ALL) continue;
   let text; try { text = src(rec.file); } catch { continue; }
   const b = block(text, rec.line);
   const shapes = [];
@@ -69,8 +77,14 @@ for (const rec of records) {
   if (guarded > 0 && guarded >= expects - 1) shapes.push('H3-guarded');
   if (/\.toBe(Defined|Truthy)\(\)/.test(b)) shapes.push('H4-defined');
   if (/\/(effects|ledger)\b/.test(b) && !/receiver|received|deliveries|hits|count\(/i.test(b)) shapes.push('H5-own-ledger');
+  // H6: an expect( that precedes a softSkip( in the same block, when that softSkip is not
+  // `blocked` (a blocked note stays blocked at major 2; inapplicable/skipped after an
+  // assertion becomes a partial-witness pass).
+  const firstExpect = b.indexOf('expect(');
+  const skipAfter = [...b.matchAll(/softSkip\(\s*'(inapplicable|skipped)'/g)].some((m) => firstExpect >= 0 && m.index > firstExpect);
+  if (skipAfter) shapes.push('H6-skip-after-assert');
   if (shapes.length === 0) continue;
   n++;
-  process.stdout.write(`${JSON.stringify({ rfc: accepted.get(rfcId), requirementId: rec.explicitId, file: rec.file, line: rec.line, title: rec.title, shapes })}\n`);
+  process.stdout.write(`${JSON.stringify({ rfc: rfcId ? accepted.get(rfcId) : null, requirementId: rec.explicitId ?? rec.id, file: rec.file, line: rec.line, title: rec.title, shapes })}\n`);
 }
 process.stderr.write(`audit-unfailable-legs: ${accepted.size} Accepted-RFC falsifiability ids; ${n} candidate legs\n`);

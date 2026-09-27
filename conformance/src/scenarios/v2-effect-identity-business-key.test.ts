@@ -25,7 +25,8 @@ import { describe, it, expect } from 'vitest';
 import { driver } from '../lib/driver.js';
 import { v2Discovery, gateFamily, v2Validator } from '../lib/v2.js';
 import { seamsProfileAdvertised, SEAMS_PREFIX } from '../lib/seams.js';
-import { softSkip } from '../lib/soft-skip.js';
+import { softSkip, blockedDespiteAssertions } from '../lib/soft-skip.js';
+import { startEffectReceiver } from '../lib/effect-receiver.js';
 import { req } from '../lib/requirement-ids.js';
 
 const FIXTURE = 'conformance-noop';
@@ -109,11 +110,19 @@ describe('RFC 0173 §B — effect-identity-business-key (gated on idempotency)',
     if (!doc) return softSkip('blocked', 'discovery unreachable');
     if (!(await gateFamily('idempotency'))) return softSkip('inapplicable', 'idempotency family not advertised — no Layer-2 obligation (gate recorded under openwop.family.idempotency)');
     if (!seamsProfileAdvertised(doc)) return softSkip('inapplicable', 'the retry leg is driven through the suite fixture provider (RFC 0173 §D.2 G4) under the seams profile — seams profile not advertised');
-    // The seam is catalogued (api/seams-v2.yaml `forceEffectTransportRetry`). An
-    // unreachable providerUrl forces the transport retry; the witness is the
-    // host's own Layer-2 ledger (RFC 0173 §C.2), where every attempt of one
-    // effect MUST carry the same business-identity key.
-    const fired = await driver.post(`${SEAMS_PREFIX}/sample/test/idempotency/effect-retry`, { providerUrl: 'http://127.0.0.1:1/' });
+    // The seam is catalogued (api/seams-v2.yaml `forceEffectTransportRetry`), and
+    // its contract names the witness: "the suite fixture provider records the
+    // idempotency key of each attempt". Until 2.42.4 this leg handed the host an
+    // address nothing listened on (`http://127.0.0.1:1/`), so no suite-owned
+    // party ever saw a key, and the only witness was the host's own ledger — a
+    // host could record one constant providerKey while sending a fresh key on
+    // every attempt. The suite's own receiver now cuts the FIRST attempt's
+    // connection (a genuine transport failure, after recording its
+    // Idempotency-Key) and answers the second, so the keys compared below are
+    // the ones that crossed the wire.
+    const rx = await startEffectReceiver({ failFirst: 1 });
+    try {
+    const fired = await driver.post(`${SEAMS_PREFIX}/sample/test/idempotency/effect-retry`, { providerUrl: rx.url });
     if (fired.status === 404 || fired.status === 403 || fired.status === 405) {
       return softSkip('blocked', `the host advertises the seams profile but does not serve ${SEAMS_PREFIX}/sample/test/idempotency/effect-retry (answered ${fired.status}) — the cross-retry keying leg cannot be driven`);
     }
@@ -166,5 +175,30 @@ describe('RFC 0173 §B — effect-identity-business-key (gated on idempotency)',
       keyings.size,
       req('openwop.requirement.0173.effect-identity-business-key.retry', 'spec/v2/core/idempotency.md §Layer 2: effect identity', `every attempt of one effect MUST declare the same keying — ${attempts.length} attempt(s) declared ${[...keyings].join(', ')}`),
     ).toBe(1);
+    // The wire half: what the provider actually received.
+    const deadline = Date.now() + 10_000;
+    while (rx.arrivals() < 2 && Date.now() < deadline) await new Promise((r) => setTimeout(r, 100));
+    const wire = rx.all().filter((a) => a.mine);
+    if (wire.length < 2) {
+      return blockedDespiteAssertions(`the suite's fixture provider saw ${wire.length} attempt(s) at ${rx.url} (local ${rx.localUrl}${rx.tunnelled ? ', tunnelled' : ''}) while the ledger records ${attempts.length} — the host's attempts did not reach the suite's receiver, so the keys on the wire are unobserved`);
+    }
+    for (const a of wire) {
+      expect(
+        typeof a.idempotencyKey === 'string' && a.idempotencyKey.length > 0,
+        req('openwop.requirement.0173.effect-identity-business-key.retry', 'spec/v2/core/idempotency.md §Layer 2: effect identity', `every attempt MUST present an Idempotency-Key to the provider — an attempt at ${a.path} carried ${JSON.stringify(a.idempotencyKey ?? null)}`),
+      ).toBe(true);
+    }
+    const wireKeys = new Set(wire.map((a) => a.idempotencyKey));
+    expect(
+      wireKeys.size,
+      req('openwop.requirement.0173.effect-identity-business-key.retry', 'spec/v2/core/idempotency.md §Layer 2: effect identity', `the provider MUST see the same Idempotency-Key on every attempt of one effect — ${wire.length} attempt(s) on the wire carried ${wireKeys.size} distinct key(s)`),
+    ).toBe(1);
+    expect(
+      [...wireKeys][0],
+      req('openwop.requirement.0173.effect-identity-business-key.retry', 'spec/v2/core/idempotency.md §Layer 2: effect identity', 'the key the ledger records MUST be the key the provider received — a ledger that disagrees with the wire is not a witness'),
+    ).toBe([...keys][0]);
+    } finally {
+      await rx.close();
+    }
   });
 });

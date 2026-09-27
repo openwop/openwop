@@ -24,7 +24,7 @@ import { driver } from '../lib/driver.js';
 import { pollUntilTerminal } from '../lib/polling.js';
 import { isFixtureAdvertised } from '../lib/fixtures.js';
 import { req } from '../lib/requirement-ids.js';
-import { softSkip } from '../lib/soft-skip.js';
+import { softSkip, blockedDespiteAssertions } from '../lib/soft-skip.js';
 
 // `conformance-multi-node` produces enough events (run.started, three
 // node.started/completed pairs, run.completed = ~8 events) that
@@ -70,12 +70,25 @@ describe('debug-bundle-truncation: truncated: true contract', () => {
       metrics?: { eventCount?: number };
     };
 
-    if (body.truncated !== true) {
+    // unfailable-leg audit wave 2, 2026-09-27: `truncated !== true` used to
+    // soft-skip unconditionally after the create/baseline asserts — a
+    // partial-witness PASS even for a host that DID cut the events array
+    // (fewer than the full bundle) but omitted `truncated: true`, which is
+    // exactly the violation this scenario exists to catch. Now: a shortened
+    // events array MUST carry `truncated: true`; an un-shortened bundle means
+    // the cap was never lowered, so the requirement was not observed.
+    const returnedCount = Array.isArray(body.events) ? body.events.length : fullEventCount;
+    if (returnedCount < fullEventCount) {
+      expect(body.truncated, req('openwop.it.debug-bundle-truncation.host-that-supports-maxevents-n-or-otherwise-caps-surfaces-truncated-truncatedrea',
+        'debug-bundle.md §"Bundle size limits"',
+        `a bundle whose events were cut (${returnedCount} of ${fullEventCount}) MUST set truncated: true`,
+      )).toBe(true);
+    } else if (body.truncated !== true) {
       // eslint-disable-next-line no-console
       console.warn(
         '[debug-bundle-truncation] host does not honor ?maxEvents=; skipping truncated-shape assertions',
       );
-      return softSkip('blocked', 'precondition not met — `body.truncated !== true` returned early ([debug-bundle-truncation] host does not honor ?maxEvents=; skipping truncated-shape assertions) (seam, prior step, or fixture unavailable)');
+      return blockedDespiteAssertions('host does not honor ?maxEvents= (full bundle returned, truncated not set) — truncation contract not observed');
     }
 
     expect(typeof body.truncatedReason, req('openwop.it.debug-bundle-truncation.host-that-supports-maxevents-n-or-otherwise-caps-surfaces-truncated-truncatedrea', 

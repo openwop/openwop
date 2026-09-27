@@ -42,7 +42,7 @@ import { behaviorGate } from '../lib/behavior-gate.js';
 import { isFixtureAdvertised } from '../lib/fixtures.js';
 import { capabilityFamily } from '../lib/discovery-capabilities.js';
 import { req } from '../lib/requirement-ids.js';
-import { softSkip } from '../lib/soft-skip.js';
+import { softSkip, blockedDespiteAssertions } from '../lib/soft-skip.js';
 
 interface BackpressureCaps {
   supported?: boolean;
@@ -212,7 +212,10 @@ describe('production-backpressure: 503 envelope under saturation', () => {
         }
       }
       await Promise.allSettled(slotPromises);
-      return softSkip('blocked', 'precondition not met — `saturationEarlyExit` returned early (seam, prior step, or fixture unavailable)');
+      // unfailable-leg audit wave 2, 2026-09-27: this plain softSkip came
+      // AFTER up to cap-1 `create.status === 201` assertions, so the row was
+      // a partial-witness PASS although no 503 envelope was ever observed.
+      return blockedDespiteAssertions('inflight cap already saturated by parallel runs before the cap+1 probe (run with --no-file-parallelism) — 503 envelope not observed');
     }
 
     // Let SSE connections register.
@@ -233,7 +236,10 @@ describe('production-backpressure: 503 envelope under saturation', () => {
         console.warn(
           `[production-backpressure] expected 503 at cap+1=${cap + 1}, got ${blocked.status}; saturation may need tuning`,
         );
-        return softSkip('blocked', 'precondition not met — `blocked.status !== 503` returned early ([production-backpressure] expected 503 at cap+1=…, got …; saturation may need tuning) (seam, prior step, or fixture unavailable)');
+        // unfailable-leg audit wave 2, 2026-09-27: after `cap` × 201 asserts a
+        // plain softSkip recorded a partial-witness PASS — a host that never
+        // 503s at cap+1 passed the 503-envelope leg. Now `blocked`.
+        return blockedDespiteAssertions(`expected 503 at cap+1=${cap + 1}, got ${blocked.status} — saturation not reached (SSE slots may not have registered); 503 envelope not observed`);
       }
 
       const retryAfterHeader = blocked.headers.get('retry-after');
@@ -318,14 +324,14 @@ describe('production-backpressure: discovery exempt from cap', () => {
 
     const cap = prod?.backpressure?.inflightCap;
     if (cap === undefined) {
-      // Without advertised cap we can't saturate deterministically;
-      // fall back to a single discovery probe.
-      const probe = await driver.get('/.well-known/openwop');
-      expect(probe.status, req('openwop.it.production-backpressure.get-well-known-openwop-returns-200-even-when-inflight-is-saturated', 
-        'production-profile.md §Backpressure',
-        'discovery MUST answer regardless of load',
-      )).toBe(200);
-      return softSkip('inapplicable', 'capability or profile not advertised by this host — gate `cap === undefined` returned early');
+      // unfailable-leg audit wave 2, 2026-09-27: this used to take one UNLOADED
+      // discovery probe and then soft-skip, which recorded a partial-witness PASS
+      // for "returns 200 even when inflight is saturated", although nothing was
+      // saturated. The cap is OPTIONAL, so a host without one has nothing to
+      // saturate and the requirement does not bind it: `inapplicable`, before
+      // any assertion. It is not `blocked`, which would deny certification to a
+      // conforming host for a surface it may decline.
+      return softSkip('inapplicable', 'host does not advertise production.backpressure.inflightCap — there is no cap to saturate, so discovery-under-saturation does not bind');
     }
 
     // Issue many concurrent discovery probes; all MUST succeed.

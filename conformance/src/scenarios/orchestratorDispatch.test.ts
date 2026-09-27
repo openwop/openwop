@@ -45,8 +45,8 @@ describe.skipIf(SKIP)('orchestratorDispatch: supervisor → dispatch → next-wo
     expect(terminal.status).toBe('completed');
 
     const events = await driver.get(`/v1/runs/${encodeURIComponent(runId)}/events`);
-    const list = (events.json as { events?: Array<{ type: string; payload?: Record<string, unknown> }> })
-      .events ?? [];
+    const list = ((events.json as { events?: Array<{ type: string; sequence?: number; nodeId?: string; payload?: Record<string, unknown> }> })
+      .events ?? []).slice().sort((a, b) => (a.sequence ?? 0) - (b.sequence ?? 0));
 
     const decisions = list.filter((e) => e.type === 'runOrchestrator.decided');
     expect(decisions.length).toBeGreaterThan(0);
@@ -64,5 +64,21 @@ describe.skipIf(SKIP)('orchestratorDispatch: supervisor → dispatch → next-wo
     expect(decision.kind).toBe('next-worker');
     expect(Array.isArray(decision.nextWorkerIds)).toBe(true);
     expect(decision.nextWorkerIds.length).toBeGreaterThanOrEqual(1);
+
+    // unfailable-leg audit wave 2, 2026-09-27: the leg is named "decided
+    // {next-worker} BETWEEN supervisor + dispatch" but never read an order —
+    // a host that emitted the decision AFTER the dispatch node had already
+    // started (or never started the dispatch node at all) passed. The
+    // next-worker decision MUST precede the dispatch node's first node.started.
+    const nodeIdOf = (e: { nodeId?: string; payload?: Record<string, unknown> }): unknown => e.nodeId ?? e.payload?.nodeId;
+    const dispatchStarted = list.find((e) => e.type === 'node.started' && nodeIdOf(e) === 'dispatch');
+    expect(
+      dispatchStarted,
+      req('openwop.it.orchestratorDispatch.emits-runorchestrator-decided-next-worker-between-supervisor-dispatch', 'RFCS/0006-orchestrator.md', 'the dispatch node MUST emit node.started after the supervisor decides next-worker'),
+    ).toBeDefined();
+    expect(
+      typeof nextWorker!.sequence === 'number' && typeof dispatchStarted?.sequence === 'number' && nextWorker!.sequence < dispatchStarted.sequence,
+      req('openwop.it.orchestratorDispatch.emits-runorchestrator-decided-next-worker-between-supervisor-dispatch', 'RFCS/0006-orchestrator.md', 'runOrchestrator.decided{next-worker} MUST precede node.started{dispatch} in event-log sequence'),
+    ).toBe(true);
   });
 });

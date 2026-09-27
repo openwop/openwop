@@ -106,6 +106,12 @@ describe('v2 idempotency-in-flight (idempotency.md Concurrency, RFC 0213 §B)', 
     const r = await theRace();
     if (r.kind === 'blocked') return softSkip('blocked', r.reason);
     expect(r.successes.length, req(ID_ONE, DOC, `at least one of ${N} same-key creates MUST complete (statuses: ${r.all.map((x) => x.status).join(',')})`)).toBeGreaterThan(0);
+    // unfailable-leg audit wave 2, 2026-09-27: non-string runIds were FILTERED
+    // before the distinct-count, so a host answering the winner `201 {runId}`
+    // and every loser `201 {}` (a success that names no run — possibly a second
+    // one) passed. Every success MUST name the run it created or replayed.
+    const withoutRunId = r.successes.filter((x) => typeof (x.json as { runId?: unknown } | null)?.runId !== 'string');
+    expect(withoutRunId.length, req(ID_ONE, DOC, `every same-key success MUST carry the string runId of the one run processed (${withoutRunId.length} of ${r.successes.length} did not; statuses ${withoutRunId.map((x) => x.status).join(',')})`)).toBe(0);
     const runIds = new Set(r.successes.map((x) => (x.json as { runId?: unknown } | null)?.runId).filter((x): x is string => typeof x === 'string'));
     expect(runIds.size, req(ID_ONE, DOC, `a host MUST NOT process two same-key requests: distinct runIds ${[...runIds].join(', ')}`)).toBe(1);
   }, 60_000);
@@ -115,6 +121,16 @@ describe('v2 idempotency-in-flight (idempotency.md Concurrency, RFC 0213 §B)', 
     if (r.kind === 'blocked') return softSkip('blocked', r.reason);
     const unmarked = r.successes.filter((x) => x.headers.get('openwop-idempotent-replay') !== 'true');
     expect(unmarked.length, req(ID_LOSER, DOC, `exactly one success is the winner; every other MUST carry OpenWOP-Idempotent-Replay: true (${unmarked.length} of ${r.successes.length} unmarked)`)).toBe(1);
+    // unfailable-leg audit wave 2, 2026-09-27: a marked replay was never
+    // compared to the winner, so a loser answered `201` + the replay header
+    // over a DIFFERENT (or no) runId passed. §Concurrency: the loser receives
+    // "the winner's response" — the same runId.
+    const winnerRunId = (unmarked[0]?.json as { runId?: unknown } | null)?.runId;
+    const replayRunIds = r.successes.filter((x) => x !== unmarked[0]).map((x) => (x.json as { runId?: unknown } | null)?.runId);
+    expect(
+      { winnerIsString: typeof winnerRunId === 'string', mismatched: replayRunIds.filter((id) => id !== winnerRunId).map(String) },
+      req(ID_LOSER, DOC, `a loser that waits MUST receive the winner's response — every marked replay MUST carry the winner's runId (${String(winnerRunId)})`),
+    ).toEqual({ winnerIsString: true, mismatched: [] });
     for (const x of r.refusals) {
       const code = readErrorCode(x.json);
       expect({ status: x.status, code }, req(ID_LOSER, DOC, `a loser that is not a replay MUST be 409 idempotency_in_flight (got ${x.status} ${String(code)})`)).toEqual({ status: 409, code: 'idempotency_in_flight' });

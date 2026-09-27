@@ -98,27 +98,36 @@ describe.skipIf(SKIP)('agentReasoningEvents: agent.* event family emission', () 
     //      paired eventId through.
     const calls = agentEvents.filter((e) => e.type === 'agent.toolCalled');
     const returns = agentEvents.filter((e) => e.type === 'agent.toolReturned');
+    // unfailable-leg audit wave 2, 2026-09-27: a toolReturned with NO callId
+    // used to `continue` (skipping pairing entirely), and a matched toolCalled
+    // with no eventId skipped the causationId check — so a host that omitted
+    // both schema-required fields passed the whole pairing requirement.
+    // callId is required on agentToolReturned (run-event-payloads.schema.json)
+    // and eventId on every RunEventDoc (run-event.schema.json): both asserted.
     for (const ret of returns) {
-      const callId = ret.payload?.callId as string | undefined;
-      if (callId === undefined) continue;
+      const callId = ret.payload?.callId;
+      expect(
+        typeof callId === 'string' && callId.length > 0,
+        req('openwop.it.agentReasoningEvents.host-emits-at-least-one-canonical-agent-event-during-a-reasoning-fixture-run', 'schemas/run-event-payloads.schema.json#/$defs/agentToolReturned', 'agent.toolReturned MUST carry a callId (schema-required)'),
+      ).toBe(true);
       const matched = calls.find((c) => c.payload?.callId === callId);
       expect(
         matched,
         req('openwop.it.agentReasoningEvents.host-emits-at-least-one-canonical-agent-event-during-a-reasoning-fixture-run', 'schemas/run-event-payloads.schema.json', `agent.toolReturned.callId=${callId} MUST pair with a prior agent.toolCalled`),
       ).toBeDefined();
 
-      // Strict causationId chain — only assert when the host actually
-      // surfaces eventId on the matched toolCalled event. Hosts that
-      // omit eventId from their `/events` projection skip this check
-      // (and SHOULD add it — RFC 0002 §B's chain integrity depends on
-      // it).
+      // Strict causationId chain. eventId is required on every RunEventDoc
+      // (run-event.schema.json), so a matched toolCalled without one is a
+      // projection defect, not a reason to skip RFC 0002 §B's chain check.
       const matchedEventId = matched?.eventId;
-      if (typeof matchedEventId === 'string' && matchedEventId.length > 0) {
-        expect(
-          ret.causationId,
-          req('openwop.it.agentReasoningEvents.host-emits-at-least-one-canonical-agent-event-during-a-reasoning-fixture-run', 'schemas/run-event-payloads.schema.json', `agent.toolReturned (callId=${callId}) MUST carry causationId === paired agent.toolCalled.eventId per RFC 0002 §B`),
-        ).toBe(matchedEventId);
-      }
+      expect(
+        typeof matchedEventId === 'string' && matchedEventId.length > 0,
+        req('openwop.it.agentReasoningEvents.host-emits-at-least-one-canonical-agent-event-during-a-reasoning-fixture-run', 'schemas/run-event.schema.json', `the agent.toolCalled paired with callId=${String(callId)} MUST carry an eventId (schema-required)`),
+      ).toBe(true);
+      expect(
+        ret.causationId,
+        req('openwop.it.agentReasoningEvents.host-emits-at-least-one-canonical-agent-event-during-a-reasoning-fixture-run', 'schemas/run-event-payloads.schema.json', `agent.toolReturned (callId=${String(callId)}) MUST carry causationId === paired agent.toolCalled.eventId per RFC 0002 §B`),
+      ).toBe(matchedEventId);
     }
   });
 });

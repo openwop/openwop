@@ -19,7 +19,7 @@
  */
 
 import { describe, it, expect } from 'vitest';
-import { softSkip } from '../lib/soft-skip.js';
+import { softSkip, blockedDespiteAssertions } from '../lib/soft-skip.js';
 import { driver } from '../lib/driver.js';
 import { capabilityFamily } from '../lib/discovery-capabilities.js';
 import { req } from '../lib/requirement-ids.js';
@@ -90,7 +90,11 @@ describe('memory-compaction-provenance-tag: compacted-from:<id> tag follows §C 
     if (listRes.status === 404) {
       // eslint-disable-next-line no-console
       console.warn('[rfc0012-tag] host does not expose memory:list at /v1/memory/{ref}; skipping tag inspection (canonical provenance signal remains the memory.compacted event itself)');
-      return softSkip('blocked', '[rfc0012-tag] host does not expose memory:list at /v1/memory/{ref}; skipping tag inspection (canonical provenance signal remains the memory.compacted event itself)');
+      // unfailable-leg audit wave 2, 2026-09-27: this return follows the seed/
+      // compact asserts, so a plain softSkip recorded a partial-witness
+      // `executed-pass` — a host whose compacted entry was never inspectable
+      // passed the tag requirement unobserved. Now `blocked`.
+      return blockedDespiteAssertions('[rfc0012-tag] host does not expose memory:list at /v1/memory/{ref}; skipping tag inspection (canonical provenance signal remains the memory.compacted event itself)');
     }
     expect(listRes.status, req('openwop.it.memory-compaction-provenance-tag.compacted-entry-carries-a-well-formed-compacted-from-tag-or-omits-it-cleanly-no', 'RFC 0012 §C', 'memory:list MUST return 200 when reachable')).toBe(200);
 
@@ -100,7 +104,11 @@ describe('memory-compaction-provenance-tag: compacted-from:<id> tag follows §C 
     if (!output) {
       // eslint-disable-next-line no-console
       console.warn(`[rfc0012-tag] outputId ${outputId} not visible via memory:list; cannot inspect tags`);
-      return softSkip('blocked', '[rfc0012-tag] outputId … not visible via memory:list; cannot inspect tags');
+      // unfailable-leg audit wave 2, 2026-09-27: this return follows the seed/
+      // compact asserts, so a plain softSkip recorded a partial-witness
+      // `executed-pass` — a host whose compacted entry was never inspectable
+      // passed the tag requirement unobserved. Now `blocked`.
+      return blockedDespiteAssertions('[rfc0012-tag] outputId … not visible via memory:list; cannot inspect tags');
     }
     const tags = output.tags ?? [];
 

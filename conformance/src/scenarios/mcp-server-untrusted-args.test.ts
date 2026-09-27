@@ -39,8 +39,11 @@ async function rpc(method: string, params?: Record<string, unknown>) {
 }
 
 const TEST_TOOL_NAME = `inj_${Date.now()}_${Math.random().toString(36).slice(2, 6)}`;
+/** Set once the strict tool is registered, so the valid-args leg can tell "no tool" from "rejected". */
+let strictToolRegistered = false;
 
 async function registerStrictWorkflow(): Promise<boolean> {
+  if (strictToolRegistered) return true;
   const res = await driver.post('/v1/host/sample/workflows', {
     workflowId: `mcp.untrusted.${Date.now()}`,
     nodes: [
@@ -60,7 +63,8 @@ async function registerStrictWorkflow(): Promise<boolean> {
       },
     ],
   });
-  return res.status === 200 || res.status === 201;
+  strictToolRegistered = res.status === 200 || res.status === 201;
+  return strictToolRegistered;
 }
 
 describe('mcp-server-untrusted-args: advertisement shape (RFC 0020)', () => {
@@ -96,14 +100,25 @@ describe('mcp-server-untrusted-args: behavioral (RFC 0020 §D)', () => {
   it('tools/call with valid arguments is accepted', async () => {
     const cap = await readCap();
     if (!cap || cap.supported !== true) return softSkip('inapplicable', 'capability or profile not advertised by this host — gate `!cap || cap.supported !== true` returned early');
+    // The tool this leg calls is registered by the malformed-args leg; register
+    // it here too (idempotent) so an unknown-tool error is never read as a
+    // rejection of valid arguments.
+    if (!(await registerStrictWorkflow())) return softSkip('blocked', 'precondition not met — the strict-schema tool could not be registered via /v1/host/sample/workflows');
     const r = await rpc('tools/call', {
       name: TEST_TOOL_NAME,
       arguments: { text: 'hello' },
     });
     if (r.status === 404) return seamAbsent(`host advertises an MCP server mount but the mount (capabilities.mcp.serverUrls[0], else /v1/host/sample/mcp) answered ${r.status} — RFC 0153 §B is unobservable at the path the host itself advertised`);
-    expect(r.status).toBe(200);
-    if (r.body.error) {
-      expect(r.body.error.code, req('openwop.it.mcp-server-untrusted-args.tools-call-with-valid-arguments-is-accepted', 'RFC 0020 §D', 'valid args MUST NOT trigger -32602')).not.toBe(-32602);
-    }
+    expect(r.status, req('openwop.it.mcp-server-untrusted-args.tools-call-with-valid-arguments-is-accepted', 'RFC 0020 §D', 'the JSON-RPC envelope MUST answer 200')).toBe(200);
+    // unfailable-leg audit wave 2, 2026-09-27: the only requirement assert sat
+    // inside `if (r.body.error)` and checked just `code !== -32602`, so a host
+    // that rejected VALID arguments with any other JSON-RPC error (-32603,
+    // -32000, …) — or answered with neither result nor error — passed. A valid
+    // call MUST be accepted: no JSON-RPC error, and a result present.
+    // (`result.isError` is deliberately NOT asserted: it reports the exposed
+    // workflow's own execution outcome — a failed/suspended run — not a
+    // rejection of the arguments; RFC 0020 §C.)
+    expect(r.body.error, req('openwop.it.mcp-server-untrusted-args.tools-call-with-valid-arguments-is-accepted', 'RFC 0020 §D', 'valid args MUST NOT be rejected with any JSON-RPC error')).toBeUndefined();
+    expect(r.body.result, req('openwop.it.mcp-server-untrusted-args.tools-call-with-valid-arguments-is-accepted', 'RFC 0020 §D', 'an accepted tools/call MUST return a JSON-RPC result')).toBeDefined();
   });
 });

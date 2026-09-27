@@ -17,7 +17,7 @@
 import { describe, it, expect } from 'vitest';
 import { readManifestRuntimeCap, listManifestAgents, dispatchAgent } from '../lib/agentRuntime.js';
 import { req } from '../lib/requirement-ids.js';
-import { softSkip } from '../lib/soft-skip.js';
+import { blockedDespiteAssertions, softSkip } from '../lib/soft-skip.js';
 
 describe('agent-manifest-runtime (RFC 0070)', () => {
   it('lists installed manifest agents and dispatches one with attributed events', async () => {
@@ -32,7 +32,16 @@ describe('agent-manifest-runtime (RFC 0070)', () => {
     ).toBe(true);
 
     const inv = await listManifestAgents();
-    if (inv === null) return softSkip('blocked', 'precondition not met — `inv === null` returned early (seam absent — soft-skip) (seam, prior step, or fixture unavailable)'); // seam absent — soft-skip
+    // unfailable-leg audit wave 2, 2026-09-27: a 404/405/501 on GET /v1/agents
+    // was `softSkip('blocked')` after the installScope assert — a partial-witness
+    // PASS for a host that advertised manifestRuntime and served no inventory.
+    // node-packs.md §"Agent inventory (RFC 0072 §A — normative)": an advertiser
+    // MUST serve GET /v1/agents, so absence is a failure, not a missing seam.
+    expect(
+      inv,
+      req('openwop.it.agent-manifest-runtime.lists-installed-manifest-agents-and-dispatches-one-with-attributed-events', 'RFC 0072 §A / node-packs.md §Agent inventory', 'a host advertising agents.manifestRuntime.supported MUST serve GET /v1/agents (it answered 404/405/501)'),
+    ).not.toBeNull();
+    if (inv === null) throw new Error("unreachable: the assertion above fails first");
     const agents = inv.agents ?? [];
     expect(
       Array.isArray(agents),
@@ -56,12 +65,16 @@ describe('agent-manifest-runtime (RFC 0070)', () => {
     }
 
     const agentId = agents[0]?.agentId;
-    if (typeof agentId !== 'string') return softSkip('blocked', 'precondition not met — `typeof agentId !== \'string\'` returned early (seam, prior step, or fixture unavailable)');
+    // unfailable-leg audit wave 2, 2026-09-27: this and the `res === null`
+    // return below were plain `softSkip('blocked')` after the inventory
+    // asserts, recording a partial-witness PASS for a leg whose dispatch half
+    // (terminal status + attributed agent.* events) was never observed.
+    if (typeof agentId !== 'string') return blockedDespiteAssertions( 'precondition not met — `typeof agentId !== \'string\'` returned early (seam, prior step, or fixture unavailable)');
 
     // Opaque-payload dispatch (validateHandoff:false) so the assertion is
     // independent of the chosen agent's handoff schema.
     const res = await dispatchAgent(agentId, { task: {}, validateHandoff: false, availableTools: [] });
-    if (res === null) return softSkip('blocked', 'precondition not met — `res === null` returned early (seam absent — soft-skip) (seam, prior step, or fixture unavailable)'); // seam absent — soft-skip
+    if (res === null) return blockedDespiteAssertions( 'precondition not met — `res === null` returned early (seam absent — soft-skip) (seam, prior step, or fixture unavailable)'); // seam absent — soft-skip
     expect(
       res.status === 'completed' || res.status === 'escalated',
       req('openwop.it.agent-manifest-runtime.lists-installed-manifest-agents-and-dispatches-one-with-attributed-events', 'RFC 0070', 'dispatch MUST resolve to a terminal status (completed | escalated)'),
