@@ -1,12 +1,13 @@
 {
   "$schema": "https://openwop.dev/spec/v2/errors.schema.json",
-  "$comment": "RFC 0171 §B.1 — the error registry: one row per code {code, httpStatus, retriable, details, since, deprecated?}. schemas/v2/error-envelope.schema.json is GENERATED from it (scripts/generate-error-envelope.mjs). Retry timing lives in Retry-After only (§B.2). statusSource records whether the status was stated in v1 prose, a v1 convention, or decided here. details is null until a code's details schema is registered (a null row means details is an open object for that code — closure over details is the RFC 0171 Phase 3 follow-up G-row).",
+  "$comment": "RFC 0171 §B.1 — the error registry: one row per code {code, meaning?, httpStatus, retriable, details, since, deprecated?}. schemas/v2/error-envelope.schema.json is GENERATED from it (scripts/generate-error-envelope.mjs). Retry timing lives in Retry-After only (§B.2). statusSource records whether the status was stated in v1 prose, a v1 convention, or decided here. details is null until a code's details schema is registered (a null row means details is an open object for that code — closure over details is the RFC 0171 Phase 3 follow-up G-row).",
   "version": "2.0",
-  "updated": "2026-09-26",
+  "updated": "2026-09-27",
   "vendorCodePattern": "^(?!openwop\\.)[a-z][a-z0-9]*(-[a-z0-9]+)*\\.[a-z][a-z0-9_]*$",
   "rows": [
     {
       "code": "connection_provider_unresolved",
+      "meaning": "A connector or pack references a connection provider that nothing defines.",
       "httpStatus": 400,
       "statusSource": "v1 prose",
       "retriable": false,
@@ -16,6 +17,7 @@
     },
     {
       "code": "connector_action_unresolved",
+      "meaning": "A pack's connector action or trigger names a node type the same manifest does not define.",
       "httpStatus": 400,
       "statusSource": "v1 convention",
       "retriable": false,
@@ -25,6 +27,7 @@
     },
     {
       "code": "credential_scope_unsupported",
+      "meaning": "The credential request names a scope the host does not support.",
       "httpStatus": 400,
       "statusSource": "v1 convention",
       "retriable": false,
@@ -34,6 +37,7 @@
     },
     {
       "code": "delegation_chain_cyclic",
+      "meaning": "The delegation chain repeats a subject.",
       "httpStatus": 400,
       "statusSource": "v2 decision",
       "retriable": false,
@@ -43,6 +47,7 @@
     },
     {
       "code": "delegation_chain_too_long",
+      "meaning": "The delegation chain is longer than the host's bound.",
       "httpStatus": 400,
       "statusSource": "v2 decision",
       "retriable": false,
@@ -52,6 +57,7 @@
     },
     {
       "code": "idempotency_key_invalid",
+      "meaning": "The Idempotency-Key value does not match the required grammar.",
       "httpStatus": 400,
       "statusSource": "v2 decision",
       "retriable": false,
@@ -61,6 +67,7 @@
     },
     {
       "code": "interop_version_unsupported",
+      "meaning": "An A2A or MCP negotiation would land below the host's advertised minimum version.",
       "httpStatus": 400,
       "statusSource": "v1 convention",
       "retriable": false,
@@ -70,6 +77,7 @@
     },
     {
       "code": "oauth_provider_unsupported",
+      "meaning": "A node names an OAuth provider the host does not advertise.",
       "httpStatus": 400,
       "statusSource": "v1 convention",
       "retriable": false,
@@ -79,6 +87,7 @@
     },
     {
       "code": "oauth_scope_unsupported",
+      "meaning": "A node asks for an OAuth scope the provider does not advertise.",
       "httpStatus": 400,
       "statusSource": "v1 convention",
       "retriable": false,
@@ -88,6 +97,7 @@
     },
     {
       "code": "pack_dependency_cycle",
+      "meaning": "The pack dependency graph contains a cycle.",
       "httpStatus": 400,
       "statusSource": "v1 convention (node-packs.md)",
       "retriable": false,
@@ -97,6 +107,7 @@
     },
     {
       "code": "pack_engine_unsupported",
+      "meaning": "The pack's engines range does not admit the host's protocol major.",
       "httpStatus": 400,
       "statusSource": "v2 decision",
       "retriable": false,
@@ -106,6 +117,7 @@
     },
     {
       "code": "pack_integrity_failure",
+      "meaning": "The uploaded or fetched pack's SHA-256 does not match the declared digest.",
       "httpStatus": 400,
       "statusSource": "v1 convention (node-packs.md)",
       "retriable": false,
@@ -115,6 +127,7 @@
     },
     {
       "code": "pack_kind_invalid",
+      "meaning": "The manifest's content does not match its declared pack kind, or mixes kinds.",
       "httpStatus": 400,
       "statusSource": "v1 convention (node-packs.md)",
       "retriable": false,
@@ -124,6 +137,7 @@
     },
     {
       "code": "pack_lockfile_incomplete",
+      "meaning": "The workspace references a pack the lockfile does not list.",
       "httpStatus": 400,
       "statusSource": "v1 convention (node-packs.md)",
       "retriable": false,
@@ -133,6 +147,7 @@
     },
     {
       "code": "pack_peer_dependency_missing",
+      "meaning": "The host does not provide a capability the pack declares as a peer dependency.",
       "httpStatus": 400,
       "statusSource": "v1 convention (node-packs.md)",
       "retriable": false,
@@ -142,6 +157,7 @@
     },
     {
       "code": "pack_peer_dependency_undefined",
+      "meaning": "A peer-dependency key is not a declared capability family or alias.",
       "httpStatus": 400,
       "statusSource": "v1 convention (node-packs.md)",
       "retriable": false,
@@ -151,6 +167,7 @@
     },
     {
       "code": "pack_signature_invalid",
+      "meaning": "The pack's signature, signing key or namespace check failed.",
       "httpStatus": 400,
       "statusSource": "v1 convention (node-packs.md)",
       "retriable": false,
@@ -160,6 +177,7 @@
     },
     {
       "code": "pack_validation_failed",
+      "meaning": "The pack manifest is invalid.",
       "httpStatus": 400,
       "statusSource": "v1 convention (node-packs.md)",
       "retriable": false,
@@ -169,6 +187,7 @@
     },
     {
       "code": "unsupported_runtime",
+      "meaning": "The host cannot execute the pack's runtime language.",
       "httpStatus": 400,
       "statusSource": "v1 convention (node-packs.md)",
       "retriable": false,
@@ -178,6 +197,7 @@
     },
     {
       "code": "protocol_version_mismatch",
+      "meaning": "A /v1/ path was called with an OpenWOP-Version other than 1.",
       "httpStatus": 400,
       "statusSource": "v2 decision",
       "retriable": false,
@@ -187,6 +207,7 @@
     },
     {
       "code": "schedule_horizon_exceeded",
+      "meaning": "A schedule asks for a fire time beyond the host's advertised horizon.",
       "httpStatus": 400,
       "statusSource": "v1 convention",
       "retriable": false,
@@ -196,6 +217,7 @@
     },
     {
       "code": "sub_chain_cycle",
+      "meaning": "A workflow chain transitively composes itself.",
       "httpStatus": 400,
       "statusSource": "v2 decision",
       "retriable": false,
@@ -205,6 +227,7 @@
     },
     {
       "code": "sub_chain_depth_exceeded",
+      "meaning": "Workflow chain nesting is deeper than the host's advertised maximum.",
       "httpStatus": 400,
       "statusSource": "v2 decision",
       "retriable": false,
@@ -214,6 +237,7 @@
     },
     {
       "code": "unsupported_stream_mode",
+      "meaning": "The requested stream mode is malformed or not served; details.supported lists the modes the host serves.",
       "httpStatus": 400,
       "statusSource": "v1 prose",
       "retriable": false,
@@ -245,6 +269,7 @@
     },
     {
       "code": "until_in_past",
+      "meaning": "A capability record's until date is in the past.",
       "httpStatus": 400,
       "statusSource": "v2 decision",
       "retriable": false,
@@ -254,6 +279,7 @@
     },
     {
       "code": "validation_error",
+      "meaning": "The request is malformed or fails schema validation.",
       "httpStatus": 400,
       "statusSource": "v1 convention",
       "retriable": false,
@@ -263,6 +289,7 @@
     },
     {
       "code": "webhook_url_rejected",
+      "meaning": "The webhook URL is not an allowed public https:// destination.",
       "httpStatus": 400,
       "statusSource": "v2 decision",
       "retriable": false,
@@ -272,6 +299,7 @@
     },
     {
       "code": "webhook_endpoint_unverified",
+      "meaning": "The webhook endpoint did not answer the verification challenge; nothing was stored.",
       "httpStatus": 400,
       "statusSource": "v2 decision",
       "retriable": false,
@@ -281,6 +309,7 @@
     },
     {
       "code": "connector_auth_declined",
+      "meaning": "The user declined the connector's authorization request, so the node failed.",
       "httpStatus": 401,
       "statusSource": "v2 decision",
       "retriable": false,
@@ -290,6 +319,7 @@
     },
     {
       "code": "connection_auth_metadata_mismatch",
+      "meaning": "The provider's discovered issuer or endpoint differs from the one the manifest or registration pinned.",
       "httpStatus": 422,
       "statusSource": "v2 decision",
       "retriable": false,
@@ -299,6 +329,7 @@
     },
     {
       "code": "audience_mismatch",
+      "meaning": "The credential was issued for a different audience than this host.",
       "httpStatus": 401,
       "statusSource": "v2 decision",
       "retriable": false,
@@ -308,6 +339,7 @@
     },
     {
       "code": "connector_auth_expired",
+      "meaning": "The connector's credential expired and could not be refreshed, so the node failed.",
       "httpStatus": 401,
       "statusSource": "v1 convention",
       "retriable": false,
@@ -317,6 +349,7 @@
     },
     {
       "code": "credential_revoked",
+      "meaning": "The presented API key or session has been revoked.",
       "httpStatus": 401,
       "statusSource": "v2 decision",
       "retriable": false,
@@ -326,6 +359,7 @@
     },
     {
       "code": "credential_lifetime_exceeded",
+      "meaning": "The credential's lifetime exceeds the bound the host advertises for its lane, or it carries no iat.",
       "httpStatus": 401,
       "statusSource": "v2 decision",
       "retriable": false,
@@ -335,6 +369,7 @@
     },
     {
       "code": "delegation_expired",
+      "meaning": "A delegation or workload credential is past its lifetime.",
       "httpStatus": 401,
       "statusSource": "v2 decision",
       "retriable": false,
@@ -344,6 +379,7 @@
     },
     {
       "code": "identity_unresolvable",
+      "meaning": "The credential verified, but it maps to no known subject.",
       "httpStatus": 401,
       "statusSource": "v2 decision",
       "retriable": false,
@@ -353,6 +389,7 @@
     },
     {
       "code": "identity_unverified",
+      "meaning": "The credential or delegation chain failed verification.",
       "httpStatus": 401,
       "statusSource": "v2 decision",
       "retriable": false,
@@ -362,6 +399,7 @@
     },
     {
       "code": "interrupt_token_invalid",
+      "meaning": "The interrupt token uses an algorithm or key the host does not accept.",
       "httpStatus": 401,
       "statusSource": "v2 decision",
       "retriable": false,
@@ -371,6 +409,7 @@
     },
     {
       "code": "key_revoked",
+      "meaning": "The API key has been revoked or its subject disabled.",
       "httpStatus": 401,
       "statusSource": "v1 convention",
       "retriable": false,
@@ -380,6 +419,7 @@
     },
     {
       "code": "sender_constraint_missing",
+      "meaning": "The request does not meet the lane's minimum sender-constraint assurance.",
       "httpStatus": 401,
       "statusSource": "v2 decision",
       "retriable": false,
@@ -389,6 +429,7 @@
     },
     {
       "code": "unauthenticated",
+      "meaning": "No credential was sent, or the credential is invalid.",
       "httpStatus": 401,
       "statusSource": "v1 convention",
       "retriable": false,
@@ -398,6 +439,7 @@
     },
     {
       "code": "credential_forbidden",
+      "meaning": "The credential exists but is outside the caller's scope.",
       "httpStatus": 403,
       "statusSource": "v1 convention",
       "retriable": false,
@@ -407,6 +449,7 @@
     },
     {
       "code": "credential_scope_forbidden",
+      "meaning": "The credential cannot be bound at the requested scope.",
       "httpStatus": 403,
       "statusSource": "v1 prose",
       "retriable": false,
@@ -416,6 +459,7 @@
     },
     {
       "code": "delegation_scope_amplified",
+      "meaning": "A delegated link claims more scope than its delegator holds.",
       "httpStatus": 403,
       "statusSource": "v2 decision",
       "retriable": false,
@@ -425,6 +469,7 @@
     },
     {
       "code": "forbidden",
+      "meaning": "The caller is authenticated but not permitted to do this.",
       "httpStatus": 403,
       "statusSource": "v1 prose",
       "retriable": false,
@@ -434,6 +479,7 @@
     },
     {
       "code": "force_engine_version_forbidden",
+      "meaning": "Forcing an engine version is refused outside test keys.",
       "httpStatus": 403,
       "statusSource": "v1 prose",
       "retriable": false,
@@ -443,6 +489,7 @@
     },
     {
       "code": "id_tenant_mismatch",
+      "meaning": "The id's tenant segment is not the caller's tenant.",
       "httpStatus": 403,
       "statusSource": "v2 decision",
       "retriable": false,
@@ -452,6 +499,7 @@
     },
     {
       "code": "mock_provider_forbidden",
+      "meaning": "The mock AI provider is refused outside test keys.",
       "httpStatus": 403,
       "statusSource": "v1 prose",
       "retriable": false,
@@ -461,6 +509,7 @@
     },
     {
       "code": "pack_namespace_unauthorized",
+      "meaning": "The pack's signing key is not allowed for its namespace.",
       "httpStatus": 403,
       "statusSource": "v1 convention (node-packs.md)",
       "retriable": false,
@@ -470,6 +519,7 @@
     },
     {
       "code": "run_forbidden",
+      "meaning": "The caller may not act on this run.",
       "httpStatus": 403,
       "statusSource": "v1 prose",
       "retriable": false,
@@ -479,6 +529,7 @@
     },
     {
       "code": "sandbox_capability_denied",
+      "meaning": "Sandboxed code called a host capability it is not allowed to use.",
       "httpStatus": 403,
       "statusSource": "v1 convention",
       "retriable": false,
@@ -488,6 +539,7 @@
     },
     {
       "code": "sandbox_escape_attempt",
+      "meaning": "Sandboxed code tried to escape its sandbox.",
       "httpStatus": 403,
       "statusSource": "v1 convention",
       "retriable": false,
@@ -497,6 +549,7 @@
     },
     {
       "code": "workspace_membership_required",
+      "meaning": "The caller is not a member of the workspace the request names.",
       "httpStatus": 403,
       "statusSource": "v1 prose",
       "retriable": false,
@@ -506,6 +559,7 @@
     },
     {
       "code": "credential_not_found",
+      "meaning": "No credential resolves for the requested reference.",
       "httpStatus": 404,
       "statusSource": "v1 convention",
       "retriable": false,
@@ -515,6 +569,7 @@
     },
     {
       "code": "interrupt_not_found",
+      "meaning": "The interrupt does not exist.",
       "httpStatus": 404,
       "statusSource": "v1 prose",
       "retriable": false,
@@ -524,6 +579,7 @@
     },
     {
       "code": "not_found",
+      "meaning": "The resource does not exist, or the caller may not see it.",
       "httpStatus": 404,
       "statusSource": "v1 convention",
       "retriable": false,
@@ -533,6 +589,7 @@
     },
     {
       "code": "pack_version_not_found",
+      "meaning": "The requested pack version is not served.",
       "httpStatus": 404,
       "statusSource": "v1 convention (node-packs.md)",
       "retriable": false,
@@ -542,6 +599,7 @@
     },
     {
       "code": "replay_source_missing",
+      "meaning": "During replay, a side-effecting node has no recorded source outcome, so it failed closed.",
       "httpStatus": 404,
       "statusSource": "v1 convention",
       "retriable": false,
@@ -551,6 +609,7 @@
     },
     {
       "code": "signature_not_available",
+      "meaning": "No signature is served for this pack version.",
       "httpStatus": 404,
       "statusSource": "v1 prose",
       "retriable": false,
@@ -560,6 +619,7 @@
     },
     {
       "code": "protocol_version_unsupported",
+      "meaning": "The OpenWOP-Version header names a version the host does not list; details.protocolVersions lists what it serves.",
       "httpStatus": 406,
       "statusSource": "v2 decision",
       "retriable": false,
@@ -569,6 +629,7 @@
     },
     {
       "code": "connection_provider_conflict",
+      "meaning": "Two registrations claim the same connection provider id.",
       "httpStatus": 409,
       "statusSource": "v1 prose",
       "retriable": false,
@@ -578,6 +639,7 @@
     },
     {
       "code": "envelope_correlation_conflict",
+      "meaning": "An envelope reuses a correlationId already seen in this run with a different type.",
       "httpStatus": 409,
       "statusSource": "v1 prose",
       "retriable": false,
@@ -587,6 +649,7 @@
     },
     {
       "code": "idempotency_in_flight",
+      "meaning": "A request with the same idempotency key is still being processed.",
       "httpStatus": 409,
       "statusSource": "v1 prose",
       "retriable": false,
@@ -596,6 +659,7 @@
     },
     {
       "code": "idempotency_key_mismatch",
+      "meaning": "The idempotency key was reused with a different request.",
       "httpStatus": 409,
       "statusSource": "v1 prose",
       "retriable": false,
@@ -605,6 +669,7 @@
     },
     {
       "code": "interrupt_already_resolved",
+      "meaning": "The interrupt is already resolved, its run has ended, or its token was invalidated.",
       "httpStatus": 409,
       "statusSource": "v1 prose",
       "retriable": false,
@@ -614,6 +679,7 @@
     },
     {
       "code": "pack_dependency_conflict",
+      "meaning": "Two packs require versions of a third pack that no single version satisfies.",
       "httpStatus": 409,
       "statusSource": "v1 convention (node-packs.md)",
       "retriable": false,
@@ -623,6 +689,7 @@
     },
     {
       "code": "pack_integrity_mismatch",
+      "meaning": "The fetched pack's SHA-256 does not match the lockfile.",
       "httpStatus": 409,
       "statusSource": "v1 convention (node-packs.md)",
       "retriable": false,
@@ -632,6 +699,7 @@
     },
     {
       "code": "replay_context_summary_unavailable",
+      "meaning": "The fork was refused: the host cannot serve the context summary as of the fork point.",
       "httpStatus": 409,
       "statusSource": "v2 decision (sibling of replay_memory_snapshot_unavailable)",
       "retriable": false,
@@ -641,6 +709,7 @@
     },
     {
       "code": "replay_diverged_at_refusal",
+      "meaning": "Replay diverged: the source and the replay disagree on whether the AI provider refused.",
       "httpStatus": 409,
       "statusSource": "v1 convention",
       "retriable": false,
@@ -650,6 +719,7 @@
     },
     {
       "code": "replay_memory_snapshot_unavailable",
+      "meaning": "The fork was refused: the host cannot serve memory state as of the fork point.",
       "httpStatus": 409,
       "statusSource": "v2 decision (v1 host-sample-test-seams.md §MAE-3 stated 422; the v1 error list states no status)",
       "retriable": false,
@@ -659,6 +729,7 @@
     },
     {
       "code": "run_already_active",
+      "meaning": "A run for the same scope is already active and deduplication is enforced.",
       "httpStatus": 409,
       "statusSource": "v1 convention",
       "retriable": false,
@@ -668,6 +739,7 @@
     },
     {
       "code": "run_terminal",
+      "meaning": "The run has already finished, so it cannot be changed.",
       "httpStatus": 409,
       "statusSource": "v1 prose",
       "retriable": false,
@@ -677,6 +749,7 @@
     },
     {
       "code": "run_state_conflict",
+      "meaning": "The run's current status does not allow this transition; details.runStatus names it.",
       "httpStatus": 409,
       "statusSource": "v2 decision",
       "retriable": false,
@@ -698,6 +771,7 @@
     },
     {
       "code": "version_conflict",
+      "meaning": "This pack version was already published with different content.",
       "httpStatus": 409,
       "statusSource": "v1 prose",
       "retriable": false,
@@ -707,6 +781,7 @@
     },
     {
       "code": "workspace_conflict",
+      "meaning": "The workspace file changed since the caller last read it.",
       "httpStatus": 409,
       "statusSource": "v1 prose",
       "retriable": false,
@@ -716,6 +791,7 @@
     },
     {
       "code": "interrupt_cancelled",
+      "meaning": "The interrupt was cancelled. The core resolve operations never return this code.",
       "httpStatus": 410,
       "statusSource": "registry (v1 prose said 422, run-scoped; RFC 0213 §C)",
       "retriable": false,
@@ -725,6 +801,7 @@
     },
     {
       "code": "interrupt_expired",
+      "meaning": "The interrupt token is past its expiry.",
       "httpStatus": 410,
       "statusSource": "v1 prose",
       "retriable": false,
@@ -734,6 +811,7 @@
     },
     {
       "code": "payload_too_large",
+      "meaning": "The request body is larger than the host accepts.",
       "httpStatus": 413,
       "statusSource": "v2 decision",
       "retriable": false,
@@ -743,6 +821,7 @@
     },
     {
       "code": "workspace_too_large",
+      "meaning": "The workspace file is larger than the host's advertised maximum.",
       "httpStatus": 413,
       "statusSource": "v1 prose",
       "retriable": false,
@@ -752,6 +831,7 @@
     },
     {
       "code": "unsupported_media_type",
+      "meaning": "The request body's Content-Type is not accepted.",
       "httpStatus": 415,
       "statusSource": "v2 decision",
       "retriable": false,
@@ -761,6 +841,7 @@
     },
     {
       "code": "capability_not_provided",
+      "meaning": "The host does not provide a capability the request or pack requires.",
       "httpStatus": 422,
       "statusSource": "v1 convention",
       "retriable": false,
@@ -770,6 +851,7 @@
     },
     {
       "code": "capability_required",
+      "meaning": "The workflow uses a node type whose capability the host does not advertise.",
       "httpStatus": 422,
       "statusSource": "v1 convention",
       "retriable": false,
@@ -779,6 +861,7 @@
     },
     {
       "code": "credential_required",
+      "meaning": "A node needs a credential that did not resolve.",
       "httpStatus": 422,
       "statusSource": "v1 convention",
       "retriable": false,
@@ -788,6 +871,7 @@
     },
     {
       "code": "envelope_invalid",
+      "meaning": "An AI envelope failed validation and was refused.",
       "httpStatus": 422,
       "statusSource": "v1 convention",
       "retriable": false,
@@ -797,6 +881,7 @@
     },
     {
       "code": "envelope_refusal",
+      "meaning": "The AI provider explicitly refused; the host does not retry.",
       "httpStatus": 422,
       "statusSource": "v1 convention",
       "retriable": false,
@@ -806,6 +891,7 @@
     },
     {
       "code": "envelope_truncation_unrecoverable",
+      "meaning": "The AI output stayed truncated after the retry budget ran out, so the node failed.",
       "httpStatus": 422,
       "statusSource": "v1 convention",
       "retriable": false,
@@ -815,6 +901,7 @@
     },
     {
       "code": "fork_point_invalid",
+      "meaning": "The fork point is not a valid sequence in the source run's log.",
       "httpStatus": 422,
       "statusSource": "v2 decision",
       "retriable": false,
@@ -824,6 +911,7 @@
     },
     {
       "code": "loop_limit_exceeded",
+      "meaning": "A loop exceeded its iteration limit.",
       "httpStatus": 422,
       "statusSource": "v1 convention",
       "retriable": false,
@@ -833,6 +921,7 @@
     },
     {
       "code": "mcp_mrtr_rounds_exceeded",
+      "meaning": "An MCP exchange asked for more tool-result rounds than the host's advertised ceiling.",
       "httpStatus": 422,
       "statusSource": "v2 decision",
       "retriable": false,
@@ -842,6 +931,7 @@
     },
     {
       "code": "pack_runtime_requirement_unmet",
+      "meaning": "The host does not meet a runtime requirement the pack declares.",
       "httpStatus": 422,
       "statusSource": "v1 convention (node-packs.md)",
       "retriable": false,
@@ -851,6 +941,7 @@
     },
     {
       "code": "recursion_limit_exceeded",
+      "meaning": "The run hit its recursion safety cap.",
       "httpStatus": 422,
       "statusSource": "v1 convention",
       "retriable": false,
@@ -860,6 +951,7 @@
     },
     {
       "code": "residency_unavailable",
+      "meaning": "The host cannot serve the requested data-residency region.",
       "httpStatus": 422,
       "statusSource": "v1 convention",
       "retriable": true,
@@ -869,6 +961,7 @@
     },
     {
       "code": "run_timeout",
+      "meaning": "The run exceeded its time limit and failed.",
       "httpStatus": 422,
       "statusSource": "v1 convention",
       "retriable": false,
@@ -878,6 +971,7 @@
     },
     {
       "code": "sandbox_memory_exceeded",
+      "meaning": "Sandboxed code exceeded its memory limit.",
       "httpStatus": 422,
       "statusSource": "v1 convention",
       "retriable": false,
@@ -887,6 +981,7 @@
     },
     {
       "code": "sandbox_timeout",
+      "meaning": "Sandboxed code exceeded its wall-clock limit.",
       "httpStatus": 422,
       "statusSource": "v1 convention",
       "retriable": false,
@@ -896,6 +991,7 @@
     },
     {
       "code": "token_budget_exceeded",
+      "meaning": "The run could not stay within its token budget.",
       "httpStatus": 422,
       "statusSource": "v1 convention",
       "retriable": false,
@@ -905,6 +1001,7 @@
     },
     {
       "code": "client_version_unsupported",
+      "meaning": "The client is below the host's advertised minClientVersion.",
       "httpStatus": 426,
       "statusSource": "v2 decision",
       "retriable": false,
@@ -914,6 +1011,7 @@
     },
     {
       "code": "rate_limited",
+      "meaning": "Too many requests. Retry after the Retry-After header.",
       "httpStatus": 429,
       "statusSource": "v1 convention",
       "retriable": true,
@@ -923,6 +1021,7 @@
     },
     {
       "code": "event_type_unmapped",
+      "meaning": "The run's event log holds an event type the host cannot translate, so the log is unreadable.",
       "httpStatus": 500,
       "statusSource": "v2 decision",
       "retriable": false,
@@ -932,6 +1031,7 @@
     },
     {
       "code": "payload_unprojectable",
+      "meaning": "An event payload cannot be represented under the requested contract. Never retried.",
       "httpStatus": 500,
       "statusSource": "v2 decision (sibling of event_type_unmapped)",
       "retriable": false,
@@ -969,6 +1069,7 @@
     },
     {
       "code": "internal_error",
+      "meaning": "The host failed unexpectedly.",
       "httpStatus": 500,
       "statusSource": "v1 convention",
       "retriable": true,
@@ -978,6 +1079,7 @@
     },
     {
       "code": "pack_load_failure",
+      "meaning": "The pack could not be loaded when the workflow was registered.",
       "httpStatus": 500,
       "statusSource": "v1 convention (node-packs.md)",
       "retriable": false,
@@ -987,6 +1089,7 @@
     },
     {
       "code": "credential_unavailable",
+      "meaning": "The host cannot resolve credentials at all, so the run cannot proceed.",
       "httpStatus": 501,
       "statusSource": "v1 convention",
       "retriable": false,
@@ -996,6 +1099,7 @@
     },
     {
       "code": "pack_registry_unreachable",
+      "meaning": "The pack registry could not be reached.",
       "httpStatus": 503,
       "statusSource": "v1 convention (node-packs.md)",
       "retriable": true,
@@ -1005,6 +1109,7 @@
     },
     {
       "code": "runner_unavailable",
+      "meaning": "No runner is available to execute this run.",
       "httpStatus": 503,
       "statusSource": "v1 convention",
       "retriable": true,
@@ -1014,6 +1119,7 @@
     },
     {
       "code": "unknown_envelope_kind",
+      "meaning": "The envelope's type is neither universal nor in the host's supported catalog.",
       "httpStatus": 422,
       "statusSource": "v1 prose",
       "retriable": false,
@@ -1023,6 +1129,7 @@
     },
     {
       "code": "unknown_schema_version",
+      "meaning": "The envelope's schemaVersion is above the version the host advertises for that kind.",
       "httpStatus": 422,
       "statusSource": "v1 prose",
       "retriable": false,

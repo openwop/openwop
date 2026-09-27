@@ -1,0 +1,38 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://openwop.dev/spec/v2/errors.schema.json",
+  "title": "OpenWOP v2 error registry",
+  "description": "Shape of spec/v2/errors.json: one row per registered error code. schemas/v2/error-envelope.schema.json and the status table in spec/v2/core/errors.md are generated from it by scripts/generate-error-envelope.mjs, which also validates the registry against this schema. Data, not a wire artifact.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["$schema", "version", "updated", "vendorCodePattern", "rows"],
+  "properties": {
+    "$schema": { "type": "string", "const": "https://openwop.dev/spec/v2/errors.schema.json" },
+    "$comment": { "type": "string" },
+    "version": { "type": "string", "pattern": "^[0-9]+\\.[0-9]+$", "description": "The registry format version." },
+    "updated": { "type": "string", "pattern": "^[0-9]{4}-[0-9]{2}-[0-9]{2}$" },
+    "vendorCodePattern": { "type": "string", "format": "regex", "description": "The pattern a vendor (non-registered) code MUST match." },
+    "rows": { "type": "array", "minItems": 1, "items": { "$ref": "#/$defs/row" } }
+  },
+  "$defs": {
+    "row": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["code", "httpStatus", "statusSource", "retriable", "details", "since", "source"],
+      "properties": {
+        "code": { "type": "string", "pattern": "^[a-z][a-z0-9]*(_[a-z0-9]+)*$", "description": "The value of the envelope's `error` field. Unique across rows." },
+        "meaning": { "type": "string", "minLength": 1, "description": "One plain-English line: what the code tells a client." },
+        "httpStatus": { "type": "integer", "minimum": 400, "maximum": 599, "description": "The status a host MUST answer with." },
+        "statusSource": { "type": "string", "minLength": 1, "description": "Provenance of the status: stated in v1 prose, a v1 convention, or decided for v2." },
+        "retriable": { "type": "boolean", "description": "Whether a client may retry the same request. Timing lives in Retry-After only." },
+        "details": {
+          "type": ["object", "null"],
+          "description": "The JSON Schema for this code's `details` object, or null when details is an open object."
+        },
+        "since": { "type": "string", "pattern": "^[0-9]+\\.[0-9]+$", "description": "The protocol version that first registered the code." },
+        "deprecated": { "type": "boolean", "description": "True when the code is deprecated. Absent means not deprecated." },
+        "source": { "type": "string", "minLength": 1, "description": "Provenance: the document or decision the row came from." }
+      }
+    }
+  }
+}
