@@ -26,7 +26,7 @@ A form instantiated from a pack advertised through `forms.contentPacks` MUST be 
 
 ## Localized strings
 
-`label`, `title`, and `description` are localized strings. A host MUST select the rendered language by the locale-selection and fallback rules of `spec/v1/i18n.md`, the `i18n` family's normative text in `spec/v2/declaration.json`, and MUST treat every rendered string as untrusted: escaped for the target surface, never interpreted as markup, script, or a template directive.
+`label`, `title`, and `description` are localized strings. A host MUST select the rendered language by the locale-selection and fallback rules of [i18n.md](i18n.md), and MUST treat every rendered string as untrusted: escaped for the target surface, never interpreted as markup, script, or a template directive.
 
 ## Validation
 
