@@ -10,9 +10,9 @@
  * the caller is authorized to read the run: for a run the caller cannot read
  * the answer MUST be the one the host gives without the header.
  *
- * Off the core-standard floor: `v2-sse-last-event-id` is the floor scenario and
- * this file adds legs a committed claim was never measured against (rc.59
- * precedent). Promotion waits until the three bundle hosts are measured.
+ * On the core-standard floor since 2.42.7, beside `v2-sse-last-event-id`. It was
+ * held off until the three bundle hosts were measured (rc.59 precedent); all
+ * three recorded it executed-pass, two with partial-witness on the SHOULD leg only.
  *
  * Legs, on one completed noop run:
  *   1. a future id (last + 1000) ⇒ 200, zero frames, closed by the server — a

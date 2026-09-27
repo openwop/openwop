@@ -2535,10 +2535,6 @@
           "required": [
             "version"
           ],
-          "if": {
-            "properties": {}
-          },
-          "then": {},
           "properties": {
             "version": {
               "type": "integer",
