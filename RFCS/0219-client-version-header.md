@@ -223,7 +223,7 @@ All of this lands at `Active`, not in the filing PR, following the Draft convent
 
 - [x] `Active`: `versioning.md` §1.5 text and the OpenAPI header merged; `v2-client-version-header.test.ts` in the suite with its `scenario-majors.json` row, each leg sabotage-proved (2026-09-27, against a stub host implementing §1.5 exactly and one sabotage per leg; suite 2.42.8).
 - [x] `Active`: Unresolved questions 1, 2 and 4 decided; 3, 5 and 6 decided or transferred to their owning doc (§Decisions, 2026-09-27).
-- [ ] `Active`: the v2 reference host and openwop-app measured on the malformed leg before it ships (gap G1, risk R1). Waiting on the two host PRs (`openwop-examples` v2 reference, openwop-app); the Active PR does not merge until both are measured.
+- [x] `Active`: the v2 reference host and openwop-app measured on the malformed leg before it ships (gap G1, risk R1). Measured 2026-09-27: v2 reference (openwop-examples#97, `134f4f7e`, local run) and openwop-app (#4173, `55b7d8a3`, production revision `openwop-app-backend-00773-jq5`) both serve `abc`, `1.0abc`, `1.0.7` and a header-less request with `200`, and refuse `0.0.1` with `426 client_version_unsupported`, `details.minClientVersion: "1.0"`.
 - [ ] `Accepted`: `openwop.requirement.0219.floor-comparison`, `.absent-not-refused` and `.malformed-not-refused` `executed-pass` on a certified host bundle.
 - [ ] `Accepted`: at least one v2 SDK sends the header, with a test pinning the corpus version it sends (gap G6, risk R3).
 - [ ] CHANGELOG entry at each status flip.
