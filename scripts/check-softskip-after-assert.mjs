@@ -37,13 +37,67 @@ import { dirname, join, resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
 
 const ROOT = resolve(dirname(fileURLToPath(import.meta.url)), '..');
-const SCEN = join(ROOT, 'conformance', 'src', 'scenarios');
+// OPENWOP_SOFTSKIP_SCENARIOS_DIR points the scan at another directory — the
+// self-test (`conformance/src/lib/softskip-after-assert-parser.test.ts`)
+// uses it to run the parser over fixture files. Never set it in the gate.
+const SCEN = process.env.OPENWOP_SOFTSKIP_SCENARIOS_DIR ?? join(ROOT, 'conformance', 'src', 'scenarios');
 const majors = JSON.parse(readFileSync(join(ROOT, 'conformance', 'scenario-majors.json'), 'utf8')).majors ?? {};
 const LIST = process.argv.includes('--list');
 const WRITE = process.argv.includes('--write');
 const BASELINE = join(ROOT, 'conformance', 'softskip-after-assert.baseline.json');
 const baseline = existsSync(BASELINE) ? JSON.parse(readFileSync(BASELINE, 'utf8')).files ?? {} : {};
 const counts = {};
+
+/**
+ * The source with every comment, string/template literal and regex literal
+ * blanked to spaces — same length, newlines kept, so offsets and line numbers
+ * are unchanged. Until 2026-09-27 the scan ran on the raw text and miscounted
+ * both ways: a `{` inside a string (`'{"valid":'` in a mock program) unbalanced
+ * the brace count and merged an it() block into the next one, so skips that run
+ * before any assertion were counted as following one (23 phantom sites), and
+ * blocks that the merge swallowed hid 9 real sites; and `softSkip('blocked')`
+ * quoted in a comment counted as a call. The delimiters are kept (`''`, `//`),
+ * so a skip's kind is still read from the raw text at the same offset.
+ */
+function blank(text) {
+  let out = '';
+  let i = 0;
+  let prev = ''; // last significant (non-space) character emitted as code
+  const keep = (c) => (c === '\n' ? '\n' : ' ');
+  const regexCanStart = () => prev === '' || '(,=:[!&|?{};+-*%<>~^'.includes(prev) || /\b(return|typeof|case|of|in)$/.test(out.trimEnd());
+  while (i < text.length) {
+    const c = text[i];
+    const d = text[i + 1];
+    if (c === '/' && d === '/') {
+      while (i < text.length && text[i] !== '\n') { out += ' '; i++; }
+      continue;
+    }
+    if (c === '/' && d === '*') {
+      out += '  '; i += 2;
+      while (i < text.length && !(text[i] === '*' && text[i + 1] === '/')) { out += keep(text[i]); i++; }
+      out += '  '; i += 2;
+      continue;
+    }
+    if (c === "'" || c === '"' || c === '`' || (c === '/' && regexCanStart())) {
+      out += c; i++;
+      let inClass = false;
+      while (i < text.length && (text[i] !== c || inClass)) {
+        if (text[i] === '\\') { out += '  '; i += 2; continue; }
+        if (c === '/' && text[i] === '[') inClass = true;
+        else if (c === '/' && text[i] === ']') inClass = false;
+        else if (c === '/' && text[i] === '\n') break; // not a regex after all
+        out += keep(text[i]); i++;
+      }
+      if (i < text.length) { out += text[i]; i++; }
+      prev = c;
+      continue;
+    }
+    out += c;
+    if (!/\s/.test(c)) prev = c;
+    i++;
+  }
+  return out;
+}
 
 /** [start, end) offsets of each it(...) block's body. */
 function itBlocks(text) {
@@ -70,16 +124,18 @@ const problems = [];
 let sites = 0, annotated = 0;
 for (const f of readdirSync(SCEN).filter((n) => n.endsWith('.test.ts')).sort()) {
   const text = readFileSync(join(SCEN, f), 'utf8');
+  const code = blank(text);
   const lines = text.split('\n');
   const major1 = (majors[f] ?? [1]).includes(1);
-  for (const [s, e] of itBlocks(text)) {
+  for (const [s, e] of itBlocks(code)) {
     const body = text.slice(s, e);
-    const firstExpect = body.search(/\bexpect(\.soft)?\(/);
+    const firstExpect = code.slice(s, e).search(/\bexpect(\.soft)?\(/);
     if (firstExpect < 0) continue;
     const re = /\b(softSkip\(\s*'(inapplicable|skipped|blocked)'|seamAbsent\()/g;
     let m;
     while ((m = re.exec(body))) {
       if (m.index < firstExpect) continue;
+      if (!/^(softSkip|seamAbsent)\(/.test(code.slice(s + m.index))) continue; // inside a comment or string
       const kind = m[2] ?? 'blocked';
       if (kind === 'blocked' && !major1) continue; // stands as blocked at major 2
       sites++;
