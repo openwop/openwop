@@ -37,7 +37,7 @@ import { driver } from '../lib/driver.js';
 import { behaviorGatePresent } from '../lib/behavior-gate.js';
 import { readArtifactTypesCap } from '../lib/artifactTypes.js';
 import { req } from '../lib/requirement-ids.js';
-import { softSkip } from '../lib/soft-skip.js';
+import { softSkip, blockedDespiteAssertions } from '../lib/soft-skip.js';
 const CAPS = join(SCHEMAS_DIR, 'capabilities.schema.json');
 const EVENT_PAYLOADS = join(SCHEMAS_DIR, 'run-event-payloads.schema.json');
 const readDoc = (name: string): string => (V1_DIR ? readFileSync(join(V1_DIR, name), 'utf8') : '');
@@ -206,7 +206,7 @@ describe('artifact-type-registration-source: the advert agrees with the event (R
     const created = list.filter((e) => e['type'] === 'artifact.created');
     // Emission itself is RFC 0142's MUST, reported by its own leg. Reaching here without an
     // event means that leg is already red; don't restate its finding as a 0145 failure.
-    if (created.length === 0) return softSkip('blocked', 'precondition not met — `created.length === 0` returned early (Emission itself is RFC 0142\'s MUST, reported by its own leg. Reaching here without an event means that leg is already red; don\'t restate its finding as a 0…');
+    if (created.length === 0) return blockedDespiteAssertions('the run emitted no artifact.created event, so registrationSource is unobserved (RFC 0142\'s emission leg reports the missing event)');
 
     const payload = (created[0]?.['payload'] ?? created[0]?.['data'] ?? {}) as Record<string, unknown>;
     expect(

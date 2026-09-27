@@ -22,7 +22,7 @@ import { subscribe, type SseEvent } from '../lib/sse.js';
 import { pollUntilTerminal } from '../lib/polling.js';
 import { isFixtureAdvertised } from '../lib/fixtures.js';
 import { req } from '../lib/requirement-ids.js';
-import { softSkip } from '../lib/soft-skip.js';
+import { softSkip, blockedDespiteAssertions } from '../lib/soft-skip.js';
 
 const WORKFLOW_ID = 'conformance-cancellable';
 const SKIP_NO_FIXTURE = !isFixtureAdvertised(WORKFLOW_ID);
@@ -84,7 +84,7 @@ describe.skipIf(SKIP_NO_FIXTURE)('stream-reconnect: Last-Event-ID resume per spe
         // because the run already completed and the server closed before we
         // got events. Skip the rest of this scenario; the host is fast enough
         // that the reconnect path doesn't apply.
-        return softSkip('blocked', 'precondition not met — `lastSeen < 0` returned early (First connection emitted no events with a parseable sequence — e.g. because the run already completed and the server closed before we got events. Skip the rest of …');
+        return blockedDespiteAssertions('the first SSE connection yielded no event with a parseable sequence within 1s — the Last-Event-ID resume is unobserved');
       }
 
       // Phase 3: reconnect with Last-Event-ID set to the last seq we saw.

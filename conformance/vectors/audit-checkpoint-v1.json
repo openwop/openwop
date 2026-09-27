@@ -1,0 +1,260 @@
+{
+  "$comment": [
+    "RFC 0218 — vectors for the audit checkpoint preimage (spec/v1/auth-profiles.md §\"Audit-log integrity\" 3).",
+    "A conforming producer or verifier MUST reproduce every entryHash, merkleRoot and signature here, and MUST refuse every `refusals` case.",
+    "The key is RFC 8032 §7.1 TEST 1. It is a published test key: never use it for anything else."
+  ],
+  "spec": "RFC 0218; RFC 8785; RFC 8032",
+  "construction": {
+    "entryHash": "lowercase-hex SHA-256 of the entry's RFC 8785 JCS bytes (the value the next entry carries as prevHash)",
+    "range": "entries with sequence in (P, atSequence], P = the previous checkpoint's atSequence, or 0 for the first",
+    "parent": "lowercase-hex SHA-256 of the ASCII bytes of left ‖ right (each 64 lowercase hex)",
+    "odd": "a last odd node is promoted unchanged, never duplicated",
+    "signature": "Ed25519 over the 32 bytes merkleRoot hex-decodes to; base64 (RFC 4648 §4, padded)"
+  },
+  "publicKeySpkiBase64": "MCowBQYDK2VwAyEA11qYAYKxCrfVS/7TyWQHOg7hcvPapiMlrwIaaPcHURo=",
+  "entries": [
+    {
+      "entry": {
+        "action": "run.created",
+        "actor": "key:vector-1",
+        "atSequence": 1,
+        "details": {
+          "runId": "run-1"
+        },
+        "occurredAt": "2026-09-27T00:00:01.000Z",
+        "prevHash": null,
+        "target": "run-1"
+      },
+      "entryHash": "2bb3eb03f572491c7334c1a5a12a43e5786663fd4df773b0beb9d05a5d1b496e"
+    },
+    {
+      "entry": {
+        "action": "run.created",
+        "actor": "key:vector-0",
+        "atSequence": 2,
+        "details": {
+          "runId": "run-2"
+        },
+        "occurredAt": "2026-09-27T00:00:02.000Z",
+        "prevHash": "2bb3eb03f572491c7334c1a5a12a43e5786663fd4df773b0beb9d05a5d1b496e",
+        "target": "run-2"
+      },
+      "entryHash": "66892fdd522ad21a99968866d05cb92f4c1db98ddfebf747817891d744060fda"
+    },
+    {
+      "entry": {
+        "action": "interrupt.resolved",
+        "actor": "key:vector-1",
+        "atSequence": 3,
+        "details": {
+          "runId": "run-3"
+        },
+        "occurredAt": "2026-09-27T00:00:03.000Z",
+        "prevHash": "66892fdd522ad21a99968866d05cb92f4c1db98ddfebf747817891d744060fda",
+        "target": "run-3"
+      },
+      "entryHash": "5873ed119eb591fa8c4af1d7d9d947662c78ca5569c57733ebab3d2b399da6fb"
+    },
+    {
+      "entry": {
+        "action": "run.created",
+        "actor": "key:vector-0",
+        "atSequence": 4,
+        "details": {
+          "runId": "run-4"
+        },
+        "occurredAt": "2026-09-27T00:00:04.000Z",
+        "prevHash": "5873ed119eb591fa8c4af1d7d9d947662c78ca5569c57733ebab3d2b399da6fb",
+        "target": "run-4"
+      },
+      "entryHash": "4e48e5dd88bf081edfdbb176a89cfb75697fd4adec954272d65f804ce5643518"
+    },
+    {
+      "entry": {
+        "action": "run.created",
+        "actor": "key:vector-1",
+        "atSequence": 5,
+        "details": {
+          "note": "ünïcode ✓",
+          "votes": [
+            1,
+            2
+          ]
+        },
+        "occurredAt": "2026-09-27T00:00:05.000Z",
+        "prevHash": "4e48e5dd88bf081edfdbb176a89cfb75697fd4adec954272d65f804ce5643518",
+        "target": "run-5"
+      },
+      "entryHash": "9930634e696476f67dce8ea69bd89e6ef1d77dbe3279ec694e47e7dacda47f8a"
+    },
+    {
+      "entry": {
+        "action": "interrupt.resolved",
+        "actor": "key:vector-0",
+        "atSequence": 6,
+        "details": {
+          "runId": "run-6"
+        },
+        "occurredAt": "2026-09-27T00:00:06.000Z",
+        "prevHash": "9930634e696476f67dce8ea69bd89e6ef1d77dbe3279ec694e47e7dacda47f8a",
+        "target": "run-6"
+      },
+      "entryHash": "eda0c73fa14541ca52f2fa9446f07f319a3192c54e66a9a23a48fe22f5c5316f"
+    },
+    {
+      "entry": {
+        "action": "run.created",
+        "actor": "key:vector-1",
+        "atSequence": 7,
+        "details": {
+          "runId": "run-7"
+        },
+        "occurredAt": "2026-09-27T00:00:07.000Z",
+        "prevHash": "eda0c73fa14541ca52f2fa9446f07f319a3192c54e66a9a23a48fe22f5c5316f",
+        "target": "run-7"
+      },
+      "entryHash": "5d2e74535536c835517898427b6e152fcdd5ed79751d165ffe736d66529ea2c0"
+    },
+    {
+      "entry": {
+        "action": "run.created",
+        "actor": "key:vector-0",
+        "atSequence": 8,
+        "details": {
+          "runId": "run-8"
+        },
+        "occurredAt": "2026-09-27T00:00:08.000Z",
+        "prevHash": "5d2e74535536c835517898427b6e152fcdd5ed79751d165ffe736d66529ea2c0",
+        "target": "run-8"
+      },
+      "entryHash": "ebe7b92183a8fe2712cb524d7b5ebf052ef85b1c0cffd8b9a977a33d80cb8a4c"
+    },
+    {
+      "entry": {
+        "action": "interrupt.resolved",
+        "actor": "key:vector-1",
+        "atSequence": 9,
+        "details": {
+          "runId": "run-9"
+        },
+        "occurredAt": "2026-09-27T00:00:09.000Z",
+        "prevHash": "ebe7b92183a8fe2712cb524d7b5ebf052ef85b1c0cffd8b9a977a33d80cb8a4c",
+        "target": "run-9"
+      },
+      "entryHash": "6c3648ec20243c855823056e5ae63b52e7d3e570feef5f6d7a182e084bde6c08"
+    },
+    {
+      "entry": {
+        "action": "run.created",
+        "actor": "key:vector-0",
+        "atSequence": 10,
+        "details": {
+          "runId": "run-10"
+        },
+        "occurredAt": "2026-09-27T00:00:10.000Z",
+        "prevHash": "6c3648ec20243c855823056e5ae63b52e7d3e570feef5f6d7a182e084bde6c08",
+        "target": "run-10"
+      },
+      "entryHash": "740826be7291e62cd84199d8702eb7b32db57f12376a6bc13f680acdaba61bce"
+    },
+    {
+      "entry": {
+        "action": "run.created",
+        "actor": "key:vector-1",
+        "atSequence": 11,
+        "details": {
+          "runId": "run-11"
+        },
+        "occurredAt": "2026-09-27T00:00:11.000Z",
+        "prevHash": "740826be7291e62cd84199d8702eb7b32db57f12376a6bc13f680acdaba61bce",
+        "target": "run-11"
+      },
+      "entryHash": "31d04cd504983f8c9c740128167063a6c4708139e9a9d1b9891e8933792390e4"
+    },
+    {
+      "entry": {
+        "action": "interrupt.resolved",
+        "actor": "key:vector-0",
+        "atSequence": 12,
+        "details": {
+          "runId": "run-12"
+        },
+        "occurredAt": "2026-09-27T00:00:12.000Z",
+        "prevHash": "31d04cd504983f8c9c740128167063a6c4708139e9a9d1b9891e8933792390e4",
+        "target": "run-12"
+      },
+      "entryHash": "213f18d0c231ca4206f7aba10ed4b5a11a7b51f71d77dd4c4f04455a24238fe1"
+    }
+  ],
+  "checkpoints": [
+    {
+      "atSequence": 1,
+      "previousAtSequence": 0,
+      "leafCount": 1,
+      "merkleRoot": "2bb3eb03f572491c7334c1a5a12a43e5786663fd4df773b0beb9d05a5d1b496e",
+      "signature": "+O3og3Lozimsu+l0X6NZ3bTpFhvE6bFdVNqOUpAeHGoRSgeAyuufmXPKwoHcnAr4SqxdUtaXhjiyp4jicjYnAg=="
+    },
+    {
+      "atSequence": 3,
+      "previousAtSequence": 1,
+      "leafCount": 2,
+      "merkleRoot": "42750e6edbe7a4e7f10f5af0ebc0a25c45db6f89193dd2688cca5cc405d95b32",
+      "signature": "9Yo8N2iXAYLIXIlysqH0OfLkSlgzX4Za4fM/S/1MtIdS1khdBUZ6kTDAYT2Z0XhH0/Qq/KMJA4qjfJekx4oHDg=="
+    },
+    {
+      "atSequence": 7,
+      "previousAtSequence": 3,
+      "leafCount": 4,
+      "merkleRoot": "5e277e32a11f6a3ae377850cdf199e6726daa32e0d83873b698f07aa3096c3e2",
+      "signature": "rcjz09tb2ltcoaMYUKjZbp7iY2AHo0WXrJyOPny8T5u/uryyYIgVyzBaEZ3BT3kbAT1y+x7MHtStEt1sIsn2Dw=="
+    },
+    {
+      "atSequence": 12,
+      "previousAtSequence": 7,
+      "leafCount": 5,
+      "merkleRoot": "44a4232543a863aa7fc48477ceb0872e5513dd18db568201990b1b83b4fbbf96",
+      "signature": "axFFc3cFhUONP0Y7Is1vWMg12nNvEiT1aZV54XBcj7LN58VbVqGSWQS5jJ5fdzYM0DjfdPJK1x+pKR4KAuCfCg=="
+    }
+  ],
+  "refusals": [
+    {
+      "id": "interior-nodes-as-leaves",
+      "why": "the 4-leaf checkpoint at 7 recomputed from its two level-1 nodes gives the same root; a verifier that does not hold the leaf count to atSequence − P accepts it",
+      "checkpointAtSequence": 7,
+      "leaves": [
+        "62cf43b39d9b7ad76060add3967e09f876aa8d962bafd224e1190c3bb7495f3d",
+        "a4c9291d9fa45b513d9f22ad3fb8f3d9716869e747c822e49845d4f164328de9"
+      ],
+      "expectedLeaves": 4
+    },
+    {
+      "id": "uppercase-leaf",
+      "why": "leaves are lowercase hex; an uppercase leaf hashes to a different parent",
+      "leaves": [
+        "2BB3EB03F572491C7334C1A5A12A43E5786663FD4DF773B0BEB9D05A5D1B496E"
+      ],
+      "expectedLeaves": 1
+    },
+    {
+      "id": "empty-range",
+      "why": "a checkpoint anchors at least one entry",
+      "leaves": [],
+      "expectedLeaves": 0
+    }
+  ],
+  "signatureRefusals": [
+    {
+      "id": "signed-canonical-json",
+      "why": "a signature over the checkpoint object's canonical JSON instead of the root bytes (the reading the schema description once gave) does not verify",
+      "merkleRoot": "42750e6edbe7a4e7f10f5af0ebc0a25c45db6f89193dd2688cca5cc405d95b32",
+      "signature": "PNlGy3uTxxx3RXhFHBTV1wCm4XpluOy5QXDR4gWHQjh4tNBEYKN0ur7KJxvNXIHTWdKZSWK2Yk0SB4cJk+ZhBw=="
+    },
+    {
+      "id": "signed-hex-text",
+      "why": "a signature over the 64 ASCII hex characters instead of the 32 decoded bytes does not verify",
+      "merkleRoot": "42750e6edbe7a4e7f10f5af0ebc0a25c45db6f89193dd2688cca5cc405d95b32",
+      "signature": "niqG8/dnZLpwv8WfBW082VDfTi5UCrH7uck+hSh3a6ne3RhO+KWvPbyLK++Fw2vumLqD6P4zfTfEgamjxM4ZDA=="
+    }
+  ]
+}

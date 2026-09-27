@@ -93,7 +93,9 @@ describe.skipIf(SKIP_NO_NOOP)('cost-attribution: metrics.openwopCost forward-com
       // passes trivially; don't force a value on a workflow that produces
       // no cost.
       expect(openwopCost).toBeUndefined();
-      return softSkip('blocked', 'precondition not met — `openwopCost === undefined` returned early (seam, prior step, or fixture unavailable)');
+      // partial-witness-ok: an IF-present clause. The noop fixture records no cost and absence
+      // is spec-allowed, so there is no openwopCost shape to bind; the run itself completed.
+      return softSkip('inapplicable', 'metrics.openwopCost is absent on the noop run (spec-allowed) — no shape to check');
     }
 
     // When present, validate the canonical shape per

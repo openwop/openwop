@@ -11,8 +11,8 @@
 | JSON Schemas | 81 | `schemas/*.schema.json` |
 | OpenAPI operations | 58 | `api/openapi.yaml` |
 | AsyncAPI version | 3.1.0 | `api/asyncapi.yaml` |
-| Conformance scenario files | 561 | `conformance/src/scenarios/*.test.ts` |
-| RFCs tracked | 214 | `RFCS/[0-9][0-9][0-9][0-9]-*.md`, excluding template |
+| Conformance scenario files | 563 | `conformance/src/scenarios/*.test.ts` |
+| RFCs tracked | 215 | `RFCS/[0-9][0-9][0-9][0-9]-*.md`, excluding template |
 
 ## Artifact Versions
 
@@ -68,7 +68,7 @@
 | Status | Count |
 |---|---:|
 | Accepted | 211 |
-| Active | 1 |
+| Active | 2 |
 | Draft | 1 |
 | Superseded | 1 |
 
@@ -288,12 +288,15 @@
 | RFC 0215 | a webhook delivery does not wait on another subscription's receiver, and an unregistered subscription gets no further attempts | Accepted |
 | RFC 0216 | a colocated companion bundle is marked, and witnesses only the rows that need the suite's own issuer | Accepted |
 | RFC 0217 | after a subscription is unregistered, its dead-letter read answers as though it never existed | Accepted |
+| RFC 0218 | an audit checkpoint signs its Merkle root, and the root is pinned | Active |
 
 ## SDK Helper Coverage
 
 The TypeScript / Python / Go SDKs live in the [`openwop-sdks`](https://github.com/openwop/openwop-sdks) repo. Per-SDK helper coverage (typed / raw-only / unreachable surfaces) is tracked in that repo's `sdk/PARITY.md` and machine-enforced by its `scripts/check-sdk-parity.mjs` against the OpenAPI operation set.
 
 ## Reference Host Conformance Evidence
+
+Historical: v1 reference-host pass rates at suite 1.22.0–1.29.0 (2026-06), from [`docs/INTEROP-EVIDENCE-LOG.md`](./INTEROP-EVIDENCE-LOG.md). The current v2 state of every host is its certified bundle in [`INTEROP-MATRIX.md`](../INTEROP-MATRIX.md).
 
 | Host | Passed | Failed | Skipped | Todo | Total | Pass rate |
 |---|---:|---:|---:|---:|---:|---|
@@ -310,7 +313,7 @@ The pack registry now lives in the [`openwop-registry`](https://github.com/openw
 ## Active Follow-Ups
 
 - 1 RFC still `Draft` (RFC 0038) — advance with schema/conformance proof or defer.
-- 1 RFC `Active` (RFC 0121) — wire-shape MAY shift compatibly within v1.x until promotion to `Accepted`.
+- 2 RFCs `Active` (RFC 0121, RFC 0218) — wire-shape MAY shift compatibly within v1.x until promotion to `Accepted`.
 - External audit, non-steward host recruitment, and non-steward maintainer recruitment remain external-action gates.
 - Multi-region idempotency and some optional-profile behavior checks remain lower-confidence than the core wire contract.
 

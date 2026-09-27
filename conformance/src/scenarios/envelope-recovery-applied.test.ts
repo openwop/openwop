@@ -123,7 +123,7 @@ describe.skipIf(HTTP_SKIP)('envelope-recovery-applied: SECURITY invariant envelo
 import { pollUntilTerminal } from '../lib/polling.js';
 import { isFixtureAdvertised } from '../lib/fixtures.js';
 import { req } from '../lib/requirement-ids.js';
-import { softSkip } from '../lib/soft-skip.js';
+import { softSkip, blockedDespiteAssertions } from '../lib/soft-skip.js';
 
 const RECOVERY_FIXTURE = 'conformance-envelope-recovery-applied';
 const RECOVERY_NODE_ID = 'recovery-applied-structured-call';
@@ -163,7 +163,7 @@ describe.skipIf(HTTP_SKIP)('envelope-recovery-applied: end-to-end through the en
     expect(seed.status).toBe(200);
 
     const events = await runAndReadEvents();
-    if (events === null) return softSkip('blocked', 'precondition not met — `events === null` returned early (seam, prior step, or fixture unavailable)');
+    if (events === null) return blockedDespiteAssertions('the advertised fixture run did not start (≠201) or its event log did not read (≠200) — envelope.recovery.applied is unobserved');
     const recoveries = events.filter((e) => e.type === 'envelope.recovery.applied');
     expect(
       recoveries.length,

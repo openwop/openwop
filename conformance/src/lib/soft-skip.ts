@@ -109,6 +109,20 @@ export function blockedDespiteAssertions(reason: string): undefined {
   return undefined;
 }
 
+/**
+ * `seamAbsent` for a seam that goes missing AFTER the leg has asserted setup
+ * facts: strict mode fails exactly as `seamAbsent` does, and default mode
+ * records a `blocked` that stands at both majors (`blockedDespiteAssertions`).
+ * A plain `seamAbsent` there notes `blocked`, which major 1 records as a
+ * partial-witness pass.
+ */
+export function seamAbsentDespiteAssertions(reason: string): undefined {
+  if (process.env['OPENWOP_REQUIRE_BEHAVIOR'] === 'true') {
+    throw new Error(`RFC 0148 §B: advertised behaviour is not observable — ${reason} (OPENWOP_REQUIRE_BEHAVIOR=true fails an advertised-missing seam)`);
+  }
+  return blockedDespiteAssertions(reason);
+}
+
 const RANK: Record<SoftSkipKind, number> = { blocked: 0, skipped: 1, inapplicable: 2 };
 
 function fold(arr: readonly Note[]): { kind: SoftSkipKind; reason: string; conclusive?: true } | null {

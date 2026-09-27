@@ -40,7 +40,7 @@ import { driver } from '../lib/driver.js';
 import { behaviorGate } from '../lib/behavior-gate.js';
 import { readCapabilityFamily } from '../lib/discovery-capabilities.js';
 import { req } from '../lib/requirement-ids.js';
-import { softSkip } from '../lib/soft-skip.js';
+import { softSkip, blockedDespiteAssertions } from '../lib/soft-skip.js';
 
 const SEAM = '/v1/host/sample/ai/call';
 
@@ -118,7 +118,7 @@ describe('aiproviders-selfhosted-honesty (RFC 0108 §A.2/§D)', () => {
         '[openwop-selfhosted-providers] §D disclosure check skipped — set OPENWOP_TEST_COMPAT_ENDPOINT ' +
           "to the host's configured compat endpoint to assert non-disclosure on the wire.",
       );
-      return softSkip('blocked', 'precondition not met — `!endpoint` returned early (seam, prior step, or fixture unavailable)');
+      return blockedDespiteAssertions('§D non-disclosure is unobserved: OPENWOP_TEST_COMPAT_ENDPOINT is unset, so there is no configured endpoint to search the response for (§A.2 was observed)');
     }
 
     const serialized = JSON.stringify(res.json ?? {});

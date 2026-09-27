@@ -36,7 +36,7 @@ import { readErrorCode, readRetriable } from '../lib/error-envelope.js';
 import { driver } from '../lib/driver.js';
 import { behaviorGate } from '../lib/behavior-gate.js';
 import { capabilityFamily } from '../lib/discovery-capabilities.js';
-import { seamAbsent, softSkip } from '../lib/soft-skip.js';
+import { seamAbsent, softSkip, blockedDespiteAssertions } from '../lib/soft-skip.js';
 import { req } from '../lib/requirement-ids.js';
 
 const DELEGATION_PROFILE = 'openwop-workload-identity-delegation';
@@ -94,7 +94,7 @@ describe('RFC 0154 §B — delegation chain bounds (capability-gated behavior)',
     const depth = caps.maxChainDepth as number;
     const chain = Array.from({ length: depth + 1 }, (_, i) => hop(i + 1));
     const r = await resolve({ identity: { ...IDENTITY, delegation: { chain, audience: 'openwop-host', expiresAt: LIVE } }, expectedAudience: 'openwop-host' });
-    if (r === null) return softSkip('blocked', 'precondition not met — `r === null` returned early (seam, prior step, or fixture unavailable)');
+    if (r === null) return blockedDespiteAssertions('the identity-resolve seam is unwired — the maxChainDepth refusal is unobserved');
     expectRefusal('openwop.it.workload-identity-chain-bounds.a-chain-longer-than-the-advertised-maxchaindepth-is-refused', r, 'delegation_chain_too_long', `a chain of ${depth + 1} hops exceeds the advertised bound of ${depth} — each hop is another party the host trusts transitively`);
   });
 
@@ -113,7 +113,10 @@ describe('RFC 0154 §B — delegation chain bounds (capability-gated behavior)',
       expect(r.status >= 400, req('openwop.it.workload-identity-chain-bounds.a-chain-that-revisits-a-subject-is-refused-as-cyclic', 'RFCS/0154 §B', 'a cyclic chain is refused')).toBe(true);
       expect(['delegation_chain_cyclic', 'delegation_chain_too_long'], req('openwop.it.workload-identity-chain-bounds.a-chain-that-revisits-a-subject-is-refused-as-cyclic', 'spec/v1/host-sample-test-seams.md §20', 'cyclic or too-long — the bound is below the cycle length')).toContain(readErrorCode(r.json));
       expect(readRetriable(r.json)).toBe(false);
-      return softSkip('blocked', 'precondition not met — `bound < 3` returned early (seam, prior step, or fixture unavailable)');
+      // partial-witness-ok: with maxChainDepth < 3 a 3-hop cyclic chain is also too long. The
+      // non-retriable refusal (either code) was asserted above; the cyclic-specific code cannot
+      // be told apart here.
+      return softSkip('inapplicable', 'maxChainDepth < 3: the cyclic chain is also too long, so the refusal was checked for either code');
     }
     expectRefusal('openwop.it.workload-identity-chain-bounds.a-chain-that-revisits-a-subject-is-refused-as-cyclic', r, 'delegation_chain_cyclic', 'a subject appearing twice is a chain that loops back through authority it already spent — unbounded laundering with a bounded length');
   });

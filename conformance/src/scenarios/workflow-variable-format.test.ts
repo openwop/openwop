@@ -48,7 +48,7 @@ import { behaviorGate } from '../lib/behavior-gate.js';
 import { readCapabilityFamily } from '../lib/discovery-capabilities.js';
 import { isFixtureAdvertised } from '../lib/fixtures.js';
 import { driver } from '../lib/driver.js';
-import { softSkip } from '../lib/soft-skip.js';
+import { softSkip, blockedDespiteAssertions } from '../lib/soft-skip.js';
 import { req } from '../lib/requirement-ids.js';
 const WORKFLOW_DEF = join(SCHEMAS_DIR, 'workflow-definition.schema.json');
 // S38 (2026-08-17): `spec/` is NOT in the published package (`files`), so a path built
@@ -193,7 +193,7 @@ describe('workflow-variable-format §B: host behaviour (RFC 0136, capability-gat
     if (res.status === 404) return softSkip('blocked', 'precondition not met — `res.status === 404` returned early (A host advertising deferredParameters but not yet serving the variables[]-returning seam extension soft-skips (404), as does a host with the seam disabled in…');
     expect(res.status, req('openwop.it.workflow-variable-format.b1-deferred-expansion-mints-format-onto-the-workflowvariable-string-copied-req-7', '§Deferred-parameter expansion', 'the deferred-expand seam returns 200')).toBe(200);
     const variables = (res.json as { variables?: Array<{ name: string; type?: string; format?: string }> }).variables;
-    if (!Array.isArray(variables)) return softSkip('blocked', 'precondition not met — `!Array.isArray(variables)` returned early (seam present but not returning variables[] yet — soft-skip) (seam, prior step, or fixture unavailable)'); // seam present but not returning variables[] yet — soft-skip
+    if (!Array.isArray(variables)) return blockedDespiteAssertions('the deferred-expand seam answered 200 without variables[] — the minted WorkflowVariable.format is unobserved');
     const fmt = (n: string): string | undefined => variables.find((v) => v.name === n)?.format;
 
     expect(fmt('email'), req('openwop.it.workflow-variable-format.b1-deferred-expansion-mints-format-onto-the-workflowvariable-string-copied-req-7', '§WorkflowVariable', 'req 7: a string param\'s recognised `format` is minted verbatim')).toBe('email');

@@ -9,7 +9,7 @@
     "api/grpc/openwop.proto": "c3e72bb17cba514ee98feb6434e6c9b6ea6795bfd086489ec69fd882dd1ad977",
     "api/openapi.yaml": "69464bc0e1e71ef3b543a73d4fa4f67202343d2603c80af8033f6c3619ef1b30",
     "api/redocly.yaml": "b0604c89b2ca6d5076ec25725c539dad44a741a811fe524439ee6daef8baa09f",
-    "api/seams-v2.yaml": "51e7571b302aab0620492a16944e6e1542e62acefb4cf4231919cc2add3a9cd4",
+    "api/seams-v2.yaml": "c188943dbb662ddb1d8ed26759c1daa560f63617fedd2a116b8abcc41c2f42de",
     "api/v2/asyncapi.yaml": "94b9174faeccabea8f2d29fe3e80da7d16037b497ea02f91e61e512ff8ea8d62",
     "api/v2/openapi.yaml": "5f2bcb438b77c250e0732f1808690bb710941a7c7ee5150a27e66537dee9fcb8",
     "api/v2/redocly.yaml": "1e66b60e6118ad11a823bb620678be464d99dfe50a40e3e6f93ec9429b88b34c",
@@ -29,7 +29,7 @@
     "schemas/annotation-create.schema.json": "567e8327777968e0ddab8e1547b4acd7beda734cf9d1fc6cde17037d8d9540d4",
     "schemas/annotation.schema.json": "b26d22f9a97e1ae7c195e8799964aca804e78452a079ca3a0d61ea013907ce91",
     "schemas/artifact-type-pack-manifest.schema.json": "60342fcb15eb7f3ab46271f0641409a30d3a4a8f318b1020c53070886b191252",
-    "schemas/audit-verify-result.schema.json": "e8fd013fb610ba5db27ab0113ec2eb18e7da5f9310dd3de2dd3dc87a259c21fe",
+    "schemas/audit-verify-result.schema.json": "de9cc3b9d7b97995b906dc96438244ea6b93c26b5faaf4926320676b48ba4fcc",
     "schemas/budget-policy.schema.json": "3d4fe30ae129fe136ab9ece395f2a2a42a76360786b1b9a1d5f1cbc753eb5b39",
     "schemas/capabilities.schema.json": "56b367074bce0f02ff87e0b84ccdf91856793d3d285e28f261656edba6352cc0",
     "schemas/certification-bundle-v2.schema.json": "2f85530dd04824a15810c94e96869362dee1e78396eca21fdd18e5501416bb7d",
@@ -114,7 +114,7 @@
     "schemas/v2/annotation.schema.json": "eb4813cdaa8e325412cfcaeeee5c8a28f3751c946dec64e546c7ba0ad3aad8d4",
     "schemas/v2/artifact-type-pack-manifest.schema.json": "c8820351a2ab93855bd654ad3d8a9788f97975d09b3a7a0418e374ed6114595d",
     "schemas/v2/artifact.schema.json": "85b9dc284d39b99d2a66fa8cbf47f2dd3d8526d3bd6cc411ad315b372de38975",
-    "schemas/v2/audit-verify-result.schema.json": "a748dfadb5155adfde8a91045e76b0db6695005fe559035d71670fdd55edb3ba",
+    "schemas/v2/audit-verify-result.schema.json": "2a4bfc42976717f78c10468fdba756ca6b19e49762699e6dffd418ffff08e55d",
     "schemas/v2/budget-policy.schema.json": "c7449daeb6e1d95e7a047b8c2814d3d54748697c27046972834874867d9b5f4c",
     "schemas/v2/capabilities.schema.json": "5dd705e11c54e73add97d29c222c3b71d15c394d07397a2f7827538890ae0233",
     "schemas/v2/certification-bundle.schema.json": "82ce31a1ed6c7e21b0ba88ff62a7b8b768fc3b176b1d06fce023203830b94725",
@@ -210,7 +210,7 @@
     "spec/v1/event-codemap.json": "3da60d884157793a360da532a9fcbbfb5285636db325a74cec94b34622186d97",
     "spec/v1/event-codemap.schema.json": "d05933b2e88103aff51a2f774df97b9bda065e0fc88dbd9b114cc47a32189174",
     "spec/v1/extensions.json": "79a60754aa16cbdbdb604f8e5c00038af535a1690a4d07bd5ff7c38f0256a7bc",
-    "spec/v1/gaps.json": "361fb29a27dc933c2462a64f32a5a6a6ecf8e6d9fb46039550cb5cfa2eb0ab13",
+    "spec/v1/gaps.json": "c0ab4659652733e1c374460b9d7a1ae48b34a43c333cf8365157756571083915",
     "spec/v1/gaps.schema.json": "8fd83259f556553c9df0f53e7a82ca8c2a4771d471197f69b4e2ae0ceeacfd66",
     "spec/v1/migrations.json": "8839497d6a4830b53fa7867014a8336f0d725ef2346352e54fb580b7947897af",
     "spec/v1/migrations.schema.json": "886779aa6c22e646db097f5df210adb018a4dd14a7b815465a18c8a7056c8f72",
@@ -298,5 +298,5 @@
     "spec/v2/retention-floors.json": "eaf3722d95c79947af1d4269ef85117e126518c588cfcf1a2b21b97269f51624",
     "spec/v2/surface-baseline.json": "f850d3149a897641abaf4cec48fa2b6deb82b48ca1fea28a789b734d7844e590"
   },
-  "corpusCommit": "f6536bc21232b880e68b6efd74395d605b412d8c"
+  "corpusCommit": "fb71d621c5f9d6d742508a5c5c3188ab2e31293a"
 }

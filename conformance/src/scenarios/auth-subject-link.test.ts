@@ -25,7 +25,7 @@
 
 import { randomBytes } from 'node:crypto';
 import { describe, it, expect } from 'vitest';
-import { softSkip, seamAbsent } from '../lib/soft-skip.js';
+import { softSkip, seamAbsent, blockedDespiteAssertions } from '../lib/soft-skip.js';
 import { driver } from '../lib/driver.js';
 import { capabilityFamily } from '../lib/discovery-capabilities.js';
 import { req } from '../lib/requirement-ids.js';
@@ -139,7 +139,7 @@ describe('auth-subject-link: cross-lane deactivation (RFC 0159 §A.3 — opt-in)
     // 2. A valid SAML assertion whose persistent NameID equals the externalId
     //    links to the same subject and authenticates.
     const before = await driver.post('/v1/host/sample/auth/saml/validate', { idpUrl, variant: 'valid', nameId: externalId });
-    if (before.status === 404) return softSkip('blocked', 'seam unwired');
+    if (before.status === 404) return blockedDespiteAssertions('SAML validate seam answered 404 after SCIM provisioning succeeded — the deactivation fail-close is unobserved');
     expect(
       (before.json as { authenticated?: boolean } | undefined)?.authenticated,
       req('openwop.it.auth-subject-link.a-scim-deactivation-fail-closes-the-linked-saml-identity', 'auth-profiles.md §Subject linking', 'a valid linked SAML assertion authenticates before deactivation'),
@@ -189,23 +189,24 @@ describe('auth-subject-link: link-key hygiene (RFC 0159 §A.2 — opt-in)', () =
         link.status,
         req('openwop.it.auth-subject-link.a-mutable-pii-link-key-email-never-produces-a-cross-lane-pass', 'auth-profiles.md §Subject linking', 'RFC 0159 §A.2: a link on a mutable/PII key (email) MUST be rejected'),
       ).toBeGreaterThanOrEqual(400);
-      return softSkip('blocked', 'precondition not met — `link.status >= 400` returned early (seam, prior step, or fixture unavailable)');
+      // A 4xx on the mutable-key link IS the §A.2 conformant answer: the requirement was
+      // observed. (This branch used to end in a blocked note, a partial-witness pass.)
+    } else {
+      // If the host accepted the request, it MUST NOT have formed a cross-lane
+      // link on email: a deactivation via the email "link" MUST NOT deny (or
+      // otherwise act on) an unrelated SAML subject, and MUST NOT let a mutable
+      // key authorize one. Probe: deactivate by email, then a SAML assertion for
+      // a DIFFERENT opaque subject MUST be unaffected by the email operation.
+      await driver.post('/v1/host/sample/auth/scim/provision', { scimUrl, op: 'deactivate-user', email: 'r.smith@example.test' });
+      const other = await driver.post('/v1/host/sample/auth/saml/validate', { idpUrl, variant: 'valid', nameId: 'idp-op-DIFFERENT' });
+      expect(
+        (other.json as { linkedDenied?: boolean } | undefined)?.linkedDenied === true,
+        req('openwop.it.auth-subject-link.a-mutable-pii-link-key-email-never-produces-a-cross-lane-pass', 
+          'auth-profiles.md §Subject linking',
+          'RFC 0159 §A.2: a mutable-key (email) operation MUST NOT drive a cross-lane deny on any opaque subject',
+        ),
+      ).toBe(false);
     }
-
-    // If the host accepted the request, it MUST NOT have formed a cross-lane
-    // link on email: a deactivation via the email "link" MUST NOT deny (or
-    // otherwise act on) an unrelated SAML subject, and MUST NOT let a mutable
-    // key authorize one. Probe: deactivate by email, then a SAML assertion for
-    // a DIFFERENT opaque subject MUST be unaffected by the email operation.
-    await driver.post('/v1/host/sample/auth/scim/provision', { scimUrl, op: 'deactivate-user', email: 'r.smith@example.test' });
-    const other = await driver.post('/v1/host/sample/auth/saml/validate', { idpUrl, variant: 'valid', nameId: 'idp-op-DIFFERENT' });
-    expect(
-      (other.json as { linkedDenied?: boolean } | undefined)?.linkedDenied === true,
-      req('openwop.it.auth-subject-link.a-mutable-pii-link-key-email-never-produces-a-cross-lane-pass', 
-        'auth-profiles.md §Subject linking',
-        'RFC 0159 §A.2: a mutable-key (email) operation MUST NOT drive a cross-lane deny on any opaque subject',
-      ),
-    ).toBe(false);
   });
 });
 

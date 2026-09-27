@@ -38,7 +38,7 @@
  */
 
 import { describe, it, expect } from 'vitest';
-import { seamAbsent } from '../lib/soft-skip.js';
+import { seamAbsent, seamAbsentDespiteAssertions } from '../lib/soft-skip.js';
 import { behaviorGate } from '../lib/behavior-gate.js';
 import { isMultiPartyConversationSupported } from '../lib/multi-agent-capabilities.js';
 import {
@@ -89,7 +89,7 @@ describe('multi-party-conversation-behavioral (RFC 0101 §Conformance)', () => {
 
     // ---- MUST 1: POSITIVE — a roster-valid attributed turn is accepted ----
     const ok = await exchangeMultiPartyTurn({ conversationId: convId, turn: agentTurn('host:advisor-cfo', 1) });
-    if (ok.unwired) return seamAbsent('host advertises multiPartyConversation but the conversation seam is not wired');
+    if (ok.unwired) return seamAbsentDespiteAssertions('host advertises multiPartyConversation and the council opened, but the turn-exchange seam is not wired');
     expect(
       ok.status === 200,
       req('openwop.it.multi-party-conversation-behavioral.opens-a-council-accepts-an-attributed-turn-and-rejects-missing-non-participant-o', 'RFC 0101 §Spec', "a role:'agent' turn with an in-roster speakerId MUST be accepted"),

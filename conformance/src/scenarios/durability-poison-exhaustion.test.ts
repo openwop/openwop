@@ -47,7 +47,7 @@ import { describe, expect, it } from 'vitest';
 import { driver } from '../lib/driver.js';
 import { pollUntilTerminal, scaledTimeoutMs } from '../lib/polling.js';
 import { isFixtureAdvertised } from '../lib/fixtures.js';
-import { softSkip } from '../lib/soft-skip.js';
+import { blockedDespiteAssertions } from '../lib/soft-skip.js';
 import { queryTestEvents, requireEvents } from '../lib/event-log-query.js';
 import { recordRequirement } from '../lib/requirement-ledger.js';
 import { requirementIdForFile } from '../lib/scenario-disposition.js';
@@ -112,7 +112,7 @@ describe.skipIf(SKIP_NO_FIXTURE)('RFC 0158 §C.8 — poison work terminates with
         ? 'event-log seam /v1/host/sample/test/runs/{runId}/events not wired — attempts are unobservable'
         : `event-log seam returned HTTP ${first.status}`;
       recordRequirement(REQ, 'blocked', why);
-      return softSkip('blocked', why);
+      return blockedDespiteAssertions(why);
     }
 
     const events = requireEvents(first, 'RFC 0158 §C.8 attempt counting');

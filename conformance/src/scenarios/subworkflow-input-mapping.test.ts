@@ -24,7 +24,7 @@ import { pollUntilTerminal, pollUntilStatus } from '../lib/polling.js';
 import { isFixtureAdvertised } from '../lib/fixtures.js';
 import { setHostCapability, resetHostCapabilities, isToggleAvailable } from '../lib/host-toggle.js';
 import { req } from '../lib/requirement-ids.js';
-import { softSkip } from '../lib/soft-skip.js';
+import { softSkip, blockedDespiteAssertions } from '../lib/soft-skip.js';
 
 const PARENT = 'conformance-subworkflow-input-mapping';
 const CHILD = 'conformance-subworkflow-input-mapping-child';
@@ -102,7 +102,7 @@ describe.skipIf(SKIP)('subworkflow-input-mapping: parent → child variable seed
     const subwfCompleted = events.find(
       (e) => e.type === 'node.completed' && e.nodeId === 'subwf-call',
     );
-    if (!subwfCompleted) return softSkip('blocked', 'precondition not met — `!subwfCompleted` returned early (seam, prior step, or fixture unavailable)');
+    if (!subwfCompleted) return blockedDespiteAssertions('the advertised fixture\'s parent run has no node.completed for subwf-call — the unset-variable projection is unobserved');
     const childRunId = subwfCompleted.payload?.outputs?.childRunId;
 
     const childRes = await driver.get(`/v1/runs/${encodeURIComponent(childRunId!)}`);

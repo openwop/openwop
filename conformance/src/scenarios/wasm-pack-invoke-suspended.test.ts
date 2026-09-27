@@ -65,12 +65,13 @@ describe('wasm-pack-invoke-suspended: suspend → resume round-trip', () => {
         'RFCS/0008-wasm-abi.md §D',
         "if a host doesn't implement WASM-driven suspends it MUST surface a recognizable code",
       )).toBe(true);
-      return softSkip('blocked', 'precondition not met — `terminal.status === \'failed\'` returned early (seam, prior step, or fixture unavailable)');
+      // A failed run carrying the recognizable code IS one of the two conformant
+      // outcomes: the requirement was observed.
+    } else {
+      // Completed path: the reference pack never suspends. Asserting
+      // 'completed' confirms the host did not spuriously enter a
+      // waiting-* state.
+      expect(terminal.status).toBe('completed');
     }
-
-    // Completed path: the reference pack never suspends. Asserting
-    // 'completed' confirms the host did not spuriously enter a
-    // waiting-* state.
-    expect(terminal.status).toBe('completed');
   });
 });

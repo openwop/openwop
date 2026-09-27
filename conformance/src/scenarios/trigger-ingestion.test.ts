@@ -48,7 +48,7 @@ import { driver } from '../lib/driver.js';
 import { behaviorGate } from '../lib/behavior-gate.js';
 import { readCapabilityFamily } from '../lib/discovery-capabilities.js';
 import { req } from '../lib/requirement-ids.js';
-import { softSkip } from '../lib/soft-skip.js';
+import { softSkip, blockedDespiteAssertions } from '../lib/soft-skip.js';
 
 const HTTP_SKIP = !process.env.OPENWOP_BASE_URL;
 
@@ -213,7 +213,7 @@ describe.skipIf(HTTP_SKIP)('trigger-ingestion: behavioral ingestion + SSRF (capa
       verification: { mode: 'none' },
       webhook: { method: 'POST', headers: { Authorization: 'Bearer canary' }, body: { x: 1 } },
     });
-    if (del.status === 404 || del.status === 403) return softSkip('blocked', 'precondition not met — `del.status === 404 || del.status === 403` returned early (seam, prior step, or fixture unavailable)');
+    if (del.status === 404 || del.status === 403) return blockedDespiteAssertions('the ingest seam answered the SSRF probe but not the webhook delivery — ingestion content redaction is unobserved');
     const delBody = del.json as
       | { deliveryEvent?: Record<string, unknown>; triggerEvent?: { webhook?: { headers?: Record<string, string> } } }
       | undefined;

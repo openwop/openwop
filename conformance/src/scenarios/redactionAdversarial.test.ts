@@ -48,7 +48,7 @@ import { CANARIES, CANARY_MARKER, getCanary } from '../lib/canaries.js';
 import { pollUntilTerminal } from '../lib/polling.js';
 import { isFixtureAdvertised } from '../lib/fixtures.js';
 import { req } from '../lib/requirement-ids.js';
-import { softSkip } from '../lib/soft-skip.js';
+import { blockedDespiteAssertions } from '../lib/soft-skip.js';
 
 const NOOP_WORKFLOW_ID = 'conformance-noop';
 const SKIP_NO_NOOP = !isFixtureAdvertised(NOOP_WORKFLOW_ID);
@@ -77,8 +77,9 @@ describe.skipIf(SKIP_NO_NOOP)('redaction-adversarial: workflow input canaries', 
       `/v1/runs/${encodeURIComponent(runId)}/events/poll`,
     );
     if (events.status !== 200) {
-      // Host doesn't expose polling; SSE is the alternative. Skip-equivalent.
-      return softSkip('blocked', 'precondition not met — `events.status !== 200` returned early (Host doesn\'t expose polling; SSE is the alternative. Skip-equivalent.) (seam, prior step, or fixture unavailable)');
+      // events/poll is a core endpoint (rest-endpoints.md); without it the
+      // canary check below never runs, so the leg is blocked, not passed.
+      return blockedDespiteAssertions('GET /v1/runs/{runId}/events/poll did not answer 200 — the canary non-disclosure is unobserved');
     }
 
     const eventsText = events.text;
@@ -139,7 +140,7 @@ describe.skipIf(SKIP_NO_NOOP)('redaction-adversarial: bearer-shaped strings roun
     const events = await driver.get(
       `/v1/runs/${encodeURIComponent(runId)}/events/poll`,
     );
-    if (events.status !== 200) return softSkip('blocked', 'precondition not met — `events.status !== 200` returned early (seam, prior step, or fixture unavailable)');
+    if (events.status !== 200) return blockedDespiteAssertions('GET /v1/runs/{runId}/events/poll did not answer 200 — the canary non-disclosure is unobserved');
 
     expect(events.text.includes(canary), req('openwop.it.redactionAdversarial.anthropic-shaped-canary-embedded-in-non-credential-input-must-not-appear-verbati', 
       'capabilities.md §"Secrets" + NFR-7',

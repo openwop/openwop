@@ -39,7 +39,7 @@
  */
 
 import { describe, it, expect } from 'vitest';
-import { softSkip } from '../lib/soft-skip.js';
+import { softSkip, blockedDespiteAssertions } from '../lib/soft-skip.js';
 import { driver } from '../lib/driver.js';
 import { capabilityFamily } from '../lib/discovery-capabilities.js';
 import { req } from '../lib/requirement-ids.js';
@@ -150,7 +150,7 @@ describe('auth-subject-link-key-class: same-IdP trust root (RFC 0163 §B — beh
     expect(provSame.status, req('openwop.it.auth-subject-link-key-class.a-same-idp-link-forms-control-but-a-cross-idp-collision-must-not-link', 'auth-profiles.md §Subject linking', 'SCIM provisioning MUST succeed')).toBeLessThan(400);
 
     const sameIdp = await driver.post('/v1/host/sample/auth/saml/validate', { idpUrl: idpAUrl, variant: 'valid', nameId: sameId });
-    if (sameIdp.status === 404) return softSkip('blocked', 'SAML validate seam unwired');
+    if (sameIdp.status === 404) return blockedDespiteAssertions('SAML validate seam answered 404 after SCIM provisioning succeeded — the same-IdP control and the cross-IdP MUST are unobserved');
     expect(
       (sameIdp.json as { authenticated?: boolean } | undefined)?.authenticated,
       req('openwop.it.auth-subject-link-key-class.a-same-idp-link-forms-control-but-a-cross-idp-collision-must-not-link', 'auth-profiles.md §Subject linking', 'RFC 0163 §B positive control: a SAML assertion from the SAME IdP trust root as the SCIM lane links and authenticates'),
@@ -172,7 +172,7 @@ describe('auth-subject-link-key-class: same-IdP trust root (RFC 0163 §B — beh
     expect(provCross.status, req('openwop.it.auth-subject-link-key-class.a-same-idp-link-forms-control-but-a-cross-idp-collision-must-not-link', 'auth-profiles.md §Subject linking', 'SCIM provisioning MUST succeed')).toBeLessThan(400);
 
     const crossIdp = await driver.post('/v1/host/sample/auth/saml/validate', { idpUrl: idpBUrl, variant: 'valid', nameId: collideId });
-    if (crossIdp.status === 404) return softSkip('blocked', 'SAML validate seam unwired');
+    if (crossIdp.status === 404) return blockedDespiteAssertions('SAML validate seam answered 404 on the cross-IdP probe — RFC 0163 §B.1 is unobserved');
     expect(
       (crossIdp.json as { authenticated?: boolean } | undefined)?.authenticated === true,
       req('openwop.it.auth-subject-link-key-class.a-same-idp-link-forms-control-but-a-cross-idp-collision-must-not-link', 

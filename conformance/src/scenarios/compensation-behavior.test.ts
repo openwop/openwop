@@ -40,7 +40,7 @@
  */
 
 import { describe, it, expect } from 'vitest';
-import { softSkip } from '../lib/soft-skip.js';
+import { blockedDespiteAssertions, softSkip } from '../lib/soft-skip.js';
 import { driver } from '../lib/driver.js';
 import { behaviorGate } from '../lib/behavior-gate.js';
 import { capabilityFamily } from '../lib/discovery-capabilities.js';
@@ -101,7 +101,7 @@ describe('RFC 0151 §C — compensation lifecycle (capability-gated behavior)', 
             'cannot be certified (RFC 0148 §A: unobservable resolves to `blocked`, not to a pass)',
         ),
       ).not.toBe(404);
-      return softSkip('blocked', 'precondition not met — `seam.status === 404` returned early (seam, prior step, or fixture unavailable)');
+      throw new Error('unreachable: the assertion above fails first');
     }
     const events = (seam.json as { events?: { type: string }[] }).events ?? [];
     const requestedAt = events.findIndex((e) => e.type === 'compensation.requested');
@@ -194,7 +194,10 @@ describe('RFC 0151 §C — compensation lifecycle (capability-gated behavior)', 
             `— got ${String(status)}`,
         ),
       ).toBe(true);
-      return softSkip('blocked', 'precondition not met — `expected === null` returned early (seam, prior step, or fixture unavailable)');
+      // partial-witness-ok: an unwind that started and did not complete folds to
+      // one of running | partial | failed, and the assertion above observed that;
+      // which of the three is host state the seam's event list cannot decide.
+      return softSkip('blocked', 'the unwind started and did not complete: the rollup was asserted to be running | partial | failed, but which one is not decidable from the seam events');
     }
     expect(
       status,
@@ -267,8 +270,10 @@ describe('RFC 0151 §C — compensation lifecycle (capability-gated behavior)', 
     // that legitimately has a plan.
     const types = (body.events ?? []).map((e) => e.type);
     if (types.includes('compensation.requested')) {
-      return softSkip(
-        'blocked',
+      // host-sample-test-seams.md §21: under `fail: false` the host MUST record no
+      // compensation.requested, and a host that fails the node anyway leaves this
+      // leg `blocked`, not passed — the runId assertion above is setup.
+      return blockedDespiteAssertions(
         `the seam emitted ${JSON.stringify(types)} under \`fail: false\` — a trigger fired, so this run ` +
           'is not the healthy case the leg needs',
       );
