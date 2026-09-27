@@ -90,7 +90,7 @@ Sabotage-proved: removing `turn` from the union, removing `reason` from `nodeSus
 
 | Requirement | Observable — what an outside party sees | Who can cause the condition | Verdict |
 | --- | --- | --- | --- |
-| §A the three seats admit the shapes both hosts persist, under one bound def | `openwop.requirement.0186.payload-seats` — each host's `conversation.exchanged` payload validates; the `oneOf` matches exactly one branch | the suite, unaided | witnessable — unaided, `executed-pass` on the reference host's certified bundle |
+| §A the three seats admit the shapes both hosts persist, under one bound def | `openwop.requirement.0186.payload-seats` — the union, `reason` and `onTimeout` defs validate the measured host shapes and refuse a bare key; the `oneOf` matches exactly one branch | the suite, unaided, server-free | witnessable — unaided, by schema validation (no host). *Corrected 2026-09-26 (unfailable-leg audit):* this row read "each host's `conversation.exchanged` payload validates", but `v2-payload-seats-0186.test.ts` validates payload shapes the suite itself supplies and never contacts a host. Its `executed-pass` in a host bundle records the schema check, not the host's behaviour. The RFC adds seats a host MAY use and obliges no host to emit them, so the schema check is the right witness; the wording now says so |
 | §A the orphan is an alias and the `oneOf` cannot double-match | a payload matching two branches is refused at schema level | the corpus gate | witnessable — unaided (corpus) |
 
 ## Acceptance criteria

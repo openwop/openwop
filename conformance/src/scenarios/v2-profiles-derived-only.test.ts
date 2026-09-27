@@ -28,8 +28,13 @@ async function discovery(): Promise<Record<string, unknown> | null> {
   try { return await v2Discovery(); } catch { return null; }
 }
 
+// Unfailable-leg audit, 2026-09-26: this checked `status` alone, so a bare
+// `{status}` object passed as a capability record. capabilities.md §2 makes
+// `status`, `since` and `witness` all REQUIRED, so all three are checked.
 function isRecord(v: unknown): v is Record<string, unknown> {
-  return v !== null && typeof v === 'object' && !Array.isArray(v) && typeof (v as Record<string, unknown>)['status'] === 'string';
+  if (v === null || typeof v !== 'object' || Array.isArray(v)) return false;
+  const r = v as Record<string, unknown>;
+  return typeof r['status'] === 'string' && typeof r['since'] === 'string' && typeof r['witness'] === 'string';
 }
 
 /** RFC 0169 §C.1 — the predicate, evaluated over the document alone. */
@@ -60,7 +65,9 @@ describe('v2 profiles-derived-only (RFC 0169 §C.1, §C.3)', () => {
           expect(isRecord(doc[f]), req('openwop.requirement.0169.profiles-derived-only.derivable', DOC, `profile ${p.id} lists family ${f}; the host advertises it, so it MUST be one capability record {status, since, witness, …}`)).toBe(true);
         }
       }
-      expect(typeof derive(doc, p), req('openwop.requirement.0169.profiles-derived-only.derivable', DOC, `profile ${p.id} MUST be decidable from the document alone`)).toBe('boolean');
+      // Unfailable-leg audit, 2026-09-26: a `typeof derive(...) === 'boolean'`
+      // assertion stood here; `derive` always returns a boolean, so it passed
+      // every host. Decidability is carried by the record check above.
     }
     const core = rows.find((p) => p.id === 'openwop-discovery-core');
     if (core !== undefined) {

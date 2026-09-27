@@ -26,11 +26,13 @@
  *     host released one to make room), or never within the window, AND the held
  *     attempts had stayed open until the run was terminal: the contention the
  *     floor names existed when the healthy delivery fell due, and it waited.
- *   - partial-witness — the host's own delivery timeout closed held attempts
- *     before the run was terminal. Contention was not sustained when the
- *     healthy delivery fell due, so this run of the leg cannot judge §A. The
- *     timeout is the host's to choose; a host with a timeout shorter than
- *     DELAY_MS is simply not measured by this instrument.
+ *   - blocked (unjudged) — the host had all 8 held attempts open at once, but
+ *     its own delivery timeout closed them before the run was terminal.
+ *     Contention was not sustained when the healthy delivery fell due, so this
+ *     run of the leg cannot judge §A. The timeout is the host's to choose; a
+ *     host with a timeout shorter than DELAY_MS is simply not measured by this
+ *     instrument. If fewer than 8 were EVER open at once (a serial or small
+ *     pool), it fails instead (2026-09-26, unfailable-leg audit).
  *   - blocked — fewer than 8 held attempts ever arrived AND the healthy one
  *     never did either: nothing reached the suite, which says nothing about
  *     isolation (`noDeliveryCause`).
@@ -121,6 +123,10 @@ describe('RFC 0215 §A — one subscription\'s receiver does not hold another\'s
     let healthyId: string | null = null;
     let healthyAt: number | null = null;
     let openAtHealthy = -1;
+    // The most held attempts ever open at once. Sampled at each held arrival:
+    // the open count only rises there (closes only lower it), so the max over
+    // arrivals is the true peak.
+    let peakOpen = 0;
     const openCount = (): number => [...held.values()].filter((h) => h.closedAt === null).length;
 
     const rx = await startScopedReceiver((hit, res) => {
@@ -137,6 +143,7 @@ describe('RFC 0215 §A — one subscription\'s receiver does not hold another\'s
       }
       const h: Held = { webhookId, res, openedAt: Date.now(), closedAt: null };
       held.set(webhookId, h);
+      peakOpen = Math.max(peakOpen, openCount());
       // The HOST closing the socket before we answer is the host abandoning the attempt.
       res.on('close', () => { if (h.closedAt === null) h.closedAt = Date.now(); });
     });
@@ -175,7 +182,7 @@ describe('RFC 0215 §A — one subscription\'s receiver does not hold another\'s
     const everOpened = held.size;
     await waitFor(() => healthyAt !== null, WINDOW_MS);
     const earliestClose = Math.min(...[...held.values()].map((h) => h.closedAt ?? Infinity));
-    const detail = `${everOpened} held attempt(s) arrived; ${openAtTerminal} were still open when the run was seen terminal; `
+    const detail = `${everOpened} held attempt(s) arrived (at most ${peakOpen} open at once); ${openAtTerminal} were still open when the run was seen terminal; `
       + (healthyAt === null ? `the healthy attempt did not arrive within ${WINDOW_MS}ms of that` : `the healthy attempt arrived ${healthyAt - terminalAt}ms after it, with ${openAtHealthy} held open`);
 
     if (healthyAt === null && everOpened === 0) {
@@ -193,8 +200,21 @@ describe('RFC 0215 §A — one subscription\'s receiver does not hold another\'s
       // delivery timeout released the held attempts early (its choice), or it
       // never opened FLOOR of them at once. The second is the defect, the first
       // is not, and they differ in WHEN the first held attempt closed.
-      expect(everOpened, req(ID, DOC, 'the held subscriptions\' attempts MUST have been dispatched')).toBeGreaterThan(0);
-      return softSkip('skipped', `partial-witness: the host closed held attempts ${Number.isFinite(earliestClose) ? `${terminalAt - earliestClose}ms ` : ''}before the run was terminal (its delivery timeout is shorter than this leg's ${DELAY_MS}ms delay), so ${FLOOR} attempts were not outstanding when the healthy delivery fell due — ${detail}`);
+      //
+      // Unfailable-leg audit (2026-09-26): this branch asserted everOpened > 0
+      // and then `softSkip('skipped')`, which records `executed-pass` with a
+      // `partial-witness:` detail. A serial dispatcher (pool of 1) with a
+      // sub-2s delivery timeout landed here and passed — every held attempt
+      // arrived eventually (everOpened reached FLOOR), one at a time, while the
+      // healthy attempt queued behind them: head-of-line blocking. peakOpen
+      // separates the two cases the comment above names: below FLOOR the host
+      // never had FLOOR attempts outstanding at once, which is the defect; at
+      // FLOOR the host's timeout released them early, which is unjudged.
+      expect(
+        peakOpen,
+        req(ID, DOC, `a host MUST sustain ${FLOOR} subscriptions' attempts outstanding at once — at most ${peakOpen} were ever open together, so the held attempts were dispatched below the floor — ${detail}`),
+      ).toBeGreaterThanOrEqual(FLOOR);
+      return blockedDespiteAssertions(`unjudged: ${FLOOR} held attempts were open at once, but the host closed held attempts ${Number.isFinite(earliestClose) ? `${terminalAt - earliestClose}ms ` : ''}before the run was terminal (its delivery timeout is shorter than this leg's ${DELAY_MS}ms delay), so ${FLOOR} attempts were not outstanding when the healthy delivery fell due — ${detail}`);
     } else {
       expect.fail(req(ID, DOC, `the host never had ${FLOOR} subscriptions' attempts outstanding at once, and the healthy attempt waited — a bounded dispatcher below the floor — ${detail}`));
     }

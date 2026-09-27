@@ -38,9 +38,10 @@
 import { afterEach, describe, it, expect } from 'vitest';
 import { req } from '../lib/requirement-ids.js';
 import { readErrorCode } from '../lib/error-envelope.js';
-import { softSkip } from '../lib/soft-skip.js';
+import { softSkip, blockedDespiteAssertions } from '../lib/soft-skip.js';
 import { v2Validator } from '../lib/v2.js';
-import { hitHeader, mintWhsec, startModalReceiver, verifyStandardWebhooks } from '../lib/webhook-receiver.js';
+import { scaledTimeoutMs } from '../lib/polling.js';
+import { hitHeader, mintWhsec, startModalReceiver, verifyStandardWebhooks, type ModalHit } from '../lib/webhook-receiver.js';
 import {
   STANDARD_WEBHOOKS_ALG,
   deliveriesFor,
@@ -53,6 +54,9 @@ import {
 } from '../lib/standard-webhooks.js';
 
 const REFUSED = ['no-echo', 'wrong-echo', 'redirect'] as const;
+/** A second echo subscription, registered AFTER the refused modes (routed as `echo`, told apart by this trailing segment). */
+const LATE_CONTROL = 'late-control';
+const isLateControl = (h: ModalHit): boolean => h.path.split('?')[0]!.endsWith(`/echo/${LATE_CONTROL}`);
 
 let closeReceiver: (() => Promise<void>) | null = null;
 afterEach(async () => {
@@ -80,10 +84,18 @@ describe('RFC 0201 §D — endpoint verification refuses without consent (opted-
       const res = await registerSw(body(mode));
       refused.set(mode, { status: res.status, code: readErrorCode(res.json), id: (res.json as { webhookId?: unknown } | null)?.webhookId });
     }
+    // Unfailable-leg audit, 2026-09-26: the persisted-nothing check synced only
+    // on the FIRST echo subscription plus a 1 s grace, so a host that answered
+    // 400 but kept the rows, delivering serially in registration order, could
+    // land those deliveries after the window. A second echo control registered
+    // AFTER the refused modes sits behind them in that order.
+    const late = await registerSw({ ...body('echo'), url: `${rx.urlFor('echo').url}/${LATE_CONTROL}` });
 
     const ID = 'openwop.requirement.0201.endpoint-verification';
     expect(ok.status, req(ID, 'RFC 0201 §D.14', `an endpoint that echoes the challenge MUST be registered 201 (got ${ok.status} ${readErrorCode(ok.json) ?? ''})`)).toBe(201);
     const echoId = (ok.json as { webhookId: string }).webhookId;
+    expect(late.status, req(ID, 'RFC 0201 §D.14', `a second echoing endpoint (the late control) MUST be registered 201 (got ${late.status} ${readErrorCode(late.json) ?? ''})`)).toBe(201);
+    const lateId = (late.json as { webhookId: string }).webhookId;
     for (const [mode, r] of refused) {
       expect(r.status, req(ID, 'RFC 0201 §D.14', `a ${mode} endpoint MUST be refused 400 before any 201 (got ${r.status})`)).toBe(400);
       expect(r.code, req(ID, 'RFC 0201 §D.14', `a ${mode} refusal MUST carry webhook_endpoint_unverified`)).toBe('webhook_endpoint_unverified');
@@ -91,7 +103,7 @@ describe('RFC 0201 §D — endpoint verification refuses without consent (opted-
 
     const validate = v2Validator('webhook-verification');
     for (const mode of ['echo', ...REFUSED]) {
-      const vr = rx.hits.filter((h) => h.mode === mode && h.verification);
+      const vr = rx.hits.filter((h) => h.mode === mode && h.verification && !isLateControl(h));
       expect(vr.length, req(ID, 'RFC 0201 §D.13–§D.14', `the host MUST send exactly one verification request to the ${mode} endpoint and MUST NOT retry it (saw ${vr.length})`)).toBe(1);
       const h = vr[0]!;
       expect(h.method, req(ID, 'RFC 0201 §D.13', 'the verification request MUST be a POST')).toBe('POST');
@@ -113,12 +125,19 @@ describe('RFC 0201 §D — endpoint verification refuses without consent (opted-
     // delivery; by then any persisted refused subscription would have one too.
     const run = await driveRun();
     expect(run.status, req(ID, 'runs.md §Create', 'POST /runs MUST answer 201 for the noop fixture')).toBe(201);
-    await waitFor(() => deliveriesFor(rx.hits, echoId, run.runId).length > 0, 15_000);
+    await waitFor(() => deliveriesFor(rx.hits, echoId, run.runId).length > 0 && deliveriesFor(rx.hits, lateId, run.runId).length > 0, 15_000);
     expect(deliveriesFor(rx.hits, echoId, run.runId).length, req(ID, 'webhooks.md §Durability', 'the verified subscription MUST receive run.completed — the sync point for the persisted-nothing check')).toBeGreaterThan(0);
-    await new Promise((r) => setTimeout(r, 1_000));
+    // The late control is a SYNC POINT, not a requirement: a public receiver
+    // front that drops its extra path segment would starve it through no fault
+    // of the host. Unobserved ⇒ the persisted-nothing check is unjudged, never
+    // failed and never passed.
+    if (deliveriesFor(rx.hits, lateId, run.runId).length === 0) {
+      return blockedDespiteAssertions(`the late-control subscription (${lateId}) received no run.completed within the wait — the second sync point for the persisted-nothing check is missing, so that check is unjudged`);
+    }
+    await new Promise((r) => setTimeout(r, scaledTimeoutMs(3_000)));
     for (const mode of REFUSED) {
       const late = rx.hits.filter((h) => h.mode === mode && !h.verification);
       expect(late.length, req(ID, 'RFC 0201 §D.14', `a refused (${mode}) registration MUST persist no subscription — it received ${late.length} later request(s)`)).toBe(0);
     }
-  }, 60_000);
+  }, 75_000);
 });

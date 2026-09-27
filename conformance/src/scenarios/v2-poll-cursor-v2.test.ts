@@ -14,7 +14,7 @@ import { describe, it, expect } from 'vitest';
 import { driver, type OpenWOPResponse } from '../lib/driver.js';
 import { v2Discovery } from '../lib/v2.js';
 import { readErrorCode } from '../lib/error-envelope.js';
-import { softSkip } from '../lib/soft-skip.js';
+import { blockedDespiteAssertions, softSkip } from '../lib/soft-skip.js';
 import { req } from '../lib/requirement-ids.js';
 
 const DOC = 'spec/v2/core/events.md §Poll';
@@ -32,19 +32,24 @@ async function http(fn: () => Promise<OpenWOPResponse>): Promise<OpenWOPResponse
   try { return await fn(); } catch { return null; }
 }
 
-async function terminalRun(): Promise<{ runId: string } | { reason: string }> {
+async function terminalRun(): Promise<{ runId: string; terminal: boolean } | { reason: string }> {
   if (!(await discovery())) return { reason: 'v2 discovery unreachable — /.well-known/openwop did not answer 200 with a JSON body under OpenWOP-Version: 2.0' };
   const created = await http(() => driver.post('/runs', { workflowId: NOOP_WORKFLOW_ID }));
   if (created === null) return { reason: 'POST /runs unreachable (fetch failed)' };
   const runId = (created.json as { runId?: unknown } | undefined)?.runId;
   if (created.status !== 201 || typeof runId !== 'string') return { reason: `POST /runs {workflowId: ${NOOP_WORKFLOW_ID}} answered ${created.status} ${readErrorCode(created.json) ?? ''} — the smallest valid create was refused (fixture not seeded?)`.trim() };
+  // unfailable-leg audit, 2026-09-26: the helper used to return the run even
+  // when the deadline lapsed with it still running, so the shape leg could not
+  // hold a host to isTerminal:true. It now reports whether it actually saw a
+  // terminal snapshot status.
   const deadline = Date.now() + TIMEOUT_MS;
+  let terminal = false;
   while (Date.now() < deadline) {
     const snap = await http(() => driver.get(`/runs/${encodeURIComponent(runId)}`));
-    if (snap !== null && TERMINAL.has(String((snap.json as { status?: unknown } | undefined)?.status))) break;
+    if (snap !== null && TERMINAL.has(String((snap.json as { status?: unknown } | undefined)?.status))) { terminal = true; break; }
     await new Promise((r) => setTimeout(r, 250));
   }
-  return { runId };
+  return { runId, terminal };
 }
 
 async function poll(runId: string, query: string): Promise<OpenWOPResponse | null> {
@@ -60,6 +65,7 @@ describe('v2 poll-cursor-v2 (RFC 0171 §E.2)', () => {
   it('the response is the closed { runId, events, lastSequence, status, isTerminal }', async () => {
     const r = await terminalRun();
     if ('reason' in r) return softSkip('blocked', r.reason);
+    if (!r.terminal) return softSkip('blocked', `the ${NOOP_WORKFLOW_ID} run did not reach a terminal snapshot status within ${TIMEOUT_MS} ms — isTerminal/status/lastSequence cannot be held to a settled log`);
     const res = await poll(r.runId, '');
     if (res === null) return softSkip('blocked', 'GET /runs/{runId}/events/poll unreachable (fetch failed)');
     expect(res.status, req('openwop.requirement.0171.poll-cursor-v2.shape', DOC, 'pollRunEvents MUST answer 200')).toBe(200);
@@ -70,8 +76,25 @@ describe('v2 poll-cursor-v2 (RFC 0171 §E.2)', () => {
     expect(Number.isInteger(body?.lastSequence) && (body?.lastSequence as number) >= -1, req('openwop.requirement.0171.poll-cursor-v2.shape', DOC, 'lastSequence is the highest sequence in the log (−1 when empty)')).toBe(true);
     expect(typeof body?.status, req('openwop.requirement.0171.poll-cursor-v2.shape', DOC, 'status is the snapshot status')).toBe('string');
     expect(typeof body?.isTerminal, req('openwop.requirement.0171.poll-cursor-v2.shape', DOC, 'isTerminal is a boolean')).toBe('boolean');
+    // unfailable-leg audit, 2026-09-26: status and isTerminal were checked only
+    // for type, so a host answering isTerminal:false (or status "running") for
+    // a run whose snapshot is terminal passed. The run was observed terminal
+    // above, so the poll MUST say so.
+    expect(TERMINAL.has(String(body?.status)), req('openwop.requirement.0171.poll-cursor-v2.shape', DOC, `status is the snapshot status: the run was observed terminal, so status MUST be one of ${[...TERMINAL].join('/')}; got ${String(body?.status)}`)).toBe(true);
+    expect(body?.isTerminal, req('openwop.requirement.0171.poll-cursor-v2.shape', DOC, 'isTerminal is whether the run is terminal: the run was observed terminal, so isTerminal MUST be true')).toBe(true);
+    // unfailable-leg audit, 2026-09-26: the old check was max(seqs) ≤
+    // lastSequence, so a host answering max+1 (or any larger number) passed.
+    // lastSequence is the highest sequence IN THE LOG; a cursor-less poll
+    // carries the whole log, so once the log is confirmed quiescent (a second
+    // whole-log read returns the same sequences) lastSequence MUST equal the
+    // highest returned sequence, or −1 when the log is empty.
     const seqs = sequences(body);
-    if (seqs.length > 0) expect(Math.max(...seqs), req('openwop.requirement.0171.poll-cursor-v2.shape', DOC, 'lastSequence MUST equal the highest sequence returned when the response carries the whole log')).toBeLessThanOrEqual(body?.lastSequence as number);
+    const settled = await poll(r.runId, '');
+    const seqsAfter = settled !== null && settled.status === 200 ? sequences(settled.json) : null;
+    if (seqsAfter === null || seqsAfter.join(',') !== seqs.join(',')) {
+      return blockedDespiteAssertions(`the event log grew between two whole-log reads (before: [${seqs.join(',')}], after: [${seqsAfter?.join(',') ?? 'unreadable'}]) — a run at terminal STATUS is still appending, so lastSequence cannot be compared to a settled log. Re-run against a quiescent log.`);
+    }
+    expect(body?.lastSequence, req('openwop.requirement.0171.poll-cursor-v2.shape', DOC, `lastSequence MUST equal the highest sequence in the log (−1 when empty); the whole-log poll returned [${seqs.join(', ')}]`)).toBe(seqs.length > 0 ? Math.max(...seqs) : -1);
   });
 
   it('omitting the cursor returns from the first event (sequence 0)', async () => {

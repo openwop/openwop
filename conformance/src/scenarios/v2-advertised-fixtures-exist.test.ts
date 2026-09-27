@@ -65,9 +65,16 @@ describe('v2-advertised-fixtures-exist (RFC 0168 §C.3)', () => {
     const ids = advertisedIds(doc);
     if (ids.length === 0) return softSkip('inapplicable', 'the host advertises no fixtures[]');
 
-    // Deterministic sample: the first N by sort order, so a failure is
+    // Deterministic sample spread across the sorted list, so a failure is
     // reproducible and a host cannot pass by luck of ordering.
-    const sample = [...ids].sort().slice(0, SAMPLE);
+    // Unfailable-leg audit, 2026-09-26: the sample was the first N by sort
+    // order, so an unseeded fixture sorting 6th or later was never attempted.
+    // Indices round(i*(n-1)/(SAMPLE-1)), deduped, reach both ends and between.
+    const sorted = [...new Set(ids)].sort();
+    const picks = sorted.length <= SAMPLE
+      ? sorted.map((_, i) => i)
+      : Array.from({ length: SAMPLE }, (_, i) => Math.round((i * (sorted.length - 1)) / (SAMPLE - 1)));
+    const sample = [...new Set(picks)].map((i) => sorted[i]!);
     const unreachable: string[] = [];
     let attempted = 0;
     for (const id of sample) {

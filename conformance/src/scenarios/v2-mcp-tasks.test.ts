@@ -37,6 +37,7 @@ import { isFixtureAdvertised } from '../lib/fixtures.js';
 import { loadEnv } from '../lib/env.js';
 import { softSkip } from '../lib/soft-skip.js';
 import { req } from '../lib/requirement-ids.js';
+import { scaledTimeoutMs } from '../lib/polling.js';
 
 export const HOST_CALLBACK_NOT_REQUIRED = 'the suite is the MCP client: every leg POSTs JSON-RPC to the mount the host advertises in mcp.serverUrls; nothing harness-hosted is handed to the host';
 
@@ -343,9 +344,21 @@ describe('RFC 0198 — v2-mcp-tasks (MCP Tasks on the server mount; disconnect c
     expect(key, req(ID_TASK_UPDATE_APPROVER_CHECKED, 'interop-map.json mcp.tasks.status', `the approvers task is input_required (got ${JSON.stringify(t.error ?? t.result)})`)).toBeDefined();
     const u = await call(m.url, 'tasks/update', { taskId, inputResponses: { [key!]: { action: 'accept', content: { action: 'accept' } } } });
     expect(u.error === undefined || u.error.code === INVALID_PARAMS, req(ID_TASK_UPDATE_APPROVER_CHECKED, 'interop-map.json mcp.tasks.methods tasks/update', `a non-approver's update is acknowledged or -32602, never an internal error (got ${JSON.stringify(u.error)})`)).toBe(true);
-    await new Promise((ok) => setTimeout(ok, 750));
-    expect(await runStatus(unproject(taskId)), req(ID_TASK_UPDATE_APPROVER_CHECKED, `${DOC}; interrupt.md §Approver enforcement; RFC 0198 §E.7`, 'the interrupt stays open: the run is still waiting-approval')).toBe('waiting-approval');
-    expect((await events(unproject(taskId))).filter((e) => e.type === 'interrupt.resolved').length, req(ID_TASK_UPDATE_APPROVER_CHECKED, 'interrupt.md §Approver enforcement', 'no interrupt.resolved is recorded')).toBe(0);
+    // Unfailable-leg audit, 2026-09-26: the negative evidence was read once
+    // after a fixed 750 ms, so a host applying the non-approver's update
+    // asynchronously after that passed. It is now held for a scaled ~3 s: the
+    // run must stay waiting-approval with zero interrupt.resolved on every read.
+    const holdUntil = Date.now() + scaledTimeoutMs(3_000);
+    let status: unknown;
+    let resolvedCount = 0;
+    for (;;) {
+      status = await runStatus(unproject(taskId));
+      resolvedCount = (await events(unproject(taskId))).filter((e) => e.type === 'interrupt.resolved').length;
+      if (status !== 'waiting-approval' || resolvedCount !== 0 || Date.now() >= holdUntil) break;
+      await new Promise((ok) => setTimeout(ok, 250));
+    }
+    expect(status, req(ID_TASK_UPDATE_APPROVER_CHECKED, `${DOC}; interrupt.md §Approver enforcement; RFC 0198 §E.7`, 'the interrupt stays open: the run is still waiting-approval')).toBe('waiting-approval');
+    expect(resolvedCount, req(ID_TASK_UPDATE_APPROVER_CHECKED, 'interrupt.md §Approver enforcement', 'no interrupt.resolved is recorded')).toBe(0);
     await call(m.url, 'tasks/cancel', { taskId });
   });
 

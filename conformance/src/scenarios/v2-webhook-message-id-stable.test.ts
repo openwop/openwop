@@ -31,7 +31,7 @@
 import { afterEach, describe, it, expect } from 'vitest';
 import { req } from '../lib/requirement-ids.js';
 import { readErrorCode } from '../lib/error-envelope.js';
-import { softSkip } from '../lib/soft-skip.js';
+import { blockedDespiteAssertions, softSkip } from '../lib/soft-skip.js';
 import { hitHeader, mintWhsec, startModalReceiver, STANDARD_WEBHOOKS_ID, type ModalHit } from '../lib/webhook-receiver.js';
 import { retryWaitCapMs, retryWaitFor } from '../lib/webhook-retry-window.js';
 import {
@@ -108,11 +108,19 @@ describe('RFC 0201 §C.10 — webhook-id is stable across retries, distinct acro
         req(ID, 'RFC 0201 §C.10', `webhook-id MUST be identical on every attempt of one (webhookId, runId, sequence) — ${attempts.length} attempts of ${key} carried ${ids.size} value(s)`),
       ).toHaveLength(1);
     }
+    // Unfailable-leg audit, 2026-09-26: the distinctness half asserted only
+    // `keys.size >= 2`, so a host coalescing the two subscriptions (or keeping a
+    // per-subscription constant id with one delivery each) passed on a partial
+    // set. Distinctness is judged only over the full expected set; fewer keys
+    // is unmeasured, and the retry-stability assertions above already ran.
+    if (keys.size < expectedKeys) {
+      return blockedDespiteAssertions(`only ${keys.size} of ${expectedKeys} expected deliveries (${subs.length} subscriptions × ${EVENTS.join(' + ')}) arrived inside the ${window}ms window — distinctness across deliveries cannot be judged on a partial set`);
+    }
     const perKey = [...keys.entries()].map(([key, a]) => ({ key, id: hitHeader(a[0]!, 'webhook-id') ?? '' }));
     for (const { key, id } of perKey) {
       expect(STANDARD_WEBHOOKS_ID.test(id), req(ID, 'RFC 0201 §C.10', `webhook-id MUST match ^[A-Za-z0-9_-]{16,128}$ (${key}: ${JSON.stringify(id)})`)).toBe(true);
     }
-    expect(keys.size, req(ID, 'RFC 0201 §C.10', `two opted-in subscriptions on ${EVENTS.join(' + ')} MUST yield ${expectedKeys} distinct deliveries of one run`)).toBeGreaterThanOrEqual(2);
+    expect(keys.size, req(ID, 'RFC 0201 §C.10', `two opted-in subscriptions on ${EVENTS.join(' + ')} MUST yield ${expectedKeys} distinct deliveries of one run`)).toBe(expectedKeys);
     expect(
       new Set(perKey.map((k) => k.id)).size,
       req(ID, 'RFC 0201 §C.10', `webhook-id MUST differ between distinct deliveries, by event and by subscription — ${perKey.length} deliveries carried ${new Set(perKey.map((k) => k.id)).size} distinct id(s)`),

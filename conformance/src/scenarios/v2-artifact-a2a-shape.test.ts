@@ -118,12 +118,18 @@ describe('RFC 0205 §A.3 — a url Part does not resolve beyond the caller\'s au
     const tenantB = process.env['OPENWOP_TEST_TENANT_B_API_KEY'];
     if (!tenantB) return softSkip('blocked', 'the artifact carries a url Part but OPENWOP_TEST_TENANT_B_API_KEY is not supplied — the second-tenant leg cannot run');
     const base = loadEnv().baseUrl;
+    // unfailable-leg audit, 2026-09-26: the probes use redirect:'manual' and
+    // only failed on a 2xx, so a url that answered 302 to a public pre-signed
+    // object-store URL — readable by tenant B and by anyone — passed. A 3xx is
+    // the host resolving the url for that caller; the only answers that do not
+    // resolve it are a refusal (401/403) or a non-disclosing 404.
+    const REFUSED = new Set([401, 403, 404]);
     for (const u of urls) {
       const abs = new URL(u, base).toString();
       const asB = await fetch(abs, { headers: { Authorization: `Bearer ${tenantB}` }, redirect: 'manual' });
-      expect(asB.status >= 200 && asB.status < 300, req('openwop.requirement.0205.artifact-url-part-scoped', 'RFC 0205 §A.3', `${abs} MUST NOT answer 2xx to tenant B's credential (got ${asB.status})`)).toBe(false);
+      expect(REFUSED.has(asB.status), req('openwop.requirement.0205.artifact-url-part-scoped', 'RFC 0205 §A.3', `${abs} MUST NOT resolve for tenant B's credential: expected 401/403/404, got ${asB.status}${asB.status >= 300 && asB.status < 400 ? ` (a redirect to ${asB.headers.get('location') ?? 'no Location'} resolves the url)` : ''}`)).toBe(true);
       const anon = await fetch(abs, { redirect: 'manual' });
-      expect(anon.status >= 200 && anon.status < 300, req('openwop.requirement.0205.artifact-url-part-scoped', 'RFC 0205 §A.3', `${abs} MUST NOT answer 2xx with no credential (got ${anon.status})`)).toBe(false);
+      expect(REFUSED.has(anon.status), req('openwop.requirement.0205.artifact-url-part-scoped', 'RFC 0205 §A.3', `${abs} MUST NOT resolve with no credential: expected 401/403/404, got ${anon.status}${anon.status >= 300 && anon.status < 400 ? ` (a redirect to ${anon.headers.get('location') ?? 'no Location'} resolves the url)` : ''}`)).toBe(true);
     }
   });
 });

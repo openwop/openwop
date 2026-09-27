@@ -327,6 +327,29 @@ describe('RFC 0207 — the receiver rule (host as MCP server / A2A server)', () 
     try {
       expect(r.error, req(A2A_MALFORMED, DOC, `a malformed traceparent MUST be ignored, never a request failure — SendMessage answered error ${JSON.stringify(r.error)}`)).toBeUndefined();
       expect(r.result, req(A2A_MALFORMED, DOC, 'SendMessage MUST answer a normal result')).toBeDefined();
+      // unfailable-leg audit, 2026-09-26: only the JSON-RPC envelope was held,
+      // so a host that accepted SendMessage but failed (or rejected) the task
+      // because it could not parse the traceparent passed. "Ignored" means the
+      // task proceeds as if no traceparent were sent — the A2A sibling of the
+      // MCP leg's isError check. Read the returned Task (result.task or a bare
+      // Task) and, when it names an id, GetTask once more after a beat so a
+      // failure recorded just after the response is seen too. A Message result
+      // carries no task state and is not a failure.
+      const FAILED = new Set(['TASK_STATE_FAILED', 'TASK_STATE_REJECTED', 'failed', 'rejected']);
+      const stateOf = (res: Record<string, unknown> | undefined): string | undefined => {
+        const task = (res?.['task'] ?? res) as { status?: { state?: unknown } } | undefined;
+        const st = task?.status?.state;
+        return typeof st === 'string' ? st : undefined;
+      };
+      const first = stateOf(r.result);
+      expect(first !== undefined && FAILED.has(first), req(A2A_MALFORMED, DOC, `a malformed traceparent MUST be ignored — the task SendMessage returned is ${String(first)}; the malformed value failed the task instead of starting a new trace`)).toBe(false);
+      const id = ((r.result?.['task'] as { id?: unknown } | undefined)?.id ?? r.result?.['id']) as unknown;
+      if (typeof id === 'string') {
+        await sleep(500);
+        const again = await a2aCall(t.url, 'GetTask', { id }, {}).catch(() => null);
+        const later = again?.error === undefined ? stateOf(again?.result) : undefined;
+        expect(later !== undefined && FAILED.has(later), req(A2A_MALFORMED, DOC, `a malformed traceparent MUST be ignored — GetTask shows the task ${String(later)} after the SendMessage that carried it`)).toBe(false);
+      }
     } finally {
       await cancelTask(t.url, r);
     }

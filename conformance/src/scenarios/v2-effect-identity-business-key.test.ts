@@ -53,24 +53,36 @@ describe('RFC 0173 §B — effect-identity-business-key (gated on idempotency)',
     const fixtures = Array.isArray(doc['fixtures']) ? (doc['fixtures'] as unknown[]) : [];
     if (!fixtures.includes(FIXTURE)) return softSkip('inapplicable', `${FIXTURE} fixture not advertised — no run to read`);
 
+    // Unfailable-leg audit (2026-09-26): the noop fixture issues no effects, so
+    // the per-row loop asserted nothing on any host, and the trailing
+    // `softSkip('inapplicable')` (called without `return`, after four passing
+    // setup asserts) recorded `executed-pass` with a `partial-witness:` detail —
+    // a host that mis-keyed every effect passed this row. Now no expect passes
+    // before the empty-ledger check: a failing setup read still fails, and an
+    // empty but well-formed ledger returns `inapplicable` with zero assertions.
     const create = await driver.post('/runs', { workflowId: FIXTURE });
-    expect(create.status, req('openwop.requirement.0173.effect-identity-business-key', 'runs.md §Create', 'POST /runs MUST answer 201 for the noop fixture')).toBe(201);
+    if (create.status !== 201) {
+      expect(create.status, req('openwop.requirement.0173.effect-identity-business-key', 'runs.md §Create', 'POST /runs MUST answer 201 for the noop fixture')).toBe(201);
+    }
     const runId = (create.json as { runId: string }).runId;
     await waitTerminal(runId, 10_000);
 
     const res = await driver.get(`/runs/${encodeURIComponent(runId)}/effects`);
+    const check = v2Validator('effect-ledger-projection')(res.json);
+    const body = res.json as { runId?: unknown; effects?: Array<{ effectId?: unknown; keying?: unknown; providerKey?: unknown }> } | null;
+    const effects = body?.effects ?? [];
+    if (res.status === 200 && check.ok && body?.runId === runId && effects.length === 0) {
+      return softSkip('inapplicable', 'the noop fixture issued no external effect — the ledger read is well-formed but the per-row keying leg had no rows (an effect-issuing fixture would exercise it)');
+    }
     expect(
       res.status,
       req('openwop.requirement.0173.effect-identity-business-key', 'security-defaults.md §Layer-2 effect identity', 'a host advertising `idempotency` MUST serve GET /runs/{runId}/effects with 200 (RFC 0173 §B)'),
     ).toBe(200);
-    const check = v2Validator('effect-ledger-projection')(res.json);
     expect(
       check.ok,
       req('openwop.requirement.0173.effect-identity-business-key', 'effect-ledger-projection.schema.json', `the ledger projection MUST validate: ${check.errors}`),
     ).toBe(true);
-    const body = res.json as { runId?: unknown; effects?: Array<{ effectId?: unknown; keying?: unknown; providerKey?: unknown }> };
-    expect(body.runId, req('openwop.requirement.0173.effect-identity-business-key', 'effect-ledger-projection.schema.json runId', 'runId MUST echo the run read')).toBe(runId);
-    const effects = body.effects ?? [];
+    expect(body?.runId, req('openwop.requirement.0173.effect-identity-business-key', 'effect-ledger-projection.schema.json runId', 'runId MUST echo the run read')).toBe(runId);
     const ids = new Set<string>();
     for (const e of effects) {
       expect(
@@ -90,7 +102,6 @@ describe('RFC 0173 §B — effect-identity-business-key (gated on idempotency)',
         ).toBe(false);
       }
     }
-    if (effects.length === 0) softSkip('inapplicable', 'the noop fixture issued no external effect — the per-row keying leg had no rows (an effect-issuing fixture would exercise it)');
   });
 
   it('the same provider key is presented across two transport retries', async () => {
@@ -117,7 +128,20 @@ describe('RFC 0173 §B — effect-identity-business-key (gated on idempotency)',
     if (attempts.length < 2) {
       return softSkip('blocked', `the seam produced ${attempts.length} ledger row(s) for effect ${String(body.effectId)} — a cross-retry assertion needs at least two attempts`);
     }
-    const keys = new Set(attempts.map((e) => String(e['providerKey'] ?? '')));
+    // Unfailable-leg audit (2026-09-26): `providerKey` is optional in the ledger
+    // schema and `?? ''` folded a missing key to '', so a host that recorded no
+    // provider key on any attempt showed "one distinct key" and passed. Every
+    // attempt now MUST carry a non-empty key. Remaining limit: the witness is
+    // still the host's own ledger; a suite-owned receiver counting the
+    // Idempotency-Key header on the wire (lib/effect-receiver.ts) is the
+    // stronger follow-up, not done here.
+    for (const a of attempts) {
+      expect(
+        typeof a['providerKey'] === 'string' && (a['providerKey'] as string).length > 0,
+        req('openwop.requirement.0173.effect-identity-business-key.retry', 'spec/v2/core/idempotency.md §Layer 2: effect identity', `every attempt of one effect MUST record the provider key it presented — attempt ${String(a['attempt'])} recorded ${JSON.stringify(a['providerKey'] ?? null)}`),
+      ).toBe(true);
+    }
+    const keys = new Set(attempts.map((e) => String(e['providerKey'])));
     expect(
       keys.size,
       req('openwop.requirement.0173.effect-identity-business-key.retry', 'spec/v2/core/idempotency.md §Layer 2: effect identity', `every attempt of one effect MUST present the same provider key across a transport retry — ${attempts.length} attempt(s) presented ${keys.size} distinct key(s)`),
