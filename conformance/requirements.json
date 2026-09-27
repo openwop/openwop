@@ -14752,7 +14752,7 @@
     {
       "id": "openwop.it.inbound-credential-no-passthrough.no-webhook-delivery-carries-the-caller-s-authorization-cookie-or-proxy-authoriza",
       "file": "inbound-credential-no-passthrough.test.ts",
-      "line": 70,
+      "line": 71,
       "title": "no webhook delivery carries the caller's Authorization, Cookie or Proxy-Authorization",
       "explicitId": "openwop.requirement.0200.inbound-credential-no-passthrough",
       "citations": [
@@ -27568,7 +27568,7 @@
     {
       "id": "openwop.it.v2-artifact-a2a-shape.records-why-export-alias-equivalence-has-no-wire-witness",
       "file": "v2-artifact-a2a-shape.test.ts",
-      "line": 132,
+      "line": 138,
       "title": "records why export-alias-equivalence has no wire witness",
       "explicitId": "openwop.requirement.0205.export-alias-equivalence",
       "citations": [
@@ -27753,7 +27753,7 @@
     {
       "id": "openwop.it.v2-bound-id-kinds.deliveryid-every-record-in-the-dead-letter-read-carries-a-bound-id-in-the-caller",
       "file": "v2-bound-id-kinds.test.ts",
-      "line": 230,
+      "line": 235,
       "title": "deliveryId: every record in the dead-letter read carries a bound id in the caller's tenant",
       "explicitId": "openwop.requirement.0187.bound-id-kinds.per-kind",
       "citations": [
@@ -28805,10 +28805,15 @@
     {
       "id": "openwop.it.v2-effect-identity-business-key.the-same-provider-key-is-presented-across-two-transport-retries",
       "file": "v2-effect-identity-business-key.test.ts",
-      "line": 96,
+      "line": 107,
       "title": "the same provider key is presented across two transport retries",
       "explicitId": "openwop.requirement.0173.effect-identity-business-key.retry",
       "citations": [
+        {
+          "section": "spec/v2/core/idempotency.md §Layer 2: effect identity",
+          "requirement": null,
+          "interpolated": true
+        },
         {
           "section": "spec/v2/core/idempotency.md §Layer 2: effect identity",
           "requirement": null,
@@ -28867,11 +28872,6 @@
           "interpolated": true
         },
         {
-          "section": "RFC 0173 §C.1",
-          "requirement": null,
-          "interpolated": true
-        },
-        {
           "section": "effect-seam-manifest.schema.json seams[].branchReFires",
           "requirement": null,
           "interpolated": true
@@ -28881,7 +28881,7 @@
     {
       "id": "openwop.it.v2-effect-seam-manifest.the-replay-facet-names-the-manifest-address-as-the-constant-host-effect-seams",
       "file": "v2-effect-seam-manifest.test.ts",
-      "line": 118,
+      "line": 112,
       "title": "the replay facet names the manifest address as the constant /host/effect-seams",
       "explicitId": "openwop.requirement.0173.effect-seam-manifest.facet",
       "citations": [
@@ -28981,7 +28981,7 @@
     {
       "id": "openwop.it.v2-era-2-append-vocabulary.the-run-keeps-the-era-it-was-created-with-an-append-does-not-promote-it-to-era-3",
       "file": "v2-era-2-append-vocabulary.test.ts",
-      "line": 133,
+      "line": 165,
       "title": "the run keeps the era it was created with; an append does not promote it to era 3",
       "explicitId": "openwop.requirement.0176.era-2-append-vocabulary",
       "citations": [
@@ -29588,13 +29588,23 @@
         {
           "section": "spec/v2/core/interop.md §\"Trace context\" (RFC 0207)",
           "requirement": "SendMessage MUST answer a normal result"
+        },
+        {
+          "section": "spec/v2/core/interop.md §\"Trace context\" (RFC 0207)",
+          "requirement": null,
+          "interpolated": true
+        },
+        {
+          "section": "spec/v2/core/interop.md §\"Trace context\" (RFC 0207)",
+          "requirement": null,
+          "interpolated": true
         }
       ]
     },
     {
       "id": "openwop.it.v2-interop-trace-context.a2a-interface-metadata-openwop-traceparent-is-the-parent-not-the-transport-heade",
       "file": "v2-interop-trace-context.test.ts",
-      "line": 335,
+      "line": 358,
       "title": "A2A interface: metadata.openwop.traceparent is the parent, not the transport header",
       "explicitId": "openwop.requirement.0207.a2a-inbound-adopts",
       "citations": [
@@ -30498,7 +30508,7 @@
     {
       "id": "openwop.it.v2-mcp-tasks.a-mount-that-lists-the-tasks-extension-in-server-discover-also-lists-extensions",
       "file": "v2-mcp-tasks.test.ts",
-      "line": 247,
+      "line": 248,
       "title": "a mount that lists the Tasks extension in server/discover also lists extensions in mcp.features",
       "explicitId": "openwop.requirement.0198.advertised-via-discover",
       "citations": [
@@ -30512,7 +30522,7 @@
     {
       "id": "openwop.it.v2-mcp-tasks.a-tools-call-declaring-the-extension-on-a-run-that-is-not-terminal-is-answered-c",
       "file": "v2-mcp-tasks.test.ts",
-      "line": 254,
+      "line": 255,
       "title": "a tools/call declaring the extension on a run that is not terminal is answered CreateTaskResult",
       "explicitId": "openwop.requirement.0198.task-when-nonterminal",
       "citations": [
@@ -30551,7 +30561,7 @@
     {
       "id": "openwop.it.v2-mcp-tasks.taskid-is-the-run-id-in-its-projected-wire-form-with-an-opaque-segment-of-at-lea",
       "file": "v2-mcp-tasks.test.ts",
-      "line": 274,
+      "line": 275,
       "title": "taskId is the run id in its projected wire form, with an opaque segment of at least 22 characters",
       "explicitId": "openwop.requirement.0198.task-id-is-run-id",
       "citations": [
@@ -30575,7 +30585,7 @@
     {
       "id": "openwop.it.v2-mcp-tasks.tasks-get-projects-input-required-keyed-by-interruptid-and-a-failed-run-as-compl",
       "file": "v2-mcp-tasks.test.ts",
-      "line": 290,
+      "line": 291,
       "title": "tasks/get projects input_required keyed by interruptId, and a failed run as completed with isError true",
       "explicitId": "openwop.requirement.0198.task-status-projection",
       "citations": [
@@ -30607,7 +30617,7 @@
     {
       "id": "openwop.it.v2-mcp-tasks.tasks-update-answered-twice-resolves-the-interrupt-once-and-the-task-completes",
       "file": "v2-mcp-tasks.test.ts",
-      "line": 313,
+      "line": 314,
       "title": "tasks/update answered twice resolves the interrupt once and the task completes",
       "explicitId": "openwop.requirement.0198.task-update-resolves-once",
       "citations": [
@@ -30635,7 +30645,7 @@
     {
       "id": "openwop.it.v2-mcp-tasks.a-tasks-update-from-a-caller-not-in-approverslist-resolves-nothing",
       "file": "v2-mcp-tasks.test.ts",
-      "line": 333,
+      "line": 334,
       "title": "a tasks/update from a caller not in approversList resolves nothing",
       "explicitId": "openwop.requirement.0198.task-update-approver-checked",
       "citations": [
@@ -30663,7 +30673,7 @@
     {
       "id": "openwop.it.v2-mcp-tasks.tasks-get-appends-nothing-to-the-run-log",
       "file": "v2-mcp-tasks.test.ts",
-      "line": 352,
+      "line": 365,
       "title": "tasks/get appends nothing to the run log",
       "explicitId": "openwop.requirement.0198.task-get-read-only",
       "citations": [
@@ -30677,7 +30687,7 @@
     {
       "id": "openwop.it.v2-mcp-tasks.an-unreadable-task-is-answered-32602-exactly-as-a-nonexistent-one",
       "file": "v2-mcp-tasks.test.ts",
-      "line": 367,
+      "line": 380,
       "title": "an unreadable task is answered -32602 exactly as a nonexistent one",
       "explicitId": "openwop.requirement.0198.task-unreadable-not-found",
       "citations": [
@@ -30709,7 +30719,7 @@
     {
       "id": "openwop.it.v2-mcp-tasks.a-subscriptions-listen-acknowledgement-leaves-out-a-task-the-caller-cannot-read",
       "file": "v2-mcp-tasks.test.ts",
-      "line": 400,
+      "line": 413,
       "title": "a subscriptions/listen acknowledgement leaves out a task the caller cannot read",
       "explicitId": "openwop.requirement.0198.listen-omits-unreadable",
       "citations": [
@@ -30737,7 +30747,7 @@
     {
       "id": "openwop.it.v2-mcp-tasks.tasks-cancel-cancels-the-run-on-a-terminal-task-it-is-acknowledged-and-appends-n",
       "file": "v2-mcp-tasks.test.ts",
-      "line": 422,
+      "line": 435,
       "title": "tasks/cancel cancels the run; on a terminal task it is acknowledged and appends nothing",
       "explicitId": "openwop.requirement.0198.task-cancel-cancels-run",
       "citations": [
@@ -30769,7 +30779,7 @@
     {
       "id": "openwop.it.v2-mcp-tasks.a-client-disconnect-before-the-host-answers-a-task-less-tools-call-cancels-the-r",
       "file": "v2-mcp-tasks.test.ts",
-      "line": 441,
+      "line": 454,
       "title": "a client disconnect before the host answers a task-less tools/call cancels the run it started",
       "explicitId": "openwop.requirement.0198.disconnect-cancels-run",
       "citations": [
@@ -30792,7 +30802,7 @@
     {
       "id": "openwop.it.v2-mcp-tasks.a-disconnect-after-createtaskresult-never-affects-the-run",
       "file": "v2-mcp-tasks.test.ts",
-      "line": 461,
+      "line": 474,
       "title": "a disconnect after CreateTaskResult never affects the run",
       "explicitId": "openwop.requirement.0198.task-survives-disconnect",
       "citations": [
@@ -30811,7 +30821,7 @@
     {
       "id": "openwop.it.v2-mcp-tasks.a-blocking-tools-call-on-an-sse-stream-whose-run-is-cancelled-carries-no-notific",
       "file": "v2-mcp-tasks.test.ts",
-      "line": 476,
+      "line": 489,
       "title": "a blocking tools/call on an SSE stream whose run is cancelled carries no notifications/cancelled and ends isError true",
       "explicitId": "openwop.requirement.0198.no-server-cancelled",
       "citations": [
@@ -30914,6 +30924,11 @@
         },
         {
           "section": "errors.json mcp_mrtr_rounds_exceeded",
+          "requirement": null,
+          "interpolated": true
+        },
+        {
+          "section": "interop.md §The MCP round ceiling",
           "requirement": null,
           "interpolated": true
         },
@@ -31680,7 +31695,7 @@
     {
       "id": "openwop.it.v2-poll-cursor-v2.the-response-is-the-closed-runid-events-lastsequence-status-isterminal",
       "file": "v2-poll-cursor-v2.test.ts",
-      "line": 60,
+      "line": 65,
       "title": "the response is the closed { runId, events, lastSequence, status, isTerminal }",
       "explicitId": "openwop.requirement.0171.poll-cursor-v2.shape",
       "citations": [
@@ -31714,14 +31729,24 @@
         },
         {
           "section": "spec/v2/core/events.md §Poll",
-          "requirement": "lastSequence MUST equal the highest sequence returned when the response carries the whole log"
+          "requirement": null,
+          "interpolated": true
+        },
+        {
+          "section": "spec/v2/core/events.md §Poll",
+          "requirement": "isTerminal is whether the run is terminal: the run was observed terminal, so isTerminal MUST be true"
+        },
+        {
+          "section": "spec/v2/core/events.md §Poll",
+          "requirement": null,
+          "interpolated": true
         }
       ]
     },
     {
       "id": "openwop.it.v2-poll-cursor-v2.omitting-the-cursor-returns-from-the-first-event-sequence-0",
       "file": "v2-poll-cursor-v2.test.ts",
-      "line": 77,
+      "line": 100,
       "title": "omitting the cursor returns from the first event (sequence 0)",
       "explicitId": "openwop.requirement.0171.poll-cursor-v2.from-first",
       "citations": [
@@ -31734,7 +31759,7 @@
     {
       "id": "openwop.it.v2-poll-cursor-v2.aftersequence-n-returns-only-events-with-sequence-n",
       "file": "v2-poll-cursor-v2.test.ts",
-      "line": 87,
+      "line": 110,
       "title": "afterSequence=N returns only events with sequence > N",
       "explicitId": "openwop.requirement.0171.poll-cursor-v2.after-sequence",
       "citations": [
@@ -31756,7 +31781,7 @@
     {
       "id": "openwop.it.v2-poll-cursor-v2.a-cursor-past-the-end-of-the-log-returns-200-with-an-empty-events-array",
       "file": "v2-poll-cursor-v2.test.ts",
-      "line": 121,
+      "line": 144,
       "title": "a cursor past the end of the log returns 200 with an empty events array",
       "explicitId": "openwop.requirement.0171.poll-cursor-v2.past-end",
       "citations": [
@@ -31840,7 +31865,7 @@
     {
       "id": "openwop.it.v2-profiles-derived-only.the-v2-document-carries-no-root-profiles",
       "file": "v2-profiles-derived-only.test.ts",
-      "line": 43,
+      "line": 48,
       "title": "the v2 document carries no root `profiles[]`",
       "explicitId": "openwop.requirement.0169.profiles-derived-only.no-root-profiles",
       "citations": [
@@ -31853,18 +31878,13 @@
     {
       "id": "openwop.it.v2-profiles-derived-only.every-registry-profile-is-derivable-from-the-document-the-discovery-core-predica",
       "file": "v2-profiles-derived-only.test.ts",
-      "line": 49,
+      "line": 54,
       "title": "every registry profile is derivable from the document; the discovery-core predicate holds on a valid document",
       "explicitId": "openwop.requirement.0169.profiles-derived-only.derivable",
       "citations": [
         {
           "section": "spec/v2/core/capabilities.md §7",
           "requirement": "spec/v2/profiles.json MUST list at least one profile"
-        },
-        {
-          "section": "spec/v2/core/capabilities.md §7",
-          "requirement": null,
-          "interpolated": true
         },
         {
           "section": "spec/v2/core/capabilities.md §7",
@@ -33227,7 +33247,7 @@
     {
       "id": "openwop.requirement.0215.no-head-of-line",
       "file": "v2-webhook-delivery-isolation.test.ts",
-      "line": 111,
+      "line": 113,
       "title": null,
       "explicitId": "openwop.requirement.0215.no-head-of-line",
       "citations": [
@@ -33256,7 +33276,8 @@
         },
         {
           "section": "webhooks.md §Durability (RFC 0215 §A.1, §A.2)",
-          "requirement": "the held subscriptions' attempts MUST have been dispatched"
+          "requirement": null,
+          "interpolated": true
         },
         {
           "section": "webhooks.md §Durability (RFC 0215 §A.1, §A.2)",
@@ -33359,6 +33380,11 @@
           "interpolated": true
         },
         {
+          "section": "webhooks.md §Durability",
+          "requirement": null,
+          "interpolated": true
+        },
+        {
           "section": "webhooks.md §Surfaces",
           "requirement": "DELETE /webhooks/{webhookId} MUST answer 204"
         }
@@ -33367,7 +33393,7 @@
     {
       "id": "openwop.it.v2-webhook-durable-delivery.an-exhausted-delivery-is-dead-lettered-never-dropped",
       "file": "v2-webhook-durable-delivery.test.ts",
-      "line": 360,
+      "line": 376,
       "title": "an exhausted delivery is dead-lettered, never dropped",
       "explicitId": "openwop.requirement.0173.webhook-durable-delivery.dead-letter",
       "citations": [
@@ -33401,7 +33427,7 @@
     {
       "id": "openwop.it.v2-webhook-durable-delivery.the-dead-letter-read-is-served-and-its-records-carry-no-payload",
       "file": "v2-webhook-durable-delivery.test.ts",
-      "line": 454,
+      "line": 470,
       "title": "the dead-letter read is served and its records carry no payload",
       "explicitId": "openwop.requirement.0188.dead-letter-read",
       "citations": [
@@ -33414,7 +33440,7 @@
     {
       "id": "openwop.it.v2-webhook-durable-delivery.after-unregister-the-dead-letter-read-answers-404-not-found-as-for-a-subscriptio",
       "file": "v2-webhook-durable-delivery.test.ts",
-      "line": 475,
+      "line": 491,
       "title": "after unregister, the dead-letter read answers 404 not_found, as for a subscription that never existed",
       "explicitId": "openwop.requirement.0217.dead-letter-read-after-unregister",
       "citations": [
@@ -33441,7 +33467,7 @@
     {
       "id": "openwop.it.v2-webhook-durable-delivery.a-dead-letter-record-carries-no-delivered-payload",
       "file": "v2-webhook-durable-delivery.test.ts",
-      "line": 508,
+      "line": 524,
       "title": "a dead-letter record carries no delivered payload",
       "explicitId": "openwop.requirement.0188.dead-letter-content-free",
       "citations": [
@@ -33478,10 +33504,15 @@
     {
       "id": "openwop.it.v2-webhook-endpoint-verification.no-echo-wrong-echo-and-a-redirect-are-refused-and-persist-nothing-an-echo-is-acc",
       "file": "v2-webhook-endpoint-verification.test.ts",
-      "line": 64,
+      "line": 68,
       "title": "no-echo, wrong-echo and a redirect are refused and persist nothing; an echo is accepted",
       "explicitId": "openwop.requirement.0201.endpoint-verification",
       "citations": [
+        {
+          "section": "RFC 0201 §D.14",
+          "requirement": null,
+          "interpolated": true
+        },
         {
           "section": "RFC 0201 §D.14",
           "requirement": null,

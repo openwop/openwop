@@ -86,7 +86,14 @@ describe('v2-advertised-fixtures-exist (RFC 0168 §C.3)', () => {
       // 201 is the claim honoured. A 4xx that names the workflow as unknown is
       // the drift this leg exists to catch; any other status is a different
       // problem and is not judged here.
-      if (res.status !== 201) unreachable.push(`${id} → ${res.status}`);
+      // The comment above always said only an unknown-workflow refusal is
+      // judged, but the code counted ANY non-201. The 2026-09-26 audit's wider
+      // sample then hit fixtures that need an Idempotency-Key or specific
+      // inputs (a validation 4xx) and failed a conforming host. v2 has no
+      // dedicated unknown-workflow code, so the signal is 404, or a 4xx whose
+      // details.field names workflowId.
+      const field = (res.json as { details?: { field?: unknown } } | null)?.details?.field;
+      if (res.status === 404 || (res.status >= 400 && res.status < 500 && field === 'workflowId')) unreachable.push(`${id} → ${res.status}`);
     }
     if (attempted === 0) return softSkip('blocked', 'no advertised fixture could be attempted');
     expect(
