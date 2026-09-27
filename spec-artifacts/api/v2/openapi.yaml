@@ -197,10 +197,9 @@ paths:
         schema:
           type: integer
           minimum: 0
-        description: Test keys only. When set, the server emits events for this run as if it were running the given engine
-          version, which must be within the server's advertised `Capabilities.testing.forceEngineVersionRange`. The conformance
-          suite uses it to verify fold-best-effort tolerance across engine versions. Servers MUST reject it on production
-          API keys with `403 force_engine_version_forbidden`.
+        description: Test keys only. The server emits this run's events as if it ran the given engine version, which must
+          be within `Capabilities.testing.forceEngineVersionRange`. Servers MUST reject it on production API keys with `403
+          force_engine_version_forbidden`.
       - $ref: '#/components/parameters/OpenWOPVersion'
       requestBody:
         required: true

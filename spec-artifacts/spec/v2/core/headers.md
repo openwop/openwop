@@ -17,7 +17,7 @@ Standard headers keep their standard names: `Idempotency-Key`, `ETag`, `If-None-
 | `If-None-Match` | 2 | Standard conditional request for any resource that carries an `ETag`: the discovery document (capabilities.md §1) and the run snapshot (runs.md §Snapshot). A matching value MUST yield `304 Not Modified` with no body. The 304 carries `OpenWOP-Version` like every response (versioning.md §1.4). |
 | `Last-Event-ID` | 1 | Resume from sequence after this ID. |
 | `OpenWOP-Dedup` | 1 | When set, the host's cross-host claim system rejects a duplicate `(tenantId, scopeId)` pair with `409 Conflict`. |
-| `OpenWOP-Force-Engine-Version` | 1 | Test keys only. When set, the server emits events for this run as if it were running the given engine version, which must be within the server's advertised `Capabilities.testing.forceEngineVersionRange`. The conformance suite uses it to verify fold-best-effort tolerance across engine versions. Servers MUST reject it on production API keys with `403 force_engine_version_forbidden`. |
+| `OpenWOP-Force-Engine-Version` | 1 | Test keys only. The server emits this run's events as if it ran the given engine version, which must be within `Capabilities.testing.forceEngineVersionRange`. Servers MUST reject it on production API keys with `403 force_engine_version_forbidden`. |
 | `OpenWOP-Version` | 55 | Selects one of the host's listed major.minor versions. Absent, the host uses its `preferredVersion`; an unlisted value is 406 protocol_version_unsupported. |
 
 ## Response headers
