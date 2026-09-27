@@ -114,7 +114,7 @@ export function enumerateSchema(rel, schema) {
   };
 
   const seen = new Set();
-  function walk(node, path, branchKey, depth) {
+  function walk(node, path, branchKey, depth, conditionalAtSameSite = false) {
     if (node === null || typeof node !== 'object' || Array.isArray(node)) return;
     if (depth > 60) return;
     if (typeof node.$ref === 'string') {
@@ -127,8 +127,16 @@ export function enumerateSchema(rel, schema) {
       // A `$ref` sibling may still carry keywords (2020-12 allows it); fall
       // through so they are not lost.
     }
-    if (!reached.has(path)) reached.set(path, new Set());
-    reached.get(path).add(branchKey);
+    // A `then`/`else` walked at its parent's own path applies ON TOP of the parent, not
+    // instead of it, so it must not count as another branch reaching that path. It did
+    // until 2.42.7, and the intersection below then dropped the parent's unconditional
+    // `closed` and `required` from every object carrying an `if`, which made tightening
+    // one invisible to check-v2-surface-monotone. Its own restrictions still don't count
+    // there: they are recorded under its branch key, which the parent never reaches.
+    if (!conditionalAtSameSite) {
+      if (!reached.has(path)) reached.set(path, new Set());
+      reached.get(path).add(branchKey);
+    }
 
     for (const comb of ['anyOf', 'oneOf', 'allOf']) {
       const branches = node[comb];
@@ -143,7 +151,7 @@ export function enumerateSchema(rel, schema) {
     for (const cond of ['then', 'else']) {
       // A conditional restriction does not hold on every document, so it is a
       // branch of its own; `if` is a selector, not a surface.
-      if (node[cond] && typeof node[cond] === 'object') walk(node[cond], path, `${branchKey}>${cond}@${path}`, depth + 1);
+      if (node[cond] && typeof node[cond] === 'object') walk(node[cond], path, `${branchKey}>${cond}@${path}`, depth + 1, true);
     }
 
     if (node.type !== undefined) {
