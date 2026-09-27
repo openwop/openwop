@@ -20,7 +20,7 @@ A maintainer is expected to:
 2. **Gate quality.** Merge only changes that pass the CI gates listed in `CONTRIBUTING.md` §"The CI gate." A failing CI run is never a "fix-forward" rationale on `main`.
 3. **Follow the spec change process.** Per `GOVERNANCE.md` §"Spec change process" — editorial / non-normative-addition / normative-addition / breaking each have their own decision rule and comment window. RFCs follow `RFCS/0001-rfc-process.md`.
 4. **Disclose conflicts.** Any commercial relationship, funding source, or employment that could bias a decision is disclosed in the PR or RFC thread. Recusal is the default for direct conflicts.
-5. **Honor compatibility.** Apply `COMPATIBILITY.md` strictly. v1.x stays additive-only by default; safety/security breaks follow the §3 process; v2 is the parallel track for everything else.
+5. **Honor compatibility.** Apply `COMPATIBILITY.md` strictly. A major stays additive-only by default (§2, §2.4); safety/security breaks follow the §3 process; everything else waits for the next major.
 6. **Update governance docs in lockstep.** Changes to maintainer status (additions, removals, role changes) update this file via PR. Changes to `GOVERNANCE.md` decision rules go through the RFC process.
 7. **Uphold registry policy.** Maintainers acting as registry approvers apply the submission, trust-tier, and signing rules in [`RFCS/0043-registry-and-extension-policy.md`](./RFCS/0043-registry-and-extension-policy.md) §B (indexed at [`docs/governance/registry-policy.md`](./docs/governance/registry-policy.md)) — including the registry-root-key rotation dual-control requirement (§B.4).
 
@@ -75,7 +75,7 @@ The vendor-neutral-org migration tripwire in `ROADMAP.md` activates when this fi
 
 ### External host implementations
 
-Recruitment targets per `docs/recruitment/external-host.md` (drafts ready 2026-05-11; **freshness re-verified 2026-08-13 — content DID drift and was corrected**: three quoted conformance pass rates came from a suite ~40 versions old and now point at dated, re-derivable measurements instead. **Outreach still not sent** — but as of 2026-08-13 it is **sendable**: `external-host.md` carries **zero unfilled placeholders**, the four scheduling slots that required a Calendly link the steward may not have are now plain "name two or three windows" asks, and every quoted figure points at a dated measurement. Sending is the remaining act and it is the tripwire for RFC 0035 and RFC 0038 both — neither is blocked on the world having declined, only on nobody having asked).
+Recruitment targets per `docs/recruitment/external-host.md`. The drafts are ready and **sendable**: last re-verified 2026-08-13, with zero unfilled placeholders and every quoted figure pointing at a dated, re-derivable measurement. **Outreach has not been sent.** Sending it is the tripwire for RFC 0035 and RFC 0038 both; neither is blocked on the world having declined, only on nobody having asked.
 
 | Target                        | Outreach sent | First reply | Status  | Notes                                                                                                  |
 | ----------------------------- | ------------- | ----------- | ------- | ------------------------------------------------------------------------------------------------------ |
@@ -88,7 +88,7 @@ When a target replies positively + commits to a draft adapter PR within 30 days,
 
 ### External pack authors
 
-Recruitment targets per `docs/recruitment/external-pack-author.md` (drafts ready 2026-05-11; freshness re-verified 2026-08-13 — no numeric drift found in this file; **outreach still not sent**). Initial Tier-1 shortlist below; the recruitment doc's criteria gate adding more.
+Recruitment targets per `docs/recruitment/external-pack-author.md` (drafts ready, last re-verified 2026-08-13; **outreach not sent**). Initial Tier-1 shortlist below; the recruitment doc's criteria gate adding more.
 
 | Target                                                                       | Outreach sent | First reply | Status           | Notes                                                                                                                                          |
 | ---------------------------------------------------------------------------- | ------------- | ----------- | ---------------- | ---------------------------------------------------------------------------------------------------------------------------------------------- |
@@ -111,19 +111,15 @@ When the first non-steward maintainer is added to the "Current maintainers" tabl
 
 ## Bootstrap-phase RFC waivers
 
-> **⚠️ The grant below authorises less than has been done under it (audited 2026-08-20 — see
-> [`docs/WAIVER-AUDIT-2026-08-20.md`](./docs/WAIVER-AUDIT-2026-08-20.md)).** It permits
-> *additive* RFCs, *Draft → Active*. At least five RFCs — 0147, 0148, 0149, 0150, 0156 — are
-> **non-additive** and were promoted to **`Accepted`**. RFC 0147 additionally forbids waiving
-> the comment window for RFCs touching identity, authorization, idempotency, replay or
-> certification (§A.6), and was itself waived while affecting four of them. Reconciling the
-> text with the practice is on the maintainer's desk; nothing has been reversed on this basis.
+> **⚠️ The grant below authorises less than has been done under it** (audit: [`docs/WAIVER-AUDIT-2026-08-20.md`](./docs/WAIVER-AUDIT-2026-08-20.md)).
 >
-> **Completeness is now gated.** `scripts/check-waiver-ledger.mjs` (step 6 of `openwop:check`)
-> fails if an RFC the tree shows as waived has no row here. The ledger drifted to 26 rows
-> against 41 derived before that gate existed.
+> - It permits *additive* RFCs, *Draft → Active*. At least five RFCs — 0147, 0148, 0149, 0150, 0156 — are **non-additive** and were promoted to **`Accepted`**.
+> - RFC 0147 forbids waiving the comment window for RFCs touching identity, authorization, idempotency, replay or certification (§A.6), and was itself waived while affecting four of them.
+> - Reconciling the text with the practice is on the maintainer's desk; nothing has been reversed on this basis.
+>
+> **Completeness is gated.** `scripts/check-waiver-ledger.mjs` (step 6 of `openwop:check`) fails if an RFC the tree shows as waived has no row here.
 
-Per `CONTRIBUTING.md` §"Bootstrap-phase notes," additive RFCs MAY be promoted Draft → Active by steward decision when the comment window would only serve as a delay against zero external reviewers. This section tracks every RFC that has used the waiver so future maintainers can audit the velocity of bootstrap-phase decisions. The waiver is retired automatically when the first non-steward maintainer joins.
+Per `CONTRIBUTING.md` §"Bootstrap-phase notes," additive RFCs MAY be promoted Draft → Active by steward decision when the comment window would only serve as a delay against zero external reviewers. This section records every RFC that has used the waiver, so future maintainers can audit the velocity of bootstrap-phase decisions. The waiver is retired automatically when the first non-steward maintainer joins.
 
 | RFC  | Title                                                                                                                               | Draft date | Active date | Comment-window duration                 | Waiver rationale                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                  |
 | ---- | ----------------------------------------------------------------------------------------------------------------------------------- | ---------- | ----------- | --------------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
@@ -211,7 +207,7 @@ Per `CONTRIBUTING.md` §"Bootstrap-phase notes," additive RFCs MAY be promoted D
 
 When the count gets uncomfortable (e.g., > 5 waivers within a 30-day window, or > 15 total before the first non-steward maintainer joins), that's a signal to slow down and stage at least one RFC through a real 7-day window even without external reviewers — exercising the process is itself a credibility surface.
 
-> **Tripwire status (2026-06-11): crossed.** This ledger now records **26** waivers with no non-steward maintainer yet — past the > 15-total threshold above (and the 2026-05-25 – 2026-05-30 cluster alone exceeded the 5-in-30-days signal). Per the policy this is the signal to slow down: the slow-down response should be evaluated now, and at least one upcoming RFC should be staged through a real 7-day comment window even without external reviewers. The 2026-06-11 backfill itself is part of the response — the ledger had silently lagged at 5 rows while ≥ 19 RFCs carried "comment window waived" language; every discoverable waiver is now recorded. The tripwire is deliberately retained, not raised.
+> **Tripwire status: crossed** (since 2026-06-11). The ledger is past the > 15-total threshold with no non-steward maintainer, and the 2026-05-25 – 2026-05-30 cluster alone exceeded the 5-in-30-days signal. Per the policy, the slow-down response should be evaluated, and at least one upcoming RFC should be staged through a real 7-day comment window even without external reviewers. The tripwire is deliberately retained, not raised.
 
 ### Waivers not annotated at the time (added 2026-08-20)
 
@@ -249,21 +245,21 @@ curated table above with the real rationale.
 
 ## Spec version bump runbook
 
-The repo currently hosts `spec/v1/` rendered at `/spec/v1/`. Under v1.x compatibility rules the major version is the URL-stability boundary; minor bumps (v1.1, v1.2, …) edit `spec/v1/` in place. A new major version (`spec/v2/`) materializes only when v2 work actually starts. This section is the runbook for that day.
+The repo hosts `spec/v2/` (the current major) and `spec/v1/` (read-only during the v1 overlap), rendered at `/spec/v2/` and `/spec/v1/`. The major version is the URL-stability boundary: minor bumps edit the major's directory in place, and a new directory appears only for a new major.
 
-### Minor bump inside v1.x (the common case)
+### Minor bump inside v2.x (the common case)
 
 The release manager:
 
-1. Lands the additive prose / schema / RFC content directly inside `spec/v1/`. Each touched file's status banner updates to the new minor: `Status: Stable · v1.2 (YYYY-MM-DD).`
-2. Adds a `## [1.2.0]` section to `CHANGELOG.md`.
+1. Lands the additive prose / schema / RFC content directly inside `spec/v2/` and `schemas/v2/`, and bumps `spec/v2/release.json` to the new version.
+2. Adds a `## [2.N.0]` section to `CHANGELOG.md`.
 3. Tags + publishes the release per `PUBLISHING.md`.
 
-**The public site is published from a separate repo** — [`openwop/openwop-site`](https://github.com/openwop/openwop-site) renders this corpus, tracking openwop `main` pinned to an exact commit. The site (homepage hero, spec table, changelog, `/spec/v1/`, badges) re-renders and redeploys when `openwop-site` advances its `OPENWOP_REF` pin (its `pin-bump` workflow opens that PR daily as `main` moves; merging it deploys). **No site steps, `public/index.html` edits, `build-site.sh` runs, or `firebase deploy --only hosting:docs` happen in this repo anymore.**
+**The public site is published from a separate repo.** [`openwop/openwop-site`](https://github.com/openwop/openwop-site) renders this corpus pinned to an exact openwop commit. Its `pin-bump` workflow opens a PR daily as `main` moves, and merging that PR redeploys the site. No site build or deploy step runs in this repo.
 
 ### Major bump to v2.x (rare)
 
-Rewritten 2026-09-02 from the v2 charter's downstream audit: the earlier text pointed at `site/src/build.mjs`, which moved to the `openwop-site` repository in the 2026-06 split, and covered only the site. A major touches nine repositories. The release manager, in this order:
+A major touches nine repositories. The release manager did the following for v2.0.0 (tagged 2026-09-05), in this order; the next major follows the same steps.
 
 **In this repository (`openwop/openwop`):**
 
@@ -295,7 +291,7 @@ Rewritten 2026-09-02 from the v2 charter's downstream audit: the earlier text po
 
 12. Each host advertises both majors via `protocolVersions[]` during the overlap, produces a non-vacuous v2 bundle, and gets a matrix row. The v1 deprecation date is then computed per `COMPATIBILITY.md` §5.
 
-**Anti-pattern.** Do not create `spec/v1.2/` as a directory. Inside v1.x, minor bumps are in-place edits of `spec/v1/`. A new directory is reserved for a new major version. The `/spec/v1.1/` redirect entry in `firebase.json` exists only as an inbound-link safety net for citations that hard-coded the minor number; it does not imply a parallel directory.
+**Anti-pattern.** Do not create a minor-version directory such as `spec/v1.2/`. Minor bumps are in-place edits of the major's directory; a new directory is reserved for a new major version. The `/spec/v1.1/` redirect entry in `firebase.json` exists only as an inbound-link safety net for citations that hard-coded the minor number; it does not imply a parallel directory.
 
 ## See also
 

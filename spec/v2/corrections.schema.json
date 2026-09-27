@@ -30,7 +30,7 @@
           "description": "Every schema pointer the correction moved, as `<repo-relative file>#<INSTANCE pointer>` \u2014 the document-shaped path scripts/generate-v2-surface-baseline.mjs prints (`#/signing`, `#/chains/[]/dag/nodes/[]/config`), never the schema-shaped one (`#/properties/signing`), because a `$defs` name is not a surface. scripts/check-v2-surface-monotone.mjs matches a baseline removal against this list, so a pointer left out is a removal the monotone gate refuses.",
           "items": { "type": "string", "pattern": "^[A-Za-z0-9_./-]+#(/[^#|]*)?$" }
         },
-        "compatibilityEntry": { "type": "string", "minLength": 1, "description": "A literal substring of the COMPATIBILITY.md §3 \"correction on record\" entry. The gate fails when it drifts — a register row whose prose entry has been reworded away is an unrecorded shape change." },
+        "compatibilityEntry": { "type": "string", "minLength": 1, "description": "A literal substring of the COMPATIBILITY.md §3 \"correction on record\" entry, which is kept in docs/COMPATIBILITY-CORRECTIONS-LOG.md. The gate fails when it drifts — a register row whose prose entry has been reworded away is an unrecorded shape change." },
         "priorShapeCensus": {
           "type": "object",
           "additionalProperties": false,
