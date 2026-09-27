@@ -1,236 +1,302 @@
 # OpenWOP in 10 Minutes
 
-> **⚠️ v1 DOCUMENT.** The calls below speak v1, which is what the host serves by default — `spec/v2/core/versioning.md` §1.1 requires `preferredVersion` to name a 1.x member through the overlap, so a header-less request is a v1 request.
+> **Status: v2.** Every call below speaks the v2 wire: unversioned paths (`/runs`, not `/v1/runs` or `/v2/runs`) and an `OpenWOP-Version: 2` header on every request. The responses were captured from the v2 reference host and abbreviated. It was booted with `OPENWOP_PORT=3990` because 3838 was busy, so your URLs show `3838`.
 >
-> **To exercise v2 instead:** add `-H 'OpenWOP-Version: 2'` to every call and drop the `/v1` prefix — v2 operations are unversioned (`/runs`, not `/v2/runs`). Adding the prefix change without the header would silently keep you on v1.
->
-> Implementing a host? Read [`docs/IMPLEMENT-CORE.md`](./docs/IMPLEMENT-CORE.md) instead.
+> The v1 version of this walkthrough (for the in-memory host on `/v1/…`) is in git history: `git show 11c348cc:QUICKSTART-10MIN.md`.
 
-> The fastest possible path from "what is openwop?" to "I have a workflow running on my laptop." Zero vendor SDK / managed-service / framework setup. Just Node 20+ and a clone of [`openwop/openwop-examples`](https://github.com/openwop/openwop-examples) — the reference hosts + runnable samples, extracted from this spec repo (2026-06).
+This is the fastest path from "what is OpenWOP?" to "I have a v2 workflow running on my laptop". You need Node 20+ and a clone of [`openwop/openwop-examples`](https://github.com/openwop/openwop-examples), which holds the reference hosts and runnable samples. You don't need a vendor SDK, a managed service, or a framework.
 
-This guide walks through:
+1. **Minute 0–2:** start the v2 reference host.
+2. **Minute 2–5:** run a workflow with curl.
+3. **Minute 5–8:** run the same workflow with the TypeScript SDK.
+4. **Minute 8–10:** stream events live over SSE, resume a stream, and cancel a run.
 
-1. **Minute 0–2** — Start the in-memory reference host.
-2. **Minute 2–5** — Run a workflow via curl.
-3. **Minute 5–8** — Run the same workflow via the TypeScript SDK.
-4. **Minute 8–10** — Stream events live via SSE.
-
-The general-audience `QUICKSTART.md` covers more (BYOK, fork, node packs, conformance) and assumes you already have a host running. This guide assumes you have nothing.
+[`QUICKSTART.md`](./QUICKSTART.md) covers more (webhooks, fork and replay, `configurable`, node packs, conformance) and works against any v2 host. This guide assumes you have nothing yet.
 
 ---
 
 ## Prerequisites
 
 ```bash
-node --version  # MUST be >= 20
+node --version  # must be >= 20
 git --version
 ```
 
-That's it. No Docker, no cloud account, no API keys.
+That's all. You don't need Docker, a cloud account, or provider API keys.
 
 ---
 
-## Minute 0–2 — Start the in-memory reference host
+## Minute 0–2: start the v2 reference host
 
 ```bash
 git clone https://github.com/openwop/openwop-examples.git
-cd openwop-examples/examples/hosts/in-memory
-npm install
+cd openwop-examples/examples/hosts/v2-reference
+npm install --legacy-peer-deps
 npm start
 ```
 
-Output:
+You should see a line like this one (captured with `OPENWOP_PORT=3990`; yours names port 3838 and `db data/v2-reference.sqlite`):
 
 ```text
-[openwop-host-in-memory] listening on http://127.0.0.1:3737 (api key: openwop-inmem-dev-key, 16 fixtures loaded)
+openwop-host-v2-reference listening on http://127.0.0.1:3990 (protocolVersions 1.11, 2.0; preferredVersion 1.11; db …; fixtures 16; seams mounted; spec-artifacts 2.42.2)
 ```
 
-Leave this running. The host has no persistence — when you Ctrl-C it, every run is dropped. That's the point: it's a reference example, not a production host.
+Leave it running. `--legacy-peer-deps` is required: the host's README explains the exact-pinned conformance peers it works around. The host stores runs in one SQLite file (`data/v2-reference.sqlite`). Set `OPENWOP_DB_PATH=:memory:` if you want nothing written to disk.
 
-In a separate terminal, verify it works:
+The boot line says `protocolVersions 1.11, 2.0; preferredVersion 1.11`. The host serves both majors, and until v1 end-of-support a request **without** `OpenWOP-Version` gets the v1 contract ([`spec/v2/core/versioning.md`](./spec/v2/core/versioning.md) §1.1, §1.3). That's why every call below sends `OpenWOP-Version: 2`.
+
+In a separate terminal:
 
 ```bash
-curl http://127.0.0.1:3737/.well-known/openwop | head -c 300
+export OPENWOP_URL=http://127.0.0.1:3838
+export TOKEN=openwop-v2-dev-key   # the host's default dev key (OPENWOP_API_KEY overrides it)
 ```
-
-You should see a JSON capability advertisement.
 
 ---
 
-## Minute 2–5 — Run a workflow via curl
+## Minute 2–5: run a workflow with curl
 
 ### Discover
 
 ```bash
-curl -s http://127.0.0.1:3737/.well-known/openwop | jq '{protocolVersion, implementation}'
+curl -s -H 'OpenWOP-Version: 2' $OPENWOP_URL/.well-known/openwop \
+  | jq '{protocolVersions, preferredVersion, implementation, replay}'
 ```
 
 ```json
 {
-  "protocolVersion": "1.0",
+  "protocolVersions": ["1.11", "2.0"],
+  "preferredVersion": "1.11",
   "implementation": {
-    "name": "openwop-host-in-memory",
-    "version": "1.0.0",
-    "vendor": "openwop-spec (reference example)"
+    "name": "openwop-host-v2-reference",
+    "version": "2.0.0-rc.1",
+    "vendor": "openwop (reference example)"
+  },
+  "replay": {
+    "status": "experimental",
+    "since": "2.0",
+    "until": "2.1",
+    "witness": "witnessable-gated",
+    "modes": ["replay", "branch"],
+    "retention": { "days": 30 },
+    "effectSeamsManifest": "/host/effect-seams"
   }
 }
 ```
 
+This is the closed v2 discovery root. Each family (`replay` here) is a record with `status`, `since`, `witness`, and its facets. A family that is present is supported. v2 has no `supported: true` flags. `jq '.fixtures'` lists the 16 test workflows the host can run.
+
 ### Create a run
 
 ```bash
-curl -s -X POST http://127.0.0.1:3737/v1/runs \
-  -H "Authorization: Bearer openwop-inmem-dev-key" \
-  -H "Content-Type: application/json" \
-  -d '{"workflowId":"conformance-noop"}'
+curl -s -X POST $OPENWOP_URL/runs \
+  -H 'OpenWOP-Version: 2' \
+  -H "Authorization: Bearer $TOKEN" \
+  -H 'Content-Type: application/json' \
+  -H "Idempotency-Key: $(uuidgen)" \
+  -d '{"workflowId":"conformance-multi-node"}'
 ```
 
 ```json
 {
-  "runId": "run-3f...",
+  "runId": "openwop-reference-tenant/9fasFA1XO6OIVVrEDg6S_Msv",
   "status": "pending",
-  "workflowId": "conformance-noop",
-  "startedAt": "2026-05-01T12:34:56.000Z"
+  "eventsUrl": "http://127.0.0.1:3990/runs/openwop-reference-tenant~2F9fasFA1XO6OIVVrEDg6S_Msv/events",
+  "statusUrl": "http://127.0.0.1:3990/runs/openwop-reference-tenant~2F9fasFA1XO6OIVVrEDg6S_Msv"
 }
 ```
 
-Save the `runId`.
+A v2 `runId` is tenant-bound (`<tenant>/<opaque>`). In a URL, the `/` travels as `~2F`. Use the last path segment of `statusUrl` as your run reference:
+
+```bash
+RUN=openwop-reference-tenant~2F9fasFA1XO6OIVVrEDg6S_Msv   # paste yours
+```
 
 ### Get the snapshot
 
 ```bash
-RUN_ID=run-3f...  # paste your runId here
-curl -s -H "Authorization: Bearer openwop-inmem-dev-key" \
-  http://127.0.0.1:3737/v1/runs/$RUN_ID
+curl -s -H 'OpenWOP-Version: 2' -H "Authorization: Bearer $TOKEN" \
+  $OPENWOP_URL/runs/$RUN | jq '{status, owner, eventLogSchemaVersion}'
 ```
 
-If you waited a moment, `status` is now `completed`.
+```json
+{
+  "status": "completed",
+  "owner": {
+    "tenant": "openwop-reference-tenant",
+    "subject": {
+      "issuer": "urn:openwop-host-v2-reference:api-key",
+      "subjectId": "default",
+      "tenant": "openwop-reference-tenant",
+      "lane": "api-key",
+      "kind": "user"
+    }
+  },
+  "eventLogSchemaVersion": 3
+}
+```
 
-You just ran an OpenWOP workflow. Three HTTP calls. No client library, no schema validation, no auth ceremony beyond a Bearer token.
+You just ran an OpenWOP v2 workflow with three HTTP calls and no client library. `owner.subject` is who the host decided you are, and the host derives it from your credential, never from the request body.
 
 ---
 
-## Minute 5–8 — Run the same workflow via the TypeScript SDK
+## Minute 5–8: run the same workflow with the TypeScript SDK
 
-In a fresh terminal, create a quickstart project and install the published SDK from npm:
+The 2.x line of `@openwop/openwop` is v2-only. It sends `OpenWOP-Version` on every request and never calls a `/v1/…` path.
 
 ```bash
 mkdir -p /tmp/openwop-quickstart && cd /tmp/openwop-quickstart
 npm init -y > /dev/null
 npm pkg set type=module
-npm install @openwop/openwop
+npm install @openwop/openwop@2
 
 cat > quickstart.mjs <<'EOF'
 import { OpenwopClient } from '@openwop/openwop';
 
 const client = new OpenwopClient({
-  baseUrl: 'http://127.0.0.1:3737',
-  apiKey: 'openwop-inmem-dev-key',
+  baseUrl: 'http://127.0.0.1:3838',
+  apiKey: 'openwop-v2-dev-key',
 });
 
-const caps = await client.discover();
-console.log('Server:', caps.implementation?.name);
+const caps = await client.discovery.capabilities();
+console.log('Server:', caps.implementation?.name, caps.protocolVersions);
 
-const run = await client.createRun({ workflowId: 'conformance-noop' });
-console.log('Created:', run.runId);
+const { runId } = await client.runs.create(
+  { workflowId: 'conformance-multi-node' },
+  { idempotencyKey: crypto.randomUUID() },
+);
+console.log('Created:', runId);
 
-let snap;
-do {
-  await new Promise(r => setTimeout(r, 250));
-  snap = await client.getRun(run.runId);
-} while (!['completed', 'failed', 'cancelled'].includes(snap.status));
+for await (const event of client.runs.events(runId)) {
+  console.log(`  [${event.sequence}] ${event.type}`);
+}
+
+const snap = await client.runs.get(runId);
 console.log('Final:', snap.status);
 EOF
 
 node quickstart.mjs
 ```
 
-> **Note**: to test an unpublished SDK checkout instead, clone [`openwop/openwop-sdks`](https://github.com/openwop/openwop-sdks), run `npm install && npm run build && npm link` in `sdk/typescript/`, and replace the install step with `npm link @openwop/openwop`.
-
-Output:
+Output (with `@openwop/openwop` 2.3.0):
 
 ```text
-Server: openwop-host-in-memory
-Created: run-...
+Server: openwop-host-v2-reference [ '1.11', '2.0' ]
+Created: openwop-reference-tenant/G_N8_vAoLjSAzDK7a2rLAB-n
+  [0] run.started
+  [1] node.started
+  [2] node.completed
+  [3] node.started
+  [4] node.completed
+  [5] node.started
+  [6] node.completed
+  [7] run.completed
 Final: completed
 ```
 
-The SDK is doing the same three calls under the hood, but you get type-checked clients (`@openwop/openwop` for TypeScript, `openwop-client` for Python, the Go SDK at `github.com/openwop/openwop-sdks/go` — all three live in [`openwop/openwop-sdks`](https://github.com/openwop/openwop-sdks)) and consistent error handling.
+`client.runs.events` consumes the SSE stream. It ends after the terminal event, so you don't need a polling loop. The Python (`openwop-client>=2`) and Go (`github.com/openwop/openwop-sdks/go/v2`) clients have the same shape. All three live in [`openwop/openwop-sdks`](https://github.com/openwop/openwop-sdks).
 
-A simpler version that doesn't need the SDK at all is at [`examples/tiny-workflow/`](https://github.com/openwop/openwop-examples/tree/main/examples/tiny-workflow) — pure `fetch`.
+> **Note:** to test an unpublished SDK checkout instead, clone `openwop-sdks`, run `npm install && npm run build && npm link` in `sdk/typescript-v2/`, and replace the install step with `npm link @openwop/openwop`.
 
 ---
 
-## Minute 8–10 — Stream events live via SSE
+## Minute 8–10: stream events live over SSE
+
+Start a long-running workflow. `conformance-cancellable` waits `delayMs` before it completes.
 
 ```bash
-cd openwop-examples/examples/streaming-client
-npm start
+curl -s -X POST $OPENWOP_URL/runs \
+  -H 'OpenWOP-Version: 2' -H "Authorization: Bearer $TOKEN" -H 'Content-Type: application/json' \
+  -d '{"workflowId":"conformance-cancellable","inputs":{"delayMs":30000}}'
+RUN=...   # the last path segment of the statusUrl it returns
 ```
 
-Output:
+Attach to its event stream:
+
+```bash
+curl -s -N -H 'OpenWOP-Version: 2' -H "Authorization: Bearer $TOKEN" \
+  "$OPENWOP_URL/runs/$RUN/events"
+```
+
+While it waits, cancel it from a third terminal:
+
+```bash
+curl -s -X POST -H 'OpenWOP-Version: 2' -H "Authorization: Bearer $TOKEN" \
+  -H 'Content-Type: application/json' -d '{"reason":"quickstart demo"}' \
+  "$OPENWOP_URL/runs/$RUN/cancel"
+```
+
+```json
+{"runId":"openwop-reference-tenant/1xe1dnUaKrvDQjragfK7I05a","status":"cancelling"}
+```
+
+The stream shows the whole life of the run and then closes:
 
 ```text
-→ POST /v1/runs { workflowId: "conformance-noop" }
-  runId: run-...
-→ Streaming /v1/runs/run-.../events
-  [0] run.started
-  [1] node.started node=noop
-  [2] node.completed node=noop
-  [3] run.completed
-✓ Stream closed after 4 events
+id: 0
+event: run.started
+data: {"eventId":"nujxvYrr4atcpEqbUTS0Dls6","runId":"openwop-reference-tenant/1xe1dnUaKrvDQjragfK7I05a","type":"run.started",…}
+
+id: 1
+event: node.started
+data: {…,"type":"node.started","payload":{"nodeId":"wait","typeId":"core.delay",…}}
+
+id: 2
+event: node.cancelled
+data: {…,"type":"node.cancelled",…}
+
+id: 3
+event: run.cancelled
+data: {…,"type":"run.cancelled","payload":{"reason":"quickstart demo",…}}
 ```
 
-The host's SSE stream replays the backlog on connect (so you see all 4 events even though the run was instant) and closes on the terminal event. That's how you build a live UI without polling.
+Three details are worth knowing:
 
-For a longer demonstration, run a `conformance-cancellable` workflow with `delayMs: 5000` and you can watch the events trickle in over 5 seconds:
-
-```bash
-OPENWOP_WORKFLOW=conformance-cancellable npm start
-```
-
-Then in another terminal, while the run is mid-flight, cancel it:
-
-```bash
-curl -s -X POST -H "Authorization: Bearer openwop-inmem-dev-key" \
-  http://127.0.0.1:3737/v1/runs/$RUN_ID/cancel
-```
-
-The streaming client will receive `node.cancelled` + `run.cancelled` and exit.
+- **`id:` is the event's `sequence`.** If your connection drops, reconnect with `-H 'Last-Event-ID: 1'` and the host sends only events with a higher sequence.
+- **The host replays the backlog on connect.** Attaching after a run has finished still shows every event, and the stream closes after the terminal event.
+- **A second cancel is refused.** The run is already terminal, so you get `409 run_terminal` with `details.runStatus: "cancelled"`.
 
 ---
 
 ## What you just learned
 
-| Concept                | Where to read                                                                                                                                     |
-| ---------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------- |
-| openwop wire contract  | `spec/v1/rest-endpoints.md`, `spec/v1/capabilities.md`                                                                                            |
-| Run lifecycle + events | `spec/v1/observability.md` §"Canonical run lifecycle event names"                                                                                 |
-| SSE consumption        | `spec/v1/stream-modes.md`                                                                                                                         |
-| Idempotency            | `spec/v1/idempotency.md` + [`examples/idempotent-runs/`](https://github.com/openwop/openwop-examples/tree/main/examples/idempotent-runs)          |
-| Compatibility profiles | `spec/v1/profiles.md`                                                                                                                             |
-| Build your own host    | [`examples/hosts/in-memory/`](https://github.com/openwop/openwop-examples/tree/main/examples/hosts/in-memory) — the host you just ran is one file |
-| Conformance            | `conformance/README.md` — run the suite against your own host                                                                                     |
+| Concept | Where to read |
+| --- | --- |
+| The v2 wire contract | [`spec/v2/core/overview.md`](./spec/v2/core/overview.md) (reading order), [`api/v2/openapi.yaml`](./api/v2/openapi.yaml) |
+| Version negotiation, `OpenWOP-Version` | [`spec/v2/core/versioning.md`](./spec/v2/core/versioning.md) §1 |
+| Discovery records | [`spec/v2/core/capabilities.md`](./spec/v2/core/capabilities.md) |
+| Run lifecycle, snapshot, cancel | [`spec/v2/core/runs.md`](./spec/v2/core/runs.md) |
+| Events, SSE, poll | [`spec/v2/core/events.md`](./spec/v2/core/events.md) |
+| Tenant-bound ids, Subjects | [`spec/v2/core/identity.md`](./spec/v2/core/identity.md) |
+| Idempotency | [`spec/v2/core/idempotency.md`](./spec/v2/core/idempotency.md) |
+| Profiles | [`spec/v2/profiles.json`](./spec/v2/profiles.json), [`capabilities.md`](./spec/v2/core/capabilities.md) §7 |
+| Build your own host | [`examples/hosts/v2-reference/`](https://github.com/openwop/openwop-examples/tree/main/examples/hosts/v2-reference), the host you just ran. It is implemented from `spec/v2/core/`, and its `src/` layout is in its README |
+| Conformance | [`QUICKSTART.md`](./QUICKSTART.md) §8: `npx openwop-conformance --base-url $OPENWOP_URL --api-key $TOKEN --target-major 2` |
 
 ---
 
 ## Where to go next
 
-- **`QUICKSTART.md`** — comprehensive guide covering BYOK, fork, node packs, webhooks against any host.
-- **`INTEROP-MATRIX.md`** — see which conformance scenarios pass against known OpenWOP-compatible hosts, including the in-memory and SQLite reference hosts.
-- **`spec/v1/positioning.md`** — when to use openwop vs Temporal / Airflow / LangGraph / MCP.
-- **Build a node pack** — `spec/v1/node-packs.md` walks through manifest authoring + signing.
+- **[`QUICKSTART.md`](./QUICKSTART.md)** covers webhooks, fork and replay, `configurable`, node packs, conformance, and SDKs against any v2 host.
+- **[`INTEROP-MATRIX.md`](./INTEROP-MATRIX.md)** shows which hosts have a v2 certification bundle, including this one.
+- **[`docs/migration/v1-to-v2.md`](./docs/migration/v1-to-v2.md)** is for readers who have v1 client code.
+- **Build a node pack:** [`docs/PACK-AUTHOR-QUICKSTART.md`](./docs/PACK-AUTHOR-QUICKSTART.md).
+
+The in-memory host and the `tiny-workflow` / `streaming-client` samples in `openwop-examples` are still v1 (`/v1/…`, port 3737). They stay on the 1.x line through the overlap.
 
 ---
 
 ## Troubleshooting
 
-| Issue                                               | Fix                                                                                           |
-| --------------------------------------------------- | --------------------------------------------------------------------------------------------- |
-| `EADDRINUSE` on port 3737                           | Set `OPENWOP_PORT=3738 npm start` and update the URLs in this guide                           |
-| `npm start` errors with "tsx not found"             | Re-run `npm install` in `openwop-examples/examples/hosts/in-memory/`                          |
-| `401 unauthenticated`                               | Include `Authorization: Bearer openwop-inmem-dev-key` (or whatever `OPENWOP_API_KEY` you set) |
-| `400 validation_error: workflowId MUST be a string` | Body must be valid JSON with `workflowId` as a top-level string                               |
-| `404 workflow_not_found`                            | The host resolves the fixture catalog (this repo's `conformance/fixtures/`) via a vendored fallback, a sibling `../openwop` checkout, or an explicit `OPENWOP_FIXTURES_DIR` — the boot line logs the resolved dir + fixture count |
+| Issue | Fix |
+| --- | --- |
+| `EADDRINUSE` on port 3838 | Run `OPENWOP_PORT=3990 npm start` and change `OPENWOP_URL` to match. |
+| `npm install` fails resolving peers | Use `npm install --legacy-peer-deps`. If npm 10.9 crashes (`edgesOut`), use a current npm: `npx -y npm@latest install --legacy-peer-deps`. |
+| `401 unauthenticated` | Include `Authorization: Bearer openwop-v2-dev-key`, or whatever you set `OPENWOP_API_KEY` to. |
+| `400 idempotency_key_invalid` | `Idempotency-Key` must match `^[A-Za-z0-9._~-]{22,128}$`. Use a UUID (`uuidgen`). |
+| `400 validation_error` naming an unknown key | The `POST /runs` body is closed. v1 fields such as a free-form `configurable` map are refused. See [`runs.md`](./spec/v2/core/runs.md) §Create. |
+| `403` mentioning `tenantId` | Leave `tenantId` out. The tenant comes from your credential. |
+| `400 protocol_version_mismatch` | You sent `OpenWOP-Version: 2` to a `/v1/…` path. Drop the `/v1` prefix. |
+| Discovery returns the v1 document (`OpenWOP-Version: 1.11` on the response) | You forgot the `OpenWOP-Version: 2` request header. |
 
-If something else doesn't work, file an issue at <https://github.com/openwop/openwop/issues> — the in-memory host is supposed to "just work" for this guide.
+If something else doesn't work, file an issue at <https://github.com/openwop/openwop/issues>. The v2 reference host is supposed to "just work" for this guide.
