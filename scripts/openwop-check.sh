@@ -302,6 +302,11 @@ node "$(dirname "$0")/check-v2-schemas.mjs"
 # derivation, or the next `--write` silently reverts a hand edit (RFC 0186 `onTimeout`).
 node "$(dirname "$0")/derive-v2-schemas.mjs" --check
 node "$(dirname "$0")/check-core-budget.mjs"
+# spec/v2 prose renders verbatim on openwop.dev: no RFC numbers in banners, headings or
+# running text, no text walls, no paragraph-sized table cells, and v1 mentions only fall.
+# /spec-readability fixes what it reports.
+node "$(dirname "$0")/check-spec-readability.mjs" --self-test
+node "$(dirname "$0")/check-spec-readability.mjs"
 python3 "$(dirname "$0")/derive-v2-api.py" --check
 # 2.36.2 (D5): the generated AsyncAPI names v2 event types, never a v1 spelling copied
 # from api/asyncapi.yaml; host events are exempt (events.md §Host events, RFC 0060).

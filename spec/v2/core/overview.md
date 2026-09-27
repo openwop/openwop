@@ -1,41 +1,47 @@
 # OpenWOP v2 Core — Overview
 
-> **Status: Stable · RFC 0167, 0168, 0169, 0171, 0174.**
+> **Status: Stable.**
 
 ## Why this exists
 
-`spec/v2/core/` is the front door a host implements to pass the 2.0.0 floor. This document fixes the reading order, restates the six axioms, and states once the rules other documents only reference.
+`spec/v2/core/` is what a host implements to pass the 2.0.0 floor. This document sets the reading order, states the six axioms, and holds the rules other documents only reference.
 
 ## Reading order
 
-1. `overview.md` — axioms, §0, §0a, claim vocabulary, `ext/` rule
-2. `versioning.md` — major negotiation, `OpenWOP-Version`, the 18 axes, release identity
-3. `capabilities.md` — one well-known resource, record type, closed root, derived profiles
-4. `identity.md` — Subject, lanes, `SubjectLink`, id grammars, resume tokens
-5. `runs.md` — create / get / cancel / fork, `configurable`, snapshot, owner
-6. `events.md`, `errors.md`, `headers.md` — event `oneOf`, payload and error registries, `OpenWOP-*`
-7. `interrupt.md`, `idempotency.md`, `replay.md`, `conversation.md` — run-side surfaces
-8. `persistence.md` — era key, v1 reader rule, pinned runs
-9. `security-defaults.md`, `webhooks.md`, `interop.md`, `host-services.md` — obligations of a surface, signatures, A2A / MCP, host services
-10. `packs.md`, `connection-packs.md`, `form-content-packs.md`, `workflow-chain-packs.md` — pack identity, engines ceiling
-11. `conformance.md` — requirement ids, witness classes, bundle v3, seams profile
+1. [`overview.md`](overview.md) — axioms, §0, §0a, claim vocabulary, the `ext/` rule
+2. [`versioning.md`](versioning.md) — major negotiation, `OpenWOP-Version`, the 18 axes, release identity
+3. [`capabilities.md`](capabilities.md) — the well-known resource, record type, closed root, derived profiles
+4. [`identity.md`](identity.md) — Subject, lanes, `SubjectLink`, id grammars, resume tokens
+5. [`runs.md`](runs.md) — create, get, cancel, fork; `configurable`; snapshot; owner
+6. [`events.md`](events.md), [`errors.md`](errors.md), [`headers.md`](headers.md) — event `oneOf`, payload and error registries, `OpenWOP-*` headers
+7. [`interrupt.md`](interrupt.md), [`idempotency.md`](idempotency.md), [`replay.md`](replay.md), [`conversation.md`](conversation.md) — run-side surfaces
+8. [`persistence.md`](persistence.md) — era key, v1 reader rule, pinned runs
+9. [`security-defaults.md`](security-defaults.md), [`webhooks.md`](webhooks.md), [`interop.md`](interop.md), [`host-services.md`](host-services.md), [`tool-catalog.md`](tool-catalog.md), [`i18n.md`](i18n.md), [`portability.md`](portability.md) — surface obligations, signatures, A2A and MCP, host services, locale, estate export
+10. [`packs.md`](packs.md), [`node-pack-runtimes.md`](node-pack-runtimes.md), [`connection-packs.md`](connection-packs.md), [`form-content-packs.md`](form-content-packs.md), [`workflow-chain-packs.md`](workflow-chain-packs.md) — pack identity, engines ceiling
+11. [`conformance.md`](conformance.md) — requirement ids, witness classes, bundle v3, seams profile
 
-## Axioms in force (RFC 0167 §A)
+## Axioms in force
 
 1. A MUST without a witness class is not a requirement.
-2. One name per thing; every alias has a removal date in `spec/v1/deprecations.json` and a codemod id.
-3. Closed by default: discovery root, event envelope, payload and error registries, bundle, and `configurable` are `additionalProperties: false`; vendor extension is one positive pattern in one namespace.
-4. Registers are data: gaps, risks, deprecations, migrations, witness classes, and dispositions are files with schemas and gates; prose is checked against them, never the reverse.
-5. Security defaults are obligations of the surface: a protecting behavior binds when the surface is advertised, never when a flag is set.
-6. Nothing persisted under v1 is orphaned: every v1 artifact has a disposition in the migration register.
+2. One name per thing. Every alias has a removal date in `spec/v1/deprecations.json` and a codemod id.
+3. Closed by default. The discovery root, event envelope, payload and error registries, bundle, and `configurable` are `additionalProperties: false`. Vendor extension is one positive pattern in one namespace.
+4. Registers are data. Gaps, risks, deprecations, migrations, witness classes, and dispositions are files with schemas and gates; prose is checked against them, never the reverse.
+5. Security defaults are obligations of the surface. A protecting behavior binds when the surface is advertised, never when a flag is set.
+6. Nothing persisted under v1 is orphaned. Every v1 artifact has a disposition in the migration register.
 
-## §0 Closed-enum growth rule (RFC 0171 §A.5)
+## §0 Closed-enum growth rule
 
-A registry-backed enum (event types, error codes, envelope kinds, reason vocabularies, lanes) grows by adding a row to its registry and regenerating. Consumers MUST accept an unknown member of a registry-backed enum and MUST NOT act on it. Producers MUST NOT emit an unregistered member. Adding a member is additive in v2.x; renaming one is a major, and removing one is a major except under §0a.
+A registry-backed enum (event types, error codes, envelope kinds, reason vocabularies, lanes) grows by adding a row to its registry and regenerating.
 
-## §0a Retiring a v2 surface (RFC 0197)
+- Consumers MUST accept an unknown member of a registry-backed enum and MUST NOT act on it.
+- Producers MUST NOT emit an unregistered member.
+- Adding a member is additive in v2.x. Renaming one is a major; removing one is a major except under §0a.
 
-A 2.x minor MUST NOT change the shape of an existing v2 surface; a new shape is a new surface added beside the old one. A 2.x minor MAY remove a surface only when `scripts/check-v2-retirement.mjs` proves all of the following; otherwise the removal waits for 3.0.
+## §0a Retiring a v2 surface
+
+A 2.x minor MUST NOT change the shape of an existing v2 surface; a new shape is a new surface added beside the old one.
+
+A 2.x minor MAY remove a surface only when `scripts/check-v2-retirement.mjs` proves all of the following; otherwise the removal waits for 3.0:
 
 1. Its replacement shipped in an earlier 2.x minor.
 2. A `v2-minor` row in `spec/v1/deprecations.json` named the removal minor at least two minors and 30 days earlier.
@@ -46,26 +52,48 @@ A 2.x minor MUST NOT change the shape of an existing v2 surface; a new shape is 
 
 Readers MUST keep accepting a retired shape on replay, fork and poll; only emission narrows.
 
-## v1 end-of-support (RFC 0174 §B.4)
+## v1 end-of-support
 
-v1 support ends at the later of (a) every INTEROP-MATRIX host's non-vacuous v2 bundle plus 90 days and (b) 18 months from the v2 release, where (b) applies if and only if an independent host is in the matrix at release. Phase 5 computes the date from the matrix; nothing else MAY set it. The hosts counted under (a) are those with a row in the INTEROP-MATRIX v2 table; a reference host that stays on the 1.x line through the overlap (the matrix says which) is not a v2 host and does not count. A host's bundle is "non-vacuous" when at least one claimed profile carries `witnessCount ≥ 1`. The anchor for a host is the date its signed bundle was committed to `evidence/v2-host-bundles/` in the spec repository, read from the public history (`git log --diff-filter=A`), never from `generatedAt` inside the bundle, which nothing signs; a later re-certification replaces the file and does not move the anchor. `evidence/v1-end-of-support.json` is the computed date and is GENERATED (`scripts/generate-v1-eos-clock.mjs`); `check-removal-dates.mjs` reads it and fails the v1-tree sources of every `v1-end-of-support` row on or after it.
+v1 support ends at the later of:
 
-**Old-major retention floors.** Every published old-major artifact — the npm packages `@openwop/openwop` (1.x) and `@openwop/openwop-conformance` (1.x), the PyPI package `openwop-client` (1.x) and the Go module `github.com/openwop/openwop-sdks/go` (v1.x) — MUST remain installable at its last 1.x version for 12 months from the 2.0.0 publish (the `v2.0.0` tag's commit date), independent of v1 end-of-support, which may come first; a consumer pinned to the old major MUST be able to rebuild through that window. The identities and the last 1.x versions are `spec/v2/retention-floors.json`; `scripts/check-retention-floors.mjs` prints the floor state and, with `--network`, probes each registry for the pinned version. Unpublishing, deprecating-with-removal, or retracting a listed version inside the window is a Phase 5 exit failure.
+- (a) every INTEROP-MATRIX host's non-vacuous v2 bundle, plus 90 days;
+- (b) 18 months from the v2 release — applied if and only if an independent host is in the matrix at release.
 
-## Profile claim vocabulary (RFC 0169 §C.3; RFC 0155 §A unchanged)
+The date is computed from the matrix; nothing else MAY set it.
 
-Normative for any public conformance statement:
+- **Counted hosts.** Those with a row in the INTEROP-MATRIX v2 table. A reference host that stays on the 1.x line through the overlap (the matrix says which) is not a v2 host and does not count.
+- **Non-vacuous.** At least one claimed profile carries `witnessCount ≥ 1`.
+- **Anchor.** The date the host's signed bundle was committed to `evidence/v2-host-bundles/` in the spec repository, read from the public history (`git log --diff-filter=A`). Never `generatedAt` inside the bundle, which nothing signs. A later re-certification replaces the file and does not move the anchor.
+- **The computed date.** `evidence/v1-end-of-support.json`, GENERATED by `scripts/generate-v1-eos-clock.mjs`. `check-removal-dates.mjs` reads it and fails the v1-tree sources of every `v1-end-of-support` row on or after it.
+
+### Old-major retention floors
+
+Every published old-major artifact MUST remain installable at its last 1.x version for 12 months from the 2.0.0 publish (the `v2.0.0` tag's commit date). This holds independent of v1 end-of-support, which may come first. A consumer pinned to the old major MUST be able to rebuild through that window.
+
+The artifacts are the npm packages `@openwop/openwop` (1.x) and `@openwop/openwop-conformance` (1.x), the PyPI package `openwop-client` (1.x), and the Go module `github.com/openwop/openwop-sdks/go` (v1.x). Their identities and last 1.x versions are in `spec/v2/retention-floors.json`. `scripts/check-retention-floors.mjs` prints the floor state and, with `--network`, probes each registry for the pinned version.
+
+Unpublishing, deprecating-with-removal, or retracting a listed version inside the window is a Phase 5 exit failure.
+
+## Profile claim vocabulary
+
+These rules bind any public conformance statement:
 
 - An unqualified "OpenWOP conformant" or "OpenWOP compatible" statement MUST mean `openwop-core-standard`, the executable floor, never the discovery predicate.
 - A discovery-only claim MUST say `openwop-discovery-core` and MUST NOT use the same badge as `openwop-core-standard`.
 - Every claim MUST state every additional profile it relies on; an omitted profile is an unclaimed one.
-- A certification bundle MUST name canonical profile ids; `openwop-core` is deleted (see `capabilities.md`).
+- A certification bundle MUST name canonical profile ids; `openwop-core` is deleted (see [`capabilities.md`](capabilities.md)).
 - A vendor extension MUST NOT use an `openwop-*` id without an accepted RFC.
 
-## What is `ext/` (RFC 0174 §E.2; RFC 0169 §B.3)
+## What is `ext/`
 
-`spec/v2/core/` stays within the word budget `scripts/check-core-budget.mjs` enforces (RFC 0190). Every `spec/v2/ext/<key>/` document MUST declare `witness` and both maturity axes (`technical`, `adoption`) in its header. A MUST with `witness: unwitnessable` MUST NOT appear in `core/`; a document whose only witness is "deferred to Active → Accepted" enters `ext/` or is deleted. An `ext/` family is advertised only under a wire-legal witness class (see `capabilities.md`).
+`spec/v2/core/` stays within the word budget that `scripts/check-core-budget.mjs` enforces; `spec/v2/ext/` holds the rest.
 
-## What a MUST means (RFC 0168 §B.1; Axiom 1)
+- Every `spec/v2/ext/<key>/` document MUST declare `witness` and both maturity axes (`technical`, `adoption`) in its header.
+- A MUST with `witness: unwitnessable` MUST NOT appear in `core/`. A document whose only witness is "deferred to Active → Accepted" enters `ext/` or is deleted.
+- An `ext/` family is advertised only under a wire-legal witness class (see [`capabilities.md`](capabilities.md)).
 
-Every MUST, SHOULD, and MAY in `core/` is a requirement with an id in `requirements.json` and a `witness` from `witnessable-unaided | witnessable-gated | seam-gated | claims-check | negative-existence`. A seam-gated MUST is governed by `conformance.md` §"Witness class".
+## What a MUST means (Axiom 1)
+
+Every MUST, SHOULD, and MAY in `core/` is a requirement with an id in `requirements.json` and a `witness` from `witnessable-unaided | witnessable-gated | seam-gated | claims-check | negative-existence`. A seam-gated MUST is governed by [`conformance.md`](conformance.md) §"Witness class".
+
+*Sources: RFC 0155, RFC 0167, RFC 0168, RFC 0169, RFC 0171, RFC 0174, RFC 0190, RFC 0197.*

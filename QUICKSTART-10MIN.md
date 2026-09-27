@@ -1,8 +1,6 @@
 # OpenWOP in 10 Minutes
 
-> **Status: v2.** Every call below speaks the v2 wire: unversioned paths (`/runs`, not `/v1/runs` or `/v2/runs`) and an `OpenWOP-Version: 2` header on every request. The responses were captured from the v2 reference host and abbreviated. It was booted with `OPENWOP_PORT=3990` because 3838 was busy, so your URLs show `3838`.
->
-> The v1 version of this walkthrough (for the in-memory host on `/v1/…`) is in git history: `git show 11c348cc:QUICKSTART-10MIN.md`.
+> **Status: v2.** Every call below uses unversioned paths (`/runs`) and sends an `OpenWOP-Version: 2` header. The responses come from the v2 reference host, abbreviated. That host ran on port 3990 for the capture; yours will show `3838`.
 
 This is the fastest path from "what is OpenWOP?" to "I have a v2 workflow running on my laptop". You need Node 20+ and a clone of [`openwop/openwop-examples`](https://github.com/openwop/openwop-examples), which holds the reference hosts and runnable samples. You don't need a vendor SDK, a managed service, or a framework.
 
@@ -142,7 +140,7 @@ You just ran an OpenWOP v2 workflow with three HTTP calls and no client library.
 
 ## Minute 5–8: run the same workflow with the TypeScript SDK
 
-The 2.x line of `@openwop/openwop` is v2-only. It sends `OpenWOP-Version` on every request and never calls a `/v1/…` path.
+The 2.x line of `@openwop/openwop` sends `OpenWOP-Version` on every request.
 
 ```bash
 mkdir -p /tmp/openwop-quickstart && cd /tmp/openwop-quickstart
@@ -282,7 +280,7 @@ Three details are worth knowing:
 - **[`docs/migration/v1-to-v2.md`](./docs/migration/v1-to-v2.md)** is for readers who have v1 client code.
 - **Build a node pack:** [`docs/PACK-AUTHOR-QUICKSTART.md`](./docs/PACK-AUTHOR-QUICKSTART.md).
 
-The in-memory host and the `tiny-workflow` / `streaming-client` samples in `openwop-examples` are still v1 (`/v1/…`, port 3737). They stay on the 1.x line through the overlap.
+The in-memory host and the `tiny-workflow` / `streaming-client` samples in `openwop-examples` still speak the older wire (`/v1/…`, port 3737). Use the v2 reference host for this walkthrough.
 
 ---
 
@@ -294,7 +292,7 @@ The in-memory host and the `tiny-workflow` / `streaming-client` samples in `open
 | `npm install` fails resolving peers | Use `npm install --legacy-peer-deps`. If npm 10.9 crashes (`edgesOut`), use a current npm: `npx -y npm@latest install --legacy-peer-deps`. |
 | `401 unauthenticated` | Include `Authorization: Bearer openwop-v2-dev-key`, or whatever you set `OPENWOP_API_KEY` to. |
 | `400 idempotency_key_invalid` | `Idempotency-Key` must match `^[A-Za-z0-9._~-]{22,128}$`. Use a UUID (`uuidgen`). |
-| `400 validation_error` naming an unknown key | The `POST /runs` body is closed. v1 fields such as a free-form `configurable` map are refused. See [`runs.md`](./spec/v2/core/runs.md) §Create. |
+| `400 validation_error` naming an unknown key | The `POST /runs` body is closed. Fields it does not define, such as a free-form `configurable` map, are refused. See [`runs.md`](./spec/v2/core/runs.md) §Create. |
 | `403` mentioning `tenantId` | Leave `tenantId` out. The tenant comes from your credential. |
 | `400 protocol_version_mismatch` | You sent `OpenWOP-Version: 2` to a `/v1/…` path. Drop the `/v1` prefix. |
 | Discovery returns the v1 document (`OpenWOP-Version: 1.11` on the response) | You forgot the `OpenWOP-Version: 2` request header. |

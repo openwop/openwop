@@ -1,129 +1,267 @@
 # Runs
 
-> **Status: Stable · RFC 0170 §A, §D.1; RFC 0171 §D; RFC 0176 §B.1.**
+> **Status: Stable.**
 > **Normative home:** `runList`, `limits`, `conversationPrimitive`, `dataResidency`.
 
 ## Why this exists
 
-A run is the unit of execution, ownership and observation. This document is the run surface of `api/v2/openapi.yaml`: how a run is created, read, streamed, cancelled, paused, forked and diffed, and the one snapshot shape every host projects from the same event log (events.md).
+A run is the unit of execution, ownership and observation. This document covers the run surface of `api/v2/openapi.yaml`: how a run is created, read, streamed, cancelled, paused, forked and diffed. Every host projects the same snapshot shape from the same event log ([events.md](events.md)).
 
 ## Identity
 
-Every id `$ref`s `schemas/v2/ids.schema.json` (identity.md). A `runId` is tenant-bound, `<tenantId>/<opaque>`, host-minted; a host MUST reject a `runId` whose tenant segment is not the caller's with `403 id_tenant_mismatch` and MUST NOT disclose whether the run exists. A caller MUST treat every id as opaque.
+Every id `$ref`s `schemas/v2/ids.schema.json` ([identity.md](identity.md)). A `runId` is host-minted and tenant-bound: `<tenantId>/<opaque>`.
+
+- A caller MUST treat every id as opaque.
+- A host MUST reject a `runId` whose tenant segment is not the caller's with `403 id_tenant_mismatch`, and MUST NOT disclose whether the run exists.
 
 ## Surface
 
-Every operation accepts `OpenWOP-Version` (overview.md); every mutating operation accepts `Idempotency-Key` (idempotency.md); every response carries `OpenWOP-Version`. Scopes are the `auth.md` vocabulary.
+Every operation accepts `OpenWOP-Version` ([overview.md](overview.md)) and every response carries it. Every mutating operation accepts `Idempotency-Key` ([idempotency.md](idempotency.md)). Scopes are the `auth.md` vocabulary.
 
 | Operation | Method and path | Scope | Gate |
 | --- | --- | --- | --- |
 | `createRun` | `POST /runs` | `runs:create` | — |
 | `getRun` | `GET /runs/{runId}` | `runs:read` | — |
-| `streamRunEvents` | `GET /runs/{runId}/events` | `runs:read` | events.md |
-| `pollRunEvents` | `GET /runs/{runId}/events/poll` | `runs:read` | events.md |
+| `listRuns` | `GET /runs` | `runs:read` | `runList` |
+| `streamRunEvents` | `GET /runs/{runId}/events` | `runs:read` | [events.md](events.md) |
+| `pollRunEvents` | `GET /runs/{runId}/events/poll` | `runs:read` | [events.md](events.md) |
 | `cancelRun` | `POST /runs/{runId}/cancel` | `runs:cancel` | — |
 | `bulkCancelRuns` | `POST /runs:bulk-cancel` | `runs:cancel` | — |
 | `pauseRun` | `POST /runs/{runId}:pause` | `runs:cancel` | — |
 | `resumeRun` | `POST /runs/{runId}:resume` | `runs:cancel` | — |
-| `forkRun` | `POST /runs/{runId}:fork` | `runs:create` + `runs:read` | `replay` (replay.md) |
-| `diffRun` | `GET /runs/{runId}:diff?against=` | `runs:read` on both | OPTIONAL; `404` when absent |
-| `getRunAncestry` | `GET /runs/{runId}/ancestry` | `runs:read` | `multiAgent.executionModel.crossHostCausation.ancestryEndpointSupported`; `404` when unadvertised |
-| `createAnnotation` / `listAnnotations` | `POST` / `GET /runs/{runId}/annotations` | `runs:annotate` / `runs:read` | `feedback`; `404 not_found` when unadvertised (as `getEvalSummary` and `getRunAncestry`; the registry has no 501 for an unadvertised surface) |
+| `forkRun` | `POST /runs/{runId}:fork` | `runs:create` + `runs:read` | `replay` |
+| `diffRun` | `GET /runs/{runId}:diff?against=` | `runs:read` on both | OPTIONAL |
+| `getRunAncestry` | `GET /runs/{runId}/ancestry` | `runs:read` | `multiAgent.executionModel.crossHostCausation.ancestryEndpointSupported` |
+| `createAnnotation` / `listAnnotations` | `POST` / `GET /runs/{runId}/annotations` | `runs:annotate` / `runs:read` | `feedback` |
 | `getArtifact` | `GET /runs/{runId}/artifacts/{artifactId}` | `artifacts:read` | — |
-| `getEvalSummary` | `GET /runs/{runId}/eval-summary` | `runs:read` | `agents.evalSuite`; `404` when unadvertised |
-| `getRunCompensation` | `GET /runs/{runId}/compensation` | `runs:read` | `compensation` (security-defaults.md) |
-| `getRunEffects` | `GET /runs/{runId}/effects` | `runs:read` | `idempotency` (idempotency.md) |
-| `listRuns` | `GET /runs` | `runs:read` | `runList` (RFC 0182); `404` when unadvertised |
+| `getEvalSummary` | `GET /runs/{runId}/eval-summary` | `runs:read` | `agents.evalSuite` |
+| `getRunCompensation` | `GET /runs/{runId}/compensation` | `runs:read` | `compensation` |
+| `getRunEffects` | `GET /runs/{runId}/effects` | `runs:read` | `idempotency` |
+
+A gated operation the host does not advertise (or an absent `diffRun`) answers `404`; for annotations it is `404 not_found`.
 
 ## Create
 
-The `createRun` body is closed at the composition (`unevaluatedProperties: false`): `workflowId` (REQUIRED unless `mode: eval`), `inputs`, `residency`, `tenantId`, `scopeId`, `callbackUrl` (interrupt.md §Callback delivery; a refusal is `400 validation_error`, `details.field: "callbackUrl"`), `mode`, `evalSuiteRef`, `agentId`, and the `RunOptions` fields `configurable`, `tags`, `metadata`. A body without `RunOptions` MUST be accepted as if it were `{}`.
+The `createRun` body is closed (`unevaluatedProperties: false`). Its fields:
+
+- `workflowId` — REQUIRED unless `mode: eval`.
+- `inputs`, `residency`, `tenantId`, `scopeId`.
+- `callbackUrl` — see [interrupt.md](interrupt.md) §Callback delivery. A refused value is `400 validation_error` with `details.field: "callbackUrl"`.
+- `mode`, `evalSuiteRef`, `agentId`.
+- The `RunOptions` fields `configurable`, `tags`, `metadata`. A body without `RunOptions` MUST be accepted as if it were `{}`.
+
+### Request headers
 
 | Header | Rule |
 | --- | --- |
-| `Idempotency-Key` | RECOMMENDED; a replayed create MUST NOT create a second run and carries `OpenWOP-Idempotent-Replay: true`. |
+| `Idempotency-Key` | RECOMMENDED. A replayed create MUST NOT create a second run, and carries `OpenWOP-Idempotent-Replay: true`. |
 | `OpenWOP-Dedup: enforce` | The host MUST reject a duplicate `(tenantId, scopeId)` with `409 run_already_active` and `Retry-After`. |
-| `OpenWOP-Force-Engine-Version` | Test keys only; the seams profile. A host MUST reject it on a production credential with `403`. |
+| `OpenWOP-Force-Engine-Version` | Test keys only (the seams profile). A host MUST reject it on a production credential with `403`. |
 
-The `201` response is `{ runId, status, eventsUrl, statusUrl? }`, `status` one of `pending`, `running`, `waiting-approval`, `waiting-input`, `waiting-external`. `eventsUrl` and `statusUrl` MUST resolve under the origin the request was made to — a relative path, or an absolute URL on the same origin — and MUST NOT downgrade the scheme; a link that names a different host (a backing service behind the origin) or `http://` on an `https://` origin is non-conformant. The base that minted `runId` MUST resolve it: `GET /runs/{runId}` and `GET /runs/{runId}/events/poll` at that base MUST answer `200` for the id the `201` returned, percent-encoded per identity.md §5 (a front door that decodes `%2F` before routing makes every tenant-bound id unreachable). `mode: eval` (with `evalSuiteRef` and `agentId` REQUIRED) starts an eval-suite projection that emits the content-free `eval.*` family and terminates with an `EvalSummary`; a host that does not advertise `agents.evalSuite` MUST reject it. A host advertising `dataResidency` MUST reject a `residency.region` outside `dataResidency.regions` with `422 residency_unavailable` and create no run (§"Conversation and residency capabilities"). A workflow that references a capability-gated reserved node type on a host that does not advertise the capability MUST be rejected with `422 capability_required`.
+### Response
 
-`run.started` (events.md) MUST echo the run's `owner` block exactly as `RunSnapshot.owner` carries it (RFC 0170 §A.1); `transport` records `rest`, `mcp`, `a2a` or `ui`.
+The `201` response is `{ runId, status, eventsUrl, statusUrl? }`. `status` is one of `pending`, `running`, `waiting-approval`, `waiting-input`, `waiting-external`.
+
+- `eventsUrl` and `statusUrl` MUST resolve under the origin the request was made to — a relative path, or an absolute URL on the same origin — and MUST NOT downgrade the scheme. A link naming a different host, or `http://` on an `https://` origin, is non-conformant.
+- The base that minted `runId` MUST resolve it: `GET /runs/{runId}` and `GET /runs/{runId}/events/poll` at that base MUST answer `200` for the returned id, percent-encoded per [identity.md](identity.md) §5. (A front door that decodes `%2F` before routing makes every tenant-bound id unreachable.)
+
+### Refusals
+
+- `mode: eval` makes `evalSuiteRef` and `agentId` REQUIRED. It starts an eval-suite projection that emits the content-free `eval.*` family and terminates with an `EvalSummary`. A host that does not advertise `agents.evalSuite` MUST reject it.
+- A host advertising `dataResidency` MUST reject a `residency.region` outside `dataResidency.regions` with `422 residency_unavailable` and create no run (see §"Conversation and residency capabilities").
+- A workflow that references a capability-gated reserved node type on a host that does not advertise the capability MUST be rejected with `422 capability_required`.
+
+### The start event
+
+`run.started` ([events.md](events.md)) MUST echo the run's `owner` block exactly as `RunSnapshot.owner` carries it. Its `transport` records `rest`, `mcp`, `a2a` or `ui`.
 
 ## Run options
 
 `schemas/v2/run-options.schema.json` is `{ configurable?, tags?, metadata? }`.
 
-`configurable` is `schemas/v2/configurable.schema.json`: closed, nested and versioned (RFC 0171 §D.1). The request body `$ref`s it directly; there is no `allOf`-merge of an open map. `version` is REQUIRED and is `1`.
+`configurable` is `schemas/v2/configurable.schema.json`: closed, nested and versioned. The request body `$ref`s it directly; there is no `allOf`-merge of an open map. `version` is REQUIRED and is `1`. It has five sections:
 
-| Section | Keys | Rule |
-| --- | --- | --- |
-| `run` | `recursionLimit`, `runTimeoutMs`, `maxLoopIterations`, `escalationThreshold` | `recursionLimit` is clamped to `limits.maxNodeExecutions`. `runTimeoutMs` resolves to `min(runTimeoutMs, limits.maxRunDurationMs)`; an out-of-range value MUST return `400 validation_error` at create, and a breach MUST emit `cap.breached { kind: 'run-duration' }` and terminate the run `failed` with `run_timeout`. `maxLoopIterations` resolves against `limits.maxLoopIterations`; a breach MUST emit `cap.breached { kind: 'loop-iterations' }` and fail with `loop_limit_exceeded`. `escalationThreshold` is the `low-confidence` threshold (interrupt.md). |
-| `ai` | `provider`, `model`, `temperature` (0..2), `maxTokens`, `credentialRef`, `promptOverrides`, `mockProvider`, `reasoningVerbosity` (`none` \| `summary` \| `full`), `maxRefusals` | `provider` MUST be in `aiProviders.providers`, else `400 validation_error`. `credentialRef` MUST reference a provider in `aiProviders.byok`, else `403 credential_forbidden`; it never carries key material. `mockProvider` is test-keys-only: a host MUST refuse it on a production credential with `403`. `maxRefusals` is the refusal ceiling (events.md E5). |
-| `distillation` | `tokenBudget` | Resolves to `min(tokenBudget, memory.distillation.maxTokenBudget)`; a run that cannot distill within it MUST fail atomically with `token_budget_exceeded`. |
-| `budget` | `schemas/v2/budget-policy.schema.json` | The run's budget policy. |
-| `extensions` | `<org>: {…}` | A vendor key lives under its registered org and nowhere else. |
+| Section | Keys |
+| --- | --- |
+| `run` | `recursionLimit`, `runTimeoutMs`, `maxLoopIterations`, `escalationThreshold` |
+| `ai` | `provider`, `model`, `temperature` (0..2), `maxTokens`, `credentialRef`, `promptOverrides`, `mockProvider`, `reasoningVerbosity` (`none` \| `summary` \| `full`), `maxRefusals` |
+| `distillation` | `tokenBudget` |
+| `budget` | `schemas/v2/budget-policy.schema.json` — the run's budget policy |
+| `extensions` | `<org>: {…}` — a vendor key lives under its registered org and nowhere else |
 
-An unknown root key, an unknown key inside a section, or a dotted key (`ai.provider` as a string key) MUST be rejected with `400 validation_error`. A host MUST persist `RunOptions` on the run at creation, MUST surface the same `configurable` to every attempt of a node, and MUST NOT allow `configurable` to change after creation. A workflow's `configurableSchema` MUST be validated against at create time and MUST be surfaced on `getWorkflow`.
+### `run` section
 
-`tags` is an opaque string array (at most 100 entries, each at most 256 characters, valid UTF-8); a host MUST NOT reject a tag on format and MUST return `400 validation_error` over the limits. `metadata` is a free-form JSON object the engine MUST NOT consume for any execution decision; a host MUST persist it. Both surface unchanged on `RunSnapshot`.
+- `recursionLimit` is clamped to `limits.maxNodeExecutions`.
+- `runTimeoutMs` resolves to `min(runTimeoutMs, limits.maxRunDurationMs)`. An out-of-range value MUST return `400 validation_error` at create. A breach MUST emit `cap.breached { kind: 'run-duration' }` and terminate the run `failed` with `run_timeout`.
+- `maxLoopIterations` resolves against `limits.maxLoopIterations`. A breach MUST emit `cap.breached { kind: 'loop-iterations' }` and fail with `loop_limit_exceeded`.
+- `escalationThreshold` is the `low-confidence` threshold ([interrupt.md](interrupt.md)).
+
+### `ai` section
+
+- `provider` MUST be in `aiProviders.providers`, else `400 validation_error`.
+- `credentialRef` MUST reference a provider in `aiProviders.byok`, else `403 credential_forbidden`. It never carries key material.
+- `mockProvider` is test-keys-only: a host MUST refuse it on a production credential with `403`.
+- `maxRefusals` is the refusal ceiling ([events.md](events.md) E5).
+
+### `distillation` section
+
+`tokenBudget` resolves to `min(tokenBudget, memory.distillation.maxTokenBudget)`. A run that cannot distill within it MUST fail atomically with `token_budget_exceeded`.
+
+### Validation and persistence
+
+- An unknown root key, an unknown key inside a section, or a dotted key (`ai.provider` as a string key) MUST be rejected with `400 validation_error`.
+- A host MUST persist `RunOptions` on the run at creation, MUST surface the same `configurable` to every attempt of a node, and MUST NOT allow `configurable` to change after creation.
+- A workflow's `configurableSchema` MUST be validated against at create time and MUST be surfaced on `getWorkflow`.
+
+### `tags` and `metadata`
+
+- `tags` is an opaque string array: at most 100 entries, each at most 256 characters, valid UTF-8. A host MUST NOT reject a tag on format, and MUST return `400 validation_error` over the limits.
+- `metadata` is a free-form JSON object. A host MUST persist it, and the engine MUST NOT consume it for any execution decision.
+- Both surface unchanged on `RunSnapshot`.
 
 ## Snapshot
 
-`getRun` returns `schemas/v2/run-snapshot.schema.json`, the fold of the event log through the run projection. `runId`, `workflowId`, `status`, `owner` and `eventLogSchemaVersion` are REQUIRED; the object is closed.
+`getRun` returns `schemas/v2/run-snapshot.schema.json`: the fold of the event log through the run projection. The object is closed. `runId`, `workflowId`, `status`, `owner` and `eventLogSchemaVersion` are REQUIRED.
 
-| Field | Rule |
+| Field | Meaning |
 | --- | --- |
-| `owner` | `{ tenant, workspace?, subject }`, closed, `subject` REQUIRED (`schemas/v2/subject.schema.json`). `principal` and `principalKind` do not exist. A run created before the host emitted subjects reads with the legacy subject rule (identity.md), stamped at first read and never rewritten. |
-| `status` | `pending`, `running`, `paused`, `waiting-approval`, `waiting-input`, `waiting-external`, `completed`, `failed`, `cancelling`, `cancelled`. `waiting-external` MUST be used when the suspended interrupt's `kind` is `external-event`. `cancelling` is the state between an accepted cancel and the terminal `cancelled`. The vocabulary grows by overview.md §0. |
-| `eventLogSchemaVersion` | The era key, integer ≥ 2 (persistence.md §"The era key"). |
-| `engineVersion` | Integer. |
-| `compensationStatus` | `none`, `pending`, `running`, `completed`, `partial`, `failed`, `manual`. A host that does not advertise `compensation` MUST omit it; a host that does MUST include it on every snapshot, `none` when never requested. |
-| `currentNodeId` | Set while suspended; names the node holding the interrupt. |
-| `error` | `{ code, message, details? }` on terminal `failed`. |
-| `configurable`, `tags`, `metadata` | The persisted `RunOptions`. |
-| `agent`, `runOrchestrator` | `schemas/v2/agent-ref.schema.json`; `runOrchestrator` MUST NOT change for the run's lifetime. |
-| `metrics.openwopCost` | `{ usd, tokens { input, output }, model, provider, duration_ms }`; absence is not zero. |
+| `owner` | `{ tenant, workspace?, subject }`, closed; `subject` REQUIRED (`schemas/v2/subject.schema.json`) |
+| `status` | Run state (below) |
+| `eventLogSchemaVersion` | The era key, integer ≥ 2 ([persistence.md](persistence.md) §"The era key") |
+| `engineVersion` | Integer |
+| `compensationStatus` | `none`, `pending`, `running`, `completed`, `partial`, `failed`, `manual` |
+| `currentNodeId` | Set while suspended; names the node holding the interrupt |
+| `error` | `{ code, message, details? }` on terminal `failed` |
+| `configurable`, `tags`, `metadata` | The persisted `RunOptions` |
+| `agent`, `runOrchestrator` | `schemas/v2/agent-ref.schema.json` |
+| `metrics.openwopCost` | `{ usd, tokens { input, output }, model, provider, duration_ms }`; absence is not zero |
 
-The `200` SHOULD carry a strong `ETag` derived from the latest persisted `sequence`; when present it MUST change on every observable transition and be stable otherwise. A request whose `If-None-Match` matches MUST receive `304` with no body. A host MAY compress (`gzip` baseline; `br`, `zstd` only where advertised under `restTransport.contentEncodings`) and MUST then set `Content-Encoding` and `Vary: Accept-Encoding`; the decoded body is byte-identical.
+Field rules:
+
+- `status` is one of `pending`, `running`, `paused`, `waiting-approval`, `waiting-input`, `waiting-external`, `completed`, `failed`, `cancelling`, `cancelled`. `waiting-external` MUST be used when the suspended interrupt's `kind` is `external-event`. `cancelling` is the state between an accepted cancel and the terminal `cancelled`. The vocabulary grows by [overview.md](overview.md) §0.
+- `owner`: a run created before the host emitted subjects reads with the subject rule in [identity.md](identity.md), stamped at first read and never rewritten.
+- `compensationStatus`: a host that does not advertise `compensation` MUST omit it. A host that does MUST include it on every snapshot, `none` when never requested.
+- `runOrchestrator` MUST NOT change for the run's lifetime.
+
+### Caching and encoding
+
+- The `200` SHOULD carry a strong `ETag` derived from the latest persisted `sequence`. When present it MUST change on every observable transition and be stable otherwise.
+- When the host sends an `ETag`, a request whose `If-None-Match` matches it MUST receive `304` with no body.
+- A host MAY compress (`gzip` baseline; `br` and `zstd` only where advertised under `extensions["<org>.rest-transport"].contentEncodings`, [ext/restTransport](../ext/restTransport/README.md)). It MUST then set `Content-Encoding` and `Vary: Accept-Encoding`. The decoded body is byte-identical.
 
 ## List
 
-`GET /runs` (RFC 0182; gated on `runList`) returns `{ runs: RunSnapshot[], nextCursor? }`, the caller's runs newest first: only runs whose tenant segment is the caller's, every `runId` bound (identity.md §5), and a run the caller created MUST appear. A page MUST NOT exceed `runList.maxPageSize`; `cursor` is opaque and one the host did not mint MUST be refused `400 validation_error`; `workflowId` and `status` are exact-match filters when `runList.filters` names them (an unadvertised filter is ignored).
+`GET /runs` (gated on `runList`) returns `{ runs: RunSnapshot[], nextCursor? }`: the caller's runs, newest first.
+
+- Only runs whose tenant segment is the caller's appear, and every `runId` is bound ([identity.md](identity.md) §5). A run the caller created MUST appear.
+- A page MUST NOT exceed `runList.maxPageSize`.
+- `cursor` is opaque. A cursor the host did not mint MUST be refused with `400 validation_error`.
+- `workflowId` and `status` are exact-match filters when `runList.filters` names them. An unadvertised filter is ignored.
 
 ## Cancel
 
-`cancelRun` accepts `{ reason? }` and answers `200 { runId, status }` with `status` `cancelling` or `cancelled`; the cascade MAY be asynchronous and the run emits `run.cancelled` when it completes. A cancel on a run that is already terminal (`completed`, `failed`, `cancelled`) MUST be refused `409 run_terminal`; a `200` whose `status` echoes the terminal state is outside this grammar. Cancelling a parent MUST NOT silently abandon an active compensation (security-defaults.md). `run.cancelled.parentRunId` with `reason: parent-cancelled` records a cascade from a parent.
+`cancelRun` accepts `{ reason? }` and answers `200 { runId, status }`, where `status` is `cancelling` or `cancelled`. The cascade MAY be asynchronous; the run emits `run.cancelled` when it completes.
 
-A non-terminal run inherited from v1 continues, or is cancelled `v1_pin_unsupported`, per persistence.md §"Runs pinned to v1" (RFC 0176 §B.1).
+- A cancel on a terminal run (`completed`, `failed`, `cancelled`) MUST be refused with `409 run_terminal`. A `200` echoing the terminal state is non-conformant.
+- Cancelling a parent MUST NOT silently abandon an active compensation ([security-defaults.md](security-defaults.md)).
+- `run.cancelled.parentRunId` with `reason: parent-cancelled` records a cascade from a parent.
 
-`bulkCancelRuns` accepts `{ runIds[1..100], reason? }`; over the host's cap (RECOMMENDED 100) it MUST return `400 validation_error` with `details.maxRunIds`. The host MUST process each id independently, MUST return `200 { results[] }` in request order even when every id failed, and MUST enforce authorization per id: a run the caller cannot see yields `ok: false` with an error envelope in that entry, never a top-level `403` — `id_tenant_mismatch` (or `not_found` where existence is not leaked) when the id's tenant segment is not the caller's (identity.md §5 applies inside an entry exactly as on a path), `run_forbidden` for a run in the caller's tenant the caller may not cancel, `run_terminal` for a run already terminal. `ok: true` carries `status` `cancelling` or `cancelled`; `ok: false` carries the error envelope (errors.md).
+### Bulk cancel
+
+`bulkCancelRuns` accepts `{ runIds[1..100], reason? }`.
+
+- Over the host's cap (RECOMMENDED 100) it MUST return `400 validation_error` with `details.maxRunIds`.
+- The host MUST process each id independently, and MUST return `200 { results[] }` in request order, even when every id failed.
+- The host MUST enforce authorization per id. A run the caller cannot see yields `ok: false` with an error envelope in that entry, never a top-level `403`.
+
+Per-entry errors ([errors.md](errors.md)):
+
+| Condition | Code |
+| --- | --- |
+| The id's tenant segment is not the caller's ([identity.md](identity.md) §5 applies inside an entry as on a path) | `id_tenant_mismatch`, or `not_found` where existence is not leaked |
+| A run in the caller's tenant the caller may not cancel | `run_forbidden` |
+| A run already terminal | `run_terminal` |
+
+`ok: true` carries `status` `cancelling` or `cancelled`; `ok: false` carries the error envelope.
 
 ## Pause and resume
 
-`pauseRun` accepts `{ reason?, drainPolicy? }` with `drainPolicy` `immediate` (snapshot between events) or `drain-current-node` (default; the executing node reaches a terminal first) and answers `202 { runId, status: 'paused', pausedAt? }`; the transition emits `run.paused`, whose payload echoes the request's `drainPolicy` word. With `immediate`, the attempt that was executing is cut between events: it has no terminal node event, a host MUST NOT record `node.failed` (or any terminal node event) for it, and the resumed run's `node.started` begins a fresh attempt. The record of the interruption is `run.paused` itself; its payload MAY carry `interruptedNodeId` and `interruptedAttempt` so a `debug` consumer can see which attempt was cut. A run already paused, terminal, or otherwise unpausable MUST receive `409`: `run_terminal` when the run is terminal, else `run_state_conflict` with `details.runStatus` naming the status that refused it. `resumeRun` accepts `{ reason? }`, answers `202 { runId, status: 'running', resumedAt? }`, emits `run.resumed`, and MUST return `409` when the run is not paused — `run_terminal` or `run_state_conflict` by the same rule. Only `resumeRun` or a cancel exits `paused`. A replay MUST fold `run.paused` and `run.resumed` as no-ops for projected state.
+`pauseRun` accepts `{ reason?, drainPolicy? }` and answers `202 { runId, status: 'paused', pausedAt? }`. The transition emits `run.paused`, whose payload echoes the request's `drainPolicy` word.
+
+`drainPolicy` is one of:
+
+- `drain-current-node` (default) — the executing node reaches a terminal first.
+- `immediate` — the run is snapshotted between events. The executing attempt is cut: it has no terminal node event, a host MUST NOT record `node.failed` (or any terminal node event) for it, and the resumed run's `node.started` begins a fresh attempt. `run.paused` itself records the interruption; its payload MAY carry `interruptedNodeId` and `interruptedAttempt` so a `debug` consumer can see which attempt was cut.
+
+`resumeRun` accepts `{ reason? }`, answers `202 { runId, status: 'running', resumedAt? }`, and emits `run.resumed`.
+
+Rules:
+
+- A pause on a run that is already paused, terminal, or otherwise unpausable MUST receive `409`.
+- A resume on a run that is not paused MUST return `409`.
+- In both cases the code is `run_terminal` when the run is terminal, else `run_state_conflict` with `details.runStatus` naming the refusing status.
+- Only `resumeRun` or a cancel exits `paused`.
+- A replay MUST fold `run.paused` and `run.resumed` as no-ops for projected state.
 
 ## Fork
 
-`forkRun` accepts `{ mode: replay | branch, fromSeq?, runOptionsOverlay? }`: events with `sequence < fromSeq` are fixed history and events `≥ fromSeq` re-execute. `fromSeq` is REQUIRED for `branch` and defaults to `0` for `replay`; `runOptionsOverlay` is `branch`-only, and a `replay` with a non-empty overlay MUST be rejected with `400`. A `fromSeq` not in the source log MUST be rejected with `422 fork_point_invalid`. The `201` response is `{ runId, sourceRunId, fromSeq?, mode, status, eventsUrl }`. The child's `owner` is copied verbatim from the parent (RFC 0170 §A.4). Determinism, side-effect suppression, and forking an era-2 parent are in replay.md.
+`forkRun` accepts `{ mode: replay | branch, fromSeq?, runOptionsOverlay? }`. Events with `sequence < fromSeq` are fixed history; events `≥ fromSeq` re-execute.
+
+- `fromSeq` is REQUIRED for `branch` and defaults to `0` for `replay`.
+- `runOptionsOverlay` is `branch`-only. A `replay` with a non-empty overlay MUST be rejected with `400`.
+- A `fromSeq` not in the source log MUST be rejected with `422 fork_point_invalid`.
+
+The `201` response is `{ runId, sourceRunId, fromSeq?, mode, status, eventsUrl }`. The child's `owner` is copied verbatim from the parent. Determinism, side-effect suppression, and forking an era-2 parent are in [replay.md](replay.md).
 
 ## Diff and ancestry
 
-`diffRun` returns `schemas/v2/run-diff-response.schema.json`: `divergedAtSeq`, ordered `eventDiffs[]`, `stateDiff`, optional `truncated`. The diff MUST be a pure function of the two logs: identical logs MUST yield `divergedAtSeq: null` and empty `eventDiffs`; `eventId`, `runId`, `timestamp` and other run-scoped fields MUST be excluded from comparison. A host that diffs an in-flight prefix MUST set `truncated: true`. A caller lacking `runs:read` on either run MUST receive `403`. `getRunAncestry` returns `schemas/v2/run-ancestry-response.schema.json` (`runId`, `hostId`, `parent` or `null`); a client walks the chain one hop at a time via `parent.wellKnownUrl`.
+`diffRun` returns `schemas/v2/run-diff-response.schema.json`: `divergedAtSeq`, ordered `eventDiffs[]`, `stateDiff`, optional `truncated`.
+
+- The diff MUST be a pure function of the two logs. Identical logs MUST yield `divergedAtSeq: null` and empty `eventDiffs`.
+- `eventId`, `runId`, `timestamp` and other run-scoped fields MUST be excluded from comparison.
+- A host that diffs an in-flight prefix MUST set `truncated: true`.
+- A caller lacking `runs:read` on either run MUST receive `403`.
+
+`getRunAncestry` returns `schemas/v2/run-ancestry-response.schema.json` (`runId`, `hostId`, `parent` or `null`). A client walks the chain one hop at a time via `parent.wellKnownUrl`.
 
 ## Annotations, artifacts, eval summary
 
-`createAnnotation` accepts `schemas/v2/annotation-create.schema.json` and returns `201` with `schemas/v2/annotation.schema.json`; `listAnnotations` returns `{ annotations[] }`. An annotation is a live notification (`run.annotated`), never a run event: it MUST NOT enter the event log and MUST be excluded from fork, replay and diff. `getArtifact` answers `application/json` with an implementation-defined object or, when `Accept` prefers `application/a2a+json`, an A2A `Artifact` (`schemas/v2/artifact.schema.json`); a host SHOULD offer the latter. A body served as `application/a2a+json` MUST validate against that schema with `artifactId` equal to the path's, and a `url` Part in it MUST NOT resolve beyond the caller's `artifacts:read` authorization. `getEvalSummary` returns `schemas/v2/eval-summary.schema.json` for a terminal eval run, `409` while it is running, `404` when the run is not an eval run; the summary MUST be content-free of task output, rubric prose and credentials.
+### Annotations
+
+`createAnnotation` accepts `schemas/v2/annotation-create.schema.json` and returns `201` with `schemas/v2/annotation.schema.json`. `listAnnotations` returns `{ annotations[] }`.
+
+An annotation is a live notification (`run.annotated`), never a run event. It MUST NOT enter the event log and MUST be excluded from fork, replay and diff.
+
+### Artifacts
+
+`getArtifact` answers `application/json` with an implementation-defined object or, when `Accept` prefers `application/a2a+json`, an A2A `Artifact` (`schemas/v2/artifact.schema.json`). A host SHOULD offer the latter.
+
+- A body served as `application/a2a+json` MUST validate against that schema, with `artifactId` equal to the path's.
+- A `url` Part in it MUST NOT resolve beyond the caller's `artifacts:read` authorization.
+
+### Eval summary
+
+`getEvalSummary` returns `schemas/v2/eval-summary.schema.json` for a terminal eval run, `409` while it is running, and `404` when the run is not an eval run. The summary MUST be free of task output, rubric prose and credentials.
 
 ## Conversation and residency capabilities
 
-`conversationPrimitive` carries no payload: its presence is the claim (capabilities.md §2). A
-workflow whose `nodes[].typeId` references `core.conversationGate` MUST be refused by a host that
-does not advertise `conversationPrimitive`, at registration or at run creation, with `422
-capability_required` naming the family in `details.requiredCapability`.
+### `conversationPrimitive`
 
-A conversation turn MAY carry `parts`, a non-empty array of A2A `Part` objects (`schemas/v2/part.schema.json`); its presence marks the turn A2A-shaped. A producer SHOULD emit it and keep `content` readable by consumers that predate it. A turn without `parts` stays valid on emission, replay and fork.
+`conversationPrimitive` carries no payload: its presence is the claim ([capabilities.md](capabilities.md) §2). A host that does not advertise it MUST refuse a workflow whose `nodes[].typeId` references `core.conversationGate` — at registration or at run creation — with `422 capability_required`, naming the family in `details.requiredCapability`.
 
-A host advertising `dataResidency` MUST honor-or-reject: accept a `residency` constraint naming a
-region in `dataResidency.regions`, refuse one it does not advertise with `residency_unavailable`,
-and MUST NOT silently accept-and-ignore. A host that does not advertise `dataResidency` MAY ignore or
-reject a `residency` constraint but MUST NOT claim to honor it.
+A conversation turn MAY carry `parts`: a non-empty array of A2A `Part` objects (`schemas/v2/part.schema.json`) that marks the turn A2A-shaped. A producer SHOULD emit it and keep `content` readable by consumers that predate it. A turn without `parts` stays valid on emission, replay and fork.
+
+### `dataResidency`
+
+A host advertising `dataResidency` MUST honor-or-reject, and MUST NOT silently accept-and-ignore:
+
+- accept a `residency` constraint naming a region in `dataResidency.regions`;
+- refuse one it does not advertise with `residency_unavailable`.
+
+A host that does not advertise `dataResidency` MAY ignore or reject a `residency` constraint, but MUST NOT claim to honor it.
+
+## During the v1 overlap
+
+A non-terminal run inherited from v1 continues, or is cancelled `v1_pin_unsupported`, per [persistence.md](persistence.md) §"Runs pinned to v1".
+
+*Sources: RFC 0170, RFC 0171, RFC 0176, RFC 0182.*

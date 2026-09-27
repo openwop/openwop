@@ -118,7 +118,8 @@
     },
     "minClientVersion": {
       "type": "string",
-      "description": "RFC 0172 row C5.8 — MUST (426 client_version_unsupported)."
+      "pattern": "^(0|[1-9][0-9]*)\\.(0|[1-9][0-9]*)$",
+      "description": "Optional. The lowest <major>.<minor> client this host serves (versioning.md §1.5). A host MAY refuse a client below it; a refusal MUST be 426 client_version_unsupported."
     },
     "runtimeCapabilities": {
       "type": "array",
@@ -7909,7 +7910,7 @@
         "export": {
           "type": "boolean",
           "default": false,
-          "description": "Host can emit an export bundle for the caller's tenant/workspace via `GET /export`."
+          "description": "Host can emit an export bundle for the caller's tenant or workspace (portability.md)."
         },
         "import": {
           "type": "boolean",
@@ -7936,7 +7937,7 @@
         "dryRun": {
           "type": "boolean",
           "default": true,
-          "description": "Import supports a no-write plan preview (`POST /import?dryRun=true`). MUST be true if `import` is true."
+          "description": "Import supports a no-write plan preview. MUST be true if `import` is true."
         }
       },
       "allOf": [

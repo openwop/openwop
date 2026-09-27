@@ -1,0 +1,1 @@
+{ "kind": "approval", "key": "budget-q4", "data": { "actions": ["accept", "reject", "clarify"], "title": "予算承認", "description": "Q4予算の最終承認をお願いします。" } }

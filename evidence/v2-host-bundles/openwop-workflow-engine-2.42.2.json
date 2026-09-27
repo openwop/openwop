@@ -1,26 +1,26 @@
 {
   "bundleVersion": "3",
-  "generatedAt": "2026-09-26T19:24:04.178Z",
+  "generatedAt": "2026-09-27T16:26:03.139Z",
   "suite": {
     "name": "@openwop/openwop-conformance",
-    "version": "2.41.1",
+    "version": "2.42.2",
     "targetMajor": 2,
-    "specArtifactsVersion": "2.41.1",
-    "stampSha256": "65a8826755d00694cf357104040996db9220790ddc8579ec4eaca262f75a444d"
+    "specArtifactsVersion": "2.42.2",
+    "stampSha256": "1410563585447c32dced7e6679caf5968a68e9de88c39a5188d527336b86e784"
   },
   "host": {
     "name": "openwop-workflow-engine",
-    "version": "0.1.0",
+    "version": "0.2.0",
     "vendor": "openwop-app",
     "build": {
       "kind": "commit",
-      "id": "1c50beb5172faf90c45212b455be393ce6d9cc33"
+      "id": "6f7b5e90a90bf47586866ae96ceff3668d4c940f"
     },
     "signingKeyId": "openwop-app-bundle-2"
   },
   "discovery": {
     "url": "https://app.openwop.dev/.well-known/openwop",
-    "sha256": "6eb73894cf17892f906c69282b96b55e90acdc6f619a6baad1e8bd4532600c87",
+    "sha256": "173574415504766eb19281d9c5fc5e39791680898c5bbd0e5a88964e1058f9d4",
     "protocolVersions": [
       "1.1",
       "2.0"
@@ -65,7 +65,7 @@
       ],
       "implementation": {
         "name": "openwop-workflow-engine",
-        "version": "0.1.0",
+        "version": "0.2.0",
         "vendor": "openwop-app"
       },
       "fixtures": [
@@ -332,7 +332,6 @@
         "supportedLocales": [
           "en",
           "es",
-          "es-419",
           "pt-BR",
           "fr"
         ]
@@ -345,7 +344,6 @@
         "baseLocale": "en",
         "supportedLocales": [
           "es",
-          "es-419",
           "pt-BR",
           "fr"
         ]
@@ -615,9 +613,9 @@
   "results": {
     "totals": {
       "executedPass": 232,
-      "executedFail": 2,
+      "executedFail": 0,
       "skipped": 19,
-      "inapplicable": 207,
+      "inapplicable": 210,
       "blocked": 0
     },
     "requirements": [
@@ -803,7 +801,7 @@
         "scenario": "v2-capability-maturity-bounded.test.ts",
         "result": "executed-pass",
         "assertions": 23,
-        "detail": "partial-witness: inapplicable: unwitnessable until the first persisted-class retirement row is due (RFC 0197 §A.3 Falsifiability): corpus 2.41.1: 0 persisted-class v2-minor retirement row(s), 0 v2→v2 migration row(s) — no retired member exists for a post-2.N event to carry. Before one does, a scenario would be vacuous, and a row that cannot fail is not a witness. This leg asserts the moment such a row falls due."
+        "detail": "partial-witness: inapplicable: unwitnessable until the first persisted-class retirement row is due (RFC 0197 §A.3 Falsifiability): corpus 2.42.2: 0 persisted-class v2-minor retirement row(s), 0 v2→v2 migration row(s) — no retired member exists for a post-2.N event to carry. Before one does, a scenario would be vacuous, and a row that cannot fail is not a witness. This leg asserts the moment such a row falls due."
       },
       {
         "id": "openwop.scenario.v2-capability-record-shape",
@@ -841,9 +839,9 @@
       {
         "id": "openwop.scenario.v2-content-locale-keys",
         "scenario": "v2-content-locale-keys.test.ts",
-        "result": "executed-fail",
-        "assertions": 3,
-        "detail": "1 test(s) failed — \"an advertised extended content locale is written and delivered\"; first failure: [openwop-workflow-engine@0.1.0] RFC 0206 §A.1; localized-content.md §C, §D: Content-Language MUST name the negotiated extended locale \"es-419\" (compared case-insensitively): expected 'es' to be 'es-419' // Object.is equality"
+        "result": "inapplicable",
+        "assertions": 0,
+        "detail": "every test returned early through behaviorGate with zero assertions: profile not advertised in the captured discovery set"
       },
       {
         "id": "openwop.scenario.v2-conversation-turn-parts",
@@ -959,7 +957,7 @@
         "id": "openwop.scenario.v2-id-grammar",
         "scenario": "v2-id-grammar.test.ts",
         "result": "executed-pass",
-        "assertions": 15
+        "assertions": 11
       },
       {
         "id": "openwop.scenario.v2-idempotency-in-flight",
@@ -1265,7 +1263,7 @@
         "id": "openwop.scenario.v2-run-list",
         "scenario": "v2-run-list.test.ts",
         "result": "executed-pass",
-        "assertions": 97
+        "assertions": 107
       },
       {
         "id": "openwop.floor.v2-run-options-limits",
@@ -1375,7 +1373,7 @@
         "scenario": "v2-webhook-durable-delivery.test.ts",
         "result": "executed-pass",
         "assertions": 13,
-        "detail": "partial-witness: inapplicable: [inapplicable] host does not advertise the webhooks.deadLetter facet — RFC 0188 §A.5 makes the read a 404 rather than an obligation, so the sink half of §Durability is unwitnessable here (the retry half above passed); [inapplicable] host does not advertise the webhooks.deadLetter facet — RFC 0188 §A.5 makes the read a 404 rather than an obligation"
+        "detail": "partial-witness: inapplicable: [inapplicable] host does not advertise the webhooks.deadLetter facet — RFC 0188 §A.5 makes the read a 404 rather than an obligation, so the sink half of §Durability is unwitnessable here (the retry half above passed); [inapplicable] host does not advertise the webhooks.deadLetter facet — RFC 0188 §A.5 makes the read a 404 rather than an obligation; [inapplicable] host does not advertise the webhooks.deadLetter facet — RFC 0188 §A.5 makes the read a 404 for every subscription, so there is no before/after to compare"
       },
       {
         "id": "openwop.scenario.v2-webhook-egress-refusal",
@@ -2311,7 +2309,7 @@
         "id": "openwop.requirement.0170.id-grammar.events",
         "scenario": "v2-id-grammar.test.ts",
         "result": "executed-pass",
-        "assertions": 8
+        "assertions": 4
       },
       {
         "id": "openwop.requirement.0170.id-grammar.snapshot",
@@ -3062,7 +3060,7 @@
         "id": "openwop.requirement.0182.run-list.tenant-scoped",
         "scenario": "v2-run-list.test.ts",
         "result": "executed-pass",
-        "assertions": 93
+        "assertions": 103
       },
       {
         "id": "openwop.requirement.0184.bound-id-path-projection",
@@ -3146,7 +3144,7 @@
         "scenario": "v2-capability-maturity-bounded.test.ts",
         "result": "inapplicable",
         "assertions": 0,
-        "detail": "unwitnessable until the first persisted-class retirement row is due (RFC 0197 §A.3 Falsifiability): corpus 2.41.1: 0 persisted-class v2-minor retirement row(s), 0 v2→v2 migration row(s) — no retired member exists for a post-2.N event to carry. Before one does, a scenario would be vacuous, and a row that cannot fail is not a witness. This leg asserts the moment such a row falls due."
+        "detail": "unwitnessable until the first persisted-class retirement row is due (RFC 0197 §A.3 Falsifiability): corpus 2.42.2: 0 persisted-class v2-minor retirement row(s), 0 v2→v2 migration row(s) — no retired member exists for a post-2.N event to carry. Before one does, a scenario would be vacuous, and a row that cannot fail is not a witness. This leg asserts the moment such a row falls due."
       },
       {
         "id": "openwop.requirement.0198.advertised-via-discover",
@@ -3398,9 +3396,9 @@
       {
         "id": "openwop.requirement.0206.delivery-extended-locale",
         "scenario": "v2-content-locale-keys.test.ts",
-        "result": "executed-fail",
-        "assertions": 3,
-        "detail": "the test executed and failed in \"an advertised extended content locale is written and delivered\": [openwop-workflow-engine@0.1.0] RFC 0206 §A.1; localized-content.md §C, §D: Content-Language MUST name the negotiated extended locale \"es-419\" (compared case-insensitively): expected 'es' to be 'es-419' // Object.is equality"
+        "result": "inapplicable",
+        "assertions": 0,
+        "detail": "no advertised content locale outside the RFC 0103 subset (content.supportedLocales = [\"es\",\"pt-BR\",\"fr\"])"
       },
       {
         "id": "openwop.requirement.0207.a2a-inbound-adopts",
@@ -3628,11 +3626,18 @@
         "scenario": "v2-webhook-unregister-stops-delivery.test.ts",
         "result": "executed-pass",
         "assertions": 7
+      },
+      {
+        "id": "openwop.requirement.0217.dead-letter-read-after-unregister",
+        "scenario": "v2-webhook-durable-delivery.test.ts",
+        "result": "inapplicable",
+        "assertions": 0,
+        "detail": "host does not advertise the webhooks.deadLetter facet — RFC 0188 §A.5 makes the read a 404 for every subscription, so there is no before/after to compare"
       }
     ]
   },
-  "witnessSha256": "500047645d50f6dcc5278b56d635b7a692a5300625a0e79df6d20da49383fd99",
-  "assertionCount": 3546,
+  "witnessSha256": "b05ac4f8953833d746902e041c8381f5f136070f1fa6989ca6246284d01b7f8e",
+  "assertionCount": 3552,
   "detail": {
     "nonPass": [
       {
@@ -3712,8 +3717,8 @@
       },
       {
         "id": "openwop.scenario.v2-content-locale-keys",
-        "result": "executed-fail",
-        "reason": "1 test(s) failed — \"an advertised extended content locale is written and delivered\"; first failure: [openwop-workflow-engine@0.1.0] RFC 0206 §A.1; localized-content.md §C, §D: Content-Language MUST name the negotiated extended locale \"es-419\" (compared case-insensitively): expected 'es' to be 'es-419' // Object.is equality"
+        "result": "inapplicable",
+        "reason": "every test returned early through behaviorGate with zero assertions: profile not advertised in the captured discovery set"
       },
       {
         "id": "openwop.scenario.v2-credential-interrupt",
@@ -4533,7 +4538,7 @@
       {
         "id": "openwop.requirement.0197.retired-not-emitted",
         "result": "inapplicable",
-        "reason": "unwitnessable until the first persisted-class retirement row is due (RFC 0197 §A.3 Falsifiability): corpus 2.41.1: 0 persisted-class v2-minor retirement row(s), 0 v2→v2 migration row(s) — no retired member exists for a post-2.N event to carry. Before one does, a scenario would be vacuous, and a row that cannot fail is not a witness. This leg asserts the moment such a row falls due."
+        "reason": "unwitnessable until the first persisted-class retirement row is due (RFC 0197 §A.3 Falsifiability): corpus 2.42.2: 0 persisted-class v2-minor retirement row(s), 0 v2→v2 migration row(s) — no retired member exists for a post-2.N event to carry. Before one does, a scenario would be vacuous, and a row that cannot fail is not a witness. This leg asserts the moment such a row falls due."
       },
       {
         "id": "openwop.requirement.0198.advertised-via-discover",
@@ -4657,8 +4662,8 @@
       },
       {
         "id": "openwop.requirement.0206.delivery-extended-locale",
-        "result": "executed-fail",
-        "reason": "the test executed and failed in \"an advertised extended content locale is written and delivered\": [openwop-workflow-engine@0.1.0] RFC 0206 §A.1; localized-content.md §C, §D: Content-Language MUST name the negotiated extended locale \"es-419\" (compared case-insensitively): expected 'es' to be 'es-419' // Object.is equality"
+        "result": "inapplicable",
+        "reason": "no advertised content locale outside the RFC 0103 subset (content.supportedLocales = [\"es\",\"pt-BR\",\"fr\"])"
       },
       {
         "id": "openwop.requirement.0207.a2a-inbound-adopts",
@@ -4774,13 +4779,18 @@
         "id": "openwop.requirement.0214.a2a-push-unadvertised-refused",
         "result": "inapplicable",
         "reason": "a2a not advertised at major 2"
+      },
+      {
+        "id": "openwop.requirement.0217.dead-letter-read-after-unregister",
+        "result": "inapplicable",
+        "reason": "host does not advertise the webhooks.deadLetter facet — RFC 0188 §A.5 makes the read a 404 for every subscription, so there is no before/after to compare"
       }
     ]
   },
   "signature": {
     "alg": "ed25519",
     "keyId": "openwop-app-bundle-2",
-    "sig": "m6Mo4srs0k4W31FRhA_36cWD5yzemVDg8eTgqGoVtIWC3Zjz4NdohC9bTLPsPohlcV9z494A_-A9olLmNGKrAw",
+    "sig": "b9VE1ikHWlIJEP5VzuGXgRIzaoFfPS4916Gu7jXGlyisspU7h1X_CkvvoL0VUucpgaKzv0yM0PsUx9UFO6jpBQ",
     "over": [
       "witnessSha256",
       "host.build",

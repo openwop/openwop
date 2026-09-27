@@ -1002,6 +1002,28 @@
           "token": "deltaTransport"
         }
       ]
+    },
+    {
+      "id": "openwop.deprecation.interrupt-locale-field",
+      "status": "deprecated",
+      "surface": "optional `locale` field on `InterruptPayload.data` and on the interrupt resume payload",
+      "kind": "schema-field",
+      "deprecatedIn": "RFC 0171 §Migration table row `openwop.migration.C4.17` (v2 closes interrupt data and resume bodies)",
+      "authority": "RFCS/0171-v2-wire-envelope.md §Migration table, row openwop.migration.C4.17",
+      "removeIn": "2.0",
+      "replacement": "none; the locale a host rendered in is request-scoped (`Content-Language`, spec/v2/core/i18n.md)",
+      "codemod": "openwop.codemod.interrupt-locale-drop",
+      "sources": [
+        {
+          "file": "RFCS/0171-v2-wire-envelope.md",
+          "token": "openwop.migration.C4.17"
+        },
+        {
+          "file": "spec/v1/i18n.md",
+          "token": "`locale` field on `InterruptPayload`"
+        }
+      ],
+      "removalTrigger": "v2.0-cut"
     }
   ]
 }

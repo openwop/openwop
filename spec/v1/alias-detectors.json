@@ -308,6 +308,12 @@
       "file": "spec/v2/declaration.json",
       "token": "\"deltaTransport\"",
       "deprecation": "openwop.deprecation.v2-a2ui-delta-transport-facet"
+    },
+    {
+      "alias": "optional `locale` on InterruptPayload.data and the resume payload",
+      "file": "spec/v1/i18n.md",
+      "token": "## `locale` field on `InterruptPayload`",
+      "deprecation": "openwop.deprecation.interrupt-locale-field"
     }
   ]
 }

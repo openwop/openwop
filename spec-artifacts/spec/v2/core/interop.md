@@ -1,15 +1,18 @@
 # Interop
 
-> **Status: Stable · RFC 0175.**
+> **Status: Stable.**
 > **Normative home:** `a2a`, `mcp`.
 
 ## Why this exists
 
-The v2 contract for the two embedded protocols (A2A and MCP): how a host advertises them, how a version is negotiated, and what every negotiation leaves behind. Capability shapes are in capabilities.md; the peer identity is the Subject of identity.md.
+This document covers the two embedded protocols, A2A and MCP: how a host advertises them, how a version is negotiated, and what every negotiation leaves behind. Capability shapes are in [capabilities.md](capabilities.md); the peer identity is the Subject of [identity.md](identity.md).
 
 ## REST is the wire
 
-REST and SSE are the wire. A host MUST NOT advertise a transport list; `supportedTransports` does not exist in `schemas/v2/capabilities.schema.json`, and a discovery document carrying it MUST fail validation. A2A and MCP are **compositions** over the wire, advertised by their own facets and nothing else.
+REST and SSE are the wire. A2A and MCP are compositions over it, advertised by their own facets and nothing else.
+
+- A host MUST NOT advertise a transport list.
+- A discovery document carrying `supportedTransports` MUST fail validation against `schemas/v2/capabilities.schema.json`.
 
 ## The facets
 
@@ -21,14 +24,16 @@ A host that speaks either protocol MUST advertise the corresponding facet — `a
 | Default | `preferredVersion` | `preferredVersion` | REQUIRED; served when the peer names none |
 | Floor | `minimumVersion` | `minimumRevision` | REQUIRED; below it negotiation fails closed |
 | Freshness | `refreshedAt` | `refreshedAt` | REQUIRED; see the refresh SLA |
-| Profiles | `profiles[]` `a2a-<major.minor>` | `profiles[]` `mcp-<date>` | no `-legacy` alternative exists |
+| Profiles | `profiles[]` `a2a-<major.minor>` | `profiles[]` `mcp-<date>` | no `-legacy` suffix |
 | Protocol-specific | `agentCardUrl`, `streaming`, `pushNotifications`, `durableTasks` | `features[]`, `serverUrls[]`, `serverMount.transports[]` (`stdio` \| `streamable-http`), `mrtr.maxRounds` | optional |
 
 `mcp.serverMount.transports[]` is the MCP server's own transport enum; it is not a host transport advertisement.
 
 ## Legacy profiles are absent
 
-The profile ids `a2a-0.3-legacy` and `mcp-2025-06-18-legacy` do not exist in v2. The `profiles[]` item patterns admit no `-legacy` suffix, and the legacy code paths (the A2A 0.3 mapping and the MCP live-callback bridges) are not part of this corpus. A host that still speaks a legacy version does so as a private, non-advertised behavior. When no `A2A-Version` header is present, a host MUST serve the agent card of `preferredVersion`.
+The `profiles[]` item patterns admit no `-legacy` suffix, so `a2a-0.3-legacy` and `mcp-2025-06-18-legacy` are not valid profile ids. A host that still speaks a legacy version does so as a private, non-advertised behavior.
+
+When no `A2A-Version` header is present, a host MUST serve the agent card of `preferredVersion`.
 
 ## Negotiation is a protocol
 
@@ -43,23 +48,45 @@ The profile ids `a2a-0.3-legacy` and `mcp-2025-06-18-legacy` do not exist in v2.
   "negotiated": "…" | null, "outcome": "accepted" | "downgraded" | "refused", "reason": "…" }
 ```
 
-The event is content-free: `peer` MUST be a digest of the peer origin, never the origin in clear. The event on the host's own log is the normative witness of the two silent-downgrade invariants (`a2a-version-no-silent-downgrade`, `mcp-version-no-silent-downgrade`); the conformance seams profile (conformance.md) drives the exchange and captures the wire leg.
+The event is content-free: `peer` MUST be a digest of the peer origin, never the origin in clear. The event is the normative witness of the invariants `a2a-version-no-silent-downgrade` and `mcp-version-no-silent-downgrade`; the seams profile ([conformance.md](conformance.md)) drives the exchange and captures the wire leg.
 
 **The refresh SLA.** A host MUST re-evaluate its advertised `versions[]` / `revisions[]` against the upstream registry within the window its `refreshedAt` declares, and that window MUST NOT exceed 90 days. An advertisement older than its window is non-conformant.
 
 **Downgrade above the floor.** A host MAY accept an authenticated request for a version between the floor and `preferredVersion`; the event then reports `outcome: downgraded`.
 
-## The operation mappings (RFC 0208)
+## The operation mappings
 
-`spec/v2/interop-map.json` (schema `interop-map.schema.json`) maps each profile's upstream operations, states, fields and errors to the v2 wire, pinned to an upstream release. A host advertising a profile MUST serve every row it implements as the row states, under the caller's Subject with the authorization, tenant scoping and state of the v2 operation the row names; MUST refuse a row whose `requires` facet it does not advertise with the row's error; and MUST list every feature the map requires for that profile. What the map does not name is opaque: it MUST round-trip where upstream requires it and MUST NOT become authority, a prompt segment, a tool call or a workflow variable. A patch release that re-maps a row is a map edit; patch numbers are never negotiated.
+`spec/v2/interop-map.json` (schema `interop-map.schema.json`) maps each profile's upstream operations, states, fields and errors to the v2 wire, pinned to an upstream release. A host advertising a profile:
 
-**Isolation.** On either interface, a task the caller could not read through `getRun` MUST be answered exactly as a nonexistent one, including a tenant mismatch REST refuses `403`. `ListTasks` MUST return only runs `listRuns` would return to the same Subject, whether or not `runList` is advertised. `contextId`, `tenant` and `_meta` never select a tenant, workspace or principal.
+- MUST serve every row it implements as the row states, under the caller's Subject with the authorization, tenant scoping and state of the v2 operation the row names;
+- MUST refuse a row whose `requires` facet it does not advertise with the row's error;
+- MUST list every feature the map requires for that profile.
 
-**A2A multi-turn (A2A §3.4.3).** A message carrying `taskId` without `contextId` MUST be answered with the task's `contextId`. A message whose `contextId` is not its task's MUST be refused with its binding's invalid-parameters error and MUST NOT change the run. A message to a retained terminal task MUST be refused `UnsupportedOperationError`; `TaskNotFoundError` is for unknown, purged and unreadable tasks.
+What the map does not name is opaque: it MUST round-trip where upstream requires it and MUST NOT become authority, a prompt segment, a tool call or a workflow variable. A patch release that re-maps a row is a map edit; patch numbers are never negotiated.
 
-**A2A error details (RFC 0211).** On a 1.0 `JSONRPC` interface, an A2A error's `error.data` MUST be an array of objects each carrying `@type`, including exactly one `type.googleapis.com/google.rpc.ErrorInfo` whose `reason` is the map row's `reason` and whose `domain` is `a2a-protocol.org` (a tightening of A2A §9.5's SHOULD). An `HTTP+JSON` interface MUST answer A2A §11.6's `google.rpc.Status`. A response on an interface URL the card lists, including a refusal before dispatch, MUST NOT be the OpenWOP error envelope. `TaskNotFoundError` details MUST NOT differ between an unknown task and an unreadable one, apart from an echo of the requested id. On `VersionNotSupportedError` a host SHOULD set `metadata.supportedVersions` to a comma-joined list; a client falls back to the card's `supportedInterfaces[].protocolVersion`. A client MUST identify an error by code or by the ErrorInfo `reason`, MUST accept `data` as an array, and SHOULD accept a `data` object carrying `reason` through 2.x.
+**Isolation.** On either interface:
 
-## MCP tasks and cancellation (RFC 0198)
+- A task the caller could not read through `getRun` MUST be answered exactly as a nonexistent one, including a tenant mismatch REST refuses `403`.
+- `ListTasks` MUST return only runs `listRuns` would return to the same Subject, whether or not `runList` is advertised.
+- `contextId`, `tenant` and `_meta` never select a tenant, workspace or principal.
+
+**A2A multi-turn (A2A §3.4.3).**
+
+- A message carrying `taskId` without `contextId` MUST be answered with the task's `contextId`.
+- A message whose `contextId` is not its task's MUST be refused with its binding's invalid-parameters error and MUST NOT change the run.
+- A message to a retained terminal task MUST be refused `UnsupportedOperationError`; `TaskNotFoundError` is for unknown, purged and unreadable tasks.
+
+**A2A error details.** A host:
+
+- on a 1.0 `JSONRPC` interface, MUST make an A2A error's `error.data` an array of objects each carrying `@type`, including exactly one `type.googleapis.com/google.rpc.ErrorInfo` whose `reason` is the map row's `reason` and whose `domain` is `a2a-protocol.org` (a tightening of A2A §9.5's SHOULD);
+- on an `HTTP+JSON` interface, MUST answer A2A §11.6's `google.rpc.Status`;
+- MUST NOT answer with the OpenWOP error envelope on an interface URL the card lists, including a refusal before dispatch;
+- MUST NOT vary `TaskNotFoundError` details between an unknown task and an unreadable one, apart from an echo of the requested id;
+- on `VersionNotSupportedError`, SHOULD set `metadata.supportedVersions` to a comma-joined list; a client falls back to the card's `supportedInterfaces[].protocolVersion`.
+
+A client MUST identify an error by code or by the ErrorInfo `reason`, MUST accept `data` as an array, and SHOULD accept a `data` object carrying `reason` through 2.x.
+
+## MCP tasks and cancellation
 
 A host MAY serve the MCP Tasks extension `io.modelcontextprotocol/tasks` (revision `2026-07-28`) on its server mount. It advertises it in its `server/discover` `capabilities.extensions` and by listing `extensions` in `mcp.features[]`, and nowhere else. A host that advertises it MUST implement the extension as published and the map's `mcp.tasks` rows, and:
 
@@ -67,7 +94,11 @@ A host MAY serve the MCP Tasks extension `io.modelcontextprotocol/tasks` (revisi
 - MUST use the run's projected `runId` (identity.md §5) as `taskId`, with an opaque segment of at least 128 bits of entropy. A `taskId` is never a credential;
 - MUST NOT append to a run's log to answer `tasks/get`.
 
-**Cancellation.** Until the host has sent its whole response to a request that starts or continues a run, the run belongs to that request: a client disconnect on streamable HTTP, or a stdio `notifications/cancelled` naming the request, MUST cancel the run as `cancelRun` would, with `run.cancelled.reason` `mcp-request-cancelled`. Once the response is sent, a disconnect MUST NOT affect the run; a task ends through `tasks/cancel`, `cancelRun`, or its own terminal state. A host MUST NOT send `notifications/cancelled` except to end a `subscriptions/listen` stream.
+**Cancellation.** Until the host has sent its whole response to a request that starts or continues a run, the run belongs to that request.
+
+- Before the response is sent, a client disconnect on streamable HTTP, or a stdio `notifications/cancelled` naming the request, MUST cancel the run as `cancelRun` would, with `run.cancelled.reason` `mcp-request-cancelled`.
+- Once the response is sent, a disconnect MUST NOT affect the run; a task ends through `tasks/cancel`, `cancelRun`, or its own terminal state.
+- A host MUST NOT send `notifications/cancelled` except to end a `subscriptions/listen` stream.
 
 ## The MCP round ceiling
 
@@ -77,28 +108,58 @@ A host MAY serve the MCP Tasks extension `io.modelcontextprotocol/tasks` (revisi
 
 `auth-required` remains a member of the persisted A2A task state enum (`schemas/v2/a2a-task-state.schema.json`) for the reverse direction (consuming an external A2A agent). The forward projection MUST emit it, with `interruptKind: credential` and a status message carrying `connectUrl`, for a run suspended on a `credential` interrupt (interrupt.md), and MUST NOT emit it otherwise.
 
-## A2A push delivery (RFC 0214)
+## A2A push delivery
 
-A host advertising `a2a.pushNotifications` treats each push as a webhook egress: webhooks.md §Egress binds at delivery time as well as registration, a `3xx` is a failed delivery, and the push credential is bound as security-defaults.md §"Onward hops" states. It MUST attempt each push at least once; a host that retries follows `webhooks.md` `retryPolicy` semantics. The body is an A2A 1.0 `StreamResponse` sent as `application/a2a+json`, carrying `Authorization: {scheme} {credentials}` from the config; when only `token` is set a host SHOULD send it as `Authorization: Bearer <token>` (A2A v1.0.1 leaves its carriage undefined). A host MUST NOT add an OpenWOP signature. Push dead-letters are not visible to A2A clients; a client recovers with `GetTask`.
+A host advertising `a2a.pushNotifications` treats each push as a webhook egress: webhooks.md §Egress binds at delivery time as well as registration, a `3xx` is a failed delivery, and the push credential is bound as security-defaults.md §"Onward hops" states.
 
-A `replay` fork MUST NOT push re-emitted history, and no fork inherits a source run's push configs. A push-config read or delete on a task the caller cannot read, or naming a `configId` that is not that task's, MUST answer exactly as for an unknown id, apart from the JSON-RPC `id`; a `configId` MUST NOT encode a tenant, workspace or principal, and delete is idempotent.
+- A host MUST attempt each push at least once; a host that retries follows `webhooks.md` `retryPolicy` semantics.
+- The body is an A2A 1.0 `StreamResponse` sent as `application/a2a+json`, carrying `Authorization: {scheme} {credentials}` from the config. When only `token` is set, a host SHOULD send it as `Authorization: Bearer <token>` (A2A v1.0.1 leaves its carriage undefined).
+- A host MUST NOT add an OpenWOP signature.
+- Push dead-letters are not visible to A2A clients; a client recovers with `GetTask`.
+- A `replay` fork MUST NOT push re-emitted history, and no fork inherits a source run's push configs.
+- A push-config read or delete on a task the caller cannot read, or naming a `configId` that is not that task's, MUST answer exactly as for an unknown id, apart from the JSON-RPC `id`.
+- A `configId` MUST NOT encode a tenant, workspace or principal. Delete is idempotent.
 
 ## Per-agent cards
 
 A host advertising `a2a.agentCards` MUST also offer the `a2a-1.0` profile and `agents.manifestRuntime`, and MUST declare `capabilities.extendedAgentCard: true` on its public card. It publishes each entry of a caller's agent inventory (`GET /agents`) as an A2A `AgentCard`, reached through the entry's `a2aTenant`: an opaque routing value `R` the host mints, stable for the agent and host version, that MUST NOT encode a tenant, workspace, or principal.
 
-`GetExtendedAgentCard` with `tenant: R` MUST return that agent's card: `name` is the entry's `persona`, `version` its `packVersion`, `description` its `description` or else `label`; `supportedInterfaces[]` are the host card's interfaces, each carrying `tenant: R`; `capabilities` and `securitySchemes` equal the host card's; `skills[]` holds one skill per workflow the host routes to the agent for this caller. The card MUST NOT carry anything the inventory entry may not, and does not replace it: `degraded[]` and `memoryDegraded` stay on the entry.
+`GetExtendedAgentCard` with `tenant: R` MUST return that agent's card:
 
-**Non-disclosure.** A request carrying `R` MUST be authenticated and authorized as `GET /agents/{agentId}` is, before `R` is resolved. For an `R` naming an agent outside the caller's inventory, every A2A operation MUST return what it returns for an `R` the host never minted, apart from the JSON-RPC `id`. The public card at `agentCardUrl` MUST NOT list any `R`. `R` is a `tenant` value under §"The operation mappings" **Isolation**.
+- `name` is the entry's `persona`, `version` its `packVersion`, `description` its `description` or else `label`;
+- `supportedInterfaces[]` are the host card's interfaces, each carrying `tenant: R`;
+- `capabilities` and `securitySchemes` equal the host card's;
+- `skills[]` holds one skill per workflow the host routes to the agent for this caller.
+
+The card MUST NOT carry anything the inventory entry may not, and does not replace it: `degraded[]` and `memoryDegraded` stay on the entry.
+
+**Non-disclosure.**
+
+- A request carrying `R` MUST be authenticated and authorized as `GET /agents/{agentId}` is, before `R` is resolved.
+- For an `R` naming an agent outside the caller's inventory, every A2A operation MUST return what it returns for an `R` the host never minted, apart from the JSON-RPC `id`.
+- The public card at `agentCardUrl` MUST NOT list any `R`.
+- `R` is a `tenant` value under §"The operation mappings" **Isolation**.
 
 ## gRPC
 
-gRPC is not part of the core wire. Its document lives at `spec/v2/ext/grpc-transport/` with `witness: unwitnessable` and `adoption: none`; its requirements are SHOULDs of that extension. A host MUST NOT advertise a `grpc` capability block — an unwitnessable family is not advertisable — and `api/v2/openapi.yaml` and the AsyncAPI document are the only canonical API descriptions. The extension re-enters core only by a v2.x additive RFC that generates the proto from `spec/v2/declaration.json` and lands a suite client.
+gRPC is not part of the core wire. Its document lives at `spec/v2/ext/grpc-transport/` with `witness: unwitnessable` and `adoption: none`; its requirements are SHOULDs of that extension.
 
-## Trace context (RFC 0207)
+- A host MUST NOT advertise a `grpc` capability block — an unwitnessable family is not advertisable.
+- `api/v2/openapi.yaml` and the AsyncAPI document are the only canonical API descriptions.
 
-A host that propagates W3C Trace Context into an MCP request MUST carry it in that request's `params._meta` (unprefixed `traceparent`, and `tracestate` when present; MCP 2026-07-28 `_meta`, SEP-414) or in the HTTP `traceparent` header, and SHOULD use `_meta`, the only carrier on stdio. Into an A2A message it MUST carry it in `Message.metadata.openwop.traceparent` and `.tracestate` or in the HTTP header, and SHOULD use the metadata. A receiver prefers the in-message value, ignores a malformed one, and MUST NOT derive tenant, principal or scope from either.
+The extension re-enters core only by an additive RFC that generates the proto from `spec/v2/declaration.json` and lands a suite client.
+
+## Trace context
+
+A host that propagates W3C Trace Context:
+
+- into an MCP request MUST carry it in that request's `params._meta` (unprefixed `traceparent`, and `tracestate` when present; MCP 2026-07-28 `_meta`, SEP-414) or in the HTTP `traceparent` header, and SHOULD use `_meta`, the only carrier on stdio;
+- into an A2A message MUST carry it in `Message.metadata.openwop.traceparent` and `.tracestate` or in the HTTP header, and SHOULD use the metadata.
+
+A receiver prefers the in-message value, ignores a malformed one, and MUST NOT derive tenant, principal or scope from either.
 
 ## Threat model
 
 `SECURITY/threat-model-interop.md` is the threat model for this document; its invariants are rows of `SECURITY/invariants.yaml`. Peer identity and authorization at the boundary are governed by security-defaults.md; a peer MUST NOT gain authority the caller's Subject does not hold.
+
+*Sources: RFC 0175, RFC 0198, RFC 0207, RFC 0208, RFC 0211, RFC 0214.*
