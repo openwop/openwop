@@ -243,7 +243,7 @@
     "spec/v2/core/webhooks.md": "0398db27b2ddd97bc2a9a9b1236b5139451765462789dee9c3a8cc6b7b81e666",
     "spec/v2/core/workflow-chain-packs.md": "35a957f1dd22016febd76bf2c4dfb79cda58b95d8efd8893b5e5babda9f79cf3",
     "spec/v2/corrections.json": "cc74ffde74384b0f261a4f625871d922e8661d654d647a8534e21036595cb280",
-    "spec/v2/corrections.schema.json": "4ac595b9a6d7f66d53de03fe0edbe0dc58de46426932387bfdc0ceb3cf949a3e",
+    "spec/v2/corrections.schema.json": "46bbffb954d13bd9995aebc912ceeb2544f7064331abf25fd6ab85c81a5cec94",
     "spec/v2/declaration.json": "9b5736d65cf099145d1cfa44278c8a71d79889316c0ea681615be7edc55a7c07",
     "spec/v2/declaration.schema.json": "881c08b455aa12c41a0a0ec43a960ab78b75ff1302188f7eaaa43074ed4cff7a",
     "spec/v2/errors.json": "1064999c8a00f44ab99ce24995fe9a93e6d2d5778e5eacb6621de0d0af1eb37f",
@@ -298,5 +298,5 @@
     "spec/v2/retention-floors.json": "eaf3722d95c79947af1d4269ef85117e126518c588cfcf1a2b21b97269f51624",
     "spec/v2/surface-baseline.json": "f850d3149a897641abaf4cec48fa2b6deb82b48ca1fea28a789b734d7844e590"
   },
-  "corpusCommit": "3769a0b477342049553ecb72b1bf3045e20eae35"
+  "corpusCommit": "456d70376de30033e108ddb552cc798ee98fa1b7"
 }
