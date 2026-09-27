@@ -136,6 +136,15 @@ def v2_openapi_and_seams():
             'properties': {'runId': {'$ref': '../schemas/v2/ids.schema.json#/$defs/runId'}, 'sequence': {'type': 'integer', 'minimum': 0}}}}}},
             '400': {'$ref': '#/components/responses/ValidationError'}, '401': {'$ref': '#/components/responses/Unauthenticated'}, '404': {'$ref': '#/components/responses/NotFound'},
             '409': {'description': 'The run is terminal (`run_terminal`).'}}}}
+    # RFC 0033 §C per-attempt budget witness (host-sample-test-seams.md §28): every mock-provider call's output budget for one node, in call order.
+    seams['paths']['/conformance/seams/sample/test/mock-ai/dispatch-budgets'] = {'get': {'tags': ['Seams'], 'operationId': 'getMockDispatchBudgets',
+        'summary': "Per-attempt output budgets the conformance mock provider received for one node — RFC 0033 §C witness",
+        'description': "One entry per call the host's conformance mock provider received for `nodeId` since its program was last seeded (seeding clears the history), in call order; `maxTokens` is the output budget THAT call carried to the provider, or `null` when it carried none. Each entry is per attempt: it MUST NOT be accumulated across attempts, the node or the run, and MUST record what reached the provider, not what the retry router intended. An unseeded `nodeId` answers an empty `attempts`. OPTIONAL; consumed by `envelope-completion-distinguishes-truncation` (RFC 0033 §C: a schema-violation retry SHALL NOT carry an increased budget). An unserved seam leaves that leg a partial witness, never `blocked`.",
+        'parameters': [{'name': 'nodeId', 'in': 'query', 'required': True, 'schema': {'type': 'string', 'minLength': 1}}],
+        'responses': {'200': {'description': 'The per-attempt budgets.', 'content': {'application/json': {'schema': {'type': 'object', 'additionalProperties': False, 'required': ['nodeId', 'attempts'],
+            'properties': {'nodeId': {'type': 'string'}, 'attempts': {'type': 'array', 'items': {'type': 'object', 'additionalProperties': False, 'required': ['maxTokens'],
+                'properties': {'maxTokens': {'type': ['integer', 'null'], 'minimum': 0}}}}}}}}},
+            '400': {'$ref': '#/components/responses/ValidationError'}, '401': {'$ref': '#/components/responses/Unauthenticated'}}}}
     seams['paths']['/conformance/seams/sample/effect-seams/fire'] = {'post': {'tags': ['Seams'], 'operationId': 'fireEffectSeam',
         'summary': 'Fire one named effect seam inside a run',
         'description': ('The host runs a workflow that drives the named seam once. The scenario then forks the run in `replay` '
