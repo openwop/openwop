@@ -153,7 +153,7 @@
   },
   "risks": {
     "source": "RFCS/registers/*.risks.md + RFCS/*.risks.md (RFC 0166 tokens)",
-    "rowsScanned": 449,
+    "rowsScanned": 452,
     "openCriticalOrHigh": [
       {
         "rfc": "0058",
@@ -1338,7 +1338,8 @@
       "0147/R2",
       "0147/R3",
       "0147/R12",
-      "0147/R14"
+      "0147/R14",
+      "0219/R1"
     ]
   },
   "claims": {
