@@ -266,12 +266,13 @@ describe.skipIf(!RUN_BEHAVIOR)('auth-mtls: client cert behavior', () => {
         'auth-profiles.md §`openwop-auth-mtls`',
         'mtls.required: true MUST reject no-cert requests (TLS handshake failure is conformant)',
       )).toBe(true);
-      return softSkip('blocked', 'precondition not met — `\'error\' in res` returned early (seam, prior step, or fixture unavailable)');
+      // The TLS-layer rejection IS the conformant refusal: the requirement was observed.
+      // (This branch used to end in a blocked note, a partial-witness pass at major 1.)
+    } else {
+      expect(res.status >= 400, req('openwop.it.auth-mtls.no-client-cert-against-mtls-required-true-non-2xx-or-tls-failure', 
+        'auth-profiles.md §`openwop-auth-mtls`',
+        'mtls.required: true MUST reject no-cert requests at the auth layer (4xx) when not rejected at the TLS layer',
+      )).toBe(true);
     }
-
-    expect(res.status >= 400, req('openwop.it.auth-mtls.no-client-cert-against-mtls-required-true-non-2xx-or-tls-failure', 
-      'auth-profiles.md §`openwop-auth-mtls`',
-      'mtls.required: true MUST reject no-cert requests at the auth layer (4xx) when not rejected at the TLS layer',
-    )).toBe(true);
   });
 });

@@ -30,7 +30,7 @@
 
 import { describe, it, expect } from 'vitest';
 import { driver } from '../lib/driver.js';
-import { softSkip } from '../lib/soft-skip.js';
+import { softSkip, blockedDespiteAssertions } from '../lib/soft-skip.js';
 import { forkDeclined } from '../lib/fork-availability.js';
 import { pollUntilTerminal } from '../lib/polling.js';
 import { isFixtureAdvertised } from '../lib/fixtures.js';
@@ -246,7 +246,7 @@ describe.skipIf(SKIP_NO_MULTI)(
         );
         if (forkDeclined(fork2.status, 'arbitrary-event fork 2')) {
           ctx.skip();
-          return softSkip('blocked', 'precondition not met — `forkDeclined(fork2.status, \'arbitrary-event fork 2\')` returned early (seam, prior step, or fixture unavailable)');
+          return blockedDespiteAssertions('arbitrary-event fork 2 was declined — fork determinism is unobserved');
         }
         expect(fork2.status).toBe(201);
         const fork2Id = (fork2.json as { runId: string }).runId;

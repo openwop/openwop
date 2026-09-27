@@ -65,7 +65,7 @@ import {
   PLAIN_TEXT_CONTROLS,
 } from '../lib/formContentPacks.js';
 import { req } from '../lib/requirement-ids.js';
-import { softSkip } from '../lib/soft-skip.js';
+import { softSkip, blockedDespiteAssertions } from '../lib/soft-skip.js';
 
 /**
  * Conformance fixture templates a host wires the seam against.
@@ -140,7 +140,7 @@ describe('form-content-instantiation: a host instantiates a registered template 
     ).toBe(true);
 
     const field = fieldById(res.fields, VENDOR_FIELD_ID);
-    if (field === undefined) return softSkip('blocked', 'precondition not met — `field === undefined` returned early (host doesn\'t report per-field controls on the seam — soft-skip) (seam, prior step, or fixture unavailable)'); // host doesn't report per-field controls on the seam — soft-skip
+    if (field === undefined) return blockedDespiteAssertions('the instantiate seam reports no fields[] entry for the vendor field — the plain-text degrade is unobserved');
     expect(
       field.control !== undefined && PLAIN_TEXT_CONTROLS.has(field.control),
       req('openwop.it.form-content-instantiation.2-an-unrecognized-vendor-field-type-degrades-to-plain-text-and-does-not-fail-the', 

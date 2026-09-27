@@ -97,14 +97,20 @@ describe('RFC 0148 §B — conformance-advertised-seam-required', () => {
   it('strict mode: seamAbsent (advertised, seam answered 404/403 mid-scenario) FAILS; default mode notes blocked with the reason', () => {
     process.env['OPENWOP_REQUIRE_BEHAVIOR'] = 'true';
     __resetEnvCacheForTests();
+    // partial-witness-ok: seamAbsent is the subject under test in this server-free unit test of
+    // the helper, not an early return.
     expect(() => seamAbsent('host advertises X but /v1/host/sample/x answered 404'), req('openwop.it.conformance-advertised-seam-required.strict-mode-seamabsent-advertised-seam-answered-404-403-mid-scenario-fails-defau', 'RFC 0148 §B', 'strict mode: seamAbsent (advertised, seam answered 404/403 mid-scenario) FAILS; default mode notes blocked with the reason')).toThrow(/RFC 0148 §B/);
     delete process.env['OPENWOP_REQUIRE_BEHAVIOR'];
     __resetEnvCacheForTests();
     resetSoftSkips();
+    // partial-witness-ok: seamAbsent is the subject under test in this server-free unit test of
+    // the helper, not an early return.
     expect(seamAbsent('host advertises X but /v1/host/sample/x answered 403')).toBeUndefined();
     const noted = softSkipDisposition('conformance-advertised-seam-required.test.ts');
     expect(noted?.kind).toBe('blocked');
     expect(noted?.reason).toContain('answered 403');
+    // The note above is this test's subject, not a disposition of the leg.
+    resetSoftSkips();
   });
 
   it('the sanctioned escape is an explicit opt-out, which records skipped with the reason — still never a pass', () => {

@@ -193,7 +193,7 @@ import { pollUntilTerminal } from '../lib/polling.js';
 import { isFixtureAdvertised } from '../lib/fixtures.js';
 import { capabilityFamily } from '../lib/discovery-capabilities.js';
 import { req } from '../lib/requirement-ids.js';
-import { softSkip } from '../lib/soft-skip.js';
+import { softSkip, blockedDespiteAssertions } from '../lib/soft-skip.js';
 
 const E2E_FIXTURE = 'conformance-envelope-refusal';
 const E2E_NODE_ID = 'refusal-structured-call';
@@ -232,7 +232,7 @@ describe.skipIf(HTTP_SKIP)('envelope-refusal-shape: end-to-end refusal through d
     expect(seed.status).toBe(200);
 
     const result = await runE2eAndRead();
-    if (result === null) return softSkip('blocked', 'precondition not met — `result === null` returned early (seam, prior step, or fixture unavailable)');
+    if (result === null) return blockedDespiteAssertions('the advertised fixture run did not start (≠201) or its event log did not read (≠200) — envelope.refusal and the no-retry rule are unobserved');
     const refusals = result.events.filter((e) => e.type === 'envelope.refusal');
     expect(
       refusals.length,

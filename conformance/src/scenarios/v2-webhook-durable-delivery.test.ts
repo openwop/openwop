@@ -366,6 +366,8 @@ describe('RFC 0173 §B — webhook-durable-delivery (gated on webhooks)', () => 
         }
       }
     } else {
+      // partial-witness-ok: delivery and retry were observed above; the spacing leg binds only
+      // an advertised backoff other than none.
       softSkip('inapplicable', 'no advertised retryPolicy.backoff other than none — the spacing leg is not asserted');
     }
 

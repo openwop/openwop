@@ -24,7 +24,7 @@ import { driver } from '../lib/driver.js';
 import { behaviorGate } from '../lib/behavior-gate.js';
 import { readCapabilityFamily } from '../lib/discovery-capabilities.js';
 import { req } from '../lib/requirement-ids.js';
-import { softSkip } from '../lib/soft-skip.js';
+import { softSkip, blockedDespiteAssertions } from '../lib/soft-skip.js';
 
 const SEAM = '/v1/host/sample/agents/verify-run';
 
@@ -62,7 +62,7 @@ describe('verifier-gating (RFC 0090 §B)', () => {
 
     // PASS verdict → completes normally.
     const passRes = await driver.post(SEAM, { simulateVerdict: 'pass' });
-    if (passRes.status === 404) return softSkip('blocked', 'precondition not met — `passRes.status === 404` returned early (seam, prior step, or fixture unavailable)');
+    if (passRes.status === 404) return blockedDespiteAssertions('the verify seam answered the fail verdict but not the pass verdict — pass-completes is unobserved');
     expect(
       verifiedVerdict(passRes.json) === 'pass',
       req('openwop.it.verifier-gating.a-fail-verdict-blocks-commit-on-a-gating-host-a-pass-verdict-completes', 'RFC 0090 §A', 'a verify-run forcing a pass MUST emit agent.verified{verdict:"pass"}'),

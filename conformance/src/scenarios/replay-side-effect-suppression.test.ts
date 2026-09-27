@@ -55,7 +55,7 @@ import { readFileSync } from 'node:fs';
 import { join } from 'node:path';
 import { V1_DIR } from '../lib/paths.js';
 import { req } from '../lib/requirement-ids.js';
-import { softSkip } from '../lib/soft-skip.js';
+import { softSkip, blockedDespiteAssertions } from '../lib/soft-skip.js';
 
 const WORKFLOW_ID = 'conformance-replay-side-effect';
 const EFFECT_NODE = 'effect';
@@ -178,7 +178,7 @@ describe.skipIf(SKIP_NO_FIXTURE)('replay-side-effect-suppression: a replay does 
     });
     if (forkDeclined(fork.status, 'side-effect-suppression replay fork')) {
       ctx.skip();
-      return softSkip('blocked', 'precondition not met — `forkDeclined(fork.status, \'side-effect-suppression replay fork\')` returned early (seam, prior step, or fixture unavailable)');
+      return blockedDespiteAssertions('the replay fork was declined — side-effect suppression is unobserved');
     }
     expect(fork.status, req('openwop.it.replay-side-effect-suppression.fails-a-side-effecting-node-closed-with-replay-source-missing-when-the-source-ne', 'replay.md §"Side-effect suppression in replay" requirement 1', 'fork should be accepted')).toBe(201);
     const forkRunId = (fork.json as { runId: string }).runId;

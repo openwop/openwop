@@ -31,7 +31,7 @@
  */
 
 import { describe, it, expect } from 'vitest';
-import { softSkip, seamAbsent } from '../lib/soft-skip.js';
+import { softSkip, seamAbsent, seamAbsentDespiteAssertions } from '../lib/soft-skip.js';
 import { driver } from '../lib/driver.js';
 import { mcpServerMount } from '../lib/mcp-mount.js';
 import { behaviorGate } from '../lib/behavior-gate.js';
@@ -74,7 +74,7 @@ describe.skipIf(!process.env.OPENWOP_BASE_URL)('RFC 0153 §C — mcp-mrtr-roundt
     const mrtr = (drive.json as { mrtr?: { inputRequiredSeen?: boolean; retried?: boolean; requestStateEchoed?: boolean; result?: unknown } }).mrtr;
     if (mrtr === undefined) {
       expect(mrtr, req('openwop.it.mcp-mrtr-roundtrip.input-required-gather-retry-with-inputresponses-echoed-requeststate-as-one-logic', 'host-sample-test-seams.md §23', 'the invoke seam SHOULD report `mrtr: { inputRequiredSeen, retried, requestStateEchoed, result }` for tool "needs_input"; until it does this requirement is unobservable and resolves to `blocked`')).toBeDefined();
-      return softSkip('blocked', 'precondition not met — `mrtr === undefined` returned early (seam, prior step, or fixture unavailable)');
+      throw new Error('unreachable: the assertion above has already failed this leg');
     }
     expect(mrtr.inputRequiredSeen, req('openwop.it.mcp-mrtr-roundtrip.input-required-gather-retry-with-inputresponses-echoed-requeststate-as-one-logic', 'mcp-integration.md §C.1', 'the host MUST recognise resultType input_required')).toBe(true);
     expect(mrtr.retried, req('openwop.it.mcp-mrtr-roundtrip.input-required-gather-retry-with-inputresponses-echoed-requeststate-as-one-logic', 'mcp-integration.md §C.1', 'the host MUST retry the ORIGINAL request with inputResponses (a live callback is not the current profile)')).toBe(true);
@@ -123,7 +123,7 @@ describe.skipIf(!process.env.OPENWOP_BASE_URL)('RFC 0153 §C — mcp-mrtr-roundt
     expect(reg.status, req('openwop.it.mcp-mrtr-roundtrip.a-suspending-tool-answers-input-required-with-elicitation-requeststate-the-retry', 'host-sample-test-seams.md §"sample workflows"', `the registration fixture MUST be accepted; a 4xx means the fixture this leg posts is malformed (suite defect): ${JSON.stringify(reg.json).slice(0, 200)}`)).toBeLessThan(400);
     const hdr = { 'MCP-Protocol-Version': '2026-07-28', 'Mcp-Method': 'tools/call', 'Mcp-Name': TOOL };
     const first = await driver.post(await mcpServerMount(), { jsonrpc: '2.0', id: 1, method: 'tools/call', params: { name: TOOL, arguments: {}, _meta: { [META_V]: '2026-07-28', [META_C]: { elicitation: {} } } } }, { headers: hdr });
-    if (first.status === 404) return seamAbsent('host advertises an MCP server mount but /v1/host/sample/mcp answered 404');
+    if (first.status === 404) return seamAbsentDespiteAssertions('host advertises an MCP server mount but /v1/host/sample/mcp answered 404 after the tool registered');
     const r1 = first.json as { result?: { resultType?: string; inputRequests?: Record<string, { method?: string }>; requestState?: string }; error?: { code: number } };
     expect(r1.error, req('openwop.it.mcp-mrtr-roundtrip.a-suspending-tool-answers-input-required-with-elicitation-requeststate-the-retry', 'mcp-integration.md §C.2', `tools/call MUST NOT error: ${JSON.stringify(r1.error)}`)).toBeUndefined();
     expect(r1.result?.resultType, req('openwop.it.mcp-mrtr-roundtrip.a-suspending-tool-answers-input-required-with-elicitation-requeststate-the-retry', 'mcp-integration.md §C.2', 'a run reaching waiting-input MUST answer the in-flight tools/call with resultType input_required (not a live callback)')).toBe('input_required');

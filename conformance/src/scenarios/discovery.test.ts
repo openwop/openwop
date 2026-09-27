@@ -64,7 +64,9 @@ describe('discovery: /.well-known/openwop', () => {
         'capabilities-change-detection.md §Capabilities-Etag',
         'Capabilities-Etag is optional; hosts that omit it remain conformant',
       )).toBeNull();
-      return softSkip('blocked', 'precondition not met — `firstEtag === null` returned early (seam, prior step, or fixture unavailable)');
+      // partial-witness-ok: Capabilities-Etag is OPTIONAL; when absent, the IF-present MUSTs
+      // below bind nothing.
+      return softSkip('inapplicable', 'Capabilities-Etag not sent (optional) — no etag to check');
     }
 
     expect(firstEtag.trim().length, req('openwop.it.discovery.if-capabilities-etag-is-present-it-is-non-empty-and-stable-within-the-cache-wind', 
@@ -116,7 +118,9 @@ describe('discovery: /.well-known/openwop fixtures field shape per RFC 0003', ()
       // RFC 0003 makes the field OPTIONAL — pre-RFC hosts and hosts
       // that opt out advertise nothing. Assertion passes trivially.
       expect(fixtures).toBeUndefined();
-      return softSkip('blocked', 'precondition not met — `fixtures === undefined` returned early (seam, prior step, or fixture unavailable)');
+      // partial-witness-ok: discovery answered 200 and `fixtures` is OPTIONAL (RFC 0003); when
+      // absent, the IF-present MUSTs below bind nothing.
+      return softSkip('inapplicable', 'discovery carries no fixtures[] (optional, RFC 0003) — no entries to check');
     }
 
     expect(Array.isArray(fixtures), req('openwop.it.discovery.if-fixtures-is-present-it-must-be-a-string-of-unique-non-empty-entries', 

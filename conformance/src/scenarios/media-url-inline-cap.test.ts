@@ -148,7 +148,7 @@ describe.skipIf(HTTP_SKIP)('media-url-inline-cap: advertisement shape (RFC 0055 
     const runIds = ((runs.json as { runs?: { runId?: string }[] }).runs ?? [])
       .map((r) => r.runId)
       .filter((id): id is string => typeof id === 'string');
-    for (const runId of runIds) {
+    runs: for (const runId of runIds) {
       const bundle = await driver.get(`/v1/runs/${encodeURIComponent(runId)}/debug-bundle`);
       if (bundle.status !== 200) continue;
       const events = (bundle.json as { events?: { type?: string; payload?: { url?: unknown; base64?: unknown } }[] }).events ?? [];
@@ -159,7 +159,8 @@ describe.skipIf(HTTP_SKIP)('media-url-inline-cap: advertisement shape (RFC 0055 
             typeof ev.payload?.url === 'string' && ev.payload?.base64 === undefined,
             req('openwop.it.media-url-inline-cap.a-media-payload-in-a-run-debug-bundle-is-referenced-by-url-not-inlined-rfc-0055', 'ai-envelope.md §"Media reference payloads"', 'a media.* payload in a debug bundle MUST be a URL reference, never inlined binary'),
           ).toBe(true);
-          return softSkip('blocked', 'precondition not met — `typeof ev.type === \'string\' && ev.type.startsWith(\'media.\')` returned early (asserted one — contract proven) (seam, prior step, or fixture unavailable)'); // asserted one — contract proven
+          // One media.* payload asserted by URL: the §C rule-3 requirement was observed.
+          break runs;
         }
       }
     }

@@ -159,6 +159,8 @@ describe('context-summarization-replay (RFC 0111 §"Replay determinism")', () =>
     // The model-facing half: the summary TEXT the host fed on the fork.
     const sourceTexts = await fedSummaryTexts(sourceRunId, toLog(sourceQ.events));
     const forkTexts = await fedSummaryTexts(forkRunId, toLog(forkQ.events));
+    // partial-witness-ok: summaryRef reuse, the replay MUST, was asserted above; the summary-
+    // text comparison needs the transcript-window seam's entries[], an optional extra.
     if (sourceTexts === null || forkTexts === null) return softSkip('inapplicable', 'the transcript-window seam serves no entries[] for these runs, so the model-facing summary text was not compared (summaryRef reuse was)');
     expect(sourceTexts.length, req(ID, 'RFC 0111 §"Replay determinism"', 'the source run summarized, so its transcript windows MUST carry the summary text it fed')).toBeGreaterThan(0);
     expect(forkTexts, req(ID, 'RFC 0111 §"Replay determinism"', 'the replay MUST feed the model the recorded summary text, byte for byte — never a re-summarization')).toEqual(sourceTexts);

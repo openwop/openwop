@@ -19,7 +19,7 @@ import { driver } from '../lib/driver.js';
 import { pollUntilTerminal } from '../lib/polling.js';
 import { isFixtureAdvertised } from '../lib/fixtures.js';
 import { req } from '../lib/requirement-ids.js';
-import { softSkip } from '../lib/soft-skip.js';
+import { softSkip, blockedDespiteAssertions } from '../lib/soft-skip.js';
 
 const CANDIDATES = ['conformance-append-ordering', 'conformance-multi-node'] as const;
 const FIXTURE = CANDIDATES.find((id) => isFixtureAdvertised(id)) ?? null;
@@ -49,31 +49,36 @@ interface RunEvent {
 describe.skipIf(SKIP)('append-ordering: folded channel reflects event sequence', () => {
   it('append-reducer channels project entries in event-sequence order', async () => {
     const create = await driver.post('/v1/runs', { workflowId: FIXTURE! });
-    expect(create.status).toBe(201);
-    const runId = (create.json as { runId: string }).runId;
-
-    await pollUntilTerminal(runId, { timeoutMs: 30_000 });
-
-    const events = await driver.get(`/v1/runs/${encodeURIComponent(runId)}/events`);
-    const list = (events.json as { events?: RunEvent[] }).events ?? [];
+    const runId = (create.json as { runId?: string } | undefined)?.runId;
 
     // Group channel.written events by channel.
     const byChannel = new Map<string, RunEvent[]>();
-    for (const e of list) {
-      if (e.type !== 'channel.written') continue;
-      const ch = e.payload?.channel;
-      if (typeof ch !== 'string') continue;
-      const arr = byChannel.get(ch) ?? [];
-      arr.push(e);
-      byChannel.set(ch, arr);
+    if (create.status === 201 && typeof runId === 'string') {
+      await pollUntilTerminal(runId, { timeoutMs: 30_000 });
+      const events = await driver.get(`/v1/runs/${encodeURIComponent(runId)}/events`);
+      const list = (events.json as { events?: RunEvent[] }).events ?? [];
+      for (const e of list) {
+        if (e.type !== 'channel.written') continue;
+        const ch = e.payload?.channel;
+        if (typeof ch !== 'string') continue;
+        const arr = byChannel.get(ch) ?? [];
+        arr.push(e);
+        byChannel.set(ch, arr);
+      }
+      // The conformance-multi-node fallback is not required to write an append
+      // channel, so when it wrote none the ordering rule has nothing to bind on this
+      // host. Decided before any assertion so the row is `inapplicable`, not a
+      // partial-witness pass on the run-created assertion.
+      if (byChannel.size === 0 && FIXTURE !== 'conformance-append-ordering') {
+        return softSkip('inapplicable', 'the conformance-multi-node fallback fixture wrote no append channel and the host advertises no conformance-append-ordering fixture');
+      }
     }
+    expect(create.status).toBe(201);
 
     if (byChannel.size === 0) {
-      // eslint-disable-next-line no-console
-      console.warn(
-        '[append-ordering] fixture emitted no channel.written events; skipping ordering assertions',
-      );
-      return softSkip('blocked', 'precondition not met — `byChannel.size === 0` returned early ([append-ordering] fixture emitted no channel.written events; skipping ordering assertions) (seam, prior step, or fixture unavailable)');
+      // The dedicated fixture exists to write an append channel, so a run of it with
+      // no channel.written leaves the ordering rule unobserved: blocked, not passed.
+      return blockedDespiteAssertions('conformance-append-ordering ran but emitted no channel.written event — append ordering is unobserved');
     }
 
     // For each channel, sequence MUST be strictly increasing within the run.
@@ -122,7 +127,7 @@ describe.skipIf(SKIP)('append-ordering: folded channel reflects event sequence',
 
     // Cross-check against the projected channel state on the run snapshot
     // (when surfaced) — projected array length MUST equal the number of writes.
-    const snapshot = await driver.get(`/v1/runs/${encodeURIComponent(runId)}`);
+    const snapshot = await driver.get(`/v1/runs/${encodeURIComponent(runId!)}`);
     const channels = (snapshot.json as { channels?: Record<string, unknown> }).channels ?? {};
     for (const [channel, writes] of byChannel) {
       const projected = (channels as Record<string, unknown>)[channel];

@@ -22,7 +22,7 @@
 
 import { describe, it, expect } from 'vitest';
 import { driver } from '../lib/driver.js';
-import { seamAbsent, softSkip } from '../lib/soft-skip.js';
+import { seamAbsent, blockedDespiteAssertions } from '../lib/soft-skip.js';
 import { mcpServerMount } from '../lib/mcp-mount.js';
 import { behaviorGate } from '../lib/behavior-gate.js';
 import { capabilityFamily } from '../lib/discovery-capabilities.js';
@@ -56,10 +56,10 @@ describe.skipIf(!process.env.OPENWOP_BASE_URL)('RFC 0153 §D — mcp-cache-tenan
       // Shape only; the cross-caller half is unobservable without a second credential.
       // eslint-disable-next-line no-console
       console.warn('[mcp-cache-tenant-scope] OPENWOP_TEST_SECONDARY_API_KEY not set — cross-caller half not exercised (blocked)');
-      return softSkip('blocked', 'precondition not met — `!other` returned early ([mcp-cache-tenant-scope] OPENWOP_TEST_SECONDARY_API_KEY not set — cross-caller half not exercised (blocked)) (seam, prior step, or fixture unavailable)');
+      return blockedDespiteAssertions('OPENWOP_TEST_SECONDARY_API_KEY is unset — the cross-caller half (a per-caller list MUST be cacheScope private) is unobserved');
     }
     const theirs = await listAs(other);
-    if (theirs.status !== 200) return softSkip('blocked', 'precondition not met — `theirs.status !== 200` returned early (seam, prior step, or fixture unavailable)');
+    if (theirs.status !== 200) return blockedDespiteAssertions('tools/list under the secondary credential did not answer 200 — the cross-caller comparison is unobserved');
     const same = JSON.stringify(mine.body.result?.tools) === JSON.stringify(theirs.body.result?.tools);
     if (!same) {
       expect(mine.body.result?.cacheScope, req('openwop.it.mcp-cache-tenant-scope.a-per-caller-list-is-cachescope-private-a-public-list-is-byte-identical-across-c', 'mcp-integration.md §D', 'a list that differs per caller MUST be cacheScope private — a public list that differs is cross-context cache poisoning (mcp-cache-tenant-scoped)')).toBe('private');

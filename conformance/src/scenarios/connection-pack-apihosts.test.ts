@@ -48,7 +48,7 @@ import { driver } from '../lib/driver.js';
 import { behaviorGate } from '../lib/behavior-gate.js';
 import { readCapabilityFamily } from '../lib/discovery-capabilities.js';
 import { req } from '../lib/requirement-ids.js';
-import { softSkip } from '../lib/soft-skip.js';
+import { softSkip, blockedDespiteAssertions } from '../lib/soft-skip.js';
 
 const SCHEMA_PATH = join(SCHEMAS_DIR, 'connection-pack-manifest.schema.json');
 const APIHOSTS_FIXTURE = join(FIXTURES_DIR, 'connection-packs', 'connection-pack-apihosts-valid.json');
@@ -188,7 +188,7 @@ describe('connection-pack apiHosts — behavioral egress allow-list (RFC 0120 it
 
     for (const evil of ['evil.com', 'notfacebook.com', 'facebook.com.evil.com']) {
       const denied = await probe(evil);
-      if (denied === undefined) return softSkip('blocked', 'precondition not met — `denied === undefined` returned early (soft-skip) (seam, prior step, or fixture unavailable)'); // soft-skip
+      if (denied === undefined) return blockedDespiteAssertions('the egress-check seam stopped answering on a non-matching host — fail-closed egress is unobserved');
       expect(
         denied.allowed,
         req('openwop.it.connection-pack-apihosts.permits-a-credential-bearing-egress-to-an-apihosts-match-fails-closed-otherwise', 'connection-packs.md §Manifest item 10', `egress to "${evil}" (no apiHosts match) MUST fail closed — no credential sent`),

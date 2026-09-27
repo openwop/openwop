@@ -30,7 +30,7 @@ import { capabilityFamily } from '../lib/discovery-capabilities.js';
 import { getA2AFakePeer } from '../lib/a2a-fake-peer.js';
 import { readErrorCode } from '../lib/error-envelope.js';
 import { req } from '../lib/requirement-ids.js';
-import { softSkip } from '../lib/soft-skip.js';
+import { softSkip, seamAbsent } from '../lib/soft-skip.js';
 
 /**
  * Callback-shaped: the host issues A2A calls to the suite's fake peer, which records the negotiated version header.
@@ -80,17 +80,11 @@ describe('RFC 0152 §B — A2A version negotiation', () => {
     peer.reset();
     const drive = await driver.post('/v1/host/sample/a2a/invoke', { peerUrl: peer.hostFacingEndpoint() });
     if (drive.status === 404 || drive.status === 403) {
-      // Seam absent. RFC 0148 §A: unobservable resolves to `blocked`, not a pass.
-      expect(
-        drive.status,
-        req('openwop.it.a2a-version-negotiation.outbound-calls-carry-an-explicit-a2a-version-header', 
-          'RFCS/0152 §B',
-          'a host advertising A2A version negotiation MUST expose an invoke seam so the negotiated ' +
-            'version is observable. Without it the requirement cannot be witnessed and resolves to ' +
-            '`blocked` per RFC 0148 §A.',
-        ),
-      ).not.toBe(404);
-      return softSkip('blocked', 'precondition not met — `drive.status === 404 || drive.status === 403` returned early (seam, prior step, or fixture unavailable)');
+      // A host advertising A2A version negotiation MUST expose the invoke seam so the negotiated
+      // version is observable. Default mode records `blocked` (RFC 0148 §A); strict mode
+      // fails (RFC 0148 §B). This was a not-404 assert followed by a blocked note, so a 403
+      // recorded a partial-witness pass at major 1.
+      return seamAbsent(`host advertises A2A version negotiation but the invoke seam /v1/host/sample/a2a/invoke answered ${drive.status}`);
     }
     const calls = peer.invocations().filter((i: { method: string }) => i.method !== 'GET');
     expect(calls.length, req('openwop.it.a2a-version-negotiation.outbound-calls-carry-an-explicit-a2a-version-header', 'RFCS/0152 §B', 'the host MUST have called the peer')).toBeGreaterThan(0);

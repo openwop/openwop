@@ -50,6 +50,8 @@ describe('v2 min-client-version (RFC 0172 §A.5 — gated on minClientVersion)',
     if (res.status !== 426 && (res.status < 200 || res.status >= 300)) {
       return blockedDespiteAssertions(`the host advertises minClientVersion ${String(floor)} and answered ${res.status} to a client announcing 0.0.1 — neither served (the MAY) nor refused with the registered 426 client_version_unsupported; the refusal form was not observed`);
     }
+    // partial-witness-ok: the minClientVersion grammar MUST was asserted above; refusing a
+    // below-floor client is a MAY and this host served it, so the 426 shape binds nothing.
     if (res.status !== 426) return softSkip('inapplicable', `the host advertises minClientVersion ${String(floor)} but served a client announcing 0.0.1 (${res.status}) — refusal is a MAY; nothing further is observable`);
     expect(readErrorCode(res.json), req('openwop.requirement.0172.min-client-version', DOC, 'a 426 refusal MUST carry client_version_unsupported')).toBe('client_version_unsupported');
     const r = v2Validator('error-envelope')(res.json);

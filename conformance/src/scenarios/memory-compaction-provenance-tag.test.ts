@@ -117,6 +117,8 @@ describe('memory-compaction-provenance-tag: compacted-from:<id> tag follows §C 
     if (provenance === undefined) {
       // eslint-disable-next-line no-console
       console.warn('[rfc0012-tag] output entry has no compacted-from:<id> tag — RFC 0012 §C is SHOULD, not MUST; pass with warning');
+      // partial-witness-ok: RFC 0012 §C tagging is a SHOULD. An untagged entry is this leg's
+      // "omits it cleanly" branch, and the entry was located and inspected above.
       return softSkip('inapplicable', '[rfc0012-tag] output entry has no compacted-from:<id> tag — RFC 0012 §C is SHOULD, not MUST; pass with warning');
     }
     expect(provenance, req('openwop.it.memory-compaction-provenance-tag.compacted-entry-carries-a-well-formed-compacted-from-tag-or-omits-it-cleanly-no', 
