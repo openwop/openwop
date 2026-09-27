@@ -110,12 +110,11 @@ One optional request header, injected by `scripts/derive-v2-api.py` beside `Open
 +      required: false
 +      schema:
 +        type: string
-+        pattern: ^(0|[1-9][0-9]*)\.(0|[1-9][0-9]*)(\.(0|[1-9][0-9]*))?$
 +      description: The protocol version the client implements (versioning.md §1.5). Compared with minClientVersion on
 +        major and minor. A malformed value is treated as absent and MUST NOT produce a 400. Never selects a contract.
 ```
 
-The `pattern` states what a client sends; the description states what a host does with anything else. No schema, error code, status, event or discovery field changes. `426` is not added to each operation's `responses`, matching `406 protocol_version_unsupported`, which is declared in `versioning.md` §1.3 and `errors.json` rather than per operation.
+The schema carries no `pattern` (changed 2026-09-27, before `Active` merged): a host that validates requests against the OpenAPI document would otherwise answer `400` to a malformed value, which this RFC forbids. The grammar lives in the description and `versioning.md` §1.5. No schema, error code, status, event or discovery field changes. `426` is not added to each operation's `responses`, matching `406 protocol_version_unsupported`, which is declared in `versioning.md` §1.3 and `errors.json` rather than per operation.
 
 ### Examples
 

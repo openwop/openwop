@@ -375,7 +375,7 @@ def v2_openapi_and_seams():
     comps.setdefault('parameters', {})['OpenWOPVersion'] = {'name': 'OpenWOP-Version', 'in': 'header', 'required': False, 'schema': {'type': 'string', 'pattern': '^(0|[1-9][0-9]*)\\.(0|[1-9][0-9]*)$'}, 'description': ("Selects one of the host's listed major.minor versions. Absent, the host uses its `preferredVersion`; an "
                                                                                                                                                                                                                           'unlisted value is 406 protocol_version_unsupported.')}
     # RFC 0219: the client announces the protocol version it implements (versioning.md §1.5).
-    comps['parameters']['OpenWOPClientVersion'] = {'name': 'OpenWOP-Client-Version', 'in': 'header', 'required': False, 'schema': {'type': 'string', 'pattern': '^(0|[1-9][0-9]*)\\.(0|[1-9][0-9]*)(\\.(0|[1-9][0-9]*))?$'},
+    comps['parameters']['OpenWOPClientVersion'] = {'name': 'OpenWOP-Client-Version', 'in': 'header', 'required': False, 'schema': {'type': 'string'},
                                                    'description': ('The protocol version the client implements (versioning.md §1.5). Compared with `minClientVersion` on major.minor. '
                                                                    'A malformed value is treated as absent and MUST NOT produce a 400. Never selects a contract.')}
     comps.setdefault('headers', {})['OpenWOPVersion'] = {'schema': {'type': 'string'}, 'description': 'The contract that produced this response. It MUST equal the one used.', 'required': True}
