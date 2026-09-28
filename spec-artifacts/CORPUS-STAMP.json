@@ -268,7 +268,7 @@
     "spec/v2/ext/portability/README.md": "c59423ee446638b748a911b9e97e803c4786157be6120f656f0a060586bc7b82",
     "spec/v2/ext/provider-idempotency/README.md": "9d1bccef0ec16a19a3370ae79c2f5a1726ce0d1d25a51352907f288a2ccb15d7",
     "spec/v2/ext/provider-idempotency/registry.json": "5b5fecad604fb4ab38da39f5abe697a4e57b05406c398f8afeb377331b2bd965",
-    "spec/v2/ext/restTransport/README.md": "acda51f1a973308841861a119def691db972f310c7b7250ab14f248e9c968585",
+    "spec/v2/ext/restTransport/README.md": "a8115faefeab01b7c85d516de60ebfc99b8e89552d16ba654456224518447b28",
     "spec/v2/ext/sandbox-runtime-notes/README.md": "0d1290fb1e20b2e35c0b15051541ab6546e4e2a6f693b4f912cb3f7d6a65e92c",
     "spec/v2/ext/webResearch/README.md": "b675e6f6646128d781b661f754c2393eed86e5935d16c3a22df582a5ce025b9b",
     "spec/v2/facets/a2a.schema.json": "b68bf5e29e455e46c2ad7cfcccf5963730ec2310ff9db81884550d8df30fd6ef",
@@ -302,5 +302,5 @@
     "spec/v2/retention-floors.json": "eaf3722d95c79947af1d4269ef85117e126518c588cfcf1a2b21b97269f51624",
     "spec/v2/surface-baseline.json": "d5b4e6c55a1d4bbe54241f9d0d020e7f9857f29912bb9f2ef910087b276be7e6"
   },
-  "corpusCommit": "31673ed04e60405296f7fa327d84c9c99b723b6e"
+  "corpusCommit": "5ec5bef58ba9c98c37308454825848013e0d7ea9"
 }
