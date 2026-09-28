@@ -4,7 +4,7 @@
     "schemas/v2/**/*.json",
     "spec/v2/path-manifest.json"
   ],
-  "release": "2.43.2",
+  "release": "2.44.0",
   "kinds": {
     "union": [
       "channel",
@@ -18,7 +18,7 @@
       "type"
     ]
   },
-  "count": 8552,
+  "count": 8557,
   "surfaces": [
     "schemas/v2/a2a-task-state.schema.json#/contextId|type|string",
     "schemas/v2/a2a-task-state.schema.json#/interruptKind|enum-member|\"approval\"",
@@ -3521,9 +3521,11 @@
     "schemas/v2/capabilities.schema.json#/webhooks/retryPolicy/backoff|enum-member|\"none\"",
     "schemas/v2/capabilities.schema.json#/webhooks/retryPolicy/backoff|type|string",
     "schemas/v2/capabilities.schema.json#/webhooks/retryPolicy/maxAttempts|type|integer",
+    "schemas/v2/capabilities.schema.json#/webhooks/retryPolicy/maxElapsedMs|type|integer",
     "schemas/v2/capabilities.schema.json#/webhooks/retryPolicy|closed|true",
     "schemas/v2/capabilities.schema.json#/webhooks/retryPolicy|property|backoff",
     "schemas/v2/capabilities.schema.json#/webhooks/retryPolicy|property|maxAttempts",
+    "schemas/v2/capabilities.schema.json#/webhooks/retryPolicy|property|maxElapsedMs",
     "schemas/v2/capabilities.schema.json#/webhooks/retryPolicy|required|backoff",
     "schemas/v2/capabilities.schema.json#/webhooks/retryPolicy|required|maxAttempts",
     "schemas/v2/capabilities.schema.json#/webhooks/retryPolicy|type|object",
@@ -5365,8 +5367,10 @@
     "schemas/v2/error-envelope.schema.json#/error|enum-member|\"interrupt_token_invalid\"",
     "schemas/v2/error-envelope.schema.json#/error|enum-member|\"key_revoked\"",
     "schemas/v2/error-envelope.schema.json#/error|enum-member|\"loop_limit_exceeded\"",
+    "schemas/v2/error-envelope.schema.json#/error|enum-member|\"mcp_error\"",
     "schemas/v2/error-envelope.schema.json#/error|enum-member|\"mcp_mrtr_rounds_exceeded\"",
     "schemas/v2/error-envelope.schema.json#/error|enum-member|\"mock_provider_forbidden\"",
+    "schemas/v2/error-envelope.schema.json#/error|enum-member|\"node_config_invalid\"",
     "schemas/v2/error-envelope.schema.json#/error|enum-member|\"not_found\"",
     "schemas/v2/error-envelope.schema.json#/error|enum-member|\"oauth_provider_unsupported\"",
     "schemas/v2/error-envelope.schema.json#/error|enum-member|\"oauth_scope_unsupported\"",
@@ -5405,6 +5409,7 @@
     "schemas/v2/error-envelope.schema.json#/error|enum-member|\"runner_unavailable\"",
     "schemas/v2/error-envelope.schema.json#/error|enum-member|\"sandbox_capability_denied\"",
     "schemas/v2/error-envelope.schema.json#/error|enum-member|\"sandbox_escape_attempt\"",
+    "schemas/v2/error-envelope.schema.json#/error|enum-member|\"sandbox_invocation_error\"",
     "schemas/v2/error-envelope.schema.json#/error|enum-member|\"sandbox_memory_exceeded\"",
     "schemas/v2/error-envelope.schema.json#/error|enum-member|\"sandbox_timeout\"",
     "schemas/v2/error-envelope.schema.json#/error|enum-member|\"schedule_horizon_exceeded\"",
