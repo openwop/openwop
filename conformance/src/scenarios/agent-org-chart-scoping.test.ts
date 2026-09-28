@@ -29,9 +29,30 @@
  */
 
 import { describe, it, expect } from 'vitest';
+import { readFileSync } from 'node:fs';
+import { join } from 'node:path';
+import Ajv2020 from 'ajv/dist/2020.js';
+import addFormats from 'ajv-formats';
 import { behaviorGate } from '../lib/behavior-gate.js';
 import { readOrgChartCap, getOrgChartResponse, getDepartmentView, type OrgChart } from '../lib/agentOrgChart.js';
+import { SCHEMAS_DIR } from '../lib/paths.js';
 import { req } from '../lib/requirement-ids.js';
+
+function loadSchema(name: string): Record<string, unknown> {
+  return JSON.parse(readFileSync(join(SCHEMAS_DIR, name), 'utf8')) as Record<string, unknown>;
+}
+
+/** A validator for `schemas/<name>.schema.json` (this file targets major 1;
+ *  the major-2 twin is `v2-agent-org-chart-served-shape.test.ts`). The
+ *  responsibility view `$ref`s the chart's `$defs`, so the chart schema is
+ *  registered first. */
+function servedShapeValidator(name: 'agent-org-chart' | 'org-chart-responsibility-view'): (d: unknown) => { ok: boolean; errors: string } {
+  const ajv = new Ajv2020({ strict: false, allErrors: true });
+  addFormats(ajv);
+  if (name !== 'agent-org-chart') ajv.addSchema(loadSchema('agent-org-chart.schema.json'));
+  const validate = ajv.compile(loadSchema(`${name}.schema.json`));
+  return (d: unknown) => ({ ok: validate(d) as boolean, errors: ajv.errorsText(validate.errors, { separator: '; ' }) });
+}
 
 const ROSTER_ID_RE = /^host:[a-z0-9][a-z0-9._-]*$/;
 
@@ -156,6 +177,48 @@ describe('agent-org-chart-scoping (RFC 0087 §A/§C/§D)', () => {
         probe.status === 404,
         req('openwop.it.agent-org-chart-scoping.serves-the-normative-org-chart-responsibility-roll-up-tree-shaped-and-tenant-sco', 'agent-org-chart.md §C / RFC 0074', 'GET /v1/agents/org-chart/{id} for a cross-tenant department MUST 404 (no cross-tenant disclosure)'),
       ).toBe(true);
+    }
+  });
+});
+
+// Org-chart served-shape leg (2026-09-28). Leg 1 above walks the chart's tree
+// and member references but never validated the body against the schema, so a
+// host serving its stored record (`{ tenantId, departments, members, updatedAt }`
+// — `owner` missing, two extra keys on an `additionalProperties:false` object)
+// passed at both majors; openwop-app did exactly that (fixed in openwop-app
+// #4189). This leg validates the SERVED bodies of the normative read pair
+// against `agent-org-chart.schema.json` / `org-chart-responsibility-view.schema.json`;
+// `v2-agent-org-chart-served-shape.test.ts` is the same leg at major 2.
+describe('agent-org-chart-scoping: served shape (RFC 0087 §A/§D)', () => {
+  it('serves the org-chart read pair in the exact schema shape', async () => {
+    const cap = await readOrgChartCap();
+    if (!behaviorGate('openwop-org-chart-scoping', cap?.supported === true)) return;
+
+    const chartRes = await getOrgChartResponse();
+    expect(
+      chartRes.status,
+      req('openwop.it.agent-org-chart-scoping.serves-the-org-chart-read-pair-in-the-exact-schema-shape', 'agent-org-chart.md §A / §E', 'a host advertising agents.orgChart.supported MUST serve GET /v1/agents/org-chart with 200'),
+    ).toBe(200);
+    const chartCheck = servedShapeValidator('agent-org-chart')(chartRes.chart);
+    expect(
+      chartCheck.ok ? 'valid' : chartCheck.errors,
+      req('openwop.it.agent-org-chart-scoping.serves-the-org-chart-read-pair-in-the-exact-schema-shape', 'agent-org-chart.schema.json (RFC 0087 §A)', 'the served GET /v1/agents/org-chart body MUST validate against agent-org-chart.schema.json (owner required; no extra keys)'),
+    ).toBe('valid');
+
+    const probeDeptId = chartRes.chart?.departments?.[0]?.departmentId;
+    // The view leg needs a department to read; an empty chart is still
+    // validated above (an empty chart is a conforming chart).
+    if (cap?.responsibilityView === true && typeof probeDeptId === 'string') {
+      const { status, view } = await getDepartmentView(probeDeptId);
+      expect(
+        status,
+        req('openwop.it.agent-org-chart-scoping.serves-the-org-chart-read-pair-in-the-exact-schema-shape', 'agent-org-chart.md §D / §E', "a host advertising agents.orgChart.responsibilityView MUST serve GET /v1/agents/org-chart/{departmentId} with 200 for a department in the caller's chart"),
+      ).toBe(200);
+      const viewCheck = servedShapeValidator('org-chart-responsibility-view')(view);
+      expect(
+        viewCheck.ok ? 'valid' : viewCheck.errors,
+        req('openwop.it.agent-org-chart-scoping.serves-the-org-chart-read-pair-in-the-exact-schema-shape', 'org-chart-responsibility-view.schema.json (RFC 0087 §D)', 'the served GET /v1/agents/org-chart/{departmentId} body MUST validate against org-chart-responsibility-view.schema.json'),
+      ).toBe('valid');
     }
   });
 });
