@@ -13141,11 +13141,11 @@
       "rfc": "0223",
       "local": "G1",
       "section": "§Conformance",
-      "surface": "The routed case (a rejected gate followed over an `all_complete` or `any_failed` edge) has no witness: no registered fixture has a gate with an outgoing edge, and widening `conformance-approval` would force every host to re-register it.",
+      "surface": "The routed case (a rejected gate followed over an `all_complete` or `any_failed` edge) had no witness.",
       "witness": "unclassified",
       "requirementId": null,
-      "disposition": "transferred",
-      "target": "openwop#1700",
+      "disposition": "closed",
+      "target": null,
       "sources": [
         {
           "file": "RFCS/registers/0223-approval-reject-disposition.gaps.md",
@@ -13158,11 +13158,11 @@
       "rfc": "0223",
       "local": "G2",
       "section": "§Conformance",
-      "surface": "The timeout disposition has no witness: no registered fixture carries a gate with a short `timeoutMs`, and the suite cannot make a host's timer fire.",
+      "surface": "The timeout disposition had no witness.",
       "witness": "unclassified",
       "requirementId": null,
-      "disposition": "transferred",
-      "target": "openwop#1700",
+      "disposition": "closed",
+      "target": null,
       "sources": [
         {
           "file": "RFCS/registers/0223-approval-reject-disposition.gaps.md",
