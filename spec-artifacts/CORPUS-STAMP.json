@@ -1,7 +1,7 @@
 {
   "_comment": "Provenance of @openwop/spec-artifacts (RFC 0168 §D.2). files: SHA-256 per file; the conformance suite compares the installed peer against dist/spec-artifacts.lock.json at start.",
   "package": "@openwop/spec-artifacts",
-  "version": "2.43.0",
+  "version": "2.43.1",
   "corpusTag": "v2.43.0",
   "files": {
     "api/.redocly.lint-ignore.yaml": "bf5a8350b88a72fa43f59605ed8d903ed24b6cfccda5e45509c9f6ed9ee4e712",
@@ -204,13 +204,13 @@
     "schemas/workspace-file.schema.json": "464de85c2a068243084ee9c1d969bc7cd5d8f7948574e58450d6493c38a0e1e4",
     "spec/v1/alias-detectors.json": "29f21e0fb2c7a232a92a5c19b4cba3a86bc3b5e16f06780452f0421c66c6ec38",
     "spec/v1/capability-declaration-classes.json": "e7729aed5c4b4e1dd02abab0530f14cc95f5d4070fe51fb139e7f5cccefa00c6",
-    "spec/v1/core-standard-manifest.json": "4c43eec4ac5a43b026949f9d9c65d6b92f7b79706a185c4a147e232b1be0c945",
+    "spec/v1/core-standard-manifest.json": "0c23e7ab67fa69cda05de86da9dee127e62d82045137fcecc1684d3201feaa97",
     "spec/v1/deprecations.json": "46df807fb4adf0aae24671c20f69975cf3496e3bc3a521cb7e6ea556bdce563c",
     "spec/v1/deprecations.schema.json": "3e393c405d2a41b467d8c5e3c468549078df1ce6a6d2588fc488097b95d9b55b",
     "spec/v1/event-codemap.json": "3da60d884157793a360da532a9fcbbfb5285636db325a74cec94b34622186d97",
     "spec/v1/event-codemap.schema.json": "d05933b2e88103aff51a2f774df97b9bda065e0fc88dbd9b114cc47a32189174",
     "spec/v1/extensions.json": "79a60754aa16cbdbdb604f8e5c00038af535a1690a4d07bd5ff7c38f0256a7bc",
-    "spec/v1/gaps.json": "2d4e4772cd647b471f989bdb6416ca902b11e10d17dc7f84825bb9f2eef1314c",
+    "spec/v1/gaps.json": "5740c3cbfb94409851c3cb398d1099ff5d9a982f1ff41f36eab1f0a9b953de8d",
     "spec/v1/gaps.schema.json": "8fd83259f556553c9df0f53e7a82ca8c2a4771d471197f69b4e2ae0ceeacfd66",
     "spec/v1/migrations.json": "2efcd9064b2bc65a84a3b3d281aa86a91efd002690c1f4f14e8335c4a18194d1",
     "spec/v1/migrations.schema.json": "886779aa6c22e646db097f5df210adb018a4dd14a7b815465a18c8a7056c8f72",
@@ -302,5 +302,5 @@
     "spec/v2/retention-floors.json": "eaf3722d95c79947af1d4269ef85117e126518c588cfcf1a2b21b97269f51624",
     "spec/v2/surface-baseline.json": "d47f26c3194de0e0d42a731ecaeeae1c2adfdea8c09314792d15c02b50d62efb"
   },
-  "corpusCommit": "49be1aa2be9d835a80f934ce98dc4cebf0af46a4"
+  "corpusCommit": "7732c22e61924a3c6ca3848d6c6be7a5351545b3"
 }

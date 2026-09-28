@@ -7,7 +7,7 @@
 | **Status**        | `Active`                                                        |
 | **Author(s)**     | David Tufts (@davidscotttufts)                                  |
 | **Created**       | 2026-09-28                                                      |
-| **Updated**       | 2026-09-28 — amended in place with openwop-app evidence (evidence only, no decision changed): the `majority` threshold moves from an open question to a measured fact, and openwop-app's per-path gaps are recorded under §Compatibility. · 2026-09-28 — filed and moved `Draft → Active` in the filing PR (openwop #1692). **Comment window waived** by the steward. **STEWARD OVERRIDE of RFC 0147 §A.6**, which forbids a bootstrap waiver from shortening the window for RFCs affecting authorization and replay; an approval gate's outcome is an authorization decision (as it was for RFC 0213 §C), and §A's last rule governs replay. Logged in `MAINTAINERS.md` §"Bootstrap-phase RFC waivers". The evidence gate is not waived: `Accepted` waits for a certified host bundle that records the three `0223.reject-*` rows `executed-pass`, and the RFC 0156 §B retrospective review is owed. |
+| **Updated**       | 2026-09-28 — conformance only (openwop #1700): the routed and timeout legs and their fixtures land (`0223.reject-routed`, `0223.timeout-rejects`); gaps G1 and G2 closed. No rule changed. · 2026-09-28 — amended in place with openwop-app evidence (evidence only, no decision changed): the `majority` threshold moves from an open question to a measured fact, and openwop-app's per-path gaps are recorded under §Compatibility. · 2026-09-28 — filed and moved `Draft → Active` in the filing PR (openwop #1692). **Comment window waived** by the steward. **STEWARD OVERRIDE of RFC 0147 §A.6**, which forbids a bootstrap waiver from shortening the window for RFCs affecting authorization and replay; an approval gate's outcome is an authorization decision (as it was for RFC 0213 §C), and §A's last rule governs replay. Logged in `MAINTAINERS.md` §"Bootstrap-phase RFC waivers". The evidence gate is not waived: `Accepted` waits for a certified host bundle that records the three `0223.reject-*` rows `executed-pass`, and the RFC 0156 §B retrospective review is owed. |
 | **Affects**       | `spec/v2/core/interrupt.md` §Approval (new §Rejection; one sentence at `timeoutMs`) · `spec/v2/errors.json` (`approval_rejected`, `since` 2.43; the generated `schemas/v2/error-envelope.schema.json` and the `errors.md` table follow) · `schemas/v2/suspend-request.schema.json` (`ApprovalData.onTimeout` description only) · conformance: `v2-approval-reject-disposition.test.ts`, a coherence leg in `v2-error-registry-prose-parity.test.ts`, `fixtures.md` (suite 2.43.0) |
 | **Compatibility** | `additive` — a new registry row and a new normative requirement on a behaviour the v2 text left undefined (`COMPATIBILITY.md` §4, §2.4). No schema shape, status or existing code changes |
 | **Supersedes**    | —                                                               |
@@ -113,6 +113,8 @@ openwop-app fixes these in its own repository before the corpus release, as Mynd
 2. `openwop.requirement.0223.reject-recorded`: that run's `interrupt.resolved` carries `action: "reject"` and `decision: "rejected"`.
 3. `openwop.requirement.0223.reject-fails-node`: the gate's `node.failed` carries `approval_rejected` with `retryable: false`, and `run.failed.failedNodeId` is `gate`.
 4. `openwop.requirement.0223.quorum-reject-fails-run` (gated on the `conformance-interrupt-quorum` fixture, `inapplicable` when not advertised): one reject of three under `majority` leaves the run `waiting-approval` and emits no `interrupt.resolved`; the second fails the run with `approval_rejected`. The votes are distinguished by the resume value's `voter`, as in the major-1 `interrupt-quorum-resolution`; a host that counts both as one principal records `blocked`, not a failure.
+5. `openwop.requirement.0223.reject-routed` (gated on `conformance-approval-reject-routed`; added 2026-09-28, gap G1): the rejected gate still fails as a node (`approval_rejected`, `retryable: false`), its `any_failed` target runs to `node.completed`, its `all_success` target never runs, and the run completes. `node.skipped` is not required: §A says the `all_success` edge is not satisfied, not how a host records that.
+6. `openwop.requirement.0223.timeout-rejects` (gated on `conformance-approval-timeout`, a 1500 ms `timeoutMs` with no `onTimeout`; added 2026-09-28, gap G2): left unresolved, the gate is resolved by the host with `action: "timeout"`, `decision: "rejected"`, `reason: "timeout"`; it fails with `approval_rejected`, and `run.failed` carries the code and `failedNodeId: "gate"`.
 
 Coherence (server-free): a second leg in `v2-error-registry-prose-parity.test.ts` (`openwop.requirement.0223.code-registered`) checks the registry row, its prose home and that `onTimeout` declares no `default`.
 
@@ -128,8 +130,8 @@ The major-1 `interrupt-quorum-resolution` leg is **not** tightened to the code: 
 | §A the reject is recorded with `action` and `decision` (`0223.reject-recorded`) | `interrupt.resolved` payload | the suite, as above | witnessable — gated |
 | §A the node fails not retryable and `failedNodeId` names it (`0223.reject-fails-node`) | `node.failed`, `run.failed` payloads | the suite, as above | witnessable — gated |
 | §A the majority threshold and no resolve on a non-deciding vote (`0223.quorum-reject-fails-run`) | run status and events between votes | the suite, on `conformance-interrupt-quorum` | witnessable — gated |
-| §A a failure-admitting edge continues the run | the downstream node runs | a workflow author; no registered fixture has one | witnessable — gated (no fixture yet: G1, openwop #1700) |
-| §A the timeout disposition | `interrupt.resolved { action: timeout }` and the failure | the host's timer; no fixture carries a short `timeoutMs` | witnessable — gated (no fixture yet: G2, openwop #1700) |
+| §A a failure-admitting edge continues the run | the downstream node runs | the suite, on `conformance-approval-reject-routed` (`0223.reject-routed`) | witnessable — gated |
+| §A the timeout disposition | `interrupt.resolved { action: timeout }` and the failure | the host's timer, on `conformance-approval-timeout` (`0223.timeout-rejects`) | witnessable — gated |
 | §A replay derives, never re-decides | a replayed run fails identically | the suite, through `replay`, once a host witnesses row 1 | witnessable — gated (leg not yet written) |
 | §B the code is registered (`0223.code-registered`) | `spec/v2/errors.json` | the corpus | claims-check (corpus coherence, server-free) |
 
@@ -154,7 +156,7 @@ The major-1 `interrupt-quorum-resolution` leg is **not** tightened to the code: 
 
 - [x] `Active`: the `interrupt.md` §Rejection rule, the `approval_rejected` row, the `onTimeout` description, and the scenarios (suite 2.43.0).
 - [ ] `0223.reject-fails-run`, `0223.reject-recorded` and `0223.reject-fails-node` `executed-pass` on a committed certified host bundle.
-- [ ] A witness for the timeout disposition (G2).
+- [ ] A witness for the timeout disposition (G2): the leg and fixture exist (`0223.timeout-rejects`, openwop #1700) and pass on the v2 reference host with the fixture registered locally; the box closes on a committed certified bundle.
 
 ## References
 
@@ -162,4 +164,4 @@ The major-1 `interrupt-quorum-resolution` leg is **not** tightened to the code: 
 - `spec/v1/interrupt.md` §`ApprovalResume`.
 - RFC 0093 (timeout fails closed), RFC 0125 (`triggerRule` routes a failed node), RFC 0183 (`action`, `decision`), RFC 0186 (`reason`, `onTimeout`), RFC 0199 §C.4 (`connector_auth_declined`).
 - `spec/v2/core/overview.md` §0 (a producer MUST NOT emit an unregistered member).
-- openwop #1692; separate gaps #1696 (`onTimeout: approve`), #1697 (loop re-entry and the key rule), #1698 (registration scope of run-failure codes), #1699 (the `majority` threshold, closed by measurement), #1700 (the unwitnessed legs).
+- openwop #1692; separate gaps #1696 (`onTimeout: approve`), #1697 (loop re-entry and the key rule), #1698 (registration scope of run-failure codes), #1699 (the `majority` threshold, closed by measurement), #1700 (the routed and timeout legs, now witnessed).

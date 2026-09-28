@@ -49,6 +49,8 @@ All fixtures MUST advertise:
 | Approval                                  | `conformance-approval`                                                                          | Verifies HITL approval interrupt + resume                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                 | `completed` after resolve                                                           | unbounded (suspends)         |
 | Approval (refine)                         | `conformance-approval-refine`                                                                   | RFC 0183 — refine resolution carries action + refineFeedback                                                        |
 | Approval (edit-accept)                    | `conformance-approval-edit-accept`                                                                 | RFC 0183 — edit-accept resolution carries action + editedArtifactData                                                        |
+| Approval (reject routed) | `conformance-approval-reject-routed` | RFC 0223 G1 — a rejected gate is routed over an `any_failed` edge; its `all_success` sibling never runs | `completed` after reject | unbounded (suspends) |
+| Approval (timeout) | `conformance-approval-timeout` | RFC 0223 G2 — a 1500 ms `timeoutMs`, no `onTimeout`: the host's timer resolves the gate rejected | `failed` (`approval_rejected`) after the timeout | ~1.5 s + the host's sweep |
 | Clarification                             | `conformance-clarification`                                                                     | Verifies HITL clarification interrupt + resume                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                            | `completed` after resolve                                                           | unbounded (suspends)         |
 | Clarification (nested schema)             | `conformance-clarification-nested`                                                              | RFC 0199 §D.2(d) probe — an answer schema an MCP mount MUST NOT bridge in form mode                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                       | `completed` after resolve                                                           | unbounded (suspends)         |
 | Clarification (sensitive field)           | `conformance-clarification-sensitive`                                                           | RFC 0199 §D.2(d) probe — `format: "password"`; form mode MUST be refused                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                  | `completed` after resolve                                                           | unbounded (suspends)         |
@@ -210,6 +212,33 @@ The `messages`-mode stream fixture (AI token streaming) is covered by the determ
   4. The resolved event payload MUST carry `action: 'edit-accept'` and the `editedArtifactData` supplied.
   5. An `edit-accept` resolution supplying no `editedArtifactData` MUST be refused.
 - **Why it is separate**: same reason as `conformance-approval-refine` — widening a registered fixture's `actions` forces every host to re-register a test-only change.
+
+### `conformance-approval-reject-routed`
+
+- **Purpose**: witness that a rejected approval gate is a failed source a workflow can route (RFC 0223 §A, gap G1; `spec/v2/core/interrupt.md` §Rejection).
+- **Inputs**: none.
+- **Behavior**:
+  1. Run starts and reaches the `gate` (`core.approvalGate`, actions `accept | reject`).
+  2. Run status MUST be `waiting-approval`.
+  3. Client POSTs `{action: 'reject'}` to the interrupt.
+  4. `gate` MUST emit `node.failed` with `error.code` `approval_rejected` and `retryable: false`.
+  5. `on-reject` (incoming edge `triggerRule: any_failed`) MUST run to `node.completed`.
+  6. `on-accept` (incoming edge `triggerRule: all_success`) MUST NOT run: no `node.started` or `node.completed` for it. A host MAY record `node.skipped`; the spec does not require it.
+  7. Run reaches `completed`.
+- **Terminal status (after reject)**: `completed`.
+- **Why it is separate from `conformance-approval`**: that fixture has no edges, and giving it some would force every host to re-register a registered definition.
+
+### `conformance-approval-timeout`
+
+- **Purpose**: witness the timeout disposition (RFC 0223 §A, gap G2).
+- **Inputs**: none.
+- **Behavior**:
+  1. Run starts and reaches the `gate` (`core.approvalGate`, `config.timeoutMs: 1500`, no `onTimeout`). The host carries the node's `timeoutMs` onto the interrupt payload.
+  2. Run status MUST be `waiting-approval`.
+  3. Nobody resolves it. After the deadline, the host MUST resolve the gate itself: `interrupt.resolved` with `action: "timeout"`, `decision: "rejected"`, `reason: "timeout"`.
+  4. `gate` MUST emit `node.failed` with `error.code` `approval_rejected`, and `run.failed` MUST carry `approval_rejected` with `failedNodeId: "gate"`.
+- **Terminal status**: `failed`.
+- **Timing**: the suite waits up to 20 s (scaled) for the terminal state; a host's timer granularity is its own.
 
 ### `conformance-clarification`
 
@@ -588,6 +617,8 @@ conformance/
     conformance-approval.json
     conformance-approval-refine.json
     conformance-approval-edit-accept.json
+    conformance-approval-reject-routed.json
+    conformance-approval-timeout.json
     conformance-clarification.json
     conformance-multi-node.json
     conformance-idempotent.json
