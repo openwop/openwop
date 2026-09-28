@@ -13409,23 +13409,6 @@
       ]
     },
     {
-      "id": "openwop.gap.0223.9",
-      "rfc": "0223",
-      "local": "G9",
-      "section": "§Conformance",
-      "surface": "`openwop.requirement.0223.reject-loopback-reasks` (openwop #1697) has no positive witness on any host. The v2 reference host does not run cycles. MyndHyve runs request-changes loops over condition edges on a successful gate output, and does not route a failed node over `any_failed` (its Cloud Run executor has no `triggerRule` handling), so the row stays `inapplicable` there. openwop-app rejects cycles. The row exists and is negatively controlled: registering the fixture on a host that does not loop records `executed-fail`.",
-      "witness": "unclassified",
-      "requirementId": null,
-      "disposition": "externally-gated",
-      "target": "host-routes-failed-gate-over-cycle",
-      "sources": [
-        {
-          "file": "RFCS/registers/0223-approval-reject-disposition.gaps.md",
-          "token": "G9"
-        }
-      ]
-    },
-    {
       "id": "openwop.gap.0223.10",
       "rfc": "0223",
       "local": "G10",
@@ -13439,6 +13422,23 @@
         {
           "file": "RFCS/registers/0223-approval-reject-disposition.gaps.md",
           "token": "G10"
+        }
+      ]
+    },
+    {
+      "id": "openwop.gap.0223.11",
+      "rfc": "0223",
+      "local": "G11",
+      "section": "§Conformance",
+      "surface": "*(Renumbered from a second `G9` on 2026-09-28: two rows shared the local ID, so `spec/v1/gaps.json` carried `openwop.gap.0223.9` twice.)* `openwop.requirement.0223.reject-loopback-reasks` (openwop #1697) has no positive witness on any host. The v2 reference host does not run cycles. MyndHyve runs request-changes loops over condition edges on a successful gate output, and does not route a failed node over `any_failed` (its Cloud Run executor has no `triggerRule` handling), so the row stays `inapplicable` there. openwop-app rejects cycles. The row exists and is negatively controlled: registering the fixture on a host that does not loop records `executed-fail`.",
+      "witness": "unclassified",
+      "requirementId": null,
+      "disposition": "externally-gated",
+      "target": "host-routes-failed-gate-over-cycle",
+      "sources": [
+        {
+          "file": "RFCS/registers/0223-approval-reject-disposition.gaps.md",
+          "token": "G11"
         }
       ]
     },
