@@ -30725,7 +30725,7 @@
     {
       "id": "openwop.it.v2-manifest-hatch-carried.an-x-field-inside-a-prompt-template-of-a-prompt-pack-is-ignored-not-rejected-the",
       "file": "v2-manifest-hatch-carried.test.ts",
-      "line": 115,
+      "line": 119,
       "title": "an x- field inside a prompt template of a prompt pack is ignored, not rejected — the pack installs",
       "explicitId": "openwop.requirement.0177.manifest-hatch-carried.prompt-template-x-field",
       "citations": [
