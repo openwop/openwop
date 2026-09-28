@@ -234,7 +234,7 @@
     "spec/v2/core/node-pack-runtimes.md": "d52966319c53aaa03575025915b73b470a42832c039c41d73aff6931758630cb",
     "spec/v2/core/oauth.md": "57f167d899993b6959c243e4102819f4014b365299b9b2b253decd2781e6b8b7",
     "spec/v2/core/overview.md": "3dbc8c0cf7474b31816b1a12412c1edf5597066c38edcdbca4dd2e465880f65b",
-    "spec/v2/core/packs.md": "e46bf8cd34ac9566fe1e5601f67e7a17fce9639b8676e0f5278a10c6ca70ab29",
+    "spec/v2/core/packs.md": "4892f2805e1ffb6a03c21a4ab18a92b2d9ebdcf13b483188378cbfc226d1b17e",
     "spec/v2/core/persistence.md": "bba672ed3bf6d83af6e4e65c0f4f480fc21fe12207811e321306af2108d9010d",
     "spec/v2/core/portability.md": "a35fbe66b8b5ccf63cf0216157d4b61d4c47f6dc8e757c830569ddf244e21e8a",
     "spec/v2/core/replay.md": "a5be4e05242f25f8b5a8a4fb31bd359d5abb4bf34fa8e536403a8ee5779ab876",
@@ -302,5 +302,5 @@
     "spec/v2/retention-floors.json": "eaf3722d95c79947af1d4269ef85117e126518c588cfcf1a2b21b97269f51624",
     "spec/v2/surface-baseline.json": "d47f26c3194de0e0d42a731ecaeeae1c2adfdea8c09314792d15c02b50d62efb"
   },
-  "corpusCommit": "59f14edfc52cfd02adc036e5905b986dac9f7c5f"
+  "corpusCommit": "ac8ad183fff601385f24709913112463d5e89733"
 }
