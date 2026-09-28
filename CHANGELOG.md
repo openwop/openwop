@@ -299,6 +299,26 @@ Format follows [Keep a Changelog](https://keepachangelog.com/en/1/) loosely. Ver
 - **The remaining eleven stay `Active`, each for a stated reason** rather than for lack of attention. The eight RFC 0167 program children name a certified openwop-app bundle in their own acceptance criteria and the committed one reads `certified: false` (3 blocked rows, RFC 0168 §E.1). RFC 0173 additionally carries the program's only `open` gap row. RFC 0179's sole criterion is unmet — 2.4.2 stopped the gate reading "(Phase 4 leg)" as an excuse for it. RFC 0187 names three requirement ids that no scenario mints. RFC 0167 itself flips **last**, which 2.4.2 made a rule: the moment the umbrella stops being `Active`, every child still `Active` becomes permanently ineligible.
 - **The interrupt `data` union is bound to `kind`** (MCP/A2A review P3-H7, Class 3 correction — COMPATIBILITY.md §3). `schemas/suspend-request.schema.json` and its v2 twin typed `data` as an unbound `oneOf`, so the minimal `conversation.start` and `conversation.close` payloads (`{ conversationId }`, which satisfies both shapes) failed validation in v1 and v2, and a payload carrying another kind's `data` passed. `data` is now an `anyOf` and a root `allOf` binds each kind to its own shape with one `if`/`then`; no per-kind shape or `$id` changed. Witnessed by `conformance/fixtures/interrupt-payloads/` (suite 2.36.0).
 
+## [2.43.0] — 2026-09-28 — four RFCs: approval reject, registry operations, the audit anomaly shape, and a v2 home for audit-log integrity
+
+A suite minor. The packed `@openwop/spec-artifacts` tree changes: a new error-registry row (`approval_rejected`), a new capability family (`auditLogIntegrity`), and the audit verify schema's anomaly shape.
+
+### Protocol
+
+- **RFC 0223 `Active` (#1701): a rejected approval gate fails closed, and the failure is routable.** New error code `approval_rejected`.
+- **RFC 0222 `Active` (#1702): v2 registry operations.** Lifecycle changes are publications, and a yanked version stays served but is never `latest` or matched by a range. Only an `active` key signs a new version, and a verifier never refuses a version for its key's status.
+- **RFC 0218 §C (#1703): the audit anomaly shape.** `anomalies[]` entries carry a `kind`, and `chainValid` is false exactly when anomalies are present (Class 3, `openwop.correction.v2.3`).
+- **RFC 0224 `Active` (#1709): audit-log integrity gets a v2 home.** A new `auditLogIntegrity` family gates `/audit/verify`, and `security-defaults.md` §"Audit-log integrity" states the rules.
+- **RFC 0220 `Active` (#1707): six extension families are `Stable`.**
+
+### Conformance
+
+- New scenarios `v2-approval-reject-disposition`, `v2-registry-lifecycle` (reads a registry, gated on `OPENWOP_REGISTRY_URL`) and `audit-anomaly-shape` (server-free).
+- `audit-log-integrity` and `audit-checkpoint-signature` run at both majors, with a new checkpoint-cadence leg.
+- The surface-monotone gate licenses a `required` under a `then` whose selector pins only values new in the same diff.
+- `byok-roundtrip` records `blocked` instead of an unclassified return (#1708), so a host without the BYOK fixture loses only `openwop-secrets` rather than its whole certification.
+- **Suite `2.43.0`**: 570 scenario files. `@openwop/spec-artifacts` moves in lockstep at the same exact pin.
+
 ## [2.42.9] — 2026-09-28 — a v2 delivery's workspaceId is checked, and two test-isolation and SHOULD-strength fixes
 
 A suite patch. No canonical wire change.
