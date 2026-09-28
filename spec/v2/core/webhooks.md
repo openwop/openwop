@@ -124,4 +124,4 @@ At delivery time a host MUST re-resolve the hostname, validate every resolved ad
 
 See also: events.md, replay.md, persistence.md, security-defaults.md.
 
-*Sources: RFC 0053, RFC 0165, RFC 0171, RFC 0173, RFC 0176, RFC 0188, RFC 0196, RFC 0201, RFC 0215, RFC 0217.*
+*Sources: RFCs 0053, 0165, 0171, 0173, 0176, 0188, 0196, 0201, 0215, 0217.*

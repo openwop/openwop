@@ -35,8 +35,11 @@ Per-kind rules:
 
 ### Re-entry and resume values
 
-`key` is the deterministic re-entry key.
+`key` is the deterministic re-entry key of one invocation. A host MUST derive it from at least the run, the node and the node's visit index: the number of that node's interrupts in this run whose resolution was consumed before this execution began. Its spelling is host-defined.
 
+- A replay or recovery of the same execution MUST re-derive the same key.
+- A later execution of the node, reached over an edge, MUST derive a different key, MUST raise a new `interrupt.requested`, and MUST NOT return an earlier visit's `resumeValue`.
+- Two interrupts raised in one execution MUST have distinct keys.
 - A host MUST invoke an interrupt with key `K` at most once for the lifetime of the run.
 - On recovery the engine MUST consult the event log, find the prior `interrupt.resolved`, and return the persisted `resumeValue` without emitting a second `interrupt.requested`.
 - An in-memory cache MAY serve in-process replays but MUST NOT replace the event log for cross-process replays.
@@ -126,7 +129,7 @@ A `reject` exits the suspend. The host MUST record `action: "reject"` and `decis
 
 ## Approver enforcement
 
-Enforcement is an obligation of the fields, not a discovery flag. The facet `spec/v2/facets/interrupt.schema.json` carries `tokenAlgs[]` (REQUIRED) and `refKinds[]` ⊆ `principal`, `group`, `role`.
+The facet `spec/v2/facets/interrupt.schema.json` carries `tokenAlgs[]` (REQUIRED) and `refKinds[]` ⊆ `principal`, `group`, `role`.
 
 - **`approversList`** (explicit principals) binds everywhere: a host advertising `interrupt` MUST refuse a resolver not in the list.
 - **`approverGroupRefs`** binds only where `refKinds` includes `group`: the host MUST surface the field unchanged and MUST resolve and enforce its members as eligible approvers.

@@ -36,4 +36,4 @@ Fragment edges carry the same `condition` and `triggerRule` shapes as a top-leve
 
 A host MUST carry both fields through expansion verbatim and MUST honor them on expanded edges as on authored ones. [form-content-packs.md](form-content-packs.md) reuses this operator set for field visibility.
 
-*Sources: RFC 0133, RFC 0177.*
+*Sources: RFCs 0133, 0177.*

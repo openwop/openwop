@@ -40,4 +40,4 @@ A form instantiated from a pack advertised through `forms.contentPacks` MUST be 
 
 The five spec-reserved `format` values are the core set. A host that recognizes a format SHOULD apply it; one that does not MUST ignore it and accept plain text. A host MUST ignore `format` on any type other than `text` or `longtext`.
 
-*Sources: RFC 0137, RFC 0177.*
+*Sources: RFCs 0137, 0177.*

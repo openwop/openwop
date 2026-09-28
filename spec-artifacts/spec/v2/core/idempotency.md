@@ -68,4 +68,4 @@ Layer 1 deduplicates the caller's request; Layer 2 deduplicates the run's effect
 - `multiRegion` is the behavioural claim. When a host advertises it, both layers MUST hold across regions: an `Idempotency-Key` replayed into a second region MUST resolve to the first region's response rather than starting new work, and effect identity MUST collapse a duplicate effect wherever it is observed.
 - A host that does not advertise `multiRegion` makes no cross-region promise, and a client MUST NOT infer one from `crossRegion` alone.
 
-*Sources: RFC 0170, RFC 0171, RFC 0173, RFC 0213.*
+*Sources: RFCs 0170, 0171, 0173, 0213.*
