@@ -1,6 +1,7 @@
 import { describe, it, expect } from 'vitest';
 import { createHash, generateKeyPairSync } from 'node:crypto';
-import { signBundleV3, verifyBundleV3, witnessDigest, verifierSign, publicKeyFromPrivate, canonicalJSON, optedOutFromRows, type BundleV3 } from './certification-bundle-v3.js';
+import { signBundleV3, verifyBundleV3, witnessDigest, verifierSign, publicKeyFromPrivate, canonicalJSON, optedOutFromRows, sealBundleV3, type BundleV3 } from './certification-bundle-v3.js';
+import { scrubEvidence, redactionMarker } from './certification-bundle-verify.js';
 
 const pem = (k: ReturnType<typeof generateKeyPairSync>['privateKey']) => k.export({ type: 'pkcs8', format: 'pem' }) as string;
 const host = generateKeyPairSync('ed25519');
@@ -260,5 +261,33 @@ describe('opt-outs derive from rows shaped like a REAL bundle (2.35.1)', () => {
       { id: 'openwop.it.v2-forms.when', result: 'skipped', detail: `${OLD}: family.forms` },
       { id: 'openwop.it.v2-x.pass', result: 'executed-pass', detail: `${OLD}: family.ignored` },
     ])).toEqual(['family.forms', 'family.sandbox']);
+  });
+  // Suite 2.43.0 cut openwop-app at major 1 and refused its own bundle:
+  // `[witness-digest] witnessSha256 b69d1cc8201e does not equal the digest of
+  // the rows…`. The emitter digested and signed the raw rows, then scrubbed the
+  // finished bundle; a configured secret in one row's `detail` was redacted
+  // after the digest was taken. The first case replays that order and pins the
+  // refusal; the second is the emitter's order now.
+  const SECRET = 'sk-live-0123456789abcdef';
+  const leaky = [
+    { id: 'openwop.it.byok.roundtrip', scenario: 'byok-roundtrip.test.ts', result: 'blocked' as const, detail: `401 body: {"error":"bad key ${SECRET}"}` },
+    ...good,
+  ];
+  it('pins the defect: digest-then-scrub ships rows that do not hash to witnessSha256', () => {
+    const u = unsigned(leaky);
+    const signed: BundleV3 = { ...u, signature: signBundleV3(u, pem(host.privateKey), 'host-key-1') };
+    const shipped = scrubEvidence(signed, [SECRET]).value;
+    expect(verifyBundleV3(shipped, { hostPublicKeyPem: hostPub }).rejections.map((r) => r.kind)).toContain('witness-digest');
+  });
+  it('sealBundleV3 scrubs before it digests and signs, so a redacted row still verifies', () => {
+    const { witnessSha256: _raw, ...draft } = unsigned(leaky);
+    const sealed = sealBundleV3(draft, [SECRET], pem(host.privateKey), 'host-key-1');
+    expect(sealed.redactedAt.length).toBeGreaterThan(0);
+    expect(JSON.stringify(sealed.bundle)).not.toContain(SECRET);
+    expect(sealed.bundle.results.requirements[0]?.detail).toContain(redactionMarker(SECRET));
+    const v = verifyBundleV3(sealed.bundle, { hostPublicKeyPem: hostPub });
+    expect(v.rejections.map((r) => r.kind)).not.toContain('witness-digest');
+    expect(v.signatureVerified).toBe(true);
+    expect(sealed.bundle.witnessSha256).toBe(witnessDigest(sealed.bundle.results.requirements));
   });
 });

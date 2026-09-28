@@ -46,7 +46,7 @@ import { readLedgerFile } from './lib/requirement-ledger.js';
 import { deriveRung, emittedByNewerSuite, type RowEvidence } from './lib/durability-evidence.js';
 import { deriveRequirementDispositions } from './lib/scenario-disposition.js';
 import { scrubEvidence, evidenceSecretsFromEnv, verifyBundleV2 } from './lib/certification-bundle-verify.js';
-import { publicKeyFromPrivate, signBundleV3, verifierSign, verifyBundleV3, witnessDigest, type BundleV3, type BundleV3Requirement } from './lib/certification-bundle-v3.js';
+import { publicKeyFromPrivate, sealBundleV3, verifierSign, verifyBundleV3, type BundleV3, type BundleV3Requirement } from './lib/certification-bundle-v3.js';
 import { canonicalJSON, parseIJson } from './lib/jcs.js';
 import {
   deriveProfiles,
@@ -718,7 +718,7 @@ async function runCertify(args: ParsedArgs, baseUrl: string, apiKey: string): Pr
     if (rows3.some((r) => r.id.startsWith('openwop.requirement.0158.') && r.result === 'executed-pass' && r.id !== 'openwop.requirement.0158.poison-exhaustion')) {
       process.stderr.write(`openwop-conformance --certify: RFC 0158 rung — ${rung3.rung ?? 'NONE'} (${rung3.why})\n`);
     }
-    const unsigned: Omit<BundleV3, 'signature'> = {
+    const draft: Omit<BundleV3, 'signature' | 'witnessSha256'> = {
       bundleVersion: '3',
       generatedAt: new Date().toISOString(),
       suite: { name: '@openwop/openwop-conformance', version, targetMajor: target.major, specArtifactsVersion: lock?.version ?? 'repo-layout', ...(lock ? { stampSha256: lock.stampSha256 } : {}) },
@@ -730,7 +730,6 @@ async function runCertify(args: ParsedArgs, baseUrl: string, apiKey: string): Pr
       discovery: { url: discoveryUrl, sha256, protocolVersions, preferredVersion, document },
       claimedProfiles: claimed3,
       results: { totals: totals3, requirements: rows3 },
-      witnessSha256: witnessDigest(rows3, relaxations, args.colocatedCompanion ? 'colocated-companion' : undefined),
       assertionCount: rows3.reduce((n, r) => n + (r.assertions ?? 0), 0),
       ...(nonPass.length ? { detail: { nonPass: nonPass.map((r) => ({ id: r.id, result: r.result, reason: r.detail ?? '' })) } } : {}),
       // RFC 0158 §D: claimed ONLY when these rows support it. The verifier
@@ -738,20 +737,24 @@ async function runCertify(args: ParsedArgs, baseUrl: string, apiKey: string): Pr
       // claimed more would be writing a bundle its own `--verify` rejects.
       ...(rung3.rung === null ? {} : { durability: { rung: rung3.rung } }),
     };
-    const signature = signBundleV3(unsigned, signingKeyPem, keyId);
-    const v3: BundleV3 = { ...unsigned, signature };
+    // The published keyId is never a secret, whichever variable carried it
+    // (evidenceSecretsFromEnv: the `_ID` exclusion is the rule, `except` is
+    // the belt for a host that names its env var differently). Scrubbed BEFORE
+    // the digest and the signature (sealBundleV3), so the signed rows are the
+    // written rows.
+    const secrets3 = evidenceSecretsFromEnv(process.env, [apiKey, signingKeyPem], [keyId]);
+    const sealed = sealBundleV3(draft, secrets3, signingKeyPem, keyId);
+    const { unsigned } = sealed;
+    const v3Out: BundleV3 = sealed.bundle;
+    if (sealed.redactedAt.length > 0) {
+      process.stderr.write(`openwop-conformance --certify: REDACTED ${sealed.redactedAt.length} evidence field(s) that carried a configured secret or the conformance canary: ${sealed.redactedAt.slice(0, 8).join(', ')}${sealed.redactedAt.length > 8 ? ', …' : ''}\n`);
+    }
     if (args.evidenceTier === 'independent') {
       const vk = args.verifierKeyPath ? readFileSync(args.verifierKeyPath, 'utf8') : process.env['OPENWOP_BUNDLE_VERIFIER_KEY'];
       const vkId = args.verifierKeyId ?? process.env['OPENWOP_BUNDLE_VERIFIER_KEY_ID'];
       if (!vk || !vkId) { process.stderr.write('openwop-conformance --certify: --evidence-tier independent needs --verifier-key and --verifier-key-id (RFC 0168 §E.2)\n'); process.exit(2); }
-      v3.verifierSignature = verifierSign(unsigned, vk, vkId);
+      v3Out.verifierSignature = verifierSign(unsigned, vk, vkId);
     }
-    // The published keyId is never a secret, whichever variable carried it
-    // (evidenceSecretsFromEnv: the `_ID` exclusion is the rule, `except` is
-    // the belt for a host that names its env var differently).
-    const secrets3 = evidenceSecretsFromEnv(process.env, [apiKey, signingKeyPem], [keyId]);
-    const scrubbed3 = scrubEvidence(v3, secrets3);
-    const v3Out = scrubbed3.value as BundleV3;
     const audit3 = verifyBundleV3(v3Out, { hostPublicKeyPem: publicKeyFromPrivate(signingKeyPem) });
     // `relaxed-profile-certified` is no longer excused: the emitter now computes
     // the relaxation into `certified`, so if the verifier still finds that

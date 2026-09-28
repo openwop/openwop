@@ -8,7 +8,7 @@
 | --- | --- |
 | **witness:** | `claims-check` |
 | **technical:** | `stable` |
-| **adoption:** | `single-witness` |
+| **adoption:** | `multi-witness` |
 | **peer-dependency id** | `kanban` |
 | **advertised as** | `extensions.<org>.kanban` |
 | **declared facets** | none defined |

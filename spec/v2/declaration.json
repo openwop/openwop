@@ -1822,7 +1822,7 @@
       "witness": "claims-check",
       "maturity": {
         "technical": "experimental",
-        "adoption": "none"
+        "adoption": "single-witness"
       },
       "facets": [],
       "floorScenarios": [],
@@ -1840,7 +1840,7 @@
       "witness": "claims-check",
       "maturity": {
         "technical": "stable",
-        "adoption": "single-witness"
+        "adoption": "multi-witness"
       },
       "facets": [],
       "floorScenarios": [],
@@ -1912,7 +1912,7 @@
       "witness": "claims-check",
       "maturity": {
         "technical": "stable",
-        "adoption": "single-witness"
+        "adoption": "multi-witness"
       },
       "facets": [],
       "floorScenarios": [],
@@ -1930,7 +1930,7 @@
       "witness": "claims-check",
       "maturity": {
         "technical": "stable",
-        "adoption": "single-witness"
+        "adoption": "multi-witness"
       },
       "facets": [],
       "floorScenarios": [],
@@ -1948,7 +1948,7 @@
       "witness": "claims-check",
       "maturity": {
         "technical": "experimental",
-        "adoption": "none"
+        "adoption": "single-witness"
       },
       "facets": [],
       "floorScenarios": [],
@@ -1984,7 +1984,7 @@
       "witness": "claims-check",
       "maturity": {
         "technical": "stable",
-        "adoption": "single-witness"
+        "adoption": "multi-witness"
       },
       "facets": [],
       "floorScenarios": [],

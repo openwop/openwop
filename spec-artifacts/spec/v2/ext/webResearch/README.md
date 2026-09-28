@@ -8,7 +8,7 @@
 | --- | --- |
 | **witness:** | `claims-check` |
 | **technical:** | `stable` |
-| **adoption:** | `single-witness` |
+| **adoption:** | `multi-witness` |
 | **peer-dependency id** | `webResearch` |
 | **advertised as** | `extensions.<org>.web-research` |
 | **declared facets** | none defined |
