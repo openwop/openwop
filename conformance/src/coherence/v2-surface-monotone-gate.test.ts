@@ -153,6 +153,36 @@ describe('v2-surface-monotone-gate (RFC 0197 §A.1 / §B)', () => {
     expect(r.out, req(ID, DOC, 'the refusal must name the property and the object')).toMatch(/`required` entry "transport" added to the pre-existing object/);
   }, 180_000);
 
+  it('POSITIVE CONTROL — a `required` under a `then` selecting only enum members this diff adds is additive', () => {
+    if (V1_DIR === null) return softSkip('inapplicable', 'not a spec checkout');
+    // RFC 0218 §C's shape: a new `transport` value brings a member it requires.
+    // No document valid before carries "ws", so the arm restricts none of them.
+    const r = drive((s) => {
+      const props = s['properties'] as Record<string, Record<string, unknown>>;
+      props['transport']!['enum'] = ['http', 'sse', 'ws'];
+      props['endpoint'] = { type: 'string' };
+      s['if'] = { required: ['transport'], properties: { transport: { const: 'ws' } } };
+      s['then'] = { required: ['endpoint'] };
+    });
+    expect(r.status, req(ID, DOC, `a conditional that only a new enum value can select narrows nothing that validated before — it exited ${r.status}: ${r.out.slice(-800)}`)).toBe(0);
+    expect(r.out, req(ID, DOC, 'the gate must say it admitted the conditional, not pass it silently')).toMatch(/new-value conditional: .* requires "endpoint"/);
+  }, 180_000);
+
+  it('a `required` under a `then` an EXISTING enum value selects is REFUSED (§B.6)', () => {
+    if (V1_DIR === null) return softSkip('inapplicable', 'not a spec checkout');
+    // Same arm, but "sse" was already valid: every old `sse` document without
+    // `endpoint` now fails. Adding "ws" beside it must not launder that.
+    const r = drive((s) => {
+      const props = s['properties'] as Record<string, Record<string, unknown>>;
+      props['transport']!['enum'] = ['http', 'sse', 'ws'];
+      props['endpoint'] = { type: 'string' };
+      s['if'] = { required: ['transport'], properties: { transport: { enum: ['sse', 'ws'] } } };
+      s['then'] = { required: ['endpoint'] };
+    });
+    expect(r.status, req(ID, DOC, `a conditional an old document can satisfy is a tightening — it exited ${r.status}: ${r.out.slice(-800)}`)).not.toBe(0);
+    expect(r.out, req(ID, DOC, 'the refusal must name the property and the object')).toMatch(/`required` entry "endpoint" added to the pre-existing object/);
+  }, 180_000);
+
   it('an OPEN object closed to `additionalProperties: false` is REFUSED (§B.6)', () => {
     if (V1_DIR === null) return softSkip('inapplicable', 'not a spec checkout');
     const r = drive((s) => { ((s['properties'] as Record<string, Record<string, unknown>>)['config'])['additionalProperties'] = false; });

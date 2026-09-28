@@ -7,15 +7,15 @@
 | **Status**        | `Active`                                                        |
 | **Author(s)**     | David Tufts (@davidscotttufts)                                  |
 | **Created**       | 2026-09-27                                                      |
-| **Updated**       | 2026-09-27 — filed and moved `Draft → Active` in the filing PR. **Comment window waived** (7-day) by the steward under `GOVERNANCE.md` §"Sole-steward operation", logged in `MAINTAINERS.md` §"Bootstrap-phase RFC waivers". RFC 0147 §A.6 does not apply: the RFC touches no replay, external-effect or certification surface. It pins the bytes of an audit-log checkpoint, which no certification bundle, witness digest or replay digest covers. |
-| **Affects**       | `spec/v1/auth-profiles.md` §"Audit-log integrity" 3 (the checkpoint preimage; the checkpoint export) · `schemas/audit-verify-result.schema.json` `merkleRoot` and `signature` descriptions (and the derived `schemas/v2/` copy) · conformance: `conformance/vectors/audit-checkpoint-v1.json`, `audit-checkpoint-vectors.test.ts`, `audit-checkpoint-signature.test.ts` (suite 2.42.7) |
-| **Compatibility** | §A: W3C Process Class 3 correction (`COMPATIBILITY.md`, entry of 2026-09-27). §B: `additive`. No schema shape, error code, status or event changes |
+| **Updated**       | 2026-09-27 — filed and moved `Draft → Active` in the filing PR. **Comment window waived** (7-day) by the steward under `GOVERNANCE.md` §"Sole-steward operation", logged in `MAINTAINERS.md` §"Bootstrap-phase RFC waivers". RFC 0147 §A.6 does not apply: the RFC touches no replay, external-effect or certification surface. It pins the bytes of an audit-log checkpoint, which no certification bundle, witness digest or replay digest covers. 2026-09-28 — amended in place while `Active` with **§C, the anomaly entries** of `GET /v1/audit/verify`, under the same waiver. Both reference hosts returned `{atSequence, kind, detail}` against a schema that closed `Anomaly` to `{atSeq, expectedPrevHash, actualPrevHash}`, and reported a forged checkpoint signature with `chainValid: true`. The schema's shape is kept and gains `kind`. §A.6 still does not apply: an anomaly is a verifier's report, and no bundle, witness or replay digest covers it. |
+| **Affects**       | `spec/v1/auth-profiles.md` §"Audit-log integrity" 3 (the checkpoint preimage; the checkpoint export) · `schemas/audit-verify-result.schema.json` `merkleRoot` and `signature` descriptions (and the derived `schemas/v2/` copy) · conformance: `conformance/vectors/audit-checkpoint-v1.json`, `audit-checkpoint-vectors.test.ts`, `audit-checkpoint-signature.test.ts` (suite 2.42.7) · §C: `auth-profiles.md` §"Audit-log integrity" 4 and `audit-verify-result.schema.json` `$defs/Anomaly` (v1 and derived v2), `audit-anomaly-shape.test.ts` (suite 2.42.10) |
+| **Compatibility** | §A: W3C Process Class 3 correction (`COMPATIBILITY.md`, entry of 2026-09-27). §B: `additive`. §C: `additive` (optional members on `Anomaly`), plus a Class 3 correction of the `chainValid` statement (`COMPATIBILITY.md`, entry of 2026-09-28). No error code, status or event changes |
 | **Supersedes**    | —                                                               |
 | **Superseded by** | —                                                               |
 
 ## Summary
 
-The `openwop-audit-log-integrity` profile requires signed checkpoints and never says consistently what is signed. The prose signs "the merkleRoot" and defines the root as "SHA-256 of all entries up to atSequence". The verify-result schema says the signature covers "the checkpoint's canonical JSON" and the root covers "entries 0..atSequence". Both reference hosts and the out-of-band verifier do a third thing: a Merkle tree over the entries since the previous checkpoint, signed over the root's 32 raw bytes. §A pins that construction, the one every implementation already uses. §B defines the portable checkpoint export the verifier consumes, which until now existed only as a code comment.
+The `openwop-audit-log-integrity` profile requires signed checkpoints and never says consistently what is signed. The prose signs "the merkleRoot" and defines the root as "SHA-256 of all entries up to atSequence". The verify-result schema says the signature covers "the checkpoint's canonical JSON" and the root covers "entries 0..atSequence". Both reference hosts and the out-of-band verifier do a third thing: a Merkle tree over the entries since the previous checkpoint, signed over the root's 32 raw bytes. §A pins that construction, the one every implementation already uses. §B defines the portable checkpoint export the verifier consumes, which until now existed only as a code comment. §C (added 2026-09-28) says what an anomaly in the verification result looks like, since the reference hosts and the schema disagreed.
 
 ## Motivation
 
@@ -49,6 +49,22 @@ The schema's two descriptions are corrected to match. The profile's field list n
 
 A host claiming the profile MAY publish its checkpoints as a portable export for an out-of-band verifier. When it does, the export MUST be the document `auth-profiles.md` now shows: `bundleVersion: "1"`, `exportedAt`, optional `host`, `signingKey { keyId, algorithm: "ed25519", publicKeyPEM }`, and `checkpoints[] { checkpointId, atSequence, merkleRoot, signature, signedAt, signingKeyId }`. Every `signingKeyId` MUST equal `signingKey.keyId`, so a host that dual-signs during a rotation publishes one export per key. This is the shape `examples/hosts/postgres/src/audit-export.ts` produces and `scripts/verify-audit-checkpoints.mjs` consumes. It is stated in prose only, with no new schema file, because v1 is frozen through the overlap and the verifier already checks every member.
 
+### §C. Anomaly entries (added 2026-09-28)
+
+`GET /v1/audit/verify` returns `anomalies[]`. The schema closed each entry to `{ atSeq, expectedPrevHash, actualPrevHash }`, which describes a chain break and nothing else. The verifier both reference hosts run detects five things and reported them as `{ atSequence, kind, detail }`, a shape the closed schema refuses. The black-box leg never saw the difference because it asserts an empty `anomalies` on an untampered log.
+
+1. **The schema's shape is the contract.** `Anomaly` keeps `atSeq` and gains an OPTIONAL `kind`: `chain-break`, `hash-mismatch`, `missing-entry`, `merkle-mismatch` or `signature-invalid`. An entry without `kind` is a `chain-break`, so every document valid before stays valid. Hosts SHOULD set `kind`.
+2. **`kind` fixes the members.**
+   - `chain-break` REQUIRES `expectedPrevHash` and `actualPrevHash`. Both MAY be `null` for a genesis `prevHash`, which step 2 defines as `null`.
+   - `merkle-mismatch` and `signature-invalid` REQUIRE `checkpoint`, the failing checkpoint's id. `atSeq` is the checkpoint's `atSequence`. The id is needed because two checkpoints can share an `atSequence` while a rotating key dual-signs.
+   - `hash-mismatch` and `missing-entry` carry only `atSeq`.
+   - A member outside its kind is refused, so a verifier that dispatches on `kind` never sees an ambiguous entry.
+3. **`detail`** is an OPTIONAL string for an operator. A verifier MUST NOT branch on it.
+4. **`chainValid` is `false` exactly when `anomalies` is non-empty (Class 3 correction).** The schema already said `chainValid` is false on "ANY break or invalid signature" and that `anomalies` is empty when it is true. Both hosts reported a forged signature as `chainValid: true` with `checkpointsValid: false`, and the schema's own `checkpointsValid` text ("checkpoints forged but chain intact") could be read to allow it. The reading that keeps a client which only reads `chainValid` safe is the aggregate one, so that reading is pinned. `checkpointsValid` stays the OPTIONAL bit that says which half failed.
+5. **An unknown `kind` is a failure.** A verifier that meets a `kind` it does not know MUST treat the entry as an anomaly, never skip it.
+
+**What was dropped.** The hosts' `detail` strings carried the recomputed and stored hashes of a `hash-mismatch`. No verifier reads them as data, so they stay in `detail` and get no members. A verifier that needs them recomputes from the entries.
+
 ### Examples
 
 **Conforming.** Checkpoint at 12 with the previous at 7 anchors entries 8–12, five leaves. Level 1 is `H(l8‖l9)`, `H(l10‖l11)`, `l12`. Level 2 is `H(a‖b)`, `l12`. The root is `H(c‖l12)`, and the signature is over its 32 bytes. See `conformance/vectors/audit-checkpoint-v1.json`.
@@ -63,7 +79,8 @@ A host claiming the profile MAY publish its checkpoints as a portable export for
 
 - **§A.** A Class 3 correction (see §A). A host that signed the canonical JSON was never jointly conforming, because the prose it also had to follow said otherwise. None is known.
 - **§B.** `additive`. The export is optional (MAY). A host that publishes none is unaffected.
-- **No wire change.** No schema property, `required` entry, error code or status moved. The `check-v2-surface-monotone` baseline is unchanged, since descriptions are not surfaces.
+- **§A and §B: no wire change.** No schema property, `required` entry, error code or status moved.
+- **§C.** `additive` for the shape: `kind`, `checkpoint` and `detail` are new OPTIONAL members, and `expectedPrevHash`/`actualPrevHash` move from always-required to required for `chain-break`, the kind an entry without `kind` is. Every document valid before is valid now. The `null` genesis hash widens a type, which `check-v2-surface-monotone` passes. §C.4 is a Class 3 correction (`spec/v2/corrections.json` row `openwop.correction.v2.3`; no committed v2 bundle and no registry manifest carries a verify result): the schema's `chainValid` text already required it, and the only implementations that differed are the two reference hosts, corrected in openwop-examples in the same cycle. openwop-app and MyndHyve do not advertise the profile.
 
 ## Conformance
 
@@ -76,6 +93,8 @@ A host claiming the profile MAY publish its checkpoints as a portable export for
   The vectors come from an implementation independent of the lib and were cross-checked in Python. Three sabotages of the lib each turned one leg red: duplicating the odd node, dropping the leaf-count check, and hashing decoded bytes.
 - **`audit-checkpoint-signature.test.ts`** is major 1 and gated on the profile. It verifies every checkpoint `GET /v1/audit/verify` returns under the advertised `checkpointPublicKey`. A host with no checkpoint yet records `inapplicable` before any assertion.
 
+- **`audit-anomaly-shape.test.ts`** (suite 2.42.10) is server-free, runs at both majors, and is in `openwop:check`'s server-free list. It validates one anomaly of each kind and a kind-less legacy entry against `audit-verify-result.schema.json`, and refuses: `atSequence` for `atSeq` (the hosts' old shape); a `merkle-mismatch` without `checkpoint`; a `chain-break` without its hashes; a mixed entry carrying both `checkpoint` and the chain hashes; an unknown `kind`. At the result level it refuses `chainValid: true` with a non-empty `anomalies` (the hosts' forged-signature report) and `chainValid: false` with an empty one; the schema now carries that as a root `if/then/else`.
+
 ### Falsifiability — one row per normative requirement
 
 | Requirement | Observable — what an outside party sees | Who can cause the condition | Verdict |
@@ -83,6 +102,8 @@ A host claiming the profile MAY publish its checkpoints as a portable export for
 | §A construction, reproduced by any implementation (`openwop.requirement.0218.checkpoint-preimage-vectors`) | the committed vectors recompute, and the refusals are refused | the suite, server-free | witnessable — corpus gate |
 | §A.4 signature over the root bytes (`openwop.requirement.0218.checkpoint-signature-over-root`) | each served checkpoint's signature verifies under the advertised key over its hex-decoded root | the suite, gated on the profile | witnessable — gated on the profile |
 | §A.1–3 the host's root is over `(P, atSequence]` | — the entries are not on the wire | nobody from outside | unwitnessable — the entries are not on the wire, so only the host-internal tamper tests (openwop-examples) and an out-of-band verifier with entry access can recompute a host's root |
+| §C.1–3 anomaly shape (`openwop.requirement.0218.anomaly-shape`) | sample anomalies of every kind validate, the refusals are refused | the suite, server-free | witnessable — corpus gate |
+| §C.1–4 a host's served anomalies | — a black-box caller cannot tamper with the log, so an untampered log serves none | nobody from outside | unwitnessable from outside — the host-internal tamper tests (openwop-examples) assert every kind's shape against the schema |
 | §B export shape | an export validates under `verify-audit-checkpoints.mjs` | the operator | witnessable — gated (out of band, when an operator publishes an export; `openwop:check` runs the verifier on the committed samples) |
 
 ## Alternatives considered
@@ -103,6 +124,7 @@ A host claiming the profile MAY publish its checkpoints as a portable export for
 ## Acceptance criteria
 
 - [x] `Active`: the `auth-profiles.md` construction and export text, the corrected schema descriptions (v1 and derived v2), the vectors and both scenarios (suite 2.42.7), sabotage-proved.
+- [x] §C (2026-09-28): the schema's `Anomaly` with `kind` (v1 and derived v2), `auth-profiles.md` step 4, `audit-anomaly-shape.test.ts` (suite 2.42.10), sabotage-proved; both reference hosts serve the shape and their tamper tests validate every anomaly against the schema.
 - [ ] `openwop.requirement.0218.checkpoint-signature-over-root` `executed-pass` on a host bundle cut against a host that claims the profile and serves at least one checkpoint (the Postgres reference host). The acceptance predicate's bundle bar applies.
 
 ## References
