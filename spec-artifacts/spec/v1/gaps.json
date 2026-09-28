@@ -13311,11 +13311,11 @@
       "rfc": "0223",
       "local": "G4",
       "section": "§Implementation notes",
-      "surface": "openwop-app records no `action` on single reject or timeout, emits no `interrupt.resolved` on quorum reject, never emits `approval.rejected`, and emits no `node.failed` / `failedNodeId` on either reject path.",
+      "surface": "openwop-app recorded no `action` on single reject or timeout, emitted no `interrupt.resolved` on quorum reject, never emitted `approval.rejected`, and emitted no `node.failed` / `failedNodeId` on either reject path.",
       "witness": "unclassified",
       "requirementId": null,
-      "disposition": "externally-gated",
-      "target": "openwop-app-followup",
+      "disposition": "closed",
+      "target": null,
       "sources": [
         {
           "file": "RFCS/registers/0223-approval-reject-disposition.gaps.md",
