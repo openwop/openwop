@@ -125,6 +125,18 @@ With `bufferMs` (0..5000) the host accumulates events into one `event: batch` fr
 
 `hostEvents` carries the heartbeat messages (`schemas/v2/heartbeat-evaluated.schema.json`, `schemas/v2/heartbeat-state-changed.schema.json`) at `/host/events` (`streamHostEvents`), the documented default. A host MAY declare another address under `heartbeat.deliveryChannel` ([capabilities.md](capabilities.md)). The channel is content-free of run data. There is no channel without an address.
 
+#### `heartbeat`
+
+A heartbeat evaluates a predicate on an interval (at least `minIntervalSec`) and acts only on a state change. A host advertising `heartbeat` SHOULD also advertise `scheduling`, and otherwise MUST document its own interval substrate. On each tick it MUST:
+
+- skip, not queue, a tick while the prior evaluation still runs;
+- bound the evaluation by `maxRuntimeMs`, itself capped by `limits.maxRunDurationMs`, terminating an overrun with `status: timeout`;
+- pass the predicate the prior tick's state, and perform no side effect itself; the predicate MUST be a pure function of observed and prior state;
+- emit `heartbeat.evaluated`;
+- on a transition only, emit `heartbeat.stateChanged` and, if the predicate asks, call `createRun`; never on an unchanged tick.
+
+The first tick of a `heartbeatId` MUST be treated as a transition from `{}`. A durable host SHOULD persist prior state so a restart does not re-notify.
+
 ## Poll
 
 `GET /runs/{runId}/events/poll` (`pollRunEvents`) is the long-poll fallback.
@@ -188,4 +200,4 @@ An absent `kinds` is not an empty catalog and is not an unrestricted one: a host
 - **`feedback.targets`** names the resources an annotation may be attached to. A host MUST refuse an annotation whose target is outside the advertised set, and MUST NOT write it to the replayable run event log.
 - **`providerUsage.costEstimates`** advertises that the host stamps a derived cost on the `provider.usage` event. That figure is an estimate from the host's own rate table; a consumer MUST NOT treat it as a billed amount.
 
-*Sources: RFCs 0171, 0172, 0176, 0185, 0194, 0213.*
+*Sources: RFCs 0060, 0171, 0172, 0176, 0185, 0194, 0213.*
