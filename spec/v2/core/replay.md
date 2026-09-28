@@ -63,7 +63,7 @@ When a replayed node produces an event different from the source at the same seq
 Divergence codes (`spec/v2/errors.json`):
 
 - **`replay_diverged_at_refusal`** (fork fails, `409`) — the source obtained a valid envelope and the replay a refusal, or the reverse. The host MUST NOT substitute silently; it MUST emit `replay.diverged-at-refusal` naming the node and both envelope kinds and fail the replay with this code.
-- **`replay_source_missing`** (`node.failed` payload; the fork request still returns `201`) — a side-effecting node reached with no recorded source outcome for `(nodeId, attempt)` (§Suppression).
+- **`replay_source_missing`** (`node.failed` payload; the fork request still returns `201`) — a side-effecting node reached with no recorded source outcome (§Suppression).
 - **`replay_memory_snapshot_unavailable`** (fork refused, `409`) — the host cannot serve memory state as-of `fromSeq`. It MUST refuse rather than substitute current memory; `details.fromSeq` SHOULD name the index.
 - **`replay_context_summary_unavailable`** (fork refused, `409`) — the host advertises `multiAgent.executionModel.contextBudget.summarization` and cannot serve, as-of `fromSeq`, a summary artifact (`context.summarized.summaryRef`) the replay would reuse. It MUST refuse rather than re-summarize; `details.fromSeq` SHOULD name the index.
 
@@ -74,7 +74,7 @@ Suppression is an obligation of the `replay` surface: advertising `replay` binds
 For a fork with `mode: replay`:
 
 1. A node that performs an external side effect — any operation observable outside the run's own event log — MUST NOT perform it.
-2. The host MUST resolve the node's outcome from the source run's recorded terminal outcome for the same `(nodeId, attempt)`, keyed on `(sourceRunId, nodeId, attempt)` and never on the fork's own `runId` (the Layer-2 key includes `runId`, so it cannot span a fork).
+2. The host MUST resolve the node's outcome from the source run's recorded terminal outcome keyed on `(sourceRunId, nodeId, n)`, never on the fork's own `runId`, where `n` counts the node's `node.started` events through this execution, including retries, later visits and the fork's inherited prefix.
 3. Absent a recorded outcome, the host MUST fail the node closed with `replay_source_missing`, MUST NOT perform the effect, and MUST NOT substitute a synthesized or empty success.
 4. A node whose pack manifest declares `role: "side-effect"` MUST be treated as side-effecting; a host classifier MAY add nodes and MUST NOT remove any. A throwing seam satisfies rule 1 only.
 5. The guarantee is whole-run and requires both classification before execution and a default-deny guard at every effect seam.
@@ -102,7 +102,7 @@ A host advertising `replay` MUST publish `schemas/v2/effect-seam-manifest.schema
 1. Load the source run's events with `sequence < fromSeq` through the storage boundary, where an era-`2` log is translated (persistence.md).
 2. Fold them to a projected state.
 3. Initialize the new run with that state, copy-on-write into its own log.
-4. For `replay`, resolve side-effecting nodes from the source run's recorded outcomes keyed on `(sourceRunId, nodeId, attempt)`; LLM invocations additionally consult the invocation log via the content-addressed invocation key.
+4. For `replay`, resolve side-effecting nodes from the source run's recorded outcomes keyed on `(sourceRunId, nodeId, n)`; LLM invocations additionally consult the invocation log via the content-addressed invocation key.
 5. For `branch`, executor invocations create new invocation-log entries keyed on the new `runId`.
 
 ## Forking a v1 run
