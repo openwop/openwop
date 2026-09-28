@@ -13154,6 +13154,23 @@
       ]
     },
     {
+      "id": "openwop.gap.0220.5",
+      "rfc": "0220",
+      "local": "G5",
+      "section": "§B",
+      "surface": "`canvas` has no tier-2 path yet. MyndHyve serves the canvas host service (myndhyve #547), but its claim depends on the `vendor.myndhyve.canvas` pack. The only v2-admissible version (1.0.1, `registry/v2/`) is signed with `signing.scheme: ed25519-canonical-json` (RFC 0177 §A), and MyndHyve's pack publish route and resolver do not implement that scheme. The v1-tree 1.0.0 pins `engines.openwop <2.0.0`, which a v2 host MUST refuse. This is a general v2 pack-signing gap at the host, not canvas-specific.",
+      "witness": "unclassified",
+      "requirementId": null,
+      "disposition": "transferred",
+      "target": "myndhyve/services/workflow-runtime",
+      "sources": [
+        {
+          "file": "RFCS/registers/0220-ext-families-graduate-on-evidence.gaps.md",
+          "token": "G5"
+        }
+      ]
+    },
+    {
       "id": "openwop.gap.0221.1",
       "rfc": "0221",
       "local": "G1",
