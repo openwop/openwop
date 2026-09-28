@@ -42,4 +42,4 @@ A host advertising `toolCatalog.compactView` MUST answer `?view=compact` on both
 
 A host advertising `toolCatalog.sessionLifecycle` MAY bracket calls with content-free `tool.session.opened` and `tool.session.closed`; a consumer MUST tolerate their absence.
 
-*Sources: RFC 0078, RFC 0112, RFC 0204.*
+*Sources: RFCs 0078, 0112, 0204.*

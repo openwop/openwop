@@ -3,8 +3,8 @@
   "generatedFrom": "src/scenarios/*.test.ts",
   "counts": {
     "files": 645,
-    "tests": 2483,
-    "withStableId": 2483,
+    "tests": 2485,
+    "withStableId": 2485,
     "interpolatedTitles": 0,
     "explicitIds": 2367
   },
@@ -27806,7 +27806,7 @@
     {
       "id": "openwop.it.v2-approval-reject-disposition.a-rejected-gate-with-no-routing-edge-fails-the-run-with-approval-rejected",
       "file": "v2-approval-reject-disposition.test.ts",
-      "line": 115,
+      "line": 126,
       "title": "a rejected gate with no routing edge fails the run with approval_rejected",
       "explicitId": null,
       "citations": [
@@ -27829,7 +27829,7 @@
     {
       "id": "openwop.it.v2-approval-reject-disposition.interrupt-resolved-records-action-reject-and-decision-rejected",
       "file": "v2-approval-reject-disposition.test.ts",
-      "line": 126,
+      "line": 137,
       "title": "interrupt.resolved records action reject and decision rejected",
       "explicitId": null,
       "citations": [
@@ -27848,7 +27848,7 @@
     {
       "id": "openwop.it.v2-approval-reject-disposition.the-gate-node-fails-with-approval-rejected-not-retryable-and-run-failed-names-it",
       "file": "v2-approval-reject-disposition.test.ts",
-      "line": 139,
+      "line": 150,
       "title": "the gate node fails with approval_rejected, not retryable, and run.failed names it",
       "explicitId": null,
       "citations": [
@@ -27869,7 +27869,7 @@
     {
       "id": "openwop.it.v2-approval-reject-disposition.a-majority-reject-decides-the-quorum-gate-on-the-deciding-vote-and-fails-the-run",
       "file": "v2-approval-reject-disposition.test.ts",
-      "line": 152,
+      "line": 163,
       "title": "a majority reject decides the quorum gate on the deciding vote and fails the run with approval_rejected",
       "explicitId": null,
       "citations": [
@@ -27895,7 +27895,7 @@
     {
       "id": "openwop.it.v2-approval-reject-disposition.a-rejected-gate-routed-over-an-any-failed-edge-fails-as-a-node-its-all-success-s",
       "file": "v2-approval-reject-disposition.test.ts",
-      "line": 175,
+      "line": 186,
       "title": "a rejected gate routed over an any_failed edge fails as a node, its all_success sibling never runs, and the run completes",
       "explicitId": null,
       "citations": [
@@ -27921,7 +27921,7 @@
     {
       "id": "openwop.it.v2-approval-reject-disposition.an-unresolved-gate-past-its-timeoutms-with-no-ontimeout-is-resolved-rejected-by",
       "file": "v2-approval-reject-disposition.test.ts",
-      "line": 194,
+      "line": 205,
       "title": "an unresolved gate past its timeoutMs with no onTimeout is resolved rejected by the host and fails the run naming the gate",
       "explicitId": null,
       "citations": [
@@ -27936,6 +27936,54 @@
         {
           "section": "spec/v2/core/interrupt.md §Rejection (RFC 0223)",
           "requirement": "with no routing edge the run MUST terminate failed, run.failed carrying approval_rejected and failedNodeId naming the gate"
+        }
+      ]
+    },
+    {
+      "id": "openwop.it.v2-approval-reject-disposition.a-gate-whose-ontimeout-is-approve-still-resolves-rejected-on-timeout-and-fails-t",
+      "file": "v2-approval-reject-disposition.test.ts",
+      "line": 224,
+      "title": "a gate whose onTimeout is approve still resolves rejected on timeout and fails the run: a timeout never grants",
+      "explicitId": null,
+      "citations": [
+        {
+          "section": "spec/v2/core/interrupt.md §Rejection (RFC 0223)",
+          "requirement": "whatever onTimeout holds, the host MUST resolve the timed-out gate rejected (action \"timeout\", decision \"rejected\") — onTimeout \"approve\" is treated as reject"
+        },
+        {
+          "section": "spec/v2/core/interrupt.md §Rejection (RFC 0223)",
+          "requirement": "the timed-out gate MUST fail with approval_rejected"
+        },
+        {
+          "section": "spec/v2/core/interrupt.md §Rejection (RFC 0223)",
+          "requirement": null,
+          "interpolated": true
+        }
+      ]
+    },
+    {
+      "id": "openwop.it.v2-approval-reject-disposition.a-rejected-gate-looped-back-to-itself-is-asked-again-under-a-new-key-and-the-fir",
+      "file": "v2-approval-reject-disposition.test.ts",
+      "line": 242,
+      "title": "a rejected gate looped back to itself is asked again under a new key, and the first rejection is not replayed",
+      "explicitId": null,
+      "citations": [
+        {
+          "section": "spec/v2/core/interrupt.md §Re-entry and resume values",
+          "requirement": "the second visit of the gate MUST raise a new interrupt.requested"
+        },
+        {
+          "section": "spec/v2/core/interrupt.md §Re-entry and resume values",
+          "requirement": null,
+          "interpolated": true
+        },
+        {
+          "section": "spec/v2/core/interrupt.md §Re-entry and resume values",
+          "requirement": "the second visit MUST wait for a new decision: the run is waiting-approval again"
+        },
+        {
+          "section": "spec/v2/core/interrupt.md §Re-entry and resume values",
+          "requirement": "an earlier visit's resumeValue MUST NOT be returned: only the one caller resolve is recorded"
         }
       ]
     },
@@ -30641,7 +30689,7 @@
     {
       "id": "openwop.it.v2-manifest-ceiling-refused.an-engines-openwop-range-with-no-upper-bound-1-0-0-reads-2-0-0-and-is-refused-at",
       "file": "v2-manifest-ceiling-refused.test.ts",
-      "line": 105,
+      "line": 117,
       "title": "an engines.openwop range with no upper bound (>=1.0.0) reads <2.0.0 and is refused at install with pack_engine_unsupported",
       "explicitId": "openwop.requirement.0177.manifest-ceiling-refused.unbounded",
       "citations": [
@@ -30658,7 +30706,7 @@
     {
       "id": "openwop.it.v2-manifest-ceiling-refused.a-v1-ceiling-1-0-0-2-0-0-is-refused-at-install-with-pack-engine-unsupported",
       "file": "v2-manifest-ceiling-refused.test.ts",
-      "line": 114,
+      "line": 126,
       "title": "a v1 ceiling (>=1.0.0 <2.0.0) is refused at install with pack_engine_unsupported",
       "explicitId": "openwop.requirement.0177.manifest-ceiling-refused.v1-ceiling",
       "citations": [
@@ -30675,7 +30723,7 @@
     {
       "id": "openwop.it.v2-manifest-ceiling-refused.a-range-admitting-the-host-major-2-0-0-3-0-0-installs",
       "file": "v2-manifest-ceiling-refused.test.ts",
-      "line": 123,
+      "line": 135,
       "title": "a range admitting the host major (>=2.0.0 <3.0.0) installs",
       "explicitId": "openwop.requirement.0177.manifest-ceiling-refused.v2-installs",
       "citations": [
@@ -30689,7 +30737,7 @@
     {
       "id": "openwop.it.v2-manifest-hatch-carried.an-x-field-inside-agents-0-of-a-node-pack-is-ignored-not-rejected-the-pack-insta",
       "file": "v2-manifest-hatch-carried.test.ts",
-      "line": 85,
+      "line": 97,
       "title": "an x- field inside agents[0] of a node pack is ignored, not rejected — the pack installs",
       "explicitId": "openwop.requirement.0177.manifest-hatch-carried.agents-x-field",
       "citations": [
@@ -30703,7 +30751,7 @@
     {
       "id": "openwop.it.v2-manifest-hatch-carried.an-x-field-inside-a-prompt-template-of-a-prompt-pack-is-ignored-not-rejected-the",
       "file": "v2-manifest-hatch-carried.test.ts",
-      "line": 103,
+      "line": 119,
       "title": "an x- field inside a prompt template of a prompt pack is ignored, not rejected — the pack installs",
       "explicitId": "openwop.requirement.0177.manifest-hatch-carried.prompt-template-x-field",
       "citations": [
@@ -32125,7 +32173,7 @@
     {
       "id": "openwop.it.v2-pack-isolation.sandbox-isolationmodel-names-a-real-mechanism-never-node-vm",
       "file": "v2-pack-isolation.test.ts",
-      "line": 78,
+      "line": 82,
       "title": "sandbox.isolationModel names a real mechanism, never node:vm",
       "explicitId": "openwop.requirement.0173.pack-isolation",
       "citations": [
@@ -32143,7 +32191,7 @@
     {
       "id": "openwop.it.v2-pack-isolation.the-sandbox-invoke-seam-answers-the-seam-contract",
       "file": "v2-pack-isolation.test.ts",
-      "line": 92,
+      "line": 96,
       "title": "the sandbox-invoke seam answers the seam contract",
       "explicitId": "openwop.requirement.0173.pack-isolation.seam",
       "citations": [
@@ -32157,7 +32205,7 @@
     {
       "id": "openwop.it.v2-pack-isolation.node-pack-sandbox-fs-gated-a-host-filesystem-read-is-refused",
       "file": "v2-pack-isolation.test.ts",
-      "line": 104,
+      "line": 108,
       "title": "node-pack-sandbox-fs-gated: a host filesystem read is refused",
       "explicitId": null,
       "citations": []
@@ -32165,7 +32213,7 @@
     {
       "id": "openwop.it.v2-pack-isolation.node-pack-sandbox-fs-gated-a-host-filesystem-write-is-refused",
       "file": "v2-pack-isolation.test.ts",
-      "line": 111,
+      "line": 115,
       "title": "node-pack-sandbox-fs-gated: a host filesystem write is refused",
       "explicitId": null,
       "citations": []
@@ -32173,7 +32221,7 @@
     {
       "id": "openwop.it.v2-pack-isolation.node-pack-sandbox-no-env-the-host-environment-does-not-leak",
       "file": "v2-pack-isolation.test.ts",
-      "line": 118,
+      "line": 122,
       "title": "node-pack-sandbox-no-env: the host environment does not leak",
       "explicitId": null,
       "citations": []
@@ -32181,7 +32229,7 @@
     {
       "id": "openwop.it.v2-pack-isolation.node-pack-sandbox-network-gated-ungated-network-egress-is-refused",
       "file": "v2-pack-isolation.test.ts",
-      "line": 125,
+      "line": 129,
       "title": "node-pack-sandbox-network-gated: ungated network egress is refused",
       "explicitId": null,
       "citations": []
@@ -32189,7 +32237,7 @@
     {
       "id": "openwop.it.v2-pack-isolation.node-pack-sandbox-no-process-host-process-access-is-refused",
       "file": "v2-pack-isolation.test.ts",
-      "line": 132,
+      "line": 136,
       "title": "node-pack-sandbox-no-process: host process access is refused",
       "explicitId": null,
       "citations": []
@@ -32197,7 +32245,7 @@
     {
       "id": "openwop.it.v2-pack-isolation.node-pack-sandbox-timeout-exceeding-wallclocklimitms-fails-with-sandbox-timeout",
       "file": "v2-pack-isolation.test.ts",
-      "line": 139,
+      "line": 143,
       "title": "node-pack-sandbox-timeout: exceeding wallClockLimitMs fails with sandbox_timeout",
       "explicitId": "openwop.requirement.0173.pack-isolation.timeout",
       "citations": [
@@ -32210,7 +32258,7 @@
     {
       "id": "openwop.it.v2-pack-isolation.node-pack-sandbox-memory-cap-exceeding-memorylimitbytes-fails-with-sandbox-memor",
       "file": "v2-pack-isolation.test.ts",
-      "line": 146,
+      "line": 150,
       "title": "node-pack-sandbox-memory-cap: exceeding memoryLimitBytes fails with sandbox_memory_exceeded",
       "explicitId": "openwop.requirement.0173.pack-isolation.memory-cap",
       "citations": [
@@ -32223,7 +32271,7 @@
     {
       "id": "openwop.it.v2-pack-isolation.node-pack-sandbox-isolated-context-a-pack-cannot-mutate-state-another-invocation",
       "file": "v2-pack-isolation.test.ts",
-      "line": 153,
+      "line": 157,
       "title": "node-pack-sandbox-isolated-context: a pack cannot mutate state another invocation sees",
       "explicitId": "openwop.requirement.0173.pack-isolation.isolated-context",
       "citations": [
@@ -32368,7 +32416,7 @@
     {
       "id": "openwop.it.v2-peer-dependency-declared.a-peerdependencies-key-the-declaration-file-does-not-name-is-refused-with-pack-p",
       "file": "v2-peer-dependency-declared.test.ts",
-      "line": 104,
+      "line": 116,
       "title": "a peerDependencies key the declaration file does not name is refused with pack_peer_dependency_undefined",
       "explicitId": "openwop.requirement.0177.peer-dependency-declared.undefined-key",
       "citations": [
@@ -32385,7 +32433,7 @@
     {
       "id": "openwop.it.v2-peer-dependency-declared.an-alias-table-row-host-fs-fs-resolves-through-the-overlap-and-the-pack-installs",
       "file": "v2-peer-dependency-declared.test.ts",
-      "line": 113,
+      "line": 125,
       "title": "an alias-table row (host.fs → fs) resolves through the overlap and the pack installs",
       "explicitId": "openwop.requirement.0177.peer-dependency-declared.alias-overlap",
       "citations": [

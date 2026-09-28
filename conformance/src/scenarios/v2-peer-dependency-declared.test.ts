@@ -17,8 +17,10 @@
  *      failure; any other refusal fails.
  *
  * Both legs install through the seams-profile publish seam
- * (`/conformance/seams/packs-test/…`, RFC 0168 §C.2). Gated on `packs` + the
- * seams profile.
+ * (`/conformance/seams/packs-test/…`, RFC 0168 §C.2). Gated on the seams
+ * profile; not on `packs` since suite 2.43.1 (#1706) — the rule binds at install
+ * on every path. A seam 404 records `blocked` when `packs` is advertised and
+ * `inapplicable` when it is not.
  *
  * @see RFCS/0177-v2-registry-packs-and-extension-tail.md §B.1, §B.2
  * @see spec/v2/core/packs.md §"Peer-dependency identifiers", §"The alias table"
@@ -35,7 +37,7 @@ import { SCHEMAS_DIR } from '../lib/paths.js';
 import { req } from '../lib/requirement-ids.js';
 import { softSkip, type SoftSkipKind } from '../lib/soft-skip.js';
 import { seamsProfileAdvertised, targetMajor } from '../lib/seams.js';
-import { v2Discovery, gateFamily, familyAdvertised } from '../lib/v2.js';
+import { v2Discovery, familyAdvertised } from '../lib/v2.js';
 
 const SECTION = 'packs.md §"Peer-dependency identifiers" (RFC 0177 §B.1)';
 const ALIASES = join(SCHEMAS_DIR, '..', 'spec', 'v2', 'peer-dependency-aliases.json');
@@ -86,6 +88,17 @@ async function publish(manifest: Record<string, unknown>) {
     headers: { 'Content-Type': 'application/octet-stream' },
   });
 }
+/**
+ * The publish seam answered 404. Whether that is a defect depends on `packs`
+ * (#1706): a host advertising `packs` claims an install path and must mount it
+ * (`blocked`); a host that omits `packs` may have no install path the suite can
+ * drive (`inapplicable`). §A.1 binds at install on every path, not on `packs`.
+ */
+async function seamMissing(): Promise<undefined> {
+  if (await familyAdvertised('packs')) return softSkip('blocked', 'packs-test publish seam answered 404 — packs and the seams profile are advertised but the seam is not mounted');
+  return softSkip('inapplicable', 'packs-test publish seam answered 404 and packs is not advertised — no install path the suite can drive');
+}
+
 async function preflight(): Promise<{ kind: SoftSkipKind; reason: string } | null> {
   if (targetMajor() !== 2) return { kind: 'inapplicable', reason: 'suite 2.0.0 v2 scenario: OPENWOP_TARGET_MAJOR is not 2' };
   let doc: Record<string, unknown> | null;
@@ -95,7 +108,6 @@ async function preflight(): Promise<{ kind: SoftSkipKind; reason: string } | nul
     doc = null;
   }
   if (!doc) return { kind: 'blocked', reason: 'discovery unreachable — /.well-known/openwop (OpenWOP-Version: 2.0) did not answer 200 JSON' };
-  if (!(await gateFamily('packs'))) return { kind: 'inapplicable', reason: 'v2 discovery does not advertise the packs family (RFC 0169 §A.2)' };
   if (!seamsProfileAdvertised(doc)) return { kind: 'inapplicable', reason: 'host does not advertise conformance.seamsProfile: openwop-conformance-seams-v2 — the packs-test publish seam is the only install path the suite can drive (RFC 0168 §C.1)' };
   return null;
 }
@@ -105,7 +117,7 @@ describe('v2-peer-dependency-declared (RFC 0177 §B.1/§B.2)', () => {
     const skip = await preflight();
     if (skip) return softSkip(skip.kind, skip.reason);
     const res = await publish(nodePack(freshName('peer-undefined'), { 'host.nonexistent': 'required' }));
-    if (res.status === 404) return softSkip('blocked', 'packs-test publish seam answered 404 — seams profile advertised but the seam is not mounted');
+    if (res.status === 404) return seamMissing();
     expect(res.status, req('openwop.requirement.0177.peer-dependency-declared.undefined-key', SECTION, 'a key absent from spec/v2/declaration.json MUST be refused with 400 pack_peer_dependency_undefined')).toBe(400);
     expect(readErrorCode(res.json), req('openwop.requirement.0177.peer-dependency-declared.undefined-key', SECTION, 'the refusal code MUST be pack_peer_dependency_undefined')).toBe('pack_peer_dependency_undefined');
   });
@@ -124,7 +136,7 @@ describe('v2-peer-dependency-declared (RFC 0177 §B.1/§B.2)', () => {
     }
     if (!chosen) return softSkip('inapplicable', 'no facet-less alias row names a family this host advertises — the overlap alias cannot be exercised');
     const res = await publish(nodePack(freshName('peer-alias'), { [chosen.alias]: 'required' }));
-    if (res.status === 404) return softSkip('blocked', 'packs-test publish seam answered 404 — seams profile advertised but the seam is not mounted');
+    if (res.status === 404) return seamMissing();
     const code = readErrorCode(res.json);
     if (res.status === 400 && code === 'pack_peer_dependency_undefined') return softSkip('skipped', `host does not resolve the overlap alias ${chosen.alias} (RFC 0177 §B.2 is a MAY during the overlap; MUST NOT after v1 end-of-support)`);
     expect([200, 201].includes(res.status), req('openwop.requirement.0177.peer-dependency-declared.alias-overlap', 'packs.md §"The alias table" (RFC 0177 §B.2)', `alias ${chosen.alias} → ${chosen.family} (advertised) MUST install through the overlap or be refused only with pack_peer_dependency_undefined (got ${res.status} ${code ?? ''})`)).toBe(true);

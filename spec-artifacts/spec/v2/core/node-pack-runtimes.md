@@ -31,4 +31,4 @@ It has no `packages[]`, `headers`, `variables` or `_meta`, so it carries no inst
 - A host SHOULD NOT treat `name` as a verified identity: an inline record carries no proof of namespace ownership.
 - A host that authenticates to the server does so through the node's `requiredCredentials` or `auth`.
 
-*Sources: RFC 0008, RFC 0203.*
+*Sources: RFCs 0008, 0203.*

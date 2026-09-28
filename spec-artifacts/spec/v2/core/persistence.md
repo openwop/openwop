@@ -143,4 +143,4 @@ A host MAY claim a qualification rung (`durable-single-instance`, `durable-multi
 
 See also: [overview.md](overview.md), [events.md](events.md), [replay.md](replay.md), [identity.md](identity.md), [webhooks.md](webhooks.md).
 
-*Sources: RFC 0041, RFC 0158, RFC 0170, RFC 0171, RFC 0172, RFC 0176, RFC 0180, RFC 0185, RFC 0186, RFC 0187.*
+*Sources: RFCs 0041, 0158, 0170, 0171, 0172, 0176, 0180, 0185, 0186, 0187.*

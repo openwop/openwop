@@ -27,7 +27,7 @@
     },
     "key": {
       "type": "string",
-      "description": "Deterministic key used to short-circuit on re-entry after process death. If two interrupt() calls in the same run emit the same key, the second returns the cached result of the first. Recommended: ${runId}:${nodeId}:${interruptCount}.",
+      "description": "The deterministic re-entry key of ONE invocation of an interrupt (interrupt.md §Re-entry and resume values; corrected 2026-09-28 by openwop#1697). A host MUST derive it from at least the run, the node and the node's visit index; the spelling is host-defined. Recommended: ${runId}:${nodeId}:${interruptCount}, where interruptCount is the visit index — the number of interrupts this node raised in this run whose resolution was consumed before the current execution of the node began (plus an ordinal when one execution raises several). A replay or recovery of the same execution re-derives the same key and returns the recorded resume value; a later execution of the node (a loop back over an edge) derives a new key and raises a new interrupt.requested.",
       "minLength": 1,
       "maxLength": 256
     },
@@ -299,7 +299,7 @@
             "approve",
             "escalate"
           ],
-          "description": "RFC 0186 §A.3 — the disposition applied when `timeoutMs` elapses with no resolution. Every gate with a timer needs one; two production hosts recorded it as a bare key on `approval.requested` (280 rows on one) because the seat did not exist. `escalate` pairs with a host-defined escalation target. A `timeoutMs` of `0` means no timer, and `onTimeout` is then meaningless. Absent means `reject` (RFC 0223; interrupt.md §Rejection): the gate fails closed, the node and run fail with `approval_rejected` unless an edge routes the failure. No JSON-Schema `default` is declared, because a validator that fills defaults would write a value the host never recorded."
+          "description": "RFC 0186 §A.3, corrected by RFC 0223 (openwop#1696) — a hint recorded with the gate; it does not choose the outcome. Whatever it holds, when a non-zero `timeoutMs` elapses with no resolution the host MUST resolve the gate rejected (`action: timeout`, `decision: rejected`, `reason: timeout`) and the node and run fail with `approval_rejected` unless an edge routes the failure (interrupt.md §Rejection). A timeout never grants a gate: a host MUST treat `approve` as `reject` and SHOULD NOT emit it (RFC 0093 ruled fail-open non-conformant; the value stays in the enum only so recorded payloads validate). `escalate` MAY notify a host-defined target but MUST NOT extend or grant the gate. Absent means `reject`. A `timeoutMs` of `0` means no timer. Two production hosts recorded this as a bare key on `approval.requested` (280 rows on one) before the seat existed. No JSON-Schema `default` is declared, because a validator that fills defaults would write a value the host never recorded."
         },
         "description": {
           "type": "string"

@@ -188,4 +188,4 @@ An absent `kinds` is not an empty catalog and is not an unrestricted one: a host
 - **`feedback.targets`** names the resources an annotation may be attached to. A host MUST refuse an annotation whose target is outside the advertised set, and MUST NOT write it to the replayable run event log.
 - **`providerUsage.costEstimates`** advertises that the host stamps a derived cost on the `provider.usage` event. That figure is an estimate from the host's own rate table; a consumer MUST NOT treat it as a billed amount.
 
-*Sources: RFC 0171, RFC 0172, RFC 0176, RFC 0185, RFC 0194, RFC 0213.*
+*Sources: RFCs 0171, 0172, 0176, 0185, 0194, 0213.*

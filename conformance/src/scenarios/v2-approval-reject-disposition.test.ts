@@ -22,7 +22,16 @@
  *   6. `conformance-approval-timeout` (gap G2, suite 2.43.1): left unresolved
  *      past its 1500 ms `timeoutMs` with no `onTimeout`, the host resolves the
  *      gate itself (`action: timeout`, `decision: rejected`, `reason: timeout`),
- *      the gate fails with `approval_rejected` and `run.failed` names it.
+ *      the gate fails with `approval_rejected` and `run.failed` names it;
+ *   7. `conformance-approval-timeout-approve` (openwop#1696, suite 2.43.1): the
+ *      same gate with `onTimeout: "approve"` still resolves rejected — a
+ *      timeout never grants — and the run fails, never completes;
+ *   8. `conformance-approval-reject-loopback` (openwop#1697, suite 2.43.1): a
+ *      rejected gate routed back to itself through `revise` is asked again —
+ *      a second `interrupt.requested` with a different `key`, the run back in
+ *      `waiting-approval`, and no second `interrupt.resolved` (the first
+ *      rejection is not replayed). `inapplicable` on a host that does not
+ *      advertise the fixture, i.e. one that does not run cycles.
  *
  * The legs are separate rows so a host that misses one field fails that row
  * only. Legs 5 and 6 each need their own fixture, because `conformance-approval`
@@ -57,6 +66,8 @@ const FIXTURE = 'conformance-approval';
 const QUORUM = 'conformance-interrupt-quorum';
 const ROUTED = 'conformance-approval-reject-routed';
 const TIMEOUT = 'conformance-approval-timeout';
+const TIMEOUT_APPROVE = 'conformance-approval-timeout-approve';
+const LOOPBACK = 'conformance-approval-reject-loopback';
 const NODE_ID = 'gate';
 const CODE = 'approval_rejected';
 const TERMINAL = new Set(['completed', 'failed', 'cancelled']);
@@ -209,4 +220,43 @@ describe('RFC 0223 — v2-approval-reject-disposition (gated on interrupt + conf
     const runFailed = evs.find((e) => e.type === 'run.failed');
     expect({ status: terminal?.['status'], code: errorCode(runFailed?.payload?.['error']), failedNodeId: runFailed?.payload?.['failedNodeId'] }, req(id, DOC, 'with no routing edge the run MUST terminate failed, run.failed carrying approval_rejected and failedNodeId naming the gate')).toEqual({ status: 'failed', code: CODE, failedNodeId: NODE_ID });
   }, 60_000);
+
+  it('a gate whose onTimeout is approve still resolves rejected on timeout and fails the run: a timeout never grants', async () => {
+    if (!(await gateFamily('interrupt'))) return softSkip('inapplicable', 'interrupt family not advertised (gate recorded under openwop.family.interrupt)');
+    if (!isFixtureAdvertised(TIMEOUT_APPROVE)) return softSkip('inapplicable', `fixture ${TIMEOUT_APPROVE} is not advertised — the host does not claim the timeout-approve fixture`);
+    const s = await suspended(TIMEOUT_APPROVE);
+    if ('reason' in s) return softSkip('blocked', s.reason);
+    const id = R('timeout-never-grants');
+    const terminal = await waitStatus(s.runId, TERMINAL, scaledTimeoutMs(20_000));
+    const evs = await events(s.runId);
+    const resolved = evs.find((e) => e.type === 'interrupt.resolved');
+    expect(
+      { action: resolved?.payload?.['action'], decision: resolved?.payload?.['decision'] },
+      req(id, DOC, 'whatever onTimeout holds, the host MUST resolve the timed-out gate rejected (action "timeout", decision "rejected") — onTimeout "approve" is treated as reject'),
+    ).toEqual({ action: 'timeout', decision: 'rejected' });
+    const gateFailed = evs.find((e) => e.type === 'node.failed' && (e.payload?.['nodeId'] ?? e.nodeId) === NODE_ID);
+    expect(errorCode(gateFailed?.payload?.['error']), req(id, DOC, 'the timed-out gate MUST fail with approval_rejected')).toBe(CODE);
+    expect(terminal?.['status'], req(id, DOC, `a timeout MUST NOT grant a gate: with no routing edge the run MUST terminate failed, never completed (got ${String(terminal?.['status'])})`)).toBe('failed');
+  }, 60_000);
+
+  it('a rejected gate looped back to itself is asked again under a new key, and the first rejection is not replayed', async () => {
+    if (!(await gateFamily('interrupt'))) return softSkip('inapplicable', 'interrupt family not advertised (gate recorded under openwop.family.interrupt)');
+    if (!isFixtureAdvertised(LOOPBACK)) return softSkip('inapplicable', `fixture ${LOOPBACK} is not advertised — the host does not run cycles`);
+    const s = await suspended(LOOPBACK);
+    if ('reason' in s) return softSkip('blocked', s.reason);
+    const res = await resolve(s.runId, { action: 'reject' });
+    if (res === null || res.status < 200 || res.status >= 300) return softSkip('blocked', `the reject resolve answered ${res?.status ?? 'nothing'} ${readErrorCode(res?.json) ?? ''} — interrupt resolution owns that contract`);
+    const id = R('reject-loopback-reasks');
+    const gateRequests = (evs: Ev[]): Ev[] => evs.filter((e) => e.type === 'interrupt.requested' && (e.nodeId ?? e.payload?.['nodeId']) === NODE_ID);
+    const deadline = Date.now() + scaledTimeoutMs(10_000);
+    let evs = await events(s.runId);
+    while (gateRequests(evs).length < 2 && Date.now() < deadline) { await new Promise((r) => setTimeout(r, 250)); evs = await events(s.runId); }
+    const snap = await snapshot(s.runId);
+    const [first, second] = gateRequests(evs);
+    expect(second, req(id, 'spec/v2/core/interrupt.md §Re-entry and resume values', 'the second visit of the gate MUST raise a new interrupt.requested')).toBeDefined();
+    expect(second?.payload?.['key'] !== undefined && second?.payload?.['key'] !== first?.payload?.['key'], req(id, 'spec/v2/core/interrupt.md §Re-entry and resume values', `a later execution of the node MUST derive a different key (got ${String(first?.payload?.['key'])} then ${String(second?.payload?.['key'])})`)).toBe(true);
+    expect(snap?.['status'], req(id, 'spec/v2/core/interrupt.md §Re-entry and resume values', 'the second visit MUST wait for a new decision: the run is waiting-approval again')).toBe('waiting-approval');
+    expect(evs.filter((e) => e.type === 'interrupt.resolved').length, req(id, 'spec/v2/core/interrupt.md §Re-entry and resume values', 'an earlier visit\'s resumeValue MUST NOT be returned: only the one caller resolve is recorded')).toBe(1);
+    await http(() => driver.post(`/runs/${enc(s.runId)}/cancel`, {}));
+  }, 45_000);
 });

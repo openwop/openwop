@@ -1,5 +1,10 @@
 /**
- * RFC 0173 §B — `pack-isolation` (suite 2.0.0, target major 2; gated on `packs` + `sandbox`).
+ * RFC 0173 §B — `pack-isolation` (suite 2.0.0, target major 2; gated on `sandbox`).
+ *
+ * Gated on `sandbox` alone since suite 2.43.1 (#1706). It was gated on `packs`
+ * + `sandbox`, but `packs` advertises registry resolution (packs.md §The
+ * `packs` capability), which a host executing only local packs correctly omits.
+ * `sandbox` is the advertisement §B requires of any host executing packs.
  *
  * Isolation binds with pack EXECUTION: a host that executes third-party packs
  * MUST enforce the eight `node-pack-sandbox-*` invariants and MUST advertise
@@ -41,11 +46,10 @@ async function discovery(): Promise<Record<string, unknown> | null> {
   try { return await v2Discovery(); } catch { return null; }
 }
 
-/** Gate for every leg: packs + sandbox advertised. Returns the sandbox facet or null (reason recorded). */
+/** Gate for every leg: sandbox advertised. Returns the sandbox facet or null (reason recorded). */
 async function gated(): Promise<Record<string, unknown> | null> {
   const doc = await discovery();
   if (!doc) { softSkip('blocked', 'discovery unreachable'); return null; }
-  if (!(await gateFamily('packs'))) { softSkip('inapplicable', 'packs family not advertised — no pack execution, no isolation obligation (gate recorded under openwop.family.packs)'); return null; }
   const sandbox = await gateFamily('sandbox');
   if (!sandbox) { softSkip('inapplicable', 'sandbox family not advertised (gate recorded under openwop.family.sandbox)'); return null; }
   return sandbox;
@@ -56,7 +60,7 @@ async function invoke(typeId: string, extra: Record<string, unknown> = {}): Prom
   const doc = await discovery();
   if (!doc || !seamsProfileAdvertised(doc)) { softSkip('inapplicable', `the ${typeId} leg is seam-driven — seams profile (conformance.seamsProfile = openwop-conformance-seams-v2) not advertised`); return null; }
   const res = await driver.post(INVOKE, { typeId, ...extra });
-  if (res.status === 404 || res.status === 403 || res.status === 405) { seamAbsent(`host advertises packs + sandbox but ${INVOKE} answered ${res.status} — the ${typeId} leg is unobservable (host-sample-test-seams.md §8)`); return null; }
+  if (res.status === 404 || res.status === 403 || res.status === 405) { seamAbsent(`host advertises sandbox but ${INVOKE} answered ${res.status} — the ${typeId} leg is unobservable (host-sample-test-seams.md §8)`); return null; }
   // The same id is ALSO asserted by its own `it` above, and that is the copy the
   // registry can see: `generate-requirement-registry.mjs` harvests `req(…)` only
   // within an `it`, so this helper-level call alone left the id out of
@@ -74,7 +78,7 @@ function expectEscape(id: string, r: InvokeResult, escapeKind: string, invariant
   expect(r.error?.details?.escapeKind, req(id, 'host-sample-test-seams.md §8 SandboxError', `escapeKind MUST be ${escapeKind}`)).toBe(escapeKind);
 }
 
-describe('RFC 0173 §B — pack-isolation (gated on packs + sandbox)', () => {
+describe('RFC 0173 §B — pack-isolation (gated on sandbox)', () => {
   it('sandbox.isolationModel names a real mechanism, never node:vm', async () => {
     const sandbox = await gated();
     if (!sandbox) return softSkip('inapplicable', 'gate not met (reason recorded above)');
@@ -94,7 +98,7 @@ describe('RFC 0173 §B — pack-isolation (gated on packs + sandbox)', () => {
     const doc = await discovery();
     if (!doc || !seamsProfileAdvertised(doc)) return softSkip('inapplicable', 'seam-driven — seams profile (conformance.seamsProfile = openwop-conformance-seams-v2) not advertised');
     const res = await driver.post(INVOKE, { typeId: 'misbehave.fs-escape-read' });
-    if (res.status === 404 || res.status === 403 || res.status === 405) return seamAbsent(`host advertises packs + sandbox but ${INVOKE} answered ${res.status}`);
+    if (res.status === 404 || res.status === 403 || res.status === 405) return seamAbsent(`host advertises sandbox but ${INVOKE} answered ${res.status}`);
     expect(
       res.status,
       req('openwop.requirement.0173.pack-isolation.seam', 'host-sample-test-seams.md §8', `${INVOKE} MUST answer 200 { result } | 200 { error } — the eight behavioural legs are unobservable otherwise`),

@@ -23,4 +23,4 @@ A host advertising `channelPresence` MUST report present members as a subset of 
 
 A host that stamps model provenance on an agent turn MUST advertise `conversationTurnModelProvenance`. The stamp is non-secret and non-PII (provider and model identifiers only), and a host MUST NOT place prompt or completion content in it.
 
-*Sources: RFC 0101, RFC 0109, RFC 0110.*
+*Sources: RFCs 0101, 0109, 0110.*

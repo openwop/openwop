@@ -96,4 +96,4 @@ These rules bind any public conformance statement:
 
 Every MUST, SHOULD, and MAY in `core/` is a requirement with an id in `requirements.json` and a `witness` from `witnessable-unaided | witnessable-gated | seam-gated | claims-check | negative-existence`. A seam-gated MUST is governed by [`conformance.md`](conformance.md) §"Witness class".
 
-*Sources: RFC 0155, RFC 0167, RFC 0168, RFC 0169, RFC 0171, RFC 0174, RFC 0190, RFC 0197.*
+*Sources: RFCs 0155, 0167, 0168, 0169, 0171, 0174, 0190, 0197.*

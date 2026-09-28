@@ -26,12 +26,12 @@ Each conjunct keeps its own refusal code. A mechanical ceiling bump is not a ver
 
 ## The `packs` capability
 
-A host advertises `packs` when it serves the registry surface above. The record is the advertisement:
+A host advertises `packs` when it serves the registry surface above:
 
 - A host MUST NOT advertise `packs` unless it resolves pack references through a registry reachable from its discovery document.
-- A client MUST treat an absent record as "this host installs no packs", not as an unknown.
+- A client MUST treat an absent record as "no registry resolution", not as an unknown. It says nothing about pack validation or execution, which `sandbox` and §"The engine range" bind.
 
-`testMode` is DEPRECATED and MUST NOT be relied on by a client (see §"During the v1 overlap"). A host mounting a test catalog SHOULD advertise the seams profile instead, and MUST NOT treat `testMode` as a second way to claim one.
+`testMode` is DEPRECATED and MUST NOT be relied on by a client (§"During the v1 overlap"). A host mounting a test catalog SHOULD advertise the seams profile instead, and MUST NOT treat `testMode` as a second way to claim one.
 
 ## The registry tree
 
@@ -118,4 +118,4 @@ A registry MUST validate submissions against vendored copies of these schemas pi
 - The v1 registry tree is frozen through the overlap, behind the v2 tree.
 - `testMode` advertises the v1 `/v1/packs-test/*` mirror, a conformance seam ([conformance.md §"The seams profile"](conformance.md)). It remains advertisable through the overlap and is removed at 3.0.
 
-*Sources: RFC 0177, RFC 0212, RFC 0222.*
+*Sources: RFCs 0177, 0212, 0222.*

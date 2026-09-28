@@ -5,7 +5,7 @@
 
 ## Why this exists
 
-`interrupt` is the one primitive by which a run waits for something outside itself: a human decision, an answer, an external event, a conversation turn. Every kind shares one payload shape, one pair of events, one resolve contract and one token scheme, so a client that can resolve an approval can resolve anything.
+`interrupt` is how a run waits for something outside itself: a decision, an answer, an event, a conversation turn. Every kind shares one payload shape, event pair, resolve contract and token scheme, so a client that resolves an approval can resolve anything.
 
 ## Payload
 
@@ -35,8 +35,11 @@ Per-kind rules:
 
 ### Re-entry and resume values
 
-`key` is the deterministic re-entry key.
+`key` is the deterministic re-entry key of one invocation. A host MUST derive it from at least the run, the node and the node's visit index: the number of that node's interrupts in this run whose resolution was consumed before this execution began. Its spelling is host-defined.
 
+- A replay or recovery of the same execution MUST re-derive the same key.
+- A later execution of the node, reached over an edge, MUST derive a different key, MUST raise a new `interrupt.requested`, and MUST NOT return an earlier visit's `resumeValue`.
+- Two interrupts raised in one execution MUST have distinct keys.
 - A host MUST invoke an interrupt with key `K` at most once for the lifetime of the run.
 - On recovery the engine MUST consult the event log, find the prior `interrupt.resolved`, and return the persisted `resumeValue` without emitting a second `interrupt.requested`.
 - An in-memory cache MAY serve in-process replays but MUST NOT replace the event log for cross-process replays.
@@ -51,7 +54,7 @@ Every kind uses two registered types ([events.md](events.md)):
 - `interrupt.requested` — the payload is the `InterruptPayload` verbatim.
 - `interrupt.resolved` — the closed payload is `interruptResolved`. Resolving an approval-kind interrupt MUST record the applied `action` there, with the field §Approval requires.
 
-The kind-specific `approval.*` and `clarification.*` types remain registered. Their payload definitions in `schemas/v2/run-event-payloads.schema.json` are `$ref` aliases of `interruptRequested` and `interruptResolved`, so there is one shape per direction. A host emitting `interrupt.requested` SHOULD also emit the kind-specific type until its consumers migrate.
+The kind-specific `approval.*` and `clarification.*` types remain registered. Their payload definitions in `schemas/v2/run-event-payloads.schema.json` are `$ref` aliases of `interruptRequested` and `interruptResolved`. A host emitting `interrupt.requested` SHOULD also emit the kind-specific type until its consumers migrate.
 
 Both events are durable and appear in the `updates` and `debug` stream modes. While suspended, `RunSnapshot.currentNodeId` names the node and `status` is `waiting-approval`, `waiting-input` or `waiting-external`.
 
@@ -115,18 +118,18 @@ The token grammar and the `interrupt.tokenAlgs[]` / `kid` check are [identity.md
 
 ### Rejection
 
-A `reject` exits the suspend. The host MUST record `action: "reject"` and `decision: "rejected"` on `interrupt.resolved`, and SHOULD also emit `approval.rejected`. The resume value is returned to the node that raised the interrupt (§Re-entry and resume values).
+A `reject` exits the suspend. The host MUST record `action: "reject"` and `decision: "rejected"` on `interrupt.resolved`, and SHOULD also emit `approval.rejected`. The resume value returns to the raising node (§Re-entry and resume values).
 
-- A node that does not turn the rejection into an output MUST fail with `approval_rejected` ([errors.md](errors.md)) and `retryable: false` on the `node.failed` error, and MUST NOT be retried.
+- A node that does not turn the rejection into an output MUST fail with `approval_rejected` and `retryable: false` on the `node.failed` error, and MUST NOT be retried.
 - A rejected gate is a failed source. It MUST NOT satisfy an `all_success`, `any_success` or `none_failed` edge. The run continues past it only over an edge whose `triggerRule` admits a failed source (`all_complete` or `any_failed`).
 - When no such edge exists, the run MUST terminate `failed` with `run.failed.error.code` `approval_rejected` and `failedNodeId` naming the gate.
 - The gate resolves rejected on one eligible `reject` under `single-veto`, or when rejects exceed half of `requiredApprovals` under `majority`. A vote that does not decide the gate MUST NOT emit `interrupt.resolved`.
-- When a non-zero `timeoutMs` elapses with no resolution and `onTimeout` is absent or `reject`, the host MUST resolve the gate rejected, recording `action: "timeout"`, `decision: "rejected"` and `reason: "timeout"`, and MUST apply the rules above. A host MUST NOT accept `timeout` on a resume request.
+- When a non-zero `timeoutMs` elapses with no resolution, the host MUST resolve the gate rejected, recording `action: "timeout"`, `decision: "rejected"` and `reason: "timeout"`, whatever `onTimeout` holds, and MUST apply the rules above. A timeout MUST NOT grant a gate. A host MUST treat `onTimeout: "approve"` as `reject` and SHOULD NOT emit it. `escalate` MAY notify a host-defined target but MUST NOT extend or grant the gate. A host MUST NOT accept `timeout` on a resume request.
 - On replay the failure MUST be derived from the recorded `interrupt.resolved`, never re-decided.
 
 ## Approver enforcement
 
-Enforcement is an obligation of the fields, not a discovery flag. The facet `spec/v2/facets/interrupt.schema.json` carries `tokenAlgs[]` (REQUIRED) and `refKinds[]` ⊆ `principal`, `group`, `role`.
+The facet `spec/v2/facets/interrupt.schema.json` carries `tokenAlgs[]` (REQUIRED) and `refKinds[]` ⊆ `principal`, `group`, `role`.
 
 - **`approversList`** (explicit principals) binds everywhere: a host advertising `interrupt` MUST refuse a resolver not in the list.
 - **`approverGroupRefs`** binds only where `refKinds` includes `group`: the host MUST surface the field unchanged and MUST resolve and enforce its members as eligible approvers.
@@ -136,10 +139,10 @@ Enforcement is an obligation of the fields, not a discovery flag. The facet `spe
 
 Eligibility binds every writer of the suspension record, not every route. A host whose durable store is writable by a principal other than the engine MUST enforce the same eligibility at the store, or MUST NOT expose the record to that principal for write.
 
-Refs are opaque to the engine; the host resolves them against its own identity model. Membership MUST be resolved at decision time and MUST NOT be re-resolved during replay or `forkRun`: the recorded eligibility decision is fixed history ([replay.md](replay.md)).
+Refs are opaque to the engine; the host resolves them. Membership MUST be resolved at decision time and MUST NOT be re-resolved during replay or `forkRun`: the recorded eligibility decision is fixed history ([replay.md](replay.md)).
 
 ## During the v1 overlap
 
 The v1 interrupt-token drain is [identity.md](identity.md) §4.
 
-*Sources: RFC 0170, RFC 0171, RFC 0173, RFC 0187, RFC 0196, RFC 0223.*
+*Sources: RFCs 0170, 0171, 0173, 0187, 0196, 0223.*

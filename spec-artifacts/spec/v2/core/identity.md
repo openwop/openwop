@@ -222,4 +222,4 @@ Every code below is a row with `retriable: false` and no `details` contract; the
 
 The identity invariants are registered in `SECURITY/invariants.yaml` with their scenarios. An invariant without a witness is demoted from `protocol` tier.
 
-*Sources: RFC 0132, RFC 0165, RFC 0170, RFC 0176, RFC 0184, RFC 0200, RFC 0210.*
+*Sources: RFCs 0132, 0165, 0170, 0176, 0184, 0200, 0210.*
