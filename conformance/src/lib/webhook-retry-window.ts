@@ -65,9 +65,29 @@ export function retryWaitCapMs(env: Record<string, string | undefined> = process
 export function retryWaitFor(policy: AdvertisedRetryPolicy | null, capMs: number): number {
   if (policy === null) return RETRY_WAIT_FLOOR_MS;
   const bound = advertisedMaxElapsedMs(policy);
-  if (bound !== null) return Math.min(MAX_RETRY_WAIT_CAP_MS, Math.max(bound + ADVERTISED_BOUND_GRACE_MS, capMs));
+  if (bound !== null) return Math.min(MAX_RETRY_WAIT_MS, Math.max(bound + ADVERTISED_BOUND_GRACE_MS, capMs));
   const backoff = String(policy.backoff ?? '');
-  return backoff === 'exponential' || backoff === 'fixed' ? capMs : RETRY_WAIT_FLOOR_MS;
+  return backoff === 'exponential' || backoff === 'fixed' ? Math.min(MAX_RETRY_WAIT_MS, capMs) : RETRY_WAIT_FLOOR_MS;
+}
+
+/**
+ * The longest `retryWaitFor` can return, whatever a host advertises or an
+ * operator sets (suite 2.44.1).
+ *
+ * vitest fixes a test's timeout when the test is REGISTERED, before any
+ * discovery document is read, so a timeout cannot follow the host's advertised
+ * `maxElapsedMs`. 2.44.0 derived them from the cap alone (90 s by default):
+ * a host advertising 600000 had its dead-letter leg killed at 210 s ("Test
+ * timed out in 210000ms"), before its own bound plus the grace elapsed. That is
+ * the 2.0.2 defect again: a wait longer than the timeout that governs it. The
+ * timeout is only a backstop — every wait is bounded by its own window — so it
+ * is derived from the largest window instead.
+ */
+export const MAX_RETRY_WAIT_MS = MAX_RETRY_WAIT_CAP_MS;
+
+/** The timeout for a test that runs `waits` sequential retry waits, plus `slackMs` for the HTTP round trips around them. */
+export function retryTestTimeoutMs(waits: number, slackMs: number): number {
+  return waits * MAX_RETRY_WAIT_MS + slackMs;
 }
 
 /** What a row says when its window closed before the host's schedule did. Computed, so the numbers a host reads are the ones the run used. */
