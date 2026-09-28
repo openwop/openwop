@@ -1,12 +1,12 @@
 {
   "bundleVersion": "3",
-  "generatedAt": "2026-09-26T21:14:29.393Z",
+  "generatedAt": "2026-09-28T17:47:23.987Z",
   "suite": {
     "name": "@openwop/openwop-conformance",
-    "version": "2.42.0",
+    "version": "2.43.1",
     "targetMajor": 2,
-    "specArtifactsVersion": "2.42.0",
-    "stampSha256": "99ce95950e5c5c127286091e76b7569eeb6eb05ec752c853b23eb548c0a755f9"
+    "specArtifactsVersion": "2.43.1",
+    "stampSha256": "596087154d2220f81b333dc0567ed6a0ed90fbbd0ddf2e8981012800d954885b"
   },
   "host": {
     "name": "workflow-runtime",
@@ -14,13 +14,13 @@
     "vendor": "myndhyve",
     "build": {
       "kind": "commit",
-      "id": "e609c63723426cc7c7fbb72f7e2472fab10df1f2"
+      "id": "f0744fc254d4a61535c9aa944cb378a8b3f80ce9"
     },
     "signingKeyId": "myndhyve-bundle-2026-09b"
   },
   "discovery": {
     "url": "https://api.myndhyve.ai/.well-known/openwop",
-    "sha256": "1be01ffe13aded8f47a37e6086175efcde39ec4245735a87f4c009f1808aa5e7",
+    "sha256": "ed4610207b6253f1095f57f9109454b938af78d8a6f2595824a1bc98902f94eb",
     "protocolVersions": [
       "1.0",
       "2.0"
@@ -361,7 +361,8 @@
         ],
         "providers": [
           {
-            "id": "github"
+            "id": "github",
+            "issuer": "https://github.com/login/oauth"
           },
           {
             "id": "notion"
@@ -918,6 +919,66 @@
           ],
           "rfc": "0181"
         },
+        "myndhyve.web-research": {
+          "servedBy": "workflow-runtime",
+          "nodeTypes": [
+            "ai.research.web",
+            "data.source.webSearch",
+            "data.transform.fetchUrls",
+            "ai.process.synthesize"
+          ],
+          "rfc": "0220"
+        },
+        "myndhyve.knowledge": {
+          "servedBy": "workflow-runtime",
+          "nodeTypes": [
+            "knowledge.parse.document",
+            "knowledge.chunk.document",
+            "knowledge.enrich.chunks",
+            "knowledge.embed.chunks",
+            "knowledge.persist.chunks",
+            "knowledge.update.asset-metadata"
+          ],
+          "rfc": "0220"
+        },
+        "myndhyve.kanban": {
+          "servedBy": "workflow-runtime",
+          "nodeTypes": [
+            "core.kanban.materialize-tasks"
+          ],
+          "rfc": "0220"
+        },
+        "myndhyve.brand": {
+          "servedBy": "workflow-runtime",
+          "nodeTypes": [
+            "brand.theme.generate",
+            "brand.theme.validate",
+            "brand.theme.templates"
+          ],
+          "rfc": "0220"
+        },
+        "myndhyve.launch-studio": {
+          "servedBy": "workflow-runtime",
+          "nodeTypes": [
+            "vendor.myndhyve.launchStudioSupervisor"
+          ],
+          "rfc": "0220"
+        },
+        "myndhyve.data-integration": {
+          "servedBy": "workflow-runtime",
+          "nodeTypes": [
+            "data.transform",
+            "data.variable.compute"
+          ],
+          "rfc": "0220"
+        },
+        "myndhyve.entities": {
+          "servedBy": "workflow-runtime",
+          "nodeTypes": [
+            "core.entities.projectCreate"
+          ],
+          "rfc": "0220"
+        },
         "myndhyve.testing": {
           "mockProviders": [
             "stream-text"
@@ -1067,19 +1128,45 @@
     {
       "id": "openwop-core-standard",
       "evidenceTier": "self",
-      "witnessCount": 13,
+      "witnessCount": 14,
       "certified": true
     }
   ],
   "results": {
     "totals": {
-      "executedPass": 238,
+      "executedPass": 267,
       "executedFail": 0,
       "skipped": 17,
-      "inapplicable": 206,
+      "inapplicable": 225,
       "blocked": 0
     },
     "requirements": [
+      {
+        "id": "openwop.scenario.audit-anomaly-shape",
+        "scenario": "audit-anomaly-shape.test.ts",
+        "result": "executed-pass",
+        "assertions": 40
+      },
+      {
+        "id": "openwop.scenario.audit-checkpoint-signature",
+        "scenario": "audit-checkpoint-signature.test.ts",
+        "result": "inapplicable",
+        "assertions": 0,
+        "detail": "every test returned early through behaviorGate with zero assertions: profile not advertised in the captured discovery set"
+      },
+      {
+        "id": "openwop.scenario.audit-checkpoint-vectors",
+        "scenario": "audit-checkpoint-vectors.test.ts",
+        "result": "executed-pass",
+        "assertions": 39
+      },
+      {
+        "id": "openwop.scenario.audit-log-integrity",
+        "scenario": "audit-log-integrity.test.ts",
+        "result": "inapplicable",
+        "assertions": 0,
+        "detail": "every test returned early through behaviorGate with zero assertions: profile not advertised in the captured discovery set"
+      },
       {
         "id": "openwop.scenario.auth-challenge-no-oracle",
         "scenario": "auth-challenge-no-oracle.test.ts",
@@ -1104,7 +1191,7 @@
         "id": "openwop.scenario.fixtures-valid",
         "scenario": "fixtures-valid.test.ts",
         "result": "executed-pass",
-        "assertions": 377
+        "assertions": 389
       },
       {
         "id": "openwop.scenario.inbound-credential-no-passthrough",
@@ -1142,7 +1229,7 @@
         "id": "openwop.scenario.tool-catalog-projection",
         "scenario": "tool-catalog-projection.test.ts",
         "result": "executed-pass",
-        "assertions": 13
+        "assertions": 16
       },
       {
         "id": "openwop.floor.tool-descriptor-shape",
@@ -1198,6 +1285,19 @@
         "assertions": 2
       },
       {
+        "id": "openwop.scenario.v2-agent-org-chart-served-shape",
+        "scenario": "v2-agent-org-chart-served-shape.test.ts",
+        "result": "executed-pass",
+        "assertions": 2
+      },
+      {
+        "id": "openwop.scenario.v2-approval-reject-disposition",
+        "scenario": "v2-approval-reject-disposition.test.ts",
+        "result": "executed-pass",
+        "assertions": 8,
+        "detail": "partial-witness: inapplicable: [inapplicable] fixture conformance-interrupt-quorum is not advertised — the host does not claim the quorum fixture; [inapplicable] fixture conformance-approval-reject-routed is not advertised — the host does not claim the routed-reject fixture; [inapplicable] fixture conformance-approval-timeout is not advertised — the host does not claim the timeout fixture; [inapplicable] fixture conformance-approval-timeout-approve is not advertised — the host does not claim the timeout-approve fixture; [inapplicable] fixture conformance-approval-reject-loopback is not advertised — the host does not run cycles"
+      },
+      {
         "id": "openwop.scenario.v2-approver-enforced",
         "scenario": "v2-approver-enforced.test.ts",
         "result": "executed-pass",
@@ -1227,7 +1327,7 @@
         "id": "openwop.scenario.v2-bound-id-kinds",
         "scenario": "v2-bound-id-kinds.test.ts",
         "result": "executed-pass",
-        "assertions": 10,
+        "assertions": 8,
         "detail": "partial-witness: inapplicable: [inapplicable] the noop fixture records no effects — no effectId on the wire to read (a host with an effect-producing fixture witnesses this leg); [inapplicable] the subscription has no dead-lettered delivery in this run — the read is served and the shape is unwitnessed here; v2-webhook-durable-delivery drives an exhaustion and asserts the record"
       },
       {
@@ -1259,7 +1359,7 @@
         "scenario": "v2-capability-maturity-bounded.test.ts",
         "result": "executed-pass",
         "assertions": 44,
-        "detail": "partial-witness: inapplicable: unwitnessable until the first persisted-class retirement row is due (RFC 0197 §A.3 Falsifiability): corpus 2.42.0: 0 persisted-class v2-minor retirement row(s), 0 v2→v2 migration row(s) — no retired member exists for a post-2.N event to carry. Before one does, a scenario would be vacuous, and a row that cannot fail is not a witness. This leg asserts the moment such a row falls due."
+        "detail": "partial-witness: inapplicable: unwitnessable until the first persisted-class retirement row is due (RFC 0197 §A.3 Falsifiability): corpus 2.43.1: 0 persisted-class v2-minor retirement row(s), 0 v2→v2 migration row(s) — no retired member exists for a post-2.N event to carry. Before one does, a scenario would be vacuous, and a row that cannot fail is not a witness. This leg asserts the moment such a row falls due."
       },
       {
         "id": "openwop.scenario.v2-capability-record-shape",
@@ -1273,6 +1373,13 @@
         "result": "skipped",
         "assertions": 0,
         "detail": "every test returned early through behaviorGate with zero assertions: operator opted the profile or family out (OPENWOP_OPTED_OUT_PROFILES)"
+      },
+      {
+        "id": "openwop.scenario.v2-client-version-header",
+        "scenario": "v2-client-version-header.test.ts",
+        "result": "executed-pass",
+        "assertions": 20,
+        "detail": "partial-witness: inapplicable: the host advertises minClientVersion \"0.1\" — this leg is for a host with no floor"
       },
       {
         "id": "openwop.scenario.v2-coherence-not-in-bundle",
@@ -1336,14 +1443,14 @@
         "id": "openwop.floor.v2-effect-identity-business-key",
         "scenario": "v2-effect-identity-business-key.test.ts",
         "result": "executed-pass",
-        "assertions": 6,
+        "assertions": 5,
         "detail": "partial-witness: inapplicable: the retry leg is driven through the suite fixture provider (RFC 0173 §D.2 G4) under the seams profile — seams profile not advertised"
       },
       {
         "id": "openwop.floor.v2-effect-seam-manifest",
         "scenario": "v2-effect-seam-manifest.test.ts",
         "result": "executed-pass",
-        "assertions": 30
+        "assertions": 26
       },
       {
         "id": "openwop.floor.v2-effect-seam-no-refire",
@@ -1381,7 +1488,7 @@
         "id": "openwop.scenario.v2-error-registry",
         "scenario": "v2-error-registry.test.ts",
         "result": "executed-pass",
-        "assertions": 3,
+        "assertions": 5,
         "detail": "partial-witness: inapplicable: no 429 rate_limited response was observed during the suite's probes — the Retry-After leg is gated on a rate-limited response"
       },
       {
@@ -1389,6 +1496,19 @@
         "scenario": "v2-event-type-closed.test.ts",
         "result": "executed-pass",
         "assertions": 18
+      },
+      {
+        "id": "openwop.scenario.v2-ext-family-claims",
+        "scenario": "v2-ext-family-claims.test.ts",
+        "result": "executed-pass",
+        "assertions": 8,
+        "detail": "partial-witness: inapplicable: [inapplicable] no extensions[\"<org>.canvas\"] record under a registered org — the host does not advertise canvas; [inapplicable] no extensions[\"<org>.coordination\"] record under a registered org — the host does not advertise coordination; [inapplicable] no extensions[\"<org>.messaging\"] record under a registered org — the host does not advertise messaging"
+      },
+      {
+        "id": "openwop.scenario.v2-ext-rest-transport",
+        "scenario": "v2-ext-rest-transport.test.ts",
+        "result": "executed-pass",
+        "assertions": 20
       },
       {
         "id": "openwop.floor.v2-fork-a-v1-run",
@@ -1420,7 +1540,7 @@
         "id": "openwop.scenario.v2-idempotency-in-flight",
         "scenario": "v2-idempotency-in-flight.test.ts",
         "result": "executed-pass",
-        "assertions": 12,
+        "assertions": 14,
         "detail": "partial-witness: inapplicable: the held-claim leg is driven through the seams profile (RFC 0213 §B) — seams profile not advertised; the unaided leg above is this host's witness"
       },
       {
@@ -1519,7 +1639,7 @@
         "id": "openwop.scenario.v2-min-client-version",
         "scenario": "v2-min-client-version.test.ts",
         "result": "executed-pass",
-        "assertions": 3
+        "assertions": 4
       },
       {
         "id": "openwop.scenario.v2-minimum-version-refused",
@@ -1625,19 +1745,19 @@
         "id": "openwop.floor.v2-poll-cursor-v2",
         "scenario": "v2-poll-cursor-v2.test.ts",
         "result": "executed-pass",
-        "assertions": 14
+        "assertions": 16
       },
       {
         "id": "openwop.floor.v2-preferred-version-default",
         "scenario": "v2-preferred-version-default.test.ts",
         "result": "executed-pass",
-        "assertions": 7
+        "assertions": 8
       },
       {
         "id": "openwop.scenario.v2-profiles-derived-only",
         "scenario": "v2-profiles-derived-only.test.ts",
         "result": "executed-pass",
-        "assertions": 11
+        "assertions": 8
       },
       {
         "id": "openwop.scenario.v2-protected-resource-metadata",
@@ -1655,6 +1775,13 @@
       {
         "id": "openwop.scenario.v2-refresh-sla",
         "scenario": "v2-refresh-sla.test.ts",
+        "result": "inapplicable",
+        "assertions": 0,
+        "detail": "every test returned early through behaviorGate with zero assertions: profile not advertised in the captured discovery set"
+      },
+      {
+        "id": "openwop.scenario.v2-registry-lifecycle",
+        "scenario": "v2-registry-lifecycle.test.ts",
         "result": "inapplicable",
         "assertions": 0,
         "detail": "every test returned early through behaviorGate with zero assertions: profile not advertised in the captured discovery set"
@@ -1740,7 +1867,7 @@
         "assertions": 5
       },
       {
-        "id": "openwop.scenario.v2-sse-last-event-id-cursor",
+        "id": "openwop.floor.v2-sse-last-event-id-cursor",
         "scenario": "v2-sse-last-event-id-cursor.test.ts",
         "result": "executed-pass",
         "assertions": 10,
@@ -1750,7 +1877,7 @@
         "id": "openwop.floor.v2-sse-last-event-id",
         "scenario": "v2-sse-last-event-id.test.ts",
         "result": "executed-pass",
-        "assertions": 13
+        "assertions": 14
       },
       {
         "id": "openwop.scenario.v2-stream-mode-refusal",
@@ -1821,14 +1948,14 @@
         "id": "openwop.scenario.v2-webhook-delivery-shape",
         "scenario": "v2-webhook-delivery-shape.test.ts",
         "result": "executed-pass",
-        "assertions": 11,
+        "assertions": 12,
         "detail": "partial-witness: inapplicable: seams profile not advertised (conformance.seamsProfile !== openwop-conformance-seams-v2) — an era-2 log can only be seeded through /conformance/seams/sample/event-log/seed"
       },
       {
         "id": "openwop.floor.v2-webhook-durable-delivery",
         "scenario": "v2-webhook-durable-delivery.test.ts",
         "result": "executed-pass",
-        "assertions": 22
+        "assertions": 23
       },
       {
         "id": "openwop.scenario.v2-webhook-egress-refusal",
@@ -1842,6 +1969,12 @@
         "result": "inapplicable",
         "assertions": 0,
         "detail": "every test returned early through behaviorGate with zero assertions: profile not advertised in the captured discovery set"
+      },
+      {
+        "id": "openwop.scenario.v2-webhook-generated-secret",
+        "scenario": "v2-webhook-generated-secret.test.ts",
+        "result": "executed-pass",
+        "assertions": 6
       },
       {
         "id": "openwop.scenario.v2-webhook-message-id-stable",
@@ -1877,6 +2010,74 @@
         "assertions": 11
       },
       {
+        "id": "openwop.family.brand",
+        "scenario": "v2-ext-family-claims.test.ts",
+        "result": "executed-pass",
+        "assertions": 1
+      },
+      {
+        "id": "openwop.family.chat",
+        "scenario": "v2-ext-family-claims.test.ts",
+        "result": "executed-pass",
+        "assertions": 1
+      },
+      {
+        "id": "openwop.family.dataIntegration",
+        "scenario": "v2-ext-family-claims.test.ts",
+        "result": "executed-pass",
+        "assertions": 1
+      },
+      {
+        "id": "openwop.family.entities",
+        "scenario": "v2-ext-family-claims.test.ts",
+        "result": "executed-pass",
+        "assertions": 1
+      },
+      {
+        "id": "openwop.family.kanban",
+        "scenario": "v2-ext-family-claims.test.ts",
+        "result": "executed-pass",
+        "assertions": 1
+      },
+      {
+        "id": "openwop.family.knowledge",
+        "scenario": "v2-ext-family-claims.test.ts",
+        "result": "executed-pass",
+        "assertions": 1
+      },
+      {
+        "id": "openwop.family.launchStudio",
+        "scenario": "v2-ext-family-claims.test.ts",
+        "result": "executed-pass",
+        "assertions": 1
+      },
+      {
+        "id": "openwop.family.restTransport",
+        "scenario": "v2-ext-rest-transport.test.ts",
+        "result": "executed-pass",
+        "assertions": 20
+      },
+      {
+        "id": "openwop.family.webResearch",
+        "scenario": "v2-ext-family-claims.test.ts",
+        "result": "executed-pass",
+        "assertions": 1
+      },
+      {
+        "id": "openwop.it.audit-log-integrity.get-v1-audit-verify-on-a-recent-range-reports-chainvalid-true",
+        "scenario": "audit-log-integrity.test.ts",
+        "result": "inapplicable",
+        "assertions": 0,
+        "detail": "the host does not claim the auditLogIntegrity family at major 2"
+      },
+      {
+        "id": "openwop.it.audit-log-integrity.host-that-claims-the-profile-advertises-required-capability-fields",
+        "scenario": "audit-log-integrity.test.ts",
+        "result": "inapplicable",
+        "assertions": 0,
+        "detail": "the host does not claim the auditLogIntegrity family at major 2"
+      },
+      {
         "id": "openwop.it.context-budget-transcript-bound.bounds-the-per-turn-transcript-to-transcripttokenbudget-with-an-internally-consi",
         "scenario": "context-budget-transcript-bound.test.ts",
         "result": "inapplicable",
@@ -1900,13 +2101,13 @@
         "id": "openwop.it.fixtures-valid.every-fixture-has-a-manual-trigger-so-the-conformance-driver-can-start-it",
         "scenario": "fixtures-valid.test.ts",
         "result": "executed-pass",
-        "assertions": 94
+        "assertions": 98
       },
       {
         "id": "openwop.it.fixtures-valid.every-fixture-id-matches-its-filename",
         "scenario": "fixtures-valid.test.ts",
         "result": "executed-pass",
-        "assertions": 94
+        "assertions": 98
       },
       {
         "id": "openwop.it.fixtures-valid.every-fixture-templateid-matches-its-filename",
@@ -1990,7 +2191,7 @@
         "id": "openwop.it.fixtures-valid.validates-against-workflow-definition-schema-json",
         "scenario": "fixtures-valid.test.ts",
         "result": "executed-pass",
-        "assertions": 94
+        "assertions": 98
       },
       {
         "id": "openwop.it.jcs-vectors.a-non-i-json-native-value-is-refused-at-the-value-boundary",
@@ -2051,7 +2252,7 @@
         "id": "openwop.it.tool-catalog-projection.lists-schema-valid-tooldescriptors-serves-by-id-404s-is-auth-gated-and-never-dis",
         "scenario": "tool-catalog-projection.test.ts",
         "result": "executed-pass",
-        "assertions": 12
+        "assertions": 15
       },
       {
         "id": "openwop.it.tool-descriptor-shape.a-conforming-descriptor-validates",
@@ -2298,6 +2499,54 @@
         "detail": "host does not advertise conformance.seamsProfile: openwop-conformance-seams-v2 — the emit-surface seam is the only way the suite can choose an envelope (RFC 0209 Falsifiability)"
       },
       {
+        "id": "openwop.it.v2-a2ui-v09-surface.a-version-2-surface-is-admitted-and-a-version-1-body-under-schema-version-2-is-r",
+        "scenario": "v2-a2ui-v09-surface.test.ts",
+        "result": "inapplicable",
+        "assertions": 0,
+        "detail": "host does not advertise conformance.seamsProfile: openwop-conformance-seams-v2 — the emit-surface seam is the only way the suite can choose an envelope (RFC 0209 Falsifiability)"
+      },
+      {
+        "id": "openwop.it.v2-agent-org-chart-served-shape.serves-the-org-chart-read-pair-in-the-exact-v2-schema-shape",
+        "scenario": "v2-agent-org-chart-served-shape.test.ts",
+        "result": "executed-pass",
+        "assertions": 2
+      },
+      {
+        "id": "openwop.it.v2-approval-reject-disposition.a-gate-whose-ontimeout-is-approve-still-resolves-rejected-on-timeout-and-fails-t",
+        "scenario": "v2-approval-reject-disposition.test.ts",
+        "result": "inapplicable",
+        "assertions": 0,
+        "detail": "fixture conformance-approval-timeout-approve is not advertised — the host does not claim the timeout-approve fixture"
+      },
+      {
+        "id": "openwop.it.v2-approval-reject-disposition.a-majority-reject-decides-the-quorum-gate-on-the-deciding-vote-and-fails-the-run",
+        "scenario": "v2-approval-reject-disposition.test.ts",
+        "result": "inapplicable",
+        "assertions": 0,
+        "detail": "fixture conformance-interrupt-quorum is not advertised — the host does not claim the quorum fixture"
+      },
+      {
+        "id": "openwop.it.v2-approval-reject-disposition.a-rejected-gate-looped-back-to-itself-is-asked-again-under-a-new-key-and-the-fir",
+        "scenario": "v2-approval-reject-disposition.test.ts",
+        "result": "inapplicable",
+        "assertions": 0,
+        "detail": "fixture conformance-approval-reject-loopback is not advertised — the host does not run cycles"
+      },
+      {
+        "id": "openwop.it.v2-approval-reject-disposition.a-rejected-gate-routed-over-an-any-failed-edge-fails-as-a-node-its-all-success-s",
+        "scenario": "v2-approval-reject-disposition.test.ts",
+        "result": "inapplicable",
+        "assertions": 0,
+        "detail": "fixture conformance-approval-reject-routed is not advertised — the host does not claim the routed-reject fixture"
+      },
+      {
+        "id": "openwop.it.v2-approval-reject-disposition.an-unresolved-gate-past-its-timeoutms-with-no-ontimeout-is-resolved-rejected-by",
+        "scenario": "v2-approval-reject-disposition.test.ts",
+        "result": "inapplicable",
+        "assertions": 0,
+        "detail": "fixture conformance-approval-timeout is not advertised — the host does not claim the timeout fixture"
+      },
+      {
         "id": "openwop.it.v2-credential-interrupt.a-caller-resolve-of-authorized-is-refused-while-no-credential-resolves-and-a-res",
         "scenario": "v2-credential-interrupt.test.ts",
         "result": "inapplicable",
@@ -2345,6 +2594,27 @@
         "result": "inapplicable",
         "assertions": 0,
         "detail": "conformance.seamsProfile not advertised (the host claims no seams instrument) — the grant can only be driven against the suite's authorization-server double through the authorize-start seam"
+      },
+      {
+        "id": "openwop.it.v2-ext-family-claims.canvas",
+        "scenario": "v2-ext-family-claims.test.ts",
+        "result": "inapplicable",
+        "assertions": 0,
+        "detail": "no extensions[\"<org>.canvas\"] record under a registered org — the host does not advertise canvas"
+      },
+      {
+        "id": "openwop.it.v2-ext-family-claims.coordination",
+        "scenario": "v2-ext-family-claims.test.ts",
+        "result": "inapplicable",
+        "assertions": 0,
+        "detail": "no extensions[\"<org>.coordination\"] record under a registered org — the host does not advertise coordination"
+      },
+      {
+        "id": "openwop.it.v2-ext-family-claims.messaging",
+        "scenario": "v2-ext-family-claims.test.ts",
+        "result": "inapplicable",
+        "assertions": 0,
+        "detail": "no extensions[\"<org>.messaging\"] record under a registered org — the host does not advertise messaging"
       },
       {
         "id": "openwop.it.v2-mcp-client-results.an-unknown-serverid-rejects-with-not-found",
@@ -2662,7 +2932,7 @@
           "recovery": {
             "class": "dispatch-hold",
             "boundMs": 45000,
-            "observedMs": 15337
+            "observedMs": 16629
           }
         }
       },
@@ -2675,7 +2945,7 @@
           "recovery": {
             "class": "dispatch-lease",
             "boundMs": 100000,
-            "observedMs": 71067
+            "observedMs": 70277
           }
         }
       },
@@ -2774,7 +3044,7 @@
         "id": "openwop.requirement.0169.profiles-derived-only.derivable",
         "scenario": "v2-profiles-derived-only.test.ts",
         "result": "executed-pass",
-        "assertions": 10
+        "assertions": 7
       },
       {
         "id": "openwop.requirement.0169.profiles-derived-only.no-root-profiles",
@@ -3045,7 +3315,7 @@
         "id": "openwop.requirement.0171.poll-cursor-v2.shape",
         "scenario": "v2-poll-cursor-v2.test.ts",
         "result": "executed-pass",
-        "assertions": 8
+        "assertions": 10
       },
       {
         "id": "openwop.requirement.0171.run-completed-outputs",
@@ -3063,7 +3333,7 @@
         "id": "openwop.requirement.0171.sse-last-event-id",
         "scenario": "v2-sse-last-event-id.test.ts",
         "result": "executed-pass",
-        "assertions": 13
+        "assertions": 14
       },
       {
         "id": "openwop.requirement.0171.stream-mode-refusal",
@@ -3081,7 +3351,7 @@
         "id": "openwop.requirement.0171.webhook-delivery-shape",
         "scenario": "v2-webhook-delivery-shape.test.ts",
         "result": "executed-pass",
-        "assertions": 11,
+        "assertions": 12,
         "detail": "seams profile not advertised (conformance.seamsProfile !== openwop-conformance-seams-v2) — an era-2 log can only be seeded through /conformance/seams/sample/event-log/seed"
       },
       {
@@ -3136,7 +3406,7 @@
         "id": "openwop.requirement.0172.min-client-version",
         "scenario": "v2-min-client-version.test.ts",
         "result": "executed-pass",
-        "assertions": 3
+        "assertions": 4
       },
       {
         "id": "openwop.requirement.0172.preferred-version-default.headerless",
@@ -3152,6 +3422,12 @@
       },
       {
         "id": "openwop.requirement.0172.preferred-version-default.overlap",
+        "scenario": "v2-preferred-version-default.test.ts",
+        "result": "executed-pass",
+        "assertions": 1
+      },
+      {
+        "id": "openwop.requirement.0172.preferred-version-default.unversioned-is-v2",
         "scenario": "v2-preferred-version-default.test.ts",
         "result": "executed-pass",
         "assertions": 1
@@ -3184,7 +3460,7 @@
         "id": "openwop.requirement.0173.effect-identity-business-key",
         "scenario": "v2-effect-identity-business-key.test.ts",
         "result": "executed-pass",
-        "assertions": 6
+        "assertions": 5
       },
       {
         "id": "openwop.requirement.0173.effect-identity-business-key.retry",
@@ -3197,7 +3473,7 @@
         "id": "openwop.requirement.0173.effect-seam-manifest",
         "scenario": "v2-effect-seam-manifest.test.ts",
         "result": "executed-pass",
-        "assertions": 29
+        "assertions": 25
       },
       {
         "id": "openwop.requirement.0173.effect-seam-manifest.facet",
@@ -3269,7 +3545,7 @@
         "id": "openwop.requirement.0173.webhook-durable-delivery",
         "scenario": "v2-webhook-durable-delivery.test.ts",
         "result": "executed-pass",
-        "assertions": 8
+        "assertions": 9
       },
       {
         "id": "openwop.requirement.0173.webhook-durable-delivery.dead-letter",
@@ -3580,8 +3856,8 @@
         "id": "openwop.requirement.0187.bound-id-kinds.per-kind",
         "scenario": "v2-bound-id-kinds.test.ts",
         "result": "executed-pass",
-        "assertions": 3,
-        "detail": "partial-witness: inapplicable: the noop fixture records no effects — no effectId on the wire to read (a host with an effect-producing fixture witnesses this leg)"
+        "assertions": 1,
+        "detail": "the noop fixture records no effects — no effectId on the wire to read (a host with an effect-producing fixture witnesses this leg)"
       },
       {
         "id": "openwop.requirement.0187.bound-id-kinds.webhook",
@@ -3636,7 +3912,7 @@
         "scenario": "v2-capability-maturity-bounded.test.ts",
         "result": "inapplicable",
         "assertions": 0,
-        "detail": "unwitnessable until the first persisted-class retirement row is due (RFC 0197 §A.3 Falsifiability): corpus 2.42.0: 0 persisted-class v2-minor retirement row(s), 0 v2→v2 migration row(s) — no retired member exists for a post-2.N event to carry. Before one does, a scenario would be vacuous, and a row that cannot fail is not a witness. This leg asserts the moment such a row falls due."
+        "detail": "unwitnessable until the first persisted-class retirement row is due (RFC 0197 §A.3 Falsifiability): corpus 2.43.1: 0 persisted-class v2-minor retirement row(s), 0 v2→v2 migration row(s) — no retired member exists for a post-2.N event to carry. Before one does, a scenario would be vacuous, and a row that cannot fail is not a witness. This leg asserts the moment such a row falls due."
       },
       {
         "id": "openwop.requirement.0198.advertised-via-discover",
@@ -4034,13 +4310,13 @@
         "id": "openwop.requirement.0213.in-flight-loser-outcome",
         "scenario": "v2-idempotency-in-flight.test.ts",
         "result": "executed-pass",
-        "assertions": 10
+        "assertions": 11
       },
       {
         "id": "openwop.requirement.0213.in-flight-one-winner",
         "scenario": "v2-idempotency-in-flight.test.ts",
         "result": "executed-pass",
-        "assertions": 2
+        "assertions": 3
       },
       {
         "id": "openwop.requirement.0213.in-flight-refused-under-hold",
@@ -4131,13 +4407,117 @@
         "scenario": "v2-webhook-durable-delivery.test.ts",
         "result": "executed-pass",
         "assertions": 4
+      },
+      {
+        "id": "openwop.requirement.0218.anomaly-shape",
+        "scenario": "audit-anomaly-shape.test.ts",
+        "result": "executed-pass",
+        "assertions": 40
+      },
+      {
+        "id": "openwop.requirement.0218.checkpoint-preimage-vectors",
+        "scenario": "audit-checkpoint-vectors.test.ts",
+        "result": "executed-pass",
+        "assertions": 39
+      },
+      {
+        "id": "openwop.requirement.0218.checkpoint-signature-over-root",
+        "scenario": "audit-checkpoint-signature.test.ts",
+        "result": "inapplicable",
+        "assertions": 0,
+        "detail": "the host does not claim the auditLogIntegrity family"
+      },
+      {
+        "id": "openwop.requirement.0219.absent-not-refused",
+        "scenario": "v2-client-version-header.test.ts",
+        "result": "executed-pass",
+        "assertions": 2
+      },
+      {
+        "id": "openwop.requirement.0219.floor-comparison",
+        "scenario": "v2-client-version-header.test.ts",
+        "result": "executed-pass",
+        "assertions": 6
+      },
+      {
+        "id": "openwop.requirement.0219.malformed-not-refused",
+        "scenario": "v2-client-version-header.test.ts",
+        "result": "executed-pass",
+        "assertions": 12
+      },
+      {
+        "id": "openwop.requirement.0219.no-floor-no-refusal",
+        "scenario": "v2-client-version-header.test.ts",
+        "result": "inapplicable",
+        "assertions": 0,
+        "detail": "the host advertises minClientVersion \"0.1\" — this leg is for a host with no floor"
+      },
+      {
+        "id": "openwop.requirement.0221.generated-secret-returned",
+        "scenario": "v2-webhook-generated-secret.test.ts",
+        "result": "executed-pass",
+        "assertions": 6
+      },
+      {
+        "id": "openwop.requirement.0222.signing-keys-cover-served-versions",
+        "scenario": "v2-registry-lifecycle.test.ts",
+        "result": "inapplicable",
+        "assertions": 0,
+        "detail": "no registry named — set OPENWOP_REGISTRY_URL (or OPENWOP_TEST_PUBLIC_REGISTRY=true for packs.openwop.dev); a host run does not read a registry"
+      },
+      {
+        "id": "openwop.requirement.0222.yanked-version-lifecycle",
+        "scenario": "v2-registry-lifecycle.test.ts",
+        "result": "inapplicable",
+        "assertions": 0,
+        "detail": "no registry named — set OPENWOP_REGISTRY_URL (or OPENWOP_TEST_PUBLIC_REGISTRY=true for packs.openwop.dev); a host run does not read a registry"
+      },
+      {
+        "id": "openwop.requirement.0223.reject-fails-node",
+        "scenario": "v2-approval-reject-disposition.test.ts",
+        "result": "executed-pass",
+        "assertions": 3
+      },
+      {
+        "id": "openwop.requirement.0223.reject-fails-run",
+        "scenario": "v2-approval-reject-disposition.test.ts",
+        "result": "executed-pass",
+        "assertions": 3
+      },
+      {
+        "id": "openwop.requirement.0223.reject-recorded",
+        "scenario": "v2-approval-reject-disposition.test.ts",
+        "result": "executed-pass",
+        "assertions": 2
+      },
+      {
+        "id": "openwop.requirement.0224.checkpoint-cadence",
+        "scenario": "audit-log-integrity.test.ts",
+        "result": "inapplicable",
+        "assertions": 0,
+        "detail": "the host does not claim the auditLogIntegrity family at major 2"
+      },
+      {
+        "id": "openwop.requirement.errors.event-code-registered",
+        "scenario": "v2-error-registry.test.ts",
+        "result": "executed-pass",
+        "assertions": 2
       }
     ]
   },
-  "witnessSha256": "a634cdcc69f03d5672221266232b5ee963896e8fee377702f2718d9fe68ea437",
-  "assertionCount": 2830,
+  "assertionCount": 3148,
   "detail": {
     "nonPass": [
+      {
+        "id": "openwop.scenario.audit-checkpoint-signature",
+        "result": "inapplicable",
+        "reason": "every test returned early through behaviorGate with zero assertions: profile not advertised in the captured discovery set"
+      },
+      {
+        "id": "openwop.scenario.audit-log-integrity",
+        "result": "inapplicable",
+        "reason": "every test returned early through behaviorGate with zero assertions: profile not advertised in the captured discovery set"
+      },
       {
         "id": "openwop.scenario.context-budget-transcript-bound",
         "result": "inapplicable",
@@ -4324,6 +4704,11 @@
         "reason": "every test returned early through behaviorGate with zero assertions: profile not advertised in the captured discovery set"
       },
       {
+        "id": "openwop.scenario.v2-registry-lifecycle",
+        "result": "inapplicable",
+        "reason": "every test returned early through behaviorGate with zero assertions: profile not advertised in the captured discovery set"
+      },
+      {
         "id": "openwop.scenario.v2-revocation-honored",
         "result": "inapplicable",
         "reason": "every test returned early through behaviorGate with zero assertions: profile not advertised in the captured discovery set"
@@ -4372,6 +4757,16 @@
         "id": "openwop.scenario.v2-webhook-standard-webhooks-delivery",
         "result": "inapplicable",
         "reason": "every test returned early through behaviorGate with zero assertions: profile not advertised in the captured discovery set"
+      },
+      {
+        "id": "openwop.it.audit-log-integrity.get-v1-audit-verify-on-a-recent-range-reports-chainvalid-true",
+        "result": "inapplicable",
+        "reason": "the host does not claim the auditLogIntegrity family at major 2"
+      },
+      {
+        "id": "openwop.it.audit-log-integrity.host-that-claims-the-profile-advertises-required-capability-fields",
+        "result": "inapplicable",
+        "reason": "the host does not claim the auditLogIntegrity family at major 2"
       },
       {
         "id": "openwop.it.context-budget-transcript-bound.bounds-the-per-turn-transcript-to-transcripttokenbudget-with-an-internally-consi",
@@ -4529,6 +4924,36 @@
         "reason": "host does not advertise conformance.seamsProfile: openwop-conformance-seams-v2 — the emit-surface seam is the only way the suite can choose an envelope (RFC 0209 Falsifiability)"
       },
       {
+        "id": "openwop.it.v2-a2ui-v09-surface.a-version-2-surface-is-admitted-and-a-version-1-body-under-schema-version-2-is-r",
+        "result": "inapplicable",
+        "reason": "host does not advertise conformance.seamsProfile: openwop-conformance-seams-v2 — the emit-surface seam is the only way the suite can choose an envelope (RFC 0209 Falsifiability)"
+      },
+      {
+        "id": "openwop.it.v2-approval-reject-disposition.a-gate-whose-ontimeout-is-approve-still-resolves-rejected-on-timeout-and-fails-t",
+        "result": "inapplicable",
+        "reason": "fixture conformance-approval-timeout-approve is not advertised — the host does not claim the timeout-approve fixture"
+      },
+      {
+        "id": "openwop.it.v2-approval-reject-disposition.a-majority-reject-decides-the-quorum-gate-on-the-deciding-vote-and-fails-the-run",
+        "result": "inapplicable",
+        "reason": "fixture conformance-interrupt-quorum is not advertised — the host does not claim the quorum fixture"
+      },
+      {
+        "id": "openwop.it.v2-approval-reject-disposition.a-rejected-gate-looped-back-to-itself-is-asked-again-under-a-new-key-and-the-fir",
+        "result": "inapplicable",
+        "reason": "fixture conformance-approval-reject-loopback is not advertised — the host does not run cycles"
+      },
+      {
+        "id": "openwop.it.v2-approval-reject-disposition.a-rejected-gate-routed-over-an-any-failed-edge-fails-as-a-node-its-all-success-s",
+        "result": "inapplicable",
+        "reason": "fixture conformance-approval-reject-routed is not advertised — the host does not claim the routed-reject fixture"
+      },
+      {
+        "id": "openwop.it.v2-approval-reject-disposition.an-unresolved-gate-past-its-timeoutms-with-no-ontimeout-is-resolved-rejected-by",
+        "result": "inapplicable",
+        "reason": "fixture conformance-approval-timeout is not advertised — the host does not claim the timeout fixture"
+      },
+      {
         "id": "openwop.it.v2-credential-interrupt.a-caller-resolve-of-authorized-is-refused-while-no-credential-resolves-and-a-res",
         "result": "inapplicable",
         "reason": "conformance.seamsProfile not advertised (the host claims no seams instrument) — the grant can only be driven against the suite's authorization-server double through the authorize-start seam"
@@ -4562,6 +4987,21 @@
         "id": "openwop.it.v2-credential-interrupt.without-oauth-credentialinterrupt-a-terminal-refresh-failure-fails-the-node-conn",
         "result": "inapplicable",
         "reason": "conformance.seamsProfile not advertised (the host claims no seams instrument) — the grant can only be driven against the suite's authorization-server double through the authorize-start seam"
+      },
+      {
+        "id": "openwop.it.v2-ext-family-claims.canvas",
+        "result": "inapplicable",
+        "reason": "no extensions[\"<org>.canvas\"] record under a registered org — the host does not advertise canvas"
+      },
+      {
+        "id": "openwop.it.v2-ext-family-claims.coordination",
+        "result": "inapplicable",
+        "reason": "no extensions[\"<org>.coordination\"] record under a registered org — the host does not advertise coordination"
+      },
+      {
+        "id": "openwop.it.v2-ext-family-claims.messaging",
+        "result": "inapplicable",
+        "reason": "no extensions[\"<org>.messaging\"] record under a registered org — the host does not advertise messaging"
       },
       {
         "id": "openwop.it.v2-mcp-client-results.an-unknown-serverid-rejects-with-not-found",
@@ -4971,7 +5411,7 @@
       {
         "id": "openwop.requirement.0197.retired-not-emitted",
         "result": "inapplicable",
-        "reason": "unwitnessable until the first persisted-class retirement row is due (RFC 0197 §A.3 Falsifiability): corpus 2.42.0: 0 persisted-class v2-minor retirement row(s), 0 v2→v2 migration row(s) — no retired member exists for a post-2.N event to carry. Before one does, a scenario would be vacuous, and a row that cannot fail is not a witness. This leg asserts the moment such a row falls due."
+        "reason": "unwitnessable until the first persisted-class retirement row is due (RFC 0197 §A.3 Falsifiability): corpus 2.43.1: 0 persisted-class v2-minor retirement row(s), 0 v2→v2 migration row(s) — no retired member exists for a post-2.N event to carry. Before one does, a scenario would be vacuous, and a row that cannot fail is not a witness. This leg asserts the moment such a row falls due."
       },
       {
         "id": "openwop.requirement.0198.advertised-via-discover",
@@ -5252,16 +5692,42 @@
         "id": "openwop.requirement.0214.a2a-push-unadvertised-refused",
         "result": "inapplicable",
         "reason": "a2a not advertised at major 2"
+      },
+      {
+        "id": "openwop.requirement.0218.checkpoint-signature-over-root",
+        "result": "inapplicable",
+        "reason": "the host does not claim the auditLogIntegrity family"
+      },
+      {
+        "id": "openwop.requirement.0219.no-floor-no-refusal",
+        "result": "inapplicable",
+        "reason": "the host advertises minClientVersion \"0.1\" — this leg is for a host with no floor"
+      },
+      {
+        "id": "openwop.requirement.0222.signing-keys-cover-served-versions",
+        "result": "inapplicable",
+        "reason": "no registry named — set OPENWOP_REGISTRY_URL (or OPENWOP_TEST_PUBLIC_REGISTRY=true for packs.openwop.dev); a host run does not read a registry"
+      },
+      {
+        "id": "openwop.requirement.0222.yanked-version-lifecycle",
+        "result": "inapplicable",
+        "reason": "no registry named — set OPENWOP_REGISTRY_URL (or OPENWOP_TEST_PUBLIC_REGISTRY=true for packs.openwop.dev); a host run does not read a registry"
+      },
+      {
+        "id": "openwop.requirement.0224.checkpoint-cadence",
+        "result": "inapplicable",
+        "reason": "the host does not claim the auditLogIntegrity family at major 2"
       }
     ]
   },
   "durability": {
     "rung": "durable-single-instance"
   },
+  "witnessSha256": "69d0b862c985ec905cf35bee3b4536f51ed8dfe258543d2d15c4d634e3ec3437",
   "signature": {
     "alg": "ed25519",
     "keyId": "myndhyve-bundle-2026-09b",
-    "sig": "bimXPWBijhH39bfYhT86TK3lt6P4ILFTGmvzhiXuKRy4_Gysz49STb_hqq8HbOTVAMPCpYqqWZfKkLJYM11ZCw",
+    "sig": "nVH4gy915H4IgvjIkND-Whszxhr52JOuLLuXcYhDiUfuJi-0VugMku83fQ2k8gL59ku4yUFw4Wqv4V2MLP6zAw",
     "over": [
       "witnessSha256",
       "host.build",
