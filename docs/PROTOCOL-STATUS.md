@@ -24,9 +24,12 @@
 | Conformance suite `@openwop/openwop-conformance` | 2.43.1 | `conformance/package.json` | minor on scenario add/remove |
 | OpenAPI `info.version` | 1.1.0 | `api/openapi.yaml` | hand-maintained in v1.x; generated from the corpus tag at v2 (RFC 0172 sectionB #14) |
 | AsyncAPI `info.version` | 1.1.0 | `api/asyncapi.yaml` | as above |
-| TypeScript SDK `@openwop/openwop` | 1.10.0 | openwop-sdks `sdk/typescript/package.json` (via `evidence/cross-repo-manifests.json`) | tracks the spec major (PUBLISHING.md) |
-| Python SDK `openwop-client` | 1.8.0 | openwop-sdks `sdk/python/pyproject.toml` | as above |
-| Go SDK `github.com/openwop/openwop-sdks/go` | 1.7.0 | openwop-sdks `go/CHANGELOG.md` head (tag-versioned; no version file) | as above |
+| TypeScript SDK `@openwop/openwop` (2.x, current) | 2.4.0 | openwop-sdks `sdk/typescript-v2/package.json` (via `evidence/cross-repo-manifests.json`) | v2-only; npm `latest` |
+| Python SDK `openwop-client` (2.x, current) | 2.4.0 | openwop-sdks `sdk/python-v2/pyproject.toml` | v2-only; `openwop-client>=2,<3` |
+| Go SDK `github.com/openwop/openwop-sdks/go/v2` (2.x, current) | 2.4.0 | openwop-sdks `go/v2/CHANGELOG.md` head (tag-versioned `go/v2.Y.Z`; no version file) | v2-only |
+| TypeScript SDK `@openwop/openwop` (1.x) | 1.10.0 | openwop-sdks `sdk/typescript/package.json` | maintained parallel line through the v1 overlap; npm `latest-1` |
+| Python SDK `openwop-client` (1.x) | 1.8.0 | openwop-sdks `sdk/python/pyproject.toml` | as above; `openwop-client<2` |
+| Go SDK `github.com/openwop/openwop-sdks/go` (1.x) | 1.7.0 | openwop-sdks `go/CHANGELOG.md` head (tag-versioned `go/v1.Y.Z`; no version file) | as above |
 | openwop-sdks corpus pin | v2.43.0 | openwop-sdks `CORPUS_TAG` | bumped only by a re-vendor PR (RFC 0176 sectionE.1) |
 | CLI `@openwop/cli` | 1.3.0 | openwop-cli `package.json` | speaks the wire directly; negotiates major 2 since 1.0.0 (the v1-only 0.18.x line is frozen on branch `cli-v1-frozen`) |
 | Registry `registryVersion` / `protocolVersion` | 1.0.0 / 1.0 | openwop-registry `.well-known/openwop-registry.json` | RFC 0172 sectionB #18; versioned by tree at v2 (RFC 0177 sectionA.3) |
