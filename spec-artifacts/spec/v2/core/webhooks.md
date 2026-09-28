@@ -9,7 +9,7 @@ A client registers a URL and an event filter once; the host POSTs matching event
 
 ## Surfaces
 
-A host that advertises `webhooks` ([capabilities.md](capabilities.md)) serves `registerWebhook` (`POST /webhooks`) and `unregisterWebhook` (`DELETE /webhooks/{webhookId}`) from `api/v2/openapi.yaml`. The facet (`spec/v2/facets/webhooks.schema.json`) is `{ signatureAlgorithms[] }`, which MUST list `"v1"`.
+A host that advertises `webhooks` ([capabilities.md](capabilities.md)) serves `registerWebhook` (`POST /webhooks`) and `unregisterWebhook` (`DELETE /webhooks/{webhookId}`) from `api/v2/openapi.yaml`. The facet (`spec/v2/facets/webhooks.schema.json`) carries `signatureAlgorithms[]`, which MUST list `"v1"`.
 
 | Operation | Request | Response |
 | --- | --- | --- |
@@ -77,7 +77,7 @@ A subscriber MUST reject an unrecognized `OpenWOP-Signature-Algorithm` value, an
 
 Durable delivery is an obligation of the `webhooks` surface ([security-defaults.md](security-defaults.md)). A host MUST:
 
-- retry a failed attempt per its advertised `retryPolicy` (`maxAttempts`, `backoff ∈ none | fixed | exponential`) with backoff between attempts;
+- retry a failed attempt per its advertised `retryPolicy` (`maxAttempts`, `backoff ∈ none | fixed | exponential`, optional `maxElapsedMs`) with backoff between attempts, and when it advertises `maxElapsedMs`, dead-letter an exhausted delivery within that many milliseconds of the first attempt's start;
 - route a delivery whose retries are exhausted to the dead-letter sink (§Dead letters), rather than drop it;
 - deliver each matching event at least once; a receiver MAY observe the same event more than once;
 - not make the start of an attempt to one subscription wait for an attempt to a *different* subscription to finish (answered, failed, or timed out) (§Delivery isolation);
@@ -108,7 +108,7 @@ This sink is the delivery sink; the `deadLetter` family is the run sink and is a
 
 ## Replay
 
-A host MUST NOT deliver events a `replay` fork re-emits as fixed history; replay-ness is read from the run, never from the event type (replay.md). A `branch` fork's events are new facts and are delivered.
+A `replay` fork's re-emitted history is never delivered ([replay.md](replay.md) §Suppression); a `branch` fork's events are.
 
 ## Egress
 

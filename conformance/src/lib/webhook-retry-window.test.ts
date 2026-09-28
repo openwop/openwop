@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { DEFAULT_RETRY_WAIT_CAP_MS, MAX_RETRY_WAIT_CAP_MS, RETRY_WAIT_ENV, RETRY_WAIT_FLOOR_MS, retryWaitCapMs, retryWaitFor, windowClosedNote } from './webhook-retry-window.js';
+import { ADVERTISED_BOUND_GRACE_MS, DEFAULT_RETRY_WAIT_CAP_MS, MAX_RETRY_WAIT_CAP_MS, RETRY_WAIT_ENV, RETRY_WAIT_FLOOR_MS, advertisedMaxElapsedMs, pastAdvertisedBound, retryWaitCapMs, retryWaitFor, windowClosedNote } from './webhook-retry-window.js';
 
 describe('the webhook retry window is operator-RAISABLE and never lowerable', () => {
   it('defaults to 90 s when unset, empty, or not a number', () => {
@@ -31,5 +31,22 @@ describe('the webhook retry window is operator-RAISABLE and never lowerable', ()
     const d = windowClosedNote(4, 5, 90_000, DEFAULT_RETRY_WAIT_CAP_MS);
     expect(d).toContain('4 of the advertised 5'); expect(d).toContain(RETRY_WAIT_ENV); expect(d).toContain('never lowered');
     expect(windowClosedNote(4, 5, 120_000, 120_000)).toContain('already raised to 120000ms');
+  });
+  // RFC 0225: an advertised maxElapsedMs sets the window, and only it lets a row convict.
+  it('an advertised maxElapsedMs sets the wait to the bound plus the grace, never below the cap, never above the hour', () => {
+    expect(retryWaitFor({ backoff: 'exponential', maxElapsedMs: 540_000 }, DEFAULT_RETRY_WAIT_CAP_MS)).toBe(540_000 + ADVERTISED_BOUND_GRACE_MS);
+    expect(retryWaitFor({ backoff: 'none', maxElapsedMs: 10_000 }, DEFAULT_RETRY_WAIT_CAP_MS)).toBe(DEFAULT_RETRY_WAIT_CAP_MS);
+    expect(retryWaitFor({ backoff: 'exponential', maxElapsedMs: 540_000 }, 900_000)).toBe(900_000);
+    expect(retryWaitFor({ backoff: 'fixed', maxElapsedMs: 7_200_000 }, DEFAULT_RETRY_WAIT_CAP_MS)).toBe(MAX_RETRY_WAIT_CAP_MS);
+  });
+  it('a malformed maxElapsedMs is ignored, so the host is measured as if it advertised none', () => {
+    for (const v of [0, -1, 1.5, '540000', null]) expect(advertisedMaxElapsedMs({ maxElapsedMs: v })).toBeNull();
+    expect(retryWaitFor({ backoff: 'exponential', maxElapsedMs: 0 }, DEFAULT_RETRY_WAIT_CAP_MS)).toBe(DEFAULT_RETRY_WAIT_CAP_MS);
+  });
+  it('a row may convict only past the advertised bound plus the grace', () => {
+    expect(pastAdvertisedBound(null, 3_600_000)).toBe(false);
+    expect(pastAdvertisedBound({ backoff: 'exponential' }, 3_600_000)).toBe(false);
+    expect(pastAdvertisedBound({ maxElapsedMs: 60_000 }, 60_000 + ADVERTISED_BOUND_GRACE_MS - 1)).toBe(false);
+    expect(pastAdvertisedBound({ maxElapsedMs: 60_000 }, 60_000 + ADVERTISED_BOUND_GRACE_MS)).toBe(true);
   });
 });

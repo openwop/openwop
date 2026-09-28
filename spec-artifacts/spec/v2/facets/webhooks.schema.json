@@ -35,6 +35,11 @@
             "fixed",
             "exponential"
           ]
+        },
+        "maxElapsedMs": {
+          "type": "integer",
+          "minimum": 1,
+          "description": "RFC 0225 \u2014 OPTIONAL. The longest, in ms, from a delivery's first attempt starting to its routing to the dead-letter sink when every attempt fails. A host advertising it MUST dead-letter an exhausted delivery within that bound (webhooks.md \u00a7Delivery)."
         }
       },
       "description": "spec/v2/core/webhooks.md \u00a7Delivery \u2014 the policy a host retries a failed attempt under. The webhooks family carries it at v2; `triggerBridge.retryPolicy` is the v1 carrier and stays through the overlap."

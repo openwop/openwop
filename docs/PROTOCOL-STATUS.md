@@ -12,7 +12,7 @@
 | OpenAPI operations | 58 | `api/openapi.yaml` |
 | AsyncAPI version | 3.1.0 | `api/asyncapi.yaml` |
 | Conformance scenario files | 573 | `conformance/src/scenarios/*.test.ts` |
-| RFCs tracked | 222 | `RFCS/[0-9][0-9][0-9][0-9]-*.md`, excluding template |
+| RFCs tracked | 223 | `RFCS/[0-9][0-9][0-9][0-9]-*.md`, excluding template |
 
 ## Artifact Versions
 
@@ -71,7 +71,7 @@
 | Status | Count |
 |---|---:|
 | Accepted | 217 |
-| Active | 3 |
+| Active | 4 |
 | Draft | 1 |
 | Superseded | 1 |
 
@@ -298,6 +298,7 @@
 | RFC 0222 | v2 registry operations - lifecycle by publication, key rotation, and the checks a registry refuses on | Active |
 | RFC 0223 | a rejected approval gate fails closed, and the failure is routable | Accepted |
 | RFC 0224 | audit-log integrity gets a v2 home | Accepted |
+| RFC 0225 | a webhook host may advertise how long a delivery can keep retrying | Active |
 | RFC 0226 | three run-failure codes the hosts share, registered | Active |
 
 ## SDK Helper Coverage
@@ -323,7 +324,7 @@ The pack registry now lives in the [`openwop-registry`](https://github.com/openw
 ## Active Follow-Ups
 
 - 1 RFC still `Draft` (RFC 0038) — advance with schema/conformance proof or defer.
-- 3 RFCs `Active` (RFC 0121, RFC 0222, RFC 0226) — wire-shape MAY shift compatibly within v1.x until promotion to `Accepted`.
+- 4 RFCs `Active` (RFC 0121, RFC 0222, RFC 0225, RFC 0226) — wire-shape MAY shift compatibly within v1.x until promotion to `Accepted`.
 - External audit, non-steward host recruitment, and non-steward maintainer recruitment remain external-action gates.
 - Multi-region idempotency and some optional-profile behavior checks remain lower-confidence than the core wire contract.
 
