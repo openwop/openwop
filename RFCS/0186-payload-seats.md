@@ -55,6 +55,8 @@ The tier-2 host drops the same fact on **350 rows** of `node.suspended`, which h
 ### §A.3 `ApprovalData.onTimeout` — the one field that was genuinely missing
 
 > *Corrected 2026-09-28 (RFC 0223, openwop #1696, Class 3).* The seat stands, but it does not choose a timeout's outcome: a timed-out gate resolves rejected whatever `onTimeout` holds. `approve` is treated as `reject` (RFC 0093), and `escalate` MUST NOT extend or grant the gate.
+>
+> Measured basis (MyndHyve production, read-only, 2026-09-28): 0 of 170 stored workflow definitions set any grant-on-timeout key (`onTimeout`, `approvalTimeout`, `autoApproveOnTimeout`, `hitlConfig.timeoutAction`); none of the 101 approval nodes sets a timeout at all; 0 of 22,169 runs (all time) and 1,419 suspensions were auto-approved on timeout. The only grant path is `core.chat.approvalGate` (`src/core/workflow/nodes/chat/approvalGate.node.ts:602-606`), and it is inert in production: both production hosts use `FirestoreSuspendManager`, which ignores `timeoutResumeValue` and rejects with `SUSPEND_TIMED_OUT`, so only the in-memory fallback could grant. No conforming or production behaviour is removed in practice.
 
 RFC 0185's closure gate waived `approvalRequested` pending host input. The tier-2 host answered with the full historical key set — `{title, message, timeout, onTimeout}`, 280 rows — and with the observation that these payloads were the **wrong model**, not extra keys on the right one: the right one already existed.
 
