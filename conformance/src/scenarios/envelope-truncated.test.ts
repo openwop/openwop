@@ -22,6 +22,11 @@ import { pollUntilTerminal } from '../lib/polling.js';
 import { isFixtureAdvertised } from '../lib/fixtures.js';
 import { req } from '../lib/requirement-ids.js';
 import { softSkip, blockedDespiteAssertions } from '../lib/soft-skip.js';
+import { holdMockNodes } from '../lib/mock-node-lock.js';
+import { truncationBudgetVerdict } from '../lib/mock-ai-budgets.js';
+
+// The mock-AI program seam is keyed by node id; files sharing a fixture's node run one at a time.
+holdMockNodes('truncated-structured-call');
 
 const HTTP_SKIP = !process.env.OPENWOP_BASE_URL;
 const FIXTURE = 'conformance-envelope-truncated';
@@ -48,12 +53,6 @@ async function startRunAndRead(): Promise<{ events: RunEvent[]; terminal: unknow
   if (eventsRes.status !== 200) return null;
   const events = ((eventsRes.json as { events?: RunEvent[] } | undefined)?.events ?? []) as RunEvent[];
   return { events, terminal };
-}
-
-async function lastBudget(): Promise<number | null> {
-  const res = await driver.get(`/v1/host/sample/test/mock-ai/last-dispatch-budget?nodeId=${encodeURIComponent(NODE_ID)}`);
-  if (res.status !== 200) return null;
-  return (res.json as { maxTokens?: number | null }).maxTokens ?? null;
 }
 
 describe.skipIf(HTTP_SKIP)('envelope-truncated: runtime behavior (RFC 0032 §B.4 + RFC 0033 §B)', () => {
@@ -112,19 +111,20 @@ describe.skipIf(HTTP_SKIP)('envelope-truncated: runtime behavior (RFC 0032 §B.4
 
     const result = await startRunAndRead();
     if (result === null) return softSkip('blocked', 'precondition not met — `result === null` returned early (seam, prior step, or fixture unavailable)');
-    // After the run, the mock's most-recent budget is the SECOND (retry)
-    // attempt's maxTokens. Per RFC 0033 §B, this MUST exceed the fixture's
-    // initial maxTokens (50). The host's default multiplier is 2 — so the
-    // retry should see 100.
-    const budget = await lastBudget();
-    if (budget === null) return softSkip('blocked', 'precondition not met — `budget === null` returned early (host doesn\'t expose the seam) (seam, prior step, or fixture unavailable)'); // host doesn't expose the seam
+    // RFC 0033 §B: the retry budget SHOULD exceed the first attempt's (a MAY retry,
+    // a SHOULD increase). Suite 2.42.9 compares the budgets the provider actually
+    // received, and records an unmet SHOULD rather than failing it; until then this
+    // leg asserted `> 50` (the fixture value) as a MUST.
+    const v = await truncationBudgetVerdict(NODE_ID);
+    if (v.kind === 'skip') return softSkip(v.skip, v.reason);
+    if (v.kind === 'unmet') return softSkip('inapplicable', `RFC 0033 §B SHOULD not met — the retry carried maxTokens ${v.retry} after the first attempt carried ${v.first}; recorded, not failed`);
     expect(
-      budget,
-      req('openwop.it.envelope-truncated.retry-attempt-receives-a-maxtokens-value-strictly-greater-than-the-previous-atte', 
+      v.retry,
+      req('openwop.it.envelope-truncated.retry-attempt-receives-a-maxtokens-value-strictly-greater-than-the-previous-atte',
         'RFCS/0033-envelope-completion-contract.md §B',
-        'truncation retry MUST issue with a strictly-increased maxTokens budget (host multiplies by capabilities.envelopes.reliability.completion.truncationBudgetMultiplier)',
+        `the truncation retry's budget SHOULD exceed the first attempt's (first ${v.first}, retry ${v.retry})`,
       ),
-    ).toBeGreaterThan(50);
+    ).toBeGreaterThan(v.first);
   });
 
   it('run terminates `completed` after the second attempt succeeds', async () => {
