@@ -1,0 +1,46 @@
+{
+  "id": "conformance-approval-timeout-approve",
+  "name": "Conformance: Approval (timeout, onTimeout approve)",
+  "version": "1.0",
+  "description": "RFC 0223 / openwop#1696. An approval gate with a 1500 ms timeoutMs and onTimeout: approve. Nobody resolves it: a timeout never grants, so the host's timer resolves the gate rejected (action timeout, decision rejected, reason timeout), the gate fails with approval_rejected and the run fails. Conformance scenario: v2-approval-reject-disposition.test.ts.",
+  "nodes": [
+    {
+      "id": "gate",
+      "typeId": "core.approvalGate",
+      "name": "Approval Gate",
+      "position": {
+        "x": 0,
+        "y": 0
+      },
+      "config": {
+        "title": "Conformance approval (timeout, onTimeout approve)",
+        "description": "Conformance suite — do not resolve; the gate times out and MUST NOT be granted.",
+        "actions": [
+          "accept",
+          "reject"
+        ],
+        "timeoutMs": 1500,
+        "onTimeout": "approve"
+      },
+      "inputs": {}
+    }
+  ],
+  "edges": [],
+  "triggers": [
+    {
+      "id": "manual",
+      "type": "manual",
+      "enabled": true
+    }
+  ],
+  "variables": [],
+  "metadata": {
+    "tags": [
+      "conformance",
+      "hitl"
+    ]
+  },
+  "settings": {
+    "timeout": 0
+  }
+}
