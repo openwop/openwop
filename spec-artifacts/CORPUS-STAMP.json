@@ -112,7 +112,7 @@
     "schemas/v2/ai-envelope.schema.json": "0dc7dfbf032a37239ffd81fc2d67f999a40782ff5074866a56e414164cdee809",
     "schemas/v2/annotation-create.schema.json": "ec32c22a243b343eeb6956a23be2d76ba5b50c8018ec3ec9d6efa5a1d9b0c792",
     "schemas/v2/annotation.schema.json": "eb4813cdaa8e325412cfcaeeee5c8a28f3751c946dec64e546c7ba0ad3aad8d4",
-    "schemas/v2/artifact-type-pack-manifest.schema.json": "c8820351a2ab93855bd654ad3d8a9788f97975d09b3a7a0418e374ed6114595d",
+    "schemas/v2/artifact-type-pack-manifest.schema.json": "acbbf14d32da4e0cb81254bbd6cc48fc10083890572044ddef71c59a0f65c185",
     "schemas/v2/artifact.schema.json": "85b9dc284d39b99d2a66fa8cbf47f2dd3d8526d3bd6cc411ad315b372de38975",
     "schemas/v2/audit-verify-result.schema.json": "14af8e9283510f0a40e48a2059c929ee44e0fc9fa3cc66a95bfbe90b17c48297",
     "schemas/v2/budget-policy.schema.json": "c7449daeb6e1d95e7a047b8c2814d3d54748697c27046972834874867d9b5f4c",
@@ -216,7 +216,8 @@
     "spec/v1/migrations.schema.json": "886779aa6c22e646db097f5df210adb018a4dd14a7b815465a18c8a7056c8f72",
     "spec/v1/operation-path-manifest.json": "fada0342815fb129c1ae61f1829bd6e34417717408ce86fcc54280f373c19e74",
     "spec/v1/spec-gaps.json": "ea9612af55bea9dae3e82223d4f714243f8f590b0193f1188257b13491a38afc",
-    "spec/v2/README.md": "ae7e9dceb3a6a1df75259de43c08244840c8ca8380a3eb4c727ae07dc4bdc4b1",
+    "spec/v2/README.md": "ddea90d7cf14aefffe1a43eeeecd4222dadad1d1e5ac64dceb073990eb93d9ef",
+    "spec/v2/core/artifact-type-packs.md": "e143bfd6f98d4867855bb57090a6b854e98d4b0a6202b9b3734cb45366f99854",
     "spec/v2/core/capabilities.md": "ad728e8a761153b55d036ece55043ff62d0982121e2e629e5e7cdf560fca3c03",
     "spec/v2/core/conformance.md": "0cfceb926eed87055550a5c23e640210c795fc8cf9dd1b2544db0e2b3842c564",
     "spec/v2/core/connection-packs.md": "1ee129d792c537bfe82393ccb92555d8e6ddc342b1aa781a13f101b27ec38171",
@@ -234,8 +235,8 @@
     "spec/v2/core/interrupt.md": "4c825634acac72900ebd3c5ac5941f55648fa33d2df92913ef16371dcb700a34",
     "spec/v2/core/node-pack-runtimes.md": "e1088cb69b8c3c67256c494063328916c2980ab1aa97a7063de25bab82fdb1e5",
     "spec/v2/core/oauth.md": "c96483a44b62978c596945fbb7d7c863cf6056cd980fdb4cf4e97555e3e10b72",
-    "spec/v2/core/overview.md": "76fdb48ea68de416d6a63ae3b3ec750cafda01d234ea22a1096426fded7b54f3",
-    "spec/v2/core/packs.md": "5929e708bd4e79f6e1beea570af583c80f3b63bb21dec78a5df03c235e73364a",
+    "spec/v2/core/overview.md": "d7000fbcd2f59280870fc592f5d5ea28a5195b9eb209029f09c5de59e0f2bf9c",
+    "spec/v2/core/packs.md": "935fc2f633c68fa98ad6c9cdb083dd556e955b1a15eff32f4773d13329a57238",
     "spec/v2/core/persistence.md": "711874f74cb08b03cd118d683056db10a063517762fcea73ec70feb5d983e6a4",
     "spec/v2/core/portability.md": "87c4327f674f714fda6217fd79b99d2ba219ad47dc02f9751bb56c200fb2c17a",
     "spec/v2/core/replay.md": "4d379494057746c6883f6047972e93e621863b998ed291b9a691d3aa57c1ff43",
@@ -248,7 +249,7 @@
     "spec/v2/core/workflow-chain-packs.md": "fdce7a8477e269950a2bac05ee6eddbd66eb0b670b464d00054f7196ec05d29c",
     "spec/v2/corrections.json": "59f647f4d22477f6c2b06dcf913b682dde5d51dd5e607a5d0cf648ab60864d6e",
     "spec/v2/corrections.schema.json": "46bbffb954d13bd9995aebc912ceeb2544f7064331abf25fd6ab85c81a5cec94",
-    "spec/v2/declaration.json": "25ceb30f1b055afa529c2d822e768498e8c3e95bdc652b5edb2404bf75ac96ee",
+    "spec/v2/declaration.json": "9a6ae40d8c7045f5d00fe46b1ea4a80b0b4e49dd9dd5db8e7a1a4873c91999f4",
     "spec/v2/declaration.schema.json": "ef951633e4070899f64828f5cf1b5f4870270a0360f81dbb49b5b4d6cd407550",
     "spec/v2/errors.json": "fa650cbbdf25a140fdaf82ec5269f95b4585ac4bdde1fa6b0b3ffe48a3f7943c",
     "spec/v2/errors.schema.json": "47404ad53e6147cf9017b813483712466573e419fb33e6c4b6c12d3e7deba1bc",
@@ -304,5 +305,5 @@
     "spec/v2/retention-floors.json": "eaf3722d95c79947af1d4269ef85117e126518c588cfcf1a2b21b97269f51624",
     "spec/v2/surface-baseline.json": "d0540276e74001f5058dd81909100ea6ee3c1925c6ac02918418f5ec941d0661"
   },
-  "corpusCommit": "cb6b5103c7c7f1b931e31e8b64ca8af831afa0a3"
+  "corpusCommit": "90ff736153bb72370352c51b0ec704927ec8adc7"
 }
