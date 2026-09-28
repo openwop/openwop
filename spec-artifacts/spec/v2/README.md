@@ -31,7 +31,7 @@ when v1 ends.
 | Area | Documents |
 | --- | --- |
 | Foundation | [`overview`](./core/overview.md), [`versioning`](./core/versioning.md), [`headers`](./core/headers.md), [`identity`](./core/identity.md), [`oauth`](./core/oauth.md), [`capabilities`](./core/capabilities.md), [`i18n`](./core/i18n.md) |
-| Execution | [`runs`](./core/runs.md), [`events`](./core/events.md), [`interrupt`](./core/interrupt.md), [`conversation`](./core/conversation.md), [`persistence`](./core/persistence.md), [`idempotency`](./core/idempotency.md), [`replay`](./core/replay.md) |
+| Execution | [`runs`](./core/runs.md), [`events`](./core/events.md), [`interrupt`](./core/interrupt.md), [`conversation`](./core/conversation.md), [`persistence`](./core/persistence.md), [`idempotency`](./core/idempotency.md), [`replay`](./core/replay.md), [`execution`](./core/execution.md) |
 | Integration | [`webhooks`](./core/webhooks.md), [`interop`](./core/interop.md), [`host services`](./core/host-services.md), [`storage`](./core/storage.md), [`tool catalog`](./core/tool-catalog.md), [`portability`](./core/portability.md), [`packs`](./core/packs.md), [`node-pack runtimes`](./core/node-pack-runtimes.md), [`connection packs`](./core/connection-packs.md), [`form-content packs`](./core/form-content-packs.md), [`workflow-chain packs`](./core/workflow-chain-packs.md) |
 | Reliability | [`errors`](./core/errors.md), [`security defaults`](./core/security-defaults.md), [`conformance`](./core/conformance.md) |
 
