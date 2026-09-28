@@ -46,7 +46,7 @@ So the budget still counts every rule a human wrote, and it stops counting the r
 ### §C. The implementing change (in this RFC's pull request)
 
 - `spec/v2/generated/error-codes.md`, written whole by `scripts/generate-error-envelope.mjs`. It has a banner naming the generator, the count, the 108-row table and a *Sources:* line. The generator's `--check` fails if the file is stale or hand-edited.
-- `spec/v2/core/errors.md` §Codes by HTTP status becomes one sentence: "Every registered code, by HTTP status, is listed in [error-codes.md](../generated/error-codes.md), generated from `spec/v2/errors.json` (108 codes)." The generator keeps both counts current, and no rule text moves.
+- `spec/v2/core/errors.md` §Codes by HTTP status becomes one sentence: "Every registered code, by HTTP status, is listed in `error-codes.md` (linked), generated from `spec/v2/errors.json` (108 codes)." The generator keeps both counts current, and no rule text moves.
 - `scripts/check-core-budget.mjs` gains the §A guard and reports the excluded words.
 - `openwop.requirement.0171.error-registry-prose-parity` is re-pointed. The property it protects, that a reader of the spec finds every registered code and the stated counts are true, is kept at the table's new home. `errors.md` MUST link the generated table, the table MUST hold every registered code, and every count either document states MUST equal the registry.
 - `spec-artifacts/` mirrors the new document (`spec/v2/**/*.md` is already in its set).
