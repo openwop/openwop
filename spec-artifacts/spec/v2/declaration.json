@@ -1821,8 +1821,8 @@
       "extensionName": "canvas",
       "witness": "claims-check",
       "maturity": {
-        "technical": "experimental",
-        "adoption": "single-witness"
+        "technical": "stable",
+        "adoption": "multi-witness"
       },
       "facets": [],
       "floorScenarios": [],

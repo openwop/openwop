@@ -210,7 +210,7 @@
     "spec/v1/event-codemap.json": "3da60d884157793a360da532a9fcbbfb5285636db325a74cec94b34622186d97",
     "spec/v1/event-codemap.schema.json": "d05933b2e88103aff51a2f774df97b9bda065e0fc88dbd9b114cc47a32189174",
     "spec/v1/extensions.json": "79a60754aa16cbdbdb604f8e5c00038af535a1690a4d07bd5ff7c38f0256a7bc",
-    "spec/v1/gaps.json": "addf65b3a1cae9c896d91b6d12d25028a18ced148686f3178fcad0df80da40e3",
+    "spec/v1/gaps.json": "07b0f5a206a015336307dd343b75adec647f06a9bae59ee08dbbfac851c503d5",
     "spec/v1/gaps.schema.json": "8fd83259f556553c9df0f53e7a82ca8c2a4771d471197f69b4e2ae0ceeacfd66",
     "spec/v1/migrations.json": "2efcd9064b2bc65a84a3b3d281aa86a91efd002690c1f4f14e8335c4a18194d1",
     "spec/v1/migrations.schema.json": "886779aa6c22e646db097f5df210adb018a4dd14a7b815465a18c8a7056c8f72",
@@ -246,7 +246,7 @@
     "spec/v2/core/workflow-chain-packs.md": "fdce7a8477e269950a2bac05ee6eddbd66eb0b670b464d00054f7196ec05d29c",
     "spec/v2/corrections.json": "59f647f4d22477f6c2b06dcf913b682dde5d51dd5e607a5d0cf648ab60864d6e",
     "spec/v2/corrections.schema.json": "46bbffb954d13bd9995aebc912ceeb2544f7064331abf25fd6ab85c81a5cec94",
-    "spec/v2/declaration.json": "184b83919e56d2f12bda73c7772905810a441cbab53fc42ad0b3135937fac3e5",
+    "spec/v2/declaration.json": "aba200967c28190c6889c27dcfb01fd02919d0c023b88693e9ffc57e9488021a",
     "spec/v2/declaration.schema.json": "ef951633e4070899f64828f5cf1b5f4870270a0360f81dbb49b5b4d6cd407550",
     "spec/v2/errors.json": "fa650cbbdf25a140fdaf82ec5269f95b4585ac4bdde1fa6b0b3ffe48a3f7943c",
     "spec/v2/errors.schema.json": "47404ad53e6147cf9017b813483712466573e419fb33e6c4b6c12d3e7deba1bc",
@@ -255,7 +255,7 @@
     "spec/v2/ext/README.md": "e2731ebb5156ece1840ed3b96e7a347f6345e73071ff4e54df0f21c1585c5027",
     "spec/v2/ext/a2uiSurface/README.md": "5518c7f355262eb7cc584422f4ff8e548f066b211878f969274a3a578127622d",
     "spec/v2/ext/brand/README.md": "82989c018d7965bab029bcce7a67b1d76ffc433d08971a4cac91befcccc09438",
-    "spec/v2/ext/canvas/README.md": "0e91b68566d2be90319feedfaebe2cd2db0bd8f72fb59c958fa723c05e38023f",
+    "spec/v2/ext/canvas/README.md": "00ca0856e3a0146f1eeaec87209d450e2900ed2748dc7520cc60250a0d3ffbeb",
     "spec/v2/ext/chat/README.md": "f59b6706162abbfff96f8bccd4c0e1aeed721047cf62e9af58c875727a38d716",
     "spec/v2/ext/coordination/README.md": "c7fe0884f52405fdd02c5f9ec309ac6b585685ee06ec5f338fff7acf03c07148",
     "spec/v2/ext/dataIntegration/README.md": "286dec8aa29e4d3225cbd8b3a361f5a438c3288e759966b9415ecbb99c576e70",
@@ -302,5 +302,5 @@
     "spec/v2/retention-floors.json": "eaf3722d95c79947af1d4269ef85117e126518c588cfcf1a2b21b97269f51624",
     "spec/v2/surface-baseline.json": "3d3d0fc7c0b48e7d7339e5d8ada0640487908f37220b2de65ccc9bff093f876a"
   },
-  "corpusCommit": "d3cd824c26ee405d6a555cbfe40da9b5d7800624"
+  "corpusCommit": "4bf8f2e9ea26fcf85fe1d26484bdeb4032c3af9f"
 }
