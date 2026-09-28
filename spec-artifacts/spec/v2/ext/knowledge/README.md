@@ -1,13 +1,13 @@
 # `knowledge` extension
 
-> **Status: Draft.**
+> **Status: Stable.**
 
 `knowledge` names knowledge-base retrieval through the host's RAG pipeline. It is a discovery-only reservation: v2 defines no portable operations or payload contract for it.
 
 | Field | Value |
 | --- | --- |
 | **witness:** | `claims-check` |
-| **technical:** | `experimental` |
+| **technical:** | `stable` |
 | **adoption:** | `single-witness` |
 | **peer-dependency id** | `knowledge` |
 | **advertised as** | `extensions.<org>.knowledge` |

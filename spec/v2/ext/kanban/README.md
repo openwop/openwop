@@ -1,13 +1,13 @@
 # `kanban` extension
 
-> **Status: Draft.**
+> **Status: Stable.**
 
 `kanban` names board, task, timeline and automation operations. It is a discovery-only reservation: v2 defines no portable operations or payload contract for it.
 
 | Field | Value |
 | --- | --- |
 | **witness:** | `claims-check` |
-| **technical:** | `experimental` |
+| **technical:** | `stable` |
 | **adoption:** | `single-witness` |
 | **peer-dependency id** | `kanban` |
 | **advertised as** | `extensions.<org>.kanban` |

@@ -8,7 +8,7 @@
 | --- | --- |
 | **witness:** | `claims-check` |
 | **technical:** | `experimental` |
-| **adoption:** | `single-witness` |
+| **adoption:** | `none` |
 | **peer-dependency id** | `launchStudio` |
 | **advertised as** | `extensions.<org>.launch-studio` |
 | **declared facets** | none defined |
