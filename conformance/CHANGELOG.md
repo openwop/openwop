@@ -1,5 +1,10 @@
 # `@openwop/openwop-conformance` Changelog
 
+## [2.44.1] — unreleased — nine host storage families get a v2 normative home
+
+- **The 2.44.1 cycle opens.** New `spec/v2/core/storage.md` changes the packed `@openwop/spec-artifacts` tree after `v2.44.0` was tagged (`spec/v2/core/storage.md`, `spec/v2/core/overview.md`, `spec/v2/README.md`, `spec/v2/declaration.json`). It restates the v1 rules for `fs`, `kvStorage`, `tableStorage`, `sql`, `nosql`, `vectorStore`, `searchIndex`, `blobStorage` and `cache` (RFC 0189 §D). No rule and no wire change, and no scenario change.
+- **Suite `2.44.1`**. `@openwop/spec-artifacts` moves in lockstep at the same exact pin.
+
 ## [2.44.0] — 2026-09-28 — three run-failure codes registered, a webhook retry bound hosts can advertise, and RFC 0219 Accepted
 
 - **RFC 0219 is `Accepted`** (corpus only; no scenario change). The flip changes the packed `@openwop/spec-artifacts` tree through `spec/v1/gaps.json`: 0219 gap G6 is closed (SDK 2.5.0 sends the header), G7 is declared (`no-floor-no-refusal` needs a host with no `minClientVersion`), and G8 is transferred to #1763 (CORS).
