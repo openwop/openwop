@@ -95,6 +95,18 @@ Applies to a host advertising both `openwop-auth-saml` and `openwop-auth-scim` (
 | Elevation of privilege (leaver) | A SCIM-deactivated leaver keeps authenticating over SAML because the deactivation touched only the `scim:` subject, not the linked `saml:` one — the combined-deployment leaver bypass (`USERS-2`).                                                                                  | On SCIM `active:false` / `DELETE`, the host **MUST** fail-close the linked SAML identity's subsequent authorization decisions, composing with RFC 0049 §C (§A.3). Verified by `auth-subject-link.test.ts` leaver positive case. Invariant `subject-link-leaver-deny`. |
 | Spoofing (cross-tenant / -IdP)  | An identifier that collides across two tenants — or two IdPs feeding the two lanes — is used to join subjects belonging to different principals.                                                                                                                                    | The link **MUST** be scoped to a single tenant; a host **MUST NOT** link across tenants (§A.1). **RFC 0163 closes the cross-IdP half as a normative MUST:** the SAML and SCIM lanes **MUST** share an IdP trust root before a link may form — the SAML assertion's signed `<saml:Issuer>` entityID **MUST** equal the IdP entityID bound to the SCIM connection at configuration time — so an opaque identifier that collides across two different IdPs **MUST NOT** join two principals (`auth-profiles.md` §Subject linking, RFC 0163 §B; invariant `subject-link-same-trust-root`). Was tracked as RFC 0159 UQ4 / register R5. |
 
+### 4.6 Audit-log integrity (RFC 0218, RFC 0224)
+
+Applies to a host advertising the `openwop-audit-log-integrity` profile (major 1) or the `auditLogIntegrity` family (major 2, `spec/v2/core/security-defaults.md` §Audit-log integrity). The adversary is A6 with write access to the audit store: a privileged insider, a buggy migration, or an attacker after compromise.
+
+| Threat | Vector | Mitigation | Invariant |
+| --- | --- | --- | --- |
+| Tampering (rewrite) | An entry is edited or deleted in place | Append-only storage; each entry's `prevHash` chains the prior entry's JCS hash, and the verifier re-walks it. Host-internal tamper tests (the storage is not on the wire). | — (host-internal) |
+| Repudiation (forged anchor) | A checkpoint is re-rooted over rewritten entries, or signed over a preimage a verifier cannot reproduce | Ed25519 over the root's 32 bytes under the advertised `checkpointPublicKey`, a key used for no other surface (RFC 0218 §A). `audit-checkpoint-signature.test.ts` at both majors. | `audit-checkpoint-signed-over-root` |
+| Repudiation (hidden anchor) | The verify body omits a checkpoint, so a rewrite after it goes unanchored | Every in-range checkpoint is listed, ascending, no more than the advertised `checkpointIntervalEntries` apart. The cadence leg of `audit-log-integrity.test.ts`. | `audit-checkpoint-signed-over-root` |
+
+Residual: the root and the time bound are not on the wire. A host that signs a correct-looking root over entries it never had passes the black box, and only an out-of-band verifier with entry access (`scripts/verify-audit-checkpoints.mjs` over an export) or the host's own tamper test detects it.
+
 ### 4.7 The Subject record (RFC 0165 §B)
 
 `owner.subject` is the issuer-scoped identity record hosts MAY emit on `RunSnapshot` and the `run.started` echo (`auth.md` §"The Subject record"). It adds no lane; it changes what a leaked or forged run record can reveal or join.

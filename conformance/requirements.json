@@ -3,10 +3,10 @@
   "generatedFrom": "src/scenarios/*.test.ts",
   "counts": {
     "files": 643,
-    "tests": 2471,
-    "withStableId": 2471,
+    "tests": 2472,
+    "withStableId": 2472,
     "interpolatedTitles": 0,
-    "explicitIds": 2357
+    "explicitIds": 2358
   },
   "records": [
     {
@@ -5428,12 +5428,12 @@
     {
       "id": "openwop.it.audit-checkpoint-signature.every-checkpoint-get-v1-audit-verify-returns-verifies-under-the-advertised-key",
       "file": "audit-checkpoint-signature.test.ts",
-      "line": 30,
+      "line": 29,
       "title": "every checkpoint GET /v1/audit/verify returns verifies under the advertised key",
       "explicitId": "openwop.requirement.0218.checkpoint-signature-over-root",
       "citations": [
         {
-          "section": "RFC 0218 · spec/v1/auth-profiles.md §\"Audit-log integrity\" 3",
+          "section": "RFC 0218 · spec/v1/auth-profiles.md §\"Audit-log integrity\" 3; spec/v2/core/security-defaults.md §\"Audit-log integrity\" (RFC 0224)",
           "requirement": null,
           "interpolated": true
         }
@@ -5534,10 +5534,19 @@
     {
       "id": "openwop.it.audit-log-integrity.host-that-claims-the-profile-advertises-required-capability-fields",
       "file": "audit-log-integrity.test.ts",
-      "line": 60,
+      "line": 80,
       "title": "host that claims the profile advertises required capability fields",
       "explicitId": "openwop.it.audit-log-integrity.host-that-claims-the-profile-advertises-required-capability-fields",
       "citations": [
+        {
+          "section": "security-defaults.md §\"Audit-log integrity\"",
+          "requirement": null,
+          "interpolated": true
+        },
+        {
+          "section": "security-defaults.md §\"Audit-log integrity\"",
+          "requirement": "auditLogIntegrity.checkpointPublicKey MUST be an Ed25519 SubjectPublicKeyInfo, base64"
+        },
         {
           "section": "auth-profiles.md §\"Audit-log integrity\"",
           "requirement": "openwop-audit-log-integrity profile MUST advertise auditLogIntegrity.hashChain: true"
@@ -5551,13 +5560,14 @@
     {
       "id": "openwop.it.audit-log-integrity.get-v1-audit-verify-on-a-recent-range-reports-chainvalid-true",
       "file": "audit-log-integrity.test.ts",
-      "line": 83,
+      "line": 112,
       "title": "GET /v1/audit/verify on a recent range reports chainValid: true",
       "explicitId": "openwop.it.audit-log-integrity.get-v1-audit-verify-on-a-recent-range-reports-chainvalid-true",
       "citations": [
         {
           "section": "auth-profiles.md §\"Audit-log integrity\" §\"Verification endpoint\"",
-          "requirement": "claiming openwop-audit-log-integrity profile REQUIRES exposing GET /v1/audit/verify"
+          "requirement": null,
+          "interpolated": true
         },
         {
           "section": "audit-verify-result.schema.json",
@@ -5571,6 +5581,29 @@
         {
           "section": "auth-profiles.md §\"Audit-log integrity\"",
           "requirement": "checkpoint signature MUST be a non-empty string"
+        }
+      ]
+    },
+    {
+      "id": "openwop.it.audit-log-integrity.verify-lists-every-checkpoint-ascending-no-more-than-checkpointintervalentries-a",
+      "file": "audit-log-integrity.test.ts",
+      "line": 164,
+      "title": "verify lists every checkpoint ascending, no more than checkpointIntervalEntries apart",
+      "explicitId": "openwop.requirement.0224.checkpoint-cadence",
+      "citations": [
+        {
+          "section": "security-defaults.md §\"Audit-log integrity\"",
+          "requirement": "every checkpoint MUST carry an integer atSequence"
+        },
+        {
+          "section": "security-defaults.md §\"Audit-log integrity\"",
+          "requirement": null,
+          "interpolated": true
+        },
+        {
+          "section": "security-defaults.md §\"Audit-log integrity\"",
+          "requirement": null,
+          "interpolated": true
         }
       ]
     },
