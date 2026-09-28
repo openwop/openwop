@@ -1,14 +1,14 @@
 # `messaging` extension
 
-> **Status: Draft.**
+> **Status: Stable.**
 
 `messaging` names outbound chat-egress dispatch through host-owned connectors. It is a discovery-only reservation: v2 defines no portable operations or payload contract for it.
 
 | Field | Value |
 | --- | --- |
 | **witness:** | `claims-check` |
-| **technical:** | `experimental` |
-| **adoption:** | `none` |
+| **technical:** | `stable` |
+| **adoption:** | `single-witness` |
 | **peer-dependency id** | `messaging` |
 | **advertised as** | `extensions.<org>.messaging` |
 | **declared facets** | none defined |

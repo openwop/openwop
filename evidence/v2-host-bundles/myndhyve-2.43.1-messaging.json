@@ -1,6 +1,6 @@
 {
   "bundleVersion": "3",
-  "generatedAt": "2026-09-28T17:47:23.987Z",
+  "generatedAt": "2026-09-28T18:09:29.490Z",
   "suite": {
     "name": "@openwop/openwop-conformance",
     "version": "2.43.1",
@@ -14,13 +14,13 @@
     "vendor": "myndhyve",
     "build": {
       "kind": "commit",
-      "id": "f0744fc254d4a61535c9aa944cb378a8b3f80ce9"
+      "id": "2749f8e18a074aae97b7f224af1029052d88c6f2"
     },
     "signingKeyId": "myndhyve-bundle-2026-09b"
   },
   "discovery": {
     "url": "https://api.myndhyve.ai/.well-known/openwop",
-    "sha256": "ed4610207b6253f1095f57f9109454b938af78d8a6f2595824a1bc98902f94eb",
+    "sha256": "c85f896c9f59cea0eff45bf96a0e9ec49edb241b4159530ccbfa1328ba8ff9f5",
     "protocolVersions": [
       "1.0",
       "2.0"
@@ -979,6 +979,14 @@
           ],
           "rfc": "0220"
         },
+        "myndhyve.messaging": {
+          "servedBy": "workflow-runtime",
+          "nodeTypes": [
+            "messaging.chatReply",
+            "messaging.chatSend"
+          ],
+          "rfc": "0220"
+        },
         "myndhyve.testing": {
           "mockProviders": [
             "stream-text"
@@ -1134,10 +1142,10 @@
   ],
   "results": {
     "totals": {
-      "executedPass": 267,
+      "executedPass": 268,
       "executedFail": 0,
-      "skipped": 17,
-      "inapplicable": 225,
+      "skipped": 0,
+      "inapplicable": 241,
       "blocked": 0
     },
     "requirements": [
@@ -1370,9 +1378,9 @@
       {
         "id": "openwop.scenario.v2-chain-pin-exact",
         "scenario": "v2-chain-pin-exact.test.ts",
-        "result": "skipped",
+        "result": "inapplicable",
         "assertions": 0,
-        "detail": "every test returned early through behaviorGate with zero assertions: operator opted the profile or family out (OPENWOP_OPTED_OUT_PROFILES)"
+        "detail": "every test returned early through behaviorGate with zero assertions: profile not advertised in the captured discovery set"
       },
       {
         "id": "openwop.scenario.v2-client-version-header",
@@ -1501,8 +1509,8 @@
         "id": "openwop.scenario.v2-ext-family-claims",
         "scenario": "v2-ext-family-claims.test.ts",
         "result": "executed-pass",
-        "assertions": 8,
-        "detail": "partial-witness: inapplicable: [inapplicable] no extensions[\"<org>.canvas\"] record under a registered org — the host does not advertise canvas; [inapplicable] no extensions[\"<org>.coordination\"] record under a registered org — the host does not advertise coordination; [inapplicable] no extensions[\"<org>.messaging\"] record under a registered org — the host does not advertise messaging"
+        "assertions": 9,
+        "detail": "partial-witness: inapplicable: [inapplicable] no extensions[\"<org>.canvas\"] record under a registered org — the host does not advertise canvas; [inapplicable] no extensions[\"<org>.coordination\"] record under a registered org — the host does not advertise coordination"
       },
       {
         "id": "openwop.scenario.v2-ext-rest-transport",
@@ -1520,9 +1528,9 @@
       {
         "id": "openwop.scenario.v2-form-when-reuses-edge-conditions",
         "scenario": "v2-form-when-reuses-edge-conditions.test.ts",
-        "result": "skipped",
+        "result": "inapplicable",
         "assertions": 0,
-        "detail": "every test returned early through behaviorGate with zero assertions: operator opted the profile or family out (OPENWOP_OPTED_OUT_PROFILES)"
+        "detail": "every test returned early through behaviorGate with zero assertions: profile not advertised in the captured discovery set"
       },
       {
         "id": "openwop.scenario.v2-header-scheme",
@@ -1705,9 +1713,9 @@
       {
         "id": "openwop.scenario.v2-pack-isolation",
         "scenario": "v2-pack-isolation.test.ts",
-        "result": "skipped",
+        "result": "inapplicable",
         "assertions": 0,
-        "detail": "every test returned early through behaviorGate with zero assertions: operator opted the profile or family out (OPENWOP_OPTED_OUT_PROFILES)"
+        "detail": "every test returned early through behaviorGate with zero assertions: profile not advertised in the captured discovery set"
       },
       {
         "id": "openwop.scenario.v2-payload-registry-closed",
@@ -1846,7 +1854,7 @@
         "id": "openwop.scenario.v2-run-list",
         "scenario": "v2-run-list.test.ts",
         "result": "executed-pass",
-        "assertions": 35
+        "assertions": 37
       },
       {
         "id": "openwop.floor.v2-run-options-limits",
@@ -2047,6 +2055,12 @@
       },
       {
         "id": "openwop.family.launchStudio",
+        "scenario": "v2-ext-family-claims.test.ts",
+        "result": "executed-pass",
+        "assertions": 1
+      },
+      {
+        "id": "openwop.family.messaging",
         "scenario": "v2-ext-family-claims.test.ts",
         "result": "executed-pass",
         "assertions": 1
@@ -2610,13 +2624,6 @@
         "detail": "no extensions[\"<org>.coordination\"] record under a registered org — the host does not advertise coordination"
       },
       {
-        "id": "openwop.it.v2-ext-family-claims.messaging",
-        "scenario": "v2-ext-family-claims.test.ts",
-        "result": "inapplicable",
-        "assertions": 0,
-        "detail": "no extensions[\"<org>.messaging\"] record under a registered org — the host does not advertise messaging"
-      },
-      {
         "id": "openwop.it.v2-mcp-client-results.an-unknown-serverid-rejects-with-not-found",
         "scenario": "v2-mcp-client-results.test.ts",
         "result": "inapplicable",
@@ -2843,37 +2850,37 @@
       {
         "id": "openwop.it.v2-pack-isolation.node-pack-sandbox-fs-gated-a-host-filesystem-read-is-refused",
         "scenario": "v2-pack-isolation.test.ts",
-        "result": "skipped",
+        "result": "inapplicable",
         "assertions": 0,
-        "detail": "operator declared an honest opt-out via OPENWOP_OPTED_OUT_PROFILES: family.sandbox"
+        "detail": "profile not advertised in the captured discovery set"
       },
       {
         "id": "openwop.it.v2-pack-isolation.node-pack-sandbox-fs-gated-a-host-filesystem-write-is-refused",
         "scenario": "v2-pack-isolation.test.ts",
-        "result": "skipped",
+        "result": "inapplicable",
         "assertions": 0,
-        "detail": "operator declared an honest opt-out via OPENWOP_OPTED_OUT_PROFILES: family.sandbox"
+        "detail": "profile not advertised in the captured discovery set"
       },
       {
         "id": "openwop.it.v2-pack-isolation.node-pack-sandbox-network-gated-ungated-network-egress-is-refused",
         "scenario": "v2-pack-isolation.test.ts",
-        "result": "skipped",
+        "result": "inapplicable",
         "assertions": 0,
-        "detail": "operator declared an honest opt-out via OPENWOP_OPTED_OUT_PROFILES: family.sandbox"
+        "detail": "profile not advertised in the captured discovery set"
       },
       {
         "id": "openwop.it.v2-pack-isolation.node-pack-sandbox-no-env-the-host-environment-does-not-leak",
         "scenario": "v2-pack-isolation.test.ts",
-        "result": "skipped",
+        "result": "inapplicable",
         "assertions": 0,
-        "detail": "operator declared an honest opt-out via OPENWOP_OPTED_OUT_PROFILES: family.sandbox"
+        "detail": "profile not advertised in the captured discovery set"
       },
       {
         "id": "openwop.it.v2-pack-isolation.node-pack-sandbox-no-process-host-process-access-is-refused",
         "scenario": "v2-pack-isolation.test.ts",
-        "result": "skipped",
+        "result": "inapplicable",
         "assertions": 0,
-        "detail": "operator declared an honest opt-out via OPENWOP_OPTED_OUT_PROFILES: family.sandbox"
+        "detail": "profile not advertised in the captured discovery set"
       },
       {
         "id": "openwop.requirement.0158.bound-is-derived",
@@ -2932,7 +2939,7 @@
           "recovery": {
             "class": "dispatch-hold",
             "boundMs": 45000,
-            "observedMs": 16629
+            "observedMs": 15826
           }
         }
       },
@@ -2945,7 +2952,7 @@
           "recovery": {
             "class": "dispatch-lease",
             "boundMs": 100000,
-            "observedMs": 70277
+            "observedMs": 70581
           }
         }
       },
@@ -3491,37 +3498,37 @@
       {
         "id": "openwop.requirement.0173.pack-isolation",
         "scenario": "v2-pack-isolation.test.ts",
-        "result": "skipped",
+        "result": "inapplicable",
         "assertions": 0,
-        "detail": "operator declared an honest opt-out via OPENWOP_OPTED_OUT_PROFILES: family.sandbox"
+        "detail": "profile not advertised in the captured discovery set"
       },
       {
         "id": "openwop.requirement.0173.pack-isolation.isolated-context",
         "scenario": "v2-pack-isolation.test.ts",
-        "result": "skipped",
+        "result": "inapplicable",
         "assertions": 0,
-        "detail": "operator declared an honest opt-out via OPENWOP_OPTED_OUT_PROFILES: family.sandbox"
+        "detail": "profile not advertised in the captured discovery set"
       },
       {
         "id": "openwop.requirement.0173.pack-isolation.memory-cap",
         "scenario": "v2-pack-isolation.test.ts",
-        "result": "skipped",
+        "result": "inapplicable",
         "assertions": 0,
-        "detail": "operator declared an honest opt-out via OPENWOP_OPTED_OUT_PROFILES: family.sandbox"
+        "detail": "profile not advertised in the captured discovery set"
       },
       {
         "id": "openwop.requirement.0173.pack-isolation.seam",
         "scenario": "v2-pack-isolation.test.ts",
-        "result": "skipped",
+        "result": "inapplicable",
         "assertions": 0,
-        "detail": "operator declared an honest opt-out via OPENWOP_OPTED_OUT_PROFILES: family.sandbox"
+        "detail": "profile not advertised in the captured discovery set"
       },
       {
         "id": "openwop.requirement.0173.pack-isolation.timeout",
         "scenario": "v2-pack-isolation.test.ts",
-        "result": "skipped",
+        "result": "inapplicable",
         "assertions": 0,
-        "detail": "operator declared an honest opt-out via OPENWOP_OPTED_OUT_PROFILES: family.sandbox"
+        "detail": "profile not advertised in the captured discovery set"
       },
       {
         "id": "openwop.requirement.0173.relaxation-recorded",
@@ -3730,30 +3737,30 @@
       {
         "id": "openwop.requirement.0177.chain-pin-exact.exact-accepted",
         "scenario": "v2-chain-pin-exact.test.ts",
-        "result": "skipped",
+        "result": "inapplicable",
         "assertions": 0,
-        "detail": "operator declared an honest opt-out via OPENWOP_OPTED_OUT_PROFILES: family.workflowChainPacks"
+        "detail": "profile not advertised in the captured discovery set"
       },
       {
         "id": "openwop.requirement.0177.chain-pin-exact.external-range-refused",
         "scenario": "v2-chain-pin-exact.test.ts",
-        "result": "skipped",
+        "result": "inapplicable",
         "assertions": 0,
-        "detail": "operator declared an honest opt-out via OPENWOP_OPTED_OUT_PROFILES: family.workflowChainPacks"
+        "detail": "profile not advertised in the captured discovery set"
       },
       {
         "id": "openwop.requirement.0177.chain-pin-exact.range-refused",
         "scenario": "v2-chain-pin-exact.test.ts",
-        "result": "skipped",
+        "result": "inapplicable",
         "assertions": 0,
-        "detail": "operator declared an honest opt-out via OPENWOP_OPTED_OUT_PROFILES: family.workflowChainPacks"
+        "detail": "profile not advertised in the captured discovery set"
       },
       {
         "id": "openwop.requirement.0177.form-when-reuses-edge-conditions",
         "scenario": "v2-form-when-reuses-edge-conditions.test.ts",
-        "result": "skipped",
+        "result": "inapplicable",
         "assertions": 0,
-        "detail": "operator declared an honest opt-out via OPENWOP_OPTED_OUT_PROFILES: family.forms"
+        "detail": "profile not advertised in the captured discovery set"
       },
       {
         "id": "openwop.requirement.0177.manifest-ceiling-refused.unbounded",
@@ -3832,7 +3839,7 @@
         "id": "openwop.requirement.0182.run-list.tenant-scoped",
         "scenario": "v2-run-list.test.ts",
         "result": "executed-pass",
-        "assertions": 31
+        "assertions": 33
       },
       {
         "id": "openwop.requirement.0184.bound-id-path-projection",
@@ -4505,7 +4512,7 @@
       }
     ]
   },
-  "assertionCount": 3148,
+  "assertionCount": 3154,
   "detail": {
     "nonPass": [
       {
@@ -4575,8 +4582,8 @@
       },
       {
         "id": "openwop.scenario.v2-chain-pin-exact",
-        "result": "skipped",
-        "reason": "every test returned early through behaviorGate with zero assertions: operator opted the profile or family out (OPENWOP_OPTED_OUT_PROFILES)"
+        "result": "inapplicable",
+        "reason": "every test returned early through behaviorGate with zero assertions: profile not advertised in the captured discovery set"
       },
       {
         "id": "openwop.scenario.v2-content-locale-keys",
@@ -4610,8 +4617,8 @@
       },
       {
         "id": "openwop.scenario.v2-form-when-reuses-edge-conditions",
-        "result": "skipped",
-        "reason": "every test returned early through behaviorGate with zero assertions: operator opted the profile or family out (OPENWOP_OPTED_OUT_PROFILES)"
+        "result": "inapplicable",
+        "reason": "every test returned early through behaviorGate with zero assertions: profile not advertised in the captured discovery set"
       },
       {
         "id": "openwop.scenario.v2-interop-trace-context",
@@ -4685,8 +4692,8 @@
       },
       {
         "id": "openwop.scenario.v2-pack-isolation",
-        "result": "skipped",
-        "reason": "every test returned early through behaviorGate with zero assertions: operator opted the profile or family out (OPENWOP_OPTED_OUT_PROFILES)"
+        "result": "inapplicable",
+        "reason": "every test returned early through behaviorGate with zero assertions: profile not advertised in the captured discovery set"
       },
       {
         "id": "openwop.scenario.v2-peer-dependency-declared",
@@ -4999,11 +5006,6 @@
         "reason": "no extensions[\"<org>.coordination\"] record under a registered org — the host does not advertise coordination"
       },
       {
-        "id": "openwop.it.v2-ext-family-claims.messaging",
-        "result": "inapplicable",
-        "reason": "no extensions[\"<org>.messaging\"] record under a registered org — the host does not advertise messaging"
-      },
-      {
         "id": "openwop.it.v2-mcp-client-results.an-unknown-serverid-rejects-with-not-found",
         "result": "inapplicable",
         "reason": "mcp.client not advertised — the host exposes no ctx.mcp to pack code (RFC 0204 §A.1)"
@@ -5165,28 +5167,28 @@
       },
       {
         "id": "openwop.it.v2-pack-isolation.node-pack-sandbox-fs-gated-a-host-filesystem-read-is-refused",
-        "result": "skipped",
-        "reason": "operator declared an honest opt-out via OPENWOP_OPTED_OUT_PROFILES: family.sandbox"
+        "result": "inapplicable",
+        "reason": "profile not advertised in the captured discovery set"
       },
       {
         "id": "openwop.it.v2-pack-isolation.node-pack-sandbox-fs-gated-a-host-filesystem-write-is-refused",
-        "result": "skipped",
-        "reason": "operator declared an honest opt-out via OPENWOP_OPTED_OUT_PROFILES: family.sandbox"
+        "result": "inapplicable",
+        "reason": "profile not advertised in the captured discovery set"
       },
       {
         "id": "openwop.it.v2-pack-isolation.node-pack-sandbox-network-gated-ungated-network-egress-is-refused",
-        "result": "skipped",
-        "reason": "operator declared an honest opt-out via OPENWOP_OPTED_OUT_PROFILES: family.sandbox"
+        "result": "inapplicable",
+        "reason": "profile not advertised in the captured discovery set"
       },
       {
         "id": "openwop.it.v2-pack-isolation.node-pack-sandbox-no-env-the-host-environment-does-not-leak",
-        "result": "skipped",
-        "reason": "operator declared an honest opt-out via OPENWOP_OPTED_OUT_PROFILES: family.sandbox"
+        "result": "inapplicable",
+        "reason": "profile not advertised in the captured discovery set"
       },
       {
         "id": "openwop.it.v2-pack-isolation.node-pack-sandbox-no-process-host-process-access-is-refused",
-        "result": "skipped",
-        "reason": "operator declared an honest opt-out via OPENWOP_OPTED_OUT_PROFILES: family.sandbox"
+        "result": "inapplicable",
+        "reason": "profile not advertised in the captured discovery set"
       },
       {
         "id": "openwop.requirement.0168.coherence-not-in-bundle.disjoint-by-construction",
@@ -5240,28 +5242,28 @@
       },
       {
         "id": "openwop.requirement.0173.pack-isolation",
-        "result": "skipped",
-        "reason": "operator declared an honest opt-out via OPENWOP_OPTED_OUT_PROFILES: family.sandbox"
+        "result": "inapplicable",
+        "reason": "profile not advertised in the captured discovery set"
       },
       {
         "id": "openwop.requirement.0173.pack-isolation.isolated-context",
-        "result": "skipped",
-        "reason": "operator declared an honest opt-out via OPENWOP_OPTED_OUT_PROFILES: family.sandbox"
+        "result": "inapplicable",
+        "reason": "profile not advertised in the captured discovery set"
       },
       {
         "id": "openwop.requirement.0173.pack-isolation.memory-cap",
-        "result": "skipped",
-        "reason": "operator declared an honest opt-out via OPENWOP_OPTED_OUT_PROFILES: family.sandbox"
+        "result": "inapplicable",
+        "reason": "profile not advertised in the captured discovery set"
       },
       {
         "id": "openwop.requirement.0173.pack-isolation.seam",
-        "result": "skipped",
-        "reason": "operator declared an honest opt-out via OPENWOP_OPTED_OUT_PROFILES: family.sandbox"
+        "result": "inapplicable",
+        "reason": "profile not advertised in the captured discovery set"
       },
       {
         "id": "openwop.requirement.0173.pack-isolation.timeout",
-        "result": "skipped",
-        "reason": "operator declared an honest opt-out via OPENWOP_OPTED_OUT_PROFILES: family.sandbox"
+        "result": "inapplicable",
+        "reason": "profile not advertised in the captured discovery set"
       },
       {
         "id": "openwop.requirement.0175.legacy-profiles-absent",
@@ -5355,23 +5357,23 @@
       },
       {
         "id": "openwop.requirement.0177.chain-pin-exact.exact-accepted",
-        "result": "skipped",
-        "reason": "operator declared an honest opt-out via OPENWOP_OPTED_OUT_PROFILES: family.workflowChainPacks"
+        "result": "inapplicable",
+        "reason": "profile not advertised in the captured discovery set"
       },
       {
         "id": "openwop.requirement.0177.chain-pin-exact.external-range-refused",
-        "result": "skipped",
-        "reason": "operator declared an honest opt-out via OPENWOP_OPTED_OUT_PROFILES: family.workflowChainPacks"
+        "result": "inapplicable",
+        "reason": "profile not advertised in the captured discovery set"
       },
       {
         "id": "openwop.requirement.0177.chain-pin-exact.range-refused",
-        "result": "skipped",
-        "reason": "operator declared an honest opt-out via OPENWOP_OPTED_OUT_PROFILES: family.workflowChainPacks"
+        "result": "inapplicable",
+        "reason": "profile not advertised in the captured discovery set"
       },
       {
         "id": "openwop.requirement.0177.form-when-reuses-edge-conditions",
-        "result": "skipped",
-        "reason": "operator declared an honest opt-out via OPENWOP_OPTED_OUT_PROFILES: family.forms"
+        "result": "inapplicable",
+        "reason": "profile not advertised in the captured discovery set"
       },
       {
         "id": "openwop.requirement.0177.manifest-ceiling-refused.unbounded",
@@ -5723,11 +5725,11 @@
   "durability": {
     "rung": "durable-single-instance"
   },
-  "witnessSha256": "69d0b862c985ec905cf35bee3b4536f51ed8dfe258543d2d15c4d634e3ec3437",
+  "witnessSha256": "8e84c605d6c4bc4bbd6553df32a58301dd5f717752db6469d9f475b5c11f7619",
   "signature": {
     "alg": "ed25519",
     "keyId": "myndhyve-bundle-2026-09b",
-    "sig": "nVH4gy915H4IgvjIkND-Whszxhr52JOuLLuXcYhDiUfuJi-0VugMku83fQ2k8gL59ku4yUFw4Wqv4V2MLP6zAw",
+    "sig": "bEt1wDQagmRUTCs6I3UZLcwRXr3wM1cJg9B4ueAavEl1n79FXHSu4Cw0ms3vbayUXib49yACRaK8t8og5hz5Dw",
     "over": [
       "witnessSha256",
       "host.build",

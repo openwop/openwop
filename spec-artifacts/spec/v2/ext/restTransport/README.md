@@ -32,12 +32,14 @@ For each coding listed in `contentEncodings`, a request that names only that cod
 
 A client MUST NOT infer anything else from the record.
 
+The claim describes what a client receives at the host's advertised base URL, so a CDN or proxy in front of the host is part of it. A front that drops or rewrites a coding the origin produces makes the claim false. This is the most common way it goes wrong in deployment: one host's CDN served `zstd` as identity while its origin produced `zstd`. A host behind a front should list only the codings measured through that front.
+
 ## Conformance
 
 `conformance/src/scenarios/v2-ext-rest-transport.test.ts` (major 2) records the witness under `openwop.family.restTransport`:
 
 - **Conditional GET:** runs the `conformance-approval` fixture to `waiting-approval`. It checks for a strong `ETag`, a `304` with no body on a matching `If-None-Match`, and a changed `ETag` once the run completes.
-- **Codings:** for each advertised coding, the decoded body is byte-identical to the identity body.
+- **Codings:** for each advertised coding, the decoded body is byte-identical to the identity body. The probe goes through the base URL it is given, so it measures any front in the path.
 
 A host without the claim records `inapplicable`. A host that makes the claim but lacks the fixture records `blocked`.
 

@@ -9843,11 +9843,11 @@
       "rfc": "0171",
       "local": "G7",
       "section": "§B.1",
-      "surface": "MyndHyve emits about 56 UPPER_CASE run-failure codes (normalised in `failurePayload`, measured at MyndHyve `fc3b007cf`) that are neither registered nor vendor codes.",
+      "surface": "MyndHyve emitted about 56 UPPER_CASE run-failure codes that were neither registered nor vendor codes.",
       "witness": "unclassified",
       "requirementId": null,
-      "disposition": "externally-gated",
-      "target": "myndhyve-code-remap",
+      "disposition": "closed",
+      "target": null,
       "sources": [
         {
           "file": "RFCS/registers/0171-v2-wire-envelope.gaps.md",
@@ -9860,11 +9860,11 @@
       "rfc": "0171",
       "local": "G8",
       "section": "§B.1",
-      "surface": "The v2 reference host emits unregistered run-failure codes that are not vendor codes. openwop-examples #125 (`21e552e`) remapped three (`fixture_failure`, `unsupported_node_type`, `sandbox_invocation_error`), but at `21e552e` it still emits `http_fetch_failed` (`examples/hosts/v2-reference/src/executor.ts:263`), and `mcp_error` and `mcp_unreachable` (`src/mcp-client.ts:43`, `:68`, surfaced through `src/executor.ts:291`).",
+      "surface": "The v2 reference host emitted unregistered run-failure codes that were not vendor codes.",
       "witness": "unclassified",
       "requirementId": null,
-      "disposition": "externally-gated",
-      "target": "v2-reference-code-remap",
+      "disposition": "closed",
+      "target": null,
       "sources": [
         {
           "file": "RFCS/registers/0171-v2-wire-envelope.gaps.md",
@@ -13154,6 +13154,23 @@
       ]
     },
     {
+      "id": "openwop.gap.0220.5",
+      "rfc": "0220",
+      "local": "G5",
+      "section": "§B",
+      "surface": "`canvas` has no tier-2 path yet. MyndHyve serves the canvas host service (myndhyve #547), but its claim depends on the `vendor.myndhyve.canvas` pack. The only v2-admissible version (1.0.1, `registry/v2/`) is signed with `signing.scheme: ed25519-canonical-json` (RFC 0177 §A), and MyndHyve's pack publish route and resolver do not implement that scheme. The v1-tree 1.0.0 pins `engines.openwop <2.0.0`, which a v2 host MUST refuse. This is a general v2 pack-signing gap at the host, not canvas-specific.",
+      "witness": "unclassified",
+      "requirementId": null,
+      "disposition": "transferred",
+      "target": "myndhyve/services/workflow-runtime",
+      "sources": [
+        {
+          "file": "RFCS/registers/0220-ext-families-graduate-on-evidence.gaps.md",
+          "token": "G5"
+        }
+      ]
+    },
+    {
       "id": "openwop.gap.0221.1",
       "rfc": "0221",
       "local": "G1",
@@ -13277,11 +13294,11 @@
       "rfc": "0223",
       "local": "G5",
       "section": "§Implementation notes",
-      "surface": "MyndHyve fails the gate with the unregistered `APPROVAL_REJECTED`.",
+      "surface": "MyndHyve failed the gate with the unregistered `APPROVAL_REJECTED`.",
       "witness": "unclassified",
       "requirementId": null,
-      "disposition": "externally-gated",
-      "target": "myndhyve-next-cut",
+      "disposition": "closed",
+      "target": null,
       "sources": [
         {
           "file": "RFCS/registers/0223-approval-reject-disposition.gaps.md",
@@ -13379,11 +13396,11 @@
       "rfc": "0223",
       "local": "G10",
       "section": "§Conformance",
-      "surface": "`openwop.requirement.0223.timeout-rejects` and `0223.timeout-never-grants` have no MyndHyve witness: its `core.approvalGate` has no timeout configuration. On the v2 reference host both rows are negatively controlled (sweep sabotaged, or the `onTimeout` exclusion present) and pass locally with the fixtures registered. They need suite 2.43.1 and a new certified cut.",
+      "surface": "`openwop.requirement.0223.timeout-rejects` and `0223.timeout-never-grants` had no certified witness, and have no MyndHyve witness: its `core.approvalGate` has no timeout configuration.",
       "witness": "unclassified",
       "requirementId": null,
-      "disposition": "externally-gated",
-      "target": "certified-cut-on-2.43.1",
+      "disposition": "closed",
+      "target": null,
       "sources": [
         {
           "file": "RFCS/registers/0223-approval-reject-disposition.gaps.md",
@@ -13438,6 +13455,23 @@
       "sources": [
         {
           "file": "RFCS/registers/0225-webhook-retry-max-elapsed.gaps.md",
+          "token": "G1"
+        }
+      ]
+    },
+    {
+      "id": "openwop.gap.0226.1",
+      "rfc": "0226",
+      "local": "G1",
+      "section": "§Unresolved questions",
+      "surface": "Whether `mcp_unreachable` (an MCP peer that cannot be reached) needs its own registered code.",
+      "witness": "unclassified",
+      "requirementId": null,
+      "disposition": "closed",
+      "target": null,
+      "sources": [
+        {
+          "file": "RFCS/registers/0226-shared-run-failure-codes.gaps.md",
           "token": "G1"
         }
       ]

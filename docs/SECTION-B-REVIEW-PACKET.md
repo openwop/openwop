@@ -6,7 +6,7 @@
 
 RFC 0156 §B: RFCs affecting auth, identity, tenant isolation, secrets, packs, execution sandboxing, idempotency, replay, external effects, conformance/certification, or governance **MUST** receive a retrospective **cross-organization** review. Every RFC below was accepted with its public comment window shortened, either under the bootstrap waiver or by explicit steward override of RFC 0147 §A.6. Each such acceptance is **provisional** until a reviewer from an organization other than the steward's records an outcome.
 
-This packet is for that reviewer. **102 RFCs are listed; 102 have no discharging outcome.** The steward, the steward's sessions, and steward-affiliated hosts (MyndHyve is tier-2, not independent) cannot supply the review. Recording one of their reviews as `ratified` is the substitution §B's last clause forbids.
+This packet is for that reviewer. **104 RFCs are listed; 104 have no discharging outcome.** The steward, the steward's sessions, and steward-affiliated hosts (MyndHyve is tier-2, not independent) cannot supply the review. Recording one of their reviews as `ratified` is the substitution §B's last clause forbids.
 
 ## How to review one RFC
 
@@ -77,13 +77,14 @@ Grouping below is a reading aid only: it assigns each RFC to the risk class its 
 | [0093](../RFCS/0093-protocol-hardening-webhooks-tokens-idempotency.md) | protocol hardening webhooks tokens idempotency | `Accepted` | bootstrap waiver | not declared (predates RFC 0174 §B.1, or not yet Accepted) | `not-reviewed` |
 | [0201](../RFCS/0201-standard-webhooks-signature-scheme.md) | Standard Webhooks as an opt-in companion signature scheme, with a signed delivery id, multi-signature rotatio… | `Accepted` | steward override of RFC 0147 §A.6 | tier-1 — the v2 reference host | `not-reviewed` |
 
-## Replay (3)
+## Replay (4)
 
 | RFC | Title | Status | Waiver | Evidence tier | Outcome |
 | --- | --- | --- | --- | --- | --- |
 | [0194](../RFCS/0194-terminal-event-ends-forward-execution.md) | a run's terminal event is emitted once and ends its forward execution | `Accepted` | steward override of RFC 0147 §A.6 | tier-1 — the v2 reference host | `not-reviewed` |
 | [0212](../RFCS/0212-canonical-json-is-jcs.md) | canonical JSON is RFC 8785 JCS, and a certification preimage does not depend on the machine that computed it | `Accepted` | steward override of RFC 0147 §A.6 | tier-1 — steward-verified: openwop-app `bundle-v3-verify | `not-reviewed` |
 | [0218](../RFCS/0218-audit-checkpoint-preimage.md) | an audit checkpoint signs its Merkle root, and the root is pinned | `Accepted` | bootstrap waiver | tier-1 — the v2 reference host | `not-reviewed` |
+| [0225](../RFCS/0225-webhook-retry-max-elapsed.md) | a webhook host may advertise how long a delivery can keep retrying | `Active` | steward override of RFC 0147 §A.6 | not declared (predates RFC 0174 §B.1, or not yet Accepted) | `not-reviewed` |
 
 ## External effects (10)
 
@@ -123,9 +124,9 @@ Grouping below is a reading aid only: it assigns each RFC to the risk class its 
 | [0178](../RFCS/0178-v2-assurance-registers-and-deprecation-machinery.md) | v2 assurance registers and deprecation machinery | `Accepted` | bootstrap waiver | corpus gate — no host tier is claimed at the release candidate | `not-reviewed` |
 | [0190](../RFCS/0190-kernel-budget-denominator.md) | The kernel budget measures what the home gate accepts, and its cap grows only as debt is retired | `Accepted` | bootstrap waiver | corpus gate — every requirement id in the falsifiability table carries a row in `evidence… | `not-reviewed` |
 | [0192](../RFCS/0192-facet-advertisement.md) | A facet is advertised by the presence of its key; the 26 descriptions that gated on a retired field | `Accepted` | bootstrap waiver | corpus gate — every requirement id in the falsifiability table carries a row in `evidence… | `not-reviewed` |
-| [0223](../RFCS/0223-approval-reject-disposition.md) | a rejected approval gate fails closed, and the failure is routable | `Active` | steward override of RFC 0147 §A.6 | not declared (predates RFC 0174 §B.1, or not yet Accepted) | `not-reviewed` |
+| [0223](../RFCS/0223-approval-reject-disposition.md) | a rejected approval gate fails closed, and the failure is routable | `Accepted` | steward override of RFC 0147 §A.6 | tier-1 — the v2 reference host's certified public cut on published suite 2 | `not-reviewed` |
 
-## Other (assign during review) (43)
+## Other (assign during review) (44)
 
 | RFC | Title | Status | Waiver | Evidence tier | Outcome |
 | --- | --- | --- | --- | --- | --- |
@@ -172,4 +173,5 @@ Grouping below is a reading aid only: it assigns each RFC to the risk class its 
 | [0217](../RFCS/0217-dead-letter-read-after-unregister.md) | after a subscription is unregistered, its dead-letter read answers as though it never existed | `Accepted` | bootstrap waiver | tier-1 — the v2 reference host | `not-reviewed` |
 | [0219](../RFCS/0219-client-version-header.md) | a client announces the protocol version it implements in `OpenWOP-Client-Version` | `Active` | bootstrap waiver | not declared (predates RFC 0174 §B.1, or not yet Accepted) | `not-reviewed` |
 | [0224](../RFCS/0224-v2-audit-log-integrity.md) | audit-log integrity gets a v2 home | `Accepted` | bootstrap waiver | tier-1 — the v2 reference host's certified public cut on published suite 2 | `not-reviewed` |
+| [0226](../RFCS/0226-shared-run-failure-codes.md) | three run-failure codes the hosts share, registered | `Active` | bootstrap waiver | not declared (predates RFC 0174 §B.1, or not yet Accepted) | `not-reviewed` |
 

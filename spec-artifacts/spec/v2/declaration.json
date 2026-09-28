@@ -1803,8 +1803,8 @@
       "extensionName": "brand",
       "witness": "claims-check",
       "maturity": {
-        "technical": "experimental",
-        "adoption": "none"
+        "technical": "stable",
+        "adoption": "single-witness"
       },
       "facets": [],
       "floorScenarios": [],
@@ -1947,8 +1947,8 @@
       "extensionName": "launch-studio",
       "witness": "claims-check",
       "maturity": {
-        "technical": "experimental",
-        "adoption": "single-witness"
+        "technical": "stable",
+        "adoption": "multi-witness"
       },
       "facets": [],
       "floorScenarios": [],
@@ -1965,8 +1965,8 @@
       "extensionName": "messaging",
       "witness": "claims-check",
       "maturity": {
-        "technical": "experimental",
-        "adoption": "none"
+        "technical": "stable",
+        "adoption": "single-witness"
       },
       "facets": [],
       "floorScenarios": [],

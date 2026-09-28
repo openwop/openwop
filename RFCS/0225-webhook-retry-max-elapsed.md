@@ -4,10 +4,10 @@
 | ----------------- | --------------------------------------------------------------- |
 | **RFC**           | 0225                                                            |
 | **Title**         | a webhook host may advertise how long a delivery can keep retrying |
-| **Status**        | `Draft`                                                         |
+| **Status**        | `Active`                                                        |
 | **Author(s)**     | David Tufts (@davidscotttufts)                                  |
 | **Created**       | 2026-09-28                                                      |
-| **Updated**       | 2026-09-28 — filed `Draft`; the 7-day comment window for a normative addition opens with the pull request and closes 2026-10-05. The window is **not** waived. |
+| **Updated**       | 2026-09-28 — **`Draft → Active`. Comment window waived** by the steward (steward direction 2026-09-28; 7-day window, 0 days elapsed, not run). **STEWARD OVERRIDE of RFC 0147 §A.6**, which forbids a bootstrap waiver from shortening the window for RFCs affecting certification, external effects and replay: §D changes the verdict of a certification row (`0173.webhook-durable-delivery.dead-letter` goes `blocked → executed-fail` past an advertised bound), §B bounds when an outbound webhook delivery (an external effect) is dead-lettered, and §C edits `webhooks.md` §Replay. Logged in `MAINTAINERS.md` §"Bootstrap-phase RFC waivers". The evidence gate is not waived, and the RFC 0156 §B retrospective review is owed. The suite change ships in 2.44.0. · 2026-09-28 — filed `Draft`; the 7-day comment window for a normative addition opens with the pull request and closes 2026-10-05. The window is **not** waived. |
 | **Affects**       | `spec/v2/facets/webhooks.schema.json` (`retryPolicy.maxElapsedMs`, optional; `schemas/v2/capabilities.schema.json` regenerated) · `spec/v2/core/webhooks.md` §Delivery (one bullet), §Surfaces (the facet sentence), §Replay (restated by reference) · conformance: `lib/webhook-retry-window.ts`, `v2-webhook-durable-delivery.test.ts` (the dead-letter row `openwop.requirement.0173.webhook-durable-delivery.dead-letter` can now convict) |
 | **Compatibility** | `additive` — one OPTIONAL facet member and an obligation that binds only a host that advertises it (`COMPATIBILITY.md` §2.4, §4). The v1 carrier `triggerBridge.retryPolicy` is untouched |
 | **Supersedes**    | —                                                               |
@@ -42,7 +42,7 @@ Measured schedules: MyndHyve repeats 15/30/60/120 s, about 450 s in total, so it
 ### §C. Two word-neutral edits in the same document
 
 - §Surfaces said the facet "is `{ signatureAlgorithms[] }`", which was stale: the facet also carries `retryPolicy`, `deadLetter` and `secretRotation`. It now says the facet "carries `signatureAlgorithms[]`".
-- §Replay restated a rule `replay.md` §Suppression owns ("MUST NOT deliver events a replay re-emits as fixed history; replay-ness is read from the run"). It now points there: "A `replay` fork's re-emitted history is never delivered ([replay.md](replay.md) §Suppression); a `branch` fork's events are." This offsets §B's words under the RFC 0190 kernel budget (30,597 / 30,600). The rule itself is unchanged and stays in `replay.md`.
+- §Replay restated a rule `replay.md` §Suppression owns ("MUST NOT deliver events a replay re-emits as fixed history; replay-ness is read from the run"). It now points there: "A `replay` fork's re-emitted history is never delivered ([replay.md](../spec/v2/core/replay.md) §Suppression); a `branch` fork's events are." This offsets §B's words under the RFC 0190 kernel budget (30,591 / 30,600 at merge, after RFC 0226). The rule itself is unchanged and stays in `replay.md`.
 
 ### §D. The suite
 
@@ -81,7 +81,7 @@ None.
 
 ## Acceptance criteria
 
-- [ ] `Active`: the comment window closes (2026-10-05) with no unresolved objection; the facet member, the `webhooks.md` text and the suite row land together.
+- [x] `Active` (2026-09-28): window waived by steward override (see Updated); the facet member, the `webhooks.md` text and the suite row land together (suite 2.44.0).
 - [ ] `openwop.requirement.0173.webhook-durable-delivery.dead-letter` `executed-pass` on a committed certified bundle of a host that advertises `maxElapsedMs`.
 
 ## References
