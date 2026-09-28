@@ -10,15 +10,20 @@
  * checked before lookup (`403 id_tenant_mismatch`), refuses a subscription that
  * did not opt in (`400 validation_error`), and returns no secret.
  *
- * The post-overlap leg waits for `previousSecretExpiresAt` only when
- * `overlapSeconds` fits inside the suite's retry-wait cap
- * (`OPENWOP_WEBHOOK_RETRY_WAIT_MS`, operator-raisable). Past the cap it is not
- * observed, and the row says so with a `partial-witness:` detail — which the
- * acceptance predicate refuses to cite as `executed-pass` (RFC 0201 §Falsifiability).
+ * The post-overlap leg waits for `previousSecretExpiresAt` when `overlapSeconds`
+ * fits inside the suite's retry-wait cap (`OPENWOP_WEBHOOK_RETRY_WAIT_MS`,
+ * operator-raisable). Past the cap (suite 2.43.1), a seams-profile host that
+ * serves the OPTIONAL `shortenRotationOverlap` seam (host-sample-test-seams.md
+ * §29) has this one subscription's overlap cut to a few seconds, and the leg
+ * waits for that; a served seam that breaks its contract records `blocked`.
+ * A host without the seam is not observed, and the row says so with a
+ * `partial-witness:` detail — which the acceptance predicate refuses to cite as
+ * `executed-pass` (RFC 0201 §Falsifiability).
  *
  * How it FAILS: signing only with the new secret (one entry); moving
  * `OpenWOP-Signature` to the new secret at rotation; a foreign-tenant id that
- * reaches the lookup (`404` instead of `403`); a response that echoes the secret.
+ * reaches the lookup (`404` instead of `403`); a response that echoes the secret;
+ * the previous secret still signing after the (shortened) overlap.
  *
  * @see spec/v2/core/webhooks.md §Standard Webhooks
  * @see RFCS/0201-standard-webhooks-signature-scheme.md §E
@@ -32,6 +37,7 @@ import { readErrorCode } from '../lib/error-envelope.js';
 import { softSkip } from '../lib/soft-skip.js';
 import { projectBoundId } from '../lib/bound-id.js';
 import { retryWaitCapMs } from '../lib/webhook-retry-window.js';
+import { seamsProfileAdvertised } from '../lib/seams.js';
 import { hitHeader, mintWhsec, startModalReceiver, verifyStandardWebhooks, type ModalHit } from '../lib/webhook-receiver.js';
 import {
   STANDARD_WEBHOOKS_ALG,
@@ -39,12 +45,15 @@ import {
   driveRun,
   loopbackRefusal,
   registerSw,
+  shortenRotationOverlap,
   swGate,
   unregisterAllSw,
   waitFor,
 } from '../lib/standard-webhooks.js';
 
 const CAP_MS = retryWaitCapMs();
+/** The overlap the §29 seam sets: long enough that the call returns inside it, short enough to wait out. */
+const SEAM_OVERLAP_SECONDS = 3;
 
 let closeReceiver: (() => Promise<void>) | null = null;
 afterEach(async () => {
@@ -114,17 +123,25 @@ describe('RFC 0201 §E — secret rotation overlaps, then retires (gated on webh
     expect(underOld.matched, req(ID, 'RFC 0201 §E.20', 'one entry MUST verify under the previous secret')).toBe(1);
     expect(v1SignedBy(s1, d), req(ID, 'RFC 0201 §E.20', 'OpenWOP-Signature MUST stay on the previous secret during the overlap')).toBe(true);
 
-    // After the overlap: only when it fits the operator's wait cap.
-    const expiresAt = Date.parse(body.previousSecretExpiresAt ?? '');
+    // After the overlap: when it fits the operator's wait cap, or when the §29 seam shortens it.
+    let expiresAt = Date.parse(body.previousSecretExpiresAt ?? '');
     if (expiresAt - Date.now() > CAP_MS) {
+      const unobserved = (why: string): string => `the post-overlap leg is not observed: the advertised webhooks.secretRotation.overlapSeconds is ${overlapSeconds}s (expiry ${new Date(expiresAt).toISOString()}) and the suite wait cap is ${CAP_MS}ms, and ${why}; raise OPENWOP_WEBHOOK_RETRY_WAIT_MS past the overlap, or serve the seam, to witness it`;
       // partial-witness-ok: the tenant check, the rotate response and the dual signature during
       // the overlap were asserted above. "The previous secret MUST NOT sign after
       // previousSecretExpiresAt" cannot be observed inside a bounded run when the host's
       // advertised webhooks.secretRotation.overlapSeconds outlasts the suite's wait cap, and
       // blocking every long-overlap host would deny certification to conforming hosts
-      // (steward ruling, 2026-09-27). The row detail names both numbers. Raise
-      // OPENWOP_WEBHOOK_RETRY_WAIT_MS past the overlap to witness it.
-      return softSkip('inapplicable', `the post-overlap leg is not observed: the advertised webhooks.secretRotation.overlapSeconds is ${overlapSeconds}s (expiry ${new Date(expiresAt).toISOString()}) and the suite wait cap is ${CAP_MS}ms; raise OPENWOP_WEBHOOK_RETRY_WAIT_MS past the overlap to witness it`);
+      // (steward ruling, 2026-09-27). The §29 seam closes it, but only for a host that
+      // claims the seams profile; this one did not. The row detail names both numbers.
+      if (!seamsProfileAdvertised(g.doc)) return softSkip('inapplicable', unobserved('the seams profile is not advertised, so the optional shortenRotationOverlap seam (host-sample-test-seams.md §29) is not offered'));
+      const cut = await shortenRotationOverlap(webhookId, SEAM_OVERLAP_SECONDS, foreign);
+      // partial-witness-ok: as above — the dual-signing half was asserted. The §29 seam is
+      // OPTIONAL and newer than this leg, so a host that does not serve it keeps the partial
+      // witness it held before the seam existed, never `blocked`.
+      if (!cut.ok && cut.unserved) return softSkip('inapplicable', unobserved(cut.reason));
+      if (!cut.ok) return softSkip('blocked', cut.reason);
+      expiresAt = cut.expiresAt;
     }
     await new Promise((r) => setTimeout(r, Math.max(0, expiresAt - Date.now()) + 1_500));
     const after = await oneDelivery(rx, webhookId);
