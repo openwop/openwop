@@ -1,5 +1,10 @@
 # `@openwop/openwop-conformance` Changelog
 
+## [2.44.1] — unreleased — four families get v2 normative homes
+
+- **The 2.44.1 cycle opens.** `workspace`, `content`, `triggerBridge` and `uiPlugins` get v2 normative homes (RFC 0189), which changes the packed `@openwop/spec-artifacts` tree (`spec/v2/core/host-services.md`, `i18n.md`, `webhooks.md`, `packs.md`, `spec/v2/declaration.json`) after `v2.44.0` was tagged. No scenario changes: the rules are restated from the v1 text, none added or strengthened.
+- **Suite `2.44.1`**. `@openwop/spec-artifacts` moves in lockstep at the same exact pin.
+
 ## [2.44.0] — 2026-09-28 — three run-failure codes registered, a webhook retry bound hosts can advertise, and RFC 0219 Accepted
 
 - **RFC 0219 is `Accepted`** (corpus only; no scenario change). The flip changes the packed `@openwop/spec-artifacts` tree through `spec/v1/gaps.json`: 0219 gap G6 is closed (SDK 2.5.0 sends the header), G7 is declared (`no-floor-no-refusal` needs a host with no `minClientVersion`), and G8 is transferred to #1763 (CORS).
