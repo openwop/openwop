@@ -1,5 +1,12 @@
 # `@openwop/openwop-conformance` Changelog
 
+## [2.44.2] — unreleased — RFC 0215's no-head-of-line leg does not convict a late fan-out, and says when it sampled each count
+
+- **The 2.44.2 cycle opens.** A patch: the requirement is unchanged, and one verdict branch that convicted without the contention it names becomes unjudged. `@openwop/spec-artifacts` moves in lockstep at the same exact pin.
+- **`0215.no-head-of-line` no longer fails a host whose `run.started` fan-out is late.** The last branch failed the row as "a bounded dispatcher below the floor" whenever fewer than 8 held attempts had arrived by the time the run was terminal. MyndHyve `00821-qec` hit it twice. In the first cut no held attempt had arrived and the healthy one was delivered. In the second, 2 held attempts had arrived at terminal and 7 later, and the healthy attempt started with 7 held open and none closed. §A forbids an attempt waiting for another subscription's attempt to *finish*. None had finished, so the healthy attempt waited for nothing, and the contention §A.2 names was never established. The row is now `blocked` (unjudged) in that case. A bounded pool still fails: its healthy attempt starts only after a held attempt closes, or never while they stay open. So does a serial dispatcher, through the peak assertion.
+- **The detail names each sampling time.** It read "2 held attempt(s) arrived (at most 7 open at once)", with the 2 sampled at terminal and the 7 at the verdict. It now reports what had arrived and was open at terminal, what had arrived by the verdict and the peak, when the healthy attempt arrived, and whether the host had closed any held attempt. It no longer names a cause the data does not show.
+- **The verdict is a pure function with self-tests** (`lib/delivery-isolation-verdict.ts`). The tests cover pass, the contention-present fail, a 7-slot pool with a 15 s timeout (fail), a serial dispatcher (peak assertion), and both MyndHyve cuts (unjudged). Sabotage-checked: removing the new branch fails the two MyndHyve cases.
+
 ## [2.44.1] — 2026-09-28 — the webhook retry legs outlast an advertised maxElapsedMs, and four families get v2 normative homes
 
 - **The 2.44.1 cycle opens.** `workspace`, `content`, `triggerBridge` and `uiPlugins` get v2 normative homes (RFC 0189), which changes the packed `@openwop/spec-artifacts` tree (`spec/v2/core/host-services.md`, `i18n.md`, `webhooks.md`, `packs.md`, `spec/v2/declaration.json`) after `v2.44.0` was tagged. No scenario changes: the rules are restated from the v1 text, none added or strengthened.
