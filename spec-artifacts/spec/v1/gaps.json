@@ -13239,6 +13239,91 @@
       ]
     },
     {
+      "id": "openwop.gap.0224.1",
+      "rfc": "0224",
+      "local": "G1",
+      "section": "§Implementation notes",
+      "surface": "The predicate branch, the INTEROP-MATRIX path check and the coherence scenario `v2-major1-witness-bundle.test.ts` do not exist. They land at `Active`, never at `Draft`, because they loosen a gate.",
+      "witness": "unclassified",
+      "requirementId": null,
+      "disposition": "transferred",
+      "target": "rfc-0224",
+      "sources": [
+        {
+          "file": "RFCS/registers/0224-major1-only-witness-bundles.gaps.md",
+          "token": "G1"
+        }
+      ]
+    },
+    {
+      "id": "openwop.gap.0224.2",
+      "rfc": "0224",
+      "local": "G2",
+      "section": "§Motivation 4",
+      "surface": "The Postgres reference host publishes no `certification-bundle` key in its v1 `signingKeys[]` on `openwop-examples` `main`, so no attributable major-1 witness bundle can be cut yet. The 2026-09-28 dry run is not committed.",
+      "witness": "unclassified",
+      "requirementId": null,
+      "disposition": "externally-gated",
+      "target": "openwop-examples-postgres-signing-keys",
+      "sources": [
+        {
+          "file": "RFCS/registers/0224-major1-only-witness-bundles.gaps.md",
+          "token": "G2"
+        }
+      ]
+    },
+    {
+      "id": "openwop.gap.0224.3",
+      "rfc": "0224",
+      "local": "G3",
+      "section": "Unresolved questions 1–4",
+      "surface": "Whether a reasoned `inapplicable` sibling leg is admitted; where §A.1 is evaluated; a `openwop-discovery-core` floor; the tier floor.",
+      "witness": "unclassified",
+      "requirementId": null,
+      "disposition": "transferred",
+      "target": "rfc-0224",
+      "sources": [
+        {
+          "file": "RFCS/registers/0224-major1-only-witness-bundles.gaps.md",
+          "token": "G3"
+        }
+      ]
+    },
+    {
+      "id": "openwop.gap.0224.4",
+      "rfc": "0224",
+      "local": "G4",
+      "section": "Unresolved question 5",
+      "surface": "The audit-log integrity family has no v2 home (`spec/v2/profiles.json`, no core doc), which is why its signature row is major-1-only.",
+      "witness": "unclassified",
+      "requirementId": null,
+      "disposition": "externally-gated",
+      "target": "v2-audit-log-profile-rfc",
+      "sources": [
+        {
+          "file": "RFCS/registers/0224-major1-only-witness-bundles.gaps.md",
+          "token": "G4"
+        }
+      ]
+    },
+    {
+      "id": "openwop.gap.0224.5",
+      "rfc": "0224",
+      "local": "G5",
+      "section": "Unresolved question 6",
+      "surface": "The approval count for an amendment to the decision rule (two approvals; one maintainer).",
+      "witness": "unclassified",
+      "requirementId": null,
+      "disposition": "transferred",
+      "target": "rfc-0224",
+      "sources": [
+        {
+          "file": "RFCS/registers/0224-major1-only-witness-bundles.gaps.md",
+          "token": "G5"
+        }
+      ]
+    },
+    {
       "id": "openwop.gap.spec.a2a-integration.g1",
       "rfc": "0152",
       "local": "G1",
