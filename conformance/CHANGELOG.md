@@ -3,6 +3,7 @@
 ## [2.43.2] — unreleased — Class 3 corrections: approval.rejected is a MAY; the replay outcome key
 
 - **The 2.43.2 cycle opens.** #1724 changes the packed `@openwop/spec-artifacts` tree (`spec/v2/core/interrupt.md`, `spec/v1/gaps.json`) after `v2.43.1` was tagged. No scenario changes in this entry: `approval.rejected` goes from SHOULD to MAY (Class 3), and no leg asserted the SHOULD.
+- **The replay outcome key uses the execution ordinal** (#1718, Class 3). New `v2-replay-suppression-ordinal.test.ts` (target major 2), row `openwop.requirement.replay.suppression-execution-ordinal`, fixture `conformance-replay-ordinal-loop` (start → effect → wait → effect). The suite cancels the source after `effect`'s first execution, then forks `mode: "replay"`. `effect`'s second execution has no recorded outcome for n = 2 and MUST fail closed with `replay_source_missing`; a host keyed on `(nodeId, attempt)`, or on the latest outcome, completes it instead. `inapplicable` unless the host runs cycles and advertises the fixture. No host witnesses it yet.
 - **Suite `2.43.2`**. `@openwop/spec-artifacts` moves in lockstep at the same exact pin.
 
 ## [2.43.1] — 2026-09-28 — major-1 certification works again, RFC 0223's routed and timed-out rejects are witnessed, and four Class 3 corrections

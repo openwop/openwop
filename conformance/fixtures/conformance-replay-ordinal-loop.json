@@ -1,0 +1,31 @@
+{
+  "id": "conformance-replay-ordinal-loop",
+  "name": "Conformance: Replay outcome keyed on the execution ordinal",
+  "version": "1.0",
+  "description": "openwop#1718. start → effect (a side-effecting node) → wait (core.delay) → back to effect, bounded by settings.maxLoopbackIterations 2, so effect executes twice. The suite cancels the source run inside wait, after effect's first execution completed and before its second, then forks mode:\"replay\" at effect's first node.started. In the fork, effect's first execution resolves from the recorded outcome for n = 1, and its second execution has no recorded outcome for n = 2, so it MUST fail closed with replay_source_missing (replay.md §Suppression rule 2). A host keying on (nodeId, attempt) or selecting the latest outcome resolves the second execution from the first and completes it. core.conformance.side-effect is the reserved side-effecting typeId (see conformance-replay-side-effect). Advertised only by a host that runs cycles and suppresses side effects in replay.",
+  "nodes": [
+    { "id": "start", "typeId": "core.noop", "name": "Start", "position": { "x": 0, "y": 0 }, "config": {}, "inputs": {} },
+    { "id": "effect", "typeId": "core.conformance.side-effect", "name": "Side Effect", "position": { "x": 200, "y": 0 }, "config": {}, "inputs": {} },
+    {
+      "id": "wait",
+      "typeId": "core.delay",
+      "name": "Wait",
+      "position": { "x": 400, "y": 0 },
+      "config": {},
+      "inputs": { "delayMs": { "type": "variable", "variableName": "delayMs" } }
+    }
+  ],
+  "edges": [
+    { "id": "start-effect", "sourceNodeId": "start", "targetNodeId": "effect", "triggerRule": "any_success" },
+    { "id": "effect-wait", "sourceNodeId": "effect", "targetNodeId": "wait" },
+    { "id": "wait-effect", "sourceNodeId": "wait", "targetNodeId": "effect", "triggerRule": "any_success" }
+  ],
+  "triggers": [
+    { "id": "manual", "type": "manual", "enabled": true }
+  ],
+  "variables": [
+    { "name": "delayMs", "type": "number", "defaultValue": 3000 }
+  ],
+  "metadata": { "tags": ["conformance", "replay"] },
+  "settings": { "timeout": 0, "maxLoopbackIterations": 2 }
+}
