@@ -67,7 +67,7 @@ Grouping below is a reading aid only: it assigns each RFC to the risk class its 
 | [0177](../RFCS/0177-v2-registry-packs-and-extension-tail.md) | v2 registry, packs, and the extension tail | `Accepted` | bootstrap waiver | tier-1 AND tier-2 — both required | `not-reviewed` |
 | [0180](../RFCS/0180-vendor-org-registration-procedure.md) | Vendor-org registration procedure | `Accepted` | bootstrap waiver | corpus gate — no host tier is claimed**: every obligation in this RFC is a property of th… | `not-reviewed` |
 | [0203](../RFCS/0203-remote-runtime-mcp-registry-record.md) | a remote node-pack runtime may name its MCP server by its registry record | `Accepted` | bootstrap waiver | corpus gate — no host tier is claimed**: every rule here is a property of the signed mani… | `not-reviewed` |
-| [0220](../RFCS/0220-ext-families-graduate-on-evidence.md) | an extension family graduates on evidence a script can read | `Active` | steward override of RFC 0147 §A.6 | not declared (predates RFC 0174 §B.1, or not yet Accepted) | `not-reviewed` |
+| [0220](../RFCS/0220-ext-families-graduate-on-evidence.md) | an extension family graduates on evidence a script can read | `Accepted` | steward override of RFC 0147 §A.6 | tier-2 — steward-affiliated sibling host | `not-reviewed` |
 | [0222](../RFCS/0222-v2-registry-operations.md) | v2 registry operations — lifecycle by publication, key rotation, and the checks a registry refuses on | `Active` | bootstrap waiver | not declared (predates RFC 0174 §B.1, or not yet Accepted) | `not-reviewed` |
 
 ## Idempotency (2)
