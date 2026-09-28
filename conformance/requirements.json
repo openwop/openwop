@@ -3,10 +3,10 @@
   "generatedFrom": "src/scenarios/*.test.ts",
   "counts": {
     "files": 642,
-    "tests": 2465,
-    "withStableId": 2465,
+    "tests": 2466,
+    "withStableId": 2466,
     "interpolatedTitles": 0,
-    "explicitIds": 2355
+    "explicitIds": 2356
   },
   "records": [
     {
@@ -32333,7 +32333,7 @@
     {
       "id": "openwop.it.v2-preferred-version-default.preferredversion-is-a-member-of-protocolversions",
       "file": "v2-preferred-version-default.test.ts",
-      "line": 40,
+      "line": 41,
       "title": "preferredVersion is a member of protocolVersions[]",
       "explicitId": "openwop.requirement.0172.preferred-version-default.member",
       "citations": [
@@ -32355,7 +32355,7 @@
     {
       "id": "openwop.it.v2-preferred-version-default.a-header-less-get-well-known-openwop-is-the-preferredversion-representation",
       "file": "v2-preferred-version-default.test.ts",
-      "line": 52,
+      "line": 53,
       "title": "a header-less GET /.well-known/openwop is the preferredVersion representation",
       "explicitId": "openwop.requirement.0172.preferred-version-default.headerless",
       "citations": [
@@ -32384,9 +32384,23 @@
       ]
     },
     {
+      "id": "openwop.it.v2-preferred-version-default.a-header-less-request-on-any-other-unversioned-path-is-served-major-2",
+      "file": "v2-preferred-version-default.test.ts",
+      "line": 71,
+      "title": "a header-less request on any other unversioned path is served major 2",
+      "explicitId": "openwop.requirement.0172.preferred-version-default.unversioned-is-v2",
+      "citations": [
+        {
+          "section": "spec/v2/core/versioning.md §1.2, §1.3",
+          "requirement": null,
+          "interpolated": true
+        }
+      ]
+    },
+    {
       "id": "openwop.it.v2-preferred-version-default.through-the-overlap-preferredversion-names-a-1-x-member",
       "file": "v2-preferred-version-default.test.ts",
-      "line": 70,
+      "line": 88,
       "title": "through the overlap preferredVersion names a 1.x member",
       "explicitId": "openwop.requirement.0172.preferred-version-default.overlap",
       "citations": [
