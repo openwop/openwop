@@ -8,7 +8,7 @@
 | --- | --- |
 | **witness:** | `claims-check` |
 | **technical:** | `experimental` |
-| **adoption:** | `none` |
+| **adoption:** | `single-witness` |
 | **peer-dependency id** | `canvas` |
 | **advertised as** | `extensions.<org>.canvas` |
 | **declared facets** | none defined |
