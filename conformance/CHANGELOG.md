@@ -1,5 +1,12 @@
 # `@openwop/openwop-conformance` Changelog
 
+## [2.44.3] — unreleased — fifteen more core families get v2 normative homes
+
+- **The 2.44.3 cycle opens.** Fifteen core families get a v2 normative home (RFC 0189), which changes the packed `@openwop/spec-artifacts` tree. v1-dependent core families fall from 23 to 8. No scenario changes: the rules are restated, none added.
+  - `events.md`: `feedback`, `providerUsage`, `envelopes`, and the rest of `heartbeat`.
+  - `host-services.md`: `secrets`, `modelCapabilities`, `scheduling`, `queueBus`, `toolHooks`, `httpClient`; `runs.md`: `deadLetter`.
+  - New `execution.md`: `selfHostedRunner`, `subWorkflow`, `multiAgent` (the family claim and `executionModel` facet); `identity.md` §1.5: `anonymousActor`.
+
 ## [2.44.2] — 2026-09-28 — RFC 0215's no-head-of-line leg does not convict a late fan-out, and says when it sampled each count
 
 - **The 2.44.2 cycle opens.** A patch: the requirement is unchanged, and one verdict branch that convicted without the contention it names becomes unjudged. `@openwop/spec-artifacts` moves in lockstep at the same exact pin.
