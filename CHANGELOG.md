@@ -13,6 +13,7 @@ Format follows [Keep a Changelog](https://keepachangelog.com/en/1/) loosely. Ver
 
 ## [Unreleased]
 
+- **Class 3 correction: an error code on an event is registered or a vendor code, as on a response** (Refs #1698). `errors.md` bound only error responses, while `overview.md` §0 binds every producer, so `run.failed`, `node.failed` and the snapshot `error` carried unregistered codes on all three measured hosts. The sentence now says so explicitly, and a recorded event re-emitted by replay is carried as recorded. `_errorObject.code` is described (still an open string). `core.fail` throws `example.conformance_failure`. A new advisory leg is added, with per-host gap rows `openwop.gap.0171.6`–`.8`. No registry rows: registering shared codes is deferred to a later RFC (suite 2.43.1).
 - **The v2 reference host is re-cut on published 2.43.0: all three profiles certified, 406 / 0 / 0 blocked** (`evidence/v2-host-bundles/openwop-host-v2-reference.json`; build `commit:bc8cc30`, witness `0a7ed040313c`, signed `v2-reference-4`, relaxations none, public cut with the egress guard closed).
   - It carries `openwop.family.a2uiSurface` `executed-pass`, RFC 0220 §C.2's witness.
   - It carries `0218.checkpoint-signature-over-root`, `.checkpoint-preimage-vectors` and `.anomaly-shape`, plus `0224.checkpoint-cadence`.
