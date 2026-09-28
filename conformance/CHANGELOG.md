@@ -1,11 +1,9 @@
 # `@openwop/openwop-conformance` Changelog
 
-## [2.44.1] — unreleased — seven families get v2 normative homes
+## [2.44.2] — unreleased — feedback, providerUsage and envelopes get v2 normative homes
 
-- **The 2.44.1 cycle opens.** `workspace`, `content`, `triggerBridge` and `uiPlugins` get v2 normative homes (RFC 0189), which changes the packed `@openwop/spec-artifacts` tree (`spec/v2/core/host-services.md`, `i18n.md`, `webhooks.md`, `packs.md`, `spec/v2/declaration.json`) after `v2.44.0` was tagged. No scenario changes: the rules are restated from the v1 text, none added or strengthened.
-- **`feedback`, `providerUsage` and `envelopes` get a v2 normative home** (RFC 0189), in the same cycle. The packed `spec/v2/core/events.md` and `spec/v2/declaration.json` change. No scenario changes: the rules are restated, none added or strengthened.
-## [2.44.1] — unreleased — thirteen families get v2 normative homes
-## [2.44.1] — unreleased — thirteen families get v2 normative homes, and the webhook retry legs' timeouts cover an advertised `maxElapsedMs`
+- **`feedback`, `providerUsage` and `envelopes` get a v2 normative home** (RFC 0189), and open the 2.44.2 cycle (2.44.1 is published). The packed `spec/v2/core/events.md` and `spec/v2/declaration.json` change. No scenario changes: the rules are restated, none added or strengthened.
+
 ## [2.44.1] — 2026-09-28 — the webhook retry legs outlast an advertised maxElapsedMs, and four families get v2 normative homes
 
 - **The 2.44.1 cycle opens.** `workspace`, `content`, `triggerBridge` and `uiPlugins` get v2 normative homes (RFC 0189), which changes the packed `@openwop/spec-artifacts` tree (`spec/v2/core/host-services.md`, `i18n.md`, `webhooks.md`, `packs.md`, `spec/v2/declaration.json`) after `v2.44.0` was tagged. No scenario changes: the rules are restated from the v1 text, none added or strengthened.
