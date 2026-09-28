@@ -183,7 +183,7 @@
     "schemas/v2/self-hosted-runner-result-frame.schema.json": "8e739a721f350226f3ffb4af752b4fe0a72016042a7b6f42e16c0487c3c58983",
     "schemas/v2/subject-link.schema.json": "1fc941d6c14af886534009f2ffa6611e2035eb07e30b1df918c50d6bafff026c",
     "schemas/v2/subject.schema.json": "094e981fb20052a911393e219ea5f2065d8b8417b65080a70c5ea99fd960a8fe",
-    "schemas/v2/suspend-request.schema.json": "29c9cfa6978342f0175e250607e6eddb5e4058ea0c4adacc1965e1f3bb4dc9ee",
+    "schemas/v2/suspend-request.schema.json": "4d17f83d271619848693150284534718fadafbf5b4b11443637e67d0aba0966f",
     "schemas/v2/tool-descriptor.schema.json": "8c98fb5e93bc649dff859d3d1dde8075db929efd6c49c496252d0a88cccc73e1",
     "schemas/v2/trigger-event.schema.json": "710ecca8b3ecdad3a532a96768177f062192b24a589a4f798c7eb24bab64b30a",
     "schemas/v2/trigger-subscription-registration.schema.json": "04bc314a07c7e8b565577cb8df5821d968ce2af915900dfdccd4a24e928d20db",
@@ -210,7 +210,7 @@
     "spec/v1/event-codemap.json": "3da60d884157793a360da532a9fcbbfb5285636db325a74cec94b34622186d97",
     "spec/v1/event-codemap.schema.json": "d05933b2e88103aff51a2f774df97b9bda065e0fc88dbd9b114cc47a32189174",
     "spec/v1/extensions.json": "79a60754aa16cbdbdb604f8e5c00038af535a1690a4d07bd5ff7c38f0256a7bc",
-    "spec/v1/gaps.json": "5740c3cbfb94409851c3cb398d1099ff5d9a982f1ff41f36eab1f0a9b953de8d",
+    "spec/v1/gaps.json": "e82548ca8b6aae7bc04bc29ae1b1822e8cbf0be489c02cddee586f0d66c94c68",
     "spec/v1/gaps.schema.json": "8fd83259f556553c9df0f53e7a82ca8c2a4771d471197f69b4e2ae0ceeacfd66",
     "spec/v1/migrations.json": "2efcd9064b2bc65a84a3b3d281aa86a91efd002690c1f4f14e8335c4a18194d1",
     "spec/v1/migrations.schema.json": "886779aa6c22e646db097f5df210adb018a4dd14a7b815465a18c8a7056c8f72",
@@ -230,7 +230,7 @@
     "spec/v2/core/idempotency.md": "21830b7d23dd03e9e8ba4b0de253dd001fc960f166310d6b6b60b1c33cf60b30",
     "spec/v2/core/identity.md": "acb7f739729c69a1f40dcaa5b1d873ba9f32993c17bfd297f5fa56351cf47c69",
     "spec/v2/core/interop.md": "3cfa2af70ae6ba1f4b4268447d46d1d2f5fb65f7917f15bad159d9779d25b1a6",
-    "spec/v2/core/interrupt.md": "5e6fe9767228638095d5a2210307e1febfcefda808f4a400f2c7c528b929c445",
+    "spec/v2/core/interrupt.md": "b1a59ee50571cfb8b7a1b34eb94ce4fcd514ece147f55581b9178cd0297272f6",
     "spec/v2/core/node-pack-runtimes.md": "d52966319c53aaa03575025915b73b470a42832c039c41d73aff6931758630cb",
     "spec/v2/core/oauth.md": "57f167d899993b6959c243e4102819f4014b365299b9b2b253decd2781e6b8b7",
     "spec/v2/core/overview.md": "3dbc8c0cf7474b31816b1a12412c1edf5597066c38edcdbca4dd2e465880f65b",
@@ -302,5 +302,5 @@
     "spec/v2/retention-floors.json": "eaf3722d95c79947af1d4269ef85117e126518c588cfcf1a2b21b97269f51624",
     "spec/v2/surface-baseline.json": "d47f26c3194de0e0d42a731ecaeeae1c2adfdea8c09314792d15c02b50d62efb"
   },
-  "corpusCommit": "7ec692b942228cbc471ca2becb116b890a6e70dc"
+  "corpusCommit": "079850242031079170f5f92a7dcbb30f944fd6e4"
 }
