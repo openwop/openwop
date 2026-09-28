@@ -124,7 +124,11 @@ A `reject` exits the suspend. The host MUST record `action: "reject"` and `decis
 - A rejected gate is a failed source. It MUST NOT satisfy an `all_success`, `any_success` or `none_failed` edge. The run continues past it only over an edge whose `triggerRule` admits a failed source (`all_complete` or `any_failed`).
 - When no such edge exists, the run MUST terminate `failed` with `run.failed.error.code` `approval_rejected` and `failedNodeId` naming the gate.
 - The gate resolves rejected on one eligible `reject` under `single-veto`, or when rejects exceed half of `requiredApprovals` under `majority`. A vote that does not decide the gate MUST NOT emit `interrupt.resolved`.
-- When a non-zero `timeoutMs` elapses with no resolution, the host MUST resolve the gate rejected, recording `action: "timeout"`, `decision: "rejected"` and `reason: "timeout"`, whatever `onTimeout` holds, and MUST apply the rules above. A timeout MUST NOT grant a gate. A host MUST treat `onTimeout: "approve"` as `reject` and SHOULD NOT emit it. `escalate` MAY notify a host-defined target but MUST NOT extend or grant the gate. A host MUST NOT accept `timeout` on a resume request.
+- When a non-zero `timeoutMs` elapses with no resolution:
+  - the host MUST resolve the gate rejected, recording `action: "timeout"`, `decision: "rejected"` and `reason: "timeout"`, whatever `onTimeout` holds, and MUST apply the rules above;
+  - a timeout MUST NOT grant a gate. A host MUST treat `onTimeout: "approve"` as `reject` and SHOULD NOT emit it;
+  - `escalate` MAY notify a host-defined target but MUST NOT extend or grant the gate;
+  - a host MUST NOT accept `timeout` on a resume request.
 - On replay the failure MUST be derived from the recorded `interrupt.resolved`, never re-decided.
 
 ## Approver enforcement
