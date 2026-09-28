@@ -3,8 +3,8 @@
   "generatedFrom": "src/scenarios/*.test.ts",
   "counts": {
     "files": 645,
-    "tests": 2481,
-    "withStableId": 2481,
+    "tests": 2483,
+    "withStableId": 2483,
     "interpolatedTitles": 0,
     "explicitIds": 2367
   },
@@ -27806,7 +27806,7 @@
     {
       "id": "openwop.it.v2-approval-reject-disposition.a-rejected-gate-with-no-routing-edge-fails-the-run-with-approval-rejected",
       "file": "v2-approval-reject-disposition.test.ts",
-      "line": 103,
+      "line": 115,
       "title": "a rejected gate with no routing edge fails the run with approval_rejected",
       "explicitId": null,
       "citations": [
@@ -27829,7 +27829,7 @@
     {
       "id": "openwop.it.v2-approval-reject-disposition.interrupt-resolved-records-action-reject-and-decision-rejected",
       "file": "v2-approval-reject-disposition.test.ts",
-      "line": 114,
+      "line": 126,
       "title": "interrupt.resolved records action reject and decision rejected",
       "explicitId": null,
       "citations": [
@@ -27848,7 +27848,7 @@
     {
       "id": "openwop.it.v2-approval-reject-disposition.the-gate-node-fails-with-approval-rejected-not-retryable-and-run-failed-names-it",
       "file": "v2-approval-reject-disposition.test.ts",
-      "line": 127,
+      "line": 139,
       "title": "the gate node fails with approval_rejected, not retryable, and run.failed names it",
       "explicitId": null,
       "citations": [
@@ -27869,7 +27869,7 @@
     {
       "id": "openwop.it.v2-approval-reject-disposition.a-majority-reject-decides-the-quorum-gate-on-the-deciding-vote-and-fails-the-run",
       "file": "v2-approval-reject-disposition.test.ts",
-      "line": 140,
+      "line": 152,
       "title": "a majority reject decides the quorum gate on the deciding vote and fails the run with approval_rejected",
       "explicitId": null,
       "citations": [
@@ -27889,6 +27889,53 @@
         {
           "section": "spec/v2/core/interrupt.md §Rejection (RFC 0223)",
           "requirement": "the terminal snapshot error.code MUST be approval_rejected"
+        }
+      ]
+    },
+    {
+      "id": "openwop.it.v2-approval-reject-disposition.a-rejected-gate-routed-over-an-any-failed-edge-fails-as-a-node-its-all-success-s",
+      "file": "v2-approval-reject-disposition.test.ts",
+      "line": 175,
+      "title": "a rejected gate routed over an any_failed edge fails as a node, its all_success sibling never runs, and the run completes",
+      "explicitId": null,
+      "citations": [
+        {
+          "section": "spec/v2/core/interrupt.md §Rejection (RFC 0223)",
+          "requirement": "the routed gate still fails as a node: node.failed.error MUST carry approval_rejected and retryable false"
+        },
+        {
+          "section": "spec/v2/core/interrupt.md §Rejection (RFC 0223)",
+          "requirement": "the any_failed edge admits the failed gate: on-reject MUST run to node.completed"
+        },
+        {
+          "section": "spec/v2/core/interrupt.md §Rejection (RFC 0223)",
+          "requirement": "a rejected gate MUST NOT satisfy an all_success edge: on-accept MUST NOT run"
+        },
+        {
+          "section": "spec/v2/core/interrupt.md §Rejection (RFC 0223)",
+          "requirement": null,
+          "interpolated": true
+        }
+      ]
+    },
+    {
+      "id": "openwop.it.v2-approval-reject-disposition.an-unresolved-gate-past-its-timeoutms-with-no-ontimeout-is-resolved-rejected-by",
+      "file": "v2-approval-reject-disposition.test.ts",
+      "line": 194,
+      "title": "an unresolved gate past its timeoutMs with no onTimeout is resolved rejected by the host and fails the run naming the gate",
+      "explicitId": null,
+      "citations": [
+        {
+          "section": "spec/v2/core/interrupt.md §Rejection (RFC 0223)",
+          "requirement": "the host MUST resolve the timed-out gate itself, recording action \"timeout\", decision \"rejected\" and reason \"timeout\""
+        },
+        {
+          "section": "spec/v2/core/interrupt.md §Rejection (RFC 0223)",
+          "requirement": "the timed-out gate MUST fail with approval_rejected"
+        },
+        {
+          "section": "spec/v2/core/interrupt.md §Rejection (RFC 0223)",
+          "requirement": "with no routing edge the run MUST terminate failed, run.failed carrying approval_rejected and failedNodeId naming the gate"
         }
       ]
     },
