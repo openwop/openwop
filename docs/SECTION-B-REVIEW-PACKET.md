@@ -53,7 +53,7 @@ Grouping below is a reading aid only: it assigns each RFC to the risk class its 
 
 | RFC | Title | Status | Waiver | Evidence tier | Outcome |
 | --- | --- | --- | --- | --- | --- |
-| [0221](../RFCS/0221-generated-webhook-secret-returned-once.md) | a webhook secret the host generates is returned once | `Active` | steward override of RFC 0147 §A.6 | not declared (predates RFC 0174 §B.1, or not yet Accepted) | `not-reviewed` |
+| [0221](../RFCS/0221-generated-webhook-secret-returned-once.md) | a webhook secret the host generates is returned once | `Accepted` | steward override of RFC 0147 §A.6 | tier-1 — the v2 reference host's certified public cut on published suite 2 | `not-reviewed` |
 
 ## Packs and registry (10)
 
@@ -67,7 +67,7 @@ Grouping below is a reading aid only: it assigns each RFC to the risk class its 
 | [0177](../RFCS/0177-v2-registry-packs-and-extension-tail.md) | v2 registry, packs, and the extension tail | `Accepted` | bootstrap waiver | tier-1 AND tier-2 — both required | `not-reviewed` |
 | [0180](../RFCS/0180-vendor-org-registration-procedure.md) | Vendor-org registration procedure | `Accepted` | bootstrap waiver | corpus gate — no host tier is claimed**: every obligation in this RFC is a property of th… | `not-reviewed` |
 | [0203](../RFCS/0203-remote-runtime-mcp-registry-record.md) | a remote node-pack runtime may name its MCP server by its registry record | `Accepted` | bootstrap waiver | corpus gate — no host tier is claimed**: every rule here is a property of the signed mani… | `not-reviewed` |
-| [0220](../RFCS/0220-ext-families-graduate-on-evidence.md) | an extension family graduates on evidence a script can read | `Active` | steward override of RFC 0147 §A.6 | not declared (predates RFC 0174 §B.1, or not yet Accepted) | `not-reviewed` |
+| [0220](../RFCS/0220-ext-families-graduate-on-evidence.md) | an extension family graduates on evidence a script can read | `Accepted` | steward override of RFC 0147 §A.6 | tier-2 — steward-affiliated sibling host | `not-reviewed` |
 | [0222](../RFCS/0222-v2-registry-operations.md) | v2 registry operations — lifecycle by publication, key rotation, and the checks a registry refuses on | `Active` | bootstrap waiver | not declared (predates RFC 0174 §B.1, or not yet Accepted) | `not-reviewed` |
 
 ## Idempotency (2)
@@ -83,7 +83,7 @@ Grouping below is a reading aid only: it assigns each RFC to the risk class its 
 | --- | --- | --- | --- | --- | --- |
 | [0194](../RFCS/0194-terminal-event-ends-forward-execution.md) | a run's terminal event is emitted once and ends its forward execution | `Accepted` | steward override of RFC 0147 §A.6 | tier-1 — the v2 reference host | `not-reviewed` |
 | [0212](../RFCS/0212-canonical-json-is-jcs.md) | canonical JSON is RFC 8785 JCS, and a certification preimage does not depend on the machine that computed it | `Accepted` | steward override of RFC 0147 §A.6 | tier-1 — steward-verified: openwop-app `bundle-v3-verify | `not-reviewed` |
-| [0218](../RFCS/0218-audit-checkpoint-preimage.md) | an audit checkpoint signs its Merkle root, and the root is pinned | `Active` | bootstrap waiver | not declared (predates RFC 0174 §B.1, or not yet Accepted) | `not-reviewed` |
+| [0218](../RFCS/0218-audit-checkpoint-preimage.md) | an audit checkpoint signs its Merkle root, and the root is pinned | `Accepted` | bootstrap waiver | tier-1 — the v2 reference host | `not-reviewed` |
 
 ## External effects (10)
 
@@ -171,5 +171,5 @@ Grouping below is a reading aid only: it assigns each RFC to the risk class its 
 | [0206](../RFCS/0206-locale-keys-accept-negotiated-bcp47.md) | locale keys accept the BCP 47 tags the host negotiates | `Accepted` | bootstrap waiver | corpus gate — no host tier is claimed | `not-reviewed` |
 | [0217](../RFCS/0217-dead-letter-read-after-unregister.md) | after a subscription is unregistered, its dead-letter read answers as though it never existed | `Accepted` | bootstrap waiver | tier-1 — the v2 reference host | `not-reviewed` |
 | [0219](../RFCS/0219-client-version-header.md) | a client announces the protocol version it implements in `OpenWOP-Client-Version` | `Active` | bootstrap waiver | not declared (predates RFC 0174 §B.1, or not yet Accepted) | `not-reviewed` |
-| [0224](../RFCS/0224-v2-audit-log-integrity.md) | audit-log integrity gets a v2 home | `Active` | bootstrap waiver | not declared (predates RFC 0174 §B.1, or not yet Accepted) | `not-reviewed` |
+| [0224](../RFCS/0224-v2-audit-log-integrity.md) | audit-log integrity gets a v2 home | `Accepted` | bootstrap waiver | tier-1 — the v2 reference host's certified public cut on published suite 2 | `not-reviewed` |
 
