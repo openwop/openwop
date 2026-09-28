@@ -188,7 +188,7 @@
       }
     },
     "openwop-sdks": {
-      "commit": "adba0de443325f14b0a6950c2dd262053d353bb6",
+      "commit": "36f4a2f8fe95e49ecaf03343b7984136d4a34551",
       "files": {}
     }
   },
@@ -244,9 +244,9 @@
       "typescript": "1.10.0",
       "python": "1.8.0",
       "go": "1.7.0",
-      "typescriptV2": "2.4.0",
-      "pythonV2": "2.4.0",
-      "goV2": "2.4.0",
+      "typescriptV2": "2.5.0",
+      "pythonV2": "2.5.0",
+      "goV2": "2.5.0",
       "corpusTag": "v2.43.0"
     },
     "openwop-cli": {
