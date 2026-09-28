@@ -93,7 +93,11 @@ describe('v2-manifest-hatch-carried (RFC 0177 §C.2)', () => {
       engines: { openwop: '>=2.0.0 <3.0.0' },
       runtime: { language: 'javascript', entry: 'index.mjs', format: 'esm' },
       nodes: [{ typeId: `${name}.echo`, version: '1.0.0', category: 'data', role: 'pure' }],
-      agents: [{ agentId: `${name}.helper`, persona: 'Hatch Helper', modelClass: 'general', 'x-vendor-note': 'a hatch property the host MUST ignore' }],
+      // systemPrompt: agent-manifest requires exactly one of systemPrompt /
+      // systemPromptRef (oneOf). Without it the fixture was schema-invalid for a
+      // reason unrelated to the hatch, and a conforming host had to refuse it
+      // (2.43.1; reported by MyndHyve).
+      agents: [{ agentId: `${name}.helper`, persona: 'Hatch Helper', modelClass: 'general', systemPrompt: 'You are a conformance fixture.', 'x-vendor-note': 'a hatch property the host MUST ignore' }],
     };
     const res = await publish(manifest, { 'index.mjs': ENTRY });
     if (res.status === 404) return softSkip('blocked', 'packs-test publish seam answered 404 — seams profile advertised but the seam is not mounted');
