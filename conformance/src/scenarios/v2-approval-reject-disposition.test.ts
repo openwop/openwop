@@ -22,7 +22,10 @@
  *   6. `conformance-approval-timeout` (gap G2, suite 2.43.1): left unresolved
  *      past its 1500 ms `timeoutMs` with no `onTimeout`, the host resolves the
  *      gate itself (`action: timeout`, `decision: rejected`, `reason: timeout`),
- *      the gate fails with `approval_rejected` and `run.failed` names it.
+ *      the gate fails with `approval_rejected` and `run.failed` names it;
+ *   7. `conformance-approval-timeout-approve` (openwop#1696, suite 2.43.1): the
+ *      same gate with `onTimeout: "approve"` still resolves rejected — a
+ *      timeout never grants — and the run fails, never completes.
  *
  * The legs are separate rows so a host that misses one field fails that row
  * only. Legs 5 and 6 each need their own fixture, because `conformance-approval`
@@ -57,6 +60,7 @@ const FIXTURE = 'conformance-approval';
 const QUORUM = 'conformance-interrupt-quorum';
 const ROUTED = 'conformance-approval-reject-routed';
 const TIMEOUT = 'conformance-approval-timeout';
+const TIMEOUT_APPROVE = 'conformance-approval-timeout-approve';
 const NODE_ID = 'gate';
 const CODE = 'approval_rejected';
 const TERMINAL = new Set(['completed', 'failed', 'cancelled']);
@@ -208,5 +212,23 @@ describe('RFC 0223 — v2-approval-reject-disposition (gated on interrupt + conf
     expect(errorCode(gateFailed?.payload?.['error']), req(id, DOC, 'the timed-out gate MUST fail with approval_rejected')).toBe(CODE);
     const runFailed = evs.find((e) => e.type === 'run.failed');
     expect({ status: terminal?.['status'], code: errorCode(runFailed?.payload?.['error']), failedNodeId: runFailed?.payload?.['failedNodeId'] }, req(id, DOC, 'with no routing edge the run MUST terminate failed, run.failed carrying approval_rejected and failedNodeId naming the gate')).toEqual({ status: 'failed', code: CODE, failedNodeId: NODE_ID });
+  }, 60_000);
+
+  it('a gate whose onTimeout is approve still resolves rejected on timeout and fails the run: a timeout never grants', async () => {
+    if (!(await gateFamily('interrupt'))) return softSkip('inapplicable', 'interrupt family not advertised (gate recorded under openwop.family.interrupt)');
+    if (!isFixtureAdvertised(TIMEOUT_APPROVE)) return softSkip('inapplicable', `fixture ${TIMEOUT_APPROVE} is not advertised — the host does not claim the timeout-approve fixture`);
+    const s = await suspended(TIMEOUT_APPROVE);
+    if ('reason' in s) return softSkip('blocked', s.reason);
+    const id = R('timeout-never-grants');
+    const terminal = await waitStatus(s.runId, TERMINAL, scaledTimeoutMs(20_000));
+    const evs = await events(s.runId);
+    const resolved = evs.find((e) => e.type === 'interrupt.resolved');
+    expect(
+      { action: resolved?.payload?.['action'], decision: resolved?.payload?.['decision'] },
+      req(id, DOC, 'whatever onTimeout holds, the host MUST resolve the timed-out gate rejected (action "timeout", decision "rejected") — onTimeout "approve" is treated as reject'),
+    ).toEqual({ action: 'timeout', decision: 'rejected' });
+    const gateFailed = evs.find((e) => e.type === 'node.failed' && (e.payload?.['nodeId'] ?? e.nodeId) === NODE_ID);
+    expect(errorCode(gateFailed?.payload?.['error']), req(id, DOC, 'the timed-out gate MUST fail with approval_rejected')).toBe(CODE);
+    expect(terminal?.['status'], req(id, DOC, `a timeout MUST NOT grant a gate: with no routing edge the run MUST terminate failed, never completed (got ${String(terminal?.['status'])})`)).toBe('failed');
   }, 60_000);
 });

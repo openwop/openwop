@@ -13243,11 +13243,11 @@
       "rfc": "0223",
       "local": "G7",
       "section": "§Unresolved questions",
-      "surface": "`onTimeout: approve` re-legalises the fail-open timeout RFC 0093 ruled non-conformant; this RFC defines only the absent and `reject` cases.",
+      "surface": "`onTimeout: approve` re-legalised the fail-open timeout RFC 0093 ruled non-conformant.",
       "witness": "unclassified",
       "requirementId": null,
-      "disposition": "transferred",
-      "target": "openwop#1696",
+      "disposition": "closed",
+      "target": null,
       "sources": [
         {
           "file": "RFCS/registers/0223-approval-reject-disposition.gaps.md",

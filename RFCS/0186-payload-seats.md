@@ -7,7 +7,7 @@
 | **Status**        | `Accepted`                                                        |
 | **Author(s)**     | David Tufts (@davidscotttufts)                                  |
 | **Created**       | 2026-09-17                                                      |
-| **Updated**       | 2026-09-17 (`Draft` → `Active`; **comment window waived** (additive, 7-day) by the steward under the bootstrap rule — every seat is a strict widening measured from two hosts' persisted payloads, and the witness ships in the same PR) · 2026-09-18 (`Active → Accepted`). **Evidence tier: tier-1 — steward-verified** (`GOVERNANCE.md` §"Acceptance evidence tiers"): `openwop.requirement.0186.payload-seats` is `executed-pass` on the reference host's certified bundle (suite 2.4.1, witness `b8a7d1d6941d…`, all three profiles certified). |
+| **Updated**       | 2026-09-28 — §A.3 corrected by RFC 0223 (openwop #1696, Class 3): `onTimeout` does not choose the outcome of a timeout. Whatever it holds, a timed-out gate resolves rejected, `approve` is treated as `reject`, and `escalate` MUST NOT extend or grant the gate. RFC 0093 had ruled auto-approval fail-open, and §A.3 seated `approve` from measured payloads without revisiting that. The enum is unchanged. · 2026-09-17 (`Draft` → `Active`; **comment window waived** (additive, 7-day) by the steward under the bootstrap rule — every seat is a strict widening measured from two hosts' persisted payloads, and the witness ships in the same PR) · 2026-09-18 (`Active → Accepted`). **Evidence tier: tier-1 — steward-verified** (`GOVERNANCE.md` §"Acceptance evidence tiers"): `openwop.requirement.0186.payload-seats` is `executed-pass` on the reference host's certified bundle (suite 2.4.1, witness `b8a7d1d6941d…`, all three profiles certified). |
 | **Affects**       | `schemas/v2/run-event-payloads.schema.json` (`conversationExchanged`, `interruptResolved`, `nodeSuspended`), `schemas/v2/conversation-event.schema.json` (`ConversationExchangedPayload` becomes an alias), `schemas/v2/suspend-request.schema.json` (`ApprovalData.onTimeout`), `scripts/check-payload-closure-hatched.mjs` (a `MODELLED` disposition), `conformance/src/scenarios/v2-payload-seats-0186.test.ts` |
 | **Compatibility** | `additive` (COMPATIBILITY.md §2.1) — three optional properties added, one closed def widened to the union of two existing shapes, one orphan turned into an alias; no required field, no retype, no MUST relaxed |
 | **Supersedes**    | —                                                               |
@@ -53,6 +53,8 @@ The tier-2 host drops the same fact on **350 rows** of `node.suspended`, which h
 **Not seated:** `interrupt.resolved.outcome`. Measured single-valued `'rejected'` on the emitting host — a duplicate of `decision`, and that host is deleting it.
 
 ### §A.3 `ApprovalData.onTimeout` — the one field that was genuinely missing
+
+> *Corrected 2026-09-28 (RFC 0223, openwop #1696, Class 3).* The seat stands, but it does not choose a timeout's outcome: a timed-out gate resolves rejected whatever `onTimeout` holds. `approve` is treated as `reject` (RFC 0093), and `escalate` MUST NOT extend or grant the gate.
 
 RFC 0185's closure gate waived `approvalRequested` pending host input. The tier-2 host answered with the full historical key set — `{title, message, timeout, onTimeout}`, 280 rows — and with the observation that these payloads were the **wrong model**, not extra keys on the right one: the right one already existed.
 
