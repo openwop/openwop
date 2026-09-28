@@ -90,9 +90,35 @@ The same block applies to a **bare manifest** — the `pack.json` inside the tar
 - A verifier MUST verify the signature against the issuing registry's key for `keyId`, and MUST check the pack name against that key's `permittedNamespaces`.
 - A signature over tarball bytes is not a v2 signature; such a pack MUST be re-signed, not relabeled.
 
+A registry lists its keys as `signingKeys[]` in `.well-known/openwop-registry.json`, each with `keyId`, `publicKeyUrl`, `permittedNamespaces` and `status`:
+
+- Only a key whose `status` is `active` MAY sign a new publication.
+- A key MUST stay listed, with its `permittedNamespaces`, while any served version names it.
+- A verifier MUST NOT refuse a version because its key is no longer `active`.
+
 ## Version manifests
 
-`kind` is REQUIRED on every version manifest and every bare manifest. A deprecated version is flagged `versionDeprecated: true`; the registry continues to serve it, and a consumer MAY refuse to install it.
+`kind` is REQUIRED on every version manifest and every bare manifest.
+
+There are no lifecycle endpoints: `writeApi` in `.well-known/openwop-registry.json` says how to submit, and a lifecycle change republishes the version manifest. These flags sit outside the signature, which covers only `pack.json`.
+
+- **Deprecated.** `versionDeprecated: true`, optionally with `deprecationReason` and `supersededBy`. It stays served; a consumer MAY refuse to install it, and SHOULD warn with both values when it does not.
+- **Yanked.** `yanked: true`, optionally with `yankedReason`. The registry MUST keep serving its manifest, tarball and signature, and its pack index MUST NOT name it `latest` while any version is not yanked.
+- A consumer resolving a range MUST exclude yanked versions. An exact pin MAY resolve one.
+- A version that a registry security advisory lists in `affected[]` MUST be yanked.
+
+## Submissions
+
+A registry MUST refuse a submission that fails a check below: a write API answers with the code, and a pull-request registry fails its gate.
+
+| Check | Code |
+| --- | --- |
+| `integrity` matches the tarball | `pack_integrity_failure` |
+| Both manifests validate against the schema for `kind`, and `name` and `version` match the path | `pack_validation_failed` |
+| The version is not already published | `version_conflict` |
+| The signature verifies under an `active` key permitted for the namespace | `pack_signature_invalid` |
+| `engines.openwop` admits the tree's major | `pack_engine_unsupported` |
+| Every `peerDependencies` key is defined | `pack_peer_dependency_undefined` |
 
 ## The registry's own schemas
 
@@ -111,4 +137,4 @@ A registry MUST validate submissions against vendored copies of these schemas pi
 - The v1 registry tree is frozen through the overlap, behind the v2 tree.
 - `testMode` advertises the v1 `/v1/packs-test/*` mirror, a conformance seam ([conformance.md §"The seams profile"](conformance.md)). It remains advertisable through the overlap and is removed at 3.0.
 
-*Sources: RFC 0177, RFC 0212.*
+*Sources: RFC 0177, RFC 0212, RFC 0222.*
