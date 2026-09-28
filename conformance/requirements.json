@@ -3,10 +3,10 @@
   "generatedFrom": "src/scenarios/*.test.ts",
   "counts": {
     "files": 643,
-    "tests": 2469,
-    "withStableId": 2469,
+    "tests": 2471,
+    "withStableId": 2471,
     "interpolatedTitles": 0,
-    "explicitIds": 2359
+    "explicitIds": 2361
   },
   "records": [
     {
@@ -43084,9 +43084,45 @@
       ]
     },
     {
-      "id": "openwop.it.v2-surface-monotone-gate.an-open-object-closed-to-additionalproperties-false-is-refused-b-6",
+      "id": "openwop.it.v2-surface-monotone-gate.positive-control-a-required-under-a-then-selecting-only-enum-members-this-diff-a",
       "file": "v2-surface-monotone-gate.test.ts",
       "line": 156,
+      "title": "POSITIVE CONTROL — a `required` under a `then` selecting only enum members this diff adds is additive",
+      "explicitId": "openwop.requirement.0197.no-reshape",
+      "citations": [
+        {
+          "section": "spec/v2/core/overview.md §0a (RFC 0197 §A.1)",
+          "requirement": null,
+          "interpolated": true
+        },
+        {
+          "section": "spec/v2/core/overview.md §0a (RFC 0197 §A.1)",
+          "requirement": "the gate must say it admitted the conditional, not pass it silently"
+        }
+      ]
+    },
+    {
+      "id": "openwop.it.v2-surface-monotone-gate.a-required-under-a-then-an-existing-enum-value-selects-is-refused-b-6",
+      "file": "v2-surface-monotone-gate.test.ts",
+      "line": 171,
+      "title": "a `required` under a `then` an EXISTING enum value selects is REFUSED (§B.6)",
+      "explicitId": "openwop.requirement.0197.no-reshape",
+      "citations": [
+        {
+          "section": "spec/v2/core/overview.md §0a (RFC 0197 §A.1)",
+          "requirement": null,
+          "interpolated": true
+        },
+        {
+          "section": "spec/v2/core/overview.md §0a (RFC 0197 §A.1)",
+          "requirement": "the refusal must name the property and the object"
+        }
+      ]
+    },
+    {
+      "id": "openwop.it.v2-surface-monotone-gate.an-open-object-closed-to-additionalproperties-false-is-refused-b-6",
+      "file": "v2-surface-monotone-gate.test.ts",
+      "line": 186,
       "title": "an OPEN object closed to `additionalProperties: false` is REFUSED (§B.6)",
       "explicitId": "openwop.requirement.0197.no-reshape",
       "citations": [
@@ -43104,7 +43140,7 @@
     {
       "id": "openwop.it.v2-surface-monotone-gate.a-narrowed-type-is-refused-a-1-add-the-new-shape-beside-the-old-one",
       "file": "v2-surface-monotone-gate.test.ts",
-      "line": 163,
+      "line": 193,
       "title": "a narrowed `type` is REFUSED (§A.1 — add the new shape beside the old one)",
       "explicitId": "openwop.requirement.0197.no-reshape",
       "citations": [
@@ -43122,7 +43158,7 @@
     {
       "id": "openwop.it.v2-surface-monotone-gate.a-removed-operation-is-refused-a-path-manifest-row-is-a-surface-too",
       "file": "v2-surface-monotone-gate.test.ts",
-      "line": 170,
+      "line": 200,
       "title": "a removed OPERATION is REFUSED (a path-manifest row is a surface too)",
       "explicitId": "openwop.requirement.0197.no-reshape",
       "citations": [
