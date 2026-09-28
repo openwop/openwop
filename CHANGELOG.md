@@ -361,6 +361,19 @@ Format follows [Keep a Changelog](https://keepachangelog.com/en/1/) loosely. Ver
 - **The remaining eleven stay `Active`, each for a stated reason** rather than for lack of attention. The eight RFC 0167 program children name a certified openwop-app bundle in their own acceptance criteria and the committed one reads `certified: false` (3 blocked rows, RFC 0168 §E.1). RFC 0173 additionally carries the program's only `open` gap row. RFC 0179's sole criterion is unmet — 2.4.2 stopped the gate reading "(Phase 4 leg)" as an excuse for it. RFC 0187 names three requirement ids that no scenario mints. RFC 0167 itself flips **last**, which 2.4.2 made a rule: the moment the umbrella stops being `Active`, every child still `Active` becomes permanently ineligible.
 - **The interrupt `data` union is bound to `kind`** (MCP/A2A review P3-H7, Class 3 correction — COMPATIBILITY.md §3). `schemas/suspend-request.schema.json` and its v2 twin typed `data` as an unbound `oneOf`, so the minimal `conversation.start` and `conversation.close` payloads (`{ conversationId }`, which satisfies both shapes) failed validation in v1 and v2, and a payload carrying another kind's `data` passed. `data` is now an `anyOf` and a root `allOf` binds each kind to its own shape with one `if`/`then`; no per-kind shape or `$id` changed. Witnessed by `conformance/fixtures/interrupt-payloads/` (suite 2.36.0).
 
+## [2.44.1] — 2026-09-28 — the webhook retry legs outlast an advertised maxElapsedMs, and four families get v2 normative homes
+
+A suite patch. It fixes a 2.44.0 regression, and the packed `@openwop/spec-artifacts` tree gains v2 normative homes.
+
+### Conformance
+
+- **A webhook retry leg is no longer killed before its own wait elapses** (#1774). 2.44.0 made the retry wait follow an advertised `retryPolicy.maxElapsedMs` plus 30 s, but the tests' timeouts were still sized from the operator cap (210 s). A host advertising 600000 had its dead-letter rows killed and recorded `executed-fail`; MyndHyve's `0173` dead-letter and `0188.dead-letter-content-free` rows passed on 2.43.1. Timeouts now cover the wait's ceiling, and a self-test holds every call site to that.
+- **Suite `2.44.1`.** `@openwop/spec-artifacts` moves in lockstep at the same exact pin.
+
+### Protocol
+
+- **`workspace`, `content`, `triggerBridge` and `uiPlugins` get v2 normative homes** (RFC 0189, #1772), and new `spec/v2/core/storage.md` restates the v1 storage rules for v2 (#1775).
+
 ## [2.44.0] — 2026-09-28 — three run-failure codes registered, a webhook retry bound hosts can advertise, and RFC 0219 Accepted
 
 A suite minor: new registry rows and a new optional capability member.
