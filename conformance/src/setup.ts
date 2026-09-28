@@ -36,7 +36,7 @@ import { basename, join } from 'node:path';
 import { existsSync, readFileSync } from 'node:fs';
 import { PKG_ROOT_PATH } from './lib/paths.js';
 import { recordRequirement, hasRequirement, journalLength, journalSince } from './lib/requirement-ledger.js';
-import { requirementIdForFile, resolveFileRecord, resolveItRecord, type FileTestState, type TestFailure } from './lib/scenario-disposition.js';
+import { requirementIdForFile, resolveFileRecord, resolveItRecord, unrecordedTests, type FileTestState, type FinishedTest, type TestFailure } from './lib/scenario-disposition.js';
 import { softSkipDisposition, softSkipDispositionSince, softSkipMark } from './lib/soft-skip.js';
 import { ItIdAllocator, takeExplicitRequirementId } from './lib/requirement-ids.js';
 import { SPEC_COHERENCE_SCENARIOS, SPEC_COHERENCE_DETAIL } from './lib/spec-coherence.js';
@@ -250,6 +250,8 @@ const _fileStates = new Map<string, FileTestState[]>();
 const _fileAssertions = new Map<string, number>();
 /** Per file: the failing cases, so the file row can NAME them (2.37.0). */
 const _fileFailures = new Map<string, TestFailure[]>();
+/** Task ids the per-test recorder saw, so `afterAll` can recover the ones a throwing scenario hook hid (`unrecordedTests`). */
+const _fileRecorded = new Map<string, Set<string>>();
 const _ledgerMarks = new Map<string, number>();
 // Per-`it` recording (v2 charter Phase 1, suite 1.153.0 — the durable G8 fix
 // named in scenario-disposition.ts). Each test gets its own ledger row under
@@ -296,6 +298,20 @@ function registeredExplicitId(file: string, title: string): string | null {
   return _registry.get(`${file}\u0000${title}`) ?? null;
 }
 
+/** Every `it` under a suite or file task, with the state vitest settled on. */
+function _finishedTests(node: unknown): FinishedTest[] {
+  const out: FinishedTest[] = [];
+  const walk = (n: unknown): void => {
+    const t = n as { id?: string; name?: string; type?: string; tasks?: unknown[]; result?: { state?: string; errors?: Array<{ message?: string }> } };
+    if (t.type === 'test' && typeof t.id === 'string') {
+      const message = t.result?.errors?.[0]?.message;
+      out.push({ id: t.id, name: t.name ?? '', state: t.result?.state, ...(message === undefined ? {} : { message }) });
+    }
+    for (const c of t.tasks ?? []) walk(c);
+  };
+  walk(node);
+  return out;
+}
 function _fileOf(task: { file?: { filepath?: string; name?: string } } | undefined): string | null {
   const f = task?.file?.filepath ?? task?.file?.name;
   return typeof f === 'string' && f.length > 0 ? basename(f) : null;
@@ -414,6 +430,9 @@ afterEach(({ task }) => {
   if (file === null) return;
   if (!_ledgerMarks.has(file)) _ledgerMarks.set(file, 0);
   const state = task.result?.state;
+  const seen = _fileRecorded.get(file) ?? new Set<string>();
+  seen.add(task.id);
+  _fileRecorded.set(file, seen);
   const arr = _fileStates.get(file) ?? [];
   arr.push(state === 'pass' ? 'pass' : state === 'fail' ? 'fail' : 'skip');
   _fileStates.set(file, arr);
@@ -506,7 +525,10 @@ afterAll(({}, suite) => {
   const s = suite as unknown as { filepath?: string; name?: string; file?: { filepath?: string; name?: string } };
   const file = _fileOf({ file: s.file ?? s });
   if (file === null || !file.endsWith('.test.ts')) return;
-  const states = _fileStates.get(file) ?? [];
+  // A scenario hook that threw before the recorder ran hid its test; recover it from vitest's own results.
+  const hidden = unrecordedTests(_finishedTests(s.file ?? s), _fileRecorded.get(file) ?? new Set());
+  const states = [...(_fileStates.get(file) ?? []), ...hidden.states];
+  if (hidden.failures.length > 0) _fileFailures.set(file, [...(_fileFailures.get(file) ?? []), ...hidden.failures]);
   // Did a behaviorGate in this file record inapplicable/skipped for its profile?
   const mark = _ledgerMarks.get(file) ?? 0;
   const since = journalSince(mark);
@@ -550,6 +572,7 @@ afterAll(({}, suite) => {
   _fileStates.delete(file);
   _fileAssertions.delete(file);
   _fileFailures.delete(file);
+  _fileRecorded.delete(file);
   _ledgerMarks.delete(file);
   _itAllocators.delete(file);
   _itMarks.delete(file);
