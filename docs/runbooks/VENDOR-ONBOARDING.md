@@ -171,12 +171,14 @@ If both succeed, the vendor can publish their first pack.
 Vendor uses the standard pack-publishing flow:
 
 ```bash
+# in an openwop-registry clone
 node scripts/new-pack.mjs vendor.<org>.<pack>
 # ...edit pack.json, index.mjs, schemas/
-node scripts/build-pack-tarball.mjs --pack vendor.<org>.<pack> --signed \
-  --key ~/.openwop-keys/<org>-internal-1.private.pem \
-  --key-id <org>-internal-1
-# Open PR against openwop/openwop
+node scripts/auto-register.mjs --tree v2 \
+  --key-file ~/.openwop-keys/<org>-internal-1.private.pem \
+  --key-id <org>-internal-1 --scheme ed25519-canonical-json
+node registry/scripts/verify-signatures.mjs --tree v2 && npm run check
+# Open PR against openwop/openwop-registry (see docs/PACK-AUTHOR-QUICKSTART.md)
 ```
 
 The Stage 2 CI gates (`registry/scripts/verify-signatures.mjs`) cross-check the keyId against the namespace allow-list claimed in Step 1. A pack signed by `<org>-internal-1` MUST be in `vendor.<org>.*` — any mismatch fails CI.

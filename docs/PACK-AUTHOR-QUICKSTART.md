@@ -34,7 +34,17 @@ If you're new, start with `private.<your-team>.<pack>` locally, then move to `co
 
 ## 1. Create the pack source
 
-Copy the template from [`openwop-examples/examples/packs/vendor-template/`](https://github.com/openwop/openwop-examples/tree/main/examples/packs/vendor-template) into `packs/<your-pack-name>/` in the registry clone. Then replace the `{ORG}` and `{PACK}` placeholders.
+Scaffold the pack from the registry's v2 template ([`templates/node-pack/`](https://github.com/openwop/openwop-registry/tree/main/templates/node-pack)):
+
+```bash
+node scripts/new-pack.mjs community.your-group.your-pack
+```
+
+```text
+✓ pack source tree created at …/packs/community.your-group.your-pack
+```
+
+The script copies the template into `packs/<your-pack-name>/` and fills in the name. It then prints the build, stage and verify commands for your key. `--template <dir>` scaffolds from another source tree instead.
 
 ```text
 packs/community.your-group.your-pack/
@@ -45,15 +55,13 @@ packs/community.your-group.your-pack/
   LICENSE
 ```
 
-> The template is still v1-shaped, so apply every edit in the list below. The registry's `scripts/new-pack.mjs` expects the template in the registry repo itself, which no longer has an `examples/` directory, so it currently exits with `template dir missing`. Copy the template by hand until that script is fixed.
-
-Edit `pack.json` so it is a v2 manifest ([`packs.md`](../spec/v2/core/packs.md)):
+The scaffolded `pack.json` is already a v2 manifest ([`packs.md`](../spec/v2/core/packs.md)). Fill in `description`, `author`, `homepage`, `repository` and `keywords`, and replace the example node with your own. Keep it v2 while you edit:
 
 - **`kind: "node"`** is required. v1's "absent means node" reading doesn't exist in v2.
-- **`engines.openwop`** needs a `>=` lower bound and an explicit `<` major ceiling that admits 2, such as `">=1.0.0 <3.0.0"`. A v2 host treats a range with no upper bound as `<2.0.0` and refuses it with `pack_engine_unsupported`. The template's `<2.0.0` has to change.
+- **`engines.openwop`** needs a `>=` lower bound and an explicit `<` major ceiling that admits 2, such as `">=1.0.0 <3.0.0"`. A v2 host treats a range with no upper bound as `<2.0.0` and refuses it with `pack_engine_unsupported`.
 - **`peerDependencies`** keys are capability family keys from [`spec/v2/declaration.json`](../spec/v2/declaration.json), such as `aiEnvelope`, `secrets`, or `aiProviders`. A dotted v1 key (`host.aiEnvelope`) or a facet path isn't an identifier. Name facets in `peerDependenciesMeta.<family>.facets[]`. A key the declaration doesn't name gets `pack_peer_dependency_undefined`.
-- **Delete the template's `signing` block.** The v1 block `{ method, keyId, signatureRef }` fails v2 validation. The build step writes the v2 block for you.
-- Set `name`, `version` (semver), and `nodes[]` (each with its `typeId`, `version`, and schema refs).
+- **Don't add a `signing` block.** The build step writes the v2 block for you. The v1 block `{ method, keyId, signatureRef }` fails v2 validation.
+- Set `version` (semver) and `nodes[]` (each with its `typeId`, `version`, and schema refs). When you bump `version`, bump the version segment of every schema `$id` in `schemas/` too.
 
 ```json
 {
@@ -68,7 +76,7 @@ Edit `pack.json` so it is a v2 manifest ([`packs.md`](../spec/v2/core/packs.md))
 }
 ```
 
-[`examples/packs/rust-hello/`](https://github.com/openwop/openwop-examples/tree/main/examples/packs/rust-hello) shows a WASM pack end to end. It is also v1-shaped, so apply the same edits. Runtimes are covered in [`spec/v2/core/node-pack-runtimes.md`](../spec/v2/core/node-pack-runtimes.md).
+[`examples/packs/rust-hello/`](https://github.com/openwop/openwop-examples/tree/main/examples/packs/rust-hello) shows a v2 WASM pack manifest and loads in the in-memory example host. The registry's tarball builder packages JavaScript pack sources only, so it can't publish a WASM pack yet. Runtimes are covered in [`spec/v2/core/node-pack-runtimes.md`](../spec/v2/core/node-pack-runtimes.md).
 
 ---
 
@@ -148,7 +156,7 @@ registry/v2/index.json, registry/v2/sbom.json                        # registry-
 registry/community.your-group.your-pack/0.1.0/*.json                 # the node schemas, served for $ref
 ```
 
-The registry README describes the v2 tree as produced by the `registry-v2-sign` CI job. That job runs this same script with the first-party `openwop-team-1` key, and it leaves `community.*` and other vendors' namespaces to their own publishers.
+The registry's `registry-v2-sign` CI job runs this same script with the first-party `openwop-team-1` key. It leaves `community.*` and other vendors' namespaces to their own publishers, who run it with their own keys as above.
 
 ---
 
@@ -163,16 +171,31 @@ node registry/scripts/verify-signatures.mjs --tree v2
 ✓ verified 199 signed pack(s) [v2]
 ```
 
-This is one of the checks the registry's `.github/workflows/registry-publish.yml` runs on your PR. The full v2 gate also runs:
+This is one of the checks the registry's `.github/workflows/registry-publish.yml` runs on your PR. Run the rest locally with the registry's own gate:
 
-- `build-index --tree v2 --check`
-- `check-pack-tarball-signatures --tree v2`
-- `check-registry-signer-consistency --tree v2`
-- `conformance-check --tree v2`
-- `generate-sbom --tree v2 --check`
-- `check-advisories --tree v2`
+```bash
+npm install   # once, for the schema checks
+npm run check
+```
 
-Each of those is a script under `scripts/` or `registry/scripts/`, and you can run it locally the same way. `npm run check` (`scripts/registry-check.sh`) checks only the v1 tree.
+```text
+=== registry:check OK ===
+```
+
+`npm run check` (`scripts/registry-check.sh`) checks the v1 tree, then the v2 tree. The v2 leg covers:
+
+- index drift
+- tarball signatures and signer consistency
+- namespace authority
+- structural conformance
+- SBOM drift
+- advisories
+- the vendored v2 schemas
+- the engines ceiling
+- peer-dependency identifiers
+- the corpus manifest schema for every source and served pack
+
+Your scaffolded source is validated even before you stage it.
 
 ---
 

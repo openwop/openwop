@@ -18,31 +18,26 @@ If your pack is entirely editor-preset typeIds that workflow authors drop into p
 
 ## The 30-minute path: generate → fill in → publish
 
-The generator + Stage 2 CI gates collapse pack-publishing to deterministic stages:
+The generator + the registry gate collapse pack-publishing to deterministic stages. All commands run from an [`openwop-registry`](https://github.com/openwop/openwop-registry) clone. New publications go to the v2 tree, and the step-by-step guide is [`PACK-AUTHOR-QUICKSTART.md`](./PACK-AUTHOR-QUICKSTART.md).
 
 ```bash
-# 1. Generate the source tree
+# 1. Generate the source tree (v2 manifest, from templates/node-pack/)
 node scripts/new-pack.mjs vendor.<org>.<pack>
 
 # 2. Edit pack.json + per-node JSON schemas + index.mjs (executor logic)
-# 3. Build + sign
-node scripts/build-pack-tarball.mjs \
-  --pack vendor.<org>.<pack> --signed \
-  --key ~/.openwop-keys/<org>-internal-1.private.pem \
-  --key-id <org>-internal-1
+# 3. Check the build
+node scripts/build-pack-tarball.mjs --pack vendor.<org>.<pack> \
+  --signed --key ~/.openwop-keys/<org>-1.private.pem --key-id <org>-1 \
+  --tree v2 --scheme ed25519-canonical-json
 
-# 4. Drop the tarball + sig + manifest into the registry tree
-cp dist/packs/vendor.<org>.<pack>-1.0.0.tgz \
-   registry/v1/packs/vendor.<org>.<pack>/-/1.0.0.tgz
-base64 -d < dist/packs/vendor.<org>.<pack>-1.0.0.sig.b64 \
-   > registry/v1/packs/vendor.<org>.<pack>/-/1.0.0.sig
-cp dist/packs/vendor.<org>.<pack>-1.0.0.manifest.json \
-   registry/v1/packs/vendor.<org>.<pack>/-/1.0.0.json
+# 4. Stage the signed artifacts, indexes and SBOMs into registry/v2
+node scripts/auto-register.mjs --tree v2 \
+  --key-file ~/.openwop-keys/<org>-1.private.pem --key-id <org>-1 \
+  --scheme ed25519-canonical-json
 
-# 5. Regenerate the indices
-node registry/scripts/build-index.mjs
-
-# 6. Commit, open PR, merge after Stage 2 gates pass
+# 5. Verify, then commit and open a PR
+node registry/scripts/verify-signatures.mjs --tree v2
+npm run check
 ```
 
 For a small pack (1–3 typeIds, simple schemas, no business-logic refactor), this is a 30-minute path end-to-end. The Stage 2 CI gates (`registry-publish.yml`) catch the common authoring mistakes before merge.
@@ -291,7 +286,7 @@ If the integrity hash or signing keyId is wrong, the deploy succeeded but consum
 - [`spec/v1/registry-operations.md`](../spec/v1/registry-operations.md) — namespace claims, signing-key registration, publish lifecycle
 - [`docs/CANVAS-PACKS-INVENTORY.md`](./CANVAS-PACKS-INVENTORY.md) — current scope (30 executors, 4 sub-packs)
 - [`registry/README.md`](https://github.com/openwop/openwop-registry/blob/main/registry/README.md) — registry layout + signing-key + namespace assignment table
-- [`examples/packs/vendor-template/`](https://github.com/openwop/openwop-examples/tree/main/examples/packs/vendor-template) — pack source-tree skeleton (input to `scripts/new-pack.mjs`)
+- [`templates/node-pack/`](https://github.com/openwop/openwop-registry/tree/main/templates/node-pack) — v2 pack source-tree skeleton (input to `scripts/new-pack.mjs`)
 - [`scripts/new-pack.mjs`](https://github.com/openwop/openwop-registry/blob/main/scripts/new-pack.mjs) — pack generator
 - [`scripts/build-pack-tarball.mjs`](https://github.com/openwop/openwop-registry/blob/main/scripts/build-pack-tarball.mjs) — deterministic tarball builder + signer
 - [`registry/scripts/verify-signatures.mjs`](https://github.com/openwop/openwop-registry/blob/main/registry/scripts/verify-signatures.mjs) — CI sig-verification gate
