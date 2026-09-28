@@ -13,6 +13,7 @@ Format follows [Keep a Changelog](https://keepachangelog.com/en/1/) loosely. Ver
 
 ## [Unreleased]
 
+- **MyndHyve's certified 2.43.1 production cut closes gaps `openwop.gap.0171.7` and `openwop.gap.0223.5`** (evidence only). The cut is myndhyve#548: api.myndhyve.ai revision `00809-gin`, build `commit:f0744fc2`, 267 pass / 0 fail / 0 blocked, both profiles certified. It records `errors.event-code-registered` as a clean `executed-pass`, because myndhyve#539 projects every error seat to a registered or `myndhyve.*` code. It also records the RFC 0223 reject rows `executed-pass` under `approval_rejected`. `evidence/v2-host-bundles/myndhyve.json` now carries that cut, and `evidence/v1-end-of-support.json` is regenerated (the anchor date is unchanged).
 - **`brand` and `launchStudio` are `Stable`** (RFC 0220; the promotion window is waived by steward direction, #1747). New `evidence/v2-host-bundles/myndhyve-2.43.1.json`: MyndHyve production `workflow-runtime-00809-gin`, build `commit:f0744fc2`, suite 2.43.1, both profiles certified, 267 pass / 0 fail / 0 blocked, RFC 0158 rung `durable-single-instance`. It witnesses nine families.
   - MyndHyve now serves `brand.theme.generate`, `.validate` and `.templates`, and `vendor.myndhyve.launchStudioSupervisor`, from its OpenWOP server (myndhyve #540).
   - `brand` adoption goes `none → single-witness`.
