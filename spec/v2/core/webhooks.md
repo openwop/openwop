@@ -99,7 +99,7 @@ An attempt whose request the host had begun sending before `unregisterWebhook` a
 
 ### Dead letters
 
-This sink is the delivery sink; the `deadLetter` family is the run sink and is a different thing.
+This sink is the delivery sink; the `deadLetter` family is the run sink ([runs.md](runs.md) §Dead letters) and is a different thing.
 
 - A host advertising `webhooks.deadLetter` MUST serve `GET /webhooks/{webhookId}/dead-letters`.
 - A record MUST NOT carry the delivered body, the delivery headers, or the subscription secret — a dead-letter read names a delivery, it does not replay one.

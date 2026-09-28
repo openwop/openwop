@@ -1,7 +1,7 @@
 # Identity
 
 > **Status: Stable.**
-> **Normative home:** `auth`, `authorization`.
+> **Normative home:** `auth`, `authorization`, `anonymousActor`.
 
 ## Why this exists
 
@@ -43,6 +43,19 @@ On fork the host MUST copy `owner` verbatim onto the child: `tenant`, `workspace
 ### 1.4 A2A anonymous end users
 
 An end user reaching the host through an A2A peer is `kind: anonymous`, `lane: anonymous`, with the forwarding peer's subject as `actor`. Such a subject MUST NOT be linked.
+
+### 1.5 `anonymousActor`
+
+A host advertising `anonymousActor` MUST give a run dispatched through a public agent surface, an operator-configured entry point for unauthenticated callers, an anonymous subject.
+
+- **The subject.** Its `subjectId` MUST be host-minted, opaque, PII-free and scoped to one surface session. It MUST NOT correlate two sessions or resolve to another subject, workspace or session.
+- **Authority.** Only the surface's explicit tool allowlist. A host MUST NOT resolve a role, scope or default tool baseline for it, or widen it within a session.
+- **`failClosed`.** A call whose grant is absent, unresolvable or errors MUST be denied.
+- **`tiers`.** A host MUST list only tiers it enforces. `read`: tenant-scoped tools with no egress and no secret or BYOK reach. `bounded-write-egress`: writes or egress behind a control, over the SSRF-guarded egress path, attaching a credential only when its audience covers the destination and policy permits anonymous use.
+- **`writeEgressControls`.** REQUIRED iff `bounded-write-egress` is listed, else absent: `hitl` or `rate-limit-session-cap` (a hard rate limit plus a per-session action cap).
+- **Audit.** Every anonymous tool call MUST emit `authorization.decided` carrying no PII or credential. A denial's `reason` is `anon-not-granted`, `anon-write-ungated` or `anon-egress-denied`.
+
+`listTools` scoped to the subject reads the effective grant.
 
 ## 2. One binding pipeline, every lane
 

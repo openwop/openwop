@@ -125,6 +125,18 @@ With `bufferMs` (0..5000) the host accumulates events into one `event: batch` fr
 
 `hostEvents` carries the heartbeat messages (`schemas/v2/heartbeat-evaluated.schema.json`, `schemas/v2/heartbeat-state-changed.schema.json`) at `/host/events` (`streamHostEvents`), the documented default. A host MAY declare another address under `heartbeat.deliveryChannel` ([capabilities.md](capabilities.md)). The channel is content-free of run data. There is no channel without an address.
 
+#### `heartbeat`
+
+A heartbeat evaluates a predicate on an interval (at least `minIntervalSec`) and acts only on a state change. A host advertising `heartbeat` SHOULD also advertise `scheduling`, and otherwise MUST document its own interval substrate. On each tick it MUST:
+
+- skip, not queue, a tick while the prior evaluation still runs;
+- bound the evaluation by `maxRuntimeMs`, itself capped by `limits.maxRunDurationMs`, terminating an overrun with `status: timeout`;
+- pass the predicate the prior tick's state, and perform no side effect itself; the predicate MUST be a pure function of observed and prior state;
+- emit `heartbeat.evaluated`;
+- on a transition only, emit `heartbeat.stateChanged` and, if the predicate asks, call `createRun`; never on an unchanged tick.
+
+The first tick of a `heartbeatId` MUST be treated as a transition from `{}`. A durable host SHOULD persist prior state so a restart does not re-notify.
+
 ## Poll
 
 `GET /runs/{runId}/events/poll` (`pollRunEvents`) is the long-poll fallback.
@@ -188,4 +200,45 @@ An absent `kinds` is not an empty catalog and is not an unrestricted one: a host
 - **`feedback.targets`** names the resources an annotation may be attached to. A host MUST refuse an annotation whose target is outside the advertised set, and MUST NOT write it to the replayable run event log.
 - **`providerUsage.costEstimates`** advertises that the host stamps a derived cost on the `provider.usage` event. That figure is an estimate from the host's own rate table; a consumer MUST NOT treat it as a billed amount.
 
-*Sources: RFCs 0171, 0172, 0176, 0185, 0194, 0213.*
+### `feedback`
+
+`feedback.signals` lists the signal kinds a host accepts; absent means all four. A host advertising `feedback` MUST:
+
+- accept an annotation on a terminal run;
+- keep annotations visible only within the run's tenant (invariant `annotation-cross-tenant-isolation`);
+- redact secret-shaped material in `signal.correction` and `note` before persistence, listing and export (invariant `annotation-content-redaction`);
+- audit-log each recording with the acting principal.
+
+### `providerUsage`
+
+A host advertising `providerUsage` MUST emit exactly one `provider.usage` per LLM provider invocation, before that node's `node.completed`. A host that does not advertise it omits the event.
+
+- `inputTokens` and `outputTokens` MUST replay identically; `costEstimateUsd` MAY be omitted on replay.
+- The payload MUST NOT carry credential refs, hashed credential identifiers, or prompt or response text (invariant `provider-usage-no-credential-leak`).
+- `providerUsage.currency` is the ISO 4217 currency of `costEstimateUsd`; absent means USD.
+
+### `envelopes`
+
+`envelopes.reasoning` advertises the host's prompt posture for the optional payload field `reasoning`.
+
+- `reasoning` SHOULD be the first property where the schema dialect orders properties. A vendor kind whose payload needs multi-step reasoning SHOULD declare it as optional.
+- Where a payload schema permits it, a host SHOULD instruct the model to populate it. A host MUST NOT reject an envelope without it, whatever `promptDirective` says.
+- A host MUST NOT route on `reasoning`. A known secret in the input MUST NOT appear verbatim in it, in derived events, span attributes or the debug bundle (invariant `envelope-reasoning-secret-redaction`).
+
+A host advertising `envelopes.reliability`:
+
+- MUST emit `envelope.retry-exhausted` and `envelope.refusal`, and list in `reliability.events[]` both of them and only the other reliability events it emits;
+- SHOULD emit `envelope.retry-attempted` before each retry past the first;
+- MUST pass `previousError`, `finalError` and `refusalText` through the secret redaction applied to envelope payloads (invariants `envelope-refusal-no-prompt-leak`, `envelope-recovery-no-content-leak`);
+- MUST replay `totalAttempts`, `outputTokenCount` and the recovery `path` identically. `refusalText` MAY differ, and a consumer MUST tolerate `null`.
+
+Under `reliability.completion.distinguishesTruncation`, an envelope is complete only on a clean provider stop with a payload that validates against its kind's schema.
+
+- **Truncation** (no clean stop, whatever the payload): the host MUST emit `envelope.truncated`. A retry SHOULD raise the output budget, by `truncationBudgetMultiplier` (default 2), and MUST NOT carry a schema-correcting fragment.
+- **Schema violation** (clean stop, invalid payload): a retry's corrective fragment SHOULD reproduce the validator's failure and MUST NOT contain text from the model's output. The retry MUST NOT raise the output budget.
+- **Refusal** is terminal: the node MUST fail with `envelope_refusal`.
+- Each retry past the first MUST emit `envelope.retry-attempted` with that `reason`. Both paths count against `limits.schemaRounds`.
+- On exhaustion the host MUST emit `envelope.retry-exhausted` with that `finalReason` and `cap.breached` `kind: "schema"`, and fail the node with `envelope_truncation_unrecoverable` or `envelope_invalid`.
+- Lenient-parse recovery consumes no retry. It emits `envelope.recovery-applied` once per recovery, carrying only the path and an optional byte offset.
+
+*Sources: RFCs 0026, 0030, 0032, 0033, 0056, 0060, 0171, 0172, 0176, 0185, 0194, 0213.*
