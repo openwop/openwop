@@ -3,6 +3,7 @@
 ## [2.42.9] — unreleased — a v2 delivery's workspaceId is checked
 
 - **`v2-webhook-delivery-shape` checks that `workspaceId` is present exactly when the run has a workspace.** `webhooks.md` §Delivery requires it and forbids substituting a value, but the leg only validated the schema, which cannot say "exactly when". It now compares the delivered `workspaceId` with the owner echo on the event. The v2 reference host sent `"default"` and fails without openwop-examples #99 (fixed there); openwop-app already conformed.
+- **`--help` says `--bundle-version` defaults to 3** (#1693). The code has defaulted to 3 since 2.0.0-rc.1 and the deprecation note for `2` already said so; the help text still read `Default 2`.
 - **Suite `2.42.9`**. `@openwop/spec-artifacts` moves in lockstep at the same exact pin.
 
 ## [2.42.8] — 2026-09-27 — RFC 0221, a closed audit schema again, and a dispatch race fixed

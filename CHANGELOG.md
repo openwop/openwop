@@ -13,6 +13,7 @@ Format follows [Keep a Changelog](https://keepachangelog.com/en/1/) loosely. Ver
 
 ## [Unreleased]
 
+- **The conformance CLI's `--help` says `--bundle-version` defaults to 3**, matching the code, its own deprecation note and `IMPLEMENT-CORE.md` (#1693; help text only, suite 2.42.9).
 - **RFC 0220: six extension families are graduable on tier-2 evidence** (evidence only; no status changes yet). New `evidence/v2-host-bundles/myndhyve-2.42.8-ext-families.json`: MyndHyve production (`workflow-runtime-00410-szh`, build `commit:3a7d56edc`), suite 2.42.8, signed `myndhyve-bundle-2026-09b`, `openwop-core-standard` certified. It records `openwop.family.<key>` `executed-pass` for `chat`, `entities`, `kanban`, `knowledge`, `restTransport` and `webResearch`, so `check-ext-status-coherence` reports all six `GRADUABLE`.
   - `openwop-discovery-core` is not certified in this bundle. It has four `executed-fail` rows against two rules new in 2.42.8: MyndHyve still serves major 1 to a header-less request on a non-discovery path (#1684), and echoes a caller-supplied webhook secret in the `201` (RFC 0221). They are recorded as found.
   - `myndhyve.json` stays MyndHyve's matrix record.
