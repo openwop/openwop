@@ -163,11 +163,24 @@ if (mode === 'write') {
   // deterministic in a CI that has no siblings.
   const readJson = (d, rel) => { try { return JSON.parse(readFileSync(join(d, rel), 'utf8')); } catch { return null; } };
   const readText = (d, rel) => { try { return readFileSync(join(d, rel), 'utf8'); } catch { return null; } };
+  const pyVersion = (d, rel) => (/^version\s*=\s*"([^"]+)"/m.exec(readText(d, rel) ?? '') ?? [])[1] ?? null;
+  // Go modules are tag-versioned (no version file): the newest released CHANGELOG heading.
+  // Headings are `## [vX.Y.Z]` from go v1.6.0 on and `## [X.Y.Z]` before, so `v?` — without
+  // it the regex skips every current heading and reports the last un-prefixed one.
+  const goChangelogVersion = (d, rel) => (/^## \[v?(\d+\.\d+\.\d+)\]/m.exec(readText(d, rel) ?? '') ?? [])[1] ?? null;
   const sdks = siblingDir('openwop-sdks'), cli = siblingDir('openwop-cli'), app = siblingDir('openwop-app'), ex = siblingDir('openwop-examples');
   const siblingVersions = {
-    // go/CHANGELOG.md headings carry a `v` from v1.6.0 on (`## [v1.7.0]`); `v?` keeps
-    // the regex from skipping them and reading the last un-prefixed heading (1.5.0).
-    'openwop-sdks': sdks ? { typescript: readJson(sdks, 'sdk/typescript/package.json')?.version ?? null, python: (/^version\s*=\s*"([^"]+)"/m.exec(readText(sdks, 'sdk/python/pyproject.toml') ?? '') ?? [])[1] ?? null, go: (/^## \[v?(\d+\.\d+\.\d+)\]/m.exec(readText(sdks, 'go/CHANGELOG.md') ?? '') ?? [])[1] ?? null, corpusTag: (readText(sdks, 'CORPUS_TAG') ?? '').trim() || null } : null,
+    'openwop-sdks': sdks ? {
+      // 1.x fields (unchanged names — downstream readers key on them).
+      typescript: readJson(sdks, 'sdk/typescript/package.json')?.version ?? null,
+      python: pyVersion(sdks, 'sdk/python/pyproject.toml'),
+      go: goChangelogVersion(sdks, 'go/CHANGELOG.md'),
+      // 2.x line (the current major) beside them.
+      typescriptV2: readJson(sdks, 'sdk/typescript-v2/package.json')?.version ?? null,
+      pythonV2: pyVersion(sdks, 'sdk/python-v2/pyproject.toml'),
+      goV2: goChangelogVersion(sdks, 'go/v2/CHANGELOG.md'),
+      corpusTag: (readText(sdks, 'CORPUS_TAG') ?? '').trim() || null,
+    } : null,
     'openwop-cli': cli ? { version: readJson(cli, 'package.json')?.version ?? null, dependsOnSdk: Boolean(readJson(cli, 'package.json')?.dependencies?.['@openwop/openwop']) } : null,
     'openwop-registry': registryDir ? { registryVersion: readJson(registryDir, 'registry/.well-known/openwop-registry.json')?.registryVersion ?? null, protocolVersion: readJson(registryDir, 'registry/.well-known/openwop-registry.json')?.protocolVersion ?? null, corpusTag: (readText(registryDir, 'CORPUS_TAG') ?? '').trim() || null } : null,
     'openwop-app': app ? { corpusTag: (readText(app, 'schemas/CORPUS_TAG') ?? '').trim() || null, conformancePin: readJson(app, 'backend/typescript/package.json')?.devDependencies?.['@openwop/openwop-conformance'] ?? readJson(app, 'backend/typescript/package.json')?.dependencies?.['@openwop/openwop-conformance'] ?? null } : null,
