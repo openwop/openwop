@@ -85,7 +85,7 @@ const esc = (s) => String(s).replace(/~/g, '~0').replace(/\//g, '~1');
  * can intersect restriction kinds per instance path: a `required` that holds
  * on one `anyOf` branch and not another restricts nothing.
  */
-export function enumerateSchema(rel, schema) {
+export function enumerateSchema(rel, schema, conditionals = null) {
   /** kind → instancePath → Map(value → Set(branchKey)) */
   const acc = new Map();
   /** instancePath → Set(branchKey) — every branch that REACHED this path. */
@@ -113,6 +113,8 @@ export function enumerateSchema(rel, schema) {
     return node;
   };
 
+  /** `then` branch key → the `if` that selects it. */
+  const selectorOf = new Map();
   const seen = new Set();
   function walk(node, path, branchKey, depth, conditionalAtSameSite = false) {
     if (node === null || typeof node !== 'object' || Array.isArray(node)) return;
@@ -151,7 +153,10 @@ export function enumerateSchema(rel, schema) {
     for (const cond of ['then', 'else']) {
       // A conditional restriction does not hold on every document, so it is a
       // branch of its own; `if` is a selector, not a surface.
-      if (node[cond] && typeof node[cond] === 'object') walk(node[cond], path, `${branchKey}>${cond}@${path}`, depth + 1, true);
+      if (node[cond] && typeof node[cond] === 'object') {
+        if (cond === 'then' && node.if && typeof node.if === 'object') selectorOf.set(`${branchKey}>then@${path}`, node.if);
+        walk(node[cond], path, `${branchKey}>${cond}@${path}`, depth + 1, true);
+      }
     }
 
     if (node.type !== undefined) {
@@ -191,6 +196,14 @@ export function enumerateSchema(rel, schema) {
           // INTERSECTION: a restriction counts only when every branch that
           // reaches this instance path imposes it.
           if (branches.size < branchesHere.size) continue;
+          // A `required` no branch reaching the path imposes directly holds only
+          // under `then` arms. Record their selectors, so the monotone gate can
+          // tell a new conditional on a NEW value (RFC 0218 §C's per-kind
+          // `checkpoint`) from a tightened one. The census itself is unchanged.
+          if (conditionals && kind === 'required' && [...branches].every((b) => !branchesHere.has(b))) {
+            const selectors = [...branches].map((b) => selectorOf.get(b) ?? null);
+            conditionals.set(`${rel}#${path}|${kind}|${value}`, selectors);
+          }
         }
         out.push(`${rel}#${path}|${kind}|${value}`);
       }
@@ -199,13 +212,13 @@ export function enumerateSchema(rel, schema) {
   return out;
 }
 
-export function enumerateTree(root = ROOT) {
+export function enumerateTree(root = ROOT, conditionals = null) {
   const tuples = [];
   for (const file of walkDir(join(root, 'schemas', 'v2')).sort()) {
     const rel = relative(root, file);
     let doc;
     try { doc = JSON.parse(readFileSync(file, 'utf8')); } catch (e) { throw new Error(`${rel}: ${e.message}`); }
-    tuples.push(...enumerateSchema(rel, doc));
+    tuples.push(...enumerateSchema(rel, doc, conditionals));
   }
   const pm = join(root, 'spec', 'v2', 'path-manifest.json');
   if (existsSync(pm)) {

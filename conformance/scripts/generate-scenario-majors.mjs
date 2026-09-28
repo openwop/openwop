@@ -33,10 +33,11 @@ const OUT = join(CONF, 'scenario-majors.json');
 // the multiAgent record's presence at major 2 (familyAdvertised + inapplicable,
 // never a strict-mode failure), read `summarization` by presence there, and
 // resolve paths through runsPath() and the driver's seam rewrite.
-// RFC 0218: audit-checkpoint-vectors is server-free, like jcs-vectors below.
+// RFC 0218: audit-checkpoint-vectors and audit-anomaly-shape (§C) are server-free,
+// like jcs-vectors below.
 // RFC 0212: jcs-vectors is server-free — the canonical-JSON rule governs signatures
 // and digests in both majors (v1 replay.md §B, v2 conformance.md §Canonical JSON).
-const BOTH_MAJORS = new Set(['auth-challenge-no-oracle.test.ts', 'context-budget-transcript-bound.test.ts', 'context-summarization-replay.test.ts', 'fixtures-valid.test.ts', 'inbound-credential-no-passthrough.test.ts', 'audit-checkpoint-vectors.test.ts', 'jcs-vectors.test.ts', 'memory-attribution-replay-stable.test.ts', 'otel-mcp-semconv-projection.test.ts', 'tool-catalog-compact-projection.test.ts', 'tool-catalog-projection.test.ts', 'tool-descriptor-shape.test.ts']);
+const BOTH_MAJORS = new Set(['auth-challenge-no-oracle.test.ts', 'context-budget-transcript-bound.test.ts', 'context-summarization-replay.test.ts', 'fixtures-valid.test.ts', 'inbound-credential-no-passthrough.test.ts', 'audit-checkpoint-vectors.test.ts', 'audit-anomaly-shape.test.ts', 'jcs-vectors.test.ts', 'memory-attribution-replay-stable.test.ts', 'otel-mcp-semconv-projection.test.ts', 'tool-catalog-compact-projection.test.ts', 'tool-catalog-projection.test.ts', 'tool-descriptor-shape.test.ts']);
 
 /**
  * A third half-requirement, and it fires at the only moment it can be caught.
