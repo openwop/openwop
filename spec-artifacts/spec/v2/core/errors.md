@@ -8,9 +8,9 @@ Every error a v2 host returns is a row in one registry. A client routes on `erro
 
 ## The registry
 
-`spec/v2/errors.json` holds one row per code: `{ code, httpStatus, retriable, details, since, deprecated? }` plus the provenance fields `statusSource` and `source`, and an optional one-line `meaning`. `spec/v2/errors.schema.json` defines the row. It registers **108** codes. `schemas/v2/error-envelope.schema.json` is GENERATED from it and MUST NOT be edited by hand.
+`spec/v2/errors.json` holds one row per code, defined by `spec/v2/errors.schema.json`. It registers **108** codes. `schemas/v2/error-envelope.schema.json` is GENERATED from it and MUST NOT be edited by hand.
 
-- A host MUST return a registered code, or a vendor code, in every error response.
+- A host MUST emit a registered code, or a vendor code, wherever it emits an error code: the `error` of every error response, and `error.code` on `run.failed`, `node.failed` and the snapshot's `error` (overview.md §0). A recorded event re-emitted by replay or `:fork` is carried as recorded ([replay.md](replay.md)).
 - A vendor code MUST match `^(?!openwop\.)[a-z][a-z0-9]*(-[a-z0-9]+)*\.[a-z][a-z0-9_]*$`, with its first segment an org registered in `spec/v2/declaration.json`. `openwop.` is reserved.
 - The registry grows by [overview.md](overview.md) §0.
 
