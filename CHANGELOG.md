@@ -13,6 +13,7 @@ Format follows [Keep a Changelog](https://keepachangelog.com/en/1/) loosely. Ver
 
 ## [Unreleased]
 
+- **Conformance: the org-chart read pair's served bodies are schema-validated** (suite 2.43.1, unreleased). A major-1 row in `agent-org-chart-scoping` and a new `v2-agent-org-chart-served-shape` validate `GET /agents/org-chart` and `GET /agents/org-chart/{departmentId}` against `agent-org-chart.schema.json` / `org-chart-responsibility-view.schema.json`. The previous rows passed a host serving its stored record without `owner` (openwop-app #4189).
 - **openwop-app is a second witness for four `Stable` families** (evidence only; no status change). New `evidence/v2-host-bundles/openwop-workflow-engine-2.43.0.json`: app.openwop.dev, build `commit:52b7715c`, suite 2.43.0, signed `openwop-app-bundle-2`, all three profiles certified, 253 pass / 2 fail / 0 blocked.
   - `chat`, `kanban`, `knowledge` and `webResearch` move `adoption: single-witness → multi-witness`: MyndHyve at tier 2, openwop-app at tier 1.
   - `canvas` and `launchStudio` move `none → single-witness`. They stay `Draft`, because a tier-1 witness cannot graduate a family (`check-ext-status-coherence` reports them `NOT YET`).
