@@ -1,6 +1,6 @@
 {
   "bundleVersion": "3",
-  "generatedAt": "2026-09-28T13:49:29.825Z",
+  "generatedAt": "2026-09-28T13:48:05.086Z",
   "suite": {
     "name": "@openwop/openwop-conformance",
     "version": "2.43.0",
@@ -14,13 +14,13 @@
     "vendor": "openwop (reference example)",
     "build": {
       "kind": "commit",
-      "id": "80d129da9bf2a24486d5c5575da9afcd679f6569"
+      "id": "bc8cc30e9d97de49f22a175ee0a5de2113bb277a"
     },
     "signingKeyId": "v2-reference-4"
   },
   "discovery": {
     "url": "http://127.0.0.1:3838/.well-known/openwop",
-    "sha256": "bddeb11b203f6bf9b635af549e3c2c4bdf0d727cc304fe60a5c606a88281904a",
+    "sha256": "9608f45abe65270a759afa57ce78bca8736f22a85df57a2dabe12fe92fffd78c",
     "protocolVersions": [
       "1.11",
       "2.0"
@@ -399,7 +399,7 @@
         "until": "2.1",
         "witness": "witnessable-gated",
         "checkpointSignatureAlgorithm": "ed25519",
-        "checkpointPublicKey": "MCowBQYDK2VwAyEA14lbOA5r5NzlmlTB+lBnUTwaqamk3uAP3HWrttuEG1A=",
+        "checkpointPublicKey": "MCowBQYDK2VwAyEAKrn0LUHgAWO7NwEYEho4fOaPiimjFSAZt8ulhTnpBgQ=",
         "checkpointIntervalEntries": 1000,
         "checkpointIntervalSeconds": 300
       },
@@ -933,7 +933,7 @@
         "id": "openwop.scenario.v2-mcp-client-results",
         "scenario": "v2-mcp-client-results.test.ts",
         "result": "executed-pass",
-        "assertions": 27
+        "assertions": 26
       },
       {
         "id": "openwop.scenario.v2-mcp-mount-map",
@@ -1249,7 +1249,7 @@
         "scenario": "v2-webhook-delivery-shape.test.ts",
         "result": "executed-pass",
         "assertions": 13,
-        "detail": "partial-witness: inapplicable: no run.started delivery for the seeded era-2 run inside 15s — this host does not fan out seeded history, so the era-2 fan-out branch is unobservable here (recorded under openwop.family.conformance). no run.started delivery bearing this exercise's nonce b733e6884c1ffe0677 arrived, and nothing else reached this listener either — the registered destination is the public front https://arctic-foreign-species-cite.trycloudflare.com/hook/fx/b733e6884c1ffe0677 (OPENWOP_WEBHOOK_RECEIVER_URL) and this listener answers on http://127.0.0.1:3841/fx/b733e6884c1ffe0677, port 3841"
+        "detail": "partial-witness: inapplicable: no run.started delivery for the seeded era-2 run inside 15s — this host does not fan out seeded history, so the era-2 fan-out branch is unobservable here (recorded under openwop.family.conformance). no run.started delivery bearing this exercise's nonce 9332600a6b7330e0e4 arrived, and nothing else reached this listener either — the registered destination is the public front https://monte-hrs-medicine-tribune.trycloudflare.com/hook/fx/9332600a6b7330e0e4 (OPENWOP_WEBHOOK_RECEIVER_URL) and this listener answers on http://127.0.0.1:3841/fx/9332600a6b7330e0e4, port 3841"
       },
       {
         "id": "openwop.floor.v2-webhook-durable-delivery",
@@ -1747,7 +1747,7 @@
           "recovery": {
             "class": "single-instance-restart",
             "boundMs": 6000,
-            "observedMs": 1807
+            "observedMs": 1681
           }
         }
       },
@@ -1760,7 +1760,7 @@
           "recovery": {
             "class": "single-instance-restart",
             "boundMs": 6000,
-            "observedMs": 2051
+            "observedMs": 1693
           }
         }
       },
@@ -2163,7 +2163,7 @@
         "scenario": "v2-webhook-delivery-shape.test.ts",
         "result": "executed-pass",
         "assertions": 13,
-        "detail": "partial-witness: inapplicable: no run.started delivery for the seeded era-2 run inside 15s — this host does not fan out seeded history, so the era-2 fan-out branch is unobservable here (recorded under openwop.family.conformance). no run.started delivery bearing this exercise's nonce b733e6884c1ffe0677 arrived, and nothing else reached this listener either — the registered destination is the public front https://arctic-foreign-species-cite.trycloudflare.com/hook/fx/b733e6884c1ffe0677 (OPENWOP_WEBHOOK_RECEIVER_URL) and this listener answers on http://127.0.0.1:3841/fx/b733e6884c1ffe0677, port 3841"
+        "detail": "partial-witness: inapplicable: no run.started delivery for the seeded era-2 run inside 15s — this host does not fan out seeded history, so the era-2 fan-out branch is unobservable here (recorded under openwop.family.conformance). no run.started delivery bearing this exercise's nonce 9332600a6b7330e0e4 arrived, and nothing else reached this listener either — the registered destination is the public front https://monte-hrs-medicine-tribune.trycloudflare.com/hook/fx/9332600a6b7330e0e4 (OPENWOP_WEBHOOK_RECEIVER_URL) and this listener answers on http://127.0.0.1:3841/fx/9332600a6b7330e0e4, port 3841"
       },
       {
         "id": "openwop.requirement.0171.webhook-egress-refused",
@@ -3070,7 +3070,7 @@
         "id": "openwop.requirement.0204.server-health",
         "scenario": "v2-mcp-client-results.test.ts",
         "result": "executed-pass",
-        "assertions": 8
+        "assertions": 7
       },
       {
         "id": "openwop.requirement.0205.artifact-a2a-shape",
@@ -3589,8 +3589,8 @@
       }
     ]
   },
-  "witnessSha256": "289de4b5e007d47e5418b79615e49cdcf46b19389ef5788b7f2182ff35424848",
-  "assertionCount": 4572,
+  "witnessSha256": "0a7ed040313c9716efdee13f4315af8170e668d0abbd22abdcb2c9f25643442c",
+  "assertionCount": 4570,
   "detail": {
     "nonPass": [
       {
@@ -4051,7 +4051,7 @@
   "signature": {
     "alg": "ed25519",
     "keyId": "v2-reference-4",
-    "sig": "OhVR5l1ZfzWz9yBzC_tCdNHFi4FFTq42ZWohbPebiTB1ZAlS7pZrJE4QvXjFow5AeijYQ5xONCtHD8QyrhYcCw",
+    "sig": "6cj96k9rxp5cQT2Sqj2dlumc3VinguWr6znq3shJ68LKJag-IQoRu8en4Cre2Au1rGOiDkL57LovJg5_DjngCg",
     "over": [
       "witnessSha256",
       "host.build",

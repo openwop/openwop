@@ -1147,3 +1147,51 @@ predicate refusing the row), **never** `blocked`: the seam is newer than the leg
 **Ceiling.** The seam reports the mock provider's view; a host that routes the fixture through
 a different code path from its real providers would pass here and not in production. Same
 advertise-and-attest ceiling as §27.
+
+### 29. Rotation overlap — `POST /conformance/seams/sample/webhooks/rotation-overlap` (RFC 0201 §E)
+
+| Field                     | Value                                                                                |
+| ------------------------- | ------------------------------------------------------------------------------------ |
+| Method + path             | `POST /conformance/seams/sample/webhooks/rotation-overlap` (v2 only; `api/seams-v2.yaml` `shortenRotationOverlap`) |
+| Capability gate           | `webhooks.signatureAlgorithms` lists `standard-webhooks-1` and `webhooks.secretRotation` is advertised |
+| Profile gate              | `conformance.seamsProfile: "openwop-conformance-seams-v2"`                            |
+| Introduced                | RFC 0201 §E.20 post-overlap witness. "Afterwards only the new secret signs" is observable only by waiting out `webhooks.secretRotation.overlapSeconds`, which is 60 s at least and hours or days on a realistic host — past any bounded run's wait. Without this seam the security-relevant half of rotation (the previous secret stops signing) goes unobserved on every such host. |
+
+OPTIONAL. Request `{ webhookId, overlapSeconds }` — `webhookId` a subscription of the caller's
+tenant whose secret is inside a rotation overlap, `overlapSeconds` an integer in `1..60` —
+answers `200 { webhookId, previousSecretExpiresAt }`. It **shortens the overlap in progress on
+that one subscription**: `previousSecretExpiresAt` becomes the time the host received the
+request plus `overlapSeconds`, and the response reports the stored value.
+
+The seam **MUST** write the same stored expiry that `rotateWebhookSecret` wrote and the host's
+production signer reads, and the signer **MUST NOT** branch on the seam: after the new expiry,
+which secret signs `webhook-signature` and `OpenWOP-Signature` is the production signer's
+decision alone. It changes only the overlap in progress; the subscription's next rotation uses
+the advertised `overlapSeconds`. It **MUST NOT** lengthen an overlap: a request whose expiry
+would fall at or after the current one, a subscription with no overlap in progress, or one that
+did not opt into `standard-webhooks-1` answers `400 validation_error`. Tenant checks are those of
+`rotateWebhookSecret`: `403 id_tenant_mismatch` when the id's tenant segment is not the caller's,
+checked **before** the lookup (`identity.md` §5); `404` when unknown. The seam is a test
+instrument, not a product feature: a host **MUST NOT** serve it outside the seams profile.
+
+Consumed by `v2-webhook-secret-rotation` (`openwop.requirement.0201.secret-rotation`), and only
+when the advertised overlap outlasts the suite's wait cap (`OPENWOP_WEBHOOK_RETRY_WAIT_MS`); an
+overlap that fits is waited out unshortened. The leg asserts the rotate response and the dual
+signature against the advertised overlap first, then calls the seam with `overlapSeconds: 3`,
+waits past the reported expiry and drives one more delivery. A host that serves the seam gets
+a real witness: `executed-pass` when that delivery carries one `webhook-signature` entry, under
+the new secret, and `OpenWOP-Signature` has moved to the new secret; `executed-fail` when the
+previous secret still signs. A host that serves it but breaks its contract (not `200 { webhookId,
+previousSecretExpiresAt }`, an expiry more than 1 s from `overlapSeconds` after the request, or a
+foreign-tenant id not refused `403 id_tenant_mismatch`) records `blocked`. A host that does
+**not** serve it (`404`/`405`/`501` for the suite's own subscription) — the seam is OPTIONAL and
+newer than the leg — records the pre-seam partial witness, **never** `blocked`; a host that does
+not advertise the seams profile records the same partial witness.
+
+**Ceiling (advertise-and-attest).** A host whose seam moves an expiry its production signer
+never reads — or a signer that honours a shortened expiry and ignores a stored one — would be
+measured on the seam's state, not production's. The seam's contract is that it edits the one
+stored expiry production uses; the witness is real for the signer's handling of that expiry,
+and for nothing about how the host chose `overlapSeconds`. A served seam that answers `404` for
+the suite's own subscription is indistinguishable from an unserved one and keeps the partial
+witness.

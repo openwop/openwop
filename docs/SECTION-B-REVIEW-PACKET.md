@@ -83,7 +83,7 @@ Grouping below is a reading aid only: it assigns each RFC to the risk class its 
 | --- | --- | --- | --- | --- | --- |
 | [0194](../RFCS/0194-terminal-event-ends-forward-execution.md) | a run's terminal event is emitted once and ends its forward execution | `Accepted` | steward override of RFC 0147 §A.6 | tier-1 — the v2 reference host | `not-reviewed` |
 | [0212](../RFCS/0212-canonical-json-is-jcs.md) | canonical JSON is RFC 8785 JCS, and a certification preimage does not depend on the machine that computed it | `Accepted` | steward override of RFC 0147 §A.6 | tier-1 — steward-verified: openwop-app `bundle-v3-verify | `not-reviewed` |
-| [0218](../RFCS/0218-audit-checkpoint-preimage.md) | an audit checkpoint signs its Merkle root, and the root is pinned | `Accepted` | bootstrap waiver | tier-1 — the v2 reference host's certified public cut on published suite 2 | `not-reviewed` |
+| [0218](../RFCS/0218-audit-checkpoint-preimage.md) | an audit checkpoint signs its Merkle root, and the root is pinned | `Active` | bootstrap waiver | not declared (predates RFC 0174 §B.1, or not yet Accepted) | `not-reviewed` |
 
 ## External effects (10)
 
