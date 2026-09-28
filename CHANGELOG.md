@@ -299,6 +299,7 @@ A suite patch. No canonical wire change.
 - **`v2-webhook-delivery-shape` checks that a v2 delivery carries `workspaceId` exactly when the run has a workspace (#1682).** `webhooks.md` §Delivery forbids a substituted value; the v2 reference host sent `"default"` (fixed in openwop-examples #99).
 - **Files that share a mock-AI node no longer race under the default parallel run.** A new cross-process lock per node id makes them run one after another.
 - **The RFC 0033 §B truncation budget legs record the SHOULD instead of failing it.** They compare the first and retry budgets the provider actually received.
+- **The conformance CLI's `--help` says `--bundle-version` defaults to 3 (#1694)**, matching the code.
 - **Suite `2.42.9`**: 567 scenario files. `@openwop/spec-artifacts` moves in lockstep at the same exact pin.
 
 ## [2.42.8] — 2026-09-27 — RFC 0221, a closed audit schema again, and a dispatch race fixed
