@@ -359,6 +359,21 @@ Format follows [Keep a Changelog](https://keepachangelog.com/en/1/) loosely. Ver
 - **The remaining eleven stay `Active`, each for a stated reason** rather than for lack of attention. The eight RFC 0167 program children name a certified openwop-app bundle in their own acceptance criteria and the committed one reads `certified: false` (3 blocked rows, RFC 0168 §E.1). RFC 0173 additionally carries the program's only `open` gap row. RFC 0179's sole criterion is unmet — 2.4.2 stopped the gate reading "(Phase 4 leg)" as an excuse for it. RFC 0187 names three requirement ids that no scenario mints. RFC 0167 itself flips **last**, which 2.4.2 made a rule: the moment the umbrella stops being `Active`, every child still `Active` becomes permanently ineligible.
 - **The interrupt `data` union is bound to `kind`** (MCP/A2A review P3-H7, Class 3 correction — COMPATIBILITY.md §3). `schemas/suspend-request.schema.json` and its v2 twin typed `data` as an unbound `oneOf`, so the minimal `conversation.start` and `conversation.close` payloads (`{ conversationId }`, which satisfies both shapes) failed validation in v1 and v2, and a payload carrying another kind's `data` passed. `data` is now an `anyOf` and a root `allOf` binds each kind to its own shape with one `if`/`then`; no per-kind shape or `$id` changed. Witnessed by `conformance/fixtures/interrupt-payloads/` (suite 2.36.0).
 
+## [2.44.0] — 2026-09-28 — three run-failure codes registered, a webhook retry bound hosts can advertise, and RFC 0219 Accepted
+
+A suite minor: new registry rows and a new optional capability member.
+
+### Protocol
+
+- **RFC 0226 `Active`: three run-failure codes the hosts share are registered** (#1751): `node_config_invalid` (422), `sandbox_invocation_error` (422) and `mcp_error` (502), `since` 2.44. `capability_not_provided`'s meaning widens. The generated error envelope and the `errors.md` table follow.
+- **RFC 0225 `Active`: a webhook host may advertise how long a delivery can keep retrying** (#1749), as `retryPolicy.maxElapsedMs`. A host that advertises it MUST dead-letter an exhausted delivery within that bound.
+- **RFC 0219 `Accepted`** (#1764): clients announce the protocol version they implement in `OpenWOP-Client-Version`. All three v2 SDKs send it from 2.5.0. A host serving browsers cross-origin must admit it in its CORS preflight (#1763).
+
+### Conformance
+
+- **The webhook retry window follows the advertised bound:** the suite waits `maxElapsedMs` plus 30 s (1 h ceiling), and the dead-letter row convicts only past an advertised bound.
+- **Suite `2.44.0`.** `@openwop/spec-artifacts` moves in lockstep at the same exact pin.
+
 ## [2.43.2] — 2026-09-28 — three Class 3 corrections, and a failing scenario hook no longer hides its test
 
 A suite patch. The packed `@openwop/spec-artifacts` tree changes only by Class 3 prose and one fixture.
