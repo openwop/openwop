@@ -99,6 +99,17 @@ if (mode === 'write') {
     const ids = new Set();
     if (existsSync(reqPath)) for (const r of JSON.parse(readFileSync(reqPath, 'utf8')).records ?? []) if (r.id) ids.add(r.id);
     if (existsSync(aliasPath)) for (const k of Object.keys(JSON.parse(readFileSync(aliasPath, 'utf8')).aliases ?? {})) ids.add(k);
+    // One namespace means one row per id. Two register rows sharing a local ID
+    // (a G9 appended twice) generated two entries with the same id, and every
+    // check above passed: the second silently shadowed the first for anyone
+    // resolving the id.
+    const seen = new Map();
+    for (const e of prev.entries ?? []) seen.set(e.id, (seen.get(e.id) ?? 0) + 1);
+    // Ratchet: these ids were already doubled when the guard landed (registers
+    // 0124–0129 repeat local IDs across tables). They are recorded, not fixed
+    // here; a NEW duplicate fails.
+    const LEGACY_DUPLICATES = new Set(['openwop.gap.0124.5','openwop.gap.0124.6','openwop.gap.0126.1','openwop.gap.0126.2','openwop.gap.0126.3','openwop.gap.0126.4','openwop.gap.0126.5','openwop.gap.0126.6','openwop.gap.0126.7','openwop.gap.0127.1','openwop.gap.0127.2','openwop.gap.0127.3','openwop.gap.0127.4','openwop.gap.0127.5','openwop.gap.0128.1','openwop.gap.0128.2','openwop.gap.0128.3','openwop.gap.0128.4','openwop.gap.0128.5','openwop.gap.0128.6','openwop.gap.0129.1','openwop.gap.0129.2','openwop.gap.0129.3','openwop.gap.0129.4','openwop.gap.0129.5']);
+    for (const [id, n] of seen) if (n > 1 && !LEGACY_DUPLICATES.has(id)) failures.push(`${id}: ${n} register rows share this id — give each row its own local ID`);
     for (const e of prev.entries ?? []) {
       if (e.requirementId && !ids.has(e.requirementId)) failures.push(`${e.id}: requirementId ${e.requirementId} is not in conformance/requirements.json or its aliases`);
       if (!WITNESS.includes(e.witness)) failures.push(`${e.id}: witness ${JSON.stringify(e.witness)} is not in the closed enum`);
