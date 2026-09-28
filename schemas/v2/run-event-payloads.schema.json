@@ -948,7 +948,8 @@
       "properties": {
         "code": {
           "type": "string",
-          "minLength": 1
+          "minLength": 1,
+          "description": "A registered code from spec/v2/errors.json or a vendor code (errors.md §The registry, corrected by openwop#1698): the producer rule binds run.failed, node.failed and the snapshot error exactly as it binds an error response. Kept an open string on purpose — a consumer MUST accept an unknown code (overview.md §0) — so this schema does not enforce the rule; the suite's event-code-registered leg does."
         },
         "message": {
           "type": "string",
