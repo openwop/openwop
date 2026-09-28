@@ -13341,6 +13341,40 @@
       ]
     },
     {
+      "id": "openwop.gap.0223.9",
+      "rfc": "0223",
+      "local": "G9",
+      "section": "§Conformance",
+      "surface": "`openwop.requirement.0223.reject-loopback-reasks` (openwop #1697) has no positive witness on any host. The v2 reference host does not run cycles. MyndHyve runs request-changes loops over condition edges on a successful gate output, and does not route a failed node over `any_failed` (its Cloud Run executor has no `triggerRule` handling), so the row stays `inapplicable` there. openwop-app rejects cycles. The row exists and is negatively controlled: registering the fixture on a host that does not loop records `executed-fail`.",
+      "witness": "unclassified",
+      "requirementId": null,
+      "disposition": "externally-gated",
+      "target": "host-routes-failed-gate-over-cycle",
+      "sources": [
+        {
+          "file": "RFCS/registers/0223-approval-reject-disposition.gaps.md",
+          "token": "G9"
+        }
+      ]
+    },
+    {
+      "id": "openwop.gap.0223.10",
+      "rfc": "0223",
+      "local": "G10",
+      "section": "§Conformance",
+      "surface": "`openwop.requirement.0223.timeout-rejects` and `0223.timeout-never-grants` have no MyndHyve witness: its `core.approvalGate` has no timeout configuration. On the v2 reference host both rows are negatively controlled (sweep sabotaged, or the `onTimeout` exclusion present) and pass locally with the fixtures registered. They need suite 2.43.1 and a new certified cut.",
+      "witness": "unclassified",
+      "requirementId": null,
+      "disposition": "externally-gated",
+      "target": "certified-cut-on-2.43.1",
+      "sources": [
+        {
+          "file": "RFCS/registers/0223-approval-reject-disposition.gaps.md",
+          "token": "G10"
+        }
+      ]
+    },
+    {
       "id": "openwop.gap.0224.1",
       "rfc": "0224",
       "local": "G1",
