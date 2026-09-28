@@ -53,7 +53,7 @@ Grouping below is a reading aid only: it assigns each RFC to the risk class its 
 
 | RFC | Title | Status | Waiver | Evidence tier | Outcome |
 | --- | --- | --- | --- | --- | --- |
-| [0221](../RFCS/0221-generated-webhook-secret-returned-once.md) | a webhook secret the host generates is returned once | `Active` | steward override of RFC 0147 §A.6 | not declared (predates RFC 0174 §B.1, or not yet Accepted) | `not-reviewed` |
+| [0221](../RFCS/0221-generated-webhook-secret-returned-once.md) | a webhook secret the host generates is returned once | `Accepted` | steward override of RFC 0147 §A.6 | tier-1 — the v2 reference host's certified public cut on published suite 2 | `not-reviewed` |
 
 ## Packs and registry (10)
 
@@ -171,5 +171,5 @@ Grouping below is a reading aid only: it assigns each RFC to the risk class its 
 | [0206](../RFCS/0206-locale-keys-accept-negotiated-bcp47.md) | locale keys accept the BCP 47 tags the host negotiates | `Accepted` | bootstrap waiver | corpus gate — no host tier is claimed | `not-reviewed` |
 | [0217](../RFCS/0217-dead-letter-read-after-unregister.md) | after a subscription is unregistered, its dead-letter read answers as though it never existed | `Accepted` | bootstrap waiver | tier-1 — the v2 reference host | `not-reviewed` |
 | [0219](../RFCS/0219-client-version-header.md) | a client announces the protocol version it implements in `OpenWOP-Client-Version` | `Active` | bootstrap waiver | not declared (predates RFC 0174 §B.1, or not yet Accepted) | `not-reviewed` |
-| [0224](../RFCS/0224-v2-audit-log-integrity.md) | audit-log integrity gets a v2 home | `Active` | bootstrap waiver | not declared (predates RFC 0174 §B.1, or not yet Accepted) | `not-reviewed` |
+| [0224](../RFCS/0224-v2-audit-log-integrity.md) | audit-log integrity gets a v2 home | `Accepted` | bootstrap waiver | tier-1 — the v2 reference host's certified public cut on published suite 2 | `not-reviewed` |
 

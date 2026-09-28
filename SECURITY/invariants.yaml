@@ -4836,7 +4836,7 @@ invariants:
     witness: witnessable-gated
     witnessReview: reviewed-2026-09-25
   - id: audit-checkpoint-signed-over-root
-    tier: reference-impl
+    tier: protocol
     severity: high
     threat_model: SECURITY/threat-model-auth-profiles.md
     tests:
