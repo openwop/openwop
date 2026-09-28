@@ -4,7 +4,7 @@
     "schemas/v2/**/*.json",
     "spec/v2/path-manifest.json"
   ],
-  "release": "2.42.7",
+  "release": "2.42.8",
   "kinds": {
     "union": [
       "channel",
@@ -18,7 +18,7 @@
       "type"
     ]
   },
-  "count": 8502,
+  "count": 8504,
   "surfaces": [
     "schemas/v2/a2a-task-state.schema.json#/contextId|type|string",
     "schemas/v2/a2a-task-state.schema.json#/interruptKind|enum-member|\"approval\"",
@@ -5254,6 +5254,7 @@
     "schemas/v2/envelopes/ui.a2ui-surface.schema.json#|type|object",
     "schemas/v2/error-envelope.schema.json#/details/keys/[]|type|string",
     "schemas/v2/error-envelope.schema.json#/details/keys|type|array",
+    "schemas/v2/error-envelope.schema.json#/details/minClientVersion|type|string",
     "schemas/v2/error-envelope.schema.json#/details/runStatus|type|string",
     "schemas/v2/error-envelope.schema.json#/details/sequence|type|integer",
     "schemas/v2/error-envelope.schema.json#/details/supported/[]|enum-member|\"debug\"",
@@ -5265,6 +5266,7 @@
     "schemas/v2/error-envelope.schema.json#/details/type|type|string",
     "schemas/v2/error-envelope.schema.json#/details|property|eventId",
     "schemas/v2/error-envelope.schema.json#/details|property|keys",
+    "schemas/v2/error-envelope.schema.json#/details|property|minClientVersion",
     "schemas/v2/error-envelope.schema.json#/details|property|runStatus",
     "schemas/v2/error-envelope.schema.json#/details|property|sequence",
     "schemas/v2/error-envelope.schema.json#/details|property|supported",

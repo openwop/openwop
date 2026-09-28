@@ -1,7 +1,7 @@
 {
   "$schema": "./gaps.schema.json",
   "version": 1,
-  "updated": "2026-09-27",
+  "updated": "2026-09-28",
   "witnessClasses": [
     "witnessable-unaided",
     "witnessable-gated",
@@ -12923,8 +12923,8 @@
       "surface": "Two of the three certified hosts read a malformed value as `0.0` and refuse it (`openwop-examples` v2 reference host `router.ts`, openwop-app `protocolVersion.ts`). Under §C.2 both fail the planned `malformed-not-refused` leg.",
       "witness": "unclassified",
       "requirementId": null,
-      "disposition": "transferred",
-      "target": "rfc-0219",
+      "disposition": "closed",
+      "target": null,
       "sources": [
         {
           "file": "RFCS/registers/0219-client-version-header.gaps.md",
@@ -12940,8 +12940,8 @@
       "surface": "Whether the value names the corpus release the client implements (this RFC) or a product version (v1's `openwop-sdk/<v>`).",
       "witness": "unclassified",
       "requirementId": null,
-      "disposition": "transferred",
-      "target": "rfc-0219",
+      "disposition": "closed",
+      "target": null,
       "sources": [
         {
           "file": "RFCS/registers/0219-client-version-header.gaps.md",
@@ -12974,8 +12974,8 @@
       "surface": "`client_version_unsupported` has `details: null`. Two hosts send `details.minClientVersion`, MyndHyve sends none.",
       "witness": "unclassified",
       "requirementId": null,
-      "disposition": "transferred",
-      "target": "spec/v2/core/errors.md",
+      "disposition": "closed",
+      "target": null,
       "sources": [
         {
           "file": "RFCS/registers/0219-client-version-header.gaps.md",
@@ -12991,8 +12991,8 @@
       "surface": "The header's meaning on a `/v1/…` path during the overlap. The reference host applies the floor there; openwop-app does not.",
       "witness": "unclassified",
       "requirementId": null,
-      "disposition": "transferred",
-      "target": "rfc-0219",
+      "disposition": "closed",
+      "target": null,
       "sources": [
         {
           "file": "RFCS/registers/0219-client-version-header.gaps.md",

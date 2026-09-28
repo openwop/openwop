@@ -16,9 +16,10 @@ Standard headers keep their standard names: `Idempotency-Key`, `ETag`, `If-None-
 | `Idempotency-Key` | 15 | Per-mutation idempotency token (`idempotency.md` Layer 1). The server caches `(tenantId, endpoint, key)` → response for ≥24h. A duplicate request returns the cached response with `OpenWOP-Idempotent-Replay: true`. |
 | `If-None-Match` | 2 | Conditional request on the discovery document (capabilities.md §1) and the run snapshot (runs.md §Snapshot). A value matching the `ETag` the host sent MUST yield `304 Not Modified` with no body. The 304 carries `OpenWOP-Version` like every response (versioning.md §1.4). |
 | `Last-Event-ID` | 1 | Resume from sequence after this ID. |
+| `OpenWOP-Client-Version` | 55 | The protocol version the client implements (versioning.md §1.5). Compared with `minClientVersion` on major.minor. A malformed value is treated as absent and MUST NOT produce a 400. Never selects a contract. |
 | `OpenWOP-Dedup` | 1 | When set, the host's cross-host claim system rejects a duplicate `(tenantId, scopeId)` pair with `409 Conflict`. |
 | `OpenWOP-Force-Engine-Version` | 1 | Test keys only. The server emits this run's events as if it ran the given engine version, which must be within `Capabilities.testing.forceEngineVersionRange`. Servers MUST reject it on production API keys with `403 force_engine_version_forbidden`. |
-| `OpenWOP-Version` | 55 | Selects one of the host's listed major.minor versions. Absent, the host uses its `preferredVersion`; an unlisted value is 406 protocol_version_unsupported. |
+| `OpenWOP-Version` | 55 | Selects one of the host's listed major.minor versions. Absent, `/.well-known/openwop` uses `preferredVersion` and every other unversioned path is v2; an unlisted value is 406 protocol_version_unsupported. |
 
 ## Response headers
 

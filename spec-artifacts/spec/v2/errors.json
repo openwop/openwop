@@ -1001,13 +1001,23 @@
     },
     {
       "code": "client_version_unsupported",
-      "meaning": "The client is below the host's advertised minClientVersion.",
+      "meaning": "The client is below the host's advertised minClientVersion; details.minClientVersion, when present, names the floor.",
       "httpStatus": 426,
       "statusSource": "v2 decision",
       "retriable": false,
-      "details": null,
+      "details": {
+        "type": "object",
+        "properties": {
+          "minClientVersion": {
+            "type": "string",
+            "pattern": "^(0|[1-9][0-9]*)\\.(0|[1-9][0-9]*)$",
+            "description": "OPTIONAL. The host's advertised minClientVersion, so a client refused at discovery learns the floor (versioning.md §1.5)."
+          }
+        },
+        "additionalProperties": true
+      },
       "since": "2.0",
-      "source": "RFC 0172 row C5.8"
+      "source": "RFC 0172 row C5.8; details registered by RFC 0219"
     },
     {
       "code": "rate_limited",

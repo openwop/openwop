@@ -43,8 +43,11 @@ A request on an unversioned path MAY carry `OpenWOP-Version: <major>` or `OpenWO
 | --- | --- |
 | Header names a major in `protocolVersions[]` | MUST serve that major |
 | Header names a major not in `protocolVersions[]` | MUST answer `406` `protocol_version_unsupported`, with `details.protocolVersions[]` echoing the list |
-| Header absent on an unversioned path | MUST serve `preferredVersion`'s major |
+| Header absent on `/.well-known/openwop` | MUST serve `preferredVersion`'s major |
+| Header absent on any other unversioned path | MUST serve major 2: the path is the v2 surface (§1.2) |
 | `/v1/…` path with `OpenWOP-Version` other than `1` | MUST answer `400` `protocol_version_mismatch` |
+
+`/.well-known/openwop` is the one resource both majors serve at the same unversioned path, so it is the only place a header-less request can come from a client of the earlier major.
 
 A request on a `/v1/…` path key MUST NOT carry `OpenWOP-Version` with a value other than `1`. `protocol_version_unsupported`, `protocol_version_mismatch` and `client_version_unsupported` (§1.5) are rows in `spec/v2/errors.json` ([errors.md](errors.md)).
 
@@ -75,10 +78,26 @@ Otherwise the page MUST move off the shared name.
 
 When both majors are advertised, a v2 client MUST select the highest major it implements that the host lists. A v1 client (no header, `/v1/` paths) is unaffected.
 
+A client announces the protocol version it implements in the `OpenWOP-Client-Version` request header, as `<major>.<minor>` or `<major>.<minor>.<patch>` (non-negative integers, no leading zeros). The value is the corpus release the client is built against (§4), not an SDK or product version.
+
+- A client SHOULD send it on every request under major 2.
+- The header is optional on every operation and never selects a major (§1.3). A host MUST NOT choose a major or a representation from it.
+- A host MUST NOT refuse a request because it omits the header or sends a malformed value.
+- A value outside the grammar MUST be treated as absent, and MUST NOT produce a `400`.
+- The value is the client's claim. A host MUST NOT use it as an authentication or authorization input.
+
 `minClientVersion` (axis 15) is optional. When a host advertises it:
 
 - It MUST use the axis-1 grammar.
-- A host MAY refuse a client below it. A refusal MUST be `426` `client_version_unsupported`.
+- A client is below it when the client's major and minor, compared as integers, are less than the floor's. The patch never decides.
+- A host MAY refuse a client below it. A refusal MUST be `426` `client_version_unsupported`, and MAY carry `details.minClientVersion` naming the floor ([errors.md](errors.md)).
+- The discovery document is not exempt: a client refused there learns the floor from `details.minClientVersion`.
+
+A host MUST NOT answer `426` `client_version_unsupported` to a request that does not carry a well-formed `OpenWOP-Client-Version` below its advertised `minClientVersion`.
+
+This header rule binds requests served under major 2. A request served under major 1 follows that major's frozen text.
+
+Open gap: RFC 9110 §15.5.22 requires an `Upgrade` header on every `426`. This floor departs from it, and no `Upgrade` value is defined yet.
 
 ## 2. The 18 version axes
 
@@ -173,4 +192,4 @@ Every vendor namespace — capability records ([capabilities.md](capabilities.md
 
 Rows `C5.1`–`C5.9` are `spec/v1/migrations.json` entries (`C5.2` is owned by `events.md`). The persisted-data disposition for each is `not-persisted`, except `C5.1` (legacy-stamped) and `C5.7` (never-upgraded).
 
-*Sources: RFC 0167, RFC 0168, RFC 0172, RFC 0176, RFC 0179, RFC 0181, RFC 0193.*
+*Sources: RFC 0167, RFC 0168, RFC 0172, RFC 0176, RFC 0179, RFC 0181, RFC 0193, RFC 0219.*

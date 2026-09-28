@@ -28,9 +28,11 @@ import { readErrorCode } from '../lib/error-envelope.js';
 import { softSkip } from '../lib/soft-skip.js';
 import { req } from '../lib/requirement-ids.js';
 import { BOUND_ID as RUN_ID } from '../lib/bound-id.js';
+import { scaledTimeoutMs } from '../lib/polling.js';
 
 const DOC = 'spec/v2/core/identity.md §5';
 const NOOP_WORKFLOW_ID = 'conformance-noop';
+const EVENTS_DEADLINE_MS = 20_000;
 const FOREIGN_RUN_ID = 'openwop-conformance-foreign-tenant/foreignopaque0123456789abcdef';
 
 async function discovery(): Promise<Record<string, unknown> | null> {
@@ -63,17 +65,27 @@ describe('v2 id-grammar (RFC 0170 §D.1)', () => {
   it('every id on the run events matches its ids.schema.json kind', async () => {
     const c = await createRun();
     if ('reason' in c) return softSkip('blocked', c.reason);
-    const res = await http(() => driver.get(`/runs/${encodeURIComponent(c.runId)}/events/poll?timeout=1`));
-    if (res === null || res.status !== 200) return softSkip('blocked', `GET /runs/{runId}/events/poll answered ${res?.status ?? 'no response'}`);
-    const events = (res.json as { events?: unknown } | undefined)?.events;
-    if (!Array.isArray(events) || events.length === 0) return softSkip('blocked', 'the poll returned no events for the run just created — nothing to check the eventId / runId / nodeId grammars against');
+    // Poll until the run has recorded an event. A single 1 s poll straight after
+    // the create raced the host's dispatch: a host that queues the run (Cloud
+    // Tasks on MyndHyve) can legitimately have no event yet, and `blocked` is
+    // bundle-fatal (2.42.8; MyndHyve cut 3 on 2.42.7). A host that records
+    // nothing for a noop run inside the scaled deadline is still `blocked`.
+    const deadline = Date.now() + scaledTimeoutMs(EVENTS_DEADLINE_MS);
+    let res: OpenWOPResponse | null = null;
+    let events: unknown;
+    do {
+      res = await http(() => driver.get(`/runs/${encodeURIComponent(c.runId)}/events/poll?timeout=5`));
+      if (res === null || res.status !== 200) return softSkip('blocked', `GET /runs/{runId}/events/poll answered ${res?.status ?? 'no response'}`);
+      events = (res.json as { events?: unknown } | undefined)?.events;
+    } while ((!Array.isArray(events) || events.length === 0) && Date.now() < deadline);
+    if (!Array.isArray(events) || events.length === 0) return softSkip('blocked', `the poll returned no events for the run just created within ${scaledTimeoutMs(EVENTS_DEADLINE_MS)} ms — nothing to check the eventId / runId / nodeId grammars against`);
     const validate = v2Validator('run-event');
     for (const ev of events) {
       const r = validate(ev);
       expect(r.ok, req('openwop.requirement.0170.id-grammar.events', DOC, `every RunEventDoc id (eventId, runId, nodeId, causationId) MUST match its kind — event ${String((ev as { eventId?: unknown }).eventId)} (${r.errors})`)).toBe(true);
       expect((ev as { runId?: unknown }).runId, req('openwop.requirement.0170.id-grammar.events', DOC, 'every event MUST carry the run\'s own runId')).toBe(c.runId);
     }
-  });
+  }, scaledTimeoutMs(EVENTS_DEADLINE_MS) + 15_000);
 
   it('a run id whose tenant segment is not the caller\'s is refused', async () => {
     if (!(await discovery())) return softSkip('blocked', 'v2 discovery unreachable — /.well-known/openwop did not answer 200 with a JSON body under OpenWOP-Version: 2.0');
