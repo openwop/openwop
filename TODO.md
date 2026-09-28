@@ -6,24 +6,27 @@
 > at `7f97b724:TODO.md`, and the 2026-09-19 gap-closure follow-ups (S1–S4) are there too.
 >
 > Updated 2026-09-27: §3 and §4 worked (details below), `INTEROP-MATRIX.md` rewritten, and the
-> quickstarts moved to v2.
+> quickstarts moved to v2. Updated 2026-09-28 after the 2.43.1 release.
 >
 > Tick a box only when the change is merged on `main`. Delete an item once it is closed.
 
-## State (2026-09-28, evening)
+## State (2026-09-28, late evening)
 
-- **RFCs:** `Active` — **0121** (paused), **0218** (audit preimage + §C anomaly shape), **0219**,
-  **0221** (generated webhook secret), **0222** (v2 registry operations), **0223** (approval reject,
-  another session's), **0224** (a v2 home for audit-log integrity), **0220** (six extension families
-  Stable). **0038** `Draft` (Parked). Every waived-window Accepted RFC is **provisional** (RFC 0156 §B).
-- **Suite:** **2.43.0 is published** (#1711; tag v2.43.0, GH release). The **2.43.1 cycle is open**
-  (#1712, another session's RFC 0223 fixtures); later suite PRs add bullets under `[2.43.1]`. Take a release lock
-  (`/tmp/claude-501/openwop-release-<ver>.lock`) before cutting; other sessions cut releases too.
-- **Site:** openwop.dev is pinned at v2.43.0 (`52cb2583073f`, openwop-site #144) and deployed.
-- **Needs the operator:** a **certified public cut** of the v2 reference host (`scripts/cut-public.sh`
-  opens public ingress, an operator decision each time). One cut on 2.43.0 would move RFC 0221
-  (the generated-secret row), RFC 0224 (audit family + cadence) and RFC 0218 (signature row, now
-  witnessable at major 2) toward `Accepted`, all witnessed on loopback already.
+- **RFCs:** `Active`: **0121** (paused), **0219**, **0222** (v2 registry operations; last box
+  needs a real yanked v2 version), **0223** (approval reject, another session's). **0038** is `Draft`
+  (Parked). **0218, 0220, 0221 and 0224 are `Accepted`** (#1728, #1733), witnessed on the certified
+  public 2.43.0 cut of the v2 reference host (#1727). Every waived-window `Accepted` RFC is
+  **provisional** (RFC 0156 §B).
+- **Suite:** **2.43.1 is published** (#1743; tag v2.43.1, GH release; npm tarball verified to carry
+  `sealBundleV3`). Its headline is #1739: the witness digest is now taken after the scrub, which
+  fixes major-1 certification. The session `close-front-page-follow-ups` opens the 2.43.2 cycle (#1740,
+  #1718) and runs its own approved cut on 2.43.1. Take a release lock
+  (`/tmp/claude-501/openwop-release-<ver>.lock`) before cutting.
+- **Site:** another session owns openwop-site (pin PR #158 plus homepage layout PRs). It has been told
+  2.43.1 is out. Don't open a competing pin bump.
+- **Cuts:** the operator's one approval ("Cut is approved") was used on 2.43.0. Every further
+  certified public cut needs a fresh approval.
+- **Open PR:** #1730 (v2-reference fork ancestry) lands in the next cycle.
 
 ## 1 — RFC 0121 subscription-rail witness · **owner openwop-77 (paused)**
 
@@ -54,18 +57,14 @@ works through the CLI. Buying a plan is not covered by any autonomy grant, so as
       major 1 before release: #1659 reverted the one row that had wrongly gone `blocked`.
 - [x] Audit checkpoint preimage contradiction and export shape: **RFC 0218 `Active`** (#1653).
   - [x] RFC 0218 §C, the anomaly shape, with `chainValid` tied to anomalies (#1703, examples #105).
-  - [ ] RFC 0218 `Accepted`: the signature row now runs at major 2 against the v2 `auditLogIntegrity`
-        family (RFC 0224, #1709). It needs the certified public v2 cut (see State).
+  - [x] RFC 0218 `Accepted` on the certified 2.43.0 cut (#1733, #1727).
 - [x] Postgres extra audit fields (examples #96) and the per-attempt budget witness for RFC 0033 §C
       (#1664, openwop-app #4167; new optional seam `…/test/mock-ai/dispatch-budgets`).
   - [x] openwop-app's vendored fixture carries `maxTokens: 256` (openwop-app #4161, pinning 2.42.9).
   - [x] RFC 0033 §B truncation legs compare real attempts and record the SHOULD (2.42.9, #1695).
   - [x] The anomaly shape (RFC 0218 §C, #1703).
   - [x] The mock-node race: a cross-process lock per node id (2.42.9, #1695).
-- [ ] **Rotation overlap seam.** `v2-webhook-secret-rotation`'s post-overlap leg cannot observe
-      the old secret stopping when the advertised `overlapSeconds` exceeds the suite's wait cap.
-      It is annotated, not `blocked`, by ruling. A seam that shortens the overlap under test would
-      make it witnessable.
+- [x] Rotation overlap seam (#1720, examples #117).
 
 ## 4 — Smaller residuals
 
@@ -87,9 +86,8 @@ works through the CLI. Buying a plan is not covered by any autonomy grant, so as
 Spec problems:
 - [x] When is a request v2: Class 3 correction, the header-less default applies to
       `/.well-known/openwop` only; every other unversioned path is v2 (#1684, suite leg in 2.42.8).
-- [x] A lost webhook secret: **RFC 0221 `Active`** — a host-generated secret is returned once in the
-      `201` (#1680; v2 reference host fixed in examples #98). `Accepted` needs a committed certified
-      bundle carrying `openwop.requirement.0221.generated-secret-returned`; MyndHyve is unmeasured.
+- [x] A lost webhook secret: **RFC 0221 `Accepted`** (#1680, #1728; v2 reference host fixed in
+      examples #98, witnessed on the certified 2.43.0 cut).
 - [x] Dangling `auth.md` references (#1681).
 - [x] Metadata key count: fixed by another session (#1671).
 - [x] v2 registry operations: **RFC 0222 `Active`** (#1702, #1710; registry #77, #79 gate).
