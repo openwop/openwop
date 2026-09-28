@@ -179,7 +179,7 @@ for (const t of removedTuples) {
 
 // ── report ──────────────────────────────────────────────────────────────────
 const addedUnion = addedTuples.filter((t) => ['property', 'enum-member', 'operation', 'channel'].includes(t.kind));
-console.log(`check-v2-surface-monotone: baseline ${baseline.count ?? before.size} surfaces at release ${baseline.release}; tree ${after.size}; ${addedUnion.length} addition(s) (additive, §B.5); ${removedUnion.length} removal tuple(s); ${licences.length} licence pointer(s)${dueRetirementRows.length > 0 ? `; ${dueRetirementRows.length} due v2-minor row(s), check-v2-retirement ${retirementVerdict ? 'agrees' : 'REFUSES'}` : '; no due v2-minor row'}`);
+console.log(`check-v2-surface-monotone: baseline ${baseline.count ?? before.size} surfaces at release ${baseline.release}; tree ${after.size}; ${addedUnion.length} addition(s) (additive, §B.5); ${removedUnion.length} removal tuple(s); ${newValueConditionals.length} new-value conditional(s); ${licences.length} licence pointer(s)${dueRetirementRows.length > 0 ? `; ${dueRetirementRows.length} due v2-minor row(s), check-v2-retirement ${retirementVerdict ? 'agrees' : 'REFUSES'}` : '; no due v2-minor row'}`);
 for (const l of licensed.slice(0, 20)) console.log(`  licensed: ${l}`);
 for (const c of newValueConditionals) console.log(`  new-value conditional: ${c}`);
 if (failures.length > 0) {

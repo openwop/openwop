@@ -183,6 +183,38 @@ describe('v2-surface-monotone-gate (RFC 0197 §A.1 / §B)', () => {
     expect(r.out, req(ID, DOC, 'the refusal must name the property and the object')).toMatch(/`required` entry "endpoint" added to the pre-existing object/);
   }, 180_000);
 
+  it('a `then` pinning only a PRE-EXISTING value, or pinning nothing required, licenses nothing', () => {
+    if (V1_DIR === null) return softSkip('inapplicable', 'not a spec checkout');
+    const withIf = (sel: Record<string, unknown>) => (s: Record<string, unknown>) => {
+      const props = s['properties'] as Record<string, Record<string, unknown>>;
+      props['transport']!['enum'] = ['http', 'sse', 'ws'];
+      props['endpoint'] = { type: 'string' };
+      s['if'] = sel;
+      s['then'] = { required: ['endpoint'] };
+    };
+    // An old value alone: every old `sse` document now needs `endpoint`.
+    const old = drive(withIf({ required: ['transport'], properties: { transport: { const: 'sse' } } }));
+    expect(old.status, req(ID, DOC, `a selector on an existing value is a tightening — it exited ${old.status}: ${old.out.slice(-800)}`)).not.toBe(0);
+    // A new value without `required`: an old document lacking `transport` matches the `if`.
+    const unpinned = drive(withIf({ properties: { transport: { const: 'ws' } } }));
+    expect(unpinned.status, req(ID, DOC, `an \`if\` that does not require the selector property matches every document without it — it exited ${unpinned.status}: ${unpinned.out.slice(-800)}`)).not.toBe(0);
+    expect(unpinned.out, req(ID, DOC, 'the refusal must name the property and the object')).toMatch(/`required` entry "endpoint" added to the pre-existing object/);
+  }, 180_000);
+
+  it('a new-value conditional does not launder an UNCONDITIONAL `required` beside it', () => {
+    if (V1_DIR === null) return softSkip('inapplicable', 'not a spec checkout');
+    const r = drive((s) => {
+      const props = s['properties'] as Record<string, Record<string, unknown>>;
+      props['transport']!['enum'] = ['http', 'sse', 'ws'];
+      props['endpoint'] = { type: 'string' };
+      s['if'] = { required: ['transport'], properties: { transport: { const: 'ws' } } };
+      s['then'] = { required: ['endpoint'] };
+      (s['required'] as string[]).push('transport');
+    });
+    expect(r.status, req(ID, DOC, `the unconditional \`required\` is a §B.6 major whatever sits beside it — it exited ${r.status}: ${r.out.slice(-800)}`)).not.toBe(0);
+    expect(r.out, req(ID, DOC, 'the refusal must name the unconditional property')).toMatch(/`required` entry "transport" added to the pre-existing object/);
+  }, 180_000);
+
   it('an OPEN object closed to `additionalProperties: false` is REFUSED (§B.6)', () => {
     if (V1_DIR === null) return softSkip('inapplicable', 'not a spec checkout');
     const r = drive((s) => { ((s['properties'] as Record<string, Record<string, unknown>>)['config'])['additionalProperties'] = false; });
