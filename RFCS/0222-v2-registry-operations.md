@@ -99,7 +99,7 @@ Taken from the earlier "Required checks", filtered: `X-Pack-Sha256`, the account
 
 ## Conformance
 
-`v2-registry-lifecycle.test.ts` reads a registry, not the host: it runs when `OPENWOP_REGISTRY_URL` names one, or `OPENWOP_TEST_PUBLIC_REGISTRY=true` names `packs.openwop.dev`, and records `inapplicable` otherwise. Paths come from `.well-known` `endpoints.v2`.
+`v2-registry-lifecycle.test.ts` reads a registry, not the host: it runs when `OPENWOP_REGISTRY_URL` names one, or `OPENWOP_TEST_PUBLIC_REGISTRY=true` names `packs.openwop.dev`, and records `inapplicable` otherwise. It is a major-2 file, so it runs in a major-2 lane (`OPENWOP_TARGET_MAJOR=2`). Paths come from `.well-known` `endpoints.v2`.
 
 1. **`openwop.requirement.0222.yanked-version-lifecycle`** — every pack index agrees with its version manifests on `yanked` and `versionDeprecated`; `latest` is not yanked while an unyanked version exists; the registry-wide row agrees; every yanked version's tarball and signature are served.
 2. **`openwop.requirement.0222.signing-keys-cover-served-versions`** — every served version names a listed key whose `permittedNamespaces` admit it, and its `integrity` and signature verify over the in-tarball `pack.json`, whatever the key's `status`.

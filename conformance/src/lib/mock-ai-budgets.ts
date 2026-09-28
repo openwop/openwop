@@ -38,3 +38,29 @@ export async function readDispatchBudgets(nodeId: string): Promise<DispatchBudge
   }
   return { ok: true, attempts: out };
 }
+
+/**
+ * RFC 0033 §B: a host MAY retry a truncated emission, and the new output budget
+ * SHOULD be greater than the previous one. A SHOULD is recorded, not failed: the
+ * caller asserts only on `met`, and records `unmet` as `inapplicable` with the
+ * observed budgets. The comparison is between the attempts the provider actually
+ * received (the dispatch-budgets seam), never against the fixture's configured value.
+ */
+export type TruncationBudgetVerdict =
+  | { kind: 'met'; first: number; retry: number }
+  | { kind: 'unmet'; first: number; retry: number }
+  | { kind: 'skip'; skip: 'inapplicable' | 'blocked'; reason: string };
+
+export async function truncationBudgetVerdict(nodeId: string): Promise<TruncationBudgetVerdict> {
+  const budgets = await readDispatchBudgets(nodeId);
+  if (!budgets.ok && budgets.unserved) {
+    return { kind: 'skip', skip: 'inapplicable', reason: `partial witness — the §B budget SHOULD is not observed: ${budgets.reason}, so the retry's budget cannot be compared with the first attempt's` };
+  }
+  if (!budgets.ok) return { kind: 'skip', skip: 'blocked', reason: budgets.reason };
+  const [first, retry] = budgets.attempts;
+  if (budgets.attempts.length < 2) return { kind: 'skip', skip: 'inapplicable', reason: `the host made no truncation retry (RFC 0033 §B: MAY retry); per-attempt budgets ${JSON.stringify(budgets.attempts)}` };
+  if (typeof first !== 'number' || typeof retry !== 'number') {
+    return { kind: 'skip', skip: 'inapplicable', reason: `partial witness — a call carried no output budget (per-attempt budgets ${JSON.stringify(budgets.attempts)}), so the §B SHOULD cannot be compared` };
+  }
+  return retry > first ? { kind: 'met', first, retry } : { kind: 'unmet', first, retry };
+}

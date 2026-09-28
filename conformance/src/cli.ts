@@ -104,9 +104,8 @@ function parseArgs(argv: readonly string[]): ParsedArgs {
   let impl: string | undefined;
   let implVersion: string | undefined;
   let certify: string | undefined;
-  // Suite 1.152.0: bundle v2 (RFC 0148) is the default. v1 stays reachable via
-  // `--bundle-version 1` through the RFC 0148 migration window (ends
-  // 2026-11-10) and is removed at v2.0 (spec/v1/deprecations.json).
+  // Suite 2.0.0-rc.1: bundle v3 (RFC 0168 §E) is the default. v2 stays reachable
+  // via `--bundle-version 2`, deprecated (RFC 0168 §E.3); v1 is gone.
   let bundleVersion: '2' | '3' = '3';
   let hostBuild: ParsedArgs['hostBuild'];
   let evidenceTier: ParsedArgs['evidenceTier'] = 'self';
@@ -294,7 +293,7 @@ Certification (RFC 0089):
   --signing-key <pem>     v3: Ed25519 private key (PKCS8 PEM) that signs the bundle, or OPENWOP_BUNDLE_SIGNING_KEY.
   --signing-key-id <id>   v3: the keyId the host publishes for that key, or OPENWOP_BUNDLE_SIGNING_KEY_ID.
   --evidence-tier <t>     v3: self | steward | independent (independent needs --verifier-key/--verifier-key-id).
-  --bundle-version <2|3>  Certification bundle format. Default 2 (corrected 2026-09-03, RFC 0168 §E.4; the text said 1 while the code set 2). Version 2 (RFC 0148
+  --bundle-version <2|3>  Certification bundle format. Default 3 (since suite 2.0.0-rc.1; 2 is DEPRECATED, RFC 0168 §E.3). Version 2 (RFC 0148
                         §C) records per-requirement DISPOSITIONS instead of pass/fail/skip
                         file lists, so "we could not check" stops being indistinguishable
                         from "checked and it holds". See the note it prints.

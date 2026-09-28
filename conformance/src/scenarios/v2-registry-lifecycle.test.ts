@@ -8,7 +8,8 @@
  * or `node registry/scripts/serve.mjs` in openwop-registry), or
  * `OPENWOP_TEST_PUBLIC_REGISTRY=true` for `https://packs.openwop.dev`. With
  * neither it records `inapplicable`, like `registry-public.test.ts`: a host
- * conformance run MUST NOT need outbound access to a registry.
+ * conformance run MUST NOT need outbound access to a registry. It is a major-2
+ * file, so it runs in a major-2 lane (`OPENWOP_TARGET_MAJOR=2`).
  *
  * Every path is resolved through `.well-known/openwop-registry` `endpoints.v2`
  * (packs.md §"The registry tree"), never constructed.
