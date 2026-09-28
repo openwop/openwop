@@ -9843,11 +9843,11 @@
       "rfc": "0171",
       "local": "G8",
       "section": "§B.1",
-      "surface": "The v2 reference host emits 3 unregistered run-failure codes (measured at openwop-examples `456dfaa`), among them `fixture_failure` from `core.fail`, which `fixtures.md` now names `example.conformance_failure`.",
+      "surface": "The v2 reference host emitted 3 unregistered run-failure codes (measured at openwop-examples `456dfaa`).",
       "witness": "unclassified",
       "requirementId": null,
-      "disposition": "externally-gated",
-      "target": "v2-reference-code-remap",
+      "disposition": "closed",
+      "target": null,
       "sources": [
         {
           "file": "RFCS/registers/0171-v2-wire-envelope.gaps.md",
