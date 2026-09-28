@@ -362,6 +362,16 @@ Format follows [Keep a Changelog](https://keepachangelog.com/en/1/) loosely. Ver
 - **The remaining eleven stay `Active`, each for a stated reason** rather than for lack of attention. The eight RFC 0167 program children name a certified openwop-app bundle in their own acceptance criteria and the committed one reads `certified: false` (3 blocked rows, RFC 0168 §E.1). RFC 0173 additionally carries the program's only `open` gap row. RFC 0179's sole criterion is unmet — 2.4.2 stopped the gate reading "(Phase 4 leg)" as an excuse for it. RFC 0187 names three requirement ids that no scenario mints. RFC 0167 itself flips **last**, which 2.4.2 made a rule: the moment the umbrella stops being `Active`, every child still `Active` becomes permanently ineligible.
 - **The interrupt `data` union is bound to `kind`** (MCP/A2A review P3-H7, Class 3 correction — COMPATIBILITY.md §3). `schemas/suspend-request.schema.json` and its v2 twin typed `data` as an unbound `oneOf`, so the minimal `conversation.start` and `conversation.close` payloads (`{ conversationId }`, which satisfies both shapes) failed validation in v1 and v2, and a payload carrying another kind's `data` passed. `data` is now an `anyOf` and a root `allOf` binds each kind to its own shape with one `if`/`then`; no per-kind shape or `$id` changed. Witnessed by `conformance/fixtures/interrupt-payloads/` (suite 2.36.0).
 
+## [2.44.2] — 2026-09-28 — RFC 0215's no-head-of-line leg does not convict a late fan-out, and says when it sampled each count
+
+A suite patch. The requirement is unchanged.
+
+### Conformance
+
+- **`0215.no-head-of-line` no longer convicts a late `run.started` fan-out as head-of-line blocking** (#1780). When fewer than 8 held attempts had arrived at the due time, and the healthy attempt started before any held attempt finished, it did not wait. The row is now `blocked` (unjudged), which still denies certification. Every real head-of-line case still fails: 8 held open at the due time, a bounded pool (a 7-slot pool with a 15 s timeout), and a serial dispatcher. The verdict is a pure function with self-tests, and the detail names when each count was sampled.
+- **The defect that case exposed has its own follow-up:** a lost or late delivery of a subscribed event is convicted by no row today (#1781).
+- **Suite `2.44.2`.** `@openwop/spec-artifacts` moves in lockstep at the same exact pin.
+
 ## [2.44.1] — 2026-09-28 — the webhook retry legs outlast an advertised maxElapsedMs, and four families get v2 normative homes
 
 A suite patch. It fixes a 2.44.0 regression, and the packed `@openwop/spec-artifacts` tree gains v2 normative homes.
