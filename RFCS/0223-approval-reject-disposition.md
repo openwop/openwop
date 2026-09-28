@@ -7,7 +7,7 @@
 | **Status**        | `Active`                                                        |
 | **Author(s)**     | David Tufts (@davidscotttufts)                                  |
 | **Created**       | 2026-09-28                                                      |
-| **Updated**       | 2026-09-28 — filed and moved `Draft → Active` in the filing PR (openwop #1692). **Comment window waived** by the steward. **STEWARD OVERRIDE of RFC 0147 §A.6**, which forbids a bootstrap waiver from shortening the window for RFCs affecting authorization and replay; an approval gate's outcome is an authorization decision (as it was for RFC 0213 §C), and §A's last rule governs replay. Logged in `MAINTAINERS.md` §"Bootstrap-phase RFC waivers". The evidence gate is not waived: `Accepted` waits for a certified host bundle that records the three `0223.reject-*` rows `executed-pass`, and the RFC 0156 §B retrospective review is owed. |
+| **Updated**       | 2026-09-28 — amended in place with openwop-app evidence (evidence only, no decision changed): the `majority` threshold moves from an open question to a measured fact, and openwop-app's per-path gaps are recorded under §Compatibility. · 2026-09-28 — filed and moved `Draft → Active` in the filing PR (openwop #1692). **Comment window waived** by the steward. **STEWARD OVERRIDE of RFC 0147 §A.6**, which forbids a bootstrap waiver from shortening the window for RFCs affecting authorization and replay; an approval gate's outcome is an authorization decision (as it was for RFC 0213 §C), and §A's last rule governs replay. Logged in `MAINTAINERS.md` §"Bootstrap-phase RFC waivers". The evidence gate is not waived: `Accepted` waits for a certified host bundle that records the three `0223.reject-*` rows `executed-pass`, and the RFC 0156 §B retrospective review is owed. |
 | **Affects**       | `spec/v2/core/interrupt.md` §Approval (new §Rejection; one sentence at `timeoutMs`) · `spec/v2/errors.json` (`approval_rejected`, `since` 2.43; the generated `schemas/v2/error-envelope.schema.json` and the `errors.md` table follow) · `schemas/v2/suspend-request.schema.json` (`ApprovalData.onTimeout` description only) · conformance: `v2-approval-reject-disposition.test.ts`, a coherence leg in `v2-error-registry-prose-parity.test.ts`, `fixtures.md` (suite 2.43.0) |
 | **Compatibility** | `additive` — a new registry row and a new normative requirement on a behaviour the v2 text left undefined (`COMPATIBILITY.md` §4, §2.4). No schema shape, status or existing code changes |
 | **Supersedes**    | —                                                               |
@@ -86,10 +86,24 @@ Following the RFC 0183/0186 practice, the rule codifies what hosts measurably do
 | Host | Terminal `failed` + code | `action` on `interrupt.resolved` | `node.failed` + `failedNodeId` |
 | --- | --- | --- | --- |
 | v2 reference host | yes | **no** (records `decision` only) | yes |
-| openwop-app | yes | **no** (records `decision` only) | **no** (no `node.failed`; `run.failed` has no `failedNodeId`) |
+| openwop-app | yes | **no** on single reject, timeout and quorum reject (see below) | **no** (no `node.failed`; `run.failed` has no `failedNodeId`) |
 | MyndHyve | **no** (`APPROVAL_REJECTED`) | not measured | not measured |
 
-`action` on an approval-kind `interrupt.resolved` was already a MUST (`interrupt.md` §Events, RFC 0183), so that column is an existing defect, not a new one. The `node.failed` / `failedNodeId` column is new, and openwop-app will fail it until its follow-up lands. The follow-ups are gap register rows G3–G5.
+`action` on an approval-kind `interrupt.resolved` was already a MUST (`interrupt.md` §Events, RFC 0183), so that column is an existing defect, not a new one. The `node.failed` / `failedNodeId` column is new. The follow-ups are gap register rows G3–G5.
+
+**openwop-app, per path** (measured 2026-09-28 on openwop-app `origin/main`, read-only; added in place after filing):
+
+| Path | `interrupt.resolved` | `action` | `approval.rejected` | `node.failed` / `failedNodeId` |
+| --- | --- | --- | --- | --- |
+| accept / refine / edit-accept (`routes/interrupts.ts:1368-1378`, `resolvedActionFields` `:695`) | yes | yes | — | — |
+| single reject (`routes/interrupts.ts` ~`:1320-1328`) | yes, `decision: "rejected"` | **no** | **never emitted** | **no** |
+| timeout (`executor/approvalGateTimeout.ts:95-111`) | yes | **no** | **never emitted** | **no** |
+| quorum reject (`routes/interrupts.ts:1233-1263`) | **none** — only `run.failed` | **no** | **never emitted** | **no** |
+| non-deciding quorum vote | none (correct, §A) | — | — | — |
+
+openwop-app fixes these in its own repository before the corpus release, as MyndHyve renames its code.
+
+*Observation, not part of this change:* on a non-deciding vote openwop-app emits `interrupt.vote.recorded`, a type the event registry does not hold (overview.md §0). It is recorded here because the quorum row reads the same event log; it is neither required nor forbidden by this RFC.
 
 ## Conformance
 
@@ -127,13 +141,13 @@ The major-1 `interrupt-quorum-resolution` leg is **not** tightened to the code: 
 
 ## Unresolved questions
 
-1. **The `majority` threshold** is stated as "rejects exceed half of `requiredApprovals`". v1 left the rule to the host (`interrupt-profiles.md` §openwop-interrupt-quorum: "a deterministic, documented rule"), and the only fixture (`requiredApprovals: 3`, two rejects) cannot tell "more than half" from "at least half". Measured 2026-09-28: openwop-app `backend/typescript/src/host/reviewDecisionLedger.ts:209` computes `Math.floor(required / 2) + 1`, which is "more than half". The v2 reference host has no quorum support, and MyndHyve's was not measured. Recorded here until a second host is measured (openwop #1699, gap G6).
+1. ~~**The `majority` threshold.**~~ *Resolved 2026-09-28 by measurement, not by decision; this item previously read as open.* "Rejects exceed half of `requiredApprovals`" is what openwop-app does: `backend/typescript/src/host/reviewDecisionLedger.ts:209` (`evaluateQuorumTally`) sets the reject threshold under `majority` to `Math.floor(requiredApprovals / 2) + 1`, which is rejects > n/2, and it checks accept first. Its default is `any` (single veto), and the wire tokens `single-veto` / `majority` map onto it (`:111-137`). v1 had left the rule to host documentation (`interrupt-profiles.md` §openwop-interrupt-quorum). Gap G6 is closed, and openwop #1699 with it.
 2. **`onTimeout: "approve"`** re-legalises the fail-open timeout RFC 0093 ruled non-conformant. This RFC defines only the absent and `reject` cases; the conflict is openwop #1696 (gap G7).
 
 ## Implementation notes (non-normative)
 
 - v2 reference host: record `action` (and `reason` for timeout and quorum), emit `approval.rejected`, fail through the scheduler so `triggerRule` applies, implement the timeout. A separate openwop-examples PR.
-- openwop-app: record `action`, emit `node.failed`, and set `failedNodeId` on both reject paths.
+- openwop-app: record `action` on the single-reject and timeout `interrupt.resolved`; emit `interrupt.resolved` on the quorum-reject path; emit `approval.rejected`; emit `node.failed` and set `failedNodeId` on the single and quorum reject paths. This is in openwop-app's own scope, before the corpus release.
 - MyndHyve: rename `APPROVAL_REJECTED` to `approval_rejected` and re-cut its bundle.
 
 ## Acceptance criteria
@@ -148,4 +162,4 @@ The major-1 `interrupt-quorum-resolution` leg is **not** tightened to the code: 
 - `spec/v1/interrupt.md` §`ApprovalResume`.
 - RFC 0093 (timeout fails closed), RFC 0125 (`triggerRule` routes a failed node), RFC 0183 (`action`, `decision`), RFC 0186 (`reason`, `onTimeout`), RFC 0199 §C.4 (`connector_auth_declined`).
 - `spec/v2/core/overview.md` §0 (a producer MUST NOT emit an unregistered member).
-- openwop #1692; separate gaps #1696 (`onTimeout: approve`), #1697 (loop re-entry and the key rule), #1698 (registration scope of run-failure codes), #1699 (the `majority` threshold), #1700 (the unwitnessed legs).
+- openwop #1692; separate gaps #1696 (`onTimeout: approve`), #1697 (loop re-entry and the key rule), #1698 (registration scope of run-failure codes), #1699 (the `majority` threshold, closed by measurement), #1700 (the unwitnessed legs).

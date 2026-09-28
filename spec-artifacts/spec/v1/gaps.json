@@ -13141,7 +13141,7 @@
       "rfc": "0223",
       "local": "G4",
       "section": "§Implementation notes",
-      "surface": "openwop-app records no `action`, emits no `node.failed`, and sets no `failedNodeId` on either reject path.",
+      "surface": "openwop-app records no `action` on single reject or timeout, emits no `interrupt.resolved` on quorum reject, never emits `approval.rejected`, and emits no `node.failed` / `failedNodeId` on either reject path.",
       "witness": "unclassified",
       "requirementId": null,
       "disposition": "externally-gated",
@@ -13175,11 +13175,11 @@
       "rfc": "0223",
       "local": "G6",
       "section": "§Unresolved questions",
-      "surface": "The `majority` threshold is measured on one host (openwop-app `reviewDecisionLedger.ts:209`, \"more than half\").",
+      "surface": "The `majority` threshold was stated from one v1 fixture.",
       "witness": "unclassified",
       "requirementId": null,
-      "disposition": "transferred",
-      "target": "openwop#1699",
+      "disposition": "closed",
+      "target": null,
       "sources": [
         {
           "file": "RFCS/registers/0223-approval-reject-disposition.gaps.md",
