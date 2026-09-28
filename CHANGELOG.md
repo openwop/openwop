@@ -316,6 +316,7 @@ A suite minor. The packed `@openwop/spec-artifacts` tree changes: a new error-re
 - New scenarios `v2-approval-reject-disposition`, `v2-registry-lifecycle` (reads a registry, gated on `OPENWOP_REGISTRY_URL`) and `audit-anomaly-shape` (server-free).
 - `audit-log-integrity` and `audit-checkpoint-signature` run at both majors, with a new checkpoint-cadence leg.
 - The surface-monotone gate licenses a `required` under a `then` whose selector pins only values new in the same diff.
+- `byok-roundtrip` records `blocked` instead of an unclassified return (#1708), so a host without the BYOK fixture loses only `openwop-secrets` rather than its whole certification.
 - **Suite `2.43.0`**: 570 scenario files. `@openwop/spec-artifacts` moves in lockstep at the same exact pin.
 
 ## [2.42.9] — 2026-09-28 — a v2 delivery's workspaceId is checked, and two test-isolation and SHOULD-strength fixes
