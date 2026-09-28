@@ -16,8 +16,8 @@
   **0221** (generated webhook secret), **0222** (v2 registry operations), **0223** (approval reject,
   another session's), **0224** (a v2 home for audit-log integrity), **0220** (six extension families
   Stable). **0038** `Draft` (Parked). Every waived-window Accepted RFC is **provisional** (RFC 0156 §B).
-- **Suite:** **2.43.0 is published** (#1711; tag v2.43.0, GH release). No cycle is open: the next
-  suite PR opens 2.43.1, or 2.44.0 if it changes the packed spec-artifacts tree. Take a release lock
+- **Suite:** **2.43.0 is published** (#1711; tag v2.43.0, GH release). The **2.43.1 cycle is open**
+  (#1712, another session's RFC 0223 fixtures); later suite PRs add bullets under `[2.43.1]`. Take a release lock
   (`/tmp/claude-501/openwop-release-<ver>.lock`) before cutting; other sessions cut releases too.
 - **Site:** openwop.dev is pinned at v2.43.0 (`52cb2583073f`, openwop-site #144) and deployed.
 - **Needs the operator:** a **certified public cut** of the v2 reference host (`scripts/cut-public.sh`

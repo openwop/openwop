@@ -1,0 +1,32 @@
+{
+  "id": "conformance-approval-reject-routed",
+  "name": "Conformance: Approval (reject routed)",
+  "version": "1.0",
+  "description": "RFC 0223 G1. An approval gate with two outgoing edges: an any_failed edge to on-reject and an all_success edge to on-accept. Rejected, the gate fails with approval_rejected, on-reject runs, on-accept never runs, and the run completes. Conformance scenario: v2-approval-reject-disposition.test.ts.",
+  "nodes": [
+    {
+      "id": "gate",
+      "typeId": "core.approvalGate",
+      "name": "Approval Gate",
+      "position": { "x": 0, "y": 0 },
+      "config": {
+        "title": "Conformance approval (reject routed)",
+        "description": "Conformance suite — reject to take the any_failed route.",
+        "actions": ["accept", "reject"]
+      },
+      "inputs": {}
+    },
+    { "id": "on-reject", "typeId": "core.noop", "name": "On reject", "position": { "x": 200, "y": -80 }, "config": {}, "inputs": {} },
+    { "id": "on-accept", "typeId": "core.noop", "name": "On accept", "position": { "x": 200, "y": 80 }, "config": {}, "inputs": {} }
+  ],
+  "edges": [
+    { "id": "gate-on-reject", "sourceNodeId": "gate", "targetNodeId": "on-reject", "triggerRule": "any_failed" },
+    { "id": "gate-on-accept", "sourceNodeId": "gate", "targetNodeId": "on-accept", "triggerRule": "all_success" }
+  ],
+  "triggers": [
+    { "id": "manual", "type": "manual", "enabled": true }
+  ],
+  "variables": [],
+  "metadata": { "tags": ["conformance", "hitl"] },
+  "settings": { "timeout": 0 }
+}
