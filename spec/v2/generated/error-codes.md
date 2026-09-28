@@ -2,7 +2,7 @@
 
 > **Status: Stable.** Generated from `spec/v2/errors.json` by `scripts/generate-error-envelope.mjs`; do not edit.
 
-Every registered code (108 codes), by HTTP status. The registry is normative; this table restates it for reading. `retriable` and `statusSource` are in the registry. The rules are in [errors.md](../core/errors.md).
+Every registered code (111 codes), by HTTP status. The registry is normative; this table restates it for reading. `retriable` and `statusSource` are in the registry. The rules are in [errors.md](../core/errors.md).
 
 Code | Status
 --- | ---
@@ -96,10 +96,12 @@ Code | Status
 `fork_point_invalid` | 422
 `loop_limit_exceeded` | 422
 `mcp_mrtr_rounds_exceeded` | 422
+`node_config_invalid` | 422
 `pack_runtime_requirement_unmet` | 422
 `recursion_limit_exceeded` | 422
 `residency_unavailable` | 422
 `run_timeout` | 422
+`sandbox_invocation_error` | 422
 `sandbox_memory_exceeded` | 422
 `sandbox_timeout` | 422
 `token_budget_exceeded` | 422
@@ -112,6 +114,7 @@ Code | Status
 `pack_load_failure` | 500
 `payload_unprojectable` | 500
 `credential_unavailable` | 501
+`mcp_error` | 502
 `pack_registry_unreachable` | 503
 `runner_unavailable` | 503
 

@@ -819,7 +819,7 @@
     {
       "key": "fs",
       "kind": "family",
-      "normativeText": ["spec/v1/host-capabilities.md"],
+      "normativeText": ["spec/v2/core/storage.md"],
       "anchor": "core",
       "section": "core/capabilities.md#fs",
       "peerDependencyId": "fs",
@@ -842,7 +842,7 @@
     {
       "key": "kvStorage",
       "kind": "family",
-      "normativeText": ["spec/v1/host-capabilities.md"],
+      "normativeText": ["spec/v2/core/storage.md"],
       "anchor": "core",
       "section": "core/capabilities.md#kvStorage",
       "peerDependencyId": "kvStorage",
@@ -865,7 +865,7 @@
     {
       "key": "tableStorage",
       "kind": "family",
-      "normativeText": ["spec/v1/host-capabilities.md"],
+      "normativeText": ["spec/v2/core/storage.md"],
       "anchor": "core",
       "section": "core/capabilities.md#tableStorage",
       "peerDependencyId": "tableStorage",
@@ -1162,7 +1162,7 @@
     {
       "key": "triggerBridge",
       "kind": "family",
-      "normativeText": ["spec/v1/trigger-bridge.md"],
+      "normativeText": ["spec/v2/core/webhooks.md"],
       "anchor": "core",
       "section": "core/capabilities.md#triggerBridge",
       "peerDependencyId": "triggerBridge",
@@ -1254,7 +1254,7 @@
     {
       "key": "workspace",
       "kind": "family",
-      "normativeText": ["spec/v1/agent-workspace.md"],
+      "normativeText": ["spec/v2/core/host-services.md"],
       "anchor": "core",
       "section": "core/capabilities.md#workspace",
       "peerDependencyId": "workspace",
@@ -1276,7 +1276,7 @@
     {
       "key": "uiPlugins",
       "kind": "family",
-      "normativeText": ["spec/v1/frontend-plugin-packs.md"],
+      "normativeText": ["spec/v2/core/packs.md"],
       "anchor": "core",
       "section": "core/capabilities.md#uiPlugins",
       "peerDependencyId": "uiPlugins",
@@ -1298,7 +1298,7 @@
     {
       "key": "sql",
       "kind": "family",
-      "normativeText": ["spec/v1/host-capabilities.md"],
+      "normativeText": ["spec/v2/core/storage.md"],
       "anchor": "core",
       "section": "core/capabilities.md#sql",
       "peerDependencyId": "sql",
@@ -1319,7 +1319,7 @@
     {
       "key": "nosql",
       "kind": "family",
-      "normativeText": ["spec/v1/host-capabilities.md"],
+      "normativeText": ["spec/v2/core/storage.md"],
       "anchor": "core",
       "section": "core/capabilities.md#nosql",
       "peerDependencyId": "nosql",
@@ -1339,7 +1339,7 @@
     {
       "key": "vectorStore",
       "kind": "family",
-      "normativeText": ["spec/v1/host-capabilities.md"],
+      "normativeText": ["spec/v2/core/storage.md"],
       "anchor": "core",
       "section": "core/capabilities.md#vectorStore",
       "peerDependencyId": "vectorStore",
@@ -1359,7 +1359,7 @@
     {
       "key": "searchIndex",
       "kind": "family",
-      "normativeText": ["spec/v1/host-capabilities.md"],
+      "normativeText": ["spec/v2/core/storage.md"],
       "anchor": "core",
       "section": "core/capabilities.md#searchIndex",
       "peerDependencyId": "searchIndex",
@@ -1379,7 +1379,7 @@
     {
       "key": "blobStorage",
       "kind": "family",
-      "normativeText": ["spec/v1/host-capabilities.md"],
+      "normativeText": ["spec/v2/core/storage.md"],
       "anchor": "core",
       "section": "core/capabilities.md#blobStorage",
       "peerDependencyId": "blobStorage",
@@ -1400,7 +1400,7 @@
     {
       "key": "cache",
       "kind": "family",
-      "normativeText": ["spec/v1/host-capabilities.md"],
+      "normativeText": ["spec/v2/core/storage.md"],
       "anchor": "core",
       "section": "core/capabilities.md#cache",
       "peerDependencyId": "cache",
@@ -1669,7 +1669,7 @@
     {
       "key": "content",
       "kind": "family",
-      "normativeText": ["spec/v1/localized-content.md"],
+      "normativeText": ["spec/v2/core/i18n.md"],
       "anchor": "core",
       "section": "core/capabilities.md#content",
       "peerDependencyId": "content",
@@ -1821,8 +1821,8 @@
       "extensionName": "canvas",
       "witness": "claims-check",
       "maturity": {
-        "technical": "experimental",
-        "adoption": "single-witness"
+        "technical": "stable",
+        "adoption": "multi-witness"
       },
       "facets": [],
       "floorScenarios": [],

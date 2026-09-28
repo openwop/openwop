@@ -157,3 +157,5 @@ to land — and until then the zero is visibly a blocked obligation rather than 
 | 0222 | v2 registry operations — lifecycle by publication, key rotation, and the checks a registry refuses on (additive; bootstrap waiver, not a §A.6 override) | in-scope-pending-assessment | — | — | `not-reviewed` |
 | 0223 | a rejected approval gate fails closed, and the failure is routable (additive; STEWARD OVERRIDE of RFC 0147 §A.6) | in-scope-pending-assessment | — | — | `not-reviewed` |
 | 0224 | audit-log integrity gets a v2 home (additive; bootstrap waiver, not a §A.6 override) | in-scope-pending-assessment | — | — | `not-reviewed` |
+| 0225 | a webhook host may advertise how long a delivery can keep retrying (certification, external effects and replay; additive; STEWARD OVERRIDE of RFC 0147 §A.6) | in-scope-pending-assessment | — | — | `not-reviewed` |
+| 0226 | three run-failure codes the hosts share, registered (additive; bootstrap waiver, not a §A.6 override) | in-scope-pending-assessment | — | — | `not-reviewed` |

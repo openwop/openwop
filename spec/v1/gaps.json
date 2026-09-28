@@ -13076,12 +13076,46 @@
       "surface": "No v2 SDK sends the header today (`openwop-sdks`: `sdk/typescript-v2`, `sdk/python-v2`, Go).",
       "witness": "unclassified",
       "requirementId": null,
-      "disposition": "transferred",
-      "target": "rfc-0219",
+      "disposition": "closed",
+      "target": null,
       "sources": [
         {
           "file": "RFCS/registers/0219-client-version-header.gaps.md",
           "token": "G6"
+        }
+      ]
+    },
+    {
+      "id": "openwop.gap.0219.7",
+      "rfc": "0219",
+      "local": "G7",
+      "section": "§Conformance",
+      "surface": "`openwop.requirement.0219.no-floor-no-refusal` has no positive witness. All three measured hosts (the v2 reference host, MyndHyve, openwop-app) advertise `minClientVersion`, so every committed bundle records the row `inapplicable` with the reason \"this leg is for a host with no floor\".",
+      "witness": "unclassified",
+      "requirementId": null,
+      "disposition": "externally-gated",
+      "target": "host-without-min-client-version",
+      "sources": [
+        {
+          "file": "RFCS/registers/0219-client-version-header.gaps.md",
+          "token": "G7"
+        }
+      ]
+    },
+    {
+      "id": "openwop.gap.0219.8",
+      "rfc": "0219",
+      "local": "G8",
+      "section": "§A / upgrade",
+      "surface": "A browser preflights the new request header. A host whose `Access-Control-Allow-Headers` is an explicit list, and which serves browsers cross-origin, fails every request from a client that sends it. Found at the SDK 2.5.0 release: openwop-app's list omitted it (as it once omitted `OpenWOP-Version`), and so did MyndHyve's public pack reads (fixed in myndhyve#549). v2 says nothing about CORS.",
+      "witness": "unclassified",
+      "requirementId": null,
+      "disposition": "transferred",
+      "target": "openwop#1763",
+      "sources": [
+        {
+          "file": "RFCS/registers/0219-client-version-header.gaps.md",
+          "token": "G8"
         }
       ]
     },
@@ -13161,8 +13195,8 @@
       "surface": "`canvas` has no tier-2 path yet. MyndHyve serves the canvas host service (myndhyve #547), but its claim depends on the `vendor.myndhyve.canvas` pack. The only v2-admissible version (1.0.1, `registry/v2/`) is signed with `signing.scheme: ed25519-canonical-json` (RFC 0177 §A), and MyndHyve's pack publish route and resolver do not implement that scheme. The v1-tree 1.0.0 pins `engines.openwop <2.0.0`, which a v2 host MUST refuse. This is a general v2 pack-signing gap at the host, not canvas-specific.",
       "witness": "unclassified",
       "requirementId": null,
-      "disposition": "transferred",
-      "target": "myndhyve/services/workflow-runtime",
+      "disposition": "closed",
+      "target": null,
       "sources": [
         {
           "file": "RFCS/registers/0220-ext-families-graduate-on-evidence.gaps.md",
@@ -13277,11 +13311,11 @@
       "rfc": "0223",
       "local": "G4",
       "section": "§Implementation notes",
-      "surface": "openwop-app records no `action` on single reject or timeout, emits no `interrupt.resolved` on quorum reject, never emits `approval.rejected`, and emits no `node.failed` / `failedNodeId` on either reject path.",
+      "surface": "openwop-app recorded no `action` on single reject or timeout, emitted no `interrupt.resolved` on quorum reject, never emitted `approval.rejected`, and emitted no `node.failed` / `failedNodeId` on either reject path.",
       "witness": "unclassified",
       "requirementId": null,
-      "disposition": "externally-gated",
-      "target": "openwop-app-followup",
+      "disposition": "closed",
+      "target": null,
       "sources": [
         {
           "file": "RFCS/registers/0223-approval-reject-disposition.gaps.md",
@@ -13375,23 +13409,6 @@
       ]
     },
     {
-      "id": "openwop.gap.0223.9",
-      "rfc": "0223",
-      "local": "G9",
-      "section": "§Conformance",
-      "surface": "`openwop.requirement.0223.reject-loopback-reasks` (openwop #1697) has no positive witness on any host. The v2 reference host does not run cycles. MyndHyve runs request-changes loops over condition edges on a successful gate output, and does not route a failed node over `any_failed` (its Cloud Run executor has no `triggerRule` handling), so the row stays `inapplicable` there. openwop-app rejects cycles. The row exists and is negatively controlled: registering the fixture on a host that does not loop records `executed-fail`.",
-      "witness": "unclassified",
-      "requirementId": null,
-      "disposition": "externally-gated",
-      "target": "host-routes-failed-gate-over-cycle",
-      "sources": [
-        {
-          "file": "RFCS/registers/0223-approval-reject-disposition.gaps.md",
-          "token": "G9"
-        }
-      ]
-    },
-    {
       "id": "openwop.gap.0223.10",
       "rfc": "0223",
       "local": "G10",
@@ -13405,6 +13422,23 @@
         {
           "file": "RFCS/registers/0223-approval-reject-disposition.gaps.md",
           "token": "G10"
+        }
+      ]
+    },
+    {
+      "id": "openwop.gap.0223.11",
+      "rfc": "0223",
+      "local": "G11",
+      "section": "§Conformance",
+      "surface": "*(Renumbered from a second `G9` on 2026-09-28: two rows shared the local ID, so `spec/v1/gaps.json` carried `openwop.gap.0223.9` twice.)* `openwop.requirement.0223.reject-loopback-reasks` (openwop #1697) has no positive witness on any host. The v2 reference host does not run cycles. MyndHyve runs request-changes loops over condition edges on a successful gate output, and does not route a failed node over `any_failed` (its Cloud Run executor has no `triggerRule` handling), so the row stays `inapplicable` there. openwop-app rejects cycles. The row exists and is negatively controlled: registering the fixture on a host that does not loop records `executed-fail`.",
+      "witness": "unclassified",
+      "requirementId": null,
+      "disposition": "externally-gated",
+      "target": "host-routes-failed-gate-over-cycle",
+      "sources": [
+        {
+          "file": "RFCS/registers/0223-approval-reject-disposition.gaps.md",
+          "token": "G11"
         }
       ]
     },
@@ -13439,6 +13473,40 @@
         {
           "file": "RFCS/registers/0224-v2-audit-log-integrity.gaps.md",
           "token": "G2"
+        }
+      ]
+    },
+    {
+      "id": "openwop.gap.0225.1",
+      "rfc": "0225",
+      "local": "G1",
+      "section": "§Implementation notes",
+      "surface": "No host advertises `retryPolicy.maxElapsedMs` yet, so the new row has no witness.",
+      "witness": "unclassified",
+      "requirementId": null,
+      "disposition": "externally-gated",
+      "target": "host-advertises-max-elapsed",
+      "sources": [
+        {
+          "file": "RFCS/registers/0225-webhook-retry-max-elapsed.gaps.md",
+          "token": "G1"
+        }
+      ]
+    },
+    {
+      "id": "openwop.gap.0226.1",
+      "rfc": "0226",
+      "local": "G1",
+      "section": "§Unresolved questions",
+      "surface": "Whether `mcp_unreachable` (an MCP peer that cannot be reached) needs its own registered code.",
+      "witness": "unclassified",
+      "requirementId": null,
+      "disposition": "closed",
+      "target": null,
+      "sources": [
+        {
+          "file": "RFCS/registers/0226-shared-run-failure-codes.gaps.md",
+          "token": "G1"
         }
       ]
     },

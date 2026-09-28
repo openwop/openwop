@@ -15,13 +15,13 @@
 
 ## Summary
 
-RFC 0190 §A budgets every word of `spec/v2/core/**` against a single kernel cap, and says where prose is filed has no budget consequence. `spec/v2/core/errors.md` carries a 108-row "Codes by HTTP status" table (about 330 words). A generator writes it from `spec/v2/errors.json`, and it adds nothing the registry does not already say. Every new error code therefore costs kernel words, although no rule has changed. This RFC excludes one narrow thing from the measured set: a restatement of a machine-readable registry that a repo generator writes whole and a gate checks byte-for-byte. The table moves to `spec/v2/generated/error-codes.md`, and `errors.md` keeps a link and the count.
+RFC 0190 §A budgets every word of `spec/v2/core/**` against a single kernel cap, and says where prose is filed has no budget consequence. `spec/v2/core/errors.md` carries a 111-row "Codes by HTTP status" table (about 340 words). A generator writes it from `spec/v2/errors.json`, and it adds nothing the registry does not already say. Every new error code therefore costs kernel words, although no rule has changed. This RFC excludes one narrow thing from the measured set: a restatement of a machine-readable registry that a repo generator writes whole and a gate checks byte-for-byte. The table moves to `spec/v2/generated/error-codes.md`, and `errors.md` keeps a link and the count.
 
 ## Motivation
 
 - **The budget is counting the registry twice.** The normative source of every code, status and retriability is `spec/v2/errors.json` (`errors.md` §The registry). The table is a view of that file for reading, and it is regenerated whenever the file changes. Budgeting it charges the kernel for data it does not own, and a reader who reads the table learns no rule that the registry and §The registry do not already state.
-- **It taxes the wrong thing.** With the kernel at its cap (30,599 / 30,600 on 2026-09-28), registering three codes (RFC 0226) cost 9 kernel words. Those words had to be found by deleting prose elsewhere, when no rule had grown. Measured codification of shared codes is exactly the work the registry exists for, and the budget was discouraging it.
-- **The reading-burden invariant is unaffected.** RFC 0190 §A protects "an implementer can read the entire front door in one sitting". A lookup table of 108 code/status pairs is reference data, not front-door reading, in the same way the registry JSON itself is not counted.
+- **It charges the kernel for data, not rules.** Each registry row adds a table row to `errors.md`, so every newly registered code costs kernel words although no rule has changed: RFC 0226's three codes cost 9. Measured codification of shared codes is exactly the work the registry exists for, and the budget should not price it as if it were new front-door prose. (This is a question of what the budget measures, not of headroom: at filing time the kernel is 32,334 / 33,200 after RFC 0189 raised the cap.)
+- **The reading-burden invariant is unaffected.** RFC 0190 §A protects "an implementer can read the entire front door in one sitting". A lookup table of 111 code/status pairs is reference data, not front-door reading, in the same way the registry JSON itself is not counted.
 
 ## Proposal
 
@@ -45,13 +45,13 @@ So the budget still counts every rule a human wrote, and it stops counting the r
 
 ### §C. The implementing change (in this RFC's pull request)
 
-- `spec/v2/generated/error-codes.md`, written whole by `scripts/generate-error-envelope.mjs`. It has a banner naming the generator, the count, the 108-row table and a *Sources:* line. The generator's `--check` fails if the file is stale or hand-edited.
-- `spec/v2/core/errors.md` §Codes by HTTP status becomes one sentence: "Every registered code, by HTTP status, is listed in `error-codes.md` (linked), generated from `spec/v2/errors.json` (108 codes)." The generator keeps both counts current, and no rule text moves.
+- `spec/v2/generated/error-codes.md`, written whole by `scripts/generate-error-envelope.mjs`. It has a banner naming the generator, the count, the 111-row table and a *Sources:* line. The generator's `--check` fails if the file is stale or hand-edited.
+- `spec/v2/core/errors.md` §Codes by HTTP status becomes one sentence: "Every registered code, by HTTP status, is listed in `error-codes.md` (linked), generated from `spec/v2/errors.json` (111 codes)." The generator keeps both counts current, and no rule text moves.
 - `scripts/check-core-budget.mjs` gains the §A guard and reports the excluded words.
 - `openwop.requirement.0171.error-registry-prose-parity` is re-pointed. The property it protects, that a reader of the spec finds every registered code and the stated counts are true, is kept at the table's new home. `errors.md` MUST link the generated table, the table MUST hold every registered code, and every count either document states MUST equal the registry.
 - `spec-artifacts/` mirrors the new document (`spec/v2/**/*.md` is already in its set).
 
-**Kernel budget:** 30,599 / 30,600 before, **30,273 / 30,600** after (−326). The 381 words of the generated document are reported by the gate as unbudgeted.
+**Kernel budget** (re-measured 2026-09-28 after RFC 0189 raised the cap and RFC 0226 added three rows): 32,334 / 33,200 before, **31,999 / 33,200** after (−335). The 390 words of the generated document are reported by the gate as unbudgeted.
 
 ## Compatibility
 
@@ -73,7 +73,7 @@ So the budget still counts every rule a human wrote, and it stops counting the r
 
 ## Alternatives considered
 
-1. **Raise the cap.** RFC 0190 ties the cap to retired debt ("the budget grows only as debt is retired"), and this is not debt. Raising it would also keep taxing every future registry row.
+1. **Leave it to the cap.** The cap grows only as debt is retired (RFC 0190; RFC 0189 has since raised it), and a registry table is not debt. Headroom would hide the miscount, not correct it: every future registry row would still be charged as kernel prose.
 2. **Exclude any generated file wherever it sits.** "Generated" is a claim a gate must check. Scoping the exclusion to one guarded directory, with a registered generator per file, keeps it checkable.
 3. **Drop the table and link the JSON.** The table is useful to a human reader, costs nothing once it is outside the kernel, and the parity row already guarantees it is complete.
 
@@ -89,5 +89,5 @@ None.
 ## References
 
 - RFC 0190 §A, §B (the kernel budget and the zero-word resolution it closed); RFC 0189 §B.
-- openwop #1698 (architect batch 2, the "separate editorial PR" item), #1751 (RFC 0226, the three codes whose 9 words prompted this).
+- openwop #1698 (architect batch 2, the "separate editorial PR" item), #1751 (RFC 0226, whose three codes cost 9 kernel words).
 - `spec/v2/core/errors.md`, `spec/v2/errors.json`, `scripts/generate-error-envelope.mjs`, `scripts/check-core-budget.mjs`.

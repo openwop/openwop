@@ -1,14 +1,14 @@
 # `canvas` extension
 
-> **Status: Draft.**
+> **Status: Stable.**
 
 `canvas` names a host service that reads and writes canvas state. It is a discovery-only reservation: v2 defines no portable operations or payload contract for it.
 
 | Field | Value |
 | --- | --- |
 | **witness:** | `claims-check` |
-| **technical:** | `experimental` |
-| **adoption:** | `single-witness` |
+| **technical:** | `stable` |
+| **adoption:** | `multi-witness` |
 | **peer-dependency id** | `canvas` |
 | **advertised as** | `extensions.<org>.canvas` |
 | **declared facets** | none defined |

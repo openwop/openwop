@@ -4,11 +4,11 @@
 
 ## Why this exists
 
-Every error a v2 host returns is a row in one registry. A client routes on `error`, never on `message`. A code that is not registered is not a protocol error. The registry is the single source for the envelope schema, the HTTP status and retriability.
+Every error a v2 host returns is a row in one registry. A client routes on `error`, never on `message`. A code that is not registered is not a protocol error.
 
 ## The registry
 
-`spec/v2/errors.json` holds one row per code, defined by `spec/v2/errors.schema.json`. It registers **108** codes. `schemas/v2/error-envelope.schema.json` is GENERATED from it and MUST NOT be edited by hand.
+`spec/v2/errors.json` holds one row per code, defined by `spec/v2/errors.schema.json`. It registers **111** codes. `schemas/v2/error-envelope.schema.json` is GENERATED from it and MUST NOT be edited by hand.
 
 - A host MUST emit a registered code, or a vendor code, wherever it emits an error code: the `error` of every error response, and `error.code` on `run.failed`, `node.failed` and the snapshot's `error` (overview.md §0). A recorded event re-emitted by replay or `:fork` is carried as recorded ([replay.md](replay.md)).
 - A vendor code MUST match `^(?!openwop\.)[a-z][a-z0-9]*(-[a-z0-9]+)*\.[a-z][a-z0-9_]*$`, with its first segment an org registered in `spec/v2/declaration.json`. `openwop.` is reserved.
@@ -47,6 +47,6 @@ The idempotency mismatch code is `idempotency_key_mismatch` only ([idempotency.m
 
 ## Codes by HTTP status
 
-Every registered code, by HTTP status, is listed in [error-codes.md](../generated/error-codes.md), generated from `spec/v2/errors.json` (108 codes).
+Every registered code, by HTTP status, is listed in [error-codes.md](../generated/error-codes.md), generated from `spec/v2/errors.json` (111 codes).
 
 *Sources: RFCs 0171, 0213, 0227.*

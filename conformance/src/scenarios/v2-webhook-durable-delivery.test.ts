@@ -35,7 +35,7 @@ import { absenceIsUnmeasured, noDeliveryCause, startScopedReceiver, type ScopedR
 import { readErrorCode } from '../lib/error-envelope.js';
 import { blockedDespiteAssertions, softSkip } from '../lib/soft-skip.js';
 import { req } from '../lib/requirement-ids.js';
-import { retryWaitCapMs, retryWaitFor, windowClosedNote } from '../lib/webhook-retry-window.js';
+import { pastAdvertisedBound, retryTestTimeoutMs, retryWaitCapMs, retryWaitFor, windowClosedNote } from '../lib/webhook-retry-window.js';
 
 export const REQUIRES_HOST_CALLBACK = 'the host POSTs and retries webhook deliveries to the suite-owned scoped receiver behind OPENWOP_WEBHOOK_RECEIVER_URL';
 
@@ -143,10 +143,10 @@ async function waitFor(pred: () => boolean, timeoutMs: number): Promise<boolean>
  * `webhooks.retryPolicy` first, `triggerBridge.retryPolicy` second for the
  * v1 overlap the schema explicitly preserves.
  */
-function advertisedRetryPolicy(doc: Record<string, unknown>): { maxAttempts?: number; backoff?: string } | null {
-  const read = (holder: unknown): { maxAttempts?: number; backoff?: string } | null => {
+function advertisedRetryPolicy(doc: Record<string, unknown>): { maxAttempts?: number; backoff?: string; maxElapsedMs?: unknown } | null {
+  const read = (holder: unknown): { maxAttempts?: number; backoff?: string; maxElapsedMs?: unknown } | null => {
     const rp = holder && typeof holder === 'object' ? (holder as { retryPolicy?: unknown }).retryPolicy : undefined;
-    return rp && typeof rp === 'object' ? (rp as { maxAttempts?: number; backoff?: string }) : null;
+    return rp && typeof rp === 'object' ? (rp as { maxAttempts?: number; backoff?: string; maxElapsedMs?: unknown }) : null;
   };
   return read(doc['webhooks']) ?? read(doc['triggerBridge']);
 }
@@ -198,6 +198,11 @@ function retryWaitMs(doc: Record<string, unknown>): number {
  * to the wait carries its own timeout, the way the advert is sourced from the
  * constant the delivery loop reads. `WAIT_SLACK_MS` covers `waitTerminal`,
  * registration and the HTTP round trips around the waits.
+ *
+ * 2.44.1: and the cap was the wrong wait to derive from once RFC 0225 let a
+ * host advertise `maxElapsedMs` — the wait follows the advert, the timeout is
+ * fixed at registration. So the budget is derived from the largest wait
+ * `retryWaitFor` can return (`retryTestTimeoutMs`).
  */
 /**
  * How many attempts the receiver refuses before answering 204 (suite 2.0.3).
@@ -230,9 +235,9 @@ function failFirstFor(policy: { maxAttempts?: number } | null): number {
 
 const WAIT_SLACK_MS = 30_000;
 /** One `retryWaitMs` wait (the retry leg). */
-const RETRY_TEST_TIMEOUT_MS = RETRY_WAIT_CAP_MS + WAIT_SLACK_MS;
+const RETRY_TEST_TIMEOUT_MS = retryTestTimeoutMs(1, WAIT_SLACK_MS);
 /** Two sequential `retryWaitMs` waits (the dead-letter leg: observe a retry, then exhaust). */
-const DEAD_LETTER_TEST_TIMEOUT_MS = RETRY_WAIT_CAP_MS * 2 + WAIT_SLACK_MS;
+const DEAD_LETTER_TEST_TIMEOUT_MS = retryTestTimeoutMs(2, WAIT_SLACK_MS);
 
 /** Register the suite receiver; null (with a note) when the host's SSRF guard refuses a loopback URL. */
 async function register(rx: ScopedReceiver): Promise<{ webhookId: string } | null> {
@@ -314,8 +319,8 @@ describe('RFC 0173 §B — webhook-durable-delivery (gated on webhooks)', () => 
     // exactly RETRY_WAIT_CAP_MS — a host loses by the width of one delivery.
     // The obvious fix is to derive the wait from the intervals, and it cannot
     // be built: `spec/v2/facets/webhooks.schema.json` `retryPolicy` is
-    // `additionalProperties: false` over exactly { maxAttempts, backoff }.
-    // THE BASE INTERVAL IS NOT ON THE WIRE, so the suite cannot compute the
+    // `additionalProperties: false` over { maxAttempts, backoff } (RFC 0225 adds
+    // an OPTIONAL total `maxElapsedMs`, not the intervals). THE BASE INTERVAL IS NOT ON THE WIRE, so the suite cannot compute the
     // time to the Nth attempt, and any cap I pick is 2.0.1's 20-second
     // deadline again with a bigger literal.
     //
@@ -447,6 +452,12 @@ describe('RFC 0173 §B — webhook-durable-delivery (gated on webhooks)', () => 
     // sink still FAILS below; so does a delivery that was never retried.
     const seen = ours().length;
     if (inSink === false && policy?.maxAttempts !== undefined && attempts.length > 1 && seen < policy.maxAttempts) {
+      // RFC 0225: a host that advertised maxElapsedMs promised the sink by then.
+      // Past that bound (plus the grace) the empty sink is a conviction, not a
+      // window the suite closed early.
+      if (pastAdvertisedBound(policy, retryWaitMs(doc))) {
+        expect(inSink, req('openwop.requirement.0173.webhook-durable-delivery.dead-letter', 'webhooks.md §Delivery (RFC 0225 maxElapsedMs)', `a host advertising retryPolicy.maxElapsedMs (${String(policy.maxElapsedMs)} ms) MUST dead-letter an exhausted delivery within it — ${seen} of ${policy.maxAttempts} attempts arrived and the sink is empty after ${retryWaitMs(doc)} ms`)).toBe(true);
+      }
       return blockedDespiteAssertions(windowClosedNote(seen, policy.maxAttempts, retryWaitMs(doc), RETRY_WAIT_CAP_MS));
     }
     expect(create.status, req('openwop.requirement.0173.webhook-durable-delivery.dead-letter', 'runs.md §Create', 'POST /runs MUST answer 201 for the noop fixture')).toBe(201);

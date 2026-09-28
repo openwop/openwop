@@ -12,7 +12,7 @@
 | OpenAPI operations | 58 | `api/openapi.yaml` |
 | AsyncAPI version | 3.1.0 | `api/asyncapi.yaml` |
 | Conformance scenario files | 573 | `conformance/src/scenarios/*.test.ts` |
-| RFCs tracked | 222 | `RFCS/[0-9][0-9][0-9][0-9]-*.md`, excluding template |
+| RFCs tracked | 224 | `RFCS/[0-9][0-9][0-9][0-9]-*.md`, excluding template |
 
 ## Artifact Versions
 
@@ -21,12 +21,12 @@
 | Artifact | Version | Source | Cadence |
 |---|---|---|---|
 | Spec corpus (root) | 1.1.0 | `package.json` | bumps only on a coordinated spec release |
-| Conformance suite `@openwop/openwop-conformance` | 2.43.2 | `conformance/package.json` | minor on scenario add/remove |
+| Conformance suite `@openwop/openwop-conformance` | 2.44.1 | `conformance/package.json` | minor on scenario add/remove |
 | OpenAPI `info.version` | 1.1.0 | `api/openapi.yaml` | hand-maintained in v1.x; generated from the corpus tag at v2 (RFC 0172 sectionB #14) |
 | AsyncAPI `info.version` | 1.1.0 | `api/asyncapi.yaml` | as above |
-| TypeScript SDK `@openwop/openwop` (2.x, current) | 2.4.0 | openwop-sdks `sdk/typescript-v2/package.json` (via `evidence/cross-repo-manifests.json`) | v2-only; npm `latest` |
-| Python SDK `openwop-client` (2.x, current) | 2.4.0 | openwop-sdks `sdk/python-v2/pyproject.toml` | v2-only; `openwop-client>=2,<3` |
-| Go SDK `github.com/openwop/openwop-sdks/go/v2` (2.x, current) | 2.4.0 | openwop-sdks `go/v2/CHANGELOG.md` head (tag-versioned `go/v2.Y.Z`; no version file) | v2-only |
+| TypeScript SDK `@openwop/openwop` (2.x, current) | 2.5.0 | openwop-sdks `sdk/typescript-v2/package.json` (via `evidence/cross-repo-manifests.json`) | v2-only; npm `latest` |
+| Python SDK `openwop-client` (2.x, current) | 2.5.0 | openwop-sdks `sdk/python-v2/pyproject.toml` | v2-only; `openwop-client>=2,<3` |
+| Go SDK `github.com/openwop/openwop-sdks/go/v2` (2.x, current) | 2.5.0 | openwop-sdks `go/v2/CHANGELOG.md` head (tag-versioned `go/v2.Y.Z`; no version file) | v2-only |
 | TypeScript SDK `@openwop/openwop` (1.x) | 1.10.0 | openwop-sdks `sdk/typescript/package.json` | maintained parallel line through the v1 overlap; npm `latest-1` |
 | Python SDK `openwop-client` (1.x) | 1.8.0 | openwop-sdks `sdk/python/pyproject.toml` | as above; `openwop-client<2` |
 | Go SDK `github.com/openwop/openwop-sdks/go` (1.x) | 1.7.0 | openwop-sdks `go/CHANGELOG.md` head (tag-versioned `go/v1.Y.Z`; no version file) | as above |
@@ -70,8 +70,8 @@
 
 | Status | Count |
 |---|---:|
-| Accepted | 216 |
-| Active | 3 |
+| Accepted | 217 |
+| Active | 4 |
 | Draft | 2 |
 | Superseded | 1 |
 
@@ -292,12 +292,14 @@
 | RFC 0216 | a colocated companion bundle is marked, and witnesses only the rows that need the suite's own issuer | Accepted |
 | RFC 0217 | after a subscription is unregistered, its dead-letter read answers as though it never existed | Accepted |
 | RFC 0218 | an audit checkpoint signs its Merkle root, and the root is pinned | Accepted |
-| RFC 0219 | a client announces the protocol version it implements in `OpenWOP-Client-Version` | Active |
+| RFC 0219 | a client announces the protocol version it implements in `OpenWOP-Client-Version` | Accepted |
 | RFC 0220 | an extension family graduates on evidence a script can read | Accepted |
 | RFC 0221 | a webhook secret the host generates is returned once | Accepted |
 | RFC 0222 | v2 registry operations - lifecycle by publication, key rotation, and the checks a registry refuses on | Active |
 | RFC 0223 | a rejected approval gate fails closed, and the failure is routable | Accepted |
 | RFC 0224 | audit-log integrity gets a v2 home | Accepted |
+| RFC 0225 | a webhook host may advertise how long a delivery can keep retrying | Active |
+| RFC 0226 | three run-failure codes the hosts share, registered | Active |
 | RFC 0227 | a generated restatement of a registry is not kernel prose | Draft |
 
 ## SDK Helper Coverage
@@ -323,7 +325,7 @@ The pack registry now lives in the [`openwop-registry`](https://github.com/openw
 ## Active Follow-Ups
 
 - 2 RFCs still `Draft` (RFC 0038, RFC 0227) — advance with schema/conformance proof or defer.
-- 3 RFCs `Active` (RFC 0121, RFC 0219, RFC 0222) — wire-shape MAY shift compatibly within v1.x until promotion to `Accepted`.
+- 4 RFCs `Active` (RFC 0121, RFC 0222, RFC 0225, RFC 0226) — wire-shape MAY shift compatibly within v1.x until promotion to `Accepted`.
 - External audit, non-steward host recruitment, and non-steward maintainer recruitment remain external-action gates.
 - Multi-region idempotency and some optional-profile behavior checks remain lower-confidence than the core wire contract.
 
