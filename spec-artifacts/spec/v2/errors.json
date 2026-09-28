@@ -850,8 +850,38 @@
       "source": "RFC 0223; spec/v2/core/interrupt.md §Rejection"
     },
     {
+      "code": "node_config_invalid",
+      "meaning": "A node's configuration is missing a required value or holds one the node cannot use, so the node failed.",
+      "httpStatus": 422,
+      "statusSource": "v2 decision",
+      "retriable": false,
+      "details": null,
+      "since": "2.44",
+      "source": "RFC 0226 §A (measured: openwop-app `invalid_config` ×13, MyndHyve `CONFIG_INVALID`)"
+    },
+    {
+      "code": "sandbox_invocation_error",
+      "meaning": "A pack node running in the sandbox threw an error outside the canonical sandbox catalog, so the node failed.",
+      "httpStatus": 422,
+      "statusSource": "v2 decision",
+      "retriable": false,
+      "details": null,
+      "since": "2.44",
+      "source": "RFC 0226 §A; spec/v1/host-sample-test-seams.md:340 already names it (the suite's sandbox probe emits it)"
+    },
+    {
+      "code": "mcp_error",
+      "meaning": "An MCP server the host called answered with a JSON-RPC error, so the node failed.",
+      "httpStatus": 502,
+      "statusSource": "v2 decision",
+      "retriable": false,
+      "details": null,
+      "since": "2.44",
+      "source": "RFC 0226 §A (a v2 decision: the host acted as a gateway to the MCP peer, whose answer was an error)"
+    },
+    {
       "code": "capability_not_provided",
-      "meaning": "The host does not provide a capability the request or pack requires.",
+      "meaning": "The host does not provide a capability the request or pack requires, including a node type it cannot execute.",
       "httpStatus": 422,
       "statusSource": "v1 convention",
       "retriable": false,

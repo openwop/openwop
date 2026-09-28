@@ -142,7 +142,7 @@
     "schemas/v2/envelopes/schema.request.schema.json": "be2c5f7aa881cdd252ccff47ac02193659e1393633a1541f4297383205d384a2",
     "schemas/v2/envelopes/schema.response.schema.json": "d049a081267c06c28879c331b147f3ed821b14ccfd93005c67aff64db0a8c68e",
     "schemas/v2/envelopes/ui.a2ui-surface.schema.json": "e92a2548ba65454c9e0a34f72ea6768d18f59e61fa5da7668d0b2d5baddaddc8",
-    "schemas/v2/error-envelope.schema.json": "d1a6862930e7c3fbc8ec334ef17953ac7b716525c6c82769edf89d0809d0c94b",
+    "schemas/v2/error-envelope.schema.json": "34f467d5775618f740059dab0aa49bf26247101feb0cdae3403560b6baf5eda9",
     "schemas/v2/eval-summary.schema.json": "2f384daf05b8f3b4f604688cae504d6d9971ba41b8c771e55fe9a17e09e86b7a",
     "schemas/v2/export-bundle.schema.json": "bd28905a7729437ab7f2ad8bb33e13a371b2bf5605a7eb2962a0d246de312d69",
     "schemas/v2/form-content-pack-manifest.schema.json": "a1942a124e250a6e9fbdb6b811c5a125e78fbcbcaa46dfc71d0636f24710a339",
@@ -210,7 +210,7 @@
     "spec/v1/event-codemap.json": "3da60d884157793a360da532a9fcbbfb5285636db325a74cec94b34622186d97",
     "spec/v1/event-codemap.schema.json": "d05933b2e88103aff51a2f774df97b9bda065e0fc88dbd9b114cc47a32189174",
     "spec/v1/extensions.json": "79a60754aa16cbdbdb604f8e5c00038af535a1690a4d07bd5ff7c38f0256a7bc",
-    "spec/v1/gaps.json": "e68436a2aef39bb44d608e9f62259924fc18c68c18788a2e1e9996067b1620dd",
+    "spec/v1/gaps.json": "66528e2d3cbb89a1ff1d487f2d51dd1b68648ce823ae3cf0c501e74c279c33e1",
     "spec/v1/gaps.schema.json": "8fd83259f556553c9df0f53e7a82ca8c2a4771d471197f69b4e2ae0ceeacfd66",
     "spec/v1/migrations.json": "2efcd9064b2bc65a84a3b3d281aa86a91efd002690c1f4f14e8335c4a18194d1",
     "spec/v1/migrations.schema.json": "886779aa6c22e646db097f5df210adb018a4dd14a7b815465a18c8a7056c8f72",
@@ -221,7 +221,7 @@
     "spec/v2/core/conformance.md": "0cfceb926eed87055550a5c23e640210c795fc8cf9dd1b2544db0e2b3842c564",
     "spec/v2/core/connection-packs.md": "1ee129d792c537bfe82393ccb92555d8e6ddc342b1aa781a13f101b27ec38171",
     "spec/v2/core/conversation.md": "354fa57c73d11062e523a44aa75a6353c5c81aefaf306d30c42416a228c82c86",
-    "spec/v2/core/errors.md": "bcb62944d8a482b1b6d5ac08a692ad7e4aaadf6165746c7ba7fa39157be2a300",
+    "spec/v2/core/errors.md": "6d5a67389de84556f81e2558a30d83959c9283c8c5481ce7c759021e486d84fd",
     "spec/v2/core/events.md": "604abb6f9e2259a04103e1cb76d728712c3701c0d84dd915d4dc2949c912ee5e",
     "spec/v2/core/form-content-packs.md": "02931227899676fd4581a27017be2a6c4953904717be9b81c29d12f87ab3917d",
     "spec/v2/core/headers.md": "5cb1624fa63acc81992b6a6d842ec392cf7271aaf2f65d1f83c8c4fa286e6730",
@@ -248,7 +248,7 @@
     "spec/v2/corrections.schema.json": "46bbffb954d13bd9995aebc912ceeb2544f7064331abf25fd6ab85c81a5cec94",
     "spec/v2/declaration.json": "7765c86f7a3fbdd5a80c6778fb22335f099dcc4caddf9747fb144c1f318a17f1",
     "spec/v2/declaration.schema.json": "ef951633e4070899f64828f5cf1b5f4870270a0360f81dbb49b5b4d6cd407550",
-    "spec/v2/errors.json": "dc1a846abe3e888acb0ce4a33cf9d1fb98e41fcc8b49f42b3682fd65deca2eb2",
+    "spec/v2/errors.json": "fa650cbbdf25a140fdaf82ec5269f95b4585ac4bdde1fa6b0b3ffe48a3f7943c",
     "spec/v2/errors.schema.json": "47404ad53e6147cf9017b813483712466573e419fb33e6c4b6c12d3e7deba1bc",
     "spec/v2/event-codemap.json": "37869a03cdfd8758b57e6f350641a6ebbd383231cebda51f5473ad85f94ab74c",
     "spec/v2/event-codemap.schema.json": "b173f2a9bcc0bf9b62a474ce3b91e1431d597e64fd1560fc58662cd8606eaf9c",
@@ -268,7 +268,7 @@
     "spec/v2/ext/portability/README.md": "c59423ee446638b748a911b9e97e803c4786157be6120f656f0a060586bc7b82",
     "spec/v2/ext/provider-idempotency/README.md": "9d1bccef0ec16a19a3370ae79c2f5a1726ce0d1d25a51352907f288a2ccb15d7",
     "spec/v2/ext/provider-idempotency/registry.json": "5b5fecad604fb4ab38da39f5abe697a4e57b05406c398f8afeb377331b2bd965",
-    "spec/v2/ext/restTransport/README.md": "acda51f1a973308841861a119def691db972f310c7b7250ab14f248e9c968585",
+    "spec/v2/ext/restTransport/README.md": "a8115faefeab01b7c85d516de60ebfc99b8e89552d16ba654456224518447b28",
     "spec/v2/ext/sandbox-runtime-notes/README.md": "0d1290fb1e20b2e35c0b15051541ab6546e4e2a6f693b4f912cb3f7d6a65e92c",
     "spec/v2/ext/webResearch/README.md": "b675e6f6646128d781b661f754c2393eed86e5935d16c3a22df582a5ce025b9b",
     "spec/v2/facets/a2a.schema.json": "b68bf5e29e455e46c2ad7cfcccf5963730ec2310ff9db81884550d8df30fd6ef",
@@ -302,5 +302,5 @@
     "spec/v2/retention-floors.json": "eaf3722d95c79947af1d4269ef85117e126518c588cfcf1a2b21b97269f51624",
     "spec/v2/surface-baseline.json": "d5b4e6c55a1d4bbe54241f9d0d020e7f9857f29912bb9f2ef910087b276be7e6"
   },
-  "corpusCommit": "31673ed04e60405296f7fa327d84c9c99b723b6e"
+  "corpusCommit": "5ec5bef58ba9c98c37308454825848013e0d7ea9"
 }

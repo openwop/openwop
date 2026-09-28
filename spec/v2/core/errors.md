@@ -4,11 +4,11 @@
 
 ## Why this exists
 
-Every error a v2 host returns is a row in one registry. A client routes on `error`, never on `message`. A code that is not registered is not a protocol error. The registry is the single source for the envelope schema, the HTTP status and retriability.
+Every error a v2 host returns is a row in one registry. A client routes on `error`, never on `message`. A code that is not registered is not a protocol error.
 
 ## The registry
 
-`spec/v2/errors.json` holds one row per code, defined by `spec/v2/errors.schema.json`. It registers **108** codes. `schemas/v2/error-envelope.schema.json` is GENERATED from it and MUST NOT be edited by hand.
+`spec/v2/errors.json` holds one row per code, defined by `spec/v2/errors.schema.json`. It registers **111** codes. `schemas/v2/error-envelope.schema.json` is GENERATED from it and MUST NOT be edited by hand.
 
 - A host MUST emit a registered code, or a vendor code, wherever it emits an error code: the `error` of every error response, and `error.code` on `run.failed`, `node.failed` and the snapshot's `error` (overview.md §0). A recorded event re-emitted by replay or `:fork` is carried as recorded ([replay.md](replay.md)).
 - A vendor code MUST match `^(?!openwop\.)[a-z][a-z0-9]*(-[a-z0-9]+)*\.[a-z][a-z0-9_]*$`, with its first segment an org registered in `spec/v2/declaration.json`. `openwop.` is reserved.
@@ -47,7 +47,7 @@ The idempotency mismatch code is `idempotency_key_mismatch` only ([idempotency.m
 
 ## Codes by HTTP status
 
-Generated from `spec/v2/errors.json` (108 codes; `retriable` and `statusSource` are in the registry).
+Generated from `spec/v2/errors.json` (111 codes; `retriable` and `statusSource` are in the registry).
 
 Code | Status
 --- | ---
@@ -141,10 +141,12 @@ Code | Status
 `fork_point_invalid` | 422
 `loop_limit_exceeded` | 422
 `mcp_mrtr_rounds_exceeded` | 422
+`node_config_invalid` | 422
 `pack_runtime_requirement_unmet` | 422
 `recursion_limit_exceeded` | 422
 `residency_unavailable` | 422
 `run_timeout` | 422
+`sandbox_invocation_error` | 422
 `sandbox_memory_exceeded` | 422
 `sandbox_timeout` | 422
 `token_budget_exceeded` | 422
@@ -157,6 +159,7 @@ Code | Status
 `pack_load_failure` | 500
 `payload_unprojectable` | 500
 `credential_unavailable` | 501
+`mcp_error` | 502
 `pack_registry_unreachable` | 503
 `runner_unavailable` | 503
 
