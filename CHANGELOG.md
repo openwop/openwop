@@ -13,6 +13,7 @@ Format follows [Keep a Changelog](https://keepachangelog.com/en/1/) loosely. Ver
 
 ## [Unreleased]
 
+- **`workspace`, `content`, `triggerBridge` and `uiPlugins` get v2 normative homes** (RFC 0189 §D remediation; restated, no rule added or strengthened; no wire change). New sections in `host-services.md` §`workspace`, `i18n.md` §Localized content, `webhooks.md` §Inbound triggers and `packs.md` §Front-end plugin packs; `declaration.json` points the four families there, and the baseline lowers `v1Dependent` 36 → 32. `artifactTypes` stays v1-dependent: its contract does not fit the word budget. Core budget 31,397 / 31,400.
 - **`canvas` is `Stable`, and gap G5 is closed** (RFC 0220; the promotion window is waived, #1747). New `evidence/v2-host-bundles/myndhyve-2.43.2-canvas.json`: MyndHyve production `workflow-runtime-00819-qah`, build `commit:76fc9bbb`, suite 2.43.2, both profiles certified, 269 pass / 2 fail / 0 blocked. It witnesses eleven families.
   - MyndHyve serves `canvasCreate`, `canvasWrite` and `canvasRead` through its canvas host service. They come from the v2-signed `vendor.myndhyve.canvas@1.0.2`, workspace-approved (myndhyve #547, #554, #555).
   - `canvas` adoption goes `single-witness → multi-witness`: openwop-app witnesses it at tier 1.
