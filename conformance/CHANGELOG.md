@@ -1,6 +1,6 @@
 # `@openwop/openwop-conformance` Changelog
 
-## [2.43.1] — unreleased — RFC 0223's routed and timed-out reject are witnessed
+## [2.43.1] — 2026-09-28 — major-1 certification works again, RFC 0223's routed and timed-out rejects are witnessed, and four Class 3 corrections
 
 - **`v2-manifest-hatch-carried`'s agent fixture is schema-valid.** Its `agents[0]` had neither `systemPrompt` nor `systemPromptRef`, and `agent-manifest` (v1 and v2) requires exactly one. A conforming host therefore had to refuse the pack for a reason unrelated to the `x-` hatch, and `0177.manifest-hatch-carried.agents-x-field` could not pass on any host. The fixture now carries `systemPrompt`. Validated against `schemas/v2/agent-manifest.schema.json`: invalid before, valid after. Reported by MyndHyve.
 - **RFC 0223 G1 and G2: the routed and the timed-out approval reject are witnessed** (#1700). Two new fixtures and two new rows in `v2-approval-reject-disposition.test.ts` (target major 2). Each row is `inapplicable` on a host that does not advertise its fixture.

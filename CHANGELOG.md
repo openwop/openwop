@@ -330,6 +330,24 @@ Format follows [Keep a Changelog](https://keepachangelog.com/en/1/) loosely. Ver
 - **The remaining eleven stay `Active`, each for a stated reason** rather than for lack of attention. The eight RFC 0167 program children name a certified openwop-app bundle in their own acceptance criteria and the committed one reads `certified: false` (3 blocked rows, RFC 0168 §E.1). RFC 0173 additionally carries the program's only `open` gap row. RFC 0179's sole criterion is unmet — 2.4.2 stopped the gate reading "(Phase 4 leg)" as an excuse for it. RFC 0187 names three requirement ids that no scenario mints. RFC 0167 itself flips **last**, which 2.4.2 made a rule: the moment the umbrella stops being `Active`, every child still `Active` becomes permanently ineligible.
 - **The interrupt `data` union is bound to `kind`** (MCP/A2A review P3-H7, Class 3 correction — COMPATIBILITY.md §3). `schemas/suspend-request.schema.json` and its v2 twin typed `data` as an unbound `oneOf`, so the minimal `conversation.start` and `conversation.close` payloads (`{ conversationId }`, which satisfies both shapes) failed validation in v1 and v2, and a payload carrying another kind's `data` passed. `data` is now an `anyOf` and a root `allOf` binds each kind to its own shape with one `if`/`then`; no per-kind shape or `$id` changed. Witnessed by `conformance/fixtures/interrupt-payloads/` (suite 2.36.0).
 
+## [2.43.1] — 2026-09-28 — major-1 certification works again, RFC 0223's routed and timed-out rejects are witnessed, and four Class 3 corrections
+
+A suite patch. The packed `@openwop/spec-artifacts` tree changes only by fixtures and Class 3 prose.
+
+### Conformance
+
+- **`--certify --bundle-version 3` no longer refuses its own bundle when a secret is redacted (#1739).** The v3 path computed and signed `witnessSha256` before scrubbing configured secrets out of row details, so any host whose key values appeared in a row failed self-verification with `[witness-digest]`, exit 2. That blocked openwop-app's major-1 cut on 2.43.0. It now scrubs, then digests, then signs. There is no wire or preimage change: the 2.43.0 verifier accepts the fixed bundles.
+- **RFC 0223's routed and timed-out approval rejects are witnessed** (#1700), with new fixtures.
+- **Class 3 corrections:**
+  - a timeout never grants an approval gate (#1696);
+  - an interrupt `key` is per visit (#1697);
+  - event error codes are registered or vendor codes (#1698);
+  - the pack isolation and manifest rows no longer gate on `packs` (#1706).
+- **RFC 0201 §E.20 is witnessable on a long overlap:** a new optional seams-profile seam shortens the rotation overlap under test (#1720).
+- **The org-chart read pair's served bodies are validated against their schemas** (#1737), at both majors.
+- `v2-manifest-hatch-carried`'s agent fixture is schema-valid.
+- **Suite `2.43.1`.** `@openwop/spec-artifacts` moves in lockstep at the same exact pin.
+
 ## [2.43.0] — 2026-09-28 — four RFCs: approval reject, registry operations, the audit anomaly shape, and a v2 home for audit-log integrity
 
 A suite minor. The packed `@openwop/spec-artifacts` tree changes: a new error-registry row (`approval_rejected`), a new capability family (`auditLogIntegrity`), and the audit verify schema's anomaly shape.
