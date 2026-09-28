@@ -7,7 +7,7 @@
 | **Status**        | `Active`                                                        |
 | **Author(s)**     | David Tufts (@davidscotttufts)                                  |
 | **Created**       | 2026-09-28                                                      |
-| **Updated**       | 2026-09-28 — filed and moved `Draft → Active` in the filing PR. **Comment window waived** (7-day) by the steward under `GOVERNANCE.md` §"Sole-steward operation", logged in `MAINTAINERS.md` §"Bootstrap-phase RFC waivers". RFC 0147 §A.6 does not apply: registry lifecycle is not replay, an external effect or certification, and the signing-key rules neither widen nor narrow who may sign a namespace (`packs.md` §Signing already requires the `permittedNamespaces` check). The evidence gate is not waived. |
+| **Updated**       | 2026-09-28 — filed and moved `Draft → Active` in the filing PR. **Comment window waived** (7-day) by the steward under `GOVERNANCE.md` §"Sole-steward operation", logged in `MAINTAINERS.md` §"Bootstrap-phase RFC waivers". RFC 0147 §A.6 does not apply: registry lifecycle is not replay, an external effect or certification, and the signing-key rules neither widen nor narrow who may sign a namespace (`packs.md` §Signing already requires the `permittedNamespaces` check). The steward confirmed this on 2026-09-28: the key rules narrow nothing §Signing did not already require, and §A.6 names replay, external effects and certification, so no override is needed. The evidence gate is not waived. 2026-09-28 — both registry-side acceptance boxes ticked: openwop-registry #79 refuses a changed published version and a new version signed by a key that is not `active`. |
 | **Affects**       | `spec/v2/core/packs.md` §Signing (the key list), §"Version manifests" (deprecate and yank), a submission sentence · `schemas/v2/registry-version-manifest.schema.json` `yanked` and `supersededBy` descriptions · `docs/runbooks/PACK-LIFECYCLE.md` · conformance: `v2-registry-lifecycle.test.ts` (suite 2.43.0) · openwop-registry: `build-index.mjs --tree v2`, `writeApi.publishUrl` |
 | **Compatibility** | `additive` — the rules restate for v2 what `spec/v1/registry-operations.md` required, filtered to what the static tree can do. No schema shape, error code, status or endpoint changes |
 | **Supersedes**    | —                                                               |
@@ -82,8 +82,8 @@ A write API answers with the code; a registry that publishes by pull request fai
 | --- | --- | --- |
 | `integrity` matches the tarball | `pack_integrity_failure` | `build-index.mjs --tree v2 --check` recomputes it |
 | Both manifests validate against the schema for `kind`, and `name` and `version` match the path | `pack_validation_failed` | `test-registry-v2-schemas.mjs`, `check-pack-manifest-schemas.mjs`, `conformance-check.mjs --tree v2` |
-| The version is not already published | `version_conflict` | none mechanical — pull-request review (acceptance box) |
-| The signature verifies under an `active` key permitted for the namespace | `pack_signature_invalid` | `verify-signatures.mjs --tree v2`, `check-pack-namespace-authority.mjs`; the `active` half is not checked (acceptance box) |
+| The version is not already published | `version_conflict` | `check-published-immutable.mjs` (openwop-registry #79): a published `.tgz` or `.sig` may not change, and its manifest may change only the lifecycle fields |
+| The signature verifies under an `active` key permitted for the namespace | `pack_signature_invalid` | `verify-signatures.mjs --tree v2`, `check-pack-namespace-authority.mjs`; the `active` half is `check-published-immutable.mjs` (#79), on the versions a PR adds |
 | `engines.openwop` admits the tree's major | `pack_engine_unsupported` | `check-pack-engines-admit-major.mjs --major 2` |
 | Every `peerDependencies` key is defined | `pack_peer_dependency_undefined` | `check-pack-peer-dependencies.mjs` |
 
@@ -129,8 +129,8 @@ Witnessed 2026-09-28:
 | §B a consumer resolving a range excludes yanked versions | nothing: no v2 operation takes a version range | — | unwitnessable — no v2 operation installs a pack by range, so which candidate a host excluded never reaches the wire |
 | §B advisory-listed versions are yanked | the advisory feed and the version manifests | the registry gate | witnessable — unaided (registry side: `check-advisories.mjs --tree v2` in openwop-registry `npm run check`) |
 | §C a key stays listed while a served version names it, and a non-`active` key still verifies (`openwop.requirement.0222.signing-keys-cover-served-versions`) | `signingKeys[]`, each version's `signing.keyId`, and the signature over the in-tarball `pack.json` | the suite, given a registry URL | witnessable — gated (on a registry being named) |
-| §C only an `active` key signs a new publication | a new version whose key is not `active` | the registry gate, at submission | unwitnessable — from outside the registry: `publishedAt` is unsigned and a key carries no retirement time, so the served tree cannot say whether a version predates the key leaving `active`; the registry's submission gate is the only place it is decidable |
-| §D the six submission checks | a submission refused, with the code or a failed gate | the registry gate | witnessable — unaided (registry side: openwop-registry `npm run check`, per the §D table; two cells owed) |
+| §C only an `active` key signs a new publication | a new version whose key is not `active` | the registry gate, at submission | witnessable — unaided (registry side only: `check-published-immutable.mjs` refuses a version a PR adds whose key is not `active`. The served tree cannot decide it, because `publishedAt` is unsigned and a key carries no retirement time) |
+| §D the six submission checks | a submission refused, with the code or a failed gate | the registry gate | witnessable — unaided (registry side: openwop-registry `npm run check`, per the §D table) |
 
 ## Alternatives considered
 
@@ -151,8 +151,8 @@ None.
 ## Acceptance criteria
 
 - [x] `Active`: the `packs.md` rules, the corrected schema descriptions, and `v2-registry-lifecycle.test.ts` (suite 2.43.0), passing on the live registry and sabotage-proved on a local one.
-- [ ] openwop-registry's gate refuses a new version signed by a key whose `status` is not `active` (§C first rule; §D signature cell).
-- [ ] openwop-registry's gate refuses a change to an already-published version's tarball or `pack.json` (§D `version_conflict` cell).
+- [x] openwop-registry's gate refuses a new version signed by a key whose `status` is not `active` (§C first rule; §D signature cell). openwop-registry #79, `scripts/check-published-immutable.mjs`, runs in the `registry-publish` PR job against the PR base and in `npm run check`. Sabotage: a new version signed by a key set to `rotated`, or by an unlisted key, is refused; a new version signed by an active key passes.
+- [x] openwop-registry's gate refuses a change to an already-published version's tarball or `pack.json` (§D `version_conflict` cell). Same script, same PR (#79). Refused: a modified `.tgz`, a flipped or deleted `.sig`, and an edited non-lifecycle field. Passed: setting all six lifecycle fields. It also failed in CI on a pushed sabotage commit that flipped a `.sig` byte (run 36418742170) before that commit was reverted. No published v2 artifact had ever been modified or deleted, so it blocks no past practice.
 - [ ] Leg 1 `executed-pass` without `partial-witness` on the live registry — needs a yanked v2 version to exist.
 
 ## References
