@@ -15,7 +15,7 @@
   },
   "waivers": {
     "source": "RFCS/*.md, RFCS/registers/*",
-    "bootstrapWaiversExercised": 101,
+    "bootstrapWaiversExercised": 102,
     "rfcs": [
       "0042",
       "0043",
@@ -117,11 +117,12 @@
       "0220",
       "0221",
       "0222",
-      "0223"
+      "0223",
+      "0224"
     ],
     "retrospectiveReviewsCompleted": 0,
     "outcomes": {
-      "not-reviewed": 101
+      "not-reviewed": 102
     }
   },
   "audit": {
@@ -158,7 +159,7 @@
   },
   "risks": {
     "source": "RFCS/registers/*.risks.md + RFCS/*.risks.md (RFC 0166 tokens)",
-    "rowsScanned": 460,
+    "rowsScanned": 462,
     "openCriticalOrHigh": [
       {
         "rfc": "0058",

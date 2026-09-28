@@ -4835,3 +4835,24 @@ invariants:
       the row.
     witness: witnessable-gated
     witnessReview: reviewed-2026-09-25
+  - id: audit-checkpoint-signed-over-root
+    tier: reference-impl
+    severity: high
+    threat_model: SECURITY/threat-model-auth-profiles.md
+    tests:
+      - conformance/src/scenarios/audit-checkpoint-signature.test.ts
+      - conformance/src/scenarios/audit-log-integrity.test.ts
+    note: |
+      RFC 0224 (spec/v2/core/security-defaults.md §"Audit-log integrity"; the
+      earlier major's spec/v1/auth-profiles.md §"Audit-log integrity"). A host
+      claiming audit-log integrity (major 1: the openwop-audit-log-integrity
+      profile; major 2: the auditLogIntegrity family) MUST serve checkpoints
+      whose signatures verify as Ed25519 over the 32 bytes merkleRoot
+      hex-decodes to, under the advertised checkpointPublicKey (RFC 0218 §A.4),
+      and MUST list every in-range checkpoint ascending, no more than
+      checkpointIntervalEntries apart. Sabotage-proved on the v2 reference host
+      (openwop-examples #111): signing the checkpoint object's JCS reddens the
+      signature row; dropping a checkpoint from the verify body reddens the
+      cadence row. Reference-impl at Active; graduates to protocol on a
+      non-vacuous executed-pass in a committed certified v2 bundle.
+    witness: witnessable-gated
