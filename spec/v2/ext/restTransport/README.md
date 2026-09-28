@@ -32,7 +32,7 @@ For each coding listed in `contentEncodings`, a request that names only that cod
 
 A client MUST NOT infer anything else from the record.
 
-The claim describes what a client receives at the host's advertised base URL, so a CDN or proxy in front of the host is part of it. A front that drops or rewrites a coding the origin produces makes the claim false. This is the most common way it goes wrong in deployment: one host's CDN served `zstd` as identity while its origin produced `zstd`. A host behind a front should list only the codings measured through that front.
+The claim describes what a client receives at the host's advertised base URL, so a CDN or proxy in front of the host is part of it. A front that drops or rewrites a coding the origin produces makes the claim false. A host behind a front should list only the codings measured through that front.
 
 ## Conformance
 
