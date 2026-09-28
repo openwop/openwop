@@ -1,8 +1,9 @@
 # `@openwop/openwop-conformance` Changelog
 
-## [2.44.1] — unreleased — five core families get v2 normative homes
+## [2.44.1] — unreleased — nine core families get v2 normative homes
 
-- **The 2.44.1 cycle opens.** Homing `selfHostedRunner`, `subWorkflow`, `multiAgent`, `anonymousActor` and `heartbeat` (RFC 0189) changes the packed `@openwop/spec-artifacts` tree (`spec/v2/core/execution.md` new; `events.md`, `identity.md`, `overview.md`, `spec/v2/README.md`, `declaration.json`) after `v2.44.0` was tagged. No scenario changes: the rules are restated, not changed.
+- **The 2.44.1 cycle opens.** `workspace`, `content`, `triggerBridge` and `uiPlugins` get v2 normative homes (RFC 0189), which changes the packed `@openwop/spec-artifacts` tree (`spec/v2/core/host-services.md`, `i18n.md`, `webhooks.md`, `packs.md`, `spec/v2/declaration.json`) after `v2.44.0` was tagged. No scenario changes: the rules are restated from the v1 text, none added or strengthened.
+- **Also in 2.44.1.** Homing `selfHostedRunner`, `subWorkflow`, `multiAgent`, `anonymousActor` and `heartbeat` (RFC 0189) changes the packed `@openwop/spec-artifacts` tree (`spec/v2/core/execution.md` new; `events.md`, `identity.md`, `overview.md`, `spec/v2/README.md`, `declaration.json`). No scenario changes: the rules are restated, not changed.
 - **Suite `2.44.1`**. `@openwop/spec-artifacts` moves in lockstep at the same exact pin.
 
 ## [2.44.0] — 2026-09-28 — three run-failure codes registered, a webhook retry bound hosts can advertise, and RFC 0219 Accepted
