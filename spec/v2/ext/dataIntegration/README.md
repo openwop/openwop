@@ -8,7 +8,7 @@
 | --- | --- |
 | **witness:** | `claims-check` |
 | **technical:** | `experimental` |
-| **adoption:** | `single-witness` |
+| **adoption:** | `none` |
 | **peer-dependency id** | `dataIntegration` |
 | **advertised as** | `extensions.<org>.data-integration` |
 | **declared facets** | none defined |

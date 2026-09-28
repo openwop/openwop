@@ -1,13 +1,13 @@
 # `chat` extension
 
-> **Status: Draft.**
+> **Status: Stable.**
 
 `chat` names a host service that posts messages and cards into a host-established chat session. It is a discovery-only reservation: v2 defines no portable operations or payload contract for it.
 
 | Field | Value |
 | --- | --- |
 | **witness:** | `claims-check` |
-| **technical:** | `experimental` |
+| **technical:** | `stable` |
 | **adoption:** | `single-witness` |
 | **peer-dependency id** | `chat` |
 | **advertised as** | `extensions.<org>.chat` |
