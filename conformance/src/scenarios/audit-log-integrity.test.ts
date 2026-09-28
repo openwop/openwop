@@ -58,16 +58,16 @@ const CADENCE = 'openwop.requirement.0224.checkpoint-cadence';
 
 /**
  * The gate, per major. Major 1: behaviorGate on the profile (unchanged). Major 2:
- * an absent family is `inapplicable`, recorded before any assertion.
+ * the family record or null. A null is recorded `inapplicable` by the caller
+ * before any assertion (`unclaimed()`).
  */
 async function gate(): Promise<AuditIntegrityCaps | null> {
   const caps = await auditIntegrityAdvert();
-  if (targetMajor() === 2) {
-    if (caps === null) softSkip('inapplicable', 'the host does not advertise the auditLogIntegrity family at major 2');
-    return caps;
-  }
+  if (targetMajor() === 2) return caps;
   return behaviorGate(AUDIT_PROFILE, caps !== null) ? caps : null;
 }
+
+const unclaimed = (): undefined => softSkip('inapplicable', `the host does not claim ${auditClaimName()} at major ${targetMajor()}`);
 
 function validateVerifyBody(body: unknown): { ok: boolean; errors: string } {
   if (targetMajor() === 2) return v2Validator('audit-verify-result')(body);
@@ -79,7 +79,7 @@ function validateVerifyBody(body: unknown): { ok: boolean; errors: string } {
 describe('audit-log-integrity: profile shape', () => {
   it('host that claims the profile advertises required capability fields', async () => {
     const integrity = await gate();
-    if (integrity === null) return;
+    if (integrity === null) return unclaimed();
 
     if (targetMajor() === 2) {
       const shape = v2RefValidator('capabilities.schema.json#/properties/auditLogIntegrity')(integrity);
@@ -93,24 +93,23 @@ describe('audit-log-integrity: profile shape', () => {
         'security-defaults.md §"Audit-log integrity"',
         'auditLogIntegrity.checkpointPublicKey MUST be an Ed25519 SubjectPublicKeyInfo, base64',
       )).toBe(true);
-      return;
+    } else {
+      expect(integrity.hashChain, req('openwop.it.audit-log-integrity.host-that-claims-the-profile-advertises-required-capability-fields',
+        'auth-profiles.md §"Audit-log integrity"',
+        "openwop-audit-log-integrity profile MUST advertise auditLogIntegrity.hashChain: true",
+      )).toBe(true);
+      expect(integrity.checkpointSignatureAlgorithm, req('openwop.it.audit-log-integrity.host-that-claims-the-profile-advertises-required-capability-fields',
+        'auth-profiles.md §"Audit-log integrity" §"Key management"',
+        'checkpointSignatureAlgorithm MUST be present (canonical: ed25519)',
+      )).toBeDefined();
+      expect(typeof integrity.checkpointPublicKey).toBe('string');
     }
-
-    expect(integrity.hashChain, req('openwop.it.audit-log-integrity.host-that-claims-the-profile-advertises-required-capability-fields', 
-      'auth-profiles.md §"Audit-log integrity"',
-      "openwop-audit-log-integrity profile MUST advertise auditLogIntegrity.hashChain: true",
-    )).toBe(true);
-    expect(integrity.checkpointSignatureAlgorithm, req('openwop.it.audit-log-integrity.host-that-claims-the-profile-advertises-required-capability-fields', 
-      'auth-profiles.md §"Audit-log integrity" §"Key management"',
-      'checkpointSignatureAlgorithm MUST be present (canonical: ed25519)',
-    )).toBeDefined();
-    expect(typeof integrity.checkpointPublicKey).toBe('string');
   });
 });
 
 describe('audit-log-integrity: verify endpoint returns chainValid', () => {
   it('GET /v1/audit/verify on a recent range reports chainValid: true', async () => {
-    if ((await gate()) === null) return;
+    if ((await gate()) === null) return unclaimed();
 
     const path = auditVerifyPath(0, 100);
     const verify = await driver.get(path);
@@ -163,7 +162,7 @@ describe('audit-log-integrity: verify endpoint returns chainValid', () => {
 describe('audit-log-integrity: checkpoints at the advertised cadence', () => {
   it('verify lists every checkpoint ascending, no more than checkpointIntervalEntries apart', async () => {
     const integrity = await gate();
-    if (integrity === null) return;
+    if (integrity === null) return unclaimed();
     const every = integrity.checkpointIntervalEntries;
     if (typeof every !== 'number' || !Number.isInteger(every) || every < 1) {
       // Required at major 2 (the shape leg owns that failure); optional at major 1.

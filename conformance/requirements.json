@@ -5617,7 +5617,7 @@
     {
       "id": "openwop.it.audit-log-integrity.get-v1-audit-verify-on-a-recent-range-reports-chainvalid-true",
       "file": "audit-log-integrity.test.ts",
-      "line": 112,
+      "line": 111,
       "title": "GET /v1/audit/verify on a recent range reports chainValid: true",
       "explicitId": "openwop.it.audit-log-integrity.get-v1-audit-verify-on-a-recent-range-reports-chainvalid-true",
       "citations": [
@@ -5644,7 +5644,7 @@
     {
       "id": "openwop.it.audit-log-integrity.verify-lists-every-checkpoint-ascending-no-more-than-checkpointintervalentries-a",
       "file": "audit-log-integrity.test.ts",
-      "line": 164,
+      "line": 163,
       "title": "verify lists every checkpoint ascending, no more than checkpointIntervalEntries apart",
       "explicitId": "openwop.requirement.0224.checkpoint-cadence",
       "citations": [
