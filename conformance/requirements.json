@@ -34246,7 +34246,7 @@
     {
       "id": "openwop.requirement.0215.no-head-of-line",
       "file": "v2-webhook-delivery-isolation.test.ts",
-      "line": 113,
+      "line": 119,
       "title": null,
       "explicitId": "openwop.requirement.0215.no-head-of-line",
       "citations": [
@@ -34260,11 +34260,6 @@
         },
         {
           "section": "runs.md §Create",
-          "requirement": null,
-          "interpolated": true
-        },
-        {
-          "section": "webhooks.md §Durability (RFC 0215 §A.1, §A.2)",
           "requirement": null,
           "interpolated": true
         },
