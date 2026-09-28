@@ -13477,6 +13477,23 @@
       ]
     },
     {
+      "id": "openwop.gap.0226.1",
+      "rfc": "0226",
+      "local": "G1",
+      "section": "§Unresolved questions",
+      "surface": "Whether `mcp_unreachable` (an MCP peer that cannot be reached) needs its own registered code.",
+      "witness": "unclassified",
+      "requirementId": null,
+      "disposition": "closed",
+      "target": null,
+      "sources": [
+        {
+          "file": "RFCS/registers/0226-shared-run-failure-codes.gaps.md",
+          "token": "G1"
+        }
+      ]
+    },
+    {
       "id": "openwop.gap.spec.a2a-integration.g1",
       "rfc": "0152",
       "local": "G1",
