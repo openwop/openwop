@@ -132,4 +132,4 @@ A host advertising `replay` MUST document retention for source snapshots, source
 
 See also: events.md, runs.md, persistence.md, security-defaults.md.
 
-*Sources: RFC 0036, RFC 0039, RFC 0041, RFC 0057, RFC 0104, RFC 0111, RFC 0140, RFC 0173, RFC 0176, RFC 0194.*
+*Sources: RFCs 0036, 0039, 0041, 0057, 0104, 0111, 0140, 0173, 0176, 0194.*

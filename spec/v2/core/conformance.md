@@ -145,4 +145,4 @@ This proves the arithmetic and that recovery ran once inside the bound. It does 
 
 An RFC whose acceptance criteria are corpus gates rather than host scenarios records the evidence label **corpus gate — no host tier** in its `Updated` line. For such an RFC the accepted-predicate check reads `(corpus)` rows from `evidence/corpus-ledger.json` and MUST NOT require a host bundle.
 
-*Sources: RFC 0158, RFC 0168, RFC 0212, RFC 0216.*
+*Sources: RFCs 0158, 0168, 0212, 0216.*

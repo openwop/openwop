@@ -142,4 +142,4 @@ Rows `C6.1`–`C6.9` are `spec/v1/migrations.json` entries.
 
 See also: identity.md, replay.md, webhooks.md, capabilities.md, conformance.md.
 
-*Sources: RFC 0150, RFC 0163, RFC 0164, RFC 0170, RFC 0173, RFC 0214, RFC 0218, RFC 0224.*
+*Sources: RFCs 0150, 0163, 0164, 0170, 0173, 0214, 0218, 0224.*

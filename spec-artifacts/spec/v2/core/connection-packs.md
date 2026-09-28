@@ -35,4 +35,4 @@ A host advertising `connections.packsSupported` MUST resolve a connector's `auth
 
 Both codes are in `spec/v2/errors.json`: `connection_provider_conflict` (two claimants for one bare id) and `connection_provider_unresolved` (no definition for the referenced id).
 
-*Sources: RFC 0095, RFC 0177.*
+*Sources: RFCs 0095, 0177.*

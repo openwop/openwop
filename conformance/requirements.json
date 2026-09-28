@@ -3,8 +3,8 @@
   "generatedFrom": "src/scenarios/*.test.ts",
   "counts": {
     "files": 645,
-    "tests": 2484,
-    "withStableId": 2484,
+    "tests": 2485,
+    "withStableId": 2485,
     "interpolatedTitles": 0,
     "explicitIds": 2367
   },
@@ -27806,7 +27806,7 @@
     {
       "id": "openwop.it.v2-approval-reject-disposition.a-rejected-gate-with-no-routing-edge-fails-the-run-with-approval-rejected",
       "file": "v2-approval-reject-disposition.test.ts",
-      "line": 119,
+      "line": 126,
       "title": "a rejected gate with no routing edge fails the run with approval_rejected",
       "explicitId": null,
       "citations": [
@@ -27829,7 +27829,7 @@
     {
       "id": "openwop.it.v2-approval-reject-disposition.interrupt-resolved-records-action-reject-and-decision-rejected",
       "file": "v2-approval-reject-disposition.test.ts",
-      "line": 130,
+      "line": 137,
       "title": "interrupt.resolved records action reject and decision rejected",
       "explicitId": null,
       "citations": [
@@ -27848,7 +27848,7 @@
     {
       "id": "openwop.it.v2-approval-reject-disposition.the-gate-node-fails-with-approval-rejected-not-retryable-and-run-failed-names-it",
       "file": "v2-approval-reject-disposition.test.ts",
-      "line": 143,
+      "line": 150,
       "title": "the gate node fails with approval_rejected, not retryable, and run.failed names it",
       "explicitId": null,
       "citations": [
@@ -27869,7 +27869,7 @@
     {
       "id": "openwop.it.v2-approval-reject-disposition.a-majority-reject-decides-the-quorum-gate-on-the-deciding-vote-and-fails-the-run",
       "file": "v2-approval-reject-disposition.test.ts",
-      "line": 156,
+      "line": 163,
       "title": "a majority reject decides the quorum gate on the deciding vote and fails the run with approval_rejected",
       "explicitId": null,
       "citations": [
@@ -27895,7 +27895,7 @@
     {
       "id": "openwop.it.v2-approval-reject-disposition.a-rejected-gate-routed-over-an-any-failed-edge-fails-as-a-node-its-all-success-s",
       "file": "v2-approval-reject-disposition.test.ts",
-      "line": 179,
+      "line": 186,
       "title": "a rejected gate routed over an any_failed edge fails as a node, its all_success sibling never runs, and the run completes",
       "explicitId": null,
       "citations": [
@@ -27921,7 +27921,7 @@
     {
       "id": "openwop.it.v2-approval-reject-disposition.an-unresolved-gate-past-its-timeoutms-with-no-ontimeout-is-resolved-rejected-by",
       "file": "v2-approval-reject-disposition.test.ts",
-      "line": 198,
+      "line": 205,
       "title": "an unresolved gate past its timeoutMs with no onTimeout is resolved rejected by the host and fails the run naming the gate",
       "explicitId": null,
       "citations": [
@@ -27942,7 +27942,7 @@
     {
       "id": "openwop.it.v2-approval-reject-disposition.a-gate-whose-ontimeout-is-approve-still-resolves-rejected-on-timeout-and-fails-t",
       "file": "v2-approval-reject-disposition.test.ts",
-      "line": 217,
+      "line": 224,
       "title": "a gate whose onTimeout is approve still resolves rejected on timeout and fails the run: a timeout never grants",
       "explicitId": null,
       "citations": [
@@ -27958,6 +27958,32 @@
           "section": "spec/v2/core/interrupt.md §Rejection (RFC 0223)",
           "requirement": null,
           "interpolated": true
+        }
+      ]
+    },
+    {
+      "id": "openwop.it.v2-approval-reject-disposition.a-rejected-gate-looped-back-to-itself-is-asked-again-under-a-new-key-and-the-fir",
+      "file": "v2-approval-reject-disposition.test.ts",
+      "line": 242,
+      "title": "a rejected gate looped back to itself is asked again under a new key, and the first rejection is not replayed",
+      "explicitId": null,
+      "citations": [
+        {
+          "section": "spec/v2/core/interrupt.md §Re-entry and resume values",
+          "requirement": "the second visit of the gate MUST raise a new interrupt.requested"
+        },
+        {
+          "section": "spec/v2/core/interrupt.md §Re-entry and resume values",
+          "requirement": null,
+          "interpolated": true
+        },
+        {
+          "section": "spec/v2/core/interrupt.md §Re-entry and resume values",
+          "requirement": "the second visit MUST wait for a new decision: the run is waiting-approval again"
+        },
+        {
+          "section": "spec/v2/core/interrupt.md §Re-entry and resume values",
+          "requirement": "an earlier visit's resumeValue MUST NOT be returned: only the one caller resolve is recorded"
         }
       ]
     },

@@ -27,7 +27,7 @@
     },
     "key": {
       "type": "string",
-      "description": "Deterministic key used to short-circuit on re-entry after process death. If two interrupt() calls in the same run emit the same key, the second returns the cached result of the first. Recommended: ${runId}:${nodeId}:${interruptCount}.",
+      "description": "The deterministic re-entry key of ONE invocation of an interrupt (interrupt.md §Re-entry and resume values; corrected 2026-09-28 by openwop#1697). A host MUST derive it from at least the run, the node and the node's visit index; the spelling is host-defined. Recommended: ${runId}:${nodeId}:${interruptCount}, where interruptCount is the visit index — the number of interrupts this node raised in this run whose resolution was consumed before the current execution of the node began (plus an ordinal when one execution raises several). A replay or recovery of the same execution re-derives the same key and returns the recorded resume value; a later execution of the node (a loop back over an edge) derives a new key and raises a new interrupt.requested.",
       "minLength": 1,
       "maxLength": 256
     },
