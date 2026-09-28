@@ -1,25 +1,16 @@
 /**
  * The verdict of RFC 0215's `no-head-of-line` leg, as a pure function of what
- * the leg observed (suite 2.44.2), so the rule can be tested without a host.
+ * the leg observed (suite 2.44.2), so the rule and its message can be tested
+ * without a host.
  *
- * 2.44.2 fixes two defects that MyndHyve's 2.44.x cuts surfaced:
- *
- * 1. **A conviction without the contention it names.** The last branch failed
- *    the row as "a bounded dispatcher below the floor" whenever fewer than
- *    `floor` held attempts had arrived by the time the run was terminal. On a
- *    host whose `run.started` fan-out arrived late, that convicted a healthy
- *    attempt that started while every held attempt that HAD arrived was still
- *    open and none had finished (MyndHyve `00821-qec`: 0 held attempts, then 2
- *    at terminal and 7 later, the healthy attempt delivered with 7 open). §A
- *    forbids an attempt waiting for another subscription's attempt to FINISH; no
- *    attempt had finished, so there was nothing it could have waited for. The
- *    contention was never established, so the row is unjudged, not failed. A
- *    bounded pool still fails: its healthy attempt starts only after a held
- *    attempt closes, or never while they stay open.
- *
- * 2. **A detail string that mixed two sampling times.** It read "2 held
- *    attempt(s) arrived (at most 7 open at once)": the 2 was sampled at
- *    terminal, the 7 at the verdict. The detail now names each time.
+ * 2.44.2 changes the MESSAGE, not the verdict. The detail read "2 held
+ * attempt(s) arrived (at most 7 open at once)": the 2 was sampled when the run
+ * was seen terminal, the 7 at the verdict, and the failure named "a bounded
+ * dispatcher" whatever the cause. On MyndHyve `00821-qec` the cause was a
+ * starved `run.started` fan-out (myndhyve#560), and the mixed sampling hid it.
+ * The detail now names the time of each count, and the failure states only
+ * what was observed. The row still fails whenever fewer than the floor were
+ * outstanding at once when the healthy delivery fell due.
  */
 
 export interface IsolationObservation {
@@ -50,8 +41,7 @@ export type IsolationVerdict =
   | { readonly kind: 'pass'; readonly detail: string }
   | { readonly kind: 'fail'; readonly message: string; readonly detail: string }
   /** Unjudged, after asserting `peakOpen >= floor` (which fails a pool below the floor). */
-  | { readonly kind: 'blocked-after-peak'; readonly message: string; readonly detail: string }
-  | { readonly kind: 'blocked'; readonly message: string; readonly detail: string };
+  | { readonly kind: 'blocked-after-peak'; readonly message: string; readonly detail: string };
 
 /** What the leg saw, each count against the time it was sampled. */
 export function isolationDetail(o: IsolationObservation): string {
@@ -80,18 +70,9 @@ export function isolationVerdict(o: IsolationObservation): IsolationVerdict {
     const released = Number.isFinite(o.earliestClose) ? `${o.terminalAt - o.earliestClose}ms ` : '';
     return { kind: 'blocked-after-peak', message: `unjudged: ${F} held attempts were open at once, but the host closed held attempts ${released}before the run was terminal (its delivery timeout is shorter than this leg's ${o.delayMs}ms delay), so ${F} attempts were not outstanding when the healthy delivery fell due`, detail };
   }
-  if (o.healthyAt !== null && !(o.earliestClose < o.healthyAt)) {
-    // Fewer than F held attempts had arrived when the healthy delivery fell
-    // due, and it started before any held attempt finished: it cannot have
-    // waited for one. The held fan-out was late, so the contention the floor
-    // names never existed when it mattered.
-    return { kind: 'blocked', message: `unjudged: only ${o.arrivedAtTerminal} of the ${F} held attempts had arrived when the healthy delivery fell due, and the healthy attempt started before any held attempt finished, so it did not wait for one; the held run.started deliveries arrived late, and the contention §A.2 names was not established`, detail };
-  }
-  return {
-    kind: 'fail',
-    message: o.healthyAt === null
-      ? `the host never had ${F} subscriptions' attempts outstanding at once, and the healthy attempt did not start within ${o.windowMs}ms while the held attempts stayed open`
-      : `the host never had ${F} subscriptions' attempts outstanding at once, and the healthy attempt started only after a held attempt finished`,
-    detail,
-  };
+  // Fewer than F held attempts were outstanding when the healthy delivery
+  // fell due. The message states that and no cause: a bounded pool, a serial
+  // dispatcher and a late fan-out all land here, and the detail's sampling
+  // times are what tell them apart.
+  return { kind: 'fail', message: `a host MUST sustain ${F} subscriptions' attempts outstanding at once; only ${o.openAtTerminal} were outstanding when the healthy delivery fell due, and ${o.peakOpen} at most by the verdict`, detail };
 }

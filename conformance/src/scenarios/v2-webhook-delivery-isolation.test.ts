@@ -20,17 +20,13 @@
  *     attempts due at t0; `run.completed` makes the healthy one due at
  *     t0 + DELAY_MS, by which time 8 attempts are outstanding.
  *
- * Verdicts, each on a positive observation:
+ * Verdicts, each on a positive observation (the rule and its message are in
+ * `lib/delivery-isolation-verdict.ts`, with self-tests):
  *   - pass — the healthy attempt ARRIVED while all 8 held attempts were open.
  *   - fail — the healthy attempt arrived only once fewer than 8 were open (the
  *     host released one to make room), or never within the window, AND the held
  *     attempts had stayed open until the run was terminal: the contention the
  *     floor names existed when the healthy delivery fell due, and it waited.
- *   - blocked (unjudged, suite 2.44.2) — fewer than 8 held attempts had arrived
- *     when the healthy delivery fell due, and the healthy attempt started before
- *     any held attempt finished: it waited for nothing, and the contention was
- *     never established (a late `run.started` fan-out). The rule and its tests
- *     are in `lib/delivery-isolation-verdict.ts`.
  *   - blocked (unjudged) — the host had all 8 held attempts open at once, but
  *     its own delivery timeout closed them before the run was terminal.
  *     Contention was not sustained when the healthy delivery fell due, so this
@@ -189,7 +185,7 @@ describe('RFC 0215 §A — one subscription\'s receiver does not hold another\'s
     await waitFor(() => healthyAt !== null, WINDOW_MS);
     const earliestClose = Math.min(...[...held.values()].map((h) => h.closedAt ?? Infinity));
 
-    if (healthyAt === null && held.size === 0) {
+    if (healthyAt === null && arrivedAtTerminal === 0) {
       if (absenceIsUnmeasured(rx)) return blockedDespiteAssertions(noDeliveryCause(rx, 'webhook attempt'));
       return blockedDespiteAssertions(`no attempt for any of the ${FLOOR + 1} subscriptions arrived — ${noDeliveryCause(rx, 'webhook attempt')}`);
     }
@@ -197,7 +193,6 @@ describe('RFC 0215 §A — one subscription\'s receiver does not hold another\'s
       floor: FLOOR, terminalAt, healthyAt, openAtHealthy, arrivedAtTerminal, openAtTerminal,
       arrivedByVerdict: held.size, peakOpen, earliestClose, windowMs: WINDOW_MS, delayMs: DELAY_MS,
     });
-    if (v.kind === 'blocked') return blockedDespiteAssertions(`${v.message} — ${v.detail}`);
     if (v.kind === 'blocked-after-peak') {
       // Unfailable-leg audit (2026-09-26): a serial dispatcher (pool of 1)
       // with a sub-2s delivery timeout lands here; below FLOOR at once it
