@@ -154,4 +154,5 @@ to land — and until then the zero is visibly a blocked obligation rather than 
 | 0219 | a client announces the protocol version it implements in `OpenWOP-Client-Version` (additive; bootstrap waiver, not a §A.6 override) | in-scope-pending-assessment | — | — | `not-reviewed` |
 | 0220 | an extension family graduates on evidence a script can read (additive + Class 3; STEWARD OVERRIDE of RFC 0147 §A.6, also covering the first ext promotion window) | in-scope-pending-assessment | — | — | `not-reviewed` |
 | 0221 | a webhook secret the host generates is returned once (additive; STEWARD OVERRIDE of RFC 0147 §A.6) | in-scope-pending-assessment | — | — | `not-reviewed` |
+| 0222 | v2 registry operations — lifecycle by publication, key rotation, and the checks a registry refuses on (additive; bootstrap waiver, not a §A.6 override) | in-scope-pending-assessment | — | — | `not-reviewed` |
 | 0223 | a rejected approval gate fails closed, and the failure is routable (additive; STEWARD OVERRIDE of RFC 0147 §A.6) | in-scope-pending-assessment | — | — | `not-reviewed` |
