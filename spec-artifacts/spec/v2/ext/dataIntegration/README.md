@@ -1,14 +1,14 @@
 # `dataIntegration` extension
 
-> **Status: Draft.**
+> **Status: Stable.**
 
 `dataIntegration` names typed data-source operations: fetches from configured external sources, transforms and run-scoped variables. It is a discovery-only reservation: v2 defines no portable operations or payload contract for it.
 
 | Field | Value |
 | --- | --- |
 | **witness:** | `claims-check` |
-| **technical:** | `experimental` |
-| **adoption:** | `none` |
+| **technical:** | `stable` |
+| **adoption:** | `single-witness` |
 | **peer-dependency id** | `dataIntegration` |
 | **advertised as** | `extensions.<org>.data-integration` |
 | **declared facets** | none defined |

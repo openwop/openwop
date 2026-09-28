@@ -151,9 +151,13 @@ function siblingVersionRows() {
   const rows = [];
   const s = v['openwop-sdks'];
   if (s) {
-    rows.push({ artifact: 'TypeScript SDK `@openwop/openwop`', version: s.typescript ?? 'unrecorded', source: 'openwop-sdks `sdk/typescript/package.json` (via `evidence/cross-repo-manifests.json`)', cadence: 'tracks the spec major (PUBLISHING.md)' });
-    rows.push({ artifact: 'Python SDK `openwop-client`', version: s.python ?? 'unrecorded', source: 'openwop-sdks `sdk/python/pyproject.toml`', cadence: 'as above' });
-    rows.push({ artifact: 'Go SDK `github.com/openwop/openwop-sdks/go`', version: s.go ?? 'unrecorded', source: 'openwop-sdks `go/CHANGELOG.md` head (tag-versioned; no version file)', cadence: 'as above' });
+    // v2 is the current major: its SDK line leads; 1.x is the maintained parallel track.
+    rows.push({ artifact: 'TypeScript SDK `@openwop/openwop` (2.x, current)', version: s.typescriptV2 ?? 'unrecorded', source: 'openwop-sdks `sdk/typescript-v2/package.json` (via `evidence/cross-repo-manifests.json`)', cadence: 'v2-only; npm `latest`' });
+    rows.push({ artifact: 'Python SDK `openwop-client` (2.x, current)', version: s.pythonV2 ?? 'unrecorded', source: 'openwop-sdks `sdk/python-v2/pyproject.toml`', cadence: 'v2-only; `openwop-client>=2,<3`' });
+    rows.push({ artifact: 'Go SDK `github.com/openwop/openwop-sdks/go/v2` (2.x, current)', version: s.goV2 ?? 'unrecorded', source: 'openwop-sdks `go/v2/CHANGELOG.md` head (tag-versioned `go/v2.Y.Z`; no version file)', cadence: 'v2-only' });
+    rows.push({ artifact: 'TypeScript SDK `@openwop/openwop` (1.x)', version: s.typescript ?? 'unrecorded', source: 'openwop-sdks `sdk/typescript/package.json`', cadence: 'maintained parallel line through the v1 overlap; npm `latest-1`' });
+    rows.push({ artifact: 'Python SDK `openwop-client` (1.x)', version: s.python ?? 'unrecorded', source: 'openwop-sdks `sdk/python/pyproject.toml`', cadence: 'as above; `openwop-client<2`' });
+    rows.push({ artifact: 'Go SDK `github.com/openwop/openwop-sdks/go` (1.x)', version: s.go ?? 'unrecorded', source: 'openwop-sdks `go/CHANGELOG.md` head (tag-versioned `go/v1.Y.Z`; no version file)', cadence: 'as above' });
     rows.push({ artifact: 'openwop-sdks corpus pin', version: s.corpusTag ?? 'unpinned', source: 'openwop-sdks `CORPUS_TAG`', cadence: 'bumped only by a re-vendor PR (RFC 0176 §E.1)' });
   }
   const c = v['openwop-cli'];
