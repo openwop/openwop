@@ -8,7 +8,7 @@
 | --- | --- |
 | **witness:** | `claims-check` |
 | **technical:** | `stable` |
-| **adoption:** | `single-witness` |
+| **adoption:** | `multi-witness` |
 | **peer-dependency id** | `knowledge` |
 | **advertised as** | `extensions.<org>.knowledge` |
 | **declared facets** | none defined |
