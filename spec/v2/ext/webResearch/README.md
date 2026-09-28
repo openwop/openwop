@@ -1,13 +1,13 @@
 # `webResearch` extension
 
-> **Status: Draft.**
+> **Status: Stable.**
 
 `webResearch` names search, fetch and research orchestration through the host's search adapter. It is a discovery-only reservation: v2 defines no portable operations or payload contract for it.
 
 | Field | Value |
 | --- | --- |
 | **witness:** | `claims-check` |
-| **technical:** | `experimental` |
+| **technical:** | `stable` |
 | **adoption:** | `single-witness` |
 | **peer-dependency id** | `webResearch` |
 | **advertised as** | `extensions.<org>.web-research` |

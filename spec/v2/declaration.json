@@ -1762,7 +1762,7 @@
       "extensionName": "rest-transport",
       "witness": "witnessable-gated",
       "maturity": {
-        "technical": "experimental",
+        "technical": "stable",
         "adoption": "single-witness"
       },
       "facets": [
@@ -1804,7 +1804,7 @@
       "witness": "claims-check",
       "maturity": {
         "technical": "experimental",
-        "adoption": "single-witness"
+        "adoption": "none"
       },
       "facets": [],
       "floorScenarios": [],
@@ -1822,7 +1822,7 @@
       "witness": "claims-check",
       "maturity": {
         "technical": "experimental",
-        "adoption": "single-witness"
+        "adoption": "none"
       },
       "facets": [],
       "floorScenarios": [],
@@ -1839,7 +1839,7 @@
       "extensionName": "chat",
       "witness": "claims-check",
       "maturity": {
-        "technical": "experimental",
+        "technical": "stable",
         "adoption": "single-witness"
       },
       "facets": [],
@@ -1858,7 +1858,7 @@
       "witness": "claims-check",
       "maturity": {
         "technical": "experimental",
-        "adoption": "single-witness"
+        "adoption": "none"
       },
       "facets": [],
       "floorScenarios": [],
@@ -1876,7 +1876,7 @@
       "witness": "claims-check",
       "maturity": {
         "technical": "experimental",
-        "adoption": "single-witness"
+        "adoption": "none"
       },
       "facets": [],
       "floorScenarios": [],
@@ -1893,7 +1893,7 @@
       "extensionName": "entities",
       "witness": "claims-check",
       "maturity": {
-        "technical": "experimental",
+        "technical": "stable",
         "adoption": "single-witness"
       },
       "facets": [],
@@ -1911,7 +1911,7 @@
       "extensionName": "kanban",
       "witness": "claims-check",
       "maturity": {
-        "technical": "experimental",
+        "technical": "stable",
         "adoption": "single-witness"
       },
       "facets": [],
@@ -1929,7 +1929,7 @@
       "extensionName": "knowledge",
       "witness": "claims-check",
       "maturity": {
-        "technical": "experimental",
+        "technical": "stable",
         "adoption": "single-witness"
       },
       "facets": [],
@@ -1948,7 +1948,7 @@
       "witness": "claims-check",
       "maturity": {
         "technical": "experimental",
-        "adoption": "single-witness"
+        "adoption": "none"
       },
       "facets": [],
       "floorScenarios": [],
@@ -1966,7 +1966,7 @@
       "witness": "claims-check",
       "maturity": {
         "technical": "experimental",
-        "adoption": "single-witness"
+        "adoption": "none"
       },
       "facets": [],
       "floorScenarios": [],
@@ -1983,7 +1983,7 @@
       "extensionName": "web-research",
       "witness": "claims-check",
       "maturity": {
-        "technical": "experimental",
+        "technical": "stable",
         "adoption": "single-witness"
       },
       "facets": [],
