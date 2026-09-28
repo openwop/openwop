@@ -1,7 +1,7 @@
 /**
  * RFC 0222 — v2 registry lifecycle and signing keys, witnessed against a
  * registry (`spec/v2/core/packs.md` §"Version manifests" and §Signing; suite
- * 2.42.10, target major 2).
+ * 2.43.0, target major 2).
  *
  * This scenario reads a REGISTRY, not the host under test. It runs only when
  * one is named: `OPENWOP_REGISTRY_URL=<origin>` (a mirror, a vendor registry,

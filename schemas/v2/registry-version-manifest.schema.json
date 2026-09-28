@@ -253,7 +253,7 @@
     "supersededBy": {
       "type": "string",
       "maxLength": 256,
-      "description": "Optional pointer to the version (or `<name>@<version>`) that replaces this one. A consumer that installs a deprecated version SHOULD name it in its warning (spec/v2/core/packs.md §\"Version manifests\")."
+      "description": "Optional pointer to the version (or `<name>@<version>`) that replaces this one. Display only: a consumer that refuses or warns about a deprecated version can name it (spec/v2/core/packs.md §\"Version manifests\")."
     },
     "advisoryUrl": {
       "type": "string",

@@ -13120,6 +13120,159 @@
       ]
     },
     {
+      "id": "openwop.gap.0223.1",
+      "rfc": "0223",
+      "local": "G1",
+      "section": "§Conformance",
+      "surface": "The routed case (a rejected gate followed over an `all_complete` or `any_failed` edge) has no witness: no registered fixture has a gate with an outgoing edge, and widening `conformance-approval` would force every host to re-register it.",
+      "witness": "unclassified",
+      "requirementId": null,
+      "disposition": "transferred",
+      "target": "openwop#1700",
+      "sources": [
+        {
+          "file": "RFCS/registers/0223-approval-reject-disposition.gaps.md",
+          "token": "G1"
+        }
+      ]
+    },
+    {
+      "id": "openwop.gap.0223.2",
+      "rfc": "0223",
+      "local": "G2",
+      "section": "§Conformance",
+      "surface": "The timeout disposition has no witness: no registered fixture carries a gate with a short `timeoutMs`, and the suite cannot make a host's timer fire.",
+      "witness": "unclassified",
+      "requirementId": null,
+      "disposition": "transferred",
+      "target": "openwop#1700",
+      "sources": [
+        {
+          "file": "RFCS/registers/0223-approval-reject-disposition.gaps.md",
+          "token": "G2"
+        }
+      ]
+    },
+    {
+      "id": "openwop.gap.0223.3",
+      "rfc": "0223",
+      "local": "G3",
+      "section": "§Implementation notes",
+      "surface": "The v2 reference host does not record `action` on `interrupt.resolved`, does not emit `approval.rejected`, fails the run directly rather than through the scheduler, and has no timeout disposition.",
+      "witness": "unclassified",
+      "requirementId": null,
+      "disposition": "externally-gated",
+      "target": "openwop-examples-v2-reference-followup",
+      "sources": [
+        {
+          "file": "RFCS/registers/0223-approval-reject-disposition.gaps.md",
+          "token": "G3"
+        }
+      ]
+    },
+    {
+      "id": "openwop.gap.0223.4",
+      "rfc": "0223",
+      "local": "G4",
+      "section": "§Implementation notes",
+      "surface": "openwop-app records no `action`, emits no `node.failed`, and sets no `failedNodeId` on either reject path.",
+      "witness": "unclassified",
+      "requirementId": null,
+      "disposition": "externally-gated",
+      "target": "openwop-app-followup",
+      "sources": [
+        {
+          "file": "RFCS/registers/0223-approval-reject-disposition.gaps.md",
+          "token": "G4"
+        }
+      ]
+    },
+    {
+      "id": "openwop.gap.0223.5",
+      "rfc": "0223",
+      "local": "G5",
+      "section": "§Implementation notes",
+      "surface": "MyndHyve fails the gate with the unregistered `APPROVAL_REJECTED`.",
+      "witness": "unclassified",
+      "requirementId": null,
+      "disposition": "externally-gated",
+      "target": "myndhyve-next-cut",
+      "sources": [
+        {
+          "file": "RFCS/registers/0223-approval-reject-disposition.gaps.md",
+          "token": "G5"
+        }
+      ]
+    },
+    {
+      "id": "openwop.gap.0223.6",
+      "rfc": "0223",
+      "local": "G6",
+      "section": "§Unresolved questions",
+      "surface": "The `majority` threshold is measured on one host (openwop-app `reviewDecisionLedger.ts:209`, \"more than half\").",
+      "witness": "unclassified",
+      "requirementId": null,
+      "disposition": "transferred",
+      "target": "openwop#1699",
+      "sources": [
+        {
+          "file": "RFCS/registers/0223-approval-reject-disposition.gaps.md",
+          "token": "G6"
+        }
+      ]
+    },
+    {
+      "id": "openwop.gap.0223.7",
+      "rfc": "0223",
+      "local": "G7",
+      "section": "§Unresolved questions",
+      "surface": "`onTimeout: approve` re-legalises the fail-open timeout RFC 0093 ruled non-conformant; this RFC defines only the absent and `reject` cases.",
+      "witness": "unclassified",
+      "requirementId": null,
+      "disposition": "transferred",
+      "target": "openwop#1696",
+      "sources": [
+        {
+          "file": "RFCS/registers/0223-approval-reject-disposition.gaps.md",
+          "token": "G7"
+        }
+      ]
+    },
+    {
+      "id": "openwop.gap.0223.8",
+      "rfc": "0223",
+      "local": "G8",
+      "section": "§A",
+      "surface": "A gate re-entered over a reject loop collides with the one-interrupt-per-key rule (`interrupt.md` §Re-entry); v2 has no per-iteration key derivation.",
+      "witness": "unclassified",
+      "requirementId": null,
+      "disposition": "transferred",
+      "target": "openwop#1697",
+      "sources": [
+        {
+          "file": "RFCS/registers/0223-approval-reject-disposition.gaps.md",
+          "token": "G8"
+        }
+      ]
+    },
+    {
+      "id": "openwop.gap.0223.9",
+      "rfc": "0223",
+      "local": "G9",
+      "section": "§Motivation",
+      "surface": "Whether a run-failure code on `run.failed` / `node.failed` must be registered: `errors.md` scopes its MUST to error responses, overview §0 to every producer.",
+      "witness": "unclassified",
+      "requirementId": null,
+      "disposition": "transferred",
+      "target": "openwop#1698",
+      "sources": [
+        {
+          "file": "RFCS/registers/0223-approval-reject-disposition.gaps.md",
+          "token": "G9"
+        }
+      ]
+    },
+    {
       "id": "openwop.gap.spec.a2a-integration.g1",
       "rfc": "0152",
       "local": "G1",

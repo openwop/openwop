@@ -2,7 +2,7 @@
   "$schema": "https://openwop.dev/spec/v2/errors.schema.json",
   "$comment": "RFC 0171 §B.1 — the error registry: one row per code {code, meaning?, httpStatus, retriable, details, since, deprecated?}. schemas/v2/error-envelope.schema.json is GENERATED from it (scripts/generate-error-envelope.mjs). Retry timing lives in Retry-After only (§B.2). statusSource records whether the status was stated in v1 prose, a v1 convention, or decided here. details is null until a code's details schema is registered (a null row means details is an open object for that code — closure over details is the RFC 0171 Phase 3 follow-up G-row).",
   "version": "2.0",
-  "updated": "2026-09-27",
+  "updated": "2026-09-28",
   "vendorCodePattern": "^(?!openwop\\.)[a-z][a-z0-9]*(-[a-z0-9]+)*\\.[a-z][a-z0-9_]*$",
   "rows": [
     {
@@ -838,6 +838,16 @@
       "details": null,
       "since": "2.0",
       "source": "spec/v2/core/errors.md §The envelope — a request body whose Content-Type the host does not accept (RFC 9110 §15.5.16); registered 2026-09-05 because both production hosts had to invent it"
+    },
+    {
+      "code": "approval_rejected",
+      "meaning": "An approval gate resolved rejected (a decision, a quorum or a timeout) and no edge routed the failure, so the node and the run failed.",
+      "httpStatus": 422,
+      "statusSource": "v2 decision",
+      "retriable": false,
+      "details": null,
+      "since": "2.43",
+      "source": "RFC 0223; spec/v2/core/interrupt.md §Rejection"
     },
     {
       "code": "capability_not_provided",

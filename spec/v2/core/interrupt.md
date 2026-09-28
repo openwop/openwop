@@ -42,7 +42,7 @@ Per-kind rules:
 - An in-memory cache MAY serve in-process replays but MUST NOT replace the event log for cross-process replays.
 - A host MUST validate the resume value against `resumeSchema` when one is declared, and MUST refuse a failing value with `400 validation_error`.
 
-`timeoutMs`, when set, is the interrupt's own deadline.
+`timeoutMs`, when set, is the interrupt's own deadline. What an approval gate does when it elapses is §Rejection.
 
 ## Events
 
@@ -113,6 +113,17 @@ The token grammar and the `interrupt.tokenAlgs[]` / `kid` check are [identity.md
 - `requiredApprovals` sets the quorum (default 1). `rejectionPolicy` is `single-veto` (default) or `majority`.
 - When `overrideBypassesQuorum` is `true`, a configured override principal MAY release the gate alone; otherwise its vote counts once.
 
+### Rejection
+
+A `reject` exits the suspend. The host MUST record `action: "reject"` and `decision: "rejected"` on `interrupt.resolved`, and SHOULD also emit `approval.rejected`. The resume value is returned to the node that raised the interrupt (§Re-entry and resume values).
+
+- A node that does not turn the rejection into an output MUST fail with `approval_rejected` ([errors.md](errors.md)) and `retryable: false` on the `node.failed` error, and MUST NOT be retried.
+- A rejected gate is a failed source. It MUST NOT satisfy an `all_success`, `any_success` or `none_failed` edge. The run continues past it only over an edge whose `triggerRule` admits a failed source (`all_complete` or `any_failed`).
+- When no such edge exists, the run MUST terminate `failed` with `run.failed.error.code` `approval_rejected` and `failedNodeId` naming the gate.
+- The gate resolves rejected on one eligible `reject` under `single-veto`, or when rejects exceed half of `requiredApprovals` under `majority`. A vote that does not decide the gate MUST NOT emit `interrupt.resolved`.
+- When a non-zero `timeoutMs` elapses with no resolution and `onTimeout` is absent or `reject`, the host MUST resolve the gate rejected, recording `action: "timeout"`, `decision: "rejected"` and `reason: "timeout"`, and MUST apply the rules above. A host MUST NOT accept `timeout` on a resume request.
+- On replay the failure MUST be derived from the recorded `interrupt.resolved`, never re-decided.
+
 ## Approver enforcement
 
 Enforcement is an obligation of the fields, not a discovery flag. The facet `spec/v2/facets/interrupt.schema.json` carries `tokenAlgs[]` (REQUIRED) and `refKinds[]` ⊆ `principal`, `group`, `role`.
@@ -131,4 +142,4 @@ Refs are opaque to the engine; the host resolves them against its own identity m
 
 The v1 interrupt-token drain is [identity.md](identity.md) §4.
 
-*Sources: RFC 0170, RFC 0171, RFC 0173, RFC 0187, RFC 0196.*
+*Sources: RFC 0170, RFC 0171, RFC 0173, RFC 0187, RFC 0196, RFC 0223.*

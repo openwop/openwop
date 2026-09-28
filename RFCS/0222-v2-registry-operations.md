@@ -8,7 +8,7 @@
 | **Author(s)**     | David Tufts (@davidscotttufts)                                  |
 | **Created**       | 2026-09-28                                                      |
 | **Updated**       | 2026-09-28 — filed and moved `Draft → Active` in the filing PR. **Comment window waived** (7-day) by the steward under `GOVERNANCE.md` §"Sole-steward operation", logged in `MAINTAINERS.md` §"Bootstrap-phase RFC waivers". RFC 0147 §A.6 does not apply: registry lifecycle is not replay, an external effect or certification, and the signing-key rules neither widen nor narrow who may sign a namespace (`packs.md` §Signing already requires the `permittedNamespaces` check). The evidence gate is not waived. |
-| **Affects**       | `spec/v2/core/packs.md` §Signing (the key list), §"Version manifests" (deprecate and yank), new §Submissions · `schemas/v2/registry-version-manifest.schema.json` `yanked` and `supersededBy` descriptions · `docs/runbooks/PACK-LIFECYCLE.md` · conformance: `v2-registry-lifecycle.test.ts` (suite 2.42.10) · openwop-registry: `build-index.mjs --tree v2`, `writeApi.publishUrl` |
+| **Affects**       | `spec/v2/core/packs.md` §Signing (the key list), §"Version manifests" (deprecate and yank), a submission sentence · `schemas/v2/registry-version-manifest.schema.json` `yanked` and `supersededBy` descriptions · `docs/runbooks/PACK-LIFECYCLE.md` · conformance: `v2-registry-lifecycle.test.ts` (suite 2.43.0) · openwop-registry: `build-index.mjs --tree v2`, `writeApi.publishUrl` |
 | **Compatibility** | `additive` — the rules restate for v2 what `spec/v1/registry-operations.md` required, filtered to what the static tree can do. No schema shape, error code, status or endpoint changes |
 | **Supersedes**    | —                                                               |
 | **Superseded by** | —                                                               |
@@ -41,16 +41,18 @@ Measured on 2026-09-28 against openwop-registry `origin/main` (`4c5de1f`) and th
 
 `spec/v2/core/packs.md` §"Version manifests":
 
-> There are no lifecycle endpoints: `writeApi` in `.well-known/openwop-registry.json` says how to submit, and a lifecycle change republishes the version manifest. These flags sit outside the signature, which covers only `pack.json`.
+> Lifecycle flags sit outside the signature; changing one republishes the version manifest.
+
+The registry's `writeApi` (`.well-known/openwop-registry.json`) says how a submission is made; the protocol names no endpoint for it.
 
 Not carried from the earlier major: the `deprecate`, `yank` and `keychain` endpoints and their scopes (`packs:yank`, `packs:yank-revert`), the `keychain` document with `validFrom` / `validUntil` / `rotationProof`, and the 72-hour unpublish window. A registry with a write API MAY still offer them; the protocol names none.
 
 ### §B. Deprecate and yank
 
-> - **Deprecated.** `versionDeprecated: true`, optionally with `deprecationReason` and `supersededBy`. It stays served; a consumer MAY refuse to install it, and SHOULD warn with both values when it does not.
-> - **Yanked.** `yanked: true`, optionally with `yankedReason`. The registry MUST keep serving its manifest, tarball and signature, and its pack index MUST NOT name it `latest` while any version is not yanked.
-> - A consumer resolving a range MUST exclude yanked versions. An exact pin MAY resolve one.
-> - A version that a registry security advisory lists in `affected[]` MUST be yanked.
+> - `versionDeprecated: true`: still served; a consumer MAY refuse to install it.
+> - `yanked: true`: its manifest, tarball and signature stay served, and the pack index MUST NOT name it `latest` while an unyanked version exists. A range MUST skip it; a pin MAY resolve it. Advisory-listed versions MUST be yanked.
+
+"Advisory-listed" means named by an `affected[]` range in the registry's security-advisory feed (`schemas/v2/security-advisory.schema.json`). `deprecationReason`, `supersededBy` and `yankedReason` remain optional display fields.
 
 Where each rule came from:
 
@@ -58,23 +60,23 @@ Where each rule came from:
 - **Not `latest`:** the earlier "Effects" 3 (yanked versions leave range resolution) applied to the one resolution the registry itself performs. openwop-registry's `build-index.mjs --tree v2` now implements it; the v1 tree is frozen and keeps highest-semver.
 - **Range vs pin:** the earlier "Yank consumer semantics" — a pin is contractual, a range skips the version.
 - **Advisory → yanked:** `check-advisories.mjs`, which already fails the registry gate when an advisory's `affected[]` range matches an unyanked version, on both trees.
-- **Deprecation warning:** the earlier "Deprecation consumer semantics". It was a SHOULD-warn whose warning MUST carry the reason; v2 keeps one SHOULD.
+- **Deprecation:** unchanged from the existing v2 rule (still served, a consumer MAY refuse). The earlier SHOULD-warn is not carried: a warning is operator-facing, has no wire form, and the core word budget had no room for an unwitnessable SHOULD.
 
 ### §C. Signing keys
 
 `spec/v2/core/packs.md` §Signing:
 
-> A registry lists its keys as `signingKeys[]` in `.well-known/openwop-registry.json`, each with `keyId`, `publicKeyUrl`, `permittedNamespaces` and `status`:
->
-> - Only a key whose `status` is `active` MAY sign a new publication.
-> - A key MUST stay listed, with its `permittedNamespaces`, while any served version names it.
-> - A verifier MUST NOT refuse a version because its key is no longer `active`.
+> Only a `signingKeys[]` entry whose `status` is `active` MAY sign a new publication. A key MUST stay listed while a served version names it, and a verifier MUST NOT refuse a version because its key is not `active`.
 
-The members are the ones every entry in the served `.well-known` carries. No schema for that document exists in the corpus, and this RFC does not add one. `active` is the only `status` value in use and the only one this RFC gives a meaning; any other value means "verifies what it signed, signs nothing new". `KEY-ROTATION.md` uses `rotated`, which is such a value. The "stays listed" rule is the earlier "old keys remain usable for old packs", and it is what `verify-signatures.mjs` already enforces by verifying every served version, yanked ones included. Since §B keeps a yanked version served, yanking does not release its key.
+Every entry in the served `.well-known/openwop-registry.json` carries `keyId`, `publicKeyUrl`, `permittedNamespaces` and `status`; the conformance leg requires all four.
+
+No schema for that document exists in the corpus, and this RFC does not add one. `active` is the only `status` value in use and the only one this RFC gives a meaning; any other value means "verifies what it signed, signs nothing new". `KEY-ROTATION.md` uses `rotated`, which is such a value. The "stays listed" rule is the earlier "old keys remain usable for old packs", and it is what `verify-signatures.mjs` already enforces by verifying every served version, yanked ones included. Since §B keeps a yanked version served, yanking does not release its key.
 
 ### §D. Submissions
 
-> A registry MUST refuse a submission that fails a check below: a write API answers with the code, and a pull-request registry fails its gate.
+> A registry MUST refuse a submission that breaks these rules or republishes a version, with `pack_integrity_failure`, `pack_validation_failed`, `pack_signature_invalid`, `pack_engine_unsupported`, `pack_peer_dependency_undefined` or `version_conflict`.
+
+A write API answers with the code; a registry that publishes by pull request fails its gate. The checks and codes:
 
 | Check | Code | openwop-registry gate (`npm run check`, v2 leg) |
 | --- | --- | --- |
@@ -125,8 +127,7 @@ Witnessed 2026-09-28:
 | --- | --- | --- | --- |
 | §B a yanked version stays served and is never `latest` while an unyanked one exists; index and manifest agree (`openwop.requirement.0222.yanked-version-lifecycle`) | the pack index, the version manifests, and `200` on a yanked version's files | the suite, given a registry URL | witnessable — gated (on a registry being named) |
 | §B a consumer resolving a range excludes yanked versions | nothing: no v2 operation takes a version range | — | unwitnessable — no v2 operation installs a pack by range, so which candidate a host excluded never reaches the wire |
-| §B a deprecated version warns | an operator-facing warning | — | unwitnessable — the warning is operator-facing and has no wire form |
-| §B an advisory's `affected[]` versions are yanked | the advisory feed and the version manifests | the registry gate | witnessable — unaided (registry side: `check-advisories.mjs --tree v2` in openwop-registry `npm run check`) |
+| §B advisory-listed versions are yanked | the advisory feed and the version manifests | the registry gate | witnessable — unaided (registry side: `check-advisories.mjs --tree v2` in openwop-registry `npm run check`) |
 | §C a key stays listed while a served version names it, and a non-`active` key still verifies (`openwop.requirement.0222.signing-keys-cover-served-versions`) | `signingKeys[]`, each version's `signing.keyId`, and the signature over the in-tarball `pack.json` | the suite, given a registry URL | witnessable — gated (on a registry being named) |
 | §C only an `active` key signs a new publication | a new version whose key is not `active` | the registry gate, at submission | unwitnessable — from outside the registry: `publishedAt` is unsigned and a key carries no retirement time, so the served tree cannot say whether a version predates the key leaving `active`; the registry's submission gate is the only place it is decidable |
 | §D the six submission checks | a submission refused, with the code or a failed gate | the registry gate | witnessable — unaided (registry side: openwop-registry `npm run check`, per the §D table; two cells owed) |
@@ -149,7 +150,7 @@ None.
 
 ## Acceptance criteria
 
-- [x] `Active`: the `packs.md` rules, the corrected schema descriptions, and `v2-registry-lifecycle.test.ts` (suite 2.42.10), passing on the live registry and sabotage-proved on a local one.
+- [x] `Active`: the `packs.md` rules, the corrected schema descriptions, and `v2-registry-lifecycle.test.ts` (suite 2.43.0), passing on the live registry and sabotage-proved on a local one.
 - [ ] openwop-registry's gate refuses a new version signed by a key whose `status` is not `active` (§C first rule; §D signature cell).
 - [ ] openwop-registry's gate refuses a change to an already-published version's tarball or `pack.json` (§D `version_conflict` cell).
 - [ ] Leg 1 `executed-pass` without `partial-witness` on the live registry — needs a yanked v2 version to exist.
