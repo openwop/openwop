@@ -3,7 +3,7 @@
   "generated": "2026-09-28",
   "repos": {
     "openwop-examples": {
-      "commit": "bc8cc30e9d97de49f22a175ee0a5de2113bb277a",
+      "commit": "2595873b1cf772cebbfa503cd6f7ed64bafb0247",
       "files": {
         "examples/hosts/postgres/src/audit-export.ts": {
           "exists": true,
@@ -244,6 +244,9 @@
       "typescript": "1.10.0",
       "python": "1.8.0",
       "go": "1.7.0",
+      "typescriptV2": "2.4.0",
+      "pythonV2": "2.4.0",
+      "goV2": "2.4.0",
       "corpusTag": "v2.43.0"
     },
     "openwop-cli": {

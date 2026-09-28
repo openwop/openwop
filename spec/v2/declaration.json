@@ -1875,8 +1875,8 @@
       "extensionName": "data-integration",
       "witness": "claims-check",
       "maturity": {
-        "technical": "experimental",
-        "adoption": "none"
+        "technical": "stable",
+        "adoption": "single-witness"
       },
       "facets": [],
       "floorScenarios": [],
