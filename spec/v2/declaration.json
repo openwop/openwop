@@ -269,7 +269,7 @@
     {
       "key": "envelopes",
       "kind": "family",
-      "normativeText": ["spec/v1/ai-envelope.md", "spec/v2/core/events.md"],
+      "normativeText": ["spec/v2/core/events.md"],
       "anchor": "core",
       "section": "core/capabilities.md#envelopes",
       "peerDependencyId": "envelopes",
@@ -486,7 +486,7 @@
     {
       "key": "feedback",
       "kind": "family",
-      "normativeText": ["spec/v1/observability.md", "spec/v2/core/events.md"],
+      "normativeText": ["spec/v2/core/events.md"],
       "anchor": "core",
       "section": "core/capabilities.md#feedback",
       "peerDependencyId": "feedback",
@@ -665,7 +665,7 @@
     {
       "key": "providerUsage",
       "kind": "family",
-      "normativeText": ["spec/v1/observability.md", "spec/v2/core/events.md"],
+      "normativeText": ["spec/v2/core/events.md"],
       "anchor": "core",
       "section": "core/capabilities.md#providerUsage",
       "peerDependencyId": "providerUsage",

@@ -13,6 +13,7 @@ Format follows [Keep a Changelog](https://keepachangelog.com/en/1/) loosely. Ver
 
 ## [Unreleased]
 
+- **`feedback`, `providerUsage` and `envelopes` get a v2 normative home** (RFC 0189). `events.md` restates the rules `spec/v1/observability.md` and `spec/v1/ai-envelope.md` made normative for them; no rule is added or changed. `v1Dependent` 36 → 33. `budget` and `production` stay v1-dependent: carrying them needs error codes the v2 registry does not have.
 - **`canvas` is `Stable`, and gap G5 is closed** (RFC 0220; the promotion window is waived, #1747). New `evidence/v2-host-bundles/myndhyve-2.43.2-canvas.json`: MyndHyve production `workflow-runtime-00819-qah`, build `commit:76fc9bbb`, suite 2.43.2, both profiles certified, 269 pass / 2 fail / 0 blocked. It witnesses eleven families.
   - MyndHyve serves `canvasCreate`, `canvasWrite` and `canvasRead` through its canvas host service. They come from the v2-signed `vendor.myndhyve.canvas@1.0.2`, workspace-approved (myndhyve #547, #554, #555).
   - `canvas` adoption goes `single-witness → multi-witness`: openwop-app witnesses it at tier 1.

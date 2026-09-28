@@ -222,7 +222,7 @@
     "spec/v2/core/connection-packs.md": "1ee129d792c537bfe82393ccb92555d8e6ddc342b1aa781a13f101b27ec38171",
     "spec/v2/core/conversation.md": "354fa57c73d11062e523a44aa75a6353c5c81aefaf306d30c42416a228c82c86",
     "spec/v2/core/errors.md": "6d5a67389de84556f81e2558a30d83959c9283c8c5481ce7c759021e486d84fd",
-    "spec/v2/core/events.md": "604abb6f9e2259a04103e1cb76d728712c3701c0d84dd915d4dc2949c912ee5e",
+    "spec/v2/core/events.md": "c3de4f492acd38c0a8d42af2136abcdb3b3dedc44ddb4d71f054cc1170d3e4ee",
     "spec/v2/core/form-content-packs.md": "02931227899676fd4581a27017be2a6c4953904717be9b81c29d12f87ab3917d",
     "spec/v2/core/headers.md": "5cb1624fa63acc81992b6a6d842ec392cf7271aaf2f65d1f83c8c4fa286e6730",
     "spec/v2/core/host-services.md": "15923cceb95cba148a32e0944f6a2d1d25e9cc36b0c169b67ee42d483bcac800",
@@ -246,7 +246,7 @@
     "spec/v2/core/workflow-chain-packs.md": "fdce7a8477e269950a2bac05ee6eddbd66eb0b670b464d00054f7196ec05d29c",
     "spec/v2/corrections.json": "59f647f4d22477f6c2b06dcf913b682dde5d51dd5e607a5d0cf648ab60864d6e",
     "spec/v2/corrections.schema.json": "46bbffb954d13bd9995aebc912ceeb2544f7064331abf25fd6ab85c81a5cec94",
-    "spec/v2/declaration.json": "aba200967c28190c6889c27dcfb01fd02919d0c023b88693e9ffc57e9488021a",
+    "spec/v2/declaration.json": "71f2b18cc5e5abaf25374f50d24123058e36f461a07cce3804f88d9312d56cfa",
     "spec/v2/declaration.schema.json": "ef951633e4070899f64828f5cf1b5f4870270a0360f81dbb49b5b4d6cd407550",
     "spec/v2/errors.json": "fa650cbbdf25a140fdaf82ec5269f95b4585ac4bdde1fa6b0b3ffe48a3f7943c",
     "spec/v2/errors.schema.json": "47404ad53e6147cf9017b813483712466573e419fb33e6c4b6c12d3e7deba1bc",
@@ -302,5 +302,5 @@
     "spec/v2/retention-floors.json": "eaf3722d95c79947af1d4269ef85117e126518c588cfcf1a2b21b97269f51624",
     "spec/v2/surface-baseline.json": "3d3d0fc7c0b48e7d7339e5d8ada0640487908f37220b2de65ccc9bff093f876a"
   },
-  "corpusCommit": "4bf8f2e9ea26fcf85fe1d26484bdeb4032c3af9f"
+  "corpusCommit": "8bb20a89a81544aaf90b3a375fc6b1f4ffef3a33"
 }
