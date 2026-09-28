@@ -1,8 +1,9 @@
 # `@openwop/openwop-conformance` Changelog
 
-## [2.44.1] — unreleased — seven host-service families get v2 normative homes
+## [2.44.1] — unreleased — eleven families get v2 normative homes
 
-- **The 2.44.1 cycle opens.** Homing `secrets`, `modelCapabilities`, `scheduling`, `queueBus`, `toolHooks` and `httpClient` in `spec/v2/core/host-services.md`, and `deadLetter` in `spec/v2/core/runs.md`, changes the packed `@openwop/spec-artifacts` tree (those docs, `webhooks.md`, `spec/v2/declaration.json`) after `v2.44.0` was tagged. No scenario changes: the v2 text restates rules the v1 text already made normative.
+- **The 2.44.1 cycle opens.** `workspace`, `content`, `triggerBridge` and `uiPlugins` get v2 normative homes (RFC 0189), which changes the packed `@openwop/spec-artifacts` tree (`spec/v2/core/host-services.md`, `i18n.md`, `webhooks.md`, `packs.md`, `spec/v2/declaration.json`) after `v2.44.0` was tagged. No scenario changes: the rules are restated from the v1 text, none added or strengthened.
+- **Seven more host-service families get v2 normative homes.** Homing `secrets`, `modelCapabilities`, `scheduling`, `queueBus`, `toolHooks` and `httpClient` in `spec/v2/core/host-services.md`, and `deadLetter` in `spec/v2/core/runs.md`, changes the packed `@openwop/spec-artifacts` tree (those docs, `webhooks.md`, `spec/v2/declaration.json`). No scenario changes: the v2 text restates rules the v1 text already made normative.
 - **Suite `2.44.1`**. `@openwop/spec-artifacts` moves in lockstep at the same exact pin.
 
 ## [2.44.0] — 2026-09-28 — three run-failure codes registered, a webhook retry bound hosts can advertise, and RFC 0219 Accepted

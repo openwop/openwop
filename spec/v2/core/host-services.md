@@ -1,7 +1,7 @@
 # Host services
 
 > **Status: Stable.**
-> **Normative home:** `aiEnvelope`, `promptLibrary`, `agentRuntime`, `mcp`, `secrets`, `modelCapabilities`, `scheduling`, `queueBus`, `toolHooks`, `httpClient`.
+> **Normative home:** `aiEnvelope`, `promptLibrary`, `agentRuntime`, `mcp`, `workspace`, `secrets`, `modelCapabilities`, `scheduling`, `queueBus`, `toolHooks`, `httpClient`.
 
 ## Why this exists
 
@@ -110,4 +110,17 @@ A host advertising `egressPolicy`, which requires `safeFetch`, attaches a `Crede
 
 An egress is `allowed` only when the address guard and the audience check both pass.
 
-*Sources: RFCs 0017, 0031, 0052, 0064, 0076, 0079, 0144.*
+## `workspace`
+
+A host advertising `workspace` keeps agent files (`schemas/v2/workspace-file.schema.json`) scoped to one `{tenant, workspace}`; no protocol path is defined for them. The host:
+
+- MUST make each write atomic, bumping `version`, and emit `workspace.updated` on each write or delete; a versioned delete leaves a tombstone;
+- MUST refuse a stale `If-Match` etag with `409 workspace_conflict` (`details.currentVersion`), and content over `maxFileBytes` with `workspace_too_large`;
+- with `versioned`, MUST serve the latest and any retained version, retaining best-effort up to `maxVersions`; `maxFiles` caps the file count;
+- MUST give a run, through `ctx.workspace`, an immutable snapshot taken at `run.started`, so a replay on any host sees the same files; its writes reach later runs only;
+- MUST derive the scope from the authenticated identity and MUST NOT return or disclose another scope's file; `404` MAY stand for `403` (invariant `workspace-cross-tenant-isolation`);
+- MUST persist `[REDACTED:<secretId>]` for any value the run's vault resolved at user, tenant or run scope (longest first, 8-character minimum).
+
+A workflow calling `ctx.workspace` MUST NOT register on a host without the family. The memory-index manifest is the workspace file `MEMORY-INDEX.json`.
+
+*Sources: RFCs 0017, 0031, 0052, 0059, 0064, 0076, 0079, 0144.*
