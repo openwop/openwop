@@ -6,6 +6,7 @@
 - **`feedback`, `providerUsage` and `envelopes` get a v2 normative home** (RFC 0189), in the same cycle. The packed `spec/v2/core/events.md` and `spec/v2/declaration.json` change. No scenario changes: the rules are restated, none added or strengthened.
 ## [2.44.1] — unreleased — thirteen families get v2 normative homes
 ## [2.44.1] — unreleased — thirteen families get v2 normative homes, and the webhook retry legs' timeouts cover an advertised `maxElapsedMs`
+## [2.44.1] — 2026-09-28 — the webhook retry legs outlast an advertised maxElapsedMs, and four families get v2 normative homes
 
 - **The 2.44.1 cycle opens.** `workspace`, `content`, `triggerBridge` and `uiPlugins` get v2 normative homes (RFC 0189), which changes the packed `@openwop/spec-artifacts` tree (`spec/v2/core/host-services.md`, `i18n.md`, `webhooks.md`, `packs.md`, `spec/v2/declaration.json`) after `v2.44.0` was tagged. No scenario changes: the rules are restated from the v1 text, none added or strengthened.
 - New `spec/v2/core/storage.md` also changes the packed tree (`spec/v2/core/storage.md`, `spec/v2/core/overview.md`, `spec/v2/README.md`, `spec/v2/declaration.json`). It restates the v1 rules for `fs`, `kvStorage`, `tableStorage`, `sql`, `nosql`, `vectorStore`, `searchIndex`, `blobStorage` and `cache` (RFC 0189 §D). No rule and no wire change, and no scenario change.
