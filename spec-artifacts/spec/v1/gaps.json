@@ -9843,11 +9843,11 @@
       "rfc": "0171",
       "local": "G7",
       "section": "§B.1",
-      "surface": "MyndHyve emits about 56 UPPER_CASE run-failure codes (normalised in `failurePayload`, measured at MyndHyve `fc3b007cf`) that are neither registered nor vendor codes.",
+      "surface": "MyndHyve emitted about 56 UPPER_CASE run-failure codes that were neither registered nor vendor codes.",
       "witness": "unclassified",
       "requirementId": null,
-      "disposition": "externally-gated",
-      "target": "myndhyve-code-remap",
+      "disposition": "closed",
+      "target": null,
       "sources": [
         {
           "file": "RFCS/registers/0171-v2-wire-envelope.gaps.md",
@@ -13294,11 +13294,11 @@
       "rfc": "0223",
       "local": "G5",
       "section": "§Implementation notes",
-      "surface": "MyndHyve fails the gate with the unregistered `APPROVAL_REJECTED`.",
+      "surface": "MyndHyve failed the gate with the unregistered `APPROVAL_REJECTED`.",
       "witness": "unclassified",
       "requirementId": null,
-      "disposition": "externally-gated",
-      "target": "myndhyve-next-cut",
+      "disposition": "closed",
+      "target": null,
       "sources": [
         {
           "file": "RFCS/registers/0223-approval-reject-disposition.gaps.md",
