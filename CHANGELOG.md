@@ -13,6 +13,7 @@ Format follows [Keep a Changelog](https://keepachangelog.com/en/1/) loosely. Ver
 
 ## [Unreleased]
 
+- **Seven host-service families get v2 normative homes** (RFC 0189; no rule added, dropped, strengthened or weakened, no wire change). `spec/v2/core/host-services.md` now homes `secrets`, `modelCapabilities`, `scheduling`, `queueBus`, `toolHooks` and `httpClient`, and `spec/v2/core/runs.md` §Dead letters homes `deadLetter`. `declaration.json` points their `normativeText` at those docs; the normative-home baseline lowers `v1Dependent` 36 → 29. Opens suite 2.44.1.
 - **`canvas` is `Stable`, and gap G5 is closed** (RFC 0220; the promotion window is waived, #1747). New `evidence/v2-host-bundles/myndhyve-2.43.2-canvas.json`: MyndHyve production `workflow-runtime-00819-qah`, build `commit:76fc9bbb`, suite 2.43.2, both profiles certified, 269 pass / 2 fail / 0 blocked. It witnesses eleven families.
   - MyndHyve serves `canvasCreate`, `canvasWrite` and `canvasRead` through its canvas host service. They come from the v2-signed `vendor.myndhyve.canvas@1.0.2`, workspace-approved (myndhyve #547, #554, #555).
   - `canvas` adoption goes `single-witness → multi-witness`: openwop-app witnesses it at tier 1.
