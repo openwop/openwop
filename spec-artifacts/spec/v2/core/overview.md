@@ -14,7 +14,7 @@
 4. [`identity.md`](identity.md) — Subject, lanes, `SubjectLink`, id grammars, resume tokens
 5. [`runs.md`](runs.md) — create, get, cancel, fork; `configurable`; snapshot; owner
 6. [`events.md`](events.md), [`errors.md`](errors.md), [`headers.md`](headers.md) — event `oneOf`, payload and error registries, `OpenWOP-*` headers
-7. [`interrupt.md`](interrupt.md), [`idempotency.md`](idempotency.md), [`replay.md`](replay.md), [`conversation.md`](conversation.md) — run-side surfaces
+7. [`interrupt.md`](interrupt.md), [`idempotency.md`](idempotency.md), [`replay.md`](replay.md), [`conversation.md`](conversation.md), [`execution.md`](execution.md) — run-side surfaces
 8. [`persistence.md`](persistence.md) — era key, v1 reader rule, pinned runs
 9. [`security-defaults.md`](security-defaults.md), [`webhooks.md`](webhooks.md), [`interop.md`](interop.md), [`host-services.md`](host-services.md), [`storage.md`](storage.md), [`tool-catalog.md`](tool-catalog.md), [`i18n.md`](i18n.md), [`portability.md`](portability.md) — surface obligations, signatures, A2A and MCP, host services, storage, locale, estate export
 10. [`packs.md`](packs.md), [`node-pack-runtimes.md`](node-pack-runtimes.md), [`connection-packs.md`](connection-packs.md), [`form-content-packs.md`](form-content-packs.md), [`workflow-chain-packs.md`](workflow-chain-packs.md) — pack identity, engines ceiling

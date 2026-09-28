@@ -386,7 +386,7 @@
     {
       "key": "selfHostedRunner",
       "kind": "family",
-      "normativeText": ["spec/v1/capabilities.md"],
+      "normativeText": ["spec/v2/core/execution.md"],
       "anchor": "core",
       "section": "core/capabilities.md#selfHostedRunner",
       "peerDependencyId": "selfHostedRunner",
@@ -443,7 +443,7 @@
     {
       "key": "anonymousActor",
       "kind": "family",
-      "normativeText": ["spec/v1/capabilities.md"],
+      "normativeText": ["spec/v2/core/identity.md"],
       "anchor": "core",
       "section": "core/capabilities.md#anonymousActor",
       "peerDependencyId": "anonymousActor",
@@ -625,7 +625,7 @@
     {
       "key": "multiAgent",
       "kind": "family",
-      "normativeText": ["spec/v1/multi-agent-execution.md"],
+      "normativeText": ["spec/v2/core/execution.md"],
       "anchor": "core",
       "section": "core/capabilities.md#multiAgent",
       "peerDependencyId": "multiAgent",
@@ -800,7 +800,7 @@
     {
       "key": "subWorkflow",
       "kind": "family",
-      "normativeText": ["spec/v1/node-packs.md"],
+      "normativeText": ["spec/v2/core/execution.md"],
       "anchor": "core",
       "section": "core/capabilities.md#subWorkflow",
       "peerDependencyId": "subWorkflow",
@@ -930,7 +930,7 @@
     {
       "key": "heartbeat",
       "kind": "family",
-      "normativeText": ["spec/v2/core/events.md", "spec/v1/host-capabilities.md"],
+      "normativeText": ["spec/v2/core/events.md"],
       "anchor": "core",
       "section": "core/capabilities.md#heartbeat",
       "peerDependencyId": "heartbeat",
