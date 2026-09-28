@@ -65,6 +65,13 @@ const ARTIFACTS = [
     version: /openwop-sdks\/go`\]\([^)]*\) \(Go modules, \*\*v([0-9][0-9.]*)\*\*\)/g,
     // The proxy returns `v1.5.0`; the README writes `**v1.5.0**`. Strip the `v`
     // on both sides rather than comparing one shape to the other.
+    //
+    // `@latest` LAGS a new tag. On 2026-09-28 `go/v1.7.0` was pushed at 13:17Z and
+    // `@v/list` named it at once, but `@latest` kept answering v1.6.0 until about
+    // 13:32Z (~15 min). Bump the README's Go version only after
+    // `curl -s https://proxy.golang.org/github.com/openwop/openwop-sdks/go/@latest`
+    // reports the new tag: too early fails this check one way, and leaving the
+    // old number fails it the other way once the cache turns over.
     fetch: () => JSON.parse(execFileSync('curl', ['-fsS', '--max-time', '20', 'https://proxy.golang.org/github.com/openwop/openwop-sdks/go/@latest'],
       { encoding: 'utf8', timeout: TIMEOUT_MS, stdio: ['ignore', 'pipe', 'pipe'] })).Version.replace(/^v/, ''),
   },

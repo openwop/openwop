@@ -165,7 +165,9 @@ if (mode === 'write') {
   const readText = (d, rel) => { try { return readFileSync(join(d, rel), 'utf8'); } catch { return null; } };
   const sdks = siblingDir('openwop-sdks'), cli = siblingDir('openwop-cli'), app = siblingDir('openwop-app'), ex = siblingDir('openwop-examples');
   const siblingVersions = {
-    'openwop-sdks': sdks ? { typescript: readJson(sdks, 'sdk/typescript/package.json')?.version ?? null, python: (/^version\s*=\s*"([^"]+)"/m.exec(readText(sdks, 'sdk/python/pyproject.toml') ?? '') ?? [])[1] ?? null, go: (/^## \[(\d+\.\d+\.\d+)\]/m.exec(readText(sdks, 'go/CHANGELOG.md') ?? '') ?? [])[1] ?? null, corpusTag: (readText(sdks, 'CORPUS_TAG') ?? '').trim() || null } : null,
+    // go/CHANGELOG.md headings carry a `v` from v1.6.0 on (`## [v1.7.0]`); `v?` keeps
+    // the regex from skipping them and reading the last un-prefixed heading (1.5.0).
+    'openwop-sdks': sdks ? { typescript: readJson(sdks, 'sdk/typescript/package.json')?.version ?? null, python: (/^version\s*=\s*"([^"]+)"/m.exec(readText(sdks, 'sdk/python/pyproject.toml') ?? '') ?? [])[1] ?? null, go: (/^## \[v?(\d+\.\d+\.\d+)\]/m.exec(readText(sdks, 'go/CHANGELOG.md') ?? '') ?? [])[1] ?? null, corpusTag: (readText(sdks, 'CORPUS_TAG') ?? '').trim() || null } : null,
     'openwop-cli': cli ? { version: readJson(cli, 'package.json')?.version ?? null, dependsOnSdk: Boolean(readJson(cli, 'package.json')?.dependencies?.['@openwop/openwop']) } : null,
     'openwop-registry': registryDir ? { registryVersion: readJson(registryDir, 'registry/.well-known/openwop-registry.json')?.registryVersion ?? null, protocolVersion: readJson(registryDir, 'registry/.well-known/openwop-registry.json')?.protocolVersion ?? null, corpusTag: (readText(registryDir, 'CORPUS_TAG') ?? '').trim() || null } : null,
     'openwop-app': app ? { corpusTag: (readText(app, 'schemas/CORPUS_TAG') ?? '').trim() || null, conformancePin: readJson(app, 'backend/typescript/package.json')?.devDependencies?.['@openwop/openwop-conformance'] ?? readJson(app, 'backend/typescript/package.json')?.dependencies?.['@openwop/openwop-conformance'] ?? null } : null,
