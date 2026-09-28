@@ -1,7 +1,9 @@
 # `@openwop/openwop-conformance` Changelog
 
-## [2.42.9] — unreleased — a v2 delivery's workspaceId is checked
+## [2.42.9] — 2026-09-28 — a v2 delivery's workspaceId is checked, and two test-isolation and SHOULD-strength fixes
 
+- **Scenario files that share a mock-AI node no longer race.** The mock-AI program hook is keyed by node id, and a node id belongs to a fixture. `envelope-completion-distinguishes-truncation` drives both envelope fixtures that `envelope-truncated` and `envelope-retry-attempted` also drive, so under the default parallel run one file could overwrite another's program. New `lib/mock-node-lock.ts` holds a cross-process lock per node id for the whole file, so files sharing a node run one after another. Serial runs (`--certify`, openwop-app's harness) are unchanged.
+- **The RFC 0033 §B truncation budget legs compare real attempts and record the SHOULD.** Both legs asserted "retry budget > 50" (the fixture's value) as a MUST. §B makes the retry a MAY and the larger budget a SHOULD, so the old legs failed a conforming host that retried at the same budget and passed a host that ignored the fixture's `maxTokens`. They now read the first and retry budgets through the `dispatch-budgets` hook. A larger retry budget passes, and an unmet SHOULD is recorded as `inapplicable` with the observed values. An unserved hook is a partial witness. On openwop-app the rows are identical before and after, and the truncation leg passes with a real comparison.
 - **`v2-webhook-delivery-shape` checks that `workspaceId` is present exactly when the run has a workspace.** `webhooks.md` §Delivery requires it and forbids substituting a value, but the leg only validated the schema, which cannot say "exactly when". It now compares the delivered `workspaceId` with the owner echo on the event. The v2 reference host sent `"default"` and fails without openwop-examples #99 (fixed there); openwop-app already conformed.
 - **Suite `2.42.9`**. `@openwop/spec-artifacts` moves in lockstep at the same exact pin.
 
