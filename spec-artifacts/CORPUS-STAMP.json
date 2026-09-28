@@ -238,7 +238,7 @@
     "spec/v2/core/persistence.md": "711874f74cb08b03cd118d683056db10a063517762fcea73ec70feb5d983e6a4",
     "spec/v2/core/portability.md": "87c4327f674f714fda6217fd79b99d2ba219ad47dc02f9751bb56c200fb2c17a",
     "spec/v2/core/replay.md": "4d379494057746c6883f6047972e93e621863b998ed291b9a691d3aa57c1ff43",
-    "spec/v2/core/runs.md": "157600d7dd2554856bba29e231e46489b5097cc0c0a0e74073549d410897a78b",
+    "spec/v2/core/runs.md": "55e21292ae4b41d0d104199a6c2634ecb3f787c4a671f9ebc37084be38ceef03",
     "spec/v2/core/security-defaults.md": "153884da7a2d54c30c81b5e649cfdef31e151b3a2a19dee1bc5a16c35d60a3aa",
     "spec/v2/core/tool-catalog.md": "d16a9004418719c48301804aefa4d7ab6f41112a4ed83727f552aa1b92b418b0",
     "spec/v2/core/versioning.md": "e3b3ab6d76e51035039a32173e9b412628a52c8fe7b16687ff58a2d0d983faa0",
@@ -302,5 +302,5 @@
     "spec/v2/retention-floors.json": "eaf3722d95c79947af1d4269ef85117e126518c588cfcf1a2b21b97269f51624",
     "spec/v2/surface-baseline.json": "d5b4e6c55a1d4bbe54241f9d0d020e7f9857f29912bb9f2ef910087b276be7e6"
   },
-  "corpusCommit": "1ebd45d541165ceb41097f41cee5bfdb259df5eb"
+  "corpusCommit": "59a2dc3cefc9b32bad67271f3de9a585fe7c6e8b"
 }
