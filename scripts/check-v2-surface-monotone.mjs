@@ -16,7 +16,11 @@
  *
  *   NEW RESTRICTIONS FAIL: a `required` entry appearing on a pre-existing
  *   object, an object going from open to `additionalProperties: false`, a
- *   permitted `type` disappearing. These are §A.1 / §B.6 majors.
+ *   permitted `type` disappearing. These are §A.1 / §B.6 majors. One
+ *   exception, because it restricts no document that existed: a `required`
+ *   imposed only under `then` arms whose `if` pins a property to enum members
+ *   this same diff adds (RFC 0218 §C — a new anomaly `kind` brings the member
+ *   it requires). It is reported as a new-value conditional, never silently.
  *
  * WHY A REMOVAL IS NOT WHAT A NAIVE DIFF CALLS ONE. The baseline enumerates by
  * INSTANCE path, resolving `$ref` and walking every `anyOf`/`oneOf`/`allOf`
@@ -83,7 +87,9 @@ function siteOf(t) {
 }
 
 const before = new Set(baseline.surfaces ?? []);
-const after = new Set(enumerateTree(TREE_ROOT));
+/** tuple → the `if` selectors of the `then` arms that alone impose it (required only). */
+const conditionals = new Map();
+const after = new Set(enumerateTree(TREE_ROOT, conditionals));
 
 const beforeSites = new Set([...before].map((s) => parse(s).site));
 const afterSites = new Set([...after].map((s) => parse(s).site));
@@ -133,8 +139,35 @@ for (const t of removedUnion) {
 
 // ── new restrictions ────────────────────────────────────────────────────────
 const addedTuples = [...after].filter((s) => !before.has(s)).map(parse);
+const addedStrings = new Set([...after].filter((s) => !before.has(s)));
+const esc = (k) => String(k).replace(/~/g, '~0').replace(/\//g, '~1');
+/**
+ * A `then` arm can only bite a document its `if` selects. When the `if` requires
+ * a property and pins it (`const`/`enum`) to values that are ALL enum members
+ * this same diff adds at that property, no document valid before carries them,
+ * so the arm's `required` restricts nothing that existed (RFC 0218 §C: a
+ * `merkle-mismatch` anomaly requires `checkpoint`). Any other selector (one an
+ * old value can satisfy, or one that pins nothing) is a tightening and fails.
+ */
+function selectsOnlyNewValues(site, sel) {
+  if (!sel || typeof sel !== 'object' || !Array.isArray(sel.required)) return false;
+  return sel.required.some((k) => {
+    const p = sel.properties?.[k];
+    const values = p?.const !== undefined ? [p.const] : Array.isArray(p?.enum) ? p.enum : null;
+    if (!values || values.length === 0) return false;
+    return values.every((v) => addedStrings.has(`${site}/${esc(k)}|enum-member|${JSON.stringify(v)}`));
+  });
+}
+const newValueConditionals = [];
 for (const t of addedTuples) {
   if (!beforeSites.has(t.site)) continue; // a brand-new object may require whatever it likes
+  if (t.kind === 'required') {
+    const selectors = conditionals.get(`${t.site}|required|${t.value}`);
+    if (selectors && selectors.length > 0 && selectors.every((sel) => selectsOnlyNewValues(t.site, sel))) {
+      newValueConditionals.push(`${t.site} requires "${t.value}" only under a selector on enum members this diff adds`);
+      continue;
+    }
+  }
   if (t.kind === 'required') failures.push(`\`required\` entry "${t.value}" added to the pre-existing object ${t.site} — a document that validated without it no longer does (RFC 0197 §B.6; a new REQUIRED property is a major)`);
   if (t.kind === 'closed') failures.push(`${t.site} went from open to \`additionalProperties: false\` — closing an open object is a major (RFC 0197 §B.6)`);
 }
@@ -146,8 +179,9 @@ for (const t of removedTuples) {
 
 // ── report ──────────────────────────────────────────────────────────────────
 const addedUnion = addedTuples.filter((t) => ['property', 'enum-member', 'operation', 'channel'].includes(t.kind));
-console.log(`check-v2-surface-monotone: baseline ${baseline.count ?? before.size} surfaces at release ${baseline.release}; tree ${after.size}; ${addedUnion.length} addition(s) (additive, §B.5); ${removedUnion.length} removal tuple(s); ${licences.length} licence pointer(s)${dueRetirementRows.length > 0 ? `; ${dueRetirementRows.length} due v2-minor row(s), check-v2-retirement ${retirementVerdict ? 'agrees' : 'REFUSES'}` : '; no due v2-minor row'}`);
+console.log(`check-v2-surface-monotone: baseline ${baseline.count ?? before.size} surfaces at release ${baseline.release}; tree ${after.size}; ${addedUnion.length} addition(s) (additive, §B.5); ${removedUnion.length} removal tuple(s); ${newValueConditionals.length} new-value conditional(s); ${licences.length} licence pointer(s)${dueRetirementRows.length > 0 ? `; ${dueRetirementRows.length} due v2-minor row(s), check-v2-retirement ${retirementVerdict ? 'agrees' : 'REFUSES'}` : '; no due v2-minor row'}`);
 for (const l of licensed.slice(0, 20)) console.log(`  licensed: ${l}`);
+for (const c of newValueConditionals) console.log(`  new-value conditional: ${c}`);
 if (failures.length > 0) {
   console.error(`=== check-v2-surface-monotone FAILED — ${failures.length} problem(s) ===`);
   for (const f of failures.slice(0, 40)) console.error(`  ${f}`);
