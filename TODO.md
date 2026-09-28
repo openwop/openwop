@@ -96,10 +96,14 @@ Spec problems:
 Defects outside the spec:
 - [x] v2-reference's substituted `workspaceId` (examples #99), and the delivery-shape leg now checks
       "present exactly when" (#1682, which opened 2.42.9).
-- [ ] openwop-registry `new-pack.mjs` and the v1-shaped pack templates (`vendor-template`,
-      `rust-hello`): in progress with the `newpack-v2` agent. `npm run check` does cover the v2 tree
-      when `registry/v2/packs` exists (it does); only its skip message and the README overstated
-      the CI-only claim.
+- [x] `new-pack` scaffolds a v2 pack from a registry clone (registry #76, examples #101, openwop
+      #1688). The template now lives in `openwop-registry/templates/node-pack/`. It was proven end to
+      end: scaffold → schema check (with a sabotage) → build → sign → `auto-register --tree v2` →
+      `verify-signatures` → `npm run check`. The README's CI-only claim is corrected.
+  - [ ] `build-pack-tarball.mjs` packs only `pack.json`, `README.md`, `LICENSE`, `index.mjs` and
+        `schemas/`, so WASM, Python and Go packs cannot be published through it.
+  - [ ] Fixtures `rust-misbehaving-abi` / `rust-misbehaving-memory` keep v1-shaped manifests
+        (never published). `packs/community.openwop-team.demo` carries stale v1 `keys/` files.
 - [x] `tiny-workflow` and `streaming-client` speak v2, and CI runs them against the v2 reference
       host (examples #100).
 
