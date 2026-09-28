@@ -4,10 +4,10 @@
 | ----------------- | --------------------------------------------------------------- |
 | **RFC**           | 0220                                                            |
 | **Title**         | an extension family graduates on evidence a script can read |
-| **Status**        | `Draft`                                                         |
+| **Status**        | `Active`                                                        |
 | **Author(s)**     | David Tufts (@davidscotttufts)                                  |
 | **Created**       | 2026-09-27                                                      |
-| **Updated**       | 2026-09-27: filed `Draft`. The 7-day comment window runs to 2026-10-04 and is **not waived**, because §D changes which bundles count as maturity evidence. The mechanism lands with this filing. It only makes `check-ext-status-coherence` stricter and records new rows, so it changes no status on its own. |
+| **Updated**       | 2026-09-28: **`Draft → Active`, comment window waived**. Filed `Draft` 2026-09-27 with the window to 2026-10-04, not waived; the steward directed the waiver on 2026-09-28. **STEWARD OVERRIDE of RFC 0147 §A.6.** §A.6 names certification as a class whose window bootstrap waiver language MUST NOT shorten, and §D changes which bundles count as maturity evidence. The override is recorded as its own row in `MAINTAINERS.md`, not folded under an earlier RFC's. The same direction waives the 7-day window on the first promotion PR (`ext/README.md` §Stable). Acceptance will be provisional, and the RFC 0156 §B review is owed. The evidence gate is not waived. Promoted `Stable` in this PR: `chat`, `entities`, `kanban`, `knowledge`, `restTransport`, `webResearch`, on `evidence/v2-host-bundles/myndhyve-2.42.8-ext-families.json` (MyndHyve production, tier 2, `openwop-core-standard` certified; #1690). Corrected here: `brand`, `canvas`, `coordination`, `dataIntegration`, `launchStudio` and `messaging` declared `adoption: single-witness`, but no host advertises them, so each now says `none`. Earlier: 2026-09-27: filed `Draft`. |
 | **Affects**       | `spec/v2/declaration.json` + `declaration.schema.json` (`extensionName` on the 13 `anchor: ext` rows; `restTransport` witness `claims-check` → `witnessable-gated`, adoption `none` → `single-witness`; `a2uiSurface` witness `claims-check` → `seam-gated`) · `spec/v2/core/capabilities.md` §3.2 and §6 · `spec/v2/core/runs.md` §"Caching and encoding" (one key spelling) · `spec/v2/ext/README.md` (the tier half of `Stable`; the `Note` label) · the 13 ext family READMEs and the 3 note READMEs · new `evidence/host-tiers.json` · `scripts/check-ext-status-coherence.mjs`, `scripts/check-declaration.mjs` · conformance: new `lib/ext-claims.ts` (+ self-test), new scenarios `v2-ext-family-claims`, `v2-ext-rest-transport`, one new leg in `v2-a2ui-v09-surface` (suite 2.42.7) |
 | **Compatibility** | `additive`, plus a Class 3 correction (§A). No wire shape, error code or status changes. §D makes a corpus gate stricter and fail closed. |
 | **Supersedes**    | —                                                               |
@@ -146,9 +146,9 @@ A directory under `spec/v2/ext/` with no declared family carries `Status: Note.`
 ## Acceptance criteria
 
 - [x] Filed: the key, the witnesses, the tier table and the notes, with the self-test sabotage-proved.
-- [ ] `Active`: the comment window closes (2026-10-04) with no unresolved objection, and suite 2.42.7 is published.
-- [ ] Per family, `Draft → Stable` (a separate promotion PR with its own 7-day window): `check-ext-status-coherence` reports the family `GRADUABLE` from a committed, certified MyndHyve bundle cut against the DEPLOYED revision.
-  - Expected first: `restTransport`, `chat`, and the other reservations once MyndHyve advertises them.
+- [x] `Active` (2026-09-28): window waived by steward override (see Updated); suite 2.42.7 and 2.42.8 are published.
+- [ ] Per family, `Draft → Stable` (a separate promotion PR with its own 7-day window; the first one's window is waived): **done for six** (chat, entities, kanban, knowledge, restTransport, webResearch), on #1690's bundle. `check-ext-status-coherence` reports the family `GRADUABLE` from a committed, certified MyndHyve bundle cut against the DEPLOYED revision.
+  - Remaining: `messaging` and a `dataIntegration` subset once MyndHyve registers them server-side. `coordination`, `brand`, `canvas` and `launchStudio` are an honest no this pass: their executors are browser-only or `canvas-runtime` only, and no tier-2 host serves them (gap G4).
   - `a2uiSurface` waits on MyndHyve's seam (gap G1).
 - [ ] `Accepted`: every row above witnessed. The §B/§C host rows are `executed-pass` on a tier-2 certified bundle.
 

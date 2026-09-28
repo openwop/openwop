@@ -13069,6 +13069,23 @@
       ]
     },
     {
+      "id": "openwop.gap.0220.4",
+      "rfc": "0220",
+      "local": "G4",
+      "section": "§B",
+      "surface": "`brand`, `canvas`, `coordination` and `launchStudio` have no tier-2 host. MyndHyve's executors for them run in the browser engine or on `canvas-runtime`, which does no OpenWOP version negotiation. `coordination`'s vote/consensus nodes need server-side agent dispatch.",
+      "witness": "unclassified",
+      "requirementId": null,
+      "disposition": "externally-gated",
+      "target": "tier-2-host-serves-family",
+      "sources": [
+        {
+          "file": "RFCS/registers/0220-ext-families-graduate-on-evidence.gaps.md",
+          "token": "G4"
+        }
+      ]
+    },
+    {
       "id": "openwop.gap.0221.1",
       "rfc": "0221",
       "local": "G1",
@@ -13082,6 +13099,40 @@
         {
           "file": "RFCS/registers/0221-generated-webhook-secret-returned-once.gaps.md",
           "token": "G1"
+        }
+      ]
+    },
+    {
+      "id": "openwop.gap.0222.1",
+      "rfc": "0222",
+      "local": "G1",
+      "section": "§A",
+      "surface": "The earlier major's registry write endpoints (`deprecate`, `yank`, `keychain`, `keychain/rotate`), their scopes, the `rotationProof` chain and the 72-hour unpublish window have no v2 home.",
+      "witness": "unclassified",
+      "requirementId": null,
+      "disposition": "closed",
+      "target": null,
+      "sources": [
+        {
+          "file": "RFCS/registers/0222-v2-registry-operations.gaps.md",
+          "token": "G1"
+        }
+      ]
+    },
+    {
+      "id": "openwop.gap.0222.2",
+      "rfc": "0222",
+      "local": "G2",
+      "section": "§C",
+      "surface": "No corpus schema describes `.well-known/openwop-registry.json`, so the `signingKeys[]` members §C names are validated only by the conformance leg.",
+      "witness": "unclassified",
+      "requirementId": null,
+      "disposition": "closed",
+      "target": null,
+      "sources": [
+        {
+          "file": "RFCS/registers/0222-v2-registry-operations.gaps.md",
+          "token": "G2"
         }
       ]
     },

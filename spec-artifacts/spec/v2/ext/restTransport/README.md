@@ -1,13 +1,13 @@
 # `restTransport` extension
 
-> **Status: Draft.**
+> **Status: Stable.**
 
 `restTransport` names conditional GET and response compression on run reads. The run-snapshot rules are in [`runs.md`](../../core/runs.md) §"Caching and encoding". This page defines the claim and what advertising it adds to those rules.
 
 | Field | Value |
 | --- | --- |
 | **witness:** | `witnessable-gated` |
-| **technical:** | `experimental` |
+| **technical:** | `stable` |
 | **adoption:** | `single-witness` |
 | **peer-dependency id** | `restTransport` |
 | **advertised as** | `extensions.<org>.rest-transport` |
