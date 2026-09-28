@@ -6,11 +6,22 @@
  * asserts credentialRefs DO resolve and DO get used (positive test) —
  * with redaction-safe verification via SHA-256 hashing.
  *
- * Both scenarios skip trivially-pass when the host returns 404/422 from
- * the start-run call (production deployments don't advertise the
- * fixture surface). Hosts that opt into `OPENWOP_CONFORMANCE_FIXTURES=1`
+ * This is a FLOOR scenario (`openwop.floor.byok-roundtrip`), so a host that
+ * cannot run it has NOT witnessed the floor. When the canary fixture is not
+ * advertised, or the start-run call answers 404/422, every test records
+ * `blocked` with the reason — never a trivial pass. A production posture that
+ * keeps the `conformance.secret.echo` seam off therefore leaves its claimed
+ * `openwop-secrets` profile uncertified, and only that profile: the cut's
+ * other claims still certify. Hosts that opt into `OPENWOP_CONFORMANCE_FIXTURES=1`
  * AND pre-provision a secret under `openwop-conformance-canary-secret`
  * expose the surface and the scenarios run end-to-end.
+ *
+ * Why not `describe.skipIf`: a file whose tests are all skipped WITHOUT a
+ * recorded reason is an unclassified return (RFC 0148 §A), and an
+ * unclassified FLOOR row in a claimed profile rejects the whole
+ * certification, not just that profile. Measured on openwop-app's
+ * 2026-09-28 post-deploy major-1 cut: 2,116 rows, `certified: none`, the
+ * only unclassified row being this file.
  *
  * The scenarios assert shape + non-empty + redaction, not exact value
  * equality — any host-defined canary value works as long as it's
@@ -34,17 +45,18 @@ const SHA256_HEX_RE = /^[0-9a-f]{64}$/;
 
 const BYOK_WORKFLOW_ID = 'openwop-smoke-byok-roundtrip';
 const SKIP_NO_FIXTURE = !isFixtureAdvertised(BYOK_WORKFLOW_ID);
+const NO_FIXTURE_REASON = `precondition not met — the \`${BYOK_WORKFLOW_ID}\` fixture is not advertised, so this host cannot witness the BYOK roundtrip floor (the \`conformance.secret.echo\` seam and the \`openwop-conformance-canary-secret\` canary are off)`;
 
-describe.skipIf(SKIP_NO_FIXTURE)('byok: end-to-end credentialRef resolution roundtrip (openwop-byok profile)', () => {
+describe('byok: end-to-end credentialRef resolution roundtrip (openwop-byok profile)', () => {
   it('the canary fixture run MUST resolve a host-provisioned secret and emit SHA-256 hex', async () => {
+    if (SKIP_NO_FIXTURE) return softSkip('blocked', NO_FIXTURE_REASON);
     const create = await driver.post('/v1/runs', {
       workflowId: 'openwop-smoke-byok-roundtrip',
     });
 
-    // Fixture absent OR canary not provisioned — host doesn't opt in.
-    // Scenario passes trivially.
+    // Fixture absent OR canary not provisioned: the floor is not witnessed.
     if (create.status === 404 || create.status === 422) {
-      return softSkip('inapplicable', 'capability or profile not advertised by this host — gate `create.status === 404 || create.status === 422` returned early (Fixture absent OR canary not provisioned — host doesn\'t opt in. Scenario passes trivially.)');
+      return softSkip('blocked', 'precondition not met — `create.status === 404 || create.status === 422` returned early (fixture advertised but the run could not start: canary not provisioned or seam unavailable)');
     }
 
     expect(create.status, req('openwop.it.byok-roundtrip.the-canary-fixture-run-must-resolve-a-host-provisioned-secret-and-emit-sha-256-h', 
@@ -102,6 +114,7 @@ describe.skipIf(SKIP_NO_FIXTURE)('byok: end-to-end credentialRef resolution roun
   });
 
   it('BYOK fixture run MUST emit a node.completed event for the resolve step', async () => {
+    if (SKIP_NO_FIXTURE) return softSkip('blocked', NO_FIXTURE_REASON);
     const create = await driver.post('/v1/runs', {
       workflowId: 'openwop-smoke-byok-roundtrip',
     });
@@ -128,6 +141,7 @@ describe.skipIf(SKIP_NO_FIXTURE)('byok: end-to-end credentialRef resolution roun
   });
 
   it('BYOK fixture run event log MUST NOT echo the resolved secret value (redaction)', async () => {
+    if (SKIP_NO_FIXTURE) return softSkip('blocked', NO_FIXTURE_REASON);
     const create = await driver.post('/v1/runs', {
       workflowId: 'openwop-smoke-byok-roundtrip',
     });

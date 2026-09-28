@@ -6788,7 +6788,7 @@
     {
       "id": "openwop.it.byok-roundtrip.the-canary-fixture-run-must-resolve-a-host-provisioned-secret-and-emit-sha-256-h",
       "file": "byok-roundtrip.test.ts",
-      "line": 39,
+      "line": 51,
       "title": "the canary fixture run MUST resolve a host-provisioned secret and emit SHA-256 hex",
       "explicitId": "openwop.it.byok-roundtrip.the-canary-fixture-run-must-resolve-a-host-provisioned-secret-and-emit-sha-256-h",
       "citations": [
@@ -6813,7 +6813,7 @@
     {
       "id": "openwop.it.byok-roundtrip.byok-fixture-run-must-emit-a-node-completed-event-for-the-resolve-step",
       "file": "byok-roundtrip.test.ts",
-      "line": 104,
+      "line": 116,
       "title": "BYOK fixture run MUST emit a node.completed event for the resolve step",
       "explicitId": "openwop.it.byok-roundtrip.byok-fixture-run-must-emit-a-node-completed-event-for-the-resolve-step",
       "citations": [
@@ -6826,7 +6826,7 @@
     {
       "id": "openwop.it.byok-roundtrip.byok-fixture-run-event-log-must-not-echo-the-resolved-secret-value-redaction",
       "file": "byok-roundtrip.test.ts",
-      "line": 130,
+      "line": 143,
       "title": "BYOK fixture run event log MUST NOT echo the resolved secret value (redaction)",
       "explicitId": "openwop.it.byok-roundtrip.byok-fixture-run-event-log-must-not-echo-the-resolved-secret-value-redaction",
       "citations": [
