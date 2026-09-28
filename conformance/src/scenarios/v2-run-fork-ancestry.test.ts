@@ -1,6 +1,6 @@
 /**
  * `spec/v2/core/runs.md` §Diff and ancestry — a fork has no ancestry parent
- * (suite 2.43.1, target major 2; gated on `replay` and on
+ * (suite 2.43.2, target major 2; gated on `replay` and on
  * `multiAgent.executionModel.crossHostCausation.ancestryEndpointSupported`;
  * one run created plus one branch fork).
  *

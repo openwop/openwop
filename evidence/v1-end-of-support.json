@@ -11,9 +11,9 @@
       "bundle": "evidence/v2-host-bundles/openwop-host-v2-reference.json",
       "present": true,
       "latest": {
-        "suiteVersion": "2.43.0",
+        "suiteVersion": "2.43.1",
         "targetMajor": 2,
-        "witnessSha256": "0a7ed040313c9716efdee13f4315af8170e668d0abbd22abdcb2c9f25643442c",
+        "witnessSha256": "763dd7f6a2098a0797157857ea7715d5e8b958223a99fd600ccafaebd9ceba4f",
         "evidenceTiers": [
           "self"
         ],
@@ -29,9 +29,9 @@
       "bundle": "evidence/v2-host-bundles/myndhyve.json",
       "present": true,
       "latest": {
-        "suiteVersion": "2.42.0",
+        "suiteVersion": "2.43.1",
         "targetMajor": 2,
-        "witnessSha256": "a634cdcc69f03d5672221266232b5ee963896e8fee377702f2718d9fe68ea437",
+        "witnessSha256": "69d0b862c985ec905cf35bee3b4536f51ed8dfe258543d2d15c4d634e3ec3437",
         "evidenceTiers": [
           "self"
         ],

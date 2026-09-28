@@ -7272,6 +7272,23 @@
       ]
     },
     {
+      "id": "openwop.gap.0140.10",
+      "rfc": "0140",
+      "local": "G10",
+      "section": "§Conformance",
+      "surface": "`openwop.requirement.replay.suppression-execution-ordinal` (openwop#1718) has no witness on any host, positive or negative. `conformance-replay-ordinal-loop` needs a host that both runs cycles and suppresses a side-effecting node in replay. The v2 reference host does neither for this fixture: it does not loop, it does not execute `core.conformance.side-effect`, and its `effectOutcome` (`store.ts:586` at openwop-examples `f56f092`) selects the latest outcome regardless of ordinal, which would fail the row if it looped. openwop-app does not index by ordinal (`nodeAttempts` is never reset), and MyndHyve does not seed `replaySourceOutcomes` from the prefix.",
+      "witness": "unclassified",
+      "requirementId": null,
+      "disposition": "externally-gated",
+      "target": "host-loops-with-replay-suppression",
+      "sources": [
+        {
+          "file": "RFCS/registers/0140-replay-side-effect-suppression.gaps.md",
+          "token": "G10"
+        }
+      ]
+    },
+    {
       "id": "openwop.gap.0141.0",
       "rfc": "0141",
       "local": "G0",
@@ -9826,11 +9843,11 @@
       "rfc": "0171",
       "local": "G7",
       "section": "§B.1",
-      "surface": "MyndHyve emits about 56 UPPER_CASE run-failure codes (normalised in `failurePayload`, measured at MyndHyve `fc3b007cf`) that are neither registered nor vendor codes.",
+      "surface": "MyndHyve emitted about 56 UPPER_CASE run-failure codes that were neither registered nor vendor codes.",
       "witness": "unclassified",
       "requirementId": null,
-      "disposition": "externally-gated",
-      "target": "myndhyve-code-remap",
+      "disposition": "closed",
+      "target": null,
       "sources": [
         {
           "file": "RFCS/registers/0171-v2-wire-envelope.gaps.md",
@@ -9843,7 +9860,7 @@
       "rfc": "0171",
       "local": "G8",
       "section": "§B.1",
-      "surface": "The v2 reference host emitted 3 unregistered run-failure codes (measured at openwop-examples `456dfaa`).",
+      "surface": "The v2 reference host emitted unregistered run-failure codes that were not vendor codes.",
       "witness": "unclassified",
       "requirementId": null,
       "disposition": "closed",
@@ -13260,11 +13277,11 @@
       "rfc": "0223",
       "local": "G5",
       "section": "§Implementation notes",
-      "surface": "MyndHyve fails the gate with the unregistered `APPROVAL_REJECTED`.",
+      "surface": "MyndHyve failed the gate with the unregistered `APPROVAL_REJECTED`.",
       "witness": "unclassified",
       "requirementId": null,
-      "disposition": "externally-gated",
-      "target": "myndhyve-next-cut",
+      "disposition": "closed",
+      "target": null,
       "sources": [
         {
           "file": "RFCS/registers/0223-approval-reject-disposition.gaps.md",
@@ -13362,11 +13379,11 @@
       "rfc": "0223",
       "local": "G10",
       "section": "§Conformance",
-      "surface": "`openwop.requirement.0223.timeout-rejects` and `0223.timeout-never-grants` have no MyndHyve witness: its `core.approvalGate` has no timeout configuration. On the v2 reference host both rows are negatively controlled (sweep sabotaged, or the `onTimeout` exclusion present) and pass locally with the fixtures registered. They need suite 2.43.1 and a new certified cut.",
+      "surface": "`openwop.requirement.0223.timeout-rejects` and `0223.timeout-never-grants` had no certified witness, and have no MyndHyve witness: its `core.approvalGate` has no timeout configuration.",
       "witness": "unclassified",
       "requirementId": null,
-      "disposition": "externally-gated",
-      "target": "certified-cut-on-2.43.1",
+      "disposition": "closed",
+      "target": null,
       "sources": [
         {
           "file": "RFCS/registers/0223-approval-reject-disposition.gaps.md",

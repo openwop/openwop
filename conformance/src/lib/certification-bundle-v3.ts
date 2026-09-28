@@ -22,6 +22,7 @@ import { profileDerivable, type DiscoveryPayload } from './profiles.js';
 import { checkRungClaim, type DurabilityRung, type RowEvidence } from './durability-evidence.js';
 import { profilesDeniedByObservedRelaxation, profilesRelaxedBy, v2RegistryAvailable } from './v2-profiles.js';
 import { canonicalJSON, codeUnitCompare, JcsRefusal } from './jcs.js';
+import { scrubEvidence } from './certification-bundle-verify.js';
 
 export type BundleV3Result = 'executed-pass' | 'executed-fail' | 'skipped' | 'inapplicable' | 'blocked';
 
@@ -143,6 +144,30 @@ export function signBundleV3(bundle: Omit<BundleV3, 'signature'>, privateKeyPem:
 export function verifierSign(bundle: Pick<BundleV3, 'witnessSha256' | 'host' | 'suite' | 'discovery'>, privateKeyPem: string, keyId: string): NonNullable<BundleV3['verifierSignature']> {
   const key = createPrivateKey(privateKeyPem);
   return { alg: 'ed25519', keyId, sig: toBase64url(edSign(null, attestationPayload(bundle), key)) };
+}
+
+/**
+ * Scrub, THEN digest, THEN sign (RFC 0148 §C + RFC 0168 §E.2).
+ *
+ * Until 2.43.1 the emitter computed `witnessSha256` over the raw rows, signed,
+ * and only then ran `scrubEvidence` over the finished bundle. A secret found in
+ * a row's `detail` or `evidence` was redacted AFTER the digest was taken, so
+ * the written rows no longer hashed to `witnessSha256` and the emitter's own
+ * self-verification refused the bundle (`[witness-digest]`, exit 2, no bundle)
+ * — openwop-app at major 1 on suite 2.43.0, 2026-09-28. The redaction was
+ * right and the check was right; the order was wrong. Everything the digest and
+ * the attestation cover is now scrubbed before either is computed, so the
+ * signed bytes are the shipped bytes.
+ */
+export function sealBundleV3(
+  draft: Omit<BundleV3, 'signature' | 'witnessSha256'>,
+  secrets: readonly string[],
+  privateKeyPem: string,
+  keyId: string,
+): { unsigned: Omit<BundleV3, 'signature'>; bundle: BundleV3; redactedAt: readonly string[] } {
+  const { value: scrubbed, redactedAt } = scrubEvidence(draft, secrets);
+  const unsigned: Omit<BundleV3, 'signature'> = { ...scrubbed, witnessSha256: witnessDigest(scrubbed.results.requirements, scrubbed.host.relaxations, scrubbed.host.deployment) };
+  return { unsigned, bundle: { ...unsigned, signature: signBundleV3(unsigned, privateKeyPem, keyId) }, redactedAt };
 }
 
 export function publicKeyFromPrivate(privateKeyPem: string): string {

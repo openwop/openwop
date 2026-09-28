@@ -153,6 +153,46 @@ export interface TestFailure {
   readonly message?: string;
 }
 
+/** A finished `it` as vitest's own task tree reports it. */
+export interface FinishedTest {
+  readonly id: string;
+  readonly name: string;
+  readonly state: string | undefined;
+  readonly message?: string;
+}
+
+/**
+ * The tests the per-test recorder never saw, as file states and failures.
+ *
+ * vitest runs a file's `afterEach` hooks in stack order, so a scenario's own
+ * `afterEach` (unregistering webhooks, closing a receiver) runs BEFORE the
+ * recorder `setup.ts` registers. If that hook throws or times out, vitest
+ * fails the test and skips the remaining hooks, so the recorder never runs.
+ * The file then has no recorded state, and its row read "no test executed and
+ * no disposition recorded" (`blocked`). That row gives no reason and hides a
+ * real failure. One tier-2 cut of `v2-webhook-message-id-stable` produced it
+ * on 2026-09-28.
+ *
+ * Only tests that finished `pass` or `fail` are recovered. A skipped test
+ * never reaches the recorder either way, and the existing rules already cover it.
+ */
+export function unrecordedTests(
+  tests: readonly FinishedTest[],
+  recordedIds: ReadonlySet<string>,
+): { states: FileTestState[]; failures: TestFailure[] } {
+  const states: FileTestState[] = [];
+  const failures: TestFailure[] = [];
+  for (const t of tests) {
+    if (recordedIds.has(t.id)) continue;
+    if (t.state === 'pass') states.push('pass');
+    else if (t.state === 'fail') {
+      states.push('fail');
+      failures.push({ name: t.name, message: `the test or its afterEach hook failed before the runner recorded it: ${t.message ?? 'no message'}` });
+    }
+  }
+  return { states, failures };
+}
+
 /**
  * The `executed-fail` detail for a file row: WHICH cases failed, and what the
  * first one said.

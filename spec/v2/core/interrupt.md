@@ -118,7 +118,7 @@ The token grammar and the `interrupt.tokenAlgs[]` / `kid` check are [identity.md
 
 ### Rejection
 
-A `reject` exits the suspend. The host MUST record `action: "reject"` and `decision: "rejected"` on `interrupt.resolved`, and SHOULD also emit `approval.rejected`. The resume value returns to the raising node (§Re-entry and resume values).
+A `reject` exits the suspend. The host MUST record `action: "reject"` and `decision: "rejected"` on `interrupt.resolved`, and MAY also emit `approval.rejected`. The resume value returns to the raising node (§Re-entry and resume values).
 
 - A node that does not turn the rejection into an output MUST fail with `approval_rejected` and `retryable: false` on the `node.failed` error, and MUST NOT be retried.
 - A rejected gate is a failed source. It MUST NOT satisfy an `all_success`, `any_success` or `none_failed` edge. The run continues past it only over an edge whose `triggerRule` admits a failed source (`all_complete` or `any_failed`).
