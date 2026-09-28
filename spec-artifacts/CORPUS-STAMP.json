@@ -225,8 +225,8 @@
     "spec/v2/core/events.md": "604abb6f9e2259a04103e1cb76d728712c3701c0d84dd915d4dc2949c912ee5e",
     "spec/v2/core/form-content-packs.md": "02931227899676fd4581a27017be2a6c4953904717be9b81c29d12f87ab3917d",
     "spec/v2/core/headers.md": "5cb1624fa63acc81992b6a6d842ec392cf7271aaf2f65d1f83c8c4fa286e6730",
-    "spec/v2/core/host-services.md": "15923cceb95cba148a32e0944f6a2d1d25e9cc36b0c169b67ee42d483bcac800",
-    "spec/v2/core/i18n.md": "846c6d2878fc8454c2ae0a1576f6b6e6c8958d47187a6c96cc5826ca3c3e2e91",
+    "spec/v2/core/host-services.md": "8b920bf2e9335ab04452068429b0c37d6eb8872b380a4d53368f2600d4afa241",
+    "spec/v2/core/i18n.md": "2d5a67bd3b9b956d1144acab2fbc3646cdb50b3621f97d772087eaa953798286",
     "spec/v2/core/idempotency.md": "2084d756789c1faf5121593fb39e67ca36a4c227178e175004742e403178ea49",
     "spec/v2/core/identity.md": "2dceb1c2697015e4a4fa8a9b28f4fbd25fa44a76ca5a919c752e2a8163c819db",
     "spec/v2/core/interop.md": "e72e25dff864c83b2980d7366b34054cffa072af0225821199f260f6228d260e",
@@ -234,7 +234,7 @@
     "spec/v2/core/node-pack-runtimes.md": "e1088cb69b8c3c67256c494063328916c2980ab1aa97a7063de25bab82fdb1e5",
     "spec/v2/core/oauth.md": "c96483a44b62978c596945fbb7d7c863cf6056cd980fdb4cf4e97555e3e10b72",
     "spec/v2/core/overview.md": "c8c3bedb8e02dd8ce244b8a7a75d23af1c30dc92a343af912489424a89674d70",
-    "spec/v2/core/packs.md": "b472a583211d466d6ab8e00c414c225b246e678043fe6283a710c899fadde913",
+    "spec/v2/core/packs.md": "5929e708bd4e79f6e1beea570af583c80f3b63bb21dec78a5df03c235e73364a",
     "spec/v2/core/persistence.md": "711874f74cb08b03cd118d683056db10a063517762fcea73ec70feb5d983e6a4",
     "spec/v2/core/portability.md": "87c4327f674f714fda6217fd79b99d2ba219ad47dc02f9751bb56c200fb2c17a",
     "spec/v2/core/replay.md": "4d379494057746c6883f6047972e93e621863b998ed291b9a691d3aa57c1ff43",
@@ -243,11 +243,11 @@
     "spec/v2/core/storage.md": "598ad4f3775c297c698a20daf72a7d15a6836c1231ddbca5961865c704f765b5",
     "spec/v2/core/tool-catalog.md": "d16a9004418719c48301804aefa4d7ab6f41112a4ed83727f552aa1b92b418b0",
     "spec/v2/core/versioning.md": "e3b3ab6d76e51035039a32173e9b412628a52c8fe7b16687ff58a2d0d983faa0",
-    "spec/v2/core/webhooks.md": "2fcb502be558014fd20b342687e0f078a5388fc430b2f99d883c0e73ddf7789f",
+    "spec/v2/core/webhooks.md": "d2d33c6be777f217ade3e15dd369849e5c6ce67e1a4417216f0aa6ec5bdecc56",
     "spec/v2/core/workflow-chain-packs.md": "fdce7a8477e269950a2bac05ee6eddbd66eb0b670b464d00054f7196ec05d29c",
     "spec/v2/corrections.json": "59f647f4d22477f6c2b06dcf913b682dde5d51dd5e607a5d0cf648ab60864d6e",
     "spec/v2/corrections.schema.json": "46bbffb954d13bd9995aebc912ceeb2544f7064331abf25fd6ab85c81a5cec94",
-    "spec/v2/declaration.json": "45f52d8d4a48c74151cdc13232f1f90dbd1fa5005c39161a785fcd419425f8d8",
+    "spec/v2/declaration.json": "56c85c6d49f93d08d3bd48ccf1c049191cfbc4d4c22a1cd5202c1b6252759aca",
     "spec/v2/declaration.schema.json": "ef951633e4070899f64828f5cf1b5f4870270a0360f81dbb49b5b4d6cd407550",
     "spec/v2/errors.json": "fa650cbbdf25a140fdaf82ec5269f95b4585ac4bdde1fa6b0b3ffe48a3f7943c",
     "spec/v2/errors.schema.json": "47404ad53e6147cf9017b813483712466573e419fb33e6c4b6c12d3e7deba1bc",
@@ -303,5 +303,5 @@
     "spec/v2/retention-floors.json": "eaf3722d95c79947af1d4269ef85117e126518c588cfcf1a2b21b97269f51624",
     "spec/v2/surface-baseline.json": "0d60d3d34ddc8f1290a2fc3a6be2e5ef5cfa211cde0918d8702ec4dd299d5549"
   },
-  "corpusCommit": "93ba78bcd3b7a444b6e94550c4e5ce2d6d417592"
+  "corpusCommit": "146a1771049b6a64ac90381f7816898a97e63d56"
 }

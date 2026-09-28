@@ -1,8 +1,9 @@
 # `@openwop/openwop-conformance` Changelog
 
-## [2.44.1] — unreleased — nine host storage families get a v2 normative home
+## [2.44.1] — unreleased — thirteen families get v2 normative homes
 
-- **The 2.44.1 cycle opens.** New `spec/v2/core/storage.md` changes the packed `@openwop/spec-artifacts` tree after `v2.44.0` was tagged (`spec/v2/core/storage.md`, `spec/v2/core/overview.md`, `spec/v2/README.md`, `spec/v2/declaration.json`). It restates the v1 rules for `fs`, `kvStorage`, `tableStorage`, `sql`, `nosql`, `vectorStore`, `searchIndex`, `blobStorage` and `cache` (RFC 0189 §D). No rule and no wire change, and no scenario change.
+- **The 2.44.1 cycle opens.** `workspace`, `content`, `triggerBridge` and `uiPlugins` get v2 normative homes (RFC 0189), which changes the packed `@openwop/spec-artifacts` tree (`spec/v2/core/host-services.md`, `i18n.md`, `webhooks.md`, `packs.md`, `spec/v2/declaration.json`) after `v2.44.0` was tagged. No scenario changes: the rules are restated from the v1 text, none added or strengthened.
+- New `spec/v2/core/storage.md` also changes the packed tree (`spec/v2/core/storage.md`, `spec/v2/core/overview.md`, `spec/v2/README.md`, `spec/v2/declaration.json`). It restates the v1 rules for `fs`, `kvStorage`, `tableStorage`, `sql`, `nosql`, `vectorStore`, `searchIndex`, `blobStorage` and `cache` (RFC 0189 §D). No rule and no wire change, and no scenario change.
 - **Suite `2.44.1`**. `@openwop/spec-artifacts` moves in lockstep at the same exact pin.
 
 ## [2.44.0] — 2026-09-28 — three run-failure codes registered, a webhook retry bound hosts can advertise, and RFC 0219 Accepted
