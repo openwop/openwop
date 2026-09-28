@@ -1622,6 +1622,31 @@
       "facetsFrom": "spec/v2/facets/auth.schema.json"
     },
     {
+      "key": "auditLogIntegrity",
+      "kind": "family",
+      "normativeText": [
+        "spec/v2/core/security-defaults.md"
+      ],
+      "anchor": "core",
+      "section": "core/capabilities.md#auditLogIntegrity",
+      "peerDependencyId": "auditLogIntegrity",
+      "witness": "witnessable-gated",
+      "maturity": {
+        "technical": "experimental",
+        "adoption": "none"
+      },
+      "facets": [
+        "checkpointSignatureAlgorithm",
+        "checkpointPublicKey",
+        "checkpointIntervalEntries",
+        "checkpointIntervalSeconds"
+      ],
+      "floorScenarios": [],
+      "requirementIds": [],
+      "owningRfc": "0224",
+      "facetsFrom": "spec/v2/facets/auditLogIntegrity.schema.json"
+    },
+    {
       "key": "i18n",
       "kind": "family",
       "normativeText": ["spec/v2/core/i18n.md"],

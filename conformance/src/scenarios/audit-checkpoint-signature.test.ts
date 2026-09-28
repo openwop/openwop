@@ -2,8 +2,10 @@
  * RFC 0218 — a host's audit checkpoints are signed over their Merkle root
  * (`spec/v1/auth-profiles.md` §"Audit-log integrity" 3).
  *
- * Gated on the `openwop-audit-log-integrity` profile. Every checkpoint
- * `GET /v1/audit/verify` returns MUST verify under the advertised
+ * Gated on the `openwop-audit-log-integrity` profile at major 1 and on the
+ * `auditLogIntegrity` family at major 2 (RFC 0224; spec/v2/core/
+ * security-defaults.md §Audit-log integrity). Every checkpoint
+ * `GET /v1/audit/verify` (major 2: `GET /audit/verify`) returns MUST verify under the advertised
  * `checkpointPublicKey` as Ed25519 over its hex-decoded `merkleRoot`. The root
  * itself cannot be recomputed from outside (the entries are not on the wire),
  * so the black box witnesses the signature half only. The root half belongs to
@@ -15,38 +17,35 @@
 
 import { describe, it, expect } from 'vitest';
 import { driver } from '../lib/driver.js';
-import { capabilityFamily } from '../lib/discovery-capabilities.js';
 import { req } from '../lib/requirement-ids.js';
 import { softSkip } from '../lib/soft-skip.js';
 import { checkpointPublicKey, verifyCheckpointSignature } from '../lib/audit-checkpoint.js';
+import { auditClaimName, auditIntegrityAdvert, auditVerifyPath } from '../lib/auditIntegrity.js';
 
-const SPEC = 'RFC 0218 · spec/v1/auth-profiles.md §"Audit-log integrity" 3';
+const SPEC = 'RFC 0218 · spec/v1/auth-profiles.md §"Audit-log integrity" 3; spec/v2/core/security-defaults.md §"Audit-log integrity" (RFC 0224)';
 const SIGNED = 'openwop.requirement.0218.checkpoint-signature-over-root';
-
-interface AuditIntegrityCaps { checkpointPublicKey?: string }
-interface AuthCaps { profiles?: string[]; auditLogIntegrity?: AuditIntegrityCaps }
 
 describe('RFC 0218 — a host\'s checkpoints are signed over their root', () => {
   it('every checkpoint GET /v1/audit/verify returns verifies under the advertised key', async () => {
-    const disco = await driver.get('/.well-known/openwop');
-    const auth = capabilityFamily<AuthCaps>(disco.json, 'auth') ?? {};
-    if (!(Array.isArray(auth.profiles) && auth.profiles.includes('openwop-audit-log-integrity'))) {
-      return softSkip('inapplicable', 'the host does not claim openwop-audit-log-integrity');
+    const integrity = await auditIntegrityAdvert();
+    if (integrity === null) {
+      return softSkip('inapplicable', `the host does not claim ${auditClaimName()}`);
     }
-    const advertised = auth.auditLogIntegrity?.checkpointPublicKey;
+    const advertised = integrity.checkpointPublicKey;
     if (typeof advertised !== 'string' || advertised.length === 0) {
       // A claimed profile without its key is the profile-shape leg's failure
       // (audit-log-integrity.test.ts); this row cannot be observed without it.
-      return softSkip('blocked', 'the host claims the profile but advertises no auditLogIntegrity.checkpointPublicKey');
+      return softSkip('blocked', `the host claims ${auditClaimName()} but advertises no auditLogIntegrity.checkpointPublicKey`);
     }
     let key;
     try { key = checkpointPublicKey(advertised); } catch (e) {
       return softSkip('blocked', `auditLogIntegrity.checkpointPublicKey is not an Ed25519 SPKI key: ${(e as Error).message}`);
     }
 
-    const verify = await driver.get('/v1/audit/verify?fromSeq=0&toSeq=1000000');
+    const path = auditVerifyPath(0, 1_000_000);
+    const verify = await driver.get(path);
     if (verify.status !== 200) {
-      return softSkip('blocked', `GET /v1/audit/verify answered ${verify.status}; the verify leg of audit-log-integrity owns that contract`);
+      return softSkip('blocked', `GET ${path.split('?')[0]} answered ${verify.status}; the verify leg of audit-log-integrity owns that contract`);
     }
     const checkpoints = ((verify.json as { checkpoints?: Array<{ atSequence?: number; merkleRoot?: string; signature?: string }> }).checkpoints) ?? [];
     if (checkpoints.length === 0) {

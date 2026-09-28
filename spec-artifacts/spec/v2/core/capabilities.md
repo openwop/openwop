@@ -111,7 +111,7 @@ These keys are not part of the v2 root:
 
 Operation paths live in `spec/v2/path-manifest.json` ([`versioning.md`](versioning.md)). The declaration is generated from nothing and checked against everything (`scripts/check-declaration.mjs`).
 
-## 5. Core families (72)
+## 5. Core families (73)
 
 Each heading below is a `spec/v2/declaration.json` row with `anchor: core`. `scripts/check-declaration.mjs` MUST fail when a heading here, a root key in the generated schema, or a pack peer-dependency identifier names a family the declaration does not. The peer-dependency identifier is identical to the key ([`packs.md`](packs.md)).
 
@@ -393,6 +393,10 @@ Witness `witnessable-gated`.
 ### § auth
 
 Witness `seam-gated`. Facets: `lanes`, `subjectLinkKey`.
+
+### § auditLogIntegrity
+
+Witness `witnessable-gated`. Facets: `checkpointSignatureAlgorithm`, `checkpointPublicKey`, `checkpointIntervalEntries`, `checkpointIntervalSeconds` ([security-defaults.md](security-defaults.md) §Audit-log integrity).
 
 ### § i18n
 

@@ -7696,6 +7696,102 @@
       "description": "core/capabilities.md#auth — witness: seam-gated; maturity experimental/none; RFC 0154",
       "x-openwop-facets-from": "spec/v2/facets/auth.schema.json"
     },
+    "auditLogIntegrity": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "status",
+        "since",
+        "witness",
+        "checkpointSignatureAlgorithm",
+        "checkpointPublicKey",
+        "checkpointIntervalEntries",
+        "checkpointIntervalSeconds"
+      ],
+      "properties": {
+        "status": {
+          "enum": [
+            "stable",
+            "experimental",
+            "deprecated"
+          ]
+        },
+        "since": {
+          "type": "string",
+          "pattern": "^(0|[1-9][0-9]*)\\.(0|[1-9][0-9]*)$",
+          "description": "The minor of THIS HOST's own contract at which it began serving the family — a point on its protocolVersions[] timeline, not the corpus minor that introduced the family. The corpus states no per-family since (spec/v2/declaration.json carries witness and maturity and no since), and `status`/`until` are the host's stability claim absorbed from v1 tier/experimentalUntil, so all three describe the host's offering and `witness` is the record's one corpus-derived field. A since naming a minor absent from protocolVersions[] puts adjacent same-grammar fields on two different timelines and is a defect. Ruled 2026-09-11."
+        },
+        "until": {
+          "type": "string",
+          "pattern": "^((0|[1-9][0-9]*)\\.(0|[1-9][0-9]*)|\\d{4}-\\d{2}-\\d{2})$"
+        },
+        "witness": {
+          "enum": [
+            "witnessable-unaided",
+            "witnessable-gated",
+            "seam-gated",
+            "claims-check",
+            "negative-existence"
+          ]
+        },
+        "checkpointSignatureAlgorithm": {
+          "const": "ed25519",
+          "description": "The checkpoint signature algorithm. Ed25519 over the 32 bytes `merkleRoot` hex-decodes to (RFC 0218 §A.4)."
+        },
+        "checkpointPublicKey": {
+          "type": "string",
+          "pattern": "^MCowBQYDK2VwAyEA[A-Za-z0-9+/]{43}=$",
+          "description": "The audit-signing public key: base64 (RFC 4648 §4, padded) of its DER SubjectPublicKeyInfo, 44 bytes for Ed25519. Every checkpoint `GET /audit/verify` returns MUST verify under it."
+        },
+        "checkpointIntervalEntries": {
+          "type": "integer",
+          "minimum": 1,
+          "description": "The most entries a checkpoint anchors: consecutive checkpoints' atSequence, and the first checkpoint's atSequence from 0, differ by at most this."
+        },
+        "checkpointIntervalSeconds": {
+          "type": "integer",
+          "minimum": 1,
+          "description": "The longest an appended entry waits before a checkpoint anchors it."
+        }
+      },
+      "allOf": [
+        {
+          "if": {
+            "properties": {
+              "status": {
+                "const": "stable"
+              }
+            }
+          },
+          "then": {
+            "not": {
+              "required": [
+                "until"
+              ]
+            }
+          }
+        },
+        {
+          "if": {
+            "properties": {
+              "status": {
+                "enum": [
+                  "experimental",
+                  "deprecated"
+                ]
+              }
+            }
+          },
+          "then": {
+            "required": [
+              "until"
+            ]
+          }
+        }
+      ],
+      "description": "core/capabilities.md#auditLogIntegrity — witness: witnessable-gated; maturity experimental/none; RFC 0224",
+      "x-openwop-facets-from": "spec/v2/facets/auditLogIntegrity.schema.json"
+    },
     "i18n": {
       "type": "object",
       "additionalProperties": false,

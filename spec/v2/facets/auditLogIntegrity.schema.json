@@ -1,0 +1,30 @@
+{
+  "$comment": "RFC 0224 §A — the audit-log-integrity family's facets: the checkpoint signing key and algorithm a verifier needs, and the checkpoint cadence the host declares. The record's presence claims the hash chain, so the earlier major's `hashChain: true` has no seat.",
+  "properties": {
+    "checkpointSignatureAlgorithm": {
+      "const": "ed25519",
+      "description": "The checkpoint signature algorithm. Ed25519 over the 32 bytes `merkleRoot` hex-decodes to (RFC 0218 §A.4)."
+    },
+    "checkpointPublicKey": {
+      "type": "string",
+      "pattern": "^MCowBQYDK2VwAyEA[A-Za-z0-9+/]{43}=$",
+      "description": "The audit-signing public key: base64 (RFC 4648 §4, padded) of its DER SubjectPublicKeyInfo, 44 bytes for Ed25519. Every checkpoint `GET /audit/verify` returns MUST verify under it."
+    },
+    "checkpointIntervalEntries": {
+      "type": "integer",
+      "minimum": 1,
+      "description": "The most entries a checkpoint anchors: consecutive checkpoints' atSequence, and the first checkpoint's atSequence from 0, differ by at most this."
+    },
+    "checkpointIntervalSeconds": {
+      "type": "integer",
+      "minimum": 1,
+      "description": "The longest an appended entry waits before a checkpoint anchors it."
+    }
+  },
+  "required": [
+    "checkpointSignatureAlgorithm",
+    "checkpointPublicKey",
+    "checkpointIntervalEntries",
+    "checkpointIntervalSeconds"
+  ]
+}
