@@ -35,7 +35,7 @@ import { absenceIsUnmeasured, noDeliveryCause, startScopedReceiver, type ScopedR
 import { readErrorCode } from '../lib/error-envelope.js';
 import { blockedDespiteAssertions, softSkip } from '../lib/soft-skip.js';
 import { req } from '../lib/requirement-ids.js';
-import { pastAdvertisedBound, retryWaitCapMs, retryWaitFor, windowClosedNote } from '../lib/webhook-retry-window.js';
+import { pastAdvertisedBound, retryTestTimeoutMs, retryWaitCapMs, retryWaitFor, windowClosedNote } from '../lib/webhook-retry-window.js';
 
 export const REQUIRES_HOST_CALLBACK = 'the host POSTs and retries webhook deliveries to the suite-owned scoped receiver behind OPENWOP_WEBHOOK_RECEIVER_URL';
 
@@ -198,6 +198,11 @@ function retryWaitMs(doc: Record<string, unknown>): number {
  * to the wait carries its own timeout, the way the advert is sourced from the
  * constant the delivery loop reads. `WAIT_SLACK_MS` covers `waitTerminal`,
  * registration and the HTTP round trips around the waits.
+ *
+ * 2.44.1: and the cap was the wrong wait to derive from once RFC 0225 let a
+ * host advertise `maxElapsedMs` — the wait follows the advert, the timeout is
+ * fixed at registration. So the budget is derived from the largest wait
+ * `retryWaitFor` can return (`retryTestTimeoutMs`).
  */
 /**
  * How many attempts the receiver refuses before answering 204 (suite 2.0.3).
@@ -230,9 +235,9 @@ function failFirstFor(policy: { maxAttempts?: number } | null): number {
 
 const WAIT_SLACK_MS = 30_000;
 /** One `retryWaitMs` wait (the retry leg). */
-const RETRY_TEST_TIMEOUT_MS = RETRY_WAIT_CAP_MS + WAIT_SLACK_MS;
+const RETRY_TEST_TIMEOUT_MS = retryTestTimeoutMs(1, WAIT_SLACK_MS);
 /** Two sequential `retryWaitMs` waits (the dead-letter leg: observe a retry, then exhaust). */
-const DEAD_LETTER_TEST_TIMEOUT_MS = RETRY_WAIT_CAP_MS * 2 + WAIT_SLACK_MS;
+const DEAD_LETTER_TEST_TIMEOUT_MS = retryTestTimeoutMs(2, WAIT_SLACK_MS);
 
 /** Register the suite receiver; null (with a note) when the host's SSRF guard refuses a loopback URL. */
 async function register(rx: ScopedReceiver): Promise<{ webhookId: string } | null> {
