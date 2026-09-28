@@ -24,7 +24,7 @@
     },
     "chainValid": {
       "type": "boolean",
-      "description": "True when every entry's `prevHash` matches the SHA-256 of the prior entry's RFC 8785 JCS canonicalization AND every signed checkpoint in `checkpoints[]` verifies against the host's advertised `auditLogIntegrity.checkpointPublicKey`. False when ANY break or invalid signature is detected; `anomalies[]` enumerates the breaks."
+      "description": "True when every entry's `prevHash` matches the SHA-256 of the prior entry's RFC 8785 JCS canonicalization AND every signed checkpoint in `checkpoints[]` verifies against the host's advertised `auditLogIntegrity.checkpointPublicKey`. False when ANY anomaly is detected: a chain break, a mutated or missing entry, a checkpoint root that does not recompute, or an invalid signature. `anomalies[]` enumerates them (RFC 0218 §C)."
     },
     "checkpointsValid": {
       "type": "boolean",
@@ -39,13 +39,34 @@
     },
     "anomalies": {
       "type": "array",
-      "description": "One entry per detected hash-chain break in [fromSeq, toSeq]. Empty array MUST appear when chainValid is true (not omitted).",
+      "description": "One entry per anomaly detected in [fromSeq, toSeq]: a chain break, a mutated or missing entry, or a checkpoint whose root or signature fails (RFC 0218 §C). Empty array MUST appear when chainValid is true (not omitted), and MUST be non-empty when chainValid is false.",
       "items": {
         "$ref": "#/$defs/Anomaly"
       }
     }
   },
   "additionalProperties": false,
+  "if": {
+    "properties": {
+      "chainValid": {
+        "const": true
+      }
+    }
+  },
+  "then": {
+    "properties": {
+      "anomalies": {
+        "maxItems": 0
+      }
+    }
+  },
+  "else": {
+    "properties": {
+      "anomalies": {
+        "minItems": 1
+      }
+    }
+  },
   "$defs": {
     "Checkpoint": {
       "type": "object",
@@ -82,28 +103,103 @@
     },
     "Anomaly": {
       "type": "object",
+      "description": "One detected anomaly (RFC 0218 §C). `kind` says what failed and fixes which members the entry carries: `chain-break` carries `expectedPrevHash` and `actualPrevHash`; `merkle-mismatch` and `signature-invalid` carry `checkpoint`; `hash-mismatch` and `missing-entry` carry neither. An entry without `kind` is a `chain-break`, the only shape this object had before RFC 0218 §C. A verifier MUST treat an unknown `kind` as an anomaly: `chainValid` is false whenever `anomalies` is non-empty.",
       "required": [
-        "atSeq",
-        "expectedPrevHash",
-        "actualPrevHash"
+        "atSeq"
       ],
       "properties": {
         "atSeq": {
           "type": "integer",
           "minimum": 0,
-          "description": "Sequence number of the entry whose `prevHash` failed verification."
+          "description": "The sequence number the anomaly is at. For an entry kind, the entry that failed (`chain-break`, `hash-mismatch`) or the first missing sequence of a gap (`missing-entry`). For a checkpoint kind, the checkpoint's `atSequence`."
+        },
+        "kind": {
+          "type": "string",
+          "enum": [
+            "chain-break",
+            "hash-mismatch",
+            "missing-entry",
+            "merkle-mismatch",
+            "signature-invalid"
+          ],
+          "description": "What failed. `chain-break`: the entry's `prevHash` is not the hash of the entry before it. `hash-mismatch`: the entry no longer hashes to the value the host recorded when it was appended (the entry was mutated in place). `missing-entry`: no entry exists at `atSeq` inside the verified range. `merkle-mismatch`: the root recomputed over the checkpoint's range (RFC 0218 §A) differs from its `merkleRoot`. `signature-invalid`: the checkpoint's `signature` does not verify under the advertised `checkpointPublicKey`. Hosts SHOULD set it; absent means `chain-break`."
         },
         "expectedPrevHash": {
-          "type": "string",
+          "type": [
+            "string",
+            "null"
+          ],
           "minLength": 1,
-          "description": "Hex-encoded SHA-256 the verifier computed from the prior entry's RFC 8785 JCS canonicalization."
+          "description": "`chain-break` only. Hex-encoded SHA-256 the verifier computed from the prior entry's RFC 8785 JCS canonicalization; `null` when the entry is the genesis entry, whose `prevHash` must be null."
         },
         "actualPrevHash": {
+          "type": [
+            "string",
+            "null"
+          ],
+          "description": "`chain-break` only. The `prevHash` value the audit-log entry actually carries, `null` included. Empty string when the field is missing (a structural anomaly distinct from a hash mismatch)."
+        },
+        "checkpoint": {
           "type": "string",
-          "description": "The `prevHash` value the audit-log entry actually carries. Empty string when the field is missing (a structural anomaly distinct from a hash mismatch)."
+          "minLength": 1,
+          "maxLength": 256,
+          "description": "`merkle-mismatch` and `signature-invalid` only: the id of the failing checkpoint, as in `checkpoints[].checkpoint`. Required because two checkpoints can share an `atSequence` while a rotating key dual-signs (auth-profiles.md §Key management)."
+        },
+        "detail": {
+          "type": "string",
+          "maxLength": 1024,
+          "description": "OPTIONAL human-readable explanation for an operator. Not machine-readable; a verifier MUST NOT branch on it."
         }
       },
-      "additionalProperties": false
+      "additionalProperties": false,
+      "allOf": [
+        {
+          "if": {
+            "properties": {
+              "kind": {
+                "const": "chain-break"
+              }
+            }
+          },
+          "then": {
+            "required": [
+              "expectedPrevHash",
+              "actualPrevHash"
+            ]
+          },
+          "else": {
+            "properties": {
+              "expectedPrevHash": false,
+              "actualPrevHash": false
+            }
+          }
+        },
+        {
+          "if": {
+            "required": [
+              "kind"
+            ],
+            "properties": {
+              "kind": {
+                "enum": [
+                  "merkle-mismatch",
+                  "signature-invalid"
+                ]
+              }
+            }
+          },
+          "then": {
+            "required": [
+              "checkpoint"
+            ]
+          },
+          "else": {
+            "properties": {
+              "checkpoint": false
+            }
+          }
+        }
+      ]
     }
   },
   "x-openwop-seeded-from": "v1"
