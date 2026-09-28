@@ -1,7 +1,7 @@
 # Security Defaults
 
 > **Status: Stable.**
-> **Normative home:** `sandbox`, `compensation`, `purposePropagation`.
+> **Normative home:** `sandbox`, `compensation`, `purposePropagation`, `auditLogIntegrity`.
 
 ## Why this exists
 
@@ -28,6 +28,7 @@ A security-load-bearing behavior is an obligation of the surface that needs it. 
 | `idempotency` | Layer-2 effect identity (§Layer-2 effect identity) | witnessable-gated (fixture provider) | `logical-effect-id-retry-stable` |
 | an `oauth2` or `oidc` lane | protected-resource metadata and challenges ([identity.md §2.5](identity.md)) | witnessable-gated | `auth-challenge-no-oracle` |
 | any outbound request | no inbound credential on an onward hop (§Onward hops) | seam-gated | `inbound-credential-no-passthrough` |
+| `auditLogIntegrity` | a chained, checkpointed, verifiable audit log (§Audit-log integrity) | witnessable-gated | `audit-checkpoint-signed-over-root` |
 
 ### Auth lanes
 
@@ -91,6 +92,16 @@ One credential is not inbound in this sense: an A2A push-config credential (`aut
 
 A host advertising `purposePropagation` MUST re-emit a `permittedPurposes` label it received (A2A `metadata.openwop.permittedPurposes`, `TriggerEvent.permittedPurposes`) on every onward hop of the same data, narrowing and never widening, and MUST treat `[]` as no onward use. `purposePropagation.propagatesOnward` is `false` only on a host with no onward hop. The family advertises propagation, not enforcement.
 
+### Audit-log integrity
+
+A host advertising `auditLogIntegrity` MUST keep an audit log a privileged insider cannot silently rewrite. It:
+
+- MUST keep the log append-only, each entry carrying `prevHash`, the lowercase-hex SHA-256 of the prior entry's canonical JSON ([conformance.md §Canonical JSON](conformance.md)), `null` for the first;
+- MUST sign a checkpoint anchoring at most `checkpointIntervalEntries` entries, and anchor an entry within `checkpointIntervalSeconds` of its append. The range, leaves, root and signature are [RFC 0218 §A](https://github.com/openwop/openwop/blob/main/RFCS/0218-audit-checkpoint-preimage.md); the signature is Ed25519 (`checkpointSignatureAlgorithm`) under `checkpointPublicKey`, a key used for no other surface;
+- MUST serve `GET /audit/verify` (scope `audit:read`), answering `schemas/v2/audit-verify-result.schema.json` with every checkpoint whose `atSequence` is in the range, ascending, and the anomalies of [RFC 0218 §C](https://github.com/openwop/openwop/blob/main/RFCS/0218-audit-checkpoint-preimage.md). A host that does not advertise the family MAY omit the operation.
+
+The `audit-log-integrity` and `audit-checkpoint-signature` scenarios witness the verify body, each signature, and the cadence. The root is not witnessable from outside, because entries are not on the wire; tamper detection is a host-internal test.
+
 ## Relaxations
 
 A relaxation, where one is legitimate — a development deployment, a single-tenant appliance — is an operator setting, never a discovery field. Every relaxation a host runs under MUST be recorded in its certification bundle as `host.relaxations[]` (`schemas/v2/certification-bundle.schema.json`): `{ obligation, durability, reason }`, `durability ∈ session | deployment | persisted`.
@@ -131,4 +142,4 @@ Rows `C6.1`–`C6.9` are `spec/v1/migrations.json` entries.
 
 See also: identity.md, replay.md, webhooks.md, capabilities.md, conformance.md.
 
-*Sources: RFC 0150, RFC 0163, RFC 0164, RFC 0170, RFC 0173, RFC 0214.*
+*Sources: RFC 0150, RFC 0163, RFC 0164, RFC 0170, RFC 0173, RFC 0214, RFC 0218, RFC 0224.*

@@ -13069,6 +13069,23 @@
       ]
     },
     {
+      "id": "openwop.gap.0220.4",
+      "rfc": "0220",
+      "local": "G4",
+      "section": "§B",
+      "surface": "`brand`, `canvas`, `coordination` and `launchStudio` have no tier-2 host. MyndHyve's executors for them run in the browser engine or on `canvas-runtime`, which does no OpenWOP version negotiation. `coordination`'s vote/consensus nodes need server-side agent dispatch.",
+      "witness": "unclassified",
+      "requirementId": null,
+      "disposition": "externally-gated",
+      "target": "tier-2-host-serves-family",
+      "sources": [
+        {
+          "file": "RFCS/registers/0220-ext-families-graduate-on-evidence.gaps.md",
+          "token": "G4"
+        }
+      ]
+    },
+    {
       "id": "openwop.gap.0221.1",
       "rfc": "0221",
       "local": "G1",
@@ -13269,6 +13286,40 @@
         {
           "file": "RFCS/registers/0223-approval-reject-disposition.gaps.md",
           "token": "G9"
+        }
+      ]
+    },
+    {
+      "id": "openwop.gap.0224.1",
+      "rfc": "0224",
+      "local": "G1",
+      "section": "§Conformance",
+      "surface": "The witness is loopback only; `Accepted` needs a certified public v2 bundle from a host advertising the family.",
+      "witness": "unclassified",
+      "requirementId": null,
+      "disposition": "externally-gated",
+      "target": "v2-reference-public-cut",
+      "sources": [
+        {
+          "file": "RFCS/registers/0224-v2-audit-log-integrity.gaps.md",
+          "token": "G1"
+        }
+      ]
+    },
+    {
+      "id": "openwop.gap.0224.2",
+      "rfc": "0224",
+      "local": "G2",
+      "section": "§Unresolved questions",
+      "surface": "A dual-signing host lists a checkpoint under a key other than `checkpointPublicKey`, which the signature row fails; v2 advertises one key.",
+      "witness": "unclassified",
+      "requirementId": null,
+      "disposition": "externally-gated",
+      "target": "first-rotating-host",
+      "sources": [
+        {
+          "file": "RFCS/registers/0224-v2-audit-log-integrity.gaps.md",
+          "token": "G2"
         }
       ]
     },

@@ -3,7 +3,7 @@
   "counts": {
     "files": 570,
     "v1": 452,
-    "v2": 131
+    "v2": 133
   },
   "majors": {
     "a2a-1-0-agent-card.test.ts": [
@@ -254,14 +254,16 @@
       2
     ],
     "audit-checkpoint-signature.test.ts": [
-      1
+      1,
+      2
     ],
     "audit-checkpoint-vectors.test.ts": [
       1,
       2
     ],
     "audit-log-integrity.test.ts": [
-      1
+      1,
+      2
     ],
     "auth-api-key-rotation.test.ts": [
       1

@@ -2638,9 +2638,10 @@ paths:
       summary: Verify the audit-log hash chain over [fromSeq, toSeq].
       description: Re-walks the audit-log entries in the requested range, recomputes each entry's `prevHash` from the canonical
         RFC 8785 JCS serialization of the prior entry, verifies signed checkpoints against the host's advertised `auditLogIntegrity.checkpointPublicKey`,
-        and returns `chainValid` with any anomalies. Hosts MUST require the `audit:read` scope. Hosts that do not advertise
-        the `openwop-audit-log-integrity` profile MAY omit this endpoint entirely; clients SHOULD check `/.well-known/openwop`
-        first. See `spec/v1/auth-profiles.md` §`openwop-audit-log-integrity` §4.
+        and returns `chainValid` with any anomalies. Hosts MUST require the `audit:read` scope. Served by a host that advertises
+        the `auditLogIntegrity` family, which MUST list every checkpoint whose `atSequence` is in the range, ascending; a
+        host that does not advertise it MAY omit this endpoint entirely, and clients SHOULD check `/.well-known/openwop` first.
+        See `spec/v2/core/security-defaults.md` §Audit-log integrity.
       operationId: verifyAuditLog
       security:
       - ApiKeyAuth:

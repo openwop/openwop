@@ -8,7 +8,7 @@
 | --- | --- |
 | **witness:** | `claims-check` |
 | **technical:** | `experimental` |
-| **adoption:** | `single-witness` |
+| **adoption:** | `none` |
 | **peer-dependency id** | `coordination` |
 | **advertised as** | `extensions.<org>.coordination` |
 | **declared facets** | none defined |

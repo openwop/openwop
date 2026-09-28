@@ -1,13 +1,13 @@
 # `entities` extension
 
-> **Status: Draft.**
+> **Status: Stable.**
 
 `entities` names generic entity CRUD over projects and workspace assets. It is a discovery-only reservation: v2 defines no portable operations or payload contract for it.
 
 | Field | Value |
 | --- | --- |
 | **witness:** | `claims-check` |
-| **technical:** | `experimental` |
+| **technical:** | `stable` |
 | **adoption:** | `single-witness` |
 | **peer-dependency id** | `entities` |
 | **advertised as** | `extensions.<org>.entities` |

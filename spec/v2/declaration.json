@@ -1622,6 +1622,31 @@
       "facetsFrom": "spec/v2/facets/auth.schema.json"
     },
     {
+      "key": "auditLogIntegrity",
+      "kind": "family",
+      "normativeText": [
+        "spec/v2/core/security-defaults.md"
+      ],
+      "anchor": "core",
+      "section": "core/capabilities.md#auditLogIntegrity",
+      "peerDependencyId": "auditLogIntegrity",
+      "witness": "witnessable-gated",
+      "maturity": {
+        "technical": "experimental",
+        "adoption": "none"
+      },
+      "facets": [
+        "checkpointSignatureAlgorithm",
+        "checkpointPublicKey",
+        "checkpointIntervalEntries",
+        "checkpointIntervalSeconds"
+      ],
+      "floorScenarios": [],
+      "requirementIds": [],
+      "owningRfc": "0224",
+      "facetsFrom": "spec/v2/facets/auditLogIntegrity.schema.json"
+    },
+    {
       "key": "i18n",
       "kind": "family",
       "normativeText": ["spec/v2/core/i18n.md"],
@@ -1737,7 +1762,7 @@
       "extensionName": "rest-transport",
       "witness": "witnessable-gated",
       "maturity": {
-        "technical": "experimental",
+        "technical": "stable",
         "adoption": "single-witness"
       },
       "facets": [
@@ -1779,7 +1804,7 @@
       "witness": "claims-check",
       "maturity": {
         "technical": "experimental",
-        "adoption": "single-witness"
+        "adoption": "none"
       },
       "facets": [],
       "floorScenarios": [],
@@ -1797,7 +1822,7 @@
       "witness": "claims-check",
       "maturity": {
         "technical": "experimental",
-        "adoption": "single-witness"
+        "adoption": "none"
       },
       "facets": [],
       "floorScenarios": [],
@@ -1814,7 +1839,7 @@
       "extensionName": "chat",
       "witness": "claims-check",
       "maturity": {
-        "technical": "experimental",
+        "technical": "stable",
         "adoption": "single-witness"
       },
       "facets": [],
@@ -1833,7 +1858,7 @@
       "witness": "claims-check",
       "maturity": {
         "technical": "experimental",
-        "adoption": "single-witness"
+        "adoption": "none"
       },
       "facets": [],
       "floorScenarios": [],
@@ -1851,7 +1876,7 @@
       "witness": "claims-check",
       "maturity": {
         "technical": "experimental",
-        "adoption": "single-witness"
+        "adoption": "none"
       },
       "facets": [],
       "floorScenarios": [],
@@ -1868,7 +1893,7 @@
       "extensionName": "entities",
       "witness": "claims-check",
       "maturity": {
-        "technical": "experimental",
+        "technical": "stable",
         "adoption": "single-witness"
       },
       "facets": [],
@@ -1886,7 +1911,7 @@
       "extensionName": "kanban",
       "witness": "claims-check",
       "maturity": {
-        "technical": "experimental",
+        "technical": "stable",
         "adoption": "single-witness"
       },
       "facets": [],
@@ -1904,7 +1929,7 @@
       "extensionName": "knowledge",
       "witness": "claims-check",
       "maturity": {
-        "technical": "experimental",
+        "technical": "stable",
         "adoption": "single-witness"
       },
       "facets": [],
@@ -1923,7 +1948,7 @@
       "witness": "claims-check",
       "maturity": {
         "technical": "experimental",
-        "adoption": "single-witness"
+        "adoption": "none"
       },
       "facets": [],
       "floorScenarios": [],
@@ -1941,7 +1966,7 @@
       "witness": "claims-check",
       "maturity": {
         "technical": "experimental",
-        "adoption": "single-witness"
+        "adoption": "none"
       },
       "facets": [],
       "floorScenarios": [],
@@ -1958,7 +1983,7 @@
       "extensionName": "web-research",
       "witness": "claims-check",
       "maturity": {
-        "technical": "experimental",
+        "technical": "stable",
         "adoption": "single-witness"
       },
       "facets": [],
