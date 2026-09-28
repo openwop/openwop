@@ -13260,11 +13260,11 @@
       "rfc": "0223",
       "local": "G8",
       "section": "§A",
-      "surface": "A gate re-entered over a reject loop collides with the one-interrupt-per-key rule (`interrupt.md` §Re-entry); v2 has no per-iteration key derivation.",
+      "surface": "A gate re-entered over a reject loop collided with the one-interrupt-per-key rule (`interrupt.md` §Re-entry); v2 had no per-iteration key derivation.",
       "witness": "unclassified",
       "requirementId": null,
-      "disposition": "transferred",
-      "target": "openwop#1697",
+      "disposition": "closed",
+      "target": null,
       "sources": [
         {
           "file": "RFCS/registers/0223-approval-reject-disposition.gaps.md",

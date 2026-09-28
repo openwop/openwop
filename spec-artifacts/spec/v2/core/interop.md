@@ -162,4 +162,4 @@ A receiver prefers the in-message value, ignores a malformed one, and MUST NOT d
 
 `SECURITY/threat-model-interop.md` is the threat model for this document; its invariants are rows of `SECURITY/invariants.yaml`. Peer identity and authorization at the boundary are governed by security-defaults.md; a peer MUST NOT gain authority the caller's Subject does not hold.
 
-*Sources: RFC 0175, RFC 0198, RFC 0207, RFC 0208, RFC 0211, RFC 0214.*
+*Sources: RFCs 0175, 0198, 0207, 0208, 0211, 0214.*

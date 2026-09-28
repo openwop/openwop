@@ -41,4 +41,4 @@ An applied import emits `import.applied` (`schemas/v2/run-event-payloads.schema.
 
 No protocol path is defined for export or import: a host serves them on routes of its own. A host-private migration from an anonymous sandbox into a signed-in tenant fits this contract, because its response is a subset of the import outcome.
 
-*Sources: RFC 0043, RFC 0096, RFC 0098.*
+*Sources: RFCs 0043, 0096, 0098.*

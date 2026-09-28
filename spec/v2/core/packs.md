@@ -118,4 +118,4 @@ A registry MUST validate submissions against vendored copies of these schemas pi
 - The v1 registry tree is frozen through the overlap, behind the v2 tree.
 - `testMode` advertises the v1 `/v1/packs-test/*` mirror, a conformance seam ([conformance.md §"The seams profile"](conformance.md)). It remains advertisable through the overlap and is removed at 3.0.
 
-*Sources: RFC 0177, RFC 0212, RFC 0222.*
+*Sources: RFCs 0177, 0212, 0222.*

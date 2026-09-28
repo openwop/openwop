@@ -1,0 +1,33 @@
+{
+  "id": "conformance-approval-reject-loopback",
+  "name": "Conformance: Approval (reject loops back)",
+  "version": "1.0",
+  "description": "openwop#1697. A rejected approval gate routed over an any_failed edge to revise, which loops back to the gate (bounded by settings.maxLoopbackIterations 2). Rejected once, the gate is visited again: the host MUST raise a new interrupt.requested with a different key and wait for a new decision, never replaying the first rejection. Conformance scenario: v2-approval-reject-disposition.test.ts.",
+  "nodes": [
+    { "id": "start", "typeId": "core.noop", "name": "Start", "position": { "x": 0, "y": 0 }, "config": {}, "inputs": {} },
+    {
+      "id": "gate",
+      "typeId": "core.approvalGate",
+      "name": "Approval Gate",
+      "position": { "x": 200, "y": 0 },
+      "config": {
+        "title": "Conformance approval (reject loops back)",
+        "description": "Conformance suite — reject once; the gate is asked again.",
+        "actions": ["accept", "reject"]
+      },
+      "inputs": {}
+    },
+    { "id": "revise", "typeId": "core.noop", "name": "Revise", "position": { "x": 400, "y": 0 }, "config": {}, "inputs": {} }
+  ],
+  "edges": [
+    { "id": "start-gate", "sourceNodeId": "start", "targetNodeId": "gate", "triggerRule": "any_success" },
+    { "id": "gate-revise", "sourceNodeId": "gate", "targetNodeId": "revise", "triggerRule": "any_failed" },
+    { "id": "revise-gate", "sourceNodeId": "revise", "targetNodeId": "gate", "triggerRule": "any_success" }
+  ],
+  "triggers": [
+    { "id": "manual", "type": "manual", "enabled": true }
+  ],
+  "variables": [],
+  "metadata": { "tags": ["conformance", "hitl"] },
+  "settings": { "timeout": 0, "maxLoopbackIterations": 2 }
+}

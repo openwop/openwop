@@ -264,4 +264,4 @@ A host that does not advertise `dataResidency` MAY ignore or reject a `residency
 
 A non-terminal run inherited from v1 continues, or is cancelled `v1_pin_unsupported`, per [persistence.md](persistence.md) §"Runs pinned to v1".
 
-*Sources: RFC 0170, RFC 0171, RFC 0176, RFC 0182.*
+*Sources: RFCs 0170, 0171, 0176, 0182.*

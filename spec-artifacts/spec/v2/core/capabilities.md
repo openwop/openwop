@@ -467,4 +467,4 @@ A profile is a predicate over the declaration file, published in `spec/v2/profil
 
 Rows `C2.1`–`C2.10` are `spec/v1/migrations.json` entries. `openwop.codemod.discovery-document-v2` transforms `C2.2`–`C2.8`: it drops a family with `supported: false` and promotes a dotted-only declared family to its plain key. Certification bundles naming `openwop-core` are never upgraded; they remain valid v1 evidence at their version.
 
-*Sources: RFC 0144, RFC 0169, RFC 0175, RFC 0176, RFC 0179, RFC 0197. Each family's owning RFC is its `owningRfc` in [`declaration.json`](../declaration.json).*
+*Sources: RFCs 0144, 0169, 0175, 0176, 0179, 0197. Each family's owning RFC is its `owningRfc` in [`declaration.json`](../declaration.json).*

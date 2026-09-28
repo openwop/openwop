@@ -52,6 +52,7 @@ All fixtures MUST advertise:
 | Approval (reject routed) | `conformance-approval-reject-routed` | RFC 0223 G1 — a rejected gate is routed over an `any_failed` edge; its `all_success` sibling never runs | `completed` after reject | unbounded (suspends) |
 | Approval (timeout) | `conformance-approval-timeout` | RFC 0223 G2 — a 1500 ms `timeoutMs`, no `onTimeout`: the host's timer resolves the gate rejected | `failed` (`approval_rejected`) after the timeout | ~1.5 s + the host's sweep |
 | Approval (timeout, onTimeout approve) | `conformance-approval-timeout-approve` | openwop#1696 — a 1500 ms `timeoutMs` with `onTimeout: approve`: a timeout never grants, so the gate still resolves rejected | `failed` (`approval_rejected`) after the timeout | ~1.5 s + the host's sweep |
+| Approval (reject loops back) | `conformance-approval-reject-loopback` | openwop#1697 — a rejected gate routed back to itself through `revise` is asked again under a new `key` | `waiting-approval` again after one reject (the suite cancels) | unbounded (suspends) |
 | Clarification                             | `conformance-clarification`                                                                     | Verifies HITL clarification interrupt + resume                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                            | `completed` after resolve                                                           | unbounded (suspends)         |
 | Clarification (nested schema)             | `conformance-clarification-nested`                                                              | RFC 0199 §D.2(d) probe — an answer schema an MCP mount MUST NOT bridge in form mode                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                       | `completed` after resolve                                                           | unbounded (suspends)         |
 | Clarification (sensitive field)           | `conformance-clarification-sensitive`                                                           | RFC 0199 §D.2(d) probe — `format: "password"`; form mode MUST be refused                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                  | `completed` after resolve                                                           | unbounded (suspends)         |
@@ -248,6 +249,19 @@ The `messages`-mode stream fixture (AI token streaming) is covered by the determ
 - **Behavior**: as `conformance-approval-timeout`, with `config.onTimeout: "approve"`. After the deadline, the host MUST resolve the gate rejected (`action: "timeout"`, `decision: "rejected"`, `reason: "timeout"`), `gate` MUST fail with `approval_rejected`, and the run MUST NOT complete.
 - **Terminal status**: `failed`.
 - **Why it is separate**: `conformance-approval-timeout` witnesses the absent case; this one witnesses the value that used to read as permission to fail open.
+
+### `conformance-approval-reject-loopback`
+
+- **Purpose**: witness that `key` is per visit (`spec/v2/core/interrupt.md` §Re-entry and resume values, openwop#1697).
+- **Inputs**: none.
+- **Graph**: `start` (`core.noop`) → `gate` (`any_success`); `gate` → `revise` (`core.noop`, `any_failed`); `revise` → `gate` (`any_success`). `settings.maxLoopbackIterations: 2`.
+- **Behavior**:
+  1. Run reaches `gate` and MUST be `waiting-approval`.
+  2. Client POSTs `{action: 'reject'}`. `gate` fails with `approval_rejected`, and `revise` runs.
+  3. `gate` runs again. The host MUST raise a second `interrupt.requested` for `gate` with a different `key`, and the run MUST be `waiting-approval` again.
+  4. The first rejection MUST NOT be replayed into the second visit: only one `interrupt.resolved` is on the log.
+- **Terminal status**: none reached by the suite, which cancels the run.
+- **Advertise only if** the host runs cycles. A host that does not MUST NOT advertise the fixture, and the row is `inapplicable`.
 
 ### `conformance-clarification`
 
@@ -629,6 +643,7 @@ conformance/
     conformance-approval-reject-routed.json
     conformance-approval-timeout.json
     conformance-approval-timeout-approve.json
+    conformance-approval-reject-loopback.json
     conformance-clarification.json
     conformance-multi-node.json
     conformance-idempotent.json

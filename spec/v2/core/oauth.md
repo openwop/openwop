@@ -63,4 +63,4 @@ Then:
 - `declined` fails the node with `connector_auth_declined`.
 - A host that binds a node to one credential reference (for example, a connection) reads "resolves" as that reference resolving with the node's scopes, carries it as `credentialRef`, and still completes `connectUrl` only for the initiating Subject.
 
-*Sources: RFC 0046, RFC 0047, RFC 0199.*
+*Sources: RFCs 0046, 0047, 0199.*

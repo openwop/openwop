@@ -160,4 +160,4 @@ Code | Status
 `pack_registry_unreachable` | 503
 `runner_unavailable` | 503
 
-*Sources: RFC 0171, RFC 0213.*
+*Sources: RFCs 0171, 0213.*
