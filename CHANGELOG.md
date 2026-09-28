@@ -290,6 +290,18 @@ Format follows [Keep a Changelog](https://keepachangelog.com/en/1/) loosely. Ver
 - **The remaining eleven stay `Active`, each for a stated reason** rather than for lack of attention. The eight RFC 0167 program children name a certified openwop-app bundle in their own acceptance criteria and the committed one reads `certified: false` (3 blocked rows, RFC 0168 §E.1). RFC 0173 additionally carries the program's only `open` gap row. RFC 0179's sole criterion is unmet — 2.4.2 stopped the gate reading "(Phase 4 leg)" as an excuse for it. RFC 0187 names three requirement ids that no scenario mints. RFC 0167 itself flips **last**, which 2.4.2 made a rule: the moment the umbrella stops being `Active`, every child still `Active` becomes permanently ineligible.
 - **The interrupt `data` union is bound to `kind`** (MCP/A2A review P3-H7, Class 3 correction — COMPATIBILITY.md §3). `schemas/suspend-request.schema.json` and its v2 twin typed `data` as an unbound `oneOf`, so the minimal `conversation.start` and `conversation.close` payloads (`{ conversationId }`, which satisfies both shapes) failed validation in v1 and v2, and a payload carrying another kind's `data` passed. `data` is now an `anyOf` and a root `allOf` binds each kind to its own shape with one `if`/`then`; no per-kind shape or `$id` changed. Witnessed by `conformance/fixtures/interrupt-payloads/` (suite 2.36.0).
 
+## [2.42.9] — 2026-09-28 — a v2 delivery's workspaceId is checked, and two test-isolation and SHOULD-strength fixes
+
+A suite patch. No canonical wire change.
+
+### Conformance
+
+- **`v2-webhook-delivery-shape` checks that a v2 delivery carries `workspaceId` exactly when the run has a workspace (#1682).** `webhooks.md` §Delivery forbids a substituted value; the v2 reference host sent `"default"` (fixed in openwop-examples #99).
+- **Files that share a mock-AI node no longer race under the default parallel run.** A new cross-process lock per node id makes them run one after another.
+- **The RFC 0033 §B truncation budget legs record the SHOULD instead of failing it.** They compare the first and retry budgets the provider actually received.
+- **The conformance CLI's `--help` says `--bundle-version` defaults to 3 (#1694)**, matching the code.
+- **Suite `2.42.9`**: 567 scenario files. `@openwop/spec-artifacts` moves in lockstep at the same exact pin.
+
 ## [2.42.8] — 2026-09-27 — RFC 0221, a closed audit schema again, and a dispatch race fixed
 
 A suite patch. No canonical wire change. The corpus tag moves because `@openwop/openwop-conformance` and `@openwop/spec-artifacts` move together, and RFC 0189 (#1675) changed the packed spec-artifacts tree after `v2.42.7`.

@@ -117,6 +117,10 @@ import { isFixtureAdvertised } from '../lib/fixtures.js';
 import { capabilityFamily } from '../lib/discovery-capabilities.js';
 import { req } from '../lib/requirement-ids.js';
 import { softSkip, blockedDespiteAssertions } from '../lib/soft-skip.js';
+import { holdMockNodes } from '../lib/mock-node-lock.js';
+
+// The mock-AI program seam is keyed by node id; files sharing a fixture's node run one at a time.
+holdMockNodes('retry-attempted-structured-call');
 
 const FIXTURE = 'conformance-envelope-retry-attempted';
 const NODE_ID = 'retry-attempted-structured-call';
