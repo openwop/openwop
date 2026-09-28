@@ -234,6 +234,11 @@ describe('webhook delivery shape is per-contract (webhooks.md §Delivery, versio
     expect(owner !== null, req(ID, DOC, 'a major-2 run.started payload MUST carry the owner echo { tenant, subject } (identity.md §1; run-event-payloads runStarted.owner requires both)')).toBe(true);
     expect(Object.keys(owner ?? {}).filter((k) => k === 'principal' || k === 'principalKind'), req(ID, DOC, 'a major-2 owner echo MUST NOT carry the v1 keys principal / principalKind — that is the fan-out forwarding the in-process dialect instead of projecting')).toEqual([]);
     expect(typeof owner?.['tenant'] === 'string' && owner?.['subject'] !== undefined, req(ID, DOC, 'a major-2 owner echo carries tenant and subject')).toBe(true);
+    // webhooks.md §Delivery: `workspaceId` is present exactly when RunSnapshot.owner.workspace is,
+    // equal to it, and a host MUST NOT substitute its tenant id (or any placeholder) for an absent one.
+    const ws = owner?.['workspace'];
+    const sent = (d.envelope as Record<string, unknown>)['workspaceId'];
+    expect(ws === undefined ? sent === undefined : sent === ws, req(ID, DOC, `workspaceId MUST be present exactly when owner.workspace is, and equal to it — nothing is substituted for an absent workspace (owner.workspace ${JSON.stringify(ws)}, delivered workspaceId ${JSON.stringify(sent)})`)).toBe(true);
   });
 
   it('a major-1 subscriber still receives the v1 rendering — the v1 wire does not move mid-overlap', async () => {

@@ -1,5 +1,10 @@
 # `@openwop/openwop-conformance` Changelog
 
+## [2.42.9] — unreleased — a v2 delivery's workspaceId is checked
+
+- **`v2-webhook-delivery-shape` checks that `workspaceId` is present exactly when the run has a workspace.** `webhooks.md` §Delivery requires it and forbids substituting a value, but the leg only validated the schema, which cannot say "exactly when". It now compares the delivered `workspaceId` with the owner echo on the event. The v2 reference host sent `"default"` and fails without openwop-examples #99 (fixed there); openwop-app already conformed.
+- **Suite `2.42.9`**. `@openwop/spec-artifacts` moves in lockstep at the same exact pin.
+
 ## [2.42.8] — 2026-09-27 — RFC 0221, a closed audit schema again, and a dispatch race fixed
 
 - **`v2-preferred-version-default`: a header-less request on an unversioned operation path is served major 2.** This follows a Class 3 correction to `versioning.md` §1.3: the `preferredVersion` default applies to `/.well-known/openwop` only. The new leg reads `OpenWOP-Version` on a header-less `GET /runs/{unknown}`. It passes on the v2 reference host and fails when the host applies `preferredVersion` to every path.
