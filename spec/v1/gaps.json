@@ -9860,11 +9860,11 @@
       "rfc": "0171",
       "local": "G8",
       "section": "§B.1",
-      "surface": "The v2 reference host emits unregistered run-failure codes that are not vendor codes. openwop-examples #125 (`21e552e`) remapped three (`fixture_failure`, `unsupported_node_type`, `sandbox_invocation_error`), but at `21e552e` it still emits `http_fetch_failed` (`examples/hosts/v2-reference/src/executor.ts:263`), and `mcp_error` and `mcp_unreachable` (`src/mcp-client.ts:43`, `:68`, surfaced through `src/executor.ts:291`).",
+      "surface": "The v2 reference host emitted unregistered run-failure codes that were not vendor codes.",
       "witness": "unclassified",
       "requirementId": null,
-      "disposition": "externally-gated",
-      "target": "v2-reference-code-remap",
+      "disposition": "closed",
+      "target": null,
       "sources": [
         {
           "file": "RFCS/registers/0171-v2-wire-envelope.gaps.md",
@@ -13433,8 +13433,8 @@
       "surface": "Whether `mcp_unreachable` (an MCP peer that cannot be reached) needs its own registered code.",
       "witness": "unclassified",
       "requirementId": null,
-      "disposition": "carried",
-      "target": "openwop.gap.0171.8",
+      "disposition": "closed",
+      "target": null,
       "sources": [
         {
           "file": "RFCS/registers/0226-shared-run-failure-codes.gaps.md",

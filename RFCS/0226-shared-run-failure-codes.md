@@ -7,8 +7,8 @@
 | **Status**        | `Draft`                                                         |
 | **Author(s)**     | David Tufts (@davidscotttufts)                                  |
 | **Created**       | 2026-09-28                                                      |
-| **Updated**       | 2026-09-28 — filed `Draft`; the 7-day comment window for a normative addition opens with the pull request and closes 2026-10-05. The window is **not** waived. Merge also waits for the reopened gap `openwop.gap.0171.8` and openwop-app's remap to be measured. |
-| **Affects**       | `spec/v2/errors.json` (+3 rows, `since` 2.44; `capability_not_provided`'s `meaning` widened) · generated `schemas/v2/error-envelope.schema.json` and the `errors.md` table and count (108 → 111) · `spec/v2/core/errors.md` §Why this exists (one non-normative sentence removed for the RFC 0190 budget) · `RFCS/registers/0171-v2-wire-envelope.gaps.md` (G6/G7 rename lists; G8 stays reopened) |
+| **Updated**       | 2026-09-28 — filed `Draft`; the 7-day comment window for a normative addition opens with the pull request and closes 2026-10-05. The window is **not** waived. Merge also waits for openwop-app's remap to be measured (the v2 reference host's gap `openwop.gap.0171.8` closed on openwop-examples #126). |
+| **Affects**       | `spec/v2/errors.json` (+3 rows, `since` 2.44; `capability_not_provided`'s `meaning` widened) · generated `schemas/v2/error-envelope.schema.json` and the `errors.md` table and count (108 → 111) · `spec/v2/core/errors.md` §Why this exists (one non-normative sentence removed for the RFC 0190 budget) · `RFCS/registers/0171-v2-wire-envelope.gaps.md` (G6/G7 rename lists; G8 closed on openwop-examples #126) |
 | **Compatibility** | `additive` — three new registry members (`spec/v2/core/overview.md` §0: adding a member is additive in v2.x) and a widened `meaning` string. No shape, status or existing code changes |
 | **Supersedes**    | —                                                               |
 | **Superseded by** | —                                                               |
@@ -37,7 +37,7 @@ Measured at openwop-app `c4aad98c2`, MyndHyve `f73069edc` and openwop-examples `
 | `mcp_error` | 502 | false | An MCP server the host called answered with a JSON-RPC error, so the node failed. |
 
 - **Why 422 for the first two.** They end a node on a condition of the workflow or pack, not of the request. That is the registry's convention for run-ending codes (`run_timeout`, `approval_rejected`).
-- **Why 502 for `mcp_error` (a v2 decision).** The host acted as a gateway to a peer it does not control, and the peer's answer was an error (RFC 9110 §15.6.3). A 422 would misattribute the failure to the workflow. The code is not retriable, because a JSON-RPC error is the peer's answer, not a transport fault. A transport fault reaching the peer stays a host-side condition. The v2 reference host's `mcp_unreachable` is **not** registered here: it remains gap G8 until the host remaps it or a later RFC decides it.
+- **Why 502 for `mcp_error` (a v2 decision).** The host acted as a gateway to a peer it does not control, and the peer's answer was an error (RFC 9110 §15.6.3). A 422 would misattribute the failure to the workflow. The code is not retriable, because a JSON-RPC error is the peer's answer, not a transport fault. A transport fault reaching the peer stays a host-side condition. `mcp_unreachable` (a peer that could not be reached) is **not** registered: the v2 reference host emits it as the vendor code `example.mcp_unreachable` (openwop-examples #126), and a second host would have to emit it before a shared code is justified.
 - **Why not register the renames.** A second code for "cannot execute this node type" would give clients two spellings of one state (`errors.md` §One code per state).
 
 ### §B. The core budget
@@ -50,7 +50,7 @@ The three generated table rows cost 9 words. The `errors.md` §Why this exists s
 
 ## Conformance
 
-No new leg. `openwop.requirement.errors.event-code-registered` (`v2-error-registry`, advisory) already reads every run-failure code against the registry, so a host emitting the three codes passes it once they are registered. The leg drives only `conformance-failure`. The MCP and sandbox paths are witnessed by their own families' scenarios, whose `node.failed` codes the leg does not see. That limitation is why G8 was reopened.
+No new leg. `openwop.requirement.errors.event-code-registered` (`v2-error-registry`, advisory) already reads every run-failure code against the registry, so a host emitting the three codes passes it once they are registered. The leg drives only `conformance-failure`. The MCP and sandbox paths are witnessed by their own families' scenarios, whose `node.failed` codes the leg does not see. That limitation is why G8's first closure was premature (openwop #1740, #1752).
 
 ### Falsifiability — one row per normative requirement
 
@@ -66,15 +66,15 @@ No new leg. `openwop.requirement.errors.event-code-registered` (`v2-error-regist
 
 ## Unresolved questions
 
-1. Whether `mcp_unreachable` (the peer could not be reached) deserves its own code, or is the host-side `internal_error` / a vendor code. It is left to gap G8.
+1. ~~Whether `mcp_unreachable` deserves its own code.~~ *Settled for this RFC (2026-09-28): no.* Only the v2 reference host emits it, as the vendor code `example.mcp_unreachable` (openwop-examples #126). A later RFC can register it if a second host measures the same failure.
 
 ## Implementation notes (non-normative)
 
-The rename lists per host are in `RFCS/registers/0171-v2-wire-envelope.gaps.md` rows G6 (openwop-app), G7 (MyndHyve) and G8 (v2 reference host, reopened).
+The rename lists per host are in `RFCS/registers/0171-v2-wire-envelope.gaps.md` rows G6 (openwop-app) and G7 (MyndHyve). The v2 reference host's G8 closed on openwop-examples #126: `mcp_error` is `example.mcp_error` there until this RFC registers it, after which the host renames it back.
 
 ## Acceptance criteria
 
-- [ ] `Active`: the comment window closes (2026-10-05) with no unresolved objection, G8 and openwop-app's remap are measured, and the rows land.
+- [ ] `Active`: the comment window closes (2026-10-05) with no unresolved objection, openwop-app's remap is measured, and the rows land.
 - [ ] `openwop.requirement.errors.event-code-registered` is a clean `executed-pass` (no partial-witness detail) on a certified bundle of each of the three hosts.
 
 ## References
