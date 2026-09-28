@@ -14,10 +14,12 @@
  *   2. `>=1.0.0 <2.0.0`   (v1 ceiling)      → refused, pack_engine_unsupported
  *   3. `>=2.0.0 <3.0.0`   (admits major 2)  → installs (200/201)
  *
- * Gated on the `packs` family (RFC 0169 §A.2: presence is the claim) and on
- * the seams profile (`conformance.seamsProfile: openwop-conformance-seams-v2`);
- * a host without the profile records `blocked` — the write API is the only
- * install path the suite can drive.
+ * Gated on the seams profile (`conformance.seamsProfile:
+ * openwop-conformance-seams-v2`): its publish seam is the only install path the
+ * suite can drive. Not gated on `packs` since suite 2.43.1 (#1706): §A.1 binds
+ * at install on every path, and `packs` advertises registry resolution, which a
+ * host installing only local packs correctly omits. A seam 404 records `blocked`
+ * when `packs` is advertised and `inapplicable` when it is not.
  *
  * @see RFCS/0177-v2-registry-packs-and-extension-tail.md §A.1
  * @see spec/v2/core/packs.md §"The engine range"
@@ -31,7 +33,7 @@ import { readErrorCode } from '../lib/error-envelope.js';
 import { req } from '../lib/requirement-ids.js';
 import { softSkip, type SoftSkipKind } from '../lib/soft-skip.js';
 import { seamsProfileAdvertised, targetMajor } from '../lib/seams.js';
-import { v2Discovery, gateFamily } from '../lib/v2.js';
+import { v2Discovery, familyAdvertised } from '../lib/v2.js';
 
 const SECTION = 'packs.md §"The engine range" (RFC 0177 §A.1)';
 
@@ -87,6 +89,17 @@ async function publish(manifest: Record<string, unknown>) {
 }
 
 /** The reason this leg cannot run, or null when the seam is reachable. */
+/**
+ * The publish seam answered 404. Whether that is a defect depends on `packs`
+ * (#1706): a host advertising `packs` claims an install path and must mount it
+ * (`blocked`); a host that omits `packs` may have no install path the suite can
+ * drive (`inapplicable`). §A.1 binds at install on every path, not on `packs`.
+ */
+async function seamMissing(): Promise<undefined> {
+  if (await familyAdvertised('packs')) return softSkip('blocked', 'packs-test publish seam answered 404 — packs and the seams profile are advertised but the seam is not mounted');
+  return softSkip('inapplicable', 'packs-test publish seam answered 404 and packs is not advertised — no install path the suite can drive');
+}
+
 async function preflight(): Promise<{ kind: SoftSkipKind; reason: string } | null> {
   if (targetMajor() !== 2) return { kind: 'inapplicable', reason: 'suite 2.0.0 v2 scenario: OPENWOP_TARGET_MAJOR is not 2' };
   let doc: Record<string, unknown> | null;
@@ -96,7 +109,6 @@ async function preflight(): Promise<{ kind: SoftSkipKind; reason: string } | nul
     doc = null;
   }
   if (!doc) return { kind: 'blocked', reason: 'discovery unreachable — /.well-known/openwop (OpenWOP-Version: 2.0) did not answer 200 JSON' };
-  if (!(await gateFamily('packs'))) return { kind: 'inapplicable', reason: 'v2 discovery does not advertise the packs family (RFC 0169 §A.2)' };
   if (!seamsProfileAdvertised(doc)) return { kind: 'inapplicable', reason: 'host does not advertise conformance.seamsProfile: openwop-conformance-seams-v2 — the packs-test publish seam is the only install path the suite can drive (RFC 0168 §C.1)' };
   return null;
 }
@@ -106,7 +118,7 @@ describe('v2-manifest-ceiling-refused (RFC 0177 §A.1)', () => {
     const skip = await preflight();
     if (skip) return softSkip(skip.kind, skip.reason);
     const res = await publish(nodePack(freshName('unbounded'), '>=1.0.0'));
-    if (res.status === 404) return softSkip('blocked', 'packs-test publish seam answered 404 — seams profile advertised but the seam is not mounted');
+    if (res.status === 404) return seamMissing();
     expect(res.status, req('openwop.requirement.0177.manifest-ceiling-refused.unbounded', SECTION, 'an unbounded range does not admit protocol major 2 and MUST be refused with 400 pack_engine_unsupported')).toBe(400);
     expect(readErrorCode(res.json), req('openwop.requirement.0177.manifest-ceiling-refused.unbounded', SECTION, 'the refusal code MUST be pack_engine_unsupported (not pack_runtime_requirement_unmet)')).toBe('pack_engine_unsupported');
   });
@@ -115,7 +127,7 @@ describe('v2-manifest-ceiling-refused (RFC 0177 §A.1)', () => {
     const skip = await preflight();
     if (skip) return softSkip(skip.kind, skip.reason);
     const res = await publish(nodePack(freshName('v1-ceiling'), '>=1.0.0 <2.0.0'));
-    if (res.status === 404) return softSkip('blocked', 'packs-test publish seam answered 404 — seams profile advertised but the seam is not mounted');
+    if (res.status === 404) return seamMissing();
     expect(res.status, req('openwop.requirement.0177.manifest-ceiling-refused.v1-ceiling', SECTION, 'a <2.0.0 ceiling does not admit protocol major 2 and MUST be refused with 400 pack_engine_unsupported')).toBe(400);
     expect(readErrorCode(res.json), req('openwop.requirement.0177.manifest-ceiling-refused.v1-ceiling', SECTION, 'the refusal code MUST be pack_engine_unsupported')).toBe('pack_engine_unsupported');
   });
@@ -124,7 +136,7 @@ describe('v2-manifest-ceiling-refused (RFC 0177 §A.1)', () => {
     const skip = await preflight();
     if (skip) return softSkip(skip.kind, skip.reason);
     const res = await publish(nodePack(freshName('v2-installs'), '>=2.0.0 <3.0.0'));
-    if (res.status === 404) return softSkip('blocked', 'packs-test publish seam answered 404 — seams profile advertised but the seam is not mounted');
+    if (res.status === 404) return seamMissing();
     expect([200, 201].includes(res.status), req('openwop.requirement.0177.manifest-ceiling-refused.v2-installs', SECTION, `a manifest whose range admits major 2 MUST install (got ${res.status} ${readErrorCode(res.json) ?? ''})`)).toBe(true);
   });
 });
