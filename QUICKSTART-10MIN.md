@@ -280,7 +280,7 @@ Three details are worth knowing:
 - **[`docs/migration/v1-to-v2.md`](./docs/migration/v1-to-v2.md)** is for readers who have v1 client code.
 - **Build a node pack:** [`docs/PACK-AUTHOR-QUICKSTART.md`](./docs/PACK-AUTHOR-QUICKSTART.md).
 
-The in-memory host and the `tiny-workflow` / `streaming-client` samples in `openwop-examples` still speak the older wire (`/v1/…`, port 3737). Use the v2 reference host for this walkthrough.
+The `tiny-workflow` and `streaming-client` samples in `openwop-examples` speak v2 and run against the v2 reference host (openwop-examples #100). The in-memory host still speaks the older wire (`/v1/…`, port 3737), so use the v2 reference host for this walkthrough.
 
 ---
 
