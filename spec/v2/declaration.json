@@ -343,7 +343,7 @@
     {
       "key": "secrets",
       "kind": "family",
-      "normativeText": ["spec/v1/host-capabilities.md"],
+      "normativeText": ["spec/v2/core/host-services.md"],
       "anchor": "core",
       "section": "core/capabilities.md#secrets",
       "peerDependencyId": "secrets",
@@ -645,7 +645,7 @@
     {
       "key": "modelCapabilities",
       "kind": "family",
-      "normativeText": ["spec/v1/host-capabilities.md"],
+      "normativeText": ["spec/v2/core/host-services.md"],
       "anchor": "core",
       "section": "core/capabilities.md#modelCapabilities",
       "peerDependencyId": "modelCapabilities",
@@ -887,7 +887,7 @@
     {
       "key": "queueBus",
       "kind": "family",
-      "normativeText": ["spec/v1/host-capabilities.md"],
+      "normativeText": ["spec/v2/core/host-services.md"],
       "anchor": "core",
       "section": "core/capabilities.md#queueBus",
       "peerDependencyId": "queueBus",
@@ -908,7 +908,7 @@
     {
       "key": "scheduling",
       "kind": "family",
-      "normativeText": ["spec/v1/host-capabilities.md"],
+      "normativeText": ["spec/v2/core/host-services.md"],
       "anchor": "core",
       "section": "core/capabilities.md#scheduling",
       "peerDependencyId": "scheduling",
@@ -969,7 +969,7 @@
       "requirementIds": [],
       "owningRfc": "0064",
       "normativeText": [
-        "spec/v1/host-capabilities.md"
+        "spec/v2/core/host-services.md"
       ]
     },
     {
@@ -998,7 +998,7 @@
     {
       "key": "httpClient",
       "kind": "family",
-      "normativeText": ["spec/v1/host-capabilities.md"],
+      "normativeText": ["spec/v2/core/host-services.md"],
       "anchor": "core",
       "section": "core/capabilities.md#httpClient",
       "peerDependencyId": "httpClient",
@@ -1118,7 +1118,7 @@
     {
       "key": "deadLetter",
       "kind": "family",
-      "normativeText": ["spec/v1/host-capabilities.md"],
+      "normativeText": ["spec/v2/core/runs.md"],
       "anchor": "core",
       "section": "core/capabilities.md#deadLetter",
       "peerDependencyId": "deadLetter",

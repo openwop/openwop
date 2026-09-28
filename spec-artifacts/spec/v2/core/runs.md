@@ -1,7 +1,7 @@
 # Runs
 
 > **Status: Stable.**
-> **Normative home:** `runList`, `limits`, `conversationPrimitive`, `dataResidency`.
+> **Normative home:** `runList`, `limits`, `conversationPrimitive`, `dataResidency`, `deadLetter`.
 
 ## Why this exists
 
@@ -262,8 +262,18 @@ A host advertising `dataResidency` MUST honor-or-reject, and MUST NOT silently a
 
 A host that does not advertise `dataResidency` MAY ignore or reject a `residency` constraint, but MUST NOT claim to honor it.
 
+## Dead letters
+
+A host advertising `deadLetter` MUST, when a run or node exhausts its retry policy:
+
+- route it to the dead-letter sink and emit `run.dead-lettered`, whose `reason` is redaction-safe and which carries no credential or payload material;
+- keep the failed run fork-eligible for `retentionDays`, and not purge it sooner;
+- purge it after `retentionDays`, after which a fork fails as for an unknown run.
+
+This sink holds runs. Queue messages ([host-services.md](host-services.md) §`queueBus`) and webhook deliveries ([webhooks.md](webhooks.md) §Dead letters) have their own.
+
 ## During the v1 overlap
 
 A non-terminal run inherited from v1 continues, or is cancelled `v1_pin_unsupported`, per [persistence.md](persistence.md) §"Runs pinned to v1".
 
-*Sources: RFCs 0170, 0171, 0176, 0182.*
+*Sources: RFCs 0053, 0170, 0171, 0176, 0182.*
