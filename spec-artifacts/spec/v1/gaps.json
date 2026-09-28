@@ -13076,12 +13076,46 @@
       "surface": "No v2 SDK sends the header today (`openwop-sdks`: `sdk/typescript-v2`, `sdk/python-v2`, Go).",
       "witness": "unclassified",
       "requirementId": null,
-      "disposition": "transferred",
-      "target": "rfc-0219",
+      "disposition": "closed",
+      "target": null,
       "sources": [
         {
           "file": "RFCS/registers/0219-client-version-header.gaps.md",
           "token": "G6"
+        }
+      ]
+    },
+    {
+      "id": "openwop.gap.0219.7",
+      "rfc": "0219",
+      "local": "G7",
+      "section": "§Conformance",
+      "surface": "`openwop.requirement.0219.no-floor-no-refusal` has no positive witness. All three measured hosts (the v2 reference host, MyndHyve, openwop-app) advertise `minClientVersion`, so every committed bundle records the row `inapplicable` with the reason \"this leg is for a host with no floor\".",
+      "witness": "unclassified",
+      "requirementId": null,
+      "disposition": "externally-gated",
+      "target": "host-without-min-client-version",
+      "sources": [
+        {
+          "file": "RFCS/registers/0219-client-version-header.gaps.md",
+          "token": "G7"
+        }
+      ]
+    },
+    {
+      "id": "openwop.gap.0219.8",
+      "rfc": "0219",
+      "local": "G8",
+      "section": "§A / upgrade",
+      "surface": "A browser preflights the new request header. A host whose `Access-Control-Allow-Headers` is an explicit list, and which serves browsers cross-origin, fails every request from a client that sends it. Found at the SDK 2.5.0 release: openwop-app's list omitted it (as it once omitted `OpenWOP-Version`), and so did MyndHyve's public pack reads (fixed in myndhyve#549). v2 says nothing about CORS.",
+      "witness": "unclassified",
+      "requirementId": null,
+      "disposition": "transferred",
+      "target": "openwop#1763",
+      "sources": [
+        {
+          "file": "RFCS/registers/0219-client-version-header.gaps.md",
+          "token": "G8"
         }
       ]
     },

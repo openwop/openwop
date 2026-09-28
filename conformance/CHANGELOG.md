@@ -2,6 +2,7 @@
 
 ## [2.44.0] — unreleased — RFC 0226: three shared run-failure codes registered
 
+- **RFC 0219 is `Accepted`** (corpus only; no scenario change). The flip changes the packed `@openwop/spec-artifacts` tree through `spec/v1/gaps.json`: 0219 gap G6 is closed (SDK 2.5.0 sends the header), G7 is declared (`no-floor-no-refusal` needs a host with no `minClientVersion`), and G8 is transferred to #1763 (CORS).
 - **The 2.44.0 cycle opens.** RFC 0226 (`Active`) changes the packed `@openwop/spec-artifacts` tree after `v2.43.2` was tagged: `spec/v2/errors.json` gains `node_config_invalid` (422), `sandbox_invocation_error` (422) and `mcp_error` (502), `since` 2.44, and `capability_not_provided`'s `meaning` widens. The generated `schemas/v2/error-envelope.schema.json` and the `errors.md` table follow (108 → 111 codes). A minor, not a patch: the registry gains members. No scenario changes: `openwop.requirement.errors.event-code-registered` already reads every run-failure code against the registry, so a host emitting the three codes passes it once they are registered.
 - **Suite `2.44.0`**. `@openwop/spec-artifacts` moves in lockstep at the same exact pin.
 

@@ -170,7 +170,7 @@ Grouping below is a reading aid only: it assigns each RFC to the risk class its 
 | [0193](../RFCS/0193-envelope-catalog-seats.md) | A capability record is an object, so a v1 array needs a seat; the three envelope families whose payload the g… | `Accepted` | bootstrap waiver | corpus gate | `not-reviewed` |
 | [0206](../RFCS/0206-locale-keys-accept-negotiated-bcp47.md) | locale keys accept the BCP 47 tags the host negotiates | `Accepted` | bootstrap waiver | corpus gate — no host tier is claimed | `not-reviewed` |
 | [0217](../RFCS/0217-dead-letter-read-after-unregister.md) | after a subscription is unregistered, its dead-letter read answers as though it never existed | `Accepted` | bootstrap waiver | tier-1 — the v2 reference host | `not-reviewed` |
-| [0219](../RFCS/0219-client-version-header.md) | a client announces the protocol version it implements in `OpenWOP-Client-Version` | `Active` | bootstrap waiver | not declared (predates RFC 0174 §B.1, or not yet Accepted) | `not-reviewed` |
+| [0219](../RFCS/0219-client-version-header.md) | a client announces the protocol version it implements in `OpenWOP-Client-Version` | `Accepted` | bootstrap waiver | tier-1 — the v2 reference host's certified public cut on published suite 2 | `not-reviewed` |
 | [0224](../RFCS/0224-v2-audit-log-integrity.md) | audit-log integrity gets a v2 home | `Accepted` | bootstrap waiver | tier-1 — the v2 reference host's certified public cut on published suite 2 | `not-reviewed` |
 | [0226](../RFCS/0226-shared-run-failure-codes.md) | three run-failure codes the hosts share, registered | `Active` | bootstrap waiver | not declared (predates RFC 0174 §B.1, or not yet Accepted) | `not-reviewed` |
 
