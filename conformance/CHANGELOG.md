@@ -1,8 +1,9 @@
 # `@openwop/openwop-conformance` Changelog
 
-## [2.44.1] — unreleased — `feedback`, `providerUsage` and `envelopes` get a v2 normative home
+## [2.44.1] — unreleased — seven families get v2 normative homes
 
-- **The 2.44.1 cycle opens.** The v2 normative-home change for these three families changes the packed `@openwop/spec-artifacts` tree (`spec/v2/core/events.md`, `spec/v2/declaration.json`) after `v2.44.0` was published. The change is prose and declaration only: no rule changes and no scenario changes.
+- **The 2.44.1 cycle opens.** `workspace`, `content`, `triggerBridge` and `uiPlugins` get v2 normative homes (RFC 0189), which changes the packed `@openwop/spec-artifacts` tree (`spec/v2/core/host-services.md`, `i18n.md`, `webhooks.md`, `packs.md`, `spec/v2/declaration.json`) after `v2.44.0` was tagged. No scenario changes: the rules are restated from the v1 text, none added or strengthened.
+- **`feedback`, `providerUsage` and `envelopes` get a v2 normative home** (RFC 0189), in the same cycle. The packed `spec/v2/core/events.md` and `spec/v2/declaration.json` change. No scenario changes: the rules are restated, none added or strengthened.
 - **Suite `2.44.1`**. `@openwop/spec-artifacts` moves in lockstep at the same exact pin.
 
 ## [2.44.0] — 2026-09-28 — three run-failure codes registered, a webhook retry bound hosts can advertise, and RFC 0219 Accepted
