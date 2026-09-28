@@ -8,7 +8,7 @@
 | **Author(s)**     | David Tufts (@davidscotttufts)                                  |
 | **Created**       | 2026-09-28                                                      |
 | **Updated**       | 2026-09-28 — filed and moved `Draft → Active` in the filing PR (openwop #1692). **Comment window waived** by the steward. **STEWARD OVERRIDE of RFC 0147 §A.6**, which forbids a bootstrap waiver from shortening the window for RFCs affecting authorization and replay; an approval gate's outcome is an authorization decision (as it was for RFC 0213 §C), and §A's last rule governs replay. Logged in `MAINTAINERS.md` §"Bootstrap-phase RFC waivers". The evidence gate is not waived: `Accepted` waits for a certified host bundle that records the three `0223.reject-*` rows `executed-pass`, and the RFC 0156 §B retrospective review is owed. |
-| **Affects**       | `spec/v2/core/interrupt.md` §Approval (new §Rejection; one sentence at `timeoutMs`) · `spec/v2/errors.json` (`approval_rejected`, `since` 2.43; the generated `schemas/v2/error-envelope.schema.json` and the `errors.md` table follow) · `schemas/v2/suspend-request.schema.json` (`ApprovalData.onTimeout` description only) · conformance: `v2-approval-reject-disposition.test.ts`, coherence `v2-approval-reject-registered.test.ts`, `fixtures.md` (suite 2.43.0) |
+| **Affects**       | `spec/v2/core/interrupt.md` §Approval (new §Rejection; one sentence at `timeoutMs`) · `spec/v2/errors.json` (`approval_rejected`, `since` 2.43; the generated `schemas/v2/error-envelope.schema.json` and the `errors.md` table follow) · `schemas/v2/suspend-request.schema.json` (`ApprovalData.onTimeout` description only) · conformance: `v2-approval-reject-disposition.test.ts`, a coherence leg in `v2-error-registry-prose-parity.test.ts`, `fixtures.md` (suite 2.43.0) |
 | **Compatibility** | `additive` — a new registry row and a new normative requirement on a behaviour the v2 text left undefined (`COMPATIBILITY.md` §4, §2.4). No schema shape, status or existing code changes |
 | **Supersedes**    | —                                                               |
 | **Superseded by** | —                                                               |
@@ -100,7 +100,7 @@ Following the RFC 0183/0186 practice, the rule codifies what hosts measurably do
 3. `openwop.requirement.0223.reject-fails-node`: the gate's `node.failed` carries `approval_rejected` with `retryable: false`, and `run.failed.failedNodeId` is `gate`.
 4. `openwop.requirement.0223.quorum-reject-fails-run` (gated on the `conformance-interrupt-quorum` fixture, `inapplicable` when not advertised): one reject of three under `majority` leaves the run `waiting-approval` and emits no `interrupt.resolved`; the second fails the run with `approval_rejected`. The votes are distinguished by the resume value's `voter`, as in the major-1 `interrupt-quorum-resolution`; a host that counts both as one principal records `blocked`, not a failure.
 
-Coherence (server-free): `v2-approval-reject-registered.test.ts` (`openwop.requirement.0223.code-registered`) checks the registry row, its prose home and that `onTimeout` declares no `default`.
+Coherence (server-free): a second leg in `v2-error-registry-prose-parity.test.ts` (`openwop.requirement.0223.code-registered`) checks the registry row, its prose home and that `onTimeout` declares no `default`.
 
 The major-1 `interrupt-quorum-resolution` leg is **not** tightened to the code: v1 registers no `approval_rejected`, so asserting it there would fail every conforming v1 host. The major-2 leg above carries the tightening instead.
 
@@ -112,10 +112,10 @@ The major-1 `interrupt-quorum-resolution` leg is **not** tightened to the code: 
 | §A the reject is recorded with `action` and `decision` (`0223.reject-recorded`) | `interrupt.resolved` payload | the suite, as above | witnessable — gated |
 | §A the node fails not retryable and `failedNodeId` names it (`0223.reject-fails-node`) | `node.failed`, `run.failed` payloads | the suite, as above | witnessable — gated |
 | §A the majority threshold and no resolve on a non-deciding vote (`0223.quorum-reject-fails-run`) | run status and events between votes | the suite, on `conformance-interrupt-quorum` | witnessable — gated |
-| §A a failure-admitting edge continues the run | the downstream node runs | a workflow author; no registered fixture has one | unwitnessed — G1 (openwop #1700) |
-| §A the timeout disposition | `interrupt.resolved { action: timeout }` and the failure | the host's timer; no fixture carries a short `timeoutMs` | unwitnessed — G2 (openwop #1700) |
-| §A replay derives, never re-decides | a replayed run fails identically | the suite, through `replay`, once a host witnesses row 1 | not yet written |
-| §B the code is registered (`0223.code-registered`) | `spec/v2/errors.json` | the corpus | corpus-coherence |
+| §A a failure-admitting edge continues the run | the downstream node runs | a workflow author; no registered fixture has one | witnessable — gated (no fixture yet: G1, openwop #1700) |
+| §A the timeout disposition | `interrupt.resolved { action: timeout }` and the failure | the host's timer; no fixture carries a short `timeoutMs` | witnessable — gated (no fixture yet: G2, openwop #1700) |
+| §A replay derives, never re-decides | a replayed run fails identically | the suite, through `replay`, once a host witnesses row 1 | witnessable — gated (leg not yet written) |
+| §B the code is registered (`0223.code-registered`) | `spec/v2/errors.json` | the corpus | claims-check (corpus coherence, server-free) |
 
 ## Alternatives considered
 
