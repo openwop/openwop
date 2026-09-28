@@ -2,7 +2,7 @@
   "$schema": "./corrections.schema.json",
   "$comment": "RFC 0197 §A.4 — v2 Class-3 corrections. Seeded with P3 only. The 2.8.2 removal of `workflowChainPacks.deferredParameters` and `.hostExpansionSeam` (P1) is deliberately NOT seeded: a committed bundle carried `deferredParameters` and then failed `capabilities-root-closed`, so the row would fail R3 — which is the point. P1 is recorded as the motivating defect in COMPATIBILITY.md §3a, not laundered into this register.",
   "version": 1,
-  "updated": "2026-09-27",
+  "updated": "2026-09-28",
   "rows": [
     {
       "id": "openwop.correction.v2.1",
@@ -42,6 +42,23 @@
         "manifests": 0,
         "manifestsScanned": 156,
         "note": "The prior shape is any string; the corrected shape is the axis-1 `<major>.<minor>` grammar that spec/v2/core/versioning.md §1.5 and the v2-min-client-version scenario already required of an advertised value. Bundle leg: all 8 committed evidence/v2-host-bundles/*.json advertise minClientVersion, and every value conforms (seven \"1.0\", MyndHyve \"0.1\"), so 0 carry a value the pattern rejects. The one \"0.1.0\" in the corpus is a major-1 witness under evidence/rfc-witnesses/, not a v2 bundle. Registry leg: minClientVersion is a discovery field, not a manifest field; 0 of 156 pack.json documents on openwop-registry origin/main (c15d3d6) carry it. The schema added a pattern only, so no property, type or required entry moved and check-v2-surface-monotone sees no change."
+      }
+    },
+    {
+      "id": "openwop.correction.v2.3",
+      "date": "2026-09-28",
+      "class": "w3c-class-3",
+      "rfc": "0218",
+      "pointers": [
+        "schemas/v2/audit-verify-result.schema.json#/chainValid",
+        "schemas/v2/audit-verify-result.schema.json#/anomalies"
+      ],
+      "compatibilityEntry": "an audit anomaly's shape, and `chainValid` as the aggregate verdict",
+      "priorShapeCensus": {
+        "bundles": 0,
+        "manifests": 0,
+        "manifestsScanned": 157,
+        "note": "The prior shape is a verify result with `chainValid: true` beside a non-empty `anomalies`, or `chainValid: false` beside an empty one; the corrected shape is the root if/then/else RFC 0218 §C.4 adds, which the schema's `chainValid` and `anomalies` descriptions already required. Bundle leg: none of the 9 committed evidence/v2-host-bundles/*.json carries a `GET /audit/verify` body (no `chainValid` member anywhere). Registry leg: a verify result is not a manifest field; 0 of 157 pack.json documents on openwop-registry origin/main (4c5de1f) carry `chainValid`. The Anomaly members RFC 0218 §C adds are OPTIONAL additions that check-v2-surface-monotone reports as additive."
       }
     }
   ]

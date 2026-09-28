@@ -90,9 +90,16 @@ The same block applies to a **bare manifest** — the `pack.json` inside the tar
 - A verifier MUST verify the signature against the issuing registry's key for `keyId`, and MUST check the pack name against that key's `permittedNamespaces`.
 - A signature over tarball bytes is not a v2 signature; such a pack MUST be re-signed, not relabeled.
 
+Only a `signingKeys[]` entry whose `status` is `active` MAY sign a new publication. A key MUST stay listed while a served version names it, and a verifier MUST NOT refuse a version because its key is not `active`.
+
 ## Version manifests
 
-`kind` is REQUIRED on every version manifest and every bare manifest. A deprecated version is flagged `versionDeprecated: true`; the registry continues to serve it, and a consumer MAY refuse to install it.
+`kind` is REQUIRED on every version manifest and every bare manifest. Lifecycle flags sit outside the signature; changing one republishes the version manifest.
+
+- `versionDeprecated: true`: still served; a consumer MAY refuse to install it.
+- `yanked: true`: its manifest, tarball and signature stay served, and the pack index MUST NOT name it `latest` while an unyanked version exists. A range MUST skip it; a pin MAY resolve it. Advisory-listed versions MUST be yanked.
+
+A registry MUST refuse a submission that breaks these rules or republishes a version, with `pack_integrity_failure`, `pack_validation_failed`, `pack_signature_invalid`, `pack_engine_unsupported`, `pack_peer_dependency_undefined` or `version_conflict`.
 
 ## The registry's own schemas
 
@@ -111,4 +118,4 @@ A registry MUST validate submissions against vendored copies of these schemas pi
 - The v1 registry tree is frozen through the overlap, behind the v2 tree.
 - `testMode` advertises the v1 `/v1/packs-test/*` mirror, a conformance seam ([conformance.md §"The seams profile"](conformance.md)). It remains advertisable through the overlap and is removed at 3.0.
 
-*Sources: RFC 0177, RFC 0212.*
+*Sources: RFC 0177, RFC 0212, RFC 0222.*

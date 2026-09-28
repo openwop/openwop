@@ -153,5 +153,6 @@ to land — and until then the zero is visibly a blocked obligation rather than 
 | 0218 | an audit checkpoint signs its Merkle root, and the root is pinned (Class 3 correction + additive; bootstrap waiver, not a §A.6 override) | in-scope-pending-assessment | — | — | `not-reviewed` |
 | 0219 | a client announces the protocol version it implements in `OpenWOP-Client-Version` (additive; bootstrap waiver, not a §A.6 override) | in-scope-pending-assessment | — | — | `not-reviewed` |
 | 0221 | a webhook secret the host generates is returned once (additive; STEWARD OVERRIDE of RFC 0147 §A.6) | in-scope-pending-assessment | — | — | `not-reviewed` |
+| 0222 | v2 registry operations — lifecycle by publication, key rotation, and the checks a registry refuses on (additive; bootstrap waiver, not a §A.6 override) | in-scope-pending-assessment | — | — | `not-reviewed` |
 | 0223 | a rejected approval gate fails closed, and the failure is routable (additive; STEWARD OVERRIDE of RFC 0147 §A.6) | in-scope-pending-assessment | — | — | `not-reviewed` |
 | 0224 | audit-log integrity gets a v2 home (additive; bootstrap waiver, not a §A.6 override) | in-scope-pending-assessment | — | — | `not-reviewed` |

@@ -13086,6 +13086,40 @@
       ]
     },
     {
+      "id": "openwop.gap.0222.1",
+      "rfc": "0222",
+      "local": "G1",
+      "section": "§A",
+      "surface": "The earlier major's registry write endpoints (`deprecate`, `yank`, `keychain`, `keychain/rotate`), their scopes, the `rotationProof` chain and the 72-hour unpublish window have no v2 home.",
+      "witness": "unclassified",
+      "requirementId": null,
+      "disposition": "closed",
+      "target": null,
+      "sources": [
+        {
+          "file": "RFCS/registers/0222-v2-registry-operations.gaps.md",
+          "token": "G1"
+        }
+      ]
+    },
+    {
+      "id": "openwop.gap.0222.2",
+      "rfc": "0222",
+      "local": "G2",
+      "section": "§C",
+      "surface": "No corpus schema describes `.well-known/openwop-registry.json`, so the `signingKeys[]` members §C names are validated only by the conformance leg.",
+      "witness": "unclassified",
+      "requirementId": null,
+      "disposition": "closed",
+      "target": null,
+      "sources": [
+        {
+          "file": "RFCS/registers/0222-v2-registry-operations.gaps.md",
+          "token": "G2"
+        }
+      ]
+    },
+    {
       "id": "openwop.gap.0223.1",
       "rfc": "0223",
       "local": "G1",

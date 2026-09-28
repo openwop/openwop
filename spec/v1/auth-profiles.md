@@ -316,7 +316,20 @@ A host advertising the profile MUST:
    }
    ```
 
-   When `chainValid: false`, `anomalies` carries one entry per detected break (`{ atSeq, expectedPrevHash, actualPrevHash }`).
+   `chainValid` is `false` exactly when `anomalies` is non-empty. A forged checkpoint signature makes it `false` even when every entry links, and the OPTIONAL `checkpointsValid` then says which half failed. Each anomaly is one object, and its `kind` fixes its members (RFC 0218 §C):
+
+   | `kind` | `atSeq` is | Also carries |
+   | --- | --- | --- |
+   | `chain-break` | the entry whose `prevHash` is not the prior entry's hash | `expectedPrevHash`, `actualPrevHash` (`null` for a genesis `prevHash`) |
+   | `hash-mismatch` | the entry that no longer hashes to the value recorded when it was appended | — |
+   | `missing-entry` | the first missing sequence of a gap in the range | — |
+   | `merkle-mismatch` | the checkpoint's `atSequence`; its root does not recompute over its range (step 3) | `checkpoint` (the id) |
+   | `signature-invalid` | the checkpoint's `atSequence`; its signature does not verify under `checkpointPublicKey` | `checkpoint` (the id) |
+
+   - Hosts SHOULD set `kind`. An anomaly without it is a `chain-break`, the one shape this step defined before RFC 0218 §C.
+   - A member outside its row is refused: a `merkle-mismatch` carries no `expectedPrevHash`, and a `chain-break` carries no `checkpoint`.
+   - Every kind MAY carry `detail`, a string for an operator. A verifier MUST NOT branch on it, and MUST treat an anomaly of a `kind` it does not know as a failure.
+   - One tamper usually shows as several anomalies. Mutating entry 3 in place gives a `hash-mismatch` at 3, a `chain-break` at 4, and a `merkle-mismatch` on the checkpoint that anchors 3.
 
 ### Key management
 
