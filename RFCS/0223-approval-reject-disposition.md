@@ -102,6 +102,8 @@ Following the RFC 0183/0186 practice, the rule codifies what hosts measurably do
 
 Coherence (server-free): a second leg in `v2-error-registry-prose-parity.test.ts` (`openwop.requirement.0223.code-registered`) checks the registry row, its prose home and that `onTimeout` declares no `default`.
 
+Measured on the v2 reference host (a local copy of openwop-examples `76d522f`, `:memory:` store, against this tree's `spec-artifacts`): `reject-fails-run` `executed-pass`; `reject-recorded` and `reject-fails-node` `executed-fail` (no `action` on `interrupt.resolved`, no `retryable: false` on `node.failed`); the quorum row `inapplicable` (no quorum fixture). Positive control: adding exactly those two fields to the copy's `resolveAndResume` turned all three rows `executed-pass`. The quorum row was not run against a host that advertises the fixture.
+
 The major-1 `interrupt-quorum-resolution` leg is **not** tightened to the code: v1 registers no `approval_rejected`, so asserting it there would fail every conforming v1 host. The major-2 leg above carries the tightening instead.
 
 ### Falsifiability — one row per normative requirement
