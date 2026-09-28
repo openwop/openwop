@@ -123,7 +123,7 @@ Grouping below is a reading aid only: it assigns each RFC to the risk class its 
 | [0178](../RFCS/0178-v2-assurance-registers-and-deprecation-machinery.md) | v2 assurance registers and deprecation machinery | `Accepted` | bootstrap waiver | corpus gate — no host tier is claimed at the release candidate | `not-reviewed` |
 | [0190](../RFCS/0190-kernel-budget-denominator.md) | The kernel budget measures what the home gate accepts, and its cap grows only as debt is retired | `Accepted` | bootstrap waiver | corpus gate — every requirement id in the falsifiability table carries a row in `evidence… | `not-reviewed` |
 | [0192](../RFCS/0192-facet-advertisement.md) | A facet is advertised by the presence of its key; the 26 descriptions that gated on a retired field | `Accepted` | bootstrap waiver | corpus gate — every requirement id in the falsifiability table carries a row in `evidence… | `not-reviewed` |
-| [0223](../RFCS/0223-approval-reject-disposition.md) | a rejected approval gate fails closed, and the failure is routable | `Active` | steward override of RFC 0147 §A.6 | not declared (predates RFC 0174 §B.1, or not yet Accepted) | `not-reviewed` |
+| [0223](../RFCS/0223-approval-reject-disposition.md) | a rejected approval gate fails closed, and the failure is routable | `Accepted` | steward override of RFC 0147 §A.6 | tier-1 — the v2 reference host's certified public cut on published suite 2 | `not-reviewed` |
 
 ## Other (assign during review) (43)
 

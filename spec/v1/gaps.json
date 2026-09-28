@@ -13379,11 +13379,11 @@
       "rfc": "0223",
       "local": "G10",
       "section": "§Conformance",
-      "surface": "`openwop.requirement.0223.timeout-rejects` and `0223.timeout-never-grants` have no MyndHyve witness: its `core.approvalGate` has no timeout configuration. On the v2 reference host both rows are negatively controlled (sweep sabotaged, or the `onTimeout` exclusion present) and pass locally with the fixtures registered. They need suite 2.43.1 and a new certified cut.",
+      "surface": "`openwop.requirement.0223.timeout-rejects` and `0223.timeout-never-grants` had no certified witness, and have no MyndHyve witness: its `core.approvalGate` has no timeout configuration.",
       "witness": "unclassified",
       "requirementId": null,
-      "disposition": "externally-gated",
-      "target": "certified-cut-on-2.43.1",
+      "disposition": "closed",
+      "target": null,
       "sources": [
         {
           "file": "RFCS/registers/0223-approval-reject-disposition.gaps.md",
