@@ -34,7 +34,11 @@ import { isFixtureAdvertised } from '../lib/fixtures.js';
 import { capabilityFamily } from '../lib/discovery-capabilities.js';
 import { req } from '../lib/requirement-ids.js';
 import { softSkip, blockedDespiteAssertions } from '../lib/soft-skip.js';
-import { readDispatchBudgets } from '../lib/mock-ai-budgets.js';
+import { readDispatchBudgets, truncationBudgetVerdict } from '../lib/mock-ai-budgets.js';
+import { holdMockNodes } from '../lib/mock-node-lock.js';
+
+// The mock-AI program seam is keyed by node id; files sharing a fixture's node run one at a time.
+holdMockNodes('truncated-structured-call', 'retry-attempted-structured-call');
 
 const HTTP_SKIP = !process.env.OPENWOP_BASE_URL;
 /**
@@ -159,16 +163,21 @@ describe.skipIf(HTTP_SKIP)('envelope-completion-distinguishes-truncation: trunca
     ]);
     if (seed.status === 404) return softSkip('blocked', 'precondition not met — `seed.status === 404` returned early (seam, prior step, or fixture unavailable)');
 
-    await startRunAndRead(TRUNCATED_FIXTURE);
-    const budget = await lastBudget(TRUNCATED_FIXTURE);
-    if (budget === null) return softSkip('blocked', 'precondition not met — `budget === null` returned early (seam, prior step, or fixture unavailable)');
+    const run = await startRunAndRead(TRUNCATED_FIXTURE);
+    if (run === null) return softSkip('blocked', 'precondition not met — the run create or event-log read failed');
+    // RFC 0033 §B: MAY retry, and the retry budget SHOULD exceed the first
+    // attempt's. Compared through the dispatch-budgets seam; an unmet SHOULD is
+    // recorded, not failed (suite 2.42.9; this leg asserted `> 50` as a MUST).
+    const v = await truncationBudgetVerdict(NODE_OF[TRUNCATED_FIXTURE] as string);
+    if (v.kind === 'skip') return softSkip(v.skip, v.reason);
+    if (v.kind === 'unmet') return softSkip('inapplicable', `RFC 0033 §B SHOULD not met — the retry carried maxTokens ${v.retry} after the first attempt carried ${v.first}; recorded, not failed`);
     expect(
-      budget,
-      req('openwop.it.envelope-completion-distinguishes-truncation.truncation-retry-budget-strictly-greater-than-initial-rfc-0033-b-truncationbudge', 
+      v.retry,
+      req('openwop.it.envelope-completion-distinguishes-truncation.truncation-retry-budget-strictly-greater-than-initial-rfc-0033-b-truncationbudge',
         'RFCS/0033-envelope-completion-contract.md §B',
-        'truncation retry MUST multiply maxTokens by truncationBudgetMultiplier — final budget > initial 50 fixture value',
+        `the truncation retry's budget SHOULD exceed the first attempt's (first ${v.first}, retry ${v.retry})`,
       ),
-    ).toBeGreaterThan(50);
+    ).toBeGreaterThan(v.first);
   });
 });
 

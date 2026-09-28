@@ -3,10 +3,10 @@
   "generatedFrom": "src/scenarios/*.test.ts",
   "counts": {
     "files": 643,
-    "tests": 2471,
-    "withStableId": 2471,
+    "tests": 2473,
+    "withStableId": 2473,
     "interpolatedTitles": 0,
-    "explicitIds": 2361
+    "explicitIds": 2363
   },
   "records": [
     {
@@ -11598,7 +11598,7 @@
     {
       "id": "openwop.it.envelope-completion-distinguishes-truncation.capabilities-envelopes-reliability-completion-when-present-conforms-to-rfc-0033",
       "file": "envelope-completion-distinguishes-truncation.test.ts",
-      "line": 104,
+      "line": 108,
       "title": "capabilities.envelopes.reliability.completion (when present) conforms to RFC 0033 §E",
       "explicitId": "openwop.it.envelope-completion-distinguishes-truncation.capabilities-envelopes-reliability-completion-when-present-conforms-to-rfc-0033",
       "citations": [
@@ -11615,7 +11615,7 @@
     {
       "id": "openwop.it.envelope-completion-distinguishes-truncation.truncation-emits-envelope-truncated-envelope-retry-attempted-with-reason-truncat",
       "file": "envelope-completion-distinguishes-truncation.test.ts",
-      "line": 127,
+      "line": 131,
       "title": "truncation: emits envelope.truncated + envelope.retry.attempted with reason: \"truncation\"",
       "explicitId": "openwop.it.envelope-completion-distinguishes-truncation.truncation-emits-envelope-truncated-envelope-retry-attempted-with-reason-truncat",
       "citations": [
@@ -11636,20 +11636,21 @@
     {
       "id": "openwop.it.envelope-completion-distinguishes-truncation.truncation-retry-budget-strictly-greater-than-initial-rfc-0033-b-truncationbudge",
       "file": "envelope-completion-distinguishes-truncation.test.ts",
-      "line": 152,
+      "line": 156,
       "title": "truncation: retry budget strictly greater than initial (RFC 0033 §B truncationBudgetMultiplier)",
       "explicitId": "openwop.it.envelope-completion-distinguishes-truncation.truncation-retry-budget-strictly-greater-than-initial-rfc-0033-b-truncationbudge",
       "citations": [
         {
           "section": "RFCS/0033-envelope-completion-contract.md §B",
-          "requirement": "truncation retry MUST multiply maxTokens by truncationBudgetMultiplier — final budget > initial 50 fixture value"
+          "requirement": null,
+          "interpolated": true
         }
       ]
     },
     {
       "id": "openwop.it.envelope-completion-distinguishes-truncation.schema-violation-no-envelope-truncated-envelope-retry-attempted-reason-schema-vi",
       "file": "envelope-completion-distinguishes-truncation.test.ts",
-      "line": 176,
+      "line": 185,
       "title": "schema-violation: NO envelope.truncated; envelope.retry.attempted reason ∈ {schema-violation, parse-error}",
       "explicitId": "openwop.it.envelope-completion-distinguishes-truncation.schema-violation-no-envelope-truncated-envelope-retry-attempted-reason-schema-vi",
       "citations": [
@@ -11666,7 +11667,7 @@
     {
       "id": "openwop.it.envelope-completion-distinguishes-truncation.schema-violation-retry-budget-unchanged-from-initial-no-budget-multiplication-on",
       "file": "envelope-completion-distinguishes-truncation.test.ts",
-      "line": 206,
+      "line": 215,
       "title": "schema-violation: retry budget UNCHANGED from initial (no budget multiplication on this path)",
       "explicitId": "openwop.it.envelope-completion-distinguishes-truncation.schema-violation-retry-budget-unchanged-from-initial-no-budget-multiplication-on",
       "citations": [
@@ -12318,7 +12319,7 @@
     {
       "id": "openwop.it.envelope-retry-attempted.when-mock-llm-emits-invalid-envelope-on-attempt-1-then-valid-on-attempt-2-exactl",
       "file": "envelope-retry-attempted.test.ts",
-      "line": 158,
+      "line": 162,
       "title": "when mock LLM emits invalid envelope on attempt 1 then valid on attempt 2, exactly one `envelope.retry.attempted` event fires before the second attempt",
       "explicitId": "openwop.it.envelope-retry-attempted.when-mock-llm-emits-invalid-envelope-on-attempt-1-then-valid-on-attempt-2-exactl",
       "citations": [
@@ -12331,7 +12332,7 @@
     {
       "id": "openwop.it.envelope-retry-attempted.event-payload-carries-attempt-2-1-indexed-first-attempt-does-not-emit",
       "file": "envelope-retry-attempted.test.ts",
-      "line": 179,
+      "line": 183,
       "title": "event payload carries `attempt: 2` (1-indexed; first attempt does not emit)",
       "explicitId": "openwop.it.envelope-retry-attempted.event-payload-carries-attempt-2-1-indexed-first-attempt-does-not-emit",
       "citations": [
@@ -12348,7 +12349,7 @@
     {
       "id": "openwop.it.envelope-retry-attempted.reason-is-one-of-the-spec-reserved-closed-enum-values-or-matches-the-x-host-host",
       "file": "envelope-retry-attempted.test.ts",
-      "line": 197,
+      "line": 201,
       "title": "`reason` is one of the spec-reserved closed-enum values OR matches the `x-host-<host>-<key>` extension pattern",
       "explicitId": "openwop.it.envelope-retry-attempted.reason-is-one-of-the-spec-reserved-closed-enum-values-or-matches-the-x-host-host",
       "citations": [
@@ -12361,7 +12362,7 @@
     {
       "id": "openwop.it.envelope-retry-attempted.eventual-success-records-normally-via-envelope-acceptance-downstream-runeventdoc",
       "file": "envelope-retry-attempted.test.ts",
-      "line": 217,
+      "line": 221,
       "title": "eventual success records normally via envelope acceptance + downstream RunEventDoc",
       "explicitId": "openwop.it.envelope-retry-attempted.eventual-success-records-normally-via-envelope-acceptance-downstream-runeventdoc",
       "citations": [
@@ -12374,7 +12375,7 @@
     {
       "id": "openwop.it.envelope-retry-attempted.previouserror-when-populated-must-not-contain-prompt-or-response-substring-excer",
       "file": "envelope-retry-attempted.test.ts",
-      "line": 236,
+      "line": 240,
       "title": "`previousError` (when populated) MUST NOT contain prompt or response substring excerpts — limit to validator output",
       "explicitId": "openwop.it.envelope-retry-attempted.previouserror-when-populated-must-not-contain-prompt-or-response-substring-excer",
       "citations": [
@@ -12485,7 +12486,7 @@
     {
       "id": "openwop.it.envelope-truncated.when-mock-returns-stopreason-max-tokens-on-attempt-1-exactly-one-envelope-trunca",
       "file": "envelope-truncated.test.ts",
-      "line": 60,
+      "line": 59,
       "title": "when mock returns stopReason: max_tokens on attempt 1, exactly one envelope.truncated event fires with stopReason: max_tokens",
       "explicitId": "openwop.it.envelope-truncated.when-mock-returns-stopreason-max-tokens-on-attempt-1-exactly-one-envelope-trunca",
       "citations": [
@@ -12498,7 +12499,7 @@
     {
       "id": "openwop.it.envelope-truncated.payload-includes-nodeid-provider-model-partialpayloadavailable-boolean",
       "file": "envelope-truncated.test.ts",
-      "line": 86,
+      "line": 85,
       "title": "payload includes nodeId + provider + model + partialPayloadAvailable boolean",
       "explicitId": "openwop.it.envelope-truncated.payload-includes-nodeid-provider-model-partialpayloadavailable-boolean",
       "citations": [
@@ -12511,13 +12512,14 @@
     {
       "id": "openwop.it.envelope-truncated.retry-attempt-receives-a-maxtokens-value-strictly-greater-than-the-previous-atte",
       "file": "envelope-truncated.test.ts",
-      "line": 105,
+      "line": 104,
       "title": "retry attempt receives a maxTokens value strictly greater than the previous attempt (RFC 0033 §B truncationBudgetMultiplier)",
       "explicitId": "openwop.it.envelope-truncated.retry-attempt-receives-a-maxtokens-value-strictly-greater-than-the-previous-atte",
       "citations": [
         {
           "section": "RFCS/0033-envelope-completion-contract.md §B",
-          "requirement": "truncation retry MUST issue with a strictly-increased maxTokens budget (host multiplies by capabilities.envelopes.reliability.completion.truncationBudgetMultiplier)"
+          "requirement": null,
+          "interpolated": true
         }
       ]
     },
@@ -43120,9 +43122,50 @@
       ]
     },
     {
-      "id": "openwop.it.v2-surface-monotone-gate.an-open-object-closed-to-additionalproperties-false-is-refused-b-6",
+      "id": "openwop.it.v2-surface-monotone-gate.a-then-pinning-only-a-pre-existing-value-or-pinning-nothing-required-licenses-no",
       "file": "v2-surface-monotone-gate.test.ts",
       "line": 186,
+      "title": "a `then` pinning only a PRE-EXISTING value, or pinning nothing required, licenses nothing",
+      "explicitId": "openwop.requirement.0197.no-reshape",
+      "citations": [
+        {
+          "section": "spec/v2/core/overview.md §0a (RFC 0197 §A.1)",
+          "requirement": null,
+          "interpolated": true
+        },
+        {
+          "section": "spec/v2/core/overview.md §0a (RFC 0197 §A.1)",
+          "requirement": null,
+          "interpolated": true
+        },
+        {
+          "section": "spec/v2/core/overview.md §0a (RFC 0197 §A.1)",
+          "requirement": "the refusal must name the property and the object"
+        }
+      ]
+    },
+    {
+      "id": "openwop.it.v2-surface-monotone-gate.a-new-value-conditional-does-not-launder-an-unconditional-required-beside-it",
+      "file": "v2-surface-monotone-gate.test.ts",
+      "line": 204,
+      "title": "a new-value conditional does not launder an UNCONDITIONAL `required` beside it",
+      "explicitId": "openwop.requirement.0197.no-reshape",
+      "citations": [
+        {
+          "section": "spec/v2/core/overview.md §0a (RFC 0197 §A.1)",
+          "requirement": null,
+          "interpolated": true
+        },
+        {
+          "section": "spec/v2/core/overview.md §0a (RFC 0197 §A.1)",
+          "requirement": "the refusal must name the unconditional property"
+        }
+      ]
+    },
+    {
+      "id": "openwop.it.v2-surface-monotone-gate.an-open-object-closed-to-additionalproperties-false-is-refused-b-6",
+      "file": "v2-surface-monotone-gate.test.ts",
+      "line": 218,
       "title": "an OPEN object closed to `additionalProperties: false` is REFUSED (§B.6)",
       "explicitId": "openwop.requirement.0197.no-reshape",
       "citations": [
@@ -43140,7 +43183,7 @@
     {
       "id": "openwop.it.v2-surface-monotone-gate.a-narrowed-type-is-refused-a-1-add-the-new-shape-beside-the-old-one",
       "file": "v2-surface-monotone-gate.test.ts",
-      "line": 193,
+      "line": 225,
       "title": "a narrowed `type` is REFUSED (§A.1 — add the new shape beside the old one)",
       "explicitId": "openwop.requirement.0197.no-reshape",
       "citations": [
@@ -43158,7 +43201,7 @@
     {
       "id": "openwop.it.v2-surface-monotone-gate.a-removed-operation-is-refused-a-path-manifest-row-is-a-surface-too",
       "file": "v2-surface-monotone-gate.test.ts",
-      "line": 200,
+      "line": 232,
       "title": "a removed OPERATION is REFUSED (a path-manifest row is a surface too)",
       "explicitId": "openwop.requirement.0197.no-reshape",
       "citations": [
