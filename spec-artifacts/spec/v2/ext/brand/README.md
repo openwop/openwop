@@ -1,14 +1,14 @@
 # `brand` extension
 
-> **Status: Draft.**
+> **Status: Stable.**
 
 `brand` names a host service for brand artifacts: themes and personas. It is a discovery-only reservation: v2 defines no portable operations or payload contract for it.
 
 | Field | Value |
 | --- | --- |
 | **witness:** | `claims-check` |
-| **technical:** | `experimental` |
-| **adoption:** | `none` |
+| **technical:** | `stable` |
+| **adoption:** | `single-witness` |
 | **peer-dependency id** | `brand` |
 | **advertised as** | `extensions.<org>.brand` |
 | **declared facets** | none defined |
