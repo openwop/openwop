@@ -13,7 +13,7 @@ Per `spec/v1/registry-operations.md`:
 | Operation        | Effect on consumers                                                                                                          | Reversible                                                                                                                   | When to use                                                                                    |
 | ---------------- | ---------------------------------------------------------------------------------------------------------------------------- | ---------------------------------------------------------------------------------------------------------------------------- | ---------------------------------------------------------------------------------------------- |
 | **Deprecate**    | Pack still installable + dispatch-able. Consumers running `verified` mode see a deprecation flag + SHOULD suggest migration. | Yes (via `undeprecate`)                                                                                                      | "There's a newer version; we'd like you to upgrade but old version still works"                |
-| **Yank**         | Pack tarball blocked (registry refuses to serve). Consumers MUST NOT dispatch nodes from yanked versions.                    | Yes (via `unyank`)                                                                                                           | "This version has a bug serious enough to block new installs; existing installs should re-pin" |
+| **Yank**         | Still served at its exact path; never `latest`; a range skips it, an exact pin still resolves it (v2 `packs.md`).            | Yes (via `unyank`)                                                                                                           | "This version has a bug serious enough to block new installs; existing installs should re-pin" |
 | **Unpublish**    | Pack removed from registry entirely (tarball + manifest + index entry). Only allowed within 72h of publish per spec.         | NO — once unpublished, the version can never be re-published with the same bytes (consumers may have cached the SHA256 hash) | "We published by mistake within the last 72h; we want it gone before anyone consumes it"       |
 | **Force-update** | New version published with bumped SemVer; old version stays at-rest                                                          | N/A (this is just the standard publish flow at a new version)                                                                | "Bug fix or feature addition"                                                                  |
 
@@ -31,7 +31,7 @@ Deprecation is ADVISORY — consumers can still install + dispatch. The registry
 
 ### How
 
-1. Open a PR against `openwop/openwop` modifying the pack's version manifest:
+1. Open a PR against `openwop/openwop-registry` modifying the pack's version manifest:
 
    ```bash
    # registry/v1/packs/<name>/-/<version>.json
@@ -68,7 +68,7 @@ Set `"deprecated": false`, rerun `build-index.mjs`, merge. Same gates apply.
 - A pack causes consumer-side data loss or undefined behavior
 - A signing-key compromise is suspected (yank ALL versions signed by the key — see `INCIDENT-RESPONSE.md`)
 
-Yank is STRICTER than deprecation: the registry MUST stop serving the tarball + signature for that version. Consumers running `verified` mode MUST refuse to dispatch any node from a yanked version.
+Yank is STRICTER than deprecation: a consumer resolving a range MUST skip the version, and the pack index MUST NOT name it `latest` while an unyanked version exists. The registry MUST keep serving its manifest, tarball and signature, so an exact pin still resolves and anyone can verify what they installed (`spec/v2/core/packs.md` §"Version manifests").
 
 ### How
 
@@ -84,21 +84,21 @@ Yank is STRICTER than deprecation: the registry MUST stop serving the tarball + 
    }
    ```
 
-2. Run `node registry/scripts/build-index.mjs`. The script ALSO updates the per-pack `index.json` to mark the version yanked and excludes it from `latestVersion` resolution.
+2. Run `node registry/scripts/build-index.mjs --tree v2`. It marks the version yanked in the per-pack `index.json` and keeps it off `latest` while an unyanked version exists. (The v1 tree is frozen and keeps highest-semver.)
 
 3. Open the PR with the title prefix `[YANK]` so maintainers prioritize review.
 
-4. After merge, CRITICAL verification:
+4. After merge, verify:
 
    ```bash
-   # Registry returns 404 (or 410 Gone, depending on Hosting config)
-   curl -sI https://packs.openwop.dev/v1/packs/<name>/-/<version>.tgz
-   # Discovery doc + version manifest still served, with `yanked: true`
-   curl -s https://packs.openwop.dev/v1/packs/<name>/-/<version>.json | jq .yanked
-   # Expects: true
+   # Version manifest, tarball and signature are all still served
+   curl -s https://packs.openwop.dev/v2/packs/<name>/-/<version>.json | jq .yanked   # true
+   curl -sI https://packs.openwop.dev/v2/packs/<name>/-/<version>.tgz | head -1      # 200
+   # latest moved off it
+   curl -s https://packs.openwop.dev/v2/packs/<name>/index.json | jq .latest
    ```
 
-   If the tarball still serves: open an incident issue + manually delete the `.tgz` file from `registry/v1/packs/<name>/-/<version>.tgz` in a follow-up PR. Firebase Hosting doesn't auto-purge yanked artifacts; deletion is required for hard-refusal.
+   Do NOT delete the `.tgz`: the version's key must also stay listed in `signingKeys[]` while it is served (`packs.md` §Signing).
 
 ### Reverse (unyank)
 
@@ -163,7 +163,7 @@ Publisher keys SHOULD rotate annually. Hard rotation (compromise response) follo
 4. **After transition**: vendor opens a second PR removing the old key:
    - Delete `registry/keys/<org>-internal-1.pub`
    - Remove the `<org>-internal-1` entry from `signingKeys[]`
-   - All existing packs signed with the old key MUST have been re-signed with `<org>-internal-2` first (or yanked)
+   - All existing packs signed with the old key MUST have been re-signed with `<org>-internal-2` first. Yanking is not enough: a yanked version stays served, so its key stays listed (`packs.md` §Signing). Until then, mark the old entry non-`active` (e.g. `status: "rotated"`) instead of removing it
 
 5. **Calendar reminder**: each vendor maintains an annual calendar entry for their next rotation.
 
@@ -173,9 +173,8 @@ Publisher keys SHOULD rotate annually. Hard rotation (compromise response) follo
 
 | Symptom                                                         | Cause                                                                                            | Fix                                                                                          |
 | --------------------------------------------------------------- | ------------------------------------------------------------------------------------------------ | -------------------------------------------------------------------------------------------- |
-| Yank PR merges but tarball still serves                         | Firebase Hosting doesn't auto-purge content; only the metadata is updated                        | Follow up with a PR deleting the `.tgz` file from `registry/v1/packs/<name>/-/<version>.tgz` |
 | Deprecation flag not shown to consumers                         | Per-pack `index.json` `versionEntries[].deprecated` not updated                                  | Re-run `node registry/scripts/build-index.mjs`                                               |
-| `latestVersion` doesn't update after yanking the current latest | `build-index.mjs` recomputes latest from non-yanked versions; ensure yank PR merged + redeployed | Wait for Firebase Hosting cache TTL (~60s) or re-run build-index                             |
+| `latestVersion` doesn't update after yanking the current latest | `build-index.mjs --tree v2` recomputes latest from unyanked versions; ensure the yank PR merged + redeployed | Wait for Firebase Hosting cache TTL (~60s) or re-run build-index                             |
 | Unpublish PR merges after 72h                                   | Spec allows the deletion but consumer caches still have the hash                                 | Operational impact: consumers see 404; recommend yank instead next time                      |
 
 ---

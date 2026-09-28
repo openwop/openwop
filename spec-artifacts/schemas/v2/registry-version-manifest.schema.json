@@ -238,7 +238,7 @@
     },
     "yanked": {
       "type": "boolean",
-      "description": "Hard refusal: this version was published in error. Registry MUST refuse to serve the tarball; consumers MUST refuse to dispatch nodes from yanked versions."
+      "description": "This version is yanked (spec/v2/core/packs.md §\"Version manifests\"). The registry keeps serving its manifest, tarball and signature, and its pack index never names it `latest` while an unyanked version exists. A consumer resolving a range excludes it; an exact pin MAY still resolve it."
     },
     "yankedReason": {
       "type": "string",
@@ -253,7 +253,7 @@
     "supersededBy": {
       "type": "string",
       "maxLength": 256,
-      "description": "Optional pointer to the version (or `<name>@<version>`) that replaces this one. Per spec/v1/registry-operations.md, engine consumers in `open` / `verified` mode MUST surface this value in any deprecation warning when set."
+      "description": "Optional pointer to the version (or `<name>@<version>`) that replaces this one. Display only: a consumer that refuses or warns about a deprecated version can name it (spec/v2/core/packs.md §\"Version manifests\")."
     },
     "advisoryUrl": {
       "type": "string",
