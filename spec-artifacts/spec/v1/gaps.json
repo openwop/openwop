@@ -7272,6 +7272,23 @@
       ]
     },
     {
+      "id": "openwop.gap.0140.10",
+      "rfc": "0140",
+      "local": "G10",
+      "section": "§Conformance",
+      "surface": "`openwop.requirement.replay.suppression-execution-ordinal` (openwop#1718) has no witness on any host, positive or negative. `conformance-replay-ordinal-loop` needs a host that both runs cycles and suppresses a side-effecting node in replay. The v2 reference host does neither for this fixture: it does not loop, it does not execute `core.conformance.side-effect`, and its `effectOutcome` (`store.ts:586` at openwop-examples `f56f092`) selects the latest outcome regardless of ordinal, which would fail the row if it looped. openwop-app does not index by ordinal (`nodeAttempts` is never reset), and MyndHyve does not seed `replaySourceOutcomes` from the prefix.",
+      "witness": "unclassified",
+      "requirementId": null,
+      "disposition": "externally-gated",
+      "target": "host-loops-with-replay-suppression",
+      "sources": [
+        {
+          "file": "RFCS/registers/0140-replay-side-effect-suppression.gaps.md",
+          "token": "G10"
+        }
+      ]
+    },
+    {
       "id": "openwop.gap.0141.0",
       "rfc": "0141",
       "local": "G0",
@@ -9843,11 +9860,11 @@
       "rfc": "0171",
       "local": "G8",
       "section": "§B.1",
-      "surface": "The v2 reference host emitted 3 unregistered run-failure codes (measured at openwop-examples `456dfaa`).",
+      "surface": "The v2 reference host emits unregistered run-failure codes that are not vendor codes. openwop-examples #125 (`21e552e`) remapped three (`fixture_failure`, `unsupported_node_type`, `sandbox_invocation_error`), but at `21e552e` it still emits `http_fetch_failed` (`examples/hosts/v2-reference/src/executor.ts:263`), and `mcp_error` and `mcp_unreachable` (`src/mcp-client.ts:43`, `:68`, surfaced through `src/executor.ts:291`).",
       "witness": "unclassified",
       "requirementId": null,
-      "disposition": "closed",
-      "target": null,
+      "disposition": "externally-gated",
+      "target": "v2-reference-code-remap",
       "sources": [
         {
           "file": "RFCS/registers/0171-v2-wire-envelope.gaps.md",
