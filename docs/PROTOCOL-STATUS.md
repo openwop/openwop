@@ -70,8 +70,8 @@
 
 | Status | Count |
 |---|---:|
-| Accepted | 215 |
-| Active | 4 |
+| Accepted | 216 |
+| Active | 3 |
 | Draft | 1 |
 | Superseded | 1 |
 
@@ -296,7 +296,7 @@
 | RFC 0220 | an extension family graduates on evidence a script can read | Accepted |
 | RFC 0221 | a webhook secret the host generates is returned once | Accepted |
 | RFC 0222 | v2 registry operations - lifecycle by publication, key rotation, and the checks a registry refuses on | Active |
-| RFC 0223 | a rejected approval gate fails closed, and the failure is routable | Active |
+| RFC 0223 | a rejected approval gate fails closed, and the failure is routable | Accepted |
 | RFC 0224 | audit-log integrity gets a v2 home | Accepted |
 
 ## SDK Helper Coverage
@@ -322,7 +322,7 @@ The pack registry now lives in the [`openwop-registry`](https://github.com/openw
 ## Active Follow-Ups
 
 - 1 RFC still `Draft` (RFC 0038) — advance with schema/conformance proof or defer.
-- 4 RFCs `Active` (RFC 0121, RFC 0219, RFC 0222, RFC 0223) — wire-shape MAY shift compatibly within v1.x until promotion to `Accepted`.
+- 3 RFCs `Active` (RFC 0121, RFC 0219, RFC 0222) — wire-shape MAY shift compatibly within v1.x until promotion to `Accepted`.
 - External audit, non-steward host recruitment, and non-steward maintainer recruitment remain external-action gates.
 - Multi-region idempotency and some optional-profile behavior checks remain lower-confidence than the core wire contract.
 
