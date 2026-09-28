@@ -1965,8 +1965,8 @@
       "extensionName": "messaging",
       "witness": "claims-check",
       "maturity": {
-        "technical": "experimental",
-        "adoption": "none"
+        "technical": "stable",
+        "adoption": "single-witness"
       },
       "facets": [],
       "floorScenarios": [],
