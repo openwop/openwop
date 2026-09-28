@@ -8,7 +8,8 @@
  *
  * Absence is not evidence on its own (architect review, 2026-09-25). "No retry
  * arrived after the 204" proves nothing about a host whose next retry falls
- * outside the window, and `webhooks.retryPolicy` carries no interval, so the
+ * outside the window, and `webhooks.retryPolicy` carries no interval (RFC 0225's
+ * optional `maxElapsedMs` bounds the total, not the next retry), so the
  * suite cannot compute when that is. The leg therefore runs a CONTROL:
  *
  *   - two subscriptions on one receiver, both filtering `run.completed`, both
@@ -64,10 +65,10 @@ afterEach(async () => {
   if (receiver) { const rx = receiver; receiver = null; await rx.close(); }
 });
 
-function advertisedRetryPolicy(doc: Record<string, unknown>): { maxAttempts?: number; backoff?: string } | null {
-  const read = (holder: unknown): { maxAttempts?: number; backoff?: string } | null => {
+function advertisedRetryPolicy(doc: Record<string, unknown>): { maxAttempts?: number; backoff?: string; maxElapsedMs?: unknown } | null {
+  const read = (holder: unknown): { maxAttempts?: number; backoff?: string; maxElapsedMs?: unknown } | null => {
     const rp = holder && typeof holder === 'object' ? (holder as { retryPolicy?: unknown }).retryPolicy : undefined;
-    return rp && typeof rp === 'object' ? (rp as { maxAttempts?: number; backoff?: string }) : null;
+    return rp && typeof rp === 'object' ? (rp as { maxAttempts?: number; backoff?: string; maxElapsedMs?: unknown }) : null;
   };
   return read(doc['webhooks']) ?? read(doc['triggerBridge']);
 }

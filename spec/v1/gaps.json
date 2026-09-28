@@ -13426,6 +13426,23 @@
       ]
     },
     {
+      "id": "openwop.gap.0225.1",
+      "rfc": "0225",
+      "local": "G1",
+      "section": "§Implementation notes",
+      "surface": "No host advertises `retryPolicy.maxElapsedMs` yet, so the new row has no witness.",
+      "witness": "unclassified",
+      "requirementId": null,
+      "disposition": "externally-gated",
+      "target": "host-advertises-max-elapsed",
+      "sources": [
+        {
+          "file": "RFCS/registers/0225-webhook-retry-max-elapsed.gaps.md",
+          "token": "G1"
+        }
+      ]
+    },
+    {
       "id": "openwop.gap.spec.a2a-integration.g1",
       "rfc": "0152",
       "local": "G1",

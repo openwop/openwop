@@ -89,7 +89,7 @@ describe('RFC 0201 §C.10 — webhook-id is stable across retries, distinct acro
       return m;
     };
     const expectedKeys = subs.length * EVENTS.length;
-    const window = retryWaitFor((g.facet['retryPolicy'] as { backoff?: string } | undefined) ?? null, CAP_MS);
+    const window = retryWaitFor((g.facet['retryPolicy'] as { backoff?: string; maxElapsedMs?: unknown } | undefined) ?? null, CAP_MS);
     await waitFor(() => {
       const m = byKey();
       return m.size >= expectedKeys && [...m.values()].every((a) => a.length >= 2);
