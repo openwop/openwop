@@ -20,6 +20,7 @@ import { readErrorCode } from './error-envelope.js';
 import type { SoftSkipKind } from './soft-skip.js';
 import { projectBoundId } from './bound-id.js';
 import { hitHeader, type ModalHit } from './webhook-receiver.js';
+import { SEAMS_PREFIX } from './seams.js';
 
 export const STANDARD_WEBHOOKS_ALG = 'standard-webhooks-1';
 export const SW_FIXTURE = 'conformance-noop';
@@ -117,4 +118,56 @@ export function deliveriesFor(hits: readonly ModalHit[], webhookId: string, runI
 /** Every `webhook-*` header name on a hit (RFC 0201 §B.8 reads this as "must be empty" on a non-opted subscription). */
 export function standardWebhooksHeaderNames(hit: ModalHit): string[] {
   return Object.keys(hit.headers).filter((k) => k.toLowerCase().startsWith('webhook-'));
+}
+
+export const ROTATION_OVERLAP_SEAM = `${SEAMS_PREFIX}/sample/webhooks/rotation-overlap`;
+
+export type ShortenedOverlap =
+  | { readonly ok: true; readonly expiresAt: number }
+  | { readonly ok: false; readonly unserved: true; readonly reason: string }
+  | { readonly ok: false; readonly unserved: false; readonly reason: string };
+
+/**
+ * Shorten the rotation overlap in progress on ONE subscription
+ * (host-sample-test-seams.md §29, `shortenRotationOverlap`), so the RFC 0201
+ * §E.20 post-overlap leg can be observed on a host whose advertised
+ * `overlapSeconds` outlasts the wait cap. The seam only moves the stored expiry;
+ * which secret signs after it is the production signer's decision, and that is
+ * what the caller asserts on. UNSERVED (404/405/501) is reported apart from a
+ * served seam that breaks its contract: the seam is OPTIONAL and newer than the
+ * leg, so its absence falls back to the pre-seam partial witness.
+ *
+ * The contract checked here: `200 { webhookId, previousSecretExpiresAt }` with
+ * the expiry `overlapSeconds` after the request (±1 s), and a foreign-tenant id
+ * refused `403 id_tenant_mismatch` before the lookup, as `rotateWebhookSecret`
+ * refuses it. The real call goes first so that a 404 can only mean "unserved".
+ */
+export async function shortenRotationOverlap(webhookId: string, overlapSeconds: number, foreignWebhookId: string): Promise<ShortenedOverlap> {
+  const before = Date.now();
+  let res: OpenWOPResponse;
+  try { res = await driver.post(ROTATION_OVERLAP_SEAM, { webhookId, overlapSeconds }); } catch {
+    return { ok: false, unserved: false, reason: `${ROTATION_OVERLAP_SEAM} unreachable (fetch failed)` };
+  }
+  const after = Date.now();
+  if (res.status === 404 || res.status === 405 || res.status === 501) {
+    return { ok: false, unserved: true, reason: `${ROTATION_OVERLAP_SEAM} answered ${res.status} — the host does not serve the optional shortenRotationOverlap seam (host-sample-test-seams.md §29)` };
+  }
+  const body = (res.json ?? {}) as { webhookId?: unknown; previousSecretExpiresAt?: unknown };
+  const expiresAt = typeof body.previousSecretExpiresAt === 'string' ? Date.parse(body.previousSecretExpiresAt) : Number.NaN;
+  if (res.status !== 200 || body.webhookId !== webhookId || !Number.isFinite(expiresAt)) {
+    return { ok: false, unserved: false, reason: `${ROTATION_OVERLAP_SEAM} answered ${res.status} ${readErrorCode(res.json) ?? ''} without 200 { webhookId, previousSecretExpiresAt } for ${webhookId} — the seam contract (api/seams-v2.yaml shortenRotationOverlap) is not honoured`.replace(/ +/g, ' ') };
+  }
+  const lo = before + overlapSeconds * 1000 - 1000;
+  const hi = after + overlapSeconds * 1000 + 1000;
+  if (expiresAt < lo || expiresAt > hi) {
+    return { ok: false, unserved: false, reason: `${ROTATION_OVERLAP_SEAM} reported previousSecretExpiresAt ${body.previousSecretExpiresAt as string}, not ${overlapSeconds}s after the request (window ${new Date(lo).toISOString()}..${new Date(hi).toISOString()}) — the overlap it reports is not the one it was asked to set` };
+  }
+  let cross: OpenWOPResponse;
+  try { cross = await driver.post(ROTATION_OVERLAP_SEAM, { webhookId: foreignWebhookId, overlapSeconds }); } catch {
+    return { ok: false, unserved: false, reason: `${ROTATION_OVERLAP_SEAM} unreachable on the foreign-tenant probe (fetch failed)` };
+  }
+  if (cross.status !== 403 || readErrorCode(cross.json) !== 'id_tenant_mismatch') {
+    return { ok: false, unserved: false, reason: `${ROTATION_OVERLAP_SEAM} answered ${cross.status} ${readErrorCode(cross.json) ?? ''} for a foreign-tenant webhookId — the seam MUST be tenant-checked before the lookup (403 id_tenant_mismatch), exactly as rotateWebhookSecret`.replace(/ +/g, ' ') };
+  }
+  return { ok: true, expiresAt };
 }

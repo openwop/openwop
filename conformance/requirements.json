@@ -34482,7 +34482,7 @@
     {
       "id": "openwop.it.v2-webhook-secret-rotation.a-rotation-dual-signs-for-overlapseconds-keeps-openwop-signature-on-the-previous",
       "file": "v2-webhook-secret-rotation.test.ts",
-      "line": 67,
+      "line": 76,
       "title": "a rotation dual-signs for overlapSeconds, keeps OpenWOP-Signature on the previous secret, and is tenant-checked",
       "explicitId": "openwop.requirement.0201.secret-rotation",
       "citations": [
