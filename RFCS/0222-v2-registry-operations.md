@@ -30,7 +30,7 @@ Measured on 2026-09-28 against openwop-registry `origin/main` (`4c5de1f`) and th
 
 - **The write endpoints do not exist.** `writeApi.supported` is `false`. No v2 operation in `api/v2/openapi.yaml` touches a registry.
 - **`writeApi.publishUrl` was stale.** It named `github.com/openwop/openwop/pulls`, where pack submissions stopped landing at the repo split.
-- **Yanked versions are served.** The v1 tree has six yanked versions (for example `core.openwop.examples@1.0.0`, `vendor.openwop.rust-hello@1.0.0`); each still serves `.json`, `.tgz` and `.sig`. That matches the earlier prose ("Still served … consumers may need it for forensic analysis") and contradicts both the v2 schema description ("Registry MUST refuse to serve the tarball") and `PACK-LIFECYCLE.md` ("the registry MUST stop serving the tarball").
+- **Yanked versions are served.** The v1 tree has seven yanked versions (for example `core.openwop.examples@1.0.0`, `vendor.openwop.rust-hello@1.0.0`); each still serves `.json`, `.tgz` and `.sig`. That matches the earlier prose ("Still served … consumers may need it for forensic analysis") and contradicts both the v2 schema description ("Registry MUST refuse to serve the tarball") and `PACK-LIFECYCLE.md` ("the registry MUST stop serving the tarball").
 - **`latest` was not yank-aware.** `build-index.mjs` set `latest = versions[versions.length - 1]` and hard-coded `yanked: false` on every registry-wide row, although `PACK-LIFECYCLE.md` said it "excludes it from `latestVersion` resolution". `vendor.openwop.rust-hello`'s `latest` is its one, yanked, version. The v2 tree has no yanked version yet, so nothing served was wrong; the next yank would have been.
 - **Key status is not read.** Every `signingKeys[]` entry is `status: "active"`. `verify-signatures.mjs` authorizes by `keyId` and `permittedNamespaces` alone, and verifies every version, yanked or not, so a key removed from the list fails the gate for every version it signed. `KEY-ROTATION.md` describes marking the old key non-`active` and removing it only after its versions are re-signed.
 - **The lifecycle flags are unsigned.** The v2 signature covers the canonical `pack.json` inside the tarball (`packs.md` §Signing). `yanked` and `versionDeprecated` sit on the served version manifest, outside it. "A re-signed version manifest" is not what a lifecycle change is; it is a republication of unsigned registry metadata.
@@ -54,7 +54,7 @@ Not carried from the earlier major: the `deprecate`, `yank` and `keychain` endpo
 
 Where each rule came from:
 
-- **Still served:** the earlier "Yank flow §Effects" 1, and the served v1 tree (six yanked versions, all files `200`). The v2 schema's `yanked` description said the opposite and now says this.
+- **Still served:** the earlier "Yank flow §Effects" 1, and the served v1 tree (seven yanked versions, all three files `200` on packs.openwop.dev). The v2 schema's `yanked` description said the opposite and now says this.
 - **Not `latest`:** the earlier "Effects" 3 (yanked versions leave range resolution) applied to the one resolution the registry itself performs. openwop-registry's `build-index.mjs --tree v2` now implements it; the v1 tree is frozen and keeps highest-semver.
 - **Range vs pin:** the earlier "Yank consumer semantics" — a pin is contractual, a range skips the version.
 - **Advisory → yanked:** `check-advisories.mjs`, which already fails the registry gate when an advisory's `affected[]` range matches an unyanked version, on both trees.
@@ -95,7 +95,7 @@ Taken from the earlier "Required checks", filtered: `X-Pack-Sha256`, the account
 
 ## Compatibility
 
-`additive`. No schema shape, error code, status or endpoint changes; two schema descriptions are corrected to the prose. The registry conforms: its v2 tree has no yanked version, and `build-index.mjs --tree v2` now keeps a future one off `latest` (openwop-registry PR). A consumer that installed yanked versions by range was already outside the earlier major's rule.
+`additive`. No schema shape, error code, status or endpoint changes; two schema descriptions are corrected to the prose. The registry conforms: its v2 tree has no yanked version, and `build-index.mjs --tree v2` now keeps a future one off `latest` (openwop-registry #77). A consumer that installed yanked versions by range was already outside the earlier major's rule.
 
 ## Conformance
 
@@ -144,7 +144,7 @@ None.
 
 ## Implementation notes (non-normative)
 
-- openwop-registry: `writeApi.publishUrl` → `github.com/openwop/openwop-registry/pulls`; `build-index.mjs --tree v2` keeps a yanked version off `latest` and marks the registry-wide row `yanked` only when every version is (openwop-registry PR).
+- openwop-registry: `writeApi.publishUrl` → `github.com/openwop/openwop-registry/pulls`; `build-index.mjs --tree v2` keeps a yanked version off `latest` and marks the registry-wide row `yanked` only when every version is (openwop-registry #77, merged).
 - `docs/runbooks/PACK-LIFECYCLE.md` now says a yanked tarball stays served and a publication PR goes to openwop-registry.
 
 ## Acceptance criteria
