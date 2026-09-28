@@ -801,6 +801,62 @@ paths:
           $ref: '#/components/responses/ValidationError'
         '401':
           $ref: '#/components/responses/Unauthenticated'
+  /conformance/seams/sample/webhooks/rotation-overlap:
+    post:
+      tags:
+      - Seams
+      operationId: shortenRotationOverlap
+      summary: Shorten the rotation overlap in progress on one subscription — RFC 0201 §E.20 witness
+      description: 'Sets the subscription''s `previousSecretExpiresAt` to the time the request was received plus `overlapSeconds`,
+        and reports the stored value. The seam MUST write the same stored expiry `rotateWebhookSecret` wrote and the production
+        signer reads; the signer MUST NOT branch on the seam, so which secret signs after the new expiry is production''s
+        decision. It changes only the overlap in progress and MUST NOT lengthen it: an expiry at or after the current one,
+        no overlap in progress, or a subscription that did not opt into `standard-webhooks-1` answers `400 validation_error`.
+        Tenant checks are those of `rotateWebhookSecret` (`403 id_tenant_mismatch` before the lookup; `404` when unknown).
+        OPTIONAL, and never served outside the seams profile; consumed by `v2-webhook-secret-rotation` when the advertised
+        overlap outlasts the wait cap. An unserved seam leaves that leg a partial witness, never `blocked`.'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              additionalProperties: false
+              required:
+              - webhookId
+              - overlapSeconds
+              properties:
+                webhookId:
+                  $ref: ../schemas/v2/ids.schema.json#/$defs/subscriptionId
+                overlapSeconds:
+                  type: integer
+                  minimum: 1
+                  maximum: 60
+      responses:
+        '200':
+          description: The overlap is shortened.
+          content:
+            application/json:
+              schema:
+                type: object
+                additionalProperties: false
+                required:
+                - webhookId
+                - previousSecretExpiresAt
+                properties:
+                  webhookId:
+                    $ref: ../schemas/v2/ids.schema.json#/$defs/subscriptionId
+                  previousSecretExpiresAt:
+                    type: string
+                    format: date-time
+        '400':
+          $ref: '#/components/responses/ValidationError'
+        '401':
+          $ref: '#/components/responses/Unauthenticated'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          $ref: '#/components/responses/NotFound'
   /conformance/seams/sample/webhooks/receive:
     post:
       tags:

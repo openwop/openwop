@@ -13226,11 +13226,11 @@
       "rfc": "0223",
       "local": "G3",
       "section": "§Implementation notes",
-      "surface": "The v2 reference host does not record `action` on `interrupt.resolved`, does not emit `approval.rejected`, fails the run directly rather than through the scheduler, and has no timeout disposition.",
+      "surface": "The v2 reference host did not record `action` on `interrupt.resolved`, did not emit `approval.rejected`, failed the run directly rather than through the scheduler, and had no timeout disposition.",
       "witness": "unclassified",
       "requirementId": null,
-      "disposition": "externally-gated",
-      "target": "openwop-examples-v2-reference-followup",
+      "disposition": "closed",
+      "target": null,
       "sources": [
         {
           "file": "RFCS/registers/0223-approval-reject-disposition.gaps.md",
