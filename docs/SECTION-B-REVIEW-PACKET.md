@@ -6,7 +6,7 @@
 
 RFC 0156 §B: RFCs affecting auth, identity, tenant isolation, secrets, packs, execution sandboxing, idempotency, replay, external effects, conformance/certification, or governance **MUST** receive a retrospective **cross-organization** review. Every RFC below was accepted with its public comment window shortened, either under the bootstrap waiver or by explicit steward override of RFC 0147 §A.6. Each such acceptance is **provisional** until a reviewer from an organization other than the steward's records an outcome.
 
-This packet is for that reviewer. **98 RFCs are listed; 98 have no discharging outcome.** The steward, the steward's sessions, and steward-affiliated hosts (MyndHyve is tier-2, not independent) cannot supply the review. Recording one of their reviews as `ratified` is the substitution §B's last clause forbids.
+This packet is for that reviewer. **99 RFCs are listed; 99 have no discharging outcome.** The steward, the steward's sessions, and steward-affiliated hosts (MyndHyve is tier-2, not independent) cannot supply the review. Recording one of their reviews as `ratified` is the substitution §B's last clause forbids.
 
 ## How to review one RFC
 
@@ -112,7 +112,7 @@ Grouping below is a reading aid only: it assigns each RFC to the risk class its 
 | [0197](../RFCS/0197-v2-surfaces-retired-never-reshaped.md) | v2 surfaces are retired, never reshaped | `Accepted` | steward override of RFC 0147 §A.6 | tier-1 — the v2 reference host | `not-reviewed` |
 | [0216](../RFCS/0216-colocated-witness-for-harness-trust-anchor-rows.md) | a colocated companion bundle is marked, and witnesses only the rows that need the suite's own issuer | `Accepted` | steward override of RFC 0147 §A.6 | corpus gate — no host tier | `not-reviewed` |
 
-## Governance (5)
+## Governance (6)
 
 | RFC | Title | Status | Waiver | Evidence tier | Outcome |
 | --- | --- | --- | --- | --- | --- |
@@ -121,6 +121,7 @@ Grouping below is a reading aid only: it assigns each RFC to the risk class its 
 | [0178](../RFCS/0178-v2-assurance-registers-and-deprecation-machinery.md) | v2 assurance registers and deprecation machinery | `Accepted` | bootstrap waiver | corpus gate — no host tier is claimed at the release candidate | `not-reviewed` |
 | [0190](../RFCS/0190-kernel-budget-denominator.md) | The kernel budget measures what the home gate accepts, and its cap grows only as debt is retired | `Accepted` | bootstrap waiver | corpus gate — every requirement id in the falsifiability table carries a row in `evidence… | `not-reviewed` |
 | [0192](../RFCS/0192-facet-advertisement.md) | A facet is advertised by the presence of its key; the 26 descriptions that gated on a retired field | `Accepted` | bootstrap waiver | corpus gate — every requirement id in the falsifiability table carries a row in `evidence… | `not-reviewed` |
+| [0223](../RFCS/0223-approval-reject-disposition.md) | a rejected approval gate fails closed, and the failure is routable | `Active` | steward override of RFC 0147 §A.6 | not declared (predates RFC 0174 §B.1, or not yet Accepted) | `not-reviewed` |
 
 ## Other (assign during review) (42)
 
