@@ -224,7 +224,7 @@ The `201` response is `{ runId, sourceRunId, fromSeq?, mode, status, eventsUrl }
 
 `getRunAncestry` returns `schemas/v2/run-ancestry-response.schema.json` (`runId`, `hostId`, `parent` or `null`). A client walks the chain one hop at a time via `parent.wellKnownUrl`.
 
-`parent` is the dispatching run and `cause` its composition mechanism. A fork is not dispatched, so its `parent` MUST be `null`; its lineage is `sourceRunId` and the snapshot's `parentRunId`.
+`parent` is the dispatching run, `cause` its composition mechanism. A fork is not dispatched (its lineage is `parentRunId`): its `parent` MUST be `null`.
 
 ## Annotations, artifacts, eval summary
 

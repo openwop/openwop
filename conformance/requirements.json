@@ -3,10 +3,10 @@
   "generatedFrom": "src/scenarios/*.test.ts",
   "counts": {
     "files": 646,
-    "tests": 2486,
-    "withStableId": 2486,
+    "tests": 2487,
+    "withStableId": 2487,
     "interpolatedTitles": 0,
-    "explicitIds": 2368
+    "explicitIds": 2369
   },
   "records": [
     {
@@ -29689,7 +29689,7 @@
     {
       "id": "openwop.it.v2-error-registry.an-error-response-is-the-closed-envelope-with-a-registered-code-at-its-registere",
       "file": "v2-error-registry.test.ts",
-      "line": 52,
+      "line": 72,
       "title": "an error response is the closed envelope with a registered code at its registered status",
       "explicitId": "openwop.requirement.0171.error-registry.envelope",
       "citations": [
@@ -29708,7 +29708,7 @@
     {
       "id": "openwop.it.v2-error-registry.retry-timing-is-never-spelled-inside-details",
       "file": "v2-error-registry.test.ts",
-      "line": 64,
+      "line": 84,
       "title": "retry timing is never spelled inside details",
       "explicitId": "openwop.requirement.0171.error-registry.no-retry-details",
       "citations": [
@@ -29721,7 +29721,7 @@
     {
       "id": "openwop.it.v2-error-registry.a-429-rate-limited-response-carries-retry-after",
       "file": "v2-error-registry.test.ts",
-      "line": 72,
+      "line": 92,
       "title": "a 429 rate_limited response carries Retry-After",
       "explicitId": "openwop.requirement.0171.error-registry.retry-after",
       "citations": [
@@ -29732,6 +29732,24 @@
         {
           "section": "spec/v2/core/errors.md §Retry timing",
           "requirement": "a 429 rate_limited response MUST set Retry-After"
+        }
+      ]
+    },
+    {
+      "id": "openwop.it.v2-error-registry.an-error-code-on-run-failed-node-failed-and-the-snapshot-is-registered-or-a-vend",
+      "file": "v2-error-registry.test.ts",
+      "line": 110,
+      "title": "an error code on run.failed, node.failed and the snapshot is registered or a vendor code (advisory in 2.43.1)",
+      "explicitId": "openwop.requirement.errors.event-code-registered",
+      "citations": [
+        {
+          "section": "spec/v2/core/errors.md §The registry",
+          "requirement": null,
+          "interpolated": true
+        },
+        {
+          "section": "spec/v2/core/errors.md §The registry",
+          "requirement": "every error code on run.failed, node.failed and the snapshot MUST be registered or a vendor code"
         }
       ]
     },
