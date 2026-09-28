@@ -13,6 +13,10 @@ Format follows [Keep a Changelog](https://keepachangelog.com/en/1/) loosely. Ver
 
 ## [Unreleased]
 
+- **`messaging` is `Stable`** (RFC 0220; the promotion window is waived, #1747). New `evidence/v2-host-bundles/myndhyve-2.43.1-messaging.json`: MyndHyve production `workflow-runtime-00811-pec`, build `commit:2749f8e1`, suite 2.43.1, both profiles certified, 268 pass / 0 fail / 0 blocked. It witnesses ten families.
+  - MyndHyve serves `messaging.chatReply` and `messaging.chatSend` from its OpenWOP server through an owner-bound OIDC service lane to its messaging gateway (myndhyve #546).
+  - Stated as found: `messaging`'s witness is `claims-check`, so it checks the advertised record, not delivery. MyndHyve ran no live end-to-end send. Its lane is covered by 22 auth tests with sabotage, and the gateway refuses a missing token (403) and a non-service-account token (401).
+  - New gap G5: `canvas` waits on v2 pack-signing support at MyndHyve (`ed25519-canonical-json`).
 - **`brand` and `launchStudio` are `Stable`** (RFC 0220; the promotion window is waived by steward direction, #1747). New `evidence/v2-host-bundles/myndhyve-2.43.1.json`: MyndHyve production `workflow-runtime-00809-gin`, build `commit:f0744fc2`, suite 2.43.1, both profiles certified, 267 pass / 0 fail / 0 blocked, RFC 0158 rung `durable-single-instance`. It witnesses nine families.
   - MyndHyve now serves `brand.theme.generate`, `.validate` and `.templates`, and `vendor.myndhyve.launchStudioSupervisor`, from its OpenWOP server (myndhyve #540).
   - `brand` adoption goes `none → single-witness`.
