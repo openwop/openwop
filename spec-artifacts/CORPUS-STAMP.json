@@ -246,7 +246,7 @@
     "spec/v2/core/workflow-chain-packs.md": "fdce7a8477e269950a2bac05ee6eddbd66eb0b670b464d00054f7196ec05d29c",
     "spec/v2/corrections.json": "59f647f4d22477f6c2b06dcf913b682dde5d51dd5e607a5d0cf648ab60864d6e",
     "spec/v2/corrections.schema.json": "46bbffb954d13bd9995aebc912ceeb2544f7064331abf25fd6ab85c81a5cec94",
-    "spec/v2/declaration.json": "48cf54bc5ab04c00df3079b3fee701802de35a5a211dbfaf62c6a16bd4d3cd06",
+    "spec/v2/declaration.json": "84d13e0d06f1be2177c10f9da31b549d4d721fb7f4f374e9a0fa17859069f5ca",
     "spec/v2/declaration.schema.json": "ef951633e4070899f64828f5cf1b5f4870270a0360f81dbb49b5b4d6cd407550",
     "spec/v2/errors.json": "dc1a846abe3e888acb0ce4a33cf9d1fb98e41fcc8b49f42b3682fd65deca2eb2",
     "spec/v2/errors.schema.json": "47404ad53e6147cf9017b813483712466573e419fb33e6c4b6c12d3e7deba1bc",
@@ -258,7 +258,7 @@
     "spec/v2/ext/canvas/README.md": "9a08469f1cbde2b0d6594ce76f8cce94b9fb5415979ef5e2ecb732f311c86bae",
     "spec/v2/ext/chat/README.md": "07e9ca34b3e5fc222ace1c2af60375266e001d1695da87f38f56b58f17aeaead",
     "spec/v2/ext/coordination/README.md": "c7fe0884f52405fdd02c5f9ec309ac6b585685ee06ec5f338fff7acf03c07148",
-    "spec/v2/ext/dataIntegration/README.md": "a18e179cf88eb5d3e2fe2e017018141747a64a984d25a4f4ed32d776ea62e26d",
+    "spec/v2/ext/dataIntegration/README.md": "286dec8aa29e4d3225cbd8b3a361f5a438c3288e759966b9415ecbb99c576e70",
     "spec/v2/ext/entities/README.md": "956d4a9a2aedb8cb9c79ce8145580480920474cc6943f0e33ede32d7b20414dc",
     "spec/v2/ext/grpc-transport/README.md": "6ba378e3c6d1f2e3269b392cfdf0c40565ee9bfa259d1baaa9ee1d350e38e792",
     "spec/v2/ext/kanban/README.md": "df179bea93a35c7a9d2556f2abefe2d53e05e33730b0b8cb2a9facab0e394ed2",
@@ -302,5 +302,5 @@
     "spec/v2/retention-floors.json": "eaf3722d95c79947af1d4269ef85117e126518c588cfcf1a2b21b97269f51624",
     "spec/v2/surface-baseline.json": "d47f26c3194de0e0d42a731ecaeeae1c2adfdea8c09314792d15c02b50d62efb"
   },
-  "corpusCommit": "144273f2b26ba081112145409a22c07c5a3c9fbd"
+  "corpusCommit": "cef7e9f0101f5b43c961791766bfc5c6ca2f2b73"
 }
