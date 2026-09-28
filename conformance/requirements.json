@@ -42601,20 +42601,28 @@
       ]
     },
     {
-      "id": "openwop.it.v2-error-registry-prose-parity.errors-md-states-the-registry-count-it-was-generated-from-and-renders-every-code",
+      "id": "openwop.it.v2-error-registry-prose-parity.errors-md-states-the-registry-count-and-links-the-generated-table-which-renders",
       "file": "v2-error-registry-prose-parity.test.ts",
-      "line": 35,
-      "title": "errors.md states the registry count it was generated from and renders every code",
+      "line": 40,
+      "title": "errors.md states the registry count and links the generated table, which renders every code",
       "explicitId": "openwop.requirement.0171.error-registry-prose-parity",
       "citations": [
         {
           "section": "spec/v2/core/errors.md",
+          "requirement": "errors.md MUST link the generated code table (spec/v2/generated/error-codes.md), so a reader of the spec reaches every registered code"
+        },
+        {
+          "section": "spec/v2/generated/error-codes.md",
+          "requirement": "the generated code table MUST exist beside the registry it restates"
+        },
+        {
+          "section": "spec/v2/generated/error-codes.md",
           "requirement": null,
           "interpolated": true
         },
         {
           "section": "spec/v2/core/errors.md",
-          "requirement": "errors.md states the registry size at least once, so the claim is checkable"
+          "requirement": "errors.md and the generated table state the registry size, so the claim is checkable"
         },
         {
           "section": "spec/v2/core/errors.md",
@@ -42626,7 +42634,7 @@
     {
       "id": "openwop.it.v2-error-registry-prose-parity.approval-rejected-is-a-registered-422-not-retriable-and-interrupt-md-rejection-n",
       "file": "v2-error-registry-prose-parity.test.ts",
-      "line": 67,
+      "line": 83,
       "title": "approval_rejected is a registered 422, not retriable, and interrupt.md §Rejection names it",
       "explicitId": "openwop.requirement.0223.code-registered",
       "citations": [
