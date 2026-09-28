@@ -10,17 +10,20 @@
 >
 > Tick a box only when the change is merged on `main`. Delete an item once it is closed.
 
-## State (2026-09-28)
+## State (2026-09-28, evening)
 
-- **RFCs:** `Active` — **0121** (paused), **0218** (audit checkpoint preimage), **0219**
-  (`OpenWOP-Client-Version`, another session's), **0221** (generated webhook secret). **0038**
-  `Draft` (Parked); **0220** `Draft`. Every Accepted RFC whose window was waived is **provisional**:
-  its RFC 0156 §B review is owed, and `docs/SECTION-B-REVIEW-PACKET.md` lists them.
-- **Suite:** 2.42.8 is published (#1685). The **2.42.9 cycle is open** (#1682) and holds the v2
-  delivery `workspaceId` leg. Cut it with the release recipe; take a release lock first, because
-  other sessions cut releases too (2.42.7 in #1674, 2.42.8 in #1685).
-- **Site:** openwop.dev is pinned at `bad18fceb915` (openwop-site #125). A pin bump would pick up
-  the v2 spec edits made since.
+- **RFCs:** `Active` — **0121** (paused), **0218** (audit preimage + §C anomaly shape), **0219**,
+  **0221** (generated webhook secret), **0222** (v2 registry operations), **0223** (approval reject,
+  another session's), **0224** (a v2 home for audit-log integrity), **0220** (six extension families
+  Stable). **0038** `Draft` (Parked). Every waived-window Accepted RFC is **provisional** (RFC 0156 §B).
+- **Suite:** **2.43.0 is published** (#1711; tag v2.43.0, GH release). The **2.43.1 cycle is open**
+  (#1712, another session's RFC 0223 fixtures); later suite PRs add bullets under `[2.43.1]`. Take a release lock
+  (`/tmp/claude-501/openwop-release-<ver>.lock`) before cutting; other sessions cut releases too.
+- **Site:** openwop.dev is pinned at v2.43.0 (`52cb2583073f`, openwop-site #144) and deployed.
+- **Needs the operator:** a **certified public cut** of the v2 reference host (`scripts/cut-public.sh`
+  opens public ingress, an operator decision each time). One cut on 2.43.0 would move RFC 0221
+  (the generated-secret row), RFC 0224 (audit family + cadence) and RFC 0218 (signature row, now
+  witnessable at major 2) toward `Accepted`, all witnessed on loopback already.
 
 ## 1 — RFC 0121 subscription-rail witness · **owner openwop-77 (paused)**
 
@@ -50,23 +53,15 @@ works through the CLI. Buying a plan is not covered by any autonomy grant, so as
       `audit-log-integrity`, owned by the audit-budget work below. Checked on openwop-app at
       major 1 before release: #1659 reverted the one row that had wrongly gone `blocked`.
 - [x] Audit checkpoint preimage contradiction and export shape: **RFC 0218 `Active`** (#1653).
-  - [ ] RFC 0218 `Accepted` needs a committed host bundle carrying
-        `openwop.requirement.0218.checkpoint-signature-over-root`. It was witnessed live on the
-        SQLite reference host, and a host that signs the object instead of the root fails it.
+  - [x] RFC 0218 §C, the anomaly shape, with `chainValid` tied to anomalies (#1703, examples #105).
+  - [ ] RFC 0218 `Accepted`: the signature row now runs at major 2 against the v2 `auditLogIntegrity`
+        family (RFC 0224, #1709). It needs the certified public v2 cut (see State).
 - [x] Postgres extra audit fields (examples #96) and the per-attempt budget witness for RFC 0033 §C
       (#1664, openwop-app #4167; new optional seam `…/test/mock-ai/dispatch-budgets`).
-  - [ ] openwop-app's vendored `conformance-envelope-retry-attempted.json` needs `"maxTokens": 256`
-        at its next suite pin bump (`check-vendored-fixtures` blocks it earlier). Until then the leg
-        records a partial witness there.
-  - [ ] RFC 0033 §B says a truncation retry SHOULD raise the budget, but its legs assert `> 50` as
-        a MUST, and a host that ignores the fixture's `maxTokens` passes. Decide: compare against the
-        observed first attempt through the new seam, and record (not fail) the SHOULD.
-  - [ ] On a tamper, hosts report `anomalies[]` as `{atSequence, kind, detail}`, but the schema's
-        `Anomaly` is `{atSeq, expectedPrevHash, actualPrevHash}`. Decide whether the schema covers
-        merkle-mismatch and signature-invalid entries (RFC 0218 territory).
-  - [ ] `envelope-completion-distinguishes-truncation` and `envelope-retry-attempted` drive the same
-        mock node id and race under file parallelism. `--certify` runs serially; give them distinct
-        node ids.
+  - [x] openwop-app's vendored fixture carries `maxTokens: 256` (openwop-app #4161, pinning 2.42.9).
+  - [x] RFC 0033 §B truncation legs compare real attempts and record the SHOULD (2.42.9, #1695).
+  - [x] The anomaly shape (RFC 0218 §C, #1703).
+  - [x] The mock-node race: a cross-process lock per node id (2.42.9, #1695).
 - [ ] **Rotation overlap seam.** `v2-webhook-secret-rotation`'s post-overlap leg cannot observe
       the old secret stopping when the advertised `overlapSeconds` exceeds the suite's wait cap.
       It is annotated, not `blocked`, by ruling. A seam that shortens the overlap under test would
@@ -83,6 +78,12 @@ works through the CLI. Buying a plan is not covered by any autonomy grant, so as
 
 ## 5 — Found while rewriting the quickstarts for v2 (#1654)
 
+- [ ] MyndHyve's certified 2.42.8 cut fails `0172…unversioned-is-v2` and `0221.generated-secret-returned`
+      (it echoes a supplied secret). Filed as myndhyve/myndhyve#528. Its next certified cut with both
+      fixed is also RFC 0221's tier-2 witness.
+- [ ] RFC 0224 gap G2 (`checkpointPublicKeys[]`): reopen when the first host dual-signs during a key
+      rotation, or when anyone needs rotation without a verify gap.
+
 Spec problems:
 - [x] When is a request v2: Class 3 correction, the header-less default applies to
       `/.well-known/openwop` only; every other unversioned path is v2 (#1684, suite leg in 2.42.8).
@@ -91,7 +92,9 @@ Spec problems:
       bundle carrying `openwop.requirement.0221.generated-secret-returned`; MyndHyve is unmeasured.
 - [x] Dangling `auth.md` references (#1681).
 - [x] Metadata key count: fixed by another session (#1671).
-- [ ] v2 has no counterpart to `spec/v1/registry-operations.md` (yank, rotation, submission).
+- [x] v2 registry operations: **RFC 0222 `Active`** (#1702, #1710; registry #77, #79 gate).
+  - [ ] RFC 0222's last box: `v2-registry-lifecycle` leg 1 needs a non-partial pass, which needs a real
+        yanked v2 version on packs.openwop.dev. Do not yank a pack just to produce evidence.
 
 Defects outside the spec:
 - [x] v2-reference's substituted `workspaceId` (examples #99), and the delivery-shape leg now checks
@@ -100,8 +103,8 @@ Defects outside the spec:
       #1688). The template now lives in `openwop-registry/templates/node-pack/`. It was proven end to
       end: scaffold → schema check (with a sabotage) → build → sign → `auto-register --tree v2` →
       `verify-signatures` → `npm run check`. The README's CI-only claim is corrected.
-  - [ ] `build-pack-tarball.mjs` packs only `pack.json`, `README.md`, `LICENSE`, `index.mjs` and
-        `schemas/`, so WASM, Python and Go packs cannot be published through it.
+  - [x] `build-pack-tarball.mjs` bundles the file `runtime.entry` names, so WASM, Python and Go packs
+        can publish (registry #78; all 156 existing tarballs rebuilt byte-identical).
   - [ ] Fixtures `rust-misbehaving-abi` / `rust-misbehaving-memory` keep v1-shaped manifests
         (never published). `packs/community.openwop-team.demo` carries stale v1 `keys/` files.
 - [x] `tiny-workflow` and `streaming-client` speak v2, and CI runs them against the v2 reference

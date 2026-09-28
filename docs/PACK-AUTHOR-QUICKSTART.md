@@ -76,7 +76,7 @@ The scaffolded `pack.json` is already a v2 manifest ([`packs.md`](../spec/v2/cor
 }
 ```
 
-[`examples/packs/rust-hello/`](https://github.com/openwop/openwop-examples/tree/main/examples/packs/rust-hello) shows a v2 WASM pack manifest and loads in the in-memory example host. The registry's tarball builder packages JavaScript pack sources only, so it can't publish a WASM pack yet. Runtimes are covered in [`spec/v2/core/node-pack-runtimes.md`](../spec/v2/core/node-pack-runtimes.md).
+[`examples/packs/rust-hello/`](https://github.com/openwop/openwop-examples/tree/main/examples/packs/rust-hello) shows a v2 WASM pack manifest and loads in the in-memory example host. The registry's tarball builder also bundles the file `runtime.entry` names (openwop-registry #78), so a WASM pack publishes once its module is built. Runtimes are covered in [`spec/v2/core/node-pack-runtimes.md`](../spec/v2/core/node-pack-runtimes.md).
 
 ---
 
