@@ -1,14 +1,14 @@
 # `launchStudio` extension
 
-> **Status: Draft.**
+> **Status: Stable.**
 
 `launchStudio` names launch-studio operations for the multi-canvas launch workflow. It is a discovery-only reservation: v2 defines no portable operations or payload contract for it.
 
 | Field | Value |
 | --- | --- |
 | **witness:** | `claims-check` |
-| **technical:** | `experimental` |
-| **adoption:** | `single-witness` |
+| **technical:** | `stable` |
+| **adoption:** | `multi-witness` |
 | **peer-dependency id** | `launchStudio` |
 | **advertised as** | `extensions.<org>.launch-studio` |
 | **declared facets** | none defined |

@@ -4,10 +4,10 @@
 | ----------------- | --------------------------------------------------------------- |
 | **RFC**           | 0226                                                            |
 | **Title**         | three run-failure codes the hosts share, registered             |
-| **Status**        | `Draft`                                                         |
+| **Status**        | `Active`                                                        |
 | **Author(s)**     | David Tufts (@davidscotttufts)                                  |
 | **Created**       | 2026-09-28                                                      |
-| **Updated**       | 2026-09-28 — filed `Draft`; the 7-day comment window for a normative addition opens with the pull request and closes 2026-10-05. The window is **not** waived. Merge also waits for openwop-app's remap to be measured (the v2 reference host's gap `openwop.gap.0171.8` closed on openwop-examples #126). |
+| **Updated**       | 2026-09-28 — **`Draft → Active`. Comment window waived** (7-day, 0 days elapsed, not run) by the steward under `GOVERNANCE.md` §"Sole-steward operation" (steward direction 2026-09-28: the maintainer waived the comment window), logged in `MAINTAINERS.md` §"Bootstrap-phase RFC waivers". RFC 0147 §A.6 does not apply: the RFC adds error-code vocabulary only. `sandbox_invocation_error` names a failure and changes no isolation guarantee, `mcp_error` classifies a peer's answer and changes no effect semantics, and no certification leg or verdict rule changes (the advisory `errors.event-code-registered` row is untouched). openwop-app's remap is ready (openwop-app #4202, `89d4d7f55`); its `invalid_config` → `node_config_invalid` switch follows this RFC. The evidence gate is not waived. · 2026-09-28 — filed `Draft`; the 7-day comment window for a normative addition opens with the pull request and closes 2026-10-05. The window is **not** waived. Merge also waits for openwop-app's remap to be measured (the v2 reference host's gap `openwop.gap.0171.8` closed on openwop-examples #126). |
 | **Affects**       | `spec/v2/errors.json` (+3 rows, `since` 2.44; `capability_not_provided`'s `meaning` widened) · generated `schemas/v2/error-envelope.schema.json` and the `errors.md` table and count (108 → 111) · `spec/v2/core/errors.md` §Why this exists (one non-normative sentence removed for the RFC 0190 budget) · `RFCS/registers/0171-v2-wire-envelope.gaps.md` (G6/G7 rename lists; G8 closed on openwop-examples #126) |
 | **Compatibility** | `additive` — three new registry members (`spec/v2/core/overview.md` §0: adding a member is additive in v2.x) and a widened `meaning` string. No shape, status or existing code changes |
 | **Supersedes**    | —                                                               |
@@ -74,7 +74,7 @@ The rename lists per host are in `RFCS/registers/0171-v2-wire-envelope.gaps.md` 
 
 ## Acceptance criteria
 
-- [ ] `Active`: the comment window closes (2026-10-05) with no unresolved objection, openwop-app's remap is measured, and the rows land.
+- [x] `Active` (2026-09-28): window waived by the steward (see Updated); openwop-app's remap is ready (openwop-app #4202); the rows land.
 - [ ] `openwop.requirement.errors.event-code-registered` is a clean `executed-pass` (no partial-witness detail) on a certified bundle of each of the three hosts.
 
 ## References

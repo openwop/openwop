@@ -63,7 +63,7 @@ The `createRun` body is closed (`unevaluatedProperties: false`). Its fields:
 The `201` response is `{ runId, status, eventsUrl, statusUrl? }`. `status` is one of `pending`, `running`, `waiting-approval`, `waiting-input`, `waiting-external`.
 
 - `eventsUrl` and `statusUrl` MUST resolve under the origin the request was made to — a relative path, or an absolute URL on the same origin — and MUST NOT downgrade the scheme. A link naming a different host, or `http://` on an `https://` origin, is non-conformant.
-- The base that minted `runId` MUST resolve it: `GET /runs/{runId}` and `GET /runs/{runId}/events/poll` at that base MUST answer `200` for the returned id, percent-encoded per [identity.md](identity.md) §5. (A front door that decodes `%2F` before routing makes every tenant-bound id unreachable.)
+- The base that minted `runId` MUST resolve it: `GET /runs/{runId}` and `GET /runs/{runId}/events/poll` at that base MUST answer `200` for the returned id, percent-encoded per [identity.md](identity.md) §5.
 
 ### Refusals
 
@@ -191,7 +191,7 @@ Per-entry errors ([errors.md](errors.md)):
 `drainPolicy` is one of:
 
 - `drain-current-node` (default) — the executing node reaches a terminal first.
-- `immediate` — the run is snapshotted between events. The executing attempt is cut: it has no terminal node event, a host MUST NOT record `node.failed` (or any terminal node event) for it, and the resumed run's `node.started` begins a fresh attempt. `run.paused` itself records the interruption; its payload MAY carry `interruptedNodeId` and `interruptedAttempt` so a `debug` consumer can see which attempt was cut.
+- `immediate` — the run is snapshotted between events. The executing attempt is cut: it has no terminal node event, a host MUST NOT record `node.failed` (or any terminal node event) for it, and the resumed run's `node.started` begins a fresh attempt. `run.paused` itself records the interruption; its payload MAY carry `interruptedNodeId` and `interruptedAttempt`.
 
 `resumeRun` accepts `{ reason? }`, answers `202 { runId, status: 'running', resumedAt? }`, and emits `run.resumed`.
 
@@ -223,6 +223,8 @@ The `201` response is `{ runId, sourceRunId, fromSeq?, mode, status, eventsUrl }
 - A caller lacking `runs:read` on either run MUST receive `403`.
 
 `getRunAncestry` returns `schemas/v2/run-ancestry-response.schema.json` (`runId`, `hostId`, `parent` or `null`). A client walks the chain one hop at a time via `parent.wellKnownUrl`.
+
+`parent` is the dispatching run, `cause` its composition mechanism. A fork is not dispatched (its lineage is `parentRunId`): its `parent` MUST be `null`.
 
 ## Annotations, artifacts, eval summary
 
