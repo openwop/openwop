@@ -5,7 +5,7 @@
 
 ## Why this exists
 
-`POST /runs/{runId}:fork` makes any past state of a run re-executable: a replay proves that current code reproduces recorded history; a branch explores an alternative from a recorded point. This document states what a fork MUST reproduce, what it MUST NOT re-fire, and how a host proves the second.
+`POST /runs/{runId}:fork` makes any past run state re-executable: a replay proves current code reproduces recorded history; a branch explores an alternative from a recorded point. This document states what a fork MUST reproduce, what it MUST NOT re-fire, and how a host proves the second.
 
 ## The surface
 
@@ -46,9 +46,9 @@ A host MUST cache the observable result (return value, workflow-state effects, e
 ## Determinism caveats (`replay` mode)
 
 1. A side-effecting node MUST NOT call the external system twice; see §Suppression.
-2. `ctx.interrupt(K)` MUST short-circuit to the persisted `interrupt.resolved` value.
+2. `ctx.interrupt(K)` MUST short-circuit to the persisted `interrupt.resolved`, raising no new `interrupt.requested`.
 3. `ctx.getVersion` pins from the source run are fixed history; the replay MUST take the recorded branch.
-4. Nodes MUST consume time via `ctx.now()` where available; direct clock reads make replay non-deterministic.
+4. Nodes MUST consume time via `ctx.now()` where available; direct clock reads are non-deterministic.
 5. Recorded-fact events such as `memory.written` are fixed history. A replay MUST re-emit them verbatim from the log and MUST NOT regenerate their identifiers or timestamps — never a new `memoryId`. A `branch` MAY perform its own memory writes with fresh identifiers.
 6. Approver eligibility recorded on a resume event is fixed history; a host MUST NOT re-resolve membership during replay.
 

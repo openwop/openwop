@@ -278,7 +278,7 @@ describe('RFC 0223 — v2-approval-reject-disposition (gated on interrupt + conf
 
   // ── openwop#1756: replay derives the rejection, never re-decides it ──────────
   const REPLAY_ID = R('replay-derives-rejection');
-  const REPLAY_DOC = `${DOC}, last bullet; spec/v2/core/replay.md §Determinism`;
+  const REPLAY_DOC = `${DOC}, last bullet; spec/v2/core/replay.md §Determinism caveats rule 2 (short-circuit, raising no new interrupt.requested)`;
   interface SeqEv extends Ev { readonly sequence?: number }
   async function debugLog(runId: string): Promise<SeqEv[]> {
     const res = await http(() => driver.get(`/runs/${enc(runId)}/events/poll?timeout=1&streamMode=debug`));
