@@ -5,11 +5,11 @@
 
 ## Why this exists
 
-A connector node needs a token a user granted to a third party. The host obtains, stores and refreshes it and hands it to the node's sandbox, so a pack names a provider and scopes and never touches the grant. Here the host is an OAuth client; [identity.md](identity.md) covers the host as a protected resource.
+A connector node needs a token a user granted to a third party. The host obtains, stores and refreshes it and hands it to the node's sandbox; a pack names a provider and scopes and never touches the grant. Here the host is an OAuth client; [identity.md](identity.md) covers it as a protected resource.
 
 ## Credentials
 
-A host advertising `credentials` MUST resolve a `{ ref, scope }` reference (`schemas/v2/credential-reference.schema.json`) at node execution and inject the material into the node sandbox only.
+A host advertising `credentials` MUST resolve a `{ ref, scope }` reference (`schemas/v2/credential-reference.schema.json`) at node execution and inject the material only into the node sandbox.
 
 - The material MUST NOT appear in inputs, variables, events, the debug bundle or replay state (invariant `credential-payload-redaction`).
 - A failed resolution is `credential_not_found`, `credential_forbidden` (outside the caller's scope; fail closed) or `credential_scope_unsupported` (a scope not in `credentials.scopes`).
@@ -46,7 +46,7 @@ Where the provider is reached as an MCP server:
 - It fetches the server's Protected Resource Metadata (RFC 9728) only from URLs derived from the manifest's server URL.
 - Discovery verifies and never selects. A discovered issuer or endpoint that differs from the manifest's, or from the tuple pinned at registration, MUST be refused `connection_auth_metadata_mismatch`. A grant for such a provider whose manifest declares no `issuer` MUST be refused the same way.
 
-This binds a provider the host configures itself as well as one a connection pack defines: the configured server URL and issuer stand in for the manifest's, and the tuple is pinned when the host loads that configuration.
+This binds a host-configured provider as well as a connection-pack one: the configured server URL and issuer stand in for the manifest's, pinned when the host loads that configuration.
 
 ## The credential interrupt
 
@@ -61,6 +61,6 @@ Then:
 - `connectUrl` MUST be host-owned, MUST NOT be pre-authenticated, and MUST complete only for the initiating Subject.
 - The host resolves the interrupt when the grant completes. A resolve of `authorized` MUST be refused `400 validation_error` unless a credential now resolves.
 - `declined` fails the node with `connector_auth_declined`.
-- A host that binds a node to one credential reference (for example, a connection) reads "resolves" as that reference resolving with the node's scopes, carries it as `credentialRef`, and still completes `connectUrl` only for the initiating Subject.
+- A host that binds a node to one credential reference (such as a connection) reads "resolves" as that reference resolving with the node's scopes, carries it as `credentialRef`, and still completes `connectUrl` only for the initiating Subject.
 
 *Sources: RFCs 0046, 0047, 0199.*
