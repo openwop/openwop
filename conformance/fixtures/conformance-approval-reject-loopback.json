@@ -2,7 +2,7 @@
   "id": "conformance-approval-reject-loopback",
   "name": "Conformance: Approval (reject loops back)",
   "version": "1.0",
-  "description": "openwop#1697. A rejected approval gate routed over an any_failed edge to revise, which loops back to the gate (bounded by settings.maxLoopbackIterations 2). Rejected once, the gate is visited again: the host MUST raise a new interrupt.requested with a different key and wait for a new decision, never replaying the first rejection. Conformance scenario: v2-approval-reject-disposition.test.ts.",
+  "description": "openwop#1697. A rejected approval gate routed over an any_failed edge to revise, which loops back to the gate (the loop is bounded by the scenario, a single reject, not by the host; the scenario passes configurable.run.recursionLimit 20 as a runaway guard; settings.maxLoopbackIterations is authoring metadata, openwop#1748). Rejected once, the gate is visited again: the host MUST raise a new interrupt.requested with a different key and wait for a new decision, never replaying the first rejection. Conformance scenario: v2-approval-reject-disposition.test.ts.",
   "nodes": [
     { "id": "start", "typeId": "core.noop", "name": "Start", "position": { "x": 0, "y": 0 }, "config": {}, "inputs": {} },
     {
