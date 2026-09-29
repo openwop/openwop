@@ -130,6 +130,4 @@ A host advertising `replay` MUST document retention for source snapshots, source
 
 `nondeterminismPolicy` is the host's statement of which nondeterministic sources it declares rather than suppresses. A host advertising `nondeterminismPolicy.declared` MUST record every declared source in the run's event log at the point it is read, so a fork replays the recorded value rather than re-drawing it. A source the host neither declares nor suppresses is a replay defect, not a policy choice.
 
-See also: events.md, runs.md, persistence.md, security-defaults.md.
-
 *Sources: RFCs 0036, 0039, 0041, 0057, 0104, 0111, 0140, 0173, 0176, 0194, 0228.*

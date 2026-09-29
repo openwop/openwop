@@ -59,7 +59,10 @@ const SABOTAGE: Array<[string, (m: MapDoc) => void, RegExp]> = [
 ];
 
 describe('RFC 0208 §A — v2 interop map coherence (corpus gate)', () => {
-  it('the map agrees with the v2 wire, and the gate refuses each defect it exists to catch', () => {
+  // ~12 sabotaged sub-runs of check-interop-map at ~2.7 s each: 30 s is exceeded whenever the
+  // machine is loaded (measured 34–46 s at load 50–75 while parallel gates ran), which failed the
+  // whole gate on load rather than on content. 180 s still catches a hang.
+  it('the map agrees with the v2 wire, and the gate refuses each defect it exists to catch', { timeout: 180_000 }, () => {
     if (V1_DIR === null) return softSkip('inapplicable', 'not a spec checkout — the gate script and api/v2 live in the corpus repository');
     const clean = run();
     expect(clean.status, req(ID, DOC, `check-interop-map.mjs MUST pass on the committed map: ${clean.out.slice(-600)}`)).toBe(0);

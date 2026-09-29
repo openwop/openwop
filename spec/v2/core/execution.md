@@ -73,7 +73,7 @@ At level 5:
 - Every `runOrchestrator.decided` MUST carry `iteration`, 1-based and incremented by exactly 1 per turn; `maxLoopIterations` bounds it ([runs.md](runs.md)).
 - Turn *i*'s inputs MUST be reproducible on replay: memory as of its log index, the workspace snapshot when `workspace` is advertised, and the log tail bounded by `transcriptWindow`. A turn's writes MUST become visible to turn *i+1*, never to turn *i*.
 - Under `statefulResume`, a resumed loop MUST continue at the same `iteration` with the same snapshot lineage. A heartbeat MAY enqueue a fresh loop run and MUST NOT advance a suspended one.
-- `contextBudget` bounds that transcript in tokens, under the rules in its `schemas/v2/capabilities.schema.json` descriptions and on `context.summarized`. A replay MUST reuse a recorded summary, never re-summarize.
+- `contextBudget` bounds that transcript in tokens, per its `schemas/v2/capabilities.schema.json` descriptions and `context.summarized`. A replay MUST reuse a recorded summary, never re-summarize.
 
 At level 6, with `verifier` advertised:
 

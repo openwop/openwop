@@ -140,6 +140,4 @@ With `triggerBridge.ingestion`, each `externalSources` entry MUST turn an extern
 - MUST refuse private, link-local and loopback targets and cap the body on any ingestion fetch, and never hand the run a URL (invariant `trigger-ingestion-ssrf`);
 - SHOULD key `stream` by topic, partition and offset, `change` by table and changelog id; a key MUST survive broker redelivery.
 
-See also: events.md, replay.md, persistence.md, security-defaults.md.
-
 *Sources: RFCs 0053, 0083, 0099, 0127, 0165, 0171, 0173, 0176, 0188, 0196, 0201, 0215, 0217.*
