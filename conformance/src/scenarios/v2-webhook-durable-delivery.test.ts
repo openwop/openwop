@@ -35,7 +35,8 @@ import { absenceIsUnmeasured, noDeliveryCause, startScopedReceiver, type ScopedR
 import { readErrorCode } from '../lib/error-envelope.js';
 import { blockedDespiteAssertions, softSkip } from '../lib/soft-skip.js';
 import { req } from '../lib/requirement-ids.js';
-import { pastAdvertisedBound, retryWaitCapMs, retryWaitFor, windowClosedNote } from '../lib/webhook-retry-window.js';
+import { pastAdvertisedBound, retryTestTimeoutMs, retryWaitCapMs, retryWaitFor, retryWaitSelection, waitObservation, windowClosedNote } from '../lib/webhook-retry-window.js';
+import { noteObservation } from '../lib/row-observation.js';
 
 export const REQUIRES_HOST_CALLBACK = 'the host POSTs and retries webhook deliveries to the suite-owned scoped receiver behind OPENWOP_WEBHOOK_RECEIVER_URL';
 
@@ -181,6 +182,21 @@ function retryWaitMs(doc: Record<string, unknown>): number {
 }
 
 /**
+ * Suite 2.44.3 (RFC 0225 witness): say, on the row, which wait path ran and what
+ * was measured. The first attempt is t0; the last attempt lower-bounds the
+ * dead-lettering, and the sink read that found the record upper-bounds it.
+ */
+function observeWait(doc: Record<string, unknown>, attempts: ReadonlyArray<{ readonly at: number }>, sinkSeenAt?: number | null): void {
+  const t0 = attempts[0]?.at;
+  const last = attempts[attempts.length - 1]?.at;
+  noteObservation(waitObservation(retryWaitSelection(advertisedRetryPolicy(doc), RETRY_WAIT_CAP_MS), {
+    attempts: attempts.length,
+    lastAttemptAfterMs: t0 === undefined || last === undefined ? null : last - t0,
+    ...(sinkSeenAt === undefined ? {} : { sinkSeenAfterMs: t0 === undefined || sinkSeenAt === null ? null : sinkSeenAt - t0 }),
+  }));
+}
+
+/**
  * The per-test budget, DERIVED from the wait above (suite 2.0.2).
  *
  * 2.0.1 raised the derived wait to 90 s and left the `it()` blocks on the
@@ -198,6 +214,11 @@ function retryWaitMs(doc: Record<string, unknown>): number {
  * to the wait carries its own timeout, the way the advert is sourced from the
  * constant the delivery loop reads. `WAIT_SLACK_MS` covers `waitTerminal`,
  * registration and the HTTP round trips around the waits.
+ *
+ * 2.44.1: and the cap was the wrong wait to derive from once RFC 0225 let a
+ * host advertise `maxElapsedMs` — the wait follows the advert, the timeout is
+ * fixed at registration. So the budget is derived from the largest wait
+ * `retryWaitFor` can return (`retryTestTimeoutMs`).
  */
 /**
  * How many attempts the receiver refuses before answering 204 (suite 2.0.3).
@@ -230,9 +251,9 @@ function failFirstFor(policy: { maxAttempts?: number } | null): number {
 
 const WAIT_SLACK_MS = 30_000;
 /** One `retryWaitMs` wait (the retry leg). */
-const RETRY_TEST_TIMEOUT_MS = RETRY_WAIT_CAP_MS + WAIT_SLACK_MS;
+const RETRY_TEST_TIMEOUT_MS = retryTestTimeoutMs(1, WAIT_SLACK_MS);
 /** Two sequential `retryWaitMs` waits (the dead-letter leg: observe a retry, then exhaust). */
-const DEAD_LETTER_TEST_TIMEOUT_MS = RETRY_WAIT_CAP_MS * 2 + WAIT_SLACK_MS;
+const DEAD_LETTER_TEST_TIMEOUT_MS = retryTestTimeoutMs(2, WAIT_SLACK_MS);
 
 /** Register the suite receiver; null (with a note) when the host's SSRF guard refuses a loopback URL. */
 async function register(rx: ScopedReceiver): Promise<{ webhookId: string } | null> {
@@ -282,6 +303,7 @@ describe('RFC 0173 §B — webhook-durable-delivery (gated on webhooks)', () => 
     const ours = () => receiver.attempts.filter((a) => a.runId === runId && a.webhookId === sub.webhookId);
     const retried = await waitFor(() => ours().some((a) => a.status === 204), retryWaitMs(doc));
     const attempts = ours();
+    observeWait(doc, attempts);
     // A zero that is PROVABLY not a verdict about the host records `blocked`
     // with its cause, not `executed-fail` (2.37.0). `absenceIsUnmeasured` is
     // true only when other traffic reached this listener — the path from the
@@ -435,6 +457,7 @@ describe('RFC 0173 §B — webhook-durable-delivery (gated on webhooks)', () => 
       const sink = await driver.get(`/webhooks/${projectBoundId(sub.webhookId)}/dead-letters`);
       inSink = sink.status === 200 && ((sink.json as { deliveries?: unknown[] } | null)?.deliveries ?? []).some((r) => (r as Record<string, unknown>)['runId'] === runId);
     }
+    observeWait(doc, ours(), inSink === true ? Date.now() : null);
     await driver.delete(`/webhooks/${encodeURIComponent(sub.webhookId)}`);
     // "Routed to the sink, not dropped" is a claim about an EXHAUSTED delivery,
     // and until 2.34.1 it was asserted whether or not exhaustion had been
@@ -584,9 +607,11 @@ describe('RFC 0173 §B — webhook-durable-delivery (gated on webhooks)', () => 
     await new Promise((r) => setTimeout(r, 1_000));
 
     const sink = await driver.get(`/webhooks/${projectBoundId(sub.webhookId)}/dead-letters`);
+    const sinkReadAt = Date.now();
     await driver.delete(`/webhooks/${encodeURIComponent(sub.webhookId)}`);
     if (sink.status !== 200) return blockedDespiteAssertions(`the dead-letter read answered ${sink.status}`);
     const rows = ((sink.json as { deliveries?: Array<Record<string, unknown>> } | null)?.deliveries ?? []);
+    observeWait(doc, ours(), rows.length > 0 ? sinkReadAt : null);
     // An empty sink is NOT a pass. Recording one as a pass is exactly the
     // vacuous witness this leg used to produce; say so instead.
     if (rows.length === 0) {

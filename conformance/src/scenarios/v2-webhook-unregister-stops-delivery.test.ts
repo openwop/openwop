@@ -45,7 +45,8 @@ import { absenceIsUnmeasured, noDeliveryCause, startScopedReceiver, type ScopedR
 import { readErrorCode } from '../lib/error-envelope.js';
 import { blockedDespiteAssertions, softSkip } from '../lib/soft-skip.js';
 import { req } from '../lib/requirement-ids.js';
-import { retryWaitCapMs, retryWaitFor } from '../lib/webhook-retry-window.js';
+import { retryTestTimeoutMs, retryWaitCapMs, retryWaitFor, retryWaitSelection, waitPathNote } from '../lib/webhook-retry-window.js';
+import { noteObservation } from '../lib/row-observation.js';
 
 export const REQUIRES_HOST_CALLBACK = 'the host POSTs and retries webhook deliveries to the suite-owned scoped receiver behind OPENWOP_WEBHOOK_RECEIVER_URL';
 
@@ -94,6 +95,7 @@ describe('RFC 0215 §B — unregistering stops the attempts (gated on webhooks)'
     const policy = advertisedRetryPolicy(doc);
     if (policy?.maxAttempts === 1) return softSkip('inapplicable', 'webhooks.retryPolicy.maxAttempts is 1 — the host schedules no retry, so there is none for unregistering to stop');
     const windowMs = retryWaitFor(policy, CAP_MS);
+    noteObservation(waitPathNote(retryWaitSelection(policy, CAP_MS)));
 
     const arrivals = new Map<string, number[]>();
     let targetId: string | null = null;
@@ -180,5 +182,5 @@ describe('RFC 0215 §B — unregistering stops the attempts (gated on webhooks)'
     if (controlLate.length === 0) {
       return blockedDespiteAssertions(`the control subscription was not retried after the 204 + ${GRACE_MS}ms within ${windowMs}ms either, so the target's silence shows nothing — the schedule finished inside the grace or runs past the window (raise OPENWOP_WEBHOOK_RETRY_WAIT_MS above the host's backoff sum) — ${detail}`);
     }
-  }, CAP_MS * 2 + 90_000);
+  }, retryTestTimeoutMs(2, 90_000));
 });

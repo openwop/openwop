@@ -1,11 +1,11 @@
 # Packs
 
 > **Status: Stable.**
-> **Normative home:** `packs`.
+> **Normative home:** `packs`, `uiPlugins`.
 
 ## Why this exists
 
-The v2 contract for pack manifests, the registry tree, peer-dependency identifiers, and signing. The per-kind rules live in [connection-packs.md](connection-packs.md), [form-content-packs.md](form-content-packs.md), and [workflow-chain-packs.md](workflow-chain-packs.md); the capability vocabulary a pack requires is [capabilities.md](capabilities.md).
+The v2 contract for pack manifests, the registry tree, peer-dependency identifiers, and signing. The per-kind rules live in [connection-packs.md](connection-packs.md), [form-content-packs.md](form-content-packs.md), [workflow-chain-packs.md](workflow-chain-packs.md), and [artifact-type-packs.md](artifact-type-packs.md); the capability vocabulary a pack requires is [capabilities.md](capabilities.md).
 
 ## The engine range
 
@@ -113,9 +113,24 @@ A registry MUST validate submissions against vendored copies of these schemas pi
 | `pack_peer_dependency_undefined` | a peer-dependency key is not a declaration-file key or an overlap alias |
 | `pack_signature_invalid` | the signature, key, or namespace check fails |
 
+## Front-end plugin packs
+
+A `frontend-plugin` pack (`schemas/v2/frontend-plugin-manifest.schema.json`) ships opaque UI bundles that reach the host only over `ui-plugin/1` (`schemas/v2/ui-plugin-message.schema.json`); both schemas' rules bind. A host advertising `uiPlugins`:
+
+- MUST verify the pack signature before loading, failing closed;
+- MUST run every entry sandboxed from host context, DOM, origin storage and credentials, whatever `uiPlugins.isolation` names; never in-process, same-origin or federated (invariant `frontend-plugin-isolation`);
+- MUST serve a deny-egress policy apart from declared `connectSrc` (invariant `frontend-plugin-egress`), and let no BYOK material cross the boundary (invariant `frontend-plugin-no-byok`);
+- MUST ignore a message whose version tag it does not know, and refuse a method outside both allowlists with `method_not_allowed`, authorizing every call itself;
+- with `artifact.write`, MUST return an opaque `version` from each read and write and refuse a stale one with `artifact_conflict`, persisting nothing;
+- MUST treat a plugin needing an unadvertised `surfaces` or `hostApi` entry as inert there, not an error.
+
+A host without `uiPlugins` MUST reject the pack and render its own way.
+
+A breaking method change is `ui-plugin/2`. `host.announce` MUST be length-capped (SHOULD ≤ 400 characters) and SHOULD be rate-limited; `host.documentChanged` SHOULD be debounced, and a plugin MUST treat the latest as authoritative and tolerate unknown `host.selectionChanged` kinds. `maxEntryBytes` caps an entry bundle.
+
 ## During the v1 overlap
 
 - The v1 registry tree is frozen through the overlap, behind the v2 tree.
 - `testMode` advertises the v1 `/v1/packs-test/*` mirror, a conformance seam ([conformance.md §"The seams profile"](conformance.md)). It remains advertisable through the overlap and is removed at 3.0.
 
-*Sources: RFCs 0177, 0212, 0222.*
+*Sources: RFCs 0117, 0119, 0130, 0177, 0212, 0222.*

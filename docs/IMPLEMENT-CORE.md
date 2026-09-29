@@ -2,7 +2,7 @@
 
 > **Read this instead of the corpus.** v2 is the current protocol major
 > (`spec/v2/README.md`; corpus tag in `spec/v2/release.json`), and a new host
-> targets it. The normative v2 text is **twenty-seven documents in `spec/v2/core/`**,
+> targets it. The normative v2 text is **thirty documents in `spec/v2/core/`**,
 > held under the kernel word budget that `scripts/check-core-budget.mjs` enforces (it grows as core families gain v2 homes). Everything
 > under `spec/v2/ext/` is an extension you may ignore until you want it.
 >
@@ -80,7 +80,7 @@ when you produce a bundle. The machine contract is
 | Surface | Ignore until |
 | --- | --- |
 | Agents, roster, org chart, memory, prompts | You want agents. Their families are optional records in `capabilities.md` §5. |
-| Packs (`packs.md` and the three per-kind pack documents) | You want third-party code in your runs. Advertising `packs` binds the sandbox invariants (`security-defaults.md`). |
+| Packs (`packs.md` and the four per-kind pack documents) | You want third-party code in your runs. Advertising `packs` binds the sandbox invariants (`security-defaults.md`). |
 | Compensation | You have effects worth unwinding. Advertising `compensation` binds its plan and read projection. |
 | A2A and MCP (`interop.md`) | You want to talk to other ecosystems. |
 | Auth lanes beyond what you use | Your deployment needs them. Each lane in `auth.lanes[]` binds its own obligations (`identity.md`). |

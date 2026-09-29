@@ -34246,7 +34246,7 @@
     {
       "id": "openwop.requirement.0215.no-head-of-line",
       "file": "v2-webhook-delivery-isolation.test.ts",
-      "line": 113,
+      "line": 119,
       "title": null,
       "explicitId": "openwop.requirement.0215.no-head-of-line",
       "citations": [
@@ -34260,11 +34260,6 @@
         },
         {
           "section": "runs.md §Create",
-          "requirement": null,
-          "interpolated": true
-        },
-        {
-          "section": "webhooks.md §Durability (RFC 0215 §A.1, §A.2)",
           "requirement": null,
           "interpolated": true
         },
@@ -34360,7 +34355,7 @@
     {
       "id": "openwop.it.v2-webhook-durable-delivery.a-failed-attempt-is-retried-and-the-event-is-delivered-at-least-once",
       "file": "v2-webhook-durable-delivery.test.ts",
-      "line": 258,
+      "line": 279,
       "title": "a failed attempt is retried and the event is delivered at least once",
       "explicitId": "openwop.requirement.0173.webhook-durable-delivery",
       "citations": [
@@ -34397,7 +34392,7 @@
     {
       "id": "openwop.it.v2-webhook-durable-delivery.an-exhausted-delivery-is-dead-lettered-never-dropped",
       "file": "v2-webhook-durable-delivery.test.ts",
-      "line": 378,
+      "line": 400,
       "title": "an exhausted delivery is dead-lettered, never dropped",
       "explicitId": "openwop.requirement.0173.webhook-durable-delivery.dead-letter",
       "citations": [
@@ -34436,7 +34431,7 @@
     {
       "id": "openwop.it.v2-webhook-durable-delivery.the-dead-letter-read-is-served-and-its-records-carry-no-payload",
       "file": "v2-webhook-durable-delivery.test.ts",
-      "line": 486,
+      "line": 509,
       "title": "the dead-letter read is served and its records carry no payload",
       "explicitId": "openwop.requirement.0188.dead-letter-read",
       "citations": [
@@ -34449,7 +34444,7 @@
     {
       "id": "openwop.it.v2-webhook-durable-delivery.after-unregister-the-dead-letter-read-answers-404-not-found-as-for-a-subscriptio",
       "file": "v2-webhook-durable-delivery.test.ts",
-      "line": 507,
+      "line": 530,
       "title": "after unregister, the dead-letter read answers 404 not_found, as for a subscription that never existed",
       "explicitId": "openwop.requirement.0217.dead-letter-read-after-unregister",
       "citations": [
@@ -34476,7 +34471,7 @@
     {
       "id": "openwop.it.v2-webhook-durable-delivery.a-dead-letter-record-carries-no-delivered-payload",
       "file": "v2-webhook-durable-delivery.test.ts",
-      "line": 540,
+      "line": 563,
       "title": "a dead-letter record carries no delivered payload",
       "explicitId": "openwop.requirement.0188.dead-letter-content-free",
       "citations": [
@@ -34620,7 +34615,7 @@
     {
       "id": "openwop.it.v2-webhook-message-id-stable.every-attempt-of-one-delivery-carries-one-webhook-id-and-distinct-deliveries-car",
       "file": "v2-webhook-message-id-stable.test.ts",
-      "line": 69,
+      "line": 70,
       "title": "every attempt of one delivery carries one webhook-id, and distinct deliveries carry distinct ids",
       "explicitId": "openwop.requirement.0201.message-id-stable",
       "citations": [
@@ -34859,7 +34854,7 @@
     {
       "id": "openwop.it.v2-webhook-unregister-stops-delivery.no-attempt-for-an-unregistered-subscription-starts-after-the-204-while-its-contr",
       "file": "v2-webhook-unregister-stops-delivery.test.ts",
-      "line": 86,
+      "line": 87,
       "title": "no attempt for an unregistered subscription starts after the 204, while its control keeps being retried",
       "explicitId": "openwop.requirement.0215.unregister-stops-delivery",
       "citations": [

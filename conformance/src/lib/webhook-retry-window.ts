@@ -65,9 +65,85 @@ export function retryWaitCapMs(env: Record<string, string | undefined> = process
 export function retryWaitFor(policy: AdvertisedRetryPolicy | null, capMs: number): number {
   if (policy === null) return RETRY_WAIT_FLOOR_MS;
   const bound = advertisedMaxElapsedMs(policy);
-  if (bound !== null) return Math.min(MAX_RETRY_WAIT_CAP_MS, Math.max(bound + ADVERTISED_BOUND_GRACE_MS, capMs));
+  if (bound !== null) return Math.min(MAX_RETRY_WAIT_MS, Math.max(bound + ADVERTISED_BOUND_GRACE_MS, capMs));
   const backoff = String(policy.backoff ?? '');
-  return backoff === 'exponential' || backoff === 'fixed' ? capMs : RETRY_WAIT_FLOOR_MS;
+  return backoff === 'exponential' || backoff === 'fixed' ? Math.min(MAX_RETRY_WAIT_MS, capMs) : RETRY_WAIT_FLOOR_MS;
+}
+
+/**
+ * The longest `retryWaitFor` can return, whatever a host advertises or an
+ * operator sets (suite 2.44.1).
+ *
+ * vitest fixes a test's timeout when the test is REGISTERED, before any
+ * discovery document is read, so a timeout cannot follow the host's advertised
+ * `maxElapsedMs`. 2.44.0 derived them from the cap alone (90 s by default):
+ * a host advertising 600000 had its dead-letter leg killed at 210 s ("Test
+ * timed out in 210000ms"), before its own bound plus the grace elapsed. That is
+ * the 2.0.2 defect again: a wait longer than the timeout that governs it. The
+ * timeout is only a backstop — every wait is bounded by its own window — so it
+ * is derived from the largest window instead.
+ */
+export const MAX_RETRY_WAIT_MS = MAX_RETRY_WAIT_CAP_MS;
+
+/** The timeout for a test that runs `waits` sequential retry waits, plus `slackMs` for the HTTP round trips around them. */
+export function retryTestTimeoutMs(waits: number, slackMs: number): number {
+  return waits * MAX_RETRY_WAIT_MS + slackMs;
+}
+
+/**
+ * WHICH branch `retryWaitFor` took, so a row can say so (RFC 0225 witness, suite
+ * 2.44.3). A passing dead-letter row used to carry no detail at all, so a
+ * bundle could not show whether the wait was derived from the host's advertised
+ * `maxElapsedMs` (the RFC 0225 path), from an operator-raised cap, or from the
+ * 20 s floor, and a certifier could not tell a witness of the bound from a pass
+ * the old default would have produced anyway.
+ *
+ *   advertised-bound  the window is the advertised maxElapsedMs + the grace
+ *   cap               the window is the cap (default or operator-raised); when
+ *                     a bound is advertised this means the operator raised the
+ *                     cap ABOVE it, so the bound did not set the wait
+ *   floor             no policy, or backoff none: the 20 s floor
+ */
+export type RetryWaitPath = 'advertised-bound' | 'cap' | 'floor';
+export interface RetryWaitSelection { readonly path: RetryWaitPath; readonly windowMs: number; readonly maxElapsedMs: number | null; readonly capMs: number }
+
+export function retryWaitSelection(policy: AdvertisedRetryPolicy | null, capMs: number): RetryWaitSelection {
+  const windowMs = retryWaitFor(policy, capMs);
+  const bound = advertisedMaxElapsedMs(policy);
+  if (policy === null) return { path: 'floor', windowMs, maxElapsedMs: null, capMs };
+  if (bound !== null) return { path: bound + ADVERTISED_BOUND_GRACE_MS >= capMs ? 'advertised-bound' : 'cap', windowMs, maxElapsedMs: bound, capMs };
+  const backoff = String(policy.backoff ?? '');
+  return { path: backoff === 'exponential' || backoff === 'fixed' ? 'cap' : 'floor', windowMs, maxElapsedMs: null, capMs };
+}
+
+/** What the leg measured, in ms since the delivery's FIRST attempt reached the receiver. */
+export interface RetryWaitMeasurement { readonly attempts: number; readonly lastAttemptAfterMs: number | null; /** undefined when the leg does not read the sink */ readonly sinkSeenAfterMs?: number | null }
+
+/**
+ * The informational row detail: the path, the window, and what was measured.
+ * The last attempt is a LOWER bound on the dead-lettering time (the host cannot
+ * dead-letter before its last attempt); the sink observation is an UPPER bound
+ * (the read that first found the record). Never starts with the partial-witness
+ * prefix: this describes a witness, it does not qualify one.
+ */
+/** The path and window alone, for a leg that measures no dead-lettering. */
+export function waitPathNote(sel: RetryWaitSelection): string {
+  return `${pathLabel(sel)}: waited ≤${sel.windowMs}ms`;
+}
+
+function pathLabel(sel: RetryWaitSelection): string {
+  return sel.path === 'advertised-bound'
+    ? `advertised-bound (maxElapsedMs ${sel.maxElapsedMs})`
+    : sel.path === 'cap'
+      ? `cap (${sel.capMs > DEFAULT_RETRY_WAIT_CAP_MS ? `${RETRY_WAIT_ENV} raised to ${sel.capMs}` : `default ${sel.capMs}`}ms; advertised maxElapsedMs ${sel.maxElapsedMs ?? 'none'})`
+      : 'floor';
+}
+
+export function waitObservation(sel: RetryWaitSelection, m: RetryWaitMeasurement): string {
+  const how = pathLabel(sel);
+  const last = m.lastAttemptAfterMs === null ? 'no attempt' : `last attempt after ${m.lastAttemptAfterMs}ms`;
+  const sink = m.sinkSeenAfterMs === undefined ? '' : m.sinkSeenAfterMs === null ? ', sink not observed' : `, sink after ${m.sinkSeenAfterMs}ms`;
+  return `${how}: waited ≤${sel.windowMs}ms; ${m.attempts} attempt(s), ${last}${sink}`;
 }
 
 /** What a row says when its window closed before the host's schedule did. Computed, so the numbers a host reads are the ones the run used. */

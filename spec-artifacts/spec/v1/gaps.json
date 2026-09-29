@@ -1,7 +1,7 @@
 {
   "$schema": "./gaps.schema.json",
   "version": 1,
-  "updated": "2026-09-28",
+  "updated": "2026-09-29",
   "witnessClasses": [
     "witnessable-unaided",
     "witnessable-gated",
@@ -13481,11 +13481,11 @@
       "rfc": "0225",
       "local": "G1",
       "section": "§Implementation notes",
-      "surface": "No host advertises `retryPolicy.maxElapsedMs` yet, so the new row has no witness.",
+      "surface": "No host advertised `retryPolicy.maxElapsedMs`, so the row had no witness.",
       "witness": "unclassified",
       "requirementId": null,
-      "disposition": "externally-gated",
-      "target": "host-advertises-max-elapsed",
+      "disposition": "closed",
+      "target": null,
       "sources": [
         {
           "file": "RFCS/registers/0225-webhook-retry-max-elapsed.gaps.md",
@@ -13507,6 +13507,142 @@
         {
           "file": "RFCS/registers/0226-shared-run-failure-codes.gaps.md",
           "token": "G1"
+        }
+      ]
+    },
+    {
+      "id": "openwop.gap.0228.1",
+      "rfc": "0228",
+      "local": "G1",
+      "section": "§Compatibility",
+      "surface": "MyndHyve emits `ssrf_blocked` and `fetch_failed` from `ctx.http.safeFetch` (`host/safeFetch.ts:68`), and a `503 service_unavailable` carrying `details.retryAfter` and `details.inflightCap` (`middleware/backpressureGate.ts:54-57`), which `errors.md` §Retry timing forbids.",
+      "witness": "unclassified",
+      "requirementId": null,
+      "disposition": "externally-gated",
+      "target": "rfc-0228-active",
+      "sources": [
+        {
+          "file": "RFCS/registers/0228-v1-host-service-error-codes.gaps.md",
+          "token": "G1"
+        }
+      ]
+    },
+    {
+      "id": "openwop.gap.0228.2",
+      "rfc": "0228",
+      "local": "G2",
+      "section": "§Compatibility",
+      "surface": "The v2 reference host emits `example.mcp_unreachable` (`mcp-client.ts:67`, `:73`) and `example.http_fetch_failed` (`executor.ts:264`), vendor codes chosen only because no row existed.",
+      "witness": "unclassified",
+      "requirementId": null,
+      "disposition": "externally-gated",
+      "target": "rfc-0228-active",
+      "sources": [
+        {
+          "file": "RFCS/registers/0228-v1-host-service-error-codes.gaps.md",
+          "token": "G2"
+        }
+      ]
+    },
+    {
+      "id": "openwop.gap.0228.3",
+      "rfc": "0228",
+      "local": "G3",
+      "section": "§Compatibility",
+      "surface": "openwop-app throws `path_outside_sandbox` (`host/durable/durableFs.ts:20`, `:27`) and `table_schema_violation` (`durableTable.ts:69`) from `ctx` storage; its `ads-publish-*` packs branch on the five `secret_*` names.",
+      "witness": "unclassified",
+      "requirementId": null,
+      "disposition": "externally-gated",
+      "target": "rfc-0228-active",
+      "sources": [
+        {
+          "file": "RFCS/registers/0228-v1-host-service-error-codes.gaps.md",
+          "token": "G3"
+        }
+      ]
+    },
+    {
+      "id": "openwop.gap.0228.4",
+      "rfc": "0228",
+      "local": "G4",
+      "section": "§Conformance",
+      "surface": "No v2 scenario exercises a host-service refusal: `fs-path-traversal`, `table-schema-enforcement`, `budget-enforcement`, `budget-policy-shape` and `production-backpressure` are major-1 only.",
+      "witness": "unclassified",
+      "requirementId": null,
+      "disposition": "externally-gated",
+      "target": "rfc-0228-active",
+      "sources": [
+        {
+          "file": "RFCS/registers/0228-v1-host-service-error-codes.gaps.md",
+          "token": "G4"
+        }
+      ]
+    },
+    {
+      "id": "openwop.gap.0228.5",
+      "rfc": "0228",
+      "local": "G5",
+      "section": "§D",
+      "surface": "The `aiProviders` codes for a provider that answered with a failure (`content_too_long`, `envelope_validation_failed`, the `*_generation_failed` codes, the provider arm of `speech_synthesis_failed`) are not decided here; the leaning is one `provider_error` row.",
+      "witness": "unclassified",
+      "requirementId": null,
+      "disposition": "transferred",
+      "target": "aiProviders-normative-home",
+      "sources": [
+        {
+          "file": "RFCS/registers/0228-v1-host-service-error-codes.gaps.md",
+          "token": "G5"
+        }
+      ]
+    },
+    {
+      "id": "openwop.gap.0228.6",
+      "rfc": "0228",
+      "local": "G6",
+      "section": "§Compatibility, §H",
+      "surface": "openwop-app answers ungated `/prompts*` with `501 capability_not_provided` (`routes/prompts.ts:147`, `:174`, `:178`, `:202`, `:242`), at a status the registry does not give that code, and emits `prompt_ref_ambiguous` (`:214`, `:330`) and the `aiProviders` modality codes.",
+      "witness": "unclassified",
+      "requirementId": null,
+      "disposition": "externally-gated",
+      "target": "rfc-0228-active",
+      "sources": [
+        {
+          "file": "RFCS/registers/0228-v1-host-service-error-codes.gaps.md",
+          "token": "G6"
+        }
+      ]
+    },
+    {
+      "id": "openwop.gap.0228.7",
+      "rfc": "0228",
+      "local": "G7",
+      "section": "§Compatibility",
+      "surface": "MyndHyve fails a run with `no_active_deployment` (`runExecutor.ts:2182`), emits the `aiProviders` modality codes, and answers an agent-deployment denial as `{ error, detail }` (`routes/agents.ts:719`) with unregistered codes (`illegal_transition`, `canary_unsupported`, `no_deployment`, `transition_denied`). The top-level `detail` breaks the envelope's `additionalProperties: false`.",
+      "witness": "unclassified",
+      "requirementId": null,
+      "disposition": "externally-gated",
+      "target": "rfc-0228-active",
+      "sources": [
+        {
+          "file": "RFCS/registers/0228-v1-host-service-error-codes.gaps.md",
+          "token": "G7"
+        }
+      ]
+    },
+    {
+      "id": "openwop.gap.0228.8",
+      "rfc": "0228",
+      "local": "G8",
+      "section": "§G, §H",
+      "surface": "`api/v2/openapi.yaml` is derived from the v1 document by `scripts/derive-v2-api.py`, which copies v1's `501` responses and the descriptions naming unregistered codes.",
+      "witness": "unclassified",
+      "requirementId": null,
+      "disposition": "externally-gated",
+      "target": "rfc-0228-active",
+      "sources": [
+        {
+          "file": "RFCS/registers/0228-v1-host-service-error-codes.gaps.md",
+          "token": "G8"
         }
       ]
     },

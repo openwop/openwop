@@ -1,7 +1,7 @@
 # Webhooks
 
 > **Status: Stable.**
-> **Normative home:** `webhooks`.
+> **Normative home:** `webhooks`, `triggerBridge`.
 
 ## Why this exists
 
@@ -99,7 +99,7 @@ An attempt whose request the host had begun sending before `unregisterWebhook` a
 
 ### Dead letters
 
-This sink is the delivery sink; the `deadLetter` family is the run sink and is a different thing.
+This sink is the delivery sink; the `deadLetter` family is the run sink ([runs.md](runs.md) §Dead letters) and is a different thing.
 
 - A host advertising `webhooks.deadLetter` MUST serve `GET /webhooks/{webhookId}/dead-letters`.
 - A record MUST NOT carry the delivered body, the delivery headers, or the subscription secret — a dead-letter read names a delivery, it does not replay one.
@@ -122,6 +122,24 @@ Address classification:
 
 At delivery time a host MUST re-resolve the hostname, validate every resolved address against the same denied ranges plus its own denylist, connect to the validated address without re-resolving, and refuse to follow redirects (invariant `webhook-delivery-egress-revalidation`, reference-impl tier). These delivery-time rules bind an A2A push identically (interop.md §"A2A push delivery").
 
+## Inbound triggers
+
+A host advertising `triggerBridge` runs inbound work through subscriptions (`schemas/v2/trigger-subscription.schema.json`) that are `active`, `paused` (not delivering; a schedule skips ticks), `failed`, or `dead-lettered` (deliveries in the `deadLetter` sink); `subscriptionStates` lists those it implements. On an `active` subscription the host:
+
+- with `dedup`, MUST answer a `dedupKey` repeated within retention (at least 24 hours) with the prior `runId`;
+- retries per `retryPolicy`, then dead-letters, starting no run;
+- MUST set the delivery id as `causationId` on `run.started`.
+
+A source in `triggerBridge.sources` MUST run through these states and emit `trigger.subscription-state-changed` and `trigger.delivery-attempted`, which MUST NOT carry inbound content or credentials (`schemas/v2/run-event-payloads.schema.json`).
+
+With `triggerBridge.ingestion`, each `externalSources` entry MUST turn an external event into a `TriggerEvent` (`schemas/v2/trigger-event.schema.json`, whose rules bind) and start a run. The host:
+
+- MUST verify per `verification` before delivery; a failed `required` check dead-letters with reason `signature-invalid`;
+- returns a binding secret or URL once; `stream` and `change` bindings are empty;
+- MUST pass the event only as `ctx.triggerData`, never in an event, and replay it from cache (invariant `trigger-ingestion-content-redaction`);
+- MUST refuse private, link-local and loopback targets and cap the body on any ingestion fetch, and never hand the run a URL (invariant `trigger-ingestion-ssrf`);
+- SHOULD key `stream` by topic, partition and offset, `change` by table and changelog id; a key MUST survive broker redelivery.
+
 See also: events.md, replay.md, persistence.md, security-defaults.md.
 
-*Sources: RFCs 0053, 0165, 0171, 0173, 0176, 0188, 0196, 0201, 0215, 0217.*
+*Sources: RFCs 0053, 0083, 0099, 0127, 0165, 0171, 0173, 0176, 0188, 0196, 0201, 0215, 0217.*

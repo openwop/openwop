@@ -2,7 +2,7 @@
   "$schema": "https://json-schema.org/draft/2020-12/schema",
   "$id": "https://openwop.dev/spec/v2/artifact-type-pack-manifest.schema.json",
   "title": "ArtifactTypePackManifest",
-  "description": "Manifest for a published OpenWOP artifact-type pack \u2014 `pack.json` at the pack root with `kind: \"artifact-type\"`. Peer to `node-pack-manifest.schema.json` (RFC 0003), `workflow-chain-pack-manifest.schema.json` (RFC 0013), and `prompt-pack-manifest.schema.json` (RFC 0028); disjoint from all three via the `kind` discriminator. See `spec/v1/artifact-type-packs.md` for the canonical contract and RFC 0071 for the rationale.\n\nArtifact-type packs distribute typed artifact definitions \u2014 the JSON Schema, rendering hint, lifecycle, and export-format hints for the rich outputs workflow nodes produce \u2014 via the same signed-tarball + Ed25519 + SRI pipeline that already serves node, workflow-chain, and prompt packs. When a host installs an artifact-type pack and advertises `host.artifactTypes: { supported: true }`, it validates produced artifacts of the declared `artifactTypeId`s against their `schemaRef` before emitting `artifact.created`.",
+  "description": "Manifest for a published OpenWOP artifact-type pack \u2014 `pack.json` at the pack root with `kind: \"artifact-type\"`. Peer to `node-pack-manifest.schema.json` (RFC 0003), `workflow-chain-pack-manifest.schema.json` (RFC 0013), and `prompt-pack-manifest.schema.json` (RFC 0028); disjoint from all three via the `kind` discriminator. See `spec/v2/core/artifact-type-packs.md` for the host contract and RFC 0071 for the rationale.\n\nArtifact-type packs distribute typed artifact definitions \u2014 the JSON Schema, rendering hint, lifecycle, and export-format hints for the rich outputs workflow nodes produce \u2014 via the same signed-tarball + Ed25519 + SRI pipeline that already serves node, workflow-chain, and prompt packs. When a host installs an artifact-type pack and advertises `host.artifactTypes: { supported: true }`, it validates produced artifacts of the declared `artifactTypeId`s against their `schemaRef` before emitting `artifact.created`.",
   "type": "object",
   "required": [
     "name",
@@ -82,7 +82,7 @@
       "additionalProperties": {
         "type": "string"
       },
-      "description": "Engine-supplied capabilities the pack consumes (e.g., `{ \"host.artifactTypes\": \"supported\" }`). Resolved against the host's advertised capabilities at register time."
+      "description": "Engine-supplied capabilities the pack consumes, keyed by family (e.g., `{ \"artifactTypes\": \"required\" }`; spec/v2/core/packs.md \u00a7\"Peer-dependency identifiers\"). Resolved against the host's advertised capabilities at register time: a registry MUST refuse to register a pack requiring `artifactTypes` against a host that does not advertise it."
     },
     "artifactTypes": {
       "type": "array",
@@ -114,7 +114,7 @@
               "pattern": "^(core|vendor|community|private)\\.[a-z][a-z0-9_-]*(\\.[a-z][a-zA-Z0-9_-]*)+$"
             }
           ],
-          "description": "Reverse-DNS artifact-type identifier. Same pattern and reserved scopes as a pack `name`. This is the value `WorkflowNode.artifactType`, `nodes[].artifact.typeId`, and `artifact.created.artifactType` reference. Third parties MUST NOT publish under `core.*`."
+          "description": "Reverse-DNS artifact-type identifier. Same pattern and reserved scopes as a pack `name`. This is the value `WorkflowNode.artifactType`, `nodes[].artifact.typeId`, and `artifact.created.artifactType` reference. Third parties MUST NOT publish under `core.*`. The pattern is definitional: a value outside it is unregistered (spec/v2/core/artifact-type-packs.md), and a host is under no obligation to migrate it. A host that migrates an identifier MUST NOT rewrite a recorded `artifact.created.artifactType`, or any other event-carried artifact-type identifier. It MAY keep a permanent, host-internal read-side alias map, consulted on lookup and never rewriting a stored or emitted identifier; a host that aliases MUST resolve the alias everywhere registration is decided, schema validation included. The legacy spellings stay non-conformant on the wire, and a host MUST NOT advertise or imply otherwise (RFC 0141)."
         },
         "schemaRef": {
           "type": "string",
@@ -132,7 +132,7 @@
             "open",
             "closed"
           ],
-          "description": "RFC 0075. Strictness contract of the artifact's `schemaRef` schema. `closed` \u21d2 closed-world (`additionalProperties: false`); a consumer MAY rely on the absence of unknown fields. `open` (recommended for AI/LLM-produced artifacts) \u21d2 the schema tolerates extra fields to absorb model drift; consumers MUST ignore unknown fields per COMPATIBILITY.md \u00a72.1. Absent \u21d2 `open` (the forward-compatible default). The `additionalProperties:false` requirement on `schemaRef` was relaxed MUST \u2192 SHOULD by RFC 0075: a closed-world artifact contract contradicts the protocol's own forward-compat mandate and the first AI-native adopter cannot meet it."
+          "description": "RFC 0075. Strictness contract of the artifact's `schemaRef` schema. `closed` \u21d2 closed-world (`additionalProperties: false`); a consumer MAY rely on the absence of unknown fields. `open` (recommended for AI/LLM-produced artifacts) \u21d2 the schema tolerates extra fields to absorb model drift; consumers MUST ignore unknown fields per COMPATIBILITY.md \u00a72.1. Absent \u21d2 `open` (the forward-compatible default). A consumer MUST NOT assume closed-world shape unless `validation` is `closed`. The host validates emit-time output against the schema as written; it keeps no separate strict contract schema. The `additionalProperties:false` requirement on `schemaRef` was relaxed MUST \u2192 SHOULD by RFC 0075: a closed-world artifact contract contradicts the protocol's own forward-compat mandate and the first AI-native adopter cannot meet it."
         },
         "displayName": {
           "type": "string",
@@ -150,7 +150,7 @@
             "pattern": "^([a-z][a-z0-9]*|vendor\\.[a-z][a-z0-9-]*\\.[a-z][a-z0-9-]*|x-[a-z][a-z0-9-]*|[a-z0-9][a-z0-9!#$&^_.+-]{0,126}/[a-z0-9][a-z0-9!#$&^_.+-]{0,126})$"
           },
           "uniqueItems": true,
-          "description": "Export-format identifiers (hints) a renderer MAY offer. Spec-reserved core identifiers carry interoperable meaning (the lowercase file-extension / common name): `pdf`, `pptx`, `docx`, `xlsx`, `md`, `html`, `txt`, `csv`, `json`, `png`, `svg`, `jpeg`, `step`, `stl`, `dxf`. Domain-specific formats outside the core set MUST be `vendor.<org>.<format>`- or `x-<format>`-prefixed (mirrors the `requiredModelCapabilities` reserved-core + extension idiom). An entry MAY instead be a lowercase RFC 6838 media type (`type/subtype`, no parameters; RFC 0205 §C); each reserved alias names exactly one media type per artifact-type-packs.md §\"Export-format aliases\", and a consumer MUST treat the two spellings as one format. Advisory: this spec assigns no byte-level production semantics to any identifier \u2014 it standardizes the identifier so two hosts agree what `pptx` names, not how the bytes are produced."
+          "description": "Export-format identifiers (hints) a renderer MAY offer. Spec-reserved core identifiers carry interoperable meaning (the lowercase file-extension / common name): `pdf`, `pptx`, `docx`, `xlsx`, `md`, `html`, `txt`, `csv`, `json`, `png`, `svg`, `jpeg`, `step`, `stl`, `dxf`. Domain-specific formats outside the core set MUST be `vendor.<org>.<format>`- or `x-<format>`-prefixed (mirrors the `requiredModelCapabilities` reserved-core + extension idiom). An entry MAY instead be a lowercase RFC 6838 media type (`type/subtype`, no parameters; RFC 0205 §C); each reserved alias names exactly one media type: pdf=application/pdf, pptx=application/vnd.openxmlformats-officedocument.presentationml.presentation, docx=application/vnd.openxmlformats-officedocument.wordprocessingml.document, xlsx=application/vnd.openxmlformats-officedocument.spreadsheetml.sheet, md=text/markdown, html=text/html, txt=text/plain, csv=text/csv, json=application/json, png=image/png, svg=image/svg+xml, jpeg=image/jpeg, step=model/step, stl=model/stl, dxf=image/vnd.dxf. A consumer MUST treat an alias and its media type as one format, including when matching a host's `artifactTypes.export` advertisement against a type's `exportFormats`, and a manifest SHOULD NOT list both. A media type outside that list SHOULD be IANA-registered or use an RFC 6838 §3 tree. A pack meant to install on hosts that predate RFC 0205 SHOULD keep to the aliases. Advisory: this spec assigns no byte-level production semantics to any identifier \u2014 it standardizes the identifier so two hosts agree what `pptx` names, not how the bytes are produced."
         },
         "syncOn": {
           "type": "string",
