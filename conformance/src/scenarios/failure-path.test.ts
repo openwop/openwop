@@ -9,12 +9,15 @@ import { driver } from '../lib/driver.js';
 import { pollUntilTerminal } from '../lib/polling.js';
 import { isFixtureAdvertised } from '../lib/fixtures.js';
 import { req } from '../lib/requirement-ids.js';
+import { softSkip } from '../lib/soft-skip.js';
 
 const WORKFLOW_ID = 'conformance-failure';
 const SKIP_NO_FIXTURE = !isFixtureAdvertised(WORKFLOW_ID);
+const NO_FIXTURE_REASON = `precondition not met — \`${WORKFLOW_ID}\` is not advertised, so this host cannot witness the failure-path floor. RFC 0148 §A: \`blocked\`, naming the fixture (#1686: a describe-level skip recorded no disposition, and an unrecorded floor rejected the whole certification)`;
 
-describe.skipIf(SKIP_NO_FIXTURE)('failure: conformance-failure fixture reaches terminal `failed`', () => {
+describe('failure: conformance-failure fixture reaches terminal `failed`', () => {
   it('POST /v1/runs accepts the run and run terminates as failed with structured error', async () => {
+    if (SKIP_NO_FIXTURE) return softSkip('blocked', NO_FIXTURE_REASON);
     const create = await driver.post('/v1/runs', { workflowId: WORKFLOW_ID });
     expect(create.status, req('openwop.it.failure-path.post-v1-runs-accepts-the-run-and-run-terminates-as-failed-with-structured-error', 
       'rest-endpoints.md',

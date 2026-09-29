@@ -14,12 +14,15 @@ import { driver } from '../lib/driver.js';
 import { pollUntilTerminal } from '../lib/polling.js';
 import { isFixtureAdvertised } from '../lib/fixtures.js';
 import { req } from '../lib/requirement-ids.js';
+import { softSkip } from '../lib/soft-skip.js';
 
 const NOOP_WORKFLOW_ID = 'conformance-noop';
 const SKIP_NO_NOOP = !isFixtureAdvertised(NOOP_WORKFLOW_ID);
+const NO_FIXTURE_REASON = `precondition not met — \`${NOOP_WORKFLOW_ID}\` is not advertised, so this host cannot witness the runs-lifecycle floor. RFC 0148 §A: \`blocked\`, naming the fixture (#1686: a describe-level skip recorded no disposition, and an unrecorded floor rejected the whole certification)`;
 
-describe.skipIf(SKIP_NO_NOOP)('run lifecycle: conformance-noop fixture', () => {
+describe('run lifecycle: conformance-noop fixture', () => {
   it('POST /v1/runs returns 201 with runId per rest-endpoints.md', async () => {
+    if (SKIP_NO_NOOP) return softSkip('blocked', NO_FIXTURE_REASON);
     const res = await driver.post('/v1/runs', { workflowId: NOOP_WORKFLOW_ID });
 
     expect(res.status, req('openwop.it.runs-lifecycle.post-v1-runs-returns-201-with-runid-per-rest-endpoints-md', 
@@ -39,6 +42,7 @@ describe.skipIf(SKIP_NO_NOOP)('run lifecycle: conformance-noop fixture', () => {
   });
 
   it('reaches terminal `completed` within bounded time per fixtures.md noop spec', async () => {
+    if (SKIP_NO_NOOP) return softSkip('blocked', NO_FIXTURE_REASON);
     const create = await driver.post('/v1/runs', { workflowId: NOOP_WORKFLOW_ID });
     expect(create.status).toBe(201);
     const runId = (create.json as { runId: string }).runId;
@@ -57,6 +61,7 @@ describe.skipIf(SKIP_NO_NOOP)('run lifecycle: conformance-noop fixture', () => {
   });
 
   it('GET /v1/runs/{nonexistentId} returns 404 (or 403) per rest-endpoints.md', async () => {
+    if (SKIP_NO_NOOP) return softSkip('blocked', NO_FIXTURE_REASON);
     const res = await driver.get('/v1/runs/openwop-conformance-this-run-id-does-not-exist');
     expect(
       [403, 404].includes(res.status),

@@ -33,6 +33,7 @@ import { req } from '../lib/requirement-ids.js';
 
 const SOURCE_WORKFLOW_ID = 'conformance-noop';
 const SKIP_NO_NOOP = !isFixtureAdvertised(SOURCE_WORKFLOW_ID);
+const NO_FIXTURE_REASON = `precondition not met — \`${SOURCE_WORKFLOW_ID}\` is not advertised, so this host cannot witness the replay-fork floor. RFC 0148 §A: \`blocked\`, naming the fixture (#1686: a describe-level skip recorded no disposition, and an unrecorded floor rejected the whole certification)`;
 
 async function fetchReplayModes(): Promise<readonly string[]> {
   const res = await driver.get('/.well-known/openwop', { authenticated: false });
@@ -56,8 +57,9 @@ async function startAndFinishNoop(): Promise<string> {
   return runId;
 }
 
-describe.skipIf(SKIP_NO_NOOP)('replay: fork from fromSeq=0 in replay mode', () => {
+describe('replay: fork from fromSeq=0 in replay mode', () => {
   it('produces a new run that reaches terminal `completed`', async (ctx) => {
+    if (SKIP_NO_NOOP) return softSkip('blocked', NO_FIXTURE_REASON);
     const modes = await fetchReplayModes();
     if (!modes.includes('replay')) {
       // Visible skip — earlier this was a silent `return` that
@@ -101,8 +103,9 @@ describe.skipIf(SKIP_NO_NOOP)('replay: fork from fromSeq=0 in replay mode', () =
   });
 });
 
-describe.skipIf(SKIP_NO_NOOP)('replay: fork from fromSeq=0 in branch mode with empty overlay', () => {
+describe('replay: fork from fromSeq=0 in branch mode with empty overlay', () => {
   it('produces a new run that reaches terminal `completed`', async (ctx) => {
+    if (SKIP_NO_NOOP) return softSkip('blocked', NO_FIXTURE_REASON);
     const modes = await fetchReplayModes();
     if (!modes.includes('branch')) {
       softSkip('inapplicable', "host does not advertise the `branch` fork mode — this leg's rule has no path to apply");
@@ -130,7 +133,7 @@ describe.skipIf(SKIP_NO_NOOP)('replay: fork from fromSeq=0 in branch mode with e
   });
 });
 
-describe.skipIf(SKIP_NO_NOOP)('replay: validation errors', () => {
+describe('replay: validation errors', () => {
   // Earlier each of these tests had a silent `return;` early-exit
   // when the host advertised no replay modes (or only the wrong mode for
   // the assertion). That collapsed unexercised paths into vacuous green
@@ -140,6 +143,7 @@ describe.skipIf(SKIP_NO_NOOP)('replay: validation errors', () => {
   // "exercised the validation path and got the expected error code."
 
   it('rejects negative fromSeq with 400', async (ctx) => {
+    if (SKIP_NO_NOOP) return softSkip('blocked', NO_FIXTURE_REASON);
     const modes = await fetchReplayModes();
     if (modes.length === 0) {
       softSkip('inapplicable', "host advertises no usable fork mode for this leg");
@@ -159,6 +163,7 @@ describe.skipIf(SKIP_NO_NOOP)('replay: validation errors', () => {
   });
 
   it('rejects fromSeq beyond source event log length with 422', async (ctx) => {
+    if (SKIP_NO_NOOP) return softSkip('blocked', NO_FIXTURE_REASON);
     const modes = await fetchReplayModes();
     if (modes.length === 0) {
       softSkip('inapplicable', "host advertises no usable fork mode for this leg");
@@ -180,6 +185,7 @@ describe.skipIf(SKIP_NO_NOOP)('replay: validation errors', () => {
   });
 
   it('rejects replay mode with non-empty runOptionsOverlay (overlay is branch-only)', async (ctx) => {
+    if (SKIP_NO_NOOP) return softSkip('blocked', NO_FIXTURE_REASON);
     const modes = await fetchReplayModes();
     if (!modes.includes('replay')) {
       // The rule under test (`replay` + non-empty `runOptionsOverlay`
@@ -206,6 +212,7 @@ describe.skipIf(SKIP_NO_NOOP)('replay: validation errors', () => {
   });
 
   it('rejects fork on a non-existent run with 404', async (ctx) => {
+    if (SKIP_NO_NOOP) return softSkip('blocked', NO_FIXTURE_REASON);
     const modes = await fetchReplayModes();
     if (modes.length === 0) {
       softSkip('inapplicable', "host advertises no usable fork mode for this leg");

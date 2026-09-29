@@ -23,17 +23,20 @@ import { subscribe } from '../lib/sse.js';
 import { pollUntilTerminal } from '../lib/polling.js';
 import { isFixtureAdvertised } from '../lib/fixtures.js';
 import { req } from '../lib/requirement-ids.js';
+import { softSkip } from '../lib/soft-skip.js';
 
 const WORKFLOW_ID = 'conformance-delay';
 const SKIP_NO_FIXTURE = !isFixtureAdvertised(WORKFLOW_ID);
+const NO_FIXTURE_REASON = `precondition not met — \`${WORKFLOW_ID}\` is not advertised, so this host cannot witness the stream-modes-buffer floor. RFC 0148 §A: \`blocked\`, naming the fixture (#1686: a describe-level skip recorded no disposition, and an unrecorded floor rejected the whole certification)`;
 
 interface RunEventDoc {
   readonly type: string;
   readonly sequence: number;
 }
 
-describe.skipIf(SKIP_NO_FIXTURE)('stream-modes-buffer: ?bufferMs= aggregation hint', () => {
+describe('stream-modes-buffer: ?bufferMs= aggregation hint', () => {
   it('accepts bufferMs in range and emits at least one event: batch frame', async () => {
+    if (SKIP_NO_FIXTURE) return softSkip('blocked', NO_FIXTURE_REASON);
     const create = await driver.post('/v1/runs', { workflowId: WORKFLOW_ID });
     expect(create.status).toBe(201);
     const runId = (create.json as { runId: string }).runId;
@@ -70,6 +73,7 @@ describe.skipIf(SKIP_NO_FIXTURE)('stream-modes-buffer: ?bufferMs= aggregation hi
   });
 
   it('rejects out-of-range bufferMs with 400 validation_error', async () => {
+    if (SKIP_NO_FIXTURE) return softSkip('blocked', NO_FIXTURE_REASON);
     const create = await driver.post('/v1/runs', { workflowId: WORKFLOW_ID });
     const runId = (create.json as { runId: string }).runId;
 
@@ -88,6 +92,7 @@ describe.skipIf(SKIP_NO_FIXTURE)('stream-modes-buffer: ?bufferMs= aggregation hi
   });
 
   it('forces flush on terminal — run.completed arrives bundled in a batch BEFORE the timer fires', async () => {
+    if (SKIP_NO_FIXTURE) return softSkip('blocked', NO_FIXTURE_REASON);
     const create = await driver.post('/v1/runs', { workflowId: WORKFLOW_ID });
     const runId = (create.json as { runId: string }).runId;
 
@@ -132,6 +137,7 @@ describe.skipIf(SKIP_NO_FIXTURE)('stream-modes-buffer: ?bufferMs= aggregation hi
   });
 
   it('bufferMs=0 behaves identically to omitting (per-event mode)', async () => {
+    if (SKIP_NO_FIXTURE) return softSkip('blocked', NO_FIXTURE_REASON);
     const create = await driver.post('/v1/runs', { workflowId: WORKFLOW_ID });
     const runId = (create.json as { runId: string }).runId;
 

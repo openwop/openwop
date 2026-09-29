@@ -11,13 +11,16 @@ import { driver } from '../lib/driver.js';
 import { pollUntilStatus, pollUntilTerminal } from '../lib/polling.js';
 import { isFixtureAdvertised } from '../lib/fixtures.js';
 import { req } from '../lib/requirement-ids.js';
+import { softSkip } from '../lib/soft-skip.js';
 
 const WORKFLOW_ID = 'conformance-clarification';
 const NODE_ID = 'ask';
 const SKIP_NO_FIXTURE = !isFixtureAdvertised(WORKFLOW_ID);
+const NO_FIXTURE_REASON = `precondition not met — \`${WORKFLOW_ID}\` is not advertised, so this host cannot witness the interrupt-clarification floor. RFC 0148 §A: \`blocked\`, naming the fixture (#1686: a describe-level skip recorded no disposition, and an unrecorded floor rejected the whole certification)`;
 
-describe.skipIf(SKIP_NO_FIXTURE)('interrupt: clarification answers resume to `completed`', () => {
+describe('interrupt: clarification answers resume to `completed`', () => {
   it('run suspends at ask, answers payload drives terminal completed', async () => {
+    if (SKIP_NO_FIXTURE) return softSkip('blocked', NO_FIXTURE_REASON);
     const create = await driver.post('/v1/runs', { workflowId: WORKFLOW_ID });
     expect(create.status).toBe(201);
     const runId = (create.json as { runId: string }).runId;

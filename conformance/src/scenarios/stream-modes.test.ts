@@ -12,9 +12,11 @@ import { driver } from '../lib/driver.js';
 import { subscribe, type SseEvent } from '../lib/sse.js';
 import { isFixtureAdvertised } from '../lib/fixtures.js';
 import { req } from '../lib/requirement-ids.js';
+import { softSkip } from '../lib/soft-skip.js';
 
 const WORKFLOW_ID = 'conformance-delay';
 const SKIP_NO_FIXTURE = !isFixtureAdvertised(WORKFLOW_ID);
+const NO_FIXTURE_REASON = `precondition not met — \`${WORKFLOW_ID}\` is not advertised, so this host cannot witness the stream-modes floor. RFC 0148 §A: \`blocked\`, naming the fixture (#1686: a describe-level skip recorded no disposition, and an unrecorded floor rejected the whole certification)`;
 
 async function startDelayRun(delayMs: number): Promise<string> {
   const create = await driver.post('/v1/runs', {
@@ -31,8 +33,9 @@ function eventTypes(events: readonly SseEvent[]): string[] {
   return events.map((e) => e.event);
 }
 
-describe.skipIf(SKIP_NO_FIXTURE)('stream-modes: updates (default) closes on terminal event', () => {
+describe('stream-modes: updates (default) closes on terminal event', () => {
   it('emits at least run.started + run.completed and server closes the stream', async () => {
+    if (SKIP_NO_FIXTURE) return softSkip('blocked', NO_FIXTURE_REASON);
     const runId = await startDelayRun(1_000);
     const { events, closedBy } = await subscribe(
       `/v1/runs/${encodeURIComponent(runId)}/events?streamMode=updates`,
@@ -56,8 +59,9 @@ describe.skipIf(SKIP_NO_FIXTURE)('stream-modes: updates (default) closes on term
   });
 });
 
-describe.skipIf(SKIP_NO_FIXTURE)('stream-modes: invalid streamMode is rejected', () => {
+describe('stream-modes: invalid streamMode is rejected', () => {
   it('returns 400 and a structured error body', async () => {
+    if (SKIP_NO_FIXTURE) return softSkip('blocked', NO_FIXTURE_REASON);
     const runId = await startDelayRun(1_000);
     const res = await driver.get(
       `/v1/runs/${encodeURIComponent(runId)}/events?streamMode=does-not-exist`,
@@ -86,8 +90,9 @@ describe.skipIf(SKIP_NO_FIXTURE)('stream-modes: invalid streamMode is rejected',
   });
 });
 
-describe.skipIf(SKIP_NO_FIXTURE)('stream-modes: values mode is reachable + closes on terminal', () => {
+describe('stream-modes: values mode is reachable + closes on terminal', () => {
   it('returns 200 + emits at least one event + server-closes per stream-modes.md §values', async () => {
+    if (SKIP_NO_FIXTURE) return softSkip('blocked', NO_FIXTURE_REASON);
     const runId = await startDelayRun(1_000);
     const result = await subscribe(
       `/v1/runs/${encodeURIComponent(runId)}/events?streamMode=values`,
@@ -110,8 +115,9 @@ describe.skipIf(SKIP_NO_FIXTURE)('stream-modes: values mode is reachable + close
   });
 });
 
-describe.skipIf(SKIP_NO_FIXTURE)('stream-modes: debug emits at least as many events as updates', () => {
+describe('stream-modes: debug emits at least as many events as updates', () => {
   it('debug stream is a superset of updates per stream-modes.md mode-mapping', async () => {
+    if (SKIP_NO_FIXTURE) return softSkip('blocked', NO_FIXTURE_REASON);
     const runIdUpdates = await startDelayRun(1_000);
     const updatesResult = await subscribe(
       `/v1/runs/${encodeURIComponent(runIdUpdates)}/events?streamMode=updates`,
