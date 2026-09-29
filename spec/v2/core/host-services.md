@@ -1,7 +1,7 @@
 # Host services
 
 > **Status: Stable.**
-> **Normative home:** `aiEnvelope`, `promptLibrary`, `agentRuntime`, `mcp`, `workspace`, `secrets`, `modelCapabilities`, `scheduling`, `queueBus`, `toolHooks`, `httpClient`.
+> **Normative home:** `aiEnvelope`, `promptLibrary`, `prompts`, `aiProviders`, `agentRuntime`, `mcp`, `workspace`, `secrets`, `modelCapabilities`, `scheduling`, `queueBus`, `toolHooks`, `httpClient`.
 
 ## Why this exists
 
@@ -22,6 +22,66 @@ A host advertising `promptLibrary`:
 - MUST expose `ctx.promptLibrary.get`;
 - MUST return a pinned version verbatim, so that a replayed run resolves the same template;
 - MUST fail the calling node rather than substitute an unpinned one.
+
+## `prompts`
+
+A host advertising `prompts` resolves node `config` PromptRefs (`systemPromptRef`, `userPromptRef`, `fewShotPromptRefs`, `schemaHintPromptRef`); otherwise they are opaque strings.
+
+- `templateKinds` and `variableSources` narrow what is accepted; `secret` SHOULD appear only with `secrets`.
+- `maxTemplateBytes` MUST NOT exceed 65536. `observability` is `off`, `hashed` (default) or `full`.
+- `endpointsSupported` gates `/prompts*`, `mutableLibrary` its writes, `packsSupported` pack installs; ungated operations answer `501`. `library` carries `id`, `renderEndpoint`, `maxRenderRequestBytes`.
+
+### Resolution
+
+For each `(nodeId, kind)` the host MUST take the first non-null ref below, and MUST emit `agent.prompt-resolved` (one `chain[]` entry per layer tried) before `prompt.composed`:
+
+1. node `config`; a ref beats an inline body;
+2. under `agentBindings`, the `config.agentId` agent: for `system` first its own prompt (tagged `agent-intrinsic`), then `promptOverrides`, then MAY a `promptLibraryRef` default. An unknown agent MUST log a warning and be skipped;
+3. the workflow's `defaults.promptRefs[kind]`;
+4. `prompts.defaults[kind]`.
+
+All-null is fatal only if the node type says so. A host honoring `ai.promptOverrides` applies it first and MUST record a `run-configurable` entry.
+
+### Composition
+
+- `{{varName}}` substitution is literal. An unbound required variable MUST fail the node; an unbound optional or undeclared one renders empty, and install SHOULD warn on an undeclared one.
+- `secret` values MUST appear only as `[REDACTED:<secretId>]` in observability output.
+- Untrusted input MUST be wrapped verbatim in `<UNTRUSTED>…</UNTRUSTED>`, making `contentTrust` `untrusted`.
+- Unless `observability` is `off`, the host MUST emit `prompt.composed` per composition, with bodies only under `full`.
+- On replay, `hash`, `variableHashes`, `refs`, the resolved ref and `chain[].applied` MUST match, and a mismatch MUST emit `replay.diverged`. Bodies MAY be omitted; `chain[].source` SHOULD match, and a rotated `host-defaults` source MUST be tolerated.
+
+### Library
+
+- A version-less ref resolves the latest. A stringy ref matching several templates MUST be refused; `libraryId` disambiguates.
+- `renderPromptTemplate` dispatches nothing, and its `hash` MUST equal the dispatch-time `prompt.composed` hash.
+- `getPromptTemplate` SHOULD send `ETag` and `max-age=60`, `immutable` when `version` is pinned.
+- Writes MUST be authenticated and SHOULD be role-scoped. An update MUST carry a greater SemVer; built-in and pack templates are read-only.
+- For workspace-scoped reads and writes, the host MUST verify membership from the authenticated identity, never a caller's `workspaceId`, fail-closed (canonically `403 workspace_membership_required`), in the application tier even behind a privileged database client.
+- A `kind: "prompt"` pack MUST NOT carry `nodes[]` or `chains[]`; its templates MUST carry `meta.packName` and `meta.packVersion`.
+
+## `aiProviders`
+
+A host advertising `aiProviders` MUST expose `ctx.callAI`. A `provider` a `ctx` call names MUST be in `providers` ([runs.md](runs.md) §`ai` section covers `byok`).
+
+- A part of a modality absent from `input` MUST be rejected, never dropped; non-text input is untrusted.
+- A `media.*` envelope inlines base64 only up to `maxInlineMediaBytes` (default 256 KiB); above it the host MUST use a `url`.
+- `imageGeneration`, `videoGeneration`, `speechSynthesis` and `realtimeVoice` add `ctx.callImageGenerator`, `callVideoGenerator`, `callSpeechSynthesizer`, and `callTranscriber` plus streamed synthesis. Unadvertised synthesis or transcription MUST be rejected, never a no-op or whole-file fallback.
+- A video caller MUST honor `ctx.signal`. Synthesis MUST return exactly one of `url` or `base64`, a `url` served through the SSRF guard. The transcriber MUST reject inline or `mediaRef` audio.
+- `voiceId`, `streamRef` and `cachePrefixId` MUST NOT encode secrets. Transcripts are untrusted; an interim one MUST NOT be persisted or drive a side-effecting tool.
+
+`selfHosted` (operator-configured OpenAI-compatible endpoints) MUST be advertised only with one configured and reachable. A host MUST NOT disclose an endpoint's location on any wire surface or in a provider id. A client MUST NOT infer capabilities from the id; unadvertised ones fail `capability_not_provided`.
+
+`authModes` (`apiKey`, `oauth-pkce`, `oauth-device`, `none`, `subscription`) is capability, not policy: a client MUST ignore an unknown mode and MUST NOT infer policy from one.
+
+- OAuth and `subscription` credentials go by `ref`, never key material; an OAuth mode SHOULD come with `oauth`.
+- A `subscription` credential MUST bind at user scope; a tenant or workspace binding MUST be rejected with `credential_scope_forbidden`.
+- A host MUST NOT advertise `subscription` without a reachable acquisition mechanism.
+
+`policies.modes` lists enforced modes; a client MUST tolerate any subset, and absence means `optional` only. The host MUST document its `scopes` precedence. `disabled` always refuses (`provider_disabled`); `required` refuses without `credentialRef` (`byok_required`) or a usable secret (`byok_required_but_unresolved`); `restricted` refuses a model matching no `allowedModels` glob (`model_not_allowed`).
+
+A refusal MUST carry `policies.errorCode` (or its default), SHOULD carry `reason`, and MUST NOT echo the policy; each decision SHOULD be audited. An empty `restricted` policy MUST fail closed; a resolver outage SHOULD fail open.
+
+A host advertising `promptPrefixCache` MAY honor `cachePrefixId` per routed provider, and otherwise MUST ignore it. It MUST key the cache by (authenticated tenant, `cachePrefixId`) and MUST NOT persist prompt or response substrings keyed by it. The envelope and `provider.usage` token counts MUST match on hit and miss, and on replay.
 
 ## `agentRuntime`
 
@@ -123,4 +183,4 @@ A host advertising `workspace` keeps agent files (`schemas/v2/workspace-file.sch
 
 A workflow calling `ctx.workspace` MUST NOT register on a host without the family. The memory-index manifest is the workspace file `MEMORY-INDEX.json`.
 
-*Sources: RFCs 0017, 0031, 0052, 0059, 0064, 0076, 0079, 0144.*
+*Sources: RFCs 0017, 0027, 0028, 0029, 0031, 0048, 0052, 0055, 0059, 0064, 0067, 0076, 0079, 0091, 0105, 0106, 0108, 0116, 0121, 0144.*
