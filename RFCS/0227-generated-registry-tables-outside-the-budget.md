@@ -4,10 +4,10 @@
 | ----------------- | --------------------------------------------------------------- |
 | **RFC**           | 0227                                                            |
 | **Title**         | a generated restatement of a registry is not kernel prose       |
-| **Status**        | `Draft`                                                         |
+| **Status**        | `Active`                                                        |
 | **Author(s)**     | David Tufts (@davidscotttufts)                                  |
 | **Created**       | 2026-09-28                                                      |
-| **Updated**       | 2026-09-28 — filed `Draft`; the 7-day comment window opens with the pull request and closes 2026-10-05. The window is **not** waived. The maintainer approved drafting it (openwop #1698, architect batch 2: "separate editorial PR for later (the maintainer decides)"). · 2026-09-29 — split for filing: this RFC loosens the kernel budget, so the filing PR carries the RFC only, and the §C change lands with the `Draft → Active` flip (the RFC 0219 pattern, #1672). The §C change is prepared on branch `rfc/0227-mechanism`. Re-measured after 73/73 families were homed (the RFC 0190 §A cap is now final at 37,800) and RFC 0228 registered nine codes. |
+| **Updated**       | 2026-09-28 — filed `Draft`; the 7-day comment window opens with the pull request and closes 2026-10-05. The window is **not** waived. The maintainer approved drafting it (openwop #1698, architect batch 2: "separate editorial PR for later (the maintainer decides)"). · 2026-09-29 — split for filing: this RFC loosens the kernel budget, so the filing PR carries the RFC only, and the §C change lands with the `Draft → Active` flip (the RFC 0219 pattern, #1672). The §C change is prepared on branch `rfc/0227-mechanism`. Re-measured after 73/73 families were homed (the RFC 0190 §A cap is now final at 37,800) and RFC 0228 registered nine codes. · 2026-09-29 — **`Draft → Active`; comment window waived** (7-day, filed 2026-09-28, 1 day elapsed, not run) at the maintainer's explicit direction, logged in `MAINTAINERS.md` §"Bootstrap-phase RFC waivers" and `docs/WAIVER-RETROSPECTIVE-REGISTER.md`. Routine bootstrap waiver under GOVERNANCE §"Sole-steward operation", not an RFC 0147 §A.6 override: the RFC amends a corpus budget gate and re-points a server-free corpus-coherence row; no certification bundle, witness or replay digest covers either, and no identity, authorization, isolation, idempotency, replay or external-effect surface changes. The §C change lands in the same PR, re-measured on `origin/main` bee239e1. The evidence gate is not waived. |
 | **Affects**       | RFC 0190 §A (amended) · `scripts/check-core-budget.mjs` (a guarded `spec/v2/generated/` directory) · `scripts/generate-error-envelope.mjs` (writes the table doc whole; `--check` compares it byte-for-byte) · `spec/v2/core/errors.md` §Codes by HTTP status (the table becomes a link) · new `spec/v2/generated/error-codes.md` · `conformance/src/coherence/v2-error-registry-prose-parity.test.ts` (`openwop.requirement.0171.error-registry-prose-parity` re-pointed) |
 | **Compatibility** | `editorial + gate` (COMPATIBILITY.md, the RFC 0190 class): no wire artifact, no schema shape, no endpoint contract, no error meaning, and no MUST added, moved or relaxed |
 | **Supersedes**    | —                                                               |
@@ -45,7 +45,7 @@ So the budget still counts every rule a human wrote, and it stops counting the r
 
 ### §C. The implementing change (lands with `Draft → Active`)
 
-This RFC loosens the budget, so none of §C takes effect while it is `Draft`: the filing PR carries the RFC and its registers only. The change below lands in the PR that moves the RFC to `Active`. It is prepared on branch `rfc/0227-mechanism`, which that PR merges forward and re-measures.
+This RFC loosens the budget, so none of §C took effect while it was `Draft`: the filing PR carried the RFC and its registers only. The change below landed with `Draft → Active` (2026-09-29), merged forward from branch `rfc/0227-mechanism` and re-measured.
 
 - `spec/v2/generated/error-codes.md`, written whole by `scripts/generate-error-envelope.mjs`. It has a banner naming the generator, the count, the registry table and a *Sources:* line. The generator's `--check` fails if the file is stale or hand-edited.
 - `spec/v2/core/errors.md` §Codes by HTTP status becomes one sentence: "Every registered code, by HTTP status, is listed in `error-codes.md` (linked), generated from `spec/v2/errors.json` (120 codes)." The generator keeps both counts current, and no rule text moves.
@@ -53,7 +53,7 @@ This RFC loosens the budget, so none of §C takes effect while it is `Draft`: th
 - `openwop.requirement.0171.error-registry-prose-parity` is re-pointed. The property it protects, that a reader of the spec finds every registered code and the stated counts are true, is kept at the table's new home. `errors.md` MUST link the generated table, the table MUST hold every registered code, and every count either document states MUST equal the registry.
 - `spec-artifacts/` mirrors the new document (`spec/v2/**/*.md` is already in its set).
 
-**Kernel budget** (re-measured 2026-09-29 on `origin/main` 8d867b2a plus the §C change, after 73/73 homing and RFC 0228's nine codes): 37,713 / 37,800 before, **37,351 / 37,800** after (−362). The 417 words of the generated document are reported by the gate as unbudgeted.
+**Kernel budget** (re-measured 2026-09-29 on `origin/main` bee239e1 plus the §C change, after 73/73 homing and RFC 0228's nine codes): 37,713 / 37,800 before, **37,351 / 37,800** after (−362). The 417 words of the generated document are reported by the gate as unbudgeted.
 
 ## Compatibility
 
@@ -85,7 +85,7 @@ None.
 
 ## Acceptance criteria
 
-- [ ] `Active`: the comment window closes (2026-10-05) with no unresolved objection, and the §C change lands in the same PR, re-measured on the tree it merges into. RFC 0190 gains its `Amended by` row then.
+- [x] `Active`: the comment window closes (2026-10-05) with no unresolved objection, and the §C change lands in the same PR, re-measured on the tree it merges into. RFC 0190 gains its `Amended by` row then. *(2026-09-29: the window was waived at the maintainer's direction, not run; the §C change and RFC 0190's row landed with the flip.)*
 - [ ] `Accepted`: `openwop.requirement.0171.error-registry-prose-parity` has an `executed-pass` row in `evidence/corpus-ledger.json` at the re-pointed location, and `check-core-budget` reports the exclusion.
 
 ## References
