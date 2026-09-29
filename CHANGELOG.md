@@ -401,6 +401,20 @@ Format follows [Keep a Changelog](https://keepachangelog.com/en/1/) loosely. Ver
 - **The remaining eleven stay `Active`, each for a stated reason** rather than for lack of attention. The eight RFC 0167 program children name a certified openwop-app bundle in their own acceptance criteria and the committed one reads `certified: false` (3 blocked rows, RFC 0168 §E.1). RFC 0173 additionally carries the program's only `open` gap row. RFC 0179's sole criterion is unmet — 2.4.2 stopped the gate reading "(Phase 4 leg)" as an excuse for it. RFC 0187 names three requirement ids that no scenario mints. RFC 0167 itself flips **last**, which 2.4.2 made a rule: the moment the umbrella stops being `Active`, every child still `Active` becomes permanently ineligible.
 - **The interrupt `data` union is bound to `kind`** (MCP/A2A review P3-H7, Class 3 correction — COMPATIBILITY.md §3). `schemas/suspend-request.schema.json` and its v2 twin typed `data` as an unbound `oneOf`, so the minimal `conversation.start` and `conversation.close` payloads (`{ conversationId }`, which satisfies both shapes) failed validation in v1 and v2, and a payload carrying another kind's `data` passed. `data` is now an `anyOf` and a root `allOf` binds each kind to its own shape with one `if`/`then`; no per-kind shape or `$id` changed. Witnessed by `conformance/fixtures/interrupt-payloads/` (suite 2.36.0).
 
+## [2.45.0] — 2026-09-29 — a host that grants an origin admits the contract's request headers in preflight
+
+A suite minor: it adds one scenario.
+
+### Protocol
+
+- **Class 3 clarification: cross-origin preflight** (#1763, #1814). `spec/v2/core/headers.md` §Cross-origin preflight covers a host that grants the requesting origin in a CORS preflight. It MUST admit the operation's method, plus every request header `api/v2/openapi.yaml` declares for it (with `Authorization` when authenticated and `Content-Type` when it takes a body). It may do so by listing them or by reflecting `Access-Control-Request-Headers`. A `*` does not admit `Authorization`. Which origins a host grants, and whether with credentials, stays host policy. `Access-Control-Expose-Headers` was considered and not taken, because it needs an RFC. RFC 0219 gap G8 closes. Core words: 36,691 → 36,772 of 37,800.
+- **`spec/v2/path-manifest.json`** now carries per-operation `requestHeaders`, `authenticated` and `requestBody`, derived from `openapi.yaml`. The fields are additive.
+
+### Conformance
+
+- **New scenario `v2-cors-preflight`** (`openwop.requirement.headers.cors-preflight-admits`, major 2). It preflights every operation with `Origin: $OPENWOP_CORS_ORIGIN` (default `https://conformance.invalid`) and judges each response by Fetch's rules. Operations whose origin the host does not grant are not judged; if none is granted, the row is `inapplicable`.
+- **Suite `2.45.0`.** `@openwop/spec-artifacts` moves in lockstep at the same exact pin.
+
 ## [2.44.9] — 2026-09-29 — a floor gated on a withheld fixture records `blocked`, not nothing
 
 A suite patch.
