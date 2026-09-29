@@ -1,7 +1,7 @@
 # Execution
 
 > **Status: Stable.**
-> **Normative home:** `selfHostedRunner`, `subWorkflow`, `multiAgent`.
+> **Normative home:** `selfHostedRunner`, `subWorkflow`, `multiAgent`, `agents`.
 
 ## Why this exists
 
@@ -81,4 +81,20 @@ At level 6, with `verifier` advertised:
 - Under `verifier.gating`, a `fail` MUST NOT be merged or `terminate` as success, and a `revise` SHOULD route back to an actor turn within `maxLoopIterations`. A missing verdict is not a failure. Without `gating`, verdicts are observational.
 - A consumer MUST NOT treat a `terminate` whose `successCriteria` has a `met: false` entry as goal-satisfied.
 
-*Sources: RFCs 0007, 0022, 0037, 0039, 0040, 0041, 0061, 0090, 0111, 0122, 0228.*
+## `agents`
+
+`agents` and each of its facets are optional; a client MUST tolerate their absence. A host advertising `agents` serves `RunSnapshot.agent` and `runOrchestrator`, emits the `agent.*` family, and suspends a low-confidence `agent.decided`. Each facet's rules are its description in `spec/v2/facets/agents.schema.json`, with the records it names under `schemas/v2/`:
+
+| Facets | Records |
+| --- | --- |
+| `profile`, `modelClasses`, `orchestratorPattern`, `orchestrator`, `dispatch`, `dispatchMapping`, `reasoning`, `subRunAttestation` | `dispatch-config` |
+| `manifestRuntime`, `liveRuntime` | `agent-manifest`, `agent-inventory-response` |
+| `memoryBackends`, `memoryConsolidation`, `commitments` | `memory-entry` ([host-services.md](host-services.md)) |
+| `evalSuite` | `agent-eval-suite`, `eval-summary` |
+| `deployment` | `agent-deployment`, `agent-deployment-transition`, `agent-ref` |
+| `roster`, `orgChart` | `agent-roster-entry`, `agent-org-chart` |
+| `proposals`, `goals` | `proposal`, `goal` |
+
+A host MUST NOT advertise `liveRuntime` or `roster` without `manifestRuntime`, `orgChart` without `roster`, or `memoryConsolidation` without `long-term` in `memoryBackends`. `roster.installScope` MUST equal `manifestRuntime.installScope`; `orgChart.installScope` SHOULD equal it.
+
+*Sources: RFCs 0002, 0007, 0022, 0037, 0039, 0040, 0041, 0061, 0068, 0077, 0086, 0087, 0090, 0111, 0122, 0228.*

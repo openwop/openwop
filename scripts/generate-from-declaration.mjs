@@ -182,12 +182,11 @@ const rewriteSupportedProse = (d) => {
 // Keyed by the exact v1 sentence; a row that matches nothing fails the
 // generator, so a changed seed cannot silently keep the old text.
 const RFC_0228_REWRITES = [
+  // The five `agents` rows (modelClasses, deployment.channels, the deployment,
+  // roster and orgChart 404s) moved into spec/v2/facets/agents.schema.json,
+  // which the agents homing hand-decided from the rewritten seed.
   ['When present, MUST equal both the `Retry-After` header and the `details.retryAfter` body field per production-profile.md.',
    'When present, MUST equal the `Retry-After` header the host sends with `503 service_unavailable`.'],
-  ['Pack manifests whose `modelClass` is not in this list MUST refuse install with `unsupported_model_class`.',
-   'Pack manifests whose `modelClass` is not in this list MUST refuse install with `pack_runtime_requirement_unmet`.'],
-  ['a `channel` not in this list resolves to no version and fails the run with `no_active_deployment`.',
-   'a `channel` not in this list resolves to no version and fails the run with `not_found` (`details.service: agents`).'],
   ['A host advertising this facet MUST include at least `envelope.retry.exhausted` and `envelope.refusal` in `events[]` (the two MUST-tier events). The other four (`envelope.retry.attempted`, `envelope.truncated`, `envelope.nlToFormat.engaged`, `envelope.recovery.applied`) are SHOULD/MAY-tier per RFC 0032 §B and may be omitted.',
    'A host advertising this facet MUST include at least `envelope.retry-exhausted` and `envelope.refusal` in `events[]` (the two MUST-tier events). The other four (`envelope.retry-attempted`, `envelope.truncated`, `envelope.nl-to-format-engaged`, `envelope.recovery-applied`) are SHOULD/MAY-tier per RFC 0032 §B and may be omitted.'],
   ['Subset of the six reliability events the host actually emits. A host advertising this facet MUST include `envelope.retry.exhausted` and `envelope.refusal`.',
@@ -196,9 +195,6 @@ const RFC_0228_REWRITES = [
   ['False or absent = every `/prompts*` request returns `501 capability_not_provided`.',
    'False or absent = every `/prompts*` request answers `404 not_found`.'],
   ['When `false` or absent, those endpoints return 501.', 'When `false` or absent, those endpoints answer `404 not_found`.'],
-  ['with `validation_error` and 501 the deployment endpoint.', 'with `validation_error`, and the deployment endpoint answers `404 not_found`.'],
-  ['(the roster reads 501)', '(the roster read answers `404 not_found`)'],
-  ['(the read 501s)', '(the read answers `404 not_found`)'],
 ];
 const RFC_0228_USED = new Set();
 // RFC 0228 §G — the v2 spellings `events.md` §envelopes requires, added beside

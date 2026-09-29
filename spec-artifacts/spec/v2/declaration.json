@@ -717,7 +717,7 @@
     {
       "key": "agents",
       "kind": "family",
-      "normativeText": ["spec/v1/multi-agent-execution.md", "spec/v1/agent-memory.md", "spec/v1/agent-runtime.md", "spec/v1/agent-org-chart.md", "spec/v1/agent-evaluation.md", "spec/v1/capabilities.md"],
+      "normativeText": ["spec/v2/core/execution.md", "spec/v2/facets/agents.schema.json", "schemas/v2/run-event-payloads.schema.json"],
       "anchor": "core",
       "section": "core/capabilities.md#agents",
       "peerDependencyId": "agents",

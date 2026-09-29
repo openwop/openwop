@@ -116,7 +116,7 @@
     "schemas/v2/artifact.schema.json": "85b9dc284d39b99d2a66fa8cbf47f2dd3d8526d3bd6cc411ad315b372de38975",
     "schemas/v2/audit-verify-result.schema.json": "14af8e9283510f0a40e48a2059c929ee44e0fc9fa3cc66a95bfbe90b17c48297",
     "schemas/v2/budget-policy.schema.json": "c7449daeb6e1d95e7a047b8c2814d3d54748697c27046972834874867d9b5f4c",
-    "schemas/v2/capabilities.schema.json": "bf78732aec3994295a5aae1aaeaab3745ef1c159463a87db7436b3fe306f4d98",
+    "schemas/v2/capabilities.schema.json": "d0b72f589b4e29ef69bd26e38a309aca1db2965c8441cae56c1dcc12c8d7152f",
     "schemas/v2/certification-bundle.schema.json": "82ce31a1ed6c7e21b0ba88ff62a7b8b768fc3b176b1d06fce023203830b94725",
     "schemas/v2/channel-presence-payload.schema.json": "4eeb224910e6f7eee3ab5e7c3899559c25c83a26d0022e0ad195c4672611977a",
     "schemas/v2/channel-written-payload.schema.json": "ccecff3c71a3275ad8db035ac0e04db25e6f8d23cf091ddbcd5a60d1be1cbb6b",
@@ -171,7 +171,7 @@
     "schemas/v2/residency.schema.json": "3fd23c9732beb140504e81560fc426eb6764d547e56da5fb92c5a5c7bf04db3a",
     "schemas/v2/run-ancestry-response.schema.json": "334c17f2062dea62726ca1d07b8be3f169cdc422af843c1def5fb317039814c9",
     "schemas/v2/run-diff-response.schema.json": "8bdb2045c274580038bd74781f7d062f5049839797c164a89de4ed89edc53a74",
-    "schemas/v2/run-event-payloads.schema.json": "f3107248608dd4ce16ed3af68979d76601b9cbe6ee83350a0d6960abfb3e2e16",
+    "schemas/v2/run-event-payloads.schema.json": "161018016b8f57cd08ad3a8f797ae86c4dcb362ecda5711ad2b802bfa30d1cfe",
     "schemas/v2/run-event.schema.json": "2f0d7416bd376c56affe97b6b2b49981532e8e9ff45c0a162cf806c78b3e7fb7",
     "schemas/v2/run-list-response.schema.json": "c2dbc34768dcf64528914a213aa3cb55952e8e3e90a64b04a9423b2a19749d38",
     "schemas/v2/run-options.schema.json": "f0e9f494d80086c2ed2cf9fe87df54e5b4e66601699c4a1089f4edbc7ba58867",
@@ -224,7 +224,7 @@
     "spec/v2/core/conversation.md": "354fa57c73d11062e523a44aa75a6353c5c81aefaf306d30c42416a228c82c86",
     "spec/v2/core/errors.md": "cbe50d40b86103bb325ae46288acaa808f841721a02b9451e94188ea523460b1",
     "spec/v2/core/events.md": "8a2767691f604b2adf76399edeeaccfc151c697fc9717dc17cf7dd57372a8c22",
-    "spec/v2/core/execution.md": "4ff2f6d5470d83795ef70deff54e74f27267644f3ada48b197599a32d97b1f91",
+    "spec/v2/core/execution.md": "56c414f6c1d33f0adcdef917adf5f37804b9b194ada6e3f653267f286fd65446",
     "spec/v2/core/form-content-packs.md": "02931227899676fd4581a27017be2a6c4953904717be9b81c29d12f87ab3917d",
     "spec/v2/core/headers.md": "5cb1624fa63acc81992b6a6d842ec392cf7271aaf2f65d1f83c8c4fa286e6730",
     "spec/v2/core/host-services.md": "02739326bbe255f7c3038d6765e086d861b7aa52e126b526983a2bff77f85259",
@@ -249,7 +249,7 @@
     "spec/v2/core/workflow-chain-packs.md": "fdce7a8477e269950a2bac05ee6eddbd66eb0b670b464d00054f7196ec05d29c",
     "spec/v2/corrections.json": "59f647f4d22477f6c2b06dcf913b682dde5d51dd5e607a5d0cf648ab60864d6e",
     "spec/v2/corrections.schema.json": "46bbffb954d13bd9995aebc912ceeb2544f7064331abf25fd6ab85c81a5cec94",
-    "spec/v2/declaration.json": "edace8c4ec7e32aba44828f459e2ae8933dc88ec8129f16549bca6279e3ca24c",
+    "spec/v2/declaration.json": "8132b5528a2cb733858e716b364ade04fdbe2b69d61b333a9e5f21d91bd6ce48",
     "spec/v2/declaration.schema.json": "ef951633e4070899f64828f5cf1b5f4870270a0360f81dbb49b5b4d6cd407550",
     "spec/v2/errors.json": "83f048b0a06952b4af6f125fb66c4212acab51056b411390f1010acd6ab9cdc0",
     "spec/v2/errors.schema.json": "47404ad53e6147cf9017b813483712466573e419fb33e6c4b6c12d3e7deba1bc",
@@ -275,6 +275,7 @@
     "spec/v2/ext/sandbox-runtime-notes/README.md": "0d1290fb1e20b2e35c0b15051541ab6546e4e2a6f693b4f912cb3f7d6a65e92c",
     "spec/v2/ext/webResearch/README.md": "b675e6f6646128d781b661f754c2393eed86e5935d16c3a22df582a5ce025b9b",
     "spec/v2/facets/a2a.schema.json": "b68bf5e29e455e46c2ad7cfcccf5963730ec2310ff9db81884550d8df30fd6ef",
+    "spec/v2/facets/agents.schema.json": "5e4d76d298fb1371b0e47a3b6fcf99ef65ae139d619d25d021d334c42583c4f1",
     "spec/v2/facets/aiProviders.schema.json": "4eb911c2403b8f618325194855a1326680fbda2549dfbfe86a70dd2743f8fb12",
     "spec/v2/facets/auditLogIntegrity.schema.json": "9a7f81320c8f940c6f4129bc7dd895a4063231c5458a717a08c2cbf9bb886c46",
     "spec/v2/facets/auth.schema.json": "7d98bc81a0f7d307460d039eebfebd21388091bfe1d538762583940f94c0bd2a",
@@ -305,5 +306,5 @@
     "spec/v2/retention-floors.json": "eaf3722d95c79947af1d4269ef85117e126518c588cfcf1a2b21b97269f51624",
     "spec/v2/surface-baseline.json": "ca7310e7b970f4cd5629e20718d77ee64427a04c7aba2e963bbfd43500ba1521"
   },
-  "corpusCommit": "923798cbe0b24c8b82271029035ae70394652167"
+  "corpusCommit": "99a43b78bd955cbc06998405860ed18f3ae80618"
 }
