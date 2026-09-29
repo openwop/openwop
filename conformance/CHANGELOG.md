@@ -1,11 +1,12 @@
 # `@openwop/openwop-conformance` Changelog
 
-## [2.44.3] — unreleased — fifteen more core families get v2 normative homes
+## [2.44.3] — unreleased — twenty-one more core families get v2 normative homes
 
 - **The 2.44.3 cycle opens.** Fifteen core families get a v2 normative home (RFC 0189), which changes the packed `@openwop/spec-artifacts` tree. v1-dependent core families fall from 23 to 8. No scenario changes: the rules are restated, none added.
   - `events.md`: `feedback`, `providerUsage`, `envelopes`, and the rest of `heartbeat`.
   - `host-services.md`: `secrets`, `modelCapabilities`, `scheduling`, `queueBus`, `toolHooks`, `httpClient`; `runs.md`: `deadLetter`.
   - New `execution.md`: `selfHostedRunner`, `subWorkflow`, `multiAgent` (the family claim and `executionModel` facet); `identity.md` §1.5: `anonymousActor`.
+- **Six more families get a v2 normative home** (RFC 0189), in the same cycle: `memory`, `prompts` and `aiProviders` in `host-services.md`; `limits` in `runs.md`; `artifactTypes` in a new `artifact-type-packs.md`, with field-level rules in `schemas/v2/artifact-type-pack-manifest.schema.json` descriptions. v1-dependent core families: 8 → 3 (`agents`, `budget`, `production`, each blocked on error codes v2 does not register). No scenario changes.
 
 ## [2.44.2] — 2026-09-28 — RFC 0215's no-head-of-line leg does not convict a late fan-out, and says when it sampled each count
 
