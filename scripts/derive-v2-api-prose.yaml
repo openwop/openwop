@@ -56,7 +56,8 @@
     normal workflow run.
   now: 'Set to `eval` to run an eval-suite projection instead of a workflow run: the host runs the `evalSuiteRef` against `agentId`,
     emits the content-free `eval.*` family, and terminates with an `EvalSummary` readable at `GET /runs/{runId}/eval-summary`. Gated
-    on `capabilities.agents.evalSuite.supported`; a host that omits it rejects `mode: "eval"` with 501. Omit for a normal workflow run.'
+    on `capabilities.agents.evalSuite.supported`; a host that omits it rejects `mode: "eval"` with `422 capability_not_provided`.
+    Omit for a normal workflow run.'
 - was: RFC 0081 — URI of the `AgentEvalSuite` to run. Required when mode is `eval`.
   now: URI of the `AgentEvalSuite` to run. Required when mode is `eval`.
 - was: RFC 0081 — the manifest agent the eval suite targets. Required when mode is `eval`.

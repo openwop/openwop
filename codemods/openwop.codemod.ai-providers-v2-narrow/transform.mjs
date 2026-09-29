@@ -1,7 +1,10 @@
 /**
- * openwop.codemod.ai-providers-v2-narrow — RFC 0169 row C2.11: v2 narrows four
- * `aiProviders` facets (spec/v2/core/host-services.md §aiProviders). Rewrites the
- * root `aiProviders` record of a v1 discovery document:
+ * openwop.codemod.ai-providers-v2-narrow — RFC 0169 rows C2.11 and C2.12: v2
+ * narrows four `aiProviders` facets and renames `supported` to `providers`
+ * (spec/v2/core/host-services.md §aiProviders). Rewrites the root `aiProviders`
+ * record of a v1 discovery document:
+ *   - `supported` → `providers` (C2.12); REFUSES a record carrying both with
+ *     different values;
  *   - `selfHosted: string[]` → `true` when non-empty; dropped when empty;
  *   - `realtimeVoice: {transcription, synthesis, turnDetection?, bargeIn?}` →
  *     `true` when both `transcription` and `synthesis` are present; dropped when
@@ -11,8 +14,7 @@
  *   - `authModes: {provider: mode[]}` → the union of the modes, known modes in
  *     schema order, then any others sorted.
  * Refuses a facet whose value is neither the v1 shape nor already the v2 one.
- * Runs after discovery-document-v2 and the wrapper removal; does not rename
- * `supported`. Idempotent. Pure.
+ * Runs after discovery-document-v2 and the wrapper removal. Idempotent. Pure.
  */
 export const id = 'openwop.codemod.ai-providers-v2-narrow';
 export const inputSchema = 'schemas/capabilities.schema.json';
@@ -24,7 +26,13 @@ const refuse = (why) => { throw new Error(`${id}: ${why}; refusing to guess`); }
 export function transform(doc) {
   if (!isObj(doc)) throw new TypeError(`${id}: input must be a discovery document object`);
   if (!isObj(doc.aiProviders)) return doc;
-  const ai = { ...doc.aiProviders };
+  let ai = { ...doc.aiProviders };
+
+  if ('supported' in ai) {
+    if ('providers' in ai && JSON.stringify(ai.providers) !== JSON.stringify(ai.supported)) refuse('aiProviders carries both `supported` and `providers` with different values');
+    const { supported, ...rest } = ai;
+    ai = { providers: supported, ...rest };
+  }
 
   if ('selfHosted' in ai && typeof ai.selfHosted !== 'boolean') {
     if (!Array.isArray(ai.selfHosted)) refuse(`selfHosted is ${JSON.stringify(ai.selfHosted)}`);

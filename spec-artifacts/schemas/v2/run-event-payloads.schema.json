@@ -2377,7 +2377,7 @@
         "fallbackAttempted": {
           "type": "boolean",
           "default": false,
-          "description": "True if the host attempted to authenticate to a declared `fallbackModel` and that attempt failed (e.g., no credential resolvable, or the fallback provider was outside `capabilities.aiProviders.supported`). False if no `fallbackModel` was declared on the NodeModule."
+          "description": "True if the host attempted to authenticate to a declared `fallbackModel` and that attempt failed (e.g., no credential resolvable, or the fallback provider was outside `capabilities.aiProviders.providers`). False if no `fallbackModel` was declared on the NodeModule."
         }
       }
     },
@@ -3278,7 +3278,7 @@
         },
         "resolvedProvider": {
           "type": "string",
-          "description": "MAY \u2014 the concrete provider the host routed to (aligns with `capabilities.aiProviders.supported` / RFC 0067 `authModes`). OPTIONAL, same rationale as `resolvedModel`."
+          "description": "MAY \u2014 the concrete provider the host routed to (aligns with `capabilities.aiProviders.providers` / RFC 0067 `authModes`). OPTIONAL, same rationale as `resolvedModel`."
         },
         "resolvedAgentVersion": {
           "type": "string",
