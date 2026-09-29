@@ -1,0 +1,325 @@
+{
+  "$comment": "Curated input to scripts/report-v2-witness-coverage.mjs: the top-20 v2 core obligations with no major-2 witness, ranked security / tenant isolation / idempotency / replay first, then wire shape, then behaviour. `rule` MUST be a verbatim substring of `doc` (whitespace-normalised); the report re-checks it and the section's major-2 citations on every run. Judgement, not derivation: a regex cannot decide which rule a test discharges (RFC 0191).",
+  "risks": [
+    {
+      "title": "Host storage leaks across tenants",
+      "family": "kvStorage",
+      "class": "tenant isolation",
+      "doc": "spec/v2/core/storage.md",
+      "section": "Shared rules",
+      "rule": "A read for one tenant MUST NOT return data another tenant wrote, even under an identical key or name",
+      "today": "Major 1 only: `kv-`, `table-`, `blob-` and `cache-cross-tenant-isolation` drive the v1 seam `POST /v1/host/sample/test/surface`. `vectorStore` and `searchIndex` have no isolation leg at any major. No v2 seam exists for host storage.",
+      "why": "One missing tenant prefix exposes every tenant's data. It covers six families and is the widest isolation rule in core.",
+      "scenario": {
+        "name": "v2-storage-cross-tenant-isolation",
+        "gate": "each advertised storage family, plus a second-tenant credential (`OPENWOP_TEST_TENANT_B_API_KEY`) and a storage-probe fixture workflow",
+        "asserts": "per advertised family, a run under tenant A writes value V at key K, and a run under tenant B reading K on the run surface sees absent / `not_found`, never V",
+        "sabotage": "key the store by name only (drop the tenant prefix): tenant B reads V and the leg fails"
+      }
+    },
+    {
+      "title": "Agent memory crosses tenants",
+      "family": "memory",
+      "class": "tenant isolation",
+      "doc": "spec/v2/core/host-services.md",
+      "section": "`memory`",
+      "rule": "A ref MUST resolve to one tenant's entries, whatever the caller's permissions.",
+      "today": "Major 1 only (`agentMemoryCrossTenantIsolation`, `memory-attribution-tenant-scoped`). The family is gated at major 2, but no major-2 scenario cites §`memory`.",
+      "why": "Memory holds conversation content and redacted secrets. A cross-tenant read is a direct data breach.",
+      "scenario": {
+        "name": "v2-memory-cross-tenant-isolation",
+        "gate": "`memory` advertised, second-tenant credential, the cross-tenant memory fixture",
+        "asserts": "a run under tenant B given tenant A's `memoryRef` gets `[]` from `list` and `null` from `get`; a malformed ref (traversal, NUL, oversize) also gets `[]` / `null`",
+        "sabotage": "resolve `memoryRef` without checking its tenant: B's run returns A's entry"
+      }
+    },
+    {
+      "title": "Workspace files cross scopes",
+      "family": "workspace",
+      "class": "tenant isolation",
+      "doc": "spec/v2/core/host-services.md",
+      "section": "`workspace`",
+      "rule": "MUST derive the scope from the authenticated identity and MUST NOT return or disclose another scope's file",
+      "today": "Major 1 only (`workspace-cross-tenant-isolation`, through the v1 seam `POST /v1/host/sample/workspace/op`). The v2 seams profile already mounts `/conformance/seams/workspace/files`.",
+      "why": "Agent workspace files are durable and shared across runs. Taking the scope from a request field instead of the identity lets any caller read any workspace.",
+      "scenario": {
+        "name": "v2-workspace-scope-from-identity",
+        "gate": "`workspace` advertised, seams profile `openwop-conformance-seams-v2`, second-tenant credential",
+        "asserts": "a file written under tenant A through the v2 seam is `404` (or `403`) for tenant B by path and absent from B's list, even when B names A's workspace id in the request",
+        "sabotage": "take `workspaceId` from the request body instead of the credential: B reads A's file"
+      }
+    },
+    {
+      "title": "Queue messages cross tenants",
+      "family": "queueBus",
+      "class": "tenant isolation",
+      "doc": "spec/v2/core/host-services.md",
+      "section": "`queueBus`",
+      "rule": "A tenant's consumer MUST NOT receive another tenant's messages, even on the same topic.",
+      "today": "Major 1 only (`queue-cross-tenant-isolation`, v1 seam).",
+      "why": "Topics are named by pack authors, so two tenants sharing a pack share topic names by default.",
+      "scenario": {
+        "name": "v2-queue-cross-tenant-isolation",
+        "gate": "`queueBus` advertised, second-tenant credential, a queue-probe fixture workflow",
+        "asserts": "a message published under tenant A on topic T is never consumed by tenant B's consumer on T within the poll window, while A's own consumer receives it (the positive control)",
+        "sabotage": "name the physical queue by topic only: B consumes A's message"
+      }
+    },
+    {
+      "title": "Raw secrets reach events or logs",
+      "family": "secrets",
+      "class": "security",
+      "doc": "spec/v2/core/host-services.md",
+      "section": "`secrets`",
+      "rule": "Raw key material MUST NOT appear in any event, log, trace, prompt, error, export or screenshot",
+      "today": "Major 1 only, and only on the envelope and OTel paths (`envelope-reasoning-secret-redaction`, `secret-leakage-otel-attribute`). Nothing at major 2 checks the event log, snapshot or error body.",
+      "why": "This is the BYOK boundary. One leaked provider key in an event log is replicated to every consumer and every fork.",
+      "scenario": {
+        "name": "v2-secret-canary-absent",
+        "gate": "`secrets` advertised with `resolveInPack`, a canary-secret fixture workflow",
+        "asserts": "after a run that resolves a canary secret and then fails, the canary bytes appear nowhere in the event log, the snapshot, the SSE stream, the error envelope or a fork's log",
+        "sabotage": "echo the resolved plaintext into `node.completed` outputs: the scan finds the canary"
+      }
+    },
+    {
+      "title": "A tool runs without its scopes",
+      "family": "toolHooks",
+      "class": "security",
+      "doc": "spec/v2/core/host-services.md",
+      "section": "`toolHooks`",
+      "rule": "If one is missing or cannot be evaluated, it MUST NOT invoke, MUST emit `agent.toolReturned` with `status: forbidden`",
+      "today": "Major 1 only (`tool-hooks-authorization-fail-closed`, through the v1 tool-hooks seam).",
+      "why": "Per-tool authorization is the only check between an agent and an external side effect. Fail-open here turns a prompt injection into an action.",
+      "scenario": {
+        "name": "v2-tool-authorization-fail-closed",
+        "gate": "`toolHooks.perToolAuthorization`, a fixture agent whose principal lacks one `requiredScopes` entry",
+        "asserts": "the tool is not invoked (the fixture receiver sees no call), the log carries `agent.toolReturned` `status: forbidden`, and the response is `403 forbidden` with `details.scope: \"tool\"`",
+        "sabotage": "treat an unevaluable scope as granted: the receiver sees the call"
+      }
+    },
+    {
+      "title": "Anonymous callers gain a tool baseline",
+      "family": "anonymousActor",
+      "class": "security",
+      "doc": "spec/v2/core/identity.md",
+      "section": "1.5 `anonymousActor`",
+      "rule": "A host MUST NOT resolve a role, scope or default tool baseline for it, or widen it within a session.",
+      "today": "Six major-1 scenarios (`anonymous-actor-*`). The only major-2 gate is `v2-mcp-mount-map`, which skips when the family is advertised; no major-2 scenario cites §1.5.",
+      "why": "An anonymous subject reaches the public internet. Any default grant is a grant to everyone.",
+      "scenario": {
+        "name": "v2-anonymous-actor-default-deny",
+        "gate": "`anonymousActor` advertised; seam-gated until a public-surface observation path is minted",
+        "asserts": "a call to a tool outside the surface allowlist is denied with `authorization.decided` `reason: anon-not-granted` and no dispatch; `listTools` for the subject equals the allowlist exactly",
+        "sabotage": "merge the authenticated default toolset into the anonymous grant: the extra tool dispatches"
+      }
+    },
+    {
+      "title": "A step routes to another subject's runner",
+      "family": "selfHostedRunner",
+      "class": "security",
+      "doc": "spec/v2/core/execution.md",
+      "section": "`selfHostedRunner`",
+      "rule": "A host MUST NOT route a step to a runner its run's subject does not own, and MUST match on subject before capability.",
+      "today": "Major 1 only (`self-hosted-runner`).",
+      "why": "A runner holds credentials the host cannot see. Mis-routing sends one user's prompt and tool arguments to another user's machine.",
+      "scenario": {
+        "name": "v2-runner-subject-isolation",
+        "gate": "`selfHostedRunner` advertised, two harness runners registered under two subjects with identical `dispatchKinds`",
+        "asserts": "a run owned by subject A dispatches only to A's runner, and with A's runner gone fails `runner_unavailable` rather than using B's",
+        "sabotage": "pick the first runner matching `dispatchKinds`: B's runner receives A's frame"
+      }
+    },
+    {
+      "title": "Egress reaches private addresses",
+      "family": "httpClient",
+      "class": "security",
+      "doc": "spec/v2/core/host-services.md",
+      "section": "`httpClient`",
+      "rule": "Before connecting it MUST resolve the target, reject loopback, RFC 1918, link-local and cloud-metadata addresses, and pin the resolved address for the connection",
+      "today": "Major 1 only, and only the advertisement (`http-client-ssrf` asserts `ssrfGuard: true`; the rejection is left to the host's own tests).",
+      "why": "SSRF to a cloud-metadata endpoint hands a pack the host's cloud credentials.",
+      "scenario": {
+        "name": "v2-safefetch-ssrf-refused",
+        "gate": "`httpClient.safeFetch`, a fixture workflow that fetches a URL from its input",
+        "asserts": "fetches of `169.254.169.254`, `127.0.0.1`, `10.0.0.1` and a public hostname resolving to loopback each fail `egress_denied` with `reason: ssrf-blocked`, and no connection reaches a harness listener",
+        "sabotage": "check the hostname string, not the resolved address: the loopback-resolving hostname connects"
+      }
+    },
+    {
+      "title": "Pack file access escapes the sandbox root",
+      "family": "fs",
+      "class": "security",
+      "doc": "spec/v2/core/storage.md",
+      "section": "`fs`",
+      "rule": "A path that escapes the root, whether absolute, through `..` segments or through a symlink, MUST be refused.",
+      "today": "Major 1 only (`fs-path-traversal`, v1 seam `POST /v1/host/sample/fs/read`).",
+      "why": "Path traversal from pack code reads host configuration and credentials.",
+      "scenario": {
+        "name": "v2-fs-sandbox-escape-refused",
+        "gate": "`fs` advertised, an fs-probe fixture workflow",
+        "asserts": "reads of an absolute path, a `../` path and a symlink out of `sandboxRoot` each fail `forbidden` with `details.reason: path-outside-sandbox`; a read inside the root succeeds",
+        "sabotage": "normalise `..` but follow symlinks: the symlink read succeeds"
+      }
+    },
+    {
+      "title": "Query injection through host storage",
+      "family": "nosql",
+      "class": "security",
+      "doc": "spec/v2/core/storage.md",
+      "section": "`sql` and `nosql`",
+      "rule": "`nosql` filter operators MUST NOT permit injection. Server-side script evaluation, such as MongoDB `$where`, MUST be refused unless an explicit allowlist is configured.",
+      "today": "`sql` has a major-1 leg (`sql-injection-rejection`); `nosql` has no leg at any major.",
+      "why": "Operator injection bypasses tenant filters and reads every document in a collection.",
+      "scenario": {
+        "name": "v2-storage-injection-refused",
+        "gate": "`sql` or `nosql` advertised, a query-probe fixture workflow",
+        "asserts": "a `nosql` filter carrying `$where` is refused `forbidden`; a `sql` query whose user value holds `' OR 1=1 --` returns only the bound row",
+        "sabotage": "pass filter objects to the driver unvalidated: `$where` executes"
+      }
+    },
+    {
+      "title": "An import carries credential values",
+      "family": "portability",
+      "class": "security",
+      "doc": "spec/v2/core/portability.md",
+      "section": "Import rules",
+      "rule": "A host MUST reject with `422` an imported bundle whose payload carries a literal credential value.",
+      "today": "Major 1 only (`export-bundle-portability`, v1 seam `/v1/host/sample/import`).",
+      "why": "An export bundle crosses tenants and hosts by design. Accepting literal credentials launders secrets across that boundary.",
+      "scenario": {
+        "name": "v2-import-refuses-credential-literal",
+        "gate": "`portability.import`",
+        "asserts": "a dry-run and a real import of a bundle whose `connection-ref` carries a literal token each answer `422`, and the dry run writes nothing (a follow-up read finds no created entity)",
+        "sabotage": "strip unknown fields instead of refusing: the import returns `200`"
+      }
+    },
+    {
+      "title": "Unverified inbound events start runs",
+      "family": "triggerBridge",
+      "class": "security",
+      "doc": "spec/v2/core/webhooks.md",
+      "section": "Inbound triggers",
+      "rule": "MUST verify per `verification` before delivery; a failed `required` check dead-letters with reason `signature-invalid`",
+      "today": "Major 1 only (`trigger-ingestion`, `trigger-bridge-delivery`). The section is attributed to `webhooks` by document name; its obligations belong to `triggerBridge`.",
+      "why": "An unsigned inbound event that starts a run lets anyone on the internet trigger workflows with chosen input.",
+      "scenario": {
+        "name": "v2-trigger-ingestion-verification",
+        "gate": "`triggerBridge.ingestion` with a `required` verification source",
+        "asserts": "an event with a bad signature starts no run and lands in dead-letter with `signature-invalid`; the same event correctly signed starts exactly one run",
+        "sabotage": "log the verification failure and deliver anyway: a run starts"
+      }
+    },
+    {
+      "title": "Front-end plugins load unsigned",
+      "family": "uiPlugins",
+      "class": "security",
+      "doc": "spec/v2/core/packs.md",
+      "section": "Front-end plugin packs",
+      "rule": "MUST verify the pack signature before loading, failing closed",
+      "today": "Major 1 only (`frontend-plugin-packs`). The v2 seams profile already serves test packs with `.sig` files under `/conformance/seams/packs-test/`.",
+      "why": "A plugin bundle runs in the user's browser next to the host UI. An unsigned bundle is arbitrary script.",
+      "scenario": {
+        "name": "v2-frontend-plugin-signature-required",
+        "gate": "`uiPlugins` advertised, seams profile (packs-test registry)",
+        "asserts": "installing a `frontend-plugin` pack with a tampered `.sig` is refused and the pack never appears as installed; the correctly signed pack installs",
+        "sabotage": "skip verification when the signature file is missing or unreadable: the tampered pack installs"
+      }
+    },
+    {
+      "title": "Replay re-resolves approver membership",
+      "family": "replay",
+      "class": "replay",
+      "doc": "spec/v2/core/replay.md",
+      "section": "Determinism caveats (`replay` mode)",
+      "rule": "Approver eligibility recorded on a resume event is fixed history; a host MUST NOT re-resolve membership during replay.",
+      "today": "No witness at any major. `v2-approver-enforced` checks live enforcement, not replay.",
+      "why": "A replay that re-checks membership against today's roster rewrites who approved what, and breaks audit.",
+      "scenario": {
+        "name": "v2-replay-approver-eligibility-fixed",
+        "gate": "`replay` modes include `replay`, `interrupt` approval, a second-tenant or second-subject credential",
+        "asserts": "a run approved by subject S, then replayed after S loses membership, completes identically and re-emits the recorded resolution",
+        "sabotage": "re-run the eligibility check on replay: the replay parks or fails"
+      }
+    },
+    {
+      "title": "Replay raises a fresh interrupt",
+      "family": "replay",
+      "class": "replay",
+      "doc": "spec/v2/core/replay.md",
+      "section": "Determinism caveats (`replay` mode)",
+      "rule": "`ctx.interrupt(K)` MUST short-circuit to the persisted `interrupt.resolved`, raising no new `interrupt.requested`.",
+      "today": "No major-2 witness. The section has no major-2 citation.",
+      "why": "A replay that re-asks a human repeats approvals and can take a different branch than the source.",
+      "scenario": {
+        "name": "v2-replay-interrupt-short-circuit",
+        "gate": "`replay` modes include `replay`, `interrupt` advertised",
+        "asserts": "replaying a resolved approval run emits no `interrupt.requested` after the fork point, reaches the same terminal and carries the source's resolve value",
+        "sabotage": "re-execute `ctx.interrupt` on replay: the run parks in `waiting-approval`"
+      }
+    },
+    {
+      "title": "Replay divergence goes unreported",
+      "family": "replay",
+      "class": "replay",
+      "doc": "spec/v2/core/replay.md",
+      "section": "Divergence",
+      "rule": "MUST emit `replay.diverged` `{ originalEventId, replayEventId, divergencePoint }`;",
+      "today": "No scenario at any major asserts `replay.diverged`. Only its refusal variant has a major-1 leg (`replay-divergence-at-refusal`).",
+      "why": "Divergence is how a replay user learns the replay is not the source run. Silent divergence makes replay evidence worthless.",
+      "scenario": {
+        "name": "v2-replay-divergence-emitted",
+        "gate": "`replay` modes include `replay`, the mock-AI seam (a scripted response that differs on replay)",
+        "asserts": "the replay continues, emits `replay.diverged` naming both event ids and a `divergencePoint`, and reaches a terminal",
+        "sabotage": "substitute the recorded output silently: no `replay.diverged` appears"
+      }
+    },
+    {
+      "title": "Inbound dedup starts a second run",
+      "family": "triggerBridge",
+      "class": "idempotency",
+      "doc": "spec/v2/core/webhooks.md",
+      "section": "Inbound triggers",
+      "rule": "with `dedup`, MUST answer a `dedupKey` repeated within retention (at least 24 hours) with the prior `runId`;",
+      "today": "Major 1 only (`trigger-bridge-delivery`).",
+      "why": "Sources redeliver. Without dedup one upstream event runs a workflow, and its side effects, twice.",
+      "scenario": {
+        "name": "v2-trigger-dedup-prior-run",
+        "gate": "`triggerBridge.dedup`",
+        "asserts": "two deliveries with the same `dedupKey` yield one run, and the second answer carries the first `runId`",
+        "sabotage": "dedup in memory only and restart between deliveries (or skip dedup): a second run starts"
+      }
+    },
+    {
+      "title": "Production keys can force the engine version",
+      "family": "(none)",
+      "class": "wire shape",
+      "doc": "spec/v2/core/headers.md",
+      "section": "Request headers",
+      "rule": "Servers MUST reject it on production API keys with `403 force_engine_version_forbidden`.",
+      "today": "No family: `headers.md` homes none. `version-fold` (major 1) holds one API key and cannot tell a production key from a test key, so the refusal is never exercised.",
+      "why": "Forcing an old engine version on production traffic reopens fixed behaviour on live runs.",
+      "scenario": {
+        "name": "v2-force-engine-version-production-refused",
+        "gate": "a production-class key supplied to the harness (new env, e.g. `OPENWOP_TEST_PRODUCTION_API_KEY`)",
+        "asserts": "`POST /runs` with `OpenWOP-Force-Engine-Version` on the production key answers `403 force_engine_version_forbidden` and creates no run",
+        "sabotage": "honour the header on any key: the run is created"
+      }
+    },
+    {
+      "title": "Residency constraints are accepted and ignored",
+      "family": "dataResidency",
+      "class": "wire shape",
+      "doc": "spec/v2/core/runs.md",
+      "section": "`dataResidency`",
+      "rule": "A host advertising `dataResidency` MUST honor-or-reject, and MUST NOT silently accept-and-ignore:",
+      "today": "Major 1 only (`data-residency-admission`).",
+      "why": "A silently ignored residency constraint puts regulated data in the wrong jurisdiction while the client believes otherwise.",
+      "scenario": {
+        "name": "v2-residency-honor-or-reject",
+        "gate": "`dataResidency` advertised",
+        "asserts": "a run naming a region outside `dataResidency.regions` is refused `residency_unavailable`; one naming an advertised region is accepted",
+        "sabotage": "drop the `residency` field during validation: the unadvertised region is accepted"
+      }
+    }
+  ]
+}
