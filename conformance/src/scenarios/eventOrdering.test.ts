@@ -21,9 +21,11 @@ import { pollUntilTerminal } from '../lib/polling.js';
 import { isFixtureAdvertised } from '../lib/fixtures.js';
 import { req } from '../lib/requirement-ids.js';
 import { blockedDespiteAssertions } from '../lib/soft-skip.js';
+import { softSkip } from '../lib/soft-skip.js';
 
 const NOOP_WORKFLOW_ID = 'conformance-noop';
 const SKIP_NO_NOOP = !isFixtureAdvertised(NOOP_WORKFLOW_ID);
+const NO_FIXTURE_REASON = `precondition not met — \`${NOOP_WORKFLOW_ID}\` is not advertised, so this host cannot witness the eventOrdering floor. RFC 0148 §A: \`blocked\`, naming the fixture (#1686: a describe-level skip recorded no disposition, and an unrecorded floor rejected the whole certification)`;
 
 interface RawEvent {
   // Event shape may use `seq` or `sequence` depending on host's event-
@@ -49,8 +51,9 @@ function getSeq(event: RawEvent): number | null {
 // always yields a readable events[] of at least two. A host that does not was
 // never observed ordering anything — until 2026-09-27 these recorded a
 // partial-witness PASS.
-describe.skipIf(SKIP_NO_NOOP)('event-ordering: polling returns events in monotonic order', () => {
+describe('event-ordering: polling returns events in monotonic order', () => {
   it('events from a single poll have non-decreasing sequence numbers', async () => {
+    if (SKIP_NO_NOOP) return softSkip('blocked', NO_FIXTURE_REASON);
     const create = await driver.post('/v1/runs', { workflowId: NOOP_WORKFLOW_ID });
     expect(create.status).toBe(201);
     const runId = (create.json as { runId: string }).runId;
@@ -76,6 +79,7 @@ describe.skipIf(SKIP_NO_NOOP)('event-ordering: polling returns events in monoton
   });
 
   it('repeated polls of a terminal run yield identical event sequences', async () => {
+    if (SKIP_NO_NOOP) return softSkip('blocked', NO_FIXTURE_REASON);
     const create = await driver.post('/v1/runs', { workflowId: NOOP_WORKFLOW_ID });
     expect(create.status).toBe(201);
     const runId = (create.json as { runId: string }).runId;
@@ -106,8 +110,9 @@ describe.skipIf(SKIP_NO_NOOP)('event-ordering: polling returns events in monoton
   });
 });
 
-describe.skipIf(SKIP_NO_NOOP)('event-ordering: terminal run has at most one terminal event', () => {
+describe('event-ordering: terminal run has at most one terminal event', () => {
   it('event stream contains exactly one of run.completed / run.failed / run.cancelled', async () => {
+    if (SKIP_NO_NOOP) return softSkip('blocked', NO_FIXTURE_REASON);
     const create = await driver.post('/v1/runs', { workflowId: NOOP_WORKFLOW_ID });
     expect(create.status).toBe(201);
     const runId = (create.json as { runId: string }).runId;
@@ -129,6 +134,7 @@ describe.skipIf(SKIP_NO_NOOP)('event-ordering: terminal run has at most one term
   });
 
   it('the terminal event is the LAST event in the stream', async () => {
+    if (SKIP_NO_NOOP) return softSkip('blocked', NO_FIXTURE_REASON);
     const create = await driver.post('/v1/runs', { workflowId: NOOP_WORKFLOW_ID });
     expect(create.status).toBe(201);
     const runId = (create.json as { runId: string }).runId;

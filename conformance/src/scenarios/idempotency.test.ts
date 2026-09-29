@@ -19,16 +19,19 @@ import { driver } from '../lib/driver.js';
 import { isFixtureAdvertised } from '../lib/fixtures.js';
 import { readErrorCode } from '../lib/error-envelope.js';
 import { req } from '../lib/requirement-ids.js';
+import { softSkip } from '../lib/soft-skip.js';
 
 const WORKFLOW_ID = 'conformance-idempotent';
 const SKIP_NO_FIXTURE = !isFixtureAdvertised(WORKFLOW_ID);
+const NO_FIXTURE_REASON = `precondition not met — \`${WORKFLOW_ID}\` is not advertised, so this host cannot witness the idempotency floor. RFC 0148 §A: \`blocked\`, naming the fixture (#1686: a describe-level skip recorded no disposition, and an unrecorded floor rejected the whole certification)`;
 
 function freshKey(suffix: string): string {
   return `openwop-conformance-${Date.now()}-${Math.random().toString(36).slice(2, 8)}-${suffix}`;
 }
 
-describe.skipIf(SKIP_NO_FIXTURE)('idempotency: same key + same body replays per idempotency.md §Layer 1', () => {
+describe('idempotency: same key + same body replays per idempotency.md §Layer 1', () => {
   it('returns same runId twice and sets openwop-Idempotent-Replay on the replay', async () => {
+    if (SKIP_NO_FIXTURE) return softSkip('blocked', NO_FIXTURE_REASON);
     const key = freshKey('replay');
     const body = { workflowId: WORKFLOW_ID, inputs: { nonce: 'abc-123' } };
 
@@ -66,8 +69,9 @@ describe.skipIf(SKIP_NO_FIXTURE)('idempotency: same key + same body replays per 
   });
 });
 
-describe.skipIf(SKIP_NO_FIXTURE)('idempotency: same key + different body conflicts per idempotency.md §Layer 1', () => {
+describe('idempotency: same key + different body conflicts per idempotency.md §Layer 1', () => {
   it('returns 409 when the body changes under the same key', async () => {
+    if (SKIP_NO_FIXTURE) return softSkip('blocked', NO_FIXTURE_REASON);
     const key = freshKey('conflict');
 
     const first = await driver.post(

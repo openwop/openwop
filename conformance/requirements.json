@@ -12791,7 +12791,7 @@
     {
       "id": "openwop.it.eventOrdering.events-from-a-single-poll-have-non-decreasing-sequence-numbers",
       "file": "eventOrdering.test.ts",
-      "line": 53,
+      "line": 55,
       "title": "events from a single poll have non-decreasing sequence numbers",
       "explicitId": "openwop.it.eventOrdering.events-from-a-single-poll-have-non-decreasing-sequence-numbers",
       "citations": [
@@ -12805,7 +12805,7 @@
     {
       "id": "openwop.it.eventOrdering.repeated-polls-of-a-terminal-run-yield-identical-event-sequences",
       "file": "eventOrdering.test.ts",
-      "line": 78,
+      "line": 81,
       "title": "repeated polls of a terminal run yield identical event sequences",
       "explicitId": "openwop.it.eventOrdering.repeated-polls-of-a-terminal-run-yield-identical-event-sequences",
       "citations": [
@@ -12823,7 +12823,7 @@
     {
       "id": "openwop.it.eventOrdering.event-stream-contains-exactly-one-of-run-completed-run-failed-run-cancelled",
       "file": "eventOrdering.test.ts",
-      "line": 110,
+      "line": 114,
       "title": "event stream contains exactly one of run.completed / run.failed / run.cancelled",
       "explicitId": "openwop.it.eventOrdering.event-stream-contains-exactly-one-of-run-completed-run-failed-run-cancelled",
       "citations": [
@@ -12836,7 +12836,7 @@
     {
       "id": "openwop.it.eventOrdering.the-terminal-event-is-the-last-event-in-the-stream",
       "file": "eventOrdering.test.ts",
-      "line": 131,
+      "line": 136,
       "title": "the terminal event is the LAST event in the stream",
       "explicitId": "openwop.it.eventOrdering.the-terminal-event-is-the-last-event-in-the-stream",
       "citations": [
@@ -13103,7 +13103,7 @@
     {
       "id": "openwop.it.failure-path.post-v1-runs-accepts-the-run-and-run-terminates-as-failed-with-structured-error",
       "file": "failure-path.test.ts",
-      "line": 17,
+      "line": 19,
       "title": "POST /v1/runs accepts the run and run terminates as failed with structured error",
       "explicitId": "openwop.it.failure-path.post-v1-runs-accepts-the-run-and-run-terminates-as-failed-with-structured-error",
       "citations": [
@@ -14869,7 +14869,7 @@
     {
       "id": "openwop.it.idempotency.returns-same-runid-twice-and-sets-openwop-idempotent-replay-on-the-replay",
       "file": "idempotency.test.ts",
-      "line": 31,
+      "line": 33,
       "title": "returns same runId twice and sets openwop-Idempotent-Replay on the replay",
       "explicitId": "openwop.it.idempotency.returns-same-runid-twice-and-sets-openwop-idempotent-replay-on-the-replay",
       "citations": [
@@ -14894,7 +14894,7 @@
     {
       "id": "openwop.it.idempotency.returns-409-when-the-body-changes-under-the-same-key",
       "file": "idempotency.test.ts",
-      "line": 70,
+      "line": 73,
       "title": "returns 409 when the body changes under the same key",
       "explicitId": "openwop.it.idempotency.returns-409-when-the-body-changes-under-the-same-key",
       "citations": [
@@ -15354,7 +15354,7 @@
     {
       "id": "openwop.it.interrupt-clarification.run-suspends-at-ask-answers-payload-drives-terminal-completed",
       "file": "interrupt-clarification.test.ts",
-      "line": 20,
+      "line": 22,
       "title": "run suspends at ask, answers payload drives terminal completed",
       "explicitId": "openwop.it.interrupt-clarification.run-suspends-at-ask-answers-payload-drives-terminal-completed",
       "citations": [
@@ -22575,7 +22575,7 @@
     {
       "id": "openwop.it.replay-fork.produces-a-new-run-that-reaches-terminal-completed",
       "file": "replay-fork.test.ts",
-      "line": 60,
+      "line": 61,
       "title": "produces a new run that reaches terminal `completed`",
       "explicitId": "openwop.it.replay-fork.produces-a-new-run-that-reaches-terminal-completed",
       "citations": [
@@ -22608,7 +22608,7 @@
     {
       "id": "openwop.it.replay-fork.produces-a-new-run-that-reaches-terminal-completed~2",
       "file": "replay-fork.test.ts",
-      "line": 105,
+      "line": 107,
       "title": "produces a new run that reaches terminal `completed`",
       "explicitId": "openwop.it.replay-fork.produces-a-new-run-that-reaches-terminal-completed~2",
       "citations": [
@@ -22621,7 +22621,7 @@
     {
       "id": "openwop.it.replay-fork.rejects-negative-fromseq-with-400",
       "file": "replay-fork.test.ts",
-      "line": 142,
+      "line": 145,
       "title": "rejects negative fromSeq with 400",
       "explicitId": "openwop.it.replay-fork.rejects-negative-fromseq-with-400",
       "citations": [
@@ -22634,7 +22634,7 @@
     {
       "id": "openwop.it.replay-fork.rejects-fromseq-beyond-source-event-log-length-with-422",
       "file": "replay-fork.test.ts",
-      "line": 161,
+      "line": 165,
       "title": "rejects fromSeq beyond source event log length with 422",
       "explicitId": "openwop.it.replay-fork.rejects-fromseq-beyond-source-event-log-length-with-422",
       "citations": [
@@ -22647,7 +22647,7 @@
     {
       "id": "openwop.it.replay-fork.rejects-replay-mode-with-non-empty-runoptionsoverlay-overlay-is-branch-only",
       "file": "replay-fork.test.ts",
-      "line": 182,
+      "line": 187,
       "title": "rejects replay mode with non-empty runOptionsOverlay (overlay is branch-only)",
       "explicitId": "openwop.it.replay-fork.rejects-replay-mode-with-non-empty-runoptionsoverlay-overlay-is-branch-only",
       "citations": [
@@ -22660,7 +22660,7 @@
     {
       "id": "openwop.it.replay-fork.rejects-fork-on-a-non-existent-run-with-404",
       "file": "replay-fork.test.ts",
-      "line": 208,
+      "line": 214,
       "title": "rejects fork on a non-existent run with 404",
       "explicitId": "openwop.it.replay-fork.rejects-fork-on-a-non-existent-run-with-404",
       "citations": [
@@ -23735,7 +23735,7 @@
     {
       "id": "openwop.it.runs-lifecycle.post-v1-runs-returns-201-with-runid-per-rest-endpoints-md",
       "file": "runs-lifecycle.test.ts",
-      "line": 22,
+      "line": 24,
       "title": "POST /v1/runs returns 201 with runId per rest-endpoints.md",
       "explicitId": "openwop.it.runs-lifecycle.post-v1-runs-returns-201-with-runid-per-rest-endpoints-md",
       "citations": [
@@ -23756,7 +23756,7 @@
     {
       "id": "openwop.it.runs-lifecycle.reaches-terminal-completed-within-bounded-time-per-fixtures-md-noop-spec",
       "file": "runs-lifecycle.test.ts",
-      "line": 41,
+      "line": 44,
       "title": "reaches terminal `completed` within bounded time per fixtures.md noop spec",
       "explicitId": "openwop.it.runs-lifecycle.reaches-terminal-completed-within-bounded-time-per-fixtures-md-noop-spec",
       "citations": [
@@ -23773,7 +23773,7 @@
     {
       "id": "openwop.it.runs-lifecycle.get-v1-runs-nonexistentid-returns-404-or-403-per-rest-endpoints-md",
       "file": "runs-lifecycle.test.ts",
-      "line": 59,
+      "line": 63,
       "title": "GET /v1/runs/{nonexistentId} returns 404 (or 403) per rest-endpoints.md",
       "explicitId": "openwop.it.runs-lifecycle.get-v1-runs-nonexistentid-returns-404-or-403-per-rest-endpoints-md",
       "citations": [
@@ -25058,7 +25058,7 @@
     {
       "id": "openwop.it.stream-modes-buffer.accepts-bufferms-in-range-and-emits-at-least-one-event-batch-frame",
       "file": "stream-modes-buffer.test.ts",
-      "line": 36,
+      "line": 38,
       "title": "accepts bufferMs in range and emits at least one event: batch frame",
       "explicitId": "openwop.it.stream-modes-buffer.accepts-bufferms-in-range-and-emits-at-least-one-event-batch-frame",
       "citations": [
@@ -25079,7 +25079,7 @@
     {
       "id": "openwop.it.stream-modes-buffer.rejects-out-of-range-bufferms-with-400-validation-error",
       "file": "stream-modes-buffer.test.ts",
-      "line": 72,
+      "line": 75,
       "title": "rejects out-of-range bufferMs with 400 validation_error",
       "explicitId": "openwop.it.stream-modes-buffer.rejects-out-of-range-bufferms-with-400-validation-error",
       "citations": [
@@ -25092,7 +25092,7 @@
     {
       "id": "openwop.it.stream-modes-buffer.forces-flush-on-terminal-run-completed-arrives-bundled-in-a-batch-before-the-tim",
       "file": "stream-modes-buffer.test.ts",
-      "line": 90,
+      "line": 94,
       "title": "forces flush on terminal — run.completed arrives bundled in a batch BEFORE the timer fires",
       "explicitId": "openwop.it.stream-modes-buffer.forces-flush-on-terminal-run-completed-arrives-bundled-in-a-batch-before-the-tim",
       "citations": [
@@ -25110,7 +25110,7 @@
     {
       "id": "openwop.it.stream-modes-buffer.bufferms-0-behaves-identically-to-omitting-per-event-mode",
       "file": "stream-modes-buffer.test.ts",
-      "line": 134,
+      "line": 139,
       "title": "bufferMs=0 behaves identically to omitting (per-event mode)",
       "explicitId": "openwop.it.stream-modes-buffer.bufferms-0-behaves-identically-to-omitting-per-event-mode",
       "citations": [
@@ -25123,7 +25123,7 @@
     {
       "id": "openwop.it.stream-modes-mixed.accepts-streammode-updates-messages-and-emits-a-server-closed-stream",
       "file": "stream-modes-mixed.test.ts",
-      "line": 34,
+      "line": 36,
       "title": "accepts streamMode=updates,messages and emits a server-closed stream",
       "explicitId": "openwop.it.stream-modes-mixed.accepts-streammode-updates-messages-and-emits-a-server-closed-stream",
       "citations": [
@@ -25144,7 +25144,7 @@
     {
       "id": "openwop.it.stream-modes-mixed.rejects-streammode-values-updates-with-400-unsupported-stream-mode",
       "file": "stream-modes-mixed.test.ts",
-      "line": 64,
+      "line": 67,
       "title": "rejects streamMode=values,updates with 400 + unsupported_stream_mode",
       "explicitId": "openwop.it.stream-modes-mixed.rejects-streammode-values-updates-with-400-unsupported-stream-mode",
       "citations": [
@@ -25169,7 +25169,7 @@
     {
       "id": "openwop.it.stream-modes-mixed.rejects-streammode-updates-bogus-one-bad-mode-fails-the-whole-list",
       "file": "stream-modes-mixed.test.ts",
-      "line": 98,
+      "line": 102,
       "title": "rejects streamMode=updates,bogus (one bad mode fails the whole list)",
       "explicitId": "openwop.it.stream-modes-mixed.rejects-streammode-updates-bogus-one-bad-mode-fails-the-whole-list",
       "citations": [
@@ -25182,7 +25182,7 @@
     {
       "id": "openwop.it.stream-modes-mixed.mixed-mode-union-updates-debug-sees-every-event-updates-sees",
       "file": "stream-modes-mixed.test.ts",
-      "line": 116,
+      "line": 121,
       "title": "mixed mode union: updates,debug sees every event updates sees",
       "explicitId": "openwop.it.stream-modes-mixed.mixed-mode-union-updates-debug-sees-every-event-updates-sees",
       "citations": [
@@ -25196,7 +25196,7 @@
     {
       "id": "openwop.it.stream-modes.emits-at-least-run-started-run-completed-and-server-closes-the-stream",
       "file": "stream-modes.test.ts",
-      "line": 35,
+      "line": 37,
       "title": "emits at least run.started + run.completed and server closes the stream",
       "explicitId": "openwop.it.stream-modes.emits-at-least-run-started-run-completed-and-server-closes-the-stream",
       "citations": [
@@ -25217,7 +25217,7 @@
     {
       "id": "openwop.it.stream-modes.returns-400-and-a-structured-error-body",
       "file": "stream-modes.test.ts",
-      "line": 60,
+      "line": 63,
       "title": "returns 400 and a structured error body",
       "explicitId": "openwop.it.stream-modes.returns-400-and-a-structured-error-body",
       "citations": [
@@ -25242,7 +25242,7 @@
     {
       "id": "openwop.it.stream-modes.returns-200-emits-at-least-one-event-server-closes-per-stream-modes-md-values",
       "file": "stream-modes.test.ts",
-      "line": 90,
+      "line": 94,
       "title": "returns 200 + emits at least one event + server-closes per stream-modes.md §values",
       "explicitId": "openwop.it.stream-modes.returns-200-emits-at-least-one-event-server-closes-per-stream-modes-md-values",
       "citations": [
@@ -25259,7 +25259,7 @@
     {
       "id": "openwop.it.stream-modes.debug-stream-is-a-superset-of-updates-per-stream-modes-md-mode-mapping",
       "file": "stream-modes.test.ts",
-      "line": 114,
+      "line": 119,
       "title": "debug stream is a superset of updates per stream-modes.md mode-mapping",
       "explicitId": "openwop.it.stream-modes.debug-stream-is-a-superset-of-updates-per-stream-modes-md-mode-mapping",
       "citations": [

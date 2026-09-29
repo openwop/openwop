@@ -22,16 +22,19 @@ import { subscribe, type SseEvent } from '../lib/sse.js';
 import { pollUntilTerminal } from '../lib/polling.js';
 import { isFixtureAdvertised } from '../lib/fixtures.js';
 import { req } from '../lib/requirement-ids.js';
+import { softSkip } from '../lib/soft-skip.js';
 
 const WORKFLOW_ID = 'conformance-delay';
 const SKIP_NO_FIXTURE = !isFixtureAdvertised(WORKFLOW_ID);
+const NO_FIXTURE_REASON = `precondition not met — \`${WORKFLOW_ID}\` is not advertised, so this host cannot witness the stream-modes-mixed floor. RFC 0148 §A: \`blocked\`, naming the fixture (#1686: a describe-level skip recorded no disposition, and an unrecorded floor rejected the whole certification)`;
 
 function eventTypes(events: readonly SseEvent[]): string[] {
   return events.map((e) => e.event);
 }
 
-describe.skipIf(SKIP_NO_FIXTURE)('stream-modes-mixed: comma-separated subsets', () => {
+describe('stream-modes-mixed: comma-separated subsets', () => {
   it('accepts streamMode=updates,messages and emits a server-closed stream', async () => {
+    if (SKIP_NO_FIXTURE) return softSkip('blocked', NO_FIXTURE_REASON);
     const create = await driver.post('/v1/runs', {
       workflowId: WORKFLOW_ID,
       inputs: { delayMs: 500 },
@@ -62,6 +65,7 @@ describe.skipIf(SKIP_NO_FIXTURE)('stream-modes-mixed: comma-separated subsets', 
   });
 
   it('rejects streamMode=values,updates with 400 + unsupported_stream_mode', async () => {
+    if (SKIP_NO_FIXTURE) return softSkip('blocked', NO_FIXTURE_REASON);
     const create = await driver.post('/v1/runs', {
       workflowId: WORKFLOW_ID,
       inputs: { delayMs: 100 },
@@ -96,6 +100,7 @@ describe.skipIf(SKIP_NO_FIXTURE)('stream-modes-mixed: comma-separated subsets', 
   });
 
   it('rejects streamMode=updates,bogus (one bad mode fails the whole list)', async () => {
+    if (SKIP_NO_FIXTURE) return softSkip('blocked', NO_FIXTURE_REASON);
     const create = await driver.post('/v1/runs', {
       workflowId: WORKFLOW_ID,
       inputs: { delayMs: 100 },
@@ -114,6 +119,7 @@ describe.skipIf(SKIP_NO_FIXTURE)('stream-modes-mixed: comma-separated subsets', 
   });
 
   it('mixed mode union: updates,debug sees every event updates sees', async () => {
+    if (SKIP_NO_FIXTURE) return softSkip('blocked', NO_FIXTURE_REASON);
     // Run twice — once with updates only, once with updates,debug.
     // The mixed-mode response MUST be a superset of the updates-only
     // response (union semantics).
