@@ -1,7 +1,7 @@
 # Host services
 
 > **Status: Stable.**
-> **Normative home:** `aiEnvelope`, `promptLibrary`, `agentRuntime`, `mcp`, `workspace`, `secrets`, `modelCapabilities`, `scheduling`, `queueBus`, `toolHooks`, `httpClient`.
+> **Normative home:** `aiEnvelope`, `promptLibrary`, `agentRuntime`, `mcp`, `workspace`, `secrets`, `modelCapabilities`, `scheduling`, `queueBus`, `toolHooks`, `httpClient`, `memory`.
 
 ## Why this exists
 
@@ -123,4 +123,20 @@ A host advertising `workspace` keeps agent files (`schemas/v2/workspace-file.sch
 
 A workflow calling `ctx.workspace` MUST NOT register on a host without the family. The memory-index manifest is the workspace file `MEMORY-INDEX.json`.
 
-*Sources: RFCs 0017, 0031, 0052, 0059, 0064, 0076, 0079, 0144.*
+## `memory`
+
+A host advertising `memory` serves agent memory (`schemas/v2/memory-entry.schema.json`) to pack code as `ctx.memory`; no protocol path exists. `list` returns `[]` for an unknown ref and `get` returns `null`; writes are host-internal, and a read-only host sets `writable: false`.
+
+- **Refs.** `memoryRef` is opaque; a host MUST NOT assume another host's ref resolves. A node MUST guard `ctx.memory`, which may be undefined.
+- **Tenant isolation.** A ref MUST resolve to one tenant's entries, whatever the caller's permissions. A malformed ref (traversal, embedded null, oversize) MUST return `[]` or `null`. An adapter sharing a store MUST gate on the ref's shape, not trust the store. An adapter error MUST NOT carry entry data.
+- **Redaction.** A persisted entry MUST carry `[REDACTED:<secretId>]` in place of any value the run's vault resolved at user, tenant or run scope; platform scope is excluded.
+- **Size and expiry.** A host SHOULD reject a `put` over `maxEntrySizeBytes` with `validation_error`. Under `ttlSupported` or `retention.ttl`, an entry past `expiresAt` MUST NOT surface, purged or not.
+- **Long-term.** A host whose `agents.memoryBackends` includes `long-term` MUST honor isolation, redaction and expiry end to end. A validator MUST NOT look for `memoryBackends` under `memory`.
+- **`search`** advertises query `modes` beyond `list`. **`retention.forget`** is a tenant-scoped delete-by-subject of live memory only; replay reads the recorded snapshot and the log is untouched.
+- **`attribution`.** Under `emitsWriteEvents: true` the host MUST emit a content-free `memory.written` for every memory write a run makes; otherwise a consumer MUST tolerate its absence.
+- **`injectionBudget`** makes `list` honor `tokenBudget`, in `tokenCounter` units; otherwise it is ignored. The host MUST return a prefix of the ranked list within budget, omitting, never truncating, an entry that alone exceeds it, and with `limit` MUST honor whichever yields fewer. `rank: relevance` MUST carry `query` and requires `search` mode `semantic`; otherwise a host MUST reject it or fall back, as documented, to `recency` (the default), never fabricate a ranking. Ranking MUST run over the redacted, single-tenant set.
+- **`compaction`** (`trigger: host-managed`) emits `memory.compacted`. Derived content MUST pass the same redaction as a fresh `put`. A client MUST NOT infer compaction or distillation from entry counts.
+- **`distillation`** is budgeted compaction ([runs.md](runs.md)); an absent budget MUST default to `maxTokenBudget`, counting input and output. A run MUST read the ref's snapshot, MUST NOT re-expose a redacted secret at any recursion level, and MUST write an immutable, addressable archive, byte-stable per source set and budget, kept for `archiveRetention`. Under `indexEmitted` it updates `MEMORY-INDEX.json` (a `.md` sibling MAY accompany it). It emits `memory.compacted` with `distillation` and `trigger: host-managed`. Tenant isolation covers archive and index.
+- **Degraded agents.** When an agent's `memoryShape` needs a dimension the host lacks, its inventory entry MUST set `memoryDegraded` and `degradedMemoryDimensions`; the agent MAY still dispatch. A `role: skill` manifest MUST keep `memoryShape` scratchpad-only, enforced by schema.
+
+*Sources: RFCs 0004, 0012, 0017, 0031, 0052, 0057, 0059, 0062, 0064, 0076, 0079, 0080, 0113, 0131, 0144.*
