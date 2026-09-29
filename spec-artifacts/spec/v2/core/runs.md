@@ -67,7 +67,7 @@ The `201` response is `{ runId, status, eventsUrl, statusUrl? }`. `status` is on
 
 ### Refusals
 
-- `mode: eval` makes `evalSuiteRef` and `agentId` REQUIRED. It starts an eval-suite projection that emits the content-free `eval.*` family and terminates with an `EvalSummary`. A host that does not advertise `agents.evalSuite` MUST reject it.
+- `mode: eval` makes `evalSuiteRef` and `agentId` REQUIRED. It starts an eval-suite projection that emits the content-free `eval.*` family and terminates with an `EvalSummary`. A host that does not advertise `agents.evalSuite` MUST reject it `422 capability_not_provided`.
 - A host advertising `dataResidency` MUST reject a `residency.region` outside `dataResidency.regions` with `422 residency_unavailable` and create no run (see §"Conversation and residency capabilities").
 - A workflow that references a capability-gated reserved node type on a host that does not advertise the capability MUST be rejected with `422 capability_required`.
 

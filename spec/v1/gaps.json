@@ -10689,6 +10689,23 @@
       ]
     },
     {
+      "id": "openwop.gap.0189.17",
+      "rfc": "0189",
+      "local": "G17",
+      "section": "—",
+      "surface": "`spec/v1/multi-agent-execution.md` (RFC 0039 MAE-2) names an opt-in `memoryScopeIsolation: \"isolated\"` field on the dispatch config, but no v1 schema ever defined it. Found while restating `multiAgent` levels 2–6 in `execution.md` (#1802).",
+      "witness": "unclassified",
+      "requirementId": null,
+      "disposition": "closed",
+      "target": null,
+      "sources": [
+        {
+          "file": "RFCS/registers/0189-normative-home.gaps.md",
+          "token": "G17"
+        }
+      ]
+    },
+    {
       "id": "openwop.gap.0190.1",
       "rfc": "0190",
       "local": "G1",
