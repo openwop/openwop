@@ -3,17 +3,12 @@
   "t0": "2026-09-18",
   "openAtT0": 66,
   "$openAtT0Comment": "Re-seeded 2026-09-19 from 68 to 66 when the burn-down denominator changed from `v1Dependent + undeclared` to what RFC 0189 §D actually makes fatal (`undeclared + uncarried`). 66 is what `undeclared` was at t0; the 2 v1-dependent families of that day are no longer counted by the calendar. A SNAPSHOT taken at the start of t0, not a running total. `undeclared` + `v1Dependent` below are CURRENT and are already lower — two commits on t0 retired five families. The difference is real headroom in the burn-down and is intentional; do not 'reconcile' them by lowering openAtT0, which would retroactively steepen a schedule already met.",
-  "v1Dependent": 2,
+  "v1Dependent": 0,
   "undeclared": 0,
   "facetsUncovered": 0,
   "v1Banners": {
-    "spec/v1/budget-policy.md": "> **Status: Stable · v1.x · RFC 0084.** Capability-gated budget, quota, and cost-enforcement contract.",
-    "spec/v1/node-packs.md": "> **Status: Stable · v1.1.** Normative contract for the pack manifest format, distribution, signing, and the registry HTTP API. The hosted reference registry is `https://packs.openwop.dev/`.",
-    "spec/v1/production-profile.md": "> **Status: Stable · v1.1.** Operational-readiness profile for public OpenWOP hosts. Additive: combines existing v1 contracts into a production claim without changing required wire shapes."
+    "spec/v1/node-packs.md": "> **Status: Stable · v1.1.** Normative contract for the pack manifest format, distribution, signing, and the registry HTTP API. The hosted reference registry is `https://packs.openwop.dev/`."
   },
-  "v1Carried": [
-    "budget",
-    "production"
-  ],
+  "v1Carried": [],
   "$v1CarriedComment": "RFC 0189 §D. At v1 end-of-support, spec/v1/** is FROZEN-BUT-OPERATIVE for exactly these families: EOS ends new v1 wire support, it does not de-normativize prose a v2 family still points at. After the date the gate fails only if one of these targets is DELETED or its Status banner changes — which is the real hazard, rather than a calendar square."
 }

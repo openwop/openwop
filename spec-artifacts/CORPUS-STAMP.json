@@ -219,7 +219,7 @@
     "spec/v2/README.md": "ddea90d7cf14aefffe1a43eeeecd4222dadad1d1e5ac64dceb073990eb93d9ef",
     "spec/v2/core/artifact-type-packs.md": "e143bfd6f98d4867855bb57090a6b854e98d4b0a6202b9b3734cb45366f99854",
     "spec/v2/core/capabilities.md": "ad728e8a761153b55d036ece55043ff62d0982121e2e629e5e7cdf560fca3c03",
-    "spec/v2/core/conformance.md": "0cfceb926eed87055550a5c23e640210c795fc8cf9dd1b2544db0e2b3842c564",
+    "spec/v2/core/conformance.md": "e25f2e0f27fb5a05ee999134ac2486c8058bcc4812b2483cbd52a8517e7fa5ad",
     "spec/v2/core/connection-packs.md": "1ee129d792c537bfe82393ccb92555d8e6ddc342b1aa781a13f101b27ec38171",
     "spec/v2/core/conversation.md": "354fa57c73d11062e523a44aa75a6353c5c81aefaf306d30c42416a228c82c86",
     "spec/v2/core/errors.md": "cbe50d40b86103bb325ae46288acaa808f841721a02b9451e94188ea523460b1",
@@ -240,7 +240,7 @@
     "spec/v2/core/persistence.md": "b4d7ae6ad3472018b33cbc2df81a0e8899c7bf7535b015e91b993589ab88af5f",
     "spec/v2/core/portability.md": "87c4327f674f714fda6217fd79b99d2ba219ad47dc02f9751bb56c200fb2c17a",
     "spec/v2/core/replay.md": "1265a53a526174bb4cfcaf76d2bb1123168e575bfb61d7e297504caa0ece140d",
-    "spec/v2/core/runs.md": "097a43f64ec8077a96afcea752d1020cbc032404415ccec581c0eb055f033fb7",
+    "spec/v2/core/runs.md": "2abcb196c046d1d0ef2777fc4f348b5b547985123964dd60e67a31a0e79eae52",
     "spec/v2/core/security-defaults.md": "887d8c4bc592094e3b931c23f1c2175c18ebbd47528b074016f9d2091bc513b2",
     "spec/v2/core/storage.md": "339574d7f054f1bad7269b786d152d984293abb77ef8553fa3c8a79a7eafe9c5",
     "spec/v2/core/tool-catalog.md": "d16a9004418719c48301804aefa4d7ab6f41112a4ed83727f552aa1b92b418b0",
@@ -249,7 +249,7 @@
     "spec/v2/core/workflow-chain-packs.md": "fdce7a8477e269950a2bac05ee6eddbd66eb0b670b464d00054f7196ec05d29c",
     "spec/v2/corrections.json": "59f647f4d22477f6c2b06dcf913b682dde5d51dd5e607a5d0cf648ab60864d6e",
     "spec/v2/corrections.schema.json": "46bbffb954d13bd9995aebc912ceeb2544f7064331abf25fd6ab85c81a5cec94",
-    "spec/v2/declaration.json": "8132b5528a2cb733858e716b364ade04fdbe2b69d61b333a9e5f21d91bd6ce48",
+    "spec/v2/declaration.json": "24866c15908b3b70d96339dd852187ba908ddf65f90fad1d566ba6df5881aa48",
     "spec/v2/declaration.schema.json": "ef951633e4070899f64828f5cf1b5f4870270a0360f81dbb49b5b4d6cd407550",
     "spec/v2/errors.json": "83f048b0a06952b4af6f125fb66c4212acab51056b411390f1010acd6ab9cdc0",
     "spec/v2/errors.schema.json": "47404ad53e6147cf9017b813483712466573e419fb33e6c4b6c12d3e7deba1bc",
@@ -306,5 +306,5 @@
     "spec/v2/retention-floors.json": "eaf3722d95c79947af1d4269ef85117e126518c588cfcf1a2b21b97269f51624",
     "spec/v2/surface-baseline.json": "ca7310e7b970f4cd5629e20718d77ee64427a04c7aba2e963bbfd43500ba1521"
   },
-  "corpusCommit": "99a43b78bd955cbc06998405860ed18f3ae80618"
+  "corpusCommit": "cadeddaa87d6e29374c7e84b5c6d06431720ef32"
 }
