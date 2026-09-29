@@ -397,6 +397,24 @@ Format follows [Keep a Changelog](https://keepachangelog.com/en/1/) loosely. Ver
 - **The remaining eleven stay `Active`, each for a stated reason** rather than for lack of attention. The eight RFC 0167 program children name a certified openwop-app bundle in their own acceptance criteria and the committed one reads `certified: false` (3 blocked rows, RFC 0168 §E.1). RFC 0173 additionally carries the program's only `open` gap row. RFC 0179's sole criterion is unmet — 2.4.2 stopped the gate reading "(Phase 4 leg)" as an excuse for it. RFC 0187 names three requirement ids that no scenario mints. RFC 0167 itself flips **last**, which 2.4.2 made a rule: the moment the umbrella stops being `Active`, every child still `Active` becomes permanently ineligible.
 - **The interrupt `data` union is bound to `kind`** (MCP/A2A review P3-H7, Class 3 correction — COMPATIBILITY.md §3). `schemas/suspend-request.schema.json` and its v2 twin typed `data` as an unbound `oneOf`, so the minimal `conversation.start` and `conversation.close` payloads (`{ conversationId }`, which satisfies both shapes) failed validation in v1 and v2, and a payload carrying another kind's `data` passed. `data` is now an `anyOf` and a root `allOf` binds each kind to its own shape with one `if`/`then`; no per-kind shape or `$id` changed. Witnessed by `conformance/fixtures/interrupt-payloads/` (suite 2.36.0).
 
+## [2.44.6] — 2026-09-29 — RFC 0228 registers the v1 host-service codes, RFC 0227 moves the generated error table out of the core budget, and the last core families get v2 homes
+
+A suite patch.
+
+### Protocol
+
+- **RFC 0228 `Active`: the error codes v1 named for host services are registered for v2** (#1802). Nine registry rows, including `storage_limit_exceeded`, `egress_denied`, `upstream_unavailable`, `budget_exhausted` and `service_unavailable`. `multiAgent` levels 2–6 are restated in `execution.md`, and the `aiProviders` / `subWorkflow` retirements are recorded.
+- **RFC 0227 `Active`: a generated restatement of a registry is not kernel prose** (#1761; the comment window is waived by steward direction, RFC 0147 §A.6 does not apply). `errors.md`'s status table moves to `spec/v2/generated/error-codes.md`, written whole by `generate-error-envelope.mjs` and excluded from the RFC 0190 core budget (37,713 → 37,351 of 37,800).
+- **`agents`, `budget` and `production` get v2 normative homes** (RFC 0189; #1803, #1804). No rule is added, dropped, strengthened or weakened.
+- **A readability pass over the homed v2 prose** (#1806; editorial, −665 core words), plus the remaining homing loose ends.
+
+### Conformance
+
+- **`0171.error-registry-prose-parity` is re-pointed** at the generated table (RFC 0227).
+- **New scenario `v2-unadvertised-operation-not-found`** (major 2): an unadvertised `/prompts` or `/content/settings` operation answers `404 not_found`, not v1's `501`.
+- **`v2-interop-map-coherent`** gets a 180 s per-test timeout.
+- **Suite `2.44.6`.** `@openwop/spec-artifacts` moves in lockstep at the same exact pin.
+
 ## [2.44.5] — 2026-09-29 — a replay short-circuit raises no new interrupt request, and the hold node's outputs are pinned
 
 A suite patch that follows up 2.44.4.

@@ -1,7 +1,7 @@
 asyncapi: 3.1.0
 info:
   title: OpenWOP v2 event streams
-  version: 2.44.5
+  version: 2.44.6
   description: 'OpenWOP v2 event streams over SSE. The run-events channel''s address is the OpenAPI path key, and the server
     pathname is empty (bare origin). `streamMode` is a stream mode from the closed set, or a comma-separated combination of
     them; `values` never combines. `hostEvents` has a default address, `/host/events`; a host MAY declare another under `heartbeat.deliveryChannel`.

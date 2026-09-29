@@ -1,6 +1,6 @@
 # `@openwop/openwop-conformance` Changelog
 
-## [2.44.6] — unreleased — RFC 0228 registers the v1 host-service codes; multiAgent levels 2–6 restated
+## [2.44.6] — 2026-09-29 — RFC 0228 registers the v1 host-service codes, RFC 0227 moves the generated error table out of the core budget, and the last core families get v2 homes
 
 - **`0171.error-registry-prose-parity` is re-pointed (RFC 0227).** The `errors.md` status table moved to `spec/v2/generated/error-codes.md`, which the packed `@openwop/spec-artifacts` now ships. The row now requires that `errors.md` links the generated table, that the table holds every registered code, and that every count either document states equals the registry. No scenario is added or removed.
 - **The 2.44.6 cycle opens.** RFC 0228 goes `Active`: nine error codes are registered (`storage_limit_exceeded`, `egress_denied`, `upstream_unavailable`, `budget_exhausted`, `budget_model_denied`, `service_unavailable`, `run_expired`, `provider_policy_denied`, `eval_gate_unmet`) and `token_budget_exceeded` narrows to memory distillation. The v2 homes now name the codes their refusals return.
