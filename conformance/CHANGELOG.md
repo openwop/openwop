@@ -1,6 +1,6 @@
 # `@openwop/openwop-conformance` Changelog
 
-## [2.44.5] — unreleased — a replay short-circuit raises no new interrupt request, and the hold node's outputs are pinned
+## [2.44.5] — 2026-09-29 — a replay short-circuit raises no new interrupt request, and the hold node's outputs are pinned
 
 - **The 2.44.5 cycle opens.** Class 3 and editorial follow-ups to 2.44.4 change the packed `@openwop/spec-artifacts` tree (`replay.md`, `fixtures.md`). No scenario is added or removed.
 - **`core.conformance.hold`'s outputs are pinned, and `0223.replay-derives-rejection` cites its MUST.** The hold node's outputs are exactly its resolved inputs, `delayMs` included, under the same keys (`fixtures.md`), so hosts converge. The leg's requirement text now cites `replay.md` §Determinism caveats rule 2, which says a replay short-circuit raises no new `interrupt.requested` (clarified, Class 3).
