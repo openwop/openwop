@@ -5,7 +5,7 @@
 
 ## Why this exists
 
-A retried request MUST NOT create a second run, and a retried node MUST NOT issue a second external effect. A host MUST implement Layer 1 for every mutating endpoint; a host that advertises `idempotency` MUST implement Layer 2 for every node executor that performs an external side effect ([security-defaults.md](security-defaults.md)).
+A retried request MUST NOT create a second run, and a retried node MUST NOT issue a second external effect. A host MUST implement Layer 1 for every mutating endpoint; a host advertising `idempotency` MUST implement Layer 2 for every node executor that performs an external side effect ([security-defaults.md](security-defaults.md)).
 
 ## Layer 1: `Idempotency-Key`
 
@@ -37,7 +37,7 @@ The code's registry `retriable: false` means not retryable without waiting.
 
 ## Layer 2: effect identity
 
-Layer 2 is bound by advertising `idempotency` ([security-defaults.md](security-defaults.md)). Its unit is the **effect**, identified once and stable across every transport or provider retry.
+Layer 2's unit is the **effect**, identified once and stable across every transport or provider retry.
 
 - **Keying.** An effect MUST be keyed on its business identity (`keying: business-identity`): derived from the business operation, stable across every entry point, containing no `runId`, `nodeId` or ordinal. The activity recipe (`keying: activity-recipe`: tenant, run, node, ordinal, `providerKey`) is the fallback for a provider with no business key.
 - **Attempts.** The retry counter MUST NOT participate in the identity. Two distinct logical invocations MUST receive different identities.
@@ -62,7 +62,7 @@ Layer 1 deduplicates the caller's request; Layer 2 deduplicates the run's effect
 
 ## Multi-region
 
-`multiRegion` and `crossRegion` are the two region facets of `idempotency`, and they claim different things.
+The two region facets of `idempotency`, `multiRegion` and `crossRegion`, claim different things.
 
 - `crossRegion` names the host's deployment posture for this axis and MUST be held constant for the life of an advertisement.
 - `multiRegion` is the behavioural claim. When a host advertises it, both layers MUST hold across regions: an `Idempotency-Key` replayed into a second region MUST resolve to the first region's response rather than starting new work, and effect identity MUST collapse a duplicate effect wherever it is observed.

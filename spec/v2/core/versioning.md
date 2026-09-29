@@ -13,11 +13,11 @@ How a v2 host selects a major, what each version axis means, and what a release 
 A v2 host MUST advertise two root fields, both REQUIRED in `schemas/v2/capabilities.schema.json` ([capabilities.md](capabilities.md)):
 
 - `protocolVersions[]` — every `<major>.<minor>` it serves, each matching `^(0|[1-9][0-9]*)\.(0|[1-9][0-9]*)$`. Through the overlap that is `["1.<n>", "2.<m>"]`; after v1 end-of-support, `["2.<m>"]`.
-- `preferredVersion` — MUST be a member of `protocolVersions[]`. Through the overlap it MUST name a 1.x member, because a header-less request is a v1 client's ([capabilities.md](capabilities.md) §1; §1.3). On a host serving a single major, it MUST equal `protocolVersion`.
+- `preferredVersion` — MUST be a member of `protocolVersions[]`. Through the overlap it MUST name a 1.x member ([capabilities.md](capabilities.md) §1; §1.3). On a host serving a single major, it MUST equal `protocolVersion`.
 
 A host that drops v1 advertises a `2.x` `preferredVersion`; its header-less representation becomes the closed v2 root.
 
-A v2 consumer reads `preferredVersion` as the header-less default. When it is absent on a v1 document, the default is `max(protocolVersions[])`, else `protocolVersion`. The suite's `--target-major` defaults from it.
+A v2 consumer reads `preferredVersion` as the header-less default. When it is absent on a v1 document, the default is `max(protocolVersions[])`, else `protocolVersion`.
 
 ### 1.2 Paths
 
@@ -46,8 +46,6 @@ A request on an unversioned path MAY carry `OpenWOP-Version: <major>` or `OpenWO
 | Header absent on `/.well-known/openwop` | MUST serve `preferredVersion`'s major |
 | Header absent on any other unversioned path | MUST serve major 2: the path is the v2 surface (§1.2) |
 | `/v1/…` path with `OpenWOP-Version` other than `1` | MUST answer `400` `protocol_version_mismatch` |
-
-`/.well-known/openwop` is the one resource both majors serve at the same unversioned path, so it is the only place a header-less request can come from a client of the earlier major.
 
 A request on a `/v1/…` path key MUST NOT carry `OpenWOP-Version` with a value other than `1`. `protocol_version_unsupported`, `protocol_version_mismatch` and `client_version_unsupported` (§1.5) are rows in `spec/v2/errors.json` ([errors.md](errors.md)).
 
@@ -131,7 +129,6 @@ Dispositions:
 
 - One grammar covers protocol, envelope-kind and pack axes wherever a version is `<major>.<minor>` (#1, #2, #11, #15).
 - `typeId@<semver>` is a pack axis (`packs.md`); the `2` in `typeId@2.0.0` never means `OpenWOP-Version: 2`.
-- `docs/PROTOCOL-STATUS.md` carries one row per axis.
 
 ### 2.1 `engineVersion` (axis 3)
 
@@ -141,7 +138,7 @@ Dispositions:
 
 ### 2.2 `eventLogSchemaVersion` (axis 4)
 
-`eventLogSchemaVersion` is the era key; the schema floor is `minimum 2`. Its stamping, absent-⇒-`2` and discovery rules are `persistence.md` §"The era key"; the reader contract is `persistence.md`.
+`eventLogSchemaVersion` is the era key; the schema floor is `minimum 2`. Its stamping, absent-⇒-`2`, discovery and reader rules are in [persistence.md](persistence.md) §"The era key".
 
 ## 3. Where v2 lives
 
@@ -168,15 +165,13 @@ Through the overlap a host:
 - MUST emit `OpenWOP-Version` on every response (§1.4);
 - MUST serve `/.well-known/openwop` as one resource whose representation the request header selects ([capabilities.md](capabilities.md)).
 
-The dual-stack scenario creates one run through `/v1/runs` with no header and reads it through `/runs` with `OpenWOP-Version: 2`; the response headers name the contract used.
-
 A run minted under major 1 and read under major 2 MUST use the tenant-bound projection `<tenantId>/<v1-id>` ([identity.md](identity.md) §5). A host MUST NOT return a bare v1 id in a major-2 response.
 
 ### Retirement
 
 The overlap ends at v1 end-of-support ([overview.md](overview.md)): `protocolVersions[]` drops the `1.<n>` member, and every alias carrying the `v1-end-of-support` trigger is removed.
 
-- **Retirement is atomic.** §1.1 admits no state in which both majors are advertised and `2.x` is preferred, so dropping v1 retires the whole `/v1` path space at once.
+- **Retirement is atomic.** Dropping v1 retires the whole `/v1` path space at once (§1.1).
 - **Retirement changes every header-less request's default contract**, from major 1 to major 2. Before retirement, a host MUST check for collisions between manifest top-level path segments and non-protocol unversioned routes, and MUST move each colliding route or apply §1.4 content negotiation.
 
 ### Host-proprietary paths: `/host/<org>/…`
