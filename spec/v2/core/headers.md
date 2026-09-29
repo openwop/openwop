@@ -21,6 +21,10 @@ Standard headers keep their standard names: `Idempotency-Key`, `ETag`, `If-None-
 | `OpenWOP-Force-Engine-Version` | 1 | Test keys only. The server emits this run's events as if it ran the given engine version, which must be within `Capabilities.testing.forceEngineVersionRange`. Servers MUST reject it on production API keys with `403 force_engine_version_forbidden`. |
 | `OpenWOP-Version` | 55 | Selects one of the host's listed major.minor versions. Absent, `/.well-known/openwop` uses `preferredVersion` and every other unversioned path is v2; an unlisted value is 406 protocol_version_unsupported. |
 
+## Cross-origin preflight
+
+A host that answers a CORS preflight for an operation by granting the requesting origin (`Access-Control-Allow-Origin`) MUST admit the operation's method in `Access-Control-Allow-Methods` and, in `Access-Control-Allow-Headers`, every request header `api/v2/openapi.yaml` declares for it, `Authorization` when it is authenticated and `Content-Type` when it takes a body, by listing them or by reflecting `Access-Control-Request-Headers`. A `*` does not admit `Authorization`. Which origins a host grants, and whether with credentials, is host policy. Admitting this table's union on every operation conforms.
+
 ## Response headers
 
 | Header | Operations | Meaning |

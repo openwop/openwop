@@ -13127,8 +13127,8 @@
       "surface": "A browser preflights the new request header. A host whose `Access-Control-Allow-Headers` is an explicit list, and which serves browsers cross-origin, fails every request from a client that sends it. Found at the SDK 2.5.0 release: openwop-app's list omitted it (as it once omitted `OpenWOP-Version`), and so did MyndHyve's public pack reads (fixed in myndhyve#549). v2 says nothing about CORS.",
       "witness": "unclassified",
       "requirementId": null,
-      "disposition": "transferred",
-      "target": "openwop#1763",
+      "disposition": "closed",
+      "target": null,
       "sources": [
         {
           "file": "RFCS/registers/0219-client-version-header.gaps.md",
