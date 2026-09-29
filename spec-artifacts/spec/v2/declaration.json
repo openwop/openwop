@@ -755,7 +755,7 @@
     {
       "key": "memory",
       "kind": "family",
-      "normativeText": ["spec/v1/agent-memory.md", "spec/v1/capabilities.md"],
+      "normativeText": ["spec/v2/core/host-services.md"],
       "anchor": "core",
       "section": "core/capabilities.md#memory",
       "peerDependencyId": "memory",
