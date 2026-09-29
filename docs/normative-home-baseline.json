@@ -3,7 +3,7 @@
   "t0": "2026-09-18",
   "openAtT0": 66,
   "$openAtT0Comment": "Re-seeded 2026-09-19 from 68 to 66 when the burn-down denominator changed from `v1Dependent + undeclared` to what RFC 0189 §D actually makes fatal (`undeclared + uncarried`). 66 is what `undeclared` was at t0; the 2 v1-dependent families of that day are no longer counted by the calendar. A SNAPSHOT taken at the start of t0, not a running total. `undeclared` + `v1Dependent` below are CURRENT and are already lower — two commits on t0 retired five families. The difference is real headroom in the burn-down and is intentional; do not 'reconcile' them by lowering openAtT0, which would retroactively steepen a schedule already met.",
-  "v1Dependent": 4,
+  "v1Dependent": 3,
   "undeclared": 0,
   "facetsUncovered": 0,
   "v1Banners": {
@@ -15,12 +15,10 @@
     "spec/v1/agent-memory.md": "> **Status: Stable · v1.1.** Normative cross-run agent-memory contract: `memoryRef` resolution, the `MemoryAdapter` host interface, cross-tenant isolation (CTI-1), and BYOK secret redaction (SR-1).",
     "spec/v1/agent-org-chart.md": "> **Status: Stable · v1.x · RFC 0087.** Capability-gated descriptive org chart; organizational position never grants protocol authority.",
     "spec/v1/agent-runtime.md": "> **Status: Stable · v1.x · RFC 0097.** Capability-gated standing goals with bounded, judge-based continuation.",
-    "spec/v1/artifact-type-packs.md": "> **Status: Stable · v1.1 · RFC 0071, amended by RFC 0075.** Normative contract for portable and host-registered artifact-type definitions.",
     "spec/v1/production-profile.md": "> **Status: Stable · v1.1.** Operational-readiness profile for public OpenWOP hosts. Additive: combines existing v1 contracts into a production claim without changing required wire shapes."
   },
   "v1Carried": [
     "budget",
-    "artifactTypes",
     "agents",
     "production"
   ],

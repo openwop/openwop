@@ -1022,7 +1022,7 @@
     {
       "key": "artifactTypes",
       "kind": "family",
-      "normativeText": ["spec/v1/artifact-type-packs.md"],
+      "normativeText": ["spec/v2/core/artifact-type-packs.md", "schemas/v2/artifact-type-pack-manifest.schema.json"],
       "anchor": "core",
       "section": "core/capabilities.md#artifactTypes",
       "peerDependencyId": "artifactTypes",
