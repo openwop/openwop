@@ -19,15 +19,21 @@ import { driver } from '../lib/driver.js';
 import { pollUntilTerminal } from '../lib/polling.js';
 import { isFixtureAdvertised } from '../lib/fixtures.js';
 import { isConversationPrimitiveSupported } from '../lib/multi-agent-capabilities.js';
-import { softSkip } from '../lib/soft-skip.js';
+import { softSkip, type SoftSkipKind } from '../lib/soft-skip.js';
 import { req } from '../lib/requirement-ids.js';
 import { readCapabilityFamily } from '../lib/discovery-capabilities.js';
 
 const FIXTURE = 'conformance-conversation-replay';
 const SKIP = !isConversationPrimitiveSupported() || !isFixtureAdvertised(FIXTURE);
 
-describe.skipIf(SKIP)('conversationReplayDeterminism: replay-fork preserves conversation log', () => {
+/** Why the gate below holds, as RFC 0148 §A names it (openwop#1686: a describe-level skip recorded no disposition). */
+const GATE_WHY: readonly [SoftSkipKind, string] =
+  (!isConversationPrimitiveSupported()) ? ['inapplicable', `the host does not advertise the capability this scenario covers (isConversationPrimitiveSupported() is false)`] as const : 
+  (!isFixtureAdvertised(FIXTURE)) ? ['blocked', `the \`${FIXTURE}\` fixture is not advertised`] as const : ['blocked', 'the gate held for no named reason'] as const;
+
+describe('conversationReplayDeterminism: replay-fork preserves conversation log', () => {
   it('forked run yields byte-equal conversation channel projection', async () => {
+    if (SKIP) return softSkip(...GATE_WHY);
     // unfailable-leg audit wave 2, 2026-09-27: the replay-fork gate used to be
     // the fork response itself (404/501 → soft-skip 'inapplicable'), reached
     // only AFTER the create/terminal asserts — a host with no fork surface

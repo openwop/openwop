@@ -30,6 +30,7 @@ import {
   getReasoningVerbosity,
 } from '../lib/multi-agent-capabilities.js';
 import { req } from '../lib/requirement-ids.js';
+import { softSkip, type SoftSkipKind } from '../lib/soft-skip.js';
 
 const FIXTURE = 'conformance-agent-reasoning-streaming';
 /** Expected concatenation of the fixture's `streamChunks` — kept in sync
@@ -48,8 +49,16 @@ const SKIP =
   getReasoningVerbosity() === 'off' ||
   !isFixtureAdvertised(FIXTURE);
 
-describe.skipIf(SKIP)('agentReasoningStreaming: RFC 0024 incremental + closing event contract', () => {
+/** Why the gate below holds, as RFC 0148 §A names it (openwop#1686: a describe-level skip recorded no disposition). */
+const GATE_WHY: readonly [SoftSkipKind, string] =
+  (!isAgentSupported()) ? ['inapplicable', `the host does not advertise the capability this scenario covers (isAgentSupported() is false)`] as const : 
+  (!isReasoningStreamingSupported()) ? ['inapplicable', `the host does not advertise the capability this scenario covers (isReasoningStreamingSupported() is false)`] as const : 
+  (getReasoningVerbosity() === 'off') ? ['inapplicable', `the host advertises reasoning verbosity \`off\`, so agent reasoning events do not apply`] as const : 
+  (!isFixtureAdvertised(FIXTURE)) ? ['blocked', `the \`${FIXTURE}\` fixture is not advertised`] as const : ['blocked', 'the gate held for no named reason'] as const;
+
+describe('agentReasoningStreaming: RFC 0024 incremental + closing event contract', () => {
   it('emits N agent.reasoning.delta events followed by exactly one closing agent.reasoned', async () => {
+    if (SKIP) return softSkip(...GATE_WHY);
     const create = await driver.post('/v1/runs', { workflowId: FIXTURE });
     expect(create.status).toBe(201);
     const runId = (create.json as { runId: string }).runId;
@@ -80,6 +89,7 @@ describe.skipIf(SKIP)('agentReasoningStreaming: RFC 0024 incremental + closing e
   });
 
   it('agent.reasoning.delta `sequence` starts at 0 and increments by 1 within the block', async () => {
+    if (SKIP) return softSkip(...GATE_WHY);
     const create = await driver.post('/v1/runs', { workflowId: FIXTURE });
     expect(create.status).toBe(201);
     const runId = (create.json as { runId: string }).runId;
@@ -104,6 +114,7 @@ describe.skipIf(SKIP)('agentReasoningStreaming: RFC 0024 incremental + closing e
   });
 
   it('closing agent.reasoned.reasoning is the concatenation of the deltas (authoritative)', async () => {
+    if (SKIP) return softSkip(...GATE_WHY);
     const create = await driver.post('/v1/runs', { workflowId: FIXTURE });
     expect(create.status).toBe(201);
     const runId = (create.json as { runId: string }).runId;
@@ -130,6 +141,7 @@ describe.skipIf(SKIP)('agentReasoningStreaming: RFC 0024 incremental + closing e
   });
 
   it('agentId is consistent across all streaming + closing events in a block', async () => {
+    if (SKIP) return softSkip(...GATE_WHY);
     const create = await driver.post('/v1/runs', { workflowId: FIXTURE });
     expect(create.status).toBe(201);
     const runId = (create.json as { runId: string }).runId;
@@ -158,6 +170,7 @@ describe.skipIf(SKIP)('agentReasoningStreaming: RFC 0024 incremental + closing e
   });
 
   it('all agent.reasoning.delta events arrive BEFORE the closing agent.reasoned', async () => {
+    if (SKIP) return softSkip(...GATE_WHY);
     const create = await driver.post('/v1/runs', { workflowId: FIXTURE });
     expect(create.status).toBe(201);
     const runId = (create.json as { runId: string }).runId;

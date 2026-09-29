@@ -37,7 +37,7 @@ import { pollUntilTerminal } from '../lib/polling.js';
 import { isFixtureAdvertised } from '../lib/fixtures.js';
 import { getCollector, waitForRunSpans } from '../lib/otel-collector.js';
 import { req } from '../lib/requirement-ids.js';
-import { softSkip } from '../lib/soft-skip.js';
+import { softSkip, type SoftSkipKind } from '../lib/soft-skip.js';
 
 /**
  * Callback-shaped: the host exports OTLP metrics to the suite's collector.
@@ -75,8 +75,17 @@ const OPENWOP_COST_ATTRIBUTE_NAMES: readonly string[] = [
  *  in snake_case / kebab-case neighbors still match. */
 const CREDENTIAL_SHAPE_RE = /(?<![A-Za-z0-9_])(?:sk-(?:ant-|proj-)?[A-Za-z0-9_-]{20,}|Bearer\s+[A-Za-z0-9._~+/=-]{20,}|ghp_[A-Za-z0-9]{20,}|gho_[A-Za-z0-9]{20,})(?![A-Za-z0-9])|CANARY-openwop-CONFORMANCE-NEVER-SECRET[A-Za-z0-9_-]*/g;
 
-describe.skipIf(SKIP_NO_NOOP)('cost-attribution: metrics.openwopCost forward-compat shape (G6)', () => {
+/** Why the gate below holds, as RFC 0148 §A names it (openwop#1686: a describe-level skip recorded no disposition). */
+const GATE_WHY: readonly [SoftSkipKind, string] =
+  (!isFixtureAdvertised(NOOP_WORKFLOW_ID)) ? ['blocked', `the \`${NOOP_WORKFLOW_ID}\` fixture is not advertised`] as const : ['blocked', 'the gate held for no named reason'] as const;
+
+/** Why the gate below holds, as RFC 0148 §A names it (openwop#1686: a describe-level skip recorded no disposition). */
+const GATE_WHY_2: readonly [SoftSkipKind, string] =
+  (!isFixtureAdvertised(COST_EMIT_WORKFLOW_ID)) ? ['blocked', `the \`${COST_EMIT_WORKFLOW_ID}\` fixture is not advertised`] as const : ['blocked', 'the gate held for no named reason'] as const;
+
+describe('cost-attribution: metrics.openwopCost forward-compat shape (G6)', () => {
   it('on any run, IF metrics.openwopCost is present, its shape MUST match the spec', async () => {
+    if (SKIP_NO_NOOP) return softSkip(...GATE_WHY);
     // Use the noop fixture so we don't depend on AI nodes. The fixture
     // doesn't emit recordCost, so metrics.openwopCost will typically be
     // absent — that's allowed. The assertion is forward-compat: when
@@ -132,8 +141,9 @@ describe.skipIf(SKIP_NO_NOOP)('cost-attribution: metrics.openwopCost forward-com
 // scenarios assert shape conformance + non-negative-integer/number
 // constraints, not exact numeric equality, so any host-canary works.
 
-describe.skipIf(SKIP_NO_COST_EMIT)('cost-attribution: end-to-end roundtrip via conformance.cost.emit (G6 / O4)', () => {
+describe('cost-attribution: end-to-end roundtrip via conformance.cost.emit (G6 / O4)', () => {
   it('metrics.openwopCost MUST carry the canary cost shape after the fixture node runs', async () => {
+    if (SKIP_NO_COST_EMIT) return softSkip(...GATE_WHY_2);
     // Try to start the cost-emit fixture workflow. If the host doesn't
     // advertise the fixture surface (production deployments don't), we
     // get 404 / 422 back and skip the scenario.
@@ -221,6 +231,7 @@ describe.skipIf(SKIP_NO_COST_EMIT)('cost-attribution: end-to-end roundtrip via c
   });
 
   it('cost-emit fixture run MUST emit a node.completed event for the cost-emitting node', async () => {
+    if (SKIP_NO_COST_EMIT) return softSkip(...GATE_WHY_2);
     const create = await driver.post('/v1/runs', {
       workflowId: 'openwop-smoke-cost-emit',
     });
@@ -247,7 +258,7 @@ describe.skipIf(SKIP_NO_COST_EMIT)('cost-attribution: end-to-end roundtrip via c
   });
 });
 
-describe.skipIf(SKIP_NO_COST_EMIT)('cost-attribution: G6 / O4 allowlist + redaction (live OTel spans)', () => {
+describe('cost-attribution: G6 / O4 allowlist + redaction (live OTel spans)', () => {
   // Drives the `openwop-smoke-cost-emit` fixture, which posts arbitrary
   // `attrs` into `conformance.cost.emit` — a mix of (a) all 7
   // allowlisted attribute names, (b) one non-allowlisted key
@@ -260,6 +271,7 @@ describe.skipIf(SKIP_NO_COST_EMIT)('cost-attribution: G6 / O4 allowlist + redact
   // collector isn't available, matching `otel-emission.test.ts`).
 
   it('only allowlisted openwop.cost.* attributes reach the OTel span (G6 close criteria — allowlist enforcement)', async () => {
+    if (SKIP_NO_COST_EMIT) return softSkip(...GATE_WHY_2);
     if (!getCollector()) {
       // eslint-disable-next-line no-console
       console.warn('[cost-attribution] OTel collector not started; set OPENWOP_OTEL_COLLECTOR=true to run');
@@ -299,6 +311,7 @@ describe.skipIf(SKIP_NO_COST_EMIT)('cost-attribution: G6 / O4 allowlist + redact
   });
 
   it('credential-shaped canaries do NOT leak to any OTel attribute (G6 close criteria — redaction)', async () => {
+    if (SKIP_NO_COST_EMIT) return softSkip(...GATE_WHY_2);
     if (!getCollector()) {
       // eslint-disable-next-line no-console
       console.warn('[cost-attribution] OTel collector not started; set OPENWOP_OTEL_COLLECTOR=true to run');

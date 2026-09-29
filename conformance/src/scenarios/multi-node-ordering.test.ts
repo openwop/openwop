@@ -15,6 +15,7 @@ import { driver } from '../lib/driver.js';
 import { pollUntilTerminal } from '../lib/polling.js';
 import { isFixtureAdvertised } from '../lib/fixtures.js';
 import { req } from '../lib/requirement-ids.js';
+import { softSkip, type SoftSkipKind } from '../lib/soft-skip.js';
 
 const WORKFLOW_ID = 'conformance-multi-node';
 const SKIP_NO_FIXTURE = !isFixtureAdvertised(WORKFLOW_ID);
@@ -27,8 +28,13 @@ interface RunEvent {
   readonly sequence: number;
 }
 
-describe.skipIf(SKIP_NO_FIXTURE)('multi-node: conformance-multi-node fixture emits node.completed in topological order', () => {
+/** Why the gate below holds, as RFC 0148 §A names it (openwop#1686: a describe-level skip recorded no disposition). */
+const GATE_WHY: readonly [SoftSkipKind, string] =
+  (!isFixtureAdvertised(WORKFLOW_ID)) ? ['blocked', `the \`${WORKFLOW_ID}\` fixture is not advertised`] as const : ['blocked', 'the gate held for no named reason'] as const;
+
+describe('multi-node: conformance-multi-node fixture emits node.completed in topological order', () => {
   it('a, b, c node.completed events arrive in DAG order by sequence', async () => {
+    if (SKIP_NO_FIXTURE) return softSkip(...GATE_WHY);
     const create = await driver.post('/v1/runs', { workflowId: WORKFLOW_ID });
     expect(create.status).toBe(201);
     const runId = (create.json as { runId: string }).runId;

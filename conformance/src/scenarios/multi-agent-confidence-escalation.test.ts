@@ -47,7 +47,7 @@
  */
 
 import { describe, it, expect } from 'vitest';
-import { softSkip } from '../lib/soft-skip.js';
+import { softSkip, type SoftSkipKind } from '../lib/soft-skip.js';
 import { driver } from '../lib/driver.js';
 import { isFixtureAdvertised } from '../lib/fixtures.js';
 import { pollUntil } from '../lib/polling.js';
@@ -83,8 +83,13 @@ async function readDiscovery(): Promise<DiscoveryDoc | null> {
   }
 }
 
-describe.skipIf(HTTP_SKIP)('multi-agent-confidence-escalation: capability shape (RFC 0039 §A)', () => {
+/** Why the gate below holds, as RFC 0148 §A names it (openwop#1686: a describe-level skip recorded no disposition). */
+const GATE_WHY: readonly [SoftSkipKind, string] =
+  (!process.env.OPENWOP_BASE_URL) ? ['inapplicable', `no target: OPENWOP_BASE_URL is unset`] as const : ['blocked', 'the gate held for no named reason'] as const;
+
+describe('multi-agent-confidence-escalation: capability shape (RFC 0039 §A)', () => {
   it('confidenceEscalationFloor (when advertised) MUST be in [0.5, 1.0]', async () => {
+    if (HTTP_SKIP) return softSkip(...GATE_WHY);
     const d = await readDiscovery();
     if (d === null) return softSkip('blocked', 'precondition not met — `d === null` returned early (seam, prior step, or fixture unavailable)');
     const em = capabilityFamily<{ executionModel?: { [k: string]: unknown; crossHostCausation?: Record<string, unknown>; replayDeterminism?: Record<string, unknown> } }>(d, 'multiAgent')?.executionModel;
@@ -101,8 +106,14 @@ describe.skipIf(HTTP_SKIP)('multi-agent-confidence-escalation: capability shape 
   });
 });
 
-describe.skipIf(BEHAVIORAL_SKIP)('multi-agent-confidence-escalation: behavioral (RFC 0039 §A)', () => {
+/** Why the gate below holds, as RFC 0148 §A names it (openwop#1686: a describe-level skip recorded no disposition). */
+const GATE_WHY_2: readonly [SoftSkipKind, string] =
+  (!process.env.OPENWOP_BASE_URL) ? ['inapplicable', `no target: OPENWOP_BASE_URL is unset`] as const : 
+  (!isFixtureAdvertised(FIXTURE)) ? ['blocked', `the \`${FIXTURE}\` fixture is not advertised`] as const : ['blocked', 'the gate held for no named reason'] as const;
+
+describe('multi-agent-confidence-escalation: behavioral (RFC 0039 §A)', () => {
   it('happy-path: low-confidence decision → confidence-escalated event + clarification interrupt + zero dispatch events', async () => {
+    if (BEHAVIORAL_SKIP) return softSkip(...GATE_WHY_2);
     const d = await readDiscovery();
     const supported = capabilityFamily<{ executionModel?: { [k: string]: unknown; crossHostCausation?: Record<string, unknown>; replayDeterminism?: Record<string, unknown> } }>(d, 'multiAgent')?.executionModel?.supported === true;
     const versionRaw = capabilityFamily<{ executionModel?: { [k: string]: unknown; crossHostCausation?: Record<string, unknown>; replayDeterminism?: Record<string, unknown> } }>(d, 'multiAgent')?.executionModel?.version;

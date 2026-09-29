@@ -47,7 +47,7 @@ import { describe, expect, it } from 'vitest';
 import { driver } from '../lib/driver.js';
 import { pollUntilTerminal, scaledTimeoutMs } from '../lib/polling.js';
 import { isFixtureAdvertised } from '../lib/fixtures.js';
-import { blockedDespiteAssertions } from '../lib/soft-skip.js';
+import { blockedDespiteAssertions, softSkip, type SoftSkipKind } from '../lib/soft-skip.js';
 import { queryTestEvents, requireEvents } from '../lib/event-log-query.js';
 import { recordRequirement } from '../lib/requirement-ledger.js';
 import { requirementIdForFile } from '../lib/scenario-disposition.js';
@@ -88,8 +88,13 @@ if (SKIP_NO_FIXTURE) {
   recordRequirement(REQ, 'inapplicable', `fixture ${WORKFLOW_ID} not advertised`);
 }
 
-describe.skipIf(SKIP_NO_FIXTURE)('RFC 0158 §C.8 — poison work terminates within a bounded number of attempts', () => {
+/** Why the gate below holds, as RFC 0148 §A names it (openwop#1686: a describe-level skip recorded no disposition). */
+const GATE_WHY: readonly [SoftSkipKind, string] =
+  (!isFixtureAdvertised(WORKFLOW_ID)) ? ['inapplicable', `fixture ${WORKFLOW_ID} not advertised`] as const : ['blocked', 'the gate held for no named reason'] as const;
+
+describe('RFC 0158 §C.8 — poison work terminates within a bounded number of attempts', () => {
   it('reaches terminal AND stops being retried, asserted on the log rather than on the status alone', async () => {
+    if (SKIP_NO_FIXTURE) return softSkip(...GATE_WHY);
     const create = await driver.post('/v1/runs', { workflowId: WORKFLOW_ID });
     expect(create.status, req('openwop.it.durability-poison-exhaustion.reaches-terminal-and-stops-being-retried-asserted-on-the-log-rather-than-on-the', 
       'rest-endpoints.md',

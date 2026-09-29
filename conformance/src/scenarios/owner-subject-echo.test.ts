@@ -17,7 +17,7 @@
 import { describe, it, expect } from 'vitest';
 import { driver } from '../lib/driver.js';
 import { isFixtureAdvertised } from '../lib/fixtures.js';
-import { softSkip } from '../lib/soft-skip.js';
+import { softSkip, type SoftSkipKind } from '../lib/soft-skip.js';
 import { pollUntil } from '../lib/polling.js';
 import { req } from '../lib/requirement-ids.js';
 
@@ -81,8 +81,13 @@ function actorDepth(s: Subject | undefined): number {
   return d;
 }
 
-describe.skipIf(SKIP_NO_NOOP)('owner-subject-echo: consistency, echo, fork (RFC 0165 §B — gated on a host that emits owner.subject)', () => {
+/** Why the gate below holds, as RFC 0148 §A names it (openwop#1686: a describe-level skip recorded no disposition). */
+const GATE_WHY: readonly [SoftSkipKind, string] =
+  (!isFixtureAdvertised(NOOP_WORKFLOW_ID)) ? ['blocked', `the \`${NOOP_WORKFLOW_ID}\` fixture is not advertised`] as const : ['blocked', 'the gate held for no named reason'] as const;
+
+describe('owner-subject-echo: consistency, echo, fork (RFC 0165 §B — gated on a host that emits owner.subject)', () => {
   it('subject is consistent with the owner triple (§B.2) and the actor chain is bounded (§B.5)', async () => {
+    if (SKIP_NO_NOOP) return softSkip(...GATE_WHY);
     const runId = await createRun();
     const snap = await snapshot(runId);
     const subject = snap.owner?.subject;
@@ -105,6 +110,7 @@ describe.skipIf(SKIP_NO_NOOP)('owner-subject-echo: consistency, echo, fork (RFC 
   });
 
   it('run.started echoes the snapshot subject verbatim (§B.2, RFC 0048 §C)', async () => {
+    if (SKIP_NO_NOOP) return softSkip(...GATE_WHY);
     const runId = await createRun();
     const snap = await snapshot(runId);
     if (snap.owner?.subject === undefined) {
@@ -122,6 +128,7 @@ describe.skipIf(SKIP_NO_NOOP)('owner-subject-echo: consistency, echo, fork (RFC 
   });
 
   it('a fork copies owner.tenant and owner.subject verbatim onto the child (§B.4)', async () => {
+    if (SKIP_NO_NOOP) return softSkip(...GATE_WHY);
     const sourceRunId = await createRun();
     const source = await snapshot(sourceRunId);
     if (source.owner?.subject === undefined) {

@@ -21,12 +21,19 @@ import { pollUntilTerminal } from '../lib/polling.js';
 import { isFixtureAdvertised } from '../lib/fixtures.js';
 import { hasLongTermMemory } from '../lib/multi-agent-capabilities.js';
 import { req } from '../lib/requirement-ids.js';
+import { softSkip, type SoftSkipKind } from '../lib/soft-skip.js';
 
 const FIXTURE = 'conformance-agent-memory-redaction';
 const SKIP = !hasLongTermMemory() || !isFixtureAdvertised(FIXTURE);
 
-describe.skipIf(SKIP)('agentMemoryRedactionContract: SR-1 invariant', () => {
+/** Why the gate below holds, as RFC 0148 §A names it (openwop#1686: a describe-level skip recorded no disposition). */
+const GATE_WHY: readonly [SoftSkipKind, string] =
+  (!hasLongTermMemory()) ? ['inapplicable', `the host does not advertise the capability this scenario covers (hasLongTermMemory() is false)`] as const : 
+  (!isFixtureAdvertised(FIXTURE)) ? ['blocked', `the \`${FIXTURE}\` fixture is not advertised`] as const : ['blocked', 'the gate held for no named reason'] as const;
+
+describe('agentMemoryRedactionContract: SR-1 invariant', () => {
   it('BYOK plaintext is redacted to [REDACTED:<secretId>] at the read surface', async () => {
+    if (SKIP) return softSkip(...GATE_WHY);
     const create = await driver.post('/v1/runs', { workflowId: FIXTURE });
     expect(create.status, req('openwop.it.agentMemoryRedactionContract.byok-plaintext-is-redacted-to-redacted-secretid-at-the-read-surface', 'RFCS/0004-memory-layer.md', 'BYOK plaintext is redacted to [REDACTED:<secretId>] at the read surface')).toBe(201);
     const runId = (create.json as { runId: string }).runId;

@@ -32,7 +32,7 @@ import { describe, it, expect } from 'vitest';
 import { driver } from '../lib/driver.js';
 import { isAgentSupported } from '../lib/multi-agent-capabilities.js';
 import { req } from '../lib/requirement-ids.js';
-import { softSkip } from '../lib/soft-skip.js';
+import { softSkip, type SoftSkipKind } from '../lib/soft-skip.js';
 
 interface PackList {
   packs?: Array<{
@@ -132,8 +132,13 @@ function assertAgentManifestShape(requirementId: string,
 
 const SKIP = !isAgentSupported();
 
-describe.skipIf(SKIP)('core.openwop.agents.deep-research — pack catalog evidence', () => {
+/** Why the gate below holds, as RFC 0148 §A names it (openwop#1686: a describe-level skip recorded no disposition). */
+const GATE_WHY: readonly [SoftSkipKind, string] =
+  (!isAgentSupported()) ? ['inapplicable', `the host does not advertise the capability this scenario covers (isAgentSupported() is false)`] as const : ['blocked', 'the gate held for no named reason'] as const;
+
+describe('core.openwop.agents.deep-research — pack catalog evidence', () => {
   it('host pack-list includes deep-research with a well-formed AgentManifest', async () => {
+    if (SKIP) return softSkip(...GATE_WHY);
     const pack = await findPack('core.openwop.agents.deep-research');
     if (pack === null) return softSkip('blocked', 'precondition not met — `pack === null` returned early (host doesn\'t expose /v1/packs or doesn\'t have this pack) (seam, prior step, or fixture unavailable)'); // host doesn't expose /v1/packs or doesn't have this pack
     expect(pack.version, req('openwop.it.agentPackCatalog.host-pack-list-includes-deep-research-with-a-well-formed-agentmanifest', 'RFCS/0003-agent-packs.md', 'pack version MUST be present')).toBeDefined();
@@ -156,8 +161,9 @@ describe.skipIf(SKIP)('core.openwop.agents.deep-research — pack catalog eviden
   });
 });
 
-describe.skipIf(SKIP)('core.openwop.agents.react — pack catalog evidence', () => {
+describe('core.openwop.agents.react — pack catalog evidence', () => {
   it('host pack-list includes react with a well-formed AgentManifest', async () => {
+    if (SKIP) return softSkip(...GATE_WHY);
     const pack = await findPack('core.openwop.agents.react');
     if (pack === null) return softSkip('blocked', 'precondition not met — `pack === null` returned early (seam, prior step, or fixture unavailable)');
     expect(pack.version).toBeDefined();
@@ -173,8 +179,9 @@ describe.skipIf(SKIP)('core.openwop.agents.react — pack catalog evidence', () 
   });
 });
 
-describe.skipIf(SKIP)('core.openwop.agents.supervisor — pack catalog evidence', () => {
+describe('core.openwop.agents.supervisor — pack catalog evidence', () => {
   it('host pack-list includes supervisor with a well-formed AgentManifest', async () => {
+    if (SKIP) return softSkip(...GATE_WHY);
     const pack = await findPack('core.openwop.agents.supervisor');
     if (pack === null) return softSkip('blocked', 'precondition not met — `pack === null` returned early (seam, prior step, or fixture unavailable)');
     expect(pack.version).toBeDefined();
@@ -194,8 +201,9 @@ describe.skipIf(SKIP)('core.openwop.agents.supervisor — pack catalog evidence'
   });
 });
 
-describe.skipIf(SKIP)('agent-pack catalog summary', () => {
+describe('agent-pack catalog summary', () => {
   it('all three 2026-05-17 reference agent packs are catalog-reachable', async () => {
+    if (SKIP) return softSkip(...GATE_WHY);
     const names = [
       'core.openwop.agents.deep-research',
       'core.openwop.agents.react',

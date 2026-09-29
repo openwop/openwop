@@ -34,7 +34,7 @@
  */
 
 import { describe, it, expect } from 'vitest';
-import { softSkip, blockedDespiteAssertions } from '../lib/soft-skip.js';
+import { softSkip, blockedDespiteAssertions, type SoftSkipKind } from '../lib/soft-skip.js';
 import { driver, type OpenWOPResponse } from '../lib/driver.js';
 import { pollUntilTerminal } from '../lib/polling.js';
 import { isFixtureAdvertised } from '../lib/fixtures.js';
@@ -77,8 +77,13 @@ async function createForcedRun(version: number): Promise<OpenWOPResponse> {
   );
 }
 
-describe.skipIf(SKIP_NO_FIXTURE)('version-fold: forced engine versions fold-best-effort across the advertised range', () => {
+/** Why the gate below holds, as RFC 0148 §A names it (openwop#1686: a describe-level skip recorded no disposition). */
+const GATE_WHY: readonly [SoftSkipKind, string] =
+  (!isFixtureAdvertised(FIXTURE_ID)) ? ['blocked', `the \`${FIXTURE_ID}\` fixture is not advertised`] as const : ['blocked', 'the gate held for no named reason'] as const;
+
+describe('version-fold: forced engine versions fold-best-effort across the advertised range', () => {
   it('each version in [min, current, max] completes + snapshot and event log stay readable', async () => {
+    if (SKIP_NO_FIXTURE) return softSkip(...GATE_WHY);
     const seam = await readForceSeam();
     if (seam === null) {
       // eslint-disable-next-line no-console
@@ -163,6 +168,7 @@ describe.skipIf(SKIP_NO_FIXTURE)('version-fold: forced engine versions fold-best
   });
 
   it('a forced version outside the advertised range is rejected with 400 unsupported_force_engine_version', async () => {
+    if (SKIP_NO_FIXTURE) return softSkip(...GATE_WHY);
     const seam = await readForceSeam();
     if (seam === null) {
       // eslint-disable-next-line no-console

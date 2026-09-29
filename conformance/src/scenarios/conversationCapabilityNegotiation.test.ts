@@ -22,14 +22,21 @@ import { driver } from '../lib/driver.js';
 import { isFixtureAdvertised } from '../lib/fixtures.js';
 import { isConversationPrimitiveSupported } from '../lib/multi-agent-capabilities.js';
 import { req } from '../lib/requirement-ids.js';
+import { softSkip, type SoftSkipKind } from '../lib/soft-skip.js';
 
 const FIXTURE = 'conformance-conversation-capability-negotiation';
 // Inverted gate: this scenario runs when host does NOT advertise the
 // capability, to verify the refusal contract.
 const SKIP = isConversationPrimitiveSupported() || !isFixtureAdvertised(FIXTURE);
 
-describe.skipIf(SKIP)('conversationCapabilityNegotiation: refusal contract', () => {
+/** Why the gate below holds, as RFC 0148 §A names it (openwop#1686: a describe-level skip recorded no disposition). */
+const GATE_WHY: readonly [SoftSkipKind, string] =
+  (isConversationPrimitiveSupported()) ? ['inapplicable', `the host advertises the conversation primitive; this scenario covers a host that does not`] as const : 
+  (!isFixtureAdvertised(FIXTURE)) ? ['blocked', `the \`${FIXTURE}\` fixture is not advertised`] as const : ['blocked', 'the gate held for no named reason'] as const;
+
+describe('conversationCapabilityNegotiation: refusal contract', () => {
   it('host without conversationPrimitive capability refuses conversation-bearing workflow', async () => {
+    if (SKIP) return softSkip(...GATE_WHY);
     const create = await driver.post('/v1/runs', { workflowId: FIXTURE });
     // The host MUST reject — either at workflow registration (404/400)
     // or at run-create (400). What MUST NOT happen is a successful

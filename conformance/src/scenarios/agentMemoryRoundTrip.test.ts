@@ -20,12 +20,19 @@ import { pollUntilTerminal } from '../lib/polling.js';
 import { isFixtureAdvertised } from '../lib/fixtures.js';
 import { hasLongTermMemory } from '../lib/multi-agent-capabilities.js';
 import { req } from '../lib/requirement-ids.js';
+import { softSkip, type SoftSkipKind } from '../lib/soft-skip.js';
 
 const FIXTURE = 'conformance-agent-memory-roundtrip';
 const SKIP = !hasLongTermMemory() || !isFixtureAdvertised(FIXTURE);
 
-describe.skipIf(SKIP)('agentMemoryRoundTrip: write → read via MemoryAdapter', () => {
+/** Why the gate below holds, as RFC 0148 §A names it (openwop#1686: a describe-level skip recorded no disposition). */
+const GATE_WHY: readonly [SoftSkipKind, string] =
+  (!hasLongTermMemory()) ? ['inapplicable', `the host does not advertise the capability this scenario covers (hasLongTermMemory() is false)`] as const : 
+  (!isFixtureAdvertised(FIXTURE)) ? ['blocked', `the \`${FIXTURE}\` fixture is not advertised`] as const : ['blocked', 'the gate held for no named reason'] as const;
+
+describe('agentMemoryRoundTrip: write → read via MemoryAdapter', () => {
   it('memory entries written during a run are readable via the resolved memoryRef', async () => {
+    if (SKIP) return softSkip(...GATE_WHY);
     const create = await driver.post('/v1/runs', { workflowId: FIXTURE });
     expect(create.status, req('openwop.it.agentMemoryRoundTrip.memory-entries-written-during-a-run-are-readable-via-the-resolved-memoryref', 'RFCS/0004-memory-layer.md', 'memory entries written during a run are readable via the resolved memoryRef')).toBe(201);
     const runId = (create.json as { runId: string }).runId;

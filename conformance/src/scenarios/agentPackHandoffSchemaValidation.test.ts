@@ -52,6 +52,7 @@ import { driver } from '../lib/driver.js';
 import { isFixtureAdvertised } from '../lib/fixtures.js';
 import { isAgentSupported, hasHandoffValidation } from '../lib/multi-agent-capabilities.js';
 import { req } from '../lib/requirement-ids.js';
+import { softSkip, type SoftSkipKind } from '../lib/soft-skip.js';
 
 const FIXTURE = 'conformance-agent-pack-handoff-schema-validation';
 const SKIP = !isAgentSupported() || !isFixtureAdvertised(FIXTURE);
@@ -67,8 +68,18 @@ async function settle(runId: string, terminal = ['completed', 'failed', 'waiting
   return undefined;
 }
 
-describe.skipIf(SKIP)('agentPackHandoffSchemaValidation: handoff schema enforcement at dispatch', () => {
+/** Why the gate below holds, as RFC 0148 §A names it (openwop#1686: a describe-level skip recorded no disposition). */
+const GATE_WHY: readonly [SoftSkipKind, string] =
+  (!isAgentSupported()) ? ['inapplicable', `the host does not advertise the capability this scenario covers (isAgentSupported() is false)`] as const : 
+  (!isFixtureAdvertised(FIXTURE)) ? ['blocked', `the \`${FIXTURE}\` fixture is not advertised`] as const : ['blocked', 'the gate held for no named reason'] as const;
+
+/** Why the gate below holds, as RFC 0148 §A names it (openwop#1686: a describe-level skip recorded no disposition). */
+const GATE_WHY_2: readonly [SoftSkipKind, string] =
+  (!hasHandoffValidation()) ? ['inapplicable', `the host does not advertise the capability this scenario covers (hasHandoffValidation() is false)`] as const : ['blocked', 'the gate held for no named reason'] as const;
+
+describe('agentPackHandoffSchemaValidation: handoff schema enforcement at dispatch', () => {
   it('HV-1a: valid task payload that matches taskSchemaRef is dispatched and completes', async () => {
+    if (SKIP) return softSkip(...GATE_WHY);
     // Valid inputs for `structured-fixture` task schema (required: text,
     // extractionFields). No `scenario` key → the gate takes the task probe,
     // `validateTask(inputs)` passes, the gate is ok, the no-op node runs.
@@ -88,8 +99,10 @@ describe.skipIf(SKIP)('agentPackHandoffSchemaValidation: handoff schema enforcem
 
   // HV-1b / HV-1c assert a REJECTION, which only a host performing handoff
   // validation can produce — gate on the capability that declares that behavior.
-  describe.skipIf(!hasHandoffValidation())('rejection legs (agents.manifestRuntime.handoffValidation)', () => {
+  describe('rejection legs (agents.manifestRuntime.handoffValidation)', () => {
     it('HV-1b: invalid task payload (missing required field) fails before dispatch with a structured violation', async () => {
+    if (!hasHandoffValidation()) return softSkip(...GATE_WHY_2);
+    if (SKIP) return softSkip(...GATE_WHY);
       // HV-1a's inputs minus the required `extractionFields` — the paired
       // sabotage. `validateTask` fails `required` → the run MUST fail.
       const create = await driver.post('/v1/runs', {
@@ -121,6 +134,8 @@ describe.skipIf(SKIP)('agentPackHandoffSchemaValidation: handoff schema enforcem
     });
 
     it('HV-1c: agent return payload that fails returnSchemaRef surfaces a structured violation before persistence', async () => {
+    if (!hasHandoffValidation()) return softSkip(...GATE_WHY_2);
+    if (SKIP) return softSkip(...GATE_WHY);
       // `scenario: 'mock-return-violation'` routes to the return probe, which
       // validates `{}` against the return schema's success-XOR-error `oneOf`
       // (satisfies neither branch) → a return-schema violation.

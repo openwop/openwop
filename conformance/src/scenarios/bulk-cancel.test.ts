@@ -21,6 +21,7 @@ import { describe, it, expect } from 'vitest';
 import { driver } from '../lib/driver.js';
 import { isFixtureAdvertised } from '../lib/fixtures.js';
 import { req } from '../lib/requirement-ids.js';
+import { softSkip, type SoftSkipKind } from '../lib/soft-skip.js';
 
 const CANCELLABLE = 'conformance-cancellable';
 const NOOP = 'conformance-noop';
@@ -34,8 +35,14 @@ interface BulkResult {
   error?: { code?: string; message?: string };
 }
 
-describe.skipIf(SKIP)('bulk-cancel: POST /v1/runs:bulk-cancel', () => {
+/** Why the gate below holds, as RFC 0148 §A names it (openwop#1686: a describe-level skip recorded no disposition). */
+const GATE_WHY: readonly [SoftSkipKind, string] =
+  (!isFixtureAdvertised(CANCELLABLE)) ? ['blocked', `the \`${CANCELLABLE}\` fixture is not advertised`] as const : 
+  (!isFixtureAdvertised(NOOP)) ? ['blocked', `the \`${NOOP}\` fixture is not advertised`] as const : ['blocked', 'the gate held for no named reason'] as const;
+
+describe('bulk-cancel: POST /v1/runs:bulk-cancel', () => {
   it('mixed-outcome request returns per-id results in order', async () => {
+    if (SKIP) return softSkip(...GATE_WHY);
     // Spin up a long-running cancellable run + observe a known-bad id
     // alongside it. The host MUST handle each independently.
     const create = await driver.post('/v1/runs', {
@@ -71,6 +78,7 @@ describe.skipIf(SKIP)('bulk-cancel: POST /v1/runs:bulk-cancel', () => {
   });
 
   it('empty runIds array returns 400 validation_error', async () => {
+    if (SKIP) return softSkip(...GATE_WHY);
     const res = await driver.post('/v1/runs:bulk-cancel', { runIds: [] });
     expect(res.status, req('openwop.it.bulk-cancel.empty-runids-array-returns-400-validation-error', 'rest-endpoints.md §Open', 'empty runIds array returns 400 validation_error')).toBe(400);
     const body = res.json as { error?: string };
@@ -78,6 +86,7 @@ describe.skipIf(SKIP)('bulk-cancel: POST /v1/runs:bulk-cancel', () => {
   });
 
   it('oversized runIds array returns 400 with details.maxRunIds', async () => {
+    if (SKIP) return softSkip(...GATE_WHY);
     // 101 entries — exceeds the recommended 100-entry cap.
     const ids = Array.from({ length: 101 }, (_, i) => `run-overflow-${i}`);
     const res = await driver.post('/v1/runs:bulk-cancel', { runIds: ids });
@@ -92,6 +101,7 @@ describe.skipIf(SKIP)('bulk-cancel: POST /v1/runs:bulk-cancel', () => {
   });
 
   it('re-bulk-cancel after first cancel is idempotent', async () => {
+    if (SKIP) return softSkip(...GATE_WHY);
     const create = await driver.post('/v1/runs', {
       workflowId: CANCELLABLE,
       inputs: { delaySeconds: 30 },

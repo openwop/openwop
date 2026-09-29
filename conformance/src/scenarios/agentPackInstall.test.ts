@@ -24,7 +24,7 @@ import { SCHEMAS_DIR } from '../lib/paths.js';
 import { driver } from '../lib/driver.js';
 import { isFixtureAdvertised } from '../lib/fixtures.js';
 import { isAgentSupported } from '../lib/multi-agent-capabilities.js';
-import { softSkip } from '../lib/soft-skip.js';
+import { softSkip, type SoftSkipKind } from '../lib/soft-skip.js';
 import { req } from '../lib/requirement-ids.js';
 
 const FIXTURE = 'conformance-agent-pack-install';
@@ -50,8 +50,14 @@ function agentManifestValidator(): (doc: unknown) => { ok: boolean; errors: stri
   return (doc: unknown) => ({ ok: validate(doc) as boolean, errors: ajv.errorsText(validate.errors, { separator: '; ' }) });
 }
 
-describe.skipIf(SKIP)('agentPackInstall: pack agents[] entries surface as AgentManifest', () => {
+/** Why the gate below holds, as RFC 0148 §A names it (openwop#1686: a describe-level skip recorded no disposition). */
+const GATE_WHY: readonly [SoftSkipKind, string] =
+  (!isAgentSupported()) ? ['inapplicable', `the host does not advertise the capability this scenario covers (isAgentSupported() is false)`] as const : 
+  (!isFixtureAdvertised(FIXTURE)) ? ['blocked', `the \`${FIXTURE}\` fixture is not advertised`] as const : ['blocked', 'the gate held for no named reason'] as const;
+
+describe('agentPackInstall: pack agents[] entries surface as AgentManifest', () => {
   it('host exposes installed agent manifests with required AgentManifest fields', async () => {
+    if (SKIP) return softSkip(...GATE_WHY);
     // Host-specific pack-listing endpoint. The conformance suite probes
     // common paths; hosts that don't expose pack listings via REST mark
     // this scenario as skip via their own capability advertisement.

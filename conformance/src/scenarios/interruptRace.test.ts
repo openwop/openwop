@@ -24,7 +24,7 @@ import { driver } from '../lib/driver.js';
 import { pollUntil } from '../lib/polling.js';
 import { isFixtureAdvertised } from '../lib/fixtures.js';
 import { req } from '../lib/requirement-ids.js';
-import { softSkip } from '../lib/soft-skip.js';
+import { softSkip, type SoftSkipKind } from '../lib/soft-skip.js';
 
 const APPROVAL_WORKFLOW_ID = 'conformance-approval';
 const NOOP_WORKFLOW_ID = 'conformance-noop';
@@ -43,10 +43,19 @@ async function hostClaimsInterrupts(): Promise<boolean> {
   return (body.supportedEnvelopes as string[]).includes('clarification.request');
 }
 
-describe.skipIf(SKIP_NO_APPROVAL)('interrupt-race: concurrent cancel + resolve dispatch deterministically', () => {
+/** Why the gate below holds, as RFC 0148 §A names it (openwop#1686: a describe-level skip recorded no disposition). */
+const GATE_WHY: readonly [SoftSkipKind, string] =
+  (!isFixtureAdvertised(APPROVAL_WORKFLOW_ID)) ? ['blocked', `the \`${APPROVAL_WORKFLOW_ID}\` fixture is not advertised`] as const : ['blocked', 'the gate held for no named reason'] as const;
+
+/** Why the gate below holds, as RFC 0148 §A names it (openwop#1686: a describe-level skip recorded no disposition). */
+const GATE_WHY_2: readonly [SoftSkipKind, string] =
+  (!isFixtureAdvertised(NOOP_WORKFLOW_ID)) ? ['blocked', `the \`${NOOP_WORKFLOW_ID}\` fixture is not advertised`] as const : ['blocked', 'the gate held for no named reason'] as const;
+
+describe('interrupt-race: concurrent cancel + resolve dispatch deterministically', () => {
   it(
     'concurrent cancel + interrupt-resolve resolves to one of: cancelled or completed',
     async () => {
+    if (SKIP_NO_APPROVAL) return softSkip(...GATE_WHY);
       if (!(await hostClaimsInterrupts())) return softSkip('blocked', 'precondition not met — `!(await hostClaimsInterrupts())` returned early (skip-equivalent) (seam, prior step, or fixture unavailable)'); // skip-equivalent
 
       // Phase 1: start a workflow that suspends at an approval gate.
@@ -155,8 +164,9 @@ describe.skipIf(SKIP_NO_APPROVAL)('interrupt-race: concurrent cancel + resolve d
   );
 });
 
-describe.skipIf(SKIP_NO_NOOP)('interrupt-race: cancel against a non-suspended run is well-formed', () => {
+describe('interrupt-race: cancel against a non-suspended run is well-formed', () => {
   it('cancel of a completed run returns 200 with the existing terminal status (idempotent)', async () => {
+    if (SKIP_NO_NOOP) return softSkip(...GATE_WHY_2);
     // Self-test that doesn't require a race. Runs against any host
     // that supports cancel (every conforming host does).
     const create = await driver.post('/v1/runs', { workflowId: 'conformance-noop' });

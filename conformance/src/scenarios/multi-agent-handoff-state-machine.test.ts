@@ -31,7 +31,7 @@
  */
 
 import { describe, it, expect } from 'vitest';
-import { softSkip } from '../lib/soft-skip.js';
+import { softSkip, type SoftSkipKind } from '../lib/soft-skip.js';
 import { driver } from '../lib/driver.js';
 import { executionModelVersionMax } from '../lib/execution-model-version.js';
 import { isFixtureAdvertised } from '../lib/fixtures.js';
@@ -62,8 +62,13 @@ async function readDiscovery(): Promise<DiscoveryDoc | null> {
   }
 }
 
-describe.skipIf(HTTP_SKIP)('multi-agent-handoff-state-machine: advertisement shape (RFC 0037 §C)', () => {
+/** Why the gate below holds, as RFC 0148 §A names it (openwop#1686: a describe-level skip recorded no disposition). */
+const GATE_WHY: readonly [SoftSkipKind, string] =
+  (!process.env.OPENWOP_BASE_URL) ? ['inapplicable', `no target: OPENWOP_BASE_URL is unset`] as const : ['blocked', 'the gate held for no named reason'] as const;
+
+describe('multi-agent-handoff-state-machine: advertisement shape (RFC 0037 §C)', () => {
   it('capabilities.multiAgent.executionModel (when present) conforms to RFC 0037 §C', async () => {
+    if (HTTP_SKIP) return softSkip(...GATE_WHY);
     const d = await readDiscovery();
     if (d === null) return softSkip('blocked', 'discovery unavailable — skip (d === null)');
     const executionModel = capabilityFamily<{ executionModel?: { [k: string]: unknown; crossHostCausation?: Record<string, unknown>; replayDeterminism?: Record<string, unknown> } }>(d, 'multiAgent')?.executionModel;
@@ -108,8 +113,15 @@ const PARENT_FIXTURE = 'conformance-multi-agent-handoff';
 const CHILD_FIXTURE = 'conformance-multi-agent-handoff-child';
 const BEHAVIORAL_SKIP = HTTP_SKIP || !isFixtureAdvertised(PARENT_FIXTURE) || !isFixtureAdvertised(CHILD_FIXTURE);
 
-describe.skipIf(BEHAVIORAL_SKIP)('multi-agent-handoff-state-machine: behavioral 4-event causation chain (RFC 0037 §"Handoff state machine")', () => {
+/** Why the gate below holds, as RFC 0148 §A names it (openwop#1686: a describe-level skip recorded no disposition). */
+const GATE_WHY_2: readonly [SoftSkipKind, string] =
+  (!process.env.OPENWOP_BASE_URL) ? ['inapplicable', `no target: OPENWOP_BASE_URL is unset`] as const : 
+  (!isFixtureAdvertised(PARENT_FIXTURE)) ? ['blocked', `the \`${PARENT_FIXTURE}\` fixture is not advertised`] as const : 
+  (!isFixtureAdvertised(CHILD_FIXTURE)) ? ['blocked', `the \`${CHILD_FIXTURE}\` fixture is not advertised`] as const : ['blocked', 'the gate held for no named reason'] as const;
+
+describe('multi-agent-handoff-state-machine: behavioral 4-event causation chain (RFC 0037 §"Handoff state machine")', () => {
   it('happy-path: dispatch.began → dispatch.succeeded → child.completed → output.harvested fire in causation order', async () => {
+    if (BEHAVIORAL_SKIP) return softSkip(...GATE_WHY_2);
     const d = await readDiscovery();
     const advertised = capabilityFamily<{ executionModel?: { [k: string]: unknown; crossHostCausation?: Record<string, unknown>; replayDeterminism?: Record<string, unknown> } }>(d, 'multiAgent')?.executionModel?.supported === true;
     if (!advertised) return softSkip('inapplicable', 'soft-skip — host honest about not implementing');

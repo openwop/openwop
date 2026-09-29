@@ -30,7 +30,7 @@
 
 import { describe, it, expect } from 'vitest';
 import { driver } from '../lib/driver.js';
-import { softSkip, blockedDespiteAssertions } from '../lib/soft-skip.js';
+import { softSkip, blockedDespiteAssertions, type SoftSkipKind } from '../lib/soft-skip.js';
 import { forkDeclined } from '../lib/fork-availability.js';
 import { pollUntilTerminal } from '../lib/polling.js';
 import { isFixtureAdvertised } from '../lib/fixtures.js';
@@ -119,10 +119,15 @@ function structuralShape(
   }));
 }
 
-describe.skipIf(SKIP_NO_MULTI)(
+/** Why the gate below holds, as RFC 0148 §A names it (openwop#1686: a describe-level skip recorded no disposition). */
+const GATE_WHY: readonly [SoftSkipKind, string] =
+  (!isFixtureAdvertised(MULTI_NODE_WORKFLOW_ID)) ? ['blocked', `the \`${MULTI_NODE_WORKFLOW_ID}\` fixture is not advertised`] as const : ['blocked', 'the gate held for no named reason'] as const;
+
+describe(
   'replay-fork-arbitrary: fork from mid-range fromSeq in replay mode reaches terminal',
   () => {
     it('mid-fromSeq replay fork produces a new run that reaches `completed`', async (ctx) => {
+    if (SKIP_NO_MULTI) return softSkip(...GATE_WHY);
       const replay = await fetchReplayCapability();
       if (replay?.supported !== true) {
         softSkip('inapplicable', "host does not advertise `replay.supported: true` — the replay contract does not apply to it");
@@ -197,12 +202,13 @@ describe.skipIf(SKIP_NO_MULTI)(
   },
 );
 
-describe.skipIf(SKIP_NO_MULTI)(
+describe(
   'replay-fork-arbitrary: two replay forks at the same mid-range fromSeq yield identical event shape',
   () => {
     it(
       'mid-fromSeq determinism — same source + same fromSeq → identical post-fork events (modulo IDs + timestamps)',
       async (ctx) => {
+    if (SKIP_NO_MULTI) return softSkip(...GATE_WHY);
         const replay = await fetchReplayCapability();
         if (replay?.supported !== true) {
           ctx.skip();
@@ -294,10 +300,11 @@ describe.skipIf(SKIP_NO_MULTI)(
   },
 );
 
-describe.skipIf(SKIP_NO_MULTI)(
+describe(
   'replay-fork-arbitrary: fork from mid-range fromSeq in branch mode reaches terminal with overlay',
   () => {
     it('mid-fromSeq branch fork with empty overlay produces a new run that reaches `completed`', async (ctx) => {
+    if (SKIP_NO_MULTI) return softSkip(...GATE_WHY);
       const replay = await fetchReplayCapability();
       if (replay?.supported !== true) {
         softSkip('inapplicable', "host does not advertise `replay.supported: true` — the replay contract does not apply to it");

@@ -19,12 +19,19 @@ import { pollUntilTerminal } from '../lib/polling.js';
 import { isFixtureAdvertised } from '../lib/fixtures.js';
 import { hasLongTermMemory } from '../lib/multi-agent-capabilities.js';
 import { req } from '../lib/requirement-ids.js';
+import { softSkip, type SoftSkipKind } from '../lib/soft-skip.js';
 
 const FIXTURE = 'conformance-agent-memory-ttl';
 const SKIP = !hasLongTermMemory() || !isFixtureAdvertised(FIXTURE);
 
-describe.skipIf(SKIP)('agentMemoryTtlExpiry: expired entries are excluded from list/get', () => {
+/** Why the gate below holds, as RFC 0148 §A names it (openwop#1686: a describe-level skip recorded no disposition). */
+const GATE_WHY: readonly [SoftSkipKind, string] =
+  (!hasLongTermMemory()) ? ['inapplicable', `the host does not advertise the capability this scenario covers (hasLongTermMemory() is false)`] as const : 
+  (!isFixtureAdvertised(FIXTURE)) ? ['blocked', `the \`${FIXTURE}\` fixture is not advertised`] as const : ['blocked', 'the gate held for no named reason'] as const;
+
+describe('agentMemoryTtlExpiry: expired entries are excluded from list/get', () => {
   it('list() excludes entries whose expiresAt is in the past', async () => {
+    if (SKIP) return softSkip(...GATE_WHY);
     const create = await driver.post('/v1/runs', { workflowId: FIXTURE });
     expect(create.status).toBe(201);
     const runId = (create.json as { runId: string }).runId;
