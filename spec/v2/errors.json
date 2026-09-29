@@ -1031,13 +1031,13 @@
     },
     {
       "code": "token_budget_exceeded",
-      "meaning": "The run could not stay within its token budget.",
+      "meaning": "A memory distillation could not be completed within its effective token budget, so the run failed and wrote no partial archive.",
       "httpStatus": 422,
       "statusSource": "v1 convention",
       "retriable": false,
       "details": null,
       "since": "1.0",
-      "source": "spec/v1/rest-endpoints.md §Error response shape"
+      "source": "spec/v1/rest-endpoints.md §Error response shape; meaning narrowed to v1's (RFC 0062) by RFC 0228 §E"
     },
     {
       "code": "client_version_unsupported",
@@ -1186,6 +1186,212 @@
       "details": null,
       "since": "1.0",
       "source": "spec/v1/ai-envelope.md §\"Schema version advertisement\" (emitted schemaVersion above the advertised floor)"
+    },
+    {
+      "code": "storage_limit_exceeded",
+      "meaning": "A storage call was refused because it would exceed an advertised limit or the tenant's quota.",
+      "httpStatus": 422,
+      "statusSource": "v2 decision",
+      "retriable": false,
+      "details": {
+        "type": "object",
+        "required": [
+          "service",
+          "limit"
+        ],
+        "properties": {
+          "service": {
+            "type": "string",
+            "minLength": 1,
+            "description": "The host-service family key (`fs`, `kvStorage`, `secrets`, `queueBus`, …)."
+          },
+          "limit": {
+            "type": "string",
+            "minLength": 1,
+            "description": "The advertised field that was exceeded (`maxValueBytes`, `maxTtlSeconds`, `maxRowsPerTable`, …), or `quota`."
+          }
+        },
+        "additionalProperties": true
+      },
+      "since": "2.45",
+      "source": "RFC 0228 §C (replaces v1's nine per-service size, TTL, row and quota codes)"
+    },
+    {
+      "code": "egress_denied",
+      "meaning": "The host refused an outbound request a pack asked it to make: the address guard or the egress policy denied it.",
+      "httpStatus": 403,
+      "statusSource": "v2 decision",
+      "retriable": false,
+      "details": {
+        "type": "object",
+        "required": [
+          "reason"
+        ],
+        "properties": {
+          "reason": {
+            "enum": [
+              "out-of-audience",
+              "expired",
+              "ssrf-blocked",
+              "provenance-unevaluable",
+              "scope-denied",
+              "policy-denied"
+            ],
+            "description": "The `egress.decided` reason, from its closed set minus `ok`."
+          }
+        },
+        "additionalProperties": true
+      },
+      "since": "2.45",
+      "source": "RFC 0228 §C (v1 `ssrf_blocked` and the `egressPolicy` denial; measured: MyndHyve `ssrf_blocked`)"
+    },
+    {
+      "code": "upstream_unavailable",
+      "meaning": "A host service could not reach the upstream it depends on (a fetch target, an MCP server, a queue backend), so the call failed.",
+      "httpStatus": 502,
+      "statusSource": "v2 decision",
+      "retriable": true,
+      "details": {
+        "type": "object",
+        "required": [
+          "service"
+        ],
+        "properties": {
+          "service": {
+            "type": "string",
+            "minLength": 1,
+            "description": "The host-service family key (`fs`, `kvStorage`, `secrets`, `queueBus`, …)."
+          }
+        },
+        "additionalProperties": true
+      },
+      "since": "2.45",
+      "source": "RFC 0228 §C (measured: MyndHyve `fetch_failed`, the v2 reference host's `example.mcp_unreachable` and `example.http_fetch_failed`)"
+    },
+    {
+      "code": "budget_exhausted",
+      "meaning": "A hard budget dimension was exhausted and the run failed.",
+      "httpStatus": 422,
+      "statusSource": "v2 decision",
+      "retriable": false,
+      "details": {
+        "type": "object",
+        "required": [
+          "dimension"
+        ],
+        "properties": {
+          "dimension": {
+            "enum": [
+              "tokens",
+              "costUsd",
+              "toolCalls",
+              "retries"
+            ],
+            "description": "The budget dimension that was exhausted."
+          }
+        },
+        "additionalProperties": true
+      },
+      "since": "2.45",
+      "source": "RFC 0228 §C; spec/v1/budget-policy.md §D (measured: MyndHyve `host/budgetPolicy.ts`)"
+    },
+    {
+      "code": "budget_model_denied",
+      "meaning": "The run's resolved model is outside its budget's `modelAllow`, or inside its `modelDeny`, so it was refused before the call.",
+      "httpStatus": 422,
+      "statusSource": "v2 decision",
+      "retriable": false,
+      "details": {
+        "type": "object",
+        "properties": {
+          "model": {
+            "type": "string",
+            "minLength": 1,
+            "description": "OPTIONAL. The refused model."
+          }
+        },
+        "additionalProperties": true
+      },
+      "since": "2.45",
+      "source": "RFC 0228 §C; spec/v1/budget-policy.md §D (measured: MyndHyve `host/budgetPolicy.ts`)"
+    },
+    {
+      "code": "service_unavailable",
+      "meaning": "The host is at capacity. Retry after the `Retry-After` header when present.",
+      "httpStatus": 503,
+      "statusSource": "v1 prose (production-profile.md §Backpressure)",
+      "retriable": true,
+      "details": null,
+      "since": "2.45",
+      "source": "RFC 0228 §C (measured: MyndHyve `middleware/backpressureGate.ts`)"
+    },
+    {
+      "code": "run_expired",
+      "meaning": "The run, or the part of its event log the request needs, was purged under the host's documented retention.",
+      "httpStatus": 410,
+      "statusSource": "v2 decision",
+      "retriable": false,
+      "details": {
+        "type": "object",
+        "properties": {
+          "runId": {
+            "type": "string",
+            "minLength": 1,
+            "description": "OPTIONAL. The expired run."
+          }
+        },
+        "additionalProperties": true
+      },
+      "since": "2.45",
+      "source": "RFC 0228 §C (replay.md's `410` for a fork past retention; spec-authored, no measured host)"
+    },
+    {
+      "code": "provider_policy_denied",
+      "meaning": "Host provider policy refused the model or provider before the call, so the node failed.",
+      "httpStatus": 422,
+      "statusSource": "v2 decision",
+      "retriable": false,
+      "details": {
+        "type": "object",
+        "required": [
+          "provider"
+        ],
+        "properties": {
+          "provider": {
+            "type": "string",
+            "minLength": 1,
+            "description": "The refused provider."
+          },
+          "reason": {
+            "type": "string",
+            "minLength": 1,
+            "description": "OPTIONAL. The policy cause (`provider-disabled`, `model-not-allowed`, …)."
+          }
+        },
+        "additionalProperties": true
+      },
+      "since": "2.45",
+      "source": "RFC 0228 §C; the default of `aiProviders.policies[].errorCode` (measured: openwop-app and MyndHyve)"
+    },
+    {
+      "code": "eval_gate_unmet",
+      "meaning": "A deployment transition was refused because the eval run its gate requires is not terminal and passing.",
+      "httpStatus": 422,
+      "statusSource": "v2 decision (the status MyndHyve answers)",
+      "retriable": false,
+      "details": {
+        "type": "object",
+        "properties": {
+          "evalRunId": {
+            "type": "string",
+            "minLength": 1,
+            "description": "OPTIONAL. The eval run the gate requires."
+          }
+        },
+        "additionalProperties": true
+      },
+      "since": "2.45",
+      "source": "RFC 0228 §C (measured: MyndHyve `host/agentDeployment.ts`, answered at 422)"
     }
   ]
 }

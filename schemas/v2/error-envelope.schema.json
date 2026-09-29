@@ -2,7 +2,7 @@
   "$schema": "https://json-schema.org/draft/2020-12/schema",
   "$id": "https://openwop.dev/spec/v2/error-envelope.schema.json",
   "title": "ErrorEnvelope (v2)",
-  "description": "GENERATED from spec/v2/errors.json by scripts/generate-error-envelope.mjs (RFC 0171 §B.1). 111 registered codes; vendor codes match ^(?!openwop\\.)[a-z][a-z0-9]*(-[a-z0-9]+)*\\.[a-z][a-z0-9_]*$. Consumers MUST accept an unknown registered member and MUST NOT act on it (RFC 0171 §A.5).",
+  "description": "GENERATED from spec/v2/errors.json by scripts/generate-error-envelope.mjs (RFC 0171 §B.1). 120 registered codes; vendor codes match ^(?!openwop\\.)[a-z][a-z0-9]*(-[a-z0-9]+)*\\.[a-z][a-z0-9_]*$. Consumers MUST accept an unknown registered member and MUST NOT act on it (RFC 0171 §A.5).",
   "type": "object",
   "additionalProperties": false,
   "required": [
@@ -125,7 +125,16 @@
             "pack_registry_unreachable",
             "runner_unavailable",
             "unknown_envelope_kind",
-            "unknown_schema_version"
+            "unknown_schema_version",
+            "storage_limit_exceeded",
+            "egress_denied",
+            "upstream_unavailable",
+            "budget_exhausted",
+            "budget_model_denied",
+            "service_unavailable",
+            "run_expired",
+            "provider_policy_denied",
+            "eval_gate_unmet"
           ]
         },
         {
@@ -288,6 +297,266 @@
           }
         }
       }
+    },
+    {
+      "if": {
+        "properties": {
+          "error": {
+            "const": "storage_limit_exceeded"
+          }
+        },
+        "required": [
+          "error"
+        ]
+      },
+      "then": {
+        "properties": {
+          "details": {
+            "type": "object",
+            "required": [
+              "service",
+              "limit"
+            ],
+            "properties": {
+              "service": {
+                "type": "string",
+                "minLength": 1,
+                "description": "The host-service family key (`fs`, `kvStorage`, `secrets`, `queueBus`, …)."
+              },
+              "limit": {
+                "type": "string",
+                "minLength": 1,
+                "description": "The advertised field that was exceeded (`maxValueBytes`, `maxTtlSeconds`, `maxRowsPerTable`, …), or `quota`."
+              }
+            },
+            "additionalProperties": true,
+            "x-openwop-error": "storage_limit_exceeded"
+          }
+        }
+      }
+    },
+    {
+      "if": {
+        "properties": {
+          "error": {
+            "const": "egress_denied"
+          }
+        },
+        "required": [
+          "error"
+        ]
+      },
+      "then": {
+        "properties": {
+          "details": {
+            "type": "object",
+            "required": [
+              "reason"
+            ],
+            "properties": {
+              "reason": {
+                "enum": [
+                  "out-of-audience",
+                  "expired",
+                  "ssrf-blocked",
+                  "provenance-unevaluable",
+                  "scope-denied",
+                  "policy-denied"
+                ],
+                "description": "The `egress.decided` reason, from its closed set minus `ok`."
+              }
+            },
+            "additionalProperties": true,
+            "x-openwop-error": "egress_denied"
+          }
+        }
+      }
+    },
+    {
+      "if": {
+        "properties": {
+          "error": {
+            "const": "upstream_unavailable"
+          }
+        },
+        "required": [
+          "error"
+        ]
+      },
+      "then": {
+        "properties": {
+          "details": {
+            "type": "object",
+            "required": [
+              "service"
+            ],
+            "properties": {
+              "service": {
+                "type": "string",
+                "minLength": 1,
+                "description": "The host-service family key (`fs`, `kvStorage`, `secrets`, `queueBus`, …)."
+              }
+            },
+            "additionalProperties": true,
+            "x-openwop-error": "upstream_unavailable"
+          }
+        }
+      }
+    },
+    {
+      "if": {
+        "properties": {
+          "error": {
+            "const": "budget_exhausted"
+          }
+        },
+        "required": [
+          "error"
+        ]
+      },
+      "then": {
+        "properties": {
+          "details": {
+            "type": "object",
+            "required": [
+              "dimension"
+            ],
+            "properties": {
+              "dimension": {
+                "enum": [
+                  "tokens",
+                  "costUsd",
+                  "toolCalls",
+                  "retries"
+                ],
+                "description": "The budget dimension that was exhausted."
+              }
+            },
+            "additionalProperties": true,
+            "x-openwop-error": "budget_exhausted"
+          }
+        }
+      }
+    },
+    {
+      "if": {
+        "properties": {
+          "error": {
+            "const": "budget_model_denied"
+          }
+        },
+        "required": [
+          "error"
+        ]
+      },
+      "then": {
+        "properties": {
+          "details": {
+            "type": "object",
+            "properties": {
+              "model": {
+                "type": "string",
+                "minLength": 1,
+                "description": "OPTIONAL. The refused model."
+              }
+            },
+            "additionalProperties": true,
+            "x-openwop-error": "budget_model_denied"
+          }
+        }
+      }
+    },
+    {
+      "if": {
+        "properties": {
+          "error": {
+            "const": "run_expired"
+          }
+        },
+        "required": [
+          "error"
+        ]
+      },
+      "then": {
+        "properties": {
+          "details": {
+            "type": "object",
+            "properties": {
+              "runId": {
+                "type": "string",
+                "minLength": 1,
+                "description": "OPTIONAL. The expired run."
+              }
+            },
+            "additionalProperties": true,
+            "x-openwop-error": "run_expired"
+          }
+        }
+      }
+    },
+    {
+      "if": {
+        "properties": {
+          "error": {
+            "const": "provider_policy_denied"
+          }
+        },
+        "required": [
+          "error"
+        ]
+      },
+      "then": {
+        "properties": {
+          "details": {
+            "type": "object",
+            "required": [
+              "provider"
+            ],
+            "properties": {
+              "provider": {
+                "type": "string",
+                "minLength": 1,
+                "description": "The refused provider."
+              },
+              "reason": {
+                "type": "string",
+                "minLength": 1,
+                "description": "OPTIONAL. The policy cause (`provider-disabled`, `model-not-allowed`, …)."
+              }
+            },
+            "additionalProperties": true,
+            "x-openwop-error": "provider_policy_denied"
+          }
+        }
+      }
+    },
+    {
+      "if": {
+        "properties": {
+          "error": {
+            "const": "eval_gate_unmet"
+          }
+        },
+        "required": [
+          "error"
+        ]
+      },
+      "then": {
+        "properties": {
+          "details": {
+            "type": "object",
+            "properties": {
+              "evalRunId": {
+                "type": "string",
+                "minLength": 1,
+                "description": "OPTIONAL. The eval run the gate requires."
+              }
+            },
+            "additionalProperties": true,
+            "x-openwop-error": "eval_gate_unmet"
+          }
+        }
+      }
     }
   ],
   "x-openwop-http-status": {
@@ -401,13 +670,24 @@
     "pack_registry_unreachable": 503,
     "runner_unavailable": 503,
     "unknown_envelope_kind": 422,
-    "unknown_schema_version": 422
+    "unknown_schema_version": 422,
+    "storage_limit_exceeded": 422,
+    "egress_denied": 403,
+    "upstream_unavailable": 502,
+    "budget_exhausted": 422,
+    "budget_model_denied": 422,
+    "service_unavailable": 503,
+    "run_expired": 410,
+    "provider_policy_denied": 422,
+    "eval_gate_unmet": 422
   },
   "x-openwop-retriable": [
     "residency_unavailable",
     "rate_limited",
     "internal_error",
     "pack_registry_unreachable",
-    "runner_unavailable"
+    "runner_unavailable",
+    "upstream_unavailable",
+    "service_unavailable"
   ]
 }

@@ -546,6 +546,20 @@ def v2_openapi_and_seams():
                     p['schema'] = {'type': 'string', 'pattern': '^(values|(updates|messages|debug)(,(updates|messages|debug))*)$', 'default': 'updates'}
                     p['description'] = 'A stream mode from the closed set, or a comma-separated combination of them. `values` never combines.'
             op['parameters'] = [p for p in params if not (isinstance(p, dict) and p.get('name') == 'since')]
+            # RFC 0228 §H (errors.md §Unadvertised operations): an operation gated on a family or facet
+            # the host does not advertise answers `404 not_found`, never v1's `501`, which carries no
+            # registered code. Only the "Host does not advertise" 501s move; any other 501 stays.
+            resps = op.get('responses', {})
+            for code in [c for c in resps if str(c) == '501']:
+                r501 = resps[code]
+                if isinstance(r501, dict) and 'does not advertise' in str(r501.get('description', '')):
+                    del resps[code]
+                    resps.setdefault('404', {'$ref': '#/components/responses/NotFound'})
+            # RFC 0228 §C/§G: `eval_gate_unmet` is registered at 422 (it is missing evidence, not a missing
+            # role), so the deployment transition documents it there instead of under its 403.
+            if op.get('operationId') == 'transitionAgentDeployment' and '422' not in resps:
+                resps['422'] = {'description': '`eval_gate_unmet`: a `requiredEval` gate\'s referenced eval run is not terminal and passed.',
+                                'content': {'application/json': {'schema': {'$ref': '#/components/schemas/Error'}}}}
             for code, resp in op.get('responses', {}).items():
                 if isinstance(resp, dict) and '$ref' not in resp:
                     resp.setdefault('headers', {})['OpenWOP-Version'] = {'$ref': '#/components/headers/OpenWOPVersion'}
