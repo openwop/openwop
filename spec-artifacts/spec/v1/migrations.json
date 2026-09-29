@@ -206,6 +206,7 @@
       },
       "codemod": "openwop.codemod.event-type-codemap",
       "persistedData": "translated",
+      "note": "Not translatable (corrected 2026-09-29, Class 3, openwop#1741): an era-2 approval.granted / approval.rejected / approval.overridden in the RFC 0051 governance shape {gateId, principal, …} has no v2 projection — the closed v2 interruptResolved requires interruptId, which cannot be sourced from the row without defaulting it — so a v2 read of one is 500 payload_unprojectable (events.md). Census at openwop-app 62705064c, MyndHyve d55ab6edb and openwop-examples b6302cd: 0 persisted writers of the governance shape. Tripwire: a host reporting persisted governance-shape rows files an additive RFC for a sanctioned interruptId derivation, failing closed when absent.",
       "requirementIds": [],
       "gapIds": [],
       "deprecationId": "openwop.deprecation.legacy-interrupt-payloads"
