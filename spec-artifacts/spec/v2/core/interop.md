@@ -5,7 +5,7 @@
 
 ## Why this exists
 
-This document covers the two embedded protocols, A2A and MCP: how a host advertises them, how a version is negotiated, and what every negotiation leaves behind. Capability shapes are in [capabilities.md](capabilities.md); the peer identity is the Subject of [identity.md](identity.md).
+A2A and MCP are embedded protocols: a host advertises them, negotiates a version, and records every negotiation. Capability shapes are in [capabilities.md](capabilities.md); the peer identity is the Subject of [identity.md](identity.md).
 
 ## REST is the wire
 
@@ -48,7 +48,7 @@ When no `A2A-Version` header is present, a host MUST serve the agent card of `pr
   "negotiated": "…" | null, "outcome": "accepted" | "downgraded" | "refused", "reason": "…" }
 ```
 
-The event is content-free: `peer` MUST be a digest of the peer origin, never the origin in clear. The event is the normative witness of the invariants `a2a-version-no-silent-downgrade` and `mcp-version-no-silent-downgrade`; the seams profile ([conformance.md](conformance.md)) drives the exchange and captures the wire leg.
+The event is content-free: `peer` MUST be a digest of the peer origin, never the origin in clear. The event is the normative witness of the invariants `a2a-version-no-silent-downgrade` and `mcp-version-no-silent-downgrade`.
 
 **The refresh SLA.** A host MUST re-evaluate its advertised `versions[]` / `revisions[]` against the upstream registry within the window its `refreshedAt` declares, and that window MUST NOT exceed 90 days. An advertisement older than its window is non-conformant.
 
@@ -78,7 +78,7 @@ What the map does not name is opaque: it MUST round-trip where upstream requires
 
 **A2A error details.** A host:
 
-- on a 1.0 `JSONRPC` interface, MUST make an A2A error's `error.data` an array of objects each carrying `@type`, including exactly one `type.googleapis.com/google.rpc.ErrorInfo` whose `reason` is the map row's `reason` and whose `domain` is `a2a-protocol.org` (a tightening of A2A §9.5's SHOULD);
+- on a 1.0 `JSONRPC` interface, MUST make an A2A error's `error.data` an array of objects each carrying `@type`, including exactly one `type.googleapis.com/google.rpc.ErrorInfo` whose `reason` is the map row's `reason` and whose `domain` is `a2a-protocol.org`;
 - on an `HTTP+JSON` interface, MUST answer A2A §11.6's `google.rpc.Status`;
 - MUST NOT answer with the OpenWOP error envelope on an interface URL the card lists, including a refusal before dispatch;
 - MUST NOT vary `TaskNotFoundError` details between an unknown task and an unreadable one, apart from an echo of the requested id;
@@ -113,7 +113,7 @@ A host MAY serve the MCP Tasks extension `io.modelcontextprotocol/tasks` (revisi
 A host advertising `a2a.pushNotifications` treats each push as a webhook egress: webhooks.md §Egress binds at delivery time as well as registration, a `3xx` is a failed delivery, and the push credential is bound as security-defaults.md §"Onward hops" states.
 
 - A host MUST attempt each push at least once; a host that retries follows `webhooks.md` `retryPolicy` semantics.
-- The body is an A2A 1.0 `StreamResponse` sent as `application/a2a+json`, carrying `Authorization: {scheme} {credentials}` from the config. When only `token` is set, a host SHOULD send it as `Authorization: Bearer <token>` (A2A v1.0.1 leaves its carriage undefined).
+- The body is an A2A 1.0 `StreamResponse` sent as `application/a2a+json`, carrying `Authorization: {scheme} {credentials}` from the config. When only `token` is set, a host SHOULD send it as `Authorization: Bearer <token>`.
 - A host MUST NOT add an OpenWOP signature.
 - Push dead-letters are not visible to A2A clients; a client recovers with `GetTask`.
 - A `replay` fork MUST NOT push re-emitted history, and no fork inherits a source run's push configs.
@@ -144,10 +144,8 @@ The card MUST NOT carry anything the inventory entry may not, and does not repla
 
 gRPC is not part of the core wire. Its document lives at `spec/v2/ext/grpc-transport/` with `witness: unwitnessable` and `adoption: none`; its requirements are SHOULDs of that extension.
 
-- A host MUST NOT advertise a `grpc` capability block — an unwitnessable family is not advertisable.
+- A host MUST NOT advertise a `grpc` capability block.
 - `api/v2/openapi.yaml` and the AsyncAPI document are the only canonical API descriptions.
-
-The extension re-enters core only by an additive RFC that generates the proto from `spec/v2/declaration.json` and lands a suite client.
 
 ## Trace context
 
@@ -160,6 +158,6 @@ A receiver prefers the in-message value, ignores a malformed one, and MUST NOT d
 
 ## Threat model
 
-`SECURITY/threat-model-interop.md` is the threat model for this document; its invariants are rows of `SECURITY/invariants.yaml`. Peer identity and authorization at the boundary are governed by security-defaults.md; a peer MUST NOT gain authority the caller's Subject does not hold.
+`SECURITY/threat-model-interop.md` is the threat model for this document. Peer identity and authorization at the boundary are governed by security-defaults.md; a peer MUST NOT gain authority the caller's Subject does not hold.
 
 *Sources: RFCs 0175, 0198, 0207, 0208, 0211, 0214.*

@@ -16,7 +16,11 @@ The schema at `schemaRef`, inside the signed tarball, is the source of truth. It
 - A host advertising `artifactTypes` SHOULD serve each installed type's schema there, and MUST for a host-registered type whose `schemaVersion` it advertises.
 - A tarball copy and a served copy of one `(artifactTypeId, schemaVersion)` MUST be byte-identical.
 
-At registry publish and at install, a host MUST reject, with `pack_validation_failed`, an artifact schema exceeding its bounds on serialized size, `$ref` depth or keyword/subschema count, and MUST compile under a wall-clock timeout. It SHOULD reject a `pattern` it cannot evaluate in linear time (invariant `artifact-schema-compile-bounded`).
+At registry publish and at install, a host (invariant `artifact-schema-compile-bounded`):
+
+- MUST reject, with `pack_validation_failed`, an artifact schema exceeding its bounds on serialized size, `$ref` depth or keyword/subschema count;
+- MUST compile it under a wall-clock timeout;
+- SHOULD reject a `pattern` it cannot evaluate in linear time.
 
 ## Registration
 

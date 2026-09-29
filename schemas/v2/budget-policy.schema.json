@@ -46,7 +46,7 @@
       "type": "number",
       "minimum": 0,
       "maximum": 100,
-      "description": "Emit `budget.threshold.crossed` once per dimension at this percent of the dimension's limit."
+      "description": "Emit `budget.threshold-crossed` once per dimension at this percent of the dimension's limit."
     },
     "onExhaustion": {
       "type": "string",
@@ -56,6 +56,5 @@
       ],
       "description": "`fail` (default): `cap.breached{kind:\"budget-*\"}` → `run.failed{budget_exhausted}`. `interrupt`: raise an RFC 0051 approval interrupt so a human MAY extend the budget."
     }
-  },
-  "x-openwop-seeded-from": "v1"
+  }
 }

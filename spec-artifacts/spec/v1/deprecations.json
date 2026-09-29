@@ -1,7 +1,7 @@
 {
   "$schema": "./deprecations.schema.json",
   "version": 1,
-  "updated": "2026-09-28",
+  "updated": "2026-09-29",
   "entries": [
     {
       "id": "openwop.deprecation.capabilities-wrapper",
@@ -1065,6 +1065,28 @@
         {
           "file": "spec/v1/capabilities.md",
           "token": "**A.1 — Subset constraint.**"
+        }
+      ],
+      "removalTrigger": "v2.0-cut"
+    },
+    {
+      "id": "openwop.deprecation.ai-providers-supported-rename",
+      "status": "deprecated",
+      "surface": "`aiProviders.supported`",
+      "kind": "discovery-field",
+      "deprecatedIn": "RFC 0169 §Migration table row `openwop.migration.C2.12` (v2 renames the list `providers`)",
+      "authority": "RFCS/0169-v2-discovery-and-capabilities.md §Migration table, row openwop.migration.C2.12",
+      "removeIn": "2.0",
+      "replacement": "`aiProviders.providers` (spec/v2/core/host-services.md §aiProviders)",
+      "codemod": "openwop.codemod.ai-providers-v2-narrow",
+      "sources": [
+        {
+          "file": "RFCS/0169-v2-discovery-and-capabilities.md",
+          "token": "openwop.migration.C2.12"
+        },
+        {
+          "file": "spec/v1/capabilities.md",
+          "token": "| `aiProviders.supported`"
         }
       ],
       "removalTrigger": "v2.0-cut"
