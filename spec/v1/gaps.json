@@ -13583,7 +13583,7 @@
       "rfc": "0228",
       "local": "G5",
       "section": "§D",
-      "surface": "The `aiProviders` failure modes are not decided here.",
+      "surface": "The `aiProviders` codes for a provider that answered with a failure (`content_too_long`, `envelope_validation_failed`, the `*_generation_failed` codes, the provider arm of `speech_synthesis_failed`) are not decided here; the leaning is one `provider_error` row.",
       "witness": "unclassified",
       "requirementId": null,
       "disposition": "transferred",
@@ -13592,6 +13592,57 @@
         {
           "file": "RFCS/registers/0228-v1-host-service-error-codes.gaps.md",
           "token": "G5"
+        }
+      ]
+    },
+    {
+      "id": "openwop.gap.0228.6",
+      "rfc": "0228",
+      "local": "G6",
+      "section": "§Compatibility, §H",
+      "surface": "openwop-app answers ungated `/prompts*` with `501 capability_not_provided` (`routes/prompts.ts:147`, `:174`, `:178`, `:202`, `:242`), at a status the registry does not give that code, and emits `prompt_ref_ambiguous` (`:214`, `:330`) and the `aiProviders` modality codes.",
+      "witness": "unclassified",
+      "requirementId": null,
+      "disposition": "externally-gated",
+      "target": "rfc-0228-active",
+      "sources": [
+        {
+          "file": "RFCS/registers/0228-v1-host-service-error-codes.gaps.md",
+          "token": "G6"
+        }
+      ]
+    },
+    {
+      "id": "openwop.gap.0228.7",
+      "rfc": "0228",
+      "local": "G7",
+      "section": "§Compatibility",
+      "surface": "MyndHyve fails a run with `no_active_deployment` (`runExecutor.ts:2182`), emits the `aiProviders` modality codes, and answers an agent-deployment denial as `{ error, detail }` (`routes/agents.ts:719`) with unregistered codes (`illegal_transition`, `canary_unsupported`, `no_deployment`, `transition_denied`). The top-level `detail` breaks the envelope's `additionalProperties: false`.",
+      "witness": "unclassified",
+      "requirementId": null,
+      "disposition": "externally-gated",
+      "target": "rfc-0228-active",
+      "sources": [
+        {
+          "file": "RFCS/registers/0228-v1-host-service-error-codes.gaps.md",
+          "token": "G7"
+        }
+      ]
+    },
+    {
+      "id": "openwop.gap.0228.8",
+      "rfc": "0228",
+      "local": "G8",
+      "section": "§G, §H",
+      "surface": "`api/v2/openapi.yaml` is derived from the v1 document by `scripts/derive-v2-api.py`, which copies v1's `501` responses and the descriptions naming unregistered codes.",
+      "witness": "unclassified",
+      "requirementId": null,
+      "disposition": "externally-gated",
+      "target": "rfc-0228-active",
+      "sources": [
+        {
+          "file": "RFCS/registers/0228-v1-host-service-error-codes.gaps.md",
+          "token": "G8"
         }
       ]
     },
