@@ -9,8 +9,8 @@ Every v2 core family now has a v2 normative home (RFC 0189). Many of its rules a
 ## Headline
 
 - **Families (73 core):** 31 v2-witnessed, 38 v1-only, 4 unwitnessed. Of the 54 `witnessable-gated` families, 34 are v1-only; every unwitnessed family is `claims-check`.
-- **At v1 end-of-support:** the 38 v1-only families, and the 154 obligation units attributed to them, lose their only witness.
-- **Obligation units (870 in `spec/v2/core/`):** 497 (57%) sit in a section a major-2 scenario cites; 373 sit in 118 sections no major-2 scenario cites.
+- **At v1 end-of-support:** the 38 v1-only families, and the 157 obligation units attributed to them, lose their only witness.
+- **Obligation units (873 in `spec/v2/core/`):** 497 (57%) sit in a section a major-2 scenario cites; 376 sit in 117 sections no major-2 scenario cites.
 - **Declaration links:** 0 core families declare `floorScenarios`; 0 declare `requirementIds`. The family-to-test link exists only in scenario code and citations, although `overview.md` §What a MUST means says every core MUST has an id in `requirements.json`.
 - **Scenarios:** 574 registered, 137 run at major 2. 33 major-2 citations name a v2 core section this script cannot match to a heading (see Citation gaps).
 
@@ -27,14 +27,14 @@ Every v2 core family now has a v2 normative home (RFC 0189). Many of its rules a
 | Family | Witness class | Verdict | Units (v2-cited) | Major-2 witnesses | Major-1-only witnesses |
 | --- | --- | --- | --- | --- | --- |
 | `nosql` | claims-check | **unwitnessed** | 3 (0) | – | – |
-| `promptLibrary` | claims-check | **unwitnessed** | 3 (0) | – | – |
 | `agentRuntime` | claims-check | **unwitnessed** | 1 (0) | – | – |
+| `promptLibrary` | claims-check | **unwitnessed** | 1 (0) | – | – |
 | `envelopeContracts` | claims-check | **unwitnessed** | 0 (0) | – | – |
 | `i18n` | witnessable-gated | **v1-only** | 17 (0) | – | `i18n-negotiation` |
 | `prompts` | witnessable-gated | **v1-only** | 16 (0) | – | `prompt-all-four-kinds-events`, `prompt-composed-secret-redaction`, `prompt-composed-trust-marker`, `prompt-end-to-end-events` +11 |
-| `aiProviders` | witnessable-gated | **v1-only** | 14 (0) | – | `ai-envelope-shape`, `byok-auth-modes`, `media-url-inline-cap`, `node-module-required-capabilities-shape` |
-| `envelopes` | claims-check | **v1-only** | 12 (0) | – | `envelope-reasoning-secret-redaction`, `envelope-reasoning-shape`, `envelope-tier-one-subset-static` |
-| `artifactTypes` | witnessable-gated | **v1-only** | 8 (0) | – | `artifact-type-pack-install`, `artifact-type-registration-source`, `artifact-type-store-emission`, `artifact-type-store-without-render` +1 |
+| `aiProviders` | witnessable-gated | **v1-only** | 15 (0) | – | `ai-envelope-shape`, `byok-auth-modes`, `media-url-inline-cap`, `node-module-required-capabilities-shape` |
+| `envelopes` | claims-check | **v1-only** | 13 (0) | – | `envelope-reasoning-secret-redaction`, `envelope-reasoning-shape`, `envelope-tier-one-subset-static` |
+| `artifactTypes` | witnessable-gated | **v1-only** | 10 (0) | – | `artifact-type-pack-install`, `artifact-type-registration-source`, `artifact-type-store-emission`, `artifact-type-store-without-render` +1 |
 | `portability` | witnessable-gated | **v1-only** | 8 (0) | – | `export-bundle-portability` |
 | `selfHostedRunner` | witnessable-gated | **v1-only** | 8 (0) | – | `self-hosted-runner` |
 | `httpClient` | witnessable-gated | **v1-only** | 7 (0) | – | `http-client-ssrf`, `safefetch-behavior`, `safefetch-live-audit` |
@@ -42,13 +42,12 @@ Every v2 core family now has a v2 normative home (RFC 0189). Many of its rules a
 | `workspace` | witnessable-gated | **v1-only** | 7 (0) | – | `workspace-behavior`, `workspace-capability-shape`, `workspace-cross-tenant-isolation-blackbox`, `workspace-cross-tenant-isolation` |
 | `queueBus` | witnessable-gated | **v1-only** | 5 (0) | – | `queue-ack-nack-dlq`, `queue-cross-tenant-isolation`, `queue-publish-consume-roundtrip`, `stream-subscribe-from-beginning` |
 | `subWorkflow` | claims-check | **v1-only** | 5 (0) | – | `dispatch-input-mapping`, `dispatchLoop` |
+| `providerUsage` | witnessable-gated | **v1-only** | 4 (0) | – | `provider-usage` |
 | `toolHooks` | witnessable-gated | **v1-only** | 4 (0) | – | `safefetch-behavior`, `safefetch-live-audit`, `tool-hooks-authorization-fail-closed`, `tool-hooks-content-free` +4 |
-| `aiEnvelope` | witnessable-gated | **v1-only** | 3 (0) | – | `aiEnvelope.universalKinds` |
 | `fs` | witnessable-gated | **v1-only** | 3 (0) | – | `fs-path-traversal` |
 | `modelCapabilities` | witnessable-gated | **v1-only** | 3 (0) | – | `envelope-variant-discriminator-static`, `model-capability-insufficient`, `model-capability-substituted`, `node-module-required-capabilities-shape` |
 | `multiPartyConversation` | witnessable-gated | **v1-only** | 3 (0) | – | `multi-party-conversation-behavioral`, `multi-party-conversation-shape` |
 | `nodePackRuntimes` | claims-check | **v1-only** | 3 (0) | – | `otel-emission-grpc`, `wasm-pack-abi-version-rejection`, `wasm-pack-invoke-completed`, `wasm-pack-invoke-suspended` +3 |
-| `providerUsage` | witnessable-gated | **v1-only** | 3 (0) | – | `provider-usage` |
 | `sql` | witnessable-gated | **v1-only** | 3 (0) | – | `sql-injection-rejection`, `sql-transaction-atomicity` |
 | `dataResidency` | witnessable-gated | **v1-only** | 2 (0) | – | `data-residency-admission` |
 | `kvStorage` | witnessable-gated | **v1-only** | 2 (0) | – | `kv-atomic-increment`, `kv-cas`, `kv-cross-tenant-isolation`, `kv-ttl-expiry` |
@@ -56,6 +55,7 @@ Every v2 core family now has a v2 normative home (RFC 0189). Many of its rules a
 | `searchIndex` | witnessable-gated | **v1-only** | 2 (0) | – | `search-bm25-roundtrip` |
 | `tableStorage` | witnessable-gated | **v1-only** | 2 (0) | – | `table-cross-tenant-isolation`, `table-cursor-pagination`, `table-schema-enforcement` |
 | `vectorStore` | witnessable-gated | **v1-only** | 2 (0) | – | `vector-knn-roundtrip` |
+| `aiEnvelope` | witnessable-gated | **v1-only** | 1 (0) | – | `aiEnvelope.universalKinds` |
 | `blobStorage` | witnessable-gated | **v1-only** | 1 (0) | – | `blob-cross-tenant-isolation`, `blob-presign-expiry`, `blob-roundtrip` |
 | `channelPresence` | witnessable-gated | **v1-only** | 1 (0) | – | `channel-presence-behavioral`, `channel-presence-shape` |
 | `conversationTurnModelProvenance` | witnessable-gated | **v1-only** | 1 (0) | – | `conversation-turn-model-provenance-shape` |
@@ -68,18 +68,18 @@ Every v2 core family now has a v2 normative home (RFC 0189). Many of its rules a
 | `purposePropagation` | witnessable-gated | **v1-only** | 0 (0) | – | `purpose-propagation` |
 | `triggerBridge` | witnessable-gated | **v1-only** | 0 (0) | – | `agent-roster-attribution`, `trigger-bridge-delivery`, `trigger-ingestion`, `trigger-stream-cdc-sources` |
 | `uiPlugins` | witnessable-gated | **v1-only** | 0 (0) | – | `frontend-plugin-packs` |
-| `production` | witnessable-gated | **v2-witnessed** | 48 (26) | `jcs-vectors`, `v2-bundle-v3-signed`, `v2-coherence-not-in-bundle`, `v2-relaxation-recorded` | `grpc-transport`, `production-backpressure`, `production-retention-expiry` |
+| `production` | witnessable-gated | **v2-witnessed** | 49 (26) | `jcs-vectors`, `v2-bundle-v3-signed`, `v2-coherence-not-in-bundle`, `v2-relaxation-recorded` | `grpc-transport`, `production-backpressure`, `production-retention-expiry` |
 | `interrupt` | witnessable-gated | **v2-witnessed** | 46 (43) | `v2-approval-reject-disposition`, `v2-approver-enforced`, `v2-bound-id-kinds`, `v2-callback-url-guarded` +4 | `interrupt-approver-routing` |
-| `eventLog` | claims-check | **v2-witnessed** | 36 (26) | `v2-era-2-append-vocabulary`, `v2-era-key`, `v2-era-stamp-universal`, `v2-fork-a-v1-run` +3 | `cross-engine-append-behavior`, `cross-engine-append-ordering`, `multi-region-idempotency` |
 | `replay` | witnessable-gated | **v2-witnessed** | 36 (19) | `v2-a2a-push-delivery`, `v2-approval-reject-disposition`, `v2-effect-seam-manifest`, `v2-effect-seam-no-refire` +7 | `replay-side-effect-suppression` |
-| `packs` | claims-check | **v2-witnessed** | 34 (20) | `v2-manifest-ceiling-refused`, `v2-manifest-hatch-carried`, `v2-peer-dependency-declared`, `v2-registry-lifecycle` | `pack-registry-isolation` |
+| `eventLog` | claims-check | **v2-witnessed** | 35 (25) | `v2-era-2-append-vocabulary`, `v2-era-key`, `v2-era-stamp-universal`, `v2-fork-a-v1-run` +3 | `cross-engine-append-behavior`, `cross-engine-append-ordering`, `multi-region-idempotency` |
+| `packs` | claims-check | **v2-witnessed** | 35 (20) | `v2-manifest-ceiling-refused`, `v2-manifest-hatch-carried`, `v2-peer-dependency-declared`, `v2-registry-lifecycle` | `pack-registry-isolation` |
 | `webhooks` | witnessable-gated | **v2-witnessed** | 34 (26) | `inbound-credential-no-passthrough`, `v2-a2a-operation-map`, `v2-bound-id-kinds`, `v2-v1-signed-webhook-accepted` +10 | `webhook-negative`, `webhook-sig-algorithm`, `webhook-signed-delivery` |
 | `idempotency` | witnessable-gated | **v2-witnessed** | 25 (20) | `v2-bound-id-kinds`, `v2-effect-identity-business-key`, `v2-idempotency-key-grammar` | `compensation-recovery`, `multi-region-idempotency-behavior`, `multi-region-idempotency`, `replay-llm-cache-key` +1 |
 | `multiAgent` | claims-check | **v2-witnessed** | 19 (0) | `context-budget-transcript-bound`, `context-summarization-replay`, `v2-run-fork-ancestry` | `cross-host-traceparent-propagation`, `multi-agent-handoff-state-machine`, `replay-observable-sequence-determinism` |
 | `toolCatalog` | witnessable-gated | **v2-witnessed** | 14 (11) | `auth-challenge-no-oracle`, `tool-catalog-compact-projection`, `tool-catalog-projection`, `tool-descriptor-shape` +1 | `tool-session-lifecycle` |
 | `oauth` | witnessable-gated | **v2-witnessed** | 13 (11) | `v2-a2a-operation-map`, `v2-credential-interrupt`, `v2-mcp-mount-map`, `v2-oauth-client-pkce-state-iss` +1 | `byok-auth-modes`, `oauth-authorization-code-roundtrip`, `oauth-capability-shape`, `oauth-connector-redaction` |
+| `memory` | witnessable-gated | **v2-witnessed** | 12 (0) | `context-budget-transcript-bound`, `context-summarization-replay`, `memory-attribution-replay-stable` | `agentMemoryRedactionContract`, `agentMemoryRoundTrip`, `memory-attribution-emits-on-write`, `memory-attribution-no-content` +7 |
 | `forms` | claims-check | **v2-witnessed** | 11 (1) | `v2-form-when-reuses-edge-conditions` | `form-content-instantiation` |
-| `memory` | witnessable-gated | **v2-witnessed** | 10 (0) | `context-budget-transcript-bound`, `context-summarization-replay`, `memory-attribution-replay-stable` | `agentMemoryRedactionContract`, `agentMemoryRoundTrip`, `memory-attribution-emits-on-write`, `memory-attribution-no-content` +7 |
 | `connections` | witnessable-gated | **v2-witnessed** | 8 (5) | `fixtures-valid`, `v2-provider-conflict` | `connection-pack-apihosts`, `connection-pack-manifest-valid`, `connection-pack-no-credential-material`, `connection-pack-write-reconsent` +1 |
 | `anonymousActor` | seam-gated | **v2-witnessed** | 7 (0) | `v2-mcp-mount-map` | `anonymous-actor-audit-opaque`, `anonymous-actor-default-deny`, `anonymous-actor-egress-guarded`, `anonymous-actor-no-secret-reach` +4 |
 | `workflowChainPacks` | witnessable-gated | **v2-witnessed** | 5 (1) | `v2-chain-pin-exact` | `chain-subchain-fanout`, `workflow-chain-deferred-parameters`, `workflow-chain-expansion`, `workflow-chain-host-expansion` +2 |
@@ -89,8 +89,8 @@ Every v2 core family now has a v2 normative home (RFC 0189). Many of its rules a
 | `heartbeat` | witnessable-gated | **v2-witnessed** | 3 (3) | `v2-stream-mode-refusal` | `heartbeat-capability-shape`, `heartbeat-fires-once-per-tick`, `heartbeat-idempotent-no-spam`, `heartbeat-runtime-bound` |
 | `agents` | witnessable-gated | **v2-witnessed** | 2 (0) | `v2-a2a-agent-cards`, `v2-agent-org-chart-served-shape` | `agent-live-allowlist-enforced`, `agent-manifest-runtime`, `agentConfidenceEscalation`, `agentMessageReducer` +3 |
 | `conversationPrimitive` | claims-check | **v2-witnessed** | 2 (0) | `v2-conversation-turn-parts` | `conversationCapabilityNegotiation`, `conversationLifecycle`, `conversationReplayDeterminism`, `conversationVsLegacySuspend` +1 |
+| `feedback` | witnessable-gated | **v2-witnessed** | 2 (0) | `v2-run-annotation-not-event` | `feedback-capability-shape`, `feedback-correction-redaction`, `feedback-cross-tenant-isolation`, `feedback-fork-not-copied` +3 |
 | `supportedEnvelopes` | witnessable-gated | **v2-witnessed** | 2 (2) | `v2-a2ui-v09-surface` | `ai-envelope-shape`, `envelope-tier-one-subset-static` |
-| `feedback` | witnessable-gated | **v2-witnessed** | 1 (0) | `v2-run-annotation-not-event` | `feedback-capability-shape`, `feedback-correction-redaction`, `feedback-cross-tenant-isolation`, `feedback-fork-not-copied` +3 |
 | `schemaVersions` | witnessable-gated | **v2-witnessed** | 1 (1) | `v2-a2ui-v09-surface` | `aiEnvelope.schemaDrift` |
 | `a2a` | seam-gated | **v2-witnessed** | 0 (0) | `v2-a2a-agent-cards`, `v2-a2a-client-error-details`, `v2-a2a-operation-map`, `v2-a2a-push-delivery` +3 | `a2a-1-0-agent-card`, `a2a-1-0-task-roundtrip`, `a2a-card-runtime-consistency`, `a2a-peer-authority` +2 |
 | `auditLogIntegrity` | witnessable-gated | **v2-witnessed** | 0 (0) | `audit-checkpoint-signature`, `audit-log-integrity` | `strict-behavior-gate` |
@@ -104,9 +104,9 @@ Every v2 core family now has a v2 normative home (RFC 0189). Many of its rules a
 
 | Document | Units | In v2-cited sections | Homes |
 | --- | --- | --- | --- |
-| `artifact-type-packs.md` | 8 | 0 (0%) | `artifactTypes` |
+| `artifact-type-packs.md` | 10 | 0 (0%) | `artifactTypes` |
 | `capabilities.md` | 25 | 21 (84%) | – |
-| `conformance.md` | 48 | 26 (54%) | `production` |
+| `conformance.md` | 49 | 26 (53%) | `production` |
 | `connection-packs.md` | 8 | 5 (63%) | `connections` |
 | `conversation.md` | 5 | 0 (0%) | `multiPartyConversation`, `conversationTurnModelProvenance`, `channelPresence` |
 | `errors.md` | 18 | 14 (78%) | – |
@@ -114,7 +114,7 @@ Every v2 core family now has a v2 normative home (RFC 0189). Many of its rules a
 | `execution.md` | 34 | 0 (0%) | `selfHostedRunner`, `multiAgent`, `agents`, `subWorkflow` |
 | `form-content-packs.md` | 11 | 1 (9%) | `forms` |
 | `headers.md` | 6 | 0 (0%) | – |
-| `host-services.md` | 86 | 4 (5%) | `prompts`, `secrets`, `modelCapabilities`, `aiProviders`, `memory`, `queueBus`, `scheduling`, `toolHooks`, `httpClient`, `aiEnvelope`, `promptLibrary`, `agentRuntime`, `workspace`, `mcp` |
+| `host-services.md` | 85 | 4 (5%) | `prompts`, `secrets`, `modelCapabilities`, `aiProviders`, `memory`, `queueBus`, `scheduling`, `toolHooks`, `httpClient`, `aiEnvelope`, `promptLibrary`, `agentRuntime`, `workspace`, `mcp` |
 | `i18n.md` | 17 | 0 (0%) | `i18n`, `content` |
 | `idempotency.md` | 25 | 20 (80%) | `idempotency` |
 | `identity.md` | 64 | 55 (86%) | `anonymousActor`, `authorization`, `auth` |
@@ -123,11 +123,11 @@ Every v2 core family now has a v2 normative home (RFC 0189). Many of its rules a
 | `node-pack-runtimes.md` | 3 | 0 (0%) | `nodePackRuntimes` |
 | `oauth.md` | 13 | 11 (85%) | `credentials`, `oauth` |
 | `overview.md` | 14 | 0 (0%) | – |
-| `packs.md` | 34 | 20 (59%) | `uiPlugins`, `packs` |
-| `persistence.md` | 36 | 26 (72%) | `eventLog` |
+| `packs.md` | 35 | 20 (57%) | `uiPlugins`, `packs` |
+| `persistence.md` | 35 | 25 (71%) | `eventLog` |
 | `portability.md` | 8 | 0 (0%) | `portability` |
 | `replay.md` | 36 | 19 (53%) | `replay`, `nondeterminismPolicy`, `eventLog` |
-| `runs.md` | 69 | 64 (93%) | `limits`, `dataResidency`, `conversationPrimitive`, `deadLetter`, `budget`, `runList` |
+| `runs.md` | 70 | 65 (93%) | `limits`, `dataResidency`, `conversationPrimitive`, `deadLetter`, `budget`, `runList` |
 | `security-defaults.md` | 27 | 19 (70%) | `purposePropagation`, `sandbox`, `compensation`, `auditLogIntegrity` |
 | `storage.md` | 19 | 0 (0%) | `fs`, `kvStorage`, `tableStorage`, `sql`, `nosql`, `vectorStore`, `searchIndex`, `blobStorage`, `cache` |
 | `tool-catalog.md` | 14 | 11 (79%) | `toolCatalog` |
@@ -142,13 +142,13 @@ Sections with the most obligation units and no major-2 citation. A doc-level cit
 | Document § | Owner | Units |
 | --- | --- | --- |
 | `execution.md` § `multiAgent` | multiAgent | 19 |
-| `host-services.md` § `aiProviders` | aiProviders | 14 |
-| `events.md` § `envelopes` | envelopes | 12 |
-| `host-services.md` § `memory` | memory | 10 |
+| `host-services.md` § `aiProviders` | aiProviders | 15 |
+| `events.md` § `envelopes` | envelopes | 13 |
+| `host-services.md` § `memory` | memory | 12 |
+| `packs.md` § Front-end plugin packs | packs | 9 |
+| `conformance.md` § Production profile | production | 8 |
 | `execution.md` § `selfHostedRunner` | selfHostedRunner | 8 |
-| `packs.md` § Front-end plugin packs | packs | 8 |
 | `webhooks.md` § Inbound triggers | webhooks | 8 |
-| `conformance.md` § Production profile | production | 7 |
 | `host-services.md` § `secrets` | secrets | 7 |
 | `host-services.md` § `httpClient` | httpClient | 7 |
 | `host-services.md` § `workspace` | workspace | 7 |
@@ -159,13 +159,13 @@ Sections with the most obligation units and no major-2 citation. A doc-level cit
 | `portability.md` § Import rules | portability | 6 |
 | `replay.md` § Determinism caveats (`replay` mode) | replay | 6 |
 | `replay.md` § Divergence | replay | 6 |
+| `artifact-type-packs.md` § Schema distribution | artifactTypes | 5 |
 | `conformance.md` § Witness class | production | 5 |
 | `events.md` § AI envelopes: E1–E5 | shared | 5 |
 | `execution.md` § `subWorkflow` | subWorkflow | 5 |
 | `form-content-packs.md` § Validation | forms | 5 |
 | `host-services.md` § Composition | prompts | 5 |
 | `host-services.md` § `queueBus` | queueBus | 5 |
-| `i18n.md` § `Accept-Language` | i18n | 5 |
 
 ## Citation gaps
 
@@ -410,11 +410,11 @@ node scripts/report-v2-witness-coverage.mjs --write  # regenerate this file
     }
   },
   "obligationUnits": {
-    "total": 870,
+    "total": 873,
     "inV2CitedSections": 497,
-    "inUncitedSections": 373,
-    "sectionsWithObligations": 268,
-    "sectionsWithNoV2Citation": 118
+    "inUncitedSections": 376,
+    "sectionsWithObligations": 266,
+    "sectionsWithNoV2Citation": 117
   },
   "declarationLinks": {
     "familiesWithFloorScenarios": 0,
