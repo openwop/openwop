@@ -453,8 +453,18 @@ describe('webhook-signed-delivery: end-to-end HMAC v1', () => {
     activeServer = receiver;
 
     const ownedTenant = await discoverOwnedTenant(driver);
+    // The LOOPBACK address, over https so the refusal can only come from the
+    // loopback deny list and not from a scheme check. `receiver.url` is the
+    // wrong value here: since 2.37.0 `startScopedReceiver` returns the PUBLIC
+    // FRONT as `url` whenever OPENWOP_WEBHOOK_RECEIVER_URL is set (the tunnel,
+    // plus this exercise's nonce). So this control registered the tunnel, a
+    // host with a working guard correctly accepted it, and the control failed
+    // on a conformant host. Measured on openwop-app production 2026-09-28: the
+    // same host answers `https://127.0.0.1:…` and `https://localhost:…` with
+    // 400 webhook_url_rejected ("denied (loopback / link-local / private-IP)").
+    const loopback = receiver.localUrl.replace(/^http:/, 'https:');
     const reg = await driver.post('/v1/webhooks', {
-      url: receiver.url, // deliberately the raw loopback URL, NOT the tunnel
+      url: loopback, // deliberately the raw loopback listener, NOT the tunnel
       events: ['run.completed'],
       ...(ownedTenant ? { tenantId: ownedTenant } : {}),
     });
