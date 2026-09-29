@@ -44,7 +44,7 @@ Source: `conformance/package.json, CHANGELOG.md`. Conformance suite **2.45.1**; 
 
 ## Open Critical / High program risks
 
-Source: `RFCS/registers/*.risks.md + RFCS/*.risks.md (RFC 0166 tokens)` (470 rows scanned). **109** open across all registers, of which **59** belong to the RFC 0147 program (RFCs ≥ 0147) — the set RFC 0156's claims are gated on. Older registers were never dispositioned; `Open` there means "the mitigation is the normative MUST in the row", not an unaddressed risk:
+Source: `RFCS/registers/*.risks.md + RFCS/*.risks.md (RFC 0166 tokens)` (474 rows scanned). **110** open across all registers, of which **60** belong to the RFC 0147 program (RFCs ≥ 0147) — the set RFC 0156's claims are gated on. Older registers were never dispositioned; `Open` there means "the mitigation is the normative MUST in the row", not an unaddressed risk:
 
 Of those, **5** are explicitly **transferred** to a named tracked surface (0147/R2, 0147/R3, 0147/R12, 0147/R14, 0219/R1) — real and open, but dispositioned. A register sweep turns on "Closed **or transferred**", so both are reported; an open row and a transferred row are not the same state and are not reported as one.
 
@@ -159,6 +159,7 @@ Of those, **5** are explicitly **transferred** to a named tracked surface (0147/
 | 0176 | R4 — `schemas/v2/` ships into a v1 image through an unpinned sync | High | `open` |
 | 0177 | R1 — The re-publish wave (282 versions) is not done before a host cuts and a v2 host has zero installable packs | High | `open` |
 | 0177 | R2 — A mirror or vendor registry installs a `<2.0.0` pack on a v2 host | High | `open` |
+| 0229 | R1 — A host implements §A.2 loosely: its resolver chain lets a `run:` ref fall through to a stored or environment secret, recreating the oracle this RFC removes. | High | `open` — mitigated once the §F.3 leg ships with its negative control. |
 
 ## Permitted claims (RFC 0147 §A)
 

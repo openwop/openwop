@@ -1,0 +1,9 @@
+# RFC 0229 — Gap register
+
+| ID | Section | Question / Missing Input | Owner | Resolution Path | Blocks |
+| --- | --- | --- | --- | --- | --- |
+| G1 | §A | Where `runSecrets` sits on `createRun`: top-level (proposed; keeps secret material out of `configurable`, which hosts persist and echo) or `configurable.runSecrets` (what one production host accepts today). | Spec Architect | `carried:openwop.gap.0229.1` Decision before `Active`, from comments in the window (Unresolved question 1). | `Active` |
+| G2 | §E, §F | No host implements `runSecrets` with the `run:` binding, `core.secret.witness` and the fixture, so the three requirement ids have no witness. | Reference Implementation Architect | `externally-gated:host-implements-run-witness` — a host advertises the facet and records all three rows `executed-pass`; `Accepted` needs one from a production deployment. | `Accepted` |
+| G3 | §A.4, §A.6 | The value is neither stored in cleartext nor logged, but both are unwitnessable from outside: storage and host logs are not protocol surfaces. | Security Architect | `carried:openwop.gap.0229.3` Recorded unwitnessable in the falsifiability table; operator audit and the host's own tests are the only check. A future operator-attested evidence field is out of scope. | Nothing in this RFC. |
+| G4 | §F | Proof of *use* (an egress carrying the value to a suite-owned receiver), beyond proof of resolution. | Conformance Architect | `carried:openwop.gap.0229.4` A possible follow-up leg, gated on `httpClient` and an operator-supplied receiver (Unresolved question 2). | Nothing in this RFC. |
+| G5 | §E | The suite's floor table has no any-of group, so the v1 `openwop-secrets` floor cannot yet name two alternative scenarios. | Conformance Architect | `carried:openwop.gap.0229.5` At `Active`: add a `requiredAnyOf` form to `PROFILE_FLOOR_SCENARIOS` with the scenarios, and extend `describe-level-skip.test.ts` to treat both files as floors. | `Active` |
