@@ -206,7 +206,7 @@
     {
       "key": "limits",
       "kind": "family",
-      "normativeText": ["spec/v2/core/runs.md", "spec/v1/capabilities.md", "spec/v1/budget-policy.md"],
+      "normativeText": ["spec/v2/core/runs.md"],
       "anchor": "core",
       "section": "core/capabilities.md#limits",
       "peerDependencyId": "limits",
@@ -290,7 +290,7 @@
     {
       "key": "prompts",
       "kind": "family",
-      "normativeText": ["spec/v1/prompts.md", "spec/v1/capabilities.md"],
+      "normativeText": ["spec/v2/core/host-services.md"],
       "anchor": "core",
       "section": "core/capabilities.md#prompts",
       "peerDependencyId": "prompts",
@@ -685,7 +685,7 @@
     {
       "key": "aiProviders",
       "kind": "family",
-      "normativeText": ["spec/v1/host-capabilities.md", "spec/v1/capabilities.md", "spec/v1/ai-envelope.md"],
+      "normativeText": ["spec/v2/core/host-services.md"],
       "anchor": "core",
       "section": "core/capabilities.md#aiProviders",
       "peerDependencyId": "aiProviders",
@@ -755,7 +755,7 @@
     {
       "key": "memory",
       "kind": "family",
-      "normativeText": ["spec/v1/agent-memory.md", "spec/v1/capabilities.md"],
+      "normativeText": ["spec/v2/core/host-services.md"],
       "anchor": "core",
       "section": "core/capabilities.md#memory",
       "peerDependencyId": "memory",
@@ -1022,7 +1022,7 @@
     {
       "key": "artifactTypes",
       "kind": "family",
-      "normativeText": ["spec/v1/artifact-type-packs.md"],
+      "normativeText": ["spec/v2/core/artifact-type-packs.md", "schemas/v2/artifact-type-pack-manifest.schema.json"],
       "anchor": "core",
       "section": "core/capabilities.md#artifactTypes",
       "peerDependencyId": "artifactTypes",

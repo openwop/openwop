@@ -91,10 +91,17 @@ The `201` response is `{ runId, status, eventsUrl, statusUrl? }`. `status` is on
 
 ### `run` section
 
-- `recursionLimit` is clamped to `limits.maxNodeExecutions`.
-- `runTimeoutMs` resolves to `min(runTimeoutMs, limits.maxRunDurationMs)`. An out-of-range value MUST return `400 validation_error` at create. A breach MUST emit `cap.breached { kind: 'run-duration' }` and terminate the run `failed` with `run_timeout`.
-- `maxLoopIterations` resolves against `limits.maxLoopIterations`. A breach MUST emit `cap.breached { kind: 'loop-iterations' }` and fail with `loop_limit_exceeded`.
+- `recursionLimit` is clamped to `limits.maxNodeExecutions`. A breach, counted in node starts, MUST emit `cap.breached { kind: 'node-executions' }` and fail the run with `recursion_limit_exceeded`.
+- `runTimeoutMs` resolves to `min(runTimeoutMs, limits.maxRunDurationMs)`, measured from `run.started`. A breach MUST emit `cap.breached { kind: 'run-duration' }` and terminate the run `failed` with `run_timeout`.
+- `maxLoopIterations` resolves against `limits.maxLoopIterations`, counted in orchestrator turns. A breach MUST emit `cap.breached { kind: 'loop-iterations' }` and fail with `loop_limit_exceeded`.
+- An out-of-range `recursionLimit` or `runTimeoutMs` MUST return `400 validation_error` at create. After a breach the host schedules nothing more.
 - `escalationThreshold` is the `low-confidence` threshold ([interrupt.md](interrupt.md)).
+
+### Limits
+
+`limits` always carries `clarificationRounds` (per task), `schemaRounds` (per envelope) and `envelopesPerTurn` (per chat turn). A host advertising `maxNodeExecutions`, `maxRunDurationMs` or `maxLoopIterations` MUST enforce it. On any breach the host MUST emit `cap.breached`, with `nodeId` for `clarification` and `schema`, and fail the node or run. Its `observed` exceeds `limit` and MUST be reused on replay and fork, never recomputed.
+
+`budget.maxTokens` and `budget.maxCostUsd` clamp to `maxBudgetTokens` and `maxBudgetCostUsd`. `maxRequestBodyBytes` is the largest REST request body accepted.
 
 ### `ai` section
 
@@ -276,4 +283,4 @@ This sink holds runs. Queue messages ([host-services.md](host-services.md) §`qu
 
 A non-terminal run inherited from v1 continues, or is cancelled `v1_pin_unsupported`, per [persistence.md](persistence.md) §"Runs pinned to v1".
 
-*Sources: RFCs 0053, 0170, 0171, 0176, 0182.*
+*Sources: RFCs 0053, 0058, 0084, 0170, 0171, 0176, 0182.*
