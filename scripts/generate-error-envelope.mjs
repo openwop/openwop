@@ -8,7 +8,7 @@
  * retry timing lives in Retry-After only (§B.2).
  *   --write / --check
  */
-import { readFileSync, writeFileSync, existsSync } from 'node:fs';
+import { readFileSync, writeFileSync, existsSync, mkdirSync } from 'node:fs';
 import { join, dirname, resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { createRequire } from 'node:module';
@@ -56,36 +56,55 @@ const schema = {
 };
 const render = JSON.stringify(schema, null, 2) + '\n';
 
-// --- spec/v2/core/errors.md ------------------------------------------------
+// --- spec/v2/core/errors.md + spec/v2/generated/error-codes.md ------------
 // The doc said "Generated from spec/v2/errors.json" in two places and named a
 // count in both, while NOTHING generated or checked it. Adding one registry row
-// left a published table silently one code short. The two counts and the
-// status table are now derived here, so the claim is true.
+// left a published table silently one code short. The two counts are derived
+// here, so the claim is true.
+//
+// RFC 0227: the status table itself is a generated restatement of the registry,
+// so it lives in spec/v2/generated/error-codes.md, outside the budgeted kernel
+// (RFC 0190 §A as amended). This script writes that file WHOLE and `--check`
+// compares it byte-for-byte; errors.md keeps the counts and a link to it.
 const DOC = join(ROOT, 'spec', 'v2', 'core', 'errors.md');
+const TABLE_DOC = join(ROOT, 'spec', 'v2', 'generated', 'error-codes.md');
 const n = reg.rows.length;
 const table = [...reg.rows]
   .sort((a, b) => a.httpStatus - b.httpStatus || a.code.localeCompare(b.code))
   .map((r) => `\`${r.code}\` | ${r.httpStatus}`)
   .join('\n');
 const docSrc = readFileSync(DOC, 'utf8');
-let docOut = docSrc
+const docOut = docSrc
   .replace(/It registers \*\*\d+\*\* codes\./, `It registers **${n}** codes.`)
-  .replace(/Generated from `spec\/v2\/errors\.json` \(\d+ codes;/, `Generated from \`spec/v2/errors.json\` (${n} codes;`);
-const head = docOut.indexOf('Code | Status\n--- | ---\n');
-if (head === -1) { console.error('generate-error-envelope: errors.md has no `Code | Status` table'); process.exit(1); }
-const start = head + 'Code | Status\n--- | ---\n'.length;
-let end = docOut.indexOf('\n\n', start);
-if (end === -1) end = docOut.length;
-docOut = docOut.slice(0, start) + table + docOut.slice(end);
+  .replace(/generated from `spec\/v2\/errors\.json` \(\d+ codes\)/, `generated from \`spec/v2/errors.json\` (${n} codes)`);
+const tableOut = [
+  '# Error codes by HTTP status',
+  '',
+  '> **Status: Stable.** Generated from `spec/v2/errors.json` by `scripts/generate-error-envelope.mjs`; do not edit.',
+  '',
+  `Every registered code (${n} codes), by HTTP status. The registry is normative; this table restates it for reading. \`retriable\` and \`statusSource\` are in the registry. The rules are in [errors.md](../core/errors.md).`,
+  '',
+  'Code | Status',
+  '--- | ---',
+  table,
+  '',
+  '*Sources: RFCs 0171, 0227.*',
+  '',
+].join('\n');
 
 if (process.argv.includes('--write')) {
   writeFileSync(OUT, render);
   writeFileSync(DOC, docOut);
-  console.log(`wrote schemas/v2/error-envelope.schema.json + spec/v2/core/errors.md (${n} codes)`);
+  mkdirSync(dirname(TABLE_DOC), { recursive: true });
+  writeFileSync(TABLE_DOC, tableOut);
+  console.log(`wrote schemas/v2/error-envelope.schema.json + spec/v2/core/errors.md + spec/v2/generated/error-codes.md (${n} codes)`);
 } else if (!existsSync(OUT) || readFileSync(OUT, 'utf8') !== render) {
   console.error('generate-error-envelope: schemas/v2/error-envelope.schema.json is stale — run --write');
   process.exit(1);
 } else if (docSrc !== docOut) {
-  console.error('generate-error-envelope: spec/v2/core/errors.md is stale (count or status table) — run --write');
+  console.error('generate-error-envelope: spec/v2/core/errors.md is stale (a count) — run --write');
+  process.exit(1);
+} else if (!existsSync(TABLE_DOC) || readFileSync(TABLE_DOC, 'utf8') !== tableOut) {
+  console.error('generate-error-envelope: spec/v2/generated/error-codes.md is stale or hand-edited — run --write');
   process.exit(1);
 } else console.log(`=== generate-error-envelope OK — ${n} codes, ${withDetails.length} with a details schema; errors.md current ===`);

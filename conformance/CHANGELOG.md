@@ -2,6 +2,7 @@
 
 ## [2.44.6] — unreleased — RFC 0228 registers the v1 host-service codes; multiAgent levels 2–6 restated
 
+- **`0171.error-registry-prose-parity` is re-pointed (RFC 0227).** The `errors.md` status table moved to `spec/v2/generated/error-codes.md`, which the packed `@openwop/spec-artifacts` now ships. The row now requires that `errors.md` links the generated table, that the table holds every registered code, and that every count either document states equals the registry. No scenario is added or removed.
 - **The 2.44.6 cycle opens.** RFC 0228 goes `Active`: nine error codes are registered (`storage_limit_exceeded`, `egress_denied`, `upstream_unavailable`, `budget_exhausted`, `budget_model_denied`, `service_unavailable`, `run_expired`, `provider_policy_denied`, `eval_gate_unmet`) and `token_budget_exceeded` narrows to memory distillation. The v2 homes now name the codes their refusals return.
 - **New scenario `v2-unadvertised-operation-not-found`** (major 2): an unadvertised `/prompts` or `/content/settings` operation answers `404 not_found`, not v1's `501`. A host that still answers `501` fails it.
 - **`multiAgent` levels 2–6** are restated in `spec/v2/core/execution.md`, with per-event rules in `run-event-payloads.schema.json` descriptions. **`aiProviders`' narrowed facets** (`openwop.migration.C2.11`) and **`subWorkflow`'s v1 parent-link fields** (`openwop.migration.C4.18`) are recorded as retired, each with a codemod.
