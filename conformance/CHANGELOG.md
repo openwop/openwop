@@ -1,6 +1,6 @@
 # `@openwop/openwop-conformance` Changelog
 
-## [2.45.1] — 2026-09-29 — the run-list legs stop walking once they find the runs they created
+## [2.45.1] — 2026-09-29 — the run-list legs stop walking once they find their runs, and no scenario skips every test at describe level
 
 - **No scenario file skips every test at describe level any more, and the guard is a hard rule** (patch; no requirement added or removed; the gates are identical, and only their placement moves).
   - **Background.** `describe-level-skip.test.ts` (2.44.9, #1686) ratcheted 56 non-floor files in which every test sat under `describe.skipIf`. vitest runs no setup hook for such a file, so it recorded no disposition when its gate held, and the runner resolved it to a report-derived `blocked` naming no reason.
