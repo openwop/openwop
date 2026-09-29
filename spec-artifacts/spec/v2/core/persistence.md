@@ -141,6 +141,4 @@ Template — one row per store:
 
 A host MAY claim a qualification rung (`durable-single-instance`, `durable-multi-instance`, `multi-region-qualified`; cumulative) only with the evidence [RFC 0158 §D](https://github.com/openwop/openwop/blob/main/RFCS/0158-durable-execution-and-disaster-recovery-qualification.md) names for it, and MUST NOT claim one from tests in which no process was terminated. A rung is evidence, not a capability: discovery carries none, and the certification bundle publishes the rung and its bounds ([conformance.md §Bundle v3](conformance.md)).
 
-See also: [overview.md](overview.md), [events.md](events.md), [replay.md](replay.md), [identity.md](identity.md), [webhooks.md](webhooks.md).
-
 *Sources: RFCs 0041, 0158, 0170, 0171, 0172, 0176, 0180, 0185, 0186, 0187.*

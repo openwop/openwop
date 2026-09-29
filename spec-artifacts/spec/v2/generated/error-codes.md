@@ -2,7 +2,7 @@
 
 > **Status: Stable.** Generated from `spec/v2/errors.json` by `scripts/generate-error-envelope.mjs`; do not edit.
 
-Every registered code (111 codes), by HTTP status. The registry is normative; this table restates it for reading. `retriable` and `statusSource` are in the registry. The rules are in [errors.md](../core/errors.md).
+Every registered code (120 codes), by HTTP status. The registry is normative; this table restates it for reading. `retriable` and `statusSource` are in the registry. The rules are in [errors.md](../core/errors.md).
 
 Code | Status
 --- | ---
@@ -49,6 +49,7 @@ Code | Status
 `credential_forbidden` | 403
 `credential_scope_forbidden` | 403
 `delegation_scope_amplified` | 403
+`egress_denied` | 403
 `forbidden` | 403
 `force_engine_version_forbidden` | 403
 `id_tenant_mismatch` | 403
@@ -82,10 +83,13 @@ Code | Status
 `workspace_conflict` | 409
 `interrupt_cancelled` | 410
 `interrupt_expired` | 410
+`run_expired` | 410
 `payload_too_large` | 413
 `workspace_too_large` | 413
 `unsupported_media_type` | 415
 `approval_rejected` | 422
+`budget_exhausted` | 422
+`budget_model_denied` | 422
 `capability_not_provided` | 422
 `capability_required` | 422
 `connection_auth_metadata_mismatch` | 422
@@ -93,17 +97,20 @@ Code | Status
 `envelope_invalid` | 422
 `envelope_refusal` | 422
 `envelope_truncation_unrecoverable` | 422
+`eval_gate_unmet` | 422
 `fork_point_invalid` | 422
 `loop_limit_exceeded` | 422
 `mcp_mrtr_rounds_exceeded` | 422
 `node_config_invalid` | 422
 `pack_runtime_requirement_unmet` | 422
+`provider_policy_denied` | 422
 `recursion_limit_exceeded` | 422
 `residency_unavailable` | 422
 `run_timeout` | 422
 `sandbox_invocation_error` | 422
 `sandbox_memory_exceeded` | 422
 `sandbox_timeout` | 422
+`storage_limit_exceeded` | 422
 `token_budget_exceeded` | 422
 `unknown_envelope_kind` | 422
 `unknown_schema_version` | 422
@@ -115,7 +122,9 @@ Code | Status
 `payload_unprojectable` | 500
 `credential_unavailable` | 501
 `mcp_error` | 502
+`upstream_unavailable` | 502
 `pack_registry_unreachable` | 503
 `runner_unavailable` | 503
+`service_unavailable` | 503
 
 *Sources: RFCs 0171, 0227.*

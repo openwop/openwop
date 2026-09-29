@@ -146,7 +146,7 @@ The major-1 `interrupt-quorum-resolution` leg is **not** tightened to the code: 
 | §A the timeout disposition | `interrupt.resolved { action: timeout }` and the failure | the host's timer, on `conformance-approval-timeout` (`openwop.requirement.0223.timeout-rejects`) | witnessable — gated |
 | §A a timeout never grants, whatever `onTimeout` holds (openwop #1696) | `interrupt.resolved { action: timeout, decision: rejected }` and a failed run on `conformance-approval-timeout-approve` (`openwop.requirement.0223.timeout-never-grants`) | the host's timer | witnessable — gated |
 | §A (note, openwop #1697) a gate looped back is asked again under a new `key` | a second `interrupt.requested` with a different `key` on `conformance-approval-reject-loopback` | only a host that runs cycles; none does today (gap G11) | witnessable — gated (no host runs cycles yet; G11) |
-| §A replay derives, never re-decides | a replayed run fails identically | the suite, through `replay`, once a host witnesses row 1 | witnessable — gated (leg not yet written) |
+| §A replay derives, never re-decides | a `replay` fork taken at the gate's recorded `interrupt.resolved` raises no new `interrupt.requested`, carries the source's `decision` / `action` / `reason`, fails the same way, and answers a resolve with `409 interrupt_already_resolved` | the suite, through `replay` (leg `0223.replay-derives-rejection`, openwop #1756; legs A reject and B timeout; suite 2.44.4) | witnessable — gated (the v2 reference host passes it locally; no certified bundle records it yet) |
 | §B the code is registered (`openwop.requirement.0223.code-registered`) | `spec/v2/errors.json` | the corpus gate | witnessable — unaided (corpus) |
 
 ## Alternatives considered

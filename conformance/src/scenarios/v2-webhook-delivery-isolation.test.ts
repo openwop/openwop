@@ -26,6 +26,11 @@
  *     host released one to make room), or never within the window, AND the held
  *     attempts had stayed open until the run was terminal: the contention the
  *     floor names existed when the healthy delivery fell due, and it waited.
+ *   - blocked (unjudged, suite 2.44.2) — fewer than 8 held attempts had arrived
+ *     when the healthy delivery fell due, and the healthy attempt started before
+ *     any held attempt finished: it waited for nothing, and the contention was
+ *     never established (a late `run.started` fan-out). The rule and its tests
+ *     are in `lib/delivery-isolation-verdict.ts`.
  *   - blocked (unjudged) — the host had all 8 held attempts open at once, but
  *     its own delivery timeout closed them before the run was terminal.
  *     Contention was not sustained when the healthy delivery fell due, so this
@@ -56,6 +61,7 @@ import { readErrorCode } from '../lib/error-envelope.js';
 import { blockedDespiteAssertions, softSkip } from '../lib/soft-skip.js';
 import { req } from '../lib/requirement-ids.js';
 import { RETRY_WAIT_FLOOR_MS } from '../lib/webhook-retry-window.js';
+import { isolationVerdict } from '../lib/delivery-isolation-verdict.js';
 
 export const REQUIRES_HOST_CALLBACK = 'the host POSTs webhook deliveries to nine suite-owned subscriptions on the scoped receiver behind OPENWOP_WEBHOOK_RECEIVER_URL, eight of which the suite holds open';
 
@@ -179,44 +185,30 @@ describe('RFC 0215 §A — one subscription\'s receiver does not hold another\'s
     const terminalAt = await waitTerminal(runId, DELAY_MS + 30_000);
     if (terminalAt === null) return blockedDespiteAssertions(`${FIXTURE} run ${runId} did not reach a terminal status — the healthy delivery never fell due`);
     const openAtTerminal = openCount();
-    const everOpened = held.size;
+    const arrivedAtTerminal = held.size;
     await waitFor(() => healthyAt !== null, WINDOW_MS);
     const earliestClose = Math.min(...[...held.values()].map((h) => h.closedAt ?? Infinity));
-    const detail = `${everOpened} held attempt(s) arrived (at most ${peakOpen} open at once); ${openAtTerminal} were still open when the run was seen terminal; `
-      + (healthyAt === null ? `the healthy attempt did not arrive within ${WINDOW_MS}ms of that` : `the healthy attempt arrived ${healthyAt - terminalAt}ms after it, with ${openAtHealthy} held open`);
 
-    if (healthyAt === null && everOpened === 0) {
+    if (healthyAt === null && held.size === 0) {
       if (absenceIsUnmeasured(rx)) return blockedDespiteAssertions(noDeliveryCause(rx, 'webhook attempt'));
       return blockedDespiteAssertions(`no attempt for any of the ${FLOOR + 1} subscriptions arrived — ${noDeliveryCause(rx, 'webhook attempt')}`);
     }
-    if (healthyAt !== null && openAtHealthy >= FLOOR) {
-      expect(openAtHealthy, req(ID, DOC, `an attempt to one subscription MUST NOT wait for attempts to other subscriptions — ${detail}`)).toBeGreaterThanOrEqual(FLOOR);
-    } else if (openAtTerminal >= FLOOR) {
-      // The healthy attempt waited (or never came), and the contention §A.2
-      // names was present when it fell due.
-      expect.fail(req(ID, DOC, `with ${FLOOR} subscriptions' attempts unanswered, a further subscription's attempt MUST still start; it waited for the host to release one — ${detail}`));
-    } else if (everOpened >= FLOOR || earliestClose < terminalAt) {
-      // Contention was not sustained to the due time. Either the host's own
-      // delivery timeout released the held attempts early (its choice), or it
-      // never opened FLOOR of them at once. The second is the defect, the first
-      // is not, and they differ in WHEN the first held attempt closed.
-      //
-      // Unfailable-leg audit (2026-09-26): this branch asserted everOpened > 0
-      // and then `softSkip('skipped')`, which records `executed-pass` with a
-      // `partial-witness:` detail. A serial dispatcher (pool of 1) with a
-      // sub-2s delivery timeout landed here and passed — every held attempt
-      // arrived eventually (everOpened reached FLOOR), one at a time, while the
-      // healthy attempt queued behind them: head-of-line blocking. peakOpen
-      // separates the two cases the comment above names: below FLOOR the host
-      // never had FLOOR attempts outstanding at once, which is the defect; at
-      // FLOOR the host's timeout released them early, which is unjudged.
+    const v = isolationVerdict({
+      floor: FLOOR, terminalAt, healthyAt, openAtHealthy, arrivedAtTerminal, openAtTerminal,
+      arrivedByVerdict: held.size, peakOpen, earliestClose, windowMs: WINDOW_MS, delayMs: DELAY_MS,
+    });
+    if (v.kind === 'blocked') return blockedDespiteAssertions(`${v.message} — ${v.detail}`);
+    if (v.kind === 'blocked-after-peak') {
+      // Unfailable-leg audit (2026-09-26): a serial dispatcher (pool of 1)
+      // with a sub-2s delivery timeout lands here; below FLOOR at once it
+      // fails, at FLOOR the host's timeout released them early (unjudged).
       expect(
         peakOpen,
-        req(ID, DOC, `a host MUST sustain ${FLOOR} subscriptions' attempts outstanding at once — at most ${peakOpen} were ever open together, so the held attempts were dispatched below the floor — ${detail}`),
+        req(ID, DOC, `a host MUST sustain ${FLOOR} subscriptions' attempts outstanding at once — at most ${peakOpen} were ever open together, so the held attempts were dispatched below the floor — ${v.detail}`),
       ).toBeGreaterThanOrEqual(FLOOR);
-      return blockedDespiteAssertions(`unjudged: ${FLOOR} held attempts were open at once, but the host closed held attempts ${Number.isFinite(earliestClose) ? `${terminalAt - earliestClose}ms ` : ''}before the run was terminal (its delivery timeout is shorter than this leg's ${DELAY_MS}ms delay), so ${FLOOR} attempts were not outstanding when the healthy delivery fell due — ${detail}`);
-    } else {
-      expect.fail(req(ID, DOC, `the host never had ${FLOOR} subscriptions' attempts outstanding at once, and the healthy attempt waited — a bounded dispatcher below the floor — ${detail}`));
+      return blockedDespiteAssertions(`${v.message} — ${v.detail}`);
     }
+    if (v.kind === 'fail') expect.fail(req(ID, DOC, `${v.message} — ${v.detail}`));
+    expect(openAtHealthy, req(ID, DOC, `an attempt to one subscription MUST NOT wait for attempts to other subscriptions — ${v.detail}`)).toBeGreaterThanOrEqual(FLOOR);
   }, DELAY_MS + 30_000 + RETRY_WAIT_FLOOR_MS + 30_000);
 });

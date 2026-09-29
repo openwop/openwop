@@ -5,7 +5,7 @@
 
 ## Why this exists
 
-`POST /runs/{runId}:fork` makes any past state of a run re-executable: a replay proves that current code reproduces recorded history; a branch explores an alternative from a recorded point. This document states what a fork MUST reproduce, what it MUST NOT re-fire, and how a host proves the second.
+`POST /runs/{runId}:fork` makes any past run state re-executable: a replay proves current code reproduces recorded history; a branch explores an alternative from a recorded point. This document states what a fork MUST reproduce, what it MUST NOT re-fire, and how a host proves the second.
 
 ## The surface
 
@@ -46,9 +46,9 @@ A host MUST cache the observable result (return value, workflow-state effects, e
 ## Determinism caveats (`replay` mode)
 
 1. A side-effecting node MUST NOT call the external system twice; see §Suppression.
-2. `ctx.interrupt(K)` MUST short-circuit to the persisted `interrupt.resolved` value.
+2. `ctx.interrupt(K)` MUST short-circuit to the persisted `interrupt.resolved`, raising no new `interrupt.requested`.
 3. `ctx.getVersion` pins from the source run are fixed history; the replay MUST take the recorded branch.
-4. Nodes MUST consume time via `ctx.now()` where available; direct clock reads make replay non-deterministic.
+4. Nodes MUST consume time via `ctx.now()` where available; direct clock reads are non-deterministic.
 5. Recorded-fact events such as `memory.written` are fixed history. A replay MUST re-emit them verbatim from the log and MUST NOT regenerate their identifiers or timestamps — never a new `memoryId`. A `branch` MAY perform its own memory writes with fresh identifiers.
 6. Approver eligibility recorded on a resume event is fixed history; a host MUST NOT re-resolve membership during replay.
 
@@ -74,7 +74,7 @@ Suppression is an obligation of the `replay` surface: advertising `replay` binds
 For a fork with `mode: replay`:
 
 1. A node that performs an external side effect — any operation observable outside the run's own event log — MUST NOT perform it.
-2. The host MUST resolve the node's outcome from the source run's recorded terminal outcome keyed on `(sourceRunId, nodeId, n)`, never on the fork's own `runId`, where `n` counts the node's `node.started` events through this execution, including retries, later visits and the fork's inherited prefix.
+2. The host MUST resolve the node's outcome from the source run's `n`th recorded terminal outcome for the node, keyed on `(sourceRunId, nodeId, n)`, never on the fork's own `runId`, where `n` is one more than the node's `node.completed` and `node.failed` events before this execution, the fork's inherited prefix included.
 3. Absent a recorded outcome, the host MUST fail the node closed with `replay_source_missing`, MUST NOT perform the effect, and MUST NOT substitute a synthesized or empty success.
 4. A node whose pack manifest declares `role: "side-effect"` MUST be treated as side-effecting; a host classifier MAY add nodes and MUST NOT remove any. A throwing seam satisfies rule 1 only.
 5. The guarantee is whole-run and requires both classification before execution and a default-deny guard at every effect seam.
@@ -124,12 +124,10 @@ A host that advertises only one of the two keeps the single-region contract abov
 
 ## Retention
 
-A host advertising `replay` MUST document retention for source snapshots, source logs, the invocation records replay depends on, and forked runs; `retention.days` MAY advertise the window. When the range `fromSeq` needs has expired, the host MUST reject the fork with `410` or `422`; `details` SHOULD carry `sourceRunId`, `fromSeq`, and the boundary.
+A host advertising `replay` MUST document retention for source snapshots, source logs, the invocation records replay depends on, and forked runs; `retention.days` MAY advertise the window. When the range `fromSeq` needs has expired, the host MUST reject the fork with `410 run_expired` or `422`; `details` SHOULD carry `sourceRunId`, `fromSeq`, and the boundary.
 
 ## Declared nondeterminism
 
 `nondeterminismPolicy` is the host's statement of which nondeterministic sources it declares rather than suppresses. A host advertising `nondeterminismPolicy.declared` MUST record every declared source in the run's event log at the point it is read, so a fork replays the recorded value rather than re-drawing it. A source the host neither declares nor suppresses is a replay defect, not a policy choice.
 
-See also: events.md, runs.md, persistence.md, security-defaults.md.
-
-*Sources: RFCs 0036, 0039, 0041, 0057, 0104, 0111, 0140, 0173, 0176, 0194.*
+*Sources: RFCs 0036, 0039, 0041, 0057, 0104, 0111, 0140, 0173, 0176, 0194, 0228.*

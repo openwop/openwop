@@ -1,0 +1,9 @@
+# RFC 0228 — Risk register
+
+| ID | Risk | Likelihood | Impact | Score | Mitigation | Owner | Status |
+| --- | --- | --- | --- | --- | --- | --- | --- |
+| R1 | Consolidation breaks packs that branch on v1's per-service names (measured: openwop-app's three `ads-publish-*` packs branch on all five `secret_*` codes). | H | M | Med | The finer cause survives as `details.reason`; the change is disclosed in §Compatibility, and the comment window was waived at `Active` (2026-09-28), so pack authors object through the RFC 0156 §B retrospective review instead. | Spec Architect | `accepted` — the cost of one code per state. |
+| R2 | A client that routes on `not_found` or `forbidden` cannot tell a storage refusal from a resource-API refusal. | M | L | Low | §A requires `details.service` on every host-service rejection that uses a generic code. | Spec Architect | `mitigated` — by a MUST that the §A falsifiability row witnesses once G4 lands. |
+| R3 | `run_expired` is registered with no host emitting it. | M | L | Low | `replay.md` already requires a `410` that has no code, and `production` needs one; `404 not_found` stays allowed when a host cannot tell expired from unknown. | Spec Architect | `accepted` — a spec-authored code, recorded as such in §C. |
+| R4 | `reliability.events[]` carries two spellings for four events until v3. | H | L | Low | A consumer MUST treat a dotted name as its hyphenated equivalent; the dotted names are described as deprecated aliases. | Spec Architect | `accepted` — the replacement fails RFC 0197 R3 on six committed bundles. |
+| R5 | A client that learned v1's `501` for an unadvertised operation reads v2's `404` as "no such resource" and does not check discovery. | L | L | Low | `runs.md` already answers `404` for its gated operations; discovery is the authoritative source of what is advertised, and §H says so. | Spec Architect | `accepted` — `404` is also what a host answers for a path it does not serve. |

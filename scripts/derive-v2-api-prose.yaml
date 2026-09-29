@@ -91,8 +91,6 @@
   now: Events after `afterSequence`.
 - was: Record a non-blocking quality annotation on a run (RFC 0056).
   now: Record a non-blocking quality annotation on a run.
-- was: Host does not advertise capabilities.feedback.supported (RFC 0056).
-  now: Host does not advertise `capabilities.feedback.supported`.
 - was: List the annotations recorded on a run (RFC 0056).
   now: List the annotations recorded on a run.
 - was: Register an external-event trigger subscription (RFC 0099).
@@ -114,8 +112,6 @@
     secret is returned once at creation (SR-1).
   now: 'Source-specific binding the caller needs to wire the external source. For `webhook`: `{ ingestUrl, secretFingerprint }`; for
     `email`: `{ ingestAddress }`; for `form`: `{ ingestUrl }`. The secret is returned once, at creation (SR-1).'
-- was: Host does not advertise capabilities.triggerBridge.ingestion.registrationEndpoint (RFC 0099).
-  now: Host does not advertise `capabilities.triggerBridge.ingestion.registrationEndpoint`.
 - was: Deliver a published content page resolved for the negotiated locale (RFC 0103 §D).
   now: Deliver a published content page resolved for the negotiated locale.
 - was: |
@@ -139,8 +135,6 @@
     The tenant is host-resolved (`localized-content.md` §F): from the credential when authenticated, host-defined (for example by domain) when anonymous. A `slug` absent for the resolved tenant returns the same `404` as a nonexistent slug, so tenants cannot be enumerated.
 - was: BCP-47 preference list; authoritative for locale selection (i18n.md). A malformed value MUST NOT 400.
   now: BCP-47 preference list; authoritative for locale selection (i18n.md). A malformed value MUST NOT produce a 400.
-- was: Host does not advertise capabilities.content.supported (RFC 0103).
-  now: Host does not advertise `capabilities.content.supported`.
 - was: Delete a content page (RFC 0103 §D, admin).
   now: Delete a content page (admin).
 - was: |
@@ -315,14 +309,13 @@
     Validation error, or a transition that the host's advertised
     `states`/`canary` cannot satisfy, or `no_active_deployment` when a
     referenced channel resolves to no active version.
-  now: A validation error; a transition the host's advertised `states`/`canary` cannot satisfy; or `no_active_deployment` when a referenced
-    channel resolves to no active version.
+  now: '`validation_error`: the request is malformed, a transition the host''s advertised `states`/`canary` cannot satisfy, or a referenced
+    channel that resolves to no active version.'
 - was: |
     Fail-closed authorization denial (the principal lacks the required
     `deploy:*` scope — RFC 0049), or `eval_gate_unmet` when a `requiredEval`
     gate's referenced eval run is not terminal-and-passed (RFC 0081).
-  now: Fail-closed authorization denial (the principal lacks the required `deploy:*` scope), or `eval_gate_unmet` when a `requiredEval`
-    gate's referenced eval run is not terminal and passed.
+  now: Fail-closed authorization denial (the principal lacks the required `deploy:*` scope). An unmet `requiredEval` gate answers `422`.
 - was: |
     RFC 0086 §B — list the standing agent roster (named "digital-twin
     employee" instances + their workflow portfolios) visible to the
@@ -501,22 +494,16 @@
     when repeated is AND (every named tag must be present).
   now: Filter to templates whose `tags[]` contains this exact tag. Hosts MAY accept the parameter more than once; repeated values combine
     with AND (every named tag must be present).
-- was: Host does not advertise capabilities.prompts.endpointsSupported. (RFC 0028 §A — supported gates Phase A node-execution composition;
-    endpointsSupported gates this REST surface independently.)
-  now: Host does not advertise `capabilities.prompts.endpointsSupported`. (`supported` gates node-execution composition; `endpointsSupported`
-    gates this REST surface independently.)
-- was: Host does not advertise capabilities.prompts.mutableLibrary.
-  now: Host does not advertise `capabilities.prompts.mutableLibrary`.
 - was: PromptTemplate.templateId per RFC 0027.
   now: '`PromptTemplate.templateId`.'
 - was: |
     Disambiguate when multiple installed packs ship the same
     templateId. Hosts MUST return `prompt_ref_ambiguous` if
     ambiguous and libraryId is omitted.
-  now: Disambiguates when several installed packs ship the same templateId. Hosts MUST return `prompt_ref_ambiguous` when the reference
-    is ambiguous and libraryId is omitted.
+  now: 'Disambiguates when several installed packs ship the same templateId. Hosts MUST answer `validation_error` with `details.field:
+    libraryId` when the reference is ambiguous and libraryId is omitted.'
 - was: '`prompt_ref_ambiguous` when libraryId disambiguation is required.'
-  now: '`prompt_ref_ambiguous` when `libraryId` disambiguation is required.'
+  now: '`validation_error` with `details.field: libraryId` when `libraryId` disambiguation is required.'
 - was: |
     Returns the composed body + sha256 hash + per-variable hashes.
     The response's `hash` MUST equal the `hash` that a matching
@@ -545,8 +532,7 @@
     `prompt_variable_unresolved` (required variable missing),
     `prompt_variable_type_mismatch` (bound type vs. declared type),
     or `prompt_ref_invalid` (malformed PromptRef).
-  now: '`prompt_variable_unresolved` (a required variable is missing), `prompt_variable_type_mismatch` (bound type differs from declared
-    type), or `prompt_ref_invalid` (malformed PromptRef).'
+  now: '`validation_error`: a required variable is missing, a bound type differs from its declared type, or the PromptRef is malformed.'
 - was: |
     openwop API key. Format implementation-defined; reference impl uses `hk_`/`hk_test_` prefixes.
     Each key carries one or more scopes from the canonical vocabulary

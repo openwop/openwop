@@ -821,7 +821,7 @@
         "reliability": {
           "type": "object",
           "additionalProperties": false,
-          "description": "RFC 0032 §C. Host emits the envelope-reliability event family on documented adverse paths. Hosts advertise the family by emitting the record AND explicitly list the events they emit via `events[]`. A host advertising this facet MUST include at least `envelope.retry.exhausted` and `envelope.refusal` in `events[]` (the two MUST-tier events). The other four (`envelope.retry.attempted`, `envelope.truncated`, `envelope.nlToFormat.engaged`, `envelope.recovery.applied`) are SHOULD/MAY-tier per RFC 0032 §B and may be omitted.",
+          "description": "RFC 0032 §C. Host emits the envelope-reliability event family on documented adverse paths. Hosts advertise the family by emitting the record AND explicitly list the events they emit via `events[]`. A host advertising this facet MUST include at least `envelope.retry-exhausted` and `envelope.refusal` in `events[]` (the two MUST-tier events). The other four (`envelope.retry-attempted`, `envelope.truncated`, `envelope.nl-to-format-engaged`, `envelope.recovery-applied`) are SHOULD/MAY-tier per RFC 0032 §B and may be omitted.",
           "properties": {
             "events": {
               "type": "array",
@@ -833,11 +833,15 @@
                   "envelope.refusal",
                   "envelope.truncated",
                   "envelope.nlToFormat.engaged",
-                  "envelope.recovery.applied"
+                  "envelope.recovery.applied",
+                  "envelope.retry-attempted",
+                  "envelope.retry-exhausted",
+                  "envelope.nl-to-format-engaged",
+                  "envelope.recovery-applied"
                 ]
               },
               "uniqueItems": true,
-              "description": "Subset of the six reliability events the host actually emits. A host advertising this facet MUST include `envelope.retry.exhausted` and `envelope.refusal`. Conformance scenarios soft-skip for events absent from this list (the event-emission assertion is skipped; other host behavior assertions remain in force)."
+              "description": "Subset of the six reliability events the host actually emits, by their v2 names. A host advertising this facet MUST include `envelope.retry-exhausted` and `envelope.refusal`. The four v1 dotted names (`envelope.retry.attempted`, `envelope.retry.exhausted`, `envelope.nlToFormat.engaged`, `envelope.recovery.applied`) are deprecated aliases, removed in 3.0; a consumer MUST treat each as its hyphenated equivalent (RFC 0228 §G). Conformance scenarios soft-skip for events absent from this list (the event-emission assertion is skipped; other host behavior assertions remain in force)."
             },
             "maxRetryAttempts": {
               "type": "integer",
@@ -942,7 +946,7 @@
         },
         "endpointsSupported": {
           "type": "boolean",
-          "description": "RFC 0028 §A. When `true`, the host serves the `/prompts*` REST surface — at minimum the read endpoints (`listPromptTemplates`, `getPromptTemplate`, `renderPromptTemplate`). The mutating endpoints additionally require `mutableLibrary: true`; the pack-install path additionally requires `packsSupported: true`. False or absent = every `/prompts*` request returns `501 capability_not_provided`. Independent of the family record — a host MAY advertise the family with `endpointsSupported: false` (composition without library REST) or the family omitted and `endpointsSupported: true` (library REST against an external resolver, e.g., a façade host)."
+          "description": "RFC 0028 §A. When `true`, the host serves the `/prompts*` REST surface — at minimum the read endpoints (`listPromptTemplates`, `getPromptTemplate`, `renderPromptTemplate`). The mutating endpoints additionally require `mutableLibrary: true`; the pack-install path additionally requires `packsSupported: true`. False or absent = every `/prompts*` request answers `404 not_found`. Independent of the family record — a host MAY advertise the family with `endpointsSupported: false` (composition without library REST) or the family omitted and `endpointsSupported: true` (library REST against an external resolver, e.g., a façade host)."
         },
         "templateKinds": {
           "type": "array",
@@ -987,7 +991,7 @@
         },
         "mutableLibrary": {
           "type": "boolean",
-          "description": "RFC 0028 §C. When `true`, the host honors the mutating endpoints `POST /prompts`, `PUT /prompts/{templateId}`, `DELETE /prompts/{templateId}`. When `false` or absent, those endpoints return 501. Pack-sourced and host-built-in templates remain read-only even under `mutableLibrary: true` — deletion of those returns 403 per RFC 0028 §A."
+          "description": "RFC 0028 §C. When `true`, the host honors the mutating endpoints `POST /prompts`, `PUT /prompts/{templateId}`, `DELETE /prompts/{templateId}`. When `false` or absent, those endpoints answer `404 not_found`. Pack-sourced and host-built-in templates remain read-only even under `mutableLibrary: true` — deletion of those returns 403 per RFC 0028 §A."
         },
         "library": {
           "type": "object",
@@ -3002,7 +3006,7 @@
             "errorCode": {
               "type": "string",
               "minLength": 1,
-              "description": "Wire-format error code returned on denial. Defaults to `provider_policy_denied`. Reserved for hosts that need a vendor-prefixed alias."
+              "description": "Wire-format error code returned on denial. Defaults to `provider_policy_denied`. Any other value MUST be a vendor code."
             }
           },
           "additionalProperties": false
@@ -3024,7 +3028,7 @@
                   "document"
                 ]
               },
-              "description": "Input modalities the host's `callAI` accepts as ContentParts. `text` is implicit even when omitted. A ContentPart whose `type` is not advertised here MUST be rejected with `unsupported_modality` (never silently dropped)."
+              "description": "Input modalities the host's `callAI` accepts as ContentParts. `text` is implicit even when omitted. A ContentPart whose `type` is not advertised here MUST be rejected with `capability_not_provided` (never silently dropped)."
             },
             "maxBytesPerPart": {
               "type": "integer",
@@ -3108,7 +3112,7 @@
         },
         "profile": {
           "type": "string",
-          "description": "Optional named capability profile (e.g., `openwop-agents-phase-1-skeleton` for identity-only, `openwop-agents-full` for orchestrator+dispatch+memory+conversation). Clients pattern-match on profile to gate feature usage."
+          "description": "Optional named capability profile (e.g. `openwop-agents-phase-1-skeleton` for identity only, `openwop-agents-full` for orchestrator, dispatch, memory and conversation). Clients pattern-match on it to gate feature usage. Whatever the profile, a host advertising `agents` accepts run-level `RunSnapshot.agent` / `runOrchestrator`, emits `agent.reasoned`, `agent.tool-called`, `agent.tool-returned`, `agent.handoff` and `agent.decided`, and honors confidence escalation: an `agent.decided` whose `confidence` is below the run's resolved escalation threshold suspends with `node.suspended { reason: low-confidence }`."
         },
         "modelClasses": {
           "type": "array",
@@ -3127,11 +3131,11 @@
             ]
           },
           "uniqueItems": true,
-          "description": "Optional list of `AgentRef.modelClass` values this host supports for hosted agents (Phase 2). Pack manifests whose `modelClass` is not in this list MUST refuse install with `unsupported_model_class`."
+          "description": "Optional list of `AgentRef.modelClass` values this host supports for hosted agents. Pack manifests whose `modelClass` is not in this list MUST refuse install with `pack_runtime_requirement_unmet`."
         },
         "orchestratorPattern": {
           "type": "string",
-          "description": "Optional orchestration pattern (Phase 2). Canonical: `single`, `delegate`, `delegate.smart`. Vendor extensions ship under `vendor.<host>.<pattern>`."
+          "description": "Optional orchestration pattern: the host's supervisor strategy. Canonical: `single`, `delegate`, `delegate.smart`. Vendor extensions ship under `vendor.<host>.<pattern>`."
         },
         "memoryBackends": {
           "type": "array",
@@ -3142,11 +3146,11 @@
             ]
           },
           "uniqueItems": true,
-          "description": "Optional list of memory backends (Phase 3). `long-term` means the host implements `ExecutionHost.memory` against a durable store with the SR-1 redaction invariant intact end-to-end. Hosts that don't wire `MemoryAdapter` omit this field."
+          "description": "Optional list of memory backends. `long-term` means the host implements `ctx.memory` (host-services.md §memory) against a durable store with the SR-1 redaction invariant intact end to end: a value the run's vault resolved is replaced by `[REDACTED:<secretId>]` before any persisted write. Hosts that do not wire a memory adapter omit this field."
         },
         "memoryConsolidation": {
           "type": "object",
-          "description": "RFC 0068 (`Draft`). Background reconciliation of LONG-TERM memory (merge/dedup/supersede/strengthen) — distinct from RFC 0062 token-budgeted distillation of TRANSACTIONAL memory. A host advertising this emits `agent.memory.consolidated` (content-free) after a consolidation pass. Requires `agents.memoryBackends` to include `long-term`. SR-1 carry-forward + CTI-1 (RFC 0004) hold across the pass. Hosts that omit this block do not consolidate; the conformance scenarios skip cleanly.",
+          "description": "RFC 0068. Background reconciliation of LONG-TERM memory (merge, dedup, supersede, strengthen). Distinct from token-budgeted distillation of transactional memory, which emits `memory.compacted`; a host MAY implement both, independently. Requires `memoryBackends` to include `long-term`. A consolidation pass MUST (1) operate over a single `memoryRef`'s long-term entries and MUST NOT read or write another tenant's entries; (2) be idempotent over a stable corpus: a second pass over an unchanged corpus MUST NOT further reduce `outputCount`; (3) route every derived or merged entry's content through the same redaction as a fresh `put`; (4) emit the content-free `agent.memory-consolidated` (`inputCount`, `outputCount`, `memoryRef`) after the pass. Consolidation is a host-managed mutation outside the replay envelope: a run sees consolidated memory only through the read snapshot its event log records, and the event is re-read from the log on replay. A host MUST NOT re-run a pass at replay time, and a run MUST NOT trigger a pass that mutates its own read snapshot mid-run. Hosts that omit this block do not consolidate.",
           "additionalProperties": false,
           "properties": {
             "schedule": {
@@ -3162,7 +3166,7 @@
         },
         "commitments": {
           "type": "object",
-          "description": "RFC 0068 (`Draft`). Inferred STANDING commitments — durable, memory-derived intentions the host promotes into a time- or predicate-gated arm that fires a run later, without a fresh user turn. When an arm fires the host emits `commitment.fired` (content-free — the intention text lives in SR-1-redacted memory). Composes RFC 0052 (time arms) / RFC 0060 (predicate arms) for the fire substrate. Hosts that omit this block do not infer commitments; the conformance scenario skips cleanly.",
+          "description": "RFC 0068. Inferred STANDING commitments: durable, memory-derived intentions the host promotes into a time- or predicate-gated arm that fires later without a fresh user turn (time arms compose `scheduling`, predicate arms `heartbeat`). A host advertising this: MUST bind each commitment to the `memoryRef` it was inferred from, and the commitment, its `commitment.fired` event and any enqueued run MUST share that memory's tenant; MUST fire each commitment at most once per satisfied condition (once per scheduled instant for `time`, once per state transition for `predicate`) and MUST NOT re-fire one on replay; MUST emit the content-free `commitment.fired` when one fires, and MUST NOT place the inferred intention text or any secret-bearing payload on it (the redacted memory read serves the text); MAY enqueue a run when one fires, and that run inherits the source memory's tenant and is reported as `enqueuedRunId`. Hosts that omit this block do not infer commitments.",
           "additionalProperties": false,
           "properties": {
             "fireConditions": {
@@ -3181,15 +3185,15 @@
         },
         "orchestrator": {
           "type": "boolean",
-          "description": "Phase 5. When `true`, host advertises that it implements the `core.orchestrator.supervisor` node typeId AND honors the conservative-path suspend semantics (CP-1: low-confidence suspend via `node.suspended { reason: 'low-confidence' }`)."
+          "description": "When `true`, the host implements the `core.orchestrator.supervisor` node typeId AND honors the conservative-path suspend semantics (CP-1: low-confidence suspend via `node.suspended { reason: low-confidence }`)."
         },
         "dispatch": {
           "type": "boolean",
-          "description": "Phase 6. When `true`, host advertises that it implements the `core.dispatch` Core typeId AND honors the conservative-path commitment CP-2 (`core.dispatch` MUST NOT mutate the run's DAG mid-run). Implies (but does NOT require) `agents.orchestrator: true`."
+          "description": "When `true`, the host implements the `core.dispatch` Core typeId AND honors the conservative-path commitment CP-2 (`core.dispatch` MUST NOT mutate the run's DAG mid-run). Implies (but does NOT require) `agents.orchestrator: true`."
         },
         "manifestRuntime": {
           "type": "object",
-          "description": "RFC 0070. Agent-manifest runtime floor — the minimal tier that makes a published agent pack (RFC 0003) runnable. When this facet is present, the host implements RFC 0003 `installAgents`: it loads each installed pack's `agents[]` into an in-process AgentRegistry, resolves `systemPromptRef` + `handoff.*SchemaRef` from the tarball at install (RFC 0003 §C/§D), and can DISPATCH a manifest agent on the existing `core.dispatch`/orchestrator loop (RFC 0007/0037/0061). Does NOT imply swarm/consensus (`host.agentRuntime`), long-term memory (`agents.memoryBackends`), or crews beyond `agents.dispatch`. A host advertising `agentRuntime` is treated as also satisfying this flag (RFC 0070 §B). Hosts that omit this block do not instantiate manifest agents (today's default).",
+          "description": "RFC 0070. Agent-manifest runtime floor — the minimal tier that makes a published agent pack (RFC 0003) runnable. When this facet is present, the host implements RFC 0003 `installAgents`: it loads each installed pack's `agents[]` into an in-process AgentRegistry, resolves `systemPromptRef` + `handoff.*SchemaRef` from the tarball at install (RFC 0003 §C/§D), and can DISPATCH a manifest agent on the existing `core.dispatch`/orchestrator loop (RFC 0007/0037/0061). Does NOT imply swarm/consensus (`host.agentRuntime`), long-term memory (`agents.memoryBackends`), or crews beyond `agents.dispatch`. A host advertising `agentRuntime` is treated as also satisfying this facet (host-services.md §agentRuntime). Its inventory is `GET /agents` (`agent-inventory-response.schema.json`). Hosts that omit this block do not instantiate manifest agents (today's default).",
           "additionalProperties": false,
           "properties": {
             "handoffValidation": {
@@ -3204,13 +3208,13 @@
                 "tenant"
               ],
               "default": "host",
-              "description": "RFC 0074. Scope at which manifest agents are installed/approved and therefore enumerated by GET /v1/agents. 'host' (default): a single host-global inventory; the endpoint returns the same set for every caller (RFC 0072's original behavior). 'tenant': agents are installed per tenant·workspace (RFC 0048 owner triple); GET /agents returns ONLY the agents available to the authenticated principal's workspace, and an unapproved/unknown agent 404s — the surface never discloses another tenant's inventory. Does not change dispatch (RFC 0072 §B, owner-triple-scoped POST /runs) or any floor safety guarantee (toolAllowlist/systemPromptRef/SR-1 stay mandatory regardless of scope)."
+              "description": "RFC 0074. Scope at which manifest agents are installed/approved and therefore enumerated by GET /agents. 'host' (default): a single host-global inventory; the endpoint returns the same set for every caller (RFC 0072's original behavior). 'tenant': agents are installed per tenant·workspace (RFC 0048 owner triple); GET /agents returns ONLY the agents available to the authenticated principal's workspace, and an unapproved/unknown agent 404s — the surface never discloses another tenant's inventory. Does not change dispatch (RFC 0072 §B, owner-triple-scoped POST /runs) or any floor safety guarantee (toolAllowlist/systemPromptRef/SR-1 stay mandatory regardless of scope)."
             }
           }
         },
         "liveRuntime": {
           "type": "object",
-          "description": "RFC 0077. The host executes manifest agents against LIVE models and tools (not the deterministic RFC 0070 sample floor) per the normative AgentManifest→live-run mapping (`multi-agent-execution.md` §\"Live manifest dispatch\"), and emits the `agent.invocation.started`/`agent.invocation.completed` content-free bracket around the existing `agent.*` family. REQUIRES `agents.manifestRuntime` — `liveRuntime` is a strict superset of the floor. The floor's mandatory safety guarantees (toolAllowlist enforcement, handoff inbound validation, tenant scoping, untrusted-model-output handling, fail-closed per-tool authorization) stay unconditional under `liveRuntime`. Hosts that omit this block run the floor only; the behavioral conformance scenarios skip cleanly.",
+          "description": "RFC 0077. The host executes manifest agents against LIVE models and tools (not the deterministic `manifestRuntime` floor) and emits the content-free `agent.invocation-started` / `agent.invocation-completed` bracket around the `agent.*` family. REQUIRES `manifestRuntime`, of which it is a strict superset. A live invocation MUST perform, in this order: (1) model selection: resolve the manifest's `modelClass` to a concrete model and provider, host-defined but stable within a run (it enters the replay invocation key); a run-time `configurable.ai` override MAY take precedence, and resolution MAY happen downstream, so `agent.invocation-started` MAY omit the resolved model; (2) prompt resolution: `systemPrompt` or `systemPromptRef` wins over `promptOverrides` / `promptLibraryRef` (host-services.md §prompts), and the host MUST emit `agent.prompt-resolved` naming the resolved prompt refs, content-free; (3) tool surface: filter against `toolAllowlist` — a tool outside it MUST NOT be callable; under `toolHooks`, per-tool authorization MUST fail closed (`forbidden`) and tool calls MUST emit `agent.tool-called` / `agent.tool-returned`; (4) memory binding: bind the `memoryShape` backends; under `memoryShape.longTerm` the host MUST redact writes as for any memory write, and MAY emit `memory.written` or consolidate; memory is tenant-scoped; (5) the reasoning and tool turn(s), emitting `agent.reasoned`, `agent.reasoning-delta`, `agent.tool-called` and `agent.tool-returned`. Single-shot is the floor: a host MAY run one turn, and the multi-turn loop (`multiAgent` level 5) composes above it, so loop infrastructure is not required to advertise `liveRuntime`; (6) handoff validation: under `handoff.taskSchemaRef` the host MUST validate the inbound task before step 5 and reject a non-conforming one (see `structuredOutput` for the result); a cross-agent handoff emits `agent.handoff`; (7) confidence escalation, under `confidenceEscalation`; (8) terminal projection onto the run's normal result surface — under `subRunAttestation` the attestation composes unchanged and follows the agent-scoped terminal — and the host MUST emit `agent.invocation-completed` as the final agent-scoped event. Live execution MUST NOT relax the floor. These hold unconditionally: `toolAllowlist` enforcement; inbound `taskSchemaRef` validation when present; tenant scoping of memory and of any enqueued run; treating live model output as untrusted per the envelope contract (a refusal terminates with `outcome: refused`, never a silent substitution); and fail-closed per-tool authorization under `toolHooks`. `structuredOutput` and `confidenceEscalation` are optional quality flags. Hosts that omit this block run the floor only.",
           "additionalProperties": false,
           "properties": {
             "structuredOutput": {
@@ -3219,7 +3223,7 @@
             },
             "confidenceEscalation": {
               "type": "boolean",
-              "description": "When `true`, the host honors `AgentManifest.confidence.defaultThreshold` and triggers the RFC 0002 §F escalation contract when an `agent.decided` confidence falls below the effective threshold, rather than silently accepting the decision. Absent ⇒ `false`."
+              "description": "When `true`, the host honors `AgentManifest.confidence.defaultThreshold` and triggers the RFC 0002 §F escalation contract when an `agent.decided` confidence falls below the effective threshold, rather than silently accepting the decision. Absent ⇒ `false`. The effective threshold is `confidence.defaultThreshold`, else the run-resolved threshold, default 0.7; such an `agent.decided` MUST trigger escalation rather than be silently accepted. It is distinct from, and not interchangeable with, the fixed 0.5 `OrchestratorDecision.confidence` floor of `multiAgent` level 2."
             },
             "sources": {
               "type": "array",
@@ -3232,13 +3236,13 @@
                   "chat-mention"
                 ]
               },
-              "description": "Which invocation entry points the host exposes for live manifest dispatch. `workflow-node`: an agent step inside a workflow run (RFC 0072 §B); `run-api`: an agent as the root of POST /runs; `chat-mention`: a chat @agent invocation mapped onto the run surface. Enum membership is NOT mandatory — a host with no chat surface simply omits `chat-mention`. Absent ⇒ `['workflow-node']` (the RFC 0072 §B normative path). All advertised sources MUST emit the identical `agent.invocation.*` + `agent.*` event family."
+              "description": "Which invocation entry points the host exposes for live manifest dispatch. `workflow-node`: an agent step inside a workflow run (RFC 0072 §B); `run-api`: an agent as the root of POST /runs; `chat-mention`: a chat @agent invocation mapped onto the run surface. Enum membership is NOT mandatory — a host with no chat surface simply omits `chat-mention`. Absent ⇒ `['workflow-node']` (the RFC 0072 §B normative path). All advertised sources MUST emit the identical `agent.invocation.*` + `agent.*` event family. Every source MUST resolve to the same manifest-to-run mapping. A host advertising `run-api` MUST accept a run whose root references a manifest `agentId`; one advertising `chat-mention` MUST map it onto the same run surface. `workflow-node` invocations are node executions inheriting the run's replay, fork and observability envelope."
             }
           }
         },
         "evalSuite": {
           "type": "object",
-          "description": "RFC 0081. The host runs portable `agent-eval-suite.schema.json` suites as eval runs (a `mode: \"eval\"` projection over POST /runs, RFC 0081 §B), emits the `eval.started`/`eval.scored`/`eval.completed` content-free family, and terminates with an `eval-summary.schema.json` scorecard. Composes RFC 0026 (per-task cost), RFC 0054 (regression baseline diff), RFC 0056 (human override of an auto-score). Hosts that omit this block reject `mode: \"eval\"` with 501; the behavioral conformance scenario soft-skips. The summary + events are content-free (SECURITY invariant `eval-summary-no-content-leak`).",
+          "description": "RFC 0081. The host runs portable `agent-eval-suite.schema.json` suites as eval runs (`mode: eval` on `createRun`, runs.md) and terminates each with an `eval-summary.schema.json` scorecard as the run's output. Hosts that omit this block reject `mode: eval` (runs.md). A host advertising this MUST execute each task as a child agent invocation, reusing the `agent.invocation-*` bracket and the `agent.*` and `provider.usage` events, score it, and MUST emit exactly one `eval.started`, one `eval.scored` per task after that task's terminal `agent.decided`, and one `eval.completed` before `run.completed`. When a task carries `fixtures`, the host MUST inject `fixtures.toolResponses` in place of live tool calls and seed `fixtures.memorySeed` into the agent's read snapshot before the invocation; `live-shadow` alone ignores fixtures. Seeded memory is tenant-scoped and redacted like any memory write. The `eval.*` events and the summary are content-free (SECURITY invariant `eval-summary-no-content-leak`) and are recorded facts: a replay re-reads a score, never re-judges. An eval run, its suite, fixtures and summary are scoped to the caller's owner triple; a suite or summary MUST NOT be readable across tenants. A human MAY override an auto-score with an annotation on its `eval.scored` event. Composes per-task cost (`provider.usage`) and the regression baseline diff.",
           "additionalProperties": false,
           "properties": {
             "modes": {
@@ -3254,7 +3258,7 @@
                   "live-shadow"
                 ]
               },
-              "description": "Which eval modes the host actually implements (RFC 0081 §D closed vocabulary). Truthful advertisement (RFC 0031): a host advertises ONLY the modes it gates on; a suite requesting an unadvertised mode is rejected at run-create with `400 validation_error`. Absent ⇒ no modes (the host advertises the family but gates nothing — effectively shape-only)."
+              "description": "Which eval modes the host actually implements (RFC 0081 §D closed vocabulary). Truthful advertisement (RFC 0031): a host advertises ONLY the modes it gates on; a suite requesting an unadvertised mode is rejected at run-create with `400 validation_error`, as is one requesting a mode the suite does not declare. Absent ⇒ no modes (the host advertises the family but gates nothing — effectively shape-only)."
             },
             "maxTasksPerSuite": {
               "type": "integer",
@@ -3270,7 +3274,7 @@
         },
         "deployment": {
           "type": "object",
-          "description": "RFC 0082. The host implements an agent deployment lifecycle: per-(agentId, version) deployment records with the seven-state machine (draft/test/staged/active/paused/deprecated/rolled-back), named-channel binding (`agentId@channel` / `@latest` resolved + pinned per-(run, agentId, channel) at first resolution per §B), optional canary traffic-split, a rollback pointer, the content-free `deployment.*` audit events, and the `POST /agents/{agentId}/deployments` promotion contract composing RFC 0049 (`deploy:*` fail-closed scopes) + RFC 0051 (approvalGate) + RFC 0081 (`requiredEval`). Hosts that omit this block reject a `channel`-bearing `AgentRef` with `validation_error` and 501 the deployment endpoint. The promotion endpoint + behavioral lifecycle scenario + reference-host store land at Active → Accepted.",
+          "description": "RFC 0082. The host implements an agent deployment lifecycle: per-(agentId, version) deployment records with the seven-state machine (draft/test/staged/active/paused/deprecated/rolled-back), named-channel binding (`agentId@channel` / `@latest` resolved + pinned per-(run, agentId, channel) at first resolution per §B), optional canary traffic-split, a rollback pointer, the content-free `deployment.*` audit events, and the `POST /agents/{agentId}/deployments` promotion contract composing RFC 0049 (`deploy:*` fail-closed scopes) + RFC 0051 (approvalGate) + RFC 0081 (`requiredEval`). A ref binds by at most one of an exact `version`, a `channel`, or neither (host default); both is a `validation_error`. At the first resolution of an `(agentId, channel)` pair in a run the host MUST resolve it to a concrete version; every later resolution of that pair in the run MUST return the same version, and the host MUST NOT re-resolve a channel that moved mid-run. The version is recorded on `agent.invocation-started.resolvedAgentVersion` (with `resolvedChannel`); replay and fork MUST re-read it and MUST NOT re-resolve. With more than one `active` version on a channel, the canary draw is part of that first resolution and MUST NOT be re-rolled on replay. A channel with no `active` version fails closed, never falling back to an arbitrary version (`agent-ref.schema.json#/properties/channel`). A transition (`agent-deployment-transition.schema.json`) MUST be authorized fail-closed against a `deploy:*` scope, emitting `authorization.decided`; runs the approval gate when host policy gates it; and, when the gate carries `requiredEval: { evalRunId, requiredPassScore? }`, MUST verify that eval run is terminal and passed (or meets `requiredPassScore`) before emitting `deployment.promoted`, else denies with `eval_gate_unmet`. A host without `evalSuite` MAY promote without an eval gate. The `deployment.*` events appear on the deployment-management run, never on a consuming run. Channels are tenant-scoped as `manifestRuntime.installScope` scopes agents. Hosts that omit this block reject a `channel`-bearing `AgentRef` with `validation_error`, and the deployment endpoint answers `404 not_found`. The promotion endpoint + behavioral lifecycle scenario + reference-host store land at Active → Accepted.",
           "additionalProperties": false,
           "properties": {
             "channels": {
@@ -3280,7 +3284,7 @@
                 "type": "string",
                 "minLength": 1
               },
-              "description": "The named channels the host resolves (e.g. `[\"stable\", \"canary\", \"latest\"]`). Truthful advertisement (RFC 0031): a `channel` not in this list resolves to no version and fails the run with `no_active_deployment`."
+              "description": "The named channels the host resolves (e.g. `[\"stable\", \"canary\", \"latest\"]`). Truthful advertisement (RFC 0031): a `channel` not in this list resolves to no version and fails the run with `not_found` (`details.service: agents`)."
             },
             "canary": {
               "type": "boolean",
@@ -3305,13 +3309,13 @@
                   "rolled-back"
                 ]
               },
-              "description": "The subset of the seven lifecycle states the host implements. Truthful advertisement (RFC 0031): the host MUST reject a transition into a state not advertised here."
+              "description": "The subset of the seven lifecycle states the host implements. Truthful advertisement (RFC 0031): the host MUST reject a transition into a state not advertised here. A host implementing a subset MUST advertise exactly that subset."
             }
           }
         },
         "roster": {
           "type": "object",
-          "description": "RFC 0086. The host maintains a standing agent roster: named, tenant-scoped agent INSTANCES (the 'digital-twin employee') that reference a manifest/deployment and own a workflow portfolio, discoverable via GET /agents/roster, with trigger-fired portfolio runs attributed to the member via the content-free `roster.run.initiated` event. REQUIRES `agents.manifestRuntime` (a roster entry instantiates a manifest agent). Triggers compose RFC 0052 (schedule) + RFC 0083 (durable work-item bridge) — no new WorkflowTrigger.type; the concrete work surface (a Kanban board) stays a host/vendor extension (§E). Hosts that omit this block do not maintain a roster (the roster reads 501). The roster-management endpoints + behavioral attribution scenario + reference-host store land at Active → Accepted.",
+          "description": "RFC 0086. The host maintains a standing agent roster: named, tenant-scoped agent INSTANCES (the 'digital-twin employee') that reference a manifest/deployment and own a workflow portfolio, discoverable via GET /agents/roster, with trigger-fired portfolio runs attributed to the member via the content-free `roster.run.initiated` event. `rosterId` MUST be a `host:<id>` form; dispatching it (a `WorkflowNode.agent` or a run against it) MUST resolve to the entry's bound `agentRef`, MUST project its `persona` onto the dispatch `AgentRef`, and MUST emit `roster.run-initiated`. An entry MUST NOT list a workflow outside its owner's tenant scope. `enabled: false` makes an entry's portfolio triggers inert without deleting it; a disabled entry SHOULD remain discoverable. `GET /agents/roster` and `GET /agents/roster/{rosterId}` MUST be tenant-scoped as `GET /agents` is: an entry outside the caller's owner triple MUST answer `404`. When a trigger fires a workflow in an entry's portfolio, the host MUST emit one `roster.run-initiated` immediately after `run.started` and before any agent invocation. REQUIRES `agents.manifestRuntime` (a roster entry instantiates a manifest agent). Triggers compose RFC 0052 (schedule) + RFC 0083 (durable work-item bridge) — no new WorkflowTrigger.type; the concrete work surface (a Kanban board) stays a host/vendor extension (it participates by bridging a work-item event into a trigger delivery). Hosts that omit this block do not maintain a roster (the roster read answers `404 not_found`). The roster-management endpoints + behavioral attribution scenario + reference-host store land at Active → Accepted.",
           "additionalProperties": false,
           "properties": {
             "installScope": {
@@ -3335,7 +3339,7 @@
         },
         "orgChart": {
           "type": "object",
-          "description": "RFC 0087. The host maintains a tenant-scoped, DESCRIPTIVE org-chart over RFC 0086 roster members: departments + roles with acyclic `reportsTo` edges + a derived responsibility roll-up, discoverable via GET /agents/org-chart. The load-bearing guarantee (§B `org-position-no-authority-escalation`): an org edge confers NO authority — it MUST NOT widen `toolAllowlist` (RFC 0002 §A14), grant an RBAC scope (RFC 0049), or bypass an approval gate (RFC 0051); org position MUST NOT be an authorization input. The schema carries no authority-bearing field, and a conformant host MUST NOT derive authority from position out-of-band. REQUIRES `agents.roster` (the chart's members are roster entries). Hosts that omit this block have no org-chart surface (the read 501s). The org-chart-management endpoints + behavioral non-authority scenario + reference-host store land at Active → Accepted.",
+          "description": "RFC 0087. The host maintains a tenant-scoped, DESCRIPTIVE org-chart over RFC 0086 roster members: departments + roles with acyclic `reportsTo` edges + a derived responsibility roll-up, discoverable via GET /agents/org-chart. The load-bearing guarantee (§B `org-position-no-authority-escalation`): an org edge confers NO authority — it MUST NOT widen `toolAllowlist` (RFC 0002 §A14), grant an RBAC scope (RFC 0049), or bypass an approval gate (RFC 0051); org position MUST NOT be an authorization input. The schema carries no authority-bearing field, and a conformant host MUST NOT derive authority from position out-of-band. `members[].rosterId` MUST reference a roster entry in the same owner triple (a cross-tenant member is a `validation_error`), and the `reportsTo` edges MUST be acyclic (a cycle is a `validation_error`). On a `tenant` host the chart reads return only the caller's chart, never disclosing an outside member, department or edge, and an unknown or cross-tenant `departmentId` answers `404`. Being a manager MUST NOT add a report's tools, nor may a report inherit a manager's; position MUST NOT cause an `authorization.decided { allowed: true }` the principal's scopes alone would not; being senior MUST NOT satisfy, bypass or override an approval gate. A host MAY use position for non-authority purposes (rendering, routing preference, notification, responsibility reporting). The non-authority rule holds at every `installScope` and is never opt-out. REQUIRES `agents.roster` (the chart's members are roster entries). Hosts that omit this block have no org-chart surface (the read answers `404 not_found`). The org-chart-management endpoints + behavioral non-authority scenario + reference-host store land at Active → Accepted.",
           "additionalProperties": false,
           "properties": {
             "installScope": {
@@ -3352,18 +3356,18 @@
             },
             "responsibilityView": {
               "type": "boolean",
-              "description": "When `true`, the host computes the §D responsibility roll-up (the union of a department's members' RFC 0086 portfolios) on GET /v1/agents/org-chart/{departmentId}."
+              "description": "When `true`, the host computes the responsibility roll-up on `GET /agents/org-chart/{departmentId}`: the union of the department's members' `workflows[]` portfolios, recursively through sub-departments unless `recursive=false`. A view computed from roster entries: it grants nothing and stores nothing."
             }
           }
         },
         "dispatchMapping": {
           "type": "boolean",
           "default": false,
-          "description": "Phase 6.1 (RFC 0022 §A). When `true`, host honors `inputMapping` / `outputMapping` / `perWorkerInputMappings` / `perWorkerOutputMappings` on `DispatchConfig` — building child inputs from parent variables before dispatch and harvesting child variables into parent variables on completion. Implies (but does NOT require) `agents.dispatch: true`. Hosts that set `agents.dispatch: true` but omit / `false` this flag MUST refuse workflows that carry non-empty mapping fields at registration with `validation_error` + `details.requiredCapability: 'agents.dispatchMapping'`."
+          "description": "RFC 0022. When `true`, the host honors `inputMapping` / `outputMapping` / `perWorkerInputMappings` / `perWorkerOutputMappings` on `DispatchConfig` — building child inputs from parent variables before dispatch and harvesting child variables into parent variables on completion. Implies (but does NOT require) `agents.dispatch: true`. Hosts that set `agents.dispatch: true` but omit / `false` this flag MUST refuse workflows that carry non-empty mapping fields at registration with `validation_error` + `details.requiredCapability: 'agents.dispatchMapping'`."
         },
         "reasoning": {
           "type": "object",
-          "description": "Phase 1 reasoning-event verbosity configuration.",
+          "description": "Reasoning-event verbosity configuration.",
           "properties": {
             "verbosity": {
               "type": "string",
@@ -3372,7 +3376,7 @@
                 "full",
                 "off"
               ],
-              "description": "Default reasoning verbosity for `agent.reasoned` events when the run does not override via `RunOptions.configurable.reasoningVerbosity`."
+              "description": "Default reasoning verbosity for `agent.reasoned` events when the run does not override via `RunOptions.configurable.reasoningVerbosity`. `summary`: the host SHOULD bound each `agent.reasoned` `reasoning` to `tokenLimit` tokens. `full`: the host MAY emit complete model traces. `off`: the host suppresses `agent.reasoned`. A run MAY override the default."
             },
             "tokenLimit": {
               "type": "integer",
@@ -3382,7 +3386,7 @@
             "streaming": {
               "type": "boolean",
               "default": false,
-              "description": "RFC 0024. When `true`, the host MAY emit `agent.reasoning.delta` events while a reasoning block is still open, in addition to the final `agent.reasoned`. Hosts that omit / `false` this flag emit only the final `agent.reasoned`. Consumers MUST tolerate both modes."
+              "description": "RFC 0024. When `true`, the host MAY emit `agent.reasoning-delta` events while a reasoning block is still open, in addition to the final `agent.reasoned`. Hosts that omit / `false` this flag emit only the final `agent.reasoned`. Consumers MUST tolerate both modes. A streaming host emits zero or more deltas followed by exactly one closing `agent.reasoned`, which stays authoritative for the reasoning content."
             }
           },
           "additionalProperties": false
@@ -3394,7 +3398,7 @@
         },
         "proposals": {
           "type": "object",
-          "description": "RFC 0096 (`Active`). Reviewable learning — the host synthesizes reusable artifacts (skills/packs/templates/automations) from run/tool traces as INERT, reviewable drafts that MUST NOT influence the resolution, planning, or execution of any run until an authorized principal activates them. A host advertising this serves the `/v1/host/sample/proposals` surface (promotable to `/v1/proposals`) and emits the content-free `proposal.created` / `proposal.activated` events. Activation is delegated to RFC 0051 approval-gate or RFC 0049 RBAC — no new authorization path. On `apply` the installed artifact MUST byte-match the last-persisted `artifact` (no silent re-synthesis). Hosts that omit this block do not synthesize proposals; the conformance scenarios skip cleanly.",
+          "description": "RFC 0096 (`Active`). Reviewable learning — the host synthesizes reusable artifacts (skills/packs/templates/automations) from run/tool traces as INERT, reviewable drafts that MUST NOT influence the resolution, planning, or execution of any run until an authorized principal activates them. v2 defines no protocol path for the proposal surface. A host advertising this emits the content-free `proposal.created` / `proposal.activated` events. Activation is delegated to RFC 0051 approval-gate or RFC 0049 RBAC — no new authorization path. On `apply` the installed artifact MUST byte-match the last-persisted `artifact` (no silent re-synthesis). Hosts that omit this block do not synthesize proposals; the conformance scenarios skip cleanly. The redaction-safety of `rationale` and `provenance.sourceRunIds` and the lifecycle are in `proposal.schema.json`.",
           "additionalProperties": false,
           "required": [
             "artifactKinds",
@@ -3426,13 +3430,13 @@
                 "approval-gate",
                 "direct-rbac"
               ],
-              "description": "`approval-gate`: `apply` MUST drive an RFC 0051 gate (role/scope/quorum, audited override) and MUST NOT install unless granted/overridden. `direct-rbac`: `apply` requires only the RFC 0049 scope the host advertises for activation."
+              "description": "`approval-gate`: `apply` MUST drive an RFC 0051 gate (role/scope/quorum, audited override) and MUST NOT install unless granted/overridden. `direct-rbac`: `apply` requires only the RFC 0049 scope the host advertises for activation. An `overridden` gate MUST be audited."
             }
           }
         },
         "goals": {
           "type": "object",
-          "description": "RFC 0097 (`Active`). Standing goals — a durable objective with explicit completion criteria, evaluated by a host-side judge (RFC 0090 verifier or host evaluator), that keeps an agent working across turns/runs until the judge is satisfied, a declared RFC 0058 bound is crossed, or the agent escalates (RFC 0044). A host advertising this serves `/v1/host/sample/goals` (promotable to `/v1/goals`) and emits the content-free `goal.evaluated` / `goal.closed` events. Completion MUST be the judge's verdict — a client MUST NOT set `state: satisfied` directly. Continuation MUST be bounded. Hosts that omit this block do not run standing goals; the conformance scenarios skip cleanly.",
+          "description": "RFC 0097 (`Active`). Standing goals — a durable objective with explicit completion criteria, evaluated by a host-side judge (RFC 0090 verifier or host evaluator), that keeps an agent working across turns/runs until the judge is satisfied, a declared RFC 0058 bound is crossed, or the agent escalates (RFC 0044). v2 defines no protocol path for the goal surface. A host advertising this emits the content-free `goal.evaluated` / `goal.closed` events. Completion MUST be the judge's verdict — a client MUST NOT set `state: satisfied` directly. Continuation MUST be bounded. When the agent raises a confidence-escalation interrupt against a goal, the host MUST set `state: escalated` and stop continuation until a human resolves it. Each judge evaluation MUST be attributable to the run it evaluated (`goal.evaluated.runId`); its verdict MUST be recorded on `goal.evaluated` and MUST NOT be recomputed on replay or fork. `objective` and any verdict payload MUST be redaction-safe. Hosts that omit this block do not run standing goals; the conformance scenarios skip cleanly.",
           "additionalProperties": false,
           "required": [
             "judge",
@@ -3464,7 +3468,7 @@
             "requiresBounds": {
               "type": "boolean",
               "default": true,
-              "description": "When `true` (default), a goal MUST declare valid RFC 0058 `bounds` before it may activate; a `POST /goals` without bounds returns 422. The host MUST stop continuation and set `state: bound-exceeded` when any declared bound (iteration count / accumulated cost / wall-clock deadline) is crossed."
+              "description": "When `true` (default), a goal MUST declare valid RFC 0058 `bounds` before it may activate; a goal create without bounds is refused with `422`. The host MUST stop continuation and set `state: bound-exceeded` when any declared bound (iteration count / accumulated cost / wall-clock deadline) is crossed, emitting `goal.closed`."
             }
           }
         }
@@ -3505,7 +3509,7 @@
         }
       ],
       "description": "core/capabilities.md#agents — witness: witnessable-gated; maturity experimental/none; RFC 0002",
-      "x-openwop-seeded-from": "v1"
+      "x-openwop-facets-from": "spec/v2/facets/agents.schema.json"
     },
     "memory": {
       "type": "object",
@@ -7428,7 +7432,7 @@
               "type": "integer",
               "minimum": 0,
               "maximum": 86400,
-              "description": "Optional advertised Retry-After value in seconds the host returns on 503. When present, MUST equal both the `Retry-After` header and the `details.retryAfter` body field per production-profile.md. Upper bound 86400 (24h) — values beyond that are operationally indistinguishable from 'permanently denied'. Hosts needing longer holds SHOULD omit `Retry-After` entirely (RFC 0009 Q#2)."
+              "description": "Optional advertised Retry-After value in seconds the host returns on 503. When present, MUST equal the `Retry-After` header the host sends with `503 service_unavailable`. Upper bound 86400 (24h) — values beyond that are operationally indistinguishable from 'permanently denied'. Hosts needing longer holds SHOULD omit `Retry-After` entirely (RFC 0009 Q#2)."
             }
           },
           "additionalProperties": false

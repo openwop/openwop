@@ -206,7 +206,7 @@
     {
       "key": "limits",
       "kind": "family",
-      "normativeText": ["spec/v2/core/runs.md", "spec/v1/capabilities.md", "spec/v1/budget-policy.md"],
+      "normativeText": ["spec/v2/core/runs.md"],
       "anchor": "core",
       "section": "core/capabilities.md#limits",
       "peerDependencyId": "limits",
@@ -269,7 +269,7 @@
     {
       "key": "envelopes",
       "kind": "family",
-      "normativeText": ["spec/v1/ai-envelope.md", "spec/v2/core/events.md"],
+      "normativeText": ["spec/v2/core/events.md"],
       "anchor": "core",
       "section": "core/capabilities.md#envelopes",
       "peerDependencyId": "envelopes",
@@ -290,7 +290,7 @@
     {
       "key": "prompts",
       "kind": "family",
-      "normativeText": ["spec/v1/prompts.md", "spec/v1/capabilities.md"],
+      "normativeText": ["spec/v2/core/host-services.md"],
       "anchor": "core",
       "section": "core/capabilities.md#prompts",
       "peerDependencyId": "prompts",
@@ -343,7 +343,7 @@
     {
       "key": "secrets",
       "kind": "family",
-      "normativeText": ["spec/v1/host-capabilities.md"],
+      "normativeText": ["spec/v2/core/host-services.md"],
       "anchor": "core",
       "section": "core/capabilities.md#secrets",
       "peerDependencyId": "secrets",
@@ -386,7 +386,7 @@
     {
       "key": "selfHostedRunner",
       "kind": "family",
-      "normativeText": ["spec/v1/capabilities.md"],
+      "normativeText": ["spec/v2/core/execution.md"],
       "anchor": "core",
       "section": "core/capabilities.md#selfHostedRunner",
       "peerDependencyId": "selfHostedRunner",
@@ -443,7 +443,7 @@
     {
       "key": "anonymousActor",
       "kind": "family",
-      "normativeText": ["spec/v1/capabilities.md"],
+      "normativeText": ["spec/v2/core/identity.md"],
       "anchor": "core",
       "section": "core/capabilities.md#anonymousActor",
       "peerDependencyId": "anonymousActor",
@@ -486,7 +486,7 @@
     {
       "key": "feedback",
       "kind": "family",
-      "normativeText": ["spec/v1/observability.md", "spec/v2/core/events.md"],
+      "normativeText": ["spec/v2/core/events.md"],
       "anchor": "core",
       "section": "core/capabilities.md#feedback",
       "peerDependencyId": "feedback",
@@ -625,7 +625,7 @@
     {
       "key": "multiAgent",
       "kind": "family",
-      "normativeText": ["spec/v1/multi-agent-execution.md"],
+      "normativeText": ["spec/v2/core/execution.md"],
       "anchor": "core",
       "section": "core/capabilities.md#multiAgent",
       "peerDependencyId": "multiAgent",
@@ -645,7 +645,7 @@
     {
       "key": "modelCapabilities",
       "kind": "family",
-      "normativeText": ["spec/v1/host-capabilities.md"],
+      "normativeText": ["spec/v2/core/host-services.md"],
       "anchor": "core",
       "section": "core/capabilities.md#modelCapabilities",
       "peerDependencyId": "modelCapabilities",
@@ -665,7 +665,7 @@
     {
       "key": "providerUsage",
       "kind": "family",
-      "normativeText": ["spec/v1/observability.md", "spec/v2/core/events.md"],
+      "normativeText": ["spec/v2/core/events.md"],
       "anchor": "core",
       "section": "core/capabilities.md#providerUsage",
       "peerDependencyId": "providerUsage",
@@ -685,7 +685,7 @@
     {
       "key": "aiProviders",
       "kind": "family",
-      "normativeText": ["spec/v1/host-capabilities.md", "spec/v1/capabilities.md", "spec/v1/ai-envelope.md"],
+      "normativeText": ["spec/v2/core/host-services.md"],
       "anchor": "core",
       "section": "core/capabilities.md#aiProviders",
       "peerDependencyId": "aiProviders",
@@ -717,7 +717,7 @@
     {
       "key": "agents",
       "kind": "family",
-      "normativeText": ["spec/v1/multi-agent-execution.md", "spec/v1/agent-memory.md", "spec/v1/agent-runtime.md", "spec/v1/agent-org-chart.md", "spec/v1/agent-evaluation.md", "spec/v1/capabilities.md"],
+      "normativeText": ["spec/v2/core/execution.md", "spec/v2/facets/agents.schema.json", "schemas/v2/run-event-payloads.schema.json"],
       "anchor": "core",
       "section": "core/capabilities.md#agents",
       "peerDependencyId": "agents",
@@ -755,7 +755,7 @@
     {
       "key": "memory",
       "kind": "family",
-      "normativeText": ["spec/v1/agent-memory.md", "spec/v1/capabilities.md"],
+      "normativeText": ["spec/v2/core/host-services.md"],
       "anchor": "core",
       "section": "core/capabilities.md#memory",
       "peerDependencyId": "memory",
@@ -800,7 +800,7 @@
     {
       "key": "subWorkflow",
       "kind": "family",
-      "normativeText": ["spec/v1/node-packs.md"],
+      "normativeText": ["spec/v2/core/execution.md"],
       "anchor": "core",
       "section": "core/capabilities.md#subWorkflow",
       "peerDependencyId": "subWorkflow",
@@ -887,7 +887,7 @@
     {
       "key": "queueBus",
       "kind": "family",
-      "normativeText": ["spec/v1/host-capabilities.md"],
+      "normativeText": ["spec/v2/core/host-services.md"],
       "anchor": "core",
       "section": "core/capabilities.md#queueBus",
       "peerDependencyId": "queueBus",
@@ -908,7 +908,7 @@
     {
       "key": "scheduling",
       "kind": "family",
-      "normativeText": ["spec/v1/host-capabilities.md"],
+      "normativeText": ["spec/v2/core/host-services.md"],
       "anchor": "core",
       "section": "core/capabilities.md#scheduling",
       "peerDependencyId": "scheduling",
@@ -930,7 +930,7 @@
     {
       "key": "heartbeat",
       "kind": "family",
-      "normativeText": ["spec/v2/core/events.md", "spec/v1/host-capabilities.md"],
+      "normativeText": ["spec/v2/core/events.md"],
       "anchor": "core",
       "section": "core/capabilities.md#heartbeat",
       "peerDependencyId": "heartbeat",
@@ -969,7 +969,7 @@
       "requirementIds": [],
       "owningRfc": "0064",
       "normativeText": [
-        "spec/v1/host-capabilities.md"
+        "spec/v2/core/host-services.md"
       ]
     },
     {
@@ -998,7 +998,7 @@
     {
       "key": "httpClient",
       "kind": "family",
-      "normativeText": ["spec/v1/host-capabilities.md"],
+      "normativeText": ["spec/v2/core/host-services.md"],
       "anchor": "core",
       "section": "core/capabilities.md#httpClient",
       "peerDependencyId": "httpClient",
@@ -1022,7 +1022,7 @@
     {
       "key": "artifactTypes",
       "kind": "family",
-      "normativeText": ["spec/v1/artifact-type-packs.md"],
+      "normativeText": ["spec/v2/core/artifact-type-packs.md", "schemas/v2/artifact-type-pack-manifest.schema.json"],
       "anchor": "core",
       "section": "core/capabilities.md#artifactTypes",
       "peerDependencyId": "artifactTypes",
@@ -1118,7 +1118,7 @@
     {
       "key": "deadLetter",
       "kind": "family",
-      "normativeText": ["spec/v1/host-capabilities.md"],
+      "normativeText": ["spec/v2/core/runs.md"],
       "anchor": "core",
       "section": "core/capabilities.md#deadLetter",
       "peerDependencyId": "deadLetter",
@@ -1214,7 +1214,7 @@
     {
       "key": "budget",
       "kind": "family",
-      "normativeText": ["spec/v1/budget-policy.md"],
+      "normativeText": ["spec/v2/core/runs.md", "schemas/v2/budget-policy.schema.json"],
       "anchor": "core",
       "section": "core/capabilities.md#budget",
       "peerDependencyId": "budget",
@@ -1582,7 +1582,7 @@
     {
       "key": "production",
       "kind": "family",
-      "normativeText": ["spec/v1/production-profile.md"],
+      "normativeText": ["spec/v2/core/conformance.md"],
       "anchor": "core",
       "section": "core/capabilities.md#production",
       "peerDependencyId": "production",
@@ -1763,7 +1763,7 @@
       "witness": "witnessable-gated",
       "maturity": {
         "technical": "stable",
-        "adoption": "single-witness"
+        "adoption": "multi-witness"
       },
       "facets": [
         "conditionalRunGet",
@@ -1966,7 +1966,7 @@
       "witness": "claims-check",
       "maturity": {
         "technical": "stable",
-        "adoption": "single-witness"
+        "adoption": "multi-witness"
       },
       "facets": [],
       "floorScenarios": [],

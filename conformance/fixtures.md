@@ -255,7 +255,7 @@ The `messages`-mode stream fixture (AI token streaming) is covered by the determ
 
 - **Purpose**: witness that `key` is per visit (`spec/v2/core/interrupt.md` §Re-entry and resume values, openwop#1697).
 - **Inputs**: none.
-- **Graph**: `start` (`core.noop`) → `gate` (`any_success`); `gate` → `revise` (`core.noop`, `any_failed`); `revise` → `gate` (`any_success`). `settings.maxLoopbackIterations: 2`.
+- **Graph**: `start` (`core.noop`) → `gate` (`any_success`); `gate` → `revise` (`core.noop`, `any_failed`); `revise` → `gate` (`any_success`). The loop is bounded by the scenario (a single reject; cancel plus fail-closed), not by the host. The scenario creates the run with `configurable: { version: 1, run: { recursionLimit: 20 } }` as a runaway guard (`runs.md` §run section). `settings.maxLoopbackIterations: 2` stays in the JSON as authoring metadata; the scenario does not depend on it (openwop#1748).
 - **Behavior**:
   1. Run reaches `gate` and MUST be `waiting-approval`.
   2. Client POSTs `{action: 'reject'}`. `gate` fails with `approval_rejected`, and `revise` runs.
@@ -306,8 +306,8 @@ The `messages`-mode stream fixture (AI token streaming) is covered by the determ
 
 ### `conformance-replay-ordinal-loop`
 
-- **Purpose**: witness that a replay fork keys a side-effecting node's recorded outcome on `(sourceRunId, nodeId, n)`, where `n` counts the node's `node.started` events through this execution (`spec/v2/core/replay.md` §Suppression rule 2, openwop#1718).
-- **Shape**: `start` (`core.noop`) → `effect` (`core.conformance.side-effect`, `any_success`) → `wait` (`core.delay`) → `effect` (`any_success`); `settings.maxLoopbackIterations: 2`, so `effect` executes twice.
+- **Purpose**: witness that a replay fork keys a side-effecting node's recorded outcome on `(sourceRunId, nodeId, n)`, where `n` is one more than the node's recorded terminals (`node.completed`, `node.failed`) before this execution (`spec/v2/core/replay.md` §Suppression rule 2, openwop#1718, re-corrected by openwop#1769).
+- **Shape**: `start` (`core.noop`) → `effect` (`core.conformance.side-effect`, `any_success`) → `wait` (`core.conformance.hold`) → `effect` (`any_success`), so `effect` executes twice. The loop is bounded by the scenario (a single reject; cancel plus fail-closed), not by the host. The scenario creates the run with `configurable: { version: 1, run: { recursionLimit: 20 } }` as a runaway guard (`runs.md` §run section). `settings.maxLoopbackIterations: 2` stays in the JSON as authoring metadata; the scenario does not depend on it (openwop#1748).
 - **Inputs**: `delayMs` (integer, default 3000), long enough to cancel inside `wait`.
 - **Expected behavior**:
   1. The source run completes `effect`'s first execution. The client cancels it inside `wait`, before the second execution.
@@ -318,7 +318,7 @@ The `messages`-mode stream fixture (AI token streaming) is covered by the determ
 ### `conformance-replay-side-effect`
 
 - **Purpose**: verify RFC 0140 — a `mode:"replay"` fork MUST NOT re-perform a side-effecting node's effect.
-- **Shape**: `core.delay` (`wait`) → `core.conformance.side-effect` (`effect`).
+- **Shape**: `core.conformance.hold` (`wait`) → `core.conformance.side-effect` (`effect`). *(Corrected 2026-09-29, openwop#1769: `wait` was `core.delay`, which the registry's flow pack declares `role: "side-effect"`; a host honouring that floor resolved `wait` from the cancelled source and failed it with `replay_source_missing` before `effect` was reached.)*
 - **`core.conformance.side-effect` is a conformance-RESERVED typeId** (same pattern as `core.conformance.mock-agent`): a host advertising `replay.sideEffectSuppression: "recorded-outcome"` MUST map it to a node its replay classifier treats as side-effecting. The node's actual effect is irrelevant to the assertion — what matters is that the host would refuse to perform it during a replay. Hosts that do not advertise the capability need not supply this fixture; the scenario skips.
 - **Inputs**:
   - `delayMs` (integer, required, 1 ≤ value ≤ 60000) — long enough for the test to cancel before `effect` runs.
@@ -590,6 +590,7 @@ The fixtures reference these typeIds:
 | `core.delay`                  | delay, cancellable                                     | Sleep `config.delayMs` ms                                                                                                                                                                |
 | `core.fail`                   | failure                                                | Throw with `code: "example.conformance_failure"` (a vendor code under the registered `example` org; errors.md §The registry, openwop#1698), message: "Intentional conformance failure"                                                                                                |
 | `core.approvalGate`           | approval                                               | Call `ctx.interrupt({kind: 'approval', ...})`                                                                                                                                            |
+| `core.conformance.hold` | replay-side-effect, replay-ordinal-loop | Conformance-RESERVED (openwop#1769). Completes after `inputs.delayMs`; its outputs are exactly its resolved inputs, `delayMs` included, under the same keys. It performs nothing observable outside the run's own event log. A host advertising a fixture that uses it MUST NOT classify it side-effecting (`replay.md` §Suppression rule 1) and MUST re-execute it live in a replay. |
 | `core.clarificationGate`      | clarification                                          | Call `ctx.interrupt({kind: 'clarification', ...})`                                                                                                                                       |
 | `conformance.requiresMissing` | capability-missing                                     | Declares `requires: ['conformance.never-provided']`; engine MUST refuse dispatch. Opt-in fixture registration is recommended so production deployments don't expose the fixture surface. |
 | `conformance.artifact.emit` | artifact-emit | Opt-in (RFC 0205). Produce one artifact of `config.artifactType` with payload `config.data`; emit `artifact.created` naming it; readable through `getArtifact`. |

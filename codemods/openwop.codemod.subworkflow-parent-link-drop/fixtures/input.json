@@ -1,0 +1,1 @@
+{ "runId": "run_child_01", "workflowId": "invoice-lines", "status": "completed", "parentRunId": "run_parent_01", "parentNodeId": "sub-lines", "variables": { "total": 42 } }

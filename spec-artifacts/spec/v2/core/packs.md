@@ -5,7 +5,7 @@
 
 ## Why this exists
 
-The v2 contract for pack manifests, the registry tree, peer-dependency identifiers, and signing. The per-kind rules live in [connection-packs.md](connection-packs.md), [form-content-packs.md](form-content-packs.md), and [workflow-chain-packs.md](workflow-chain-packs.md); the capability vocabulary a pack requires is [capabilities.md](capabilities.md).
+The v2 contract for pack manifests, the registry tree, peer-dependency identifiers, and signing. The per-kind rules live in [connection-packs.md](connection-packs.md), [form-content-packs.md](form-content-packs.md), [workflow-chain-packs.md](workflow-chain-packs.md), and [artifact-type-packs.md](artifact-type-packs.md); the capability vocabulary a pack requires is [capabilities.md](capabilities.md).
 
 ## The engine range
 

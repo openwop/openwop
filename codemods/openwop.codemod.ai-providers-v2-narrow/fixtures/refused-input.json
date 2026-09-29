@@ -1,0 +1,1 @@
+{ "protocolVersion": "1.1", "aiProviders": { "supported": ["openai"], "realtimeVoice": { "transcription": "streaming", "turnDetection": "vad" } } }

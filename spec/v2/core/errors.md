@@ -8,7 +8,7 @@ Every error a v2 host returns is a row in one registry. A client routes on `erro
 
 ## The registry
 
-`spec/v2/errors.json` holds one row per code, defined by `spec/v2/errors.schema.json`. It registers **111** codes. `schemas/v2/error-envelope.schema.json` is GENERATED from it and MUST NOT be edited by hand.
+`spec/v2/errors.json` holds one row per code, defined by `spec/v2/errors.schema.json`. It registers **120** codes. `schemas/v2/error-envelope.schema.json` is GENERATED from it and MUST NOT be edited by hand.
 
 - A host MUST emit a registered code, or a vendor code, wherever it emits an error code: the `error` of every error response, and `error.code` on `run.failed`, `node.failed` and the snapshot's `error` (overview.md §0). A recorded event re-emitted by replay or `:fork` is carried as recorded ([replay.md](replay.md)).
 - A vendor code MUST match `^(?!openwop\.)[a-z][a-z0-9]*(-[a-z0-9]+)*\.[a-z][a-z0-9_]*$`, with its first segment an org registered in `spec/v2/declaration.json`. `openwop.` is reserved.
@@ -32,7 +32,7 @@ Retry timing lives in the `Retry-After` header only.
 - A host MUST NOT emit `details.retryAfter`, `details.retryAfterMs` or `details.retryAfterSeconds`.
 - A `429 rate_limited` response MUST set `Retry-After`.
 
-The retriable rows are `residency_unavailable`, `rate_limited`, `internal_error`, `pack_registry_unreachable`, `runner_unavailable`.
+The retriable rows are `residency_unavailable`, `rate_limited`, `internal_error`, `pack_registry_unreachable`, `runner_unavailable`, `service_unavailable`, `upstream_unavailable`.
 
 ## One code per state
 
@@ -45,8 +45,20 @@ An interrupt has one code per state ([interrupt.md](interrupt.md), [identity.md]
 
 The idempotency mismatch code is `idempotency_key_mismatch` only ([idempotency.md](idempotency.md)).
 
+## Host-service refusals
+
+A `ctx.*` call that rejects MUST use a registered or vendor code. A host MAY carry an uncaught rejection unchanged as the `node.failed` code.
+
+- A generic code (`not_found`, `forbidden`, `validation_error`, `rate_limited`, `credential_not_found`, `credential_forbidden`) MUST carry `details.service`, the family key.
+- `details.reason` MAY name a finer cause in lower-kebab. A client MUST NOT route on it.
+- A vendor code MUST NOT stand for a state a registered code names.
+
+## Unadvertised operations
+
+An operation gated on a family or facet the host does not advertise MUST answer `404 not_found`.
+
 ## Codes by HTTP status
 
-Every registered code, by HTTP status, is listed in [error-codes.md](../generated/error-codes.md), generated from `spec/v2/errors.json` (111 codes).
+Every registered code, by HTTP status, is listed in [error-codes.md](../generated/error-codes.md), generated from `spec/v2/errors.json` (120 codes).
 
-*Sources: RFCs 0171, 0213, 0227.*
+*Sources: RFCs 0171, 0213, 0227, 0228.*

@@ -173,8 +173,40 @@ const rewriteSupportedProse = (d) => {
   let out = d;
   for (const [from, to] of SUPPORTED_REWRITES) out = out.split(from).join(to);
   for (const [from, to] of V1_PATH_REWRITES) out = out.split(from).join(to);
+  for (const [from, to] of RFC_0228_REWRITES) if (out.includes(from)) { out = out.split(from).join(to); RFC_0228_USED.add(from); }
   return out;
 };
+
+// RFC 0228 §G — seeded descriptions that required a code the v2 registry does
+// not hold, or a `details.retryAfter` that errors.md §Retry timing forbids.
+// Keyed by the exact v1 sentence; a row that matches nothing fails the
+// generator, so a changed seed cannot silently keep the old text.
+const RFC_0228_REWRITES = [
+  // The five `agents` rows (modelClasses, deployment.channels, the deployment,
+  // roster and orgChart 404s) moved into spec/v2/facets/agents.schema.json,
+  // which the agents homing hand-decided from the rewritten seed.
+  ['When present, MUST equal both the `Retry-After` header and the `details.retryAfter` body field per production-profile.md.',
+   'When present, MUST equal the `Retry-After` header the host sends with `503 service_unavailable`.'],
+  ['A host advertising this facet MUST include at least `envelope.retry.exhausted` and `envelope.refusal` in `events[]` (the two MUST-tier events). The other four (`envelope.retry.attempted`, `envelope.truncated`, `envelope.nlToFormat.engaged`, `envelope.recovery.applied`) are SHOULD/MAY-tier per RFC 0032 §B and may be omitted.',
+   'A host advertising this facet MUST include at least `envelope.retry-exhausted` and `envelope.refusal` in `events[]` (the two MUST-tier events). The other four (`envelope.retry-attempted`, `envelope.truncated`, `envelope.nl-to-format-engaged`, `envelope.recovery-applied`) are SHOULD/MAY-tier per RFC 0032 §B and may be omitted.'],
+  ['Subset of the six reliability events the host actually emits. A host advertising this facet MUST include `envelope.retry.exhausted` and `envelope.refusal`.',
+   'Subset of the six reliability events the host actually emits, by their v2 names. A host advertising this facet MUST include `envelope.retry-exhausted` and `envelope.refusal`. The four v1 dotted names (`envelope.retry.attempted`, `envelope.retry.exhausted`, `envelope.nlToFormat.engaged`, `envelope.recovery.applied`) are deprecated aliases, removed in 3.0; a consumer MUST treat each as its hyphenated equivalent (RFC 0228 §G).'],
+  // §H: an operation gated on an unadvertised family or facet answers `404 not_found`, not v1's 501.
+  ['False or absent = every `/prompts*` request returns `501 capability_not_provided`.',
+   'False or absent = every `/prompts*` request answers `404 not_found`.'],
+  ['When `false` or absent, those endpoints return 501.', 'When `false` or absent, those endpoints answer `404 not_found`.'],
+];
+const RFC_0228_USED = new Set();
+// RFC 0228 §G — the v2 spellings `events.md` §envelopes requires, added beside
+// the v1 dotted names (kept as deprecated aliases: six committed bundles carry
+// them, so a replacement would fail RFC 0197 R3).
+const RELIABILITY_V2_EVENTS = ['envelope.retry-attempted', 'envelope.retry-exhausted', 'envelope.nl-to-format-engaged', 'envelope.recovery-applied'];
+function widenReliabilityEvents(schema) {
+  const items = schema.properties?.envelopes?.properties?.reliability?.properties?.events?.items;
+  if (!Array.isArray(items?.enum)) throw new Error('generate-from-declaration FAILED — envelopes.reliability.events[].items.enum not found (RFC 0228 §G)');
+  items.enum = [...items.enum, ...RELIABILITY_V2_EVENTS.filter((e) => !items.enum.includes(e))];
+  return schema;
+}
 
 // Seeded descriptions that name a v1 route. v2 defines no protocol path for
 // portability export or import (spec/v2/core/portability.md §Routes); `GET
@@ -365,7 +397,11 @@ function buildAliases() {
   return { $comment: 'GENERATED (RFC 0177 §B.2) from the registry peer-dependency key inventory recorded in evidence/cross-repo-manifests.json — never from a sibling checkout. A row with unresolved:true is a key no declaration family or facet explains; check-declaration.mjs fails on it.', generatedFrom: ['spec/v2/declaration.json', 'evidence/cross-repo-manifests.json#registryPeerDependencyKeys'], rows };
 }
 
-const outputs = [[OUT_SCHEMA, buildSchema()], [OUT_PROFILES, buildProfiles()], [OUT_ALIASES, buildAliases()]];
+const outputs = [[OUT_SCHEMA, widenReliabilityEvents(buildSchema())], [OUT_PROFILES, buildProfiles()], [OUT_ALIASES, buildAliases()]];
+{
+  const unused = RFC_0228_REWRITES.filter(([from]) => !RFC_0228_USED.has(from));
+  if (unused.length) { console.error(`generate-from-declaration FAILED — ${unused.length} RFC 0228 rewrite(s) matched no seeded description:\n  ${unused.map(([f]) => f.slice(0, 100)).join('\n  ')}`); process.exit(1); }
+}
 const render = (o) => JSON.stringify(o, null, 2) + '\n';
 // RFC 0192 §C — the 27th occurrence cannot appear silently.
 //
