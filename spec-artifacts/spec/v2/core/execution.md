@@ -45,9 +45,6 @@ A runner is a user-operated process that dials out, holds credentials the host c
 | 5 | stateful loop lifecycle and context budget |
 | 6 | verifier turn and convergence |
 
-Levels 2–6 are not yet restated in v2 prose. Their rules are those of their owning RFCs: level 2 [RFC 0039](https://github.com/openwop/openwop/blob/main/RFCS/0039-multi-agent-confidence-and-memory-lifecycle.md), level 3 [RFC 0040](https://github.com/openwop/openwop/blob/main/RFCS/0040-multi-agent-cross-host-causation.md), level 4 [RFC 0041](https://github.com/openwop/openwop/blob/main/RFCS/0041-multi-agent-replay-under-nondeterminism.md), level 5 [RFC 0061](https://github.com/openwop/openwop/blob/main/RFCS/0061-agent-loop-lifecycle.md) and [RFC 0111](https://github.com/openwop/openwop/blob/main/RFCS/0111-context-economy.md), level 6 [RFC 0090](https://github.com/openwop/openwop/blob/main/RFCS/0090-agent-verifier-and-convergence.md).
-
-
 At level 1, a workflow whose `core.orchestrator.supervisor` feeds `core.dispatch` runs this loop:
 
 - Each turn records one decision as `runOrchestrator.decided`. `terminate` completes the run; `clarify` and `escalate` suspend on a `clarification` or `approval` interrupt; `next-worker` dispatches each of `nextWorkerIds[]` as a child run, and the next turn waits for all of them.
@@ -56,4 +53,32 @@ At level 1, a workflow whose `core.orchestrator.supervisor` feeds `core.dispatch
 - `output.harvested` fires exactly when a child completes with a non-empty `outputMapping`.
 - A host not advertising `executionModel` MUST NOT emit `core.workflowChain.event`.
 
-*Sources: RFCs 0007, 0022, 0037, 0122, 0228.*
+At level 2:
+
+- A `next-worker` or `terminate` decision whose `confidence` is below the floor (`confidenceEscalationFloor`, else `0.5`) MUST NOT execute silently. The host MUST record `core.workflowChain.confidence-escalated`, then fire a `clarification` interrupt (preferred) or an `approval` interrupt, both before any `dispatch.began` for that decision. An absent `confidence` MUST NOT trigger escalation.
+- With `memory` also advertised, a child of `core.dispatch` or `core.subWorkflow` MUST keep memory scoped per `(tenantId, scopeId)` ([host-services.md](host-services.md)). When it shares its parent's scope, its writes are visible to the parent from its completion and on later supervisor turns, and an entry's `ttl` MUST run from the child's write time.
+- The host MUST serialize sibling children's writes to the shared scope per parent run, unless it advertises `crossChildMemoryConcurrency: "advisory"`, and then SHOULD document last-write-wins.
+- The host MUST persist memory snapshots by log index: before `fromSeq`, a fork's memory reads MUST return the source run's memory as of `fromSeq`, or the fork is refused ([replay.md](replay.md)).
+
+At level 3, with `crossHostCausation` advertised:
+
+- An event whose `causationId` names an event on another host MUST carry `causationHostId`, equal to that host's `crossHostCausation.hostId`; a same-host one MUST NOT.
+- The host MUST propagate the run's trace context into every outbound MCP request and A2A message, and adopt an inbound one, per [interop.md](interop.md).
+- Under `ancestryEndpointSupported` the host MUST serve `getRunAncestry` ([runs.md](runs.md)); otherwise it returns `404` and clients walk `causationHostId`.
+
+At level 4, every LLM-calling node MUST meet [replay.md](replay.md)'s invocation key, refusal-divergence and observable-result rules.
+
+At level 5:
+
+- Every `runOrchestrator.decided` MUST carry `iteration`, 1-based and incremented by exactly 1 per turn; `maxLoopIterations` bounds it ([runs.md](runs.md)).
+- Turn *i*'s inputs MUST be reproducible on replay: memory as of its log index, the workspace snapshot when `workspace` is advertised, and the log tail bounded by `transcriptWindow`. A turn's writes MUST become visible to turn *i+1*, never to turn *i*.
+- Under `statefulResume`, a resumed loop MUST continue at the same `iteration` with the same snapshot lineage. A heartbeat MAY enqueue a fresh loop run and MUST NOT advance a suspended one.
+- `contextBudget` bounds that transcript in tokens, per its `schemas/v2/capabilities.schema.json` descriptions and `context.summarized`. A replay MUST reuse a recorded summary, never re-summarize.
+
+At level 6, with `verifier` advertised:
+
+- A critic MUST emit content-free `agent.verified` over a prior result: an `agent.decided` event, a child run or a tool call.
+- Under `verifier.gating`, a `fail` MUST NOT be merged or `terminate` as success, and a `revise` SHOULD route back to an actor turn within `maxLoopIterations`. A missing verdict is not a failure. Without `gating`, verdicts are observational.
+- A consumer MUST NOT treat a `terminate` whose `successCriteria` has a `met: false` entry as goal-satisfied.
+
+*Sources: RFCs 0007, 0022, 0037, 0039, 0040, 0041, 0061, 0090, 0111, 0122, 0228.*

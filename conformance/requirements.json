@@ -6,7 +6,7 @@
     "tests": 2494,
     "withStableId": 2494,
     "interpolatedTitles": 0,
-    "explicitIds": 2374
+    "explicitIds": 2373
   },
   "records": [
     {
@@ -42865,21 +42865,10 @@
     {
       "id": "openwop.it.v2-interop-map-coherent.the-map-agrees-with-the-v2-wire-and-the-gate-refuses-each-defect-it-exists-to-ca",
       "file": "v2-interop-map-coherent.test.ts",
-      "line": 62,
+      "line": 65,
       "title": "the map agrees with the v2 wire, and the gate refuses each defect it exists to catch",
-      "explicitId": "openwop.requirement.0208.map-coherent",
-      "citations": [
-        {
-          "section": "RFCS/0208 §A; spec/v2/core/interop.md §\"The operation mappings\"",
-          "requirement": null,
-          "interpolated": true
-        },
-        {
-          "section": "RFCS/0208 §A; spec/v2/core/interop.md §\"The operation mappings\"",
-          "requirement": null,
-          "interpolated": true
-        }
-      ]
+      "explicitId": null,
+      "citations": []
     },
     {
       "id": "openwop.it.v2-lane-exp-only-schema.exp-only-validates-on-a-jwt-lane-and-is-refused-on-api-key-and-session-and-only",
