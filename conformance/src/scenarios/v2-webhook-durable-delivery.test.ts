@@ -8,6 +8,10 @@
  * (`spec/v2/core/webhooks.md` §Durability; security-defaults.md §Webhook
  * durability; RFC 0173 §B row C6.3).
  *
+ * The last leg (suite 2.44.8, openwop#1781) reads "deliver each matching event
+ * at least once" across a whole run, with a receiver that never fails: see
+ * `webhook-delivery-complete` below.
+ *
  * How the receiver is driven: the suite boots its own HTTP receiver (the same
  * shape `webhook-signed-delivery.test.ts` uses) in a FAILING mode — it answers
  * `500` to the first N attempts for a delivery key and `204` afterwards — so
@@ -35,7 +39,7 @@ import { absenceIsUnmeasured, noDeliveryCause, startScopedReceiver, type ScopedR
 import { readErrorCode } from '../lib/error-envelope.js';
 import { blockedDespiteAssertions, softSkip } from '../lib/soft-skip.js';
 import { req } from '../lib/requirement-ids.js';
-import { pastAdvertisedBound, retryTestTimeoutMs, retryWaitCapMs, retryWaitFor, retryWaitSelection, waitObservation, windowClosedNote } from '../lib/webhook-retry-window.js';
+import { pastAdvertisedBound, retryTestTimeoutMs, retryWaitCapMs, retryWaitFor, retryWaitSelection, waitObservation, waitPathNote, windowClosedNote } from '../lib/webhook-retry-window.js';
 import { noteObservation } from '../lib/row-observation.js';
 
 export const REQUIRES_HOST_CALLBACK = 'the host POSTs and retries webhook deliveries to the suite-owned scoped receiver behind OPENWOP_WEBHOOK_RECEIVER_URL';
@@ -43,7 +47,7 @@ export const REQUIRES_HOST_CALLBACK = 'the host POSTs and retries webhook delive
 const FIXTURE = 'conformance-noop';
 const TERMINAL = new Set(['completed', 'failed', 'cancelled']);
 
-interface Attempt { readonly key: string; readonly runId: string | null; readonly webhookId: string; readonly status: number; readonly at: number }
+interface Attempt { readonly key: string; readonly runId: string | null; readonly webhookId: string; readonly sequence: number | null; readonly status: number; readonly at: number }
 
 /**
  * A receiver that fails the first `failFirst` attempts for each delivery key
@@ -75,7 +79,7 @@ async function startReceiver(failFirst: number): Promise<ScopedReceiver & { atte
     const n = (seen.get(key) ?? 0) + 1;
     seen.set(key, n);
     const status = n <= failFirst ? 500 : 204;
-    attempts.push({ key, runId, webhookId, status, at: Date.now() });
+    attempts.push({ key, runId, webhookId, sequence: typeof sequence === 'number' ? sequence : null, status, at: Date.now() });
     res.writeHead(status);
     res.end();
   });
@@ -274,6 +278,32 @@ async function register(rx: ScopedReceiver): Promise<{ webhookId: string } | nul
   expect(typeof webhookId, req('openwop.requirement.0173.webhook-durable-delivery', 'webhooks.md §Surfaces', 'the 201 body MUST carry `webhookId`')).toBe('string');
   return { webhookId: webhookId as string };
 }
+
+/**
+ * `webhook-delivery-complete` (suite 2.44.8, openwop#1781): the lifecycle types
+ * a one-node run emits. The EXPECTED deliveries are still read from the host's
+ * own log, so the suite assumes nothing about what the fixture emits.
+ */
+const COMPLETE_ID = 'openwop.requirement.0173.webhook-delivery-complete';
+const COMPLETE_TYPES = ['run.started', 'node.started', 'node.completed', 'run.completed'] as const;
+const COMPLETE_TERMINAL_WAIT_MS = 30_000;
+
+/** The run's logged events of a subscribed type, by sequence; null when the log is unreadable or carries no sequences. */
+async function subscribedLog(runId: string): Promise<Map<number, string> | null> {
+  const res = await driver.get(`/runs/${encodeURIComponent(runId)}/events/poll?timeout=1`);
+  if (res.status !== 200) return null;
+  const events = (res.json as { events?: Array<{ type?: unknown; sequence?: unknown }> } | null)?.events;
+  if (!Array.isArray(events)) return null;
+  const want = new Map<number, string>();
+  for (const e of events) {
+    if (typeof e.type !== 'string' || !(COMPLETE_TYPES as readonly string[]).includes(e.type)) continue;
+    if (typeof e.sequence !== 'number') return null;
+    want.set(e.sequence, e.type);
+  }
+  return want;
+}
+
+const bareId = (id: string): string => (id.includes('/') ? id.slice(id.indexOf('/') + 1) : id);
 
 describe('RFC 0173 §B — webhook-durable-delivery (gated on webhooks)', () => {
   it('a failed attempt is retried and the event is delivered at least once', async () => {
@@ -626,4 +656,93 @@ describe('RFC 0173 §B — webhook-durable-delivery (gated on webhooks)', () => 
       req('openwop.requirement.0188.dead-letter-content-free', 'RFC 0188 §B.1', `a dead-letter record MUST NOT carry the delivered body, headers or subscription secret — the queue is precisely the traffic the subscriber never received, so a record carrying any of it turns one read scope into a replay of that traffic for the whole retention window (read ${rows.length} record(s))`),
     ).toBe(true);
   }, DEAD_LETTER_TEST_TIMEOUT_MS);
+  /**
+   * openwop#1781: "deliver each matching event at least once" binds EVERY
+   * matching event, and no row read it that way. `v2-webhook-delivery-shape`
+   * records `blocked` on a missing delivery; `v2-webhook-standard-webhooks-delivery`
+   * fails only on a missing `run.completed`; the legs above subscribe to
+   * `run.completed` alone and drive retries after a FAILING receiver. So a host
+   * that lost part of a run's fan-out certified green. Measured on a tier-2
+   * host: its `run.started` fan-out was fire-and-forget work that Cloud Run CPU
+   * throttling starved once the appending request ended (myndhyve#560); the
+   * only row that reddened was `0215.no-head-of-line`, under the wrong MUST,
+   * and #1780 correctly stopped it convicting.
+   *
+   * One subscription to the four lifecycle types, a receiver that answers 204
+   * to everything, one noop run. Every logged event of a subscribed type must
+   * arrive at least once, deduplicated on `(webhookId, runId, sequence)` — the
+   * triple webhooks.md §Verification names. Duplicates are counted in the
+   * `observed:` detail and never held against the host: at-least-once permits
+   * them. The wait is `retryWaitFor`: the advertised `maxElapsedMs` plus the
+   * grace when the host states one (RFC 0225), else the cap or the floor. It
+   * only bounds how long a missing event is waited for; a healthy receiver
+   * needs no retry.
+   *
+   * Convicts only when some of this run's subscribed events arrived and others
+   * did not, or when nothing arrived and nothing else reached the listener (the
+   * rule the first leg applies). Nothing of this run arriving while other
+   * traffic did is `blocked`: the path works, and what is absent is this
+   * exercise's identity. Negative control: the v2 reference host with its
+   * `run.started` fan-out removed fails this leg naming `run.started`.
+   */
+  it('every logged event of a subscribed type reaches a healthy receiver at least once within the retry bound', async () => {
+    const doc = await discovery();
+    if (!doc) return softSkip('blocked', 'discovery unreachable');
+    if (!(await gateFamily('webhooks'))) return softSkip('inapplicable', 'webhooks family not advertised (gate recorded under openwop.family.webhooks)');
+    if (!fixtureAdvertised(doc, FIXTURE)) return softSkip('inapplicable', `${FIXTURE} fixture not advertised — no run to deliver`);
+
+    const receiver = await startReceiver(0); // 204 to every attempt
+    active = receiver;
+    const reg = await driver.post('/webhooks', { url: receiver.url, events: [...COMPLETE_TYPES] });
+    if (reg.status === 400 && readErrorCode(reg.json) === 'webhook_url_rejected') {
+      if (!receiver.tunnelled) return softSkip('blocked', 'host SSRF guard rejected the loopback receiver (webhooks.md §Egress requires it); set OPENWOP_WEBHOOK_RECEIVER_URL to a public https tunnel in front of the suite receiver');
+      expect.fail(`host rejected the operator-supplied public https receiver (${receiver.url}) with webhook_url_rejected — a public https destination is legitimate under webhooks.md §Egress`);
+    }
+    expect(reg.status, req(COMPLETE_ID, 'webhooks.md §Surfaces', `POST /webhooks MUST answer 201 { webhookId } for events [${COMPLETE_TYPES.join(', ')}], each a v2 event type name`)).toBe(201);
+    const webhookId = (reg.json as { webhookId?: unknown } | null)?.webhookId;
+    expect(typeof webhookId, req(COMPLETE_ID, 'webhooks.md §Surfaces', 'the 201 body MUST carry `webhookId`')).toBe('string');
+    const sub = webhookId as string;
+    try {
+      const create = await driver.post('/runs', { workflowId: FIXTURE });
+      expect(create.status, req(COMPLETE_ID, 'runs.md §Create', 'POST /runs MUST answer 201 for the noop fixture')).toBe(201);
+      const runId = (create.json as { runId: string }).runId;
+      const createdAt = Date.now();
+      const status = await waitTerminal(runId, COMPLETE_TERMINAL_WAIT_MS);
+      if (status === null || !TERMINAL.has(status)) return softSkip('blocked', `the ${FIXTURE} run did not reach a terminal status inside ${COMPLETE_TERMINAL_WAIT_MS}ms (last ${status ?? 'unreadable'}), so its event log, the expected set, is not final`);
+      const want = await subscribedLog(runId);
+      if (want === null) return softSkip('blocked', 'GET /runs/{runId}/events/poll did not yield the run\'s events with a numeric sequence, so the expected deliveries cannot be keyed (webhooks.md §Verification dedupes on sequence)');
+      if (want.size === 0) return softSkip('blocked', `the run's event log holds no event of a subscribed type [${COMPLETE_TYPES.join(', ')}]: nothing to deliver, nothing measured`);
+
+      const ours = (): Attempt[] => receiver.attempts.filter((a) => a.runId !== null && bareId(a.runId) === bareId(runId) && bareId(a.webhookId) === bareId(sub));
+      const missing = (): number[] => {
+        const got = new Set(ours().map((a) => a.sequence));
+        return [...want.keys()].filter((q) => !got.has(q)).sort((a, b) => a - b);
+      };
+      const policy = advertisedRetryPolicy(doc);
+      const selection = retryWaitSelection(policy, RETRY_WAIT_CAP_MS);
+      const deadline = Date.now() + retryWaitFor(policy, RETRY_WAIT_CAP_MS);
+      while (missing().length > 0 && Date.now() < deadline) await new Promise((r) => setTimeout(r, 250));
+
+      const arrivals = ours();
+      const firstAt = new Map<number, number>();
+      for (const a of arrivals) if (a.sequence !== null && want.has(a.sequence) && !firstAt.has(a.sequence)) firstAt.set(a.sequence, a.at);
+      const slowest = firstAt.size === 0 ? null : Math.max(...[...firstAt.values()].map((t) => t - createdAt));
+      const duplicates = arrivals.filter((a) => a.sequence !== null && want.has(a.sequence)).length - firstAt.size;
+      const lost = missing();
+      noteObservation(`${firstAt.size}/${want.size} subscribed event(s) delivered, ${duplicates} duplicate arrival(s); slowest first arrival ${slowest === null ? 'none' : `${slowest}ms after the run was created`}; ${waitPathNote(selection)}`);
+
+      if (arrivals.length === 0 && absenceIsUnmeasured(receiver)) {
+        return blockedDespiteAssertions(noDeliveryCause(receiver, 'delivery for this run'));
+      }
+      const lostList = lost.map((q) => `${want.get(q)} (sequence ${q})`).join(', ');
+      expect(
+        lost,
+        req(COMPLETE_ID, 'webhooks.md §Durability', `the host MUST deliver each matching event at least once; best-effort delivery is not a conforming mode (RFC 0173 §B). ${lost.length} of ${want.size} subscribed event(s) in this run's log never reached the healthy receiver inside ${selection.windowMs}ms: ${lostList}. ${firstAt.size > 0 ? `${firstAt.size} other(s) did arrive, so the receiver was reachable.` : noDeliveryCause(receiver, 'delivery for this run')}`),
+      ).toEqual([]);
+    } finally {
+      // Four lifecycle types on a live subscription would keep fanning every later
+      // run's events at a closed nonce, each retried to exhaustion.
+      try { await driver.delete(`/webhooks/${encodeURIComponent(sub)}`); } catch { /* best effort: the verdict is already recorded */ }
+    }
+  }, retryTestTimeoutMs(1, COMPLETE_TERMINAL_WAIT_MS + WAIT_SLACK_MS));
 });
