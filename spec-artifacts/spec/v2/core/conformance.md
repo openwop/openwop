@@ -5,7 +5,7 @@
 
 ## Why this exists
 
-The v2 evidence contract: how a requirement is asserted, how every requirement declares what can witness it, how the seams are mounted, what the suite ships, and what a bundle proves. Profiles are in [overview.md](overview.md); the capability vocabulary the suite gates on is in [capabilities.md](capabilities.md).
+The v2 evidence contract: how a requirement is asserted and witnessed, how the seams are mounted, what the suite ships, and what a bundle proves. Profiles are in [overview.md](overview.md); the capability vocabulary the suite gates on is in [capabilities.md](capabilities.md).
 
 ## Requirement ids
 
@@ -47,7 +47,7 @@ Every family in `spec/v2/declaration.json`, every requirement in `conformance/re
 
 ## The seams profile
 
-Test seams are the profile `openwop-conformance-seams-v2` (`spec/v2/profiles.json`), described by `api/seams-v2.yaml` with schemas under `schemas/v2/seams/`, in the path space `/conformance/seams/…`. The seam schemas `$ref` the canonical error and event schemas with no tolerance path. The profile is versioned with the suite (`seams-v2` for 2.x).
+Test seams are the profile `openwop-conformance-seams-v2` (`spec/v2/profiles.json`), described by `api/seams-v2.yaml` with schemas under `schemas/v2/seams/`, at `/conformance/seams/…`. The seam schemas `$ref` the canonical error and event schemas with no tolerance path. The profile is versioned with the suite (`seams-v2` for 2.x).
 
 - A host that mounts the seams MUST advertise the profile as `conformance.seamsProfile: "openwop-conformance-seams-v2"` at the discovery root (the closed root has no `profiles[]`; [capabilities.md](capabilities.md) §3).
 - A host MUST NOT advertise a `testSeams` capability flag.
@@ -88,7 +88,7 @@ A certification bundle validates against `schemas/v2/certification-bundle.schema
 - A verifier MUST resolve `keyId` there — in the discovery document of the host the bundle is *about* — and MUST verify the attestation under the published key.
 - A retired key MUST stay listed.
 
-A signature that cannot be resolved to a published key attests **integrity only**, and the bundle MUST NOT be read as attributable evidence. A gate MUST distinguish three outcomes that a presence check collapses into one: *no discovery document was read*, *read and the key is not published*, and *the attestation does not verify*.
+A signature that cannot be resolved to a published key attests **integrity only**, and the bundle MUST NOT be read as attributable evidence. A gate MUST distinguish three outcomes: *no discovery document was read*, *read and the key is not published*, and *the attestation does not verify*.
 
 `evidenceTier: independent` MUST carry a `verifierKeyId` distinct from the host's signing key. The verifier MUST refuse, not warn, on a missing or self-signed independent claim.
 
@@ -102,7 +102,7 @@ A signature that cannot be resolved to a published key attests **integrity only*
 
 ### Colocated companion
 
-A *colocated companion* is the served host's image run beside the suite, so it can trust a suite-held trust anchor.
+A *colocated companion* is the served host's image run beside the suite, trusting a suite-held trust anchor.
 
 - A bundle cut from one MUST carry `host.deployment: "colocated-companion"`, which the preimage covers (§"Canonical JSON").
 - A host serving production traffic MUST NOT list a suite-held trust anchor among the trust roots it advertises.
@@ -127,7 +127,7 @@ The value MUST be I-JSON (RFC 7493):
 
 ### Recovery evidence
 
-Recovery evidence rides on rows: a row's `evidence` enters `witnessSha256` only when present.
+A row's `evidence` enters `witnessSha256` only when present.
 
 | Row | `evidence` member |
 | --- | --- |
@@ -140,13 +140,14 @@ Recovery evidence rides on rows: a row's `evidence` enters `witnessSha256` only 
 
 `durability.rung` is outside the attestation, so a verifier MUST re-derive it and MUST reject (`rung-not-derivable`) a claim it cannot derive. Derivation requires every row of the rung to be `executed-pass`, and each kill row's `class` to name a declared entry whose `bound` equals its `boundMs` and is not exceeded by its `observedMs`. Only `durable-single-instance` is derivable in this revision; a higher claim is refused.
 
-This proves the arithmetic and that recovery ran once inside the bound. It does not prove the kill landed in the class it names; killing only once the execution claim is held is the host's obligation.
+The evidence does not prove the kill landed in the class it names; killing only once the execution claim is held is the host's obligation.
 
 ## Production profile
 
 `production` is the operational bar for a public host. A host claiming it:
 
-- MUST pass `openwop-core-standard` and serve the events channel or poll, and SHOULD serve both; it MUST publish the suite version and command used, and document every optional profile it claims;
+- MUST pass `openwop-core-standard`, publish the suite version and command used, and document every optional profile it claims;
+- MUST serve the events channel or poll, and SHOULD serve both;
 - MUST persist run state and event logs outside process memory, replayable after restart, including stale-claim recovery;
 - MUST tolerate at least five retries of one `Idempotency-Key` within its retention;
 - MUST log run id, tenant or project id, terminal status, error code and correlation id, and SHOULD export the `openwop.*` OTel spans and metrics.

@@ -316,7 +316,7 @@
             "provider": {
               "type": "string",
               "pattern": "^[a-z][a-z0-9-]*$",
-              "description": "Provider id per `capabilities.aiProviders.supported` (e.g., `anthropic`, `openai`, `gemini`). MUST be in the host's `capabilities.aiProviders.supported[]` for the substitution to fire; otherwise the host emits `model.capability.insufficient` with `fallbackAttempted: true`."
+              "description": "Provider id per `capabilities.aiProviders.providers` (e.g., `anthropic`, `openai`, `gemini`). MUST be in the host's `capabilities.aiProviders.providers[]` for the substitution to fire; otherwise the host emits `model.capability-insufficient` with `fallbackAttempted: true`."
             },
             "model": {
               "type": "string",
@@ -358,7 +358,7 @@
         },
         "provider": {
           "type": "string",
-          "description": "For `kind: 'ai-provider'`, the provider id (`anthropic`, `openai`, `gemini`, etc.). MUST be in `Capabilities.aiProviders.supported`. Optional for other kinds."
+          "description": "For `kind: 'ai-provider'`, the provider id (`anthropic`, `openai`, `gemini`, etc.). MUST be in `capabilities.aiProviders.providers`. Optional for other kinds."
         },
         "scope": {
           "type": "string",

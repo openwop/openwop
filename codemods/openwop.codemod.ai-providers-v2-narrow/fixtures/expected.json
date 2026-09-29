@@ -1,1 +1,1 @@
-{ "protocolVersion": "1.1", "aiProviders": { "supported": ["anthropic", "openai", "local-llm"], "byok": ["anthropic", "openai"], "selfHosted": true, "realtimeVoice": true, "promptPrefixCache": true, "authModes": ["apiKey", "none", "subscription"] } }
+{ "protocolVersion": "1.1", "aiProviders": { "providers": ["anthropic", "openai", "local-llm"], "byok": ["anthropic", "openai"], "selfHosted": true, "realtimeVoice": true, "promptPrefixCache": true, "authModes": ["apiKey", "none", "subscription"] } }

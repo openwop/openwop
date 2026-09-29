@@ -123,7 +123,7 @@ With `bufferMs` (0..5000) the host accumulates events into one `event: batch` fr
 
 ### Host events
 
-`hostEvents` carries the heartbeat messages (`schemas/v2/heartbeat-evaluated.schema.json`, `schemas/v2/heartbeat-state-changed.schema.json`) at `/host/events` (`streamHostEvents`), the documented default. A host MAY declare another address under `heartbeat.deliveryChannel` ([capabilities.md](capabilities.md)). The channel is content-free of run data. There is no channel without an address.
+`hostEvents` carries the heartbeat messages (`schemas/v2/heartbeat-evaluated.schema.json`, `schemas/v2/heartbeat-state-changed.schema.json`) at the default address `/host/events` (`streamHostEvents`). A host MAY declare another address under `heartbeat.deliveryChannel` ([capabilities.md](capabilities.md)); every channel has an address. The channel carries no run data.
 
 #### `heartbeat`
 
@@ -131,7 +131,7 @@ A heartbeat evaluates a predicate on an interval (at least `minIntervalSec`) and
 
 - skip, not queue, a tick while the prior evaluation still runs;
 - bound the evaluation by `maxRuntimeMs`, itself capped by `limits.maxRunDurationMs`, terminating an overrun with `status: timeout`;
-- pass the predicate the prior tick's state, and perform no side effect itself; the predicate MUST be a pure function of observed and prior state;
+- pass the predicate the prior tick's state, and perform no side effect itself. The predicate MUST be a pure function of observed and prior state;
 - emit `heartbeat.evaluated`;
 - on a transition only, emit `heartbeat.stateChanged` and, if the predicate asks, call `createRun`; never on an unchanged tick.
 
@@ -196,15 +196,12 @@ An absent `kinds` is not an empty catalog and is not an unrestricted one: a host
 
 ## Envelope, feedback and usage facets
 
-- **`envelopes.tierOneSubsetCompliance`** advertises that the host accepts the Tier 1 structured-output subset shared across major providers. A host advertising it MUST accept an envelope restricted to that subset from any provider it advertises, rather than refusing on provider-specific grounds.
-- **`feedback.targets`** names the resources an annotation may be attached to. A host MUST refuse an annotation whose target is outside the advertised set, and MUST NOT write it to the replayable run event log.
-- **`providerUsage.costEstimates`** advertises that the host stamps a derived cost on the `provider.usage` event. That figure is an estimate from the host's own rate table; a consumer MUST NOT treat it as a billed amount.
-
 ### `feedback`
 
-`feedback.signals` lists the signal kinds a host accepts; absent means all four. A host advertising `feedback` MUST:
+`feedback.signals` lists the signal kinds a host accepts; absent means all four. `feedback.targets` names the resources an annotation may be attached to. A host advertising `feedback` MUST:
 
 - accept an annotation on a terminal run;
+- refuse an annotation whose target is outside the advertised `targets`, and MUST NOT write it to the replayable run event log;
 - keep annotations visible only within the run's tenant (invariant `annotation-cross-tenant-isolation`);
 - redact secret-shaped material in `signal.correction` and `note` before persistence, listing and export (invariant `annotation-content-redaction`);
 - audit-log each recording with the acting principal.
@@ -214,10 +211,13 @@ An absent `kinds` is not an empty catalog and is not an unrestricted one: a host
 A host advertising `providerUsage` MUST emit exactly one `provider.usage` per LLM provider invocation, before that node's `node.completed`. A host that does not advertise it omits the event.
 
 - `inputTokens` and `outputTokens` MUST replay identically; `costEstimateUsd` MAY be omitted on replay.
+- **`providerUsage.costEstimates`** advertises that the host stamps a derived cost on the event. That figure is an estimate from the host's own rate table; a consumer MUST NOT treat it as a billed amount.
 - The payload MUST NOT carry credential refs, hashed credential identifiers, or prompt or response text (invariant `provider-usage-no-credential-leak`).
 - `providerUsage.currency` is the ISO 4217 currency of `costEstimateUsd`; absent means USD.
 
 ### `envelopes`
+
+**`envelopes.tierOneSubsetCompliance`** advertises that the host accepts the Tier 1 structured-output subset shared across major providers. A host advertising it MUST accept an envelope restricted to that subset from any provider it advertises, rather than refusing on provider-specific grounds.
 
 `envelopes.reasoning` advertises the host's prompt posture for the optional payload field `reasoning`.
 

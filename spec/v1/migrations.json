@@ -1,7 +1,7 @@
 {
   "$schema": "./migrations.schema.json",
   "version": 1,
-  "updated": "2026-09-03",
+  "updated": "2026-09-29",
   "rows": [
     {
       "id": "openwop.migration.C2.1",
@@ -503,6 +503,25 @@
       "gapIds": [],
       "deprecationId": "openwop.deprecation.ai-providers-per-provider-facets",
       "note": "Recorded 2026-09-28: v2 accepts the narrowing. Seven v1 rules with no v2 seat retire: `selfHosted[]` ⊆ `supported[]` (capabilities.md A.1); per-provider `authModes` rules 1, 2, 3, 5 and 7 (keys ⊆ `supported`, `apiKey` and `subscription` ⇒ `byok`, `[\"none\"]` ⇒ not `byok`, the absent-map defaults); the `promptPrefixCache.providers` list (v2: per routed provider); and the `realtimeVoice` sub-flags (v2: one boolean)."
+    },
+    {
+      "id": "openwop.migration.C2.12",
+      "child": "C2",
+      "kind": "rename",
+      "v1": {
+        "surface": "`aiProviders.supported` (the providers the host's AI proxy routes to)",
+        "path": "spec/v1/capabilities.md"
+      },
+      "v2": {
+        "surface": "`aiProviders.providers` (spec/v2/core/host-services.md §aiProviders)",
+        "path": "schemas/v2/capabilities.schema.json"
+      },
+      "codemod": "openwop.codemod.ai-providers-v2-narrow",
+      "persistedData": "not-persisted",
+      "requirementIds": [],
+      "gapIds": [],
+      "deprecationId": "openwop.deprecation.ai-providers-supported-rename",
+      "note": "Recorded 2026-09-29: the v2 facet renamed the list without a row. Same values, same meaning; `byok` stays a subset of it. The codemod refuses a record carrying both names with different values."
     },
     {
       "id": "openwop.migration.C5.3",

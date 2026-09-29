@@ -5,7 +5,7 @@
 
 ## Why this exists
 
-A tenant's reusable estate moves between hosts as one export bundle, and lands on the destination under the importing caller's identity. This document states the bundle and the rules an importer follows. An adapter that turns another platform's export into a bundle is host tooling.
+A tenant's reusable estate moves between hosts as one export bundle, and lands on the destination under the importing caller's identity. An adapter that turns another platform's export into a bundle is host tooling.
 
 ## The export bundle
 
@@ -24,8 +24,8 @@ An `ExportBundle` (`schemas/v2/export-bundle.schema.json`) carries `bundleVersio
 
 ## Import rules
 
-- **No credential material.** A bundle MUST NOT contain credential values: a `connection-ref` item carries only references and provider ids. The importer MUST report unbound references in `secretsToRebind` and MUST NOT invent or transfer secret material. A host MUST reject with `422` an imported bundle whose payload carries a literal credential value.
-- **Dry run.** When `import` is advertised, import MUST offer a dry run. A dry run MUST NOT write, and MUST return the plan it would execute: creates, updates, skips, conflicts and unbound credential references.
+- **No credential material.** A bundle MUST NOT contain credential values: a `connection-ref` item carries only references and provider ids. A host MUST reject with `422` an imported bundle whose payload carries a literal credential value. The importer MUST report unbound references in `secretsToRebind` and MUST NOT invent or transfer secret material.
+- **Dry run.** When `import` is advertised, import MUST offer a dry run, which MUST NOT write and MUST return the plan it would execute: creates, updates, skips, conflicts and unbound credential references.
 - **Idempotent.** Import MUST be idempotent: re-applying a bundle resolves each item to `skipped` or `updated`, never to a duplicate create.
 - **Ordered.** Items MUST be applied in `dependsOn` topological order. A cycle is a `422`.
 - **Re-owned.** Every imported entity MUST be re-owned to the caller's Subject at the destination ([identity.md](identity.md) §1). `source.originPrincipal` is informational and MUST NOT grant any access. Host-scoped handles are re-minted as [identity.md](identity.md) §5 requires.
@@ -39,6 +39,6 @@ An applied import emits `import.applied` (`schemas/v2/run-event-payloads.schema.
 
 ## Routes
 
-No protocol path is defined for export or import: a host serves them on routes of its own. A host-private migration from an anonymous sandbox into a signed-in tenant fits this contract, because its response is a subset of the import outcome.
+No protocol path is defined for export or import: a host serves them on routes of its own. A host-private migration from an anonymous sandbox into a signed-in tenant fits this contract.
 
 *Sources: RFCs 0043, 0096, 0098.*

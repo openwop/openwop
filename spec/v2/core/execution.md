@@ -9,7 +9,7 @@ A step can run on a user's machine, in a child run, or under a supervisor loop; 
 
 ## `selfHostedRunner`
 
-A runner is a user-operated process that dials out, holds credentials the host cannot reach, and executes single model or tool steps. It receives dispatch frames over SSE and POSTs result frames, on host-defined paths. A host MUST NOT advertise `selfHostedRunner` unless it accepts registrations, routes matching dispatch and delivers results.
+A runner is a user-operated process that dials out, holds credentials the host cannot reach, and executes single model or tool steps. On host-defined paths, it receives dispatch frames over SSE and POSTs result frames. A host MUST NOT advertise `selfHostedRunner` unless it accepts registrations, routes matching dispatch and delivers results.
 
 - **Records.** A registration (`schemas/v2/self-hosted-runner-registration.schema.json`) MUST NOT appear in discovery. `dispatchKinds` lists `model`, `tool` or both.
 - **Subject isolation.** A host MUST NOT route a step to a runner its run's subject does not own, and MUST match on subject before capability.
@@ -30,20 +30,18 @@ A runner is a user-operated process that dials out, holds credentials the host c
 - **`inputMapping`** (`childVar → parentVar`) seeds the child once, at creation, after and over its `variables[].defaultValue`, which MUST seed first. An unset parent variable MUST arrive undefined, never an error or `null`. A host not advertising `subWorkflow.inputMapping` MUST refuse a non-empty `inputMapping` at registration with `validation_error`, naming it in `details.requiredCapability`.
 - **`outputMapping`** (`parentVar → childVar`). After the child completes, the host MUST copy each mapped variable into the parent, without throwing on or copying an undefined one.
 - **`propagateCancellation`** (default `true`) cancels the child with its parent.
-- **Parent link.** The child's `getRunAncestry` `parent` MUST be the parent run, with `cause: "core.subWorkflow"`. It does not name the dispatching node; that node's `node.completed` carries `outputs.childRunId`. `parentRunId` is fork lineage, not this link.
+- **Parent link.** Where `getRunAncestry` is served, the child's `parent` MUST be the parent run, with `cause: "core.subWorkflow"`. It does not name the dispatching node; that node's `node.completed` carries `outputs.childRunId`. `parentRunId` is fork lineage, not this link.
 
 ## `multiAgent`
 
-`multiAgent.executionModel.version` is cumulative: a host advertising `N` MUST implement levels 1 through `N`.
+`multiAgent.executionModel.version` is cumulative: a host advertising `N` MUST implement levels 1 through `N`. Each level adds:
 
-| Level | Adds |
-| --- | --- |
-| 1 | the supervisor loop and worker handoff |
-| 2 | confidence escalation; memory across sub-runs |
-| 3 | cross-host causation |
-| 4 | replay determinism under nondeterministic models |
-| 5 | stateful loop lifecycle and context budget |
-| 6 | verifier turn and convergence |
+1. the supervisor loop and worker handoff;
+2. confidence escalation, and memory across sub-runs;
+3. cross-host causation;
+4. replay determinism under nondeterministic models;
+5. stateful loop lifecycle and context budget;
+6. verifier turn and convergence.
 
 At level 1, a workflow whose `core.orchestrator.supervisor` feeds `core.dispatch` runs this loop:
 
@@ -56,8 +54,8 @@ At level 1, a workflow whose `core.orchestrator.supervisor` feeds `core.dispatch
 At level 2:
 
 - A `next-worker` or `terminate` decision whose `confidence` is below the floor (`confidenceEscalationFloor`, else `0.5`) MUST NOT execute silently. The host MUST record `core.workflowChain.confidence-escalated`, then fire a `clarification` interrupt (preferred) or an `approval` interrupt, both before any `dispatch.began` for that decision. An absent `confidence` MUST NOT trigger escalation.
-- With `memory` also advertised, a child of `core.dispatch` or `core.subWorkflow` MUST keep memory scoped per `(tenantId, scopeId)` ([host-services.md](host-services.md)). When it shares its parent's scope, its writes are visible to the parent from its completion and on later supervisor turns, and an entry's `ttl` MUST run from the child's write time.
-- The host MUST serialize sibling children's writes to the shared scope per parent run, unless it advertises `crossChildMemoryConcurrency: "advisory"`, and then SHOULD document last-write-wins.
+- With `memory` also advertised, a child of `core.dispatch` or `core.subWorkflow` MUST keep memory scoped per `(tenantId, scopeId)` ([host-services.md](host-services.md) §`memory`). When it shares its parent's scope, its writes are visible to the parent from its completion and on later supervisor turns, and an entry's `ttl` MUST run from the child's write time.
+- The host MUST serialize sibling children's writes to the shared scope per parent run. A host advertising `crossChildMemoryConcurrency: "advisory"` is exempt, and SHOULD document last-write-wins.
 - The host MUST persist memory snapshots by log index: before `fromSeq`, a fork's memory reads MUST return the source run's memory as of `fromSeq`, or the fork is refused ([replay.md](replay.md)).
 
 At level 3, with `crossHostCausation` advertised:

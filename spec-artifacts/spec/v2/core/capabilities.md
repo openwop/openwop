@@ -115,15 +115,15 @@ Operation paths live in `spec/v2/path-manifest.json` ([`versioning.md`](versioni
 
 Each heading below is a `spec/v2/declaration.json` row with `anchor: core`. `scripts/check-declaration.mjs` MUST fail when a heading here, a root key in the generated schema, or a pack peer-dependency identifier names a family the declaration does not. The peer-dependency identifier is identical to the key ([`packs.md`](packs.md)).
 
-Under each heading: the family's witness class and, where `spec/v2/facets/<key>.schema.json` exists, its hand-decided facets. Maturity axes are §8; the owning RFC is the row's `owningRfc`.
+Under each heading: the family's witness class. Its facets are named in its normative home (§2 says where they are decided). Maturity axes are §8; the owning RFC is the row's `owningRfc`.
 
 ### § supportedEnvelopes
 
-Witness `witnessable-gated`. Facets: `kinds`.
+Witness `witnessable-gated`.
 
 ### § schemaVersions
 
-Witness `witnessable-gated`. Facets: `kinds`.
+Witness `witnessable-gated`.
 
 ### § limits
 
@@ -131,7 +131,7 @@ Witness `witnessable-gated`.
 
 ### § envelopeStrictness
 
-Witness `claims-check`. Facets: `mode`.
+Witness `claims-check`.
 
 ### § envelopeContracts
 
@@ -183,7 +183,7 @@ Witness `witnessable-gated`.
 
 ### § replay
 
-Witness `witnessable-gated`. Facets: `modes`, `retention`, `effectSeamsManifest`.
+Witness `witnessable-gated`.
 
 ### § oauth
 
@@ -219,7 +219,7 @@ Witness `witnessable-gated`.
 
 ### § aiProviders
 
-Witness `witnessable-gated`. Facets: `providers`, `byok`, `selfHosted`, `speechSynthesis`, `imageGeneration`, `videoGeneration`, `realtimeVoice`, `promptPrefixCache`, `maxInlineMediaBytes`, `authModes`, `policies`, `input`.
+Witness `witnessable-gated`.
 
 ### § agents
 
@@ -259,7 +259,7 @@ Witness `witnessable-gated`.
 
 ### § heartbeat
 
-Witness `witnessable-gated`. Facets: `minIntervalSec`, `maxRuntimeMs`, `deliveryChannel`.
+Witness `witnessable-gated`.
 
 ### § toolHooks
 
@@ -299,7 +299,7 @@ Witness `witnessable-gated`.
 
 ### § webhooks
 
-Witness `witnessable-gated`. Facets: `deadLetter`, `retryPolicy`, `secretRotation`, `signatureAlgorithms`.
+Witness `witnessable-gated`.
 
 ### § triggerBridge
 
@@ -307,7 +307,7 @@ Witness `witnessable-gated`.
 
 ### § a2a
 
-Witness `seam-gated`. Facets: `versions`, `preferredVersion`, `minimumVersion`, `refreshedAt`, `profiles`, `agentCardUrl`, `streaming`, `pushNotifications`, `durableTasks`, `agentCards`.
+Witness `seam-gated`.
 
 A facet MAY name a URL on another origin; that is a claim about the facet, not the origin. `agentCardUrl` (and `mcp.serverUrls[]`) are `format: uri` with no origin constraint.
 
@@ -358,21 +358,21 @@ Witness `witnessable-gated`.
 
 ### § workflowChainPacks
 
-Witness `witnessable-gated`. Facets: `subChains`.
+Witness `witnessable-gated`.
 
 ### § packs
 
-Witness `claims-check`. Facets: `testMode`.
+Witness `claims-check`.
 
 ### § mcp
 
-Witness `seam-gated`. Facets: `revisions`, `preferredVersion`, `minimumRevision`, `refreshedAt`, `profiles`, `features`, `serverUrls`, `serverMount`, `mrtr`, `client`.
+Witness `seam-gated`.
 
 `serverUrls[]` MAY name other origins; the off-origin rule under § a2a applies.
 
 ### § sandbox
 
-Witness `witnessable-gated`. Facets: `isolationModel`, `allowedHostCalls`, `memoryLimitBytes`, `wallClockLimitMs`.
+Witness `witnessable-gated`.
 
 ### § compensation
 
@@ -392,11 +392,11 @@ Witness `witnessable-gated`.
 
 ### § auth
 
-Witness `seam-gated`. Facets: `lanes`, `subjectLinkKey`.
+Witness `seam-gated`.
 
 ### § auditLogIntegrity
 
-Witness `witnessable-gated`. Facets: `checkpointSignatureAlgorithm`, `checkpointPublicKey`, `checkpointIntervalEntries`, `checkpointIntervalSeconds` ([security-defaults.md](security-defaults.md) §Audit-log integrity).
+Witness `witnessable-gated`; see [security-defaults.md](security-defaults.md) §Audit-log integrity.
 
 ### § i18n
 
@@ -412,11 +412,11 @@ Witness `witnessable-gated`.
 
 ### § interrupt
 
-Witness `witnessable-gated`. Facets: `refKinds`, `tokenAlgs`, `callbackDelivery`.
+Witness `witnessable-gated`.
 
 ### § runList
 
-Witness `witnessable-gated`. Facets: `maxPageSize`, `filters` ([runs.md](runs.md) §List).
+Witness `witnessable-gated`; see [runs.md](runs.md) §List.
 
 
 ## 6. Extension families (13)
@@ -438,10 +438,8 @@ A profile is a predicate over the declaration file, published in `spec/v2/profil
 | `openwop-conformance-seams-v2` | The seams profile ([`conformance.md`](conformance.md)); forbidden from the capability namespace |
 
 - The v2 root has no `profiles[]`; a host that emits one MUST fail schema validation (§3).
-- The facet `auth.lanes[]` ([`identity.md`](identity.md)) replaces `auth.profiles`.
-- `a2a.profiles[]` and `mcp.profiles[]` are facets that admit no `-legacy` id; the offered versions are `a2a.versions[]` and `mcp.revisions[]` ([`interop.md`](interop.md)).
-- The discovery-only id is `openwop-discovery-core`; the `openwop-core` alias is deleted (row `C2.3`).
-- The claim vocabulary is in [`overview.md`](overview.md). The invariant `profile-claim-floor-not-overstated` is registered in `SECURITY/invariants.yaml` with its test.
+- The facet `auth.lanes[]` ([`identity.md`](identity.md)) replaces `auth.profiles`. `a2a.profiles[]` and `mcp.profiles[]` are facets too ([`interop.md`](interop.md)).
+- The claim vocabulary is in [`overview.md`](overview.md) (invariant `profile-claim-floor-not-overstated`).
 
 ## 8. Maturity axes
 
@@ -465,6 +463,6 @@ A profile is a predicate over the declaration file, published in `spec/v2/profil
 
 ## 10. Migration rows
 
-Rows `C2.1`–`C2.10` are `spec/v1/migrations.json` entries. `openwop.codemod.discovery-document-v2` transforms `C2.2`–`C2.8`: it drops a family with `supported: false` and promotes a dotted-only declared family to its plain key. Certification bundles naming `openwop-core` are never upgraded; they remain valid v1 evidence at their version.
+Rows `C2.1`–`C2.10` are `spec/v1/migrations.json` entries. `openwop.codemod.discovery-document-v2` transforms `C2.2`–`C2.8`: it drops a family with `supported: false` and promotes a dotted-only declared family to its plain key.
 
 *Sources: RFCs 0144, 0169, 0175, 0176, 0179, 0197. Each family's owning RFC is its `owningRfc` in [`declaration.json`](../declaration.json).*

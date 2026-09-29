@@ -5,7 +5,7 @@
 
 ## Why this exists
 
-`interrupt` is how a run waits for something outside itself: a decision, an answer, an event, a conversation turn. Every kind shares one payload shape, event pair, resolve contract and token scheme, so a client that resolves an approval can resolve anything.
+`interrupt` is how a run waits for something outside itself: a decision, an answer, an event, a conversation turn. Every kind shares one payload shape, event pair, resolve contract and token scheme.
 
 ## Payload
 
@@ -35,7 +35,7 @@ Per-kind rules:
 
 ### Re-entry and resume values
 
-`key` is the deterministic re-entry key of one invocation. A host MUST derive it from at least the run, the node and the node's visit index: the number of that node's interrupts in this run whose resolution was consumed before this execution began. Its spelling is host-defined.
+`key` is the deterministic re-entry key of one invocation. A host MUST derive it from at least the run, the node and the node's visit index: how many of that node's interrupts in this run had their resolution consumed before this execution began. Its spelling is host-defined.
 
 - A replay or recovery of the same execution MUST re-derive the same key.
 - A later execution of the node, reached over an edge, MUST derive a different key, MUST raise a new `interrupt.requested`, and MUST NOT return an earlier visit's `resumeValue`.
@@ -45,7 +45,7 @@ Per-kind rules:
 - An in-memory cache MAY serve in-process replays but MUST NOT replace the event log for cross-process replays.
 - A host MUST validate the resume value against `resumeSchema` when one is declared, and MUST refuse a failing value with `400 validation_error`.
 
-`timeoutMs`, when set, is the interrupt's own deadline. What an approval gate does when it elapses is §Rejection.
+`timeoutMs`, when set, is the interrupt's own deadline; for an approval gate see §Rejection.
 
 ## Events
 
@@ -54,7 +54,7 @@ Every kind uses two registered types ([events.md](events.md)):
 - `interrupt.requested` — the payload is the `InterruptPayload` verbatim.
 - `interrupt.resolved` — the closed payload is `interruptResolved`. Resolving an approval-kind interrupt MUST record the applied `action` there, with the field §Approval requires.
 
-The kind-specific `approval.*` and `clarification.*` types remain registered. Their payload definitions in `schemas/v2/run-event-payloads.schema.json` are `$ref` aliases of `interruptRequested` and `interruptResolved`. A host emitting `interrupt.requested` MAY also emit the kind-specific type.
+The kind-specific `approval.*` and `clarification.*` types remain registered; their payloads in `schemas/v2/run-event-payloads.schema.json` are `$ref` aliases of `interruptRequested` and `interruptResolved`. A host emitting `interrupt.requested` MAY also emit the kind-specific type.
 
 Both events are durable and appear in the `updates` and `debug` stream modes. While suspended, `RunSnapshot.currentNodeId` names the node and `status` is `waiting-approval`, `waiting-input` or `waiting-external`.
 
@@ -72,7 +72,7 @@ Both events are durable and appear in the `updates` and `debug` stream modes. Wh
 
 ### Callback delivery
 
-`createRun.callbackUrl` names where a host that advertises `interrupt.callbackDelivery: true` delivers notice of an interrupt, so its holder can resolve it through the token surface. The payload, timing and signing are host-defined.
+`createRun.callbackUrl` names where a host advertising `interrupt.callbackDelivery: true` delivers notice of an interrupt, for resolution through the token surface. Payload, timing and signing are host-defined.
 
 A host advertising the facet:
 
@@ -98,7 +98,7 @@ The token grammar and the `interrupt.tokenAlgs[]` / `kid` check are [identity.md
 
 - **Expiry.** Every token MUST carry `expiresAt`. The default SHOULD be 30 minutes, and a host MUST cap the lifetime at the interrupt's `timeoutMs` when one exists. A token MUST NOT outlive the interrupt it resolves; past `expiresAt` the host MUST answer `410 interrupt_expired`.
 - **Invalidation.** A token MUST be invalidated when its interrupt is resolved or its run is cancelled or completed. Later use MUST answer `409 interrupt_already_resolved`.
-- **Verification.** MAC comparison MUST be constant-time. `kid` selects the verification secret, so secrets rotate without orphaning outstanding tokens.
+- **Verification.** MAC comparison MUST be constant-time. `kid` selects the verification secret, so secrets rotate without orphaning tokens.
 - **Intent.** A token minted with `intent: resolve` authorizes both operations. A host MAY mint `intent: inspect` tokens; a resolve with one MUST be refused with `403`.
 
 ## Approval
@@ -141,9 +141,9 @@ The facet `spec/v2/facets/interrupt.schema.json` carries `tokenAlgs[]` (REQUIRED
 - **`audience`** is a notification hint, never eligibility. When omitted, the host SHOULD notify the union of the eligibility refs.
 - A host that does not advertise a ref kind MUST ignore that field.
 
-Eligibility binds every writer of the suspension record, not every route. A host whose durable store is writable by a principal other than the engine MUST enforce the same eligibility at the store, or MUST NOT expose the record to that principal for write.
+Eligibility binds every writer of the suspension record. A host whose durable store is writable by a principal other than the engine MUST enforce the same eligibility at the store, or MUST NOT expose the record to that principal for write.
 
-Refs are opaque to the engine; the host resolves them. Membership MUST be resolved at decision time and MUST NOT be re-resolved during replay or `forkRun`: the recorded eligibility decision is fixed history ([replay.md](replay.md)).
+Refs are opaque to the engine. Membership MUST be resolved at decision time and MUST NOT be re-resolved during replay or `forkRun`: the recorded eligibility decision is fixed history ([replay.md](replay.md)).
 
 ## During the v1 overlap
 

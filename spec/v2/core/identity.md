@@ -46,13 +46,15 @@ An end user reaching the host through an A2A peer is `kind: anonymous`, `lane: a
 
 ### 1.5 `anonymousActor`
 
-A host advertising `anonymousActor` MUST give a run dispatched through a public agent surface, an operator-configured entry point for unauthenticated callers, an anonymous subject.
+A public agent surface is an operator-configured entry point for unauthenticated callers. A host advertising `anonymousActor` MUST give a run dispatched through one an anonymous subject.
 
 - **The subject.** Its `subjectId` MUST be host-minted, opaque, PII-free and scoped to one surface session. It MUST NOT correlate two sessions or resolve to another subject, workspace or session.
-- **Authority.** Only the surface's explicit tool allowlist. A host MUST NOT resolve a role, scope or default tool baseline for it, or widen it within a session.
+- **Authority.** The subject's only authority is the surface's explicit tool allowlist. A host MUST NOT resolve a role, scope or default tool baseline for it, or widen it within a session.
 - **`failClosed`.** A call whose grant is absent, unresolvable or errors MUST be denied.
-- **`tiers`.** A host MUST list only tiers it enforces. `read`: tenant-scoped tools with no egress and no secret or BYOK reach. `bounded-write-egress`: writes or egress behind a control, over the SSRF-guarded egress path, attaching a credential only when its audience covers the destination and policy permits anonymous use.
-- **`writeEgressControls`.** REQUIRED iff `bounded-write-egress` is listed, else absent: `hitl` or `rate-limit-session-cap` (a hard rate limit plus a per-session action cap).
+- **`tiers`.** A host MUST list only tiers it enforces:
+  - `read` — tenant-scoped tools with no egress and no secret or BYOK reach;
+  - `bounded-write-egress` — writes or egress behind a control, over the SSRF-guarded egress path, attaching a credential only when its audience covers the destination and policy permits anonymous use.
+- **`writeEgressControls`.** REQUIRED when `bounded-write-egress` is listed, and absent otherwise: `hitl` or `rate-limit-session-cap` (a hard rate limit plus a per-session action cap).
 - **Audit.** Every anonymous tool call MUST emit `authorization.decided` carrying no PII or credential. A denial's `reason` is `anon-not-granted`, `anon-write-ungated` or `anon-egress-denied`.
 
 `listTools` scoped to the subject reads the effective grant.
@@ -101,13 +103,13 @@ Every lane MUST name its trust root as `subject.issuer` and MUST advertise it in
 
 #### `exp-only`
 
-`exp-only` names a host that honors `exp` and never re-checks revocation: it consults no introspection endpoint, no userinfo endpoint, no revocation list and no host-side epoch or `validAfter` record. A credential revoked at the trust root is accepted until its own `exp`, so the window is the only bound, and it is enforced.
+`exp-only` names a host that honors `exp` and never re-checks revocation: it consults no introspection endpoint, userinfo endpoint, revocation list, or host-side epoch or `validAfter` record. A credential revoked at the trust root is accepted until its own `exp`, so the enforced window is the only bound.
 
-- A host advertising `exp-only` on a lane MUST refuse a credential presented on that lane with `401 credential_lifetime_exceeded` when **either** `exp − iat` (total lifetime) **or** `exp − now` (remaining lifetime) exceeds the advertised `revocationWindowSeconds`. Both bounds matter: `exp − iat` alone admits a ten-year token minted ten years ago; `exp − now` alone admits a fresh ten-year token in its ninth year.
-- A credential carrying no `iat` MUST be refused with the same code, because the first bound cannot be evaluated without it (§2.1 fail-closed).
+- A host advertising `exp-only` on a lane MUST refuse a credential presented on that lane with `401 credential_lifetime_exceeded` when **either** `exp − iat` (total lifetime) **or** `exp − now` (remaining lifetime) exceeds the advertised `revocationWindowSeconds`.
+- A credential carrying no `iat` MUST be refused with the same code (§2.1 fail-closed).
 - A host that cannot enforce both bounds MUST NOT advertise `exp-only`.
 - `exp-only` SHOULD be advertised with a window of one hour or less. No maximum is set.
-- `exp-only` MUST NOT be advertised on the `api-key` or `session` lane, where the host issued the credential and controls revocation itself. `auth.schema.json` refuses that pairing (invariant `lane-exp-only-lifetime-bounded`).
+- `exp-only` MUST NOT be advertised on the `api-key` or `session` lane; `auth.schema.json` refuses that pairing (invariant `lane-exp-only-lifetime-bounded`).
 
 ### 2.3 Minimum assurance
 
@@ -158,7 +160,7 @@ The record and both `SubjectRef`s are closed; `a`, `b`, `keyClass`, `issuer`, `t
 
 Deactivation sets `deniedAt`; the SAML decision path MUST consult it (the leaver contract). The link is a reference, not a merge: nothing rewrites a subject already stamped on a run.
 
-Advertising both `saml` and `scim` lanes implies the link contract; there is no `auth.subjectLinking` flag. Lanes stay separate facets, with no single "enterprise identity" profile. The `auth.subjectLinkKey` facet (`opaque-idp | configured-immutable`) names the key class the host forms links under.
+Advertising both `saml` and `scim` lanes implies the link contract. The `auth.subjectLinkKey` facet (`opaque-idp | configured-immutable`) names the key class the host forms links under.
 
 ## 4. Resume tokens
 

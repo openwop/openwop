@@ -14,7 +14,7 @@ A manifest's `engines.openwop` MUST match the grammar in `schemas/v2/node-pack-m
 - A v2 host MUST treat a range with no upper bound as bounded by `<2.0.0`.
 - A host MUST refuse to install a version whose range does not admit the host's protocol major with `pack_engine_unsupported` (`spec/v2/errors.json`).
 - `pack_runtime_requirement_unmet` remains a runtime-requirement code and MUST NOT be used for the protocol major.
-- Both checks MUST run at install on every publication path — the canonical registry, a vendor registry's write API, and a mirror ingest — so no registry-side artifact can bypass it.
+- Both checks MUST run at install on every publication path — the canonical registry, a vendor registry's write API, and a mirror ingest.
 
 The range is a claim about the pack's own surface, not about run semantics. Admitting major M asserts that:
 
@@ -37,7 +37,7 @@ A host advertises `packs` when it serves the registry surface above:
 
 The registry is versioned by tree, not header. It publishes `registry/v2/packs/<name>/-/<version>.{json,sbom.json,sig,tgz}` as a parallel tree of re-signed manifests with regenerated SBOMs and index.
 
-- A signed compatibility overlay MUST be rejected: signatures authorize by namespace, and a mirror re-derives the signer at ingest.
+- A signed compatibility overlay MUST be rejected; a mirror re-derives the signer at ingest.
 - `.well-known/openwop-registry.json` `endpoints` is the negotiation: it names both trees, and a client MUST resolve every registry path through it rather than construct one.
 - `publicKey` is unversioned: keys are not protocol-versioned.
 
@@ -85,7 +85,7 @@ There is one signing scheme. `signing` on a version manifest (`schemas/v2/regist
 - **`keyId`** is the signing key id.
 - A block carrying `method`, `publicKeyRef` or `signatureRef` fails validation.
 
-The same block applies to a **bare manifest** — the `pack.json` inside the tarball, which is the document the signature covers. `signing` is OPTIONAL there, because an authoring-time `pack.json` exists before it is signed. When present it MUST be the identical closed `{ keyId, scheme }` object, on every bare manifest kind.
+The same block applies to a **bare manifest** — the `pack.json` inside the tarball, which is the document the signature covers. `signing` is OPTIONAL there; when present it MUST be the identical closed `{ keyId, scheme }` object, on every bare manifest kind.
 
 - A verifier MUST verify the signature against the issuing registry's key for `keyId`, and MUST check the pack name against that key's `permittedNamespaces`.
 - A signature over tarball bytes is not a v2 signature; such a pack MUST be re-signed, not relabeled.
@@ -103,7 +103,7 @@ A registry MUST refuse a submission that breaks these rules or republishes a ver
 
 ## The registry's own schemas
 
-A registry MUST validate submissions against vendored copies of these schemas pinned to a corpus tag, and MUST re-sync them from that tag before any v2 publication. An unpinned or drifted vendored schema is a registry defect: it rejects documents the protocol requires the registry to accept.
+A registry MUST validate submissions against vendored copies of these schemas pinned to a corpus tag, and MUST re-sync them from that tag before any v2 publication. An unpinned or drifted vendored schema is a registry defect.
 
 ## Errors
 
@@ -126,7 +126,13 @@ A `frontend-plugin` pack (`schemas/v2/frontend-plugin-manifest.schema.json`) shi
 
 A host without `uiPlugins` MUST reject the pack and render its own way.
 
-A breaking method change is `ui-plugin/2`. `host.announce` MUST be length-capped (SHOULD ≤ 400 characters) and SHOULD be rate-limited; `host.documentChanged` SHOULD be debounced, and a plugin MUST treat the latest as authoritative and tolerate unknown `host.selectionChanged` kinds. `maxEntryBytes` caps an entry bundle.
+On the message protocol:
+
+- A breaking method change is `ui-plugin/2`.
+- `host.announce` MUST be length-capped (SHOULD ≤ 400 characters) and SHOULD be rate-limited.
+- `host.documentChanged` SHOULD be debounced. A plugin MUST treat the latest one as authoritative and tolerate unknown `host.selectionChanged` kinds.
+
+`maxEntryBytes` caps an entry bundle.
 
 ## During the v1 overlap
 
