@@ -38,6 +38,7 @@ import { PKG_ROOT_PATH } from './lib/paths.js';
 import { recordRequirement, hasRequirement, journalLength, journalSince } from './lib/requirement-ledger.js';
 import { requirementIdForFile, resolveFileRecord, resolveItRecord, unrecordedTests, type FileTestState, type FinishedTest, type TestFailure } from './lib/scenario-disposition.js';
 import { softSkipDisposition, softSkipDispositionSince, softSkipMark } from './lib/soft-skip.js';
+import { attachObservation, takeNotedObservation } from './lib/row-observation.js';
 import { ItIdAllocator, takeExplicitRequirementId } from './lib/requirement-ids.js';
 import { SPEC_COHERENCE_SCENARIOS, SPEC_COHERENCE_DETAIL } from './lib/spec-coherence.js';
 import type { DiscoveryPayload } from './lib/profiles.js';
@@ -472,6 +473,7 @@ afterEach(({ task }) => {
   // Suite 2.0.0: src/coherence/ rows feed the corpus ledger (scripts/check-spec-coherence.mjs), not a host bundle.
   if (!/[\\/]src[\\/](scenarios|coherence)[\\/]/.test(filepath)) {
     takeExplicitRequirementId();
+    takeNotedObservation();
     return;
   }
   // A leg that soft-skips before its first assertion never calls `req()`, so the
@@ -506,6 +508,11 @@ afterEach(({ task }) => {
     disposition = rec.disposition;
     detail = rec.detail;
   }
+  // Suite 2.44.3 (RFC 0225 witness): an informational note the `it` wrote
+  // (`noteObservation`) rides on the row's detail, on a pass too — the bundle
+  // writer carries it and the witness digest signs it. Taken whatever the
+  // disposition, so a note never leaks into the next `it`.
+  detail = attachObservation(detail, takeNotedObservation());
   try {
     const evidence = takeNotedEvidence();
     // `fold: true` — several `it` legs of one file legitimately share ONE

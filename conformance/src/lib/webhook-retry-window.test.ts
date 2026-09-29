@@ -2,7 +2,7 @@ import { readFileSync, readdirSync } from 'node:fs';
 import { dirname, join } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { describe, expect, it } from 'vitest';
-import { ADVERTISED_BOUND_GRACE_MS, DEFAULT_RETRY_WAIT_CAP_MS, MAX_RETRY_WAIT_CAP_MS, MAX_RETRY_WAIT_MS, RETRY_WAIT_ENV, RETRY_WAIT_FLOOR_MS, advertisedMaxElapsedMs, pastAdvertisedBound, retryTestTimeoutMs, retryWaitCapMs, retryWaitFor, windowClosedNote } from './webhook-retry-window.js';
+import { retryWaitSelection, waitObservation, waitPathNote, ADVERTISED_BOUND_GRACE_MS, DEFAULT_RETRY_WAIT_CAP_MS, MAX_RETRY_WAIT_CAP_MS, MAX_RETRY_WAIT_MS, RETRY_WAIT_ENV, RETRY_WAIT_FLOOR_MS, advertisedMaxElapsedMs, pastAdvertisedBound, retryTestTimeoutMs, retryWaitCapMs, retryWaitFor, windowClosedNote } from './webhook-retry-window.js';
 
 describe('the webhook retry window is operator-RAISABLE and never lowerable', () => {
   it('defaults to 90 s when unset, empty, or not a number', () => {
@@ -130,5 +130,23 @@ describe('a test that awaits a retry window has a timeout that covers it (suite 
     expect(new Set(found.map((t) => t.file))).toEqual(new Set(users));
     const short = found.filter((t) => coveredWaits(readFileSync(join(SCENARIOS, t.file), 'utf8'), t.timeout) < t.waits);
     expect(short.map((t) => `${t.file} it(${JSON.stringify(t.title)}): ${t.waits} retry wait(s) under timeout \`${t.timeout || 'the harness default'}\``)).toEqual([]);
+  });
+  // Suite 2.44.3 (RFC 0225 witness): the row names the path, the window and the measurement.
+  it('names the path the wait took: advertised-bound, cap (default or operator-raised), or floor', () => {
+    expect(retryWaitSelection({ backoff: 'exponential', maxElapsedMs: 600_000 }, DEFAULT_RETRY_WAIT_CAP_MS)).toEqual({ path: 'advertised-bound', windowMs: 630_000, maxElapsedMs: 600_000, capMs: DEFAULT_RETRY_WAIT_CAP_MS });
+    // An operator cap above the bound means the bound did NOT set the wait.
+    expect(retryWaitSelection({ backoff: 'exponential', maxElapsedMs: 600_000 }, 900_000).path).toBe('cap');
+    expect(retryWaitSelection({ backoff: 'exponential' }, DEFAULT_RETRY_WAIT_CAP_MS).path).toBe('cap');
+    expect(retryWaitSelection({ backoff: 'none' }, DEFAULT_RETRY_WAIT_CAP_MS).path).toBe('floor');
+    expect(retryWaitSelection(null, DEFAULT_RETRY_WAIT_CAP_MS)).toEqual({ path: 'floor', windowMs: RETRY_WAIT_FLOOR_MS, maxElapsedMs: null, capMs: DEFAULT_RETRY_WAIT_CAP_MS });
+  });
+  it('the observation string carries the path, the window, the last attempt and the sink read', () => {
+    const sel = retryWaitSelection({ backoff: 'exponential', maxElapsedMs: 600_000 }, DEFAULT_RETRY_WAIT_CAP_MS);
+    expect(waitObservation(sel, { attempts: 5, lastAttemptAfterMs: 225_031, sinkSeenAfterMs: 231_412 }))
+      .toBe('advertised-bound (maxElapsedMs 600000): waited ≤630000ms; 5 attempt(s), last attempt after 225031ms, sink after 231412ms');
+    expect(waitObservation(sel, { attempts: 4, lastAttemptAfterMs: 105_000, sinkSeenAfterMs: null })).toContain('sink not observed');
+    expect(waitObservation(sel, { attempts: 2, lastAttemptAfterMs: 15_000 })).not.toContain('sink');
+    const raised = retryWaitSelection({ backoff: 'exponential' }, 540_000);
+    expect(waitPathNote(raised)).toBe(`cap (${RETRY_WAIT_ENV} raised to 540000ms; advertised maxElapsedMs none): waited ≤540000ms`);
   });
 });

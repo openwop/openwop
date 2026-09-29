@@ -33,7 +33,8 @@ import { req } from '../lib/requirement-ids.js';
 import { readErrorCode } from '../lib/error-envelope.js';
 import { blockedDespiteAssertions, softSkip } from '../lib/soft-skip.js';
 import { hitHeader, mintWhsec, startModalReceiver, STANDARD_WEBHOOKS_ID, type ModalHit } from '../lib/webhook-receiver.js';
-import { retryTestTimeoutMs, retryWaitCapMs, retryWaitFor } from '../lib/webhook-retry-window.js';
+import { retryTestTimeoutMs, retryWaitCapMs, retryWaitFor, retryWaitSelection, waitPathNote } from '../lib/webhook-retry-window.js';
+import { noteObservation } from '../lib/row-observation.js';
 import {
   STANDARD_WEBHOOKS_ALG,
   deliveriesFor,
@@ -89,7 +90,9 @@ describe('RFC 0201 §C.10 — webhook-id is stable across retries, distinct acro
       return m;
     };
     const expectedKeys = subs.length * EVENTS.length;
-    const window = retryWaitFor((g.facet['retryPolicy'] as { backoff?: string; maxElapsedMs?: unknown } | undefined) ?? null, CAP_MS);
+    const advertised = (g.facet['retryPolicy'] as { backoff?: string; maxElapsedMs?: unknown } | undefined) ?? null;
+    const window = retryWaitFor(advertised, CAP_MS);
+    noteObservation(waitPathNote(retryWaitSelection(advertised, CAP_MS)));
     await waitFor(() => {
       const m = byKey();
       return m.size >= expectedKeys && [...m.values()].every((a) => a.length >= 2);
