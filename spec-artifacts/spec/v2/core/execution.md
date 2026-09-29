@@ -30,6 +30,7 @@ A runner is a user-operated process that dials out, holds credentials the host c
 - **`inputMapping`** (`childVar → parentVar`) seeds the child once, at creation, after and over its `variables[].defaultValue`, which MUST seed first. An unset parent variable MUST arrive undefined, never an error or `null`. A host not advertising `subWorkflow.inputMapping` MUST refuse a non-empty `inputMapping` at registration with `validation_error`, naming it in `details.requiredCapability`.
 - **`outputMapping`** (`parentVar → childVar`). After the child completes, the host MUST copy each mapped variable into the parent, without throwing on or copying an undefined one.
 - **`propagateCancellation`** (default `true`) cancels the child with its parent.
+- **Parent link.** The child's `getRunAncestry` `parent` MUST be the parent run, with `cause: "core.subWorkflow"`. It does not name the dispatching node; that node's `node.completed` carries `outputs.childRunId`. `parentRunId` is fork lineage, not this link.
 
 ## `multiAgent`
 

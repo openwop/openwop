@@ -314,6 +314,18 @@
       "file": "spec/v1/i18n.md",
       "token": "## `locale` field on `InterruptPayload`",
       "deprecation": "openwop.deprecation.interrupt-locale-field"
+    },
+    {
+      "alias": "per-provider aiProviders facets (selfHosted[], authModes map, promptPrefixCache.providers, realtimeVoice sub-flags)",
+      "file": "spec/v1/capabilities.md",
+      "token": "`authModes` is an OPTIONAL object whose keys are provider ids",
+      "deprecation": "openwop.deprecation.ai-providers-per-provider-facets"
+    },
+    {
+      "alias": "RunSnapshot.parentNodeId child→parent link",
+      "file": "spec/v1/node-packs.md",
+      "token": "`RunSnapshot.parentNodeId`",
+      "deprecation": "openwop.deprecation.subworkflow-parent-link-fields"
     }
   ]
 }

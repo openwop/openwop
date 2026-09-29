@@ -485,6 +485,25 @@
       "note": "A host emitting it fails v2 schema validation; MyndHyve drops it in its Phase 4 leg."
     },
     {
+      "id": "openwop.migration.C2.11",
+      "child": "C2",
+      "kind": "retype",
+      "v1": {
+        "surface": "`aiProviders.selfHosted[]`, `realtimeVoice.{transcription, synthesis, turnDetection, bargeIn}`, `promptPrefixCache.{supported, providers[]}`, per-provider `authModes` map",
+        "path": "spec/v1/capabilities.md"
+      },
+      "v2": {
+        "surface": "`selfHosted`, `realtimeVoice`, `promptPrefixCache` booleans; `authModes` one list of modes (spec/v2/core/host-services.md §aiProviders)",
+        "path": "schemas/v2/capabilities.schema.json"
+      },
+      "codemod": "openwop.codemod.ai-providers-v2-narrow",
+      "persistedData": "not-persisted",
+      "requirementIds": [],
+      "gapIds": [],
+      "deprecationId": "openwop.deprecation.ai-providers-per-provider-facets",
+      "note": "Recorded 2026-09-28: v2 accepts the narrowing. Seven v1 rules with no v2 seat retire: `selfHosted[]` ⊆ `supported[]` (capabilities.md A.1); per-provider `authModes` rules 1, 2, 3, 5 and 7 (keys ⊆ `supported`, `apiKey` and `subscription` ⇒ `byok`, `[\"none\"]` ⇒ not `byok`, the absent-map defaults); the `promptPrefixCache.providers` list (v2: per routed provider); and the `realtimeVoice` sub-flags (v2: one boolean)."
+    },
+    {
       "id": "openwop.migration.C5.3",
       "child": "C5",
       "kind": "add",
@@ -1055,6 +1074,24 @@
       "gapIds": [],
       "deprecationId": "openwop.deprecation.interrupt-locale-field",
       "note": "Recorded 2026-09-27: the v2 schema closure (C4.9) left the v1 field no place, and it is dropped rather than re-added. A v1 `interrupt.requested` event carrying `data.locale` is read through the C.9 adapter like any other extra key."
+    },
+    {
+      "id": "openwop.migration.C4.18",
+      "child": "C4",
+      "kind": "remove",
+      "v1": {
+        "surface": "`RunSnapshot.parentRunId` and `RunSnapshot.parentNodeId` on a `core.subWorkflow` child run (node-packs.md §Parent linkage)",
+        "path": "spec/v1/node-packs.md"
+      },
+      "v2": {
+        "surface": "none on the child snapshot — `parentRunId` is fork lineage; the child's parent is `getRunAncestry` `parent.runId` with `cause: \"core.subWorkflow\"` (spec/v2/core/execution.md §subWorkflow)"
+      },
+      "codemod": "openwop.codemod.subworkflow-parent-link-drop",
+      "persistedData": "translated",
+      "requirementIds": [],
+      "gapIds": [],
+      "deprecationId": "openwop.deprecation.subworkflow-parent-link-fields",
+      "note": "Recorded 2026-09-28. Ancestry names the parent run, not the dispatching node; that node is the one whose `node.completed` carries the child's id in `outputs.childRunId`. A host migrating a persisted v1 child keeps the link in whatever backs its ancestry answer before the codemod drops the fields."
     },
     {
       "id": "openwop.migration.C6.1",

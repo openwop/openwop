@@ -1024,6 +1024,50 @@
         }
       ],
       "removalTrigger": "v2.0-cut"
+    },
+    {
+      "id": "openwop.deprecation.ai-providers-per-provider-facets",
+      "status": "deprecated",
+      "surface": "per-provider `aiProviders` facet shapes: `selfHosted[]`, the `realtimeVoice` sub-flag object, `promptPrefixCache.{supported, providers[]}`, the per-provider `authModes` map",
+      "kind": "discovery-field",
+      "deprecatedIn": "RFC 0169 §Migration table row `openwop.migration.C2.11` (v2 narrows the four facets)",
+      "authority": "RFCS/0169-v2-discovery-and-capabilities.md §Migration table, row openwop.migration.C2.11",
+      "removeIn": "2.0",
+      "replacement": "`selfHosted`, `realtimeVoice`, `promptPrefixCache` booleans and one `authModes` list (spec/v2/core/host-services.md §aiProviders)",
+      "codemod": "openwop.codemod.ai-providers-v2-narrow",
+      "sources": [
+        {
+          "file": "RFCS/0169-v2-discovery-and-capabilities.md",
+          "token": "openwop.migration.C2.11"
+        },
+        {
+          "file": "spec/v1/capabilities.md",
+          "token": "**A.1 — Subset constraint.**"
+        }
+      ],
+      "removalTrigger": "v2.0-cut"
+    },
+    {
+      "id": "openwop.deprecation.subworkflow-parent-link-fields",
+      "status": "deprecated",
+      "surface": "`RunSnapshot.parentRunId` and `RunSnapshot.parentNodeId` as the `core.subWorkflow` child→parent link",
+      "kind": "schema-field",
+      "deprecatedIn": "RFC 0171 §Migration table row `openwop.migration.C4.18` (v2 `parentRunId` is fork lineage; `parentNodeId` has no v2 place)",
+      "authority": "RFCS/0171-v2-wire-envelope.md §Migration table, row openwop.migration.C4.18",
+      "removeIn": "2.0",
+      "replacement": "`getRunAncestry` `parent.runId` with `cause: \"core.subWorkflow\"` (spec/v2/core/execution.md §subWorkflow)",
+      "codemod": "openwop.codemod.subworkflow-parent-link-drop",
+      "sources": [
+        {
+          "file": "RFCS/0171-v2-wire-envelope.md",
+          "token": "openwop.migration.C4.18"
+        },
+        {
+          "file": "spec/v1/node-packs.md",
+          "token": "**Parent linkage.**"
+        }
+      ],
+      "removalTrigger": "v2.0-cut"
     }
   ]
 }
