@@ -22,6 +22,7 @@ import { driver } from '../lib/driver.js';
 import { pollUntilStatus, pollUntilTerminal } from '../lib/polling.js';
 import { isFixtureAdvertised } from '../lib/fixtures.js';
 import { req } from '../lib/requirement-ids.js';
+import { softSkip, type SoftSkipKind } from '../lib/soft-skip.js';
 
 const PARENT_WORKFLOW = 'conformance-interrupt-parent-child-cancel';
 const CHILD_WORKFLOW = 'conformance-interrupt-parent-child-cancel-child';
@@ -41,8 +42,14 @@ async function findChildRunId(parentRunId: string): Promise<string | null> {
   return child?.runId ?? null;
 }
 
-describe.skipIf(SKIP)('interrupt: parent/child — parent cancel cascades to child', () => {
+/** Why the gate below holds, as RFC 0148 §A names it (openwop#1686: a describe-level skip recorded no disposition). */
+const GATE_WHY: readonly [SoftSkipKind, string] =
+  (!isFixtureAdvertised(PARENT_WORKFLOW)) ? ['blocked', `the \`${PARENT_WORKFLOW}\` fixture is not advertised`] as const : 
+  (!isFixtureAdvertised(CHILD_WORKFLOW)) ? ['blocked', `the \`${CHILD_WORKFLOW}\` fixture is not advertised`] as const : ['blocked', 'the gate held for no named reason'] as const;
+
+describe('interrupt: parent/child — parent cancel cascades to child', () => {
   it('child transitions to cancelled when parent is cancelled mid-suspend', async () => {
+    if (SKIP) return softSkip(...GATE_WHY);
     const create = await driver.post('/v1/runs', { workflowId: PARENT_WORKFLOW });
     expect(create.status).toBe(201);
     const parentRunId = (create.json as { runId: string }).runId;
@@ -73,8 +80,9 @@ describe.skipIf(SKIP)('interrupt: parent/child — parent cancel cascades to chi
   });
 });
 
-describe.skipIf(SKIP)('interrupt: parent/child — post-cascade resolve of child returns 410/409', () => {
+describe('interrupt: parent/child — post-cascade resolve of child returns 410/409', () => {
   it('attempting to resolve the cascaded child interrupt is rejected', async () => {
+    if (SKIP) return softSkip(...GATE_WHY);
     const create = await driver.post('/v1/runs', { workflowId: PARENT_WORKFLOW });
     expect(create.status).toBe(201);
     const parentRunId = (create.json as { runId: string }).runId;

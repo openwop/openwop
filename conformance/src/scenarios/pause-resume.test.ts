@@ -37,7 +37,7 @@ import { capabilityFamily } from '../lib/discovery-capabilities.js';
 import { pollUntilStatus, pollUntilTerminal } from '../lib/polling.js';
 import { isFixtureAdvertised } from '../lib/fixtures.js';
 import { req } from '../lib/requirement-ids.js';
-import { softSkip } from '../lib/soft-skip.js';
+import { softSkip, type SoftSkipKind } from '../lib/soft-skip.js';
 
 const FIXTURE =
   (isFixtureAdvertised('conformance-cancellable') && 'conformance-cancellable') ||
@@ -77,8 +77,13 @@ async function eventTypes(runId: string): Promise<string[]> {
   return Array.isArray(events) ? events.map((e) => String((e as { type?: unknown }).type)) : [];
 }
 
-describe.skipIf(SKIP)('pause/resume: running → paused → running → terminal', () => {
+/** Why the gate below holds, as RFC 0148 §A names it (openwop#1686: a describe-level skip recorded no disposition). */
+const GATE_WHY: readonly [SoftSkipKind, string] =
+  (!FIXTURE) ? ['blocked', `no candidate fixture for this scenario is advertised`] as const : ['blocked', 'the gate held for no named reason'] as const;
+
+describe('pause/resume: running → paused → running → terminal', () => {
   it('pause transitions to paused; resume returns the run to running', async () => {
+    if (SKIP) return softSkip(...GATE_WHY);
     const create = await driver.post('/v1/runs', {
       workflowId: FIXTURE!,
       // 3 s, not 30 s: the resumed node.started is a FRESH attempt (runs.md
@@ -125,8 +130,9 @@ describe.skipIf(SKIP)('pause/resume: running → paused → running → terminal
   });
 });
 
-describe.skipIf(SKIP)('pause/resume: :resume on a non-paused run returns 409', () => {
+describe('pause/resume: :resume on a non-paused run returns 409', () => {
   it('resuming a running (not paused) run returns 409 with details.runStatus', async () => {
+    if (SKIP) return softSkip(...GATE_WHY);
     const create = await driver.post('/v1/runs', {
       workflowId: FIXTURE!,
       inputs: { delayMs: 30_000 },
@@ -159,8 +165,9 @@ describe.skipIf(SKIP)('pause/resume: :resume on a non-paused run returns 409', (
   });
 });
 
-describe.skipIf(SKIP)('pause/resume: a second :pause is 409 without a matching Idempotency-Key and 202 with one', () => {
+describe('pause/resume: a second :pause is 409 without a matching Idempotency-Key and 202 with one', () => {
   it(':pause on an already-paused run returns 409 with details.runStatus paused, unless the request carries the original Idempotency-Key', async () => {
+    if (SKIP) return softSkip(...GATE_WHY);
     const create = await driver.post('/v1/runs', {
       workflowId: FIXTURE!,
       inputs: { delayMs: 30_000 },
@@ -220,8 +227,9 @@ describe.skipIf(SKIP)('pause/resume: a second :pause is 409 without a matching I
   });
 });
 
-describe.skipIf(SKIP)('pause/resume: :pause on a terminal run returns 409', () => {
+describe('pause/resume: :pause on a terminal run returns 409', () => {
   it(':pause on a completed/cancelled/failed run MUST return 409', async () => {
+    if (SKIP) return softSkip(...GATE_WHY);
     const create = await driver.post('/v1/runs', {
       workflowId: 'conformance-noop',
     });
@@ -244,8 +252,9 @@ describe.skipIf(SKIP)('pause/resume: :pause on a terminal run returns 409', () =
   });
 });
 
-describe.skipIf(SKIP)('pause/resume: drain-current-node lets the executing node reach a terminal first', () => {
+describe('pause/resume: drain-current-node lets the executing node reach a terminal first', () => {
   it('under drain-current-node node.completed precedes run.paused in the log', async () => {
+    if (SKIP) return softSkip(...GATE_WHY);
     // A short node: drain has something to wait for that finishes inside the
     // poll window. A 30 s node under drain pauses after 30 s — that is the
     // semantic, not a bug (rest-endpoints.md: "lets the executing node reach
@@ -283,8 +292,9 @@ describe.skipIf(SKIP)('pause/resume: drain-current-node lets the executing node 
   });
 });
 
-describe.skipIf(SKIP)('pause/resume: :pause-during-suspend race', () => {
+describe('pause/resume: :pause-during-suspend race', () => {
   it(':pause MUST NOT silently override an active interrupt suspend', async () => {
+    if (SKIP) return softSkip(...GATE_WHY);
     // If the host seeds an approval fixture, drive a suspend then attempt
     // :pause. The expected behavior is that :pause either (a) noops with
     // 409 because the run is already waiting-approval (not in a pausable
@@ -339,8 +349,9 @@ describe.skipIf(SKIP)('pause/resume: :pause-during-suspend race', () => {
 // `capabilities.md` §`runs.pauseResume`. When a host advertises
 // `drainPolicies[]`, each advertised value MUST be accepted with 202.
 // Skips entirely when no advertisement is present.
-describe.skipIf(SKIP)('pause/resume: drainPolicy discrimination per capabilities advertisement', () => {
+describe('pause/resume: drainPolicy discrimination per capabilities advertisement', () => {
   it('every drainPolicy advertised by the host is accepted on :pause', async () => {
+    if (SKIP) return softSkip(...GATE_WHY);
     const disco = await driver.get('/.well-known/openwop');
     const drainPolicies =
       capabilityFamily<{ pauseResume?: { drainPolicies?: string[] } }>(disco.json, 'runs')

@@ -36,7 +36,7 @@ import { isFixtureAdvertised } from '../lib/fixtures.js';
 import { behaviorGate } from '../lib/behavior-gate.js';
 import { capabilityFamily } from '../lib/discovery-capabilities.js';
 import { req } from '../lib/requirement-ids.js';
-import { softSkip } from '../lib/soft-skip.js';
+import { softSkip, type SoftSkipKind } from '../lib/soft-skip.js';
 
 const WORKFLOW_ID = 'conformance-prompt-all-four-kinds';
 const SKIP_NO_FIXTURE = !isFixtureAdvertised(WORKFLOW_ID);
@@ -79,8 +79,14 @@ async function readAllEvents(runId: string): Promise<RunEventDoc[]> {
 
 const HTTP_SKIP = !process.env.OPENWOP_BASE_URL;
 
-describe.skipIf(SKIP_NO_FIXTURE || HTTP_SKIP)('prompt-all-four-kinds-events: each PromptKind dispatches end-to-end (RFC 0027 §A)', () => {
+/** Why the gate below holds, as RFC 0148 §A names it (openwop#1686: a describe-level skip recorded no disposition). */
+const GATE_WHY: readonly [SoftSkipKind, string] =
+  (!process.env.OPENWOP_BASE_URL) ? ['inapplicable', `no target: OPENWOP_BASE_URL is unset`] as const : 
+  (!isFixtureAdvertised(WORKFLOW_ID)) ? ['blocked', `the \`${WORKFLOW_ID}\` fixture is not advertised`] as const : ['blocked', 'the gate held for no named reason'] as const;
+
+describe('prompt-all-four-kinds-events: each PromptKind dispatches end-to-end (RFC 0027 §A)', () => {
   it('emits agent.promptResolved + prompt.composed for system, user, schema-hint, and few-shot kinds', async () => {
+    if (SKIP_NO_FIXTURE || HTTP_SKIP) return softSkip(...GATE_WHY);
     const d = await readDiscovery();
     if (!behaviorGate('prompts-supported', promptsSupported(d))) return;
 
@@ -171,6 +177,7 @@ describe.skipIf(SKIP_NO_FIXTURE || HTTP_SKIP)('prompt-all-four-kinds-events: eac
   });
 
   it('emits the first agent.promptResolved before the first prompt.composed (resolution-precedes-composition ordering)', async () => {
+    if (SKIP_NO_FIXTURE || HTTP_SKIP) return softSkip(...GATE_WHY);
     const d = await readDiscovery();
     if (!behaviorGate('prompts-supported', promptsSupported(d))) return;
     const create = await driver.post('/v1/runs', { workflowId: WORKFLOW_ID });

@@ -2626,7 +2626,7 @@
     {
       "id": "openwop.it.agentConfidenceEscalation.low-confidence-agent-decided-suspends-with-reason-low-confidence-and-run-reaches",
       "file": "agentConfidenceEscalation.test.ts",
-      "line": 30,
+      "line": 36,
       "title": "low-confidence agent.decided suspends with reason=low-confidence and run reaches waiting-approval",
       "explicitId": "openwop.it.agentConfidenceEscalation.low-confidence-agent-decided-suspends-with-reason-low-confidence-and-run-reaches",
       "citations": [
@@ -2639,7 +2639,7 @@
     {
       "id": "openwop.it.agentMemoryCrossTenantIsolation.cross-tenant-memoryref-returns-empty-null-no-leak-across-tenant-boundary",
       "file": "agentMemoryCrossTenantIsolation.test.ts",
-      "line": 29,
+      "line": 35,
       "title": "cross-tenant memoryRef returns empty / null — no leak across tenant boundary",
       "explicitId": "openwop.it.agentMemoryCrossTenantIsolation.cross-tenant-memoryref-returns-empty-null-no-leak-across-tenant-boundary",
       "citations": [
@@ -2669,7 +2669,7 @@
     {
       "id": "openwop.it.agentMemoryRedactionContract.byok-plaintext-is-redacted-to-redacted-secretid-at-the-read-surface",
       "file": "agentMemoryRedactionContract.test.ts",
-      "line": 29,
+      "line": 35,
       "title": "BYOK plaintext is redacted to [REDACTED:<secretId>] at the read surface",
       "explicitId": "openwop.it.agentMemoryRedactionContract.byok-plaintext-is-redacted-to-redacted-secretid-at-the-read-surface",
       "citations": [
@@ -2682,7 +2682,7 @@
     {
       "id": "openwop.it.agentMemoryRoundTrip.memory-entries-written-during-a-run-are-readable-via-the-resolved-memoryref",
       "file": "agentMemoryRoundTrip.test.ts",
-      "line": 28,
+      "line": 34,
       "title": "memory entries written during a run are readable via the resolved memoryRef",
       "explicitId": "openwop.it.agentMemoryRoundTrip.memory-entries-written-during-a-run-are-readable-via-the-resolved-memoryref",
       "citations": [
@@ -2695,7 +2695,7 @@
     {
       "id": "openwop.it.agentMemoryTtlExpiry.list-excludes-entries-whose-expiresat-is-in-the-past",
       "file": "agentMemoryTtlExpiry.test.ts",
-      "line": 27,
+      "line": 33,
       "title": "list() excludes entries whose expiresAt is in the past",
       "explicitId": "openwop.it.agentMemoryTtlExpiry.list-excludes-entries-whose-expiresat-is-in-the-past",
       "citations": [
@@ -2718,7 +2718,7 @@
     {
       "id": "openwop.it.agentMessageReducer.duplicate-messageid-emissions-fold-to-a-single-channel-entry",
       "file": "agentMessageReducer.test.ts",
-      "line": 32,
+      "line": 38,
       "title": "duplicate messageId emissions fold to a single channel entry",
       "explicitId": "openwop.it.agentMessageReducer.duplicate-messageid-emissions-fold-to-a-single-channel-entry",
       "citations": [
@@ -2731,7 +2731,7 @@
     {
       "id": "openwop.it.agentMetadata.host-populates-agentref-shaped-agent-identity-on-runsnapshot",
       "file": "agentMetadata.test.ts",
-      "line": 32,
+      "line": 38,
       "title": "host populates AgentRef-shaped agent identity on RunSnapshot",
       "explicitId": "openwop.it.agentMetadata.host-populates-agentref-shaped-agent-identity-on-runsnapshot",
       "citations": [
@@ -2744,7 +2744,7 @@
     {
       "id": "openwop.it.agentPackCatalog.host-pack-list-includes-deep-research-with-a-well-formed-agentmanifest",
       "file": "agentPackCatalog.test.ts",
-      "line": 136,
+      "line": 140,
       "title": "host pack-list includes deep-research with a well-formed AgentManifest",
       "explicitId": "openwop.it.agentPackCatalog.host-pack-list-includes-deep-research-with-a-well-formed-agentmanifest",
       "citations": [
@@ -2769,7 +2769,7 @@
     {
       "id": "openwop.it.agentPackCatalog.host-pack-list-includes-react-with-a-well-formed-agentmanifest",
       "file": "agentPackCatalog.test.ts",
-      "line": 160,
+      "line": 165,
       "title": "host pack-list includes react with a well-formed AgentManifest",
       "explicitId": "openwop.it.agentPackCatalog.host-pack-list-includes-react-with-a-well-formed-agentmanifest",
       "citations": [
@@ -2794,7 +2794,7 @@
     {
       "id": "openwop.it.agentPackCatalog.host-pack-list-includes-supervisor-with-a-well-formed-agentmanifest",
       "file": "agentPackCatalog.test.ts",
-      "line": 177,
+      "line": 183,
       "title": "host pack-list includes supervisor with a well-formed AgentManifest",
       "explicitId": "openwop.it.agentPackCatalog.host-pack-list-includes-supervisor-with-a-well-formed-agentmanifest",
       "citations": [
@@ -2816,7 +2816,7 @@
     {
       "id": "openwop.it.agentPackCatalog.all-three-2026-05-17-reference-agent-packs-are-catalog-reachable",
       "file": "agentPackCatalog.test.ts",
-      "line": 198,
+      "line": 205,
       "title": "all three 2026-05-17 reference agent packs are catalog-reachable",
       "explicitId": "openwop.it.agentPackCatalog.all-three-2026-05-17-reference-agent-packs-are-catalog-reachable",
       "citations": [
@@ -2829,7 +2829,7 @@
     {
       "id": "openwop.it.agentPackExport.exported-manifests-contain-required-agentmanifest-fields",
       "file": "agentPackExport.test.ts",
-      "line": 53,
+      "line": 58,
       "title": "exported manifests contain required AgentManifest fields",
       "explicitId": "openwop.it.agentPackExport.exported-manifests-contain-required-agentmanifest-fields",
       "citations": [
@@ -2847,7 +2847,7 @@
     {
       "id": "openwop.it.agentPackHandoffSchemaValidation.hv-1a-valid-task-payload-that-matches-taskschemaref-is-dispatched-and-completes",
       "file": "agentPackHandoffSchemaValidation.test.ts",
-      "line": 71,
+      "line": 81,
       "title": "HV-1a: valid task payload that matches taskSchemaRef is dispatched and completes",
       "explicitId": "openwop.it.agentPackHandoffSchemaValidation.hv-1a-valid-task-payload-that-matches-taskschemaref-is-dispatched-and-completes",
       "citations": [
@@ -2860,7 +2860,7 @@
     {
       "id": "openwop.it.agentPackHandoffSchemaValidation.hv-1b-invalid-task-payload-missing-required-field-fails-before-dispatch-with-a-s",
       "file": "agentPackHandoffSchemaValidation.test.ts",
-      "line": 92,
+      "line": 103,
       "title": "HV-1b: invalid task payload (missing required field) fails before dispatch with a structured violation",
       "explicitId": "openwop.it.agentPackHandoffSchemaValidation.hv-1b-invalid-task-payload-missing-required-field-fails-before-dispatch-with-a-s",
       "citations": [
@@ -2877,7 +2877,7 @@
     {
       "id": "openwop.it.agentPackHandoffSchemaValidation.hv-1c-agent-return-payload-that-fails-returnschemaref-surfaces-a-structured-viol",
       "file": "agentPackHandoffSchemaValidation.test.ts",
-      "line": 123,
+      "line": 136,
       "title": "HV-1c: agent return payload that fails returnSchemaRef surfaces a structured violation before persistence",
       "explicitId": "openwop.it.agentPackHandoffSchemaValidation.hv-1c-agent-return-payload-that-fails-returnschemaref-surfaces-a-structured-viol",
       "citations": [
@@ -2890,7 +2890,7 @@
     {
       "id": "openwop.it.agentPackInstall.host-exposes-installed-agent-manifests-with-required-agentmanifest-fields",
       "file": "agentPackInstall.test.ts",
-      "line": 54,
+      "line": 59,
       "title": "host exposes installed agent manifests with required AgentManifest fields",
       "explicitId": "openwop.it.agentPackInstall.host-exposes-installed-agent-manifests-with-required-agentmanifest-fields",
       "citations": [
@@ -2908,7 +2908,7 @@
     {
       "id": "openwop.it.agentPackProvenance.run-level-agentref-carries-sourcemanifestid-pointing-back-to-the-install-source",
       "file": "agentPackProvenance.test.ts",
-      "line": 29,
+      "line": 35,
       "title": "run-level AgentRef carries sourceManifestId pointing back to the install source",
       "explicitId": "openwop.it.agentPackProvenance.run-level-agentref-carries-sourcemanifestid-pointing-back-to-the-install-source",
       "citations": [
@@ -2921,7 +2921,7 @@
     {
       "id": "openwop.it.agentReasoningEvents.host-emits-at-least-one-canonical-agent-event-during-a-reasoning-fixture-run",
       "file": "agentReasoningEvents.test.ts",
-      "line": 42,
+      "line": 49,
       "title": "host emits at least one canonical agent.* event during a reasoning-fixture run",
       "explicitId": "openwop.it.agentReasoningEvents.host-emits-at-least-one-canonical-agent-event-during-a-reasoning-fixture-run",
       "citations": [
@@ -2949,7 +2949,7 @@
     {
       "id": "openwop.it.agentReasoningStreaming.emits-n-agent-reasoning-delta-events-followed-by-exactly-one-closing-agent-reaso",
       "file": "agentReasoningStreaming.test.ts",
-      "line": 52,
+      "line": 60,
       "title": "emits N agent.reasoning.delta events followed by exactly one closing agent.reasoned",
       "explicitId": "openwop.it.agentReasoningStreaming.emits-n-agent-reasoning-delta-events-followed-by-exactly-one-closing-agent-reaso",
       "citations": [
@@ -2966,7 +2966,7 @@
     {
       "id": "openwop.it.agentReasoningStreaming.agent-reasoning-delta-sequence-starts-at-0-and-increments-by-1-within-the-block",
       "file": "agentReasoningStreaming.test.ts",
-      "line": 82,
+      "line": 91,
       "title": "agent.reasoning.delta `sequence` starts at 0 and increments by 1 within the block",
       "explicitId": "openwop.it.agentReasoningStreaming.agent-reasoning-delta-sequence-starts-at-0-and-increments-by-1-within-the-block",
       "citations": [
@@ -2979,7 +2979,7 @@
     {
       "id": "openwop.it.agentReasoningStreaming.closing-agent-reasoned-reasoning-is-the-concatenation-of-the-deltas-authoritativ",
       "file": "agentReasoningStreaming.test.ts",
-      "line": 106,
+      "line": 116,
       "title": "closing agent.reasoned.reasoning is the concatenation of the deltas (authoritative)",
       "explicitId": "openwop.it.agentReasoningStreaming.closing-agent-reasoned-reasoning-is-the-concatenation-of-the-deltas-authoritativ",
       "citations": [
@@ -3000,7 +3000,7 @@
     {
       "id": "openwop.it.agentReasoningStreaming.agentid-is-consistent-across-all-streaming-closing-events-in-a-block",
       "file": "agentReasoningStreaming.test.ts",
-      "line": 132,
+      "line": 143,
       "title": "agentId is consistent across all streaming + closing events in a block",
       "explicitId": "openwop.it.agentReasoningStreaming.agentid-is-consistent-across-all-streaming-closing-events-in-a-block",
       "citations": [
@@ -3013,7 +3013,7 @@
     {
       "id": "openwop.it.agentReasoningStreaming.all-agent-reasoning-delta-events-arrive-before-the-closing-agent-reasoned",
       "file": "agentReasoningStreaming.test.ts",
-      "line": 160,
+      "line": 172,
       "title": "all agent.reasoning.delta events arrive BEFORE the closing agent.reasoned",
       "explicitId": "openwop.it.agentReasoningStreaming.all-agent-reasoning-delta-events-arrive-before-the-closing-agent-reasoned",
       "citations": [
@@ -4892,7 +4892,7 @@
     {
       "id": "openwop.it.append-ordering.append-reducer-channels-project-entries-in-event-sequence-order",
       "file": "append-ordering.test.ts",
-      "line": 50,
+      "line": 54,
       "title": "append-reducer channels project entries in event-sequence order",
       "explicitId": "openwop.it.append-ordering.append-reducer-channels-project-entries-in-event-sequence-order",
       "citations": [
@@ -6710,7 +6710,7 @@
     {
       "id": "openwop.it.bulk-cancel.mixed-outcome-request-returns-per-id-results-in-order",
       "file": "bulk-cancel.test.ts",
-      "line": 38,
+      "line": 44,
       "title": "mixed-outcome request returns per-id results in order",
       "explicitId": "openwop.it.bulk-cancel.mixed-outcome-request-returns-per-id-results-in-order",
       "citations": [
@@ -6739,7 +6739,7 @@
     {
       "id": "openwop.it.bulk-cancel.empty-runids-array-returns-400-validation-error",
       "file": "bulk-cancel.test.ts",
-      "line": 73,
+      "line": 80,
       "title": "empty runIds array returns 400 validation_error",
       "explicitId": "openwop.it.bulk-cancel.empty-runids-array-returns-400-validation-error",
       "citations": [
@@ -6752,7 +6752,7 @@
     {
       "id": "openwop.it.bulk-cancel.oversized-runids-array-returns-400-with-details-maxrunids",
       "file": "bulk-cancel.test.ts",
-      "line": 80,
+      "line": 88,
       "title": "oversized runIds array returns 400 with details.maxRunIds",
       "explicitId": "openwop.it.bulk-cancel.oversized-runids-array-returns-400-with-details-maxrunids",
       "citations": [
@@ -6765,7 +6765,7 @@
     {
       "id": "openwop.it.bulk-cancel.re-bulk-cancel-after-first-cancel-is-idempotent",
       "file": "bulk-cancel.test.ts",
-      "line": 94,
+      "line": 103,
       "title": "re-bulk-cancel after first cancel is idempotent",
       "explicitId": "openwop.it.bulk-cancel.re-bulk-cancel-after-first-cancel-is-idempotent",
       "citations": [
@@ -7015,7 +7015,7 @@
     {
       "id": "openwop.it.cap-breach.emits-cap-breached-transitions-to-terminal-failed-when-configurable-recursionlim",
       "file": "cap-breach.test.ts",
-      "line": 41,
+      "line": 46,
       "title": "emits cap.breached + transitions to terminal failed when configurable.recursionLimit is exceeded",
       "explicitId": "openwop.it.cap-breach.emits-cap-breached-transitions-to-terminal-failed-when-configurable-recursionlim",
       "citations": [
@@ -7060,7 +7060,7 @@
     {
       "id": "openwop.it.cap-breach.cap-breached-precedes-run-failed-in-the-event-sequence-breach-detected-before-ov",
       "file": "cap-breach.test.ts",
-      "line": 108,
+      "line": 114,
       "title": "cap.breached precedes run.failed in the event sequence (breach detected before over-limit node fires)",
       "explicitId": "openwop.it.cap-breach.cap-breached-precedes-run-failed-in-the-event-sequence-breach-detected-before-ov",
       "citations": [
@@ -8228,7 +8228,7 @@
     {
       "id": "openwop.it.channel-ttl.after-the-post-ttl-write-the-channel-contains-exactly-one-entry-with-value-d",
       "file": "channel-ttl.test.ts",
-      "line": 36,
+      "line": 41,
       "title": "after the post-TTL write, the channel contains exactly one entry with value \"d\"",
       "explicitId": "openwop.it.channel-ttl.after-the-post-ttl-write-the-channel-contains-exactly-one-entry-with-value-d",
       "citations": [
@@ -9711,7 +9711,7 @@
     {
       "id": "openwop.it.conversationCapabilityNegotiation.host-without-conversationprimitive-capability-refuses-conversation-bearing-workf",
       "file": "conversationCapabilityNegotiation.test.ts",
-      "line": 32,
+      "line": 38,
       "title": "host without conversationPrimitive capability refuses conversation-bearing workflow",
       "explicitId": "openwop.it.conversationCapabilityNegotiation.host-without-conversationprimitive-capability-refuses-conversation-bearing-workf",
       "citations": [
@@ -9724,7 +9724,7 @@
     {
       "id": "openwop.it.conversationLifecycle.emits-all-three-lifecycle-events-with-matching-conversationid-no-exchanges-after",
       "file": "conversationLifecycle.test.ts",
-      "line": 31,
+      "line": 37,
       "title": "emits all three lifecycle events with matching conversationId; no exchanges after close",
       "explicitId": "openwop.it.conversationLifecycle.emits-all-three-lifecycle-events-with-matching-conversationid-no-exchanges-after",
       "citations": [
@@ -9750,7 +9750,7 @@
     {
       "id": "openwop.it.conversationReplayDeterminism.forked-run-yields-byte-equal-conversation-channel-projection",
       "file": "conversationReplayDeterminism.test.ts",
-      "line": 30,
+      "line": 35,
       "title": "forked run yields byte-equal conversation channel projection",
       "explicitId": "openwop.it.conversationReplayDeterminism.forked-run-yields-byte-equal-conversation-channel-projection",
       "citations": [
@@ -9775,7 +9775,7 @@
     {
       "id": "openwop.it.conversationVsLegacySuspend.conversation-suspend-emits-conversation-events-not-clarification",
       "file": "conversationVsLegacySuspend.test.ts",
-      "line": 29,
+      "line": 35,
       "title": "conversation suspend emits conversation.* events, not clarification.*",
       "explicitId": "openwop.it.conversationVsLegacySuspend.conversation-suspend-emits-conversation-events-not-clarification",
       "citations": [
@@ -9870,7 +9870,7 @@
     {
       "id": "openwop.it.cost-attribution.on-any-run-if-metrics-openwopcost-is-present-its-shape-must-match-the-spec",
       "file": "cost-attribution.test.ts",
-      "line": 79,
+      "line": 87,
       "title": "on any run, IF metrics.openwopCost is present, its shape MUST match the spec",
       "explicitId": "openwop.it.cost-attribution.on-any-run-if-metrics-openwopcost-is-present-its-shape-must-match-the-spec",
       "citations": [
@@ -9895,7 +9895,7 @@
     {
       "id": "openwop.it.cost-attribution.metrics-openwopcost-must-carry-the-canary-cost-shape-after-the-fixture-node-runs",
       "file": "cost-attribution.test.ts",
-      "line": 136,
+      "line": 145,
       "title": "metrics.openwopCost MUST carry the canary cost shape after the fixture node runs",
       "explicitId": "openwop.it.cost-attribution.metrics-openwopcost-must-carry-the-canary-cost-shape-after-the-fixture-node-runs",
       "citations": [
@@ -9936,7 +9936,7 @@
     {
       "id": "openwop.it.cost-attribution.cost-emit-fixture-run-must-emit-a-node-completed-event-for-the-cost-emitting-nod",
       "file": "cost-attribution.test.ts",
-      "line": 223,
+      "line": 233,
       "title": "cost-emit fixture run MUST emit a node.completed event for the cost-emitting node",
       "explicitId": "openwop.it.cost-attribution.cost-emit-fixture-run-must-emit-a-node-completed-event-for-the-cost-emitting-nod",
       "citations": [
@@ -9949,7 +9949,7 @@
     {
       "id": "openwop.it.cost-attribution.only-allowlisted-openwop-cost-attributes-reach-the-otel-span-g6-close-criteria-a",
       "file": "cost-attribution.test.ts",
-      "line": 262,
+      "line": 273,
       "title": "only allowlisted openwop.cost.* attributes reach the OTel span (G6 close criteria — allowlist enforcement)",
       "explicitId": "openwop.it.cost-attribution.only-allowlisted-openwop-cost-attributes-reach-the-otel-span-g6-close-criteria-a",
       "citations": [
@@ -9966,7 +9966,7 @@
     {
       "id": "openwop.it.cost-attribution.credential-shaped-canaries-do-not-leak-to-any-otel-attribute-g6-close-criteria-r",
       "file": "cost-attribution.test.ts",
-      "line": 301,
+      "line": 313,
       "title": "credential-shaped canaries do NOT leak to any OTel attribute (G6 close criteria — redaction)",
       "explicitId": "openwop.it.cost-attribution.credential-shaped-canaries-do-not-leak-to-any-otel-attribute-g6-close-criteria-r",
       "citations": [
@@ -10451,7 +10451,7 @@
     {
       "id": "openwop.it.debugBundle.host-advertising-capabilities-debugbundle-supported-returns-200-with-valid-bundl",
       "file": "debugBundle.test.ts",
-      "line": 73,
+      "line": 77,
       "title": "host advertising capabilities.debugBundle.supported returns 200 with valid bundle",
       "explicitId": "openwop.it.debugBundle.host-advertising-capabilities-debugbundle-supported-returns-200-with-valid-bundl",
       "citations": [
@@ -10500,7 +10500,7 @@
     {
       "id": "openwop.it.debugBundle.hosts-not-advertising-debugbundle-return-404-on-the-endpoint",
       "file": "debugBundle.test.ts",
-      "line": 127,
+      "line": 132,
       "title": "hosts not advertising debugBundle return 404 on the endpoint",
       "explicitId": "openwop.it.debugBundle.hosts-not-advertising-debugbundle-return-404-on-the-endpoint",
       "citations": [
@@ -10513,7 +10513,7 @@
     {
       "id": "openwop.it.debugBundle.metrics-eventcount-equals-events-length",
       "file": "debugBundle.test.ts",
-      "line": 141,
+      "line": 147,
       "title": "metrics.eventCount equals events.length",
       "explicitId": "openwop.it.debugBundle.metrics-eventcount-equals-events-length",
       "citations": [
@@ -10526,7 +10526,7 @@
     {
       "id": "openwop.it.debugBundle.redactionapplied-true-is-incompatible-with-redactionmode-passthrough",
       "file": "debugBundle.test.ts",
-      "line": 161,
+      "line": 168,
       "title": "redactionApplied=true is incompatible with redactionMode=passthrough",
       "explicitId": "openwop.it.debugBundle.redactionapplied-true-is-incompatible-with-redactionmode-passthrough",
       "citations": [
@@ -10539,7 +10539,7 @@
     {
       "id": "openwop.it.debugBundle.bundle-events-agree-with-events-poll-for-the-same-run",
       "file": "debugBundle.test.ts",
-      "line": 181,
+      "line": 189,
       "title": "bundle events agree with /events/poll for the same run",
       "explicitId": "openwop.it.debugBundle.bundle-events-agree-with-events-poll-for-the-same-run",
       "citations": [
@@ -10552,7 +10552,7 @@
     {
       "id": "openwop.it.debugBundle.canary-in-workflow-inputs-must-not-appear-verbatim-in-the-bundle-response",
       "file": "debugBundle.test.ts",
-      "line": 206,
+      "line": 215,
       "title": "canary in workflow inputs MUST NOT appear verbatim in the bundle response",
       "explicitId": "openwop.it.debugBundle.canary-in-workflow-inputs-must-not-appear-verbatim-in-the-bundle-response",
       "citations": [
@@ -10569,7 +10569,7 @@
     {
       "id": "openwop.it.debugBundle.span-traceid-kind-status-have-the-rfc-0207-shape-and-the-run-span-joins-the-call",
       "file": "debugBundle.test.ts",
-      "line": 240,
+      "line": 250,
       "title": "span traceId / kind / status have the RFC 0207 shape and the run span joins the caller trace",
       "explicitId": null,
       "citations": [
@@ -10843,7 +10843,7 @@
     {
       "id": "openwop.it.dispatch-cross-worker-handoff.hvmap-1c-child-a-writes-via-perworkeroutputmappings-child-b-reads-via-perworkeri",
       "file": "dispatch-cross-worker-handoff.test.ts",
-      "line": 52,
+      "line": 58,
       "title": "HVMAP-1c: child-a writes via perWorkerOutputMappings; child-b reads via perWorkerInputMappings; shared parent bag is the handoff channel",
       "explicitId": "openwop.it.dispatch-cross-worker-handoff.hvmap-1c-child-a-writes-via-perworkeroutputmappings-child-b-reads-via-perworkeri",
       "citations": [
@@ -10868,7 +10868,7 @@
     {
       "id": "openwop.it.dispatch-cross-worker-handoff.hvmap-1c-override-per-worker-mapping-overrides-default-mapping-per-a-effectivein",
       "file": "dispatch-cross-worker-handoff.test.ts",
-      "line": 97,
+      "line": 104,
       "title": "HVMAP-1c-override: per-worker mapping overrides default mapping per §A effectiveInputMapping precedence",
       "explicitId": "openwop.it.dispatch-cross-worker-handoff.hvmap-1c-override-per-worker-mapping-overrides-default-mapping-per-a-effectivein",
       "citations": [
@@ -11101,7 +11101,7 @@
     {
       "id": "openwop.it.dispatch-output-mapping.hvmap-1b-outputmapping-harvests-child-variables-into-parent-variables-on-termina",
       "file": "dispatch-output-mapping.test.ts",
-      "line": 38,
+      "line": 51,
       "title": "HVMAP-1b: outputMapping harvests child variables into parent variables on terminal completed",
       "explicitId": "openwop.it.dispatch-output-mapping.hvmap-1b-outputmapping-harvests-child-variables-into-parent-variables-on-termina",
       "citations": [
@@ -11118,7 +11118,7 @@
     {
       "id": "openwop.it.dispatch-output-mapping.child-terminates-failed-outputmapping-must-be-skipped-parent-parentresult-stays",
       "file": "dispatch-output-mapping.test.ts",
-      "line": 102,
+      "line": 116,
       "title": "child terminates `failed` → outputMapping MUST be skipped; parent.parentResult stays at sentinel",
       "explicitId": "openwop.it.dispatch-output-mapping.child-terminates-failed-outputmapping-must-be-skipped-parent-parentresult-stays",
       "citations": [
@@ -11131,7 +11131,7 @@
     {
       "id": "openwop.it.dispatch-output-mapping.child-terminates-cancelled-outputmapping-must-be-skipped-parent-parentresult-sta",
       "file": "dispatch-output-mapping.test.ts",
-      "line": 123,
+      "line": 138,
       "title": "child terminates `cancelled` → outputMapping MUST be skipped; parent.parentResult stays at sentinel",
       "explicitId": "openwop.it.dispatch-output-mapping.child-terminates-cancelled-outputmapping-must-be-skipped-parent-parentresult-sta",
       "citations": [
@@ -11287,7 +11287,7 @@
     {
       "id": "openwop.it.dispatchLoop.host-correctly-processes-orchestrator-decisions-and-terminates",
       "file": "dispatchLoop.test.ts",
-      "line": 24,
+      "line": 29,
       "title": "host correctly processes orchestrator decisions and terminates",
       "explicitId": "openwop.it.dispatchLoop.host-correctly-processes-orchestrator-decisions-and-terminates",
       "citations": [
@@ -11403,7 +11403,7 @@
     {
       "id": "openwop.it.durability-poison-exhaustion.reaches-terminal-and-stops-being-retried-asserted-on-the-log-rather-than-on-the",
       "file": "durability-poison-exhaustion.test.ts",
-      "line": 92,
+      "line": 96,
       "title": "reaches terminal AND stops being retried, asserted on the log rather than on the status alone",
       "explicitId": "openwop.it.durability-poison-exhaustion.reaches-terminal-and-stops-being-retried-asserted-on-the-log-rather-than-on-the",
       "citations": [
@@ -14431,7 +14431,7 @@
     {
       "id": "openwop.it.highConcurrency.10-parallel-requests-with-same-key-yield-one-runid-and-9-replays",
       "file": "highConcurrency.test.ts",
-      "line": 70,
+      "line": 76,
       "title": "10 parallel requests with same key yield ONE runId and 9 replays",
       "explicitId": "openwop.it.highConcurrency.10-parallel-requests-with-same-key-yield-one-runid-and-9-replays",
       "citations": [
@@ -14456,7 +14456,7 @@
     {
       "id": "openwop.it.highConcurrency.10-parallel-requests-with-distinct-keys-yield-10-distinct-runids",
       "file": "highConcurrency.test.ts",
-      "line": 124,
+      "line": 131,
       "title": "10 parallel requests with distinct keys yield 10 distinct runIds",
       "explicitId": "openwop.it.highConcurrency.10-parallel-requests-with-distinct-keys-yield-10-distinct-runids",
       "citations": [
@@ -14477,7 +14477,7 @@
     {
       "id": "openwop.it.highConcurrency.5-sequential-retries-with-same-key-100ms-apart-all-succeed-idempotency-cache-sur",
       "file": "highConcurrency.test.ts",
-      "line": 173,
+      "line": 181,
       "title": "5 sequential retries with same key 100ms apart all succeed (idempotency cache survives retry storm)",
       "explicitId": "openwop.it.highConcurrency.5-sequential-retries-with-same-key-100ms-apart-all-succeed-idempotency-cache-sur",
       "citations": [
@@ -14502,7 +14502,7 @@
     {
       "id": "openwop.it.highConcurrency.concurrent-distinct-key-requests-respect-advertised-idempotency-cache-retention",
       "file": "highConcurrency.test.ts",
-      "line": 227,
+      "line": 236,
       "title": "concurrent distinct-key requests respect advertised idempotency cache retention",
       "explicitId": "openwop.it.highConcurrency.concurrent-distinct-key-requests-respect-advertised-idempotency-cache-retention",
       "citations": [
@@ -14519,7 +14519,7 @@
     {
       "id": "openwop.it.host-callback-declaration.the-scan-reaches-the-scenario-corpus",
       "file": "host-callback-declaration.test.ts",
-      "line": 63,
+      "line": 68,
       "title": "the scan reaches the scenario corpus",
       "explicitId": "openwop.it.host-callback-declaration.the-scan-reaches-the-scenario-corpus",
       "citations": [
@@ -14532,7 +14532,7 @@
     {
       "id": "openwop.it.host-callback-declaration.every-scenario-driving-a-harness-double-declares-the-callback",
       "file": "host-callback-declaration.test.ts",
-      "line": 76,
+      "line": 82,
       "title": "every scenario driving a harness double declares the callback",
       "explicitId": "openwop.it.host-callback-declaration.every-scenario-driving-a-harness-double-declares-the-callback",
       "citations": [
@@ -14546,7 +14546,7 @@
     {
       "id": "openwop.it.host-callback-declaration.the-declaration-states-a-reason-rather-than-a-bare-flag",
       "file": "host-callback-declaration.test.ts",
-      "line": 93,
+      "line": 100,
       "title": "the declaration states a reason rather than a bare flag",
       "explicitId": "openwop.it.host-callback-declaration.the-declaration-states-a-reason-rather-than-a-bare-flag",
       "citations": [
@@ -14560,7 +14560,7 @@
     {
       "id": "openwop.it.host-callback-declaration.nothing-declares-a-callback-it-does-not-make",
       "file": "host-callback-declaration.test.ts",
-      "line": 112,
+      "line": 120,
       "title": "nothing declares a callback it does not make",
       "explicitId": "openwop.it.host-callback-declaration.nothing-declares-a-callback-it-does-not-make",
       "citations": [
@@ -15046,7 +15046,7 @@
     {
       "id": "openwop.it.identity-passthrough.arbitrary-nested-json-payload-round-trips-through-inputs-variables",
       "file": "identity-passthrough.test.ts",
-      "line": 22,
+      "line": 27,
       "title": "arbitrary nested JSON payload round-trips through inputs → variables",
       "explicitId": "openwop.it.identity-passthrough.arbitrary-nested-json-payload-round-trips-through-inputs-variables",
       "citations": [
@@ -15081,7 +15081,7 @@
     {
       "id": "openwop.it.interrupt-approval.run-suspends-at-gate-accept-resolution-drives-terminal-completed",
       "file": "interrupt-approval.test.ts",
-      "line": 27,
+      "line": 40,
       "title": "run suspends at gate, accept resolution drives terminal completed",
       "explicitId": "openwop.it.interrupt-approval.run-suspends-at-gate-accept-resolution-drives-terminal-completed",
       "citations": [
@@ -15102,7 +15102,7 @@
     {
       "id": "openwop.it.interrupt-approval.400-or-422-when-action-is-not-in-accept-reject",
       "file": "interrupt-approval.test.ts",
-      "line": 56,
+      "line": 70,
       "title": "400 (or 422) when action is not in {accept, reject}",
       "explicitId": "openwop.it.interrupt-approval.400-or-422-when-action-is-not-in-accept-reject",
       "citations": [
@@ -15115,7 +15115,7 @@
     {
       "id": "openwop.it.interrupt-approval.400-404-when-nodeid-does-not-match-an-active-interrupt",
       "file": "interrupt-approval.test.ts",
-      "line": 84,
+      "line": 99,
       "title": "400/404 when nodeId does not match an active interrupt",
       "explicitId": "openwop.it.interrupt-approval.400-404-when-nodeid-does-not-match-an-active-interrupt",
       "citations": [
@@ -15128,7 +15128,7 @@
     {
       "id": "openwop.it.interrupt-approval.a-refine-resolve-round-trips-action-and-the-structured-feedback-it-requires",
       "file": "interrupt-approval.test.ts",
-      "line": 120,
+      "line": 136,
       "title": "a refine resolve round-trips `action` and the structured feedback it requires",
       "explicitId": "openwop.it.interrupt-approval.a-refine-resolve-round-trips-action-and-the-structured-feedback-it-requires",
       "citations": [
@@ -15153,7 +15153,7 @@
     {
       "id": "openwop.it.interrupt-approval.refuses-a-refine-resolution-that-supplies-no-refinefeedback",
       "file": "interrupt-approval.test.ts",
-      "line": 170,
+      "line": 187,
       "title": "refuses a refine resolution that supplies no refineFeedback",
       "explicitId": "openwop.it.interrupt-approval.refuses-a-refine-resolution-that-supplies-no-refinefeedback",
       "citations": [
@@ -15166,7 +15166,7 @@
     {
       "id": "openwop.it.interrupt-approval.an-edit-accept-resolve-round-trips-action-and-the-edited-artifact-it-requires",
       "file": "interrupt-approval.test.ts",
-      "line": 197,
+      "line": 215,
       "title": "an edit-accept resolve round-trips `action` and the edited artifact it requires",
       "explicitId": "openwop.it.interrupt-approval.an-edit-accept-resolve-round-trips-action-and-the-edited-artifact-it-requires",
       "citations": [
@@ -15191,7 +15191,7 @@
     {
       "id": "openwop.it.interrupt-approval.refuses-an-edit-accept-resolution-that-supplies-no-editedartifactdata",
       "file": "interrupt-approval.test.ts",
-      "line": 247,
+      "line": 266,
       "title": "refuses an edit-accept resolution that supplies no editedArtifactData",
       "explicitId": "openwop.it.interrupt-approval.refuses-an-edit-accept-resolution-that-supplies-no-editedartifactdata",
       "citations": [
@@ -15328,7 +15328,7 @@
     {
       "id": "openwop.it.interrupt-auth-required-resume.valid-bearer-with-approvals-respond-drives-terminal-completed",
       "file": "interrupt-auth-required-resume.test.ts",
-      "line": 34,
+      "line": 38,
       "title": "valid bearer with approvals:respond drives terminal completed",
       "explicitId": "openwop.it.interrupt-auth-required-resume.valid-bearer-with-approvals-respond-drives-terminal-completed",
       "citations": [
@@ -15341,7 +15341,7 @@
     {
       "id": "openwop.it.interrupt-auth-required-resume.bearer-without-approvals-respond-scope-is-rejected",
       "file": "interrupt-auth-required-resume.test.ts",
-      "line": 57,
+      "line": 62,
       "title": "bearer without approvals:respond scope is rejected",
       "explicitId": "openwop.it.interrupt-auth-required-resume.bearer-without-approvals-respond-scope-is-rejected",
       "citations": [
@@ -15375,7 +15375,7 @@
     {
       "id": "openwop.it.interrupt-external-event-correlation.signed-token-post-with-matching-correlation-drives-terminal-completed",
       "file": "interrupt-external-event-correlation.test.ts",
-      "line": 47,
+      "line": 52,
       "title": "signed-token POST with matching correlation drives terminal completed",
       "explicitId": "openwop.it.interrupt-external-event-correlation.signed-token-post-with-matching-correlation-drives-terminal-completed",
       "citations": [
@@ -15396,7 +15396,7 @@
     {
       "id": "openwop.it.interrupt-external-event-correlation.correlation-mismatch-returns-422-and-leaves-run-suspended",
       "file": "interrupt-external-event-correlation.test.ts",
-      "line": 82,
+      "line": 88,
       "title": "correlation mismatch returns 422 and leaves run suspended",
       "explicitId": "openwop.it.interrupt-external-event-correlation.correlation-mismatch-returns-422-and-leaves-run-suspended",
       "citations": [
@@ -15413,7 +15413,7 @@
     {
       "id": "openwop.it.interrupt-parent-child-cascade.child-transitions-to-cancelled-when-parent-is-cancelled-mid-suspend",
       "file": "interrupt-parent-child-cascade.test.ts",
-      "line": 45,
+      "line": 51,
       "title": "child transitions to cancelled when parent is cancelled mid-suspend",
       "explicitId": "openwop.it.interrupt-parent-child-cascade.child-transitions-to-cancelled-when-parent-is-cancelled-mid-suspend",
       "citations": [
@@ -15430,7 +15430,7 @@
     {
       "id": "openwop.it.interrupt-parent-child-cascade.attempting-to-resolve-the-cascaded-child-interrupt-is-rejected",
       "file": "interrupt-parent-child-cascade.test.ts",
-      "line": 77,
+      "line": 84,
       "title": "attempting to resolve the cascaded child interrupt is rejected",
       "explicitId": "openwop.it.interrupt-parent-child-cascade.attempting-to-resolve-the-cascaded-child-interrupt-is-rejected",
       "citations": [
@@ -15443,7 +15443,7 @@
     {
       "id": "openwop.it.interrupt-quorum-resolution.first-two-accepts-persist-without-resuming-third-accept-drives-terminal-complete",
       "file": "interrupt-quorum-resolution.test.ts",
-      "line": 34,
+      "line": 39,
       "title": "first two accepts persist without resuming; third accept drives terminal completed",
       "explicitId": "openwop.it.interrupt-quorum-resolution.first-two-accepts-persist-without-resuming-third-accept-drives-terminal-complete",
       "citations": [
@@ -15466,7 +15466,7 @@
     {
       "id": "openwop.it.interrupt-quorum-resolution.two-rejects-out-of-three-votes-trigger-the-majority-reject-termination",
       "file": "interrupt-quorum-resolution.test.ts",
-      "line": 76,
+      "line": 82,
       "title": "two rejects out of three votes trigger the majority-reject termination",
       "explicitId": "openwop.it.interrupt-quorum-resolution.two-rejects-out-of-three-votes-trigger-the-majority-reject-termination",
       "citations": [
@@ -15479,7 +15479,7 @@
     {
       "id": "openwop.it.interrupt-token-matrix.malformed-token-returns-400-or-404-never-200",
       "file": "interrupt-token-matrix.test.ts",
-      "line": 46,
+      "line": 50,
       "title": "malformed token returns 400 or 404 (NEVER 200)",
       "explicitId": "openwop.it.interrupt-token-matrix.malformed-token-returns-400-or-404-never-200",
       "citations": [
@@ -15492,7 +15492,7 @@
     {
       "id": "openwop.it.interrupt-token-matrix.well-formed-but-unknown-token-returns-404",
       "file": "interrupt-token-matrix.test.ts",
-      "line": 56,
+      "line": 61,
       "title": "well-formed but unknown token returns 404",
       "explicitId": "openwop.it.interrupt-token-matrix.well-formed-but-unknown-token-returns-404",
       "citations": [
@@ -15505,7 +15505,7 @@
     {
       "id": "openwop.it.interrupt-token-matrix.replay-after-successful-resolve-returns-409-or-404",
       "file": "interrupt-token-matrix.test.ts",
-      "line": 68,
+      "line": 74,
       "title": "replay after successful resolve returns 409 or 404",
       "explicitId": "openwop.it.interrupt-token-matrix.replay-after-successful-resolve-returns-409-or-404",
       "citations": [
@@ -15518,7 +15518,7 @@
     {
       "id": "openwop.it.interrupt-token-matrix.unknown-token-returns-404-on-post",
       "file": "interrupt-token-matrix.test.ts",
-      "line": 131,
+      "line": 138,
       "title": "unknown token returns 404 on POST",
       "explicitId": "openwop.it.interrupt-token-matrix.unknown-token-returns-404-on-post",
       "citations": [
@@ -15531,7 +15531,7 @@
     {
       "id": "openwop.it.interruptRace.concurrent-cancel-interrupt-resolve-resolves-to-one-of-cancelled-or-completed",
       "file": "interruptRace.test.ts",
-      "line": 47,
+      "line": 55,
       "title": "concurrent cancel + interrupt-resolve resolves to one of: cancelled or completed",
       "explicitId": "openwop.it.interruptRace.concurrent-cancel-interrupt-resolve-resolves-to-one-of-cancelled-or-completed",
       "citations": [
@@ -15562,7 +15562,7 @@
     {
       "id": "openwop.it.interruptRace.cancel-of-a-completed-run-returns-200-with-the-existing-terminal-status-idempote",
       "file": "interruptRace.test.ts",
-      "line": 159,
+      "line": 168,
       "title": "cancel of a completed run returns 200 with the existing terminal status (idempotent)",
       "explicitId": "openwop.it.interruptRace.cancel-of-a-completed-run-returns-200-with-the-existing-terminal-status-idempote",
       "citations": [
@@ -17826,7 +17826,7 @@
     {
       "id": "openwop.it.multi-agent-confidence-escalation.confidenceescalationfloor-when-advertised-must-be-in-0-5-1-0",
       "file": "multi-agent-confidence-escalation.test.ts",
-      "line": 87,
+      "line": 91,
       "title": "confidenceEscalationFloor (when advertised) MUST be in [0.5, 1.0]",
       "explicitId": "openwop.it.multi-agent-confidence-escalation.confidenceescalationfloor-when-advertised-must-be-in-0-5-1-0",
       "citations": [
@@ -17839,7 +17839,7 @@
     {
       "id": "openwop.it.multi-agent-confidence-escalation.happy-path-low-confidence-decision-confidence-escalated-event-clarification-inte",
       "file": "multi-agent-confidence-escalation.test.ts",
-      "line": 105,
+      "line": 115,
       "title": "happy-path: low-confidence decision → confidence-escalated event + clarification interrupt + zero dispatch events",
       "explicitId": "openwop.it.multi-agent-confidence-escalation.happy-path-low-confidence-decision-confidence-escalated-event-clarification-inte",
       "citations": [
@@ -17891,7 +17891,7 @@
     {
       "id": "openwop.it.multi-agent-handoff-state-machine.capabilities-multiagent-executionmodel-when-present-conforms-to-rfc-0037-c",
       "file": "multi-agent-handoff-state-machine.test.ts",
-      "line": 66,
+      "line": 70,
       "title": "capabilities.multiAgent.executionModel (when present) conforms to RFC 0037 §C",
       "explicitId": "openwop.it.multi-agent-handoff-state-machine.capabilities-multiagent-executionmodel-when-present-conforms-to-rfc-0037-c",
       "citations": [
@@ -17913,7 +17913,7 @@
     {
       "id": "openwop.it.multi-agent-handoff-state-machine.happy-path-dispatch-began-dispatch-succeeded-child-completed-output-harvested-fi",
       "file": "multi-agent-handoff-state-machine.test.ts",
-      "line": 112,
+      "line": 123,
       "title": "happy-path: dispatch.began → dispatch.succeeded → child.completed → output.harvested fire in causation order",
       "explicitId": "openwop.it.multi-agent-handoff-state-machine.happy-path-dispatch-began-dispatch-succeeded-child-completed-output-harvested-fi",
       "citations": [
@@ -17997,7 +17997,7 @@
     {
       "id": "openwop.it.multi-node-ordering.a-b-c-node-completed-events-arrive-in-dag-order-by-sequence",
       "file": "multi-node-ordering.test.ts",
-      "line": 31,
+      "line": 36,
       "title": "a, b, c node.completed events arrive in DAG order by sequence",
       "explicitId": "openwop.it.multi-node-ordering.a-b-c-node-completed-events-arrive-in-dag-order-by-sequence",
       "citations": [
@@ -18364,7 +18364,7 @@
     {
       "id": "openwop.it.node-failed-payload-shape.every-node-failed-on-the-conformance-failure-run-validates-against-nodefailed-er",
       "file": "node-failed-payload-shape.test.ts",
-      "line": 45,
+      "line": 50,
       "title": "every node.failed on the conformance-failure run validates against §nodeFailed (error: { code, message } is an object, not a string)",
       "explicitId": "openwop.it.node-failed-payload-shape.every-node-failed-on-the-conformance-failure-run-validates-against-nodefailed-er",
       "citations": [
@@ -18590,7 +18590,7 @@
     {
       "id": "openwop.it.orchestratorConservativePath.supervisor-below-threshold-suspends-with-reason-low-confidence-ratified-decision",
       "file": "orchestratorConservativePath.test.ts",
-      "line": 31,
+      "line": 37,
       "title": "supervisor below threshold suspends with reason=low-confidence; ratified decision follows after resume",
       "explicitId": "openwop.it.orchestratorConservativePath.supervisor-below-threshold-suspends-with-reason-low-confidence-ratified-decision",
       "citations": [
@@ -18603,7 +18603,7 @@
     {
       "id": "openwop.it.orchestratorDispatch.emits-runorchestrator-decided-next-worker-between-supervisor-dispatch",
       "file": "orchestratorDispatch.test.ts",
-      "line": 39,
+      "line": 46,
       "title": "emits runOrchestrator.decided{next-worker} between supervisor + dispatch",
       "explicitId": "openwop.it.orchestratorDispatch.emits-runorchestrator-decided-next-worker-between-supervisor-dispatch",
       "citations": [
@@ -18624,7 +18624,7 @@
     {
       "id": "openwop.it.orchestratorTermination.terminate-is-the-final-orchestrator-decision-run-completes-cleanly",
       "file": "orchestratorTermination.test.ts",
-      "line": 29,
+      "line": 35,
       "title": "terminate is the final orchestrator decision; run completes cleanly",
       "explicitId": "openwop.it.orchestratorTermination.terminate-is-the-final-orchestrator-decision-run-completes-cleanly",
       "citations": [
@@ -18844,7 +18844,7 @@
     {
       "id": "openwop.it.owner-subject-echo.subject-is-consistent-with-the-owner-triple-b-2-and-the-actor-chain-is-bounded-b",
       "file": "owner-subject-echo.test.ts",
-      "line": 85,
+      "line": 89,
       "title": "subject is consistent with the owner triple (§B.2) and the actor chain is bounded (§B.5)",
       "explicitId": "openwop.it.owner-subject-echo.subject-is-consistent-with-the-owner-triple-b-2-and-the-actor-chain-is-bounded-b",
       "citations": [
@@ -18877,7 +18877,7 @@
     {
       "id": "openwop.it.owner-subject-echo.run-started-echoes-the-snapshot-subject-verbatim-b-2-rfc-0048-c",
       "file": "owner-subject-echo.test.ts",
-      "line": 107,
+      "line": 112,
       "title": "run.started echoes the snapshot subject verbatim (§B.2, RFC 0048 §C)",
       "explicitId": "openwop.it.owner-subject-echo.run-started-echoes-the-snapshot-subject-verbatim-b-2-rfc-0048-c",
       "citations": [
@@ -18894,7 +18894,7 @@
     {
       "id": "openwop.it.owner-subject-echo.a-fork-copies-owner-tenant-and-owner-subject-verbatim-onto-the-child-b-4",
       "file": "owner-subject-echo.test.ts",
-      "line": 124,
+      "line": 130,
       "title": "a fork copies owner.tenant and owner.subject verbatim onto the child (§B.4)",
       "explicitId": "openwop.it.owner-subject-echo.a-fork-copies-owner-tenant-and-owner-subject-verbatim-onto-the-child-b-4",
       "citations": [
@@ -19542,7 +19542,7 @@
     {
       "id": "openwop.it.pause-resume.pause-transitions-to-paused-resume-returns-the-run-to-running",
       "file": "pause-resume.test.ts",
-      "line": 81,
+      "line": 85,
       "title": "pause transitions to paused; resume returns the run to running",
       "explicitId": "openwop.it.pause-resume.pause-transitions-to-paused-resume-returns-the-run-to-running",
       "citations": [
@@ -19559,7 +19559,7 @@
     {
       "id": "openwop.it.pause-resume.resuming-a-running-not-paused-run-returns-409-with-details-runstatus",
       "file": "pause-resume.test.ts",
-      "line": 129,
+      "line": 134,
       "title": "resuming a running (not paused) run returns 409 with details.runStatus",
       "explicitId": "openwop.it.pause-resume.resuming-a-running-not-paused-run-returns-409-with-details-runstatus",
       "citations": [
@@ -19576,7 +19576,7 @@
     {
       "id": "openwop.it.pause-resume.pause-on-an-already-paused-run-returns-409-with-details-runstatus-paused-unless",
       "file": "pause-resume.test.ts",
-      "line": 163,
+      "line": 169,
       "title": ":pause on an already-paused run returns 409 with details.runStatus paused, unless the request carries the original Idempotency-Key",
       "explicitId": "openwop.it.pause-resume.pause-on-an-already-paused-run-returns-409-with-details-runstatus-paused-unless",
       "citations": [
@@ -19605,7 +19605,7 @@
     {
       "id": "openwop.it.pause-resume.pause-on-a-completed-cancelled-failed-run-must-return-409",
       "file": "pause-resume.test.ts",
-      "line": 224,
+      "line": 231,
       "title": ":pause on a completed/cancelled/failed run MUST return 409",
       "explicitId": "openwop.it.pause-resume.pause-on-a-completed-cancelled-failed-run-must-return-409",
       "citations": [
@@ -19618,7 +19618,7 @@
     {
       "id": "openwop.it.pause-resume.under-drain-current-node-node-completed-precedes-run-paused-in-the-log",
       "file": "pause-resume.test.ts",
-      "line": 248,
+      "line": 256,
       "title": "under drain-current-node node.completed precedes run.paused in the log",
       "explicitId": "openwop.it.pause-resume.under-drain-current-node-node-completed-precedes-run-paused-in-the-log",
       "citations": [
@@ -19636,7 +19636,7 @@
     {
       "id": "openwop.it.pause-resume.pause-must-not-silently-override-an-active-interrupt-suspend",
       "file": "pause-resume.test.ts",
-      "line": 287,
+      "line": 296,
       "title": ":pause MUST NOT silently override an active interrupt suspend",
       "explicitId": "openwop.it.pause-resume.pause-must-not-silently-override-an-active-interrupt-suspend",
       "citations": [
@@ -19653,7 +19653,7 @@
     {
       "id": "openwop.it.pause-resume.every-drainpolicy-advertised-by-the-host-is-accepted-on-pause",
       "file": "pause-resume.test.ts",
-      "line": 343,
+      "line": 353,
       "title": "every drainPolicy advertised by the host is accepted on :pause",
       "explicitId": "openwop.it.pause-resume.every-drainpolicy-advertised-by-the-host-is-accepted-on-pause",
       "citations": [
@@ -20400,7 +20400,7 @@
     {
       "id": "openwop.it.prompt-all-four-kinds-events.emits-agent-promptresolved-prompt-composed-for-system-user-schema-hint-and-few-s",
       "file": "prompt-all-four-kinds-events.test.ts",
-      "line": 83,
+      "line": 88,
       "title": "emits agent.promptResolved + prompt.composed for system, user, schema-hint, and few-shot kinds",
       "explicitId": "openwop.it.prompt-all-four-kinds-events.emits-agent-promptresolved-prompt-composed-for-system-user-schema-hint-and-few-s",
       "citations": [
@@ -20436,7 +20436,7 @@
     {
       "id": "openwop.it.prompt-all-four-kinds-events.emits-the-first-agent-promptresolved-before-the-first-prompt-composed-resolution",
       "file": "prompt-all-four-kinds-events.test.ts",
-      "line": 173,
+      "line": 179,
       "title": "emits the first agent.promptResolved before the first prompt.composed (resolution-precedes-composition ordering)",
       "explicitId": "openwop.it.prompt-all-four-kinds-events.emits-the-first-agent-promptresolved-before-the-first-prompt-composed-resolution",
       "citations": [
@@ -20547,7 +20547,7 @@
     {
       "id": "openwop.it.prompt-end-to-end-events.emits-agent-promptresolved-with-chain-applied-true-for-layer-node-when-systempro",
       "file": "prompt-end-to-end-events.test.ts",
-      "line": 86,
+      "line": 91,
       "title": "emits agent.promptResolved with chain[].applied: true for layer \"node\" when systemPromptRef is set on node.config",
       "explicitId": "openwop.it.prompt-end-to-end-events.emits-agent-promptresolved-with-chain-applied-true-for-layer-node-when-systempro",
       "citations": [
@@ -20580,7 +20580,7 @@
     {
       "id": "openwop.it.prompt-end-to-end-events.emits-prompt-composed-with-sha256-hex64-hash-non-empty-composed-body-for-system",
       "file": "prompt-end-to-end-events.test.ts",
-      "line": 138,
+      "line": 144,
       "title": "emits prompt.composed with sha256:<hex64> hash + non-empty composed body for system-kind template",
       "explicitId": "openwop.it.prompt-end-to-end-events.emits-prompt-composed-with-sha256-hex64-hash-non-empty-composed-body-for-system",
       "citations": [
@@ -20605,7 +20605,7 @@
     {
       "id": "openwop.it.prompt-end-to-end-events.emits-agent-promptresolved-before-prompt-composed-causal-ordering",
       "file": "prompt-end-to-end-events.test.ts",
-      "line": 184,
+      "line": 191,
       "title": "emits agent.promptResolved before prompt.composed (causal ordering)",
       "explicitId": "openwop.it.prompt-end-to-end-events.emits-agent-promptresolved-before-prompt-composed-causal-ordering",
       "citations": [
@@ -22502,7 +22502,7 @@
     {
       "id": "openwop.it.replay-fork-arbitrary.mid-fromseq-replay-fork-produces-a-new-run-that-reaches-completed",
       "file": "replay-fork-arbitrary.test.ts",
-      "line": 125,
+      "line": 129,
       "title": "mid-fromSeq replay fork produces a new run that reaches `completed`",
       "explicitId": "openwop.it.replay-fork-arbitrary.mid-fromseq-replay-fork-produces-a-new-run-that-reaches-completed",
       "citations": [
@@ -22537,7 +22537,7 @@
     {
       "id": "openwop.it.replay-fork-arbitrary.mid-fromseq-determinism-same-source-same-fromseq-identical-post-fork-events-modu",
       "file": "replay-fork-arbitrary.test.ts",
-      "line": 203,
+      "line": 208,
       "title": "mid-fromSeq determinism — same source + same fromSeq → identical post-fork events (modulo IDs + timestamps)",
       "explicitId": "openwop.it.replay-fork-arbitrary.mid-fromseq-determinism-same-source-same-fromseq-identical-post-fork-events-modu",
       "citations": [
@@ -22556,7 +22556,7 @@
     {
       "id": "openwop.it.replay-fork-arbitrary.mid-fromseq-branch-fork-with-empty-overlay-produces-a-new-run-that-reaches-compl",
       "file": "replay-fork-arbitrary.test.ts",
-      "line": 300,
+      "line": 306,
       "title": "mid-fromSeq branch fork with empty overlay produces a new run that reaches `completed`",
       "explicitId": "openwop.it.replay-fork-arbitrary.mid-fromseq-branch-fork-with-empty-overlay-produces-a-new-run-that-reaches-compl",
       "citations": [
@@ -23255,7 +23255,7 @@
     {
       "id": "openwop.it.restart-during-run.mid-run-sigkill-on-the-host-process-restart-at-the-same-port-db-resumes-to-termi",
       "file": "restart-during-run.test.ts",
-      "line": 84,
+      "line": 89,
       "title": "mid-run SIGKILL on the host process; restart at the same port + DB resumes to terminal",
       "explicitId": "openwop.it.restart-during-run.mid-run-sigkill-on-the-host-process-restart-at-the-same-port-db-resumes-to-termi",
       "citations": [
@@ -24587,7 +24587,7 @@
     {
       "id": "openwop.it.secret-leakage-otel-attribute.no-otel-span-attribute-must-contain-the-byok-canary-plaintext-for-a-run-that-res",
       "file": "secret-leakage-otel-attribute.test.ts",
-      "line": 108,
+      "line": 113,
       "title": "NO OTel span attribute MUST contain the BYOK canary plaintext for a run that resolved it",
       "explicitId": "openwop.it.secret-leakage-otel-attribute.no-otel-span-attribute-must-contain-the-byok-canary-plaintext-for-a-run-that-res",
       "citations": [
@@ -24612,7 +24612,7 @@
     {
       "id": "openwop.it.secret-leakage-otel-attribute.no-debug-bundle-field-must-contain-the-byok-canary-plaintext-for-a-run-that-reso",
       "file": "secret-leakage-otel-attribute.test.ts",
-      "line": 177,
+      "line": 183,
       "title": "NO debug-bundle field MUST contain the BYOK canary plaintext for a run that resolved it",
       "explicitId": "openwop.it.secret-leakage-otel-attribute.no-debug-bundle-field-must-contain-the-byok-canary-plaintext-for-a-run-that-reso",
       "citations": [
@@ -24629,7 +24629,7 @@
     {
       "id": "openwop.it.secret-leakage-otel-attribute.no-real-exported-otel-span-metric-attribute-must-contain-the-byok-canary-plainte",
       "file": "secret-leakage-otel-attribute.test.ts",
-      "line": 230,
+      "line": 237,
       "title": "NO real-exported OTel span/metric attribute MUST contain the BYOK canary plaintext",
       "explicitId": "openwop.it.secret-leakage-otel-attribute.no-real-exported-otel-span-metric-attribute-must-contain-the-byok-canary-plainte",
       "citations": [
@@ -24643,7 +24643,7 @@
     {
       "id": "openwop.it.secret-leakage-otel-attribute.when-secrets-supported-is-true-observability-testseams-advertisements-must-be-bo",
       "file": "secret-leakage-otel-attribute.test.ts",
-      "line": 273,
+      "line": 281,
       "title": "when secrets.supported is true, observability.testSeams advertisements MUST be boolean if present",
       "explicitId": "openwop.it.secret-leakage-otel-attribute.when-secrets-supported-is-true-observability-testseams-advertisements-must-be-bo",
       "citations": [
@@ -25336,7 +25336,7 @@
     {
       "id": "openwop.it.stream-text-fixture.delivers-the-mocked-tokens-in-order-terminates-with-islast-meta-and-server-close",
       "file": "stream-text-fixture.test.ts",
-      "line": 91,
+      "line": 95,
       "title": "delivers the mocked tokens in order, terminates with isLast + meta, and server-closes",
       "explicitId": "openwop.it.stream-text-fixture.delivers-the-mocked-tokens-in-order-terminates-with-islast-meta-and-server-close",
       "citations": [
@@ -25389,7 +25389,7 @@
     {
       "id": "openwop.it.stream-text-fixture.an-unknown-mockprovider-id-is-rejected-with-400-unsupported-mock-provider",
       "file": "stream-text-fixture.test.ts",
-      "line": 193,
+      "line": 198,
       "title": "an unknown mockProvider.id is rejected with 400 unsupported_mock_provider",
       "explicitId": "openwop.it.stream-text-fixture.an-unknown-mockprovider-id-is-rejected-with-400-unsupported-mock-provider",
       "citations": [
@@ -25406,7 +25406,7 @@
     {
       "id": "openwop.it.streamReconnect.reconnect-with-last-event-id-resumes-without-loss-or-duplication",
       "file": "streamReconnect.test.ts",
-      "line": 54,
+      "line": 58,
       "title": "reconnect with Last-Event-ID resumes without loss or duplication",
       "explicitId": "openwop.it.streamReconnect.reconnect-with-last-event-id-resumes-without-loss-or-duplication",
       "citations": [
@@ -25428,7 +25428,7 @@
     {
       "id": "openwop.it.streamReconnect.reconnect-with-last-event-id-equal-to-terminal-seq-closes-immediately",
       "file": "streamReconnect.test.ts",
-      "line": 119,
+      "line": 124,
       "title": "reconnect with Last-Event-ID equal to terminal seq closes immediately",
       "explicitId": "openwop.it.streamReconnect.reconnect-with-last-event-id-equal-to-terminal-seq-closes-immediately",
       "citations": [
@@ -25673,7 +25673,7 @@
     {
       "id": "openwop.it.subworkflow.parent-run-reaches-terminal-completed-and-child-variable-is-propagated-via-outpu",
       "file": "subworkflow.test.ts",
-      "line": 48,
+      "line": 54,
       "title": "parent run reaches terminal completed and child variable is propagated via outputMapping",
       "explicitId": "openwop.it.subworkflow.parent-run-reaches-terminal-completed-and-child-variable-is-propagated-via-outpu",
       "citations": [
@@ -25690,7 +25690,7 @@
     {
       "id": "openwop.it.subworkflow.child-run-is-created-with-parent-linkage-fields-and-reaches-terminal-completed",
       "file": "subworkflow.test.ts",
-      "line": 70,
+      "line": 77,
       "title": "child run is created with parent linkage fields and reaches terminal completed",
       "explicitId": "openwop.it.subworkflow.child-run-is-created-with-parent-linkage-fields-and-reaches-terminal-completed",
       "citations": [
@@ -35127,7 +35127,7 @@
     {
       "id": "openwop.it.version-fold.each-version-in-min-current-max-completes-snapshot-and-event-log-stay-readable",
       "file": "version-fold.test.ts",
-      "line": 81,
+      "line": 85,
       "title": "each version in [min, current, max] completes + snapshot and event log stay readable",
       "explicitId": "openwop.it.version-fold.each-version-in-min-current-max-completes-snapshot-and-event-log-stay-readable",
       "citations": [
@@ -35165,7 +35165,7 @@
     {
       "id": "openwop.it.version-fold.a-forced-version-outside-the-advertised-range-is-rejected-with-400-unsupported-f",
       "file": "version-fold.test.ts",
-      "line": 165,
+      "line": 170,
       "title": "a forced version outside the advertised range is rejected with 400 unsupported_force_engine_version",
       "explicitId": "openwop.it.version-fold.a-forced-version-outside-the-advertised-range-is-rejected-with-400-unsupported-f",
       "citations": [

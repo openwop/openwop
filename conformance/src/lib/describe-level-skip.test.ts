@@ -24,10 +24,14 @@
  *      `conditional` branch) may have ALL its tests under a describe-level
  *      skip. The one exemption is a gate on the absence of a target
  *      (`!process.env.OPENWOP_BASE_URL`): with no host there is no bundle.
- *   2. A ratchet for every other file: a non-floor all-gated file still records
- *      nothing, and the runner resolves it to a report-derived `blocked` whose
- *      detail names no reason. That is the right disposition without the why,
- *      and it certifies nothing either way, so the count may only fall.
+ *   2. No other scenario file may either (suite 2.45.1; it began as a ratchet
+ *      at 56 in 2.44.9 and was driven to zero). A non-floor all-gated file
+ *      records nothing when its gate holds, and the runner resolves it to a
+ *      report-derived `blocked` that names no reason. Each such file now opens
+ *      every test with `if (GATE) return softSkip(...GATE_WHY)`, where the tuple
+ *      names the §A disposition: `inapplicable` for a capability the host does
+ *      not advertise, `blocked` for a withheld fixture, and `skipped` for an
+ *      operator opt-in that is not set.
  */
 import { describe, it, expect } from 'vitest';
 import ts from 'typescript';
@@ -36,9 +40,6 @@ import { fileURLToPath } from 'node:url';
 import { PROFILE_FLOOR_SCENARIOS } from './profiles.js';
 
 const SCENARIOS = fileURLToPath(new URL('../scenarios/', import.meta.url));
-
-/** Non-floor scenario files whose every test is under a describe-level skip (2026-09-29, suite 2.44.9). Lower it; never raise it. */
-const NON_FLOOR_ALL_GATED_CEILING = 56;
 
 interface GateScan { readonly file: string; readonly gated: number; readonly open: number; readonly predicates: readonly string[] }
 
@@ -137,14 +138,15 @@ describe('describe-level skips leave no floor requirement undispositioned (openw
     ).toEqual([]);
   });
 
-  it(`non-floor files that can skip every test at describe level only decrease (ceiling ${NON_FLOOR_ALL_GATED_CEILING})`, () => {
-    const gatedNonFloor = scans
+  it('no other scenario file can skip every test at describe level either (each test records why it did not run)', () => {
+    const offenders = scans
       .filter(({ scan, source }) => !floors.has(scan.file) && allGated(scan) && !noTargetGate(source, scan.predicates))
-      .map(({ scan }) => scan.file);
+      .map(({ scan }) => `${scan.file} (${scan.gated} test(s) under describe-level ${scan.predicates.join(' / ')})`);
     expect(
-      gatedNonFloor.length,
-      `${gatedNonFloor.length} non-floor scenario file(s) can skip every test at describe level and so record no disposition when their gate holds (the runner's report-derived \`blocked\` names no reason). `
-        + `A new one is not allowed: gate at \`it\` level with softSkip and a reason (and when one is fixed, lower NON_FLOOR_ALL_GATED_CEILING to match). Files: ${gatedNonFloor.join(', ')}`,
-    ).toBeLessThanOrEqual(NON_FLOOR_ALL_GATED_CEILING);
+      offenders,
+      'a scenario file whose every test sits under describe.skipIf/describe.skip records NO disposition when the gate holds, so its row names no reason. '
+        + 'Gate each test instead: `if (GATE) return softSkip(kind, reason)`, with the RFC 0148 §A kind (inapplicable: capability not advertised; blocked: fixture withheld; skipped: operator opt-in unset). '
+        + `Offenders: ${offenders.join('; ')}`,
+    ).toEqual([]);
   });
 });

@@ -32,7 +32,7 @@
  */
 
 import { describe, it, expect } from 'vitest';
-import { softSkip } from '../lib/soft-skip.js';
+import { softSkip, type SoftSkipKind } from '../lib/soft-skip.js';
 import { driver, type OpenWOPResponse } from '../lib/driver.js';
 import { subscribe } from '../lib/sse.js';
 import { pollUntilTerminal } from '../lib/polling.js';
@@ -87,8 +87,13 @@ async function isStreamTextMockAdvertised(): Promise<boolean> {
   return Array.isArray(testing?.mockProviders) && testing.mockProviders.includes('stream-text');
 }
 
-describe.skipIf(SKIP_NO_FIXTURE)('stream-text-fixture: messages-mode fold through the stream-text mock (F1)', () => {
+/** Why the gate below holds, as RFC 0148 §A names it (openwop#1686: a describe-level skip recorded no disposition). */
+const GATE_WHY: readonly [SoftSkipKind, string] =
+  (!isFixtureAdvertised(FIXTURE_ID)) ? ['blocked', `the \`${FIXTURE_ID}\` fixture is not advertised`] as const : ['blocked', 'the gate held for no named reason'] as const;
+
+describe('stream-text-fixture: messages-mode fold through the stream-text mock (F1)', () => {
   it('delivers the mocked tokens in order, terminates with isLast + meta, and server-closes', async () => {
+    if (SKIP_NO_FIXTURE) return softSkip(...GATE_WHY);
     if (!(await isStreamTextMockAdvertised())) {
       // eslint-disable-next-line no-console
       console.warn(
@@ -191,6 +196,7 @@ describe.skipIf(SKIP_NO_FIXTURE)('stream-text-fixture: messages-mode fold throug
   });
 
   it('an unknown mockProvider.id is rejected with 400 unsupported_mock_provider', async () => {
+    if (SKIP_NO_FIXTURE) return softSkip(...GATE_WHY);
     if (!(await isStreamTextMockAdvertised())) {
       // eslint-disable-next-line no-console
       console.warn('[stream-text-fixture] stream-text mock not advertised; skipping negative leg');

@@ -20,6 +20,7 @@ import { join } from 'node:path';
 import { SCENARIOS_DIR } from '../lib/paths.js';
 import { HARNESS_DOUBLE_MODULES } from '../lib/host-callback.js';
 import { req } from '../lib/requirement-ids.js';
+import { softSkip, type SoftSkipKind } from '../lib/soft-skip.js';
 
 const DECLARATION = /export\s+const\s+REQUIRES_HOST_CALLBACK\s*[:=]/;
 /**
@@ -57,10 +58,15 @@ function scan(dir: string): Scenario[] {
     });
 }
 
-describe.skipIf(SCENARIOS_DIR === null)('host-callback declaration (conformance/README §"Where the suite runs")', () => {
+/** Why the gate below holds, as RFC 0148 §A names it (openwop#1686: a describe-level skip recorded no disposition). */
+const GATE_WHY: readonly [SoftSkipKind, string] =
+  (SCENARIOS_DIR === null) ? ['inapplicable', `the published package does not bundle the scenario sources this check reads, so nothing about the host is exercised`] as const : ['blocked', 'the gate held for no named reason'] as const;
+
+describe('host-callback declaration (conformance/README §"Where the suite runs")', () => {
   const all = SCENARIOS_DIR === null ? [] : scan(SCENARIOS_DIR);
 
   it('the scan reaches the scenario corpus', () => {
+    if (SCENARIOS_DIR === null) return softSkip(...GATE_WHY);
     // Guard: an empty scan makes every leg below vacuously true, which is the
     // shape RFC 0148 §C found in the floor verifier. A gate that passes by
     // having looked at nothing is worse than no gate, because it reports clean.
@@ -74,6 +80,7 @@ describe.skipIf(SCENARIOS_DIR === null)('host-callback declaration (conformance/
   });
 
   it('every scenario driving a harness double declares the callback', () => {
+    if (SCENARIOS_DIR === null) return softSkip(...GATE_WHY);
     const undeclared = all
       .filter((s) => s.doubles.length > 0 && !s.declared && !s.optedOut)
       .map((s) => `${s.file} (imports ${s.doubles.join(', ')})`);
@@ -91,6 +98,7 @@ describe.skipIf(SCENARIOS_DIR === null)('host-callback declaration (conformance/
   });
 
   it('the declaration states a reason rather than a bare flag', () => {
+    if (SCENARIOS_DIR === null) return softSkip(...GATE_WHY);
     // A boolean records that somebody ticked a box. A sentence records what a
     // consumer must route, and is checkable against the scenario body by anyone
     // reading the diff — the same annotated-vs-bare rule RFC 0149 §D applies to
@@ -110,6 +118,7 @@ describe.skipIf(SCENARIOS_DIR === null)('host-callback declaration (conformance/
   });
 
   it('nothing declares a callback it does not make', () => {
+    if (SCENARIOS_DIR === null) return softSkip(...GATE_WHY);
     // The reverse direction, and the one that keeps the list honest as the
     // corpus moves. A declaration left behind after the double was removed
     // would tell a consumer to route something nobody needs — a stale claim,

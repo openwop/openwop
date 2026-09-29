@@ -36,7 +36,7 @@ import { isFixtureAdvertised } from '../lib/fixtures.js';
 import { behaviorGate } from '../lib/behavior-gate.js';
 import { capabilityFamily } from '../lib/discovery-capabilities.js';
 import { req } from '../lib/requirement-ids.js';
-import { softSkip } from '../lib/soft-skip.js';
+import { softSkip, type SoftSkipKind } from '../lib/soft-skip.js';
 
 const WORKFLOW_ID = 'conformance-prompt-end-to-end';
 const SKIP_NO_FIXTURE = !isFixtureAdvertised(WORKFLOW_ID);
@@ -82,8 +82,14 @@ async function readAllEvents(runId: string): Promise<RunEventDoc[]> {
 
 const HTTP_SKIP = !process.env.OPENWOP_BASE_URL;
 
-describe.skipIf(SKIP_NO_FIXTURE || HTTP_SKIP)('prompt-end-to-end-events: real dispatch emits agent.promptResolved + prompt.composed (RFC 0027/0029)', () => {
+/** Why the gate below holds, as RFC 0148 §A names it (openwop#1686: a describe-level skip recorded no disposition). */
+const GATE_WHY: readonly [SoftSkipKind, string] =
+  (!process.env.OPENWOP_BASE_URL) ? ['inapplicable', `no target: OPENWOP_BASE_URL is unset`] as const : 
+  (!isFixtureAdvertised(WORKFLOW_ID)) ? ['blocked', `the \`${WORKFLOW_ID}\` fixture is not advertised`] as const : ['blocked', 'the gate held for no named reason'] as const;
+
+describe('prompt-end-to-end-events: real dispatch emits agent.promptResolved + prompt.composed (RFC 0027/0029)', () => {
   it('emits agent.promptResolved with chain[].applied: true for layer "node" when systemPromptRef is set on node.config', async () => {
+    if (SKIP_NO_FIXTURE || HTTP_SKIP) return softSkip(...GATE_WHY);
     const d = await readDiscovery();
     if (!behaviorGate('prompts-supported', promptsSupported(d))) return;
 
@@ -136,6 +142,7 @@ describe.skipIf(SKIP_NO_FIXTURE || HTTP_SKIP)('prompt-end-to-end-events: real di
   });
 
   it('emits prompt.composed with sha256:<hex64> hash + non-empty composed body for system-kind template', async () => {
+    if (SKIP_NO_FIXTURE || HTTP_SKIP) return softSkip(...GATE_WHY);
     const d = await readDiscovery();
     if (!behaviorGate('prompts-supported', promptsSupported(d))) return;
 
@@ -182,6 +189,7 @@ describe.skipIf(SKIP_NO_FIXTURE || HTTP_SKIP)('prompt-end-to-end-events: real di
   });
 
   it('emits agent.promptResolved before prompt.composed (causal ordering)', async () => {
+    if (SKIP_NO_FIXTURE || HTTP_SKIP) return softSkip(...GATE_WHY);
     const d = await readDiscovery();
     if (!behaviorGate('prompts-supported', promptsSupported(d))) return;
     const create = await driver.post('/v1/runs', { workflowId: WORKFLOW_ID });

@@ -43,7 +43,7 @@ import { pollUntilTerminal } from '../lib/polling.js';
 import { CANARY_MARKER, getCanary } from '../lib/canaries.js';
 import { isFixtureAdvertised } from '../lib/fixtures.js';
 import { req } from '../lib/requirement-ids.js';
-import { blockedDespiteAssertions, softSkip } from '../lib/soft-skip.js';
+import { blockedDespiteAssertions, softSkip, type SoftSkipKind } from '../lib/soft-skip.js';
 import { makeTraceparent } from '../lib/trace-context.js';
 
 const NOOP_WORKFLOW_ID = 'conformance-noop';
@@ -69,8 +69,13 @@ async function isAdvertised(): Promise<boolean> {
   return body.debugBundle?.supported === true;
 }
 
-describe.skipIf(SKIP_NO_NOOP)('debug-bundle: GET /v1/runs/{runId}/debug-bundle response shape', () => {
+/** Why the gate below holds, as RFC 0148 §A names it (openwop#1686: a describe-level skip recorded no disposition). */
+const GATE_WHY: readonly [SoftSkipKind, string] =
+  (!isFixtureAdvertised(NOOP_WORKFLOW_ID)) ? ['blocked', `the \`${NOOP_WORKFLOW_ID}\` fixture is not advertised`] as const : ['blocked', 'the gate held for no named reason'] as const;
+
+describe('debug-bundle: GET /v1/runs/{runId}/debug-bundle response shape', () => {
   it('host advertising capabilities.debugBundle.supported returns 200 with valid bundle', async () => {
+    if (SKIP_NO_NOOP) return softSkip(...GATE_WHY);
     if (!(await isAdvertised())) return softSkip('inapplicable', 'capability or profile not advertised by this host — gate `!(await isAdvertised())` returned early (skip-equivalent)'); // skip-equivalent
 
     const create = await driver.post('/v1/runs', { workflowId: NOOP_WORKFLOW_ID });
@@ -125,6 +130,7 @@ describe.skipIf(SKIP_NO_NOOP)('debug-bundle: GET /v1/runs/{runId}/debug-bundle r
   });
 
   it('hosts not advertising debugBundle return 404 on the endpoint', async () => {
+    if (SKIP_NO_NOOP) return softSkip(...GATE_WHY);
     if (await isAdvertised()) return softSkip('inapplicable', 'capability or profile not advertised by this host — gate `await isAdvertised()` returned early (skip-equivalent for hosts that DO advertise)'); // skip-equivalent for hosts that DO advertise
 
     // Use any runId — even a synthetic one — since the host should 404
@@ -137,8 +143,9 @@ describe.skipIf(SKIP_NO_NOOP)('debug-bundle: GET /v1/runs/{runId}/debug-bundle r
   });
 });
 
-describe.skipIf(SKIP_NO_NOOP)('debug-bundle: invariants per debug-bundle.md', () => {
+describe('debug-bundle: invariants per debug-bundle.md', () => {
   it('metrics.eventCount equals events.length', async () => {
+    if (SKIP_NO_NOOP) return softSkip(...GATE_WHY);
     if (!(await isAdvertised())) return softSkip('inapplicable', 'capability or profile not advertised by this host — gate `!(await isAdvertised())` returned early');
 
     const create = await driver.post('/v1/runs', { workflowId: NOOP_WORKFLOW_ID });
@@ -159,6 +166,7 @@ describe.skipIf(SKIP_NO_NOOP)('debug-bundle: invariants per debug-bundle.md', ()
   });
 
   it('redactionApplied=true is incompatible with redactionMode=passthrough', async () => {
+    if (SKIP_NO_NOOP) return softSkip(...GATE_WHY);
     if (!(await isAdvertised())) return softSkip('inapplicable', 'capability or profile not advertised by this host — gate `!(await isAdvertised())` returned early');
 
     const create = await driver.post('/v1/runs', { workflowId: NOOP_WORKFLOW_ID });
@@ -179,6 +187,7 @@ describe.skipIf(SKIP_NO_NOOP)('debug-bundle: invariants per debug-bundle.md', ()
   });
 
   it('bundle events agree with /events/poll for the same run', async () => {
+    if (SKIP_NO_NOOP) return softSkip(...GATE_WHY);
     if (!(await isAdvertised())) return softSkip('inapplicable', 'capability or profile not advertised by this host — gate `!(await isAdvertised())` returned early');
 
     const create = await driver.post('/v1/runs', { workflowId: NOOP_WORKFLOW_ID });
@@ -202,8 +211,9 @@ describe.skipIf(SKIP_NO_NOOP)('debug-bundle: invariants per debug-bundle.md', ()
   });
 });
 
-describe.skipIf(SKIP_NO_NOOP)('debug-bundle: redaction inheritance per SECURITY/invariants.yaml secret-leakage-debug-bundle', () => {
+describe('debug-bundle: redaction inheritance per SECURITY/invariants.yaml secret-leakage-debug-bundle', () => {
   it('canary in workflow inputs MUST NOT appear verbatim in the bundle response', async () => {
+    if (SKIP_NO_NOOP) return softSkip(...GATE_WHY);
     if (!(await isAdvertised())) return softSkip('inapplicable', 'capability or profile not advertised by this host — gate `!(await isAdvertised())` returned early');
 
     const canary = getCanary('byok-credential-ref').value;
@@ -233,11 +243,12 @@ describe.skipIf(SKIP_NO_NOOP)('debug-bundle: redaction inheritance per SECURITY/
   });
 });
 
-describe.skipIf(SKIP_NO_NOOP)('debug-bundle: spans join the trace (RFC 0207 §C, v1 only, non-gating)', () => {
+describe('debug-bundle: spans join the trace (RFC 0207 §C, v1 only, non-gating)', () => {
   const LEG = 'openwop.it.debugBundle.spans-join-the-trace';
   const KINDS = new Set(['internal', 'server', 'client', 'producer', 'consumer']);
   const CODES = new Set(['unset', 'ok', 'error']);
   it('span traceId / kind / status have the RFC 0207 shape and the run span joins the caller trace', async () => {
+    if (SKIP_NO_NOOP) return softSkip(...GATE_WHY);
     if (!(await isAdvertised())) return softSkip('inapplicable', 'debugBundle not advertised by this host');
     const tp = makeTraceparent();
     // Run create and the bundle read are asserted by the legs above; here they

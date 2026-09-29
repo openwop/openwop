@@ -23,7 +23,7 @@ import { driver } from '../lib/driver.js';
 import { pollUntilTerminal } from '../lib/polling.js';
 import { isFixtureAdvertised } from '../lib/fixtures.js';
 import { req } from '../lib/requirement-ids.js';
-import { softSkip } from '../lib/soft-skip.js';
+import { softSkip, type SoftSkipKind } from '../lib/soft-skip.js';
 
 const PARENT = 'conformance-dispatch-output-mapping';
 const CHILD = 'conformance-dispatch-output-mapping-child';
@@ -34,8 +34,22 @@ interface RunSnapshot {
   readonly variables?: Record<string, unknown>;
 }
 
-describe.skipIf(SKIP)('dispatch-output-mapping: child → parent variable harvest (RFC 0022 §A)', () => {
+/** Why the gate below holds, as RFC 0148 §A names it (openwop#1686: a describe-level skip recorded no disposition). */
+const GATE_WHY: readonly [SoftSkipKind, string] =
+  (!isFixtureAdvertised(PARENT)) ? ['blocked', `the \`${PARENT}\` fixture is not advertised`] as const : 
+  (!isFixtureAdvertised(CHILD)) ? ['blocked', `the \`${CHILD}\` fixture is not advertised`] as const : ['blocked', 'the gate held for no named reason'] as const;
+
+/** Why the gate below holds, as RFC 0148 §A names it (openwop#1686: a describe-level skip recorded no disposition). */
+const GATE_WHY_2: readonly [SoftSkipKind, string] =
+  (!isFixtureAdvertised('conformance-dispatch-deterministic-fail-child')) ? ['blocked', `the \`conformance-dispatch-deterministic-fail-child\` fixture is not advertised`] as const : ['blocked', 'the gate held for no named reason'] as const;
+
+/** Why the gate below holds, as RFC 0148 §A names it (openwop#1686: a describe-level skip recorded no disposition). */
+const GATE_WHY_3: readonly [SoftSkipKind, string] =
+  (!isFixtureAdvertised('conformance-dispatch-cancellable-child')) ? ['blocked', `the \`conformance-dispatch-cancellable-child\` fixture is not advertised`] as const : ['blocked', 'the gate held for no named reason'] as const;
+
+describe('dispatch-output-mapping: child → parent variable harvest (RFC 0022 §A)', () => {
   it('HVMAP-1b: outputMapping harvests child variables into parent variables on terminal completed', async () => {
+    if (SKIP) return softSkip(...GATE_WHY);
     const create = await driver.post('/v1/runs', { workflowId: PARENT });
     expect(create.status).toBe(201);
     const parentRunId = (create.json as { runId: string }).runId;
@@ -98,8 +112,9 @@ async function registerParent(childFixtureId: string): Promise<string | null> {
   return workflowId;
 }
 
-describe.skipIf(!isFixtureAdvertised('conformance-dispatch-deterministic-fail-child'))('dispatch-output-mapping: HVMAP-1b-failed (RFC 0022 §B)', () => {
+describe('dispatch-output-mapping: HVMAP-1b-failed (RFC 0022 §B)', () => {
   it('child terminates `failed` → outputMapping MUST be skipped; parent.parentResult stays at sentinel', async () => {
+    if (!isFixtureAdvertised('conformance-dispatch-deterministic-fail-child')) return softSkip(...GATE_WHY_2);
     const parentId = await registerParent('conformance-dispatch-deterministic-fail-child');
     if (!parentId) return softSkip('blocked', 'precondition not met — `!parentId` returned early (workflow-register seam not exposed — soft-skip) (seam, prior step, or fixture unavailable)'); // workflow-register seam not exposed — soft-skip
     const create = await driver.post('/v1/runs', { workflowId: parentId });
@@ -119,8 +134,9 @@ describe.skipIf(!isFixtureAdvertised('conformance-dispatch-deterministic-fail-ch
   });
 });
 
-describe.skipIf(!isFixtureAdvertised('conformance-dispatch-cancellable-child'))('dispatch-output-mapping: HVMAP-1b-cancelled (RFC 0022 §B)', () => {
+describe('dispatch-output-mapping: HVMAP-1b-cancelled (RFC 0022 §B)', () => {
   it('child terminates `cancelled` → outputMapping MUST be skipped; parent.parentResult stays at sentinel', async () => {
+    if (!isFixtureAdvertised('conformance-dispatch-cancellable-child')) return softSkip(...GATE_WHY_3);
     const parentId = await registerParent('conformance-dispatch-cancellable-child');
     if (!parentId) return softSkip('blocked', 'precondition not met — `!parentId` returned early (soft-skip) (seam, prior step, or fixture unavailable)'); // soft-skip
     const create = await driver.post('/v1/runs', { workflowId: parentId });

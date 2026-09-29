@@ -26,6 +26,7 @@ import { describe, it, expect } from 'vitest';
 import { driver } from '../lib/driver.js';
 import { isFixtureAdvertised } from '../lib/fixtures.js';
 import { req } from '../lib/requirement-ids.js';
+import { softSkip, type SoftSkipKind } from '../lib/soft-skip.js';
 
 const WORKFLOW_ID = 'conformance-idempotent';
 const SKIP_SCALE = process.env.OPENWOP_SKIP_SCALE_PRODUCTION === '1';
@@ -64,12 +65,18 @@ async function createRun(body: unknown, key?: string): Promise<RunCreateResult> 
   };
 }
 
-describe.skipIf(SKIP)(
+/** Why the gate below holds, as RFC 0148 §A names it (openwop#1686: a describe-level skip recorded no disposition). */
+const GATE_WHY: readonly [SoftSkipKind, string] =
+  (SKIP_SCALE) ? ['skipped', `the operator opted out of the scale scenario (OPENWOP_SKIP_SCALE_PRODUCTION=1)`] as const : 
+  (!isFixtureAdvertised(WORKFLOW_ID)) ? ['blocked', `the \`${WORKFLOW_ID}\` fixture is not advertised`] as const : ['blocked', 'the gate held for no named reason'] as const;
+
+describe(
   'high-concurrency: parallel POST /v1/runs per scale-profiles.md §"Conformance scenarios"',
   () => {
     it(
       '10 parallel requests with same key yield ONE runId and 9 replays',
       async () => {
+    if (SKIP) return softSkip(...GATE_WHY);
         const key = freshKey('parallel-same-key');
         const body = { workflowId: WORKFLOW_ID, inputs: { nonce: 'parallel-1' } };
 
@@ -124,6 +131,7 @@ describe.skipIf(SKIP)(
     it(
       '10 parallel requests with distinct keys yield 10 distinct runIds',
       async () => {
+    if (SKIP) return softSkip(...GATE_WHY);
         const body = { workflowId: WORKFLOW_ID, inputs: { nonce: 'parallel-2' } };
 
         const results = await Promise.all(
@@ -173,6 +181,7 @@ describe.skipIf(SKIP)(
     it(
       '5 sequential retries with same key 100ms apart all succeed (idempotency cache survives retry storm)',
       async () => {
+    if (SKIP) return softSkip(...GATE_WHY);
         const key = freshKey('retry-storm');
         const body = { workflowId: WORKFLOW_ID, inputs: { nonce: 'retry-storm' } };
 
@@ -227,6 +236,7 @@ describe.skipIf(SKIP)(
     it(
       'concurrent distinct-key requests respect advertised idempotency cache retention',
       async () => {
+    if (SKIP) return softSkip(...GATE_WHY);
         // This is a structural assertion against /.well-known/openwop, NOT a
         // wall-clock test. We can't realistically wait 24h for cache
         // expiration in a conformance run. Instead we assert the host

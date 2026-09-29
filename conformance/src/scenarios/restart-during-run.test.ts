@@ -37,6 +37,7 @@ import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import { spawnHost, type SpawnedHost } from '../lib/multiProcess.js';
 import { req } from '../lib/requirement-ids.js';
+import { softSkip, type SoftSkipKind } from '../lib/soft-skip.js';
 
 const HOST_PACKAGE_DIR =
   process.env.OPENWOP_RESTART_DURING_RUN_HOST_DIR ?? 'examples/hosts/sqlite';
@@ -78,12 +79,17 @@ afterEach(async () => {
   }
 });
 
-describe.skipIf(!RUN_THIS_SCENARIO)(
+/** Why the gate below holds, as RFC 0148 §A names it (openwop#1686: a describe-level skip recorded no disposition). */
+const GATE_WHY: readonly [SoftSkipKind, string] =
+  (!RUN_THIS_SCENARIO) ? ['skipped', `the operator did not opt in (OPENWOP_RUN_RESTART_DURING_RUN=1)`] as const : ['blocked', 'the gate held for no named reason'] as const;
+
+describe(
   'restart-during-run: SIGKILL + same-port restart resumes orphaned run',
   () => {
     it(
       'mid-run SIGKILL on the host process; restart at the same port + DB resumes to terminal',
       async () => {
+    if (!RUN_THIS_SCENARIO) return softSkip(...GATE_WHY);
         workdir = mkdtempSync(join(tmpdir(), 'openwop-restart-during-run-'));
         const dbPath = join(workdir, 'openwop-host.sqlite');
 

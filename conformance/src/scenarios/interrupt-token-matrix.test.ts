@@ -31,7 +31,7 @@ import { driver } from '../lib/driver.js';
 import { pollUntilStatus } from '../lib/polling.js';
 import { isFixtureAdvertised } from '../lib/fixtures.js';
 import { req } from '../lib/requirement-ids.js';
-import { blockedDespiteAssertions } from '../lib/soft-skip.js';
+import { blockedDespiteAssertions, softSkip, type SoftSkipKind } from '../lib/soft-skip.js';
 
 const FIXTURE = 'conformance-interrupt-external-event';
 const SKIP = !isFixtureAdvertised(FIXTURE);
@@ -42,8 +42,13 @@ function randomBytesB64(length: number): string {
   ).toString('base64url');
 }
 
-describe.skipIf(SKIP)('interrupt-token-matrix: GET /v1/interrupts/{token} negative paths', () => {
+/** Why the gate below holds, as RFC 0148 §A names it (openwop#1686: a describe-level skip recorded no disposition). */
+const GATE_WHY: readonly [SoftSkipKind, string] =
+  (!isFixtureAdvertised(FIXTURE)) ? ['blocked', `the \`${FIXTURE}\` fixture is not advertised`] as const : ['blocked', 'the gate held for no named reason'] as const;
+
+describe('interrupt-token-matrix: GET /v1/interrupts/{token} negative paths', () => {
   it('malformed token returns 400 or 404 (NEVER 200)', async () => {
+    if (SKIP) return softSkip(...GATE_WHY);
     const malformed = '!!!not-a-valid-token!!!';
     const res = await driver.get(`/v1/interrupts/${encodeURIComponent(malformed)}`);
     expect([400, 404]).toContain(res.status);
@@ -54,6 +59,7 @@ describe.skipIf(SKIP)('interrupt-token-matrix: GET /v1/interrupts/{token} negati
   });
 
   it('well-formed but unknown token returns 404', async () => {
+    if (SKIP) return softSkip(...GATE_WHY);
     // Plausibly-shaped opaque token that the host has no record of.
     const unknown = `tok_${randomBytesB64(32)}`;
     const res = await driver.get(`/v1/interrupts/${encodeURIComponent(unknown)}`);
@@ -64,8 +70,9 @@ describe.skipIf(SKIP)('interrupt-token-matrix: GET /v1/interrupts/{token} negati
   });
 });
 
-describe.skipIf(SKIP)('interrupt-token-matrix: POST /v1/interrupts/{token} negative paths', () => {
+describe('interrupt-token-matrix: POST /v1/interrupts/{token} negative paths', () => {
   it('replay after successful resolve returns 409 or 404', async () => {
+    if (SKIP) return softSkip(...GATE_WHY);
     // Drive a run to suspension; capture the real token; resolve once;
     // replay the same POST and assert it doesn't succeed twice.
     const create = await driver.post('/v1/runs', { workflowId: FIXTURE });
@@ -129,6 +136,7 @@ describe.skipIf(SKIP)('interrupt-token-matrix: POST /v1/interrupts/{token} negat
   });
 
   it('unknown token returns 404 on POST', async () => {
+    if (SKIP) return softSkip(...GATE_WHY);
     const unknown = `tok_${randomBytesB64(32)}`;
     const res = await driver.post(`/v1/interrupts/${encodeURIComponent(unknown)}`, {
       correlation: { orderId: 'noop', status: 'whatever' },
