@@ -34,7 +34,9 @@
  *
  * ## Construction
  *
- * `conformance-replay-side-effect` is `core.delay` → a side-effecting node. We
+ * `conformance-replay-side-effect` is `core.conformance.hold` (a reserved PURE
+ * wait; it was `core.delay`, which the registry declares side-effecting,
+ * openwop#1769) → a side-effecting node. We
  * start it with a long delay, cancel mid-flight so the effect node never
  * records a terminal outcome, then fork `mode:"replay"`. Requirement 3 of
  * `replay.md` §"Side-effect suppression in replay" then applies to that node.
@@ -145,7 +147,7 @@ describe.skipIf(SKIP_NO_FIXTURE)('replay-side-effect-suppression: a replay does 
     //    side-effecting node downstream never reaches a terminal outcome.
     //
     //    Kept SHORT on purpose: a `replay` fork re-executes from seq 0, so it
-    //    re-runs this delay too (a delay is not side-effecting). A 30s delay
+    //    re-runs this hold too (`core.conformance.hold` is pure). A 30s delay
     //    here would make the fork outlive any sane poll budget — measured, not
     //    theorised: the first version of this scenario used 30s and timed out
     //    at step 3 with the fork still `running`.
@@ -182,7 +184,7 @@ describe.skipIf(SKIP_NO_FIXTURE)('replay-side-effect-suppression: a replay does 
     }
     expect(fork.status, req('openwop.it.replay-side-effect-suppression.fails-a-side-effecting-node-closed-with-replay-source-missing-when-the-source-ne', 'replay.md §"Side-effect suppression in replay" requirement 1', 'fork should be accepted')).toBe(201);
     const forkRunId = (fork.json as { runId: string }).runId;
-    await pollUntilTerminal(forkRunId, { timeoutMs: 45_000 }); // re-runs the 5s delay before reaching `effect`
+    await pollUntilTerminal(forkRunId, { timeoutMs: 45_000 }); // re-runs the pure hold before reaching `effect`
 
     // 3. THE assertion. A non-suppressing host executes the node; a suppressing
     //    host cannot, and has no recorded outcome to serve, so it must fail
