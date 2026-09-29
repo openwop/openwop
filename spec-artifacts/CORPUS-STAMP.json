@@ -193,12 +193,12 @@
     "schemas/v2/webhook-delivery.schema.json": "4e8ab3b722ad1731adf0548c1217f0de62da40de14e8abf77533aee4ace4c079",
     "schemas/v2/webhook-verification.schema.json": "76e4e0d81143ffd2649bc7adba2aa34f2525e2c4e9f0300a425d908b3163196b",
     "schemas/v2/workflow-chain-pack-manifest.schema.json": "0816c6c59a91452d6fa1931394b766780eaf90949c9f7cd0ced522dadd32ff81",
-    "schemas/v2/workflow-definition.schema.json": "b9043e3413fc01d939e7b2892cc0fe28bdfd77d5bacc561b6ca4ae20197b985b",
+    "schemas/v2/workflow-definition.schema.json": "3f031c0cb1644ac21f203945a0860e04dcea4bd1ab722f280bdcdc788edd0a22",
     "schemas/v2/workload-identity.schema.json": "1f589debfac6d70e0908da511550ec69a27b4bcc8314551cd843b6d923605efc",
     "schemas/v2/workspace-file-create.schema.json": "b6b5260857318c3b67de0231ed15e3a746f525880a763e7b36a7854178dd10d0",
     "schemas/v2/workspace-file.schema.json": "d2ed39e8c229dde33b56905c8df6f8b2ff056c97e1c5f615e3124baa54a6254f",
     "schemas/workflow-chain-pack-manifest.schema.json": "c027571913c44d8d9678750c72701a710a02fa0df55e86849da03e13e95c333a",
-    "schemas/workflow-definition.schema.json": "28b050ffe22121796c9d4a5a8c7e57c901bb283bd08d3fd3ff2ea25a898108c1",
+    "schemas/workflow-definition.schema.json": "fbab3787707fc0e00ecf2adea8de8aba582e6057af9cde893b1b0eb969adea83",
     "schemas/workload-identity.schema.json": "64ed93e12cc9f0657e56ff9b8f045e5d68d397df5276d103c07f42c7f34f0579",
     "schemas/workspace-file-create.schema.json": "70a23b92c2958c0165d7d29aea9020a045dc7816af82c80c5f50d0aac19c4856",
     "schemas/workspace-file.schema.json": "464de85c2a068243084ee9c1d969bc7cd5d8f7948574e58450d6493c38a0e1e4",
@@ -212,7 +212,7 @@
     "spec/v1/extensions.json": "79a60754aa16cbdbdb604f8e5c00038af535a1690a4d07bd5ff7c38f0256a7bc",
     "spec/v1/gaps.json": "11c35393ad666899fe8a668c45fa69f79d20361ab57e84949dce3bc2f528d5c3",
     "spec/v1/gaps.schema.json": "8fd83259f556553c9df0f53e7a82ca8c2a4771d471197f69b4e2ae0ceeacfd66",
-    "spec/v1/migrations.json": "2efcd9064b2bc65a84a3b3d281aa86a91efd002690c1f4f14e8335c4a18194d1",
+    "spec/v1/migrations.json": "ca57b7ce335a681aaa78573ce229e9c3d7d75859f03e087ae93bbfc889359127",
     "spec/v1/migrations.schema.json": "886779aa6c22e646db097f5df210adb018a4dd14a7b815465a18c8a7056c8f72",
     "spec/v1/operation-path-manifest.json": "fada0342815fb129c1ae61f1829bd6e34417717408ce86fcc54280f373c19e74",
     "spec/v1/spec-gaps.json": "ea9612af55bea9dae3e82223d4f714243f8f590b0193f1188257b13491a38afc",
@@ -239,7 +239,7 @@
     "spec/v2/core/packs.md": "935fc2f633c68fa98ad6c9cdb083dd556e955b1a15eff32f4773d13329a57238",
     "spec/v2/core/persistence.md": "711874f74cb08b03cd118d683056db10a063517762fcea73ec70feb5d983e6a4",
     "spec/v2/core/portability.md": "87c4327f674f714fda6217fd79b99d2ba219ad47dc02f9751bb56c200fb2c17a",
-    "spec/v2/core/replay.md": "4d379494057746c6883f6047972e93e621863b998ed291b9a691d3aa57c1ff43",
+    "spec/v2/core/replay.md": "f406d71fb690b2e71f4b86ff799a49e6f1a0662c98fc59bcfe517d100eb6117c",
     "spec/v2/core/runs.md": "8a1d71fb9305fd0df31150bfbbd892f96b8aab553400a36196212f7d0a24906d",
     "spec/v2/core/security-defaults.md": "153884da7a2d54c30c81b5e649cfdef31e151b3a2a19dee1bc5a16c35d60a3aa",
     "spec/v2/core/storage.md": "598ad4f3775c297c698a20daf72a7d15a6836c1231ddbca5961865c704f765b5",
@@ -305,5 +305,5 @@
     "spec/v2/retention-floors.json": "eaf3722d95c79947af1d4269ef85117e126518c588cfcf1a2b21b97269f51624",
     "spec/v2/surface-baseline.json": "8acb9fab0aca69abfe40dc56fcf48729aaf0d56a41467962e5c7247f3548eea3"
   },
-  "corpusCommit": "31dec6ee048800e60ebcfc5cd9632aa30b1c6638"
+  "corpusCommit": "5419def43db697a86b428dd076ba34810adce3df"
 }

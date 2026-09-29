@@ -1,9 +1,10 @@
 /**
  * `spec/v2/core/replay.md` §Suppression rule 2 — a replay fork resolves a
- * side-effecting node's outcome keyed on `(sourceRunId, nodeId, n)`, where `n`
- * counts the node's `node.started` events through this execution, including
- * retries, later visits and the fork's inherited prefix (openwop#1718, suite
- * 2.43.2, target major 2).
+ * side-effecting node's outcome keyed on `(sourceRunId, nodeId, n)`, where `n` is
+ * one more than the node's recorded terminals (`node.completed`, `node.failed`)
+ * before this execution, the fork's inherited prefix included (openwop#1718,
+ * re-corrected by openwop#1769 from a count of `node.started`, which a pause or a
+ * suspend re-emits; suite 2.43.2, target major 2).
  *
  * The rule said `(nodeId, attempt)`. In a run where a node executes more than
  * once (a loop back over an edge), that key names no single execution: a host
@@ -11,8 +12,8 @@
  * outcome, and one selecting the latest recorded outcome does the same when
  * only one exists.
  *
- * Construction (`conformance-replay-ordinal-loop`): start → effect → wait →
- * effect, so `effect` executes twice. The suite cancels the source inside
+ * Construction (`conformance-replay-ordinal-loop`): start → effect → wait
+ * (`core.conformance.hold`, a reserved PURE node that re-executes live) → effect, so `effect` executes twice. The suite cancels the source inside
  * `wait`, after `effect`'s first execution completed and before its second, and
  * forks `mode: "replay"` at `effect`'s first `node.started`. In the fork:
  *   - `effect` execution 1 (n = 1) has a recorded outcome and resolves from it;
@@ -74,7 +75,7 @@ describe('v2 replay-suppression-ordinal (replay.md §Suppression rule 2, openwop
     if (!(await gateFamily('replay'))) return softSkip('inapplicable', 'replay family not advertised (gate recorded under openwop.family.replay)');
     if (!isFixtureAdvertised(FIXTURE)) return softSkip('inapplicable', `fixture ${FIXTURE} is not advertised — the host does not run cycles with a side-effecting node`);
 
-    const created = await http(() => driver.post('/runs', { workflowId: FIXTURE, inputs: { delayMs: 3000 } }));
+    const created = await http(() => driver.post('/runs', { workflowId: FIXTURE, inputs: { delayMs: 3000 }, configurable: { version: 1, run: { recursionLimit: 20 } } }));
     const runId = (created?.json as { runId?: unknown } | null)?.runId;
     if (created === null || created.status !== 201 || typeof runId !== 'string') return softSkip('blocked', `POST /runs (${FIXTURE}) answered ${created?.status ?? 'nothing'} ${readErrorCode(created?.json) ?? ''}`.trim());
 

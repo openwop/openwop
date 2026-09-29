@@ -22926,7 +22926,7 @@
     {
       "id": "openwop.it.replay-side-effect-suppression.sideeffectsuppression-when-present-is-one-of-the-two-defined-values",
       "file": "replay-side-effect-suppression.test.ts",
-      "line": 101,
+      "line": 103,
       "title": "sideEffectSuppression, when present, is one of the two defined values",
       "explicitId": "openwop.it.replay-side-effect-suppression.sideeffectsuppression-when-present-is-one-of-the-two-defined-values",
       "citations": [
@@ -22939,7 +22939,7 @@
     {
       "id": "openwop.it.replay-side-effect-suppression.fails-a-side-effecting-node-closed-with-replay-source-missing-when-the-source-ne",
       "file": "replay-side-effect-suppression.test.ts",
-      "line": 115,
+      "line": 117,
       "title": "fails a side-effecting node CLOSED with replay_source_missing when the source never recorded it",
       "explicitId": "openwop.it.replay-side-effect-suppression.fails-a-side-effecting-node-closed-with-replay-source-missing-when-the-source-ne",
       "citations": [
@@ -22974,7 +22974,7 @@
     {
       "id": "openwop.it.replay-side-effect-suppression.the-manifest-still-offers-the-role-value-the-requirement-binds",
       "file": "replay-side-effect-suppression.test.ts",
-      "line": 240,
+      "line": 242,
       "title": "the manifest still offers the role value the requirement binds",
       "explicitId": "openwop.it.replay-side-effect-suppression.the-manifest-still-offers-the-role-value-the-requirement-binds",
       "citations": [
@@ -22988,7 +22988,7 @@
     {
       "id": "openwop.it.replay-side-effect-suppression.replay-md-binds-that-declaration-naming-the-schema-it-comes-from",
       "file": "replay-side-effect-suppression.test.ts",
-      "line": 251,
+      "line": 253,
       "title": "replay.md binds that declaration, naming the schema it comes from",
       "explicitId": "openwop.it.replay-side-effect-suppression.replay-md-binds-that-declaration-naming-the-schema-it-comes-from",
       "citations": [
@@ -23002,7 +23002,7 @@
     {
       "id": "openwop.it.replay-side-effect-suppression.a-throw-is-named-a-backstop-not-a-discharge",
       "file": "replay-side-effect-suppression.test.ts",
-      "line": 261,
+      "line": 263,
       "title": "a throw is named a backstop, not a discharge",
       "explicitId": "openwop.it.replay-side-effect-suppression.a-throw-is-named-a-backstop-not-a-discharge",
       "citations": [
@@ -23016,7 +23016,7 @@
     {
       "id": "openwop.it.replay-side-effect-suppression.the-floor-direction-is-stated-not-left-to-inference",
       "file": "replay-side-effect-suppression.test.ts",
-      "line": 285,
+      "line": 287,
       "title": "the floor direction is stated, not left to inference",
       "explicitId": "openwop.it.replay-side-effect-suppression.the-floor-direction-is-stated-not-left-to-inference",
       "citations": [
@@ -33078,7 +33078,7 @@
     {
       "id": "openwop.it.v2-replay-suppression-ordinal.a-replay-fork-resolves-each-execution-of-a-looped-side-effecting-node-by-its-own",
       "file": "v2-replay-suppression-ordinal.test.ts",
-      "line": 73,
+      "line": 74,
       "title": "a replay fork resolves each execution of a looped side-effecting node by its own ordinal, failing closed where none was recorded",
       "explicitId": "openwop.requirement.replay.suppression-execution-ordinal",
       "citations": [

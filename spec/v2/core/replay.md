@@ -74,7 +74,7 @@ Suppression is an obligation of the `replay` surface: advertising `replay` binds
 For a fork with `mode: replay`:
 
 1. A node that performs an external side effect — any operation observable outside the run's own event log — MUST NOT perform it.
-2. The host MUST resolve the node's outcome from the source run's recorded terminal outcome keyed on `(sourceRunId, nodeId, n)`, never on the fork's own `runId`, where `n` counts the node's `node.started` events through this execution, including retries, later visits and the fork's inherited prefix.
+2. The host MUST resolve the node's outcome from the source run's `n`th recorded terminal outcome for the node, keyed on `(sourceRunId, nodeId, n)`, never on the fork's own `runId`, where `n` is one more than the node's `node.completed` and `node.failed` events before this execution, the fork's inherited prefix included.
 3. Absent a recorded outcome, the host MUST fail the node closed with `replay_source_missing`, MUST NOT perform the effect, and MUST NOT substitute a synthesized or empty success.
 4. A node whose pack manifest declares `role: "side-effect"` MUST be treated as side-effecting; a host classifier MAY add nodes and MUST NOT remove any. A throwing seam satisfies rule 1 only.
 5. The guarantee is whole-run and requires both classification before execution and a default-deny guard at every effect seam.
