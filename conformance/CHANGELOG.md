@@ -1,5 +1,9 @@
 # `@openwop/openwop-conformance` Changelog
 
+## [2.44.7] — unreleased — RFC 0223 G11 and RFC 0140 G10 close on a certified cut
+
+- **The 2.44.7 cycle opens.** The packed `@openwop/spec-artifacts` gaps register changes: RFC 0223 G11 (`0223.reject-loopback-reasks`) and RFC 0140 G10 (`replay.suppression-execution-ordinal`) close on the v2 reference host's certified 2.44.6 cut. No scenario is added or removed.
+
 ## [2.44.6] — 2026-09-29 — RFC 0228 registers the v1 host-service codes, RFC 0227 moves the generated error table out of the core budget, and the last core families get v2 homes
 
 - **`0171.error-registry-prose-parity` is re-pointed (RFC 0227).** The `errors.md` status table moved to `spec/v2/generated/error-codes.md`, which the packed `@openwop/spec-artifacts` now ships. The row now requires that `errors.md` links the generated table, that the table holds every registered code, and that every count either document states equals the registry. No scenario is added or removed.
