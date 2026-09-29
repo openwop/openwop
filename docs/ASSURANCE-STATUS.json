@@ -158,7 +158,7 @@
   "versions": {
     "source": "conformance/package.json, CHANGELOG.md",
     "conformanceSuite": "2.44.6",
-    "corpusRelease": "2.44.5",
+    "corpusRelease": "2.44.6",
     "corpusReleaseDate": "2026-09-29"
   },
   "risks": {
