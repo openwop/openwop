@@ -3,8 +3,8 @@
   "generatedFrom": "src/scenarios/*.test.ts",
   "counts": {
     "files": 648,
-    "tests": 2490,
-    "withStableId": 2490,
+    "tests": 2492,
+    "withStableId": 2492,
     "interpolatedTitles": 0,
     "explicitIds": 2372
   },
@@ -27856,7 +27856,7 @@
     {
       "id": "openwop.it.v2-approval-reject-disposition.a-rejected-gate-with-no-routing-edge-fails-the-run-with-approval-rejected",
       "file": "v2-approval-reject-disposition.test.ts",
-      "line": 126,
+      "line": 141,
       "title": "a rejected gate with no routing edge fails the run with approval_rejected",
       "explicitId": null,
       "citations": [
@@ -27879,7 +27879,7 @@
     {
       "id": "openwop.it.v2-approval-reject-disposition.interrupt-resolved-records-action-reject-and-decision-rejected",
       "file": "v2-approval-reject-disposition.test.ts",
-      "line": 137,
+      "line": 152,
       "title": "interrupt.resolved records action reject and decision rejected",
       "explicitId": null,
       "citations": [
@@ -27898,7 +27898,7 @@
     {
       "id": "openwop.it.v2-approval-reject-disposition.the-gate-node-fails-with-approval-rejected-not-retryable-and-run-failed-names-it",
       "file": "v2-approval-reject-disposition.test.ts",
-      "line": 150,
+      "line": 165,
       "title": "the gate node fails with approval_rejected, not retryable, and run.failed names it",
       "explicitId": null,
       "citations": [
@@ -27919,7 +27919,7 @@
     {
       "id": "openwop.it.v2-approval-reject-disposition.a-majority-reject-decides-the-quorum-gate-on-the-deciding-vote-and-fails-the-run",
       "file": "v2-approval-reject-disposition.test.ts",
-      "line": 163,
+      "line": 178,
       "title": "a majority reject decides the quorum gate on the deciding vote and fails the run with approval_rejected",
       "explicitId": null,
       "citations": [
@@ -27945,7 +27945,7 @@
     {
       "id": "openwop.it.v2-approval-reject-disposition.a-rejected-gate-routed-over-an-any-failed-edge-fails-as-a-node-its-all-success-s",
       "file": "v2-approval-reject-disposition.test.ts",
-      "line": 186,
+      "line": 201,
       "title": "a rejected gate routed over an any_failed edge fails as a node, its all_success sibling never runs, and the run completes",
       "explicitId": null,
       "citations": [
@@ -27971,7 +27971,7 @@
     {
       "id": "openwop.it.v2-approval-reject-disposition.an-unresolved-gate-past-its-timeoutms-with-no-ontimeout-is-resolved-rejected-by",
       "file": "v2-approval-reject-disposition.test.ts",
-      "line": 205,
+      "line": 220,
       "title": "an unresolved gate past its timeoutMs with no onTimeout is resolved rejected by the host and fails the run naming the gate",
       "explicitId": null,
       "citations": [
@@ -27992,7 +27992,7 @@
     {
       "id": "openwop.it.v2-approval-reject-disposition.a-gate-whose-ontimeout-is-approve-still-resolves-rejected-on-timeout-and-fails-t",
       "file": "v2-approval-reject-disposition.test.ts",
-      "line": 224,
+      "line": 239,
       "title": "a gate whose onTimeout is approve still resolves rejected on timeout and fails the run: a timeout never grants",
       "explicitId": null,
       "citations": [
@@ -28014,7 +28014,7 @@
     {
       "id": "openwop.it.v2-approval-reject-disposition.a-rejected-gate-looped-back-to-itself-is-asked-again-under-a-new-key-and-the-fir",
       "file": "v2-approval-reject-disposition.test.ts",
-      "line": 242,
+      "line": 257,
       "title": "a rejected gate looped back to itself is asked again under a new key, and the first rejection is not replayed",
       "explicitId": null,
       "citations": [
@@ -28034,6 +28034,33 @@
         {
           "section": "spec/v2/core/interrupt.md §Re-entry and resume values",
           "requirement": "an earlier visit's resumeValue MUST NOT be returned: only the one caller resolve is recorded"
+        }
+      ]
+    },
+    {
+      "id": "openwop.it.v2-approval-reject-disposition.a-replay-fork-of-a-decided-reject-derives-the-rejection-from-the-log-and-never-r",
+      "file": "v2-approval-reject-disposition.test.ts",
+      "line": 333,
+      "title": "a replay fork of a decided reject derives the rejection from the log and never re-decides it (leg A)",
+      "explicitId": null,
+      "citations": [
+        {
+          "section": "spec/v2/core/errors.md §One code per state",
+          "requirement": "a resolve against the replayed gate MUST answer 409 interrupt_already_resolved — the fork holds no open decision"
+        }
+      ]
+    },
+    {
+      "id": "openwop.it.v2-approval-reject-disposition.a-replay-fork-of-a-timed-out-gate-derives-the-timeout-rejection-from-the-log-and",
+      "file": "v2-approval-reject-disposition.test.ts",
+      "line": 348,
+      "title": "a replay fork of a timed-out gate derives the timeout rejection from the log and never re-arms it (leg B)",
+      "explicitId": null,
+      "citations": [
+        {
+          "section": null,
+          "requirement": "leg B: the derived resolution is the recorded timeout — action timeout, reason timeout, and the source's resolvedBy (a host subject or absent), never a caller",
+          "interpolated": true
         }
       ]
     },
