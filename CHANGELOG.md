@@ -383,6 +383,21 @@ Format follows [Keep a Changelog](https://keepachangelog.com/en/1/) loosely. Ver
 - **The remaining eleven stay `Active`, each for a stated reason** rather than for lack of attention. The eight RFC 0167 program children name a certified openwop-app bundle in their own acceptance criteria and the committed one reads `certified: false` (3 blocked rows, RFC 0168 §E.1). RFC 0173 additionally carries the program's only `open` gap row. RFC 0179's sole criterion is unmet — 2.4.2 stopped the gate reading "(Phase 4 leg)" as an excuse for it. RFC 0187 names three requirement ids that no scenario mints. RFC 0167 itself flips **last**, which 2.4.2 made a rule: the moment the umbrella stops being `Active`, every child still `Active` becomes permanently ineligible.
 - **The interrupt `data` union is bound to `kind`** (MCP/A2A review P3-H7, Class 3 correction — COMPATIBILITY.md §3). `schemas/suspend-request.schema.json` and its v2 twin typed `data` as an unbound `oneOf`, so the minimal `conversation.start` and `conversation.close` payloads (`{ conversationId }`, which satisfies both shapes) failed validation in v1 and v2, and a payload carrying another kind's `data` passed. `data` is now an `anyOf` and a root `allOf` binds each kind to its own shape with one `if`/`then`; no per-kind shape or `$id` changed. Witnessed by `conformance/fixtures/interrupt-payloads/` (suite 2.36.0).
 
+## [2.44.5] — 2026-09-29 — a replay short-circuit raises no new interrupt request, and the hold node's outputs are pinned
+
+A suite patch that follows up 2.44.4.
+
+### Protocol
+
+- **Class 3 clarification: a replay short-circuit raises no new `interrupt.requested`** (#1756). `replay.md` §Determinism caveats rule 2 now says `ctx.interrupt(K)` MUST short-circuit to the persisted `interrupt.resolved`, raising no new `interrupt.requested`. Before, the text covered recovery only. The change is word-neutral.
+- **RFC 0140's rule-2 note cites a measured case** (#1769 follow-up): on the v2 reference host, a fork cut right after the source's `node.started` computed n = 2 under start-counting and failed closed with `replay_source_missing`.
+
+### Conformance
+
+- **`core.conformance.hold`'s outputs are pinned** (`fixtures.md`): they are exactly its resolved inputs, `delayMs` included, under the same keys.
+- **`0223.replay-derives-rejection` cites `replay.md` rule 2** as its MUST.
+- **Suite `2.44.5`.** `@openwop/spec-artifacts` moves in lockstep at the same exact pin.
+
 ## [2.44.4] — 2026-09-29 — six more core families get v2 normative homes, replay derives a rejection and counts terminals, and the replay fixtures wait on a pure hold node
 
 A suite patch.
