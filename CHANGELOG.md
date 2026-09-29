@@ -403,6 +403,21 @@ Format follows [Keep a Changelog](https://keepachangelog.com/en/1/) loosely. Ver
 - **The remaining eleven stay `Active`, each for a stated reason** rather than for lack of attention. The eight RFC 0167 program children name a certified openwop-app bundle in their own acceptance criteria and the committed one reads `certified: false` (3 blocked rows, RFC 0168 §E.1). RFC 0173 additionally carries the program's only `open` gap row. RFC 0179's sole criterion is unmet — 2.4.2 stopped the gate reading "(Phase 4 leg)" as an excuse for it. RFC 0187 names three requirement ids that no scenario mints. RFC 0167 itself flips **last**, which 2.4.2 made a rule: the moment the umbrella stops being `Active`, every child still `Active` becomes permanently ineligible.
 - **The interrupt `data` union is bound to `kind`** (MCP/A2A review P3-H7, Class 3 correction — COMPATIBILITY.md §3). `schemas/suspend-request.schema.json` and its v2 twin typed `data` as an unbound `oneOf`, so the minimal `conversation.start` and `conversation.close` payloads (`{ conversationId }`, which satisfies both shapes) failed validation in v1 and v2, and a payload carrying another kind's `data` passed. `data` is now an `anyOf` and a root `allOf` binds each kind to its own shape with one `if`/`then`; no per-kind shape or `$id` changed. Witnessed by `conformance/fixtures/interrupt-payloads/` (suite 2.36.0).
 
+## [2.45.1] — 2026-09-29 — the run-list legs stop walking once they find their runs, and no scenario skips every test at describe level
+
+A suite patch. No requirement is added or removed.
+
+### Conformance
+
+- **The run-list legs stop walking once they find the runs they created** (#1816), instead of paging a host's whole run history.
+- **No scenario file skips every test at `describe` level** (#1818). When vitest skips a whole file at `describe` level, it runs no hooks and writes no ledger row. The remaining 56 such files now record a disposition on every test, per RFC 0148 §A:
+  - an unadvertised capability → `inapplicable`;
+  - an operator opt-in that's unset → `skipped`;
+  - a withheld fixture → `blocked`, naming it.
+
+  Against a host with no fixtures and no capabilities, 56 of 56 files now record rows, none of them unclassified; before, only 4 did. `describe-level-skip.test.ts` is now a hard rule with no ceiling.
+- **Suite `2.45.1`.** `@openwop/spec-artifacts` moves in lockstep at the same exact pin.
+
 ## [2.45.0] — 2026-09-29 — a host that grants an origin admits the contract's request headers in preflight
 
 A suite minor: it adds one scenario.
