@@ -1,12 +1,12 @@
 {
   "bundleVersion": "3",
-  "generatedAt": "2026-09-28T23:56:17.532Z",
+  "generatedAt": "2026-09-29T00:54:55.053Z",
   "suite": {
     "name": "@openwop/openwop-conformance",
-    "version": "2.44.1",
+    "version": "2.44.3",
     "targetMajor": 2,
-    "specArtifactsVersion": "2.44.1",
-    "stampSha256": "c9a9550d05910b204589704d1e2c83fac85656062d8374a94e5afedf00b011e3"
+    "specArtifactsVersion": "2.44.3",
+    "stampSha256": "bc74ca389abf79ec8f23a07b8bb2742a6a5bab984fd5a6a06c56299dcf8b7076"
   },
   "host": {
     "name": "workflow-runtime",
@@ -1385,7 +1385,7 @@
         "scenario": "v2-capability-maturity-bounded.test.ts",
         "result": "executed-pass",
         "assertions": 44,
-        "detail": "partial-witness: inapplicable: unwitnessable until the first persisted-class retirement row is due (RFC 0197 §A.3 Falsifiability): corpus 2.44.1: 0 persisted-class v2-minor retirement row(s), 0 v2→v2 migration row(s) — no retired member exists for a post-2.N event to carry. Before one does, a scenario would be vacuous, and a row that cannot fail is not a witness. This leg asserts the moment such a row falls due."
+        "detail": "partial-witness: inapplicable: unwitnessable until the first persisted-class retirement row is due (RFC 0197 §A.3 Falsifiability): corpus 2.44.3: 0 persisted-class v2-minor retirement row(s), 0 v2→v2 migration row(s) — no retired member exists for a post-2.N event to carry. Before one does, a scenario would be vacuous, and a row that cannot fail is not a witness. This leg asserts the moment such a row falls due."
       },
       {
         "id": "openwop.scenario.v2-capability-record-shape",
@@ -1566,7 +1566,7 @@
         "id": "openwop.scenario.v2-idempotency-in-flight",
         "scenario": "v2-idempotency-in-flight.test.ts",
         "result": "executed-pass",
-        "assertions": 11,
+        "assertions": 17,
         "detail": "partial-witness: inapplicable: the held-claim leg is driven through the seams profile (RFC 0213 §B) — seams profile not advertised; the unaided leg above is this host's witness"
       },
       {
@@ -2975,7 +2975,7 @@
           "recovery": {
             "class": "dispatch-hold",
             "boundMs": 45000,
-            "observedMs": 16591
+            "observedMs": 15583
           }
         }
       },
@@ -2988,7 +2988,7 @@
           "recovery": {
             "class": "dispatch-lease",
             "boundMs": 100000,
-            "observedMs": 71130
+            "observedMs": 70843
           }
         }
       },
@@ -3588,13 +3588,15 @@
         "id": "openwop.requirement.0173.webhook-durable-delivery",
         "scenario": "v2-webhook-durable-delivery.test.ts",
         "result": "executed-pass",
-        "assertions": 9
+        "assertions": 9,
+        "detail": "observed: advertised-bound (maxElapsedMs 600000): waited ≤630000ms; 3 attempt(s), last attempt after 45263ms"
       },
       {
         "id": "openwop.requirement.0173.webhook-durable-delivery.dead-letter",
         "scenario": "v2-webhook-durable-delivery.test.ts",
         "result": "executed-pass",
-        "assertions": 6
+        "assertions": 6,
+        "detail": "observed: advertised-bound (maxElapsedMs 600000): waited ≤630000ms; 5 attempt(s), last attempt after 224981ms, sink after 226481ms"
       },
       {
         "id": "openwop.requirement.0175.legacy-profiles-absent",
@@ -3918,7 +3920,8 @@
         "id": "openwop.requirement.0188.dead-letter-content-free",
         "scenario": "v2-webhook-durable-delivery.test.ts",
         "result": "executed-pass",
-        "assertions": 3
+        "assertions": 3,
+        "detail": "observed: advertised-bound (maxElapsedMs 600000): waited ≤630000ms; 5 attempt(s), last attempt after 226961ms, sink after 228621ms"
       },
       {
         "id": "openwop.requirement.0188.dead-letter-read",
@@ -3955,7 +3958,7 @@
         "scenario": "v2-capability-maturity-bounded.test.ts",
         "result": "inapplicable",
         "assertions": 0,
-        "detail": "unwitnessable until the first persisted-class retirement row is due (RFC 0197 §A.3 Falsifiability): corpus 2.44.1: 0 persisted-class v2-minor retirement row(s), 0 v2→v2 migration row(s) — no retired member exists for a post-2.N event to carry. Before one does, a scenario would be vacuous, and a row that cannot fail is not a witness. This leg asserts the moment such a row falls due."
+        "detail": "unwitnessable until the first persisted-class retirement row is due (RFC 0197 §A.3 Falsifiability): corpus 2.44.3: 0 persisted-class v2-minor retirement row(s), 0 v2→v2 migration row(s) — no retired member exists for a post-2.N event to carry. Before one does, a scenario would be vacuous, and a row that cannot fail is not a witness. This leg asserts the moment such a row falls due."
       },
       {
         "id": "openwop.requirement.0198.advertised-via-discover",
@@ -4353,7 +4356,7 @@
         "id": "openwop.requirement.0213.in-flight-loser-outcome",
         "scenario": "v2-idempotency-in-flight.test.ts",
         "result": "executed-pass",
-        "assertions": 8
+        "assertions": 14
       },
       {
         "id": "openwop.requirement.0213.in-flight-one-winner",
@@ -4443,7 +4446,8 @@
         "id": "openwop.requirement.0215.unregister-stops-delivery",
         "scenario": "v2-webhook-unregister-stops-delivery.test.ts",
         "result": "executed-pass",
-        "assertions": 7
+        "assertions": 7,
+        "detail": "observed: advertised-bound (maxElapsedMs 600000): waited ≤630000ms"
       },
       {
         "id": "openwop.requirement.0217.dead-letter-read-after-unregister",
@@ -4555,7 +4559,7 @@
       }
     ]
   },
-  "assertionCount": 3166,
+  "assertionCount": 3178,
   "detail": {
     "nonPass": [
       {
@@ -5456,7 +5460,7 @@
       {
         "id": "openwop.requirement.0197.retired-not-emitted",
         "result": "inapplicable",
-        "reason": "unwitnessable until the first persisted-class retirement row is due (RFC 0197 §A.3 Falsifiability): corpus 2.44.1: 0 persisted-class v2-minor retirement row(s), 0 v2→v2 migration row(s) — no retired member exists for a post-2.N event to carry. Before one does, a scenario would be vacuous, and a row that cannot fail is not a witness. This leg asserts the moment such a row falls due."
+        "reason": "unwitnessable until the first persisted-class retirement row is due (RFC 0197 §A.3 Falsifiability): corpus 2.44.3: 0 persisted-class v2-minor retirement row(s), 0 v2→v2 migration row(s) — no retired member exists for a post-2.N event to carry. Before one does, a scenario would be vacuous, and a row that cannot fail is not a witness. This leg asserts the moment such a row falls due."
       },
       {
         "id": "openwop.requirement.0198.advertised-via-discover",
@@ -5773,11 +5777,11 @@
   "durability": {
     "rung": "durable-single-instance"
   },
-  "witnessSha256": "49d731f026ae463cc015aca0b8000fab8f6f279bcb6f87bde0072cf3086fd900",
+  "witnessSha256": "58da9407e616b430bd5c40e8cc3bcefaf6e2d11d7fffa93ce4701b592c7496ac",
   "signature": {
     "alg": "ed25519",
     "keyId": "myndhyve-bundle-2026-09b",
-    "sig": "3SoxEbFmeyWhRLCx1Vz_Rw4O17U_Bxf81E5CxYD6BttKHer6Pp8_CWy75vxjBxbtIROdwrdAdxH7xUn0csjRAQ",
+    "sig": "Vg3g2GtLhGmAjW-hZ4f9-xNtWpbLyb3Iyx1TqJeJuJHee41iYISc6Kbqqi4BL0lKKtz7nF_JLSQpT4wtitr3Aw",
     "over": [
       "witnessSha256",
       "host.build",
