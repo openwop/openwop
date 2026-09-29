@@ -33489,12 +33489,17 @@
     {
       "id": "openwop.it.v2-run-list.two-runs-the-caller-just-created-appear-every-id-is-bound-to-the-caller-s-tenant",
       "file": "v2-run-list.test.ts",
-      "line": 62,
+      "line": 59,
       "title": "two runs the caller just created appear, every id is bound to the caller's tenant, and no page exceeds maxPageSize",
       "explicitId": "openwop.requirement.0182.run-list.tenant-scoped",
       "citations": [
         {
           "section": "spec/v2/core/capabilities.md § runList",
+          "requirement": null,
+          "interpolated": true
+        },
+        {
+          "section": "spec/v2/core/runs.md §List",
           "requirement": null,
           "interpolated": true
         },
@@ -33523,7 +33528,7 @@
     {
       "id": "openwop.it.v2-run-list.a-cursor-the-host-did-not-mint-is-refused-400-validation-error",
       "file": "v2-run-list.test.ts",
-      "line": 84,
+      "line": 82,
       "title": "a cursor the host did not mint is refused 400 validation_error",
       "explicitId": "openwop.requirement.0182.run-list.cursor-refused",
       "citations": [
@@ -33541,7 +33546,7 @@
     {
       "id": "openwop.it.v2-run-list.when-the-filters-facet-names-workflowid-a-filtered-list-contains-only-that-workf",
       "file": "v2-run-list.test.ts",
-      "line": 93,
+      "line": 91,
       "title": "when the filters facet names workflowId, a filtered list contains only that workflow",
       "explicitId": "openwop.requirement.0182.run-list.filter-exact",
       "citations": [

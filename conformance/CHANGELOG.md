@@ -1,5 +1,21 @@
 # `@openwop/openwop-conformance` Changelog
 
+## [2.45.1] — 2026-09-29 — the run-list legs stop walking once they find the runs they created
+
+- **`v2-run-list`: a bounded walk instead of a full-history walk** (patch; no requirement added or removed).
+  - **Defect.** `walk()` followed `nextCursor` to the end of the list or `MAX_PAGES` (50), although the list is newest first (`runs.md` §List) and the two runs the leg had just created sit on page 1. A long-lived host's conformance tenant gains hundreds of runs per cut, so the walk grew with the tenant's age. On openwop-app's b29427fef major-2 cut it outran the 30 s test timeout, and `0182.run-list.tenant-scoped` failed on the tenant's history, not on host behaviour.
+  - **Fix.** New pure helper `lib/run-list-walk.ts` (`walkRunList`). It stops once every created id is seen, then follows a two-page tail, so a host-minted cursor is still exercised. A created id that never appears within the 50-page cap fails the leg; it is never a silent pass.
+  - **Unchanged checks.** Every page walked is still validated against `run-list-response.schema.json`, checked against `maxPageSize`, and every id seen is checked for the caller's tenant (identity.md §5).
+  - **New check.** The unfiltered leg asserts newest-first: the second created run is listed before the first. The filtered leg uses the same walk.
+  - **Proof.**
+    - Server-free self-test `run-list-walk.test.ts` (6). Removing the early stop fails it (51 fetches, not 3), and so does dropping the tail.
+    - Measured on a stub host with 40 prior runs, 3 per page:
+      - created runs on page 1: pass.
+      - created runs on pages 3–4: pass (the walk finds them).
+      - one created run omitted: fail.
+      - another tenant's run interleaved: fail on the tenant check.
+      - created runs listed oldest first: fail on the new order check.
+
 ## [2.45.0] — 2026-09-29 — a host that grants an origin admits the contract's request headers in preflight
 
 - **New scenario `v2-cors-preflight`: `openwop.requirement.headers.cors-preflight-admits`** (#1763; minor, since a scenario is added). It witnesses the new `headers.md` §Cross-origin preflight (Class 3).

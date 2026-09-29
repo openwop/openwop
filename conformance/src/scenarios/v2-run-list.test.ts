@@ -21,10 +21,13 @@ import { gateFamily, v2Discovery, v2Validator } from '../lib/v2.js';
 import { readErrorCode } from '../lib/error-envelope.js';
 import { softSkip } from '../lib/soft-skip.js';
 import { req } from '../lib/requirement-ids.js';
+import { walkRunList, type FetchPage, type RunListPage, type WalkResult } from '../lib/run-list-walk.js';
 
 const DOC = 'spec/v2/core/runs.md §List';
 const NOOP_WORKFLOW_ID = 'conformance-noop';
 const MAX_PAGES = 50;
+/** Pages still followed after the created runs are seen, so a host-minted cursor is exercised. */
+const TAIL_PAGES = 2;
 
 async function http(fn: () => Promise<OpenWOPResponse>): Promise<OpenWOPResponse | null> {
   try { return await fn(); } catch { return null; }
@@ -40,22 +43,16 @@ async function createRun(): Promise<{ runId: string } | { reason: string }> {
 
 function tenantOf(runId: string): string { return runId.slice(0, runId.indexOf('/')); }
 
-type Page = { runs?: unknown; nextCursor?: unknown };
-
-/** Walk the list from the first page, collecting run ids, until the last page or MAX_PAGES. */
-async function walk(query: string, maxPageSize: number): Promise<{ ids: string[]; pages: Page[]; reason?: string }> {
-  const ids: string[] = []; const pages: Page[] = []; let cursor: string | undefined;
-  for (let i = 0; i < MAX_PAGES; i++) {
+/** The newest-first, stop-when-found walk (`lib/run-list-walk.ts`) over this host's `GET /runs`. */
+async function walk(query: string, maxPageSize: number, want: string[]): Promise<WalkResult> {
+  const fetchPage: FetchPage = async (cursor) => {
     const q = `${query}${query ? '&' : '?'}limit=${maxPageSize}${cursor ? `&cursor=${encodeURIComponent(cursor)}` : ''}`;
     const res = await http(() => driver.get(`/runs${q}`));
-    if (res === null) return { ids, pages, reason: `GET /runs${q} unreachable (fetch failed)` };
-    if (res.status !== 200) return { ids, pages, reason: `GET /runs${q} answered ${res.status} ${readErrorCode(res.json) ?? ''}` };
-    const page = res.json as Page; pages.push(page);
-    for (const r of Array.isArray(page.runs) ? page.runs : []) { const id = (r as { runId?: unknown }).runId; if (typeof id === 'string') ids.push(id); }
-    if (typeof page.nextCursor !== 'string') break;
-    cursor = page.nextCursor;
-  }
-  return { ids, pages };
+    if (res === null) return { reason: `GET /runs${q} unreachable (fetch failed)` };
+    if (res.status !== 200) return { reason: `GET /runs${q} answered ${res.status} ${readErrorCode(res.json) ?? ''}` };
+    return { page: res.json as RunListPage };
+  };
+  return walkRunList(fetchPage, { want, maxPages: MAX_PAGES, tailPages: TAIL_PAGES });
 }
 
 describe('RFC 0182 — run-list (gated on runList)', () => {
@@ -68,7 +65,7 @@ describe('RFC 0182 — run-list (gated on runList)', () => {
     const a = await createRun(); if ('reason' in a) return softSkip('blocked', a.reason);
     const b = await createRun(); if ('reason' in b) return softSkip('blocked', b.reason);
     const tenant = tenantOf(a.runId);
-    const walked = await walk('', maxPageSize);
+    const walked = await walk('', maxPageSize, [a.runId, b.runId]);
     if (walked.reason && walked.pages.length === 0) return softSkip('blocked', walked.reason);
     const validate = v2Validator('run-list-response');
     for (const page of walked.pages) {
@@ -77,6 +74,7 @@ describe('RFC 0182 — run-list (gated on runList)', () => {
       expect((page.runs as unknown[]).length <= maxPageSize, req('openwop.requirement.0182.run-list.tenant-scoped', DOC, `a page MUST NOT exceed the advertised runList.maxPageSize (${maxPageSize}); got ${(page.runs as unknown[]).length}`)).toBe(true);
     }
     expect(walked.ids.includes(a.runId) && walked.ids.includes(b.runId), req('openwop.requirement.0182.run-list.tenant-scoped', DOC, `a run the caller just created MUST appear in its unfiltered list — created ${a.runId} and ${b.runId}; walked ${walked.ids.length} id(s) over ${walked.pages.length} page(s)${walked.reason ? ` (${walked.reason})` : ''}`)).toBe(true);
+    expect(walked.ids.indexOf(b.runId) < walked.ids.indexOf(a.runId), req('openwop.requirement.0182.run-list.tenant-scoped', DOC, `the list MUST be newest first — ${b.runId} was created after ${a.runId}, so it MUST be listed before it`)).toBe(true);
     const foreign = walked.ids.filter((id) => tenantOf(id) !== tenant);
     expect(foreign, req('openwop.requirement.0182.run-list.tenant-scoped', 'spec/v2/core/identity.md §5', `every runId in the list MUST carry the caller's tenant segment (${tenant}) — the list is tenant-scoped by construction; found ${foreign.length} other(s): ${foreign.slice(0, 3).join(', ')}`)).toEqual([]);
   });
@@ -98,7 +96,7 @@ describe('RFC 0182 — run-list (gated on runList)', () => {
     if (!filters.includes('workflowId')) return softSkip('inapplicable', 'runList.filters does not name workflowId — the filter leg has no obligation');
     const maxPageSize = typeof fam['maxPageSize'] === 'number' ? fam['maxPageSize'] : 1;
     const c = await createRun(); if ('reason' in c) return softSkip('blocked', c.reason);
-    const walked = await walk(`?workflowId=${encodeURIComponent(NOOP_WORKFLOW_ID)}`, maxPageSize);
+    const walked = await walk(`?workflowId=${encodeURIComponent(NOOP_WORKFLOW_ID)}`, maxPageSize, [c.runId]);
     if (walked.reason && walked.pages.length === 0) return softSkip('blocked', walked.reason);
     const others = walked.pages.flatMap((p) => (Array.isArray(p.runs) ? p.runs : [])).filter((r) => (r as { workflowId?: unknown }).workflowId !== NOOP_WORKFLOW_ID);
     expect(others.length, req('openwop.requirement.0182.run-list.filter-exact', DOC, `a workflowId filter MUST be exact — every listed run's workflowId MUST equal ${NOOP_WORKFLOW_ID}; found ${others.length} other(s)`)).toBe(0);
