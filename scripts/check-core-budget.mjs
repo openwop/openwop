@@ -98,29 +98,6 @@ if (existsSync(declPath)) {
   }
 }
 
-// RFC 0227 (amends RFC 0190 §A): a GENERATED restatement of a machine-readable
-// registry sits outside the measured set, in spec/v2/generated/. The exclusion is
-// narrow and checked here: every file there MUST be listed below with the
-// generator that writes it whole, MUST name that generator in its banner, and
-// the generator's `--check` (run by openwop:check) compares it byte-for-byte. A
-// hand-written file dropped into spec/v2/generated/ fails this gate, so the
-// directory cannot become a place to file prose out of the budget (§B's hole).
-const GENERATED = {
-  'spec/v2/generated/error-codes.md': 'scripts/generate-error-envelope.mjs',
-};
-const genDir = join(ROOT, 'spec', 'v2', 'generated');
-let generatedWords = 0;
-if (existsSync(genDir)) {
-  for (const f of walk(genDir)) {
-    const rel = relative(ROOT, f);
-    const gen = GENERATED[rel];
-    if (!gen) { console.error(`=== check-core-budget FAILED — ${rel} is in spec/v2/generated/ but no generator is registered for it (RFC 0227: only generator-written registry restatements live there) ===`); process.exit(1); }
-    const text = readFileSync(f, 'utf8');
-    if (!text.includes(`by \`${gen}\`; do not edit`)) { console.error(`=== check-core-budget FAILED — ${rel} does not name its generator ${gen} in its banner ===`); process.exit(1); }
-    generatedWords += text.split(/\s+/).filter(Boolean).length;
-  }
-}
-
 const files = [...walk(DIR), ...extHomes.map((h) => join(ROOT, h))];
 const rows = files
   .map((p) => [relative(join(ROOT, 'spec', 'v2'), p), readFileSync(p, 'utf8').split(/\s+/).filter(Boolean).length])
@@ -134,4 +111,4 @@ if (total > BUDGET) {
   console.error(`=== check-core-budget FAILED — the measured kernel is ${total.toLocaleString()} words; cap ${BUDGET.toLocaleString()} (RFC 0190 §A). ${extHomes.length} ext document(s) counted because a core family declares them. ===`);
   process.exit(1);
 }
-console.log(`=== check-core-budget OK — ${total.toLocaleString()} / ${BUDGET.toLocaleString()} words across ${rows.length} document(s)${extHomes.length ? ` (incl. ${extHomes.length} ext home(s) cited by a core family)` : ''}; ${generatedWords.toLocaleString()} generated registry-restatement words unbudgeted (RFC 0227) ===`);
+console.log(`=== check-core-budget OK — ${total.toLocaleString()} / ${BUDGET.toLocaleString()} words across ${rows.length} document(s)${extHomes.length ? ` (incl. ${extHomes.length} ext home(s) cited by a core family)` : ''} ===`);

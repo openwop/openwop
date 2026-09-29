@@ -222,7 +222,7 @@
     "spec/v2/core/conformance.md": "e25f2e0f27fb5a05ee999134ac2486c8058bcc4812b2483cbd52a8517e7fa5ad",
     "spec/v2/core/connection-packs.md": "1ee129d792c537bfe82393ccb92555d8e6ddc342b1aa781a13f101b27ec38171",
     "spec/v2/core/conversation.md": "354fa57c73d11062e523a44aa75a6353c5c81aefaf306d30c42416a228c82c86",
-    "spec/v2/core/errors.md": "91f46acc9c9a5532a98cf62c69285d68575c100ff6064f0b1bf94731a087e34a",
+    "spec/v2/core/errors.md": "cbe50d40b86103bb325ae46288acaa808f841721a02b9451e94188ea523460b1",
     "spec/v2/core/events.md": "8a2767691f604b2adf76399edeeaccfc151c697fc9717dc17cf7dd57372a8c22",
     "spec/v2/core/execution.md": "56c414f6c1d33f0adcdef917adf5f37804b9b194ada6e3f653267f286fd65446",
     "spec/v2/core/form-content-packs.md": "02931227899676fd4581a27017be2a6c4953904717be9b81c29d12f87ab3917d",
@@ -292,7 +292,6 @@
     "spec/v2/facets/supportedEnvelopes.schema.json": "644f22cc2236e30a611b5b7f1ba0458ff1925d68b94c514d9672583224e126bd",
     "spec/v2/facets/webhooks.schema.json": "54b576f1d150e28e1642693d846ce471c118e9c521bdf3924185305fbd1d0de4",
     "spec/v2/facets/workflowChainPacks.schema.json": "ea625ce818fbeb746478f00f31f96ee9613d538e4409c258c1bfb517acdeaba9",
-    "spec/v2/generated/error-codes.md": "f171c0ca1be40221f9b4fbfcbce73c728c315a1e8feb8dd6bf738d6ca9e29526",
     "spec/v2/harness-trust-anchors.json": "6007b92eae16a070fbc3777424efb0abfe865fda89d096963109b96282b91205",
     "spec/v2/harness-trust-anchors.schema.json": "372b5d92337c893d3449eff3f6bfd009ac09fdac285296d8bdbe0a08fff9e34c",
     "spec/v2/id-field-bindings.json": "9f6fd280250447e26a6704811c352bb8f2ff6c4bd242befe3da0ba38962370e9",
@@ -307,5 +306,5 @@
     "spec/v2/retention-floors.json": "eaf3722d95c79947af1d4269ef85117e126518c588cfcf1a2b21b97269f51624",
     "spec/v2/surface-baseline.json": "ca7310e7b970f4cd5629e20718d77ee64427a04c7aba2e963bbfd43500ba1521"
   },
-  "corpusCommit": "48f1fc4495e0636a6390a5cdbd0b4fa924132d24"
+  "corpusCommit": "9dca8c87c2ee19ffed4fb33342270a13476ce614"
 }

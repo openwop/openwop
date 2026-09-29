@@ -14,12 +14,7 @@
  * (absent means `reject` by prose; a validator filling a default would record a
  * value the host never chose).
  *
- * RFC 0227: the table moved to spec/v2/generated/error-codes.md (a generated
- * restatement, outside the budgeted kernel). The row now checks that errors.md
- * links it and that it holds every code — the same guarantee, at its new home.
- *
  * @see spec/v2/core/errors.md
- * @see spec/v2/generated/error-codes.md
  * @see spec/v2/errors.json
  * @see spec/v2/core/interrupt.md §Rejection
  */
@@ -37,43 +32,32 @@ const ID_0223 = 'openwop.requirement.0223.code-registered';
 const CODE_0223 = 'approval_rejected';
 
 describe('v2-error-registry-prose-parity (RFC 0171 §B.1)', () => {
-  it('errors.md states the registry count and links the generated table, which renders every code', () => {
+  it('errors.md states the registry count it was generated from and renders every code', () => {
     if (V1_DIR === null) return softSkip('inapplicable', 'not a spec checkout');
     const root = join(SCHEMAS_DIR, '..');
     const registryPath = join(root, 'spec', 'v2', 'errors.json');
     const prosePath = join(root, 'spec', 'v2', 'core', 'errors.md');
-    const tablePath = join(root, 'spec', 'v2', 'generated', 'error-codes.md');
     if (!existsSync(registryPath) || !existsSync(prosePath)) {
       return softSkip('inapplicable', 'the v2 error registry or its prose is absent from this layout');
     }
     const rows = (JSON.parse(readFileSync(registryPath, 'utf8')) as { rows: Array<{ code: string }> }).rows;
     const prose = readFileSync(prosePath, 'utf8');
 
-    // The table is a generated restatement of the registry and lives outside the
-    // budgeted kernel (RFC 0190 §A as amended). The property this row protects is
-    // unchanged: a host reading the spec finds every registered code. errors.md
-    // must lead to the table, and the table must hold every code.
-    expect(
-      prose.includes('](../generated/error-codes.md)'),
-      req(ID, SECTION, 'errors.md MUST link the generated code table (spec/v2/generated/error-codes.md), so a reader of the spec reaches every registered code'),
-    ).toBe(true);
-    expect(existsSync(tablePath), req(ID, 'spec/v2/generated/error-codes.md', 'the generated code table MUST exist beside the registry it restates')).toBe(true);
-    const table = existsSync(tablePath) ? readFileSync(tablePath, 'utf8') : '';
-    const missing = rows.map((r) => r.code).filter((code) => !table.includes(`\`${code}\``));
+    const missing = rows.map((r) => r.code).filter((code) => !prose.includes(`\`${code}\``));
     expect(
       missing,
-      req(ID, 'spec/v2/generated/error-codes.md', `every registered code MUST appear in the generated table — a host reading the spec as the registry refuses codes the spec requires of it (${missing.length} of ${rows.length} absent: ${missing.slice(0, 5).join(', ')})`),
+      req(ID, SECTION, `every registered code MUST appear in the generated table — a host reading errors.md as the registry refuses codes the spec requires of it (${missing.length} of ${rows.length} absent: ${missing.slice(0, 5).join(', ')})`),
     ).toEqual([]);
 
-    const claimed = [...prose.matchAll(/(\d+) codes/g), ...table.matchAll(/(\d+) codes/g)].map((m) => Number(m[1]));
+    const claimed = [...prose.matchAll(/(\d+) codes/g)].map((m) => Number(m[1]));
     expect(
       claimed.length,
-      req(ID, SECTION, 'errors.md and the generated table state the registry size, so the claim is checkable'),
-    ).toBeGreaterThan(1);
+      req(ID, SECTION, 'errors.md states the registry size at least once, so the claim is checkable'),
+    ).toBeGreaterThan(0);
     for (const n of claimed) {
       expect(
         n,
-        req(ID, SECTION, `every count errors.md or the generated table states MUST equal the registry's row count (says ${n}, spec/v2/errors.json has ${rows.length})`),
+        req(ID, SECTION, `every count errors.md states MUST equal the registry's row count (prose says ${n}, spec/v2/errors.json has ${rows.length})`),
       ).toBe(rows.length);
     }
   });
