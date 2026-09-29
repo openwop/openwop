@@ -10,23 +10,25 @@
 >
 > Tick a box only when the change is merged on `main`. Delete an item once it is closed.
 
-## State (2026-09-28, late evening)
+## State (2026-09-28, night)
 
-- **RFCs:** `Active`: **0121** (paused), **0219**, **0222** (v2 registry operations; last box
-  needs a real yanked v2 version), **0223** (approval reject, another session's). **0038** is `Draft`
-  (Parked). **0218, 0220, 0221 and 0224 are `Accepted`** (#1728, #1733), witnessed on the certified
-  public 2.43.0 cut of the v2 reference host (#1727). Every waived-window `Accepted` RFC is
-  **provisional** (RFC 0156 §B).
-- **Suite:** **2.43.1 is published** (#1743; tag v2.43.1, GH release; npm tarball verified to carry
-  `sealBundleV3`). Its headline is #1739: the witness digest is now taken after the scrub, which
-  fixes major-1 certification. The session `close-front-page-follow-ups` opens the 2.43.2 cycle (#1740,
-  #1718) and runs its own approved cut on 2.43.1. Take a release lock
-  (`/tmp/claude-501/openwop-release-<ver>.lock`) before cutting.
-- **Site:** another session owns openwop-site (pin PR #158 plus homepage layout PRs). It has been told
-  2.43.1 is out. Don't open a competing pin bump.
-- **Cuts:** the operator's one approval ("Cut is approved") was used on 2.43.0. Every further
-  certified public cut needs a fresh approval.
-- **Open PR:** #1730 (v2-reference fork ancestry) lands in the next cycle.
+- **RFCs:** `Active`: **0121** (paused), **0222** (last box needs a real yanked v2 version),
+  **0225** (webhook `retryPolicy.maxElapsedMs`; spec-optionD is checking MyndHyve's certified 2.44.1
+  bundle as its witness) and **0226** (shared run-failure codes). **0038** is `Draft` (Parked), and
+  **0227** (#1761) is a draft until 2026-10-05. **0218–0224 are `Accepted`**, 0219 via #1764.
+  Every waived-window `Accepted` RFC is **provisional** (RFC 0156 §B).
+- **Suite:** **2.44.2 is published** (#1783). Today's releases were 2.43.2, 2.44.0 (RFCs 0225/0226,
+  0219 `Accepted`), 2.44.1 (#1774: the retry legs' timeouts cover an advertised `maxElapsedMs`) and
+  2.44.2 (#1780: `0215.no-head-of-line` records a late fan-out as `blocked`, not as head-of-line
+  blocking). No cycle is open. Four PRs from another owner (#1773, #1776–#1778) will open 2.44.3.
+  Take a release lock (`/tmp/claude-501/openwop-release-<ver>.lock`) before cutting.
+- **SDKs:** **2.5.0** (npm, PyPI, `go/v2.5.0`) sends `OpenWOP-Client-Version` on every request, set to the
+  corpus version it's built against (`CORPUS_TAG`, `2.43.0`). Re-vendoring to a newer corpus tag is
+  a separate change.
+- **Hosts:** the v2 reference host and MyndHyve (2.44.1, 271/0/0) are certified. openwop-app's
+  major 2 is certified on 2.43.1 (`86c27e613`, 261/0/0); it is re-cutting on 2.44.0 after its CORS
+  (#4204) and timeout-sweep (#4205) fixes.
+- **Cuts:** every certified public cut needs a fresh operator approval. None is outstanding.
 
 ## 1 — RFC 0121 subscription-rail witness · **owner openwop-77 (paused)**
 
@@ -107,6 +109,18 @@ Defects outside the spec:
         (never published). `packs/community.openwop-team.demo` carries stale v1 `keys/` files.
 - [x] `tiny-workflow` and `streaming-client` speak v2, and CI runs them against the v2 reference
       host (examples #100).
+
+## 6 — Follow-ups from 2026-09-28
+
+- [ ] **#1763 — CORS for v2 hosts serving browsers.** The spec says nothing about which request headers a
+      preflight must admit. Two hosts omitted `OpenWOP-Client-Version`, and openwop-app also omitted
+      `OpenWOP-Dedup`. Derive the admitted set from `api/v2/openapi.yaml`'s request-header parameters
+      rather than a hand-kept list, and add a preflight conformance leg.
+- [ ] **#1781 — no row convicts a lost or late webhook delivery.** MyndHyve lost its `run.started`
+      fan-out (myndhyve#560), and only `0215` reddened, under the wrong requirement. Add a
+      delivery-completeness leg that fails a host dropping a subscribed event past its retry bound.
+- [ ] **RFC 0219 gap G7:** `0219.no-floor-no-refusal` needs a certified host that advertises no
+      `minClientVersion`. It is externally gated.
 
 ## Pattern checks (no code owed; read new scenarios against these)
 
