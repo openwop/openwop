@@ -98,8 +98,8 @@ const errorCode = (o: unknown): string | undefined => (o as { code?: unknown } |
 const resolve = (runId: string, resumeValue: unknown): Promise<OpenWOPResponse | null> => http(() => driver.post(`/runs/${enc(runId)}/interrupts/${enc(NODE_ID)}`, { resumeValue }));
 
 /** Create a run of `fixture` and wait for it to suspend on its gate. */
-async function suspended(fixture: string): Promise<{ runId: string } | { reason: string }> {
-  const res = await http(() => driver.post('/runs', { workflowId: fixture }));
+async function suspended(fixture: string, extra: Record<string, unknown> = {}): Promise<{ runId: string } | { reason: string }> {
+  const res = await http(() => driver.post('/runs', { workflowId: fixture, ...extra }));
   if (res === null) return { reason: 'POST /runs unreachable (fetch failed)' };
   const runId = (res.json as { runId?: unknown } | null)?.runId;
   if (res.status !== 201 || typeof runId !== 'string') return { reason: `POST /runs (${fixture}) answered ${res.status} ${readErrorCode(res.json) ?? ''}`.trim() };
@@ -242,7 +242,8 @@ describe('RFC 0223 — v2-approval-reject-disposition (gated on interrupt + conf
   it('a rejected gate looped back to itself is asked again under a new key, and the first rejection is not replayed', async () => {
     if (!(await gateFamily('interrupt'))) return softSkip('inapplicable', 'interrupt family not advertised (gate recorded under openwop.family.interrupt)');
     if (!isFixtureAdvertised(LOOPBACK)) return softSkip('inapplicable', `fixture ${LOOPBACK} is not advertised — the host does not run cycles`);
-    const s = await suspended(LOOPBACK);
+    // The loop is bounded by the scenario (one reject), not by the host; recursionLimit is a runaway guard (openwop#1748).
+    const s = await suspended(LOOPBACK, { configurable: { version: 1, run: { recursionLimit: 20 } } });
     if ('reason' in s) return softSkip('blocked', s.reason);
     const res = await resolve(s.runId, { action: 'reject' });
     if (res === null || res.status < 200 || res.status >= 300) return softSkip('blocked', `the reject resolve answered ${res?.status ?? 'nothing'} ${readErrorCode(res?.json) ?? ''} — interrupt resolution owns that contract`);

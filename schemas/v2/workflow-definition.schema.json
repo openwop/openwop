@@ -845,7 +845,8 @@
         "maxLoopbackIterations": {
           "type": "integer",
           "minimum": 1,
-          "default": 5
+          "default": 5,
+          "description": "Authoring hint. The protocol binds no enforcement to it: a run's loop bounds are configurable.run.recursionLimit and maxLoopIterations (v2 runs.md §run section) and node-level caps. Hosts differ on what it counts and what happens at the limit; a future additive RFC may bind it (openwop#1748)."
         },
         "compensation": {
           "$ref": "compensation-policy.schema.json",

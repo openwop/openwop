@@ -255,7 +255,7 @@ The `messages`-mode stream fixture (AI token streaming) is covered by the determ
 
 - **Purpose**: witness that `key` is per visit (`spec/v2/core/interrupt.md` §Re-entry and resume values, openwop#1697).
 - **Inputs**: none.
-- **Graph**: `start` (`core.noop`) → `gate` (`any_success`); `gate` → `revise` (`core.noop`, `any_failed`); `revise` → `gate` (`any_success`). `settings.maxLoopbackIterations: 2`.
+- **Graph**: `start` (`core.noop`) → `gate` (`any_success`); `gate` → `revise` (`core.noop`, `any_failed`); `revise` → `gate` (`any_success`). The loop is bounded by the scenario (a single reject; cancel plus fail-closed), not by the host. The scenario creates the run with `configurable: { version: 1, run: { recursionLimit: 20 } }` as a runaway guard (`runs.md` §run section). `settings.maxLoopbackIterations: 2` stays in the JSON as authoring metadata; the scenario does not depend on it (openwop#1748).
 - **Behavior**:
   1. Run reaches `gate` and MUST be `waiting-approval`.
   2. Client POSTs `{action: 'reject'}`. `gate` fails with `approval_rejected`, and `revise` runs.
@@ -307,7 +307,7 @@ The `messages`-mode stream fixture (AI token streaming) is covered by the determ
 ### `conformance-replay-ordinal-loop`
 
 - **Purpose**: witness that a replay fork keys a side-effecting node's recorded outcome on `(sourceRunId, nodeId, n)`, where `n` is one more than the node's recorded terminals (`node.completed`, `node.failed`) before this execution (`spec/v2/core/replay.md` §Suppression rule 2, openwop#1718, re-corrected by openwop#1769).
-- **Shape**: `start` (`core.noop`) → `effect` (`core.conformance.side-effect`, `any_success`) → `wait` (`core.conformance.hold`) → `effect` (`any_success`); `settings.maxLoopbackIterations: 2`, so `effect` executes twice.
+- **Shape**: `start` (`core.noop`) → `effect` (`core.conformance.side-effect`, `any_success`) → `wait` (`core.conformance.hold`) → `effect` (`any_success`), so `effect` executes twice. The loop is bounded by the scenario (a single reject; cancel plus fail-closed), not by the host. The scenario creates the run with `configurable: { version: 1, run: { recursionLimit: 20 } }` as a runaway guard (`runs.md` §run section). `settings.maxLoopbackIterations: 2` stays in the JSON as authoring metadata; the scenario does not depend on it (openwop#1748).
 - **Inputs**: `delayMs` (integer, default 3000), long enough to cancel inside `wait`.
 - **Expected behavior**:
   1. The source run completes `effect`'s first execution. The client cancels it inside `wait`, before the second execution.
