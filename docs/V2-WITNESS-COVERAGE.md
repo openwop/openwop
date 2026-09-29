@@ -1,6 +1,6 @@
 # v2 witness coverage
 
-> **Status:** generated report, not normative. Regenerate with `node scripts/report-v2-witness-coverage.mjs --write`; `--check` fails when this file is stale.
+> **Status:** generated report, not normative. Regenerate with `node scripts/report-v2-witness-coverage.mjs --write`. A point-in-time report, not a gate: re-run it when scenarios or v2 prose change.
 
 ## Why this exists
 

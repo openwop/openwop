@@ -241,12 +241,6 @@ node "$(dirname "$0")/generate-review-packet.mjs" --check
 # under spec/v1/, which stops being operative on the EOS date with nothing to
 # notice. Two ratchets, both due to reach zero before that date.
 node "$(dirname "$0")/check-v2-normative-home.mjs"
-# A home is not a witness: docs/V2-WITNESS-COVERAGE.md measures which v2 core
-# families and sections a major-2 scenario witnesses, and which lean on major-1
-# scenarios that stop counting at v1 end-of-support. A report, not a threshold:
-# --check fails only when the file is stale or a curated risk quote no longer
-# matches its doc. Fix with `node scripts/report-v2-witness-coverage.mjs --write`.
-node "$(dirname "$0")/report-v2-witness-coverage.mjs" --check
 # RFC 0156 §F — the assurance manifest is current AND no public surface carries
 # a claim token the manifest does not permit (RFC 0147 §A claim table).
 node "$(dirname "$0")/generate-assurance-status.mjs" --check

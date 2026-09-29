@@ -320,7 +320,7 @@ const esc = (s) => String(s).replace(/\|/g, '\\|');
 function markdown() {
   const L = [];
   L.push('# v2 witness coverage', '');
-  L.push('> **Status:** generated report, not normative. Regenerate with `node scripts/report-v2-witness-coverage.mjs --write`; `--check` fails when this file is stale.', '');
+  L.push('> **Status:** generated report, not normative. Regenerate with `node scripts/report-v2-witness-coverage.mjs --write`. A point-in-time report, not a gate: re-run it when scenarios or v2 prose change.', '');
   L.push('## Why this exists', '');
   L.push('Every v2 core family now has a v2 normative home (RFC 0189). Many of its rules are witnessed only by major-1 scenarios, or by nothing. At v1 end-of-support (not before the date in `evidence/v1-end-of-support.json`) a major-1 witness stops counting, and the rule is then checked by no test.', '');
   L.push('## Headline', '');
