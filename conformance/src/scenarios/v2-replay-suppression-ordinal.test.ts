@@ -75,7 +75,7 @@ describe('v2 replay-suppression-ordinal (replay.md §Suppression rule 2, openwop
     if (!(await gateFamily('replay'))) return softSkip('inapplicable', 'replay family not advertised (gate recorded under openwop.family.replay)');
     if (!isFixtureAdvertised(FIXTURE)) return softSkip('inapplicable', `fixture ${FIXTURE} is not advertised — the host does not run cycles with a side-effecting node`);
 
-    const created = await http(() => driver.post('/runs', { workflowId: FIXTURE, inputs: { delayMs: 3000 } }));
+    const created = await http(() => driver.post('/runs', { workflowId: FIXTURE, inputs: { delayMs: 3000 }, configurable: { version: 1, run: { recursionLimit: 20 } } }));
     const runId = (created?.json as { runId?: unknown } | null)?.runId;
     if (created === null || created.status !== 201 || typeof runId !== 'string') return softSkip('blocked', `POST /runs (${FIXTURE}) answered ${created?.status ?? 'nothing'} ${readErrorCode(created?.json) ?? ''}`.trim());
 
