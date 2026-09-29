@@ -1214,7 +1214,7 @@
     {
       "key": "budget",
       "kind": "family",
-      "normativeText": ["spec/v1/budget-policy.md"],
+      "normativeText": ["spec/v2/core/runs.md", "schemas/v2/budget-policy.schema.json"],
       "anchor": "core",
       "section": "core/capabilities.md#budget",
       "peerDependencyId": "budget",
@@ -1582,7 +1582,7 @@
     {
       "key": "production",
       "kind": "family",
-      "normativeText": ["spec/v1/production-profile.md"],
+      "normativeText": ["spec/v2/core/conformance.md"],
       "anchor": "core",
       "section": "core/capabilities.md#production",
       "peerDependencyId": "production",

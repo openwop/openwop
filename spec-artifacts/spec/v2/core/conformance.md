@@ -1,6 +1,7 @@
 # Conformance
 
 > **Status: Stable.**
+> **Normative home:** `production`.
 
 ## Why this exists
 
@@ -141,8 +142,23 @@ Recovery evidence rides on rows: a row's `evidence` enters `witnessSha256` only 
 
 This proves the arithmetic and that recovery ran once inside the bound. It does not prove the kill landed in the class it names; killing only once the execution claim is held is the host's obligation.
 
+## Production profile
+
+`production` is the operational bar for a public host. A host claiming it:
+
+- MUST pass `openwop-core-standard` and serve the events channel or poll, and SHOULD serve both; it MUST publish the suite version and command used, and document every optional profile it claims;
+- MUST persist run state and event logs outside process memory, replayable after restart, including stale-claim recovery;
+- MUST tolerate at least five retries of one `Idempotency-Key` within its retention;
+- MUST log run id, tenant or project id, terminal status, error code and correlation id, and SHOULD export the `openwop.*` OTel spans and metrics.
+
+Its facets:
+
+- **`backpressure`.** At capacity it MUST answer `503 service_unavailable` with `Retry-After`. A hold beyond 24 hours SHOULD omit the header.
+- **`retention`.** It MUST document event-log retention, at least 7 days for snapshots and events unless labelled development-only. An expired run MUST answer `404 not_found` or `410 run_expired`, and SHOULD answer `410` when expiry is known.
+- **`debugBundle`.** A debug bundle (`schemas/v2/debug-bundle.schema.json`) MUST redact secrets and tokens and MUST mark truncation explicitly; the host MUST document its truncation limits.
+
 ## Corpus-gate evidence
 
 An RFC whose acceptance criteria are corpus gates rather than host scenarios records the evidence label **corpus gate — no host tier** in its `Updated` line. For such an RFC the accepted-predicate check reads `(corpus)` rows from `evidence/corpus-ledger.json` and MUST NOT require a host bundle.
 
-*Sources: RFCs 0158, 0168, 0212, 0216.*
+*Sources: RFCs 0009, 0158, 0168, 0212, 0216, 0228.*
