@@ -1,13 +1,16 @@
 # `@openwop/openwop-conformance` Changelog
 
-## [2.44.3] — unreleased — twenty-one more core families get v2 normative homes
+## [2.44.4] — unreleased — six more core families get v2 normative homes
+
+- **The 2.44.4 cycle opens.** Six more core families get a v2 normative home (RFC 0189), which changes the packed `@openwop/spec-artifacts` tree: `memory`, `prompts` and `aiProviders` in `host-services.md`; `limits` in `runs.md`; `artifactTypes` in a new `artifact-type-packs.md`, with field-level rules in `schemas/v2/artifact-type-pack-manifest.schema.json` descriptions. v1-dependent core families: 8 → 3 (`agents`, `budget`, `production`, each blocked on error codes v2 does not register). No scenario changes.
+
+## [2.44.3] — 2026-09-28 — fifteen more core families get v2 normative homes, and webhook retry rows record the wait path they measured
 
 - **Webhook retry rows say which wait path ran and what they measured** (RFC 0225 witness). A passing dead-letter row carried no detail, so a bundle could not show whether its wait came from the host's advertised `retryPolicy.maxElapsedMs`, an operator-raised cap or the 20 s floor, or when the dead-letter arrived. MyndHyve's 2.44.1 cut was the case: it advertises 600000, and it could not be counted as RFC 0225's witness. Rows driven by `retryWaitFor` now carry an informational detail, on passes too. `0173.webhook-durable-delivery.dead-letter` and `0188.dead-letter-content-free` record, for example, `observed: advertised-bound (maxElapsedMs 600000): waited ≤630000ms; 5 attempt(s), last attempt after 225031ms, sink after 231412ms`. The last attempt is a lower bound on the dead-letter time, and the sink read an upper bound. The retry leg, `v2-webhook-unregister-stops-delivery` and `v2-webhook-message-id-stable` record the path and window. The detail is prefixed `observed: `, never `partial-witness: `, so `check-accepted-predicate` counts the row as a full witness. The bundle already carries `detail` on every row inside the witness digest, so the note is signed. New `lib/row-observation.ts`, attached in `setup.ts`; `retryWaitSelection` / `waitObservation` in `lib/webhook-retry-window.ts`; server-free tests in `row-observation.test.ts` and `webhook-retry-window.test.ts`, each sabotage-checked.
 - **The 2.44.3 cycle opens.** Fifteen core families get a v2 normative home (RFC 0189), which changes the packed `@openwop/spec-artifacts` tree. v1-dependent core families fall from 23 to 8. No scenario changes: the rules are restated, none added.
   - `events.md`: `feedback`, `providerUsage`, `envelopes`, and the rest of `heartbeat`.
   - `host-services.md`: `secrets`, `modelCapabilities`, `scheduling`, `queueBus`, `toolHooks`, `httpClient`; `runs.md`: `deadLetter`.
   - New `execution.md`: `selfHostedRunner`, `subWorkflow`, `multiAgent` (the family claim and `executionModel` facet); `identity.md` §1.5: `anonymousActor`.
-- **Six more families get a v2 normative home** (RFC 0189), in the same cycle: `memory`, `prompts` and `aiProviders` in `host-services.md`; `limits` in `runs.md`; `artifactTypes` in a new `artifact-type-packs.md`, with field-level rules in `schemas/v2/artifact-type-pack-manifest.schema.json` descriptions. v1-dependent core families: 8 → 3 (`agents`, `budget`, `production`, each blocked on error codes v2 does not register). No scenario changes.
 
 ## [2.44.2] — 2026-09-28 — RFC 0215's no-head-of-line leg does not convict a late fan-out, and says when it sampled each count
 
