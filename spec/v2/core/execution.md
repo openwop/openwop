@@ -44,6 +44,9 @@ A runner is a user-operated process that dials out, holds credentials the host c
 | 5 | stateful loop lifecycle and context budget |
 | 6 | verifier turn and convergence |
 
+Levels 2–6 are not yet restated in v2 prose. Their rules are those of their owning RFCs: level 2 [RFC 0039](https://github.com/openwop/openwop/blob/main/RFCS/0039-multi-agent-confidence-and-memory-lifecycle.md), level 3 [RFC 0040](https://github.com/openwop/openwop/blob/main/RFCS/0040-multi-agent-cross-host-causation.md), level 4 [RFC 0041](https://github.com/openwop/openwop/blob/main/RFCS/0041-multi-agent-replay-under-nondeterminism.md), level 5 [RFC 0061](https://github.com/openwop/openwop/blob/main/RFCS/0061-agent-loop-lifecycle.md) and [RFC 0111](https://github.com/openwop/openwop/blob/main/RFCS/0111-context-economy.md), level 6 [RFC 0090](https://github.com/openwop/openwop/blob/main/RFCS/0090-agent-verifier-and-convergence.md).
+
+
 At level 1, a workflow whose `core.orchestrator.supervisor` feeds `core.dispatch` runs this loop:
 
 - Each turn records one decision as `runOrchestrator.decided`. `terminate` completes the run; `clarify` and `escalate` suspend on a `clarification` or `approval` interrupt; `next-worker` dispatches each of `nextWorkerIds[]` as a child run, and the next turn waits for all of them.
