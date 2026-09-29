@@ -6,7 +6,7 @@
 
 RFC 0156 §B: RFCs affecting auth, identity, tenant isolation, secrets, packs, execution sandboxing, idempotency, replay, external effects, conformance/certification, or governance **MUST** receive a retrospective **cross-organization** review. Every RFC below was accepted with its public comment window shortened, either under the bootstrap waiver or by explicit steward override of RFC 0147 §A.6. Each such acceptance is **provisional** until a reviewer from an organization other than the steward's records an outcome.
 
-This packet is for that reviewer. **105 RFCs are listed; 105 have no discharging outcome.** The steward, the steward's sessions, and steward-affiliated hosts (MyndHyve is tier-2, not independent) cannot supply the review. Recording one of their reviews as `ratified` is the substitution §B's last clause forbids.
+This packet is for that reviewer. **106 RFCs are listed; 106 have no discharging outcome.** The steward, the steward's sessions, and steward-affiliated hosts (MyndHyve is tier-2, not independent) cannot supply the review. Recording one of their reviews as `ratified` is the substitution §B's last clause forbids.
 
 ## How to review one RFC
 
@@ -55,7 +55,7 @@ Grouping below is a reading aid only: it assigns each RFC to the risk class its 
 | --- | --- | --- | --- | --- | --- |
 | [0221](../RFCS/0221-generated-webhook-secret-returned-once.md) | a webhook secret the host generates is returned once | `Accepted` | steward override of RFC 0147 §A.6 | tier-1 — the v2 reference host's certified public cut on published suite 2 | `not-reviewed` |
 
-## Packs and registry (10)
+## Packs and registry (11)
 
 | RFC | Title | Status | Waiver | Evidence tier | Outcome |
 | --- | --- | --- | --- | --- | --- |
@@ -69,6 +69,7 @@ Grouping below is a reading aid only: it assigns each RFC to the risk class its 
 | [0203](../RFCS/0203-remote-runtime-mcp-registry-record.md) | a remote node-pack runtime may name its MCP server by its registry record | `Accepted` | bootstrap waiver | corpus gate — no host tier is claimed**: every rule here is a property of the signed mani… | `not-reviewed` |
 | [0220](../RFCS/0220-ext-families-graduate-on-evidence.md) | an extension family graduates on evidence a script can read | `Accepted` | steward override of RFC 0147 §A.6 | tier-2 — steward-affiliated sibling host | `not-reviewed` |
 | [0222](../RFCS/0222-v2-registry-operations.md) | v2 registry operations — lifecycle by publication, key rotation, and the checks a registry refuses on | `Active` | bootstrap waiver | not declared (predates RFC 0174 §B.1, or not yet Accepted) | `not-reviewed` |
+| [0227](../RFCS/0227-generated-registry-tables-outside-the-budget.md) | a generated restatement of a registry is not kernel prose | `Active` | bootstrap waiver | not declared (predates RFC 0174 §B.1, or not yet Accepted) | `not-reviewed` |
 
 ## Idempotency (2)
 

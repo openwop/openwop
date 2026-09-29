@@ -13511,6 +13511,23 @@
       ]
     },
     {
+      "id": "openwop.gap.0227.1",
+      "rfc": "0227",
+      "local": "G1",
+      "section": "§A",
+      "surface": "Other registries with generated restatements inside `spec/v2/core/` (for example `headers.md`, which `derive-v2-api.py` writes) are not moved by this RFC.",
+      "witness": "unclassified",
+      "requirementId": null,
+      "disposition": "closed",
+      "target": null,
+      "sources": [
+        {
+          "file": "RFCS/registers/0227-generated-registry-tables-outside-the-budget.gaps.md",
+          "token": "G1"
+        }
+      ]
+    },
+    {
       "id": "openwop.gap.0228.1",
       "rfc": "0228",
       "local": "G1",
