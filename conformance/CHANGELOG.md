@@ -1,6 +1,6 @@
 # `@openwop/openwop-conformance` Changelog
 
-## [2.45.0] — unreleased — a host that grants an origin admits the contract's request headers in preflight
+## [2.45.0] — 2026-09-29 — a host that grants an origin admits the contract's request headers in preflight
 
 - **New scenario `v2-cors-preflight`: `openwop.requirement.headers.cors-preflight-admits`** (#1763; minor, since a scenario is added). It witnesses the new `headers.md` §Cross-origin preflight (Class 3).
   - **Probe.** For every operation in `spec/v2/path-manifest.json` it sends `OPTIONS <path>` with `Origin`, `Access-Control-Request-Method`, and `Access-Control-Request-Headers`. The headers requested are that operation's declared request headers, plus `authorization` when authenticated and `content-type` with a body.
