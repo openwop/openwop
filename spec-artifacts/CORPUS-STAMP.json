@@ -249,7 +249,7 @@
     "spec/v2/core/workflow-chain-packs.md": "fdce7a8477e269950a2bac05ee6eddbd66eb0b670b464d00054f7196ec05d29c",
     "spec/v2/corrections.json": "59f647f4d22477f6c2b06dcf913b682dde5d51dd5e607a5d0cf648ab60864d6e",
     "spec/v2/corrections.schema.json": "46bbffb954d13bd9995aebc912ceeb2544f7064331abf25fd6ab85c81a5cec94",
-    "spec/v2/declaration.json": "368d48b810c76258809b45ae408212e036b5078740f056ca5e388cfb269ef913",
+    "spec/v2/declaration.json": "edace8c4ec7e32aba44828f459e2ae8933dc88ec8129f16549bca6279e3ca24c",
     "spec/v2/declaration.schema.json": "ef951633e4070899f64828f5cf1b5f4870270a0360f81dbb49b5b4d6cd407550",
     "spec/v2/errors.json": "fa650cbbdf25a140fdaf82ec5269f95b4585ac4bdde1fa6b0b3ffe48a3f7943c",
     "spec/v2/errors.schema.json": "47404ad53e6147cf9017b813483712466573e419fb33e6c4b6c12d3e7deba1bc",
@@ -267,11 +267,11 @@
     "spec/v2/ext/kanban/README.md": "bfc386dc0f874a4afa1e3ec6a2f99084b547dcce9bd363da3b8ebd8786b9c184",
     "spec/v2/ext/knowledge/README.md": "cbe1f945a757791dedac0fd542a68c86c5b457778b831d58d9ae44a2baa270f2",
     "spec/v2/ext/launchStudio/README.md": "a941ef1d2401438a412eaea48d2d6ca807a032b44ea08719fea33120daf088a0",
-    "spec/v2/ext/messaging/README.md": "949f350e35294f52ad490e42699f8c560cd154549516fbaa1805f06312b7f342",
+    "spec/v2/ext/messaging/README.md": "ee2d19fb6f6c2de11d889e966a41e6d1ff34272771689a81d7de039105a5be03",
     "spec/v2/ext/portability/README.md": "c59423ee446638b748a911b9e97e803c4786157be6120f656f0a060586bc7b82",
     "spec/v2/ext/provider-idempotency/README.md": "9d1bccef0ec16a19a3370ae79c2f5a1726ce0d1d25a51352907f288a2ccb15d7",
     "spec/v2/ext/provider-idempotency/registry.json": "5b5fecad604fb4ab38da39f5abe697a4e57b05406c398f8afeb377331b2bd965",
-    "spec/v2/ext/restTransport/README.md": "c875fd7ae4818a5d5e93ab9b21e569de8700bb07c4dafacd60a46a46e4022ddb",
+    "spec/v2/ext/restTransport/README.md": "bd7207683b2fbcead78bdb7d474fa723e08adad500185ea10804fd4e99541c0c",
     "spec/v2/ext/sandbox-runtime-notes/README.md": "0d1290fb1e20b2e35c0b15051541ab6546e4e2a6f693b4f912cb3f7d6a65e92c",
     "spec/v2/ext/webResearch/README.md": "b675e6f6646128d781b661f754c2393eed86e5935d16c3a22df582a5ce025b9b",
     "spec/v2/facets/a2a.schema.json": "b68bf5e29e455e46c2ad7cfcccf5963730ec2310ff9db81884550d8df30fd6ef",
@@ -305,5 +305,5 @@
     "spec/v2/retention-floors.json": "eaf3722d95c79947af1d4269ef85117e126518c588cfcf1a2b21b97269f51624",
     "spec/v2/surface-baseline.json": "8acb9fab0aca69abfe40dc56fcf48729aaf0d56a41467962e5c7247f3548eea3"
   },
-  "corpusCommit": "ff6aebf85d4011c6b3623e65c4570499b0582ad7"
+  "corpusCommit": "aae3b20d2f18ca6e62e53dc6cc643142afd74832"
 }

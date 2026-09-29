@@ -1763,7 +1763,7 @@
       "witness": "witnessable-gated",
       "maturity": {
         "technical": "stable",
-        "adoption": "single-witness"
+        "adoption": "multi-witness"
       },
       "facets": [
         "conditionalRunGet",
@@ -1966,7 +1966,7 @@
       "witness": "claims-check",
       "maturity": {
         "technical": "stable",
-        "adoption": "single-witness"
+        "adoption": "multi-witness"
       },
       "facets": [],
       "floorScenarios": [],
