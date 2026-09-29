@@ -1,7 +1,7 @@
 # Runs
 
 > **Status: Stable.**
-> **Normative home:** `runList`, `limits`, `conversationPrimitive`, `dataResidency`, `deadLetter`.
+> **Normative home:** `runList`, `limits`, `conversationPrimitive`, `dataResidency`, `deadLetter`, `budget`.
 
 ## Why this exists
 
@@ -113,6 +113,16 @@ The `201` response is `{ runId, status, eventsUrl, statusUrl? }`. `status` is on
 ### `distillation` section
 
 `tokenBudget` resolves to `min(tokenBudget, memory.distillation.maxTokenBudget)`. A run that cannot distill within it MUST fail atomically with `token_budget_exceeded`.
+
+### `budget` section
+
+`budget` caps a run's spend. The effective budget is the minimum across the `scopes` that apply (run, workflow, agent, project), clamped as §Limits says. Only the run scope has a wire surface. Whichever of `budget` and the `run` section binds first fires its own `cap.breached` kind.
+
+- `budget.reserved` records the effective budget, and consumption is derived from `provider.usage`, `agent.toolCalled` and `node.retried`, never measured twice. A replay reuses both.
+- Under either `enforce` mode a host MUST emit `budget.reserved`, `budget.threshold-crossed` and `budget.exhausted`, and MAY coalesce `budget.consumed`.
+- `hard` exhaustion under `onExhaustion: fail` emits `cap.breached` (`kind: budget-*`) and fails the run `budget_exhausted`. Under `interrupt` it raises an approval whose `resumeValue` adds budget, recorded by a second `budget.reserved`. An `advisory` host MUST NOT stop the run.
+- A resolved model outside `modelAllow`, or in `modelDeny` (which wins), is refused `budget_model_denied` before the call.
+- `dimensions` lists only what the host enforces and MAY omit `cost`. The `budget.*` events and `cap.breached` MUST NOT carry rate cards, unit prices, cost breakdowns, credentials or model prose (`budget-no-pricing-leak`); the aggregate cost is allowed.
 
 ### Validation and persistence
 
