@@ -13481,11 +13481,11 @@
       "rfc": "0225",
       "local": "G1",
       "section": "§Implementation notes",
-      "surface": "No host advertises `retryPolicy.maxElapsedMs` yet, so the new row has no witness.",
+      "surface": "No host advertised `retryPolicy.maxElapsedMs`, so the row had no witness.",
       "witness": "unclassified",
       "requirementId": null,
-      "disposition": "externally-gated",
-      "target": "host-advertises-max-elapsed",
+      "disposition": "closed",
+      "target": null,
       "sources": [
         {
           "file": "RFCS/registers/0225-webhook-retry-max-elapsed.gaps.md",
