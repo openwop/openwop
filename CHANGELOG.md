@@ -399,6 +399,15 @@ Format follows [Keep a Changelog](https://keepachangelog.com/en/1/) loosely. Ver
 - **The remaining eleven stay `Active`, each for a stated reason** rather than for lack of attention. The eight RFC 0167 program children name a certified openwop-app bundle in their own acceptance criteria and the committed one reads `certified: false` (3 blocked rows, RFC 0168 §E.1). RFC 0173 additionally carries the program's only `open` gap row. RFC 0179's sole criterion is unmet — 2.4.2 stopped the gate reading "(Phase 4 leg)" as an excuse for it. RFC 0187 names three requirement ids that no scenario mints. RFC 0167 itself flips **last**, which 2.4.2 made a rule: the moment the umbrella stops being `Active`, every child still `Active` becomes permanently ineligible.
 - **The interrupt `data` union is bound to `kind`** (MCP/A2A review P3-H7, Class 3 correction — COMPATIBILITY.md §3). `schemas/suspend-request.schema.json` and its v2 twin typed `data` as an unbound `oneOf`, so the minimal `conversation.start` and `conversation.close` payloads (`{ conversationId }`, which satisfies both shapes) failed validation in v1 and v2, and a payload carrying another kind's `data` passed. `data` is now an `anyOf` and a root `allOf` binds each kind to its own shape with one `if`/`then`; no per-kind shape or `$id` changed. Witnessed by `conformance/fixtures/interrupt-payloads/` (suite 2.36.0).
 
+## [2.44.8] — 2026-09-29 — every subscribed event of a run is delivered
+
+A suite patch.
+
+### Conformance
+
+- **`0173.webhook-delivery-complete`: every matching event reaches a healthy receiver at least once** (#1781, #1810). A new leg in `v2-webhook-durable-delivery`, gated on `webhooks`, witnesses `webhooks.md` §Durability: "deliver each matching event at least once", and best-effort delivery is not conforming. Duplicates are permitted and are counted only in the row's `observed:` detail. A missing event is waited for up to the host's retry window (`retryWaitFor`). The leg convicts a host that drops a subscribed event. Before this, a lost `run.started` fan-out was caught only incidentally (myndhyve#560).
+- **Suite `2.44.8`.** `@openwop/spec-artifacts` moves in lockstep at the same exact pin.
+
 ## [2.44.7] — 2026-09-29 — RFC 0223 G11 and RFC 0140 G10 close on a certified cut
 
 A suite patch. Evidence and gap-register changes only; no scenario is added or changed.
