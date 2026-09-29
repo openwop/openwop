@@ -398,6 +398,22 @@ Format follows [Keep a Changelog](https://keepachangelog.com/en/1/) loosely. Ver
 - **The remaining eleven stay `Active`, each for a stated reason** rather than for lack of attention. The eight RFC 0167 program children name a certified openwop-app bundle in their own acceptance criteria and the committed one reads `certified: false` (3 blocked rows, RFC 0168 §E.1). RFC 0173 additionally carries the program's only `open` gap row. RFC 0179's sole criterion is unmet — 2.4.2 stopped the gate reading "(Phase 4 leg)" as an excuse for it. RFC 0187 names three requirement ids that no scenario mints. RFC 0167 itself flips **last**, which 2.4.2 made a rule: the moment the umbrella stops being `Active`, every child still `Active` becomes permanently ineligible.
 - **The interrupt `data` union is bound to `kind`** (MCP/A2A review P3-H7, Class 3 correction — COMPATIBILITY.md §3). `schemas/suspend-request.schema.json` and its v2 twin typed `data` as an unbound `oneOf`, so the minimal `conversation.start` and `conversation.close` payloads (`{ conversationId }`, which satisfies both shapes) failed validation in v1 and v2, and a payload carrying another kind's `data` passed. `data` is now an `anyOf` and a root `allOf` binds each kind to its own shape with one `if`/`then`; no per-kind shape or `$id` changed. Witnessed by `conformance/fixtures/interrupt-payloads/` (suite 2.36.0).
 
+## [2.44.7] — 2026-09-29 — RFC 0223 G11 and RFC 0140 G10 close on a certified cut
+
+A suite patch. Evidence and gap-register changes only; no scenario is added or changed.
+
+### Evidence
+
+- **The v2 reference host's certified public cut on 2.44.6** (#1808; build `commit:0b04cac`, 437 pass / 0 fail / 0 blocked, witness `188a23d56886`, signed `v2-reference-4`, relaxations none, egress guard closed). The host now runs bounded cycles (openwop-examples #137).
+- **RFC 0223 gap G11 is closed.** `0223.reject-loopback-reasks` is `executed-pass`: a looped-back gate raises a new `interrupt.requested` under a new per-visit key.
+- **RFC 0140 gap G10 is closed.** `replay.suppression-execution-ordinal` is `executed-pass`.
+- **RFC 0223's falsifiability table** names the full requirement ids for `replay-derives-rejection` and `reject-loopback-reasks`.
+- **A v2 witness coverage report** is added (#1807).
+
+### Conformance
+
+- **Suite `2.44.7`.** `@openwop/spec-artifacts` moves in lockstep at the same exact pin, and carries the updated gaps register.
+
 ## [2.44.6] — 2026-09-29 — RFC 0228 registers the v1 host-service codes, RFC 0227 moves the generated error table out of the core budget, and the last core families get v2 homes
 
 A suite patch.
