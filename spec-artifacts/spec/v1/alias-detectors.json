@@ -1,7 +1,7 @@
 {
   "$comment": "RFC 0167 §E — the alias inventory as data. Each detector names a literal token that, while present in the named file, proves an alias or legacy spelling is still in the corpus, and the spec/v1/deprecations.json row that must cover it. scripts/check-alias-coverage.mjs fails when a token is present and its row is missing, or when a row's detector token has disappeared (the alias is gone — retire the detector with the surface). Reviewed, not derived: a grep cannot decide what is an alias; this file records the decision.",
   "version": 1,
-  "updated": "2026-09-22",
+  "updated": "2026-09-28",
   "detectors": [
     {
       "alias": "capabilities wrapper object",
@@ -314,6 +314,24 @@
       "file": "spec/v1/i18n.md",
       "token": "## `locale` field on `InterruptPayload`",
       "deprecation": "openwop.deprecation.interrupt-locale-field"
+    },
+    {
+      "alias": "envelopes.reliability.events[] v1 dotted names",
+      "file": "schemas/v2/capabilities.schema.json",
+      "token": "\"envelope.retry.exhausted\"",
+      "deprecation": "openwop.deprecation.v2-reliability-dotted-event-names"
+    },
+    {
+      "alias": "per-provider aiProviders facets (selfHosted[], authModes map, promptPrefixCache.providers, realtimeVoice sub-flags)",
+      "file": "spec/v1/capabilities.md",
+      "token": "`authModes` is an OPTIONAL object whose keys are provider ids",
+      "deprecation": "openwop.deprecation.ai-providers-per-provider-facets"
+    },
+    {
+      "alias": "RunSnapshot.parentNodeId child→parent link",
+      "file": "spec/v1/node-packs.md",
+      "token": "`RunSnapshot.parentNodeId`",
+      "deprecation": "openwop.deprecation.subworkflow-parent-link-fields"
     }
   ]
 }

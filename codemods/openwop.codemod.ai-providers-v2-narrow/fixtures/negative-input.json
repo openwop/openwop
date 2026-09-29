@@ -1,0 +1,1 @@
+{ "protocolVersion": "1.1", "aiProviders": { "supported": ["anthropic"], "byok": ["anthropic"], "speechSynthesis": true } }

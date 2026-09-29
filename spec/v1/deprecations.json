@@ -1,7 +1,7 @@
 {
   "$schema": "./deprecations.schema.json",
   "version": 1,
-  "updated": "2026-09-22",
+  "updated": "2026-09-28",
   "entries": [
     {
       "id": "openwop.deprecation.capabilities-wrapper",
@@ -1021,6 +1021,72 @@
         {
           "file": "spec/v1/i18n.md",
           "token": "`locale` field on `InterruptPayload`"
+        }
+      ],
+      "removalTrigger": "v2.0-cut"
+    },
+    {
+      "id": "openwop.deprecation.v2-reliability-dotted-event-names",
+      "status": "deprecated",
+      "surface": "the four v1 dotted names in `envelopes.reliability.events[]` (`envelope.retry.attempted`, `envelope.retry.exhausted`, `envelope.nlToFormat.engaged`, `envelope.recovery.applied`)",
+      "kind": "discovery-field",
+      "deprecatedIn": "2.45 (RFC 0228)",
+      "authority": "RFCS/0228-v1-host-service-error-codes.md §G (the enum gains the v2 hyphenated names; the dotted names stay as deprecated aliases)",
+      "removeIn": "3.0",
+      "replacement": "the v2 names `envelope.retry-attempted`, `envelope.retry-exhausted`, `envelope.nl-to-format-engaged`, `envelope.recovery-applied` (spec/v2/event-codemap.json); a consumer treats each dotted name as its hyphenated equivalent",
+      "codemod": null,
+      "note": "NOT removed at 2.x: six committed MyndHyve v2 bundles carry the dotted names in their discovery document (checked 2026-09-28), so a replacement fails RFC 0197 R3. v2 only; the v1 schema is unchanged.",
+      "sources": [
+        {
+          "file": "schemas/v2/capabilities.schema.json",
+          "token": "are deprecated aliases, removed in 3.0"
+        },
+        {
+          "file": "RFCS/0228-v1-host-service-error-codes.md",
+          "token": "described as deprecated aliases"
+        }
+      ]
+    },
+    {
+      "id": "openwop.deprecation.ai-providers-per-provider-facets",
+      "status": "deprecated",
+      "surface": "per-provider `aiProviders` facet shapes: `selfHosted[]`, the `realtimeVoice` sub-flag object, `promptPrefixCache.{supported, providers[]}`, the per-provider `authModes` map",
+      "kind": "discovery-field",
+      "deprecatedIn": "RFC 0169 §Migration table row `openwop.migration.C2.11` (v2 narrows the four facets)",
+      "authority": "RFCS/0169-v2-discovery-and-capabilities.md §Migration table, row openwop.migration.C2.11",
+      "removeIn": "2.0",
+      "replacement": "`selfHosted`, `realtimeVoice`, `promptPrefixCache` booleans and one `authModes` list (spec/v2/core/host-services.md §aiProviders)",
+      "codemod": "openwop.codemod.ai-providers-v2-narrow",
+      "sources": [
+        {
+          "file": "RFCS/0169-v2-discovery-and-capabilities.md",
+          "token": "openwop.migration.C2.11"
+        },
+        {
+          "file": "spec/v1/capabilities.md",
+          "token": "**A.1 — Subset constraint.**"
+        }
+      ],
+      "removalTrigger": "v2.0-cut"
+    },
+    {
+      "id": "openwop.deprecation.subworkflow-parent-link-fields",
+      "status": "deprecated",
+      "surface": "`RunSnapshot.parentRunId` and `RunSnapshot.parentNodeId` as the `core.subWorkflow` child→parent link",
+      "kind": "schema-field",
+      "deprecatedIn": "RFC 0171 §Migration table row `openwop.migration.C4.18` (v2 `parentRunId` is fork lineage; `parentNodeId` has no v2 place)",
+      "authority": "RFCS/0171-v2-wire-envelope.md §Migration table, row openwop.migration.C4.18",
+      "removeIn": "2.0",
+      "replacement": "`getRunAncestry` `parent.runId` with `cause: \"core.subWorkflow\"` (spec/v2/core/execution.md §subWorkflow)",
+      "codemod": "openwop.codemod.subworkflow-parent-link-drop",
+      "sources": [
+        {
+          "file": "RFCS/0171-v2-wire-envelope.md",
+          "token": "openwop.migration.C4.18"
+        },
+        {
+          "file": "spec/v1/node-packs.md",
+          "token": "**Parent linkage.**"
         }
       ],
       "removalTrigger": "v2.0-cut"

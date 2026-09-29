@@ -2,7 +2,7 @@
   "$schema": "https://json-schema.org/draft/2020-12/schema",
   "$id": "https://openwop.dev/spec/v2/prompt-ref.schema.json",
   "title": "PromptRef",
-  "description": "Reference to a PromptTemplate. Two equivalent forms are accepted: a compact stringy URI (`prompt:templateId[@version]`) and a structured object form. The stringy form is canonical for inline use in WorkflowNode.config and AgentManifest.promptOverrides; the object form is canonical when libraryId disambiguation, variable overrides, or pinned versions need to be expressed explicitly. See spec/v1/prompts.md §\"PromptRef\" for the canonical contract and RFC 0027 §B for the rationale.\n\nResolution semantics (host responsibility): the host looks up the referenced template in its library (host built-ins + installed packs + user templates, gated by capabilities.prompts.*). When no `version` is given, the latest version wins. When two installed packs ship the same templateId, the stringy form is rejected with `prompt_ref_ambiguous` and consumers MUST use the object form with `libraryId` to disambiguate (RFC 0028 §B \"Conflict resolution\").",
+  "description": "Reference to a PromptTemplate. Two equivalent forms are accepted: a compact stringy URI (`prompt:templateId[@version]`) and a structured object form. The stringy form is canonical for inline use in WorkflowNode.config and AgentManifest.promptOverrides; the object form is canonical when libraryId disambiguation, variable overrides, or pinned versions need to be expressed explicitly. See spec/v1/prompts.md §\"PromptRef\" for the canonical contract and RFC 0027 §B for the rationale.\n\nResolution semantics (host responsibility): the host looks up the referenced template in its library (host built-ins + installed packs + user templates, gated by capabilities.prompts.*). When no `version` is given, the latest version wins. When two installed packs ship the same templateId, the stringy form is rejected with `validation_error` (`details.field: libraryId`) and consumers MUST use the object form with `libraryId` to disambiguate (RFC 0028 §B \"Conflict resolution\").",
   "oneOf": [
     {
       "type": "string",
@@ -37,6 +37,5 @@
         }
       }
     }
-  ],
-  "x-openwop-seeded-from": "v1"
+  ]
 }

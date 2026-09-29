@@ -11,7 +11,7 @@
 | JSON Schemas | 81 | `schemas/*.schema.json` |
 | OpenAPI operations | 58 | `api/openapi.yaml` |
 | AsyncAPI version | 3.1.0 | `api/asyncapi.yaml` |
-| Conformance scenario files | 573 | `conformance/src/scenarios/*.test.ts` |
+| Conformance scenario files | 574 | `conformance/src/scenarios/*.test.ts` |
 | RFCs tracked | 224 | `RFCS/[0-9][0-9][0-9][0-9]-*.md`, excluding template |
 
 ## Artifact Versions
@@ -21,7 +21,7 @@
 | Artifact | Version | Source | Cadence |
 |---|---|---|---|
 | Spec corpus (root) | 1.1.0 | `package.json` | bumps only on a coordinated spec release |
-| Conformance suite `@openwop/openwop-conformance` | 2.44.5 | `conformance/package.json` | minor on scenario add/remove |
+| Conformance suite `@openwop/openwop-conformance` | 2.44.6 | `conformance/package.json` | minor on scenario add/remove |
 | OpenAPI `info.version` | 1.1.0 | `api/openapi.yaml` | hand-maintained in v1.x; generated from the corpus tag at v2 (RFC 0172 sectionB #14) |
 | AsyncAPI `info.version` | 1.1.0 | `api/asyncapi.yaml` | as above |
 | TypeScript SDK `@openwop/openwop` (2.x, current) | 2.5.0 | openwop-sdks `sdk/typescript-v2/package.json` (via `evidence/cross-repo-manifests.json`) | v2-only; npm `latest` |
@@ -71,8 +71,8 @@
 | Status | Count |
 |---|---:|
 | Accepted | 218 |
-| Active | 3 |
-| Draft | 2 |
+| Active | 4 |
+| Draft | 1 |
 | Superseded | 1 |
 
 | RFC | Title | Status |
@@ -300,7 +300,7 @@
 | RFC 0224 | audit-log integrity gets a v2 home | Accepted |
 | RFC 0225 | a webhook host may advertise how long a delivery can keep retrying | Accepted |
 | RFC 0226 | three run-failure codes the hosts share, registered | Active |
-| RFC 0228 | the error codes v1 named for host services, decided for v2 | Draft |
+| RFC 0228 | the error codes v1 named for host services, decided for v2 | Active |
 
 ## SDK Helper Coverage
 
@@ -324,8 +324,8 @@ The pack registry now lives in the [`openwop-registry`](https://github.com/openw
 
 ## Active Follow-Ups
 
-- 2 RFCs still `Draft` (RFC 0038, RFC 0228) — advance with schema/conformance proof or defer.
-- 3 RFCs `Active` (RFC 0121, RFC 0222, RFC 0226) — wire-shape MAY shift compatibly within v1.x until promotion to `Accepted`.
+- 1 RFC still `Draft` (RFC 0038) — advance with schema/conformance proof or defer.
+- 4 RFCs `Active` (RFC 0121, RFC 0222, RFC 0226, RFC 0228) — wire-shape MAY shift compatibly within v1.x until promotion to `Accepted`.
 - External audit, non-steward host recruitment, and non-steward maintainer recruitment remain external-action gates.
 - Multi-region idempotency and some optional-profile behavior checks remain lower-confidence than the core wire contract.
 

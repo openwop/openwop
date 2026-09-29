@@ -47,7 +47,7 @@
       "type": "string",
       "minLength": 1,
       "maxLength": 64,
-      "description": "RFC 0082 §A. Optional NAMED deployment-channel binding (e.g. `stable`, `canary`, or the reserved `latest` = highest active semver), as an alternative to the exact `version` pin. A host advertising `capabilities.agents.deployment.supported: true` resolves the channel to a concrete version and pins it per-(run, agentId, channel) at first resolution (RFC 0082 §B) — the resolved version is a recorded fact carried on `agent.invocation.started.resolvedAgentVersion`, re-read on replay and NEVER re-resolved against a moved channel. Mutually exclusive with `version` (the `not` clause below). A channel that resolves to no `active` version fails the run with `no_active_deployment`. Hosts that omit `agents.deployment` MUST reject a `channel`-bearing ref with `validation_error` (the channel has nowhere to resolve)."
+      "description": "RFC 0082 §A. Optional NAMED deployment-channel binding (e.g. `stable`, `canary`, or the reserved `latest` = highest active semver), as an alternative to the exact `version` pin. A host advertising `capabilities.agents.deployment.supported: true` resolves the channel to a concrete version and pins it per-(run, agentId, channel) at first resolution (RFC 0082 §B) — the resolved version is a recorded fact carried on `agent.invocation.started.resolvedAgentVersion`, re-read on replay and NEVER re-resolved against a moved channel. Mutually exclusive with `version` (the `not` clause below). A channel that resolves to no `active` version is refused at run creation with `validation_error`, or fails the run with `not_found` (`details.service: agents`). Hosts that omit `agents.deployment` MUST reject a `channel`-bearing ref with `validation_error` (the channel has nowhere to resolve)."
     },
     "sourceManifestId": {
       "type": "string",
@@ -62,6 +62,5 @@
       "channel"
     ],
     "$comment": "RFC 0082 §A. `version` (exact pin) and `channel` (named deployment channel) are mutually exclusive — a ref MAY set at most one. Setting both is a validation_error. Setting neither is valid (host-default resolution). Additive-safe: no pre-RFC-0082 ref can carry `channel`, so this clause never invalidates an existing AgentRef."
-  },
-  "x-openwop-seeded-from": "v1"
+  }
 }

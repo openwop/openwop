@@ -35,7 +35,7 @@ The facets are `kvStorage.atomicIncrement` and `kvStorage.compareAndSwap`, `sql.
 
 What a family advertises also names its targets: `sql.datasources`, `nosql.datasources`, `vectorStore.collections`, `searchIndex.indexes` and `blobStorage.buckets`. `tableStorage` advertises `maxColumnsPerRow`, `indexable` and `fullTextSearch` as limits and features, with no further rule.
 
-No error code specific to these families is registered; [errors.md](errors.md) governs the code a refused call carries.
+A refused call carries `not_found`, `forbidden`, `validation_error`, or `storage_limit_exceeded` for a limit or quota ([errors.md](errors.md) §Host-service refusals). A sandbox escape is `forbidden` with `details.reason: path-outside-sandbox`.
 
 ## `fs`
 
@@ -58,7 +58,7 @@ No error code specific to these families is registered; [errors.md](errors.md) g
 ## `sql` and `nosql`
 
 - `sql` MUST be treated as a parametric template: bound values MUST flow through `params`, never through string interpolation. A host SHOULD verify parameter binding before execution, and a pack MUST NOT concatenate user input into `sql`.
-- When `sql.transactions` is `true`, a partial failure inside `transaction` MUST roll back the whole batch.
+- When `sql.transactions` is `true`, a partial failure inside `transaction` MUST roll back the whole batch, which resolves `committed: false`.
 - `nosql` filter operators MUST NOT permit injection. Server-side script evaluation, such as MongoDB `$where`, MUST be refused unless an explicit allowlist is configured.
 
 ## `vectorStore` and `searchIndex`
@@ -70,4 +70,4 @@ No error code specific to these families is registered; [errors.md](errors.md) g
 
 Presigned URLs MUST expire at the advertised TTL. A presigned request after expiry MUST fail at the storage layer, not after an authorization skip.
 
-*Sources: RFCs 0014, 0015, 0016, 0018, 0019.*
+*Sources: RFCs 0014, 0015, 0016, 0018, 0019, 0228.*
