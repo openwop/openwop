@@ -23,7 +23,7 @@ A runner is a user-operated process that dials out, holds credentials the host c
 
 `core.subWorkflow` starts a child run of another workflow and waits for its terminal status.
 
-- **`workflowId`.** A host MUST refuse the parent run when that workflow is not loaded.
+- **`workflowId`.** A host MUST refuse the parent run with `node_config_invalid` when that workflow is not loaded.
 - **`waitForCompletion`** defaults to `true`; a host MAY refuse `false` with `validation_error`.
 - **`onChildFailure`.** `fail-parent` (default) fails the node and the run; `absorb` records the failure and continues.
 - **Output.** `node.completed` MUST carry `outputs.childRunId` and `outputs.childStatus` (`completed | failed | cancelled`), and MAY add fields.
@@ -55,4 +55,4 @@ At level 1, a workflow whose `core.orchestrator.supervisor` feeds `core.dispatch
 - `output.harvested` fires exactly when a child completes with a non-empty `outputMapping`.
 - A host not advertising `executionModel` MUST NOT emit `core.workflowChain.event`.
 
-*Sources: RFCs 0007, 0022, 0037, 0122.*
+*Sources: RFCs 0007, 0022, 0037, 0122, 0228.*

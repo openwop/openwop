@@ -1335,8 +1335,7 @@
         "type": "object",
         "properties": {
           "runId": {
-            "type": "string",
-            "minLength": 1,
+            "$ref": "ids.schema.json#/$defs/runId",
             "description": "OPTIONAL. The expired run."
           }
         },
@@ -1383,8 +1382,7 @@
         "type": "object",
         "properties": {
           "evalRunId": {
-            "type": "string",
-            "minLength": 1,
+            "$ref": "ids.schema.json#/$defs/runId",
             "description": "OPTIONAL. The eval run the gate requires."
           }
         },

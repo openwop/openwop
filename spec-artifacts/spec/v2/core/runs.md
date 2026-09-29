@@ -38,7 +38,7 @@ Every operation accepts `OpenWOP-Version` ([overview.md](overview.md)) and every
 | `getRunCompensation` | `GET /runs/{runId}/compensation` | `runs:read` | `compensation` |
 | `getRunEffects` | `GET /runs/{runId}/effects` | `runs:read` | `idempotency` |
 
-A gated operation the host does not advertise (or an absent `diffRun`) answers `404`; for annotations it is `404 not_found`.
+A gated operation the host does not advertise (or an absent `diffRun`) answers `404 not_found` ([errors.md](errors.md)).
 
 ## Create
 
@@ -283,4 +283,4 @@ This sink holds runs. Queue messages ([host-services.md](host-services.md) §`qu
 
 A non-terminal run inherited from v1 continues, or is cancelled `v1_pin_unsupported`, per [persistence.md](persistence.md) §"Runs pinned to v1".
 
-*Sources: RFCs 0053, 0058, 0084, 0170, 0171, 0176, 0182.*
+*Sources: RFCs 0053, 0058, 0084, 0170, 0171, 0176, 0182, 0228.*

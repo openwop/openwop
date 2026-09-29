@@ -74,7 +74,7 @@
         "errorCode": {
           "type": "string",
           "minLength": 1,
-          "description": "Wire-format error code returned on denial. Defaults to `provider_policy_denied`. Reserved for hosts that need a vendor-prefixed alias."
+          "description": "Wire-format error code returned on denial. Defaults to `provider_policy_denied`. Any other value MUST be a vendor code."
         }
       },
       "additionalProperties": false
@@ -96,7 +96,7 @@
               "document"
             ]
           },
-          "description": "Input modalities the host's `callAI` accepts as ContentParts. `text` is implicit even when omitted. A ContentPart whose `type` is not advertised here MUST be rejected with `unsupported_modality` (never silently dropped)."
+          "description": "Input modalities the host's `callAI` accepts as ContentParts. `text` is implicit even when omitted. A ContentPart whose `type` is not advertised here MUST be rejected with `capability_not_provided` (never silently dropped)."
         },
         "maxBytesPerPart": {
           "type": "integer",
