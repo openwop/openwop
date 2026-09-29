@@ -232,7 +232,7 @@
     "spec/v2/core/idempotency.md": "2084d756789c1faf5121593fb39e67ca36a4c227178e175004742e403178ea49",
     "spec/v2/core/identity.md": "582eddbf2e1bad41911e886bd08524683837045404f7b8f6bceccf61792b2765",
     "spec/v2/core/interop.md": "e72e25dff864c83b2980d7366b34054cffa072af0225821199f260f6228d260e",
-    "spec/v2/core/interrupt.md": "4c825634acac72900ebd3c5ac5941f55648fa33d2df92913ef16371dcb700a34",
+    "spec/v2/core/interrupt.md": "c1e13179e792bf8099b2d1c7891542646bb1d4cdee1757590f190833cae6047c",
     "spec/v2/core/node-pack-runtimes.md": "e1088cb69b8c3c67256c494063328916c2980ab1aa97a7063de25bab82fdb1e5",
     "spec/v2/core/oauth.md": "c96483a44b62978c596945fbb7d7c863cf6056cd980fdb4cf4e97555e3e10b72",
     "spec/v2/core/overview.md": "d7000fbcd2f59280870fc592f5d5ea28a5195b9eb209029f09c5de59e0f2bf9c",
@@ -305,5 +305,5 @@
     "spec/v2/retention-floors.json": "eaf3722d95c79947af1d4269ef85117e126518c588cfcf1a2b21b97269f51624",
     "spec/v2/surface-baseline.json": "8acb9fab0aca69abfe40dc56fcf48729aaf0d56a41467962e5c7247f3548eea3"
   },
-  "corpusCommit": "aae3b20d2f18ca6e62e53dc6cc643142afd74832"
+  "corpusCommit": "31dec6ee048800e60ebcfc5cd9632aa30b1c6638"
 }

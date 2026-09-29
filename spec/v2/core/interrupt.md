@@ -54,7 +54,7 @@ Every kind uses two registered types ([events.md](events.md)):
 - `interrupt.requested` — the payload is the `InterruptPayload` verbatim.
 - `interrupt.resolved` — the closed payload is `interruptResolved`. Resolving an approval-kind interrupt MUST record the applied `action` there, with the field §Approval requires.
 
-The kind-specific `approval.*` and `clarification.*` types remain registered. Their payload definitions in `schemas/v2/run-event-payloads.schema.json` are `$ref` aliases of `interruptRequested` and `interruptResolved`. A host emitting `interrupt.requested` SHOULD also emit the kind-specific type until its consumers migrate.
+The kind-specific `approval.*` and `clarification.*` types remain registered. Their payload definitions in `schemas/v2/run-event-payloads.schema.json` are `$ref` aliases of `interruptRequested` and `interruptResolved`. A host emitting `interrupt.requested` MAY also emit the kind-specific type.
 
 Both events are durable and appear in the `updates` and `debug` stream modes. While suspended, `RunSnapshot.currentNodeId` names the node and `status` is `waiting-approval`, `waiting-input` or `waiting-external`.
 
