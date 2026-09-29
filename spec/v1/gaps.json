@@ -1,7 +1,7 @@
 {
   "$schema": "./gaps.schema.json",
   "version": 1,
-  "updated": "2026-09-28",
+  "updated": "2026-09-29",
   "witnessClasses": [
     "witnessable-unaided",
     "witnessable-gated",
@@ -13507,6 +13507,91 @@
         {
           "file": "RFCS/registers/0226-shared-run-failure-codes.gaps.md",
           "token": "G1"
+        }
+      ]
+    },
+    {
+      "id": "openwop.gap.0228.1",
+      "rfc": "0228",
+      "local": "G1",
+      "section": "§Compatibility",
+      "surface": "MyndHyve emits `ssrf_blocked` and `fetch_failed` from `ctx.http.safeFetch` (`host/safeFetch.ts:68`), and a `503 service_unavailable` carrying `details.retryAfter` and `details.inflightCap` (`middleware/backpressureGate.ts:54-57`), which `errors.md` §Retry timing forbids.",
+      "witness": "unclassified",
+      "requirementId": null,
+      "disposition": "externally-gated",
+      "target": "rfc-0228-active",
+      "sources": [
+        {
+          "file": "RFCS/registers/0228-v1-host-service-error-codes.gaps.md",
+          "token": "G1"
+        }
+      ]
+    },
+    {
+      "id": "openwop.gap.0228.2",
+      "rfc": "0228",
+      "local": "G2",
+      "section": "§Compatibility",
+      "surface": "The v2 reference host emits `example.mcp_unreachable` (`mcp-client.ts:67`, `:73`) and `example.http_fetch_failed` (`executor.ts:264`), vendor codes chosen only because no row existed.",
+      "witness": "unclassified",
+      "requirementId": null,
+      "disposition": "externally-gated",
+      "target": "rfc-0228-active",
+      "sources": [
+        {
+          "file": "RFCS/registers/0228-v1-host-service-error-codes.gaps.md",
+          "token": "G2"
+        }
+      ]
+    },
+    {
+      "id": "openwop.gap.0228.3",
+      "rfc": "0228",
+      "local": "G3",
+      "section": "§Compatibility",
+      "surface": "openwop-app throws `path_outside_sandbox` (`host/durable/durableFs.ts:20`, `:27`) and `table_schema_violation` (`durableTable.ts:69`) from `ctx` storage; its `ads-publish-*` packs branch on the five `secret_*` names.",
+      "witness": "unclassified",
+      "requirementId": null,
+      "disposition": "externally-gated",
+      "target": "rfc-0228-active",
+      "sources": [
+        {
+          "file": "RFCS/registers/0228-v1-host-service-error-codes.gaps.md",
+          "token": "G3"
+        }
+      ]
+    },
+    {
+      "id": "openwop.gap.0228.4",
+      "rfc": "0228",
+      "local": "G4",
+      "section": "§Conformance",
+      "surface": "No v2 scenario exercises a host-service refusal: `fs-path-traversal`, `table-schema-enforcement`, `budget-enforcement`, `budget-policy-shape` and `production-backpressure` are major-1 only.",
+      "witness": "unclassified",
+      "requirementId": null,
+      "disposition": "externally-gated",
+      "target": "rfc-0228-active",
+      "sources": [
+        {
+          "file": "RFCS/registers/0228-v1-host-service-error-codes.gaps.md",
+          "token": "G4"
+        }
+      ]
+    },
+    {
+      "id": "openwop.gap.0228.5",
+      "rfc": "0228",
+      "local": "G5",
+      "section": "§D",
+      "surface": "The `aiProviders` failure modes are not decided here.",
+      "witness": "unclassified",
+      "requirementId": null,
+      "disposition": "transferred",
+      "target": "aiProviders-normative-home",
+      "sources": [
+        {
+          "file": "RFCS/registers/0228-v1-host-service-error-codes.gaps.md",
+          "token": "G5"
         }
       ]
     },
