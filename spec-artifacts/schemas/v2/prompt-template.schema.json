@@ -2,7 +2,7 @@
   "$schema": "https://json-schema.org/draft/2020-12/schema",
   "$id": "https://openwop.dev/spec/v2/prompt-template.schema.json",
   "title": "PromptTemplate",
-  "description": "Canonical wire shape for a named, versioned, variable-bound prompt body referenced by workflow nodes and agent manifests. See spec/v1/prompts.md §\"PromptTemplate\" for the canonical contract, RFC 0027 for the rationale, and prompt-ref.schema.json for the reference type that points at instances of this shape. Variable interpolation MUST use Mustache-compatible `{{varName}}` placeholders; unresolved required variables MUST cause the node to fail with `prompt_variable_unresolved`; unresolved optional variables render as the empty string per RFC 0027 §A.\n\nThe `text` field MAY contain `<UNTRUSTED>...</UNTRUSTED>` markers verbatim — hosts MUST preserve them through composition per SECURITY/threat-model-prompt-injection.md. Variables sourced from `secret` MUST be replaced with `[REDACTED:<secretId>]` markers in any observability output (e.g., `prompt.composed` events) per SECURITY/threat-model-secret-leakage.md §SR-1.",
+  "description": "Canonical wire shape for a named, versioned, variable-bound prompt body referenced by workflow nodes and agent manifests. See spec/v1/prompts.md §\"PromptTemplate\" for the canonical contract, RFC 0027 for the rationale, and prompt-ref.schema.json for the reference type that points at instances of this shape. Variable interpolation MUST use Mustache-compatible `{{varName}}` placeholders; unresolved required variables MUST cause the node to fail with `node_config_invalid`; unresolved optional variables render as the empty string per RFC 0027 §A.\n\nThe `text` field MAY contain `<UNTRUSTED>...</UNTRUSTED>` markers verbatim — hosts MUST preserve them through composition per SECURITY/threat-model-prompt-injection.md. Variables sourced from `secret` MUST be replaced with `[REDACTED:<secretId>]` markers in any observability output (e.g., `prompt.composed` events) per SECURITY/threat-model-secret-leakage.md §SR-1.",
   "type": "object",
   "additionalProperties": false,
   "required": [
@@ -154,7 +154,7 @@
         "type",
         "required"
       ],
-      "description": "Typed interpolation slot. Bindings are validated against this declaration before composition; unresolved required slots MUST fail the node with `prompt_variable_unresolved`. Variables sourced from `secret` MUST be redacted to `[REDACTED:<secretId>]` markers in observability output per SECURITY/threat-model-secret-leakage.md §SR-1.",
+      "description": "Typed interpolation slot. Bindings are validated against this declaration before composition; unresolved required slots MUST fail the node with `node_config_invalid`. Variables sourced from `secret` MUST be redacted to `[REDACTED:<secretId>]` markers in observability output per SECURITY/threat-model-secret-leakage.md §SR-1.",
       "properties": {
         "name": {
           "type": "string",
@@ -174,7 +174,7 @@
         },
         "required": {
           "type": "boolean",
-          "description": "When true, an absent binding fails the node with `prompt_variable_unresolved`. When false, the variable renders as `defaultValue` (if present) or the empty string."
+          "description": "When true, an absent binding fails the node with `node_config_invalid`. When false, the variable renders as `defaultValue` (if present) or the empty string."
         },
         "source": {
           "type": "string",

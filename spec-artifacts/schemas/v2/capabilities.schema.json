@@ -821,7 +821,7 @@
         "reliability": {
           "type": "object",
           "additionalProperties": false,
-          "description": "RFC 0032 §C. Host emits the envelope-reliability event family on documented adverse paths. Hosts advertise the family by emitting the record AND explicitly list the events they emit via `events[]`. A host advertising this facet MUST include at least `envelope.retry.exhausted` and `envelope.refusal` in `events[]` (the two MUST-tier events). The other four (`envelope.retry.attempted`, `envelope.truncated`, `envelope.nlToFormat.engaged`, `envelope.recovery.applied`) are SHOULD/MAY-tier per RFC 0032 §B and may be omitted.",
+          "description": "RFC 0032 §C. Host emits the envelope-reliability event family on documented adverse paths. Hosts advertise the family by emitting the record AND explicitly list the events they emit via `events[]`. A host advertising this facet MUST include at least `envelope.retry-exhausted` and `envelope.refusal` in `events[]` (the two MUST-tier events). The other four (`envelope.retry-attempted`, `envelope.truncated`, `envelope.nl-to-format-engaged`, `envelope.recovery-applied`) are SHOULD/MAY-tier per RFC 0032 §B and may be omitted.",
           "properties": {
             "events": {
               "type": "array",
@@ -833,11 +833,15 @@
                   "envelope.refusal",
                   "envelope.truncated",
                   "envelope.nlToFormat.engaged",
-                  "envelope.recovery.applied"
+                  "envelope.recovery.applied",
+                  "envelope.retry-attempted",
+                  "envelope.retry-exhausted",
+                  "envelope.nl-to-format-engaged",
+                  "envelope.recovery-applied"
                 ]
               },
               "uniqueItems": true,
-              "description": "Subset of the six reliability events the host actually emits. A host advertising this facet MUST include `envelope.retry.exhausted` and `envelope.refusal`. Conformance scenarios soft-skip for events absent from this list (the event-emission assertion is skipped; other host behavior assertions remain in force)."
+              "description": "Subset of the six reliability events the host actually emits, by their v2 names. A host advertising this facet MUST include `envelope.retry-exhausted` and `envelope.refusal`. The four v1 dotted names (`envelope.retry.attempted`, `envelope.retry.exhausted`, `envelope.nlToFormat.engaged`, `envelope.recovery.applied`) are deprecated aliases, removed in 3.0; a consumer MUST treat each as its hyphenated equivalent (RFC 0228 §G). Conformance scenarios soft-skip for events absent from this list (the event-emission assertion is skipped; other host behavior assertions remain in force)."
             },
             "maxRetryAttempts": {
               "type": "integer",
@@ -942,7 +946,7 @@
         },
         "endpointsSupported": {
           "type": "boolean",
-          "description": "RFC 0028 §A. When `true`, the host serves the `/prompts*` REST surface — at minimum the read endpoints (`listPromptTemplates`, `getPromptTemplate`, `renderPromptTemplate`). The mutating endpoints additionally require `mutableLibrary: true`; the pack-install path additionally requires `packsSupported: true`. False or absent = every `/prompts*` request returns `501 capability_not_provided`. Independent of the family record — a host MAY advertise the family with `endpointsSupported: false` (composition without library REST) or the family omitted and `endpointsSupported: true` (library REST against an external resolver, e.g., a façade host)."
+          "description": "RFC 0028 §A. When `true`, the host serves the `/prompts*` REST surface — at minimum the read endpoints (`listPromptTemplates`, `getPromptTemplate`, `renderPromptTemplate`). The mutating endpoints additionally require `mutableLibrary: true`; the pack-install path additionally requires `packsSupported: true`. False or absent = every `/prompts*` request answers `404 not_found`. Independent of the family record — a host MAY advertise the family with `endpointsSupported: false` (composition without library REST) or the family omitted and `endpointsSupported: true` (library REST against an external resolver, e.g., a façade host)."
         },
         "templateKinds": {
           "type": "array",
@@ -987,7 +991,7 @@
         },
         "mutableLibrary": {
           "type": "boolean",
-          "description": "RFC 0028 §C. When `true`, the host honors the mutating endpoints `POST /prompts`, `PUT /prompts/{templateId}`, `DELETE /prompts/{templateId}`. When `false` or absent, those endpoints return 501. Pack-sourced and host-built-in templates remain read-only even under `mutableLibrary: true` — deletion of those returns 403 per RFC 0028 §A."
+          "description": "RFC 0028 §C. When `true`, the host honors the mutating endpoints `POST /prompts`, `PUT /prompts/{templateId}`, `DELETE /prompts/{templateId}`. When `false` or absent, those endpoints answer `404 not_found`. Pack-sourced and host-built-in templates remain read-only even under `mutableLibrary: true` — deletion of those returns 403 per RFC 0028 §A."
         },
         "library": {
           "type": "object",
@@ -3002,7 +3006,7 @@
             "errorCode": {
               "type": "string",
               "minLength": 1,
-              "description": "Wire-format error code returned on denial. Defaults to `provider_policy_denied`. Reserved for hosts that need a vendor-prefixed alias."
+              "description": "Wire-format error code returned on denial. Defaults to `provider_policy_denied`. Any other value MUST be a vendor code."
             }
           },
           "additionalProperties": false
@@ -3024,7 +3028,7 @@
                   "document"
                 ]
               },
-              "description": "Input modalities the host's `callAI` accepts as ContentParts. `text` is implicit even when omitted. A ContentPart whose `type` is not advertised here MUST be rejected with `unsupported_modality` (never silently dropped)."
+              "description": "Input modalities the host's `callAI` accepts as ContentParts. `text` is implicit even when omitted. A ContentPart whose `type` is not advertised here MUST be rejected with `capability_not_provided` (never silently dropped)."
             },
             "maxBytesPerPart": {
               "type": "integer",
@@ -3127,7 +3131,7 @@
             ]
           },
           "uniqueItems": true,
-          "description": "Optional list of `AgentRef.modelClass` values this host supports for hosted agents (Phase 2). Pack manifests whose `modelClass` is not in this list MUST refuse install with `unsupported_model_class`."
+          "description": "Optional list of `AgentRef.modelClass` values this host supports for hosted agents (Phase 2). Pack manifests whose `modelClass` is not in this list MUST refuse install with `pack_runtime_requirement_unmet`."
         },
         "orchestratorPattern": {
           "type": "string",
@@ -3270,7 +3274,7 @@
         },
         "deployment": {
           "type": "object",
-          "description": "RFC 0082. The host implements an agent deployment lifecycle: per-(agentId, version) deployment records with the seven-state machine (draft/test/staged/active/paused/deprecated/rolled-back), named-channel binding (`agentId@channel` / `@latest` resolved + pinned per-(run, agentId, channel) at first resolution per §B), optional canary traffic-split, a rollback pointer, the content-free `deployment.*` audit events, and the `POST /agents/{agentId}/deployments` promotion contract composing RFC 0049 (`deploy:*` fail-closed scopes) + RFC 0051 (approvalGate) + RFC 0081 (`requiredEval`). Hosts that omit this block reject a `channel`-bearing `AgentRef` with `validation_error` and 501 the deployment endpoint. The promotion endpoint + behavioral lifecycle scenario + reference-host store land at Active → Accepted.",
+          "description": "RFC 0082. The host implements an agent deployment lifecycle: per-(agentId, version) deployment records with the seven-state machine (draft/test/staged/active/paused/deprecated/rolled-back), named-channel binding (`agentId@channel` / `@latest` resolved + pinned per-(run, agentId, channel) at first resolution per §B), optional canary traffic-split, a rollback pointer, the content-free `deployment.*` audit events, and the `POST /agents/{agentId}/deployments` promotion contract composing RFC 0049 (`deploy:*` fail-closed scopes) + RFC 0051 (approvalGate) + RFC 0081 (`requiredEval`). Hosts that omit this block reject a `channel`-bearing `AgentRef` with `validation_error`, and the deployment endpoint answers `404 not_found`. The promotion endpoint + behavioral lifecycle scenario + reference-host store land at Active → Accepted.",
           "additionalProperties": false,
           "properties": {
             "channels": {
@@ -3280,7 +3284,7 @@
                 "type": "string",
                 "minLength": 1
               },
-              "description": "The named channels the host resolves (e.g. `[\"stable\", \"canary\", \"latest\"]`). Truthful advertisement (RFC 0031): a `channel` not in this list resolves to no version and fails the run with `no_active_deployment`."
+              "description": "The named channels the host resolves (e.g. `[\"stable\", \"canary\", \"latest\"]`). Truthful advertisement (RFC 0031): a `channel` not in this list resolves to no version and fails the run with `not_found` (`details.service: agents`)."
             },
             "canary": {
               "type": "boolean",
@@ -3311,7 +3315,7 @@
         },
         "roster": {
           "type": "object",
-          "description": "RFC 0086. The host maintains a standing agent roster: named, tenant-scoped agent INSTANCES (the 'digital-twin employee') that reference a manifest/deployment and own a workflow portfolio, discoverable via GET /agents/roster, with trigger-fired portfolio runs attributed to the member via the content-free `roster.run.initiated` event. REQUIRES `agents.manifestRuntime` (a roster entry instantiates a manifest agent). Triggers compose RFC 0052 (schedule) + RFC 0083 (durable work-item bridge) — no new WorkflowTrigger.type; the concrete work surface (a Kanban board) stays a host/vendor extension (§E). Hosts that omit this block do not maintain a roster (the roster reads 501). The roster-management endpoints + behavioral attribution scenario + reference-host store land at Active → Accepted.",
+          "description": "RFC 0086. The host maintains a standing agent roster: named, tenant-scoped agent INSTANCES (the 'digital-twin employee') that reference a manifest/deployment and own a workflow portfolio, discoverable via GET /agents/roster, with trigger-fired portfolio runs attributed to the member via the content-free `roster.run.initiated` event. REQUIRES `agents.manifestRuntime` (a roster entry instantiates a manifest agent). Triggers compose RFC 0052 (schedule) + RFC 0083 (durable work-item bridge) — no new WorkflowTrigger.type; the concrete work surface (a Kanban board) stays a host/vendor extension (§E). Hosts that omit this block do not maintain a roster (the roster read answers `404 not_found`). The roster-management endpoints + behavioral attribution scenario + reference-host store land at Active → Accepted.",
           "additionalProperties": false,
           "properties": {
             "installScope": {
@@ -3335,7 +3339,7 @@
         },
         "orgChart": {
           "type": "object",
-          "description": "RFC 0087. The host maintains a tenant-scoped, DESCRIPTIVE org-chart over RFC 0086 roster members: departments + roles with acyclic `reportsTo` edges + a derived responsibility roll-up, discoverable via GET /agents/org-chart. The load-bearing guarantee (§B `org-position-no-authority-escalation`): an org edge confers NO authority — it MUST NOT widen `toolAllowlist` (RFC 0002 §A14), grant an RBAC scope (RFC 0049), or bypass an approval gate (RFC 0051); org position MUST NOT be an authorization input. The schema carries no authority-bearing field, and a conformant host MUST NOT derive authority from position out-of-band. REQUIRES `agents.roster` (the chart's members are roster entries). Hosts that omit this block have no org-chart surface (the read 501s). The org-chart-management endpoints + behavioral non-authority scenario + reference-host store land at Active → Accepted.",
+          "description": "RFC 0087. The host maintains a tenant-scoped, DESCRIPTIVE org-chart over RFC 0086 roster members: departments + roles with acyclic `reportsTo` edges + a derived responsibility roll-up, discoverable via GET /agents/org-chart. The load-bearing guarantee (§B `org-position-no-authority-escalation`): an org edge confers NO authority — it MUST NOT widen `toolAllowlist` (RFC 0002 §A14), grant an RBAC scope (RFC 0049), or bypass an approval gate (RFC 0051); org position MUST NOT be an authorization input. The schema carries no authority-bearing field, and a conformant host MUST NOT derive authority from position out-of-band. REQUIRES `agents.roster` (the chart's members are roster entries). Hosts that omit this block have no org-chart surface (the read answers `404 not_found`). The org-chart-management endpoints + behavioral non-authority scenario + reference-host store land at Active → Accepted.",
           "additionalProperties": false,
           "properties": {
             "installScope": {
@@ -7428,7 +7432,7 @@
               "type": "integer",
               "minimum": 0,
               "maximum": 86400,
-              "description": "Optional advertised Retry-After value in seconds the host returns on 503. When present, MUST equal both the `Retry-After` header and the `details.retryAfter` body field per production-profile.md. Upper bound 86400 (24h) — values beyond that are operationally indistinguishable from 'permanently denied'. Hosts needing longer holds SHOULD omit `Retry-After` entirely (RFC 0009 Q#2)."
+              "description": "Optional advertised Retry-After value in seconds the host returns on 503. When present, MUST equal the `Retry-After` header the host sends with `503 service_unavailable`. Upper bound 86400 (24h) — values beyond that are operationally indistinguishable from 'permanently denied'. Hosts needing longer holds SHOULD omit `Retry-After` entirely (RFC 0009 Q#2)."
             }
           },
           "additionalProperties": false

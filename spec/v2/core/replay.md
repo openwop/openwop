@@ -124,7 +124,7 @@ A host that advertises only one of the two keeps the single-region contract abov
 
 ## Retention
 
-A host advertising `replay` MUST document retention for source snapshots, source logs, the invocation records replay depends on, and forked runs; `retention.days` MAY advertise the window. When the range `fromSeq` needs has expired, the host MUST reject the fork with `410` or `422`; `details` SHOULD carry `sourceRunId`, `fromSeq`, and the boundary.
+A host advertising `replay` MUST document retention for source snapshots, source logs, the invocation records replay depends on, and forked runs; `retention.days` MAY advertise the window. When the range `fromSeq` needs has expired, the host MUST reject the fork with `410 run_expired` or `422`; `details` SHOULD carry `sourceRunId`, `fromSeq`, and the boundary.
 
 ## Declared nondeterminism
 
@@ -132,4 +132,4 @@ A host advertising `replay` MUST document retention for source snapshots, source
 
 See also: events.md, runs.md, persistence.md, security-defaults.md.
 
-*Sources: RFCs 0036, 0039, 0041, 0057, 0104, 0111, 0140, 0173, 0176, 0194.*
+*Sources: RFCs 0036, 0039, 0041, 0057, 0104, 0111, 0140, 0173, 0176, 0194, 0228.*

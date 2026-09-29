@@ -13519,7 +13519,7 @@
       "witness": "unclassified",
       "requirementId": null,
       "disposition": "externally-gated",
-      "target": "rfc-0228-active",
+      "target": "myndhyve-host-cut",
       "sources": [
         {
           "file": "RFCS/registers/0228-v1-host-service-error-codes.gaps.md",
@@ -13536,7 +13536,7 @@
       "witness": "unclassified",
       "requirementId": null,
       "disposition": "externally-gated",
-      "target": "rfc-0228-active",
+      "target": "v2-reference-recut",
       "sources": [
         {
           "file": "RFCS/registers/0228-v1-host-service-error-codes.gaps.md",
@@ -13553,7 +13553,7 @@
       "witness": "unclassified",
       "requirementId": null,
       "disposition": "externally-gated",
-      "target": "rfc-0228-active",
+      "target": "openwop-app-host-cut",
       "sources": [
         {
           "file": "RFCS/registers/0228-v1-host-service-error-codes.gaps.md",
@@ -13570,7 +13570,7 @@
       "witness": "unclassified",
       "requirementId": null,
       "disposition": "externally-gated",
-      "target": "rfc-0228-active",
+      "target": "v2-host-service-ports",
       "sources": [
         {
           "file": "RFCS/registers/0228-v1-host-service-error-codes.gaps.md",
@@ -13604,7 +13604,7 @@
       "witness": "unclassified",
       "requirementId": null,
       "disposition": "externally-gated",
-      "target": "rfc-0228-active",
+      "target": "openwop-app-host-cut",
       "sources": [
         {
           "file": "RFCS/registers/0228-v1-host-service-error-codes.gaps.md",
@@ -13621,7 +13621,7 @@
       "witness": "unclassified",
       "requirementId": null,
       "disposition": "externally-gated",
-      "target": "rfc-0228-active",
+      "target": "myndhyve-host-cut",
       "sources": [
         {
           "file": "RFCS/registers/0228-v1-host-service-error-codes.gaps.md",
@@ -13637,8 +13637,8 @@
       "surface": "`api/v2/openapi.yaml` is derived from the v1 document by `scripts/derive-v2-api.py`, which copies v1's `501` responses and the descriptions naming unregistered codes.",
       "witness": "unclassified",
       "requirementId": null,
-      "disposition": "externally-gated",
-      "target": "rfc-0228-active",
+      "disposition": "closed",
+      "target": null,
       "sources": [
         {
           "file": "RFCS/registers/0228-v1-host-service-error-codes.gaps.md",
