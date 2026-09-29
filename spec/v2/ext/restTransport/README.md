@@ -8,7 +8,7 @@
 | --- | --- |
 | **witness:** | `witnessable-gated` |
 | **technical:** | `stable` |
-| **adoption:** | `single-witness` |
+| **adoption:** | `multi-witness` |
 | **peer-dependency id** | `restTransport` |
 | **advertised as** | `extensions.<org>.rest-transport` |
 | **declared facets** | `conditionalRunGet`, `contentEncodings` |
