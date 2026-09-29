@@ -9,7 +9,7 @@
 
 ## The surface
 
-A host that advertises `replay` ([capabilities.md](capabilities.md)) serves `forkRun` (`api/v2/openapi.yaml`, `POST /runs/{runId}:fork`) and `getEffectSeamManifest` (`GET /host/effect-seams`).
+A host advertising `replay` ([capabilities.md](capabilities.md)) serves `forkRun` (`api/v2/openapi.yaml`, `POST /runs/{runId}:fork`) and `getEffectSeamManifest` (`GET /host/effect-seams`).
 
 The `replay` facet (`spec/v2/facets/replay.schema.json`) is `{ modes[], retention?, effectSeamsManifest }`:
 
@@ -80,11 +80,11 @@ For a fork with `mode: replay`:
 5. The guarantee is whole-run and requires both classification before execution and a default-deny guard at every effect seam.
 6. A dispatch to a peer host is an outbound call under rule 2; the peer is never contacted.
 
-Pure nodes and LLM calls served from the invocation log MUST re-execute live; otherwise divergence detection is vacuous.
+Pure nodes and LLM calls served from the invocation log MUST re-execute live.
 
 **Fan-out.** A host that projects its log outward — webhook delivery, A2A push, outbound streams, analytics or audit sinks — MUST NOT deliver events a replay re-emits as fixed history, and a fork of either mode MUST NOT inherit its source's A2A push configs. Replay-ness MUST be read from the run, never from the event type; the fork's own log MUST still carry the re-emitted events ([webhooks.md](webhooks.md)).
 
-**Branch.** A branch re-fires effects for sequences `>= fromSeq`; those are effects the operator asked for. A host MAY suppress branch effects and MUST NOT report that as replay suppression. A host SHOULD surface the re-fire in operator-facing fork UI.
+**Branch.** A branch re-fires effects for sequences `>= fromSeq`. A host MAY suppress branch effects and MUST NOT report that as replay suppression. A host SHOULD surface the re-fire in operator-facing fork UI.
 
 ### The effect-seam manifest
 
@@ -95,7 +95,7 @@ A host advertising `replay` MUST publish `schemas/v2/effect-seam-manifest.schema
 - Two seams a host guards through one code path but that leave by different mechanisms are different `kind`s; two that leave by the same mechanism for different business reasons are one.
 - `other` is the escape for a mechanism this list does not name — raw TCP, gRPC, a filesystem write, a device SDK. A row using it MUST carry `note` naming that mechanism.
 
-**Completeness outranks driveability.** Every outbound effect path the node runtime can reach MUST be listed, including one the suite cannot drive (typically `smtp` or `other`); the scenario records that one `inapplicable`, naming the mechanism. A host MUST NOT omit a seam because the suite cannot drive it, and MUST NOT relabel it as a `kind` the suite can drive. The manifest is a self-declaration whose false negatives are found by audit, not a witness.
+**Completeness outranks driveability.** Every outbound effect path the node runtime can reach MUST be listed, including one the suite cannot drive (typically `smtp` or `other`); the scenario records that one `inapplicable`, naming the mechanism. A host MUST NOT omit a seam because the suite cannot drive it, and MUST NOT relabel it as a `kind` the suite can drive.
 
 ## Replay-from-event-log internals
 
@@ -111,7 +111,7 @@ A v2 host MUST fork a run created before the cut (era `2`, [persistence.md](pers
 
 - The fork's prefix MUST be byte-equivalent to the *translated* parent — the parent as read through the codemap, not its stored bytes.
 - `run.started` on the fork MUST carry the legacy Subject (`issuer: urn:openwop:legacy`, [identity.md](identity.md)) where the parent had none.
-- A backfill of an era-`2` log is permitted only atomically per run with the original preserved, so this obligation stays checkable.
+- A backfill of an era-`2` log is permitted only atomically per run with the original preserved.
 
 ## Cross-engine ordering
 
@@ -120,7 +120,7 @@ When a host advertises both `idempotency.multiRegion` and `eventLog.crossEngineO
 - `status`, `variables`, and the projected event log up to `fromSeq` MUST be byte-equivalent across regions.
 - Per-region wall-clock and entropy fields in events after the boundary MAY differ.
 
-A host that advertises only one of the two keeps the single-region contract above; a host that advertises neither is single-region and the cross-region claim does not apply.
+A host advertising only one of the two, or neither, keeps the single-region contract.
 
 ## Retention
 

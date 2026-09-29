@@ -89,7 +89,7 @@ Best-effort delivery is not a conforming mode. A `3xx` response is a delivery fa
 
 ### Delivery isolation
 
-One subscription's slow or dead receiver MUST NOT delay another subscription's deliveries (invariant `webhook-delivery-isolation`). The rule is about when an attempt starts, not how soon after an event it must start, and it names no mechanism: a lane per subscription, a concurrent pool or asynchronous I/O all meet it; a sequential loop over a batch does not.
+One subscription's slow or dead receiver MUST NOT delay another subscription's deliveries (invariant `webhook-delivery-isolation`). The rule constrains when an attempt starts, not how soon after its event, and names no mechanism; a sequential loop over a batch does not meet it.
 
 A host MAY bound concurrent attempts beyond the floor of 8, and SHOULD NOT let one tenant's unanswered attempts occupy capacity another tenant's deliveries need.
 
@@ -99,10 +99,10 @@ An attempt whose request the host had begun sending before `unregisterWebhook` a
 
 ### Dead letters
 
-This sink is the delivery sink; the `deadLetter` family is the run sink ([runs.md](runs.md) §Dead letters) and is a different thing.
+This is the delivery sink, not the run sink of the `deadLetter` family ([runs.md](runs.md) §Dead letters).
 
 - A host advertising `webhooks.deadLetter` MUST serve `GET /webhooks/{webhookId}/dead-letters`.
-- A record MUST NOT carry the delivered body, the delivery headers, or the subscription secret — a dead-letter read names a delivery, it does not replay one.
+- A record names a delivery and MUST NOT carry the delivered body, the delivery headers, or the subscription secret.
 - The read belongs to a live subscription: after `unregisterWebhook` answers `204`, `GET /webhooks/{webhookId}/dead-letters` for that id MUST answer `404 not_found`, exactly as for a same-tenant id the host never minted. The host MAY discard that subscription's records at the unregister.
 - `expiresAt` bounds a record's retention only while its subscription exists.
 
@@ -124,13 +124,20 @@ At delivery time a host MUST re-resolve the hostname, validate every resolved ad
 
 ## Inbound triggers
 
-A host advertising `triggerBridge` runs inbound work through subscriptions (`schemas/v2/trigger-subscription.schema.json`) that are `active`, `paused` (not delivering; a schedule skips ticks), `failed`, or `dead-lettered` (deliveries in the `deadLetter` sink); `subscriptionStates` lists those it implements. On an `active` subscription the host:
+A host advertising `triggerBridge` runs inbound work through subscriptions (`schemas/v2/trigger-subscription.schema.json`), and `subscriptionStates` lists the states it implements:
+
+- `active`;
+- `paused` — not delivering; a schedule skips ticks;
+- `failed`;
+- `dead-lettered` — deliveries are in the `deadLetter` sink.
+
+On an `active` subscription the host:
 
 - with `dedup`, MUST answer a `dedupKey` repeated within retention (at least 24 hours) with the prior `runId`;
-- retries per `retryPolicy`, then dead-letters, starting no run;
+- retries a failed delivery per `retryPolicy`, then dead-letters it without starting a run;
 - MUST set the delivery id as `causationId` on `run.started`.
 
-A source in `triggerBridge.sources` MUST run through these states and emit `trigger.subscription-state-changed` and `trigger.delivery-attempted`, which MUST NOT carry inbound content or credentials (`schemas/v2/run-event-payloads.schema.json`).
+A source in `triggerBridge.sources` MUST move through these states and emit `trigger.subscription-state-changed` and `trigger.delivery-attempted`. These events MUST NOT carry inbound content or credentials (`schemas/v2/run-event-payloads.schema.json`).
 
 With `triggerBridge.ingestion`, each `externalSources` entry MUST turn an external event into a `TriggerEvent` (`schemas/v2/trigger-event.schema.json`, whose rules bind) and start a run. The host:
 
