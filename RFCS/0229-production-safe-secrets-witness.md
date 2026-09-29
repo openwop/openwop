@@ -55,6 +55,13 @@ A host that advertises the `secrets` facet `runSecrets` (§D) accepts an optiona
 4. **Lifetime.** The host MUST NOT write a `runSecrets` value to any store that an operator or client can read in cleartext, and MUST discard it by the time the run is terminal. A fork or replay of the run does not inherit it: a `run:` ref in the fork fails `credential_not_found`.
 5. **Redaction.** The value is a resolved secret at run scope, so every rule that already binds such a value applies to it: `host-services.md` §`secrets` and the §Memory redaction rules at v2, `observability.md` §Redaction at v1. In addition, the host MUST NOT echo it on any response. That includes the `createRun` answer, the run snapshot, and any `runSecrets` field a read returns; a read MAY return the `ref`s.
 6. **Transport.** The host MUST NOT log the `createRun` request body's `runSecrets` values, including in request, access or error logs.
+7. **No persisted or derived digest.** A `runSecrets` value MUST NOT enter any hash, digest, fingerprint or cache key that the host persists or derives from the request. That covers the idempotency request digest (`idempotency.md` §Key and record) and any replay, witness or audit digest. A digest of a value is a confirmation oracle: anyone who can read the store can test a guessed value against it offline. This is measured on current code: one host's run-scoped secrets were folded, with `inputs` and `configurable`, into the persisted idempotency body hash.
+
+   The idempotency request digest is therefore computed over the `createRun` body **with `runSecrets` removed**. A same-key retry that differs from the original only in `runSecrets` compares **equal**. It is answered by the idempotency outcome rules as any duplicate is, and the retried values are discarded unused. Two points justify this:
+   - Refusing the retry with `409 idempotency_key_mismatch` would require the host to keep a function of the first request's secrets for the record's retention of at least 24 hours. That is the persisted digest this rule forbids.
+   - Treating the retry as equal uses no secret under a request it did not come with. A final outcome is replayed from cache and starts no run, so only the original run ever held the original values. A retryable outcome (`429`, `5xx`) re-executes, and that execution resolves the values the retry itself supplied.
+
+   A client that means to supply different values starts a new run under a new `Idempotency-Key`.
 
 ### §B. The witness node (`core.secret.witness`)
 
@@ -78,13 +85,13 @@ In both majors the facet is optional, and its absence means "`createRun` does no
 ### §E. The floor
 
 - **v1:** `profiles.md` §`openwop-secrets` gains a second floor path. A host is certified when the discovery predicate holds and **either** `byok-roundtrip.test.ts` **or** `secrets-run-witness.test.ts` records a witnessed pass. The canary path stays for hosts that keep it. The run-witness path is the one a production host can take.
-- **v2:** the `secrets` family's `requirementIds` gain the three §F rows. There is no v2 `openwop-secrets` profile, and this RFC adds none.
+- **v2:** the `secrets` family's `requirementIds` gain the four §F rows. There is no v2 `openwop-secrets` profile, and this RFC adds none.
 
 ### §F. Conformance
 
 The leg lives in `secrets-run-witness` (v1) and `v2-secrets-run-witness` (v2), gated on the `runSecrets` facet.
 
-The suite draws a fresh value `C` for each run: 48 bytes from a CSPRNG, base64url-encoded (64 characters), with no fixed prefix. It supplies `C` as `runSecrets: [{ ref: "run:openwop-witness", value: C }]`, and passes `expectedSha256 = sha256(C)` and the `ref` as run inputs. Three requirements:
+The suite draws a fresh value `C` for each run: 48 bytes from a CSPRNG, base64url-encoded (64 characters), with no fixed prefix. It supplies `C` as `runSecrets: [{ ref: "run:openwop-witness", value: C }]`, and passes `expectedSha256 = sha256(C)` and the `ref` as run inputs. Four requirements:
 
 1. **`openwop.requirement.secrets.run-witness-resolves`.** The run completes, and `witness`'s output is `{ matched: true }`.
    - A second run passes an `expectedSha256` for a different value and must complete with `matched: false`.
@@ -113,6 +120,10 @@ The suite draws a fresh value `C` for each run: 48 bytes from a CSPRNG, base64ur
    - where `replay` is advertised, a `branch` fork of the first run taken before `witness` fails `credential_not_found` (§A.4: a fork does not inherit `runSecrets`).
 
    A pass here is the observable half of "this witness is not an oracle".
+4. **`openwop.requirement.secrets.run-secrets-outside-request-digest`.** The suite creates a run with `runSecrets` value `C` under a fresh `Idempotency-Key`, waits for the `2xx`, then repeats the request under the same key with a different value `C′`.
+   - The retry MUST be answered from cache: the same `runId`, with `OpenWOP-Idempotent-Replay: true`.
+   - It MUST NOT be answered `409 idempotency_key_mismatch`. A `409` shows the request digest covered `runSecrets` (§A.7).
+   - `C′` MUST NOT appear on any surface of the original run. That is checked as in row 2, and it shows the retried value was discarded.
 
 **Dispositions.**
 
@@ -135,6 +146,7 @@ The suite draws a fresh value `C` for each run: 48 bytes from a CSPRNG, base64ur
 | §A.4 not stored in cleartext | — | operator only | **unwitnessable from outside**: storage is not observable; audit and the host's own tests |
 | §A.5 redaction and no echo | `C` absent on every readable surface, in every encoding | the suite, unaided | witnessable — gated |
 | §A.6 not logged | — | operator only | **unwitnessable from outside**: host logs are not a protocol surface |
+| §A.7 no persisted or derived digest | a same-key retry differing only in `runSecrets` replays (`OpenWOP-Idempotent-Replay: true`, the same `runId`) and is never `409 idempotency_key_mismatch` | the suite, unaided | witnessable — gated, for the idempotency digest. Other persisted digests are **unwitnessable from outside**, since stores are not a protocol surface. |
 | §B.1–§B.3 the witness's behaviour | `matched` true and false as expected; `credential_forbidden` on a non-`run:` ref; no digest or length on any surface | the suite, unaided | witnessable — gated |
 | §C the fixture is advertised with the facet | discovery lists `openwop-secrets-run-witness` | the suite, unaided | witnessable — gated |
 
@@ -150,6 +162,7 @@ The attacker considered here holds the suite's credentials: an API key that can 
 **What they cannot do:**
 - **Learn anything about a stored secret.** The witness resolves only `run:` refs (§B.1), a `run:` ref resolves only to values supplied with the same run (§A.2), and no stored secret carries a `run:` ref (§A.3). There is therefore no input that makes the node read a user, tenant, workspace, platform or environment secret. The current fixture has no such bound. This is the property that makes the node safe to register in production.
 - **Learn another run's supplied value.** It is not persisted in cleartext, discarded at terminal, and not inherited (§A.4). An earlier run's `ref` fails `credential_not_found` (§F.3).
+- **Confirm a guess against anything the host kept.** No digest of a supplied value is persisted or derived, the idempotency request digest included (§A.7), so reading a host store yields nothing to test a guess against. A same-key retry cannot probe whether its values match the original's, because it compares equal either way.
 - **Replace a workflow's real credential.** A `runSecrets` value never answers a non-`run:` ref (§A.3). Supplying `run:anthropic_api_key` changes nothing about what `anthropic_api_key` resolves to.
 - **Read a value through the run's audience.** A viewer of the run sees `matched` and nothing else: no digest, no length (§B.3). The current fixture gives every run viewer the digest and length of the resolved secret.
 
@@ -191,7 +204,12 @@ RFC 0147 §A.6 applies, because the RFC touches certification (a floor) and secr
 
 ## Unresolved questions
 
-1. **Placement of `runSecrets`.** One production host already accepts run-scoped secrets as `configurable.runSecrets`. A top-level `runSecrets` keeps secret material out of `configurable`, which hosts persist and echo. `configurable.runSecrets` would match existing code. Maintainer input is wanted before `Active`.
+1. **Placement of `runSecrets`** (G1, the maintainer's call). **Recommended: top level**, not `configurable.runSecrets`, for three reasons:
+   - v2 `configurable` is closed and versioned (`runs.md` §`configurable`, `schemas/v2/configurable.schema.json`).
+   - `runs.md` requires a host to persist `RunOptions` at creation and to surface the persisted `configurable` on the run snapshot. A secret inside it would be persisted and echoed, against §A.4 and §A.5.
+   - A `branch` fork takes caller-supplied `RunOptions` over the projected state (`replay.md`), and `configurable` is what a fork carries, against §A.4.
+
+   The production host that accepts `configurable.runSecrets` today concurs. It already strips those values before persistence and keeps them in process only. It proposes keeping `configurable.runSecrets` as a **v1 alias**, routed into the same non-persisted store and never into the persisted `RunOptions`. The alias is v1-only, because the v2 `configurable` is closed. Recorded as a recommendation; the decision stays with the maintainer before `Active`.
 2. **Should an egress leg follow?** It would witness *use* as well as *resolution* (Alternative 3), gated on `httpClient` and an operator-supplied receiver, as the webhook legs are.
 3. **Should the v1 canary path be deprecated** once a production host certifies through the run-witness path? This RFC keeps it, because a test host may prefer it.
 
@@ -213,7 +231,7 @@ Both need the `run:` binding, the witness node and the facet.
 
 - [ ] `Active`: the comment window closes (2026-10-06) with no unresolved objection. Then the spec text (§A–§E) lands in `run-options.md`, `capabilities.md`, `host-services.md`, `fixtures.md` and `profiles.md`, together with the schemas, facet and declaration rows.
 - [ ] The two scenarios ship in a suite minor, with a negative control. A host whose witness resolves a non-`run:` ref must fail `run-witness-scope-bound`, and a host that echoes `C` must fail `run-witness-redacted`.
-- [ ] `Accepted`: all three requirement ids `executed-pass` on a committed certified bundle from a host whose deployment is production (not a test posture). This is the property the RFC exists for.
+- [ ] `Accepted`: all four requirement ids `executed-pass` on a committed certified bundle from a host whose deployment is production (not a test posture). This is the property the RFC exists for.
 
 ## References
 
