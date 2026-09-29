@@ -382,6 +382,26 @@ Format follows [Keep a Changelog](https://keepachangelog.com/en/1/) loosely. Ver
 - **The remaining eleven stay `Active`, each for a stated reason** rather than for lack of attention. The eight RFC 0167 program children name a certified openwop-app bundle in their own acceptance criteria and the committed one reads `certified: false` (3 blocked rows, RFC 0168 §E.1). RFC 0173 additionally carries the program's only `open` gap row. RFC 0179's sole criterion is unmet — 2.4.2 stopped the gate reading "(Phase 4 leg)" as an excuse for it. RFC 0187 names three requirement ids that no scenario mints. RFC 0167 itself flips **last**, which 2.4.2 made a rule: the moment the umbrella stops being `Active`, every child still `Active` becomes permanently ineligible.
 - **The interrupt `data` union is bound to `kind`** (MCP/A2A review P3-H7, Class 3 correction — COMPATIBILITY.md §3). `schemas/suspend-request.schema.json` and its v2 twin typed `data` as an unbound `oneOf`, so the minimal `conversation.start` and `conversation.close` payloads (`{ conversationId }`, which satisfies both shapes) failed validation in v1 and v2, and a payload carrying another kind's `data` passed. `data` is now an `anyOf` and a root `allOf` binds each kind to its own shape with one `if`/`then`; no per-kind shape or `$id` changed. Witnessed by `conformance/fixtures/interrupt-payloads/` (suite 2.36.0).
 
+## [2.44.4] — 2026-09-29 — six more core families get v2 normative homes, replay derives a rejection and counts terminals, and the replay fixtures wait on a pure hold node
+
+A suite patch.
+
+### Protocol
+
+- **More core families get v2 normative homes** (RFC 0189): `memory`, `prompts` and `aiProviders` in `host-services.md`, `limits` in `runs.md`, and `artifactTypes` in the new `artifact-type-packs.md`. The rules are restated; none is added, dropped, strengthened or weakened. v1-dependent core families fall from 8 to 3 (`agents`, `budget`, `production`).
+- **Class 3 correction: emitting the kind-specific interrupt types is a MAY** (#1770). Six of the seven legacy `approval.*` / `clarification.*` types cannot carry one payload valid on both majors. v1's `approval.overridden` MUST on the override path is unchanged (#1798).
+- **Class 3 clarification: an era-2 governance-shape `approval.granted` / `rejected` / `overridden` has no v2 projection** (#1741). `migrations.json` C4.4 is corrected.
+- **Class 3 re-correction: the replay ordinal counts recorded terminals, not starts** (#1769). A pause or a suspend re-emits `node.started` without a terminal, so start-counting failed correct replays closed.
+- **`settings.maxLoopbackIterations` is an authoring hint** (#1748; no wire change).
+
+### Conformance
+
+- **`0223.replay-derives-rejection`** (#1756): a `replay` fork of a rejected gate derives the recorded rejection and never re-decides it, for a reject and for a timeout.
+- **`core.conformance.hold`** (#1769): a reserved pure node replaces `core.delay` in `conformance-replay-ordinal-loop` and the v1 `conformance-replay-side-effect`, which a host honouring `core.delay`'s side-effect role could not pass.
+- **The loop fixtures are bounded by their scenarios** (#1748), with `recursionLimit: 20` as a runaway guard.
+- **`webhook-signed-delivery`'s tunnel control registers loopback, not the tunnel** (#1773), so it no longer fails conformant hosts.
+- **Suite `2.44.4`.** `@openwop/spec-artifacts` moves in lockstep at the same exact pin.
+
 ## [2.44.3] — 2026-09-28 — fifteen more core families get v2 normative homes, and webhook retry rows record the wait path they measured
 
 A suite patch.
