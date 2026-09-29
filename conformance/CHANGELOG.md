@@ -1,6 +1,6 @@
 # `@openwop/openwop-conformance` Changelog
 
-## [2.44.7] — unreleased — RFC 0223 G11 and RFC 0140 G10 close on a certified cut
+## [2.44.7] — 2026-09-29 — RFC 0223 G11 and RFC 0140 G10 close on a certified cut
 
 - **The 2.44.7 cycle opens.** The packed `@openwop/spec-artifacts` gaps register changes: RFC 0223 G11 (`0223.reject-loopback-reasks`) and RFC 0140 G10 (`replay.suppression-execution-ordinal`) close on the v2 reference host's certified 2.44.6 cut. No scenario is added or removed.
 
