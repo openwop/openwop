@@ -1,7 +1,7 @@
 {
   "$schema": "./gaps.schema.json",
   "version": 1,
-  "updated": "2026-09-29",
+  "updated": "2026-09-30",
   "witnessClasses": [
     "witnessable-unaided",
     "witnessable-gated",
@@ -13688,8 +13688,8 @@
       "surface": "Where `runSecrets` sits on `createRun`: top-level (proposed; keeps secret material out of `configurable`, which hosts persist and echo) or `configurable.runSecrets` (what one production host accepts today).",
       "witness": "unclassified",
       "requirementId": null,
-      "disposition": "carried",
-      "target": "openwop.gap.0229.1",
+      "disposition": "closed",
+      "target": null,
       "sources": [
         {
           "file": "RFCS/registers/0229-production-safe-secrets-witness.gaps.md",

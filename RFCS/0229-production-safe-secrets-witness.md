@@ -7,8 +7,8 @@
 | **Status**        | `Draft`                                                         |
 | **Author(s)**     | David Tufts (@davidscotttufts)                                  |
 | **Created**       | 2026-09-29                                                      |
-| **Updated**       | 2026-09-29 — filed `Draft`. The 7-day comment window opens with the pull request and closes 2026-10-06. The window is **not** waived: this RFC touches certification and secret material, so RFC 0147 §A.6 bars a bootstrap waiver. The maintainer approved drafting it (openwop #1686 follow-up). |
-| **Affects**       | `spec/v1/run-options.md` and `schemas/v2/run-options.schema.json` (an optional `runSecrets` on `createRun`) · `spec/v1/capabilities.md` §secrets and the `secrets` record of `schemas/capabilities.schema.json` (the `runSecrets` facet; the v1 seed, derived into `schemas/v2/capabilities.schema.json`) · `spec/v2/core/host-services.md` §`secrets` · `conformance/fixtures.md` (new `openwop-secrets-run-witness`) · `spec/v1/profiles.md` §`openwop-secrets` (a second floor path) · `spec/v2/declaration.json` (`secrets` requirement ids) · new scenarios `secrets-run-witness` (v1) and `v2-secrets-run-witness` |
+| **Updated**       | 2026-09-30 — G1 decided by the maintainer: `runSecrets` is a top-level member of the `createRun` body, with a v1-only `configurable.runSecrets` alias a host MAY accept during the transition (§A.8). Unresolved question 1 is closed. · 2026-09-29 — filed `Draft`. The 7-day comment window opens with the pull request and closes 2026-10-06. The window is **not** waived: this RFC touches certification and secret material, so RFC 0147 §A.6 bars a bootstrap waiver. The maintainer approved drafting it (openwop #1686 follow-up). |
+| **Affects**       | the `createRun` request body: a top-level optional `runSecrets` in `api/openapi.yaml` (v1, from which `derive-v2-api.py` derives `api/v2/openapi.yaml`), with prose in `spec/v1/rest-endpoints.md` §`POST /v1/runs` and `spec/v2/core/runs.md` §Create. It is never in `RunOptions`, and `spec/v1/run-options.md` gains only the v1 alias note (§A.8) · `spec/v1/capabilities.md` §secrets and the `secrets` record of `schemas/capabilities.schema.json` (the `runSecrets` facet; the v1 seed, derived into `schemas/v2/capabilities.schema.json`) · `spec/v2/core/host-services.md` §`secrets` · `conformance/fixtures.md` (new `openwop-secrets-run-witness`) · `spec/v1/profiles.md` §`openwop-secrets` (a second floor path) · `spec/v2/declaration.json` (`secrets` requirement ids) · new scenarios `secrets-run-witness` (v1) and `v2-secrets-run-witness` |
 | **Compatibility** | `additive` (COMPATIBILITY.md §2): a new optional request field, a new facet, a new node type and fixture, and a second way to satisfy an existing floor. Nothing changes for a host that advertises none of it. |
 | **Supersedes**    | —                                                               |
 | **Superseded by** | —                                                               |
@@ -47,7 +47,12 @@ The suite does not know the canary, so it never checks that the hash is the cana
 
 ### §A. Run-supplied secrets (`runSecrets`)
 
-A host that advertises the `secrets` facet `runSecrets` (§D) accepts an optional `runSecrets` on `createRun`: an array of `{ ref, value }`.
+A host that advertises the `secrets` facet `runSecrets` (§D) accepts an optional `runSecrets` on `createRun`: an array of `{ ref, value }`. It is a **top-level member of the request body**, beside `workflowId` and `inputs`, and never part of `RunOptions` / `configurable`. That placement is the maintainer's decision (2026-09-30, G1), for three reasons:
+- v2 `configurable` is closed and versioned;
+- `RunOptions` are persisted at creation and surfaced on the snapshot (`runs.md`);
+- a fork carries `RunOptions`.
+
+Each of those would contradict §A.4 or §A.5.
 
 1. `ref` MUST match `^run:[A-Za-z0-9_.-]{1,64}$`. `value` is a string of 16 to 4096 characters. The array holds at most `runSecrets.maxEntries` entries, and a `ref` appears at most once. A request that breaks any of these MUST be refused `400 validation_error`, naming the field and never the value.
 2. **Resolution is bound to the run.** A `run:` ref MUST resolve only to a value supplied in the `runSecrets` of the run that is resolving it. It MUST NOT resolve from any other scope or source: another run, user, tenant, workspace, platform, or the host process environment. A `run:` ref that the run did not supply MUST fail `credential_not_found`.
@@ -62,6 +67,12 @@ A host that advertises the `secrets` facet `runSecrets` (§D) accepts an optiona
    - Treating the retry as equal uses no secret under a request it did not come with. A final outcome is replayed from cache and starts no run, so only the original run ever held the original values. A retryable outcome (`429`, `5xx`) re-executes, and that execution resolves the values the retry itself supplied.
 
    A client that means to supply different values starts a new run under a new `Idempotency-Key`.
+8. **v1 transition alias.** On a v1 `createRun` (`POST /v1/runs`) a host MAY also accept the same array at `configurable.runSecrets`. This is transition behaviour for a host that accepted run-scoped secrets there before this RFC. The host MUST route the alias into the same non-persisted store as the top-level field, and MUST remove it from `configurable` before `RunOptions` are persisted, surfaced or carried by a fork.
+   - Every rule in §A binds values supplied through the alias, and the §A.7 digest excludes it exactly as it excludes the top-level field.
+   - A request carrying both forms MUST be refused `400 validation_error`.
+   - A v2 host MUST NOT accept the alias. v2 `configurable` is closed, so the request fails validation as any unknown member does.
+   - A client SHOULD send the top-level field.
+   - The alias ends with v1 end-of-support.
 
 ### §B. The witness node (`core.secret.witness`)
 
@@ -147,6 +158,7 @@ The suite draws a fresh value `C` for each run: 48 bytes from a CSPRNG, base64ur
 | §A.5 redaction and no echo | `C` absent on every readable surface, in every encoding | the suite, unaided | witnessable — gated |
 | §A.6 not logged | — | operator only | **unwitnessable from outside**: host logs are not a protocol surface |
 | §A.7 no persisted or derived digest | a same-key retry differing only in `runSecrets` replays (`OpenWOP-Idempotent-Replay: true`, the same `runId`) and is never `409 idempotency_key_mismatch` | the suite, unaided | witnessable — gated, for the idempotency digest. Other persisted digests are **unwitnessable from outside**, since stores are not a protocol surface. |
+| §A.8 the v1 alias | on v1, a request carrying both forms answers `400 validation_error`; on v2, `configurable.runSecrets` fails validation; an aliased value is absent from the persisted `configurable` on the snapshot | the suite, unaided | witnessable — gated (`runSecrets`; the v1 rows only where the host accepts the alias) |
 | §B.1–§B.3 the witness's behaviour | `matched` true and false as expected; `credential_forbidden` on a non-`run:` ref; no digest or length on any surface | the suite, unaided | witnessable — gated |
 | §C the fixture is advertised with the facet | discovery lists `openwop-secrets-run-witness` | the suite, unaided | witnessable — gated |
 
@@ -204,12 +216,12 @@ RFC 0147 §A.6 applies, because the RFC touches certification (a floor) and secr
 
 ## Unresolved questions
 
-1. **Placement of `runSecrets`** (G1, the maintainer's call). **Recommended: top level**, not `configurable.runSecrets`, for three reasons:
-   - v2 `configurable` is closed and versioned (`runs.md` §`configurable`, `schemas/v2/configurable.schema.json`).
-   - `runs.md` requires a host to persist `RunOptions` at creation and to surface the persisted `configurable` on the run snapshot. A secret inside it would be persisted and echoed, against §A.4 and §A.5.
-   - A `branch` fork takes caller-supplied `RunOptions` over the projected state (`replay.md`), and `configurable` is what a fork carries, against §A.4.
+1. ~~**Placement of `runSecrets`.**~~ **Resolved 2026-09-30 (maintainer decision, G1): top level**, with the v1-only `configurable.runSecrets` alias of §A.8. The recommendation's three reasons carried:
+   - v2 `configurable` is closed and versioned;
+   - `runs.md` persists `RunOptions` and surfaces `configurable` on the snapshot;
+   - a `branch` fork carries `RunOptions`.
 
-   The production host that accepts `configurable.runSecrets` today concurs. It already strips those values before persistence and keeps them in process only. It proposes keeping `configurable.runSecrets` as a **v1 alias**, routed into the same non-persisted store and never into the persisted `RunOptions`. The alias is v1-only, because the v2 `configurable` is closed. Recorded as a recommendation; the decision stays with the maintainer before `Active`.
+   The production host that accepts `configurable.runSecrets` today concurs.
 2. **Should an egress leg follow?** It would witness *use* as well as *resolution* (Alternative 3), gated on `httpClient` and an operator-supplied receiver, as the webhook legs are.
 3. **Should the v1 canary path be deprecated** once a production host certifies through the run-witness path? This RFC keeps it, because a test host may prefer it.
 
