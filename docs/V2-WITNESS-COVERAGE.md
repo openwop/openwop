@@ -8,11 +8,11 @@ Every v2 core family now has a v2 normative home (RFC 0189). Many of its rules a
 
 ## Headline
 
-- **Families (73 core):** 43 v2-witnessed, 27 v1-only, 3 unwitnessed. Of the 54 `witnessable-gated` families, 23 are v1-only; every unwitnessed family is `claims-check`.
-- **At v1 end-of-support:** the 27 v1-only families, and the 123 obligation units attributed to them, lose their only witness.
-- **Obligation units (884 in `spec/v2/core/`):** 550 (62%) sit in a section a major-2 scenario cites; 334 sit in 110 sections no major-2 scenario cites.
+- **Families (73 core):** 45 v2-witnessed, 25 v1-only, 3 unwitnessed. Of the 54 `witnessable-gated` families, 21 are v1-only; every unwitnessed family is `claims-check`.
+- **At v1 end-of-support:** the 25 v1-only families, and the 112 obligation units attributed to them, lose their only witness.
+- **Obligation units (883 in `spec/v2/core/`):** 554 (63%) sit in a section a major-2 scenario cites; 329 sit in 109 sections no major-2 scenario cites.
 - **Declaration links:** 0 core families declare `floorScenarios`; 1 declare `requirementIds`. The family-to-test link exists only in scenario code and citations, although `overview.md` §What a MUST means says every core MUST has an id in `requirements.json`.
-- **Scenarios:** 583 registered, 145 run at major 2. 33 major-2 citations name a v2 core section this script cannot match to a heading (see Citation gaps).
+- **Scenarios:** 585 registered, 147 run at major 2. 33 major-2 citations name a v2 core section this script cannot match to a heading (see Citation gaps).
 
 ## How to read it
 
@@ -36,10 +36,8 @@ Every v2 core family now has a v2 normative home (RFC 0189). Many of its rules a
 | `artifactTypes` | witnessable-gated | **v1-only** | 10 (0) | – | `artifact-type-pack-install`, `artifact-type-registration-source`, `artifact-type-store-emission`, `artifact-type-store-without-render` +1 |
 | `portability` | witnessable-gated | **v1-only** | 8 (0) | – | `export-bundle-portability` |
 | `selfHostedRunner` | witnessable-gated | **v1-only** | 8 (0) | – | `self-hosted-runner` |
-| `httpClient` | witnessable-gated | **v1-only** | 7 (0) | – | `egress-audience-binding`, `egress-decision-content-free`, `http-client-ssrf`, `safefetch-behavior` +1 |
 | `subWorkflow` | claims-check | **v1-only** | 5 (0) | – | `dispatch-input-mapping`, `dispatchLoop` |
 | `providerUsage` | witnessable-gated | **v1-only** | 4 (0) | – | `provider-usage` |
-| `toolHooks` | witnessable-gated | **v1-only** | 4 (0) | – | `safefetch-behavior`, `safefetch-live-audit`, `tool-hooks-authorization-fail-closed`, `tool-hooks-content-free` +4 |
 | `modelCapabilities` | witnessable-gated | **v1-only** | 3 (0) | – | `envelope-variant-discriminator-static`, `model-capability-insufficient`, `model-capability-substituted`, `node-module-required-capabilities-shape` |
 | `multiPartyConversation` | witnessable-gated | **v1-only** | 3 (0) | – | `multi-party-conversation-behavioral`, `multi-party-conversation-shape` |
 | `nodePackRuntimes` | claims-check | **v1-only** | 3 (0) | – | `otel-emission-grpc`, `wasm-pack-abi-version-rejection`, `wasm-pack-invoke-completed`, `wasm-pack-invoke-suspended` +3 |
@@ -61,7 +59,7 @@ Every v2 core family now has a v2 normative home (RFC 0189). Many of its rules a
 | `replay` | witnessable-gated | **v2-witnessed** | 36 (19) | `v2-a2a-push-delivery`, `v2-approval-reject-disposition`, `v2-effect-seam-manifest`, `v2-effect-seam-no-refire` +8 | `conversationReplayDeterminism`, `feedback-fork-not-copied`, `replay-fanout-suppression`, `replay-side-effect-suppression` |
 | `eventLog` | claims-check | **v2-witnessed** | 35 (25) | `v2-era-2-append-vocabulary`, `v2-era-key`, `v2-era-stamp-universal`, `v2-fork-a-v1-run` +3 | `cross-engine-append-behavior`, `cross-engine-append-ordering`, `multi-region-idempotency` |
 | `packs` | claims-check | **v2-witnessed** | 35 (20) | `v2-manifest-ceiling-refused`, `v2-manifest-hatch-carried`, `v2-peer-dependency-declared`, `v2-registry-lifecycle` | `pack-registry-isolation` |
-| `webhooks` | witnessable-gated | **v2-witnessed** | 35 (26) | `inbound-credential-no-passthrough`, `v2-a2a-operation-map`, `v2-bound-id-kinds`, `v2-v1-signed-webhook-accepted` +10 | `webhook-negative`, `webhook-sig-algorithm`, `webhook-signed-delivery`, `webhook-tenant-isolation` |
+| `webhooks` | witnessable-gated | **v2-witnessed** | 34 (26) | `inbound-credential-no-passthrough`, `v2-a2a-operation-map`, `v2-bound-id-kinds`, `v2-v1-signed-webhook-accepted` +10 | `webhook-negative`, `webhook-sig-algorithm`, `webhook-signed-delivery`, `webhook-tenant-isolation` |
 | `idempotency` | witnessable-gated | **v2-witnessed** | 25 (20) | `v2-bound-id-kinds`, `v2-effect-identity-business-key`, `v2-idempotency-key-grammar`, `v2-secrets-run-witness` | `compensation-recovery`, `multi-region-idempotency-behavior`, `multi-region-idempotency`, `replay-llm-cache-key` +1 |
 | `multiAgent` | claims-check | **v2-witnessed** | 19 (0) | `context-budget-transcript-bound`, `context-summarization-replay`, `v2-run-fork-ancestry` | `agent-loop-iteration-monotonic`, `agent-loop-stateful-resume`, `agent-loop-version5-shape`, `agent-loop-workspace-snapshot` +11 |
 | `secrets` | witnessable-gated | **v2-witnessed** | 16 (16) | `v2-secret-canary-absent`, `v2-secrets-run-witness` | `envelope-reasoning-secret-redaction`, `secret-leakage-otel-attribute` |
@@ -71,10 +69,12 @@ Every v2 core family now has a v2 normative home (RFC 0189). Many of its rules a
 | `forms` | claims-check | **v2-witnessed** | 11 (1) | `v2-form-when-reuses-edge-conditions` | `form-content-instantiation` |
 | `connections` | witnessable-gated | **v2-witnessed** | 8 (5) | `fixtures-valid`, `v2-provider-conflict` | `connection-pack-apihosts`, `connection-pack-manifest-valid`, `connection-pack-no-credential-material`, `connection-pack-write-reconsent` +1 |
 | `anonymousActor` | seam-gated | **v2-witnessed** | 7 (0) | `v2-mcp-mount-map` | `anonymous-actor-audit-opaque`, `anonymous-actor-default-deny`, `anonymous-actor-egress-guarded`, `anonymous-actor-no-secret-reach` +4 |
+| `httpClient` | witnessable-gated | **v2-witnessed** | 7 (0) | `v2-safefetch-ssrf-refused` | `egress-audience-binding`, `egress-decision-content-free`, `http-client-ssrf`, `safefetch-behavior` +1 |
 | `workspace` | witnessable-gated | **v2-witnessed** | 7 (7) | `v2-workspace-scope-from-identity` | `agent-loop-iteration-monotonic`, `agent-loop-stateful-resume`, `agent-loop-version5-shape`, `agent-loop-workspace-snapshot` +4 |
 | `queueBus` | witnessable-gated | **v2-witnessed** | 5 (5) | `v2-queue-cross-tenant-isolation` | `queue-ack-nack-dlq`, `queue-cross-tenant-isolation`, `queue-publish-consume-roundtrip`, `stream-subscribe-from-beginning` |
 | `workflowChainPacks` | witnessable-gated | **v2-witnessed** | 5 (1) | `v2-chain-pin-exact` | `chain-subchain-fanout`, `workflow-chain-deferred-parameters`, `workflow-chain-expansion`, `workflow-chain-host-expansion` +2 |
 | `mcp` | seam-gated | **v2-witnessed** | 4 (4) | `v2-interop-trace-context`, `v2-mcp-client-results`, `v2-mcp-mount-map`, `v2-mcp-tasks` +5 | `mcp-2026-07-28-discover`, `mcp-cache-tenant-scope`, `mcp-current-auth-boundary`, `mcp-extension-opacity` +9 |
+| `toolHooks` | witnessable-gated | **v2-witnessed** | 4 (4) | `v2-tool-authorization-fail-closed` | `safefetch-behavior`, `safefetch-live-audit`, `tool-hooks-authorization-fail-closed`, `tool-hooks-content-free` +4 |
 | `budget` | witnessable-gated | **v2-witnessed** | 3 (3) | `v2-configurable-closed`, `v2-run-options-limits` | `budget-enforcement`, `budget-policy-shape` |
 | `envelopeStrictness` | claims-check | **v2-witnessed** | 3 (3) | `v2-a2ui-v09-surface` | – |
 | `fs` | witnessable-gated | **v2-witnessed** | 3 (3) | `v2-fs-sandbox-escape-refused` | `fs-path-traversal` |
@@ -114,7 +114,7 @@ Every v2 core family now has a v2 normative home (RFC 0189). Many of its rules a
 | `execution.md` | 34 | 0 (0%) | `selfHostedRunner`, `multiAgent`, `agents`, `subWorkflow` |
 | `form-content-packs.md` | 11 | 1 (9%) | `forms` |
 | `headers.md` | 7 | 1 (14%) | – |
-| `host-services.md` | 94 | 44 (47%) | `prompts`, `secrets`, `modelCapabilities`, `aiProviders`, `memory`, `queueBus`, `scheduling`, `toolHooks`, `httpClient`, `aiEnvelope`, `promptLibrary`, `agentRuntime`, `workspace`, `mcp` |
+| `host-services.md` | 94 | 48 (51%) | `prompts`, `secrets`, `modelCapabilities`, `aiProviders`, `memory`, `queueBus`, `scheduling`, `toolHooks`, `httpClient`, `aiEnvelope`, `promptLibrary`, `agentRuntime`, `workspace`, `mcp` |
 | `i18n.md` | 17 | 0 (0%) | `i18n`, `content` |
 | `idempotency.md` | 25 | 20 (80%) | `idempotency` |
 | `identity.md` | 64 | 55 (86%) | `anonymousActor`, `authorization`, `auth` |
@@ -132,7 +132,7 @@ Every v2 core family now has a v2 normative home (RFC 0189). Many of its rules a
 | `storage.md` | 19 | 8 (42%) | `fs`, `kvStorage`, `tableStorage`, `sql`, `nosql`, `vectorStore`, `searchIndex`, `blobStorage`, `cache` |
 | `tool-catalog.md` | 14 | 11 (79%) | `toolCatalog` |
 | `versioning.md` | 40 | 33 (83%) | – |
-| `webhooks.md` | 35 | 26 (74%) | `webhooks`, `triggerBridge` |
+| `webhooks.md` | 34 | 26 (76%) | `webhooks`, `triggerBridge` |
 | `workflow-chain-packs.md` | 5 | 1 (20%) | `workflowChainPacks` |
 
 ## Largest uncited sections
@@ -145,9 +145,9 @@ Sections with the most obligation units and no major-2 citation. A doc-level cit
 | `host-services.md` § `aiProviders` | aiProviders | 15 |
 | `events.md` § `envelopes` | envelopes | 13 |
 | `packs.md` § Front-end plugin packs | packs | 9 |
-| `webhooks.md` § Inbound triggers | webhooks | 9 |
 | `conformance.md` § Production profile | production | 8 |
 | `execution.md` § `selfHostedRunner` | selfHostedRunner | 8 |
+| `webhooks.md` § Inbound triggers | webhooks | 8 |
 | `host-services.md` § `httpClient` | httpClient | 7 |
 | `identity.md` § 1.5 `anonymousActor` | anonymousActor | 7 |
 | `interop.md` § MCP tasks and cancellation | shared | 7 |
@@ -169,9 +169,9 @@ Sections with the most obligation units and no major-2 citation. A doc-level cit
 
 ## Citation gaps
 
-These 19 major-2 scenarios cite no `spec/v2/core` document (only RFCs, schemas or the interop map). Whatever they witness is invisible to the section counts above; `v2-durability-recovery`, for one, witnesses `persistence.md` §Durable acceptance through RFC 0158 only.
+These 20 major-2 scenarios cite no `spec/v2/core` document (only RFCs, schemas or the interop map). Whatever they witness is invisible to the section counts above; `v2-durability-recovery`, for one, witnesses `persistence.md` §Durable acceptance through RFC 0158 only.
 
-`audit-anomaly-shape`, `audit-checkpoint-vectors`, `context-budget-transcript-bound`, `context-summarization-replay`, `otel-mcp-semconv-projection`, `v2-advertised-fixtures-exist`, `v2-agent-org-chart-served-shape`, `v2-auth-challenge`, `v2-content-locale-keys`, `v2-conversation-turn-parts`, `v2-durability-recovery`, `v2-ext-family-claims`, `v2-ext-rest-transport`, `v2-negotiation-authenticated`, `v2-negotiation-decided-emitted`, `v2-payload-seats-0186`, `v2-payload-vendor-hatch`, `v2-protected-resource-metadata`, `v2-webhook-message-id-stable`
+`audit-anomaly-shape`, `audit-checkpoint-vectors`, `context-budget-transcript-bound`, `context-summarization-replay`, `otel-mcp-semconv-projection`, `v2-advertised-fixtures-exist`, `v2-agent-org-chart-served-shape`, `v2-auth-challenge`, `v2-content-locale-keys`, `v2-conversation-turn-parts`, `v2-durability-recovery`, `v2-ext-family-claims`, `v2-ext-rest-transport`, `v2-negotiation-authenticated`, `v2-negotiation-decided-emitted`, `v2-payload-seats-0186`, `v2-payload-vendor-hatch`, `v2-protected-resource-metadata`, `v2-safefetch-ssrf-refused`, `v2-webhook-message-id-stable`
 
 33 major-2 citations name a v2 core section that matches no heading (most are `tool-catalog.md` §A–§F, RFC section letters):
 
@@ -199,10 +199,10 @@ Ranked: security, tenant isolation, idempotency and replay first; then wire shap
 | 3 | `workspace` | `host-services.md` § `workspace` | tenant isolation | v2-witnessed | `v2-workspace-scope-from-identity` |
 | 4 | `queueBus` | `host-services.md` § `queueBus` | tenant isolation | v2-witnessed | `v2-queue-cross-tenant-isolation` |
 | 5 | `secrets` | `host-services.md` § `secrets` | security | v2-witnessed | `v2-secret-canary-absent` |
-| 6 | `toolHooks` | `host-services.md` § `toolHooks` | security | v1-only | `v2-tool-authorization-fail-closed` |
+| 6 | `toolHooks` | `host-services.md` § `toolHooks` | security | v2-witnessed | `v2-tool-authorization-fail-closed` |
 | 7 | `anonymousActor` | `identity.md` § 1.5 `anonymousActor` | security | v2-witnessed | `v2-anonymous-actor-default-deny` |
 | 8 | `selfHostedRunner` | `execution.md` § `selfHostedRunner` | security | v1-only | `v2-runner-subject-isolation` |
-| 9 | `httpClient` | `host-services.md` § `httpClient` | security | v1-only | `v2-safefetch-ssrf-refused` |
+| 9 | `httpClient` | `host-services.md` § `httpClient` | security | v2-witnessed | `v2-safefetch-ssrf-refused` |
 | 10 | `fs` | `storage.md` § `fs` | security | v2-witnessed | `v2-fs-sandbox-escape-refused` |
 | 11 | `nosql` | `storage.md` § `sql` and `nosql` | security | v2-witnessed | `v2-storage-injection-refused` |
 | 12 | `portability` | `portability.md` § Import rules | security | v1-only | `v2-import-refuses-credential-literal` |
@@ -258,7 +258,7 @@ Ranked: security, tenant isolation, idempotency and replay first; then wire shap
 ### 6. A tool runs without its scopes
 
 - **Rule** (`host-services.md` § `toolHooks`): "If one is missing or cannot be evaluated, it MUST NOT invoke, MUST emit `agent.toolReturned` with `status: forbidden`"
-- **Today:** Major 1 only (`tool-hooks-authorization-fail-closed`, through the v1 tool-hooks seam).
+- **Today:** Major 1 only (`tool-hooks-authorization-fail-closed`, through the v1 tool-hooks seam). The section is now cited at major 2 by `v2-tool-authorization-fail-closed.test.ts`; re-check whether this rule is covered.
 - **Why it matters:** Per-tool authorization is the only check between an agent and an external side effect. Fail-open here turns a prompt injection into an action.
 - **Proposed:** `v2-tool-authorization-fail-closed` (major 2; gate: `toolHooks.perToolAuthorization`, a fixture agent whose principal lacks one `requiredScopes` entry). Asserts: the tool is not invoked (the fixture receiver sees no call), the log carries `agent.toolReturned` `status: forbidden`, and the response is `403 forbidden` with `details.scope: "tool"`.
 - **Sabotage that must fail it:** treat an unevaluable scope as granted: the receiver sees the call.
@@ -388,8 +388,8 @@ node scripts/report-v2-witness-coverage.mjs --write  # regenerate this file
 {
   "families": {
     "total": 73,
-    "v2-witnessed": 43,
-    "v1-only": 27,
+    "v2-witnessed": 45,
+    "v1-only": 25,
     "unwitnessed": 3
   },
   "byWitnessClass": {
@@ -404,28 +404,28 @@ node scripts/report-v2-witness-coverage.mjs --write  # regenerate this file
       "unwitnessed": 0
     },
     "witnessable-gated": {
-      "v2-witnessed": 31,
-      "v1-only": 23,
+      "v2-witnessed": 33,
+      "v1-only": 21,
       "unwitnessed": 0
     }
   },
   "obligationUnits": {
-    "total": 884,
-    "inV2CitedSections": 550,
-    "inUncitedSections": 334,
+    "total": 883,
+    "inV2CitedSections": 554,
+    "inUncitedSections": 329,
     "sectionsWithObligations": 268,
-    "sectionsWithNoV2Citation": 110
+    "sectionsWithNoV2Citation": 109
   },
   "declarationLinks": {
     "familiesWithFloorScenarios": 0,
     "familiesWithRequirementIds": 1
   },
   "scenarios": {
-    "registered": 583,
-    "major2": 145
+    "registered": 585,
+    "major2": 147
   },
   "unresolvedV2Citations": 33,
-  "major2ScenariosCitingNoCoreDoc": 19,
+  "major2ScenariosCitingNoCoreDoc": 20,
   "risks": {
     "listed": 20,
     "staleQuotes": [],
@@ -435,6 +435,7 @@ node scripts/report-v2-witness-coverage.mjs --write  # regenerate this file
       3,
       4,
       5,
+      6,
       10
     ]
   }

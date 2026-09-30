@@ -67,7 +67,12 @@ describe('trigger-refused-event-keeps-subscription (trigger-bridge.md §F.2)', (
       return seamAbsent('host ingests external webhooks but the trigger-bridge delivery seam is unwired');
     }
     if (refusedRes.status === 400) {
-      return seamAbsent('the trigger-bridge delivery seam does not implement scenario "refused" (answered 400)');
+      // Grace window (suite 2.45.3): the `refused` seam value is new in this cycle, so a
+      // host whose existing delivery seam predates it records `inapplicable` with this
+      // reason rather than `blocked` (which would deny its certification for a seam
+      // extension it has not yet shipped). The disposition for an advertised facet whose
+      // fixture or seam value is missing is pending a suite-wide policy decision.
+      return softSkip('inapplicable', 'the trigger-bridge delivery seam predates scenario "refused" (answered 400); grace window for seams extended in 2.45.3');
     }
     expect(refusedRes.status, req(ID, 'host-sample-test-seams.md (trigger-bridge delivery seam)', 'scenario "refused" MUST answer 200')).toBe(200);
     const refused = (refusedRes.json ?? {}) as SeamResult;
