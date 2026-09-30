@@ -8,16 +8,16 @@ Every v2 core family now has a v2 normative home (RFC 0189). Many of its rules a
 
 ## Headline
 
-- **Families (73 core):** 32 v2-witnessed, 37 v1-only, 4 unwitnessed. Of the 54 `witnessable-gated` families, 33 are v1-only; every unwitnessed family is `claims-check`.
-- **At v1 end-of-support:** the 37 v1-only families, and the 150 obligation units attributed to them, lose their only witness.
-- **Obligation units (883 in `spec/v2/core/`):** 507 (57%) sit in a section a major-2 scenario cites; 376 sit in 117 sections no major-2 scenario cites.
+- **Families (73 core):** 43 v2-witnessed, 27 v1-only, 3 unwitnessed. Of the 54 `witnessable-gated` families, 23 are v1-only; every unwitnessed family is `claims-check`.
+- **At v1 end-of-support:** the 27 v1-only families, and the 123 obligation units attributed to them, lose their only witness.
+- **Obligation units (884 in `spec/v2/core/`):** 550 (62%) sit in a section a major-2 scenario cites; 334 sit in 110 sections no major-2 scenario cites.
 - **Declaration links:** 0 core families declare `floorScenarios`; 1 declare `requirementIds`. The family-to-test link exists only in scenario code and citations, although `overview.md` §What a MUST means says every core MUST has an id in `requirements.json`.
-- **Scenarios:** 577 registered, 139 run at major 2. 33 major-2 citations name a v2 core section this script cannot match to a heading (see Citation gaps).
+- **Scenarios:** 583 registered, 145 run at major 2. 33 major-2 citations name a v2 core section this script cannot match to a heading (see Citation gaps).
 
 ## How to read it
 
 - **Obligation unit:** a paragraph, table row or list item in `spec/v2/core/` with MUST, MUST NOT, SHOULD, SHOULD NOT or REQUIRED. Fenced code is ignored.
-- **Signals:** `gate` = the scenario code names the family key; `rfc` = an `it()` cites the family's owning RFC; `cite` = an `it()` cites a v2 section owned by the family.
+- **Signals:** `gate` = the scenario code names the family key, directly or through a local helper, a literal table or an exported lib helper (resolved on the TypeScript AST); `rfc` = an `it()` cites the family's owning RFC; `cite` = an `it()` cites a v2 section of the family's normative home that the family owns, or a shared section of that home when the same scenario also gates on the family.
 - **Verdict:** `v2-witnessed` if a major-2 scenario carries a signal, `v1-only` if only major-1 scenarios do, else `unwitnessed`. It is necessary, not sufficient: one gated scenario can witness one rule of thirty.
 - **Not measured:** which prose rule a given `it()` discharges. Citations name sections, not sentences, and no regex can decide it (RFC 0191). A cited section can still hold unwitnessed rules, so the cited-section count is an upper bound.
 - **Attribution:** a section belongs to a family when its heading (or an ancestor's) is titled for it, when its document homes that family alone, or when the document is named for it (`replay.md`). Anything else is `shared`.
@@ -26,40 +26,29 @@ Every v2 core family now has a v2 normative home (RFC 0189). Many of its rules a
 
 | Family | Witness class | Verdict | Units (v2-cited) | Major-2 witnesses | Major-1-only witnesses |
 | --- | --- | --- | --- | --- | --- |
-| `nosql` | claims-check | **unwitnessed** | 3 (0) | – | – |
 | `agentRuntime` | claims-check | **unwitnessed** | 1 (0) | – | – |
 | `promptLibrary` | claims-check | **unwitnessed** | 1 (0) | – | – |
 | `envelopeContracts` | claims-check | **unwitnessed** | 0 (0) | – | – |
-| `i18n` | witnessable-gated | **v1-only** | 17 (0) | – | `i18n-negotiation` |
+| `i18n` | witnessable-gated | **v1-only** | 17 (0) | – | `i18n-negotiation`, `localized-content-delivery` |
 | `prompts` | witnessable-gated | **v1-only** | 16 (0) | – | `prompt-all-four-kinds-events`, `prompt-composed-secret-redaction`, `prompt-composed-trust-marker`, `prompt-end-to-end-events` +11 |
-| `aiProviders` | witnessable-gated | **v1-only** | 15 (0) | – | `ai-envelope-shape`, `byok-auth-modes`, `media-url-inline-cap`, `node-module-required-capabilities-shape` |
-| `envelopes` | claims-check | **v1-only** | 13 (0) | – | `envelope-reasoning-secret-redaction`, `envelope-reasoning-shape`, `envelope-tier-one-subset-static` |
+| `aiProviders` | witnessable-gated | **v1-only** | 15 (0) | – | `ai-envelope-shape`, `aiproviders-selfhosted-honesty`, `aiproviders-subscription-scope`, `byok-auth-modes` +12 |
+| `envelopes` | claims-check | **v1-only** | 13 (0) | – | `envelope-completion-distinguishes-truncation`, `envelope-reasoning-secret-redaction`, `envelope-reasoning-shape`, `envelope-refusal-shape` +2 |
 | `artifactTypes` | witnessable-gated | **v1-only** | 10 (0) | – | `artifact-type-pack-install`, `artifact-type-registration-source`, `artifact-type-store-emission`, `artifact-type-store-without-render` +1 |
 | `portability` | witnessable-gated | **v1-only** | 8 (0) | – | `export-bundle-portability` |
 | `selfHostedRunner` | witnessable-gated | **v1-only** | 8 (0) | – | `self-hosted-runner` |
-| `httpClient` | witnessable-gated | **v1-only** | 7 (0) | – | `http-client-ssrf`, `safefetch-behavior`, `safefetch-live-audit` |
-| `workspace` | witnessable-gated | **v1-only** | 7 (0) | – | `workspace-behavior`, `workspace-capability-shape`, `workspace-cross-tenant-isolation-blackbox`, `workspace-cross-tenant-isolation` |
-| `queueBus` | witnessable-gated | **v1-only** | 5 (0) | – | `queue-ack-nack-dlq`, `queue-cross-tenant-isolation`, `queue-publish-consume-roundtrip`, `stream-subscribe-from-beginning` |
+| `httpClient` | witnessable-gated | **v1-only** | 7 (0) | – | `egress-audience-binding`, `egress-decision-content-free`, `http-client-ssrf`, `safefetch-behavior` +1 |
 | `subWorkflow` | claims-check | **v1-only** | 5 (0) | – | `dispatch-input-mapping`, `dispatchLoop` |
 | `providerUsage` | witnessable-gated | **v1-only** | 4 (0) | – | `provider-usage` |
 | `toolHooks` | witnessable-gated | **v1-only** | 4 (0) | – | `safefetch-behavior`, `safefetch-live-audit`, `tool-hooks-authorization-fail-closed`, `tool-hooks-content-free` +4 |
-| `fs` | witnessable-gated | **v1-only** | 3 (0) | – | `fs-path-traversal` |
 | `modelCapabilities` | witnessable-gated | **v1-only** | 3 (0) | – | `envelope-variant-discriminator-static`, `model-capability-insufficient`, `model-capability-substituted`, `node-module-required-capabilities-shape` |
 | `multiPartyConversation` | witnessable-gated | **v1-only** | 3 (0) | – | `multi-party-conversation-behavioral`, `multi-party-conversation-shape` |
 | `nodePackRuntimes` | claims-check | **v1-only** | 3 (0) | – | `otel-emission-grpc`, `wasm-pack-abi-version-rejection`, `wasm-pack-invoke-completed`, `wasm-pack-invoke-suspended` +3 |
-| `sql` | witnessable-gated | **v1-only** | 3 (0) | – | `sql-injection-rejection`, `sql-transaction-atomicity` |
 | `dataResidency` | witnessable-gated | **v1-only** | 2 (0) | – | `data-residency-admission` |
-| `kvStorage` | witnessable-gated | **v1-only** | 2 (0) | – | `kv-atomic-increment`, `kv-cas`, `kv-cross-tenant-isolation`, `kv-ttl-expiry` |
 | `scheduling` | witnessable-gated | **v1-only** | 2 (0) | – | `scheduling-capability-shape`, `scheduling-cron-fires-once` |
-| `searchIndex` | witnessable-gated | **v1-only** | 2 (0) | – | `search-bm25-roundtrip` |
-| `tableStorage` | witnessable-gated | **v1-only** | 2 (0) | – | `table-cross-tenant-isolation`, `table-cursor-pagination`, `table-schema-enforcement` |
-| `vectorStore` | witnessable-gated | **v1-only** | 2 (0) | – | `vector-knn-roundtrip` |
 | `aiEnvelope` | witnessable-gated | **v1-only** | 1 (0) | – | `aiEnvelope.universalKinds` |
-| `blobStorage` | witnessable-gated | **v1-only** | 1 (0) | – | `blob-cross-tenant-isolation`, `blob-presign-expiry`, `blob-roundtrip` |
 | `channelPresence` | witnessable-gated | **v1-only** | 1 (0) | – | `channel-presence-behavioral`, `channel-presence-shape` |
 | `conversationTurnModelProvenance` | witnessable-gated | **v1-only** | 1 (0) | – | `conversation-turn-model-provenance-shape` |
-| `authorization` | witnessable-gated | **v1-only** | 0 (0) | – | `authorization-fail-closed`, `authorization-roles-shape`, `compensation-recovery` |
-| `cache` | witnessable-gated | **v1-only** | 0 (0) | – | `cache-cross-tenant-isolation`, `cache-ttl-expiry` |
+| `authorization` | witnessable-gated | **v1-only** | 0 (0) | – | `approval-gate-flow`, `authorization-fail-closed`, `authorization-roles-shape`, `compensation-recovery` |
 | `credentials` | witnessable-gated | **v1-only** | 0 (0) | – | `credential-payload-redaction`, `credentials-capability-shape` |
 | `deadLetter` | witnessable-gated | **v1-only** | 0 (0) | – | `deadletter-capability-shape`, `deadletter-retry-exhaustion` |
 | `limits` | witnessable-gated | **v1-only** | 0 (0) | – | `aiEnvelope.capBreached`, `run-execution-bounds-shape` |
@@ -69,35 +58,46 @@ Every v2 core family now has a v2 normative home (RFC 0189). Many of its rules a
 | `uiPlugins` | witnessable-gated | **v1-only** | 0 (0) | – | `frontend-plugin-packs` |
 | `production` | witnessable-gated | **v2-witnessed** | 49 (26) | `jcs-vectors`, `v2-bundle-v3-signed`, `v2-coherence-not-in-bundle`, `v2-relaxation-recorded` | `grpc-transport`, `production-backpressure`, `production-retention-expiry` |
 | `interrupt` | witnessable-gated | **v2-witnessed** | 46 (43) | `v2-approval-reject-disposition`, `v2-approver-enforced`, `v2-bound-id-kinds`, `v2-callback-url-guarded` +4 | `interrupt-approver-routing` |
-| `replay` | witnessable-gated | **v2-witnessed** | 36 (19) | `v2-a2a-push-delivery`, `v2-approval-reject-disposition`, `v2-effect-seam-manifest`, `v2-effect-seam-no-refire` +7 | `replay-side-effect-suppression` |
+| `replay` | witnessable-gated | **v2-witnessed** | 36 (19) | `v2-a2a-push-delivery`, `v2-approval-reject-disposition`, `v2-effect-seam-manifest`, `v2-effect-seam-no-refire` +8 | `conversationReplayDeterminism`, `feedback-fork-not-copied`, `replay-fanout-suppression`, `replay-side-effect-suppression` |
 | `eventLog` | claims-check | **v2-witnessed** | 35 (25) | `v2-era-2-append-vocabulary`, `v2-era-key`, `v2-era-stamp-universal`, `v2-fork-a-v1-run` +3 | `cross-engine-append-behavior`, `cross-engine-append-ordering`, `multi-region-idempotency` |
 | `packs` | claims-check | **v2-witnessed** | 35 (20) | `v2-manifest-ceiling-refused`, `v2-manifest-hatch-carried`, `v2-peer-dependency-declared`, `v2-registry-lifecycle` | `pack-registry-isolation` |
-| `webhooks` | witnessable-gated | **v2-witnessed** | 34 (26) | `inbound-credential-no-passthrough`, `v2-a2a-operation-map`, `v2-bound-id-kinds`, `v2-v1-signed-webhook-accepted` +10 | `webhook-negative`, `webhook-sig-algorithm`, `webhook-signed-delivery` |
+| `webhooks` | witnessable-gated | **v2-witnessed** | 35 (26) | `inbound-credential-no-passthrough`, `v2-a2a-operation-map`, `v2-bound-id-kinds`, `v2-v1-signed-webhook-accepted` +10 | `webhook-negative`, `webhook-sig-algorithm`, `webhook-signed-delivery`, `webhook-tenant-isolation` |
 | `idempotency` | witnessable-gated | **v2-witnessed** | 25 (20) | `v2-bound-id-kinds`, `v2-effect-identity-business-key`, `v2-idempotency-key-grammar`, `v2-secrets-run-witness` | `compensation-recovery`, `multi-region-idempotency-behavior`, `multi-region-idempotency`, `replay-llm-cache-key` +1 |
-| `multiAgent` | claims-check | **v2-witnessed** | 19 (0) | `context-budget-transcript-bound`, `context-summarization-replay`, `v2-run-fork-ancestry` | `cross-host-traceparent-propagation`, `multi-agent-handoff-state-machine`, `replay-observable-sequence-determinism` |
-| `secrets` | witnessable-gated | **v2-witnessed** | 16 (9) | `v2-secrets-run-witness` | `envelope-reasoning-secret-redaction`, `secret-leakage-otel-attribute` |
+| `multiAgent` | claims-check | **v2-witnessed** | 19 (0) | `context-budget-transcript-bound`, `context-summarization-replay`, `v2-run-fork-ancestry` | `agent-loop-iteration-monotonic`, `agent-loop-stateful-resume`, `agent-loop-version5-shape`, `agent-loop-workspace-snapshot` +11 |
+| `secrets` | witnessable-gated | **v2-witnessed** | 16 (16) | `v2-secret-canary-absent`, `v2-secrets-run-witness` | `envelope-reasoning-secret-redaction`, `secret-leakage-otel-attribute` |
 | `toolCatalog` | witnessable-gated | **v2-witnessed** | 14 (11) | `auth-challenge-no-oracle`, `tool-catalog-compact-projection`, `tool-catalog-projection`, `tool-descriptor-shape` +1 | `tool-session-lifecycle` |
 | `oauth` | witnessable-gated | **v2-witnessed** | 13 (11) | `v2-a2a-operation-map`, `v2-credential-interrupt`, `v2-mcp-mount-map`, `v2-oauth-client-pkce-state-iss` +1 | `byok-auth-modes`, `oauth-authorization-code-roundtrip`, `oauth-capability-shape`, `oauth-connector-redaction` |
-| `memory` | witnessable-gated | **v2-witnessed** | 12 (0) | `context-budget-transcript-bound`, `context-summarization-replay`, `memory-attribution-replay-stable` | `agentMemoryRedactionContract`, `agentMemoryRoundTrip`, `memory-attribution-emits-on-write`, `memory-attribution-no-content` +7 |
+| `memory` | witnessable-gated | **v2-witnessed** | 12 (12) | `context-budget-transcript-bound`, `context-summarization-replay`, `memory-attribution-replay-stable`, `v2-memory-cross-tenant-isolation` | `agentMemoryRedactionContract`, `agentMemoryRoundTrip`, `distillation-index-roundtrip`, `distillation-secret-carryforward` +14 |
 | `forms` | claims-check | **v2-witnessed** | 11 (1) | `v2-form-when-reuses-edge-conditions` | `form-content-instantiation` |
 | `connections` | witnessable-gated | **v2-witnessed** | 8 (5) | `fixtures-valid`, `v2-provider-conflict` | `connection-pack-apihosts`, `connection-pack-manifest-valid`, `connection-pack-no-credential-material`, `connection-pack-write-reconsent` +1 |
 | `anonymousActor` | seam-gated | **v2-witnessed** | 7 (0) | `v2-mcp-mount-map` | `anonymous-actor-audit-opaque`, `anonymous-actor-default-deny`, `anonymous-actor-egress-guarded`, `anonymous-actor-no-secret-reach` +4 |
+| `workspace` | witnessable-gated | **v2-witnessed** | 7 (7) | `v2-workspace-scope-from-identity` | `agent-loop-iteration-monotonic`, `agent-loop-stateful-resume`, `agent-loop-version5-shape`, `agent-loop-workspace-snapshot` +4 |
+| `queueBus` | witnessable-gated | **v2-witnessed** | 5 (5) | `v2-queue-cross-tenant-isolation` | `queue-ack-nack-dlq`, `queue-cross-tenant-isolation`, `queue-publish-consume-roundtrip`, `stream-subscribe-from-beginning` |
 | `workflowChainPacks` | witnessable-gated | **v2-witnessed** | 5 (1) | `v2-chain-pin-exact` | `chain-subchain-fanout`, `workflow-chain-deferred-parameters`, `workflow-chain-expansion`, `workflow-chain-host-expansion` +2 |
-| `mcp` | seam-gated | **v2-witnessed** | 4 (4) | `v2-interop-trace-context`, `v2-mcp-client-results`, `v2-mcp-mount-map`, `v2-mcp-tasks` +3 | `mcp-2026-07-28-discover`, `mcp-cache-tenant-scope`, `mcp-current-auth-boundary`, `mcp-extension-opacity` +9 |
+| `mcp` | seam-gated | **v2-witnessed** | 4 (4) | `v2-interop-trace-context`, `v2-mcp-client-results`, `v2-mcp-mount-map`, `v2-mcp-tasks` +5 | `mcp-2026-07-28-discover`, `mcp-cache-tenant-scope`, `mcp-current-auth-boundary`, `mcp-extension-opacity` +9 |
 | `budget` | witnessable-gated | **v2-witnessed** | 3 (3) | `v2-configurable-closed`, `v2-run-options-limits` | `budget-enforcement`, `budget-policy-shape` |
 | `envelopeStrictness` | claims-check | **v2-witnessed** | 3 (3) | `v2-a2ui-v09-surface` | – |
+| `fs` | witnessable-gated | **v2-witnessed** | 3 (3) | `v2-fs-sandbox-escape-refused` | `fs-path-traversal` |
 | `heartbeat` | witnessable-gated | **v2-witnessed** | 3 (3) | `v2-stream-mode-refusal` | `heartbeat-capability-shape`, `heartbeat-fires-once-per-tick`, `heartbeat-idempotent-no-spam`, `heartbeat-runtime-bound` |
-| `agents` | witnessable-gated | **v2-witnessed** | 2 (0) | `v2-a2a-agent-cards`, `v2-agent-org-chart-served-shape` | `agent-live-allowlist-enforced`, `agent-manifest-runtime`, `agentConfidenceEscalation`, `agentMessageReducer` +3 |
+| `nosql` | claims-check | **v2-witnessed** | 3 (0) | `v2-storage-cross-tenant-isolation` | – |
+| `sql` | witnessable-gated | **v2-witnessed** | 3 (0) | `v2-storage-cross-tenant-isolation` | `sql-injection-rejection`, `sql-transaction-atomicity` |
+| `agents` | witnessable-gated | **v2-witnessed** | 2 (0) | `v2-a2a-agent-cards`, `v2-agent-org-chart-served-shape` | `agent-capability-degraded-projection`, `agent-channel-dispatch`, `agent-deployment-lifecycle`, `agent-eval-run` +17 |
 | `conversationPrimitive` | claims-check | **v2-witnessed** | 2 (0) | `v2-conversation-turn-parts` | `conversationCapabilityNegotiation`, `conversationLifecycle`, `conversationReplayDeterminism`, `conversationVsLegacySuspend` +1 |
 | `feedback` | witnessable-gated | **v2-witnessed** | 2 (0) | `v2-run-annotation-not-event` | `feedback-capability-shape`, `feedback-correction-redaction`, `feedback-cross-tenant-isolation`, `feedback-fork-not-copied` +3 |
+| `kvStorage` | witnessable-gated | **v2-witnessed** | 2 (0) | `v2-storage-cross-tenant-isolation` | `kv-atomic-increment`, `kv-cas`, `kv-cross-tenant-isolation`, `kv-ttl-expiry` |
+| `searchIndex` | witnessable-gated | **v2-witnessed** | 2 (0) | `v2-storage-cross-tenant-isolation` | `search-bm25-roundtrip` |
 | `supportedEnvelopes` | witnessable-gated | **v2-witnessed** | 2 (2) | `v2-a2ui-v09-surface` | `ai-envelope-shape`, `envelope-tier-one-subset-static` |
+| `tableStorage` | witnessable-gated | **v2-witnessed** | 2 (0) | `v2-storage-cross-tenant-isolation` | `table-cross-tenant-isolation`, `table-cursor-pagination`, `table-schema-enforcement` |
+| `vectorStore` | witnessable-gated | **v2-witnessed** | 2 (0) | `v2-storage-cross-tenant-isolation` | `vector-knn-roundtrip` |
+| `blobStorage` | witnessable-gated | **v2-witnessed** | 1 (0) | `v2-storage-cross-tenant-isolation` | `blob-cross-tenant-isolation`, `blob-presign-expiry`, `blob-roundtrip` |
 | `schemaVersions` | witnessable-gated | **v2-witnessed** | 1 (1) | `v2-a2ui-v09-surface` | `aiEnvelope.schemaDrift` |
-| `a2a` | seam-gated | **v2-witnessed** | 0 (0) | `v2-a2a-agent-cards`, `v2-a2a-client-error-details`, `v2-a2a-operation-map`, `v2-a2a-push-delivery` +3 | `a2a-1-0-agent-card`, `a2a-1-0-task-roundtrip`, `a2a-card-runtime-consistency`, `a2a-peer-authority` +2 |
+| `a2a` | seam-gated | **v2-witnessed** | 0 (0) | `v2-a2a-agent-cards`, `v2-a2a-client-error-details`, `v2-a2a-operation-map`, `v2-a2a-push-delivery` +5 | `a2a-1-0-agent-card`, `a2a-1-0-task-roundtrip`, `a2a-card-runtime-consistency`, `a2a-peer-authority` +2 |
 | `auditLogIntegrity` | witnessable-gated | **v2-witnessed** | 0 (0) | `audit-checkpoint-signature`, `audit-log-integrity` | `strict-behavior-gate` |
 | `auth` | seam-gated | **v2-witnessed** | 0 (0) | `audit-checkpoint-signature`, `audit-log-integrity`, `v2-assurance-downgrade-audited`, `v2-lane-exp-only-bound` +3 | `auth-api-key-rotation`, `auth-mtls`, `auth-oauth2-client-credentials`, `auth-oidc-user-bearer` +6 |
+| `cache` | witnessable-gated | **v2-witnessed** | 0 (0) | `v2-storage-cross-tenant-isolation` | `cache-cross-tenant-isolation`, `cache-ttl-expiry` |
 | `compensation` | seam-gated | **v2-witnessed** | 0 (0) | `v2-compensation-read-projection` | `chain-compensation-expansion`, `compensation-behavior`, `compensation-recovery`, `workflow-chain-host-expansion` |
 | `content` | witnessable-gated | **v2-witnessed** | 0 (0) | `v2-content-locale-keys` | `localized-content-delivery` |
-| `runList` | witnessable-gated | **v2-witnessed** | 0 (0) | `v2-mcp-mount-map`, `v2-mcp-tasks`, `v2-run-list` | – |
+| `runList` | witnessable-gated | **v2-witnessed** | 0 (0) | `v2-mcp-mount-map`, `v2-mcp-tasks`, `v2-run-list`, `v2-secret-canary-absent` | – |
 | `sandbox` | witnessable-gated | **v2-witnessed** | 0 (0) | `v2-pack-isolation` | `sandbox-memory-cap`, `sandbox-mvp-behavior`, `sandbox-no-host-fs-escape`, `sandbox-timeout-cap` +2 |
 
 ## Per-document coverage
@@ -109,12 +109,12 @@ Every v2 core family now has a v2 normative home (RFC 0189). Many of its rules a
 | `conformance.md` | 49 | 26 (53%) | `production` |
 | `connection-packs.md` | 8 | 5 (63%) | `connections` |
 | `conversation.md` | 5 | 0 (0%) | `multiPartyConversation`, `conversationTurnModelProvenance`, `channelPresence` |
-| `errors.md` | 18 | 14 (78%) | – |
+| `errors.md` | 18 | 18 (100%) | – |
 | `events.md` | 63 | 37 (59%) | `supportedEnvelopes`, `schemaVersions`, `envelopeStrictness`, `envelopeContracts`, `envelopes`, `feedback`, `providerUsage`, `heartbeat` |
 | `execution.md` | 34 | 0 (0%) | `selfHostedRunner`, `multiAgent`, `agents`, `subWorkflow` |
 | `form-content-packs.md` | 11 | 1 (9%) | `forms` |
 | `headers.md` | 7 | 1 (14%) | – |
-| `host-services.md` | 94 | 13 (14%) | `prompts`, `secrets`, `modelCapabilities`, `aiProviders`, `memory`, `queueBus`, `scheduling`, `toolHooks`, `httpClient`, `aiEnvelope`, `promptLibrary`, `agentRuntime`, `workspace`, `mcp` |
+| `host-services.md` | 94 | 44 (47%) | `prompts`, `secrets`, `modelCapabilities`, `aiProviders`, `memory`, `queueBus`, `scheduling`, `toolHooks`, `httpClient`, `aiEnvelope`, `promptLibrary`, `agentRuntime`, `workspace`, `mcp` |
 | `i18n.md` | 17 | 0 (0%) | `i18n`, `content` |
 | `idempotency.md` | 25 | 20 (80%) | `idempotency` |
 | `identity.md` | 64 | 55 (86%) | `anonymousActor`, `authorization`, `auth` |
@@ -129,10 +129,10 @@ Every v2 core family now has a v2 normative home (RFC 0189). Many of its rules a
 | `replay.md` | 36 | 19 (53%) | `replay`, `nondeterminismPolicy`, `eventLog` |
 | `runs.md` | 70 | 65 (93%) | `limits`, `dataResidency`, `conversationPrimitive`, `deadLetter`, `budget`, `runList` |
 | `security-defaults.md` | 27 | 19 (70%) | `purposePropagation`, `sandbox`, `compensation`, `auditLogIntegrity` |
-| `storage.md` | 19 | 0 (0%) | `fs`, `kvStorage`, `tableStorage`, `sql`, `nosql`, `vectorStore`, `searchIndex`, `blobStorage`, `cache` |
+| `storage.md` | 19 | 8 (42%) | `fs`, `kvStorage`, `tableStorage`, `sql`, `nosql`, `vectorStore`, `searchIndex`, `blobStorage`, `cache` |
 | `tool-catalog.md` | 14 | 11 (79%) | `toolCatalog` |
 | `versioning.md` | 40 | 33 (83%) | – |
-| `webhooks.md` | 34 | 26 (76%) | `webhooks`, `triggerBridge` |
+| `webhooks.md` | 35 | 26 (74%) | `webhooks`, `triggerBridge` |
 | `workflow-chain-packs.md` | 5 | 1 (20%) | `workflowChainPacks` |
 
 ## Largest uncited sections
@@ -144,14 +144,11 @@ Sections with the most obligation units and no major-2 citation. A doc-level cit
 | `execution.md` § `multiAgent` | multiAgent | 19 |
 | `host-services.md` § `aiProviders` | aiProviders | 15 |
 | `events.md` § `envelopes` | envelopes | 13 |
-| `host-services.md` § `memory` | memory | 12 |
 | `packs.md` § Front-end plugin packs | packs | 9 |
+| `webhooks.md` § Inbound triggers | webhooks | 9 |
 | `conformance.md` § Production profile | production | 8 |
 | `execution.md` § `selfHostedRunner` | selfHostedRunner | 8 |
-| `webhooks.md` § Inbound triggers | webhooks | 8 |
-| `host-services.md` § `secrets` | secrets | 7 |
 | `host-services.md` § `httpClient` | httpClient | 7 |
-| `host-services.md` § `workspace` | workspace | 7 |
 | `identity.md` § 1.5 `anonymousActor` | anonymousActor | 7 |
 | `interop.md` § MCP tasks and cancellation | shared | 7 |
 | `host-services.md` § Library | prompts | 6 |
@@ -165,7 +162,10 @@ Sections with the most obligation units and no major-2 citation. A doc-level cit
 | `execution.md` § `subWorkflow` | subWorkflow | 5 |
 | `form-content-packs.md` § Validation | forms | 5 |
 | `host-services.md` § Composition | prompts | 5 |
-| `host-services.md` § `queueBus` | queueBus | 5 |
+| `i18n.md` § `Accept-Language` | i18n | 5 |
+| `interop.md` § Negotiation is a protocol | shared | 5 |
+| `overview.md` § Profile claim vocabulary | shared | 5 |
+| `events.md` § `providerUsage` | providerUsage | 4 |
 
 ## Citation gaps
 
@@ -194,17 +194,17 @@ Ranked: security, tenant isolation, idempotency and replay first; then wire shap
 
 | # | Family | Doc § | Class | Verdict | Proposed scenario |
 | --- | --- | --- | --- | --- | --- |
-| 1 | `kvStorage` | `storage.md` § Shared rules | tenant isolation | v1-only | `v2-storage-cross-tenant-isolation` |
+| 1 | `kvStorage` | `storage.md` § Shared rules | tenant isolation | v2-witnessed | `v2-storage-cross-tenant-isolation` |
 | 2 | `memory` | `host-services.md` § `memory` | tenant isolation | v2-witnessed | `v2-memory-cross-tenant-isolation` |
-| 3 | `workspace` | `host-services.md` § `workspace` | tenant isolation | v1-only | `v2-workspace-scope-from-identity` |
-| 4 | `queueBus` | `host-services.md` § `queueBus` | tenant isolation | v1-only | `v2-queue-cross-tenant-isolation` |
+| 3 | `workspace` | `host-services.md` § `workspace` | tenant isolation | v2-witnessed | `v2-workspace-scope-from-identity` |
+| 4 | `queueBus` | `host-services.md` § `queueBus` | tenant isolation | v2-witnessed | `v2-queue-cross-tenant-isolation` |
 | 5 | `secrets` | `host-services.md` § `secrets` | security | v2-witnessed | `v2-secret-canary-absent` |
 | 6 | `toolHooks` | `host-services.md` § `toolHooks` | security | v1-only | `v2-tool-authorization-fail-closed` |
 | 7 | `anonymousActor` | `identity.md` § 1.5 `anonymousActor` | security | v2-witnessed | `v2-anonymous-actor-default-deny` |
 | 8 | `selfHostedRunner` | `execution.md` § `selfHostedRunner` | security | v1-only | `v2-runner-subject-isolation` |
 | 9 | `httpClient` | `host-services.md` § `httpClient` | security | v1-only | `v2-safefetch-ssrf-refused` |
-| 10 | `fs` | `storage.md` § `fs` | security | v1-only | `v2-fs-sandbox-escape-refused` |
-| 11 | `nosql` | `storage.md` § `sql` and `nosql` | security | unwitnessed | `v2-storage-injection-refused` |
+| 10 | `fs` | `storage.md` § `fs` | security | v2-witnessed | `v2-fs-sandbox-escape-refused` |
+| 11 | `nosql` | `storage.md` § `sql` and `nosql` | security | v2-witnessed | `v2-storage-injection-refused` |
 | 12 | `portability` | `portability.md` § Import rules | security | v1-only | `v2-import-refuses-credential-literal` |
 | 13 | `triggerBridge` | `webhooks.md` § Inbound triggers | security | v1-only | `v2-trigger-ingestion-verification` |
 | 14 | `uiPlugins` | `packs.md` § Front-end plugin packs | security | v1-only | `v2-frontend-plugin-signature-required` |
@@ -218,7 +218,7 @@ Ranked: security, tenant isolation, idempotency and replay first; then wire shap
 ### 1. Host storage leaks across tenants
 
 - **Rule** (`storage.md` § Shared rules): "A read for one tenant MUST NOT return data another tenant wrote, even under an identical key or name"
-- **Today:** Major 1 only: `kv-`, `table-`, `blob-` and `cache-cross-tenant-isolation` drive the v1 seam `POST /v1/host/sample/test/surface`. `vectorStore` and `searchIndex` have no isolation leg at any major. No v2 seam exists for host storage.
+- **Today:** Major 1 only: `kv-`, `table-`, `blob-` and `cache-cross-tenant-isolation` drive the v1 seam `POST /v1/host/sample/test/surface`. `vectorStore` and `searchIndex` have no isolation leg at any major. No v2 seam exists for host storage. The section is now cited at major 2 by `v2-fs-sandbox-escape-refused.test.ts`, `v2-storage-cross-tenant-isolation.test.ts`; re-check whether this rule is covered.
 - **Why it matters:** One missing tenant prefix exposes every tenant's data. It covers six families and is the widest isolation rule in core.
 - **Proposed:** `v2-storage-cross-tenant-isolation` (major 2; gate: each advertised storage family, plus a second-tenant credential (`OPENWOP_TEST_TENANT_B_API_KEY`) and a storage-probe fixture workflow). Asserts: per advertised family, a run under tenant A writes value V at key K, and a run under tenant B reading K on the run surface sees absent / `not_found`, never V.
 - **Sabotage that must fail it:** key the store by name only (drop the tenant prefix): tenant B reads V and the leg fails.
@@ -226,7 +226,7 @@ Ranked: security, tenant isolation, idempotency and replay first; then wire shap
 ### 2. Agent memory crosses tenants
 
 - **Rule** (`host-services.md` § `memory`): "A ref MUST resolve to one tenant's entries, whatever the caller's permissions."
-- **Today:** Major 1 only (`agentMemoryCrossTenantIsolation`, `memory-attribution-tenant-scoped`). The family is gated at major 2, but no major-2 scenario cites §`memory`.
+- **Today:** Major 1 only (`agentMemoryCrossTenantIsolation`, `memory-attribution-tenant-scoped`). The family is gated at major 2, but no major-2 scenario cites §`memory`. The section is now cited at major 2 by `v2-memory-cross-tenant-isolation.test.ts`; re-check whether this rule is covered.
 - **Why it matters:** Memory holds conversation content and redacted secrets. A cross-tenant read is a direct data breach.
 - **Proposed:** `v2-memory-cross-tenant-isolation` (major 2; gate: `memory` advertised, second-tenant credential, the cross-tenant memory fixture). Asserts: a run under tenant B given tenant A's `memoryRef` gets `[]` from `list` and `null` from `get`; a malformed ref (traversal, NUL, oversize) also gets `[]` / `null`.
 - **Sabotage that must fail it:** resolve `memoryRef` without checking its tenant: B's run returns A's entry.
@@ -234,7 +234,7 @@ Ranked: security, tenant isolation, idempotency and replay first; then wire shap
 ### 3. Workspace files cross scopes
 
 - **Rule** (`host-services.md` § `workspace`): "MUST derive the scope from the authenticated identity and MUST NOT return or disclose another scope's file"
-- **Today:** Major 1 only (`workspace-cross-tenant-isolation`, through the v1 seam `POST /v1/host/sample/workspace/op`). The v2 seams profile already mounts `/conformance/seams/workspace/files`.
+- **Today:** Major 1 only (`workspace-cross-tenant-isolation`, through the v1 seam `POST /v1/host/sample/workspace/op`). The v2 seams profile already mounts `/conformance/seams/workspace/files`. The section is now cited at major 2 by `v2-workspace-scope-from-identity.test.ts`; re-check whether this rule is covered.
 - **Why it matters:** Agent workspace files are durable and shared across runs. Taking the scope from a request field instead of the identity lets any caller read any workspace.
 - **Proposed:** `v2-workspace-scope-from-identity` (major 2; gate: `workspace` advertised, seams profile `openwop-conformance-seams-v2`, second-tenant credential). Asserts: a file written under tenant A through the v2 seam is `404` (or `403`) for tenant B by path and absent from B's list, even when B names A's workspace id in the request.
 - **Sabotage that must fail it:** take `workspaceId` from the request body instead of the credential: B reads A's file.
@@ -242,7 +242,7 @@ Ranked: security, tenant isolation, idempotency and replay first; then wire shap
 ### 4. Queue messages cross tenants
 
 - **Rule** (`host-services.md` § `queueBus`): "A tenant's consumer MUST NOT receive another tenant's messages, even on the same topic."
-- **Today:** Major 1 only (`queue-cross-tenant-isolation`, v1 seam).
+- **Today:** Major 1 only (`queue-cross-tenant-isolation`, v1 seam). The section is now cited at major 2 by `v2-queue-cross-tenant-isolation.test.ts`; re-check whether this rule is covered.
 - **Why it matters:** Topics are named by pack authors, so two tenants sharing a pack share topic names by default.
 - **Proposed:** `v2-queue-cross-tenant-isolation` (major 2; gate: `queueBus` advertised, second-tenant credential, a queue-probe fixture workflow). Asserts: a message published under tenant A on topic T is never consumed by tenant B's consumer on T within the poll window, while A's own consumer receives it (the positive control).
 - **Sabotage that must fail it:** name the physical queue by topic only: B consumes A's message.
@@ -250,7 +250,7 @@ Ranked: security, tenant isolation, idempotency and replay first; then wire shap
 ### 5. Raw secrets reach events or logs
 
 - **Rule** (`host-services.md` § `secrets`): "Raw key material MUST NOT appear in any event, log, trace, prompt, error, export or screenshot"
-- **Today:** Major 1 only, and only on the envelope and OTel paths (`envelope-reasoning-secret-redaction`, `secret-leakage-otel-attribute`). Nothing at major 2 checks the event log, snapshot or error body.
+- **Today:** Major 1 only, and only on the envelope and OTel paths (`envelope-reasoning-secret-redaction`, `secret-leakage-otel-attribute`). Nothing at major 2 checks the event log, snapshot or error body. The section is now cited at major 2 by `v2-secret-canary-absent.test.ts`; re-check whether this rule is covered.
 - **Why it matters:** This is the BYOK boundary. One leaked provider key in an event log is replicated to every consumer and every fork.
 - **Proposed:** `v2-secret-canary-absent` (major 2; gate: `secrets` advertised with `resolveInPack`, a canary-secret fixture workflow). Asserts: after a run that resolves a canary secret and then fails, the canary bytes appear nowhere in the event log, the snapshot, the SSE stream, the error envelope or a fork's log.
 - **Sabotage that must fail it:** echo the resolved plaintext into `node.completed` outputs: the scan finds the canary.
@@ -290,7 +290,7 @@ Ranked: security, tenant isolation, idempotency and replay first; then wire shap
 ### 10. Pack file access escapes the sandbox root
 
 - **Rule** (`storage.md` § `fs`): "A path that escapes the root, whether absolute, through `..` segments or through a symlink, MUST be refused."
-- **Today:** Major 1 only (`fs-path-traversal`, v1 seam `POST /v1/host/sample/fs/read`).
+- **Today:** Major 1 only (`fs-path-traversal`, v1 seam `POST /v1/host/sample/fs/read`). The section is now cited at major 2 by `v2-fs-sandbox-escape-refused.test.ts`; re-check whether this rule is covered.
 - **Why it matters:** Path traversal from pack code reads host configuration and credentials.
 - **Proposed:** `v2-fs-sandbox-escape-refused` (major 2; gate: `fs` advertised, an fs-probe fixture workflow). Asserts: reads of an absolute path, a `../` path and a symlink out of `sandboxRoot` each fail `forbidden` with `details.reason: path-outside-sandbox`; a read inside the root succeeds.
 - **Sabotage that must fail it:** normalise `..` but follow symlinks: the symlink read succeeds.
@@ -388,15 +388,15 @@ node scripts/report-v2-witness-coverage.mjs --write  # regenerate this file
 {
   "families": {
     "total": 73,
-    "v2-witnessed": 32,
-    "v1-only": 37,
-    "unwitnessed": 4
+    "v2-witnessed": 43,
+    "v1-only": 27,
+    "unwitnessed": 3
   },
   "byWitnessClass": {
     "claims-check": {
-      "v2-witnessed": 6,
+      "v2-witnessed": 7,
       "v1-only": 4,
-      "unwitnessed": 4
+      "unwitnessed": 3
     },
     "seam-gated": {
       "v2-witnessed": 5,
@@ -404,32 +404,39 @@ node scripts/report-v2-witness-coverage.mjs --write  # regenerate this file
       "unwitnessed": 0
     },
     "witnessable-gated": {
-      "v2-witnessed": 21,
-      "v1-only": 33,
+      "v2-witnessed": 31,
+      "v1-only": 23,
       "unwitnessed": 0
     }
   },
   "obligationUnits": {
-    "total": 883,
-    "inV2CitedSections": 507,
-    "inUncitedSections": 376,
+    "total": 884,
+    "inV2CitedSections": 550,
+    "inUncitedSections": 334,
     "sectionsWithObligations": 268,
-    "sectionsWithNoV2Citation": 117
+    "sectionsWithNoV2Citation": 110
   },
   "declarationLinks": {
     "familiesWithFloorScenarios": 0,
     "familiesWithRequirementIds": 1
   },
   "scenarios": {
-    "registered": 577,
-    "major2": 139
+    "registered": 583,
+    "major2": 145
   },
   "unresolvedV2Citations": 33,
   "major2ScenariosCitingNoCoreDoc": 19,
   "risks": {
     "listed": 20,
     "staleQuotes": [],
-    "sectionsNowCited": []
+    "sectionsNowCited": [
+      1,
+      2,
+      3,
+      4,
+      5,
+      10
+    ]
   }
 }
 ```

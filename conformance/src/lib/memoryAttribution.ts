@@ -42,9 +42,19 @@ export async function readMemoryAttributionCap(): Promise<Record<string, unknown
   return attr && typeof attr === 'object' ? (attr as Record<string, unknown>) : null;
 }
 
-/** True when the host commits to emitting `memory.written`. */
+/**
+ * True when the host commits to emitting `memory.written`.
+ *
+ * Major 1: the v1 block's `supported: true` (its schema `const`) AND
+ * `emitsWriteEvents: true`. Major 2: there is no `supported` field — presence
+ * of the `memory` family record IS the claim (RFC 0169 §A.2), and
+ * `readMemoryAttributionCap` returns the `attribution` object only when that
+ * record is present — so the commitment is `emitsWriteEvents: true` alone.
+ * Requiring `supported` at major 2 soft-skipped every v2 host (suite 2.45.3).
+ */
 export function emitsWriteEvents(cap: Record<string, unknown> | null): boolean {
-  return cap?.['supported'] === true && cap?.['emitsWriteEvents'] === true;
+  if (cap?.['emitsWriteEvents'] !== true) return false;
+  return targetMajor() === 2 ? true : cap['supported'] === true;
 }
 
 const SEED_FIXTURE = 'conformance-noop';
@@ -71,9 +81,34 @@ interface RunEventLike {
   payload?: Record<string, unknown>;
 }
 
-/** Fetches a run's events and returns only the `memory.written` ones. */
+/**
+ * Fetches a run's events and returns only the `memory.written` ones.
+ *
+ * Major 2: `GET /runs/{runId}/events` is the SSE stream (`streamRunEvents`,
+ * `text/event-stream` only), so a JSON read of it yields nothing and every leg
+ * would soft-skip "run wrote no memory" — a `blocked` row that denies
+ * certification for a suite defect. The JSON projection at v2 is the poll
+ * (`events.md` §Poll), read from sequence 0 and paged on `afterSequence` until
+ * `lastSequence` is reached.
+ */
 export async function memoryWrittenEvents(runId: string): Promise<RunEventLike[]> {
-  const res = await driver.get(`${runsPath()}/${encodeURIComponent(runId)}/events`);
-  const events = (res.json as { events?: RunEventLike[] } | undefined)?.events ?? [];
-  return events.filter((e) => e.type === 'memory.written');
+  if (targetMajor() !== 2) {
+    const res = await driver.get(`${runsPath()}/${encodeURIComponent(runId)}/events`);
+    const events = (res.json as { events?: RunEventLike[] } | undefined)?.events ?? [];
+    return events.filter((e) => e.type === 'memory.written');
+  }
+  const out: RunEventLike[] = [];
+  let after = -1;
+  for (let page = 0; page < 50; page++) {
+    const q = after < 0 ? '' : `&afterSequence=${after}`;
+    const res = await driver.get(`/runs/${encodeURIComponent(runId)}/events/poll?timeout=1${q}`);
+    const body = res.json as { events?: Array<RunEventLike & { sequence?: number }>; lastSequence?: number } | undefined;
+    const events = res.status === 200 && Array.isArray(body?.events) ? body.events : [];
+    out.push(...events);
+    const seqs = events.map((e) => e.sequence).filter((s): s is number => typeof s === 'number');
+    const next = seqs.length ? Math.max(...seqs) : after;
+    if (next <= after || typeof body?.lastSequence !== 'number' || next >= body.lastSequence) break;
+    after = next;
+  }
+  return out.filter((e) => e.type === 'memory.written');
 }

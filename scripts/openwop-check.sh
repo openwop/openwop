@@ -308,6 +308,9 @@ node "$(dirname "$0")/check-core-budget.mjs"
 # /spec-readability fixes what it reports.
 node "$(dirname "$0")/check-spec-readability.mjs" --self-test
 node "$(dirname "$0")/check-spec-readability.mjs"
+# The v2 witness-coverage report resolves table-driven and helper-wrapped family
+# gates on the TypeScript AST; its self-test proves detection and non-detection.
+node "$(dirname "$0")/report-v2-witness-coverage.mjs" --self-test
 python3 "$(dirname "$0")/derive-v2-api.py" --check
 # 2.36.2 (D5): the generated AsyncAPI names v2 event types, never a v1 spelling copied
 # from api/asyncapi.yaml; host events are exempt (events.md §Host events, RFC 0060).
