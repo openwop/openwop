@@ -199,14 +199,14 @@
       "class": "security",
       "doc": "spec/v2/core/webhooks.md",
       "section": "Inbound triggers",
-      "rule": "MUST verify per `verification` before delivery; a failed `required` check dead-letters with reason `signature-invalid`",
-      "today": "Major 1 only (`trigger-ingestion`, `trigger-bridge-delivery`). The section is attributed to `webhooks` by document name; its obligations belong to `triggerBridge`.",
-      "why": "An unsigned inbound event that starts a run lets anyone on the internet trigger workflows with chosen input.",
+      "rule": "A failed `required` check starts no run and dead-letters only that delivery. A refused event MUST NOT change the subscription's state or emit `trigger.subscription-state-changed`",
+      "today": "Major 1 only (`trigger-ingestion`, `trigger-bridge-delivery`, `trigger-refused-event-keeps-subscription`). The section is attributed to `webhooks` by document name; its obligations belong to `triggerBridge`.",
+      "why": "An unsigned inbound event that starts a run lets anyone on the internet trigger workflows with chosen input, and one that dead-letters the subscription lets them disable a working integration with a single post.",
       "scenario": {
         "name": "v2-trigger-ingestion-verification",
         "gate": "`triggerBridge.ingestion` with a `required` verification source",
-        "asserts": "an event with a bad signature starts no run and lands in dead-letter with `signature-invalid`; the same event correctly signed starts exactly one run",
-        "sabotage": "log the verification failure and deliver anyway: a run starts"
+        "asserts": "an event with a bad signature starts no run and dead-letters only that delivery; the subscription stays `active` with no state-change event; the same event correctly signed then starts exactly one run",
+        "sabotage": "log the verification failure and deliver anyway: a run starts; or dead-letter the subscription: the signed event is refused"
       }
     },
     {

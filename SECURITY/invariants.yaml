@@ -54,6 +54,8 @@ invariants:
     threat_model: SECURITY/threat-model-secret-leakage.md
     tests:
       - conformance/src/scenarios/redaction.test.ts
+      - conformance/src/scenarios/v2-secret-canary-absent.test.ts
+      - conformance/src/scenarios/v2-secrets-run-witness.test.ts
     note: |
       Persisted event payloads MUST NOT contain raw key material.
       Applies to ALL `RunEventType` kinds — most notably the two
@@ -576,6 +578,7 @@ invariants:
     tests:
       - conformance/src/scenarios/redaction.test.ts
       - conformance/src/scenarios/auth.test.ts
+      - conformance/src/scenarios/v2-secret-canary-absent.test.ts
     note: |
       Canonical error envelope's message field MUST NOT leak material.
       Upstream (cite checked live 2026-09-22; informative, the OpenWOP rule
@@ -2183,6 +2186,7 @@ invariants:
     threat_model: SECURITY/threat-model-secret-leakage.md
     tests:
       - conformance/src/scenarios/agentMemoryCrossTenantIsolation.test.ts
+      - conformance/src/scenarios/v2-memory-cross-tenant-isolation.test.ts
     note: |
       RFC 0004 CTI-1: a host implementing `MemoryAdapter` MUST scope
       every list/get query by authenticated principal → tenant_id.
@@ -2270,6 +2274,7 @@ invariants:
     threat_model: SECURITY/threat-model-secret-leakage.md
     tests:
       - conformance/src/scenarios/kv-cross-tenant-isolation.test.ts
+      - conformance/src/scenarios/v2-storage-cross-tenant-isolation.test.ts
     note: |
       RFC 0015 §B point 1: hosts advertising `capabilities.kvStorage.supported`
       MUST partition values by tenant. A `get` for one tenant MUST NOT return
@@ -2286,6 +2291,7 @@ invariants:
     threat_model: SECURITY/threat-model-secret-leakage.md
     tests:
       - conformance/src/scenarios/queue-cross-tenant-isolation.test.ts
+      - conformance/src/scenarios/v2-queue-cross-tenant-isolation.test.ts
     note: |
       RFC 0017 §C: hosts advertising `capabilities.queueBus.supported` MUST
       partition messages by tenant. A consumer for tenant A MUST NOT receive
@@ -2302,6 +2308,7 @@ invariants:
     tests:
       - conformance/src/scenarios/workspace-cross-tenant-isolation.test.ts
       - conformance/src/scenarios/workspace-cross-tenant-isolation-blackbox.test.ts
+      - conformance/src/scenarios/v2-workspace-scope-from-identity.test.ts
     note: |
       RFC 0059 §E WCT-1: hosts advertising `capabilities.workspace.supported`
       MUST scope every file to a single `{tenant, workspace}` (RFC 0048). No
@@ -2462,6 +2469,7 @@ invariants:
     threat_model: SECURITY/threat-model-secret-leakage.md
     tests:
       - conformance/src/scenarios/fs-path-traversal.test.ts
+      - conformance/src/scenarios/v2-fs-sandbox-escape-refused.test.ts
     note: |
       RFC 0014 §B + §C: hosts advertising `capabilities.fs.supported`
       MUST resolve every input path relative to `sandboxRoot` and
@@ -2595,6 +2603,7 @@ invariants:
     tests:
       - conformance/src/scenarios/authorization-fail-closed.test.ts
       - conformance/src/scenarios/tool-hooks-authorization-fail-closed.test.ts
+      - conformance/src/scenarios/v2-tool-authorization-fail-closed.test.ts
     note: |
       RFC 0049 §C: hosts advertising `capabilities.authorization.supported`
       MUST deny when a principal's role is absent, unseeded, or unresolvable
@@ -2700,6 +2709,7 @@ invariants:
     threat_model: SECURITY/threat-model-secret-leakage.md
     tests:
       - conformance/src/scenarios/table-cross-tenant-isolation.test.ts
+      - conformance/src/scenarios/v2-storage-cross-tenant-isolation.test.ts
     note: |
       RFC 0016 §B point 1: hosts advertising `capabilities.tableStorage.supported`
       MUST partition rows by tenant. A `query` or direct `get` by rowId for
@@ -2718,6 +2728,7 @@ invariants:
     threat_model: SECURITY/threat-model-secret-leakage.md
     tests:
       - conformance/src/scenarios/blob-cross-tenant-isolation.test.ts
+      - conformance/src/scenarios/v2-storage-cross-tenant-isolation.test.ts
     note: |
       RFC 0019 §B point 1: hosts advertising `capabilities.blobStorage.supported`
       MUST partition blobs by tenant. A `get` for tenant A MUST NOT return
@@ -2735,6 +2746,7 @@ invariants:
     threat_model: SECURITY/threat-model-secret-leakage.md
     tests:
       - conformance/src/scenarios/cache-cross-tenant-isolation.test.ts
+      - conformance/src/scenarios/v2-storage-cross-tenant-isolation.test.ts
     note: |
       RFC 0019 §B point 2: hosts advertising `capabilities.cache.supported`
       MUST partition cache entries by tenant. A `get` for tenant A MUST NOT

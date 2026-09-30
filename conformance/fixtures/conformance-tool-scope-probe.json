@@ -1,0 +1,27 @@
+{
+  "id": "conformance-tool-scope-probe",
+  "name": "Conformance: per-tool authorization probe",
+  "version": "1.0",
+  "description": "host-services.md §toolHooks (`perToolAuthorization`) — one node, `core.conformance.scoped-tool` (conformance-RESERVED): a host that advertises `toolHooks.perToolAuthorization` maps it to ONE external tool call, of the tool `conformance.scope-probe`, made through the host's ordinary tool-invocation path as the run's principal, with the tool's `requiredScopes` set to `[inputs.requiredScope]` (or `[]` when it is empty or absent). The tool, when invoked, POSTs `{}` to `inputs.url` and returns `{ invoked: true }`. The per-tool authorization check runs before it, as for any tool: a lacked or unevaluable scope MUST NOT invoke it, MUST emit `agent.tool-returned { status: forbidden }`, and fails the node with the refusal — `forbidden` with `details.scope: \"tool\"`, `toolName` and `requiredScopes` — unchanged. Operator contract: no principal holds `conformance:never-granted`, and evaluating `conformance:unevaluable` errors. See conformance/fixtures.md §`conformance-tool-scope-probe` and v2-tool-authorization-fail-closed.test.ts.",
+  "nodes": [
+    {
+      "id": "scoped-tool",
+      "typeId": "core.conformance.scoped-tool",
+      "name": "Call a scoped tool",
+      "position": { "x": 0, "y": 0 },
+      "config": { "toolName": "conformance.scope-probe" },
+      "inputs": {
+        "requiredScope": { "type": "variable", "variableName": "requiredScope" },
+        "url": { "type": "variable", "variableName": "url" }
+      }
+    }
+  ],
+  "edges": [],
+  "triggers": [{ "id": "manual", "type": "manual", "enabled": true }],
+  "variables": [
+    { "name": "requiredScope", "type": "string", "description": "The one scope the tool requires; empty for none (the positive control).", "defaultValue": "" },
+    { "name": "url", "type": "string", "description": "Where the tool POSTs when it is invoked — the suite's receiver.", "required": true }
+  ],
+  "metadata": { "tags": ["conformance", "toolHooks", "security"] },
+  "settings": { "timeout": 15000, "maxRetries": 0 }
+}
