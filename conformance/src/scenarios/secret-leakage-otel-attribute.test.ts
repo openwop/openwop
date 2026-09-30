@@ -58,7 +58,7 @@ import { isFixtureAdvertised } from '../lib/fixtures.js';
 import { capabilityFamily } from '../lib/discovery-capabilities.js';
 import { getCollector, waitForRunSpans } from '../lib/otel-collector.js';
 import { req } from '../lib/requirement-ids.js';
-import { softSkip } from '../lib/soft-skip.js';
+import { softSkip, type SoftSkipKind } from '../lib/soft-skip.js';
 
 /**
  * Callback-shaped: the host exports OTLP spans to the suite's collector, which scans them for the BYOK canary.
@@ -102,10 +102,16 @@ async function startByokRun(): Promise<string | null> {
   return (create.json as { runId: string }).runId;
 }
 
-describe.skipIf(HTTP_SKIP || FIXTURE_SKIP)(
+/** Why the gate below holds, as RFC 0148 §A names it (openwop#1686: a describe-level skip recorded no disposition). */
+const GATE_WHY: readonly [SoftSkipKind, string] =
+  (!process.env.OPENWOP_BASE_URL) ? ['inapplicable', `no target: OPENWOP_BASE_URL is unset`] as const : 
+  (!isFixtureAdvertised(BYOK_WORKFLOW_ID)) ? ['blocked', `the \`${BYOK_WORKFLOW_ID}\` fixture is not advertised`] as const : ['blocked', 'the gate held for no named reason'] as const;
+
+describe(
   'secret-leakage-otel-attribute: OTel span scrape (RFC 0034 §B)',
   () => {
     it('NO OTel span attribute MUST contain the BYOK canary plaintext for a run that resolved it', async (ctx) => {
+    if (HTTP_SKIP || FIXTURE_SKIP) return softSkip(...GATE_WHY);
       if (!CANARY_VALUE) {
         ctx.skip();
         return softSkip('blocked', 'precondition not met — `!CANARY_VALUE` returned early (seam, prior step, or fixture unavailable)');
@@ -171,10 +177,11 @@ describe.skipIf(HTTP_SKIP || FIXTURE_SKIP)(
   },
 );
 
-describe.skipIf(HTTP_SKIP || FIXTURE_SKIP)(
+describe(
   'secret-leakage-debug-bundle-otel: debug-bundle export scrape (RFC 0034 §B)',
   () => {
     it('NO debug-bundle field MUST contain the BYOK canary plaintext for a run that resolved it', async (ctx) => {
+    if (HTTP_SKIP || FIXTURE_SKIP) return softSkip(...GATE_WHY);
       if (!CANARY_VALUE) {
         ctx.skip();
         return softSkip('blocked', 'precondition not met — `!CANARY_VALUE` returned early (seam, prior step, or fixture unavailable)');
@@ -216,7 +223,7 @@ describe.skipIf(HTTP_SKIP || FIXTURE_SKIP)(
   },
 );
 
-describe.skipIf(HTTP_SKIP || FIXTURE_SKIP)(
+describe(
   'secret-leakage-otel-attribute: real OTLP export scrape (collector-side)',
   () => {
     // Distinct from the scrape-seam probe above: this asserts against what
@@ -228,6 +235,7 @@ describe.skipIf(HTTP_SKIP || FIXTURE_SKIP)(
     // attributes" gap. Gated on the in-process collector being active
     // (`OPENWOP_OTEL_COLLECTOR=true` + the host configured to export to it).
     it('NO real-exported OTel span/metric attribute MUST contain the BYOK canary plaintext', async (ctx) => {
+    if (HTTP_SKIP || FIXTURE_SKIP) return softSkip(...GATE_WHY);
       const collector = getCollector();
       if (!collector || !CANARY_VALUE) {
         ctx.skip();
@@ -267,10 +275,11 @@ describe.skipIf(HTTP_SKIP || FIXTURE_SKIP)(
   },
 );
 
-describe.skipIf(HTTP_SKIP || FIXTURE_SKIP)(
+describe(
   'secret-leakage-otel-attribute: advertisement-shape probe (RFC 0034 §A)',
   () => {
     it('when secrets.supported is true, observability.testSeams advertisements MUST be boolean if present', async (ctx) => {
+    if (HTTP_SKIP || FIXTURE_SKIP) return softSkip(...GATE_WHY);
       const d = await readDiscovery();
       if (capabilityFamily<{ supported?: unknown }>(d, 'secrets')?.supported !== true) {
         ctx.skip();

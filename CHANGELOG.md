@@ -20,6 +20,22 @@ Format follows [Keep a Changelog](https://keepachangelog.com/en/1/) loosely. Ver
   - a second floor path for v1 `openwop-secrets`, and the first requirement ids for v2 `secrets`.
 
   The current `openwop-smoke-byok-roundtrip` node hashes a workflow-named secret, which is an oracle, so production hosts rightly withhold it (#1686). Filed as the RFC and its registers only; no spec, schema or conformance file changes.
+- **RFC 0226 `Active → Accepted`** (provisional pending the RFC 0156 §B retrospective review; bootstrap waiver, register row `not-reviewed`). Tier-2 evidence: all three hosts' latest certified bundles, each verified under the key its host serves, record `openwop.requirement.errors.event-code-registered` as a clean `executed-pass`.
+  - the v2 reference host at 2.44.6 (`188a23d56886`);
+  - MyndHyve at 2.44.3 (`58da9407e616`);
+  - openwop-app at 2.44.5 (`ab77c3aa`, `cb16716e1be6`).
+
+  The falsifiability table gains that host-side row. `check-accepted-predicate` passes.
+- **openwop-app's canonical v2 evidence now tracks its latest certified cut, as `myndhyve.json` and `openwop-host-v2-reference.json` do.**
+  - `evidence/v2-host-bundles/openwop-workflow-engine.json` is now the ab77c3aa bundle, byte-for-byte (suite 2.44.5, 263 / 0 / 0, both claimed profiles certified).
+  - The suite 2.35.1 bundle it held since #1473 moves to `openwop-workflow-engine-2.35.1.json`. That bundle is still the witness for `0187.bound-id-kinds.per-kind` and `openwop-conformance-seams-v2`. The other versioned files stay.
+  - `INTEROP-EVIDENCE-LOG.md`'s openwop-app rows now read the new bundle: the newest cut, the current suite, and the lanes. `anonymous` no longer advertises a revocation rule, and `oidc` is advertised as `exp-only` with a 3600 s window, which its `0210.*` rows record `inapplicable`. The earlier readings are kept as history.
+  - RFC 0210 G1's citation moves to the 2.35.1 file, where it was measured.
+- **A run-failure code must be registered or a vendor code: `errors.event-code-registered` is required, and #1698 closes** (suite 2.45.2). The row checks `error.code` on `run.failed`, `node.failed` and the snapshot's `error` against the registry.
+  - **The chain.** The #1721 correction made `errors.md` §The registry bind these codes. RFC 0226 registered the shared codes, and the hosts remapped: openwop-examples #125, #126, #138; myndhyve#539; openwop-app #4202, #4213.
+  - **Evidence.** The three hosts' latest certified bundles all record the row as a clean `executed-pass`. The new corpus copy is `evidence/v2-host-bundles/openwop-workflow-engine-2.44.5.json`, versioned like the 2.43.1 and 2.44.0 cuts.
+  - **Registers.** RFC 0171 gap G6 (openwop-app) closes; G7 and G8 were already closed. RFC 0223 G9, which was transferred to #1698, closes. RFC 0226's second acceptance criterion is checked.
+- **Conformance: every gated scenario records why it did not run** (suite 2.45.1). The 56 non-floor files that skipped every test at describe level, and so recorded no disposition, now gate each test with the RFC 0148 §A disposition: `inapplicable` for a capability not advertised, `blocked` for a withheld fixture, `skipped` for an operator opt-in not set. `describe-level-skip.test.ts` is now a hard rule for every scenario file. The gates are unchanged.
 - **Conformance: the RFC 0182 run-list legs no longer time out on a long-lived host** (suite 2.45.1). `v2-run-list` walked every page of the caller's history, up to 50 pages, although the runs it had just created are the newest and sit on page 1. The time grew with the conformance tenant's age, and on openwop-app's b29427fef cut it outran the 30 s test timeout. The walk now stops once the created runs are seen, plus a two-page tail that still exercises a host-minted cursor. The unfiltered leg now also asserts newest-first order (`runs.md` §List). No requirement is added or removed.
 - **Class 3: a host that grants an origin admits the contract's request headers in preflight** (#1763, suite 2.45.0). `spec/v2/core/headers.md` gains §Cross-origin preflight, generated beside the request-header table. When a host grants the requesting origin, it MUST admit the operation's method and every request header `api/v2/openapi.yaml` declares for it, plus `Authorization` and `Content-Type` where they apply. A `*` never admits `Authorization`, and which origins a host grants stays host policy. This closes RFC 0219 gap G8. `spec/v2/path-manifest.json` gains per-operation `requestHeaders`, `authenticated` and `requestBody`. The new leg is `openwop.requirement.headers.cors-preflight-admits`. Expose-Headers was considered and not taken (it would need an RFC). +81 core words (36,772 / 37,800).
 - **Conformance: a v1 floor gated on a withheld fixture records `blocked` instead of nothing** (#1686, suite 2.44.9). Nine floor files skipped at describe level, which leaves no ledger row, and `--certify` rejected the whole certification for an unrecorded floor. They now record `blocked` naming the fixture (RFC 0148 §A), which denies only that profile. A new server-free self-test forbids the shape on floors and ratchets the 56 non-floor files that still have it. No spec text changes.
@@ -408,6 +424,39 @@ Format follows [Keep a Changelog](https://keepachangelog.com/en/1/) loosely. Ver
 - **RFC 0180, 0185 and 0186 flip `Active → Accepted`** — the first flips computed by the RFC 0174 §B.1 predicate since 2.4.2 closed its five holes, and the only three of the fourteen Active v2-era RFCs that clear it on committed evidence. 0185 (`openwop.requirement.0185.payload-vendor-hatch`) and 0186 (`openwop.requirement.0186.payload-seats`) cite `tier-1 — steward-verified`: both ids are `executed-pass` on the reference host's **certified** bundle (suite 2.4.1, witness `b8a7d1d6941d…`). 0180 cites `corpus gate — no host tier`, which is the honest label rather than a convenience — every obligation it carries is a property of the corpus and the registry declaration, so no host bundle can witness it and none is cited. All three gained a `### Falsifiability` table, because 2.4.2's rule 4 no longer passes an RFC that names nothing to check: each row is now either id-witnessed or verdict-declared, including 0180 §A.4's deregistration rule, which is witnessable **in the negative only** — the absence of a removal procedure is the requirement.
 - **The remaining eleven stay `Active`, each for a stated reason** rather than for lack of attention. The eight RFC 0167 program children name a certified openwop-app bundle in their own acceptance criteria and the committed one reads `certified: false` (3 blocked rows, RFC 0168 §E.1). RFC 0173 additionally carries the program's only `open` gap row. RFC 0179's sole criterion is unmet — 2.4.2 stopped the gate reading "(Phase 4 leg)" as an excuse for it. RFC 0187 names three requirement ids that no scenario mints. RFC 0167 itself flips **last**, which 2.4.2 made a rule: the moment the umbrella stops being `Active`, every child still `Active` becomes permanently ineligible.
 - **The interrupt `data` union is bound to `kind`** (MCP/A2A review P3-H7, Class 3 correction — COMPATIBILITY.md §3). `schemas/suspend-request.schema.json` and its v2 twin typed `data` as an unbound `oneOf`, so the minimal `conversation.start` and `conversation.close` payloads (`{ conversationId }`, which satisfies both shapes) failed validation in v1 and v2, and a payload carrying another kind's `data` passed. `data` is now an `anyOf` and a root `allOf` binds each kind to its own shape with one `if`/`then`; no per-kind shape or `$id` changed. Witnessed by `conformance/fixtures/interrupt-payloads/` (suite 2.36.0).
+
+## [2.45.2] — 2026-09-30 — a run-failure code must be registered or a vendor code (no longer advisory)
+
+A suite patch.
+
+### Conformance
+
+- **`errors.event-code-registered` is required** (#1698, #1820). Until now it recorded `executed-pass` with a partial-witness note even when a host emitted an unregistered code. It now fails and names each offending code on `run.failed`, `node.failed` or the snapshot `error`. Vendor codes still pass. All three hosts' latest certified bundles are clean `executed-pass`:
+  - v2-reference 2.44.6;
+  - MyndHyve 2.44.3;
+  - openwop-app 2.44.5 (`ab77c3aa`).
+- **Suite `2.45.2`.** `@openwop/spec-artifacts` moves in lockstep at the same exact pin.
+
+### Evidence and status
+
+- **RFC 0171 G6 and RFC 0223 G9 close.** #1698 is resolved: the #1721 correction, then RFC 0226's registry rows, then the host remaps, then required here.
+- **RFC 0226 is `Accepted`** (#1821; provisional, RFC 0156 §B review owed; evidence tier 2, three hosts).
+- **openwop-app's canonical v2 evidence tracks its latest cut** (#1821). `evidence/v2-host-bundles/openwop-workflow-engine.json` is the 2.44.5 `ab77c3aa` bundle. The 2.35.1 bundle it replaced is kept as `openwop-workflow-engine-2.35.1.json`, because it still witnesses the seams profile.
+
+## [2.45.1] — 2026-09-29 — the run-list legs stop walking once they find their runs, and no scenario skips every test at describe level
+
+A suite patch. No requirement is added or removed.
+
+### Conformance
+
+- **The run-list legs stop walking once they find the runs they created** (#1816), instead of paging a host's whole run history.
+- **No scenario file skips every test at `describe` level** (#1818). When vitest skips a whole file at `describe` level, it runs no hooks and writes no ledger row. The remaining 56 such files now record a disposition on every test, per RFC 0148 §A:
+  - an unadvertised capability → `inapplicable`;
+  - an operator opt-in that's unset → `skipped`;
+  - a withheld fixture → `blocked`, naming it.
+
+  Against a host with no fixtures and no capabilities, 56 of 56 files now record rows, none of them unclassified; before, only 4 did. `describe-level-skip.test.ts` is now a hard rule with no ceiling.
+- **Suite `2.45.1`.** `@openwop/spec-artifacts` moves in lockstep at the same exact pin.
 
 ## [2.45.0] — 2026-09-29 — a host that grants an origin admits the contract's request headers in preflight
 

@@ -23,6 +23,7 @@ import {
   getReasoningVerbosity,
 } from '../lib/multi-agent-capabilities.js';
 import { req } from '../lib/requirement-ids.js';
+import { softSkip, type SoftSkipKind } from '../lib/soft-skip.js';
 
 const FIXTURE = 'conformance-agent-reasoning';
 const SKIP =
@@ -38,8 +39,15 @@ const REASONING_EVENT_TYPES = new Set([
   'agent.decided',
 ]);
 
-describe.skipIf(SKIP)('agentReasoningEvents: agent.* event family emission', () => {
+/** Why the gate below holds, as RFC 0148 §A names it (openwop#1686: a describe-level skip recorded no disposition). */
+const GATE_WHY: readonly [SoftSkipKind, string] =
+  (!isAgentSupported()) ? ['inapplicable', `the host does not advertise the capability this scenario covers (isAgentSupported() is false)`] as const : 
+  (getReasoningVerbosity() === 'off') ? ['inapplicable', `the host advertises reasoning verbosity \`off\`, so agent reasoning events do not apply`] as const : 
+  (!isFixtureAdvertised(FIXTURE)) ? ['blocked', `the \`${FIXTURE}\` fixture is not advertised`] as const : ['blocked', 'the gate held for no named reason'] as const;
+
+describe('agentReasoningEvents: agent.* event family emission', () => {
   it('host emits at least one canonical agent.* event during a reasoning-fixture run', async () => {
+    if (SKIP) return softSkip(...GATE_WHY);
     const create = await driver.post('/v1/runs', { workflowId: FIXTURE });
     expect(create.status).toBe(201);
     const runId = (create.json as { runId: string }).runId;

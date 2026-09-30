@@ -23,6 +23,7 @@ import { driver } from '../lib/driver.js';
 import { pollUntilStatus, pollUntilTerminal } from '../lib/polling.js';
 import { isFixtureAdvertised } from '../lib/fixtures.js';
 import { req } from '../lib/requirement-ids.js';
+import { softSkip, type SoftSkipKind } from '../lib/soft-skip.js';
 
 const WORKFLOW_ID = 'conformance-interrupt-external-event';
 const SKIP = !isFixtureAdvertised(WORKFLOW_ID);
@@ -43,8 +44,13 @@ async function fetchInterruptToken(runId: string): Promise<string | null> {
   return null;
 }
 
-describe.skipIf(SKIP)('interrupt: external-event — matching correlation resumes', () => {
+/** Why the gate below holds, as RFC 0148 §A names it (openwop#1686: a describe-level skip recorded no disposition). */
+const GATE_WHY: readonly [SoftSkipKind, string] =
+  (!isFixtureAdvertised(WORKFLOW_ID)) ? ['blocked', `the \`${WORKFLOW_ID}\` fixture is not advertised`] as const : ['blocked', 'the gate held for no named reason'] as const;
+
+describe('interrupt: external-event — matching correlation resumes', () => {
   it('signed-token POST with matching correlation drives terminal completed', async () => {
+    if (SKIP) return softSkip(...GATE_WHY);
     const create = await driver.post('/v1/runs', { workflowId: WORKFLOW_ID });
     expect(create.status).toBe(201);
     const runId = (create.json as { runId: string }).runId;
@@ -78,8 +84,9 @@ describe.skipIf(SKIP)('interrupt: external-event — matching correlation resume
   });
 });
 
-describe.skipIf(SKIP)('interrupt: external-event — mismatched correlation rejected', () => {
+describe('interrupt: external-event — mismatched correlation rejected', () => {
   it('correlation mismatch returns 422 and leaves run suspended', async () => {
+    if (SKIP) return softSkip(...GATE_WHY);
     const create = await driver.post('/v1/runs', { workflowId: WORKFLOW_ID });
     expect(create.status).toBe(201);
     const runId = (create.json as { runId: string }).runId;

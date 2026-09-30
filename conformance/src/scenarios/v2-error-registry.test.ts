@@ -16,8 +16,11 @@
  * `error` exactly as it binds an error response. The leg runs
  * `conformance-failure` and checks every such code against the registry and the
  * vendor pattern (first segment an org registered in `spec/v2/declaration.json`).
- * ADVISORY for suite 2.43.1: a violation is recorded as a partial witness naming
- * the codes, not a failure, while hosts remap (per-host rows in gaps.json).
+ * It shipped ADVISORY in suite 2.43.1: a violation was recorded as a partial
+ * witness naming the codes, not a failure, while hosts remapped (RFC 0171 gaps
+ * G6–G8). REQUIRED since 2.45.2 (openwop#1698): all three hosts' latest
+ * certified bundles record it `executed-pass` after their remaps to the RFC
+ * 0226 rows, so an unregistered, non-vendor code now fails the row.
  */
 
 import { describe, it, expect } from 'vitest';
@@ -107,7 +110,7 @@ describe('v2 error-registry (RFC 0171 §B.1–§B.2)', () => {
     }
   });
 
-  it('an error code on run.failed, node.failed and the snapshot is registered or a vendor code (advisory in 2.43.1)', async () => {
+  it('an error code on run.failed, node.failed and the snapshot is registered or a vendor code', async () => {
     if (!(await discovery())) return softSkip('blocked', 'v2 discovery unreachable — /.well-known/openwop did not answer 200 with a JSON body under OpenWOP-Version: 2.0');
     const accepted = codeAccepted();
     if (accepted === null) return softSkip('inapplicable', 'spec/v2/errors.json or spec/v2/declaration.json is not present in this layout');
@@ -137,12 +140,6 @@ describe('v2 error-registry (RFC 0171 §B.1–§B.2)', () => {
     const ID = 'openwop.requirement.errors.event-code-registered';
     expect(seen.length, req(ID, 'spec/v2/core/errors.md §The registry', `a failed ${FAILURE_FIXTURE} run MUST carry an error code on run.failed, node.failed or the snapshot (status ${String(snap?.['status'])})`)).toBeGreaterThan(0);
     const bad = seen.filter((s) => !accepted(s.code));
-    if (bad.length > 0) {
-      // partial-witness-ok: ADVISORY for suite 2.43.1 (openwop#1698). The codes were
-      // observed and checked above; a violation is recorded, not failed, for one
-      // suite patch while hosts remap. Per-host gap rows track them.
-      return softSkip('inapplicable', `ADVISORY (suite 2.43.1, openwop#1698): unregistered, non-vendor error codes: ${bad.map((b) => `${b.where}=${b.code}`).join(', ')}`);
-    }
-    expect(bad, req(ID, 'spec/v2/core/errors.md §The registry', 'every error code on run.failed, node.failed and the snapshot MUST be registered or a vendor code')).toEqual([]);
+    expect(bad.map((b) => `${b.where}=${b.code}`), req(ID, 'spec/v2/core/errors.md §The registry', 'every error code on run.failed, node.failed and the snapshot MUST be registered or a vendor code (an org registered in spec/v2/declaration.json)')).toEqual([]);
   }, 45_000);
 });

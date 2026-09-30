@@ -174,6 +174,6 @@ Grouping below is a reading aid only: it assigns each RFC to the risk class its 
 | [0217](../RFCS/0217-dead-letter-read-after-unregister.md) | after a subscription is unregistered, its dead-letter read answers as though it never existed | `Accepted` | bootstrap waiver | tier-1 — the v2 reference host | `not-reviewed` |
 | [0219](../RFCS/0219-client-version-header.md) | a client announces the protocol version it implements in `OpenWOP-Client-Version` | `Accepted` | bootstrap waiver | tier-1 — the v2 reference host's certified public cut on published suite 2 | `not-reviewed` |
 | [0224](../RFCS/0224-v2-audit-log-integrity.md) | audit-log integrity gets a v2 home | `Accepted` | bootstrap waiver | tier-1 — the v2 reference host's certified public cut on published suite 2 | `not-reviewed` |
-| [0226](../RFCS/0226-shared-run-failure-codes.md) | three run-failure codes the hosts share, registered | `Active` | bootstrap waiver | not declared (predates RFC 0174 §B.1, or not yet Accepted) | `not-reviewed` |
+| [0226](../RFCS/0226-shared-run-failure-codes.md) | three run-failure codes the hosts share, registered | `Accepted` | bootstrap waiver | tier-2 — all three hosts' latest certified bundles, each VERIFIED under the key its host… | `not-reviewed` |
 | [0228](../RFCS/0228-v1-host-service-error-codes.md) | the error codes v1 named for host services, decided for v2 | `Active` | bootstrap waiver | not declared (predates RFC 0174 §B.1, or not yet Accepted) | `not-reviewed` |
 

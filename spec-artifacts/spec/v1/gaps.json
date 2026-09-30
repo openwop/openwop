@@ -9829,8 +9829,8 @@
       "surface": "openwop-app emits error codes on `run.failed` / `node.failed` that are neither registered nor vendor codes (22 codes measured at openwop-app `0cfb264c9`, e.g. `invalid_config`, `host_capability_missing`); `errors.md` §The registry binds them since openwop#1698.",
       "witness": "unclassified",
       "requirementId": null,
-      "disposition": "externally-gated",
-      "target": "openwop-app-code-remap",
+      "disposition": "closed",
+      "target": null,
       "sources": [
         {
           "file": "RFCS/registers/0171-v2-wire-envelope.gaps.md",
@@ -12614,7 +12614,7 @@
       "rfc": "0210",
       "local": "G1",
       "section": "§D.10",
-      "surface": "`identity.md` §2.2's `anonymous` row has `—` in the `revocation` column, while `auth.schema.json` REQUIRES `revocation` on every lane member. An `anonymous` lane therefore must advertise a value the table does not name; openwop-app advertises `next-request` (`evidence/v2-host-bundles/openwop-workflow-engine.json`). The §D.9 leg leaves `anonymous` unconstrained for exactly this reason, which is a hole in an assertion whose whole point is to have no holes.",
+      "surface": "`identity.md` §2.2's `anonymous` row has `—` in the `revocation` column, while `auth.schema.json` REQUIRES `revocation` on every lane member. An `anonymous` lane therefore must advertise a value the table does not name; openwop-app advertised `next-request` (`evidence/v2-host-bundles/openwop-workflow-engine-2.35.1.json`, formerly `openwop-workflow-engine.json`; its 2.44.5 cut omits the field). The §D.9 leg leaves `anonymous` unconstrained for exactly this reason, which is a hole in an assertion whose whole point is to have no holes.",
       "witness": "unclassified",
       "requirementId": null,
       "disposition": "transferred",
@@ -13416,8 +13416,8 @@
       "surface": "Whether a run-failure code on `run.failed` / `node.failed` must be registered: `errors.md` scopes its MUST to error responses, overview §0 to every producer.",
       "witness": "unclassified",
       "requirementId": null,
-      "disposition": "transferred",
-      "target": "openwop#1698",
+      "disposition": "closed",
+      "target": null,
       "sources": [
         {
           "file": "RFCS/registers/0223-approval-reject-disposition.gaps.md",

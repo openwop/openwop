@@ -23,12 +23,19 @@ import { pollUntilTerminal } from '../lib/polling.js';
 import { isFixtureAdvertised } from '../lib/fixtures.js';
 import { isConversationPrimitiveSupported } from '../lib/multi-agent-capabilities.js';
 import { req } from '../lib/requirement-ids.js';
+import { softSkip, type SoftSkipKind } from '../lib/soft-skip.js';
 
 const FIXTURE = 'conformance-conversation-lifecycle';
 const SKIP = !isConversationPrimitiveSupported() || !isFixtureAdvertised(FIXTURE);
 
-describe.skipIf(SKIP)('conversationLifecycle: open → exchange → close round-trip', () => {
+/** Why the gate below holds, as RFC 0148 §A names it (openwop#1686: a describe-level skip recorded no disposition). */
+const GATE_WHY: readonly [SoftSkipKind, string] =
+  (!isConversationPrimitiveSupported()) ? ['inapplicable', `the host does not advertise the capability this scenario covers (isConversationPrimitiveSupported() is false)`] as const : 
+  (!isFixtureAdvertised(FIXTURE)) ? ['blocked', `the \`${FIXTURE}\` fixture is not advertised`] as const : ['blocked', 'the gate held for no named reason'] as const;
+
+describe('conversationLifecycle: open → exchange → close round-trip', () => {
   it('emits all three lifecycle events with matching conversationId; no exchanges after close', async () => {
+    if (SKIP) return softSkip(...GATE_WHY);
     const create = await driver.post('/v1/runs', { workflowId: FIXTURE });
     expect(create.status, req('openwop.it.conversationLifecycle.emits-all-three-lifecycle-events-with-matching-conversationid-no-exchanges-after', 'RFCS/0005-conversation.md', 'emits all three lifecycle events with matching conversationId; no exchanges after close')).toBe(201);
     const runId = (create.json as { runId: string }).runId;

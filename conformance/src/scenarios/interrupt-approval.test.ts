@@ -12,6 +12,7 @@ import { driver } from '../lib/driver.js';
 import { pollUntilStatus, pollUntilTerminal } from '../lib/polling.js';
 import { isFixtureAdvertised } from '../lib/fixtures.js';
 import { req } from '../lib/requirement-ids.js';
+import { softSkip, type SoftSkipKind } from '../lib/soft-skip.js';
 
 const WORKFLOW_ID = 'conformance-approval';
 const NODE_ID = 'gate';
@@ -23,8 +24,21 @@ const SKIP_NO_REFINE = !isFixtureAdvertised(REFINE_WORKFLOW_ID);
 const EDIT_ACCEPT_WORKFLOW_ID = 'conformance-approval-edit-accept';
 const SKIP_NO_EDIT_ACCEPT = !isFixtureAdvertised(EDIT_ACCEPT_WORKFLOW_ID);
 
-describe.skipIf(SKIP_NO_FIXTURE)('interrupt: approval accept resumes to `completed`', () => {
+/** Why the gate below holds, as RFC 0148 §A names it (openwop#1686: a describe-level skip recorded no disposition). */
+const GATE_WHY: readonly [SoftSkipKind, string] =
+  (!isFixtureAdvertised(WORKFLOW_ID)) ? ['blocked', `the \`${WORKFLOW_ID}\` fixture is not advertised`] as const : ['blocked', 'the gate held for no named reason'] as const;
+
+/** Why the gate below holds, as RFC 0148 §A names it (openwop#1686: a describe-level skip recorded no disposition). */
+const GATE_WHY_2: readonly [SoftSkipKind, string] =
+  (!isFixtureAdvertised(REFINE_WORKFLOW_ID)) ? ['blocked', `the \`${REFINE_WORKFLOW_ID}\` fixture is not advertised`] as const : ['blocked', 'the gate held for no named reason'] as const;
+
+/** Why the gate below holds, as RFC 0148 §A names it (openwop#1686: a describe-level skip recorded no disposition). */
+const GATE_WHY_3: readonly [SoftSkipKind, string] =
+  (!isFixtureAdvertised(EDIT_ACCEPT_WORKFLOW_ID)) ? ['blocked', `the \`${EDIT_ACCEPT_WORKFLOW_ID}\` fixture is not advertised`] as const : ['blocked', 'the gate held for no named reason'] as const;
+
+describe('interrupt: approval accept resumes to `completed`', () => {
   it('run suspends at gate, accept resolution drives terminal completed', async () => {
+    if (SKIP_NO_FIXTURE) return softSkip(...GATE_WHY);
     const create = await driver.post('/v1/runs', { workflowId: WORKFLOW_ID });
     expect(create.status).toBe(201);
     const runId = (create.json as { runId: string }).runId;
@@ -52,8 +66,9 @@ describe.skipIf(SKIP_NO_FIXTURE)('interrupt: approval accept resumes to `complet
   });
 });
 
-describe.skipIf(SKIP_NO_FIXTURE)('interrupt: invalid resolve payload rejected per resumeSchema', () => {
+describe('interrupt: invalid resolve payload rejected per resumeSchema', () => {
   it('400 (or 422) when action is not in {accept, reject}', async () => {
+    if (SKIP_NO_FIXTURE) return softSkip(...GATE_WHY);
     const create = await driver.post('/v1/runs', { workflowId: WORKFLOW_ID });
     expect(create.status).toBe(201);
     const runId = (create.json as { runId: string }).runId;
@@ -80,8 +95,9 @@ describe.skipIf(SKIP_NO_FIXTURE)('interrupt: invalid resolve payload rejected pe
   });
 });
 
-describe.skipIf(SKIP_NO_FIXTURE)('interrupt: resolving an unknown interrupt returns 404', () => {
+describe('interrupt: resolving an unknown interrupt returns 404', () => {
   it('400/404 when nodeId does not match an active interrupt', async () => {
+    if (SKIP_NO_FIXTURE) return softSkip(...GATE_WHY);
     const create = await driver.post('/v1/runs', { workflowId: WORKFLOW_ID });
     expect(create.status).toBe(201);
     const runId = (create.json as { runId: string }).runId;
@@ -116,8 +132,9 @@ describe.skipIf(SKIP_NO_FIXTURE)('interrupt: resolving an unknown interrupt retu
  * adding `refine` to that fixture's `actions` would change a registered workflow
  * definition every host already serves.
  */
-describe.skipIf(SKIP_NO_REFINE)('interrupt: refine resolution carries action + refineFeedback (RFC 0183)', () => {
+describe('interrupt: refine resolution carries action + refineFeedback (RFC 0183)', () => {
   it('a refine resolve round-trips `action` and the structured feedback it requires', async () => {
+    if (SKIP_NO_REFINE) return softSkip(...GATE_WHY_2);
     const create = await driver.post('/v1/runs', { workflowId: REFINE_WORKFLOW_ID });
     expect(create.status).toBe(201);
     const runId = (create.json as { runId: string }).runId;
@@ -168,6 +185,7 @@ describe.skipIf(SKIP_NO_REFINE)('interrupt: refine resolution carries action + r
   });
 
   it('refuses a refine resolution that supplies no refineFeedback', async () => {
+    if (SKIP_NO_REFINE) return softSkip(...GATE_WHY_2);
     const create = await driver.post('/v1/runs', { workflowId: REFINE_WORKFLOW_ID });
     expect(create.status).toBe(201);
     const runId = (create.json as { runId: string }).runId;
@@ -193,8 +211,9 @@ describe.skipIf(SKIP_NO_REFINE)('interrupt: refine resolution carries action + r
  * witnesses one of §A.2's two conditional MUSTs; until this block the other was
  * stated in `spec/v2/core/interrupt.md` §Approval and witnessed nowhere.
  */
-describe.skipIf(SKIP_NO_EDIT_ACCEPT)('interrupt: edit-accept resolution carries action + editedArtifactData (RFC 0183)', () => {
+describe('interrupt: edit-accept resolution carries action + editedArtifactData (RFC 0183)', () => {
   it('an edit-accept resolve round-trips `action` and the edited artifact it requires', async () => {
+    if (SKIP_NO_EDIT_ACCEPT) return softSkip(...GATE_WHY_3);
     const create = await driver.post('/v1/runs', { workflowId: EDIT_ACCEPT_WORKFLOW_ID });
     expect(create.status).toBe(201);
     const runId = (create.json as { runId: string }).runId;
@@ -245,6 +264,7 @@ describe.skipIf(SKIP_NO_EDIT_ACCEPT)('interrupt: edit-accept resolution carries 
   });
 
   it('refuses an edit-accept resolution that supplies no editedArtifactData', async () => {
+    if (SKIP_NO_EDIT_ACCEPT) return softSkip(...GATE_WHY_3);
     const create = await driver.post('/v1/runs', { workflowId: EDIT_ACCEPT_WORKFLOW_ID });
     expect(create.status).toBe(201);
     const runId = (create.json as { runId: string }).runId;

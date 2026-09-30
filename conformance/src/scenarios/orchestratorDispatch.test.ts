@@ -28,6 +28,7 @@ import {
   isDispatchSupported,
 } from '../lib/multi-agent-capabilities.js';
 import { req } from '../lib/requirement-ids.js';
+import { softSkip, type SoftSkipKind } from '../lib/soft-skip.js';
 
 const FIXTURE = 'conformance-orchestrator-dispatch';
 const SKIP =
@@ -35,8 +36,15 @@ const SKIP =
   !isDispatchSupported() ||
   !isFixtureAdvertised(FIXTURE);
 
-describe.skipIf(SKIP)('orchestratorDispatch: supervisor → dispatch → next-worker', () => {
+/** Why the gate below holds, as RFC 0148 §A names it (openwop#1686: a describe-level skip recorded no disposition). */
+const GATE_WHY: readonly [SoftSkipKind, string] =
+  (!isOrchestratorSupported()) ? ['inapplicable', `the host does not advertise the capability this scenario covers (isOrchestratorSupported() is false)`] as const : 
+  (!isDispatchSupported()) ? ['inapplicable', `the host does not advertise the capability this scenario covers (isDispatchSupported() is false)`] as const : 
+  (!isFixtureAdvertised(FIXTURE)) ? ['blocked', `the \`${FIXTURE}\` fixture is not advertised`] as const : ['blocked', 'the gate held for no named reason'] as const;
+
+describe('orchestratorDispatch: supervisor → dispatch → next-worker', () => {
   it('emits runOrchestrator.decided{next-worker} between supervisor + dispatch', async () => {
+    if (SKIP) return softSkip(...GATE_WHY);
     const create = await driver.post('/v1/runs', { workflowId: FIXTURE });
     expect(create.status).toBe(201);
     const runId = (create.json as { runId: string }).runId;

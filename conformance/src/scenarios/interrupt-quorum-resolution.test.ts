@@ -22,6 +22,7 @@ import { driver } from '../lib/driver.js';
 import { pollUntilStatus, pollUntilTerminal } from '../lib/polling.js';
 import { isFixtureAdvertised } from '../lib/fixtures.js';
 import { req } from '../lib/requirement-ids.js';
+import { softSkip, type SoftSkipKind } from '../lib/soft-skip.js';
 
 // Profile gating: a host claims `openwop-interrupt-quorum` support by
 // advertising the fixture. Hosts that don't support quorum semantics
@@ -30,8 +31,13 @@ const WORKFLOW_ID = 'conformance-interrupt-quorum';
 const NODE_ID = 'gate';
 const SKIP = !isFixtureAdvertised(WORKFLOW_ID);
 
-describe.skipIf(SKIP)('interrupt: quorum — three accepts resume to completed', () => {
+/** Why the gate below holds, as RFC 0148 §A names it (openwop#1686: a describe-level skip recorded no disposition). */
+const GATE_WHY: readonly [SoftSkipKind, string] =
+  (!isFixtureAdvertised(WORKFLOW_ID)) ? ['blocked', `the \`${WORKFLOW_ID}\` fixture is not advertised`] as const : ['blocked', 'the gate held for no named reason'] as const;
+
+describe('interrupt: quorum — three accepts resume to completed', () => {
   it('first two accepts persist without resuming; third accept drives terminal completed', async () => {
+    if (SKIP) return softSkip(...GATE_WHY);
     const create = await driver.post('/v1/runs', { workflowId: WORKFLOW_ID });
     expect(create.status).toBe(201);
     const runId = (create.json as { runId: string }).runId;
@@ -72,8 +78,9 @@ describe.skipIf(SKIP)('interrupt: quorum — three accepts resume to completed',
   });
 });
 
-describe.skipIf(SKIP)('interrupt: quorum — majority reject fails the gate', () => {
+describe('interrupt: quorum — majority reject fails the gate', () => {
   it('two rejects out of three votes trigger the majority-reject termination', async () => {
+    if (SKIP) return softSkip(...GATE_WHY);
     const create = await driver.post('/v1/runs', { workflowId: WORKFLOW_ID });
     expect(create.status).toBe(201);
     const runId = (create.json as { runId: string }).runId;

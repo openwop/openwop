@@ -23,6 +23,7 @@ import { driver } from '../lib/driver.js';
 import { pollUntilTerminal } from '../lib/polling.js';
 import { isFixtureAdvertised } from '../lib/fixtures.js';
 import { req } from '../lib/requirement-ids.js';
+import { softSkip, type SoftSkipKind } from '../lib/soft-skip.js';
 
 const WORKFLOW_ID = 'conformance-cap-breach';
 const RECURSION_LIMIT = 3;
@@ -37,8 +38,13 @@ interface RunEvent {
   readonly payload?: unknown;
 }
 
-describe.skipIf(SKIP_NO_FIXTURE)('cap-breach: conformance-cap-breach fixture fails with recursion_limit_exceeded', () => {
+/** Why the gate below holds, as RFC 0148 §A names it (openwop#1686: a describe-level skip recorded no disposition). */
+const GATE_WHY: readonly [SoftSkipKind, string] =
+  (!isFixtureAdvertised(WORKFLOW_ID)) ? ['blocked', `the \`${WORKFLOW_ID}\` fixture is not advertised`] as const : ['blocked', 'the gate held for no named reason'] as const;
+
+describe('cap-breach: conformance-cap-breach fixture fails with recursion_limit_exceeded', () => {
   it('emits cap.breached + transitions to terminal failed when configurable.recursionLimit is exceeded', async () => {
+    if (SKIP_NO_FIXTURE) return softSkip(...GATE_WHY);
     const create = await driver.post('/v1/runs', {
       workflowId: WORKFLOW_ID,
       configurable: { recursionLimit: RECURSION_LIMIT },
@@ -106,6 +112,7 @@ describe.skipIf(SKIP_NO_FIXTURE)('cap-breach: conformance-cap-breach fixture fai
   });
 
   it('cap.breached precedes run.failed in the event sequence (breach detected before over-limit node fires)', async () => {
+    if (SKIP_NO_FIXTURE) return softSkip(...GATE_WHY);
     const create = await driver.post('/v1/runs', {
       workflowId: WORKFLOW_ID,
       configurable: { recursionLimit: RECURSION_LIMIT },

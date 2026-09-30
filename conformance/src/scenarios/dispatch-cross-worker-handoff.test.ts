@@ -26,7 +26,7 @@ import { driver } from '../lib/driver.js';
 import { pollUntilTerminal } from '../lib/polling.js';
 import { isFixtureAdvertised } from '../lib/fixtures.js';
 import { req } from '../lib/requirement-ids.js';
-import { softSkip, blockedDespiteAssertions } from '../lib/soft-skip.js';
+import { softSkip, blockedDespiteAssertions, type SoftSkipKind } from '../lib/soft-skip.js';
 
 const PARENT = 'conformance-dispatch-cross-worker-handoff';
 const CHILD_A = 'conformance-dispatch-cross-worker-handoff-child-a';
@@ -48,8 +48,15 @@ interface RunSnapshot {
   readonly variables?: Record<string, unknown>;
 }
 
-describe.skipIf(SKIP)('dispatch-cross-worker-handoff: sequential child→parent→child variable flow (RFC 0022 §A + §D)', () => {
+/** Why the gate below holds, as RFC 0148 §A names it (openwop#1686: a describe-level skip recorded no disposition). */
+const GATE_WHY: readonly [SoftSkipKind, string] =
+  (!isFixtureAdvertised(PARENT)) ? ['blocked', `the \`${PARENT}\` fixture is not advertised`] as const : 
+  (!isFixtureAdvertised(CHILD_A)) ? ['blocked', `the \`${CHILD_A}\` fixture is not advertised`] as const : 
+  (!isFixtureAdvertised(CHILD_B)) ? ['blocked', `the \`${CHILD_B}\` fixture is not advertised`] as const : ['blocked', 'the gate held for no named reason'] as const;
+
+describe('dispatch-cross-worker-handoff: sequential child→parent→child variable flow (RFC 0022 §A + §D)', () => {
   it('HVMAP-1c: child-a writes via perWorkerOutputMappings; child-b reads via perWorkerInputMappings; shared parent bag is the handoff channel', async () => {
+    if (SKIP) return softSkip(...GATE_WHY);
     const create = await driver.post('/v1/runs', { workflowId: PARENT });
     expect(create.status).toBe(201);
     const parentRunId = (create.json as { runId: string }).runId;
@@ -95,6 +102,7 @@ describe.skipIf(SKIP)('dispatch-cross-worker-handoff: sequential child→parent�
   });
 
   it('HVMAP-1c-override: per-worker mapping overrides default mapping per §A effectiveInputMapping precedence', async () => {
+    if (SKIP) return softSkip(...GATE_WHY);
     const PARENT_OVERRIDE = 'conformance-dispatch-per-worker-override';
     if (!isFixtureAdvertised(PARENT_OVERRIDE)) return softSkip('inapplicable', 'capability or profile not advertised by this host — gate `!isFixtureAdvertised(PARENT_OVERRIDE)` returned early (fixture not seeded — soft-skip)'); // fixture not seeded — soft-skip
     const create = await driver.post('/v1/runs', { workflowId: PARENT_OVERRIDE });

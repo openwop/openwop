@@ -19,7 +19,7 @@ import { driver } from '../lib/driver.js';
 import { pollUntilTerminal } from '../lib/polling.js';
 import { isFixtureAdvertised } from '../lib/fixtures.js';
 import { req } from '../lib/requirement-ids.js';
-import { softSkip, blockedDespiteAssertions } from '../lib/soft-skip.js';
+import { softSkip, blockedDespiteAssertions, type SoftSkipKind } from '../lib/soft-skip.js';
 
 const CANDIDATES = ['conformance-append-ordering', 'conformance-multi-node'] as const;
 const FIXTURE = CANDIDATES.find((id) => isFixtureAdvertised(id)) ?? null;
@@ -46,8 +46,13 @@ interface RunEvent {
   payload?: ChannelWrittenPayload;
 }
 
-describe.skipIf(SKIP)('append-ordering: folded channel reflects event sequence', () => {
+/** Why the gate below holds, as RFC 0148 §A names it (openwop#1686: a describe-level skip recorded no disposition). */
+const GATE_WHY: readonly [SoftSkipKind, string] =
+  (!FIXTURE) ? ['blocked', `none of the candidate fixtures (${CANDIDATES.join(', ')}) is advertised`] as const : ['blocked', 'the gate held for no named reason'] as const;
+
+describe('append-ordering: folded channel reflects event sequence', () => {
   it('append-reducer channels project entries in event-sequence order', async () => {
+    if (SKIP) return softSkip(...GATE_WHY);
     const create = await driver.post('/v1/runs', { workflowId: FIXTURE! });
     const runId = (create.json as { runId?: string } | undefined)?.runId;
 

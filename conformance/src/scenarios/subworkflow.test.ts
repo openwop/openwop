@@ -21,6 +21,7 @@ import { driver } from '../lib/driver.js';
 import { pollUntilTerminal } from '../lib/polling.js';
 import { isFixtureAdvertised } from '../lib/fixtures.js';
 import { req } from '../lib/requirement-ids.js';
+import { softSkip, type SoftSkipKind } from '../lib/soft-skip.js';
 
 const PARENT_WORKFLOW_ID = 'conformance-subworkflow-parent';
 const CHILD_WORKFLOW_ID = 'conformance-subworkflow-child';
@@ -44,8 +45,14 @@ interface RunEvent {
   readonly payload?: unknown;
 }
 
-describe.skipIf(SKIP_NO_FIXTURE)('subworkflow: conformance-subworkflow-parent dispatches child + completes', () => {
+/** Why the gate below holds, as RFC 0148 §A names it (openwop#1686: a describe-level skip recorded no disposition). */
+const GATE_WHY: readonly [SoftSkipKind, string] =
+  (!isFixtureAdvertised(PARENT_WORKFLOW_ID)) ? ['blocked', `the \`${PARENT_WORKFLOW_ID}\` fixture is not advertised`] as const : 
+  (!isFixtureAdvertised(CHILD_WORKFLOW_ID)) ? ['blocked', `the \`${CHILD_WORKFLOW_ID}\` fixture is not advertised`] as const : ['blocked', 'the gate held for no named reason'] as const;
+
+describe('subworkflow: conformance-subworkflow-parent dispatches child + completes', () => {
   it('parent run reaches terminal completed and child variable is propagated via outputMapping', async () => {
+    if (SKIP_NO_FIXTURE) return softSkip(...GATE_WHY);
     const create = await driver.post('/v1/runs', { workflowId: PARENT_WORKFLOW_ID });
     expect(create.status).toBe(201);
     const parentRunId = (create.json as { runId: string }).runId;
@@ -68,6 +75,7 @@ describe.skipIf(SKIP_NO_FIXTURE)('subworkflow: conformance-subworkflow-parent di
   });
 
   it('child run is created with parent linkage fields and reaches terminal completed', async () => {
+    if (SKIP_NO_FIXTURE) return softSkip(...GATE_WHY);
     const create = await driver.post('/v1/runs', { workflowId: PARENT_WORKFLOW_ID });
     const parentRunId = (create.json as { runId: string }).runId;
 

@@ -22,7 +22,7 @@ import { subscribe, type SseEvent } from '../lib/sse.js';
 import { pollUntilTerminal } from '../lib/polling.js';
 import { isFixtureAdvertised } from '../lib/fixtures.js';
 import { req } from '../lib/requirement-ids.js';
-import { softSkip, blockedDespiteAssertions } from '../lib/soft-skip.js';
+import { softSkip, blockedDespiteAssertions, type SoftSkipKind } from '../lib/soft-skip.js';
 
 const WORKFLOW_ID = 'conformance-cancellable';
 const SKIP_NO_FIXTURE = !isFixtureAdvertised(WORKFLOW_ID);
@@ -50,10 +50,15 @@ function getSeq(event: SseEvent): number | null {
   return null;
 }
 
-describe.skipIf(SKIP_NO_FIXTURE)('stream-reconnect: Last-Event-ID resume per spec/v1/stream-modes.md', () => {
+/** Why the gate below holds, as RFC 0148 §A names it (openwop#1686: a describe-level skip recorded no disposition). */
+const GATE_WHY: readonly [SoftSkipKind, string] =
+  (!isFixtureAdvertised(WORKFLOW_ID)) ? ['blocked', `the \`${WORKFLOW_ID}\` fixture is not advertised`] as const : ['blocked', 'the gate held for no named reason'] as const;
+
+describe('stream-reconnect: Last-Event-ID resume per spec/v1/stream-modes.md', () => {
   it(
     'reconnect with Last-Event-ID resumes without loss or duplication',
     async () => {
+    if (SKIP_NO_FIXTURE) return softSkip(...GATE_WHY);
       // Phase 1: kick off a long-running run.
       const create = await driver.post('/v1/runs', {
         workflowId: WORKFLOW_ID,
@@ -119,6 +124,7 @@ describe.skipIf(SKIP_NO_FIXTURE)('stream-reconnect: Last-Event-ID resume per spe
   it(
     'reconnect with Last-Event-ID equal to terminal seq closes immediately',
     async () => {
+    if (SKIP_NO_FIXTURE) return softSkip(...GATE_WHY);
       // Quick run, observe terminal seq, then attempt a reconnect after
       // terminal — server SHOULD close immediately with no events.
       const create = await driver.post('/v1/runs', { workflowId: 'conformance-noop' });
