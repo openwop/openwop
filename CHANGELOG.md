@@ -13,6 +13,11 @@ Format follows [Keep a Changelog](https://keepachangelog.com/en/1/) loosely. Ver
 
 ## [Unreleased]
 
+- **Evidence: MyndHyve's certified 2.45.2 production cut** (myndhyve#577, `4da28dac`, file sha256 `152151cf…`). Build `commit:c63c8e05`, revision `workflow-runtime-00837-nix`: 273 pass / 0 fail / 0 blocked (231 inapplicable, 17 skipped), both claimed profiles certified, no relaxations, witness `8857a0bf358b`, signed `myndhyve-bundle-2026-09b` and VERIFIED under the key api.myndhyve.ai serves. The corpus copy `evidence/v2-host-bundles/myndhyve.json` is replaced byte-for-byte. New `executed-pass` rows:
+  - `0173.webhook-delivery-complete`, whose **first host witness** this is: 4/4 subscribed events delivered, on the advertised-bound path;
+  - `0223.replay-derives-rejection` (myndhyve#571). Its timeout leg is `inapplicable` because that fixture is not advertised. This makes three host witnesses, and RFC 0223 notes it.
+
+  Unchanged: `errors.event-code-registered` is a clean `executed-pass` (now required), and `headers.cors-preflight-admits` is `inapplicable`, since MyndHyve grants no origin on the operations probed. No row regressed, and RFC 0225's rows gain no second witness (MyndHyve was already theirs).
 - **RFC 0226 `Active → Accepted`** (provisional pending the RFC 0156 §B retrospective review; bootstrap waiver, register row `not-reviewed`). Tier-2 evidence: all three hosts' latest certified bundles, each verified under the key its host serves, record `openwop.requirement.errors.event-code-registered` as a clean `executed-pass`.
   - the v2 reference host at 2.44.6 (`188a23d56886`);
   - MyndHyve at 2.44.3 (`58da9407e616`);
