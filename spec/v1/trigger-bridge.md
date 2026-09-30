@@ -98,6 +98,17 @@ two per-source sub-objects grow:
   at-least-once/exactly-once semantics — a `deliveryGuarantee` claim would be unfalsifiable by a
   conformance run (RFC 0127 resolved Q2).
 
+### §F.6 — Inbound webhook ingest contract (RFC 0230)
+
+> **Status: additive over §F.2 (2026-09-30, [RFC 0230](../../RFCS/0230-inbound-webhook-ingest-contract.md) `Active`).** Binds only a host that advertises `capabilities.triggerBridge.ingestion.inboundSigning` containing `"standard-webhooks-1"`, and only for `webhook` subscriptions.
+
+- **Registration.** The `201` `binding` carries `signingSecret`, a `whsec_` Standard Webhooks secret, exactly once, beside `ingestUrl` and `secretFingerprint`. A re-read MUST NOT return it (SR-1).
+- **Request.** A sender POSTs the raw event body to `ingestUrl` with `webhook-id`, `webhook-timestamp` (Unix seconds) and `webhook-signature` (space-separated `v1,<base64(HMAC-SHA256(key, "{webhook-id}.{webhook-timestamp}.{rawBody}"))>`, `key` the base64 decoding of the secret after `whsec_`), the [`webhooks.md`](./webhooks.md) §"Standard Webhooks companion scheme" construction applied inbound. The signature authenticates the sender: the host MUST NOT require an OpenWOP credential on `ingestUrl`.
+- **Verification.** Under `verification.mode: required`, a missing or invalid signature, or a `webhook-timestamp` more than 300 seconds from the host's clock, MUST NOT start a run (the §F.2 `signature-invalid` dead-letter).
+- **A sender cannot change a subscription's state.** `ingestUrl` takes no OpenWOP credential, so a refused post (bad signature, skew, malformed body) MUST dead-letter only that delivery. It MUST NOT move the subscription out of `active` or emit `trigger.subscription.state.changed`. Here §F.2's `signature-invalid` reason applies to the delivery, not to the subscription.
+- **Identity.** `webhook-id` (`^[A-Za-z0-9_-]{16,128}$`) is the inbound event identity. With `dedupEnabled`, `dedupKey` MUST derive from `(subscriptionId, webhook-id)`; a repeated `webhook-id` within the §C-1 retention MUST start no new run.
+- **Response.** `202 { outcome: "delivered", runId }` when a run starts; `200 { outcome: "duplicate", runId }` (the prior run) on a dedup no-op; `401` with `error: "signature_invalid"` and no `runId` on a `required` verification failure; `409` with `error: "subscription_not_active"` when the subscription is not `active`. The body carries no inbound content.
+
 ## §G — `paused` semantics
 
 Pausing a webhook stops delivery. Pausing a _schedule_ **skips** ticks (no catch-up); resume starts fresh (honoring the RFC 0052 §B missed-tick "skip" policy, not queue-and-replay).

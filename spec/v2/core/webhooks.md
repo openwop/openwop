@@ -137,6 +137,14 @@ On an `active` subscription the host:
 - retries a failed delivery per `retryPolicy`, then dead-letters it without starting a run;
 - MUST set the delivery id as `causationId` on `run.started`.
 
+A host whose `triggerBridge.ingestion.inboundSigning` lists `standard-webhooks-1` also serves `webhook` subscriptions this way:
+
+- registration returns a `whsec_` `signingSecret` once;
+- a sender signs the raw body with the `webhook-*` headers of §"Standard Webhooks", and that signature, not an OpenWOP credential, authenticates `ingestUrl`;
+- under `required` verification a bad signature, or a timestamp more than 300 seconds off, starts no run and dead-letters only that delivery: a refused post MUST NOT change the subscription's state;
+- `webhook-id` is the identity dedup keys on;
+- the ingest answers `202` (delivered, `runId`), `200` (duplicate, prior `runId`), `401 signature_invalid`, or `409 subscription_not_active`.
+
 A source in `triggerBridge.sources` MUST move through these states and emit `trigger.subscription-state-changed` and `trigger.delivery-attempted`. These events MUST NOT carry inbound content or credentials (`schemas/v2/run-event-payloads.schema.json`).
 
 With `triggerBridge.ingestion`, each `externalSources` entry MUST turn an external event into a `TriggerEvent` (`schemas/v2/trigger-event.schema.json`, whose rules bind) and start a run. The host:
@@ -147,4 +155,4 @@ With `triggerBridge.ingestion`, each `externalSources` entry MUST turn an extern
 - MUST refuse private, link-local and loopback targets and cap the body on any ingestion fetch, and never hand the run a URL (invariant `trigger-ingestion-ssrf`);
 - SHOULD key `stream` by topic, partition and offset, `change` by table and changelog id; a key MUST survive broker redelivery.
 
-*Sources: RFCs 0053, 0083, 0099, 0127, 0165, 0171, 0173, 0176, 0188, 0196, 0201, 0215, 0217.*
+*Sources: RFCs 0053, 0083, 0099, 0127, 0165, 0171, 0173, 0176, 0188, 0196, 0201, 0215, 0217, 0230.*

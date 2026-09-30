@@ -31,7 +31,7 @@
     "schemas/artifact-type-pack-manifest.schema.json": "60342fcb15eb7f3ab46271f0641409a30d3a4a8f318b1020c53070886b191252",
     "schemas/audit-verify-result.schema.json": "0d3a3088ac1c32f9df66d346c33d7adbd8037940dba040e14ea847565a1a14bd",
     "schemas/budget-policy.schema.json": "3d4fe30ae129fe136ab9ece395f2a2a42a76360786b1b9a1d5f1cbc753eb5b39",
-    "schemas/capabilities.schema.json": "baefddbc886f31312387de5a4476209900ace22465f54b2dcdd3239e5c3837ef",
+    "schemas/capabilities.schema.json": "d1d491248930e9b50ac6aca93a33cb1155eb997c4fbb2af0a940e8e889c76807",
     "schemas/certification-bundle-v2.schema.json": "2f85530dd04824a15810c94e96869362dee1e78396eca21fdd18e5501416bb7d",
     "schemas/channel-presence-payload.schema.json": "f9d0ef4219814c2b765baf3e68cbe5eea2cb42379f516a93a0459dcd5f7db47e",
     "schemas/channel-written-payload.schema.json": "54723a56bc5a35232f64544ca686ac1ac959a5fb05b32b2401facca6b3ef51a3",
@@ -116,7 +116,7 @@
     "schemas/v2/artifact.schema.json": "85b9dc284d39b99d2a66fa8cbf47f2dd3d8526d3bd6cc411ad315b372de38975",
     "schemas/v2/audit-verify-result.schema.json": "14af8e9283510f0a40e48a2059c929ee44e0fc9fa3cc66a95bfbe90b17c48297",
     "schemas/v2/budget-policy.schema.json": "1de68095db0beb5c7a4be629de26e79f62ebbe748a88d46f36e768edfd1f0d68",
-    "schemas/v2/capabilities.schema.json": "de121e3bde14397b52588ec67ae10edb41ecc0c5c2c54c5723a0a4f5815a4d7a",
+    "schemas/v2/capabilities.schema.json": "3792aa9d292229cf9b82c7306600a5dfdb63b3274523e0ed5dd4f952a04cb833",
     "schemas/v2/certification-bundle.schema.json": "82ce31a1ed6c7e21b0ba88ff62a7b8b768fc3b176b1d06fce023203830b94725",
     "schemas/v2/channel-presence-payload.schema.json": "4eeb224910e6f7eee3ab5e7c3899559c25c83a26d0022e0ad195c4672611977a",
     "schemas/v2/channel-written-payload.schema.json": "ccecff3c71a3275ad8db035ac0e04db25e6f8d23cf091ddbcd5a60d1be1cbb6b",
@@ -210,7 +210,7 @@
     "spec/v1/event-codemap.json": "3da60d884157793a360da532a9fcbbfb5285636db325a74cec94b34622186d97",
     "spec/v1/event-codemap.schema.json": "d05933b2e88103aff51a2f774df97b9bda065e0fc88dbd9b114cc47a32189174",
     "spec/v1/extensions.json": "79a60754aa16cbdbdb604f8e5c00038af535a1690a4d07bd5ff7c38f0256a7bc",
-    "spec/v1/gaps.json": "5fbb476e02064918a6423114d3d33e81d98556ece771a9d7a892fb32650e6a33",
+    "spec/v1/gaps.json": "8848781087ca5106a14250a81df35830ad4a9cd558450d5c4d639e3db0ea65e5",
     "spec/v1/gaps.schema.json": "8fd83259f556553c9df0f53e7a82ca8c2a4771d471197f69b4e2ae0ceeacfd66",
     "spec/v1/migrations.json": "4c50760be70cb644d02427bcaf5749606700edf4513f423903cf3b1d12f5c300",
     "spec/v1/migrations.schema.json": "886779aa6c22e646db097f5df210adb018a4dd14a7b815465a18c8a7056c8f72",
@@ -245,7 +245,7 @@
     "spec/v2/core/storage.md": "dc94b985847c1341c7a064f04a6010f0fdbe6c3ab3e555d4362878c81d764c18",
     "spec/v2/core/tool-catalog.md": "d16a9004418719c48301804aefa4d7ab6f41112a4ed83727f552aa1b92b418b0",
     "spec/v2/core/versioning.md": "b7acb0d8b77425cb53ea700e47ba790bf7506de600c398690e6ec5bb9c7a220e",
-    "spec/v2/core/webhooks.md": "7b2606b2ebbeafd84ca052a5c4d2f392cade0b482fbb063acb0aeb38675f6ede",
+    "spec/v2/core/webhooks.md": "1e092242a08e41662ea26a68f614877177e2d67efd455d23e39246b142cce4b3",
     "spec/v2/core/workflow-chain-packs.md": "fdce7a8477e269950a2bac05ee6eddbd66eb0b670b464d00054f7196ec05d29c",
     "spec/v2/corrections.json": "59f647f4d22477f6c2b06dcf913b682dde5d51dd5e607a5d0cf648ab60864d6e",
     "spec/v2/corrections.schema.json": "46bbffb954d13bd9995aebc912ceeb2544f7064331abf25fd6ab85c81a5cec94",
@@ -307,5 +307,5 @@
     "spec/v2/retention-floors.json": "eaf3722d95c79947af1d4269ef85117e126518c588cfcf1a2b21b97269f51624",
     "spec/v2/surface-baseline.json": "18c9f38e3b596465128ceeee10cbdd17395672da5fe321db03ab4eee67bd50a4"
   },
-  "corpusCommit": "0e4d888ad95159415f7e4a12c202aa5c9a4dc7ac"
+  "corpusCommit": "65d2f0e36249dd50f5a336df4572e44bf0a21ebc"
 }

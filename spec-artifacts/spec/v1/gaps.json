@@ -13766,6 +13766,40 @@
       ]
     },
     {
+      "id": "openwop.gap.0230.1",
+      "rfc": "0230",
+      "local": "G1",
+      "section": "§Conformance",
+      "surface": "No scenario drives the normative-surface ingest path yet. `trigger-bridge-delivery.test.ts` still witnesses only through the host seams.",
+      "witness": "unclassified",
+      "requirementId": null,
+      "disposition": "carried",
+      "target": "openwop.gap.0230.1",
+      "sources": [
+        {
+          "file": "RFCS/registers/0230-inbound-webhook-ingest-contract.gaps.md",
+          "token": "G1"
+        }
+      ]
+    },
+    {
+      "id": "openwop.gap.0230.2",
+      "rfc": "0230",
+      "local": "G2",
+      "section": "§Compatibility",
+      "surface": "No host advertises `inboundSigning` yet. openwop-app serves an ingest route with a different contract (OpenWOP-credentialed, wrapped body, 200/422).",
+      "witness": "unclassified",
+      "requirementId": null,
+      "disposition": "carried",
+      "target": "openwop.gap.0230.2",
+      "sources": [
+        {
+          "file": "RFCS/registers/0230-inbound-webhook-ingest-contract.gaps.md",
+          "token": "G2"
+        }
+      ]
+    },
+    {
       "id": "openwop.gap.spec.a2a-integration.g1",
       "rfc": "0152",
       "local": "G1",
