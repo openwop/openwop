@@ -219,7 +219,7 @@ On `Active`, the "left to `errors.md`" sentences in `storage.md`, `host-services
 
 No new leg landed with the `Draft`. At `Active`, `v2-unadvertised-operation-not-found.test.ts` witnesses §H unaided: `openwop.requirement.0228.unadvertised-prompts-not-found` (`GET /prompts` when `prompts.endpointsSupported` is not advertised) and `openwop.requirement.0228.unadvertised-content-not-found` (`GET /content/settings` when `content` is not advertised). Each leg was sabotage-proved against a stub host answering v1's `501 capability_not_provided`, and a bare `404` with no envelope.
 
-- `openwop.requirement.errors.event-code-registered` (advisory) already reads every run-failure code against the registry. It drives only `conformance-failure`, so it does not see `ctx` rejections. §A is witnessed only once the v1 host-service scenarios gain v2 ports (gap G4).
+- `openwop.requirement.errors.event-code-registered` (advisory until suite 2.45.2, required since) already reads every run-failure code against the registry. It drives only `conformance-failure`, so it does not see `ctx` rejections. §A is witnessed only once the v1 host-service scenarios gain v2 ports (gap G4).
 - `openwop.requirement.0171.error-registry.no-retry-details` already forbids `details.retryAfter`. On a 503 it only fires once `production-backpressure.test.ts` has a v2 port.
 
 ### Falsifiability — one row per normative requirement

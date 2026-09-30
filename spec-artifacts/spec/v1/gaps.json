@@ -1,7 +1,7 @@
 {
   "$schema": "./gaps.schema.json",
   "version": 1,
-  "updated": "2026-09-29",
+  "updated": "2026-09-30",
   "witnessClasses": [
     "witnessable-unaided",
     "witnessable-gated",
@@ -9829,8 +9829,8 @@
       "surface": "openwop-app emits error codes on `run.failed` / `node.failed` that are neither registered nor vendor codes (22 codes measured at openwop-app `0cfb264c9`, e.g. `invalid_config`, `host_capability_missing`); `errors.md` §The registry binds them since openwop#1698.",
       "witness": "unclassified",
       "requirementId": null,
-      "disposition": "externally-gated",
-      "target": "openwop-app-code-remap",
+      "disposition": "closed",
+      "target": null,
       "sources": [
         {
           "file": "RFCS/registers/0171-v2-wire-envelope.gaps.md",
@@ -13416,8 +13416,8 @@
       "surface": "Whether a run-failure code on `run.failed` / `node.failed` must be registered: `errors.md` scopes its MUST to error responses, overview §0 to every producer.",
       "witness": "unclassified",
       "requirementId": null,
-      "disposition": "transferred",
-      "target": "openwop#1698",
+      "disposition": "closed",
+      "target": null,
       "sources": [
         {
           "file": "RFCS/registers/0223-approval-reject-disposition.gaps.md",
