@@ -2595,6 +2595,7 @@ invariants:
     tests:
       - conformance/src/scenarios/authorization-fail-closed.test.ts
       - conformance/src/scenarios/tool-hooks-authorization-fail-closed.test.ts
+      - conformance/src/scenarios/v2-tool-authorization-fail-closed.test.ts
     note: |
       RFC 0049 §C: hosts advertising `capabilities.authorization.supported`
       MUST deny when a principal's role is absent, unseeded, or unresolvable
