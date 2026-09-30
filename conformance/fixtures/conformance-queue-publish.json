@@ -1,0 +1,29 @@
+{
+  "id": "conformance-queue-publish",
+  "name": "Conformance: Queue Publish",
+  "version": "1.0",
+  "description": "host-services.md §queueBus — node 'publish' (conformance.queue.probe, action 'publish') calls ctx.queueBus.publish({ topic, payload: { message } }) under the run's own tenant and outputs { published: true }. Paired with conformance-queue-consume. See v2-queue-cross-tenant-isolation.test.ts.",
+  "nodes": [
+    {
+      "id": "publish",
+      "typeId": "conformance.queue.probe",
+      "name": "Publish",
+      "position": { "x": 0, "y": 0 },
+      "config": { "action": "publish" },
+      "inputs": {
+        "topic": { "type": "variable", "variableName": "topic" },
+        "message": { "type": "variable", "variableName": "message" }
+      }
+    }
+  ],
+  "edges": [],
+  "triggers": [
+    { "id": "manual", "type": "manual", "enabled": true }
+  ],
+  "variables": [
+    { "name": "topic", "type": "string", "description": "Topic to publish on.", "required": true },
+    { "name": "message", "type": "string", "description": "Opaque message string carried as payload.message.", "required": true }
+  ],
+  "metadata": { "tags": ["conformance", "queue", "security"] },
+  "settings": { "timeout": 10000, "maxRetries": 0 }
+}
