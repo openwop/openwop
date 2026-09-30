@@ -95,7 +95,7 @@
     "schemas/suspend-request.schema.json": "7a90b622d5c619e3ffb5da696d272d6505e2780ab92ab631ac1b900f5daea908",
     "schemas/tool-descriptor.schema.json": "7f6adbae63003c1f1311f6a436f7f286542be62aa19a27b46730f2c2810857f7",
     "schemas/trigger-event.schema.json": "59d63b79dca3593f45d281776cbfe43ae4d85ee25519b82ad59f162a9efb592c",
-    "schemas/trigger-subscription-registration.schema.json": "929d628bad08e1def696e47e9a148aba00fa801e28d49bbd0dc2360b08673435",
+    "schemas/trigger-subscription-registration.schema.json": "2ca680ca6ffdb3cfc5de7bb8b8db8c3ec8eab4b88b7c9f7fe5edaecc7cf61ad0",
     "schemas/trigger-subscription.schema.json": "4f7b067f20032073b140c4bb15dc9a9914c4f6421a252ff1ff261cbdd8edf270",
     "schemas/ui-plugin-message.schema.json": "346638babf1f8ea7b161cde75c0038b518cd2cc5bf0631772e20a9b74c96b5dd",
     "schemas/v2/a2a-task-state.schema.json": "1810363e2d9bddb5997923bdac4044cc17c6f46ec5a40515d2ff21d9c82c1ad9",
@@ -186,7 +186,7 @@
     "schemas/v2/suspend-request.schema.json": "368d9932efb08f85b4520cac44b3c553876209f55bada93b5fcac93cc890b411",
     "schemas/v2/tool-descriptor.schema.json": "8c98fb5e93bc649dff859d3d1dde8075db929efd6c49c496252d0a88cccc73e1",
     "schemas/v2/trigger-event.schema.json": "710ecca8b3ecdad3a532a96768177f062192b24a589a4f798c7eb24bab64b30a",
-    "schemas/v2/trigger-subscription-registration.schema.json": "04bc314a07c7e8b565577cb8df5821d968ce2af915900dfdccd4a24e928d20db",
+    "schemas/v2/trigger-subscription-registration.schema.json": "5f7959f3e13f49399783e47f73101d6af95e5abccea1af2f0014ccbe3e51006c",
     "schemas/v2/trigger-subscription.schema.json": "1f5c286f68577d531ef9445ab2493f8d69ac9ee42313d28d758a0f00dd0fab36",
     "schemas/v2/ui-plugin-message.schema.json": "879d65867c01656b3962d64283e66364dcb8f626ad26c5fcf2d2d55a79ae0ce9",
     "schemas/v2/webhook-dead-letter-page.schema.json": "543f5ccc26d8f777684a037172ab7b9fdf70735e5394eeb42e5fa6569503f528",
@@ -245,9 +245,9 @@
     "spec/v2/core/storage.md": "dc94b985847c1341c7a064f04a6010f0fdbe6c3ab3e555d4362878c81d764c18",
     "spec/v2/core/tool-catalog.md": "d16a9004418719c48301804aefa4d7ab6f41112a4ed83727f552aa1b92b418b0",
     "spec/v2/core/versioning.md": "b7acb0d8b77425cb53ea700e47ba790bf7506de600c398690e6ec5bb9c7a220e",
-    "spec/v2/core/webhooks.md": "1e092242a08e41662ea26a68f614877177e2d67efd455d23e39246b142cce4b3",
+    "spec/v2/core/webhooks.md": "b0c08a3511b9319da7b0f7d83cddb15758acfc92e4c58c3604ac0f6b1ab13242",
     "spec/v2/core/workflow-chain-packs.md": "fdce7a8477e269950a2bac05ee6eddbd66eb0b670b464d00054f7196ec05d29c",
-    "spec/v2/corrections.json": "59f647f4d22477f6c2b06dcf913b682dde5d51dd5e607a5d0cf648ab60864d6e",
+    "spec/v2/corrections.json": "3a8d93e33865b692d26a3b6bfd3819766e206b2e0c2a69669baa4bf833d05a49",
     "spec/v2/corrections.schema.json": "46bbffb954d13bd9995aebc912ceeb2544f7064331abf25fd6ab85c81a5cec94",
     "spec/v2/declaration.json": "8845c1d52b0ce3b6c4f6753fda843a7cec16eb000b4c3847bd6a96c2afa48040",
     "spec/v2/declaration.schema.json": "ef951633e4070899f64828f5cf1b5f4870270a0360f81dbb49b5b4d6cd407550",
@@ -307,5 +307,5 @@
     "spec/v2/retention-floors.json": "eaf3722d95c79947af1d4269ef85117e126518c588cfcf1a2b21b97269f51624",
     "spec/v2/surface-baseline.json": "18c9f38e3b596465128ceeee10cbdd17395672da5fe321db03ab4eee67bd50a4"
   },
-  "corpusCommit": "65d2f0e36249dd50f5a336df4572e44bf0a21ebc"
+  "corpusCommit": "f94fbdb19e95b3486a720b40f809d6b72d719be6"
 }

@@ -313,11 +313,11 @@ Ranked: security, tenant isolation, idempotency and replay first; then wire shap
 
 ### 13. Unverified inbound events start runs
 
-- **Rule** (`webhooks.md` § Inbound triggers): "MUST verify per `verification` before delivery; a failed `required` check dead-letters with reason `signature-invalid`"
-- **Today:** Major 1 only (`trigger-ingestion`, `trigger-bridge-delivery`). The section is attributed to `webhooks` by document name; its obligations belong to `triggerBridge`.
-- **Why it matters:** An unsigned inbound event that starts a run lets anyone on the internet trigger workflows with chosen input.
-- **Proposed:** `v2-trigger-ingestion-verification` (major 2; gate: `triggerBridge.ingestion` with a `required` verification source). Asserts: an event with a bad signature starts no run and lands in dead-letter with `signature-invalid`; the same event correctly signed starts exactly one run.
-- **Sabotage that must fail it:** log the verification failure and deliver anyway: a run starts.
+- **Rule** (`webhooks.md` § Inbound triggers): "A failed `required` check starts no run and dead-letters only that delivery. A refused event MUST NOT change the subscription's state or emit `trigger.subscription-state-changed`"
+- **Today:** Major 1 only (`trigger-ingestion`, `trigger-bridge-delivery`, `trigger-refused-event-keeps-subscription`). The section is attributed to `webhooks` by document name; its obligations belong to `triggerBridge`.
+- **Why it matters:** An unsigned inbound event that starts a run lets anyone on the internet trigger workflows with chosen input, and one that dead-letters the subscription lets them disable a working integration with a single post.
+- **Proposed:** `v2-trigger-ingestion-verification` (major 2; gate: `triggerBridge.ingestion` with a `required` verification source). Asserts: an event with a bad signature starts no run and dead-letters only that delivery; the subscription stays `active` with no state-change event; the same event correctly signed then starts exactly one run.
+- **Sabotage that must fail it:** log the verification failure and deliver anyway: a run starts; or dead-letter the subscription: the signed event is refused.
 
 ### 14. Front-end plugins load unsigned
 
