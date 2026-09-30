@@ -1,6 +1,6 @@
 # `@openwop/openwop-conformance` Changelog
 
-## [2.45.3] — unreleased — RFC 0229 (Active): a production host can witness secret resolution without an oracle
+## [2.45.3] — unreleased — RFC 0229 (Active): a production host can witness secret resolution without an oracle; v2 tenant-isolation witnesses for storage, fs, memory, workspace, queues and secrets
 
 - **The 2.45.3 cycle opens.** RFC 0229's gap register changes the packed `spec/v1/gaps.json`.
 - **RFC 0229 `Active`** (the window is waived by steward override of RFC 0147 §A.6). Two new scenarios, `secrets-run-witness` (major 1) and `v2-secrets-run-witness` (major 2), share `lib/run-secrets-witness.ts`. Each draws a fresh 64-character value `C` per run, supplies it as `createRun.runSecrets` under `run:openwop-witness`, and runs the fixture `openwop-secrets-run-witness`. Four rows, the same ids at both majors:
@@ -16,6 +16,7 @@
   - `byok-roundtrip` records `inapplicable` instead of `blocked` when the canary fixture is withheld and the host advertises `secrets.runSecrets` and the witness fixture. A host that takes the other path is not denied the bundle over a canary it does not serve.
   - Otherwise `byok-roundtrip` is unchanged.
 - **Host impact: none today.** No committed bundle and neither live production host advertises `secrets.runSecrets`, so both new files record `inapplicable` everywhere, and `byok-roundtrip` keeps its current disposition.
+- **New v2 tenant-isolation witnesses** from `docs/V2-WITNESS-COVERAGE.md`, each sabotage-proved against a host with the exact defect: `v2-storage-cross-tenant-isolation` (eight families, one id each), `v2-fs-sandbox-escape-refused` (absolute, `..`, symlink), `v2-memory-cross-tenant-isolation`, `v2-workspace-scope-from-identity`, `v2-queue-cross-tenant-isolation`, and `v2-secret-canary-absent` (a host-resolved secret on no readable surface, including after a failure and in a fork). Each is `inapplicable` where its family is not advertised; MyndHyve runs the memory and secret-canary legs.
 
 ## [2.45.2] — 2026-09-30 — a run-failure code must be registered or a vendor code (no longer advisory)
 

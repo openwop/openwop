@@ -8,11 +8,11 @@ Every v2 core family now has a v2 normative home (RFC 0189). Many of its rules a
 
 ## Headline
 
-- **Families (73 core):** 31 v2-witnessed, 38 v1-only, 4 unwitnessed. Of the 54 `witnessable-gated` families, 34 are v1-only; every unwitnessed family is `claims-check`.
-- **At v1 end-of-support:** the 38 v1-only families, and the 157 obligation units attributed to them, lose their only witness.
-- **Obligation units (873 in `spec/v2/core/`):** 497 (57%) sit in a section a major-2 scenario cites; 376 sit in 117 sections no major-2 scenario cites.
-- **Declaration links:** 0 core families declare `floorScenarios`; 0 declare `requirementIds`. The family-to-test link exists only in scenario code and citations, although `overview.md` §What a MUST means says every core MUST has an id in `requirements.json`.
-- **Scenarios:** 574 registered, 137 run at major 2. 33 major-2 citations name a v2 core section this script cannot match to a heading (see Citation gaps).
+- **Families (73 core):** 32 v2-witnessed, 37 v1-only, 4 unwitnessed. Of the 54 `witnessable-gated` families, 33 are v1-only; every unwitnessed family is `claims-check`.
+- **At v1 end-of-support:** the 37 v1-only families, and the 150 obligation units attributed to them, lose their only witness.
+- **Obligation units (883 in `spec/v2/core/`):** 507 (57%) sit in a section a major-2 scenario cites; 376 sit in 117 sections no major-2 scenario cites.
+- **Declaration links:** 0 core families declare `floorScenarios`; 1 declare `requirementIds`. The family-to-test link exists only in scenario code and citations, although `overview.md` §What a MUST means says every core MUST has an id in `requirements.json`.
+- **Scenarios:** 577 registered, 139 run at major 2. 33 major-2 citations name a v2 core section this script cannot match to a heading (see Citation gaps).
 
 ## How to read it
 
@@ -38,7 +38,6 @@ Every v2 core family now has a v2 normative home (RFC 0189). Many of its rules a
 | `portability` | witnessable-gated | **v1-only** | 8 (0) | – | `export-bundle-portability` |
 | `selfHostedRunner` | witnessable-gated | **v1-only** | 8 (0) | – | `self-hosted-runner` |
 | `httpClient` | witnessable-gated | **v1-only** | 7 (0) | – | `http-client-ssrf`, `safefetch-behavior`, `safefetch-live-audit` |
-| `secrets` | witnessable-gated | **v1-only** | 7 (0) | – | `envelope-reasoning-secret-redaction`, `secret-leakage-otel-attribute` |
 | `workspace` | witnessable-gated | **v1-only** | 7 (0) | – | `workspace-behavior`, `workspace-capability-shape`, `workspace-cross-tenant-isolation-blackbox`, `workspace-cross-tenant-isolation` |
 | `queueBus` | witnessable-gated | **v1-only** | 5 (0) | – | `queue-ack-nack-dlq`, `queue-cross-tenant-isolation`, `queue-publish-consume-roundtrip`, `stream-subscribe-from-beginning` |
 | `subWorkflow` | claims-check | **v1-only** | 5 (0) | – | `dispatch-input-mapping`, `dispatchLoop` |
@@ -74,8 +73,9 @@ Every v2 core family now has a v2 normative home (RFC 0189). Many of its rules a
 | `eventLog` | claims-check | **v2-witnessed** | 35 (25) | `v2-era-2-append-vocabulary`, `v2-era-key`, `v2-era-stamp-universal`, `v2-fork-a-v1-run` +3 | `cross-engine-append-behavior`, `cross-engine-append-ordering`, `multi-region-idempotency` |
 | `packs` | claims-check | **v2-witnessed** | 35 (20) | `v2-manifest-ceiling-refused`, `v2-manifest-hatch-carried`, `v2-peer-dependency-declared`, `v2-registry-lifecycle` | `pack-registry-isolation` |
 | `webhooks` | witnessable-gated | **v2-witnessed** | 34 (26) | `inbound-credential-no-passthrough`, `v2-a2a-operation-map`, `v2-bound-id-kinds`, `v2-v1-signed-webhook-accepted` +10 | `webhook-negative`, `webhook-sig-algorithm`, `webhook-signed-delivery` |
-| `idempotency` | witnessable-gated | **v2-witnessed** | 25 (20) | `v2-bound-id-kinds`, `v2-effect-identity-business-key`, `v2-idempotency-key-grammar` | `compensation-recovery`, `multi-region-idempotency-behavior`, `multi-region-idempotency`, `replay-llm-cache-key` +1 |
+| `idempotency` | witnessable-gated | **v2-witnessed** | 25 (20) | `v2-bound-id-kinds`, `v2-effect-identity-business-key`, `v2-idempotency-key-grammar`, `v2-secrets-run-witness` | `compensation-recovery`, `multi-region-idempotency-behavior`, `multi-region-idempotency`, `replay-llm-cache-key` +1 |
 | `multiAgent` | claims-check | **v2-witnessed** | 19 (0) | `context-budget-transcript-bound`, `context-summarization-replay`, `v2-run-fork-ancestry` | `cross-host-traceparent-propagation`, `multi-agent-handoff-state-machine`, `replay-observable-sequence-determinism` |
+| `secrets` | witnessable-gated | **v2-witnessed** | 16 (9) | `v2-secrets-run-witness` | `envelope-reasoning-secret-redaction`, `secret-leakage-otel-attribute` |
 | `toolCatalog` | witnessable-gated | **v2-witnessed** | 14 (11) | `auth-challenge-no-oracle`, `tool-catalog-compact-projection`, `tool-catalog-projection`, `tool-descriptor-shape` +1 | `tool-session-lifecycle` |
 | `oauth` | witnessable-gated | **v2-witnessed** | 13 (11) | `v2-a2a-operation-map`, `v2-credential-interrupt`, `v2-mcp-mount-map`, `v2-oauth-client-pkce-state-iss` +1 | `byok-auth-modes`, `oauth-authorization-code-roundtrip`, `oauth-capability-shape`, `oauth-connector-redaction` |
 | `memory` | witnessable-gated | **v2-witnessed** | 12 (0) | `context-budget-transcript-bound`, `context-summarization-replay`, `memory-attribution-replay-stable` | `agentMemoryRedactionContract`, `agentMemoryRoundTrip`, `memory-attribution-emits-on-write`, `memory-attribution-no-content` +7 |
@@ -113,8 +113,8 @@ Every v2 core family now has a v2 normative home (RFC 0189). Many of its rules a
 | `events.md` | 63 | 37 (59%) | `supportedEnvelopes`, `schemaVersions`, `envelopeStrictness`, `envelopeContracts`, `envelopes`, `feedback`, `providerUsage`, `heartbeat` |
 | `execution.md` | 34 | 0 (0%) | `selfHostedRunner`, `multiAgent`, `agents`, `subWorkflow` |
 | `form-content-packs.md` | 11 | 1 (9%) | `forms` |
-| `headers.md` | 6 | 0 (0%) | – |
-| `host-services.md` | 85 | 4 (5%) | `prompts`, `secrets`, `modelCapabilities`, `aiProviders`, `memory`, `queueBus`, `scheduling`, `toolHooks`, `httpClient`, `aiEnvelope`, `promptLibrary`, `agentRuntime`, `workspace`, `mcp` |
+| `headers.md` | 7 | 1 (14%) | – |
+| `host-services.md` | 94 | 13 (14%) | `prompts`, `secrets`, `modelCapabilities`, `aiProviders`, `memory`, `queueBus`, `scheduling`, `toolHooks`, `httpClient`, `aiEnvelope`, `promptLibrary`, `agentRuntime`, `workspace`, `mcp` |
 | `i18n.md` | 17 | 0 (0%) | `i18n`, `content` |
 | `idempotency.md` | 25 | 20 (80%) | `idempotency` |
 | `identity.md` | 64 | 55 (86%) | `anonymousActor`, `authorization`, `auth` |
@@ -198,7 +198,7 @@ Ranked: security, tenant isolation, idempotency and replay first; then wire shap
 | 2 | `memory` | `host-services.md` § `memory` | tenant isolation | v2-witnessed | `v2-memory-cross-tenant-isolation` |
 | 3 | `workspace` | `host-services.md` § `workspace` | tenant isolation | v1-only | `v2-workspace-scope-from-identity` |
 | 4 | `queueBus` | `host-services.md` § `queueBus` | tenant isolation | v1-only | `v2-queue-cross-tenant-isolation` |
-| 5 | `secrets` | `host-services.md` § `secrets` | security | v1-only | `v2-secret-canary-absent` |
+| 5 | `secrets` | `host-services.md` § `secrets` | security | v2-witnessed | `v2-secret-canary-absent` |
 | 6 | `toolHooks` | `host-services.md` § `toolHooks` | security | v1-only | `v2-tool-authorization-fail-closed` |
 | 7 | `anonymousActor` | `identity.md` § 1.5 `anonymousActor` | security | v2-witnessed | `v2-anonymous-actor-default-deny` |
 | 8 | `selfHostedRunner` | `execution.md` § `selfHostedRunner` | security | v1-only | `v2-runner-subject-isolation` |
@@ -388,8 +388,8 @@ node scripts/report-v2-witness-coverage.mjs --write  # regenerate this file
 {
   "families": {
     "total": 73,
-    "v2-witnessed": 31,
-    "v1-only": 38,
+    "v2-witnessed": 32,
+    "v1-only": 37,
     "unwitnessed": 4
   },
   "byWitnessClass": {
@@ -404,25 +404,25 @@ node scripts/report-v2-witness-coverage.mjs --write  # regenerate this file
       "unwitnessed": 0
     },
     "witnessable-gated": {
-      "v2-witnessed": 20,
-      "v1-only": 34,
+      "v2-witnessed": 21,
+      "v1-only": 33,
       "unwitnessed": 0
     }
   },
   "obligationUnits": {
-    "total": 873,
-    "inV2CitedSections": 497,
+    "total": 883,
+    "inV2CitedSections": 507,
     "inUncitedSections": 376,
-    "sectionsWithObligations": 266,
+    "sectionsWithObligations": 268,
     "sectionsWithNoV2Citation": 117
   },
   "declarationLinks": {
     "familiesWithFloorScenarios": 0,
-    "familiesWithRequirementIds": 0
+    "familiesWithRequirementIds": 1
   },
   "scenarios": {
-    "registered": 574,
-    "major2": 137
+    "registered": 577,
+    "major2": 139
   },
   "unresolvedV2Citations": 33,
   "major2ScenariosCitingNoCoreDoc": 19,
