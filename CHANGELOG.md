@@ -418,6 +418,24 @@ Format follows [Keep a Changelog](https://keepachangelog.com/en/1/) loosely. Ver
 - **The remaining eleven stay `Active`, each for a stated reason** rather than for lack of attention. The eight RFC 0167 program children name a certified openwop-app bundle in their own acceptance criteria and the committed one reads `certified: false` (3 blocked rows, RFC 0168 §E.1). RFC 0173 additionally carries the program's only `open` gap row. RFC 0179's sole criterion is unmet — 2.4.2 stopped the gate reading "(Phase 4 leg)" as an excuse for it. RFC 0187 names three requirement ids that no scenario mints. RFC 0167 itself flips **last**, which 2.4.2 made a rule: the moment the umbrella stops being `Active`, every child still `Active` becomes permanently ineligible.
 - **The interrupt `data` union is bound to `kind`** (MCP/A2A review P3-H7, Class 3 correction — COMPATIBILITY.md §3). `schemas/suspend-request.schema.json` and its v2 twin typed `data` as an unbound `oneOf`, so the minimal `conversation.start` and `conversation.close` payloads (`{ conversationId }`, which satisfies both shapes) failed validation in v1 and v2, and a payload carrying another kind's `data` passed. `data` is now an `anyOf` and a root `allOf` binds each kind to its own shape with one `if`/`then`; no per-kind shape or `$id` changed. Witnessed by `conformance/fixtures/interrupt-payloads/` (suite 2.36.0).
 
+## [2.45.2] — 2026-09-30 — a run-failure code must be registered or a vendor code (no longer advisory)
+
+A suite patch.
+
+### Conformance
+
+- **`errors.event-code-registered` is required** (#1698, #1820). Until now it recorded `executed-pass` with a partial-witness note even when a host emitted an unregistered code. It now fails and names each offending code on `run.failed`, `node.failed` or the snapshot `error`. Vendor codes still pass. All three hosts' latest certified bundles are clean `executed-pass`:
+  - v2-reference 2.44.6;
+  - MyndHyve 2.44.3;
+  - openwop-app 2.44.5 (`ab77c3aa`).
+- **Suite `2.45.2`.** `@openwop/spec-artifacts` moves in lockstep at the same exact pin.
+
+### Evidence and status
+
+- **RFC 0171 G6 and RFC 0223 G9 close.** #1698 is resolved: the #1721 correction, then RFC 0226's registry rows, then the host remaps, then required here.
+- **RFC 0226 is `Accepted`** (#1821; provisional, RFC 0156 §B review owed; evidence tier 2, three hosts).
+- **openwop-app's canonical v2 evidence tracks its latest cut** (#1821). `evidence/v2-host-bundles/openwop-workflow-engine.json` is the 2.44.5 `ab77c3aa` bundle. The 2.35.1 bundle it replaced is kept as `openwop-workflow-engine-2.35.1.json`, because it still witnesses the seams profile.
+
 ## [2.45.1] — 2026-09-29 — the run-list legs stop walking once they find their runs, and no scenario skips every test at describe level
 
 A suite patch. No requirement is added or removed.
