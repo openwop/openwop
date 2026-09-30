@@ -5578,6 +5578,17 @@
               },
               "description": "Which source-authenticity checks the host performs. An advertised check MUST actually be performed (RFC 0099 §F.3 / UQ1)."
             },
+            "inboundSigning": {
+              "type": "array",
+              "uniqueItems": true,
+              "items": {
+                "type": "string",
+                "enum": [
+                  "standard-webhooks-1"
+                ]
+              },
+              "description": "RFC 0230. Sender-facing ingest schemes this host implements for `webhook` subscriptions. `standard-webhooks-1`: a sender signs the raw body with the Standard Webhooks headers under the secret returned once at registration; the signature authenticates it (no OpenWOP credential on `ingestUrl`), `webhook-id` is the inbound identity dedup keys on, and the ingest answers 202 delivered / 200 duplicate / 401 signature_invalid / 409 subscription_not_active."
+            },
             "registrationEndpoint": {
               "type": "boolean",
               "description": "`true` ⇒ the host serves `POST /trigger-subscriptions` (RFC 0099 §F.2) for portable external-event subscription creation."
