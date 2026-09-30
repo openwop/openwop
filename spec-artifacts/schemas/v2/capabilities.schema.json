@@ -1241,6 +1241,21 @@
             "host-managed"
           ],
           "description": "Resolution mode. v1.x supports only `host-managed` (clients reference stored secrets via opaque ids); reserved for future modes."
+        },
+        "runSecrets": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": [
+            "maxEntries"
+          ],
+          "properties": {
+            "maxEntries": {
+              "type": "integer",
+              "minimum": 1,
+              "description": "The most `{ ref, value }` entries one `createRun` may carry in `runSecrets`."
+            }
+          },
+          "description": "RFC 0229 — the host accepts run-supplied secrets: a top-level `runSecrets` array of `{ ref, value }` on `createRun`, each `ref` in the reserved `run:` namespace, resolvable only by the run that supplied it. Absent means `createRun` does not accept `runSecrets`, and a client MUST NOT send it. A host advertising it MUST also list `run` in `scopes`, MUST execute the node type `core.secret.witness`, and MUST advertise the fixture `openwop-secrets-run-witness`."
         }
       },
       "allOf": [
@@ -1275,6 +1290,22 @@
             "required": [
               "until"
             ]
+          }
+        },
+        {
+          "if": {
+            "required": [
+              "runSecrets"
+            ]
+          },
+          "then": {
+            "properties": {
+              "scopes": {
+                "contains": {
+                  "const": "run"
+                }
+              }
+            }
           }
         }
       ],

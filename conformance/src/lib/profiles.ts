@@ -496,6 +496,16 @@ export interface ProfileFloor {
   /** Prefix groups where ≥1 matching passed scenario satisfies the group. */
   readonly requiredAnyPrefix?: readonly string[];
   /**
+   * RFC 0229 §E — ANY-OF groups: each inner list names alternative scenario
+   * files, and the group is satisfied when at least one of them records a
+   * WITNESSED pass and none of them records a failure. A group is one
+   * requirement (`openwop.floor.anyof.<stem>+<stem>`, a summary row the runner
+   * derives from the members, like `requiredAnyPrefix`). An `inapplicable` or
+   * `skipped` member never satisfies it: `openwop-secrets` is certified by the
+   * canary round-trip OR the run-witness, not by the absence of both.
+   */
+  readonly requiredAnyOf?: ReadonlyArray<readonly string[]>;
+  /**
    * The profile is discovery-payload-only: its predicate IS the whole claim and
    * it has no runtime floor. This flag exists so an EMPTY floor is a decision on
    * record rather than an absence — an absent key means "not yet transcribed",
@@ -527,6 +537,11 @@ export interface ProfileFloor {
    * requirements and therefore does not certify.
    */
   readonly conditional?: ReadonlyArray<{ readonly path: string; readonly includes: string; readonly required: readonly string[] }>;
+}
+
+/** Every scenario FILE a floor names: `required`, every `conditional` branch, and every `requiredAnyOf` member. */
+export function floorMemberFiles(floor: ProfileFloor): string[] {
+  return [...floor.required, ...(floor.conditional ?? []).flatMap((c) => c.required), ...(floor.requiredAnyOf ?? []).flat()];
 }
 
 export const PROFILE_FLOOR_SCENARIOS: Readonly<Record<string, ProfileFloor>> = {
@@ -607,7 +622,11 @@ export const PROFILE_FLOOR_SCENARIOS: Readonly<Record<string, ProfileFloor>> = {
   // `profiles.md` §`openwop-secrets`: credential resolution per `run-options.md`
   // §"Credential references" — the BYOK canary round-trip (`fixtures.md`
   // §conformance-secrets-roundtrip, SR-1) is the profile's proof.
-  'openwop-secrets': { required: ['byok-roundtrip.test.ts'] },
+  // RFC 0229 §E (2026-09-30): a SECOND floor path, as an any-of group. The
+  // canary fixture's node is an oracle over whatever its name reaches, so a
+  // production host rightly withholds it; the run-witness reads only a value
+  // the caller supplied with the same run and outputs only `matched`.
+  'openwop-secrets': { required: [], requiredAnyOf: [['byok-roundtrip.test.ts', 'secrets-run-witness.test.ts']] },
 
   // `profiles.md` §`openwop-provider-policy`: the four-mode taxonomy shape and
   // its enforcement on the wire.
@@ -756,9 +775,14 @@ export function verifyBundleProfile(bundle: CertificationBundleLike, profile: st
   }
   const missingFloor = requiredFiles.filter((r) => !passed.has(scenarioBasename(r)));
   const prefixOk = (floor.requiredAnyPrefix ?? []).every((p) => [...passed].some((s) => s.startsWith(p)));
+  // RFC 0229 §E any-of groups: a v1 bundle lists only what passed, so a group
+  // holds when one member is in `results.passed`; an unmet group is reported
+  // as missing, spelled as its alternatives.
+  const groups = floor.requiredAnyOf ?? [];
+  for (const g of groups) if (!g.some((f) => passed.has(scenarioBasename(f)))) missingFloor.push(g.join(' | '));
   // A conditional floor none of whose branches matched requires nothing — that
   // is unprovable for a non-discovery-only profile, not proven.
-  const evaluable = floor.discoveryOnly === true || requiredFiles.length > 0 || (floor.requiredAnyPrefix ?? []).length > 0;
+  const evaluable = floor.discoveryOnly === true || requiredFiles.length > 0 || (floor.requiredAnyPrefix ?? []).length > 0 || groups.length > 0;
   const floorProven = evaluable && missingFloor.length === 0 && prefixOk;
   return {
     profile,

@@ -134,7 +134,7 @@ describe('RFC 0148 §C — floor enforcement is not vacuous', () => {
     // scenario can never be satisfied, which would fail honest hosts for a
     // reason unrelated to their behavior.
     const all = Object.entries(PROFILE_FLOOR_SCENARIOS).flatMap(([profile, floor]) =>
-      floor.required.map((scenario) => ({ profile, scenario })),
+      [...floor.required, ...(floor.requiredAnyOf ?? []).flat()].map((scenario) => ({ profile, scenario })),
     );
     expect(all.length, req('openwop.it.certification-floor-enforcement.every-transcribed-floor-names-scenario-files-that-exist-in-this-suite', 'RFC 0148 §C', 'the floor map MUST NOT be empty — an empty map re-opens the vacuity')).toBeGreaterThan(0);
     for (const { profile, scenario } of all) {
@@ -189,7 +189,7 @@ describe('RFC 0148 §C — floor enforcement is not vacuous', () => {
     };
 
     const offenders = Object.entries(PROFILE_FLOOR_SCENARIOS)
-      .flatMap(([profile, floor]) => floor.required.map((scenario) => ({ profile, scenario })))
+      .flatMap(([profile, floor]) => [...floor.required, ...(floor.requiredAnyOf ?? []).flat()].map((scenario) => ({ profile, scenario })))
       .filter(({ scenario }) => {
         const path = join(dir, scenario);
         return existsSync(path) && isCorpusOnly(readFileSync(path, 'utf8'));

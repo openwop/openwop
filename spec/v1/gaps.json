@@ -13756,8 +13756,8 @@
       "surface": "The suite's floor table has no any-of group, so the v1 `openwop-secrets` floor cannot yet name two alternative scenarios.",
       "witness": "unclassified",
       "requirementId": null,
-      "disposition": "carried",
-      "target": "openwop.gap.0229.5",
+      "disposition": "closed",
+      "target": null,
       "sources": [
         {
           "file": "RFCS/registers/0229-production-safe-secrets-witness.gaps.md",

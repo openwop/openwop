@@ -27,11 +27,11 @@
  */
 
 import { scenarioFileOfItId } from './requirement-ids.js';
-import { PROFILE_FLOOR_SCENARIOS } from './profiles.js';
+import { PROFILE_FLOOR_SCENARIOS, floorMemberFiles } from './profiles.js';
 import { targetMajor } from './seams.js';
 import { PKG_ROOT_PATH } from './paths.js';
 import { v2ProfileFloorFiles } from './requirement-registry.js';
-import { requirementIdForScenario, requirementIdForPrefix, requirementsFor, v2FloorsActive } from './requirement-registry.js';
+import { requirementIdForScenario, requirementIdForPrefix, requirementIdForAnyOf, requirementsFor, v2FloorsActive } from './requirement-registry.js';
 import { UNCLASSIFIED_RETURN_DETAIL } from './soft-skip.js';
 import { SPEC_COHERENCE_SCENARIOS, SPEC_COHERENCE_DETAIL } from './spec-coherence.js';
 import { CERTIFIABLE, type Disposition, type LedgerEntry } from './requirement-ledger.js';
@@ -39,10 +39,7 @@ import { CERTIFIABLE, type Disposition, type LedgerEntry } from './requirement-l
 /** All scenario basenames that appear in some profile's runtime floor. */
 export function floorScenarioFiles(): ReadonlySet<string> {
   const out = new Set<string>();
-  for (const floor of Object.values(PROFILE_FLOOR_SCENARIOS)) {
-    for (const f of floor.required) out.add(f);
-    for (const c of floor.conditional ?? []) for (const f of c.required) out.add(f);
-  }
+  for (const floor of Object.values(PROFILE_FLOOR_SCENARIOS)) for (const f of floorMemberFiles(floor)) out.add(f);
   // At target major 2 the floors come from the declaration, not the v1 hand
   // table. The ledger and --certify MUST agree on this set, or a floor file is
   // minted `openwop.scenario.*` and looked up as `openwop.floor.*` — which is
@@ -458,6 +455,29 @@ export function deriveRequirementDispositions(
     rows.push(row);
   }
 
+  // Any-of requirements (RFC 0229 §E): one summary row per group, derived from
+  // its member files. Satisfied only by a WITNESSED pass (assertions > 0) with
+  // no member failing; `inapplicable`/`skipped` members never satisfy it. v1
+  // hand table only, like the prefix groups (the major-2 floors have none).
+  const groups = new Map<string, readonly string[]>();
+  if (!v2FloorsActive()) for (const floor of Object.values(PROFILE_FLOOR_SCENARIOS)) for (const g of floor.requiredAnyOf ?? []) groups.set(requirementIdForAnyOf(g), g);
+  for (const [id, members] of [...groups.entries()].sort((a, b) => a[0].localeCompare(b[0]))) {
+    const scenarioId = `anyof:${members.join('|')}`;
+    const matching = members.map((f) => perFile.get(f)).filter((r): r is DerivedRequirement => r !== undefined);
+    const witnessed = matching.filter((r) => r.disposition === 'executed-pass' && (r.assertionCount ?? 0) > 0);
+    let row: DerivedRequirement;
+    if (matching.some((r) => r.disposition === 'executed-fail')) {
+      row = { requirementId: id, scenarioId, disposition: 'executed-fail', detail: `an alternative failed: ${matching.filter((r) => r.disposition === 'executed-fail').map((r) => r.scenarioId).join(', ')}` };
+    } else if (witnessed.length > 0) {
+      row = { requirementId: id, scenarioId, disposition: 'executed-pass', assertionCount: witnessed.reduce((n, r) => n + (r.assertionCount ?? 0), 0) };
+    } else if (matching.length === 0) {
+      row = { requirementId: id, scenarioId, disposition: 'blocked', detail: `none of ${members.join(', ')} ran — unclassified return` };
+    } else {
+      row = { requirementId: id, scenarioId, disposition: 'blocked', detail: `no alternative recorded a witnessed pass (${matching.map((r) => `${r.scenarioId}: ${r.disposition}`).join(', ')})` };
+    }
+    rows.push(row);
+  }
+
   // Per-`it` rows (suite 1.153.0): every ledger entry keyed `openwop.it.<file>.<slug>`
   // becomes its own bundle row, attributed to its scenario file. Additive — the
   // file-level and prefix rows above are unchanged, and the floors still key on
@@ -513,7 +533,7 @@ export function deriveRequirementDispositions(
     const atMajor2 = v2FloorsActive();
     for (const id of ids) {
       const r = rowById.get(id);
-      const fromLedger = byId.has(id) || (r !== undefined && r.scenarioId.endsWith('*'));
+      const fromLedger = byId.has(id) || (r !== undefined && (r.scenarioId.endsWith('*') || r.scenarioId.startsWith('anyof:')));
       if (r !== undefined && r.disposition === 'executed-pass' && (r.assertionCount ?? 0) > 0) witnessedPasses += 1;
       // Unclassified: no row, or a report-derived blocked (nothing recorded), or a
       // VACUOUS pass — executed-pass with assertionCount 0 is a witness of nothing

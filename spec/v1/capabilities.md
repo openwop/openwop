@@ -235,11 +235,26 @@ Lets a host advertise that it supports secret-resolution + BYOK (Bring-Your-Own-
 - `scopes` (string array, subset of `["tenant", "user", "run"]`) — declares which secret-storage scopes the host implements. A `tenant`-scoped secret is shared across the workspace; `user`-scoped is per-end-user; `run`-scoped is ephemeral per-run. Hosts that support multiple scopes return all of them. **Naming alias**: hosts that store tenant-scoped secrets at a workspace-keyed path (e.g., a host that uses `workspaces/{wsId}/secrets/{id}`) advertise `tenant` here regardless of internal field naming — the wire term is `tenant`. **`run` scope is reserved** in v1.x; future hosts MAY advertise it without a spec bump (additive in this `scopes` array). Clients MUST tolerate any subset including unfamiliar future scopes.
 - `resolution` (string, currently always `"host-managed"`) — the resolution mode. Reserved for forward-compat: future versions may add `"client-attached"` for clients that pass credentials inline (out of scope for v1.x — clients MUST use opaque references via `RunOptions.configurable.ai.credentialRef`).
 
+- `runSecrets` (OPTIONAL object `{ maxEntries: integer ≥ 1 }`, RFC 0229) — the host accepts run-supplied secrets on `POST /v1/runs` (`rest-endpoints.md`). Absent means the host does not accept them, and a client MUST NOT send them. A host advertising it MUST also list `run` in `scopes`. The rules are in §"Run-supplied secrets" below.
+
 **Client semantics.** Clients gate BYOK UX on `secrets.supported === true`. Without it, the BYOK flow is unavailable and the host serves all callers from platform-managed credentials.
 
 **Server semantics.** Hosts that advertise secrets MUST implement a secret-resolution adapter. The adapter returns opaque resolved-secret references that downstream provider adapters dereference internally — raw key material NEVER appears in the protocol surface (no events, logs, traces, prompts, errors, exports, screenshots).
 
 **Hard rule (NFR-7):** any code path that emits a `RunEvent`, OTel span, log line, error message, or exported artifact MUST NOT contain raw key material. Hosts MUST add lint + redaction unit tests verifying this invariant before exposing the BYOK surface.
+
+#### Run-supplied secrets (RFC 0229)
+
+A host advertising `secrets.runSecrets` accepts `runSecrets` on `POST /v1/runs`: a top-level array of `{ ref, value }`, never part of `RunOptions`.
+
+- **Bounds.** `ref` MUST match `^run:[A-Za-z0-9_.-]{1,64}$`; `value` is a string of 16 to 4096 characters; at most `maxEntries` entries, each `ref` once. A request that breaks any of these MUST be refused `400 validation_error`, naming the field and never the value.
+- **Bound to the run.** A `run:` ref MUST resolve only to a value supplied in the `runSecrets` of the run resolving it — never from another run, a user, tenant, workspace, the platform or the process environment — and an unsupplied `run:` ref MUST fail `credential_not_found`. A ref without the `run:` prefix MUST NOT resolve to a `runSecrets` value.
+- **Lifetime.** The host MUST NOT write a value to any store an operator or client can read in cleartext, and MUST discard it by the time the run is terminal. A fork or replay does not inherit it: a `run:` ref in the fork fails `credential_not_found`.
+- **Redaction.** The value is a resolved run-scoped secret: the hard rule above and `observability.md` §"Redaction" bind it. The host MUST NOT echo it on any response (the create answer and the run snapshot included; a read MAY return the refs), and MUST NOT log the request's values.
+- **No digest.** A value MUST NOT enter any hash, digest, fingerprint or cache key the host persists or derives from the request, including any replay, witness or audit digest. The idempotency request digest (`idempotency.md`) is computed with `runSecrets` removed: a same-key retry differing only there compares equal, is answered as any duplicate, and its values are discarded unused.
+- **Transition alias.** A host MAY also accept the same array at `configurable.runSecrets` (`run-options.md` §"Reserved keys"). It MUST route the alias into the same non-persisted store, MUST remove it from `configurable` before `RunOptions` are persisted, surfaced or carried by a fork, and MUST refuse a request carrying both forms `400 validation_error`. Every rule above binds an aliased value. A client SHOULD send the top-level field. The alias ends with v1 end-of-support.
+
+**The witness node.** A host advertising `runSecrets` MUST execute the node type `core.secret.witness` and MUST advertise the fixture `openwop-secrets-run-witness` (`conformance/fixtures.md`). Its configuration is `{ ref, expectedSha256 }`. A `ref` without the `run:` prefix MUST fail `credential_forbidden` without resolving anything. Otherwise the node resolves `ref` under the rules above and outputs `{ matched }` — whether the lowercase-hex SHA-256 of the value's UTF-8 bytes equals `expectedSha256`. It MUST NOT output, log or emit the value, its digest, its length, or any other function of it beyond `matched`.
 
 ### `aiProviders`
 

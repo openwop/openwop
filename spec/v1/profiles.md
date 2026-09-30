@@ -125,6 +125,8 @@ openwop-secrets(c) :=
 
 > **Floor (RFC 0148 §C, transcribed 2026-08-16 — gap G7 closed).** A host is *certified* for `openwop-secrets` when the discovery predicate holds AND these black-box scenarios record witnessed passes in its bundle v2: `byok-roundtrip.test.ts` — the BYOK canary round-trip (`fixtures.md` §`conformance-secrets-roundtrip`, SR-1); the profile's proof that a credential reference resolves and its value never leaves the host. Before this date the profile had no floor and every bundle read it as *unprovable*.
 
+> **Second floor path (RFC 0229, 2026-09-30).** The floor is an any-of group: the host is certified when the predicate holds AND **either** `byok-roundtrip.test.ts` **or** `secrets-run-witness.test.ts` records a witnessed pass, and neither records a failure. The run-witness path is the one a production host can take: the client supplies the value with the run (`capabilities.md` §"Run-supplied secrets"), and the `core.secret.witness` node outputs only whether its digest matches, so the fixture `openwop-secrets-run-witness` is safe to advertise in production. The canary path stays for hosts that keep it. A host that advertises `secrets.runSecrets` and its fixture, and withholds the canary fixture, records `byok-roundtrip.test.ts` `inapplicable` rather than `blocked`, because the floor it takes is the other one.
+
 ### `openwop-provider-policy`
 
 The host enforces AI provider policy modes per `capabilities.md` §`aiProviders.policies`.

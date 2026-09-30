@@ -37,6 +37,15 @@ export function requirementIdForPrefix(prefix: string): string {
 }
 
 /**
+ * Any-of groups (RFC 0229 §E) become one requirement:
+ * `['byok-roundtrip.test.ts', 'secrets-run-witness.test.ts']` →
+ * `openwop.floor.anyof.byok-roundtrip+secrets-run-witness`.
+ */
+export function requirementIdForAnyOf(files: readonly string[]): string {
+  return `openwop.floor.anyof.${files.map((f) => f.replace(/\.test\.ts$/, '')).join('+')}`;
+}
+
+/**
  * The requirement IDs a profile's certification rests on.
  *
  * Returns `null` — not an empty array — when the corpus has no floor for the
@@ -122,6 +131,7 @@ export function requirementsFor(profile: string, document?: Readonly<Record<stri
   return [
     ...files.map(requirementIdForScenario),
     ...(floor.requiredAnyPrefix ?? []).map(requirementIdForPrefix),
+    ...(floor.requiredAnyOf ?? []).map(requirementIdForAnyOf),
   ];
 }
 
@@ -134,6 +144,8 @@ export function allRequirements(): readonly string[] {
     for (const f of floor.required) ids.add(requirementIdForScenario(f));
     for (const c of floor.conditional ?? []) for (const f of c.required) ids.add(requirementIdForScenario(f));
     for (const p of floor.requiredAnyPrefix ?? []) ids.add(requirementIdForPrefix(p));
+    // an any-of group is one requirement, and each member file records under its own floor id
+    for (const g of floor.requiredAnyOf ?? []) { ids.add(requirementIdForAnyOf(g)); for (const f of g) ids.add(requirementIdForScenario(f)); }
     void profile;
   }
   return [...ids].sort();

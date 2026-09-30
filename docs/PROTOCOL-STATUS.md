@@ -11,7 +11,7 @@
 | JSON Schemas | 81 | `schemas/*.schema.json` |
 | OpenAPI operations | 58 | `api/openapi.yaml` |
 | AsyncAPI version | 3.1.0 | `api/asyncapi.yaml` |
-| Conformance scenario files | 575 | `conformance/src/scenarios/*.test.ts` |
+| Conformance scenario files | 577 | `conformance/src/scenarios/*.test.ts` |
 | RFCs tracked | 226 | `RFCS/[0-9][0-9][0-9][0-9]-*.md`, excluding template |
 
 ## Artifact Versions
@@ -71,8 +71,8 @@
 | Status | Count |
 |---|---:|
 | Accepted | 219 |
-| Active | 4 |
-| Draft | 2 |
+| Active | 5 |
+| Draft | 1 |
 | Superseded | 1 |
 
 | RFC | Title | Status |
@@ -302,7 +302,7 @@
 | RFC 0226 | three run-failure codes the hosts share, registered | Accepted |
 | RFC 0227 | a generated restatement of a registry is not kernel prose | Active |
 | RFC 0228 | the error codes v1 named for host services, decided for v2 | Active |
-| RFC 0229 | a production host can witness secret resolution without an oracle | Draft |
+| RFC 0229 | a production host can witness secret resolution without an oracle | Active |
 
 ## SDK Helper Coverage
 
@@ -326,8 +326,8 @@ The pack registry now lives in the [`openwop-registry`](https://github.com/openw
 
 ## Active Follow-Ups
 
-- 2 RFCs still `Draft` (RFC 0038, RFC 0229) — advance with schema/conformance proof or defer.
-- 4 RFCs `Active` (RFC 0121, RFC 0222, RFC 0227, RFC 0228) — wire-shape MAY shift compatibly within v1.x until promotion to `Accepted`.
+- 1 RFC still `Draft` (RFC 0038) — advance with schema/conformance proof or defer.
+- 5 RFCs `Active` (RFC 0121, RFC 0222, RFC 0227, RFC 0228, RFC 0229) — wire-shape MAY shift compatibly within v1.x until promotion to `Accepted`.
 - External audit, non-steward host recruitment, and non-steward maintainer recruitment remain external-action gates.
 - Multi-region idempotency and some optional-profile behavior checks remain lower-confidence than the core wire contract.
 

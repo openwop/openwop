@@ -48,6 +48,7 @@ The `createRun` body is closed (`unevaluatedProperties: false`). Its fields:
 - `inputs`, `residency`, `tenantId`, `scopeId`.
 - `callbackUrl` — see [interrupt.md](interrupt.md) §Callback delivery. A refused value is `400 validation_error` with `details.field: "callbackUrl"`.
 - `mode`, `evalSuiteRef`, `agentId`.
+- `runSecrets` — run-supplied secrets, accepted only by a host advertising `secrets.runSecrets` ([host-services.md](host-services.md) §Run-supplied secrets). It is never part of `RunOptions`.
 - The `RunOptions` fields `configurable`, `tags`, `metadata`. A body without `RunOptions` MUST be accepted as if it were `{}`.
 
 ### Request headers
@@ -296,4 +297,4 @@ Queue messages ([host-services.md](host-services.md) §`queueBus`) and webhook d
 
 A non-terminal run inherited from v1 continues, or is cancelled `v1_pin_unsupported`, per [persistence.md](persistence.md) §"Runs pinned to v1".
 
-*Sources: RFCs 0053, 0058, 0084, 0170, 0171, 0176, 0182, 0228.*
+*Sources: RFCs 0053, 0058, 0084, 0170, 0171, 0176, 0182, 0228, 0229.*

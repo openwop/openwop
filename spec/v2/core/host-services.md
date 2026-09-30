@@ -109,6 +109,22 @@ A host offering `resolveInPack` MUST expose `ctx.secrets.resolve({ ref, purpose 
 
 A pack MUST pass a non-empty `purpose`, which the host audits. The pack MUST NOT log the plaintext, keep it past the consuming call, or pass it to any other `ctx` method, and MUST treat it as run input that may differ between runs.
 
+### Run-supplied secrets
+
+A host advertising `runSecrets: { maxEntries }` accepts `runSecrets` on `createRun` ([runs.md](runs.md) §Create): an array of `{ ref, value }`. It MUST also list `run` in `scopes`. A client MUST NOT send `runSecrets` to a host that does not advertise it.
+
+- **Bounds.** `ref` MUST match `^run:[A-Za-z0-9_.-]{1,64}$`, and `value` is a string of 16 to 4096 characters. The array holds at most `maxEntries` entries, each `ref` once. A request that breaks any of these MUST be refused `400 validation_error`, naming the field and never the value.
+- **Bound to the run.** A `run:` ref MUST resolve only to a value in the `runSecrets` of the run resolving it, never from another run, a user, tenant, workspace, the platform or the process environment. An unsupplied `run:` ref MUST fail `credential_not_found`. A ref without the `run:` prefix MUST NOT resolve to a `runSecrets` value.
+- **Lifetime.** The host MUST NOT write a value to any store an operator or client can read in cleartext, and MUST discard it by the time the run is terminal. A fork does not inherit it, so a `run:` ref in the fork fails `credential_not_found`.
+- **Redaction.** A value is a resolved run-scoped secret, and every redaction rule of this section and of §`memory` binds it. The host MUST NOT echo it on any response, the `createRun` answer and the snapshot included; a read MAY return the refs. It MUST NOT log the request's values.
+- **No digest.** A value MUST NOT enter any hash, digest, fingerprint or cache key the host persists or derives from the request, including any replay, witness or audit digest. The idempotency request digest ([idempotency.md](idempotency.md)) is computed with `runSecrets` removed. A same-key retry that differs only there compares equal, is answered as any duplicate is, and its values are discarded unused.
+
+A host advertising `runSecrets` MUST execute the node type `core.secret.witness` and MUST advertise the fixture `openwop-secrets-run-witness`. The node's configuration is `{ ref, expectedSha256 }`.
+
+- A `ref` without the `run:` prefix MUST fail `credential_forbidden` without resolving anything.
+- Otherwise the node resolves `ref` under the rules above and outputs `{ matched }`: whether the lowercase-hex SHA-256 of the value's UTF-8 bytes equals `expectedSha256`.
+- It MUST NOT output, log or emit the value, its digest, its length, or any other function of it beyond `matched`.
+
 ## `modelCapabilities`
 
 `modelCapabilities.advertised` lists the capability identifiers the active model offers; a host-private identifier MUST be prefixed `x-host-<host>-`.
@@ -198,4 +214,4 @@ A host advertising `memory` serves agent memory (`schemas/v2/memory-entry.schema
 - **Distillation runs.** A distillation run MUST read the ref's snapshot, MUST NOT re-expose a redacted secret at any recursion level, and MUST write an immutable, addressable archive, byte-stable per source set and budget, kept for `archiveRetention`. Under `indexEmitted` it updates `MEMORY-INDEX.json`, and a `.md` sibling MAY accompany it.
 - **Degraded agents.** When an agent's `memoryShape` needs a dimension the host lacks, its inventory entry MUST set `memoryDegraded` and `degradedMemoryDimensions`; the agent MAY still dispatch. A `role: skill` manifest MUST keep `memoryShape` scratchpad-only, enforced by schema.
 
-*Sources: RFCs 0004, 0012, 0017, 0027, 0028, 0029, 0031, 0048, 0052, 0055, 0057, 0059, 0062, 0064, 0067, 0076, 0079, 0080, 0091, 0105, 0106, 0108, 0113, 0116, 0121, 0131, 0144, 0228.*
+*Sources: RFCs 0004, 0012, 0017, 0027, 0028, 0029, 0031, 0048, 0052, 0055, 0057, 0059, 0062, 0064, 0067, 0076, 0079, 0080, 0091, 0105, 0106, 0108, 0113, 0116, 0121, 0131, 0144, 0228, 0229.*
