@@ -141,7 +141,7 @@ A host whose `triggerBridge.ingestion.inboundSigning` lists `standard-webhooks-1
 
 - registration returns a `whsec_` `signingSecret` once;
 - a sender signs the raw body with the `webhook-*` headers of §"Standard Webhooks", and that signature, not an OpenWOP credential, authenticates `ingestUrl`;
-- under `required` verification a bad signature, or a timestamp more than 300 seconds off, starts no run;
+- under `required` verification a bad signature, or a timestamp more than 300 seconds off, starts no run and dead-letters only that delivery: a refused post MUST NOT change the subscription's state;
 - `webhook-id` is the identity dedup keys on;
 - the ingest answers `202` (delivered, `runId`), `200` (duplicate, prior `runId`), `401 signature_invalid`, or `409 subscription_not_active`.
 

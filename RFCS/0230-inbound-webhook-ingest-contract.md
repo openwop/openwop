@@ -61,6 +61,7 @@ For a `webhook` registration on such a host, the `201` response's `binding` MUST
   - `best-effort`: the host delivers and stamps `TriggerEvent.verified` accordingly.
   - `none`: the host does not verify.
 - **Identity.** The inbound event identity is `webhook-id`. It MUST match `^[A-Za-z0-9_-]{16,128}$` (RFC 0201). With `dedupEnabled`, the host MUST derive `dedupKey` from `(subscriptionId, webhook-id)`, host-opaque as §F.4 already requires. A post whose `webhook-id` repeats one already delivered within the §C-1 retention window MUST start no new run.
+- **A sender cannot change a subscription's state (§C.1).** `ingestUrl` needs no OpenWOP credential, so anyone who learns it can post to it. A verification failure, a malformed post or any other ingest refusal MUST NOT transition the subscription out of `active`, and MUST NOT emit `trigger.subscription.state.changed`. Only the dead-lettered `trigger.delivery.attempted` for that post is recorded. Otherwise one unauthenticated post with a garbage signature would disable a working integration. On an opted-in host this refines §F.2's `state.changed.reason: signature-invalid`, which predates an uncredentialed ingest: that reason applies to the delivery, not to the subscription's state.
 
 ### D. The ingest response
 
@@ -68,7 +69,7 @@ For a `webhook` registration on such a host, the `201` response's `binding` MUST
 | --- | --- | --- |
 | Delivered: a run was started | `202` | `{ "outcome": "delivered", "runId": "<id>" }` |
 | Dedup no-op: `webhook-id` seen within retention | `200` | `{ "outcome": "duplicate", "runId": "<prior id>" }` (§F.4 "returning the prior runId") |
-| Verification failure under `required` | `401` | the error envelope with `error: "signature_invalid"`, and no `runId`. The delivery is dead-lettered (§F.2). |
+| Verification failure under `required` | `401` | the error envelope with `error: "signature_invalid"`, and no `runId`. The **delivery** is dead-lettered (§F.2); the **subscription's state MUST NOT change** (§C.1). |
 | Subscription not `active` (`paused` / `dead-lettered` / `failed`) | `409` | the error envelope with `error: "subscription_not_active"` |
 
 `runId` is tenant-bound on the v2 wire (identity.md §5). The body carries no inbound content (SR-1).
@@ -96,7 +97,7 @@ Until then it simply does not advertise the facet.
 The existing `trigger-bridge-delivery.test.ts` keeps its seam path as the primary witness. When the seams are absent AND the host advertises `inboundSigning: ["standard-webhooks-1"]`, each leg runs a **normative-surface path**, noting `observed: normative-surface path` on its row:
 
 - **Leg 1, dedup.** Register a webhook subscription (`verification.mode: none`) and POST twice with the same `webhook-id`. The first answers `202` with a `runId`; the second answers `200 {outcome: "duplicate", runId}` with the same `runId`.
-- **Leg 2, dead-letter.** Register with `verification.mode: required` and POST with a bad `webhook-signature`: `401 signature_invalid`, no `runId`. `GET /v1/trigger-subscriptions/{id}` shows `state: dead-lettered`.
+- **Leg 2, dead-letter.** Register with `verification.mode: required` and POST with a bad `webhook-signature`: `401 signature_invalid`, no `runId`. `GET /v1/trigger-subscriptions/{id}` still shows `state: active` (§C.1). A correctly signed post afterwards answers `202` with a `runId`, proving the bad post did not disable the subscription.
 - **Leg 3, causation.** POST a signed event and read `runId` from the `202`. On `GET /v1/runs/{runId}/events/poll`: `run.started.causationId` is present, and equals the `trigger.delivery.attempted{delivered}` event's id when that event is on the run's log. The delivered event is content-free.
 
 The run-less terminal events (the dead-lettered `trigger.delivery.attempted`, `trigger.subscription.state.changed`) are not on any run's log, so their content-freeness stays seam-witnessed. That becomes its own requirement id, not a qualifier on a passing row (RFC 0174 §B.1). Dedup likewise becomes its own requirement id, and **both remain in the floor**.
@@ -106,11 +107,12 @@ The run-less terminal events (the dead-lettered `trigger.delivery.attempted`, `t
 | Requirement | Observable | Who can cause it | Verdict |
 | --- | --- | --- | --- |
 | §C no OpenWOP credential on ingest | the ingest answers without `Authorization` | the suite | witnessable |
-| §C `required` + bad signature → no run | `401 signature_invalid`, no `runId`; subscription `dead-lettered` | the suite | witnessable |
+| §C `required` + bad signature → no run | `401 signature_invalid`, no `runId` | the suite | witnessable |
+| §C.1 a refused post leaves the subscription `active` | `GET` shows `active`; a signed post next answers `202` | the suite | witnessable |
 | §C timestamp skew > 300 s → no run | as above, with a stale `webhook-timestamp` | the suite | witnessable |
 | §C dedup on `webhook-id` | second post `200 duplicate` with the same `runId` | the suite | witnessable |
 | §D `202` + `runId` on delivery | status + body | the suite | witnessable |
-| §D `409` on a non-active subscription | status + envelope | the suite (pause via the existing operator surface, or a dead-lettered subscription from leg 2) | witnessable |
+| §D `409` on a non-active subscription | status + envelope | the suite (pause via the existing operator surface) | witnessable |
 | §B `signingSecret` once, never on re-read | absent on `GET` | the suite | witnessable |
 
 ## Alternatives considered
@@ -148,7 +150,7 @@ Each question is decided per the RFC's own lean. Each stays open to the RFC 0156
 - [ ] `trigger-bridge-delivery.test.ts` gains the normative-surface path, with dedup and run-less-event content-freeness split into their own requirement ids and kept in the floor.
 - [ ] Sabotage-proven on the non-seam path:
   - two runs on a duplicate `webhook-id` → fail;
-  - a run on a bad signature, or a state other than dead-lettered → fail;
+  - a run on a bad signature, or a subscription left non-`active` by it → fail;
   - a missing `causationId` → fail.
 - [ ] A host (openwop-app) advertises the facet and passes the path in strict mode on a production cut.
 - [ ] CHANGELOG entries.
