@@ -2,7 +2,7 @@
   "$schema": "./corrections.schema.json",
   "$comment": "RFC 0197 §A.4 — v2 Class-3 corrections. Seeded with P3 only. The 2.8.2 removal of `workflowChainPacks.deferredParameters` and `.hostExpansionSeam` (P1) is deliberately NOT seeded: a committed bundle carried `deferredParameters` and then failed `capabilities-root-closed`, so the row would fail R3 — which is the point. P1 is recorded as the motivating defect in COMPATIBILITY.md §3a, not laundered into this register.",
   "version": 1,
-  "updated": "2026-09-28",
+  "updated": "2026-09-30",
   "rows": [
     {
       "id": "openwop.correction.v2.1",
@@ -59,6 +59,23 @@
         "manifests": 0,
         "manifestsScanned": 157,
         "note": "The prior shape is a verify result with `chainValid: true` beside a non-empty `anomalies`, or `chainValid: false` beside an empty one; the corrected shape is the root if/then/else RFC 0218 §C.4 adds, which the schema's `chainValid` and `anomalies` descriptions already required. Bundle leg: none of the 9 committed evidence/v2-host-bundles/*.json carries a `GET /audit/verify` body (no `chainValid` member anywhere). Registry leg: a verify result is not a manifest field; 0 of 157 pack.json documents on openwop-registry origin/main (4c5de1f) carry `chainValid`. The Anomaly members RFC 0218 §C adds are OPTIONAL additions that check-v2-surface-monotone reports as additive."
+      }
+    },
+    {
+      "id": "openwop.correction.v2.4",
+      "date": "2026-09-30",
+      "class": "w3c-class-3",
+      "releasedIn": "2.45.3",
+      "rfc": "0230",
+      "pointers": [
+        "schemas/v2/trigger-subscription-registration.schema.json#/verification"
+      ],
+      "compatibilityEntry": "a refused inbound event dead-letters only its delivery",
+      "priorShapeCensus": {
+        "bundles": 0,
+        "manifests": 0,
+        "manifestsScanned": 157,
+        "note": "The prior shape is behavioral: an event failing a `required` verification moved its subscription to `dead-lettered` with `state.changed.reason: signature-invalid` (v1 trigger-bridge.md §F.2 and the registration schema's `verification` description; v2 webhooks.md §Inbound triggers read the same way). Host census, read-only, 2026-09-30: openwop-app 5ee8cc064 returns `rejected` on a failed check and transitions a subscription only on `retry-exhausted`; MyndHyve 02e5d7fd2 performs no inbound verification (no `ingestion.verification[]`) and has no `dead-lettered` subscription state; no openwop-examples a6d61a6 reference host implements trigger ingestion. So no host implements the prior behavior and nothing conforming stops conforming. Bundle leg: 0 of 18 committed evidence/v2-host-bundles/*.json carry a trigger-bridge row (every trigger scenario is major-1 only); the six MyndHyve bundles advertise `triggerBridge.ingestion` without `verification[]`. Registry leg: a verification policy is a registration-request field, not a manifest field; 0 of 157 pack.json documents on openwop-registry origin/main (3b85bb4) carry one. Only a description changed, so check-v2-surface-monotone sees no change. Had a host implemented the prior rule, COMPATIBILITY.md §3's safety-fix exception would apply: the prior rule is an unauthenticated denial of service that no additive option closes."
       }
     }
   ]

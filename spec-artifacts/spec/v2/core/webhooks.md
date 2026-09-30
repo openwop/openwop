@@ -141,7 +141,7 @@ A host whose `triggerBridge.ingestion.inboundSigning` lists `standard-webhooks-1
 
 - registration returns a `whsec_` `signingSecret` once;
 - a sender signs the raw body with the `webhook-*` headers of §"Standard Webhooks", and that signature, not an OpenWOP credential, authenticates `ingestUrl`;
-- under `required` verification a bad signature, or a timestamp more than 300 seconds off, starts no run and dead-letters only that delivery: a refused post MUST NOT change the subscription's state;
+- under `required` verification a bad signature, or a timestamp more than 300 seconds off, fails the check (below);
 - `webhook-id` is the identity dedup keys on;
 - the ingest answers `202` (delivered, `runId`), `200` (duplicate, prior `runId`), `401 signature_invalid`, or `409 subscription_not_active`.
 
@@ -149,7 +149,7 @@ A source in `triggerBridge.sources` MUST move through these states and emit `tri
 
 With `triggerBridge.ingestion`, each `externalSources` entry MUST turn an external event into a `TriggerEvent` (`schemas/v2/trigger-event.schema.json`, whose rules bind) and start a run. The host:
 
-- MUST verify per `verification` before delivery; a failed `required` check dead-letters with reason `signature-invalid`;
+- MUST verify per `verification` before delivery. A failed `required` check starts no run and dead-letters only that delivery. A refused event MUST NOT change the subscription's state or emit `trigger.subscription-state-changed`;
 - returns a binding secret or URL once; `stream` and `change` bindings are empty;
 - MUST pass the event only as `ctx.triggerData`, never in an event, and replay it from cache (invariant `trigger-ingestion-content-redaction`);
 - MUST refuse private, link-local and loopback targets and cap the body on any ingestion fetch, and never hand the run a URL (invariant `trigger-ingestion-ssrf`);
