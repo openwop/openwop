@@ -1,0 +1,25 @@
+{
+  "id": "conformance-fs-probe",
+  "name": "Conformance: v2 fs sandbox probe",
+  "version": "1.0",
+  "description": "Fixture for `v2-fs-sandbox-escape-refused.test.ts` (spec/v2/core/storage.md §`fs`). One node, `core.conformance.fs-probe` (conformance-RESERVED): a host that advertises `fs` maps it to a node that calls its OWN `ctx.fs` with the run's inputs and nothing else. `op: write` calls `write(path, utf8(content), \"text/plain\")` and completes with `outputs.result` = the resolved `{ path, sizeBytes }`; `op: read` calls `read(path)` and completes with `outputs.result = { content }`, the bytes decoded as UTF-8. The node passes `path` through UNCHANGED (no normalisation of its own, so the host's sandbox check is what is exercised). A rejection fails the node with the rejection's code and details, unchanged. Operator contract: `<sandboxRoot>/conformance/escape-link` is a symbolic link to a readable file OUTSIDE the root. A host that does not advertise `fs` MUST NOT advertise this fixture.",
+  "nodes": [
+    {
+      "id": "fs-probe",
+      "typeId": "core.conformance.fs-probe",
+      "name": "Probe ctx.fs",
+      "position": { "x": 0, "y": 0 },
+      "config": {},
+      "inputs": {}
+    }
+  ],
+  "edges": [],
+  "triggers": [{ "id": "manual", "type": "manual", "enabled": true }],
+  "variables": [
+    { "name": "op", "type": "string", "defaultValue": "read" },
+    { "name": "path", "type": "string" },
+    { "name": "content", "type": "string" }
+  ],
+  "metadata": { "tags": ["conformance", "storage", "fs", "security"] },
+  "settings": { "timeout": 0 }
+}
