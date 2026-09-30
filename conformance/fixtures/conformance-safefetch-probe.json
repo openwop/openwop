@@ -1,0 +1,23 @@
+{
+  "id": "conformance-safefetch-probe",
+  "name": "Conformance: v2 safeFetch SSRF probe",
+  "version": "1.0",
+  "description": "Fixture for `v2-safefetch-ssrf-refused.test.ts` (spec/v2/core/host-services.md §`httpClient`). One node, `core.conformance.safefetch-probe` (conformance-RESERVED): a host that advertises `httpClient.safeFetch` maps it to a node that calls its OWN `ctx.http.safeFetch(url)` with the run's `url` input, unchanged, and nothing else (method GET, no headers, no body). On success it completes with `outputs.result = { status }`, the response status only (never the body, so the fixture is not a read proxy). A rejection fails the node with the rejection's code and details, unchanged (a refused target is `egress_denied`, `details.reason: ssrf-blocked`; an unreachable one `upstream_unavailable`). A host that does not advertise `httpClient.safeFetch` MUST NOT advertise this fixture.",
+  "nodes": [
+    {
+      "id": "safefetch-probe",
+      "typeId": "core.conformance.safefetch-probe",
+      "name": "Probe ctx.http.safeFetch",
+      "position": { "x": 0, "y": 0 },
+      "config": {},
+      "inputs": {}
+    }
+  ],
+  "edges": [],
+  "triggers": [{ "id": "manual", "type": "manual", "enabled": true }],
+  "variables": [
+    { "name": "url", "type": "string" }
+  ],
+  "metadata": { "tags": ["conformance", "httpClient", "safeFetch", "ssrf", "security"] },
+  "settings": { "timeout": 0 }
+}

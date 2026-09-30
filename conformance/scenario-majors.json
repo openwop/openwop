@@ -1578,6 +1578,9 @@
     "v2-run-snapshot-etag.test.ts": [
       2
     ],
+    "v2-safefetch-ssrf-refused.test.ts": [
+      2
+    ],
     "v2-secret-canary-absent.test.ts": [
       2
     ],
