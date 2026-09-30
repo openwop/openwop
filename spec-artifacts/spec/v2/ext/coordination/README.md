@@ -1,14 +1,14 @@
 # `coordination` extension
 
-> **Status: Draft.**
+> **Status: Stable.**
 
 `coordination` names multi-participant coordination primitives that operate on roles, such as voters and competitors. It is a discovery-only reservation: v2 defines no portable operations or payload contract for it.
 
 | Field | Value |
 | --- | --- |
 | **witness:** | `claims-check` |
-| **technical:** | `experimental` |
-| **adoption:** | `none` |
+| **technical:** | `stable` |
+| **adoption:** | `single-witness` |
 | **peer-dependency id** | `coordination` |
 | **advertised as** | `extensions.<org>.coordination` |
 | **declared facets** | none defined |

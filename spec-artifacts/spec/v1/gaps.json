@@ -13195,8 +13195,8 @@
       "surface": "`brand`, `canvas`, `coordination` and `launchStudio` have no tier-2 host. MyndHyve's executors for them run in the browser engine or on `canvas-runtime`, which does no OpenWOP version negotiation. `coordination`'s vote/consensus nodes need server-side agent dispatch.",
       "witness": "unclassified",
       "requirementId": null,
-      "disposition": "externally-gated",
-      "target": "tier-2-host-serves-family",
+      "disposition": "closed",
+      "target": null,
       "sources": [
         {
           "file": "RFCS/registers/0220-ext-families-graduate-on-evidence.gaps.md",
