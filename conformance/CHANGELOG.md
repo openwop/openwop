@@ -1,5 +1,22 @@
 # `@openwop/openwop-conformance` Changelog
 
+## [2.45.3] — unreleased — RFC 0229 (Active): a production host can witness secret resolution without an oracle
+
+- **The 2.45.3 cycle opens.** RFC 0229's gap register changes the packed `spec/v1/gaps.json`.
+- **RFC 0229 `Active`** (the window is waived by steward override of RFC 0147 §A.6). Two new scenarios, `secrets-run-witness` (major 1) and `v2-secrets-run-witness` (major 2), share `lib/run-secrets-witness.ts`. Each draws a fresh 64-character value `C` per run, supplies it as `createRun.runSecrets` under `run:openwop-witness`, and runs the fixture `openwop-secrets-run-witness`. Four rows, the same ids at both majors:
+  - `openwop.requirement.secrets.run-witness-resolves`: `matched: true` for `C`, and `false` when `expectedSha256` names another value;
+  - `openwop.requirement.secrets.run-witness-redacted`: `C` is absent from the create answer, snapshot, polled and `debug`-mode events, the run list and the debug bundle where served. The scan reads raw text and covers every encoding RFC 0229 §F lists. It also covers the digest, wherever the suite did not send that digest itself;
+  - `openwop.requirement.secrets.run-witness-scope-bound`: a non-`run:` ref fails `credential_forbidden`; an unsupplied or earlier run's `run:` ref fails `credential_not_found`; a branch fork, where served, fails `credential_not_found`;
+  - `openwop.requirement.secrets.run-secrets-outside-request-digest`: a same-key retry differing only in `runSecrets` replays with the original `runId` and `OpenWOP-Idempotent-Replay: true`, is never `409 idempotency_key_mismatch`, and its value appears nowhere.
+
+  **Dispositions.** Facet absent: `inapplicable`. Facet without the fixture: `blocked`. A refused well-formed `runSecrets`: `executed-fail`.
+
+  **Sabotage.** Each row failed against a scratch host with its defect: a witness that resolves a stored secret by a non-`run:` name, an echoed value, an emitted digest, a digest-covering idempotency record, a fork that inherits, and a cross-run fallback. The clean host passed all four rows at both majors.
+- **The `openwop-secrets` floor is an any-of group** (`requiredAnyOf`, RFC 0229 §E). It is satisfied by a witnessed pass of `byok-roundtrip` or `secrets-run-witness` with no member failing, and never by an `inapplicable` one. The runner writes one summary row, `openwop.floor.anyof.byok-roundtrip+secrets-run-witness`, and both bundle verifiers and the `--certify` witness count read it. `src/lib/floor-any-of.test.ts` pins this.
+  - `byok-roundtrip` records `inapplicable` instead of `blocked` when the canary fixture is withheld and the host advertises `secrets.runSecrets` and the witness fixture. A host that takes the other path is not denied the bundle over a canary it does not serve.
+  - Otherwise `byok-roundtrip` is unchanged.
+- **Host impact: none today.** No committed bundle and neither live production host advertises `secrets.runSecrets`, so both new files record `inapplicable` everywhere, and `byok-roundtrip` keeps its current disposition.
+
 ## [2.45.2] — 2026-09-30 — a run-failure code must be registered or a vendor code (no longer advisory)
 
 - **`errors.event-code-registered` is required** (#1698). The leg in `v2-error-registry` shipped ADVISORY in 2.43.1: an unregistered, non-vendor code on `run.failed`, `node.failed` or the snapshot's `error` recorded a partial witness naming the codes, while hosts remapped. That branch is removed, so such a code now fails the row, which names each `where=code`.

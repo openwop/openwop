@@ -121,6 +121,8 @@ Vendor extensions MUST use a vendor-prefixed namespace (e.g., `acme.feature_x`) 
 
 The `ai.*` namespace is RESERVED for spec-defined BYOK + provider-routing keys; vendor extensions to AI routing MUST use a vendor prefix instead.
 
+**`runSecrets` alias (RFC 0229 §A.8).** `configurable.runSecrets` is RESERVED as a v1-only transition alias of the top-level `runSecrets` on `POST /v1/runs`. A host MAY accept it; a host that does MUST route it into the same non-persisted store as the top-level field and MUST remove it from `configurable` before `RunOptions` are persisted, surfaced on the snapshot or carried by a fork. A request carrying both forms MUST be refused `400 validation_error`. The rules are `capabilities.md` §"Run-supplied secrets"; a client SHOULD send the top-level field, and the alias ends with v1 end-of-support.
+
 ### Example
 
 ```json

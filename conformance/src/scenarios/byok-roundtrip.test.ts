@@ -9,7 +9,8 @@
  * This is a FLOOR scenario (`openwop.floor.byok-roundtrip`), so a host that
  * cannot run it has NOT witnessed the floor. When the canary fixture is not
  * advertised, or the start-run call answers 404/422, every test records
- * `blocked` with the reason — never a trivial pass. A production posture that
+ * `blocked` with the reason — never a trivial pass (unless the host takes the
+ * RFC 0229 run-witness floor path instead: then `inapplicable`). A production posture that
  * keeps the `conformance.secret.echo` seam off therefore leaves its claimed
  * `openwop-secrets` profile uncertified, and only that profile: the cut's
  * other claims still certify. Hosts that opt into `OPENWOP_CONFORMANCE_FIXTURES=1`
@@ -39,6 +40,7 @@ import { pollUntilTerminal } from '../lib/polling.js';
 import { isFixtureAdvertised } from '../lib/fixtures.js';
 import { req } from '../lib/requirement-ids.js';
 import { softSkip } from '../lib/soft-skip.js';
+import { WITNESS_FIXTURE, WitnessHost } from '../lib/run-secrets-witness.js';
 
 /** SHA-256 hex regex — 64 lowercase hex chars exactly. */
 const SHA256_HEX_RE = /^[0-9a-f]{64}$/;
@@ -47,9 +49,23 @@ const BYOK_WORKFLOW_ID = 'openwop-smoke-byok-roundtrip';
 const SKIP_NO_FIXTURE = !isFixtureAdvertised(BYOK_WORKFLOW_ID);
 const NO_FIXTURE_REASON = `precondition not met — the \`${BYOK_WORKFLOW_ID}\` fixture is not advertised, so this host cannot witness the BYOK roundtrip floor (the \`conformance.secret.echo\` seam and the \`openwop-conformance-canary-secret\` canary are off)`;
 
+/**
+ * RFC 0229 §E: `openwop-secrets` has a second floor path, `secrets-run-witness`.
+ * A host that withholds the canary but advertises `secrets.runSecrets` and the
+ * `openwop-secrets-run-witness` fixture takes that path, so this file is
+ * `inapplicable` on it, not `blocked` — a `blocked` row would deny the whole
+ * bundle (RFC 0168 §E.1) for a floor the host satisfies the other way.
+ */
+async function noFixture(): Promise<undefined> {
+  if (isFixtureAdvertised(WITNESS_FIXTURE) && (await new WitnessHost(1).gate()).ok) {
+    return softSkip('inapplicable', `the \`${BYOK_WORKFLOW_ID}\` fixture is withheld and the host takes the run-witness floor path instead (secrets.runSecrets and \`${WITNESS_FIXTURE}\` are advertised; RFC 0229 §E, profiles.md §openwop-secrets)`);
+  }
+  return softSkip('blocked', NO_FIXTURE_REASON);
+}
+
 describe('byok: end-to-end credentialRef resolution roundtrip (openwop-byok profile)', () => {
   it('the canary fixture run MUST resolve a host-provisioned secret and emit SHA-256 hex', async () => {
-    if (SKIP_NO_FIXTURE) return softSkip('blocked', NO_FIXTURE_REASON);
+    if (SKIP_NO_FIXTURE) return noFixture();
     const create = await driver.post('/v1/runs', {
       workflowId: 'openwop-smoke-byok-roundtrip',
     });
@@ -114,7 +130,7 @@ describe('byok: end-to-end credentialRef resolution roundtrip (openwop-byok prof
   });
 
   it('BYOK fixture run MUST emit a node.completed event for the resolve step', async () => {
-    if (SKIP_NO_FIXTURE) return softSkip('blocked', NO_FIXTURE_REASON);
+    if (SKIP_NO_FIXTURE) return noFixture();
     const create = await driver.post('/v1/runs', {
       workflowId: 'openwop-smoke-byok-roundtrip',
     });
@@ -141,7 +157,7 @@ describe('byok: end-to-end credentialRef resolution roundtrip (openwop-byok prof
   });
 
   it('BYOK fixture run event log MUST NOT echo the resolved secret value (redaction)', async () => {
-    if (SKIP_NO_FIXTURE) return softSkip('blocked', NO_FIXTURE_REASON);
+    if (SKIP_NO_FIXTURE) return noFixture();
     const create = await driver.post('/v1/runs', {
       workflowId: 'openwop-smoke-byok-roundtrip',
     });

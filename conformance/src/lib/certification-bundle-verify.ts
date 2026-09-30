@@ -31,7 +31,7 @@ import {
   type DiscoveryPayload,
 } from './profiles.js';
 import { CERTIFIABLE, DISPOSITIONS, type Disposition } from './requirement-ledger.js';
-import { floorFilesFor, requirementIdForPrefix, requirementIdForScenario } from './requirement-registry.js';
+import { floorFilesFor, requirementIdForAnyOf, requirementIdForPrefix, requirementIdForScenario } from './requirement-registry.js';
 import { UNCLASSIFIED_RETURN_DETAIL } from './soft-skip.js';
 
 /**
@@ -149,7 +149,7 @@ export function findLiteral(value: unknown, literal: string): string[] {
  * it is the prefix requirement id, and the rows that satisfy it are the
  * matching scenario rows.
  */
-function requiredFor(profile: string, document: Readonly<Record<string, unknown>>): { files: string[]; prefixes: string[]; discoveryOnly: boolean } | null {
+function requiredFor(profile: string, document: Readonly<Record<string, unknown>>): { files: string[]; prefixes: string[]; anyOf: Array<readonly string[]>; discoveryOnly: boolean } | null {
   const floor = PROFILE_FLOOR_SCENARIOS[profile];
   if (floor === undefined) return null;
   // Discovery-conditional floors (G7) are evaluated against the bundle's own
@@ -159,6 +159,7 @@ function requiredFor(profile: string, document: Readonly<Record<string, unknown>
   return {
     files: [...files],
     prefixes: [...(floor.requiredAnyPrefix ?? [])],
+    anyOf: [...(floor.requiredAnyOf ?? [])],
     discoveryOnly: floor.discoveryOnly === true,
   };
 }
@@ -270,6 +271,26 @@ export function verifyBundleV2(bundle: BundleV2Like): BundleV2Verdict {
       // `requiredAnyPrefix`: ANY witnessed pass among the matching scenarios
       // satisfies the requirement (the emitter's summary row says the same).
       if (!considered.some((r) => isWitnessedPass(r))) notCertifiable.push(id);
+    }
+
+    for (const group of req.anyOf) {
+      // RFC 0229 §E: one requirement, satisfied by a WITNESSED pass of any
+      // member with no member failing. The emitter writes a summary row under
+      // the group id; member rows are read when it is absent.
+      const id = requirementIdForAnyOf(group);
+      required.push(id);
+      const summary = byId.get(id)?.[0];
+      const members = group.map((f) => byId.get(requirementIdForScenario(scenarioBasename(f)))?.[0]).filter((r): r is BundleV2Requirement => r !== undefined);
+      if (summary === undefined && members.length === 0) {
+        profileRejections.push({ kind: 'unwitnessed-requirement', profile, requirementId: id, detail: `${id}: no alternative (${group.join(', ')}) recorded a row` });
+        continue;
+      }
+      const considered = summary !== undefined ? [summary] : members;
+      if (considered.some((r) => r.disposition === 'executed-pass' && !isWitnessedPass(r))) {
+        profileRejections.push({ kind: 'vacuous-pass', profile, requirementId: id, detail: `${id}: executed-pass with no witnessed assertion` });
+        continue;
+      }
+      if (considered.some((r) => r.disposition === 'executed-fail') || !considered.some((r) => isWitnessedPass(r))) notCertifiable.push(id);
     }
 
     const evidenceValid = profileRejections.length === 0;

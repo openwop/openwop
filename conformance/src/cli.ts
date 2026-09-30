@@ -685,7 +685,7 @@ async function runCertify(args: ParsedArgs, baseUrl: string, apiKey: string): Pr
       if (target.major === 2) return verdictFor(profile)?.witnessedPasses ?? 0;
       const floor = PROFILE_FLOOR_SCENARIOS[profile];
       if (!floor) return 0;
-      const onFloor = (scenario: string): boolean => floor.required.includes(scenario) || (floor.requiredAnyPrefix ?? []).some((pre) => scenario.startsWith(pre));
+      const onFloor = (scenario: string): boolean => floor.required.includes(scenario) || (floor.requiredAnyPrefix ?? []).some((pre) => scenario.startsWith(pre)) || (floor.requiredAnyOf ?? []).some((g) => g.includes(scenario));
       return derived.requirements.filter((r) => r.disposition === 'executed-pass' && onFloor(r.scenarioId)).length;
     };
     // `certified` IS the verdict (RFC 0148 §A; RFC 0168 §E.1 adds the bundle-wide

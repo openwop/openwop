@@ -276,6 +276,29 @@ paths:
                       type: string
                       minLength: 1
                       description: RFC 0081 — the manifest agent the eval suite targets. Required when mode is `eval`.
+                    runSecrets:
+                      # RFC 0229 §A — top-level, never part of RunOptions (RunOptions are
+                      # persisted, surfaced on the snapshot and carried by a fork).
+                      # Bounds beyond the grammar (at most `secrets.runSecrets.maxEntries`
+                      # entries, each `ref` once) are host-checked: `400 validation_error`.
+                      type: array
+                      minItems: 1
+                      description: Run-supplied secrets. Accepted only by a host advertising `capabilities.secrets.runSecrets`; a client MUST NOT send it to any other host. A `run:` ref resolves only within the run that supplied it, and no value is ever echoed, logged or folded into a persisted digest (the idempotency request digest is computed without it).
+                      items:
+                        # Closed per entry with unevaluatedProperties (RFC 0094 §A keeps
+                        # the additionalProperties closure out of this allOf body entirely).
+                        type: object
+                        unevaluatedProperties: false
+                        required: [ref, value]
+                        properties:
+                          ref:
+                            type: string
+                            pattern: '^run:[A-Za-z0-9_.-]{1,64}$'
+                          value:
+                            type: string
+                            minLength: 16
+                            maxLength: 4096
+                            writeOnly: true
                   if:
                     properties: { mode: { const: eval } }
                     required: [mode]

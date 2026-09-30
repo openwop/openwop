@@ -105,6 +105,8 @@ function floorFiles(): Set<string> {
   for (const floor of Object.values(PROFILE_FLOOR_SCENARIOS)) {
     for (const f of floor.required) out.add(f);
     for (const c of floor.conditional ?? []) for (const f of c.required) out.add(f);
+    // RFC 0229 §E: every alternative of an any-of group is a floor file
+    for (const g of floor.requiredAnyOf ?? []) for (const f of g) out.add(f);
   }
   return out;
 }

@@ -13681,6 +13681,91 @@
       ]
     },
     {
+      "id": "openwop.gap.0229.1",
+      "rfc": "0229",
+      "local": "G1",
+      "section": "§A",
+      "surface": "Where `runSecrets` sits on `createRun`: top-level (proposed; keeps secret material out of `configurable`, which hosts persist and echo) or `configurable.runSecrets` (what one production host accepts today).",
+      "witness": "unclassified",
+      "requirementId": null,
+      "disposition": "closed",
+      "target": null,
+      "sources": [
+        {
+          "file": "RFCS/registers/0229-production-safe-secrets-witness.gaps.md",
+          "token": "G1"
+        }
+      ]
+    },
+    {
+      "id": "openwop.gap.0229.2",
+      "rfc": "0229",
+      "local": "G2",
+      "section": "§E, §F",
+      "surface": "No host implements `runSecrets` with the `run:` binding, `core.secret.witness` and the fixture, so the three requirement ids have no witness.",
+      "witness": "unclassified",
+      "requirementId": null,
+      "disposition": "externally-gated",
+      "target": "host-implements-run-witness",
+      "sources": [
+        {
+          "file": "RFCS/registers/0229-production-safe-secrets-witness.gaps.md",
+          "token": "G2"
+        }
+      ]
+    },
+    {
+      "id": "openwop.gap.0229.3",
+      "rfc": "0229",
+      "local": "G3",
+      "section": "§A.4, §A.6",
+      "surface": "The value is neither stored in cleartext nor logged, but both are unwitnessable from outside: storage and host logs are not protocol surfaces.",
+      "witness": "unclassified",
+      "requirementId": null,
+      "disposition": "carried",
+      "target": "openwop.gap.0229.3",
+      "sources": [
+        {
+          "file": "RFCS/registers/0229-production-safe-secrets-witness.gaps.md",
+          "token": "G3"
+        }
+      ]
+    },
+    {
+      "id": "openwop.gap.0229.4",
+      "rfc": "0229",
+      "local": "G4",
+      "section": "§F",
+      "surface": "Proof of *use* (an egress carrying the value to a suite-owned receiver), beyond proof of resolution.",
+      "witness": "unclassified",
+      "requirementId": null,
+      "disposition": "carried",
+      "target": "openwop.gap.0229.4",
+      "sources": [
+        {
+          "file": "RFCS/registers/0229-production-safe-secrets-witness.gaps.md",
+          "token": "G4"
+        }
+      ]
+    },
+    {
+      "id": "openwop.gap.0229.5",
+      "rfc": "0229",
+      "local": "G5",
+      "section": "§E",
+      "surface": "The suite's floor table has no any-of group, so the v1 `openwop-secrets` floor cannot yet name two alternative scenarios.",
+      "witness": "unclassified",
+      "requirementId": null,
+      "disposition": "closed",
+      "target": null,
+      "sources": [
+        {
+          "file": "RFCS/registers/0229-production-safe-secrets-witness.gaps.md",
+          "token": "G5"
+        }
+      ]
+    },
+    {
       "id": "openwop.gap.spec.a2a-integration.g1",
       "rfc": "0152",
       "local": "G1",
