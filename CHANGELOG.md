@@ -13,6 +13,17 @@ Format follows [Keep a Changelog](https://keepachangelog.com/en/1/) loosely. Ver
 
 ## [Unreleased]
 
+- **RFC 0226 `Active → Accepted`** (provisional pending the RFC 0156 §B retrospective review; bootstrap waiver, register row `not-reviewed`). Tier-2 evidence: all three hosts' latest certified bundles, each verified under the key its host serves, record `openwop.requirement.errors.event-code-registered` as a clean `executed-pass`.
+  - the v2 reference host at 2.44.6 (`188a23d56886`);
+  - MyndHyve at 2.44.3 (`58da9407e616`);
+  - openwop-app at 2.44.5 (`ab77c3aa`, `cb16716e1be6`).
+
+  The falsifiability table gains that host-side row. `check-accepted-predicate` passes.
+- **openwop-app's canonical v2 evidence now tracks its latest certified cut, as `myndhyve.json` and `openwop-host-v2-reference.json` do.**
+  - `evidence/v2-host-bundles/openwop-workflow-engine.json` is now the ab77c3aa bundle, byte-for-byte (suite 2.44.5, 263 / 0 / 0, both claimed profiles certified).
+  - The suite 2.35.1 bundle it held since #1473 moves to `openwop-workflow-engine-2.35.1.json`. That bundle is still the witness for `0187.bound-id-kinds.per-kind` and `openwop-conformance-seams-v2`. The other versioned files stay.
+  - `INTEROP-EVIDENCE-LOG.md`'s openwop-app rows now read the new bundle: the newest cut, the current suite, and the lanes. `anonymous` no longer advertises a revocation rule, and `oidc` is advertised as `exp-only` with a 3600 s window, which its `0210.*` rows record `inapplicable`. The earlier readings are kept as history.
+  - RFC 0210 G1's citation moves to the 2.35.1 file, where it was measured.
 - **A run-failure code must be registered or a vendor code: `errors.event-code-registered` is required, and #1698 closes** (suite 2.45.2). The row checks `error.code` on `run.failed`, `node.failed` and the snapshot's `error` against the registry.
   - **The chain.** The #1721 correction made `errors.md` §The registry bind these codes. RFC 0226 registered the shared codes, and the hosts remapped: openwop-examples #125, #126, #138; myndhyve#539; openwop-app #4202, #4213.
   - **Evidence.** The three hosts' latest certified bundles all record the row as a clean `executed-pass`. The new corpus copy is `evidence/v2-host-bundles/openwop-workflow-engine-2.44.5.json`, versioned like the 2.43.1 and 2.44.0 cuts.
