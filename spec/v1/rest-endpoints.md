@@ -78,9 +78,12 @@ Every OpenWOP-compliant server MUST expose:
   "callbackUrl": "string (optional, signed-token HITL callback)",
   "configurable": "object (optional, per-run parameter overlay)",
   "tags": "string[] (optional)",
-  "metadata": "object (optional)"
+  "metadata": "object (optional)",
+  "runSecrets": "<{ ref, value }[]> (optional; RFC 0229)"
 }
 ```
+
+`runSecrets` is accepted only by a host advertising `capabilities.secrets.runSecrets`, and a client MUST NOT send it to any other host. It is a top-level member, never part of `RunOptions`; its rules (bounds, run binding, no echo, no persisted digest) are `capabilities.md` §"Run-supplied secrets".
 
 Headers:
 

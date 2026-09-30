@@ -1,0 +1,27 @@
+{
+  "id": "conformance-storage-probe",
+  "name": "Conformance: v2 storage tenant-isolation probe",
+  "version": "1.0",
+  "description": "Fixture for `v2-storage-cross-tenant-isolation.test.ts` (spec/v2/core/storage.md §Shared rules, tenant isolation). One node, `core.conformance.storage-probe` (conformance-RESERVED): a host maps it to a node that calls its OWN storage service for the run's tenant, the one `family` names (kvStorage | tableStorage | blobStorage | cache | vectorStore | searchIndex | sql | nosql), with the run's inputs, and nothing else. `action: write` stores `value` under `key` and completes with `outputs.result = { written: true, ref? }`; `action: read` completes with `outputs.result = { values, keys }`, every value and every key the family's tenant-isolated read operations return for `key` (and for `ref`, when given); `action: delete` removes it. A rejection fails the node with the rejection's code, unchanged. The per-family mapping is in conformance/fixtures.md §\"The storage probe fixture\". A host MUST NOT advertise this fixture unless it implements it for every storage family it advertises.",
+  "nodes": [
+    {
+      "id": "storage-probe",
+      "typeId": "core.conformance.storage-probe",
+      "name": "Probe host storage",
+      "position": { "x": 0, "y": 0 },
+      "config": {},
+      "inputs": {}
+    }
+  ],
+  "edges": [],
+  "triggers": [{ "id": "manual", "type": "manual", "enabled": true }],
+  "variables": [
+    { "name": "family", "type": "string", "defaultValue": "kvStorage" },
+    { "name": "action", "type": "string", "defaultValue": "read" },
+    { "name": "key", "type": "string" },
+    { "name": "value", "type": "string" },
+    { "name": "ref", "type": "string" }
+  ],
+  "metadata": { "tags": ["conformance", "storage", "tenant-isolation"] },
+  "settings": { "timeout": 0 }
+}

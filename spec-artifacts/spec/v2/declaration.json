@@ -355,10 +355,16 @@
       "facets": [
         "scopes",
         "resolution",
-        "resolveInPack"
+        "resolveInPack",
+        "runSecrets"
       ],
       "floorScenarios": [],
-      "requirementIds": [],
+      "requirementIds": [
+        "openwop.requirement.secrets.run-witness-resolves",
+        "openwop.requirement.secrets.run-witness-redacted",
+        "openwop.requirement.secrets.run-witness-scope-bound",
+        "openwop.requirement.secrets.run-secrets-outside-request-digest"
+      ],
       "owningRfc": null,
       "note": "resolveInPack (RFC 0112-era pack peer dependency) is a declared facet"
     },

@@ -99,7 +99,9 @@ if (existsSync(evidencePath)) {
   if (!Object.keys(inv).length) console.warn('check-declaration: evidence/cross-repo-manifests.json carries no registryPeerDependencyKeys inventory yet — the alias leg is vacuous until generate-cross-repo-evidence.mjs --write runs with the registry checkout');
 }
 
-const reqIds = existsSync(join(ROOT, 'conformance', 'requirements.json')) ? new Set((read('conformance/requirements.json').records ?? []).map((r) => r.id)) : new Set();
+// A requirement id is a per-`it` id or an authored `req()` id — the latter is
+// what a bundle row carries for that `it` (RFC 0229 §E names its four rows so).
+const reqIds = existsSync(join(ROOT, 'conformance', 'requirements.json')) ? new Set((read('conformance/requirements.json').records ?? []).flatMap((r) => [r.id, ...(r.explicitId ? [r.explicitId] : [])])) : new Set();
 for (const f of [...decl.families, ...decl.profiles]) for (const id of f.requirementIds ?? []) if (!id.startsWith('planned:') && !reqIds.has(id)) failures.push(`${f.key ?? f.id}: requirement id ${id} is neither planned: nor in conformance/requirements.json`);
 
 // 9. Every profile floor names a scenario file that EXISTS. A floor the CLI

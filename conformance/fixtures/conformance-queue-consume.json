@@ -1,0 +1,27 @@
+{
+  "id": "conformance-queue-consume",
+  "name": "Conformance: Queue Consume",
+  "version": "1.0",
+  "description": "host-services.md §queueBus — node 'consume' (conformance.queue.probe, action 'consume') calls ctx.queueBus.consume on `topic` under the run's own tenant for up to config.waitMs, acks every message it receives, and outputs { consumed: [<payload.message of each, in order>] } — [] when none arrived, never unset. Paired with conformance-queue-publish. See v2-queue-cross-tenant-isolation.test.ts.",
+  "nodes": [
+    {
+      "id": "consume",
+      "typeId": "conformance.queue.probe",
+      "name": "Consume",
+      "position": { "x": 0, "y": 0 },
+      "config": { "action": "consume", "waitMs": 1000 },
+      "inputs": {
+        "topic": { "type": "variable", "variableName": "topic" }
+      }
+    }
+  ],
+  "edges": [],
+  "triggers": [
+    { "id": "manual", "type": "manual", "enabled": true }
+  ],
+  "variables": [
+    { "name": "topic", "type": "string", "description": "Topic to consume from.", "required": true }
+  ],
+  "metadata": { "tags": ["conformance", "queue", "security"] },
+  "settings": { "timeout": 10000, "maxRetries": 0 }
+}

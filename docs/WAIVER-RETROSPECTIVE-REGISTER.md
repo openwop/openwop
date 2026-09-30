@@ -161,3 +161,4 @@ to land — and until then the zero is visibly a blocked obligation rather than 
 | 0226 | three run-failure codes the hosts share, registered (additive; bootstrap waiver, not a §A.6 override) | in-scope-pending-assessment | — | — | `not-reviewed` |
 | 0227 | a generated restatement of a registry is not kernel prose (editorial + gate; bootstrap waiver, not a §A.6 override) | in-scope-pending-assessment | — | — | `not-reviewed` |
 | 0228 | the error codes v1 named for host services, decided for v2 (additive; bootstrap waiver, not a §A.6 override) | in-scope-pending-assessment | — | — | `not-reviewed` |
+| 0229 | a production host can witness secret resolution without an oracle (certification and secret material; additive; STEWARD OVERRIDE of RFC 0147 §A.6) | in-scope-pending-assessment | — | — | `not-reviewed` |
