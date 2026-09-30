@@ -13,6 +13,12 @@ Format follows [Keep a Changelog](https://keepachangelog.com/en/1/) loosely. Ver
 
 ## [Unreleased]
 
+- **`coordination` is `Stable`, and gap G4 is closed** (RFC 0220; the promotion window is waived, #1747). New `evidence/v2-host-bundles/myndhyve-2.45.2-coordination.json`: MyndHyve production `workflow-runtime-00843-pox`, build `commit:86d75737`, suite 2.45.2, both profiles certified, 274 pass / 2 fail / 0 blocked, RFC 0158 rung `durable-single-instance` restored. It witnesses twelve families.
+  - MyndHyve serves `ctx.coordination` (roundRobin, vote, consensus and delegate) to the v2-signed `vendor.myndhyve.agent-orchestration@1.0.3`, workspace-approved (myndhyve #568, #578, #579, #580).
+  - Participant turns are single invocation-logged model turns against agents in the run's own workspace. A host refusal fails the node; it is not counted as an abstention.
+  - The live proof counted a real 3/3 vote.
+  - `compete`, `mapReduce` and `crossCanvasInvoke` are not claimed.
+  - Stated as found: `v2-mcp-client-results` timed out at 30 s (both fail rows). It gates no profile or family.
 - **Conformance: `openwop.floor.trigger-bridge-delivery` is witnessable without seams** (suite 2.45.3). On a host advertising RFC 0230's `inboundSigning`, the dedup, dead-letter and causation legs run through the signed public ingest, and each leg is now its own requirement. The run-less event content-freeness leg stays seam-witnessed and in the floor.
 - **Conformance: `memory-attribution-replay-stable` now runs on v2 hosts** (suite 2.45.3). Its gate required a v1 `supported` field that v2 family records do not carry, and its event read hit the v2 SSE stream instead of the poll. MyndHyve and openwop-app both advertise `memory.attribution.emitsWriteEvents: true` and will now be measured on replay caveat 5.
 - **`docs/V2-WITNESS-COVERAGE.md` counts table-driven and helper-gated scenarios** (report only; no wire or normative change). A gate helper called with a variable is now resolved on the TypeScript AST. The report follows local helpers, literal tables, `for-of` / `.map` / `it.each` rows and exported lib helpers. A citation of a shared section in a multi-family home, such as `storage.md` §Shared rules, credits only the homed families the same scenario gates on. The result is 43 v2-witnessed families, 27 v1-only and 3 unwitnessed, up from 32 / 37 / 4 in the committed report. `--self-test` runs 17 synthetic cases (7 negative) in `openwop:check`.
