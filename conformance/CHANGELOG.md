@@ -1,6 +1,6 @@
 # `@openwop/openwop-conformance` Changelog
 
-## [2.45.2] — unreleased — a run-failure code must be registered or a vendor code (no longer advisory)
+## [2.45.2] — 2026-09-30 — a run-failure code must be registered or a vendor code (no longer advisory)
 
 - **`errors.event-code-registered` is required** (#1698). The leg in `v2-error-registry` shipped ADVISORY in 2.43.1: an unregistered, non-vendor code on `run.failed`, `node.failed` or the snapshot's `error` recorded a partial witness naming the codes, while hosts remapped. That branch is removed, so such a code now fails the row, which names each `where=code`.
   - **Evidence.** All three hosts' latest certified bundles record it as a clean `executed-pass` (2 assertions, no partial-witness detail), each verified under the key its host serves:
