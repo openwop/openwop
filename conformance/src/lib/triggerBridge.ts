@@ -20,7 +20,7 @@
  * @see spec/v1/trigger-bridge.md
  * @see spec/v1/profiles.md (§openwop-trigger-bridge)
  */
-import { randomBytes, randomInt } from 'node:crypto';
+import { createHmac, randomBytes, randomInt } from 'node:crypto';
 import { driver } from './driver.js';
 import { deriveProfiles, type DiscoveryPayload } from './profiles.js';
 
@@ -121,3 +121,71 @@ export function freshStreamDedupKey(topic = 'events', partition = 3): string {
 
 export const SUBSCRIPTION_STATES = ['active', 'paused', 'failed', 'dead-lettered'];
 export const DELIVERY_OUTCOMES = ['delivered', 'retrying', 'dead-lettered'];
+
+// ---------------------------------------------------------------------------
+// RFC 0230 — the normative-surface (seam-free) ingest path.
+// ---------------------------------------------------------------------------
+
+/** Does discovery advertise `triggerBridge.ingestion.inboundSigning` ∋ `standard-webhooks-1`? */
+export async function inboundSigningAdvertised(): Promise<boolean> {
+  const disco = await driver.get('/.well-known/openwop');
+  if (disco.status !== 200 || !disco.json) return false;
+  const d = disco.json as Record<string, any>;
+  const tb = d.triggerBridge ?? d.capabilities?.triggerBridge;
+  const s = tb?.ingestion?.inboundSigning;
+  return Array.isArray(s) && s.includes('standard-webhooks-1');
+}
+
+export interface SignedWebhookSubscription {
+  subscriptionId: string;
+  ingestUrl: string;
+  signingSecret: string;
+}
+
+/**
+ * Register a `webhook` subscription bound to the `conformance-noop` fixture
+ * (RFC 0230 §B). Returns null (with a reason) when the registration does not
+ * yield the §B binding — the caller records that as a host defect, not a skip.
+ */
+export async function registerSignedWebhook(mode: 'none' | 'required'): Promise<SignedWebhookSubscription | { reason: string }> {
+  const res = await driver.post('/v1/trigger-subscriptions', { source: 'webhook', workflowId: 'conformance-noop', verification: { mode } });
+  const body = res.json as { subscription?: { subscriptionId?: string }; binding?: { ingestUrl?: string; signingSecret?: string } } | undefined;
+  const subscriptionId = body?.subscription?.subscriptionId;
+  const ingestUrl = body?.binding?.ingestUrl;
+  const signingSecret = body?.binding?.signingSecret;
+  if (res.status !== 201 || !subscriptionId || !ingestUrl || !signingSecret) {
+    return { reason: `POST /v1/trigger-subscriptions answered ${res.status} without the RFC 0230 §B binding (subscriptionId, ingestUrl, signingSecret)` };
+  }
+  return { subscriptionId, ingestUrl, signingSecret };
+}
+
+/** A Standard Webhooks `webhook-id` (RFC 0201 grammar). */
+export function freshWebhookId(): string {
+  return `msg_${randomBytes(12).toString('hex')}`;
+}
+
+/** `v1,<base64 HMAC-SHA256(key, "{id}.{ts}.{body}")>`, key = base64-decode after `whsec_`. */
+export function standardWebhooksSignature(secret: string, id: string, ts: string, body: string): string {
+  const key = Buffer.from(secret.replace(/^whsec_/, ''), 'base64');
+  return `v1,${createHmac('sha256', key).update(`${id}.${ts}.${body}`).digest('base64')}`;
+}
+
+/**
+ * POST a raw body to `ingestUrl` with NO OpenWOP credential and the three
+ * Standard Webhooks headers (RFC 0230 §C). `signature` overrides the computed one
+ * (a bad-signature probe); `timestamp` overrides the current second (a skew probe).
+ */
+export async function signedIngest(
+  sub: SignedWebhookSubscription,
+  body: string,
+  opts: { webhookId?: string; timestamp?: string; signature?: string } = {},
+): Promise<{ status: number; json: Record<string, unknown> | undefined }> {
+  const id = opts.webhookId ?? freshWebhookId();
+  const ts = opts.timestamp ?? String(Math.floor(Date.now() / 1000));
+  const sig = opts.signature ?? standardWebhooksSignature(sub.signingSecret, id, ts, body);
+  const res = await driver.post(sub.ingestUrl, body, {
+    authenticated: false,
+    headers: { 'Content-Type': 'application/json', 'webhook-id': id, 'webhook-timestamp': ts, 'webhook-signature': sig },
+  });
+  return { status: res.status, json: res.json as Record<string, unknown> | undefined };
+}
