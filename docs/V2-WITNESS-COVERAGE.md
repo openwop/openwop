@@ -10,7 +10,7 @@ Every v2 core family now has a v2 normative home (RFC 0189). Many of its rules a
 
 - **Families (73 core):** 43 v2-witnessed, 27 v1-only, 3 unwitnessed. Of the 54 `witnessable-gated` families, 23 are v1-only; every unwitnessed family is `claims-check`.
 - **At v1 end-of-support:** the 27 v1-only families, and the 123 obligation units attributed to them, lose their only witness.
-- **Obligation units (883 in `spec/v2/core/`):** 550 (62%) sit in a section a major-2 scenario cites; 333 sit in 110 sections no major-2 scenario cites.
+- **Obligation units (884 in `spec/v2/core/`):** 550 (62%) sit in a section a major-2 scenario cites; 334 sit in 110 sections no major-2 scenario cites.
 - **Declaration links:** 0 core families declare `floorScenarios`; 1 declare `requirementIds`. The family-to-test link exists only in scenario code and citations, although `overview.md` §What a MUST means says every core MUST has an id in `requirements.json`.
 - **Scenarios:** 583 registered, 145 run at major 2. 33 major-2 citations name a v2 core section this script cannot match to a heading (see Citation gaps).
 
@@ -61,7 +61,7 @@ Every v2 core family now has a v2 normative home (RFC 0189). Many of its rules a
 | `replay` | witnessable-gated | **v2-witnessed** | 36 (19) | `v2-a2a-push-delivery`, `v2-approval-reject-disposition`, `v2-effect-seam-manifest`, `v2-effect-seam-no-refire` +8 | `conversationReplayDeterminism`, `feedback-fork-not-copied`, `replay-fanout-suppression`, `replay-side-effect-suppression` |
 | `eventLog` | claims-check | **v2-witnessed** | 35 (25) | `v2-era-2-append-vocabulary`, `v2-era-key`, `v2-era-stamp-universal`, `v2-fork-a-v1-run` +3 | `cross-engine-append-behavior`, `cross-engine-append-ordering`, `multi-region-idempotency` |
 | `packs` | claims-check | **v2-witnessed** | 35 (20) | `v2-manifest-ceiling-refused`, `v2-manifest-hatch-carried`, `v2-peer-dependency-declared`, `v2-registry-lifecycle` | `pack-registry-isolation` |
-| `webhooks` | witnessable-gated | **v2-witnessed** | 34 (26) | `inbound-credential-no-passthrough`, `v2-a2a-operation-map`, `v2-bound-id-kinds`, `v2-v1-signed-webhook-accepted` +10 | `webhook-negative`, `webhook-sig-algorithm`, `webhook-signed-delivery`, `webhook-tenant-isolation` |
+| `webhooks` | witnessable-gated | **v2-witnessed** | 35 (26) | `inbound-credential-no-passthrough`, `v2-a2a-operation-map`, `v2-bound-id-kinds`, `v2-v1-signed-webhook-accepted` +10 | `webhook-negative`, `webhook-sig-algorithm`, `webhook-signed-delivery`, `webhook-tenant-isolation` |
 | `idempotency` | witnessable-gated | **v2-witnessed** | 25 (20) | `v2-bound-id-kinds`, `v2-effect-identity-business-key`, `v2-idempotency-key-grammar`, `v2-secrets-run-witness` | `compensation-recovery`, `multi-region-idempotency-behavior`, `multi-region-idempotency`, `replay-llm-cache-key` +1 |
 | `multiAgent` | claims-check | **v2-witnessed** | 19 (0) | `context-budget-transcript-bound`, `context-summarization-replay`, `v2-run-fork-ancestry` | `agent-loop-iteration-monotonic`, `agent-loop-stateful-resume`, `agent-loop-version5-shape`, `agent-loop-workspace-snapshot` +11 |
 | `secrets` | witnessable-gated | **v2-witnessed** | 16 (16) | `v2-secret-canary-absent`, `v2-secrets-run-witness` | `envelope-reasoning-secret-redaction`, `secret-leakage-otel-attribute` |
@@ -132,7 +132,7 @@ Every v2 core family now has a v2 normative home (RFC 0189). Many of its rules a
 | `storage.md` | 19 | 8 (42%) | `fs`, `kvStorage`, `tableStorage`, `sql`, `nosql`, `vectorStore`, `searchIndex`, `blobStorage`, `cache` |
 | `tool-catalog.md` | 14 | 11 (79%) | `toolCatalog` |
 | `versioning.md` | 40 | 33 (83%) | – |
-| `webhooks.md` | 34 | 26 (76%) | `webhooks`, `triggerBridge` |
+| `webhooks.md` | 35 | 26 (74%) | `webhooks`, `triggerBridge` |
 | `workflow-chain-packs.md` | 5 | 1 (20%) | `workflowChainPacks` |
 
 ## Largest uncited sections
@@ -145,9 +145,9 @@ Sections with the most obligation units and no major-2 citation. A doc-level cit
 | `host-services.md` § `aiProviders` | aiProviders | 15 |
 | `events.md` § `envelopes` | envelopes | 13 |
 | `packs.md` § Front-end plugin packs | packs | 9 |
+| `webhooks.md` § Inbound triggers | webhooks | 9 |
 | `conformance.md` § Production profile | production | 8 |
 | `execution.md` § `selfHostedRunner` | selfHostedRunner | 8 |
-| `webhooks.md` § Inbound triggers | webhooks | 8 |
 | `host-services.md` § `httpClient` | httpClient | 7 |
 | `identity.md` § 1.5 `anonymousActor` | anonymousActor | 7 |
 | `interop.md` § MCP tasks and cancellation | shared | 7 |
@@ -410,9 +410,9 @@ node scripts/report-v2-witness-coverage.mjs --write  # regenerate this file
     }
   },
   "obligationUnits": {
-    "total": 883,
+    "total": 884,
     "inV2CitedSections": 550,
-    "inUncitedSections": 333,
+    "inUncitedSections": 334,
     "sectionsWithObligations": 268,
     "sectionsWithNoV2Citation": 110
   },
