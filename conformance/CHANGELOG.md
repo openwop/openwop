@@ -1,5 +1,15 @@
 # `@openwop/openwop-conformance` Changelog
 
+## [2.45.2] — unreleased — a run-failure code must be registered or a vendor code (no longer advisory)
+
+- **`errors.event-code-registered` is required** (#1698). The leg in `v2-error-registry` shipped ADVISORY in 2.43.1: an unregistered, non-vendor code on `run.failed`, `node.failed` or the snapshot's `error` recorded a partial witness naming the codes, while hosts remapped. That branch is removed, so such a code now fails the row, which names each `where=code`.
+  - **Evidence.** All three hosts' latest certified bundles record it as a clean `executed-pass` (2 assertions, no partial-witness detail), each verified under the key its host serves:
+    - the v2 reference host at 2.44.6 (witness `188a23d56886`);
+    - MyndHyve at 2.44.3 (`58da9407e616`);
+    - openwop-app at 2.44.5 (build `ab77c3aa`, `cb16716e1be6`).
+  - **Negative control.** A stub host whose failed run carries `totally_unregistered_code` passed the advisory leg and now fails it. A vendor code (`example.conformance_failure`) still passes.
+  - **Ids.** The title drops "(advisory in 2.43.1)". The per-`it` id is unchanged, since the slug is capped before those words.
+
 ## [2.45.1] — 2026-09-29 — the run-list legs stop walking once they find their runs, and no scenario skips every test at describe level
 
 - **No scenario file skips every test at describe level any more, and the guard is a hard rule** (patch; no requirement added or removed; the gates are identical, and only their placement moves).

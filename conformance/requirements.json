@@ -29780,7 +29780,7 @@
     {
       "id": "openwop.it.v2-error-registry.an-error-response-is-the-closed-envelope-with-a-registered-code-at-its-registere",
       "file": "v2-error-registry.test.ts",
-      "line": 72,
+      "line": 75,
       "title": "an error response is the closed envelope with a registered code at its registered status",
       "explicitId": "openwop.requirement.0171.error-registry.envelope",
       "citations": [
@@ -29799,7 +29799,7 @@
     {
       "id": "openwop.it.v2-error-registry.retry-timing-is-never-spelled-inside-details",
       "file": "v2-error-registry.test.ts",
-      "line": 84,
+      "line": 87,
       "title": "retry timing is never spelled inside details",
       "explicitId": "openwop.requirement.0171.error-registry.no-retry-details",
       "citations": [
@@ -29812,7 +29812,7 @@
     {
       "id": "openwop.it.v2-error-registry.a-429-rate-limited-response-carries-retry-after",
       "file": "v2-error-registry.test.ts",
-      "line": 92,
+      "line": 95,
       "title": "a 429 rate_limited response carries Retry-After",
       "explicitId": "openwop.requirement.0171.error-registry.retry-after",
       "citations": [
@@ -29829,8 +29829,8 @@
     {
       "id": "openwop.it.v2-error-registry.an-error-code-on-run-failed-node-failed-and-the-snapshot-is-registered-or-a-vend",
       "file": "v2-error-registry.test.ts",
-      "line": 110,
-      "title": "an error code on run.failed, node.failed and the snapshot is registered or a vendor code (advisory in 2.43.1)",
+      "line": 113,
+      "title": "an error code on run.failed, node.failed and the snapshot is registered or a vendor code",
       "explicitId": "openwop.requirement.errors.event-code-registered",
       "citations": [
         {
@@ -29840,7 +29840,7 @@
         },
         {
           "section": "spec/v2/core/errors.md §The registry",
-          "requirement": "every error code on run.failed, node.failed and the snapshot MUST be registered or a vendor code"
+          "requirement": "every error code on run.failed, node.failed and the snapshot MUST be registered or a vendor code (an org registered in spec/v2/declaration.json)"
         }
       ]
     },
