@@ -34,13 +34,14 @@
  */
 
 import { describe, it, expect } from 'vitest';
-import { seamAbsent, softSkip } from '../lib/soft-skip.js';
+import { seamAbsent } from '../lib/soft-skip.js';
 import { behaviorGate } from '../lib/behavior-gate.js';
 import {
   isTriggerBridgeProfileAdvertised,
   driveDelivery,
   DELIVERY_OUTCOMES,
   SUBSCRIPTION_STATES,
+  freshDedupKey,
   inboundSigningAdvertised,
   registerSignedWebhook,
   signedIngest,
@@ -80,34 +81,81 @@ function bareRunId(runId: string): string {
   return runId.includes('/') ? runId.slice(runId.lastIndexOf('/') + 1) : runId;
 }
 
+/** The seam witness path (primary when the host serves the seams). */
+async function dedupViaSeam(): Promise<undefined> {
+    // The dedupKey is MINTED PER EXERCISE, and that is load-bearing (2.37.0):
+    // §C-1's dedup window is a ≥24h floor, so a literal key collides with an
+    // earlier run the same day and convicts a conformant host. The repetition
+    // §C-1 is about happens INSIDE `driveDelivery`'s `scenario: 'dedup'`.
+    const dedupKey = freshDedupKey('queue');
+    const dedup = await driveDelivery({ scenario: 'dedup', dedupKey, source: 'queue' });
+    if (dedup === null) return seamAbsent('host advertises openwop-trigger-bridge but the delivery seam is unwired');
+    const dedupEvents = requireEvents(
+      await queryTestEvents(dedup.runId ?? '__dedup__', { type: 'trigger.delivery.attempted' }),
+      'trigger.delivery.attempted (dedup)',
+    );
+    const deliveredForKey = dedupEvents.filter((e) => e.payload.dedupKey === dedupKey && e.payload.outcome === 'delivered');
+    expect(deliveredForKey.length === 1, req(R_DEDUP, 'trigger-bridge.md §C-1', 'a repeated dedupKey MUST be effectively-once — EXACTLY one delivered attempt (not zero, not two)')).toBe(true);
+    for (const e of dedupEvents) {
+      expect(typeof e.payload.outcome === 'string' && DELIVERY_OUTCOMES.includes(e.payload.outcome as string), req(R_DEDUP, 'run-event-payloads.schema.json#triggerDeliveryAttempted', 'outcome MUST be delivered|retrying|dead-lettered')).toBe(true);
+      expectContentFree(R_DEDUP, e.payload, 'trigger.delivery.attempted');
+    }
+    noteObservation('seam path');
+    await resetTestSeam();
+  return undefined;
+}
+
+/** The seam witness path (primary when the host serves the seams). */
+async function deadLetterViaSeam(): Promise<undefined> {
+    const exhaust = await driveDelivery({ scenario: 'exhaust', source: 'webhook' });
+    if (exhaust === null) return seamAbsent('host advertises openwop-trigger-bridge but the delivery seam is unwired');
+    const exKey = exhaust.runId ?? '__exhaust__';
+    const exhaustEvents = requireEvents(await queryTestEvents(exKey, { type: 'trigger.delivery.attempted' }), 'trigger.delivery.attempted (exhaust)');
+    expect(exhaustEvents.length >= 1, req(R_DEAD_LETTER, 'trigger-bridge.md §C-2', 'an exhausted delivery MUST emit ≥1 trigger.delivery.attempted')).toBe(true);
+    const terminal = exhaustEvents.sort((a, b) => a.sequence - b.sequence)[exhaustEvents.length - 1]!;
+    expect(terminal.payload.outcome === 'dead-lettered', req(R_DEAD_LETTER, 'trigger-bridge.md §C-2', 'an exhausted retry policy MUST terminate in a dead-lettered delivery')).toBe(true);
+    const stateEvents = requireEvents(await queryTestEvents(exKey, { type: 'trigger.subscription.state.changed' }), 'trigger.subscription.state.changed (exhaust)');
+    expect(stateEvents.length >= 1, req(R_DEAD_LETTER, 'trigger-bridge.md §B', 'exhaustion MUST emit ≥1 trigger.subscription.state.changed')).toBe(true);
+    expect(stateEvents.some((e) => e.payload.toState === 'dead-lettered'), req(R_DEAD_LETTER, 'trigger-bridge.md §B', 'the subscription MUST transition to dead-lettered on exhaustion')).toBe(true);
+    for (const e of stateEvents) {
+      expect(typeof e.payload.toState === 'string' && SUBSCRIPTION_STATES.includes(e.payload.toState as string), req(R_DEAD_LETTER, 'trigger-bridge.md §B', 'toState MUST be in the four-state vocabulary')).toBe(true);
+    }
+    noteObservation('seam path');
+    await resetTestSeam();
+  return undefined;
+}
+
+/** The seam witness path (primary when the host serves the seams). */
+async function causationViaSeam(): Promise<undefined> {
+    const delivered = await driveDelivery({ scenario: 'deliver', source: 'schedule' });
+    expect(delivered !== null && typeof delivered.runId === 'string' && (delivered.runId as string).length > 0, req(R_CAUSATION, 'trigger-bridge.md §C', 'a successful delivery MUST create a run')).toBe(true);
+    const deliveredRunId = delivered!.runId as string;
+    const attemptEvents = requireEvents(await queryTestEvents(deliveredRunId, { type: 'trigger.delivery.attempted' }), 'trigger.delivery.attempted (deliver)');
+    const deliveredEvent = attemptEvents.find((e) => e.payload.outcome === 'delivered');
+    expect(deliveredEvent !== undefined, req(R_CAUSATION, 'trigger-bridge.md §C-1', 'a successful delivery MUST emit a trigger.delivery.attempted{outcome:delivered}')).toBe(true);
+    const runStartedEvents = requireEvents(await queryTestEvents(deliveredRunId, { type: 'run.started' }), 'run.started (deliver)');
+    expect(runStartedEvents.length >= 1, req(R_CAUSATION, 'trigger-bridge.md §C', 'a delivered run MUST emit run.started')).toBe(true);
+    const runStarted = runStartedEvents.sort((a, b) => a.sequence - b.sequence)[0]!;
+    expect(
+      typeof runStarted.causationId === 'string' && (runStarted.causationId as string).length > 0 && runStarted.causationId === deliveredEvent!.eventId,
+      req(R_CAUSATION, 'trigger-bridge.md §C / RFC 0040', 'run.started.causationId MUST EQUAL the delivery id (the trigger.delivery.attempted{delivered} eventId) — resolvable via /ancestry'),
+    ).toBe(true);
+    noteObservation('seam path');
+    await resetTestSeam();
+  return undefined;
+}
+
 describe('trigger-bridge-delivery (RFC 0083 §C)', () => {
   it('de-dups by dedupKey: a repeated delivery is effectively-once', async () => {
     if (!behaviorGate('openwop-trigger-bridge', await isTriggerBridgeProfileAdvertised())) return;
     const path = await witnessPath();
     if (path === null) return seamAbsent(NO_PATH);
 
-    if (path === 'seam') {
-      const dedup = await driveDelivery({ scenario: 'dedup', dedupKey: 'conformance-dedup-key', source: 'queue' });
-      if (dedup === null) return seamAbsent('host advertises openwop-trigger-bridge but the delivery seam is unwired');
-      const dedupEvents = requireEvents(
-        await queryTestEvents(dedup.runId ?? '__dedup__', { type: 'trigger.delivery.attempted' }),
-        'trigger.delivery.attempted (dedup)',
-      );
-      const deliveredForKey = dedupEvents.filter((e) => e.payload.dedupKey === 'conformance-dedup-key' && e.payload.outcome === 'delivered');
-      expect(deliveredForKey.length === 1, req(R_DEDUP, 'trigger-bridge.md §C-1', 'a repeated dedupKey MUST be effectively-once — EXACTLY one delivered attempt (not zero, not two)')).toBe(true);
-      for (const e of dedupEvents) {
-        expect(typeof e.payload.outcome === 'string' && DELIVERY_OUTCOMES.includes(e.payload.outcome as string), req(R_DEDUP, 'run-event-payloads.schema.json#triggerDeliveryAttempted', 'outcome MUST be delivered|retrying|dead-lettered')).toBe(true);
-        expectContentFree(R_DEDUP, e.payload, 'trigger.delivery.attempted');
-      }
-      noteObservation('seam path');
-      await resetTestSeam();
-      return;
-    }
+    if (path === 'seam') return dedupViaSeam();
 
     // Normative-surface path (RFC 0230 §C Identity + §D).
     const sub = await registerSignedWebhook('none');
-    expect('reason' in sub ? sub.reason : null, req(R_DEDUP, 'trigger-bridge.md §F.6', 'an inboundSigning host MUST return the §B binding on webhook registration')).toBeNull();
-    if ('reason' in sub) return;
+    if ('reason' in sub) throw new Error(req(R_DEDUP, 'trigger-bridge.md §F.6', `an inboundSigning host MUST return the §B binding on webhook registration: ${sub.reason}`));
     const body = JSON.stringify({ conformance: 'dedup' });
     const webhookId = freshWebhookId();
     const first = await signedIngest(sub, body, { webhookId });
@@ -126,29 +174,11 @@ describe('trigger-bridge-delivery (RFC 0083 §C)', () => {
     const path = await witnessPath();
     if (path === null) return seamAbsent(NO_PATH);
 
-    if (path === 'seam') {
-      const exhaust = await driveDelivery({ scenario: 'exhaust', source: 'webhook' });
-      if (exhaust === null) return seamAbsent('host advertises openwop-trigger-bridge but the delivery seam is unwired');
-      const exKey = exhaust.runId ?? '__exhaust__';
-      const exhaustEvents = requireEvents(await queryTestEvents(exKey, { type: 'trigger.delivery.attempted' }), 'trigger.delivery.attempted (exhaust)');
-      expect(exhaustEvents.length >= 1, req(R_DEAD_LETTER, 'trigger-bridge.md §C-2', 'an exhausted delivery MUST emit ≥1 trigger.delivery.attempted')).toBe(true);
-      const terminal = exhaustEvents.sort((a, b) => a.sequence - b.sequence)[exhaustEvents.length - 1]!;
-      expect(terminal.payload.outcome === 'dead-lettered', req(R_DEAD_LETTER, 'trigger-bridge.md §C-2', 'an exhausted retry policy MUST terminate in a dead-lettered delivery')).toBe(true);
-      const stateEvents = requireEvents(await queryTestEvents(exKey, { type: 'trigger.subscription.state.changed' }), 'trigger.subscription.state.changed (exhaust)');
-      expect(stateEvents.length >= 1, req(R_DEAD_LETTER, 'trigger-bridge.md §B', 'exhaustion MUST emit ≥1 trigger.subscription.state.changed')).toBe(true);
-      expect(stateEvents.some((e) => e.payload.toState === 'dead-lettered'), req(R_DEAD_LETTER, 'trigger-bridge.md §B', 'the subscription MUST transition to dead-lettered on exhaustion')).toBe(true);
-      for (const e of stateEvents) {
-        expect(typeof e.payload.toState === 'string' && SUBSCRIPTION_STATES.includes(e.payload.toState as string), req(R_DEAD_LETTER, 'trigger-bridge.md §B', 'toState MUST be in the four-state vocabulary')).toBe(true);
-      }
-      noteObservation('seam path');
-      await resetTestSeam();
-      return;
-    }
+    if (path === 'seam') return deadLetterViaSeam();
 
     // Normative-surface path (RFC 0230 §C Verification + §C.1).
     const sub = await registerSignedWebhook('required');
-    expect('reason' in sub ? sub.reason : null, req(R_DEAD_LETTER, 'trigger-bridge.md §F.6', 'an inboundSigning host MUST return the §B binding on webhook registration')).toBeNull();
-    if ('reason' in sub) return;
+    if ('reason' in sub) throw new Error(req(R_DEAD_LETTER, 'trigger-bridge.md §F.6', `an inboundSigning host MUST return the §B binding on webhook registration: ${sub.reason}`));
     const body = JSON.stringify({ conformance: 'dead-letter' });
     const bad = await signedIngest(sub, body, { signature: 'v1,AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA=' });
     expect(bad.status, req(R_DEAD_LETTER, 'trigger-bridge.md §F.6', `a bad signature under required verification MUST answer 401 (got ${bad.status})`)).toBe(401);
@@ -166,34 +196,16 @@ describe('trigger-bridge-delivery (RFC 0083 §C)', () => {
     const path = await witnessPath();
     if (path === null) return seamAbsent(NO_PATH);
 
-    if (path === 'seam') {
-      const delivered = await driveDelivery({ scenario: 'deliver', source: 'schedule' });
-      expect(delivered !== null && typeof delivered.runId === 'string' && (delivered.runId as string).length > 0, req(R_CAUSATION, 'trigger-bridge.md §C', 'a successful delivery MUST create a run')).toBe(true);
-      const deliveredRunId = delivered!.runId as string;
-      const attemptEvents = requireEvents(await queryTestEvents(deliveredRunId, { type: 'trigger.delivery.attempted' }), 'trigger.delivery.attempted (deliver)');
-      const deliveredEvent = attemptEvents.find((e) => e.payload.outcome === 'delivered');
-      expect(deliveredEvent !== undefined, req(R_CAUSATION, 'trigger-bridge.md §C-1', 'a successful delivery MUST emit a trigger.delivery.attempted{outcome:delivered}')).toBe(true);
-      const runStartedEvents = requireEvents(await queryTestEvents(deliveredRunId, { type: 'run.started' }), 'run.started (deliver)');
-      expect(runStartedEvents.length >= 1, req(R_CAUSATION, 'trigger-bridge.md §C', 'a delivered run MUST emit run.started')).toBe(true);
-      const runStarted = runStartedEvents.sort((a, b) => a.sequence - b.sequence)[0]!;
-      expect(
-        typeof runStarted.causationId === 'string' && (runStarted.causationId as string).length > 0 && runStarted.causationId === deliveredEvent!.eventId,
-        req(R_CAUSATION, 'trigger-bridge.md §C / RFC 0040', 'run.started.causationId MUST EQUAL the delivery id (the trigger.delivery.attempted{delivered} eventId) — resolvable via /ancestry'),
-      ).toBe(true);
-      noteObservation('seam path');
-      await resetTestSeam();
-      return;
-    }
+    if (path === 'seam') return causationViaSeam();
 
     // Normative-surface path: a signed delivery, then the run's own event log.
     const sub = await registerSignedWebhook('none');
-    expect('reason' in sub ? sub.reason : null, req(R_CAUSATION, 'trigger-bridge.md §F.6', 'an inboundSigning host MUST return the §B binding on webhook registration')).toBeNull();
-    if ('reason' in sub) return;
+    if ('reason' in sub) throw new Error(req(R_CAUSATION, 'trigger-bridge.md §F.6', `an inboundSigning host MUST return the §B binding on webhook registration: ${sub.reason}`));
     const res = await signedIngest(sub, JSON.stringify({ conformance: 'causation' }));
     expect(res.status, req(R_CAUSATION, 'trigger-bridge.md §F.6', `a signed delivery MUST answer 202 (got ${res.status})`)).toBe(202);
     const runId = res.json?.runId;
-    if (typeof runId !== 'string' || runId.length === 0) return softSkip('blocked', 'the 202 carried no runId to read the run from');
-    const poll = await driver.get(`/v1/runs/${encodeURIComponent(bareRunId(runId))}/events/poll`);
+    expect(typeof runId === 'string' && runId.length > 0, req(R_CAUSATION, 'trigger-bridge.md §F.6', 'a 202 MUST carry the started runId')).toBe(true);
+    const poll = await driver.get(`/v1/runs/${encodeURIComponent(bareRunId(String(runId)))}/events/poll`);
     const events = ((poll.json as { events?: Array<Record<string, unknown>> } | undefined)?.events ?? []);
     const started = events.find((e) => e.type === 'run.started');
     expect(started !== undefined, req(R_CAUSATION, 'trigger-bridge.md §C', `a delivered run MUST emit run.started (poll answered ${poll.status}; saw ${events.map((e) => e.type).join(',') || 'none'})`)).toBe(true);
