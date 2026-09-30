@@ -15,7 +15,7 @@
   },
   "waivers": {
     "source": "RFCS/*.md, RFCS/registers/*",
-    "bootstrapWaiversExercised": 107,
+    "bootstrapWaiversExercised": 108,
     "rfcs": [
       "0042",
       "0043",
@@ -123,11 +123,12 @@
       "0226",
       "0227",
       "0228",
-      "0229"
+      "0229",
+      "0230"
     ],
     "retrospectiveReviewsCompleted": 0,
     "outcomes": {
-      "not-reviewed": 107
+      "not-reviewed": 108
     }
   },
   "audit": {
@@ -164,7 +165,7 @@
   },
   "risks": {
     "source": "RFCS/registers/*.risks.md + RFCS/*.risks.md (RFC 0166 tokens)",
-    "rowsScanned": 475,
+    "rowsScanned": 477,
     "openCriticalOrHigh": [
       {
         "rfc": "0058",
@@ -935,6 +936,13 @@
         "title": "A host implements §A.2 loosely: its resolver chain lets a `run:` ref fall through to a stored or environment secret, recreating the oracle this RFC removes.",
         "score": "High",
         "status": "`open` — mitigated once the §F.3 leg ships with its negative control."
+      },
+      {
+        "rfc": "0230",
+        "id": "R1",
+        "title": "An unauthenticated (signature-only) `ingestUrl` is abused to start runs.",
+        "score": "High",
+        "status": "`open` — reviewed at the RFC 0156 §B retrospective."
       }
     ],
     "programOpenCriticalOrHigh": [
@@ -1357,6 +1365,13 @@
         "title": "A host implements §A.2 loosely: its resolver chain lets a `run:` ref fall through to a stored or environment secret, recreating the oracle this RFC removes.",
         "score": "High",
         "status": "`open` — mitigated once the §F.3 leg ships with its negative control."
+      },
+      {
+        "rfc": "0230",
+        "id": "R1",
+        "title": "An unauthenticated (signature-only) `ingestUrl` is abused to start runs.",
+        "score": "High",
+        "status": "`open` — reviewed at the RFC 0156 §B retrospective."
       }
     ],
     "transferred": [

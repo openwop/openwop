@@ -6,7 +6,7 @@
 
 RFC 0156 §B: RFCs affecting auth, identity, tenant isolation, secrets, packs, execution sandboxing, idempotency, replay, external effects, conformance/certification, or governance **MUST** receive a retrospective **cross-organization** review. Every RFC below was accepted with its public comment window shortened, either under the bootstrap waiver or by explicit steward override of RFC 0147 §A.6. Each such acceptance is **provisional** until a reviewer from an organization other than the steward's records an outcome.
 
-This packet is for that reviewer. **107 RFCs are listed; 107 have no discharging outcome.** The steward, the steward's sessions, and steward-affiliated hosts (MyndHyve is tier-2, not independent) cannot supply the review. Recording one of their reviews as `ratified` is the substitution §B's last clause forbids.
+This packet is for that reviewer. **108 RFCs are listed; 108 have no discharging outcome.** The steward, the steward's sessions, and steward-affiliated hosts (MyndHyve is tier-2, not independent) cannot supply the review. Recording one of their reviews as `ratified` is the substitution §B's last clause forbids.
 
 ## How to review one RFC
 
@@ -21,7 +21,7 @@ This packet is for that reviewer. **107 RFCs are listed; 107 have no discharging
 
 Grouping below is a reading aid only: it assigns each RFC to the risk class its waiver recorded, else to the first §B area its title names. It is not a scope assessment.
 
-## Identity and authorization (13)
+## Identity and authorization (14)
 
 | RFC | Title | Status | Waiver | Evidence tier | Outcome |
 | --- | --- | --- | --- | --- | --- |
@@ -38,6 +38,7 @@ Grouping below is a reading aid only: it assigns each RFC to the risk class its 
 | [0210](../RFCS/0210-lane-revocation-rule-is-measured.md) | a lane's revocation rule is measured, and a host that only honours `exp` says so | `Accepted` | steward override of RFC 0147 §A.6 | tier-1 — openwop-app production, witnessed through RFC 0216's colocated-companion pairing | `not-reviewed` |
 | [0213](../RFCS/0213-three-unstated-v2-outcomes.md) | three outcomes the v2 core never stated — a resume cursor past the log, the loser of a same-key race, and a r… | `Accepted` | steward override of RFC 0147 §A.6 | tier-1 — the v2 reference host | `not-reviewed` |
 | [0214](../RFCS/0214-a2a-push-credential-is-a-destination-credential.md) | an A2A push credential is a destination credential, and a push is an egress like any webhook | `Accepted` | steward override of RFC 0147 §A.6 | tier-1 — the v2 reference host | `not-reviewed` |
+| [0230](../RFCS/0230-inbound-webhook-ingest-contract.md) | inbound webhook ingest contract | `Active` | steward override of RFC 0147 §A.6 | not declared (predates RFC 0174 §B.1, or not yet Accepted) | `not-reviewed` |
 
 ## Tenant isolation (5)
 

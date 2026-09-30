@@ -12,9 +12,9 @@ Source: `MAINTAINERS.md`. **1 maintainer(s)** across **1 organization(s)**; cros
 
 ## Bootstrap waivers
 
-Source: `RFCS/*.md, RFCS/registers/*`. **107** RFC(s) reached `Accepted` under a waived comment window (0042, 0043, 0050, 0065, 0066, 0067, 0068, 0072, 0076, 0077, 0078, 0079, 0080, 0083, 0084, 0085, 0090, 0091, 0092, 0093, 0094, 0101, 0103, 0105, 0106, 0108, 0109, 0110, 0121, 0124, 0147, 0148, 0149, 0150, 0151, 0152, 0153, 0154, 0155, 0156, 0157, 0163, 0164, 0165, 0166, 0167, 0168, 0169, 0170, 0171, 0172, 0173, 0174, 0175, 0176, 0177, 0178, 0179, 0180, 0181, 0182, 0183, 0184, 0186, 0187, 0188, 0189, 0190, 0191, 0192, 0193, 0194, 0195, 0196, 0197, 0198, 0199, 0200, 0201, 0202, 0203, 0204, 0205, 0206, 0207, 0208, 0209, 0210, 0211, 0212, 0213, 0214, 0215, 0216, 0217, 0218, 0219, 0220, 0221, 0222, 0223, 0224, 0225, 0226, 0227, 0228, 0229); **0** `ratified` retrospective review(s) — the only outcome that discharges RFC 0156 §B.
+Source: `RFCS/*.md, RFCS/registers/*`. **108** RFC(s) reached `Accepted` under a waived comment window (0042, 0043, 0050, 0065, 0066, 0067, 0068, 0072, 0076, 0077, 0078, 0079, 0080, 0083, 0084, 0085, 0090, 0091, 0092, 0093, 0094, 0101, 0103, 0105, 0106, 0108, 0109, 0110, 0121, 0124, 0147, 0148, 0149, 0150, 0151, 0152, 0153, 0154, 0155, 0156, 0157, 0163, 0164, 0165, 0166, 0167, 0168, 0169, 0170, 0171, 0172, 0173, 0174, 0175, 0176, 0177, 0178, 0179, 0180, 0181, 0182, 0183, 0184, 0186, 0187, 0188, 0189, 0190, 0191, 0192, 0193, 0194, 0195, 0196, 0197, 0198, 0199, 0200, 0201, 0202, 0203, 0204, 0205, 0206, 0207, 0208, 0209, 0210, 0211, 0212, 0213, 0214, 0215, 0216, 0217, 0218, 0219, 0220, 0221, 0222, 0223, 0224, 0225, 0226, 0227, 0228, 0229, 0230); **0** `ratified` retrospective review(s) — the only outcome that discharges RFC 0156 §B.
 
-Per-RFC outcomes (`docs/WAIVER-RETROSPECTIVE-REGISTER.md`): `not-reviewed` 107. `not-reviewed` is not one of §B's four outcomes — it records the absence of a review, so that silence is stated rather than inferred. §B review is **cross-organization**; with one maintainer listed and the non-steward tripwire unfired, a non-zero open count is the honest state rather than a backlog.
+Per-RFC outcomes (`docs/WAIVER-RETROSPECTIVE-REGISTER.md`): `not-reviewed` 108. `not-reviewed` is not one of §B's four outcomes — it records the absence of a review, so that silence is stated rather than inferred. §B review is **cross-organization**; with one maintainer listed and the non-steward tripwire unfired, a non-zero open count is the honest state rather than a backlog.
 
 ## Independent security audit
 
@@ -44,7 +44,7 @@ Source: `conformance/package.json, CHANGELOG.md`. Conformance suite **2.45.3**; 
 
 ## Open Critical / High program risks
 
-Source: `RFCS/registers/*.risks.md + RFCS/*.risks.md (RFC 0166 tokens)` (475 rows scanned). **110** open across all registers, of which **60** belong to the RFC 0147 program (RFCs ≥ 0147) — the set RFC 0156's claims are gated on. Older registers were never dispositioned; `Open` there means "the mitigation is the normative MUST in the row", not an unaddressed risk:
+Source: `RFCS/registers/*.risks.md + RFCS/*.risks.md (RFC 0166 tokens)` (477 rows scanned). **111** open across all registers, of which **61** belong to the RFC 0147 program (RFCs ≥ 0147) — the set RFC 0156's claims are gated on. Older registers were never dispositioned; `Open` there means "the mitigation is the normative MUST in the row", not an unaddressed risk:
 
 Of those, **5** are explicitly **transferred** to a named tracked surface (0147/R2, 0147/R3, 0147/R12, 0147/R14, 0219/R1) — real and open, but dispositioned. A register sweep turns on "Closed **or transferred**", so both are reported; an open row and a transferred row are not the same state and are not reported as one.
 
@@ -160,6 +160,7 @@ Of those, **5** are explicitly **transferred** to a named tracked surface (0147/
 | 0177 | R1 — The re-publish wave (282 versions) is not done before a host cuts and a v2 host has zero installable packs | High | `open` |
 | 0177 | R2 — A mirror or vendor registry installs a `<2.0.0` pack on a v2 host | High | `open` |
 | 0229 | R1 — A host implements §A.2 loosely: its resolver chain lets a `run:` ref fall through to a stored or environment secret, recreating the oracle this RFC removes. | High | `open` — mitigated once the §F.3 leg ships with its negative control. |
+| 0230 | R1 — An unauthenticated (signature-only) `ingestUrl` is abused to start runs. | High | `open` — reviewed at the RFC 0156 §B retrospective. |
 
 ## Permitted claims (RFC 0147 §A)
 

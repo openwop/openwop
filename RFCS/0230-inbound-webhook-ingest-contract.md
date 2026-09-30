@@ -4,10 +4,10 @@
 | ----------------- | ----- |
 | **RFC**           | 0230 |
 | **Title**         | Inbound webhook ingest contract |
-| **Status**        | `Draft` |
+| **Status**        | `Active` |
 | **Author(s)**     | openwop-app steward session (on behalf of the maintainer) |
 | **Created**       | 2026-09-30 |
-| **Updated**       | 2026-09-30 |
+| **Updated**       | 2026-09-30 — **`Draft → Active` by STEWARD OVERRIDE of RFC 0147 §A.6** (comment window waived, not run; register row `not-reviewed`). §A.6 applies on four counts: idempotency (`webhook-id` dedup), external effects (an ingest starts a run), authentication (the signature replaces an OpenWOP credential on `ingestUrl`) and a certification floor's contract (`openwop.floor.trigger-bridge-delivery`). The maintainer chose the override explicitly after that finding and the three open security questions were put to them. The evidence gate is not waived: `Accepted` still needs a host passing the §Conformance path in strict mode on a production cut, and the RFC 0156 §B review is owed. |
 | **Affects**       | `spec/v1/trigger-bridge.md` §F.2 / §F.4; `spec/v2/core/webhooks.md` §Inbound triggers; `schemas/capabilities.schema.json` (`triggerBridge.ingestion`); `schemas/v2/…` capability mirror; conformance `trigger-bridge-delivery.test.ts` (public path) |
 | **Compatibility** | `additive` per `COMPATIBILITY.md`: every rule binds only a host that advertises the new `inboundSigning` facet |
 | **Supersedes**    | — |
@@ -121,9 +121,19 @@ The run-less terminal events (the dead-lettered `trigger.delivery.attempted`, `t
 
 ## Unresolved questions
 
+*Decided at the `Active` flip. See §Decisions.*
+
 1. Should `form` ingest adopt the same signing? This RFC leaves `form` alone because a browser form cannot sign.
 2. Is 300 s the right skew bound? It is Standard Webhooks' recommended tolerance; RFC 0201's outbound rule uses ±5 min.
 3. Should `401` for a verification failure instead be `202` (accepted, dead-lettered), so the sender cannot probe signatures? `401` is chosen because the sender is the secret holder and a silent accept hides misconfiguration.
+
+## Decisions (2026-09-30, at the `Active` flip)
+
+Each question is decided per the RFC's own lean. Each stays open to the RFC 0156 §B review.
+
+1. **`form` signing: not in scope.** `form` ingest is unchanged. A browser-submitted form cannot hold the secret, so signing it would be decorative; `form-origin` verification (RFC 0099) remains its authenticity check.
+2. **Skew bound: 300 seconds.** This is Standard Webhooks' recommended tolerance and matches the ±5 minute window `webhooks.md` already uses outbound. A tighter bound would convict hosts with ordinary clock drift.
+3. **Bad signature under `required`: `401 signature_invalid`, and the delivery is dead-lettered.** Both happen; they are not alternatives. The sender is the secret holder, so a visible refusal surfaces a misconfiguration that a silent `202` would hide. The §F.2 dead-letter still records the attempt. Signature probing is bounded by the secret's entropy, not by hiding the status.
 
 ## Implementation notes (non-normative)
 
@@ -132,6 +142,7 @@ The run-less terminal events (the dead-lettered `trigger.delivery.attempted`, `t
 
 ## Acceptance criteria
 
+- [x] `Active` (2026-09-30): comment window waived by steward override of RFC 0147 §A.6 (see Updated). The §B–§D contract, the capability facet (v1 + v2) and the `trigger-bridge.md` §F.6 / v2 `webhooks.md` text land together.
 - [ ] `trigger-bridge.md` §F.2 / §F.4 and v2 `webhooks.md` §Inbound triggers text merged.
 - [ ] `capabilities` schemas (v1 and v2) carry `ingestion.inboundSigning`.
 - [ ] `trigger-bridge-delivery.test.ts` gains the normative-surface path, with dedup and run-less-event content-freeness split into their own requirement ids and kept in the floor.
