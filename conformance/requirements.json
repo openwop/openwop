@@ -3,10 +3,10 @@
   "generatedFrom": "src/scenarios/*.test.ts",
   "counts": {
     "files": 661,
-    "tests": 2531,
-    "withStableId": 2531,
+    "tests": 2534,
+    "withStableId": 2534,
     "interpolatedTitles": 0,
-    "explicitIds": 2408
+    "explicitIds": 2410
   },
   "records": [
     {
@@ -26309,11 +26309,11 @@
       ]
     },
     {
-      "id": "openwop.it.trigger-bridge-delivery.de-dups-by-dedupkey-retries-to-dead-letter-and-links-delivery-run-causation",
+      "id": "openwop.it.trigger-bridge-delivery.de-dups-by-dedupkey-a-repeated-delivery-is-effectively-once",
       "file": "trigger-bridge-delivery.test.ts",
-      "line": 55,
-      "title": "de-dups by dedupKey, retries to dead-letter, and links delivery→run causation",
-      "explicitId": "openwop.it.trigger-bridge-delivery.de-dups-by-dedupkey-retries-to-dead-letter-and-links-delivery-run-causation",
+      "line": 84,
+      "title": "de-dups by dedupKey: a repeated delivery is effectively-once",
+      "explicitId": "openwop.requirement.0083.trigger-delivery.dedup",
       "citations": [
         {
           "section": "trigger-bridge.md §C-1",
@@ -26324,9 +26324,40 @@
           "requirement": "outcome MUST be delivered|retrying|dead-lettered"
         },
         {
-          "section": "trigger-bridge.md §C-2",
-          "requirement": "the exhaust scenario MUST be wired when the delivery seam is"
+          "section": "trigger-bridge.md §F.6",
+          "requirement": "an inboundSigning host MUST return the §B binding on webhook registration"
         },
+        {
+          "section": "trigger-bridge.md §F.6",
+          "requirement": null,
+          "interpolated": true
+        },
+        {
+          "section": "trigger-bridge.md §F.6",
+          "requirement": "a 202 MUST carry the started runId"
+        },
+        {
+          "section": "trigger-bridge.md §F.6 / §C-1",
+          "requirement": null,
+          "interpolated": true
+        },
+        {
+          "section": "trigger-bridge.md §F.6",
+          "requirement": "the dedup no-op MUST say outcome \"duplicate\""
+        },
+        {
+          "section": "trigger-bridge.md §F.4",
+          "requirement": "a dedup no-op MUST return the PRIOR runId"
+        }
+      ]
+    },
+    {
+      "id": "openwop.it.trigger-bridge-delivery.dead-letters-an-exhausted-or-refused-delivery-without-starting-a-run",
+      "file": "trigger-bridge-delivery.test.ts",
+      "line": 124,
+      "title": "dead-letters an exhausted or refused delivery without starting a run",
+      "explicitId": "openwop.requirement.0083.trigger-delivery.dead-letter",
+      "citations": [
         {
           "section": "trigger-bridge.md §C-2",
           "requirement": "an exhausted delivery MUST emit ≥1 trigger.delivery.attempted"
@@ -26348,6 +26379,38 @@
           "requirement": "toState MUST be in the four-state vocabulary"
         },
         {
+          "section": "trigger-bridge.md §F.6",
+          "requirement": "an inboundSigning host MUST return the §B binding on webhook registration"
+        },
+        {
+          "section": "trigger-bridge.md §F.6",
+          "requirement": null,
+          "interpolated": true
+        },
+        {
+          "section": "trigger-bridge.md §F.2",
+          "requirement": "a required-verification failure MUST NOT start a run"
+        },
+        {
+          "section": "trigger-bridge.md §F.6 (RFC 0230 §C.1)",
+          "requirement": null,
+          "interpolated": true
+        },
+        {
+          "section": "trigger-bridge.md §F.6 (RFC 0230 §C.1)",
+          "requirement": null,
+          "interpolated": true
+        }
+      ]
+    },
+    {
+      "id": "openwop.it.trigger-bridge-delivery.links-delivery-run-causation-on-run-started",
+      "file": "trigger-bridge-delivery.test.ts",
+      "line": 164,
+      "title": "links delivery→run causation on run.started",
+      "explicitId": "openwop.requirement.0083.trigger-delivery.causation",
+      "citations": [
+        {
           "section": "trigger-bridge.md §C",
           "requirement": "a successful delivery MUST create a run"
         },
@@ -26362,8 +26425,38 @@
         {
           "section": "trigger-bridge.md §C / RFC 0040",
           "requirement": "run.started.causationId MUST EQUAL the delivery id (the trigger.delivery.attempted{delivered} eventId) — resolvable via /ancestry"
+        },
+        {
+          "section": "trigger-bridge.md §F.6",
+          "requirement": "an inboundSigning host MUST return the §B binding on webhook registration"
+        },
+        {
+          "section": "trigger-bridge.md §F.6",
+          "requirement": null,
+          "interpolated": true
+        },
+        {
+          "section": "trigger-bridge.md §C",
+          "requirement": null,
+          "interpolated": true
+        },
+        {
+          "section": "trigger-bridge.md §C / RFC 0040",
+          "requirement": "run.started MUST carry the delivery id as causationId"
+        },
+        {
+          "section": "trigger-bridge.md §C / RFC 0040",
+          "requirement": "run.started.causationId MUST EQUAL the delivered attempt event id"
         }
       ]
+    },
+    {
+      "id": "openwop.it.trigger-bridge-delivery.keeps-the-run-less-trigger-events-content-free",
+      "file": "trigger-bridge-delivery.test.ts",
+      "line": 210,
+      "title": "keeps the run-less trigger events content-free",
+      "explicitId": null,
+      "citations": []
     },
     {
       "id": "openwop.it.trigger-bridge-shape.a-conforming-subscription-validates",

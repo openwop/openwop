@@ -3,6 +3,19 @@
 ## [2.45.3] — unreleased — RFC 0229 (Active): a production host can witness secret resolution without an oracle; v2 tenant-isolation witnesses for storage, fs, memory, workspace, queues and secrets
 
 - **The 2.45.3 cycle opens.** RFC 0229's gap register changes the packed `spec/v1/gaps.json`.
+- **`trigger-bridge-delivery`: a normative-surface witness path (RFC 0230), and one requirement per leg.**
+  - **Split.** The single combined `it` becomes four, each with its own requirement id: `openwop.requirement.0083.trigger-delivery.{dedup,dead-letter,causation,runless-content-free}`. The old per-`it` id aliases to the dedup leg.
+  - **Seam path unchanged.** It stays the primary witness whenever the host serves the seams.
+  - **Normative-surface path.** When the seams are absent and the host advertises `triggerBridge.ingestion.inboundSigning: ["standard-webhooks-1"]`, legs 1–3 run it. The suite registers a webhook subscription, then POSTs Standard-Webhooks-signed bodies to its `ingestUrl` with no OpenWOP credential:
+    - dedup: 202, then `200 duplicate` with the same `runId`;
+    - dead-letter: a bad signature gets 401 with no run, the subscription stays `active` (RFC 0230 §C.1), and a signed post then gets 202;
+    - causation: `run.started.causationId` via the run's own event poll.
+  - **Run-less content-freeness** stays seam-only, since those events are on no run's log. It **stays in the floor**, which never narrows: a seam-free host records one honest red row instead of three.
+  - **Proof.** Measured on openwop-app with the RFC 0230 route on and the seams off: legs 1–3 pass in strict mode on the new path. Sabotaged host builds each fail only their own leg:
+    - a duplicate `webhook-id` starting a new run fails dedup;
+    - a bad signature accepted fails dead-letter;
+    - a refused post dead-lettering the subscription fails dead-letter;
+    - a missing `causationId` fails causation.
 - **RFC 0229 `Active`** (the window is waived by steward override of RFC 0147 §A.6). Two new scenarios, `secrets-run-witness` (major 1) and `v2-secrets-run-witness` (major 2), share `lib/run-secrets-witness.ts`. Each draws a fresh 64-character value `C` per run, supplies it as `createRun.runSecrets` under `run:openwop-witness`, and runs the fixture `openwop-secrets-run-witness`. Four rows, the same ids at both majors:
   - `openwop.requirement.secrets.run-witness-resolves`: `matched: true` for `C`, and `false` when `expectedSha256` names another value;
   - `openwop.requirement.secrets.run-witness-redacted`: `C` is absent from the create answer, snapshot, polled and `debug`-mode events, the run list and the debug bundle where served. The scan reads raw text and covers every encoding RFC 0229 §F lists. It also covers the digest, wherever the suite did not send that digest itself;
