@@ -131,8 +131,6 @@ Defects outside the spec:
       `422 capability_not_provided` without `agents.evalSuite`; the eval scenarios are major 1 only.
       **Unverified:** openwop-app appears to accept `mode` and `evalSuiteRef` with no rejection.
       That was read from source, not run. Probe it before filing an issue.
-- [ ] **Unchecked:** whether app.openwop.dev's deployed revision carries openwop-app #4238 (`404`
-      on an unadvertised operation at major 2). The source is fixed.
 - [ ] **Two maintainer decisions from the homing work.** `memoryScopeIsolation: "isolated"` is in
       v1 prose and no schema (recorded in `spec/v1/gaps.json`). `subWorkflow`'s child→parent link
       is observable only where `getRunAncestry` is served. Adding either to v2 needs an RFC.
