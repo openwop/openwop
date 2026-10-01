@@ -1,5 +1,12 @@
 # `@openwop/openwop-conformance` Changelog
 
+## [2.45.5] — unreleased — a prefix floor row is written only for a claimed profile
+
+- **The 2.45.5 cycle opens.** A runner change alters the packed content.
+- **Fix: an unclaimed prefix floor no longer blocks a major-1 bundle.** The runner wrote `openwop.floor.any.interrupt-` for every floor in the v1 table. On a major-1 host that does not claim `openwop-interrupts`, no `interrupt-*` file passes, so the row was `blocked`, and a v3 bundle with any `blocked` row certifies nothing (RFC 0168 §E.1). The row is now written only when the profile is claimed, as the any-of rows have been since 2.45.4. A claimed profile is unchanged.
+  - **Who is affected:** a major-1 host that cuts a v3 bundle without claiming `openwop-interrupts`. No such host is known. Major-2 bundles never carried the row.
+  - **Proof.** `floor-prefix-claimed.test.ts`: the same evidence yields no row unclaimed and a `blocked` row claimed; a witnessed `interrupt-*` pass still satisfies a claimed floor.
+
 ## [2.45.4] — 2026-10-01 — v2 ports of production-backpressure and budget-enforcement, on a per-major profile
 
 - **The gate runs every host-free scenario** (not packed; no scenario changes). New `scripts/list-host-free-scenarios.mjs` lists the scenarios whose import closure never reaches `lib/driver`, `lib/sse` or `lib/env` and never calls `fetch(`: 70 files today. `scripts/openwop-check.sh` runs them with `OPENWOP_BASE_URL` and `OPENWOP_API_KEY` unset, after the nine hand-listed files.
