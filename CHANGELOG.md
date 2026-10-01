@@ -13,6 +13,9 @@ Format follows [Keep a Changelog](https://keepachangelog.com/en/1/) loosely. Ver
 
 ## [Unreleased]
 
+- **Evidence: the v2 reference host's certified 2.45.4 public cut** (445 pass / 0 fail / 0 blocked, all three profiles, build `commit:0cc965c4`, witness `f36f20ef6171`, signed `v2-reference-4`, no relaxations; `--verify --host-key` VERIFIED; openwop-examples #144, #145). The corpus copy is replaced byte-for-byte. Newly `executed-pass` on a certified bundle: `openwop.requirement.runs.eval-mode-unadvertised-refused`. The two v2 ports (`v2-production-backpressure`, `v2-budget-enforcement`) are `inapplicable` there, and so are RFC 0228's `egress_denied` and `storage_limit_exceeded` rows: the host advertises none of those families.
+- **openwop-app refuses `mode: "eval"` with `400 openwop-app.invalid_request`, not `422 capability_not_provided`** (measured on a local in-process host at major 2 with suite 2.45.4; openwop-app #4318).
+
 - **Conformance fix: an unclaimed prefix floor no longer blocks a major-1 bundle** (suite 2.45.5). The `openwop.floor.any.interrupt-` row is now written only for a host that claims `openwop-interrupts`, as the any-of rows have been since 2.45.4. No affected host is known; major-2 bundles never carried the row.
 - **Two v2 decisions recorded** (architect review, 2026-10-01). `memoryScopeIsolation` is not carried in v2 (gap `openwop.gap.0189.17`, already closed). A `core.subWorkflow` child's parent stays observable through `getRunAncestry` only; no snapshot field is added.
 
