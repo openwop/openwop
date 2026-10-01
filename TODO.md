@@ -7,7 +7,7 @@
 >
 > Updated 2026-09-27: §3 and §4 worked (details below), `INTEROP-MATRIX.md` rewritten, and the
 > quickstarts moved to v2. Updated 2026-09-28 after the 2.43.1 release. Updated 2026-10-01 after
-> the 2.45.2 release (state, §6 and §7), and again after 2.45.4.
+> the 2.45.2 release (state, §6 and §7), and again after 2.45.4 and 2.45.5.
 >
 > Tick a box only when the change is merged on `main`. Delete an item once it is closed.
 
@@ -18,14 +18,18 @@
   **0230** (inbound webhook ingest contract). **0038** is `Draft` (Parked). **0225**, **0226** and
   **0227** went `Accepted` since the last update (#1791, #1821, #1831). Every waived-window
   `Accepted` RFC is **provisional** (RFC 0156 §B).
-- **Suite:** **2.45.4 is published** (#1840, tag `v2.45.4` on `967820ba`; npm `latest` for both
+- **Suite:** **2.45.5 is published** (#1844, tag `v2.45.5` on `d68bd71d`; npm `latest` for both
   packages). Releases since 2.44.2: 2.44.3–2.44.9, 2.45.0 (#1815, CORS preflight headers), 2.45.1
-  (#1819), 2.45.2 (#1822), 2.45.3 (#1835) and 2.45.4 (the unclaimed any-of floor fix, the v2 ports
-  of `production-backpressure` and `budget-enforcement`, the host-free gate). **A major-1 host that
-  cut a v3 bundle on 2.45.3 without claiming `openwop-secrets` should re-cut on 2.45.4.** The v2
-  reference host has cut on 2.45.4; MyndHyve and openwop-app have not. **The 2.45.5 cycle is open on `main`** (the prefix floor fix) and
-  is not cut.
+  (#1819), 2.45.2 (#1822), 2.45.3 (#1835), 2.45.4 (#1840: the unclaimed any-of floor fix, the v2
+  ports of `production-backpressure` and `budget-enforcement`, the host-free gate) and 2.45.5 (the
+  unclaimed prefix floor fix). **A major-1 host that cut a v3 bundle on 2.45.3 without claiming
+  `openwop-secrets`, or on any suite without claiming `openwop-interrupts`, should re-cut on
+  2.45.5.** The v2 reference host has cut on 2.45.4; MyndHyve and openwop-app have not cut on
+  2.45.3 or later. No cycle is open.
   Take a release lock (`/tmp/claude-501/openwop-release-<ver>.lock`) before cutting.
+  - Until a 2.45.6 cycle opens, a PR that leaves the version alone must not re-stamp: restore
+    `spec-artifacts/CORPUS-STAMP.json` and `evidence/corpus-ledger.json` before committing. A PR
+    that changes packed content must open the cycle itself.
 - **Normative homes:** all 73 core families have v2 homes (#1802–#1804). The kernel budget is
   37,284 / 37,800 words, with the generated error table outside it (RFC 0227).
 - **SDKs:** **2.5.0** (npm, PyPI, `go/v2.5.0`) sends `OpenWOP-Client-Version` on every request.
@@ -162,6 +166,11 @@ Defects outside the spec:
     also serves ancestry. If a host ever advertises `subWorkflow` without ancestry, the fix is an
     RFC requiring the child's `run.started.causationId` to name the parent's event, as trigger
     deliveries already do. It is not a new field.
+- [ ] **openwop-app's tool catalog order varied between two runs of one build.** In the 2.45.5
+      pre-release diff at major 1, the advisory row
+      `tool-catalog-projection…sorted-by-toolid` was `executed-pass` on one run and "not sorted
+      by toolId" on the next, with no suite change between them. It is a SHOULD (RFC 0204 §D.13)
+      that is recorded and never failed. Not re-run to confirm it flips; report it to the host.
 
 ## Pattern checks (no code owed; read new scenarios against these)
 
