@@ -2,7 +2,7 @@
   "$schema": "https://json-schema.org/draft/2020-12/schema",
   "$id": "https://openwop.dev/spec/v2/debug-bundle.schema.json",
   "title": "RunDebugBundle",
-  "description": "Portable JSON export of a single run's diagnostic state. See spec/v2/core/conformance.md \u00a7Production profile. Additive over v1 per COMPATIBILITY.md \u00a72.1: optional endpoint; hosts MAY omit.",
+  "description": "Portable JSON export of a single run's diagnostic state. See spec/v2/core/conformance.md \u00a7Production profile. The endpoint is optional; hosts MAY omit it.",
   "type": "object",
   "required": [
     "bundleVersion",

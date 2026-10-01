@@ -6,29 +6,30 @@
 > at `7f97b724:TODO.md`, and the 2026-09-19 gap-closure follow-ups (S1–S4) are there too.
 >
 > Updated 2026-09-27: §3 and §4 worked (details below), `INTEROP-MATRIX.md` rewritten, and the
-> quickstarts moved to v2. Updated 2026-09-28 after the 2.43.1 release.
+> quickstarts moved to v2. Updated 2026-09-28 after the 2.43.1 release. Updated 2026-10-01 after
+> the 2.45.2 release (state, §6 and §7).
 >
 > Tick a box only when the change is merged on `main`. Delete an item once it is closed.
 
-## State (2026-09-28, night)
+## State (2026-10-01)
 
-- **RFCs:** `Active`: **0121** (paused), **0222** (last box needs a real yanked v2 version),
-  **0225** (webhook `retryPolicy.maxElapsedMs`; spec-optionD is checking MyndHyve's certified 2.44.1
-  bundle as its witness) and **0226** (shared run-failure codes). **0038** is `Draft` (Parked), and
-  **0227** (#1761) is a draft until 2026-10-05. **0218–0224 are `Accepted`**, 0219 via #1764.
-  Every waived-window `Accepted` RFC is **provisional** (RFC 0156 §B).
-- **Suite:** **2.44.2 is published** (#1783). Today's releases were 2.43.2, 2.44.0 (RFCs 0225/0226,
-  0219 `Accepted`), 2.44.1 (#1774: the retry legs' timeouts cover an advertised `maxElapsedMs`) and
-  2.44.2 (#1780: `0215.no-head-of-line` records a late fan-out as `blocked`, not as head-of-line
-  blocking). No cycle is open. Four PRs from another owner (#1773, #1776–#1778) will open 2.44.3.
+- **RFCs:** 220 `Accepted`. `Active`: **0121** (paused), **0222** (last box needs a real yanked v2
+  version), **0228** (v1 host-service error codes), **0229** (production-safe secrets witness) and
+  **0230** (inbound webhook ingest contract). **0038** is `Draft` (Parked). **0225**, **0226** and
+  **0227** went `Accepted` since the last update (#1791, #1821, #1831). Every waived-window
+  `Accepted` RFC is **provisional** (RFC 0156 §B).
+- **Suite:** **2.45.2 is published** (#1822). Releases since 2.44.2: 2.44.3–2.44.9, then 2.45.0
+  (#1815, CORS preflight headers), 2.45.1 (#1819) and 2.45.2. **The 2.45.3 cycle is open on
+  `main`** (RFC 0229 witnesses, the RFC 0230 trigger-bridge path, #1825–#1827) and is not cut.
   Take a release lock (`/tmp/claude-501/openwop-release-<ver>.lock`) before cutting.
-- **SDKs:** **2.5.0** (npm, PyPI, `go/v2.5.0`) sends `OpenWOP-Client-Version` on every request, set to the
-  corpus version it's built against (`CORPUS_TAG`, `2.43.0`). Re-vendoring to a newer corpus tag is
-  a separate change.
-- **Hosts:** the v2 reference host and MyndHyve (2.44.1, 271/0/0) are certified. openwop-app's
-  major 2 is certified on 2.43.1 (`86c27e613`, 261/0/0); it is re-cutting on 2.44.0 after its CORS
-  (#4204) and timeout-sweep (#4205) fixes.
-- **Cuts:** every certified public cut needs a fresh operator approval. None is outstanding.
+- **Normative homes:** all 73 core families have v2 homes (#1802–#1804). The kernel budget is
+  37,284 / 37,800 words, with the generated error table outside it (RFC 0227).
+- **SDKs:** **2.5.0** (npm, PyPI, `go/v2.5.0`) sends `OpenWOP-Client-Version` on every request.
+  Re-vendoring to a newer corpus tag is a separate change.
+- **Hosts** (the canonical files in `evidence/v2-host-bundles/`, all certified, 0 fail, 0 blocked):
+  the v2 reference host on 2.44.6 (437 pass), MyndHyve on 2.45.2 (273 pass) and openwop-app on
+  2.44.5 (263 pass). `coordination` is `Stable` on MyndHyve's 2.45.2 cut (RFC 0220, #1828).
+- **Cuts:** every certified public cut needs a fresh operator approval.
 
 ## 1 — RFC 0121 subscription-rail witness · **owner openwop-77 (paused)**
 
@@ -112,15 +113,29 @@ Defects outside the spec:
 
 ## 6 — Follow-ups from 2026-09-28
 
-- [ ] **#1763 — CORS for v2 hosts serving browsers.** The spec says nothing about which request headers a
-      preflight must admit. Two hosts omitted `OpenWOP-Client-Version`, and openwop-app also omitted
-      `OpenWOP-Dedup`. Derive the admitted set from `api/v2/openapi.yaml`'s request-header parameters
-      rather than a hand-kept list, and add a preflight conformance leg.
-- [ ] **#1781 — no row convicts a lost or late webhook delivery.** MyndHyve lost its `run.started`
-      fan-out (myndhyve#560), and only `0215` reddened, under the wrong requirement. Add a
-      delivery-completeness leg that fails a host dropping a subscribed event past its retry bound.
 - [ ] **RFC 0219 gap G7:** `0219.no-floor-no-refusal` needs a certified host that advertises no
       `minClientVersion`. It is externally gated.
+
+## 7 — Follow-ups from 2026-10-01
+
+- [ ] **#1829 — an unbounded `driver.request` hangs to vitest's timeout** and records
+      `executed-fail`. A dropped response is an unreadable observation, not a verdict. Bound the
+      request and record `blocked`.
+- [ ] **RFC 0228's acceptance boxes.** `budget` and `production` are homed (#1803), but that box is
+      still unticked. Two boxes are real work: the v2 ports of `fs-path-traversal`,
+      `production-backpressure` and `budget-enforcement` with a certified `storage_limit_exceeded`
+      or `egress_denied` row, and the rename rows G1–G3, G6 and G7 closing on host cuts.
+- [ ] **RFC 0229** needs all four requirement ids `executed-pass` on a certified bundle from a
+      production deployment. **RFC 0230** has its `Active` checklist open.
+- [ ] **No v2 witness for `mode: "eval"` on an unadvertising host.** `runs.md` requires
+      `422 capability_not_provided` without `agents.evalSuite`; the eval scenarios are major 1 only.
+      **Unverified:** openwop-app appears to accept `mode` and `evalSuiteRef` with no rejection.
+      That was read from source, not run. Probe it before filing an issue.
+- [ ] **Unchecked:** whether app.openwop.dev's deployed revision carries openwop-app #4238 (`404`
+      on an unadvertised operation at major 2). The source is fixed.
+- [ ] **Two maintainer decisions from the homing work.** `memoryScopeIsolation: "isolated"` is in
+      v1 prose and no schema (recorded in `spec/v1/gaps.json`). `subWorkflow`'s child→parent link
+      is observable only where `getRunAncestry` is served. Adding either to v2 needs an RFC.
 
 ## Pattern checks (no code owed; read new scenarios against these)
 
