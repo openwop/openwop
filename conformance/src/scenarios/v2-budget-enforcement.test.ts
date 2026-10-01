@@ -59,34 +59,36 @@ function budgetRun(): Promise<BudgetRun> {
   return once;
 }
 
-/** The findings for one leg, or `null` after recording why there are none. */
-async function findings(id: string, rules: ReadonlyArray<Finding['rule']>): Promise<Finding[] | null> {
+type Leg = { readonly skip: { readonly disposition: 'inapplicable' | 'blocked'; readonly reason: string } } | { readonly findings: Finding[] };
+
+/** The findings for one leg, or why there are none. A refused create fails the leg here. */
+async function leg(id: string, rules: ReadonlyArray<Finding['rule']>): Promise<Leg> {
   const r = await budgetRun();
-  if (r.kind === 'skip') { softSkip(r.disposition, r.reason); return null; }
+  if (r.kind === 'skip') return { skip: { disposition: r.disposition, reason: r.reason } };
   if (r.kind === 'refused') {
     expect(r.status, req(id, DOC, `a host that advertises budget and the fixture MUST accept a valid configurable.budget (got ${r.status} ${r.code ?? ''})`.trim())).toBe(201);
-    return null;
+    return { findings: [] }; // unreachable: a refusal is never 201
   }
-  return judge(PROFILE, r.observation).filter((f) => rules.includes(f.rule));
+  return { findings: judge(PROFILE, r.observation).filter((f) => rules.includes(f.rule)) };
 }
 
 describe('v2 budget enforcement (runs.md §budget section)', () => {
   it('a budgeted run emits budget.reserved, budget.threshold-crossed and budget.exhausted in order', async () => {
-    const fs = await findings(ID_LIFECYCLE, ['lifecycle']);
-    if (fs === null) return;
-    for (const f of fs) expect(f.ok, req(ID_LIFECYCLE, f.doc, f.message)).toBe(true);
+    const l = await leg(ID_LIFECYCLE, ['lifecycle']);
+    if ('skip' in l) return softSkip(l.skip.disposition, l.skip.reason);
+    for (const f of l.findings) expect(f.ok, req(ID_LIFECYCLE, f.doc, f.message)).toBe(true);
   });
 
   it('a hard host stops the run budget_exhausted after cap.breached, and an advisory host does not stop it', async () => {
-    const fs = await findings(ID_ENFORCEMENT, ['hard-stop', 'advisory']);
-    if (fs === null) return;
-    if (fs.length === 0) return softSkip('inapplicable', 'budget.enforce is not advertised — neither the hard stop nor the advisory rule binds');
-    for (const f of fs) expect(f.ok, req(ID_ENFORCEMENT, f.doc, f.message)).toBe(true);
+    const l = await leg(ID_ENFORCEMENT, ['hard-stop', 'advisory']);
+    if ('skip' in l) return softSkip(l.skip.disposition, l.skip.reason);
+    if (l.findings.length === 0) return softSkip('inapplicable', 'budget.enforce is not advertised — neither the hard stop nor the advisory rule binds');
+    for (const f of l.findings) expect(f.ok, req(ID_ENFORCEMENT, f.doc, f.message)).toBe(true);
   });
 
   it('no budget.* or cap.breached payload carries pricing or a credential', async () => {
-    const fs = await findings(ID_CONTENT_FREE, ['content-free']);
-    if (fs === null) return;
-    for (const f of fs) expect(f.ok, req(ID_CONTENT_FREE, f.doc, f.message)).toBe(true);
+    const l = await leg(ID_CONTENT_FREE, ['content-free']);
+    if ('skip' in l) return softSkip(l.skip.disposition, l.skip.reason);
+    for (const f of l.findings) expect(f.ok, req(ID_CONTENT_FREE, f.doc, f.message)).toBe(true);
   });
 });

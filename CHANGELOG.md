@@ -13,6 +13,10 @@ Format follows [Keep a Changelog](https://keepachangelog.com/en/1/) loosely. Ver
 
 ## [Unreleased]
 
+- **Conformance: v2 ports of `production-backpressure` and `budget-enforcement`** (suite 2.45.4; RFC 0228's acceptance box). `v2-production-backpressure` saturates an advertised `inflightCap` and requires `503 service_unavailable` with `Retry-After` and no `details.retryAfter*`. `v2-budget-enforcement` runs the new `conformance-budget-tool-calls` fixture under a two-call budget, unaided, and reads the lifecycle from the log. Both are proven against a scratch host, since no host serves either family unaided at major 2; both record `inapplicable` on a host that has not opted in.
+- **Conformance: what differs between majors is one table** (`conformance/src/lib/major-profile.ts`). Shared witnesses take a profile, so a port to a later major is one row and a thin scenario file.
+- **`SECURITY/invariants.yaml`: `budget-no-pricing-leak` also names `v2-budget-enforcement`.**
+
 - **Conformance: a lost response records `blocked`, not `executed-fail`** (suite 2.45.3, #1829). `driver.request` is bounded at 20 s and names a timeout or a failed connection as `TransportError`. A test that fails on one before its first assertion records `blocked`, since nothing about the host was observed. A loss after an assertion stays `executed-fail`.
 - **Conformance: new `v2-eval-mode-unadvertised-refused`** (suite 2.45.3, major 2, unaided). A host that does not advertise `agents.evalSuite` MUST answer `mode: "eval"` with `422 capability_not_provided` (`runs.md` §Refusals). Nothing measured this at major 2. It found the v2 reference host answering `capability_required` (fixed in openwop-examples #143).
 - **RFC 0228: the homing acceptance box is ticked.** `budget` and `production` have had v2 homes since #1803. The v2 ports of `production-backpressure` and `budget-enforcement` are still owed.

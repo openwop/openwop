@@ -28621,7 +28621,7 @@
     {
       "id": "openwop.it.v2-budget-enforcement.a-budgeted-run-emits-budget-reserved-budget-threshold-crossed-and-budget-exhaust",
       "file": "v2-budget-enforcement.test.ts",
-      "line": 74,
+      "line": 76,
       "title": "a budgeted run emits budget.reserved, budget.threshold-crossed and budget.exhausted in order",
       "explicitId": "openwop.requirement.runs.budget-lifecycle",
       "citations": [
@@ -28635,7 +28635,7 @@
     {
       "id": "openwop.it.v2-budget-enforcement.a-hard-host-stops-the-run-budget-exhausted-after-cap-breached-and-an-advisory-ho",
       "file": "v2-budget-enforcement.test.ts",
-      "line": 80,
+      "line": 82,
       "title": "a hard host stops the run budget_exhausted after cap.breached, and an advisory host does not stop it",
       "explicitId": "openwop.requirement.runs.budget-enforcement",
       "citations": [
@@ -28649,7 +28649,7 @@
     {
       "id": "openwop.it.v2-budget-enforcement.no-budget-or-cap-breached-payload-carries-pricing-or-a-credential",
       "file": "v2-budget-enforcement.test.ts",
-      "line": 87,
+      "line": 89,
       "title": "no budget.* or cap.breached payload carries pricing or a credential",
       "explicitId": "openwop.requirement.runs.budget-content-free",
       "citations": [

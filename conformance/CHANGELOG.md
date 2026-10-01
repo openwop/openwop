@@ -1,5 +1,23 @@
 # `@openwop/openwop-conformance` Changelog
 
+## [2.45.4] — unreleased — v2 ports of production-backpressure and budget-enforcement, on a per-major profile
+
+- **The 2.45.4 cycle opens.** Two new scenarios and one new fixture change the packed content.
+- **What differs between majors is now data** (`src/lib/major-profile.ts`). One table row per major holds the run path, the version headers, the event names (from the codemap), where retry timing lives, how a family is advertised, and how a run budget rides on `createRun`. A shared witness takes a profile and never names a major, so a port to a later major is one row plus a thin scenario file. A major with no row throws; it never falls back to an older major's rules.
+- **New scenario `v2-production-backpressure`** (major 2, unaided; `conformance.md` §Production profile). Gated on `production.backpressure.inflightCap`. The suite holds that many event streams open, waits for each to open, and sends one more request.
+  - `openwop.requirement.production.backpressure-refusal`: the extra request answers `503 service_unavailable` with `Retry-After`, equal to `retryAfterSeconds` where advertised.
+  - `openwop.requirement.0171.error-registry.no-retry-details`: the refusal carries no `details.retryAfter*`. v1 required `details.retryAfter`; v2 forbids it.
+  - **Dispositions.** No `production`, `backpressure` or `inflightCap`, a cap above 64, or an unadvertised hold or probe fixture: `inapplicable`. A slot that cannot be held, or a probe with no response: `blocked`.
+  - **Not ported:** v1's "discovery is exempt from the cap" leg. No v2 document states it.
+- **New scenario `v2-budget-enforcement`** (major 2, unaided; `runs.md` §`budget` section). At major 2 a budget rides on `createRun` (`configurable.budget`), so no seam is needed. The suite runs the new fixture with `{ maxToolCalls: 2, thresholdPercent: 50, onExhaustion: "fail" }` and reads the log through the poll.
+  - `openwop.requirement.runs.budget-lifecycle`: `budget.reserved`, `budget.threshold-crossed` and `budget.exhausted`, in order.
+  - `openwop.requirement.runs.budget-enforcement`: a `hard` host emits `cap.breached` (`budget-tool-calls`) and fails the run `budget_exhausted`; an `advisory` host does not stop it.
+  - `openwop.requirement.runs.budget-content-free`: no `budget.*` or `cap.breached` payload carries pricing or a credential.
+  - **Dispositions.** No `budget`, no `toolCalls` dimension, or the fixture unadvertised: `inapplicable`. The fixture is the opt-in, so a host that advertises `budget` without seeding it is unwitnessed, not blocked. A refused valid create: `executed-fail`.
+  - **Not ported:** v1's `budget_model_denied` leg. It needs a fixture that resolves a model without a seam.
+- **New fixture `conformance-budget-tool-calls`**: one `core.conformance.mock-agent` with three scripted tool calls.
+- **Proof.** No host serves either family unaided at major 2, so both witnesses are proven against `src/lib/scratch-host.ts`, a profile-driven test double: 29 self-tests, one defect each (`backpressure-witness.test.ts`, `budget-witness.test.ts`, `major-profile.test.ts`). The scenario files were also run end to end against a conforming and a defective scratch host.
+
 ## [2.45.3] — 2026-10-01 — RFC 0229 (Active): a production host can witness secret resolution without an oracle; v2 tenant-isolation witnesses for storage, fs, memory, workspace, queues and secrets
 
 - **Two self-checks that failed on every host are fixed before the cut.** Found by running the candidate on openwop-app at major 1 against 2.45.2: four rows went `executed-pass` → `executed-fail`, and both files failed the same way with no host.
