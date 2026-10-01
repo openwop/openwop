@@ -1,0 +1,81 @@
+{
+  "id": "conformance-budget-tool-calls",
+  "name": "Conformance: Budget (tool calls)",
+  "version": "1.0",
+  "description": "Spends a run budget without a model or a seam. One `core.conformance.mock-agent` node makes three scripted tool calls, so a run created with `budget.maxToolCalls: 2` crosses its threshold on the first call and is exhausted before the third. See v2-budget-enforcement.test.ts.",
+  "nodes": [
+    {
+      "id": "spender",
+      "typeId": "core.conformance.mock-agent",
+      "name": "Budget Spender",
+      "position": {
+        "x": 0,
+        "y": 0
+      },
+      "config": {
+        "mockToolCalls": [
+          {
+            "toolId": "openwop.echo:echo",
+            "arguments": {
+              "x": 1
+            },
+            "result": {
+              "x": 1
+            },
+            "durationMs": 1
+          },
+          {
+            "toolId": "openwop.echo:echo",
+            "arguments": {
+              "x": 2
+            },
+            "result": {
+              "x": 2
+            },
+            "durationMs": 1
+          },
+          {
+            "toolId": "openwop.echo:echo",
+            "arguments": {
+              "x": 3
+            },
+            "result": {
+              "x": 3
+            },
+            "durationMs": 1
+          }
+        ],
+        "mockDecision": {
+          "decision": {
+            "next": "done"
+          },
+          "confidence": 1
+        }
+      },
+      "inputs": {},
+      "agent": {
+        "agentId": "core.conformance.budget-spender",
+        "modelClass": "reasoning"
+      }
+    }
+  ],
+  "edges": [],
+  "triggers": [
+    {
+      "id": "manual",
+      "type": "manual",
+      "enabled": true
+    }
+  ],
+  "variables": [],
+  "metadata": {
+    "tags": [
+      "conformance",
+      "budget",
+      "rfc-0084"
+    ]
+  },
+  "settings": {
+    "timeout": 15000
+  }
+}

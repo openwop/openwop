@@ -119,12 +119,18 @@ Defects outside the spec:
 ## 7 — Follow-ups from 2026-10-01
 
 - [ ] **RFC 0228's two open boxes.**
-  - v2 ports of `production-backpressure` and `budget-enforcement` (`fs-path-traversal` has
-    `v2-fs-sandbox-escape-refused`), plus a certified `storage_limit_exceeded` or `egress_denied`
-    row. Only MyndHyve advertises `production` and `budget` at major 2, so a port cannot be
-    sabotage-proved on the v2 reference host. Give the reference host the two families first, or
-    prove the ports with MyndHyve.
+  - The v2 ports exist (`v2-fs-sandbox-escape-refused`, `v2-production-backpressure`,
+    `v2-budget-enforcement`, suite 2.45.4), proven against a scratch host. Still owed: a certified
+    `storage_limit_exceeded` or `egress_denied` row from a host.
+  - No host witnesses the two new ports yet. Backpressure needs an advertised
+    `production.backpressure.inflightCap`. Budget needs the `conformance-budget-tool-calls` fixture
+    seeded.
+  - Not ported: v1's `budget_model_denied` leg (needs a fixture that resolves a model unaided).
   - The rename rows G1–G3, G6 and G7 close on host cuts.
+- [ ] **MyndHyve advertises `budget` at major 2 and enforces it only behind a v1 seam.** Reported
+      by its session from source, not measured: `configurable.budget` is validated, stored and
+      never read. The v2 port keys on the fixture, so MyndHyve records `inapplicable`. Its session
+      is raising the advert with the maintainer.
 - [ ] **RFC 0229** needs all four requirement ids `executed-pass` on a certified bundle from a
       production deployment. **RFC 0230** has its `Active` checklist open.
 - [ ] **`mode: "eval"` refusal on the other two hosts.** `v2-eval-mode-unadvertised-refused`
