@@ -13,6 +13,9 @@ Format follows [Keep a Changelog](https://keepachangelog.com/en/1/) loosely. Ver
 
 ## [Unreleased]
 
+- **Conformance fix: an unclaimed any-of floor no longer blocks a major-1 bundle** (suite 2.45.4; a 2.45.3 defect). On 2.45.3 a major-1 host that did not claim `openwop-secrets` got a `blocked` any-of row for it, and a v3 bundle with any `blocked` row certifies nothing. The row is now written only for a claimed profile. Major-2 bundles were never affected.
+- **RFC 0230: five acceptance boxes ticked** against what landed in #1824 and #1827 (text, schemas, the split scenario, the sabotage proof, changelog). The production-cut box stays open.
+
 - **Conformance: v2 ports of `production-backpressure` and `budget-enforcement`** (suite 2.45.4; RFC 0228's acceptance box). `v2-production-backpressure` saturates an advertised `inflightCap` and requires `503 service_unavailable` with `Retry-After` and no `details.retryAfter*`. `v2-budget-enforcement` runs the new `conformance-budget-tool-calls` fixture under a two-call budget, unaided, and reads the lifecycle from the log. Both are proven against a scratch host, since no host serves either family unaided at major 2; both record `inapplicable` on a host that has not opted in.
 - **Conformance: what differs between majors is one table** (`conformance/src/lib/major-profile.ts`). Shared witnesses take a profile, so a port to a later major is one row and a thin scenario file.
 - **`SECURITY/invariants.yaml`: `budget-no-pricing-leak` also names `v2-budget-enforcement`.**

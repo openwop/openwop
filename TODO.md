@@ -134,8 +134,13 @@ Defects outside the spec:
       by its session from source, not measured: `configurable.budget` is validated, stored and
       never read. The v2 port keys on the fixture, so MyndHyve records `inapplicable`. Its session
       is raising the advert with the maintainer.
+- [ ] **The `interrupt-` prefix floor row has the same shape as the any-of defect fixed in 2.45.4.**
+      It is written for every floor in the v1 table, claimed or not, and is `blocked` when no
+      `interrupt-*` file passed. Not changed here, because removing the row alters every major-1
+      bundle. **Unverified:** whether any major-1 host that cuts today lacks a passing
+      `interrupt-*` file. If one does, it is denied certification the same way.
 - [ ] **RFC 0229** needs all four requirement ids `executed-pass` on a certified bundle from a
-      production deployment. **RFC 0230** has its `Active` checklist open.
+      production deployment. **RFC 0230** needs openwop-app to advertise `inboundSigning` and pass the path in strict mode on a production cut; its other boxes are ticked.
 - [ ] **`mode: "eval"` refusal on the other two hosts.** `v2-eval-mode-unadvertised-refused`
       (2.45.3) measures it. The v2 reference host answered `capability_required` (fixed, examples
       #143). **Unverified:** openwop-app appears to accept `mode` and `evalSuiteRef` with no
@@ -144,10 +149,6 @@ Defects outside the spec:
       `host-callback-declaration` and `runner-ledger` with no host at all (fixed in #1835), and
       #1825, #1826 and #1834 were all green. The server-free job runs a subset and the host job
       passes at ≥92%. Run every scenario that needs no host in the server-free job, at 100%.
-- [ ] **The any-of floor row is emitted whatever profile is claimed** (RFC 0229 §E), as the prefix
-      rows are. **Unverified:** on a major-1 host that does not claim `openwop-secrets` it should
-      record `blocked` without denying any claimed profile. That was read from
-      `certification-bundle-verify.ts`, not run.
 - [ ] **Two maintainer decisions from the homing work.** `memoryScopeIsolation: "isolated"` is in
       v1 prose and no schema (recorded in `spec/v1/gaps.json`). `subWorkflow`'s child→parent link
       is observable only where `getRunAncestry` is served. Adding either to v2 needs an RFC.

@@ -52,6 +52,18 @@ describe('RFC 0229 §E — the any-of floor group', () => {
     }
   });
 
+  it('a host that does not claim the profile gets no group row, so an unclaimed floor cannot block its bundle', () => {
+    // Both members `inapplicable` is what a host without secrets records.
+    const rep = new Map<string, 'passed' | 'failed' | 'skipped'>([[BYOK, 'passed'], [WITNESS, 'passed']]);
+    const ledger = [entry(BYOK, 'inapplicable'), entry(WITNESS, 'inapplicable')];
+    const unclaimed = deriveRequirementDispositions(rep, ledger, ['openwop-discovery-core'], {});
+    expect(unclaimed.requirements.find((r) => r.requirementId === GROUP)).toBeUndefined();
+    // The same evidence under a claim still blocks: the profile was claimed and nothing witnessed it.
+    const claimedRun = deriveRequirementDispositions(rep, ledger, [PROFILE], {});
+    expect(claimedRun.requirements.find((r) => r.requirementId === GROUP)?.disposition).toBe('blocked');
+    expect(claimedRun.totals.blocked - unclaimed.totals.blocked).toBe(1);
+  });
+
   it('a vacuous member pass (zero assertions) does not satisfy the group', () => {
     const rep = new Map<string, 'passed' | 'failed' | 'skipped'>([[BYOK, 'passed'], [WITNESS, 'passed']]);
     const d = deriveRequirementDispositions(rep, [entry(BYOK, 'executed-pass', 0), entry(WITNESS, 'inapplicable')], [PROFILE], {});
