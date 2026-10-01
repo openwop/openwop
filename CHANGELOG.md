@@ -467,6 +467,7 @@ A suite patch. Every wire addition is optional and capability-gated.
 - **New v2 tenant-isolation and fail-closed witnesses** (#1825, #1826): `v2-storage-cross-tenant-isolation`, `v2-fs-sandbox-escape-refused`, `v2-memory-cross-tenant-isolation`, `v2-workspace-scope-from-identity`, `v2-queue-cross-tenant-isolation`, `v2-secret-canary-absent`, `v2-tool-authorization-fail-closed` and `v2-safefetch-ssrf-refused`. `SECURITY/invariants.yaml` names them.
 - **New `v2-eval-mode-unadvertised-refused`** (#1834, major 2): `mode: "eval"` without `agents.evalSuite` is `422 capability_not_provided`. The v2 reference host passes from openwop-examples #143.
 - **`memory-attribution-replay-stable` runs on v2 hosts.** Its gate read a v1-only `supported` field and its event read hit the SSE stream.
+- **Two suite self-checks no longer fail on every host** (found by the pre-release openwop-app run at major 1; both failed with no host at all). `v2-tool-authorization-fail-closed` now declares `REQUIRES_HOST_CALLBACK`, which `host-callback-declaration` requires of a scenario importing the effect receiver. `runner-ledger` no longer counts the `openwop-secrets` any-of row, honestly `blocked` in its synthetic report, against a floor it does not belong to. No host-facing row changes.
 - **Suite `2.45.3`**, 587 scenario files. `@openwop/spec-artifacts` moves in lockstep at the same exact pin.
 
 ### Evidence and status

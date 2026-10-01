@@ -135,7 +135,12 @@ describe('RFC 0148 §A (S6) — the runner derivation', () => {
       expect(p.disposition).toBe('executed-pass');
       expect(p.scenarioId).toBe(`${prefix}*`);
     }
-    expect(d.totals.executedPass).toBe(d.requirements.length);
+    // An any-of group belongs to its own profile's floor (RFC 0229 §E). None of
+    // its members is in this synthetic report, so its summary row is honestly
+    // `blocked`, and it is not one of the requirements this floor certifies on.
+    const foreignAnyOf = d.requirements.filter((r) => r.scenarioId.startsWith('anyof:') && !(floor.requiredAnyOf ?? []).some((g) => g.join('|') === r.scenarioId.slice('anyof:'.length)));
+    for (const r of foreignAnyOf) expect(r.disposition, r.requirementId).toBe('blocked');
+    expect(d.totals.executedPass).toBe(d.requirements.length - foreignAnyOf.length);
   });
 
   it('a floor file that vitest passed but that recorded NOTHING is unclassified when a ledger exists — silence is not a witness', () => {
