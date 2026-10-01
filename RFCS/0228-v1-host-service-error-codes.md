@@ -275,7 +275,7 @@ None open. See §Decisions.
 
 - [x] `Active` (2026-09-28): the comment window was waived by the steward rather than run (see Updated); the unresolved questions are ruled (§Decisions); the rows, the §E meaning, the §G schema and OpenAPI changes, §A and §H in `errors.md`, and `v2-unadvertised-operation-not-found.test.ts` (sabotage-proved) land.
 - [x] The three home sentences name codes, and `budget` and `production` are homed (`v1Dependent` falls by two). The first half landed at `Active` (`storage.md`, `host-services.md`, `execution.md`, plus `runs.md` and `replay.md`); the two homes are a follow-up RFC 0189 PR. *(2026-09-29: `budget` and `production` are homed, #1803; `check-v2-normative-home` reports 73 resolved, 0 v1-dependent.)*
-- [ ] v2 ports of `fs-path-traversal`, `production-backpressure` and `budget-enforcement` exist, and one host's certified bundle records `storage_limit_exceeded` or `egress_denied` `executed-pass`.
+- [ ] v2 ports of `fs-path-traversal`, `production-backpressure` and `budget-enforcement` exist, and one host's certified bundle records `storage_limit_exceeded` or `egress_denied` `executed-pass`. *(2026-10-01: the ports exist — `v2-fs-sandbox-escape-refused`, `v2-production-backpressure`, `v2-budget-enforcement` — proven against a scratch host, since no host serves either family unaided at major 2. v1's `budget_model_denied` leg is not ported. The certified row is still owed, so the box stays open.)*
 - [ ] The rename rows G1–G3, G6 and G7 are closed by host cuts.
 
 ## References
