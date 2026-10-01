@@ -22,6 +22,8 @@
   2.44.3–2.44.9, then 2.45.0 (#1815, CORS preflight headers), 2.45.1 (#1819), 2.45.2 (#1822) and
   2.45.3 (RFC 0229 witnesses, the RFC 0230 trigger-bridge path, the v2 tenant-isolation
   witnesses, and a lost response recorded `blocked`). No host has cut on 2.45.3 yet.
+  **The 2.45.4 cycle is open on `main`** (#1836, the v2 ports of `production-backpressure` and
+  `budget-enforcement`) and is not cut.
   Take a release lock (`/tmp/claude-501/openwop-release-<ver>.lock`) before cutting.
 - **Normative homes:** all 73 core families have v2 homes (#1802–#1804). The kernel budget is
   37,284 / 37,800 words, with the generated error table outside it (RFC 0227).
