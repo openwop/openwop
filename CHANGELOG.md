@@ -460,6 +460,21 @@ Format follows [Keep a Changelog](https://keepachangelog.com/en/1/) loosely. Ver
 - **The remaining eleven stay `Active`, each for a stated reason** rather than for lack of attention. The eight RFC 0167 program children name a certified openwop-app bundle in their own acceptance criteria and the committed one reads `certified: false` (3 blocked rows, RFC 0168 §E.1). RFC 0173 additionally carries the program's only `open` gap row. RFC 0179's sole criterion is unmet — 2.4.2 stopped the gate reading "(Phase 4 leg)" as an excuse for it. RFC 0187 names three requirement ids that no scenario mints. RFC 0167 itself flips **last**, which 2.4.2 made a rule: the moment the umbrella stops being `Active`, every child still `Active` becomes permanently ineligible.
 - **The interrupt `data` union is bound to `kind`** (MCP/A2A review P3-H7, Class 3 correction — COMPATIBILITY.md §3). `schemas/suspend-request.schema.json` and its v2 twin typed `data` as an unbound `oneOf`, so the minimal `conversation.start` and `conversation.close` payloads (`{ conversationId }`, which satisfies both shapes) failed validation in v1 and v2, and a payload carrying another kind's `data` passed. `data` is now an `anyOf` and a root `allOf` binds each kind to its own shape with one `if`/`then`; no per-kind shape or `$id` changed. Witnessed by `conformance/fixtures/interrupt-payloads/` (suite 2.36.0).
 
+## [2.45.5] — 2026-10-01 — an unclaimed prefix floor no longer blocks a major-1 bundle
+
+A suite patch. No wire, schema or normative change.
+
+### Conformance
+
+- **Fix: an unclaimed prefix floor no longer blocks a major-1 bundle** (#1842). The runner wrote `openwop.floor.any.interrupt-` for every floor in the v1 table. On a major-1 host that does not claim `openwop-interrupts`, no `interrupt-*` file passes, so the row was `blocked`, and a v3 bundle with any `blocked` row certifies nothing (RFC 0168 §E.1). The row is now written only for a claimed profile, as the any-of rows have been since 2.45.4. A claimed profile is unchanged. No affected host is known; major-2 bundles never carried the row.
+- **Suite `2.45.5`**, 589 scenario files. `@openwop/spec-artifacts` moves in lockstep at the same exact pin.
+
+### Evidence and status
+
+- **The v2 reference host is certified on 2.45.4** (#1843; openwop-examples #144, #145): 445 pass / 0 fail / 0 blocked, all three profiles, build `commit:0cc965c4`, witness `f36f20ef6171`, no relaxations. `openwop.requirement.runs.eval-mode-unadvertised-refused` is `executed-pass` on a certified bundle for the first time. RFC 0228's `egress_denied` and `storage_limit_exceeded` rows are `inapplicable` there, so that box stays open.
+- **openwop-app refuses `mode: "eval"` with `400 openwop-app.invalid_request`**, where `runs.md` requires `422 capability_not_provided` (measured on a local in-process host at major 2; openwop-app #4318).
+- **Two v2 decisions recorded** (#1842). `memoryScopeIsolation` is not carried in v2. A `core.subWorkflow` child's parent stays observable through `getRunAncestry` only.
+
 ## [2.45.4] — 2026-10-01 — an unclaimed any-of floor no longer blocks a major-1 bundle; v2 ports of production-backpressure and budget-enforcement
 
 A suite patch. No wire, schema or normative change.
