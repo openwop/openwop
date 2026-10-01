@@ -74,12 +74,16 @@ export function requirementIdForFile(basename: string): string {
  */
 export const PARTIAL_WITNESS_PREFIX = 'partial-witness: ';
 
+/** `driver.ts`'s `TRANSPORT_LOSS_PREFIX`, restated so this module stays free of the driver (a test pins the two equal). */
+export const TRANSPORT_LOSS_MARK = 'transport-loss: ';
+
 export type FileTestState = 'pass' | 'fail' | 'skip';
 
 /**
  * The per-`it` record (RFC 0148 §A at test granularity), as `setup.ts`
  * computes it in `afterEach`. Pure so a lib test can pin it:
  *   - fail                         ⇒ executed-fail (detail = the first error message)
+ *   - fail on a driver transport loss, 0 assertions ⇒ blocked (#1829: nothing was observed)
  *   - pass with ≥ 1 assertion      ⇒ executed-pass
  *   - a behaviorGate entry journaled during the test ⇒ that gate's disposition
  *   - pass with 0 assertions       ⇒ the softSkip note written DURING THIS TEST
@@ -119,6 +123,15 @@ export function resolveItRecord(
   testName?: string,
 ): { disposition: Disposition; detail?: string } {
   if (state === 'fail') {
+    // #1829: the driver got no response (`TransportError`) before the test
+    // asserted anything. Nothing about the host was observed, so this is not a
+    // verdict on it. `blocked` still denies certification, so a flaky runner
+    // cannot certify; it just cannot convict the host either. A loss AFTER an
+    // assertion stays `executed-fail`: the test was mid-measurement, and a host
+    // that stops answering part-way is a finding.
+    if (assertionCalls === 0 && firstError !== undefined && firstError.includes(TRANSPORT_LOSS_MARK)) {
+      return { disposition: 'blocked', detail: firstError.slice(firstError.indexOf(TRANSPORT_LOSS_MARK), firstError.indexOf(TRANSPORT_LOSS_MARK) + 300) };
+    }
     const where = testName === undefined || testName.trim() === '' ? '' : ` in "${testName.slice(0, 120)}"`;
     return { disposition: 'executed-fail', detail: `the test executed and failed${where}: ${(firstError ?? 'no message').slice(0, 300)}` };
   }
@@ -222,6 +235,11 @@ export function fileDisposition(
   failures: readonly TestFailure[] = [],
 ): { disposition: Disposition; detail?: string } {
   const failed = states.filter((s) => s === 'fail').length;
+  // #1829, the file-level half of `resolveItRecord`'s rule: every failure was a
+  // driver transport loss and the file asserted nothing, so nothing was observed.
+  if (failed > 0 && assertionCount === 0 && failures.length === failed && failures.every((f) => f.message?.includes(TRANSPORT_LOSS_MARK) === true)) {
+    return { disposition: 'blocked', detail: `no response reached the suite in ${failed} test(s); first: ${failures[0]!.message!.slice(failures[0]!.message!.indexOf(TRANSPORT_LOSS_MARK)).slice(0, 300)}` };
+  }
   if (failed > 0) return { disposition: 'executed-fail', detail: failureDetail(failures, failed) };
   if (states.some((s) => s === 'pass')) {
     // A test that early-returned through `behaviorGate` is reported by vitest
