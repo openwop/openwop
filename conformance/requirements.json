@@ -33198,7 +33198,7 @@
     {
       "id": "openwop.it.v2-production-backpressure.with-inflightcap-slots-held-the-next-request-is-refused-503-service-unavailable",
       "file": "v2-production-backpressure.test.ts",
-      "line": 57,
+      "line": 58,
       "title": "with inflightCap slots held, the next request is refused 503 service_unavailable with Retry-After",
       "explicitId": "openwop.requirement.production.backpressure-refusal",
       "citations": [
@@ -33212,7 +33212,7 @@
     {
       "id": "openwop.it.v2-production-backpressure.the-refusal-carries-its-retry-timing-in-the-retry-after-header-only",
       "file": "v2-production-backpressure.test.ts",
-      "line": 65,
+      "line": 66,
       "title": "the refusal carries its retry timing in the Retry-After header only",
       "explicitId": "openwop.requirement.0171.error-registry.no-retry-details",
       "citations": [
