@@ -4,7 +4,7 @@
     "schemas/v2/**/*.json",
     "spec/v2/path-manifest.json"
   ],
-  "release": "2.45.2",
+  "release": "2.45.3",
   "kinds": {
     "union": [
       "channel",
@@ -18,7 +18,7 @@
       "type"
     ]
   },
-  "count": 8593,
+  "count": 8603,
   "surfaces": [
     "schemas/v2/a2a-task-state.schema.json#/contextId|type|string",
     "schemas/v2/a2a-task-state.schema.json#/interruptKind|enum-member|\"approval\"",
@@ -3112,6 +3112,11 @@
     "schemas/v2/capabilities.schema.json#/searchIndex|type|object",
     "schemas/v2/capabilities.schema.json#/secrets/resolution|enum-member|\"host-managed\"",
     "schemas/v2/capabilities.schema.json#/secrets/resolution|type|string",
+    "schemas/v2/capabilities.schema.json#/secrets/runSecrets/maxEntries|type|integer",
+    "schemas/v2/capabilities.schema.json#/secrets/runSecrets|closed|true",
+    "schemas/v2/capabilities.schema.json#/secrets/runSecrets|property|maxEntries",
+    "schemas/v2/capabilities.schema.json#/secrets/runSecrets|required|maxEntries",
+    "schemas/v2/capabilities.schema.json#/secrets/runSecrets|type|object",
     "schemas/v2/capabilities.schema.json#/secrets/scopes/[]|enum-member|\"run\"",
     "schemas/v2/capabilities.schema.json#/secrets/scopes/[]|enum-member|\"tenant\"",
     "schemas/v2/capabilities.schema.json#/secrets/scopes/[]|enum-member|\"user\"",
@@ -3130,6 +3135,7 @@
     "schemas/v2/capabilities.schema.json#/secrets/witness|enum-member|\"witnessable-unaided\"",
     "schemas/v2/capabilities.schema.json#/secrets|closed|true",
     "schemas/v2/capabilities.schema.json#/secrets|property|resolution",
+    "schemas/v2/capabilities.schema.json#/secrets|property|runSecrets",
     "schemas/v2/capabilities.schema.json#/secrets|property|scopes",
     "schemas/v2/capabilities.schema.json#/secrets|property|since",
     "schemas/v2/capabilities.schema.json#/secrets|property|status",
@@ -3371,6 +3377,9 @@
     "schemas/v2/capabilities.schema.json#/triggerBridge/ingestion/externalSources/[]|enum-member|\"webhook\"",
     "schemas/v2/capabilities.schema.json#/triggerBridge/ingestion/externalSources/[]|type|string",
     "schemas/v2/capabilities.schema.json#/triggerBridge/ingestion/externalSources|type|array",
+    "schemas/v2/capabilities.schema.json#/triggerBridge/ingestion/inboundSigning/[]|enum-member|\"standard-webhooks-1\"",
+    "schemas/v2/capabilities.schema.json#/triggerBridge/ingestion/inboundSigning/[]|type|string",
+    "schemas/v2/capabilities.schema.json#/triggerBridge/ingestion/inboundSigning|type|array",
     "schemas/v2/capabilities.schema.json#/triggerBridge/ingestion/maxBodyBytes|type|integer",
     "schemas/v2/capabilities.schema.json#/triggerBridge/ingestion/registrationEndpoint|type|boolean",
     "schemas/v2/capabilities.schema.json#/triggerBridge/ingestion/verification/[]|enum-member|\"email-dmarc\"",
@@ -3380,6 +3389,7 @@
     "schemas/v2/capabilities.schema.json#/triggerBridge/ingestion/verification|type|array",
     "schemas/v2/capabilities.schema.json#/triggerBridge/ingestion|closed|true",
     "schemas/v2/capabilities.schema.json#/triggerBridge/ingestion|property|externalSources",
+    "schemas/v2/capabilities.schema.json#/triggerBridge/ingestion|property|inboundSigning",
     "schemas/v2/capabilities.schema.json#/triggerBridge/ingestion|property|maxBodyBytes",
     "schemas/v2/capabilities.schema.json#/triggerBridge/ingestion|property|registrationEndpoint",
     "schemas/v2/capabilities.schema.json#/triggerBridge/ingestion|property|verification",

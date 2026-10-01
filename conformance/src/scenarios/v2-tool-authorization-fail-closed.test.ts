@@ -60,6 +60,8 @@ import { softSkip } from '../lib/soft-skip.js';
 import { req } from '../lib/requirement-ids.js';
 import { startEffectReceiver, waitForFirstArrival } from '../lib/effect-receiver.js';
 
+export const REQUIRES_HOST_CALLBACK = 'the host invokes the scope-probe tool, which calls the suite-owned effect receiver (OPENWOP_WEBHOOK_RECEIVER_PORT)';
+
 const FIXTURE = 'conformance-tool-scope-probe';
 const TOOL = 'conformance.scope-probe';
 const DOC = 'spec/v2/core/host-services.md §toolHooks';
