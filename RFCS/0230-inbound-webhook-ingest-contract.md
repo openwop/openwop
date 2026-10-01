@@ -145,15 +145,15 @@ Each question is decided per the RFC's own lean. Each stays open to the RFC 0156
 ## Acceptance criteria
 
 - [x] `Active` (2026-09-30): comment window waived by steward override of RFC 0147 §A.6 (see Updated). The §B–§D contract, the capability facet (v1 + v2) and the `trigger-bridge.md` §F.6 / v2 `webhooks.md` text land together.
-- [ ] `trigger-bridge.md` §F.2 / §F.4 and v2 `webhooks.md` §Inbound triggers text merged.
-- [ ] `capabilities` schemas (v1 and v2) carry `ingestion.inboundSigning`.
-- [ ] `trigger-bridge-delivery.test.ts` gains the normative-surface path, with dedup and run-less-event content-freeness split into their own requirement ids and kept in the floor.
-- [ ] Sabotage-proven on the non-seam path:
+- [x] `trigger-bridge.md` §F.2 / §F.4 and v2 `webhooks.md` §Inbound triggers text merged. *(#1824: §F.6 and the §F.2 refused-event correction; v2 `webhooks.md` §Inbound triggers names `inboundSigning`.)*
+- [x] `capabilities` schemas (v1 and v2) carry `ingestion.inboundSigning`. *(#1824.)*
+- [x] `trigger-bridge-delivery.test.ts` gains the normative-surface path, with dedup and run-less-event content-freeness split into their own requirement ids and kept in the floor. *(#1827, suite 2.45.3: four ids under `openwop.requirement.0083.trigger-delivery.*`; the file is still in the `openwop-trigger-bridge` floor.)*
+- [x] Sabotage-proven on the non-seam path *(#1827: measured on openwop-app with the RFC 0230 route on and the seams off; each sabotaged build failed only its own leg, recorded in `conformance/CHANGELOG.md` 2.45.3)*:
   - two runs on a duplicate `webhook-id` → fail;
   - a run on a bad signature, or a subscription left non-`active` by it → fail;
   - a missing `causationId` → fail.
 - [ ] A host (openwop-app) advertises the facet and passes the path in strict mode on a production cut.
-- [ ] CHANGELOG entries.
+- [x] CHANGELOG entries. *(`CHANGELOG.md` and `conformance/CHANGELOG.md`, 2.45.3.)*
 
 ## References
 

@@ -27,7 +27,7 @@
  */
 
 import { scenarioFileOfItId } from './requirement-ids.js';
-import { PROFILE_FLOOR_SCENARIOS, floorMemberFiles } from './profiles.js';
+import { DEPRECATED_PROFILE_ALIASES, PROFILE_FLOOR_SCENARIOS, floorMemberFiles } from './profiles.js';
 import { targetMajor } from './seams.js';
 import { PKG_ROOT_PATH } from './paths.js';
 import { v2ProfileFloorFiles } from './requirement-registry.js';
@@ -478,7 +478,16 @@ export function deriveRequirementDispositions(
   // no member failing; `inapplicable`/`skipped` members never satisfy it. v1
   // hand table only, like the prefix groups (the major-2 floors have none).
   const groups = new Map<string, readonly string[]>();
-  if (!v2FloorsActive()) for (const floor of Object.values(PROFILE_FLOOR_SCENARIOS)) for (const g of floor.requiredAnyOf ?? []) groups.set(requirementIdForAnyOf(g), g);
+  //
+  // Only for a CLAIMED profile's floor (2.45.4). The row is `blocked` when no
+  // member was witnessed, and a v1 floor reads `inapplicable` as certifiable, so
+  // the row cannot simply say `inapplicable`. But 2.45.3 wrote it for every
+  // floor in the table: a host that does not advertise secrets records both
+  // members `inapplicable`, got one `blocked` row for a profile it never
+  // claimed, and a bundle with any `blocked` row certifies nothing (RFC 0168
+  // §E.1). A group nobody claims is not a requirement on this host.
+  const claimed = new Set(claimedProfiles.map((p) => DEPRECATED_PROFILE_ALIASES[p] ?? p));
+  if (!v2FloorsActive()) for (const [profile, floor] of Object.entries(PROFILE_FLOOR_SCENARIOS)) if (claimed.has(profile)) for (const g of floor.requiredAnyOf ?? []) groups.set(requirementIdForAnyOf(g), g);
   for (const [id, members] of [...groups.entries()].sort((a, b) => a[0].localeCompare(b[0]))) {
     const scenarioId = `anyof:${members.join('|')}`;
     const matching = members.map((f) => perFile.get(f)).filter((r): r is DerivedRequirement => r !== undefined);
