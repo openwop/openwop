@@ -145,10 +145,6 @@ Defects outside the spec:
       (2.45.3) measures it. The v2 reference host answered `capability_required` (fixed, examples
       #143). **Unverified:** openwop-app appears to accept `mode` and `evalSuiteRef` with no
       rejection. That was read from source, not run; its next cut on 2.45.3 will say.
-- [ ] **CI passes while a suite self-check fails on every host.** 2.45.3's candidate failed
-      `host-callback-declaration` and `runner-ledger` with no host at all (fixed in #1835), and
-      #1825, #1826 and #1834 were all green. The server-free job runs a subset and the host job
-      passes at ≥92%. Run every scenario that needs no host in the server-free job, at 100%.
 - [ ] **Two maintainer decisions from the homing work.** `memoryScopeIsolation: "isolated"` is in
       v1 prose and no schema (recorded in `spec/v1/gaps.json`). `subWorkflow`'s child→parent link
       is observable only where `getRunAncestry` is served. Adding either to v2 needs an RFC.

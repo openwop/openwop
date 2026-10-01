@@ -2,6 +2,10 @@
 
 ## [2.45.4] — unreleased — v2 ports of production-backpressure and budget-enforcement, on a per-major profile
 
+- **The gate runs every host-free scenario** (not packed; no scenario changes). New `scripts/list-host-free-scenarios.mjs` lists the scenarios whose import closure never reaches `lib/driver`, `lib/sse` or `lib/env` and never calls `fetch(`: 70 files today. `scripts/openwop-check.sh` runs them with `OPENWOP_BASE_URL` and `OPENWOP_API_KEY` unset, after the nine hand-listed files.
+  - **Why.** `host-callback-declaration` and `runner-ledger` failed on every host in the 2.45.3 candidate and nothing in CI said so (#1835).
+  - **Proof.** Clean tree: 66 files pass and 4 skip, no failure. With `REQUIRES_HOST_CALLBACK` removed from `v2-tool-authorization-fail-closed`, the step fails on `host-callback-declaration`.
+  - **Limits.** The walk reads static relative imports. `--check` fails if the set is empty or loses a known member. `ai-envelope-shape` is on the hand list and outside the derived set, so the hand list stays.
 - **The 2.45.4 cycle opens.** Two new scenarios and one new fixture change the packed content.
 - **Fix: an unclaimed any-of floor no longer blocks a major-1 bundle** (a 2.45.3 defect). The runner wrote the `openwop.floor.anyof.byok-roundtrip+secrets-run-witness` summary row for every floor in the v1 table, claimed or not. A host that does not advertise secrets records both members `inapplicable`, so it got one `blocked` row for `openwop-secrets`, a profile it never claimed, and a v3 bundle with any `blocked` row certifies nothing (RFC 0168 §E.1). The row is now written only when the profile is claimed. A claimed profile is unchanged: unwitnessed members still record `blocked` and deny it.
   - **Who was affected:** a major-1 host cutting a v3 bundle on 2.45.3 without claiming `openwop-secrets`. Major-2 bundles never carried the row.
