@@ -7,7 +7,7 @@
 >
 > Updated 2026-09-27: §3 and §4 worked (details below), `INTEROP-MATRIX.md` rewritten, and the
 > quickstarts moved to v2. Updated 2026-09-28 after the 2.43.1 release. Updated 2026-10-01 after
-> the 2.45.2 release (state, §6 and §7).
+> the 2.45.2 release (state, §6 and §7), and again after 2.45.4.
 >
 > Tick a box only when the change is merged on `main`. Delete an item once it is closed.
 
@@ -18,13 +18,16 @@
   **0230** (inbound webhook ingest contract). **0038** is `Draft` (Parked). **0225**, **0226** and
   **0227** went `Accepted` since the last update (#1791, #1821, #1831). Every waived-window
   `Accepted` RFC is **provisional** (RFC 0156 §B).
-- **Suite:** **2.45.3 is published** (#1835, tag `v2.45.3` on `67ad3a54`). Releases since 2.44.2:
-  2.44.3–2.44.9, then 2.45.0 (#1815, CORS preflight headers), 2.45.1 (#1819), 2.45.2 (#1822) and
-  2.45.3 (RFC 0229 witnesses, the RFC 0230 trigger-bridge path, the v2 tenant-isolation
-  witnesses, and a lost response recorded `blocked`). No host has cut on 2.45.3 yet.
-  **The 2.45.4 cycle is open on `main`** (#1836, the v2 ports of `production-backpressure` and
-  `budget-enforcement`) and is not cut.
+- **Suite:** **2.45.4 is published** (#1840, tag `v2.45.4` on `967820ba`; npm `latest` for both
+  packages). Releases since 2.44.2: 2.44.3–2.44.9, 2.45.0 (#1815, CORS preflight headers), 2.45.1
+  (#1819), 2.45.2 (#1822), 2.45.3 (#1835) and 2.45.4 (the unclaimed any-of floor fix, the v2 ports
+  of `production-backpressure` and `budget-enforcement`, the host-free gate). **A major-1 host that
+  cut a v3 bundle on 2.45.3 without claiming `openwop-secrets` should re-cut on 2.45.4.** No host
+  has cut on 2.45.3 or 2.45.4 yet. No cycle is open.
   Take a release lock (`/tmp/claude-501/openwop-release-<ver>.lock`) before cutting.
+  - Until a 2.45.5 cycle opens, a PR that leaves the version alone must not re-stamp: restore
+    `spec-artifacts/CORPUS-STAMP.json` and `evidence/corpus-ledger.json` before committing. A PR
+    that changes packed content must open the cycle itself.
 - **Normative homes:** all 73 core families have v2 homes (#1802–#1804). The kernel budget is
   37,284 / 37,800 words, with the generated error table outside it (RFC 0227).
 - **SDKs:** **2.5.0** (npm, PyPI, `go/v2.5.0`) sends `OpenWOP-Client-Version` on every request.
