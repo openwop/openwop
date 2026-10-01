@@ -1,6 +1,6 @@
 # `@openwop/openwop-conformance` Changelog
 
-## [2.45.3] — unreleased — RFC 0229 (Active): a production host can witness secret resolution without an oracle; v2 tenant-isolation witnesses for storage, fs, memory, workspace, queues and secrets
+## [2.45.3] — 2026-10-01 — RFC 0229 (Active): a production host can witness secret resolution without an oracle; v2 tenant-isolation witnesses for storage, fs, memory, workspace, queues and secrets
 
 - **The 2.45.3 cycle opens.** RFC 0229's gap register changes the packed `spec/v1/gaps.json`.
 - **A lost response is `blocked`, not `executed-fail`** (#1829).

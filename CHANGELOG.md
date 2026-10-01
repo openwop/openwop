@@ -447,6 +447,35 @@ Format follows [Keep a Changelog](https://keepachangelog.com/en/1/) loosely. Ver
 - **The remaining eleven stay `Active`, each for a stated reason** rather than for lack of attention. The eight RFC 0167 program children name a certified openwop-app bundle in their own acceptance criteria and the committed one reads `certified: false` (3 blocked rows, RFC 0168 §E.1). RFC 0173 additionally carries the program's only `open` gap row. RFC 0179's sole criterion is unmet — 2.4.2 stopped the gate reading "(Phase 4 leg)" as an excuse for it. RFC 0187 names three requirement ids that no scenario mints. RFC 0167 itself flips **last**, which 2.4.2 made a rule: the moment the umbrella stops being `Active`, every child still `Active` becomes permanently ineligible.
 - **The interrupt `data` union is bound to `kind`** (MCP/A2A review P3-H7, Class 3 correction — COMPATIBILITY.md §3). `schemas/suspend-request.schema.json` and its v2 twin typed `data` as an unbound `oneOf`, so the minimal `conversation.start` and `conversation.close` payloads (`{ conversationId }`, which satisfies both shapes) failed validation in v1 and v2, and a payload carrying another kind's `data` passed. `data` is now an `anyOf` and a root `allOf` binds each kind to its own shape with one `if`/`then`; no per-kind shape or `$id` changed. Witnessed by `conformance/fixtures/interrupt-payloads/` (suite 2.36.0).
 
+## [2.45.3] — 2026-10-01 — RFC 0229 (Active): a production host can witness secret resolution without an oracle; v2 tenant-isolation witnesses for storage, fs, memory, workspace, queues and secrets
+
+A suite patch. Every wire addition is optional and capability-gated.
+
+### RFCs and spec
+
+- **RFC 0229 is `Active`** (#1825; the comment window is waived by steward override of RFC 0147 §A.6, so acceptance will be provisional). A host that advertises `secrets.runSecrets` takes a top-level `createRun.runSecrets` under the reserved `run:` ref and proves resolution through `core.secret.witness`, which outputs only `{ matched }`. The `openwop-secrets` floor gains a second path. No certified host advertises the facet today.
+- **RFC 0230 is `Active`** (#1824, #1827; same override): the inbound webhook ingest contract. A host advertising `triggerBridge.ingestion.inboundSigning: ["standard-webhooks-1"]` accepts Standard-Webhooks-signed posts on `ingestUrl` and dedups on `webhook-id`.
+- **A refused inbound event dead-letters only its delivery** (Class 3 correction to `trigger-bridge.md` §F.2; RFC 0230 risk R3). One badly signed post no longer disables the subscription.
+- **RFC 0227 is `Accepted`** (#1831; provisional, RFC 0156 §B review owed; evidence tier: corpus gate). RFC 0228's homing acceptance box is ticked; its v2 ports are still owed.
+
+### Conformance
+
+- **A lost response records `blocked`, not `executed-fail`** (#1829, #1834). `driver.request` is bounded at 20 s and names a timeout or failed connection as `TransportError`. Only a loss before the first assertion is reclassified; `blocked` still denies certification.
+- **New witnesses for RFC 0229**: `secrets-run-witness` (major 1) and `v2-secrets-run-witness` (major 2), four requirement ids, each sabotage-proved. The `openwop-secrets` floor is an any-of group with one summary row, `openwop.floor.anyof.byok-roundtrip+secrets-run-witness`.
+- **`openwop.floor.trigger-bridge-delivery` is witnessable without seams** (#1827). Its one test is now four requirement ids, and the dedup, dead-letter and causation legs run through RFC 0230's signed public ingest where the seams are absent.
+- **New `trigger-refused-event-keeps-subscription`** (major 1) for the §F.2 correction. A host whose delivery seam does not serve `scenario: "refused"` records `blocked`.
+- **New v2 tenant-isolation and fail-closed witnesses** (#1825, #1826): `v2-storage-cross-tenant-isolation`, `v2-fs-sandbox-escape-refused`, `v2-memory-cross-tenant-isolation`, `v2-workspace-scope-from-identity`, `v2-queue-cross-tenant-isolation`, `v2-secret-canary-absent`, `v2-tool-authorization-fail-closed` and `v2-safefetch-ssrf-refused`. `SECURITY/invariants.yaml` names them.
+- **New `v2-eval-mode-unadvertised-refused`** (#1834, major 2): `mode: "eval"` without `agents.evalSuite` is `422 capability_not_provided`. The v2 reference host passes from openwop-examples #143.
+- **`memory-attribution-replay-stable` runs on v2 hosts.** Its gate read a v1-only `supported` field and its event read hit the SSE stream.
+- **Suite `2.45.3`**, 587 scenario files. `@openwop/spec-artifacts` moves in lockstep at the same exact pin.
+
+### Evidence and status
+
+- **`coordination` is `Stable`, and RFC 0220 gap G4 is closed** (#1828), on MyndHyve's certified 2.45.2 production cut `evidence/v2-host-bundles/myndhyve-2.45.2-coordination.json`.
+- **MyndHyve's certified 2.45.2 cut is checked in** (#1823: 273 pass, 0 fail, 0 blocked). It is the first host witness of `0173.webhook-delivery-complete`.
+- **Correction** (#1830): the `v2-mcp-client-results` failure on MyndHyve's 2.45.2 coordination cut was a runner network drop, not a host defect. It is the case the transport-loss change above now records as `blocked`.
+- **`docs/V2-WITNESS-COVERAGE.md` counts table-driven and helper-gated scenarios** (#1826; report only).
+
 ## [2.45.2] — 2026-09-30 — a run-failure code must be registered or a vendor code (no longer advisory)
 
 A suite patch.
