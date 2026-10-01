@@ -1,6 +1,6 @@
 # `@openwop/openwop-conformance` Changelog
 
-## [2.45.4] — unreleased — v2 ports of production-backpressure and budget-enforcement, on a per-major profile
+## [2.45.4] — 2026-10-01 — v2 ports of production-backpressure and budget-enforcement, on a per-major profile
 
 - **The gate runs every host-free scenario** (not packed; no scenario changes). New `scripts/list-host-free-scenarios.mjs` lists the scenarios whose import closure never reaches `lib/driver`, `lib/sse` or `lib/env` and never calls `fetch(`: 70 files today. `scripts/openwop-check.sh` runs them with `OPENWOP_BASE_URL` and `OPENWOP_API_KEY` unset, after the nine hand-listed files.
   - **Why.** `host-callback-declaration` and `runner-ledger` failed on every host in the 2.45.3 candidate and nothing in CI said so (#1835).
