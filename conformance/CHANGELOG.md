@@ -1,7 +1,11 @@
 # `@openwop/openwop-conformance` Changelog
 
-## [2.45.3] — unreleased — RFC 0229 (Active): a production host can witness secret resolution without an oracle; v2 tenant-isolation witnesses for storage, fs, memory, workspace, queues and secrets
+## [2.45.3] — 2026-10-01 — RFC 0229 (Active): a production host can witness secret resolution without an oracle; v2 tenant-isolation witnesses for storage, fs, memory, workspace, queues and secrets
 
+- **Two self-checks that failed on every host are fixed before the cut.** Found by running the candidate on openwop-app at major 1 against 2.45.2: four rows went `executed-pass` → `executed-fail`, and both files failed the same way with no host.
+  - `host-callback-declaration`: `v2-tool-authorization-fail-closed` imports `lib/effect-receiver` and now exports `REQUIRES_HOST_CALLBACK`.
+  - `runner-ledger`: the derivation emits the any-of summary row for `openwop-secrets` whatever profile is claimed, as it does the prefix rows. The test's synthetic report holds neither member, so the row is `blocked`; the test now asserts that and excludes it from the claimed floor's pass count. The derivation is unchanged.
+  - The rest of that diff was as intended: no row newly `blocked`, the four `0083.trigger-delivery.*` rows and the any-of row `executed-pass`, `secrets-run-witness` and `trigger-refused-event-keeps-subscription` `inapplicable`.
 - **The 2.45.3 cycle opens.** RFC 0229's gap register changes the packed `spec/v1/gaps.json`.
 - **A lost response is `blocked`, not `executed-fail`** (#1829).
   - **Bound.** `driver.request` gives each request 20 s (`REQUEST_TIMEOUT_MS`, scaled by `OPENWOP_POLL_TIMEOUT_SCALE`), below vitest's 30 s `testTimeout`. The body read is under the same bound. A caller's own `signal` replaces the bound, and its abort is rethrown as-is.

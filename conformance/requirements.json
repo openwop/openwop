@@ -23601,7 +23601,7 @@
     {
       "id": "openwop.it.runner-ledger.a-floor-file-that-vitest-passed-but-that-recorded-nothing-is-unclassified-when-a",
       "file": "runner-ledger.test.ts",
-      "line": 141,
+      "line": 146,
       "title": "a floor file that vitest passed but that recorded NOTHING is unclassified when a ledger exists — silence is not a witness",
       "explicitId": "openwop.it.runner-ledger.a-floor-file-that-vitest-passed-but-that-recorded-nothing-is-unclassified-when-a",
       "citations": [
@@ -23614,7 +23614,7 @@
     {
       "id": "openwop.it.runner-ledger.a-vacuous-pass-executed-pass-with-assertioncount-0-on-a-claimed-floor-is-unclass",
       "file": "runner-ledger.test.ts",
-      "line": 153,
+      "line": 158,
       "title": "a VACUOUS pass (executed-pass with assertionCount 0) on a claimed floor is unclassified and REJECTS certification",
       "explicitId": "openwop.it.runner-ledger.a-vacuous-pass-executed-pass-with-assertioncount-0-on-a-claimed-floor-is-unclass",
       "citations": [
@@ -23627,7 +23627,7 @@
     {
       "id": "openwop.it.runner-ledger.a-skipped-file-with-no-ledger-entry-is-blocked-unclassified-and-it-never-reads-a",
       "file": "runner-ledger.test.ts",
-      "line": 162,
+      "line": 167,
       "title": "a skipped file with no ledger entry is blocked (unclassified) — and it never reads as skipped/inapplicable",
       "explicitId": "openwop.it.runner-ledger.a-skipped-file-with-no-ledger-entry-is-blocked-unclassified-and-it-never-reads-a",
       "citations": [
@@ -23640,7 +23640,7 @@
     {
       "id": "openwop.it.runner-ledger.a-recorded-inapplicable-skipped-is-certifiable-and-not-unclassified-a-recorded-e",
       "file": "runner-ledger.test.ts",
-      "line": 174,
+      "line": 179,
       "title": "a recorded inapplicable/skipped is certifiable and NOT unclassified; a recorded executed-fail blocks but is classified",
       "explicitId": "openwop.it.runner-ledger.a-recorded-inapplicable-skipped-is-certifiable-and-not-unclassified-a-recorded-e",
       "citations": [
@@ -23653,7 +23653,7 @@
     {
       "id": "openwop.it.runner-ledger.a-discoveryonly-profile-certifies-with-an-empty-floor-an-unknown-profile-does-no",
       "file": "runner-ledger.test.ts",
-      "line": 187,
+      "line": 192,
       "title": "a discoveryOnly profile certifies with an empty floor; an unknown profile does not",
       "explicitId": "openwop.it.runner-ledger.a-discoveryonly-profile-certifies-with-an-empty-floor-an-unknown-profile-does-no",
       "citations": [
@@ -23666,7 +23666,7 @@
     {
       "id": "openwop.it.runner-ledger.a-runtime-derived-profile-openwop-node-packs-is-held-only-when-every-floor-row-i",
       "file": "runner-ledger.test.ts",
-      "line": 194,
+      "line": 199,
       "title": "a RUNTIME-DERIVED profile (openwop-node-packs) is HELD only when every floor row is a witnessed pass; otherwise it is not held — not rejected, not blocked",
       "explicitId": "openwop.it.runner-ledger.a-runtime-derived-profile-openwop-node-packs-is-held-only-when-every-floor-row-i",
       "citations": [
@@ -23683,7 +23683,7 @@
     {
       "id": "openwop.it.runner-ledger.the-runner-s-a-resolution-of-a-silent-zero-assertion-file-blocked-marker-is-stil",
       "file": "runner-ledger.test.ts",
-      "line": 229,
+      "line": 234,
       "title": "the runner's §A resolution of a silent zero-assertion file (blocked + marker) is STILL unclassified for a claimed floor",
       "explicitId": "openwop.it.runner-ledger.the-runner-s-a-resolution-of-a-silent-zero-assertion-file-blocked-marker-is-stil",
       "citations": [
@@ -23696,7 +23696,7 @@
     {
       "id": "openwop.it.runner-ledger.with-no-ledger-at-all-every-skipped-file-is-blocked-and-the-runner-says-so-the-p",
       "file": "runner-ledger.test.ts",
-      "line": 242,
+      "line": 247,
       "title": "with no ledger at all, every skipped file is blocked and the runner says so (the pre-S6 honest reading)",
       "explicitId": "openwop.it.runner-ledger.with-no-ledger-at-all-every-skipped-file-is-blocked-and-the-runner-says-so-the-p",
       "citations": [
@@ -23709,7 +23709,7 @@
     {
       "id": "openwop.it.runner-ledger.notes-are-keyed-to-the-current-test-file-worst-first-when-mixed-and-read-back-wi",
       "file": "runner-ledger.test.ts",
-      "line": 252,
+      "line": 257,
       "title": "notes are keyed to the current test file, worst-first when mixed, and read back with joined reasons",
       "explicitId": "openwop.it.runner-ledger.notes-are-keyed-to-the-current-test-file-worst-first-when-mixed-and-read-back-wi",
       "citations": [
@@ -23722,7 +23722,7 @@
     {
       "id": "openwop.it.runner-ledger.files-that-finished-before-this-one-appear-in-the-ledger-file-with-an-assertion",
       "file": "runner-ledger.test.ts",
-      "line": 274,
+      "line": 279,
       "title": "files that finished before this one appear in the ledger file with an assertion count",
       "explicitId": "openwop.it.runner-ledger.files-that-finished-before-this-one-appear-in-the-ledger-file-with-an-assertion",
       "citations": [
@@ -34874,7 +34874,7 @@
     {
       "id": "openwop.it.v2-tool-authorization-fail-closed.a-tool-whose-required-scope-the-principal-lacks-is-not-invoked-and-is-refused-fo",
       "file": "v2-tool-authorization-fail-closed.test.ts",
-      "line": 156,
+      "line": 158,
       "title": "a tool whose required scope the principal lacks is not invoked and is refused forbidden",
       "explicitId": "openwop.requirement.toolHooks.authorization-fail-closed-missing-scope",
       "citations": [
@@ -34928,7 +34928,7 @@
     {
       "id": "openwop.it.v2-tool-authorization-fail-closed.a-tool-whose-required-scope-cannot-be-evaluated-is-not-invoked-and-is-refused-fo",
       "file": "v2-tool-authorization-fail-closed.test.ts",
-      "line": 176,
+      "line": 178,
       "title": "a tool whose required scope cannot be evaluated is not invoked and is refused forbidden",
       "explicitId": "openwop.requirement.toolHooks.authorization-fail-closed-unevaluable-scope",
       "citations": [
