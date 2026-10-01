@@ -450,8 +450,17 @@ export function deriveRequirementDispositions(
   // `openwop.floor.any.interrupt-` row recorded `blocked` ("no interrupt-*
   // scenario ran"), which by RFC 0168 §E.1 denied certification to every
   // profile on every major-2 bundle. The fifth unjoined floor site.
+  //
+  // Only for a CLAIMED profile's floor (2.45.5), as the any-of rows below have
+  // been since 2.45.4, and for the same reason: a floor nobody claims is not a
+  // requirement on this host, and its summary row is `blocked` whenever no
+  // matching file passed. A major-1 host that does not claim
+  // `openwop-interrupts` got an `openwop.floor.any.interrupt-` row it could
+  // only satisfy by passing a scenario of a profile it never claimed, and a v3
+  // bundle with any `blocked` row certifies nothing (RFC 0168 §E.1).
+  const claimed = new Set(claimedProfiles.map((p) => DEPRECATED_PROFILE_ALIASES[p] ?? p));
   const prefixIds = new Set<string>();
-  if (!v2FloorsActive()) for (const floor of Object.values(PROFILE_FLOOR_SCENARIOS)) for (const p of floor.requiredAnyPrefix ?? []) prefixIds.add(p);
+  if (!v2FloorsActive()) for (const [profile, floor] of Object.entries(PROFILE_FLOOR_SCENARIOS)) if (claimed.has(profile)) for (const p of floor.requiredAnyPrefix ?? []) prefixIds.add(p);
   for (const prefix of [...prefixIds].sort()) {
     const matching = [...perFile.entries()].filter(([f]) => f.startsWith(prefix)).map(([, r]) => r);
     const id = requirementIdForPrefix(prefix);
@@ -486,7 +495,6 @@ export function deriveRequirementDispositions(
   // members `inapplicable`, got one `blocked` row for a profile it never
   // claimed, and a bundle with any `blocked` row certifies nothing (RFC 0168
   // §E.1). A group nobody claims is not a requirement on this host.
-  const claimed = new Set(claimedProfiles.map((p) => DEPRECATED_PROFILE_ALIASES[p] ?? p));
   if (!v2FloorsActive()) for (const [profile, floor] of Object.entries(PROFILE_FLOOR_SCENARIOS)) if (claimed.has(profile)) for (const g of floor.requiredAnyOf ?? []) groups.set(requirementIdForAnyOf(g), g);
   for (const [id, members] of [...groups.entries()].sort((a, b) => a[0].localeCompare(b[0]))) {
     const scenarioId = `anyof:${members.join('|')}`;

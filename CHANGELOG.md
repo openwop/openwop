@@ -13,6 +13,9 @@ Format follows [Keep a Changelog](https://keepachangelog.com/en/1/) loosely. Ver
 
 ## [Unreleased]
 
+- **Conformance fix: an unclaimed prefix floor no longer blocks a major-1 bundle** (suite 2.45.5). The `openwop.floor.any.interrupt-` row is now written only for a host that claims `openwop-interrupts`, as the any-of rows have been since 2.45.4. No affected host is known; major-2 bundles never carried the row.
+- **Two v2 decisions recorded** (architect review, 2026-10-01). `memoryScopeIsolation` is not carried in v2 (gap `openwop.gap.0189.17`, already closed). A `core.subWorkflow` child's parent stays observable through `getRunAncestry` only; no snapshot field is added.
+
 - **Conformance fix: an unclaimed any-of floor no longer blocks a major-1 bundle** (suite 2.45.4; a 2.45.3 defect). On 2.45.3 a major-1 host that did not claim `openwop-secrets` got a `blocked` any-of row for it, and a v3 bundle with any `blocked` row certifies nothing. The row is now written only for a claimed profile. Major-2 bundles were never affected.
 - **RFC 0230: five acceptance boxes ticked** against what landed in #1824 and #1827 (text, schemas, the split scenario, the sabotage proof, changelog). The production-cut box stays open.
 - **The server-free gate runs every scenario that needs no host** (gate only; no wire, normative or packed change). `openwop:check` step 1 ran a hand list of nine scenario files. It now also runs the 70 whose import graph never reaches a host module, derived by `conformance/scripts/list-host-free-scenarios.mjs`, with no host configured, and any failure fails the gate. 2.45.3's candidate failed two such scenarios through three green PRs, because the host job passes at ≥92% (#1835). Reintroducing that defect fails the new step.

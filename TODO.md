@@ -23,11 +23,9 @@
   (#1819), 2.45.2 (#1822), 2.45.3 (#1835) and 2.45.4 (the unclaimed any-of floor fix, the v2 ports
   of `production-backpressure` and `budget-enforcement`, the host-free gate). **A major-1 host that
   cut a v3 bundle on 2.45.3 without claiming `openwop-secrets` should re-cut on 2.45.4.** No host
-  has cut on 2.45.3 or 2.45.4 yet. No cycle is open.
+  has cut on 2.45.3 or 2.45.4 yet. **The 2.45.5 cycle is open on `main`** (the prefix floor fix) and
+  is not cut.
   Take a release lock (`/tmp/claude-501/openwop-release-<ver>.lock`) before cutting.
-  - Until a 2.45.5 cycle opens, a PR that leaves the version alone must not re-stamp: restore
-    `spec-artifacts/CORPUS-STAMP.json` and `evidence/corpus-ledger.json` before committing. A PR
-    that changes packed content must open the cycle itself.
 - **Normative homes:** all 73 core families have v2 homes (#1802–#1804). The kernel budget is
   37,284 / 37,800 words, with the generated error table outside it (RFC 0227).
 - **SDKs:** **2.5.0** (npm, PyPI, `go/v2.5.0`) sends `OpenWOP-Client-Version` on every request.
@@ -86,9 +84,6 @@ works through the CLI. Buying a plan is not covered by any autonomy grant, so as
 
 ## 5 — Found while rewriting the quickstarts for v2 (#1654)
 
-- [ ] MyndHyve's certified 2.42.8 cut fails `0172…unversioned-is-v2` and `0221.generated-secret-returned`
-      (it echoes a supplied secret). Filed as myndhyve/myndhyve#528. Its next certified cut with both
-      fixed is also RFC 0221's tier-2 witness.
 - [ ] RFC 0224 gap G2 (`checkpointPublicKeys[]`): reopen when the first host dual-signs during a key
       rotation, or when anyone needs rotation without a verify gap.
 
@@ -133,24 +128,31 @@ Defects outside the spec:
     seeded.
   - Not ported: v1's `budget_model_denied` leg (needs a fixture that resolves a model unaided).
   - The rename rows G1–G3, G6 and G7 close on host cuts.
-- [ ] **MyndHyve advertises `budget` at major 2 and enforces it only behind a v1 seam.** Reported
-      by its session from source, not measured: `configurable.budget` is validated, stored and
-      never read. The v2 port keys on the fixture, so MyndHyve records `inapplicable`. Its session
-      is raising the advert with the maintainer.
-- [ ] **The `interrupt-` prefix floor row has the same shape as the any-of defect fixed in 2.45.4.**
-      It is written for every floor in the v1 table, claimed or not, and is `blocked` when no
-      `interrupt-*` file passed. Not changed here, because removing the row alters every major-1
-      bundle. **Unverified:** whether any major-1 host that cuts today lacks a passing
-      `interrupt-*` file. If one does, it is denied certification the same way.
+- [ ] **MyndHyve advertises `budget` and `agents.evalSuite` at major 2 and serves each only behind
+      a v1 seam.** Reported by its session from source, not measured: `configurable.budget` is
+      validated, stored and never read, and eval runs only through
+      `/v1/host/sample/agents/eval-run`. The choice (implement, or narrow the advert) is with the
+      maintainer and is undecided. The v2 budget port keys on its fixture, so MyndHyve records
+      `inapplicable`; `v2-eval-mode-unadvertised-refused` is also `inapplicable` while the facet
+      is advertised.
+- [ ] **RFC 0228 rename rows, as MyndHyve's session reports them (2026-10-01, from source):** G1
+      is fixed for pack-facing callers (`egress_denied`, `upstream_unavailable`; myndhyve#581,
+      deployed). The major-2 read boundary strips `details.retryAfter*`; not checked for the `503`
+      case. `no_active_deployment` (G7) is not confirmed renamed.
 - [ ] **RFC 0229** needs all four requirement ids `executed-pass` on a certified bundle from a
       production deployment. **RFC 0230** needs openwop-app to advertise `inboundSigning` and pass the path in strict mode on a production cut; its other boxes are ticked.
 - [ ] **`mode: "eval"` refusal on the other two hosts.** `v2-eval-mode-unadvertised-refused`
       (2.45.3) measures it. The v2 reference host answered `capability_required` (fixed, examples
       #143). **Unverified:** openwop-app appears to accept `mode` and `evalSuiteRef` with no
       rejection. That was read from source, not run; its next cut on 2.45.3 will say.
-- [ ] **Two maintainer decisions from the homing work.** `memoryScopeIsolation: "isolated"` is in
-      v1 prose and no schema (recorded in `spec/v1/gaps.json`). `subWorkflow`'s child→parent link
-      is observable only where `getRunAncestry` is served. Adding either to v2 needs an RFC.
+- **Decided 2026-10-01 (architect review, at the maintainer's request); no work owed:**
+  - `memoryScopeIsolation: "isolated"` is not carried in v2. It never had a schema, and
+    `openwop.gap.0189.17` is closed.
+  - A `core.subWorkflow` child's parent stays observable through `getRunAncestry` only. v2 removed
+    the snapshot fields on purpose (migration C4.18), and the only host advertising `subWorkflow`
+    also serves ancestry. If a host ever advertises `subWorkflow` without ancestry, the fix is an
+    RFC requiring the child's `run.started.causationId` to name the parent's event, as trigger
+    deliveries already do. It is not a new field.
 
 ## Pattern checks (no code owed; read new scenarios against these)
 
