@@ -118,19 +118,19 @@ Defects outside the spec:
 
 ## 7 — Follow-ups from 2026-10-01
 
-- [ ] **#1829 — an unbounded `driver.request` hangs to vitest's timeout** and records
-      `executed-fail`. A dropped response is an unreadable observation, not a verdict. Bound the
-      request and record `blocked`.
-- [ ] **RFC 0228's acceptance boxes.** `budget` and `production` are homed (#1803), but that box is
-      still unticked. Two boxes are real work: the v2 ports of `fs-path-traversal`,
-      `production-backpressure` and `budget-enforcement` with a certified `storage_limit_exceeded`
-      or `egress_denied` row, and the rename rows G1–G3, G6 and G7 closing on host cuts.
+- [ ] **RFC 0228's two open boxes.**
+  - v2 ports of `production-backpressure` and `budget-enforcement` (`fs-path-traversal` has
+    `v2-fs-sandbox-escape-refused`), plus a certified `storage_limit_exceeded` or `egress_denied`
+    row. Only MyndHyve advertises `production` and `budget` at major 2, so a port cannot be
+    sabotage-proved on the v2 reference host. Give the reference host the two families first, or
+    prove the ports with MyndHyve.
+  - The rename rows G1–G3, G6 and G7 close on host cuts.
 - [ ] **RFC 0229** needs all four requirement ids `executed-pass` on a certified bundle from a
       production deployment. **RFC 0230** has its `Active` checklist open.
-- [ ] **No v2 witness for `mode: "eval"` on an unadvertising host.** `runs.md` requires
-      `422 capability_not_provided` without `agents.evalSuite`; the eval scenarios are major 1 only.
-      **Unverified:** openwop-app appears to accept `mode` and `evalSuiteRef` with no rejection.
-      That was read from source, not run. Probe it before filing an issue.
+- [ ] **`mode: "eval"` refusal on the other two hosts.** `v2-eval-mode-unadvertised-refused`
+      (2.45.3) measures it. The v2 reference host answered `capability_required` (fixed, examples
+      #143). **Unverified:** openwop-app appears to accept `mode` and `evalSuiteRef` with no
+      rejection. That was read from source, not run; its next cut on 2.45.3 will say.
 - [ ] **Two maintainer decisions from the homing work.** `memoryScopeIsolation: "isolated"` is in
       v1 prose and no schema (recorded in `spec/v1/gaps.json`). `subWorkflow`'s child→parent link
       is observable only where `getRunAncestry` is served. Adding either to v2 needs an RFC.

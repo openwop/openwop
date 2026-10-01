@@ -3,6 +3,14 @@
 ## [2.45.3] — unreleased — RFC 0229 (Active): a production host can witness secret resolution without an oracle; v2 tenant-isolation witnesses for storage, fs, memory, workspace, queues and secrets
 
 - **The 2.45.3 cycle opens.** RFC 0229's gap register changes the packed `spec/v1/gaps.json`.
+- **A lost response is `blocked`, not `executed-fail`** (#1829).
+  - **Bound.** `driver.request` gives each request 20 s (`REQUEST_TIMEOUT_MS`, scaled by `OPENWOP_POLL_TIMEOUT_SCALE`), below vitest's 30 s `testTimeout`. The body read is under the same bound. A caller's own `signal` replaces the bound, and its abort is rethrown as-is.
+  - **Named.** A timeout or a failed connection throws `TransportError` (`transport-loss: <METHOD> <origin+path> got no response …`). The query string is dropped from the message.
+  - **Recorded.** A test that fails on a transport loss before its first assertion records `blocked`; the file row follows when every failure in it is one and nothing was asserted. A loss after an assertion stays `executed-fail`, and an assertion failure is never excused.
+  - **Why.** On MyndHyve's 2.45.2 cut the runner's network dropped for about 9 s. `v2-mcp-client-results` hung to the harness timeout and recorded `executed-fail` with 0 assertions against a host that had answered in 2.6 ms. `blocked` still denies certification, so a flaky runner cannot certify; it can no longer convict the host.
+  - **Proof.** `src/lib/driver-transport-loss.test.ts` (10 cases): a local server that never answers yields a timeout `TransportError` well inside the bound; without the classification the same failure is `executed-fail`.
+- **New scenario `v2-eval-mode-unadvertised-refused`** (major 2, unaided): a host that does not advertise `agents.evalSuite` answers `POST /runs {mode: "eval"}` with `422 capability_not_provided` (`runs.md` §Refusals; `openwop.requirement.runs.eval-mode-unadvertised-refused`). The eval scenarios ran at major 1 only, so nothing measured this at major 2. A host that advertises the facet records `inapplicable`. If a host wrongly accepts the create, the leg cancels the run before asserting.
+  - **Proof.** Passes on the v2 reference host with openwop-examples #143; fails on the host without it, which answered `capability_required`.
 - **`trigger-bridge-delivery`: a normative-surface witness path (RFC 0230), and one requirement per leg.**
   - **Split.** The single combined `it` becomes four, each with its own requirement id: `openwop.requirement.0083.trigger-delivery.{dedup,dead-letter,causation,runless-content-free}`. The old per-`it` id aliases to the dedup leg.
   - **Seam path unchanged.** It stays the primary witness whenever the host serves the seams.

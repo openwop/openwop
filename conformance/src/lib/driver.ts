@@ -11,6 +11,46 @@
 
 import { loadEnv } from './env.js';
 import { seamPath, targetMajor } from './seams.js';
+import { scaledTimeoutMs } from './timeout-scale.js';
+
+/**
+ * How long one request may go unanswered before the driver gives up (#1829).
+ * Below vitest's 30 s `testTimeout`, so a lost response ends as a named
+ * {@link TransportError} and not as a bare harness timeout. Driver long-polls
+ * are at most 5 s. Scales with `OPENWOP_POLL_TIMEOUT_SCALE`.
+ */
+export const REQUEST_TIMEOUT_MS = 20_000;
+
+/** Leads every {@link TransportError} message; `resolveItRecord` keys on it. */
+export const TRANSPORT_LOSS_PREFIX = 'transport-loss: ';
+
+/**
+ * No response arrived: the request timed out or the connection failed. The
+ * suite observed nothing about the host, so this is never a verdict on it. A
+ * runner whose network dropped for 9 s once recorded `executed-fail` against a
+ * host that had answered in 2.6 ms (MyndHyve cut, suite 2.45.2).
+ */
+export class TransportError extends Error {
+  constructor(
+    readonly kind: 'timeout' | 'network',
+    readonly method: string,
+    /** Origin and path only. A query string can carry a token. */
+    readonly target: string,
+    reason: string,
+  ) {
+    super(`${TRANSPORT_LOSS_PREFIX}${method} ${target} got no response (${reason}); the suite could not observe the host`);
+    this.name = 'TransportError';
+  }
+}
+
+function withoutQuery(url: string): string {
+  try {
+    const u = new URL(url);
+    return `${u.origin}${u.pathname}`;
+  } catch {
+    return url.split('?')[0] ?? url;
+  }
+}
 
 export interface OpenWOPResponse {
   readonly status: number;
@@ -25,6 +65,10 @@ export interface OpenWOPRequestInit {
   /** `false` sends no default credential. A caller-supplied `Authorization`
    *  header is always sent as given, whatever this says. */
   readonly authenticated?: boolean;
+  /** Replaces the driver's own bound entirely; an abort it raises is rethrown as-is. */
+  readonly signal?: AbortSignal;
+  /** Overrides {@link REQUEST_TIMEOUT_MS} for one request (scaled the same way). */
+  readonly timeoutMs?: number;
 }
 
 class OpenWOPDriver {
@@ -83,9 +127,24 @@ class OpenWOPDriver {
         fetchInit.body = JSON.stringify(init.body);
       }
     }
-    const res = await fetch(url, fetchInit);
+    const boundMs = scaledTimeoutMs(init.timeoutMs ?? REQUEST_TIMEOUT_MS);
+    fetchInit.signal = init.signal ?? AbortSignal.timeout(boundMs);
+    let res: Response;
+    let text: string;
+    try {
+      res = await fetch(url, fetchInit);
+      // The body is read under the same bound: a response whose headers arrive
+      // and whose body never does is the same lost observation.
+      text = await res.text();
+    } catch (err) {
+      // The caller's own signal aborted: that is the caller's event, not a loss.
+      if (init.signal?.aborted === true) throw err;
+      const name = err instanceof Error ? err.name : '';
+      if (name === 'TimeoutError') throw new TransportError('timeout', method, withoutQuery(url), `no response within ${boundMs} ms`);
+      const cause = err instanceof Error ? (err.cause instanceof Error ? err.cause.message : err.message) : String(err);
+      throw new TransportError('network', method, withoutQuery(url), cause.slice(0, 160));
+    }
 
-    const text = await res.text();
     let json: unknown;
     try {
       json = text.length > 0 ? JSON.parse(text) : undefined;

@@ -28,6 +28,7 @@
  */
 
 import { driver } from './driver.js';
+import { scaledTimeoutMs } from './timeout-scale.js';
 import { targetMajor } from './seams.js';
 
 export interface RunSnapshot {
@@ -52,24 +53,7 @@ export interface RunSnapshot {
 const POLL_INTERVAL_MS = 250;
 const DEFAULT_TIMEOUT_MS = Number(process.env.OPENWOP_LIFECYCLE_TIMEOUT_MS ?? 10_000);
 
-/**
- * Multiplier applied to every poll bound (see the module docstring). Invalid,
- * non-positive, or non-finite values fall back to `1` rather than silently
- * producing a zero or negative deadline — a mis-set knob must not turn every
- * poll into an instant failure that looks like a host defect.
- */
-function pollTimeoutScale(): number {
-  const raw = process.env.OPENWOP_POLL_TIMEOUT_SCALE;
-  if (raw === undefined || raw === '') return 1;
-  const n = Number(raw);
-  return Number.isFinite(n) && n > 0 ? n : 1;
-}
-
-/** Apply the scale to a bound, rounding up so a scale of 1 is exactly a no-op. */
-export function scaledTimeoutMs(timeoutMs: number): number {
-  const scale = pollTimeoutScale();
-  return scale === 1 ? timeoutMs : Math.ceil(timeoutMs * scale);
-}
+export { scaledTimeoutMs };
 
 /**
  * Live-model scenarios (RFC 0111's `conformance-context-budget-live`) drive real
