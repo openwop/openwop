@@ -89,6 +89,14 @@ echo "[1/9] Conformance suite (typecheck + server-free scenarios)..."
     src/scenarios/anonymous-actor-shape.test.ts \
     src/scenarios/audit-checkpoint-vectors.test.ts \
     src/scenarios/audit-anomaly-shape.test.ts
+  # Every scenario that needs no host, derived from the import graph and run at
+  # 100% with no host configured (suite 2.45.4). The nine files above are a hand
+  # list; two host-free self-checks outside it failed on every host through
+  # three green PRs, because the host job passes at ≥92% (fixed in #1835). See
+  # conformance/scripts/list-host-free-scenarios.mjs.
+  HOST_FREE="$(node scripts/list-host-free-scenarios.mjs --check)"
+  # shellcheck disable=SC2086 # one path per line, no spaces: word-splitting is the intent
+  env -u OPENWOP_BASE_URL -u OPENWOP_API_KEY npx vitest run $HOST_FREE
   # Suite 2.0.0 (RFC 0168 §D.1): the corpus-coherence scenarios live in
   # src/coherence/ (spec-corpus-validity, artifact-schema-compile-bounded,
   # form-content-packs, … 29 files) and run here through their own config,
