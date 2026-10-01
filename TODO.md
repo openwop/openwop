@@ -24,10 +24,10 @@
   of `production-backpressure` and `budget-enforcement`, the host-free gate). **A major-1 host that
   cut a v3 bundle on 2.45.3 without claiming `openwop-secrets` should re-cut on 2.45.4.** No host
   has cut on 2.45.3 or 2.45.4 yet. No cycle is open.
+  Take a release lock (`/tmp/claude-501/openwop-release-<ver>.lock`) before cutting.
   - Until a 2.45.5 cycle opens, a PR that leaves the version alone must not re-stamp: restore
     `spec-artifacts/CORPUS-STAMP.json` and `evidence/corpus-ledger.json` before committing. A PR
     that changes packed content must open the cycle itself.
-  Take a release lock (`/tmp/claude-501/openwop-release-<ver>.lock`) before cutting.
 - **Normative homes:** all 73 core families have v2 homes (#1802–#1804). The kernel budget is
   37,284 / 37,800 words, with the generated error table outside it (RFC 0227).
 - **SDKs:** **2.5.0** (npm, PyPI, `go/v2.5.0`) sends `OpenWOP-Client-Version` on every request.
