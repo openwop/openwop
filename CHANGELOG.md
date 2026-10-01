@@ -454,6 +454,26 @@ Format follows [Keep a Changelog](https://keepachangelog.com/en/1/) loosely. Ver
 - **The remaining eleven stay `Active`, each for a stated reason** rather than for lack of attention. The eight RFC 0167 program children name a certified openwop-app bundle in their own acceptance criteria and the committed one reads `certified: false` (3 blocked rows, RFC 0168 §E.1). RFC 0173 additionally carries the program's only `open` gap row. RFC 0179's sole criterion is unmet — 2.4.2 stopped the gate reading "(Phase 4 leg)" as an excuse for it. RFC 0187 names three requirement ids that no scenario mints. RFC 0167 itself flips **last**, which 2.4.2 made a rule: the moment the umbrella stops being `Active`, every child still `Active` becomes permanently ineligible.
 - **The interrupt `data` union is bound to `kind`** (MCP/A2A review P3-H7, Class 3 correction — COMPATIBILITY.md §3). `schemas/suspend-request.schema.json` and its v2 twin typed `data` as an unbound `oneOf`, so the minimal `conversation.start` and `conversation.close` payloads (`{ conversationId }`, which satisfies both shapes) failed validation in v1 and v2, and a payload carrying another kind's `data` passed. `data` is now an `anyOf` and a root `allOf` binds each kind to its own shape with one `if`/`then`; no per-kind shape or `$id` changed. Witnessed by `conformance/fixtures/interrupt-payloads/` (suite 2.36.0).
 
+## [2.45.4] — 2026-10-01 — an unclaimed any-of floor no longer blocks a major-1 bundle; v2 ports of production-backpressure and budget-enforcement
+
+A suite patch. No wire, schema or normative change.
+
+### Conformance
+
+- **Fix: an unclaimed any-of floor no longer blocks a major-1 bundle** (#1839; a 2.45.3 defect). 2.45.3 wrote the `openwop-secrets` any-of summary row for every floor in the v1 table. A host that does not advertise secrets records both members `inapplicable`, so it got one `blocked` row for a profile it never claimed, and a v3 bundle with any `blocked` row certifies nothing (RFC 0168 §E.1). The row is now written only for a claimed profile. Major-2 bundles never carried it. A major-1 host that cut a v3 bundle on 2.45.3 without claiming `openwop-secrets` should re-cut on 2.45.4.
+- **New `v2-production-backpressure`** (#1836, major 2, unaided). With an advertised `production.backpressure.inflightCap` saturated, the next request MUST answer `503 service_unavailable` with `Retry-After` and no `details.retryAfter*`. It records `inapplicable` on a host that advertises no `inflightCap`.
+- **New `v2-budget-enforcement`** (#1836, major 2, unaided). It runs the new fixture `conformance-budget-tool-calls` under a two-call `configurable.budget` and reads `budget.reserved`, `budget.threshold-crossed` and `budget.exhausted` from the log, then the hard stop (`cap.breached`, `budget_exhausted`) or the advisory no-stop. The fixture is the opt-in: a host that advertises `budget` without seeding it records `inapplicable`.
+- **Both ports are proven against a scratch host**, since no host serves either family unaided at major 2. Not ported: v1's `budget_model_denied` leg and its "discovery is exempt from the cap" leg.
+- **What differs between majors is one table** (`conformance/src/lib/major-profile.ts`, #1836). Shared witnesses take a profile, so a port to a later major is one row and a thin scenario file.
+- **Suite `2.45.4`**, 589 scenario files. `@openwop/spec-artifacts` moves in lockstep at the same exact pin.
+
+### Gate and status
+
+- **The server-free gate runs every scenario that needs no host** (#1838; gate only). `openwop:check` now runs the 70 scenario files whose import graph never reaches a host module, with no host configured. 2.45.3's candidate failed two such files through three green PRs.
+- **RFC 0230: five acceptance boxes ticked** (#1839) against what landed in #1824 and #1827. The production-cut box stays open.
+- **RFC 0228: the v2 ports exist**; its certified-row box stays open.
+- **`SECURITY/invariants.yaml`: `budget-no-pricing-leak` also names `v2-budget-enforcement`.**
+
 ## [2.45.3] — 2026-10-01 — RFC 0229 (Active): a production host can witness secret resolution without an oracle; v2 tenant-isolation witnesses for storage, fs, memory, workspace, queues and secrets
 
 A suite patch. Every wire addition is optional and capability-gated.
