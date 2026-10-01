@@ -3170,6 +3170,7 @@ invariants:
     threat_model: SECURITY/threat-model-secret-leakage.md
     tests:
       - conformance/src/scenarios/budget-policy-shape.test.ts
+      - conformance/src/scenarios/v2-budget-enforcement.test.ts
     note: |
       RFC 0084 §F. The budget.{reserved,consumed,threshold.crossed,exhausted}
       events and cap.breached{kind:"budget-*"} MUST NOT carry the host's PRICING
