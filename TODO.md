@@ -18,9 +18,10 @@
   **0230** (inbound webhook ingest contract). **0038** is `Draft` (Parked). **0225**, **0226** and
   **0227** went `Accepted` since the last update (#1791, #1821, #1831). Every waived-window
   `Accepted` RFC is **provisional** (RFC 0156 §B).
-- **Suite:** **2.45.2 is published** (#1822). Releases since 2.44.2: 2.44.3–2.44.9, then 2.45.0
-  (#1815, CORS preflight headers), 2.45.1 (#1819) and 2.45.2. **The 2.45.3 cycle is open on
-  `main`** (RFC 0229 witnesses, the RFC 0230 trigger-bridge path, #1825–#1827) and is not cut.
+- **Suite:** **2.45.3 is published** (#1835, tag `v2.45.3` on `67ad3a54`). Releases since 2.44.2:
+  2.44.3–2.44.9, then 2.45.0 (#1815, CORS preflight headers), 2.45.1 (#1819), 2.45.2 (#1822) and
+  2.45.3 (RFC 0229 witnesses, the RFC 0230 trigger-bridge path, the v2 tenant-isolation
+  witnesses, and a lost response recorded `blocked`). No host has cut on 2.45.3 yet.
   Take a release lock (`/tmp/claude-501/openwop-release-<ver>.lock`) before cutting.
 - **Normative homes:** all 73 core families have v2 homes (#1802–#1804). The kernel budget is
   37,284 / 37,800 words, with the generated error table outside it (RFC 0227).
@@ -131,6 +132,14 @@ Defects outside the spec:
       (2.45.3) measures it. The v2 reference host answered `capability_required` (fixed, examples
       #143). **Unverified:** openwop-app appears to accept `mode` and `evalSuiteRef` with no
       rejection. That was read from source, not run; its next cut on 2.45.3 will say.
+- [ ] **CI passes while a suite self-check fails on every host.** 2.45.3's candidate failed
+      `host-callback-declaration` and `runner-ledger` with no host at all (fixed in #1835), and
+      #1825, #1826 and #1834 were all green. The server-free job runs a subset and the host job
+      passes at ≥92%. Run every scenario that needs no host in the server-free job, at 100%.
+- [ ] **The any-of floor row is emitted whatever profile is claimed** (RFC 0229 §E), as the prefix
+      rows are. **Unverified:** on a major-1 host that does not claim `openwop-secrets` it should
+      record `blocked` without denying any claimed profile. That was read from
+      `certification-bundle-verify.ts`, not run.
 - [ ] **Two maintainer decisions from the homing work.** `memoryScopeIsolation: "isolated"` is in
       v1 prose and no schema (recorded in `spec/v1/gaps.json`). `subWorkflow`'s child→parent link
       is observable only where `getRunAncestry` is served. Adding either to v2 needs an RFC.
@@ -145,6 +154,8 @@ Defects outside the spec:
   explains it. 2.42.3–2.42.4 shipped an era-2 row blocked on every host; hotfix 2.42.5 (#1647).
 - **Converting a partial pass to `blocked` is right only if a conforming host could have made
   the requirement observable.**
+- **A scenario that imports a harness double declares `REQUIRES_HOST_CALLBACK`** or the opt-out.
+  Run `host-callback-declaration` and `runner-ledger` with no host before opening the PR (#1835).
 
 ## Operating notes
 
