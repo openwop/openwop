@@ -13,6 +13,7 @@ Format follows [Keep a Changelog](https://keepachangelog.com/en/1/) loosely. Ver
 
 ## [Unreleased]
 
+- **`debug-bundle` schema description drops its v1 history** (editorial; no wire or normative change). The v2 `RunDebugBundle` description now reads "The endpoint is optional; hosts MAY omit it." `TODO.md` is refreshed to the state after 2.45.2.
 - **RFC 0227 `Accepted`** (provisional, RFC 0156 §B review owed; evidence tier: corpus gate). `openwop.requirement.0171.error-registry-prose-parity` is `executed-pass` in `evidence/corpus-ledger.json` at its re-pointed location, and `check-core-budget` reports the exclusion: 37,284 / 37,800 kernel words, with 417 generated registry-restatement words unbudgeted. No wire, schema or normative change.
 - **`coordination` is `Stable`, and gap G4 is closed** (RFC 0220; the promotion window is waived, #1747). New `evidence/v2-host-bundles/myndhyve-2.45.2-coordination.json`: MyndHyve production `workflow-runtime-00843-pox`, build `commit:86d75737`, suite 2.45.2, both profiles certified, 274 pass / 2 fail / 0 blocked, RFC 0158 rung `durable-single-instance` restored. It witnesses twelve families.
   - MyndHyve serves `ctx.coordination` (roundRobin, vote, consensus and delegate) to the v2-signed `vendor.myndhyve.agent-orchestration@1.0.3`, workspace-approved (myndhyve #568, #578, #579, #580).
