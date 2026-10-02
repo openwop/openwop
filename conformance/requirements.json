@@ -36065,7 +36065,7 @@
     {
       "id": "openwop.it.v2-workspace-scope-from-identity.a-second-tenant-cannot-read-or-list-a-file-the-first-tenant-wrote",
       "file": "v2-workspace-scope-from-identity.test.ts",
-      "line": 100,
+      "line": 107,
       "title": "a second tenant cannot read or list a file the first tenant wrote",
       "explicitId": "openwop.requirement.0059.workspace-scope-from-identity",
       "citations": [
@@ -36099,7 +36099,7 @@
     {
       "id": "openwop.it.v2-workspace-scope-from-identity.naming-the-first-tenant-s-scope-in-the-request-does-not-widen-the-second-tenant",
       "file": "v2-workspace-scope-from-identity.test.ts",
-      "line": 122,
+      "line": 129,
       "title": "naming the first tenant's scope in the request does not widen the second tenant's scope",
       "explicitId": "openwop.requirement.0059.workspace-scope-not-request-named",
       "citations": [

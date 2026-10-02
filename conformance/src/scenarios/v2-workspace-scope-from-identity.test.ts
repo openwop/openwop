@@ -24,7 +24,9 @@
  *      request instead of the credential serves A's file here.
  *
  * Dispositions: family or seams profile not advertised ⇒ `inapplicable`
- * (lib/seams.ts: the host has not claimed the instrument). Advertised, but the
+ * (lib/seams.ts: the host has not claimed the instrument). That holds in
+ * strict mode too: the family is read with `familyAdvertised`, so no
+ * `family.workspace` opt-out is needed from a host that does not serve it. Advertised, but the
  * seam answers 404/405/501, the second-tenant key is absent / identical /
  * refused, or (leg 2) A's scope cannot be read from a run ⇒ `blocked` — the host
  * took the obligation on and the suite could not measure it.
@@ -33,7 +35,7 @@ import { describe, it, expect } from 'vitest';
 import { randomUUID } from 'node:crypto';
 import { driver, type OpenWOPResponse } from '../lib/driver.js';
 import { loadEnv } from '../lib/env.js';
-import { v2Discovery, gateFamily } from '../lib/v2.js';
+import { v2Discovery, familyAdvertised } from '../lib/v2.js';
 import { seamsProfileAdvertised, SEAMS_PREFIX } from '../lib/seams.js';
 import { isFixtureAdvertised } from '../lib/fixtures.js';
 import { softSkip, seamAbsent } from '../lib/soft-skip.js';
@@ -55,7 +57,12 @@ async function http(fn: () => Promise<OpenWOPResponse>): Promise<OpenWOPResponse
 async function gate(): Promise<Gate> {
   const doc = await v2Discovery();
   if (!doc) return { ok: false, kind: 'blocked', reason: 'v2 discovery unreachable — /.well-known/openwop did not answer 200 JSON under OpenWOP-Version: 2.0' };
-  if (!(await gateFamily('workspace'))) return { ok: false, kind: 'inapplicable', reason: 'workspace family not advertised (gate recorded under openwop.family.workspace)' };
+  // `familyAdvertised`, not `gateFamily`: `workspace` is optional, and a host that does not advertise it has
+  // taken on no obligation here. Until 2.45.7 this was `gateFamily`, which in strict mode
+  // (`--require-behavior`) FAILS an unadvertised family unless the operator opts it out — so this file
+  // recorded `executed-fail` on a host its own header calls `inapplicable` (MyndHyve, 2.45.5), while
+  // its sibling isolation scenarios recorded `inapplicable` in the same run.
+  if (!(await familyAdvertised('workspace'))) return { ok: false, kind: 'inapplicable', reason: 'workspace family not advertised — no obligation' };
   if (!seamsProfileAdvertised(doc)) return { ok: false, kind: 'inapplicable', reason: 'workspace files have no protocol path; the only observation surface is the seams profile (conformance.seamsProfile = openwop-conformance-seams-v2), which is not advertised' };
   const probe = await http(() => driver.get(FILES));
   if (probe === null) return { ok: false, kind: 'blocked', reason: `GET ${FILES} unreachable (fetch failed)` };
