@@ -13,6 +13,12 @@ Format follows [Keep a Changelog](https://keepachangelog.com/en/1/) loosely. Ver
 
 ## [Unreleased]
 
+- **RFC 0231 `Active`: a host says which budget exhaustion behaviours it serves** (additive; suite 2.45.6; filed `Draft` and made `Active` on 2026-10-02, the 7-day comment window waived by the steward and not run; RFC 0147 §A.6 does not apply; acceptance will be provisional pending the RFC 0156 §B review). A host that advertises `budget` could not say it serves `onExhaustion: "fail"` and not `"interrupt"`; the v2 reference host refused `interrupt` and recorded that as a deviation.
+  - **Facet.** `budget.onExhaustion`, optional, in the v1 seed and derived into `schemas/v2/capabilities.schema.json`: the `onExhaustion` values the host serves under `enforce: "hard"`. It contains `fail`. Absent, the host serves both, as before.
+  - **Rule.** `spec/v2/core/runs.md` §Refusals and `spec/v1/budget-policy.md` §D: a value the host does not list is refused `422 capability_not_provided` at create. It is never applied as another behaviour and never ignored.
+  - **Witness.** New `v2-budget-exhaustion-facet` (major 2), two requirement ids, proven both ways against the scratch host. The v1 rule and the served `interrupt` path are unwitnessed (gaps G7 and G2).
+
+  No host advertises the facet today, so the new rows record `inapplicable` on every committed bundle. The RFC's gap register changes the packed `spec/v1/gaps.json`, which opens the 2.45.6 cycle.
 - **Evidence: the v2 reference host's certified 2.45.5 public cut** (451 pass / 0 fail / 0 blocked, all three profiles, build `commit:97cefdf4`, witness `5894ba221e61`, signed `v2-reference-4`, no relaxations; `--verify --host-key` VERIFIED; openwop-examples #146, #147). The corpus copy is replaced byte-for-byte. The host now advertises `budget` (`toolCalls`, hard) and `production.backpressure` (`inflightCap` 32), so the two v2 ports have their **first certified witness**: `runs.budget-lifecycle`, `runs.budget-enforcement`, `runs.budget-content-free` and `production.backpressure-refusal` are `executed-pass`. Until now they were proven only against a scratch host.
   - Stated limits of that host: only the `toolCalls` dimension is enforced, and `onExhaustion: "interrupt"` is refused `422 capability_not_provided` (a deviation; the spec defines no way to decline it).
 - **openwop-app's `mode: "eval"` refusal is fixed** (openwop-app #4318, #4320). Verified on a local in-process host at its `main` with suite 2.45.5: the leg passes.

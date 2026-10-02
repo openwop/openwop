@@ -1,5 +1,19 @@
 # `@openwop/openwop-conformance` Changelog
 
+## [2.45.6] — unreleased — RFC 0231 (Active): a host says which budget exhaustion behaviours it serves
+
+- **The 2.45.6 cycle opens.** RFC 0231's gap register changes the packed `spec/v1/gaps.json`.
+- **New scenario `v2-budget-exhaustion-facet`** (major 2, unaided; RFC 0231). Logic in `lib/exhaustion-facet-witness.ts`.
+  - `openwop.requirement.runs.budget-exhaustion-facet-contains-fail`: an advertised `budget.onExhaustion` is a non-empty list of `fail` and `interrupt` that contains `fail`.
+  - `openwop.requirement.runs.budget-unserved-exhaustion-refused`: where the list leaves out `interrupt`, a create asking for it answers `422 capability_not_provided`. The suite sends one create and cancels any run a non-conforming host starts.
+
+  **Dispositions.** No `budget`, no list, or `enforce` not `hard`: `inapplicable`. A list that includes `interrupt`: the refusal row is `inapplicable`, and the served path has no witness (RFC 0231 gap G2). No advertised fixture: the refusal row is `inapplicable`.
+
+  **Sabotage.** `lib/exhaustion-facet-witness.test.ts`, nine cases against the scratch host. The refusal row fails on a host that accepts the run, answers `400 validation_error`, or answers `422` with another code. The first row fails on a list without `fail`, an empty list and a bare string.
+
+  **Host impact: none today.** No host advertises `budget.onExhaustion`, so both rows record `inapplicable` everywhere.
+- **`lib/scratch-host.ts` can refuse a create by its body** (`createRefusal`). Unset, every create is admitted as before.
+
 ## [2.45.5] — 2026-10-01 — a prefix floor row is written only for a claimed profile
 
 - **The 2.45.5 cycle opens.** A runner change alters the packed content.

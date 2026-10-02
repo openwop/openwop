@@ -1232,10 +1232,14 @@
       "facets": [
         "dimensions",
         "enforce",
+        "onExhaustion",
         "scopes"
       ],
       "floorScenarios": [],
-      "requirementIds": [],
+      "requirementIds": [
+        "openwop.requirement.runs.budget-exhaustion-facet-contains-fail",
+        "openwop.requirement.runs.budget-unserved-exhaustion-refused"
+      ],
       "owningRfc": "0084"
     },
     {

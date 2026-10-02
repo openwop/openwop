@@ -1,7 +1,7 @@
 {
   "$schema": "./gaps.schema.json",
   "version": 1,
-  "updated": "2026-10-01",
+  "updated": "2026-10-02",
   "witnessClasses": [
     "witnessable-unaided",
     "witnessable-gated",
@@ -13796,6 +13796,125 @@
         {
           "file": "RFCS/registers/0230-inbound-webhook-ingest-contract.gaps.md",
           "token": "G2"
+        }
+      ]
+    },
+    {
+      "id": "openwop.gap.0231.1",
+      "rfc": "0231",
+      "local": "G1",
+      "section": "§B.2",
+      "surface": "What an absent facet means: \"both, as today\" (proposed, additive) or \"`fail` only\" (matches every host measured, and is a correction).",
+      "witness": "unclassified",
+      "requirementId": null,
+      "disposition": "closed",
+      "target": null,
+      "sources": [
+        {
+          "file": "RFCS/registers/0231-budget-exhaustion-facet.gaps.md",
+          "token": "G1"
+        }
+      ]
+    },
+    {
+      "id": "openwop.gap.0231.2",
+      "rfc": "0231",
+      "local": "G2",
+      "section": "§B.1, §F",
+      "surface": "The `interrupt` path has no witness in either major. `runs.md` says the approval's `resumeValue` \"adds budget\" and gives no shape (RFC 0084, Unresolved question 5), so a suite cannot drive the resume.",
+      "witness": "unclassified",
+      "requirementId": null,
+      "disposition": "carried",
+      "target": "openwop.gap.0231.2",
+      "sources": [
+        {
+          "file": "RFCS/registers/0231-budget-exhaustion-facet.gaps.md",
+          "token": "G2"
+        }
+      ]
+    },
+    {
+      "id": "openwop.gap.0231.3",
+      "rfc": "0231",
+      "local": "G3",
+      "section": "§F",
+      "surface": "No host advertises the facet, so the refusal row has no witness. The v2 reference host already refuses as §C requires.",
+      "witness": "unclassified",
+      "requirementId": null,
+      "disposition": "externally-gated",
+      "target": "host-advertises-exhaustion-facet",
+      "sources": [
+        {
+          "file": "RFCS/registers/0231-budget-exhaustion-facet.gaps.md",
+          "token": "G3"
+        }
+      ]
+    },
+    {
+      "id": "openwop.gap.0231.4",
+      "rfc": "0231",
+      "local": "G4",
+      "section": "§C.1",
+      "surface": "Whether the refusal should carry `details.supported`. `capability_not_provided` has no registered details schema.",
+      "witness": "unclassified",
+      "requirementId": null,
+      "disposition": "carried",
+      "target": "openwop.gap.0231.4",
+      "sources": [
+        {
+          "file": "RFCS/registers/0231-budget-exhaustion-facet.gaps.md",
+          "token": "G4"
+        }
+      ]
+    },
+    {
+      "id": "openwop.gap.0231.5",
+      "rfc": "0231",
+      "local": "G5",
+      "section": "§D",
+      "surface": "Whether v1 takes the facet. The seed schema is v1's, so by default both majors get it.",
+      "witness": "unclassified",
+      "requirementId": null,
+      "disposition": "closed",
+      "target": null,
+      "sources": [
+        {
+          "file": "RFCS/registers/0231-budget-exhaustion-facet.gaps.md",
+          "token": "G5"
+        }
+      ]
+    },
+    {
+      "id": "openwop.gap.0231.6",
+      "rfc": "0231",
+      "local": "G6",
+      "section": "Motivation",
+      "surface": "MyndHyve's `interrupt` behaviour is reported from source by its session and was not measured.",
+      "witness": "unclassified",
+      "requirementId": null,
+      "disposition": "externally-gated",
+      "target": "myndhyve-host-cut",
+      "sources": [
+        {
+          "file": "RFCS/registers/0231-budget-exhaustion-facet.gaps.md",
+          "token": "G6"
+        }
+      ]
+    },
+    {
+      "id": "openwop.gap.0231.7",
+      "rfc": "0231",
+      "local": "G7",
+      "section": "§F",
+      "surface": "The v1 rule has no witness: the suite's major-1 profile gives a run budget no `createRun` surface it drives, and the v1 budget scenario uses a host seam.",
+      "witness": "unclassified",
+      "requirementId": null,
+      "disposition": "carried",
+      "target": "openwop.gap.0231.7",
+      "sources": [
+        {
+          "file": "RFCS/registers/0231-budget-exhaustion-facet.gaps.md",
+          "token": "G7"
         }
       ]
     },
