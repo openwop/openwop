@@ -121,14 +121,25 @@ Defects outside the spec:
 
 ## 7 — Follow-ups from 2026-10-01
 
-- [ ] **RFC 0228's two open boxes.**
-  - The v2 ports exist and are witnessed: `v2-production-backpressure` and `v2-budget-enforcement`
-    are `executed-pass` on the v2 reference host's certified 2.45.5 cut (openwop-examples #146,
-    #147). Still owed: a certified `storage_limit_exceeded` or `egress_denied` row. The reference
-    host cannot give it (no `httpClient`, no storage); MyndHyve's next certified cut is the
-    candidate.
-  - Not ported: v1's `budget_model_denied` leg (needs a fixture that resolves a model unaided).
-  - The rename rows G1–G3, G6 and G7 close on host cuts.
+- [ ] **RFC 0228's two open boxes** (state 2026-10-02).
+  - **Certified `egress_denied` row:** the v2 reference host serves `httpClient.safeFetch` since
+    openwop-examples #148 (rehearsal: the five `httpClient.ssrf-*` rows pass). One public cut on
+    2.45.6 will record it; the maintainer approved that cut for after the 2.45.6 release.
+    MyndHyve can witness it too (it advertises `safeFetch` and the probe fixture since its #581);
+    its cut awaits its operator's go.
+  - **v2 ports (gap G4):** four exist. Still owed: a v2 port of `table-schema-enforcement`. No
+    host advertises `tableStorage` at major 2. Not ported: v1's `budget_model_denied` leg.
+  - **Rename rows.** G2 is closed (reference host, certified 2.45.5). Still open, as the host
+    sessions report from source:
+    - G1 (MyndHyve): fixed for pack-facing callers and deployed (myndhyve#581); needs a
+      certified cut. The major-2 boundary strips `details.retryAfter*`; not checked for the `503`.
+    - G3 (openwop-app): fix up as openwop-app #4331, not merged. Maintainer decision
+      2026-10-02: it closes on a certified cut that contains the fix, recorded as unit-witnessed
+      with `v2-fs-sandbox-escape-refused` `inapplicable` (the host advertises neither `fs` nor
+      `tableStorage` at major 2).
+    - G6 (openwop-app): fixed and deployed (#4238); needs a certified cut.
+    - G7 (MyndHyve): not fixed. `no_active_deployment` goes out as
+      `myndhyve.no_active_deployment` at major 2; the denial envelope is untraced.
 - [ ] **RFC 0231 (`Active`, window waived 2026-10-02): `Accepted` needs a host.** The v2 reference
       host already refuses `interrupt` as the RFC requires. It needs `onExhaustion: ["fail"]` in
       its advertisement (openwop-examples) and a certified cut on 2.45.6 with
@@ -142,20 +153,16 @@ Defects outside the spec:
       maintainer and is undecided. The v2 budget port keys on its fixture, so MyndHyve records
       `inapplicable`; `v2-eval-mode-unadvertised-refused` is also `inapplicable` while the facet
       is advertised.
-- [ ] **RFC 0228 rename rows, as MyndHyve's session reports them (2026-10-01, from source):** G1
-      is fixed for pack-facing callers (`egress_denied`, `upstream_unavailable`; myndhyve#581,
-      deployed). The major-2 read boundary strips `details.retryAfter*`; not checked for the `503`
-      case. `no_active_deployment` (G7) is not confirmed renamed.
 - [ ] **RFC 0229** needs all four requirement ids `executed-pass` on a certified bundle from a
       production deployment. **RFC 0230** needs openwop-app to advertise `inboundSigning` and pass the path in strict mode on a production cut; its other boxes are ticked.
-- [ ] **Host evidence owed, as the host sessions report it (2026-10-01, from source):**
-  - RFC 0230: openwop-app's `inboundSigning` advert is off by default and no certified cut is
-    planned.
-  - RFC 0229: openwop-app does not advertise `secrets.runSecrets` or seed the witness fixture;
-    MyndHyve consumes `runSecrets` but does not seed the fixture.
-  - RFC 0228's certified `egress_denied` or `storage_limit_exceeded` row: not the reference host
-    (it advertises neither `httpClient` nor storage). MyndHyve's next certified cut is the
-    candidate; that cut awaits its operator's approval.
+- [ ] **Host evidence owed, as the host sessions report it (2026-10-02):**
+  - RFC 0230 (openwop-app): blocked on an operator decision plus a pin bump. Measured on
+    production by the flag's owner: `OPENWOP_TRIGGER_INBOUND_SIGNING` is unset, so the facet is
+    not advertised; the suite pin is `^2.45.2`; and its last cut had ten timeout failures at
+    major 1 that are still being traced.
+  - RFC 0229: neither host can witness it yet. openwop-app does not advertise
+    `secrets.runSecrets`; MyndHyve consumes `runSecrets` but advertises no facet and seeds no
+    fixture. It needs a production deployment, so the reference host cannot stand in.
 - **Decided 2026-10-01 (architect review, at the maintainer's request); no work owed:**
   - `memoryScopeIsolation: "isolated"` is not carried in v2. It never had a schema, and
     `openwop.gap.0189.17` is closed.

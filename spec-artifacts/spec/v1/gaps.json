@@ -13569,8 +13569,8 @@
       "surface": "The v2 reference host emits `example.mcp_unreachable` (`mcp-client.ts:67`, `:73`) and `example.http_fetch_failed` (`executor.ts:264`), vendor codes chosen only because no row existed.",
       "witness": "unclassified",
       "requirementId": null,
-      "disposition": "externally-gated",
-      "target": "v2-reference-recut",
+      "disposition": "closed",
+      "target": null,
       "sources": [
         {
           "file": "RFCS/registers/0228-v1-host-service-error-codes.gaps.md",
