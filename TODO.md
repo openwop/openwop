@@ -19,17 +19,21 @@
   **0038** is `Draft` (Parked). **0225**, **0226** and
   **0227** went `Accepted` since the last update (#1791, #1821, #1831). Every waived-window
   `Accepted` RFC is **provisional** (RFC 0156 §B).
-- **Suite:** **2.45.5 is published** (#1844, tag `v2.45.5` on `d68bd71d`; npm `latest` for both
+- **Suite:** **2.45.6 is published** (#1850, tag `v2.45.6` on `41819fa8`; npm `latest` for both
   packages). Releases since 2.44.2: 2.44.3–2.44.9, 2.45.0 (#1815, CORS preflight headers), 2.45.1
   (#1819), 2.45.2 (#1822), 2.45.3 (#1835), 2.45.4 (#1840: the unclaimed any-of floor fix, the v2
-  ports of `production-backpressure` and `budget-enforcement`, the host-free gate) and 2.45.5 (the
-  unclaimed prefix floor fix). **A major-1 host that cut a v3 bundle on 2.45.3 without claiming
+  ports of `production-backpressure` and `budget-enforcement`, the host-free gate) , 2.45.5 (the
+  unclaimed prefix floor fix) and 2.45.6 (RFC 0231: the `budget.onExhaustion` facet, its refusal rule
+  and `v2-budget-exhaustion-facet`). **A major-1 host that cut a v3 bundle on 2.45.3 without claiming
   `openwop-secrets`, or on any suite without claiming `openwop-interrupts`, should re-cut on
   2.45.5.** The v2 reference host has cut on 2.45.5; MyndHyve and openwop-app have not cut on
-  2.45.3 or later. **The 2.45.6 cycle is open on `main`** (RFC 0231: the facet, the refusal rule and
-  `v2-budget-exhaustion-facet`) and is not cut. Take a release lock (`/tmp/claude-501/openwop-release-<ver>.lock`) before cutting.
+  2.45.3 or later. No host has cut on 2.45.6. No cycle is open.
+  Take a release lock (`/tmp/claude-501/openwop-release-<ver>.lock`) before cutting.
+  - Until a 2.45.7 cycle opens, a PR that leaves the version alone must not re-stamp: restore
+    `spec-artifacts/CORPUS-STAMP.json` and `evidence/corpus-ledger.json` before committing. A PR
+    that changes packed content must open the cycle itself.
 - **Normative homes:** all 73 core families have v2 homes (#1802–#1804). The kernel budget is
-  37,284 / 37,800 words, with the generated error table outside it (RFC 0227).
+  37,324 / 37,800 words, with the generated error table outside it (RFC 0227).
 - **SDKs:** **2.5.0** (npm, PyPI, `go/v2.5.0`) sends `OpenWOP-Client-Version` on every request.
   Re-vendoring to a newer corpus tag is a separate change.
 - **Hosts** (the canonical files in `evidence/v2-host-bundles/`, all certified, 0 fail, 0 blocked):
@@ -141,8 +145,8 @@ Defects outside the spec:
     - G7 (MyndHyve): not fixed. `no_active_deployment` goes out as
       `myndhyve.no_active_deployment` at major 2; the denial envelope is untraced.
 - [ ] **RFC 0231 (`Active`, window waived 2026-10-02): `Accepted` needs a host.** The v2 reference
-      host already refuses `interrupt` as the RFC requires. It needs `onExhaustion: ["fail"]` in
-      its advertisement (openwop-examples) and a certified cut on 2.45.6 with
+      host already refuses `interrupt` as the RFC requires. It advertises `onExhaustion: ["fail"]` once pinned to
+      2.45.6 (openwop-examples #148), and needs a certified cut on 2.45.6 with
       `runs.budget-unserved-exhaustion-refused` `executed-pass`. Unwitnessed and recorded: the v1
       rule (G7) and the served `interrupt` path, whose budget-extending `resumeValue` has no shape
       (G2).
