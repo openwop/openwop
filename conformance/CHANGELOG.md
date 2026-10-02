@@ -1,6 +1,6 @@
 # `@openwop/openwop-conformance` Changelog
 
-## [2.45.7] — unreleased — RFC 0231 Accepted
+## [2.45.7] — 2026-10-02 — a strict-mode host that does not advertise `workspace` is not failed; RFC 0231 Accepted
 
 - **Fix: `v2-workspace-scope-from-identity` no longer fails a strict-mode host that does not advertise `workspace`.** The file gated with `gateFamily('workspace')`, which under `--require-behavior` fails an unadvertised family unless the operator opts it out. Its own header says an unadvertised family is `inapplicable`, and its sibling isolation scenarios (`v2-storage-`, `v2-queue-cross-tenant-isolation`) read with `familyAdvertised` and recorded `inapplicable` in the same run. It now reads with `familyAdvertised`.
   - **Found by** MyndHyve's 2.45.5 cut: both `0059.workspace-scope-*` rows `executed-fail` on a host that does not serve `workspace`.

@@ -482,6 +482,23 @@ Format follows [Keep a Changelog](https://keepachangelog.com/en/1/) loosely. Ver
 - **The remaining eleven stay `Active`, each for a stated reason** rather than for lack of attention. The eight RFC 0167 program children name a certified openwop-app bundle in their own acceptance criteria and the committed one reads `certified: false` (3 blocked rows, RFC 0168 §E.1). RFC 0173 additionally carries the program's only `open` gap row. RFC 0179's sole criterion is unmet — 2.4.2 stopped the gate reading "(Phase 4 leg)" as an excuse for it. RFC 0187 names three requirement ids that no scenario mints. RFC 0167 itself flips **last**, which 2.4.2 made a rule: the moment the umbrella stops being `Active`, every child still `Active` becomes permanently ineligible.
 - **The interrupt `data` union is bound to `kind`** (MCP/A2A review P3-H7, Class 3 correction — COMPATIBILITY.md §3). `schemas/suspend-request.schema.json` and its v2 twin typed `data` as an unbound `oneOf`, so the minimal `conversation.start` and `conversation.close` payloads (`{ conversationId }`, which satisfies both shapes) failed validation in v1 and v2, and a payload carrying another kind's `data` passed. `data` is now an `anyOf` and a root `allOf` binds each kind to its own shape with one `if`/`then`; no per-kind shape or `$id` changed. Witnessed by `conformance/fixtures/interrupt-payloads/` (suite 2.36.0).
 
+## [2.45.7] — 2026-10-02 — a strict-mode host that does not advertise `workspace` is not failed; RFC 0231 Accepted
+
+A suite patch. No wire or normative change.
+
+### Conformance
+
+- **`v2-workspace-scope-from-identity` records `inapplicable`, not `executed-fail`, on a strict-mode host that does not advertise `workspace`** (#1854). It used the strict family gate against its own documented disposition, so both `0059.workspace-scope-*` rows failed under `--require-behavior`. Found by MyndHyve's 2.45.5 cut. A host that advertises `workspace` is unchanged. On 2.45.3–2.45.6 the workaround is `OPENWOP_OPTED_OUT_PROFILES=family.workspace`.
+- **Suite `2.45.7`**, 590 scenario files. `@openwop/spec-artifacts` moves in lockstep at the same exact pin.
+
+### RFCs
+
+- **RFC 0231 is `Accepted`** (#1853; provisional, RFC 0156 §B review owed; evidence tier 1, the v2 reference host). Its register rows change the packed `spec/v1/gaps.json`: G3 closes on the cut, G4 closes as not adopted, and G2 (the served `interrupt` path) and G7 (the v1 rule) are `externally-gated` and still unwitnessed.
+
+### Evidence and status
+
+- **The v2 reference host's certified 2.45.6 public cut is checked in** (#1852: 460 pass, 0 fail, 0 blocked). It witnesses RFC 0231's two rows and all five `httpClient.ssrf-*` rows, which ticks RFC 0228's certified-row box. RFC 0228 stays `Active`.
+
 ## [2.45.6] — 2026-10-02 — RFC 0231 (Active): a host says which budget exhaustion behaviours it serves
 
 A suite patch. The one wire addition is optional and changes nothing for a host that does not advertise it.
