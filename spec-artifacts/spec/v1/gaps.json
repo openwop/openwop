@@ -13705,8 +13705,8 @@
       "surface": "No host implements `runSecrets` with the `run:` binding, `core.secret.witness` and the fixture, so the three requirement ids have no witness.",
       "witness": "unclassified",
       "requirementId": null,
-      "disposition": "externally-gated",
-      "target": "host-implements-run-witness",
+      "disposition": "closed",
+      "target": null,
       "sources": [
         {
           "file": "RFCS/registers/0229-production-safe-secrets-witness.gaps.md",
@@ -13722,8 +13722,8 @@
       "surface": "The value is neither stored in cleartext nor logged, but both are unwitnessable from outside: storage and host logs are not protocol surfaces.",
       "witness": "unclassified",
       "requirementId": null,
-      "disposition": "carried",
-      "target": "openwop.gap.0229.3",
+      "disposition": "externally-gated",
+      "target": "operator-attested-evidence",
       "sources": [
         {
           "file": "RFCS/registers/0229-production-safe-secrets-witness.gaps.md",
@@ -13739,8 +13739,8 @@
       "surface": "Proof of *use* (an egress carrying the value to a suite-owned receiver), beyond proof of resolution.",
       "witness": "unclassified",
       "requirementId": null,
-      "disposition": "carried",
-      "target": "openwop.gap.0229.4",
+      "disposition": "externally-gated",
+      "target": "operator-supplied-egress-receiver",
       "sources": [
         {
           "file": "RFCS/registers/0229-production-safe-secrets-witness.gaps.md",

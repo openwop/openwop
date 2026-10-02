@@ -55,7 +55,7 @@ Grouping below is a reading aid only: it assigns each RFC to the risk class its 
 | RFC | Title | Status | Waiver | Evidence tier | Outcome |
 | --- | --- | --- | --- | --- | --- |
 | [0221](../RFCS/0221-generated-webhook-secret-returned-once.md) | a webhook secret the host generates is returned once | `Accepted` | steward override of RFC 0147 §A.6 | tier-1 — the v2 reference host's certified public cut on published suite 2 | `not-reviewed` |
-| [0229](../RFCS/0229-production-safe-secrets-witness.md) | a production host can witness secret resolution without an oracle | `Active` | steward override of RFC 0147 §A.6 | not declared (predates RFC 0174 §B.1, or not yet Accepted) | `not-reviewed` |
+| [0229](../RFCS/0229-production-safe-secrets-witness.md) | a production host can witness secret resolution without an oracle | `Accepted` | steward override of RFC 0147 §A.6 | tier-2 — MyndHyve's certified production cut on published suite 2 | `not-reviewed` |
 
 ## Packs and registry (11)
 
