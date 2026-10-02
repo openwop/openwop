@@ -19,17 +19,21 @@
   on 2026-10-02 (tier-1, the v2 reference host). **0038** is `Draft` (Parked). **0225**, **0226** and
   **0227** went `Accepted` since the last update (#1791, #1821, #1831). Every waived-window
   `Accepted` RFC is **provisional** (RFC 0156 §B).
-- **Suite:** **2.45.6 is published** (#1850, tag `v2.45.6` on `41819fa8`; npm `latest` for both
+- **Suite:** **2.45.7 is published** (#1855, tag `v2.45.7` on `573fb413`; npm `latest` for both
   packages). Releases since 2.44.2: 2.44.3–2.44.9, 2.45.0 (#1815, CORS preflight headers), 2.45.1
   (#1819), 2.45.2 (#1822), 2.45.3 (#1835), 2.45.4 (#1840: the unclaimed any-of floor fix, the v2
   ports of `production-backpressure` and `budget-enforcement`, the host-free gate), 2.45.5 (the
-  unclaimed prefix floor fix) and 2.45.6 (RFC 0231: the `budget.onExhaustion` facet, its refusal rule
-  and `v2-budget-exhaustion-facet`). **A major-1 host that cut a v3 bundle on 2.45.3 without claiming
+  unclaimed prefix floor fix), 2.45.6 (RFC 0231: the `budget.onExhaustion` facet, its refusal rule
+  and `v2-budget-exhaustion-facet`) and 2.45.7 (#1854: `v2-workspace-scope-from-identity` no longer
+  fails a strict-mode host that does not advertise `workspace`). **A host that cut on 2.45.3–2.45.6
+  in strict mode without `workspace` should re-cut on 2.45.7**, or opt out `family.workspace`. **A major-1 host that cut a v3 bundle on 2.45.3 without claiming
   `openwop-secrets`, or on any suite without claiming `openwop-interrupts`, should re-cut on
   2.45.5.** The v2 reference host has cut on 2.45.6; MyndHyve and openwop-app have not cut on
-  2.45.3 or later. **The 2.45.7 cycle is open on `main`** (RFC 0231's register rows) and is not
-  cut; it carries no suite change. Take a release lock
+  2.45.3 or later. No cycle is open. Take a release lock
   (`/tmp/claude-501/openwop-release-<ver>.lock`) before cutting.
+  - Until a 2.45.8 cycle opens, a PR that leaves the version alone must not re-stamp: restore
+    `spec-artifacts/CORPUS-STAMP.json` and `evidence/corpus-ledger.json` before committing. A PR
+    that changes packed content must open the cycle itself.
 - **Normative homes:** all 73 core families have v2 homes (#1802–#1804). The kernel budget is
   37,324 / 37,800 words, with the generated error table outside it (RFC 0227).
 - **SDKs:** **2.5.0** (npm, PyPI, `go/v2.5.0`) sends `OpenWOP-Client-Version` on every request.
