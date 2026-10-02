@@ -10,6 +10,7 @@ Entries before this file was condensed carried full development detail. That tex
 
 - **RFC 0229 is Accepted.** MyndHyve passes all four `secrets` run-witness requirements on a certified production bundle (suite 2.45.5); the RFC states the deployment's two conformance flags and the byok fixture it still advertises.
 - **RFC 0228 G1 is half witnessed.** The same bundle passes MyndHyve's `egress_denied` rows; its `503` backpressure half is still unwitnessed.
+- **RFC 0230's signed ingest runs on hosts with seams.** `trigger-bridge-delivery` now runs every witness path a host offers. A host that serves both the delivery seams and `inboundSigning` can witness RFC 0230 on a certified bundle.
 - **New `v2-table-schema-enforcement`.** Through the new fixture `conformance-table-schema-probe`, a mistyped `tableStorage` insert or update MUST fail `validation_error` with `details.service: tableStorage`; a host without the fixture records `inapplicable`.
 
 ## [2.45.7] — 2026-10-02 — Strict mode no longer fails a host that does not serve `workspace`; RFC 0231 Accepted

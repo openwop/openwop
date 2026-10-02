@@ -24,7 +24,9 @@
  *
  * Gated on the `openwop-trigger-bridge` profile and on
  * `triggerBridge.ingestion.externalSources` listing `webhook`. The uncredentialed
- * public path (RFC 0230, `inboundSigning`) is witnessed separately.
+ * public path (RFC 0230, `inboundSigning`) is witnessed separately, by the
+ * dead-letter leg of `trigger-bridge-delivery`. A host with no seams that
+ * advertises `inboundSigning` therefore records `inapplicable` here.
  *
  * @see spec/v1/trigger-bridge.md §F.2
  * @see spec/v2/core/webhooks.md §Inbound triggers
@@ -36,7 +38,7 @@ import { driver } from '../lib/driver.js';
 import { seamAbsent, softSkip } from '../lib/soft-skip.js';
 import { behaviorGate } from '../lib/behavior-gate.js';
 import { readCapabilityFamily } from '../lib/discovery-capabilities.js';
-import { isTriggerBridgeProfileAdvertised } from '../lib/triggerBridge.js';
+import { inboundSigningAdvertised, isTriggerBridgeProfileAdvertised } from '../lib/triggerBridge.js';
 import { queryTestEvents, requireEvents, isEventLogSeamAvailable } from '../lib/event-log-query.js';
 import { req } from '../lib/requirement-ids.js';
 
@@ -59,7 +61,14 @@ describe('trigger-refused-event-keeps-subscription (trigger-bridge.md §F.2)', (
     if (!sources.includes('webhook')) {
       return softSkip('inapplicable', 'triggerBridge.ingestion.externalSources does not list webhook, so the host verifies no inbound webhook event');
     }
-    if (!(await isEventLogSeamAvailable())) return seamAbsent('host ingests external webhooks but the event-log seam is absent');
+    if (!(await isEventLogSeamAvailable())) {
+      // A host with no seams that serves RFC 0230's signed ingest is measured on this same rule
+      // there: the dead-letter leg of `trigger-bridge-delivery` posts a badly signed event, reads the
+      // subscription back `active`, and delivers a signed one (RFC 0230 §C.1). Until 2.45.8 this
+      // file failed such a host in strict mode as "not observable" right after that leg observed it.
+      if (await inboundSigningAdvertised()) return softSkip('inapplicable', 'no delivery seam on this host; the rule is witnessed on its signed public ingest by openwop.requirement.0083.trigger-delivery.dead-letter (RFC 0230 §C.1)');
+      return seamAbsent('host ingests external webhooks but the event-log seam is absent');
+    }
 
     // ---- 1. The refused event -------------------------------------------
     const refusedRes = await driver.post(SEAM, { scenario: 'refused', source: 'webhook' });

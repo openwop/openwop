@@ -16,16 +16,24 @@
  *      (a dead-lettered attempt, `trigger.subscription.state.changed`) carry no
  *      inbound content.
  *
- * TWO WITNESS PATHS. The SEAM path (primary, whenever the host serves them)
- * drives `POST /v1/host/sample/trigger-bridge/deliver` and reads the test
- * event-log seam. When the seams are absent — as they are on every production
- * host — legs 1–3 run the NORMATIVE-SURFACE path of RFC 0230 if the host
- * advertises `triggerBridge.ingestion.inboundSigning: ["standard-webhooks-1"]`:
- * register a webhook subscription and POST Standard-Webhooks-signed bodies to its
- * `ingestUrl` with no OpenWOP credential. Each row notes which path ran
- * (`observed:`). Leg 4 has no normative-surface path — the run-less events are
- * on no run's log — so it stays seam-witnessed and records seam-absent
- * otherwise; it remains in the floor (the floor never narrows).
+ * TWO WITNESS PATHS, and a host is measured on EVERY path it offers (2.45.8).
+ * The SEAM path drives `POST /v1/host/sample/trigger-bridge/deliver` and reads
+ * the test event-log seam; it runs whenever the host serves the seams. The
+ * NORMATIVE-SURFACE path of RFC 0230 registers a webhook subscription and POSTs
+ * Standard-Webhooks-signed bodies to its `ingestUrl` with no OpenWOP credential;
+ * legs 1–3 run it whenever the host advertises
+ * `triggerBridge.ingestion.inboundSigning: ["standard-webhooks-1"]`. A host that
+ * offers both must pass both, and each row notes which ran (`observed:`).
+ *
+ * Until 2.45.8 the normative-surface path ran only when the seams were absent.
+ * That left it unwitnessable on a certified bundle: with the seams mounted it
+ * never ran, and without them leg 4 (seam-only) is red, the profile does not
+ * certify, and an uncertified bundle supplies no acceptance evidence
+ * (RFC 0174 §B.1).
+ *
+ * Leg 4 has no normative-surface path — the run-less events are on no run's
+ * log — so it stays seam-witnessed and records seam-absent otherwise; it
+ * remains in the floor (the floor never narrows).
  *
  * Spec references:
  *   - spec/v1/trigger-bridge.md (§C, §F.2, §F.6)
@@ -65,13 +73,17 @@ function expectContentFree(id: string, payload: Record<string, unknown>, where: 
   }
 }
 
-type Path = 'seam' | 'normative' | null;
+/** The witness paths this host offers. Both are run when both are offered. */
+async function witnessPaths(): Promise<{ seam: boolean; normative: boolean }> {
+  return { seam: await isEventLogSeamAvailable(), normative: await inboundSigningAdvertised() };
+}
 
-/** Which witness path this host supports: the seams when present, else RFC 0230's. */
-async function witnessPath(): Promise<Path> {
-  if (await isEventLogSeamAvailable()) return 'seam';
-  if (await inboundSigningAdvertised()) return 'normative';
-  return null;
+/** `ran`, or `absent` when the delivery seam turned out to be unwired; the leg then records it with `seamAbsent`. */
+const SEAM_UNWIRED = 'host advertises openwop-trigger-bridge but the delivery seam is unwired';
+type SeamLeg = 'ran' | 'absent';
+
+function notePaths(seam: boolean, normative: boolean, extra = ''): void {
+  noteObservation([seam ? 'seam path' : '', normative ? 'normative-surface path (RFC 0230)' : ''].filter((x) => x !== '').join(' + ') + extra);
 }
 
 const NO_PATH = 'host advertises openwop-trigger-bridge but neither the event-log seam nor an RFC 0230 inboundSigning ingest is available';
@@ -82,14 +94,14 @@ function bareRunId(runId: string): string {
 }
 
 /** The seam witness path (primary when the host serves the seams). */
-async function dedupViaSeam(): Promise<undefined> {
+async function dedupViaSeam(): Promise<SeamLeg> {
     // The dedupKey is MINTED PER EXERCISE, and that is load-bearing (2.37.0):
     // §C-1's dedup window is a ≥24h floor, so a literal key collides with an
     // earlier run the same day and convicts a conformant host. The repetition
     // §C-1 is about happens INSIDE `driveDelivery`'s `scenario: 'dedup'`.
     const dedupKey = freshDedupKey('queue');
     const dedup = await driveDelivery({ scenario: 'dedup', dedupKey, source: 'queue' });
-    if (dedup === null) return seamAbsent('host advertises openwop-trigger-bridge but the delivery seam is unwired');
+    if (dedup === null) return 'absent';
     const dedupEvents = requireEvents(
       await queryTestEvents(dedup.runId ?? '__dedup__', { type: 'trigger.delivery.attempted' }),
       'trigger.delivery.attempted (dedup)',
@@ -100,15 +112,14 @@ async function dedupViaSeam(): Promise<undefined> {
       expect(typeof e.payload.outcome === 'string' && DELIVERY_OUTCOMES.includes(e.payload.outcome as string), req(R_DEDUP, 'run-event-payloads.schema.json#triggerDeliveryAttempted', 'outcome MUST be delivered|retrying|dead-lettered')).toBe(true);
       expectContentFree(R_DEDUP, e.payload, 'trigger.delivery.attempted');
     }
-    noteObservation('seam path');
     await resetTestSeam();
-  return undefined;
+  return 'ran';
 }
 
 /** The seam witness path (primary when the host serves the seams). */
-async function deadLetterViaSeam(): Promise<undefined> {
+async function deadLetterViaSeam(): Promise<SeamLeg> {
     const exhaust = await driveDelivery({ scenario: 'exhaust', source: 'webhook' });
-    if (exhaust === null) return seamAbsent('host advertises openwop-trigger-bridge but the delivery seam is unwired');
+    if (exhaust === null) return 'absent';
     const exKey = exhaust.runId ?? '__exhaust__';
     const exhaustEvents = requireEvents(await queryTestEvents(exKey, { type: 'trigger.delivery.attempted' }), 'trigger.delivery.attempted (exhaust)');
     expect(exhaustEvents.length >= 1, req(R_DEAD_LETTER, 'trigger-bridge.md §C-2', 'an exhausted delivery MUST emit ≥1 trigger.delivery.attempted')).toBe(true);
@@ -120,13 +131,12 @@ async function deadLetterViaSeam(): Promise<undefined> {
     for (const e of stateEvents) {
       expect(typeof e.payload.toState === 'string' && SUBSCRIPTION_STATES.includes(e.payload.toState as string), req(R_DEAD_LETTER, 'trigger-bridge.md §B', 'toState MUST be in the four-state vocabulary')).toBe(true);
     }
-    noteObservation('seam path');
     await resetTestSeam();
-  return undefined;
+  return 'ran';
 }
 
 /** The seam witness path (primary when the host serves the seams). */
-async function causationViaSeam(): Promise<undefined> {
+async function causationViaSeam(): Promise<SeamLeg> {
     const delivered = await driveDelivery({ scenario: 'deliver', source: 'schedule' });
     expect(delivered !== null && typeof delivered.runId === 'string' && (delivered.runId as string).length > 0, req(R_CAUSATION, 'trigger-bridge.md §C', 'a successful delivery MUST create a run')).toBe(true);
     const deliveredRunId = delivered!.runId as string;
@@ -140,18 +150,18 @@ async function causationViaSeam(): Promise<undefined> {
       typeof runStarted.causationId === 'string' && (runStarted.causationId as string).length > 0 && runStarted.causationId === deliveredEvent!.eventId,
       req(R_CAUSATION, 'trigger-bridge.md §C / RFC 0040', 'run.started.causationId MUST EQUAL the delivery id (the trigger.delivery.attempted{delivered} eventId) — resolvable via /ancestry'),
     ).toBe(true);
-    noteObservation('seam path');
     await resetTestSeam();
-  return undefined;
+  return 'ran';
 }
 
 describe('trigger-bridge-delivery (RFC 0083 §C)', () => {
   it('de-dups by dedupKey: a repeated delivery is effectively-once', async () => {
     if (!behaviorGate('openwop-trigger-bridge', await isTriggerBridgeProfileAdvertised())) return;
-    const path = await witnessPath();
-    if (path === null) return seamAbsent(NO_PATH);
+    const paths = await witnessPaths();
+    if (!paths.seam && !paths.normative) return seamAbsent(NO_PATH);
 
-    if (path === 'seam') return dedupViaSeam();
+    if (paths.seam && (await dedupViaSeam()) === 'absent') return seamAbsent(SEAM_UNWIRED);
+    if (!paths.normative) return notePaths(true, false);
 
     // Normative-surface path (RFC 0230 §C Identity + §D).
     const sub = await registerSignedWebhook('none');
@@ -166,15 +176,16 @@ describe('trigger-bridge-delivery (RFC 0083 §C)', () => {
     expect(again.status, req(R_DEDUP, 'trigger-bridge.md §F.6 / §C-1', `a repeated webhook-id MUST answer 200 duplicate, starting no new run (got ${again.status})`)).toBe(200);
     expect(again.json?.outcome, req(R_DEDUP, 'trigger-bridge.md §F.6', 'the dedup no-op MUST say outcome "duplicate"')).toBe('duplicate');
     expect(again.json?.runId, req(R_DEDUP, 'trigger-bridge.md §F.4', 'a dedup no-op MUST return the PRIOR runId')).toBe(runId);
-    noteObservation('normative-surface path (RFC 0230)');
+    notePaths(paths.seam, true);
   });
 
   it('dead-letters an exhausted or refused delivery without starting a run', async () => {
     if (!behaviorGate('openwop-trigger-bridge', await isTriggerBridgeProfileAdvertised())) return;
-    const path = await witnessPath();
-    if (path === null) return seamAbsent(NO_PATH);
+    const paths = await witnessPaths();
+    if (!paths.seam && !paths.normative) return seamAbsent(NO_PATH);
 
-    if (path === 'seam') return deadLetterViaSeam();
+    if (paths.seam && (await deadLetterViaSeam()) === 'absent') return seamAbsent(SEAM_UNWIRED);
+    if (!paths.normative) return notePaths(true, false);
 
     // Normative-surface path (RFC 0230 §C Verification + §C.1).
     const sub = await registerSignedWebhook('required');
@@ -188,15 +199,16 @@ describe('trigger-bridge-delivery (RFC 0083 §C)', () => {
     expect(state, req(R_DEAD_LETTER, 'trigger-bridge.md §F.6 (RFC 0230 §C.1)', `a refused post MUST NOT change the subscription's state (got ${String(state)})`)).toBe('active');
     const ok = await signedIngest(sub, body);
     expect(ok.status, req(R_DEAD_LETTER, 'trigger-bridge.md §F.6 (RFC 0230 §C.1)', `after a refused post the subscription MUST still deliver a correctly signed one (got ${ok.status})`)).toBe(202);
-    noteObservation('normative-surface path (RFC 0230)');
+    notePaths(paths.seam, true);
   });
 
   it('links delivery→run causation on run.started', async () => {
     if (!behaviorGate('openwop-trigger-bridge', await isTriggerBridgeProfileAdvertised())) return;
-    const path = await witnessPath();
-    if (path === null) return seamAbsent(NO_PATH);
+    const paths = await witnessPaths();
+    if (!paths.seam && !paths.normative) return seamAbsent(NO_PATH);
 
-    if (path === 'seam') return causationViaSeam();
+    if (paths.seam && (await causationViaSeam()) === 'absent') return seamAbsent(SEAM_UNWIRED);
+    if (!paths.normative) return notePaths(true, false);
 
     // Normative-surface path: a signed delivery, then the run's own event log.
     const sub = await registerSignedWebhook('none');
@@ -216,7 +228,7 @@ describe('trigger-bridge-delivery (RFC 0083 §C)', () => {
       expect(causationId, req(R_CAUSATION, 'trigger-bridge.md §C / RFC 0040', 'run.started.causationId MUST EQUAL the delivered attempt event id')).toBe(deliveredEvent.eventId);
       expectContentFree(R_CAUSATION, (deliveredEvent.payload ?? {}) as Record<string, unknown>, 'trigger.delivery.attempted');
     }
-    noteObservation(`normative-surface path (RFC 0230)${deliveredEvent === undefined ? '; the delivered attempt event is not on the run log, so equality was not checked' : ''}`);
+    notePaths(paths.seam, true, deliveredEvent === undefined ? '; on the normative-surface path the delivered attempt event is not on the run log, so equality was not checked there' : '');
   });
 
   it('keeps the run-less trigger events content-free', async () => {
