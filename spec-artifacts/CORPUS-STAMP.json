@@ -31,7 +31,7 @@
     "schemas/artifact-type-pack-manifest.schema.json": "60342fcb15eb7f3ab46271f0641409a30d3a4a8f318b1020c53070886b191252",
     "schemas/audit-verify-result.schema.json": "0d3a3088ac1c32f9df66d346c33d7adbd8037940dba040e14ea847565a1a14bd",
     "schemas/budget-policy.schema.json": "3d4fe30ae129fe136ab9ece395f2a2a42a76360786b1b9a1d5f1cbc753eb5b39",
-    "schemas/capabilities.schema.json": "d1d491248930e9b50ac6aca93a33cb1155eb997c4fbb2af0a940e8e889c76807",
+    "schemas/capabilities.schema.json": "a7e5910bf10e6d8238e909fee5b81e405846f91688cccf1bb0d13fb081336a33",
     "schemas/certification-bundle-v2.schema.json": "2f85530dd04824a15810c94e96869362dee1e78396eca21fdd18e5501416bb7d",
     "schemas/channel-presence-payload.schema.json": "f9d0ef4219814c2b765baf3e68cbe5eea2cb42379f516a93a0459dcd5f7db47e",
     "schemas/channel-written-payload.schema.json": "54723a56bc5a35232f64544ca686ac1ac959a5fb05b32b2401facca6b3ef51a3",
@@ -116,7 +116,7 @@
     "schemas/v2/artifact.schema.json": "85b9dc284d39b99d2a66fa8cbf47f2dd3d8526d3bd6cc411ad315b372de38975",
     "schemas/v2/audit-verify-result.schema.json": "14af8e9283510f0a40e48a2059c929ee44e0fc9fa3cc66a95bfbe90b17c48297",
     "schemas/v2/budget-policy.schema.json": "1de68095db0beb5c7a4be629de26e79f62ebbe748a88d46f36e768edfd1f0d68",
-    "schemas/v2/capabilities.schema.json": "3792aa9d292229cf9b82c7306600a5dfdb63b3274523e0ed5dd4f952a04cb833",
+    "schemas/v2/capabilities.schema.json": "8d151a098a3cf7285fcadec8c1f192bed963ed6da3146e62d25155eb18afba9a",
     "schemas/v2/certification-bundle.schema.json": "82ce31a1ed6c7e21b0ba88ff62a7b8b768fc3b176b1d06fce023203830b94725",
     "schemas/v2/channel-presence-payload.schema.json": "4eeb224910e6f7eee3ab5e7c3899559c25c83a26d0022e0ad195c4672611977a",
     "schemas/v2/channel-written-payload.schema.json": "ccecff3c71a3275ad8db035ac0e04db25e6f8d23cf091ddbcd5a60d1be1cbb6b",
@@ -210,7 +210,7 @@
     "spec/v1/event-codemap.json": "3da60d884157793a360da532a9fcbbfb5285636db325a74cec94b34622186d97",
     "spec/v1/event-codemap.schema.json": "d05933b2e88103aff51a2f774df97b9bda065e0fc88dbd9b114cc47a32189174",
     "spec/v1/extensions.json": "79a60754aa16cbdbdb604f8e5c00038af535a1690a4d07bd5ff7c38f0256a7bc",
-    "spec/v1/gaps.json": "86e4db5c1758479ba279f8018c18f89ee8296058812f48c6472da2e55c5009d1",
+    "spec/v1/gaps.json": "3b729e4e5c3f7507e8fc1ef2d2754254b47bb5a9527763a3431c3ffb20a0f757",
     "spec/v1/gaps.schema.json": "8fd83259f556553c9df0f53e7a82ca8c2a4771d471197f69b4e2ae0ceeacfd66",
     "spec/v1/migrations.json": "4c50760be70cb644d02427bcaf5749606700edf4513f423903cf3b1d12f5c300",
     "spec/v1/migrations.schema.json": "886779aa6c22e646db097f5df210adb018a4dd14a7b815465a18c8a7056c8f72",
@@ -240,7 +240,7 @@
     "spec/v2/core/persistence.md": "249a1de353f421cdf92b9006a13a10afdb002f4029eb6a13520cc95252edb2ec",
     "spec/v2/core/portability.md": "ab13a6ca43544b9a6a91edfb377ec680c768d14be841c84fb79125b231426891",
     "spec/v2/core/replay.md": "4a8b53325e18aa53400ece81168c76b4402b932e5e304a391754f293b126eabf",
-    "spec/v2/core/runs.md": "991757ded9b3645bafad2344f4ccb75c7d79993bd80269f9dd3489193841d71b",
+    "spec/v2/core/runs.md": "bee5da861b31a583257f3d6020fbd245c36ba5ec40340d54ae6741f0c6f50ede",
     "spec/v2/core/security-defaults.md": "887d8c4bc592094e3b931c23f1c2175c18ebbd47528b074016f9d2091bc513b2",
     "spec/v2/core/storage.md": "dc94b985847c1341c7a064f04a6010f0fdbe6c3ab3e555d4362878c81d764c18",
     "spec/v2/core/tool-catalog.md": "d16a9004418719c48301804aefa4d7ab6f41112a4ed83727f552aa1b92b418b0",
@@ -249,7 +249,7 @@
     "spec/v2/core/workflow-chain-packs.md": "fdce7a8477e269950a2bac05ee6eddbd66eb0b670b464d00054f7196ec05d29c",
     "spec/v2/corrections.json": "3a8d93e33865b692d26a3b6bfd3819766e206b2e0c2a69669baa4bf833d05a49",
     "spec/v2/corrections.schema.json": "46bbffb954d13bd9995aebc912ceeb2544f7064331abf25fd6ab85c81a5cec94",
-    "spec/v2/declaration.json": "967f6db929fd7c4000d41a12d8b6d9f77bad90348de0dbc792b02f33e7026385",
+    "spec/v2/declaration.json": "45ca70a0d74fdade13192565cb3b35e446ffab537f2caaf23da73a4050b3c6ac",
     "spec/v2/declaration.schema.json": "ef951633e4070899f64828f5cf1b5f4870270a0360f81dbb49b5b4d6cd407550",
     "spec/v2/errors.json": "83f048b0a06952b4af6f125fb66c4212acab51056b411390f1010acd6ab9cdc0",
     "spec/v2/errors.schema.json": "47404ad53e6147cf9017b813483712466573e419fb33e6c4b6c12d3e7deba1bc",
@@ -305,7 +305,7 @@
     "spec/v2/profiles.json": "180beb9ef2d161766fa23b2987e7e829851e3d316273147cf6a4a3f324befd6b",
     "spec/v2/release.json": "5eb3b4b185365381f4bbe0443bf08c231af3001ebc5393b8fcc28f1d93b01a8f",
     "spec/v2/retention-floors.json": "eaf3722d95c79947af1d4269ef85117e126518c588cfcf1a2b21b97269f51624",
-    "spec/v2/surface-baseline.json": "20fa0652d150e712e5403d2635d4ff5b53c0123d5af25e45c060582835f7cb35"
+    "spec/v2/surface-baseline.json": "fb95b0c7b247f4ce5daf776e0b1421cde4c69afc52a090f41c2fc05dd5c24c51"
   },
-  "corpusCommit": "c570d204d172d34e14a62ad5e3787948b300fb87"
+  "corpusCommit": "66771e4d6e7453eee2b9dcf147af03abcbd7757a"
 }

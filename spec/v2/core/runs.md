@@ -71,6 +71,7 @@ The `201` response is `{ runId, status, eventsUrl, statusUrl? }`. `status` is on
 - `mode: eval` makes `evalSuiteRef` and `agentId` REQUIRED. It starts an eval-suite projection that emits the content-free `eval.*` family and terminates with an `EvalSummary`. A host that does not advertise `agents.evalSuite` MUST reject it `422 capability_not_provided`.
 - A host advertising `dataResidency` MUST reject a `residency.region` outside `dataResidency.regions` with `422 residency_unavailable` and create no run (see §"Conversation and residency capabilities").
 - A workflow that references a capability-gated reserved node type on a host that does not advertise the capability MUST be rejected with `422 capability_required`.
+- A host that lists `budget.onExhaustion` serves exactly those values. It MUST reject any other `budget.onExhaustion` with `422 capability_not_provided` and create no run. It MUST NOT apply a different behaviour or ignore the field.
 
 ### The start event
 
@@ -124,7 +125,7 @@ The `201` response is `{ runId, status, eventsUrl, statusUrl? }`. `status` is on
 
 - `budget.reserved` records the effective budget, and consumption is derived from `provider.usage`, `agent.toolCalled` and `node.retried`, never measured twice. A replay reuses both.
 - Under either `enforce` mode a host MUST emit `budget.reserved`, `budget.threshold-crossed` and `budget.exhausted`, and MAY coalesce `budget.consumed`.
-- `hard` exhaustion under `onExhaustion: fail` emits `cap.breached` (`kind: budget-*`) and fails the run `budget_exhausted`. Under `interrupt` it raises an approval whose `resumeValue` adds budget, recorded by a second `budget.reserved`. An `advisory` host MUST NOT stop the run.
+- `hard` exhaustion under `onExhaustion: fail` emits `cap.breached` (`kind: budget-*`) and fails the run `budget_exhausted`. Under `interrupt`, where the host serves it, it raises an approval whose `resumeValue` adds budget, recorded by a second `budget.reserved`. An `advisory` host MUST NOT stop the run.
 - A resolved model outside `modelAllow`, or in `modelDeny` (which wins), is refused `budget_model_denied` before the call.
 - `dimensions` lists only what the host enforces and MAY omit `cost`. The `budget.*` events and `cap.breached` MUST NOT carry rate cards, unit prices, cost breakdowns, credentials or model prose (`budget-no-pricing-leak`); the aggregate cost is allowed.
 
@@ -297,4 +298,4 @@ Queue messages ([host-services.md](host-services.md) §`queueBus`) and webhook d
 
 A non-terminal run inherited from v1 continues, or is cancelled `v1_pin_unsupported`, per [persistence.md](persistence.md) §"Runs pinned to v1".
 
-*Sources: RFCs 0053, 0058, 0084, 0170, 0171, 0176, 0182, 0228, 0229.*
+*Sources: RFCs 0053, 0058, 0084, 0170, 0171, 0176, 0182, 0228, 0229, 0231.*

@@ -13902,6 +13902,23 @@
       ]
     },
     {
+      "id": "openwop.gap.0231.7",
+      "rfc": "0231",
+      "local": "G7",
+      "section": "§F",
+      "surface": "The v1 rule has no witness: the suite's major-1 profile gives a run budget no `createRun` surface it drives, and the v1 budget scenario uses a host seam.",
+      "witness": "unclassified",
+      "requirementId": null,
+      "disposition": "carried",
+      "target": "openwop.gap.0231.7",
+      "sources": [
+        {
+          "file": "RFCS/registers/0231-budget-exhaustion-facet.gaps.md",
+          "token": "G7"
+        }
+      ]
+    },
+    {
       "id": "openwop.gap.spec.a2a-integration.g1",
       "rfc": "0152",
       "local": "G1",

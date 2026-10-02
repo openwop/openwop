@@ -8,7 +8,7 @@
 | **Author(s)**     | David Tufts (@davidscotttufts)                                  |
 | **Created**       | 2026-10-02                                                      |
 | **Updated**       | 2026-10-02 — G1 and G5 decided by the maintainer: an absent facet means both values, as today, and the facet lands in both majors. Unresolved questions 1 and 4 are closed. · 2026-10-02 — filed `Draft`. The 7-day comment window opens with the pull request and closes 2026-10-09. |
-| **Affects**       | the `budget` capability record: a new optional facet `onExhaustion` in `schemas/capabilities.schema.json` (the v1 seed, from which `schemas/v2/capabilities.schema.json` is derived) · `spec/v1/budget-policy.md` §D and `spec/v1/capabilities.md` §budget · `spec/v2/core/runs.md` §`budget` section (one bullet) · one new conformance scenario per major |
+| **Affects**       | the `budget` capability record: a new optional facet `onExhaustion` in `schemas/capabilities.schema.json` (the v1 seed, from which `schemas/v2/capabilities.schema.json` is derived) · `spec/v1/budget-policy.md` §D and `spec/v1/capabilities.md` §budget · `spec/v2/core/runs.md` §`budget` section (one bullet) · one new conformance scenario (major 2) |
 | **Compatibility** | `additive` (COMPATIBILITY.md §2): one optional facet. A host that does not advertise it is bound exactly as it is today. See §Compatibility for the one point a reviewer should check. |
 | **Supersedes**    | —                                                               |
 | **Superseded by** | —                                                               |
@@ -96,18 +96,21 @@ The facet takes the request field's own name, as `dimensions` and `enforce` name
 
 ### §F. Conformance
 
-One scenario file per major: `budget-exhaustion-facet.test.ts` (major 1) and `v2-budget-exhaustion-facet.test.ts` (major 2), sharing one library, as the budget-enforcement pair does.
+One scenario file, `v2-budget-exhaustion-facet.test.ts` (major 2), over `lib/exhaustion-facet-witness.ts`.
 
 | Requirement id | Assertion | Gate |
 | --- | --- | --- |
-| `openwop.requirement.budget.exhaustion-facet-contains-fail` | an advertised `onExhaustion` contains `fail` | facet present |
-| `openwop.requirement.budget.unserved-exhaustion-refused` | `createRun` with `onExhaustion: "interrupt"` answers `422 capability_not_provided` and returns no `runId` | facet present, without `interrupt`, `enforce: "hard"` |
+| `openwop.requirement.runs.budget-exhaustion-facet-contains-fail` | an advertised `onExhaustion` is a non-empty list of `fail` and `interrupt` that contains `fail` | facet present, `enforce: "hard"` |
+| `openwop.requirement.runs.budget-unserved-exhaustion-refused` | `createRun` with `onExhaustion: "interrupt"` answers `422 capability_not_provided` | facet present, without `interrupt`, `enforce: "hard"`, and a fixture advertised to name in the create |
+
+**No major-1 twin.** The suite's major-1 profile gives a run budget no `createRun` surface it drives (`lib/major-profile.ts`); the v1 budget scenario goes through a host seam. The v1 rule is stated in `budget-policy.md` §D and is unwitnessed (gap G7).
 
 **Dispositions.**
 - `budget` not advertised, `enforce: "advisory"`, or the facet absent: `inapplicable`.
+- No fixture advertised: the refusal row is `inapplicable`, because the suite has no workflow to name in an otherwise valid create.
 - The facet lists `interrupt`: the refusal row is `inapplicable`. The served path has no witness yet (gap G2).
 
-**Sabotage.** The refusal row must fail against a host that accepts the run, and against one that answers `400 validation_error`.
+**Sabotage.** `lib/exhaustion-facet-witness.test.ts` proves it both ways against the scratch host. A conforming `["fail"]` host passes. The refusal row fails against a host that accepts the run, one that answers `400 validation_error`, and one that answers `422` with another code. A list without `fail`, an empty list and a bare string fail the first row.
 
 ### Falsifiability — one row per normative requirement
 
@@ -174,8 +177,8 @@ The maintainer decided this on 2026-10-02 (G1): an absent facet keeps today's me
 
 - [ ] `Active`: the comment window closes (2026-10-09) with no unresolved objection. Unresolved questions 1 and 4 are decided (2026-10-02).
 - [ ] The facet is in the v1 seed and derived into `schemas/v2/capabilities.schema.json`; the prose of §E is merged; `CHANGELOG.md` records it.
-- [ ] The two scenario files ship, each row failing on its sabotage.
-- [ ] `Accepted`: `openwop.requirement.budget.unserved-exhaustion-refused` is `executed-pass` on a certified bundle from a host that advertises `onExhaustion: ["fail"]`.
+- [ ] The scenario file ships, each row failing on its sabotage.
+- [ ] `Accepted`: `openwop.requirement.runs.budget-unserved-exhaustion-refused` is `executed-pass` on a certified bundle from a host that advertises `onExhaustion: ["fail"]`.
 
 ## References
 

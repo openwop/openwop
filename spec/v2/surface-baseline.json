@@ -18,7 +18,7 @@
       "type"
     ]
   },
-  "count": 8603,
+  "count": 8608,
   "surfaces": [
     "schemas/v2/a2a-task-state.schema.json#/contextId|type|string",
     "schemas/v2/a2a-task-state.schema.json#/interruptKind|enum-member|\"approval\"",
@@ -1441,6 +1441,10 @@
     "schemas/v2/capabilities.schema.json#/budget/enforce|enum-member|\"advisory\"",
     "schemas/v2/capabilities.schema.json#/budget/enforce|enum-member|\"hard\"",
     "schemas/v2/capabilities.schema.json#/budget/enforce|type|string",
+    "schemas/v2/capabilities.schema.json#/budget/onExhaustion/[]|enum-member|\"fail\"",
+    "schemas/v2/capabilities.schema.json#/budget/onExhaustion/[]|enum-member|\"interrupt\"",
+    "schemas/v2/capabilities.schema.json#/budget/onExhaustion/[]|type|string",
+    "schemas/v2/capabilities.schema.json#/budget/onExhaustion|type|array",
     "schemas/v2/capabilities.schema.json#/budget/scopes/[]|enum-member|\"agent\"",
     "schemas/v2/capabilities.schema.json#/budget/scopes/[]|enum-member|\"project\"",
     "schemas/v2/capabilities.schema.json#/budget/scopes/[]|enum-member|\"run\"",
@@ -1460,6 +1464,7 @@
     "schemas/v2/capabilities.schema.json#/budget|closed|true",
     "schemas/v2/capabilities.schema.json#/budget|property|dimensions",
     "schemas/v2/capabilities.schema.json#/budget|property|enforce",
+    "schemas/v2/capabilities.schema.json#/budget|property|onExhaustion",
     "schemas/v2/capabilities.schema.json#/budget|property|scopes",
     "schemas/v2/capabilities.schema.json#/budget|property|since",
     "schemas/v2/capabilities.schema.json#/budget|property|status",

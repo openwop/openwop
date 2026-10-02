@@ -5812,6 +5812,22 @@
           ],
           "description": "`hard`: exhaustion emits `cap.breached` + stops the run. `advisory`: emits the events but MUST NOT stop the run (honest advertisement of observe-only)."
         },
+        "onExhaustion": {
+          "type": "array",
+          "minItems": 1,
+          "uniqueItems": true,
+          "items": {
+            "type": "string",
+            "enum": [
+              "fail",
+              "interrupt"
+            ]
+          },
+          "contains": {
+            "const": "fail"
+          },
+          "description": "RFC 0231. The `BudgetPolicy.onExhaustion` values the host serves under `enforce: \"hard\"`. Exact when present. Absent: both. A value not listed is refused `422 capability_not_provided` at create, never applied as another behaviour and never ignored. A consumer ignores it under `enforce: \"advisory\"`."
+        },
         "scopes": {
           "type": "array",
           "uniqueItems": true,

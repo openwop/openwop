@@ -37,6 +37,8 @@ export interface ScratchOptions {
   /** Concurrent in-flight requests admitted before {@link refusal} answers. Unset: no cap. */
   readonly inflightCap?: number | undefined;
   readonly refusal?: ScratchRefusal | undefined;
+  /** Refuse a create by its body. `undefined` admits it. Unset: every create is admitted. */
+  readonly createRefusal?: ((workflowId: string, body: Readonly<Record<string, unknown>>) => ScratchRefusal | undefined) | undefined;
 }
 
 interface StoredRun { readonly id: string; run: ScriptedRun }
@@ -101,6 +103,8 @@ export class ScratchHost {
     if (req.method === 'POST' && path === runs) {
       const body = await this.body(req);
       const workflowId = String(body['workflowId'] ?? '');
+      const refused = this.opts.createRefusal?.(workflowId, body);
+      if (refused !== undefined) return this.send(res, refused.status, refused.body, refused.headers);
       const id = `scratch/run-${++this.seq}`;
       this.runs.set(id, { id, run: this.opts.script?.(workflowId, body) ?? { status: 'running', events: [] } });
       return this.send(res, 201, { runId: id, status: 'running' });
