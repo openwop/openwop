@@ -13,6 +13,10 @@ Format follows [Keep a Changelog](https://keepachangelog.com/en/1/) loosely. Ver
 
 ## [Unreleased]
 
+- **Evidence: the v2 reference host's certified 2.45.5 public cut** (451 pass / 0 fail / 0 blocked, all three profiles, build `commit:97cefdf4`, witness `5894ba221e61`, signed `v2-reference-4`, no relaxations; `--verify --host-key` VERIFIED; openwop-examples #146, #147). The corpus copy is replaced byte-for-byte. The host now advertises `budget` (`toolCalls`, hard) and `production.backpressure` (`inflightCap` 32), so the two v2 ports have their **first certified witness**: `runs.budget-lifecycle`, `runs.budget-enforcement`, `runs.budget-content-free` and `production.backpressure-refusal` are `executed-pass`. Until now they were proven only against a scratch host.
+  - Stated limits of that host: only the `toolCalls` dimension is enforced, and `onExhaustion: "interrupt"` is refused `422 capability_not_provided` (a deviation; the spec defines no way to decline it).
+- **openwop-app's `mode: "eval"` refusal is fixed** (openwop-app #4318, #4320). Verified on a local in-process host at its `main` with suite 2.45.5: the leg passes.
+
 - **Evidence: the v2 reference host's certified 2.45.4 public cut** (445 pass / 0 fail / 0 blocked, all three profiles, build `commit:0cc965c4`, witness `f36f20ef6171`, signed `v2-reference-4`, no relaxations; `--verify --host-key` VERIFIED; openwop-examples #144, #145). The corpus copy is replaced byte-for-byte. Newly `executed-pass` on a certified bundle: `openwop.requirement.runs.eval-mode-unadvertised-refused`. The two v2 ports (`v2-production-backpressure`, `v2-budget-enforcement`) are `inapplicable` there, and so are RFC 0228's `egress_denied` and `storage_limit_exceeded` rows: the host advertises none of those families.
 - **openwop-app refuses `mode: "eval"` with `400 openwop-app.invalid_request`, not `422 capability_not_provided`** (measured on a local in-process host at major 2 with suite 2.45.4; openwop-app #4318).
 
