@@ -15,8 +15,8 @@
 
 - **RFCs:** 220 `Accepted`. `Active`: **0121** (paused), **0222** (last box needs a real yanked v2
   version), **0228** (v1 host-service error codes), **0229** (production-safe secrets witness) and
-  **0230** (inbound webhook ingest contract). `Draft`: **0231** (budget exhaustion facet, window to
-  2026-10-09) and **0038** (Parked). **0225**, **0226** and
+  **0230** (inbound webhook ingest contract). **0231** (budget exhaustion facet) is `Active` since 2026-10-02.
+  **0038** is `Draft` (Parked). **0225**, **0226** and
   **0227** went `Accepted` since the last update (#1791, #1821, #1831). Every waived-window
   `Accepted` RFC is **provisional** (RFC 0156 §B).
 - **Suite:** **2.45.5 is published** (#1844, tag `v2.45.5` on `d68bd71d`; npm `latest` for both
@@ -26,8 +26,8 @@
   unclaimed prefix floor fix). **A major-1 host that cut a v3 bundle on 2.45.3 without claiming
   `openwop-secrets`, or on any suite without claiming `openwop-interrupts`, should re-cut on
   2.45.5.** The v2 reference host has cut on 2.45.5; MyndHyve and openwop-app have not cut on
-  2.45.3 or later. **The 2.45.6 cycle is open on `main`** (RFC 0231's gap register) and is not
-  cut. Take a release lock (`/tmp/claude-501/openwop-release-<ver>.lock`) before cutting.
+  2.45.3 or later. **The 2.45.6 cycle is open on `main`** (RFC 0231: the facet, the refusal rule and
+  `v2-budget-exhaustion-facet`) and is not cut. Take a release lock (`/tmp/claude-501/openwop-release-<ver>.lock`) before cutting.
 - **Normative homes:** all 73 core families have v2 homes (#1802–#1804). The kernel budget is
   37,284 / 37,800 words, with the generated error table outside it (RFC 0227).
 - **SDKs:** **2.5.0** (npm, PyPI, `go/v2.5.0`) sends `OpenWOP-Client-Version` on every request.
@@ -129,11 +129,12 @@ Defects outside the spec:
     candidate.
   - Not ported: v1's `budget_model_denied` leg (needs a fixture that resolves a model unaided).
   - The rename rows G1–G3, G6 and G7 close on host cuts.
-- [ ] **RFC 0231 (`Draft`): a host says which budget exhaustion behaviours it serves.** The
-      comment window closes 2026-10-09. G1 and G5 are decided (absent means both; both majors).
-      At `Active`: the facet in the v1 seed, the `runs.md` and `budget-policy.md` prose, and one
-      scenario per major. The `interrupt` path has no witness in either major, because the
-      budget-extending `resumeValue` has no shape (G2).
+- [ ] **RFC 0231 (`Active`, window waived 2026-10-02): `Accepted` needs a host.** The v2 reference
+      host already refuses `interrupt` as the RFC requires. It needs `onExhaustion: ["fail"]` in
+      its advertisement (openwop-examples) and a certified cut on 2.45.6 with
+      `runs.budget-unserved-exhaustion-refused` `executed-pass`. Unwitnessed and recorded: the v1
+      rule (G7) and the served `interrupt` path, whose budget-extending `resumeValue` has no shape
+      (G2).
 - [ ] **MyndHyve advertises `budget` and `agents.evalSuite` at major 2 and serves each only behind
       a v1 seam.** Reported by its session from source, not measured: `configurable.budget` is
       validated, stored and never read, and eval runs only through

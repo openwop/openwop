@@ -4,10 +4,10 @@
 | ----------------- | --------------------------------------------------------------- |
 | **RFC**           | 0231                                                            |
 | **Title**         | a host says which budget exhaustion behaviours it serves        |
-| **Status**        | `Draft`                                                         |
+| **Status**        | `Active`                                                        |
 | **Author(s)**     | David Tufts (@davidscotttufts)                                  |
 | **Created**       | 2026-10-02                                                      |
-| **Updated**       | 2026-10-02 — G1 and G5 decided by the maintainer: an absent facet means both values, as today, and the facet lands in both majors. Unresolved questions 1 and 4 are closed. · 2026-10-02 — filed `Draft`. The 7-day comment window opens with the pull request and closes 2026-10-09. |
+| **Updated**       | 2026-10-02 — **`Draft → Active`. Comment window waived** (7-day, 0 days elapsed, not run) by the steward under `GOVERNANCE.md` §"Sole-steward operation" (steward direction 2026-10-02: "waive the window and go Active now"), logged in `MAINTAINERS.md` §"Bootstrap-phase RFC waivers". RFC 0147 §A.6 does not apply: the RFC adds a capability facet and a create-time refusal with an existing code, and changes no identity, authorization, isolation, idempotency, replay, external-effect or certification decision; `budget` is on no profile floor. The schema, prose and scenario land with the flip. The evidence gate is not waived. · 2026-10-02 — G1 and G5 decided by the maintainer: an absent facet means both values, as today, and the facet lands in both majors. Unresolved questions 1 and 4 are closed. · 2026-10-02 — filed `Draft`. The 7-day comment window opens with the pull request and closes 2026-10-09. |
 | **Affects**       | the `budget` capability record: a new optional facet `onExhaustion` in `schemas/capabilities.schema.json` (the v1 seed, from which `schemas/v2/capabilities.schema.json` is derived) · `spec/v1/budget-policy.md` §D and `spec/v1/capabilities.md` §budget · `spec/v2/core/runs.md` §`budget` section (one bullet) · one new conformance scenario (major 2) |
 | **Compatibility** | `additive` (COMPATIBILITY.md §2): one optional facet. A host that does not advertise it is bound exactly as it is today. See §Compatibility for the one point a reviewer should check. |
 | **Supersedes**    | —                                                               |
@@ -175,9 +175,9 @@ The maintainer decided this on 2026-10-02 (G1): an absent facet keeps today's me
 
 ## Acceptance criteria
 
-- [ ] `Active`: the comment window closes (2026-10-09) with no unresolved objection. Unresolved questions 1 and 4 are decided (2026-10-02).
-- [ ] The facet is in the v1 seed and derived into `schemas/v2/capabilities.schema.json`; the prose of §E is merged; `CHANGELOG.md` records it.
-- [ ] The scenario file ships, each row failing on its sabotage.
+- [x] `Active` (2026-10-02, window waived by the steward, not closed): the comment window closes (2026-10-09) with no unresolved objection. Unresolved questions 1 and 4 are decided (2026-10-02).
+- [x] The facet is in the v1 seed and derived into `schemas/v2/capabilities.schema.json`; the prose of §E is merged; `CHANGELOG.md` records it.
+- [x] The scenario file ships, each row failing on its sabotage (suite 2.45.6; `lib/exhaustion-facet-witness.test.ts`, nine cases).
 - [ ] `Accepted`: `openwop.requirement.runs.budget-unserved-exhaustion-refused` is `executed-pass` on a certified bundle from a host that advertises `onExhaustion: ["fail"]`.
 
 ## References
