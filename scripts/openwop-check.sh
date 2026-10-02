@@ -316,6 +316,9 @@ node "$(dirname "$0")/check-core-budget.mjs"
 # /spec-readability fixes what it reports.
 node "$(dirname "$0")/check-spec-readability.mjs" --self-test
 node "$(dirname "$0")/check-spec-readability.mjs"
+# CHANGELOG.md stays one short entry per release (condensed at 2.45.7 from 906 KB).
+node "$(dirname "$0")/check-changelog-shape.mjs" --self-test
+node "$(dirname "$0")/check-changelog-shape.mjs"
 # The v2 witness-coverage report resolves table-driven and helper-wrapped family
 # gates on the TypeScript AST; its self-test proves detection and non-detection.
 node "$(dirname "$0")/report-v2-witness-coverage.mjs" --self-test
