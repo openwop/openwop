@@ -1,5 +1,9 @@
 # `@openwop/openwop-conformance` Changelog
 
+## [2.45.6] — unreleased — RFC 0231 (Draft): a host says which budget exhaustion behaviours it serves
+
+- **The 2.45.6 cycle opens.** RFC 0231's gap register changes the packed `spec/v1/gaps.json`. No scenario changes.
+
 ## [2.45.5] — 2026-10-01 — a prefix floor row is written only for a claimed profile
 
 - **The 2.45.5 cycle opens.** A runner change alters the packed content.

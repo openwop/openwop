@@ -15,7 +15,8 @@
 
 - **RFCs:** 220 `Accepted`. `Active`: **0121** (paused), **0222** (last box needs a real yanked v2
   version), **0228** (v1 host-service error codes), **0229** (production-safe secrets witness) and
-  **0230** (inbound webhook ingest contract). **0038** is `Draft` (Parked). **0225**, **0226** and
+  **0230** (inbound webhook ingest contract). `Draft`: **0231** (budget exhaustion facet, window to
+  2026-10-09) and **0038** (Parked). **0225**, **0226** and
   **0227** went `Accepted` since the last update (#1791, #1821, #1831). Every waived-window
   `Accepted` RFC is **provisional** (RFC 0156 §B).
 - **Suite:** **2.45.5 is published** (#1844, tag `v2.45.5` on `d68bd71d`; npm `latest` for both
@@ -25,11 +26,8 @@
   unclaimed prefix floor fix). **A major-1 host that cut a v3 bundle on 2.45.3 without claiming
   `openwop-secrets`, or on any suite without claiming `openwop-interrupts`, should re-cut on
   2.45.5.** The v2 reference host has cut on 2.45.5; MyndHyve and openwop-app have not cut on
-  2.45.3 or later. No cycle is open.
-  Take a release lock (`/tmp/claude-501/openwop-release-<ver>.lock`) before cutting.
-  - Until a 2.45.6 cycle opens, a PR that leaves the version alone must not re-stamp: restore
-    `spec-artifacts/CORPUS-STAMP.json` and `evidence/corpus-ledger.json` before committing. A PR
-    that changes packed content must open the cycle itself.
+  2.45.3 or later. **The 2.45.6 cycle is open on `main`** (RFC 0231's gap register) and is not
+  cut. Take a release lock (`/tmp/claude-501/openwop-release-<ver>.lock`) before cutting.
 - **Normative homes:** all 73 core families have v2 homes (#1802–#1804). The kernel budget is
   37,284 / 37,800 words, with the generated error table outside it (RFC 0227).
 - **SDKs:** **2.5.0** (npm, PyPI, `go/v2.5.0`) sends `OpenWOP-Client-Version` on every request.
@@ -131,10 +129,10 @@ Defects outside the spec:
     candidate.
   - Not ported: v1's `budget_model_denied` leg (needs a fixture that resolves a model unaided).
   - The rename rows G1–G3, G6 and G7 close on host cuts.
-- [ ] **The spec gives a host no way to decline `onExhaustion: "interrupt"`.** A host that
-      advertises `budget` is taken to serve both values. The v2 reference host refuses it
-      `422 capability_not_provided` and says so. Either a facet (an RFC) or the host implementing
-      the budget-extending approval closes it.
+- [ ] **RFC 0231 (`Draft`): a host says which budget exhaustion behaviours it serves.** The
+      comment window closes 2026-10-09. Two decisions are the maintainer's: what an absent
+      `budget.onExhaustion` means (G1), and whether v1 takes the facet (G5). The `interrupt` path
+      has no witness in either major, because the budget-extending `resumeValue` has no shape (G2).
 - [ ] **MyndHyve advertises `budget` and `agents.evalSuite` at major 2 and serves each only behind
       a v1 seam.** Reported by its session from source, not measured: `configurable.budget` is
       validated, stored and never read, and eval runs only through
