@@ -472,6 +472,26 @@ Format follows [Keep a Changelog](https://keepachangelog.com/en/1/) loosely. Ver
 - **The remaining eleven stay `Active`, each for a stated reason** rather than for lack of attention. The eight RFC 0167 program children name a certified openwop-app bundle in their own acceptance criteria and the committed one reads `certified: false` (3 blocked rows, RFC 0168 §E.1). RFC 0173 additionally carries the program's only `open` gap row. RFC 0179's sole criterion is unmet — 2.4.2 stopped the gate reading "(Phase 4 leg)" as an excuse for it. RFC 0187 names three requirement ids that no scenario mints. RFC 0167 itself flips **last**, which 2.4.2 made a rule: the moment the umbrella stops being `Active`, every child still `Active` becomes permanently ineligible.
 - **The interrupt `data` union is bound to `kind`** (MCP/A2A review P3-H7, Class 3 correction — COMPATIBILITY.md §3). `schemas/suspend-request.schema.json` and its v2 twin typed `data` as an unbound `oneOf`, so the minimal `conversation.start` and `conversation.close` payloads (`{ conversationId }`, which satisfies both shapes) failed validation in v1 and v2, and a payload carrying another kind's `data` passed. `data` is now an `anyOf` and a root `allOf` binds each kind to its own shape with one `if`/`then`; no per-kind shape or `$id` changed. Witnessed by `conformance/fixtures/interrupt-payloads/` (suite 2.36.0).
 
+## [2.45.6] — 2026-10-02 — RFC 0231 (Active): a host says which budget exhaustion behaviours it serves
+
+A suite patch. The one wire addition is optional and changes nothing for a host that does not advertise it.
+
+### RFCs and spec
+
+- **RFC 0231 is `Active`** (#1848; filed and made `Active` on 2026-10-02, the comment window waived by the steward and not run, so acceptance will be provisional). A host that advertises `budget` may list the `onExhaustion` values it serves in a new optional facet, `budget.onExhaustion`. The list contains `fail`. Absent, the host serves both, as before.
+- **The refusal rule** (`spec/v2/core/runs.md` §Refusals; `spec/v1/budget-policy.md` §D). A value the host does not list is refused `422 capability_not_provided` at create. It is never applied as another behaviour and never ignored.
+- **RFC 0228 gap G2 is closed** (#1849) on the v2 reference host's certified 2.45.5 cut. G4 stays open for one v2 port.
+
+### Conformance
+
+- **New `v2-budget-exhaustion-facet`** (major 2, unaided), two requirement ids: the advertised list contains `fail`, and a create asking for an unlisted `interrupt` answers `422 capability_not_provided`. Proven both ways against the scratch host. No host advertises the facet yet, so both rows record `inapplicable` everywhere.
+- **Not witnessed, and recorded so:** the served `interrupt` path, whose budget-extending resume has no specified shape (RFC 0231 gap G2), and the v1 rule (gap G7).
+- **Suite `2.45.6`**, 590 scenario files. `@openwop/spec-artifacts` moves in lockstep at the same exact pin.
+
+### Evidence and status
+
+- **The v2 reference host's certified 2.45.5 public cut is checked in** (#1846: 451 pass, 0 fail, 0 blocked). It is the first host witness of `v2-production-backpressure` and `v2-budget-enforcement`.
+
 ## [2.45.5] — 2026-10-01 — an unclaimed prefix floor no longer blocks a major-1 bundle
 
 A suite patch. No wire, schema or normative change.

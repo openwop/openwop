@@ -1,6 +1,6 @@
 # `@openwop/openwop-conformance` Changelog
 
-## [2.45.6] — unreleased — RFC 0231 (Active): a host says which budget exhaustion behaviours it serves
+## [2.45.6] — 2026-10-02 — RFC 0231 (Active): a host says which budget exhaustion behaviours it serves
 
 - **The 2.45.6 cycle opens.** RFC 0231's gap register changes the packed `spec/v1/gaps.json`.
 - **New scenario `v2-budget-exhaustion-facet`** (major 2, unaided; RFC 0231). Logic in `lib/exhaustion-facet-witness.ts`.
