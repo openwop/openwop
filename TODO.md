@@ -29,7 +29,8 @@
   in strict mode without `workspace` should re-cut on 2.45.7**, or opt out `family.workspace`. **A major-1 host that cut a v3 bundle on 2.45.3 without claiming
   `openwop-secrets`, or on any suite without claiming `openwop-interrupts`, should re-cut on
   2.45.5.** The v2 reference host has cut on 2.45.6 and MyndHyve on 2.45.5; openwop-app has not cut on
-  2.45.3 or later. **The 2.45.8 cycle is open** (RFC 0229 `Accepted`). Take a release lock
+  2.45.3 or later. **The 2.45.8 cycle is open** (RFC 0229 `Accepted`;
+  `v2-table-schema-enforcement`). Take a release lock
   (`/tmp/claude-501/openwop-release-<ver>.lock`) before cutting.
   - A PR that changes packed content rides the open 2.45.8 cycle; do not cut it without the
     maintainer.
@@ -130,8 +131,9 @@ Defects outside the spec:
   - **Certified `egress_denied` row: done.** The v2 reference host's certified 2.45.6 cut records
     all five `httpClient.ssrf-*` requirements `executed-pass`, and the acceptance box is ticked.
     MyndHyve's certified 2.45.5 cut adds a tier-2 witness: all five rows `executed-pass`.
-  - **v2 ports (gap G4):** four exist. Still owed: a v2 port of `table-schema-enforcement`. No
-    host advertises `tableStorage` at major 2. Not ported: v1's `budget_model_denied` leg.
+  - **v2 ports (gap G4):** all five exist; `v2-table-schema-enforcement` (2.45.8, fixture
+    `conformance-table-schema-probe`) is the last. It has no host witness: no host advertises
+    `tableStorage` at major 2. Not ported: v1's `budget_model_denied` leg.
   - **Rename rows.** G2 is closed (reference host, certified 2.45.5). Still open, as the host
     sessions report from source:
     - G1 (MyndHyve): half witnessed. The `safeFetch` codes are renamed and certified (2.45.5

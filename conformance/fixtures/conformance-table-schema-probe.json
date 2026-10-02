@@ -1,0 +1,24 @@
+{
+  "id": "conformance-table-schema-probe",
+  "name": "Conformance: v2 tableStorage schema probe",
+  "version": "1.0",
+  "description": "Fixture for `v2-table-schema-enforcement.test.ts` (spec/v2/core/storage.md §`tableStorage`: rows MUST conform to the table's declared schema). One node, `core.conformance.table-schema-probe` (conformance-RESERVED): a host that advertises `tableStorage` maps it to a node that calls its OWN `ctx.storage.table` for the run's tenant with the run's inputs and nothing else. Every action first calls `createTable(table, { k: \"string\", n: \"number\" })`. `action: control` then inserts `{ k: \"control\", n: 1 }` and completes with `outputs.result = { inserted: true, rowId }`. `action: insert-mistyped` inserts `{ k: \"mistyped\", n: \"not-a-number\" }`; if the host accepts it the node completes with `{ inserted: true, rowId }`. `action: update-mistyped` inserts `{ k: \"to-update\", n: 2 }`, then calls `update(table, rowId, { n: \"not-a-number\" })`; if the host accepts it the node completes with `{ updated: true, rowId }`. The node does no type checking of its own. A rejection fails the node with the rejection's code and details, unchanged. A host that does not advertise `tableStorage` MUST NOT advertise this fixture.",
+  "nodes": [
+    {
+      "id": "table-schema-probe",
+      "typeId": "core.conformance.table-schema-probe",
+      "name": "Probe ctx.storage.table schema enforcement",
+      "position": { "x": 0, "y": 0 },
+      "config": {},
+      "inputs": {}
+    }
+  ],
+  "edges": [],
+  "triggers": [{ "id": "manual", "type": "manual", "enabled": true }],
+  "variables": [
+    { "name": "action", "type": "string", "defaultValue": "control" },
+    { "name": "table", "type": "string" }
+  ],
+  "metadata": { "tags": ["conformance", "storage", "tableStorage"] },
+  "settings": { "timeout": 0 }
+}

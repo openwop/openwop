@@ -1,8 +1,19 @@
 # `@openwop/openwop-conformance` Changelog
 
-## [2.45.8] — unreleased — RFC 0229 Accepted on MyndHyve's production cut
+## [2.45.8] — unreleased — RFC 0229 Accepted on MyndHyve's production cut; a v2 witness for tableStorage schema enforcement
 
-- **The 2.45.8 cycle opens.** RFC 0229's and RFC 0228's gap registers change the packed `spec/v1/gaps.json`. No scenario changes in this PR.
+- **The 2.45.8 cycle opens.** RFC 0229's and RFC 0228's gap registers change the packed `spec/v1/gaps.json`.
+- **New scenario `v2-table-schema-enforcement`** (major 2, unaided; RFC 0228 gap G4). The v1 twin `table-schema-enforcement` drives a test seam; this port runs the new `conformance-table-schema-probe` fixture three times, each on a fresh table declared `{ k: string, n: number }`. Logic in `lib/table-schema-witness.ts`.
+  - `openwop.requirement.storage.table-schema-control-insert-completes`: a well-typed insert completes. It is the positive control.
+  - `openwop.requirement.storage.table-schema-insert-mistyped-refused`: an insert with `n: "not-a-number"` fails the probe node `validation_error` with `details.service: tableStorage`.
+  - `openwop.requirement.storage.table-schema-update-mistyped-refused`: an update setting `n` to a string fails the same way.
+
+  **Dispositions.** `tableStorage` not advertised, or the fixture not advertised: `inapplicable`. The fixture is the opt-in, as for the budget and safeFetch witnesses. A fixture run that cannot be created, finish or be read: `blocked`. A failed control: the control row fails and the two refusal rows are `blocked`, since a host that refuses every insert would pass them vacuously.
+
+  **Sabotage.** `lib/table-schema-witness.test.ts`, eight cases against the scratch host. A host that accepts a mistyped insert, or a mistyped update, fails only that row. v1's `table_schema_violation` fails both refusal rows. `validation_error` without `details.service` fails and cites `errors.md` §Host-service refusals. A probe that refuses everything fails the control.
+
+  **Host impact: none today.** No host advertises `tableStorage` at major 2, so all three rows record `inapplicable`.
+- **New fixture `conformance-table-schema-probe`** (`fixtures.md` §The tableStorage schema probe fixture). Its node `core.conformance.table-schema-probe` is conformance-RESERVED and calls the host's own `ctx.storage.table`. A host MUST NOT advertise it unless it advertises `tableStorage`.
 - **`trigger-bridge-delivery` runs every witness path a host offers (RFC 0230).** Until now the signed public-ingest path ran only when the delivery seams were absent. With the seams mounted it never ran. Without them, the seam-only leg 4 was red, so the profile did not certify, and an uncertified bundle is not acceptance evidence (RFC 0174 §B.1). Legs 1–3 now run the seam path whenever the seams are served, and the signed-ingest path whenever `triggerBridge.ingestion.inboundSigning` is advertised. A host that offers both must pass both, and each row notes which paths ran.
   - **`trigger-refused-event-keeps-subscription`** records `inapplicable`, not seam-absent, on a host with no seams that advertises `inboundSigning`. The dead-letter leg above already witnesses the same rule on its signed ingest, and in strict mode this file used to fail such a host right after that leg had observed it.
   - **Proof.** On openwop-app's in-process harness, with the seams on and `OPENWOP_TRIGGER_INBOUND_SIGNING=true`, all four legs pass. A sabotaged dedup assertion on the signed path fails leg 1, so that path now runs on a host that also serves the seams.
