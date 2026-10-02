@@ -290,7 +290,7 @@ git push origin vX.Y.Z
   gh release create vX.Y.Z --title "vX.Y.Z" \
     --notes-file <(awk '/^## \[X.Y.Z\]/,/^## \[/{if(/^## \[/&&!/X.Y.Z/)exit;print}' CHANGELOG.md)
   ```
-- [ ] Add the next `## [Unreleased]` placeholder **now, after the tag** — not in Phase 2 (lesson #12).
+- [ ] `## [Unreleased]` stays in the file and ends the release EMPTY: the release PR **moves** its bullets into the new `## [X.Y.Z] — date — headline` section (1–5 one-line `- **Lead.** sentence` bullets). `scripts/check-changelog-shape.mjs` fails a release that leaves them behind or writes long entries. (Until 2.45.7 releases copied instead of moving, and `[Unreleased]` grew to 258 KB.)
 
 ## Lessons-learned catalog (what has gone wrong in real releases)
 

@@ -168,7 +168,7 @@ A openwop-spec PR is mergeable when:
 4. Every fixture validates against `workflow-definition.schema.json` (covered by `conformance/src/scenarios/fixtures-valid.test.ts`).
 5. Every prose doc carries a `Status:` legend tag (covered by `spec-corpus-validity.test.ts`).
 6. The `openwop-conformance --offline` server-free subset passes.
-7. `CHANGELOG.md` updated when changing any artifact (1-line entry under `[Unreleased]` is fine).
+7. `CHANGELOG.md` updated when changing any artifact: one line under `[Unreleased]`, as `- **Short lead.** one sentence` saying what changed for an implementer. Leave out hashes, pass counts and how the change was found; those belong in `evidence/`, the RFC and the PR. A release moves its lines out of `[Unreleased]` into its own `## [X.Y.Z] — date — headline` section. `scripts/check-changelog-shape.mjs` enforces the shape.
 8. Every commit on the PR carries a `Signed-off-by:` trailer per the DCO (see §"Sign your commits" below).
 
 (The SDK build + per-SDK lint gates moved to `openwop-sdks` with the SDKs — that repo's `scripts/sdks-check.sh` covers TypeScript `tsc`/ESLint, Python `ruff`, Go `go vet`/`gofmt`, and cross-SDK parity.)
