@@ -172,11 +172,13 @@ Defects outside the spec:
     also serves ancestry. If a host ever advertises `subWorkflow` without ancestry, the fix is an
     RFC requiring the child's `run.started.causationId` to name the parent's event, as trigger
     deliveries already do. It is not a new field.
-- [ ] **openwop-app's tool catalog order varied between two runs of one build.** In the 2.45.5
-      pre-release diff at major 1, the advisory row
-      `tool-catalog-projection…sorted-by-toolid` was `executed-pass` on one run and "not sorted
-      by toolId" on the next, with no suite change between them. It is a SHOULD (RFC 0204 §D.13)
-      that is recorded and never failed. Not re-run to confirm it flips; report it to the host.
+- [ ] **openwop-app's tool catalog is not sorted by `toolId`** (openwop-app #4339, filed 2026-10-02).
+      The advisory row `tool-catalog-projection…sorted-by-toolid` flipped between two runs of one
+      build in the 2.45.5 pre-release diff, then passed on four later runs. Read from its source:
+      nothing sorts the list, so the order is registration order plus whatever workspace workflows
+      expose a tool at the time of the read. That the flip comes from workspace state is inferred;
+      no failing list was captured. It is a SHOULD (RFC 0204 §D.13), recorded and never failed.
+      Closes when the host sorts and a cut records the row `executed-pass`.
 
 ## Pattern checks (no code owed; read new scenarios against these)
 
