@@ -7,7 +7,7 @@
 | **Status**        | `Draft`                                                         |
 | **Author(s)**     | David Tufts (@davidscotttufts)                                  |
 | **Created**       | 2026-10-02                                                      |
-| **Updated**       | 2026-10-02 — filed `Draft`. The 7-day comment window opens with the pull request and closes 2026-10-09. |
+| **Updated**       | 2026-10-02 — G1 and G5 decided by the maintainer: an absent facet means both values, as today, and the facet lands in both majors. Unresolved questions 1 and 4 are closed. · 2026-10-02 — filed `Draft`. The 7-day comment window opens with the pull request and closes 2026-10-09. |
 | **Affects**       | the `budget` capability record: a new optional facet `onExhaustion` in `schemas/capabilities.schema.json` (the v1 seed, from which `schemas/v2/capabilities.schema.json` is derived) · `spec/v1/budget-policy.md` §D and `spec/v1/capabilities.md` §budget · `spec/v2/core/runs.md` §`budget` section (one bullet) · one new conformance scenario per major |
 | **Compatibility** | `additive` (COMPATIBILITY.md §2): one optional facet. A host that does not advertise it is bound exactly as it is today. See §Compatibility for the one point a reviewer should check. |
 | **Supersedes**    | —                                                               |
@@ -143,7 +143,7 @@ One scenario file per major: `budget-exhaustion-facet.test.ts` (major 1) and `v2
 - `dimensions` and `enforce` narrow the same record the same way;
 - no host is known to serve `interrupt` (one measured, one reported from source; gap G6), so no client is known to depend on it.
 
-If a reviewer reads that as relaxing a MUST, the RFC is a correction and takes the correction path in place of the additive one (Unresolved question 1).
+The maintainer decided this on 2026-10-02 (G1): an absent facet keeps today's meaning, and the RFC is additive. A reviewer who reads the narrowing as relaxing a MUST should say so in the window.
 
 ## Alternatives considered
 
@@ -155,10 +155,10 @@ If a reviewer reads that as relaxing a MUST, the RFC is a correction and takes t
 
 ## Unresolved questions
 
-1. **What should an absent facet mean?** This RFC says "both, as today" to stay additive. The alternative, "`fail` only", matches every host measured. Choosing it makes this a correction.
+1. ~~**What should an absent facet mean?**~~ **Resolved 2026-10-02 (maintainer decision, G1): both values, as today.** The RFC stays additive. "`fail` only" matches every host measured, but it would change what today's advertisements mean.
 2. **Should the refusal say what is served?** `unsupported_stream_mode` carries `details.supported`. `capability_not_provided` has no registered details schema, and registering one binds every use of the code. The facet already answers the question in discovery.
 3. **Is the `interrupt` path specified well enough to witness?** `runs.md` says the `resumeValue` "adds budget" and does not give its shape. Until it does, no suite can drive the resume (G2). That is RFC 0084's open question, not this RFC's, but this RFC is where a reader will look for it.
-4. **Does a v1 host need the facet?** The seed is the v1 schema, so the facet lands in both majors. v1 is in its overlap period. If the maintainer prefers a v2-only facet, the derivation needs a v2-only member.
+4. ~~**Does a v1 host need the facet?**~~ **Resolved 2026-10-02 (maintainer decision, G5): yes.** The facet goes in the v1 seed and is derived into v2, so both majors carry it through the overlap.
 
 ## Implementation notes (non-normative)
 
@@ -172,7 +172,7 @@ If a reviewer reads that as relaxing a MUST, the RFC is a correction and takes t
 
 ## Acceptance criteria
 
-- [ ] `Active`: the comment window closes (2026-10-09) with no unresolved objection, and Unresolved question 1 is decided.
+- [ ] `Active`: the comment window closes (2026-10-09) with no unresolved objection. Unresolved questions 1 and 4 are decided (2026-10-02).
 - [ ] The facet is in the v1 seed and derived into `schemas/v2/capabilities.schema.json`; the prose of §E is merged; `CHANGELOG.md` records it.
 - [ ] The two scenario files ship, each row failing on its sabotage.
 - [ ] `Accepted`: `openwop.requirement.budget.unserved-exhaustion-refused` is `executed-pass` on a certified bundle from a host that advertises `onExhaustion: ["fail"]`.

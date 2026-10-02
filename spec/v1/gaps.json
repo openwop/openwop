@@ -13807,8 +13807,8 @@
       "surface": "What an absent facet means: \"both, as today\" (proposed, additive) or \"`fail` only\" (matches every host measured, and is a correction).",
       "witness": "unclassified",
       "requirementId": null,
-      "disposition": "carried",
-      "target": "openwop.gap.0231.1",
+      "disposition": "closed",
+      "target": null,
       "sources": [
         {
           "file": "RFCS/registers/0231-budget-exhaustion-facet.gaps.md",
@@ -13875,8 +13875,8 @@
       "surface": "Whether v1 takes the facet. The seed schema is v1's, so by default both majors get it.",
       "witness": "unclassified",
       "requirementId": null,
-      "disposition": "carried",
-      "target": "openwop.gap.0231.5",
+      "disposition": "closed",
+      "target": null,
       "sources": [
         {
           "file": "RFCS/registers/0231-budget-exhaustion-facet.gaps.md",

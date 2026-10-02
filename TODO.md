@@ -130,9 +130,10 @@ Defects outside the spec:
   - Not ported: v1's `budget_model_denied` leg (needs a fixture that resolves a model unaided).
   - The rename rows G1–G3, G6 and G7 close on host cuts.
 - [ ] **RFC 0231 (`Draft`): a host says which budget exhaustion behaviours it serves.** The
-      comment window closes 2026-10-09. Two decisions are the maintainer's: what an absent
-      `budget.onExhaustion` means (G1), and whether v1 takes the facet (G5). The `interrupt` path
-      has no witness in either major, because the budget-extending `resumeValue` has no shape (G2).
+      comment window closes 2026-10-09. G1 and G5 are decided (absent means both; both majors).
+      At `Active`: the facet in the v1 seed, the `runs.md` and `budget-policy.md` prose, and one
+      scenario per major. The `interrupt` path has no witness in either major, because the
+      budget-extending `resumeValue` has no shape (G2).
 - [ ] **MyndHyve advertises `budget` and `agents.evalSuite` at major 2 and serves each only behind
       a v1 seam.** Reported by its session from source, not measured: `configurable.budget` is
       validated, stored and never read, and eval runs only through
