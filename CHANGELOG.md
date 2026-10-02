@@ -13,6 +13,10 @@ Format follows [Keep a Changelog](https://keepachangelog.com/en/1/) loosely. Ver
 
 ## [Unreleased]
 
+- **Evidence: the v2 reference host's certified 2.45.6 public cut** (460 pass / 0 fail / 0 blocked, all three profiles, build `commit:1d3a3f39`, witness `61e63c510bfe`, signed `v2-reference-4`, no relaxations; `--verify --host-key` VERIFIED; openwop-examples #148–#150). The corpus copy is replaced byte-for-byte. The host now serves `httpClient.safeFetch` and advertises `budget.onExhaustion: ["fail"]`.
+  - **RFC 0228's certified-row box is ticked.** All five `httpClient.ssrf-*` requirements are `executed-pass`: every refused target is `egress_denied`, `details.reason: ssrf-blocked`. RFC 0228 stays `Active`: the rename rows G1, G3, G6 and G7 still wait on host cuts.
+  - **RFC 0231's acceptance row is witnessed; it stays `Active`.** `runs.budget-unserved-exhaustion-refused` and `runs.budget-exhaustion-facet-contains-fail` are `executed-pass`, and `check-accepted-predicate` accepts it. The flip waits one cycle: its gaps G2, G4 and G7 carry to themselves, which a terminal RFC may not do (RFC 0174 §C.2), and re-homing them changes the packed gaps register. G3 closes in the same change.
+
 - **RFC 0228: gap G2 is closed.** The v2 reference host emits `upstream_unavailable` and `egress_denied` since openwop-examples #138; its certified 2.45.5 cut carries neither vendor code and records `errors.event-code-registered` `executed-pass`. G4 stays open for one v2 port (`table-schema-enforcement`). The remaining rename rows wait on host cuts; G3 closes on a certified cut containing openwop-app #4331 (maintainer decision 2026-10-02).
 
 - **RFC 0231 `Active`: a host says which budget exhaustion behaviours it serves** (additive; suite 2.45.6; filed `Draft` and made `Active` on 2026-10-02, the 7-day comment window waived by the steward and not run; RFC 0147 §A.6 does not apply; acceptance will be provisional pending the RFC 0156 §B review). A host that advertises `budget` could not say it serves `onExhaustion: "fail"` and not `"interrupt"`; the v2 reference host refused `interrupt` and recorded that as a deviation.
