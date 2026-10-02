@@ -13,6 +13,8 @@ Format follows [Keep a Changelog](https://keepachangelog.com/en/1/) loosely. Ver
 
 ## [Unreleased]
 
+- **Conformance fix: `v2-workspace-scope-from-identity` records `inapplicable`, not `executed-fail`, on a strict-mode host that does not advertise `workspace`** (suite 2.45.7). It used the strict family gate against its own documented disposition. Found by MyndHyve's 2.45.5 cut; on 2.45.3–2.45.6 the workaround is to opt out `family.workspace`.
+
 - **RFC 0231 `Active → Accepted`** (provisional pending the RFC 0156 §B retrospective review; bootstrap waiver, register row `not-reviewed`). Evidence tier: tier-1, the v2 reference host's certified public cut on published suite 2.45.6 (build `commit:1d3a3f39`, witness `61e63c510bfe`), which advertises `budget.onExhaustion: ["fail"]` and records `runs.budget-unserved-exhaustion-refused` and `runs.budget-exhaustion-facet-contains-fail` `executed-pass`.
   - **Registers.** Gap G3 closes on that cut and G4 closes as not adopted (the refusal carries no `details.supported`). G2 (the served `interrupt` path) and G7 (the v1 rule) are `externally-gated`: each waits on a host that serves or advertises the thing. Risk R2 is `mitigated`, and the open-risk baseline returns to 333.
   - **Still unwitnessed:** the served `interrupt` path and the v1 rule. No production host advertises the facet.

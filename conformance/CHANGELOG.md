@@ -2,6 +2,10 @@
 
 ## [2.45.7] — unreleased — RFC 0231 Accepted
 
+- **Fix: `v2-workspace-scope-from-identity` no longer fails a strict-mode host that does not advertise `workspace`.** The file gated with `gateFamily('workspace')`, which under `--require-behavior` fails an unadvertised family unless the operator opts it out. Its own header says an unadvertised family is `inapplicable`, and its sibling isolation scenarios (`v2-storage-`, `v2-queue-cross-tenant-isolation`) read with `familyAdvertised` and recorded `inapplicable` in the same run. It now reads with `familyAdvertised`.
+  - **Found by** MyndHyve's 2.45.5 cut: both `0059.workspace-scope-*` rows `executed-fail` on a host that does not serve `workspace`.
+  - **Proof.** Against a scratch host that does not advertise the family, in strict mode: both legs failed before the change; the three rows are `inapplicable` after it. A host that advertises `workspace` is unchanged (the v2 reference host passes both rows on its certified 2.45.6 cut).
+  - **Workaround on 2.45.3–2.45.6:** `OPENWOP_OPTED_OUT_PROFILES=family.workspace`, which records the rows `skipped`.
 - **The 2.45.7 cycle opens.** RFC 0231's gap register changes the packed `spec/v1/gaps.json`: G3 and G4 close, and G2 and G7 are `externally-gated`. No scenario changes.
 
 ## [2.45.6] — 2026-10-02 — RFC 0231 (Active): a host says which budget exhaustion behaviours it serves
