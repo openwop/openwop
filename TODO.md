@@ -28,19 +28,18 @@
   fails a strict-mode host that does not advertise `workspace`). **A host that cut on 2.45.3–2.45.6
   in strict mode without `workspace` should re-cut on 2.45.7**, or opt out `family.workspace`. **A major-1 host that cut a v3 bundle on 2.45.3 without claiming
   `openwop-secrets`, or on any suite without claiming `openwop-interrupts`, should re-cut on
-  2.45.5.** The v2 reference host has cut on 2.45.6; MyndHyve and openwop-app have not cut on
-  2.45.3 or later. No cycle is open. Take a release lock
+  2.45.5.** The v2 reference host has cut on 2.45.6 and MyndHyve on 2.45.5; openwop-app has not cut on
+  2.45.3 or later. **The 2.45.8 cycle is open** (RFC 0229 `Accepted`). Take a release lock
   (`/tmp/claude-501/openwop-release-<ver>.lock`) before cutting.
-  - Until a 2.45.8 cycle opens, a PR that leaves the version alone must not re-stamp: restore
-    `spec-artifacts/CORPUS-STAMP.json` and `evidence/corpus-ledger.json` before committing. A PR
-    that changes packed content must open the cycle itself.
+  - A PR that changes packed content rides the open 2.45.8 cycle; do not cut it without the
+    maintainer.
 - **Normative homes:** all 73 core families have v2 homes (#1802–#1804). The kernel budget is
   37,324 / 37,800 words, with the generated error table outside it (RFC 0227).
 - **SDKs:** **2.5.0** (npm, PyPI, `go/v2.5.0`) sends `OpenWOP-Client-Version` on every request.
   Re-vendoring to a newer corpus tag is a separate change.
 - **Hosts** (the canonical files in `evidence/v2-host-bundles/`, all certified, 0 fail, 0 blocked):
-  the v2 reference host on 2.45.6 (460 pass), MyndHyve on 2.45.2 (273 pass) and openwop-app on
-  2.44.5 (263 pass). `coordination` is `Stable` on MyndHyve's 2.45.2 cut (RFC 0220, #1828).
+  the v2 reference host on 2.45.6 (460 pass), MyndHyve on 2.45.5 (294 pass) and openwop-app on
+  2.44.5 (263 pass). `coordination` went `Stable` on MyndHyve's 2.45.2 cut (RFC 0220, #1828).
 - **Cuts:** every certified public cut needs a fresh operator approval.
 
 ## 1 — RFC 0121 subscription-rail witness · **owner openwop-77 (paused)**
@@ -130,13 +129,14 @@ Defects outside the spec:
 - [ ] **RFC 0228's last open box: the rename rows** (state 2026-10-02).
   - **Certified `egress_denied` row: done.** The v2 reference host's certified 2.45.6 cut records
     all five `httpClient.ssrf-*` requirements `executed-pass`, and the acceptance box is ticked.
-    MyndHyve's next cut would add a tier-2 witness (it advertises `safeFetch` since its #581).
+    MyndHyve's certified 2.45.5 cut adds a tier-2 witness: all five rows `executed-pass`.
   - **v2 ports (gap G4):** four exist. Still owed: a v2 port of `table-schema-enforcement`. No
     host advertises `tableStorage` at major 2. Not ported: v1's `budget_model_denied` leg.
   - **Rename rows.** G2 is closed (reference host, certified 2.45.5). Still open, as the host
     sessions report from source:
-    - G1 (MyndHyve): fixed for pack-facing callers and deployed (myndhyve#581); needs a
-      certified cut. The major-2 boundary strips `details.retryAfter*`; not checked for the `503`.
+    - G1 (MyndHyve): half witnessed. The `safeFetch` codes are renamed and certified (2.45.5
+      cut). The `503` half is not: MyndHyve advertises no `production.backpressure.inflightCap`,
+      so `v2-production-backpressure` is `inapplicable` there.
     - G3 (openwop-app): fix up as openwop-app #4331, not merged. Maintainer decision
       2026-10-02: it closes on a certified cut that contains the fix, recorded as unit-witnessed
       with `v2-fs-sandbox-escape-refused` `inapplicable` (the host advertises neither `fs` nor
@@ -144,26 +144,17 @@ Defects outside the spec:
     - G6 (openwop-app): fixed and deployed (#4238); needs a certified cut.
     - G7 (MyndHyve): not fixed. `no_active_deployment` goes out as
       `myndhyve.no_active_deployment` at major 2; the denial envelope is untraced.
-- [ ] **MyndHyve's next certified cut carries four changes the maintainer approved** (2026-10-02;
-      reported by its session, in PRs, not deployed, no cut run):
-  - the suite pin at 2.45.5 (merged);
-  - `budget` and `agents.evalSuite` removed from discovery at both majors, with `mode: "eval"`
-    answering `422 capability_not_provided`, so `v2-eval-mode-unadvertised-refused` executes there;
-  - `secrets.runSecrets` with the `openwop-secrets-run-witness` fixture (RFC 0229's production
-    witness). The sealed value is deleted before the terminal event and status are written;
-    untested on the three cap-breach paths, and a terminal written outside the executor relies
-    on a TTL;
-  - then the cut, which would also witness `egress_denied` and RFC 0228 G1.
-- [ ] **RFC 0229** needs all four requirement ids `executed-pass` on a certified bundle from a
-      production deployment. **RFC 0230** needs openwop-app to advertise `inboundSigning` and pass the path in strict mode on a production cut; its other boxes are ticked.
+- [ ] **MyndHyve follow-up after its certified 2.45.5 cut** (RFC 0229 `Accepted` on it,
+      2026-10-02): withdraw the `openwop-smoke-byok-roundtrip` fixture from production discovery,
+      the oracle RFC 0229 says a production host should withhold. It still runs with
+      `OPENWOP_CONFORMANCE_FIXTURES=1` and `OPENWOP_TEST_SEAM_ENABLED`. The sealed value's deletion
+      is untested on the three cap-breach paths.
+- [ ] **RFC 0230** needs openwop-app to advertise `inboundSigning` and pass the path in strict mode on a production cut; its other boxes are ticked.
 - [ ] **Host evidence owed, as the host sessions report it (2026-10-02):**
   - RFC 0230 (openwop-app): blocked on an operator decision plus a pin bump. Measured on
     production by the flag's owner: `OPENWOP_TRIGGER_INBOUND_SIGNING` is unset, so the facet is
     not advertised; the suite pin is `^2.45.2`; and its last cut had ten timeout failures at
     major 1 that are still being traced.
-  - RFC 0229: neither host can witness it yet. openwop-app does not advertise
-    `secrets.runSecrets`; MyndHyve consumes `runSecrets` but advertises no facet and seeds no
-    fixture. It needs a production deployment, so the reference host cannot stand in.
 - **Decided 2026-10-01 (architect review, at the maintainer's request); no work owed:**
   - `memoryScopeIsolation: "isolated"` is not carried in v2. It never had a schema, and
     `openwop.gap.0189.17` is closed.

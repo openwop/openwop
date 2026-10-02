@@ -1,12 +1,12 @@
 {
   "bundleVersion": "3",
-  "generatedAt": "2026-09-30T11:43:59.618Z",
+  "generatedAt": "2026-10-02T18:35:02.362Z",
   "suite": {
     "name": "@openwop/openwop-conformance",
-    "version": "2.45.2",
+    "version": "2.45.5",
     "targetMajor": 2,
-    "specArtifactsVersion": "2.45.2",
-    "stampSha256": "30b580360e19f8ecdc72c058e20bdca2ba5cd054b5c6b98145b4086871ac73de"
+    "specArtifactsVersion": "2.45.5",
+    "stampSha256": "cdc1ddd3b7638a291b2179ef220c96c8d8e67179e005c7650ac9d913f73dd179"
   },
   "host": {
     "name": "workflow-runtime",
@@ -14,13 +14,13 @@
     "vendor": "myndhyve",
     "build": {
       "kind": "commit",
-      "id": "c63c8e051dffb39171ba095b1b18a201ed60fcd4"
+      "id": "8223541cdf7e905c7414883456ac72d8aeade097"
     },
     "signingKeyId": "myndhyve-bundle-2026-09b"
   },
   "discovery": {
     "url": "https://api.myndhyve.ai/.well-known/openwop",
-    "sha256": "afffc1f07e6dd78c003111bdf967072fc71686da9271e55c20e3e9e436777c4c",
+    "sha256": "167a0486b620d8e3f1121fc3f21b0c84c3c78a388f0a7860d403e87e77663a49",
     "protocolVersions": [
       "1.0",
       "2.0"
@@ -99,6 +99,8 @@
         "conformance-replay-side-effect",
         "conformance-durability-effect",
         "conformance-effect-retry",
+        "conformance-safefetch-probe",
+        "openwop-secrets-run-witness",
         "conformance-context-budget-live"
       ],
       "signingKeys": [
@@ -119,12 +121,172 @@
       "supportedEnvelopes": {
         "status": "stable",
         "since": "1.0",
-        "witness": "witnessable-gated"
+        "witness": "witnessable-gated",
+        "kinds": [
+          "myndhyve.agent.turn",
+          "myndhyve.ai.generic",
+          "myndhyve.app.architecture",
+          "myndhyve.artifact.emit",
+          "myndhyve.ask.clarify",
+          "myndhyve.brand-persona.generate",
+          "myndhyve.brand-persona.refine",
+          "myndhyve.brand-research.create",
+          "myndhyve.brand-theme.suggest-dark-variant",
+          "myndhyve.brief-ad-variants.create",
+          "myndhyve.brief-carousel.create",
+          "myndhyve.brief-creative-briefs.create",
+          "myndhyve.brief-email-sequence.create",
+          "myndhyve.brief-kernel.create",
+          "myndhyve.brief-landing-page.create",
+          "myndhyve.brief-social-posts.create",
+          "myndhyve.cad-bom.generate",
+          "myndhyve.cad-compliance.check",
+          "myndhyve.cad-cutlist.generate",
+          "myndhyve.cad-material.recommend",
+          "myndhyve.cad-spec.create",
+          "myndhyve.cad-spec.update",
+          "myndhyve.campaign-recommendation.create",
+          "myndhyve.cms-page.generate",
+          "myndhyve.cms-page.review",
+          "myndhyve.cms-section.create",
+          "myndhyve.cms-seo.optimize",
+          "myndhyve.component-library.create",
+          "myndhyve.coordination.compete-turn",
+          "myndhyve.coordination.consensus-turn",
+          "myndhyve.coordination.delegate-turn",
+          "myndhyve.coordination.map-reduce-turn",
+          "myndhyve.coordination.round-robin-turn",
+          "myndhyve.coordination.vote-turn",
+          "myndhyve.crm-contact.create",
+          "myndhyve.crm-contact.update",
+          "myndhyve.crm-deal.create",
+          "myndhyve.crm-deal.forecast",
+          "myndhyve.crm-deal.update",
+          "myndhyve.crm-email.draft",
+          "myndhyve.crm-report.generate",
+          "myndhyve.crm-sequence.enroll",
+          "myndhyve.crm-task.create",
+          "myndhyve.document.summarize",
+          "myndhyve.domain-content.create",
+          "myndhyve.drawing-composition.analyze",
+          "myndhyve.drawing-layer.create",
+          "myndhyve.drawing-palette.suggest",
+          "myndhyve.drawing-shape.create",
+          "myndhyve.drawing-shape.update",
+          "myndhyve.feature.breakdown",
+          "myndhyve.feature.unsupported",
+          "myndhyve.moodboard.create",
+          "myndhyve.personas.create",
+          "myndhyve.plan.snapshot",
+          "myndhyve.prd.create",
+          "myndhyve.prd.generate",
+          "myndhyve.production-plan.create",
+          "myndhyve.screen.emit",
+          "myndhyve.slide-deck-slide.delete",
+          "myndhyve.slide-deck-slide.insert",
+          "myndhyve.slide-deck-slide.replace",
+          "myndhyve.slide-deck.patch",
+          "myndhyve.slide-deck.replace",
+          "myndhyve.slide-diagram.generate",
+          "myndhyve.slide-image.generate",
+          "myndhyve.slide-layout.suggest",
+          "myndhyve.slide.visualize",
+          "myndhyve.status.progress",
+          "myndhyve.task.update",
+          "myndhyve.tasks.create",
+          "myndhyve.theme.create",
+          "myndhyve.theme.suggest",
+          "myndhyve.workflow.execute",
+          "myndhyve.workflow.generate",
+          "ui.a2ui-surface"
+        ]
       },
       "schemaVersions": {
         "status": "stable",
         "since": "1.0",
-        "witness": "witnessable-gated"
+        "witness": "witnessable-gated",
+        "kinds": {
+          "clarification.request": 1,
+          "schema.request": 1,
+          "schema.response": 1,
+          "error": 1,
+          "myndhyve.agent.turn": 1,
+          "myndhyve.ai.generic": 1,
+          "myndhyve.app.architecture": 1,
+          "myndhyve.artifact.emit": 1,
+          "myndhyve.ask.clarify": 1,
+          "myndhyve.brand-persona.generate": 1,
+          "myndhyve.brand-persona.refine": 1,
+          "myndhyve.brand-research.create": 1,
+          "myndhyve.brand-theme.suggest-dark-variant": 1,
+          "myndhyve.brief-ad-variants.create": 1,
+          "myndhyve.brief-carousel.create": 1,
+          "myndhyve.brief-creative-briefs.create": 1,
+          "myndhyve.brief-email-sequence.create": 1,
+          "myndhyve.brief-kernel.create": 1,
+          "myndhyve.brief-landing-page.create": 1,
+          "myndhyve.brief-social-posts.create": 1,
+          "myndhyve.cad-bom.generate": 1,
+          "myndhyve.cad-compliance.check": 1,
+          "myndhyve.cad-cutlist.generate": 1,
+          "myndhyve.cad-material.recommend": 1,
+          "myndhyve.cad-spec.create": 1,
+          "myndhyve.cad-spec.update": 1,
+          "myndhyve.campaign-recommendation.create": 1,
+          "myndhyve.cms-page.generate": 1,
+          "myndhyve.cms-page.review": 1,
+          "myndhyve.cms-section.create": 1,
+          "myndhyve.cms-seo.optimize": 1,
+          "myndhyve.component-library.create": 1,
+          "myndhyve.coordination.compete-turn": 1,
+          "myndhyve.coordination.consensus-turn": 1,
+          "myndhyve.coordination.delegate-turn": 1,
+          "myndhyve.coordination.map-reduce-turn": 1,
+          "myndhyve.coordination.round-robin-turn": 1,
+          "myndhyve.coordination.vote-turn": 1,
+          "myndhyve.crm-contact.create": 1,
+          "myndhyve.crm-contact.update": 1,
+          "myndhyve.crm-deal.create": 1,
+          "myndhyve.crm-deal.forecast": 1,
+          "myndhyve.crm-deal.update": 1,
+          "myndhyve.crm-email.draft": 1,
+          "myndhyve.crm-report.generate": 1,
+          "myndhyve.crm-sequence.enroll": 1,
+          "myndhyve.crm-task.create": 1,
+          "myndhyve.document.summarize": 1,
+          "myndhyve.domain-content.create": 1,
+          "myndhyve.drawing-composition.analyze": 1,
+          "myndhyve.drawing-layer.create": 1,
+          "myndhyve.drawing-palette.suggest": 1,
+          "myndhyve.drawing-shape.create": 1,
+          "myndhyve.drawing-shape.update": 1,
+          "myndhyve.feature.breakdown": 1,
+          "myndhyve.feature.unsupported": 1,
+          "myndhyve.moodboard.create": 1,
+          "myndhyve.personas.create": 1,
+          "myndhyve.plan.snapshot": 1,
+          "myndhyve.prd.create": 1,
+          "myndhyve.prd.generate": 1,
+          "myndhyve.production-plan.create": 1,
+          "myndhyve.screen.emit": 1,
+          "myndhyve.slide-deck-slide.delete": 1,
+          "myndhyve.slide-deck-slide.insert": 1,
+          "myndhyve.slide-deck-slide.replace": 1,
+          "myndhyve.slide-deck.patch": 1,
+          "myndhyve.slide-deck.replace": 1,
+          "myndhyve.slide-diagram.generate": 1,
+          "myndhyve.slide-image.generate": 1,
+          "myndhyve.slide-layout.suggest": 1,
+          "myndhyve.slide.visualize": 1,
+          "myndhyve.status.progress": 1,
+          "myndhyve.task.update": 1,
+          "myndhyve.tasks.create": 1,
+          "myndhyve.theme.create": 1,
+          "myndhyve.theme.suggest": 1,
+          "myndhyve.workflow.execute": 1,
+          "myndhyve.workflow.generate": 1,
+          "ui.a2ui-surface": 1
+        }
       },
       "limits": {
         "status": "stable",
@@ -211,7 +373,10 @@
           "run",
           "workspace"
         ],
-        "resolution": "host-managed"
+        "resolution": "host-managed",
+        "runSecrets": {
+          "maxEntries": 8
+        }
       },
       "aiProviders": {
         "status": "experimental",
@@ -675,14 +840,6 @@
             "chat-mention"
           ]
         },
-        "evalSuite": {
-          "modes": [
-            "golden",
-            "regression"
-          ],
-          "maxTasksPerSuite": 200,
-          "maxCostUsdPerSuite": 5
-        },
         "deployment": {
           "channels": [
             "stable",
@@ -781,26 +938,6 @@
         ],
         "sessionLifecycle": true,
         "compactView": true
-      },
-      "budget": {
-        "status": "experimental",
-        "since": "1.0",
-        "until": "2027-01-01",
-        "witness": "witnessable-gated",
-        "dimensions": [
-          "tokens",
-          "cost",
-          "toolCalls",
-          "retries",
-          "model"
-        ],
-        "enforce": "hard",
-        "scopes": [
-          "run",
-          "workflow",
-          "agent",
-          "project"
-        ]
       },
       "memory": {
         "status": "experimental",
@@ -1013,6 +1150,27 @@
           "requiresWorkspaceApproval": true,
           "rfc": "0220"
         },
+        "myndhyve.coordination": {
+          "servedBy": "workflow-runtime",
+          "via": "pack",
+          "pack": "vendor.myndhyve.agent-orchestration",
+          "packVersion": "1.0.3",
+          "nodeTypes": [
+            "coordination.round-robin",
+            "coordination.vote",
+            "coordination.consensus",
+            "coordination.delegate"
+          ],
+          "hostService": "coordination",
+          "methods": [
+            "roundRobin",
+            "vote",
+            "consensus",
+            "delegate"
+          ],
+          "requiresWorkspaceApproval": true,
+          "rfc": "0220"
+        },
         "myndhyve.testing": {
           "mockProviders": [
             "stream-text"
@@ -1171,10 +1329,10 @@
   ],
   "results": {
     "totals": {
-      "executedPass": 273,
+      "executedPass": 294,
       "executedFail": 0,
-      "skipped": 17,
-      "inapplicable": 231,
+      "skipped": 20,
+      "inapplicable": 254,
       "blocked": 0
     },
     "requirements": [
@@ -1228,7 +1386,7 @@
         "id": "openwop.scenario.fixtures-valid",
         "scenario": "fixtures-valid.test.ts",
         "result": "executed-pass",
-        "assertions": 392
+        "assertions": 419
       },
       {
         "id": "openwop.scenario.inbound-credential-no-passthrough",
@@ -1245,9 +1403,8 @@
       {
         "id": "openwop.scenario.memory-attribution-replay-stable",
         "scenario": "memory-attribution-replay-stable.test.ts",
-        "result": "inapplicable",
-        "assertions": 0,
-        "detail": "every test returned early through behaviorGate with zero assertions: profile not advertised in the captured discovery set"
+        "result": "executed-pass",
+        "assertions": 2
       },
       {
         "id": "openwop.scenario.otel-mcp-semconv-projection",
@@ -1364,14 +1521,21 @@
         "id": "openwop.scenario.v2-bound-id-kinds",
         "scenario": "v2-bound-id-kinds.test.ts",
         "result": "executed-pass",
-        "assertions": 8,
-        "detail": "partial-witness: inapplicable: [inapplicable] the noop fixture records no effects — no effectId on the wire to read (a host with an effect-producing fixture witnesses this leg); [inapplicable] the subscription has no dead-lettered delivery in this run — the read is served and the shape is unwitnessed here; v2-webhook-durable-delivery drives an exhaustion and asserts the record"
+        "assertions": 10,
+        "detail": "partial-witness: inapplicable: the subscription has no dead-lettered delivery in this run — the read is served and the shape is unwitnessed here; v2-webhook-durable-delivery drives an exhaustion and asserts the record"
       },
       {
         "id": "openwop.scenario.v2-bound-id-path-projection",
         "scenario": "v2-bound-id-path-projection.test.ts",
         "result": "executed-pass",
         "assertions": 7
+      },
+      {
+        "id": "openwop.scenario.v2-budget-enforcement",
+        "scenario": "v2-budget-enforcement.test.ts",
+        "result": "inapplicable",
+        "assertions": 0,
+        "detail": "every test returned early through behaviorGate with zero assertions: profile not advertised in the captured discovery set"
       },
       {
         "id": "openwop.scenario.v2-bundle-v3-signed",
@@ -1395,14 +1559,14 @@
         "id": "openwop.scenario.v2-capability-maturity-bounded",
         "scenario": "v2-capability-maturity-bounded.test.ts",
         "result": "executed-pass",
-        "assertions": 44,
-        "detail": "partial-witness: inapplicable: unwitnessable until the first persisted-class retirement row is due (RFC 0197 §A.3 Falsifiability): corpus 2.45.2: 0 persisted-class v2-minor retirement row(s), 0 v2→v2 migration row(s) — no retired member exists for a post-2.N event to carry. Before one does, a scenario would be vacuous, and a row that cannot fail is not a witness. This leg asserts the moment such a row falls due."
+        "assertions": 43,
+        "detail": "partial-witness: inapplicable: unwitnessable until the first persisted-class retirement row is due (RFC 0197 §A.3 Falsifiability): corpus 2.45.5: 0 persisted-class v2-minor retirement row(s), 0 v2→v2 migration row(s) — no retired member exists for a post-2.N event to carry. Before one does, a scenario would be vacuous, and a row that cannot fail is not a witness. This leg asserts the moment such a row falls due."
       },
       {
         "id": "openwop.scenario.v2-capability-record-shape",
         "scenario": "v2-capability-record-shape.test.ts",
         "result": "executed-pass",
-        "assertions": 288
+        "assertions": 281
       },
       {
         "id": "openwop.scenario.v2-chain-pin-exact",
@@ -1536,6 +1700,12 @@
         "detail": "partial-witness: inapplicable: no 429 rate_limited response was observed during the suite's probes — the Retry-After leg is gated on a rate-limited response"
       },
       {
+        "id": "openwop.scenario.v2-eval-mode-unadvertised-refused",
+        "scenario": "v2-eval-mode-unadvertised-refused.test.ts",
+        "result": "executed-pass",
+        "assertions": 2
+      },
+      {
         "id": "openwop.floor.v2-event-type-closed",
         "scenario": "v2-event-type-closed.test.ts",
         "result": "executed-pass",
@@ -1545,8 +1715,7 @@
         "id": "openwop.scenario.v2-ext-family-claims",
         "scenario": "v2-ext-family-claims.test.ts",
         "result": "executed-pass",
-        "assertions": 10,
-        "detail": "partial-witness: inapplicable: no extensions[\"<org>.coordination\"] record under a registered org — the host does not advertise coordination"
+        "assertions": 11
       },
       {
         "id": "openwop.scenario.v2-ext-rest-transport",
@@ -1569,6 +1738,13 @@
         "detail": "every test returned early through behaviorGate with zero assertions: operator opted the profile or family out (OPENWOP_OPTED_OUT_PROFILES)"
       },
       {
+        "id": "openwop.scenario.v2-fs-sandbox-escape-refused",
+        "scenario": "v2-fs-sandbox-escape-refused.test.ts",
+        "result": "inapplicable",
+        "assertions": 0,
+        "detail": "every test returned early through behaviorGate with zero assertions: profile not advertised in the captured discovery set"
+      },
+      {
         "id": "openwop.scenario.v2-header-scheme",
         "scenario": "v2-header-scheme.test.ts",
         "result": "executed-pass",
@@ -1584,7 +1760,7 @@
         "id": "openwop.scenario.v2-idempotency-in-flight",
         "scenario": "v2-idempotency-in-flight.test.ts",
         "result": "executed-pass",
-        "assertions": 14,
+        "assertions": 8,
         "detail": "partial-witness: inapplicable: the held-claim leg is driven through the seams profile (RFC 0213 §B) — seams profile not advertised; the unaided leg above is this host's witness"
       },
       {
@@ -1678,6 +1854,12 @@
         "result": "inapplicable",
         "assertions": 0,
         "detail": "every test returned early through behaviorGate with zero assertions: profile not advertised in the captured discovery set"
+      },
+      {
+        "id": "openwop.scenario.v2-memory-cross-tenant-isolation",
+        "scenario": "v2-memory-cross-tenant-isolation.test.ts",
+        "result": "executed-pass",
+        "assertions": 4
       },
       {
         "id": "openwop.scenario.v2-min-client-version",
@@ -1798,6 +1980,13 @@
         "assertions": 8
       },
       {
+        "id": "openwop.scenario.v2-production-backpressure",
+        "scenario": "v2-production-backpressure.test.ts",
+        "result": "inapplicable",
+        "assertions": 0,
+        "detail": "every test returned early through behaviorGate with zero assertions: profile not advertised in the captured discovery set"
+      },
+      {
         "id": "openwop.scenario.v2-profiles-derived-only",
         "scenario": "v2-profiles-derived-only.test.ts",
         "result": "executed-pass",
@@ -1815,6 +2004,13 @@
         "scenario": "v2-provider-conflict.test.ts",
         "result": "executed-pass",
         "assertions": 5
+      },
+      {
+        "id": "openwop.scenario.v2-queue-cross-tenant-isolation",
+        "scenario": "v2-queue-cross-tenant-isolation.test.ts",
+        "result": "inapplicable",
+        "assertions": 0,
+        "detail": "every test returned early through behaviorGate with zero assertions: profile not advertised in the captured discovery set"
       },
       {
         "id": "openwop.scenario.v2-refresh-sla",
@@ -1924,6 +2120,25 @@
         "assertions": 5
       },
       {
+        "id": "openwop.scenario.v2-safefetch-ssrf-refused",
+        "scenario": "v2-safefetch-ssrf-refused.test.ts",
+        "result": "executed-pass",
+        "assertions": 13
+      },
+      {
+        "id": "openwop.scenario.v2-secret-canary-absent",
+        "scenario": "v2-secret-canary-absent.test.ts",
+        "result": "executed-pass",
+        "assertions": 3,
+        "detail": "partial-witness: inapplicable: fixture conformance-secret-resolve-then-fail is not advertised — the host does not claim the store-canary fixture (a production host may withhold it; RFC 0229's run witness is that host's path)"
+      },
+      {
+        "id": "openwop.scenario.v2-secrets-run-witness",
+        "scenario": "v2-secrets-run-witness.test.ts",
+        "result": "executed-pass",
+        "assertions": 17
+      },
+      {
         "id": "openwop.floor.v2-sse-last-event-id-cursor",
         "scenario": "v2-sse-last-event-id-cursor.test.ts",
         "result": "executed-pass",
@@ -1935,6 +2150,13 @@
         "scenario": "v2-sse-last-event-id.test.ts",
         "result": "executed-pass",
         "assertions": 14
+      },
+      {
+        "id": "openwop.scenario.v2-storage-cross-tenant-isolation",
+        "scenario": "v2-storage-cross-tenant-isolation.test.ts",
+        "result": "inapplicable",
+        "assertions": 0,
+        "detail": "every test returned early through behaviorGate with zero assertions: profile not advertised in the captured discovery set"
       },
       {
         "id": "openwop.scenario.v2-stream-mode-refusal",
@@ -1960,6 +2182,13 @@
         "scenario": "v2-terminal-event-once.test.ts",
         "result": "executed-pass",
         "assertions": 6
+      },
+      {
+        "id": "openwop.scenario.v2-tool-authorization-fail-closed",
+        "scenario": "v2-tool-authorization-fail-closed.test.ts",
+        "result": "inapplicable",
+        "assertions": 0,
+        "detail": "every test returned early through behaviorGate with zero assertions: profile not advertised in the captured discovery set"
       },
       {
         "id": "openwop.scenario.v2-tool-catalog-annotations",
@@ -2074,6 +2303,13 @@
         "assertions": 11
       },
       {
+        "id": "openwop.scenario.v2-workspace-scope-from-identity",
+        "scenario": "v2-workspace-scope-from-identity.test.ts",
+        "result": "skipped",
+        "assertions": 0,
+        "detail": "every test returned early through behaviorGate with zero assertions: operator opted the profile or family out (OPENWOP_OPTED_OUT_PROFILES)"
+      },
+      {
         "id": "openwop.family.brand",
         "scenario": "v2-ext-family-claims.test.ts",
         "result": "executed-pass",
@@ -2087,6 +2323,12 @@
       },
       {
         "id": "openwop.family.chat",
+        "scenario": "v2-ext-family-claims.test.ts",
+        "result": "executed-pass",
+        "assertions": 1
+      },
+      {
+        "id": "openwop.family.coordination",
         "scenario": "v2-ext-family-claims.test.ts",
         "result": "executed-pass",
         "assertions": 1
@@ -2177,13 +2419,13 @@
         "id": "openwop.it.fixtures-valid.every-fixture-has-a-manual-trigger-so-the-conformance-driver-can-start-it",
         "scenario": "fixtures-valid.test.ts",
         "result": "executed-pass",
-        "assertions": 99
+        "assertions": 108
       },
       {
         "id": "openwop.it.fixtures-valid.every-fixture-id-matches-its-filename",
         "scenario": "fixtures-valid.test.ts",
         "result": "executed-pass",
-        "assertions": 99
+        "assertions": 108
       },
       {
         "id": "openwop.it.fixtures-valid.every-fixture-templateid-matches-its-filename",
@@ -2267,7 +2509,7 @@
         "id": "openwop.it.fixtures-valid.validates-against-workflow-definition-schema-json",
         "scenario": "fixtures-valid.test.ts",
         "result": "executed-pass",
-        "assertions": 99
+        "assertions": 108
       },
       {
         "id": "openwop.it.jcs-vectors.a-non-i-json-native-value-is-refused-at-the-value-boundary",
@@ -2308,9 +2550,8 @@
       {
         "id": "openwop.it.memory-attribution-replay-stable.a-replay-mode-fork-introduces-no-memory-written-with-a-new-memoryid",
         "scenario": "memory-attribution-replay-stable.test.ts",
-        "result": "inapplicable",
-        "assertions": 0,
-        "detail": "memory.attribution.emitsWriteEvents not advertised — at major 2 the gate is recorded under openwop.family.memory, so an unadvertised family and an unreadable one are distinguishable in the bundle"
+        "result": "executed-pass",
+        "assertions": 2
       },
       {
         "id": "openwop.it.tool-catalog-compact-projection.serves-the-tools-compacttooldescriptor-projection-closed-shape-bounded-inputsche",
@@ -2679,13 +2920,6 @@
         "detail": "conformance.seamsProfile not advertised (the host claims no seams instrument) — the grant can only be driven against the suite's authorization-server double through the authorize-start seam"
       },
       {
-        "id": "openwop.it.v2-ext-family-claims.coordination",
-        "scenario": "v2-ext-family-claims.test.ts",
-        "result": "inapplicable",
-        "assertions": 0,
-        "detail": "no extensions[\"<org>.coordination\"] record under a registered org — the host does not advertise coordination"
-      },
-      {
         "id": "openwop.it.v2-mcp-client-results.an-unknown-serverid-rejects-with-not-found",
         "scenario": "v2-mcp-client-results.test.ts",
         "result": "inapplicable",
@@ -2945,10 +3179,30 @@
         "detail": "operator declared an honest opt-out via OPENWOP_OPTED_OUT_PROFILES: family.sandbox"
       },
       {
+        "id": "openwop.requirement.0004.memory-ref-one-tenant",
+        "scenario": "v2-memory-cross-tenant-isolation.test.ts",
+        "result": "executed-pass",
+        "assertions": 4
+      },
+      {
         "id": "openwop.requirement.0040.fork-has-no-ancestry-parent",
         "scenario": "v2-run-fork-ancestry.test.ts",
         "result": "executed-pass",
         "assertions": 5
+      },
+      {
+        "id": "openwop.requirement.0059.workspace-scope-from-identity",
+        "scenario": "v2-workspace-scope-from-identity.test.ts",
+        "result": "skipped",
+        "assertions": 0,
+        "detail": "operator declared an honest opt-out via OPENWOP_OPTED_OUT_PROFILES: family.workspace"
+      },
+      {
+        "id": "openwop.requirement.0059.workspace-scope-not-request-named",
+        "scenario": "v2-workspace-scope-from-identity.test.ts",
+        "result": "skipped",
+        "assertions": 0,
+        "detail": "operator declared an honest opt-out via OPENWOP_OPTED_OUT_PROFILES: family.workspace"
       },
       {
         "id": "openwop.requirement.0158.bound-is-derived",
@@ -3007,7 +3261,7 @@
           "recovery": {
             "class": "dispatch-hold",
             "boundMs": 45000,
-            "observedMs": 15546
+            "observedMs": 15801
           }
         }
       },
@@ -3020,7 +3274,7 @@
           "recovery": {
             "class": "dispatch-lease",
             "boundMs": 100000,
-            "observedMs": 70381
+            "observedMs": 70483
           }
         }
       },
@@ -3101,19 +3355,19 @@
         "id": "openwop.requirement.0169.capability-record-shape.required-fields",
         "scenario": "v2-capability-record-shape.test.ts",
         "result": "executed-pass",
-        "assertions": 168
+        "assertions": 164
       },
       {
         "id": "openwop.requirement.0169.capability-record-shape.until-iff-not-stable",
         "scenario": "v2-capability-record-shape.test.ts",
         "result": "executed-pass",
-        "assertions": 81
+        "assertions": 79
       },
       {
         "id": "openwop.requirement.0169.capability-record-shape.until-not-past",
         "scenario": "v2-capability-record-shape.test.ts",
         "result": "executed-pass",
-        "assertions": 39
+        "assertions": 38
       },
       {
         "id": "openwop.requirement.0169.profiles-derived-only.derivable",
@@ -3621,21 +3875,21 @@
         "scenario": "v2-webhook-durable-delivery.test.ts",
         "result": "executed-pass",
         "assertions": 4,
-        "detail": "observed: 4/4 subscribed event(s) delivered, 0 duplicate arrival(s); slowest first arrival 3568ms after the run was created; advertised-bound (maxElapsedMs 600000): waited ≤630000ms"
+        "detail": "observed: 4/4 subscribed event(s) delivered, 0 duplicate arrival(s); slowest first arrival 3595ms after the run was created; advertised-bound (maxElapsedMs 600000): waited ≤630000ms"
       },
       {
         "id": "openwop.requirement.0173.webhook-durable-delivery",
         "scenario": "v2-webhook-durable-delivery.test.ts",
         "result": "executed-pass",
         "assertions": 9,
-        "detail": "observed: advertised-bound (maxElapsedMs 600000): waited ≤630000ms; 3 attempt(s), last attempt after 44681ms"
+        "detail": "observed: advertised-bound (maxElapsedMs 600000): waited ≤630000ms; 3 attempt(s), last attempt after 44683ms"
       },
       {
         "id": "openwop.requirement.0173.webhook-durable-delivery.dead-letter",
         "scenario": "v2-webhook-durable-delivery.test.ts",
         "result": "executed-pass",
         "assertions": 6,
-        "detail": "observed: advertised-bound (maxElapsedMs 600000): waited ≤630000ms; 5 attempt(s), last attempt after 225663ms, sink after 227097ms"
+        "detail": "observed: advertised-bound (maxElapsedMs 600000): waited ≤630000ms; 5 attempt(s), last attempt after 225417ms, sink after 227124ms"
       },
       {
         "id": "openwop.requirement.0175.legacy-profiles-absent",
@@ -3940,8 +4194,8 @@
         "id": "openwop.requirement.0187.bound-id-kinds.per-kind",
         "scenario": "v2-bound-id-kinds.test.ts",
         "result": "executed-pass",
-        "assertions": 1,
-        "detail": "the noop fixture records no effects — no effectId on the wire to read (a host with an effect-producing fixture witnesses this leg)"
+        "assertions": 3,
+        "detail": "the subscription has no dead-lettered delivery in this run — the read is served and the shape is unwitnessed here; v2-webhook-durable-delivery drives an exhaustion and asserts the record"
       },
       {
         "id": "openwop.requirement.0187.bound-id-kinds.webhook",
@@ -3960,7 +4214,7 @@
         "scenario": "v2-webhook-durable-delivery.test.ts",
         "result": "executed-pass",
         "assertions": 3,
-        "detail": "observed: advertised-bound (maxElapsedMs 600000): waited ≤630000ms; 5 attempt(s), last attempt after 226523ms, sink after 228125ms"
+        "detail": "observed: advertised-bound (maxElapsedMs 600000): waited ≤630000ms; 5 attempt(s), last attempt after 225748ms, sink after 227221ms"
       },
       {
         "id": "openwop.requirement.0188.dead-letter-read",
@@ -3990,14 +4244,14 @@
         "id": "openwop.requirement.0197.maturity-not-overstated",
         "scenario": "v2-capability-maturity-bounded.test.ts",
         "result": "executed-pass",
-        "assertions": 44
+        "assertions": 43
       },
       {
         "id": "openwop.requirement.0197.retired-not-emitted",
         "scenario": "v2-capability-maturity-bounded.test.ts",
         "result": "inapplicable",
         "assertions": 0,
-        "detail": "unwitnessable until the first persisted-class retirement row is due (RFC 0197 §A.3 Falsifiability): corpus 2.45.2: 0 persisted-class v2-minor retirement row(s), 0 v2→v2 migration row(s) — no retired member exists for a post-2.N event to carry. Before one does, a scenario would be vacuous, and a row that cannot fail is not a witness. This leg asserts the moment such a row falls due."
+        "detail": "unwitnessable until the first persisted-class retirement row is due (RFC 0197 §A.3 Falsifiability): corpus 2.45.5: 0 persisted-class v2-minor retirement row(s), 0 v2→v2 migration row(s) — no retired member exists for a post-2.N event to carry. Before one does, a scenario would be vacuous, and a row that cannot fail is not a witness. This leg asserts the moment such a row falls due."
       },
       {
         "id": "openwop.requirement.0198.advertised-via-discover",
@@ -4395,7 +4649,7 @@
         "id": "openwop.requirement.0213.in-flight-loser-outcome",
         "scenario": "v2-idempotency-in-flight.test.ts",
         "result": "executed-pass",
-        "assertions": 11
+        "assertions": 5
       },
       {
         "id": "openwop.requirement.0213.in-flight-one-winner",
@@ -4617,15 +4871,227 @@
         "detail": "no operation's preflight granted origin https://conformance.invalid (Access-Control-Allow-Origin neither it nor *): the host does not serve that origin cross-origin, which is host policy. An operator whose host allowlists origins sets OPENWOP_CORS_ORIGIN to one of them to be witnessed · observed: origin https://conformance.invalid: 0/55 operation(s) granted, 0 not admitting their set"
       },
       {
+        "id": "openwop.requirement.httpClient.ssrf-address-spellings-refused",
+        "scenario": "v2-safefetch-ssrf-refused.test.ts",
+        "result": "executed-pass",
+        "assertions": 3
+      },
+      {
+        "id": "openwop.requirement.httpClient.ssrf-link-local-metadata-refused",
+        "scenario": "v2-safefetch-ssrf-refused.test.ts",
+        "result": "executed-pass",
+        "assertions": 2
+      },
+      {
+        "id": "openwop.requirement.httpClient.ssrf-loopback-refused",
+        "scenario": "v2-safefetch-ssrf-refused.test.ts",
+        "result": "executed-pass",
+        "assertions": 3
+      },
+      {
+        "id": "openwop.requirement.httpClient.ssrf-resolved-name-refused",
+        "scenario": "v2-safefetch-ssrf-refused.test.ts",
+        "result": "executed-pass",
+        "assertions": 3
+      },
+      {
+        "id": "openwop.requirement.httpClient.ssrf-rfc1918-refused",
+        "scenario": "v2-safefetch-ssrf-refused.test.ts",
+        "result": "executed-pass",
+        "assertions": 2
+      },
+      {
+        "id": "openwop.requirement.production.backpressure-refusal",
+        "scenario": "v2-production-backpressure.test.ts",
+        "result": "inapplicable",
+        "assertions": 0,
+        "detail": "the host does not advertise production.backpressure.inflightCap — there is no cap the suite can saturate"
+      },
+      {
+        "id": "openwop.requirement.queueBus.cross-tenant-isolation",
+        "scenario": "v2-queue-cross-tenant-isolation.test.ts",
+        "result": "inapplicable",
+        "assertions": 0,
+        "detail": "queueBus family not advertised — no obligation"
+      },
+      {
         "id": "openwop.requirement.replay.suppression-execution-ordinal",
         "scenario": "v2-replay-suppression-ordinal.test.ts",
         "result": "inapplicable",
         "assertions": 0,
         "detail": "fixture conformance-replay-ordinal-loop is not advertised — the host does not run cycles with a side-effecting node"
+      },
+      {
+        "id": "openwop.requirement.runs.budget-content-free",
+        "scenario": "v2-budget-enforcement.test.ts",
+        "result": "inapplicable",
+        "assertions": 0,
+        "detail": "the host does not advertise budget"
+      },
+      {
+        "id": "openwop.requirement.runs.budget-enforcement",
+        "scenario": "v2-budget-enforcement.test.ts",
+        "result": "inapplicable",
+        "assertions": 0,
+        "detail": "the host does not advertise budget"
+      },
+      {
+        "id": "openwop.requirement.runs.budget-lifecycle",
+        "scenario": "v2-budget-enforcement.test.ts",
+        "result": "inapplicable",
+        "assertions": 0,
+        "detail": "the host does not advertise budget"
+      },
+      {
+        "id": "openwop.requirement.runs.eval-mode-unadvertised-refused",
+        "scenario": "v2-eval-mode-unadvertised-refused.test.ts",
+        "result": "executed-pass",
+        "assertions": 2
+      },
+      {
+        "id": "openwop.requirement.secrets.resolved-secret-absent",
+        "scenario": "v2-secret-canary-absent.test.ts",
+        "result": "executed-pass",
+        "assertions": 2
+      },
+      {
+        "id": "openwop.requirement.secrets.resolved-secret-absent-in-fork",
+        "scenario": "v2-secret-canary-absent.test.ts",
+        "result": "executed-pass",
+        "assertions": 1
+      },
+      {
+        "id": "openwop.requirement.secrets.resolved-secret-absent-on-failure",
+        "scenario": "v2-secret-canary-absent.test.ts",
+        "result": "inapplicable",
+        "assertions": 0,
+        "detail": "fixture conformance-secret-resolve-then-fail is not advertised — the host does not claim the store-canary fixture (a production host may withhold it; RFC 0229's run witness is that host's path)"
+      },
+      {
+        "id": "openwop.requirement.secrets.run-secrets-outside-request-digest",
+        "scenario": "v2-secrets-run-witness.test.ts",
+        "result": "executed-pass",
+        "assertions": 6
+      },
+      {
+        "id": "openwop.requirement.secrets.run-witness-redacted",
+        "scenario": "v2-secrets-run-witness.test.ts",
+        "result": "executed-pass",
+        "assertions": 2
+      },
+      {
+        "id": "openwop.requirement.secrets.run-witness-resolves",
+        "scenario": "v2-secrets-run-witness.test.ts",
+        "result": "executed-pass",
+        "assertions": 4
+      },
+      {
+        "id": "openwop.requirement.secrets.run-witness-scope-bound",
+        "scenario": "v2-secrets-run-witness.test.ts",
+        "result": "executed-pass",
+        "assertions": 5
+      },
+      {
+        "id": "openwop.requirement.storage.cross-tenant-blob-storage",
+        "scenario": "v2-storage-cross-tenant-isolation.test.ts",
+        "result": "inapplicable",
+        "assertions": 0,
+        "detail": "blobStorage is not advertised in the v2 discovery root — the host exposes no blobStorage to pack code"
+      },
+      {
+        "id": "openwop.requirement.storage.cross-tenant-cache",
+        "scenario": "v2-storage-cross-tenant-isolation.test.ts",
+        "result": "inapplicable",
+        "assertions": 0,
+        "detail": "cache is not advertised in the v2 discovery root — the host exposes no cache to pack code"
+      },
+      {
+        "id": "openwop.requirement.storage.cross-tenant-kv-storage",
+        "scenario": "v2-storage-cross-tenant-isolation.test.ts",
+        "result": "inapplicable",
+        "assertions": 0,
+        "detail": "kvStorage is not advertised in the v2 discovery root — the host exposes no kvStorage to pack code"
+      },
+      {
+        "id": "openwop.requirement.storage.cross-tenant-nosql",
+        "scenario": "v2-storage-cross-tenant-isolation.test.ts",
+        "result": "inapplicable",
+        "assertions": 0,
+        "detail": "nosql is not advertised in the v2 discovery root — the host exposes no nosql to pack code"
+      },
+      {
+        "id": "openwop.requirement.storage.cross-tenant-search-index",
+        "scenario": "v2-storage-cross-tenant-isolation.test.ts",
+        "result": "inapplicable",
+        "assertions": 0,
+        "detail": "searchIndex is not advertised in the v2 discovery root — the host exposes no searchIndex to pack code"
+      },
+      {
+        "id": "openwop.requirement.storage.cross-tenant-sql",
+        "scenario": "v2-storage-cross-tenant-isolation.test.ts",
+        "result": "inapplicable",
+        "assertions": 0,
+        "detail": "sql is not advertised in the v2 discovery root — the host exposes no sql to pack code"
+      },
+      {
+        "id": "openwop.requirement.storage.cross-tenant-table-storage",
+        "scenario": "v2-storage-cross-tenant-isolation.test.ts",
+        "result": "inapplicable",
+        "assertions": 0,
+        "detail": "tableStorage is not advertised in the v2 discovery root — the host exposes no tableStorage to pack code"
+      },
+      {
+        "id": "openwop.requirement.storage.cross-tenant-vector-store",
+        "scenario": "v2-storage-cross-tenant-isolation.test.ts",
+        "result": "inapplicable",
+        "assertions": 0,
+        "detail": "vectorStore is not advertised in the v2 discovery root — the host exposes no vectorStore to pack code"
+      },
+      {
+        "id": "openwop.requirement.storage.fs-absolute-escape-refused",
+        "scenario": "v2-fs-sandbox-escape-refused.test.ts",
+        "result": "inapplicable",
+        "assertions": 0,
+        "detail": "fs is not advertised in the v2 discovery root — the host exposes no ctx.fs to pack code"
+      },
+      {
+        "id": "openwop.requirement.storage.fs-dotdot-escape-refused",
+        "scenario": "v2-fs-sandbox-escape-refused.test.ts",
+        "result": "inapplicable",
+        "assertions": 0,
+        "detail": "fs is not advertised in the v2 discovery root — the host exposes no ctx.fs to pack code"
+      },
+      {
+        "id": "openwop.requirement.storage.fs-inside-root-read",
+        "scenario": "v2-fs-sandbox-escape-refused.test.ts",
+        "result": "inapplicable",
+        "assertions": 0,
+        "detail": "fs is not advertised in the v2 discovery root — the host exposes no ctx.fs to pack code"
+      },
+      {
+        "id": "openwop.requirement.storage.fs-symlink-escape-refused",
+        "scenario": "v2-fs-sandbox-escape-refused.test.ts",
+        "result": "inapplicable",
+        "assertions": 0,
+        "detail": "fs is not advertised in the v2 discovery root — the host exposes no ctx.fs to pack code"
+      },
+      {
+        "id": "openwop.requirement.toolHooks.authorization-fail-closed-missing-scope",
+        "scenario": "v2-tool-authorization-fail-closed.test.ts",
+        "result": "inapplicable",
+        "assertions": 0,
+        "detail": "toolHooks is advertised without perToolAuthorization: true — the host makes no per-tool authorization claim"
+      },
+      {
+        "id": "openwop.requirement.toolHooks.authorization-fail-closed-unevaluable-scope",
+        "scenario": "v2-tool-authorization-fail-closed.test.ts",
+        "result": "inapplicable",
+        "assertions": 0,
+        "detail": "toolHooks is advertised without perToolAuthorization: true — the host makes no per-tool authorization claim"
       }
     ]
   },
-  "assertionCount": 3142,
+  "assertionCount": 3256,
   "detail": {
     "nonPass": [
       {
@@ -4645,11 +5111,6 @@
       },
       {
         "id": "openwop.scenario.context-summarization-replay",
-        "result": "inapplicable",
-        "reason": "every test returned early through behaviorGate with zero assertions: profile not advertised in the captured discovery set"
-      },
-      {
-        "id": "openwop.scenario.memory-attribution-replay-stable",
         "result": "inapplicable",
         "reason": "every test returned early through behaviorGate with zero assertions: profile not advertised in the captured discovery set"
       },
@@ -4690,6 +5151,11 @@
       },
       {
         "id": "openwop.scenario.v2-assurance-downgrade-audited",
+        "result": "inapplicable",
+        "reason": "every test returned early through behaviorGate with zero assertions: profile not advertised in the captured discovery set"
+      },
+      {
+        "id": "openwop.scenario.v2-budget-enforcement",
         "result": "inapplicable",
         "reason": "every test returned early through behaviorGate with zero assertions: profile not advertised in the captured discovery set"
       },
@@ -4737,6 +5203,11 @@
         "id": "openwop.scenario.v2-form-when-reuses-edge-conditions",
         "result": "skipped",
         "reason": "every test returned early through behaviorGate with zero assertions: operator opted the profile or family out (OPENWOP_OPTED_OUT_PROFILES)"
+      },
+      {
+        "id": "openwop.scenario.v2-fs-sandbox-escape-refused",
+        "result": "inapplicable",
+        "reason": "every test returned early through behaviorGate with zero assertions: profile not advertised in the captured discovery set"
       },
       {
         "id": "openwop.scenario.v2-interop-trace-context",
@@ -4824,6 +5295,16 @@
         "reason": "every test returned early through behaviorGate with zero assertions: profile not advertised in the captured discovery set"
       },
       {
+        "id": "openwop.scenario.v2-production-backpressure",
+        "result": "inapplicable",
+        "reason": "every test returned early through behaviorGate with zero assertions: profile not advertised in the captured discovery set"
+      },
+      {
+        "id": "openwop.scenario.v2-queue-cross-tenant-isolation",
+        "result": "inapplicable",
+        "reason": "every test returned early through behaviorGate with zero assertions: profile not advertised in the captured discovery set"
+      },
+      {
         "id": "openwop.scenario.v2-refresh-sla",
         "result": "inapplicable",
         "reason": "every test returned early through behaviorGate with zero assertions: profile not advertised in the captured discovery set"
@@ -4849,7 +5330,17 @@
         "reason": "every test returned early through behaviorGate with zero assertions: profile not advertised in the captured discovery set"
       },
       {
+        "id": "openwop.scenario.v2-storage-cross-tenant-isolation",
+        "result": "inapplicable",
+        "reason": "every test returned early through behaviorGate with zero assertions: profile not advertised in the captured discovery set"
+      },
+      {
         "id": "openwop.scenario.v2-subject-link-record",
+        "result": "inapplicable",
+        "reason": "every test returned early through behaviorGate with zero assertions: profile not advertised in the captured discovery set"
+      },
+      {
+        "id": "openwop.scenario.v2-tool-authorization-fail-closed",
         "result": "inapplicable",
         "reason": "every test returned early through behaviorGate with zero assertions: profile not advertised in the captured discovery set"
       },
@@ -4894,6 +5385,11 @@
         "reason": "every test returned early through behaviorGate with zero assertions: profile not advertised in the captured discovery set"
       },
       {
+        "id": "openwop.scenario.v2-workspace-scope-from-identity",
+        "result": "skipped",
+        "reason": "every test returned early through behaviorGate with zero assertions: operator opted the profile or family out (OPENWOP_OPTED_OUT_PROFILES)"
+      },
+      {
         "id": "openwop.it.audit-log-integrity.get-v1-audit-verify-on-a-recent-range-reports-chainvalid-true",
         "result": "inapplicable",
         "reason": "the host does not claim the auditLogIntegrity family at major 2"
@@ -4912,11 +5408,6 @@
         "id": "openwop.it.context-summarization-replay.replay-reuses-the-recorded-context-summarized-summaryref-never-re-summarizes",
         "result": "inapplicable",
         "reason": "the run event-log is read through the seams profile — conformance.seamsProfile is not openwop-conformance-seams-v2"
-      },
-      {
-        "id": "openwop.it.memory-attribution-replay-stable.a-replay-mode-fork-introduces-no-memory-written-with-a-new-memoryid",
-        "result": "inapplicable",
-        "reason": "memory.attribution.emitsWriteEvents not advertised — at major 2 the gate is recorded under openwop.family.memory, so an unadvertised family and an unreadable one are distinguishable in the bundle"
       },
       {
         "id": "openwop.it.v2-a2a-agent-cards.a-task-started-through-r-is-a-run-in-the-caller-s-tenant-of-record",
@@ -5129,11 +5620,6 @@
         "reason": "conformance.seamsProfile not advertised (the host claims no seams instrument) — the grant can only be driven against the suite's authorization-server double through the authorize-start seam"
       },
       {
-        "id": "openwop.it.v2-ext-family-claims.coordination",
-        "result": "inapplicable",
-        "reason": "no extensions[\"<org>.coordination\"] record under a registered org — the host does not advertise coordination"
-      },
-      {
         "id": "openwop.it.v2-mcp-client-results.an-unknown-serverid-rejects-with-not-found",
         "result": "inapplicable",
         "reason": "mcp.client not advertised — the host exposes no ctx.mcp to pack code (RFC 0204 §A.1)"
@@ -5317,6 +5803,16 @@
         "id": "openwop.it.v2-pack-isolation.node-pack-sandbox-no-process-host-process-access-is-refused",
         "result": "skipped",
         "reason": "operator declared an honest opt-out via OPENWOP_OPTED_OUT_PROFILES: family.sandbox"
+      },
+      {
+        "id": "openwop.requirement.0059.workspace-scope-from-identity",
+        "result": "skipped",
+        "reason": "operator declared an honest opt-out via OPENWOP_OPTED_OUT_PROFILES: family.workspace"
+      },
+      {
+        "id": "openwop.requirement.0059.workspace-scope-not-request-named",
+        "result": "skipped",
+        "reason": "operator declared an honest opt-out via OPENWOP_OPTED_OUT_PROFILES: family.workspace"
       },
       {
         "id": "openwop.requirement.0168.coherence-not-in-bundle.disjoint-by-construction",
@@ -5541,7 +6037,7 @@
       {
         "id": "openwop.requirement.0197.retired-not-emitted",
         "result": "inapplicable",
-        "reason": "unwitnessable until the first persisted-class retirement row is due (RFC 0197 §A.3 Falsifiability): corpus 2.45.2: 0 persisted-class v2-minor retirement row(s), 0 v2→v2 migration row(s) — no retired member exists for a post-2.N event to carry. Before one does, a scenario would be vacuous, and a row that cannot fail is not a witness. This leg asserts the moment such a row falls due."
+        "reason": "unwitnessable until the first persisted-class retirement row is due (RFC 0197 §A.3 Falsifiability): corpus 2.45.5: 0 persisted-class v2-minor retirement row(s), 0 v2→v2 migration row(s) — no retired member exists for a post-2.N event to carry. Before one does, a scenario would be vacuous, and a row that cannot fail is not a witness. This leg asserts the moment such a row falls due."
       },
       {
         "id": "openwop.requirement.0198.advertised-via-discover",
@@ -5864,20 +6360,120 @@
         "reason": "no operation's preflight granted origin https://conformance.invalid (Access-Control-Allow-Origin neither it nor *): the host does not serve that origin cross-origin, which is host policy. An operator whose host allowlists origins sets OPENWOP_CORS_ORIGIN to one of them to be witnessed · observed: origin https://conformance.invalid: 0/55 operation(s) granted, 0 not admitting their set"
       },
       {
+        "id": "openwop.requirement.production.backpressure-refusal",
+        "result": "inapplicable",
+        "reason": "the host does not advertise production.backpressure.inflightCap — there is no cap the suite can saturate"
+      },
+      {
+        "id": "openwop.requirement.queueBus.cross-tenant-isolation",
+        "result": "inapplicable",
+        "reason": "queueBus family not advertised — no obligation"
+      },
+      {
         "id": "openwop.requirement.replay.suppression-execution-ordinal",
         "result": "inapplicable",
         "reason": "fixture conformance-replay-ordinal-loop is not advertised — the host does not run cycles with a side-effecting node"
+      },
+      {
+        "id": "openwop.requirement.runs.budget-content-free",
+        "result": "inapplicable",
+        "reason": "the host does not advertise budget"
+      },
+      {
+        "id": "openwop.requirement.runs.budget-enforcement",
+        "result": "inapplicable",
+        "reason": "the host does not advertise budget"
+      },
+      {
+        "id": "openwop.requirement.runs.budget-lifecycle",
+        "result": "inapplicable",
+        "reason": "the host does not advertise budget"
+      },
+      {
+        "id": "openwop.requirement.secrets.resolved-secret-absent-on-failure",
+        "result": "inapplicable",
+        "reason": "fixture conformance-secret-resolve-then-fail is not advertised — the host does not claim the store-canary fixture (a production host may withhold it; RFC 0229's run witness is that host's path)"
+      },
+      {
+        "id": "openwop.requirement.storage.cross-tenant-blob-storage",
+        "result": "inapplicable",
+        "reason": "blobStorage is not advertised in the v2 discovery root — the host exposes no blobStorage to pack code"
+      },
+      {
+        "id": "openwop.requirement.storage.cross-tenant-cache",
+        "result": "inapplicable",
+        "reason": "cache is not advertised in the v2 discovery root — the host exposes no cache to pack code"
+      },
+      {
+        "id": "openwop.requirement.storage.cross-tenant-kv-storage",
+        "result": "inapplicable",
+        "reason": "kvStorage is not advertised in the v2 discovery root — the host exposes no kvStorage to pack code"
+      },
+      {
+        "id": "openwop.requirement.storage.cross-tenant-nosql",
+        "result": "inapplicable",
+        "reason": "nosql is not advertised in the v2 discovery root — the host exposes no nosql to pack code"
+      },
+      {
+        "id": "openwop.requirement.storage.cross-tenant-search-index",
+        "result": "inapplicable",
+        "reason": "searchIndex is not advertised in the v2 discovery root — the host exposes no searchIndex to pack code"
+      },
+      {
+        "id": "openwop.requirement.storage.cross-tenant-sql",
+        "result": "inapplicable",
+        "reason": "sql is not advertised in the v2 discovery root — the host exposes no sql to pack code"
+      },
+      {
+        "id": "openwop.requirement.storage.cross-tenant-table-storage",
+        "result": "inapplicable",
+        "reason": "tableStorage is not advertised in the v2 discovery root — the host exposes no tableStorage to pack code"
+      },
+      {
+        "id": "openwop.requirement.storage.cross-tenant-vector-store",
+        "result": "inapplicable",
+        "reason": "vectorStore is not advertised in the v2 discovery root — the host exposes no vectorStore to pack code"
+      },
+      {
+        "id": "openwop.requirement.storage.fs-absolute-escape-refused",
+        "result": "inapplicable",
+        "reason": "fs is not advertised in the v2 discovery root — the host exposes no ctx.fs to pack code"
+      },
+      {
+        "id": "openwop.requirement.storage.fs-dotdot-escape-refused",
+        "result": "inapplicable",
+        "reason": "fs is not advertised in the v2 discovery root — the host exposes no ctx.fs to pack code"
+      },
+      {
+        "id": "openwop.requirement.storage.fs-inside-root-read",
+        "result": "inapplicable",
+        "reason": "fs is not advertised in the v2 discovery root — the host exposes no ctx.fs to pack code"
+      },
+      {
+        "id": "openwop.requirement.storage.fs-symlink-escape-refused",
+        "result": "inapplicable",
+        "reason": "fs is not advertised in the v2 discovery root — the host exposes no ctx.fs to pack code"
+      },
+      {
+        "id": "openwop.requirement.toolHooks.authorization-fail-closed-missing-scope",
+        "result": "inapplicable",
+        "reason": "toolHooks is advertised without perToolAuthorization: true — the host makes no per-tool authorization claim"
+      },
+      {
+        "id": "openwop.requirement.toolHooks.authorization-fail-closed-unevaluable-scope",
+        "result": "inapplicable",
+        "reason": "toolHooks is advertised without perToolAuthorization: true — the host makes no per-tool authorization claim"
       }
     ]
   },
   "durability": {
     "rung": "durable-single-instance"
   },
-  "witnessSha256": "8857a0bf358b653504026964ab50c77708ef18e7a8e635f41bf57d1bde9de4b9",
+  "witnessSha256": "d330616fbf0016c0e4392e388c95a0c0408a07320cc2769ff4c0aa238e809b67",
   "signature": {
     "alg": "ed25519",
     "keyId": "myndhyve-bundle-2026-09b",
-    "sig": "73XED6gFvhFJargy1qTPpNO-t72NdGzciIKIfuJffYtHOirjdcsJh6gJkqCz-YPWYfyutXCM8-FY90l0buACBw",
+    "sig": "C4ZMyavmY1lPDJsJqoEegJ8Rp5P_S88mWIdL7bXWEW43XR3zwk95TGq5TFT_5Cm1hH0H9OFgzAIIY530cYvkCg",
     "over": [
       "witnessSha256",
       "host.build",
