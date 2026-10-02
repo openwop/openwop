@@ -29,11 +29,8 @@
   in strict mode without `workspace` should re-cut on 2.45.7**, or opt out `family.workspace`. **A major-1 host that cut a v3 bundle on 2.45.3 without claiming
   `openwop-secrets`, or on any suite without claiming `openwop-interrupts`, should re-cut on
   2.45.5.** The v2 reference host has cut on 2.45.6; MyndHyve and openwop-app have not cut on
-  2.45.3 or later. No cycle is open. Take a release lock
-  (`/tmp/claude-501/openwop-release-<ver>.lock`) before cutting.
-  - Until a 2.45.8 cycle opens, a PR that leaves the version alone must not re-stamp: restore
-    `spec-artifacts/CORPUS-STAMP.json` and `evidence/corpus-ledger.json` before committing. A PR
-    that changes packed content must open the cycle itself.
+  2.45.3 or later. **The 2.45.8 cycle is open on `main`** (`v2-table-schema-enforcement`) and is not cut.
+  Take a release lock (`/tmp/claude-501/openwop-release-<ver>.lock`) before cutting.
 - **Normative homes:** all 73 core families have v2 homes (#1802–#1804). The kernel budget is
   37,324 / 37,800 words, with the generated error table outside it (RFC 0227).
 - **SDKs:** **2.5.0** (npm, PyPI, `go/v2.5.0`) sends `OpenWOP-Client-Version` on every request.
@@ -131,8 +128,9 @@ Defects outside the spec:
   - **Certified `egress_denied` row: done.** The v2 reference host's certified 2.45.6 cut records
     all five `httpClient.ssrf-*` requirements `executed-pass`, and the acceptance box is ticked.
     MyndHyve's next cut would add a tier-2 witness (it advertises `safeFetch` since its #581).
-  - **v2 ports (gap G4):** four exist. Still owed: a v2 port of `table-schema-enforcement`. No
-    host advertises `tableStorage` at major 2. Not ported: v1's `budget_model_denied` leg.
+  - **v2 ports (gap G4):** all five exist; `v2-table-schema-enforcement` (2.45.8, fixture
+    `conformance-table-schema-probe`) is the last. It has no host witness: no host advertises
+    `tableStorage` at major 2. Not ported: v1's `budget_model_denied` leg.
   - **Rename rows.** G2 is closed (reference host, certified 2.45.5). Still open, as the host
     sessions report from source:
     - G1 (MyndHyve): fixed for pack-facing callers and deployed (myndhyve#581); needs a
