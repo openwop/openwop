@@ -1,5 +1,9 @@
 # `@openwop/openwop-conformance` Changelog
 
+## [2.45.8] — unreleased — RFC 0229 Accepted on MyndHyve's production cut
+
+- **The 2.45.8 cycle opens.** RFC 0229's and RFC 0228's gap registers change the packed `spec/v1/gaps.json`. No scenario changes in this PR.
+
 ## [2.45.7] — 2026-10-02 — a strict-mode host that does not advertise `workspace` is not failed; RFC 0231 Accepted
 
 - **Fix: `v2-workspace-scope-from-identity` no longer fails a strict-mode host that does not advertise `workspace`.** The file gated with `gateFamily('workspace')`, which under `--require-behavior` fails an unadvertised family unless the operator opts it out. Its own header says an unadvertised family is `inapplicable`, and its sibling isolation scenarios (`v2-storage-`, `v2-queue-cross-tenant-isolation`) read with `familyAdvertised` and recorded `inapplicable` in the same run. It now reads with `familyAdvertised`.
