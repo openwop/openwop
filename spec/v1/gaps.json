@@ -13824,8 +13824,8 @@
       "surface": "The `interrupt` path has no witness in either major. `runs.md` says the approval's `resumeValue` \"adds budget\" and gives no shape (RFC 0084, Unresolved question 5), so a suite cannot drive the resume.",
       "witness": "unclassified",
       "requirementId": null,
-      "disposition": "carried",
-      "target": "openwop.gap.0231.2",
+      "disposition": "externally-gated",
+      "target": "host-serves-budget-interrupt",
       "sources": [
         {
           "file": "RFCS/registers/0231-budget-exhaustion-facet.gaps.md",
@@ -13841,8 +13841,8 @@
       "surface": "No host advertises the facet, so the refusal row has no witness. The v2 reference host already refuses as §C requires.",
       "witness": "unclassified",
       "requirementId": null,
-      "disposition": "externally-gated",
-      "target": "host-advertises-exhaustion-facet",
+      "disposition": "closed",
+      "target": null,
       "sources": [
         {
           "file": "RFCS/registers/0231-budget-exhaustion-facet.gaps.md",
@@ -13858,8 +13858,8 @@
       "surface": "Whether the refusal should carry `details.supported`. `capability_not_provided` has no registered details schema.",
       "witness": "unclassified",
       "requirementId": null,
-      "disposition": "carried",
-      "target": "openwop.gap.0231.4",
+      "disposition": "closed",
+      "target": null,
       "sources": [
         {
           "file": "RFCS/registers/0231-budget-exhaustion-facet.gaps.md",
@@ -13909,8 +13909,8 @@
       "surface": "The v1 rule has no witness: the suite's major-1 profile gives a run budget no `createRun` surface it drives, and the v1 budget scenario uses a host seam.",
       "witness": "unclassified",
       "requirementId": null,
-      "disposition": "carried",
-      "target": "openwop.gap.0231.7",
+      "disposition": "externally-gated",
+      "target": "v1-host-advertises-exhaustion-facet",
       "sources": [
         {
           "file": "RFCS/registers/0231-budget-exhaustion-facet.gaps.md",

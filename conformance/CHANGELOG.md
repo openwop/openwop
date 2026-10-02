@@ -1,5 +1,9 @@
 # `@openwop/openwop-conformance` Changelog
 
+## [2.45.7] — unreleased — RFC 0231 Accepted
+
+- **The 2.45.7 cycle opens.** RFC 0231's gap register changes the packed `spec/v1/gaps.json`: G3 and G4 close, and G2 and G7 are `externally-gated`. No scenario changes.
+
 ## [2.45.6] — 2026-10-02 — RFC 0231 (Active): a host says which budget exhaustion behaviours it serves
 
 - **The 2.45.6 cycle opens.** RFC 0231's gap register changes the packed `spec/v1/gaps.json`.
