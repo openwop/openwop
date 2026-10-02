@@ -24,7 +24,7 @@
   ports of `production-backpressure` and `budget-enforcement`, the host-free gate) and 2.45.5 (the
   unclaimed prefix floor fix). **A major-1 host that cut a v3 bundle on 2.45.3 without claiming
   `openwop-secrets`, or on any suite without claiming `openwop-interrupts`, should re-cut on
-  2.45.5.** The v2 reference host has cut on 2.45.4; MyndHyve and openwop-app have not cut on
+  2.45.5.** The v2 reference host has cut on 2.45.5; MyndHyve and openwop-app have not cut on
   2.45.3 or later. No cycle is open.
   Take a release lock (`/tmp/claude-501/openwop-release-<ver>.lock`) before cutting.
   - Until a 2.45.6 cycle opens, a PR that leaves the version alone must not re-stamp: restore
@@ -35,7 +35,7 @@
 - **SDKs:** **2.5.0** (npm, PyPI, `go/v2.5.0`) sends `OpenWOP-Client-Version` on every request.
   Re-vendoring to a newer corpus tag is a separate change.
 - **Hosts** (the canonical files in `evidence/v2-host-bundles/`, all certified, 0 fail, 0 blocked):
-  the v2 reference host on 2.45.4 (445 pass), MyndHyve on 2.45.2 (273 pass) and openwop-app on
+  the v2 reference host on 2.45.5 (451 pass), MyndHyve on 2.45.2 (273 pass) and openwop-app on
   2.44.5 (263 pass). `coordination` is `Stable` on MyndHyve's 2.45.2 cut (RFC 0220, #1828).
 - **Cuts:** every certified public cut needs a fresh operator approval.
 
@@ -124,14 +124,17 @@ Defects outside the spec:
 ## 7 — Follow-ups from 2026-10-01
 
 - [ ] **RFC 0228's two open boxes.**
-  - The v2 ports exist (`v2-fs-sandbox-escape-refused`, `v2-production-backpressure`,
-    `v2-budget-enforcement`, suite 2.45.4), proven against a scratch host. Still owed: a certified
-    `storage_limit_exceeded` or `egress_denied` row from a host.
-  - No host witnesses the two new ports yet. Backpressure needs an advertised
-    `production.backpressure.inflightCap`. Budget needs the `conformance-budget-tool-calls` fixture
-    seeded.
+  - The v2 ports exist and are witnessed: `v2-production-backpressure` and `v2-budget-enforcement`
+    are `executed-pass` on the v2 reference host's certified 2.45.5 cut (openwop-examples #146,
+    #147). Still owed: a certified `storage_limit_exceeded` or `egress_denied` row. The reference
+    host cannot give it (no `httpClient`, no storage); MyndHyve's next certified cut is the
+    candidate.
   - Not ported: v1's `budget_model_denied` leg (needs a fixture that resolves a model unaided).
   - The rename rows G1–G3, G6 and G7 close on host cuts.
+- [ ] **The spec gives a host no way to decline `onExhaustion: "interrupt"`.** A host that
+      advertises `budget` is taken to serve both values. The v2 reference host refuses it
+      `422 capability_not_provided` and says so. Either a facet (an RFC) or the host implementing
+      the budget-extending approval closes it.
 - [ ] **MyndHyve advertises `budget` and `agents.evalSuite` at major 2 and serves each only behind
       a v1 seam.** Reported by its session from source, not measured: `configurable.budget` is
       validated, stored and never read, and eval runs only through
@@ -145,11 +148,6 @@ Defects outside the spec:
       case. `no_active_deployment` (G7) is not confirmed renamed.
 - [ ] **RFC 0229** needs all four requirement ids `executed-pass` on a certified bundle from a
       production deployment. **RFC 0230** needs openwop-app to advertise `inboundSigning` and pass the path in strict mode on a production cut; its other boxes are ticked.
-- [ ] **openwop-app refuses `mode: "eval"` with the wrong status and code** (openwop-app #4318).
-      Measured on a local in-process host at major 2, suite 2.45.4: `400
-      openwop-app.invalid_request`, where `runs.md` requires `422 capability_not_provided`. The v2
-      reference host passes on its certified 2.45.4 cut. MyndHyve advertises `agents.evalSuite`,
-      so the leg is `inapplicable` there.
 - [ ] **Host evidence owed, as the host sessions report it (2026-10-01, from source):**
   - RFC 0230: openwop-app's `inboundSigning` advert is off by default and no certified cut is
     planned.
