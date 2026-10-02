@@ -8,6 +8,8 @@ Entries before this file was condensed carried full development detail. That tex
 
 ## [Unreleased]
 
+- **New `v2-table-schema-enforcement`.** Through the new fixture `conformance-table-schema-probe`, a mistyped `tableStorage` insert or update MUST fail `validation_error` with `details.service: tableStorage`; a host without the fixture records `inapplicable`.
+
 ## [2.45.7] — 2026-10-02 — Strict mode no longer fails a host that does not serve `workspace`; RFC 0231 Accepted
 
 - **Workspace scenario fix.** `v2-workspace-scope-from-identity` records `inapplicable`, not `executed-fail`, on a strict-mode host that does not advertise `workspace` (#1854); on 2.45.3–2.45.6 opt out `family.workspace`.
