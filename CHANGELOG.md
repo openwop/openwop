@@ -13,6 +13,8 @@ Format follows [Keep a Changelog](https://keepachangelog.com/en/1/) loosely. Ver
 
 ## [Unreleased]
 
+- **RFC 0228: gap G2 is closed.** The v2 reference host emits `upstream_unavailable` and `egress_denied` since openwop-examples #138; its certified 2.45.5 cut carries neither vendor code and records `errors.event-code-registered` `executed-pass`. G4 stays open for one v2 port (`table-schema-enforcement`). The remaining rename rows wait on host cuts; G3 closes on a certified cut containing openwop-app #4331 (maintainer decision 2026-10-02).
+
 - **RFC 0231 `Active`: a host says which budget exhaustion behaviours it serves** (additive; suite 2.45.6; filed `Draft` and made `Active` on 2026-10-02, the 7-day comment window waived by the steward and not run; RFC 0147 §A.6 does not apply; acceptance will be provisional pending the RFC 0156 §B review). A host that advertises `budget` could not say it serves `onExhaustion: "fail"` and not `"interrupt"`; the v2 reference host refused `interrupt` and recorded that as a deviation.
   - **Facet.** `budget.onExhaustion`, optional, in the v1 seed and derived into `schemas/v2/capabilities.schema.json`: the `onExhaustion` values the host serves under `enforce: "hard"`. It contains `fail`. Absent, the host serves both, as before.
   - **Rule.** `spec/v2/core/runs.md` §Refusals and `spec/v1/budget-policy.md` §D: a value the host does not list is refused `422 capability_not_provided` at create. It is never applied as another behaviour and never ignored.
