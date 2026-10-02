@@ -1,8 +1,8 @@
 # `@openwop/openwop-conformance` Changelog
 
-## [2.45.8] — unreleased — a v2 witness for tableStorage schema enforcement
+## [2.45.8] — unreleased — RFC 0229 Accepted on MyndHyve's production cut; a v2 witness for tableStorage schema enforcement
 
-- **The 2.45.8 cycle opens** with a new scenario, a new fixture and RFC 0228's gap register.
+- **The 2.45.8 cycle opens.** RFC 0229's and RFC 0228's gap registers change the packed `spec/v1/gaps.json`.
 - **New scenario `v2-table-schema-enforcement`** (major 2, unaided; RFC 0228 gap G4). The v1 twin `table-schema-enforcement` drives a test seam; this port runs the new `conformance-table-schema-probe` fixture three times, each on a fresh table declared `{ k: string, n: number }`. Logic in `lib/table-schema-witness.ts`.
   - `openwop.requirement.storage.table-schema-control-insert-completes`: a well-typed insert completes. It is the positive control.
   - `openwop.requirement.storage.table-schema-insert-mistyped-refused`: an insert with `n: "not-a-number"` fails the probe node `validation_error` with `details.service: tableStorage`.
