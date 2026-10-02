@@ -1,8 +1,19 @@
 # `@openwop/openwop-conformance` Changelog
 
-## [2.45.8] — unreleased — RFC 0229 Accepted on MyndHyve's production cut
+## [2.45.8] — unreleased — RFC 0229 Accepted on MyndHyve's production cut; a v2 witness for tableStorage schema enforcement
 
-- **The 2.45.8 cycle opens.** RFC 0229's and RFC 0228's gap registers change the packed `spec/v1/gaps.json`. No scenario changes in this PR.
+- **The 2.45.8 cycle opens.** RFC 0229's and RFC 0228's gap registers change the packed `spec/v1/gaps.json`.
+- **New scenario `v2-table-schema-enforcement`** (major 2, unaided; RFC 0228 gap G4). The v1 twin `table-schema-enforcement` drives a test seam; this port runs the new `conformance-table-schema-probe` fixture three times, each on a fresh table declared `{ k: string, n: number }`. Logic in `lib/table-schema-witness.ts`.
+  - `openwop.requirement.storage.table-schema-control-insert-completes`: a well-typed insert completes. It is the positive control.
+  - `openwop.requirement.storage.table-schema-insert-mistyped-refused`: an insert with `n: "not-a-number"` fails the probe node `validation_error` with `details.service: tableStorage`.
+  - `openwop.requirement.storage.table-schema-update-mistyped-refused`: an update setting `n` to a string fails the same way.
+
+  **Dispositions.** `tableStorage` not advertised, or the fixture not advertised: `inapplicable`. The fixture is the opt-in, as for the budget and safeFetch witnesses. A fixture run that cannot be created, finish or be read: `blocked`. A failed control: the control row fails and the two refusal rows are `blocked`, since a host that refuses every insert would pass them vacuously.
+
+  **Sabotage.** `lib/table-schema-witness.test.ts`, eight cases against the scratch host. A host that accepts a mistyped insert, or a mistyped update, fails only that row. v1's `table_schema_violation` fails both refusal rows. `validation_error` without `details.service` fails and cites `errors.md` §Host-service refusals. A probe that refuses everything fails the control.
+
+  **Host impact: none today.** No host advertises `tableStorage` at major 2, so all three rows record `inapplicable`.
+- **New fixture `conformance-table-schema-probe`** (`fixtures.md` §The tableStorage schema probe fixture). Its node `core.conformance.table-schema-probe` is conformance-RESERVED and calls the host's own `ctx.storage.table`. A host MUST NOT advertise it unless it advertises `tableStorage`.
 
 ## [2.45.7] — 2026-10-02 — a strict-mode host that does not advertise `workspace` is not failed; RFC 0231 Accepted
 
