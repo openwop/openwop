@@ -149,7 +149,7 @@ Defects outside the spec:
       the oracle RFC 0229 says a production host should withhold. It still runs with
       `OPENWOP_CONFORMANCE_FIXTURES=1` and `OPENWOP_TEST_SEAM_ENABLED`. The sealed value's deletion
       is untested on the three cap-breach paths.
-- [ ] **RFC 0230** needs openwop-app to advertise `inboundSigning` and pass the path in strict mode on a production cut; its other boxes are ticked.
+- [ ] **RFC 0230** needs openwop-app to advertise `inboundSigning` and pass the path in strict mode on a production cut; its other boxes are ticked. Since 2.45.8 the signed path runs with the seams mounted too, so a certified cut that keeps the seams can witness it (maintainer decision 2026-10-02).
 - [ ] **Host evidence owed, as the host sessions report it (2026-10-02):**
   - RFC 0230 (openwop-app): blocked on an operator decision plus a pin bump. Measured on
     production by the flag's owner: `OPENWOP_TRIGGER_INBOUND_SIGNING` is unset, so the facet is

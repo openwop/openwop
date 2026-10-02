@@ -3,6 +3,9 @@
 ## [2.45.8] — unreleased — RFC 0229 Accepted on MyndHyve's production cut
 
 - **The 2.45.8 cycle opens.** RFC 0229's and RFC 0228's gap registers change the packed `spec/v1/gaps.json`. No scenario changes in this PR.
+- **`trigger-bridge-delivery` runs every witness path a host offers (RFC 0230).** Until now the signed public-ingest path ran only when the delivery seams were absent. With the seams mounted it never ran. Without them, the seam-only leg 4 was red, so the profile did not certify, and an uncertified bundle is not acceptance evidence (RFC 0174 §B.1). Legs 1–3 now run the seam path whenever the seams are served, and the signed-ingest path whenever `triggerBridge.ingestion.inboundSigning` is advertised. A host that offers both must pass both, and each row notes which paths ran.
+  - **`trigger-refused-event-keeps-subscription`** records `inapplicable`, not seam-absent, on a host with no seams that advertises `inboundSigning`. The dead-letter leg above already witnesses the same rule on its signed ingest, and in strict mode this file used to fail such a host right after that leg had observed it.
+  - **Proof.** On openwop-app's in-process harness, with the seams on and `OPENWOP_TRIGGER_INBOUND_SIGNING=true`, all four legs pass. A sabotaged dedup assertion on the signed path fails leg 1, so that path now runs on a host that also serves the seams.
 
 ## [2.45.7] — 2026-10-02 — a strict-mode host that does not advertise `workspace` is not failed; RFC 0231 Accepted
 
