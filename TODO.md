@@ -15,7 +15,7 @@
 
 - **RFCs:** 220 `Accepted`. `Active`: **0121** (paused), **0222** (last box needs a real yanked v2
   version), **0228** (v1 host-service error codes), **0229** (production-safe secrets witness) and
-  **0230** (inbound webhook ingest contract). **0231** (budget exhaustion facet) is `Active` since 2026-10-02.
+  **0230** (inbound webhook ingest contract). **0231** (budget exhaustion facet) is `Active` since 2026-10-02; its acceptance row is witnessed.
   **0038** is `Draft` (Parked). **0225**, **0226** and
   **0227** went `Accepted` since the last update (#1791, #1821, #1831). Every waived-window
   `Accepted` RFC is **provisional** (RFC 0156 §B).
@@ -26,7 +26,7 @@
   unclaimed prefix floor fix) and 2.45.6 (RFC 0231: the `budget.onExhaustion` facet, its refusal rule
   and `v2-budget-exhaustion-facet`). **A major-1 host that cut a v3 bundle on 2.45.3 without claiming
   `openwop-secrets`, or on any suite without claiming `openwop-interrupts`, should re-cut on
-  2.45.5.** The v2 reference host has cut on 2.45.5; MyndHyve and openwop-app have not cut on
+  2.45.5.** The v2 reference host has cut on 2.45.6; MyndHyve and openwop-app have not cut on
   2.45.3 or later. No host has cut on 2.45.6. No cycle is open.
   Take a release lock (`/tmp/claude-501/openwop-release-<ver>.lock`) before cutting.
   - Until a 2.45.7 cycle opens, a PR that leaves the version alone must not re-stamp: restore
@@ -37,7 +37,7 @@
 - **SDKs:** **2.5.0** (npm, PyPI, `go/v2.5.0`) sends `OpenWOP-Client-Version` on every request.
   Re-vendoring to a newer corpus tag is a separate change.
 - **Hosts** (the canonical files in `evidence/v2-host-bundles/`, all certified, 0 fail, 0 blocked):
-  the v2 reference host on 2.45.5 (451 pass), MyndHyve on 2.45.2 (273 pass) and openwop-app on
+  the v2 reference host on 2.45.6 (460 pass), MyndHyve on 2.45.2 (273 pass) and openwop-app on
   2.44.5 (263 pass). `coordination` is `Stable` on MyndHyve's 2.45.2 cut (RFC 0220, #1828).
 - **Cuts:** every certified public cut needs a fresh operator approval.
 
@@ -125,12 +125,10 @@ Defects outside the spec:
 
 ## 7 — Follow-ups from 2026-10-01
 
-- [ ] **RFC 0228's two open boxes** (state 2026-10-02).
-  - **Certified `egress_denied` row:** the v2 reference host serves `httpClient.safeFetch` since
-    openwop-examples #148 (rehearsal: the five `httpClient.ssrf-*` rows pass). One public cut on
-    2.45.6 will record it; the maintainer approved that cut for after the 2.45.6 release.
-    MyndHyve can witness it too (it advertises `safeFetch` and the probe fixture since its #581);
-    its cut awaits its operator's go.
+- [ ] **RFC 0228's last open box: the rename rows** (state 2026-10-02).
+  - **Certified `egress_denied` row: done.** The v2 reference host's certified 2.45.6 cut records
+    all five `httpClient.ssrf-*` requirements `executed-pass`, and the acceptance box is ticked.
+    MyndHyve's next cut would add a tier-2 witness (it advertises `safeFetch` since its #581).
   - **v2 ports (gap G4):** four exist. Still owed: a v2 port of `table-schema-enforcement`. No
     host advertises `tableStorage` at major 2. Not ported: v1's `budget_model_denied` leg.
   - **Rename rows.** G2 is closed (reference host, certified 2.45.5). Still open, as the host
@@ -144,19 +142,22 @@ Defects outside the spec:
     - G6 (openwop-app): fixed and deployed (#4238); needs a certified cut.
     - G7 (MyndHyve): not fixed. `no_active_deployment` goes out as
       `myndhyve.no_active_deployment` at major 2; the denial envelope is untraced.
-- [ ] **RFC 0231 (`Active`, window waived 2026-10-02): `Accepted` needs a host.** The v2 reference
-      host already refuses `interrupt` as the RFC requires. It advertises `onExhaustion: ["fail"]` once pinned to
-      2.45.6 (openwop-examples #148), and needs a certified cut on 2.45.6 with
-      `runs.budget-unserved-exhaustion-refused` `executed-pass`. Unwitnessed and recorded: the v1
-      rule (G7) and the served `interrupt` path, whose budget-extending `resumeValue` has no shape
-      (G2).
-- [ ] **MyndHyve advertises `budget` and `agents.evalSuite` at major 2 and serves each only behind
-      a v1 seam.** Reported by its session from source, not measured: `configurable.budget` is
-      validated, stored and never read, and eval runs only through
-      `/v1/host/sample/agents/eval-run`. The choice (implement, or narrow the advert) is with the
-      maintainer and is undecided. The v2 budget port keys on its fixture, so MyndHyve records
-      `inapplicable`; `v2-eval-mode-unadvertised-refused` is also `inapplicable` while the facet
-      is advertised.
+- [ ] **RFC 0231: flip to `Accepted` in the next cycle.** Its acceptance row is `executed-pass` on
+      the v2 reference host's certified 2.45.6 cut, and `check-accepted-predicate` accepts it.
+      `check-rfc-status-coherence` refuses the flip until gaps G2, G4 and G7 stop carrying to
+      themselves (RFC 0174 §C.2): each must name a different open row or a tracked surface. Do
+      that, close G3, and flip, in one PR that opens the cycle. Still unwitnessed: the served
+      `interrupt` path (G2) and the v1 rule (G7). G6 measures MyndHyve on its next cut.
+- [ ] **MyndHyve's next certified cut carries four changes the maintainer approved** (2026-10-02;
+      reported by its session, in PRs, not deployed, no cut run):
+  - the suite pin at 2.45.5 (merged);
+  - `budget` and `agents.evalSuite` removed from discovery at both majors, with `mode: "eval"`
+    answering `422 capability_not_provided`, so `v2-eval-mode-unadvertised-refused` executes there;
+  - `secrets.runSecrets` with the `openwop-secrets-run-witness` fixture (RFC 0229's production
+    witness). The sealed value is deleted before the terminal event and status are written;
+    untested on the three cap-breach paths, and a terminal written outside the executor relies
+    on a TTL;
+  - then the cut, which would also witness `egress_denied` and RFC 0228 G1.
 - [ ] **RFC 0229** needs all four requirement ids `executed-pass` on a certified bundle from a
       production deployment. **RFC 0230** needs openwop-app to advertise `inboundSigning` and pass the path in strict mode on a production cut; its other boxes are ticked.
 - [ ] **Host evidence owed, as the host sessions report it (2026-10-02):**
