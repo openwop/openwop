@@ -13977,8 +13977,8 @@
       "surface": "Whether any host routes dead-lettered trigger deliveries to the RFC 0053 run sink, which §D's correction would change for it.",
       "witness": "unclassified",
       "requirementId": null,
-      "disposition": "carried",
-      "target": "openwop.gap.0232.4",
+      "disposition": "closed",
+      "target": null,
       "sources": [
         {
           "file": "RFCS/registers/0232-trigger-dead-letter-read.gaps.md",

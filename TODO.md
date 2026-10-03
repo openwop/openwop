@@ -161,6 +161,14 @@ Defects outside the spec:
       decided before `Active`; the author leans to splitting the id and recording the
       state-change half `inapplicable` without a seam. openwop-app holds the production flag
       and the cut until then.
+- [ ] **MyndHyve advertises trigger ingestion it does not serve** (its session's report from
+      source plus a live probe, 2026-10-03, main `68718d731`). Discovery lists
+      `triggerBridge.ingestion` with `externalSources` webhook/email/form, but the `ingestUrl` and
+      form URL it returns answer `404`, `POST /v1/trigger-subscriptions` stores nothing, and the
+      delivery model runs only behind its conformance seam. Its session is raising the advert with
+      its maintainer. **Steward follow-up:** RFC 0099's `Accepted` cites MyndHyve as the
+      non-steward witness of the behavioural legs; those legs ran through the seam. Decide whether
+      that evidence still stands.
 - [ ] **Host evidence owed, as the host sessions report it (2026-10-02):**
   - RFC 0230 (openwop-app, session 4d): the seam-free run on 2.45.9 is done (legs 1–3 pass,
     leg 4 fails, `blocked` 0). The pin to 2.45.9 is committed. The production flag and the
