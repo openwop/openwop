@@ -106,14 +106,14 @@ The run-less terminal events (the dead-lettered `trigger.delivery.attempted`, `t
 
 | Requirement | Observable | Who can cause it | Verdict |
 | --- | --- | --- | --- |
-| §C no OpenWOP credential on ingest | the ingest answers without `Authorization` | the suite | witnessable |
-| §C `required` + bad signature → no run | `401 signature_invalid`, no `runId` | the suite | witnessable |
-| §C.1 a refused post leaves the subscription `active` | `GET` shows `active`; a signed post next answers `202` | the suite | witnessable |
-| §C timestamp skew > 300 s → no run | as above, with a stale `webhook-timestamp` | the suite | witnessable |
-| §C dedup on `webhook-id` | second post `200 duplicate` with the same `runId` | the suite | witnessable |
-| §D `202` + `runId` on delivery | status + body | the suite | witnessable |
-| §D `409` on a non-active subscription | status + envelope | the suite (pause via the existing operator surface) | witnessable |
-| §B `signingSecret` once, never on re-read | absent on `GET` | the suite | witnessable |
+| §C no OpenWOP credential on ingest — `openwop.requirement.0083.trigger-delivery.dedup` (every signed post is sent without `Authorization`) | the ingest answers without `Authorization` | the suite | witnessable — executed-pass required on a host bundle |
+| §C `required` + bad signature → no run — `openwop.requirement.0083.trigger-delivery.dead-letter` | `401 signature_invalid`, no `runId` | the suite | witnessable — executed-pass required on a host bundle |
+| §C.1 a refused post leaves the subscription `active` — `openwop.requirement.0083.trigger-delivery.dead-letter` | `GET` shows `active`; a signed post next answers `202` | the suite | witnessable — executed-pass required on a host bundle |
+| §C timestamp skew > 300 s → no run — `openwop.requirement.0230.stale-timestamp-refused` | as above, with a stale `webhook-timestamp` | the suite | witnessable — executed-pass required on a host bundle |
+| §C dedup on `webhook-id` — `openwop.requirement.0083.trigger-delivery.dedup` | second post `200 duplicate` with the same `runId` | the suite | witnessable — executed-pass required on a host bundle |
+| §D `202` + `runId` on delivery — `openwop.requirement.0083.trigger-delivery.causation` | status + body | the suite | witnessable — executed-pass required on a host bundle |
+| §D `409` on a non-active subscription | status + envelope | nobody: no wire surface or seam makes a subscription non-active (corrected 2026-10-03; this row said "pause via the existing operator surface", and none exists) | unwitnessable — a pause or resume surface would make it witnessable (RFC 0232 §Decisions 3; gap G3) |
+| §B `signingSecret` once, never on re-read — `openwop.requirement.0230.signing-secret-once` | absent on `GET` | the suite | witnessable — executed-pass required on a host bundle |
 
 ## Alternatives considered
 

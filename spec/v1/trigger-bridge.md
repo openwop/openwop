@@ -53,7 +53,7 @@ Neither carries the inbound payload, headers, or credential material (SR-1) — 
 
 ## §D — The `openwop-trigger-bridge` profile
 
-A derived profile (`profiles.md` §`openwop-trigger-bridge`) — a predicate over discovery, not a wire field. A host satisfies it when it advertises `triggerBridge.supported`, has a `deadLetter` sink for exhausted deliveries, and has at least one durable inbound source (`queueBus`, `webhooks.durable`, or `scheduling`). The OR is intentional — a queue-only durable-inbound host is legitimately in the profile. The derivation lands in `conformance/src/lib/profiles.ts`.
+A derived profile (`profiles.md` §`openwop-trigger-bridge`) — a predicate over discovery, not a wire field. A host satisfies it when it advertises `triggerBridge.supported`, has a `deadLetter` sink (RFC 0053, where a trigger-started run that fails terminally lands and stays fork-eligible; a dead-lettered delivery starts no run and is read through `triggerBridge.deadLetter`, RFC 0232, where advertised), and has at least one durable inbound source (`queueBus`, `webhooks.durable`, or `scheduling`). The OR is intentional — a queue-only durable-inbound host is legitimately in the profile. The derivation lands in `conformance/src/lib/profiles.ts`.
 
 ## §E — Channels stay extensions (the Non-Goal, made explicit)
 

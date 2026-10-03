@@ -277,7 +277,9 @@ export function isMemory(c: DiscoveryPayload): boolean {
 /**
  * `openwop-trigger-bridge` predicate (RFC 0083, widened by RFC 0099). Host
  * composes the durable inbound-work contract: advertises the `triggerBridge`,
- * has a `deadLetter` sink for exhausted deliveries, and has at least one
+ * has a `deadLetter` run sink (RFC 0053: where a trigger-started run that fails
+ * terminally lands; a dead-lettered DELIVERY starts no run and is read through
+ * `triggerBridge.deadLetter`, RFC 0232), and has at least one
  * durable inbound source (queue bus, durable webhooks, scheduling, OR — per
  * RFC 0099 — externally-ingested `email`/`form` via
  * `triggerBridge.ingestion.externalSources[]`). Capability families are
