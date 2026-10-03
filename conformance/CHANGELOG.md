@@ -1,6 +1,6 @@
 # `@openwop/openwop-conformance` Changelog
 
-## [2.45.8] — unreleased — RFC 0229 Accepted on MyndHyve's production cut; a v2 witness for tableStorage schema enforcement
+## [2.45.8] — 2026-10-02 — RFC 0229 Accepted on MyndHyve's production cut; a v2 witness for tableStorage schema enforcement
 
 - **The 2.45.8 cycle opens.** RFC 0229's and RFC 0228's gap registers change the packed `spec/v1/gaps.json`.
 - **New scenario `v2-table-schema-enforcement`** (major 2, unaided; RFC 0228 gap G4). The v1 twin `table-schema-enforcement` drives a test seam; this port runs the new `conformance-table-schema-probe` fixture three times, each on a fresh table declared `{ k: string, n: number }`. Logic in `lib/table-schema-witness.ts`.

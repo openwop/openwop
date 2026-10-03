@@ -8,6 +8,8 @@ Entries before this file was condensed carried full development detail. That tex
 
 ## [Unreleased]
 
+## [2.45.8] — 2026-10-02 — RFC 0229 Accepted; RFC 0230's signed ingest witnessable on a certified run; v2 table schema witness
+
 - **RFC 0229 is Accepted.** MyndHyve passes all four `secrets` run-witness requirements on a certified production bundle (suite 2.45.5); the RFC states the deployment's two conformance flags and the byok fixture it still advertises.
 - **RFC 0228 G1 is half witnessed.** The same bundle passes MyndHyve's `egress_denied` rows; its `503` backpressure half is still unwitnessed.
 - **RFC 0230's signed ingest runs on hosts with seams.** `trigger-bridge-delivery` now runs every witness path a host offers. A host that serves both the delivery seams and `inboundSigning` can witness RFC 0230 on a certified bundle.
