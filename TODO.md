@@ -169,9 +169,9 @@ Defects outside the spec:
       `triggerBridge.ingestion` with `externalSources` webhook/email/form, but the `ingestUrl` and
       form URL it returns answer `404`, `POST /v1/trigger-subscriptions` stores nothing, and the
       delivery model runs only behind its conformance seam. Its session is raising the advert with
-      its maintainer. **Steward follow-up:** RFC 0099's `Accepted` cites MyndHyve as the
-      non-steward witness of the behavioural legs; those legs ran through the seam. Decide whether
-      that evidence still stands.
+      its maintainer. RFC 0099's `Accepted` evidence stands (maintainer, 2026-10-03); its
+      Amendment record now discloses that MyndHyve's legs ran through the seam. Open only on
+      MyndHyve's side.
 - [ ] **The `openwop-trigger-bridge` predicate still reads the RFC 0053 run family** (RFC 0232
       G7). `trigger-bridge.md` §D and `profiles.md` say the profile needs "a `deadLetter` sink for
       exhausted deliveries", but after RFC 0232 §D that family holds no trigger delivery. Reading
