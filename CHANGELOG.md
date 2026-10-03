@@ -8,6 +8,8 @@ Entries before this file was condensed carried full development detail. That tex
 
 ## [Unreleased]
 
+- **A retired vendor twin may forward reads.** After retirement, a `GET` or `HEAD` to a `/v1/host/<org>/…` address MAY answer `308`, with no body, to the same `/host/<org>/…` path. No operation is served there, and protocol `/v1` paths are unaffected. RFC 0181's falsifiability row now reads "serves an operation" instead of "answers" (maintainer decision 2026-10-03).
+
 ## [2.45.10] — 2026-10-03 — A trigger's dead letters are readable; RFC 0232 Active
 
 - **RFC 0232 is Active.** A trigger subscription's dead-lettered deliveries are readable behind the optional `triggerBridge.deadLetter` facet: new operation `listTriggerDeadLetters` and schema `trigger-dead-letter-page`, v1 and v2; records are content-free. The window was waived by steward override of RFC 0147 §A.6.
