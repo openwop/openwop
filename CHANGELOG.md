@@ -8,6 +8,8 @@ Entries before this file was condensed carried full development detail. That tex
 
 ## [Unreleased]
 
+## [2.45.12] — 2026-10-03 — Connection-provider conflicts are observable; RFC 0230's stale and secret-once legs; RFC 0233 Active
+
 - **`v2-advertised-path-space-served` no longer fails a host that retired `/v1`:** a `410 Gone` under `/v1` reads as not served, and the leg is `inapplicable` without a `1.x` member.
 - **RFC 0230 and 0232 tables name their requirement ids,** so the `Accepted` check reads bundle rows. RFC 0230's `409` row is `unwitnessable`: no surface makes a subscription non-active. RFC 0232 G6/G7 and RFC 0228 G7 close.
 - **RFC 0233 is Active** (comment window waived by steward override). Optional reads `GET /connection-providers` and `GET /connection-providers/{providerId}` behind `connections.providerRead`; `v2-provider-conflict` reads them instead of a seam.
