@@ -8,6 +8,8 @@ Entries before this file was condensed carried full development detail. That tex
 
 ## [Unreleased]
 
+- **RFC 0232 filed (Draft).** An optional read, `GET /v1/trigger-subscriptions/{id}/dead-letters`, behind `triggerBridge.deadLetter`, so a production host without test seams can witness that its dead-lettered trigger deliveries carry no inbound content. RFC 0230 needs it to be accepted on production.
+
 ## [2.45.9] — 2026-10-02 — A trigger leg that observed nothing is inapplicable, not blocked
 
 - **Stream and change ingest fix.** `trigger-stream-cdc-sources` records `inapplicable`, not `blocked`, on a host that serves neither `stream` nor `change`. The `blocked` row denied a major-1 bundle.
