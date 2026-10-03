@@ -1,6 +1,6 @@
 # `@openwop/openwop-conformance` Changelog
 
-## [2.45.10] — unreleased — RFC 0232 Active: a seam-free path for the run-less trigger leg
+## [2.45.10] — 2026-10-03 — RFC 0232 Active: a seam-free path for the run-less trigger leg
 
 - **`trigger-bridge-delivery` leg 4 splits in two (RFC 0232, decided question 1 (a)).** Both ids stay in the `openwop-trigger-bridge` floor; the old title-derived id is aliased to the first.
   - `openwop.requirement.0083.trigger-delivery.runless-attempt-content-free`: on the seam, as before. New: where the host advertises `inboundSigning` and `triggerBridge.deadLetter`, the leg posts a body carrying a canary with a bad signature to a `required` subscription and reads `GET /v1/trigger-subscriptions/{id}/dead-letters`. The record must be present with `reason: "verification_failed"`, carry no canary, signature or signing key, carry a schema-valid dead-lettered `attempt`, carry no `stateChange`, and have `expiresAt − deadLetteredAt` equal to `retentionDays`. Both paths run where both are offered.
