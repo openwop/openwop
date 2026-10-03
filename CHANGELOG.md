@@ -8,6 +8,8 @@ Entries before this file was condensed carried full development detail. That tex
 
 ## [Unreleased]
 
+- **RFC 0233 filed (Draft).** Optional v2 reads of a host's connection-provider registry and its refused registrations, behind `connections.providerRead`, so the provider-identity MUSTs get the normative observation path `conformance.md` §Witness class requires.
+
 ## [2.45.11] — 2026-10-03 — The trigger bridge is witnessed at major 2; a retired vendor twin may forward reads
 
 - **The trigger bridge is witnessed at major 2.** New scenarios `v2-trigger-bridge-delivery` and `v2-trigger-dead-letter-read` port the delivery legs and RFC 0232's read rules to the v2 surface, so a v2 bundle can witness RFC 0230 and RFC 0232.
