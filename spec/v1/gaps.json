@@ -13926,8 +13926,8 @@
       "surface": "How leg 4 is scored on a host where only the read is available: split the requirement and record the state-change half `inapplicable` without a seam (a), split and move that half out of the floor (b), or keep one id (c). Unresolved question 1.",
       "witness": "unclassified",
       "requirementId": null,
-      "disposition": "carried",
-      "target": "openwop.gap.0232.1",
+      "disposition": "closed",
+      "target": null,
       "sources": [
         {
           "file": "RFCS/registers/0232-trigger-dead-letter-read.gaps.md",
@@ -13994,12 +13994,46 @@
       "surface": "The corpus requires a host to emit `trigger.delivery.attempted` and `trigger.subscription.state.changed` for run-less transitions but names no log or channel for them. openwop-app emits neither in production for a dead-lettered delivery; only its seam does.",
       "witness": "unclassified",
       "requirementId": null,
-      "disposition": "carried",
-      "target": "openwop.gap.0232.5",
+      "disposition": "closed",
+      "target": null,
       "sources": [
         {
           "file": "RFCS/registers/0232-trigger-dead-letter-read.gaps.md",
           "token": "G5"
+        }
+      ]
+    },
+    {
+      "id": "openwop.gap.0232.6",
+      "rfc": "0232",
+      "local": "G6",
+      "section": "§B",
+      "surface": "`listTriggerDeadLetters` is a new v1 operation, so `openwop-sdks` owes a parity entry. That repository vendors a published corpus tag.",
+      "witness": "unclassified",
+      "requirementId": null,
+      "disposition": "externally-gated",
+      "target": "openwop-sdks-revendors-a-tag-carrying-listTriggerDeadLetters",
+      "sources": [
+        {
+          "file": "RFCS/registers/0232-trigger-dead-letter-read.gaps.md",
+          "token": "G6"
+        }
+      ]
+    },
+    {
+      "id": "openwop.gap.0232.7",
+      "rfc": "0232",
+      "local": "G7",
+      "section": "§D",
+      "surface": "`trigger-bridge.md` §D and `profiles.md` still say the profile needs \"a `deadLetter` sink for exhausted deliveries\". The predicate reads the RFC 0053 run family, which after §D holds no trigger delivery.",
+      "witness": "unclassified",
+      "requirementId": null,
+      "disposition": "transferred",
+      "target": "TODO.md",
+      "sources": [
+        {
+          "file": "RFCS/registers/0232-trigger-dead-letter-read.gaps.md",
+          "token": "G7"
         }
       ]
     },

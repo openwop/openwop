@@ -4,10 +4,10 @@
 | ----------------- | --------------------------------------------------------------- |
 | **RFC**           | 0232                                                            |
 | **Title**         | a trigger subscription's dead-lettered deliveries are readable  |
-| **Status**        | `Draft`                                                         |
+| **Status**        | `Active`                                                        |
 | **Author(s)**     | David Tufts (@davidscotttufts)                                  |
 | **Created**       | 2026-10-03                                                      |
-| **Updated**       | 2026-10-03 — §C.2 reworded: `attempt` carries the fields of the `trigger.delivery.attempted` payload, not "the payload exactly as emitted", because a host may emit no event for a run-less attempt (openwop-app does not, in production). Unresolved question 4 added on where a run-less event goes. Gap G4 answered for openwop-app. · 2026-10-03 — filed `Draft` at the maintainer's direction (2026-10-02: "New RFC: a dead-letter read for triggers"), to give RFC 0230's last acceptance box a production path. The 7-day comment window opens with the pull request and closes 2026-10-10. |
+| **Updated**       | 2026-10-03 — `Draft` → `Active`, comment window waived by STEWARD OVERRIDE of RFC 0147 §A.6 (MAINTAINERS.md). The maintainer decided the five questions (§Decisions): leg 4 splits into two ids, both in the floor, the state-change id `inapplicable` without a seam; a run-less transition is *recorded*, and the read is where a dead-lettered attempt is visible. The facet, the read (v1 and v2), the page schema, the §D prose, leg 4a's normative-surface path and the §B rows land with it. · 2026-10-03 — §C.2 reworded: `attempt` carries the fields of the `trigger.delivery.attempted` payload, not "the payload exactly as emitted", because a host may emit no event for a run-less attempt (openwop-app does not, in production). Unresolved question 4 added on where a run-less event goes. Gap G4 answered for openwop-app. · 2026-10-03 — filed `Draft` at the maintainer's direction (2026-10-02: "New RFC: a dead-letter read for triggers"), to give RFC 0230's last acceptance box a production path. The 7-day comment window opens with the pull request and closes 2026-10-10. |
 | **Affects**       | a new optional read `GET /v1/trigger-subscriptions/{subscriptionId}/dead-letters` (v1 `api/openapi.yaml`, derived into `api/v2/openapi.yaml`) and its page schema · a new optional facet `triggerBridge.deadLetter` (the v1 seed of `schemas/capabilities.schema.json`, carried into v2) · `spec/v1/trigger-bridge.md` §B and §C, `spec/v2/core/webhooks.md` §Inbound triggers · `trigger-bridge-delivery.test.ts` leg 4 (a normative-surface path) |
 | **Compatibility** | `additive` (COMPATIBILITY.md §2): one optional endpoint behind one optional facet. A host that does not advertise the facet is bound exactly as today. |
 | **Supersedes**    | —                                                               |
@@ -74,7 +74,8 @@ Each record names one dead-lettered delivery:
 
 - **`trigger-bridge.md` §B**: a dead-lettered subscription's deliveries go to the subscription's own delivery sink (§B of this RFC), not the RFC 0053 run sink. The `dead-lettered` row of the states table is corrected to say so.
 - **`trigger-bridge.md` §C**: one paragraph stating §B and §C of this RFC for a host that advertises the facet.
-- **`spec/v2/core/webhooks.md` §Inbound triggers**: one bullet, about 45 words, naming the read and the facet. The kernel budget has 476 words to spare.
+- **`spec/v2/core/webhooks.md` §Inbound triggers**: the `dead-lettered` state no longer points at the run sink; one sentence states question 4's decision; a short list states the read's rules.
+- **Both:** for a run-less transition, "emit" means the host keeps a content-free record (question 4). The schema descriptions that routed a dead-lettered trigger delivery to the RFC 0053 sink (`run-event-payloads`, `trigger-subscription`, v1 and v2) are corrected with the prose.
 
 ### §E. Conformance
 
@@ -87,7 +88,16 @@ Leg 4 of `trigger-bridge-delivery.test.ts` gains a normative-surface path, run w
 
 Server-free: the page schema and the facet validate in `spec-corpus-validity`. The paging, tenant and cursor rules of §B join the leg as their own requirement ids, gated on the facet.
 
-**What the read cannot witness on production.** The suite cannot cause a subscription state change on a production host: a refused post must not change state, retry exhaustion needs a delivery the host fails repeatedly, and no wire surface pauses a subscription. So the `trigger.subscription.state.changed` half of leg 4 still has only the seam. Unresolved question 1 asks how leg 4 is scored on a host where only the read is available. **RFC 0230 can be accepted on a production host only once that question is decided.**
+**What the read cannot witness on production.** The suite cannot cause a subscription state change on a production host: a refused post must not change state, retry exhaustion needs a delivery the host fails repeatedly, and no wire surface pauses a subscription. So the `trigger.subscription.state.changed` half of leg 4 still has only the seam.
+
+**How leg 4 is scored (decided, question 1 (a)).** Leg 4 is two requirement ids, both in the `openwop-trigger-bridge` floor:
+
+- `openwop.requirement.0083.trigger-delivery.runless-attempt-content-free` runs the seam path where the seam is served and the steps above where the host advertises `inboundSigning` and `triggerBridge.deadLetter`, and both where both are offered. With neither, it records `blocked`, as before.
+- `openwop.requirement.0083.trigger-delivery.runless-state-change-content-free` runs only on the seam. Without it the row records `inapplicable`, with the reason that no wire surface causes a state change (gap G2). At major 2 the payload schema is closed with an enum `reason`, so a schema-valid event cannot carry content.
+
+The §B rules are `trigger-dead-letter-read.test.ts`, outside the floor: `openwop.requirement.0232.trigger-dead-letters.paging`, `.cursor-bound` and `.tenant-bound`, each `inapplicable` where the facet or `inboundSigning` is not advertised. The tenant row needs a second tenant's credential (`OPENWOP_TEST_TENANT_B_API_KEY`) and records `blocked` without one.
+
+The judge (`conformance/src/lib/trigger-dead-letter-witness.ts`) is pure. Its unit tests turn on each defect in an otherwise conforming page: a record carrying the canary, the signature or the signing key; a page missing the refused delivery; an `attempt` that does not validate; a `stateChange` on a refused post; and an `expiresAt` that does not match `retentionDays`. No host serves the read yet, so no live sabotage proof exists (gap G3).
 
 ### Falsifiability — one row per normative requirement
 
@@ -114,22 +124,19 @@ Server-free: the page schema and the facet validate in `spec-corpus-validity`. T
 
 1. **Do nothing; accept RFC 0230 on a seams-on cut of a non-production deployment.** Fastest. It contradicts the reason RFC 0230 exists, which is evidence from production. Rejected by the maintainer (2026-10-02).
 2. **Let the acceptance predicate count a profile whose only failure is a seam-only row.** It weakens a gate this corpus has tightened several times (RFC 0174). Rejected by the maintainer (2026-10-02).
-3. **A run-less event stream for trigger subscriptions** (`GET /trigger-subscriptions/{id}/events`, every run-less event). It covers state changes too, but the suite still cannot cause one on production, so it buys no extra witness and costs a second stream surface. Kept as Unresolved question 2.
+3. **A run-less event stream for trigger subscriptions** (`GET /trigger-subscriptions/{id}/events`, every run-less event). It covers state changes too, but the suite still cannot cause one on production, so it buys no extra witness and costs a second stream surface. Rejected (§Decisions 2).
 4. **Put the events on `/host/events`.** That channel is heartbeat-only by `events.md`, and a host-wide stream would mix tenants' subscriptions on one channel.
-5. **A pause and resume endpoint** would let the suite cause a state change. It is a real operator surface with its own authorization questions, and belongs in its own RFC (Unresolved question 3).
+5. **A pause and resume endpoint** would let the suite cause a state change. It is a real operator surface with its own authorization questions, and belongs in its own RFC (§Decisions 3).
 
-## Unresolved questions
+## Decisions
 
-1. **How is leg 4 scored where only the read is available?** The read witnesses the dead-lettered attempt; nothing on such a host witnesses a state change. Options:
-   - **(a)** Split leg 4 into two requirement ids. The attempt id stays in the floor and runs on either path. The state-change id stays in the floor too, and on a host with no seam it records `inapplicable`, with the reason that no wire surface causes a state change. At major 2 the payload schema is closed, with an enum `reason`, so a schema-valid event cannot carry content. At major 1 it is open.
-   - **(b)** Split as in (a), and move the state-change id out of the floor. The floor narrows, which RFC 0230 said it would not.
-   - **(c)** Keep one id. RFC 0230 then waits for a wire surface that causes a state change (question 3).
+The maintainer decided all five questions on 2026-10-03. None remain open.
 
-   The author leans to **(a)**: it states plainly which half was witnessed, and it records `inapplicable` only for a condition no party can cause.
-2. Should the read be a general run-less event stream (Alternative 3) rather than a dead-letter list?
-3. Should a later RFC add pause and resume for trigger subscriptions, which would make the state change causable?
-4. **Where does a run-less event go?** `trigger-bridge.md` §C and v2 `webhooks.md` §Inbound triggers say a host MUST emit `trigger.delivery.attempted` and `trigger.subscription.state.changed`, but a dead-lettered delivery and a state change belong to no run, and the corpus names no log or channel for them. openwop-app, in production, emits neither for a dead-lettered delivery: it records a content-free row in its delivery store, and only its test seam appends the event (its session's report, 2026-10-03, from source). That is a reasonable reading of a rule that names no destination. This RFC's read is one answer: the record is where a run-less attempt becomes visible. Should the corpus say so, and say "record" rather than "emit" for run-less events?
-5. Should `reason` add `backpressure` or `source-removed`, which `state.changed.reason` already names, for deliveries dead-lettered for those causes?
+1. **How is leg 4 scored where only the read is available?** (a): split into two ids, both in the floor. The state-change id records `inapplicable` on a host without the seam, because no party can cause the condition there (§E). (b) would have narrowed the floor, which RFC 0230 said it would not. (c) would have left RFC 0230 waiting on a surface nobody has proposed.
+2. **A general run-less event stream instead of a list?** No. The suite cannot cause a state change on production either way, so a stream buys no extra witness and costs a second stream surface (Alternative 3).
+3. **Pause and resume for trigger subscriptions?** Out of scope. It belongs in its own RFC, with its own authorization questions. That RFC would close gap G2.
+4. **Where does a run-less event go?** It is recorded. For a run-less transition (a dead-lettered attempt, a state change), "emit" in `trigger-bridge.md` §C and `webhooks.md` §Inbound triggers means the host keeps a content-free record of that payload; a host advertising `triggerBridge.deadLetter` makes a dead-lettered attempt visible through this read. openwop-app's content-free row, with no event emitted in production, conforms. The prose says so (§D).
+5. **Should `reason` add `backpressure` or `source-removed`?** Not now. Neither cause dead-letters a delivery on any known host. A later revision can add a value additively.
 
 ## Implementation notes (non-normative)
 
@@ -139,9 +146,9 @@ Server-free: the page schema and the facet validate in `spec-corpus-validity`. T
 
 ## Acceptance criteria
 
-- [ ] `Active`: the comment window closes (2026-10-10) with no unresolved objection, and Unresolved question 1 is decided.
-- [ ] The facet is in the v1 seed and carried into v2; the read is in `api/openapi.yaml` and derived into `api/v2/openapi.yaml`; the page schema validates in `spec-corpus-validity`; the prose of §D is merged; `CHANGELOG.md` records it.
-- [ ] Leg 4's normative-surface path ships, each row failing on its sabotage: a record carrying the canary, a record missing the refused delivery, an `attempt` that does not validate, a record carrying a `stateChange` for a refused post.
+- [x] `Active`: Unresolved question 1 is decided. The window was waived by STEWARD OVERRIDE of RFC 0147 §A.6 on 2026-10-03, and the RFC 0156 §B review is owed.
+- [x] The facet is in the v1 seed and carried into v2; the read is in `api/openapi.yaml` and derived into `api/v2/openapi.yaml`; the page schema validates in `spec-corpus-validity`; the prose of §D is merged; `CHANGELOG.md` records it.
+- [x] Leg 4's normative-surface path ships, each row failing on its sabotage (proven against the pure judge; a live proof waits for a host that serves the read, G3): a record carrying the canary, a record missing the refused delivery, an `attempt` that does not validate, a record carrying a `stateChange` for a refused post.
 - [ ] `Accepted`: a host advertising `triggerBridge.deadLetter` records the §E rows `executed-pass` on a certified production bundle with no test seams served.
 
 ## References

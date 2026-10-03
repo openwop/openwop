@@ -811,6 +811,70 @@ paths:
           $ref: '#/components/responses/Forbidden'
         '404':
           $ref: '#/components/responses/NotFound'
+  /trigger-subscriptions/{subscriptionId}/dead-letters:
+    get:
+      tags:
+      - triggers
+      summary: List a trigger subscription's dead-lettered deliveries.
+      description: 'Lists the subscription''s dead-lettered deliveries, newest first, for `triggerBridge.deadLetter.retentionDays`.
+        Each record carries the fields of the dead-lettered `trigger.delivery-attempted` payload and, when the dead-lettering
+        changed the subscription''s state, the `trigger.subscription-state-changed` payload. A delivery refused by a `required`
+        verification check appears with `reason: "verification_failed"` and no `stateChange`. A record MUST NOT carry the
+        inbound body, the inbound headers, the signature, the signing secret, or any credential. Gated on `triggerBridge.deadLetter`:
+        a host that does not advertise it answers `404 not_found`. Another tenant''s subscription id answers `404 not_found`,
+        exactly as an id the host never minted.'
+      operationId: listTriggerDeadLetters
+      security:
+      - ApiKeyAuth:
+        - webhooks:manage
+      - OAuth2:
+        - webhooks:manage
+      - OpenIdConnect:
+        - webhooks:manage
+      parameters:
+      - name: subscriptionId
+        in: path
+        required: true
+        schema:
+          $ref: ../../schemas/v2/ids.schema.json#/$defs/subscriptionId
+        description: 'The trigger subscription, tenant-bound (`identity.md` §5) and carried as one path segment: `~`-projected
+          or percent-encoded.'
+      - name: limit
+        in: query
+        required: false
+        schema:
+          type: integer
+          minimum: 1
+        description: Page size; clamped to `triggerBridge.deadLetter.maxPageSize`.
+      - name: cursor
+        in: query
+        required: false
+        schema:
+          type: string
+          minLength: 1
+          maxLength: 2048
+        description: Opaque cursor from a previous page's `nextCursor`. A cursor minted for another subscription MUST be refused
+          `400 validation_error`.
+      - $ref: '#/components/parameters/OpenWOPVersion'
+      - $ref: '#/components/parameters/OpenWOPClientVersion'
+      responses:
+        '200':
+          description: One page of dead-lettered deliveries, newest first.
+          content:
+            application/json:
+              schema:
+                $ref: ../../schemas/v2/trigger-dead-letter-page.schema.json
+          headers:
+            OpenWOP-Version:
+              $ref: '#/components/headers/OpenWOPVersion'
+        '400':
+          $ref: '#/components/responses/ValidationError'
+        '401':
+          $ref: '#/components/responses/Unauthenticated'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          $ref: '#/components/responses/NotFound'
   /content/pages/{slug}:
     get:
       tags:

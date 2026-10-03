@@ -156,11 +156,14 @@ Defects outside the spec:
       and openwop-app's production host serves none, deliberately. On 2.45.9 without seams it
       passes legs 1–3 on the signed path and fails leg 4 (its session's run, 2026-10-02). The
       maintainer chose (2026-10-02) a new RFC over a non-production cut or a gate exemption:
-      **RFC 0232** (`Draft`, window to 2026-10-10), a dead-letter read for trigger subscriptions.
-      Its Unresolved question 1, how leg 4 is scored when only the read is available, must be
-      decided before `Active`; the author leans to splitting the id and recording the
-      state-change half `inapplicable` without a seam. openwop-app holds the production flag
-      and the cut until then.
+      **RFC 0232** (`Active` 2026-10-03, window waived by steward override of RFC 0147 §A.6), a
+      dead-letter read for trigger subscriptions. Leg 4 is now two ids: the attempt leg reads
+      `GET /v1/trigger-subscriptions/{id}/dead-letters` without a seam, and the state-change leg
+      records `inapplicable` without one. **Next, in order:** cut 2.45.10; openwop-app serves the
+      read and advertises `triggerBridge.deadLetter` (its estimate: one ADR, a day or two); then
+      its certified production cut, which can satisfy both RFC 0230 and RFC 0232 `Accepted`.
+      Owed later: the `openwop-sdks` parity entry for `listTriggerDeadLetters` after the tag
+      (RFC 0232 G6), and the RFC 0156 §B review.
 - [ ] **MyndHyve advertises trigger ingestion it does not serve** (its session's report from
       source plus a live probe, 2026-10-03, main `68718d731`). Discovery lists
       `triggerBridge.ingestion` with `externalSources` webhook/email/form, but the `ingestUrl` and
@@ -169,6 +172,11 @@ Defects outside the spec:
       its maintainer. RFC 0099's `Accepted` evidence stands (maintainer, 2026-10-03); its
       Amendment record now discloses that MyndHyve's legs ran through the seam. Open only on
       MyndHyve's side.
+- [ ] **The `openwop-trigger-bridge` predicate still reads the RFC 0053 run family** (RFC 0232
+      G7). `trigger-bridge.md` §D and `profiles.md` say the profile needs "a `deadLetter` sink for
+      exhausted deliveries", but after RFC 0232 §D that family holds no trigger delivery. Reading
+      `triggerBridge.deadLetter` instead would change who is in the profile; it needs its own
+      decision.
 - [ ] **Host evidence owed, as the host sessions report it (2026-10-02):**
   - RFC 0230 (openwop-app, session 4d): the seam-free run on 2.45.9 is done (legs 1–3 pass,
     leg 4 fails, `blocked` 0). The pin to 2.45.9 is committed. The production flag and the

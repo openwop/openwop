@@ -4,6 +4,7 @@
   "bindings": {
     "agentId": "agentId",
     "artifactTypeId": "typeId",
+    "attemptEventId": "eventId",
     "baselineRunId": "runId",
     "cardTypeId": "typeId",
     "causationId": "eventId",
