@@ -13655,7 +13655,7 @@
       "witness": "unclassified",
       "requirementId": null,
       "disposition": "externally-gated",
-      "target": "myndhyve-host-cut",
+      "target": "myndhyve-run-creation-channel-validation",
       "sources": [
         {
           "file": "RFCS/registers/0228-v1-host-service-error-codes.gaps.md",
@@ -13773,8 +13773,8 @@
       "surface": "No scenario drives the normative-surface ingest path yet. `trigger-bridge-delivery.test.ts` still witnesses only through the host seams.",
       "witness": "unclassified",
       "requirementId": null,
-      "disposition": "carried",
-      "target": "openwop.gap.0230.1",
+      "disposition": "closed",
+      "target": null,
       "sources": [
         {
           "file": "RFCS/registers/0230-inbound-webhook-ingest-contract.gaps.md",
@@ -13790,12 +13790,29 @@
       "surface": "No host advertises `inboundSigning` yet. openwop-app serves an ingest route with a different contract (OpenWOP-credentialed, wrapped body, 200/422).",
       "witness": "unclassified",
       "requirementId": null,
-      "disposition": "carried",
-      "target": "openwop.gap.0230.2",
+      "disposition": "closed",
+      "target": null,
       "sources": [
         {
           "file": "RFCS/registers/0230-inbound-webhook-ingest-contract.gaps.md",
           "token": "G2"
+        }
+      ]
+    },
+    {
+      "id": "openwop.gap.0230.3",
+      "rfc": "0230",
+      "local": "G3",
+      "section": "§D, Falsifiability",
+      "surface": "`409 subscription_not_active` has no observation path: no wire surface or seam makes a subscription non-active. The table claimed a pause \"via the existing operator surface\"; none exists.",
+      "witness": "unclassified",
+      "requirementId": null,
+      "disposition": "externally-gated",
+      "target": "trigger-subscription-pause-surface",
+      "sources": [
+        {
+          "file": "RFCS/registers/0230-inbound-webhook-ingest-contract.gaps.md",
+          "token": "G3"
         }
       ]
     },
@@ -14011,8 +14028,8 @@
       "surface": "`listTriggerDeadLetters` is a new v1 operation, so `openwop-sdks` owes a parity entry. That repository vendors a published corpus tag.",
       "witness": "unclassified",
       "requirementId": null,
-      "disposition": "externally-gated",
-      "target": "openwop-sdks-revendors-a-tag-carrying-listTriggerDeadLetters",
+      "disposition": "closed",
+      "target": null,
       "sources": [
         {
           "file": "RFCS/registers/0232-trigger-dead-letter-read.gaps.md",
@@ -14028,8 +14045,8 @@
       "surface": "`trigger-bridge.md` §D and `profiles.md` still say the profile needs \"a `deadLetter` sink for exhausted deliveries\". The predicate reads the RFC 0053 run family, which after §D holds no trigger delivery.",
       "witness": "unclassified",
       "requirementId": null,
-      "disposition": "transferred",
-      "target": "TODO.md",
+      "disposition": "closed",
+      "target": null,
       "sources": [
         {
           "file": "RFCS/registers/0232-trigger-dead-letter-read.gaps.md",

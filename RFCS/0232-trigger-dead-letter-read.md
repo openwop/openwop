@@ -103,14 +103,14 @@ The judge (`conformance/src/lib/trigger-dead-letter-witness.ts`) is pure. Its un
 
 | Requirement | Observable — what an outside party sees | Who can cause the condition | Verdict |
 | --- | --- | --- | --- |
-| §B.1 a host advertising the facet serves the read | `200` and a schema-valid page | the suite, unaided | witnessable — gated |
-| §B.2 another tenant's id answers `404` | status and envelope | the suite, with a second tenant's credential | witnessable — gated |
-| §B.3 a cursor from another subscription is refused | `400 validation_error` | the suite, with two subscriptions | witnessable — gated |
-| §C.1 a record carries no inbound content | the record, against the canary the suite posted | the suite, by posting a badly signed event | witnessable — gated |
+| §B.1 a host advertising the facet serves the read — `openwop.requirement.0232.trigger-dead-letters.paging` | `200` and a schema-valid page | the suite, unaided | witnessable — executed-pass required on a host bundle |
+| §B.2 another tenant's id is refused (`404` at major 1, `403 id_tenant_mismatch` at major 2) — `openwop.requirement.0232.trigger-dead-letters.tenant-bound` | status and envelope | the suite, with a second tenant's credential | witnessable — executed-pass required on a host bundle |
+| §B.3 a cursor from another subscription is refused — `openwop.requirement.0232.trigger-dead-letters.cursor-bound` | `400 validation_error` | the suite, with two subscriptions | witnessable — executed-pass required on a host bundle |
+| §C.1 a record carries no inbound content — `openwop.requirement.0083.trigger-delivery.runless-attempt-content-free` | the record, against the canary the suite posted | the suite, by posting a badly signed event | witnessable — executed-pass required on a host bundle |
 | §C.2 `attempt` agrees with the emitted event | equality with the seam's copy of the event | the suite, only where the seam is also served | witnessable — seam-gated (the event-log seam) |
-| §C.3 a refused post appears, without a state change | the record's `reason` and absent `stateChange` | the suite, by posting a badly signed event | witnessable — gated |
+| §C.3 a refused post appears, without a state change — `openwop.requirement.0083.trigger-delivery.runless-attempt-content-free` | the record's `reason` and absent `stateChange` | the suite, by posting a badly signed event | witnessable — executed-pass required on a host bundle |
 | §C `stateChange` is content-free | a record carrying `stateChange` | nobody, on a host without seams | unwitnessable — no wire surface causes a subscription state change (G2) |
-| §C `expiresAt − deadLetteredAt` matches `retentionDays` | the record | the suite, on any record | witnessable — gated |
+| §C `expiresAt − deadLetteredAt` matches `retentionDays` — `openwop.requirement.0083.trigger-delivery.runless-attempt-content-free` | the record | the suite, on any record | witnessable — executed-pass required on a host bundle |
 
 ## Compatibility
 
