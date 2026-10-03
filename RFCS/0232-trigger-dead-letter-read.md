@@ -7,7 +7,7 @@
 | **Status**        | `Draft`                                                         |
 | **Author(s)**     | David Tufts (@davidscotttufts)                                  |
 | **Created**       | 2026-10-03                                                      |
-| **Updated**       | 2026-10-03 — filed `Draft` at the maintainer's direction (2026-10-02: "New RFC: a dead-letter read for triggers"), to give RFC 0230's last acceptance box a production path. The 7-day comment window opens with the pull request and closes 2026-10-10. |
+| **Updated**       | 2026-10-03 — §C.2 reworded: `attempt` carries the fields of the `trigger.delivery.attempted` payload, not "the payload exactly as emitted", because a host may emit no event for a run-less attempt (openwop-app does not, in production). Unresolved question 4 added on where a run-less event goes. Gap G4 answered for openwop-app. · 2026-10-03 — filed `Draft` at the maintainer's direction (2026-10-02: "New RFC: a dead-letter read for triggers"), to give RFC 0230's last acceptance box a production path. The 7-day comment window opens with the pull request and closes 2026-10-10. |
 | **Affects**       | a new optional read `GET /v1/trigger-subscriptions/{subscriptionId}/dead-letters` (v1 `api/openapi.yaml`, derived into `api/v2/openapi.yaml`) and its page schema · a new optional facet `triggerBridge.deadLetter` (the v1 seed of `schemas/capabilities.schema.json`, carried into v2) · `spec/v1/trigger-bridge.md` §B and §C, `spec/v2/core/webhooks.md` §Inbound triggers · `trigger-bridge-delivery.test.ts` leg 4 (a normative-surface path) |
 | **Compatibility** | `additive` (COMPATIBILITY.md §2): one optional endpoint behind one optional facet. A host that does not advertise the facet is bound exactly as today. |
 | **Supersedes**    | —                                                               |
@@ -15,7 +15,7 @@
 
 ## Summary
 
-A trigger delivery that is dead-lettered starts no run, so the `trigger.delivery.attempted` event that records it is on no run's log. Nothing on the wire can read it: the suite reads it only through a host's test seams. This RFC adds an optional read, `GET /v1/trigger-subscriptions/{subscriptionId}/dead-letters`, behind a facet `triggerBridge.deadLetter`, that lists a subscription's dead-lettered deliveries and carries the dead-lettered attempt's own event payload. It mirrors the webhook dead-letter read RFC 0188 added for outbound deliveries. With it, a production host that serves no test seams can witness that its run-less delivery events carry no inbound content, which is the leg RFC 0230 cannot close on production today.
+A trigger delivery that is dead-lettered starts no run, so the `trigger.delivery.attempted` event that records it is on no run's log. Nothing on the wire can read it: the suite reads it only through a host's test seams. This RFC adds an optional read, `GET /v1/trigger-subscriptions/{subscriptionId}/dead-letters`, behind a facet `triggerBridge.deadLetter`, that lists a subscription's dead-lettered deliveries, each with the fields of its `trigger.delivery.attempted` payload. It mirrors the webhook dead-letter read RFC 0188 added for outbound deliveries. With it, a production host that serves no test seams can witness that its run-less delivery events carry no inbound content, which is the leg RFC 0230 cannot close on production today.
 
 ## Motivation
 
@@ -60,14 +60,14 @@ Each record names one dead-lettered delivery:
 | --- | --- | --- |
 | `subscriptionId` | id | equals the path segment |
 | `attemptEventId` | event id | the id of the dead-lettered `trigger.delivery.attempted` event |
-| `attempt` | object | that event's payload, exactly as emitted (`run-event-payloads.schema.json#triggerDeliveryAttempted`), `outcome: "dead-lettered"` |
+| `attempt` | object | the dead-lettered attempt, shaped as the `trigger.delivery.attempted` payload (`run-event-payloads.schema.json#triggerDeliveryAttempted`), `outcome: "dead-lettered"` |
 | `stateChange` | object, optional | the `trigger.subscription.state.changed` payload this dead-lettering caused, when it caused one |
 | `reason` | enum | `verification_failed` or `retries_exhausted` |
 | `deadLetteredAt` | date-time | when the host routed the delivery to the sink |
 | `expiresAt` | date-time | when the record ages out; `expiresAt − deadLetteredAt` matches `retentionDays` |
 
 1. **Content-free.** A record MUST NOT carry the inbound body, the inbound headers, the signature, the signing secret or any credential. `attempt` and `stateChange` are the events' own payloads, which `trigger-bridge.md` §C already requires to be content-free.
-2. **The same event.** `attempt` MUST be the payload of the event the host emitted, not a re-rendering of it. A reader who also has the seam sees the same object in both places.
+2. **The same fields.** `attempt` carries the fields the host would put in the `trigger.delivery.attempted` event for this delivery, and no others. Where the host also emits that event somewhere a reader can see it (a test seam), the two MUST agree.
 3. **A refused post is a dead-lettered delivery.** A delivery refused by a `required` verification check (§F.2) appears with `reason: "verification_failed"` and no `stateChange`, because a refused event MUST NOT change the subscription's state.
 
 ### §D. Prose
@@ -97,7 +97,7 @@ Server-free: the page schema and the facet validate in `spec-corpus-validity`. T
 | §B.2 another tenant's id answers `404` | status and envelope | the suite, with a second tenant's credential | witnessable — gated |
 | §B.3 a cursor from another subscription is refused | `400 validation_error` | the suite, with two subscriptions | witnessable — gated |
 | §C.1 a record carries no inbound content | the record, against the canary the suite posted | the suite, by posting a badly signed event | witnessable — gated |
-| §C.2 `attempt` is the emitted event's payload | equality with the seam's copy of the event | the suite, only where the seam is also served | witnessable — gated |
+| §C.2 `attempt` agrees with the emitted event | equality with the seam's copy of the event | the suite, only where the seam is also served | witnessable — seam-gated (the event-log seam) |
 | §C.3 a refused post appears, without a state change | the record's `reason` and absent `stateChange` | the suite, by posting a badly signed event | witnessable — gated |
 | §C `stateChange` is content-free | a record carrying `stateChange` | nobody, on a host without seams | unwitnessable — no wire surface causes a subscription state change (G2) |
 | §C `expiresAt − deadLetteredAt` matches `retentionDays` | the record | the suite, on any record | witnessable — gated |
@@ -128,11 +128,12 @@ Server-free: the page schema and the facet validate in `spec-corpus-validity`. T
    The author leans to **(a)**: it states plainly which half was witnessed, and it records `inapplicable` only for a condition no party can cause.
 2. Should the read be a general run-less event stream (Alternative 3) rather than a dead-letter list?
 3. Should a later RFC add pause and resume for trigger subscriptions, which would make the state change causable?
-4. Should `reason` add `backpressure` or `source-removed`, which `state.changed.reason` already names, for deliveries dead-lettered for those causes?
+4. **Where does a run-less event go?** `trigger-bridge.md` §C and v2 `webhooks.md` §Inbound triggers say a host MUST emit `trigger.delivery.attempted` and `trigger.subscription.state.changed`, but a dead-lettered delivery and a state change belong to no run, and the corpus names no log or channel for them. openwop-app, in production, emits neither for a dead-lettered delivery: it records a content-free row in its delivery store, and only its test seam appends the event (its session's report, 2026-10-03, from source). That is a reasonable reading of a rule that names no destination. This RFC's read is one answer: the record is where a run-less attempt becomes visible. Should the corpus say so, and say "record" rather than "emit" for run-less events?
+5. Should `reason` add `backpressure` or `source-removed`, which `state.changed.reason` already names, for deliveries dead-lettered for those causes?
 
 ## Implementation notes (non-normative)
 
-- **openwop-app** is the host that needs this for RFC 0230. Its seam already answers leg 4's query for the run-less events, so it keeps them somewhere; how much work the read is depends on where, which its session has not been asked yet.
+- **openwop-app** is the host that needs this for RFC 0230. Its session reports, from source (2026-10-03): dead-lettered and refused deliveries are already content-free rows in one host collection, so no new redaction is needed. The work is a by-subscription index (the read is a full scan today), a small history row for the state change, and retention for the collection (none today). Its estimate: one ADR, a day or two. No delivery reaches the RFC 0053 run sink there, which matches §D's correction.
 - **The v2 reference host** does not advertise `triggerBridge`, so it is untouched.
 - **Sequencing.** Spec, schema and facet at `Active`; the leg-4 path with its sabotage proof in the same suite release; openwop-app serves the read; then the production cut that RFC 0230 waits on.
 

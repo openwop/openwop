@@ -13987,6 +13987,23 @@
       ]
     },
     {
+      "id": "openwop.gap.0232.5",
+      "rfc": "0232",
+      "local": "G5",
+      "section": "§C, Unresolved question 4",
+      "surface": "The corpus requires a host to emit `trigger.delivery.attempted` and `trigger.subscription.state.changed` for run-less transitions but names no log or channel for them. openwop-app emits neither in production for a dead-lettered delivery; only its seam does.",
+      "witness": "unclassified",
+      "requirementId": null,
+      "disposition": "carried",
+      "target": "openwop.gap.0232.5",
+      "sources": [
+        {
+          "file": "RFCS/registers/0232-trigger-dead-letter-read.gaps.md",
+          "token": "G5"
+        }
+      ]
+    },
+    {
       "id": "openwop.gap.spec.a2a-integration.g1",
       "rfc": "0152",
       "local": "G1",
