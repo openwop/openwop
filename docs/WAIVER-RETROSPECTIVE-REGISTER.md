@@ -164,3 +164,4 @@ to land — and until then the zero is visibly a blocked obligation rather than 
 | 0228 | the error codes v1 named for host services, decided for v2 (additive; bootstrap waiver, not a §A.6 override) | in-scope-pending-assessment | — | — | `not-reviewed` |
 | 0231 | a host says which budget exhaustion behaviours it serves (additive; bootstrap waiver, not a §A.6 override) | in-scope-pending-assessment | — | — | `not-reviewed` |
 | 0229 | a production host can witness secret resolution without an oracle (certification and secret material; additive; STEWARD OVERRIDE of RFC 0147 §A.6) | in-scope-pending-assessment | — | — | `not-reviewed` |
+| 0232 | a trigger subscription's dead-lettered deliveries are readable (authorization/isolation and certification; additive; STEWARD OVERRIDE of RFC 0147 §A.6) | in-scope-pending-assessment | — | — | `not-reviewed` |

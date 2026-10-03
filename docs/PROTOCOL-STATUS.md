@@ -8,10 +8,10 @@
 | Surface | Current value | Source |
 |---|---:|---|
 | Spec prose documents | 61 | `spec/v1/*.md` |
-| JSON Schemas | 81 | `schemas/*.schema.json` |
-| OpenAPI operations | 58 | `api/openapi.yaml` |
+| JSON Schemas | 82 | `schemas/*.schema.json` |
+| OpenAPI operations | 59 | `api/openapi.yaml` |
 | AsyncAPI version | 3.1.0 | `api/asyncapi.yaml` |
-| Conformance scenario files | 591 | `conformance/src/scenarios/*.test.ts` |
+| Conformance scenario files | 592 | `conformance/src/scenarios/*.test.ts` |
 | RFCs tracked | 229 | `RFCS/[0-9][0-9][0-9][0-9]-*.md`, excluding template |
 
 ## Artifact Versions
@@ -64,15 +64,15 @@
 
 ## OpenAPI Operations
 
-`bulkCancelRuns`, `cancelRun`, `createAnnotation`, `createContentPage`, `createPromptTemplate`, `createRun`, `createTriggerSubscription`, `deleteContentPage`, `deletePromptTemplate`, `deleteTestPackVersion`, `deleteWorkspaceFile`, `diffRun`, `forkRun`, `getA2ATaskState`, `getAgent`, `getAgentOrgChart`, `getAgentOrgChartDepartment`, `getAgentRosterEntry`, `getArtifact`, `getCapabilities`, `getContentPage`, `getContentSettings`, `getEvalSummary`, `getOpenApiSpec`, `getPromptTemplate`, `getRun`, `getRunAncestry`, `getTestPackSignature`, `getTestPackTarball`, `getTool`, `getWorkflow`, `getWorkspaceFile`, `inspectInterruptByToken`, `listAgentDeployments`, `listAgentRoster`, `listAgents`, `listAnnotations`, `listContentPages`, `listPromptTemplates`, `listTools`, `listWorkspaceFiles`, `pauseRun`, `pollRunEvents`, `putContentSection`, `putContentSettings`, `putTestPackTarball`, `putWorkspaceFile`, `registerWebhook`, `renderPromptTemplate`, `resolveInterruptByRun`, `resolveInterruptByToken`, `resumeRun`, `rotateWebhookSecret`, `streamRunEvents`, `transitionAgentDeployment`, `unregisterWebhook`, `updatePromptTemplate`, `verifyAuditLog`
+`bulkCancelRuns`, `cancelRun`, `createAnnotation`, `createContentPage`, `createPromptTemplate`, `createRun`, `createTriggerSubscription`, `deleteContentPage`, `deletePromptTemplate`, `deleteTestPackVersion`, `deleteWorkspaceFile`, `diffRun`, `forkRun`, `getA2ATaskState`, `getAgent`, `getAgentOrgChart`, `getAgentOrgChartDepartment`, `getAgentRosterEntry`, `getArtifact`, `getCapabilities`, `getContentPage`, `getContentSettings`, `getEvalSummary`, `getOpenApiSpec`, `getPromptTemplate`, `getRun`, `getRunAncestry`, `getTestPackSignature`, `getTestPackTarball`, `getTool`, `getWorkflow`, `getWorkspaceFile`, `inspectInterruptByToken`, `listAgentDeployments`, `listAgentRoster`, `listAgents`, `listAnnotations`, `listContentPages`, `listPromptTemplates`, `listTools`, `listTriggerDeadLetters`, `listWorkspaceFiles`, `pauseRun`, `pollRunEvents`, `putContentSection`, `putContentSettings`, `putTestPackTarball`, `putWorkspaceFile`, `registerWebhook`, `renderPromptTemplate`, `resolveInterruptByRun`, `resolveInterruptByToken`, `resumeRun`, `rotateWebhookSecret`, `streamRunEvents`, `transitionAgentDeployment`, `unregisterWebhook`, `updatePromptTemplate`, `verifyAuditLog`
 
 ## RFC Status
 
 | Status | Count |
 |---|---:|
 | Accepted | 222 |
-| Active | 4 |
-| Draft | 2 |
+| Active | 5 |
+| Draft | 1 |
 | Superseded | 1 |
 
 | RFC | Title | Status |
@@ -305,7 +305,7 @@
 | RFC 0229 | a production host can witness secret resolution without an oracle | Accepted |
 | RFC 0230 | Inbound webhook ingest contract | Active |
 | RFC 0231 | a host says which budget exhaustion behaviours it serves | Accepted |
-| RFC 0232 | a trigger subscription's dead-lettered deliveries are readable | Draft |
+| RFC 0232 | a trigger subscription's dead-lettered deliveries are readable | Active |
 
 ## SDK Helper Coverage
 
@@ -329,8 +329,8 @@ The pack registry now lives in the [`openwop-registry`](https://github.com/openw
 
 ## Active Follow-Ups
 
-- 2 RFCs still `Draft` (RFC 0038, RFC 0232) — advance with schema/conformance proof or defer.
-- 4 RFCs `Active` (RFC 0121, RFC 0222, RFC 0228, RFC 0230) — wire-shape MAY shift compatibly within v1.x until promotion to `Accepted`.
+- 1 RFC still `Draft` (RFC 0038) — advance with schema/conformance proof or defer.
+- 5 RFCs `Active` (RFC 0121, RFC 0222, RFC 0228, RFC 0230, RFC 0232) — wire-shape MAY shift compatibly within v1.x until promotion to `Accepted`.
 - External audit, non-steward host recruitment, and non-steward maintainer recruitment remain external-action gates.
 - Multi-region idempotency and some optional-profile behavior checks remain lower-confidence than the core wire contract.
 

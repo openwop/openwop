@@ -436,6 +436,14 @@
       "class": "canonical"
     },
     {
+      "operationId": "listTriggerDeadLetters",
+      "method": "GET",
+      "pathKey": "/v1/trigger-subscriptions/{subscriptionId}/dead-letters",
+      "resolvedPath": "/v1/trigger-subscriptions/{subscriptionId}/dead-letters",
+      "tag": "triggers",
+      "class": "canonical"
+    },
+    {
       "operationId": "registerWebhook",
       "method": "POST",
       "pathKey": "/v1/webhooks",
@@ -469,10 +477,10 @@
     }
   ],
   "counts": {
-    "total": 58,
-    "canonical": 49,
+    "total": 59,
+    "canonical": 50,
     "hostExtension": 5,
     "testCatalog": 4
   },
-  "digest": "ab5e46df62da2401d3e119accef5378b564b0b3d679a5b05cc131d483b84762a"
+  "digest": "c461a49d47b4b7836611def8d9954f7f0e65ebf660cb2b1f6a6e730c0edf7848"
 }

@@ -36,7 +36,7 @@
         "failed",
         "dead-lettered"
       ],
-      "description": "The §B state. `active`: accepting + delivering; `paused`: retained, not delivering (operator-held); `failed`: delivery failing past policy (the webhooks.md circuit-breaker generalized); `dead-lettered`: terminal, deliveries routed to the RFC 0053 sink."
+      "description": "The §B state. `active`: accepting + delivering; `paused`: retained, not delivering (operator-held); `failed`: delivery failing past policy (the webhooks.md circuit-breaker generalized); `dead-lettered`: terminal, deliveries dead-lettered by the subscription (`webhooks.md` §Inbound triggers), not held by the run sink."
     },
     "dedupEnabled": {
       "type": "boolean",
@@ -45,7 +45,7 @@
     "retryPolicy": {
       "type": "object",
       "additionalProperties": false,
-      "description": "Delivery retry policy (§C-2). On exhaustion the subscription/delivery transitions to `dead-lettered` (RFC 0053).",
+      "description": "Delivery retry policy (§C-2). On exhaustion the subscription/delivery transitions to `dead-lettered`.",
       "properties": {
         "maxAttempts": {
           "type": "integer",

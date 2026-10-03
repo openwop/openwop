@@ -8,6 +8,7 @@
     "openwop.it.era-key-stamped-v1.a-run-the-host-just-created-carries-eventlogschemaversion": "openwop.requirement.version-negotiation.era-key-stamped",
     "openwop.it.pause-resume.pause-on-an-already-paused-run-is-a-no-op-200-202-idempotent": "openwop.it.pause-resume.pause-on-an-already-paused-run-returns-409-with-details-runstatus-paused-unless",
     "openwop.it.trigger-bridge-delivery.de-dups-by-dedupkey-retries-to-dead-letter-and-links-delivery-run-causation": "openwop.it.trigger-bridge-delivery.de-dups-by-dedupkey-a-repeated-delivery-is-effectively-once",
+    "openwop.it.trigger-bridge-delivery.keeps-the-run-less-trigger-events-content-free": "openwop.requirement.0083.trigger-delivery.runless-attempt-content-free",
     "openwop.it.v2-advertised-fixtures-exist.a-sampled-advertised-fixture-is-actually-creatable-not-just-listed": "openwop.requirement.0168.advertised-fixtures-exist",
     "openwop.it.v2-advertised-path-space-served.a-host-advertising-major-2-reaches-the-surfaces-it-already-serves-under-v1": "openwop.requirement.0172.advertised-path-space-served",
     "openwop.it.v2-alias-covers-reword.the-corpus-gate-script-exits-0": "openwop.requirement.0168.alias-covers-reword",

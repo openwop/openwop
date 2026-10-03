@@ -21,17 +21,17 @@ A [`TriggerSubscription`](../../schemas/trigger-subscription.schema.json) is a d
 | `active`        | accepting + delivering inbound events                                        | create / resume           |
 | `paused`        | retained but not delivering (operator-held)                                  | pause                     |
 | `failed`        | delivery failing past policy (the `webhooks.md` circuit-breaker generalized) | repeated delivery failure |
-| `dead-lettered` | terminal failure; deliveries routed to the RFC 0053 sink                     | retry exhaustion          |
+| `dead-lettered` | terminal failure; deliveries dead-lettered by the subscription (§C)         | retry exhaustion          |
 
-The record carries `subscriptionId`, `source`, `state`, `dedupEnabled`, the `retryPolicy`, and (for webhooks) the existing `(webhookId, secretFingerprint)` register keys — **unchanged**, with the state machine layered over them. `failed` → `dead-lettered` reuses RFC 0053's `deadLetter` sink + `retentionDays`.
+The record carries `subscriptionId`, `source`, `state`, `dedupEnabled`, the `retryPolicy`, and (for webhooks) the existing `(webhookId, secretFingerprint)` register keys — **unchanged**, with the state machine layered over them. A dead-lettered delivery started no run, so RFC 0053's `deadLetter` sink, which holds runs, does not hold it; the subscription keeps its own record of it (§C, RFC 0232).
 
 ## §C — Delivery model: attempts, dedup, retry, causation
 
 When an inbound event arrives on an `active` subscription, the host:
 
 1. **De-duplicates** by `dedupKey` (a caller- or host-derived stable key). When `triggerBridge.dedup` is advertised, a repeat `dedupKey` within the retention window MUST be a no-op returning the prior `runId` — at-least-once becomes effectively-once (the `idempotency.md` Layer-1 model applied to inbound triggers; dedup retention reuses the Layer-1 ≥24h floor with an optional override).
-2. **Attempts delivery**, recording each attempt; on failure, retries per `retryPolicy` (backoff, `maxAttempts`); on exhaustion, transitions the subscription/delivery to `dead-lettered` (RFC 0053). For `webhooks.durable: true`, this replaces the best-effort circuit-breaker-then-drop.
-3. **Links causation:** the run started by a successful delivery MUST carry the delivery's id as `causationId` on its `run.started` (reusing RFC 0040's `causationId` + optional `causationHostId` for cross-host inbound), so "which delivery (and which attempt) started this run" is answerable via the existing `/ancestry` endpoint. A `dead-lettered` delivery starts no run; the `trigger.delivery.attempted { outcome: "dead-lettered" }` event is the terminal record (no `runId`) and the RFC 0053 sink holds the delivery.
+2. **Attempts delivery**, recording each attempt; on failure, retries per `retryPolicy` (backoff, `maxAttempts`); on exhaustion, transitions the subscription/delivery to `dead-lettered`. For `webhooks.durable: true`, this replaces the best-effort circuit-breaker-then-drop.
+3. **Links causation:** the run started by a successful delivery MUST carry the delivery's id as `causationId` on its `run.started` (reusing RFC 0040's `causationId` + optional `causationHostId` for cross-host inbound), so "which delivery (and which attempt) started this run" is answerable via the existing `/ancestry` endpoint. A `dead-lettered` delivery starts no run; the `trigger.delivery.attempted { outcome: "dead-lettered" }` event is the terminal record (no `runId`), kept by the subscription, not by the RFC 0053 run sink.
 
 Two **content-free** events ([`run-event-payloads.schema.json`](../../schemas/run-event-payloads.schema.json)):
 
@@ -41,6 +41,15 @@ Two **content-free** events ([`run-event-payloads.schema.json`](../../schemas/ru
 | `trigger.delivery.attempted`         | `{ subscriptionId, dedupKey, attempt, outcome: "delivered"\|"retrying"\|"dead-lettered", runId? }` |
 
 Neither carries the inbound payload, headers, or credential material (SR-1) — only the subscription id, dedup key, attempt counter, outcome, and the resulting `runId`. Content-freeness MUSTs: `state.changed.reason` is a **closed enum** (`retry-exhausted`/`operator-paused`/`signature-invalid`/`backpressure`/`source-removed`/`provenance-unevaluable`) — a free-form reason would let a host spill an inbound URL/header into it; `delivery.attempted.dedupKey` MUST be a **host-opaque** key (e.g. `hash(subscriptionId + inbound-event-id)`) that does NOT embed inbound body/path/header content in cleartext; and a `TriggerSubscription.secretFingerprint` MUST be a **salted/host-keyed, truncated** one-way digest (≤32 chars, never a raw secret or a full unsalted `SHA256(secret)` — a brute-force oracle). A source listed in `capabilities.triggerBridge.sources[]` MUST actually be driven through the four-state machine + emit the two `trigger.*` events (no over-claiming a feature that isn't a durable subscription).
+
+**Run-less transitions are recorded (RFC 0232).** A dead-lettered attempt and a `trigger.subscription.state.changed` belong to no run, so they are on no run's event log. For such a run-less transition, "emit" above means the host MUST keep a content-free record carrying that event's payload fields. A host advertising `triggerBridge.deadLetter` MUST serve `GET /v1/trigger-subscriptions/{subscriptionId}/dead-letters` (`listTriggerDeadLetters`), which is where a dead-lettered attempt is visible:
+
+- the scope is `webhooks:manage`; another tenant's subscription id, an id the host never minted, and any id on a host that does not advertise the facet answer `404 not_found`;
+- `limit` is clamped to `maxPageSize`, and a `cursor` minted for another subscription MUST be refused `400 validation_error`;
+- records are newest first and readable for `retentionDays`; a record's `expiresAt − deadLetteredAt` matches it;
+- a record's `attempt` carries the fields of the `trigger.delivery.attempted` payload for that delivery, with `outcome: "dead-lettered"`, and its optional `stateChange` carries the `trigger.subscription.state.changed` payload the dead-lettering caused. Where the host also shows the event (a test seam), the two MUST agree;
+- a record MUST NOT carry the inbound body, the inbound headers, the signature, the signing secret, or any credential;
+- a delivery refused by a `required` verification check (§F.2) appears with `reason: "verification_failed"` and no `stateChange`, because a refused event MUST NOT change the subscription's state.
 
 ## §D — The `openwop-trigger-bridge` profile
 

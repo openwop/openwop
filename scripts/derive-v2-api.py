@@ -381,6 +381,11 @@ def v2_openapi_and_seams():
             '401': {'$ref': '#/components/responses/Unauthenticated'},
             '403': {'$ref': '#/components/responses/Forbidden'},
             '404': {'$ref': '#/components/responses/NotFound'}}}}
+    # RFC 0232 — the trigger dead-letter read is a v1 operation; its path segment is the
+    # tenant-bound subscriptionId kind at v2 (identity.md §5), as listWebhookDeadLetters' is.
+    for prm in paths['/trigger-subscriptions/{subscriptionId}/dead-letters']['get']['parameters']:
+        if prm.get('name') == 'subscriptionId':
+            prm['schema'] = {'$ref': '../../schemas/v2/ids.schema.json#/$defs/subscriptionId'}
     # RFC 0205 §A — getArtifact MAY answer the A2A Artifact shape, negotiated by Accept. The
     # v1 operation keeps its single application/json response (RFC 0205 §A.4); the second
     # media type is v2-only, so it is added here rather than in api/openapi.yaml.
