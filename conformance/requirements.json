@@ -33541,7 +33541,7 @@
     {
       "id": "openwop.it.v2-provider-conflict.two-definitions-of-one-bare-provider-id-fail-closed-the-later-registration-is-re",
       "file": "v2-provider-conflict.test.ts",
-      "line": 129,
+      "line": 130,
       "title": "two definitions of one bare provider id fail closed: the later registration is refused with connection_provider_conflict",
       "explicitId": "openwop.requirement.0177.provider-conflict.fail-closed",
       "citations": [
@@ -33555,7 +33555,7 @@
     {
       "id": "openwop.it.v2-provider-conflict.the-qualified-form-packname-acme-widgets-resolves-to-the-named-pack-s-definition",
       "file": "v2-provider-conflict.test.ts",
-      "line": 139,
+      "line": 140,
       "title": "the qualified form <packName>#acme-widgets resolves to the named pack's definition",
       "explicitId": "openwop.requirement.0177.provider-conflict.qualified-form",
       "citations": [
@@ -33569,7 +33569,7 @@
     {
       "id": "openwop.it.v2-provider-conflict.the-provider-registry-lists-each-bare-id-once-and-carries-no-endpoint-or-credent",
       "file": "v2-provider-conflict.test.ts",
-      "line": 149,
+      "line": 150,
       "title": "the provider registry lists each bare id once and carries no endpoint or credential (RFC 0233 §B)",
       "explicitId": "openwop.requirement.0233.provider-registry.unique",
       "citations": [

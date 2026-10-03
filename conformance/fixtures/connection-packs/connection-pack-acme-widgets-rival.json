@@ -3,7 +3,7 @@
   "version": "1.0.0",
   "kind": "connection",
   "engines": {
-    "openwop": ">=1.0.0"
+    "openwop": ">=2.0.0 <3.0.0"
   },
   "provider": {
     "id": "acme-widgets",

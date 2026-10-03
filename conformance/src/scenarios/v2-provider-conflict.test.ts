@@ -78,7 +78,8 @@ interface ResolveResult { resolved?: boolean; source?: 'pack' | 'builtin'; versi
 
 function fixture(): Manifest {
   const m = JSON.parse(readFileSync(FIXTURE, 'utf8')) as Manifest;
-  // The v1 fixture pins `>=1.0.0`; a v2 host reads that as `<2.0.0` (RFC 0177 §A.1).
+  // Both fixture files carry `>=2.0.0 <3.0.0` on disk since 2.45.12 (an operator installs them
+  // as-is for RFC 0233 §D). The rewrite is kept so an older checked-out fixture still installs.
   return { ...m, engines: { openwop: '>=2.0.0 <3.0.0' } };
 }
 function conflicting(base: Manifest): Manifest {

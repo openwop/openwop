@@ -2,7 +2,9 @@
   "name": "core.openwop.connections.acme-widgets",
   "version": "1.0.0",
   "kind": "connection",
-  "engines": { "openwop": ">=1.0.0" },
+  "engines": {
+    "openwop": ">=2.0.0 <3.0.0"
+  },
   "provider": {
     "id": "acme-widgets",
     "displayName": "Acme Widgets",
@@ -17,15 +19,37 @@
       },
       "scopes": {
         "read": [
-          { "key": "widget.read", "label": "Read widgets", "scopes": ["widget:read"] }
+          {
+            "key": "widget.read",
+            "label": "Read widgets",
+            "scopes": [
+              "widget:read"
+            ]
+          }
         ],
         "write": [
-          { "key": "widget.write", "label": "Write widgets", "scopes": ["widget:write"] }
+          {
+            "key": "widget.write",
+            "label": "Write widgets",
+            "scopes": [
+              "widget:write"
+            ]
+          }
         ]
       }
     },
-    "reach": { "mcp": { "server": { "url": "https://mcp.acme-widgets.example.com/mcp/", "transport": "http" } } },
-    "consumerNodes": ["core.openwop.mcp.invoke-tool", "core.openwop.mcp.read-resource"],
+    "reach": {
+      "mcp": {
+        "server": {
+          "url": "https://mcp.acme-widgets.example.com/mcp/",
+          "transport": "http"
+        }
+      }
+    },
+    "consumerNodes": [
+      "core.openwop.mcp.invoke-tool",
+      "core.openwop.mcp.read-resource"
+    ],
     "docsUrl": "https://docs.acme-widgets.example.com/oauth"
   }
 }
