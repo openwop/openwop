@@ -1,6 +1,6 @@
 # `@openwop/openwop-conformance` Changelog
 
-## [2.45.12] — unreleased — RFC 0233: the provider-identity rules have a normative witness
+## [2.45.12] — 2026-10-03 — RFC 0233: the provider-identity rules have a normative witness
 
 - **`v2-provider-conflict` gains a normative-surface path (RFC 0233).** Where the host advertises `connections.providerRead` it reads `GET /connection-providers` and `GET /connection-providers/{providerId}` (`?pack=` for the qualified form). The conflict is caused operator-side by installing the `connection-pack-acme-widgets` / `-rival` fixture pair, and the registry describes the outcome. The seam path still runs where the seams are served.
   - `openwop.requirement.0177.provider-conflict.fail-closed`: `acme-widgets` is held once by the first pack, and a `connection_provider_conflict` refusal names that holder.
