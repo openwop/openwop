@@ -8,6 +8,8 @@ Entries before this file was condensed carried full development detail. That tex
 
 ## [Unreleased]
 
+## [2.45.9] — 2026-10-02 — A trigger leg that observed nothing is inapplicable, not blocked
+
 - **Stream and change ingest fix.** `trigger-stream-cdc-sources` records `inapplicable`, not `blocked`, on a host that serves neither `stream` nor `change`. The `blocked` row denied a major-1 bundle.
 
 ## [2.45.8] — 2026-10-02 — RFC 0229 Accepted; RFC 0230's signed ingest witnessable on a certified run; v2 table schema witness

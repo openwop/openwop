@@ -19,23 +19,23 @@
   on 2026-10-02 (tier-1, the v2 reference host). **0038** is `Draft` (Parked). **0225**, **0226** and
   **0227** went `Accepted` since the last update (#1791, #1821, #1831). Every waived-window
   `Accepted` RFC is **provisional** (RFC 0156 §B).
-- **Suite:** **2.45.8 is published** (the release PR after #1861, tag `v2.45.8`; npm `latest` for
-  both packages). Releases since 2.44.2: 2.44.3–2.44.9, 2.45.0 (#1815, CORS preflight headers), 2.45.1
+- **Suite:** **2.45.9 is published** (tag `v2.45.9`; npm `latest` for both packages). Releases since 2.44.2: 2.44.3–2.44.9, 2.45.0 (#1815, CORS preflight headers), 2.45.1
   (#1819), 2.45.2 (#1822), 2.45.3 (#1835), 2.45.4 (#1840: the unclaimed any-of floor fix, the v2
   ports of `production-backpressure` and `budget-enforcement`, the host-free gate), 2.45.5 (the
   unclaimed prefix floor fix), 2.45.6 (RFC 0231: the `budget.onExhaustion` facet, its refusal rule
   and `v2-budget-exhaustion-facet`) and 2.45.7 (#1854: `v2-workspace-scope-from-identity` no longer
   fails a strict-mode host that does not advertise `workspace`) and 2.45.8 (RFC 0229 `Accepted`;
-  `trigger-bridge-delivery` runs every witness path a host offers, #1861; `v2-table-schema-enforcement`, #1859). **A host that cut on 2.45.3–2.45.6
+  `trigger-bridge-delivery` runs every witness path a host offers, #1861; `v2-table-schema-enforcement`, #1859) and 2.45.9 (#1863: `trigger-stream-cdc-sources` records
+  `inapplicable`, not `blocked`, on a host without `stream`/`change`; **a major-1 host without them
+  should cut on 2.45.9**, or the row denies its bundle). **A host that cut on 2.45.3–2.45.6
   in strict mode without `workspace` should re-cut on 2.45.7**, or opt out `family.workspace`. **A major-1 host that cut a v3 bundle on 2.45.3 without claiming
   `openwop-secrets`, or on any suite without claiming `openwop-interrupts`, should re-cut on
   2.45.5.** The v2 reference host has cut on 2.45.6 and MyndHyve on 2.45.5; openwop-app has not cut on
-  2.45.3 or later. **The 2.45.9 cycle is open** (`trigger-stream-cdc-sources` no longer records
-  `blocked` on a host without `stream`/`change`; openwop-app's RFC 0230 cut needs it, or the row
-  denies its major-1 bundle). Take a release lock
+  2.45.3 or later. No cycle is open. Take a release lock
   (`/tmp/claude-501/openwop-release-<ver>.lock`) before cutting.
-  - A PR that changes packed content rides the open 2.45.9 cycle; do not cut it without the
-    maintainer.
+  - Until a 2.45.10 cycle opens, a PR that leaves the version alone must not re-stamp: restore
+    `spec-artifacts/CORPUS-STAMP.json` and `evidence/corpus-ledger.json` before committing. A PR
+    that changes packed content must open the cycle itself.
 - **Normative homes:** all 73 core families have v2 homes (#1802–#1804). The kernel budget is
   37,324 / 37,800 words, with the generated error table outside it (RFC 0227).
 - **SDKs:** **2.5.0** (npm, PyPI, `go/v2.5.0`) sends `OpenWOP-Client-Version` on every request.
@@ -148,11 +148,10 @@ Defects outside the spec:
     - G6 (openwop-app): fixed and deployed (#4238); needs a certified cut.
     - G7 (MyndHyve): not fixed. `no_active_deployment` goes out as
       `myndhyve.no_active_deployment` at major 2; the denial envelope is untraced.
-- [ ] **MyndHyve follow-up after its certified 2.45.5 cut** (RFC 0229 `Accepted` on it,
-      2026-10-02): withdraw the `openwop-smoke-byok-roundtrip` fixture from production discovery,
-      the oracle RFC 0229 says a production host should withhold. It still runs with
-      `OPENWOP_CONFORMANCE_FIXTURES=1` and `OPENWOP_TEST_SEAM_ENABLED`. The sealed value's deletion
-      is untested on the three cap-breach paths.
+- [x] **MyndHyve follow-ups done (2026-10-02, its session):** `openwop-smoke-byok-roundtrip` is
+      withdrawn from production (build 68718d731, myndhyve#591; its next cut records
+      `v2-secret-canary-absent` `inapplicable`), and the sealed-row delete is tested before the
+      terminal on all three cap-breach paths. Still open there: RFC 0228 G1's `503` half and G7.
 - [ ] **RFC 0230** needs openwop-app to advertise `inboundSigning` and pass the path in strict mode on a production cut; its other boxes are ticked. Since 2.45.8 the signed path runs with the seams mounted too, so a certified cut that keeps the seams can witness it (maintainer decision 2026-10-02).
 - [ ] **Host evidence owed, as the host sessions report it (2026-10-02):**
   - RFC 0230 (openwop-app, session 4d): on 2.45.8, a seam-free run with
