@@ -182,6 +182,7 @@ Every vendor namespace — capability records ([capabilities.md](capabilities.md
 - An org MUST NOT be named after a manifest segment under `/host/` (`reservedOrgs`).
 - A host SHOULD advertise the mount under `extensions.<org>.<name>`.
 - A `/v1/host/<org>/…` twin MAY ride the overlap; it retires atomically with `/v1`.
+- After retirement a host MUST NOT serve an operation at the twin. It MAY answer a `GET` or `HEAD` there with `308`, no body, and `Location` set to the same `/host/<org>/…` path.
 
 ## 6. Migration rows
 
