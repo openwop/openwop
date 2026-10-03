@@ -19,21 +19,22 @@
   on 2026-10-02 (tier-1, the v2 reference host). **0038** is `Draft` (Parked). **0225**, **0226** and
   **0227** went `Accepted` since the last update (#1791, #1821, #1831). Every waived-window
   `Accepted` RFC is **provisional** (RFC 0156 §B).
-- **Suite:** **2.45.7 is published** (#1855, tag `v2.45.7` on `573fb413`; npm `latest` for both
-  packages). Releases since 2.44.2: 2.44.3–2.44.9, 2.45.0 (#1815, CORS preflight headers), 2.45.1
+- **Suite:** **2.45.8 is published** (the release PR after #1861, tag `v2.45.8`; npm `latest` for
+  both packages). Releases since 2.44.2: 2.44.3–2.44.9, 2.45.0 (#1815, CORS preflight headers), 2.45.1
   (#1819), 2.45.2 (#1822), 2.45.3 (#1835), 2.45.4 (#1840: the unclaimed any-of floor fix, the v2
   ports of `production-backpressure` and `budget-enforcement`, the host-free gate), 2.45.5 (the
   unclaimed prefix floor fix), 2.45.6 (RFC 0231: the `budget.onExhaustion` facet, its refusal rule
   and `v2-budget-exhaustion-facet`) and 2.45.7 (#1854: `v2-workspace-scope-from-identity` no longer
-  fails a strict-mode host that does not advertise `workspace`). **A host that cut on 2.45.3–2.45.6
+  fails a strict-mode host that does not advertise `workspace`) and 2.45.8 (RFC 0229 `Accepted`;
+  `trigger-bridge-delivery` runs every witness path a host offers, #1861; `v2-table-schema-enforcement`, #1859). **A host that cut on 2.45.3–2.45.6
   in strict mode without `workspace` should re-cut on 2.45.7**, or opt out `family.workspace`. **A major-1 host that cut a v3 bundle on 2.45.3 without claiming
   `openwop-secrets`, or on any suite without claiming `openwop-interrupts`, should re-cut on
   2.45.5.** The v2 reference host has cut on 2.45.6 and MyndHyve on 2.45.5; openwop-app has not cut on
-  2.45.3 or later. **The 2.45.8 cycle is open** (RFC 0229 `Accepted`;
-  `v2-table-schema-enforcement`). Take a release lock
+  2.45.3 or later. No cycle is open. Take a release lock
   (`/tmp/claude-501/openwop-release-<ver>.lock`) before cutting.
-  - A PR that changes packed content rides the open 2.45.8 cycle; do not cut it without the
-    maintainer.
+  - Until a 2.45.9 cycle opens, a PR that leaves the version alone must not re-stamp: restore
+    `spec-artifacts/CORPUS-STAMP.json` and `evidence/corpus-ledger.json` before committing. A PR
+    that changes packed content must open the cycle itself.
 - **Normative homes:** all 73 core families have v2 homes (#1802–#1804). The kernel budget is
   37,324 / 37,800 words, with the generated error table outside it (RFC 0227).
 - **SDKs:** **2.5.0** (npm, PyPI, `go/v2.5.0`) sends `OpenWOP-Client-Version` on every request.
@@ -153,10 +154,13 @@ Defects outside the spec:
       is untested on the three cap-breach paths.
 - [ ] **RFC 0230** needs openwop-app to advertise `inboundSigning` and pass the path in strict mode on a production cut; its other boxes are ticked. Since 2.45.8 the signed path runs with the seams mounted too, so a certified cut that keeps the seams can witness it (maintainer decision 2026-10-02).
 - [ ] **Host evidence owed, as the host sessions report it (2026-10-02):**
-  - RFC 0230 (openwop-app): blocked on an operator decision plus a pin bump. Measured on
-    production by the flag's owner: `OPENWOP_TRIGGER_INBOUND_SIGNING` is unset, so the facet is
-    not advertised; the suite pin is `^2.45.2`; and its last cut had ten timeout failures at
-    major 1 that are still being traced.
+  - RFC 0230 (openwop-app, session 4d): on 2.45.8, a seam-free run with
+    `OPENWOP_TRIGGER_INBOUND_SIGNING=true` (expects legs 1–3 passing on the signed path and the
+    refused-event file `inapplicable`), then the pin bump, then the production flag and a certified
+    cut, confirmed with the operator first. Production is `6de66ea16` on a dedicated-core
+    database (`db-custom-1-3840`). The host reports the earlier cut's major-1 timeout reds had two
+    causes, both addressed: a full ownership-table scan (openwop-app #4333) and `db-f1-micro`
+    throttling with two live instances.
 - **Decided 2026-10-01 (architect review, at the maintainer's request); no work owed:**
   - `memoryScopeIsolation: "isolated"` is not carried in v2. It never had a schema, and
     `openwop.gap.0189.17` is closed.
