@@ -1,5 +1,9 @@
 # `@openwop/openwop-conformance` Changelog
 
+## [2.45.12] — unreleased — RFC 0233 filed
+
+- **The 2.45.12 cycle opens.** RFC 0233's gap register changes the packed `spec/v1/gaps.json`. No scenario changes in this PR.
+
 ## [2.45.11] — 2026-10-03 — the trigger bridge is witnessed at major 2
 
 - **New scenarios `v2-trigger-bridge-delivery` and `v2-trigger-dead-letter-read`** (major 2). They port the trigger delivery legs and RFC 0232's read rules to the v2 surface (`/trigger-subscriptions/…`, bound ids `~`-projected). They share their requirement ids with the v1 twins, as the v2 secrets witness does. Each runs only the normative-surface path: there is no trigger seam at major 2.
