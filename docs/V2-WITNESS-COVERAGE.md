@@ -10,7 +10,7 @@ Every v2 core family now has a v2 normative home (RFC 0189). Many of its rules a
 
 - **Families (73 core):** 46 v2-witnessed, 24 v1-only, 3 unwitnessed. Of the 54 `witnessable-gated` families, 20 are v1-only; every unwitnessed family is `claims-check`.
 - **At v1 end-of-support:** the 24 v1-only families, and the 112 obligation units attributed to them, lose their only witness.
-- **Obligation units (887 in `spec/v2/core/`):** 573 (65%) sit in a section a major-2 scenario cites; 314 sit in 107 sections no major-2 scenario cites.
+- **Obligation units (888 in `spec/v2/core/`):** 574 (65%) sit in a section a major-2 scenario cites; 314 sit in 107 sections no major-2 scenario cites.
 - **Declaration links:** 0 core families declare `floorScenarios`; 2 declare `requirementIds`. The family-to-test link exists only in scenario code and citations, although `overview.md` §What a MUST means says every core MUST has an id in `requirements.json`.
 - **Scenarios:** 594 registered, 154 run at major 2. 33 major-2 citations name a v2 core section this script cannot match to a heading (see Citation gaps).
 
@@ -131,7 +131,7 @@ Every v2 core family now has a v2 normative home (RFC 0189). Many of its rules a
 | `security-defaults.md` | 27 | 19 (70%) | `purposePropagation`, `sandbox`, `compensation`, `auditLogIntegrity` |
 | `storage.md` | 19 | 8 (42%) | `fs`, `kvStorage`, `tableStorage`, `sql`, `nosql`, `vectorStore`, `searchIndex`, `blobStorage`, `cache` |
 | `tool-catalog.md` | 14 | 11 (79%) | `toolCatalog` |
-| `versioning.md` | 40 | 33 (83%) | – |
+| `versioning.md` | 41 | 34 (83%) | – |
 | `webhooks.md` | 37 | 37 (100%) | `webhooks`, `triggerBridge` |
 | `workflow-chain-packs.md` | 5 | 1 (20%) | `workflowChainPacks` |
 
@@ -410,8 +410,8 @@ node scripts/report-v2-witness-coverage.mjs --write  # regenerate this file
     }
   },
   "obligationUnits": {
-    "total": 887,
-    "inV2CitedSections": 573,
+    "total": 888,
+    "inV2CitedSections": 574,
     "inUncitedSections": 314,
     "sectionsWithObligations": 268,
     "sectionsWithNoV2Citation": 107

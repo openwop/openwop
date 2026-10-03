@@ -1,6 +1,6 @@
 # `@openwop/openwop-conformance` Changelog
 
-## [2.45.11] — unreleased — the trigger bridge is witnessed at major 2
+## [2.45.11] — 2026-10-03 — the trigger bridge is witnessed at major 2
 
 - **New scenarios `v2-trigger-bridge-delivery` and `v2-trigger-dead-letter-read`** (major 2). They port the trigger delivery legs and RFC 0232's read rules to the v2 surface (`/trigger-subscriptions/…`, bound ids `~`-projected). They share their requirement ids with the v1 twins, as the v2 secrets witness does. Each runs only the normative-surface path: there is no trigger seam at major 2.
   - Legs: `0083.trigger-delivery.dedup`, `.dead-letter`, `.causation` and `.runless-attempt-content-free`, through the signed ingest and `GET /trigger-subscriptions/{subscriptionId}/dead-letters`. `.runless-state-change-content-free` is `inapplicable`: no wire surface causes a state change and no seam drives one (RFC 0232 gap G2).
