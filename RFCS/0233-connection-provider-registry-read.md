@@ -101,9 +101,11 @@ Dispositions (§Decisions 2): no `packsSupported`, or no `providerRead` and no s
 | Requirement | Observable — what an outside party sees | Who can cause the condition | Verdict |
 | --- | --- | --- | --- |
 | §B.1, §B.4, §B.6 a host advertising the facet serves a schema-valid, content-free registry with each bare id once — `openwop.requirement.0233.provider-registry.unique` | `200`, the closed page schema, no duplicate `id` | the suite, unaided | witnessable — executed-pass required on a host bundle |
-| §B.5 a refused registration appears with its code — `openwop.requirement.0177.provider-conflict.fail-closed` | the `refusals` row for `acme-widgets` held by the first fixture pack, and the id listed once | the operator, by installing the §D fixture pair | witnessable — executed-pass required on a host bundle |
-| §C.1, §C.3 a qualified reference resolves only to the named pack; an unresolvable one is `404 connection_provider_unresolved` — `openwop.requirement.0177.provider-conflict.qualified-form` | the resolve answers for both fixture packs and for the bare id | the operator, by installing the §D fixture pair | witnessable — executed-pass required on a host bundle |
+| §B.5 a refused registration appears with its code — RFC 0177's `openwop.requirement.0177.provider-conflict` (leg `.fail-closed`) | the `refusals` row for `acme-widgets` held by the first fixture pack, and the id listed once | the operator, by installing the §D fixture pair | witnessable — executed-pass required on a host bundle |
+| §C.1, §C.3 a qualified reference resolves only to the named pack; an unresolvable one is `404 connection_provider_unresolved` — RFC 0177's `openwop.requirement.0177.provider-conflict` (leg `.qualified-form`) | the resolve answers for both fixture packs and for the bare id | the operator, by installing the §D fixture pair | witnessable — executed-pass required on a host bundle |
 | §B.7 refusals reflect the serving process's installs | none from outside: a restart is not observable | nobody, from outside | unwitnessable — a process boundary is not on the wire (MAY, not a MUST) |
+
+The §B.5 and §C rows name RFC 0177's parent id, not its two legs. This RFC makes that requirement witnessable without a seam; it is not a new one. Naming the legs would declare them as requirements of their own, and `check-accepted-predicate` would then stop counting them toward RFC 0177. Acceptance still needs both legs `executed-pass` (§Acceptance criteria).
 
 ## Compatibility
 

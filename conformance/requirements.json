@@ -3,10 +3,10 @@
   "generatedFrom": "src/scenarios/*.test.ts",
   "counts": {
     "files": 669,
-    "tests": 2558,
-    "withStableId": 2558,
+    "tests": 2562,
+    "withStableId": 2562,
     "interpolatedTitles": 0,
-    "explicitIds": 2435
+    "explicitIds": 2439
   },
   "records": [
     {
@@ -26311,7 +26311,7 @@
     {
       "id": "openwop.it.trigger-bridge-delivery.de-dups-by-dedupkey-a-repeated-delivery-is-effectively-once",
       "file": "trigger-bridge-delivery.test.ts",
-      "line": 171,
+      "line": 191,
       "title": "de-dups by dedupKey: a repeated delivery is effectively-once",
       "explicitId": "openwop.requirement.0083.trigger-delivery.dedup",
       "citations": [
@@ -26347,7 +26347,7 @@
     {
       "id": "openwop.it.trigger-bridge-delivery.dead-letters-an-exhausted-or-refused-delivery-without-starting-a-run",
       "file": "trigger-bridge-delivery.test.ts",
-      "line": 195,
+      "line": 215,
       "title": "dead-letters an exhausted or refused delivery without starting a run",
       "explicitId": "openwop.requirement.0083.trigger-delivery.dead-letter",
       "citations": [
@@ -26378,9 +26378,79 @@
       ]
     },
     {
+      "id": "openwop.it.trigger-bridge-delivery.refuses-a-webhook-timestamp-more-than-300-s-off-without-starting-a-run",
+      "file": "trigger-bridge-delivery.test.ts",
+      "line": 238,
+      "title": "refuses a webhook-timestamp more than 300 s off without starting a run",
+      "explicitId": "openwop.requirement.0230.stale-timestamp-refused",
+      "citations": [
+        {
+          "section": "trigger-bridge.md §F.6",
+          "requirement": null,
+          "interpolated": true
+        },
+        {
+          "section": "trigger-bridge.md §F.6",
+          "requirement": null,
+          "interpolated": true
+        },
+        {
+          "section": "trigger-bridge.md §F.6",
+          "requirement": null,
+          "interpolated": true
+        },
+        {
+          "section": "trigger-bridge.md §F.6",
+          "requirement": null,
+          "interpolated": true
+        },
+        {
+          "section": "trigger-bridge.md §F.6 (RFC 0230 §C.1)",
+          "requirement": null,
+          "interpolated": true
+        },
+        {
+          "section": "trigger-bridge.md §F.6",
+          "requirement": null,
+          "interpolated": true
+        }
+      ]
+    },
+    {
+      "id": "openwop.it.trigger-bridge-delivery.returns-the-signing-secret-once-a-re-read-carries-no-whsec-value",
+      "file": "trigger-bridge-delivery.test.ts",
+      "line": 260,
+      "title": "returns the signing secret once: a re-read carries no whsec_ value",
+      "explicitId": "openwop.requirement.0230.signing-secret-once",
+      "citations": [
+        {
+          "section": "trigger-bridge.md §F.6",
+          "requirement": null,
+          "interpolated": true
+        },
+        {
+          "section": "trigger-bridge.md §F.6",
+          "requirement": null,
+          "interpolated": true
+        },
+        {
+          "section": "trigger-bridge.md §F.6 (SR-1)",
+          "requirement": "a re-read MUST NOT carry signingSecret"
+        },
+        {
+          "section": "trigger-bridge.md §F.6 (SR-1)",
+          "requirement": "a re-read MUST NOT carry the secret's value"
+        },
+        {
+          "section": "trigger-bridge.md §F.6 (SR-1)",
+          "requirement": "a re-read MUST NOT carry any whsec_ secret"
+        }
+      ]
+    },
+    {
       "id": "openwop.it.trigger-bridge-delivery.links-delivery-run-causation-on-run-started",
       "file": "trigger-bridge-delivery.test.ts",
-      "line": 218,
+      "line": 277,
       "title": "links delivery→run causation on run.started",
       "explicitId": "openwop.requirement.0083.trigger-delivery.causation",
       "citations": [
@@ -26416,7 +26486,7 @@
     {
       "id": "openwop.it.trigger-bridge-delivery.keeps-a-dead-lettered-run-less-attempt-content-free",
       "file": "trigger-bridge-delivery.test.ts",
-      "line": 247,
+      "line": 306,
       "title": "keeps a dead-lettered run-less attempt content-free",
       "explicitId": "openwop.requirement.0083.trigger-delivery.runless-attempt-content-free",
       "citations": [
@@ -26440,7 +26510,7 @@
     {
       "id": "openwop.it.trigger-bridge-delivery.keeps-a-run-less-subscription-state-change-content-free",
       "file": "trigger-bridge-delivery.test.ts",
-      "line": 278,
+      "line": 337,
       "title": "keeps a run-less subscription state change content-free",
       "explicitId": "openwop.requirement.0083.trigger-delivery.runless-state-change-content-free",
       "citations": [
@@ -35272,7 +35342,7 @@
     {
       "id": "openwop.it.v2-trigger-bridge-delivery.de-dups-a-repeated-webhook-id-effectively-once",
       "file": "v2-trigger-bridge-delivery.test.ts",
-      "line": 59,
+      "line": 68,
       "title": "de-dups a repeated webhook-id: effectively-once",
       "explicitId": "openwop.requirement.0083.trigger-delivery.dedup",
       "citations": [
@@ -35286,7 +35356,7 @@
     {
       "id": "openwop.it.v2-trigger-bridge-delivery.a-refused-post-starts-no-run-and-leaves-the-subscription-active",
       "file": "v2-trigger-bridge-delivery.test.ts",
-      "line": 69,
+      "line": 78,
       "title": "a refused post starts no run and leaves the subscription active",
       "explicitId": "openwop.requirement.0083.trigger-delivery.dead-letter",
       "citations": [
@@ -35298,9 +35368,37 @@
       ]
     },
     {
+      "id": "openwop.it.v2-trigger-bridge-delivery.refuses-a-webhook-timestamp-more-than-300-s-off-without-starting-a-run",
+      "file": "v2-trigger-bridge-delivery.test.ts",
+      "line": 88,
+      "title": "refuses a webhook-timestamp more than 300 s off without starting a run",
+      "explicitId": "openwop.requirement.0230.stale-timestamp-refused",
+      "citations": [
+        {
+          "section": null,
+          "requirement": null,
+          "interpolated": true
+        }
+      ]
+    },
+    {
+      "id": "openwop.it.v2-trigger-bridge-delivery.returns-the-signing-secret-once-a-re-read-carries-no-whsec-value",
+      "file": "v2-trigger-bridge-delivery.test.ts",
+      "line": 98,
+      "title": "returns the signing secret once: a re-read carries no whsec_ value",
+      "explicitId": "openwop.requirement.0230.signing-secret-once",
+      "citations": [
+        {
+          "section": null,
+          "requirement": null,
+          "interpolated": true
+        }
+      ]
+    },
+    {
       "id": "openwop.it.v2-trigger-bridge-delivery.links-delivery-to-run-run-started-carries-the-delivery-as-causationid",
       "file": "v2-trigger-bridge-delivery.test.ts",
-      "line": 79,
+      "line": 108,
       "title": "links delivery to run: run.started carries the delivery as causationId",
       "explicitId": "openwop.requirement.0083.trigger-delivery.causation",
       "citations": [
@@ -35314,7 +35412,7 @@
     {
       "id": "openwop.it.v2-trigger-bridge-delivery.keeps-a-dead-lettered-run-less-attempt-content-free",
       "file": "v2-trigger-bridge-delivery.test.ts",
-      "line": 89,
+      "line": 118,
       "title": "keeps a dead-lettered run-less attempt content-free",
       "explicitId": "openwop.requirement.0083.trigger-delivery.runless-attempt-content-free",
       "citations": [
@@ -35328,7 +35426,7 @@
     {
       "id": "openwop.it.v2-trigger-bridge-delivery.keeps-a-run-less-subscription-state-change-content-free",
       "file": "v2-trigger-bridge-delivery.test.ts",
-      "line": 99,
+      "line": 128,
       "title": "keeps a run-less subscription state change content-free",
       "explicitId": "openwop.requirement.0083.trigger-delivery.runless-state-change-content-free",
       "citations": [
