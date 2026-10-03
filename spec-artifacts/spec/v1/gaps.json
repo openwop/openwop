@@ -13919,6 +13919,74 @@
       ]
     },
     {
+      "id": "openwop.gap.0232.1",
+      "rfc": "0232",
+      "local": "G1",
+      "section": "§E",
+      "surface": "How leg 4 is scored on a host where only the read is available: split the requirement and record the state-change half `inapplicable` without a seam (a), split and move that half out of the floor (b), or keep one id (c). Unresolved question 1.",
+      "witness": "unclassified",
+      "requirementId": null,
+      "disposition": "carried",
+      "target": "openwop.gap.0232.1",
+      "sources": [
+        {
+          "file": "RFCS/registers/0232-trigger-dead-letter-read.gaps.md",
+          "token": "G1"
+        }
+      ]
+    },
+    {
+      "id": "openwop.gap.0232.2",
+      "rfc": "0232",
+      "local": "G2",
+      "section": "§C, Falsifiability",
+      "surface": "A `stateChange` record's content-freeness cannot be witnessed on a host without seams: no wire surface causes a subscription state change.",
+      "witness": "unclassified",
+      "requirementId": null,
+      "disposition": "externally-gated",
+      "target": "trigger-subscription-pause-surface",
+      "sources": [
+        {
+          "file": "RFCS/registers/0232-trigger-dead-letter-read.gaps.md",
+          "token": "G2"
+        }
+      ]
+    },
+    {
+      "id": "openwop.gap.0232.3",
+      "rfc": "0232",
+      "local": "G3",
+      "section": "§B",
+      "surface": "No host serves the read, so none of the §E rows has a witness.",
+      "witness": "unclassified",
+      "requirementId": null,
+      "disposition": "externally-gated",
+      "target": "openwop-app-serves-trigger-dead-letters",
+      "sources": [
+        {
+          "file": "RFCS/registers/0232-trigger-dead-letter-read.gaps.md",
+          "token": "G3"
+        }
+      ]
+    },
+    {
+      "id": "openwop.gap.0232.4",
+      "rfc": "0232",
+      "local": "G4",
+      "section": "§D",
+      "surface": "Whether any host routes dead-lettered trigger deliveries to the RFC 0053 run sink, which §D's correction would change for it.",
+      "witness": "unclassified",
+      "requirementId": null,
+      "disposition": "carried",
+      "target": "openwop.gap.0232.4",
+      "sources": [
+        {
+          "file": "RFCS/registers/0232-trigger-dead-letter-read.gaps.md",
+          "token": "G4"
+        }
+      ]
+    },
+    {
       "id": "openwop.gap.spec.a2a-integration.g1",
       "rfc": "0152",
       "local": "G1",

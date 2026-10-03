@@ -1,5 +1,9 @@
 # `@openwop/openwop-conformance` Changelog
 
+## [2.45.10] — unreleased — RFC 0232 filed
+
+- **The 2.45.10 cycle opens.** RFC 0232's gap register changes the packed `spec/v1/gaps.json`. No scenario changes in this PR.
+
 ## [2.45.9] — 2026-10-02 — a trigger leg that observed nothing is inapplicable, not blocked
 
 - **Fix: `trigger-stream-cdc-sources` no longer records `blocked` on a host that serves neither `stream` nor `change`.** The ingest leg skipped both sources on such a host and then passed with zero assertions and no reason. RFC 0148 §A records that as `blocked`, and a `blocked` row denies a major-1 bundle (RFC 0168 §E.1). It now records `inapplicable`, with the reason. The dedup leg's pre-RFC 0127 branch said `blocked` for the same condition and now says `inapplicable`. An unwired seam is still `blocked`, and a host that advertises either source and refuses it still fails.
