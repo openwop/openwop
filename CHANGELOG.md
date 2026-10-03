@@ -8,6 +8,7 @@ Entries before this file was condensed carried full development detail. That tex
 
 ## [Unreleased]
 
+- **RFC 0233 is Active** (comment window waived by steward override). Optional reads `GET /connections/providers` and `GET /connections/providers/{providerId}` behind `connections.providerRead`, under `manifest:read`; `v2-provider-conflict` reads them instead of a seam.
 - **RFC 0233 filed (Draft).** Optional v2 reads of a host's connection-provider registry and its refused registrations, behind `connections.providerRead`, so the provider-identity MUSTs get the normative observation path `conformance.md` §Witness class requires.
 
 ## [2.45.11] — 2026-10-03 — The trigger bridge is witnessed at major 2; a retired vendor twin may forward reads

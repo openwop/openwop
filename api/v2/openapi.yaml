@@ -58,6 +58,8 @@ tags:
   description: 'Localized authored content: public delivery and tenant-scoped admin CRUD. Gated on `capabilities.content.supported`.'
 - name: host
   description: Host-capability resources, such as the agent workspace file store (gated on `capabilities.workspace.*`).
+- name: connections
+  description: 'Connection-pack provider registry: the definitions a host resolves against and the registrations it refused.'
 paths:
   /.well-known/openwop:
     get:
@@ -3318,6 +3320,92 @@ paths:
         - webhooks:manage
       - OpenIdConnect:
         - webhooks:manage
+  /connections/providers:
+    get:
+      tags:
+      - connections
+      operationId: listConnectionProviders
+      summary: List the host's connection providers and refused pack registrations
+      description: 'Every provider definition the host resolves against, built-ins included, each bare id once, and the pack
+        registrations it refused under `connection-packs.md` §Provider identity. Host-global: no tenant data. Gated on `connections.providerRead`:
+        a host that does not advertise it answers `404 not_found`.'
+      responses:
+        '200':
+          description: The registry.
+          content:
+            application/json:
+              schema:
+                $ref: ../../schemas/v2/connection-provider-registry.schema.json
+          headers:
+            OpenWOP-Version:
+              $ref: '#/components/headers/OpenWOPVersion'
+        '401':
+          $ref: '#/components/responses/Unauthenticated'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          $ref: '#/components/responses/NotFound'
+      parameters:
+      - $ref: '#/components/parameters/OpenWOPVersion'
+      - $ref: '#/components/parameters/OpenWOPClientVersion'
+      security:
+      - ApiKeyAuth:
+        - manifest:read
+      - OAuth2:
+        - manifest:read
+      - OpenIdConnect:
+        - manifest:read
+  /connections/providers/{providerId}:
+    get:
+      tags:
+      - connections
+      operationId: resolveConnectionProvider
+      summary: Resolve one connection provider reference
+      description: 'Resolves a bare provider id, or with `pack` the qualified form `<packName>#<providerId>`, to the one definition
+        it names. A bare id resolves only when exactly one definition exists; with `pack` it resolves only to that pack''s
+        definition. Not resolvable: `404` `connection_provider_unresolved`. Gated on `connections.providerRead`.'
+      parameters:
+      - name: providerId
+        in: path
+        required: true
+        schema:
+          type: string
+          minLength: 1
+          maxLength: 128
+        description: The bare provider id.
+      - name: pack
+        in: query
+        required: false
+        schema:
+          type: string
+          minLength: 1
+          maxLength: 214
+        description: 'A pack name: the qualified form, carried as a query parameter so no `#` travels in the path.'
+      - $ref: '#/components/parameters/OpenWOPVersion'
+      - $ref: '#/components/parameters/OpenWOPClientVersion'
+      responses:
+        '200':
+          description: The resolved definition.
+          content:
+            application/json:
+              schema:
+                $ref: ../../schemas/v2/connection-provider-registry.schema.json#/$defs/provider
+          headers:
+            OpenWOP-Version:
+              $ref: '#/components/headers/OpenWOPVersion'
+        '401':
+          $ref: '#/components/responses/Unauthenticated'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          $ref: '#/components/responses/NotFound'
+      security:
+      - ApiKeyAuth:
+        - manifest:read
+      - OAuth2:
+        - manifest:read
+      - OpenIdConnect:
+        - manifest:read
   /host/events:
     get:
       tags:

@@ -9,7 +9,19 @@
  * precedence is gone. A connector MAY name a provider by the qualified form
  * `<packName>#<id>`, which resolves only to the named pack's definition.
  *
- * Seam-gated: driven through the RFC 0095 install/resolve seams
+ * TWO WITNESS PATHS (RFC 0233), and a host is measured on every path it offers.
+ * The NORMATIVE-SURFACE path reads `GET /connections/providers` and
+ * `GET /connections/providers/{providerId}` when the host advertises
+ * `connections.providerRead`; the conflict was caused operator-side by
+ * installing the §D fixture pair, and the registry describes the outcome
+ * (`lib/provider-registry-witness.ts`). Without the fixture installed, its
+ * legs are `inapplicable`; the uniqueness leg runs on any host with the facet.
+ * With neither `providerRead` nor the seams the legs are `inapplicable`
+ * (RFC 0233 §Decisions 2) — a host advertising `packsSupported` SHOULD
+ * advertise `providerRead`. Until 2.45.12 that case recorded `blocked`, a
+ * seam-only MUST that `conformance.md` §Witness class forbids.
+ *
+ * The SEAM path is driven through the RFC 0095 install/resolve seams
  * (`POST /v1/host/sample/connection-packs/{install,resolve}`,
  * `spec/v1/host-sample-test-seams.md` §10; the driver rewrites the v1 seam path
  * to `/conformance/seams/sample/…` under target major 2), gated on
@@ -37,6 +49,7 @@
  * rather than assumed.
  *
  * @see RFCS/0177-v2-registry-packs-and-extension-tail.md §D.1
+ * @see RFCS/0233-connection-provider-registry-read.md
  * @see spec/v2/core/connection-packs.md
  * @see spec/v1/host-sample-test-seams.md §10
  */
@@ -50,7 +63,9 @@ import { behaviorGate } from '../lib/behavior-gate.js';
 import { req } from '../lib/requirement-ids.js';
 import { softSkip, type SoftSkipKind } from '../lib/soft-skip.js';
 import { targetMajor } from '../lib/seams.js';
-import { v2Discovery, familyAdvertised } from '../lib/v2.js';
+import { v2Discovery, familyAdvertised, v2Validator } from '../lib/v2.js';
+import { noteObservation } from '../lib/row-observation.js';
+import { failClosedLeg, providerReadAdvertised, qualifiedLeg, uniqueLeg, type RegistryOutcome } from '../lib/provider-registry-witness.js';
 
 const SECTION = 'connection-packs.md §"Provider identity" (RFC 0177 §D.1)';
 const FIXTURE = join(FIXTURES_DIR, 'connection-packs', 'connection-pack-acme-widgets.json');
@@ -73,7 +88,7 @@ function codes(r: InstallResult | undefined): string[] {
   return (r?.errors ?? []).map((e) => e.code ?? '').filter((c) => c.length > 0);
 }
 
-async function preflight(): Promise<{ kind: SoftSkipKind; reason: string } | null> {
+async function preflight(): Promise<{ kind: SoftSkipKind; reason: string } | { connections: Record<string, unknown> | null }> {
   if (targetMajor() !== 2) return { kind: 'inapplicable', reason: 'suite 2.0.0 v2 scenario: OPENWOP_TARGET_MAJOR is not 2' };
   let doc: Record<string, unknown> | null;
   try {
@@ -85,7 +100,22 @@ async function preflight(): Promise<{ kind: SoftSkipKind; reason: string } | nul
   const connections = await familyAdvertised('connections');
   if (!behaviorGate('connections.packsSupported', connections?.['packsSupported'] === true)) return { kind: 'inapplicable', reason: 'v2 discovery does not advertise connections.packsSupported (RFC 0095 §C)' };
   if (!existsSync(FIXTURE)) return { kind: 'blocked', reason: 'fixture connection-packs/connection-pack-acme-widgets.json is absent from this layout' };
-  return null;
+  return { connections };
+}
+
+const NO_PATH = 'connections.packsSupported is advertised, but the host serves neither connections.providerRead (RFC 0233) nor the RFC 0095 seams, so no party can observe a provider conflict here (RFC 0233 §Decisions 2: a host advertising packsSupported SHOULD advertise providerRead)';
+
+type SeamLeg = 'absent' | 'ran' | { kind: SoftSkipKind; reason: string };
+
+/** Map a normative-surface outcome to assertions. `observed` when it asserted; else the skip to fall back on. */
+function recordNormative(id: string, out: RegistryOutcome): { kind: SoftSkipKind; reason: string } | 'observed' {
+  if (out.kind === 'skip') return { kind: out.disposition, reason: out.reason };
+  for (const x of out.findings) expect(x.ok, req(id, x.doc, x.message)).toBe(true);
+  return 'observed';
+}
+
+function noteWitnessPaths(normative: boolean, seam: boolean): void {
+  noteObservation([normative ? 'normative-surface path (RFC 0233 provider registry read)' : '', seam ? 'seam path (RFC 0095)' : ''].filter((x) => x !== '').join(' + '));
 }
 
 /** Install the fixture; null when the seam is unwired. */
@@ -97,10 +127,39 @@ async function installFixture(): Promise<{ res: InstallResult | undefined; statu
 
 describe('v2-provider-conflict (RFC 0177 §D.1)', () => {
   it('two definitions of one bare provider id fail closed: the later registration is refused with connection_provider_conflict', async () => {
-    const skip = await preflight();
-    if (skip) return softSkip(skip.kind, skip.reason);
+    const pre = await preflight();
+    if ('kind' in pre) return softSkip(pre.kind, pre.reason);
+    const normative = providerReadAdvertised(pre.connections) ? recordNormative('openwop.requirement.0177.provider-conflict.fail-closed', await failClosedLeg()) : null;
+    const seam = await seamFailClosed();
+    if (typeof seam === 'object') return softSkip(seam.kind, seam.reason);
+    if (normative !== 'observed' && seam === 'absent') return softSkip(normative?.kind ?? 'inapplicable', normative?.reason ?? NO_PATH);
+    noteWitnessPaths(normative === 'observed', seam === 'ran');
+  });
+
+  it('the qualified form <packName>#acme-widgets resolves to the named pack\'s definition', async () => {
+    const pre = await preflight();
+    if ('kind' in pre) return softSkip(pre.kind, pre.reason);
+    const normative = providerReadAdvertised(pre.connections) ? recordNormative('openwop.requirement.0177.provider-conflict.qualified-form', await qualifiedLeg()) : null;
+    const seam = await seamQualified();
+    if (typeof seam === 'object') return softSkip(seam.kind, seam.reason);
+    if (normative !== 'observed' && seam === 'absent') return softSkip(normative?.kind ?? 'inapplicable', normative?.reason ?? NO_PATH);
+    noteWitnessPaths(normative === 'observed', seam === 'ran');
+  });
+
+  it('the provider registry lists each bare id once and carries no endpoint or credential (RFC 0233 §B)', async () => {
+    const pre = await preflight();
+    if ('kind' in pre) return softSkip(pre.kind, pre.reason);
+    if (!providerReadAdvertised(pre.connections)) return softSkip('inapplicable', 'the host does not advertise connections.providerRead (RFC 0233): no registry read to check');
+    const out = recordNormative('openwop.requirement.0233.provider-registry.unique', await uniqueLeg(v2Validator('connection-provider-registry')));
+    if (out !== 'observed') return softSkip(out.kind, out.reason);
+    noteWitnessPaths(true, false);
+  });
+});
+
+/** The seam path for fail-closed. `absent` when the install seam is unwired. */
+async function seamFailClosed(): Promise<SeamLeg> {
     const first = await installFixture();
-    if (!first) return softSkip('blocked', 'RFC 0095 install seam not mounted (404/403) — connections.packsSupported advertised but /conformance/seams/sample/connection-packs/install is absent');
+    if (!first) return 'absent';
     // The branch is kept for a host that somehow ships a built-in of this id:
     // the fixture is then the LATER registration and the rule fires on the
     // first install. `acme-widgets` is fictional so the normal path is the
@@ -115,19 +174,19 @@ describe('v2-provider-conflict (RFC 0177 §D.1)', () => {
         })();
     expect(later?.installed, req('openwop.requirement.0177.provider-conflict.fail-closed', SECTION, 'the later registration of a bare provider id MUST NOT install (no version precedence)')).toBe(false);
     expect(codes(later), req('openwop.requirement.0177.provider-conflict.fail-closed', SECTION, 'the later registration MUST be refused with connection_provider_conflict')).toContain('connection_provider_conflict');
-  });
+    return 'ran';
+}
 
-  it('the qualified form <packName>#acme-widgets resolves to the named pack\'s definition', async () => {
-    const skip = await preflight();
-    if (skip) return softSkip(skip.kind, skip.reason);
+/** The seam path for the qualified form. `absent` when the install seam is unwired. */
+async function seamQualified(): Promise<SeamLeg> {
     const first = await installFixture();
-    if (!first) return softSkip('blocked', 'RFC 0095 install seam not mounted (404/403) — connections.packsSupported advertised but /conformance/seams/sample/connection-packs/install is absent');
-    if (first.res?.installed !== true) return softSkip('blocked', `the fixture did not install (${codes(first.res).join(',') || first.status}) — a host with a built-in acme-widgets cannot exercise the qualified form through the pack`);
+    if (!first) return 'absent';
+    if (first.res?.installed !== true) return { kind: 'blocked', reason: `the fixture did not install (${codes(first.res).join(',') || first.status}) — a host with a built-in acme-widgets cannot exercise the qualified form through the pack` };
     const packName = fixture().name;
     const hit = await driver.post(RESOLVE, { provider: `${packName}#acme-widgets` });
-    if (hit.status === 404) return softSkip('blocked', 'RFC 0095 resolve seam not mounted (404)');
+    if (hit.status === 404) return { kind: 'blocked', reason: 'RFC 0095 resolve seam not mounted (404)' };
     const resolved = hit.json as ResolveResult | undefined;
     expect(resolved?.resolved, req('openwop.requirement.0177.provider-conflict.qualified-form', 'connection-packs.md §"The qualified form" (RFC 0177 §D.1)', `${packName}#acme-widgets MUST resolve (got ${JSON.stringify(resolved)})`)).toBe(true);
     expect(resolved?.source, req('openwop.requirement.0177.provider-conflict.qualified-form', 'connection-packs.md §"The qualified form" (RFC 0177 §D.1)', 'a qualified reference resolves only to the named pack\'s definition (source: pack)')).toBe('pack');
-  });
-});
+    return 'ran';
+}

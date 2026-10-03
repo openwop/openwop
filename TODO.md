@@ -179,13 +179,13 @@ Defects outside the spec:
       its maintainer. RFC 0099's `Accepted` evidence stands (maintainer, 2026-10-03); its
       Amendment record now discloses that MyndHyve's legs ran through the seam. Open only on
       MyndHyve's side.
-- [ ] **RFC 0233** (`Draft`, window to 2026-10-10): the provider-identity MUSTs of
+- [ ] **RFC 0233** (`Active` 2026-10-03, window waived by steward override; `/architect` rulings in its §Decisions): the provider-identity MUSTs of
       `connection-packs.md` are seam-only, which `conformance.md` §Witness class forbids; the
       maintainer chose (2026-10-03) to mint an observation path, not demote. Until a host serves it,
       openwop-app's seam-free v2 cut (build `451a665e8`, 2.45.11) carries three `blocked`
       `v2-provider-conflict` rows and certifies nothing, so the RFC 0230/0232 `Accepted` flip waits
-      on it too. Unresolved questions 1 (scope) and 2 (disposition without the facet) must be
-      decided before `Active`. openwop-app-5f holds `connections` advertised and will implement.
+      on it too. Next: 2.45.12 ships the reads' witness; openwop-app-5f serves both reads, installs
+      the fixture pair and advertises `providerRead`; openwop-app-31 re-cuts major 2.
 - [ ] **The `openwop-trigger-bridge` predicate still reads the RFC 0053 run family** (RFC 0232
       G7). `trigger-bridge.md` §D and `profiles.md` say the profile needs "a `deadLetter` sink for
       exhausted deliveries", but after RFC 0232 §D that family holds no trigger delivery. Reading

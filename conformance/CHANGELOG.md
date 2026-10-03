@@ -1,8 +1,16 @@
 # `@openwop/openwop-conformance` Changelog
 
-## [2.45.12] — unreleased — RFC 0233 filed
+## [2.45.12] — unreleased — RFC 0233: the provider-identity rules have a normative witness
 
-- **The 2.45.12 cycle opens.** RFC 0233's gap register changes the packed `spec/v1/gaps.json`. No scenario changes in this PR.
+- **`v2-provider-conflict` gains a normative-surface path (RFC 0233).** Where the host advertises `connections.providerRead` it reads `GET /connections/providers` and `GET /connections/providers/{providerId}` (`?pack=` for the qualified form). The conflict is caused operator-side by installing the `connection-pack-acme-widgets` / `-rival` fixture pair, and the registry describes the outcome. The seam path still runs where the seams are served.
+  - `openwop.requirement.0177.provider-conflict.fail-closed`: `acme-widgets` is held once by the first pack, and a `connection_provider_conflict` refusal names that holder.
+  - `openwop.requirement.0177.provider-conflict.qualified-form`: `?pack=<first>` resolves to it; `?pack=<rival>` answers `404 connection_provider_unresolved`; the bare id resolves to the first pack.
+  - New `openwop.requirement.0233.provider-registry.unique`: a schema-valid, closed registry with each bare id once, on any host with the facet.
+- **Disposition change.** A host advertising `packsSupported` with neither `providerRead` nor the seams now records `inapplicable`, with the reason, where it recorded `blocked`. That case was a seam-only MUST, which `conformance.md` §Witness class forbids; RFC 0233 mints the path, and `witnessable-gated` means observed when the gating capability is advertised. Without the fixture installed, the two fixture legs are `inapplicable` and uniqueness still runs.
+- **New fixture** `connection-pack-acme-widgets-rival` (catalogued in `fixtures.md`).
+- **Sabotage.** `lib/provider-registry-witness.test.ts` runs 11 cases against `lib/provider-registry-double.ts`, each defect failing exactly its leg. The scenario file was also run against a standalone double: conforming passes in strict mode; missing refusal, rival resolving, duplicate id and unserved read each fail; not-installed and no-facet are `inapplicable` in strict mode with nothing failing.
+- **Host impact.** openwop-app (`connections.packsSupported` at v2, no seams in production): the three `v2-provider-conflict` rows move from `blocked` to `inapplicable` until it advertises `providerRead`; with the facet and the fixture pair they become `executed-pass`. No other host advertises `connections` at v2.
+- **The 2.45.12 cycle opened** with RFC 0233's filing.
 
 ## [2.45.11] — 2026-10-03 — the trigger bridge is witnessed at major 2
 
