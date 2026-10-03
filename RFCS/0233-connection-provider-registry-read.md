@@ -77,7 +77,7 @@ Two connection-pack rules are MUSTs that no party can observe on a production ho
 
 `conformance/fixtures/connection-packs/` gains `connection-pack-acme-widgets-rival.json`: a well-formed pack named `core.openwop.connections.acme-widgets-rival` that also defines bare `acme-widgets`.
 
-1. An operator MAY install `connection-pack-acme-widgets` (`core.openwop.connections.acme-widgets`) through the host's normal install path. A host that has it installed MUST also have attempted the rival after it, through the same path.
+1. An operator MAY install `connection-pack-acme-widgets` (`core.openwop.connections.acme-widgets`) through the host's normal install path. A host that has it installed MUST also have attempted the rival after it, through the same path, before it serves §B, so a read never shows a half-installed pair (openwop-app's review, 2026-10-03).
 2. The registry is then self-describing: `acme-widgets` once, `source: pack`, held by the first pack, and a `refusals` row for `acme-widgets` with `connection_provider_conflict` and `heldBy` the first pack.
 3. The pair is not advertised in discovery `fixtures`: those ids name workflow fixtures, which `v2-advertised-fixtures-exist` creates runs of (RFC 0168).
 4. The provider is fictional and has no endpoints anyone calls.
