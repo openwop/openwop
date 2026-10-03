@@ -3,6 +3,11 @@
 ## [2.45.12] — unreleased — RFC 0233 filed
 
 - **The 2.45.12 cycle opens.** RFC 0233's gap register changes the packed `spec/v1/gaps.json`. No scenario changes in this PR.
+- **Two RFC 0230 rows that had no test now have one, at both majors** (`trigger-bridge-delivery` and `v2-trigger-bridge-delivery`; gated like the other signed legs on `inboundSigning`, `familyAdvertised` at major 2).
+  - `openwop.requirement.0230.stale-timestamp-refused` (§C): under `required`, a post correctly signed over a `webhook-timestamp` 600 s in the past, and again 600 s in the future, must answer `401 signature_invalid` and start no run. The subscription must stay `active`, and a current signed post must then answer `202`.
+  - `openwop.requirement.0230.signing-secret-once` (§B, SR-1): a re-read of a subscription just registered carries no `signingSecret` key at any depth, not the secret's value, and no `whsec_` string. `inapplicable` where the host serves no re-read (`404`/`405`).
+- **Sabotage.** The scratch double enforces the 300 s window and gains two defects, `skew-accepted` and `reread-leaks-secret`; `lib/trigger-delivery-witness.test.ts` runs 18 cases, and each defect fails only the legs that own the rule. Both scenario files were run against a standalone double (major 1 behind openwop-app's captured 451a665e8 discovery document): conforming, both new rows pass; each defect fails only its own row.
+- **Host impact.** openwop-app at major 1 and 2 serves both rules on the signed path and is expected to pass; no host gains a `blocked` row. A host without `inboundSigning` records `inapplicable`.
 
 ## [2.45.11] — 2026-10-03 — the trigger bridge is witnessed at major 2
 
