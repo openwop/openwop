@@ -8,6 +8,8 @@ Entries before this file was condensed carried full development detail. That tex
 
 ## [Unreleased]
 
+## [2.45.11] — 2026-10-03 — The trigger bridge is witnessed at major 2; a retired vendor twin may forward reads
+
 - **The trigger bridge is witnessed at major 2.** New scenarios `v2-trigger-bridge-delivery` and `v2-trigger-dead-letter-read` port the delivery legs and RFC 0232's read rules to the v2 surface, so a v2 bundle can witness RFC 0230 and RFC 0232.
 - **A retired vendor twin may forward reads.** After retirement a `GET`/`HEAD` to `/v1/host/<org>/…` MAY answer a bodiless `308` to the same `/host/<org>/…` path; no operation is served there. RFC 0181's row now reads "serves an operation", not "answers" (maintainer decision 2026-10-03).
 

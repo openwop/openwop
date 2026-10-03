@@ -32,11 +32,12 @@
   `openwop-secrets`, or on any suite without claiming `openwop-interrupts`, should re-cut on
   2.45.5.** The v2 reference host has cut on 2.45.6 and MyndHyve on 2.45.5; openwop-app has not cut on
   2.45.3 or later. **2.45.10 is published** (RFC 0232 `Active`; the trigger dead-letter read).
-  **The 2.45.11 cycle is open** (the v2 trigger-bridge witnesses). Take a release lock
+  **2.45.11 is published** (the v2 trigger-bridge witnesses; the retired-twin `308` errata).
+  **No cycle is open**: a PR that changes packed content opens 2.45.12. Take a release lock
   (`/tmp/claude-501/openwop-release-<ver>.lock`) before cutting.
   - A PR that leaves the version alone must not re-stamp `CORPUS-STAMP.json` or the ledger.
 - **Normative homes:** all 73 core families have v2 homes (#1802–#1804). The kernel budget is
-  37,324 / 37,800 words, with the generated error table outside it (RFC 0227).
+  37,458 / 37,800 words, with the generated error table outside it (RFC 0227).
 - **SDKs:** **2.5.0** (npm, PyPI, `go/v2.5.0`) sends `OpenWOP-Client-Version` on every request.
   Re-vendoring to a newer corpus tag is a separate change.
 - **Hosts** (the canonical files in `evidence/v2-host-bundles/`, all certified, 0 fail, 0 blocked):
