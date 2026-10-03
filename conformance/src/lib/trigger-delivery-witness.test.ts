@@ -13,7 +13,7 @@ import { majorProfile } from './major-profile.js';
 import { OTHER_TENANT_KEY, TriggerDouble, type TriggerDefect } from './trigger-double.js';
 import { v2Validator } from './v2.js';
 import {
-  adverts, causationLeg, cursorLeg, dedupLeg, pagingLeg, refusedLeg, runlessAttemptLeg, runlessStateChangeLeg, tenantLeg,
+  adverts, causationLeg, cursorLeg, dedupLeg, pagingLeg, refusedLeg, runlessAttemptLeg, runlessStateChangeLeg, signingSecretOnceLeg, staleTimestampLeg, tenantLeg,
   type LegOutcome, type TriggerAdverts,
 } from './trigger-delivery-witness.js';
 
@@ -37,6 +37,8 @@ const failed = (o: LegOutcome): string[] => (o.kind === 'observed' ? o.findings.
 const legs = {
   dedup: () => dedupLeg(V2, a),
   refused: () => refusedLeg(V2, a),
+  stale: () => staleTimestampLeg(V2, a),
+  secretOnce: () => signingSecretOnceLeg(V2, a),
   causation: () => causationLeg(V2, a, { pollMs: 1, pollTries: 2 }),
   attempt: () => runlessAttemptLeg(V2, a, validate),
   paging: () => pagingLeg(V2, a),
@@ -59,8 +61,10 @@ describe('trigger-delivery-witness at major 2 (RFC 0230 + RFC 0232)', () => {
 
   it.each<[TriggerDefect, Leg[]]>([
     ['dedup-new-run', ['dedup']],
-    ['refused-starts-run', ['refused']],
-    ['refused-changes-state', ['refused']],
+    ['refused-starts-run', ['refused', 'stale']],
+    ['refused-changes-state', ['refused', 'stale']],
+    ['skew-accepted', ['stale']],
+    ['reread-leaks-secret', ['secretOnce']],
     ['no-causation', ['causation']],
     ['record-leaks-canary', ['attempt']],
     ['refused-not-recorded', ['attempt', 'paging', 'cursor']],
@@ -77,7 +81,7 @@ describe('trigger-delivery-witness at major 2 (RFC 0230 + RFC 0232)', () => {
   it('the state-change leg is inapplicable at major 2, and every leg is inapplicable without the family', async () => {
     expect(runlessStateChangeLeg(a)).toMatchObject({ kind: 'skip', disposition: 'inapplicable' });
     const none = adverts(V2, {});
-    for (const out of [await dedupLeg(V2, none), await runlessAttemptLeg(V2, none, validate), await pagingLeg(V2, none), runlessStateChangeLeg(none)]) {
+    for (const out of [await dedupLeg(V2, none), await staleTimestampLeg(V2, none), await signingSecretOnceLeg(V2, none), await runlessAttemptLeg(V2, none, validate), await pagingLeg(V2, none), runlessStateChangeLeg(none)]) {
       expect(out).toMatchObject({ kind: 'skip', disposition: 'inapplicable' });
     }
   });
@@ -85,6 +89,8 @@ describe('trigger-delivery-witness at major 2 (RFC 0230 + RFC 0232)', () => {
   it('without inboundSigning the delivery legs are inapplicable; without deadLetter the read legs are', async () => {
     const noSigning = adverts(V2, { triggerBridge: { deadLetter: { retentionDays: 7, maxPageSize: 100 } } });
     expect(await dedupLeg(V2, noSigning)).toMatchObject({ kind: 'skip', disposition: 'inapplicable' });
+    expect(await staleTimestampLeg(V2, noSigning)).toMatchObject({ kind: 'skip', disposition: 'inapplicable' });
+    expect(await signingSecretOnceLeg(V2, noSigning)).toMatchObject({ kind: 'skip', disposition: 'inapplicable' });
     const noDl = adverts(V2, { triggerBridge: { ingestion: { inboundSigning: ['standard-webhooks-1'] } } });
     expect(await runlessAttemptLeg(V2, noDl, validate)).toMatchObject({ kind: 'skip', disposition: 'inapplicable' });
     expect(await cursorLeg(V2, noDl)).toMatchObject({ kind: 'skip', disposition: 'inapplicable' });

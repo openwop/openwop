@@ -19,7 +19,7 @@ export const OTHER_TENANT_KEY = 'tenant-b-key';
 export type TriggerDefect =
   | 'none' | 'dedup-new-run' | 'refused-starts-run' | 'refused-changes-state' | 'no-causation'
   | 'record-leaks-canary' | 'refused-not-recorded' | 'refused-records-state-change' | 'wrong-retention'
-  | 'limit-ignored' | 'cursor-not-bound' | 'tenant-leak' | 'tenant-404';
+  | 'limit-ignored' | 'cursor-not-bound' | 'tenant-leak' | 'tenant-404' | 'skew-accepted' | 'reread-leaks-secret';
 
 interface DoubleSub { id: string; n: number; mode: string; secret: string; state: string; seen: Map<string, string>; dead: Array<Record<string, unknown>> }
 
@@ -74,7 +74,9 @@ export class TriggerDouble {
       if (!sub) return this.send(res, 404, { error: 'not_found', message: 'no ingest' });
       const body = await this.raw(req);
       const id = String(req.headers['webhook-id'] ?? ''); const ts = String(req.headers['webhook-timestamp'] ?? '');
-      const good = req.headers['webhook-signature'] === standardWebhooksSignature(sub.secret, id, ts, body);
+      // RFC 0230 §C: a timestamp more than 300 s from the clock fails the check, however well signed.
+      const fresh = Math.abs(Date.now() / 1000 - Number(ts)) <= 300 || this.defect === 'skew-accepted';
+      const good = fresh && req.headers['webhook-signature'] === standardWebhooksSignature(sub.secret, id, ts, body);
       if (!good && sub.mode === 'required') {
         if (this.defect !== 'refused-not-recorded') {
           const at = Date.now();
@@ -112,7 +114,7 @@ export class TriggerDouble {
       if (auth === `Bearer ${OTHER_TENANT_KEY}` && this.defect === 'tenant-404') return this.send(res, 404, { error: 'not_found', message: 'no such subscription' });
       if (auth === `Bearer ${OTHER_TENANT_KEY}` && this.defect !== 'tenant-leak') return this.send(res, 403, { error: 'id_tenant_mismatch', message: 'tenant segment is not the caller\'s' });
       if (!sub) return this.send(res, 404, { error: 'not_found', message: 'no such subscription' });
-      if (!m[2]) return this.send(res, 200, { subscription: { subscriptionId: sub.id, source: 'webhook', state: sub.state } });
+      if (!m[2]) return this.send(res, 200, { subscription: { subscriptionId: sub.id, source: 'webhook', state: sub.state, ...(this.defect === 'reread-leaks-secret' ? { signingSecret: sub.secret } : {}) } });
       const limit = Math.min(Number(u.searchParams.get('limit') ?? '100'), 100);
       const cursor = u.searchParams.get('cursor');
       let offset = 0;

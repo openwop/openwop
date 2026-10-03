@@ -12,6 +12,13 @@
  *   1. dedup          a repeated `webhook-id` is effectively-once.
  *   2. dead-letter    a refused post starts no run and leaves the subscription
  *                     `active`; a correctly signed post still delivers.
+ *   2b. stale timestamp   under `required`, a `webhook-timestamp` more than
+ *                     300 s off, either way, answers `401 signature_invalid`,
+ *                     starts no run and leaves the subscription `active`
+ *                     (RFC 0230 §C).
+ *   2c. secret once   a re-read of the subscription carries no `signingSecret`
+ *                     and no `whsec_` value (RFC 0230 §B); `inapplicable` where
+ *                     the host serves no re-read.
  *   3. causation      the delivered run's `run.started` carries the delivery.
  *   4a. run-less attempt   a dead-lettered attempt is content-free, read through
  *                     `GET /trigger-subscriptions/{subscriptionId}/dead-letters`.
@@ -34,11 +41,13 @@ import { softSkip } from '../lib/soft-skip.js';
 import { req } from '../lib/requirement-ids.js';
 import { noteObservation } from '../lib/row-observation.js';
 import { majorProfile } from '../lib/major-profile.js';
-import { adverts, causationLeg, dedupLeg, refusedLeg, runlessAttemptLeg, runlessStateChangeLeg, type TriggerAdverts } from '../lib/trigger-delivery-witness.js';
+import { adverts, causationLeg, dedupLeg, refusedLeg, runlessAttemptLeg, runlessStateChangeLeg, signingSecretOnceLeg, staleTimestampLeg, type TriggerAdverts } from '../lib/trigger-delivery-witness.js';
 
 const PROFILE = majorProfile(2);
 const R_DEDUP = 'openwop.requirement.0083.trigger-delivery.dedup';
 const R_DEAD_LETTER = 'openwop.requirement.0083.trigger-delivery.dead-letter';
+const R_STALE_TIMESTAMP = 'openwop.requirement.0230.stale-timestamp-refused';
+const R_SECRET_ONCE = 'openwop.requirement.0230.signing-secret-once';
 const R_CAUSATION = 'openwop.requirement.0083.trigger-delivery.causation';
 const R_RUNLESS_ATTEMPT = 'openwop.requirement.0083.trigger-delivery.runless-attempt-content-free';
 const R_RUNLESS_STATE = 'openwop.requirement.0083.trigger-delivery.runless-state-change-content-free';
@@ -74,6 +83,26 @@ describe('v2 trigger-bridge delivery (webhooks.md §Inbound triggers)', () => {
     if (out.kind === 'skip') return softSkip(out.disposition, out.reason);
     for (const x of out.findings) expect(x.ok, req(R_DEAD_LETTER, x.doc, x.message)).toBe(true);
     noteObservation(`normative-surface path (RFC 0230)${out.note ? `; ${out.note}` : ''}`);
+  });
+
+  it('refuses a webhook-timestamp more than 300 s off without starting a run', async () => {
+    const a = await discovered();
+    if (a === 'GATED') return softSkip('inapplicable', 'the host does not advertise triggerBridge at major 2: no obligation');
+    if (typeof a === 'string') return softSkip('blocked', a);
+    const out = await staleTimestampLeg(PROFILE, a);
+    if (out.kind === 'skip') return softSkip(out.disposition, out.reason);
+    for (const x of out.findings) expect(x.ok, req(R_STALE_TIMESTAMP, x.doc, x.message)).toBe(true);
+    noteObservation('normative-surface path (RFC 0230)');
+  });
+
+  it('returns the signing secret once: a re-read carries no whsec_ value', async () => {
+    const a = await discovered();
+    if (a === 'GATED') return softSkip('inapplicable', 'the host does not advertise triggerBridge at major 2: no obligation');
+    if (typeof a === 'string') return softSkip('blocked', a);
+    const out = await signingSecretOnceLeg(PROFILE, a);
+    if (out.kind === 'skip') return softSkip(out.disposition, out.reason);
+    for (const x of out.findings) expect(x.ok, req(R_SECRET_ONCE, x.doc, x.message)).toBe(true);
+    noteObservation('normative-surface path (RFC 0230)');
   });
 
   it('links delivery to run: run.started carries the delivery as causationId', async () => {
