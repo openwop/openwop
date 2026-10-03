@@ -31,10 +31,10 @@
   in strict mode without `workspace` should re-cut on 2.45.7**, or opt out `family.workspace`. **A major-1 host that cut a v3 bundle on 2.45.3 without claiming
   `openwop-secrets`, or on any suite without claiming `openwop-interrupts`, should re-cut on
   2.45.5.** The v2 reference host has cut on 2.45.6 and MyndHyve on 2.45.5; openwop-app has not cut on
-  2.45.3 or later. **The 2.45.10 cycle is open** (RFC 0232 filed). Take a release lock
+  2.45.3 or later. **2.45.10 is published** (RFC 0232 `Active`; the trigger dead-letter read).
+  **No cycle is open**: a PR that changes packed content opens 2.45.11. Take a release lock
   (`/tmp/claude-501/openwop-release-<ver>.lock`) before cutting.
-  - A PR that changes packed content rides the open 2.45.10 cycle; do not cut it without the
-    maintainer.
+  - A PR that leaves the version alone must not re-stamp `CORPUS-STAMP.json` or the ledger.
 - **Normative homes:** all 73 core families have v2 homes (#1802–#1804). The kernel budget is
   37,324 / 37,800 words, with the generated error table outside it (RFC 0227).
 - **SDKs:** **2.5.0** (npm, PyPI, `go/v2.5.0`) sends `OpenWOP-Client-Version` on every request.

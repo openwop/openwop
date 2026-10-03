@@ -8,10 +8,12 @@ Entries before this file was condensed carried full development detail. That tex
 
 ## [Unreleased]
 
+## [2.45.10] — 2026-10-03 — A trigger's dead letters are readable; RFC 0232 Active
+
 - **RFC 0232 is Active.** A trigger subscription's dead-lettered deliveries are readable behind the optional `triggerBridge.deadLetter` facet: new operation `listTriggerDeadLetters` and schema `trigger-dead-letter-page`, v1 and v2; records are content-free. The window was waived by steward override of RFC 0147 §A.6.
 - **Run-less trigger transitions are recorded.** For a dead-lettered attempt or a state change, "emit" now means the host keeps a content-free record. The prose and schemas no longer route trigger dead letters to the RFC 0053 run sink.
 - **Leg 4 of `trigger-bridge-delivery` is two requirements.** The attempt leg gains a seam-free path through the read; the state-change leg is `inapplicable` without a seam. New scenario `trigger-dead-letter-read` holds the paging, cursor and tenant rules.
-- **RFC 0232 filed (Draft).** An optional read, `GET /v1/trigger-subscriptions/{id}/dead-letters`, behind `triggerBridge.deadLetter`, so a production host without test seams can witness that its dead-lettered trigger deliveries carry no inbound content. RFC 0230 needs it to be accepted on production.
+- **RFC 0232 was filed as Draft first.** An optional read, `GET /v1/trigger-subscriptions/{id}/dead-letters`, behind `triggerBridge.deadLetter`, so a production host without test seams can witness that its dead-lettered trigger deliveries carry no inbound content. RFC 0230 needs it to be accepted on production.
 
 ## [2.45.9] — 2026-10-02 — A trigger leg that observed nothing is inapplicable, not blocked
 
