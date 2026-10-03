@@ -48,7 +48,7 @@ A trigger delivery that is dead-lettered starts no run, so the `trigger.delivery
 `GET /v1/trigger-subscriptions/{subscriptionId}/dead-letters` (`listTriggerDeadLetters`), derived into v2 as `GET /trigger-subscriptions/{subscriptionId}/dead-letters`.
 
 1. A host advertising `triggerBridge.deadLetter` MUST serve it. A host that does not advertise the facet answers `404 not_found`.
-2. Scope: `webhooks:manage`, the scope that creates a trigger subscription. The subscription is tenant-bound (`identity.md` §5): another tenant's id, and an id the host never minted, answer `404 not_found` alike.
+2. Scope: `webhooks:manage`, the scope that creates a trigger subscription. The subscription is tenant-bound (`identity.md` §5). At major 1, with bare ids, another tenant's id and an id the host never minted answer `404 not_found` alike. At major 2 the id names its tenant, so `identity.md` §5 governs: another tenant's id is refused `403 id_tenant_mismatch` and discloses nothing (found by openwop-app, 2026-10-03, before the v2 witness shipped).
 3. Paging: `limit` (clamped to `maxPageSize`) and an opaque `cursor`. A cursor minted for another subscription MUST be refused `400 validation_error`.
 4. The page lists the subscription's dead-lettered deliveries, newest first, for `retentionDays`.
 

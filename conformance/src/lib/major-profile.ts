@@ -20,6 +20,7 @@
 
 import { capabilityFamily } from './discovery-capabilities.js';
 import { codemapV1toV2 } from './era2-seed.js';
+import { projectBoundId } from './bound-id.js';
 
 export interface MajorProfile {
   readonly major: number;
@@ -49,6 +50,16 @@ export interface MajorProfile {
    * unread observation and never guesses a name.
    */
   eventType(era1Name: string): string | undefined;
+  /** The trigger subscription collection, e.g. `/v1/trigger-subscriptions` or `/trigger-subscriptions`. */
+  readonly triggerSubscriptionsPath: string;
+  /** An id as one URL path segment: percent-encoded at v1, the `~` bound-id projection at v2 (`identity.md` §5). */
+  idSegment(id: string): string;
+  /**
+   * How a read of another tenant's id is refused. `not_found`: as an id never
+   * minted (v1, bare ids). `id_tenant_mismatch`: `403`, because a v2 bound id
+   * names its tenant and `identity.md` §5 requires the refusal to say so.
+   */
+  readonly foreignTenantRead: 'not_found' | 'id_tenant_mismatch';
 }
 
 const isRecord = (v: unknown): v is Record<string, unknown> => v !== null && typeof v === 'object' && !Array.isArray(v);
@@ -68,6 +79,9 @@ export const MAJOR_PROFILES: Readonly<Record<number, MajorProfile>> = {
     // v1 budgets are driven through a host seam, not `createRun`.
     runBudget: () => null,
     eventType: (era1Name) => era1Name,
+    triggerSubscriptionsPath: '/v1/trigger-subscriptions',
+    idSegment: (id) => encodeURIComponent(id),
+    foreignTenantRead: 'not_found',
   },
   2: {
     major: 2,
@@ -82,6 +96,9 @@ export const MAJOR_PROFILES: Readonly<Record<number, MajorProfile>> = {
     },
     runBudget: (policy) => ({ configurable: { version: 1, budget: { ...policy } } }),
     eventType: (era1Name) => codemapV1toV2().get(era1Name),
+    triggerSubscriptionsPath: '/trigger-subscriptions',
+    idSegment: (id) => projectBoundId(id),
+    foreignTenantRead: 'id_tenant_mismatch',
   },
 };
 

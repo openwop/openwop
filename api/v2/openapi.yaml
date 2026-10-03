@@ -821,8 +821,8 @@ paths:
         changed the subscription''s state, the `trigger.subscription-state-changed` payload. A delivery refused by a `required`
         verification check appears with `reason: "verification_failed"` and no `stateChange`. A record MUST NOT carry the
         inbound body, the inbound headers, the signature, the signing secret, or any credential. Gated on `triggerBridge.deadLetter`:
-        a host that does not advertise it answers `404 not_found`. Another tenant''s subscription id answers `404 not_found`,
-        exactly as an id the host never minted.'
+        a host that does not advertise it answers `404 not_found`. A subscription id whose tenant segment is not the caller''s
+        is refused `403 id_tenant_mismatch` (`identity.md` §5); an id the host never minted answers `404 not_found`.'
       operationId: listTriggerDeadLetters
       security:
       - ApiKeyAuth:
