@@ -176,13 +176,13 @@ Defects outside the spec:
 - [x] **MyndHyve withdrew `triggerBridge.ingestion`** at both majors (build cf84c7f64, myndhyve#592,
       2026-10-03); `POST /trigger-subscriptions` answers `404`. RFC 0099's `Accepted` already discloses
       that its MyndHyve legs ran through the seam (#1868).
-- [ ] **RFC 0233** (`Draft`, window to 2026-10-10): the provider-identity MUSTs of
+- [ ] **RFC 0233** (`Active` 2026-10-03, window waived by steward override; `/architect` rulings in its §Decisions): the provider-identity MUSTs of
       `connection-packs.md` are seam-only, which `conformance.md` §Witness class forbids; the
       maintainer chose (2026-10-03) to mint an observation path, not demote. Until a host serves it,
       openwop-app's seam-free v2 cut (build `451a665e8`, 2.45.11) carries three `blocked`
       `v2-provider-conflict` rows and certifies nothing, so the RFC 0230/0232 `Accepted` flip waits
-      on it too. Unresolved questions 1 (scope) and 2 (disposition without the facet) must be
-      decided before `Active`. openwop-app-5f holds `connections` advertised and will implement.
+      on it too. Next: 2.45.12 ships the reads' witness; openwop-app-5f serves both reads, installs
+      the fixture pair and advertises `providerRead`; openwop-app-31 re-cuts major 2.
 - [ ] **Host evidence owed, as the host sessions report it (2026-10-02):**
   - RFC 0230 (openwop-app, session 4d): the seam-free run on 2.45.9 is done (legs 1–3 pass,
     leg 4 fails, `blocked` 0). The pin to 2.45.9 is committed. The production flag and the

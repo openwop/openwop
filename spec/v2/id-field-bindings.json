@@ -89,6 +89,7 @@
     "pageId": "no openwop id kind governs this surface; the grammar is the owning schema's own",
     "parentDepartmentId": "no openwop id kind governs this surface; the grammar is the owning schema's own",
     "proposalId": "no openwop id kind governs this surface; the grammar is the owning schema's own",
+    "providerId": "a connection provider id is author-minted in a pack manifest and host-global (connection-packs.md §Provider identity); no openwop id kind governs it",
     "roleId": "no openwop id kind governs this surface; the grammar is the owning schema's own",
     "rosterId": "no openwop id kind governs this surface; the grammar is the owning schema's own",
     "runnerId": "no openwop id kind governs this surface; the grammar is the owning schema's own",

@@ -4,11 +4,11 @@
 | ----------------- | --------------------------------------------------------------- |
 | **RFC**           | 0233                                                            |
 | **Title**         | a host's connection providers and refused registrations are readable |
-| **Status**        | `Draft`                                                         |
+| **Status**        | `Active`                                                        |
 | **Author(s)**     | David Tufts (@davidscotttufts)                                  |
 | **Created**       | 2026-10-03                                                      |
-| **Updated**       | 2026-10-03 — filed `Draft` at the maintainer's direction (2026-10-03: mint a normative observation path for the provider-identity MUSTs rather than demote them). The 7-day comment window opens with the pull request and closes 2026-10-10. |
-| **Affects**       | two new optional v2 reads, `GET /connections/providers` and `GET /connections/providers/{providerRef}` (`api/v2/openapi.yaml`, added in `scripts/derive-v2-api.py` as v2-only operations) and their schema · a new optional facet `connections.providerRead` (`spec/v2/facets`/declaration) · a conformance fixture pair (`conformance-provider-conflict`) · `spec/v2/core/connection-packs.md` §Provider identity and §The qualified form · `v2-provider-conflict.test.ts` (a normative-surface path) |
+| **Updated**       | 2026-10-03 — `Draft` → `Active`, comment window waived by STEWARD OVERRIDE of RFC 0147 §A.6 (MAINTAINERS.md), under the maintainer's directive of 2026-10-03 to take this RFC to `Accepted` without the window and to settle design questions by `/architect` review. The `/architect` rulings are in §Decisions; they move the resolve read's qualified form from the path into `?pack=`, and drop the discovery `fixtures` advert in favour of a self-describing registry. · 2026-10-03 — filed `Draft` at the maintainer's direction (2026-10-03: mint a normative observation path for the provider-identity MUSTs rather than demote them). The 7-day comment window opens with the pull request and closes 2026-10-10. |
+| **Affects**       | two new optional v2 reads, `GET /connection-providers` and `GET /connection-providers/{providerId}` (`api/v2/openapi.yaml`, added in `scripts/derive-v2-api.py` as v2-only operations) and their schema · a new optional facet `connections.providerRead` (`spec/v2/facets/connections.schema.json`) · a conformance fixture pack `connection-pack-acme-widgets-rival` · `spec/v2/core/connection-packs.md` §Provider identity and §The qualified form · `v2-provider-conflict.test.ts` (a normative-surface path) |
 | **Compatibility** | `additive` (COMPATIBILITY.md §2): two optional reads behind one optional facet, and one optional fixture. A host that advertises neither is bound exactly as today. |
 | **Supersedes**    | —                                                               |
 | **Superseded by** | —                                                               |
@@ -40,10 +40,10 @@ Two connection-pack rules are MUSTs that no party can observe on a production ho
 
 ### §B. The registry read
 
-`GET /connections/providers` (`listConnectionProviders`), v2 only.
+`GET /connection-providers` (`listConnectionProviders`), v2 only.
 
 1. A host advertising `connections.providerRead` MUST serve it. A host that does not answers `404 not_found`.
-2. **Host-global.** The provider registry is one per host (`connection-packs.md` §Provider identity). The read carries no tenant data and is the same for every caller. Scope: unresolved question 1.
+2. **Host-global.** The provider registry is one per host (`connection-packs.md` §Provider identity). The read carries no tenant data and is the same for every caller. Scope: `manifest:read`.
 3. The page lists every provider definition the host resolves against, built-ins included:
 
 | Field | Type | Meaning |
@@ -67,19 +67,20 @@ Two connection-pack rules are MUSTs that no party can observe on a production ho
 
 ### §C. The resolve read
 
-`GET /connections/providers/{providerRef}` (`resolveConnectionProvider`), v2 only. `providerRef` is a bare id or a qualified `<packName>#<id>`, carried as one path segment (percent-encoded `#`).
+`GET /connection-providers/{providerId}` (`resolveConnectionProvider`), v2 only, scope `manifest:read`. The optional query parameter `pack` names a pack: `?pack=<packName>` is the qualified form `<packName>#<providerId>`. The `#` never travels on the wire, because a front door that decodes `%23` would truncate the path.
 
-1. A bare id resolves only when exactly one definition exists; a qualified reference resolves only to the named pack's definition.
+1. Without `pack`, the bare id resolves only when exactly one definition exists. With `pack`, it resolves only to that pack's definition.
 2. Resolved: `200` with one §B.3 row.
 3. Not resolvable: `404` with `connection_provider_unresolved`. A qualified reference to a pack that does not define the id, or is not installed, is not resolvable.
 
 ### §D. The conformance fixture pair
 
-`conformance/fixtures/connection-packs/` gains `connection-pack-acme-widgets-rival.json`: a well-formed pack with a different `name` that also defines bare `acme-widgets`.
+`conformance/fixtures/connection-packs/` gains `connection-pack-acme-widgets-rival.json`: a well-formed pack named `core.openwop.connections.acme-widgets-rival` that also defines bare `acme-widgets`.
 
-1. A host that advertises the fixture id `conformance-provider-conflict` in its discovery `fixtures` (RFC 0003) has installed `connection-pack-acme-widgets` and then attempted `connection-pack-acme-widgets-rival`, in that order, through its normal install path.
-2. That host MUST therefore show `acme-widgets` once, `source: pack`, held by the first pack, and a refusal for the rival with `connection_provider_conflict` and `heldBy` the first pack.
-3. A host installs the pair only when its operator chooses to; the provider is fictional and has no endpoints anyone calls.
+1. An operator MAY install `connection-pack-acme-widgets` (`core.openwop.connections.acme-widgets`) through the host's normal install path. A host that has it installed MUST also have attempted the rival after it, through the same path, before it serves §B, so a read never shows a half-installed pair (openwop-app's review, 2026-10-03).
+2. The registry is then self-describing: `acme-widgets` once, `source: pack`, held by the first pack, and a `refusals` row for `acme-widgets` with `connection_provider_conflict` and `heldBy` the first pack.
+3. The pair is not advertised in discovery `fixtures`: those ids name workflow fixtures, which `v2-advertised-fixtures-exist` creates runs of (RFC 0168).
+4. The provider is fictional and has no endpoints anyone calls.
 
 ### §E. Prose
 
@@ -87,25 +88,24 @@ Two connection-pack rules are MUSTs that no party can observe on a production ho
 
 ### §F. Conformance
 
-`v2-provider-conflict` gains a normative-surface path, run when the host advertises `connections.providerRead` and the `conformance-provider-conflict` fixture. It runs alongside the seam path where both are offered, as `trigger-bridge-delivery` does since 2.45.8.
+`v2-provider-conflict` gains a normative-surface path, run when the host advertises `connections.providerRead`. It runs alongside the seam path where both are offered, as `trigger-bridge-delivery` does since 2.45.8.
 
-1. **fail-closed** (`openwop.requirement.0177.provider-conflict.fail-closed`): the registry lists `acme-widgets` exactly once, held by the first fixture pack, and `refusals` carries the rival with `connection_provider_conflict`.
-2. **qualified-form** (`openwop.requirement.0177.provider-conflict.qualified-form`): `<first>#acme-widgets` resolves with `source: pack`; `<rival>#acme-widgets` answers `404 connection_provider_unresolved`; bare `acme-widgets` resolves to the first pack.
-3. **uniqueness** (new id `openwop.requirement.0233.provider-registry.unique`): no bare id appears twice in the registry. It runs on any host with the facet, fixture or not.
+1. **fail-closed** (`openwop.requirement.0177.provider-conflict.fail-closed`): with the §D fixture installed, the registry lists `acme-widgets` exactly once, held by the first pack, and `refusals` carries a `connection_provider_conflict` row for `acme-widgets` held by it.
+2. **qualified-form** (`openwop.requirement.0177.provider-conflict.qualified-form`): `acme-widgets?pack=<first>` resolves with `source: pack`; `acme-widgets?pack=<rival>` answers `404 connection_provider_unresolved`; bare `acme-widgets` resolves to the first pack.
+3. **uniqueness** (new id `openwop.requirement.0233.provider-registry.unique`): the page is schema-valid and no bare id appears twice. It runs on any host with the facet.
 
-Dispositions: no `packsSupported` ⇒ `inapplicable`. `packsSupported` with neither the seams nor `providerRead` plus the fixture: unresolved question 2. A host advertising `providerRead` that does not serve it ⇒ the leg fails.
+Dispositions (§Decisions 2): no `packsSupported`, or no `providerRead` and no seam ⇒ `inapplicable`. `providerRead` without the §D fixture installed ⇒ legs 1–2 `inapplicable`, leg 3 still runs. A host advertising `providerRead` that does not serve it ⇒ the leg fails. A host advertising `packsSupported` SHOULD advertise `providerRead`.
 
 ### Falsifiability — one row per normative requirement
 
 | Requirement | Observable — what an outside party sees | Who can cause the condition | Verdict |
 | --- | --- | --- | --- |
-| §B.1 a host advertising the facet serves the read | `200` and a schema-valid page | the suite, unaided | witnessable — gated |
-| §B.4 a bare id appears at most once | the registry page | the suite, unaided | witnessable — gated |
-| §B.5 a refused registration appears with its code | the `refusals` row for the rival | the operator, by installing the §D fixture pair | witnessable — gated |
-| §B.6 a row is content-free | every row against the schema's closed shape | the suite, unaided | witnessable — gated |
-| §C.1 a qualified reference resolves only to the named pack | the resolve answers for both fixture packs | the operator, by installing the §D fixture pair | witnessable — gated |
-| §C.3 an unresolvable reference is `404 connection_provider_unresolved` | the resolve answer for the rival | the operator, by installing the §D fixture pair | witnessable — gated |
+| §B.1, §B.4, §B.6 a host advertising the facet serves a schema-valid, content-free registry with each bare id once — `openwop.requirement.0233.provider-registry.unique` | `200`, the closed page schema, no duplicate `id` | the suite, unaided | witnessable — executed-pass required on a host bundle |
+| §B.5 a refused registration appears with its code — RFC 0177's `openwop.requirement.0177.provider-conflict` (leg `.fail-closed`) | the `refusals` row for `acme-widgets` held by the first fixture pack, and the id listed once | the operator, by installing the §D fixture pair | witnessable — executed-pass required on a host bundle |
+| §C.1, §C.3 a qualified reference resolves only to the named pack; an unresolvable one is `404 connection_provider_unresolved` — RFC 0177's `openwop.requirement.0177.provider-conflict` (leg `.qualified-form`) | the resolve answers for both fixture packs and for the bare id | the operator, by installing the §D fixture pair | witnessable — executed-pass required on a host bundle |
 | §B.7 refusals reflect the serving process's installs | none from outside: a restart is not observable | nobody, from outside | unwitnessable — a process boundary is not on the wire (MAY, not a MUST) |
+
+The §B.5 and §C rows name RFC 0177's parent id, not its two legs. This RFC makes that requirement witnessable without a seam; it is not a new one. Naming the legs would declare them as requirements of their own, and `check-accepted-predicate` would then stop counting them toward RFC 0177. Acceptance still needs both legs `executed-pass` (§Acceptance criteria).
 
 ## Compatibility
 
@@ -119,15 +119,26 @@ Dispositions: no `packsSupported` ⇒ `inapplicable`. `packsSupported` with neit
 
 1. **Demote the two MUSTs to SHOULD** (`conformance.md` §Witness class allows it). Fast. Rejected by the maintainer: it weakens the rule that stops two packs from claiming one provider.
 2. **Record the seam-only legs `inapplicable` on a seam-free host.** Rejected by the maintainer: any host could advertise `packsSupported` and never be checked.
-3. **A dry-run install endpoint** (`POST /connection-packs:validate` answers what an install would do). The suite could cause the conflict unaided, which is stronger. But it observes a validation function, not the install path, and the two can diverge; it is also a write-shaped surface. Kept as unresolved question 3.
+3. **A dry-run install endpoint** (`POST /connection-packs:validate` answers what an install would do). The suite could cause the conflict unaided, which is stronger. But it observes a validation function, not the install path, and the two can diverge; it is also a write-shaped surface. Deferred (§Decisions 3).
 4. **An install endpoint on the protocol surface.** Makes installation a protocol operation, with the signing, supply-chain and authorization questions `packs.md` settles for registries. Out of scope.
+5. **Advertise the fixture pair as a discovery `fixtures` id.** Rejected in review: `v2-advertised-fixtures-exist` would try to run it as a workflow.
 
-## Unresolved questions
+## Decisions
 
-1. **Which scope reads the registry?** It is host-global and carries no tenant data. Options: no new scope (any authenticated caller), `packs:read`, or a new `connections:read`. openwop-app asked for this to be stated (its session, 2026-10-03).
-2. **A host with `packsSupported` that serves neither the seams nor `providerRead` plus the fixture.** Today its rows are `blocked`. After this RFC there is a normative path the host chose not to offer. Options: (a) keep `blocked` (the host advertises behaviour it offers no way to check); (b) `inapplicable`, as RFC 0232's attempt leg records without `triggerBridge.deadLetter`. The author leans (a) for `packsSupported`, since the facet is now the cheap, honest way to be checked.
-3. **Should a dry-run validate endpoint (Alternative 3) be added later** so the suite can cause a conflict without the operator?
-4. **Should `refusals` include `connection_provider_unresolved`** for a connector (not a pack) that references an undefined provider? Connectors are registered elsewhere; this RFC lists pack registrations only unless decided otherwise.
+An `/architect` review decided these on 2026-10-03, under the maintainer's directive to settle design questions that way. None remain open.
+
+1. **Scope: `manifest:read`.** The registry is host-installed definitions with no tenant data, so it reads like the manifest reads. No new scope widens the authorization vocabulary. Not `packs:read`, which is the registry-side tarball read.
+2. **Without the gate, a leg is `inapplicable`.** `conformance.md` defines `witnessable-gated` as "observed when the host advertises the gating capability"; here the gate is `providerRead`. This matches RFC 0232's attempt leg at major 2. To keep the gap visible rather than silent, a host advertising `packsSupported` SHOULD advertise `providerRead` (risk R4).
+3. **No dry-run endpoint now** (gap G4 stays externally gated).
+4. **`refusals` covers pack registrations only.** Connectors register through a different surface (RFC 0045).
+5. **Wire shape.**
+   - Two reads: the list witnesses uniqueness and refusals; the resolve witnesses resolution.
+   - The qualified form is `?pack=`, never a `#` in the path.
+   - `providerRead` is boolean, like `packsSupported`.
+   - No paging: the set is bounded by the installed packs.
+   - The fixture pair is self-describing in the registry, not a discovery `fixtures` id (§D.3).
+   - The seam path stays as a second path.
+6. **The path is `/connection-providers`, not `/connections/providers`.** `check-manifest-top-level-segments` showed `connections` would be a new top-level name, and openwop-app already serves `/connections` unversioned as a browser page and OAuth return path. `versioning.md` §5 would then flip header-less requests on that name to the protocol at v1 end-of-support. `connection-providers` is unused by every matrix host (checked in openwop-app, openwop-examples and MyndHyve source, 2026-10-03).
 
 ## Implementation notes (non-normative)
 
@@ -136,10 +147,10 @@ Dispositions: no `packsSupported` ⇒ `inapplicable`. `packsSupported` with neit
 
 ## Acceptance criteria
 
-- [ ] `Active`: the comment window closes (2026-10-10) with no unresolved objection, and unresolved questions 1 and 2 are decided.
+- [x] `Active`: the questions are decided (§Decisions). The comment window was waived by STEWARD OVERRIDE of RFC 0147 §A.6 on 2026-10-03, and the RFC 0156 §B review is owed.
 - [ ] The facet is in the v2 declaration; both reads are in `api/v2/openapi.yaml`; the page schema validates in `spec-corpus-validity`; the fixture is catalogued in `fixtures.md`; `connection-packs.md` §Observation is merged; `CHANGELOG.md` records it.
 - [ ] `v2-provider-conflict`'s normative-surface path ships, each row failing on its sabotage: a registry listing one id twice, a missing refusal, a qualified reference resolving to the wrong pack, a rival reference that resolves, a row carrying an endpoint URL.
-- [ ] `Accepted`: a host advertising `connections.providerRead` and the fixture records the §F rows `executed-pass` on a certified production bundle with no test seams served.
+- [ ] `Accepted`: a host advertising `connections.providerRead`, with the §D fixture installed, records `openwop.requirement.0177.provider-conflict.fail-closed`, `openwop.requirement.0177.provider-conflict.qualified-form` and `openwop.requirement.0233.provider-registry.unique` `executed-pass` on a certified production bundle with no test seams served.
 
 ## References
 

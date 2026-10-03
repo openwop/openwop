@@ -381,6 +381,40 @@ def v2_openapi_and_seams():
             '401': {'$ref': '#/components/responses/Unauthenticated'},
             '403': {'$ref': '#/components/responses/Forbidden'},
             '404': {'$ref': '#/components/responses/NotFound'}}}}
+    # RFC 0233 — the connection-provider registry reads (gated on connections.providerRead).
+    # Pack installation is no protocol operation, so the provider-identity MUSTs of
+    # connection-packs.md had only a test seam as witness, which conformance.md
+    # §Witness class forbids. These reads are the normative observation path.
+    REG = '../../schemas/v2/connection-provider-registry.schema.json'
+    paths['/connection-providers'] = {'get': {
+        'tags': ['connections'],
+        'operationId': 'listConnectionProviders',
+        'summary': "List the host's connection providers and refused pack registrations",
+        'description': ('Every provider definition the host resolves against, built-ins included, each bare id once, and the pack '
+                        'registrations it refused under `connection-packs.md` §Provider identity. Host-global: no tenant data. Gated on '
+                        '`connections.providerRead`: a host that does not advertise it answers `404 not_found`.'),
+        'responses': {
+            '200': {'description': 'The registry.', 'content': {'application/json': {'schema': {'$ref': REG}}}},
+            '401': {'$ref': '#/components/responses/Unauthenticated'},
+            '403': {'$ref': '#/components/responses/Forbidden'},
+            '404': {'$ref': '#/components/responses/NotFound'}}}}
+    paths['/connection-providers/{providerId}'] = {'get': {
+        'tags': ['connections'],
+        'operationId': 'resolveConnectionProvider',
+        'summary': 'Resolve one connection provider reference',
+        'description': ('Resolves a bare provider id, or with `pack` the qualified form `<packName>#<providerId>`, to the one definition '
+                        'it names. A bare id resolves only when exactly one definition exists; with `pack` it resolves only to that '
+                        'pack\'s definition. Not resolvable: `404` `connection_provider_unresolved`. Gated on `connections.providerRead`.'),
+        'parameters': [
+            {'name': 'providerId', 'in': 'path', 'required': True, 'schema': {'type': 'string', 'minLength': 1, 'maxLength': 128},
+             'description': 'The bare provider id.'},
+            {'name': 'pack', 'in': 'query', 'required': False, 'schema': {'type': 'string', 'minLength': 1, 'maxLength': 214},
+             'description': 'A pack name: the qualified form, carried as a query parameter so no `#` travels in the path.'}],
+        'responses': {
+            '200': {'description': 'The resolved definition.', 'content': {'application/json': {'schema': {'$ref': REG + '#/$defs/provider'}}}},
+            '401': {'$ref': '#/components/responses/Unauthenticated'},
+            '403': {'$ref': '#/components/responses/Forbidden'},
+            '404': {'$ref': '#/components/responses/NotFound'}}}}
     # RFC 0232 — the trigger dead-letter read is a v1 operation; its path segment is the
     # tenant-bound subscriptionId kind at v2 (identity.md §5), as listWebhookDeadLetters' is.
     for prm in paths['/trigger-subscriptions/{subscriptionId}/dead-letters']['get']['parameters']:
@@ -594,7 +628,9 @@ def v2_openapi_and_seams():
         'getRunCompensation': ['runs:read'],
         'getRunEffects': ['runs:read'],
         'listRuns': ['runs:read'],
+        'listConnectionProviders': ['manifest:read'],
         'listWebhookDeadLetters': ['webhooks:manage'],
+        'resolveConnectionProvider': ['manifest:read'],
         'rotateWebhookSecret': ['webhooks:manage'],
         'streamHostEvents': ['runs:read'],
     }
@@ -710,6 +746,9 @@ def prune_unused(doc):
         for op in path_item.values():
             if isinstance(op, dict):
                 used.update(op.get('tags', []) or [])
+    # RFC 0233 — the connection-provider reads are v2-only, so their tag has no v1 ancestor to inherit.
+    if 'connections' in used and not any(t.get('name') == 'connections' for t in doc.get('tags', [])):
+        doc.setdefault('tags', []).append({'name': 'connections', 'description': 'Connection-pack provider registry: the definitions a host resolves against and the registrations it refused.'})
     if 'tags' in doc:
         doc['tags'] = [t for t in doc['tags'] if t.get('name') in used]
         if not doc['tags']:
