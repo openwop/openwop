@@ -116,8 +116,14 @@ Defects outside the spec:
       `verify-signatures` → `npm run check`. The README's CI-only claim is corrected.
   - [x] `build-pack-tarball.mjs` bundles the file `runtime.entry` names, so WASM, Python and Go packs
         can publish (registry #78; all 156 existing tarballs rebuilt byte-identical).
-  - [ ] Fixtures `rust-misbehaving-abi` / `rust-misbehaving-memory` keep v1-shaped manifests
-        (never published). `packs/community.openwop-team.demo` carries stale v1 `keys/` files.
+  - [ ] `packs/community.openwop-team.demo` in openwop-registry (checked 2026-10-03). Its
+        `keys/pack.json.sig` is dead: `build-pack-tarball.mjs` strips it and writes the real
+        signature. Its `keys/community.openwop-team.pub.pem` is not the key that signs 0.1.2
+        (`registry/keys/openwop-team-1.pub`), and the README's verify recipe (canonical JSON
+        over the manifest, that pem) fails on both the source and the published tarball. The pem
+        and README ship inside the tarball, so fixing them changes its bytes: do it only with a
+        0.1.3 publish. The `rust-misbehaving-abi` / `-memory` fixtures are not a defect: only
+        the major-1 `wasm-pack-*` scenarios use them, and they declare `<2.0.0`.
 - [x] `tiny-workflow` and `streaming-client` speak v2, and CI runs them against the v2 reference
       host (examples #100).
 
