@@ -120,6 +120,28 @@
     },
     {
       "method": "GET",
+      "path": "/connection-providers",
+      "operationId": "listConnectionProviders",
+      "requestHeaders": [
+        "OpenWOP-Client-Version",
+        "OpenWOP-Version"
+      ],
+      "authenticated": true,
+      "requestBody": false
+    },
+    {
+      "method": "GET",
+      "path": "/connection-providers/{providerId}",
+      "operationId": "resolveConnectionProvider",
+      "requestHeaders": [
+        "OpenWOP-Client-Version",
+        "OpenWOP-Version"
+      ],
+      "authenticated": true,
+      "requestBody": false
+    },
+    {
+      "method": "GET",
       "path": "/content/pages",
       "operationId": "listContentPages",
       "requestHeaders": [
@@ -655,7 +677,7 @@
     }
   ],
   "counts": {
-    "operations": 56,
+    "operations": 58,
     "channels": 2
   }
 }

@@ -31,8 +31,19 @@ A host advertising `connections.packsSupported` MUST resolve a connector's `auth
 - An unresolvable provider MUST be refused when the dependent connector or pack is registered.
 - On a publish-path host, resolution MUST run after the idempotency short-circuit: a byte-identical re-publish of an installed pack MUST succeed even when resolution inputs have since changed.
 
+## Observation
+
+A host advertising `connections.providerRead` MUST serve two reads under `manifest:read` (`schemas/v2/connection-provider-registry.schema.json`). The registry is host-global and carries no tenant data.
+
+- `GET /connection-providers` lists every definition, built-ins included, each bare id once, and the pack registrations refused under §Provider identity, with the code and, for a conflict, the holder.
+- `GET /connection-providers/{providerId}` resolves one reference; `?pack=<packName>` is the qualified form. An unresolvable reference answers `404` `connection_provider_unresolved`.
+- A row carries ids, pack names and codes only, never an endpoint, a scope catalog or credential material.
+- Refusals MAY be recomputed at each start.
+
+A host advertising `packsSupported` SHOULD advertise `providerRead`.
+
 ## Errors
 
 Both codes are in `spec/v2/errors.json`: `connection_provider_conflict` (two claimants for one bare id) and `connection_provider_unresolved` (no definition for the referenced id).
 
-*Sources: RFCs 0095, 0177.*
+*Sources: RFCs 0095, 0177, 0233.*

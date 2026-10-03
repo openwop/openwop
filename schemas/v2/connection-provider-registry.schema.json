@@ -1,0 +1,174 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://openwop.dev/spec/v2/connection-provider-registry.schema.json",
+  "title": "ConnectionProviderRegistry",
+  "description": "RFC 0233 §B — the answer to `listConnectionProviders`: every provider definition the host resolves against, and the pack registrations it refused under `connection-packs.md` §Provider identity. Host-global: it carries no tenant data. Content-free: ids, pack names and codes only, never an endpoint URL, a scope catalog or credential material.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "providers",
+    "refusals"
+  ],
+  "properties": {
+    "providers": {
+      "type": "array",
+      "description": "Every definition the host resolves against, built-ins included. A bare `id` appears at most once (§Provider identity).",
+      "items": {
+        "$ref": "#/$defs/provider"
+      }
+    },
+    "refusals": {
+      "type": "array",
+      "description": "Pack registrations the host refused under §Provider identity, as attempted by the serving process. A host MAY recompute this at every start.",
+      "items": {
+        "$ref": "#/$defs/refusal"
+      }
+    }
+  },
+  "$defs": {
+    "provider": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "id",
+        "source"
+      ],
+      "description": "One provider definition. Also the answer to `resolveConnectionProvider`.",
+      "properties": {
+        "id": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 128,
+          "description": "The bare provider id."
+        },
+        "source": {
+          "type": "string",
+          "enum": [
+            "builtin",
+            "pack"
+          ],
+          "description": "`builtin`: the host's own definition. `pack`: an installed connection pack's."
+        },
+        "packName": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 214,
+          "description": "The installed pack that defines it. Present exactly when `source` is `pack`."
+        }
+      },
+      "allOf": [
+        {
+          "if": {
+            "properties": {
+              "source": {
+                "const": "pack"
+              }
+            },
+            "required": [
+              "source"
+            ]
+          },
+          "then": {
+            "required": [
+              "packName"
+            ]
+          },
+          "else": {
+            "not": {
+              "required": [
+                "packName"
+              ]
+            }
+          }
+        }
+      ]
+    },
+    "refusal": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "packName",
+        "providerId",
+        "code"
+      ],
+      "description": "One refused pack registration.",
+      "properties": {
+        "packName": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 214,
+          "description": "The pack whose registration was refused."
+        },
+        "providerId": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 128,
+          "description": "The bare provider id it claimed or referenced."
+        },
+        "code": {
+          "type": "string",
+          "enum": [
+            "connection_provider_conflict",
+            "connection_provider_unresolved"
+          ],
+          "description": "Why it was refused (`spec/v2/errors.json`)."
+        },
+        "heldBy": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 214,
+          "description": "For a conflict: the `packName` that holds the id, or `builtin`."
+        }
+      },
+      "allOf": [
+        {
+          "if": {
+            "properties": {
+              "code": {
+                "const": "connection_provider_conflict"
+              }
+            },
+            "required": [
+              "code"
+            ]
+          },
+          "then": {
+            "required": [
+              "heldBy"
+            ]
+          },
+          "else": {
+            "not": {
+              "required": [
+                "heldBy"
+              ]
+            }
+          }
+        }
+      ]
+    }
+  },
+  "examples": [
+    {
+      "providers": [
+        {
+          "id": "github",
+          "source": "builtin"
+        },
+        {
+          "id": "acme-widgets",
+          "source": "pack",
+          "packName": "core.openwop.connections.acme-widgets"
+        }
+      ],
+      "refusals": [
+        {
+          "packName": "core.openwop.connections.acme-widgets-rival",
+          "providerId": "acme-widgets",
+          "code": "connection_provider_conflict",
+          "heldBy": "core.openwop.connections.acme-widgets"
+        }
+      ]
+    }
+  ]
+}
