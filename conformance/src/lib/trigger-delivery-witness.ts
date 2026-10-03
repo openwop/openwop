@@ -78,9 +78,9 @@ async function register(profile: MajorProfile, mode: 'none' | 'required'): Promi
   return { subscriptionId, ingestUrl, signingSecret };
 }
 
-async function ingest(sub: Sub, body: string, opts: { webhookId?: string; signature?: string } = {}): Promise<{ status: number; json: Record<string, unknown> | undefined }> {
+async function ingest(sub: Sub, body: string, opts: { webhookId?: string; signature?: string; timestamp?: string } = {}): Promise<{ status: number; json: Record<string, unknown> | undefined }> {
   const id = opts.webhookId ?? freshWebhookId();
-  const ts = String(Math.floor(Date.now() / 1000));
+  const ts = opts.timestamp ?? String(Math.floor(Date.now() / 1000));
   const sig = opts.signature ?? standardWebhooksSignature(sub.signingSecret, id, ts, body);
   const res = await driver.post(sub.ingestUrl, body, {
     authenticated: false,
@@ -130,6 +130,69 @@ export async function refusedLeg(profile: MajorProfile, a: TriggerAdverts): Prom
     f(bad.json?.['runId'] === undefined, DOC_INGEST, 'a failed required check MUST NOT start a run'),
     f(state === 'active', DOC_INGEST, `a refused event MUST NOT change the subscription's state (read answered ${read.status}, state ${String(state)})`),
     f(ok.status === 202, DOC_INGEST, `after a refused post the subscription MUST still deliver a correctly signed one (got ${ok.status})`),
+  ] };
+}
+
+/** How far off the skew probes are: twice the 300 s bound, so ordinary clock drift cannot pass or fail them. */
+export const SKEW_PROBE_SECONDS = 600;
+
+/**
+ * Leg 2b (RFC 0230 §C): under `required`, a `webhook-timestamp` more than 300 s
+ * from the host's clock fails the check, in either direction, even when the
+ * signature over that timestamp is correct. The post starts no run and leaves
+ * the subscription `active`.
+ */
+export async function staleTimestampLeg(profile: MajorProfile, a: TriggerAdverts): Promise<LegOutcome> {
+  const gate = signedGate(a); if (gate) return gate;
+  const sub = await register(profile, 'required'); if (typeof sub === 'string') return bindingFinding(sub);
+  const body = JSON.stringify({ conformance: 'stale-timestamp' });
+  const now = Math.floor(Date.now() / 1000);
+  const findings: TriggerFinding[] = [];
+  for (const [label, ts] of [['stale', now - SKEW_PROBE_SECONDS], ['future', now + SKEW_PROBE_SECONDS]] as const) {
+    // Correctly signed over the skewed timestamp: only the skew can refuse it.
+    const res = await ingest(sub, body, { timestamp: String(ts) });
+    findings.push(
+      f(res.status === 401, DOC_INGEST, `a ${label} webhook-timestamp (${SKEW_PROBE_SECONDS} s off) under required verification MUST answer 401 (got ${res.status})`),
+      f(readErrorCode(res.json) === 'signature_invalid', DOC_INGEST, `the ${label}-timestamp refusal MUST carry signature_invalid (got ${String(readErrorCode(res.json))})`),
+      f(res.json?.['runId'] === undefined, DOC_INGEST, `a ${label}-timestamp post MUST NOT start a run`),
+    );
+  }
+  const read = await driver.get(`${profile.triggerSubscriptionsPath}/${profile.idSegment(sub.subscriptionId)}`);
+  const state = (read.json as { subscription?: { state?: unknown } } | undefined)?.subscription?.state;
+  const ok = await ingest(sub, body);
+  findings.push(
+    f(state === 'active', DOC_INGEST, `a skewed post MUST NOT change the subscription's state (read answered ${read.status}, state ${String(state)})`),
+    f(ok.status === 202, DOC_INGEST, `after the skewed posts the subscription MUST still deliver a current, correctly signed one (got ${ok.status})`),
+  );
+  return { kind: 'observed', findings };
+}
+
+/** True when `v` holds a `signingSecret` key at any depth. */
+function hasSecretKey(v: unknown): boolean {
+  if (Array.isArray(v)) return v.some(hasSecretKey);
+  if (!isRecord(v)) return false;
+  return Object.entries(v).some(([k, x]) => k === 'signingSecret' || hasSecretKey(x));
+}
+
+/**
+ * Leg 2c (RFC 0230 §B, SR-1): the `whsec_` secret is returned once, in the
+ * registration's binding, and never on a re-read of the subscription. A host
+ * that serves no re-read cannot return it there, so the leg is `inapplicable`.
+ */
+export async function signingSecretOnceLeg(profile: MajorProfile, a: TriggerAdverts): Promise<LegOutcome> {
+  const gate = signedGate(a); if (gate) return gate;
+  const sub = await register(profile, 'none'); if (typeof sub === 'string') return bindingFinding(sub);
+  const read = await driver.get(`${profile.triggerSubscriptionsPath}/${profile.idSegment(sub.subscriptionId)}`);
+  if (read.status === 404 || read.status === 405) {
+    return { kind: 'skip', disposition: 'inapplicable', reason: `the host serves no re-read of a trigger subscription at this major (GET answered ${read.status}), so no re-read can return the secret` };
+  }
+  const text = read.text;
+  const keyBytes = sub.signingSecret.replace(/^whsec_/, '');
+  return { kind: 'observed', findings: [
+    f(read.status === 200, DOC_INGEST, `the re-read of a subscription just registered MUST answer 200 when the host serves it (got ${read.status})`),
+    f(!hasSecretKey(read.json), DOC_INGEST, 'a re-read MUST NOT carry signingSecret'),
+    f(!text.includes(sub.signingSecret) && (keyBytes.length < 8 || !text.includes(keyBytes)), DOC_INGEST, 'a re-read MUST NOT carry the secret\'s value'),
+    f(!text.includes('whsec_'), DOC_INGEST, 'a re-read MUST NOT carry any whsec_ secret'),
   ] };
 }
 

@@ -6,11 +6,18 @@
  * under `OPENWOP_REQUIRE_BEHAVIOR=true`. The always-on wire-shape coverage lives
  * in `trigger-bridge-shape.test.ts`.
  *
- * Five legs, each its own requirement (RFC 0230 split the one combined `it`;
- * RFC 0232 split the fourth):
+ * Seven legs, each its own requirement (RFC 0230 split the one combined `it`;
+ * RFC 0232 split the fourth; 2.45.12 added 2b and 2c):
  *
  *   1. DEDUP (§C-1) — a repeated delivery is effectively-once.
  *   2. DEAD-LETTER (§C-2 + RFC 0053) — an exhausted/refused delivery starts no run.
+ *   2b. STALE TIMESTAMP (RFC 0230 §C) — under `required`, a `webhook-timestamp`
+ *      more than 300 s off, either way, answers `401 signature_invalid`, starts
+ *      no run and leaves the subscription `active`.
+ *   2c. SECRET ONCE (RFC 0230 §B, SR-1) — a re-read of the subscription carries
+ *      no `signingSecret` and no `whsec_` value.
+ *   Legs 2b and 2c have only the normative-surface path: they are
+ *   `inapplicable` on a host that does not advertise `inboundSigning`.
  *   3. CAUSATION (§C / RFC 0040) — a delivered run carries the delivery as
  *      `run.started.causationId`.
  *   4a. RUN-LESS ATTEMPT (SR-1) — a dead-lettered `trigger.delivery.attempted`
@@ -71,9 +78,22 @@ import { deadLetterFacet, freshCanary, judge as judgeDeadLetters, readDeadLetter
 
 const R_DEDUP = 'openwop.requirement.0083.trigger-delivery.dedup';
 const R_DEAD_LETTER = 'openwop.requirement.0083.trigger-delivery.dead-letter';
+const R_STALE_TIMESTAMP = 'openwop.requirement.0230.stale-timestamp-refused';
+const R_SECRET_ONCE = 'openwop.requirement.0230.signing-secret-once';
 const R_CAUSATION = 'openwop.requirement.0083.trigger-delivery.causation';
 const R_RUNLESS_ATTEMPT = 'openwop.requirement.0083.trigger-delivery.runless-attempt-content-free';
 const R_RUNLESS_STATE = 'openwop.requirement.0083.trigger-delivery.runless-state-change-content-free';
+
+/** How far off the skew probes are: twice the 300 s bound, so ordinary clock drift cannot pass or fail them. */
+const SKEW_PROBE_SECONDS = 600;
+const NO_SIGNING = 'the host does not advertise triggerBridge.ingestion.inboundSigning ["standard-webhooks-1"]: this rule binds only the RFC 0230 signed ingest, and no seam path witnesses it';
+
+/** True when `v` holds a `signingSecret` key at any depth. */
+function hasSecretKey(v: unknown): boolean {
+  if (Array.isArray(v)) return v.some(hasSecretKey);
+  if (v === null || typeof v !== 'object') return false;
+  return Object.entries(v as Record<string, unknown>).some(([k, x]) => k === 'signingSecret' || hasSecretKey(x));
+}
 
 /** The bad signature every refused-post probe sends. */
 const BAD_SIGNATURE = 'v1,AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA=';
@@ -213,6 +233,45 @@ describe('trigger-bridge-delivery (RFC 0083 §C)', () => {
     const ok = await signedIngest(sub, body);
     expect(ok.status, req(R_DEAD_LETTER, 'trigger-bridge.md §F.6 (RFC 0230 §C.1)', `after a refused post the subscription MUST still deliver a correctly signed one (got ${ok.status})`)).toBe(202);
     notePaths(paths.seam, true);
+  });
+
+  it('refuses a webhook-timestamp more than 300 s off without starting a run', async () => {
+    if (!behaviorGate('openwop-trigger-bridge', await isTriggerBridgeProfileAdvertised())) return;
+    if (!(await inboundSigningAdvertised())) return softSkip('inapplicable', NO_SIGNING);
+    const sub = await registerSignedWebhook('required');
+    if ('reason' in sub) throw new Error(req(R_STALE_TIMESTAMP, 'trigger-bridge.md §F.6', `an inboundSigning host MUST return the §B binding on webhook registration: ${sub.reason}`));
+    const body = JSON.stringify({ conformance: 'stale-timestamp' });
+    const now = Math.floor(Date.now() / 1000);
+    for (const [label, ts] of [['stale', now - SKEW_PROBE_SECONDS], ['future', now + SKEW_PROBE_SECONDS]] as const) {
+      // Correctly signed over the skewed timestamp: only the skew can refuse it.
+      const res = await signedIngest(sub, body, { timestamp: String(ts) });
+      expect(res.status, req(R_STALE_TIMESTAMP, 'trigger-bridge.md §F.6', `a ${label} webhook-timestamp (${SKEW_PROBE_SECONDS} s off) under required verification MUST answer 401 (got ${res.status})`)).toBe(401);
+      expect((res.json as { error?: unknown } | undefined)?.error, req(R_STALE_TIMESTAMP, 'trigger-bridge.md §F.6', `the ${label}-timestamp refusal MUST carry signature_invalid`)).toBe('signature_invalid');
+      expect(res.json?.runId, req(R_STALE_TIMESTAMP, 'trigger-bridge.md §F.6', `a ${label}-timestamp post MUST NOT start a run`)).toBeUndefined();
+    }
+    const read = await driver.get(`/v1/trigger-subscriptions/${encodeURIComponent(sub.subscriptionId)}`);
+    const state = (read.json as { subscription?: { state?: unknown } } | undefined)?.subscription?.state;
+    expect(state, req(R_STALE_TIMESTAMP, 'trigger-bridge.md §F.6 (RFC 0230 §C.1)', `a skewed post MUST NOT change the subscription's state (read answered ${read.status}, state ${String(state)})`)).toBe('active');
+    const ok = await signedIngest(sub, body);
+    expect(ok.status, req(R_STALE_TIMESTAMP, 'trigger-bridge.md §F.6', `after the skewed posts the subscription MUST still deliver a current, correctly signed one (got ${ok.status})`)).toBe(202);
+    notePaths(false, true);
+  });
+
+  it('returns the signing secret once: a re-read carries no whsec_ value', async () => {
+    if (!behaviorGate('openwop-trigger-bridge', await isTriggerBridgeProfileAdvertised())) return;
+    if (!(await inboundSigningAdvertised())) return softSkip('inapplicable', NO_SIGNING);
+    const sub = await registerSignedWebhook('none');
+    if ('reason' in sub) throw new Error(req(R_SECRET_ONCE, 'trigger-bridge.md §F.6', `an inboundSigning host MUST return the §B binding on webhook registration: ${sub.reason}`));
+    const read = await driver.get(`/v1/trigger-subscriptions/${encodeURIComponent(sub.subscriptionId)}`);
+    if (read.status === 404 || read.status === 405) {
+      return softSkip('inapplicable', `the host serves no re-read of a trigger subscription (GET answered ${read.status}), so no re-read can return the secret`);
+    }
+    const keyBytes = sub.signingSecret.replace(/^whsec_/, '');
+    expect(read.status, req(R_SECRET_ONCE, 'trigger-bridge.md §F.6', `the re-read of a subscription just registered MUST answer 200 when the host serves it (got ${read.status})`)).toBe(200);
+    expect(hasSecretKey(read.json), req(R_SECRET_ONCE, 'trigger-bridge.md §F.6 (SR-1)', 'a re-read MUST NOT carry signingSecret')).toBe(false);
+    expect(read.text.includes(sub.signingSecret) || (keyBytes.length >= 8 && read.text.includes(keyBytes)), req(R_SECRET_ONCE, 'trigger-bridge.md §F.6 (SR-1)', 'a re-read MUST NOT carry the secret\'s value')).toBe(false);
+    expect(read.text.includes('whsec_'), req(R_SECRET_ONCE, 'trigger-bridge.md §F.6 (SR-1)', 'a re-read MUST NOT carry any whsec_ secret')).toBe(false);
+    notePaths(false, true);
   });
 
   it('links delivery→run causation on run.started', async () => {
