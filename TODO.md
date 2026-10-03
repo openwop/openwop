@@ -166,9 +166,9 @@ Defects outside the spec:
       `triggerBridge.ingestion` with `externalSources` webhook/email/form, but the `ingestUrl` and
       form URL it returns answer `404`, `POST /v1/trigger-subscriptions` stores nothing, and the
       delivery model runs only behind its conformance seam. Its session is raising the advert with
-      its maintainer. **Steward follow-up:** RFC 0099's `Accepted` cites MyndHyve as the
-      non-steward witness of the behavioural legs; those legs ran through the seam. Decide whether
-      that evidence still stands.
+      its maintainer. RFC 0099's `Accepted` evidence stands (maintainer, 2026-10-03); its
+      Amendment record now discloses that MyndHyve's legs ran through the seam. Open only on
+      MyndHyve's side.
 - [ ] **Host evidence owed, as the host sessions report it (2026-10-02):**
   - RFC 0230 (openwop-app, session 4d): the seam-free run on 2.45.9 is done (legs 1–3 pass,
     leg 4 fails, `blocked` 0). The pin to 2.45.9 is committed. The production flag and the
