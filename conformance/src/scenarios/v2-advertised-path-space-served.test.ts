@@ -135,6 +135,15 @@ describe('v2-advertised-path-space-served (RFC 0172 §A.1)', () => {
     if (!new Set(versions.map((v) => v.split('.')[0])).has('2')) {
       return softSkip('inapplicable', `the host advertises [${versions.join(', ') || 'no protocolVersions'}] — it does not claim major 2, so there is no path space to hold it to`);
     }
+    // versioning.md §1.2's obligation is an OVERLAP rule: reach under major 2
+    // what the host already serves under /v1. A host whose protocolVersions[]
+    // carries no 1.x member has retired /v1 (§5 "Retirement is atomic"), so
+    // nothing is served there and there is nothing to pair. Until 2.45.12 a
+    // retired host failed this leg: every /v1 path answers 410 there, and the
+    // leg read 410 as "served under /v1" (openwop-app's v1-cut rehearsal).
+    if (!new Set(versions.map((v) => v.split('.')[0])).has('1')) {
+      return softSkip('inapplicable', `the host advertises [${versions.join(', ')}] with no 1.x member — /v1 is retired (versioning.md §5), so there is no /v1 surface to pair`);
+    }
 
     const paths = parameterlessGets();
     if (paths.length === 0) return softSkip('blocked', 'spec/v2/path-manifest.json is unreadable from this layout');
@@ -146,8 +155,9 @@ describe('v2-advertised-path-space-served (RFC 0172 §A.1)', () => {
       const v1 = await get(`/v1${path}`, false);
       if (v1.status === null) return softSkip('blocked', `the host became unreachable while probing /v1${path}`);
       // The host does not serve this surface in EITHER major. Legitimate, and a
-      // different question from the one asked here.
-      if (v1.status === 404) continue;
+      // different question from the one asked here. 410 Gone says the same of
+      // /v1 (RFC 9110 §15.5.11: no longer available), so it is not a pair either.
+      if (v1.status === 404 || v1.status === 410) continue;
       pairable += 1;
 
       const v2 = await get(path, true);
