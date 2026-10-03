@@ -10,8 +10,8 @@
  * `<packName>#<id>`, which resolves only to the named pack's definition.
  *
  * TWO WITNESS PATHS (RFC 0233), and a host is measured on every path it offers.
- * The NORMATIVE-SURFACE path reads `GET /connections/providers` and
- * `GET /connections/providers/{providerId}` when the host advertises
+ * The NORMATIVE-SURFACE path reads `GET /connection-providers` and
+ * `GET /connection-providers/{providerId}` when the host advertises
  * `connections.providerRead`; the conflict was caused operator-side by
  * installing the §D fixture pair, and the registry describes the outcome
  * (`lib/provider-registry-witness.ts`). Without the fixture installed, its
@@ -108,9 +108,9 @@ const NO_PATH = 'connections.packsSupported is advertised, but the host serves n
 type SeamLeg = 'absent' | 'ran' | { kind: SoftSkipKind; reason: string };
 
 /** Map a normative-surface outcome to assertions. `observed` when it asserted; else the skip to fall back on. */
-function recordNormative(id: string, out: RegistryOutcome): { kind: SoftSkipKind; reason: string } | 'observed' {
+function recordNormative(label: (doc: string, message: string) => string, out: RegistryOutcome): { kind: SoftSkipKind; reason: string } | 'observed' {
   if (out.kind === 'skip') return { kind: out.disposition, reason: out.reason };
-  for (const x of out.findings) expect(x.ok, req(id, x.doc, x.message)).toBe(true);
+  for (const x of out.findings) expect(x.ok, label(x.doc, x.message)).toBe(true);
   return 'observed';
 }
 
@@ -129,7 +129,7 @@ describe('v2-provider-conflict (RFC 0177 §D.1)', () => {
   it('two definitions of one bare provider id fail closed: the later registration is refused with connection_provider_conflict', async () => {
     const pre = await preflight();
     if ('kind' in pre) return softSkip(pre.kind, pre.reason);
-    const normative = providerReadAdvertised(pre.connections) ? recordNormative('openwop.requirement.0177.provider-conflict.fail-closed', await failClosedLeg()) : null;
+    const normative = providerReadAdvertised(pre.connections) ? recordNormative((doc, m) => req('openwop.requirement.0177.provider-conflict.fail-closed', doc, m), await failClosedLeg()) : null;
     const seam = await seamFailClosed();
     if (typeof seam === 'object') return softSkip(seam.kind, seam.reason);
     if (normative !== 'observed' && seam === 'absent') return softSkip(normative?.kind ?? 'inapplicable', normative?.reason ?? NO_PATH);
@@ -139,7 +139,7 @@ describe('v2-provider-conflict (RFC 0177 §D.1)', () => {
   it('the qualified form <packName>#acme-widgets resolves to the named pack\'s definition', async () => {
     const pre = await preflight();
     if ('kind' in pre) return softSkip(pre.kind, pre.reason);
-    const normative = providerReadAdvertised(pre.connections) ? recordNormative('openwop.requirement.0177.provider-conflict.qualified-form', await qualifiedLeg()) : null;
+    const normative = providerReadAdvertised(pre.connections) ? recordNormative((doc, m) => req('openwop.requirement.0177.provider-conflict.qualified-form', doc, m), await qualifiedLeg()) : null;
     const seam = await seamQualified();
     if (typeof seam === 'object') return softSkip(seam.kind, seam.reason);
     if (normative !== 'observed' && seam === 'absent') return softSkip(normative?.kind ?? 'inapplicable', normative?.reason ?? NO_PATH);
@@ -150,7 +150,7 @@ describe('v2-provider-conflict (RFC 0177 §D.1)', () => {
     const pre = await preflight();
     if ('kind' in pre) return softSkip(pre.kind, pre.reason);
     if (!providerReadAdvertised(pre.connections)) return softSkip('inapplicable', 'the host does not advertise connections.providerRead (RFC 0233): no registry read to check');
-    const out = recordNormative('openwop.requirement.0233.provider-registry.unique', await uniqueLeg(v2Validator('connection-provider-registry')));
+    const out = recordNormative((doc, m) => req('openwop.requirement.0233.provider-registry.unique', doc, m), await uniqueLeg(v2Validator('connection-provider-registry')));
     if (out !== 'observed') return softSkip(out.kind, out.reason);
     noteWitnessPaths(true, false);
   });

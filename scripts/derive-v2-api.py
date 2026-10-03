@@ -386,7 +386,7 @@ def v2_openapi_and_seams():
     # connection-packs.md had only a test seam as witness, which conformance.md
     # §Witness class forbids. These reads are the normative observation path.
     REG = '../../schemas/v2/connection-provider-registry.schema.json'
-    paths['/connections/providers'] = {'get': {
+    paths['/connection-providers'] = {'get': {
         'tags': ['connections'],
         'operationId': 'listConnectionProviders',
         'summary': "List the host's connection providers and refused pack registrations",
@@ -398,7 +398,7 @@ def v2_openapi_and_seams():
             '401': {'$ref': '#/components/responses/Unauthenticated'},
             '403': {'$ref': '#/components/responses/Forbidden'},
             '404': {'$ref': '#/components/responses/NotFound'}}}}
-    paths['/connections/providers/{providerId}'] = {'get': {
+    paths['/connection-providers/{providerId}'] = {'get': {
         'tags': ['connections'],
         'operationId': 'resolveConnectionProvider',
         'summary': 'Resolve one connection provider reference',

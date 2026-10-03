@@ -35,8 +35,8 @@ A host advertising `connections.packsSupported` MUST resolve a connector's `auth
 
 A host advertising `connections.providerRead` MUST serve two reads under `manifest:read` (`schemas/v2/connection-provider-registry.schema.json`). The registry is host-global and carries no tenant data.
 
-- `GET /connections/providers` lists every definition, built-ins included, each bare id once, and the pack registrations refused under §Provider identity, with the code and, for a conflict, the holder.
-- `GET /connections/providers/{providerId}` resolves one reference; `?pack=<packName>` is the qualified form. An unresolvable reference answers `404` `connection_provider_unresolved`.
+- `GET /connection-providers` lists every definition, built-ins included, each bare id once, and the pack registrations refused under §Provider identity, with the code and, for a conflict, the holder.
+- `GET /connection-providers/{providerId}` resolves one reference; `?pack=<packName>` is the qualified form. An unresolvable reference answers `404` `connection_provider_unresolved`.
 - A row carries ids, pack names and codes only, never an endpoint, a scope catalog or credential material.
 - Refusals MAY be recomputed at each start.
 

@@ -8,7 +8,7 @@
 | **Author(s)**     | David Tufts (@davidscotttufts)                                  |
 | **Created**       | 2026-10-03                                                      |
 | **Updated**       | 2026-10-03 — `Draft` → `Active`, comment window waived by STEWARD OVERRIDE of RFC 0147 §A.6 (MAINTAINERS.md), under the maintainer's directive of 2026-10-03 to take this RFC to `Accepted` without the window and to settle design questions by `/architect` review. The `/architect` rulings are in §Decisions; they move the resolve read's qualified form from the path into `?pack=`, and drop the discovery `fixtures` advert in favour of a self-describing registry. · 2026-10-03 — filed `Draft` at the maintainer's direction (2026-10-03: mint a normative observation path for the provider-identity MUSTs rather than demote them). The 7-day comment window opens with the pull request and closes 2026-10-10. |
-| **Affects**       | two new optional v2 reads, `GET /connections/providers` and `GET /connections/providers/{providerId}` (`api/v2/openapi.yaml`, added in `scripts/derive-v2-api.py` as v2-only operations) and their schema · a new optional facet `connections.providerRead` (`spec/v2/facets/connections.schema.json`) · a conformance fixture pack `connection-pack-acme-widgets-rival` · `spec/v2/core/connection-packs.md` §Provider identity and §The qualified form · `v2-provider-conflict.test.ts` (a normative-surface path) |
+| **Affects**       | two new optional v2 reads, `GET /connection-providers` and `GET /connection-providers/{providerId}` (`api/v2/openapi.yaml`, added in `scripts/derive-v2-api.py` as v2-only operations) and their schema · a new optional facet `connections.providerRead` (`spec/v2/facets/connections.schema.json`) · a conformance fixture pack `connection-pack-acme-widgets-rival` · `spec/v2/core/connection-packs.md` §Provider identity and §The qualified form · `v2-provider-conflict.test.ts` (a normative-surface path) |
 | **Compatibility** | `additive` (COMPATIBILITY.md §2): two optional reads behind one optional facet, and one optional fixture. A host that advertises neither is bound exactly as today. |
 | **Supersedes**    | —                                                               |
 | **Superseded by** | —                                                               |
@@ -40,7 +40,7 @@ Two connection-pack rules are MUSTs that no party can observe on a production ho
 
 ### §B. The registry read
 
-`GET /connections/providers` (`listConnectionProviders`), v2 only.
+`GET /connection-providers` (`listConnectionProviders`), v2 only.
 
 1. A host advertising `connections.providerRead` MUST serve it. A host that does not answers `404 not_found`.
 2. **Host-global.** The provider registry is one per host (`connection-packs.md` §Provider identity). The read carries no tenant data and is the same for every caller. Scope: `manifest:read`.
@@ -67,7 +67,7 @@ Two connection-pack rules are MUSTs that no party can observe on a production ho
 
 ### §C. The resolve read
 
-`GET /connections/providers/{providerId}` (`resolveConnectionProvider`), v2 only, scope `manifest:read`. The optional query parameter `pack` names a pack: `?pack=<packName>` is the qualified form `<packName>#<providerId>`. The `#` never travels on the wire, because a front door that decodes `%23` would truncate the path.
+`GET /connection-providers/{providerId}` (`resolveConnectionProvider`), v2 only, scope `manifest:read`. The optional query parameter `pack` names a pack: `?pack=<packName>` is the qualified form `<packName>#<providerId>`. The `#` never travels on the wire, because a front door that decodes `%23` would truncate the path.
 
 1. Without `pack`, the bare id resolves only when exactly one definition exists. With `pack`, it resolves only to that pack's definition.
 2. Resolved: `200` with one §B.3 row.
@@ -136,6 +136,7 @@ An `/architect` review decided these on 2026-10-03, under the maintainer's direc
    - No paging: the set is bounded by the installed packs.
    - The fixture pair is self-describing in the registry, not a discovery `fixtures` id (§D.3).
    - The seam path stays as a second path.
+6. **The path is `/connection-providers`, not `/connections/providers`.** `check-manifest-top-level-segments` showed `connections` would be a new top-level name, and openwop-app already serves `/connections` unversioned as a browser page and OAuth return path. `versioning.md` §5 would then flip header-less requests on that name to the protocol at v1 end-of-support. `connection-providers` is unused by every matrix host (checked in openwop-app, openwop-examples and MyndHyve source, 2026-10-03).
 
 ## Implementation notes (non-normative)
 

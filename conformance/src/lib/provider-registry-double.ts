@@ -50,9 +50,9 @@ export class ProviderRegistryDouble {
   private handle(req: IncomingMessage, res: ServerResponse): void {
     const u = new URL(req.url ?? '/', 'http://x');
     if (req.method === 'GET' && u.pathname === '/.well-known/openwop') return this.send(res, 200, this.discovery);
-    if (this.defect === 'not-served' && u.pathname.startsWith('/connections/')) return this.send(res, 404, { error: 'not_found', message: 'no route' });
-    if (req.method === 'GET' && u.pathname === '/connections/providers') return this.send(res, 200, this.registry());
-    const m = /^\/connections\/providers\/([^/]+)$/.exec(u.pathname);
+    if (this.defect === 'not-served' && u.pathname.startsWith('/connection-providers')) return this.send(res, 404, { error: 'not_found', message: 'no route' });
+    if (req.method === 'GET' && u.pathname === '/connection-providers') return this.send(res, 200, this.registry());
+    const m = /^\/connection-providers\/([^/]+)$/.exec(u.pathname);
     if (req.method === 'GET' && m) {
       const id = decodeURIComponent(m[1]!);
       const pack = u.searchParams.get('pack');

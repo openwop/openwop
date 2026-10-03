@@ -1,8 +1,8 @@
 /**
  * The connection-provider registry witness (RFC 0233): the normative
  * observation path for `connection-packs.md` §Provider identity and §The
- * qualified form at major 2, read through `GET /connections/providers` and
- * `GET /connections/providers/{providerId}`.
+ * qualified form at major 2, read through `GET /connection-providers` and
+ * `GET /connection-providers/{providerId}`.
  *
  * Installing a pack is no protocol operation, so the suite never causes the
  * conflict here. An operator installs the §D fixture pair
@@ -37,12 +37,12 @@ export function providerReadAdvertised(connections: Record<string, unknown> | nu
 
 interface Read { readonly status: number; readonly json: unknown }
 async function list(): Promise<Read> {
-  const r = await driver.get('/connections/providers');
+  const r = await driver.get('/connection-providers');
   return { status: r.status, json: r.json };
 }
 async function resolve(providerId: string, pack?: string): Promise<Read> {
   const q = pack === undefined ? '' : `?pack=${encodeURIComponent(pack)}`;
-  const r = await driver.get(`/connections/providers/${encodeURIComponent(providerId)}${q}`);
+  const r = await driver.get(`/connection-providers/${encodeURIComponent(providerId)}${q}`);
   return { status: r.status, json: r.json };
 }
 
@@ -63,7 +63,7 @@ export function fixtureInstalled(json: unknown): boolean {
 /** Leg 3: a schema-valid, content-free registry with each bare id once. Runs on any host with the facet. */
 export async function uniqueLeg(validate: (doc: unknown) => { ok: boolean; errors: string }): Promise<RegistryOutcome> {
   const r = await list();
-  if (r.status !== 200) return { kind: 'observed', findings: [f(false, DOC, `a host advertising connections.providerRead MUST serve GET /connections/providers (got ${r.status})`)] };
+  if (r.status !== 200) return { kind: 'observed', findings: [f(false, DOC, `a host advertising connections.providerRead MUST serve GET /connection-providers (got ${r.status})`)] };
   const v = validate(r.json);
   const ids = providersOf(r.json).map((p) => String(p['id']));
   const dupes = [...new Set(ids.filter((id, i) => ids.indexOf(id) !== i))];
@@ -78,7 +78,7 @@ const NOT_INSTALLED = 'the §D fixture pack connection-pack-acme-widgets is not 
 /** Leg 1: the later registration of a bare id was refused, and the id is held once. */
 export async function failClosedLeg(): Promise<RegistryOutcome> {
   const r = await list();
-  if (r.status !== 200) return { kind: 'observed', findings: [f(false, DOC, `a host advertising connections.providerRead MUST serve GET /connections/providers (got ${r.status})`)] };
+  if (r.status !== 200) return { kind: 'observed', findings: [f(false, DOC, `a host advertising connections.providerRead MUST serve GET /connection-providers (got ${r.status})`)] };
   if (!fixtureInstalled(r.json)) return { kind: 'skip', disposition: 'inapplicable', reason: NOT_INSTALLED };
   const holders = providersOf(r.json).filter((p) => p['id'] === FIXTURE_ID);
   const refused = refusalsOf(r.json).filter((x) => x['providerId'] === FIXTURE_ID && x['code'] === 'connection_provider_conflict');
@@ -93,7 +93,7 @@ export async function failClosedLeg(): Promise<RegistryOutcome> {
 /** Leg 2: the qualified form resolves only to the named pack; bare resolves to the one definition. */
 export async function qualifiedLeg(): Promise<RegistryOutcome> {
   const r = await list();
-  if (r.status !== 200) return { kind: 'observed', findings: [f(false, DOC, `a host advertising connections.providerRead MUST serve GET /connections/providers (got ${r.status})`)] };
+  if (r.status !== 200) return { kind: 'observed', findings: [f(false, DOC, `a host advertising connections.providerRead MUST serve GET /connection-providers (got ${r.status})`)] };
   if (!fixtureInstalled(r.json)) return { kind: 'skip', disposition: 'inapplicable', reason: NOT_INSTALLED };
   const named = await resolve(FIXTURE_ID, FIRST_PACK);
   const rival = await resolve(FIXTURE_ID, RIVAL_PACK);

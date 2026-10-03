@@ -1353,7 +1353,7 @@
         },
         "providerRead": {
           "type": "boolean",
-          "description": "RFC 0233 §A — `true` means the host serves `GET /connections/providers` and `GET /connections/providers/{providerId}`: its provider registry, the registrations it refused, and resolution of one reference (`connection-packs.md` §Observation). Advertised only with `packsSupported: true`."
+          "description": "RFC 0233 §A — `true` means the host serves `GET /connection-providers` and `GET /connection-providers/{providerId}`: its provider registry, the registrations it refused, and resolution of one reference (`connection-packs.md` §Observation). Advertised only with `packsSupported: true`."
         }
       },
       "allOf": [

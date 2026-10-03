@@ -3320,7 +3320,7 @@ paths:
         - webhooks:manage
       - OpenIdConnect:
         - webhooks:manage
-  /connections/providers:
+  /connection-providers:
     get:
       tags:
       - connections
@@ -3355,7 +3355,7 @@ paths:
         - manifest:read
       - OpenIdConnect:
         - manifest:read
-  /connections/providers/{providerId}:
+  /connection-providers/{providerId}:
     get:
       tags:
       - connections

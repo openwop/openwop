@@ -120,7 +120,7 @@
     },
     {
       "method": "GET",
-      "path": "/connections/providers",
+      "path": "/connection-providers",
       "operationId": "listConnectionProviders",
       "requestHeaders": [
         "OpenWOP-Client-Version",
@@ -131,7 +131,7 @@
     },
     {
       "method": "GET",
-      "path": "/connections/providers/{providerId}",
+      "path": "/connection-providers/{providerId}",
       "operationId": "resolveConnectionProvider",
       "requestHeaders": [
         "OpenWOP-Client-Version",
