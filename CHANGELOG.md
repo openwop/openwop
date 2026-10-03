@@ -8,6 +8,8 @@ Entries before this file was condensed carried full development detail. That tex
 
 ## [Unreleased]
 
+- **The trigger bridge is witnessed at major 2.** New scenarios `v2-trigger-bridge-delivery` and `v2-trigger-dead-letter-read` port the delivery legs and RFC 0232's read rules to the v2 surface, so a v2 bundle can witness RFC 0230 and RFC 0232.
+
 ## [2.45.10] — 2026-10-03 — A trigger's dead letters are readable; RFC 0232 Active
 
 - **RFC 0232 is Active.** A trigger subscription's dead-lettered deliveries are readable behind the optional `triggerBridge.deadLetter` facet: new operation `listTriggerDeadLetters` and schema `trigger-dead-letter-page`, v1 and v2; records are content-free. The window was waived by steward override of RFC 0147 §A.6.

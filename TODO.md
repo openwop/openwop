@@ -32,7 +32,7 @@
   `openwop-secrets`, or on any suite without claiming `openwop-interrupts`, should re-cut on
   2.45.5.** The v2 reference host has cut on 2.45.6 and MyndHyve on 2.45.5; openwop-app has not cut on
   2.45.3 or later. **2.45.10 is published** (RFC 0232 `Active`; the trigger dead-letter read).
-  **No cycle is open**: a PR that changes packed content opens 2.45.11. Take a release lock
+  **The 2.45.11 cycle is open** (the v2 trigger-bridge witnesses). Take a release lock
   (`/tmp/claude-501/openwop-release-<ver>.lock`) before cutting.
   - A PR that leaves the version alone must not re-stamp `CORPUS-STAMP.json` or the ledger.
 - **Normative homes:** all 73 core families have v2 homes (#1802–#1804). The kernel budget is

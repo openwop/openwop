@@ -1,5 +1,16 @@
 # `@openwop/openwop-conformance` Changelog
 
+## [2.45.11] — unreleased — the trigger bridge is witnessed at major 2
+
+- **New scenarios `v2-trigger-bridge-delivery` and `v2-trigger-dead-letter-read`** (major 2). They port the trigger delivery legs and RFC 0232's read rules to the v2 surface (`/trigger-subscriptions/…`, bound ids `~`-projected). They share their requirement ids with the v1 twins, as the v2 secrets witness does. Each runs only the normative-surface path: there is no trigger seam at major 2.
+  - Legs: `0083.trigger-delivery.dedup`, `.dead-letter`, `.causation` and `.runless-attempt-content-free`, through the signed ingest and `GET /trigger-subscriptions/{subscriptionId}/dead-letters`. `.runless-state-change-content-free` is `inapplicable`: no wire surface causes a state change and no seam drives one (RFC 0232 gap G2).
+  - Read rules: `0232.trigger-dead-letters.paging`, `.cursor-bound` and `.tenant-bound` (`OPENWOP_TEST_TENANT_B_API_KEY`, else `blocked`).
+  - **Dispositions:** `triggerBridge` absent, or `inboundSigning` not listing `standard-webhooks-1` ⇒ `inapplicable`, since major 2 has no other delivery surface. The read legs also need `triggerBridge.deadLetter`.
+- **Why.** openwop-app's seam-free production cut (build 062381a5, suite 2.45.10) passes every trigger leg at major 1, but that bundle carries 350 seam-precondition `blocked` rows and cannot certify. Its v2 bundle certifies with 0 blocked but had no trigger rows. With these scenarios, a host that advertises `triggerBridge` at major 2 witnesses RFC 0230 and RFC 0232 on a certifiable bundle.
+- **Shared witness.** `lib/trigger-delivery-witness.ts` takes a `MajorProfile`. The profile gains `triggerSubscriptionsPath` and `idSegment`. The major-1 files keep their own inline legs for now.
+- **Sabotage.** `lib/trigger-delivery-witness.test.ts` runs 15 cases against the scratch double in `lib/trigger-double.ts`, and each of eleven defects fails exactly the legs that own the rule. Both scenario files were also run against a standalone double. Conforming: 7 pass, the state-change row `inapplicable`. Six defects (dedup, refused state, causation, canary leak, foreign cursor, tenant leak) each fail only their own leg. With no family, in strict mode, every row is `inapplicable` and none fails. Scenarios gate on `familyAdvertised`, not `gateFamily` (the 2.45.7 strict-mode defect).
+- **Host impact.** MyndHyve advertises `triggerBridge` at major 2 without `inboundSigning`, so every new row records `inapplicable`. openwop-app and the v2 reference host don't advertise the family at major 2. No host gains a `blocked` or failing row.
+
 ## [2.45.10] — 2026-10-03 — RFC 0232 Active: a seam-free path for the run-less trigger leg
 
 - **`trigger-bridge-delivery` leg 4 splits in two (RFC 0232, decided question 1 (a)).** Both ids stay in the `openwop-trigger-bridge` floor; the old title-derived id is aliased to the first.
