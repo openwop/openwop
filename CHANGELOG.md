@@ -9,6 +9,7 @@ Entries before this file was condensed carried full development detail. That tex
 ## [Unreleased]
 
 - **`v2-advertised-path-space-served` no longer fails a host that retired `/v1`:** a `410 Gone` under `/v1` reads as not served, and the leg is `inapplicable` without a `1.x` member.
+- **RFC 0230 and 0232 tables name their requirement ids,** so the `Accepted` check reads bundle rows. RFC 0230's `409` row is `unwitnessable`: no surface makes a subscription non-active. RFC 0232 G6/G7 and RFC 0228 G7 close.
 - **RFC 0233 is Active** (comment window waived by steward override). Optional reads `GET /connection-providers` and `GET /connection-providers/{providerId}` behind `connections.providerRead`; `v2-provider-conflict` reads them instead of a seam.
 - **Two RFC 0230 rules gain a test at both majors:** a `webhook-timestamp` more than 300 s off is refused without starting a run (`0230.stale-timestamp-refused`), and a re-read never returns the signing secret (`0230.signing-secret-once`).
 - **RFC 0233 filed (Draft).** Optional v2 reads of a host's connection-provider registry and its refused registrations, behind `connections.providerRead`, so the provider-identity MUSTs get the normative observation path `conformance.md` §Witness class requires.

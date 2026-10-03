@@ -144,16 +144,18 @@ Defects outside the spec:
     `tableStorage` at major 2. Not ported: v1's `budget_model_denied` leg.
   - **Rename rows.** G2 is closed (reference host, certified 2.45.5). Still open, as the host
     sessions report from source:
-    - G1 (MyndHyve): half witnessed. The `safeFetch` codes are renamed and certified (2.45.5
-      cut). The `503` half is not: MyndHyve advertises no `production.backpressure.inflightCap`,
-      so `v2-production-backpressure` is `inapplicable` there.
+    - G1 (MyndHyve): the `safeFetch` codes are renamed and certified (2.45.5 cut). The `503`
+      half is fixed in build cf84c7f64 (unit-witnessed; no `inflightCap` advertised). The
+      maintainer ruled (2026-10-03) it closes as unit-witnessed once a certified cut containing
+      it is in `evidence/`: MyndHyve's 2.45.10 cut (build e2fe80f33, myndhyve#594) qualifies when
+      checked in.
     - G3 (openwop-app): fix up as openwop-app #4331, not merged. Maintainer decision
       2026-10-02: it closes on a certified cut that contains the fix, recorded as unit-witnessed
       with `v2-fs-sandbox-escape-refused` `inapplicable` (the host advertises neither `fs` nor
       `tableStorage` at major 2).
     - G6 (openwop-app): fixed and deployed (#4238); needs a certified cut.
-    - G7 (MyndHyve): not fixed. `no_active_deployment` goes out as
-      `myndhyve.no_active_deployment` at major 2; the denial envelope is untraced.
+    - G7 (MyndHyve): partly fixed (cf84c7f64); the maintainer accepted the partial fix and the
+      run-creation `validation_error` leg is externally gated on a MyndHyve change.
 - [x] **MyndHyve follow-ups done (2026-10-02, its session):** `openwop-smoke-byok-roundtrip` is
       withdrawn from production (build 68718d731, myndhyve#591; its next cut records
       `v2-secret-canary-absent` `inapplicable`), and the sealed-row delete is tested before the
@@ -171,14 +173,9 @@ Defects outside the spec:
       its certified production cut, which can satisfy both RFC 0230 and RFC 0232 `Accepted`.
       Owed later: the `openwop-sdks` parity entry for `listTriggerDeadLetters` after the tag
       (RFC 0232 G6), and the RFC 0156 §B review.
-- [ ] **MyndHyve advertises trigger ingestion it does not serve** (its session's report from
-      source plus a live probe, 2026-10-03, main `68718d731`). Discovery lists
-      `triggerBridge.ingestion` with `externalSources` webhook/email/form, but the `ingestUrl` and
-      form URL it returns answer `404`, `POST /v1/trigger-subscriptions` stores nothing, and the
-      delivery model runs only behind its conformance seam. Its session is raising the advert with
-      its maintainer. RFC 0099's `Accepted` evidence stands (maintainer, 2026-10-03); its
-      Amendment record now discloses that MyndHyve's legs ran through the seam. Open only on
-      MyndHyve's side.
+- [x] **MyndHyve withdrew `triggerBridge.ingestion`** at both majors (build cf84c7f64, myndhyve#592,
+      2026-10-03); `POST /trigger-subscriptions` answers `404`. RFC 0099's `Accepted` already discloses
+      that its MyndHyve legs ran through the seam (#1868).
 - [ ] **RFC 0233** (`Active` 2026-10-03, window waived by steward override; `/architect` rulings in its §Decisions): the provider-identity MUSTs of
       `connection-packs.md` are seam-only, which `conformance.md` §Witness class forbids; the
       maintainer chose (2026-10-03) to mint an observation path, not demote. Until a host serves it,
@@ -186,11 +183,6 @@ Defects outside the spec:
       `v2-provider-conflict` rows and certifies nothing, so the RFC 0230/0232 `Accepted` flip waits
       on it too. Next: 2.45.12 ships the reads' witness; openwop-app-5f serves both reads, installs
       the fixture pair and advertises `providerRead`; openwop-app-31 re-cuts major 2.
-- [ ] **The `openwop-trigger-bridge` predicate still reads the RFC 0053 run family** (RFC 0232
-      G7). `trigger-bridge.md` §D and `profiles.md` say the profile needs "a `deadLetter` sink for
-      exhausted deliveries", but after RFC 0232 §D that family holds no trigger delivery. Reading
-      `triggerBridge.deadLetter` instead would change who is in the profile; it needs its own
-      decision.
 - [ ] **Host evidence owed, as the host sessions report it (2026-10-02):**
   - RFC 0230 (openwop-app, session 4d): the seam-free run on 2.45.9 is done (legs 1–3 pass,
     leg 4 fails, `blocked` 0). The pin to 2.45.9 is committed. The production flag and the
