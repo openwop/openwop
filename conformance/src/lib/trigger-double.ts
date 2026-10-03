@@ -19,7 +19,7 @@ export const OTHER_TENANT_KEY = 'tenant-b-key';
 export type TriggerDefect =
   | 'none' | 'dedup-new-run' | 'refused-starts-run' | 'refused-changes-state' | 'no-causation'
   | 'record-leaks-canary' | 'refused-not-recorded' | 'refused-records-state-change' | 'wrong-retention'
-  | 'limit-ignored' | 'cursor-not-bound' | 'tenant-leak';
+  | 'limit-ignored' | 'cursor-not-bound' | 'tenant-leak' | 'tenant-404';
 
 interface DoubleSub { id: string; n: number; mode: string; secret: string; state: string; seen: Map<string, string>; dead: Array<Record<string, unknown>> }
 
@@ -108,8 +108,10 @@ export class TriggerDouble {
     if (req.method === 'GET' && m) {
       const auth = String(req.headers['authorization'] ?? '');
       const sub = this.subs.get(unprojectBoundId(m[1]!));
-      const foreign = auth === `Bearer ${OTHER_TENANT_KEY}` && this.defect !== 'tenant-leak';
-      if (!sub || foreign) return this.send(res, 404, { error: 'not_found', message: 'no such subscription' });
+      // identity.md §5: tenant B reading acme's bound id is refused 403 before any lookup.
+      if (auth === `Bearer ${OTHER_TENANT_KEY}` && this.defect === 'tenant-404') return this.send(res, 404, { error: 'not_found', message: 'no such subscription' });
+      if (auth === `Bearer ${OTHER_TENANT_KEY}` && this.defect !== 'tenant-leak') return this.send(res, 403, { error: 'id_tenant_mismatch', message: 'tenant segment is not the caller\'s' });
+      if (!sub) return this.send(res, 404, { error: 'not_found', message: 'no such subscription' });
       if (!m[2]) return this.send(res, 200, { subscription: { subscriptionId: sub.id, source: 'webhook', state: sub.state } });
       const limit = Math.min(Number(u.searchParams.get('limit') ?? '100'), 100);
       const cursor = u.searchParams.get('cursor');

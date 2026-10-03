@@ -54,6 +54,12 @@ export interface MajorProfile {
   readonly triggerSubscriptionsPath: string;
   /** An id as one URL path segment: percent-encoded at v1, the `~` bound-id projection at v2 (`identity.md` §5). */
   idSegment(id: string): string;
+  /**
+   * How a read of another tenant's id is refused. `not_found`: as an id never
+   * minted (v1, bare ids). `id_tenant_mismatch`: `403`, because a v2 bound id
+   * names its tenant and `identity.md` §5 requires the refusal to say so.
+   */
+  readonly foreignTenantRead: 'not_found' | 'id_tenant_mismatch';
 }
 
 const isRecord = (v: unknown): v is Record<string, unknown> => v !== null && typeof v === 'object' && !Array.isArray(v);
@@ -75,6 +81,7 @@ export const MAJOR_PROFILES: Readonly<Record<number, MajorProfile>> = {
     eventType: (era1Name) => era1Name,
     triggerSubscriptionsPath: '/v1/trigger-subscriptions',
     idSegment: (id) => encodeURIComponent(id),
+    foreignTenantRead: 'not_found',
   },
   2: {
     major: 2,
@@ -91,6 +98,7 @@ export const MAJOR_PROFILES: Readonly<Record<number, MajorProfile>> = {
     eventType: (era1Name) => codemapV1toV2().get(era1Name),
     triggerSubscriptionsPath: '/trigger-subscriptions',
     idSegment: (id) => projectBoundId(id),
+    foreignTenantRead: 'id_tenant_mismatch',
   },
 };
 

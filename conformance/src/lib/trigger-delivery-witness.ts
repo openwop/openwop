@@ -256,10 +256,22 @@ export async function tenantLeg(profile: MajorProfile, a: TriggerAdverts, otherT
   const sub = await refusedTwice(profile, 1); if (typeof sub === 'string') return bindingFinding(sub);
   const foreign = await readDeadLettersAt(profile, sub.subscriptionId, {}, { Authorization: `Bearer ${otherTenantKey}` });
   const unknown = await readDeadLettersAt(profile, `${sub.subscriptionId}-never-minted`);
+  const noDisclosure = f(!JSON.stringify(foreign.json ?? null).includes('verification_failed'), DOC_INGEST, 'a foreign read MUST NOT disclose a record');
+  const unknownFinding = f(unknown.status === 404, DOC_INGEST, `an id the host never minted MUST answer 404 (got ${unknown.status})`);
+  if (profile.foreignTenantRead === 'id_tenant_mismatch') {
+    // identity.md §5: a bound id whose tenant segment is not the caller's is
+    // refused 403 id_tenant_mismatch, before any lookup, so it discloses nothing.
+    return { kind: 'observed', findings: [
+      f(foreign.status === 403, 'identity.md §5', `another tenant's bound id MUST be refused 403 (got ${foreign.status})`),
+      f(readErrorCode(foreign.json) === 'id_tenant_mismatch', 'identity.md §5', `the refusal MUST carry id_tenant_mismatch (got ${String(readErrorCode(foreign.json))})`),
+      noDisclosure,
+      unknownFinding,
+    ] };
+  }
   return { kind: 'observed', findings: [
     f(foreign.status === 404, DOC_INGEST, `another tenant's read MUST answer 404 (got ${foreign.status})`),
-    f(!JSON.stringify(foreign.json ?? null).includes('verification_failed'), DOC_INGEST, 'a foreign read MUST NOT disclose a record'),
-    f(unknown.status === 404, DOC_INGEST, `an id the host never minted MUST answer 404 (got ${unknown.status})`),
+    noDisclosure,
+    unknownFinding,
     f(readErrorCode(foreign.json) === readErrorCode(unknown.json), DOC_INGEST, 'a foreign id MUST be answered exactly as an unknown one'),
   ] };
 }

@@ -11,7 +11,7 @@
     "api/redocly.yaml": "b0604c89b2ca6d5076ec25725c539dad44a741a811fe524439ee6daef8baa09f",
     "api/seams-v2.yaml": "448d60e189059fe6bd4953b8c47f6941f89053707f45621d4e32b8bef0773670",
     "api/v2/asyncapi.yaml": "8db5aa748cd4f6481055d48d0a6d66d596f20e712d2004aa86de79b4c34e9bd9",
-    "api/v2/openapi.yaml": "e3b1ed5954b8e9acd6c68cd2a924603afcebb686d07fb5a26e929b01b7f6599b",
+    "api/v2/openapi.yaml": "85cbbe89d60ae09e81d4a63b6eac080bedbb08f33fe3fd18b48e92bc8503aa65",
     "api/v2/redocly.yaml": "1e66b60e6118ad11a823bb620678be464d99dfe50a40e3e6f93ec9429b88b34c",
     "schemas/README.md": "bd1c00fae7b6fda506a75aff841bbdc438d4ce092642a72041203bee999b88de",
     "schemas/a2a-task-state.schema.json": "75d5049dea8bd873ff0e7546f1c60c8d36c219bec7084264360be54a8be30ae1",
@@ -309,5 +309,5 @@
     "spec/v2/retention-floors.json": "eaf3722d95c79947af1d4269ef85117e126518c588cfcf1a2b21b97269f51624",
     "spec/v2/surface-baseline.json": "99ddcf9eb0d06967879ce7f6e54c49fe19bfabc9ee50f00f78699b401108bfd5"
   },
-  "corpusCommit": "0a518875a0d9c86eb25f74e9d3bccb89751a2e74"
+  "corpusCommit": "53cfee604d98dbadfff4f5eec3d44863a5ab2aa9"
 }

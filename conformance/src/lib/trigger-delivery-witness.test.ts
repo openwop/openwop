@@ -69,6 +69,7 @@ describe('trigger-delivery-witness at major 2 (RFC 0230 + RFC 0232)', () => {
     ['limit-ignored', ['paging', 'cursor']],
     ['cursor-not-bound', ['cursor']],
     ['tenant-leak', ['tenant']],
+    ['tenant-404', ['tenant']],
   ])('defect %s fails exactly %j', async (defect, want) => {
     expect(await failingLegs(defect)).toEqual(want);
   });

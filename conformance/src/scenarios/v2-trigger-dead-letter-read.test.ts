@@ -7,8 +7,11 @@
  *   paging        `limit` is clamped, and a short page carries `nextCursor`.
  *   cursor-bound  a cursor minted for one subscription is refused on another,
  *                 `400 validation_error`.
- *   tenant-bound  another tenant's read answers `404`, exactly as an id never
- *                 minted. Needs `OPENWOP_TEST_TENANT_B_API_KEY`, else `blocked`.
+ *   tenant-bound  another tenant's bound id is refused `403 id_tenant_mismatch`
+ *                 and discloses nothing (`identity.md` §5; at v1, with bare ids,
+ *                 the same rule is `404` as for an id never minted). An id never
+ *                 minted answers `404`. Needs `OPENWOP_TEST_TENANT_B_API_KEY`,
+ *                 else `blocked`.
  *
  * Dispositions: `triggerBridge`, `triggerBridge.deadLetter` or
  * `ingestion.inboundSigning` not advertised ⇒ `inapplicable`.
@@ -17,6 +20,7 @@
  *
  * @see spec/v2/core/webhooks.md §Inbound triggers
  * @see RFCS/0232-trigger-dead-letter-read.md §B
+ * @see spec/v2/core/identity.md §5
  */
 
 import { describe, it, expect } from 'vitest';
@@ -63,7 +67,7 @@ describe('v2 trigger dead-letter read (RFC 0232 §B)', () => {
     for (const x of out.findings) expect(x.ok, req(R_CURSOR, x.doc, x.message)).toBe(true);
   });
 
-  it("answers another tenant's read of a subscription 404, as for an id never minted", async () => {
+  it("refuses another tenant's bound id 403 id_tenant_mismatch and discloses nothing", async () => {
     const a = await discovered();
     if (a === 'GATED') return softSkip('inapplicable', 'the host does not advertise triggerBridge at major 2: no obligation');
     if (typeof a === 'string') return softSkip('blocked', a);
