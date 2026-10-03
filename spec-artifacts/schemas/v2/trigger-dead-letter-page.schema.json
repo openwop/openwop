@@ -1,0 +1,88 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://openwop.dev/spec/v2/trigger-dead-letter-page.schema.json",
+  "title": "TriggerDeadLetterPage",
+  "description": "RFC 0232 §B — one page of a trigger subscription's dead-lettered deliveries, the answer to `listTriggerDeadLetters`. A dead-lettered delivery started no run, so it is on no run's log; this read is where the host's content-free record of it is visible (`webhooks.md` §Inbound triggers).",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "deliveries"
+  ],
+  "properties": {
+    "deliveries": {
+      "type": "array",
+      "description": "Dead-lettered deliveries, newest first. Empty when the subscription has none within `retentionDays`.",
+      "items": {
+        "$ref": "#/$defs/deadLetteredTriggerDelivery"
+      }
+    },
+    "nextCursor": {
+      "type": "string",
+      "minLength": 1,
+      "maxLength": 2048,
+      "description": "Opaque continuation cursor; absent on the last page. A cursor minted for another subscription MUST be refused `400 validation_error`."
+    }
+  },
+  "$defs": {
+    "deadLetteredTriggerDelivery": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "subscriptionId",
+        "attemptEventId",
+        "attempt",
+        "reason",
+        "deadLetteredAt",
+        "expiresAt"
+      ],
+      "description": "RFC 0232 §C — one dead-lettered trigger delivery. **Content-free:** no inbound body, no inbound headers, no signature, no signing secret, no credential. A record names a delivery; it never carries what was delivered.",
+      "properties": {
+        "subscriptionId": {
+          "$ref": "ids.schema.json#/$defs/subscriptionId",
+          "description": "The trigger subscription. Equals the path segment."
+        },
+        "attemptEventId": {
+          "$ref": "ids.schema.json#/$defs/eventId",
+          "description": "The id of the dead-lettered `trigger.delivery.attempted`. Where the host also shows that event (a test seam), this is its `eventId`."
+        },
+        "attempt": {
+          "allOf": [
+            {
+              "$ref": "run-event-payloads.schema.json#/$defs/triggerDeliveryAttempted"
+            },
+            {
+              "properties": {
+                "outcome": {
+                  "const": "dead-lettered"
+                }
+              }
+            }
+          ],
+          "description": "The dead-lettered attempt: the fields of the `trigger.delivery.attempted` payload for this delivery, and no others. Where the host also shows the event, the two MUST agree."
+        },
+        "stateChange": {
+          "$ref": "run-event-payloads.schema.json#/$defs/triggerSubscriptionStateChanged",
+          "description": "The `trigger.subscription.state.changed` payload this dead-lettering caused, when it caused one. Absent for a delivery refused by verification, which MUST NOT change the subscription's state."
+        },
+        "reason": {
+          "type": "string",
+          "enum": [
+            "verification_failed",
+            "retries_exhausted"
+          ],
+          "description": "Why the delivery was dead-lettered. `verification_failed`: a `required` verification check refused it. `retries_exhausted`: the retry policy ran out."
+        },
+        "deadLetteredAt": {
+          "type": "string",
+          "format": "date-time",
+          "description": "When the host dead-lettered the delivery."
+        },
+        "expiresAt": {
+          "type": "string",
+          "format": "date-time",
+          "description": "When this record ages out. `expiresAt − deadLetteredAt` matches `triggerBridge.deadLetter.retentionDays`."
+        }
+      }
+    }
+  }
+}

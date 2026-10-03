@@ -6,15 +6,17 @@
  * under `OPENWOP_REQUIRE_BEHAVIOR=true`. The always-on wire-shape coverage lives
  * in `trigger-bridge-shape.test.ts`.
  *
- * Four legs, each its own requirement (RFC 0230 split the one combined `it`):
+ * Five legs, each its own requirement (RFC 0230 split the one combined `it`;
+ * RFC 0232 split the fourth):
  *
  *   1. DEDUP (§C-1) — a repeated delivery is effectively-once.
  *   2. DEAD-LETTER (§C-2 + RFC 0053) — an exhausted/refused delivery starts no run.
  *   3. CAUSATION (§C / RFC 0040) — a delivered run carries the delivery as
  *      `run.started.causationId`.
- *   4. RUN-LESS CONTENT-FREENESS (SR-1) — the run-less `trigger.*` events
- *      (a dead-lettered attempt, `trigger.subscription.state.changed`) carry no
- *      inbound content.
+ *   4a. RUN-LESS ATTEMPT (SR-1) — a dead-lettered `trigger.delivery.attempted`
+ *      carries no inbound content.
+ *   4b. RUN-LESS STATE CHANGE (SR-1) — a `trigger.subscription.state.changed`
+ *      carries no inbound content.
  *
  * TWO WITNESS PATHS, and a host is measured on EVERY path it offers (2.45.8).
  * The SEAM path drives `POST /v1/host/sample/trigger-bridge/deliver` and reads
@@ -31,18 +33,24 @@
  * certify, and an uncertified bundle supplies no acceptance evidence
  * (RFC 0174 §B.1).
  *
- * Leg 4 has no normative-surface path — the run-less events are on no run's
- * log — so it stays seam-witnessed and records seam-absent otherwise; it
- * remains in the floor (the floor never narrows).
+ * The run-less events are on no run's log. Leg 4a's normative-surface path is
+ * RFC 0232's read: on a host advertising `inboundSigning` AND
+ * `triggerBridge.deadLetter`, it posts a canary with a bad signature and reads
+ * the subscription's dead letters (`lib/trigger-dead-letter-witness.ts`).
+ * Leg 4b has no such path: no wire surface causes a subscription state change
+ * (a refused post must not change state; nothing pauses a subscription), so it
+ * is seam-witnessed and, on a host without the seam, records `inapplicable`
+ * (RFC 0232 Unresolved question 1, decided (a)). Both stay in the floor.
  *
  * Spec references:
  *   - spec/v1/trigger-bridge.md (§C, §F.2, §F.6)
- *   - RFCS/0083-durable-trigger-and-channel-bridge-profile.md, RFCS/0230-inbound-webhook-ingest-contract.md
+ *   - RFCS/0083-durable-trigger-and-channel-bridge-profile.md, RFCS/0230-inbound-webhook-ingest-contract.md,
+ *     RFCS/0232-trigger-dead-letter-read.md
  *   - spec/v1/profiles.md (§openwop-trigger-bridge)
  */
 
 import { describe, it, expect } from 'vitest';
-import { seamAbsent } from '../lib/soft-skip.js';
+import { seamAbsent, softSkip } from '../lib/soft-skip.js';
 import { behaviorGate } from '../lib/behavior-gate.js';
 import {
   isTriggerBridgeProfileAdvertised,
@@ -59,11 +67,16 @@ import { queryTestEvents, requireEvents, isEventLogSeamAvailable, resetTestSeam 
 import { req } from '../lib/requirement-ids.js';
 import { noteObservation } from '../lib/row-observation.js';
 import { driver } from '../lib/driver.js';
+import { deadLetterFacet, freshCanary, judge as judgeDeadLetters, readDeadLetters } from '../lib/trigger-dead-letter-witness.js';
 
 const R_DEDUP = 'openwop.requirement.0083.trigger-delivery.dedup';
 const R_DEAD_LETTER = 'openwop.requirement.0083.trigger-delivery.dead-letter';
 const R_CAUSATION = 'openwop.requirement.0083.trigger-delivery.causation';
-const R_RUNLESS = 'openwop.requirement.0083.trigger-delivery.runless-content-free';
+const R_RUNLESS_ATTEMPT = 'openwop.requirement.0083.trigger-delivery.runless-attempt-content-free';
+const R_RUNLESS_STATE = 'openwop.requirement.0083.trigger-delivery.runless-state-change-content-free';
+
+/** The bad signature every refused-post probe sends. */
+const BAD_SIGNATURE = 'v1,AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA=';
 
 const CONTENT_FREE_FORBIDDEN = ['body', 'headers', 'payload', 'secret', 'credentials', 'token', 'apiKey'];
 
@@ -191,7 +204,7 @@ describe('trigger-bridge-delivery (RFC 0083 §C)', () => {
     const sub = await registerSignedWebhook('required');
     if ('reason' in sub) throw new Error(req(R_DEAD_LETTER, 'trigger-bridge.md §F.6', `an inboundSigning host MUST return the §B binding on webhook registration: ${sub.reason}`));
     const body = JSON.stringify({ conformance: 'dead-letter' });
-    const bad = await signedIngest(sub, body, { signature: 'v1,AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA=' });
+    const bad = await signedIngest(sub, body, { signature: BAD_SIGNATURE });
     expect(bad.status, req(R_DEAD_LETTER, 'trigger-bridge.md §F.6', `a bad signature under required verification MUST answer 401 (got ${bad.status})`)).toBe(401);
     expect(bad.json?.runId, req(R_DEAD_LETTER, 'trigger-bridge.md §F.2', 'a required-verification failure MUST NOT start a run')).toBeUndefined();
     const read = await driver.get(`/v1/trigger-subscriptions/${encodeURIComponent(sub.subscriptionId)}`);
@@ -231,17 +244,53 @@ describe('trigger-bridge-delivery (RFC 0083 §C)', () => {
     notePaths(paths.seam, true, deliveredEvent === undefined ? '; on the normative-surface path the delivered attempt event is not on the run log, so equality was not checked there' : '');
   });
 
-  it('keeps the run-less trigger events content-free', async () => {
+  it('keeps a dead-lettered run-less attempt content-free', async () => {
     if (!behaviorGate('openwop-trigger-bridge', await isTriggerBridgeProfileAdvertised())) return;
-    // No normative-surface path: a dead-lettered attempt and a state change are
-    // on no run's log, so only the seam can read them (RFC 0230 §Conformance).
-    if (!(await isEventLogSeamAvailable())) return seamAbsent('the run-less trigger events are readable only through the event-log seam, which is absent');
-    const exhaust = await driveDelivery({ scenario: 'exhaust', source: 'webhook' });
-    if (exhaust === null) return seamAbsent('host advertises openwop-trigger-bridge but the delivery seam is unwired');
-    const exKey = exhaust.runId ?? '__exhaust__';
-    for (const type of ['trigger.delivery.attempted', 'trigger.subscription.state.changed'] as const) {
-      for (const e of requireEvents(await queryTestEvents(exKey, { type }), `${type} (exhaust)`)) expectContentFree(R_RUNLESS, e.payload, type);
+    const seam = await isEventLogSeamAvailable();
+    const disco = await driver.get('/.well-known/openwop');
+    const facet = disco.status === 200 ? deadLetterFacet(disco.json) : null;
+    const normative = facet !== null && (await inboundSigningAdvertised());
+    if (!seam && !normative) return seamAbsent('a dead-lettered attempt is on no run\'s log; it is readable through the event-log seam or the RFC 0232 read (triggerBridge.deadLetter with inboundSigning), and the host offers neither');
+
+    if (seam) {
+      const exhaust = await driveDelivery({ scenario: 'exhaust', source: 'webhook' });
+      if (exhaust === null) return seamAbsent(SEAM_UNWIRED);
+      const exKey = exhaust.runId ?? '__exhaust__';
+      const attempts = requireEvents(await queryTestEvents(exKey, { type: 'trigger.delivery.attempted' }), 'trigger.delivery.attempted (exhaust)');
+      for (const e of attempts) expectContentFree(R_RUNLESS_ATTEMPT, e.payload, 'trigger.delivery.attempted');
+      await resetTestSeam();
     }
+    if (!normative) return notePaths(true, false);
+
+    // Normative-surface path (RFC 0232 §E): cause a dead letter unaided, then read it.
+    const sub = await registerSignedWebhook('required');
+    if ('reason' in sub) throw new Error(req(R_RUNLESS_ATTEMPT, 'trigger-bridge.md §F.6', `an inboundSigning host MUST return the §B binding on webhook registration: ${sub.reason}`));
+    const canary = freshCanary();
+    const bad = await signedIngest(sub, JSON.stringify({ conformance: 'runless-attempt', canary }), { signature: BAD_SIGNATURE });
+    expect(bad.status, req(R_RUNLESS_ATTEMPT, 'trigger-bridge.md §F.6', `a bad signature under required verification MUST answer 401 (got ${bad.status})`)).toBe(401);
+    const read = await readDeadLetters(sub.subscriptionId);
+    for (const f of judgeDeadLetters(read, { subscriptionId: sub.subscriptionId, canary, signature: BAD_SIGNATURE, signingSecret: sub.signingSecret, retentionDays: facet!.retentionDays })) {
+      expect(f.ok, req(R_RUNLESS_ATTEMPT, 'trigger-bridge.md §C (RFC 0232 §B–§C)', f.message)).toBe(true);
+    }
+    notePaths(seam, true, ' (RFC 0232 dead-letter read)');
+  });
+
+  it('keeps a run-less subscription state change content-free', async () => {
+    if (!behaviorGate('openwop-trigger-bridge', await isTriggerBridgeProfileAdvertised())) return;
+    // Seam-only. No wire surface causes a subscription state change: a refused
+    // post MUST NOT change state, retry exhaustion needs a delivery the host
+    // fails repeatedly, and nothing pauses a subscription (RFC 0232 G2). On a
+    // host without the seam no party can cause the condition, so the row is
+    // `inapplicable`, not a defect (RFC 0232 Unresolved question 1, decided (a)).
+    if (!(await isEventLogSeamAvailable())) {
+      return softSkip('inapplicable', 'no wire surface causes a trigger subscription state change on a host without the event-log seam (RFC 0232 §E, gap G2)');
+    }
+    const exhaust = await driveDelivery({ scenario: 'exhaust', source: 'webhook' });
+    if (exhaust === null) return seamAbsent(SEAM_UNWIRED);
+    const exKey = exhaust.runId ?? '__exhaust__';
+    const changes = requireEvents(await queryTestEvents(exKey, { type: 'trigger.subscription.state.changed' }), 'trigger.subscription.state.changed (exhaust)');
+    expect(changes.length >= 1, req(R_RUNLESS_STATE, 'trigger-bridge.md §B', 'exhaustion MUST record ≥1 trigger.subscription.state.changed')).toBe(true);
+    for (const e of changes) expectContentFree(R_RUNLESS_STATE, e.payload, 'trigger.subscription.state.changed');
     await resetTestSeam();
   });
 });

@@ -1,8 +1,14 @@
 # `@openwop/openwop-conformance` Changelog
 
-## [2.45.10] — unreleased — RFC 0232 filed
+## [2.45.10] — unreleased — RFC 0232 Active: a seam-free path for the run-less trigger leg
 
-- **The 2.45.10 cycle opens.** RFC 0232's gap register changes the packed `spec/v1/gaps.json`. No scenario changes in this PR.
+- **`trigger-bridge-delivery` leg 4 splits in two (RFC 0232, decided question 1 (a)).** Both ids stay in the `openwop-trigger-bridge` floor; the old title-derived id is aliased to the first.
+  - `openwop.requirement.0083.trigger-delivery.runless-attempt-content-free`: on the seam, as before. New: where the host advertises `inboundSigning` and `triggerBridge.deadLetter`, the leg posts a body carrying a canary with a bad signature to a `required` subscription and reads `GET /v1/trigger-subscriptions/{id}/dead-letters`. The record must be present with `reason: "verification_failed"`, carry no canary, signature or signing key, carry a schema-valid dead-lettered `attempt`, carry no `stateChange`, and have `expiresAt − deadLetteredAt` equal to `retentionDays`. Both paths run where both are offered.
+  - `openwop.requirement.0083.trigger-delivery.runless-state-change-content-free`: seam-only. **Without the seam it records `inapplicable`** (was: the combined leg recorded seam-absent). No wire surface causes a subscription state change.
+- **New scenario `trigger-dead-letter-read`** (major 1; `inapplicable` unless the host advertises `triggerBridge.deadLetter` and `inboundSigning`): `openwop.requirement.0232.trigger-dead-letters.paging` (limit clamped, `nextCursor` continues), `.cursor-bound` (another subscription's cursor `400 validation_error`), `.tenant-bound` (another tenant's read `404`, as for an unknown id; needs `OPENWOP_TEST_TENANT_B_API_KEY`, `blocked` without it).
+- **Sabotage.** `lib/trigger-dead-letter-witness.test.ts`, eleven cases against the pure judge and the committed page schema. Each defect fails only its rule. No host serves the read yet, so there is no live proof.
+- **Host impact.** A host serving the seams: unchanged, except leg 4 is two rows. A host with no seams that advertises `openwop-trigger-bridge` (openwop-app's production): leg 4b records `inapplicable`, and leg 4a stays `blocked` until the host advertises and serves `triggerBridge.deadLetter`.
+- **The 2.45.10 cycle opened** with RFC 0232's filing; its gap register changes the packed `spec/v1/gaps.json`.
 
 ## [2.45.9] — 2026-10-02 — a trigger leg that observed nothing is inapplicable, not blocked
 

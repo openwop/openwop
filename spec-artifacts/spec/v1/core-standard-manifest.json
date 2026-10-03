@@ -75,6 +75,7 @@
     "listContentPages",
     "listPromptTemplates",
     "listTools",
+    "listTriggerDeadLetters",
     "listWorkspaceFiles",
     "pauseRun",
     "pollRunEvents",
@@ -385,6 +386,10 @@
       "$id": "https://openwop.dev/spec/v1/tool-descriptor.schema.json"
     },
     {
+      "file": "schemas/trigger-dead-letter-page.schema.json",
+      "$id": "https://openwop.dev/spec/v1/trigger-dead-letter-page.schema.json"
+    },
+    {
       "file": "schemas/trigger-event.schema.json",
       "$id": "https://openwop.dev/spec/v1/trigger-event.schema.json"
     },
@@ -421,5 +426,5 @@
       "$id": "https://openwop.dev/spec/v1/workspace-file.schema.json"
     }
   ],
-  "digest": "6de696956827fe7545b3298d0311e2aa38567745133e1273381d36dae0939133"
+  "digest": "177bc294edbc8d2ed1171b26b132cf40e04b53ea1d17238a78e47a46c6d3182a"
 }

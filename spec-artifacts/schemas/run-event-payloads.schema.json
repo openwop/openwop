@@ -3876,7 +3876,7 @@
             "retrying",
             "dead-lettered"
           ],
-          "description": "`delivered`: the run started; `retrying`: failed, will retry per policy; `dead-lettered`: retries exhausted, routed to the RFC 0053 sink (no run)."
+          "description": "`delivered`: the run started; `retrying`: failed, will retry per policy; `dead-lettered`: retries exhausted, no run started; the subscription keeps the record (`trigger-bridge.md` §C, RFC 0232), not the RFC 0053 run sink."
         },
         "runId": {
           "type": "string",

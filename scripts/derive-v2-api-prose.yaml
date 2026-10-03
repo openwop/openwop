@@ -94,6 +94,28 @@
   now: Record a non-blocking quality annotation on a run.
 - was: List the annotations recorded on a run (RFC 0056).
   now: List the annotations recorded on a run.
+- was: List a trigger subscription's dead-lettered deliveries (RFC 0232).
+  now: List a trigger subscription's dead-lettered deliveries.
+- was: |
+    Lists the subscription's dead-lettered deliveries, newest first, for
+    `triggerBridge.deadLetter.retentionDays`. Each record carries the fields
+    of the dead-lettered `trigger.delivery.attempted` payload and, when the
+    dead-lettering changed the subscription's state, the
+    `trigger.subscription.state.changed` payload. A delivery refused by a
+    `required` verification check appears with `reason: "verification_failed"`
+    and no `stateChange`. A record MUST NOT carry the inbound body, the
+    inbound headers, the signature, the signing secret, or any credential.
+    Gated on `triggerBridge.deadLetter`: a host that does not advertise it
+    answers `404 not_found`. Another tenant's subscription id answers
+    `404 not_found`, exactly as an id the host never minted.
+  now: 'Lists the subscription''s dead-lettered deliveries, newest first, for `triggerBridge.deadLetter.retentionDays`. Each record carries the
+    fields of the dead-lettered `trigger.delivery-attempted` payload and, when the dead-lettering changed the subscription''s state, the
+    `trigger.subscription-state-changed` payload. A delivery refused by a `required` verification check appears with `reason: "verification_failed"`
+    and no `stateChange`. A record MUST NOT carry the inbound body, the inbound headers, the signature, the signing secret, or any credential.
+    Gated on `triggerBridge.deadLetter`: a host that does not advertise it answers `404 not_found`. Another tenant''s subscription id answers
+    `404 not_found`, exactly as an id the host never minted.'
+- was: The trigger subscription, as returned by `createTriggerSubscription`.
+  now: 'The trigger subscription, tenant-bound (`identity.md` §5) and carried as one path segment: `~`-projected or percent-encoded.'
 - was: Register an external-event trigger subscription (RFC 0099).
   now: Register an external-event trigger subscription.
 - was: |

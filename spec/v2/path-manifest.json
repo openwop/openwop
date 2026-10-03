@@ -576,6 +576,17 @@
       "requestBody": true
     },
     {
+      "method": "GET",
+      "path": "/trigger-subscriptions/{subscriptionId}/dead-letters",
+      "operationId": "listTriggerDeadLetters",
+      "requestHeaders": [
+        "OpenWOP-Client-Version",
+        "OpenWOP-Version"
+      ],
+      "authenticated": true,
+      "requestBody": false
+    },
+    {
       "method": "POST",
       "path": "/webhooks",
       "operationId": "registerWebhook",
@@ -644,7 +655,7 @@
     }
   ],
   "counts": {
-    "operations": 55,
+    "operations": 56,
     "channels": 2
   }
 }

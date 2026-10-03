@@ -129,7 +129,7 @@ A host advertising `triggerBridge` runs inbound work through subscriptions (`sch
 - `active`;
 - `paused` — not delivering; a schedule skips ticks;
 - `failed`;
-- `dead-lettered` — deliveries are in the `deadLetter` sink.
+- `dead-lettered` — terminal; its deliveries are dead-lettered (below), not held by the `deadLetter` run sink.
 
 On an `active` subscription the host:
 
@@ -145,7 +145,14 @@ A host whose `triggerBridge.ingestion.inboundSigning` lists `standard-webhooks-1
 - `webhook-id` is the identity dedup keys on;
 - the ingest answers `202` (delivered, `runId`), `200` (duplicate, prior `runId`), `401 signature_invalid`, or `409 subscription_not_active`.
 
-A source in `triggerBridge.sources` MUST move through these states and emit `trigger.subscription-state-changed` and `trigger.delivery-attempted`. These events MUST NOT carry inbound content or credentials (`schemas/v2/run-event-payloads.schema.json`).
+A source in `triggerBridge.sources` MUST move through these states and emit `trigger.subscription-state-changed` and `trigger.delivery-attempted`. These events MUST NOT carry inbound content or credentials (`schemas/v2/run-event-payloads.schema.json`). A dead-lettered attempt or a state change belongs to no run; for it, emit means the host keeps a content-free record of that payload.
+
+A host advertising `triggerBridge.deadLetter` MUST serve `GET /trigger-subscriptions/{subscriptionId}/dead-letters`:
+
+- a record carries the dead-lettered attempt's payload fields and, if the dead-lettering changed the subscription's state, that state change;
+- a record MUST NOT carry the inbound body, headers, signature, or secret;
+- a delivery refused by a `required` check appears with `reason: "verification_failed"` and no state change;
+- a cursor minted for another subscription MUST be refused `400 validation_error`.
 
 With `triggerBridge.ingestion`, each `externalSources` entry MUST turn an external event into a `TriggerEvent` (`schemas/v2/trigger-event.schema.json`, whose rules bind) and start a run. The host:
 
@@ -155,4 +162,4 @@ With `triggerBridge.ingestion`, each `externalSources` entry MUST turn an extern
 - MUST refuse private, link-local and loopback targets and cap the body on any ingestion fetch, and never hand the run a URL (invariant `trigger-ingestion-ssrf`);
 - SHOULD key `stream` by topic, partition and offset, `change` by table and changelog id; a key MUST survive broker redelivery.
 
-*Sources: RFCs 0053, 0083, 0099, 0127, 0165, 0171, 0173, 0176, 0188, 0196, 0201, 0215, 0217, 0230.*
+*Sources: RFCs 0053, 0083, 0099, 0127, 0165, 0171, 0173, 0176, 0188, 0196, 0201, 0215, 0217, 0230, 0232.*

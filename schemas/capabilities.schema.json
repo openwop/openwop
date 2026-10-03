@@ -2932,6 +2932,28 @@
               "description": "`true` ⇒ the host serves `POST /v1/trigger-subscriptions` (RFC 0099 §F.2) for portable external-event subscription creation."
             }
           }
+        },
+        "deadLetter": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": [
+            "retentionDays",
+            "maxPageSize"
+          ],
+          "description": "RFC 0232 §A (additive). The trigger DELIVERY dead-letter sink, advertised only by a host that serves `GET /v1/trigger-subscriptions/{subscriptionId}/dead-letters` (`listTriggerDeadLetters`). A dead-lettered trigger delivery started no run, so it is on no run's log; this read is where the host's content-free record of it is visible (`trigger-bridge.md` §C). **Distinct from the top-level `deadLetter` family (RFC 0053), which is the RUN sink**, and from `webhooks.deadLetter` (RFC 0188), which holds OUTBOUND deliveries.",
+          "properties": {
+            "retentionDays": {
+              "type": "integer",
+              "minimum": 1,
+              "description": "How long a dead-lettered delivery stays readable. Observable: a record's `expiresAt − deadLetteredAt` matches it."
+            },
+            "maxPageSize": {
+              "type": "integer",
+              "minimum": 1,
+              "maximum": 1000,
+              "description": "The ceiling the host clamps `limit` to."
+            }
+          }
         }
       }
     },

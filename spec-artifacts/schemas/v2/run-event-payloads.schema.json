@@ -3702,7 +3702,7 @@
             "retrying",
             "dead-lettered"
           ],
-          "description": "`delivered`: the run started; `retrying`: failed, will retry per policy; `dead-lettered`: retries exhausted, routed to the RFC 0053 sink (no run)."
+          "description": "`delivered`: the run started; `retrying`: failed, will retry per policy; `dead-lettered`: retries exhausted, no run started; the subscription keeps the record (`webhooks.md` §Inbound triggers), not the run sink."
         },
         "runId": {
           "$ref": "ids.schema.json#/$defs/runId",
