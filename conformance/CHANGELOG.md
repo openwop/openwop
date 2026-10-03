@@ -1,5 +1,11 @@
 # `@openwop/openwop-conformance` Changelog
 
+## [2.45.9] — unreleased — a trigger leg that observed nothing is inapplicable, not blocked
+
+- **Fix: `trigger-stream-cdc-sources` no longer records `blocked` on a host that serves neither `stream` nor `change`.** The ingest leg skipped both sources on such a host and then passed with zero assertions and no reason. RFC 0148 §A records that as `blocked`, and a `blocked` row denies a major-1 bundle (RFC 0168 §E.1). It now records `inapplicable`, with the reason. The dedup leg's pre-RFC 0127 branch said `blocked` for the same condition and now says `inapplicable`. An unwired seam is still `blocked`, and a host that advertises either source and refuses it still fails.
+  - **Found by** openwop-app's 2.45.8 seam-free run, ahead of its RFC 0230 certified cut. My own harness run with the seams on recorded the same row, so the seams play no part in it.
+  - **Proof.** On openwop-app's in-process harness, the row was `blocked` before the change and is `inapplicable` with the reason after it. All nine tests pass.
+
 ## [2.45.8] — 2026-10-02 — RFC 0229 Accepted on MyndHyve's production cut; a v2 witness for tableStorage schema enforcement
 
 - **The 2.45.8 cycle opens.** RFC 0229's and RFC 0228's gap registers change the packed `spec/v1/gaps.json`.

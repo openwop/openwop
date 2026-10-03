@@ -166,9 +166,18 @@ describe.skipIf(HTTP_SKIP)('trigger-stream-cdc: behavioral ingestion + dedup (ca
       },
     ];
 
+    // Post every source first, so a host that serves neither is recorded before any assertion.
+    const served: { body: Record<string, unknown>; res: Awaited<ReturnType<typeof driver.post>> }[] = [];
     for (const body of bodies) {
       const res = await driver.post('/v1/host/sample/trigger-bridge/ingest', body);
-      if ((res.status === 404 || res.status === 405 || res.status === 400 || res.status === 422) && !advertisesNew) continue; // pre-0127 host — soft-skip this source
+      if ((res.status === 404 || res.status === 405 || res.status === 400 || res.status === 422) && !advertisesNew) continue; // pre-0127 host: this source is not served
+      served.push({ body, res });
+    }
+    // Until 2.45.9 a host that advertises neither source and refuses both passed this leg with zero
+    // assertions and no reason, which RFC 0148 §A records as `blocked` and which denies a major-1 bundle.
+    if (served.length === 0) return softSkip('inapplicable', 'triggerBridge.ingestion.externalSources lists neither stream nor change, and the host refused both (a pre-RFC 0127 host)');
+
+    for (const { body, res } of served) {
       expect(
         res.status < 400,
         req('openwop.it.trigger-stream-cdc-sources.a-stream-and-a-change-event-each-ingest-to-a-run-with-a-schema-valid-envelope-an', 
@@ -220,7 +229,7 @@ describe.skipIf(HTTP_SKIP)('trigger-stream-cdc: behavioral ingestion + dedup (ca
     const dedupKey = freshStreamDedupKey();
     const first = await driveDelivery({ scenario: 'dedup', dedupKey, source: 'stream' });
     if (first === null) return softSkip('blocked', 'precondition not met — `first === null` returned early (delivery seam unwired — soft-skip) (seam, prior step, or fixture unavailable)'); // delivery seam unwired — soft-skip
-    if (first.outcome === undefined && !external.includes('stream')) return softSkip('blocked', 'precondition not met — `first.outcome === undefined && !external.includes(\'stream\')` returned early (pre-0127 host — soft-skip) (seam, prior step, or fixture unavailable)'); // pre-0127 host — soft-skip
+    if (first.outcome === undefined && !external.includes('stream')) return softSkip('inapplicable', 'triggerBridge.ingestion.externalSources does not list stream, and the delivery seam reported no outcome for a stream source (a pre-RFC 0127 host)');
     expect(
       first.deliveredCount === 1 || first.outcome === 'delivered',
       req('openwop.it.trigger-stream-cdc-sources.stream-dedup-the-same-broker-coordinates-delivered-twice-are-effectively-once-c', 

@@ -8,6 +8,8 @@ Entries before this file was condensed carried full development detail. That tex
 
 ## [Unreleased]
 
+- **Stream and change ingest fix.** `trigger-stream-cdc-sources` records `inapplicable`, not `blocked`, on a host that serves neither `stream` nor `change`. The `blocked` row denied a major-1 bundle.
+
 ## [2.45.8] — 2026-10-02 — RFC 0229 Accepted; RFC 0230's signed ingest witnessable on a certified run; v2 table schema witness
 
 - **RFC 0229 is Accepted.** MyndHyve passes all four `secrets` run-witness requirements on a certified production bundle (suite 2.45.5); the RFC states the deployment's two conformance flags and the byok fixture it still advertises.
