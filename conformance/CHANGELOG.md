@@ -1,6 +1,6 @@
 # `@openwop/openwop-conformance` Changelog
 
-## [2.45.16] — unreleased — witness wave 2: the MyndHyve-served v1-only families gain major-2 witnesses
+## [2.45.16] — 2026-10-04 — witness waves 2 and 3: every core family gains a major-2 witness
 
 - **Advertisement witnesses** for ten families: `selfHostedRunner`, `credentials`, `authorization`, `providerUsage`, `subWorkflow`, `scheduling`, `artifactTypes`, `aiEnvelope`, `deadLetter` and `portability`. Each validates its v2 record plus the facet checks the v2 prose states. No `supported` leg is ported: presence is the claim (capabilities.md:50).
 - **Static twins:** runner frames, the `providerUsage` payload (no `provider_usage_credential_leak`, which isn't a v2 code), the export bundle (v2 flips `bundleVersion` to `"2"`) and `artifactCreated` / `registrationSource`.
@@ -17,6 +17,13 @@
   - `deadLetter` retry exhaustion is deferred: it needs a fixture and a ruling.
 - **No observation path ⇒ `inapplicable`, never `blocked`.** A dispatched child the host doesn't expose is `inapplicable`, since no v2 rule requires exposure; `blocked` would have denied certification on an unstated rule.
 - **Corpus fix:** `schemas/v2/orchestrator-decision.schema.json` now declares a root `additionalProperties: true` instead of `false`. With no root `properties`, `false` rejected every decision; each `oneOf` branch stays closed. Coverage after wave 2: 62 v2-witnessed, 8 v1-only, 3 unwitnessed (of 73).
+- **Wave 3 — the 11 families no host serves at v2.**
+  - An advertisement scenario each: `dataResidency`, `multiPartyConversation`, `nodePackRuntimes`, `uiPlugins`, `purposePropagation`, `agentRuntime` (implies `agents.manifestRuntime`), and record-only `conversationTurnModelProvenance`, `channelPresence`, `nondeterminismPolicy`, `promptLibrary`, `envelopeContracts`.
+  - `v2-data-residency-admission`: an unadvertised region answers `422 residency_unavailable` and creates no run; an advertised one answers `201`.
+  - `v2-conversation-turn-model-provenance`: a host that stamps `agent.model` advertises the family, and the stamp is closed.
+  - Two schema widenings: a `participants` seat on `conversationOpened`, and `agent.model` on the `ConversationTurn` mirror. The `v2-conversation-payload-mirrors` coherence test fails if either mirror drifts again.
+  - Owed (TODO §8): the multi-party roster legs and the WASM fixture-pack legs, plus an observation path for the four `uiPlugins` invariants.
+- **Coverage:** 73 of 73 core families v2-witnessed (from 52/18/3 at 2.45.15).
 - **Proof:** about 160 self-test cases, plus the scenario files against standalone doubles.
 
 ## [2.45.15] — 2026-10-04 — witness wave 1: six v1-only families gain major-2 witnesses
