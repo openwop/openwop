@@ -8,6 +8,8 @@ Entries before this file was condensed carried full development detail. That tex
 
 ## [Unreleased]
 
+## [2.45.16] — 2026-10-04 — Witness waves 2 and 3: every core family has a major-2 witness
+
 - **Witness wave 2:** 20 v2 scenarios for the ten v1-only families only MyndHyve serves at v2. Fix: `orchestrator-decision.schema.json` (v2) rejected every decision (a root `additionalProperties: false` with no root `properties`).
 - **Witness wave 3:** the 11 families no host serves at v2 gain major-2 witnesses: an advertisement scenario each, `dataResidency` admission (422 `residency_unavailable`, no run) and the `conversationTurnModelProvenance` emission legs.
 - **Two conversation schema fixes.** v2 `conversationOpened` had no `participants` seat, so a `multiPartyConversation` host could not emit a valid `conversation.opened`; the `ConversationTurn` mirror lacked `agent.model`, so a stamped turn failed. Both are strict widenings.
