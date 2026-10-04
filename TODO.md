@@ -208,6 +208,25 @@ Defects outside the spec:
       no failing list was captured. It is a SHOULD (RFC 0204 §D.13), recorded and never failed.
       Closes when the host sorts and a cut records the row `executed-pass`.
 
+## 8 — Wave 3 follow-ups (architect review, 2026-10-04)
+
+- [ ] **Schema descriptions still say `.supported`.** That is not a v2 field (`capabilities.md` §2:
+      presence is the claim). It appears in about 20 descriptions across `run-event-payloads`,
+      `conversation-turn`, `conversation-event` and `channel-presence-payload`. Needs one mechanical
+      sweep. Some MUSTs also live only in descriptions (`channel-presence-payload`: not persisted,
+      delivered to members only); move them into `conversation.md` or drop them.
+- [ ] **`dataResidency.regions` has no `minItems`.** `regions: []` validates, so the "accept an
+      advertised region" rule can never apply. Adding `minItems: 1` narrows the schema and needs an
+      RFC.
+- [ ] **RFCs owed before these legs can bind:** a plugin-origin seat so the four `uiPlugins`
+      invariants keep a witness after v1 (they are seam-gated and v2 mounts no plugin seam); a
+      roster input seat and refusal codes for `multiPartyConversation`; a
+      `nondeterminismPolicy.sources[]` seat; a purpose-label carrier the suite can receive; and
+      dropping the required `declared` / `advertised` booleans, which bring back `supported:false`
+      under another name.
+- [ ] **`otel-emission-grpc` is attributed to `nodePackRuntimes`** in the coverage report. It is
+      about OTel export.
+
 ## Pattern checks (no code owed; read new scenarios against these)
 
 - **A transport failure is an unreadable observation, not a verdict.** A read that throws after
