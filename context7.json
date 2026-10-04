@@ -1,0 +1,55 @@
+{
+  "$schema": "https://context7.com/schema/context7.json",
+  "projectTitle": "OpenWOP",
+  "description": "Open-source protocol for multi-agent workflow orchestration: runs of AI agents, tools and people that stream events, pause for human approval, resume and replay, the same way on any host that implements it, over REST and Server-Sent Events.",
+  "branch": "main",
+  "folders": [
+    "spec/v2",
+    "docs",
+    "api",
+    "schemas"
+  ],
+  "excludeFolders": [
+    "spec/v1",
+    "RFCS",
+    "conformance",
+    "evidence",
+    "spec-artifacts",
+    "scripts",
+    "codemods",
+    ".claude",
+    ".github",
+    "spec/v2/generated",
+    "docs/handoffs",
+    "docs/working-group",
+    "docs/recruitment",
+    "docs/openwop-adoption"
+  ],
+  "excludeFiles": [
+    "TODO.md",
+    "CLAUDE.md",
+    "AUDIT-RESPONSE-2026-05.md",
+    "CONFORMANCE-RUNS-2026-05.md",
+    "WAIVER-AUDIT-2026-08-20.md",
+    "WAIVER-RETROSPECTIVE-REGISTER.md",
+    "RETROSPECTIVE-QUEUE.md",
+    "SECTION-B-REVIEW-PACKET.md",
+    "RFC-0147-SELF-AUDIT.md",
+    "PROTOCOL-GAP-CLOSURE-PLAN.md",
+    "OPENWOP-FEATURE-GAP-ANALYSIS.md",
+    "OPENWOP-AGENT-RUNTIME-HANDOFF.md",
+    "OPENWOP-CANVAS-TYPE-PACKS-RESEARCH.md",
+    "PACKS-MVP-PLAN.md",
+    "REQUIREMENT-REGISTRY-FEASIBILITY.md",
+    "autonomous-agent-runtime-plan.md"
+  ],
+  "rules": [
+    "OpenWOP is a wire protocol, not a library: talk to a host over REST and SSE; the TypeScript, Python and Go SDKs are thin clients of the same wire surface.",
+    "Start every integration by reading GET /.well-known/openwop and only use capabilities the host advertises there; never assume an optional extension is present.",
+    "Send the API key and the protocol version header on every v2 call; target spec/v2, not spec/v1.",
+    "Stream run events over SSE and resume a dropped stream with Last-Event-ID instead of re-polling or restarting the run.",
+    "Human approval is an interrupt: the run suspends in waiting-approval and resumes only when a person answers; do not model it as a sleep or a poll loop.",
+    "Replay and fork re-run from a past step with side effects suppressed; give every side-effecting tool call a stable effect identity so retries and replays stay at-most-once.",
+    "Credentials are referenced by credentialRef and resolved by the host; never put key material in run options, events or logs."
+  ]
+}
