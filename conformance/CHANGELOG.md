@@ -1,5 +1,24 @@
 # `@openwop/openwop-conformance` Changelog
 
+## [2.45.15] — unreleased — witness wave 1: six v1-only families gain major-2 witnesses
+
+- **Why.** v1 end-of-support was 2026-10-04 (RFC 0234), and openwop-app has retired `/v1`, so it emits no more major-1 bundles. 24 core families were witnessed only by major-1 scenarios. This wave ports the six that production hosts serve at v2. Each port follows the per-major pattern: a profile-aware witness lib whose legs observe and return findings, a thin `v2-*` scenario, and a self-test against a scratch double.
+- **Normative wire, unaided:**
+  - `v2-i18n-negotiation`;
+  - `v2-prompt-list-and-fetch`, `v2-prompt-mutable-lifecycle`, `v2-prompt-render-deterministic`, `v2-prompt-pack-install`;
+  - the live leg of `v2-localized-content-delivery`;
+  - the advertisement witnesses `v2-envelopes-advertisement`, `v2-limits-envelope-caps-advertisement`, `v2-model-capabilities-advertisement`, `v2-ai-providers-advertisement`;
+  - `v2-run-execution-bounds`. It is new at v2, and an out-of-range `runTimeoutMs` is refused `400` unaided.
+- **Static twins over `schemas/v2`:** `v2-prompt-template-shape`, `v2-envelope-reasoning-shape`, `v2-envelope-tier-one-subset-static`, `v2-envelope-variant-discriminator-static`, `v2-ai-envelope-shape-static`, `v2-media-inline-cap-static`, and the localized-content schema legs.
+- **Fixture ports through `POST /runs` with v2 event names:** `v2-prompt-all-four-kinds-events`, `v2-prompt-end-to-end-events`, `v2-prompt-resolution-chain-event`, the run-duration breach leg, and `v2-model-capability-insufficient`.
+- **Not ported, by ruling:**
+  - Seam-only legs: prompt compose and resolve, voice and speech, `ai/call*`, `envelope/accept`, the envelope runtime, the model-capability gate, node-catalog and debug-bundle. There's no v2 seam and no normative path; see TODO.
+  - The `authModes` and `byok` map rules, retired by migration C2.11.
+  - The two prompt workspace-membership scenarios. They have no v2 wire seat, because workspace comes from identity at v2.
+- **Every leg rests on a stated rule.** A proposed `authModes` vocabulary leg was dropped: the prose's only MUSTs bind clients, and v2's schema has no enum, so it would have failed openwop-app (`"api-key"`) on an unstated rule.
+- **Fix to existing witnesses:** `budget-`, `backpressure-`, `exhaustion-facet-` and `table-schema-witness` address v2 runs with the `~` bound-id projection (`profile.idSegment`) instead of `%2F`, and the scratch double accepts both. Only `run-secrets-witness` keeps `%2F` (live-proven; follow-up).
+- **Proof:** about 200 self-test cases across the new witness libs, each defect failing only its own leg.
+
 ## [2.45.14] — 2026-10-04 — v1 end-of-support is 2026-10-04 (RFC 0234)
 
 - **The 2.45.14 cycle opens.** RFC 0234 amends `overview.md` §v1 end-of-support and `versioning.md` §5, adds `spec/v2/eos-override.json` and `spec/v1/end-of-support.json`, and its gap register changes the packed `spec/v1/gaps.json`.

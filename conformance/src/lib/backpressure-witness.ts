@@ -89,7 +89,7 @@ export async function saturate(profile: MajorProfile, discovery: unknown): Promi
       streams.push(ctl);
       // `Accept: text/event-stream` keeps the request in flight; without it a
       // negotiating host answers a one-shot snapshot and the slot drops.
-      const stream = fetch(`${env.baseUrl}${profile.runsPath}/${encodeURIComponent(runId)}/events`, {
+      const stream = fetch(`${env.baseUrl}${profile.runsPath}/${profile.idSegment(runId)}/events`, {
         headers: { Authorization: `Bearer ${env.apiKey}`, Accept: 'text/event-stream', ...profile.versionHeaders },
         signal: ctl.signal,
       }).then((r) => r.status, () => null);
@@ -127,7 +127,7 @@ export async function saturate(profile: MajorProfile, discovery: unknown): Promi
     if (runIds.length > 0) {
       const bulk = await http(() => driver.post(`${profile.runsPath}:bulk-cancel`, { runIds }));
       if (bulk === null || bulk.status >= 400) {
-        for (const id of runIds) await http(() => driver.post(`${profile.runsPath}/${encodeURIComponent(id)}/cancel`, {}));
+        for (const id of runIds) await http(() => driver.post(`${profile.runsPath}/${profile.idSegment(id)}/cancel`, {}));
       }
     }
     await Promise.allSettled(pending);

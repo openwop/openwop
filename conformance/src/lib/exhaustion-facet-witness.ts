@@ -75,7 +75,7 @@ export async function drive(profile: MajorProfile, doc: unknown): Promise<FacetR
 
   // A host that accepted the create started a run. Stop it, so a failing row leaves none behind.
   const runId = (res.json as { runId?: unknown } | undefined)?.runId;
-  if (typeof runId === 'string') await http(() => driver.post(`${profile.runsPath}/${encodeURIComponent(runId)}/cancel`, {}));
+  if (typeof runId === 'string') await http(() => driver.post(`${profile.runsPath}/${profile.idSegment(runId)}/cancel`, {}));
 
   return { kind: 'observed', observation: { facet, create: { status: res.status, code: readErrorCode(res.json) ?? undefined } } };
 }

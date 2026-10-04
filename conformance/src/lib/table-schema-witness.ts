@@ -18,6 +18,7 @@
  * nothing; {@link judge} is pure.
  */
 
+import { projectBoundId } from './bound-id.js';
 import { randomUUID } from 'node:crypto';
 import { driver, type OpenWOPResponse } from './driver.js';
 import { readErrorCode } from './error-envelope.js';
@@ -52,7 +53,8 @@ const isRecord = (v: unknown): v is Record<string, unknown> => v !== null && typ
 async function http(fn: () => Promise<OpenWOPResponse>): Promise<OpenWOPResponse | null> {
   try { return await fn(); } catch { return null; }
 }
-const enc = (id: string): string => encodeURIComponent(id);
+/** A v2 bound id as one path segment: the `~` projection (identity.md §5). */
+const enc = (id: string): string => projectBoundId(id);
 
 async function probe(action: ProbeAction, timeoutMs: number): Promise<ProbeOutcome | string> {
   const table = `conformance_schema_${randomUUID().replace(/-/g, '').slice(0, 16)}`;

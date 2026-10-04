@@ -16,6 +16,7 @@
 import { createServer, type IncomingMessage, type Server, type ServerResponse } from 'node:http';
 import type { AddressInfo } from 'node:net';
 import type { MajorProfile } from './major-profile.js';
+import { unprojectBoundId } from './bound-id.js';
 
 export interface ScriptedEvent { readonly type: string; readonly payload?: Record<string, unknown> | undefined }
 export interface ScriptedRun {
@@ -112,7 +113,9 @@ export class ScratchHost {
     if (req.method === 'POST' && path === `${runs}:bulk-cancel`) return this.send(res, 200, { results: [] });
 
     const m = new RegExp(`^${runs}/([^/]+)(/events/poll|/events|/cancel)?$`).exec(path);
-    const stored = m ? this.runs.get(decodeURIComponent(m[1] as string)) : undefined;
+    // A bound id arrives `~`-projected (identity.md §5) or percent-encoded; accept both.
+    const seg = m ? (m[1] as string) : '';
+    const stored = m ? this.runs.get(seg.includes('~') ? unprojectBoundId(seg) : decodeURIComponent(seg)) : undefined;
     if (!m || stored === undefined) return this.send(res, 404, { error: 'not_found', message: 'no such route or run' });
     const tail = m[2];
     if (tail === '/cancel') return this.send(res, 200, { status: 'cancelled' });

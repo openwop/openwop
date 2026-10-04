@@ -8,6 +8,7 @@ Entries before this file was condensed carried full development detail. That tex
 
 ## [Unreleased]
 
+- **Witness wave 1:** 21 v2 scenarios port the v1-only witnesses of `i18n`, `prompts`, `limits`, `envelopes`, `modelCapabilities` and `aiProviders` to major 2, so they stay witnessed now that hosts retire v1.
 - **ROADMAP adds two gated candidates:** structured handoff context on `agent.handoff`, and a shared intent record. Both are prototyped first in openwop-app. It also tracks certification by a non-steward host. No spec change.
 
 ## [2.45.14] — 2026-10-04 — v1 end-of-support is 2026-10-04 (RFC 0234)

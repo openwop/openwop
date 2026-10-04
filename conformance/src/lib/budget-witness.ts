@@ -59,7 +59,7 @@ async function readEvents(profile: MajorProfile, runId: string): Promise<RunEven
   const out: RunEvent[] = [];
   let after = 0;
   for (let page = 0; page < 50; page++) {
-    const res = await http(() => driver.get(`${profile.runsPath}/${encodeURIComponent(runId)}/events/poll?timeout=1&afterSequence=${after}`));
+    const res = await http(() => driver.get(`${profile.runsPath}/${profile.idSegment(runId)}/events/poll?timeout=1&afterSequence=${after}`));
     if (res === null || res.status !== 200) return page === 0 ? null : out;
     const batch = (res.json as { events?: unknown } | undefined)?.events;
     if (!Array.isArray(batch) || batch.length === 0) return out;
@@ -101,11 +101,11 @@ export async function drive(profile: MajorProfile, discovery: unknown, timeoutMs
   const deadline = Date.now() + timeoutMs;
   let snap: Record<string, unknown> | null = null;
   for (;;) {
-    const res = await http(() => driver.get(`${profile.runsPath}/${encodeURIComponent(runId)}`));
+    const res = await http(() => driver.get(`${profile.runsPath}/${profile.idSegment(runId)}`));
     snap = res?.status === 200 && isRecord(res.json) ? res.json : null;
     if (snap !== null && TERMINAL.has(String(snap['status']))) break;
     if (Date.now() > deadline) {
-      await http(() => driver.post(`${profile.runsPath}/${encodeURIComponent(runId)}/cancel`, {}));
+      await http(() => driver.post(`${profile.runsPath}/${profile.idSegment(runId)}/cancel`, {}));
       return { kind: 'skip', disposition: 'blocked', reason: `the budgeted run did not reach a terminal status within ${timeoutMs} ms (last: ${snap === null ? 'unreadable' : String(snap['status'])})` };
     }
     await new Promise((r) => setTimeout(r, 250));
