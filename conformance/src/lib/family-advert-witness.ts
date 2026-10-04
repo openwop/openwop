@@ -1,7 +1,9 @@
 /**
- * The advertisement-shape witness for the claims-check AI families at major 2:
- * `envelopes`, `limits` (the three envelope caps), `modelCapabilities` and
- * `aiProviders`.
+ * The advertisement-shape witness at major 2. Wave 1: the claims-check AI
+ * families `envelopes`, `limits` (the three envelope caps), `modelCapabilities`
+ * and `aiProviders`. Wave 2: the record and facet shapes of `selfHostedRunner`,
+ * `credentials`, `authorization`, `providerUsage`, `subWorkflow`, `scheduling`,
+ * `artifactTypes`, `aiEnvelope`, `deadLetter` and `portability`.
  *
  * A claims-check family is witnessed by what the host says about itself, so
  * every leg here reads the discovery record alone. Each leg checks one facet
@@ -13,7 +15,13 @@
  * Not here, on purpose:
  *   - `limits.maxRunDurationMs` / `maxLoopIterations` — `run-bounds-witness.ts`;
  *   - every runtime rule of these families (retry routing, refusal, substitution,
- *     cap enforcement) — they need a mock-provider or envelope-accept seam.
+ *     cap enforcement, credential resolution, dispatch, schedule firing, dead-
+ *     letter retention, import) — they need a seam or a fixture run;
+ *   - `scheduling.maxFutureHorizon` as an ISO-8601 duration: the v2 schema seat
+ *     is a plain string and no v2 prose states the format as binding the host;
+ *   - a `supported` field on any record: it is not a v2 field
+ *     (`capabilities.md` §2). The record-schema leg rejects one as an unknown
+ *     key; no leg ever asserts its presence.
  *
  * Every leg is pure: `(profile, discovery) → outcome`. A family the host does
  * not advertise, or a facet it does not carry, is `inapplicable` — never a
@@ -50,7 +58,12 @@ function onFamily(profile: MajorProfile, discovery: unknown, family: string, leg
 }
 
 /** The record as a whole against its seat in the capabilities schema. Catches every v1 shape v2 retired (`supported`, `selfHosted[]`, the per-provider `authModes` map, …). */
-export function recordSchemaLeg(profile: MajorProfile, discovery: unknown, family: 'envelopes' | 'modelCapabilities' | 'aiProviders', doc: string): AdvertOutcome {
+export type AdvertFamily =
+  | 'envelopes' | 'modelCapabilities' | 'aiProviders'
+  | 'selfHostedRunner' | 'credentials' | 'authorization' | 'providerUsage' | 'subWorkflow'
+  | 'scheduling' | 'artifactTypes' | 'aiEnvelope' | 'deadLetter' | 'portability';
+
+export function recordSchemaLeg(profile: MajorProfile, discovery: unknown, family: AdvertFamily, doc: string): AdvertOutcome {
   return onFamily(profile, discovery, family, (rec) => observed([bySchema(`/properties/${family}`, rec, doc, `the ${family} record`)]));
 }
 
@@ -210,3 +223,135 @@ export const aiProvidersPromptPrefixCacheLeg = (p: MajorProfile, d: unknown): Ad
   if (v === undefined) return inapplicable('the host does not advertise aiProviders.promptPrefixCache');
   return observed([bySchema(`${AP}/promptPrefixCache`, v, AP_DOC, 'aiProviders.promptPrefixCache (a boolean at v2, not the v1 object)')]);
 });
+
+// ---------------------------------------------------------------------------
+// Wave 2. Each facet leg validates the facet against its seat in the v2
+// capabilities schema, and adds a prose check only where a v2 core document
+// states the rule as binding the host. An absent facet is `inapplicable`.
+// ---------------------------------------------------------------------------
+
+/** One optional facet against its schema seat: absent ⇒ inapplicable. */
+function facetBySchema(p: MajorProfile, d: unknown, family: AdvertFamily, facet: string, doc: string, what = `${family}.${facet}`): AdvertOutcome {
+  return onFamily(p, d, family, (rec) => {
+    const v = rec[facet];
+    if (v === undefined) return inapplicable(`the host does not advertise ${family}.${facet} (optional)`);
+    return observed([bySchema(`/properties/${family}/properties/${facet}`, v, doc, what)]);
+  });
+}
+
+// selfHostedRunner — spec/v2/core/execution.md §selfHostedRunner
+
+/** `selfHostedRunner.dispatchKinds`: unique members of {model, tool} ("`dispatchKinds` lists `model`, `tool` or both"). */
+export const selfHostedRunnerDispatchKindsLeg = (p: MajorProfile, d: unknown): AdvertOutcome =>
+  facetBySchema(p, d, 'selfHostedRunner', 'dispatchKinds', 'execution.md §selfHostedRunner', 'selfHostedRunner.dispatchKinds (unique members of model, tool)');
+
+// credentials — spec/v2/core/oauth.md §Credentials
+
+const CRED_DOC = 'oauth.md §Credentials';
+
+/** `credentials.scopes`: unique members of {user, workspace, tenant}; a scope outside it is `credential_scope_unsupported`. */
+export const credentialsScopesLeg = (p: MajorProfile, d: unknown): AdvertOutcome =>
+  facetBySchema(p, d, 'credentials', 'scopes', CRED_DOC, 'credentials.scopes (a subset of user, workspace, tenant)');
+
+/** `credentials.rotation`: `none` or `two-key-overlap`. */
+export const credentialsRotationLeg = (p: MajorProfile, d: unknown): AdvertOutcome =>
+  facetBySchema(p, d, 'credentials', 'rotation', CRED_DOC, 'credentials.rotation (none or two-key-overlap)');
+
+// authorization — spec/v2/core/identity.md §2.1
+
+const AUTHZ_DOC = 'identity.md §2.1 (authorization)';
+
+/** `authorization.failClosed`: "MUST be `true` when present" (invariant `authorization-fail-closed`). */
+export const authorizationFailClosedLeg = (p: MajorProfile, d: unknown): AdvertOutcome => onFamily(p, d, 'authorization', (rec) => {
+  const v = rec['failClosed'];
+  if (v === undefined) return inapplicable('the host does not advertise authorization.failClosed (optional)');
+  return observed([
+    bySchema('/properties/authorization/properties/failClosed', v, AUTHZ_DOC, 'authorization.failClosed'),
+    { ok: v === true, doc: AUTHZ_DOC, message: `authorization.failClosed MUST be true when present (got ${JSON.stringify(v)})` },
+  ]);
+});
+
+/** `authorization.roles`: each entry a non-empty `role` and a unique `scopes[]` of non-empty strings. */
+export const authorizationRolesLeg = (p: MajorProfile, d: unknown): AdvertOutcome => onFamily(p, d, 'authorization', (rec) => {
+  const v = rec['roles'];
+  if (v === undefined) return inapplicable('the host does not advertise authorization.roles (optional)');
+  const out = [bySchema('/properties/authorization/properties/roles', v, AUTHZ_DOC, 'authorization.roles')];
+  if (Array.isArray(v)) {
+    v.forEach((r, i) => out.push(bySchema('/properties/authorization/properties/roles/items', r, AUTHZ_DOC, `authorization.roles[${i}]`)));
+  }
+  return observed(out);
+});
+
+// providerUsage — spec/v2/core/events.md §providerUsage
+
+const PU_DOC = 'events.md §providerUsage';
+
+/** `providerUsage.costEstimates`: one boolean. */
+export const providerUsageCostEstimatesLeg = (p: MajorProfile, d: unknown): AdvertOutcome =>
+  facetBySchema(p, d, 'providerUsage', 'costEstimates', PU_DOC);
+
+/** `providerUsage.currency`: "the ISO 4217 currency of `costEstimateUsd`" — three upper-case letters. */
+export const providerUsageCurrencyLeg = (p: MajorProfile, d: unknown): AdvertOutcome =>
+  facetBySchema(p, d, 'providerUsage', 'currency', PU_DOC, 'providerUsage.currency (an ISO 4217 code, ^[A-Z]{3}$)');
+
+// subWorkflow — spec/v2/core/execution.md §subWorkflow
+
+/** `subWorkflow.inputMapping`: one boolean (a host not advertising it refuses a non-empty `inputMapping`). */
+export const subWorkflowInputMappingLeg = (p: MajorProfile, d: unknown): AdvertOutcome =>
+  facetBySchema(p, d, 'subWorkflow', 'inputMapping', 'execution.md §subWorkflow');
+
+// scheduling — spec/v2/core/host-services.md §scheduling
+
+export const SCHEDULING_FORMS = ['cron', 'delayed', 'calendar'] as const;
+
+/** `scheduling.{cron,delayed,calendar}`: each present form is one boolean. All three absent ⇒ inapplicable. */
+export const schedulingFormsLeg = (p: MajorProfile, d: unknown): AdvertOutcome => onFamily(p, d, 'scheduling', (rec) => {
+  const present = SCHEDULING_FORMS.filter((f) => rec[f] !== undefined);
+  if (present.length === 0) return inapplicable('the host advertises none of scheduling.cron, delayed, calendar');
+  return observed(present.map((f) => bySchema(`/properties/scheduling/properties/${f}`, rec[f], 'host-services.md §scheduling', `scheduling.${f}`)));
+});
+
+// artifactTypes — spec/v2/core/artifact-type-packs.md §The capability
+
+const AT_DOC = 'artifact-type-packs.md §The capability';
+
+/** `artifactTypes.{store,render,export}`: the global facets — two booleans and a list of export-format ids. */
+export const artifactTypesGlobalFacetsLeg = (p: MajorProfile, d: unknown): AdvertOutcome => onFamily(p, d, 'artifactTypes', (rec) => {
+  const present = (['store', 'render', 'export'] as const).filter((f) => rec[f] !== undefined);
+  if (present.length === 0) return inapplicable('the host advertises none of artifactTypes.store, render, export');
+  return observed(present.map((f) => bySchema(`/properties/artifactTypes/properties/${f}`, rec[f], AT_DOC, `artifactTypes.${f}`)));
+});
+
+/**
+ * `artifactTypes.types`: each per-type entry validates against the entry seat —
+ * closed, `validation` open | closed, `schemaVersion` a non-negative integer,
+ * `registrationSource` pack | host (artifact-type-packs.md §Registration).
+ */
+export const artifactTypesPerTypeLeg = (p: MajorProfile, d: unknown): AdvertOutcome => onFamily(p, d, 'artifactTypes', (rec) => {
+  const t = rec['types'];
+  if (t === undefined) return inapplicable('the host does not advertise artifactTypes.types (optional)');
+  if (!isRecord(t)) return observed([bySchema('/properties/artifactTypes/properties/types', t, AT_DOC, 'artifactTypes.types')]);
+  const entries = Object.entries(t);
+  if (entries.length === 0) return observed([bySchema('/properties/artifactTypes/properties/types', t, AT_DOC, 'artifactTypes.types')]);
+  return observed(entries.map(([id, e]) => bySchema('/properties/artifactTypes/properties/types/additionalProperties', e, 'artifact-type-packs.md §Registration', `artifactTypes.types[${JSON.stringify(id)}]`)));
+});
+
+// deadLetter — spec/v2/core/runs.md §Dead letters
+
+/** `deadLetter.retentionDays`: an integer ≥ 1 (the failed run stays fork-eligible that long). */
+export const deadLetterRetentionDaysLeg = (p: MajorProfile, d: unknown): AdvertOutcome =>
+  facetBySchema(p, d, 'deadLetter', 'retentionDays', 'runs.md §Dead letters', 'deadLetter.retentionDays (an integer of at least 1)');
+
+// portability — spec/v2/core/portability.md §The portability record
+
+const PORT_DOC = 'portability.md §The portability record';
+
+/** "A host advertising `import` MUST advertise `dryRun: true`." Read as `import: true` ⇒ `dryRun: true`, as the schema's `allOf` if/then reads it. */
+export const portabilityImportDryRunLeg = (p: MajorProfile, d: unknown): AdvertOutcome => onFamily(p, d, 'portability', (rec) => {
+  if (rec['import'] !== true) return inapplicable('the host does not advertise portability.import: true');
+  return observed([{ ok: rec['dryRun'] === true, doc: PORT_DOC, message: `a host advertising portability.import MUST advertise dryRun: true (got ${JSON.stringify(rec['dryRun'])})` }]);
+});
+
+/** `portability.kinds`: unique members of the seven export-bundle item kinds. */
+export const portabilityKindsLeg = (p: MajorProfile, d: unknown): AdvertOutcome =>
+  facetBySchema(p, d, 'portability', 'kinds', PORT_DOC, 'portability.kinds (unique export-bundle item kinds)');

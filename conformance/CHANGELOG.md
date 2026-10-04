@@ -1,5 +1,24 @@
 # `@openwop/openwop-conformance` Changelog
 
+## [2.45.16] — unreleased — witness wave 2: the MyndHyve-served v1-only families gain major-2 witnesses
+
+- **Advertisement witnesses** for ten families: `selfHostedRunner`, `credentials`, `authorization`, `providerUsage`, `subWorkflow`, `scheduling`, `artifactTypes`, `aiEnvelope`, `deadLetter` and `portability`. Each validates its v2 record plus the facet checks the v2 prose states. No `supported` leg is ported: presence is the claim (capabilities.md:50).
+- **Static twins:** runner frames, the `providerUsage` payload (no `provider_usage_credential_leak`, which isn't a v2 code), the export bundle (v2 flips `bundleVersion` to `"2"`) and `artifactCreated` / `registrationSource`.
+- **New unaided witness, `v2-artifact-type-schema-url`.** `artifact-type-packs.md` requires `{HostBase}/schemas/artifacts/{id}.schema.json` for every host-registered type. No v1 scenario tested it.
+- **Fixture ports:**
+  - `v2-subworkflow-linkage`, on v2's replacement linkage: `node.completed` carries `childRunId`/`childStatus`, and ancestry gives `cause: core.subWorkflow`. The v1 `parentRunId` leg was retired by C4.18.
+  - `v2-subworkflow-input-mapping`, `v2-dispatch-input-mapping`, `v2-dispatch-loop`, `v2-provider-usage-emission`.
+- **Not ported, by ruling:**
+  - every v1 `supported` leg;
+  - `scheduling.maxFutureHorizon`'s ISO format (not a v2 rule);
+  - the `approvalGate` override reason (prose says MAY);
+  - the `aiEnvelope` universal-kind listing ("need not be listed" at v2);
+  - every seam-only leg.
+  - `deadLetter` retry exhaustion is deferred: it needs a fixture and a ruling.
+- **No observation path ⇒ `inapplicable`, never `blocked`.** A dispatched child the host doesn't expose is `inapplicable`, since no v2 rule requires exposure; `blocked` would have denied certification on an unstated rule.
+- **Corpus fix:** `schemas/v2/orchestrator-decision.schema.json` now declares a root `additionalProperties: true` instead of `false`. With no root `properties`, `false` rejected every decision; each `oneOf` branch stays closed. Coverage after wave 2: 62 v2-witnessed, 8 v1-only, 3 unwitnessed (of 73).
+- **Proof:** about 160 self-test cases, plus the scenario files against standalone doubles.
+
 ## [2.45.15] — 2026-10-04 — witness wave 1: six v1-only families gain major-2 witnesses
 
 - **Why.** v1 end-of-support was 2026-10-04 (RFC 0234), and openwop-app has retired `/v1`, so it emits no more major-1 bundles. 24 core families were witnessed only by major-1 scenarios. This wave ports the six that production hosts serve at v2. Each port follows the per-major pattern: a profile-aware witness lib whose legs observe and return findings, a thin `v2-*` scenario, and a self-test against a scratch double.
