@@ -8,7 +8,7 @@ Entries before this file was condensed carried full development detail. That tex
 
 ## [Unreleased]
 
-- **ROADMAP: two new gated candidates and an explicit independent-certification gap.** Structured handoff context on `agent.handoff` and a shared intent record are listed as candidates, each prototyped first as an openwop-app host extension. The implementation ecosystem now tracks a certification bundle cut by someone other than the steward. No spec, schema or conformance change.
+- **ROADMAP adds two gated candidates:** structured handoff context on `agent.handoff`, and a shared intent record. Both are prototyped first in openwop-app. It also tracks certification by a non-steward host. No spec change.
 
 ## [2.45.14] — 2026-10-04 — v1 end-of-support is 2026-10-04 (RFC 0234)
 
