@@ -10,7 +10,11 @@ import { majorProfile } from './major-profile.js';
 import {
   aiProvidersAuthModesShapeLeg, aiProvidersInlineMediaLeg, aiProvidersPromptPrefixCacheLeg, aiProvidersSelfHostedLeg,
   canonicalReliabilityEvent, envelopesCompletionLeg, envelopesReasoningLeg, envelopesReliabilityLeg, envelopesTierOneLeg, limitsCapLeg,
-  modelCapabilitiesAdvertisedLeg, modelCapabilitiesSubstitutionLeg, recordSchemaLeg, type AdvertOutcome,
+  modelCapabilitiesAdvertisedLeg, modelCapabilitiesSubstitutionLeg, recordSchemaLeg, type AdvertFamily, type AdvertOutcome,
+  artifactTypesGlobalFacetsLeg, artifactTypesPerTypeLeg, authorizationFailClosedLeg, authorizationRolesLeg,
+  credentialsRotationLeg, credentialsScopesLeg, deadLetterRetentionDaysLeg, portabilityImportDryRunLeg, portabilityKindsLeg,
+  providerUsageCostEstimatesLeg, providerUsageCurrencyLeg, schedulingFormsLeg, selfHostedRunnerDispatchKindsLeg,
+  subWorkflowInputMappingLeg,
 } from './family-advert-witness.js';
 
 const V2 = majorProfile(2);
@@ -149,5 +153,122 @@ describe('family-advert witness: aiProviders (host-services.md §aiProviders)', 
     inapplicable(aiProvidersAuthModesShapeLeg(V2, bare));
     inapplicable(aiProvidersInlineMediaLeg(V2, bare));
     inapplicable(aiProvidersPromptPrefixCacheLeg(V2, bare));
+  });
+});
+
+// ---------------------------------------------------------------------------
+// Wave 2 — record and facet shapes. One conforming record per family passes
+// every leg; each defect case changes ONE facet and fails only the leg that
+// owns it (the other legs of that family still pass).
+// ---------------------------------------------------------------------------
+
+const exp = { status: 'experimental', since: '2.0', until: '2099-01-01', witness: 'witnessable-gated' } as const;
+const CONFORMING: Readonly<Record<string, Record<string, unknown>>> = {
+  selfHostedRunner: { ...exp, dispatchKinds: ['model', 'tool'] },
+  credentials: { ...exp, scopes: ['user', 'workspace'], encryptionAtRest: true, rotation: 'two-key-overlap', sharing: true },
+  authorization: { ...exp, failClosed: true, roles: [{ role: 'owner', scopes: ['admin:*'] }, { role: 'viewer', scopes: ['runs:read'] }] },
+  providerUsage: { ...exp, costEstimates: true, currency: 'EUR' },
+  subWorkflow: { ...exp, witness: 'claims-check', inputMapping: true },
+  scheduling: { ...exp, cron: true, delayed: true, calendar: false, maxFutureHorizon: 'P90D' },
+  artifactTypes: { ...exp, store: true, render: false, export: ['pdf'], types: { 'vendor.acme.prd': { validated: true, validation: 'open', schemaVersion: 1, registrationSource: 'host' } } },
+  aiEnvelope: { ...exp, await: true },
+  deadLetter: { ...exp, retentionDays: 7 },
+  portability: { ...exp, export: true, import: true, kinds: ['agent', 'pack'], dryRun: true },
+};
+const doc2 = (family: string, over: Record<string, unknown> = {}): Record<string, unknown> => ({ [family]: { ...CONFORMING[family], ...over } });
+
+type LegFn = (p: typeof V2, d: unknown) => AdvertOutcome;
+const LEGS: Readonly<Record<string, Readonly<Record<string, LegFn>>>> = {
+  selfHostedRunner: { dispatchKinds: selfHostedRunnerDispatchKindsLeg },
+  credentials: { scopes: credentialsScopesLeg, rotation: credentialsRotationLeg },
+  authorization: { failClosed: authorizationFailClosedLeg, roles: authorizationRolesLeg },
+  providerUsage: { costEstimates: providerUsageCostEstimatesLeg, currency: providerUsageCurrencyLeg },
+  subWorkflow: { inputMapping: subWorkflowInputMappingLeg },
+  scheduling: { forms: schedulingFormsLeg },
+  artifactTypes: { global: artifactTypesGlobalFacetsLeg, perType: artifactTypesPerTypeLeg },
+  aiEnvelope: {},
+  deadLetter: { retentionDays: deadLetterRetentionDaysLeg },
+  portability: { importDryRun: portabilityImportDryRunLeg, kinds: portabilityKindsLeg },
+};
+
+describe('family-advert witness wave 2: conforming records', () => {
+  it.each(Object.keys(CONFORMING))('%s: the record and every facet leg pass', (family) => {
+    const d = doc2(family);
+    passes(recordSchemaLeg(V2, d, family as AdvertFamily, 'x'));
+    for (const leg of Object.values(LEGS[family] ?? {})) passes(leg(V2, d));
+  });
+
+  it.each(Object.keys(CONFORMING))('%s: an unadvertised family is inapplicable on every leg', (family) => {
+    inapplicable(recordSchemaLeg(V2, {}, family as AdvertFamily, 'x'));
+    for (const leg of Object.values(LEGS[family] ?? {})) inapplicable(leg(V2, {}));
+  });
+
+  it.each(Object.keys(CONFORMING))('%s: a v1 `supported` seat fails the record leg (capabilities.md §2)', (family) => {
+    fails(recordSchemaLeg(V2, doc2(family, { supported: true }), family as AdvertFamily, 'x'));
+  });
+});
+
+describe('family-advert witness wave 2: each defect fails only its own leg', () => {
+  it.each<[string, string, string, Record<string, unknown>]>([
+    ['selfHostedRunner', 'dispatchKinds', 'an unknown dispatch kind', { dispatchKinds: ['model', 'agent'] }],
+    ['selfHostedRunner', 'dispatchKinds', 'a duplicated dispatch kind', { dispatchKinds: ['tool', 'tool'] }],
+    ['selfHostedRunner', 'dispatchKinds', 'a scalar dispatchKinds', { dispatchKinds: 'model' }],
+    ['credentials', 'scopes', 'a scope outside user/workspace/tenant', { scopes: ['user', 'org'] }],
+    ['credentials', 'scopes', 'a duplicated scope', { scopes: ['user', 'user'] }],
+    ['credentials', 'rotation', 'an unknown rotation mode', { rotation: 'rolling' }],
+    ['authorization', 'failClosed', 'failClosed: false', { failClosed: false }],
+    ['authorization', 'failClosed', 'a string failClosed', { failClosed: 'true' }],
+    ['authorization', 'roles', 'a role entry with no scopes', { roles: [{ role: 'owner' }] }],
+    ['authorization', 'roles', 'an empty role name', { roles: [{ role: '', scopes: ['runs:read'] }] }],
+    ['authorization', 'roles', 'an unknown key on a role entry', { roles: [{ role: 'owner', scopes: [], grants: ['*'] }] }],
+    ['providerUsage', 'costEstimates', 'a string costEstimates', { costEstimates: 'yes' }],
+    ['providerUsage', 'currency', 'a lower-case currency', { currency: 'usd' }],
+    ['providerUsage', 'currency', 'a currency symbol', { currency: '$' }],
+    ['subWorkflow', 'inputMapping', 'a string inputMapping', { inputMapping: 'true' }],
+    ['scheduling', 'forms', 'a string cron', { cron: 'yes' }],
+    ['scheduling', 'forms', 'a calendar object', { calendar: { supported: true } }],
+    ['artifactTypes', 'global', 'a string store', { store: 'true' }],
+    ['artifactTypes', 'global', 'a non-string export id', { export: ['pdf', 3] }],
+    ['artifactTypes', 'perType', 'an unknown registrationSource', { types: { 'vendor.acme.prd': { registrationSource: 'vendor' } } }],
+    ['artifactTypes', 'perType', 'an unknown validation mode', { types: { 'vendor.acme.prd': { validation: 'strict' } } }],
+    ['artifactTypes', 'perType', 'a negative schemaVersion', { types: { 'vendor.acme.prd': { schemaVersion: -1 } } }],
+    ['artifactTypes', 'perType', 'an unknown key on a per-type entry', { types: { 'vendor.acme.prd': { supported: true } } }],
+    ['deadLetter', 'retentionDays', 'retentionDays 0', { retentionDays: 0 }],
+    ['deadLetter', 'retentionDays', 'a fractional retentionDays', { retentionDays: 1.5 }],
+    ['deadLetter', 'retentionDays', 'a string retentionDays', { retentionDays: '7' }],
+    ['portability', 'importDryRun', 'import: true with dryRun: false', { dryRun: false }],
+    ['portability', 'importDryRun', 'import: true with dryRun absent', { dryRun: undefined }],
+    ['portability', 'kinds', 'an unknown kind', { kinds: ['agent', 'workflow'] }],
+  ])('%s.%s: %s', (family, owner, _what, over) => {
+    const d = doc2(family, over);
+    for (const [name, leg] of Object.entries(LEGS[family] ?? {})) {
+      if (name === owner) fails(leg(V2, d));
+      else passes(leg(V2, d));
+    }
+    fails(recordSchemaLeg(V2, d, family as AdvertFamily, 'x'));
+  });
+
+  it('aiEnvelope: a non-boolean await fails the record leg', () => {
+    fails(recordSchemaLeg(V2, doc2('aiEnvelope', { await: 'yes' }), 'aiEnvelope', 'x'));
+  });
+
+  it('the record leg convicts the record header too: experimental without until, stable with until', () => {
+    fails(recordSchemaLeg(V2, doc2('deadLetter', { until: undefined }), 'deadLetter', 'x'));
+    fails(recordSchemaLeg(V2, doc2('deadLetter', { status: 'stable' }), 'deadLetter', 'x'));
+  });
+});
+
+describe('family-advert witness wave 2: absent facets are inapplicable, never a pass', () => {
+  it.each(Object.entries(LEGS).flatMap(([family, legs]) => Object.entries(legs).map(([name, leg]) => [family, name, leg] as const)))('%s.%s', (family, _name, leg) => {
+    inapplicable(leg(V2, { [family]: { ...exp } }));
+  });
+
+  it('portability: import false or absent leaves the dryRun rule inapplicable, whatever dryRun says', () => {
+    inapplicable(portabilityImportDryRunLeg(V2, doc2('portability', { import: false, dryRun: false })));
+    inapplicable(portabilityImportDryRunLeg(V2, doc2('portability', { import: undefined, dryRun: undefined })));
+  });
+
+  it('scheduling: a single advertised form is enough to observe', () => {
+    passes(schedulingFormsLeg(V2, { scheduling: { ...exp, cron: true } }));
   });
 });

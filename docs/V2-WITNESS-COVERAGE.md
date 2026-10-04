@@ -8,11 +8,11 @@ Every v2 core family now has a v2 normative home (RFC 0189). Many of its rules a
 
 ## Headline
 
-- **Families (73 core):** 52 v2-witnessed, 18 v1-only, 3 unwitnessed. Of the 54 `witnessable-gated` families, 15 are v1-only; every unwitnessed family is `claims-check`.
-- **At v1 end-of-support:** the 18 v1-only families, and the 48 obligation units attributed to them, lose their only witness.
-- **Obligation units (890 in `spec/v2/core/`):** 599 (67%) sit in a section a major-2 scenario cites; 291 sit in 105 sections no major-2 scenario cites.
+- **Families (73 core):** 62 v2-witnessed, 8 v1-only, 3 unwitnessed. Of the 54 `witnessable-gated` families, 6 are v1-only; every unwitnessed family is `claims-check`.
+- **At v1 end-of-support:** the 8 v1-only families, and the 10 obligation units attributed to them, lose their only witness.
+- **Obligation units (890 in `spec/v2/core/`):** 613 (69%) sit in a section a major-2 scenario cites; 277 sit in 102 sections no major-2 scenario cites.
 - **Declaration links:** 0 core families declare `floorScenarios`; 2 declare `requirementIds`. The family-to-test link exists only in scenario code and citations, although `overview.md` §What a MUST means says every core MUST has an id in `requirements.json`.
-- **Scenarios:** 615 registered, 175 run at major 2. 33 major-2 citations name a v2 core section this script cannot match to a heading (see Citation gaps).
+- **Scenarios:** 635 registered, 195 run at major 2. 33 major-2 citations name a v2 core section this script cannot match to a heading (see Citation gaps).
 
 ## How to read it
 
@@ -29,21 +29,11 @@ Every v2 core family now has a v2 normative home (RFC 0189). Many of its rules a
 | `agentRuntime` | claims-check | **unwitnessed** | 1 (0) | – | – |
 | `promptLibrary` | claims-check | **unwitnessed** | 1 (0) | – | – |
 | `envelopeContracts` | claims-check | **unwitnessed** | 0 (0) | – | – |
-| `artifactTypes` | witnessable-gated | **v1-only** | 10 (0) | – | `artifact-type-pack-install`, `artifact-type-registration-source`, `artifact-type-store-emission`, `artifact-type-store-without-render` +1 |
-| `portability` | witnessable-gated | **v1-only** | 8 (0) | – | `export-bundle-portability` |
-| `selfHostedRunner` | witnessable-gated | **v1-only** | 8 (0) | – | `self-hosted-runner` |
-| `subWorkflow` | claims-check | **v1-only** | 5 (0) | – | `dispatch-input-mapping`, `dispatchLoop` |
-| `providerUsage` | witnessable-gated | **v1-only** | 4 (0) | – | `provider-usage` |
 | `multiPartyConversation` | witnessable-gated | **v1-only** | 3 (0) | – | `multi-party-conversation-behavioral`, `multi-party-conversation-shape` |
 | `nodePackRuntimes` | claims-check | **v1-only** | 3 (0) | – | `otel-emission-grpc`, `wasm-pack-abi-version-rejection`, `wasm-pack-invoke-completed`, `wasm-pack-invoke-suspended` +3 |
 | `dataResidency` | witnessable-gated | **v1-only** | 2 (0) | – | `data-residency-admission` |
-| `scheduling` | witnessable-gated | **v1-only** | 2 (0) | – | `scheduling-capability-shape`, `scheduling-cron-fires-once` |
-| `aiEnvelope` | witnessable-gated | **v1-only** | 1 (0) | – | `aiEnvelope.universalKinds` |
 | `channelPresence` | witnessable-gated | **v1-only** | 1 (0) | – | `channel-presence-behavioral`, `channel-presence-shape` |
 | `conversationTurnModelProvenance` | witnessable-gated | **v1-only** | 1 (0) | – | `conversation-turn-model-provenance-shape` |
-| `authorization` | witnessable-gated | **v1-only** | 0 (0) | – | `approval-gate-flow`, `authorization-fail-closed`, `authorization-roles-shape`, `compensation-recovery` |
-| `credentials` | witnessable-gated | **v1-only** | 0 (0) | – | `credential-payload-redaction`, `credentials-capability-shape` |
-| `deadLetter` | witnessable-gated | **v1-only** | 0 (0) | – | `deadletter-capability-shape`, `deadletter-retry-exhaustion` |
 | `nondeterminismPolicy` | claims-check | **v1-only** | 0 (0) | – | `agent-platform-profile` |
 | `purposePropagation` | witnessable-gated | **v1-only** | 0 (0) | – | `purpose-propagation` |
 | `uiPlugins` | witnessable-gated | **v1-only** | 0 (0) | – | `frontend-plugin-packs` |
@@ -54,7 +44,7 @@ Every v2 core family now has a v2 normative home (RFC 0189). Many of its rules a
 | `eventLog` | claims-check | **v2-witnessed** | 35 (25) | `v2-era-2-append-vocabulary`, `v2-era-key`, `v2-era-stamp-universal`, `v2-fork-a-v1-run` +3 | `cross-engine-append-behavior`, `cross-engine-append-ordering`, `multi-region-idempotency` |
 | `packs` | claims-check | **v2-witnessed** | 35 (20) | `v2-manifest-ceiling-refused`, `v2-manifest-hatch-carried`, `v2-peer-dependency-declared`, `v2-registry-lifecycle` | `pack-registry-isolation` |
 | `idempotency` | witnessable-gated | **v2-witnessed** | 25 (20) | `v2-bound-id-kinds`, `v2-effect-identity-business-key`, `v2-idempotency-key-grammar`, `v2-secrets-run-witness` | `compensation-recovery`, `multi-region-idempotency-behavior`, `multi-region-idempotency`, `replay-llm-cache-key` +1 |
-| `multiAgent` | claims-check | **v2-witnessed** | 19 (0) | `context-budget-transcript-bound`, `context-summarization-replay`, `v2-run-fork-ancestry` | `agent-loop-iteration-monotonic`, `agent-loop-stateful-resume`, `agent-loop-version5-shape`, `agent-loop-workspace-snapshot` +11 |
+| `multiAgent` | claims-check | **v2-witnessed** | 19 (0) | `context-budget-transcript-bound`, `context-summarization-replay`, `v2-dispatch-loop`, `v2-run-fork-ancestry` | `agent-loop-iteration-monotonic`, `agent-loop-stateful-resume`, `agent-loop-version5-shape`, `agent-loop-workspace-snapshot` +11 |
 | `i18n` | witnessable-gated | **v2-witnessed** | 17 (4) | `v2-i18n-negotiation`, `v2-localized-content-delivery` | `i18n-negotiation`, `localized-content-delivery` |
 | `prompts` | witnessable-gated | **v2-witnessed** | 16 (6) | `v2-prompt-template-shape` | `prompt-all-four-kinds-events`, `prompt-composed-secret-redaction`, `prompt-composed-trust-marker`, `prompt-end-to-end-events` +11 |
 | `secrets` | witnessable-gated | **v2-witnessed** | 16 (16) | `v2-secret-canary-absent`, `v2-secrets-run-witness` | `envelope-reasoning-secret-redaction`, `secret-leakage-otel-attribute` |
@@ -64,13 +54,18 @@ Every v2 core family now has a v2 normative home (RFC 0189). Many of its rules a
 | `oauth` | witnessable-gated | **v2-witnessed** | 13 (11) | `v2-a2a-operation-map`, `v2-credential-interrupt`, `v2-mcp-mount-map`, `v2-oauth-client-pkce-state-iss` +1 | `byok-auth-modes`, `oauth-authorization-code-roundtrip`, `oauth-capability-shape`, `oauth-connector-redaction` |
 | `memory` | witnessable-gated | **v2-witnessed** | 12 (12) | `context-budget-transcript-bound`, `context-summarization-replay`, `memory-attribution-replay-stable`, `v2-memory-cross-tenant-isolation` | `agentMemoryRedactionContract`, `agentMemoryRoundTrip`, `distillation-index-roundtrip`, `distillation-secret-carryforward` +14 |
 | `forms` | claims-check | **v2-witnessed** | 11 (1) | `v2-form-when-reuses-edge-conditions` | `form-content-instantiation` |
+| `artifactTypes` | witnessable-gated | **v2-witnessed** | 10 (2) | `v2-artifact-created-static`, `v2-artifact-type-schema-url` | `artifact-type-pack-install`, `artifact-type-registration-source`, `artifact-type-store-emission`, `artifact-type-store-without-render` +1 |
 | `connections` | witnessable-gated | **v2-witnessed** | 10 (0) | `fixtures-valid`, `v2-provider-conflict` | `connection-pack-apihosts`, `connection-pack-manifest-valid`, `connection-pack-no-credential-material`, `connection-pack-write-reconsent` +1 |
+| `portability` | witnessable-gated | **v2-witnessed** | 8 (0) | `v2-export-bundle-static` | `export-bundle-portability` |
+| `selfHostedRunner` | witnessable-gated | **v2-witnessed** | 8 (8) | `v2-self-hosted-runner-frames-static` | `self-hosted-runner` |
 | `anonymousActor` | seam-gated | **v2-witnessed** | 7 (0) | `v2-mcp-mount-map` | `anonymous-actor-audit-opaque`, `anonymous-actor-default-deny`, `anonymous-actor-egress-guarded`, `anonymous-actor-no-secret-reach` +4 |
 | `httpClient` | witnessable-gated | **v2-witnessed** | 7 (7) | `v2-safefetch-ssrf-refused` | `egress-audience-binding`, `egress-decision-content-free`, `http-client-ssrf`, `safefetch-behavior` +1 |
 | `workspace` | witnessable-gated | **v2-witnessed** | 7 (7) | `v2-workspace-scope-from-identity` | `agent-loop-iteration-monotonic`, `agent-loop-stateful-resume`, `agent-loop-version5-shape`, `agent-loop-workspace-snapshot` +4 |
 | `queueBus` | witnessable-gated | **v2-witnessed** | 5 (5) | `v2-queue-cross-tenant-isolation` | `queue-ack-nack-dlq`, `queue-cross-tenant-isolation`, `queue-publish-consume-roundtrip`, `stream-subscribe-from-beginning` |
+| `subWorkflow` | claims-check | **v2-witnessed** | 5 (0) | `v2-sub-workflow-advertisement` | `dispatch-input-mapping`, `dispatchLoop` |
 | `workflowChainPacks` | witnessable-gated | **v2-witnessed** | 5 (1) | `v2-chain-pin-exact` | `chain-subchain-fanout`, `workflow-chain-deferred-parameters`, `workflow-chain-expansion`, `workflow-chain-host-expansion` +2 |
 | `mcp` | seam-gated | **v2-witnessed** | 4 (4) | `v2-interop-trace-context`, `v2-mcp-client-results`, `v2-mcp-mount-map`, `v2-mcp-tasks` +5 | `mcp-2026-07-28-discover`, `mcp-cache-tenant-scope`, `mcp-current-auth-boundary`, `mcp-extension-opacity` +9 |
+| `providerUsage` | witnessable-gated | **v2-witnessed** | 4 (4) | `v2-provider-usage-emission`, `v2-provider-usage-payload-static` | `provider-usage` |
 | `toolHooks` | witnessable-gated | **v2-witnessed** | 4 (4) | `v2-tool-authorization-fail-closed` | `safefetch-behavior`, `safefetch-live-audit`, `tool-hooks-authorization-fail-closed`, `tool-hooks-content-free` +4 |
 | `budget` | witnessable-gated | **v2-witnessed** | 3 (3) | `v2-configurable-closed`, `v2-run-options-limits` | `budget-enforcement`, `budget-policy-shape` |
 | `envelopeStrictness` | claims-check | **v2-witnessed** | 3 (3) | `v2-a2ui-v09-surface`, `v2-envelope-reasoning-shape` | – |
@@ -79,22 +74,27 @@ Every v2 core family now has a v2 normative home (RFC 0189). Many of its rules a
 | `modelCapabilities` | witnessable-gated | **v2-witnessed** | 3 (0) | `v2-envelope-variant-discriminator-static` | `envelope-variant-discriminator-static`, `model-capability-insufficient`, `model-capability-substituted`, `node-module-required-capabilities-shape` |
 | `nosql` | claims-check | **v2-witnessed** | 3 (0) | `v2-storage-cross-tenant-isolation` | – |
 | `sql` | witnessable-gated | **v2-witnessed** | 3 (0) | `v2-storage-cross-tenant-isolation` | `sql-injection-rejection`, `sql-transaction-atomicity` |
-| `agents` | witnessable-gated | **v2-witnessed** | 2 (0) | `v2-a2a-agent-cards`, `v2-agent-org-chart-served-shape` | `agent-capability-degraded-projection`, `agent-channel-dispatch`, `agent-deployment-lifecycle`, `agent-eval-run` +17 |
+| `agents` | witnessable-gated | **v2-witnessed** | 2 (0) | `v2-a2a-agent-cards`, `v2-agent-org-chart-served-shape`, `v2-dispatch-input-mapping` | `agent-capability-degraded-projection`, `agent-channel-dispatch`, `agent-deployment-lifecycle`, `agent-eval-run` +17 |
 | `conversationPrimitive` | claims-check | **v2-witnessed** | 2 (0) | `v2-conversation-turn-parts` | `conversationCapabilityNegotiation`, `conversationLifecycle`, `conversationReplayDeterminism`, `conversationVsLegacySuspend` +1 |
 | `feedback` | witnessable-gated | **v2-witnessed** | 2 (0) | `v2-run-annotation-not-event` | `feedback-capability-shape`, `feedback-correction-redaction`, `feedback-cross-tenant-isolation`, `feedback-fork-not-copied` +3 |
 | `kvStorage` | witnessable-gated | **v2-witnessed** | 2 (0) | `v2-storage-cross-tenant-isolation` | `kv-atomic-increment`, `kv-cas`, `kv-cross-tenant-isolation`, `kv-ttl-expiry` |
+| `scheduling` | witnessable-gated | **v2-witnessed** | 2 (0) | `v2-scheduling-advertisement` | `scheduling-capability-shape`, `scheduling-cron-fires-once` |
 | `searchIndex` | witnessable-gated | **v2-witnessed** | 2 (0) | `v2-storage-cross-tenant-isolation` | `search-bm25-roundtrip` |
 | `supportedEnvelopes` | witnessable-gated | **v2-witnessed** | 2 (2) | `v2-a2ui-v09-surface`, `v2-envelope-tier-one-subset-static` | `ai-envelope-shape`, `envelope-tier-one-subset-static` |
 | `tableStorage` | witnessable-gated | **v2-witnessed** | 2 (0) | `v2-storage-cross-tenant-isolation` | `table-cross-tenant-isolation`, `table-cursor-pagination`, `table-schema-enforcement` |
 | `vectorStore` | witnessable-gated | **v2-witnessed** | 2 (0) | `v2-storage-cross-tenant-isolation` | `vector-knn-roundtrip` |
+| `aiEnvelope` | witnessable-gated | **v2-witnessed** | 1 (0) | `v2-ai-envelope-advertisement` | `aiEnvelope.universalKinds` |
 | `blobStorage` | witnessable-gated | **v2-witnessed** | 1 (0) | `v2-storage-cross-tenant-isolation` | `blob-cross-tenant-isolation`, `blob-presign-expiry`, `blob-roundtrip` |
 | `schemaVersions` | witnessable-gated | **v2-witnessed** | 1 (1) | `v2-a2ui-v09-surface` | `aiEnvelope.schemaDrift` |
 | `a2a` | seam-gated | **v2-witnessed** | 0 (0) | `v2-a2a-agent-cards`, `v2-a2a-client-error-details`, `v2-a2a-operation-map`, `v2-a2a-push-delivery` +5 | `a2a-1-0-agent-card`, `a2a-1-0-task-roundtrip`, `a2a-card-runtime-consistency`, `a2a-peer-authority` +2 |
 | `auditLogIntegrity` | witnessable-gated | **v2-witnessed** | 0 (0) | `audit-checkpoint-signature`, `audit-log-integrity` | `strict-behavior-gate` |
 | `auth` | seam-gated | **v2-witnessed** | 0 (0) | `audit-checkpoint-signature`, `audit-log-integrity`, `v2-assurance-downgrade-audited`, `v2-lane-exp-only-bound` +3 | `auth-api-key-rotation`, `auth-mtls`, `auth-oauth2-client-credentials`, `auth-oidc-user-bearer` +6 |
+| `authorization` | witnessable-gated | **v2-witnessed** | 0 (0) | `v2-authorization-advertisement` | `approval-gate-flow`, `authorization-fail-closed`, `authorization-roles-shape`, `compensation-recovery` |
 | `cache` | witnessable-gated | **v2-witnessed** | 0 (0) | `v2-storage-cross-tenant-isolation` | `cache-cross-tenant-isolation`, `cache-ttl-expiry` |
 | `compensation` | seam-gated | **v2-witnessed** | 0 (0) | `v2-compensation-read-projection` | `chain-compensation-expansion`, `compensation-behavior`, `compensation-recovery`, `workflow-chain-host-expansion` |
 | `content` | witnessable-gated | **v2-witnessed** | 0 (0) | `v2-content-locale-keys`, `v2-localized-content-delivery` | `localized-content-delivery` |
+| `credentials` | witnessable-gated | **v2-witnessed** | 0 (0) | `v2-credentials-advertisement` | `credential-payload-redaction`, `credentials-capability-shape` |
+| `deadLetter` | witnessable-gated | **v2-witnessed** | 0 (0) | `v2-dead-letter-advertisement` | `deadletter-capability-shape`, `deadletter-retry-exhaustion` |
 | `limits` | witnessable-gated | **v2-witnessed** | 0 (0) | `v2-run-execution-bounds` | `aiEnvelope.capBreached`, `run-execution-bounds-shape` |
 | `runList` | witnessable-gated | **v2-witnessed** | 0 (0) | `v2-mcp-mount-map`, `v2-mcp-tasks`, `v2-run-list`, `v2-secret-canary-absent` | – |
 | `sandbox` | witnessable-gated | **v2-witnessed** | 0 (0) | `v2-pack-isolation` | `sandbox-memory-cap`, `sandbox-mvp-behavior`, `sandbox-no-host-fs-escape`, `sandbox-timeout-cap` +2 |
@@ -104,14 +104,14 @@ Every v2 core family now has a v2 normative home (RFC 0189). Many of its rules a
 
 | Document | Units | In v2-cited sections | Homes |
 | --- | --- | --- | --- |
-| `artifact-type-packs.md` | 10 | 0 (0%) | `artifactTypes` |
+| `artifact-type-packs.md` | 10 | 2 (20%) | `artifactTypes` |
 | `capabilities.md` | 25 | 21 (84%) | – |
 | `conformance.md` | 49 | 26 (53%) | `production` |
 | `connection-packs.md` | 10 | 0 (0%) | `connections` |
 | `conversation.md` | 5 | 0 (0%) | `multiPartyConversation`, `conversationTurnModelProvenance`, `channelPresence` |
 | `errors.md` | 18 | 18 (100%) | – |
-| `events.md` | 63 | 42 (67%) | `supportedEnvelopes`, `schemaVersions`, `envelopeStrictness`, `envelopeContracts`, `envelopes`, `feedback`, `providerUsage`, `heartbeat` |
-| `execution.md` | 34 | 0 (0%) | `selfHostedRunner`, `multiAgent`, `agents`, `subWorkflow` |
+| `events.md` | 63 | 46 (73%) | `supportedEnvelopes`, `schemaVersions`, `envelopeStrictness`, `envelopeContracts`, `envelopes`, `feedback`, `providerUsage`, `heartbeat` |
+| `execution.md` | 34 | 8 (24%) | `selfHostedRunner`, `multiAgent`, `agents`, `subWorkflow` |
 | `form-content-packs.md` | 11 | 1 (9%) | `forms` |
 | `headers.md` | 7 | 1 (14%) | – |
 | `host-services.md` | 94 | 76 (81%) | `prompts`, `secrets`, `modelCapabilities`, `aiProviders`, `memory`, `queueBus`, `scheduling`, `toolHooks`, `httpClient`, `aiEnvelope`, `promptLibrary`, `agentRuntime`, `workspace`, `mcp` |
@@ -145,7 +145,6 @@ Sections with the most obligation units and no major-2 citation. A doc-level cit
 | `events.md` § `envelopes` | envelopes | 13 |
 | `packs.md` § Front-end plugin packs | packs | 9 |
 | `conformance.md` § Production profile | production | 8 |
-| `execution.md` § `selfHostedRunner` | selfHostedRunner | 8 |
 | `identity.md` § 1.5 `anonymousActor` | anonymousActor | 7 |
 | `interop.md` § MCP tasks and cancellation | shared | 7 |
 | `persistence.md` § Durable acceptance and recovery | eventLog | 6 |
@@ -161,17 +160,18 @@ Sections with the most obligation units and no major-2 citation. A doc-level cit
 | `i18n.md` § `Accept-Language` | i18n | 5 |
 | `interop.md` § Negotiation is a protocol | shared | 5 |
 | `overview.md` § Profile claim vocabulary | shared | 5 |
-| `events.md` § `providerUsage` | providerUsage | 4 |
 | `form-content-packs.md` § Instantiation | forms | 4 |
 | `headers.md` § Request headers | shared | 4 |
 | `versioning.md` § 4. One release identity | shared | 4 |
 | `conformance.md` § Requirement ids | production | 3 |
+| `conformance.md` § Whose fact is the reason? | production | 3 |
+| `conformance.md` § The seams profile | production | 3 |
 
 ## Citation gaps
 
-These 41 major-2 scenarios cite no `spec/v2/core` document (only RFCs, schemas or the interop map). Whatever they witness is invisible to the section counts above; `v2-durability-recovery`, for one, witnesses `persistence.md` §Durable acceptance through RFC 0158 only.
+These 57 major-2 scenarios cite no `spec/v2/core` document (only RFCs, schemas or the interop map). Whatever they witness is invisible to the section counts above; `v2-durability-recovery`, for one, witnesses `persistence.md` §Durable acceptance through RFC 0158 only.
 
-`audit-anomaly-shape`, `audit-checkpoint-vectors`, `context-budget-transcript-bound`, `context-summarization-replay`, `otel-mcp-semconv-projection`, `v2-advertised-fixtures-exist`, `v2-agent-org-chart-served-shape`, `v2-ai-providers-advertisement`, `v2-auth-challenge`, `v2-budget-enforcement`, `v2-budget-exhaustion-facet`, `v2-content-locale-keys`, `v2-conversation-turn-parts`, `v2-durability-recovery`, `v2-envelope-tier-one-subset-static`, `v2-envelope-variant-discriminator-static`, `v2-envelopes-advertisement`, `v2-ext-family-claims`, `v2-ext-rest-transport`, `v2-i18n-negotiation`, `v2-limits-envelope-caps-advertisement`, `v2-model-capabilities-advertisement`, `v2-model-capability-insufficient`, `v2-negotiation-authenticated`, `v2-negotiation-decided-emitted`, `v2-payload-seats-0186`, `v2-payload-vendor-hatch`, `v2-production-backpressure`, `v2-prompt-all-four-kinds-events`, `v2-prompt-end-to-end-events`, `v2-prompt-list-and-fetch`, `v2-prompt-mutable-lifecycle`, `v2-prompt-pack-install`, `v2-prompt-render-deterministic`, `v2-prompt-resolution-chain-event`, `v2-protected-resource-metadata`, `v2-provider-conflict`, `v2-run-execution-bounds`, `v2-table-schema-enforcement`, `v2-trigger-dead-letter-read`, `v2-webhook-message-id-stable`
+`audit-anomaly-shape`, `audit-checkpoint-vectors`, `context-budget-transcript-bound`, `context-summarization-replay`, `otel-mcp-semconv-projection`, `v2-advertised-fixtures-exist`, `v2-agent-org-chart-served-shape`, `v2-ai-envelope-advertisement`, `v2-ai-providers-advertisement`, `v2-artifact-type-schema-url`, `v2-artifact-types-advertisement`, `v2-auth-challenge`, `v2-authorization-advertisement`, `v2-budget-enforcement`, `v2-budget-exhaustion-facet`, `v2-content-locale-keys`, `v2-conversation-turn-parts`, `v2-credentials-advertisement`, `v2-dead-letter-advertisement`, `v2-dispatch-input-mapping`, `v2-dispatch-loop`, `v2-durability-recovery`, `v2-envelope-tier-one-subset-static`, `v2-envelope-variant-discriminator-static`, `v2-envelopes-advertisement`, `v2-ext-family-claims`, `v2-ext-rest-transport`, `v2-i18n-negotiation`, `v2-limits-envelope-caps-advertisement`, `v2-model-capabilities-advertisement`, `v2-model-capability-insufficient`, `v2-negotiation-authenticated`, `v2-negotiation-decided-emitted`, `v2-payload-seats-0186`, `v2-payload-vendor-hatch`, `v2-portability-advertisement`, `v2-production-backpressure`, `v2-prompt-all-four-kinds-events`, `v2-prompt-end-to-end-events`, `v2-prompt-list-and-fetch`, `v2-prompt-mutable-lifecycle`, `v2-prompt-pack-install`, `v2-prompt-render-deterministic`, `v2-prompt-resolution-chain-event`, `v2-protected-resource-metadata`, `v2-provider-conflict`, `v2-provider-usage-advertisement`, `v2-provider-usage-emission`, `v2-run-execution-bounds`, `v2-scheduling-advertisement`, `v2-self-hosted-runner-advertisement`, `v2-sub-workflow-advertisement`, `v2-subworkflow-input-mapping`, `v2-subworkflow-linkage`, `v2-table-schema-enforcement`, `v2-trigger-dead-letter-read`, `v2-webhook-message-id-stable`
 
 33 major-2 citations name a v2 core section that matches no heading (most are `tool-catalog.md` §A–§F, RFC section letters):
 
@@ -201,11 +201,11 @@ Ranked: security, tenant isolation, idempotency and replay first; then wire shap
 | 5 | `secrets` | `host-services.md` § `secrets` | security | v2-witnessed | `v2-secret-canary-absent` |
 | 6 | `toolHooks` | `host-services.md` § `toolHooks` | security | v2-witnessed | `v2-tool-authorization-fail-closed` |
 | 7 | `anonymousActor` | `identity.md` § 1.5 `anonymousActor` | security | v2-witnessed | `v2-anonymous-actor-default-deny` |
-| 8 | `selfHostedRunner` | `execution.md` § `selfHostedRunner` | security | v1-only | `v2-runner-subject-isolation` |
+| 8 | `selfHostedRunner` | `execution.md` § `selfHostedRunner` | security | v2-witnessed | `v2-runner-subject-isolation` |
 | 9 | `httpClient` | `host-services.md` § `httpClient` | security | v2-witnessed | `v2-safefetch-ssrf-refused` |
 | 10 | `fs` | `storage.md` § `fs` | security | v2-witnessed | `v2-fs-sandbox-escape-refused` |
 | 11 | `nosql` | `storage.md` § `sql` and `nosql` | security | v2-witnessed | `v2-storage-injection-refused` |
-| 12 | `portability` | `portability.md` § Import rules | security | v1-only | `v2-import-refuses-credential-literal` |
+| 12 | `portability` | `portability.md` § Import rules | security | v2-witnessed | `v2-import-refuses-credential-literal` |
 | 13 | `triggerBridge` | `webhooks.md` § Inbound triggers | security | v2-witnessed | `v2-trigger-ingestion-verification` |
 | 14 | `uiPlugins` | `packs.md` § Front-end plugin packs | security | v1-only | `v2-frontend-plugin-signature-required` |
 | 15 | `replay` | `replay.md` § Determinism caveats (`replay` mode) | replay | v2-witnessed | `v2-replay-approver-eligibility-fixed` |
@@ -274,7 +274,7 @@ Ranked: security, tenant isolation, idempotency and replay first; then wire shap
 ### 8. A step routes to another subject's runner
 
 - **Rule** (`execution.md` § `selfHostedRunner`): "A host MUST NOT route a step to a runner its run's subject does not own, and MUST match on subject before capability."
-- **Today:** Major 1 only (`self-hosted-runner`).
+- **Today:** Major 1 only (`self-hosted-runner`). The section is now cited at major 2 by `v2-self-hosted-runner-frames-static.test.ts`; re-check whether this rule is covered.
 - **Why it matters:** A runner holds credentials the host cannot see. Mis-routing sends one user's prompt and tool arguments to another user's machine.
 - **Proposed:** `v2-runner-subject-isolation` (major 2; gate: `selfHostedRunner` advertised, two harness runners registered under two subjects with identical `dispatchKinds`). Asserts: a run owned by subject A dispatches only to A's runner, and with A's runner gone fails `runner_unavailable` rather than using B's.
 - **Sabotage that must fail it:** pick the first runner matching `dispatchKinds`: B's runner receives A's frame.
@@ -388,14 +388,14 @@ node scripts/report-v2-witness-coverage.mjs --write  # regenerate this file
 {
   "families": {
     "total": 73,
-    "v2-witnessed": 52,
-    "v1-only": 18,
+    "v2-witnessed": 62,
+    "v1-only": 8,
     "unwitnessed": 3
   },
   "byWitnessClass": {
     "claims-check": {
-      "v2-witnessed": 8,
-      "v1-only": 3,
+      "v2-witnessed": 9,
+      "v1-only": 2,
       "unwitnessed": 3
     },
     "seam-gated": {
@@ -404,28 +404,28 @@ node scripts/report-v2-witness-coverage.mjs --write  # regenerate this file
       "unwitnessed": 0
     },
     "witnessable-gated": {
-      "v2-witnessed": 39,
-      "v1-only": 15,
+      "v2-witnessed": 48,
+      "v1-only": 6,
       "unwitnessed": 0
     }
   },
   "obligationUnits": {
     "total": 890,
-    "inV2CitedSections": 599,
-    "inUncitedSections": 291,
+    "inV2CitedSections": 613,
+    "inUncitedSections": 277,
     "sectionsWithObligations": 269,
-    "sectionsWithNoV2Citation": 105
+    "sectionsWithNoV2Citation": 102
   },
   "declarationLinks": {
     "familiesWithFloorScenarios": 0,
     "familiesWithRequirementIds": 2
   },
   "scenarios": {
-    "registered": 615,
-    "major2": 175
+    "registered": 635,
+    "major2": 195
   },
   "unresolvedV2Citations": 33,
-  "major2ScenariosCitingNoCoreDoc": 41,
+  "major2ScenariosCitingNoCoreDoc": 57,
   "risks": {
     "listed": 20,
     "staleQuotes": [],
@@ -436,6 +436,7 @@ node scripts/report-v2-witness-coverage.mjs --write  # regenerate this file
       4,
       5,
       6,
+      8,
       9,
       10,
       13,
