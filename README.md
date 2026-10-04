@@ -1,6 +1,6 @@
 # OpenWOP — Multi-Agent Workflow Orchestration Protocol
 
-**OpenWOP is an open, wire-level protocol for multi-agent workflow orchestration.** It defines how multiple AI agents, deterministic tools, sub-workflows, and human reviewers collaborate inside a single durably-suspendable, replayable run — and how independent hosts (workflow engines, SDKs, debuggers, agent runtimes) interoperate over the same contract.
+**OpenWOP is an open-source, wire-level protocol for multi-agent workflow orchestration.** It defines how multiple AI agents, deterministic tools, sub-workflows, and human reviewers collaborate inside a single durably-suspendable, replayable run — and how independent hosts (workflow engines, SDKs, debuggers, agent runtimes) interoperate over the same contract.
 
 If you're building agentic systems, AI workflow engines, multi-agent applications, agent orchestration platforms, or human-in-the-loop pipelines and want a protocol layer instead of vendor lock-in, OpenWOP is the contract.
 
