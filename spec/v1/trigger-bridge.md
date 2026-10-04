@@ -111,7 +111,7 @@ two per-source sub-objects grow:
 
 ### §F.6 — Inbound webhook ingest contract (RFC 0230)
 
-> **Status: additive over §F.2 (2026-09-30, [RFC 0230](../../RFCS/0230-inbound-webhook-ingest-contract.md) `Active`).** Binds only a host that advertises `capabilities.triggerBridge.ingestion.inboundSigning` containing `"standard-webhooks-1"`, and only for `webhook` subscriptions.
+> **Status: additive over §F.2 (2026-09-30, [RFC 0230](../../RFCS/0230-inbound-webhook-ingest-contract.md) `Accepted`).** Binds only a host that advertises `capabilities.triggerBridge.ingestion.inboundSigning` containing `"standard-webhooks-1"`, and only for `webhook` subscriptions.
 
 - **Registration.** The `201` `binding` carries `signingSecret`, a `whsec_` Standard Webhooks secret, exactly once, beside `ingestUrl` and `secretFingerprint`. A re-read MUST NOT return it (SR-1).
 - **Request.** A sender POSTs the raw event body to `ingestUrl` with `webhook-id`, `webhook-timestamp` (Unix seconds) and `webhook-signature` (space-separated `v1,<base64(HMAC-SHA256(key, "{webhook-id}.{webhook-timestamp}.{rawBody}"))>`, `key` the base64 decoding of the secret after `whsec_`), the [`webhooks.md`](./webhooks.md) §"Standard Webhooks companion scheme" construction applied inbound. The signature authenticates the sender: the host MUST NOT require an OpenWOP credential on `ingestUrl`.

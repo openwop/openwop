@@ -1,7 +1,7 @@
 {
   "$schema": "./gaps.schema.json",
   "version": 1,
-  "updated": "2026-10-03",
+  "updated": "2026-10-04",
   "witnessClasses": [
     "witnessable-unaided",
     "witnessable-gated",
@@ -13977,8 +13977,8 @@
       "surface": "No host serves the read, so none of the §E rows has a witness.",
       "witness": "unclassified",
       "requirementId": null,
-      "disposition": "externally-gated",
-      "target": "openwop-app-serves-trigger-dead-letters",
+      "disposition": "closed",
+      "target": null,
       "sources": [
         {
           "file": "RFCS/registers/0232-trigger-dead-letter-read.gaps.md",
@@ -14096,8 +14096,8 @@
       "surface": "No host serves the reads or installs the fixture pair, so none of the §F rows has a witness.",
       "witness": "unclassified",
       "requirementId": null,
-      "disposition": "externally-gated",
-      "target": "openwop-app-serves-provider-registry-read",
+      "disposition": "closed",
+      "target": null,
       "sources": [
         {
           "file": "RFCS/registers/0233-connection-provider-registry-read.gaps.md",
