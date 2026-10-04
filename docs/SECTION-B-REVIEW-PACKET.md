@@ -38,9 +38,9 @@ Grouping below is a reading aid only: it assigns each RFC to the risk class its 
 | [0210](../RFCS/0210-lane-revocation-rule-is-measured.md) | a lane's revocation rule is measured, and a host that only honours `exp` says so | `Accepted` | steward override of RFC 0147 §A.6 | tier-1 — openwop-app production, witnessed through RFC 0216's colocated-companion pairing | `not-reviewed` |
 | [0213](../RFCS/0213-three-unstated-v2-outcomes.md) | three outcomes the v2 core never stated — a resume cursor past the log, the loser of a same-key race, and a r… | `Accepted` | steward override of RFC 0147 §A.6 | tier-1 — the v2 reference host | `not-reviewed` |
 | [0214](../RFCS/0214-a2a-push-credential-is-a-destination-credential.md) | an A2A push credential is a destination credential, and a push is an egress like any webhook | `Accepted` | steward override of RFC 0147 §A.6 | tier-1 — the v2 reference host | `not-reviewed` |
-| [0230](../RFCS/0230-inbound-webhook-ingest-contract.md) | inbound webhook ingest contract | `Active` | steward override of RFC 0147 §A.6 | not declared (predates RFC 0174 §B.1, or not yet Accepted) | `not-reviewed` |
-| [0232](../RFCS/0232-trigger-dead-letter-read.md) | a trigger subscription's dead-lettered deliveries are readable | `Active` | steward override of RFC 0147 §A.6 | not declared (predates RFC 0174 §B.1, or not yet Accepted) | `not-reviewed` |
-| [0233](../RFCS/0233-connection-provider-registry-read.md) | a host's connection providers and refused registrations are readable | `Active` | steward override of RFC 0147 §A.6 | not declared (predates RFC 0174 §B.1, or not yet Accepted) | `not-reviewed` |
+| [0230](../RFCS/0230-inbound-webhook-ingest-contract.md) | inbound webhook ingest contract | `Accepted` | steward override of RFC 0147 §A.6 | tier-1 — steward-verified: openwop-app, the steward-operated production host at `app | `not-reviewed` |
+| [0232](../RFCS/0232-trigger-dead-letter-read.md) | a trigger subscription's dead-lettered deliveries are readable | `Accepted` | steward override of RFC 0147 §A.6 | tier-1 — steward-verified: openwop-app, the steward-operated production host at `app | `not-reviewed` |
+| [0233](../RFCS/0233-connection-provider-registry-read.md) | a host's connection providers and refused registrations are readable | `Accepted` | steward override of RFC 0147 §A.6 | tier-1 — steward-verified: openwop-app, the steward-operated production host at `app | `not-reviewed` |
 
 ## Tenant isolation (5)
 

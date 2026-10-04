@@ -34,8 +34,8 @@
   2.45.3 or later. **2.45.10 is published** (RFC 0232 `Active`; the trigger dead-letter read).
   **2.45.11 is published** (the v2 trigger-bridge witnesses; the retired-twin `308` errata).
   **2.45.12 is published** (RFC 0233 `Active`: the connection-provider reads; RFC 0230's stale and
-  secret-once legs; the retired-`/v1` path-space fix). **No cycle is open**: a PR that changes packed
-  content opens 2.45.13. Take a release lock
+  secret-once legs; the retired-`/v1` path-space fix). **The 2.45.13 cycle is open** (RFC 0230, 0232
+  and 0233 `Accepted`). Take a release lock
   (`/tmp/claude-501/openwop-release-<ver>.lock`) before cutting.
   - A PR that leaves the version alone must not re-stamp `CORPUS-STAMP.json` or the ledger.
 - **Normative homes:** all 73 core families have v2 homes (#1802–#1804). The kernel budget is
@@ -162,29 +162,14 @@ Defects outside the spec:
       withdrawn from production (build 68718d731, myndhyve#591; its next cut records
       `v2-secret-canary-absent` `inapplicable`), and the sealed-row delete is tested before the
       terminal on all three cap-breach paths. Still open there: RFC 0228 G1's `503` half and G7.
-- [ ] **RFC 0230** cannot be accepted on a production host as written: leg 4 of
-      `trigger-bridge-delivery` (run-less events content-free) reads only through the test seams,
-      and openwop-app's production host serves none, deliberately. On 2.45.9 without seams it
-      passes legs 1–3 on the signed path and fails leg 4 (its session's run, 2026-10-02). The
-      maintainer chose (2026-10-02) a new RFC over a non-production cut or a gate exemption:
-      **RFC 0232** (`Active` 2026-10-03, window waived by steward override of RFC 0147 §A.6), a
-      dead-letter read for trigger subscriptions. Leg 4 is now two ids: the attempt leg reads
-      `GET /v1/trigger-subscriptions/{id}/dead-letters` without a seam, and the state-change leg
-      records `inapplicable` without one. **Next, in order:** cut 2.45.10; openwop-app serves the
-      read and advertises `triggerBridge.deadLetter` (its estimate: one ADR, a day or two); then
-      its certified production cut, which can satisfy both RFC 0230 and RFC 0232 `Accepted`.
-      Owed later: the `openwop-sdks` parity entry for `listTriggerDeadLetters` after the tag
-      (RFC 0232 G6), and the RFC 0156 §B review.
 - [x] **MyndHyve withdrew `triggerBridge.ingestion`** at both majors (build cf84c7f64, myndhyve#592,
       2026-10-03); `POST /trigger-subscriptions` answers `404`. RFC 0099's `Accepted` already discloses
       that its MyndHyve legs ran through the seam (#1868).
-- [ ] **RFC 0233** (`Active` 2026-10-03, window waived by steward override; `/architect` rulings in its §Decisions): the provider-identity MUSTs of
-      `connection-packs.md` are seam-only, which `conformance.md` §Witness class forbids; the
-      maintainer chose (2026-10-03) to mint an observation path, not demote. Until a host serves it,
-      openwop-app's seam-free v2 cut (build `451a665e8`, 2.45.11) carries three `blocked`
-      `v2-provider-conflict` rows and certifies nothing, so the RFC 0230/0232 `Accepted` flip waits
-      on it too. Next: 2.45.12 ships the reads' witness; openwop-app-5f serves both reads, installs
-      the fixture pair and advertises `providerRead`; openwop-app-31 re-cuts major 2.
+- [x] **RFC 0230, 0232 and 0233 `Accepted`** (2026-10-04, provisional; the RFC 0156 §B reviews are
+      owed). Evidence: openwop-app's certified, seam-free, strict major-2 production cut on 2.45.12
+      (build `983976bbc`, `evidence/v2-host-bundles/openwop-workflow-engine.json`). Still open by
+      design: RFC 0230 G3 and RFC 0232 G2, both waiting on a trigger-subscription pause surface (no RFC
+      yet); RFC 0233 G4 (a dry-run validate endpoint, deferred).
 - [ ] **Host evidence owed, as the host sessions report it (2026-10-02):**
   - RFC 0230 (openwop-app, session 4d): the seam-free run on 2.45.9 is done (legs 1–3 pass,
     leg 4 fails, `blocked` 0). The pin to 2.45.9 is committed. The production flag and the

@@ -1,5 +1,9 @@
 # `@openwop/openwop-conformance` Changelog
 
+## [2.45.13] — unreleased — RFC 0230, 0232 and 0233 Accepted
+
+- **The 2.45.13 cycle opens.** Closing RFC 0232 G3 and RFC 0233 G3 changes the packed `spec/v1/gaps.json`. No scenario changes.
+
 ## [2.45.12] — 2026-10-03 — RFC 0233: the provider-identity rules have a normative witness
 
 - **`v2-provider-conflict` gains a normative-surface path (RFC 0233).** Where the host advertises `connections.providerRead` it reads `GET /connection-providers` and `GET /connection-providers/{providerId}` (`?pack=` for the qualified form). The conflict is caused operator-side by installing the `connection-pack-acme-widgets` / `-rival` fixture pair, and the registry describes the outcome. The seam path still runs where the seams are served.

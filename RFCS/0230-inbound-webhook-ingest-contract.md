@@ -4,10 +4,10 @@
 | ----------------- | ----- |
 | **RFC**           | 0230 |
 | **Title**         | Inbound webhook ingest contract |
-| **Status**        | `Active` |
+| **Status**        | `Accepted` |
 | **Author(s)**     | openwop-app steward session (on behalf of the maintainer) |
 | **Created**       | 2026-09-30 |
-| **Updated**       | 2026-09-30 — **`Draft → Active` by STEWARD OVERRIDE of RFC 0147 §A.6** (comment window waived, not run; register row `not-reviewed`). §A.6 applies on four counts: idempotency (`webhook-id` dedup), external effects (an ingest starts a run), authentication (the signature replaces an OpenWOP credential on `ingestUrl`) and a certification floor's contract (`openwop.floor.trigger-bridge-delivery`). The maintainer chose the override explicitly after that finding and the three open security questions were put to them. The evidence gate is not waived: `Accepted` still needs a host passing the §Conformance path in strict mode on a production cut, and the RFC 0156 §B review is owed. |
+| **Updated**       | 2026-10-04 — `Active` → `Accepted` (provisional; the RFC 0156 §B review is owed), under the maintainer's 2026-10-03 directive to close the program without HITL. **Evidence tier: tier-1 — steward-verified: openwop-app, the steward-operated production host at `app.openwop.dev`.** Evidence: openwop-app's certified production major-2 bundle on suite 2.45.12 (build `983976bbc`, strict mode, no seams), which records RFC 0230's last box `executed-pass`; checked into `evidence/v2-host-bundles/`. · 2026-09-30 — **`Draft → Active` by STEWARD OVERRIDE of RFC 0147 §A.6** (comment window waived, not run; register row `not-reviewed`). §A.6 applies on four counts: idempotency (`webhook-id` dedup), external effects (an ingest starts a run), authentication (the signature replaces an OpenWOP credential on `ingestUrl`) and a certification floor's contract (`openwop.floor.trigger-bridge-delivery`). The maintainer chose the override explicitly after that finding and the three open security questions were put to them. The evidence gate is not waived: `Accepted` still needs a host passing the §Conformance path in strict mode on a production cut, and the RFC 0156 §B review is owed. |
 | **Affects**       | `spec/v1/trigger-bridge.md` §F.2 / §F.4; `spec/v2/core/webhooks.md` §Inbound triggers; `schemas/capabilities.schema.json` (`triggerBridge.ingestion`); `schemas/v2/…` capability mirror; conformance `trigger-bridge-delivery.test.ts` (public path) |
 | **Compatibility** | `additive` per `COMPATIBILITY.md`: every rule binds only a host that advertises the new `inboundSigning` facet |
 | **Supersedes**    | — |
@@ -152,7 +152,7 @@ Each question is decided per the RFC's own lean. Each stays open to the RFC 0156
   - two runs on a duplicate `webhook-id` → fail;
   - a run on a bad signature, or a subscription left non-`active` by it → fail;
   - a missing `causationId` → fail.
-- [ ] A host (openwop-app) advertises the facet and passes the path in strict mode on a production cut.
+- [x] A host (openwop-app) advertises the facet and passes the path in strict mode on a production cut. *(openwop-app's certified production major-2 bundle (build `983976bbc`, suite 2.45.12, sha256 `6908ebc7d168…`, signed `openwop-app-bundle-2`, strict mode, no test seams served; `evidence/v2-host-bundles/openwop-workflow-engine.json`): `openwop.requirement.0083.trigger-delivery.{dedup,dead-letter,causation}`, `openwop.requirement.0230.stale-timestamp-refused` and `openwop.requirement.0230.signing-secret-once` `executed-pass`. Evidence is major 2: every seam-free major-1 production bundle carries the seam-precondition `blocked` rows and certifies nothing, and this box names the path, not a profile.)*
 - [x] CHANGELOG entries. *(`CHANGELOG.md` and `conformance/CHANGELOG.md`, 2.45.3.)*
 
 ## References
