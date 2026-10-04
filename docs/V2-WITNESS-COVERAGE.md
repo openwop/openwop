@@ -10,9 +10,9 @@ Every v2 core family now has a v2 normative home (RFC 0189). Many of its rules a
 
 - **Families (73 core):** 73 v2-witnessed, 0 v1-only, 0 unwitnessed. Of the 54 `witnessable-gated` families, 0 are v1-only; every unwitnessed family is `claims-check`.
 - **At v1 end-of-support:** the 0 v1-only families, and the 0 obligation units attributed to them, lose their only witness.
-- **Obligation units (890 in `spec/v2/core/`):** 616 (69%) sit in a section a major-2 scenario cites; 274 sit in 100 sections no major-2 scenario cites.
+- **Obligation units (890 in `spec/v2/core/`):** 620 (70%) sit in a section a major-2 scenario cites; 270 sit in 99 sections no major-2 scenario cites.
 - **Declaration links:** 0 core families declare `floorScenarios`; 2 declare `requirementIds`. The family-to-test link exists only in scenario code and citations, although `overview.md` §What a MUST means says every core MUST has an id in `requirements.json`.
-- **Scenarios:** 648 registered, 208 run at major 2. 33 major-2 citations name a v2 core section this script cannot match to a heading (see Citation gaps).
+- **Scenarios:** 649 registered, 209 run at major 2. 33 major-2 citations name a v2 core section this script cannot match to a heading (see Citation gaps).
 
 ## How to read it
 
@@ -113,7 +113,7 @@ Every v2 core family now has a v2 normative home (RFC 0189). Many of its rules a
 | `events.md` | 63 | 46 (73%) | `supportedEnvelopes`, `schemaVersions`, `envelopeStrictness`, `envelopeContracts`, `envelopes`, `feedback`, `providerUsage`, `heartbeat` |
 | `execution.md` | 34 | 8 (24%) | `selfHostedRunner`, `multiAgent`, `agents`, `subWorkflow` |
 | `form-content-packs.md` | 11 | 1 (9%) | `forms` |
-| `headers.md` | 7 | 1 (14%) | – |
+| `headers.md` | 7 | 5 (71%) | – |
 | `host-services.md` | 94 | 76 (81%) | `prompts`, `secrets`, `modelCapabilities`, `aiProviders`, `memory`, `queueBus`, `scheduling`, `toolHooks`, `httpClient`, `aiEnvelope`, `promptLibrary`, `agentRuntime`, `workspace`, `mcp` |
 | `i18n.md` | 17 | 4 (24%) | `i18n`, `content` |
 | `idempotency.md` | 25 | 20 (80%) | `idempotency` |
@@ -161,11 +161,11 @@ Sections with the most obligation units and no major-2 citation. A doc-level cit
 | `interop.md` § Negotiation is a protocol | shared | 5 |
 | `overview.md` § Profile claim vocabulary | shared | 5 |
 | `form-content-packs.md` § Instantiation | forms | 4 |
-| `headers.md` § Request headers | shared | 4 |
 | `versioning.md` § 4. One release identity | shared | 4 |
 | `conformance.md` § Requirement ids | production | 3 |
 | `conformance.md` § Whose fact is the reason? | production | 3 |
 | `conformance.md` § The seams profile | production | 3 |
+| `connection-packs.md` § Resolution | connections | 3 |
 
 ## Citation gaps
 
@@ -362,7 +362,7 @@ Ranked: security, tenant isolation, idempotency and replay first; then wire shap
 ### 19. Production keys can force the engine version
 
 - **Rule** (`headers.md` § Request headers): "Servers MUST reject it on production API keys with `403 force_engine_version_forbidden`."
-- **Today:** No family: `headers.md` homes none. `version-fold` (major 1) holds one API key and cannot tell a production key from a test key, so the refusal is never exercised.
+- **Today:** No family: `headers.md` homes none. `version-fold` (major 1) holds one API key and cannot tell a production key from a test key, so the refusal is never exercised. The section is now cited at major 2 by `v2-discovery-etag.test.ts`; re-check whether this rule is covered.
 - **Why it matters:** Forcing an old engine version on production traffic reopens fixed behaviour on live runs.
 - **Proposed:** `v2-force-engine-version-production-refused` (major 2; gate: a production-class key supplied to the harness (new env, e.g. `OPENWOP_TEST_PRODUCTION_API_KEY`)). Asserts: `POST /runs` with `OpenWOP-Force-Engine-Version` on the production key answers `403 force_engine_version_forbidden` and creates no run.
 - **Sabotage that must fail it:** honour the header on any key: the run is created.
@@ -411,18 +411,18 @@ node scripts/report-v2-witness-coverage.mjs --write  # regenerate this file
   },
   "obligationUnits": {
     "total": 890,
-    "inV2CitedSections": 616,
-    "inUncitedSections": 274,
+    "inV2CitedSections": 620,
+    "inUncitedSections": 270,
     "sectionsWithObligations": 269,
-    "sectionsWithNoV2Citation": 100
+    "sectionsWithNoV2Citation": 99
   },
   "declarationLinks": {
     "familiesWithFloorScenarios": 0,
     "familiesWithRequirementIds": 2
   },
   "scenarios": {
-    "registered": 648,
-    "major2": 208
+    "registered": 649,
+    "major2": 209
   },
   "unresolvedV2Citations": 33,
   "major2ScenariosCitingNoCoreDoc": 68,
@@ -441,6 +441,7 @@ node scripts/report-v2-witness-coverage.mjs --write  # regenerate this file
       10,
       13,
       18,
+      19,
       20
     ]
   }

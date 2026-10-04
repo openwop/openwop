@@ -70,7 +70,6 @@ describe('prompt-library witness at major 2 (host-services.md §prompts)', () =>
   it.each<[PromptDefect, string[]]>([
     ['list-invalid-item', ['list']],
     ['filter-ignored', ['filter', 'packList']],
-    ['etag-no-304', ['etag']],
     ['unknown-200', ['unknown', 'remove']], // a deleted id is then unknown, and reads 200 too
     ['unknown-nested-envelope', ['unknown']],
     ['create-no-location', ['create']],
@@ -90,6 +89,11 @@ describe('prompt-library witness at major 2 (host-services.md §prompts)', () =>
     ['reference-pack-404', ['referencePack']],
   ])('defect %s fails exactly %j', async (defect, want) => {
     expect(await failingLegs(defect)).toEqual(want);
+  });
+
+  it('an ETag that does not revalidate to 304 is advisory: inapplicable, never failed and never a pass', async () => {
+    host.reset('etag-no-304');
+    expect(await etagLeg(V2, a())).toMatchObject({ kind: 'skip', disposition: 'inapplicable' });
   });
 
   it('no ETag is inapplicable (a SHOULD), never a false pass', async () => {

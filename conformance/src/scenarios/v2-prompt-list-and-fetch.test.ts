@@ -8,7 +8,9 @@
  *               validates against the closed v2 PromptTemplate;
  *   filters     `?kind=system` and `?source=host` narrow;
  *   fetch       a listed template is fetched by id;
- *   etag        an ETag, when sent (a SHOULD), revalidates to `304`;
+ *   etag        advisory: an ETag, when sent (a SHOULD), revalidates to `304`;
+ *               a non-304 is recorded `inapplicable`, never failed (v2 binds
+ *               304 only on discovery and the run snapshot, headers.md);
  *   unknown     an unknown id is `404` with the v2 error envelope;
  *   gate off    NEW at v2, unaided: with `prompts.endpointsSupported` not
  *               advertised (the record absent, or the facet not `true`),
@@ -77,7 +79,7 @@ describe('v2 prompt library: read surface (host-services.md §prompts)', () => {
     for (const x of out.findings) expect(x.ok, req(ID_FETCH, x.doc, x.message)).toBe(true);
   });
 
-  it('an ETag, when sent, revalidates to 304', async () => {
+  it('advisory: an ETag, when sent, revalidates to 304', async () => {
     const r = await ready();
     if (!r.ok) return r.skip();
     const out = await etagLeg(PROFILE, r.a);

@@ -152,7 +152,15 @@ export async function fetchLeg(profile: MajorProfile, a: PromptAdverts, validate
   ] };
 }
 
-/** Leg: an ETag, when sent, revalidates to `304`. `getPromptTemplate` SHOULD send one; none is inapplicable. */
+/**
+ * Leg (advisory): an ETag, when sent, revalidates to `304`. v2 binds the host
+ * to nothing here: `getPromptTemplate` SHOULD send an ETag (host-services.md
+ * §prompts), and the `304` MUST in headers.md §Request headers covers only the
+ * discovery document and the run snapshot. So the leg passes on a `304` and
+ * records `inapplicable` otherwise; it is never failed (the
+ * `tool-catalog-projection` advisory precedent). Until 2.45.17 it failed on
+ * RFC 9110 alone, which no v2 rule imports for this read.
+ */
 export async function etagLeg(profile: MajorProfile, a: PromptAdverts): Promise<PromptOutcome> {
   const g = endpointsGate(a); if (g) return g;
   const t = await aTemplate(a);
@@ -161,7 +169,8 @@ export async function etagLeg(profile: MajorProfile, a: PromptAdverts): Promise<
   const etag = first.headers.get('etag');
   if (first.status !== 200 || etag === null || etag.length === 0) return { kind: 'skip', disposition: 'inapplicable', reason: `getPromptTemplate sent no ETag (status ${first.status}) — a SHOULD, so there is nothing to revalidate` };
   const again = await driver.get(tplPath(profile, a, t.templateId), { headers: { 'If-None-Match': etag } });
-  return { kind: 'observed', findings: [f(again.status === 304, `${DOC_LIB}; RFC 9110 §13.1.2`, `If-None-Match with the current ETag MUST answer 304 (got ${again.status})`)] };
+  if (again.status !== 304) return { kind: 'skip', disposition: 'inapplicable', reason: `advisory SHOULD not met: If-None-Match with the current ETag answered ${again.status}, not 304 — v2 binds 304 only on discovery and the run snapshot (headers.md), so this is recorded, never failed` };
+  return { kind: 'observed', findings: [f(true, `${DOC_LIB} (SHOULD); RFC 9110 §13.1.2`, 'If-None-Match with the current ETag answers 304')] };
 }
 
 /** Leg: an unknown template id is `404` with the error envelope. */

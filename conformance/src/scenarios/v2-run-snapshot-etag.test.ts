@@ -7,6 +7,10 @@
  * a host that sends no ETag records `inapplicable`. Every response carries
  * `OpenWOP-Version` (versioning.md §1.4), the 304 included.
  *
+ * The revalidation runs once per client spelling (`OpenWOP-Version: 2.0`,
+ * `2`, and `2` with a wildcard Accept): a host MUST treat them alike
+ * (versioning.md §1), and one public origin served 304 to the first only.
+ *
  * Control: a non-matching `If-None-Match` MUST receive 200 with the body — a
  * host that answers 304 to any conditional request fails here. `headers.md`
  * scopes `If-None-Match` to the discovery document; runs.md applies it to the
@@ -27,6 +31,13 @@ import { req } from '../lib/requirement-ids.js';
 const ID = 'openwop.requirement.0170.run-snapshot-etag';
 const DOC = 'spec/v2/core/runs.md §Snapshot';
 const NOOP = 'conformance-noop';
+/** The client spellings a host MUST treat alike (versioning.md §1): openwop-app's public origin answered 304 to `2.0` and 200 to bare `2`. */
+const SPELLINGS: ReadonlyArray<Readonly<Record<string, string>>> = [
+  { 'OpenWOP-Version': '2.0' },
+  { 'OpenWOP-Version': '2' },
+  { 'OpenWOP-Version': '2', Accept: '*/*' },
+];
+const label = (h: Readonly<Record<string, string>>): string => Object.entries(h).map(([k, v]) => `${k}: ${v}`).join(', ');
 
 async function discovery(): Promise<Record<string, unknown> | null> { try { return await v2Discovery(); } catch { return null; } }
 async function http(fn: () => Promise<OpenWOPResponse>): Promise<OpenWOPResponse | null> { try { return await fn(); } catch { return null; } }
@@ -51,29 +62,31 @@ describe('v2 run-snapshot-etag (runs.md §Snapshot)', () => {
     // happened to finish inside the sleep. It also let a host with a CONSTANT tag
     // pass for the wrong reason, which the control below still catches.
     await pollUntilTerminal(runId, { timeoutMs: scaledTimeoutMs(30_000) });
-    let etag: string | null = null;
-    let hit: OpenWOPResponse | null = null;
-    // A terminal run should be still, but "should" is not the claim under test:
-    // if the tag moves again, take the NEW tag and retry. The violation is a 200
-    // whose ETag EQUALS the If-None-Match that was sent — never a 200 per se.
-    for (let attempt = 0; attempt < 4; attempt++) {
-      const first = await http(() => driver.get(path));
-      if (first === null || first.status !== 200) return softSkip('blocked', `GET /runs/{runId} answered ${first?.status ?? 'no response'}`);
-      etag = first.headers.get('etag');
-      if (!etag) return softSkip('inapplicable', 'the snapshot carries no ETag — runs.md §Snapshot makes the ETag a SHOULD; the 304 rule applies only when it is present');
-      const sent = etag;
-      hit = await http(() => driver.get(path, { headers: { 'If-None-Match': sent } }));
-      if (hit === null) return softSkip('blocked', 'conditional GET unreachable (fetch failed)');
-      if (hit.status !== 200 || hit.headers.get('etag') === sent) break; // 304, or the real violation: decided below
-      await new Promise((r) => setTimeout(r, 500)); // 200 with a DIFFERENT tag: the representation moved; the tag sent was honestly stale
+    for (const spelling of SPELLINGS) {
+      let etag: string | null = null;
+      let hit: OpenWOPResponse | null = null;
+      // A terminal run should be still, but "should" is not the claim under test:
+      // if the tag moves again, take the NEW tag and retry. The violation is a 200
+      // whose ETag EQUALS the If-None-Match that was sent — never a 200 per se.
+      for (let attempt = 0; attempt < 4; attempt++) {
+        const first = await http(() => driver.get(path, { headers: { ...spelling } }));
+        if (first === null || first.status !== 200) return softSkip('blocked', `GET /runs/{runId} answered ${first?.status ?? 'no response'}`);
+        etag = first.headers.get('etag');
+        if (!etag) return softSkip('inapplicable', 'the snapshot carries no ETag — runs.md §Snapshot makes the ETag a SHOULD; the 304 rule applies only when it is present');
+        const sent = etag;
+        hit = await http(() => driver.get(path, { headers: { ...spelling, 'If-None-Match': sent } }));
+        if (hit === null) return softSkip('blocked', 'conditional GET unreachable (fetch failed)');
+        if (hit.status !== 200 || hit.headers.get('etag') === sent) break; // 304, or the real violation: decided below
+        await new Promise((r) => setTimeout(r, 500)); // 200 with a DIFFERENT tag: the representation moved; the tag sent was honestly stale
+      }
+      if (hit === null || etag === null) return softSkip('blocked', 'no conditional GET was made');
+      if (hit.status === 200 && hit.headers.get('etag') !== etag) {
+        return softSkip('blocked', `the snapshot of a TERMINAL run kept changing across four reads (last tag sent ${etag}, answered 200 with ${String(hit.headers.get('etag'))}) — the 304 rule cannot be witnessed against a representation that never holds still`);
+      }
+      expect(hit.status, req(ID, DOC, `under ${label(spelling)}, a request whose If-None-Match matches the CURRENT ETag MUST receive 304 — got ${hit.status} while the response still carried the same tag ${etag}`)).toBe(304);
+      expect(hit.text.length, req(ID, DOC, `under ${label(spelling)}, the 304 MUST carry no body (got ${hit.text.length} byte(s))`)).toBe(0);
+      expect(hit.headers.get('openwop-version'), req(ID, 'spec/v2/core/versioning.md §1.4', `under ${label(spelling)}, every response carries OpenWOP-Version, the 304 included`)).not.toBeNull();
     }
-    if (hit === null || etag === null) return softSkip('blocked', 'no conditional GET was made');
-    if (hit.status === 200 && hit.headers.get('etag') !== etag) {
-      return softSkip('blocked', `the snapshot of a TERMINAL run kept changing across four reads (last tag sent ${etag}, answered 200 with ${String(hit.headers.get('etag'))}) — the 304 rule cannot be witnessed against a representation that never holds still`);
-    }
-    expect(hit.status, req(ID, DOC, `a request whose If-None-Match matches the CURRENT ETag MUST receive 304 — got ${hit.status} while the response still carried the same tag ${etag}`)).toBe(304);
-    expect(hit.text.length, req(ID, DOC, `the 304 MUST carry no body (got ${hit.text.length} byte(s))`)).toBe(0);
-    expect(hit.headers.get('openwop-version'), req(ID, 'spec/v2/core/versioning.md §1.4', 'every response carries OpenWOP-Version, the 304 included')).not.toBeNull();
     const miss = await http(() => driver.get(path, { headers: { 'If-None-Match': '"openwop-conformance-no-such-tag"' } }));
     if (miss === null) return softSkip('blocked', 'conditional GET unreachable (fetch failed)');
     expect(miss.status, req(ID, DOC, `a non-matching If-None-Match MUST receive 200 with the body — got ${miss.status} (a host answering 304 to any conditional request is not honouring the tag)`)).toBe(200);

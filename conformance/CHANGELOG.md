@@ -1,5 +1,12 @@
 # `@openwop/openwop-conformance` Changelog
 
+## [2.45.17] — unreleased — ETag rules: discovery's 304 gains a major-2 witness, the prompt-template 304 becomes advisory
+
+- **New `v2-discovery-etag`.** `capabilities.md` §1 makes both halves MUSTs at v2: emit an `ETag` on the discovery document, and answer a matching `If-None-Match` with `304` (no body, `OpenWOP-Version` present; a non-matching one gets `200`). The only witness was the v1 `discovery.test.ts` leg, so nothing checked it at major 2. openwop-app's public origin answers `200` because the hosting rewrite drops `If-None-Match` (direct to the origin: `304`), and its 2.45.16 cut certified anyway.
+- **Both 304 witnesses revalidate under every client spelling.** `v2-discovery-etag` and `v2-run-snapshot-etag` now send `OpenWOP-Version: 2.0`, then `2`, then `2` with a wildcard `Accept`; versioning.md §1 says a host MUST accept both version spellings. The snapshot leg had passed on openwop-app's public origin, which answers `304` to `2.0` (the suite's only spelling until now) and `200` to bare `2`.
+- **`openwop.requirement.prompts.etag-revalidation` is advisory.** v2 says only that `getPromptTemplate` SHOULD send an `ETag`, and `headers.md` scopes the `304` MUST to discovery and the run snapshot. The leg rested on RFC 9110 alone. It now passes on a `304` and records `inapplicable` otherwise, never failed (the `tool-catalog-projection` precedent).
+- **Proof:** the new scenario was run against a double in four modes. A conforming double passes. No ETag fails the emitted leg. A dropped `If-None-Match` fails the revalidation leg, and so does a host answering `304` to every conditional request. A double that drops it only for bare `2`, or only for `2` with a wildcard `Accept`, fails both 304 witnesses.
+
 ## [2.45.16] — 2026-10-04 — witness waves 2 and 3: every core family gains a major-2 witness
 
 - **Advertisement witnesses** for ten families: `selfHostedRunner`, `credentials`, `authorization`, `providerUsage`, `subWorkflow`, `scheduling`, `artifactTypes`, `aiEnvelope`, `deadLetter` and `portability`. Each validates its v2 record plus the facet checks the v2 prose states. No `supported` leg is ported: presence is the claim (capabilities.md:50).

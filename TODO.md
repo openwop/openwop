@@ -35,7 +35,7 @@
   **2.45.11 is published** (the v2 trigger-bridge witnesses; the retired-twin `308` errata).
   **2.45.12 is published** (RFC 0233 `Active`: the connection-provider reads; RFC 0230's stale and
   secret-once legs; the retired-`/v1` path-space fix). **2.45.13 is published** (RFC 0230, 0232
-  and 0233 `Accepted`). **2.45.14 is published** (RFC 0234: v1 end-of-support 2026-10-04; hosts MAY drop 1.x from that date). **2.45.15 is published** (witness wave 1; openwop-app fixed both defects it found in #4372). **2.45.16 is published** (witness waves 2 and 3: all 73 core families v2-witnessed; MyndHyve is fixing three host defects wave 2 found). Take a release lock
+  and 0233 `Accepted`). **2.45.14 is published** (RFC 0234: v1 end-of-support 2026-10-04; hosts MAY drop 1.x from that date). **2.45.15 is published** (witness wave 1; openwop-app fixed both defects it found in #4372). **2.45.16 is published** (witness waves 2 and 3: all 73 core families v2-witnessed). **The 2.45.17 cycle is open** (discovery ETag witness; prompt ETag advisory). Take a release lock
   (`/tmp/claude-501/openwop-release-<ver>.lock`) before cutting.
   - A PR that leaves the version alone must not re-stamp `CORPUS-STAMP.json` or the ledger.
 - **Normative homes:** all 73 core families have v2 homes (#1802–#1804). The kernel budget is
