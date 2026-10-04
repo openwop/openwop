@@ -236,6 +236,11 @@ Defects outside the spec:
 - [ ] **Schema-only legs in `*-static` scenarios belong in `src/coherence/`** (`conformance.md` §Two
       products: a check that reads only the corpus MUST NOT appear in a host bundle). Sweep the
       wave-1/2 `v2-*-static` scenarios: keep the legs that read host output, move the rest.
+- [ ] **Wrong cause in two 2.45.17 scenario comments.** `v2-discovery-etag` and
+      `v2-run-snapshot-etag` say openwop-app's origin answered `304` to `2.0` and `200` to bare `2`.
+      The cause was a CDN edge (hit-for-pass on a `no-store` response: the first conditional to reach
+      a node that had not seen the object gets `200`), not the spelling. They are packed, so fix them
+      when the 2.45.18 cycle opens. The legs themselves are right.
 - [ ] **`otel-emission-grpc` is attributed to `nodePackRuntimes`** in the coverage report. It is
       about OTel export.
 

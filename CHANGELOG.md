@@ -8,6 +8,8 @@ Entries before this file was condensed carried full development detail. That tex
 
 ## [Unreleased]
 
+- **Correction to the 2.45.17 notes.** openwop-app's 304 failures were not spelling-dependent. A CDN edge answered `200` to the first conditional reaching a node that had not seen the object (hit-for-pass on a `no-store` response), then `304`. The witnesses are right, and intermittently red on such an origin.
+
 ## [2.45.17] — 2026-10-04 — ETag rules: discovery's 304 witnessed at major 2, every client spelling covered
 
 - **Discovery's 304 is witnessed at major 2; the prompt-template 304 is advisory.** New `v2-discovery-etag` checks the `capabilities.md` §1 MUSTs (an `ETag`, and `304` on a match). The prompt-template leg failed on RFC 9110 alone; v2 scopes the 304 MUST to discovery and the run snapshot.
