@@ -3,7 +3,12 @@
  * families `envelopes`, `limits` (the three envelope caps), `modelCapabilities`
  * and `aiProviders`. Wave 2: the record and facet shapes of `selfHostedRunner`,
  * `credentials`, `authorization`, `providerUsage`, `subWorkflow`, `scheduling`,
- * `artifactTypes`, `aiEnvelope`, `deadLetter` and `portability`.
+ * `artifactTypes`, `aiEnvelope`, `deadLetter` and `portability`. Wave 3: the
+ * families no host serves at v2 — `dataResidency`, `multiPartyConversation`,
+ * `nodePackRuntimes`, `uiPlugins`, `purposePropagation` and `agentRuntime` get
+ * facet legs; `conversationTurnModelProvenance`, `channelPresence`,
+ * `nondeterminismPolicy`, `promptLibrary` and `envelopeContracts` carry no facet
+ * a host-binding v2 rule gives meaning to, so they get the record leg only.
  *
  * A claims-check family is witnessed by what the host says about itself, so
  * every leg here reads the discovery record alone. Each leg checks one facet
@@ -61,7 +66,10 @@ function onFamily(profile: MajorProfile, discovery: unknown, family: string, leg
 export type AdvertFamily =
   | 'envelopes' | 'modelCapabilities' | 'aiProviders'
   | 'selfHostedRunner' | 'credentials' | 'authorization' | 'providerUsage' | 'subWorkflow'
-  | 'scheduling' | 'artifactTypes' | 'aiEnvelope' | 'deadLetter' | 'portability';
+  | 'scheduling' | 'artifactTypes' | 'aiEnvelope' | 'deadLetter' | 'portability'
+  | 'dataResidency' | 'conversationTurnModelProvenance' | 'multiPartyConversation' | 'channelPresence'
+  | 'nodePackRuntimes' | 'uiPlugins' | 'purposePropagation' | 'nondeterminismPolicy'
+  | 'agentRuntime' | 'promptLibrary' | 'envelopeContracts';
 
 export function recordSchemaLeg(profile: MajorProfile, discovery: unknown, family: AdvertFamily, doc: string): AdvertOutcome {
   return onFamily(profile, discovery, family, (rec) => observed([bySchema(`/properties/${family}`, rec, doc, `the ${family} record`)]));
@@ -355,3 +363,49 @@ export const portabilityImportDryRunLeg = (p: MajorProfile, d: unknown): AdvertO
 /** `portability.kinds`: unique members of the seven export-bundle item kinds. */
 export const portabilityKindsLeg = (p: MajorProfile, d: unknown): AdvertOutcome =>
   facetBySchema(p, d, 'portability', 'kinds', PORT_DOC, 'portability.kinds (unique export-bundle item kinds)');
+
+// ---------------------------------------------------------------------------
+// Wave 3 — families no host serves at v2 (architect ruling, 2026-10-04).
+// ---------------------------------------------------------------------------
+
+/** `dataResidency.regions`: unique non-empty region codes (runs.md §`dataResidency`). */
+export const dataResidencyRegionsLeg = (p: MajorProfile, d: unknown): AdvertOutcome =>
+  facetBySchema(p, d, 'dataResidency', 'regions', 'runs.md §dataResidency', 'dataResidency.regions (unique non-empty region codes)');
+
+/** `multiPartyConversation.maxParticipants`: an integer of at least 2 (a council of one is not multi-party). */
+export const multiPartyMaxParticipantsLeg = (p: MajorProfile, d: unknown): AdvertOutcome =>
+  facetBySchema(p, d, 'multiPartyConversation', 'maxParticipants', 'conversation.md §multiPartyConversation', 'multiPartyConversation.maxParticipants (an integer ≥ 2)');
+
+/** `nodePackRuntimes.wasm`: `abiVersions` unique integers ≥ 1 with at least one entry; `maxMemoryBytes` within 1 MiB – 8 GiB. */
+export const nodePackRuntimesWasmLeg = (p: MajorProfile, d: unknown): AdvertOutcome =>
+  facetBySchema(p, d, 'nodePackRuntimes', 'wasm', 'node-pack-runtimes.md §WASM', 'nodePackRuntimes.wasm (abiVersions non-empty unique integers ≥ 1; maxMemoryBytes 1 MiB – 8 GiB)');
+
+const UIP_DOC = 'packs.md §Front-end plugin packs';
+/** `uiPlugins.isolation`: one of the five mechanisms or an `x-host-<host>-<key>` value — it names the mechanism, never relaxes the property. */
+export const uiPluginsIsolationLeg = (p: MajorProfile, d: unknown): AdvertOutcome =>
+  facetBySchema(p, d, 'uiPlugins', 'isolation', UIP_DOC, 'uiPlugins.isolation (a closed mechanism or x-host-<host>-<key>)');
+/** `uiPlugins.surfaces`: unique members of the closed surface set. */
+export const uiPluginsSurfacesLeg = (p: MajorProfile, d: unknown): AdvertOutcome =>
+  facetBySchema(p, d, 'uiPlugins', 'surfaces', UIP_DOC, 'uiPlugins.surfaces (unique members of the closed surface set)');
+/** `uiPlugins.hostApi`: unique members of the closed `ui-plugin/1` method set. */
+export const uiPluginsHostApiLeg = (p: MajorProfile, d: unknown): AdvertOutcome =>
+  facetBySchema(p, d, 'uiPlugins', 'hostApi', UIP_DOC, 'uiPlugins.hostApi (unique members of the closed ui-plugin/1 method set)');
+/** `uiPlugins.maxEntryBytes`: a positive integer. */
+export const uiPluginsMaxEntryBytesLeg = (p: MajorProfile, d: unknown): AdvertOutcome =>
+  facetBySchema(p, d, 'uiPlugins', 'maxEntryBytes', UIP_DOC, 'uiPlugins.maxEntryBytes (a positive integer)');
+
+/** `purposePropagation.propagatesOnward`: a boolean (security-defaults.md §Onward hops). */
+export const purposePropagatesOnwardLeg = (p: MajorProfile, d: unknown): AdvertOutcome =>
+  facetBySchema(p, d, 'purposePropagation', 'propagatesOnward', 'security-defaults.md §Onward hops', 'purposePropagation.propagatesOnward (a boolean)');
+
+/**
+ * `agentRuntime` implies `agents.manifestRuntime` (host-services.md §`agentRuntime`:
+ * "Advertising it implies `agents.manifestRuntime`, which the host MUST satisfy").
+ * The suite reads both from discovery, so this is the one cross-family rule of
+ * the wave the host's own claim can falsify.
+ */
+export const agentRuntimeImpliesManifestRuntimeLeg = (p: MajorProfile, d: unknown): AdvertOutcome => onFamily(p, d, 'agentRuntime', () => {
+  const agents = p.family(d, 'agents');
+  const ok = agents !== null && isRecord(agents['manifestRuntime']);
+  return observed([{ ok, doc: 'host-services.md §agentRuntime', message: `a host advertising agentRuntime MUST also advertise agents.manifestRuntime${ok ? '' : agents === null ? ' (agents is absent)' : ' (agents.manifestRuntime is absent)'}` }]);
+});

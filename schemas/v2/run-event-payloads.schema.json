@@ -2985,7 +2985,8 @@
           "description": "Optional `AgentRef.agentId` of the agent that opened the conversation."
         },
         "agentId": {
-          "$ref": "conversation-event.schema.json#/$defs/ConversationOpenedPayload/properties/agentId"
+          "$ref": "ids.schema.json#/$defs/agentId",
+          "description": "Optional. The agent driving this conversation (RFC 0002 \u00a7A1); the owner of a multi-agent conversation."
         },
         "participants": {
           "$ref": "conversation-event.schema.json#/$defs/ConversationOpenedPayload/properties/participants",

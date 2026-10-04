@@ -228,6 +228,14 @@ Defects outside the spec:
       `nondeterminismPolicy.sources[]` seat; a purpose-label carrier the suite can receive; and
       dropping the required `declared` / `advertised` booleans, which bring back `supported:false`
       under another name.
+- [ ] **Fixture-gated wave-3 legs not yet written.** `multiPartyConversation` roster legs need a
+      `conformance-multi-party-council` fixture, and that needs the roster input seat above first.
+      `nodePackRuntimes` ABI-rejection and memory-cap-breach legs need an operator-installed WASM
+      fixture pack (`conformance-wasm-pack-memory-cap-breach`). Until then both families are
+      witnessed by their advertisement legs only.
+- [ ] **Schema-only legs in `*-static` scenarios belong in `src/coherence/`** (`conformance.md` §Two
+      products: a check that reads only the corpus MUST NOT appear in a host bundle). Sweep the
+      wave-1/2 `v2-*-static` scenarios: keep the legs that read host output, move the rest.
 - [ ] **`otel-emission-grpc` is attributed to `nodePackRuntimes`** in the coverage report. It is
       about OTel export.
 

@@ -24,7 +24,7 @@
 import { describe, it, expect } from 'vitest';
 import { readFileSync } from 'node:fs';
 import { join } from 'node:path';
-import { SCHEMAS_DIR } from '../lib/paths.js';
+import { SCHEMAS_DIR, V1_DIR } from '../lib/paths.js';
 import { req } from '../lib/requirement-ids.js';
 
 type Json = Record<string, unknown>;
@@ -35,7 +35,8 @@ const keys = (node: unknown): string[] => Object.keys(((node as Json)['propertie
 const ID = 'openwop.requirement.conversation.payload-mirrors-agree';
 const DOC = 'conversation.md';
 
-describe('v2 conversation payload mirrors agree', () => {
+// A corpus check: it runs in the spec repo's checkout, never in a host run (V1_DIR === null there).
+describe.skipIf(V1_DIR === null)('v2 conversation payload mirrors agree', () => {
   const payloads = defs(read('run-event-payloads.schema.json'));
   const event = defs(read('conversation-event.schema.json'));
   const turn = read('conversation-turn.schema.json');
