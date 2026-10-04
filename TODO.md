@@ -35,7 +35,7 @@
   **2.45.11 is published** (the v2 trigger-bridge witnesses; the retired-twin `308` errata).
   **2.45.12 is published** (RFC 0233 `Active`: the connection-provider reads; RFC 0230's stale and
   secret-once legs; the retired-`/v1` path-space fix). **2.45.13 is published** (RFC 0230, 0232
-  and 0233 `Accepted`). **2.45.14 is published** (RFC 0234: v1 end-of-support 2026-10-04; hosts MAY drop 1.x from that date). **No cycle is open**: a PR that changes packed content opens 2.45.15. Take a release lock
+  and 0233 `Accepted`). **2.45.14 is published** (RFC 0234: v1 end-of-support 2026-10-04; hosts MAY drop 1.x from that date). **The 2.45.15 cycle is open** (witness wave 1). Take a release lock
   (`/tmp/claude-501/openwop-release-<ver>.lock`) before cutting.
   - A PR that leaves the version alone must not re-stamp `CORPUS-STAMP.json` or the ledger.
 - **Normative homes:** all 73 core families have v2 homes (#1802–#1804). The kernel budget is
@@ -170,6 +170,21 @@ Defects outside the spec:
       (build `983976bbc`, `evidence/v2-host-bundles/openwop-workflow-engine.json`). Still open by
       design: RFC 0230 G3 and RFC 0232 G2, both waiting on a trigger-subscription pause surface (no RFC
       yet); RFC 0233 G4 (a dry-run validate endpoint, deferred).
+- [ ] **Witness waves (v1 end-of-support makes them urgent).** Wave 1 (2.45.15) ports six families. Next:
+      wave 2 (MyndHyve-only families: artifactTypes, selfHostedRunner, portability, subWorkflow,
+      providerUsage, scheduling, aiEnvelope, credentials, authorization, deadLetter); wave 3 (no host
+      serves them at v2: a per-family decision). Found in wave 1, owed:
+      - ~25 seam-only MUST legs have no v2 observation path (prompt compose/resolve, voice/speech,
+        `ai/call*`, `envelope/accept`, envelope runtime, model-capability gate, node-catalog).
+        `conformance.md` §Witness class requires a path (RFC, like 0233) or a demotion per family.
+      - v2 `PromptTemplate.templateId` (`ids.schema.json`, allows A–Z, `~`, `:`) disagrees with the
+        `/prompts/{templateId}` path pattern and string `PromptRef` (lowercase only).
+      - `capabilities.schema.json` `prompts.endpointsSupported` description allows "the family
+        omitted and endpointsSupported: true", impossible at v2.
+      - v2 `aiProviders.authModes` is a bare `string[]`; v1 had an enum. Restoring it needs an RFC.
+        openwop-app advertises `api-key` (clients ignore it); told to use `apiKey`.
+      - `run-secrets-witness` still addresses v2 runs with `%2F`; switch to the `~` projection once
+        a host cut can re-prove RFC 0229's rows.
 - [ ] **Host evidence owed, as the host sessions report it (2026-10-02):**
   - RFC 0230 (openwop-app, session 4d): the seam-free run on 2.45.9 is done (legs 1–3 pass,
     leg 4 fails, `blocked` 0). The pin to 2.45.9 is committed. The production flag and the
