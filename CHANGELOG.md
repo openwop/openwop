@@ -8,6 +8,8 @@ Entries before this file was condensed carried full development detail. That tex
 
 ## [Unreleased]
 
+## [2.45.13] — 2026-10-04 — RFC 0230, 0232 and 0233 Accepted
+
 - **RFC 0230, 0232 and 0233 are Accepted** (provisional; §B review owed). openwop-app's certified, seam-free major-2 production cut on 2.45.12 (build `983976bbc`) passes every acceptance row; the bundle is the canonical openwop-app v2 evidence.
 ## [2.45.12] — 2026-10-03 — Connection-provider conflicts are observable; RFC 0230's stale and secret-once legs; RFC 0233 Active
 

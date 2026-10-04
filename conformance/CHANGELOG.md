@@ -1,6 +1,6 @@
 # `@openwop/openwop-conformance` Changelog
 
-## [2.45.13] — unreleased — RFC 0230, 0232 and 0233 Accepted
+## [2.45.13] — 2026-10-04 — RFC 0230, 0232 and 0233 Accepted
 
 - **The 2.45.13 cycle opens.** Closing RFC 0232 G3 and RFC 0233 G3 changes the packed `spec/v1/gaps.json`. No scenario changes.
 

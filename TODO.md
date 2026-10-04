@@ -34,8 +34,8 @@
   2.45.3 or later. **2.45.10 is published** (RFC 0232 `Active`; the trigger dead-letter read).
   **2.45.11 is published** (the v2 trigger-bridge witnesses; the retired-twin `308` errata).
   **2.45.12 is published** (RFC 0233 `Active`: the connection-provider reads; RFC 0230's stale and
-  secret-once legs; the retired-`/v1` path-space fix). **The 2.45.13 cycle is open** (RFC 0230, 0232
-  and 0233 `Accepted`). Take a release lock
+  secret-once legs; the retired-`/v1` path-space fix). **2.45.13 is published** (RFC 0230, 0232
+  and 0233 `Accepted`). **No cycle is open**: a PR that changes packed content opens 2.45.14. Take a release lock
   (`/tmp/claude-501/openwop-release-<ver>.lock`) before cutting.
   - A PR that leaves the version alone must not re-stamp `CORPUS-STAMP.json` or the ledger.
 - **Normative homes:** all 73 core families have v2 homes (#1802–#1804). The kernel budget is
