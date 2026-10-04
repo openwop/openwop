@@ -14140,6 +14140,40 @@
       ]
     },
     {
+      "id": "openwop.gap.0234.1",
+      "rfc": "0234",
+      "local": "G1",
+      "section": "§A.1",
+      "surface": "Header-less major-1 requests on unversioned paths are not measurable from request logs, so the traffic evidence cannot rule them out.",
+      "witness": "unclassified",
+      "requirementId": null,
+      "disposition": "externally-gated",
+      "target": "host-logs-capture-openwop-version",
+      "sources": [
+        {
+          "file": "RFCS/registers/0234-maintainer-set-v1-end-of-support.gaps.md",
+          "token": "G1"
+        }
+      ]
+    },
+    {
+      "id": "openwop.gap.0234.2",
+      "rfc": "0234",
+      "local": "G2",
+      "section": "§A.2",
+      "surface": "MyndHyve still serves first-party clients on 10 `/v1` roots with no major-2 twin.",
+      "witness": "unclassified",
+      "requirementId": null,
+      "disposition": "externally-gated",
+      "target": "myndhyve-v1-only-roots-migrated",
+      "sources": [
+        {
+          "file": "RFCS/registers/0234-maintainer-set-v1-end-of-support.gaps.md",
+          "token": "G2"
+        }
+      ]
+    },
+    {
       "id": "openwop.gap.spec.a2a-integration.g1",
       "rfc": "0152",
       "local": "G1",

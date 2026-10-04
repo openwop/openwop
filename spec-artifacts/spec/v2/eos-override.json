@@ -1,0 +1,25 @@
+{
+  "$comment": "RFC 0234 (overview.md §v1 end-of-support, leg (c)). An Accepted RFC's earlier end-of-support date and the evidence for it. generate-v1-eos-clock.mjs honours this file only when it meets (c).",
+  "date": "2026-10-04",
+  "rfc": "0234",
+  "trafficEvidence": [
+    {
+      "host": "openwop-host-v2-reference",
+      "window": "to 2026-10-03, 7 days",
+      "thirdParty": 0,
+      "note": "a reference example, not a public deployment; all traffic is the conformance suite"
+    },
+    {
+      "host": "openwop-workflow-engine (openwop-app)",
+      "window": "2026-09-27 to 2026-10-03",
+      "thirdParty": 0,
+      "note": "9,997 conformance/seam requests; 1 first-party OAuth return; 4 header-less discovery reads (3 Meta AI crawler, 1 person) that are not protocol clients; 0 SDK/CLI callers"
+    },
+    {
+      "host": "myndhyve",
+      "window": "2026-09-27 to 2026-10-03",
+      "thirdParty": 0,
+      "note": "~3,564 suite/seam/operator; 475 first-party (own pack catalog, own Cloud Function resume); ~31 scanner 404s; 0 SDK/CLI clients; header-less major-1 reads not measurable from logs"
+    }
+  ]
+}

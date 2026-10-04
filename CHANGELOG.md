@@ -8,6 +8,7 @@ Entries before this file was condensed carried full development detail. That tex
 
 ## [Unreleased]
 
+- **v1 end-of-support is 2026-10-04** (RFC 0234, Accepted). An accepted RFC may set it before the computed 2026-12-04 once counted hosts are certified at v2 and see no third-party v1 traffic. Hosts MAY now retire v1; retention floors are unchanged.
 ## [2.45.13] — 2026-10-04 — RFC 0230, 0232 and 0233 Accepted
 
 - **RFC 0230, 0232 and 0233 are Accepted** (provisional; §B review owed). openwop-app's certified, seam-free major-2 production cut on 2.45.12 (build `983976bbc`) passes every acceptance row; the bundle is the canonical openwop-app v2 evidence.

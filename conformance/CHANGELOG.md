@@ -1,5 +1,10 @@
 # `@openwop/openwop-conformance` Changelog
 
+## [2.45.14] — unreleased — v1 end-of-support is 2026-10-04 (RFC 0234)
+
+- **The 2.45.14 cycle opens.** RFC 0234 amends `overview.md` §v1 end-of-support and `versioning.md` §5, adds `spec/v2/eos-override.json` and `spec/v1/end-of-support.json`, and its gap register changes the packed `spec/v1/gaps.json`.
+- **`v2-eos-clock` gains three tests:** an override that does not meet (c) is refused; a frozen old-major tree satisfies a passed date and a marker naming another date does not; an RFC file is never a failing old-major source. `check-removal-dates.mjs` and `generate-v1-eos-clock.mjs` gain the matching logic and env overrides.
+
 ## [2.45.13] — 2026-10-04 — RFC 0230, 0232 and 0233 Accepted
 
 - **The 2.45.13 cycle opens.** Closing RFC 0232 G3 and RFC 0233 G3 changes the packed `spec/v1/gaps.json`. No scenario changes.

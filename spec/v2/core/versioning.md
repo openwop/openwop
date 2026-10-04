@@ -169,7 +169,7 @@ A run minted under major 1 and read under major 2 MUST use the tenant-bound proj
 
 ### Retirement
 
-The overlap ends at v1 end-of-support ([overview.md](overview.md)): `protocolVersions[]` drops the `1.<n>` member, and every alias carrying the `v1-end-of-support` trigger is removed.
+The overlap ends at v1 end-of-support ([overview.md](overview.md)). From then a host MAY drop the `1.<n>` member from `protocolVersions[]`; when it does, every alias carrying the `v1-end-of-support` trigger goes with it.
 
 - **Retirement is atomic.** Dropping v1 retires the whole `/v1` path space at once (§1.1).
 - **Retirement changes every header-less request's default contract**, from major 1 to major 2. Before retirement, a host MUST check for collisions between manifest top-level path segments and non-protocol unversioned routes, and MUST move each colliding route or apply §1.4 content negotiation.

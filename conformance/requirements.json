@@ -3,10 +3,10 @@
   "generatedFrom": "src/scenarios/*.test.ts",
   "counts": {
     "files": 669,
-    "tests": 2562,
-    "withStableId": 2562,
+    "tests": 2565,
+    "withStableId": 2565,
     "interpolatedTitles": 0,
-    "explicitIds": 2439
+    "explicitIds": 2442
   },
   "records": [
     {
@@ -44140,6 +44140,61 @@
         {
           "section": "spec/v2/core/overview.md §v1 end-of-support",
           "requirement": "the script MUST print the clock state on a green run — \"not anchored\" and \"far away\" must not print the same nothing"
+        }
+      ]
+    },
+    {
+      "id": "openwop.it.v2-eos-clock.rfc-0234-a-frozen-old-major-tree-satisfies-a-passed-date-a-marker-naming-another",
+      "file": "v2-eos-clock.test.ts",
+      "line": 69,
+      "title": "RFC 0234: a frozen old-major tree satisfies a passed date; a marker naming another date does not",
+      "explicitId": "openwop.requirement.0174.v1-eos-clock",
+      "citations": [
+        {
+          "section": "spec/v2/core/overview.md §v1 end-of-support",
+          "requirement": null,
+          "interpolated": true
+        },
+        {
+          "section": "spec/v2/core/overview.md §v1 end-of-support",
+          "requirement": "the frozen state MUST be printed"
+        },
+        {
+          "section": "spec/v2/core/overview.md §v1 end-of-support",
+          "requirement": null,
+          "interpolated": true
+        }
+      ]
+    },
+    {
+      "id": "openwop.it.v2-eos-clock.rfc-0234-an-rfc-file-is-history-never-a-failing-old-major-source",
+      "file": "v2-eos-clock.test.ts",
+      "line": 85,
+      "title": "RFC 0234: an RFC file is history, never a failing old-major source",
+      "explicitId": "openwop.requirement.0174.v1-eos-clock",
+      "citations": [
+        {
+          "section": "spec/v2/core/overview.md §v1 end-of-support",
+          "requirement": "no failure may name an RFCS/ file — an Accepted RFC is not edited at end-of-support"
+        }
+      ]
+    },
+    {
+      "id": "openwop.it.v2-eos-clock.rfc-0234-an-override-that-does-not-meet-c-is-refused-never-silently-ignored",
+      "file": "v2-eos-clock.test.ts",
+      "line": 94,
+      "title": "RFC 0234: an override that does not meet (c) is refused, never silently ignored",
+      "explicitId": "openwop.requirement.0174.v1-eos-clock",
+      "citations": [
+        {
+          "section": "spec/v2/core/overview.md §v1 end-of-support",
+          "requirement": null,
+          "interpolated": true
+        },
+        {
+          "section": "spec/v2/core/overview.md §v1 end-of-support",
+          "requirement": null,
+          "interpolated": true
         }
       ]
     },
