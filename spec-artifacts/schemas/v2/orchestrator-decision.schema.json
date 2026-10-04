@@ -116,5 +116,6 @@
       "additionalProperties": false
     }
   ],
-  "additionalProperties": false
+  "$comment": "additionalProperties is true at the root on purpose: each oneOf branch is closed with its own properties. A root `additionalProperties: false` with no root `properties` rejected every decision (found by witness wave 2, 2026-10-04).",
+  "additionalProperties": true
 }

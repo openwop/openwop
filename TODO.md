@@ -35,7 +35,7 @@
   **2.45.11 is published** (the v2 trigger-bridge witnesses; the retired-twin `308` errata).
   **2.45.12 is published** (RFC 0233 `Active`: the connection-provider reads; RFC 0230's stale and
   secret-once legs; the retired-`/v1` path-space fix). **2.45.13 is published** (RFC 0230, 0232
-  and 0233 `Accepted`). **2.45.14 is published** (RFC 0234: v1 end-of-support 2026-10-04; hosts MAY drop 1.x from that date). **2.45.15 is published** (witness wave 1; openwop-app must fix the v2 `run.runTimeoutMs` read and the render `validation_error` code before pinning it). **No cycle is open**: a PR that changes packed content opens 2.45.16. Take a release lock
+  and 0233 `Accepted`). **2.45.14 is published** (RFC 0234: v1 end-of-support 2026-10-04; hosts MAY drop 1.x from that date). **2.45.15 is published** (witness wave 1; openwop-app fixed both defects it found in #4372). **The 2.45.16 cycle is open** (witness wave 2). Take a release lock
   (`/tmp/claude-501/openwop-release-<ver>.lock`) before cutting.
   - A PR that leaves the version alone must not re-stamp `CORPUS-STAMP.json` or the ledger.
 - **Normative homes:** all 73 core families have v2 homes (#1802–#1804). The kernel budget is
@@ -185,6 +185,10 @@ Defects outside the spec:
         openwop-app advertises `api-key` (clients ignore it); told to use `apiKey`.
       - `run-secrets-witness` still addresses v2 runs with `%2F`; switch to the `~` projection once
         a host cut can re-prove RFC 0229's rows.
+      - Wave 2 (2.45.16) found: capabilities.md §2 "omit a facet you don't offer" vs `false`-valued
+        boolean facets (MyndHyve `scheduling.calendar: false`); a generic leg is a candidate, after
+        sizing which hosts and families it touches. `deadLetter` retry exhaustion needs a fixture and a
+        ruling on what "exhausts" means. `{HostBase}` is undefined in v2 prose.
 - [ ] **Host evidence owed, as the host sessions report it (2026-10-02):**
   - RFC 0230 (openwop-app, session 4d): the seam-free run on 2.45.9 is done (legs 1–3 pass,
     leg 4 fails, `blocked` 0). The pin to 2.45.9 is committed. The production flag and the
