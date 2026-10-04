@@ -8,6 +8,8 @@ Entries before this file was condensed carried full development detail. That tex
 
 ## [Unreleased]
 
+- **Discovery's 304 is witnessed at major 2; the prompt-template 304 is advisory.** New `v2-discovery-etag` checks the `capabilities.md` §1 MUSTs (an `ETag`, and `304` on a match). The prompt-template leg failed on RFC 9110 alone; v2 scopes the 304 MUST to discovery and the run snapshot.
+
 ## [2.45.16] — 2026-10-04 — Witness waves 2 and 3: every core family has a major-2 witness
 
 - **Witness wave 2:** 20 v2 scenarios for the ten v1-only families only MyndHyve serves at v2. Fix: `orchestrator-decision.schema.json` (v2) rejected every decision (a root `additionalProperties: false` with no root `properties`).
