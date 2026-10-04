@@ -1,6 +1,6 @@
 # `@openwop/openwop-conformance` Changelog
 
-## [2.45.15] — unreleased — witness wave 1: six v1-only families gain major-2 witnesses
+## [2.45.15] — 2026-10-04 — witness wave 1: six v1-only families gain major-2 witnesses
 
 - **Why.** v1 end-of-support was 2026-10-04 (RFC 0234), and openwop-app has retired `/v1`, so it emits no more major-1 bundles. 24 core families were witnessed only by major-1 scenarios. This wave ports the six that production hosts serve at v2. Each port follows the per-major pattern: a profile-aware witness lib whose legs observe and return findings, a thin `v2-*` scenario, and a self-test against a scratch double.
 - **Normative wire, unaided:**
