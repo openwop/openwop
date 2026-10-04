@@ -1,6 +1,6 @@
 # `@openwop/openwop-conformance` Changelog
 
-## [2.45.17] — unreleased — ETag rules: discovery's 304 gains a major-2 witness, the prompt-template 304 becomes advisory
+## [2.45.17] — 2026-10-04 — ETag rules: discovery's 304 gains a major-2 witness, the prompt-template 304 becomes advisory
 
 - **New `v2-discovery-etag`.** `capabilities.md` §1 makes both halves MUSTs at v2: emit an `ETag` on the discovery document, and answer a matching `If-None-Match` with `304` (no body, `OpenWOP-Version` present; a non-matching one gets `200`). The only witness was the v1 `discovery.test.ts` leg, so nothing checked it at major 2. openwop-app's public origin answers `200` because the hosting rewrite drops `If-None-Match` (direct to the origin: `304`), and its 2.45.16 cut certified anyway.
 - **Both 304 witnesses revalidate under every client spelling.** `v2-discovery-etag` and `v2-run-snapshot-etag` now send `OpenWOP-Version: 2.0`, then `2`, then `2` with a wildcard `Accept`; versioning.md §1 says a host MUST accept both version spellings. The snapshot leg had passed on openwop-app's public origin, which answers `304` to `2.0` (the suite's only spelling until now) and `200` to bare `2`.
