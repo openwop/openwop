@@ -6,7 +6,7 @@
 
 RFC 0156 §B: RFCs affecting auth, identity, tenant isolation, secrets, packs, execution sandboxing, idempotency, replay, external effects, conformance/certification, or governance **MUST** receive a retrospective **cross-organization** review. Every RFC below was accepted with its public comment window shortened, either under the bootstrap waiver or by explicit steward override of RFC 0147 §A.6. Each such acceptance is **provisional** until a reviewer from an organization other than the steward's records an outcome.
 
-This packet is for that reviewer. **111 RFCs are listed; 111 have no discharging outcome.** The steward, the steward's sessions, and steward-affiliated hosts (MyndHyve is tier-2, not independent) cannot supply the review. Recording one of their reviews as `ratified` is the substitution §B's last clause forbids.
+This packet is for that reviewer. **112 RFCs are listed; 112 have no discharging outcome.** The steward, the steward's sessions, and steward-affiliated hosts (MyndHyve is tier-2, not independent) cannot supply the review. Recording one of their reviews as `ratified` is the substitution §B's last clause forbids.
 
 ## How to review one RFC
 
@@ -106,7 +106,7 @@ Grouping below is a reading aid only: it assigns each RFC to the risk class its 
 | [0205](../RFCS/0205-run-artifacts-and-turns-speak-a2a-parts.md) | run artifacts and conversation content speak A2A Parts | `Accepted` | bootstrap waiver | tier-1 — the v2 reference host | `not-reviewed` |
 | [0207](../RFCS/0207-trace-context-across-mcp-and-a2a.md) | trace context across MCP and A2A, and debug-bundle spans that join the trace | `Accepted` | bootstrap waiver | tier-1 — the v2 reference host | `not-reviewed` |
 
-## Conformance and certification (9)
+## Conformance and certification (10)
 
 | RFC | Title | Status | Waiver | Evidence tier | Outcome |
 | --- | --- | --- | --- | --- | --- |
@@ -119,6 +119,7 @@ Grouping below is a reading aid only: it assigns each RFC to the risk class its 
 | [0195](../RFCS/0195-certification-bundle-hardening.md) | a certification bundle's declarations are signed, and an unobserved requirement is `blocked` | `Accepted` | steward override of RFC 0147 §A.6 | tier-1 — the v2 reference host | `not-reviewed` |
 | [0197](../RFCS/0197-v2-surfaces-retired-never-reshaped.md) | v2 surfaces are retired, never reshaped | `Accepted` | steward override of RFC 0147 §A.6 | tier-1 — the v2 reference host | `not-reviewed` |
 | [0216](../RFCS/0216-colocated-witness-for-harness-trust-anchor-rows.md) | a colocated companion bundle is marked, and witnesses only the rows that need the suite's own issuer | `Accepted` | steward override of RFC 0147 §A.6 | corpus gate — no host tier | `not-reviewed` |
+| [0234](../RFCS/0234-maintainer-set-v1-end-of-support.md) | an accepted RFC may set v1 end-of-support earlier than the computed date | `Accepted` | steward override of RFC 0147 §A.6 | corpus gate — `v2-eos-clock | `not-reviewed` |
 
 ## Governance (6)
 

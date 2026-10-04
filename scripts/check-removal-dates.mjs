@@ -47,7 +47,13 @@ let clock = null;
 try { clock = JSON.parse(readFileSync(CLOCK_PATH, 'utf8')); } catch { clock = null; }
 const eosDate = typeof clock?.endOfSupportNotBefore === 'string' ? clock.endOfSupportNotBefore : null;
 const eosDue = eosDate !== null && TODAY >= eosDate;
-const clockState = clock === null ? `no clock file at ${CLOCK_PATH.replace(ROOT + '/', '')} (v1-end-of-support rows cannot be due)` : `v1 end-of-support ${eosDate ?? 'not anchored'} — ${clock.state ?? ''}; today ${TODAY}; ${eosDue ? 'DUE' : 'not due'}`;
+// RFC 0234 §B.2: the v1 tree (spec/v1, the flat schemas/) is read-only
+// (versioning.md §3). At end-of-support it is FROZEN as history, not edited
+// token by token: a marker file naming the date is what retires it.
+const V1_MARKER = process.env['OPENWOP_V1_EOS_MARKER'] ?? join(SOURCE_ROOT, 'spec', 'v1', 'end-of-support.json');
+const v1Frozen = eosDate !== null && existsSync(V1_MARKER) && (() => { try { return JSON.parse(readFileSync(V1_MARKER, 'utf8')).frozenAt === eosDate; } catch { return false; } })();
+const clockStateBase = clock === null ? `no clock file at ${CLOCK_PATH.replace(ROOT + '/', '')} (v1-end-of-support rows cannot be due)` : `v1 end-of-support ${eosDate ?? 'not anchored'} — ${clock.state ?? ''}; today ${TODAY}; ${eosDue ? 'DUE' : 'not due'}`;
+const clockState = `${clockStateBase}${eosDue ? (v1Frozen ? '; v1 tree FROZEN (spec/v1/end-of-support.json)' : '; v1 tree NOT frozen') : ''}`;
 // `removalTrigger` is a SET (RFC 0176 §C.2 gives one row two independent removal
 // events); a bare string is the one-trigger form. Until 2026-09-04 this script
 // printed "(removalTrigger governs)" and never read the field — the claim was
@@ -99,8 +105,12 @@ for (const e of reg.entries) {
     const inV2Tree = /^(schemas|api|spec)\/v2\//.test(s.file);
     if (inV2Tree && (triggers.length === 0 || triggers.includes('v2.0-cut'))) {
       failures.push(`${e.id}: removal ${e.removeIn} has passed${triggers.length ? ' (trigger v2.0-cut)' : ''} and ${s.file} still carries \`${s.token}\``);
-    } else if (!inV2Tree && eosDue && triggers.includes('v1-end-of-support')) {
-      failures.push(`${e.id}: v1 end-of-support ${eosDate} has passed (today ${TODAY}) and ${s.file} still carries \`${s.token}\` — the v1 representation MUST drop it (overview.md §v1 end-of-support)`);
+    } else if (!inV2Tree && /^RFCS\//.test(s.file)) {
+      // RFC 0234 §B.1: an RFC is the historical record of where an alias came
+      // from, not a representation of v1; its text is not edited at end-of-support.
+      present1++;
+    } else if (!inV2Tree && eosDue && triggers.includes('v1-end-of-support') && !v1Frozen) {
+      failures.push(`${e.id}: v1 end-of-support ${eosDate} has passed (today ${TODAY}) and ${s.file} still carries \`${s.token}\` — the v1 tree MUST be frozen with spec/v1/end-of-support.json naming that date, or the source MUST drop it (overview.md §v1 end-of-support)`);
     } else if (!inV2Tree) {
       present1++;
     }

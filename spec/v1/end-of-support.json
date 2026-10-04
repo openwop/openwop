@@ -1,0 +1,5 @@
+{
+  "$comment": "RFC 0234 §A.3 — the old-major tree (spec/v1/, the flat schemas/) is frozen as history at v1 end-of-support. It is read-only (versioning.md §3) and is not edited token by token; check-removal-dates.mjs reads this marker.",
+  "frozenAt": "2026-10-04",
+  "rfc": "0234"
+}

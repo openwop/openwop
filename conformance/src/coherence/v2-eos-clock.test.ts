@@ -65,4 +65,46 @@ describe('v2-eos-clock (overview.md §v1 end-of-support)', () => {
     expect(r.status, req(ID, DOC, `before the date the same rows are not due — exited ${r.status}: ${tail(r)}`)).toBe(0);
     expect(String(r.stdout ?? ''), req(ID, DOC, 'the script MUST print the clock state on a green run — "not anchored" and "far away" must not print the same nothing')).toMatch(/check-removal-dates clock: .*not due/);
   }, 120_000);
+
+  it('RFC 0234: a frozen old-major tree satisfies a passed date; a marker naming another date does not', () => {
+    if (V1_DIR === null) return softSkip('inapplicable', 'not a spec checkout');
+    const dir = mkdtempSync(join(tmpdir(), 'openwop-eos-'));
+    const clock = join(dir, 'clock.json');
+    writeFileSync(clock, JSON.stringify({ endOfSupportNotBefore: '2000-01-01', state: 'synthetic: passed' }));
+    const good = join(dir, 'marker-good.json');
+    writeFileSync(good, JSON.stringify({ frozenAt: '2000-01-01', rfc: '0234' }));
+    const ok = spawnSync('node', [join(root, 'scripts', 'check-removal-dates.mjs')], { cwd: root, encoding: 'utf8', env: { ...process.env, OPENWOP_EOS_CLOCK_FILE: clock, OPENWOP_V1_EOS_MARKER: good }, maxBuffer: 32 * 1024 * 1024 });
+    expect(ok.status, req(ID, DOC, `a passed date with the tree frozen at that date MUST pass — exited ${ok.status}: ${tail(ok)}`)).toBe(0);
+    expect(String(ok.stdout ?? ''), req(ID, DOC, 'the frozen state MUST be printed')).toMatch(/FROZEN/);
+    const wrong = join(dir, 'marker-wrong.json');
+    writeFileSync(wrong, JSON.stringify({ frozenAt: '1999-01-01', rfc: '0234' }));
+    const bad = spawnSync('node', [join(root, 'scripts', 'check-removal-dates.mjs')], { cwd: root, encoding: 'utf8', env: { ...process.env, OPENWOP_EOS_CLOCK_FILE: clock, OPENWOP_V1_EOS_MARKER: wrong }, maxBuffer: 32 * 1024 * 1024 });
+    expect(bad.status, req(ID, DOC, `a marker naming a different date MUST NOT freeze the tree — exited ${bad.status}: ${tail(bad)}`)).not.toBe(0);
+  }, 120_000);
+
+  it('RFC 0234: an RFC file is history, never a failing old-major source', () => {
+    if (V1_DIR === null) return softSkip('inapplicable', 'not a spec checkout');
+    const dir = mkdtempSync(join(tmpdir(), 'openwop-eos-'));
+    const clock = join(dir, 'clock.json');
+    writeFileSync(clock, JSON.stringify({ endOfSupportNotBefore: '2000-01-01', state: 'synthetic: passed' }));
+    const r = spawnSync('node', [join(root, 'scripts', 'check-removal-dates.mjs')], { cwd: root, encoding: 'utf8', env: { ...process.env, OPENWOP_EOS_CLOCK_FILE: clock, OPENWOP_V1_EOS_MARKER: join(dir, 'absent.json') }, maxBuffer: 32 * 1024 * 1024 });
+    expect(String(r.stderr ?? ''), req(ID, DOC, 'no failure may name an RFCS/ file — an Accepted RFC is not edited at end-of-support')).not.toMatch(/and RFCS\//);
+  }, 120_000);
+
+  it('RFC 0234: an override that does not meet (c) is refused, never silently ignored', () => {
+    if (V1_DIR === null) return softSkip('inapplicable', 'not a spec checkout');
+    const dir = mkdtempSync(join(tmpdir(), 'openwop-eos-'));
+    const cases: Array<[string, Record<string, unknown>]> = [
+      ['an RFC that is not Accepted', { date: '2026-01-01', rfc: '0038', trafficEvidence: [{ host: 'x' }] }],
+      ['a date that is not earlier', { date: '2999-01-01', rfc: '0230', trafficEvidence: [{ host: 'x' }] }],
+      ['no traffic evidence', { date: '2026-01-01', rfc: '0230', trafficEvidence: [] }],
+    ];
+    for (const [what, body] of cases) {
+      const f = join(dir, `override-${what.replace(/\W+/g, '-')}.json`);
+      writeFileSync(f, JSON.stringify(body));
+      const r = spawnSync('node', [join(root, 'scripts', 'generate-v1-eos-clock.mjs')], { cwd: root, encoding: 'utf8', env: { ...process.env, OPENWOP_EOS_OVERRIDE_FILE: f }, maxBuffer: 32 * 1024 * 1024 });
+      expect(r.status, req(ID, DOC, `${what} MUST be refused — exited ${r.status}: ${tail(r)}`)).not.toBe(0);
+      expect(String(r.stderr ?? ''), req(ID, DOC, `${what}: the refusal MUST say why`)).toMatch(/not honourable/);
+    }
+  }, 120_000);
 });
