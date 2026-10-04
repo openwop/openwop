@@ -29,6 +29,8 @@ Each candidate ships only when its gate condition is met. The list is descriptiv
 | **4 audit-gated `core.openwop.*` packs** | The external security audit completes |
 | **mTLS certificate-matrix hardening** | Operators need documented certificate recipes |
 | **Multi-region idempotency end-to-end fixture** | A host advertises `capabilities.idempotency.crossRegion` |
+| **Structured handoff context on `agent.handoff`** | openwop-app's host-extension handoff record is stable for 30 days in two real workflows, and a second host asks for it |
+| **Shared intent record** | openwop-app's team intent ledger proves useful in production, and a second host wants it to cross host boundaries |
 
 Notes on the candidates:
 
@@ -37,6 +39,8 @@ Notes on the candidates:
 - **Audit-gated packs.** `core.openwop.{ai,http,mcp,triggers}` are built and signed in [`openwop/openwop-registry`](https://github.com/openwop/openwop-registry). Publication to `packs.openwop.dev` waits on the audit in `SECURITY/external-audit-engagement.md` and on a namespace-scoped signing key for the steward team.
 - **mTLS.** `openwop-auth-mtls` is verified end-to-end when configured. What remains is operator documentation (CA, server and client certificates, reverse-proxy deployment) and broader certificate-matrix coverage.
 - **Multi-region idempotency.** The rule is in the idempotency spec's multi-region annex. `multi-region-idempotency.test.ts` covers the capability shape only; the candidate adds behavior assertions for `"best-effort"` and `"strict"`.
+- **Structured handoff context.** Today `agent.handoff` carries `fromAgentId`, `toAgentId` and a free-text `reason`. RFC 0002 sketched an open `context` field that v2 does not carry. The candidate is an optional, typed handoff context with five parts: the intent, the decisions made (each with who decided), open questions, what was tried, and a confidence value. It would also cover agent-to-human escalation, where the same record would ride the clarification or approval interrupt. It is additive: a receiver that ignores it loses nothing it has today. openwop-app prototypes it first under the `openwop-` extension prefix the event schema already admits (see the app's ROADMAP, "Collaborative orchestration program").
+- **Shared intent record.** A run can already be paused for a human decision, and the decision is attributed. Nothing on the wire says what the work is *for*: the current intent, the decisions that shaped it, and what changed. openwop-app is building a team intent ledger as a host extension, with drift detection and decision capture from chat on top. Only the record itself is a protocol candidate, and only if it needs to cross hosts: a stable reference a run can stamp ("acted on ledger version N") and a way for a host to read it. Drift detection and decision capture stay host behavior.
 
 ## Ecosystem
 
@@ -69,9 +73,11 @@ Additional SDKs ship only when there is concrete demand. The current set (TS, Py
 | Production-host conformance certification | In progress | Three hosts certify `openwop-core-standard` |
 | Second independent host implementation (non-steward maintainer) | Not started | Needed for working-group governance |
 | Third-party node-pack catalog | Not started | Depends on hosted registry |
+| Certification bundle cut by someone other than the steward | Not started | Needs the independent host above |
 
 - **Certification.** [`INTEROP-MATRIX.md`](./INTEROP-MATRIX.md) records each host's certified profiles and signed bundle. Every bundle is steward-cut (`self`).
 - **Independent host.** `GOVERNANCE.md` requires a maintainer from a genuinely independent organization before the project moves to working-group governance. MyndHyve is a steward-affiliated sibling host (tier-2 evidence per `GOVERNANCE.md` §"Acceptance evidence tiers"), so it does not count.
+- **Independent certification.** All three certified hosts today (the v2 reference host, openwop-app and MyndHyve) are run by or affiliated with the steward, and every bundle is evidence tier `self`. "Open by design" becomes demonstrated, not just claimed, when a host we do not run publishes a certified bundle it cut itself against a released suite and it appears in `INTEROP-MATRIX.md`. Until then, public writing should say the protocol is open to any host and that independent implementations are wanted. It should not say they exist.
 
 ### Canonical Domain
 

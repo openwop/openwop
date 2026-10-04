@@ -8,6 +8,8 @@ Entries before this file was condensed carried full development detail. That tex
 
 ## [Unreleased]
 
+- **ROADMAP adds two gated candidates:** structured handoff context on `agent.handoff`, and a shared intent record. Both are prototyped first in openwop-app. It also tracks certification by a non-steward host. No spec change.
+
 ## [2.45.14] — 2026-10-04 — v1 end-of-support is 2026-10-04 (RFC 0234)
 
 - **v1 end-of-support is 2026-10-04** (RFC 0234, Accepted). An accepted RFC may set it before the computed 2026-12-04 once counted hosts are certified at v2 and see no third-party v1 traffic. Hosts MAY now retire v1; retention floors are unchanged.
