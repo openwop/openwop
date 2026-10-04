@@ -15,6 +15,8 @@ import {
   credentialsRotationLeg, credentialsScopesLeg, deadLetterRetentionDaysLeg, portabilityImportDryRunLeg, portabilityKindsLeg,
   providerUsageCostEstimatesLeg, providerUsageCurrencyLeg, schedulingFormsLeg, selfHostedRunnerDispatchKindsLeg,
   subWorkflowInputMappingLeg,
+  agentRuntimeImpliesManifestRuntimeLeg, dataResidencyRegionsLeg, multiPartyMaxParticipantsLeg, nodePackRuntimesWasmLeg,
+  purposePropagatesOnwardLeg, uiPluginsHostApiLeg, uiPluginsIsolationLeg, uiPluginsMaxEntryBytesLeg, uiPluginsSurfacesLeg,
 } from './family-advert-witness.js';
 
 const V2 = majorProfile(2);
@@ -270,5 +272,104 @@ describe('family-advert witness wave 2: absent facets are inapplicable, never a 
 
   it('scheduling: a single advertised form is enough to observe', () => {
     passes(schedulingFormsLeg(V2, { scheduling: { ...exp, cron: true } }));
+  });
+});
+
+// ---------------------------------------------------------------------------
+// Wave 3 — the families no host serves at v2. Same shape as wave 2.
+// ---------------------------------------------------------------------------
+
+const CONFORMING3: Readonly<Record<string, Record<string, unknown>>> = {
+  dataResidency: { ...exp, regions: ['eu-west', 'us-east'] },
+  conversationTurnModelProvenance: { ...exp },
+  multiPartyConversation: { ...exp, maxParticipants: 5 },
+  channelPresence: { ...exp },
+  nodePackRuntimes: { ...exp, wasm: { abiVersions: [1], maxMemoryBytes: 67108864 } },
+  uiPlugins: { ...exp, isolation: 'cross-origin-iframe', surfaces: ['artifact-viewer', 'route'], hostApi: ['artifact.read', 'host.toast'], maxEntryBytes: 524288 },
+  purposePropagation: { ...exp, propagatesOnward: true },
+  nondeterminismPolicy: { ...exp, declared: true },
+  promptLibrary: { ...exp, witness: 'claims-check' },
+  envelopeContracts: { ...exp, witness: 'claims-check', advertised: true },
+};
+const doc3 = (family: string, over: Record<string, unknown> = {}): Record<string, unknown> => ({ [family]: { ...CONFORMING3[family], ...over } });
+const LEGS3: Readonly<Record<string, Readonly<Record<string, LegFn>>>> = {
+  dataResidency: { regions: dataResidencyRegionsLeg },
+  multiPartyConversation: { maxParticipants: multiPartyMaxParticipantsLeg },
+  nodePackRuntimes: { wasm: nodePackRuntimesWasmLeg },
+  uiPlugins: { isolation: uiPluginsIsolationLeg, surfaces: uiPluginsSurfacesLeg, hostApi: uiPluginsHostApiLeg, maxEntryBytes: uiPluginsMaxEntryBytesLeg },
+  purposePropagation: { propagatesOnward: purposePropagatesOnwardLeg },
+};
+
+describe('family-advert witness wave 3: conforming records', () => {
+  it.each(Object.keys(CONFORMING3))('%s: the record and every facet leg pass', (family) => {
+    const d = doc3(family);
+    passes(recordSchemaLeg(V2, d, family as AdvertFamily, 'x'));
+    for (const leg of Object.values(LEGS3[family] ?? {})) passes(leg(V2, d));
+  });
+
+  it.each(Object.keys(CONFORMING3))('%s: an unadvertised family is inapplicable on every leg', (family) => {
+    inapplicable(recordSchemaLeg(V2, {}, family as AdvertFamily, 'x'));
+    for (const leg of Object.values(LEGS3[family] ?? {})) inapplicable(leg(V2, {}));
+  });
+
+  it.each(Object.keys(CONFORMING3))('%s: a v1 `supported` seat fails the record leg (capabilities.md §2)', (family) => {
+    fails(recordSchemaLeg(V2, doc3(family, { supported: true }), family as AdvertFamily, 'x'));
+  });
+});
+
+describe('family-advert witness wave 3: each defect fails only its own leg', () => {
+  it.each<[string, string, string, Record<string, unknown>]>([
+    ['dataResidency', 'regions', 'a duplicated region', { regions: ['eu-west', 'eu-west'] }],
+    ['dataResidency', 'regions', 'an empty region code', { regions: [''] }],
+    ['multiPartyConversation', 'maxParticipants', 'a council of one', { maxParticipants: 1 }],
+    ['multiPartyConversation', 'maxParticipants', 'a fractional cap', { maxParticipants: 2.5 }],
+    ['nodePackRuntimes', 'wasm', 'an empty abiVersions', { wasm: { abiVersions: [] } }],
+    ['nodePackRuntimes', 'wasm', 'ABI version 0', { wasm: { abiVersions: [0] } }],
+    ['nodePackRuntimes', 'wasm', 'a memory cap under 1 MiB', { wasm: { abiVersions: [1], maxMemoryBytes: 1024 } }],
+    ['uiPlugins', 'isolation', 'same-origin isolation', { isolation: 'same-origin' }],
+    ['uiPlugins', 'isolation', 'a malformed x-host value', { isolation: 'x-host-acme' }],
+    ['uiPlugins', 'surfaces', 'an unknown surface', { surfaces: ['sidebar'] }],
+    ['uiPlugins', 'hostApi', 'a method outside ui-plugin/1', { hostApi: ['host.eval'] }],
+    ['uiPlugins', 'maxEntryBytes', 'maxEntryBytes 0', { maxEntryBytes: 0 }],
+    ['purposePropagation', 'propagatesOnward', 'a string propagatesOnward', { propagatesOnward: 'yes' }],
+  ])('%s.%s: %s', (family, owner, _what, over) => {
+    const d = doc3(family, over);
+    for (const [name, leg] of Object.entries(LEGS3[family] ?? {})) {
+      if (name === owner) fails(leg(V2, d));
+      else passes(leg(V2, d));
+    }
+    fails(recordSchemaLeg(V2, d, family as AdvertFamily, 'x'));
+  });
+
+  it.each<[string, Record<string, unknown>]>([
+    ['nondeterminismPolicy', { declared: 'yes' }],
+    ['nondeterminismPolicy', { declared: undefined }],
+    ['envelopeContracts', { advertised: undefined }],
+    ['conversationTurnModelProvenance', { maxParticipants: 3 }],
+    ['channelPresence', { persisted: false }],
+    ['promptLibrary', { pinned: true }],
+  ])('%s: a record-only family fails the record leg on %j', (family, over) => {
+    fails(recordSchemaLeg(V2, doc3(family, over), family as AdvertFamily, 'x'));
+  });
+});
+
+describe('family-advert witness wave 3: absent facets are inapplicable, never a pass', () => {
+  it.each(Object.entries(LEGS3).flatMap(([family, legs]) => Object.entries(legs).map(([name, leg]) => [family, name, leg] as const)))('%s.%s', (family, _name, leg) => {
+    inapplicable(leg(V2, { [family]: { ...exp } }));
+  });
+});
+
+describe('family-advert witness wave 3: agentRuntime implies agents.manifestRuntime (host-services.md §agentRuntime)', () => {
+  const agentRuntime = { ...exp, witness: 'claims-check' };
+  it('passes when agents.manifestRuntime is advertised', () => {
+    passes(agentRuntimeImpliesManifestRuntimeLeg(V2, { agentRuntime, agents: { ...exp, manifestRuntime: { installScope: 'workspace' } } }));
+    passes(recordSchemaLeg(V2, { agentRuntime }, 'agentRuntime', 'x'));
+  });
+  it('fails when agents is absent, or carries no manifestRuntime', () => {
+    fails(agentRuntimeImpliesManifestRuntimeLeg(V2, { agentRuntime }));
+    fails(agentRuntimeImpliesManifestRuntimeLeg(V2, { agentRuntime, agents: { ...exp } }));
+  });
+  it('is inapplicable when agentRuntime is not advertised, whatever agents says', () => {
+    inapplicable(agentRuntimeImpliesManifestRuntimeLeg(V2, { agents: { ...exp } }));
   });
 });

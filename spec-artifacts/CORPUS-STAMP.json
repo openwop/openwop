@@ -118,7 +118,7 @@
     "schemas/v2/audit-verify-result.schema.json": "14af8e9283510f0a40e48a2059c929ee44e0fc9fa3cc66a95bfbe90b17c48297",
     "schemas/v2/budget-policy.schema.json": "1de68095db0beb5c7a4be629de26e79f62ebbe748a88d46f36e768edfd1f0d68",
     "schemas/v2/capabilities.schema.json": "c7a01b2f569139f99ba5e1a5329a42556fbd82bc743f8fd96963304395fc9ef0",
-    "schemas/v2/certification-bundle.schema.json": "82ce31a1ed6c7e21b0ba88ff62a7b8b768fc3b176b1d06fce023203830b94725",
+    "schemas/v2/certification-bundle.schema.json": "012c0176fbe05425507a8096412344388c0e2e1884c5fe1bc189ef1af0532997",
     "schemas/v2/channel-presence-payload.schema.json": "4eeb224910e6f7eee3ab5e7c3899559c25c83a26d0022e0ad195c4672611977a",
     "schemas/v2/channel-written-payload.schema.json": "ccecff3c71a3275ad8db035ac0e04db25e6f8d23cf091ddbcd5a60d1be1cbb6b",
     "schemas/v2/chat-card-pack-manifest.schema.json": "92a57db2fd4b2463f14ef155fef8e3f18afc78960b646459dcf32efc79ff6bf5",
@@ -128,7 +128,7 @@
     "schemas/v2/configurable.schema.json": "33a6884047e2490f723733bf8b74d3b9164e00374cfea6dc3eac5a70dc368861",
     "schemas/v2/connection-pack-manifest.schema.json": "8d019de6bd0c5b14ea3b227580734ec792521493b396a850f7f9217aa7a6a547",
     "schemas/v2/connection-provider-registry.schema.json": "5b404da328a95c45808929e233ee766ebd635cf0df6f5d15d4c19354dfd7e75d",
-    "schemas/v2/conversation-event.schema.json": "9ad4c57285818edbf38b17816de0c4162f777c835f59e68702d0367a81cbccf6",
+    "schemas/v2/conversation-event.schema.json": "51dce69b33e3eb1913b9b2a0fcc0bee3dcf86761faf0c56dd004f4c580c95d39",
     "schemas/v2/conversation-turn.schema.json": "75bb6a4a03072a958feb5b34e2a1f40471e9e3996a81fa430b65717f0773c9a4",
     "schemas/v2/credential-provenance.schema.json": "f86b09e94b1c524dec7d1c6353965665ae8891e9517faef6e742d639c5578c99",
     "schemas/v2/credential-reference.schema.json": "ea699ce30f58fb2c32d4279158b3f730f70be7b2dc8c3037693a76e66eb3e001",
@@ -173,7 +173,7 @@
     "schemas/v2/residency.schema.json": "3fd23c9732beb140504e81560fc426eb6764d547e56da5fb92c5a5c7bf04db3a",
     "schemas/v2/run-ancestry-response.schema.json": "334c17f2062dea62726ca1d07b8be3f169cdc422af843c1def5fb317039814c9",
     "schemas/v2/run-diff-response.schema.json": "8bdb2045c274580038bd74781f7d062f5049839797c164a89de4ed89edc53a74",
-    "schemas/v2/run-event-payloads.schema.json": "fc1af4245dec98f7be86d20ad339e3409d0b2aaaa301dace083f734999c470b7",
+    "schemas/v2/run-event-payloads.schema.json": "942d6f65a765f6b574922a54d1e531ab66bc8d5c673a006ec68f8d75f3f0aec9",
     "schemas/v2/run-event.schema.json": "2f0d7416bd376c56affe97b6b2b49981532e8e9ff45c0a162cf806c78b3e7fb7",
     "schemas/v2/run-list-response.schema.json": "c2dbc34768dcf64528914a213aa3cb55952e8e3e90a64b04a9423b2a19749d38",
     "schemas/v2/run-options.schema.json": "f0e9f494d80086c2ed2cf9fe87df54e5b4e66601699c4a1089f4edbc7ba58867",
@@ -313,5 +313,5 @@
     "spec/v2/retention-floors.json": "eaf3722d95c79947af1d4269ef85117e126518c588cfcf1a2b21b97269f51624",
     "spec/v2/surface-baseline.json": "49311a9dd16aaa597d1c6724aa24456edd5f372d9b7d0bd6f5f1647f68db6db8"
   },
-  "corpusCommit": "2d363d1f6007db6927033fc69b91606d334601ed"
+  "corpusCommit": "683b6c538b2d3d072628bcedd1a5e762e975d0e9"
 }
