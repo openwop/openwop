@@ -220,6 +220,11 @@ Defects outside the spec:
       advertise ⇒ emit and no-delivery-to-a-non-member rules are restated in `conversation.md`,
       witnessed by `v2-channel-presence-delivery` through the §13 seam (ported to `api/seams-v2.yaml`
       with an `observer` field), and invariant `channel-presence-member-only-delivery` is added.
+- [ ] **RFC owed: a v2 home for runless vendor host events.** openwop-app (ADR 0812) delivers runless host
+      events to major-2 webhook subscriptions with a `hostext:` pseudo-`runId`. That fails
+      `webhook-delivery.schema.json`: v2 webhooks carry run events only (`webhooks.md` §Delivery), and
+      `hostEvents` admits only the two heartbeat messages. Ruled 2026-10-05: no major-2 webhook delivery,
+      no pseudo-ids. Likely one RFC with the ephemeral class below (events with no log position).
 - [ ] **RFC owed: an ephemeral delivery class in `events.md`.** RFC 0110 says `channel.presence` MUST
       NOT be persisted and is replay-invisible. Yet `events.md` §1 makes a run its log, and the
       envelope requires `sequence`, a log position. Restating the rule would contradict core;
