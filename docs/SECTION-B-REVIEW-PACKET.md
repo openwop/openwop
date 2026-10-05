@@ -6,7 +6,7 @@
 
 RFC 0156 §B: RFCs affecting auth, identity, tenant isolation, secrets, packs, execution sandboxing, idempotency, replay, external effects, conformance/certification, or governance **MUST** receive a retrospective **cross-organization** review. Every RFC below was accepted with its public comment window shortened, either under the bootstrap waiver or by explicit steward override of RFC 0147 §A.6. Each such acceptance is **provisional** until a reviewer from an organization other than the steward's records an outcome.
 
-This packet is for that reviewer. **112 RFCs are listed; 112 have no discharging outcome.** The steward, the steward's sessions, and steward-affiliated hosts (MyndHyve is tier-2, not independent) cannot supply the review. Recording one of their reviews as `ratified` is the substitution §B's last clause forbids.
+This packet is for that reviewer. **113 RFCs are listed; 113 have no discharging outcome.** The steward, the steward's sessions, and steward-affiliated hosts (MyndHyve is tier-2, not independent) cannot supply the review. Recording one of their reviews as `ratified` is the substitution §B's last clause forbids.
 
 ## How to review one RFC
 
@@ -21,7 +21,7 @@ This packet is for that reviewer. **112 RFCs are listed; 112 have no discharging
 
 Grouping below is a reading aid only: it assigns each RFC to the risk class its waiver recorded, else to the first §B area its title names. It is not a scope assessment.
 
-## Identity and authorization (16)
+## Identity and authorization (17)
 
 | RFC | Title | Status | Waiver | Evidence tier | Outcome |
 | --- | --- | --- | --- | --- | --- |
@@ -41,6 +41,7 @@ Grouping below is a reading aid only: it assigns each RFC to the risk class its 
 | [0230](../RFCS/0230-inbound-webhook-ingest-contract.md) | inbound webhook ingest contract | `Accepted` | steward override of RFC 0147 §A.6 | tier-1 — steward-verified: openwop-app, the steward-operated production host at `app | `not-reviewed` |
 | [0232](../RFCS/0232-trigger-dead-letter-read.md) | a trigger subscription's dead-lettered deliveries are readable | `Accepted` | steward override of RFC 0147 §A.6 | tier-1 — steward-verified: openwop-app, the steward-operated production host at `app | `not-reviewed` |
 | [0233](../RFCS/0233-connection-provider-registry-read.md) | a host's connection providers and refused registrations are readable | `Accepted` | steward override of RFC 0147 §A.6 | tier-1 — steward-verified: openwop-app, the steward-operated production host at `app | `not-reviewed` |
+| [0235](../RFCS/0235-if-none-match-evaluation.md) | `If-None-Match` is evaluated as HTTP defines it | `Active` | steward override of RFC 0147 §A.6 | not declared (predates RFC 0174 §B.1, or not yet Accepted) | `not-reviewed` |
 
 ## Tenant isolation (5)
 

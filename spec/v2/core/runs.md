@@ -167,8 +167,11 @@ Field rules:
 
 ### Caching and encoding
 
-- The `200` SHOULD carry a strong `ETag` derived from the latest persisted `sequence`. When present it MUST change on every observable transition and be stable otherwise.
-- When the host sends an `ETag`, a request whose `If-None-Match` matches it MUST receive `304` with no body.
+- The `200` SHOULD carry an `ETag` derived from the latest persisted `sequence`. When present it MUST change on every observable transition and be stable otherwise.
+- A host evaluates `If-None-Match` as RFC 9110 §13.1.2 defines it: `*`, or a list of entity tags any of which matches the current `ETag` under weak comparison (`W/` is ignored on either side). This holds wherever a host honors `If-None-Match`, discovery included.
+  - On a match the host MUST answer `304` with no body, carrying the `ETag` and the `Vary` the `200` would carry.
+  - The host MUST evaluate it only when the unconditional response would be `2xx`. A run the caller cannot read stays `404`, whatever the request carries.
+  - A request `Cache-Control: no-cache` MUST NOT suppress the evaluation.
 - A host MAY compress (`gzip` baseline; `br` and `zstd` only where advertised under `extensions["<org>.rest-transport"].contentEncodings`, [ext/restTransport](../ext/restTransport/README.md)). It MUST then set `Content-Encoding` and `Vary: Accept-Encoding`. The decoded body is byte-identical.
 
 ## List
@@ -298,4 +301,4 @@ Queue messages ([host-services.md](host-services.md) §`queueBus`) and webhook d
 
 A non-terminal run inherited from v1 continues, or is cancelled `v1_pin_unsupported`, per [persistence.md](persistence.md) §"Runs pinned to v1".
 
-*Sources: RFCs 0053, 0058, 0084, 0170, 0171, 0176, 0182, 0228, 0229, 0231.*
+*Sources: RFCs 0053, 0058, 0084, 0170, 0171, 0176, 0182, 0228, 0229, 0231, 0235.*

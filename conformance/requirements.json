@@ -3,10 +3,10 @@
   "generatedFrom": "src/scenarios/*.test.ts",
   "counts": {
     "files": 726,
-    "tests": 2747,
-    "withStableId": 2747,
+    "tests": 2754,
+    "withStableId": 2754,
     "interpolatedTitles": 0,
-    "explicitIds": 2613
+    "explicitIds": 2620
   },
   "records": [
     {
@@ -30149,7 +30149,7 @@
     {
       "id": "openwop.it.v2-discovery-etag.the-discovery-document-carries-an-etag",
       "file": "v2-discovery-etag.test.ts",
-      "line": 59,
+      "line": 74,
       "title": "the discovery document carries an ETag",
       "explicitId": "openwop.requirement.capabilities.discovery-etag-emitted",
       "citations": [
@@ -30163,7 +30163,7 @@
     {
       "id": "openwop.it.v2-discovery-etag.a-matching-if-none-match-receives-304-with-no-body-and-the-version-header-a-non",
       "file": "v2-discovery-etag.test.ts",
-      "line": 66,
+      "line": 81,
       "title": "a matching If-None-Match receives 304 with no body and the version header; a non-matching one receives 200",
       "explicitId": "openwop.requirement.capabilities.discovery-etag-revalidates",
       "citations": [
@@ -30186,6 +30186,45 @@
           "section": "spec/v2/core/capabilities.md §1",
           "requirement": null,
           "interpolated": true
+        }
+      ]
+    },
+    {
+      "id": "openwop.it.v2-discovery-etag.if-none-match-is-evaluated-as-rfc-9110-defines-it-a-weak-tag-a-list-holding-the",
+      "file": "v2-discovery-etag.test.ts",
+      "line": 105,
+      "title": "If-None-Match is evaluated as RFC 9110 defines it: a weak tag, a list holding the tag and `*` match; other tags do not",
+      "explicitId": "openwop.requirement.0235.if-none-match.rfc9110-match",
+      "citations": [
+        {
+          "section": "spec/v2/core/runs.md §Caching and encoding",
+          "requirement": "If-None-Match is `*` or a list of entity tags compared weakly (RFC 9110 §13.1.2)"
+        }
+      ]
+    },
+    {
+      "id": "openwop.it.v2-discovery-etag.a-304-carries-the-etag-and-the-vary-of-the-200",
+      "file": "v2-discovery-etag.test.ts",
+      "line": 111,
+      "title": "a 304 carries the ETag and the Vary of the 200",
+      "explicitId": "openwop.requirement.0235.if-none-match.304-carries-etag",
+      "citations": [
+        {
+          "section": "spec/v2/core/runs.md §Caching and encoding",
+          "requirement": "on a match the host MUST answer 304 carrying the ETag and the Vary the 200 would carry"
+        }
+      ]
+    },
+    {
+      "id": "openwop.it.v2-discovery-etag.a-request-cache-control-no-cache-does-not-suppress-the-evaluation",
+      "file": "v2-discovery-etag.test.ts",
+      "line": 117,
+      "title": "a request Cache-Control: no-cache does not suppress the evaluation",
+      "explicitId": "openwop.requirement.0235.if-none-match.no-cache-ignored",
+      "citations": [
+        {
+          "section": "spec/v2/core/runs.md §Caching and encoding",
+          "requirement": "a request Cache-Control: no-cache MUST NOT suppress the evaluation"
         }
       ]
     },
@@ -36176,7 +36215,7 @@
     {
       "id": "openwop.it.v2-run-snapshot-etag.a-matching-if-none-match-receives-304-with-no-body-and-the-version-header-a-non",
       "file": "v2-run-snapshot-etag.test.ts",
-      "line": 47,
+      "line": 63,
       "title": "a matching If-None-Match receives 304 with no body and the version header; a non-matching one receives 200",
       "explicitId": "openwop.requirement.0170.run-snapshot-etag",
       "citations": [
@@ -36203,6 +36242,58 @@
         {
           "section": "spec/v2/core/runs.md §Snapshot",
           "requirement": "the 200 body is the snapshot"
+        }
+      ]
+    },
+    {
+      "id": "openwop.it.v2-run-snapshot-etag.if-none-match-is-evaluated-as-rfc-9110-defines-it-a-weak-tag-a-list-holding-the",
+      "file": "v2-run-snapshot-etag.test.ts",
+      "line": 137,
+      "title": "If-None-Match is evaluated as RFC 9110 defines it: a weak tag, a list holding the tag and `*` match; other tags do not",
+      "explicitId": "openwop.requirement.0235.if-none-match.rfc9110-match",
+      "citations": [
+        {
+          "section": "spec/v2/core/runs.md §Caching and encoding",
+          "requirement": "If-None-Match is `*` or a list of entity tags compared weakly (RFC 9110 §13.1.2)"
+        }
+      ]
+    },
+    {
+      "id": "openwop.it.v2-run-snapshot-etag.a-304-carries-the-etag-and-the-vary-of-the-200",
+      "file": "v2-run-snapshot-etag.test.ts",
+      "line": 144,
+      "title": "a 304 carries the ETag and the Vary of the 200",
+      "explicitId": "openwop.requirement.0235.if-none-match.304-carries-etag",
+      "citations": [
+        {
+          "section": "spec/v2/core/runs.md §Caching and encoding",
+          "requirement": "on a match the host MUST answer 304 carrying the ETag and the Vary the 200 would carry"
+        }
+      ]
+    },
+    {
+      "id": "openwop.it.v2-run-snapshot-etag.a-request-cache-control-no-cache-does-not-suppress-the-evaluation",
+      "file": "v2-run-snapshot-etag.test.ts",
+      "line": 151,
+      "title": "a request Cache-Control: no-cache does not suppress the evaluation",
+      "explicitId": "openwop.requirement.0235.if-none-match.no-cache-ignored",
+      "citations": [
+        {
+          "section": "spec/v2/core/runs.md §Caching and encoding",
+          "requirement": "a request Cache-Control: no-cache MUST NOT suppress the evaluation"
+        }
+      ]
+    },
+    {
+      "id": "openwop.it.v2-run-snapshot-etag.a-conditional-request-on-a-run-that-does-not-exist-gets-the-unconditional-status",
+      "file": "v2-run-snapshot-etag.test.ts",
+      "line": 158,
+      "title": "a conditional request on a run that does not exist gets the unconditional status, never 304",
+      "explicitId": "openwop.requirement.0235.if-none-match.only-on-2xx",
+      "citations": [
+        {
+          "section": "spec/v2/core/runs.md §Caching and encoding",
+          "requirement": "If-None-Match is evaluated only when the unconditional response would be 2xx; a run the caller cannot read stays 404"
         }
       ]
     },

@@ -167,3 +167,4 @@ to land — and until then the zero is visibly a blocked obligation rather than 
 | 0232 | a trigger subscription's dead-lettered deliveries are readable (authorization/isolation and certification; additive; STEWARD OVERRIDE of RFC 0147 §A.6) | in-scope-pending-assessment | — | — | `not-reviewed` |
 | 0233 | a host's connection providers and refused registrations are readable (authorization and certification; additive; STEWARD OVERRIDE of RFC 0147 §A.6) | in-scope-pending-assessment | — | — | `not-reviewed` |
 | 0234 | an accepted RFC may set v1 end-of-support earlier than the computed date (compatibility and certification; governance; STEWARD OVERRIDE of RFC 0147 §A.6) | in-scope-pending-assessment | — | — | `not-reviewed` |
+| 0235 | `If-None-Match` is evaluated as HTTP defines it (authorization and certification; additive; STEWARD OVERRIDE of RFC 0147 §A.6) | in-scope-pending-assessment | — | — | `not-reviewed` |
