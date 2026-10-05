@@ -3,8 +3,8 @@
   "generatedFrom": "src/scenarios/*.test.ts",
   "counts": {
     "files": 728,
-    "tests": 2762,
-    "withStableId": 2762,
+    "tests": 2763,
+    "withStableId": 2763,
     "interpolatedTitles": 0,
     "explicitIds": 2626
   },
@@ -31509,7 +31509,7 @@
     {
       "id": "openwop.it.v2-host-event-delivery.an-emitted-durable-host-event-arrives-on-host-events-as-a-valid-envelope",
       "file": "v2-host-event-delivery.test.ts",
-      "line": 122,
+      "line": 131,
       "title": "an emitted durable host event arrives on /host/events as a valid envelope",
       "explicitId": "openwop.requirement.0236.host-event.envelope",
       "citations": [
@@ -31522,7 +31522,7 @@
     {
       "id": "openwop.it.v2-host-event-delivery.an-ephemeral-host-event-has-no-id-and-is-not-redelivered-after-last-event-id",
       "file": "v2-host-event-delivery.test.ts",
-      "line": 136,
+      "line": 145,
       "title": "an ephemeral host event has no id: and is not redelivered after Last-Event-ID",
       "explicitId": null,
       "citations": []
@@ -31530,7 +31530,7 @@
     {
       "id": "openwop.it.v2-host-event-delivery.registerwebhook-refuses-an-ephemeral-host-event-type-with-400-validation-error",
       "file": "v2-host-event-delivery.test.ts",
-      "line": 153,
+      "line": 162,
       "title": "registerWebhook refuses an ephemeral host-event type with 400 validation_error",
       "explicitId": "openwop.requirement.0236.webhook.ephemeral-refused",
       "citations": [
@@ -31546,10 +31546,10 @@
       ]
     },
     {
-      "id": "openwop.it.v2-host-event-delivery.a-subscribed-durable-host-event-is-delivered-as-hostevent-signed-the-ephemeral-o",
+      "id": "openwop.it.v2-host-event-delivery.a-subscribed-durable-host-event-is-delivered-as-hostevent-signed",
       "file": "v2-host-event-delivery.test.ts",
-      "line": 166,
-      "title": "a subscribed durable host event is delivered as { hostEvent }, signed; the ephemeral one is not",
+      "line": 175,
+      "title": "a subscribed durable host event is delivered as { hostEvent }, signed",
       "explicitId": "openwop.requirement.0236.webhook.host-variant",
       "citations": [
         {
@@ -31560,9 +31560,17 @@
       ]
     },
     {
+      "id": "openwop.it.v2-host-event-delivery.the-same-subscription-never-receives-the-ephemeral-host-event",
+      "file": "v2-host-event-delivery.test.ts",
+      "line": 211,
+      "title": "the same subscription never receives the ephemeral host event",
+      "explicitId": null,
+      "citations": []
+    },
+    {
       "id": "openwop.it.v2-host-event-delivery.a-second-tenant-receives-nothing-for-the-first-tenant-s-host-event",
       "file": "v2-host-event-delivery.test.ts",
-      "line": 200,
+      "line": 224,
       "title": "a second tenant receives nothing for the first tenant’s host event",
       "explicitId": null,
       "citations": []
