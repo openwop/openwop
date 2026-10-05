@@ -11,7 +11,7 @@
     "api/redocly.yaml": "b0604c89b2ca6d5076ec25725c539dad44a741a811fe524439ee6daef8baa09f",
     "api/seams-v2.yaml": "d963b75d8b3b689a67e276f29024d7d2b58a4b4a79c11b9f2c112b30c5173156",
     "api/v2/asyncapi.yaml": "a1d8826c7a8c6bc64361a1db69b607025988fc7fb64a2cb52cca0a79f9ace7c5",
-    "api/v2/openapi.yaml": "d9c1a78a13a32c653d148126c7dd086bd25e1394cac2f4a35db6290ffdc7fa3b",
+    "api/v2/openapi.yaml": "2bfa78c726d95427590686791408919662f5e7f40e7e19fa312ed27d61373279",
     "api/v2/redocly.yaml": "1e66b60e6118ad11a823bb620678be464d99dfe50a40e3e6f93ec9429b88b34c",
     "schemas/README.md": "bd1c00fae7b6fda506a75aff841bbdc438d4ce092642a72041203bee999b88de",
     "schemas/a2a-task-state.schema.json": "75d5049dea8bd873ff0e7546f1c60c8d36c219bec7084264360be54a8be30ae1",
@@ -214,7 +214,7 @@
     "spec/v1/event-codemap.json": "3da60d884157793a360da532a9fcbbfb5285636db325a74cec94b34622186d97",
     "spec/v1/event-codemap.schema.json": "d05933b2e88103aff51a2f774df97b9bda065e0fc88dbd9b114cc47a32189174",
     "spec/v1/extensions.json": "79a60754aa16cbdbdb604f8e5c00038af535a1690a4d07bd5ff7c38f0256a7bc",
-    "spec/v1/gaps.json": "cf9d4746752f0ce4ac05bc40c74c5118f3cd5e16c238004dce0ff67a3f22835b",
+    "spec/v1/gaps.json": "7fb75c8cceaa8aa6893aa9dc68ae83e57fe0178225a23f376b6de54e74b15ead",
     "spec/v1/gaps.schema.json": "8fd83259f556553c9df0f53e7a82ca8c2a4771d471197f69b4e2ae0ceeacfd66",
     "spec/v1/migrations.json": "4c50760be70cb644d02427bcaf5749606700edf4513f423903cf3b1d12f5c300",
     "spec/v1/migrations.schema.json": "886779aa6c22e646db097f5df210adb018a4dd14a7b815465a18c8a7056c8f72",
@@ -222,7 +222,7 @@
     "spec/v1/spec-gaps.json": "ea9612af55bea9dae3e82223d4f714243f8f590b0193f1188257b13491a38afc",
     "spec/v2/README.md": "ddea90d7cf14aefffe1a43eeeecd4222dadad1d1e5ac64dceb073990eb93d9ef",
     "spec/v2/core/artifact-type-packs.md": "f734740cc3963f86c9f273a7dace26291bba2855161ddd3540618131a2c8d13e",
-    "spec/v2/core/capabilities.md": "04feda1747ca8f97443176cbf82d7d69891322a7bbf9a9bed88f519b8fb574fe",
+    "spec/v2/core/capabilities.md": "ed4664a38f53cee32d0082d9fe99091ce13a9874081150fdc72b9b41d4ef9e72",
     "spec/v2/core/conformance.md": "3ca291e63bc70a6ef829ae8759ad0ded3741ea7aa507bbbdffc57de443ab2ae2",
     "spec/v2/core/connection-packs.md": "c80f95bd6a03698f35c72cdb2b46bd973f49203bbd786c26760e35fa86e6f23d",
     "spec/v2/core/conversation.md": "354fa57c73d11062e523a44aa75a6353c5c81aefaf306d30c42416a228c82c86",
@@ -230,7 +230,7 @@
     "spec/v2/core/events.md": "c1a20e3aa6736119ea07aa2cf66faa808a1874d2cde4933033b65506d1742883",
     "spec/v2/core/execution.md": "8a0c9db1bbfb97c008ab9328b7333c1cc3318196e78bfbefb49e781bdf4f9d44",
     "spec/v2/core/form-content-packs.md": "02931227899676fd4581a27017be2a6c4953904717be9b81c29d12f87ab3917d",
-    "spec/v2/core/headers.md": "60aee0768bb1b15cf8ff783170ba6541c8c106da417c8a066c8f85cb6a5b1ba1",
+    "spec/v2/core/headers.md": "24b0d84ab5521e20f2669fca8006a11f9faf5c2311199e57375b8fa64ce763ed",
     "spec/v2/core/host-services.md": "73f26ea32891044131d63f9861d2cbddccb5d08bf76e29e47afef9bb5b646791",
     "spec/v2/core/i18n.md": "882904b7d59f992ab1e5f7346167161a54cf665b8fee47e64a3862cf9133a580",
     "spec/v2/core/idempotency.md": "adbd317a6ebb57c2759c076297b31f67def9e391576bccd0bbea787b13e85872",
@@ -244,7 +244,7 @@
     "spec/v2/core/persistence.md": "249a1de353f421cdf92b9006a13a10afdb002f4029eb6a13520cc95252edb2ec",
     "spec/v2/core/portability.md": "ab13a6ca43544b9a6a91edfb377ec680c768d14be841c84fb79125b231426891",
     "spec/v2/core/replay.md": "4a8b53325e18aa53400ece81168c76b4402b932e5e304a391754f293b126eabf",
-    "spec/v2/core/runs.md": "bee5da861b31a583257f3d6020fbd245c36ba5ec40340d54ae6741f0c6f50ede",
+    "spec/v2/core/runs.md": "1c292c0ab4a3119aeff3a6e9b6e99cff69782df78c3872179f9f0661b6204f23",
     "spec/v2/core/security-defaults.md": "887d8c4bc592094e3b931c23f1c2175c18ebbd47528b074016f9d2091bc513b2",
     "spec/v2/core/storage.md": "dc94b985847c1341c7a064f04a6010f0fdbe6c3ab3e555d4362878c81d764c18",
     "spec/v2/core/tool-catalog.md": "d16a9004418719c48301804aefa4d7ab6f41112a4ed83727f552aa1b92b418b0",
@@ -313,5 +313,5 @@
     "spec/v2/retention-floors.json": "eaf3722d95c79947af1d4269ef85117e126518c588cfcf1a2b21b97269f51624",
     "spec/v2/surface-baseline.json": "273566823eac3465b9f692c9cb795eca669e753bd0e733575b4722d176e115ce"
   },
-  "corpusCommit": "872b92a79682d6db8cf31dbaa56835b05369bcae"
+  "corpusCommit": "f51aae4405e8a75aa6ab659c29d50efe38977f31"
 }

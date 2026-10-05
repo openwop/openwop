@@ -575,7 +575,7 @@ def v2_openapi_and_seams():
                     # same conditional GET to the run snapshot (rc.49, finding 5). The 304 MUST binds only
                     # where the host sent an ETag, which is a SHOULD on the snapshot.
                     p['description'] = ('Conditional request on the discovery document (capabilities.md §1) and the run snapshot (runs.md §Snapshot). '
-                                        'A value matching the `ETag` the host sent MUST yield `304 Not Modified` with no body. '
+                                        'A value that matches the current `ETag` (runs.md §Caching and encoding) MUST yield `304 Not Modified` with no body. '
                                         'The 304 carries `OpenWOP-Version` like every response (versioning.md §1.4).')
                 if isinstance(p, dict) and p.get('name') == 'token' and p.get('in') == 'path':
                     p['schema'] = {'type': 'string', 'pattern': '^(ow2\\.hs256\\.[A-Za-z0-9._~-]{1,128}\\.[A-Za-z0-9_-]+\\.[A-Za-z0-9_-]+|[A-Za-z0-9_-]+\\.[A-Za-z0-9_-]+)$'}
@@ -606,7 +606,7 @@ def v2_openapi_and_seams():
                     if op.get('operationId') == 'getCapabilities' and code == '200' and isinstance(etag, dict):
                         # capabilities.md §1 is a MUST in v2; the v1 text said SHOULD and named the
                         # retired `Capabilities-Etag` (D2, 2.36.2). The obligation is per operation.
-                        etag['description'] = ('Strong validator for the discovery document (capabilities.md §1). A v2 host MUST send it '
+                        etag['description'] = ('Validator for the discovery document (capabilities.md §1). A v2 host MUST send it '
                                                'and MUST honor `If-None-Match` with `304`. A host that changes semantics without changing '
                                                'the bytes is non-conformant.')
             if op.get('operationId') == 'pollRunEvents':

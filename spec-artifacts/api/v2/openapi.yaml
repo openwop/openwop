@@ -75,8 +75,8 @@ paths:
         schema:
           type: string
         description: Conditional request on the discovery document (capabilities.md §1) and the run snapshot (runs.md §Snapshot).
-          A value matching the `ETag` the host sent MUST yield `304 Not Modified` with no body. The 304 carries `OpenWOP-Version`
-          like every response (versioning.md §1.4).
+          A value that matches the current `ETag` (runs.md §Caching and encoding) MUST yield `304 Not Modified` with no body.
+          The 304 carries `OpenWOP-Version` like every response (versioning.md §1.4).
       - $ref: '#/components/parameters/OpenWOPVersion'
       - $ref: '#/components/parameters/OpenWOPClientVersion'
       responses:
@@ -90,8 +90,8 @@ paths:
             ETag:
               schema:
                 type: string
-              description: Strong validator for the discovery document (capabilities.md §1). A v2 host MUST send it and MUST
-                honor `If-None-Match` with `304`. A host that changes semantics without changing the bytes is non-conformant.
+              description: Validator for the discovery document (capabilities.md §1). A v2 host MUST send it and MUST honor
+                `If-None-Match` with `304`. A host that changes semantics without changing the bytes is non-conformant.
             OpenWOP-Version:
               $ref: '#/components/headers/OpenWOPVersion'
           content:
@@ -439,8 +439,8 @@ paths:
         schema:
           type: string
         description: Conditional request on the discovery document (capabilities.md §1) and the run snapshot (runs.md §Snapshot).
-          A value matching the `ETag` the host sent MUST yield `304 Not Modified` with no body. The 304 carries `OpenWOP-Version`
-          like every response (versioning.md §1.4).
+          A value that matches the current `ETag` (runs.md §Caching and encoding) MUST yield `304 Not Modified` with no body.
+          The 304 carries `OpenWOP-Version` like every response (versioning.md §1.4).
       - $ref: '#/components/parameters/OpenWOPVersion'
       - $ref: '#/components/parameters/OpenWOPClientVersion'
       responses:

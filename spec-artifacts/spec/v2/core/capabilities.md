@@ -17,7 +17,7 @@ A single fetch answers the major the client speaks and names the other. A v2 roo
 
 ### 1.1 Cache validators
 
-A host MUST emit a standard `ETag` on the discovery document and MUST honor `If-None-Match` with `304`. The v2 representation has no `Capabilities-Etag`: the document's bytes are its negotiation identity. A host that changes semantics without changing bytes is non-conformant.
+A host MUST emit a standard `ETag` on the discovery document and MUST honor `If-None-Match` with `304` ([runs.md](runs.md) §Caching and encoding). The v2 representation has no `Capabilities-Etag`: the document's bytes are its negotiation identity. A host that changes semantics without changing bytes is non-conformant.
 
 ### 1.2 Removal triggers
 

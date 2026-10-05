@@ -71,8 +71,8 @@
 | Status | Count |
 |---|---:|
 | Accepted | 226 |
-| Active | 3 |
-| Draft | 2 |
+| Active | 4 |
+| Draft | 1 |
 | Superseded | 1 |
 
 | RFC | Title | Status |
@@ -308,7 +308,7 @@
 | RFC 0232 | a trigger subscription's dead-lettered deliveries are readable | Accepted |
 | RFC 0233 | a host's connection providers and refused registrations are readable | Accepted |
 | RFC 0234 | an accepted RFC may set v1 end-of-support earlier than the computed date | Accepted |
-| RFC 0235 | `If-None-Match` is evaluated as HTTP defines it | Draft |
+| RFC 0235 | `If-None-Match` is evaluated as HTTP defines it | Active |
 
 ## SDK Helper Coverage
 
@@ -332,8 +332,8 @@ The pack registry now lives in the [`openwop-registry`](https://github.com/openw
 
 ## Active Follow-Ups
 
-- 2 RFCs still `Draft` (RFC 0038, RFC 0235) — advance with schema/conformance proof or defer.
-- 3 RFCs `Active` (RFC 0121, RFC 0222, RFC 0228) — wire-shape MAY shift compatibly within v1.x until promotion to `Accepted`.
+- 1 RFC still `Draft` (RFC 0038) — advance with schema/conformance proof or defer.
+- 4 RFCs `Active` (RFC 0121, RFC 0222, RFC 0228, RFC 0235) — wire-shape MAY shift compatibly within v1.x until promotion to `Accepted`.
 - External audit, non-steward host recruitment, and non-steward maintainer recruitment remain external-action gates.
 - Multi-region idempotency and some optional-profile behavior checks remain lower-confidence than the core wire contract.
 

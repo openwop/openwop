@@ -17,7 +17,17 @@
  * scopes `If-None-Match` to the discovery document; runs.md applies it to the
  * snapshot with a MUST (finding 5, filed).
  *
+ * RFC 0235 (`runs.md` §Caching and encoding) adds four legs, shared with
+ * `v2-discovery-etag` through `lib/if-none-match-witness.ts`: the RFC 9110
+ * match (weak, list, `*`, and two negatives), a 304 carrying the ETag, a
+ * request `Cache-Control: no-cache` not suppressing evaluation, and — only on
+ * this surface — evaluation only where the answer would be 2xx: `*` or a
+ * minted tag on a run id that does not exist gets the unconditional status,
+ * never a 304 that would disclose the run. Each of them is `inapplicable` when
+ * the snapshot carries no ETag, like the base leg.
+ *
  * @see spec/v2/core/runs.md §Snapshot
+ * @see spec/v2/core/runs.md §Caching and encoding
  * @see spec/v2/core/versioning.md §1.4
  */
 
@@ -28,10 +38,16 @@ import { v2Discovery } from '../lib/v2.js';
 import { readErrorCode } from '../lib/error-envelope.js';
 import { softSkip } from '../lib/soft-skip.js';
 import { req } from '../lib/requirement-ids.js';
+import { headersLeg, judgeNot2xx, matchLeg, noCacheLeg, type Get, type LegOutcome } from '../lib/if-none-match-witness.js';
 
 const ID = 'openwop.requirement.0170.run-snapshot-etag';
 const DOC = 'spec/v2/core/runs.md §Snapshot';
 const NOOP = 'conformance-noop';
+const MATCH_DOC = 'spec/v2/core/runs.md §Caching and encoding';
+const ID_MATCH = 'openwop.requirement.0235.if-none-match.rfc9110-match';
+const ID_304_ETAG = 'openwop.requirement.0235.if-none-match.304-carries-etag';
+const ID_NO_CACHE = 'openwop.requirement.0235.if-none-match.no-cache-ignored';
+const ID_ONLY_2XX = 'openwop.requirement.0235.if-none-match.only-on-2xx';
 /** The client spellings a host MUST treat alike (versioning.md §1). */
 const SPELLINGS: ReadonlyArray<Readonly<Record<string, string>>> = [
   { 'OpenWOP-Version': '2.0' },
@@ -92,5 +108,69 @@ describe('v2 run-snapshot-etag (runs.md §Snapshot)', () => {
     if (miss === null) return softSkip('blocked', 'conditional GET unreachable (fetch failed)');
     expect(miss.status, req(ID, DOC, `a non-matching If-None-Match MUST receive 200 with the body — got ${miss.status} (a host answering 304 to any conditional request is not honouring the tag)`)).toBe(200);
     expect((miss.json as { runId?: unknown } | null)?.runId, req(ID, DOC, 'the 200 body is the snapshot')).toBe(runId);
+  });
+
+  /** A settled run whose snapshot carries an ETag, or the reason there is none. */
+  let settled: Promise<{ runId: string; tag: string } | { skip: 'blocked' | 'inapplicable'; reason: string }> | null = null;
+  function settledRun(): Promise<{ runId: string; tag: string } | { skip: 'blocked' | 'inapplicable'; reason: string }> {
+    settled ??= (async () => {
+      if (!(await discovery())) return { skip: 'blocked' as const, reason: 'v2 discovery unreachable' };
+      const created = await http(() => driver.post('/runs', { workflowId: NOOP }));
+      const runId = (created?.json as { runId?: unknown } | null)?.runId;
+      if (created === null || created.status !== 201 || typeof runId !== 'string') return { skip: 'blocked' as const, reason: `POST /runs answered ${created?.status ?? 'no response'} — create refused` };
+      await pollUntilTerminal(runId, { timeoutMs: scaledTimeoutMs(30_000) });
+      const ok = await http(() => driver.get(`/runs/${encodeURIComponent(runId)}`));
+      if (ok === null || ok.status !== 200) return { skip: 'blocked' as const, reason: `GET /runs/{runId} answered ${ok?.status ?? 'no response'}` };
+      const tag = ok.headers.get('etag');
+      if (!tag) return { skip: 'inapplicable' as const, reason: 'the snapshot carries no ETag — runs.md makes it a SHOULD; the If-None-Match rules apply only when it is present' };
+      return { runId, tag };
+    })();
+    return settled;
+  }
+  const runGet = (runId: string): Get => (headers) => http(() => driver.get(`/runs/${encodeURIComponent(runId)}`, { headers: { ...headers } }));
+  async function leg(fn: (get: Get) => Promise<LegOutcome>): Promise<LegOutcome | { kind: 'skip'; skip: 'blocked' | 'inapplicable'; reason: string }> {
+    const run = await settledRun();
+    if ('skip' in run) return { kind: 'skip', ...run };
+    return fn(runGet(run.runId));
+  }
+
+  it('If-None-Match is evaluated as RFC 9110 defines it: a weak tag, a list holding the tag and `*` match; other tags do not', async () => {
+    const out = await leg(matchLeg);
+    if (out.kind === 'skip') return softSkip(out.skip, out.reason);
+    if (out.kind === 'unreadable') return softSkip('blocked', `run snapshot: ${out.reason}`);
+    expect(out.findings.join('; '), req(ID_MATCH, MATCH_DOC, 'If-None-Match is `*` or a list of entity tags compared weakly (RFC 9110 §13.1.2)')).toBe('');
+  });
+
+  it('a 304 carries the ETag and the Vary of the 200', async () => {
+    const out = await leg(headersLeg);
+    if (out.kind === 'skip') return softSkip(out.skip, out.reason);
+    if (out.kind === 'unreadable') return softSkip('blocked', `run snapshot: ${out.reason}`);
+    expect(out.findings.join('; '), req(ID_304_ETAG, MATCH_DOC, 'on a match the host MUST answer 304 carrying the ETag and the Vary the 200 would carry')).toBe('');
+  });
+
+  it('a request Cache-Control: no-cache does not suppress the evaluation', async () => {
+    const out = await leg(noCacheLeg);
+    if (out.kind === 'skip') return softSkip(out.skip, out.reason);
+    if (out.kind === 'unreadable') return softSkip('blocked', `run snapshot: ${out.reason}`);
+    expect(out.findings.join('; '), req(ID_NO_CACHE, MATCH_DOC, 'a request Cache-Control: no-cache MUST NOT suppress the evaluation')).toBe('');
+  });
+
+  it('a conditional request on a run that does not exist gets the unconditional status, never 304', async () => {
+    const run = await settledRun();
+    if ('skip' in run) return softSkip(run.skip, run.reason);
+    // Same grammar and tenant as a real id, last character changed: an id this host never minted.
+    const last = run.runId.slice(-1);
+    const absent = run.runId.slice(0, -1) + (last === 'a' ? 'b' : 'a');
+    const get = runGet(absent);
+    const plain = await get({});
+    if (plain === null) return softSkip('blocked', 'GET /runs/{runId} on an absent id could not be made');
+    if (plain.status >= 200 && plain.status < 300) return softSkip('blocked', `an id differing from a real run in its last character answered ${plain.status}; no absent run to probe`);
+    const findings: string[] = [];
+    for (const sent of ['*', run.tag]) {
+      const c = await get({ 'If-None-Match': sent });
+      if (c === null) return softSkip('blocked', 'the conditional GET on an absent id could not be made');
+      findings.push(...judgeNot2xx(plain.status, c.status, sent));
+    }
+    expect(findings.join('; '), req(ID_ONLY_2XX, MATCH_DOC, 'If-None-Match is evaluated only when the unconditional response would be 2xx; a run the caller cannot read stays 404')).toBe('');
   });
 });

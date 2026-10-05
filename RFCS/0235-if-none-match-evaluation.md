@@ -4,10 +4,10 @@
 | ----------------- | --------------------------------------------------------------- |
 | **RFC**           | 0235                                                            |
 | **Title**         | `If-None-Match` is evaluated as HTTP defines it                 |
-| **Status**        | `Draft`                                                         |
+| **Status**        | `Active`                                                        |
 | **Author(s)**     | David Tufts (@davidscotttufts)                                  |
 | **Created**       | 2026-10-04                                                      |
-| **Updated**       | 2026-10-04 — filed `Draft` after an `/architect` ruling (2026-10-04) on what "matching the `ETag`" means. The 7-day comment window opens with the pull request and closes 2026-10-11. |
+| **Updated**       | 2026-10-04 — `Draft` → `Active`, comment window waived by the maintainer (2026-10-04: "skip the comment window and move it to Active"), recorded as a STEWARD OVERRIDE of RFC 0147 §A.6 in MAINTAINERS.md. §A and §B are merged; the §D legs ship in suite 2.45.18, proven against a double and against the v2 reference host before and after openwop-examples #152. · 2026-10-04 — filed `Draft` after an `/architect` ruling (2026-10-04) on what "matching the `ETag`" means. The 7-day comment window opens with the pull request and closes 2026-10-11. |
 | **Affects**       | `spec/v2/core/runs.md` §Caching and encoding · `spec/v2/core/capabilities.md` §1.1 · the `If-None-Match` parameter and the discovery `ETag` header in `api/v2/openapi.yaml` (through `scripts/derive-v2-api.py`), and so `spec/v2/core/headers.md` · `v2-discovery-etag.test.ts`, `v2-run-snapshot-etag.test.ts` |
 | **Compatibility** | `additive` (COMPATIBILITY.md §2.4, §2.3): no field, status code or endpoint changes. It binds an undefined word to the RFC 9110 meaning the corpus already cites; a host that compared byte-exact keeps its recorded measurements and fails only the new legs of a later suite. |
 | **Supersedes**    | —                                                               |
@@ -103,19 +103,19 @@ Gating is unchanged: discovery always (the `ETag` is a MUST there), the snapshot
 
 ## Unresolved questions
 
-None. An `/architect` review (2026-10-04) decided the rule (§A), its home (`runs.md`, cited from the other sites; the kernel budget has room for it) and the legs (§D).
+None. Proof surfaced one fact the legs rely on: Node's fetch adds `Cache-Control: no-cache` to every request carrying `If-None-Match`, so a host that skips evaluation on it (Express `req.fresh`) fails every `304` leg, not only §D 7. An `/architect` review (2026-10-04) decided the rule (§A), its home (`runs.md`, cited from the other sites; the kernel budget has room for it) and the legs (§D).
 
 ## Implementation notes (non-normative)
 
 - **v2 reference host** (`openwop-examples`): one helper for both comparisons, replacing `header === etag` in `runs.ts` and the exact-member list in `server.ts`. Every helper of this shape is about six lines (MyndHyve's `ifNoneMatchMatches` is a model).
 - **openwop-app**: strips `W/` from the request side only. It passes §D while it emits strong tags.
-- **Sequencing.** Draft → Active with the prose and OpenAPI edits; the legs and their scratch-host proof in the same suite release; the reference host adopts the helper and re-cuts.
+- **Sequencing.** Draft → Active with the prose and OpenAPI edits; the legs and their scratch-host proof in the same suite release; the reference host adopts the helper (openwop-examples #152) and re-cuts.
 
 ## Acceptance criteria
 
-- [ ] `Active`: the comment window closes (or is waived on the record) with §A unchanged in substance.
-- [ ] §A and §B merged; `derive-v2-api.py --write` regenerates `headers.md`; `CHANGELOG.md` records it.
-- [ ] §D legs ship in a suite release, each failing on its sabotage: a byte-exact comparison, a `*` evaluated before the readability check, a `304` without `ETag`, and a host that skips evaluation on `no-cache`.
+- [x] `Active`: the comment window was waived on the record (maintainer, 2026-10-04; MAINTAINERS.md) with §A unchanged in substance.
+- [x] §A and §B merged; `derive-v2-api.py --write` regenerates `headers.md`; `CHANGELOG.md` records it.
+- [x] §D legs ship in suite 2.45.18 (`lib/if-none-match-witness.ts`), each failing on its sabotage in the self-test double: byte-exact, no list, no `*`, strong-only, a `304` without `ETag` or `Vary`, `no-cache` skipping, always-`304`, and `*` evaluated before the readability check. Against the v2 reference host: `rfc9110-match` failed before openwop-examples #152 and all ten legs pass after it; a `*` `304` before `loadRun` and a `304` without `ETag` each fail their leg.
 - [ ] `Accepted`: a certified major-2 bundle records the four `openwop.requirement.0235.*` ids `executed-pass` with no test seams served.
 
 ## References

@@ -10,7 +10,7 @@ Every v2 core family now has a v2 normative home (RFC 0189). Many of its rules a
 
 - **Families (73 core):** 73 v2-witnessed, 0 v1-only, 0 unwitnessed. Of the 54 `witnessable-gated` families, 0 are v1-only; every unwitnessed family is `claims-check`.
 - **At v1 end-of-support:** the 0 v1-only families, and the 0 obligation units attributed to them, lose their only witness.
-- **Obligation units (890 in `spec/v2/core/`):** 586 (66%) sit in a section a major-2 scenario cites; 304 sit in 104 sections no major-2 scenario cites.
+- **Obligation units (892 in `spec/v2/core/`):** 588 (66%) sit in a section a major-2 scenario cites; 304 sit in 104 sections no major-2 scenario cites.
 - **Declaration links:** 0 core families declare `floorScenarios`; 2 declare `requirementIds`. The family-to-test link exists only in scenario code and citations, although `overview.md` §What a MUST means says every core MUST has an id in `requirements.json`.
 - **Scenarios:** 642 registered, 202 run at major 2. 33 major-2 citations name a v2 core section this script cannot match to a heading (see Citation gaps).
 
@@ -127,7 +127,7 @@ Every v2 core family now has a v2 normative home (RFC 0189). Many of its rules a
 | `persistence.md` | 35 | 25 (71%) | `eventLog` |
 | `portability.md` | 8 | 0 (0%) | `portability` |
 | `replay.md` | 36 | 19 (53%) | `replay`, `nondeterminismPolicy`, `eventLog` |
-| `runs.md` | 71 | 68 (96%) | `limits`, `dataResidency`, `conversationPrimitive`, `deadLetter`, `budget`, `runList` |
+| `runs.md` | 73 | 70 (96%) | `limits`, `dataResidency`, `conversationPrimitive`, `deadLetter`, `budget`, `runList` |
 | `security-defaults.md` | 27 | 19 (70%) | `purposePropagation`, `sandbox`, `compensation`, `auditLogIntegrity` |
 | `storage.md` | 19 | 8 (42%) | `fs`, `kvStorage`, `tableStorage`, `sql`, `nosql`, `vectorStore`, `searchIndex`, `blobStorage`, `cache` |
 | `tool-catalog.md` | 14 | 11 (79%) | `toolCatalog` |
@@ -410,8 +410,8 @@ node scripts/report-v2-witness-coverage.mjs --write  # regenerate this file
     }
   },
   "obligationUnits": {
-    "total": 890,
-    "inV2CitedSections": 586,
+    "total": 892,
+    "inV2CitedSections": 588,
     "inUncitedSections": 304,
     "sectionsWithObligations": 269,
     "sectionsWithNoV2Citation": 104
