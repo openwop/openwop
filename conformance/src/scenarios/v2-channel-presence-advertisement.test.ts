@@ -5,7 +5,7 @@
  *
  *   record         the record validates against its capabilities-schema seat;
  *
- * Not here: presence delivery needs a channel conversation the suite can create, and the non-persistence rule lives only in a schema description (TODO §8).
+ * Not here: delivery is `v2-channel-presence-delivery` (seam-gated: v2 has no route that opens a channel), and whether presence is logged is open in `conversation.md`.
  *
  * Dispositions: discovery unreadable ⇒ `blocked`; `channelPresence` absent, or the
  * facet a leg reads absent ⇒ `inapplicable`.
