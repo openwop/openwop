@@ -40,11 +40,11 @@ Source: `INTEROP-MATRIX.md`. A host from a different organization publishes vali
 
 ## Versions
 
-Source: `conformance/package.json, CHANGELOG.md`. Conformance suite **2.45.19**; corpus release **2.45.18** (2026-10-04).
+Source: `conformance/package.json, CHANGELOG.md`. Conformance suite **2.45.20**; corpus release **2.45.19** (2026-10-05).
 
 ## Open Critical / High program risks
 
-Source: `RFCS/registers/*.risks.md + RFCS/*.risks.md (RFC 0166 tokens)` (494 rows scanned). **111** open across all registers, of which **61** belong to the RFC 0147 program (RFCs ≥ 0147) — the set RFC 0156's claims are gated on. Older registers were never dispositioned; `Open` there means "the mitigation is the normative MUST in the row", not an unaddressed risk:
+Source: `RFCS/registers/*.risks.md + RFCS/*.risks.md (RFC 0166 tokens)` (499 rows scanned). **112** open across all registers, of which **62** belong to the RFC 0147 program (RFCs ≥ 0147) — the set RFC 0156's claims are gated on. Older registers were never dispositioned; `Open` there means "the mitigation is the normative MUST in the row", not an unaddressed risk:
 
 Of those, **5** are explicitly **transferred** to a named tracked surface (0147/R2, 0147/R3, 0147/R12, 0147/R14, 0219/R1) — real and open, but dispositioned. A register sweep turns on "Closed **or transferred**", so both are reported; an open row and a transferred row are not the same state and are not reported as one.
 
@@ -161,6 +161,7 @@ Of those, **5** are explicitly **transferred** to a named tracked surface (0147/
 | 0177 | R2 — A mirror or vendor registry installs a `<2.0.0` pack on a v2 host | High | `open` |
 | 0229 | R1 — A host implements §A.2 loosely: its resolver chain lets a `run:` ref fall through to a stored or environment secret, recreating the oracle this RFC removes. | High | `open` — mitigated once the §F.3 leg ships with its negative control. |
 | 0230 | R1 — An unauthenticated (signature-only) `ingestUrl` is abused to start runs. | High | `open` — reviewed at the RFC 0156 §B retrospective. |
+| 0236 | R1 — A host delivers a host event (CRM, commerce) on `/host/events` to another tenant's subscriber, because the channel never stated a tenant rule. | High | `open` — a live hazard until §D merges and the tenant leg ships with its sabotage proof. |
 
 ## Permitted claims (RFC 0147 §A)
 

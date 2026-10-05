@@ -1,7 +1,7 @@
 openapi: 3.1.0
 info:
   title: OpenWOP conformance seams profile (openwop-conformance-seams-v2)
-  version: 2.45.18
+  version: 2.45.19
   description: 'The OpenWOP conformance seams profile (`openwop-conformance-seams-v2`): test-only operations in their own
     path space, `/conformance/seams/…`. The profile is versioned and validated against the canonical v2 schemas with no tolerance
     path. It is not a capability: a host advertises the profile, never a `testSeams` flag.
@@ -1325,6 +1325,57 @@ paths:
           $ref: '#/components/responses/ValidationError'
         '401':
           $ref: '#/components/responses/Unauthenticated'
+        '404':
+          $ref: '#/components/responses/NotFound'
+  /conformance/seams/sample/channel-presence/snapshot:
+    post:
+      tags:
+      - Seams
+      operationId: snapshotChannelPresence
+      summary: Read one live channel.presence snapshot as a given observer would receive it
+      description: 'Transiently joins `member` to the channel conversation `conversationId`, then returns the `channel.presence`
+        payload the host would deliver to `observer` (default: `member`). It MUST route through the same membership gate and
+        closed payload the host applies in production, and MUST NOT branch on the seam.
+
+
+        When `observer` is not a current member, the host MUST refuse as its production delivery gate does (`403` or `404`)
+        and MUST NOT answer `200`: presence is never delivered to a non-member (conversation.md §channelPresence). An unwired
+        seam answers `404`/`405`; a scenario tells the two apart by first asking as `member`.'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              additionalProperties: false
+              required:
+              - conversationId
+              - member
+              properties:
+                conversationId:
+                  type: string
+                  minLength: 1
+                member:
+                  type: string
+                  pattern: ^(user|agent):.+
+                  description: The subject transiently joined, so `present` is non-vacuous.
+                observer:
+                  type: string
+                  pattern: ^(user|agent):.+
+                  description: The subject the snapshot is delivered to; default `member`.
+      responses:
+        '200':
+          description: The snapshot delivered to `observer`, who is a member.
+          content:
+            application/json:
+              schema:
+                $ref: ../schemas/v2/channel-presence-payload.schema.json
+        '400':
+          $ref: '#/components/responses/ValidationError'
+        '401':
+          $ref: '#/components/responses/Unauthenticated'
+        '403':
+          $ref: '#/components/responses/Forbidden'
         '404':
           $ref: '#/components/responses/NotFound'
 components:
