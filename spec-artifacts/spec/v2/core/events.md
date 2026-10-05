@@ -1,7 +1,7 @@
 # Events
 
 > **Status: Stable.**
-> **Normative home:** `heartbeat`, `envelopeContracts`, `envelopes`, `feedback`, `providerUsage`, `supportedEnvelopes`, `schemaVersions`, `envelopeStrictness`.
+> **Normative home:** `heartbeat`, `hostEvents`, `envelopeContracts`, `envelopes`, `feedback`, `providerUsage`, `supportedEnvelopes`, `schemaVersions`, `envelopeStrictness`.
 
 ## Why this exists
 
@@ -127,7 +127,7 @@ With `bufferMs` (0..5000) the host accumulates events into one `event: batch` fr
 
 #### `hostEvents`
 
-A host event belongs to no run: its envelope (`schemas/v2/host-event.schema.json`) has no `runId` or `sequence`. `hostEvents.types[]` lists each emitted type and its `delivery` class, `durable` or `ephemeral`. A host advertising it:
+A host event belongs to no run: its envelope (`schemas/v2/host-event.schema.json`) has no `runId` or `sequence`. `hostEvents.types[]` lists each emitted type and its `delivery`, `durable` or `ephemeral`. A host advertising it:
 
 - MUST deliver each listed type here, `event:` being the type and `data:` the envelope, and MUST emit no other type or class;
 - MUST confine an event naming a `workspaceId` to that workspace, and an ephemeral event to subscribers it is visible to.

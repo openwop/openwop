@@ -13,7 +13,7 @@
     "api/v2/asyncapi.yaml": "f283a1f797b0940e871178048346d03b1ae5f7bb21e94588440841a054c815b1",
     "api/v2/openapi.yaml": "0a897994896960889e07c6b87c8c0c7ebdfe809857098aae986814b09a043abf",
     "api/v2/redocly.yaml": "1e66b60e6118ad11a823bb620678be464d99dfe50a40e3e6f93ec9429b88b34c",
-    "schemas/README.md": "7392016f8526f93f6891c343568445ac7739d81366411c767631897cf2e60367",
+    "schemas/README.md": "a829e3208413062388e52ab6ba714d35889c9c7645db38a290b0c4f4992cd3da",
     "schemas/a2a-task-state.schema.json": "75d5049dea8bd873ff0e7546f1c60c8d36c219bec7084264360be54a8be30ae1",
     "schemas/a2ui-surface-delta-frame.schema.json": "970d434e4fdcb925de64aaace91eb83bfbcfd8f76757a9ce9f339eda5fb3f4e8",
     "schemas/agent-deployment-transition.schema.json": "1ac987fed0f380fa5b4e9a40e8e13316e5ae42d03a0ff42db4be6273e1bfe9f4",
@@ -223,12 +223,12 @@
     "spec/v1/spec-gaps.json": "ea9612af55bea9dae3e82223d4f714243f8f590b0193f1188257b13491a38afc",
     "spec/v2/README.md": "ddea90d7cf14aefffe1a43eeeecd4222dadad1d1e5ac64dceb073990eb93d9ef",
     "spec/v2/core/artifact-type-packs.md": "f734740cc3963f86c9f273a7dace26291bba2855161ddd3540618131a2c8d13e",
-    "spec/v2/core/capabilities.md": "093993d29e89aca40c564d2b1aa2df16b95255a73c92a75fb47166acf32b10c8",
+    "spec/v2/core/capabilities.md": "503fd78ce55aca2cf83b872a5d6086f016470df2d9bcd7fb427b8f16fb9d044a",
     "spec/v2/core/conformance.md": "3ca291e63bc70a6ef829ae8759ad0ded3741ea7aa507bbbdffc57de443ab2ae2",
     "spec/v2/core/connection-packs.md": "c80f95bd6a03698f35c72cdb2b46bd973f49203bbd786c26760e35fa86e6f23d",
     "spec/v2/core/conversation.md": "e0351883a57e90f13d2e9f6f5d3e80080b46be4988617448cb7a0e0c7c0bfbad",
     "spec/v2/core/errors.md": "91f46acc9c9a5532a98cf62c69285d68575c100ff6064f0b1bf94731a087e34a",
-    "spec/v2/core/events.md": "e477c5ed1423936cc6f1e4efca67c2b46c894b7a2bf6a30c32a6829db8795cd8",
+    "spec/v2/core/events.md": "00746062621ec98052ee323755fbdb10f4fb070439058039e44feb6bb19b073a",
     "spec/v2/core/execution.md": "8a0c9db1bbfb97c008ab9328b7333c1cc3318196e78bfbefb49e781bdf4f9d44",
     "spec/v2/core/form-content-packs.md": "02931227899676fd4581a27017be2a6c4953904717be9b81c29d12f87ab3917d",
     "spec/v2/core/headers.md": "24b0d84ab5521e20f2669fca8006a11f9faf5c2311199e57375b8fa64ce763ed",
@@ -315,5 +315,5 @@
     "spec/v2/retention-floors.json": "eaf3722d95c79947af1d4269ef85117e126518c588cfcf1a2b21b97269f51624",
     "spec/v2/surface-baseline.json": "97a0dc8dc715ed872d766aceb91f991e031b0bd160421037d6927fa21e9646b5"
   },
-  "corpusCommit": "2f723a6359a700937a88ade3ed50fdd2198aa4fe"
+  "corpusCommit": "47d265295adc11634c73f4952a56e512e4d119e9"
 }
