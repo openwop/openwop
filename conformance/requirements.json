@@ -28969,7 +28969,7 @@
     {
       "id": "openwop.it.v2-bound-id-path-projection.a-tenant-bound-id-is-readable-at-its-escaped-path-segment-links-carry-that-form",
       "file": "v2-bound-id-path-projection.test.ts",
-      "line": 64,
+      "line": 69,
       "title": "a tenant-bound id is readable at its ~-escaped path segment, links carry that form, and a malformed escape is refused",
       "explicitId": "openwop.requirement.0184.bound-id-path-projection",
       "citations": [
@@ -29014,10 +29014,10 @@
       ]
     },
     {
-      "id": "openwop.it.v2-bound-id-path-projection.a-tenant-bound-id-the-host-mints-for-this-run-contains-no",
+      "id": "openwop.it.v2-bound-id-path-projection.a-tenant-bound-id-the-host-mints-for-this-run-contains-no-bites-only-when-the-cr",
       "file": "v2-bound-id-path-projection.test.ts",
-      "line": 149,
-      "title": "a tenant-bound id the host mints for this run contains no ~",
+      "line": 154,
+      "title": "a tenant-bound id the host mints for this run contains no ~ (bites only when the credential tenant is not grammar-clean)",
       "explicitId": "openwop.requirement.0184.mint-no-tilde",
       "citations": [
         {

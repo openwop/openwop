@@ -30,8 +30,13 @@
  * the tenant key instead of mapping it), and no leg saw it, because the
  * conformance key sat in the clean tenant `default`. **The leg bites only when
  * the suite's credential sits in a tenant whose key is not already clean**: on a
- * clean tenant a host with that defect still mints a clean id. Proven both ways
- * on openwop-app with `OPENWOP_API_KEYS=<key>:acme@corp.example`.
+ * clean tenant a host with that defect still mints a clean id, so a green row is
+ * evidence only under a non-clean posture; the `it` title says so. Proven on
+ * openwop-app 800722836 (2026-10-05): under `acme@corp.example` the ADR 0814 map
+ * passes (`x-61636d65…/…`) and the reverted projection fails
+ * (`acme~40corp.example/…`); under `default` both builds pass. The in-process
+ * harness (`conformance/run.ts`) overwrites `OPENWOP_API_KEYS` with a `:*` key, so
+ * moving the tenant needs that line edited, not just the env var.
  *
  * The codec's own edge cases (marker escaping, UTF-8 vs UTF-16, malformed
  * decode) are a unit concern and live in `src/lib/bound-id.test.ts`, which is
@@ -146,7 +151,7 @@ describe('v2 bound-id path projection (identity.md §5)', () => {
     ).toBe(400);
   });
 
-  it('a tenant-bound id the host mints for this run contains no ~', async () => {
+  it('a tenant-bound id the host mints for this run contains no ~ (bites only when the credential tenant is not grammar-clean)', async () => {
     try { if (!(await v2Discovery())) return softSkip('blocked', 'v2 discovery unreachable'); } catch { return softSkip('blocked', 'v2 discovery unreachable'); }
     const created = await http(() => driver.post('/runs', { workflowId: NOOP_WORKFLOW_ID }));
     if (created === null) return softSkip('blocked', 'POST /runs unreachable (fetch failed)');
