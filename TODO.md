@@ -225,7 +225,7 @@ Defects outside the spec:
       ids the run itself mints (a created run's bound `runId`), never every body id, because ids
       already minted MUST still resolve. It bites only when the conformance credential sits in a
       non-clean tenant: `inapplicable` on a clean one. No RFC needed.
-- [ ] **Erratum: identity.md §5 table row `tenantId, workspaceId` is stale.** `ids.schema.json`
+- [x] **Erratum: identity.md §5 table row `tenantId, workspaceId` is stale.** Fixed with `typeId`'s missing `@<semver>` pin; `check-id-kinds-bound` now compares the table. `ids.schema.json`
       widened `tenantId` to `^(anon:)?[A-Za-z0-9._~-]{1,128}$` (RFC 0184 §A.3); `workspaceId`
       has no `anon:` prefix. Split the row to match the schema (found by openwop-app, ADR 0814).
 - [ ] **RFC 0235** (`Draft`, window to 2026-10-11): `If-None-Match` matching bound to RFC 9110

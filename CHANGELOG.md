@@ -8,6 +8,7 @@ Entries before this file was condensed carried full development detail. That tex
 
 ## [Unreleased]
 
+- **Erratum: `identity.md` §5 grammar table matches `ids.schema.json` again.** `tenantId` gets its own row with the `anon:` prefix its pattern has had since 2.0.0. `typeId` gains the `@<semver>` pin from RFC 0187. No wire change. `check-id-kinds-bound` now compares the table against the schema.
 - **RFC 0235 filed (Draft).** "Matching the `ETag`" was undefined, and the matrix hosts read it three ways. It binds `If-None-Match` to RFC 9110 §13.1.2 (`*`, lists, weak comparison), evaluated only where the answer would be `2xx` and not suppressed by `Cache-Control: no-cache`.
 - **2.45.18 cycle (suite):** the corpus-only legs of the `v2-*-static` scenarios move to `src/coherence/` and leave the host bundle (`conformance.md` §Two products). `.supported` wording leaves 38 v2 schema descriptions (presence is the claim). No rule changed.
 - **Witness-coverage report sees `recordSchemaLeg`.** Its gate detector missed the private `onFamily` gate, so 24 advertisement scenarios witnessed nothing in the report. Moving the static legs exposed it: four families read v1-only while their v2 advertisement witnesses ran. Still 73/73.
