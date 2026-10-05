@@ -231,6 +231,11 @@ Defects outside the spec:
 - [x] **RFC 0235** `Accepted` (provisional) 2026-10-05 on the v2 reference host's certified 2.45.18
       cut (497/0/0, build `e5f27708`). Owed: the RFC 0156 §B review. MyndHyve implements RFC 9110 and
       was invited to cut on 2.45.18; openwop-app's public origin still has the CDN-edge `304` issue.
+- [ ] **RFC 0236** (`Draft`, 2026-10-05): host events, an envelope with no run-log position, for
+      `channel.presence` (ephemeral) and runless vendor events (durable, webhook-deliverable; openwop-app
+      ADR 0812), tenant-scoped on `/host/events`. Owed for `Active`: §A–§G prose, schemas, AsyncAPI, the
+      emit seam, `v2-host-event-delivery` with its double, invariant `host-event-tenant-isolation`. Then
+      the v2 reference host implements it and cuts → `Accepted`.
 - [ ] **`dataResidency.regions` has no `minItems`.** `regions: []` validates, so the "accept an
       advertised region" rule can never apply. Adding `minItems: 1` narrows the schema and needs an
       RFC.

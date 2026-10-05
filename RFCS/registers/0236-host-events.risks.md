@@ -1,0 +1,9 @@
+# RFC 0236 — Risk register
+
+| ID | Risk | Likelihood | Impact | Score | Mitigation | Owner | Status |
+| --- | --- | --- | --- | --- | --- | --- | --- |
+| R1 | A host delivers a host event (CRM, commerce) on `/host/events` to another tenant's subscriber, because the channel never stated a tenant rule. | M | H | High | §D binds every `hostEvents` message to its tenant; invariant `host-event-tenant-isolation`; the tenant leg runs under a second-tenant credential. | Security Architect | `open` — a live hazard until §D merges and the tenant leg ships with its sabotage proof. |
+| R2 | A vendor payload carries secret material or PII, because vendor payloads are host-defined. | M | H | High | §A applies SR-1 to every payload; the envelope is closed so nothing rides beside the payload. A payload's content is not suite-observable beyond known secret shapes. | Security Architect | `accepted` — the rule binds; content review is the host's. |
+| R3 | A host persists an ephemeral event through a projection §C does not name. | L | M | Low | §C names resumption, webhooks, A2A push and "any outbound sink"; the no-resume and no-fan-out legs witness the two a client can see. | Spec Architect | `accepted` — storage itself is not observable. |
+| R4 | A subscriber that validates bodies against the old run-only schema rejects the host body. | L | L | Low | The host body is opt-in through `events[]`; no existing subscription names a host-event type. | Compatibility Architect | `accepted` — only new subscriptions see it. |
+| R5 | openwop-app's production host-event webhooks stop while it migrates (G5). | M | M | Med | The migration is the host's ADR; until it ships, the host keeps its current behaviour, recorded as non-conformant. | Reference Implementation Architect | `accepted` — host-side sequencing. |
