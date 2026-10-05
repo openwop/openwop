@@ -17,7 +17,9 @@ A host advertising `multiPartyConversation`:
 
 ## `channelPresence`
 
-A host advertising `channelPresence` MUST report present members as a subset of the channel's roster, and MUST NOT include a subject that is not a member. The payload is closed: it carries opaque, non-PII subject references and nothing else.
+A host advertising `channelPresence` MUST emit `channel.presence`; otherwise it omits it. The closed payload carries only opaque, non-PII references to roster members. A host MUST NOT include a non-member, deliver to one, or deliver across tenants.
+
+Whether presence is logged is unresolved: its source RFC forbids it, yet [events.md](events.md) logs every run event.
 
 ## `conversationTurnModelProvenance`
 
