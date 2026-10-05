@@ -1,10 +1,13 @@
 # `@openwop/openwop-conformance` Changelog
 
-## [2.45.20] — 2026-10-05 — `channelPresence` delivery witnessed through the §13 seam at v2
+## [2.45.20] — 2026-10-05 — host events (RFC 0236 Active); `channelPresence` delivery witnessed through the §13 seam at v2
 
 - **New `v2-channel-presence-delivery` (seam-gated).** `conversation.md` now restates two RFC 0110 rules: a host advertising `channelPresence` MUST emit it, and MUST NOT deliver it to a non-member. Two legs check them through the snapshot seam, asking as the member first so an unwired seam is never read as a refusal.
 - **The §13 presence seam exists at v2.** It was never ported to `api/seams-v2.yaml`, so v2 had no way to observe presence. It gains an `observer` field; a non-member observer MUST NOT get `200`.
 - **Proof:** against a double, a leak to a non-member fails only the delivery leg, a refused member fails only the emit leg, and an unwired seam records `blocked`. No host advertises `channelPresence` at v2, so no bundle gains a blocked row.
+
+- **New `v2-host-event-delivery` (RFC 0236, seam-gated).** Six requirement ids over `/host/events` and webhooks: the envelope, ephemeral no-resume, ephemeral no-fan-out, ephemeral registration refused, the `{ hostEvent }` body, and tenant isolation (with `OPENWOP_TEST_TENANT_B_API_KEY`; `inapplicable` without it). Judged by `lib/host-event-witness.ts`.
+- **Proof:** the judges' self-test convicts each defect; a double with one defect per mode fails exactly that leg; the v2 reference host passes 6/6, and a cross-tenant frame or an accepted ephemeral registration fails only its leg there.
 
 ## [2.45.19] — 2026-10-05 — a minted tenant-bound id carries no `~`; RFC 0235's registers close
 

@@ -123,7 +123,16 @@ With `bufferMs` (0..5000) the host accumulates events into one `event: batch` fr
 
 ### Host events
 
-`hostEvents` carries the heartbeat messages (`schemas/v2/heartbeat-evaluated.schema.json`, `schemas/v2/heartbeat-state-changed.schema.json`) at the default address `/host/events` (`streamHostEvents`). A host MAY declare another address under `heartbeat.deliveryChannel` ([capabilities.md](capabilities.md)); every channel has an address. The channel carries no run data.
+`hostEvents` carries the heartbeat messages (`schemas/v2/heartbeat-evaluated.schema.json`, `schemas/v2/heartbeat-state-changed.schema.json`) and host events at the default address `/host/events` (`streamHostEvents`). A host MAY declare another address under `heartbeat.deliveryChannel` ([capabilities.md](capabilities.md)); every channel has an address. The channel carries no run data. Every host event, and every heartbeat a tenant owns, MUST reach only that tenant's subscribers.
+
+#### `hostEvents`
+
+A host event belongs to no run: its envelope (`schemas/v2/host-event.schema.json`) has no `runId` or `sequence`. `hostEvents.types[]` lists each emitted type and its `delivery` class, `durable` or `ephemeral`. A host advertising it:
+
+- MUST deliver each listed type here, `event:` being the type and `data:` the envelope, and MUST emit no other type or class;
+- MUST confine an event naming a `workspaceId` to that workspace, and an ephemeral event to subscribers it is visible to.
+
+An ephemeral event MUST NOT be persisted, redelivered on reconnection, or sent through webhooks, A2A push or any sink; its frame has no `id:`. A durable event's `id:` is its `eventId`, and a host SHOULD honour `Last-Event-ID` for it within retention. A vendor payload MUST NOT carry secrets.
 
 #### `heartbeat`
 
@@ -241,4 +250,4 @@ Under `reliability.completion.distinguishesTruncation`, an envelope is complete 
 - On exhaustion the host MUST emit `envelope.retry-exhausted` with that `finalReason` and `cap.breached` `kind: "schema"`, and fail the node with `envelope_truncation_unrecoverable` or `envelope_invalid`.
 - Lenient-parse recovery consumes no retry. It emits `envelope.recovery-applied` once per recovery, carrying only the path and an optional byte offset.
 
-*Sources: RFCs 0026, 0030, 0032, 0033, 0056, 0060, 0171, 0172, 0176, 0185, 0194, 0213.*
+*Sources: RFCs 0026, 0030, 0032, 0033, 0056, 0060, 0171, 0172, 0176, 0185, 0194, 0213, 0236.*

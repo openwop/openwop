@@ -958,6 +958,26 @@
       "facetsFrom": "spec/v2/facets/heartbeat.schema.json"
     },
     {
+      "key": "hostEvents",
+      "kind": "family",
+      "normativeText": ["spec/v2/core/events.md"],
+      "anchor": "core",
+      "section": "core/capabilities.md#hostEvents",
+      "peerDependencyId": "hostEvents",
+      "witness": "witnessable-gated",
+      "maturity": {
+        "technical": "experimental",
+        "adoption": "none"
+      },
+      "facets": [
+        "types"
+      ],
+      "floorScenarios": [],
+      "requirementIds": [],
+      "owningRfc": "0236",
+      "facetsFrom": "spec/v2/facets/hostEvents.schema.json"
+    },
+    {
       "key": "toolHooks",
       "kind": "family",
       "anchor": "core",
