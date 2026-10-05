@@ -168,9 +168,43 @@ for (const n of [...Object.keys(bindings), ...Object.keys(notAKind)]) {
   if (!observed.has(n)) problems.push(`spec/v2/id-field-bindings.json: '${n}' is mapped but appears in no v2 schema — remove the stale row`);
 }
 
+// identity.md §5's grammar table restates ids.schema.json, the source of truth.
+// Nothing compared them, and the table drifted twice: `tenantId` sat in a row
+// with `workspaceId` and lost the `anon:` prefix its pattern has carried since
+// 2.0.0 (RFC 0184 §A.3 then widened the five tenant-bound kinds to match), and
+// `typeId` lost the `@<semver>` pin RFC 0187 added. A host built from the prose
+// would reject ids the schema admits. Each row's kinds take its backticked
+// `^…$` patterns positionally, or all share one; `maxLength N` and the Minted
+// column are compared too. The `opaque` kind is stated in the bullet below the
+// table, so it is read there.
+const ids = rd('schemas/v2/ids.schema.json').$defs ?? {};
+const identity = readFileSync(join(ROOT, 'spec', 'v2', 'core', 'identity.md'), 'utf8');
+const sec5 = identity.slice(identity.indexOf('## 5. Identifier grammars'), identity.indexOf('## 6.'));
+const tabled = new Set();
+for (const line of sec5.split('\n')) {
+  const cells = line.split(' | ').map((c) => c.replace(/^\|\s*|\s*\|$/g, '').trim());
+  if (cells.length !== 3 || !cells[0].startsWith('`')) continue;
+  const names = [...cells[0].matchAll(/`([A-Za-z]+)`/g)].map((m) => m[1]);
+  const pats = [...cells[1].matchAll(/`(\^[^`]*\$)`/g)].map((m) => m[1]);
+  const max = /maxLength (\d+)/.exec(cells[1]);
+  if (pats.length !== 1 && pats.length !== names.length) { problems.push(`identity.md §5 row ${names.join(', ')}: ${pats.length} pattern(s) for ${names.length} kind(s) — one shared, or one per kind`); continue; }
+  names.forEach((n, i) => {
+    tabled.add(n);
+    const def = ids[n];
+    if (!def) { problems.push(`identity.md §5 names kind '${n}', which ids.schema.json does not define`); return; }
+    const pat = pats.length === 1 ? pats[0] : pats[i];
+    if (pat !== def.pattern) problems.push(`identity.md §5 '${n}': table grammar ${pat} ≠ ids.schema.json ${def.pattern} — the schema is the source of truth; fix the table`);
+    if ((max ? Number(max[1]) : undefined) !== def.maxLength) problems.push(`identity.md §5 '${n}': table maxLength ${max?.[1] ?? 'absent'} ≠ ids.schema.json ${def.maxLength ?? 'absent'}`);
+    if (cells[2] !== def['x-openwop-minted']) problems.push(`identity.md §5 '${n}': Minted '${cells[2]}' ≠ ids.schema.json x-openwop-minted '${def['x-openwop-minted']}'`);
+  });
+}
+const opaqueLine = /opaque segment MUST match `(\^[^`]*\$)`/.exec(sec5);
+if (opaqueLine?.[1] !== ids.opaque?.pattern) problems.push(`identity.md §5: the opaque-segment bullet states ${opaqueLine?.[1] ?? 'no grammar'} ≠ ids.schema.json opaque ${ids.opaque?.pattern}`);
+for (const k of Object.keys(ids)) if (k !== 'opaque' && !tabled.has(k)) problems.push(`identity.md §5: kind '${k}' is in ids.schema.json but in no table row`);
+
 if (problems.length > 0) {
   console.log(`=== check-id-kinds-bound FAILED — ${problems.length} problem(s) ===`);
   for (const p of problems) console.log(`  ${p}`);
   process.exit(1);
 }
-console.log(`=== check-id-kinds-bound OK — ${observed.size} *Id propert(ies) across ${files.length} v2 schema(s); ${Object.keys(bindings).length} bound to a kind, ${Object.keys(notAKind).length} declared not-a-kind ===`);
+console.log(`=== check-id-kinds-bound OK — ${observed.size} *Id propert(ies) across ${files.length} v2 schema(s); ${Object.keys(bindings).length} bound to a kind, ${Object.keys(notAKind).length} declared not-a-kind; identity.md §5 table matches ${tabled.size} kind(s) ===`);
