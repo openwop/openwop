@@ -8,7 +8,7 @@
 | **Author(s)**     | David Tufts (@davidscotttufts)                                  |
 | **Created**       | 2026-10-05                                                      |
 | **Updated**       | 2026-10-05 — `Draft` → `Active`, comment window waived by the maintainer (2026-10-05: "proceed with moving the RFC to accepted"), recorded as a STEWARD OVERRIDE of RFC 0147 §A.6 in MAINTAINERS.md. §A–§G are merged; the legs ship in suite 2.45.20 (`v2-host-event-delivery`, `lib/host-event-witness.ts`), each failing on its sabotage against a double. · 2026-10-05 — filed `Draft` after an `/architect` design review (2026-10-05) of two problems with one cause: an event that belongs to no run has no lawful v2 shape. |
-| **Affects**       | `spec/v2/core/events.md` §Host events · `spec/v2/core/webhooks.md` §Subscriptions, §Delivery · `spec/v2/core/conversation.md` §`channelPresence` · `spec/v2/core/capabilities.md` (new family `hostEvents`) · `spec/v2/declaration.json` · new `schemas/v2/host-event.schema.json` · `schemas/v2/webhook-delivery.schema.json` · `api/v2/asyncapi.yaml` (`hostEvents` channel) · `api/seams-v2.yaml` (through `scripts/derive-v2-api.py`) · `SECURITY/invariants.yaml` · new `v2-host-event-delivery.test.ts` |
+| **Affects**       | `spec/v2/core/events.md` §Host events · `spec/v2/core/webhooks.md` §Subscriptions, §Delivery · `spec/v2/core/conversation.md` §`channelPresence` · `spec/v2/core/capabilities.md` (new family `hostEvents`) · `spec/v2/declaration.json` · new `schemas/v2/host-event.schema.json` · `schemas/v2/webhook-delivery.schema.json` · `schemas/v2/webhook-dead-letter-page.schema.json` · `api/v2/asyncapi.yaml` (`hostEvents` channel) · `api/seams-v2.yaml` (through `scripts/derive-v2-api.py`) · `SECURITY/invariants.yaml` · new `v2-host-event-delivery.test.ts` |
 | **Compatibility** | `additive` with one `safety-fix` clause (§D) per COMPATIBILITY.md; see §Compatibility. |
 | **Supersedes**    | —                                                               |
 | **Superseded by** | —                                                               |
@@ -82,7 +82,7 @@ Every host event belongs to exactly one tenant. Every host event, and every hear
 - The delivery body for a host event is `{ hostEvent }`, the §A envelope. `webhook-delivery.schema.json` becomes `oneOf` the existing run body (unchanged) and the host body.
 - Headers and signing are unchanged. `OpenWOP-Event-Type` is the host-event `type`.
 - The dedup key is `(OpenWOP-Webhook-Id, eventId)`. `webhook-id` MUST be identical on every attempt of one `(webhookId, eventId)`.
-- Durability, retries, dead letters and secret rotation apply exactly as to run deliveries. A subscription MUST receive only host events of its own tenant (`webhook-cross-tenant-isolation`, extended).
+- Durability, retries, dead letters and secret rotation apply exactly as to run deliveries. A dead-lettered host-event delivery is listed without `runId`: `webhook-dead-letter-page.schema.json` becomes `oneOf` the run record (unchanged) and a host record. A subscription MUST receive only host events of its own tenant (`webhook-cross-tenant-isolation`, extended).
 
 ### §F Presence is an ephemeral host event
 
