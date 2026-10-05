@@ -1,6 +1,6 @@
 # `@openwop/openwop-conformance` Changelog
 
-## [2.45.18] — 2026-10-04 — corpus-only legs leave the host bundle; `.supported` leaves the v2 schemas
+## [2.45.18] — 2026-10-04 — `If-None-Match` per RFC 9110 (RFC 0235); corpus-only legs leave the host bundle; `.supported` leaves the v2 schemas
 
 - **Seven `v2-*-static` scenarios move to `src/coherence/`.** They read only the corpus, and `conformance.md` §Two products says such a check MUST NOT appear in a host bundle. The bundle schema now excludes their ids.
 - **`v2-envelope-tier-one-subset-static` is split.** The universal-kind walk moves to the corpus gate `v2-envelope-tier-one-universal-static`; the scenario keeps the strict leg, which reads the host's advertised kinds.

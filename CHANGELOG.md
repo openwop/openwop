@@ -15,6 +15,11 @@ Entries before this file was condensed carried full development detail. That tex
 - **Witness-coverage report sees `recordSchemaLeg`.** Its gate detector missed the private `onFamily` gate, so 24 advertisement scenarios witnessed nothing in the report. Moving the static legs exposed it: four families read v1-only while their v2 advertisement witnesses ran. Still 73/73.
 - **Correction to the 2.45.17 notes.** openwop-app's 304 failures were not spelling-dependent. A CDN edge answered `200` to the first conditional reaching a node that had not seen the object (hit-for-pass on a `no-store` response), then `304`. The witnesses are right, and intermittently red on such an origin.
 
+## [2.45.18] — 2026-10-04 — `If-None-Match` per RFC 9110 (RFC 0235 Active); corpus-only legs leave host bundles
+
+- **`If-None-Match` is evaluated as RFC 9110 defines it.** RFC 0235 (`Active`): `*` and weakly compared lists match, only where the answer would be `2xx`; `no-cache` does not suppress it. Four new legs on both 304 scenarios.
+- **Host bundles get smaller, on purpose.** Seven `v2-*-static` scenarios read only the corpus and moved to `src/coherence/`, so every host's 2.45.18 bundle has fewer rows than its 2.45.17 one. That is not a regression.
+
 ## [2.45.17] — 2026-10-04 — ETag rules: discovery's 304 witnessed at major 2, every client spelling covered
 
 - **Discovery's 304 is witnessed at major 2; the prompt-template 304 is advisory.** New `v2-discovery-etag` checks the `capabilities.md` §1 MUSTs (an `ETag`, and `304` on a match). The prompt-template leg failed on RFC 9110 alone; v2 scopes the 304 MUST to discovery and the run snapshot.
