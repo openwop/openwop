@@ -352,6 +352,19 @@ def v2_openapi_and_seams():
                 'observer': {'type': 'string', 'pattern': '^(user|agent):.+', 'description': 'The subject the snapshot is delivered to; default `member`.'}}}}}},
         'responses': {'200': {'description': 'The snapshot delivered to `observer`, who is a member.', 'content': {'application/json': {'schema': {'$ref': '../schemas/v2/channel-presence-payload.schema.json'}}}},
             '400': {'$ref': '#/components/responses/ValidationError'}, '401': {'$ref': '#/components/responses/Unauthenticated'}, '403': {'$ref': '#/components/responses/Forbidden'}, '404': {'$ref': '#/components/responses/NotFound'}}}}
+    # RFC 0236 §G: produce one host event through the production path, so the suite can drive the hostEvents and webhook legs.
+    seams['paths']['/conformance/seams/sample/host-events/emit'] = {'post': {'tags': ['Seams'], 'operationId': 'emitHostEvent',
+        'summary': 'Produce one host event of an advertised type',
+        'description': ('Produces one host event of `type`, which MUST be a type the host advertises in its `hostEvents` record, '
+                        "under the caller's tenant (and `workspaceId`, when given). The host MUST produce it through its production path, "
+                        'delivery class and tenant gate included, and MUST NOT branch on the seam. A host serving the seams profile advertises '
+                        'an `example.*` durable type and an `example.*` ephemeral type for the suite to drive. An unadvertised `type` is '
+                        '`400 validation_error`; an unwired seam answers `404`/`405`.'),
+        'requestBody': {'required': True, 'content': {'application/json': {'schema': {'type': 'object', 'additionalProperties': False, 'required': ['type'],
+            'properties': {'type': {'type': 'string', 'minLength': 1}, 'workspaceId': {'$ref': '../schemas/v2/ids.schema.json#/$defs/workspaceId'}}}}}},
+        'responses': {'202': {'description': 'Produced; `eventId` is the envelope\'s.', 'content': {'application/json': {'schema': {'type': 'object', 'additionalProperties': False, 'required': ['eventId'],
+            'properties': {'eventId': {'$ref': '../schemas/v2/ids.schema.json#/$defs/eventId'}}}}}},
+            '400': {'$ref': '#/components/responses/ValidationError'}, '401': {'$ref': '#/components/responses/Unauthenticated'}, '404': {'$ref': '#/components/responses/NotFound'}}}}
     # RFC 0173 read surfaces + hostEvents default address
     paths['/host/effect-seams'] = {'get': {'tags': ['host'], 'operationId': 'getEffectSeamManifest', 'summary': "Read the host's effect-seam manifest", 'description': ('Lists every outbound effect seam that replay suppression covers. A seam omitted here is invisible to the '
                                                                                                                                                                                         "conformance suite; an audit of the host's seams is the control."), 'responses': {'200': {'description': 'The manifest.', 'content': {'application/json': {'schema': {'$ref': '../../schemas/v2/effect-seam-manifest.schema.json'}}}}, '401': {'$ref': '#/components/responses/Unauthenticated'}}}}
@@ -451,7 +464,7 @@ def v2_openapi_and_seams():
     for p, desc in (('/agents', 'Installed manifest agents, sorted by `agentId`.'), ('/agents/{agentId}', "The agent's inventory entry.")):
         paths[p]['get']['responses']['200']['description'] = (desc + ' When the host advertises `a2a.agentCards`, an entry '
             'the host routes a workflow to carries `a2aTenant`, the opaque A2A `tenant` value of that agent\'s card (interop.md §Per-agent cards).')
-    paths['/host/events'] = {'get': {'tags': ['host'], 'operationId': 'streamHostEvents', 'summary': 'Stream host-scoped events (`heartbeat.*`) as SSE', 'description': ('The default `hostEvents` address; a host MAY declare another under `heartbeat.deliveryChannel`. Carries '
+    paths['/host/events'] = {'get': {'tags': ['host'], 'operationId': 'streamHostEvents', 'summary': 'Stream host-scoped events (`heartbeat.*` and host events) as SSE', 'description': ('The default `hostEvents` address; a host MAY declare another under `heartbeat.deliveryChannel`. Every message is delivered only within the caller\'s tenant (RFC 0236 §D). Carries '
                                                                                                                                                                                 'no run data.'), 'responses': {'200': {'description': '`text/event-stream` of `hostEvents` messages.', 'content': {'text/event-stream': {'schema': {'type': 'string'}}}}, '401': {'$ref': '#/components/responses/Unauthenticated'}}}}
     doc['paths'] = paths
     comps = doc.setdefault('components', {})
@@ -689,6 +702,11 @@ def v2_asyncapi():
         comps['securitySchemes']['ApiKeyAuth'] = {'type': 'http', 'scheme': 'bearer', 'bearerFormat': 'API key',
                                                   'description': ('Bearer API key; the same scheme as `ApiKeyAuth` in `api/v2/openapi.yaml`. Subscribing requires the '
                                                                   '`runs:read` scope.')}
+    # RFC 0236 §A–§D: a host event is not a run event; it rides hostEvents beside the heartbeat messages.
+    comps['messages']['HostEvent'] = {'name': 'hostEvent', 'title': 'Host event', 'contentType': 'text/event-stream', 'payload': {'$ref': '../../schemas/v2/host-event.schema.json'},
+                                      'description': ('One SSE frame per host event (RFC 0236): `event:` is the host-event `type`, `data:` the envelope. A durable event\'s frame carries '
+                                                      '`id:` = `eventId`; an ephemeral event\'s frame carries no `id:` and is never redelivered. Every message on this channel is '
+                                                      "delivered only within the subscriber's tenant.")}
     comps.setdefault('messages', {})['RunEvent'] = {'name': 'runEvent', 'title': 'Run event', 'contentType': 'text/event-stream', 'payload': {'$ref': '../../schemas/v2/run-event.schema.json'}, 'description': 'One SSE frame per run event: `event:` is the v2 type and `id:` is the sequence.'}
     return {
         'asyncapi': A1['asyncapi'],
@@ -702,7 +720,7 @@ def v2_asyncapi():
         'channels': {
             'runEvents': {'address': '/runs/{runId}/events', 'title': 'Run event stream (SSE)', 'parameters': {'runId': {'description': 'The run to subscribe to (`ids.schema.json#/$defs/runId`).'}},
                           'messages': {'runEvent': {'$ref': '#/components/messages/RunEvent'}}},
-            'hostEvents': {'address': '/host/events', 'title': 'Host-scoped events (`heartbeat.*`)', 'messages': {'heartbeatEvaluated': {'$ref': '#/components/messages/HeartbeatEvaluated'}, 'heartbeatStateChanged': {'$ref': '#/components/messages/HeartbeatStateChanged'}}},
+            'hostEvents': {'address': '/host/events', 'title': 'Host-scoped events (`heartbeat.*` and host events)', 'messages': {'heartbeatEvaluated': {'$ref': '#/components/messages/HeartbeatEvaluated'}, 'heartbeatStateChanged': {'$ref': '#/components/messages/HeartbeatStateChanged'}, 'hostEvent': {'$ref': '#/components/messages/HostEvent'}}},
         },
         'operations': {
             'subscribeRunEvents': {'action': 'receive', 'channel': {'$ref': '#/channels/runEvents'}, 'title': 'Subscribe to a run\'s events',

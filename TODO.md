@@ -220,12 +220,12 @@ Defects outside the spec:
       advertise ⇒ emit and no-delivery-to-a-non-member rules are restated in `conversation.md`,
       witnessed by `v2-channel-presence-delivery` through the §13 seam (ported to `api/seams-v2.yaml`
       with an `observer` field), and invariant `channel-presence-member-only-delivery` is added.
-- [ ] **RFC owed: a v2 home for runless vendor host events.** openwop-app (ADR 0812) delivers runless host
+- [x] **RFC owed: a v2 home for runless vendor host events.** → RFC 0236 (Active 2026-10-05). openwop-app (ADR 0812) delivers runless host
       events to major-2 webhook subscriptions with a `hostext:` pseudo-`runId`. That fails
       `webhook-delivery.schema.json`: v2 webhooks carry run events only (`webhooks.md` §Delivery), and
       `hostEvents` admits only the two heartbeat messages. Ruled 2026-10-05: no major-2 webhook delivery,
       no pseudo-ids. Likely one RFC with the ephemeral class below (events with no log position).
-- [ ] **RFC owed: an ephemeral delivery class in `events.md`.** RFC 0110 says `channel.presence` MUST
+- [x] **RFC owed: an ephemeral delivery class in `events.md`.** → RFC 0236 (Active 2026-10-05). RFC 0110 says `channel.presence` MUST
       NOT be persisted and is replay-invisible. Yet `events.md` §1 makes a run its log, and the
       envelope requires `sequence`, a log position. Restating the rule would contradict core;
       dropping it lets a fork replay stale presence. Options: a non-`RunEvent` frame with no
@@ -242,11 +242,10 @@ Defects outside the spec:
 - [x] **RFC 0235** `Accepted` (provisional) 2026-10-05 on the v2 reference host's certified 2.45.18
       cut (497/0/0, build `e5f27708`). Owed: the RFC 0156 §B review. MyndHyve implements RFC 9110 and
       was invited to cut on 2.45.18; openwop-app's public origin still has the CDN-edge `304` issue.
-- [ ] **RFC 0236** (`Draft`, 2026-10-05): host events, an envelope with no run-log position, for
-      `channel.presence` (ephemeral) and runless vendor events (durable, webhook-deliverable; openwop-app
-      ADR 0812), tenant-scoped on `/host/events`. Owed for `Active`: §A–§G prose, schemas, AsyncAPI, the
-      emit seam, `v2-host-event-delivery` with its double, invariant `host-event-tenant-isolation`. Then
-      the v2 reference host implements it and cuts → `Accepted`.
+- [ ] **RFC 0236** (`Active`, 2026-10-05, window waived): host events. Owed for `Accepted`: openwop-examples
+      branch `v2-reference/host-events` (implemented, 6/6 locally) pins 2.45.20, merges, and a certified
+      v2-reference cut records the six `openwop.requirement.0236.*` ids, the tenant leg under
+      `OPENWOP_TENANT_B_API_KEY`. openwop-app ADR 0812 is the tier-2 follow-on.
 - [ ] **`dataResidency.regions` has no `minItems`.** `regions: []` validates, so the "accept an
       advertised region" rule can never apply. Adding `minItems: 1` narrows the schema and needs an
       RFC.

@@ -4,11 +4,11 @@
 | ----------------- | --------------------------------------------------------------- |
 | **RFC**           | 0236                                                            |
 | **Title**         | Host events — events without a run-log position                 |
-| **Status**        | `Draft`                                                         |
+| **Status**        | `Active`                                                        |
 | **Author(s)**     | David Tufts (@davidscotttufts)                                  |
 | **Created**       | 2026-10-05                                                      |
-| **Updated**       | 2026-10-05 — filed `Draft` after an `/architect` design review (2026-10-05) of two problems with one cause: an event that belongs to no run has no lawful v2 shape. |
-| **Affects**       | `spec/v2/core/events.md` §Host events · `spec/v2/core/webhooks.md` §Subscriptions, §Delivery · `spec/v2/core/conversation.md` §`channelPresence` · `spec/v2/core/capabilities.md` (new family `hostEvents`) · `spec/v2/declaration.json` · new `schemas/v2/host-event.schema.json` · `schemas/v2/webhook-delivery.schema.json` · `api/v2/asyncapi.yaml` (`hostEvents` channel) · `api/seams-v2.yaml` (through `scripts/derive-v2-api.py`) · `SECURITY/invariants.yaml` · new `v2-host-event-delivery.test.ts` |
+| **Updated**       | 2026-10-05 — `Draft` → `Active`, comment window waived by the maintainer (2026-10-05: "proceed with moving the RFC to accepted"), recorded as a STEWARD OVERRIDE of RFC 0147 §A.6 in MAINTAINERS.md. §A–§G are merged; the legs ship in suite 2.45.20 (`v2-host-event-delivery`, `lib/host-event-witness.ts`), each failing on its sabotage against a double. · 2026-10-05 — filed `Draft` after an `/architect` design review (2026-10-05) of two problems with one cause: an event that belongs to no run has no lawful v2 shape. |
+| **Affects**       | `spec/v2/core/events.md` §Host events · `spec/v2/core/webhooks.md` §Subscriptions, §Delivery · `spec/v2/core/conversation.md` §`channelPresence` · `spec/v2/core/capabilities.md` (new family `hostEvents`) · `spec/v2/declaration.json` · new `schemas/v2/host-event.schema.json` · `schemas/v2/webhook-delivery.schema.json` · `schemas/v2/webhook-dead-letter-page.schema.json` · `api/v2/asyncapi.yaml` (`hostEvents` channel) · `api/seams-v2.yaml` (through `scripts/derive-v2-api.py`) · `SECURITY/invariants.yaml` · new `v2-host-event-delivery.test.ts` |
 | **Compatibility** | `additive` with one `safety-fix` clause (§D) per COMPATIBILITY.md; see §Compatibility. |
 | **Supersedes**    | —                                                               |
 | **Superseded by** | —                                                               |
@@ -74,7 +74,7 @@ A **durable** host event:
 
 ### §D Tenant scope (safety fix)
 
-Every message on the `hostEvents` channel, host events and heartbeat messages alike, MUST be delivered only to a subscriber whose tenant owns it. A host event that names a `workspaceId` MUST be delivered only to subscribers within that workspace. An ephemeral host event MUST additionally be delivered only to subscribers it is visible to; for `channel.presence`, that is the channel's current members. This is CTI-1 applied to a channel that never stated it (invariant `host-event-tenant-isolation`).
+Every host event belongs to exactly one tenant. Every host event, and every heartbeat message a tenant owns, MUST be delivered only to that tenant's subscribers. A host-wide heartbeat that carries no tenant's data (a liveness tick) is not bound. A host event that names a `workspaceId` MUST be delivered only to subscribers within that workspace. An ephemeral host event MUST additionally be delivered only to subscribers it is visible to; for `channel.presence`, that is the channel's current members. This is CTI-1 applied to a channel that never stated it (invariant `host-event-tenant-isolation`).
 
 ### §E Webhook delivery of durable host events
 
@@ -82,7 +82,7 @@ Every message on the `hostEvents` channel, host events and heartbeat messages al
 - The delivery body for a host event is `{ hostEvent }`, the §A envelope. `webhook-delivery.schema.json` becomes `oneOf` the existing run body (unchanged) and the host body.
 - Headers and signing are unchanged. `OpenWOP-Event-Type` is the host-event `type`.
 - The dedup key is `(OpenWOP-Webhook-Id, eventId)`. `webhook-id` MUST be identical on every attempt of one `(webhookId, eventId)`.
-- Durability, retries, dead letters and secret rotation apply exactly as to run deliveries. A subscription MUST receive only host events of its own tenant (`webhook-cross-tenant-isolation`, extended).
+- Durability, retries, dead letters and secret rotation apply exactly as to run deliveries. A dead-lettered host-event delivery is listed without `runId`: `webhook-dead-letter-page.schema.json` becomes `oneOf` the run record (unchanged) and a host record. A subscription MUST receive only host events of its own tenant (`webhook-cross-tenant-isolation`, extended).
 
 ### §F Presence is an ephemeral host event
 
@@ -111,7 +111,7 @@ Every message on the `hostEvents` channel, host events and heartbeat messages al
 
 - **Additive:** a new family, schema, channel message, seam and webhook body variant. A host that does not advertise `hostEvents` is unaffected. The run body of `webhook-delivery.schema.json` is byte-identical. The host body is opt-in: a subscriber receives it only by naming a host-event type in `events[]`, which no existing subscription does, because no host-event type existed.
 - **Deprecation (§F):** `channel.presence` stays in the run-event union, deprecated. The emitter census is 0: no committed major-2 bundle's host advertises `channelPresence`. The frozen v1 tree is untouched.
-- **Safety fix (§D):** tenant-scoping heartbeat messages tightens an unstated rule. It is a CTI-1-class correctness fix, so the 90-day window does not bind. No host is known to deliver heartbeats across tenants: the v2 reference host serves one tenant per credential.
+- **Safety fix (§D):** tenant-scoping a heartbeat a tenant owns tightens an unstated rule. It is a CTI-1-class correctness fix, so the 90-day window does not bind. A host-wide liveness heartbeat carries no tenant's data and is not bound; the v2 reference host's is one.
 - **Version axes:** none move. Nothing enters or leaves a run log, so no in-flight run, replay or fork is affected.
 
 ## Conformance
@@ -139,9 +139,11 @@ A coherence check in `src/coherence/` asserts that `channel.presence` is registe
 
 ## Unresolved questions
 
-1. **Scope.** `/host/events` uses `runs:read`. Should host events need a new `events:read` scope? Proposed: no; a new scope is vocabulary churn, and §D's tenant rule is the control.
-2. **Poll.** Should durable host events also have a long-poll read? Proposed: no; SSE plus webhooks cover both consumers, and a poll would need its own cursor grammar.
-3. **Heartbeat messages.** Should they move into the §A envelope? Proposed: at the next major only (G3), because wrapping them now breaks every heartbeat consumer.
+None. Three were decided at `Active` (2026-10-05, steward):
+
+1. **Scope:** `/host/events` keeps `runs:read`. A new `events:read` scope is vocabulary churn, and §D's tenant rule is the control.
+2. **Poll:** no long-poll read for host events. SSE and webhooks cover both consumers, and a poll would need its own cursor grammar.
+3. **Heartbeat messages:** they move into the §A envelope at the next major only (G3), because wrapping them now breaks every heartbeat consumer.
 
 ## Implementation notes (non-normative)
 
@@ -151,8 +153,8 @@ A coherence check in `src/coherence/` asserts that `channel.presence` is registe
 
 ## Acceptance criteria
 
-- [ ] `Active`: §A–§G merged in `events.md`, `webhooks.md`, `conversation.md` and `capabilities.md`; the family row in `spec/v2/declaration.json`; `host-event.schema.json`; the `webhook-delivery.schema.json` `oneOf`; the AsyncAPI message; the §G seam; invariant `host-event-tenant-isolation`; a `CHANGELOG.md` entry.
-- [ ] `v2-host-event-delivery` ships, with each leg failing on its sabotage in the scratch double.
+- [x] `Active`: §A–§G merged in `events.md`, `webhooks.md`, `conversation.md` and `capabilities.md`; the family row in `spec/v2/declaration.json`; `host-event.schema.json`; the `webhook-delivery.schema.json` `oneOf`; the AsyncAPI message; the §G seam; invariant `host-event-tenant-isolation`; a `CHANGELOG.md` entry.
+- [x] `v2-host-event-delivery` ships in suite 2.45.20, with each leg failing on its sabotage against a double: a `runId` on the envelope, an `id:` on an ephemeral frame, an ephemeral event replayed after `Last-Event-ID`, an ephemeral event fanned out, an ephemeral type accepted at registration, a cross-tenant delivery, a bad signature. The judges' self-test (`host-event-witness.test.ts`) convicts each defect too.
 - [ ] `Accepted`: a certified major-2 bundle records the six `openwop.requirement.0236.*` ids `executed-pass`, or as a non-pass row with a reason for the gated tenant row.
 
 ## References

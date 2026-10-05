@@ -10,7 +10,7 @@
     "deliveries": {
       "type": "array",
       "description": "Dead-lettered deliveries, newest first. Empty when the subscription has none within `retentionDays`.",
-      "items": { "$ref": "#/$defs/deadLetteredDelivery" }
+      "items": { "oneOf": [{ "$ref": "#/$defs/deadLetteredDelivery" }, { "$ref": "#/$defs/deadLetteredHostDelivery" }] }
     },
     "nextCursor": {
       "type": "string",
@@ -20,6 +20,23 @@
     }
   },
   "$defs": {
+    "deadLetteredHostDelivery": {
+      "description": "RFC 0236 §E — a dead-lettered delivery of a durable host event. It names no run, so it carries no `runId`; `eventId` is the host event's. Only a subscription whose `events[]` names a host-event type can have one.",
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["deliveryId", "webhookId", "eventId", "eventType", "attempts", "deadLetteredAt", "expiresAt", "reason"],
+      "properties": {
+        "deliveryId": { "$ref": "ids.schema.json#/$defs/deliveryId" },
+        "webhookId": { "$ref": "ids.schema.json#/$defs/subscriptionId" },
+        "eventId": { "$ref": "ids.schema.json#/$defs/eventId" },
+        "eventType": { "$ref": "#/$defs/deadLetteredDelivery/properties/eventType" },
+        "attempts": { "$ref": "#/$defs/deadLetteredDelivery/properties/attempts" },
+        "deadLetteredAt": { "$ref": "#/$defs/deadLetteredDelivery/properties/deadLetteredAt" },
+        "expiresAt": { "$ref": "#/$defs/deadLetteredDelivery/properties/expiresAt" },
+        "reason": { "$ref": "#/$defs/deadLetteredDelivery/properties/reason" },
+        "lastStatus": { "$ref": "#/$defs/deadLetteredDelivery/properties/lastStatus" }
+      }
+    },
     "deadLetteredDelivery": {
       "type": "object",
       "additionalProperties": false,

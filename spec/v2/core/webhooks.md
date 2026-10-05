@@ -16,17 +16,17 @@ A host that advertises `webhooks` ([capabilities.md](capabilities.md)) serves `r
 | `registerWebhook` | `{ url, events[], secret?, tags?, signatureAlgorithms? }` | `201 { webhookId, secret? }` |
 | `unregisterWebhook` | path `webhookId` | `204`; `404` when unknown; `403` when the caller is outside the subscription's tenant |
 
-On `registerWebhook`, `url` MUST be `https://` and `events[]` MUST be non-empty v2 event type names ([events.md](events.md)).
+On `registerWebhook`, `url` MUST be `https://` and `events[]` MUST be non-empty v2 event type names ([events.md](events.md)). `events[]` MAY name a durable host-event type the host advertises; an ephemeral or unadvertised one MUST be refused `400 validation_error`.
 
 When `registerWebhook` omits `secret`, the host MUST generate one and return it as `secret` in the `201`. That response is the only one that carries it. A supplied secret MUST NOT be echoed.
 
 A `204` from `unregisterWebhook` ends the subscription's deliveries, including retries already scheduled (§Durability).
 
-A subscription MUST receive only events from runs within its tenant scope; cross-tenant delivery is a protocol violation whatever the filter says (invariant `webhook-cross-tenant-isolation`). `tags` narrows delivery to runs whose options carry an overlapping tag.
+A subscription MUST receive only events from runs within its tenant scope, and only host events of its tenant; cross-tenant delivery is a protocol violation whatever the filter says (invariant `webhook-cross-tenant-isolation`). `tags` narrows delivery to runs whose options carry an overlapping tag.
 
 ## Delivery
 
-The delivery envelope is generated from the event's payload definition (events.md §Payloads). The body is `{ runId, workspaceId?, event }`, where `event` is the verbatim run event.
+The delivery envelope is generated from the event's payload definition (events.md §Payloads). The body is `{ runId, workspaceId?, event }`, where `event` is the verbatim run event. A durable host event's body is `{ hostEvent }`, deduplicated on `(OpenWOP-Webhook-Id, eventId)`; its `webhook-id` MUST NOT change across attempts.
 
 - The body MUST validate against `schemas/v2/webhook-delivery.schema.json`.
 - `workspaceId` is present exactly when `RunSnapshot.owner.workspace` is ([identity.md §1](identity.md)); a host MUST NOT substitute its tenant id for an absent workspace.
@@ -162,4 +162,4 @@ With `triggerBridge.ingestion`, each `externalSources` entry MUST turn an extern
 - MUST refuse private, link-local and loopback targets and cap the body on any ingestion fetch, and never hand the run a URL (invariant `trigger-ingestion-ssrf`);
 - SHOULD key `stream` by topic, partition and offset, `change` by table and changelog id; a key MUST survive broker redelivery.
 
-*Sources: RFCs 0053, 0083, 0099, 0127, 0165, 0171, 0173, 0176, 0188, 0196, 0201, 0215, 0217, 0230, 0232.*
+*Sources: RFCs 0053, 0083, 0099, 0127, 0165, 0171, 0173, 0176, 0188, 0196, 0201, 0215, 0217, 0230, 0232, 0236.*
