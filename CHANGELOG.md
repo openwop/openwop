@@ -21,6 +21,10 @@ Entries before this file was condensed carried full development detail. That tex
 - **Witness-coverage report sees `recordSchemaLeg`.** Its gate detector missed the private `onFamily` gate, so 24 advertisement scenarios witnessed nothing in the report. Moving the static legs exposed it: four families read v1-only while their v2 advertisement witnesses ran. Still 73/73.
 - **Correction to the 2.45.17 notes.** openwop-app's 304 failures were not spelling-dependent. A CDN edge answered `200` to the first conditional reaching a node that had not seen the object (hit-for-pass on a `no-store` response), then `304`. The witnesses are right, and intermittently red on such an origin.
 
+## [2.45.21] — 2026-10-05 — `0236.webhook.host-variant` records its own row
+
+- **`v2-host-event-delivery` splits no-fan-out into its own `it`.** A bundle records one requirement id per `it`, so the 2.45.20 webhook `it` recorded only no-fan-out and hid `0236.webhook.host-variant`. Found by the v2 reference host's loopback rehearsal; all six RFC 0236 ids now record.
+
 ## [2.45.20] — 2026-10-05 — host events (RFC 0236 Active); `channelPresence` restated at v2
 
 - **RFC 0236 Active: host events.** A runless, tenant-scoped envelope (no `runId`, no `sequence`), `durable` or `ephemeral` per type in a new `hostEvents` family, on `/host/events` and (durable) webhooks as `{ hostEvent }`. New `v2-host-event-delivery` (six ids); the v2 reference host passes it on a branch.
