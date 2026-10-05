@@ -1,5 +1,9 @@
 # `@openwop/openwop-conformance` Changelog
 
+## [2.45.22] — 2026-10-05 — RFC 0236's registers close
+
+- **No scenario change.** RFC 0236 goes `Accepted` on the v2 reference host's certified 2.45.21 cut; its gaps G1 and G2 close, which changes the packed `spec/v1/gaps.json`.
+
 ## [2.45.21] — 2026-10-05 — `0236.webhook.host-variant` gets its own row
 
 - **`v2-host-event-delivery`: no-fan-out is its own `it`.** A bundle records one requirement id per `it` (the last one asserted), so the webhook `it` that asserted host-variant and then no-fan-out recorded only no-fan-out. Found by the v2 reference host's 2.45.20 loopback rehearsal: five of the six RFC 0236 ids appeared. The new `it` re-runs the same gate, so a host without the families records the same disposition.
