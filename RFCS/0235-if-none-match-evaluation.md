@@ -51,7 +51,7 @@ The same bullet's first line drops "strong": "The `200` SHOULD carry an `ETag` d
 
 ### §B. The other sites point at §A
 
-1. `capabilities.md` §1.1: "MUST honor `If-None-Match` with `304`" becomes "MUST honor `If-None-Match` with `304` ([runs.md](runs.md) §Caching and encoding)".
+1. `capabilities.md` §1.1: "MUST honor `If-None-Match` with `304`" becomes "MUST honor `If-None-Match` with `304` (runs.md §Caching and encoding)", the citation written as a link in the doc.
 2. The `If-None-Match` parameter description in `api/v2/openapi.yaml` (both operations), and so `headers.md`: "A value that matches the current `ETag` (runs.md §Caching and encoding) MUST yield `304 Not Modified` with no body."
 3. The discovery `ETag` response header: "Strong validator" becomes "Validator", matching `capabilities.md`'s "standard `ETag`".
 
