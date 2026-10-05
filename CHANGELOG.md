@@ -17,6 +17,11 @@ Entries before this file was condensed carried full development detail. That tex
 - **Witness-coverage report sees `recordSchemaLeg`.** Its gate detector missed the private `onFamily` gate, so 24 advertisement scenarios witnessed nothing in the report. Moving the static legs exposed it: four families read v1-only while their v2 advertisement witnesses ran. Still 73/73.
 - **Correction to the 2.45.17 notes.** openwop-app's 304 failures were not spelling-dependent. A CDN edge answered `200` to the first conditional reaching a node that had not seen the object (hit-for-pass on a `no-store` response), then `304`. The witnesses are right, and intermittently red on such an origin.
 
+## [2.45.19] — 2026-10-05 — a minted tenant-bound id carries no `~`; RFC 0235 Accepted
+
+- **New leg `0184.mint-no-tilde`** (RFC 0184 §A.2): a host MUST NOT mint a tenant-bound id containing `~`. It bites only when the suite's credential tenant is not grammar-clean: on openwop-app under `acme@corp.example` the conforming map passes and the reverted projection fails.
+- **RFC 0235 Accepted (provisional).** The v2 reference host's certified 2.45.18 cut (497/0/0) records all four `If-None-Match` ids `executed-pass`; the packed `gaps.json` changes as its registers close.
+
 ## [2.45.18] — 2026-10-04 — `If-None-Match` per RFC 9110 (RFC 0235 Active); corpus-only legs leave host bundles
 
 - **`If-None-Match` is evaluated as RFC 9110 defines it.** RFC 0235 (`Active`): `*` and weakly compared lists match, only where the answer would be `2xx`; `no-cache` does not suppress it. Four new legs on both 304 scenarios.
