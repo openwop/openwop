@@ -22,12 +22,24 @@
  * `v2-created-run-readable` already witnesses it. Duplicating it here would red
  * two rows for one defect and tell a bundle reader nothing new.
  *
+ * **Minting (RFC 0184 §A.2), a second `it`.** A host MUST NOT mint a
+ * tenant-bound id containing `~`; ids already minted MUST still resolve, so only
+ * an id this run mints is checked, never every id a body carries. Unescaped, a
+ * literal `~` is ambiguous with the codec's own marker. openwop-app minted
+ * `user~3A<hash>/<id>` for personal and org tenants (app ADR 0814: it projected
+ * the tenant key instead of mapping it), and no leg saw it, because the
+ * conformance key sat in the clean tenant `default`. **The leg bites only when
+ * the suite's credential sits in a tenant whose key is not already clean**: on a
+ * clean tenant a host with that defect still mints a clean id. Proven both ways
+ * on openwop-app with `OPENWOP_API_KEYS=<key>:acme@corp.example`.
+ *
  * The codec's own edge cases (marker escaping, UTF-8 vs UTF-16, malformed
  * decode) are a unit concern and live in `src/lib/bound-id.test.ts`, which is
  * sabotage-checked. This file asserts only what needs a HOST to answer.
  *
  * @see spec/v2/core/identity.md §5
  * @see RFCS/0184-bound-id-path-projection.md §A.1
+ * @see RFCS/0184-bound-id-path-projection.md §A.2
  */
 
 import { describe, it, expect } from 'vitest';
@@ -40,6 +52,7 @@ import { projectBoundId } from '../lib/bound-id.js';
 import { BOUND_ID as BOUND } from '../lib/bound-id.js';
 
 const ID = 'openwop.requirement.0184.bound-id-path-projection';
+const ID_MINT = 'openwop.requirement.0184.mint-no-tilde';
 const DOC = 'spec/v2/core/identity.md §5';
 const NOOP_WORKFLOW_ID = 'conformance-noop';
 
@@ -131,5 +144,22 @@ describe('v2 bound-id path projection (identity.md §5)', () => {
       malformed?.status ?? null,
       req(ID, DOC, `a path segment whose '~' is not followed by two hex digits MUST be refused 400 validation_error — got ${malformed?.status ?? 'no response'} ${readErrorCode(malformed?.json) ?? ''}`.trim()),
     ).toBe(400);
+  });
+
+  it('a tenant-bound id the host mints for this run contains no ~', async () => {
+    try { if (!(await v2Discovery())) return softSkip('blocked', 'v2 discovery unreachable'); } catch { return softSkip('blocked', 'v2 discovery unreachable'); }
+    const created = await http(() => driver.post('/runs', { workflowId: NOOP_WORKFLOW_ID }));
+    if (created === null) return softSkip('blocked', 'POST /runs unreachable (fetch failed)');
+    if (created.status === 429) return softSkip('blocked', 'POST /runs answered 429 — the run budget, not the wire');
+    const runId = (created.json as { runId?: unknown } | null)?.runId;
+    if (created.status !== 201 || typeof runId !== 'string') {
+      return softSkip('blocked', `POST /runs {workflowId: ${NOOP_WORKFLOW_ID}} answered ${created.status} ${readErrorCode(created.json) ?? ''} — the smallest valid create was refused (fixture not seeded?)`.trim());
+    }
+    // The body carries the bound id, never the projection (identity.md §5: ids in
+    // documents and bodies are bound). So a `~` here was minted, not escaped.
+    expect(
+      runId.includes('~'),
+      req(ID_MINT, DOC, `a host MUST NOT mint a tenant-bound id containing ~ (RFC 0184 §A.2) — the created runId is ${runId}. A literal ~ is ambiguous with the path projection's escape marker; map the tenant key to a clean segment instead of projecting it`),
+    ).toBe(false);
   });
 });

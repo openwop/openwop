@@ -3,10 +3,10 @@
   "generatedFrom": "src/scenarios/*.test.ts",
   "counts": {
     "files": 726,
-    "tests": 2754,
-    "withStableId": 2754,
+    "tests": 2755,
+    "withStableId": 2755,
     "interpolatedTitles": 0,
-    "explicitIds": 2620
+    "explicitIds": 2621
   },
   "records": [
     {
@@ -28969,7 +28969,7 @@
     {
       "id": "openwop.it.v2-bound-id-path-projection.a-tenant-bound-id-is-readable-at-its-escaped-path-segment-links-carry-that-form",
       "file": "v2-bound-id-path-projection.test.ts",
-      "line": 51,
+      "line": 64,
       "title": "a tenant-bound id is readable at its ~-escaped path segment, links carry that form, and a malformed escape is refused",
       "explicitId": "openwop.requirement.0184.bound-id-path-projection",
       "citations": [
@@ -29006,6 +29006,20 @@
           "section": "spec/v2/core/identity.md §5",
           "requirement": "a single-major host refuses the bare form with validation_error (identity.md §5), not not_found"
         },
+        {
+          "section": "spec/v2/core/identity.md §5",
+          "requirement": null,
+          "interpolated": true
+        }
+      ]
+    },
+    {
+      "id": "openwop.it.v2-bound-id-path-projection.a-tenant-bound-id-the-host-mints-for-this-run-contains-no",
+      "file": "v2-bound-id-path-projection.test.ts",
+      "line": 149,
+      "title": "a tenant-bound id the host mints for this run contains no ~",
+      "explicitId": "openwop.requirement.0184.mint-no-tilde",
+      "citations": [
         {
           "section": "spec/v2/core/identity.md §5",
           "requirement": null,

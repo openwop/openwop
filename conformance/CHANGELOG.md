@@ -1,5 +1,10 @@
 # `@openwop/openwop-conformance` Changelog
 
+## [2.45.19] — 2026-10-05 — a minted tenant-bound id carries no `~`
+
+- **New leg `openwop.requirement.0184.mint-no-tilde`** in `v2-bound-id-path-projection`. RFC 0184 §A.2: a host MUST NOT mint a tenant-bound id containing `~`. Only the run this leg creates is checked, because ids minted earlier MUST still resolve.
+- **It bites only under a non-clean tenant.** openwop-app minted `user~3A<hash>/<id>` for personal and org tenants (app ADR 0814). No leg saw it, because the suite's key sat in the clean tenant `default`. On a clean tenant the defect still mints a clean id.
+
 ## [2.45.18] — 2026-10-04 — `If-None-Match` per RFC 9110 (RFC 0235); corpus-only legs leave the host bundle; `.supported` leaves the v2 schemas
 
 - **Seven `v2-*-static` scenarios move to `src/coherence/`.** They read only the corpus, and `conformance.md` §Two products says such a check MUST NOT appear in a host bundle. The bundle schema now excludes their ids.

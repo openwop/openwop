@@ -8,6 +8,7 @@ Entries before this file was condensed carried full development detail. That tex
 
 ## [Unreleased]
 
+- **2.45.19 cycle (suite):** new leg `0184.mint-no-tilde` — a host MUST NOT mint a tenant-bound id containing `~` (RFC 0184 §A.2). It bites only when the suite's credential sits in a non-clean tenant; openwop-app's defect (app ADR 0814) hid behind `default`.
 - **Erratum: `identity.md` §5 grammar table matches `ids.schema.json` again.** `tenantId` gets its own row with the `anon:` prefix its pattern has had since 2.0.0. `typeId` gains the `@<semver>` pin from RFC 0187. No wire change. `check-id-kinds-bound` now compares the table against the schema.
 - **RFC 0235 filed (Draft).** "Matching the `ETag`" was undefined, and the matrix hosts read it three ways. It binds `If-None-Match` to RFC 9110 §13.1.2 (`*`, lists, weak comparison), evaluated only where the answer would be `2xx` and not suppressed by `Cache-Control: no-cache`.
 - **RFC 0235 Active (window waived).** `runs.md` §Caching and encoding now defines the match; `capabilities.md` §1.1 and the OpenAPI descriptions cite it, and the discovery `ETag` is a "Validator", not "Strong". Suite 2.45.18 carries the four legs.
