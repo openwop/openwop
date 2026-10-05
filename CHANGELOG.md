@@ -8,6 +8,7 @@ Entries before this file was condensed carried full development detail. That tex
 
 ## [Unreleased]
 
+- **Erratum: `identity.md` §5 grammar table matches `ids.schema.json` again.** `tenantId` gets its own row with the `anon:` prefix its pattern has had since 2.0.0. `typeId` gains the `@<semver>` pin from RFC 0187. No wire change. `check-id-kinds-bound` now compares the table against the schema.
 - **RFC 0235 filed (Draft).** "Matching the `ETag`" was undefined, and the matrix hosts read it three ways. It binds `If-None-Match` to RFC 9110 §13.1.2 (`*`, lists, weak comparison), evaluated only where the answer would be `2xx` and not suppressed by `Cache-Control: no-cache`.
 - **RFC 0235 Active (window waived).** `runs.md` §Caching and encoding now defines the match; `capabilities.md` §1.1 and the OpenAPI descriptions cite it, and the discovery `ETag` is a "Validator", not "Strong". Suite 2.45.18 carries the four legs.
 - **2.45.18 cycle (suite):** the corpus-only legs of the `v2-*-static` scenarios move to `src/coherence/` and leave the host bundle (`conformance.md` §Two products). `.supported` wording leaves 38 v2 schema descriptions (presence is the claim). No rule changed.

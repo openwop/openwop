@@ -182,12 +182,13 @@ Every id field in every v2 schema and every `api/v2/openapi.yaml` parameter and 
 | --- | --- | --- |
 | `runId`, `interruptId`, `subscriptionId`, `deliveryId`, `effectId` | tenant-bound: `^(anon:)?[A-Za-z0-9._~-]{1,128}/[A-Za-z0-9._~-]{16,128}$` | host |
 | `eventId` | `^[A-Za-z0-9._~-]{16,128}$` | host |
-| `tenantId`, `workspaceId` | `^[A-Za-z0-9._~-]{1,128}$` | host |
+| `tenantId` | `^(anon:)?[A-Za-z0-9._~-]{1,128}$` | host |
+| `workspaceId` | `^[A-Za-z0-9._~-]{1,128}$` | host |
 | `subjectId` | `^[^\s/]{1,256}$` (the issuer's grammar) | host |
 | `traceId`, `spanId` | W3C `^[0-9a-f]{32}$`, `^[0-9a-f]{16}$` | host |
 | `keyId` | `^[A-Za-z0-9._~-]{1,128}$` (signing keys, resume-token `kid`, bundle signatures) | registry |
 | `nodeId`, `workflowId`, `agentId`, `chainId`, `pluginId`, `templateId`, `libraryId` | `^[A-Za-z0-9._~:-]{1,128}$` | author |
-| `typeId` | `^[a-z][a-z0-9_-]*(\.[a-z][a-zA-Z0-9_-]*)+$`, maxLength 256 | author |
+| `typeId` | `^[a-z][a-z0-9_-]*(\.[a-z][a-zA-Z0-9_-]*)+(@[0-9]+\.[0-9]+\.[0-9]+)?$`, maxLength 256 (the `@` pin: [workflow-chain-packs.md](workflow-chain-packs.md)) | author |
 
 `spec/v2/id-field-bindings.json` sorts every `*Id` property in a v2 schema into two sets: it **is** a kind above (and MUST `$ref` it), or nothing here governs it (reason recorded).
 
