@@ -170,7 +170,7 @@
   },
   "risks": {
     "source": "RFCS/registers/*.risks.md + RFCS/*.risks.md (RFC 0166 tokens)",
-    "rowsScanned": 494,
+    "rowsScanned": 499,
     "openCriticalOrHigh": [
       {
         "rfc": "0058",
@@ -948,6 +948,13 @@
         "title": "An unauthenticated (signature-only) `ingestUrl` is abused to start runs.",
         "score": "High",
         "status": "`open` — reviewed at the RFC 0156 §B retrospective."
+      },
+      {
+        "rfc": "0236",
+        "id": "R1",
+        "title": "A host delivers a host event (CRM, commerce) on `/host/events` to another tenant's subscriber, because the channel never stated a tenant rule.",
+        "score": "High",
+        "status": "`open` — a live hazard until §D merges and the tenant leg ships with its sabotage proof."
       }
     ],
     "programOpenCriticalOrHigh": [
@@ -1377,6 +1384,13 @@
         "title": "An unauthenticated (signature-only) `ingestUrl` is abused to start runs.",
         "score": "High",
         "status": "`open` — reviewed at the RFC 0156 §B retrospective."
+      },
+      {
+        "rfc": "0236",
+        "id": "R1",
+        "title": "A host delivers a host event (CRM, commerce) on `/host/events` to another tenant's subscriber, because the channel never stated a tenant rule.",
+        "score": "High",
+        "status": "`open` — a live hazard until §D merges and the tenant leg ships with its sabotage proof."
       }
     ],
     "transferred": [
