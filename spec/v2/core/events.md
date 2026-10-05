@@ -123,11 +123,11 @@ With `bufferMs` (0..5000) the host accumulates events into one `event: batch` fr
 
 ### Host events
 
-`hostEvents` carries the heartbeat messages (`schemas/v2/heartbeat-evaluated.schema.json`, `schemas/v2/heartbeat-state-changed.schema.json`) and host events at the default address `/host/events` (`streamHostEvents`). A host MAY declare another address under `heartbeat.deliveryChannel` ([capabilities.md](capabilities.md)); every channel has an address. The channel carries no run data. Every message on it MUST be delivered only to a subscriber whose tenant owns it.
+`hostEvents` carries the heartbeat messages (`schemas/v2/heartbeat-evaluated.schema.json`, `schemas/v2/heartbeat-state-changed.schema.json`) and host events at the default address `/host/events` (`streamHostEvents`). A host MAY declare another address under `heartbeat.deliveryChannel` ([capabilities.md](capabilities.md)); every channel has an address. The channel carries no run data. Every host event, and every heartbeat a tenant owns, MUST reach only that tenant's subscribers.
 
 #### `hostEvents`
 
-A host event belongs to no run: its envelope (`schemas/v2/host-event.schema.json`) has no `runId` or `sequence`. `hostEvents.types[]` lists each emitted type with its `delivery`, `durable` or `ephemeral`. A host advertising it:
+A host event belongs to no run: its envelope (`schemas/v2/host-event.schema.json`) has no `runId` or `sequence`. `hostEvents.types[]` lists each emitted type and its `delivery` class, `durable` or `ephemeral`. A host advertising it:
 
 - MUST deliver each listed type here, `event:` being the type and `data:` the envelope, and MUST emit no other type or class;
 - MUST confine an event naming a `workspaceId` to that workspace, and an ephemeral event to subscribers it is visible to.

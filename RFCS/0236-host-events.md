@@ -74,7 +74,7 @@ A **durable** host event:
 
 ### §D Tenant scope (safety fix)
 
-Every message on the `hostEvents` channel, host events and heartbeat messages alike, MUST be delivered only to a subscriber whose tenant owns it. A host event that names a `workspaceId` MUST be delivered only to subscribers within that workspace. An ephemeral host event MUST additionally be delivered only to subscribers it is visible to; for `channel.presence`, that is the channel's current members. This is CTI-1 applied to a channel that never stated it (invariant `host-event-tenant-isolation`).
+Every host event belongs to exactly one tenant. Every host event, and every heartbeat message a tenant owns, MUST be delivered only to that tenant's subscribers. A host-wide heartbeat that carries no tenant's data (a liveness tick) is not bound. A host event that names a `workspaceId` MUST be delivered only to subscribers within that workspace. An ephemeral host event MUST additionally be delivered only to subscribers it is visible to; for `channel.presence`, that is the channel's current members. This is CTI-1 applied to a channel that never stated it (invariant `host-event-tenant-isolation`).
 
 ### §E Webhook delivery of durable host events
 
@@ -111,7 +111,7 @@ Every message on the `hostEvents` channel, host events and heartbeat messages al
 
 - **Additive:** a new family, schema, channel message, seam and webhook body variant. A host that does not advertise `hostEvents` is unaffected. The run body of `webhook-delivery.schema.json` is byte-identical. The host body is opt-in: a subscriber receives it only by naming a host-event type in `events[]`, which no existing subscription does, because no host-event type existed.
 - **Deprecation (§F):** `channel.presence` stays in the run-event union, deprecated. The emitter census is 0: no committed major-2 bundle's host advertises `channelPresence`. The frozen v1 tree is untouched.
-- **Safety fix (§D):** tenant-scoping heartbeat messages tightens an unstated rule. It is a CTI-1-class correctness fix, so the 90-day window does not bind. No host is known to deliver heartbeats across tenants: the v2 reference host serves one tenant per credential.
+- **Safety fix (§D):** tenant-scoping a heartbeat a tenant owns tightens an unstated rule. It is a CTI-1-class correctness fix, so the 90-day window does not bind. A host-wide liveness heartbeat carries no tenant's data and is not bound; the v2 reference host's is one.
 - **Version axes:** none move. Nothing enters or leaves a run log, so no in-flight run, replay or fork is affected.
 
 ## Conformance
