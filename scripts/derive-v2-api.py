@@ -334,6 +334,24 @@ def v2_openapi_and_seams():
                 'entries': {'type': 'array', 'items': {'type': 'object', 'additionalProperties': False, 'required': ['eventId', 'rendered'],
                     'properties': {'eventId': {'type': 'string', 'minLength': 1}, 'rendered': {'type': 'string'}}}}}}}}},
             '400': {'$ref': '#/components/responses/ValidationError'}, '401': {'$ref': '#/components/responses/Unauthenticated'}, '404': {'$ref': '#/components/responses/NotFound'}}}}
+    # RFC 0110 presence snapshot (host-sample-test-seams.md §13), ported at 2.45.20 with the `observer` field: v2 mints no client
+    # route that opens a channel, so this seam is the only way to observe the conversation.md §channelPresence delivery rule.
+    seams['paths']['/conformance/seams/sample/channel-presence/snapshot'] = {'post': {'tags': ['Seams'], 'operationId': 'snapshotChannelPresence',
+        'summary': 'Read one live channel.presence snapshot as a given observer would receive it',
+        'description': ('Transiently joins `member` to the channel conversation `conversationId`, then returns the `channel.presence` '
+                        'payload the host would deliver to `observer` (default: `member`). It MUST route through the same membership '
+                        'gate and closed payload the host applies in production, and MUST NOT branch on the seam.\n\nWhen `observer` '
+                        'is not a current member, the host MUST refuse as its production delivery gate does (`403` or `404`) and MUST '
+                        'NOT answer `200`: presence is never delivered to a non-member (conversation.md §channelPresence). An unwired '
+                        'seam answers `404`/`405`; a scenario tells the two apart by first asking as `member`.'),
+        'requestBody': {'required': True, 'content': {'application/json': {'schema': {'type': 'object', 'additionalProperties': False,
+            'required': ['conversationId', 'member'],
+            'properties': {
+                'conversationId': {'type': 'string', 'minLength': 1},
+                'member': {'type': 'string', 'pattern': '^(user|agent):.+', 'description': 'The subject transiently joined, so `present` is non-vacuous.'},
+                'observer': {'type': 'string', 'pattern': '^(user|agent):.+', 'description': 'The subject the snapshot is delivered to; default `member`.'}}}}}},
+        'responses': {'200': {'description': 'The snapshot delivered to `observer`, who is a member.', 'content': {'application/json': {'schema': {'$ref': '../schemas/v2/channel-presence-payload.schema.json'}}}},
+            '400': {'$ref': '#/components/responses/ValidationError'}, '401': {'$ref': '#/components/responses/Unauthenticated'}, '403': {'$ref': '#/components/responses/Forbidden'}, '404': {'$ref': '#/components/responses/NotFound'}}}}
     # RFC 0173 read surfaces + hostEvents default address
     paths['/host/effect-seams'] = {'get': {'tags': ['host'], 'operationId': 'getEffectSeamManifest', 'summary': "Read the host's effect-seam manifest", 'description': ('Lists every outbound effect seam that replay suppression covers. A seam omitted here is invisible to the '
                                                                                                                                                                                         "conformance suite; an audit of the host's seams is the control."), 'responses': {'200': {'description': 'The manifest.', 'content': {'application/json': {'schema': {'$ref': '../../schemas/v2/effect-seam-manifest.schema.json'}}}}, '401': {'$ref': '#/components/responses/Unauthenticated'}}}}
