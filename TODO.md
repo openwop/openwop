@@ -228,11 +228,9 @@ Defects outside the spec:
 - [x] **Erratum: identity.md §5 table row `tenantId, workspaceId` is stale.** Fixed with `typeId`'s missing `@<semver>` pin; `check-id-kinds-bound` now compares the table. `ids.schema.json`
       widened `tenantId` to `^(anon:)?[A-Za-z0-9._~-]{1,128}$` (RFC 0184 §A.3); `workspaceId`
       has no `anon:` prefix. Split the row to match the schema (found by openwop-app, ADR 0814).
-- [ ] **RFC 0235** (`Active` 2026-10-04, window waived): `If-None-Match` per RFC 9110, evaluated
-      only where the answer would be `2xx`. Legs ship in 2.45.18. Owed for `Accepted`: a certified
-      major-2 bundle recording the four `openwop.requirement.0235.*` ids `executed-pass` with no
-      seams. The v2 reference host passes after openwop-examples #152 (G1); MyndHyve already
-      implements RFC 9110; openwop-app's public origin still has the CDN-edge `304` problem.
+- [x] **RFC 0235** `Accepted` (provisional) 2026-10-05 on the v2 reference host's certified 2.45.18
+      cut (497/0/0, build `e5f27708`). Owed: the RFC 0156 §B review. MyndHyve implements RFC 9110 and
+      was invited to cut on 2.45.18; openwop-app's public origin still has the CDN-edge `304` issue.
 - [ ] **`dataResidency.regions` has no `minItems`.** `regions: []` validates, so the "accept an
       advertised region" rule can never apply. Adding `minItems: 1` narrows the schema and needs an
       RFC.
