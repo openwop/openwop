@@ -20,6 +20,11 @@ Entries before this file was condensed carried full development detail. That tex
 - **Witness-coverage report sees `recordSchemaLeg`.** Its gate detector missed the private `onFamily` gate, so 24 advertisement scenarios witnessed nothing in the report. Moving the static legs exposed it: four families read v1-only while their v2 advertisement witnesses ran. Still 73/73.
 - **Correction to the 2.45.17 notes.** openwop-app's 304 failures were not spelling-dependent. A CDN edge answered `200` to the first conditional reaching a node that had not seen the object (hit-for-pass on a `no-store` response), then `304`. The witnesses are right, and intermittently red on such an origin.
 
+## [2.45.20] — 2026-10-05 — host events (RFC 0236 Active); `channelPresence` restated at v2
+
+- **RFC 0236 Active: host events.** A runless, tenant-scoped envelope (no `runId`, no `sequence`), `durable` or `ephemeral` per type in a new `hostEvents` family, on `/host/events` and (durable) webhooks as `{ hostEvent }`. New `v2-host-event-delivery` (six ids); the v2 reference host passes it on a branch.
+- **`channelPresence` restated at v2.** Advertise ⇒ emit and no delivery to a non-member, witnessed through the §13 seam (now in `api/seams-v2.yaml`); `channel.presence` becomes an ephemeral host event. Two new invariants: `channel-presence-member-only-delivery`, `host-event-tenant-isolation`.
+
 ## [2.45.19] — 2026-10-05 — a minted tenant-bound id carries no `~`; RFC 0235 Accepted
 
 - **New leg `0184.mint-no-tilde`** (RFC 0184 §A.2): a host MUST NOT mint a tenant-bound id containing `~`. It bites only when the suite's credential tenant is not grammar-clean: on openwop-app under `acme@corp.example` the conforming map passes and the reverted projection fails.
