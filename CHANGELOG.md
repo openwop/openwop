@@ -8,6 +8,8 @@ Entries before this file was condensed carried full development detail. That tex
 
 ## [Unreleased]
 
+- **2.45.18 cycle (suite):** the corpus-only legs of the `v2-*-static` scenarios move to `src/coherence/` and leave the host bundle (`conformance.md` §Two products). `.supported` wording leaves 38 v2 schema descriptions (presence is the claim). No rule changed.
+- **Witness-coverage report sees `recordSchemaLeg`.** Its gate detector missed the private `onFamily` gate, so 24 advertisement scenarios witnessed nothing in the report. Moving the static legs exposed it: four families read v1-only while their v2 advertisement witnesses ran. Still 73/73.
 - **Correction to the 2.45.17 notes.** openwop-app's 304 failures were not spelling-dependent. A CDN edge answered `200` to the first conditional reaching a node that had not seen the object (hit-for-pass on a `no-store` response), then `304`. The witnesses are right, and intermittently red on such an origin.
 
 ## [2.45.17] — 2026-10-04 — ETag rules: discovery's 304 witnessed at major 2, every client spelling covered

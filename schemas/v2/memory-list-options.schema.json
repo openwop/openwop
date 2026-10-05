@@ -19,7 +19,7 @@
     "tokenBudget": {
       "type": "integer",
       "minimum": 1,
-      "description": "RFC 0113. Max cumulative tokens across returned entries, denominated in the unit named by `capabilities.memory.injectionBudget.tokenCounter`. The adapter MUST return a prefix of the ranked entry list whose cumulative token count does not exceed this; a single entry exceeding the budget on its own MUST be omitted (not truncated mid-entry). MAY combine with `limit` — the adapter honors whichever yields fewer entries. Requires the host to advertise `memory.injectionBudget.supported`."
+      "description": "RFC 0113. Max cumulative tokens across returned entries, denominated in the unit named by `capabilities.memory.injectionBudget.tokenCounter`. The adapter MUST return a prefix of the ranked entry list whose cumulative token count does not exceed this; a single entry exceeding the budget on its own MUST be omitted (not truncated mid-entry). MAY combine with `limit` — the adapter honors whichever yields fewer entries. Requires the host to advertise `memory.injectionBudget`."
     },
     "rank": {
       "type": "string",

@@ -1,5 +1,12 @@
 # `@openwop/openwop-conformance` Changelog
 
+## [2.45.18] — 2026-10-04 — corpus-only legs leave the host bundle; `.supported` leaves the v2 schemas
+
+- **Seven `v2-*-static` scenarios move to `src/coherence/`.** They read only the corpus, and `conformance.md` §Two products says such a check MUST NOT appear in a host bundle. The bundle schema now excludes their ids.
+- **`v2-envelope-tier-one-subset-static` is split.** The universal-kind walk moves to the corpus gate `v2-envelope-tier-one-universal-static`; the scenario keeps the strict leg, which reads the host's advertised kinds.
+- **No `X.supported` in a v2 schema description.** About 38 descriptions across 15 schemas named a `supported` flag that v2 does not have (`capabilities.md` §2: presence is the claim). They now say "advertises `X`". No rule changed.
+- **Comment and citation fixes.** The two 304 scenarios no longer blame the client spelling (the cause was a CDN edge). `otel-emission-grpc` no longer cites RFC 0008, which made the coverage report attribute it to `nodePackRuntimes`.
+
 ## [2.45.17] — 2026-10-04 — ETag rules: discovery's 304 gains a major-2 witness, the prompt-template 304 becomes advisory
 
 - **New `v2-discovery-etag`.** `capabilities.md` §1 makes both halves MUSTs at v2: emit an `ETag` on the discovery document, and answer a matching `If-None-Match` with `304` (no body, `OpenWOP-Version` present; a non-matching one gets `200`). The only witness was the v1 `discovery.test.ts` leg, so nothing checked it at major 2. openwop-app's public origin answers `200` because the hosting rewrite drops `If-None-Match` (direct to the origin: `304`), and its 2.45.16 cut certified anyway.

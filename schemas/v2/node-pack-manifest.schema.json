@@ -281,18 +281,18 @@
           "items": {
             "$ref": "#/$defs/SecretRequirement"
           },
-          "description": "Secrets the node needs to execute. Resolved by the host's secret-resolution adapter at dispatch time. Hosts that don't advertise `Capabilities.secrets.supported` MUST refuse to dispatch a node with non-empty `requiresSecrets` and return `credential_unavailable`."
+          "description": "Secrets the node needs to execute. Resolved by the host's secret-resolution adapter at dispatch time. Hosts that don't advertise `secrets` MUST refuse to dispatch a node with non-empty `requiresSecrets` and return `credential_unavailable`."
         },
         "requiredCredentials": {
           "type": "array",
           "items": {
             "$ref": "#/$defs/CredentialRequirement"
           },
-          "description": "RFC 0046. Credentials the node needs, resolved by the host's `host.credentials` resolver at dispatch time (distinct from `requiresSecrets`, which targets the informal BYOK annex). Hosts that don't advertise `Capabilities.credentials.supported` MUST refuse to dispatch a node with non-empty `requiredCredentials` and return `credential_unavailable` (peerDependency `credentials: 'supported'`)."
+          "description": "RFC 0046. Credentials the node needs, resolved by the host's `host.credentials` resolver at dispatch time (distinct from `requiresSecrets`, which targets the informal BYOK annex). Hosts that don't advertise `credentials` MUST refuse to dispatch a node with non-empty `requiredCredentials` and return `credential_unavailable` (a `credentials` peer dependency)."
         },
         "auth": {
           "$ref": "#/$defs/NodeAuth",
-          "description": "RFC 0047. The node's third-party authentication need. The host acquires + refreshes the token via the `host.oauth` flow and resolves it into the node sandbox as a bearer token. Hosts that don't advertise `Capabilities.oauth.supported` (or lack the named provider/scope) MUST refuse to register the pack (`oauth_provider_unsupported` / `oauth_scope_unsupported`)."
+          "description": "RFC 0047. The node's third-party authentication need. The host acquires + refreshes the token via the `host.oauth` flow and resolves it into the node sandbox as a bearer token. Hosts that don't advertise `oauth` (or lack the named provider/scope) MUST refuse to register the pack (`oauth_provider_unsupported` / `oauth_scope_unsupported`)."
         },
         "requiredModelCapabilities": {
           "type": "array",
@@ -563,7 +563,7 @@
             "wasm-component",
             "remote"
           ],
-          "description": "How the engine loads the pack. See node-packs.md \u00a7runtime formats. `wasm` is the core-module WASM ABI (RFC 0008). `wasm-component` is the WASM Component Model variant (WIT-defined interfaces); hosts that advertise `capabilities.nodePackRuntimes.wasmComponent.supported: true` load it via wasmtime / wasmer Component Model runtimes. Both share the openwop ABI envelope; the wasm-component variant uses WIT interfaces instead of hand-rolled imports/exports."
+          "description": "How the engine loads the pack. See node-packs.md \u00a7runtime formats. `wasm` is the core-module WASM ABI (RFC 0008). `wasm-component` is the WASM Component Model variant (WIT-defined interfaces); hosts that advertise `nodePackRuntimes.wasmComponent` load it via wasmtime / wasmer Component Model runtimes. Both share the openwop ABI envelope; the wasm-component variant uses WIT interfaces instead of hand-rolled imports/exports."
         },
         "entry": {
           "type": "string",

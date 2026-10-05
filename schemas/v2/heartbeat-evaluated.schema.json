@@ -2,7 +2,7 @@
   "$schema": "https://json-schema.org/draft/2020-12/schema",
   "$id": "https://openwop.dev/spec/v2/heartbeat-evaluated.schema.json",
   "title": "HeartbeatEvaluated",
-  "description": "RFC 0060. Emitted every tick by a host advertising `capabilities.heartbeat.supported: true` — the observability record of a heartbeat predicate evaluation. Heartbeat-scoped (NOT a replayable run-event-log entry). Carries no external state or secret material; `changed` gates whether a `heartbeat.stateChanged` + enqueued run follow.",
+  "description": "RFC 0060. Emitted every tick by a host advertising `heartbeat` — the observability record of a heartbeat predicate evaluation. Heartbeat-scoped (NOT a replayable run-event-log entry). Carries no external state or secret material; `changed` gates whether a `heartbeat.stateChanged` + enqueued run follow.",
   "type": "object",
   "required": [
     "heartbeatId",

@@ -92,7 +92,7 @@ describe('otel-emission-grpc: OTLP/gRPC export path', () => {
     const runSpans = await waitForRunSpans(runId, { timeoutMs: 5_000, minCount: 1 });
 
     expect(runSpans.length, req('openwop.it.otel-emission-grpc.host-emits-openwop-run-spans-over-otlp-grpc-collector-captures-them-via-the-shar', 
-      'observability.md §"Export protocols" + RFC 0008/0009 Track 11',
+      'observability.md §"Export protocols" (gap-closure plan Track 11)',
       'host advertising exportProtocols ∋ "grpc" MUST emit openwop.* spans over OTLP/gRPC',
     )).toBeGreaterThan(0);
 

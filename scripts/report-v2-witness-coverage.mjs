@@ -246,8 +246,13 @@ const camel = (k) => k.replace(/-([a-z0-9])/g, (_, c) => c.toUpperCase());
 // a message, not a gate.
 const blankStrings = (s) => s.replace(/'(?:[^'\\\n]|\\.)*'|"(?:[^"\\\n]|\\.)*"|`(?:[^`\\$]|\\.)*`/g, '""');
 
-/** Gate helpers and the argument position that names the family. */
-const BASE_HELPERS = new Map([['gateFamily', 0], ['familyAdvertised', 0], ['capabilityFamily', 1]]);
+/**
+ * Gate helpers and the argument position that names the family. `onFamily` is
+ * the private gate in `lib/family-advert-witness.ts`: it reads the record via
+ * `profile.family(...)`, a member call this pass cannot see, so without it the
+ * exported legs built on it (`recordSchemaLeg`, …) gated nothing here.
+ */
+const BASE_HELPERS = new Map([['gateFamily', 0], ['familyAdvertised', 0], ['capabilityFamily', 1], ['onFamily', 2]]);
 const ITERATORS = new Set(['map', 'flatMap', 'forEach', 'filter', 'find', 'some', 'every']);
 const unwrap = (e) => {
   while (e && (ts.isParenthesizedExpression(e) || ts.isAsExpression(e) || ts.isNonNullExpression(e) || ts.isTypeAssertionExpression(e) || ts.isAwaitExpression(e) || (ts.isSatisfiesExpression && ts.isSatisfiesExpression(e)))) e = e.expression;
@@ -396,6 +401,7 @@ function selfTest() {
     ['destructured for-of', "for (const { family } of [{ family: 'searchIndex' }]) await familyAdvertised(family);", ['searchIndex']],
     ['.map over a const table', "const T = ['vectorStore'] as const;\nawait Promise.all(T.map((k) => gateFamily(k)));", ['vectorStore']],
     ['derived lib helper, two hops', "import { probeTwice } from '../lib/p.js';\nawait probeTwice('nosql');", ['nosql']],
+    ['exported leg over the private onFamily gate', "function onFamily(p: unknown, d: unknown, family: string, leg: unknown) { return leg; }\nexport function schemaLeg(p: unknown, d: unknown, family: string, doc: string) { return onFamily(p, d, family, () => doc); }\nschemaLeg(P, doc, 'portability', DOC);", ['portability']],
     ['capabilityFamily through a param', "function cap(d: unknown, n: string) { return capabilityFamily(d, n); }\ncap(doc, 'queueBus');", ['queueBus']],
     ['NEG family key to a non-gate helper', "function leg(x: string) { console.log(x); }\nleg('kvStorage');\nconst msg = 'memory';", []],
     ['NEG gate in a comment', "// await familyAdvertised('nosql');\n/* gateFamily('sql') */", []],

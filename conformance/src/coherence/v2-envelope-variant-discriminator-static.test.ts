@@ -22,7 +22,8 @@
  * whose components are "discriminated by a single-string-enum `component`").
  * The requirement is cited to RFC 0031 §A, its only normative home.
  *
- * Host-free: every leg runs with no OPENWOP_BASE_URL.
+ * A corpus gate (`conformance.md` §Two products): it reads only the corpus, runs in
+ * the spec repo's CI, and never reaches a host bundle. Moved from src/scenarios/ in 2.45.18.
  *
  * @see RFCS/0031-envelope-variants-and-model-capabilities.md §A
  */
@@ -30,6 +31,10 @@
 import { describe, it, expect } from 'vitest';
 import { req } from '../lib/requirement-ids.js';
 import { anyOfDiscriminatorViolations, listV2EnvelopeKinds, loadV2EnvelopeSchema, oneOfViolations, UNIVERSAL_KINDS } from '../lib/envelope-schema-static.js';
+import { V1_DIR } from '../lib/paths.js';
+import { softSkip } from '../lib/soft-skip.js';
+
+const NOT_A_CHECKOUT = 'inapplicable to any host: the subject is the spec corpus, which this layout does not carry (not a spec checkout)';
 
 const DOC = 'RFC 0031 §A';
 const ID_PRESENT = 'openwop.requirement.envelopes.payload-schemas-present';
@@ -40,16 +45,19 @@ const KINDS = listV2EnvelopeKinds();
 
 describe('v2 envelope variant discrimination (RFC 0031 §A)', () => {
   it('schemas/v2/envelopes carries a payload schema for each universal kind', () => {
+    if (V1_DIR === null) return softSkip('inapplicable', NOT_A_CHECKOUT);
     for (const k of UNIVERSAL_KINDS) expect(KINDS.includes(k), req(ID_PRESENT, DOC, `schemas/v2/envelopes/${k}.schema.json MUST exist`)).toBe(true);
   });
 
   for (const kind of KINDS) {
     it(`${kind} contains no oneOf at any depth`, () => {
+      if (V1_DIR === null) return softSkip('inapplicable', NOT_A_CHECKOUT);
       const v = oneOfViolations(loadV2EnvelopeSchema(kind));
       expect(v, req(ID_NO_ONEOF, DOC, `${kind} MUST NOT use oneOf — use anyOf with a single-string-enum discriminator: ${JSON.stringify(v)}`)).toEqual([]);
     });
 
     it(`${kind} discriminates every anyOf branch by a single-string-enum property`, () => {
+      if (V1_DIR === null) return softSkip('inapplicable', NOT_A_CHECKOUT);
       const v = anyOfDiscriminatorViolations(loadV2EnvelopeSchema(kind));
       expect(v, req(ID_DISCRIMINATED, DOC, `${kind} anyOf branches without a discriminator: ${JSON.stringify(v)}`)).toEqual([]);
     });

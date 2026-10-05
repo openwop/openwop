@@ -539,7 +539,7 @@
       }
     },
     "authorizationDecided": {
-      "description": "RFC 0049 \u2014 emitted on a role-based authorization decision (allow or deny). Redaction-safe: `principal` is an opaque RFC 0048 id; `reason` carries no credential material. Every deny SHOULD be emitted and SHOULD feed the audit log (RFC 0009/0010). MUST NOT be emitted unless `capabilities.authorization.supported: true`.",
+      "description": "RFC 0049 \u2014 emitted on a role-based authorization decision (allow or deny). Redaction-safe: `principal` is an opaque RFC 0048 id; `reason` carries no credential material. Every deny SHOULD be emitted and SHOULD feed the audit log (RFC 0009/0010). MUST NOT be emitted unless the host advertises `authorization`.",
       "type": "object",
       "additionalProperties": false,
       "required": [
@@ -758,7 +758,7 @@
       }
     },
     "connectorAuthorized": {
-      "description": "RFC 0047 \u2014 emitted when the host acquires (or re-authorizes) a third-party OAuth token on a user's behalf via the `host.oauth` flow. Redaction-safe: carries the credential REFERENCE (RFC 0046), never token material. MUST NOT be emitted unless `capabilities.oauth.supported: true`.",
+      "description": "RFC 0047 \u2014 emitted when the host acquires (or re-authorizes) a third-party OAuth token on a user's behalf via the `host.oauth` flow. Redaction-safe: carries the credential REFERENCE (RFC 0046), never token material. MUST NOT be emitted unless the host advertises `oauth`.",
       "type": "object",
       "additionalProperties": false,
       "required": [
@@ -786,7 +786,7 @@
       }
     },
     "connectorAuthExpired": {
-      "description": "RFC 0047 \u2014 emitted when a stored OAuth token's refresh fails terminally (revoked/expired refresh token). Redaction-safe: no token material. MUST NOT be emitted unless `capabilities.oauth.supported: true`.",
+      "description": "RFC 0047 \u2014 emitted when a stored OAuth token's refresh fails terminally (revoked/expired refresh token). Redaction-safe: no token material. MUST NOT be emitted unless the host advertises `oauth`.",
       "type": "object",
       "additionalProperties": false,
       "required": [
@@ -811,7 +811,7 @@
       }
     },
     "coreWorkflowChainEvent": {
-      "description": "RFC 0037 \u2014 emitted on every planner\u2192worker handoff state-machine transition. Required when `capabilities.multiAgent.executionModel.supported: true`; MUST NOT be emitted otherwise. RFC 0040 \u00a7A extends with optional `causationHostId` (when `crossHostCausation.supported: true`): present + non-empty when the `causationId` points at an event on a different host; absent when the chained-event is on the same host (existing semantics).",
+      "description": "RFC 0037 \u2014 emitted on every planner\u2192worker handoff state-machine transition. Required when the host advertises `multiAgent.executionModel`; MUST NOT be emitted otherwise. RFC 0040 \u00a7A extends with optional `causationHostId` (when the host advertises `multiAgent.executionModel.crossHostCausation`): present + non-empty when the `causationId` points at an event on a different host; absent when the chained-event is on the same host (existing semantics).",
       "type": "object",
       "additionalProperties": false,
       "required": [
@@ -1162,7 +1162,7 @@
       "additionalProperties": false
     },
     "runDeadLettered": {
-      "description": "RFC 0053 \u2014 emitted when a run/node exhausts its retry policy (RFC 0009) and is routed to the durable dead-letter sink. The run remains fork-eligible (RFC 0011) for `capabilities.deadLetter.retentionDays`. Redaction-safe: `reason` carries no credential material. MUST NOT be emitted unless `capabilities.deadLetter.supported: true`.",
+      "description": "RFC 0053 \u2014 emitted when a run/node exhausts its retry policy (RFC 0009) and is routed to the durable dead-letter sink. The run remains fork-eligible (RFC 0011) for `capabilities.deadLetter.retentionDays`. Redaction-safe: `reason` carries no credential material. MUST NOT be emitted unless the host advertises `deadLetter`.",
       "type": "object",
       "additionalProperties": false,
       "required": [
@@ -2149,7 +2149,7 @@
     },
     "promptComposed": {
       "type": "object",
-      "description": "RFC 0027. Emitted once per (nodeId, kind) composition when a host resolves a PromptRef on a node and assembles its body for an LLM call. Gated on `capabilities.prompts.supported: true` AND `capabilities.prompts.observability !== 'off'`. Body fields (`systemPrompt`, `userPrompt`, `variableBindings`) are populated only under `observability: 'full'`; under `hashed` the event carries only `hash` + `variableHashes`. Replay-deterministic over `(refs, variableHashes, contentTrust)` per `spec/v1/prompts.md \u00a7\"Replay determinism\"`. Secret-source variable values MUST be replaced with `[REDACTED:<secretId>]` markers per SECURITY invariant `prompt-composed-secret-redaction`; untrusted-input segments MUST be wrapped with `<UNTRUSTED>...</UNTRUSTED>` markers per SECURITY invariant `prompt-composed-trust-marker`.",
+      "description": "RFC 0027. Emitted once per (nodeId, kind) composition when a host resolves a PromptRef on a node and assembles its body for an LLM call. Gated on the host advertising `prompts` AND `capabilities.prompts.observability !== 'off'`. Body fields (`systemPrompt`, `userPrompt`, `variableBindings`) are populated only under `observability: 'full'`; under `hashed` the event carries only `hash` + `variableHashes`. Replay-deterministic over `(refs, variableHashes, contentTrust)` per `spec/v1/prompts.md \u00a7\"Replay determinism\"`. Secret-source variable values MUST be replaced with `[REDACTED:<secretId>]` markers per SECURITY invariant `prompt-composed-secret-redaction`; untrusted-input segments MUST be wrapped with `<UNTRUSTED>...</UNTRUSTED>` markers per SECURITY invariant `prompt-composed-trust-marker`.",
       "required": [
         "nodeId",
         "refs",
@@ -2227,7 +2227,7 @@
     },
     "agentPromptResolved": {
       "type": "object",
-      "description": "RFC 0029 \u00a7B. Emitted once per (nodeId, kind) pair BEFORE the corresponding `prompt.composed` event (when emitted). Surfaces the four-layer resolution chain per `spec/v1/prompts.md` \u00a7\"Resolution chain (normative)\" so cross-host debuggers and multi-agent visualizers can render which PromptRef applied at this node and why. Gated on `capabilities.prompts.supported: true`; payload is durable in the event log and participates in replay. Carries refs (not bodies), so emission is safe regardless of `capabilities.prompts.observability` \u2014 the secret-redaction + trust-marker invariants on `prompt.composed` (RFC 0027 \u00a7G) don't apply here.",
+      "description": "RFC 0029 \u00a7B. Emitted once per (nodeId, kind) pair BEFORE the corresponding `prompt.composed` event (when emitted). Surfaces the four-layer resolution chain per `spec/v1/prompts.md` \u00a7\"Resolution chain (normative)\" so cross-host debuggers and multi-agent visualizers can render which PromptRef applied at this node and why. Gated on the host advertising `prompts`; payload is durable in the event log and participates in replay. Carries refs (not bodies), so emission is safe regardless of `capabilities.prompts.observability` \u2014 the secret-redaction + trust-marker invariants on `prompt.composed` (RFC 0027 \u00a7G) don't apply here.",
       "required": [
         "nodeId",
         "kind",
@@ -3061,7 +3061,7 @@
     },
     "memoryCompacted": {
       "type": "object",
-      "description": "RFC 0012 (Memory Compaction Profile). Emitted by a host advertising `capabilities.memory.compaction.supported: true` each time a compaction run completes, regardless of trigger. `outputId` MUST be readable via `MemoryAdapter.get(memoryRef, outputId)` until normal TTL eviction. SR-1 carry-forward (RFC 0012 \u00a7D) applies: the host MUST route compacted entry content through the same BYOK redaction harness applied to a fresh `put`.",
+      "description": "RFC 0012 (Memory Compaction Profile). Emitted by a host advertising `memory.compaction` each time a compaction run completes, regardless of trigger. `outputId` MUST be readable via `MemoryAdapter.get(memoryRef, outputId)` until normal TTL eviction. SR-1 carry-forward (RFC 0012 \u00a7D) applies: the host MUST route compacted entry content through the same BYOK redaction harness applied to a fresh `put`.",
       "required": [
         "memoryRef",
         "outputId",
@@ -3109,7 +3109,7 @@
         },
         "distillation": {
           "type": "object",
-          "description": "RFC 0062 (when `capabilities.memory.distillation.supported: true`). Present when this compaction is part of a budgeted distillation run (a scheduled or on-demand 'dream'). Absent for a plain RFC 0012 compaction. Carries the token-budget accounting + whether the memory index was refreshed \u2014 not a parallel `memory.distilled` event.",
+          "description": "RFC 0062 (when the host advertises `memory.distillation`). Present when this compaction is part of a budgeted distillation run (a scheduled or on-demand 'dream'). Absent for a plain RFC 0012 compaction. Carries the token-budget accounting + whether the memory index was refreshed \u2014 not a parallel `memory.distilled` event.",
           "additionalProperties": false,
           "required": [
             "tokenBudget",
@@ -3175,7 +3175,7 @@
     },
     "agentMemoryConsolidated": {
       "type": "object",
-      "description": "RFC 0068 (`Draft`). Emitted by a host advertising `capabilities.agents.memoryConsolidation.supported: true` after a background consolidation pass over LONG-TERM memory (merge/dedup/supersede/strengthen). Content-free: identifiers + counts only \u2014 entry content is served by the SR-1-redacted read-side (`MemoryAdapter.get`). On replay the event is re-read from the log, never regenerated. Distinct from RFC 0062 `memory.compacted` (token-budgeted distillation of transactional memory). SR-1 carry-forward (RFC 0004) + CTI-1 apply to the consolidated entries.",
+      "description": "RFC 0068 (`Draft`). Emitted by a host advertising `agents.memoryConsolidation` after a background consolidation pass over LONG-TERM memory (merge/dedup/supersede/strengthen). Content-free: identifiers + counts only \u2014 entry content is served by the SR-1-redacted read-side (`MemoryAdapter.get`). On replay the event is re-read from the log, never regenerated. Distinct from RFC 0062 `memory.compacted` (token-budgeted distillation of transactional memory). SR-1 carry-forward (RFC 0004) + CTI-1 apply to the consolidated entries.",
       "required": [
         "memoryRef",
         "inputCount",
@@ -3220,7 +3220,7 @@
     },
     "commitmentFired": {
       "type": "object",
-      "description": "RFC 0068 (`Draft`). Emitted by a host advertising `capabilities.agents.commitments.supported: true` when an inferred standing commitment fires. Content-free: identifiers + condition kind only \u2014 the intention text lives in SR-1-redacted memory (`MemoryAdapter.get(memoryRef, memoryId)`). The fired arm composes RFC 0052 (time) or RFC 0060 (predicate). On replay the event is re-read from the log, never regenerated (the host MUST NOT re-infer or re-fire a commitment at replay time). CTI-1: the commitment, its memory provenance, and any run it enqueues MUST share the source memory's tenant.",
+      "description": "RFC 0068 (`Draft`). Emitted by a host advertising `agents.commitments` when an inferred standing commitment fires. Content-free: identifiers + condition kind only \u2014 the intention text lives in SR-1-redacted memory (`MemoryAdapter.get(memoryRef, memoryId)`). The fired arm composes RFC 0052 (time) or RFC 0060 (predicate). On replay the event is re-read from the log, never regenerated (the host MUST NOT re-infer or re-fire a commitment at replay time). CTI-1: the commitment, its memory provenance, and any run it enqueues MUST share the source memory's tenant.",
       "required": [
         "commitmentId",
         "memoryRef",
@@ -3260,7 +3260,7 @@
     },
     "agentInvocationStarted": {
       "type": "object",
-      "description": "RFC 0077. Emitted by a host advertising `capabilities.agents.liveRuntime.supported: true` as the FIRST agent-scoped event of a live manifest invocation, bracketing the existing `agent.*` family with `agent.invocation.completed`. Content-free: identifiers + selection metadata only \u2014 prompt/task content is served by the run's normal projection, never on this event. A recorded-fact event per `replay.md` \u00a7\"Recorded-fact events\": on replay it is re-emitted from the log and the host MUST NOT regenerate its `invocationId` (or any identifier). Distinct from the deterministic RFC 0070 sample floor. For one live invocation the agent-scoped events MUST appear in the order `agent.invocation-started` \u2192 `agent.prompt-resolved` \u2192 (`agent.reasoning-delta`* \u2192 `agent.reasoned`)+ \u2192 (`agent.tool-called` \u2192 `agent.tool-returned`)* \u2192 `agent.decided`+ \u2192 `agent.handoff`? \u2192 `agent.invocation-completed`: this event precedes every other agent-scoped event of the invocation, and `agent.invocation-completed` follows them all and, for a sub-run, precedes the run-scoped `output.harvested`. On replay the host MUST NOT regenerate its timestamps either.",
+      "description": "RFC 0077. Emitted by a host advertising `agents.liveRuntime` as the FIRST agent-scoped event of a live manifest invocation, bracketing the existing `agent.*` family with `agent.invocation.completed`. Content-free: identifiers + selection metadata only \u2014 prompt/task content is served by the run's normal projection, never on this event. A recorded-fact event per `replay.md` \u00a7\"Recorded-fact events\": on replay it is re-emitted from the log and the host MUST NOT regenerate its `invocationId` (or any identifier). Distinct from the deterministic RFC 0070 sample floor. For one live invocation the agent-scoped events MUST appear in the order `agent.invocation-started` \u2192 `agent.prompt-resolved` \u2192 (`agent.reasoning-delta`* \u2192 `agent.reasoned`)+ \u2192 (`agent.tool-called` \u2192 `agent.tool-returned`)* \u2192 `agent.decided`+ \u2192 `agent.handoff`? \u2192 `agent.invocation-completed`: this event precedes every other agent-scoped event of the invocation, and `agent.invocation-completed` follows them all and, for a sub-run, precedes the run-scoped `output.harvested`. On replay the host MUST NOT regenerate its timestamps either.",
       "required": [
         "invocationId",
         "agentId",
@@ -3320,7 +3320,7 @@
     },
     "agentInvocationCompleted": {
       "type": "object",
-      "description": "RFC 0077. Emitted by a host advertising `capabilities.agents.liveRuntime.supported: true` as the LAST agent-scoped event of a live manifest invocation (after the terminal `agent.decided`). Content-free: identifiers + outcome metadata only \u2014 the result body is served by the run's normal projection. A recorded-fact event per `replay.md` \u00a7\"Recorded-fact events\": re-read from the log on replay, never regenerated.",
+      "description": "RFC 0077. Emitted by a host advertising `agents.liveRuntime` as the LAST agent-scoped event of a live manifest invocation (after the terminal `agent.decided`). Content-free: identifiers + outcome metadata only \u2014 the result body is served by the run's normal projection. A recorded-fact event per `replay.md` \u00a7\"Recorded-fact events\": re-read from the log on replay, never regenerated.",
       "required": [
         "invocationId",
         "agentId",
@@ -3366,7 +3366,7 @@
       "additionalProperties": false
     },
     "workspaceUpdated": {
-      "description": "RFC 0059. Emitted by a host advertising `capabilities.workspace.supported: true` on each successful `PUT`/`DELETE` of a workspace file, attributing the change to the file `path` + resulting `version`. Content-free: carries the path + version only \u2014 the file body is served by the read-side (`GET /v1/host/workspace/files/{path}`), already SR-1-redacted (RFC 0059 \u00a7E WSR-1). On replay the event is re-read from the log, never regenerated. MUST NOT be emitted unless `capabilities.workspace.supported: true`. The proposed SECURITY invariant `workspace-cross-tenant-isolation` (WCT-1) applies to the read-side that resolves these paths.",
+      "description": "RFC 0059. Emitted by a host advertising `workspace` on each successful `PUT`/`DELETE` of a workspace file, attributing the change to the file `path` + resulting `version`. Content-free: carries the path + version only \u2014 the file body is served by the read-side (`GET /v1/host/workspace/files/{path}`), already SR-1-redacted (RFC 0059 \u00a7E WSR-1). On replay the event is re-read from the log, never regenerated. MUST NOT be emitted unless the host advertises `workspace`. The proposed SECURITY invariant `workspace-cross-tenant-isolation` (WCT-1) applies to the read-side that resolves these paths.",
       "type": "object",
       "additionalProperties": false,
       "required": [
@@ -3388,7 +3388,7 @@
     },
     "evalStarted": {
       "type": "object",
-      "description": "RFC 0081 \u00a7C. Emitted ONCE at the start of an eval run (a `mode: \"eval\"` run, RFC 0081 \u00a7B) by a host advertising `capabilities.agents.evalSuite.supported: true`. Content-free: suite provenance + counts only. A recorded-fact event per `replay.md` \u00a7\"Recorded-fact events\".",
+      "description": "RFC 0081 \u00a7C. Emitted ONCE at the start of an eval run (a `mode: \"eval\"` run, RFC 0081 \u00a7B) by a host advertising `agents.evalSuite`. Content-free: suite provenance + counts only. A recorded-fact event per `replay.md` \u00a7\"Recorded-fact events\".",
       "required": [
         "suiteId",
         "suiteVersion",
@@ -3577,7 +3577,7 @@
     },
     "egressDecided": {
       "type": "object",
-      "description": "RFC 0079 \u00a7B. Emitted when a host evaluates a credentialed egress (via `ctx.http.safeFetch` / a tool) against credential provenance + the SSRF guard. Content-free: identifiers + decision only \u2014 no credential value, no request/response body (SR-1). On replay re-read from the log, never regenerated (the decision is a recorded fact). Emitted only when `capabilities.httpClient.egressPolicy.supported: true`.",
+      "description": "RFC 0079 \u00a7B. Emitted when a host evaluates a credentialed egress (via `ctx.http.safeFetch` / a tool) against credential provenance + the SSRF guard. Content-free: identifiers + decision only \u2014 no credential value, no request/response body (SR-1). On replay re-read from the log, never regenerated (the decision is a recorded fact). Emitted only when the host advertises `httpClient.egressPolicy`.",
       "required": [
         "decision",
         "destination"
@@ -3627,7 +3627,7 @@
     },
     "triggerSubscriptionStateChanged": {
       "type": "object",
-      "description": "RFC 0083 \u00a7C. Emitted when a trigger subscription changes state (the \u00a7B four-state machine). Content-free: identifiers + states only \u2014 no inbound payload, headers, or credential material (SR-1). Emitted only when `capabilities.triggerBridge.supported: true`.",
+      "description": "RFC 0083 \u00a7C. Emitted when a trigger subscription changes state (the \u00a7B four-state machine). Content-free: identifiers + states only \u2014 no inbound payload, headers, or credential material (SR-1). Emitted only when the host advertises `triggerBridge`.",
       "required": [
         "subscriptionId",
         "source",

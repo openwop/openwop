@@ -1,6 +1,7 @@
 /**
- * Static walkers over envelope payload schemas, shared by the v2 static twins
- * `v2-envelope-tier-one-subset-static` and `v2-envelope-variant-discriminator-static`.
+ * Static walkers over envelope payload schemas, shared by the v2 static twins:
+ * the scenario `v2-envelope-tier-one-subset-static` and the corpus gates
+ * `v2-envelope-tier-one-universal-static` and `v2-envelope-variant-discriminator-static`.
  *
  * The walk rules are the v1 rules unchanged (RFC 0030 §B, RFC 0031 §A); what
  * moved at major 2 is where the schemas live (`schemas/v2/envelopes/`) and

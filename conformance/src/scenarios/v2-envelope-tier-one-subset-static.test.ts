@@ -4,12 +4,11 @@
  * The v1 twin is `envelope-tier-one-subset-static`; the walker lives in
  * `lib/envelope-schema-static.ts`.
  *
- *   load-bearing  ALWAYS ON, host-free: each universal-kind payload schema in
- *                 `schemas/v2/envelopes/` uses none of the keywords that fail
- *                 across several Tier-1 vendors (`oneOf`, `allOf`, `not`,
- *                 `if`/`then`/`else`, `dependencies`, `prefixItems`,
- *                 `propertyNames`), nests at most 5 deep and has at most 100
- *                 properties;
+ * The always-on load-bearing walk over the universal kinds reads only the
+ * corpus, so it lives in `src/coherence/v2-envelope-tier-one-universal-static`
+ * (moved in 2.45.18; `conformance.md` §Two products). This file keeps the one
+ * leg that reads host output:
+ *
  *   strict        LIVE: a host advertising `tierOneSubsetCompliance: "strict"`
  *                 has, for every kind it lists in `supportedEnvelopes.kinds`
  *                 that resolves to a corpus schema, a schema meeting the whole
@@ -23,7 +22,7 @@
  * host MUST accept an envelope restricted to the subset from any advertised
  * provider — and does not distinguish strict, warn and off.
  *
- * Dispositions (strict leg): discovery unreadable ⇒ `blocked`; `envelopes` not
+ * Dispositions: discovery unreadable ⇒ `blocked`; `envelopes` not
  * advertised, or `tierOneSubsetCompliance` other than "strict" ⇒
  * `inapplicable`; no advertised kind resolving to a corpus schema ⇒
  * `inapplicable`.
@@ -36,21 +35,9 @@ import { describe, it, expect } from 'vitest';
 import { familyAdvertised, v2Discovery } from '../lib/v2.js';
 import { softSkip } from '../lib/soft-skip.js';
 import { req } from '../lib/requirement-ids.js';
-import { loadV2EnvelopeSchema, tierOneViolations, UNIVERSAL_KINDS, type SchemaViolation } from '../lib/envelope-schema-static.js';
+import { loadV2EnvelopeSchema, tierOneViolations, type SchemaViolation } from '../lib/envelope-schema-static.js';
 
-const ID_LOAD_BEARING = 'openwop.requirement.envelopes.tier-one-load-bearing-universal-kinds';
 const ID_STRICT = 'openwop.requirement.envelopes.tier-one-strict-advertised-kinds';
-
-describe('v2 Tier-1 subset: universal kinds meet the load-bearing rules (always on)', () => {
-  for (const kind of UNIVERSAL_KINDS) {
-    it(`${kind} uses no keyword that fails across Tier-1 vendors`, () => {
-      const schema = loadV2EnvelopeSchema(kind);
-      expect(schema !== null, req(ID_LOAD_BEARING, 'RFC 0030 §B', `schemas/v2/envelopes/${kind}.schema.json MUST exist`)).toBe(true);
-      const violations = schema === null ? [] : tierOneViolations(schema, 'load-bearing');
-      expect(violations, req(ID_LOAD_BEARING, 'RFC 0030 §B', `${kind} load-bearing Tier-1 violations: ${JSON.stringify(violations)}`)).toEqual([]);
-    });
-  }
-});
 
 describe('v2 Tier-1 subset: a strict host\'s advertised kinds meet the whole intersection', () => {
   it('a host advertising tierOneSubsetCompliance strict has advertised kinds whose corpus schemas satisfy the Tier-1 intersection', async () => {

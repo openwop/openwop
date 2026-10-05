@@ -90,7 +90,7 @@
         },
         "model": {
           "type": "object",
-          "description": "RFC 0109 — OPTIONAL provenance: which model produced this `role: 'agent'` turn. NON-SECRET, NON-PII: provider + model identifiers ONLY (`additionalProperties: false` forbids any credential/endpoint/prompt leaking in — the SR-1 secret-redaction guard). Stamped at emit; read VERBATIM on `:fork` (never re-resolved). A host that stamps it MUST advertise `conversationTurnModelProvenance.supported: true`. Absent ⇒ no advertisement; clients MUST tolerate its absence.",
+          "description": "RFC 0109 — OPTIONAL provenance: which model produced this `role: 'agent'` turn. NON-SECRET, NON-PII: provider + model identifiers ONLY (`additionalProperties: false` forbids any credential/endpoint/prompt leaking in — the SR-1 secret-redaction guard). Stamped at emit; read VERBATIM on `:fork` (never re-resolved). A host that stamps it MUST advertise `conversationTurnModelProvenance`. Absent ⇒ no advertisement; clients MUST tolerate its absence.",
           "additionalProperties": false,
           "required": [
             "provider",
@@ -123,12 +123,12 @@
       "type": "string",
       "minLength": 1,
       "maxLength": 256,
-      "description": "RFC 0101. Stable speaker identity of this turn — the roster INSTANCE id of the agent that produced it (the `host:<id>` AgentRef agentId per `agent-roster-entry.schema.json` §A / RFC 0086), NOT the manifest/class `AgentRef.agentId`. REQUIRED when `role: 'agent'` (the conditional below) so that 'turn N was spoken by agent X' is an observable, replay-stable, cross-host-projectable fact in a multi-party transcript. When a `participants` roster is declared on `conversation.opened` (RFC 0101), `speakerId` MUST be a member of that roster; a turn whose `speakerId` is not a participant MUST be rejected (host-enforced, capability-gated on `multiPartyConversation.supported`). For `role: 'user'` / `role: 'system'` turns the field is OPTIONAL and carries no normative meaning. Additive-safe: pre-RFC-0101 `role: 'agent'` turns that omit it are accepted by hosts that do NOT advertise `multiPartyConversation`."
+      "description": "RFC 0101. Stable speaker identity of this turn — the roster INSTANCE id of the agent that produced it (the `host:<id>` AgentRef agentId per `agent-roster-entry.schema.json` §A / RFC 0086), NOT the manifest/class `AgentRef.agentId`. REQUIRED when `role: 'agent'` (the conditional below) so that 'turn N was spoken by agent X' is an observable, replay-stable, cross-host-projectable fact in a multi-party transcript. When a `participants` roster is declared on `conversation.opened` (RFC 0101), `speakerId` MUST be a member of that roster; a turn whose `speakerId` is not a participant MUST be rejected (host-enforced, capability-gated on the host advertising `multiPartyConversation`). For `role: 'user'` / `role: 'system'` turns the field is OPTIONAL and carries no normative meaning. Additive-safe: pre-RFC-0101 `role: 'agent'` turns that omit it are accepted by hosts that do NOT advertise `multiPartyConversation`."
     }
   },
   "allOf": [
     {
-      "$comment": "RFC 0101 — agent turns MUST carry speaker attribution. Conditional (not unconditional `required`) so the field is only mandatory for `role: 'agent'`; `user`/`system` turns and pre-RFC-0101 producers on non-multi-party hosts are unaffected. Capability-gated: hosts enforce this only when advertising `multiPartyConversation.supported` (capabilities.schema.json).",
+      "$comment": "RFC 0101 — agent turns MUST carry speaker attribution. Conditional (not unconditional `required`) so the field is only mandatory for `role: 'agent'`; `user`/`system` turns and pre-RFC-0101 producers on non-multi-party hosts are unaffected. Capability-gated: hosts enforce this only when advertising `multiPartyConversation` (capabilities.schema.json).",
       "if": {
         "properties": {
           "role": {

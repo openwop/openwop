@@ -111,7 +111,7 @@
             },
             "model": {
               "type": "object",
-              "description": "RFC 0109 — OPTIONAL provenance: which model produced this `role: 'agent'` turn. NON-SECRET, NON-PII: provider + model identifiers ONLY (`additionalProperties: false` forbids any credential/endpoint/prompt leaking in — the SR-1 secret-redaction guard). Stamped at emit; read VERBATIM on `:fork` (never re-resolved). A host that stamps it MUST advertise `conversationTurnModelProvenance.supported: true`. Absent ⇒ no advertisement; clients MUST tolerate its absence.",
+              "description": "RFC 0109 — OPTIONAL provenance: which model produced this `role: 'agent'` turn. NON-SECRET, NON-PII: provider + model identifiers ONLY (`additionalProperties: false` forbids any credential/endpoint/prompt leaking in — the SR-1 secret-redaction guard). Stamped at emit; read VERBATIM on `:fork` (never re-resolved). A host that stamps it MUST advertise `conversationTurnModelProvenance`. Absent ⇒ no advertisement; clients MUST tolerate its absence.",
               "additionalProperties": false,
               "required": [
                 "provider",
@@ -191,7 +191,7 @@
           "items": {
             "$ref": "#/$defs/AgentRef"
           },
-          "description": "RFC 0101. OPTIONAL. The agent cohort permitted to speak in this conversation (multi-party group conversation / advisory council). Each `agentId` is a roster INSTANCE id (`host:<id>` per RFC 0086). When present (and the host advertises `multiPartyConversation.supported`), a turn whose `speakerId` is not a member of this roster MUST be rejected. Disambiguates the singular `agentId` (the owner) from the full speaking cohort. Absent ⇒ no roster enforcement (back-compat: single-agent conversations are unaffected). MVP: declared at open-time only; mid-conversation roster mutation is out of scope (RFC 0101 §Resolved questions)."
+          "description": "RFC 0101. OPTIONAL. The agent cohort permitted to speak in this conversation (multi-party group conversation / advisory council). Each `agentId` is a roster INSTANCE id (`host:<id>` per RFC 0086). When present (and the host advertises `multiPartyConversation`), a turn whose `speakerId` is not a member of this roster MUST be rejected. Disambiguates the singular `agentId` (the owner) from the full speaking cohort. Absent ⇒ no roster enforcement (back-compat: single-agent conversations are unaffected). MVP: declared at open-time only; mid-conversation roster mutation is out of scope (RFC 0101 §Resolved questions)."
         },
         "initialTurn": {
           "$ref": "#/$defs/ConversationTurn"

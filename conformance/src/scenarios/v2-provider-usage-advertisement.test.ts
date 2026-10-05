@@ -8,7 +8,7 @@
  *   currency       an ISO 4217 code, `^[A-Z]{3}$` (absent means USD).
  *
  * Not here: exactly-one-per-invocation emission needs a mock-provider run; the
- * payload shape is `v2-provider-usage-payload-static`.
+ * payload shape is the corpus gate `coherence/v2-provider-usage-payload-static`.
  *
  * Dispositions: discovery unreadable ⇒ `blocked`; `providerUsage` absent, or the
  * facet a leg reads absent ⇒ `inapplicable`.

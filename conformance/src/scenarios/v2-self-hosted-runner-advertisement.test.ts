@@ -8,7 +8,7 @@
  *   dispatchKinds  `dispatchKinds` lists `model`, `tool` or both, each once.
  *
  * Not here: registration, subject isolation, at-most-once and liveness need a
- * runner seam; the frame shapes are `v2-self-hosted-runner-frames-static`.
+ * runner seam; the frame shapes are the corpus gate `coherence/v2-self-hosted-runner-frames-static`.
  *
  * Dispositions: discovery unreadable ⇒ `blocked`; `selfHostedRunner` absent, or the
  * facet a leg reads absent ⇒ `inapplicable`.

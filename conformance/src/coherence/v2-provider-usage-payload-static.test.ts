@@ -20,7 +20,8 @@
  *              carry credential refs, hashed credential identifiers, or prompt
  *              or response text").
  *
- * Host-free: every leg runs with no OPENWOP_BASE_URL.
+ * A corpus gate (`conformance.md` §Two products): it reads only the corpus, runs in
+ * the spec repo's CI, and never reaches a host bundle. Moved from src/scenarios/ in 2.45.18.
  *
  * @see spec/v2/core/events.md §providerUsage
  */
@@ -28,6 +29,10 @@
 import { describe, it, expect } from 'vitest';
 import { v2RefValidator } from '../lib/v2.js';
 import { req } from '../lib/requirement-ids.js';
+import { V1_DIR } from '../lib/paths.js';
+import { softSkip } from '../lib/soft-skip.js';
+
+const NOT_A_CHECKOUT = 'inapplicable to any host: the subject is the spec corpus, which this layout does not carry (not a spec checkout)';
 
 const DOC = 'events.md §providerUsage';
 const ID_TYPE = 'openwop.requirement.provider-usage.event-type-registered';
@@ -50,11 +55,13 @@ describe('v2 provider.usage payload (events.md §providerUsage)', () => {
   const validate = v2RefValidator('run-event-payloads.schema.json#/$defs/providerUsage');
 
   it('provider.usage is a registered v2 run-event type', () => {
+    if (V1_DIR === null) return softSkip('inapplicable', NOT_A_CHECKOUT);
     const r = v2RefValidator('run-event.schema.json#/properties/type')('provider.usage');
     expect(r.ok, req(ID_TYPE, DOC, `provider.usage MUST be accepted by the v2 run-event type union (${r.errors})`)).toBe(true);
   });
 
   it('accepts a minimal and a full payload', () => {
+    if (V1_DIR === null) return softSkip('inapplicable', NOT_A_CHECKOUT);
     for (const p of [MINIMAL, FULL]) {
       const r = validate(p);
       expect(r.ok, req(ID_POSITIVE, DOC, `a well-formed provider.usage payload MUST validate (${r.errors})`)).toBe(true);
@@ -62,6 +69,7 @@ describe('v2 provider.usage payload (events.md §providerUsage)', () => {
   });
 
   it.each(['provider', 'model', 'inputTokens', 'outputTokens'])('rejects a payload without %s', (field) => {
+    if (V1_DIR === null) return softSkip('inapplicable', NOT_A_CHECKOUT);
     expect(validate(without(field)).ok, req(ID_REQUIRED, DOC, `a provider.usage payload without ${field} MUST be rejected`)).toBe(false);
   });
 
