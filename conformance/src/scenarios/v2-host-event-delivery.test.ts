@@ -18,7 +18,9 @@
  *   0236.webhook.host-variant        a subscribed durable event arrives as
  *                                    `{ hostEvent }`, typed and signed;
  *   0236.ephemeral.no-fan-out        the same subscription never receives the
- *                                    ephemeral event;
+ *                                    ephemeral event (its own `it`, reading what
+ *                                    the host-variant leg observed: a bundle
+ *                                    records one requirement id per `it`);
  *   0236.host-event.tenant-isolation a second tenant's stream receives nothing
  *                                    for the first tenant's event.
  *
@@ -111,6 +113,13 @@ async function streamWhile(act: () => Promise<void>, opts: { lastEventId?: strin
   return [...(await sub).events];
 }
 
+/**
+ * What the host-variant leg observed, for the no-fan-out leg. They are two
+ * `it`s because a bundle records one requirement id per `it` (the last one it
+ * asserts), so one `it` asserting both ids recorded only no-fan-out (2.45.20).
+ */
+let fanOut: { bodies: string[]; ephemeralId: string } | { skipped: string } = { skipped: 'the host-variant leg did not run' };
+
 const registered: string[] = [];
 let receiver: ScopedReceiver | null = null;
 afterEach(async () => {
@@ -163,7 +172,8 @@ describe('v2 host events (RFC 0236 — seam-gated)', () => {
     expect(readErrorCode(res.json), req(ID_REFUSED, 'spec/v2/core/webhooks.md §Surfaces', 'the refusal code MUST be validation_error')).toBe('validation_error');
   }, 20_000);
 
-  it('a subscribed durable host event is delivered as { hostEvent }, signed; the ephemeral one is not', async () => {
+  it('a subscribed durable host event is delivered as { hostEvent }, signed', async () => {
+    fanOut = { skipped: 'the host-variant leg skipped before observing deliveries' };
     const g = await gate();
     if ('kind' in g) return skip(g);
     if ((await familyAdvertised('webhooks')) === null) return softSkip('inapplicable', 'the host does not advertise webhooks');
@@ -193,9 +203,23 @@ describe('v2 host events (RFC 0236 — seam-gated)', () => {
     }
     const h = (name: string): string | undefined => { const v = hit.headers[name]; return Array.isArray(v) ? v[0] : v; };
     const verified = verifyWebhookDelivery(SECRET, h('openwop-signature') ?? '', h('openwop-signature-algorithm'), h('openwop-timestamp') ?? '', hit.body, createReceiverState()).accepted === true;
+    // Everything the subscription received up to the durable delivery, which was emitted after the ephemeral one.
+    fanOut = { bodies: hits.map((x) => x.body), ephemeralId };
     assertAll(ID_HOST_BODY, WDOC, judgeHostBody(hit.body, h('openwop-event-type'), verified, durableId, d.type, webhookDelivery));
-    assertAll(ID_NO_FAN_OUT, DOC, [judgeNoFanOut(hits.map((x) => x.body), ephemeralId)]);
   }, 30_000);
+
+  it('the same subscription never receives the ephemeral host event', async () => {
+    // The same gate as the host-variant leg, so a host without the families records the same disposition here.
+    const g = await gate();
+    if ('kind' in g) return skip(g);
+    if ((await familyAdvertised('webhooks')) === null) return softSkip('inapplicable', 'the host does not advertise webhooks');
+    const d = pick(g.types, 'durable');
+    const e = pick(g.types, 'ephemeral');
+    if ('kind' in d) return skip(d);
+    if ('kind' in e) return skip(e);
+    if ('skipped' in fanOut) return softSkip('blocked', `no-fan-out reads the deliveries the host-variant leg observed, and ${fanOut.skipped}`);
+    assertAll(ID_NO_FAN_OUT, DOC, [judgeNoFanOut(fanOut.bodies, fanOut.ephemeralId)]);
+  });
 
   it('a second tenant receives nothing for the first tenant’s host event', async () => {
     const g = await gate();

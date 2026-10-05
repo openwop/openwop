@@ -1,5 +1,9 @@
 # `@openwop/openwop-conformance` Changelog
 
+## [2.45.21] — 2026-10-05 — `0236.webhook.host-variant` gets its own row
+
+- **`v2-host-event-delivery`: no-fan-out is its own `it`.** A bundle records one requirement id per `it` (the last one asserted), so the webhook `it` that asserted host-variant and then no-fan-out recorded only no-fan-out. Found by the v2 reference host's 2.45.20 loopback rehearsal: five of the six RFC 0236 ids appeared. The new `it` re-runs the same gate, so a host without the families records the same disposition.
+
 ## [2.45.20] — 2026-10-05 — host events (RFC 0236 Active); `channelPresence` delivery witnessed through the §13 seam at v2
 
 - **New `v2-channel-presence-delivery` (seam-gated).** `conversation.md` now restates two RFC 0110 rules: a host advertising `channelPresence` MUST emit it, and MUST NOT deliver it to a non-member. Two legs check them through the snapshot seam, asking as the member first so an unwired seam is never read as a refusal.
