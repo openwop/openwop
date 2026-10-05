@@ -10,9 +10,9 @@ Every v2 core family now has a v2 normative home (RFC 0189). Many of its rules a
 
 - **Families (73 core):** 73 v2-witnessed, 0 v1-only, 0 unwitnessed. Of the 54 `witnessable-gated` families, 0 are v1-only; every unwitnessed family is `claims-check`.
 - **At v1 end-of-support:** the 0 v1-only families, and the 0 obligation units attributed to them, lose their only witness.
-- **Obligation units (892 in `spec/v2/core/`):** 588 (66%) sit in a section a major-2 scenario cites; 304 sit in 104 sections no major-2 scenario cites.
+- **Obligation units (892 in `spec/v2/core/`):** 589 (66%) sit in a section a major-2 scenario cites; 303 sit in 103 sections no major-2 scenario cites.
 - **Declaration links:** 0 core families declare `floorScenarios`; 2 declare `requirementIds`. The family-to-test link exists only in scenario code and citations, although `overview.md` §What a MUST means says every core MUST has an id in `requirements.json`.
-- **Scenarios:** 642 registered, 202 run at major 2. 33 major-2 citations name a v2 core section this script cannot match to a heading (see Citation gaps).
+- **Scenarios:** 643 registered, 203 run at major 2. 33 major-2 citations name a v2 core section this script cannot match to a heading (see Citation gaps).
 
 ## How to read it
 
@@ -78,7 +78,7 @@ Every v2 core family now has a v2 normative home (RFC 0189). Many of its rules a
 | `agentRuntime` | claims-check | **v2-witnessed** | 1 (0) | `v2-agent-runtime-advertisement` | – |
 | `aiEnvelope` | witnessable-gated | **v2-witnessed** | 1 (0) | `v2-ai-envelope-advertisement` | `aiEnvelope.universalKinds` |
 | `blobStorage` | witnessable-gated | **v2-witnessed** | 1 (0) | `v2-storage-cross-tenant-isolation` | `blob-cross-tenant-isolation`, `blob-presign-expiry`, `blob-roundtrip` |
-| `channelPresence` | witnessable-gated | **v2-witnessed** | 1 (0) | `v2-channel-presence-advertisement` | `channel-presence-behavioral`, `channel-presence-shape` |
+| `channelPresence` | witnessable-gated | **v2-witnessed** | 1 (1) | `v2-channel-presence-advertisement`, `v2-channel-presence-delivery` | `channel-presence-behavioral`, `channel-presence-shape` |
 | `conversationTurnModelProvenance` | witnessable-gated | **v2-witnessed** | 1 (1) | `v2-conversation-turn-model-provenance-advertisement`, `v2-conversation-turn-model-provenance` | `conversation-turn-model-provenance-shape` |
 | `promptLibrary` | claims-check | **v2-witnessed** | 1 (0) | `v2-prompt-library-advertisement` | – |
 | `schemaVersions` | witnessable-gated | **v2-witnessed** | 1 (1) | `v2-a2ui-v09-surface` | `aiEnvelope.schemaDrift` |
@@ -108,7 +108,7 @@ Every v2 core family now has a v2 normative home (RFC 0189). Many of its rules a
 | `capabilities.md` | 25 | 21 (84%) | – |
 | `conformance.md` | 49 | 26 (53%) | `production` |
 | `connection-packs.md` | 10 | 0 (0%) | `connections` |
-| `conversation.md` | 5 | 1 (20%) | `multiPartyConversation`, `conversationTurnModelProvenance`, `channelPresence` |
+| `conversation.md` | 5 | 2 (40%) | `multiPartyConversation`, `conversationTurnModelProvenance`, `channelPresence` |
 | `errors.md` | 18 | 18 (100%) | – |
 | `events.md` | 63 | 37 (59%) | `supportedEnvelopes`, `schemaVersions`, `envelopeStrictness`, `envelopeContracts`, `envelopes`, `feedback`, `providerUsage`, `heartbeat` |
 | `execution.md` | 34 | 0 (0%) | `selfHostedRunner`, `multiAgent`, `agents`, `subWorkflow` |
@@ -411,18 +411,18 @@ node scripts/report-v2-witness-coverage.mjs --write  # regenerate this file
   },
   "obligationUnits": {
     "total": 892,
-    "inV2CitedSections": 588,
-    "inUncitedSections": 304,
+    "inV2CitedSections": 589,
+    "inUncitedSections": 303,
     "sectionsWithObligations": 269,
-    "sectionsWithNoV2Citation": 104
+    "sectionsWithNoV2Citation": 103
   },
   "declarationLinks": {
     "familiesWithFloorScenarios": 0,
     "familiesWithRequirementIds": 2
   },
   "scenarios": {
-    "registered": 642,
-    "major2": 202
+    "registered": 643,
+    "major2": 203
   },
   "unresolvedV2Citations": 33,
   "major2ScenariosCitingNoCoreDoc": 67,

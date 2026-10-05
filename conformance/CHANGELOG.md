@@ -1,5 +1,11 @@
 # `@openwop/openwop-conformance` Changelog
 
+## [2.45.20] — 2026-10-05 — `channelPresence` delivery witnessed through the §13 seam at v2
+
+- **New `v2-channel-presence-delivery` (seam-gated).** `conversation.md` now restates two RFC 0110 rules: a host advertising `channelPresence` MUST emit it, and MUST NOT deliver it to a non-member. Two legs check them through the snapshot seam, asking as the member first so an unwired seam is never read as a refusal.
+- **The §13 presence seam exists at v2.** It was never ported to `api/seams-v2.yaml`, so v2 had no way to observe presence. It gains an `observer` field; a non-member observer MUST NOT get `200`.
+- **Proof:** against a double, a leak to a non-member fails only the delivery leg, a refused member fails only the emit leg, and an unwired seam records `blocked`. No host advertises `channelPresence` at v2, so no bundle gains a blocked row.
+
 ## [2.45.19] — 2026-10-05 — a minted tenant-bound id carries no `~`; RFC 0235's registers close
 
 - **New leg `openwop.requirement.0184.mint-no-tilde`** in `v2-bound-id-path-projection`. RFC 0184 §A.2: a host MUST NOT mint a tenant-bound id containing `~`. Only the run this leg creates is checked, because ids minted earlier MUST still resolve.
