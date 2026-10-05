@@ -44,7 +44,7 @@ Source: `conformance/package.json, CHANGELOG.md`. Conformance suite **2.45.18**;
 
 ## Open Critical / High program risks
 
-Source: `RFCS/registers/*.risks.md + RFCS/*.risks.md (RFC 0166 tokens)` (491 rows scanned). **111** open across all registers, of which **61** belong to the RFC 0147 program (RFCs ≥ 0147) — the set RFC 0156's claims are gated on. Older registers were never dispositioned; `Open` there means "the mitigation is the normative MUST in the row", not an unaddressed risk:
+Source: `RFCS/registers/*.risks.md + RFCS/*.risks.md (RFC 0166 tokens)` (494 rows scanned). **111** open across all registers, of which **61** belong to the RFC 0147 program (RFCs ≥ 0147) — the set RFC 0156's claims are gated on. Older registers were never dispositioned; `Open` there means "the mitigation is the normative MUST in the row", not an unaddressed risk:
 
 Of those, **5** are explicitly **transferred** to a named tracked surface (0147/R2, 0147/R3, 0147/R12, 0147/R14, 0219/R1) — real and open, but dispositioned. A register sweep turns on "Closed **or transferred**", so both are reported; an open row and a transferred row are not the same state and are not reported as one.
 

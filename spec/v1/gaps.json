@@ -14174,6 +14174,40 @@
       ]
     },
     {
+      "id": "openwop.gap.0235.1",
+      "rfc": "0235",
+      "local": "G1",
+      "section": "§D",
+      "surface": "The v2 reference host compares `If-None-Match` byte-exact on the run snapshot and member-exact on discovery, so it fails §D 1–3 once the legs ship.",
+      "witness": "unclassified",
+      "requirementId": null,
+      "disposition": "externally-gated",
+      "target": "v2-reference-if-none-match-helper",
+      "sources": [
+        {
+          "file": "RFCS/registers/0235-if-none-match-evaluation.gaps.md",
+          "token": "G1"
+        }
+      ]
+    },
+    {
+      "id": "openwop.gap.0235.2",
+      "rfc": "0235",
+      "local": "G2",
+      "section": "§D",
+      "surface": "No host bundle records the four `openwop.requirement.0235.*` ids, because the legs are not written yet.",
+      "witness": "unclassified",
+      "requirementId": null,
+      "disposition": "carried",
+      "target": "openwop.gap.0235.2",
+      "sources": [
+        {
+          "file": "RFCS/registers/0235-if-none-match-evaluation.gaps.md",
+          "token": "G2"
+        }
+      ]
+    },
+    {
       "id": "openwop.gap.spec.a2a-integration.g1",
       "rfc": "0152",
       "local": "G1",
