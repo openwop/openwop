@@ -220,7 +220,7 @@ Defects outside the spec:
       or replayed, never delivered to a non-member, and emitted whenever `channelPresence` is
       advertised. `conversation.md` §channelPresence states none of them. Needs an /architect
       ruling: restate them in the normative home, or drop them.
-- [ ] **No leg witnesses identity.md §5 "MUST NOT mint a tenant-bound id containing `~`".**
+- [x] **No leg witnesses identity.md §5 "MUST NOT mint a tenant-bound id containing `~`".** Leg `0184.mint-no-tilde` (2.45.19).
       openwop-app minted `user~3A<hash>/<id>` for personal/org tenants (app ADR 0814). Witness only
       ids the run itself mints (a created run's bound `runId`), never every body id, because ids
       already minted MUST still resolve. It bites only when the conformance credential sits in a
