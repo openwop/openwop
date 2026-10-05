@@ -216,10 +216,16 @@ Defects outside the spec:
 
 - [x] **Schema descriptions still say `.supported`.** Swept in 2.45.18: 38 descriptions in 15
       schemas now say "advertises `X`".
-- [ ] **MUSTs that live only in schema descriptions.** `channel-presence-payload`: not persisted
-      or replayed, never delivered to a non-member, and emitted whenever `channelPresence` is
-      advertised. `conversation.md` §channelPresence states none of them. Needs an /architect
-      ruling: restate them in the normative home, or drop them.
+- [x] **MUSTs that live only in schema descriptions.** /architect ruling 2026-10-05: `channelPresence`'s
+      advertise ⇒ emit and no-delivery-to-a-non-member rules are restated in `conversation.md`,
+      witnessed by `v2-channel-presence-delivery` through the §13 seam (ported to `api/seams-v2.yaml`
+      with an `observer` field), and invariant `channel-presence-member-only-delivery` is added.
+- [ ] **RFC owed: an ephemeral delivery class in `events.md`.** RFC 0110 says `channel.presence` MUST
+      NOT be persisted and is replay-invisible. Yet `events.md` §1 makes a run its log, and the
+      envelope requires `sequence`, a log position. Restating the rule would contradict core;
+      dropping it lets a fork replay stale presence. Options: a non-`RunEvent` frame with no
+      `sequence`, excluded from resumption, poll, snapshot, fork and fan-out (annotations and typing
+      want the same class), or a channel-scoped stream. `conversation.md` names it open. Owner: the user.
 - [x] **No leg witnesses identity.md §5 "MUST NOT mint a tenant-bound id containing `~`".** Leg `0184.mint-no-tilde` (2.45.19).
       openwop-app minted `user~3A<hash>/<id>` for personal/org tenants (app ADR 0814). Witness only
       ids the run itself mints (a created run's bound `runId`), never every body id, because ids
