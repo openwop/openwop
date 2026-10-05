@@ -17,7 +17,8 @@
  *   closed      an unknown key is rejected; a vendor key under the RFC 0185
  *               hatch (`x-`, `vendor.`, `openwop-`) is carried.
  *
- * Host-free: every leg runs with no OPENWOP_BASE_URL.
+ * A corpus gate (`conformance.md` §Two products): it reads only the corpus, runs in
+ * the spec repo's CI, and never reaches a host bundle. Moved from src/scenarios/ in 2.45.18.
  *
  * @see spec/v2/core/artifact-type-packs.md §Registration
  */
@@ -25,9 +26,12 @@
 import { describe, it, expect } from 'vitest';
 import { readFileSync } from 'node:fs';
 import { join } from 'node:path';
-import { SCHEMAS_DIR } from '../lib/paths.js';
+import { SCHEMAS_DIR, V1_DIR } from '../lib/paths.js';
 import { v2RefValidator } from '../lib/v2.js';
 import { req } from '../lib/requirement-ids.js';
+import { softSkip } from '../lib/soft-skip.js';
+
+const NOT_A_CHECKOUT = 'inapplicable to any host: the subject is the spec corpus, which this layout does not carry (not a spec checkout)';
 
 const DOC = 'artifact-type-packs.md §Registration';
 const ID_TYPE = 'openwop.requirement.artifact-types.created-event-type-registered';
@@ -49,11 +53,13 @@ describe('v2 artifact.created payload (artifact-type-packs.md §Registration)', 
   const validate = v2RefValidator('run-event-payloads.schema.json#/$defs/artifactCreated');
 
   it('artifact.created is a registered v2 run-event type', () => {
+    if (V1_DIR === null) return softSkip('inapplicable', NOT_A_CHECKOUT);
     const r = v2RefValidator('run-event.schema.json#/properties/type')('artifact.created');
     expect(r.ok, req(ID_TYPE, DOC, `artifact.created MUST be accepted by the v2 run-event type union (${r.errors})`)).toBe(true);
   });
 
   it('accepts a well-formed payload, with either provenance or none', () => {
+    if (V1_DIR === null) return softSkip('inapplicable', NOT_A_CHECKOUT);
     const { registrationSource: _src, ...noSource } = GOOD;
     for (const p of [GOOD, { ...GOOD, registrationSource: 'pack' }, noSource]) {
       const r = validate(p);
@@ -62,16 +68,19 @@ describe('v2 artifact.created payload (artifact-type-packs.md §Registration)', 
   });
 
   it.each(['artifactId', 'artifactType'])('rejects a payload without %s', (field) => {
+    if (V1_DIR === null) return softSkip('inapplicable', NOT_A_CHECKOUT);
     const p: Record<string, unknown> = { ...GOOD };
     delete p[field];
     expect(validate(p).ok, req(ID_REQUIRED, DOC, `artifact.created without ${field} MUST be rejected`)).toBe(false);
   });
 
   it('rejects a registrationSource outside pack | host', () => {
+    if (V1_DIR === null) return softSkip('inapplicable', NOT_A_CHECKOUT);
     expect(validate({ ...GOOD, registrationSource: 'vendor' }).ok, req(ID_PROVENANCE, DOC, 'registrationSource MUST be pack or host')).toBe(false);
   });
 
   it('the discovery per-type registrationSource carries the same vocabulary as the event', () => {
+    if (V1_DIR === null) return softSkip('inapplicable', NOT_A_CHECKOUT);
     const payloads: unknown = JSON.parse(readFileSync(join(SCHEMAS_DIR, 'v2', 'run-event-payloads.schema.json'), 'utf8'));
     const caps: unknown = JSON.parse(readFileSync(join(SCHEMAS_DIR, 'v2', 'capabilities.schema.json'), 'utf8'));
     const event = enumAt(payloads, ['$defs', 'artifactCreated', 'properties', 'registrationSource']);
@@ -81,10 +90,12 @@ describe('v2 artifact.created payload (artifact-type-packs.md §Registration)', 
   });
 
   it('rejects a non-boolean registered', () => {
+    if (V1_DIR === null) return softSkip('inapplicable', NOT_A_CHECKOUT);
     expect(validate({ ...GOOD, registered: 'true' }).ok, req(ID_REGISTERED, DOC, 'registered MUST be a boolean')).toBe(false);
   });
 
   it('rejects an unknown key, and carries a vendor key under the RFC 0185 hatch', () => {
+    if (V1_DIR === null) return softSkip('inapplicable', NOT_A_CHECKOUT);
     expect(validate({ ...GOOD, payload: { secret: 1 } }).ok, req(ID_CLOSED, DOC, 'an unknown key on artifact.created MUST be rejected')).toBe(false);
     const r = validate({ ...GOOD, 'x-acme-trace': 'abc', 'vendor.acme.note': 'n' });
     expect(r.ok, req(ID_CLOSED, 'run-event-payloads.schema.json §artifactCreated (RFC 0185)', `a vendor-prefixed key MUST be carried (${r.errors})`)).toBe(true);

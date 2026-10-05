@@ -19,7 +19,8 @@
  *               `allOf`, so it is witnessed by validation, not by reading
  *               `portability.if`.
  *
- * Host-free: every leg runs with no OPENWOP_BASE_URL.
+ * A corpus gate (`conformance.md` §Two products): it reads only the corpus, runs in
+ * the spec repo's CI, and never reaches a host bundle. Moved from src/scenarios/ in 2.45.18.
  *
  * @see spec/v2/core/portability.md
  * @see schemas/v2/export-bundle.schema.json
@@ -28,6 +29,10 @@
 import { describe, it, expect } from 'vitest';
 import { v2RefValidator, v2Validator } from '../lib/v2.js';
 import { req } from '../lib/requirement-ids.js';
+import { V1_DIR } from '../lib/paths.js';
+import { softSkip } from '../lib/soft-skip.js';
+
+const NOT_A_CHECKOUT = 'inapplicable to any host: the subject is the spec corpus, which this layout does not carry (not a spec checkout)';
 
 const DOC = 'portability.md §The export bundle';
 const ID_VERSION = 'openwop.requirement.portability.bundle-version-2';
@@ -51,22 +56,26 @@ describe('v2 export bundle (portability.md §The export bundle)', () => {
   const validate = v2Validator('export-bundle');
 
   it('accepts a conforming bundle at bundleVersion "2"', () => {
+    if (V1_DIR === null) return softSkip('inapplicable', NOT_A_CHECKOUT);
     const r = validate(GOOD);
     expect(r.ok, req(ID_VERSION, DOC, `a conforming v2 bundle MUST validate (${r.errors})`)).toBe(true);
   });
 
   it('rejects the v1 bundleVersion "1" and a missing bundleVersion', () => {
+    if (V1_DIR === null) return softSkip('inapplicable', NOT_A_CHECKOUT);
     expect(validate({ ...GOOD, bundleVersion: '1' }).ok, req(ID_VERSION, DOC, 'a v2 bundle MUST carry bundleVersion "2"; "1" MUST be rejected')).toBe(false);
     const { bundleVersion: _gone, ...rest } = GOOD;
     expect(validate(rest).ok, req(ID_VERSION, DOC, 'a bundle without bundleVersion MUST be rejected')).toBe(false);
   });
 
   it('rejects an unknown item kind and an item without ref', () => {
+    if (V1_DIR === null) return softSkip('inapplicable', NOT_A_CHECKOUT);
     expect(validate({ ...GOOD, items: [{ kind: 'workflow', ref: 'x', payload: {} }] }).ok, req(ID_SHAPE, DOC, 'an unknown item kind MUST be rejected')).toBe(false);
     expect(validate({ ...GOOD, items: [{ kind: 'agent', payload: {} }] }).ok, req(ID_SHAPE, DOC, 'an item without a ref MUST be rejected')).toBe(false);
   });
 
   it.each(CRED_NAMES)('admits no %s field at the bundle root or under source', (name) => {
+    if (V1_DIR === null) return softSkip('inapplicable', NOT_A_CHECKOUT);
     expect(validate({ ...GOOD, [name]: 'xxx' }).ok, req(ID_NO_CRED, DOC, `a "${name}" field at the bundle root MUST NOT validate`)).toBe(false);
     expect(validate({ ...GOOD, source: { ...GOOD.source, [name]: 'xxx' } }).ok, req(ID_NO_CRED, DOC, `a "${name}" field under source MUST NOT validate`)).toBe(false);
   });
@@ -77,11 +86,13 @@ describe('v2 import.applied (portability.md §The import.applied event)', () => 
   const ADOC = 'portability.md §The import.applied event';
 
   it('import.applied is a registered v2 run-event type', () => {
+    if (V1_DIR === null) return softSkip('inapplicable', NOT_A_CHECKOUT);
     const r = v2RefValidator('run-event.schema.json#/properties/type')('import.applied');
     expect(r.ok, req(ID_APPLIED, ADOC, `import.applied MUST be accepted by the v2 run-event type union (${r.errors})`)).toBe(true);
   });
 
   it('a counts-and-refs payload validates; one carrying item payloads does not', () => {
+    if (V1_DIR === null) return softSkip('inapplicable', NOT_A_CHECKOUT);
     const r = applied({ bundleOrigin: 'https://host-a.example', counts: { created: 2, skipped: 1 }, secretsToRebind: ['anthropic'] });
     expect(r.ok, req(ID_APPLIED, ADOC, `a content-free import.applied MUST validate (${r.errors})`)).toBe(true);
     expect(applied({ bundleOrigin: 'h', counts: { created: 1 }, items: [{ payload: {} }] }).ok, req(ID_APPLIED, ADOC, 'import.applied MUST NOT carry item payloads')).toBe(false);
@@ -95,6 +106,7 @@ describe('v2 portability record: import ⇒ dryRun (portability.md §The portabi
   const base = { status: 'experimental', since: '2.0', until: '2099-01-01', witness: 'witnessable-gated', export: true } as const;
 
   it('import: true with dryRun: true validates; import: false needs no dryRun', () => {
+    if (V1_DIR === null) return softSkip('inapplicable', NOT_A_CHECKOUT);
     for (const r of [{ ...base, import: true, dryRun: true }, { ...base, import: false }, { ...base }]) {
       const v = record(r);
       expect(v.ok, req(ID_DRY_RUN, PDOC, `a portability record ${JSON.stringify(r)} MUST validate (${v.errors})`)).toBe(true);
@@ -102,6 +114,7 @@ describe('v2 portability record: import ⇒ dryRun (portability.md §The portabi
   });
 
   it('import: true without dryRun, or with dryRun: false, is rejected', () => {
+    if (V1_DIR === null) return softSkip('inapplicable', NOT_A_CHECKOUT);
     expect(record({ ...base, import: true }).ok, req(ID_DRY_RUN, PDOC, 'import: true without dryRun MUST be rejected')).toBe(false);
     expect(record({ ...base, import: true, dryRun: false }).ok, req(ID_DRY_RUN, PDOC, 'import: true with dryRun: false MUST be rejected')).toBe(false);
   });

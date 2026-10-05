@@ -9,7 +9,8 @@
  *
  * The revalidation runs once per client spelling (`OpenWOP-Version: 2.0`,
  * `2`, and `2` with a wildcard Accept): a host MUST treat them alike
- * (versioning.md §1), and one public origin served 304 to the first only.
+ * (versioning.md §1), so a host that honours only the suite's own spelling
+ * cannot pass by it.
  *
  * Control: a non-matching `If-None-Match` MUST receive 200 with the body — a
  * host that answers 304 to any conditional request fails here. `headers.md`
@@ -31,7 +32,7 @@ import { req } from '../lib/requirement-ids.js';
 const ID = 'openwop.requirement.0170.run-snapshot-etag';
 const DOC = 'spec/v2/core/runs.md §Snapshot';
 const NOOP = 'conformance-noop';
-/** The client spellings a host MUST treat alike (versioning.md §1): openwop-app's public origin answered 304 to `2.0` and 200 to bare `2`. */
+/** The client spellings a host MUST treat alike (versioning.md §1). */
 const SPELLINGS: ReadonlyArray<Readonly<Record<string, string>>> = [
   { 'OpenWOP-Version': '2.0' },
   { 'OpenWOP-Version': '2' },

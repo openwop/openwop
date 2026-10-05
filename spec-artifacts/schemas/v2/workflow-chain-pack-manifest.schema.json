@@ -160,7 +160,7 @@
           "items": {
             "$ref": "#/$defs/SubChainRef"
           },
-          "description": "RFC 0133 §1.1. OPTIONAL. Child chains this chain composes at RUN TIME. Each entry names a chain (a sibling `chainId` in this pack, or an externally published chain) that a node references via `config.subChainRef`. Unlike RFC 0013's author-time inline splice, a referenced sub-chain is co-instantiated as its own registered workflow and dispatched by the parent as a child run (both parent and child stay owned + builder-editable). A host without runtime child dispatch MUST refuse instantiation with `sub_chain_unsupported` (422) rather than flatten. Requires `capabilities.workflowChainPacks.subChains.supported: true`. See `workflow-chain-packs.md` §\"Sub-chain composition (RFC 0133)\"."
+          "description": "RFC 0133 §1.1. OPTIONAL. Child chains this chain composes at RUN TIME. Each entry names a chain (a sibling `chainId` in this pack, or an externally published chain) that a node references via `config.subChainRef`. Unlike RFC 0013's author-time inline splice, a referenced sub-chain is co-instantiated as its own registered workflow and dispatched by the parent as a child run (both parent and child stay owned + builder-editable). A host without runtime child dispatch MUST refuse instantiation with `sub_chain_unsupported` (422) rather than flatten. Requires the host to advertise `workflowChainPacks.subChains`. See `workflow-chain-packs.md` §\"Sub-chain composition (RFC 0133)\"."
         },
         "producedVariables": {
           "type": "array",

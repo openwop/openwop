@@ -18,7 +18,8 @@
  *     on pack-authored documents (the `x-` header/annotation token split);
  *   - every `description` has its manifest-named `/v1/<op>` spelled `/<op>`
  *     (v2-path-spellings.mjs, the rule generate-from-declaration applies too;
- *     errata 2.0.10, #1317);
+ *     errata 2.0.10, #1317), and names no `X.supported` flag, which v2 does not
+ *     have (v2-supported-wording.mjs, 2.45.18);
  *   - root `examples` are instances of a CLOSED v2 schema and MUST validate
  *     against it (check-v2-schemas.mjs rule 6): a `$comment` inside an example
  *     is dropped, and a bare id under a property bound to a TENANT-BOUND kind is
@@ -44,6 +45,7 @@ import { readFileSync, writeFileSync, existsSync, mkdirSync, readdirSync } from 
 import { join, dirname, resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { unversionManifestSpellings } from './v2-path-spellings.mjs';
+import { unsupportedWording } from './v2-supported-wording.mjs';
 
 const ROOT = resolve(dirname(fileURLToPath(import.meta.url)), '..');
 const SRC = join(ROOT, 'schemas'); const DST = join(SRC, 'v2');
@@ -104,7 +106,7 @@ function transform(file, doc) {
         return [pk, walk(pv, pk, k === 'properties')];
       })) : walk(v, k, false);
     }
-    if (typeof out.description === 'string') out.description = unversionManifestSpellings(out.description); // #1317
+    if (typeof out.description === 'string') out.description = unsupportedWording(unversionManifestSpellings(out.description)); // #1317; no `.supported` (2.45.18)
     if (out.type === 'object' && out.additionalProperties === undefined && !out.patternProperties) {
       // Closure: an object with declared properties is closed; a declared
       // free-form map (no properties, no pattern) is OPEN — explicitly, so the

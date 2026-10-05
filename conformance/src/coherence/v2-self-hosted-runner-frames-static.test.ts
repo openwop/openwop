@@ -21,7 +21,8 @@
  * registration record; the result frame is the runner's, so its legs witness
  * the corpus shape the host's intake is written against, not the host.
  *
- * Host-free: every leg runs with no OPENWOP_BASE_URL.
+ * A corpus gate (`conformance.md` §Two products): it reads only the corpus, runs in
+ * the spec repo's CI, and never reaches a host bundle. Moved from src/scenarios/ in 2.45.18.
  *
  * @see spec/v2/core/execution.md §selfHostedRunner
  * @see schemas/v2/self-hosted-runner-dispatch-frame.schema.json
@@ -30,6 +31,10 @@
 import { describe, it, expect } from 'vitest';
 import { v2Validator } from '../lib/v2.js';
 import { req } from '../lib/requirement-ids.js';
+import { V1_DIR } from '../lib/paths.js';
+import { softSkip } from '../lib/soft-skip.js';
+
+const NOT_A_CHECKOUT = 'inapplicable to any host: the subject is the spec corpus, which this layout does not carry (not a spec checkout)';
 
 const DOC = 'execution.md §selfHostedRunner';
 const ID_COMPILE = 'openwop.requirement.self-hosted-runner.frame-schemas-compile';
@@ -54,6 +59,7 @@ function without(o: Readonly<Record<string, unknown>>, field: string): Record<st
 describe('v2 self-hosted-runner frames: schemas compile', () => {
   for (const name of SCHEMAS) {
     it(`${name}.schema.json compiles under Ajv 2020`, () => {
+      if (V1_DIR === null) return softSkip('inapplicable', NOT_A_CHECKOUT);
       expect(() => v2Validator(name), req(ID_COMPILE, DOC, `schemas/v2/${name}.schema.json MUST compile`)).not.toThrow();
     });
   }
@@ -63,6 +69,7 @@ describe('v2 self-hosted-runner frames: dispatch frame', () => {
   const validate = v2Validator('self-hosted-runner-dispatch-frame');
 
   it('accepts a model frame and a tool frame', () => {
+    if (V1_DIR === null) return softSkip('inapplicable', NOT_A_CHECKOUT);
     for (const f of [MODEL_FRAME, TOOL_FRAME]) {
       const r = validate(f);
       expect(r.ok, req(ID_DISPATCH, DOC, `a well-formed ${f.kind} dispatch frame MUST validate (${r.errors})`)).toBe(true);
@@ -87,11 +94,13 @@ describe('v2 self-hosted-runner frames: result frame', () => {
   const validate = v2Validator('self-hosted-runner-result-frame');
 
   it('accepts a result frame', () => {
+    if (V1_DIR === null) return softSkip('inapplicable', NOT_A_CHECKOUT);
     const r = validate(RESULT);
     expect(r.ok, req(ID_RESULT, DOC, `a well-formed result frame MUST validate (${r.errors})`)).toBe(true);
   });
 
   it('rejects a result frame without output', () => {
+    if (V1_DIR === null) return softSkip('inapplicable', NOT_A_CHECKOUT);
     expect(validate(without(RESULT, 'output')).ok, req(ID_RESULT, DOC, 'a result frame without output MUST be rejected')).toBe(false);
   });
 });
@@ -111,11 +120,13 @@ describe('v2 self-hosted-runner frames: registration', () => {
   const validate = v2Validator('self-hosted-runner-registration');
 
   it('accepts a registration', () => {
+    if (V1_DIR === null) return softSkip('inapplicable', NOT_A_CHECKOUT);
     const r = validate(REGISTRATION);
     expect(r.ok, req(ID_REGISTRATION, DOC, `a well-formed registration MUST validate (${r.errors})`)).toBe(true);
   });
 
   it('rejects a registration without subject', () => {
+    if (V1_DIR === null) return softSkip('inapplicable', NOT_A_CHECKOUT);
     expect(validate(without(REGISTRATION, 'subject')).ok, req(ID_REGISTRATION, DOC, 'a registration without its owning subject MUST be rejected')).toBe(false);
   });
 });

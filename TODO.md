@@ -214,11 +214,20 @@ Defects outside the spec:
 
 ## 8 — Wave 3 follow-ups (architect review, 2026-10-04)
 
-- [ ] **Schema descriptions still say `.supported`.** That is not a v2 field (`capabilities.md` §2:
-      presence is the claim). It appears in about 20 descriptions across `run-event-payloads`,
-      `conversation-turn`, `conversation-event` and `channel-presence-payload`. Needs one mechanical
-      sweep. Some MUSTs also live only in descriptions (`channel-presence-payload`: not persisted,
-      delivered to members only); move them into `conversation.md` or drop them.
+- [x] **Schema descriptions still say `.supported`.** Swept in 2.45.18: 38 descriptions in 15
+      schemas now say "advertises `X`".
+- [ ] **MUSTs that live only in schema descriptions.** `channel-presence-payload`: not persisted
+      or replayed, never delivered to a non-member, and emitted whenever `channelPresence` is
+      advertised. `conversation.md` §channelPresence states none of them. Needs an /architect
+      ruling: restate them in the normative home, or drop them.
+- [ ] **No leg witnesses identity.md §5 "MUST NOT mint a tenant-bound id containing `~`".**
+      openwop-app minted `user~3A<hash>/<id>` for personal/org tenants (app ADR 0814). Witness only
+      ids the run itself mints (a created run's bound `runId`), never every body id, because ids
+      already minted MUST still resolve. It bites only when the conformance credential sits in a
+      non-clean tenant: `inapplicable` on a clean one. No RFC needed.
+- [ ] **Erratum: identity.md §5 table row `tenantId, workspaceId` is stale.** `ids.schema.json`
+      widened `tenantId` to `^(anon:)?[A-Za-z0-9._~-]{1,128}$` (RFC 0184 §A.3); `workspaceId`
+      has no `anon:` prefix. Split the row to match the schema (found by openwop-app, ADR 0814).
 - [ ] **`dataResidency.regions` has no `minItems`.** `regions: []` validates, so the "accept an
       advertised region" rule can never apply. Adding `minItems: 1` narrows the schema and needs an
       RFC.
@@ -233,15 +242,15 @@ Defects outside the spec:
       `nodePackRuntimes` ABI-rejection and memory-cap-breach legs need an operator-installed WASM
       fixture pack (`conformance-wasm-pack-memory-cap-breach`). Until then both families are
       witnessed by their advertisement legs only.
-- [ ] **Schema-only legs in `*-static` scenarios belong in `src/coherence/`** (`conformance.md` §Two
+- [x] **Schema-only legs in `*-static` scenarios belong in `src/coherence/`** (`conformance.md` §Two
       products: a check that reads only the corpus MUST NOT appear in a host bundle). Sweep the
       wave-1/2 `v2-*-static` scenarios: keep the legs that read host output, move the rest.
-- [ ] **Wrong cause in two 2.45.17 scenario comments.** `v2-discovery-etag` and
+- [x] **Wrong cause in two 2.45.17 scenario comments.** `v2-discovery-etag` and
       `v2-run-snapshot-etag` say openwop-app's origin answered `304` to `2.0` and `200` to bare `2`.
       The cause was a CDN edge (hit-for-pass on a `no-store` response: the first conditional to reach
       a node that had not seen the object gets `200`), not the spelling. They are packed, so fix them
       when the 2.45.18 cycle opens. The legs themselves are right.
-- [ ] **`otel-emission-grpc` is attributed to `nodePackRuntimes`** in the coverage report. It is
+- [x] **`otel-emission-grpc` is attributed to `nodePackRuntimes`** in the coverage report. It is
       about OTel export.
 
 ## Pattern checks (no code owed; read new scenarios against these)

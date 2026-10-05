@@ -19,7 +19,8 @@
  * `type` is an open string, so the rule binds the engine's acceptance, not the
  * wire shape.
  *
- * Host-free: every leg runs with no OPENWOP_BASE_URL.
+ * A corpus gate (`conformance.md` §Two products): it reads only the corpus, runs in
+ * the spec repo's CI, and never reaches a host bundle. Moved from src/scenarios/ in 2.45.18.
  *
  * @see spec/v2/core/events.md §"AI envelopes: E1–E5"
  * @see spec/v1/migrations.json openwop.migration.C4.16
@@ -29,6 +30,10 @@ import { describe, it, expect } from 'vitest';
 import { v2Validator } from '../lib/v2.js';
 import { req } from '../lib/requirement-ids.js';
 import { UNIVERSAL_KINDS } from '../lib/envelope-schema-static.js';
+import { V1_DIR } from '../lib/paths.js';
+import { softSkip } from '../lib/soft-skip.js';
+
+const NOT_A_CHECKOUT = 'inapplicable to any host: the subject is the spec corpus, which this layout does not carry (not a spec checkout)';
 
 const DOC = 'events.md §AI envelopes: E1–E5';
 const ID_COMPILE = 'openwop.requirement.ai-envelope.schemas-compile';
@@ -56,11 +61,13 @@ function without(field: string): Record<string, unknown> {
 
 describe('v2 AI envelope shape: schemas compile', () => {
   it('ai-envelope.schema.json compiles under Ajv 2020', () => {
+    if (V1_DIR === null) return softSkip('inapplicable', NOT_A_CHECKOUT);
     expect(() => v2Validator('ai-envelope'), req(ID_COMPILE, DOC, 'schemas/v2/ai-envelope.schema.json MUST compile')).not.toThrow();
   });
 
   for (const kind of UNIVERSAL_KINDS) {
     it(`envelopes/${kind}.schema.json compiles under Ajv 2020`, () => {
+      if (V1_DIR === null) return softSkip('inapplicable', NOT_A_CHECKOUT);
       expect(() => v2Validator(`envelopes/${kind}`), req(ID_COMPILE, DOC, `schemas/v2/envelopes/${kind}.schema.json MUST compile`)).not.toThrow();
     });
   }
@@ -70,23 +77,28 @@ describe('v2 AI envelope shape: round-trip', () => {
   const validate = v2Validator('ai-envelope');
 
   it('accepts a well-formed envelope carrying correlationId and meta.source', () => {
+    if (V1_DIR === null) return softSkip('inapplicable', NOT_A_CHECKOUT);
     const r = validate(WELL_FORMED);
     expect(r.ok, req(ID_POSITIVE, DOC, `a well-formed envelope MUST validate (${r.errors})`)).toBe(true);
   });
 
   it('rejects an envelope missing meta', () => {
+    if (V1_DIR === null) return softSkip('inapplicable', NOT_A_CHECKOUT);
     expect(validate(without('meta')).ok, req(ID_META, DOC, 'an envelope without meta MUST be rejected')).toBe(false);
   });
 
   it('rejects an envelope with an unknown top-level property', () => {
+    if (V1_DIR === null) return softSkip('inapplicable', NOT_A_CHECKOUT);
     expect(validate({ ...WELL_FORMED, unknownTopLevel: 'x' }).ok, req(ID_CLOSED, 'schemas/v2/ai-envelope.schema.json', 'the envelope is closed: an unknown top-level property MUST be rejected')).toBe(false);
   });
 
   it('rejects an envelope missing correlationId', () => {
+    if (V1_DIR === null) return softSkip('inapplicable', NOT_A_CHECKOUT);
     expect(validate(without('correlationId')).ok, req(ID_CORRELATION, DOC, 'correlationId is REQUIRED on every envelope at v2 — an envelope without it MUST be rejected, never synthesized')).toBe(false);
   });
 
   it('rejects an envelope whose meta carries no source', () => {
+    if (V1_DIR === null) return softSkip('inapplicable', NOT_A_CHECKOUT);
     const { source: _source, ...meta } = WELL_FORMED.meta;
     expect(validate({ ...WELL_FORMED, meta }).ok, req(ID_SOURCE, DOC, 'meta.source is REQUIRED on every envelope at v2 — an envelope without it MUST be rejected')).toBe(false);
   });

@@ -11,7 +11,7 @@
  *                  `schemaVersion` ≥ 0 and `registrationSource` pack | host.
  *
  * Not here: store-implies-emit and the emitted-vs-advertised `registrationSource`
- * match need a fixture run; the event shape is `v2-artifact-created-static`.
+ * match need a fixture run; the event shape is the corpus gate `coherence/v2-artifact-created-static`.
  *
  * Dispositions: discovery unreadable ⇒ `blocked`; `artifactTypes` absent, or the
  * facet a leg reads absent ⇒ `inapplicable`.

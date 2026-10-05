@@ -10,7 +10,7 @@
  *
  * Not here: import refusal of credential material, dry-run no-write and
  * idempotence: v2 defines no import route ("a host serves them on routes of its
- * own"). The bundle shape is `v2-export-bundle-static`.
+ * own"). The bundle shape is the corpus gate `coherence/v2-export-bundle-static`.
  *
  * Dispositions: discovery unreadable ⇒ `blocked`; `portability` absent, or the
  * facet a leg reads absent ⇒ `inapplicable`.

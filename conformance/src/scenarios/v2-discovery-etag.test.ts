@@ -17,14 +17,15 @@
  *
  * The revalidation runs once per client spelling: `OpenWOP-Version: 2.0` and
  * `2` (versioning.md §1: a host MUST accept both), and `2` with a wildcard `Accept`
- * (curl, a default fetch). openwop-app's public origin answered `304` to the
- * suite's own spelling and `200` to the bare one, so a single spelling hid a
- * violation every other client sees.
+ * (curl, a default fetch). A host that honours only the suite's own spelling
+ * would pass a single-spelling leg while failing every other client.
  *
- * Measured against the PUBLIC origin a host is cut on. A front door that drops
- * `If-None-Match` on the way to a correct origin (openwop-app, 2026-10-04:
- * direct `304`, through the hosting rewrite `200`) fails here, as it should:
- * the rule binds what clients reach.
+ * Measured against the PUBLIC origin a host is cut on, because the rule binds
+ * what clients reach. A CDN in front of a correct origin can still fail it:
+ * on openwop-app (2026-10-04) a `no-store` discovery response is hit-for-pass
+ * at the edge, so the first conditional request to reach an edge node that has
+ * not yet seen the object gets `200` and later ones get `304`. That failure is
+ * intermittent and real; it does not depend on the spelling.
  *
  * Dispositions: discovery unreadable ⇒ `blocked`. No other skip — the rule is
  * unconditional at v2.
