@@ -228,6 +228,11 @@ Defects outside the spec:
 - [ ] **Erratum: identity.md §5 table row `tenantId, workspaceId` is stale.** `ids.schema.json`
       widened `tenantId` to `^(anon:)?[A-Za-z0-9._~-]{1,128}$` (RFC 0184 §A.3); `workspaceId`
       has no `anon:` prefix. Split the row to match the schema (found by openwop-app, ADR 0814).
+- [ ] **RFC 0235** (`Draft`, window to 2026-10-11): `If-None-Match` matching bound to RFC 9110
+      §13.1.2, evaluated only where the answer would be `2xx`, not suppressed by `no-cache`. Owed
+      for `Active`: the `runs.md` / `capabilities.md` / OpenAPI edits; then the seven §D legs in
+      both ETag scenarios over one shared library. The v2 reference host compares byte-exact and
+      must adopt one RFC 9110 helper before its next cut (G1).
 - [ ] **`dataResidency.regions` has no `minItems`.** `regions: []` validates, so the "accept an
       advertised region" rule can never apply. Adding `minItems: 1` narrows the schema and needs an
       RFC.
