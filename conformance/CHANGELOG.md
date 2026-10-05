@@ -1,6 +1,6 @@
 # `@openwop/openwop-conformance` Changelog
 
-## [2.45.19] — 2026-10-05 — a minted tenant-bound id carries no `~`
+## [2.45.19] — 2026-10-05 — a minted tenant-bound id carries no `~`; RFC 0235's registers close
 
 - **New leg `openwop.requirement.0184.mint-no-tilde`** in `v2-bound-id-path-projection`. RFC 0184 §A.2: a host MUST NOT mint a tenant-bound id containing `~`. Only the run this leg creates is checked, because ids minted earlier MUST still resolve.
 - **It bites only under a non-clean tenant.** openwop-app minted `user~3A<hash>/<id>` for personal and org tenants (app ADR 0814). No leg saw it, because the suite's key sat in the clean tenant `default`. On a clean tenant the defect still mints a clean id.
