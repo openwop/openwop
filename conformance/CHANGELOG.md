@@ -4,6 +4,7 @@
 
 - **New leg `openwop.requirement.0184.mint-no-tilde`** in `v2-bound-id-path-projection`. RFC 0184 §A.2: a host MUST NOT mint a tenant-bound id containing `~`. Only the run this leg creates is checked, because ids minted earlier MUST still resolve.
 - **It bites only under a non-clean tenant.** openwop-app minted `user~3A<hash>/<id>` for personal and org tenants (app ADR 0814). No leg saw it, because the suite's key sat in the clean tenant `default`. On a clean tenant the defect still mints a clean id.
+- **RFC 0235 registers closed (packed `spec/v1/gaps.json`).** Gaps G1 (the v2 reference host's byte-exact comparison) and G2 (no certified witness) close on that host's certified 2.45.18 cut. No scenario changes.
 
 ## [2.45.18] — 2026-10-04 — `If-None-Match` per RFC 9110 (RFC 0235); corpus-only legs leave the host bundle; `.supported` leaves the v2 schemas
 

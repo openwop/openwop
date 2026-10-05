@@ -14181,8 +14181,8 @@
       "surface": "The v2 reference host compares `If-None-Match` byte-exact on the run snapshot and member-exact on discovery, so it fails §D 1–3 once the legs ship.",
       "witness": "unclassified",
       "requirementId": null,
-      "disposition": "externally-gated",
-      "target": "v2-reference-if-none-match-helper",
+      "disposition": "closed",
+      "target": null,
       "sources": [
         {
           "file": "RFCS/registers/0235-if-none-match-evaluation.gaps.md",
@@ -14198,8 +14198,8 @@
       "surface": "No host bundle records the four `openwop.requirement.0235.*` ids, because no host has cut on the suite that ships the legs (2.45.18).",
       "witness": "unclassified",
       "requirementId": null,
-      "disposition": "carried",
-      "target": "openwop.gap.0235.2",
+      "disposition": "closed",
+      "target": null,
       "sources": [
         {
           "file": "RFCS/registers/0235-if-none-match-evaluation.gaps.md",

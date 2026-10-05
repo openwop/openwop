@@ -8,6 +8,7 @@ Entries before this file was condensed carried full development detail. That tex
 
 ## [Unreleased]
 
+- **RFC 0235 Accepted (provisional).** Tier-1 evidence: the v2 reference host's certified public cut on published suite 2.45.18 (build `e5f27708`, 497/0/0) records all four `If-None-Match` requirement ids `executed-pass`. Gaps G1 and G2 closed; risk R1 mitigated.
 - **2.45.19 cycle (suite):** new leg `0184.mint-no-tilde` — a host MUST NOT mint a tenant-bound id containing `~` (RFC 0184 §A.2). It bites only when the suite's credential sits in a non-clean tenant; openwop-app's defect (app ADR 0814) hid behind `default`.
 - **Erratum: `identity.md` §5 grammar table matches `ids.schema.json` again.** `tenantId` gets its own row with the `anon:` prefix its pattern has had since 2.0.0. `typeId` gains the `@<semver>` pin from RFC 0187. No wire change. `check-id-kinds-bound` now compares the table against the schema.
 - **RFC 0235 filed (Draft).** "Matching the `ETag`" was undefined, and the matrix hosts read it three ways. It binds `If-None-Match` to RFC 9110 §13.1.2 (`*`, lists, weak comparison), evaluated only where the answer would be `2xx` and not suppressed by `Cache-Control: no-cache`.
