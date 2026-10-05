@@ -261,6 +261,10 @@ Witness `witnessable-gated`.
 
 Witness `witnessable-gated`.
 
+### § hostEvents
+
+Witness `witnessable-gated`; see [events.md](events.md) §Host events.
+
 ### § toolHooks
 
 Witness `witnessable-gated`.

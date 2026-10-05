@@ -1378,6 +1378,51 @@ paths:
           $ref: '#/components/responses/Forbidden'
         '404':
           $ref: '#/components/responses/NotFound'
+  /conformance/seams/sample/host-events/emit:
+    post:
+      tags:
+      - Seams
+      operationId: emitHostEvent
+      summary: Produce one host event of an advertised type
+      description: Produces one host event of `type`, which MUST be a type the host advertises in its `hostEvents` record,
+        under the caller's tenant (and `workspaceId`, when given). The host MUST produce it through its production path, delivery
+        class and tenant gate included, and MUST NOT branch on the seam. A host serving the seams profile advertises an `example.*`
+        durable type and an `example.*` ephemeral type for the suite to drive. An unadvertised `type` is `400 validation_error`;
+        an unwired seam answers `404`/`405`.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              additionalProperties: false
+              required:
+              - type
+              properties:
+                type:
+                  type: string
+                  minLength: 1
+                workspaceId:
+                  $ref: ../schemas/v2/ids.schema.json#/$defs/workspaceId
+      responses:
+        '202':
+          description: Produced; `eventId` is the envelope's.
+          content:
+            application/json:
+              schema:
+                type: object
+                additionalProperties: false
+                required:
+                - eventId
+                properties:
+                  eventId:
+                    $ref: ../schemas/v2/ids.schema.json#/$defs/eventId
+        '400':
+          $ref: '#/components/responses/ValidationError'
+        '401':
+          $ref: '#/components/responses/Unauthenticated'
+        '404':
+          $ref: '#/components/responses/NotFound'
 components:
   securitySchemes:
     ApiKeyAuth:

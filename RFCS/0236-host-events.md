@@ -4,10 +4,10 @@
 | ----------------- | --------------------------------------------------------------- |
 | **RFC**           | 0236                                                            |
 | **Title**         | Host events — events without a run-log position                 |
-| **Status**        | `Draft`                                                         |
+| **Status**        | `Active`                                                        |
 | **Author(s)**     | David Tufts (@davidscotttufts)                                  |
 | **Created**       | 2026-10-05                                                      |
-| **Updated**       | 2026-10-05 — filed `Draft` after an `/architect` design review (2026-10-05) of two problems with one cause: an event that belongs to no run has no lawful v2 shape. |
+| **Updated**       | 2026-10-05 — `Draft` → `Active`, comment window waived by the maintainer (2026-10-05: "proceed with moving the RFC to accepted"), recorded as a STEWARD OVERRIDE of RFC 0147 §A.6 in MAINTAINERS.md. §A–§G are merged; the legs ship in suite 2.45.20 (`v2-host-event-delivery`, `lib/host-event-witness.ts`), each failing on its sabotage against a double. · 2026-10-05 — filed `Draft` after an `/architect` design review (2026-10-05) of two problems with one cause: an event that belongs to no run has no lawful v2 shape. |
 | **Affects**       | `spec/v2/core/events.md` §Host events · `spec/v2/core/webhooks.md` §Subscriptions, §Delivery · `spec/v2/core/conversation.md` §`channelPresence` · `spec/v2/core/capabilities.md` (new family `hostEvents`) · `spec/v2/declaration.json` · new `schemas/v2/host-event.schema.json` · `schemas/v2/webhook-delivery.schema.json` · `api/v2/asyncapi.yaml` (`hostEvents` channel) · `api/seams-v2.yaml` (through `scripts/derive-v2-api.py`) · `SECURITY/invariants.yaml` · new `v2-host-event-delivery.test.ts` |
 | **Compatibility** | `additive` with one `safety-fix` clause (§D) per COMPATIBILITY.md; see §Compatibility. |
 | **Supersedes**    | —                                                               |
@@ -139,9 +139,11 @@ A coherence check in `src/coherence/` asserts that `channel.presence` is registe
 
 ## Unresolved questions
 
-1. **Scope.** `/host/events` uses `runs:read`. Should host events need a new `events:read` scope? Proposed: no; a new scope is vocabulary churn, and §D's tenant rule is the control.
-2. **Poll.** Should durable host events also have a long-poll read? Proposed: no; SSE plus webhooks cover both consumers, and a poll would need its own cursor grammar.
-3. **Heartbeat messages.** Should they move into the §A envelope? Proposed: at the next major only (G3), because wrapping them now breaks every heartbeat consumer.
+None. Three were decided at `Active` (2026-10-05, steward):
+
+1. **Scope:** `/host/events` keeps `runs:read`. A new `events:read` scope is vocabulary churn, and §D's tenant rule is the control.
+2. **Poll:** no long-poll read for host events. SSE and webhooks cover both consumers, and a poll would need its own cursor grammar.
+3. **Heartbeat messages:** they move into the §A envelope at the next major only (G3), because wrapping them now breaks every heartbeat consumer.
 
 ## Implementation notes (non-normative)
 
@@ -151,8 +153,8 @@ A coherence check in `src/coherence/` asserts that `channel.presence` is registe
 
 ## Acceptance criteria
 
-- [ ] `Active`: §A–§G merged in `events.md`, `webhooks.md`, `conversation.md` and `capabilities.md`; the family row in `spec/v2/declaration.json`; `host-event.schema.json`; the `webhook-delivery.schema.json` `oneOf`; the AsyncAPI message; the §G seam; invariant `host-event-tenant-isolation`; a `CHANGELOG.md` entry.
-- [ ] `v2-host-event-delivery` ships, with each leg failing on its sabotage in the scratch double.
+- [x] `Active`: §A–§G merged in `events.md`, `webhooks.md`, `conversation.md` and `capabilities.md`; the family row in `spec/v2/declaration.json`; `host-event.schema.json`; the `webhook-delivery.schema.json` `oneOf`; the AsyncAPI message; the §G seam; invariant `host-event-tenant-isolation`; a `CHANGELOG.md` entry.
+- [x] `v2-host-event-delivery` ships in suite 2.45.20, with each leg failing on its sabotage against a double: a `runId` on the envelope, an `id:` on an ephemeral frame, an ephemeral event replayed after `Last-Event-ID`, an ephemeral event fanned out, an ephemeral type accepted at registration, a cross-tenant delivery, a bad signature. The judges' self-test (`host-event-witness.test.ts`) convicts each defect too.
 - [ ] `Accepted`: a certified major-2 bundle records the six `openwop.requirement.0236.*` ids `executed-pass`, or as a non-pass row with a reason for the gated tenant row.
 
 ## References

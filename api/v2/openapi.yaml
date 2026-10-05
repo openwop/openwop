@@ -3411,9 +3411,9 @@ paths:
       tags:
       - host
       operationId: streamHostEvents
-      summary: Stream host-scoped events (`heartbeat.*`) as SSE
-      description: The default `hostEvents` address; a host MAY declare another under `heartbeat.deliveryChannel`. Carries
-        no run data.
+      summary: Stream host-scoped events (`heartbeat.*` and host events) as SSE
+      description: The default `hostEvents` address; a host MAY declare another under `heartbeat.deliveryChannel`. Every message
+        is delivered only within the caller's tenant (RFC 0236 §D). Carries no run data.
       responses:
         '200':
           description: '`text/event-stream` of `hostEvents` messages.'
