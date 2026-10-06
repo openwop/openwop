@@ -258,8 +258,11 @@ Defects outside the spec:
       `ui-plugin-narrow-artifact`, advertises `uiPlugins.served`, and cuts certified (G1).
 - [ ] **Move the always-on schema legs of `frontend-plugin-packs.test.ts` to `src/coherence/`**
       (RFC 0238 G3; `conformance.md` §Two products).
-- [ ] **RFCs owed before these legs can bind:** (the plugin-origin seat is RFC 0238); a
-      roster input seat and refusal codes for `multiPartyConversation`; a
+- [ ] **RFC 0239** (`Draft`, 2026-10-06, window to 2026-10-13): the council roster seat
+      (`core.conversationGate` `participants`) and two `422` codes; fixtures
+      `conformance-multi-party-council` (+ `-oversize`); scenario `v2-multi-party-council`.
+- [ ] **RFCs owed before these legs can bind:** (the plugin-origin seat is RFC 0238; the roster
+      seat is RFC 0239); a
       `nondeterminismPolicy.sources[]` seat; a purpose-label carrier the suite can receive; and
       dropping the required `declared` / `advertised` booleans, which bring back `supported:false`
       under another name.
