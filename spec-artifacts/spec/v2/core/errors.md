@@ -8,7 +8,7 @@ Every error a v2 host returns is a row in one registry. A client routes on `erro
 
 ## The registry
 
-`spec/v2/errors.json` holds one row per code, defined by `spec/v2/errors.schema.json`. It registers **120** codes. `schemas/v2/error-envelope.schema.json` is GENERATED from it and MUST NOT be edited by hand.
+`spec/v2/errors.json` holds one row per code, defined by `spec/v2/errors.schema.json`. It registers **122** codes. `schemas/v2/error-envelope.schema.json` is GENERATED from it and MUST NOT be edited by hand.
 
 - A host MUST emit a registered code, or a vendor code, wherever it emits an error code: the `error` of every error response, and `error.code` on `run.failed`, `node.failed` and the snapshot's `error` (overview.md §0). A recorded event re-emitted by replay or `:fork` is carried as recorded ([replay.md](replay.md)).
 - A vendor code MUST match `^(?!openwop\.)[a-z][a-z0-9]*(-[a-z0-9]+)*\.[a-z][a-z0-9_]*$`, with its first segment an org registered in `spec/v2/declaration.json`. `openwop.` is reserved.
@@ -59,6 +59,6 @@ An operation gated on a family or facet the host does not advertise MUST answer 
 
 ## Codes by HTTP status
 
-Every registered code, by HTTP status, is listed in [error-codes.md](../generated/error-codes.md), generated from `spec/v2/errors.json` (120 codes).
+Every registered code, by HTTP status, is listed in [error-codes.md](../generated/error-codes.md), generated from `spec/v2/errors.json` (122 codes).
 
 *Sources: RFCs 0171, 0213, 0227, 0228.*

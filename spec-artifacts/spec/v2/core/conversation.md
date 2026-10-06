@@ -5,15 +5,15 @@
 
 ## Why this exists
 
-No client route opens a conversation. This document states the obligations a host takes on by advertising a multi-party conversation family.
+No client route opens a conversation. These are the obligations of a host advertising these families.
 
 ## `multiPartyConversation`
 
 A host advertising `multiPartyConversation`:
 
-- MUST accept an optional `participants` array of agent references on conversation creation;
-- MUST refuse a turn from a principal absent from that roster, rather than silently accepting it;
-- MUST refuse, at creation, a roster that exceeds `multiPartyConversation.maxParticipants`, rather than truncating it.
+- MUST accept optional `participants` (agent references) in `core.conversationGate` config and carry them on `conversation.opened`;
+- MUST refuse a resumed turn whose `speakerId` is off that roster with `conversation_speaker_not_participant`, leaving the interrupt open;
+- MUST refuse at run creation, never truncate, a roster over `multiPartyConversation.maxParticipants`, with `conversation_roster_exceeded`.
 
 ## `channelPresence`
 
@@ -25,4 +25,4 @@ A host MUST list it under `hostEvents` as ephemeral ([events.md](events.md) §Ho
 
 A host that stamps model provenance on an agent turn MUST advertise `conversationTurnModelProvenance`. The stamp is non-secret and non-PII (provider and model identifiers only), and a host MUST NOT place prompt or completion content in it.
 
-*Sources: RFCs 0101, 0109, 0110, 0236.*
+*Sources: RFCs 0101, 0109, 0110, 0236, 0239.*

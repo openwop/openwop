@@ -1,0 +1,61 @@
+{
+  "id": "conformance-multi-party-council",
+  "name": "Conformance: Multi-Party Council",
+  "version": "1.0",
+  "description": "RFC 0239 §E.1. One core.conversationGate with a three-member roster (host:conformance-council-a/-b/-c) and mockAutoResume false: the run waits on a conversation.exchange interrupt the suite resumes. conversation.opened MUST carry the roster; a turn from a non-member is refused 422 conversation_speaker_not_participant and left unconsumed. See v2-multi-party-council.test.ts.",
+  "nodes": [
+    {
+      "id": "convo",
+      "typeId": "core.conversationGate",
+      "name": "Conversation Gate",
+      "position": {
+        "x": 0,
+        "y": 0
+      },
+      "config": {
+        "lifecycle": "open-exchange-close",
+        "mockAutoResume": false,
+        "participants": [
+          {
+            "agentId": "host:conformance-council-a"
+          },
+          {
+            "agentId": "host:conformance-council-b"
+          },
+          {
+            "agentId": "host:conformance-council-c"
+          }
+        ]
+      },
+      "inputs": {}
+    }
+  ],
+  "edges": [],
+  "triggers": [
+    {
+      "id": "manual",
+      "type": "manual",
+      "enabled": true
+    }
+  ],
+  "variables": [],
+  "channels": {
+    "conversation": {
+      "schema": {
+        "type": "array"
+      },
+      "reducer": "message"
+    }
+  },
+  "metadata": {
+    "tags": [
+      "conformance",
+      "multi-agent",
+      "conversation",
+      "rfc-0239"
+    ]
+  },
+  "settings": {
+    "timeout": 20000
+  }
+}
