@@ -1,0 +1,27 @@
+{
+  "kind": "node",
+  "name": "vendor.openwop.misbehaving-abi",
+  "version": "2.0.0",
+  "description": "Conformance fixture, operator-installed only: reports openwop_abi_version 999, which no host lists, so a conforming host refuses it at load (node-pack-runtimes.md \u00a7WASM). Not for registry publication.",
+  "author": "openwop project",
+  "license": "Apache-2.0",
+  "engines": {
+    "openwop": ">=2.0.0 <3.0.0"
+  },
+  "nodes": [
+    {
+      "typeId": "vendor.openwop.misbehaving.abi-bomb",
+      "version": "1.0.0",
+      "category": "data",
+      "role": "transform",
+      "label": "ABI bomb",
+      "description": "Conformance fixture, operator-installed only: reports openwop_abi_version 999, which no host lists, so a conforming host refuses it at load (node-pack-runtimes.md \u00a7WASM). Not for registry publication."
+    }
+  ],
+  "runtime": {
+    "language": "wasm",
+    "entry": "module.wasm",
+    "format": "wasm",
+    "minRuntimeVersion": "1"
+  }
+}

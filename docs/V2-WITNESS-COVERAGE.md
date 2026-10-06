@@ -10,9 +10,9 @@ Every v2 core family now has a v2 normative home (RFC 0189). Many of its rules a
 
 - **Families (74 core):** 74 v2-witnessed, 0 v1-only, 0 unwitnessed. Of the 55 `witnessable-gated` families, 0 are v1-only; every unwitnessed family is `claims-check`.
 - **At v1 end-of-support:** the 0 v1-only families, and the 0 obligation units attributed to them, lose their only witness.
-- **Obligation units (899 in `spec/v2/core/`):** 605 (67%) sit in a section a major-2 scenario cites; 294 sit in 102 sections no major-2 scenario cites.
+- **Obligation units (899 in `spec/v2/core/`):** 607 (68%) sit in a section a major-2 scenario cites; 292 sit in 101 sections no major-2 scenario cites.
 - **Declaration links:** 0 core families declare `floorScenarios`; 2 declare `requirementIds`. The family-to-test link exists only in scenario code and citations, although `overview.md` §What a MUST means says every core MUST has an id in `requirements.json`.
-- **Scenarios:** 645 registered, 205 run at major 2. 33 major-2 citations name a v2 core section this script cannot match to a heading (see Citation gaps).
+- **Scenarios:** 646 registered, 206 run at major 2. 33 major-2 citations name a v2 core section this script cannot match to a heading (see Citation gaps).
 
 ## How to read it
 
@@ -63,7 +63,7 @@ Every v2 core family now has a v2 normative home (RFC 0189). Many of its rules a
 | `hostEvents` | witnessable-gated | **v2-witnessed** | 3 (3) | `v2-host-event-delivery`, `v2-stream-mode-refusal` | – |
 | `modelCapabilities` | witnessable-gated | **v2-witnessed** | 3 (0) | `v2-model-capabilities-advertisement` | `envelope-variant-discriminator-static`, `model-capability-insufficient`, `model-capability-substituted`, `node-module-required-capabilities-shape` |
 | `multiPartyConversation` | witnessable-gated | **v2-witnessed** | 3 (0) | `v2-multi-party-conversation-advertisement` | `multi-party-conversation-behavioral`, `multi-party-conversation-shape` |
-| `nodePackRuntimes` | claims-check | **v2-witnessed** | 3 (0) | `v2-node-pack-runtimes-advertisement` | `wasm-pack-abi-version-rejection`, `wasm-pack-invoke-completed`, `wasm-pack-invoke-suspended`, `wasm-pack-load` +2 |
+| `nodePackRuntimes` | claims-check | **v2-witnessed** | 3 (2) | `v2-node-pack-runtimes-advertisement`, `v2-wasm-memory-cap` | `wasm-pack-abi-version-rejection`, `wasm-pack-invoke-completed`, `wasm-pack-invoke-suspended`, `wasm-pack-load` +2 |
 | `nosql` | claims-check | **v2-witnessed** | 3 (0) | `v2-storage-cross-tenant-isolation` | – |
 | `sql` | witnessable-gated | **v2-witnessed** | 3 (0) | `v2-storage-cross-tenant-isolation` | `sql-injection-rejection`, `sql-transaction-atomicity` |
 | `agents` | witnessable-gated | **v2-witnessed** | 2 (0) | `v2-a2a-agent-cards`, `v2-agent-org-chart-served-shape`, `v2-dispatch-input-mapping` | `agent-capability-degraded-projection`, `agent-channel-dispatch`, `agent-deployment-lifecycle`, `agent-eval-run` +17 |
@@ -121,7 +121,7 @@ Every v2 core family now has a v2 normative home (RFC 0189). Many of its rules a
 | `identity.md` | 64 | 55 (86%) | `anonymousActor`, `authorization`, `auth` |
 | `interop.md` | 54 | 41 (76%) | `a2a`, `mcp` |
 | `interrupt.md` | 46 | 43 (93%) | `interrupt` |
-| `node-pack-runtimes.md` | 3 | 0 (0%) | `nodePackRuntimes` |
+| `node-pack-runtimes.md` | 3 | 2 (67%) | `nodePackRuntimes` |
 | `oauth.md` | 13 | 11 (85%) | `credentials`, `oauth` |
 | `overview.md` | 14 | 0 (0%) | – |
 | `packs.md` | 36 | 30 (83%) | `uiPlugins`, `packs` |
@@ -412,18 +412,18 @@ node scripts/report-v2-witness-coverage.mjs --write  # regenerate this file
   },
   "obligationUnits": {
     "total": 899,
-    "inV2CitedSections": 605,
-    "inUncitedSections": 294,
+    "inV2CitedSections": 607,
+    "inUncitedSections": 292,
     "sectionsWithObligations": 271,
-    "sectionsWithNoV2Citation": 102
+    "sectionsWithNoV2Citation": 101
   },
   "declarationLinks": {
     "familiesWithFloorScenarios": 0,
     "familiesWithRequirementIds": 2
   },
   "scenarios": {
-    "registered": 645,
-    "major2": 205
+    "registered": 646,
+    "major2": 206
   },
   "unresolvedV2Citations": 33,
   "major2ScenariosCitingNoCoreDoc": 67,

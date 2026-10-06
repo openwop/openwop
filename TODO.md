@@ -268,9 +268,10 @@ Defects outside the spec:
       under another name.
 - [ ] **Fixture-gated wave-3 legs not yet written.** `multiPartyConversation` roster legs need a
       `conformance-multi-party-council` fixture, and that needs the roster input seat above first.
-      `nodePackRuntimes` ABI-rejection and memory-cap-breach legs need an operator-installed WASM
-      fixture pack (`conformance-wasm-pack-memory-cap-breach`). Until then both families are
-      witnessed by their advertisement legs only.
+      The WASM fixture packs now exist (`conformance/fixtures/wasm-packs/`), and
+      `v2-wasm-memory-cap` witnesses the memory ceiling. **Still owed: the ABI-rejection leg.** A
+      host refuses a pack at load, which is not a protocol operation, so the refusal has no
+      observation path (the RFC 0233 shape: a read of loaded packs and refused loads). Needs an RFC.
 - [x] **Schema-only legs in `*-static` scenarios belong in `src/coherence/`** (`conformance.md` §Two
       products: a check that reads only the corpus MUST NOT appear in a host bundle). Sweep the
       wave-1/2 `v2-*-static` scenarios: keep the legs that read host output, move the rest.

@@ -1,0 +1,27 @@
+{
+  "kind": "node",
+  "name": "vendor.openwop.misbehaving",
+  "version": "2.0.0",
+  "description": "Conformance fixture, operator-installed only: grows linear memory until the host refuses, so a host enforcing nodePackRuntimes.wasm.maxMemoryBytes emits cap.breached kind wasm-memory (RFC 0008 \u00a7K). Not for registry publication.",
+  "author": "openwop project",
+  "license": "Apache-2.0",
+  "engines": {
+    "openwop": ">=2.0.0 <3.0.0"
+  },
+  "nodes": [
+    {
+      "typeId": "vendor.openwop.misbehaving.memory-bomb",
+      "version": "1.0.0",
+      "category": "data",
+      "role": "transform",
+      "label": "Memory bomb",
+      "description": "Conformance fixture, operator-installed only: grows linear memory until the host refuses, so a host enforcing nodePackRuntimes.wasm.maxMemoryBytes emits cap.breached kind wasm-memory (RFC 0008 \u00a7K). Not for registry publication."
+    }
+  ],
+  "runtime": {
+    "language": "wasm",
+    "entry": "module.wasm",
+    "format": "wasm",
+    "minRuntimeVersion": "1"
+  }
+}

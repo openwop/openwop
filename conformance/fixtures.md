@@ -825,6 +825,17 @@ The `fixtures/frontend-plugin-packs/` sub-directory holds front-end plugin packs
 
 ---
 
+## WASM fixture packs
+
+The `fixtures/wasm-packs/` sub-directory holds two node packs (`language: "wasm"`) an operator installs to make `node-pack-runtimes.md` §WASM observable. Each is a hand-written WebAssembly text module (`module.wat`) with its built `module.wasm` (`build.mjs`, using `wabt`; no Rust toolchain), exporting the RFC 0008 §B functions. Their shape is checked server-free by `src/coherence/wasm-fixture-packs.test.ts`.
+
+| Pack | Node | Purpose |
+| --- | --- | --- |
+| `misbehaving-memory` (`vendor.openwop.misbehaving`) | `vendor.openwop.misbehaving.memory-bomb` | Grows linear memory 64 MiB at a time until the host refuses, then traps. A host advertising `nodePackRuntimes.wasm.maxMemoryBytes` MUST emit `cap.breached` `kind: "wasm-memory"`. Drives `conformance-wasm-pack-memory-cap-breach` and `v2-wasm-memory-cap`. |
+| `misbehaving-abi` (`vendor.openwop.misbehaving-abi`) | `vendor.openwop.misbehaving.abi-bomb` | Reports `openwop_abi_version` 999, which no host lists, so a conforming host refuses it at load. Rejection at load is not yet observable over the protocol (TODO §8), so no v2 leg reads it. |
+
+---
+
 ## Connection pack fixtures
 
 The `fixtures/connection-packs/` sub-directory holds canonical connection-pack manifests (RFC 0095, `kind: "connection"`) used as schema-level proof points (validated server-free against `../schemas/connection-pack-manifest.schema.json`) AND as the install payloads the capability-gated behavioral scenarios POST to the `POST /v1/host/sample/connection-packs/install` seam. They are NOT seeded into a server.
