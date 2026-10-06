@@ -12,17 +12,14 @@ on:
       - 'LICENSE-DOCS'
       - '.github/ISSUE_TEMPLATE/**'
       - '.github/PULL_REQUEST_TEMPLATE.md'
+  # No paths-ignore on pull_request: `Validate spec corpus (server-free)` is a
+  # REQUIRED check, and a workflow that path-filters itself out never reports it,
+  # so a PR touching only these prose files (e.g. ROADMAP.md, #1909) could never
+  # merge without an admin bypass. A same-named stub workflow was rejected: on a
+  # PR touching both prose and spec files, two runs report one check name and a
+  # stub's success can mask the real result. Pushes keep the filter (no gate there).
   pull_request:
     branches: [main, 'release/**']
-    paths-ignore:
-      - 'CODE_OF_CONDUCT.md'
-      - 'GOVERNANCE.md'
-      - 'ROADMAP.md'
-      - 'NOTICE'
-      - 'LICENSE'
-      - 'LICENSE-DOCS'
-      - '.github/ISSUE_TEMPLATE/**'
-      - '.github/PULL_REQUEST_TEMPLATE.md'
 
 concurrency:
   group: ${{ github.workflow }}-${{ github.ref }}
