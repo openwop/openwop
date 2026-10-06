@@ -1,0 +1,244 @@
+{
+  "id": "conformance-multi-party-council-oversize",
+  "name": "Conformance: Multi-Party Council (oversize roster)",
+  "version": "1.0",
+  "description": "RFC 0239 §E.2. The same gate with a 64-member roster. A host advertising multiPartyConversation.maxParticipants below 64 MUST refuse run creation with 422 conversation_roster_exceeded and open no conversation. See v2-multi-party-council.test.ts.",
+  "nodes": [
+    {
+      "id": "convo",
+      "typeId": "core.conversationGate",
+      "name": "Conversation Gate",
+      "position": {
+        "x": 0,
+        "y": 0
+      },
+      "config": {
+        "lifecycle": "open-exchange-close",
+        "mockAutoResume": false,
+        "participants": [
+          {
+            "agentId": "host:conformance-council-01"
+          },
+          {
+            "agentId": "host:conformance-council-02"
+          },
+          {
+            "agentId": "host:conformance-council-03"
+          },
+          {
+            "agentId": "host:conformance-council-04"
+          },
+          {
+            "agentId": "host:conformance-council-05"
+          },
+          {
+            "agentId": "host:conformance-council-06"
+          },
+          {
+            "agentId": "host:conformance-council-07"
+          },
+          {
+            "agentId": "host:conformance-council-08"
+          },
+          {
+            "agentId": "host:conformance-council-09"
+          },
+          {
+            "agentId": "host:conformance-council-10"
+          },
+          {
+            "agentId": "host:conformance-council-11"
+          },
+          {
+            "agentId": "host:conformance-council-12"
+          },
+          {
+            "agentId": "host:conformance-council-13"
+          },
+          {
+            "agentId": "host:conformance-council-14"
+          },
+          {
+            "agentId": "host:conformance-council-15"
+          },
+          {
+            "agentId": "host:conformance-council-16"
+          },
+          {
+            "agentId": "host:conformance-council-17"
+          },
+          {
+            "agentId": "host:conformance-council-18"
+          },
+          {
+            "agentId": "host:conformance-council-19"
+          },
+          {
+            "agentId": "host:conformance-council-20"
+          },
+          {
+            "agentId": "host:conformance-council-21"
+          },
+          {
+            "agentId": "host:conformance-council-22"
+          },
+          {
+            "agentId": "host:conformance-council-23"
+          },
+          {
+            "agentId": "host:conformance-council-24"
+          },
+          {
+            "agentId": "host:conformance-council-25"
+          },
+          {
+            "agentId": "host:conformance-council-26"
+          },
+          {
+            "agentId": "host:conformance-council-27"
+          },
+          {
+            "agentId": "host:conformance-council-28"
+          },
+          {
+            "agentId": "host:conformance-council-29"
+          },
+          {
+            "agentId": "host:conformance-council-30"
+          },
+          {
+            "agentId": "host:conformance-council-31"
+          },
+          {
+            "agentId": "host:conformance-council-32"
+          },
+          {
+            "agentId": "host:conformance-council-33"
+          },
+          {
+            "agentId": "host:conformance-council-34"
+          },
+          {
+            "agentId": "host:conformance-council-35"
+          },
+          {
+            "agentId": "host:conformance-council-36"
+          },
+          {
+            "agentId": "host:conformance-council-37"
+          },
+          {
+            "agentId": "host:conformance-council-38"
+          },
+          {
+            "agentId": "host:conformance-council-39"
+          },
+          {
+            "agentId": "host:conformance-council-40"
+          },
+          {
+            "agentId": "host:conformance-council-41"
+          },
+          {
+            "agentId": "host:conformance-council-42"
+          },
+          {
+            "agentId": "host:conformance-council-43"
+          },
+          {
+            "agentId": "host:conformance-council-44"
+          },
+          {
+            "agentId": "host:conformance-council-45"
+          },
+          {
+            "agentId": "host:conformance-council-46"
+          },
+          {
+            "agentId": "host:conformance-council-47"
+          },
+          {
+            "agentId": "host:conformance-council-48"
+          },
+          {
+            "agentId": "host:conformance-council-49"
+          },
+          {
+            "agentId": "host:conformance-council-50"
+          },
+          {
+            "agentId": "host:conformance-council-51"
+          },
+          {
+            "agentId": "host:conformance-council-52"
+          },
+          {
+            "agentId": "host:conformance-council-53"
+          },
+          {
+            "agentId": "host:conformance-council-54"
+          },
+          {
+            "agentId": "host:conformance-council-55"
+          },
+          {
+            "agentId": "host:conformance-council-56"
+          },
+          {
+            "agentId": "host:conformance-council-57"
+          },
+          {
+            "agentId": "host:conformance-council-58"
+          },
+          {
+            "agentId": "host:conformance-council-59"
+          },
+          {
+            "agentId": "host:conformance-council-60"
+          },
+          {
+            "agentId": "host:conformance-council-61"
+          },
+          {
+            "agentId": "host:conformance-council-62"
+          },
+          {
+            "agentId": "host:conformance-council-63"
+          },
+          {
+            "agentId": "host:conformance-council-64"
+          }
+        ]
+      },
+      "inputs": {}
+    }
+  ],
+  "edges": [],
+  "triggers": [
+    {
+      "id": "manual",
+      "type": "manual",
+      "enabled": true
+    }
+  ],
+  "variables": [],
+  "channels": {
+    "conversation": {
+      "schema": {
+        "type": "array"
+      },
+      "reducer": "message"
+    }
+  },
+  "metadata": {
+    "tags": [
+      "conformance",
+      "multi-agent",
+      "conversation",
+      "rfc-0239"
+    ]
+  },
+  "settings": {
+    "timeout": 20000
+  }
+}

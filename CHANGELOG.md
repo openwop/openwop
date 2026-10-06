@@ -9,6 +9,7 @@ Entries before this file was condensed carried full development detail. That tex
 ## [Unreleased]
 
 - **RFC 0239 filed (Draft).** `multiPartyConversation`'s roster gets an input seat (`core.conversationGate` `participants`), and its two refusals get codes: `422 conversation_speaker_not_participant` on a resumed turn, `422 conversation_roster_exceeded` at run creation.
+- **RFC 0239 Active (window waived).** `conversation.md` binds the roster to `core.conversationGate` config and names the two refusals; `errors.json` registers `conversation_speaker_not_participant` and `conversation_roster_exceeded` (both `422`).
 - **RFC 0238 filed (Draft).** The four `uiPlugins` SECURITY invariants were witnessed only by a v1 seam. Optional v2 operations under `/host/ui-plugins/{packName}/{pluginId}/` serve the frame document (isolation and egress in headers) and the `ui-plugin/1` dispatch.
 - **RFC 0238 Active (window waived).** `uiPlugins.served`, `getUiPluginFrame` and `dispatchUiPluginRequest`; `packs.md` binds the frame as the only mount. The four `frontend-plugin-*` invariants become `witnessable-gated` through `v2-ui-plugin-boundary`.
 - **2.45.23 cycle (suite):** `0184.mint-no-tilde` also mints one run under the second-tenant credential, so a host whose primary tenant is clean can still make the leg bite by binding tenant B to a non-clean tenant.
