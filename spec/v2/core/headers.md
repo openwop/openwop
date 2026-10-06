@@ -16,10 +16,10 @@ Standard headers keep their standard names: `Idempotency-Key`, `ETag`, `If-None-
 | `Idempotency-Key` | 15 | Per-mutation idempotency token (`idempotency.md` Layer 1). The server caches `(tenantId, endpoint, key)` → response for ≥24h. A duplicate request returns the cached response with `OpenWOP-Idempotent-Replay: true`. |
 | `If-None-Match` | 2 | Conditional request on the discovery document (capabilities.md §1) and the run snapshot (runs.md §Snapshot). A value that matches the current `ETag` (runs.md §Caching and encoding) MUST yield `304 Not Modified` with no body. The 304 carries `OpenWOP-Version` like every response (versioning.md §1.4). |
 | `Last-Event-ID` | 1 | Resume from sequence after this ID. |
-| `OpenWOP-Client-Version` | 58 | The protocol version the client implements (versioning.md §1.5). Compared with `minClientVersion` on major.minor. A malformed value is treated as absent and MUST NOT produce a 400. Never selects a contract. |
+| `OpenWOP-Client-Version` | 60 | The protocol version the client implements (versioning.md §1.5). Compared with `minClientVersion` on major.minor. A malformed value is treated as absent and MUST NOT produce a 400. Never selects a contract. |
 | `OpenWOP-Dedup` | 1 | When set, the host's cross-host claim system rejects a duplicate `(tenantId, scopeId)` pair with `409 Conflict`. |
 | `OpenWOP-Force-Engine-Version` | 1 | Test keys only. The server emits this run's events as if it ran the given engine version, which must be within `Capabilities.testing.forceEngineVersionRange`. Servers MUST reject it on production API keys with `403 force_engine_version_forbidden`. |
-| `OpenWOP-Version` | 58 | Selects one of the host's listed major.minor versions. Absent, `/.well-known/openwop` uses `preferredVersion` and every other unversioned path is v2; an unlisted value is 406 protocol_version_unsupported. |
+| `OpenWOP-Version` | 60 | Selects one of the host's listed major.minor versions. Absent, `/.well-known/openwop` uses `preferredVersion` and every other unversioned path is v2; an unlisted value is 406 protocol_version_unsupported. |
 
 ## Cross-origin preflight
 
@@ -32,12 +32,13 @@ A host that answers a CORS preflight for an operation by granting the requesting
 | `Cache-Control` | 2 | Standard HTTP caching directive (RFC 9111), set per operation: public content-page delivery, and prompt templates (immutable semantics when the version was pinned); see each operation. |
 | `Content-Encoding` | 1 | Present only when the host negotiated compression from `Accept-Encoding`; pairs with `Vary: Accept-Encoding`. The decoded body is byte-identical to the identity body. |
 | `Content-Language` | 1 | The BCP-47 locale actually used (equals the response `locale`). |
+| `Content-Security-Policy` | 1 | The plugin frame's isolation and egress policy. |
 | `ETag` | 3 | Standard HTTP validator (RFC 9110 §8.8.3). The obligation is per operation: MUST on the discovery document (capabilities.md §1), SHOULD on the run snapshot (runs.md §Snapshot), a content hash on a prompt template (getPromptTemplate); see each operation. |
 | `Location` | 1 | Canonical URI of the new template. |
 | `OpenWOP-Idempotent-Replay` | 1 | Set when the response was served from the idempotency cache. |
-| `OpenWOP-Version` | 58 | The contract that produced this response. It MUST equal the one used. |
+| `OpenWOP-Version` | 60 | The contract that produced this response. It MUST equal the one used. |
 | `Retry-After` | 1 | Seconds until the active claim is stale-eligible. |
-| `WWW-Authenticate` | 51 | A `Bearer` challenge. On a host with an oauth2 or oidc lane it carries `resource_metadata` and `error="invalid_token"`. Never sent on a non-disclosure 404. |
+| `WWW-Authenticate` | 53 | A `Bearer` challenge. On a host with an oauth2 or oidc lane it carries `resource_metadata` and `error="invalid_token"`. Never sent on a non-disclosure 404. |
 
 ## Webhook delivery headers
 

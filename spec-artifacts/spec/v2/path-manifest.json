@@ -242,6 +242,28 @@
     },
     {
       "method": "GET",
+      "path": "/host/ui-plugins/{packName}/{pluginId}/frame",
+      "operationId": "getUiPluginFrame",
+      "requestHeaders": [
+        "OpenWOP-Client-Version",
+        "OpenWOP-Version"
+      ],
+      "authenticated": true,
+      "requestBody": false
+    },
+    {
+      "method": "POST",
+      "path": "/host/ui-plugins/{packName}/{pluginId}/rpc",
+      "operationId": "dispatchUiPluginRequest",
+      "requestHeaders": [
+        "OpenWOP-Client-Version",
+        "OpenWOP-Version"
+      ],
+      "authenticated": true,
+      "requestBody": true
+    },
+    {
+      "method": "GET",
       "path": "/interrupts/{token}",
       "operationId": "inspectInterruptByToken",
       "requestHeaders": [
@@ -677,7 +699,7 @@
     }
   ],
   "counts": {
-    "operations": 58,
+    "operations": 60,
     "channels": 2
   }
 }

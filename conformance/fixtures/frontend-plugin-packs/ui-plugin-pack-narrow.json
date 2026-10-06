@@ -1,0 +1,16 @@
+{
+  "name": "core.openwop.conformance.ui-plugin-narrow",
+  "version": "1.0.0",
+  "kind": "frontend-plugin",
+  "engines": {
+    "openwop": ">=2.0.0 <3.0.0"
+  },
+  "uiPlugins": [
+    {
+      "pluginId": "narrow",
+      "surface": "artifact-viewer",
+      "entry": "ui/narrow.html",
+      "hostApi": ["artifact.read"]
+    }
+  ]
+}

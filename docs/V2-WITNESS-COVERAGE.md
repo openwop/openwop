@@ -10,9 +10,9 @@ Every v2 core family now has a v2 normative home (RFC 0189). Many of its rules a
 
 - **Families (74 core):** 74 v2-witnessed, 0 v1-only, 0 unwitnessed. Of the 55 `witnessable-gated` families, 0 are v1-only; every unwitnessed family is `claims-check`.
 - **At v1 end-of-support:** the 0 v1-only families, and the 0 obligation units attributed to them, lose their only witness.
-- **Obligation units (898 in `spec/v2/core/`):** 595 (66%) sit in a section a major-2 scenario cites; 303 sit in 103 sections no major-2 scenario cites.
+- **Obligation units (899 in `spec/v2/core/`):** 605 (67%) sit in a section a major-2 scenario cites; 294 sit in 102 sections no major-2 scenario cites.
 - **Declaration links:** 0 core families declare `floorScenarios`; 2 declare `requirementIds`. The family-to-test link exists only in scenario code and citations, although `overview.md` §What a MUST means says every core MUST has an id in `requirements.json`.
-- **Scenarios:** 644 registered, 204 run at major 2. 33 major-2 citations name a v2 core section this script cannot match to a heading (see Citation gaps).
+- **Scenarios:** 645 registered, 205 run at major 2. 33 major-2 citations name a v2 core section this script cannot match to a heading (see Citation gaps).
 
 ## How to read it
 
@@ -29,9 +29,9 @@ Every v2 core family now has a v2 normative home (RFC 0189). Many of its rules a
 | `production` | witnessable-gated | **v2-witnessed** | 49 (26) | `jcs-vectors`, `v2-bundle-v3-signed`, `v2-coherence-not-in-bundle`, `v2-relaxation-recorded` | `grpc-transport`, `production-backpressure`, `production-retention-expiry` |
 | `interrupt` | witnessable-gated | **v2-witnessed** | 46 (43) | `v2-approval-reject-disposition`, `v2-approver-enforced`, `v2-bound-id-kinds`, `v2-callback-url-guarded` +4 | `interrupt-approver-routing` |
 | `webhooks` | witnessable-gated | **v2-witnessed** | 38 (38) | `inbound-credential-no-passthrough`, `v2-a2a-operation-map`, `v2-bound-id-kinds`, `v2-host-event-delivery` +12 | `webhook-negative`, `webhook-sig-algorithm`, `webhook-signed-delivery`, `webhook-tenant-isolation` |
+| `packs` | claims-check | **v2-witnessed** | 36 (30) | `v2-manifest-ceiling-refused`, `v2-manifest-hatch-carried`, `v2-peer-dependency-declared`, `v2-registry-lifecycle` +1 | `pack-registry-isolation` |
 | `replay` | witnessable-gated | **v2-witnessed** | 36 (19) | `v2-a2a-push-delivery`, `v2-approval-reject-disposition`, `v2-effect-seam-manifest`, `v2-effect-seam-no-refire` +8 | `conversationReplayDeterminism`, `feedback-fork-not-copied`, `replay-fanout-suppression`, `replay-side-effect-suppression` |
 | `eventLog` | claims-check | **v2-witnessed** | 35 (25) | `v2-era-2-append-vocabulary`, `v2-era-key`, `v2-era-stamp-universal`, `v2-fork-a-v1-run` +3 | `cross-engine-append-behavior`, `cross-engine-append-ordering`, `multi-region-idempotency` |
-| `packs` | claims-check | **v2-witnessed** | 35 (20) | `v2-manifest-ceiling-refused`, `v2-manifest-hatch-carried`, `v2-peer-dependency-declared`, `v2-registry-lifecycle` | `pack-registry-isolation` |
 | `idempotency` | witnessable-gated | **v2-witnessed** | 25 (20) | `v2-bound-id-kinds`, `v2-effect-identity-business-key`, `v2-idempotency-key-grammar`, `v2-secrets-run-witness` | `compensation-recovery`, `multi-region-idempotency-behavior`, `multi-region-idempotency`, `replay-llm-cache-key` +1 |
 | `multiAgent` | claims-check | **v2-witnessed** | 19 (0) | `context-budget-transcript-bound`, `context-summarization-replay`, `v2-dispatch-loop`, `v2-run-fork-ancestry` | `agent-loop-iteration-monotonic`, `agent-loop-stateful-resume`, `agent-loop-version5-shape`, `agent-loop-workspace-snapshot` +11 |
 | `i18n` | witnessable-gated | **v2-witnessed** | 17 (4) | `v2-i18n-negotiation`, `v2-localized-content-delivery` | `i18n-negotiation`, `localized-content-delivery` |
@@ -124,7 +124,7 @@ Every v2 core family now has a v2 normative home (RFC 0189). Many of its rules a
 | `node-pack-runtimes.md` | 3 | 0 (0%) | `nodePackRuntimes` |
 | `oauth.md` | 13 | 11 (85%) | `credentials`, `oauth` |
 | `overview.md` | 14 | 0 (0%) | – |
-| `packs.md` | 35 | 20 (57%) | `uiPlugins`, `packs` |
+| `packs.md` | 36 | 30 (83%) | `uiPlugins`, `packs` |
 | `persistence.md` | 35 | 25 (71%) | `eventLog` |
 | `portability.md` | 8 | 0 (0%) | `portability` |
 | `replay.md` | 36 | 19 (53%) | `replay`, `nondeterminismPolicy`, `eventLog` |
@@ -145,7 +145,6 @@ Sections with the most obligation units and no major-2 citation. A doc-level cit
 | `execution.md` § `multiAgent` | multiAgent | 19 |
 | `host-services.md` § `aiProviders` | aiProviders | 15 |
 | `events.md` § `envelopes` | envelopes | 13 |
-| `packs.md` § Front-end plugin packs | packs | 9 |
 | `conformance.md` § Production profile | production | 8 |
 | `execution.md` § `selfHostedRunner` | selfHostedRunner | 8 |
 | `identity.md` § 1.5 `anonymousActor` | anonymousActor | 7 |
@@ -167,6 +166,7 @@ Sections with the most obligation units and no major-2 citation. A doc-level cit
 | `events.md` § `providerUsage` | providerUsage | 4 |
 | `form-content-packs.md` § Instantiation | forms | 4 |
 | `versioning.md` § 4. One release identity | shared | 4 |
+| `conformance.md` § Requirement ids | production | 3 |
 
 ## Citation gaps
 
@@ -323,7 +323,7 @@ Ranked: security, tenant isolation, idempotency and replay first; then wire shap
 ### 14. Front-end plugins load unsigned
 
 - **Rule** (`packs.md` § Front-end plugin packs): "MUST verify the pack signature before loading, failing closed"
-- **Today:** Major 1 only (`frontend-plugin-packs`). The v2 seams profile already serves test packs with `.sig` files under `/conformance/seams/packs-test/`.
+- **Today:** Major 1 only (`frontend-plugin-packs`). The v2 seams profile already serves test packs with `.sig` files under `/conformance/seams/packs-test/`. The section is now cited at major 2 by `v2-ui-plugin-boundary.test.ts`; re-check whether this rule is covered.
 - **Why it matters:** A plugin bundle runs in the user's browser next to the host UI. An unsigned bundle is arbitrary script.
 - **Proposed:** `v2-frontend-plugin-signature-required` (major 2; gate: `uiPlugins` advertised, seams profile (packs-test registry)). Asserts: installing a `frontend-plugin` pack with a tampered `.sig` is refused and the pack never appears as installed; the correctly signed pack installs.
 - **Sabotage that must fail it:** skip verification when the signature file is missing or unreadable: the tampered pack installs.
@@ -411,19 +411,19 @@ node scripts/report-v2-witness-coverage.mjs --write  # regenerate this file
     }
   },
   "obligationUnits": {
-    "total": 898,
-    "inV2CitedSections": 595,
-    "inUncitedSections": 303,
+    "total": 899,
+    "inV2CitedSections": 605,
+    "inUncitedSections": 294,
     "sectionsWithObligations": 271,
-    "sectionsWithNoV2Citation": 103
+    "sectionsWithNoV2Citation": 102
   },
   "declarationLinks": {
     "familiesWithFloorScenarios": 0,
     "familiesWithRequirementIds": 2
   },
   "scenarios": {
-    "registered": 644,
-    "major2": 204
+    "registered": 645,
+    "major2": 205
   },
   "unresolvedV2Citations": 33,
   "major2ScenariosCitingNoCoreDoc": 67,
@@ -440,6 +440,7 @@ node scripts/report-v2-witness-coverage.mjs --write  # regenerate this file
       9,
       10,
       13,
+      14,
       18,
       19,
       20

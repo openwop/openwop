@@ -14378,6 +14378,23 @@
       ]
     },
     {
+      "id": "openwop.gap.0238.3",
+      "rfc": "0238",
+      "local": "G3",
+      "section": "Decisions 5",
+      "surface": "The always-on schema legs of `frontend-plugin-packs.test.ts` read only the corpus but run in a major-1 host bundle.",
+      "witness": "unclassified",
+      "requirementId": null,
+      "disposition": "transferred",
+      "target": "TODO.md",
+      "sources": [
+        {
+          "file": "RFCS/registers/0238-ui-plugin-observation-path.gaps.md",
+          "token": "G3"
+        }
+      ]
+    },
+    {
       "id": "openwop.gap.spec.a2a-integration.g1",
       "rfc": "0152",
       "local": "G1",

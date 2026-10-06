@@ -6262,6 +6262,10 @@
           "type": "integer",
           "minimum": 1,
           "description": "Per-plugin entry-bundle byte ceiling the host will load."
+        },
+        "served": {
+          "type": "boolean",
+          "description": "RFC 0238 §A — `true` means the host serves `GET /host/ui-plugins/{packName}/{pluginId}/frame` (the frame document, isolation and egress in its `Content-Security-Policy`) and `POST /host/ui-plugins/{packName}/{pluginId}/rpc` (the `ui-plugin/1` dispatch) for every plugin it has installed (`packs.md` §Front-end plugin packs). A host advertising `uiPlugins` SHOULD advertise it."
         }
       },
       "allOf": [
@@ -6300,7 +6304,7 @@
         }
       ],
       "description": "core/capabilities.md#uiPlugins — witness: witnessable-gated; maturity experimental/none; RFC 0117",
-      "x-openwop-seeded-from": "v1"
+      "x-openwop-facets-from": "spec/v2/facets/uiPlugins.schema.json"
     },
     "sql": {
       "type": "object",
