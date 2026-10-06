@@ -14416,7 +14416,7 @@
       "rfc": "0239",
       "local": "G2",
       "section": "§C, Decisions 4",
-      "surface": "A host whose `maxParticipants` is nine or more cannot be shown an oversized roster: there is no schema ceiling and no v2 workflow registration.",
+      "surface": "A host whose `maxParticipants` is 64 or more cannot be shown an oversized roster: there is no schema ceiling and no v2 workflow registration.",
       "witness": "unclassified",
       "requirementId": null,
       "disposition": "externally-gated",
