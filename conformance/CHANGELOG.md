@@ -1,8 +1,10 @@
 # `@openwop/openwop-conformance` Changelog
 
-## [2.45.23] — 2026-10-06 — RFC 0237 filed
+## [2.45.23] — 2026-10-06 — `0184.mint-no-tilde` also mints under the second-tenant credential; RFC 0237 filed
 
 - **No scenario change.** RFC 0237 (declared nondeterminism names its sources) is filed `Draft`; its gap rows change the packed `spec/v1/gaps.json`.
+
+- **`0184.mint-no-tilde` also mints under `OPENWOP_TEST_TENANT_B_API_KEY`.** A host can bind tenant B to a non-clean tenant, so the leg bites in a production cut without moving the primary key. Asked by openwop-app, whose primary tenant is clean. A refused tenant-B create skips only that half. Proven against a double.
 
 ## [2.45.22] — 2026-10-06 — an empty `dataResidency.regions` still binds the reject leg; RFC 0236's registers close
 

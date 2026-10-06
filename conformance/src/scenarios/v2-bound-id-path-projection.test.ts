@@ -38,6 +38,11 @@
  * harness (`conformance/run.ts`) overwrites `OPENWOP_API_KEYS` with a `:*` key, so
  * moving the tenant needs that line edited, not just the env var.
  *
+ * Since 2.45.23 the leg also mints one run under `OPENWOP_TEST_TENANT_B_API_KEY`
+ * when it is set, so a host can bind tenant B to a non-clean tenant and make the
+ * leg bite in a production cut without moving the primary key (asked by
+ * openwop-app, whose primary production tenant is clean).
+ *
  * The codec's own edge cases (marker escaping, UTF-8 vs UTF-16, malformed
  * decode) are a unit concern and live in `src/lib/bound-id.test.ts`, which is
  * sabotage-checked. This file asserts only what needs a HOST to answer.
@@ -166,5 +171,20 @@ describe('v2 bound-id path projection (identity.md §5)', () => {
       runId.includes('~'),
       req(ID_MINT, DOC, `a host MUST NOT mint a tenant-bound id containing ~ (RFC 0184 §A.2) — the created runId is ${runId}. A literal ~ is ambiguous with the path projection's escape marker; map the tenant key to a clean segment instead of projecting it`),
     ).toBe(false);
+
+    // The second-tenant credential, when configured, mints one more run, so a
+    // host can put tenant B in a non-clean tenant without moving the primary key
+    // every other scenario depends on. A refused create here skips only this half.
+    const other = process.env['OPENWOP_TEST_TENANT_B_API_KEY']?.trim();
+    if (other && other !== process.env['OPENWOP_API_KEY']?.trim()) {
+      const createdB = await http(() => driver.post('/runs', { workflowId: NOOP_WORKFLOW_ID }, { headers: { Authorization: `Bearer ${other}` } }));
+      const runIdB = (createdB?.json as { runId?: unknown } | null | undefined)?.runId;
+      if (createdB?.status === 201 && typeof runIdB === 'string') {
+        expect(
+          runIdB.includes('~'),
+          req(ID_MINT, DOC, `a host MUST NOT mint a tenant-bound id containing ~ (RFC 0184 §A.2) — the runId created under the second-tenant credential is ${runIdB}`),
+        ).toBe(false);
+      }
+    }
   });
 });
