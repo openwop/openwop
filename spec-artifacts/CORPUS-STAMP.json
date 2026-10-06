@@ -144,7 +144,7 @@
     "schemas/v2/envelopes/schema.request.schema.json": "be2c5f7aa881cdd252ccff47ac02193659e1393633a1541f4297383205d384a2",
     "schemas/v2/envelopes/schema.response.schema.json": "d049a081267c06c28879c331b147f3ed821b14ccfd93005c67aff64db0a8c68e",
     "schemas/v2/envelopes/ui.a2ui-surface.schema.json": "e92a2548ba65454c9e0a34f72ea6768d18f59e61fa5da7668d0b2d5baddaddc8",
-    "schemas/v2/error-envelope.schema.json": "fb85e2020a91e0c1590a78f57bbf3bbf1cffbc1bc60e1ae692265a77e9d937ff",
+    "schemas/v2/error-envelope.schema.json": "fd561987db4d277d007666f533b53d6cf0e7eacb57f930f3ce7e431573120890",
     "schemas/v2/eval-summary.schema.json": "2f384daf05b8f3b4f604688cae504d6d9971ba41b8c771e55fe9a17e09e86b7a",
     "schemas/v2/export-bundle.schema.json": "bd28905a7729437ab7f2ad8bb33e13a371b2bf5605a7eb2962a0d246de312d69",
     "schemas/v2/form-content-pack-manifest.schema.json": "a1942a124e250a6e9fbdb6b811c5a125e78fbcbcaa46dfc71d0636f24710a339",
@@ -226,8 +226,8 @@
     "spec/v2/core/capabilities.md": "503fd78ce55aca2cf83b872a5d6086f016470df2d9bcd7fb427b8f16fb9d044a",
     "spec/v2/core/conformance.md": "3ca291e63bc70a6ef829ae8759ad0ded3741ea7aa507bbbdffc57de443ab2ae2",
     "spec/v2/core/connection-packs.md": "c80f95bd6a03698f35c72cdb2b46bd973f49203bbd786c26760e35fa86e6f23d",
-    "spec/v2/core/conversation.md": "e0351883a57e90f13d2e9f6f5d3e80080b46be4988617448cb7a0e0c7c0bfbad",
-    "spec/v2/core/errors.md": "91f46acc9c9a5532a98cf62c69285d68575c100ff6064f0b1bf94731a087e34a",
+    "spec/v2/core/conversation.md": "8d6abedf6af408a74577753bfca24719d318e2632e10b45ff5d63bdcf31a8aaa",
+    "spec/v2/core/errors.md": "e48838701b86bbfe0ffee77b18a8ffc4e5f04724b4318507d9771da653f8da0f",
     "spec/v2/core/events.md": "00746062621ec98052ee323755fbdb10f4fb070439058039e44feb6bb19b073a",
     "spec/v2/core/execution.md": "8a0c9db1bbfb97c008ab9328b7333c1cc3318196e78bfbefb49e781bdf4f9d44",
     "spec/v2/core/form-content-packs.md": "02931227899676fd4581a27017be2a6c4953904717be9b81c29d12f87ab3917d",
@@ -257,7 +257,7 @@
     "spec/v2/declaration.json": "2b17dc2d74125dba052ff285158a8314e148675ac4eb3893756535ed37cfe2e4",
     "spec/v2/declaration.schema.json": "ef951633e4070899f64828f5cf1b5f4870270a0360f81dbb49b5b4d6cd407550",
     "spec/v2/eos-override.json": "4c72d2f6a658943b01c1de1643cf294642091933af7832f38ee5495df684cb2d",
-    "spec/v2/errors.json": "83f048b0a06952b4af6f125fb66c4212acab51056b411390f1010acd6ab9cdc0",
+    "spec/v2/errors.json": "c3456c8cb1f36f4b6252bbc1fa3a643eabf28cdb7088e3743e50bd51a10c4936",
     "spec/v2/errors.schema.json": "47404ad53e6147cf9017b813483712466573e419fb33e6c4b6c12d3e7deba1bc",
     "spec/v2/event-codemap.json": "37869a03cdfd8758b57e6f350641a6ebbd383231cebda51f5473ad85f94ab74c",
     "spec/v2/event-codemap.schema.json": "b173f2a9bcc0bf9b62a474ce3b91e1431d597e64fd1560fc58662cd8606eaf9c",
@@ -301,7 +301,7 @@
     "spec/v2/facets/uiPlugins.schema.json": "1fd3f8440cfb6e4422553a7c4b5f091eb3e10a40da0d43e8b977a18929116758",
     "spec/v2/facets/webhooks.schema.json": "54b576f1d150e28e1642693d846ce471c118e9c521bdf3924185305fbd1d0de4",
     "spec/v2/facets/workflowChainPacks.schema.json": "ea625ce818fbeb746478f00f31f96ee9613d538e4409c258c1bfb517acdeaba9",
-    "spec/v2/generated/error-codes.md": "f171c0ca1be40221f9b4fbfcbce73c728c315a1e8feb8dd6bf738d6ca9e29526",
+    "spec/v2/generated/error-codes.md": "eafb66f1632da783c9a0347a416ae32bcf322f41b9f8783375f579791e9cdcf0",
     "spec/v2/harness-trust-anchors.json": "6007b92eae16a070fbc3777424efb0abfe865fda89d096963109b96282b91205",
     "spec/v2/harness-trust-anchors.schema.json": "372b5d92337c893d3449eff3f6bfd009ac09fdac285296d8bdbe0a08fff9e34c",
     "spec/v2/id-field-bindings.json": "aa3e7c3590a490a77286e3ae60c1ab7407e7d627e05f981c3e08f221af4bd5dc",
@@ -316,5 +316,5 @@
     "spec/v2/retention-floors.json": "eaf3722d95c79947af1d4269ef85117e126518c588cfcf1a2b21b97269f51624",
     "spec/v2/surface-baseline.json": "12f193f56af68402c747503b465f8d7e18580ef832ac7b95c218ab06286478ea"
   },
-  "corpusCommit": "3a13652312c06ff7be089496af2f62f06984eafe"
+  "corpusCommit": "fef89b858a9b58796bdbd72722fbe1d7f7a7c7cd"
 }

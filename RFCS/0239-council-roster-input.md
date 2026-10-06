@@ -4,10 +4,10 @@
 | ----------------- | --------------------------------------------------------------- |
 | **RFC**           | 0239                                                            |
 | **Title**         | a council's roster has an input seat and its refusals have codes |
-| **Status**        | `Draft`                                                         |
+| **Status**        | `Active`                                                        |
 | **Author(s)**     | David Tufts (@davidscotttufts)                                  |
 | **Created**       | 2026-10-06                                                      |
-| **Updated**       | 2026-10-06 — filed `Draft` after an `/architect` ruling (2026-10-06). The 7-day comment window opens with the pull request and closes 2026-10-13. |
+| **Updated**       | 2026-10-06 — `Draft` → `Active`, comment window waived by the maintainer (2026-10-06: "move RFC 0239 to active and waive the comment window"), recorded as a STEWARD OVERRIDE of RFC 0147 §A.6 in MAINTAINERS.md. `conversation.md` carries §A–§C (word-neutral), both codes are in `spec/v2/errors.json`, both fixtures are catalogued, and `v2-multi-party-council` ships in suite 2.45.23, proven against a double. · 2026-10-06 — filed `Draft` after an `/architect` ruling (2026-10-06). The 7-day comment window opens with the pull request and closes 2026-10-13. |
 | **Affects**       | `core.conversationGate` config (`participants`) · two error codes in `spec/v2/errors.json` (`conversation_speaker_not_participant`, `conversation_roster_exceeded`) · `spec/v2/core/conversation.md` §`multiPartyConversation` · two workflow fixtures (`conformance-multi-party-council`, `conformance-multi-party-council-oversize`) · a new v2 scenario |
 | **Compatibility** | `additive` (COMPATIBILITY.md §2.4): an optional config field, two new error codes on paths that already refuse, two optional fixtures. No existing shape changes. |
 | **Supersedes**    | —                                                               |
@@ -115,9 +115,9 @@ An `/architect` review decided these on 2026-10-06.
 
 ## Acceptance criteria
 
-- [ ] `Active`: the comment window closes (or is waived on the record) with §A–§D unchanged in substance.
-- [ ] `participants` is in the gate's config schema; both codes are in `spec/v2/errors.json`; both fixtures are catalogued; `conversation.md` carries §A–§C; `CHANGELOG.md` records it.
-- [ ] `v2-multi-party-council` ships, each leg failing on its sabotage: a roster dropped from `conversation.opened`, a non-member turn accepted, a refused turn consumed, an oversized roster truncated.
+- [x] `Active`: the comment window was waived on the record (maintainer, 2026-10-06; MAINTAINERS.md) with §A–§D unchanged in substance.
+- [x] Both codes are in `spec/v2/errors.json` (and so the generated error envelope); both fixtures are catalogued; `conversation.md` carries §A–§C; `CHANGELOG.md` records it. v2 has no core-node config schema, so `participants` is specified in `conversation.md` and the fixtures.
+- [x] `v2-multi-party-council` ships in 2.45.23 over `lib/council-roster-witness.ts`. Each leg fails on its sabotage in the self-test double (9 cases): a roster dropped from `conversation.opened`, a non-member turn accepted, a refused turn consumed, a refusal with `validation_error`, an oversized roster truncated. No `maxParticipants`, one of 64 or more, or unadvertised fixtures record `inapplicable`.
 - [ ] `Accepted`: a host advertising `multiPartyConversation` and the fixture records the three `openwop.requirement.0239.*` ids `executed-pass`, or roster-exceeded `inapplicable` with its reason, on a certified bundle.
 
 ## References

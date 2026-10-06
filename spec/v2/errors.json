@@ -2,7 +2,7 @@
   "$schema": "https://openwop.dev/spec/v2/errors.schema.json",
   "$comment": "RFC 0171 §B.1 — the error registry: one row per code {code, meaning?, httpStatus, retriable, details, since, deprecated?}. schemas/v2/error-envelope.schema.json is GENERATED from it (scripts/generate-error-envelope.mjs). Retry timing lives in Retry-After only (§B.2). statusSource records whether the status was stated in v1 prose, a v1 convention, or decided here. details is null until a code's details schema is registered (a null row means details is an open object for that code — closure over details is the RFC 0171 Phase 3 follow-up G-row).",
   "version": "2.0",
-  "updated": "2026-09-28",
+  "updated": "2026-10-06",
   "vendorCodePattern": "^(?!openwop\\.)[a-z][a-z0-9]*(-[a-z0-9]+)*\\.[a-z][a-z0-9_]*$",
   "rows": [
     {
@@ -1390,6 +1390,40 @@
       },
       "since": "2.45",
       "source": "RFC 0228 §C (measured: MyndHyve `host/agentDeployment.ts`, answered at 422)"
+    },
+    {
+      "code": "conversation_speaker_not_participant",
+      "meaning": "A resumed conversation turn names a speaker absent from the conversation's roster; the interrupt stays open. details.speakerId names it.",
+      "httpStatus": 422,
+      "statusSource": "v2 decision",
+      "retriable": false,
+      "details": {
+        "type": "object",
+        "required": ["speakerId"],
+        "properties": {
+          "speakerId": { "type": "string", "description": "The refused turn's speakerId (conversation.md §multiPartyConversation)." }
+        },
+        "additionalProperties": true
+      },
+      "since": "2.45",
+      "source": "spec/v2/core/conversation.md §multiPartyConversation; RFC 0239 §B"
+    },
+    {
+      "code": "conversation_roster_exceeded",
+      "meaning": "A core.conversationGate roster exceeds the host's advertised multiPartyConversation.maxParticipants; details.maxParticipants names the ceiling.",
+      "httpStatus": 422,
+      "statusSource": "v2 decision",
+      "retriable": false,
+      "details": {
+        "type": "object",
+        "required": ["maxParticipants"],
+        "properties": {
+          "maxParticipants": { "type": "integer", "minimum": 2, "description": "The host's advertised ceiling (conversation.md §multiPartyConversation)." }
+        },
+        "additionalProperties": true
+      },
+      "since": "2.45",
+      "source": "spec/v2/core/conversation.md §multiPartyConversation; RFC 0239 §C"
     }
   ]
 }

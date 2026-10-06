@@ -2,7 +2,7 @@
 
 > **Status: Stable.** Generated from `spec/v2/errors.json` by `scripts/generate-error-envelope.mjs`; do not edit.
 
-Every registered code (120 codes), by HTTP status. The registry is normative; this table restates it for reading. `retriable` and `statusSource` are in the registry. The rules are in [errors.md](../core/errors.md).
+Every registered code (122 codes), by HTTP status. The registry is normative; this table restates it for reading. `retriable` and `statusSource` are in the registry. The rules are in [errors.md](../core/errors.md).
 
 Code | Status
 --- | ---
@@ -93,6 +93,8 @@ Code | Status
 `capability_not_provided` | 422
 `capability_required` | 422
 `connection_auth_metadata_mismatch` | 422
+`conversation_roster_exceeded` | 422
+`conversation_speaker_not_participant` | 422
 `credential_required` | 422
 `envelope_invalid` | 422
 `envelope_refusal` | 422
