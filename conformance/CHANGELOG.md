@@ -1,5 +1,9 @@
 # `@openwop/openwop-conformance` Changelog
 
+## [2.45.23] — 2026-10-06 — RFC 0237 filed
+
+- **No scenario change.** RFC 0237 (declared nondeterminism names its sources) is filed `Draft`; its gap rows change the packed `spec/v1/gaps.json`.
+
 ## [2.45.22] — 2026-10-06 — an empty `dataResidency.regions` still binds the reject leg; RFC 0236's registers close
 
 - **No scenario change.** RFC 0236 goes `Accepted` on the v2 reference host's certified 2.45.21 cut; its gaps G1 and G2 close, which changes the packed `spec/v1/gaps.json`.

@@ -14293,6 +14293,57 @@
       ]
     },
     {
+      "id": "openwop.gap.0237.1",
+      "rfc": "0237",
+      "local": "G1",
+      "section": "§D",
+      "surface": "No host installs `conformance-nondeterminism` or lists `nondeterminismPolicy.sources`.",
+      "witness": "unclassified",
+      "requirementId": null,
+      "disposition": "externally-gated",
+      "target": "v2-reference-nondeterminism-fixture",
+      "sources": [
+        {
+          "file": "RFCS/registers/0237-nondeterminism-sources.gaps.md",
+          "token": "G1"
+        }
+      ]
+    },
+    {
+      "id": "openwop.gap.0237.2",
+      "rfc": "0237",
+      "local": "G2",
+      "section": "§Conformance",
+      "surface": "No host bundle records the two `openwop.requirement.0237.*` ids, because the legs are not written yet.",
+      "witness": "unclassified",
+      "requirementId": null,
+      "disposition": "carried",
+      "target": "openwop.gap.0237.2",
+      "sources": [
+        {
+          "file": "RFCS/registers/0237-nondeterminism-sources.gaps.md",
+          "token": "G2"
+        }
+      ]
+    },
+    {
+      "id": "openwop.gap.0237.3",
+      "rfc": "0237",
+      "local": "G3",
+      "section": "§C",
+      "surface": "The two required booleans stay in v2 (`overview.md` §0a predicate 4).",
+      "witness": "unclassified",
+      "requirementId": null,
+      "disposition": "externally-gated",
+      "target": "next-major",
+      "sources": [
+        {
+          "file": "RFCS/registers/0237-nondeterminism-sources.gaps.md",
+          "token": "G3"
+        }
+      ]
+    },
+    {
       "id": "openwop.gap.spec.a2a-integration.g1",
       "rfc": "0152",
       "local": "G1",
