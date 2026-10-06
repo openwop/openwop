@@ -6044,6 +6044,16 @@
         "declared": {
           "type": "boolean",
           "description": "When `true`, the host documents its nondeterminism (it does not guarantee deterministic replay). A bare flag for v1.x (RFC 0085 §UQ2); a structured per-source policy is a future refinement."
+        },
+        "sources": {
+          "type": "array",
+          "uniqueItems": true,
+          "minItems": 1,
+          "items": {
+            "type": "string",
+            "pattern": "^(clock|random|id|env|x-[a-z0-9][a-z0-9-]*)$"
+          },
+          "description": "RFC 0237 §A. The nondeterministic sources the host declares rather than suppresses: `clock`, `random`, `id` (identifiers minted during a run), `env` (host configuration read during a run), or a vendor `x-*`. Each value drawn from a listed source is recorded where it is read, and a `replay` fork reproduces it (replay.md §Declared nondeterminism)."
         }
       },
       "allOf": [
@@ -6081,8 +6091,8 @@
           }
         }
       ],
-      "description": "core/capabilities.md#nondeterminismPolicy — witness: claims-check; maturity experimental/none; RFC 0085",
-      "x-openwop-seeded-from": "v1"
+      "description": "core/capabilities.md#nondeterminismPolicy — witness: witnessable-gated; maturity experimental/none; RFC 0085",
+      "x-openwop-facets-from": "spec/v2/facets/nondeterminismPolicy.schema.json"
     },
     "workspace": {
       "type": "object",

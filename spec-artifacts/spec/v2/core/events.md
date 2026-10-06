@@ -201,7 +201,7 @@ An absent `kinds` is not an empty catalog and is not an unrestricted one: a host
 
 ## Envelope contracts
 
-`envelopeContracts` advertises that a host enforces per-node envelope permission sets. A host advertising `envelopeContracts.advertised` MUST refuse a node whose emitted envelope `type` is neither universal nor listed in that node's accepted set. It MUST refuse it distinctly from the capability-gated `typeId` refusal: the two stack rather than substitute.
+`envelopeContracts` advertises that a host enforces per-node envelope permission sets; `advertised: false` is not a v2 state. A host advertising it MUST refuse a node whose emitted envelope `type` is neither universal nor listed in that node's accepted set. It MUST refuse it distinctly from the capability-gated `typeId` refusal: the two stack rather than substitute.
 
 ## Envelope, feedback and usage facets
 

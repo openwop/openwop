@@ -128,6 +128,6 @@ A host advertising `replay` MUST document retention for source snapshots, source
 
 ## Declared nondeterminism
 
-`nondeterminismPolicy` is the host's statement of which nondeterministic sources it declares rather than suppresses. A host advertising `nondeterminismPolicy.declared` MUST record every declared source in the run's event log at the point it is read, so a fork replays the recorded value rather than re-drawing it. A source the host neither declares nor suppresses is a replay defect, not a policy choice.
+`nondeterminismPolicy.sources` lists the sources a host declares rather than suppresses: `clock`, `random`, `id`, `env` or `x-*`. A host MUST record each value drawn from a listed source where it is read, and a `replay` fork MUST reproduce it. An unlisted, unsuppressed source is a replay defect. `declared: false` is not a v2 state.
 
 *Sources: RFCs 0036, 0039, 0041, 0057, 0104, 0111, 0140, 0173, 0176, 0194, 0228.*
