@@ -52,7 +52,7 @@ Grouping below is a reading aid only: it assigns each RFC to the risk class its 
 | [0208](../RFCS/0208-v2-a2a-mcp-operation-mappings.md) | v2 homes the A2A and MCP operation mappings | `Accepted` | steward override of RFC 0147 §A.6 | tier-1 — the v2 reference host | `not-reviewed` |
 | [0211](../RFCS/0211-a2a-error-details-are-errorinfo.md) | an A2A error's details are an ErrorInfo, and an A2A interface never answers in the OpenWOP envelope | `Accepted` | steward override of RFC 0147 §A.6 | tier-1 — the v2 reference host | `not-reviewed` |
 | [0215](../RFCS/0215-webhook-delivery-isolation.md) | a webhook delivery does not wait on another subscription's receiver, and an unregistered subscription gets no… | `Accepted` | steward override of RFC 0147 §A.6 | tier-2 — MyndHyve | `not-reviewed` |
-| [0236](../RFCS/0236-host-events.md) | Host events — events without a run-log position | `Active` | steward override of RFC 0147 §A.6 | not declared (predates RFC 0174 §B.1, or not yet Accepted) | `not-reviewed` |
+| [0236](../RFCS/0236-host-events.md) | Host events — events without a run-log position | `Accepted` | steward override of RFC 0147 §A.6 | tier-1 — the v2 reference host | `not-reviewed` |
 
 ## Secrets (2)
 

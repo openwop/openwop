@@ -8,6 +8,7 @@ Entries before this file was condensed carried full development detail. That tex
 
 ## [Unreleased]
 
+- **RFC 0236 Accepted (provisional).** Tier-1 evidence: the v2 reference host's certified public cut on suite 2.45.21 (505/0/0, build `9543718c`) records all six host-event ids `executed-pass`; gaps G1 and G2 close, so the packed `gaps.json` changes.
 - **2.45.21 cycle (suite):** `v2-host-event-delivery` splits no-fan-out into its own `it`, so `0236.webhook.host-variant` records a row. A bundle records one requirement id per `it`, and the shared `it` hid it.
 - **RFC 0236 Active (window waived): host events.** `events.md` §Host events, a `hostEvents` family, `host-event.schema.json`, a `{ hostEvent }` webhook body and dead-letter record, an emit seam, `channel.presence` as an ephemeral host event, and the `hostEvents` channel tenant-scoped.
 - **RFC 0236 filed (Draft): host events.** A runless, tenant-scoped envelope with no `runId` or `sequence`, `durable` or `ephemeral`, on `/host/events` and (durable) webhooks. It gives `channel.presence` a lawful shape and runless vendor events a home (openwop-app ADR 0812).

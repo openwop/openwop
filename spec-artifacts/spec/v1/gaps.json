@@ -14215,8 +14215,8 @@
       "surface": "The v2 reference host serves `/host/events` and durable webhooks but no host-event envelope, tenant gate on the stream, emit seam or webhook host body.",
       "witness": "unclassified",
       "requirementId": null,
-      "disposition": "externally-gated",
-      "target": "v2-reference-host-events",
+      "disposition": "closed",
+      "target": null,
       "sources": [
         {
           "file": "RFCS/registers/0236-host-events.gaps.md",
@@ -14232,8 +14232,8 @@
       "surface": "No host bundle records the six `openwop.requirement.0236.*` ids, because the legs are not written yet.",
       "witness": "unclassified",
       "requirementId": null,
-      "disposition": "carried",
-      "target": "openwop.gap.0236.2",
+      "disposition": "closed",
+      "target": null,
       "sources": [
         {
           "file": "RFCS/registers/0236-host-events.gaps.md",
