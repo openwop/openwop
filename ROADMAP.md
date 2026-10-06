@@ -1,7 +1,7 @@
 # OpenWOP Roadmap
 
 > **Status:** Living document. Updated as milestones land.
-> **Last reviewed:** 2026-09-27 (v2 is the current major; v1 is in its overlap period).
+> **Last reviewed:** 2026-10-05 (v2 is the current major; v1 is in its overlap period).
 
 This roadmap covers the current **v2** major, the gated candidates for later v2 minors, and the ecosystem work around the protocol (infrastructure, SDKs, governance).
 
@@ -20,23 +20,23 @@ See [`CHANGELOG.md`](./CHANGELOG.md) for the release record and [`docs/PROTOCOL-
 
 ## Candidates (gated)
 
-Each candidate ships only when its gate condition is met. The list is descriptive, not a commitment. A candidate moves to "Withdrawn" if no implementer adoption signal arrives within the RFC comment window.
+Each candidate ships only when its gate condition is met. The list is descriptive, not a commitment. A candidate is not an RFC and has no comment window running. The list is re-read at each corpus minor. A candidate with no adoption signal across two consecutive corpus minors is reviewed for withdrawal at the next one, and a maintainer removes any candidate whose gate no longer makes sense, noting the removal in the CHANGELOG.
 
 | Candidate | Gate |
 | --- | --- |
 | **WASM Component Model sub-RFC** | A first adopter requests `runtime.language: "wasm-component"` packs |
 | **Rust SDK v0.1** | An adopter asks for it, or a non-steward host lands in Rust |
-| **4 audit-gated `core.openwop.*` packs** | The external security audit completes |
+| **Post-audit obligations for the published `core.openwop.*` packs** | The external security audit completes |
 | **mTLS certificate-matrix hardening** | Operators need documented certificate recipes |
 | **Multi-region idempotency end-to-end fixture** | A host advertises `capabilities.idempotency.crossRegion` |
 | **Structured handoff context on `agent.handoff`** | openwop-app's host-extension handoff record is stable for 30 days in two real workflows, and a second host asks for it |
-| **Shared intent record** | openwop-app's team intent ledger proves useful in production, and a second host wants it to cross host boundaries |
+| **Shared intent record** | openwop-app's team intent ledger runs in production for 30 days on two real projects, with every bound run stamping the ledger version it acted on, and a second host asks to read it across host boundaries |
 
 Notes on the candidates:
 
 - **WASM Component Model.** The manifest enum is reserved in `node-pack-manifest.schema.json`, and `capabilities.schema.json` declares `nodePackRuntimes.wasmComponent`. WIT-defined interfaces would replace the hand-rolled imports and exports of [RFC 0008](./RFCS/0008-wasm-abi.md) §C. The loader needs Wasmtime ≥ 14 (Component Model GA).
 - **Rust SDK.** The conformance suite is language-agnostic, so a Rust client tests against the same wire contract. It is demand-gated.
-- **Audit-gated packs.** `core.openwop.{ai,http,mcp,triggers}` are built and signed in [`openwop/openwop-registry`](https://github.com/openwop/openwop-registry). Publication to `packs.openwop.dev` waits on the audit in `SECURITY/external-audit-engagement.md` and on a namespace-scoped signing key for the steward team.
+- **Post-audit obligations.** `core.openwop.{ai,http,mcp,triggers}` are already published on `packs.openwop.dev` (1.1.0, see [`docs/PACK-CATALOG.md`](./docs/PACK-CATALOG.md)). The steward published them before the external review completed, a decision recorded on 2026-05-17 in `SECURITY/external-audit-engagement.md` §2.1.1. The audit requirement still stands: when the review completes, its findings bind every pack published early, and the steward team still needs a namespace-scoped signing key.
 - **mTLS.** `openwop-auth-mtls` is verified end-to-end when configured. What remains is operator documentation (CA, server and client certificates, reverse-proxy deployment) and broader certificate-matrix coverage.
 - **Multi-region idempotency.** The rule is in the idempotency spec's multi-region annex. `multi-region-idempotency.test.ts` covers the capability shape only; the candidate adds behavior assertions for `"best-effort"` and `"strict"`.
 - **Structured handoff context.** Today `agent.handoff` carries `fromAgentId`, `toAgentId` and a free-text `reason`. RFC 0002 sketched an open `context` field that v2 does not carry. The candidate is an optional, typed handoff context with five parts: the intent, the decisions made (each with who decided), open questions, what was tried, and a confidence value. It would also cover agent-to-human escalation, where the same record would ride the clarification or approval interrupt. It is additive: a receiver that ignores it loses nothing it has today. openwop-app prototypes it first under the `openwop-` extension prefix the event schema already admits (see the app's ROADMAP, "Collaborative orchestration program").
@@ -56,7 +56,7 @@ A capability profile is a cluster of optional behaviors a host advertises at `/.
 | --- | --- | --- |
 | Hosted node-pack registry (`packs.openwop.dev`) | Live | Discovery, index, manifest and tarball endpoints |
 | Hosted docs + conformance leaderboard site (`openwop.dev`) | **Live** | Built from [`openwop/openwop-site`](https://github.com/openwop/openwop-site) |
-| Public CI for community contributions | In source tree | Needs public runner validation |
+| Public CI for community contributions | Live for steward PRs | `pr-checks.yml` and `openwop-spec.yml` run on every PR on GitHub-hosted runners, without secrets for forks. It is proven once the first PR from a fork runs green |
 
 - **Registry.** It serves per `registry-operations.md`. The pack inventory is [`docs/PACK-CATALOG.md`](./docs/PACK-CATALOG.md). Publishing, yanking, deprecation and key rotation go through pull requests on GitHub. `conformance/src/scenarios/registry-public.test.ts` is its public healthcheck.
 - **Site.** It renders this corpus at a pinned commit and tracks `main` through a daily pin bump.
@@ -70,7 +70,7 @@ Additional SDKs ship only when there is concrete demand. The current set (TS, Py
 
 | Item | Status | Notes |
 | --- | --- | --- |
-| Production-host conformance certification | In progress | Three hosts certify `openwop-core-standard` |
+| Production-host conformance certification | In progress | Two production hosts (openwop-app, MyndHyve) and the v2 reference host certify `openwop-core-standard` |
 | Second independent host implementation (non-steward maintainer) | Not started | Needed for working-group governance |
 | Third-party node-pack catalog | Not started | Depends on hosted registry |
 | Certification bundle cut by someone other than the steward | Not started | Needs the independent host above |
@@ -86,7 +86,7 @@ Forward-looking domain references in the spec corpus and roadmap use `openwop.de
 Three rules for domain usage:
 
 1. **All forward-looking public URLs** (`packs.openwop.dev`, `openwop.dev/openwop-conformance`, etc.) use `openwop.dev`.
-2. **Published package names stay verbatim** (`@openwop/openwop` on npm, `openwop-client` on PyPI) and are guaranteed stable through any v1.x release per `PUBLISHING.md`. The SDK source lives in [`openwop/openwop-sdks`](https://github.com/openwop/openwop-sdks), so the Go module path is `github.com/openwop/openwop-sdks/go`, not `github.com/openwop/openwop/sdk/go`.
+2. **Published package names stay verbatim** (`@openwop/openwop` on npm, `openwop-client` on PyPI) and are guaranteed stable within a major per `PUBLISHING.md`. The SDK source lives in [`openwop/openwop-sdks`](https://github.com/openwop/openwop-sdks), so the Go module path is `github.com/openwop/openwop-sdks/go/v2` for v2 and `github.com/openwop/openwop-sdks/go` for v1, never the frozen pre-split `github.com/openwop/openwop/sdk/go`.
 3. **Internal references in steward-private docs** are not normative and may use any name; this convention applies only to the public spec corpus, this ROADMAP, and the conformance suite.
 
 ### Vendor-neutral org migration
@@ -117,7 +117,7 @@ Recruiting external maintainers is **out of band**. `MAINTAINERS.md` documents t
 - A specific date for any v2 minor or for v3.
 - Any breaking change inside the v2 major.
 - Adoption by any specific vendor or platform.
-- Hosting infrastructure on any specific cloud. Forward-looking spec/registry/leaderboard URLs use `openwop.dev`; the deployment substrate (cloud provider, runtime) is similarly undecided.
+- Staying on any specific cloud. Forward-looking spec, registry and leaderboard URLs use `openwop.dev`, so the services behind them can move without changing a public URL.
 - Migration of the repository to a different organization on a specific timeline (planned but not scheduled — gated on the tripwire described above and in `MAINTAINERS.md`).
 
 ## How to influence the roadmap
