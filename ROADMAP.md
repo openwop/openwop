@@ -20,7 +20,7 @@ See [`CHANGELOG.md`](./CHANGELOG.md) for the release record and [`docs/PROTOCOL-
 
 ## Candidates (gated)
 
-Each candidate ships only when its gate condition is met. The list is descriptive, not a commitment. A candidate is not an RFC and has no comment window running. The list is re-read at each corpus minor, and a maintainer removes a candidate whose gate no longer makes sense, noting the removal in the CHANGELOG.
+Each candidate ships only when its gate condition is met. The list is descriptive, not a commitment. A candidate is not an RFC and has no comment window running. The list is re-read at each corpus minor. A candidate with no adoption signal across two consecutive corpus minors is reviewed for withdrawal at the next one, and a maintainer removes any candidate whose gate no longer makes sense, noting the removal in the CHANGELOG.
 
 | Candidate | Gate |
 | --- | --- |
