@@ -29,6 +29,13 @@ Entries before this file was condensed carried full development detail. That tex
 - **Witness-coverage report sees `recordSchemaLeg`.** Its gate detector missed the private `onFamily` gate, so 24 advertisement scenarios witnessed nothing in the report. Moving the static legs exposed it: four families read v1-only while their v2 advertisement witnesses ran. Still 73/73.
 - **Correction to the 2.45.17 notes.** openwop-app's 304 failures were not spelling-dependent. A CDN edge answered `200` to the first conditional reaching a node that had not seen the object (hit-for-pass on a `no-store` response), then `304`. The witnesses are right, and intermittently red on such an origin.
 
+## [2.45.23] — 2026-10-06 — RFCs 0237–0239 Active; purpose labels and minted ids witnessed further
+
+- **RFC 0237 Active (window waived):** `nondeterminismPolicy.sources`; a `replay` fork reproduces each listed source, witnessed by `conformance-nondeterminism`. `declared: false` and `advertised: false` are not v2 states; both go at 3.0.
+- **RFC 0238 Active (window waived):** the front-end plugin boundary is observable (`uiPlugins.served`, the frame and request operations), with `v2-ui-plugin-boundary`; plus the `host.announce` erratum.
+- **RFC 0239 Active (window waived):** a council's roster has an input seat (`core.conversationGate` participants, `speakerId`) and two refusal codes, with `v2-multi-party-council`.
+- **Suite:** `0184.mint-no-tilde` also mints under the second-tenant credential; `v2-purpose-propagation-onward` reads the onward A2A hop through the §22 seam (seam-gated; a normative path is owed); WASM fixture packs replace the operator Rust build.
+
 ## [2.45.22] — 2026-10-06 — RFC 0236 Accepted; an empty `dataResidency.regions` still binds the reject leg
 
 - **RFC 0236 Accepted (provisional).** The v2 reference host's certified 2.45.21 cut (505/0/0) records all six host-event ids `executed-pass`; its gap rows close, so the packed `gaps.json` changes.
