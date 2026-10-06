@@ -17,9 +17,14 @@
  * `inapplicable` rather than a pass. Physical confinement is an operator SHOULD
  * and cannot be observed on the wire.
  *
- * Dispositions: discovery unreadable ⇒ `blocked`; `dataResidency` absent or no
- * advertised region ⇒ `inapplicable`; a 429 ⇒ `blocked` (the run budget, not
- * the wire).
+ * An empty `regions` list still binds the reject leg: the host honours
+ * residency in no region, so every constraint MUST be refused. Until 2.45.22
+ * both legs skipped on an empty list, so a host advertising no region that
+ * silently accepted and ignored every constraint passed.
+ *
+ * Dispositions: discovery unreadable ⇒ `blocked`; `dataResidency` absent or a
+ * malformed `regions` ⇒ `inapplicable`; an empty `regions` ⇒ `inapplicable` for
+ * the accept leg only; a 429 ⇒ `blocked` (the run budget, not the wire).
  *
  * @see spec/v2/core/runs.md §Refusals
  * @see spec/v2/core/runs.md §`dataResidency`
@@ -49,9 +54,11 @@ async function advertisedRegions(): Promise<string[] | { disposition: 'blocked' 
   if (!doc) return { disposition: 'blocked', reason: UNREADABLE };
   const rec = await familyAdvertised('dataResidency');
   if (!rec) return { disposition: 'inapplicable', reason: 'the host does not advertise dataResidency' };
-  const regions = Array.isArray(rec['regions']) ? rec['regions'].filter((r): r is string => typeof r === 'string' && r.length > 0) : [];
-  if (regions.length === 0) return { disposition: 'inapplicable', reason: 'dataResidency advertises no region (regions is empty or malformed; the record leg owns that)' };
-  return regions;
+  // An empty list is a claim, not an absence: the host honours residency in no
+  // region, so it MUST refuse every residency constraint. Only a malformed list
+  // is left to the record leg.
+  if (!Array.isArray(rec['regions'])) return { disposition: 'inapplicable', reason: 'dataResidency.regions is not an array (the record leg owns that)' };
+  return rec['regions'].filter((r): r is string => typeof r === 'string' && r.length > 0);
 }
 
 /** Cancel a run the host created, so a failing row leaves nothing behind. */
@@ -82,7 +89,8 @@ describe('v2 dataResidency admission (runs.md §dataResidency)', () => {
   it('a region inside dataResidency.regions is accepted', async () => {
     const regions = await advertisedRegions();
     if (!Array.isArray(regions)) return softSkip(regions.disposition, regions.reason);
-    const region = regions[0] as string;
+    const region = regions[0];
+    if (region === undefined) return softSkip('inapplicable', 'dataResidency.regions is empty: there is no advertised region to accept (the reject leg still binds)');
 
     const res = await http(() => driver.post('/runs', { workflowId: NOOP, residency: { region } }));
     if (res === null) return softSkip('blocked', 'POST /runs unreachable (fetch failed)');
