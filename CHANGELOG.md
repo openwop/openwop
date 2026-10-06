@@ -8,6 +8,7 @@ Entries before this file was condensed carried full development detail. That tex
 
 ## [Unreleased]
 
+- **RFC 0237 filed (Draft).** `nondeterminismPolicy` names its sources (`clock`, `random`, `id`, `env`, `x-*`), and a `replay` fork must reproduce each, witnessed by a fixture. `declared: false` and `envelopeContracts.advertised: false` are not v2 states; both booleans go at 3.0.
 - **2.45.22 cycle (suite):** `v2-data-residency-admission` runs its reject leg when `dataResidency.regions` is empty. Such a host must refuse every residency constraint; it used to skip both legs and pass while ignoring them.
 - **RFC 0236 Accepted (provisional).** Tier-1 evidence: the v2 reference host's certified public cut on suite 2.45.21 (505/0/0, build `9543718c`) records all six host-event ids `executed-pass`; gaps G1 and G2 close, so the packed `gaps.json` changes.
 - **2.45.21 cycle (suite):** `v2-host-event-delivery` splits no-fan-out into its own `it`, so `0236.webhook.host-variant` records a row. A bundle records one requirement id per `it`, and the shared `it` hid it.
