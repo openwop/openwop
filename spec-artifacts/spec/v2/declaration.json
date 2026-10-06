@@ -1272,17 +1272,19 @@
       "anchor": "core",
       "section": "core/capabilities.md#nondeterminismPolicy",
       "peerDependencyId": "nondeterminismPolicy",
-      "witness": "claims-check",
+      "witness": "witnessable-gated",
       "maturity": {
         "technical": "experimental",
         "adoption": "none"
       },
       "facets": [
-        "declared"
+        "declared",
+        "sources"
       ],
       "floorScenarios": [],
       "requirementIds": [],
-      "owningRfc": "0085"
+      "owningRfc": "0085",
+      "facetsFrom": "spec/v2/facets/nondeterminismPolicy.schema.json"
     },
     {
       "key": "workspace",

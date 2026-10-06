@@ -326,7 +326,7 @@ Witness `witnessable-gated`.
 
 ### § nondeterminismPolicy
 
-Witness `claims-check`.
+Witness `witnessable-gated`.
 
 ### § workspace
 

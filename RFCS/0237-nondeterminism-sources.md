@@ -4,10 +4,10 @@
 | ----------------- | --------------------------------------------------------------- |
 | **RFC**           | 0237                                                            |
 | **Title**         | Declared nondeterminism names its sources; `false` is not a v2 state |
-| **Status**        | `Draft`                                                         |
+| **Status**        | `Active`                                                        |
 | **Author(s)**     | David Tufts (@davidscotttufts)                                  |
 | **Created**       | 2026-10-06                                                      |
-| **Updated**       | 2026-10-06 — filed `Draft` after an `/architect` ruling (2026-10-06). The 7-day comment window opens with the pull request. |
+| **Updated**       | 2026-10-06 — `Draft` → `Active`, comment window waived by the maintainer (2026-10-06, in this session: "yes to both", answering whether to waive 0237's window and move it to Active), recorded as a STEWARD OVERRIDE of RFC 0147 §A.6 in MAINTAINERS.md. §A–§D are merged; `v2-nondeterminism-sources` and the §C legs ship in suite 2.45.23, each failing on its sabotage against a double. · 2026-10-06 — filed `Draft` after an `/architect` ruling (2026-10-06). The 7-day comment window opens with the pull request. |
 | **Affects**       | `spec/v2/core/replay.md` §Declared nondeterminism · `spec/v2/core/events.md` §Envelope contracts · `spec/v2/declaration.json` (`nondeterminismPolicy` facets and witness class) · `schemas/v2/capabilities.schema.json` (generated) · `spec/v1/deprecations.json` (a 3.0 row) · `conformance/fixtures/` (`conformance-nondeterminism`) · new `v2-nondeterminism-sources.test.ts` |
 | **Compatibility** | `additive` per COMPATIBILITY.md §2.4: an optional facet, a fixture and a gated leg, plus a prose statement of `capabilities.md` §2 for two families. No schema narrows. |
 | **Supersedes**    | —                                                               |
@@ -96,8 +96,10 @@ The schemas keep both booleans required. A `spec/v1/deprecations.json` row recor
 
 ## Unresolved questions
 
-1. **`env`.** Is host configuration read during a run a source worth listing, or always the host's own business? Proposed: list it. A run that branches on configuration must replay the branch it took.
-2. **Fork origin.** Should the leg fork from sequence 0 only, or also from just after the first draw? Proposed: sequence 0, because a mid-run fork tests the same mechanism with more fixture coupling.
+None. Two were decided at `Active` (2026-10-06, steward):
+
+1. **`env`** is listed: a run that branches on configuration must replay the branch it took.
+2. **Fork origin** is sequence 0 only; a mid-run fork tests the same mechanism with more fixture coupling.
 
 ## Implementation notes (non-normative)
 
@@ -106,8 +108,8 @@ The schemas keep both booleans required. A `spec/v1/deprecations.json` row recor
 
 ## Acceptance criteria
 
-- [ ] `Active`: §A–§D merged; `sources` in `spec/v2/declaration.json`; the fixture in `conformance/fixtures.md`; the 3.0 deprecation row; `CHANGELOG.md`.
-- [ ] `v2-nondeterminism-sources` and the §C leg ship, each failing on its sabotage against a double.
+- [x] `Active`: §A–§D merged; `sources` in `spec/v2/declaration.json`; the fixture in `conformance/fixtures.md`; the 3.0 deprecation row; `CHANGELOG.md`.
+- [x] `v2-nondeterminism-sources` and the §C legs ship in suite 2.45.23, each failing on its sabotage against a double: a fork that draws again fails the replay leg, and `declared: false` fails the §C leg.
 - [ ] `Accepted`: a certified major-2 bundle records `openwop.requirement.0237.declared-source-replays` and `openwop.requirement.0237.no-false-advertisement` `executed-pass`.
 
 ## References

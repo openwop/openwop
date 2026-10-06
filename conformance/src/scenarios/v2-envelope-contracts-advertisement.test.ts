@@ -37,4 +37,12 @@ describe('v2 envelopeContracts advertisement (events.md §Envelope contracts)', 
     if (out.kind === 'skip') return softSkip(out.disposition, out.reason);
     for (const x of out.findings) expect(x.ok, req(ID_RECORD, x.doc, x.message)).toBe(true);
   });
+
+  it('envelopeContracts.advertised is not false: a host that does not offer the family omits it', async () => {
+    const doc = await discovery();
+    if (!doc) return softSkip('blocked', UNREADABLE);
+    const rec = await familyAdvertised('envelopeContracts');
+    if (!rec) return softSkip('inapplicable', 'the host does not advertise envelopeContracts');
+    expect(rec['advertised'], req('openwop.requirement.0237.no-false-advertisement', 'RFC 0237 §C; capabilities.md §2', 'envelopeContracts.advertised: false is not a v2 state; a host that does not offer the family MUST omit it')).not.toBe(false);
+  });
 });

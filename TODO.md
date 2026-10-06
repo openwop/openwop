@@ -248,10 +248,9 @@ Defects outside the spec:
       residency nowhere and MUST refuse every constraint. Since 2.45.22 the reject leg binds there (it
       used to skip). At the next major, also decide whether `capabilities.md` §2 bars advertising a family
       with no region.
-- [ ] **RFC 0237** (`Draft`, 2026-10-06, window to 2026-10-13): `nondeterminismPolicy.sources[]` (closed
-      vocabulary `clock`/`random`/`id`/`env`/`x-*`; a `replay` fork reproduces each), witnessed by the
-      `conformance-nondeterminism` fixture; `declared: false` / `advertised: false` are not v2 states; both
-      booleans are removed at 3.0. It answers two of the five seats below.
+- [ ] **RFC 0237** (`Active` 2026-10-06, window waived): `nondeterminismPolicy.sources[]`. Owed for `Accepted`:
+      a host lists `sources`, installs `conformance-nondeterminism` (reserved `core.conformance.nondeterminism`),
+      and a certified bundle records `0237.declared-source-replays` and `0237.no-false-advertisement`.
 - [ ] **RFC 0238** (`Active` 2026-10-06, window waived): the plugin-origin seat. Owed for `Accepted`:
       openwop-app serves `getUiPluginFrame` and `dispatchUiPluginRequest` (both allowlist halves
       server-side), mounts plugins from the frame URL, installs `ui-plugin-pack-narrow` and

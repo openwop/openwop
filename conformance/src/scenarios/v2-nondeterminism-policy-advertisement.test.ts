@@ -5,7 +5,9 @@
  *
  *   record         the record validates against its capabilities-schema seat;
  *
- * Not here: recording every declared source needs a `sources[]` seat and a named event (TODO §8).
+ *   no-false       `declared: false` is not a v2 state (RFC 0237 §C);
+ *
+ * Not here: the replay of each declared source is `v2-nondeterminism-sources`.
  *
  * Dispositions: discovery unreadable ⇒ `blocked`; `nondeterminismPolicy` absent, or the
  * facet a leg reads absent ⇒ `inapplicable`.
@@ -37,5 +39,13 @@ describe('v2 nondeterminismPolicy advertisement (replay.md §Declared nondetermi
     const out = recordSchemaLeg(PROFILE, doc, 'nondeterminismPolicy', DOC);
     if (out.kind === 'skip') return softSkip(out.disposition, out.reason);
     for (const x of out.findings) expect(x.ok, req(ID_RECORD, x.doc, x.message)).toBe(true);
+  });
+
+  it('nondeterminismPolicy.declared is not false: a host that does not offer the family omits it', async () => {
+    const doc = await discovery();
+    if (!doc) return softSkip('blocked', UNREADABLE);
+    const rec = await familyAdvertised('nondeterminismPolicy');
+    if (!rec) return softSkip('inapplicable', 'the host does not advertise nondeterminismPolicy');
+    expect(rec['declared'], req('openwop.requirement.0237.no-false-advertisement', 'RFC 0237 §C; capabilities.md §2', 'nondeterminismPolicy.declared: false is not a v2 state; a host that does not offer the family MUST omit it')).not.toBe(false);
   });
 });

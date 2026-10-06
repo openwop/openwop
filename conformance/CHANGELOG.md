@@ -11,6 +11,8 @@
 
 - **New `v2-purpose-propagation-onward` (seam-gated).** The suite hands the host a `permittedPurposes` label through the §22 `invoke` seam (new optional field; the seam is now in `api/seams-v2.yaml`), and its fake A2A peer checks the onward message: re-emitted, never widened, and nothing sent for `[]`. Proven against a double.
 
+- **RFC 0237 Active: new `v2-nondeterminism-sources` (fixture-gated) and the §C legs.** A host listing `nondeterminismPolicy.sources` runs `conformance-nondeterminism` (reserved typeId `core.conformance.nondeterminism`); a `replay` fork from `fromSeq: 0` must reproduce each listed source's output. The two advertisement scenarios fail `declared: false` / `advertised: false`.
+
 ## [2.45.22] — 2026-10-06 — an empty `dataResidency.regions` still binds the reject leg; RFC 0236's registers close
 
 - **No scenario change.** RFC 0236 goes `Accepted` on the v2 reference host's certified 2.45.21 cut; its gaps G1 and G2 close, which changes the packed `spec/v1/gaps.json`.

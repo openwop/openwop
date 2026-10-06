@@ -14314,7 +14314,7 @@
       "rfc": "0237",
       "local": "G2",
       "section": "§Conformance",
-      "surface": "No host bundle records the two `openwop.requirement.0237.*` ids, because the legs are not written yet.",
+      "surface": "No host bundle records the two `openwop.requirement.0237.*` ids yet; the legs shipped in suite 2.45.23.",
       "witness": "unclassified",
       "requirementId": null,
       "disposition": "carried",

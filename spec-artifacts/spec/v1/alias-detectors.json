@@ -338,6 +338,18 @@
       "file": "spec/v1/node-packs.md",
       "token": "`RunSnapshot.parentNodeId`",
       "deprecation": "openwop.deprecation.subworkflow-parent-link-fields"
+    },
+    {
+      "alias": "nondeterminismPolicy.declared required boolean",
+      "file": "schemas/v2/capabilities.schema.json",
+      "token": "\"declared\": {",
+      "deprecation": "openwop.deprecation.v2-family-false-booleans"
+    },
+    {
+      "alias": "envelopeContracts.advertised required boolean",
+      "file": "schemas/v2/capabilities.schema.json",
+      "token": "Host's node-pack manifests carry `EnvelopeContract` blocks.",
+      "deprecation": "openwop.deprecation.v2-family-false-booleans"
     }
   ]
 }

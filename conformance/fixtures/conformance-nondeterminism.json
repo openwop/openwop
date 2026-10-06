@@ -1,0 +1,23 @@
+{
+  "id": "conformance-nondeterminism",
+  "name": "Conformance: Nondeterminism Sources",
+  "version": "1.0",
+  "description": "RFC 0237 §D. One core.conformance.nondeterminism node that draws one value per source the host lists in nondeterminismPolicy.sources into the run outputs. A replay fork MUST reproduce them. See conformance/fixtures.md.",
+  "nodes": [
+    {
+      "id": "draw",
+      "typeId": "core.conformance.nondeterminism",
+      "name": "Draw declared sources",
+      "position": { "x": 0, "y": 0 },
+      "config": {},
+      "inputs": {}
+    }
+  ],
+  "edges": [],
+  "triggers": [
+    { "id": "manual", "type": "manual", "enabled": true }
+  ],
+  "variables": [],
+  "metadata": { "tags": ["conformance"] },
+  "settings": { "timeout": 10000 }
+}

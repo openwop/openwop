@@ -11,7 +11,7 @@
 | JSON Schemas | 82 | `schemas/*.schema.json` |
 | OpenAPI operations | 59 | `api/openapi.yaml` |
 | AsyncAPI version | 3.1.0 | `api/asyncapi.yaml` |
-| Conformance scenario files | 648 | `conformance/src/scenarios/*.test.ts` |
+| Conformance scenario files | 649 | `conformance/src/scenarios/*.test.ts` |
 | RFCs tracked | 236 | `RFCS/[0-9][0-9][0-9][0-9]-*.md`, excluding template |
 
 ## Artifact Versions
@@ -71,8 +71,8 @@
 | Status | Count |
 |---|---:|
 | Accepted | 228 |
-| Active | 5 |
-| Draft | 2 |
+| Active | 6 |
+| Draft | 1 |
 | Superseded | 1 |
 
 | RFC | Title | Status |
@@ -310,7 +310,7 @@
 | RFC 0234 | an accepted RFC may set v1 end-of-support earlier than the computed date | Accepted |
 | RFC 0235 | `If-None-Match` is evaluated as HTTP defines it | Accepted |
 | RFC 0236 | Host events - events without a run-log position | Accepted |
-| RFC 0237 | Declared nondeterminism names its sources; `false` is not a v2 state | Draft |
+| RFC 0237 | Declared nondeterminism names its sources; `false` is not a v2 state | Active |
 | RFC 0238 | a host's front-end plugin boundary is observable | Active |
 | RFC 0239 | a council's roster has an input seat and its refusals have codes | Active |
 
@@ -336,8 +336,8 @@ The pack registry now lives in the [`openwop-registry`](https://github.com/openw
 
 ## Active Follow-Ups
 
-- 2 RFCs still `Draft` (RFC 0038, RFC 0237) — advance with schema/conformance proof or defer.
-- 5 RFCs `Active` (RFC 0121, RFC 0222, RFC 0228, RFC 0238, RFC 0239) — wire-shape MAY shift compatibly within v1.x until promotion to `Accepted`.
+- 1 RFC still `Draft` (RFC 0038) — advance with schema/conformance proof or defer.
+- 6 RFCs `Active` (RFC 0121, RFC 0222, RFC 0228, RFC 0237, RFC 0238, RFC 0239) — wire-shape MAY shift compatibly within v1.x until promotion to `Accepted`.
 - External audit, non-steward host recruitment, and non-steward maintainer recruitment remain external-action gates.
 - Multi-region idempotency and some optional-profile behavior checks remain lower-confidence than the core wire contract.
 
