@@ -1,0 +1,9 @@
+# RFC 0236 — Gap register
+
+| ID | Section | Question / Missing Input | Owner | Resolution Path | Blocks |
+| --- | --- | --- | --- | --- | --- |
+| G1 | §G, §A–§E | The v2 reference host serves `/host/events` and durable webhooks but no host-event envelope, tenant gate on the stream, emit seam or webhook host body. | Reference Implementation Architect | `closed` 2026-10-05 — openwop-examples #155 implements §A–§G and advertises the two `example.*` types; the certified 2.45.21 cut (build `commit:9543718c`) records every leg `executed-pass`. | A reference-host certification on the suite that ships the legs. |
+| G2 | §Conformance | No host bundle records the six `openwop.requirement.0236.*` ids, because the legs are not written yet. | Conformance Architect | `closed` 2026-10-05 — the v2 reference host's certified 2.45.21 cut records all six `openwop.requirement.0236.*` ids `executed-pass` (`evidence/v2-host-bundles/openwop-host-v2-reference.json`). | `Accepted` |
+| G3 | §B | The two heartbeat messages keep their bare shape on the `hostEvents` channel and are not §A envelopes; `heartbeat.stateChanged` also breaks the `events.md` §Naming grammar. | Spec Architect | `externally-gated:next-major` Wrap them in the §A envelope and rename at the next major; wrapping now breaks every heartbeat consumer. | — |
+| G4 | §F | `channel.presence` stays in the v2 run-event union, deprecated. | Spec Architect | `externally-gated:next-major` Remove it from the union at the next major. | — |
+| G5 | Motivation | openwop-app delivers runless host events to major-2 webhooks under a pseudo `runId` and three-segment type names. | Reference Implementation Architect | `externally-gated:openwop-app-adr-0812` The host renames its types, advertises `hostEvents` and moves to the host body (its ADR). | Tier-2 evidence only. |

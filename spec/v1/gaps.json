@@ -1,7 +1,7 @@
 {
   "$schema": "./gaps.schema.json",
   "version": 1,
-  "updated": "2026-10-05",
+  "updated": "2026-10-06",
   "witnessClasses": [
     "witnessable-unaided",
     "witnessable-gated",
@@ -14204,6 +14204,142 @@
         {
           "file": "RFCS/registers/0235-if-none-match-evaluation.gaps.md",
           "token": "G2"
+        }
+      ]
+    },
+    {
+      "id": "openwop.gap.0236.1",
+      "rfc": "0236",
+      "local": "G1",
+      "section": "§G, §A–§E",
+      "surface": "The v2 reference host serves `/host/events` and durable webhooks but no host-event envelope, tenant gate on the stream, emit seam or webhook host body.",
+      "witness": "unclassified",
+      "requirementId": null,
+      "disposition": "closed",
+      "target": null,
+      "sources": [
+        {
+          "file": "RFCS/registers/0236-host-events.gaps.md",
+          "token": "G1"
+        }
+      ]
+    },
+    {
+      "id": "openwop.gap.0236.2",
+      "rfc": "0236",
+      "local": "G2",
+      "section": "§Conformance",
+      "surface": "No host bundle records the six `openwop.requirement.0236.*` ids, because the legs are not written yet.",
+      "witness": "unclassified",
+      "requirementId": null,
+      "disposition": "closed",
+      "target": null,
+      "sources": [
+        {
+          "file": "RFCS/registers/0236-host-events.gaps.md",
+          "token": "G2"
+        }
+      ]
+    },
+    {
+      "id": "openwop.gap.0236.3",
+      "rfc": "0236",
+      "local": "G3",
+      "section": "§B",
+      "surface": "The two heartbeat messages keep their bare shape on the `hostEvents` channel and are not §A envelopes; `heartbeat.stateChanged` also breaks the `events.md` §Naming grammar.",
+      "witness": "unclassified",
+      "requirementId": null,
+      "disposition": "externally-gated",
+      "target": "next-major",
+      "sources": [
+        {
+          "file": "RFCS/registers/0236-host-events.gaps.md",
+          "token": "G3"
+        }
+      ]
+    },
+    {
+      "id": "openwop.gap.0236.4",
+      "rfc": "0236",
+      "local": "G4",
+      "section": "§F",
+      "surface": "`channel.presence` stays in the v2 run-event union, deprecated.",
+      "witness": "unclassified",
+      "requirementId": null,
+      "disposition": "externally-gated",
+      "target": "next-major",
+      "sources": [
+        {
+          "file": "RFCS/registers/0236-host-events.gaps.md",
+          "token": "G4"
+        }
+      ]
+    },
+    {
+      "id": "openwop.gap.0236.5",
+      "rfc": "0236",
+      "local": "G5",
+      "section": "Motivation",
+      "surface": "openwop-app delivers runless host events to major-2 webhooks under a pseudo `runId` and three-segment type names.",
+      "witness": "unclassified",
+      "requirementId": null,
+      "disposition": "externally-gated",
+      "target": "openwop-app-adr-0812",
+      "sources": [
+        {
+          "file": "RFCS/registers/0236-host-events.gaps.md",
+          "token": "G5"
+        }
+      ]
+    },
+    {
+      "id": "openwop.gap.0237.1",
+      "rfc": "0237",
+      "local": "G1",
+      "section": "§D",
+      "surface": "No host installs `conformance-nondeterminism` or lists `nondeterminismPolicy.sources`.",
+      "witness": "unclassified",
+      "requirementId": null,
+      "disposition": "externally-gated",
+      "target": "v2-reference-nondeterminism-fixture",
+      "sources": [
+        {
+          "file": "RFCS/registers/0237-nondeterminism-sources.gaps.md",
+          "token": "G1"
+        }
+      ]
+    },
+    {
+      "id": "openwop.gap.0237.2",
+      "rfc": "0237",
+      "local": "G2",
+      "section": "§Conformance",
+      "surface": "No host bundle records the two `openwop.requirement.0237.*` ids, because the legs are not written yet.",
+      "witness": "unclassified",
+      "requirementId": null,
+      "disposition": "carried",
+      "target": "openwop.gap.0237.2",
+      "sources": [
+        {
+          "file": "RFCS/registers/0237-nondeterminism-sources.gaps.md",
+          "token": "G2"
+        }
+      ]
+    },
+    {
+      "id": "openwop.gap.0237.3",
+      "rfc": "0237",
+      "local": "G3",
+      "section": "§C",
+      "surface": "The two required booleans stay in v2 (`overview.md` §0a predicate 4).",
+      "witness": "unclassified",
+      "requirementId": null,
+      "disposition": "externally-gated",
+      "target": "next-major",
+      "sources": [
+        {
+          "file": "RFCS/registers/0237-nondeterminism-sources.gaps.md",
+          "token": "G3"
         }
       ]
     },

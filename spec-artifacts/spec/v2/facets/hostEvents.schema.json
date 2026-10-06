@@ -1,0 +1,33 @@
+{
+  "$comment": "RFC 0236 §B — every host-event type the host emits, with its delivery class; a type's class never varies",
+  "properties": {
+    "types": {
+      "type": "array",
+      "minItems": 1,
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": [
+          "type",
+          "delivery"
+        ],
+        "properties": {
+          "type": {
+            "type": "string",
+            "pattern": "^[a-z][a-z0-9]*(-[a-z0-9]+)*\\.[a-z][a-z0-9]*(-[a-z0-9]+)*$"
+          },
+          "delivery": {
+            "type": "string",
+            "enum": [
+              "durable",
+              "ephemeral"
+            ]
+          }
+        }
+      }
+    }
+  },
+  "required": [
+    "types"
+  ]
+}

@@ -15,7 +15,7 @@
   },
   "waivers": {
     "source": "RFCS/*.md, RFCS/registers/*",
-    "bootstrapWaiversExercised": 113,
+    "bootstrapWaiversExercised": 114,
     "rfcs": [
       "0042",
       "0043",
@@ -129,11 +129,12 @@
       "0232",
       "0233",
       "0234",
-      "0235"
+      "0235",
+      "0236"
     ],
     "retrospectiveReviewsCompleted": 0,
     "outcomes": {
-      "not-reviewed": 113
+      "not-reviewed": 114
     }
   },
   "audit": {
@@ -164,13 +165,13 @@
   },
   "versions": {
     "source": "conformance/package.json, CHANGELOG.md",
-    "conformanceSuite": "2.45.19",
-    "corpusRelease": "2.45.19",
-    "corpusReleaseDate": "2026-10-05"
+    "conformanceSuite": "2.45.23",
+    "corpusRelease": "2.45.22",
+    "corpusReleaseDate": "2026-10-06"
   },
   "risks": {
     "source": "RFCS/registers/*.risks.md + RFCS/*.risks.md (RFC 0166 tokens)",
-    "rowsScanned": 494,
+    "rowsScanned": 502,
     "openCriticalOrHigh": [
       {
         "rfc": "0058",

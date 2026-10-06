@@ -216,10 +216,21 @@ Defects outside the spec:
 
 - [x] **Schema descriptions still say `.supported`.** Swept in 2.45.18: 38 descriptions in 15
       schemas now say "advertises `X`".
-- [ ] **MUSTs that live only in schema descriptions.** `channel-presence-payload`: not persisted
-      or replayed, never delivered to a non-member, and emitted whenever `channelPresence` is
-      advertised. `conversation.md` §channelPresence states none of them. Needs an /architect
-      ruling: restate them in the normative home, or drop them.
+- [x] **MUSTs that live only in schema descriptions.** /architect ruling 2026-10-05: `channelPresence`'s
+      advertise ⇒ emit and no-delivery-to-a-non-member rules are restated in `conversation.md`,
+      witnessed by `v2-channel-presence-delivery` through the §13 seam (ported to `api/seams-v2.yaml`
+      with an `observer` field), and invariant `channel-presence-member-only-delivery` is added.
+- [x] **RFC owed: a v2 home for runless vendor host events.** → RFC 0236 (Active 2026-10-05). openwop-app (ADR 0812) delivers runless host
+      events to major-2 webhook subscriptions with a `hostext:` pseudo-`runId`. That fails
+      `webhook-delivery.schema.json`: v2 webhooks carry run events only (`webhooks.md` §Delivery), and
+      `hostEvents` admits only the two heartbeat messages. Ruled 2026-10-05: no major-2 webhook delivery,
+      no pseudo-ids. Likely one RFC with the ephemeral class below (events with no log position).
+- [x] **RFC owed: an ephemeral delivery class in `events.md`.** → RFC 0236 (Active 2026-10-05). RFC 0110 says `channel.presence` MUST
+      NOT be persisted and is replay-invisible. Yet `events.md` §1 makes a run its log, and the
+      envelope requires `sequence`, a log position. Restating the rule would contradict core;
+      dropping it lets a fork replay stale presence. Options: a non-`RunEvent` frame with no
+      `sequence`, excluded from resumption, poll, snapshot, fork and fan-out (annotations and typing
+      want the same class), or a channel-scoped stream. `conversation.md` names it open. Owner: the user.
 - [x] **No leg witnesses identity.md §5 "MUST NOT mint a tenant-bound id containing `~`".** Leg `0184.mint-no-tilde` (2.45.19).
       openwop-app minted `user~3A<hash>/<id>` for personal/org tenants (app ADR 0814). Witness only
       ids the run itself mints (a created run's bound `runId`), never every body id, because ids
@@ -231,9 +242,16 @@ Defects outside the spec:
 - [x] **RFC 0235** `Accepted` (provisional) 2026-10-05 on the v2 reference host's certified 2.45.18
       cut (497/0/0, build `e5f27708`). Owed: the RFC 0156 §B review. MyndHyve implements RFC 9110 and
       was invited to cut on 2.45.18; openwop-app's public origin still has the CDN-edge `304` issue.
-- [ ] **`dataResidency.regions` has no `minItems`.** `regions: []` validates, so the "accept an
-      advertised region" rule can never apply. Adding `minItems: 1` narrows the schema and needs an
-      RFC.
+- [x] **RFC 0236** `Accepted` (provisional) 2026-10-05 on the v2 reference host's certified 2.45.21 cut (505/0/0, build `9543718c`). Owed: the RFC 0156 §B review; openwop-app ADR 0812 is the tier-2 follow-on.
+- [ ] **Next major: `dataResidency.regions` `minItems: 1`.** /architect ruling 2026-10-05: narrowing is a major
+      (COMPATIBILITY.md §2.4), and not a safety fix. Within v2 an empty list is a claim: the host honours
+      residency nowhere and MUST refuse every constraint. Since 2.45.22 the reject leg binds there (it
+      used to skip). At the next major, also decide whether `capabilities.md` §2 bars advertising a family
+      with no region.
+- [ ] **RFC 0237** (`Draft`, 2026-10-06, window to 2026-10-13): `nondeterminismPolicy.sources[]` (closed
+      vocabulary `clock`/`random`/`id`/`env`/`x-*`; a `replay` fork reproduces each), witnessed by the
+      `conformance-nondeterminism` fixture; `declared: false` / `advertised: false` are not v2 states; both
+      booleans are removed at 3.0. It answers two of the five seats below.
 - [ ] **RFCs owed before these legs can bind:** a plugin-origin seat so the four `uiPlugins`
       invariants keep a witness after v1 (they are seam-gated and v2 mounts no plugin seam); a
       roster input seat and refusal codes for `multiPartyConversation`; a

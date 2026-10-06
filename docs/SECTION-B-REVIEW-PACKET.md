@@ -6,7 +6,7 @@
 
 RFC 0156 §B: RFCs affecting auth, identity, tenant isolation, secrets, packs, execution sandboxing, idempotency, replay, external effects, conformance/certification, or governance **MUST** receive a retrospective **cross-organization** review. Every RFC below was accepted with its public comment window shortened, either under the bootstrap waiver or by explicit steward override of RFC 0147 §A.6. Each such acceptance is **provisional** until a reviewer from an organization other than the steward's records an outcome.
 
-This packet is for that reviewer. **113 RFCs are listed; 113 have no discharging outcome.** The steward, the steward's sessions, and steward-affiliated hosts (MyndHyve is tier-2, not independent) cannot supply the review. Recording one of their reviews as `ratified` is the substitution §B's last clause forbids.
+This packet is for that reviewer. **114 RFCs are listed; 114 have no discharging outcome.** The steward, the steward's sessions, and steward-affiliated hosts (MyndHyve is tier-2, not independent) cannot supply the review. Recording one of their reviews as `ratified` is the substitution §B's last clause forbids.
 
 ## How to review one RFC
 
@@ -43,7 +43,7 @@ Grouping below is a reading aid only: it assigns each RFC to the risk class its 
 | [0233](../RFCS/0233-connection-provider-registry-read.md) | a host's connection providers and refused registrations are readable | `Accepted` | steward override of RFC 0147 §A.6 | tier-1 — steward-verified: openwop-app, the steward-operated production host at `app | `not-reviewed` |
 | [0235](../RFCS/0235-if-none-match-evaluation.md) | `If-None-Match` is evaluated as HTTP defines it | `Accepted` | steward override of RFC 0147 §A.6 | tier-1 — the v2 reference host | `not-reviewed` |
 
-## Tenant isolation (5)
+## Tenant isolation (6)
 
 | RFC | Title | Status | Waiver | Evidence tier | Outcome |
 | --- | --- | --- | --- | --- | --- |
@@ -52,6 +52,7 @@ Grouping below is a reading aid only: it assigns each RFC to the risk class its 
 | [0208](../RFCS/0208-v2-a2a-mcp-operation-mappings.md) | v2 homes the A2A and MCP operation mappings | `Accepted` | steward override of RFC 0147 §A.6 | tier-1 — the v2 reference host | `not-reviewed` |
 | [0211](../RFCS/0211-a2a-error-details-are-errorinfo.md) | an A2A error's details are an ErrorInfo, and an A2A interface never answers in the OpenWOP envelope | `Accepted` | steward override of RFC 0147 §A.6 | tier-1 — the v2 reference host | `not-reviewed` |
 | [0215](../RFCS/0215-webhook-delivery-isolation.md) | a webhook delivery does not wait on another subscription's receiver, and an unregistered subscription gets no… | `Accepted` | steward override of RFC 0147 §A.6 | tier-2 — MyndHyve | `not-reviewed` |
+| [0236](../RFCS/0236-host-events.md) | Host events — events without a run-log position | `Accepted` | steward override of RFC 0147 §A.6 | tier-1 — the v2 reference host | `not-reviewed` |
 
 ## Secrets (2)
 

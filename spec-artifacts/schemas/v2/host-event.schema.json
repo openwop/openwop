@@ -1,0 +1,81 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://openwop.dev/spec/v2/host-event.schema.json",
+  "title": "HostEvent",
+  "description": "RFC 0236 §A — an event that belongs to no run. It carries no `runId` and no `sequence`, and no run's log contains it. Delivered on the `hostEvents` channel and, when durable, through webhooks (`events.md` §Host events, `webhooks.md` §Delivery). `delivery` MUST equal the class the host advertises for `type` in its `hostEvents` record.",
+  "type": "object",
+  "required": [
+    "eventId",
+    "type",
+    "timestamp",
+    "delivery",
+    "payload"
+  ],
+  "additionalProperties": false,
+  "properties": {
+    "eventId": {
+      "$ref": "ids.schema.json#/$defs/eventId",
+      "description": "Unique per host; identical on every delivery attempt of this event."
+    },
+    "type": {
+      "type": "string",
+      "pattern": "^[a-z][a-z0-9]*(-[a-z0-9]+)*\\.[a-z][a-z0-9]*(-[a-z0-9]+)*$",
+      "description": "A protocol host-event type (`channel.presence`) or a vendor type `org.name` whose org is registered (`events.md` §Naming)."
+    },
+    "timestamp": {
+      "type": "string",
+      "format": "date-time",
+      "description": "When the host produced the event (RFC 3339)."
+    },
+    "delivery": {
+      "type": "string",
+      "enum": [
+        "durable",
+        "ephemeral"
+      ],
+      "description": "`ephemeral`: never persisted, never redelivered, never fanned out. `durable`: resumable by `eventId` and webhook-deliverable."
+    },
+    "workspaceId": {
+      "$ref": "ids.schema.json#/$defs/workspaceId",
+      "description": "Present exactly when the event belongs to a workspace (`identity.md` §1)."
+    },
+    "payload": {
+      "type": "object",
+      "additionalProperties": true,
+      "description": "For a protocol type, its registered payload schema. A vendor payload MUST NOT carry secret material (SR-1)."
+    }
+  },
+  "allOf": [
+    {
+      "if": {
+        "properties": {
+          "type": {
+            "const": "channel.presence"
+          }
+        }
+      },
+      "then": {
+        "properties": {
+          "delivery": {
+            "const": "ephemeral"
+          },
+          "payload": {
+            "$ref": "channel-presence-payload.schema.json"
+          }
+        }
+      }
+    }
+  ],
+  "examples": [
+    {
+      "eventId": "hev-01J9ZK3Q8W2M4N6P7R8S",
+      "type": "example.thing-happened",
+      "timestamp": "2026-10-05T12:00:00Z",
+      "delivery": "durable",
+      "workspaceId": "ws-acme",
+      "payload": {
+        "thingId": "t-1"
+      }
+    }
+  ]
+}

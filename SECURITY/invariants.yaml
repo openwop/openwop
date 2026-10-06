@@ -2823,6 +2823,37 @@ invariants:
     witness: witnessable-gated
     witnessReview: initial-mechanical-2026-09-02
 
+  - id: channel-presence-member-only-delivery
+    tier: protocol
+    severity: high
+    threat_model: SECURITY/threat-model-secret-leakage.md
+    tests:
+      - conformance/src/scenarios/v2-channel-presence-delivery.test.ts
+    note: |
+      RFC 0110; conversation.md §channelPresence. A host advertising
+      channelPresence MUST NOT deliver channel.presence to a non-member of
+      the channel, nor across tenants. Observable only through the §13
+      snapshot seam with a non-member `observer`. The cross-tenant half
+      needs a second tenant's credential and is unwitnessed. Mirrors CTI-1.
+    witness: seam-gated
+    witnessReview: reviewed-2026-10-05
+
+  - id: host-event-tenant-isolation
+    tier: protocol
+    severity: high
+    threat_model: SECURITY/threat-model-secret-leakage.md
+    tests:
+      - conformance/src/scenarios/v2-host-event-delivery.test.ts
+    note: |
+      RFC 0236 §D; events.md §Host events. Every host event, and every
+      heartbeat a tenant owns, is delivered only to that tenant's
+      subscribers on the hostEvents channel; a webhook subscription receives only
+      host events of its own tenant. Witnessed with a second tenant's
+      credential (OPENWOP_TEST_TENANT_B_API_KEY) through the §G emit seam.
+      Mirrors CTI-1.
+    witness: seam-gated
+    witnessReview: reviewed-2026-10-05
+
   - id: annotation-content-redaction
     tier: protocol
     severity: high

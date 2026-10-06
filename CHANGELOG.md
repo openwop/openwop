@@ -8,6 +8,13 @@ Entries before this file was condensed carried full development detail. That tex
 
 ## [Unreleased]
 
+- **RFC 0237 filed (Draft).** `nondeterminismPolicy` names its sources (`clock`, `random`, `id`, `env`, `x-*`), and a `replay` fork must reproduce each, witnessed by a fixture. `declared: false` and `envelopeContracts.advertised: false` are not v2 states; both booleans go at 3.0.
+- **2.45.22 cycle (suite):** `v2-data-residency-admission` runs its reject leg when `dataResidency.regions` is empty. Such a host must refuse every residency constraint; it used to skip both legs and pass while ignoring them.
+- **RFC 0236 Accepted (provisional).** Tier-1 evidence: the v2 reference host's certified public cut on suite 2.45.21 (505/0/0, build `9543718c`) records all six host-event ids `executed-pass`; gaps G1 and G2 close, so the packed `gaps.json` changes.
+- **2.45.21 cycle (suite):** `v2-host-event-delivery` splits no-fan-out into its own `it`, so `0236.webhook.host-variant` records a row. A bundle records one requirement id per `it`, and the shared `it` hid it.
+- **RFC 0236 Active (window waived): host events.** `events.md` §Host events, a `hostEvents` family, `host-event.schema.json`, a `{ hostEvent }` webhook body and dead-letter record, an emit seam, `channel.presence` as an ephemeral host event, and the `hostEvents` channel tenant-scoped.
+- **RFC 0236 filed (Draft): host events.** A runless, tenant-scoped envelope with no `runId` or `sequence`, `durable` or `ephemeral`, on `/host/events` and (durable) webhooks. It gives `channel.presence` a lawful shape and runless vendor events a home (openwop-app ADR 0812).
+- **`channelPresence` restated at v2.** `conversation.md` adds RFC 0110's advertise ⇒ emit and no-delivery-to-a-non-member rules, witnessed by `v2-channel-presence-delivery` through the §13 seam (now in `api/seams-v2.yaml`) and invariant `channel-presence-member-only-delivery`.
 - **RFC 0235 Accepted (provisional).** Tier-1 evidence: the v2 reference host's certified public cut on published suite 2.45.18 (build `e5f27708`, 497/0/0) records all four `If-None-Match` requirement ids `executed-pass`. Gaps G1 and G2 closed; risk R1 mitigated.
 - **2.45.19 cycle (suite):** new leg `0184.mint-no-tilde` — a host MUST NOT mint a tenant-bound id containing `~` (RFC 0184 §A.2). It bites only when the suite's credential sits in a non-clean tenant; openwop-app's defect (app ADR 0814) hid behind `default`.
 - **Erratum: `identity.md` §5 grammar table matches `ids.schema.json` again.** `tenantId` gets its own row with the `anon:` prefix its pattern has had since 2.0.0. `typeId` gains the `@<semver>` pin from RFC 0187. No wire change. `check-id-kinds-bound` now compares the table against the schema.
@@ -16,6 +23,20 @@ Entries before this file was condensed carried full development detail. That tex
 - **2.45.18 cycle (suite):** the corpus-only legs of the `v2-*-static` scenarios move to `src/coherence/` and leave the host bundle (`conformance.md` §Two products). `.supported` wording leaves 38 v2 schema descriptions (presence is the claim). No rule changed.
 - **Witness-coverage report sees `recordSchemaLeg`.** Its gate detector missed the private `onFamily` gate, so 24 advertisement scenarios witnessed nothing in the report. Moving the static legs exposed it: four families read v1-only while their v2 advertisement witnesses ran. Still 73/73.
 - **Correction to the 2.45.17 notes.** openwop-app's 304 failures were not spelling-dependent. A CDN edge answered `200` to the first conditional reaching a node that had not seen the object (hit-for-pass on a `no-store` response), then `304`. The witnesses are right, and intermittently red on such an origin.
+
+## [2.45.22] — 2026-10-06 — RFC 0236 Accepted; an empty `dataResidency.regions` still binds the reject leg
+
+- **RFC 0236 Accepted (provisional).** The v2 reference host's certified 2.45.21 cut (505/0/0) records all six host-event ids `executed-pass`; its gap rows close, so the packed `gaps.json` changes.
+- **`v2-data-residency-admission` runs its reject leg on an empty `regions` list.** Such a host honours residency nowhere and must refuse every constraint; it used to skip both legs. Adding `minItems: 1` is a major, recorded for the next one.
+
+## [2.45.21] — 2026-10-05 — `0236.webhook.host-variant` records its own row
+
+- **`v2-host-event-delivery` splits no-fan-out into its own `it`.** A bundle records one requirement id per `it`, so the 2.45.20 webhook `it` recorded only no-fan-out and hid `0236.webhook.host-variant`. Found by the v2 reference host's loopback rehearsal; all six RFC 0236 ids now record.
+
+## [2.45.20] — 2026-10-05 — host events (RFC 0236 Active); `channelPresence` restated at v2
+
+- **RFC 0236 Active: host events.** A runless, tenant-scoped envelope (no `runId`, no `sequence`), `durable` or `ephemeral` per type in a new `hostEvents` family, on `/host/events` and (durable) webhooks as `{ hostEvent }`. New `v2-host-event-delivery` (six ids); the v2 reference host passes it on a branch.
+- **`channelPresence` restated at v2.** Advertise ⇒ emit and no delivery to a non-member, witnessed through the §13 seam (now in `api/seams-v2.yaml`); `channel.presence` becomes an ephemeral host event. Two new invariants: `channel-presence-member-only-delivery`, `host-event-tenant-isolation`.
 
 ## [2.45.19] — 2026-10-05 — a minted tenant-bound id carries no `~`; RFC 0235 Accepted
 

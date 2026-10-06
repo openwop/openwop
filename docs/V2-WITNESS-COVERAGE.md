@@ -8,11 +8,11 @@ Every v2 core family now has a v2 normative home (RFC 0189). Many of its rules a
 
 ## Headline
 
-- **Families (73 core):** 73 v2-witnessed, 0 v1-only, 0 unwitnessed. Of the 54 `witnessable-gated` families, 0 are v1-only; every unwitnessed family is `claims-check`.
+- **Families (74 core):** 74 v2-witnessed, 0 v1-only, 0 unwitnessed. Of the 55 `witnessable-gated` families, 0 are v1-only; every unwitnessed family is `claims-check`.
 - **At v1 end-of-support:** the 0 v1-only families, and the 0 obligation units attributed to them, lose their only witness.
-- **Obligation units (892 in `spec/v2/core/`):** 588 (66%) sit in a section a major-2 scenario cites; 304 sit in 104 sections no major-2 scenario cites.
+- **Obligation units (898 in `spec/v2/core/`):** 595 (66%) sit in a section a major-2 scenario cites; 303 sit in 103 sections no major-2 scenario cites.
 - **Declaration links:** 0 core families declare `floorScenarios`; 2 declare `requirementIds`. The family-to-test link exists only in scenario code and citations, although `overview.md` §What a MUST means says every core MUST has an id in `requirements.json`.
-- **Scenarios:** 642 registered, 202 run at major 2. 33 major-2 citations name a v2 core section this script cannot match to a heading (see Citation gaps).
+- **Scenarios:** 644 registered, 204 run at major 2. 33 major-2 citations name a v2 core section this script cannot match to a heading (see Citation gaps).
 
 ## How to read it
 
@@ -28,7 +28,7 @@ Every v2 core family now has a v2 normative home (RFC 0189). Many of its rules a
 | --- | --- | --- | --- | --- | --- |
 | `production` | witnessable-gated | **v2-witnessed** | 49 (26) | `jcs-vectors`, `v2-bundle-v3-signed`, `v2-coherence-not-in-bundle`, `v2-relaxation-recorded` | `grpc-transport`, `production-backpressure`, `production-retention-expiry` |
 | `interrupt` | witnessable-gated | **v2-witnessed** | 46 (43) | `v2-approval-reject-disposition`, `v2-approver-enforced`, `v2-bound-id-kinds`, `v2-callback-url-guarded` +4 | `interrupt-approver-routing` |
-| `webhooks` | witnessable-gated | **v2-witnessed** | 37 (37) | `inbound-credential-no-passthrough`, `v2-a2a-operation-map`, `v2-bound-id-kinds`, `v2-trigger-bridge-delivery` +11 | `webhook-negative`, `webhook-sig-algorithm`, `webhook-signed-delivery`, `webhook-tenant-isolation` |
+| `webhooks` | witnessable-gated | **v2-witnessed** | 38 (38) | `inbound-credential-no-passthrough`, `v2-a2a-operation-map`, `v2-bound-id-kinds`, `v2-host-event-delivery` +12 | `webhook-negative`, `webhook-sig-algorithm`, `webhook-signed-delivery`, `webhook-tenant-isolation` |
 | `replay` | witnessable-gated | **v2-witnessed** | 36 (19) | `v2-a2a-push-delivery`, `v2-approval-reject-disposition`, `v2-effect-seam-manifest`, `v2-effect-seam-no-refire` +8 | `conversationReplayDeterminism`, `feedback-fork-not-copied`, `replay-fanout-suppression`, `replay-side-effect-suppression` |
 | `eventLog` | claims-check | **v2-witnessed** | 35 (25) | `v2-era-2-append-vocabulary`, `v2-era-key`, `v2-era-stamp-universal`, `v2-fork-a-v1-run` +3 | `cross-engine-append-behavior`, `cross-engine-append-ordering`, `multi-region-idempotency` |
 | `packs` | claims-check | **v2-witnessed** | 35 (20) | `v2-manifest-ceiling-refused`, `v2-manifest-hatch-carried`, `v2-peer-dependency-declared`, `v2-registry-lifecycle` | `pack-registry-isolation` |
@@ -60,12 +60,14 @@ Every v2 core family now has a v2 normative home (RFC 0189). Many of its rules a
 | `envelopeStrictness` | claims-check | **v2-witnessed** | 3 (3) | `v2-a2ui-v09-surface`, `v2-envelope-reasoning-shape` | – |
 | `fs` | witnessable-gated | **v2-witnessed** | 3 (3) | `v2-fs-sandbox-escape-refused` | `fs-path-traversal` |
 | `heartbeat` | witnessable-gated | **v2-witnessed** | 3 (3) | `v2-stream-mode-refusal` | `heartbeat-capability-shape`, `heartbeat-fires-once-per-tick`, `heartbeat-idempotent-no-spam`, `heartbeat-runtime-bound` |
+| `hostEvents` | witnessable-gated | **v2-witnessed** | 3 (3) | `v2-host-event-delivery`, `v2-stream-mode-refusal` | – |
 | `modelCapabilities` | witnessable-gated | **v2-witnessed** | 3 (0) | `v2-model-capabilities-advertisement` | `envelope-variant-discriminator-static`, `model-capability-insufficient`, `model-capability-substituted`, `node-module-required-capabilities-shape` |
 | `multiPartyConversation` | witnessable-gated | **v2-witnessed** | 3 (0) | `v2-multi-party-conversation-advertisement` | `multi-party-conversation-behavioral`, `multi-party-conversation-shape` |
 | `nodePackRuntimes` | claims-check | **v2-witnessed** | 3 (0) | `v2-node-pack-runtimes-advertisement` | `wasm-pack-abi-version-rejection`, `wasm-pack-invoke-completed`, `wasm-pack-invoke-suspended`, `wasm-pack-load` +2 |
 | `nosql` | claims-check | **v2-witnessed** | 3 (0) | `v2-storage-cross-tenant-isolation` | – |
 | `sql` | witnessable-gated | **v2-witnessed** | 3 (0) | `v2-storage-cross-tenant-isolation` | `sql-injection-rejection`, `sql-transaction-atomicity` |
 | `agents` | witnessable-gated | **v2-witnessed** | 2 (0) | `v2-a2a-agent-cards`, `v2-agent-org-chart-served-shape`, `v2-dispatch-input-mapping` | `agent-capability-degraded-projection`, `agent-channel-dispatch`, `agent-deployment-lifecycle`, `agent-eval-run` +17 |
+| `channelPresence` | witnessable-gated | **v2-witnessed** | 2 (2) | `v2-channel-presence-advertisement`, `v2-channel-presence-delivery`, `v2-host-event-delivery` | `channel-presence-behavioral`, `channel-presence-shape` |
 | `conversationPrimitive` | claims-check | **v2-witnessed** | 2 (0) | `v2-conversation-turn-model-provenance`, `v2-conversation-turn-parts` | `conversationCapabilityNegotiation`, `conversationLifecycle`, `conversationReplayDeterminism`, `conversationVsLegacySuspend` +1 |
 | `dataResidency` | witnessable-gated | **v2-witnessed** | 2 (2) | `v2-data-residency-admission`, `v2-data-residency-advertisement` | `data-residency-admission` |
 | `feedback` | witnessable-gated | **v2-witnessed** | 2 (0) | `v2-run-annotation-not-event` | `feedback-capability-shape`, `feedback-correction-redaction`, `feedback-cross-tenant-isolation`, `feedback-fork-not-copied` +3 |
@@ -78,7 +80,6 @@ Every v2 core family now has a v2 normative home (RFC 0189). Many of its rules a
 | `agentRuntime` | claims-check | **v2-witnessed** | 1 (0) | `v2-agent-runtime-advertisement` | – |
 | `aiEnvelope` | witnessable-gated | **v2-witnessed** | 1 (0) | `v2-ai-envelope-advertisement` | `aiEnvelope.universalKinds` |
 | `blobStorage` | witnessable-gated | **v2-witnessed** | 1 (0) | `v2-storage-cross-tenant-isolation` | `blob-cross-tenant-isolation`, `blob-presign-expiry`, `blob-roundtrip` |
-| `channelPresence` | witnessable-gated | **v2-witnessed** | 1 (0) | `v2-channel-presence-advertisement` | `channel-presence-behavioral`, `channel-presence-shape` |
 | `conversationTurnModelProvenance` | witnessable-gated | **v2-witnessed** | 1 (1) | `v2-conversation-turn-model-provenance-advertisement`, `v2-conversation-turn-model-provenance` | `conversation-turn-model-provenance-shape` |
 | `promptLibrary` | claims-check | **v2-witnessed** | 1 (0) | `v2-prompt-library-advertisement` | – |
 | `schemaVersions` | witnessable-gated | **v2-witnessed** | 1 (1) | `v2-a2ui-v09-surface` | `aiEnvelope.schemaDrift` |
@@ -108,9 +109,9 @@ Every v2 core family now has a v2 normative home (RFC 0189). Many of its rules a
 | `capabilities.md` | 25 | 21 (84%) | – |
 | `conformance.md` | 49 | 26 (53%) | `production` |
 | `connection-packs.md` | 10 | 0 (0%) | `connections` |
-| `conversation.md` | 5 | 1 (20%) | `multiPartyConversation`, `conversationTurnModelProvenance`, `channelPresence` |
+| `conversation.md` | 6 | 3 (50%) | `multiPartyConversation`, `conversationTurnModelProvenance`, `channelPresence` |
 | `errors.md` | 18 | 18 (100%) | – |
-| `events.md` | 63 | 37 (59%) | `supportedEnvelopes`, `schemaVersions`, `envelopeStrictness`, `envelopeContracts`, `envelopes`, `feedback`, `providerUsage`, `heartbeat` |
+| `events.md` | 67 | 41 (61%) | `supportedEnvelopes`, `schemaVersions`, `envelopeStrictness`, `envelopeContracts`, `envelopes`, `feedback`, `providerUsage`, `heartbeat`, `hostEvents` |
 | `execution.md` | 34 | 0 (0%) | `selfHostedRunner`, `multiAgent`, `agents`, `subWorkflow` |
 | `form-content-packs.md` | 11 | 1 (9%) | `forms` |
 | `headers.md` | 7 | 5 (71%) | – |
@@ -132,7 +133,7 @@ Every v2 core family now has a v2 normative home (RFC 0189). Many of its rules a
 | `storage.md` | 19 | 8 (42%) | `fs`, `kvStorage`, `tableStorage`, `sql`, `nosql`, `vectorStore`, `searchIndex`, `blobStorage`, `cache` |
 | `tool-catalog.md` | 14 | 11 (79%) | `toolCatalog` |
 | `versioning.md` | 41 | 34 (83%) | – |
-| `webhooks.md` | 37 | 37 (100%) | `webhooks`, `triggerBridge` |
+| `webhooks.md` | 38 | 38 (100%) | `webhooks`, `triggerBridge` |
 | `workflow-chain-packs.md` | 5 | 1 (20%) | `workflowChainPacks` |
 
 ## Largest uncited sections
@@ -387,8 +388,8 @@ node scripts/report-v2-witness-coverage.mjs --write  # regenerate this file
 ```json
 {
   "families": {
-    "total": 73,
-    "v2-witnessed": 73,
+    "total": 74,
+    "v2-witnessed": 74,
     "v1-only": 0,
     "unwitnessed": 0
   },
@@ -404,25 +405,25 @@ node scripts/report-v2-witness-coverage.mjs --write  # regenerate this file
       "unwitnessed": 0
     },
     "witnessable-gated": {
-      "v2-witnessed": 54,
+      "v2-witnessed": 55,
       "v1-only": 0,
       "unwitnessed": 0
     }
   },
   "obligationUnits": {
-    "total": 892,
-    "inV2CitedSections": 588,
-    "inUncitedSections": 304,
-    "sectionsWithObligations": 269,
-    "sectionsWithNoV2Citation": 104
+    "total": 898,
+    "inV2CitedSections": 595,
+    "inUncitedSections": 303,
+    "sectionsWithObligations": 271,
+    "sectionsWithNoV2Citation": 103
   },
   "declarationLinks": {
     "familiesWithFloorScenarios": 0,
     "familiesWithRequirementIds": 2
   },
   "scenarios": {
-    "registered": 642,
-    "major2": 202
+    "registered": 644,
+    "major2": 204
   },
   "unresolvedV2Citations": 33,
   "major2ScenariosCitingNoCoreDoc": 67,

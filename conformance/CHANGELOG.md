@@ -1,5 +1,28 @@
 # `@openwop/openwop-conformance` Changelog
 
+## [2.45.23] — 2026-10-06 — RFC 0237 filed
+
+- **No scenario change.** RFC 0237 (declared nondeterminism names its sources) is filed `Draft`; its gap rows change the packed `spec/v1/gaps.json`.
+
+## [2.45.22] — 2026-10-06 — an empty `dataResidency.regions` still binds the reject leg; RFC 0236's registers close
+
+- **No scenario change.** RFC 0236 goes `Accepted` on the v2 reference host's certified 2.45.21 cut; its gaps G1 and G2 close, which changes the packed `spec/v1/gaps.json`.
+
+- **`v2-data-residency-admission`: an empty `regions` list no longer skips the reject leg.** A host advertising `dataResidency` with no region honours residency nowhere, so it MUST refuse every constraint. Both legs used to skip on `[]`, so a host that accepted and ignored every constraint passed; a double now fails it. The accept leg stays `inapplicable` there.
+
+## [2.45.21] — 2026-10-05 — `0236.webhook.host-variant` gets its own row
+
+- **`v2-host-event-delivery`: no-fan-out is its own `it`.** A bundle records one requirement id per `it` (the last one asserted), so the webhook `it` that asserted host-variant and then no-fan-out recorded only no-fan-out. Found by the v2 reference host's 2.45.20 loopback rehearsal: five of the six RFC 0236 ids appeared. The new `it` re-runs the same gate, so a host without the families records the same disposition.
+
+## [2.45.20] — 2026-10-05 — host events (RFC 0236 Active); `channelPresence` delivery witnessed through the §13 seam at v2
+
+- **New `v2-channel-presence-delivery` (seam-gated).** `conversation.md` now restates two RFC 0110 rules: a host advertising `channelPresence` MUST emit it, and MUST NOT deliver it to a non-member. Two legs check them through the snapshot seam, asking as the member first so an unwired seam is never read as a refusal.
+- **The §13 presence seam exists at v2.** It was never ported to `api/seams-v2.yaml`, so v2 had no way to observe presence. It gains an `observer` field; a non-member observer MUST NOT get `200`.
+- **Proof:** against a double, a leak to a non-member fails only the delivery leg, a refused member fails only the emit leg, and an unwired seam records `blocked`. No host advertises `channelPresence` at v2, so no bundle gains a blocked row.
+
+- **New `v2-host-event-delivery` (RFC 0236, seam-gated).** Six requirement ids over `/host/events` and webhooks: the envelope, ephemeral no-resume, ephemeral no-fan-out, ephemeral registration refused, the `{ hostEvent }` body, and tenant isolation (with `OPENWOP_TEST_TENANT_B_API_KEY`; `inapplicable` without it). Judged by `lib/host-event-witness.ts`.
+- **Proof:** the judges' self-test convicts each defect; a double with one defect per mode fails exactly that leg; the v2 reference host passes 6/6, and a cross-tenant frame or an accepted ephemeral registration fails only its leg there.
+
 ## [2.45.19] — 2026-10-05 — a minted tenant-bound id carries no `~`; RFC 0235's registers close
 
 - **New leg `openwop.requirement.0184.mint-no-tilde`** in `v2-bound-id-path-projection`. RFC 0184 §A.2: a host MUST NOT mint a tenant-bound id containing `~`. Only the run this leg creates is checked, because ids minted earlier MUST still resolve.
