@@ -23,6 +23,11 @@ Entries before this file was condensed carried full development detail. That tex
 - **Witness-coverage report sees `recordSchemaLeg`.** Its gate detector missed the private `onFamily` gate, so 24 advertisement scenarios witnessed nothing in the report. Moving the static legs exposed it: four families read v1-only while their v2 advertisement witnesses ran. Still 73/73.
 - **Correction to the 2.45.17 notes.** openwop-app's 304 failures were not spelling-dependent. A CDN edge answered `200` to the first conditional reaching a node that had not seen the object (hit-for-pass on a `no-store` response), then `304`. The witnesses are right, and intermittently red on such an origin.
 
+## [2.45.22] — 2026-10-06 — RFC 0236 Accepted; an empty `dataResidency.regions` still binds the reject leg
+
+- **RFC 0236 Accepted (provisional).** The v2 reference host's certified 2.45.21 cut (505/0/0) records all six host-event ids `executed-pass`; its gap rows close, so the packed `gaps.json` changes.
+- **`v2-data-residency-admission` runs its reject leg on an empty `regions` list.** Such a host honours residency nowhere and must refuse every constraint; it used to skip both legs. Adding `minItems: 1` is a major, recorded for the next one.
+
 ## [2.45.21] — 2026-10-05 — `0236.webhook.host-variant` records its own row
 
 - **`v2-host-event-delivery` splits no-fan-out into its own `it`.** A bundle records one requirement id per `it`, so the 2.45.20 webhook `it` recorded only no-fan-out and hid `0236.webhook.host-variant`. Found by the v2 reference host's loopback rehearsal; all six RFC 0236 ids now record.
