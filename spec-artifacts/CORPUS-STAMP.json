@@ -192,7 +192,7 @@
     "schemas/v2/trigger-event.schema.json": "710ecca8b3ecdad3a532a96768177f062192b24a589a4f798c7eb24bab64b30a",
     "schemas/v2/trigger-subscription-registration.schema.json": "5f7959f3e13f49399783e47f73101d6af95e5abccea1af2f0014ccbe3e51006c",
     "schemas/v2/trigger-subscription.schema.json": "06abe021712a4bfc5a107a067053cd3cc9704f47ae7066d8449a508c368a0ab2",
-    "schemas/v2/ui-plugin-message.schema.json": "879d65867c01656b3962d64283e66364dcb8f626ad26c5fcf2d2d55a79ae0ce9",
+    "schemas/v2/ui-plugin-message.schema.json": "2211d58ddc3c42586586a61f03e637212465aff6c922755131f0beab58823435",
     "schemas/v2/webhook-dead-letter-page.schema.json": "78f3284722c2b42d52ff8a1e6d9b9092ba1ac35c2dbe036f3ff2470b34086d1e",
     "schemas/v2/webhook-delivery.schema.json": "5f5361ede12098b5c2d685f0aa70fcb07219fd6b68c6ad6af393ca8dd266d56a",
     "schemas/v2/webhook-verification.schema.json": "76e4e0d81143ffd2649bc7adba2aa34f2525e2c4e9f0300a425d908b3163196b",

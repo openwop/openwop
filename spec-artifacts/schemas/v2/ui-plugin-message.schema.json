@@ -44,8 +44,10 @@
             "artifact.read",
             "artifact.write",
             "host.toast",
-            "host.navigate"
-          ]
+            "host.navigate",
+            "host.announce"
+          ],
+          "description": "The closed host-API method set. `host.announce` (RFC 0130) is in it, matching the manifest and `uiPlugins.hostApi` enums (RFC 0238 erratum)."
         },
         "params": {
           "type": "object",
@@ -144,6 +146,5 @@
         }
       }
     }
-  },
-  "x-openwop-seeded-from": "v1"
+  }
 }
