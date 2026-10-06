@@ -3989,6 +3989,7 @@ invariants:
     threat_model: SECURITY/threat-model-prompt-injection.md
     tests:
       - conformance/src/scenarios/frontend-plugin-packs.test.ts
+      - conformance/src/scenarios/v2-ui-plugin-boundary.test.ts
     note: |
       `frontend-plugin-packs.md` §Isolation (amended by RFC 0119): a host
       advertising `capabilities.uiPlugins.supported: true` MUST execute every
@@ -4014,7 +4015,10 @@ invariants:
       the plugin runs out of the host's execution context. Graduates reference-impl
       → protocol when the openwop-app reference host (ADR 0153) serves the live
       sandboxed frame.
-    witness: seam-gated
+      RFC 0238: at v2 the normative witness is `v2-ui-plugin-boundary`, gated on
+      `uiPlugins.served` and the operator-installed `ui-plugin-pack-narrow` fixture;
+      the v1 sample seam is no longer the only observation path.
+    witness: witnessable-gated
     witnessReview: initial-mechanical-2026-09-02
 
   - id: frontend-plugin-egress
@@ -4023,6 +4027,7 @@ invariants:
     threat_model: SECURITY/threat-model-prompt-injection.md
     tests:
       - conformance/src/scenarios/frontend-plugin-packs.test.ts
+      - conformance/src/scenarios/v2-ui-plugin-boundary.test.ts
     note: |
       `frontend-plugin-packs.md` §Security: absent declared `connectSrc`
       exceptions in the manifest, the host MUST serve the plugin under a
@@ -4034,7 +4039,10 @@ invariants:
       and a host MAY refuse a pack whose exceptions it will not grant. The gated
       leg asserts the served CSP denies egress for a plugin with no declared
       `connectSrc`.
-    witness: seam-gated
+      RFC 0238: at v2 the normative witness is `v2-ui-plugin-boundary`, gated on
+      `uiPlugins.served` and the operator-installed `ui-plugin-pack-narrow` fixture;
+      the v1 sample seam is no longer the only observation path.
+    witness: witnessable-gated
     witnessReview: initial-mechanical-2026-09-02
 
   - id: frontend-plugin-rpc-allowlist
@@ -4043,6 +4051,7 @@ invariants:
     threat_model: SECURITY/threat-model-prompt-injection.md
     tests:
       - conformance/src/scenarios/frontend-plugin-packs.test.ts
+      - conformance/src/scenarios/v2-ui-plugin-boundary.test.ts
     note: |
       `frontend-plugin-packs.md` §Host-RPC: the host MUST reject any `ui-plugin/1`
       `request` whose `method` is not in BOTH the plugin's declared manifest
@@ -4054,7 +4063,10 @@ invariants:
       validates the `ui-plugin-message.schema.json` allowlist `enum` + the
       `method_not_allowed` error code; the gated leg drives an undeclared-method
       `request` against a live host and asserts the `method_not_allowed` refusal.
-    witness: seam-gated
+      RFC 0238: at v2 the normative witness is `v2-ui-plugin-boundary`, gated on
+      `uiPlugins.served` and the operator-installed `ui-plugin-pack-narrow` fixture;
+      the v1 sample seam is no longer the only observation path.
+    witness: witnessable-gated
     witnessReview: initial-mechanical-2026-09-02
 
   - id: frontend-plugin-no-byok
@@ -4063,6 +4075,7 @@ invariants:
     threat_model: SECURITY/threat-model-secret-leakage.md
     tests:
       - conformance/src/scenarios/frontend-plugin-packs.test.ts
+      - conformance/src/scenarios/v2-ui-plugin-boundary.test.ts
     note: |
       `frontend-plugin-packs.md` §Security: no BYOK credential material EVER
       crosses the `ui-plugin/1` boundary into the sandbox. A plugin operates
@@ -4074,7 +4087,10 @@ invariants:
       schema exposes no credential-bearing field and that `additionalProperties`
       is closed on the envelope; the gated leg asserts an `artifact.read` result
       crossing the boundary carries no resolved BYOK plaintext.
-    witness: seam-gated
+      RFC 0238: at v2 the normative witness is `v2-ui-plugin-boundary`, gated on
+      `uiPlugins.served` and the operator-installed `ui-plugin-pack-narrow` fixture;
+      the v1 sample seam is no longer the only observation path.
+    witness: witnessable-gated
     witnessReview: initial-mechanical-2026-09-02
 
   - id: test-seam-authenticated-when-enabled

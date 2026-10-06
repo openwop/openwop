@@ -815,6 +815,16 @@ Pack-manifest fixtures are exercised by the server-free `fixtures-valid.test.ts`
 
 ---
 
+## Front-end plugin pack fixtures
+
+The `fixtures/frontend-plugin-packs/` sub-directory holds front-end plugin packs (RFC 0117, `kind: "frontend-plugin"`) that an operator installs to make the plugin boundary observable (RFC 0238 §D). Their shape is checked server-free by `src/coherence/ui-plugin-fixtures.test.ts`.
+
+| Fixture | Plugin | Purpose |
+| --- | --- | --- |
+| `ui-plugin-pack-narrow` | `narrow` | RFC 0238 §D: one plugin declaring only `artifact.read` and no `connectSrc` (entry `ui/narrow.html`). The operator installs it under a key trusted for this pack only, never by default, and creates `ui-plugin-narrow-artifact`, a record whose content references the BYOK canary `openwop-conformance-canary-secret` without resolving it. Drives `v2-ui-plugin-boundary`: the frame's isolation and egress policy, `method_not_allowed` for undeclared methods, and no canary material in any dispatch response. Not advertised in discovery `fixtures`. |
+
+---
+
 ## Connection pack fixtures
 
 The `fixtures/connection-packs/` sub-directory holds canonical connection-pack manifests (RFC 0095, `kind: "connection"`) used as schema-level proof points (validated server-free against `../schemas/connection-pack-manifest.schema.json`) AND as the install payloads the capability-gated behavioral scenarios POST to the `POST /v1/host/sample/connection-packs/install` seam. They are NOT seeded into a server.

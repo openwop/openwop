@@ -412,6 +412,51 @@ def v2_openapi_and_seams():
             '401': {'$ref': '#/components/responses/Unauthenticated'},
             '403': {'$ref': '#/components/responses/Forbidden'},
             '404': {'$ref': '#/components/responses/NotFound'}}}}
+    # RFC 0238 — the front-end plugin boundary (gated on uiPlugins.served). The four
+    # frontend-plugin-* invariants had only the v1 sample seam as witness, which
+    # conformance.md §Witness class forbids for a MUST. The frame carries isolation and
+    # egress in its Content-Security-Policy; the dispatch names the plugin so both
+    # allowlist halves are observable.
+    UIP = '../../schemas/v2/ui-plugin-message.schema.json'
+    UIP_PARAMS = [
+        {'name': 'packName', 'in': 'path', 'required': True, 'schema': {'type': 'string', 'minLength': 1, 'maxLength': 214},
+         'description': 'The installed frontend-plugin pack.'},
+        {'name': 'pluginId', 'in': 'path', 'required': True, 'schema': {'type': 'string', 'minLength': 1, 'maxLength': 128},
+         'description': 'The plugin\'s `uiPlugins[].id` in that pack.'}]
+    paths['/host/ui-plugins/{packName}/{pluginId}/frame'] = {'get': {
+        'tags': ['host'],
+        'operationId': 'getUiPluginFrame',
+        'summary': 'The frame document a front-end plugin runs in',
+        'description': ('The HTML document the host mounts the plugin in, and the only way it mounts it. With `uiPlugins.isolation` '
+                        '`cross-origin-iframe`, its `Content-Security-Policy` MUST carry a `sandbox` directive admitting `allow-scripts` '
+                        'and never `allow-same-origin`, and MUST set `default-src \'none\'` with no `connect-src` source beyond the '
+                        'plugin\'s declared `connectSrc` (`packs.md` §Front-end plugin packs). Gated on `uiPlugins.served`: a host that '
+                        'does not advertise it, or a plugin that is not installed, answers `404 not_found`.'),
+        'parameters': UIP_PARAMS,
+        'responses': {
+            '200': {'description': 'The frame document.', 'headers': {'Content-Security-Policy': {'schema': {'type': 'string'},
+                    'description': 'The plugin frame\'s isolation and egress policy.'}},
+                    'content': {'text/html': {'schema': {'type': 'string'}}}},
+            '401': {'$ref': '#/components/responses/Unauthenticated'},
+            '403': {'$ref': '#/components/responses/Forbidden'},
+            '404': {'$ref': '#/components/responses/NotFound'}}}}
+    paths['/host/ui-plugins/{packName}/{pluginId}/rpc'] = {'post': {
+        'tags': ['host'],
+        'operationId': 'dispatchUiPluginRequest',
+        'summary': 'Dispatch one ui-plugin/1 request as the named plugin',
+        'description': ('Runs one `ui-plugin/1` request through the dispatcher the plugin boundary uses, as the caller and as the named '
+                        'plugin. A method outside the plugin\'s declared `hostApi` or the advertised `uiPlugins.hostApi` MUST return '
+                        '`ok: false` with `method_not_allowed` and MUST NOT execute. A refused call is `ok: false` inside a `200`, never an '
+                        'HTTP error. A response MUST NOT carry credential material. Gated on `uiPlugins.served`.'),
+        'parameters': UIP_PARAMS,
+        'requestBody': {'required': True, 'content': {'application/json': {'schema': {'type': 'object', 'additionalProperties': False,
+                        'required': ['message'], 'properties': {'message': {'$ref': UIP + '#/$defs/request'}}}}}},
+        'responses': {
+            '200': {'description': 'The `ui-plugin/1` response.', 'content': {'application/json': {'schema': {'$ref': UIP + '#/$defs/response'}}}},
+            '400': {'$ref': '#/components/responses/ValidationError'},
+            '401': {'$ref': '#/components/responses/Unauthenticated'},
+            '403': {'$ref': '#/components/responses/Forbidden'},
+            '404': {'$ref': '#/components/responses/NotFound'}}}}
     # RFC 0233 — the connection-provider registry reads (gated on connections.providerRead).
     # Pack installation is no protocol operation, so the provider-identity MUSTs of
     # connection-packs.md had only a test seam as witness, which conformance.md
@@ -658,6 +703,8 @@ def v2_openapi_and_seams():
         'getEffectSeamManifest': ['runs:read'],
         'getRunCompensation': ['runs:read'],
         'getRunEffects': ['runs:read'],
+        'getUiPluginFrame': ['manifest:read'],
+        'dispatchUiPluginRequest': ['artifacts:read'],
         'listRuns': ['runs:read'],
         'listConnectionProviders': ['manifest:read'],
         'listWebhookDeadLetters': ['webhooks:manage'],

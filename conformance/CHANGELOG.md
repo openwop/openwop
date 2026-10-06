@@ -2,6 +2,7 @@
 
 ## [2.45.23] — 2026-10-06 — `0184.mint-no-tilde` also mints under the second-tenant credential; RFC 0237 filed
 
+- **New `v2-ui-plugin-boundary` (RFC 0238).** Gated on `uiPlugins.served` and the operator-installed `ui-plugin-pack-narrow` fixture: the frame's `Content-Security-Policy` sandboxes without `allow-same-origin` and denies egress; the dispatch refuses `artifact.write` and `host.navigate` (undeclared) with `method_not_allowed`, does not execute `host.exec`, and runs `artifact.read`; no response carries canary material. The four `frontend-plugin-*` invariants move from `seam-gated` to `witnessable-gated`. Proof: a 12-case self-test double (`lib/ui-plugin-boundary-witness.test.ts`), each defect failing only its leg. The fixture's shape is a corpus check (`src/coherence/ui-plugin-fixtures.test.ts`).
 - **No scenario change.** RFC 0237 (declared nondeterminism names its sources) is filed `Draft`; its gap rows change the packed `spec/v1/gaps.json`.
 
 - **`0184.mint-no-tilde` also mints under `OPENWOP_TEST_TENANT_B_API_KEY`.** A host can bind tenant B to a non-clean tenant, so the leg bites in a production cut without moving the primary key. Asked by openwop-app, whose primary tenant is clean. A refused tenant-B create skips only that half. Proven against a double.

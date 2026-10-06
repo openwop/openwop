@@ -1,0 +1,62 @@
+{
+  "$comment": "RFC 0117 + RFC 0238 — the uiPlugins family's facets. isolation, surfaces, hostApi and maxEntryBytes are carried unchanged from the v1 seed; served is v2-only (RFC 0238).",
+  "properties": {
+    "isolation": {
+      "type": "string",
+      "anyOf": [
+        {
+          "enum": [
+            "cross-origin-iframe",
+            "wasm",
+            "process",
+            "container",
+            "vm"
+          ]
+        },
+        {
+          "pattern": "^x-host-[a-z0-9-]+-[a-z0-9-]+$"
+        }
+      ],
+      "default": "cross-origin-iframe",
+      "description": "RFC 0117 (amended by RFC 0119). The categorical isolation model the host enforces for plugin bytes. `cross-origin-iframe` = a distinct-origin sandboxed browser frame (the browser default; §Isolation). `wasm`/`process`/`container`/`vm` mirror `sandbox.isolationModel` (RFC 0035) for non-browser hosts that enforce the SAME isolation property. Vendor-specific models advertise `^x-host-<host>-<key>$` per `host-extensions.md`. ALL values denote the SAME mandatory property (`frontend-plugin-isolation`): plugin bytes execute in a boundary with no access to the host's execution context / DOM / origin-storage / credentials, deny-egress by default, and all host interaction mediated by the closed `ui-plugin/1` RPC. The field names the MECHANISM, never relaxes the property. In-process / same-origin / module-federation loading is a protocol-tier MUST NOT regardless of the advertised value."
+    },
+    "surfaces": {
+      "type": "array",
+      "description": "Plugin surfaces this host renders. A pack's `uiPlugins[].surface` not in this set is installable-but-inert (§Degradation). `canvas-preview` (RFC 0130) mounts inside a host-owned canvas editor.",
+      "items": {
+        "type": "string",
+        "enum": [
+          "artifact-viewer",
+          "route",
+          "settings-panel",
+          "canvas-preview"
+        ]
+      },
+      "uniqueItems": true
+    },
+    "hostApi": {
+      "type": "array",
+      "description": "The `ui-plugin/1` host-RPC methods this host honors. A plugin call to a method not in this set (regardless of the plugin's declared `hostApi`) MUST be rejected with `method_not_allowed` (`frontend-plugin-rpc-allowlist`). A host advertising `artifact.write` MUST enforce the `version`-token optimistic concurrency (RFC 0117 §Concurrency).",
+      "items": {
+        "type": "string",
+        "enum": [
+          "artifact.read",
+          "artifact.write",
+          "host.toast",
+          "host.navigate",
+          "host.announce"
+        ]
+      },
+      "uniqueItems": true
+    },
+    "maxEntryBytes": {
+      "type": "integer",
+      "minimum": 1,
+      "description": "Per-plugin entry-bundle byte ceiling the host will load."
+    },
+    "served": {
+      "type": "boolean",
+      "description": "RFC 0238 §A — `true` means the host serves `GET /host/ui-plugins/{packName}/{pluginId}/frame` (the frame document, isolation and egress in its `Content-Security-Policy`) and `POST /host/ui-plugins/{packName}/{pluginId}/rpc` (the `ui-plugin/1` dispatch) for every plugin it has installed (`packs.md` §Front-end plugin packs). A host advertising `uiPlugins` SHOULD advertise it."
+    }
+  }
+}

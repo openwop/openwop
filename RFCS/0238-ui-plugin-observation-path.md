@@ -4,11 +4,11 @@
 | ----------------- | --------------------------------------------------------------- |
 | **RFC**           | 0238                                                            |
 | **Title**         | a host's front-end plugin boundary is observable                |
-| **Status**        | `Draft`                                                         |
+| **Status**        | `Active`                                                        |
 | **Author(s)**     | David Tufts (@davidscotttufts)                                  |
 | **Created**       | 2026-10-06                                                      |
-| **Updated**       | 2026-10-06 — filed `Draft` after an `/architect` ruling (2026-10-06). The 7-day comment window opens with the pull request and closes 2026-10-13. |
-| **Affects**       | two new optional v2 operations, `GET /host/ui-plugins/{packName}/{pluginId}/frame` and `POST /host/ui-plugins/{packName}/{pluginId}/rpc` (`api/v2/openapi.yaml`, added in `scripts/derive-v2-api.py` as v2-only operations) · a new optional facet `uiPlugins.served` (`schemas/v2/capabilities.schema.json`) · a conformance fixture pack `conformance-ui-plugin-narrow` · `spec/v2/core/packs.md` §Front-end plugin packs · the `witness` of the four `frontend-plugin-*` rows of `SECURITY/invariants.yaml` · a new v2 scenario |
+| **Updated**       | 2026-10-06 — `Draft` → `Active`, comment window waived by the maintainer (2026-10-06: "bypass the 7 day period and proceed to active"), recorded as a STEWARD OVERRIDE of RFC 0147 §A.6 in MAINTAINERS.md. The facet, both operations, the fixture, the `packs.md` rules (word-neutral) and `v2-ui-plugin-boundary` ship in suite 2.45.23, proven against a double. · 2026-10-06 — filed `Draft` after an `/architect` ruling (2026-10-06). The 7-day comment window opens with the pull request and closes 2026-10-13. |
+| **Affects**       | two new optional v2 operations, `GET /host/ui-plugins/{packName}/{pluginId}/frame` and `POST /host/ui-plugins/{packName}/{pluginId}/rpc` (`api/v2/openapi.yaml`, added in `scripts/derive-v2-api.py` as v2-only operations) · a new optional facet `uiPlugins.served` (`schemas/v2/capabilities.schema.json`) · a conformance fixture pack `ui-plugin-pack-narrow` · `spec/v2/core/packs.md` §Front-end plugin packs · the `witness` of the four `frontend-plugin-*` rows of `SECURITY/invariants.yaml` · a new v2 scenario |
 | **Compatibility** | `additive` (COMPATIBILITY.md §2.4): two optional operations behind one optional facet, and one optional fixture. A host that advertises neither is bound exactly as today. |
 | **Supersedes**    | —                                                               |
 | **Superseded by** | —                                                               |
@@ -65,14 +65,15 @@ Four protocol-tier SECURITY invariants guard front-end plugins: isolation from h
 
 ### §D. The conformance fixture
 
-`conformance/fixtures/frontend-plugin-packs/` gains `conformance-ui-plugin-narrow`: a frontend-plugin pack with one plugin, `narrow`, declaring `hostApi: ["artifact.read"]` and no `connectSrc`. It comes with an artifact, `conformance-ui-plugin-artifact`, whose stored content references the BYOK canary `openwop-conformance-canary-secret` (`fixtures.md`).
+`conformance/fixtures/frontend-plugin-packs/` gains `ui-plugin-pack-narrow`: a frontend-plugin pack with one plugin, `narrow`, declaring `hostApi: ["artifact.read"]` and no `connectSrc`. It comes with an artifact, `ui-plugin-narrow-artifact`, whose stored content references the BYOK canary `openwop-conformance-canary-secret` (`fixtures.md`).
 
-1. An operator MAY install the pack through the host's normal install path, trusting the conformance signing key for this pack only. That trust MUST be an explicit operator act and MUST NOT be on by default.
-2. The pack is never advertised in discovery `fixtures`, which names workflow fixtures (RFC 0233 §D.3).
+1. An operator MAY install the pack through the host's normal install path, signing it with a key the host trusts for this pack only. That trust MUST be an explicit operator act and MUST NOT be on by default. No conformance signing key is distributed.
+2. The operator also creates `ui-plugin-narrow-artifact`, readable by the conformance credential.
+3. The pack is never advertised in discovery `fixtures`, which names workflow fixtures (RFC 0233 §D.3).
 
 ### §E. Prose
 
-`packs.md` §Front-end plugin packs gains §B.3–§B.5 and §C.3–§C.6 as rules, word-neutral against the kernel budget. The schema carries the shapes.
+`packs.md` §Front-end plugin packs binds a host with `uiPlugins.served` to mount plugins only from `getUiPluginFrame` and to serve `dispatchUiPluginRequest`. The operations' OpenAPI descriptions carry §B.3–§B.4 and §C.2–§C.6, and so `headers.md`. The kernel budget was full, so the edit is word-neutral: it trims three illustrative phrases in `packs.md`.
 
 ### §F. Conformance
 
@@ -80,10 +81,10 @@ A new scenario, `v2-ui-plugin-boundary`, gated on `uiPlugins.served`:
 
 1. **isolation** (`openwop.requirement.0238.ui-plugin.frame-isolated`): with `isolation: cross-origin-iframe`, the fixture's frame carries a `sandbox` directive with `allow-scripts` and without `allow-same-origin`.
 2. **egress** (`openwop.requirement.0238.ui-plugin.frame-deny-egress`): the same policy sets `default-src 'none'` and admits no `connect-src` source.
-3. **allowlist** (`openwop.requirement.0238.ui-plugin.rpc-allowlist`): `artifact.write` (host-allowed, not declared) and `host.exec` (in neither set) each return `method_not_allowed`. `artifact.read` of the fixture artifact returns `ok: true`, the control.
-4. **no-byok** (`openwop.requirement.0238.ui-plugin.no-byok`): no response in leg 3 contains the canary value.
+3. **allowlist** (`openwop.requirement.0238.ui-plugin.rpc-allowlist`): `artifact.write` and `host.navigate` (in the `ui-plugin/1` enum, not declared) each return `method_not_allowed`. `host.exec` (outside the enum) is not executed: `400` per §C.2, or a refusal. `artifact.read` of the fixture artifact returns `ok: true`, the control.
+4. **no-byok** (`openwop.requirement.0238.ui-plugin.no-byok`): no `artifact.read` or `artifact.write` response contains canary material (`lib/canaries.ts`).
 
-Dispositions: no `served` ⇒ every leg `inapplicable`. `served` without the §D fixture installed ⇒ legs 1–2 run against any installed plugin the host lists, and legs 3–4 are `inapplicable`. An `isolation` other than `cross-origin-iframe` ⇒ leg 1 `inapplicable` (§Decisions 3).
+Dispositions: no `served` ⇒ every leg `inapplicable`. The §D fixture not installed (`404`) ⇒ every leg `inapplicable`: no operation lists installed plugins, so the fixture is the only plugin the suite can name. An `isolation` other than `cross-origin-iframe` ⇒ leg 1 `inapplicable` (§Decisions 3).
 
 The four invariant rows move from `seam-gated` to `witnessable-gated`, and the seam count in `docs/witness-baseline.json` falls.
 
@@ -121,7 +122,7 @@ An `/architect` review decided these on 2026-10-06.
 2. **Scope.** The frame reads with `manifest:read`. The dispatch is authorized per method as the caller (§C.5), so no new scope is minted.
 3. **Other isolation mechanisms.** `wasm`, `process`, `container`, `vm` and `x-host-*` have no HTTP-visible boundary. For those hosts, leg 1 is `inapplicable` and the invariant keeps its seam witness on a side revision. No matrix host ships one.
 4. **The fixture is operator-trusted, not default-trusted** (§D.1), because frontend-plugin packs MUST verify their signature and fail closed.
-5. **The always-on schema legs** of `frontend-plugin-packs.test.ts` read only the corpus and move to `src/coherence/` with the `Active` change (`conformance.md` §Two products).
+5. **The always-on schema legs** of `frontend-plugin-packs.test.ts` read only the corpus and belong in `src/coherence/` (`conformance.md` §Two products). That file is a major-1 scenario on the frozen v1 tree, so the move is tracked separately (gap G3) rather than made here.
 
 ## Implementation notes (non-normative)
 
@@ -130,10 +131,10 @@ An `/architect` review decided these on 2026-10-06.
 
 ## Acceptance criteria
 
-- [ ] `Active`: the comment window closes (or is waived on the record) with §B and §C unchanged in substance.
-- [ ] The facet is in the v2 schema; both operations are in `api/v2/openapi.yaml`; the fixture is catalogued in `fixtures.md`; `packs.md` carries the rules; `CHANGELOG.md` records it.
-- [ ] `v2-ui-plugin-boundary` ships, each leg failing on its sabotage in a double: an `allow-same-origin` sandbox, a missing `default-src 'none'`, a declared-but-not-allowed method executed, a canary in a response.
-- [ ] The four invariant rows read `witnessable-gated`; the seam count falls.
+- [x] `Active`: the comment window was waived on the record (maintainer, 2026-10-06; MAINTAINERS.md) with §B and §C unchanged in substance.
+- [x] The facet is in the v2 schema (`spec/v2/facets/uiPlugins.schema.json`); both operations are in `api/v2/openapi.yaml`; the fixture is catalogued in `fixtures.md`; `packs.md` carries the rules; `CHANGELOG.md` records it.
+- [x] `v2-ui-plugin-boundary` ships in 2.45.23 over `lib/ui-plugin-boundary-witness.ts`. Each leg fails on its sabotage in the self-test double (12 cases): `allow-same-origin`, no `sandbox`, an open `default-src`, an undeclared `connect-src`, an undeclared method executed, a method outside the enum executed, the declared method refused, canary material in a response. A host without `served`, or without the fixture, records `inapplicable` on every leg.
+- [x] The four invariant rows read `witnessable-gated`; the seam-gated count falls from 93 to 89.
 - [ ] `Accepted`: a host advertising `uiPlugins.served`, with the §D fixture installed, records the four `openwop.requirement.0238.*` ids `executed-pass` on a certified bundle.
 
 ## References

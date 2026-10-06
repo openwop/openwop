@@ -1322,11 +1322,13 @@
         "isolation",
         "surfaces",
         "hostApi",
-        "maxEntryBytes"
+        "maxEntryBytes",
+        "served"
       ],
       "floorScenarios": [],
       "requirementIds": [],
-      "owningRfc": "0117"
+      "owningRfc": "0117",
+      "facetsFrom": "spec/v2/facets/uiPlugins.schema.json"
     },
     {
       "key": "sql",

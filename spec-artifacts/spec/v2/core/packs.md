@@ -5,7 +5,7 @@
 
 ## Why this exists
 
-The v2 contract for pack manifests, the registry tree, peer-dependency identifiers, and signing. The per-kind rules live in [connection-packs.md](connection-packs.md), [form-content-packs.md](form-content-packs.md), [workflow-chain-packs.md](workflow-chain-packs.md), and [artifact-type-packs.md](artifact-type-packs.md); the capability vocabulary a pack requires is [capabilities.md](capabilities.md).
+Pack manifests, the registry tree, peer-dependency identifiers, and signing. Per-kind rules live in [connection-packs.md](connection-packs.md), [form-content-packs.md](form-content-packs.md), [workflow-chain-packs.md](workflow-chain-packs.md), and [artifact-type-packs.md](artifact-type-packs.md); the capability vocabulary a pack requires is [capabilities.md](capabilities.md).
 
 ## The engine range
 
@@ -39,7 +39,7 @@ The registry is versioned by tree, not header. It publishes `registry/v2/packs/<
 
 - A signed compatibility overlay MUST be rejected; a mirror re-derives the signer at ingest.
 - `.well-known/openwop-registry.json` `endpoints` is the negotiation: it names both trees, and a client MUST resolve every registry path through it rather than construct one.
-- `publicKey` is unversioned: keys are not protocol-versioned.
+- `publicKey` is unversioned.
 
 ## Peer-dependency identifiers
 
@@ -59,7 +59,7 @@ Facet paths are not identifiers: a pack requires a family by its key and names f
 
 ## The alias table
 
-`spec/v2/peer-dependency-aliases.json` is generated from the declaration file and the published-manifest inventory, never hand-kept. It is how a v1-era key reaches a v2 family through the overlap. Each row is `{ alias, family, facets?, publishedUses, removalTrigger }` and covers a v1 grammar found in the wild (`host.*` dotted twins, `openwop.agents.memoryBackends`, facet paths such as `aiProviders.imageGeneration`).
+`spec/v2/peer-dependency-aliases.json` is generated from the declaration file and the published-manifest inventory, never hand-kept. It is how a v1-era key reaches a v2 family through the overlap. Each row is `{ alias, family, facets?, publishedUses, removalTrigger }`.
 
 A v2 host MAY resolve an alias through the table during the overlap, and MUST NOT resolve one after v1 end-of-support (`removalTrigger: v1-end-of-support`).
 
@@ -79,7 +79,7 @@ Every pack-authored document MUST admit `patternProperties` `^(openwop-|x-|vendo
 
 ## Signing
 
-There is one signing scheme. `signing` on a version manifest (`schemas/v2/registry-version-manifest.schema.json`) is the closed object `{ keyId, scheme }`, both REQUIRED:
+`signing` on a version manifest (`schemas/v2/registry-version-manifest.schema.json`) is the closed object `{ keyId, scheme }`, both REQUIRED:
 
 - **`scheme`** MUST be `ed25519-canonical-json`: a detached 64-byte Ed25519 signature over the RFC 8785 (JCS) bytes of `pack.json` inside a deterministic tarball. The input MUST satisfy `conformance.md` §"Canonical JSON".
 - **`keyId`** is the signing key id.
@@ -124,6 +124,8 @@ A `frontend-plugin` pack (`schemas/v2/frontend-plugin-manifest.schema.json`) shi
 - with `artifact.write`, MUST return an opaque `version` from each read and write and refuse a stale one with `artifact_conflict`, persisting nothing;
 - MUST treat a plugin needing an unadvertised `surfaces` or `hostApi` entry as inert there, not an error.
 
+With `uiPlugins.served`, a host MUST mount each plugin only from `getUiPluginFrame` and serve `dispatchUiPluginRequest`, whose rules bind.
+
 A host without `uiPlugins` MUST reject the pack and render its own way.
 
 On the message protocol:
@@ -139,4 +141,4 @@ On the message protocol:
 - The v1 registry tree is frozen through the overlap, behind the v2 tree.
 - `testMode` advertises the v1 `/v1/packs-test/*` mirror, a conformance seam ([conformance.md §"The seams profile"](conformance.md)). It remains advertisable through the overlap and is removed at 3.0.
 
-*Sources: RFCs 0117, 0119, 0130, 0177, 0212, 0222.*
+*Sources: RFCs 0117, 0119, 0130, 0177, 0212, 0222, 0238.*
