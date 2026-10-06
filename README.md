@@ -8,6 +8,10 @@ If you're building agentic systems, AI workflow engines, multi-agent application
 
 > **Read the paper: [_OpenWOP: A Vendor-Neutral Protocol for Durable, Portable Agentic Workflow Orchestration_](https://doi.org/10.5281/zenodo.20576239)** — published on Zenodo (DOI [10.5281/zenodo.20576239](https://doi.org/10.5281/zenodo.20576239), CC BY 4.0). The protocol-level argument, a reproducible cross-language portability result, and the full evidence artifact live in [`openwop/openwop-paper`](https://github.com/openwop/openwop-paper).
 
+> **Watch it in under two minutes: [What is OpenWOP?](https://www.youtube.com/watch?v=d5wD-NrhW3M)** — narrated, with captions, on the [OpenWOP YouTube channel](https://www.youtube.com/@openwop). Every film, with the page each one explains, is at [openwop.dev/videos](https://openwop.dev/videos/).
+>
+> [![What is OpenWOP? Open-source orchestration for multi-agent workflows](https://openwop.dev/assets/video/openwop-intro-poster.jpg)](https://www.youtube.com/watch?v=d5wD-NrhW3M)
+
 > **Implementing a host? Start with [`docs/IMPLEMENT-CORE.md`](./docs/IMPLEMENT-CORE.md), not with this corpus.** Under v2, `openwop-core-standard` means **thirteen floor scenarios** (`spec/v2/profiles.json`) over the thirty documents in `spec/v2/core/`; everything under `spec/v2/ext/` is optional until you want it, and most implementers should ignore it on day one. The size of the corpus, not its content, is the main barrier to an independent implementation, and an independent implementation is the thing this protocol most needs.
 
 ## Multi-Agent Architecture (v1+)
@@ -437,6 +441,7 @@ Project meta:
 - **[`GOVERNANCE.md`](./GOVERNANCE.md)** — maintainer model, decision-making, and spec change process.
 - **[`CONTRIBUTING.md`](./CONTRIBUTING.md)** — how to propose changes, CI gates, change categories.
 - **[`SECURITY.md`](./SECURITY.md)** — coordinated disclosure process.
+- **Videos:** short narrated films on the [OpenWOP YouTube channel](https://www.youtube.com/@openwop), listed with the page each explains at [openwop.dev/videos](https://openwop.dev/videos/).
 - **Paper:** _OpenWOP: A Vendor-Neutral Protocol for Durable, Portable Agentic Workflow Orchestration_ — [Zenodo, DOI 10.5281/zenodo.20576239](https://doi.org/10.5281/zenodo.20576239) (CC BY 4.0); source + reproducible evidence in [`openwop/openwop-paper`](https://github.com/openwop/openwop-paper).
 
 Reference implementations:
