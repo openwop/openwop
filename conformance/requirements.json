@@ -30103,7 +30103,7 @@
     {
       "id": "openwop.it.v2-data-residency-admission.a-region-outside-dataresidency-regions-answers-422-residency-unavailable-and-cre",
       "file": "v2-data-residency-admission.test.ts",
-      "line": 66,
+      "line": 73,
       "title": "a region outside dataResidency.regions answers 422 residency_unavailable and creates no run",
       "explicitId": "openwop.requirement.data-residency.reject-unadvertised-region",
       "citations": [
@@ -30126,7 +30126,7 @@
     {
       "id": "openwop.it.v2-data-residency-admission.a-region-inside-dataresidency-regions-is-accepted",
       "file": "v2-data-residency-admission.test.ts",
-      "line": 82,
+      "line": 89,
       "title": "a region inside dataResidency.regions is accepted",
       "explicitId": "openwop.requirement.data-residency.accept-advertised-region",
       "citations": [

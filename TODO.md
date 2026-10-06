@@ -243,9 +243,11 @@ Defects outside the spec:
       cut (497/0/0, build `e5f27708`). Owed: the RFC 0156 §B review. MyndHyve implements RFC 9110 and
       was invited to cut on 2.45.18; openwop-app's public origin still has the CDN-edge `304` issue.
 - [x] **RFC 0236** `Accepted` (provisional) 2026-10-05 on the v2 reference host's certified 2.45.21 cut (505/0/0, build `9543718c`). Owed: the RFC 0156 §B review; openwop-app ADR 0812 is the tier-2 follow-on.
-- [ ] **`dataResidency.regions` has no `minItems`.** `regions: []` validates, so the "accept an
-      advertised region" rule can never apply. Adding `minItems: 1` narrows the schema and needs an
-      RFC.
+- [ ] **Next major: `dataResidency.regions` `minItems: 1`.** /architect ruling 2026-10-05: narrowing is a major
+      (COMPATIBILITY.md §2.4), and not a safety fix. Within v2 an empty list is a claim: the host honours
+      residency nowhere and MUST refuse every constraint. Since 2.45.22 the reject leg binds there (it
+      used to skip). At the next major, also decide whether `capabilities.md` §2 bars advertising a family
+      with no region.
 - [ ] **RFCs owed before these legs can bind:** a plugin-origin seat so the four `uiPlugins`
       invariants keep a witness after v1 (they are seam-gated and v2 mounts no plugin seam); a
       roster input seat and refusal codes for `multiPartyConversation`; a

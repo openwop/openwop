@@ -1,8 +1,10 @@
 # `@openwop/openwop-conformance` Changelog
 
-## [2.45.22] — 2026-10-05 — RFC 0236's registers close
+## [2.45.22] — 2026-10-05 — an empty `dataResidency.regions` still binds the reject leg; RFC 0236's registers close
 
 - **No scenario change.** RFC 0236 goes `Accepted` on the v2 reference host's certified 2.45.21 cut; its gaps G1 and G2 close, which changes the packed `spec/v1/gaps.json`.
+
+- **`v2-data-residency-admission`: an empty `regions` list no longer skips the reject leg.** A host advertising `dataResidency` with no region honours residency nowhere, so it MUST refuse every constraint. Both legs used to skip on `[]`, so a host that accepted and ignored every constraint passed; a double now fails it. The accept leg stays `inapplicable` there.
 
 ## [2.45.21] — 2026-10-05 — `0236.webhook.host-variant` gets its own row
 
