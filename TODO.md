@@ -252,6 +252,9 @@ Defects outside the spec:
       vocabulary `clock`/`random`/`id`/`env`/`x-*`; a `replay` fork reproduces each), witnessed by the
       `conformance-nondeterminism` fixture; `declared: false` / `advertised: false` are not v2 states; both
       booleans are removed at 3.0. It answers two of the five seats below.
+- [ ] **RFC 0238** (`Draft`, 2026-10-06): the plugin-origin seat. Frame document + dispatch under
+      `/host/ui-plugins/{packName}/{pluginId}/`, behind `uiPlugins.served`; fixture
+      `conformance-ui-plugin-narrow`. openwop-app must serve both and mount from the frame URL (G1).
 - [ ] **RFCs owed before these legs can bind:** a plugin-origin seat so the four `uiPlugins`
       invariants keep a witness after v1 (they are seam-gated and v2 mounts no plugin seam); a
       roster input seat and refusal codes for `multiPartyConversation`; a

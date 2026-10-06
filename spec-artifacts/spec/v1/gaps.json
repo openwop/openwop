@@ -14344,6 +14344,40 @@
       ]
     },
     {
+      "id": "openwop.gap.0238.1",
+      "rfc": "0238",
+      "local": "G1",
+      "section": "§B, §C",
+      "surface": "No host serves the frame document or the dispatch operation at the normative paths, so none of the §F rows has a witness. openwop-app dispatches at a vendor path and mounts frames by `srcdoc`.",
+      "witness": "unclassified",
+      "requirementId": null,
+      "disposition": "externally-gated",
+      "target": "openwop-app-ui-plugin-served",
+      "sources": [
+        {
+          "file": "RFCS/registers/0238-ui-plugin-observation-path.gaps.md",
+          "token": "G1"
+        }
+      ]
+    },
+    {
+      "id": "openwop.gap.0238.2",
+      "rfc": "0238",
+      "local": "G2",
+      "section": "Decisions 3",
+      "surface": "A non-iframe isolation mechanism has no HTTP-visible boundary, so `frontend-plugin-isolation` keeps a seam witness for such a host.",
+      "witness": "unclassified",
+      "requirementId": null,
+      "disposition": "externally-gated",
+      "target": "non-iframe-ui-plugin-host",
+      "sources": [
+        {
+          "file": "RFCS/registers/0238-ui-plugin-observation-path.gaps.md",
+          "token": "G2"
+        }
+      ]
+    },
+    {
       "id": "openwop.gap.spec.a2a-integration.g1",
       "rfc": "0152",
       "local": "G1",
