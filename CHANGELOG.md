@@ -8,6 +8,7 @@ Entries before this file was condensed carried full development detail. That tex
 
 ## [Unreleased]
 
+- **2.45.23 cycle (suite):** purpose labels are witnessed on a real onward hop. `v2-purpose-propagation-onward` hands the host a label through the §22 A2A `invoke` seam, now defined in `api/seams-v2.yaml`, and the suite's peer checks what arrives. The witness is seam-gated; a normative path is still owed.
 - **WASM fixture packs.** Two hand-written WebAssembly node packs (`conformance/fixtures/wasm-packs/`: a memory bomb and an ABI-999 pack) replace the Rust build an operator needed. New `v2-wasm-memory-cap` witnesses the §WASM memory ceiling at major 2.
 - **RFC 0239 filed and Active (window waived).** `multiPartyConversation`'s roster gets an input seat: `conversation.md` binds the roster to `core.conversationGate` config and names the two refusals; `errors.json` registers `conversation_speaker_not_participant` and `conversation_roster_exceeded` (both `422`).
 - **RFC 0238 filed and Active (window waived).** The `uiPlugins` invariants had only a v1 seam witness. `uiPlugins.served`, `getUiPluginFrame` and `dispatchUiPluginRequest`; `packs.md` binds the frame as the only mount. The four `frontend-plugin-*` invariants become `witnessable-gated` through `v2-ui-plugin-boundary`.

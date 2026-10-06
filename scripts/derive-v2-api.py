@@ -365,6 +365,27 @@ def v2_openapi_and_seams():
         'responses': {'202': {'description': 'Produced; `eventId` is the envelope\'s.', 'content': {'application/json': {'schema': {'type': 'object', 'additionalProperties': False, 'required': ['eventId'],
             'properties': {'eventId': {'$ref': '../schemas/v2/ids.schema.json#/$defs/eventId'}}}}}},
             '400': {'$ref': '#/components/responses/ValidationError'}, '401': {'$ref': '#/components/responses/Unauthenticated'}, '404': {'$ref': '#/components/responses/NotFound'}}}}
+    # host-sample-test-seams.md §22 `invoke`: v2 scenarios drove it before it was defined here. `permittedPurposes`
+    # (2.45.23) makes the host's onward A2A hop the purpose-label carrier the suite receives (security-defaults.md).
+    seams['paths']['/conformance/seams/sample/a2a/invoke'] = {'post': {'tags': ['Seams'], 'operationId': 'invokeA2aPeer',
+        'summary': "Make the host's real A2A client call a peer once",
+        'description': ("Makes the host's production A2A client send one message to `peerUrl` (any operation; the suite reads what the peer "
+                        'received). It MUST drive the same client the production path uses, and MUST NOT hand-write headers or metadata.\n\n'
+                        '`permittedPurposes`, when present, is the purpose label the host received for the data it forwards. A host advertising '
+                        '`purposePropagation` MUST re-emit it on the onward message as `metadata.openwop.permittedPurposes`, narrowing and never '
+                        'widening, and for `[]` MUST NOT make the onward call at all; it then answers `200` with `forwarded: false`. An unwired '
+                        'seam answers `404`/`405`.'),
+        'requestBody': {'required': True, 'content': {'application/json': {'schema': {'type': 'object', 'additionalProperties': False, 'required': ['peerUrl'],
+            'properties': {
+                'peerUrl': {'type': 'string', 'format': 'uri'},
+                'authenticated': {'type': 'boolean'},
+                'peerOffersOnly': {'type': 'string', 'pattern': '^[0-9]+\\.[0-9]+$'},
+                'requestVersion': {'type': 'string', 'pattern': '^[0-9]+\\.[0-9]+$'},
+                'scenario': {'type': 'string', 'enum': ['peer-asserts-authority']},
+                'permittedPurposes': {'type': 'array', 'items': {'type': 'string', 'minLength': 1}, 'uniqueItems': True}}}}}},
+        'responses': {'200': {'description': 'The call was made (or, for an empty label, deliberately not made).', 'content': {'application/json': {'schema': {'type': 'object',
+            'additionalProperties': True, 'properties': {'negotiatedVersion': {'type': 'string'}, 'forwarded': {'type': 'boolean'}}}}}},
+            '400': {'$ref': '#/components/responses/ValidationError'}, '401': {'$ref': '#/components/responses/Unauthenticated'}, '404': {'$ref': '#/components/responses/NotFound'}}}}
     # RFC 0173 read surfaces + hostEvents default address
     paths['/host/effect-seams'] = {'get': {'tags': ['host'], 'operationId': 'getEffectSeamManifest', 'summary': "Read the host's effect-seam manifest", 'description': ('Lists every outbound effect seam that replay suppression covers. A seam omitted here is invisible to the '
                                                                                                                                                                                         "conformance suite; an audit of the host's seams is the control."), 'responses': {'200': {'description': 'The manifest.', 'content': {'application/json': {'schema': {'$ref': '../../schemas/v2/effect-seam-manifest.schema.json'}}}}, '401': {'$ref': '#/components/responses/Unauthenticated'}}}}

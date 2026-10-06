@@ -9,6 +9,8 @@
 
 - **`0184.mint-no-tilde` also mints under `OPENWOP_TEST_TENANT_B_API_KEY`.** A host can bind tenant B to a non-clean tenant, so the leg bites in a production cut without moving the primary key. Asked by openwop-app, whose primary tenant is clean. A refused tenant-B create skips only that half. Proven against a double.
 
+- **New `v2-purpose-propagation-onward` (seam-gated).** The suite hands the host a `permittedPurposes` label through the §22 `invoke` seam (new optional field; the seam is now in `api/seams-v2.yaml`), and its fake A2A peer checks the onward message: re-emitted, never widened, and nothing sent for `[]`. Proven against a double.
+
 ## [2.45.22] — 2026-10-06 — an empty `dataResidency.regions` still binds the reject leg; RFC 0236's registers close
 
 - **No scenario change.** RFC 0236 goes `Accepted` on the v2 reference host's certified 2.45.21 cut; its gaps G1 and G2 close, which changes the packed `spec/v1/gaps.json`.
