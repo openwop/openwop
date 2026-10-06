@@ -260,7 +260,9 @@ Defects outside the spec:
       (RFC 0238 G3; `conformance.md` §Two products).
 - [ ] **RFCs owed before these legs can bind:** (the plugin-origin seat is RFC 0238); a
       roster input seat and refusal codes for `multiPartyConversation`; a
-      `nondeterminismPolicy.sources[]` seat; a purpose-label carrier the suite can receive; and
+      `nondeterminismPolicy.sources[]` seat (RFC 0237); a purpose-label carrier the suite can receive
+      (done in 2.45.23 without an RFC: the §22 A2A `invoke` seam takes `permittedPurposes`, and
+      `v2-purpose-propagation-onward` reads the onward message); and
       dropping the required `declared` / `advertised` booleans, which bring back `supported:false`
       under another name.
 - [ ] **Fixture-gated wave-3 legs not yet written.** `multiPartyConversation` roster legs need a

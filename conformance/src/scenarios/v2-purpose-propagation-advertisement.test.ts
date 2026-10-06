@@ -6,7 +6,7 @@
  *   record         the record validates against its capabilities-schema seat;
  *   propagates-onward-boolean purposePropagation.propagatesOnward is a boolean;
  *
- * Not here: propagation itself needs a carrier the suite can receive with a label seat (TODO §8).
+ * Not here: propagation itself is `v2-purpose-propagation-onward`, which observes the host's onward A2A hop through the §22 seam.
  *
  * Dispositions: discovery unreadable ⇒ `blocked`; `purposePropagation` absent, or the
  * facet a leg reads absent ⇒ `inapplicable`.

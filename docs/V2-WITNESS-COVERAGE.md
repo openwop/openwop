@@ -12,7 +12,7 @@ Every v2 core family now has a v2 normative home (RFC 0189). Many of its rules a
 - **At v1 end-of-support:** the 0 v1-only families, and the 0 obligation units attributed to them, lose their only witness.
 - **Obligation units (899 in `spec/v2/core/`):** 605 (67%) sit in a section a major-2 scenario cites; 294 sit in 102 sections no major-2 scenario cites.
 - **Declaration links:** 0 core families declare `floorScenarios`; 2 declare `requirementIds`. The family-to-test link exists only in scenario code and citations, although `overview.md` §What a MUST means says every core MUST has an id in `requirements.json`.
-- **Scenarios:** 645 registered, 205 run at major 2. 33 major-2 citations name a v2 core section this script cannot match to a heading (see Citation gaps).
+- **Scenarios:** 646 registered, 206 run at major 2. 33 major-2 citations name a v2 core section this script cannot match to a heading (see Citation gaps).
 
 ## How to read it
 
@@ -83,7 +83,7 @@ Every v2 core family now has a v2 normative home (RFC 0189). Many of its rules a
 | `conversationTurnModelProvenance` | witnessable-gated | **v2-witnessed** | 1 (1) | `v2-conversation-turn-model-provenance-advertisement`, `v2-conversation-turn-model-provenance` | `conversation-turn-model-provenance-shape` |
 | `promptLibrary` | claims-check | **v2-witnessed** | 1 (0) | `v2-prompt-library-advertisement` | – |
 | `schemaVersions` | witnessable-gated | **v2-witnessed** | 1 (1) | `v2-a2ui-v09-surface` | `aiEnvelope.schemaDrift` |
-| `a2a` | seam-gated | **v2-witnessed** | 0 (0) | `v2-a2a-agent-cards`, `v2-a2a-client-error-details`, `v2-a2a-operation-map`, `v2-a2a-push-delivery` +5 | `a2a-1-0-agent-card`, `a2a-1-0-task-roundtrip`, `a2a-card-runtime-consistency`, `a2a-peer-authority` +2 |
+| `a2a` | seam-gated | **v2-witnessed** | 0 (0) | `v2-a2a-agent-cards`, `v2-a2a-client-error-details`, `v2-a2a-operation-map`, `v2-a2a-push-delivery` +6 | `a2a-1-0-agent-card`, `a2a-1-0-task-roundtrip`, `a2a-card-runtime-consistency`, `a2a-peer-authority` +2 |
 | `auditLogIntegrity` | witnessable-gated | **v2-witnessed** | 0 (0) | `audit-checkpoint-signature`, `audit-log-integrity` | `strict-behavior-gate` |
 | `auth` | seam-gated | **v2-witnessed** | 0 (0) | `audit-checkpoint-signature`, `audit-log-integrity`, `v2-assurance-downgrade-audited`, `v2-lane-exp-only-bound` +3 | `auth-api-key-rotation`, `auth-mtls`, `auth-oauth2-client-credentials`, `auth-oidc-user-bearer` +6 |
 | `authorization` | witnessable-gated | **v2-witnessed** | 0 (0) | `v2-authorization-advertisement` | `approval-gate-flow`, `authorization-fail-closed`, `authorization-roles-shape`, `compensation-recovery` |
@@ -95,7 +95,7 @@ Every v2 core family now has a v2 normative home (RFC 0189). Many of its rules a
 | `envelopeContracts` | claims-check | **v2-witnessed** | 0 (0) | `v2-envelope-contracts-advertisement` | – |
 | `limits` | witnessable-gated | **v2-witnessed** | 0 (0) | `v2-run-execution-bounds` | `aiEnvelope.capBreached`, `run-execution-bounds-shape` |
 | `nondeterminismPolicy` | claims-check | **v2-witnessed** | 0 (0) | `v2-nondeterminism-policy-advertisement` | `agent-platform-profile` |
-| `purposePropagation` | witnessable-gated | **v2-witnessed** | 0 (0) | `v2-purpose-propagation-advertisement` | `purpose-propagation` |
+| `purposePropagation` | witnessable-gated | **v2-witnessed** | 0 (0) | `v2-purpose-propagation-advertisement`, `v2-purpose-propagation-onward` | `purpose-propagation` |
 | `runList` | witnessable-gated | **v2-witnessed** | 0 (0) | `v2-mcp-mount-map`, `v2-mcp-tasks`, `v2-run-list`, `v2-secret-canary-absent` | – |
 | `sandbox` | witnessable-gated | **v2-witnessed** | 0 (0) | `v2-pack-isolation` | `sandbox-memory-cap`, `sandbox-mvp-behavior`, `sandbox-no-host-fs-escape`, `sandbox-timeout-cap` +2 |
 | `triggerBridge` | witnessable-gated | **v2-witnessed** | 0 (0) | `v2-trigger-bridge-delivery`, `v2-trigger-dead-letter-read` | `agent-roster-attribution`, `trigger-bridge-delivery`, `trigger-dead-letter-read`, `trigger-ingestion` +2 |
@@ -422,8 +422,8 @@ node scripts/report-v2-witness-coverage.mjs --write  # regenerate this file
     "familiesWithRequirementIds": 2
   },
   "scenarios": {
-    "registered": 645,
-    "major2": 205
+    "registered": 646,
+    "major2": 206
   },
   "unresolvedV2Citations": 33,
   "major2ScenariosCitingNoCoreDoc": 67,
