@@ -8,6 +8,7 @@ Entries before this file was condensed carried full development detail. That tex
 
 ## [Unreleased]
 
+- **RFC 0238 filed (Draft).** The four `uiPlugins` SECURITY invariants were witnessed only by a v1 seam. Optional v2 operations under `/host/ui-plugins/{packName}/{pluginId}/` serve the frame document (isolation and egress in headers) and the `ui-plugin/1` dispatch.
 - **2.45.23 cycle (suite):** `0184.mint-no-tilde` also mints one run under the second-tenant credential, so a host whose primary tenant is clean can still make the leg bite by binding tenant B to a non-clean tenant.
 - **RFC 0237 filed (Draft).** `nondeterminismPolicy` names its sources (`clock`, `random`, `id`, `env`, `x-*`), and a `replay` fork must reproduce each, witnessed by a fixture. `declared: false` and `envelopeContracts.advertised: false` are not v2 states; both booleans go at 3.0.
 - **2.45.22 cycle (suite):** `v2-data-residency-admission` runs its reject leg when `dataResidency.regions` is empty. Such a host must refuse every residency constraint; it used to skip both legs and pass while ignoring them.
