@@ -68,7 +68,7 @@ Two rows in `spec/v2/errors.json`, both `422`, `retriable: false`:
 ### §E. Fixtures
 
 1. `conformance-multi-party-council`: one `core.conversationGate` with `mockAutoResume: false` and a three-member roster `host:conformance-council-a`, `-b`, `-c`. A host advertises it in discovery `fixtures` when it can run it, its roster ids resolving as the host decides (RFC 0003).
-2. `conformance-multi-party-council-oversize`: the same gate with a nine-member roster. It is meaningful only for a host advertising `maxParticipants` below nine.
+2. `conformance-multi-party-council-oversize`: the same gate with a 64-member roster. It is meaningful only for a host advertising `maxParticipants` below 64.
 
 ### §F. Conformance
 
@@ -76,9 +76,9 @@ A new scenario, `v2-multi-party-council`, gated on `multiPartyConversation` and 
 
 1. **roster-carried** (`openwop.requirement.0239.council.roster-carried`): run the council; `conversation.opened.participants` equals the configured roster.
 2. **speaker-refused** (`openwop.requirement.0239.council.speaker-refused`): resume the exchange with an agent turn whose `speakerId` is `host:conformance-intruder`. Expect `422 conversation_speaker_not_participant`, the interrupt still open, and no `conversation.exchanged`. Then a turn from `host:conformance-council-a` resolves it (the control).
-3. **roster-exceeded** (`openwop.requirement.0239.council.roster-exceeded`): with `maxParticipants` below nine, creating a run of the oversize fixture is refused `422 conversation_roster_exceeded`, and no run opens a conversation.
+3. **roster-exceeded** (`openwop.requirement.0239.council.roster-exceeded`): with `maxParticipants` below 64, creating a run of the oversize fixture is refused `422 conversation_roster_exceeded`, and no run opens a conversation.
 
-Dispositions: no `multiPartyConversation` or fixture not advertised ⇒ `inapplicable`. Leg 3 is `inapplicable` when `maxParticipants` is absent or nine or more, with the reason.
+Dispositions: no `multiPartyConversation` or fixture not advertised ⇒ `inapplicable`. Leg 3 is `inapplicable` when `maxParticipants` is absent or 64 or more, with the reason.
 
 ### Falsifiability — one row per normative requirement
 
@@ -86,7 +86,7 @@ Dispositions: no `multiPartyConversation` or fixture not advertised ⇒ `inappli
 | --- | --- | --- | --- |
 | §A.2 the configured roster is carried on `conversation.opened` — `openwop.requirement.0239.council.roster-carried` | the event's `participants` | the suite, running the advertised fixture | witnessable — executed-pass required on a host bundle |
 | §B.2–§B.3 a non-member turn is refused unconsumed — `openwop.requirement.0239.council.speaker-refused` | the `422` code, the open interrupt, no `conversation.exchanged`, then a member turn resolving it | the suite, unaided | witnessable — executed-pass required on a host bundle |
-| §C an oversized roster is refused unopened — `openwop.requirement.0239.council.roster-exceeded` | the `422` code at run creation | the suite, running the oversize fixture, when `maxParticipants` is below nine | witnessable — gated (a host bounding at nine or more cannot be shown an oversize fixture without workflow registration) |
+| §C an oversized roster is refused unopened — `openwop.requirement.0239.council.roster-exceeded` | the `422` code at run creation | the suite, running the oversize fixture, when `maxParticipants` is below 64 | witnessable — gated (a host bounding at 64 or more cannot be shown an oversize fixture without workflow registration) |
 
 ## Compatibility
 
@@ -110,7 +110,7 @@ An `/architect` review decided these on 2026-10-06.
 1. **Roster in node config**, not run input: the roster is part of the workflow's design, replays with it, and needs no new run field.
 2. **Refusal status `422`** with two registered codes (§D).
 3. **A refused turn is not consumed** (§B.3), so a client can retry, and replay never sees a refused value.
-4. **The oversize leg is gated on `maxParticipants` below nine** (§F). No schema ceiling exists to guarantee the fixture exceeds it.
+4. **The oversize leg is gated on `maxParticipants` below 64** (§F; the fixture size openwop-5e proposed, which covers far more hosts than nine). No schema ceiling exists to guarantee the fixture exceeds it.
 5. **Roster ids resolve as the host decides.** The host advertises the fixture only when it can run it (RFC 0003), so the suite never requires particular agents to exist.
 
 ## Acceptance criteria
