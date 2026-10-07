@@ -42,7 +42,7 @@ Grouping below is a reading aid only: it assigns each RFC to the risk class its 
 | [0232](../RFCS/0232-trigger-dead-letter-read.md) | a trigger subscription's dead-lettered deliveries are readable | `Accepted` | steward override of RFC 0147 §A.6 | tier-1 — steward-verified: openwop-app, the steward-operated production host at `app | `not-reviewed` |
 | [0233](../RFCS/0233-connection-provider-registry-read.md) | a host's connection providers and refused registrations are readable | `Accepted` | steward override of RFC 0147 §A.6 | tier-1 — steward-verified: openwop-app, the steward-operated production host at `app | `not-reviewed` |
 | [0235](../RFCS/0235-if-none-match-evaluation.md) | `If-None-Match` is evaluated as HTTP defines it | `Accepted` | steward override of RFC 0147 §A.6 | tier-1 — the v2 reference host | `not-reviewed` |
-| [0238](../RFCS/0238-ui-plugin-observation-path.md) | a host's front-end plugin boundary is observable | `Active` | steward override of RFC 0147 §A.6 | not declared (predates RFC 0174 §B.1, or not yet Accepted) | `not-reviewed` |
+| [0238](../RFCS/0238-ui-plugin-observation-path.md) | a host's front-end plugin boundary is observable | `Accepted` | steward override of RFC 0147 §A.6 | tier-1 — openwop-app, the steward's production host: its certified cut on published suite… | `not-reviewed` |
 | [0239](../RFCS/0239-council-roster-input.md) | a council's roster has an input seat and its refusals have codes | `Accepted` | steward override of RFC 0147 §A.6 | tier-1 — the v2 reference host | `not-reviewed` |
 
 ## Tenant isolation (6)

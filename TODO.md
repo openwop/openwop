@@ -251,10 +251,9 @@ Defects outside the spec:
 - [ ] **RFC 0237** (`Active` 2026-10-06, window waived): `nondeterminismPolicy.sources[]`. Owed for `Accepted`:
       a host lists `sources`, installs `conformance-nondeterminism` (reserved `core.conformance.nondeterminism`),
       and a certified bundle records `0237.declared-source-replays` and `0237.no-false-advertisement`.
-- [ ] **RFC 0238** (`Active` 2026-10-06, window waived): the plugin-origin seat. Owed for `Accepted`:
-      openwop-app serves `getUiPluginFrame` and `dispatchUiPluginRequest` (both allowlist halves
-      server-side), mounts plugins from the frame URL, installs `ui-plugin-pack-narrow` and
-      `ui-plugin-narrow-artifact`, advertises `uiPlugins.served`, and cuts certified (G1).
+- [x] **RFC 0238** `Accepted` (provisional) 2026-10-07 on openwop-app's certified 2.45.23 cut at
+      `api.openwop.dev` (379/0/0, build `e33f3a19c`). Owed: the RFC 0156 §B review; R2 (an embedding
+      the suite cannot see) is reviewed with each host's certification; G2 stays external.
 - [x] **Move the always-on schema legs of `frontend-plugin-packs.test.ts` to `src/coherence/`**
       (RFC 0238 G3; `conformance.md` §Two products). Done in 2.45.25: `src/coherence/frontend-plugin-schemas.test.ts`.
 - [x] **RFC 0239** `Accepted` (provisional) 2026-10-07 on the v2 reference host's certified 2.45.23
