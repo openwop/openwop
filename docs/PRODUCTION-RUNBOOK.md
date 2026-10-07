@@ -146,8 +146,8 @@ Per [`observability.md`](../spec/v1/observability.md):
 ## See also
 
 - [`docs/IMPLEMENTER-PATH.md`](./IMPLEMENTER-PATH.md) — getting started.
-- [`docs/PROFILE-DECISION-GUIDE.md`](./PROFILE-DECISION-GUIDE.md) — which profiles to claim.
-- [`docs/IMPLEMENTATION-CERTIFICATION.md`](./IMPLEMENTATION-CERTIFICATION.md) — how to publish your evidence.
+- [`docs/PROFILE-DECISION-GUIDE.md`](https://github.com/openwop/openwop/blob/48c1f569eb8a8f4ed3ae95bdacf7e757707ce855/docs/PROFILE-DECISION-GUIDE.md) — which profiles to claim.
+- [`docs/IMPLEMENTATION-CERTIFICATION.md`](https://github.com/openwop/openwop/blob/48c1f569eb8a8f4ed3ae95bdacf7e757707ce855/docs/IMPLEMENTATION-CERTIFICATION.md) — how to publish your evidence.
 - [`spec/v1/production-profile.md`](../spec/v1/production-profile.md) — normative production-profile contract.
 - [`examples/hosts/postgres/README.md`](https://github.com/openwop/openwop-examples/blob/main/examples/hosts/postgres/README.md) — reference host operator guide.
 - [`examples/hosts/postgres/conformance-full.md`](https://github.com/openwop/openwop-examples/blob/main/examples/hosts/postgres/conformance-full.md) — current production-claim evidence.

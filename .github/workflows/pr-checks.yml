@@ -2,13 +2,14 @@
 #
 # PR CI scope:
 #   * `openwop-spec.yml` handles full spec-corpus validation.
-#   * This workflow handles changed-path SDK and conformance checks.
+#   * This workflow handles changed-path conformance checks (the SDKs are
+#     checked in openwop/openwop-sdks).
 #   * `openwop-publish.yml` is tag-only and never runs on PRs.
 #   * Triggered on `pull_request` (not `pull_request_target`), so secrets
 #     are not available to forked PRs by design.
 #
-# Path filters keep the matrix lean: a TS-only PR doesn't run the Python
-# or Go jobs, and vice-versa.
+# Path filters keep the matrix lean: a PR that doesn't touch conformance/
+# skips the conformance jobs.
 
 name: PR Checks
 
@@ -47,11 +48,13 @@ jobs:
       - uses: actions/setup-node@v6
         with:
           node-version: '24'
-      - name: Lint conformance
+      # The job keeps its name (a required check); conformance has no linter, so
+      # it typechecks, which is the strictest static check the package has.
+      - name: Typecheck conformance
         run: |
           cd conformance
           npm ci
-          npm run lint --if-present || (echo "::warning::lint script is not configured for this package" && true)
+          npm run typecheck
 
   # The reference app (frontend build + css-token gate + Playwright/axe e2e
   # gate) moved to the openwop-app repo (apps/workflow-engine extracted 2026-06;

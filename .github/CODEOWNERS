@@ -13,6 +13,7 @@
 /conformance/src/lib/                             @davidscotttufts
 
 # Spec corpus — normative content; same review bar as conformance.
+/spec/v2/                                         @davidscotttufts
 /spec/v1/                                         @davidscotttufts
 /api/                                             @davidscotttufts
 /schemas/                                         @davidscotttufts

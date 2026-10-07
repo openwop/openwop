@@ -198,8 +198,8 @@ Run these checks against your deployed host on a daily / per-deploy cadence:
 - [`SECURITY.md`](../SECURITY.md) — disclosure policy + threat-model index.
 - [`SECURITY/invariants.yaml`](../SECURITY/invariants.yaml) — protocol-tier MUST-NOTs with test references.
 - [`docs/PRODUCTION-RUNBOOK.md`](./PRODUCTION-RUNBOOK.md) — operator playbook for the production claim.
-- [`docs/PROFILE-DECISION-GUIDE.md`](./PROFILE-DECISION-GUIDE.md) — which profiles to claim.
-- [`docs/IMPLEMENTATION-CERTIFICATION.md`](./IMPLEMENTATION-CERTIFICATION.md) — how to publish your evidence.
+- [`docs/PROFILE-DECISION-GUIDE.md`](https://github.com/openwop/openwop/blob/48c1f569eb8a8f4ed3ae95bdacf7e757707ce855/docs/PROFILE-DECISION-GUIDE.md) — which profiles to claim.
+- [`docs/IMPLEMENTATION-CERTIFICATION.md`](https://github.com/openwop/openwop/blob/48c1f569eb8a8f4ed3ae95bdacf7e757707ce855/docs/IMPLEMENTATION-CERTIFICATION.md) — how to publish your evidence.
 - [`docs/KNOWN-LIMITS.md`](./KNOWN-LIMITS.md) — what's not yet covered.
 - [`spec/v1/auth.md`](../spec/v1/auth.md) + [`auth-profiles.md`](../spec/v1/auth-profiles.md) — normative auth surface.
 - [`spec/v1/webhooks.md`](../spec/v1/webhooks.md) — HMAC signing recipe.

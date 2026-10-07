@@ -249,7 +249,7 @@ See [`spec/v1/positioning.md`](../spec/v1/positioning.md) §"Standards compositi
 - [`docs/PROTOCOL-STATUS.md`](./PROTOCOL-STATUS.md) — generated repo state.
 - `plans/openwop-protocol-gap-closure-plan.md` — controllable + external-gated work.
 - [`docs/IMPLEMENTER-PATH.md`](./IMPLEMENTER-PATH.md) — adoption-side path.
-- [`docs/PROFILE-DECISION-GUIDE.md`](./PROFILE-DECISION-GUIDE.md) — profile-selection decision tree.
+- [`docs/PROFILE-DECISION-GUIDE.md`](https://github.com/openwop/openwop/blob/48c1f569eb8a8f4ed3ae95bdacf7e757707ce855/docs/PROFILE-DECISION-GUIDE.md) — profile-selection decision tree.
 - [`INTEROP-MATRIX.md`](../INTEROP-MATRIX.md) — public host roster + evidence claims.
 - [`SECURITY/invariants.yaml`](../SECURITY/invariants.yaml) — protocol-tier + reference-impl-tier invariants with test references or non-testability rationales.
 

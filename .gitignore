@@ -49,38 +49,6 @@ build/
 *.test
 *.out
 
-# ── Reference-host runtime artifacts ─────────────────────────────────────────
-# Per-deployment signing keys, SQLite DBs, audit logs. Never committed.
-examples/hosts/postgres/data/
-examples/hosts/sqlite/data/
-# Conformance harness runtime state for local workflow-engine runs:
-# the BE's sqlite DB + WAL/shm sidecar files (caught by `*.db` for the
-# main file, but the WAL writer emits `.db-shm`/`.db-wal` siblings
-# that need their own match), the BYOK at-rest master key (never
-# committed — a production deploy uses a managed KMS), and an
-# initially-empty host-fs sandbox dir the in-memory host writes into.
-conformance/data/*.db-shm
-conformance/data/*.db-wal
-conformance/data/.byok-master-key
-conformance/data/host-fs/
-
-# ── Registry: un-ignore the publication artifacts ────────────────────────────
-# The root `*.tgz` rule above would otherwise block every new signed pack
-# tarball under `registry/v1/packs/**`. These are intentional content (the
-# verifiable artifacts consumers download), NOT npm-pack development output.
-# Companion signatures + public keys are explicitly un-ignored too so a
-# future broader rule can't silently break the registry.
-!registry/**/*.tgz
-!registry/**/*.sig
-!registry/keys/*.pub
-!packs/**/*.sig
-
-# Public keys distributed with community-tier packs ARE meant to be
-# tracked — they're the verifier counterpart to detached signatures.
-# Private keys MUST NOT be committed; they live in the operator's
-# secrets vault per docs/PACKS-MVP-PLAN.md §"Operational note."
-!packs/**/keys/*.pub.pem
-
 # ── Environment & secrets ────────────────────────────────────────────────────
 .env
 .env.local
@@ -141,35 +109,12 @@ lcov.info
 *.temp
 *~
 
-# Firebase emulator + CLI debug streams (`.firebase/` is the deploy cache;
-# `.firebaserc` + `firebase.json` are tracked project config).
-.firebase/
-firebase-debug.log
-firestore-debug.log
-database-debug.log
-ui-debug.log
-
 # ── Database files ───────────────────────────────────────────────────────────
 *.db
 *.sqlite
 *.sqlite3
-# Exception: the database-adapter node pack directory + its registry
-# artifacts (the *.db wildcard above otherwise matches the dir name).
-!packs/core.openwop.db/
-!registry/core.openwop.db/
-!registry/core.openwop.db/**
-!registry/v1/packs/core.openwop.db/
-!registry/v1/packs/core.openwop.db/**
-!packs/core.openwop.db/**
-
 # ── Process / daemon state ───────────────────────────────────────────────────
 *.pid
-
-# ── Docker compose overrides ─────────────────────────────────────────────────
-# `compose.yml` / `docker-compose.yml` are tracked; per-developer overrides
-# are local-only.
-compose.override.yml
-docker-compose.override.yml
 
 # ── Claude Code per-developer runtime state ──────────────────────────────────
 # Scheduled-task locks, session logs, etc. Tracked skill definitions under
@@ -193,18 +138,19 @@ docker-compose.override.yml
 plans/*.md
 
 
-# Generated white-label demo-app zip (scripts/build-whitelabel-zip.sh) — built at deploy, not committed
-public/downloads/
-
 # graphify knowledge-graph output (local, not tracked)
 graphify-out/
 
 # ── Extracted-repo residue ───────────────────────────────────────────────────
-# `apps/workflow-engine` moved to openwop/openwop-app (#660) and `examples/`
-# (hosts + samples) moved to openwop/openwop-examples (813f984a); neither
-# directory holds tracked content in this monorepo anymore. Local checkouts
+# `apps/` moved to openwop/openwop-app, `examples/` to openwop/openwop-examples,
+# `packs/` + `registry/` to openwop/openwop-registry, `sdk/` to openwop/openwop-sdks
+# and `site/` to openwop/openwop-site; none of these directories holds tracked content in this monorepo anymore. Local checkouts
 # still carry pre-extraction build residue (lockfiles, Rust target/, dist
 # output, runtime DBs/keys) — ignore the directories wholesale. New work on
 # those surfaces belongs in the extracted repos, not here.
 /apps/
 /examples/
+/packs/
+/registry/
+/sdk/
+/site/

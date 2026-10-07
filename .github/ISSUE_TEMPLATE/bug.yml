@@ -18,9 +18,6 @@ body:
         - JSON Schema
         - OpenAPI
         - AsyncAPI
-        - SDK — TypeScript (@openwop/openwop)
-        - SDK — Python (openwop-client)
-        - SDK — Go (github.com/openwop/openwop/sdk/go)
         - Conformance suite (@openwop/openwop-conformance)
         - Other (describe below)
     validations:
@@ -30,7 +27,7 @@ body:
     id: file
     attributes:
       label: Specific file or section
-      description: e.g. spec/v1/auth.md §"Bearer tokens"
+      description: e.g. spec/v2/core/identity.md §"2.1 The pipeline" (SDK bugs go to openwop/openwop-sdks)
     validations:
       required: false
 
@@ -38,8 +35,8 @@ body:
     id: spec_version
     attributes:
       label: Spec / suite version
-      description: Spec tag (v1.0.0) or commit SHA + suite version + SDK version, as applicable.
-      placeholder: "spec v1.0.0; @openwop/openwop-conformance 1.0.0; @openwop/openwop 1.0.0"
+      description: Spec tag or commit SHA, plus the suite version, as applicable.
+      placeholder: "spec v2.45.23; @openwop/openwop-conformance 2.45.23"
     validations:
       required: true
 
@@ -65,7 +62,7 @@ body:
     attributes:
       label: Impact
       options:
-        - Blocks v1 conformance for at least one host
+        - Blocks conformance for at least one host
         - Internal inconsistency in the spec corpus
         - SDK ergonomics / DX
         - Documentation only

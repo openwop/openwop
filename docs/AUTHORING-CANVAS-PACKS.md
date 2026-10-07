@@ -284,7 +284,7 @@ If the integrity hash or signing keyId is wrong, the deploy succeeded but consum
 - [`spec/v1/node-packs.md`](../spec/v1/node-packs.md) — pack manifest format, registry HTTP API, `peerDependencies` semantics
 - [`spec/v1/host-capabilities.md`](../spec/v1/host-capabilities.md) — `host.*` capability contracts (currently DRAFT v1)
 - [`spec/v1/registry-operations.md`](../spec/v1/registry-operations.md) — namespace claims, signing-key registration, publish lifecycle
-- [`docs/CANVAS-PACKS-INVENTORY.md`](./CANVAS-PACKS-INVENTORY.md) — current scope (30 executors, 4 sub-packs)
+- [`docs/CANVAS-PACKS-INVENTORY.md`](https://github.com/openwop/openwop/blob/48c1f569eb8a8f4ed3ae95bdacf7e757707ce855/docs/CANVAS-PACKS-INVENTORY.md) — current scope (30 executors, 4 sub-packs)
 - [`registry/README.md`](https://github.com/openwop/openwop-registry/blob/main/registry/README.md) — registry layout + signing-key + namespace assignment table
 - [`templates/node-pack/`](https://github.com/openwop/openwop-registry/tree/main/templates/node-pack) — v2 pack source-tree skeleton (input to `scripts/new-pack.mjs`)
 - [`scripts/new-pack.mjs`](https://github.com/openwop/openwop-registry/blob/main/scripts/new-pack.mjs) — pack generator

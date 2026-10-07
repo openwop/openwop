@@ -18,10 +18,10 @@
 
 **Status: 📥 Graduating `Active → Accepted` (Phase 1) — 2026-05-26 (canary-verified, promote pending).** Openwop-side
 companion to the migration request at
-[`0071-artifact-type-packs-migration-request.md`](./0071-artifact-type-packs-migration-request.md).
+[`0071-artifact-type-packs-migration-request.md`](https://github.com/openwop/openwop/blob/48c1f569eb8a8f4ed3ae95bdacf7e757707ce855/docs/openwop-adoption/0071-artifact-type-packs-migration-request.md).
 Canonical per-row evidence belongs in [`../../INTEROP-MATRIX.md`](../../INTEROP-MATRIX.md);
 this file is the index + the migration story, mirroring the
-[0045–0054 cohort format](./0045-0054-cohort-summary.md).
+[0045–0054 cohort format](https://github.com/openwop/openwop/blob/48c1f569eb8a8f4ed3ae95bdacf7e757707ce855/docs/openwop-adoption/0045-0054-cohort-summary.md).
 
 MyndHyve is the non-steward host whose advertisement + passing conformance
 fires the `Active → Accepted` gate for RFC 0071 Phase 1
@@ -122,7 +122,7 @@ it cuts. **4 files / 15 tests passed** against the canary tag URL, 2026-05-26.
 ## Migration map — status
 
 The 16 `vendor.myndhyve.*` artifact types from the request's
-[migration map](./0071-artifact-type-packs-migration-request.md#migration-map--your-artifacttypedefinition--openwop-artifacttype)
+[migration map](https://github.com/openwop/openwop/blob/48c1f569eb8a8f4ed3ae95bdacf7e757707ce855/docs/openwop-adoption/0071-artifact-type-packs-migration-request.md#migration-map--your-artifacttypedefinition--openwop-artifacttype)
 are advertised with `schemaVersion: 1`. The reverse-DNS rename lands on the
 wire: MyndHyve's `CORE_ARTIFACT_TYPE_IDS` (`prd`/`theme`/`plan`/`screen`)
 publish under `vendor.myndhyve.*` (`core.*` reserved for the working group);
@@ -163,7 +163,7 @@ serves the production endpoint; until then they read `canary-verified`.)_
 
 ## References
 
-- Request: [`0071-artifact-type-packs-migration-request.md`](./0071-artifact-type-packs-migration-request.md)
+- Request: [`0071-artifact-type-packs-migration-request.md`](https://github.com/openwop/openwop/blob/48c1f569eb8a8f4ed3ae95bdacf7e757707ce855/docs/openwop-adoption/0071-artifact-type-packs-migration-request.md)
 - RFC: [`../../RFCS/0071-artifact-type-and-chat-card-packs.md`](../../RFCS/0071-artifact-type-and-chat-card-packs.md)
 - Spec: [`../../spec/v1/artifact-type-packs.md`](../../spec/v1/artifact-type-packs.md), [`../../spec/v1/host-capabilities.md`](../../spec/v1/host-capabilities.md) §host.artifactTypes
 - PR: openwop/openwop#270

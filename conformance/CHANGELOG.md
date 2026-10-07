@@ -3,6 +3,7 @@
 ## [2.45.24] — 2026-10-06 — the README document-index check reads `spec/v2/core`
 
 - **No scenario change.** The coherence test `spec-corpus-validity` checks that the root README's document index lists every `spec/v2/core` doc exactly once and that its **Total** matches; it checked `spec/v1`. The two requirement ids are renamed to match, which changes the packed `requirements.json`.
+- **Package README and metadata.** The README drops a 107-line block that repeated the dated coverage notes verbatim; the package description names v2; `tsconfig.json` sets `noEmit`, so a bare `tsc -p tsconfig.json` no longer writes `.js` files beside the sources.
 
 ## [2.45.23] — 2026-10-06 — `0184.mint-no-tilde` also mints under the second-tenant credential; RFC 0237 filed
 

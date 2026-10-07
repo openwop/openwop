@@ -184,6 +184,6 @@ Publisher keys SHOULD rotate annually. Hard rotation (compromise response) follo
 - [`spec/v1/registry-operations.md`](../../spec/v1/registry-operations.md) §"Pack lifecycle"
 - [`docs/runbooks/VENDOR-ONBOARDING.md`](./VENDOR-ONBOARDING.md) — initial namespace claim + key registration
 - [`docs/runbooks/INCIDENT-RESPONSE.md`](./INCIDENT-RESPONSE.md) — emergency procedures (key compromise, CVE response)
-- [`docs/runbooks/PACK-PUBLISH.md`](./PACK-PUBLISH.md) — initial publish flow
+- [`docs/runbooks/PACK-PUBLISH.md`](https://github.com/openwop/openwop/blob/48c1f569eb8a8f4ed3ae95bdacf7e757707ce855/docs/runbooks/PACK-PUBLISH.md) — initial publish flow
 - [`registry/scripts/build-index.mjs`](https://github.com/openwop/openwop-registry/blob/main/registry/scripts/build-index.mjs) — index regeneration
 - [`.github/workflows/registry-publish.yml`](https://github.com/openwop/openwop-registry/blob/main/.github/workflows/registry-publish.yml) — CI gates that run on every lifecycle PR
