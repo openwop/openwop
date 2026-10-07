@@ -1,6 +1,6 @@
 # OpenWOP in 10 Minutes
 
-> **Status: v2.** Every call below uses unversioned paths (`/runs`) and sends an `OpenWOP-Version: 2` header. The responses come from the v2 reference host, abbreviated. That host ran on port 3990 for the capture; yours will show `3838`.
+> **Status: v2.** Every call below uses unversioned paths (`/runs`) and sends an `OpenWOP-Version: 2` header. The responses were captured from the v2 reference host and abbreviated. The capture ran on port 3990; your host listens on 3838, so its URLs will say `3838`.
 
 This is the fastest path from "what is OpenWOP?" to "I have a v2 workflow running on my laptop". You need Node 20+ and a clone of [`openwop/openwop-examples`](https://github.com/openwop/openwop-examples), which holds the reference hosts and runnable samples. You don't need a vendor SDK, a managed service, or a framework.
 
@@ -41,7 +41,7 @@ openwop-host-v2-reference listening on http://127.0.0.1:3990 (protocolVersions 1
 
 Leave it running. `--legacy-peer-deps` is required: the host's README explains the exact-pinned conformance peers it works around. The host stores runs in one SQLite file (`data/v2-reference.sqlite`). Set `OPENWOP_DB_PATH=:memory:` if you want nothing written to disk.
 
-The boot line says `protocolVersions 1.11, 2.0; preferredVersion 1.11`. The host serves both majors, and until v1 end-of-support a request **without** `OpenWOP-Version` gets the v1 contract ([`spec/v2/core/versioning.md`](./spec/v2/core/versioning.md) §1.1, §1.3). That's why every call below sends `OpenWOP-Version: 2`.
+The boot line says `protocolVersions 1.11, 2.0; preferredVersion 1.11`: this host still serves the frozen v1 wire next to v2. An unversioned path such as `/runs` is always the v2 surface. Only `/.well-known/openwop` follows the header, and without one it returns the `preferredVersion` (v1) document ([`spec/v2/core/versioning.md`](./spec/v2/core/versioning.md) §1.3). Every call below sends `OpenWOP-Version: 2` so discovery returns the v2 document too.
 
 In a separate terminal:
 
@@ -176,7 +176,7 @@ EOF
 node quickstart.mjs
 ```
 
-Output (with `@openwop/openwop` 2.3.0):
+Output (captured with `@openwop/openwop` 2.3.0):
 
 ```text
 Server: openwop-host-v2-reference [ '1.11', '2.0' ]
@@ -280,7 +280,7 @@ Three details are worth knowing:
 - **[`docs/migration/v1-to-v2.md`](./docs/migration/v1-to-v2.md)** is for readers who have v1 client code.
 - **Build a node pack:** [`docs/PACK-AUTHOR-QUICKSTART.md`](./docs/PACK-AUTHOR-QUICKSTART.md).
 
-The `tiny-workflow` and `streaming-client` samples in `openwop-examples` speak v2 and run against the v2 reference host (openwop-examples #100). The in-memory host still speaks the older wire (`/v1/…`, port 3737), so use the v2 reference host for this walkthrough.
+The `tiny-workflow` and `streaming-client` samples in `openwop-examples` speak v2 and run against the v2 reference host. The in-memory host there serves only the frozen v1 wire (`/v1/…`, port 3737), so it won't work with this walkthrough.
 
 ---
 
@@ -295,6 +295,6 @@ The `tiny-workflow` and `streaming-client` samples in `openwop-examples` speak v
 | `400 validation_error` naming an unknown key | The `POST /runs` body is closed. Fields it does not define, such as a free-form `configurable` map, are refused. See [`runs.md`](./spec/v2/core/runs.md) §Create. |
 | `403` mentioning `tenantId` | Leave `tenantId` out. The tenant comes from your credential. |
 | `400 protocol_version_mismatch` | You sent `OpenWOP-Version: 2` to a `/v1/…` path. Drop the `/v1` prefix. |
-| Discovery returns the v1 document (`OpenWOP-Version: 1.11` on the response) | You forgot the `OpenWOP-Version: 2` request header. |
+| Discovery returns the v1 document (`OpenWOP-Version: 1.11` on the response) | Send the `OpenWOP-Version: 2` request header. Without it, discovery follows the host's `preferredVersion`, which is `1.11` on this host. |
 
 If something else doesn't work, file an issue at <https://github.com/openwop/openwop/issues>. The v2 reference host is supposed to "just work" for this guide.

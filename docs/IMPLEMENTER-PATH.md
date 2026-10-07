@@ -4,7 +4,7 @@
 
 The full corpus is large. This page is the thin path, and it targets **v2**, the current protocol major ([`spec/v2/README.md`](../spec/v2/README.md)). Follow it in order; each step has a single primary artifact and a single check that proves the step landed. For the shortest version of the bar itself, read [`IMPLEMENT-CORE.md`](./IMPLEMENT-CORE.md).
 
-> **Must you implement v1 instead?** v1 is the maintained parallel track until v1 end-of-support ([`spec/v2/core/overview.md`](../spec/v2/core/overview.md) §"v1 end-of-support"). The v1 path is the one this page described before the rewrite: [`spec/v1/capabilities.md`](../spec/v1/capabilities.md), [`spec/v1/rest-endpoints.md`](../spec/v1/rest-endpoints.md), [`spec/v1/profiles.md`](../spec/v1/profiles.md), [`api/openapi.yaml`](../api/openapi.yaml), the `/v1/…` path space, the 1.x SDKs, and the suite with `--target-major 1`. Its host rows are the non-v2 `## Hosts` table in `INTEROP-MATRIX.md`. If you already run a v1 host in production, migrate with [`docs/runbooks/V2-HOST-MIGRATION.md`](./runbooks/V2-HOST-MIGRATION.md) and [`docs/migration/v1-to-v2.md`](./migration/v1-to-v2.md) rather than this page.
+> **v1 reached end of support on 2026-10-04** ([RFC 0234](../RFCS/0234-maintainer-set-v1-end-of-support.md)); `spec/v1/` is a frozen tree. Do not start a new v1 host. If you already run one, migrate with [`docs/runbooks/V2-HOST-MIGRATION.md`](./runbooks/V2-HOST-MIGRATION.md) and [`docs/migration/v1-to-v2.md`](./migration/v1-to-v2.md) rather than this page.
 
 ---
 
@@ -77,7 +77,7 @@ The 2.x client SDKs are v2-only and ship from [`openwop/openwop-sdks`](https://g
 - Python: [`openwop-client`](https://pypi.org/project/openwop-client/) 2.x
 - Go: `github.com/openwop/openwop-sdks/go/v2`
 
-Method names are not repeated here; this repo does not carry the SDK sources. Use each SDK's own README, and [`sdk/PARITY.md`](https://github.com/openwop/openwop-sdks/blob/main/sdk/PARITY.md) for the shared surface. The 1.x SDKs keep publishing for callers on `/v1/…`.
+Method names are not repeated here; this repo does not carry the SDK sources. Use each SDK's own README, and [`sdk/PARITY.md`](https://github.com/openwop/openwop-sdks/blob/main/sdk/PARITY.md) for the shared surface. The 1.x SDKs remain installable for callers still on `/v1/…`.
 
 **Check:** an SDK smoke against your host completes a run end-to-end: `POST /runs` → poll until `isTerminal` → assert the event types are registered v2 types (`events.md` §Types).
 
@@ -174,7 +174,7 @@ This page no longer walks the v1 pack-consumer code: the Postgres example's `pac
 
 - **Don't advertise what you don't implement.** Omit the family. Advertising it binds its obligations, and strict mode fails a surface with no witness.
 - **No `/v2/` prefix.** v2 paths are unversioned. A major you advertise must answer every manifest operation you also serve under the other major (`versioning.md` §1.2).
-- **`preferredVersion` stays `1.x` through the overlap** if you serve v1, so a header-less request gets v1. Clients that want v2 send `OpenWOP-Version: 2`.
+- **`preferredVersion` stays `1.x` while you also serve v1**, so a header-less discovery request gets the v1 representation. Other unversioned paths are always v2 (`versioning.md` §1.3). Clients that want v2 discovery send `OpenWOP-Version: 2`.
 - **Tenant-bound ids must survive your front door.** `identity.md` §5 defines the path projection; a proxy that decodes `%2F` makes ids unreachable.
 - **Idempotency-Key has a grammar.** `^[A-Za-z0-9._~-]{22,128}$`, else `400 idempotency_key_invalid` (`idempotency.md`).
 - **Consumers tolerate unknown registered members** of closed enums and do not act on them; producers emit only registered ones (`overview.md` §0).
@@ -207,7 +207,7 @@ This is what you keep host-private. Don't try to make it normative.
 - [`openwop/openwop-sdks`](https://github.com/openwop/openwop-sdks) — three client SDKs
 - [`INTEROP-MATRIX.md`](../INTEROP-MATRIX.md) — public host roster
 - [`docs/migration/v1-to-v2.md`](./migration/v1-to-v2.md) — for existing v1 hosts and clients
-- [`spec/v1/`](../spec/v1/) — the v1 parallel track
+- [`spec/v1/`](../spec/v1/) — the frozen v1 tree (end of support 2026-10-04)
 - [`MAINTAINERS.md`](../MAINTAINERS.md) — review + waiver tables
 - [`CONTRIBUTING.md`](../CONTRIBUTING.md) — full contribution guide
 

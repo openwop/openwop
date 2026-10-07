@@ -16,19 +16,20 @@ Each row shows the host's newest certified bundle and the suite version that mea
 
 | Host | Who runs it | Suite (cut) | pass / fail / blocked / inapplicable / skipped | Certified profiles | Evidence tier | Bundle |
 | --- | --- | --- | --- | --- | --- | --- |
-| **`openwop-host-v2-reference@2.0.0-rc.1`** — the v2 reference example ([`examples/hosts/v2-reference`](https://github.com/openwop/openwop-examples/tree/main/examples/hosts/v2-reference)) | Steward, reference example (tier 1). Built from `spec/v2/core/`. | 2.42.2 (2026-09-27) | 404 / 0 / 0 / 43 / 7 | `openwop-discovery-core` · `openwop-core-standard` · `openwop-conformance-seams-v2` | `self` | [`openwop-host-v2-reference.json`](./evidence/v2-host-bundles/openwop-host-v2-reference.json) |
-| **`myndhyve@e609c637`** — MyndHyve `workflow-runtime`, production at `api.myndhyve.ai` | Steward-affiliated, production (tier 2) | 2.42.0 (2026-09-26) | 238 / 0 / 0 / 206 / 17 | `openwop-discovery-core` · `openwop-core-standard` | `self` | [`myndhyve.json`](./evidence/v2-host-bundles/myndhyve.json) |
-| **`openwop-workflow-engine@0.1.0`** — openwop-app, production at `app.openwop.dev` | Steward, production (tier 1) | 2.42.2 (2026-09-27) | 296 / 0 / 0 / 138 / 20 | `openwop-discovery-core` · `openwop-core-standard` · `openwop-conformance-seams-v2` | `self` | [`…side-rev-rfc0199-2.42.2.json`](./evidence/v2-host-bundles/openwop-workflow-engine-side-rev-rfc0199-2.42.2.json) |
+| **`openwop-host-v2-reference@2.0.0-rc.1`** — the v2 reference example ([`examples/hosts/v2-reference`](https://github.com/openwop/openwop-examples/tree/main/examples/hosts/v2-reference)) | Steward, reference example (tier 1). Built from `spec/v2/core/`. | 2.45.21 (2026-10-05) | 505 / 0 / 0 / 262 / 10 | `openwop-discovery-core` · `openwop-core-standard` · `openwop-conformance-seams-v2` | `self` | [`openwop-host-v2-reference.json`](./evidence/v2-host-bundles/openwop-host-v2-reference.json) |
+| **`myndhyve@e609c637`** — MyndHyve `workflow-runtime`, production at `api.myndhyve.ai` | Steward-affiliated, production (tier 2) | 2.45.5 (2026-10-02) | 294 / 0 / 0 / 254 / 20 | `openwop-discovery-core` · `openwop-core-standard` | `self` | [`myndhyve.json`](./evidence/v2-host-bundles/myndhyve.json) |
+| **`openwop-workflow-engine@0.1.0`** — openwop-app, production at `app.openwop.dev` | Steward, production (tier 1) | 2.45.14 (2026-10-04) | 277 / 0 / 0 / 299 / 11 | `openwop-discovery-core` · `openwop-core-standard` | `self` | [`openwop-workflow-engine.json`](./evidence/v2-host-bundles/openwop-workflow-engine.json) |
 
 Notes on the rows:
-- **openwop-app** was cut on its production image (by digest), on a 0%-traffic side revision with the conformance seams switched on. That measures the seams profile without exposing seams in production.
-- **openwop-app**'s newest cut through the public front (suite **2.42.2**, build `commit:6f7b5e90a`, **232 / 0 / 19 / 210 / 0**, pass / fail / skipped / inapplicable / blocked) certifies both claimed profiles, `openwop-discovery-core` and `openwop-core-standard`, with **zero failures and zero blocked** ([`openwop-workflow-engine-2.42.2.json`](./evidence/v2-host-bundles/openwop-workflow-engine-2.42.2.json), signed `openwop-app-bundle-2`, served bytes equal to the upload). It replaces the 2.41.1 cut, whose two RFC 0206 failures came from the hosting front reducing `Accept-Language: es-419` to `es`: production stopped advertising `es-419`, so those rows are now `inapplicable`. Both RFC 0215 rows remain `executed-pass`.
+- The `@<version>` in each host cell is the label the v1 end-of-support clock recorded when it anchored ([`evidence/v1-end-of-support.json`](./evidence/v1-end-of-support.json)). The bundle carries the host's current version and build.
+- **openwop-app** serves v2 only: its newest bundle advertises `protocolVersions: ["2.0"]`. It certified `openwop-conformance-seams-v2` on a 0%-traffic side revision of its production image, with the seams switched on ([`openwop-workflow-engine-side-rev-rfc0199-2.42.2.json`](./evidence/v2-host-bundles/openwop-workflow-engine-side-rev-rfc0199-2.42.2.json), suite 2.42.2). Production does not expose the seams.
 - **MyndHyve** is closed source. Its bundle is verified against the key its live discovery document publishes.
 - **Evidence tier** is the bundle's own field (RFC 0148). Every bundle here is `self`: the host operator cut it.
+- Older and side bundles for each host stay under [`evidence/v2-host-bundles/`](./evidence/v2-host-bundles/), named `<host>-<suite>[-<scope>].json`.
 
-## Hosts
+## v1 reference examples
 
-Four reference examples still serve the v1 wire until v1 end-of-support, which is no earlier than 2026-12-04. They have no v2 bundle. Each was last measured on 2026-08-16 at suite 1.130.0.
+v1 reached end of support on 2026-10-04 ([RFC 0234](./RFCS/0234-maintainer-set-v1-end-of-support.md)); `spec/v1/` is frozen. Four reference examples in `openwop-examples` still serve the v1 wire and have no v2 bundle. Each was last measured at suite 1.130.0.
 
 | Host | Repo / Path | Evidence |
 | --- | --- | --- |
@@ -37,12 +38,11 @@ Four reference examples still serve the v1 wire until v1 end-of-support, which i
 | **Python in-memory** (reference example) | [`examples/hosts/python`](https://github.com/openwop/openwop-examples/tree/main/examples/hosts/python) | [`conformance.md`](https://github.com/openwop/openwop-examples/blob/main/examples/hosts/python/conformance.md) |
 | **Postgres** (reference example) | [`examples/hosts/postgres`](https://github.com/openwop/openwop-examples/tree/main/examples/hosts/postgres) | [`conformance-full.md`](https://github.com/openwop/openwop-examples/blob/main/examples/hosts/postgres/conformance-full.md) |
 
-- Every one claims `openwop-discovery-core` and advertises its deprecated alias `openwop-core`. Postgres is the only one that claims the `production` profile.
-- The full profile list each host claims is in its evidence file and in the [evidence log](./docs/INTEROP-EVIDENCE-LOG.md). The profiles are defined in `spec/v1/profiles.md`, `spec/v1/scale-profiles.md` and `spec/v1/production-profile.md`.
+Each claims `openwop-discovery-core`; Postgres also claims the `production` profile. The full profile list is in each host's evidence file and in the [evidence log](./docs/INTEROP-EVIDENCE-LOG.md).
 
 ## Capabilities by host
 
-Optional capabilities, as each production host last advertised and demonstrated them. Most rows were measured between June and September 2026, before the hosts' v2 bundles. The certified v2 bundles above are the authoritative current state; the dated evidence for every cell is in the [evidence log](./docs/INTEROP-EVIDENCE-LOG.md). The v2 reference host also witnesses the durable single-instance rung.
+Optional capabilities each production host has advertised and demonstrated. The certified v2 bundles above are the authoritative current state; this table is a summary, and the dated evidence for every cell is in the [evidence log](./docs/INTEROP-EVIDENCE-LOG.md).
 
 ✓ advertised and witnessed · ◐ implemented but not advertised, or only partly witnessed · ✗ ruled out by the host · — not implemented · n/m not measured
 

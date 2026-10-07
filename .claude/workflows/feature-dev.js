@@ -289,7 +289,7 @@ if (openPr) {
   pr = await agent(
     `Use the /pr skill to open the openwop PR: detect the lane, branch from ` +
     `origin/main, generate the body from the diff, enforce DCO + Conventional ` +
-    `Commits + CHANGELOG + the 8-step openwop:check pre-flight, and apply the ` +
+    `Commits + CHANGELOG + the regen chain and the 10-step openwop:check pre-flight, and apply the ` +
     `openwop-spec label if the spec corpus is touched. Return the PR url and branch.`,
     {
       phase: 'Open PR',

@@ -1,6 +1,6 @@
 # OpenWOP Conformance Suite — Fixture Workflow Contract
 
-> **Status: FINAL v1 (2026-05-10).** Defines the standardized fixture workflows every OpenWOP-compliant server MUST seed before the conformance suite can exercise run-lifecycle, idempotency, stream-mode, interrupt, and replay scenarios. Stable surface for external review. Keywords MUST, SHOULD, MAY follow [RFC 2119](https://www.rfc-editor.org/rfc/rfc2119). Status legend per `../spec/v1/auth.md`.
+> Defines the fixture workflows a host seeds so the conformance suite can exercise run lifecycle, idempotency, streaming, interrupts, replay and the other fixture-gated scenarios. RFC 2119 keywords (MUST, SHOULD, MAY) apply to hosts that seed these fixtures. Paths are written in v2 form (unversioned, [`spec/v2/core/versioning.md`](../spec/v2/core/versioning.md)); a v1 host serves the same operations under `/v1/`. `/v1/host/sample/...` paths below are the v1 host test seams; the v2 seams are in [`api/seams-v2.yaml`](../api/seams-v2.yaml).
 
 ---
 
@@ -8,16 +8,16 @@
 
 Run-lifecycle conformance tests need a stable target — a workflow whose `workflowId`, expected events, and terminal status are agreed in advance. Without this, every implementation defines its own test workflows and the conformance suite can't run cross-implementation.
 
-This document defines a small set of fixture workflows whose canonical definitions live alongside the conformance suite (`fixtures/*.json`). An OpenWOP-compliant server MUST seed these fixtures into its workflow store before running the conformance suite against itself.
+This document defines the fixture workflows whose canonical definitions live alongside the conformance suite (`fixtures/*.json`). A host MUST seed the fixtures its advertised scenarios need into its workflow store before running the suite against itself.
 
 ---
 
 ## Seeding contract
 
-An OpenWOP-compliant server MUST:
+A host that seeds the fixtures MUST:
 
 1. Accept the canonical JSON fixture definitions in `fixtures/*.json` verbatim (they validate against `../schemas/workflow-definition.schema.json`).
-2. Persist each fixture under its declared `id` so that subsequent `GET /v1/workflows/{id}` returns the seeded definition.
+2. Persist each fixture under its declared `id` so that a subsequent `GET /workflows/{workflowId}` (`getWorkflow`) returns the seeded definition.
 3. Treat seeding as idempotent — running the seeder repeatedly MUST NOT produce duplicate runs, error states, or version drift.
 4. Expose the seeded fixtures to runs created with the conformance suite's API key.
 
@@ -36,7 +36,7 @@ Servers MUST NOT require fixtures to be re-uploaded on every conformance run —
 All fixtures MUST advertise:
 
 - **`workflowId`** — exact string clients use to start runs
-- **Trigger** — must be `manual` so the conformance suite can call `POST /v1/runs` without channel-specific setup
+- **Trigger** — must be `manual` so the conformance suite can call `POST /runs` (`createRun`) without channel-specific setup
 - **Inputs** — schema declared via `variables[]`
 - **Expected behavior** — terminal status, expected event types, timing bounds
 
@@ -81,13 +81,13 @@ All fixtures MUST advertise:
 | Agent Pack Export                         | `conformance-agent-pack-export`                                                                 | Phase 2 — workspace agents project to AgentManifest at `GET /v1/packs/export`                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                             | `completed`                                                                         | ≤ 5s                         |
 | Agent Pack Provenance                     | `conformance-agent-pack-provenance`                                                             | Phase 2 — `sourceManifestId` provenance round-trip                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                        | `completed`                                                                         | ≤ 10s                        |
 | Agent Pack Handoff Schema Validation      | `conformance-agent-pack-handoff-schema-validation`                                              | Phase 2 / HV-1 — host validates dispatch payloads against `handoff.taskSchemaRef` AND return payloads against `handoff.returnSchemaRef` per RFC 0003 §D. Three branches: valid-task → `completed`; invalid-task → `failed` with structured violation; mock-return-violation → violation surfaced before persistence.                                                                                                                                                                                                                                                                                                                                      | varies by scenario                                                                  | ≤ 5s                         |
-| WorkflowVariable format advisory          | `conformance-workflow-variable-format-advisory`                                                 | RFC 0136 req 3 — a variable declares `format: "email"` with an off-format `defaultValue`; `format` is advisory, so the run MUST complete (a value/format mismatch MUST NOT fail the run). Run via `POST /v1/runs` (portable pre-registered pattern). `workflow-variable-format.test.ts` leg B2.                                                                                                                                                                                                                                                                                                                                                            | `completed`                                                                         | ≤ 5s                         |
+| WorkflowVariable format advisory          | `conformance-workflow-variable-format-advisory`                                                 | RFC 0136 req 3 — a variable declares `format: "email"` with an off-format `defaultValue`; `format` is advisory, so the run MUST complete (a value/format mismatch MUST NOT fail the run). Run via `POST /runs` (portable pre-registered pattern). `workflow-variable-format.test.ts` leg B2.                                                                                                                                                                                                                                                                                                                                                            | `completed`                                                                         | ≤ 5s                         |
 | Dispatch Input Mapping                    | `conformance-dispatch-input-mapping`                                                            | RFC 0022 §A / HVMAP-1a — host honors `inputMapping` on `core.dispatch`. Capability-gated on `capabilities.agents.dispatchMapping`.                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                        | `completed`                                                                         | ≤ 5s                         |
 | Dispatch Output Mapping                   | `conformance-dispatch-output-mapping`                                                           | RFC 0022 §A / HVMAP-1b — host harvests child variables via `outputMapping` on `core.dispatch`. Capability-gated on `capabilities.agents.dispatchMapping`.                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                 | `completed`                                                                         | ≤ 5s                         |
 | Dispatch Cross-Worker Handoff             | `conformance-dispatch-cross-worker-handoff`                                                     | RFC 0022 §A / HVMAP-1c — sequential fan-out: child-a writes via `perWorkerOutputMappings`, child-b reads via `perWorkerInputMappings`. Capability-gated on `capabilities.agents.dispatchMapping`.                                                                                                                                                                                                                                                                                                                                                                                                                                                         | `completed`                                                                         | ≤ 10s                        |
 | subWorkflow Input Mapping                 | `conformance-subworkflow-input-mapping`                                                         | RFC 0022 §B / HVMAP-2 — host honors `inputMapping` on `core.subWorkflow`; overrides matching `defaultValue` declarations on the child. Capability-gated on `capabilities.subWorkflow.inputMapping`.                                                                                                                                                                                                                                                                                                                                                                                                                                                       | `completed`                                                                         | ≤ 10s                        |
-| subWorkflow Input Mapping (child)         | `conformance-subworkflow-input-mapping-child`                                                   | RFC 0022 §B / HVMAP-2 — child workflow for the input-mapping scenario. Declares `receivedPrdId.defaultValue='baked-in'`; parent's `inputMapping` MUST override that default. Single noop node; final variables read via `GET /v1/runs/{runId}` for the assertion.                                                                                                                                                                                                                                                                                                                                                                                         | `completed`                                                                         | ≤ 5s                         |
-| Dispatch Input Mapping (child)            | `conformance-dispatch-input-mapping-child`                                                      | RFC 0022 §A / HVMAP-1a — child workflow for the dispatch input-mapping scenario. Single noop node; the scenario reads this child's `inputs_json` via `GET /v1/runs/{childRunId}` and asserts `inputs.childGreeting === 'Alice'`.                                                                                                                                                                                                                                                                                                                                                                                                                          | `completed`                                                                         | ≤ 5s                         |
+| subWorkflow Input Mapping (child)         | `conformance-subworkflow-input-mapping-child`                                                   | RFC 0022 §B / HVMAP-2 — child workflow for the input-mapping scenario. Declares `receivedPrdId.defaultValue='baked-in'`; parent's `inputMapping` MUST override that default. Single noop node; final variables read via `GET /runs/{runId}` for the assertion.                                                                                                                                                                                                                                                                                                                                                                                         | `completed`                                                                         | ≤ 5s                         |
+| Dispatch Input Mapping (child)            | `conformance-dispatch-input-mapping-child`                                                      | RFC 0022 §A / HVMAP-1a — child workflow for the dispatch input-mapping scenario. Single noop node; the scenario reads this child's `inputs_json` via `GET /runs/{childRunId}` and asserts `inputs.childGreeting === 'Alice'`.                                                                                                                                                                                                                                                                                                                                                                                                                          | `completed`                                                                         | ≤ 5s                         |
 | Dispatch Output Mapping (child)           | `conformance-dispatch-output-mapping-child`                                                     | RFC 0022 §A / HVMAP-1b — child workflow for the dispatch output-mapping scenario. Declares `childOutcome.defaultValue='done'`; on terminal, parent's `outputMapping` harvests `childOutcome → parentResult`.                                                                                                                                                                                                                                                                                                                                                                                                                                              | `completed`                                                                         | ≤ 5s                         |
 | Dispatch Cross-Worker Handoff (child-a)   | `conformance-dispatch-cross-worker-handoff-child-a`                                             | RFC 0022 §A / HVMAP-1c — first child of the cross-worker-handoff scenario. Declares `output.defaultValue='hello'`; on terminal, parent's `perWorkerOutputMappings.child-a` harvests `output → sharedVar`.                                                                                                                                                                                                                                                                                                                                                                                                                                                 | `completed`                                                                         | ≤ 5s                         |
 | Dispatch Cross-Worker Handoff (child-b)   | `conformance-dispatch-cross-worker-handoff-child-b`                                             | RFC 0022 §A + §D / HVMAP-1c — second child of the cross-worker-handoff scenario. Sequential fan-out — runs after child-a; receives parent's `sharedVar` via `perWorkerInputMappings.child-b` onto its `input` input. Scenario reads child-b's `inputs_json` to assert `inputs.input === 'hello'`.                                                                                                                                                                                                                                                                                                                                                         | `completed`                                                                         | ≤ 5s                         |
@@ -97,7 +97,7 @@ All fixtures MUST advertise:
 | subWorkflow Mid-Run Mutation (child)      | `conformance-subworkflow-mid-run-mutation-child`                                                | RFC 0022 §B / HVMAP-2-no-midrun-propagation — child workflow with a `core.approvalGate` that suspends so the parent can mutate its variable bag mid-run. Declares `receivedPrdId.defaultValue='baked-in'` (overridden at dispatch by inputMapping).                                                                                                                                                                                                                                                                                                                                                                                                       | `completed`                                                                         | ≤ 30s                        |
 | Dispatch Per-Worker Mapping Override      | `conformance-dispatch-per-worker-override`                                                      | RFC 0022 §A / HVMAP-1c-override — parent with BOTH a default `inputMapping` (`{ input: 'defaultX' }`) AND `perWorkerInputMappings.child-b: { input: 'sharedVar' }`. Verifies `effectiveInputMapping` precedence per §A: child-a receives the default, child-b receives the override. Reuses `conformance-dispatch-cross-worker-handoff-child-a` + `-child-b`.                                                                                                                                                                                                                                                                                             | `completed`                                                                         | ≤ 30s                        |
 | Dispatch deterministic-fail child         | `conformance-dispatch-deterministic-fail-child`                                                 | RFC 0022 §B / HVMAP-1b-failed — child workflow that ALWAYS terminates `failed` via `core.fail`. Used by `conformance-dispatch-output-mapping` to verify the parent's `outputMapping` is SKIPPED when the child fails terminally.                                                                                                                                                                                                                                                                                                                                                                                                                          | `failed`                                                                            | ≤ 5s                         |
-| Dispatch cancellable child                | `conformance-dispatch-cancellable-child`                                                        | RFC 0022 §B / HVMAP-1b-cancelled — child workflow with a long `core.delay` so the test cancels it externally via `POST /v1/runs/{childRunId}/cancel`. Verifies the parent's `outputMapping` is SKIPPED when the child terminates `cancelled`.                                                                                                                                                                                                                                                                                                                                                                                                             | `cancelled`                                                                         | ≤ 60s                        |
+| Dispatch cancellable child                | `conformance-dispatch-cancellable-child`                                                        | RFC 0022 §B / HVMAP-1b-cancelled — child workflow with a long `core.delay` so the test cancels it externally via `POST /runs/{childRunId}/cancel`. Verifies the parent's `outputMapping` is SKIPPED when the child terminates `cancelled`.                                                                                                                                                                                                                                                                                                                                                                                                             | `cancelled`                                                                         | ≤ 60s                        |
 | Multi-Agent Handoff (parent)              | `conformance-multi-agent-handoff`                                                               | RFC 0037 (`version: 1`) — exercises the planner→worker handoff state machine. Supervisor decides one `next-worker`, dispatch spawns the child, harvests outputMapping. Conformance reads the event log for the 4 `core.workflowChain.event` transition records in causation-chained order (`dispatch.began → dispatch.succeeded → child.completed → output.harvested`). Capability-gated on `capabilities.multiAgent.executionModel.supported`.                                                                                                                                                                                                           | `completed`                                                                         | ≤ 30s                        |
 | Multi-Agent Handoff (child)               | `conformance-multi-agent-handoff-child`                                                         | RFC 0037 (`version: 1`) — child for `conformance-multi-agent-handoff`. Declares `childOutcome.defaultValue='handoff-complete'`; the parent's outputMapping harvests it onto `parentResult`, triggering the `output.harvested` transition event.                                                                                                                                                                                                                                                                                                                                                                                                           | `completed`                                                                         | ≤ 5s                         |
 | Multi-Agent Confidence Escalation         | `conformance-multi-agent-confidence-escalation`                                                 | RFC 0039 §A (`version: 2`) — exercises the confidence-floor escalation contract. Supervisor's `mockDispatchPlan` carries ONE decision with `confidence: 0.3` (below the 0.5 spec floor). The host MUST emit `core.workflowChain.confidence-escalated` AND suspend with a clarification interrupt BEFORE any dispatch.began fires; conformance asserts zero `core.workflowChain.event` records (no dispatch). Capability-gated on `capabilities.multiAgent.executionModel.version >= 2`.                                                                                                                                                                   | `waiting-clarification`                                                             | ≤ 30s                        |
@@ -126,7 +126,7 @@ All fixtures MUST advertise:
 | A2A Task Roundtrip                        | `conformance-a2a-task-roundtrip`                                                                | Track 6 — host consumes the conformance suite's synthetic A2A peer; covers drift points #3 (`AUTH_REQUIRED`) and #4 (`REJECTED`). Node `core.conformance.a2a-invoke` is a **conformance-RESERVED** typeId (renamed 2026-08-16 from `core.a2a.invoke`, a multi-segment `core.*` id no host shipped and the corpus never defined): a host that consumes A2A peers MUST map it to its A2A bridge node (a host-extension node — `a2a-integration.md` §"State projection"); a host that does not consume A2A MUST NOT advertise this fixture                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                          | `failed` or `waiting-input` (per `driftScenario` input)                             | ≤ 30s                        |
 | WASM Pack Roundtrip                       | `conformance-wasm-pack-roundtrip`                                                               | RFC 0008 — invokes `vendor.openwop.rust-hello.greet` (loaded WASM pack); exercises required exports + at least one import                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                 | `completed`                                                                         | ≤ 10s                        |
 | WASM Pack Memory-Cap Breach               | `conformance-wasm-pack-memory-cap-breach`                                                       | RFC 0008 §K — invokes the deliberately-misbehaving `vendor.openwop.misbehaving.memory-bomb` pack (allocates 1 GiB beyond the host's `memoryPagesMax`). Host MUST emit `cap.breached` with `kind: "wasm-memory"` and drive the run to terminal `failed`. Misbehaving pack lives at `openwop-examples:examples/packs/rust-misbehaving-memory/` (repo-qualified per the 2026-06 monorepo split — the `openwop-examples` sibling repo) and is fixture-only (NOT signed for registry publication).                                                                                                                                                             | `failed` (with `cap.breached`)                                                      | ≤ 10s                        |
-| Configurable Schema                       | `conformance-configurable-schema`                                                               | Track 13 — workflow declares `configurableSchema` (`additionalProperties: false`, `recursionLimit: integer ≥ 1`). Suite verifies `GET /v1/workflows/{id}` surfaces the schema AND `POST /v1/runs` with a mismatched `configurable` returns `validation_error`.                                                                                                                                                                                                                                                                                                                                                                                            | `completed` (with accepted overlay)                                                 | ≤ 5s                         |
+| Configurable Schema                       | `conformance-configurable-schema`                                                               | Track 13 — workflow declares `configurableSchema` (`additionalProperties: false`, `recursionLimit: integer ≥ 1`). Suite verifies `GET /workflows/{id}` surfaces the schema AND `POST /runs` with a mismatched `configurable` returns `validation_error`.                                                                                                                                                                                                                                                                                                                                                                                            | `completed` (with accepted overlay)                                                 | ≤ 5s                         |
 | Smoke — BYOK Roundtrip                    | `openwop-smoke-byok-roundtrip`                                                                  | End-to-end BYOK secret-resolution smoke. Single `conformance.secret.echo` node fetches the host-provisioned canary secret `openwop-conformance-canary-secret`, emits SHA-256 hex + byte length to variables — never the raw value. Spec: `run-options.md` §"Credential references" + `auth.md` §"Secret resolution" + `observability.md` §"Redaction".                                                                                                                                                                                                                                                                                                    | `completed`                                                                         | ≤ 10s                        |
 | Secrets — Run Witness | `openwop-secrets-run-witness` | RFC 0229 §C — one `core.secret.witness` node. The client supplies a value with the run (`runSecrets`, a `run:` ref) and its SHA-256 as an input; the node outputs only `{ matched }`. It can confirm only a value the caller already holds, so it is safe to advertise in production. Advertised by every host that advertises `secrets.runSecrets`. | `completed` (`matched: true` or `false`); `failed` (`credential_forbidden` / `credential_not_found`) on the scope legs | ≤ 10s |
 | Secret — resolve then fail | `conformance-secret-resolve-then-fail` | `host-services.md` §`secrets` — resolves the byok canary exactly as `openwop-smoke-byok-roundtrip`, then `core.fail` fails the run; the canary MUST appear on no surface of the failed run | `failed` | ≤ 10s |
@@ -145,7 +145,7 @@ All fixtures MUST advertise:
 | Phase 4 Replay Divergence                 | `conformance-phase4-replay-divergence`                                                          | RFC 0041 §B — single `core.ai.structuredOutput` node against mock provider. Conformance scenario pre-seeds a 2-entry program via the existing mock-AI program seam: entry [0] returns a valid envelope (original run consumes); entry [1] returns `stopReason: 'safety'` + `refusalText` (`:fork mode: replay` consumes). Phase 4 hosts advertising `multiAgent.executionModel.replayDeterminism.refusalDivergenceEmission: true` MUST emit `replay.divergedAtRefusal` + fail replay with `error.code: 'replay_diverged_at_refusal'`. Silent substitution is non-conformant. Pairs with `replay-divergence-at-refusal.test.ts`.                           | original: `completed`; replay: `failed` (`error.code='replay_diverged_at_refusal'`) | ≤ 10s                        |
 | Phase 4 Nondeterministic Tool             | `conformance-phase4-nondet-tool`                                                                | RFC 0041 §C — two-node workflow (`core.noop` proxied as a nondeterministic tool → `core.ai.structuredOutput`). Used by `replay-observable-sequence-determinism.test.ts` to verify that across original + replay runs, the observable `RunEventDoc` sequence prefix is identical up to and including the nondeterministic-tool node's `node.completed` event. The host's replay path MUST replay the original event log entries (rather than re-executing the tool) for nodes whose `core.tool.*` config carries `nondeterministic: true`. Phase 4 hosts advertising `multiAgent.executionModel.replayDeterminism.supported: true` honor this contract.    | original + replay: `completed`; observable prefixes equal up to the nondet boundary | ≤ 10s                        |
 
-The `messages`-mode stream fixture (AI token streaming) is covered by the deterministic mock-provider surface in `spec/v1/run-options.md`. Hosts that do not advertise `Capabilities.testing.mockProviders` skip-equivalent on those scenarios.
+The `messages`-mode stream fixture (AI token streaming) is covered by the deterministic mock-provider surface (`spec/v1/run-options.md` at v1; `testing.mockProviders` in [`spec/v2/core/runs.md`](../spec/v2/core/runs.md) at v2). Hosts that do not advertise `Capabilities.testing.mockProviders` skip-equivalent on those scenarios.
 
 ---
 
@@ -161,7 +161,7 @@ The `messages`-mode stream fixture (AI token streaming) is covered by the determ
 
 ### `conformance-noop`
 
-- **Purpose**: cheapest run-lifecycle test. Used by the conformance suite's `runs.test.ts` to verify create/read/terminal-event/cleanup work end-to-end.
+- **Purpose**: cheapest run-lifecycle test. Used by `runs-lifecycle.test.ts` (v1) and `v2-created-run-readable.test.ts` (v2), and by most run-surface scenarios, to verify create, read and the terminal event end-to-end.
 - **Inputs**: none.
 - **Expected events** (in order, `updates` mode):
   1. `run.started`
@@ -183,7 +183,7 @@ The `messages`-mode stream fixture (AI token streaming) is covered by the determ
 - **Purpose**: verify the engine handles in-flight runs (status transitions over time, SSE keep-alives, poll fallback).
 - **Inputs**:
   - `delayMs` (integer, required, 0 ≤ value ≤ 30000) — server MUST sleep for this duration before completing.
-- **Expected behavior**: `GET /v1/runs/{runId}` MUST return `status: "running"` while the delay is in flight; `status: "completed"` after.
+- **Expected behavior**: `GET /runs/{runId}` MUST return `status: "running"` while the delay is in flight; `status: "completed"` after.
 - **Terminal status**: `completed`.
 
 ### `conformance-failure`
@@ -205,7 +205,7 @@ The `messages`-mode stream fixture (AI token streaming) is covered by the determ
   1. Run starts and reaches an `approvalGate` node that calls `ctx.interrupt({kind: 'approval', ...})`.
   2. Server emits `interrupt.requested` (and SHOULD also emit `approval.requested` for back-compat).
   3. Run status MUST be `waiting-approval`.
-  4. After client POSTs `{action: 'accept'}` to `/v1/runs/{runId}/interrupt`, server emits `approval.received` and resumes.
+  4. After the client POSTs `{action: 'accept'}` to `/runs/{runId}/interrupts/{nodeId}` (`resolveInterruptByRun`), server emits `approval.received` and resumes.
   5. Run reaches `completed`.
 - **Terminal status (after accept)**: `completed`.
 - **Terminal status (after reject, major 2)**: `failed`, with `error.code` `approval_rejected` on the snapshot and on `run.failed`, and `failedNodeId: "gate"`. The fixture has no edges, so nothing routes the failure (`spec/v2/core/interrupt.md` §Rejection, RFC 0223; `v2-approval-reject-disposition.test.ts`).
@@ -310,20 +310,20 @@ The `messages`-mode stream fixture (AI token streaming) is covered by the determ
 - **Inputs**:
   - `nonce` (string, required) — caller-supplied; server MUST NOT use this for any side effect, only for de-duplication semantics tests.
 - **Expected behavior**:
-  - `POST /v1/runs` with the same `Idempotency-Key` and same body twice → second response MUST replay the first (`openwop-Idempotent-Replay: true` header) and MUST NOT create a second run.
+  - `POST /runs` with the same `Idempotency-Key` and same body twice → second response MUST replay the first (`openwop-Idempotent-Replay: true` header) and MUST NOT create a second run.
   - Same `Idempotency-Key` with a different body → 409.
 - **Terminal status**: `completed`.
 
 ### `conformance-cancellable`
 
-- **Purpose**: verify `:cancel` mid-run.
+- **Purpose**: verify cancellation mid-run.
 - **Inputs**:
   - `delayMs` (integer, required, 1 ≤ value ≤ 60000) — wait long enough for the conformance test to issue cancel.
 - **Expected behavior**:
   1. Run reaches `running`.
-  2. Client posts `POST /v1/runs/{runId}:cancel`.
+  2. Client posts `POST /runs/{runId}/cancel` (`cancelRun`).
   3. Server emits `run.cancelled` within 5s.
-  4. Subsequent `GET /v1/runs/{runId}` MUST return `status: "cancelled"`.
+  4. Subsequent `GET /runs/{runId}` MUST return `status: "cancelled"`.
 
 ### `conformance-replay-ordinal-loop`
 
@@ -374,7 +374,7 @@ The `messages`-mode stream fixture (AI token streaming) is covered by the determ
 - **Topology**: two nodes: `core.orchestrator.supervisor` and `core.dispatch`, looping back to each other.
 - **Inputs**: none.
 - **Conformance test driver**:
-  1. POST `/v1/runs` with `{workflowId: "conformance-dispatch-loop"}`.
+  1. POST `/runs` with `{workflowId: "conformance-dispatch-loop"}`.
   2. The orchestrator node must emit `runOrchestrator.decided` with `next-worker` then `terminate`.
   3. Poll until terminal.
   4. **Assert** terminal status is `completed`.
@@ -396,18 +396,18 @@ The `messages`-mode stream fixture (AI token streaming) is covered by the determ
 
 ## `conformance-version-fold` (closes F5)
 
-- **Consuming scenario**: `conformance/src/scenarios/version-fold.test.ts` (added 2026-06-11; previously this fixture had no consuming scenario).
+- **Consuming scenario**: `conformance/src/scenarios/version-fold.test.ts`. **v1 only**: `X-Force-Engine-Version` is not a v2 header ([`spec/v2/core/headers.md`](../spec/v2/core/headers.md)).
 - **Purpose**: verify forward-compat fold-best-effort tolerance across the spec's engine-version cross-version interop matrix (`version-negotiation.md` §Cross-version interop matrix). Uses the test-keys-only `X-Force-Engine-Version` header to drive the same workflow at three different engine versions from a single deployed server — no multi-version fleet needed.
 - **Fixture topology**: a single `core.noop` node. The workflow itself is trivial; the test exercises the server's READ path (projection, event-log fold) under each forced engine version.
 - **Inputs**: none.
 - **Conformance test driver**:
   1. Read the server's `Capabilities.testing.forceEngineVersionRange = { min, max }`.
   2. For each version `v` in `[min, current, max]` (deduped):
-     - POST `/v1/runs` with body `{workflowId: "conformance-version-fold"}` AND header `X-Force-Engine-Version: v`. Use a test API key.
+     - POST `/runs` with body `{workflowId: "conformance-version-fold"}` AND header `X-Force-Engine-Version: v`. Use a test API key.
      - Poll until terminal.
      - **Assert** terminal status is `completed`.
-     - **Assert** `GET /v1/runs/{runId}` returns a valid `RunSnapshot` (the projection tolerates the version mismatch via fold-best-effort).
-     - **Assert** `GET /v1/runs/{runId}/events/poll?lastSequence=0&timeout=1` returns a non-empty `events[]` array (event log is readable).
+     - **Assert** `GET /runs/{runId}` returns a valid `RunSnapshot` (the projection tolerates the version mismatch via fold-best-effort).
+     - **Assert** `GET /runs/{runId}/events/poll?lastSequence=0&timeout=1` returns a non-empty `events[]` array (event log is readable).
 - **Negative paths**:
   - Same fixture with a production API key returns `403 force_engine_version_forbidden`.
   - Same fixture with `X-Force-Engine-Version: <out-of-range>` returns `400 unsupported_force_engine_version`.
@@ -424,7 +424,7 @@ This fixture closes F5 without requiring any new server-side test infrastructure
 - **Fixture topology**: a single `core.ai.callPrompt` (or similar AI-bearing typeId) node. The node's actual prompt content is irrelevant — the conformance driver intercepts the AI dispatch via `configurable.mockProvider`.
 - **Inputs**: none.
 - **Conformance test driver**:
-  1. POST `/v1/runs` with body:
+  1. POST `/runs` with body:
 
      ```jsonc
      {
@@ -445,7 +445,7 @@ This fixture closes F5 without requiring any new server-side test infrastructure
 
      Use a test API key (server returns 403 on production keys per `run-options.md` §Authorization).
 
-  2. Subscribe to `/v1/runs/{runId}/events?streamMode=messages`.
+  2. Subscribe to `/runs/{runId}/events?streamMode=messages`.
   3. **Assert** chunk arrival order: `["Hello", " ", "world", "!"]` — same order as `tokens`.
   4. **Assert** the final chunk has `isLast: true`, `meta.finishReason === "stop"`, `meta.usage.completionTokens === 4`.
   5. **Assert** SSE stream closes on terminal — server-closed, not timeout.
@@ -495,7 +495,7 @@ The fixture JSONs and matching `subworkflow.test.ts` are part of the current con
 - **Topology**: 10 sequential `core.noop` nodes (`a → b → c → … → j`). A run completes naturally if no per-run override is supplied. With `configurable.recursionLimit = 5`, the run MUST trip after the 5th node.
 - **Inputs**: none.
 - **Conformance test driver**:
-  1. POST `/v1/runs` with `{workflowId: "conformance-cap-breach", configurable: {recursionLimit: 5}}`.
+  1. POST `/runs` with `{workflowId: "conformance-cap-breach", configurable: {recursionLimit: 5}}`.
   2. Server SHOULD validate `recursionLimit ≤ Capabilities.limits.maxNodeExecutions`. If `maxNodeExecutions` is `100` (default), `5` is fine.
   3. Poll until terminal.
   4. **Assert** terminal status is `failed`.
@@ -520,7 +520,7 @@ Both items are tracked as v1.x conformance expansion work.
 - **Topology**: single `core.delay` node that sleeps `input.delayMs` (default `30000`) — far longer than the small `runTimeoutMs` the test supplies.
 - **Inputs**: `delayMs` (number, default `30000`).
 - **Conformance test driver**:
-  1. POST `/v1/runs` with `{workflowId: "conformance-run-duration-breach", configurable: {runTimeoutMs: 1000}}`.
+  1. POST `/runs` with `{workflowId: "conformance-run-duration-breach", configurable: {runTimeoutMs: 1000}}`.
   2. Poll until terminal.
   3. **Assert** terminal status is `failed`.
   4. **Assert** `RunSnapshot.error.code === "run_timeout"`.
@@ -538,7 +538,7 @@ This fixture is unblocked when a host exposes a wall-clock deadline enforcer adv
 - **Purpose**: verify the BYOK secret-resolution roundtrip end-to-end. A host that advertises `capabilities.secrets.supported: true` MUST resolve the canary `openwop-conformance-canary-secret` via its `SecretResolver` and surface only the SHA-256 hex + byte length on every observable channel (variables, events, debug bundle, logs). The raw value MUST NOT leak per `observability.md` §"Redaction" + `threat-model-secret-leakage.md` §SR-1.
 - **Topology**: single node `resolve-secret` with `typeId: conformance.secret.echo`, `config.secretId: "openwop-conformance-canary-secret"`. Resolves the canary, hashes it, and writes `{secretSha256, secretLength}` to the run's `variables.resolve-secret`.
 - **Conformance test driver**:
-  1. POST `/v1/runs` with `{workflowId: "openwop-smoke-byok-roundtrip"}`.
+  1. POST `/runs` with `{workflowId: "openwop-smoke-byok-roundtrip"}`.
   2. Poll until terminal.
   3. **Assert** terminal status is `completed`.
   4. **Assert** `variables['resolve-secret'].secretSha256` matches `^[0-9a-f]{64}$`.
@@ -615,7 +615,7 @@ Hosts that don't ship a BYOK SecretResolver MAY return `404` / `422` on the star
 - **Topology**: 4 sequential `core.channelWrite` nodes targeting channel `events` with `ttlMs: 200`, separated by a `core.delay` of 300ms between writes 3 and 4. The 4th write fires after the TTL window has elapsed.
 - **Inputs**: none. Each node carries a static `value` in its `config` (`a`, `b`, `c`, `d` respectively).
 - **Conformance test driver**:
-  1. POST `/v1/runs` with `{workflowId: "conformance-channel-ttl"}`.
+  1. POST `/runs` with `{workflowId: "conformance-channel-ttl"}`.
   2. Poll until terminal.
   3. **Assert** terminal status is `completed`.
   4. **Assert** `RunSnapshot.variables.events.length === 1` — the 3 priors aged out at the 4th write.
@@ -632,9 +632,9 @@ Hosts that don't ship a BYOK SecretResolver MAY return `404` / `422` on the star
 - **Topology**: a single `core.identity` node whose `agent` binding is `{ "agentId": "core.conformance.channel-agent", "channel": "stable" }` (no `version`). The host MUST have an active deployment of `core.conformance.channel-agent` on the `stable` channel.
 - **Inputs**: none. Trigger `manual`.
 - **Conformance test driver**:
-  1. POST `/v1/runs` with `{workflowId: "conformance-agent-channel-dispatch"}`; poll until terminal.
+  1. POST `/runs` with `{workflowId: "conformance-agent-channel-dispatch"}`; poll until terminal.
   2. **Assert** the first `agent.invocation.started` carries `resolvedChannel: "stable"` and a concrete non-empty `resolvedAgentVersion` (the recorded fact, RFC 0077).
-  3. **Replay** via `POST /v1/runs/{runId}:fork {mode:"replay"}`; **assert** the fork's `agent.invocation.started` re-reads the SAME `resolvedAgentVersion`.
+  3. **Replay** via `POST /runs/{runId}:fork {mode:"replay"}`; **assert** the fork's `agent.invocation.started` re-reads the SAME `resolvedAgentVersion`.
   4. **(Seam-guarded)** Move the `stable` channel via the deployment seam; **assert** a replay of the original run STILL carries the original pin — never re-resolving the moved channel.
 
 ---
@@ -685,7 +685,7 @@ The fixtures reference these typeIds:
 | `conformance.artifact.emit` | artifact-emit | Opt-in (RFC 0205). Produce one artifact of `config.artifactType` with payload `config.data`; emit `artifact.created` naming it; readable through `getArtifact`. |
 | `conformance.oauth.use` | credential | Opt-in (RFC 0199). Resolve the credential `config.auth` names for the run's Subject, refreshing host-side; no credential ⇒ a `credential` interrupt (with the facet) or a failed node. Never carries token material on any surface. |
 
-An OpenWOP-compliant server's NodeModule registry MUST include implementations for all six core typeIds before seeding fixtures. The `conformance.requiresMissing` fixture node is opt-in — see the row above.
+A host's NodeModule registry MUST include implementations for all six core typeIds before seeding fixtures. The `conformance.requiresMissing` fixture node is opt-in — see the row above.
 
 ---
 
@@ -782,7 +782,7 @@ A host MUST NOT advertise the fixture unless it advertises `httpClient.safeFetch
 
 ## Versioning
 
-Each fixture's JSON has its own `version` field. The OpenWOP v1.0 conformance suite targets fixture version 1.0. Fixture spec breaking changes MUST bump the major; the suite MUST refuse to run against an unrecognized fixture version with a clear error message.
+Each fixture's JSON has its own `version` field. The suite targets fixture version 1.x. Fixture spec breaking changes MUST bump the major; the suite MUST refuse to run against an unrecognized fixture version with a clear error message.
 
 ---
 
@@ -790,26 +790,24 @@ Each fixture's JSON has its own `version` field. The OpenWOP v1.0 conformance su
 
 ```text
 conformance/
-  fixtures.md                — this file
+  fixtures.md                this file
   fixtures/
-    conformance-noop.json
-    conformance-identity.json
-    conformance-delay.json
-    conformance-failure.json
-    conformance-approval.json
-    conformance-approval-refine.json
-    conformance-approval-edit-accept.json
-    conformance-approval-reject-routed.json
-    conformance-approval-timeout.json
-    conformance-approval-timeout-approve.json
-    conformance-approval-reject-loopback.json
-    conformance-clarification.json
-    conformance-multi-node.json
-    conformance-idempotent.json
-    conformance-cancellable.json
+    *.json                   workflow fixtures (WorkflowDefinition), seeded by the host
+    a2ui-v09/                A2UI v0.9 surface payloads (not seeded)
+    connection-packs/        connection-pack manifests
+    frontend-plugin-packs/   front-end plugin packs
+    interrupt-payloads/      InterruptPayload documents (not seeded)
+    node-pack-runtime/       node-pack runtime fixtures
+    oauth-providers/         synthetic OAuth provider definitions
+    pack-manifests/          pack manifests
+    prompt-templates/        prompt templates
+    trigger-events/          trigger-event payloads
+    upstream/                upstream schemas vendored byte for byte (a2a-v1.0.1/, a2ui-v0.9/)
+    wasm-packs/              installable WASM node packs
+    wasm-sandbox/            WASM modules for the server-free sandbox probe (not seeded)
 ```
 
-Each JSON is a valid `WorkflowDefinition` per `../schemas/workflow-definition.schema.json`. Servers MUST treat them as opaque blobs to seed verbatim — do not transform field names or strip fields.
+Each top-level JSON is a valid `WorkflowDefinition` per `../schemas/workflow-definition.schema.json`, checked by `fixtures-valid.test.ts`. Hosts MUST seed them verbatim, as opaque blobs: do not transform field names or strip fields. The sub-directories are described in the sections below.
 
 ---
 
@@ -844,6 +842,24 @@ The `fixtures/wasm-packs/` sub-directory holds two node packs (`language: "wasm"
 | --- | --- | --- |
 | `misbehaving-memory` (`vendor.openwop.misbehaving`) | `vendor.openwop.misbehaving.memory-bomb` | Grows linear memory 64 MiB at a time until the host refuses, then traps. A host advertising `nodePackRuntimes.wasm.maxMemoryBytes` MUST emit `cap.breached` `kind: "wasm-memory"`. Drives `conformance-wasm-pack-memory-cap-breach` and `v2-wasm-memory-cap`. |
 | `misbehaving-abi` (`vendor.openwop.misbehaving-abi`) | `vendor.openwop.misbehaving.abi-bomb` | Reports `openwop_abi_version` 999, which no host lists, so a conforming host refuses it at load. Rejection at load is not yet observable over the protocol (TODO §8), so no v2 leg reads it. |
+
+---
+
+## WASM sandbox probe fixtures
+
+The `fixtures/wasm-sandbox/` sub-directory holds small WebAssembly modules, each a hand-written text module (`<name>.wat`) with its built `<name>.wasm`. They are NOT packs and are NOT seeded into a server: the server-free probe in `src/lib/wasm-sandbox-probe.ts` loads them directly to witness the sandbox isolation invariants (RFC 0035 §B; `SECURITY/invariants.yaml` `node-pack-sandbox-*`). Escape attempts and the capability gate are checked by inspecting each module's declared imports before instantiation; the memory bound by instantiating under a capped memory; isolated context by instantiating twice.
+
+| Module | Expect | Consumed by |
+| --- | --- | --- |
+| `well-behaved-echo` | runs and returns its input | `sandbox-wasm-isolation.test.ts` |
+| `well-behaved-host-fetch` | callable when `host-fetch` is granted; denied without the grant | `sandbox-wasm-isolation.test.ts` |
+| `misbehaving-fs`, `misbehaving-env`, `misbehaving-network`, `misbehaving-process` | `sandbox_escape_attempt` with the matching escape kind | `sandbox-wasm-isolation.test.ts` |
+| `misbehaving-capability-gate` | `sandbox_capability_denied`, naming the capability | `sandbox-wasm-isolation.test.ts` |
+| `misbehaving-memory` | `sandbox_memory_exceeded` on access past the bound | `sandbox-wasm-isolation.test.ts` |
+| `isolation-global` | no state shared between two instances | `sandbox-wasm-isolation.test.ts` |
+| `misbehaving-timeout` | killed with `sandbox_timeout` by a worker-thread kill timer | `sandbox-wasm-timeout.test.ts` |
+
+Both scenarios run at major 1 only and need no host.
 
 ---
 
@@ -979,12 +995,18 @@ The `fixtures/a2ui-v09/` sub-directory (suite 2.36.0) holds `ui.a2ui-surface` pa
 
 The `fixtures/upstream/a2ui-v0.9/` sub-directory vendors `server_to_client.json`, `catalogs/basic/catalog.json` and `common_types.json` from a2ui.org byte for byte, pinned by SHA-256 (RFC 0209 §References; its `README.md` records the URLs, fetch date and the Apache-2.0 notice). They are read only by the corpus gate.
 
+## Upstream A2A v1.0.1 schema source (RFC 0205)
+
+The `fixtures/upstream/a2a-v1.0.1/` sub-directory vendors `a2a.proto` from the A2A repository at tag `v1.0.1`, byte for byte, pinned by SHA-256 (`e195bf96ab630c69797851970203e1b2b6b19528f2e9803b7d904b91a5104016`). A2A publishes no normative JSON Schema of its own, so `schemas/v2/part.schema.json` and `schemas/v2/artifact.schema.json` are transcribed from this file. The corpus gate `src/coherence/a2a-parts-schemas.test.ts` checks the digest and compares each schema's member names with the fields of `message Part` and `message Artifact`, so a transcription slip fails the gate. Its `README.md` records the source URL, fetch date and the Apache-2.0 notice. Do not edit it; moving to a later A2A minor re-vendors the file and re-transcribes both schemas. It is read only by the corpus gate and is not seeded.
+
 ---
 
 ## References
 
-- `README.md` — conformance suite operator docs
-- `../schemas/workflow-definition.schema.json` — every fixture validates against this
-- `../rest-endpoints.md` — endpoint contracts the fixtures exercise
-- `../interrupt.md` — HITL primitive used by approval + clarification fixtures
-- `../idempotency.md` — semantics the idempotent fixture exercises
+- [`README.md`](./README.md) — running the suite
+- [`coverage.md`](./coverage.md) — which scenarios consume which fixtures
+- `../schemas/workflow-definition.schema.json` — every top-level fixture validates against this
+- [`spec/v2/core/runs.md`](../spec/v2/core/runs.md) — the run operations the fixtures exercise
+- [`spec/v2/core/interrupt.md`](../spec/v2/core/interrupt.md) — approval, clarification and credential interrupts
+- [`spec/v2/core/idempotency.md`](../spec/v2/core/idempotency.md) — the semantics the idempotent fixture exercises
+- [`spec/v2/core/replay.md`](../spec/v2/core/replay.md) — replay and fork, used by the replay fixtures

@@ -1,14 +1,16 @@
 # OpenWOP Pack Author Quickstart
 
-> **Status: v2.** This guide is the end-to-end path from "I want to publish a pack" to "my pack is live in the v2 tree of `packs.openwop.dev`". It is written for a first-time pack author who hasn't read the full corpus. The normative rules are [`spec/v2/core/packs.md`](../spec/v2/core/packs.md). Every command below was run against [`openwop/openwop-registry`](https://github.com/openwop/openwop-registry) `main` with a throwaway key.
+> **Status: current (v2).** The end-to-end path from "I want to publish a pack" to "my pack is live in the v2 tree of `packs.openwop.dev`", for a first-time pack author. The normative rules are [`spec/v2/core/packs.md`](../spec/v2/core/packs.md).
 >
-> The registry is versioned by tree ([`packs.md`](../spec/v2/core/packs.md) §"The registry tree"). `registry/v1/…` is the frozen tree for v1 hosts through the overlap, and `registry/v2/…` is the tree this guide publishes to. The v1 version of this guide is in git history: `git show 4aa80535:docs/PACK-AUTHOR-QUICKSTART.md`.
+> **The tooling is not in this repository.** `scripts/new-pack.mjs`, `scripts/build-pack-tarball.mjs`, `scripts/auto-register.mjs`, `registry/scripts/verify-signatures.mjs` and the registry's `npm run check` gate all live in [`openwop/openwop-registry`](https://github.com/openwop/openwop-registry), and every command below runs from a clone of it.
+>
+> The registry is versioned by tree ([`packs.md`](../spec/v2/core/packs.md) §"The registry tree"). `registry/v2/…` is the tree this guide publishes to; `registry/v1/…` is frozen.
 
 A **pack** is a versioned, signed unit of nodes (and optionally agents, prompts, connections, and more). A workflow definition references it through `core.<…>`, `vendor.<…>`, or `community.<…>` typeIds. Packs let third-party authors extend OpenWOP without forking the protocol. Your pack lives in your repo, or in a pull request to the registry. You sign it with your key, and the public registry serves it to any OpenWOP host.
 
 This page is the **author** path. For host-side consumption (signature verification, lockfile honoring, fail-closed behavior), see [`packs.md`](../spec/v2/core/packs.md) §Signing and [`schemas/v2/pack-lockfile.schema.json`](../schemas/v2/pack-lockfile.schema.json).
 
-All commands run from a clone of the registry:
+Clone the registry:
 
 ```bash
 git clone https://github.com/openwop/openwop-registry.git
@@ -75,6 +77,28 @@ The scaffolded `pack.json` is already a v2 manifest ([`packs.md`](../spec/v2/cor
   "nodes": [ { "typeId": "community.your-group.your-pack.example", "version": "0.1.0", "…": "…" } ]
 }
 ```
+
+### Write the node code
+
+Each node is a plain async function exported under its `typeId` in `nodes`. The host validates `ctx.inputs` and `ctx.config` against the schemas `pack.json` names, calls the function, and records the returned `outputs`:
+
+```js
+export async function example(ctx) {
+  const text = String(ctx.inputs.text);
+  return { status: 'success', outputs: { text: text.toUpperCase() } };
+}
+
+export const nodes = { 'community.your-group.your-pack.example': example };
+export default nodes;
+```
+
+Keep node code portable:
+
+- **Reach host services through `ctx.*`, never by import,** and declare each family you use in `peerDependencies`. Declare only what you call: every required family narrows the hosts that can run your pack.
+- **Bundle pack-specific logic inside the pack.** Every file under the pack directory ships in the tarball, and `index.mjs` can import its siblings. If two or more packs need the same host-side behavior, propose it as a capability family or an extension under [`spec/v2/ext/`](../spec/v2/ext/) (for example `canvas`, `brand`, `entities`) instead of reaching into one host's internals.
+- **Keep nodes stateless.** A host may run the same node concurrently across runs; nothing may carry over between calls.
+- **Never hardcode workspace or user ids.** Read them from `ctx`.
+- **Close your schemas.** Set `additionalProperties: false` unless you need an open shape, and give every field a `description`.
 
 [`examples/packs/rust-hello/`](https://github.com/openwop/openwop-examples/tree/main/examples/packs/rust-hello) shows a v2 WASM pack manifest and loads in the in-memory example host. The registry's tarball builder also bundles the file `runtime.entry` names (openwop-registry #78), so a WASM pack publishes once its module is built. Runtimes are covered in [`spec/v2/core/node-pack-runtimes.md`](../spec/v2/core/node-pack-runtimes.md).
 
@@ -230,18 +254,17 @@ Set `"versionDeprecated": true` on the version manifest. The v1 name `deprecated
 
 ### Yank a version
 
-For a serious bug or security issue, set `"yanked": true` on the version manifest and its row in the per-pack `index.json`. For a yanked version, the registry must refuse to serve the tarball and consumers must refuse to dispatch its nodes ([`schemas/v2/registry-version-manifest.schema.json`](../schemas/v2/registry-version-manifest.schema.json)). Document the reason in the PR description.
+For a serious bug or security issue, set `"yanked": true` (and a `yankedReason`) on the version manifest, then rebuild the index with `node registry/scripts/build-index.mjs --tree v2`. A yanked version's manifest, tarball and signature stay served, so exact pins keep resolving; the pack index never names it `latest` while an unyanked version exists, and a range skips it ([`packs.md`](../spec/v2/core/packs.md) §"Version manifests"). Never delete or change a published `.tgz` or `.sig`: the registry gate refuses it. Document the reason in the PR description.
 
 ### Rotate your signing key
 
 For long-lived packs, rotate the key:
 
 1. Generate a new keypair (`your-group-2`).
-2. Sign new pack versions with the new key.
-3. Keep both `your-group-1.pub` and `your-group-2.pub` in `registry/keys/` indefinitely, so older versions stay verifiable.
-4. In `signingKeys[]`, mark the old key `status: "rotated"` and add the new key as `active`.
+2. Add it to `signingKeys[]` as `active` and sign new pack versions with it.
+3. Mark the old key `status: "rotated"`. Only an `active` key may sign a new publication, but a key stays listed, with its `.pub` in `registry/keys/`, while any served version names it ([`packs.md`](../spec/v2/core/packs.md) §Signing).
 
-v2 core doesn't restate the registry's operational flows (submission, yank, rotation, federation). The v1 description is [`spec/v1/registry-operations.md`](../spec/v1/registry-operations.md).
+The operational flows (deprecate, yank, rotation) are in [`docs/runbooks/PACK-LIFECYCLE.md`](./runbooks/PACK-LIFECYCLE.md) and [`docs/runbooks/KEY-ROTATION.md`](./runbooks/KEY-ROTATION.md); the v2 rules behind them are [RFC 0222](../RFCS/0222-v2-registry-operations.md). A new vendor namespace is claimed through [`docs/runbooks/VENDOR-ONBOARDING.md`](./runbooks/VENDOR-ONBOARDING.md).
 
 ---
 
@@ -268,7 +291,8 @@ A safe first community pack has one node, wraps one tool, uses no external secre
 - [`schemas/v2/node-pack-manifest.schema.json`](../schemas/v2/node-pack-manifest.schema.json): the manifest schema.
 - [`schemas/v2/registry-version-manifest.schema.json`](../schemas/v2/registry-version-manifest.schema.json): the version manifest schema.
 - [`schemas/v2/pack-lockfile.schema.json`](../schemas/v2/pack-lockfile.schema.json): the workspace lockfile schema.
-- [`spec/v2/peer-dependency-aliases.json`](../spec/v2/peer-dependency-aliases.json): the v1 peer-dependency keys a v2 host may still resolve through the overlap.
+- [`spec/v2/peer-dependency-aliases.json`](../spec/v2/peer-dependency-aliases.json): the v1-era peer-dependency keys and the v2 families they map to. v1 reached end of support on 2026-10-04, so a v2 host no longer resolves them; use the family key.
 - [`registry/scripts/verify-signatures.mjs`](https://github.com/openwop/openwop-registry/blob/main/registry/scripts/verify-signatures.mjs): the canonical signature verifier.
+- [`docs/PACK-CATALOG.md`](./PACK-CATALOG.md): what is already published.
 - [`docs/IMPLEMENTER-PATH.md`](./IMPLEMENTER-PATH.md): for host authors rather than pack authors.
 - [`docs/recruitment/external-pack-author.md`](./recruitment/external-pack-author.md): the steward's outreach playbook.

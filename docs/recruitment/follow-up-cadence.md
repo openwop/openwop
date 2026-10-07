@@ -1,10 +1,10 @@
 # Outreach Follow-Up Cadence
 
-> **Freshness re-verified 2026-08-13.** Two pass-rate figures in these templates were quoted from a conformance suite ~40 versions old and have been replaced with pointers to dated, re-derivable measurements. **A follow-up template is an outbound claim that ages while it sits unsent** — and these have sat unsent since 2026-05-11, which is long enough for the numbers in them to stop being true.
+> **Status: cadence and templates ready; no outreach sent.** Applies to all three outreach tracks: the external security audit (`SECURITY/outreach/external-audit/`), external host recruitment ([`external-host.md`](external-host.md)) and external pack-author recruitment ([`external-pack-author.md`](external-pack-author.md)).
+>
+> A follow-up template is an outbound claim that ages while it sits unsent. The templates point at dated measurements (`INTEROP-MATRIX.md`, the published suite) rather than quoting figures; re-check anything you add on the day you send.
 
-> **Status: cadence + templates ready (2026-05-11).** Applies to all three outreach tracks: external security audit (`SECURITY/outreach/external-audit/`), external host recruitment (`external-host.md`), external pack author recruitment (`external-pack-author.md`).
-
-The bottleneck after Phase 3 is reply latency, not artifact readiness. This doc is the per-track follow-up schedule that converts no-reply into reply over a defined window, and converts "not now" into a future-dated re-contact rather than a dead lead.
+Once the drafts exist, the bottleneck is reply latency, not artifact readiness. This doc is the per-track follow-up schedule that converts no-reply into reply over a defined window, and converts "not now" into a future-dated re-contact rather than a dead lead.
 
 ## Why follow-ups matter
 
@@ -65,7 +65,7 @@ Copy / adapt per track. Each template is ≤ 80 words and asks for one thing.
 >
 > Bumping this in case it got buried. No urgency — just wanted to surface it once before assuming it's not a fit.
 >
-> If the scope (5 threat models, ~6,250 LOC across hosts and SDKs, RFCs 0002–0008) isn't a fit for [Vendor] this quarter, a one-line "not now" reply is genuinely useful — it sharpens the shortlist.
+> If the scope (<the v2 scope from the current engagement brief>) isn't a fit for [Vendor] this quarter, a one-line "not now" reply is genuinely useful — it sharpens the shortlist.
 >
 > Otherwise, happy to walk it on a call.
 >
@@ -80,8 +80,8 @@ Copy / adapt per track. Each template is ≤ 80 words and asks for one thing.
 >
 > Two updates in case they shift the picture:
 >
-> 1. The conformance suite is at `@openwop/openwop-conformance@1.99.0` — 436 scenario files, capability-gated so a host is measured only against what it advertises. Per-host results, with suite version and measurement date attached: `INTEROP-MATRIX.md`.
-> 2. The Postgres-host audit module is the next port; engagement-doc §5 preconditions remain stable for the next 60 days.
+> 1. The conformance suite is published as `@openwop/openwop-conformance@<current version>`, capability-gated so a host is measured only against what it advertises. Per-host results, with suite version and measurement date attached: `INTEROP-MATRIX.md`.
+> 2. <one concrete update since Day 0, or drop this line>
 >
 > Still happy to walk it on a call. **Happy to work around your calendar — name two or three windows and I will send an invite.**
 >
@@ -122,7 +122,7 @@ Copy / adapt per track. Each template is ≤ 80 words and asks for one thing.
 >
 > Hi [team],
 >
-> One update in case it sharpens the picture: the Postgres reference host has audit-log integrity end-to-end, and the conformance suite is now at `1.99.0`. Current per-host pass rates are in `INTEROP-MATRIX.md` with their measurement date — I'd rather send you a dated figure you can re-derive than one quoted in an email.
+> One update in case it sharpens the picture: <one concrete update since Day 0>. Current per-host results are in `INTEROP-MATRIX.md` with their suite version and measurement date — I'd rather send you a dated figure you can re-derive than one quoted in an email.
 >
 > Still happy to write the first cut as a draft PR. **Happy to work around your calendar — name two or three windows and I will send an invite.**
 >
@@ -137,7 +137,7 @@ Copy / adapt per track. Each template is ≤ 80 words and asks for one thing.
 >
 > Closing the loop. If a [Vendor]-backed OpenWOP host isn't a fit this quarter, that's a useful signal — I'll route the recruitment energy elsewhere.
 >
-> If there's a future trigger that would change the answer (e.g., we publish the production-profile claim, we hit N external packs, etc.), reply with the trigger and I'll re-contact then.
+> If there's a future trigger that would change the answer (e.g., a second non-steward host, N external packs), reply with the trigger and I'll re-contact then.
 >
 > Otherwise this is my last touch.
 >

@@ -63,7 +63,7 @@ This overlaps RFC 0149 §D, which already requires the corpus generator to fail 
 1. **Generation is viable for ~88%, and the remaining 12% must be explicit.** The registry should be generated *and* accept hand-authored entries, rather than being purely one or the other. The 168 interpolated requirements need identifiers that do not derive from their text.
 2. **Normalize citation addressing first.** Otherwise the generated IDs encode an authoring accident, and the first normalization pass churns the whole registry — including the alias file meant to make renames explicit.
 3. **The alias policy is what makes drift visible.** Since IDs derived from prose change when prose is edited, the check mode has to fail on an ID that disappears without a recorded alias. That converts an editorial reword from a silent evidence break into a deliberate, reviewable act — which is the property §A actually needs.
-4. **This does not block the other workstreams.** Nothing in RFCs 0149–0156 needs the registry to *start*; they need it before their terminal `Accepted` flip. The sequencing in `docs/PROTOCOL-GAP-CLOSURE-PLAN.md` Track 14 holds.
+4. **This does not block the other workstreams.** Nothing in RFCs 0149–0156 needs the registry to *start*; they need it before their terminal `Accepted` flip. The planned sequencing (gap-closure Track 14) holds.
 
 ## Open questions this measurement does not settle
 

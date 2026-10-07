@@ -1,8 +1,8 @@
 # Migrating from OpenWOP v1 to v2
 
-> **This is not an additive upgrade.** v2 is a new major with its own path space, its own identifier grammars, and its own discovery representation. Unlike [v1.0 → v1.1](https://github.com/openwop/openwop/blob/48c1f569eb8a8f4ed3ae95bdacf7e757707ce855/docs/migration/v1.0-to-v1.1.md), which required no code changes, every host that serves v2 mounts new surface and changes the shape of ids it emits. Read [`COMPATIBILITY.md`](../../COMPATIBILITY.md) §5 and [`spec/v2/core/versioning.md`](../../spec/v2/core/versioning.md) before starting.
+> **This is not an additive upgrade.** v2 is a new major with its own path space, its own identifier grammars, and its own discovery representation. Every host that serves v2 mounts new surface and changes the shape of the ids it emits. Read [`COMPATIBILITY.md`](../../COMPATIBILITY.md) §5 and [`spec/v2/core/versioning.md`](../../spec/v2/core/versioning.md) before starting.
 
-> **Status: in flight.** The v2 charter's Phase 5 exit requires this guide to cite **both hosts' PR series**. The series are cited below as they stand on 2026-09-05 — merged items by number, open items marked open — and the guide is complete on this point only when both hosts' origin bundles are in the INTEROP-MATRIX v2 table. It is published now because its contents are what the migrations have *already* cost, and a host starting today should not have to rediscover them. The PR series land when the hosts do.
+> **v1 reached end of support on 2026-10-04** ([RFC 0234](../../RFCS/0234-maintainer-set-v1-end-of-support.md)). `spec/v1/` is frozen. A host MAY now drop v1 from `protocolVersions[]`; it is permitted, not forced, so a dual-stack host is still conformant. New work should target v2.
 
 ## Why this doc exists, and what it is written from
 
@@ -23,13 +23,13 @@ Most of this guide is written for a host. A client's migration is three changes 
 | Change | Rule |
 | --- | --- |
 | **Paths are unversioned.** `/v1/runs` → `/runs`, `/v1/runs/{runId}` → `/runs/{runId}`. There is no `/v2/` prefix and there never will be. | [`versioning.md`](../../spec/v2/core/versioning.md) §1.2 |
-| **`OpenWOP-Version` on a request is optional; on a response it is not.** A request on an unversioned path **MAY** carry `OpenWOP-Version: 2`; absent, the host serves `preferredVersion`'s major — which through the overlap is **v1**, so a client that wants v2 and omits the header gets v1. Send it. Every response **MUST** carry `OpenWOP-Version: <major>.<minor>`; a response without it did not come from the host. | §1.3, §1.4 |
+| **`OpenWOP-Version` on a request is optional; on a response it is not.** A request on an unversioned path **MAY** carry `OpenWOP-Version: 2`; absent, the host serves major 2, because the unversioned path is the v2 surface. The one exception is `/.well-known/openwop`: without the header it is served in `preferredVersion`'s major, which on a dual-stack host is **v1** — so send `OpenWOP-Version: 2` on discovery. Every response **MUST** carry `OpenWOP-Version: <major>.<minor>`; a response without it did not come from the host. | §1.3, §1.4 |
 | **`principal` and `principalKind` are gone from run snapshots.** `RunSnapshot.owner` is `{ tenant, workspace?, subject }`; read `owner.subject.subjectId` and `owner.subject.kind`. Ids are tenant-bound (`<tenantId>/<opaque>`) and a v1-minted run read under v2 comes back projected, never bare. | [`identity.md`](../../spec/v2/core/identity.md) §5; `versioning.md` §5 |
-| **What does not change: v1 keeps working.** A client on `/v1/…` with no header is a v1 client and is served v1, unchanged, for the whole overlap. A host **MUST** keep `preferredVersion` on `1.x` while it advertises any `1.x` (§1.1), so nothing you did not change breaks. | §1.1, §5 |
+| **What does not change, while the host keeps v1: `/v1/…` keeps working.** A client on `/v1/…` with no header is served v1, unchanged, for as long as the host advertises a `1.x` member. Once a host retires v1, the whole `/v1` path space goes at once. | §1.1, §5 |
 
-**When v1 stops.** End-of-support is the later of two clocks in [`overview.md`](../../spec/v2/core/overview.md): (a) every INTEROP-MATRIX host's non-vacuous v2 bundle plus 90 days, and (b) 18 months from the v2 release — **(b) applies only if the matrix lists a host operated by someone other than the steward at the time v2 was released**. A reading that says "18 months, guaranteed" has dropped the condition. Earliest date for (a): 2026-12-04. The number to watch is `evidence/v1-end-of-support.json`, generated, not the prose.
+**When v1 stops.** v1 end of support was 2026-10-04, set early under clause (c) of [`overview.md`](../../spec/v2/core/overview.md) §"v1 end-of-support" by RFC 0234. From that date a host MAY retire v1 whenever it chooses; a client still on `/v1/…` should move before its host does. Old-major artifacts stay installable at their last 1.x version for 12 months from the 2.0.0 publish (same section).
 
-**Which SDK.** The 2.x client SDKs (`@openwop/openwop@2`, `openwop-client@2`, `github.com/openwop/openwop-sdks/go/v2`) are on `openwop-sdks` `main` and not yet published; until they are, a 1.x SDK against `/v1/…` is the correct pin and is not a downgrade. The suite that measures either major is `@openwop/openwop-conformance@2.x` with `--target-major`.
+**Which SDK.** The 2.x client SDKs are published: `@openwop/openwop` (npm), `openwop-client` (PyPI) and `github.com/openwop/openwop-sdks/go/v2`, all from [`openwop/openwop-sdks`](https://github.com/openwop/openwop-sdks). The suite that measures a host is `@openwop/openwop-conformance@2.x` with `--target-major`.
 
 ---
 
@@ -56,7 +56,7 @@ Zero matches. **No error, no 4xx, no log line.** The host's own 228 lines of new
 
 The sites are not obvious from the endpoint list. As of suite `2.0.0-rc.31`, `spec/v2/id-field-bindings.json` binds these run-shaped fields to the tenant-bound kind: `childRunId`, `parentRunId`, `sourceRunId`, `baselineRunId`, `enqueuedRunId`, `evalRunId`. **Every one is a place the projection has to reach.** `childRunId` in particular sat unbound in the corpus for the whole of v2's construction, in the same file where `parentRunId` was correctly bound.
 
-### Both header families, through the overlap
+### Both header families, while dual-stack
 
 A host advertising both majors MUST send the `X-openwop-*` family alongside `OpenWOP-*` with identical values on every webhook delivery, and a v2 receiver MUST accept a delivery carrying only `X-openwop-*` under scheme `v1` ([`webhooks.md`](../../spec/v2/core/webhooks.md) §Dual emission). This adds no signature scheme. Per-subscription secrets are unchanged across the cut.
 
@@ -135,7 +135,7 @@ File it. A corpus defect found by a host is worth more than one found by its aut
 
 ```bash
 # TypeScript
-npm install @openwop/openwop-conformance@^2.0.0-rc.31
+npm install @openwop/openwop-conformance@^2
 
 # the contract package is an exact peer and ships with it — do not pin it separately
 ```
@@ -149,7 +149,7 @@ npm install @openwop/openwop-conformance@<version>
 
 ## The two migrations, as PR series
 
-What each host actually shipped, in order, with what each PR was for. Numbers are the hosts' own repositories; "open" means not merged as of 2026-09-05.
+What the first two hosts shipped, in order, with what each change was for. Numbers are the hosts' own repositories.
 
 **openwop-app** (tier-1, `github.com/openwop/openwop-app`; served through a hosting layer in front of the service):
 
@@ -158,7 +158,7 @@ What each host actually shipped, in order, with what each PR was for. Numbers ar
 | #3639 | tenant-bound id projection on the major-2 read path | merged from a pre-rebase head, so main carried the projection without the webhook seam — the seam is a precondition, not decoration |
 | #3642 | the webhook delivery seam at `enqueueDelivery`, inbound §5 id grammar, suite re-pinned | the delivery envelope had no schema while the nested `runId` was bound all along |
 | #3647 (ADR 0631) | origin path space: 26 hosting sources generated from the manifest; the negotiator hands headerless HTML navigations to the shell; `verify-deploy.sh` probes a root at the origin | fourteen of fifteen major-2 roots fell through to the SPA shell while the direct service URL answered every path — the direct-URL witness could not see it |
-| #3648 (open) | the hosting layer decoded `%2F` to `/` before forwarding, so every tenant-bound id was unreachable at the origin; `eventsUrl`/`statusUrl` pointed at the service's own hostname over `http` | "a hosting layer is part of the wire" — every id encoding and every absolute URL must be witnessed through the origin a client is given |
+| #3648 | the hosting layer decoded `%2F` to `/` before forwarding, so every tenant-bound id was unreachable at the origin; `eventsUrl`/`statusUrl` pointed at the service's own hostname over `http` | "a hosting layer is part of the wire" — every id encoding and every absolute URL must be witnessed through the origin a client is given |
 | ADR 0623 | RFC 0164 mandatory leaver contract | — |
 
 **MyndHyve** (tier-2, `workflow-runtime`, PR #249 on `wop/v2-wire`; no hosting layer, the service is the origin):

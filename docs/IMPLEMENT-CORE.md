@@ -11,16 +11,10 @@
 > the protocol most needs. If anything here is wrong or under-specified for a
 > real implementer, that is a defect worth a PR.
 >
-> **Implementing v1 instead?** v1 is the maintained parallel track until v1
-> end-of-support (`spec/v2/core/overview.md` §"v1 end-of-support"). The v1 bar is
-> [`spec/v1/core-standard-profile.md`](../spec/v1/core-standard-profile.md) and
-> [`spec/v1/core-standard-manifest.json`](../spec/v1/core-standard-manifest.json);
-> the v1 documents this page used to point at are
-> [`rest-endpoints.md`](../spec/v1/rest-endpoints.md),
-> [`capabilities.md`](../spec/v1/capabilities.md),
-> [`stream-modes.md`](../spec/v1/stream-modes.md),
-> [`interrupt.md`](../spec/v1/interrupt.md) and
-> [`idempotency.md`](../spec/v1/idempotency.md) §A. Run the suite with `--target-major 1`.
+> **v1 reached end of support on 2026-10-04**
+> ([RFC 0234](../RFCS/0234-maintainer-set-v1-end-of-support.md)); `spec/v1/` is a
+> frozen tree. Do not start a new v1 host. An existing v1 host migrates with
+> [`docs/runbooks/V2-HOST-MIGRATION.md`](./runbooks/V2-HOST-MIGRATION.md).
 
 ## What conformance actually requires
 
@@ -104,9 +98,9 @@ npx @openwop/openwop-conformance \
   --target-major 2
 ```
 
-`--target-major` defaults from your `preferredVersion`, which through the overlap
-MUST be a `1.x` member if you also serve v1 (`versioning.md` §1.1). A dual-stack
-host that omits the flag measures v1. `--filter <pattern>` narrows the run, as in v1.
+`--target-major` defaults from your `preferredVersion`, which MUST be a `1.x`
+member while you also serve v1 (`versioning.md` §1.1). A dual-stack host that
+omits the flag measures v1. `--filter <pattern>` narrows the run, as in v1.
 
 Most rows will record `inapplicable` or `blocked`. `inapplicable` means the
 requirement does not bind your host; `blocked` means it was not measured, and a

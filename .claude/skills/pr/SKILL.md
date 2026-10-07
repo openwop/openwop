@@ -1,6 +1,6 @@
 ---
 name: pr
-description: Create a structured pull request for openwop. Detects lane (spec / SDK / conformance / host / registry / docs), generates body from actual diff, enforces DCO + Conventional Commits + CHANGELOG + 8-step openwop:check pre-flight, applies `openwop-spec` label when spec corpus is touched.
+description: Create a structured pull request for openwop. Detects lane (spec / RFC / schema+API / conformance / release / tooling / docs), generates the body from the actual diff, enforces DCO + Conventional Commits + CHANGELOG + the regen chain and 10-step openwop:check pre-flight, and applies the `openwop-spec` label when the spec corpus is touched.
 ---
 
 # Create Pull Request (openwop)
@@ -11,220 +11,167 @@ Create a well-structured pull request for the current branch's changes against `
 
 ---
 
-## Step 1: Gather Context
+## Step 1: Gather context
 
-Analyze the current branch and all its changes:
+Work in your own worktree, branched from `origin/main` (see `CLAUDE.md`). Check you are not behind before doing anything else.
 
 ```bash
-# Detect base branch (openwop uses main)
-BASE_BRANCH=$(git rev-parse --abbrev-ref origin/HEAD 2>/dev/null | sed 's|origin/||' || echo "main")
+git fetch origin
+git status -sb                      # "behind N" → git merge origin/main first
+git branch --show-current
 
 # All commits on this branch
-git log ${BASE_BRANCH}..HEAD --oneline
-
-# DCO trailer check on every commit (BLOCKING if missing)
-git log ${BASE_BRANCH}..HEAD --format='%H %s%n%b' | grep -E '^(commit |Signed-off-by:|$)' | awk '
-  /^commit / { sha=$2; signed=0 }
-  /^Signed-off-by:/ { signed=1 }
-  /^$/ { if (sha && !signed) print "MISSING DCO:", sha; sha="" }
-'
+git log origin/main..HEAD --oneline
 
 # Changed files with stats
-git diff ${BASE_BRANCH} --stat
+git diff origin/main...HEAD --stat
 
-# Any uncommitted changes
+# Uncommitted changes
 git status
 ```
 
-**Read every changed file** with the Read tool. Do not generate PR content from filenames alone — analyze the actual diff.
+**Read every changed file.** Do not write PR content from filenames alone.
+
+This repo holds the spec corpus and the conformance suite only. SDK, reference-host, registry, site and app changes belong in their own repos (`openwop/openwop-sdks`, `openwop/openwop-examples`, `openwop/openwop-registry`, `openwop/openwop-site`, `openwop/openwop-app`); open those PRs there.
 
 ---
 
-## Step 2: Classify the Lane
+## Step 2: Classify the lane
 
-Decide which kind of PR this is. Lane drives the title prefix, the body template, the labels, and the required pre-flight gates.
+The lane sets the title prefix, the body template and the label. Match the prefixes in recent history (`git log origin/main --format=%s -40`).
 
-| Lane | Surfaces touched | Title prefix | Required label | Reviewer routing |
-|---|---|---|---|---|
-| **Spec corpus (normative)** | `spec/v1/`, `RFCS/`, `schemas/`, `api/` | `spec(v1):` or `feat(spec):` | `openwop-spec` | Lead maintainer via CODEOWNERS |
-| **Spec corpus (editorial)** | `spec/v1/`, `RFCS/`, `schemas/`, `api/` — prose-only fixes | `docs(spec):` | `openwop-spec` | Lead maintainer via CODEOWNERS |
-| **Conformance** | `conformance/` | `feat(conformance):` / `fix(conformance):` | `openwop-spec` (suite is part of corpus) | Lead maintainer via CODEOWNERS |
-| **TS SDK** | `../openwop-sdks/sdk/typescript/` | `feat(sdk-ts):` / `fix(sdk-ts):` | — | Standard review |
-| **Python SDK** | `../openwop-sdks/sdk/python/` | `feat(sdk-py):` / `fix(sdk-py):` | — | Standard review |
-| **Go SDK** | `../openwop-sdks/sdk/go/` | `feat(sdk-go):` / `fix(sdk-go):` | — | Standard review |
-| **Reference host** | `../openwop-examples/examples/hosts/{in-memory,sqlite,python}/` | `feat(host-<name>):` / `fix(host-<name>):` | — | Standard review |
-| **Pack / registry** | `../openwop-registry/packs/`, `../openwop-registry/registry/`, `../openwop-examples/examples/packs/` | `feat(packs):` / `feat(registry):` | — | Standard review |
-| **Site** | `../openwop-site/site/`, `../openwop-site/public/` | `chore(site):` / `feat(site):` | — | Standard review |
-| **Tooling / build** | `scripts/`, `.github/`, root `package.json` | `build:` / `chore:` | — | Standard review |
-| **Documentation** | `README.md`, `CHANGELOG.md`, `INTEROP-MATRIX.md`, `ROADMAP.md`, `GOVERNANCE.md`, `MAINTAINERS.md`, `docs/` | `docs:` | — | Standard review |
+| Lane | Surfaces touched | Title prefix | `openwop-spec` label |
+|---|---|---|---|
+| **RFC** | `RFCS/NNNN-*.md`, plus its gap/risk registers | `rfc(NNNN):` | yes |
+| **Spec (normative)** | `spec/v2/core/`, `spec/v2/ext/`, `spec/v2/*.json` (declaration, facets, errors, …) | `spec(<doc>):` | yes |
+| **Schema / API** | `schemas/v2/`, `api/openapi.yaml` + `scripts/derive-v2-api.py` (the source of `api/v2/`), `api/v2/` | `spec(<area>):` | yes |
+| **Conformance** | `conformance/` | `conformance(X.Y.Z):` | yes |
+| **Errata** | a correction to published text or a scenario | `errata(X.Y.Z):` | yes |
+| **Release** | the version sites + `CHANGELOG.md` collapse (see `/release`) | `release(X.Y.Z):` | yes |
+| **Tooling / build** | `scripts/`, `.github/`, root `package.json` | `build:` / `chore:` | yes if a generator or gate check changed (see Step 6) |
+| **Documentation** | `README.md`, `ROADMAP.md`, `INTEROP-MATRIX.md`, `GOVERNANCE.md`, `MAINTAINERS.md`, `docs/` | `docs(<area>):` | no |
 
-Recent commits show this convention in use: `build:`, `spec(v1):`, `feat(host-sqlite):`. Match the format.
+`spec/v1/` is frozen (v1 reached end of support under RFC 0234). A PR that edits it needs an explicit reason, such as a migration-table correction.
 
-If the change is a normative spec edit, classify compatibility (additive / safety-fix / breaking) per `COMPATIBILITY.md` — the body template requires this line.
+For a normative change, classify compatibility (additive / safety-fix / breaking / v2 retirement) per `COMPATIBILITY.md` §2.4, §3 and §3a. The body template needs this line.
 
 ---
 
-## Step 3: Analyze Changes
-
-For each changed file, categorize:
+## Step 3: Analyze changes
 
 | Category | Files | Summary |
 |---|---|---|
-| Prose spec (`spec/v1/`) | … | What sections/keywords changed |
+| Normative prose (`spec/v2/core/`, `spec/v2/ext/`) | … | Sections and RFC 2119 keywords changed |
+| Families (`spec/v2/declaration.json`, `spec/v2/facets/`) | … | Family rows / facets added or changed |
 | RFC (`RFCS/`) | … | RFC NNNN — Draft / Active / Accepted |
-| Schemas (`schemas/`) | … | Field added / removed / type-changed |
-| API contracts (`api/`) | … | Endpoint / channel diff |
-| Conformance (`conformance/`) | … | Scenarios + fixtures added |
-| SDKs (`sdk/{typescript,python,go}/`) | … | Methods added / types updated |
-| Reference hosts (`../openwop-examples/examples/hosts/`) | … | Profile coverage delta |
-| Tests | … | What's covered |
-| Documentation | … | README / CHANGELOG / INTEROP-MATRIX / ROADMAP |
-| Config / build | … | scripts, workflows |
+| Schemas (`schemas/v2/`) | … | Field added / removed / type-changed |
+| API (`api/openapi.yaml`, `scripts/derive-v2-api.py`, `api/v2/`) | … | Endpoint / channel diff |
+| Conformance (`conformance/`) | … | Scenarios, fixtures, `scenario-majors.json` rows |
+| Generated surfaces | … | Regenerated, not hand-edited |
+| Tooling (`scripts/`, `.github/`) | … | Generators, gate checks, workflows |
+| Documentation | … | README / ROADMAP / INTEROP-MATRIX / docs |
 
-Determine the **primary lane** for the title prefix and the **compatibility classification** for the body.
+Determine the **primary lane** for the title and the **compatibility classification** for the body.
 
 ---
 
-## Step 4: Pre-Flight Checks (MANDATORY)
+## Step 4: Pre-flight checks (mandatory)
 
-Run the same 8-step gate CI will run:
+Run the regen chain, then the same gate CI runs. A late edit re-stales a generated surface, so run the chain immediately before the gate.
 
 ```bash
-# Full corpus gate
-npm run openwop:check 2>&1 | tee /tmp/pr-precheck.log
+python3 scripts/derive-v2-api.py --write && node scripts/generate-gaps.mjs --write && node scripts/generate-core-standard-manifest.mjs --write && node scripts/generate-assurance-status.mjs --write && node scripts/generate-protocol-status.mjs --write && node conformance/scripts/generate-scenario-majors.mjs --write && node conformance/scripts/generate-requirement-registry.mjs --write && node scripts/generate-spec-artifacts.mjs --write && node scripts/generate-review-packet.mjs --write && node scripts/generate-v1-eos-clock.mjs --write && node scripts/report-v2-witness-coverage.mjs --write && node scripts/check-spec-coherence.mjs --write
 
-# Per-SDK lint (PR check):
-( cd ../openwop-sdks/sdk/python && ruff check . ) 2>&1 | tail -10
-( cd ../openwop-sdks/sdk/go && go vet ./... && gofmt -l . ) 2>&1 | tail -10
+# The 10-step gate (scripts/openwop-check.sh)
+npm run openwop:check 2>&1 | tee "${TMPDIR:-/tmp}/pr-precheck.log"
+
+# CHANGELOG entry under [Unreleased] for any spec / schema / conformance change
+git diff origin/main...HEAD -- CHANGELOG.md
+node scripts/check-changelog-shape.mjs
 
 # DCO: every commit signed?
-git log origin/main..HEAD --format='%H %s' | while read sha subject; do
-  if ! git log -1 "$sha" --format='%b' | grep -q '^Signed-off-by:'; then
-    echo "MISSING DCO on $sha: $subject"
-  fi
+git log origin/main..HEAD --format='%H %s' | while read -r sha subject; do
+  git log -1 "$sha" --format='%b' | grep -q '^Signed-off-by:' || echo "MISSING DCO on $sha: $subject"
 done
-
-# CHANGELOG entry under [Unreleased] for any spec/SDK/conformance change?
-git diff origin/main..HEAD -- CHANGELOG.md
 ```
 
-If any of these fail, **fix before opening the PR**. The DCO bot blocks merge until every commit is signed. `npm run openwop:check` is the published merge gate (`CONTRIBUTING.md` §"The CI gate").
+Commit any regenerated files the chain changed. Fix every failure before opening the PR. `npm run openwop:check` is the merge gate; `CONTRIBUTING.md` §"The CI gate" and §"Sign your commits (DCO)" state the rules, including the current steward exemption from the DCO trailer.
 
 ---
 
-## Step 5: Generate PR Content
+## Step 5: Generate PR content
 
 ### Title rules
-- Conventional Commits prefix per lane table above
+- Conventional Commits prefix per the lane table
 - Under 70 characters
-- Describe the outcome, not the process ("Add `agent.handoff` event" not "Implement agent handoff feature")
+- Describe the outcome, not the process ("Add `agent.handoff` event", not "Implement agent handoff feature")
 
-### Body template — Spec / RFC PR
+End every PR body with the attribution lines this session's instructions give.
+
+### Body template — spec / RFC / conformance PR
 
 ```markdown
 ## Summary
-- <bullet 1 — what surface this lands and why>
-- <bullet 2 — RFC reference if applicable, e.g., "Lands RFC 0007 dispatch §3"
-- <bullet 3 — host/SDK impact>
+- <what surface this lands and why>
+- <RFC reference if applicable, e.g. "Lands RFC 0237 §B">
+- <host impact: what a v2 host must now do or may now advertise>
 
 ## Compatibility
-**Additive** / **Safety-fix** / **Breaking** per `COMPATIBILITY.md` §<section>.
+**Additive** / **Safety-fix** / **Breaking** / **v2 retirement** per `COMPATIBILITY.md` §<section>.
 
-<one-paragraph justification — cite §2.2 list items if claiming additive>
+<one-paragraph justification>
 
 ## Spec corpus changes
-- [ ] `spec/v1/<doc>.md` — <section> added/edited; `Status:` legend preserved
-- [ ] `schemas/<name>.schema.json` — new field <name>; `additionalProperties: false`; $id under openwop.dev
-- [ ] `api/openapi.yaml` — endpoint <path> added with operationId, tags, response schemas
-- [ ] `api/asyncapi.yaml` — channel <name> added with message + payload schema
+- [ ] `spec/v2/core/<doc>.md` or `spec/v2/ext/<doc>.md` — <section>; `Status:` legend preserved
+- [ ] `spec/v2/declaration.json` / `spec/v2/facets/` — family row or facet; `schemas/v2/capabilities.schema.json` regenerated by `scripts/generate-from-declaration.mjs`, not hand-edited
+- [ ] `schemas/v2/<name>.schema.json` — `$id` under `https://openwop.dev/spec/v2/`; `additionalProperties: false`
+- [ ] `api/openapi.yaml` and/or `scripts/derive-v2-api.py` — `api/v2/` re-derived
 
 ## Conformance
-- [ ] New scenario: `conformance/src/scenarios/<file>.test.ts` covering `spec/v1/<doc>.md §<section>`
-- [ ] New fixture (if applicable): `conformance/fixtures/<name>.json` registered in `fixtures.md`
-- [ ] Capability-gated on `host.<flag>.supported` per `conformance/coverage.md` §"Capability-gated scenarios"
-- [ ] `conformance/coverage.md` updated
-
-## SDK + reference host
-- [ ] `../openwop-sdks/sdk/typescript/src/client.ts` — new method on `OpenwopClient` (if endpoint added)
-- [ ] `../openwop-sdks/sdk/typescript/src/types.ts` — types extended from spec
-- [ ] `../openwop-sdks/sdk/python/src/openwop_client/` — Python method addition (stdlib-only)
-- [ ] `../openwop-sdks/sdk/go/` — Go method addition; `go vet` + `gofmt` clean
-- [ ] `../openwop-examples/examples/hosts/<name>/` — reference host implements + advertises in `conformance.md`
-- [ ] `INTEROP-MATRIX.md` — row updated if advertisement changes
+- [ ] Scenario `conformance/src/scenarios/v2-<name>.test.ts` citing `spec/v2/core/<doc>.md §<section>`
+- [ ] Assertions use `req(id, section, requirement)`; one requirement id per `it`; no bare `return` (use `softSkip`)
+- [ ] `conformance/scenario-majors.json` regenerated (the new file has a row)
+- [ ] Fixture (if any) in `conformance/fixtures/` and catalogued in `conformance/fixtures.md`
+- [ ] `conformance/CHANGELOG.md` entry
 
 ## SECURITY invariants
-- [ ] New MUST-NOT? Added row in `SECURITY/invariants.yaml` + matching public test
-- [ ] BYOK credential handling unchanged (`auth.md`, `SECURITY/threat-model-secret-leakage.md`)
-- [ ] Replay determinism preserved (`replay.md`)
+- [ ] New MUST-NOT? Row in `SECURITY/invariants.yaml` + a matching public test
+- [ ] Credential handling unchanged (`spec/v2/core/security-defaults.md`, `SECURITY/threat-model-secret-leakage.md`)
+- [ ] Replay determinism preserved (`spec/v2/core/replay.md`)
+
+## Host impact
+- <which hosts must change; open follow-ups in openwop-examples / openwop-app / openwop-sdks as needed>
+- [ ] `INTEROP-MATRIX.md` row updated if an advertisement changes
 
 ## Test plan
-- [ ] `npm run openwop:check` passes (8/8 green)
-- [ ] `( cd ../openwop-sdks/sdk/typescript && npx tsc --noEmit )` clean
-- [ ] `( cd conformance && npx vitest run )` server-free subset green
-- [ ] `redocly lint api/openapi.yaml` clean
-- [ ] `asyncapi validate api/asyncapi.yaml` clean
-- [ ] `bash scripts/check-security-invariants.sh` clean
-- [ ] `bash scripts/openwop-check-publish-metadata.sh` clean
-- [ ] DCO: every commit `Signed-off-by:` (DCO bot will verify)
+- [ ] Regen chain run; no uncommitted diff afterwards
+- [ ] `npm run openwop:check` passes (10/10)
+- [ ] `node scripts/check-changelog-shape.mjs` clean
+- [ ] DCO: every commit `Signed-off-by:` (or steward exemption per `CONTRIBUTING.md`)
 
 ## Breaking changes
 None / <list — and link the safety-fix RFC if this is one>
 
 ## RFC + comment window
-- RFC: <RFCS/NNNN-slug.md> — Status: Draft / Active
-- Comment window: <7 days for additive / 90 days for safety-fix / 30 days for breaking>
+- RFC: <RFCS/NNNN-slug.md> — Status: Draft / Active / Accepted
+- Comment window: 7 days (normative addition) / 30 days (breaking) / 90 days or embargo (safety-fix), per `RFCS/README.md` and `COMPATIBILITY.md` §3
 - Window opened: <date PR marked ready>
-
----
-Signed-off-by: David Tufts <email@davidtufts.me>
-Co-Authored-By: Claude Opus 4.7 (1M context) <noreply@anthropic.com>
 ```
 
-### Body template — SDK or reference-host PR (no spec corpus changes)
+### Body template — tooling / docs / build PR
 
 ```markdown
 ## Summary
-- <bullet 1 — what's added or fixed in the SDK/host>
-- <bullet 2 — which spec doc it tracks>
-- <bullet 3 — reference-host advertisement impact>
+- <what's improved>
+- <why>
 
 ## Surface
-- [ ] `sdk/<lang>/...` — files changed
-- [ ] No spec corpus changes (`spec/v1/`, `api/`, `schemas/`, `RFCS/` untouched)
-
-## Test plan
-- [ ] TS: `( cd ../openwop-sdks/sdk/typescript && npx tsc --noEmit && npm test )`
-- [ ] Python: `ruff check ../openwop-sdks/sdk/python/` + `python -m unittest discover ../openwop-sdks/sdk/python/tests`
-- [ ] Go: `( cd ../openwop-sdks/sdk/go && go vet ./... && go test ./... && gofmt -l . )`
-- [ ] Conformance run against affected host (if applicable)
-- [ ] `INTEROP-MATRIX.md` row updated (if advertisement changes)
-
-## CHANGELOG
-- [ ] `../openwop-sdks/sdk/typescript/CHANGELOG.md` or `conformance/CHANGELOG.md` line added (if package version will bump)
-
----
-Signed-off-by: David Tufts <email@davidtufts.me>
-Co-Authored-By: Claude Opus 4.7 (1M context) <noreply@anthropic.com>
-```
-
-### Body template — Tooling / docs / build PR
-
-```markdown
-## Summary
-- <bullet 1 — what's improved>
-- <bullet 2 — why>
-
-## Surface
-- [ ] `scripts/...`, `.github/...`, root config — files changed
-- [ ] No spec corpus, SDK runtime, or conformance assertion changes
+- [ ] `scripts/…`, `.github/…`, root config, or docs — files changed
+- [ ] No normative text, schema, or conformance assertion changes
 
 ## Test plan
 - [ ] `npm run openwop:check` still passes
-- [ ] <tool-specific verification — e.g., `bash scripts/check-npm-pack-contents.sh` clean>
-
----
-Signed-off-by: David Tufts <email@davidtufts.me>
-Co-Authored-By: Claude Opus 4.7 (1M context) <noreply@anthropic.com>
+- [ ] <tool-specific check, e.g. `bash scripts/check-npm-pack-contents.sh`>
 ```
 
 ---
@@ -232,22 +179,21 @@ Co-Authored-By: Claude Opus 4.7 (1M context) <noreply@anthropic.com>
 ## Step 6: Create the PR
 
 ```bash
-BASE_BRANCH=$(git rev-parse --abbrev-ref origin/HEAD 2>/dev/null | sed 's|origin/||' || echo "main")
-
-# Push if needed
 git push -u origin HEAD
 
-# Create the PR — apply openwop-spec label when spec corpus is touched
-SPEC_TOUCHED=$(git diff --name-only "${BASE_BRANCH}"..HEAD | grep -E '^(spec/v1|RFCS|schemas|api|conformance)/' | head -1)
+# Apply openwop-spec when the spec corpus, the suite, or a generator/gate script is touched
+SPEC_TOUCHED=$(git diff --name-only origin/main...HEAD \
+  | grep -E '^(spec/|RFCS/|schemas/|api/|conformance/|spec-artifacts/|SECURITY/invariants\.yaml|scripts/(generate-|derive-|check-|openwop-check))' \
+  | head -1)
 LABEL_ARGS=()
 [[ -n "$SPEC_TOUCHED" ]] && LABEL_ARGS+=(--label openwop-spec)
 
 gh pr create \
-  --base "${BASE_BRANCH}" \
+  --base main \
   "${LABEL_ARGS[@]}" \
   --title "<conventional-commit-prefix>: <outcome>" \
   --body "$(cat <<'EOF'
-<paste the appropriate template from Step 5, filled in>
+<the filled-in template from Step 5>
 EOF
 )"
 ```
@@ -256,20 +202,21 @@ Return the PR URL when complete.
 
 ---
 
-## PR Best Practices
+## PR best practices
 
-1. **Title:** Conventional Commits with openwop scope — `spec(v1):`, `feat(host-sqlite):`, `feat(conformance):`, `feat(sdk-ts):`, etc. Recent commit history is the source of truth on phrasing.
-2. **Size:** Keep PRs focused. Spec changes are easier to review when the schema diff, OpenAPI diff, conformance scenario, and CHANGELOG line ship in one PR — but separate SDK rollouts from spec landings when they would force a third-party host into a coordinated release.
-3. **Description:** Explain WHY plus the compatibility classification. The classification is the load-bearing claim.
-4. **Tests:** Conformance scenarios are the canonical test plan for spec changes. SDK PRs cite vitest / unittest / go test.
-5. **Breaking changes:** Call out explicitly with migration steps; safety-fix changes ship with a `version-negotiation.md` runbook section + `### Security` CHANGELOG heading.
-6. **DCO:** Every commit `Signed-off-by:`. Use `git commit -s` to add automatically; `git rebase --signoff -i HEAD~N` to fix existing commits.
-7. **CHANGELOG:** A one-line entry under `[Unreleased]` is the floor. SDK/conformance PRs that bump package versions also update the per-package CHANGELOG.
-8. **`openwop-spec` label:** Apply when `spec/v1/`, `api/`, `schemas/`, `RFCS/`, or `conformance/` is touched. Routes to lead maintainer via CODEOWNERS.
+1. **Title:** Conventional Commits with the openwop scopes in use: `rfc(NNNN):`, `spec(<doc>):`, `conformance(X.Y.Z):`, `errata(X.Y.Z):`, `release(X.Y.Z):`, `docs(<area>):`. Recent history is the source of truth on phrasing.
+2. **Size:** Keep PRs focused. A spec change reviews best when the prose, schema, derived API, scenario and CHANGELOG line ship together.
+3. **Description:** Explain why, plus the compatibility classification. The classification is the load-bearing claim.
+4. **Tests:** Conformance scenarios are the test plan for spec changes.
+5. **Breaking changes:** Call them out with migration steps. A safety-fix ships with a `### Security` CHANGELOG heading.
+6. **Generated surfaces:** Regenerate, never hand-merge. On a conflict in a generated file, take either side and rerun the chain.
+7. **DCO:** `git commit -s` adds the trailer. Fix existing commits with `git rebase --signoff origin/main` (non-interactive).
+8. **CHANGELOG:** One line under `[Unreleased]` in the shape `scripts/check-changelog-shape.mjs` enforces. Suite changes also update `conformance/CHANGELOG.md`.
+9. **`openwop-spec` label:** Applied when `spec/`, `RFCS/`, `schemas/`, `api/`, `conformance/`, `spec-artifacts/`, `SECURITY/invariants.yaml`, or a generator/gate script changes. CODEOWNERS routes these to the lead maintainer.
 
 ---
 
-## Workflow Commands
+## Workflow commands
 
 | Command | Action |
 |---|---|
@@ -277,5 +224,5 @@ Return the PR URL when complete.
 | `draft` | Create as draft PR |
 | `classify` | Re-state compatibility classification with reasoning |
 | `revise: [feedback]` | Modify the PR content |
-| `dco-fix` | Add `Signed-off-by:` to every commit lacking it (`git rebase --signoff -i HEAD~N`) |
+| `dco-fix` | Add `Signed-off-by:` to every commit lacking it (`git rebase --signoff origin/main`) |
 | `done` | Complete |

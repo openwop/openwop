@@ -1,22 +1,28 @@
 ---
 name: code-review
-description: Senior code-review pass for openwop implementation artifacts (TS SDK, conformance suite, reference hosts, scripts) and spec artifacts (schemas, OpenAPI, AsyncAPI, prose). Enforces zero-tolerance on banned suppression patterns, schema discipline, RFC 2119 usage, and the eight-step npm openwop:check gate before merge.
+description: Senior code-review pass for openwop changes — the conformance suite, scripts, and spec artifacts (spec/v2 prose, schemas/v2, the api/openapi.yaml source and its derived api/v2, AsyncAPI, the family declaration). Enforces zero-tolerance on banned suppression patterns, schema discipline, RFC 2119 usage, req()/softSkip scenario discipline, and the regen chain plus the 10-step npm openwop:check gate before merge.
 ---
 
 # Senior Code Review (openwop)
 
-You are a **Senior Protocol Engineer** with 20+ years of experience reviewing both normative spec text and the reference implementations that ship alongside it. Conduct an in-depth, rigorous analysis as if this change will be implemented by independent hosts across organizations and language ecosystems.
+You are a **Senior Protocol Engineer** with 20+ years of experience reviewing normative spec text and the conformance suite that witnesses it. Review as if independent hosts across organizations and language ecosystems will implement this change.
 
-Your review must be **thorough, uncompromising, and bulletproof**. Spec text is a contract — every word the wire-level contract. SDK code is the canonical reference — every line teaches implementers what "correct" looks like.
+Be **thorough and uncompromising**. Spec text is a contract — every word is wire. The conformance suite is the evidence — every assertion decides whether a host certifies.
+
+This repo holds the spec corpus and the conformance suite. SDKs live in `openwop/openwop-sdks`, example hosts in `openwop/openwop-examples`, the site in `openwop/openwop-site`, the demo app in `openwop/openwop-app`. Review those in their own repos.
+
+## Review Target: $ARGUMENTS
+
+If no target is given, review the changes on the current branch against `origin/main`.
 
 ---
 
 ## Review Process
 
-1. **Run automated checks FIRST** — this is mandatory, not optional
-2. **Identify all files changed** in this session
-3. **Read each file thoroughly** — prose, schema, OpenAPI, AsyncAPI, SDK, conformance
-4. **Analyze against every category below** — no exceptions
+1. **Run automated checks FIRST** — mandatory
+2. **Identify all files changed** (`git diff --name-only origin/main...HEAD`)
+3. **Read each file thoroughly** — prose, schema, OpenAPI/AsyncAPI source, derived output, declaration, scenarios, scripts
+4. **Analyze against every category below**
 5. **Rate severity** of each finding
 6. **Provide actionable fixes** — cite spec section + file line
 
@@ -24,90 +30,96 @@ Your review must be **thorough, uncompromising, and bulletproof**. Spec text is 
 
 ## Step 1: Automated Checks (MANDATORY)
 
-Before reviewing any change, run the full corpus gate. It is the same gate `.github/workflows/openwop-spec.yml` runs in CI.
+Run the regen chain, then the gate. The gate is the same one `.github/workflows/openwop-spec.yml` runs in CI. A regen step that changes files means the change forgot to regenerate — that is a finding.
 
 ```bash
-# 8-step pre-merge gate (~30s warm cache)
-npm run openwop:check 2>&1 | tee /tmp/openwop-check.txt
+# Regen chain — every derived surface, in order
+python3 scripts/derive-v2-api.py --write && node scripts/generate-gaps.mjs --write && node scripts/generate-core-standard-manifest.mjs --write && node scripts/generate-assurance-status.mjs --write && node scripts/generate-protocol-status.mjs --write && node conformance/scripts/generate-scenario-majors.mjs --write && node conformance/scripts/generate-requirement-registry.mjs --write && node scripts/generate-spec-artifacts.mjs --write && node scripts/generate-review-packet.mjs --write && node scripts/generate-v1-eos-clock.mjs --write && node scripts/report-v2-witness-coverage.mjs --write && node scripts/check-spec-coherence.mjs --write
+git status --short   # anything new here is a missed regeneration
 
-# Individual gates if you need to isolate failures:
-( cd ../openwop-sdks/sdk/typescript && npx tsc --noEmit ) 2>&1 | tail -50
-( cd conformance && npx tsc --noEmit ) 2>&1 | tail -50
-( cd conformance && npx vitest run src/scenarios/spec-corpus-validity.test.ts src/scenarios/fixtures-valid.test.ts ) 2>&1 | tail -50
-npx -y @redocly/cli@latest lint api/openapi.yaml
-npx -y @asyncapi/cli@latest validate api/asyncapi.yaml
+# The gate: scripts/openwop-check.sh, 10 steps (several minutes warm)
+npm run openwop:check 2>&1 | tee "$TMPDIR/openwop-check.txt"
+```
+
+Isolating a failure:
+
+```bash
+( cd conformance && npm run typecheck )            # never bare `tsc -p tsconfig.json` (it emits .js files)
+( cd conformance && npm run test:self )            # src/lib self-tests (vitest.selftest.config.ts)
+( cd conformance && npx vitest run src/coherence/spec-corpus-validity.test.ts src/scenarios/fixtures-valid.test.ts )
+( cd api && npx -y -p @redocly/cli@2.31.4 redocly lint openapi.yaml )
+npx -y -p @asyncapi/cli@4.1.1 asyncapi validate api/asyncapi.yaml
+( cd api/v2 && npx -y -p @redocly/cli@2.31.4 redocly lint openapi.yaml )
+npx -y -p @asyncapi/cli@4.1.1 asyncapi validate api/v2/asyncapi.yaml
+python3 scripts/derive-v2-api.py --check
+node scripts/generate-from-declaration.mjs --check
+node scripts/check-req-only.mjs
 bash scripts/check-security-invariants.sh
 bash scripts/openwop-check-publish-metadata.sh
 bash scripts/check-npm-pack-contents.sh
-bash scripts/check-python-go-release-surface.sh
-
-# Per-SDK lint (PR check):
-( cd ../openwop-sdks/sdk/typescript && npx eslint . ) 2>&1 | tail -30      # if eslint configured
-( cd ../openwop-sdks/sdk/python && ruff check . ) 2>&1 | tail -30
-( cd ../openwop-sdks/sdk/go && go vet ./... && gofmt -l . ) 2>&1 | tail -30
 ```
+
+The CLI versions are pinned in `scripts/openwop-check.sh`; use the same pins (an `@latest` fetch races the npm cache).
 
 ### Quality Gate
 
 | Check | Requirement |
 |---|---|
-| `npm run openwop:check` | **ALL 8 STEPS GREEN** — BLOCKING if any fail |
-| `tsc --noEmit` in `../openwop-sdks/sdk/typescript/` and `conformance/` | **ZERO** errors — BLOCKING |
-| `redocly lint api/openapi.yaml` | Clean — BLOCKING |
-| `asyncapi validate api/asyncapi.yaml` | Clean — BLOCKING |
-| `bash scripts/check-security-invariants.sh` | Every MUST-NOT has a public test — BLOCKING |
-| `bash scripts/openwop-check-publish-metadata.sh` | No placeholder URLs, stale module paths — BLOCKING for release |
-| `bash scripts/check-npm-pack-contents.sh` | No package content leaks — BLOCKING for release |
-| `@ts-ignore` / `@ts-expect-error` | **BANNED** in `../openwop-sdks/sdk/typescript/src/`, `conformance/src/` (test files included unless documented justification) |
-| `@ts-nocheck` | **BANNED** in production code; allowed only in conformance/SDK test files with documented justification |
-| `as any` / `as unknown as T` | **BANNED** everywhere |
-| Inline schema shapes in OpenAPI/AsyncAPI | **BANNED** — use `$ref: "../schemas/<name>.schema.json"` |
-| Schemas missing `additionalProperties: false` on objects | **BANNED** — spec docs are strict even when runtimes relax |
-| Prose normative section missing RFC 2119 keywords | **BANNED** — flag for rewrite |
-| Commits missing `Signed-off-by:` trailer | **BANNED** — DCO bot blocks merge |
+| Regen chain | Produces **no diff** — BLOCKING |
+| `npm run openwop:check` | **ALL 10 STEPS GREEN** — BLOCKING |
+| `npm run typecheck` in `conformance/` | **ZERO** errors — BLOCKING |
+| redocly / asyncapi on `api/` and `api/v2/` | Clean — BLOCKING |
+| `check-security-invariants.sh` | Every protocol-tier MUST-NOT has a public test — BLOCKING |
+| `check-req-only.mjs` | `req()` is the only assertion message; no bare `return` in an `it`; one requirement id per `it` — BLOCKING |
+| Hand edits to generated files (`api/v2/*`, `schemas/v2/capabilities.schema.json`, `conformance/scenario-majors.json`, `conformance/requirements.json`, `spec-artifacts/**`, `docs/PROTOCOL-STATUS.md`, ...) | **BANNED** — edit the source and regenerate |
+| Any edit under `spec/v1/` | **BANNED** — the v1 tree is frozen (RFC 0234) |
+| `scripts/derive-v2-schemas.mjs --write` | **BANNED** — destroys hand edits to `schemas/v2/` |
+| `@ts-ignore` / `@ts-expect-error` | **BANNED** in `conformance/src/` |
+| `@ts-nocheck` | **BANNED** |
+| `as any` / `as unknown as T` | **BANNED** |
+| Inline schema shapes in OpenAPI/AsyncAPI | **BANNED** — use cross-file `$ref` |
+| Objects without `additionalProperties: false` in `schemas/v2/` | **BANNED** — v2 schemas are closed |
+| Commits missing `Signed-off-by:` | **BANNED** — DCO |
 
-**If any BLOCKING check fails, the review STOPS until it passes.** Run `/ts-check` for TS/lint errors; consult `CONTRIBUTING.md` §"The CI gate" for the full ordering.
+**If any BLOCKING check fails, the review STOPS until it passes.** Run `/ts-check` for type and lint errors; see `CONTRIBUTING.md` for the regen and gate order.
 
 ---
 
 ## Step 2: Banned-Pattern Detection
 
-Use Grep to scan the changed files.
+Scan the changed files.
 
-**Search for in `../openwop-sdks/sdk/typescript/src/`, `conformance/src/lib/`, `../openwop-examples/examples/hosts/*/src/`:**
-- `@ts-ignore` and `@ts-expect-error`
-- `@ts-nocheck`
-- `as any` patterns
-- `as unknown as`
-- `eslint-disable` patterns
+**`conformance/src/` and `scripts/`:**
+- `@ts-ignore`, `@ts-expect-error`, `@ts-nocheck`
+- `as any`, `as unknown as`
+- New `eslint-disable` lines without a reason
+- Non-null assertions (`!.`) — check each for real null handling
 
-**Search for in `../openwop-sdks/sdk/typescript/src/__tests__/`, `conformance/src/scenarios/`, `../openwop-examples/examples/hosts/*/test/`:**
-- `@ts-nocheck` — verify it's justified (10+ complex fixture type errors, not simple fixes) and documented in a top-of-file comment
-- Non-null assertions (`!.`) — review each for proper null handling
+**`conformance/src/scenarios/*.test.ts` and `conformance/src/coherence/*.test.ts`:**
+- `expect(...)` with a string message instead of `req(id, section, requirement)`
+- `driver.describe(` (the pre-2.0.0 form)
+- Bare `return;` in an `it` body — must be `return softSkip(kind, reason)` or `return seamAbsent(reason)`
+- Two different requirement ids cited in one `it` (the ledger keeps only the last)
+- `.supported` gating in a `v2-*` file — at major 2 the record's presence is the claim (`spec/v2/core/capabilities.md`)
+- A new scenario file whose row is missing from `conformance/scenario-majors.json` (a file with no row never runs)
 
-**Search for in `../openwop-sdks/sdk/python/`:**
-- `# type: ignore` without a comment explaining why
-- `Any` import without a use-site comment
+**`spec/v2/core/*.md`, `spec/v2/ext/**`, `RFCS/*.md`:**
+- Lowercase "must" / "should" / "may" used as normative imperatives
+- Inline JSON Schema instead of a reference to `schemas/v2/*.schema.json`
+- Absolute URLs where a relative spec link belongs
+- An RFC stating a rule a core doc owns (see `CONTRIBUTING.md`)
 
-**Search for in `../openwop-sdks/sdk/go/`:**
-- `interface{}` where a concrete type is available
-- Untyped `nil` returns from constructors
-
-**Search for in `spec/v1/*.md` and `RFCS/*.md`:**
-- Lowercase "must" / "should" / "may" used as normative imperatives — flag if missing the RFC 2119 capital-letter form
-- Inline JSON Schema instead of a `$ref` to `schemas/*.schema.json`
-- Hard-coded URLs that should be relative spec links (`./capabilities.md`)
-
-**Search for in `schemas/*.schema.json`:**
+**`schemas/v2/*.schema.json`:**
 - Missing `"$schema": "https://json-schema.org/draft/2020-12/schema"`
-- `$id` not under `https://openwop.dev/spec/v1/<name>.schema.json`
+- `$id` not `https://openwop.dev/spec/v2/<name>.schema.json`
 - Object types without `"additionalProperties": false`
-- Required field added without bumping CHANGELOG
+- New required field (a major change at v2; see `COMPATIBILITY.md` §2.4)
 
-**Search for in `api/openapi.yaml` and `api/asyncapi.yaml`:**
-- Inline `schema:` blocks instead of `$ref` to `../schemas/<name>.schema.json`
-- New endpoints without `operationId`, `tags`, or error response
-- New channels (AsyncAPI) without a message-name + payload reference
+**`api/openapi.yaml`, `api/asyncapi.yaml` (the source) and `scripts/derive-v2-api.py`:**
+- Inline `schema:` blocks instead of `$ref`
+- New endpoints without `operationId`, `tags`, or an error response
+- New AsyncAPI channels without a message and payload reference
+- Changes to `api/v2/` or `api/seams-v2.yaml` without a matching source or script change
 
 If ANY banned pattern is found, **STOP and require a fix**.
 
@@ -117,151 +129,114 @@ If ANY banned pattern is found, **STOP and require a fix**.
 
 ### CRITICAL: Wire-shape stability
 
-Per `COMPATIBILITY.md` §2.2:
+Per `COMPATIBILITY.md` (§2.4 for v2.x, §3a for retiring a v2 surface):
 
-- Required → optional, required → removed, type changes on any existing field → **CRITICAL break unless safety-fix**
-- Event-type shape changes on existing event → **CRITICAL break unless safety-fix**
-- Endpoint contract changes (response shape, status code meaning) → **CRITICAL break unless safety-fix**
-- Existing `MUST` relaxed in prose → **CRITICAL break**
+- Adding a REQUIRED property, closing an open object, or narrowing a type → **major**
+- Adding an OPTIONAL property to a closed v2 object → additive
+- Removing a surface outside the §3a retirement path → **CRITICAL**
+- Event-type shape change on an existing event → **CRITICAL unless safety-fix**
+- Existing `MUST` relaxed in prose → **CRITICAL**
 
-For each diff, cite the spec doc section it touches and classify against §2.2.
+For each diff, cite the `spec/v2/` section it touches and classify it.
 
 ### CRITICAL: Security invariants
 
 Per `SECURITY/invariants.yaml` and `scripts/check-security-invariants.sh`:
 
 - Every protocol-tier MUST-NOT has at least one public test in `conformance/src/scenarios/`.
-- BYOK credential material never appears in event payloads, debug bundles, or webhook deliveries.
-- `MemoryAdapter` SR-1 secret-redaction invariant holds (`agent-memory.md`).
-- Cross-tenant CTI-1 invariant holds (`agent-memory.md`).
-- HMAC verification recipe per `webhooks.md` is implemented correctly in any new host-side code.
+- Credential material never appears in event payloads, debug bundles, or webhook deliveries.
+- Tenant isolation holds for every storage and memory surface touched.
+- Webhook signing (`spec/v2/core/webhooks.md`: `OpenWOP-Timestamp` + HMAC-SHA256 `OpenWOP-Signature`) is unchanged unless an RFC changes it.
 
 ### CRITICAL: Replay determinism
 
-Per `replay.md`:
+Per `spec/v2/core/replay.md`:
 
-- New event-log records include all non-deterministic state in the payload (no regenerating timestamps, random IDs, or local clocks at fork time).
-- Reducer additions in `channels-and-reducers.md` preserve commutativity/idempotency where the spec promises it.
+- New event-log records carry all nondeterministic state in the payload (no regenerated timestamps, random ids, or local clocks at fork time).
+- Declared nondeterminism names its sources.
+
+### HIGH: Family declaration + capabilities
+
+- A new family or facet lands in `spec/v2/declaration.json` (and `spec/v2/facets/` for its facet schema); `schemas/v2/capabilities.schema.json` is regenerated by `scripts/generate-from-declaration.mjs`, never hand-edited.
+- Every family has exactly one normative home in `spec/v2/core/` or `spec/v2/ext/`.
+- INTEROP-MATRIX rows change only with a new committed bundle in `evidence/v2-host-bundles/`.
 
 ### HIGH: Schema discipline
 
-Per `CONTRIBUTING.md` §"JSON Schemas":
+Per `CONTRIBUTING.md`:
 
-- `$schema`, `$id`, `additionalProperties: false` correctly set
+- `$schema`, `$id`, `additionalProperties: false` set
 - Required fields are an explicit array
-- New required field bumps schema implicit minor version + CHANGELOG entry
-- Examples included for new fields (per RFC template "positive and negative example")
+- New fields have a positive and a negative example where the RFC template asks for one
 
 ### HIGH: OpenAPI + AsyncAPI hygiene
 
-Per `CONTRIBUTING.md` §"OpenAPI / AsyncAPI":
-
+- Changes go in the source (`api/openapi.yaml` / `api/asyncapi.yaml`), in `scripts/derive-v2-api-prose.yaml` for description strings, or in `scripts/derive-v2-api.py` for inline seams and derivation rules; `api/v2/` is regenerated
 - All schemas via cross-file `$ref`
 - New endpoint: `tag`, `operationId`, request/response schemas, ≥1 error response
-- New AsyncAPI channel: bind to a message + payload schema; security scheme inherited from the channel root
-- Lints clean
+- Both layers lint clean
 
 ### HIGH: Conformance scenario discipline
 
-Per `CONTRIBUTING.md` §"Conformance suite":
+Per `CONTRIBUTING.md` and `spec/v2/core/conformance.md`:
 
-- New scenario: top-of-file docstring naming the spec doc(s) verified
+- v2 scenarios are `conformance/src/scenarios/v2-*.test.ts`; the name puts them on major 2 when `scenario-majors.json` is regenerated
+- Top-of-file docstring naming the spec doc(s) verified
 - `describe('category: …', …)` blocks per assertion group
-- `expect(…, driver.describe('spec.md §section', 'requirement'))` so failure messages cite the requirement
-- New fixture: added to `conformance/fixtures.md` catalog + per-fixture contracts; `spec-corpus-validity.test.ts` round-trip will fail otherwise
-- Server-free scenarios <1s
-- Capability-gated scenarios respect `host.<capability>.supported` flags
+- `expect(…, req(id, 'spec/v2/core/<doc>.md §section', 'requirement'))`; one requirement id per `it`
+- Early exits say why: `behaviorGate(...)`, `softSkip(kind, reason)`, `seamAbsent(reason)`
+- The condition is causable by the suite or gated on the seam that causes it (`spec/v2/core/conformance.md` §"The seams profile")
+- New fixture: in `conformance/fixtures.md` too, or `spec-corpus-validity.test.ts` fails
+- Server-free scenarios run in under 1s
+- `conformance/requirements.json` regenerated
 
-### HIGH: SDK contract alignment
+### HIGH: Script discipline
 
-Per `CONTRIBUTING.md` §"TypeScript reference SDK":
+Per `CONTRIBUTING.md` §"Two rules for scripts":
 
-- Every new endpoint in `api/openapi.yaml` maps to exactly one method on `OpenwopClient`
-- Types extend `../openwop-sdks/sdk/typescript/src/types.ts`; no inline shape redefs
-- `tsc --noEmit` strict + `exactOptionalPropertyTypes` clean
-- Zero new runtime deps unless justified in the PR body
-- Python: stdlib-only; ruff clean; no new third-party deps
-- Go: `go vet` clean; `gofmt -l` empty; no new deps without `go.mod` reasoning
+- A checker never contains the literal it polices
+- A multi-file edit resolves every anchor before writing
+- No global substitution over a lockfile or generated file
 
-### HIGH: SSE / stream-mode handling
+### HIGH: Streams + events
 
-Per `stream-modes.md`:
+Per `spec/v2/core/events.md`:
 
-- New events emit in the correct mode(s) (`values` / `updates` / `messages` / `debug`)
-- SDK `sse.ts` consumers (and Python equivalent) handle new event types or fall through gracefully
-- Heartbeat / `:` comment lines unchanged
+- New events are in the type and payload registries and the event codemap (`spec/v2/event-codemap.json`, generated)
+- Stream-mode behaviour (`streamMode`) is unchanged unless the RFC says otherwise
 
-### HIGH: HMAC + signed webhooks
+### HIGH: Idempotency
 
-Per `webhooks.md`:
-
-- `{timestamp}.{rawBody}` signing recipe unchanged
-- Replay-attack-resistant verification recipe in SDK helpers preserved
-- Circuit-breaker semantics + best-effort delivery still apply
-
-### HIGH: Idempotency + invocationId
-
-Per `idempotency.md`:
+Per `spec/v2/core/idempotency.md`:
 
 - Any new write endpoint accepts `Idempotency-Key`
-- Engine-side `invocationId` collapse rules still apply
-- SDK helpers expose both layers
-
-### HIGH: Capability + profile gating
-
-Per `capabilities.md`, `profiles.md`:
-
-- New optional surface advertised under `/.well-known/openwop` via `capabilities.schema.json`
-- Profile predicate updated in `profiles.md` if the change adds a new profile
-- INTEROP-MATRIX rows updated where host advertisement shifts
+- Effect-identity rules still apply
 
 ### MEDIUM: RFC 2119 + prose discipline
 
-Per `CONTRIBUTING.md` §"Prose specs":
+- Normative sections use MUST / SHOULD / MAY / MUST NOT / SHOULD NOT consistently, and only where something is normative
+- Cross-references are relative paths
+- v2 prose renders on openwop.dev as written: `node scripts/check-spec-readability.mjs` passes (the `/spec-readability` skill fixes failures)
 
-- New normative section uses MUST / SHOULD / MAY / MUST NOT / SHOULD NOT consistently
-- Cross-references use relative paths (`./capabilities.md` from inside `spec/v1/`, `./spec/v1/capabilities.md` from repo root)
-- "Why this exists" paragraph at the top of any new surface area
-- "Open spec gaps" table at the end of any new surface area
-- `Status:` legend tag preserved (STUB / DRAFT / OUTLINE / FINAL)
+### MEDIUM: Pack hygiene
 
-### MEDIUM: SDK code quality
+Per `spec/v2/core/packs.md`:
 
-- `../openwop-sdks/sdk/typescript/src/client.ts`: no `as any`, no `@ts-ignore`, all public methods have explicit return types
-- `../openwop-sdks/sdk/typescript/src/run-helpers.ts`: helper functions cite the spec doc they encode
-- `../openwop-sdks/sdk/typescript/src/sse.ts`: handles all four stream modes; tolerant of unknown event types (forward-compat per `COMPATIBILITY.md` §2.1)
-- `../openwop-sdks/sdk/python/src/openwop_client/`: stdlib-only; `typing` annotations on every public function
-- `../openwop-sdks/sdk/go/`: idiomatic Go; no unused imports; doc comments on exported symbols
-
-### MEDIUM: Reference-host coherence
-
-Per `INTEROP-MATRIX.md`:
-
-- Each touched host (`in-memory` / `sqlite` / `python`) still advertises the profiles it claims
-- Host `conformance.md` evidence file updated (suite version, command, target URL class, pass/fail/skip counts)
-- No private deployment identifiers, secrets, or internal result paths in `conformance.md`
-
-### MEDIUM: Node-pack / registry hygiene
-
-Per `node-packs.md`, `registry-operations.md`:
-
-- New pack manifests validate against `node-pack-manifest.schema.json`
-- Agent packs (per `RFCS/0003`) validate against `agent-manifest.schema.json`
-- Pack signing recipe (Ed25519, per `node-packs.md`) preserved
-- Registry submission / validation / deprecation / yank / signing-key rotation flows unchanged unless RFC'd
+- Pack-manifest schemas validate the fixtures that use them
+- Signing recipe unchanged unless RFC'd
 
 ### LOW: CHANGELOG + governance
 
-- `CHANGELOG.md` `[Unreleased]` line added (one line minimum)
-- Conventional Commit prefix matches lane: `spec(v1):`, `feat(host-sqlite):`, `feat(sdk-ts):`, `feat(conformance):`, `feat(registry):`, `fix:`, `docs:`, `chore:`, `build:`. Recent commits show this style.
-- Every commit has `Signed-off-by:` trailer (DCO)
-- Bootstrap-phase rules (`CONTRIBUTING.md` §"Bootstrap-phase notes"): one-approval; lead-maintainer routing via CODEOWNERS
+- `CHANGELOG.md` `[Unreleased]` line added; `node scripts/check-changelog-shape.mjs` passes
+- A suite change also has a `conformance/CHANGELOG.md` line
+- Conventional Commit prefix matches the lane, e.g. `spec(v2):`, `rfc(NNNN):`, `conformance(X.Y.Z):`, `errata(X.Y.Z):`, `docs:`, `chore:`, `fix:`
+- Every commit has `Signed-off-by:`
 
 ### LOW: Documentation surfacing
 
-- README "Document index" updated if a new spec doc landed
-- ROADMAP entry added/checked if the change closes a known gap (`docs/PROTOCOL-GAP-CLOSURE-PLAN.md` tracks)
-- Site rebuild not required unless `../openwop-site/site/src/build.mjs` changed
+- README Document index updated if a core doc was added; **Total** equals `ls spec/v2/core/*.md | wc -l`
+- `node scripts/check-doc-tallies.mjs` passes
+- A change to what openwop.dev renders needs a site re-pin in `openwop/openwop-site`
 
 ---
 
@@ -269,9 +244,9 @@ Per `node-packs.md`, `registry-operations.md`:
 
 | Severity | Definition | Action Required |
 |---|---|---|
-| **CRITICAL** | v1.x compatibility break, SECURITY invariant violation, replay-determinism break, BYOK leak | Must fix before merge |
-| **HIGH** | Schema/OpenAPI/AsyncAPI discipline break, missing conformance scenario, SDK contract drift | Should fix before merge |
-| **MEDIUM** | Prose / RFC 2119 issue, host-coherence drift, code-quality regression | Fix recommended |
+| **CRITICAL** | v2.x compatibility break, SECURITY invariant violation, replay-determinism break, credential leak, edit to the frozen v1 tree | Must fix before merge |
+| **HIGH** | Schema/OpenAPI/AsyncAPI/declaration discipline break, hand-edited generated file, missing or mis-shaped scenario | Should fix before merge |
+| **MEDIUM** | Prose / RFC 2119 / readability issue, pack hygiene | Fix recommended |
 | **LOW** | CHANGELOG omission, doc-index omission, style nitpick | Fix if time permits |
 
 ---
@@ -283,30 +258,28 @@ Present findings in severity order:
 ```
 ## CRITICAL Issues (Must Fix)
 
-1. [WIRE-SHAPE] **schemas/run-event.schema.json:42 — existing required field made optional**
-   - Issue: `eventId` was required in v1.0; this diff drops it from `required[]`
-   - Risk: Invalidates every v1.x conformance pass (COMPATIBILITY.md §2.2)
-   - Fix: Keep `eventId` required; introduce a new optional field if a new semantic is needed; OR file a safety-fix RFC per COMPATIBILITY.md §3 citing the correctness/CVE driver
+1. [WIRE-SHAPE] **schemas/v2/<name>.schema.json:42 — new required property**
+   - Issue: `foo` added to `required[]` on an existing closed object
+   - Risk: a major change inside 2.x (COMPATIBILITY.md §2.4)
+   - Fix: make `foo` optional, or carry it through an RFC as a major change
 
 ## HIGH Issues (Should Fix)
 
-2. [CONFORMANCE-GATING] **conformance/src/scenarios/new-surface.test.ts:1 — scenario runs unconditionally**
-   - Issue: New optional surface needs to gate on `host.newSurface.supported` per conformance/coverage.md §"Capability-gated scenarios"
-   - Fix: Wrap `describe()` in the `capability-gated` helper that skips when the flag is unset
+2. [SCENARIO] **conformance/src/scenarios/v2-new-surface.test.ts:30 — bare return in an it body**
+   - Issue: the leg exits unclassified and records `blocked`
+   - Fix: `return softSkip('inapplicable', 'host does not advertise newSurface')`
 
-3. [SDK-CONTRACT] **../openwop-sdks/sdk/typescript/src/client.ts:120 — new endpoint missing in `OpenwopClient`**
-   - Issue: api/openapi.yaml gained `/v1/runs/{runId}:newOp` but no SDK method exists
-   - Fix: Per CONTRIBUTING.md §"TypeScript reference SDK," add one method on `OpenwopClient` with explicit param + return types from `src/types.ts`
+3. [GENERATED] **api/v2/openapi.yaml — hand edit**
+   - Fix: move the change into api/openapi.yaml (or scripts/derive-v2-api.py for a seam) and run `python3 scripts/derive-v2-api.py --write`
 
 ## MEDIUM Issues (Recommended)
 
-4. [RFC-2119] **spec/v1/<doc>.md §New section — uses lowercase "should"**
-   - Fix: Capitalize to SHOULD if normative; otherwise rephrase as "we recommend"
+4. [RFC-2119] **spec/v2/core/<doc>.md §New section — lowercase "should"**
+   - Fix: SHOULD if normative; otherwise rephrase
 
 ## LOW Issues (Optional)
 
-5. [CHANGELOG] **CHANGELOG.md — `[Unreleased]` block has no entry for this change**
-   - Fix: Add one line under `[Unreleased] > Additive` or `> Security`
+5. [CHANGELOG] **CHANGELOG.md — no `[Unreleased]` entry**
 ```
 
 ---
@@ -317,30 +290,33 @@ Present findings in severity order:
 
 | Step | Status |
 |---|---|
-| [1/8] TypeScript reference SDK (build + emit) | PASS / FAIL |
-| [2/8] Conformance suite (typecheck + server-free) | PASS / FAIL |
-| [3/8] Python reference SDK (syntax + import smoke) | PASS / FAIL |
-| [4/8] Go reference SDK (go vet + tests) | PASS / FAIL |
-| [5/8] OpenAPI 3.1 (redocly lint) | PASS / FAIL |
-| [6/8] AsyncAPI 3.1 (asyncapi validate) | PASS / FAIL |
-| [7/8] Publish metadata + package contents | PASS / FAIL |
-| [8/8] Security invariants | PASS / FAIL |
+| [1/10] Conformance suite (typecheck + server-free scenarios) | PASS / FAIL |
+| [2/10] OpenAPI 3.1 (redocly lint) | PASS / FAIL |
+| [3/10] AsyncAPI 3.1 (asyncapi validate) | PASS / FAIL |
+| [4/10] Generated surfaces current | PASS / FAIL |
+| [5/10] Publish metadata + package contents | PASS / FAIL |
+| [6/10] Security invariants | PASS / FAIL |
+| [7/10] Published-layout collection | PASS / FAIL |
+| [8/10] Advertised package versions | PASS / FAIL |
+| [9/10] Published-version identity | PASS / FAIL |
+| [10/10] v2 tree (declaration, generators, budget, paths, deprecations, retirement) | PASS / FAIL |
 
 **Verdict:** [BLOCKING — Must fix before merge] / [CLEAR — Proceed with review]
 
 ### Compatibility classification
 
-**Additive** / **Safety-fix** / **Breaking** per `COMPATIBILITY.md`. One-paragraph justification.
+**Editorial** / **Additive** / **Safety-fix** / **Major** per `COMPATIBILITY.md`. One-paragraph justification.
 
 ### Banned-pattern scan
 
 | Surface | Pattern | Count |
 |---|---|---|
-| `../openwop-sdks/sdk/typescript/src/` | `as any` / `@ts-ignore` / `@ts-nocheck` | 0 required |
-| `conformance/src/` | `as any` / `@ts-ignore` | 0 required |
-| `schemas/` | Missing `additionalProperties: false` | 0 required |
+| `conformance/src/`, `scripts/` | `as any` / `@ts-ignore` / `@ts-nocheck` | 0 required |
+| `conformance/src/scenarios/` | non-`req()` message / bare `return` / two ids per `it` | 0 required |
+| `schemas/v2/` | Missing `additionalProperties: false` | 0 required |
 | `api/` | Inline schema (no `$ref`) | 0 required |
-| `spec/v1/` + `RFCS/` | Lowercase normative imperatives | 0 required |
+| Generated files | Hand edits | 0 required |
+| `spec/v1/` | Any edit | 0 required |
 
 ### Risk Assessment
 Overall risk level if merged as-is: **Critical / High / Medium / Low**
@@ -357,16 +333,17 @@ Overall risk level if merged as-is: **Critical / High / Medium / Low**
 
 ## Pre-Merge Checklist
 
-- [ ] `npm run openwop:check` passes (8/8 green)
-- [ ] No `@ts-ignore` / `@ts-nocheck` / `as any` in production SDK or conformance code
-- [ ] Every new schema is JSON Schema 2020-12, `$id` under openwop.dev, `additionalProperties: false`
-- [ ] Every new endpoint has a matching method on `OpenwopClient`
-- [ ] Every new normative surface has a conformance scenario (capability-gated where applicable)
+- [ ] Regen chain produces no diff
+- [ ] `npm run openwop:check` passes (10/10 green)
+- [ ] No `@ts-ignore` / `@ts-nocheck` / `as any` in `conformance/src/` or `scripts/`
+- [ ] Every new schema is JSON Schema 2020-12, `$id` under `https://openwop.dev/spec/v2/`, `additionalProperties: false`
+- [ ] Every new normative surface has a `v2-*` scenario, gated correctly, with a `scenario-majors.json` row
 - [ ] Every new MUST-NOT has a SECURITY invariant row + public test
-- [ ] Every commit on the PR has `Signed-off-by:` trailer
+- [ ] No edit under `spec/v1/`; no hand edit to a generated file
+- [ ] Every commit has `Signed-off-by:`
 - [ ] CHANGELOG.md `[Unreleased]` line added
 - [ ] RFC drafted (if normative) and PR labeled `openwop-spec`
-- [ ] Compatibility classification stated in PR body (additive / safety-fix / breaking)
+- [ ] Compatibility classification stated in the PR body
 
 **If ANY checkbox fails, the change is NOT ready for merge.**
 
@@ -374,15 +351,14 @@ Overall risk level if merged as-is: **Critical / High / Medium / Low**
 
 ## Next Steps
 
-After resolving issues:
-
 | Action | Command | Purpose |
 |---|---|---|
-| Fix TypeScript errors | `/ts-check` | Root-cause analysis for tsc/ruff/go-vet errors |
+| Fix type / lint errors | `/ts-check` | Root-cause conformance typecheck, self-test and API lint failures |
+| Spec prose readability | `/spec-readability` | Clean v2 prose without changing a rule |
 | Documentation review | `/ux-review` | RFC 2119 + prose hygiene + cross-link integrity |
 | NFR review | `/nfr` | Final spec/conformance/governance/security checklist |
-| Sync conformance | `/update-conformance` | If a spec change implies scenario/fixture updates |
+| Sync conformance | `/update-conformance` | Scenario/fixture updates for a spec change |
 | Update docs | `/update-docs` | Sync README, CHANGELOG, INTEROP-MATRIX, RFC index |
-| Create PR | `/pr` | Generate pull request with the right template |
+| Create PR | `/pr` | Open the pull request |
 
 Then ask: **"Which issues should I fix? (e.g., 1-3, all critical, or 'all')"**

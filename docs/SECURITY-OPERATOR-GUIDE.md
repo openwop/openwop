@@ -1,207 +1,143 @@
 # OpenWOP Security Operator Guide
 
-> DOC-5 from `plans/openwop-protocol-gap-closure-plan.md`. Distills the security-relevant surfaces an operator deploys, in checklist form, without forcing them to read all five threat models first.
+> Informative. A checklist of the security surfaces an operator turns on when running an OpenWOP v2 host. It adds no obligation. The rules are in [`spec/v2/core/security-defaults.md`](../spec/v2/core/security-defaults.md) and the core documents it points at; the invariant catalog, with test references, is [`SECURITY/invariants.yaml`](../SECURITY/invariants.yaml).
 
-This page is the **operator-side** view of OpenWOP's security posture. It assumes you've decided to deploy a host (yours or a reference) and want to enable the security surfaces that match your environment.
+This page says which knobs to turn, not why they exist. For the why, read [`SECURITY.md`](../SECURITY.md) and the threat models under [`SECURITY/`](../SECURITY/). Configuration names (environment variables, file paths) are host-specific; check your host's own documentation for them.
 
-For the threat-model background, see [`SECURITY.md`](../SECURITY.md) + the five docs under [`SECURITY/threat-model-*.md`](../SECURITY/). For the protocol-tier invariant catalog (with test references), see [`SECURITY/invariants.yaml`](../SECURITY/invariants.yaml). This page tells you which knobs to turn — not why they exist.
-
----
-
-## Auth profile decisions
-
-Pick the auth profiles you actually validate. Advertise nothing else.
-
-| Profile                                                                  | When to enable                                | Operator action                                                                                                                                                                                         |
-| ------------------------------------------------------------------------ | --------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| **API-key bearer** (`openwop-core` baseline)                             | Always.                                       | Generate a strong key (≥256 bits); store in your secrets manager; pass via `OPENWOP_API_KEY`.                                                                                                           |
-| **API-key rotation** (`openwop-auth-api-key-rotation`)                   | When you can't atomically rotate all clients. | Configure `OPENWOP_SECONDARY_API_KEY` during overlap; both keys authenticate; remove the secondary post-rotation. Hosts MUST use constant-time dual-candidate comparison (the Postgres reference does). |
-| **OAuth2 client-credentials** (`openwop-auth-oauth2-client-credentials`) | When machine clients authenticate via an IdP. | `OPENWOP_OAUTH2_ISSUER_URL` + `OPENWOP_OAUTH2_AUDIENCE`. JWKS fetched lazily; cached 10 min; re-fetched on `kid` miss.                                                                                  |
-| **OIDC user-bearer** (`openwop-auth-oidc-user-bearer`)                   | When end-users authenticate via an IdP.       | `OPENWOP_OIDC_ISSUER_URL` + `OPENWOP_OIDC_AUDIENCE`. Same JWKS handling as OAuth2.                                                                                                                      |
-| **mTLS** (`openwop-auth-mtls`)                                           | When your transport terminates mTLS.          | `OPENWOP_MTLS_CERT_PATH` + `OPENWOP_MTLS_KEY_PATH` + optional `OPENWOP_MTLS_CA_PATH` + `OPENWOP_MTLS_REQUIRED=true`. Host listens on HTTPS with `node:https.createServer({ requestCert: true })`.       |
-
-### Auth honesty signals
-
-- **Canary redaction**: failed auth (401) MUST NOT echo the rejected token in `message` or `details`. Verified by `auth-api-key-rotation.test.ts` + the Postgres host's `test/auth-rotation-scoped.test.ts`.
-- **alg: "none" rejection**: JWT validators MUST reject `alg: "none"` per `auth-profiles.md` §"openwop-auth-oauth2-client-credentials". Verified by `test/oauth2-oidc.test.ts`.
-- **Constant-time comparison**: API-key + JWT validation MUST use constant-time comparison to prevent timing attacks. Reference impls use `node:crypto.timingSafeEqual`.
+One principle runs through all of it: **advertising a surface binds its security behavior** (`security-defaults.md` §"The rule"). There is no discovery flag that turns the behavior off. If you cannot meet an obligation, do not advertise the surface.
 
 ---
 
-## BYOK + secret redaction
+## Authentication lanes
 
-Per RFC 0004 §D (SR-1) and [`auth.md`](../spec/v1/auth.md) §"Secret resolution".
+v2 has one binding pipeline for every lane: verify, bind, check audience, resolve, fail closed ([`identity.md`](../spec/v2/core/identity.md) §2). You advertise the lanes you actually run in `auth.lanes[]`, and each one carries its own trust root and revocation rule (§2.2).
 
-### What the host does
+| Lane | Enable when | What you must operate |
+| --- | --- | --- |
+| `api-key` | Always useful for machine clients. | A strong key (at least 256 bits) in a secrets manager. A revoked key is refused on the next request (`credential_revoked`). |
+| `oauth2` | Machine clients get tokens from an identity provider. | The issuer and audience. Honor `exp` and re-check the issuer within the advertised revocation window, or run `exp-only` under an enforced token lifetime. |
+| `oidc` | End users sign in through an identity provider. | As `oauth2`, keyed on `iss`. |
+| `mtls` | Your transport terminates mutual TLS. | Client-certificate verification at the TLS terminator, plus CRL, OCSP or short-lived certificates. Do not advertise the lane if your terminator does not verify client certificates. |
+| `saml`, `scim` | Enterprise single sign-on and provisioning. | If you advertise both, the leaver contract is mandatory (`identity.md` §3). |
 
-- Resolves caller-supplied `credentialRef` strings to plaintext **inside the host**.
-- Persists the SHA-256 of the cleartext + a placeholder `[REDACTED:<id>]` substitution.
-- Plaintext NEVER lands in: `runs.variables_json`, event payloads, debug bundles, OTel attributes (host-internal allowlist), audit log entries, or webhook deliveries.
+An `oauth2` or `oidc` lane also obliges protected-resource metadata and auth challenges that do not act as an oracle (`identity.md` §2.5).
 
-### What the operator wires
+### Checks worth running
 
-- Configure your secret resolver to source from your secrets manager (KMS, Vault, etc.). The Postgres reference uses `resolveCanarySecret` as a stub — replace with a real backend.
-- Set `OPENWOP_AI_POLICY_<PROVIDER>` per provider per [`spec/v1/host-capabilities.md`](../spec/v1/host-capabilities.md) §"aiProviders.policies":
-  - `disabled` — no credentialRef resolution for this provider; reject calls.
-  - `optional` — caller MAY supply credentialRef; cleartext fallback rejected at runtime.
-  - `required` — caller MUST supply credentialRef; cleartext attempts rejected with `provider_policy_denied`.
-  - `restricted` — credentialRef only AND the credential must match a host-allowlisted fingerprint.
+- A failed authentication (`401`) never echoes the rejected credential in `message` or `details`.
+- JWT validation rejects `alg: "none"`.
+- Key and token comparisons are constant-time.
+- No credential the host received inbound is ever attached to an outbound request: A2A, MCP, webhook, callback, `httpClient` or connector (`security-defaults.md` §"Onward hops", invariant `inbound-credential-no-passthrough`).
 
-### Memory compaction (RFC 0012 §D)
+---
 
-If you enable `OPENWOP_MEMORY_COMPACTION=true`, the host re-routes derived (compacted) entry content through the BYOK redaction harness BEFORE persistence. The reference impl's `applyCompactionRedaction` re-substitutes `[BYOK:...]` form-leaks + non-canonical `<REDACTED:...>` markers with the canonical `[REDACTED:carry-forward-<n>]`. **Skipping this carry-forward is a SECURITY invariant violation** (`memory-compaction-sr-1-carry-forward` per `SECURITY/invariants.yaml`).
+## Secrets and BYOK
+
+The rules are in [`host-services.md`](../spec/v2/core/host-services.md) §`secrets` and §`aiProviders`.
+
+- Secrets resolve to opaque references. Raw key material never appears in any event, log, trace, prompt, error, export or screenshot. Test this before exposing BYOK.
+- Wherever a resolved value could surface, the host writes `[REDACTED:<secretId>]` instead.
+- If you run memory with compaction, derived content passes the same redaction as a fresh write (`host-services.md` §`memory`; invariant `memory-compaction-sr-1-carry-forward`).
+- Back your secret resolver with a real secrets manager (KMS, Vault or similar).
+
+### Provider policy
+
+`aiProviders.policies` sets, per provider, how a caller's credential is treated (`host-services.md` §`aiProviders`):
+
+| Mode | Effect |
+| --- | --- |
+| `disabled` | Every call to the provider is refused (`provider_disabled`). |
+| `optional` | A caller may supply a `credentialRef`. |
+| `required` | A call without a usable `credentialRef` is refused (`byok_required`, `byok_required_but_unresolved`). |
+| `restricted` | A model outside the `allowedModels` globs is refused (`model_not_allowed`). An empty `restricted` policy fails closed. |
+
+A refusal never echoes the policy. Document the precedence of your policy `scopes`.
 
 ---
 
 ## Webhook signing
 
-Per [`spec/v1/webhooks.md`](../spec/v1/webhooks.md) §"Signature recipe".
+The rules are in [`webhooks.md`](../spec/v2/core/webhooks.md) §"Delivery" and §"Durability".
 
-### Wire shape
+Every delivery carries five headers: `OpenWOP-Webhook-Id`, `OpenWOP-Event-Type`, `OpenWOP-Timestamp`, `OpenWOP-Signature` and `OpenWOP-Signature-Algorithm`.
 
 ```text
-HMAC = SHA-256(secret, timestamp + "." + rawBody)
-Header: openwop-Webhook-Signature: v1=<hmac-hex>
-Header: openwop-Webhook-Timestamp: <unix-seconds>
+signed bytes:  {timestamp}.{rawBody}
+OpenWOP-Signature: sha256=<hex HMAC-SHA256(signed bytes, subscription secret)>
+OpenWOP-Signature-Algorithm: v1
 ```
 
-### Operator wiring
+What the operator wires:
 
-- Generate a host-managed signing secret; pass via `OPENWOP_WEBHOOK_SIGNING_SECRET`.
-- Each subscription receives a per-subscription secret on `POST /v1/webhooks` (returned once, never again).
-- Receivers verify HMAC, then verify `now - timestamp < window` (default 5 min) to defeat replay.
-- Algorithm versioning: hosts MAY claim `capabilities.webhooks.signatureAlgorithms: ["v1"]`; older clients tolerate the absence-equals-v1 default.
+- Each subscription gets its own secret from `POST /webhooks`. The host never logs it.
+- If you advertise `webhooks.secretRotation`, rotation overlaps old and new secrets for `overlapSeconds`.
+- Subscriptions may opt in to Standard Webhooks signing (`standard-webhooks-1`) as well; see `webhooks.md` §"Standard Webhooks".
+- Delivery is durable: retries with backoff, dead-letter on exhaustion, at least once. Best-effort delivery does not conform.
 
-### SDK helpers
-
-SDK-3 closed 2026-05-15. All three reference SDKs ship typed register / unregister + HMAC verification helpers:
-
-- **TypeScript:** `client.webhooks.register(body, opts?)` + `client.webhooks.unregister(id)` + `verifyWebhookSignature(secret, sigHeader, tsHeader, rawBody, opts?)` + `signWebhookDelivery(secret, ts, rawBody)`.
-- **Python:** `client.webhooks_register(body, idempotency_key=...)` + `client.webhooks_unregister(id)` + `verify_webhook_signature(secret, sig_header, ts_header, raw_body, freshness_window_seconds=...)` + `sign_webhook_delivery(secret, ts, raw_body)`.
-- **Go:** `client.RegisterWebhook(ctx, body, opts)` + `client.UnregisterWebhook(ctx, id)` + `VerifyWebhookSignature(secret, sigHeader, tsHeader, rawBody, opts)` + `SignWebhookDelivery(secret, ts, rawBody)`.
-
-All three verification helpers use constant-time HMAC comparison + a configurable freshness window (default 5 minutes per spec) + reject malformed headers and tampered bodies. Receivers MUST pass the raw body bytes — re-serialized parsed JSON fails verification because the host signs exact bytes.
+Tell your receivers to: reject a timestamp more than five minutes off, recompute the HMAC over the **raw** body bytes (re-serialized JSON will not verify), compare in constant time, reject an unknown algorithm value, and dedupe on `(OpenWOP-Webhook-Id, runId, sequence)`. The SDKs in [openwop/openwop-sdks](https://github.com/openwop/openwop-sdks) include verification helpers.
 
 ---
 
-## Audit-log integrity (`openwop-audit-log-integrity`)
+## Audit-log integrity
 
-Per [`auth-profiles.md`](../spec/v1/auth-profiles.md) §"openwop-audit-log-integrity".
+Advertise the `auditLogIntegrity` family only if you keep the log the way [`security-defaults.md`](../spec/v2/core/security-defaults.md) §"Audit-log integrity" describes: append-only, each entry hash-chained to the previous one, with signed Ed25519 checkpoints at the advertised `checkpointIntervalEntries` and `checkpointIntervalSeconds`, and `GET /audit/verify` served under scope `audit:read`.
 
-### What the host advertises
+What the operator does:
 
-```json
-"auth": {
-  "auditLogIntegrity": {
-    "hashChain": true,
-    "checkpointSignatureAlgorithm": "ed25519",
-    "checkpointPublicKey": "<base64 SPKI>",
-    "checkpointIntervalEntries": 1000,
-    "checkpointIntervalSeconds": 300
-  }
-}
-```
-
-### What the operator wires
-
-- Configure `OPENWOP_AUDIT_KEY_DIR` pointing at a writable directory. The host generates + persists an Ed25519 keypair there on first boot.
-- **Protect the private key** — possession of it lets a malicious admin forge checkpoint signatures. Production deployments SHOULD use a KMS-backed signer (the Postgres reference uses a file-backed key for simplicity).
-- Verifiers re-fetch `checkpointPublicKey` from discovery before each verification (handles key rotation).
-- Run `/v1/audit/verify?fromSeq=N&toSeq=M` to verify any slice of the chain.
-
-### Threat surface
-
-Admin with storage-write access but NOT signing-key access cannot forge a valid chain segment. Admin with both is out of scope — protect the key.
+- Keep the checkpoint private key in a KMS-backed signer, not on local disk. Whoever holds both storage-write access and the signing key can forge the chain; protect the key.
+- Use the checkpoint key for nothing else.
+- Verifiers read `checkpointPublicKey` from discovery before each verification, which handles rotation.
 
 ---
 
-## mTLS deployment
+## MCP trust boundary
 
-Per [`auth-profiles.md`](../spec/v1/auth-profiles.md) §"openwop-auth-mtls".
+MCP tool servers are external, and their output is untrusted input. The rules are in [`interop.md`](../spec/v2/core/interop.md), [`spec/v2/interop-map.json`](../spec/v2/interop-map.json) (the `mcp` rows) and [`tool-catalog.md`](../spec/v2/core/tool-catalog.md).
 
-### Operator wiring
-
-```bash
-export OPENWOP_MTLS_CERT_PATH=/etc/openwop/mtls/server.crt
-export OPENWOP_MTLS_KEY_PATH=/etc/openwop/mtls/server.key
-export OPENWOP_MTLS_CA_PATH=/etc/openwop/mtls/ca.bundle   # optional
-export OPENWOP_MTLS_REQUIRED=true                          # default true
-```
-
-The host listens on HTTPS with `requestCert: true` + `rejectUnauthorized: OPENWOP_MTLS_REQUIRED !== 'false'`. Clients without a valid cert are rejected at the TLS handshake (transport-layer fail) when `MTLS_REQUIRED=true`.
-
-### Subject mapping
-
-The reference convention is `subjectMapping: 'cn'` — client cert Common Name is the transport principal. Production deployers SHOULD extend to SAN-based mapping by parsing `req.socket.getPeerCertificate()`. Don't claim the profile if your TLS terminator doesn't actually do client-cert verification (the strict-mode conformance scenario will fail you).
+- Classify every MCP-sourced tool yourself. Never copy `safetyTier` or other effect fields from a server's `annotations`; an unclassified `source: "mcp"` tool is `safetyTier: "write"`.
+- Tool arguments and content stay off event payloads (invariant `mcp-toolcall-payload-redaction`).
+- On your own MCP server mount, every `tools/*`, `prompts/*` and `resources/*` request is authenticated and authorized before anything runs, and a run started over MCP starts untrusted.
+- Nodes that consume MCP content should apply prompt-injection countermeasures (`SECURITY/threat-model-prompt-injection.md`).
 
 ---
 
-## MCP integration trust boundary
+## Pack supply chain and sandboxing
 
-Per [`spec/v1/mcp-integration.md`](../spec/v1/mcp-integration.md) §"UNTRUSTED marker discipline".
+The rules are in [`packs.md`](../spec/v2/core/packs.md) §"Signing" and [`security-defaults.md`](../spec/v2/core/security-defaults.md) §"Sandbox isolation".
 
-### What it means
+- Verify each pack's Ed25519 signature (`ed25519-canonical-json`) against the issuing registry's key for `keyId`, and check the pack name against that key's `permittedNamespaces`. Fail closed on any mismatch.
+- Pin installed packs with a lockfile (`pack-lockfile`).
+- A host that runs third-party packs enforces the eight `node-pack-sandbox-*` invariants and advertises `sandbox.isolationModel` as `wasm`, `process`, `container` or `vm`. Set hard memory and wall-clock limits.
 
-MCP tool servers are external — their responses are adversarial input. The OpenWOP host MUST tag MCP tool output with `contentTrust: 'untrusted'` so downstream LLM nodes treat it as user data, not as system-trusted instructions.
-
-### Operator wiring
-
-- Configure each MCP server via `OPENWOP_MCP_SERVER_<ID>=https://...`.
-- The MCP-1 redaction invariant means tool arguments + content texts NEVER appear on event payloads — only the SHA-256. Verified by `mcp-toolcall-redaction.test.ts`.
-- Downstream LLM nodes that consume MCP content SHOULD apply prompt-injection countermeasures per `threat-model-prompt-injection.md`.
+The pack registry and its signing keys are operated from [openwop/openwop-registry](https://github.com/openwop/openwop-registry).
 
 ---
 
-## Node-pack supply chain
+## Routine checks
 
-Per [`spec/v1/node-packs.md`](../spec/v1/node-packs.md) + RFC 0008.
+Run these on every deploy, and on a schedule:
 
-### What the host does
-
-- At install time: validates the lockfile against `pack-lockfile.schema.json`, verifies SRI integrity against tarball bytes, detects version drift between lockfile pin and registry-served manifest, verifies the Ed25519 signature against the publisher's public key.
-- Every failure mode is a typed `PackConsumerError` with a canonical code (`pack_integrity_mismatch`, `pack_signature_invalid`, etc.). Host fails closed in every case.
-- At runtime (when a host executes WASM packs): enforces `memory.grow` cap + fuel + execution-time per RFC 0008 §G + §K. Reference loader in `examples/hosts/in-memory/src/wasm-loader.ts`.
-
-### Operator wiring
-
-- Pin your packs via a workspace lockfile (`examples/core-packs-lockfile/openwop-pack-lockfile.json` is the reference shape).
-- For `vendor.openwop.rust-hello` and other WASM packs: configure `--max-memory=67108864` (or your host's equivalent) so the loader has a hard cap.
-- For audited packs only: `core.openwop.{ai,http,mcp,triggers}` are built + signed in-tree but pending the external audit at `SECURITY/external-audit-engagement.md`. Don't deploy unaudited high-stakes packs to production.
+| Check | Surface | What a failure means |
+| --- | --- | --- |
+| Discovery advertises only what you run | `GET /.well-known/openwop` | Over-claim; conformance fails it. |
+| A canary secret never reaches events, logs or errors | host smoke test | Secret leakage. |
+| Audit chain verifies | `GET /audit/verify` | Tampering or key compromise. |
+| Receivers verify webhook signatures | receiver-side test | Forged delivery accepted. |
+| A tampered pack is refused | host smoke test | Supply-chain bypass. |
+| Behavioral conformance | `npx @openwop/openwop-conformance --target-major 2 --require-behavior` ([`conformance/README.md`](../conformance/README.md)) | Advertisement and behavior have drifted apart. |
 
 ---
 
-## Daily-check list
+## What this guide is not
 
-Run these checks against your deployed host on a daily / per-deploy cadence:
-
-| Check                                   | Surface                                                 | Failure mode                            |
-| --------------------------------------- | ------------------------------------------------------- | --------------------------------------- |
-| Discovery returns the expected profiles | `GET /.well-known/openwop`                              | Strict-mode conformance fails.          |
-| BYOK roundtrip preserves redaction      | Host smoke (e.g., `byok-roundtrip.test.ts`)             | SR-1 violation.                         |
-| Audit-log verify roundtrip              | `GET /v1/audit/verify`                                  | Chain tamper or signing-key compromise. |
-| Webhook HMAC verification on receiver   | Receiver-side test                                      | Forged delivery accepted.               |
-| Pack-consumer fail-closed               | Host smoke (PACK-1)                                     | Tampered tarball accepted.              |
-| Strict-mode conformance                 | `OPENWOP_REQUIRE_BEHAVIOR=true npx openwop-conformance` | Honesty drift.                          |
-
----
-
-## What this guide is NOT
-
-- **Not a runtime security audit.** The external audit at `SECURITY/external-audit-engagement.md` is the formal review surface. This page is operator-side configuration, not threat-model coverage.
-- **Not a substitute for `SECURITY.md`.** That doc carries the disclosure policy + embargo SLA + maintainer security contact. Read it.
-- **Not a deployment runbook.** For the operational shape (production-profile claim), see [`docs/PRODUCTION-RUNBOOK.md`](./PRODUCTION-RUNBOOK.md).
-
----
+- **Not an audit.** The external audit engagement is tracked in [`SECURITY/external-audit-engagement.md`](../SECURITY/external-audit-engagement.md).
+- **Not the disclosure policy.** That is [`SECURITY.md`](../SECURITY.md).
+- **Not a deployment runbook.** For running a host in production, see [`PRODUCTION-RUNBOOK.md`](./PRODUCTION-RUNBOOK.md).
 
 ## See also
 
-- [`SECURITY.md`](../SECURITY.md) — disclosure policy + threat-model index.
-- [`SECURITY/invariants.yaml`](../SECURITY/invariants.yaml) — protocol-tier MUST-NOTs with test references.
-- [`docs/PRODUCTION-RUNBOOK.md`](./PRODUCTION-RUNBOOK.md) — operator playbook for the production claim.
-- [`docs/PROFILE-DECISION-GUIDE.md`](https://github.com/openwop/openwop/blob/48c1f569eb8a8f4ed3ae95bdacf7e757707ce855/docs/PROFILE-DECISION-GUIDE.md) — which profiles to claim.
-- [`docs/IMPLEMENTATION-CERTIFICATION.md`](https://github.com/openwop/openwop/blob/48c1f569eb8a8f4ed3ae95bdacf7e757707ce855/docs/IMPLEMENTATION-CERTIFICATION.md) — how to publish your evidence.
-- [`docs/KNOWN-LIMITS.md`](./KNOWN-LIMITS.md) — what's not yet covered.
-- [`spec/v1/auth.md`](../spec/v1/auth.md) + [`auth-profiles.md`](../spec/v1/auth-profiles.md) — normative auth surface.
-- [`spec/v1/webhooks.md`](../spec/v1/webhooks.md) — HMAC signing recipe.
-- [`spec/v1/mcp-integration.md`](../spec/v1/mcp-integration.md) — MCP trust-boundary discipline.
-- [`spec/v1/node-packs.md`](../spec/v1/node-packs.md) — pack signing + dependency resolution.
+- [`spec/v2/core/security-defaults.md`](../spec/v2/core/security-defaults.md): the obligation table.
+- [`spec/v2/core/identity.md`](../spec/v2/core/identity.md): authentication lanes.
+- [`spec/v2/core/webhooks.md`](../spec/v2/core/webhooks.md): signing and delivery.
+- [`spec/v2/core/packs.md`](../spec/v2/core/packs.md): pack signing.
+- [`docs/KNOWN-LIMITS.md`](./KNOWN-LIMITS.md): what is not yet covered.

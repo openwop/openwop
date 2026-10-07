@@ -1,256 +1,100 @@
 # Incident Response Runbook
 
-> **Status: v1 (2026-05-12).** Procedures for the four most-likely registry-side incident classes: vulnerability disclosure, pack compromise, key compromise, registry downtime. Pairs with `docs/runbooks/PACK-LIFECYCLE.md` (yank/deprecate mechanics) + `SECURITY.md` (disclosure policy).
+How maintainers respond to a security incident in the OpenWOP corpus or the pack registry. [`SECURITY.md`](../../SECURITY.md) is the disclosure policy: reporting channels, response SLA and the 90-day embargo. This runbook is the procedure that sits behind it.
 
-This runbook is for openwop project maintainers + vendor registered-publisher accounts. Triggers are described per-incident; each incident has explicit owner + action + verification steps.
+Registry operations (hosting, deploys, uptime monitoring, index builds, signing-key files) live in [`openwop/openwop-registry`](https://github.com/openwop/openwop-registry). This runbook covers what the protocol requires of a response; that repository covers how its tooling carries it out.
+
+The rules a response must respect are in [`spec/v2/core/packs.md`](../../spec/v2/core/packs.md) §"Signing" and §"Version manifests", and [RFC 0222](../../RFCS/0222-v2-registry-operations.md).
 
 ---
 
 ## Severity classification
 
-Before responding to any incident, classify severity:
+Classify every incident before responding. The `severity` field of a registry security advisory ([`schemas/v2/security-advisory.schema.json`](../../schemas/v2/security-advisory.schema.json)) maps onto this rubric: `critical` = S0, `high` = S1, `medium` = S2, `low` = S3.
 
-| Severity          | Meaning                                                                                                                               | Response time                                                  | Public disclosure                        |
-| ----------------- | ------------------------------------------------------------------------------------------------------------------------------------- | -------------------------------------------------------------- | ---------------------------------------- |
-| **S0 — Critical** | Key compromise (private key in unauthorized hands), supply-chain attack (malicious code in a published tarball), registry compromised | <1h to mitigation, public statement within 24h                 | YES — coordinated disclosure required    |
-| **S1 — High**     | Pack vulnerability with active exploitability (CVE-rated 7.0+), registry serving wrong content                                        | <4h to mitigation, public statement within 7 days              | YES — within the 90-day default window   |
-| **S2 — Medium**   | Pack vulnerability with theoretical impact (CVE 4.0–6.9), pack causing data loss in edge cases                                        | <24h to mitigation, public statement at next scheduled release | Patch first, disclose with release notes |
-| **S3 — Low**      | Cosmetic issues, performance regressions, docs errors                                                                                 | Triaged in normal sprint cadence                               | No coordinated disclosure                |
-
----
-
-## Incident class 1: Pack vulnerability (CVE)
-
-### Trigger
-
-A security researcher (internal or external) reports a vulnerability in a published pack. Reports come via:
-
-- Email to the address in `SECURITY.md`
-- GitHub Security Advisory on `openwop/openwop`
-- Direct DM to a maintainer
-- Public disclosure (worst case — go to S0 immediately)
-
-### Step-by-step (S1/S2)
-
-1. **Acknowledge within 24h** (S1) / 72h (S2). Email the reporter confirming receipt + estimated remediation timeline.
-
-2. **Open a private GitHub Security Advisory** on `openwop/openwop`. Use the advisory's private fork mechanism for the patch.
-
-3. **Triage severity**:
-   - CVSS 4.0 to assign a numeric severity score
-   - Identify the impact radius: which consumers have installed the vulnerable pack? (Query `packs.openwop.dev` download metrics if instrumented; otherwise broadcast to all consumers as a precaution)
-
-4. **Reserve a CVE ID** via Mitre or your CNA (`cve.mitre.org/cgi-bin/CVERequest.cgi`). Use the placeholder `CVE-YYYY-XXXX` in patch artifacts until the real ID is assigned.
-
-5. **Patch the pack**:
-   - Author the fix in a private fork
-   - Bump SemVer (patch for security backport; minor if behavior changes)
-   - Build + sign + open the publish PR in the private advisory
-
-6. **Yank the vulnerable version(s)** AT THE SAME TIME as publishing the patch:
-   - Follow `docs/runbooks/PACK-LIFECYCLE.md` §"Yank"
-   - `yankedReason`: cite the CVE ID + one-line description
-   - `advisoryUrl`: point to the GitHub Security Advisory
-
-7. **Coordinated disclosure**:
-   - Notify the reporter the patch is live
-   - Publish the GitHub Security Advisory (makes it public)
-   - Update `CHANGELOG.md` with a security entry
-   - Post to openwop announcement channels
-
-### Verification
-
-```bash
-# Yanked version returns 404 (or 410) on the tarball
-curl -sI https://packs.openwop.dev/v1/packs/<name>/-/<vulnerable-version>.tgz
-# Version manifest shows yanked: true
-curl -s https://packs.openwop.dev/v1/packs/<name>/-/<vulnerable-version>.json | jq .yanked
-# New patched version installable
-curl -s https://packs.openwop.dev/v1/packs/<name>/-/<patched-version>.json | jq .integrity
-```
+| Severity          | Meaning                                                                                                     | Response time                                              | Public disclosure                       |
+| ----------------- | ----------------------------------------------------------------------------------------------------------- | ---------------------------------------------------------- | --------------------------------------- |
+| **S0 — Critical** | Signing key in unauthorized hands, malicious code in a published tarball, registry compromised              | Under 1h to mitigation, public statement within 24h        | Yes — coordinated disclosure required   |
+| **S1 — High**     | Exploitable vulnerability (CVSS 7.0+) in a pack, the corpus or the conformance suite; registry serving wrong content | Under 4h to mitigation, public statement within 7 days | Yes — within the 90-day default window |
+| **S2 — Medium**   | Vulnerability with theoretical impact (CVSS 4.0–6.9); data loss in edge cases                               | Under 24h to mitigation, disclosed at the next release     | Patch first, disclose in release notes  |
+| **S3 — Low**      | Cosmetic issues, performance regressions, documentation errors                                              | Normal triage                                              | No coordinated disclosure               |
 
 ---
 
-## Incident class 2: Pack compromise (malicious code shipped)
+## Incident class 1: vulnerability report
 
-### Trigger
+A vulnerability in a published pack, a schema, the conformance suite or the spec itself. Reports arrive through the channels in `SECURITY.md` §2. A public disclosure with no prior report is S0.
 
-A pack tarball at `packs.openwop.dev` is found to contain malicious code (e.g., backdoor, data exfiltration). This is S0 by default.
+1. **Acknowledge** within the `SECURITY.md` §3 SLA and tell the reporter the expected timeline.
+2. **Open a private GitHub Security Advisory** on the affected repository and use its private fork for the fix.
+3. **Score it** with CVSS 4.0 and work out who is affected. If the registry has no download data, notify every known consumer.
+4. **Request a CVE** through the advisory (GitHub is a CNA for projects it hosts). Use `CVE-YYYY-XXXX` as a placeholder until the ID is assigned.
+5. **Fix it.**
+   - For a pack: bump the version (patch for a security backport, minor if behavior changes), sign it with an `active` key, and publish the fixed version.
+   - For the corpus or suite: ship a patch release. A fix that breaks the wire follows the safety-fix path in [`COMPATIBILITY.md`](../../COMPATIBILITY.md) §3.
+6. **Yank the vulnerable pack versions** at the same moment the fix publishes. Add a registry advisory whose `affected[]` range names them; `packs.md` requires every advisory-listed version to be yanked. Set `yankedReason` to the CVE ID and a one-line description. Mechanics: [`PACK-LIFECYCLE.md`](./PACK-LIFECYCLE.md).
+7. **Disclose.** Tell the reporter the fix is live, publish the advisory, add a security entry to `CHANGELOG.md`, and announce it.
 
-Detection paths:
-
-- Security audit of published tarball
-- Consumer report of unexpected behavior
-- Vendor's CI finds untrusted bytes in their own tarball after publish
-
-### Step-by-step (S0)
-
-1. **Immediate yank — within 1 hour**:
-   - Yank ALL versions of the compromised pack (not just the one with confirmed bad code)
-   - Follow `docs/runbooks/PACK-LIFECYCLE.md` §"Yank" but **also delete the tarball files** in the same PR (Firebase Hosting doesn't auto-purge):
-
-     ```bash
-     rm registry/v1/packs/<name>/-/*.tgz
-     rm registry/v1/packs/<name>/-/*.sig
-     ```
-
-   - Title PR `[YANK-COMPROMISE] <pack-name>` for visibility
-
-2. **Suspend the publisher key** (if the compromise reached the publisher's signing infrastructure):
-   - Edit `.well-known/openwop-registry.json` `signingKeys[]` for the affected key:
-
-     ```json
-     { "keyId": "<org>-internal-1", "status": "suspended", ... }
-     ```
-
-   - Hosts running `verified` mode MUST refuse to install ANY pack signed by a suspended key
-
-3. **Forensics**:
-   - Determine the attack vector: was the tarball tampered with after vendor sign-off? Was the vendor's signing key compromised?
-   - Audit other packs signed by the same key in the same window
-   - Preserve forensic evidence: log retention, build-pipeline audit trails, key access logs
-
-4. **Public statement within 24h**:
-   - GitHub Security Advisory
-   - Banner on `packs.openwop.dev` (Firebase Hosting allows custom 503 / banner content)
-   - Direct notification to all known consumers (via vendor lists + GitHub issue notifications)
-
-5. **Recovery**:
-   - If key compromise: follow §"Incident class 3" below for key rotation
-   - If supply-chain (build pipeline) compromise: vendor MUST rebuild from clean source + re-sign all valid packs with a NEW key
-   - Old versions remain yanked permanently (immutable — no un-yank for compromise events)
+A yanked version stays served: its manifest, tarball and signature still return, a version range skips it, and the pack index does not name it `latest` while an unyanked version exists. Verify the yank by checking the version manifest shows `yanked: true` and the index's `latest` moved.
 
 ---
 
-## Incident class 3: Key compromise
+## Incident class 2: malicious code in a published pack
 
-### Trigger
+S0 by default. Found by an audit of a tarball, a consumer report, or the publisher's own CI.
 
-A publisher's private signing key is suspected to be in unauthorized hands. Triggers:
-
-- Vendor reports key loss (laptop stolen, HSM access logs anomaly)
-- Forensic evidence from a pack-compromise incident
-- Key holder ceases employment without proper offboarding
-
-### Step-by-step (S0)
-
-1. **Within 1 hour: mark the key suspended** in `.well-known/openwop-registry.json`:
-
-   ```json
-   {
-     "keyId": "<org>-internal-1",
-     "status": "suspended",
-     "suspendedAt": "<timestamp>",
-     "suspendedReason": "<one-line>",
-     ...
-   }
-   ```
-
-2. **Yank-all-pack-versions signed by the suspended key**:
-   - Iterate every pack version manifest in the affected namespace
-   - If `signing.keyId === <suspended-key-id>`, mark `yanked: true`
-   - Bulk via:
-
-     ```bash
-     for f in registry/v1/packs/vendor.<org>.*/-/*.json; do
-       if grep -q "\"keyId\": \"<org>-internal-1\"" "$f"; then
-         # Edit f to set yanked: true
-       fi
-     done
-     ```
-
-   - Run `node registry/scripts/build-index.mjs` to update indices
-
-3. **Generate a NEW key on uncompromised infrastructure**:
-   - Vendor follows `docs/runbooks/VENDOR-ONBOARDING.md` to register `<org>-internal-2`
-   - The new key gets the same `permittedNamespaces` as the compromised one
-
-4. **Re-sign + re-publish each yanked pack with the new key**:
-   - For each yanked version: rebuild the tarball with `build-pack-tarball.mjs --signed --key <new-key> --key-id <org>-internal-2`
-   - **Bump the SemVer** (patch) so the re-signed version has a different version number from the yanked one. This prevents consumer-cache confusion.
-   - Open a single batched PR with all re-signed packs
-
-5. **After all packs re-published**: open a final PR removing the suspended key entry entirely from `signingKeys[]` + deleting the `.pub` file from `registry/keys/`.
-
-6. **Public statement**: same coordination as Incident class 1+2. Include a clear migration guide for consumers ("uninstall `<name>@<old-version>`, install `<name>@<new-version>`").
+1. **Yank every version of the pack within one hour**, not only the one with confirmed bad code, and add an advisory covering them.
+2. **Remove the bytes if they are harmful to serve.** The yank rule keeps a yanked tarball served, which is right for a vulnerable pack and wrong for malware. Taking a malicious tarball down is an operator decision outside the protocol; record it in the advisory.
+3. **Handle the key.** If the signing key may be compromised, follow incident class 3.
+4. **Investigate.** Was the tarball changed after the publisher signed it, or was the key used by someone else? Audit every pack signed by the same key in the same window. Preserve logs, build records and key-access records.
+5. **Make a public statement within 24 hours**: the advisory, a notice on the registry, and direct notice to known consumers.
+6. **Recover.** The publisher rebuilds from clean source and signs with a new key. Compromised versions stay yanked for good.
 
 ---
 
-## Incident class 4: Registry downtime
+## Incident class 3: signing-key compromise
 
-### Trigger
+A publisher's private key may be in someone else's hands: lost hardware, anomalous key-access logs, evidence from class 2, or a key holder who left without offboarding.
 
-`packs.openwop.dev` becomes unreachable or serves wrong content. Detected via:
+1. **Within one hour, stop the key signing anything new.** Change its `status` in the registry's `.well-known/openwop-registry.json` `signingKeys[]` to any value other than `active` (for example `suspended`). Only an `active` key may sign a new publication.
+2. **Keep the key listed.** `packs.md` requires a key to stay listed while any served version names it, and a verifier does not refuse a version because its key is not `active`. Removing the key does not protect consumers; yanking does.
+3. **Yank every version the key signed** whose provenance you cannot confirm, and add an advisory covering them.
+4. **Register a new key** on clean infrastructure, with the same `permittedNamespaces` ([`VENDOR-ONBOARDING.md`](./VENDOR-ONBOARDING.md)).
+5. **Republish under the new key.** Re-sign each affected pack and give it a new patch version. A published version cannot be republished, and a new number avoids cache confusion.
+6. **Publish a statement** with a migration note for consumers: which versions to replace and with what.
 
-- Cloud Monitoring uptime check failure on the `packs-openwop-dev-uptime-failure` alert policy (set up via `scripts/setup-uptime-check.sh`)
-- Maintainer-side `curl -I https://packs.openwop.dev/` failing
-- Consumer reports of install failures
-
-### Step-by-step
-
-1. **Verify scope** of the outage:
-
-   ```bash
-   curl -I https://packs.openwop.dev/
-   curl -I https://packs.openwop.dev/v1/index.json
-   curl -I https://packs.openwop.dev/keys/openwop-registry-root.pub
-   ```
-
-   - All 200: registry up, problem is elsewhere
-   - Some 5xx: Firebase Hosting issue, check Firebase status page
-   - All DNS-fail: Fastly CDN or DNS issue
-
-2. **Identify the layer**:
-   - Firebase Hosting: check `https://status.firebase.google.com/`
-   - Fastly CDN: check `https://status.fastly.com/`
-   - GitHub Actions (auto-deploy not running): check `https://www.githubstatus.com/`
-   - DNS: check the domain registrar's panel
-
-3. **Mitigation options** by layer:
-   - Firebase Hosting outage: nothing to do, wait for upstream. Communicate ETA to consumers.
-   - Stale content (CDN cache poisoning): `firebase hosting:clone --site packs-openwop-dev` to force-redeploy
-   - Auto-deploy failure (WIF auth, IAM perms): manually deploy from operator workstation per `openwop/openwop#5–#8` runbook
-   - DNS: contact registrar; consumer fallback is hardcoded IPs (won't work because Fastly POPs)
-
-4. **Status page update**:
-   - Open a GitHub issue with the `incident` label
-   - Update `INTEROP-MATRIX.md` if persistent
-   - Post to announcement channels with current status + ETA
-
-5. **Post-mortem**:
-   - Within 5 business days of resolution
-   - Write up the incident in `docs/incidents/YYYY-MM-DD-<short-name>.md`
-   - Update this runbook if a new failure mode was discovered
+Planned rotation, as opposed to compromise, is in [`KEY-ROTATION.md`](./KEY-ROTATION.md).
 
 ---
 
-## Tabletop drill recommendation
+## Incident class 4: registry outage or wrong content
 
-Maintainers SHOULD run a tabletop exercise of one incident class per quarter to keep this runbook accurate. The drill:
+The registry is unreachable, or serves content that does not match what was published. Monitoring, hosting and deploy procedures for the registry are in [`openwop/openwop-registry`](https://github.com/openwop/openwop-registry); follow them there.
 
-1. Pick an incident class
-2. Open a dry-run PR titled `[DRILL] <class>` against a private fork
-3. Walk through every step in the runbook
-4. Record where the runbook was unclear or out-of-date
-5. Open a PR fixing the runbook gaps
+From the protocol side:
 
----
-
-## Contact escalation
-
-Incident reporter MUST be acknowledged within the severity-class response time. If the on-call maintainer is unreachable, escalate to the secondary contact in `MAINTAINERS.md`.
-
-Out-of-band channels (for cases where GitHub / email is unavailable):
-
-- openwop project Signal channel (invite-only, see `MAINTAINERS.md`)
-- Maintainer mobile phone tree (see `MAINTAINERS.md`)
+1. **Check scope**: the registry root, the pack index, `.well-known/openwop-registry.json`, and a known version manifest.
+2. **Wrong content is S1.** A served `integrity` or signature that no longer matches its tarball means a consumer verifying correctly will refuse the pack (`pack_integrity_failure`, `pack_signature_invalid`). Treat a mismatch as possible tampering until shown otherwise.
+3. **Communicate**: open an issue with the `incident` label and post the status and expected recovery time.
 
 ---
+
+## After any incident
+
+- Write a post-mortem within five business days of resolution.
+- Update this runbook if the incident exposed a step that was missing or wrong.
+
+Maintainers SHOULD run a tabletop exercise of one incident class each quarter: walk every step against a private fork and fix what was unclear.
+
+## Escalation
+
+The reporter MUST be acknowledged within the severity's response time. If the on-call maintainer is unreachable, escalate to the next contact in [`MAINTAINERS.md`](../../MAINTAINERS.md).
 
 ## See also
 
-- [`SECURITY.md`](../../SECURITY.md) — vulnerability disclosure policy
-- [`docs/runbooks/PACK-LIFECYCLE.md`](./PACK-LIFECYCLE.md) — yank/deprecate mechanics
-- [`docs/runbooks/VENDOR-ONBOARDING.md`](./VENDOR-ONBOARDING.md) — key registration (used during recovery)
-- [`spec/v1/registry-operations.md`](../../spec/v1/registry-operations.md) §"Key rotation"
-- [`MAINTAINERS.md`](../../MAINTAINERS.md) — escalation contacts + on-call rotation
+- [`SECURITY.md`](../../SECURITY.md) — disclosure policy
+- [`PACK-LIFECYCLE.md`](./PACK-LIFECYCLE.md) — deprecate and yank
+- [`KEY-ROTATION.md`](./KEY-ROTATION.md) — planned key rotation
+- [`VENDOR-ONBOARDING.md`](./VENDOR-ONBOARDING.md) — registering a publisher key
+- [`spec/v2/core/packs.md`](../../spec/v2/core/packs.md) — signing, version manifests, registry errors
+- [RFC 0222](../../RFCS/0222-v2-registry-operations.md) — v2 registry operations

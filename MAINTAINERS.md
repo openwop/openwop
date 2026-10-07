@@ -107,7 +107,7 @@ When a target replies, fill in `Outreach sent` + `First reply`, advance `Status`
 When the first non-steward maintainer is added to the "Current maintainers" table above:
 
 1. Add the recruitment log row that produced them.
-2. Open the vendor-neutral-org migration RFC per `RFCS/0001-rfc-process.md` (Phase 4 T4.1 in `docs/PROTOCOL-GAP-CLOSURE-PLAN.md`).
+2. Open the vendor-neutral-org migration RFC per `RFCS/0001-rfc-process.md`.
 
 ## Bootstrap-phase RFC waivers
 
@@ -119,7 +119,7 @@ When the first non-steward maintainer is added to the "Current maintainers" tabl
 >
 > **Completeness is gated.** `scripts/check-waiver-ledger.mjs` (step 6 of `openwop:check`) fails if an RFC the tree shows as waived has no row here.
 
-Per `CONTRIBUTING.md` §"Bootstrap-phase notes," additive RFCs MAY be promoted Draft → Active by steward decision when the comment window would only serve as a delay against zero external reviewers. This section records every RFC that has used the waiver, so future maintainers can audit the velocity of bootstrap-phase decisions. The waiver is retired automatically when the first non-steward maintainer joins.
+Per `GOVERNANCE.md` §"Sole-steward operation," additive RFCs MAY be promoted Draft → Active by steward decision when the comment window would only serve as a delay against zero external reviewers. This section records every RFC that has used the waiver, so future maintainers can audit the velocity of bootstrap-phase decisions. The waiver is retired automatically when the first non-steward maintainer joins.
 
 | RFC  | Title                                                                                                                               | Draft date | Active date | Comment-window duration                 | Waiver rationale                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                  |
 | ---- | ----------------------------------------------------------------------------------------------------------------------------------- | ---------- | ----------- | --------------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
@@ -266,53 +266,42 @@ curated table above with the real rationale.
 
 ## Spec version bump runbook
 
-The repo hosts `spec/v2/` (the current major) and `spec/v1/` (read-only during the v1 overlap), rendered at `/spec/v2/` and `/spec/v1/`. The major version is the URL-stability boundary: minor bumps edit the major's directory in place, and a new directory appears only for a new major.
+The repo holds `spec/v2/` (the current major) and `spec/v1/` (frozen since v1 end of support on 2026-10-04), rendered at `/spec/v2/` and `/spec/v1/`. The major is the URL-stability boundary: a minor edits the major's directory in place, and a new directory appears only for a new major.
 
-### Minor bump inside v2.x (the common case)
+### Minor or patch release (the common case)
 
 The release manager:
 
-1. Lands the additive prose / schema / RFC content directly inside `spec/v2/` and `schemas/v2/`, and bumps `spec/v2/release.json` to the new version.
-2. Adds a `## [2.N.0]` section to `CHANGELOG.md`.
-3. Tags + publishes the release per `PUBLISHING.md`.
+1. Lands the additive prose, schema and RFC changes in `spec/v2/` and `schemas/v2/`. API changes go into the source documents `api/openapi.yaml` and `api/asyncapi.yaml` (or `scripts/derive-v2-api-prose.yaml`), and `api/v2/` is regenerated from them by `scripts/derive-v2-api.py` (`CONTRIBUTING.md` §"OpenAPI and AsyncAPI").
+2. Bumps `spec/v2/release.json` and the package version sites, and adds a `## [2.N.P]` section to `CHANGELOG.md` (`PUBLISHING.md` §"Version sites").
+3. Tags and publishes per `PUBLISHING.md`.
 
-**The public site is published from a separate repo.** [`openwop/openwop-site`](https://github.com/openwop/openwop-site) renders this corpus pinned to an exact openwop commit. Its `pin-bump` workflow opens a PR daily as `main` moves, and merging that PR redeploys the site. No site build or deploy step runs in this repo.
+**The public site is published from a separate repo.** [`openwop/openwop-site`](https://github.com/openwop/openwop-site) renders this corpus pinned to an exact openwop commit. Its `pin-bump` workflow opens a PR as `main` moves, and merging that PR redeploys the site. No site build or deploy step runs in this repo.
 
-### Major bump to v2.x (rare)
+### The next major
 
-A major touches nine repositories. The release manager did the following for v2.0.0 (tagged 2026-09-05), in this order; the next major follows the same steps.
+A new major is rare and touches every OpenWOP repository. The RFC that opens it sets the plan (`COMPATIBILITY.md` §5). The work, in order:
 
-**In this repository (`openwop/openwop`):**
+**In this repository:**
 
-1. Creates `spec/v2/` alongside `spec/v1/` (`spec/v2/core/` under the word budget the v2 RFC sets; `spec/v2/ext/<name>/` for everything else, each with a witness class and maturity in its header). v1 stays in place and remains supported under `COMPATIBILITY.md` §5's host-inventory rule.
-2. Creates `schemas/v2/` with every `$id` under `https://openwop.dev/spec/v2/`. `schemas/` (flat, v1 `$id`s) is left untouched and becomes read-only.
-3. Regenerates `api/openapi.yaml`, `api/asyncapi.yaml`, `api/grpc/openwop.proto` (if the transport survives the cut) and the seams document from the v2 declaration file; the `operation-path-manifest.json` is regenerated for both operations and channels.
-4. Enforces `spec/v1/deprecations.json`: every entry whose `removeIn` is `2.0` is absent from `spec/v2/` and `schemas/v2/`, and the check script fails otherwise.
-5. Publishes `@openwop/openwop-conformance@2.0.0` per `PUBLISHING.md` (tarball contains `dist`, `fixtures`, `vectors` only; the v2 suite ships bundle v3 and the dual-major scenario).
-6. CHANGELOG entry: `## [2.0.0]` — the breaking-change-permitted release. Updates `spec/v1/auth.md`'s status legend to reference both majors' legend pages.
+1. Create `spec/vN/` beside the current major, and `schemas/vN/` with every `$id` under `https://openwop.dev/spec/vN/`. The previous major's directories stay in place and become read-only.
+2. Produce the new API documents, the seams document and the operation-path manifest. Decide, and write down, which document is the source and which are derived (for v2, `scripts/derive-v2-api.py` derives `api/v2/` from the v1 documents).
+3. Enforce the deprecation register: every entry due at `N.0` is absent from the new tree, and the check fails otherwise.
+4. Publish the new suite major and `@openwop/spec-artifacts` per `PUBLISHING.md`, with the scenarios that run against both majors during the overlap.
+5. Add the `## [N.0.0]` CHANGELOG section: the one release where breaking changes are permitted.
 
-**In `openwop/openwop-site`:**
+**In the sibling repositories:**
 
-7. Refactors `site/src/build.mjs::buildSpecDocs()` to iterate over `spec/v*/` instead of hard-coding `spec/v1` (twelve sites at the time of writing, including a FATAL guard and the nav label): discover versions via `readdirSync('spec').filter(d => /^v\d+$/.test(d))`; render each at `/spec/{version}/{slug}.html`; render the highest version's index plus `/spec/latest/`; add an "Other versions" link slot. `scripts/build-site.sh` copies `schemas/v2/` to `public/spec/v2/` beside the v1 copy.
-8. Updates `firebase.json` redirects: `/spec/latest{,/:path*}` → `/spec/v2/…`; the `/spec/v1.1{,/:path*}` → `/spec/v1/…` entries stay.
-
-**In `openwop/openwop-sdks`:**
-
-9. Publishes `@openwop/openwop@2.0.0` (npm), `openwop-client==2.0.0` (PyPI), and the Go module under a `/v2` directory (the module path has no version suffix today, so this is a directory move, not a tag; fix the stale `sdk/smoke` module path first). Old majors stay available for the `PUBLISHING.md` retention floor.
-
-**In `openwop/openwop-registry`:**
-
-10. Publishes `registry/v2/` (re-signed manifests, or a signed compatibility overlay) and the peer-dependency alias table generated from the v2 declaration file. A v2 host treats an absent `engines.openwop` ceiling as `<2.0.0`.
-
-**In `openwop/openwop-examples`, `openwop/openwop-cli`:**
-
-11. The four reference hosts pass the 2.0.0 floor and commit fresh v3 bundles; the CLI's disposition (rewritten onto SDK 2, or frozen v1-only) is recorded in its README. *(CLI: decided. 1.0.0 negotiates major 2, and the frozen v1-only 0.18.x line lives on branch `cli-v1-frozen`; recorded in the openwop-cli README.)*
+6. `openwop-site`: render every `spec/v*/` directory, point `/spec/latest/` at the new major, and keep the old major's pages.
+7. `openwop-sdks`: publish the SDK majors (npm, PyPI, and a Go module path with the `/vN` suffix). The old majors stay installable for the retention floor (`spec/v2/core/overview.md` §"Old-major retention floors").
+8. `openwop-registry`: publish the registry for the new major (re-signed manifests, or a signed compatibility overlay) and the peer-dependency alias table.
+9. `openwop-examples` and `openwop-cli`: bring the reference hosts to the new floor with fresh certification bundles, and record the CLI's disposition.
 
 **Hosts (`INTEROP-MATRIX.md`):**
 
-12. Each host advertises both majors via `protocolVersions[]` during the overlap, produces a non-vacuous v2 bundle, and gets a matrix row. The v1 deprecation date is then computed per `COMPATIBILITY.md` §5.
+10. Each host advertises both majors in `protocolVersions[]` during the overlap, publishes a non-vacuous certification bundle for the new major, and gets a matrix row. The old major's end-of-support date then follows `COMPATIBILITY.md` §5.
 
-**Anti-pattern.** Do not create a minor-version directory such as `spec/v1.2/`. Minor bumps are in-place edits of the major's directory; a new directory is reserved for a new major version. The `/spec/v1.1/` redirect entry in `firebase.json` exists only as an inbound-link safety net for citations that hard-coded the minor number; it does not imply a parallel directory.
+**Anti-pattern.** Don't create a minor-version directory such as `spec/v2.3/`. Minors are in-place edits of the major's directory.
 
 ## See also
 

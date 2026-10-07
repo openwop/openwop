@@ -1,34 +1,34 @@
 ---
 name: ux-review
-description: Multi-mode review for openwop user-facing surfaces. **Marketing-site mode** audits `../openwop-site/public/index.html`, `../openwop-site/public/styles.css`, `../openwop-site/public/main.js` against `DESIGN.md` (typography, color tokens, spacing, components, a11y, localization, light/dark, mobile breakpoints, no hard-coded values). **App-UI mode** audits the reference app `../openwop-app/frontend/react/src` against `../openwop-app/DESIGN.md` — the shared `ui/` cohesion layer (`.surface-card`/`.chip`/`.action-bar`/`<Notice>`/`<StateCard>`), the `ui/icons` Lucide set + no-emoji-as-icons rule, status→chip semantics, the inline-style/token policy, and app a11y. **Spec-prose mode** audits `spec/v1/`, `RFCS/`, `README.md`, `CHANGELOG.md`, `INTEROP-MATRIX.md`, `ROADMAP.md`, `docs/` for RFC 2119 keyword discipline, Status legend, table format, normative voice, cross-doc link integrity, "Why this exists" + "Open spec gaps", doc-index drift, and PUBLISHING / SECURITY surface honesty.
+description: Multi-mode review for openwop user-facing surfaces. **Marketing-site mode** audits `../openwop-site/public/index.html`, `styles.css` and `main.js` against `../openwop-site/DESIGN.md` (typography, color tokens, spacing, components, a11y, localization, light/dark, mobile breakpoints, no hard-coded values). **App-UI mode** audits the reference app `../openwop-app/frontend/react/src` against `../openwop-app/DESIGN.md` — the shared `ui/` cohesion layer (`.surface-card`/`.chip`/`.action-bar`/`<Notice>`/`<StateCard>`), the `ui/icons` Lucide set + no-emoji-as-icons rule, status→chip semantics, the inline-style/token policy, and app a11y. **Spec-prose mode** audits `spec/v2/`, `RFCS/`, `README.md`, `CHANGELOG.md`, `INTEROP-MATRIX.md`, `ROADMAP.md`, `docs/` for RFC 2119 discipline, status lines, normative ownership, link integrity, doc-index drift, and SECURITY / PUBLISHING honesty; v2 readability itself is delegated to `/spec-readability` and `scripts/check-spec-readability.mjs`.
 ---
 
 # UX Review (openwop)
 
-This skill runs in one of two modes — pick the mode that matches what changed, or run both back-to-back if the change spans surfaces.
+This skill runs in three modes. Pick the one that matches what changed, or run several if the change spans surfaces.
 
 ## Mode selection
 
 ```bash
-# Marketing-site mode (Mode A): any change touching ../openwop-site/public/ or assets used by the live site
-git diff --name-only origin/main..HEAD | grep -E '^../openwop-site/public/'
+# Marketing-site mode (Mode A): changes in the openwop-site checkout
+git -C ../openwop-site diff --name-only origin/main...HEAD | grep -E '^public/'
 
-# App-UI mode (Mode A (app)): any change to the reference app frontend — reviewed against ../openwop-app/DESIGN.md
-git diff --name-only origin/main..HEAD | grep -E '^../openwop-app/frontend/react/src/'
+# App-UI mode (Mode A (app)): changes in the openwop-app frontend
+git -C ../openwop-app diff --name-only origin/main...HEAD | grep -E '^frontend/react/src/'
 
-# Spec-prose mode (Mode B): any change touching prose
-git diff --name-only origin/main..HEAD | grep -E '^(spec/v1|RFCS|docs|public)/.*\.md$|^(README|CHANGELOG|CONTRIBUTING|COMPATIBILITY|GOVERNANCE|MAINTAINERS|ROADMAP|SECURITY|PUBLISHING|QUICKSTART(-10MIN)?|INTEROP-MATRIX|CODE_OF_CONDUCT)\.md$'
+# Spec-prose mode (Mode B): prose changes in this repo
+git diff --name-only origin/main...HEAD | grep -E '^(spec/v2|RFCS|docs|conformance)/.*\.md$|^(README|CHANGELOG|CONTRIBUTING|COMPATIBILITY|GOVERNANCE|MAINTAINERS|ROADMAP|SECURITY|PUBLISHING|QUICKSTART(-10MIN)?|INTEROP-MATRIX|CODE_OF_CONDUCT)\.md$'
 ```
 
-Run whichever modes match the diff (marketing → app → prose); the app surface (`../openwop-app/frontend/react/`) is reviewed against `../openwop-app/DESIGN.md`, the marketing site against `DESIGN.md`.
+`spec/v1/` is frozen (v1 reached end of support on 2026-10-04, RFC 0234). A diff that touches it is itself a finding.
 
 ---
 
 # Mode A — Marketing-site UX review
 
-You are a **Senior Product Designer** with deep accessibility, type-system, and front-end experience. Review the openwop public site (`../openwop-site/public/index.html`, `../openwop-site/public/styles.css`, `../openwop-site/public/main.js`) against the **`DESIGN.md`** standards document at the repo root.
+You are a **Senior Product Designer** with deep accessibility, type-system, and front-end experience. Review the openwop public site (`../openwop-site/public/index.html`, `../openwop-site/public/styles.css`, `../openwop-site/public/main.js`) against **`../openwop-site/DESIGN.md`**, the site's design standards document. Paths are relative to this repo's checkout, with `openwop-site` cloned beside it.
 
-`DESIGN.md` is the source of truth. Every finding cites the DESIGN.md section it derives from. If `DESIGN.md` does not cover a category, propose an addition to it as part of the review output.
+`../openwop-site/DESIGN.md` is the source of truth. Every finding cites the DESIGN.md section it derives from. If it does not cover a category, propose an addition to it as part of the review output.
 
 ## Step A-1 — Automated checks
 
@@ -141,7 +141,7 @@ grep -nE '@media\s*\(max-width:\s*[0-9]+px\)' ../openwop-site/public/styles.css
 
 # Mode A (app) — Reference-app UX review (`../openwop-app/DESIGN.md`)
 
-Audits the reference app at `../openwop-app/frontend/react/src` against **`../openwop-app/DESIGN.md`** (companion to `DESIGN.md`; shared tokens live in `DESIGN.md §3–§5 / §9`, mirrored in the app's `global.css :root`). Run this whenever the diff touches `../openwop-app/frontend/react/`. Every finding cites a `../openwop-app/DESIGN.md §N` (or `DESIGN.md §N` for a shared rule). Same Senior-Product-Designer lens as Mode A.
+Audits the reference app at `../openwop-app/frontend/react/src` against **`../openwop-app/DESIGN.md`** (companion to `../openwop-site/DESIGN.md`; shared tokens live in its §3–§5 / §9, mirrored in the app's `global.css :root`). Run this whenever the diff touches `../openwop-app/frontend/react/`. Every finding cites a `../openwop-app/DESIGN.md §N` (or `DESIGN.md §N` for a shared rule). Same Senior-Product-Designer lens as Mode A.
 
 ## Step Aa-1 — Automated checks (from `../openwop-app/frontend/react/`)
 
@@ -209,23 +209,33 @@ node node_modules/typescript/bin/tsc --noEmit && node node_modules/vite/bin/vite
 - [ ] `tsc --noEmit` + `vite build` clean
 
 ---
+---
 
 # Mode B — Senior Docs-Architect Review (openwop prose)
 
-You are a **Senior Spec Editor** with 15+ years of experience editing IETF RFCs, OpenAPI specs, and W3C recommendations. Review the openwop prose corpus from the perspective of a third-party implementer who has never met the maintainer and must derive correct wire-conformant behavior from the document alone.
+You are a **Senior Spec Editor** who has edited IETF RFCs, OpenAPI specs, and W3C recommendations. Review the prose from the point of view of a third-party implementer who has never met the maintainers and must derive correct wire behavior from the documents alone.
 
-Your review must be **precise, unambiguous, and uncompromising on normative clarity**. Every word the maintainer writes is a wire contract. Every cross-doc link is a promise. Every RFC 2119 keyword is a behavior gate.
+Every RFC 2119 keyword is a behavior gate, every cross-doc link is a promise, and every count in a public doc must match the tree.
+
+## Where the rules live
+
+- **Normative:** `spec/v2/core/*.md` (30 docs, all `Stable`) and `spec/v2/ext/` (labels `Draft`, `Stable`, `Retired`, `Note`, defined in `spec/v2/ext/README.md`). Families are declared in `spec/v2/declaration.json`.
+- **Wire:** `api/v2/openapi.yaml`, `api/v2/asyncapi.yaml` (generated from `api/openapi.yaml` by `scripts/derive-v2-api.py`), `schemas/v2/`.
+- **Frozen:** `spec/v1/` and the flat `schemas/*.schema.json`. `api/openapi.yaml` and `api/asyncapi.yaml` are the v1 wire; `api/openapi.yaml` is also the source `derive-v2-api.py` reads, so edit it only to change v2 through the derivation.
+- **Prose rules:** `CONTRIBUTING.md` §"Status labels" and §"Prose specs (`spec/v2/**/*.md`)".
+
+**Readability is a separate skill.** `spec/v2/**/*.md` renders verbatim on openwop.dev. Walls of stacked MUSTs, paragraph-sized table cells, RFC citations outside the `*Sources: …*` line, and v1 mentions are checked by `node scripts/check-spec-readability.mjs` (it runs in the gate) and fixed by `/spec-readability`, which verifies with `scripts/spec-fingerprint.mjs` that no rule changed. Run the check here; don't duplicate its rules.
 
 ---
 
 ## Review Process
 
-1. **Run automated checks** to catch common issues quickly (RFC 2119 lowercase, broken links, missing Status legend)
-2. **Identify all prose files changed** in this session
-3. **Examine each file** for normative clarity, structure, and cross-doc integrity
-4. **Analyze against every category below** — no exceptions
-5. **Rate severity** of each finding
-6. **Provide actionable rewrites** with the exact replacement text
+1. Run the automated checks
+2. List the prose files changed
+3. Read each file for normative clarity, ownership, and link integrity
+4. Analyze against every category below
+5. Rate severity
+6. Give the exact replacement text for each finding
 
 ---
 
@@ -233,77 +243,65 @@ Your review must be **precise, unambiguous, and uncompromising on normative clar
 
 ```bash
 # Files in scope
-git diff --name-only origin/main..HEAD | grep -E '^(spec/v1|RFCS|docs|public)/.*\.md$|^(README|CHANGELOG|CONTRIBUTING|COMPATIBILITY|GOVERNANCE|MAINTAINERS|ROADMAP|SECURITY|PUBLISHING|QUICKSTART(-10MIN)?|INTEROP-MATRIX|CODE_OF_CONDUCT)\.md$'
+git diff --name-only origin/main...HEAD | grep -E '^(spec/v2|RFCS|docs|conformance)/.*\.md$|^[A-Z_-]+\.md$'
+
+# v2 readability (banner, heading, inline RFC citations, paragraph and cell length, v1 mentions)
+node scripts/check-spec-readability.mjs
+
+# Extension status labels agree with committed evidence
+node scripts/check-ext-status-coherence.mjs
+
+# Generated status and hand-typed tallies
+node scripts/generate-protocol-status.mjs --check
+node scripts/check-doc-tallies.mjs
 ```
 
-### RFC 2119 lowercase audit (NON-NORMATIVE language in NORMATIVE position)
-
-Search changed prose for lowercase forms of RFC 2119 keywords used as normative imperatives:
+### Lowercase RFC 2119 words in normative position
 
 ```bash
-# Find lowercase "must" / "should" / "may" / "must not" / "should not" outside of:
-#   - inside code fences
-#   - inside inline backticks
-#   - inside hyperlink anchors / URLs
-git diff --name-only origin/main..HEAD | grep -E '^(spec/v1|RFCS)/.*\.md$' | while read f; do
+git diff --name-only origin/main...HEAD | grep -E '^(spec/v2|RFCS)/.*\.md$' | while read f; do
   grep -nE '\b(must|should|may|must not|should not)\b' "$f" \
     | grep -vE '`[^`]*\b(must|should|may)\b[^`]*`' \
-    | grep -vE 'href=|http' \
-    | grep -vE '\b(MUST|SHOULD|MAY|MUST NOT|SHOULD NOT)\b'
+    | grep -vE 'href=|http'
 done
 ```
 
-Each match is a candidate finding — flag if the surrounding sentence is normative.
+Each hit is a candidate. Flag it only if the sentence states a requirement.
 
-### Missing Status legend
+### Status line
 
 ```bash
-for doc in spec/v1/*.md RFCS/*.md; do
-  [[ "$doc" == "RFCS/0000-template.md" || "$doc" == "RFCS/README.md" ]] && continue
-  if ! head -30 "$doc" | grep -qE '(\*\*Status\*\*|Status:|status:)'; then
-    echo "NO STATUS: $doc"
-  fi
+for doc in spec/v2/core/*.md $(find spec/v2/ext -name '*.md' ! -name README.md); do
+  head -10 "$doc" | grep -qE '^> \*\*Status: (Stable|Draft|Retired|Note)\.' || echo "NO/ODD STATUS: $doc"
+done
+for doc in RFCS/[0-9][0-9][0-9][0-9]-*.md; do
+  case "$(basename "$doc")" in 0000-template.md|*.*.md) continue;; esac
+  grep -qE '^\| \*\*Status\*\* \| `(Draft|Active|Accepted|Withdrawn|Superseded)`' "$doc" || echo "NO STATUS ROW: $doc"
 done
 ```
 
-### Stale Status tags
-
-Per `auth.md §status legend`: STUB / DRAFT / OUTLINE / FINAL. Check for ad-hoc statuses:
+### Relative link integrity
 
 ```bash
-grep -hE '^>\s*\*\*Status' spec/v1/*.md | sort -u
-```
-
-Anything other than STUB / DRAFT / OUTLINE / FINAL → flag.
-
-### Cross-doc link integrity
-
-```bash
-# Find every relative link and verify the target exists
-for f in spec/v1/*.md RFCS/*.md README.md CHANGELOG.md INTEROP-MATRIX.md ROADMAP.md GOVERNANCE.md CONTRIBUTING.md COMPATIBILITY.md; do
-  [[ ! -f "$f" ]] && continue
-  grep -oE '\]\(\.\.?/[^)]+\)' "$f" | while read link; do
-    target="${link#](}"
-    target="${target%)}"
-    target="${target%%#*}"
-    dir=$(dirname "$f")
-    # Resolve relative to the file's directory
-    resolved="$dir/$target"
-    if [[ ! -e "$resolved" ]]; then
-      echo "BROKEN: $f → $target"
-    fi
+for f in $(git diff --name-only origin/main...HEAD | grep '\.md$'); do
+  [ -f "$f" ] || continue
+  grep -oE '\]\([^)#: ]+' "$f" | sed 's/^](//' | while read target; do
+    case "$target" in http*|mailto*) continue;; esac
+    [ -e "$(dirname "$f")/$target" ] || echo "BROKEN: $f → $target"
   done
 done
 ```
 
-### Inline JSON Schemas in OpenAPI / AsyncAPI
+### README document index
 
 ```bash
-# Per CONTRIBUTING.md §"OpenAPI / AsyncAPI": never inline; always cross-file $ref
-grep -nE '^\s+schema:\s*$' api/openapi.yaml | head -10
+ls spec/v2/core/*.md | sed 's|.*/||' | sort > /tmp/disk-docs.txt
+grep -oE 'spec/v2/core/[a-z0-9-]+\.md' README.md | sed 's|spec/v2/core/||' | sort -u > /tmp/readme-docs.txt
+diff /tmp/disk-docs.txt /tmp/readme-docs.txt
+echo "disk=$(ls spec/v2/core/*.md | wc -l | tr -d ' ') readme=$(grep -oE '\*\*Total\*\*: [0-9]+' README.md | grep -oE '[0-9]+')"
 ```
 
-Each match is a candidate (the next lines may be an inline shape rather than a `$ref`).
+`conformance/src/coherence/spec-corpus-validity.test.ts` enforces this; catching it here saves a gate run.
 
 ---
 
@@ -311,141 +309,85 @@ Each match is a candidate (the next lines may be an inline shape rather than a `
 
 ### CRITICAL: Normative language discipline
 
-Per `CONTRIBUTING.md` §"Prose specs":
+- RFC 2119 keywords in capitals, and only where something is genuinely normative
+- Lowercase "must" / "should" / "may" used as a requirement → rewrite to the keyword or to non-normative voice
+- "You must" / "we should" in normative text → rewrite with a subject ("Hosts MUST …")
+- No double imperatives ("MUST always", "SHOULD never")
+- Non-normative docs (`docs/`, `README.md`, guides) should rarely use the keywords at all
 
-- **RFC 2119 keywords (MUST, SHOULD, MAY, MUST NOT, SHOULD NOT) in capital letters** for every normative requirement
-- Lowercase "must" / "should" / "may" used as normative imperative → CRITICAL break (ambiguous to non-native English readers, fails standard ID parsers)
-- Plain-English imperatives ("you must," "we should") → CRITICAL; rewrite to MUST / SHOULD or non-normative voice
-- Conditional normative ("if X, then implementations MUST Y") preferred over imperative bare ("implementations MUST always Y")
-- No double-imperatives: "MUST always" / "SHOULD never" — simplify to MUST / SHOULD NOT
+### CRITICAL: Normative ownership
 
-### CRITICAL: Status legend present and current
+- Each rule has one home: the `spec/v2/core` or `spec/v2/ext` doc that owns it (for a family, the doc whose `> **Normative home:**` line names it). An RFC, guide, or README that restates or changes a rule another doc owns is a finding (`CONTRIBUTING.md` §"An RFC MUST NOT state a rule a core doc owns").
+- Read the owning doc before accepting any new normative sentence elsewhere. No gate checks this.
 
-- Every `spec/v1/*.md` and `RFCS/*.md` carries a header line: `> **Status:** STUB | DRAFT | OUTLINE | FINAL v1`
-- For docs marked FINAL v1: cite the freeze date
-- For RFCs: Status row in the metadata table — `Draft` / `Active` / `Accepted` / `Withdrawn` / `Superseded`
-- Mixing legends (FINAL v1 in an RFC; Active in a spec doc) → CRITICAL
+### CRITICAL: Status lines
 
-### CRITICAL: Per-doc structure (spec docs)
+- Core docs: `> **Status: Stable.**`
+- Extension docs: one of the `spec/v2/ext/README.md` maturity labels; a label changes when its predicate is met, never by hand
+- RFCs: the Status row in the metadata table
+- A v1-style legend (STUB / DRAFT / OUTLINE / FINAL v1) in a v2 doc → CRITICAL
 
-Per `CONTRIBUTING.md` §"Prose specs":
-
-- New surface area MUST include a "Why this exists" paragraph at the top — flag absence as CRITICAL
-- New surface area MUST include an "Open spec gaps" table at the end (or `None.` if comprehensive)
-- Section headings stable; numbered headings allowed where useful
-- Footnotes or sidebars: keep non-normative content out of normative sections
-
-### CRITICAL: Cross-doc link integrity
+### CRITICAL: Link integrity
 
 - Every relative link resolves
-- Spec ↔ schema cross-references: prose links to schema file; schema `$id` is the canonical URL; spec MAY also embed a permalink to the `$id`
-- Spec ↔ RFC: every RFC's "Affects" field names the docs it touches; those docs include a backlink in their "References" section
-- Spec ↔ INTEROP-MATRIX: profile predicates in `profiles.md` exactly match the column headers in INTEROP-MATRIX
+- Prose links to schemas under `schemas/v2/`; a schema's `$id` is `https://openwop.dev/spec/v2/<name>.schema.json`
+- A current-state doc that links into `spec/v1/` for a rule v2 owns → point it at the v2 home
 
-### HIGH: Conformance citation in scenarios
+### HIGH: Spec ↔ conformance
 
-`conformance/src/scenarios/*.test.ts` assertions use `driver.describe('spec.md §section', 'requirement')`. Reviewing a docs change means cross-checking that:
+Scenarios cite spec sections through `req(id, section, requirement)` (`conformance/src/lib/requirement-ids.ts`). When a v2 section changes:
 
-- Every spec section the change touches still has the conformance scenarios that cite it
-- New sections have at least one corresponding scenario citation
-
-This isn't a prose check per se but is the docs ↔ test integrity contract.
-
-### HIGH: Table format consistency
-
-openwop uses Markdown tables heavily. Inconsistencies erode trust:
-
-- Header row uses bold cells or `**Field** | **Value**` style; choose one and stay consistent within a doc
-- Body rows align on `|` — every row has the same column count
-- Empty cells use `—` (em-dash) not blank or `-`
-- Numeric columns right-aligned via `---:`
-- Status / classification columns use the legend exactly (e.g., FINAL v1, never "final v1")
-
-### HIGH: Voice + register
-
-- Normative prose: third-person, declarative ("Hosts MUST emit", "Clients SHOULD retry")
-- Non-normative prose: second-person allowed ("you can," "we recommend")
-- No first-person plural in normative ("we MUST" is wrong; "Hosts MUST" is right)
-- No imperative without subject ("MUST emit X" → "Hosts MUST emit X")
-
-### HIGH: Cross-doc terminology consistency
-
-Check the touched files for terminology drift against the canonical vocabulary:
-
-- "host" / "client" / "implementation" — `host` is the server, `client` is the consumer, `implementation` is either
-- "run" / "execution" / "instance" — use "run" only (per `rest-endpoints.md`)
-- "interrupt" — not "pause" or "checkpoint" (those are different concepts per `interrupt.md`, `replay.md`)
-- "channel" / "channel value" — per `channels-and-reducers.md`, not "state" or "variable"
-- "capability" / "profile" / "scale tier" / "production profile" — distinct, defined in `capabilities.md` / `profiles.md` / `scale-profiles.md` / `production-profile.md`
-- "BYOK" — always uppercase; expand on first use in a doc
-- "AgentRef" / "Agent identity" — title-case proper nouns
-
-### HIGH: README "Document index" drift
+- The scenarios citing it still match what it says
+- A new requirement has at least one `v2-*` scenario, or the gap is recorded
 
 ```bash
-# Every spec/v1/*.md should appear in README's Document index
-ls spec/v1/*.md | sed 's|.*/||' > /tmp/disk-docs.txt
-grep -oE 'spec/v1/[a-z0-9-]+\.md' README.md | sed 's|spec/v1/||' | sort -u > /tmp/readme-docs.txt
-diff /tmp/disk-docs.txt /tmp/readme-docs.txt
+grep -rl "spec/v2/core/<doc>.md" conformance/src/scenarios/
 ```
 
-- Disk has, README doesn't → CRITICAL add a row
-- README has, disk doesn't → CRITICAL fix the link or remove the row
+### HIGH: Structure (v2 core docs)
 
-### MEDIUM: Code-fence dialect consistency
+- Opens with `## Why this exists`
+- Where a doc owns families, its `> **Normative home:**` line lists them and matches `spec/v2/declaration.json`
+- RFC citations appear only on the `*Sources: …*` line (enforced by `check-spec-readability.mjs`)
 
-- TypeScript: ```` ```ts ```` (not `typescript`, not `js` for TS code)
-- JSON: ```` ```json ```` (not `JSON`)
-- Bash / shell: ```` ```bash ```` (not `sh`, not unqualified)
-- HTTP examples: ```` ```http ```` (not `text` for HTTP)
-- YAML (OpenAPI / AsyncAPI snippets): ```` ```yaml ````
-- JSON Schema: ```` ```json ```` (not a separate dialect — flag if you see `jsonschema`)
-- Diffs: ```` ```diff ```` for schema / OpenAPI diffs
+### HIGH: Terminology
+
+- `host` is the server, `client` the consumer, `implementation` either
+- "run", not "execution" or "instance"
+- "interrupt" is the HITL primitive; "pause" and "checkpoint" mean other things (`spec/v2/core/interrupt.md`, `runs.md`, `replay.md`)
+- "family", "capability record", "facet", "profile" as defined in `spec/v2/core/capabilities.md`; at v2 the presence of a record is the claim, there is no `supported` field
+- Expand acronyms (BYOK, SSE, HMAC) on first use in a doc
+
+### HIGH: Voice
+
+- Normative prose: third person, declarative ("Hosts MUST emit …")
+- Non-normative prose may use second person
+- Plain, short sentences; no dated "as of" status lines, session names, or PR war stories in current-state docs
+
+### MEDIUM: Tables and code fences
+
+- Every row has the same column count; empty cells use `—`
+- Fences: `ts`, `json`, `bash`, `http`, `yaml`, `diff`
 
 ### MEDIUM: CHANGELOG hygiene
 
-- `[Unreleased]` section present at top with subsections: `### Added` / `### Changed` / `### Deprecated` / `### Removed` / `### Fixed` / `### Security`
-- Per-package CHANGELOG (conformance, ../openwop-sdks/sdk/typescript) follows the same template
-- Safety-fix changes cite the advisory ID per `SECURITY.md`
-- Released sections have a date (YYYY-MM-DD) and a link or comparison ref to the prior version
+- `## [Unreleased]` on top; one short bullet per change
+- Released headings read `## [X.Y.Z] — YYYY-MM-DD — <title>`
+- `node scripts/check-changelog-shape.mjs` passes
+- Safety-fix entries cite the advisory per `SECURITY.md`
 
-### MEDIUM: ROADMAP + tripwire honesty
+### MEDIUM: INTEROP-MATRIX, ROADMAP, SECURITY honesty
 
-- Per `ROADMAP.md` and `MAINTAINERS.md`: vendor-neutral migration tripwire (≥1 non-steward maintainer) — has this changed?
-- "DONE" claims supported by visible artifacts (RFC at Accepted; conformance scenarios; reference-host evidence)
-- Active quarter has explicit deliverables, not aspirational language
+- INTEROP-MATRIX counts match the bundle in `evidence/v2-host-bundles/` each row cites
+- ROADMAP "done" claims point at visible artifacts (Accepted RFC, scenarios, host evidence)
+- SECURITY.md tallies match `SECURITY/invariants.yaml` (`check-doc-tallies.mjs`); response times match `SECURITY/response-sla.json`
+- No private deployment identifiers, secrets, or internal URLs
 
-### MEDIUM: INTEROP-MATRIX prose
+### LOW: Headings and polish
 
-- Reading rows section accurately describes how to derive a row
-- "Add A Host" steps actually work end-to-end (validate by following them for a hypothetical host)
-- No private deployment identifiers, secrets, or internal result paths
-
-### MEDIUM: SECURITY surface prose
-
-- `SECURITY.md` reporting SLA matches the triage SLA in `CONTRIBUTING.md` §"Triage SLA"
-- Threat-model docs (`SECURITY/threat-model-*.md`) cross-reference the relevant spec docs
-- `SECURITY/invariants.yaml` rows include a stable ID, the MUST-NOT, and the conformance scenario file
-
-### LOW: Heading hierarchy
-
-- `#` only once per doc (title)
-- `##` for top-level sections
-- `###` for subsections; `####` permitted, deeper levels strongly discouraged
-- No skipped levels (`##` to `####`)
-
-### LOW: Sentence-level polish
-
-- No double spaces
-- Em-dashes (`—`) with no surrounding spaces, OR en-dashes (`–`) in numeric ranges; consistent within a doc
-- Oxford comma: use throughout
-- Avoid passive voice in normative sentences ("X SHOULD be done by hosts" → "Hosts SHOULD do X")
-- Avoid jargon without definition; first use → expand or link
-
-### LOW: Diagrams + ASCII art
-
-- ASCII art used sparingly; prefer prose tables for state machines, transitions
-- If diagrams added, ensure they render in the spec site build (`../openwop-site/site/src/build.mjs`)
+- One `#` per doc; no skipped levels
+- No double spaces; consistent dash style within a doc
+- Passive voice out of normative sentences
 
 ---
 
@@ -453,10 +395,10 @@ diff /tmp/disk-docs.txt /tmp/readme-docs.txt
 
 | Severity | Definition | Action |
 |---|---|---|
-| **CRITICAL** | Normative ambiguity (lowercase RFC 2119 used normatively, missing Status, broken link in normative path) | Must fix before merge |
-| **HIGH** | Terminology drift, table inconsistency, README index drift | Should fix before merge |
-| **MEDIUM** | Code-fence dialect, CHANGELOG hygiene, ROADMAP honesty | Fix recommended |
-| **LOW** | Heading hierarchy, sentence polish, diagram positioning | Fix if time permits |
+| **CRITICAL** | Normative ambiguity, a rule stated outside its home, missing status, broken link in a normative path | Fix before merge |
+| **HIGH** | Spec ↔ scenario drift, terminology drift, README index drift | Fix before merge |
+| **MEDIUM** | Table/fence consistency, CHANGELOG hygiene, honesty of counts | Fix recommended |
+| **LOW** | Heading hierarchy, polish | Fix if time permits |
 
 ---
 
@@ -465,49 +407,38 @@ diff /tmp/disk-docs.txt /tmp/readme-docs.txt
 ```
 ## CRITICAL Issues
 
-1. [RFC-2119] **spec/v1/<doc>.md:42 — lowercase "must" used as normative imperative**
+1. [RFC-2119] **spec/v2/core/<doc>.md:42 — lowercase "must" used as a requirement**
    - Current: "Hosts must include the `eventId` field."
-   - Issue: Lowercase "must" is ambiguous to non-native English readers and fails standard ID parsers (per IETF RFC 2119)
-   - Fix: Replace with capital MUST: "Hosts MUST include the `eventId` field."
+   - Fix: "Hosts MUST include the `eventId` field."
 
-2. [STRUCTURE] **spec/v1/new-surface.md — missing "Why this exists" paragraph**
-   - Issue: New surface area docs require a "Why this exists" paragraph at the top per CONTRIBUTING.md §"Prose specs"
-   - Fix: Add 2–3 sentence rationale explaining what this doc covers and why it lives at the spec layer (not impl)
+2. [OWNERSHIP] **RFCS/NNNN-<slug>.md:88 — restates the retry rule `webhooks.md` owns, with a different bound**
+   - Fix: Remove the sentence; record the disagreement as an open question and change `spec/v2/core/webhooks.md` in the same PR if the RFC is right.
 
 ## HIGH Issues
 
-3. [LINK] **spec/v1/observability.md:88 — broken link to `./old-name.md`**
-   - Fix: Update to the current filename, or remove the reference
-
-4. [README-INDEX] **README.md — `spec/v1/host-capabilities.md` missing from Document index**
-   - Fix: Add row with `Status: FINAL v1`, word count, and one-line summary
+3. [LINK] **docs/<guide>.md:12 — links `spec/v1/auth.md` for a rule v2 owns**
+   - Fix: Link `spec/v2/core/identity.md` §<section>.
 
 ## MEDIUM Issues
 
-5. [TERM] **spec/v1/<doc>.md — uses "checkpoint" where "interrupt" is meant**
-   - Fix: Per interrupt.md, "interrupt" is the canonical HITL primitive; "checkpoint" refers to a different concept in replay.md
-
-## LOW Issues
-
-6. [POLISH] **CHANGELOG.md — double spaces between sentences in entry**
-   - Fix: Single space
+4. [COUNTS] **INTEROP-MATRIX.md — row counts differ from `evidence/v2-host-bundles/<host>.json`**
+   - Fix: Re-read the bundle and correct the row.
 ```
 
 ---
 
 ## Pre-merge checklist (docs-side)
 
-- [ ] No lowercase RFC 2119 keywords used as normative imperatives
-- [ ] Every changed `spec/v1/*.md` and `RFCS/*.md` carries a Status legend
-- [ ] New surface area has "Why this exists" + "Open spec gaps" sections
-- [ ] All relative cross-doc links resolve
-- [ ] README "Document index" matches `spec/v1/` on disk
-- [ ] Tables in changed files have consistent header style + column alignment
-- [ ] Code-fence dialects consistent (`ts`, `json`, `bash`, `yaml`, `http`, `diff`)
-- [ ] CHANGELOG `[Unreleased]` entry added for prose changes that warrant one
-- [ ] Terminology matches canonical vocabulary (host / client / run / interrupt / channel / capability / profile)
-- [ ] No first-person plural ("we MUST") in normative prose
-- [ ] Reference-host advertisement in INTEROP-MATRIX matches actual evidence files
+- [ ] `node scripts/check-spec-readability.mjs` passes
+- [ ] No lowercase RFC 2119 words used as requirements
+- [ ] Every changed v2 doc and RFC carries its status line or row
+- [ ] No rule stated outside its normative home
+- [ ] All relative links resolve
+- [ ] README Document index matches `spec/v2/core/` and **Total** is right
+- [ ] Spec ↔ scenario citations still match
+- [ ] CHANGELOG entry added where warranted
+- [ ] INTEROP-MATRIX and SECURITY counts match their sources
+- [ ] `spec/v1/` untouched
 
 ---
 
@@ -515,10 +446,10 @@ diff /tmp/disk-docs.txt /tmp/readme-docs.txt
 
 After listing findings, provide:
 
-1. **Normative clarity score:** Crystal-clear / Mostly clear / Ambiguous / Unparseable
-2. **Implementer reading test:** Can a third-party host implement the wire surface from these docs alone, without conversation with the maintainer? Yes / Partially / No
-3. **Blocking issues:** Count that must be resolved before merge
-4. **Top 3 priorities:** Most impactful fixes for normative clarity
+1. **Normative clarity:** Crystal-clear / Mostly clear / Ambiguous / Unparseable
+2. **Implementer reading test:** Can a third-party host implement the surface from these docs alone? Yes / Partially / No
+3. **Blocking issues:** count
+4. **Top 3 priorities**
 
 ---
 
@@ -529,10 +460,10 @@ After listing findings, provide:
 | `proceed` | Accept findings and start rewrites |
 | `fix all critical` | Apply all CRITICAL fixes |
 | `fix all` | Apply all fixes by severity |
-| `deep dive [category]` | Expand analysis on a category (normative / terminology / links / tables / a11y / tokens / breakpoints) |
-| `check rfc2119` | Run only the RFC 2119 lowercase audit (Mode B) |
-| `check links` | Run only the cross-doc link integrity check (Mode B) |
-| `check terms` | Run only the terminology consistency check (Mode B) |
+| `deep dive [category]` | Expand analysis on a category (normative / ownership / terminology / links / tables / a11y / tokens / breakpoints) |
+| `check rfc2119` | Run only the RFC 2119 audit (Mode B) |
+| `check links` | Run only the link integrity check (Mode B) |
+| `check readability` | Run `scripts/check-spec-readability.mjs` (Mode B) |
 | `check tokens` | Run only the hard-coded value audit (Mode A) |
 | `check a11y` | Run only the accessibility audit (Mode A) |
 | `done` | Complete review |
@@ -543,10 +474,12 @@ After listing findings, provide:
 
 | Doc / Skill | Purpose |
 |---|---|
-| `DESIGN.md` (repo root) | **Source of truth for Mode A.** Typography, color tokens, spacing, components, accessibility, mobile breakpoints, localization, light/dark mode, no-hard-coded-values policy. Every Mode A finding cites a DESIGN.md section. |
-| `/code-review` | Wire-side review (schemas, OpenAPI, AsyncAPI, SDK code) |
-| `/architect` | Wire-shape stability, version negotiation, capability gating |
-| `/update-docs` | Sync README index / CHANGELOG / INTEROP-MATRIX / RFC index after a change lands |
-| `/browser` | Validate the site renders the corpus correctly |
-| `/cleanup` | Address stale RFCs, drift, dead fixtures, orphaned schemas |
+| `../openwop-site/DESIGN.md` | Source of truth for Mode A |
+| `../openwop-app/DESIGN.md` | Source of truth for Mode A (app) |
+| `CONTRIBUTING.md` | Status labels and prose rules for Mode B |
+| `/spec-readability` | Rewrite v2 spec prose for readability without changing a rule |
+| `/code-review` | Wire-side review (schemas, OpenAPI, AsyncAPI, scenarios) |
+| `/architect` | Wire-shape stability, versioning, family gating |
+| `/update-docs` | Sync README, CHANGELOG, INTEROP-MATRIX after a change lands |
+| `/cleanup` | Stale RFCs, drift, dead fixtures, orphaned schemas |
 | `/pr` | Create the pull request |

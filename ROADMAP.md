@@ -1,7 +1,6 @@
 # OpenWOP Roadmap
 
 > **Status:** Living document. Updated as milestones land.
-> **Last reviewed:** 2026-10-05 (v2 is the current major; v1 is in its overlap period).
 
 This roadmap covers the current **v2** major, the gated candidates for later v2 minors, and the ecosystem work around the protocol (infrastructure, SDKs, governance).
 
@@ -11,12 +10,12 @@ This roadmap covers the current **v2** major, the gated candidates for later v2 
 
 - **Contract:** the documents in `spec/v2/core/`, with optional extensions in `spec/v2/ext/`. Schemas are in `schemas/v2/`, and the HTTP and event APIs are `api/v2/openapi.yaml` and `api/v2/asyncapi.yaml`.
 - **Conformance:** `@openwop/openwop-conformance` 2.x. `openwop-core-standard` is the floor listed in `spec/v2/profiles.json`.
-- **SDKs:** `@openwop/openwop` (TypeScript), `openwop-client` (Python) and `github.com/openwop/openwop-sdks/go` (Go), at 2.x in [`openwop/openwop-sdks`](https://github.com/openwop/openwop-sdks).
+- **SDKs:** `@openwop/openwop` (TypeScript), `openwop-client` (Python) and `github.com/openwop/openwop-sdks/go/v2` (Go), at 2.x in [`openwop/openwop-sdks`](https://github.com/openwop/openwop-sdks).
 - **Hosts:** [`INTEROP-MATRIX.md`](./INTEROP-MATRIX.md) lists each host's newest certified bundle.
 
 See [`CHANGELOG.md`](./CHANGELOG.md) for the release record and [`docs/PROTOCOL-STATUS.md`](./docs/PROTOCOL-STATUS.md) for the live tally.
 
-**The v1 overlap.** v1.x receives only additive and safety-fix releases until v1 end-of-support. `evidence/v1-end-of-support.json` computes that date from the host-inventory rule in `COMPATIBILITY.md` §5; it is no earlier than 2026-12-04.
+**v1.** v1 reached end of support on 2026-10-04 ([RFC 0234](./RFCS/0234-maintainer-set-v1-end-of-support.md)). `spec/v1/` and the v1 wire are a frozen tree, kept as history and no longer edited. A host may retire v1 from that date but is not required to.
 
 ## Candidates (gated)
 
@@ -25,7 +24,7 @@ Each candidate ships only when its gate condition is met. The list is descriptiv
 | Candidate | Gate |
 | --- | --- |
 | **WASM Component Model sub-RFC** | A first adopter requests `runtime.language: "wasm-component"` packs |
-| **Rust SDK v0.1** | An adopter asks for it, or a non-steward host lands in Rust |
+| **Rust SDK** | An adopter asks for it, or a non-steward host lands in Rust |
 | **Post-audit obligations for the published `core.openwop.*` packs** | The external security audit completes |
 | **mTLS certificate-matrix hardening** | Operators need documented certificate recipes |
 | **Multi-region idempotency end-to-end fixture** | A host advertises `capabilities.idempotency.crossRegion` |
@@ -48,7 +47,7 @@ These initiatives expand the openwop ecosystem without changing the wire contrac
 
 ### Optional capability profiles
 
-A capability profile is a cluster of optional behaviors a host advertises at `/.well-known/openwop`. Each profile has its own conformance scenarios in `@openwop/openwop-conformance`, which run only when the host advertises the profile. `spec/v2/profiles.json` lists the v2 profiles and their floors, and [`docs/PROFILE-DECISION-GUIDE.md`](https://github.com/openwop/openwop/blob/48c1f569eb8a8f4ed3ae95bdacf7e757707ce855/docs/PROFILE-DECISION-GUIDE.md) helps a host choose.
+A capability profile is a cluster of optional behaviors a host advertises at `/.well-known/openwop`. Each profile has its own conformance scenarios in `@openwop/openwop-conformance`, which run only when the host advertises the profile. `spec/v2/profiles.json` lists the v2 profiles and their floors. [`docs/IMPLEMENT-CORE.md`](./docs/IMPLEMENT-CORE.md) covers the `openwop-core-standard` floor, and [`docs/IMPLEMENTER-PATH.md`](./docs/IMPLEMENTER-PATH.md) walks a host from first build to a certified bundle.
 
 ### Hosted infrastructure
 
@@ -58,7 +57,7 @@ A capability profile is a cluster of optional behaviors a host advertises at `/.
 | Hosted docs + conformance leaderboard site (`openwop.dev`) | **Live** | Built from [`openwop/openwop-site`](https://github.com/openwop/openwop-site) |
 | Public CI for community contributions | Live for steward PRs | `pr-checks.yml` and `openwop-spec.yml` run on every PR on GitHub-hosted runners, without secrets for forks. It is proven once the first PR from a fork runs green |
 
-- **Registry.** It serves per `registry-operations.md`. The pack inventory is [`docs/PACK-CATALOG.md`](./docs/PACK-CATALOG.md). Publishing, yanking, deprecation and key rotation go through pull requests on GitHub. `conformance/src/scenarios/registry-public.test.ts` is its public healthcheck.
+- **Registry.** It serves the registry rules in [`spec/v2/core/packs.md`](./spec/v2/core/packs.md). The pack inventory is [`docs/PACK-CATALOG.md`](./docs/PACK-CATALOG.md). Publishing, yanking, deprecation and key rotation go through pull requests on GitHub. `conformance/src/scenarios/registry-public.test.ts` is its public healthcheck.
 - **Site.** It renders this corpus at a pinned commit and tracks `main` through a daily pin bump.
 - **CI.** The workflows are in `.github/workflows/`.
 
