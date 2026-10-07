@@ -14402,8 +14402,8 @@
       "surface": "No host advertises `multiPartyConversation` together with the §E fixture, so none of the §F rows has a witness.",
       "witness": "unclassified",
       "requirementId": null,
-      "disposition": "externally-gated",
-      "target": "multi-party-council-host",
+      "disposition": "closed",
+      "target": null,
       "sources": [
         {
           "file": "RFCS/registers/0239-council-roster-input.gaps.md",

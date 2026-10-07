@@ -8,6 +8,7 @@ Entries before this file was condensed carried full development detail. That tex
 
 ## [Unreleased]
 
+- **RFC 0239 Accepted (provisional).** Tier-1 evidence: the v2 reference host's certified public cut on suite 2.45.23 (512/0/0, build `1492562f`) records the three council-roster ids `executed-pass`; gap G1 closes, so the packed `gaps.json` changes.
 - **2.45.25 cycle (suite):** new `v2-wasm-abi-reject` reads a WASM pack's rejection at load from what it prevents: the ABI-999 pack listed in `loadedPacks`, or its node completing (`conformance-wasm-pack-abi-mismatch`). The `frontend-plugin-packs` schema legs move to `src/coherence/` (RFC 0238 G3).
 - **Erratum: `provider_policy_denied` reasons are snake_case.** The registry (from RFC 0228) spelled `details.reason` in kebab-case; the prose, v1 and every measured host use `provider_disabled`, `byok_required`, `byok_required_but_unresolved`, `model_not_allowed`. They are reasons, not codes.
 - **Corpus cleanup, part 2.** Root docs, the conformance package docs, the remaining `docs/` guides and the maintainer skills are rewritten v2-first: current versions, the 2026-10-04 v1 end of support, the real 10-step gate and two-package release; stale history is gone.
@@ -23,7 +24,6 @@ Entries before this file was condensed carried full development detail. That tex
 - **RFC 0236 Accepted (provisional).** Tier-1 evidence: the v2 reference host's certified public cut on suite 2.45.21 (505/0/0, build `9543718c`) records all six host-event ids `executed-pass`; gaps G1 and G2 close, so the packed `gaps.json` changes.
 - **2.45.21 cycle (suite):** `v2-host-event-delivery` splits no-fan-out into its own `it`, so `0236.webhook.host-variant` records a row. A bundle records one requirement id per `it`, and the shared `it` hid it.
 - **RFC 0236 Active (window waived): host events.** `events.md` §Host events, a `hostEvents` family, `host-event.schema.json`, a `{ hostEvent }` webhook body and dead-letter record, an emit seam, `channel.presence` as an ephemeral host event, and the `hostEvents` channel tenant-scoped.
-- **RFC 0236 filed (Draft): host events.** A runless, tenant-scoped envelope with no `runId` or `sequence`, `durable` or `ephemeral`, on `/host/events` and (durable) webhooks. It gives `channel.presence` a lawful shape and runless vendor events a home (openwop-app ADR 0812).
 - **`channelPresence` restated at v2.** `conversation.md` adds RFC 0110's advertise ⇒ emit and no-delivery-to-a-non-member rules, witnessed by `v2-channel-presence-delivery` through the §13 seam (now in `api/seams-v2.yaml`) and invariant `channel-presence-member-only-delivery`.
 - **RFC 0235 Accepted (provisional).** Tier-1 evidence: the v2 reference host's certified public cut on published suite 2.45.18 (build `e5f27708`, 497/0/0) records all four `If-None-Match` requirement ids `executed-pass`. Gaps G1 and G2 closed; risk R1 mitigated.
 - **2.45.19 cycle (suite):** new leg `0184.mint-no-tilde` — a host MUST NOT mint a tenant-bound id containing `~` (RFC 0184 §A.2). It bites only when the suite's credential sits in a non-clean tenant; openwop-app's defect (app ADR 0814) hid behind `default`.

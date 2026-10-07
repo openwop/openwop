@@ -215,7 +215,7 @@
     "spec/v1/event-codemap.json": "3da60d884157793a360da532a9fcbbfb5285636db325a74cec94b34622186d97",
     "spec/v1/event-codemap.schema.json": "d05933b2e88103aff51a2f774df97b9bda065e0fc88dbd9b114cc47a32189174",
     "spec/v1/extensions.json": "79a60754aa16cbdbdb604f8e5c00038af535a1690a4d07bd5ff7c38f0256a7bc",
-    "spec/v1/gaps.json": "ab22f506255eef90fba09585776dce09faa803207807eccbb3ea1c1a6cc80480",
+    "spec/v1/gaps.json": "2d76742ba842b218989cdff5bcb72460e7ea4c0fe3b55ef29ef51be1565d8eb3",
     "spec/v1/gaps.schema.json": "8fd83259f556553c9df0f53e7a82ca8c2a4771d471197f69b4e2ae0ceeacfd66",
     "spec/v1/migrations.json": "4c50760be70cb644d02427bcaf5749606700edf4513f423903cf3b1d12f5c300",
     "spec/v1/migrations.schema.json": "886779aa6c22e646db097f5df210adb018a4dd14a7b815465a18c8a7056c8f72",
@@ -317,5 +317,5 @@
     "spec/v2/retention-floors.json": "eaf3722d95c79947af1d4269ef85117e126518c588cfcf1a2b21b97269f51624",
     "spec/v2/surface-baseline.json": "1bc7b1cbf33591b9e9f406d2ce2de08b306dc6986e365a29d20a78331bce7344"
   },
-  "corpusCommit": "c885dcb87307cde40913b20302b83626ce2c4b08"
+  "corpusCommit": "97d49675ddc39bd7bf139c5226bcf9e8f539d978"
 }
