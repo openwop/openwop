@@ -255,8 +255,8 @@ Defects outside the spec:
       openwop-app serves `getUiPluginFrame` and `dispatchUiPluginRequest` (both allowlist halves
       server-side), mounts plugins from the frame URL, installs `ui-plugin-pack-narrow` and
       `ui-plugin-narrow-artifact`, advertises `uiPlugins.served`, and cuts certified (G1).
-- [ ] **Move the always-on schema legs of `frontend-plugin-packs.test.ts` to `src/coherence/`**
-      (RFC 0238 G3; `conformance.md` §Two products).
+- [x] **Move the always-on schema legs of `frontend-plugin-packs.test.ts` to `src/coherence/`**
+      (RFC 0238 G3; `conformance.md` §Two products). Done in 2.45.25: `src/coherence/frontend-plugin-schemas.test.ts`.
 - [ ] **RFC 0239** (`Active` 2026-10-06, window waived): the council roster seat. Owed for
       `Accepted`: a host advertising `multiPartyConversation` serves the two council fixtures and
       records the three `openwop.requirement.0239.*` ids on a certified bundle (G1).
