@@ -14,24 +14,19 @@ See `GOVERNANCE.md` §"Spec change process" for the rules per category.
 
 ## Surface touched
 
-- [ ] Prose spec (which file: ...)
+- [ ] Prose spec under `spec/v2/` (which file: ...)
 - [ ] JSON Schema
 - [ ] OpenAPI / AsyncAPI
-- [ ] SDK (`@openwop/openwop` / `openwop-client` / `openwopclient`)
 - [ ] `@openwop/openwop-conformance` suite
-- [ ] Examples
 - [ ] Governance / contribution / release tooling
 - [ ] CHANGELOG only
 
 ## CI gates
 
-- [ ] Full local gate passes (`npm run openwop:check`)
+- [ ] Full local gate passes (`npm run openwop:check`, after the regen chain)
 - [ ] OpenAPI lints clean
 - [ ] AsyncAPI lints clean
-- [ ] SDK typechecks
 - [ ] Conformance offline scenarios pass
-- [ ] Examples validate against schemas
-- [ ] Link check passes
 
 ## Conformance impact
 
@@ -47,4 +42,4 @@ See `GOVERNANCE.md` §"Spec change process" for the rules per category.
 
 ## RFC reference (if applicable)
 
-<!-- For normative additions and breaking changes. Link the RFC issue. -->
+<!-- For normative additions and breaking changes, link the RFC under `RFCS/`. SDK, example-host and site changes belong in openwop-sdks, openwop-examples and openwop-site. -->

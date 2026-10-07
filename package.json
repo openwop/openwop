@@ -2,7 +2,7 @@
   "name": "openwop-spec-corpus",
   "version": "1.1.0",
   "private": true,
-  "description": "OpenWOP v1.0 protocol specification corpus and release tooling.",
+  "description": "OpenWOP protocol specification corpus (v2 current; v1 frozen) and release tooling.",
   "license": "Apache-2.0",
   "scripts": {
     "protocol:status": "node scripts/generate-protocol-status.mjs --write",

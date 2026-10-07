@@ -97,7 +97,7 @@ Machine-readable artifacts: [`schemas/v2/`](./schemas/v2/), [`api/v2/openapi.yam
 
 - **[`QUICKSTART-10MIN.md`](./QUICKSTART-10MIN.md):** boot the v2 reference host and run a workflow over curl, an SDK and SSE.
 - **[`QUICKSTART.md`](./QUICKSTART.md):** the full v2 walkthrough against any host: discovery, auth, runs, streaming, webhooks, fork and replay, packs, conformance.
-- **Guides:** [`docs/IMPLEMENTER-PATH.md`](./docs/IMPLEMENTER-PATH.md) (from zero to a published certification), [`docs/PROFILE-DECISION-GUIDE.md`](./docs/PROFILE-DECISION-GUIDE.md), [`docs/IMPLEMENTATION-CERTIFICATION.md`](./docs/IMPLEMENTATION-CERTIFICATION.md), [`docs/PRODUCTION-RUNBOOK.md`](./docs/PRODUCTION-RUNBOOK.md), [`docs/SECURITY-OPERATOR-GUIDE.md`](./docs/SECURITY-OPERATOR-GUIDE.md), [`docs/PACK-AUTHOR-QUICKSTART.md`](./docs/PACK-AUTHOR-QUICKSTART.md).
+- **Guides:** [`docs/IMPLEMENTER-PATH.md`](./docs/IMPLEMENTER-PATH.md) (from zero to a published certification), [`docs/PRODUCTION-RUNBOOK.md`](./docs/PRODUCTION-RUNBOOK.md), [`docs/SECURITY-OPERATOR-GUIDE.md`](./docs/SECURITY-OPERATOR-GUIDE.md), [`docs/PACK-AUTHOR-QUICKSTART.md`](./docs/PACK-AUTHOR-QUICKSTART.md).
 
 ## Repositories
 

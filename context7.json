@@ -28,20 +28,11 @@
   "excludeFiles": [
     "TODO.md",
     "CLAUDE.md",
-    "AUDIT-RESPONSE-2026-05.md",
-    "CONFORMANCE-RUNS-2026-05.md",
     "WAIVER-AUDIT-2026-08-20.md",
     "WAIVER-RETROSPECTIVE-REGISTER.md",
-    "RETROSPECTIVE-QUEUE.md",
     "SECTION-B-REVIEW-PACKET.md",
     "RFC-0147-SELF-AUDIT.md",
-    "PROTOCOL-GAP-CLOSURE-PLAN.md",
-    "OPENWOP-FEATURE-GAP-ANALYSIS.md",
-    "OPENWOP-AGENT-RUNTIME-HANDOFF.md",
-    "OPENWOP-CANVAS-TYPE-PACKS-RESEARCH.md",
-    "PACKS-MVP-PLAN.md",
-    "REQUIREMENT-REGISTRY-FEASIBILITY.md",
-    "autonomous-agent-runtime-plan.md"
+    "REQUIREMENT-REGISTRY-FEASIBILITY.md"
   ],
   "rules": [
     "OpenWOP is a wire protocol, not a library: talk to a host over REST and SSE; the TypeScript, Python and Go SDKs are thin clients of the same wire surface.",

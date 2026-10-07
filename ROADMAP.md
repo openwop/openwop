@@ -48,7 +48,7 @@ These initiatives expand the openwop ecosystem without changing the wire contrac
 
 ### Optional capability profiles
 
-A capability profile is a cluster of optional behaviors a host advertises at `/.well-known/openwop`. Each profile has its own conformance scenarios in `@openwop/openwop-conformance`, which run only when the host advertises the profile. `spec/v2/profiles.json` lists the v2 profiles and their floors, and [`docs/PROFILE-DECISION-GUIDE.md`](./docs/PROFILE-DECISION-GUIDE.md) helps a host choose.
+A capability profile is a cluster of optional behaviors a host advertises at `/.well-known/openwop`. Each profile has its own conformance scenarios in `@openwop/openwop-conformance`, which run only when the host advertises the profile. `spec/v2/profiles.json` lists the v2 profiles and their floors, and [`docs/PROFILE-DECISION-GUIDE.md`](https://github.com/openwop/openwop/blob/48c1f569eb8a8f4ed3ae95bdacf7e757707ce855/docs/PROFILE-DECISION-GUIDE.md) helps a host choose.
 
 ### Hosted infrastructure
 

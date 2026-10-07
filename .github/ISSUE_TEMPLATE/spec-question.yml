@@ -8,7 +8,7 @@ body:
     attributes:
       label: Spec section
       description: Doc + section heading.
-      placeholder: "rest-endpoints.md §'Idempotency'"
+      placeholder: "spec/v2/core/idempotency.md §'Replay'"
     validations:
       required: true
 

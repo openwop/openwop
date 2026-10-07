@@ -1,6 +1,6 @@
 # OpenWOP Pack Catalog
 
-> Categorized snapshot of the signed packs published at [`packs.openwop.dev`](https://packs.openwop.dev) as of **2026-06-24**. Grouped by domain (not alphabetical) so workflow authors can find what they need by use case; the live [`/v1/index.json`](https://packs.openwop.dev/v1/index.json) is the authoritative, complete list (the grouped tables below are a curated view and may lag the registry). Authoring guide: [`docs/AUTHORING-CANVAS-PACKS.md`](AUTHORING-CANVAS-PACKS.md). Architecture rationale: [`docs/CANVAS-PACKS-INVENTORY.md`](CANVAS-PACKS-INVENTORY.md).
+> Categorized snapshot of the signed packs published at [`packs.openwop.dev`](https://packs.openwop.dev) as of **2026-06-24**. Grouped by domain (not alphabetical) so workflow authors can find what they need by use case; the live [`/v1/index.json`](https://packs.openwop.dev/v1/index.json) is the authoritative, complete list (the grouped tables below are a curated view and may lag the registry). Authoring guide: [`docs/AUTHORING-CANVAS-PACKS.md`](AUTHORING-CANVAS-PACKS.md). Architecture rationale: [`docs/CANVAS-PACKS-INVENTORY.md`](https://github.com/openwop/openwop/blob/48c1f569eb8a8f4ed3ae95bdacf7e757707ce855/docs/CANVAS-PACKS-INVENTORY.md).
 
 **Catalog status:** 156 packs, 282 published versions (registry as of 2026-09-26). Every version is signed under one of four keys. `openwop-team-1` signs 239 (230 `core.openwop.*` plus 9 `vendor.openwop*`), `myndhyve-internal-1` signs the 40 `vendor.myndhyve.*` versions, `openwop-registry-root` signs 2 (one core, one `vendor.openwop.*`), and `community-openwop-team-demo-1` signs the 1 community demo. The registry's `signingKeys[]` permits both `openwop-registry-root` and `openwop-team-1` for `core.openwop.*`, so both kinds of core signature verify. Catalog updates on each merged pack-publishing PR.
 
@@ -264,7 +264,7 @@ Each peer-dep in this catalog traces to a section in [`spec/v1/host-capabilities
 | `secrets.resolveInPack`                                                     | `ads-publish-meta`, `ads-publish-google`, `ads-publish-tiktok` | #52     |
 | `aiProviders.videoGeneration`                                               | `ads-video-generate`                                           | #53     |
 
-Future Phase D extensions are gated on [RFC 0013 (Workflow-chain packs)](../RFCS/0013-workflow-chain-packs.md) which proposes a new pack kind for the 55 editor-preset typeIds documented in [`docs/CANVAS-PACKS-INVENTORY.md`](CANVAS-PACKS-INVENTORY.md).
+Future Phase D extensions are gated on [RFC 0013 (Workflow-chain packs)](../RFCS/0013-workflow-chain-packs.md) which proposes a new pack kind for the 55 editor-preset typeIds documented in [`docs/CANVAS-PACKS-INVENTORY.md`](https://github.com/openwop/openwop/blob/48c1f569eb8a8f4ed3ae95bdacf7e757707ce855/docs/CANVAS-PACKS-INVENTORY.md).
 
 ---
 
@@ -273,6 +273,6 @@ Future Phase D extensions are gated on [RFC 0013 (Workflow-chain packs)](../RFCS
 - [`spec/v1/node-packs.md`](../spec/v1/node-packs.md) — node-pack manifest format + registry HTTP API
 - [`spec/v1/host-capabilities.md`](../spec/v1/host-capabilities.md) — every `host.*` capability surface
 - [`spec/v1/registry-operations.md`](../spec/v1/registry-operations.md) — namespace claims, signing keys, publish lifecycle
-- [`docs/CANVAS-PACKS-INVENTORY.md`](CANVAS-PACKS-INVENTORY.md) — v3 closure: Phase A+B+C delivery log
+- [`docs/CANVAS-PACKS-INVENTORY.md`](https://github.com/openwop/openwop/blob/48c1f569eb8a8f4ed3ae95bdacf7e757707ce855/docs/CANVAS-PACKS-INVENTORY.md) — v3 closure: Phase A+B+C delivery log
 - [`docs/AUTHORING-CANVAS-PACKS.md`](AUTHORING-CANVAS-PACKS.md) — how to author a pack from scratch
 - [`registry/README.md`](https://github.com/openwop/openwop-registry/blob/main/registry/README.md) — publish workflow against `packs.openwop.dev`

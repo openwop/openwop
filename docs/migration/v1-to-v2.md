@@ -1,6 +1,6 @@
 # Migrating from OpenWOP v1 to v2
 
-> **This is not an additive upgrade.** v2 is a new major with its own path space, its own identifier grammars, and its own discovery representation. Unlike [v1.0 → v1.1](./v1.0-to-v1.1.md), which required no code changes, every host that serves v2 mounts new surface and changes the shape of ids it emits. Read [`COMPATIBILITY.md`](../../COMPATIBILITY.md) §5 and [`spec/v2/core/versioning.md`](../../spec/v2/core/versioning.md) before starting.
+> **This is not an additive upgrade.** v2 is a new major with its own path space, its own identifier grammars, and its own discovery representation. Unlike [v1.0 → v1.1](https://github.com/openwop/openwop/blob/48c1f569eb8a8f4ed3ae95bdacf7e757707ce855/docs/migration/v1.0-to-v1.1.md), which required no code changes, every host that serves v2 mounts new surface and changes the shape of ids it emits. Read [`COMPATIBILITY.md`](../../COMPATIBILITY.md) §5 and [`spec/v2/core/versioning.md`](../../spec/v2/core/versioning.md) before starting.
 
 > **Status: in flight.** The v2 charter's Phase 5 exit requires this guide to cite **both hosts' PR series**. The series are cited below as they stand on 2026-09-05 — merged items by number, open items marked open — and the guide is complete on this point only when both hosts' origin bundles are in the INTEROP-MATRIX v2 table. It is published now because its contents are what the migrations have *already* cost, and a host starting today should not have to rediscover them. The PR series land when the hosts do.
 

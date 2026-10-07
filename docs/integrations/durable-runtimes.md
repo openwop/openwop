@@ -94,7 +94,7 @@ Durable runtimes don't give you these for free; you implement them as host conce
 3. **Event-type vocabulary.** Project durable-runtime events to OpenWOP's canonical names per `observability.md`. Don't ship vendor event types under the `run.*` / `node.*` / `agent.*` / `cap.*` prefixes.
 4. **Secret redaction (SR-1).** BYOK plaintext NEVER touches the durable journal in plaintext. Substitute `[REDACTED:<id>]` at the host layer BEFORE handing data to the runtime per [`auth.md`](../../spec/v1/auth.md) + RFC 0004 §D.
 5. **Signed audit log** if you claim `openwop-audit-log-integrity`. The durable runtime's journal is NOT the audit log; the audit log is a separate Ed25519-checkpointed surface per [`auth-profiles.md`](../../spec/v1/auth-profiles.md) §"openwop-audit-log-integrity".
-6. **Capability advertisement honesty.** Strict-mode conformance fails if you over-claim. See [`docs/PROFILE-DECISION-GUIDE.md`](../PROFILE-DECISION-GUIDE.md).
+6. **Capability advertisement honesty.** Strict-mode conformance fails if you over-claim. See [`docs/PROFILE-DECISION-GUIDE.md`](https://github.com/openwop/openwop/blob/48c1f569eb8a8f4ed3ae95bdacf7e757707ce855/docs/PROFILE-DECISION-GUIDE.md).
 
 ---
 
@@ -154,7 +154,7 @@ What you do write:
 - [`spec/v1/storage-adapters.md`](../../spec/v1/storage-adapters.md) — `RunEventLogIO` + `SuspendIO` contracts that durable runtimes implement.
 - [`spec/v1/observability.md`](../../spec/v1/observability.md) — canonical event vocabulary you project from runtime events.
 - [`docs/IMPLEMENTER-PATH.md`](../IMPLEMENTER-PATH.md) — full implementer path.
-- [`docs/PROFILE-DECISION-GUIDE.md`](../PROFILE-DECISION-GUIDE.md) — profile-selection decisions.
+- [`docs/PROFILE-DECISION-GUIDE.md`](https://github.com/openwop/openwop/blob/48c1f569eb8a8f4ed3ae95bdacf7e757707ce855/docs/PROFILE-DECISION-GUIDE.md) — profile-selection decisions.
 - Temporal: [docs.temporal.io](https://docs.temporal.io/)
 - Restate: [docs.restate.dev](https://docs.restate.dev/)
 - DBOS: [docs.dbos.dev](https://docs.dbos.dev/)

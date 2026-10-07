@@ -20,7 +20,7 @@ OpenWOP today publishes **node packs** at `packs.openwop.dev` — each pack cont
 
 ## Motivation
 
-The CANVAS-PACKS-INVENTORY audit ([`docs/CANVAS-PACKS-INVENTORY.md`](../docs/CANVAS-PACKS-INVENTORY.md), v2 revision 2026-05-12) cataloged **30 real `defineNode()` executors** that became node packs through Phases A+B+C. The same audit identified **55 additional typeIds** that exist in canvas authoring surfaces (App Builder palette, Campaign Studio drag-tile catalog, Landing Page step library) but have **no executor**. These are "editor presets" — labeled tiles in a canvas UI that, when dropped, expand into pre-configured `core.ai.callPrompt` or other framework nodes.
+The CANVAS-PACKS-INVENTORY audit ([`docs/CANVAS-PACKS-INVENTORY.md`](https://github.com/openwop/openwop/blob/48c1f569eb8a8f4ed3ae95bdacf7e757707ce855/docs/CANVAS-PACKS-INVENTORY.md), v2 revision 2026-05-12) cataloged **30 real `defineNode()` executors** that became node packs through Phases A+B+C. The same audit identified **55 additional typeIds** that exist in canvas authoring surfaces (App Builder palette, Campaign Studio drag-tile catalog, Landing Page step library) but have **no executor**. These are "editor presets" — labeled tiles in a canvas UI that, when dropped, expand into pre-configured `core.ai.callPrompt` or other framework nodes.
 
 Today the 55 presets live in host-internal canvas registries (MyndHyve's `src/canvas-types/*/nodes/index.ts` `NodeTypeDefinition` declarations). They can't be published to `packs.openwop.dev` because:
 
@@ -322,7 +322,7 @@ Also: runtime sub-DAG dispatch makes it impossible to debug an expanded chain wi
 
 **Cross-references:**
 
-- [`docs/CANVAS-PACKS-INVENTORY.md`](../docs/CANVAS-PACKS-INVENTORY.md) — the audit that motivates this RFC; v3 closure documents the 55 unpublished typeIds.
+- [`docs/CANVAS-PACKS-INVENTORY.md`](https://github.com/openwop/openwop/blob/48c1f569eb8a8f4ed3ae95bdacf7e757707ce855/docs/CANVAS-PACKS-INVENTORY.md) — the audit that motivates this RFC; v3 closure documents the 55 unpublished typeIds.
 - [`spec/v1/node-packs.md`](../spec/v1/node-packs.md) — companion spec for node packs (the existing pack kind).
 - [`spec/v1/workflow-definition.schema.json`](../schemas/workflow-definition.schema.json) — the schema that `WorkflowDefinitionFragment` references.
 
@@ -422,7 +422,7 @@ typed-resolution, embedded-coercion, and `inputs`-preservation cases.
 
 ## References
 
-- **Inventory motivating this RFC:** [`docs/CANVAS-PACKS-INVENTORY.md`](../docs/CANVAS-PACKS-INVENTORY.md) v3 closure (2026-05-13). The 55 editor presets dropped from Phase B–C scope are the concrete population this RFC addresses.
+- **Inventory motivating this RFC:** [`docs/CANVAS-PACKS-INVENTORY.md`](https://github.com/openwop/openwop/blob/48c1f569eb8a8f4ed3ae95bdacf7e757707ce855/docs/CANVAS-PACKS-INVENTORY.md) v3 closure (2026-05-13). The 55 editor presets dropped from Phase B–C scope are the concrete population this RFC addresses.
 - **Prior art:**
   - Temporal Workflows declare `@workflow.defn`-decorated entry functions that internally call `workflow.execute_activity` — equivalent to a chain pack expanding to activity-dispatched nodes.
   - BPMN sub-processes (call activities) expand a referenced sub-process inline at design time. The "design-time vs runtime expansion" distinction is exactly the alternative-1-vs-this-proposal trade-off.

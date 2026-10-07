@@ -1,7 +1,7 @@
 {
   "name": "@openwop/openwop-conformance",
   "version": "2.45.24",
-  "description": "Production-ready black-box conformance suite for OpenWOP v1.0 compliant servers.",
+  "description": "Black-box conformance suite for OpenWOP hosts (v2 current; v1 scenarios retained for the frozen v1 tree).",
   "repository": {
     "type": "git",
     "url": "git+https://github.com/openwop/openwop.git",
