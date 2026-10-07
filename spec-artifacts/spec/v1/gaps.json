@@ -14351,8 +14351,8 @@
       "surface": "No host serves the frame document or the dispatch operation at the normative paths, so none of the §F rows has a witness. openwop-app dispatches at a vendor path and mounts frames by `srcdoc`.",
       "witness": "unclassified",
       "requirementId": null,
-      "disposition": "externally-gated",
-      "target": "openwop-app-ui-plugin-served",
+      "disposition": "closed",
+      "target": null,
       "sources": [
         {
           "file": "RFCS/registers/0238-ui-plugin-observation-path.gaps.md",
@@ -14385,8 +14385,8 @@
       "surface": "The always-on schema legs of `frontend-plugin-packs.test.ts` read only the corpus but run in a major-1 host bundle.",
       "witness": "unclassified",
       "requirementId": null,
-      "disposition": "transferred",
-      "target": "TODO.md",
+      "disposition": "closed",
+      "target": null,
       "sources": [
         {
           "file": "RFCS/registers/0238-ui-plugin-observation-path.gaps.md",
