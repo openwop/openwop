@@ -29,6 +29,13 @@ Entries before this file was condensed carried full development detail. That tex
 - **Erratum: `identity.md` §5 grammar table matches `ids.schema.json` again.** `tenantId` gets its own row with the `anon:` prefix its pattern has had since 2.0.0. `typeId` gains the `@<semver>` pin from RFC 0187. No wire change. `check-id-kinds-bound` now compares the table against the schema.
 - **RFC 0235 filed (Draft).** "Matching the `ETag`" was undefined, and the matrix hosts read it three ways. It binds `If-None-Match` to RFC 9110 §13.1.2 (`*`, lists, weak comparison), evaluated only where the answer would be `2xx` and not suppressed by `Cache-Control: no-cache`.
 
+## [2.45.24] — 2026-10-07 — `provider_policy_denied` reasons erratum; v2-first corpus cleanup
+
+- **Erratum (packed contract):** `provider_policy_denied` `details.reason` values are snake_case (`provider_disabled`, `byok_required`, `byok_required_but_unresolved`, `model_not_allowed`), as the prose, v1 and every measured host spell them.
+- **Corpus cleanup:** the README, root docs, conformance package docs and `docs/` guides are rewritten v2-first; 22 dated docs and 10 one-off scripts are deleted. The README document-index check reads `spec/v2/core`.
+- **Suite:** the effect receiver fails fast on a held pinned port instead of hanging the duplicate-delivery rows to their 180 s timeout.
+- **Evidence:** MyndHyve's certified 2.45.18 production cut (396/0/0) is RFC 0235's second (tier-2) witness; openwop-app's 2.45.23 cut runs `0184.mint-no-tilde`'s tenant-B half.
+
 ## [2.45.23] — 2026-10-06 — RFCs 0237–0239 Active; purpose labels and minted ids witnessed further
 
 - **RFC 0237 Active (window waived):** `nondeterminismPolicy.sources`; a `replay` fork reproduces each listed source, witnessed by `conformance-nondeterminism`. `declared: false` and `advertised: false` are not v2 states; both go at 3.0.
