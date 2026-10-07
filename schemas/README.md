@@ -1,6 +1,6 @@
 # OpenWOP v1 JSON Schemas (frozen)
 
-> **Status: FINAL v1, frozen.** These flat `schemas/*.schema.json` files are the v1 wire contract. v1 reached end of support on 2026-10-04 ([RFC 0234](../RFCS/0234-maintainer-set-v1-end-of-support.md)), and this tree is kept as history: it is not edited. **For v2, the current major, use [`schemas/v2/`](./v2/)**, with `$id`s under `https://openwop.dev/spec/v2/`.
+> **Status: FINAL v1, frozen.** These flat `schemas/*.schema.json` files are the v1 wire contract. v1 reached end of support on 2026-10-04 ([RFC 0234](https://github.com/openwop/openwop/blob/main/RFCS/0234-maintainer-set-v1-end-of-support.md)), and this tree is kept as history: it is not edited. **For v2, the current major, use [`schemas/v2/`](./v2/)**, with `$id`s under `https://openwop.dev/spec/v2/`.
 
 The index below describes each v1 schema and the v1 prose document it came from. Per-row RFC status words are checked against `RFCS/` by `scripts/check-rfc-status-coherence.mjs` (RFC 0178 §E.1). The schemas use JSON Schema 2020-12; validate with Ajv2020 (`require('ajv/dist/2020')`), `python-jsonschema`, or any other 2020-12 implementation.
 

@@ -136,7 +136,7 @@ Condition 2 names "a currently supported major" rather than a fixed version, per
 
 When those conditions are met, a working group charter will be filed as an RFC and ratified by lazy consensus among the current maintainers. The charter will define voting rules, term limits, and the succession model for the lead-maintainer role.
 
-Working-group activation also ratifies the registry and extension policy in [`RFCS/0043-registry-and-extension-policy.md`](./RFCS/0043-registry-and-extension-policy.md), currently `Draft`. The WG's first ballot is to ratify RFC 0043 §B/§C verbatim or amend, flipping it to `Accepted`. The policy index is [`docs/governance/registry-policy.md`](./docs/governance/registry-policy.md).
+The registry and extension policy is [`RFCS/0043-registry-and-extension-policy.md`](./RFCS/0043-registry-and-extension-policy.md) (`Accepted`). A working group, once active, may amend it through the normal RFC process. The policy index is [`docs/governance/registry-policy.md`](./docs/governance/registry-policy.md).
 
 ## Sole-steward operation
 

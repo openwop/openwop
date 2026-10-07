@@ -8,10 +8,11 @@ OpenWOP v2 is the current protocol major. Its contract is this directory,
 published together as `@openwop/spec-artifacts` and tested by
 `@openwop/openwop-conformance` 2.x.
 
-v1 is still supported during the overlap period.
-[`core/versioning.md`](./core/versioning.md#5-the-overlap)
-and [`core/overview.md`](./core/overview.md) define how a host serves both and
-when v1 ends.
+The previous major, v1, reached end of support on 2026-10-04; its
+tree is frozen as history. A host may still serve the old major to its own
+clients; [`core/overview.md`](./core/overview.md) and
+[`core/versioning.md`](./core/versioning.md#5-the-overlap) say what that
+requires.
 
 ## Start here
 

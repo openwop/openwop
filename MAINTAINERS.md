@@ -75,7 +75,7 @@ The vendor-neutral-org migration tripwire in `ROADMAP.md` activates when this fi
 
 ### External host implementations
 
-Recruitment targets per `docs/recruitment/external-host.md`. The drafts are ready and **sendable**: last re-verified 2026-08-13, with zero unfilled placeholders and every quoted figure pointing at a dated, re-derivable measurement. **Outreach has not been sent.** Sending it is the tripwire for RFC 0035 and RFC 0038 both; neither is blocked on the world having declined, only on nobody having asked.
+Recruitment targets per `docs/recruitment/external-host.md`. The drafts are ready and **sendable**, with zero unfilled placeholders and every quoted figure pointing at a dated, re-derivable measurement. **Outreach has not been sent.** Sending it is the tripwire for RFC 0035 and RFC 0038 both; neither is blocked on the world having declined, only on nobody having asked.
 
 | Target                        | Outreach sent | First reply | Status  | Notes                                                                                                  |
 | ----------------------------- | ------------- | ----------- | ------- | ------------------------------------------------------------------------------------------------------ |
@@ -88,7 +88,7 @@ When a target replies positively + commits to a draft adapter PR within 30 days,
 
 ### External pack authors
 
-Recruitment targets per `docs/recruitment/external-pack-author.md` (drafts ready, last re-verified 2026-08-13; **outreach not sent**). Initial Tier-1 shortlist below; the recruitment doc's criteria gate adding more.
+Recruitment targets per `docs/recruitment/external-pack-author.md` (drafts ready; **outreach not sent**). Initial Tier-1 shortlist below; the recruitment doc's criteria gate adding more.
 
 | Target                                                                       | Outreach sent | First reply | Status           | Notes                                                                                                                                          |
 | ---------------------------------------------------------------------------- | ------------- | ----------- | ---------------- | ---------------------------------------------------------------------------------------------------------------------------------------------- |

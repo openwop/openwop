@@ -77,7 +77,7 @@ The suite is the test instrument; the spec is the contract. The suite MAY be str
 **Measurement vs. claim (RFC 0148).** A recorded pass is a *measurement* at the suite version that made it, and it stays a valid measurement at that suite. A *certification claim* is governed by RFC 0148:
 
 - Certification bundles from suite `1.114.0` on record one of five dispositions per requirement (`executed-pass`, `executed-fail`, `skipped`, `inapplicable`, `blocked`), with a witnessed assertion count.
-- The earlier bundle format could not tell `skipped` from `inapplicable` from `blocked`, and counted an early-returning test as a pass. It remains parseable but stops substantiating a new certification after the 90-day migration window that began 2026-08-12. RFC 0148 classifies this as a safety fix under §3.
+- Bundle v1 could not tell `skipped` from `inapplicable` from `blocked`, and counted an early-returning test as a pass. It remains parseable but ceases to substantiate a new certification after the 90-day migration window that began 2026-08-12. RFC 0148 classifies this as a safety fix under §3.
 - An older suite is still a valid instrument for what it measured; it is not evidence of what it could not observe.
 
 ### 2.4 v2 specifics (RFC 0197)

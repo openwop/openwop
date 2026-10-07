@@ -185,6 +185,8 @@ Current source tree: 649 scenario files. [`coverage.md`](./coverage.md) maps eac
 - a file is missing, altered or extra (it names each one), or
 - the installed peer is a different version from the one the suite was packed against.
 
+Suite 1.x worked differently: its tarball carried copies of `api/` and `schemas/`. The vendored contract is digest-checked there (from 1.154.0) against `schemas/CORPUS-STAMP.json`; 2.x removed the copies in favour of the peer.
+
 A hand-patched schema therefore cannot produce evidence. In a checkout of the spec repository there is no installed peer to check, and the log says `corpus stamp not checked`.
 
 ## Resolving the contract: depend on the package, don't hand-copy it
