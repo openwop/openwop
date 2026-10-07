@@ -17,7 +17,7 @@
  *   6. Every $ref in OpenAPI/AsyncAPI to ../schemas/*.json resolves to a
  *      file that exists on disk.
  *   7. Every OpenAPI operationId is represented in conformance/coverage.md.
- *   8. README.md's spec/v1 document index matches the on-disk docs.
+ *   8. README.md's document index matches the spec/v2/core docs on disk.
  *   9. Local Markdown links resolve to files in the repo checkout.
  *  10. schemas/README.md lists every `*.schema.json` file.
  *  11. AsyncAPI message names stay aligned with RunEventType enum values.
@@ -54,6 +54,7 @@ import {
   SCHEMAS_DIR,
   TYPESCRIPT_RUN_HELPERS_PATH,
   V1_DIR,
+  SPEC_V2_DIR,
 } from '../lib/paths.js';
 import { verifyBundle, PROFILE_FLOOR_SCENARIOS } from '../lib/profiles.js';
 import { req } from '../lib/requirement-ids.js';
@@ -1259,33 +1260,35 @@ describe.skipIf(V1_DIR === null)('spec-corpus: prose docs carry a Status: legend
   }
 });
 
-describe.skipIf(V1_DIR === null || README_PATH === null)('spec-corpus: README document index matches spec/v1', () => {
+describe.skipIf(V1_DIR === null || SPEC_V2_DIR === null || README_PATH === null)('spec-corpus: README document index matches spec/v2/core', () => {
   // describe.skipIf skips test execution but still evaluates the describe callback at registration
   // time. Guard each side-effecting read against null so the body registers cleanly under the
-  // published-tarball layout where V1_DIR / README_PATH resolve to null.
-  const v1Dir = V1_DIR;
+  // published-tarball layout where SPEC_V2_DIR / README_PATH resolve to null. Since the
+  // v1 end of support (RFC 0234) the README indexes the v2 core tree; the frozen v1 tree
+  // keeps its own index at spec/v1/README.md.
+  const coreDir = SPEC_V2_DIR === null ? null : join(SPEC_V2_DIR, 'core');
   const readmePath = README_PATH ?? '';
 
   const proseFiles =
-    v1Dir === null
+    coreDir === null
       ? []
-      : readdirSync(v1Dir)
+      : readdirSync(coreDir)
           .filter((f) => f.endsWith('.md'))
           .sort();
 
-  it('README Total count equals the number of spec/v1 prose docs', () => {
+  it('README Total count equals the number of spec/v2/core docs', () => {
     const index = extractReadmeDocumentIndex(readFileSync(readmePath, 'utf8'));
     const totalMatch = index.match(/\*\*Total\*\*:\s+(\d+)\s+docs\./);
 
-    expect(totalMatch, req('openwop.it.spec-corpus-validity.readme-total-count-equals-the-number-of-spec-v1-prose-docs', 'spec-corpus-validity.test.ts (no spec citation in file)', 'README.md document index MUST include a "**Total**: N docs." line')).not.toBeNull();
-    expect(Number(totalMatch?.[1]), req('openwop.it.spec-corpus-validity.readme-total-count-equals-the-number-of-spec-v1-prose-docs', 'spec-corpus-validity.test.ts (no spec citation in file)', 'README.md document total MUST match spec/v1/*.md count')).toBe(
+    expect(totalMatch, req('openwop.it.spec-corpus-validity.readme-total-count-equals-the-number-of-spec-v2-core-docs', 'spec-corpus-validity.test.ts (no spec citation in file)', 'README.md document index MUST include a "**Total**: N docs." line')).not.toBeNull();
+    expect(Number(totalMatch?.[1]), req('openwop.it.spec-corpus-validity.readme-total-count-equals-the-number-of-spec-v2-core-docs', 'spec-corpus-validity.test.ts (no spec citation in file)', 'README.md document total MUST match the spec/v2/core/*.md count')).toBe(
       proseFiles.length,
     );
   });
 
-  it('README document index links every spec/v1 prose doc exactly once', () => {
+  it('README document index links every spec/v2/core doc exactly once', () => {
     const index = extractReadmeDocumentIndex(readFileSync(readmePath, 'utf8'));
-    const linkRegex = /\]\(\.\/spec\/v1\/([^)]+\.md)\)/g;
+    const linkRegex = /\]\(\.\/spec\/v2\/core\/([^)]+\.md)\)/g;
     const linkedDocs: string[] = [];
     let m: RegExpExecArray | null;
     while ((m = linkRegex.exec(index)) !== null) {
@@ -1296,7 +1299,7 @@ describe.skipIf(V1_DIR === null || README_PATH === null)('spec-corpus: README do
       const occurrences = linkedDocs.filter((linked) => linked === file).length;
       expect(
         occurrences,
-        req('openwop.it.spec-corpus-validity.readme-document-index-links-every-spec-v1-prose-doc-exactly-once', 'spec-corpus-validity.test.ts (no spec citation in file)', `README.md document index MUST link ./spec/v1/${file} exactly once`),
+        req('openwop.it.spec-corpus-validity.readme-document-index-links-every-spec-v2-core-doc-exactly-once', 'spec-corpus-validity.test.ts (no spec citation in file)', `README.md document index MUST link ./spec/v2/core/${file} exactly once`),
       ).toBe(1);
     }
   });
