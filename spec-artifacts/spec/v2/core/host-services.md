@@ -76,7 +76,7 @@ A host advertising `aiProviders` MUST expose `ctx.callAI`. A `provider` that a `
 - `required` refuses without a `credentialRef` (`byok_required`) or a usable secret (`byok_required_but_unresolved`).
 - `restricted` refuses a model matching no `allowedModels` glob (`model_not_allowed`). An empty `restricted` policy MUST fail closed.
 
-A refusal MUST carry `policies.errorCode` (default `provider_policy_denied`; any other value is a vendor code), SHOULD carry `reason`, and MUST NOT echo the policy. Each decision SHOULD be audited. A resolver outage SHOULD fail open.
+A refusal's `error` MUST be `policies.errorCode` (default `provider_policy_denied`, else a vendor code); its `details.reason` SHOULD name the cause above, and it MUST NOT echo the policy. Each decision SHOULD be audited. A resolver outage SHOULD fail open.
 
 A host advertising `promptPrefixCache` MAY honor `cachePrefixId` per routed provider, and otherwise MUST ignore it. It MUST key the cache by (authenticated tenant, `cachePrefixId`) and MUST NOT persist prompt or response substrings keyed by it. The envelope and `provider.usage` token counts MUST match on hit and miss, and on replay.
 

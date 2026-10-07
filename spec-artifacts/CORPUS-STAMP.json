@@ -144,7 +144,7 @@
     "schemas/v2/envelopes/schema.request.schema.json": "be2c5f7aa881cdd252ccff47ac02193659e1393633a1541f4297383205d384a2",
     "schemas/v2/envelopes/schema.response.schema.json": "d049a081267c06c28879c331b147f3ed821b14ccfd93005c67aff64db0a8c68e",
     "schemas/v2/envelopes/ui.a2ui-surface.schema.json": "e92a2548ba65454c9e0a34f72ea6768d18f59e61fa5da7668d0b2d5baddaddc8",
-    "schemas/v2/error-envelope.schema.json": "fd561987db4d277d007666f533b53d6cf0e7eacb57f930f3ce7e431573120890",
+    "schemas/v2/error-envelope.schema.json": "8ddb1d80330dfef17572a74dfe3a53e1a06411e4b0af6a6f1dd6e7e7461da987",
     "schemas/v2/eval-summary.schema.json": "2f384daf05b8f3b4f604688cae504d6d9971ba41b8c771e55fe9a17e09e86b7a",
     "schemas/v2/export-bundle.schema.json": "bd28905a7729437ab7f2ad8bb33e13a371b2bf5605a7eb2962a0d246de312d69",
     "schemas/v2/form-content-pack-manifest.schema.json": "a1942a124e250a6e9fbdb6b811c5a125e78fbcbcaa46dfc71d0636f24710a339",
@@ -232,7 +232,7 @@
     "spec/v2/core/execution.md": "8a0c9db1bbfb97c008ab9328b7333c1cc3318196e78bfbefb49e781bdf4f9d44",
     "spec/v2/core/form-content-packs.md": "02931227899676fd4581a27017be2a6c4953904717be9b81c29d12f87ab3917d",
     "spec/v2/core/headers.md": "18e52477898e67b0b3778d1fdd22e07bc43d561c03b501573404cd53245edef6",
-    "spec/v2/core/host-services.md": "73f26ea32891044131d63f9861d2cbddccb5d08bf76e29e47afef9bb5b646791",
+    "spec/v2/core/host-services.md": "168a40935a03867ee82461b5d83d05578be25ee3e5af4eb080587b891231e242",
     "spec/v2/core/i18n.md": "882904b7d59f992ab1e5f7346167161a54cf665b8fee47e64a3862cf9133a580",
     "spec/v2/core/idempotency.md": "adbd317a6ebb57c2759c076297b31f67def9e391576bccd0bbea787b13e85872",
     "spec/v2/core/identity.md": "02656ffa413b5546342b8580ae928a74e621460746df74d7db50ff4df41d2310",
@@ -257,7 +257,7 @@
     "spec/v2/declaration.json": "396ac924068f25d4a178062a54e244f870c556c3db9fe7a98fcc933fb318ed30",
     "spec/v2/declaration.schema.json": "ef951633e4070899f64828f5cf1b5f4870270a0360f81dbb49b5b4d6cd407550",
     "spec/v2/eos-override.json": "4c72d2f6a658943b01c1de1643cf294642091933af7832f38ee5495df684cb2d",
-    "spec/v2/errors.json": "c3456c8cb1f36f4b6252bbc1fa3a643eabf28cdb7088e3743e50bd51a10c4936",
+    "spec/v2/errors.json": "1f0e29455edbd22e28f67f221766209c3c55ac4987beb77993b5702dd7cae131",
     "spec/v2/errors.schema.json": "47404ad53e6147cf9017b813483712466573e419fb33e6c4b6c12d3e7deba1bc",
     "spec/v2/event-codemap.json": "37869a03cdfd8758b57e6f350641a6ebbd383231cebda51f5473ad85f94ab74c",
     "spec/v2/event-codemap.schema.json": "b173f2a9bcc0bf9b62a474ce3b91e1431d597e64fd1560fc58662cd8606eaf9c",
@@ -317,5 +317,5 @@
     "spec/v2/retention-floors.json": "eaf3722d95c79947af1d4269ef85117e126518c588cfcf1a2b21b97269f51624",
     "spec/v2/surface-baseline.json": "a2f690b3222532cc625d94f195d84d4b62a5b3e2b7ab02c164297e0483c32a9d"
   },
-  "corpusCommit": "9858acc1b7d53590a37030f9ef447dd4dc9eb883"
+  "corpusCommit": "7bbf5b79e471a9f9e7f0b96103d1d5a0d1255be5"
 }
