@@ -51,8 +51,8 @@ Changes are categorized by impact on the wire contract per `COMPATIBILITY.md`:
 | **Breaking change** | Any other change that invalidates an existing conformance pass | New major version, or for v2 a `COMPATIBILITY.md` §3a retirement |
 
 - **Normative addition.** RFC required (see `RFCS/`). Also a CHANGELOG entry, and a conformance suite update if applicable.
-- **Safety-fix break.** The 90-day window does not apply under embargoed coordinated disclosure (`SECURITY.md`). The change ships with migration tooling. It is the only exception to v1.x's additive-only rule.
-- **Breaking change.** A §3a retirement applies only to an unevidenced v2 surface (RFC 0197). Every breaking change requires a public RFC, a 30-day comment window, and two maintainer approvals from different organizations once that's possible. The v1 contract is **locked**; breaking changes ship as v2.0+ in parallel, not as v1.X.
+- **Safety-fix break.** The 90-day window does not apply under embargoed coordinated disclosure (`SECURITY.md`). The change ships with migration tooling. It is the only exception to a major's additive-only rule.
+- **Breaking change.** A §3a retirement applies only to an unevidenced v2 surface (RFC 0197). Every breaking change requires a public RFC, a 30-day comment window, and two maintainer approvals from different organizations once that's possible. A released major's contract is **locked**: any other breaking change ships in the next major, never as a minor of the current one.
 
 The formal RFC mechanism is defined in `RFCS/0001-rfc-process.md`. RFCs live at `RFCS/NNNN-short-title.md`; the authoring template is at `RFCS/0000-template.md`.
 
@@ -109,10 +109,10 @@ Rules:
 ## Release process
 
 - **Spec corpus** ships as named tags (`v2.0.0`, `v2.1.0`, …). Major versions are reserved for breaking changes.
-- **SDKs** (`@openwop/openwop` (npm), `openwop-client` (PyPI), `github.com/openwop/openwop-sdks/go` (Go modules), all in [`openwop/openwop-sdks`](https://github.com/openwop/openwop-sdks)) ship independently with semantic versioning. SDK majors track the spec major they target.
-- **Conformance suite** (`@openwop/openwop-conformance`) ships independently. Suite majors track the spec major; minors add scenarios for the same spec major.
+- **SDKs** (`@openwop/openwop` (npm), `openwop-client` (PyPI), `github.com/openwop/openwop-sdks/go/v2` (Go modules), all in [`openwop/openwop-sdks`](https://github.com/openwop/openwop-sdks)) ship independently with semantic versioning. SDK majors track the spec major they target.
+- **Conformance suite** (`@openwop/openwop-conformance`) ships together with its exact-pinned peer `@openwop/spec-artifacts`, normally on the corpus tag. Suite majors track the spec major; minors add scenarios for the same spec major.
 
-A release requires: passing CI on `main`, a CHANGELOG entry, and a maintainer cutting the tag. The release workflow at `.github/workflows/release.yml` automates package publication once the tag is pushed.
+A release requires: passing CI on `main`, a CHANGELOG entry, and a maintainer cutting the tag. The workflow at `.github/workflows/openwop-publish.yml` publishes the conformance suite and `@openwop/spec-artifacts` once the tag is pushed (see `PUBLISHING.md`).
 
 ## Security
 
@@ -122,7 +122,7 @@ The maintainer set is currently a single person (`MAINTAINERS.md`). `SECURITY.md
 
 ## Trademark
 
-"openwop" and "Workflow Orchestration Protocol" are not currently registered trademarks. Implementations are encouraged to describe themselves as "openwop-compliant" when they pass a published conformance suite version. If the maintainer set later registers a trademark, the policy will be added to this document with a notice period.
+"openwop" and "Workflow Orchestration Protocol" are not currently registered trademarks. An implementation that passes a published conformance suite version may say so, naming the suite version (for example, "passes `@openwop/openwop-conformance` 2.45.23"). If the maintainer set later registers a trademark, the policy will be added to this document with a notice period.
 
 ## Path to working group
 
@@ -136,7 +136,7 @@ Condition 2 names "a currently supported major" rather than a fixed version, per
 
 When those conditions are met, a working group charter will be filed as an RFC and ratified by lazy consensus among the current maintainers. The charter will define voting rules, term limits, and the succession model for the lead-maintainer role.
 
-Working-group activation also ratifies the registry and extension policy in [`RFCS/0043-registry-and-extension-policy.md`](./RFCS/0043-registry-and-extension-policy.md), currently `Draft`. The WG's first ballot is to ratify RFC 0043 §B/§C verbatim or amend, flipping it to `Accepted`. The policy index is [`docs/governance/registry-policy.md`](./docs/governance/registry-policy.md).
+The registry and extension policy is [`RFCS/0043-registry-and-extension-policy.md`](./RFCS/0043-registry-and-extension-policy.md) (`Accepted`). A working group, once active, may amend it through the normal RFC process. The policy index is [`docs/governance/registry-policy.md`](./docs/governance/registry-policy.md).
 
 ## Sole-steward operation
 
@@ -148,7 +148,7 @@ The project currently has **one maintainer and one organization**. The only conf
 - **The two-approval requirement in §"Amendments" is waived and recorded while one maintainer exists** (RFC 0174 §B.3), with the same retirement condition as the window waiver. An RFC that amends the decision rule names the waiver in its header, and `scripts/check-waiver-authority.mjs` fails one that does not.
 - **Evidence gates are never waived.** `Active → Accepted` remains a witnessed, non-vacuous conformance pass on a deployed host per §"Acceptance evidence tiers"; the tier is stated in the RFC. A status can be waived; a bundle cannot.
 - **Adopter-facing machinery is built even though no external adopter exists**: the deprecation register (`COMPATIBILITY.md` §7), migration guides, codemods with negative controls, and dual-major conformance scenarios. A future implementer inherits a protocol that migrated itself on the record.
-- **The v1 deprecation clock is the host inventory**, per `COMPATIBILITY.md` §5, with a calendar floor that activates only when an independent host is in the matrix.
+- **The old-major end-of-support date is computed from the host inventory**, per `COMPATIBILITY.md` §5, with a calendar floor that activates only when an independent host is in the matrix. Leg (c) lets an `Accepted` RFC set an earlier date once every counted host is certified at v2 and reports no third-party old-major traffic; RFC 0234 used it to end v1 support on 2026-10-04.
 
 ## Amendments
 

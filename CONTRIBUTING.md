@@ -1,302 +1,236 @@
 # Contributing to OpenWOP
 
-Thanks for considering a contribution. The OpenWOP spec is mechanical and intentionally focused — small PRs land fastest.
+Thanks for considering a contribution. Small, focused pull requests land fastest.
 
 This guide covers:
 
 1. What's in scope.
-2. Status legend + when to bump status.
-3. Per-artifact change rules (prose specs, JSON Schemas, OpenAPI, AsyncAPI, conformance, SDK).
-4. The CI gate.
-5. Coordination with the impl plan.
+2. Status labels.
+3. Change rules per artifact (prose, JSON Schemas, OpenAPI/AsyncAPI, conformance).
+4. Regenerating derived files and running the gate.
+5. Process, DCO sign-off and response times.
+
+Other code lives in sibling repositories:
+
+- SDKs: [`openwop/openwop-sdks`](https://github.com/openwop/openwop-sdks).
+- Example and reference hosts: [`openwop/openwop-examples`](https://github.com/openwop/openwop-examples).
+- The demo app: [`openwop/openwop-app`](https://github.com/openwop/openwop-app).
+- Packs and the registry: [`openwop/openwop-registry`](https://github.com/openwop/openwop-registry).
+- The site: [`openwop/openwop-site`](https://github.com/openwop/openwop-site).
+
+Each has its own contribution rules and checks.
 
 ---
 
 ## What's in scope
 
-The openwop corpus describes the **wire-level contract** between independent implementations of workflow orchestration servers and the clients that talk to them. It does NOT prescribe:
+The corpus describes the **wire contract** between independent workflow hosts and the clients that talk to them. It does not prescribe:
 
-- Internal data structures (Zustand vs Redux vs raw classes — implementer's call).
-- Storage backends (Firestore vs Postgres vs SQLite — implementer's call).
-- How LLM prompts are constructed (implementer's call, modulo the `Capabilities` handshake).
-- UI conventions (any UI is fine — the spec only defines the wire data).
+- Internal data structures.
+- Storage backends.
+- How LLM prompts are built (beyond what the capabilities handshake declares).
+- UI conventions. The spec defines only the data on the wire.
 
-When a PR proposes adding to one of those surfaces, expect pushback: it likely belongs in an implementation's docs, not the spec.
+A proposal that adds to one of those surfaces probably belongs in an implementation's docs, not the spec.
 
----
-
-## Status legend
-
-Per `auth.md` §status legend (reflected in every v1 prose doc's header):
-
-| Tag         | Meaning                                                                                                         |
-| ----------- | --------------------------------------------------------------------------------------------------------------- |
-| **STUB**    | Minimal coverage of stable surfaces only. Implementers SHOULD pin only to what's documented; gaps are expected. |
-| **DRAFT**   | Comprehensive coverage of stable + in-flight surfaces, but not yet reviewed by spec committee.                  |
-| **OUTLINE** | Sketched but not detailed. Section headings lock; field schemas may shift.                                      |
-| **FINAL**   | Reviewed + frozen for a given v1.X release. Breaking changes require a major bump.                              |
-
-When to bump status:
-
-- **STUB → DRAFT**: when every stable wire-level field is documented (RFC 2119 keywords applied, examples present, edge cases called out).
-- **DRAFT → OUTLINE**: backward — only when a section needs more design work than originally thought.
-- **DRAFT → FINAL**: after committee review (none formally chartered yet — see "Process" below).
+v2 is the current major. Its contract is [`spec/v2/`](./spec/v2/), [`schemas/v2/`](./schemas/v2/) and [`api/v2/`](./api/v2/). v1 reached end of support on 2026-10-04 ([RFC 0234](./RFCS/0234-maintainer-set-v1-end-of-support.md)). `spec/v1/` and the flat `schemas/*.schema.json` are a frozen tree: don't edit them.
 
 ---
 
-## Per-artifact change rules
+## Status labels
 
-### Prose specs (`*.md`)
+Every v2 document carries a status line near its header, for example `> **Status: Stable.**`.
 
-- Every doc MUST include a header status block with: status tag, draft date, and a "stable surface for external review" note.
-- Use RFC 2119 keywords (MUST, SHOULD, MAY, MUST NOT, SHOULD NOT) consistently.
-- Cross-reference companion specs by relative path. From the repo root, use links like `[capabilities.md](./spec/v2/core/capabilities.md)`; from inside a spec directory, link to peer docs by filename.
-- New surface area: add a "Why this exists" paragraph + an "Open spec gaps" table at the end.
-- **Normative examples are declared and validated (RFC 0149 §D).** A fenced ```json / ```jsonc block in `spec/v1/*.md` that is a WHOLE instance of a schema carries the marker `<!-- normative-example: <name>.schema.json -->` on the line immediately above the fence. `normative-example-extraction.test.ts` extracts every declared example at test time and validates it against `schemas/<name>` with the same Ajv registration every other leg uses, and it also fails on the *inverse* — a fenced block that validates as a whole instance of some schema but is not declared. Fragments (`...`, jsonc comments, partial objects) are prose and take no marker; a declared example MUST be strict JSON. Discovery-shaped examples (root `protocolVersion` + `supportedEnvelopes`) MUST be declared against `capabilities.schema.json` and MUST NOT carry credential- or tenant-shaped keys (RFC 0149 §E).
+- **Core documents** (`spec/v2/core/*.md`) are `Stable`.
+- **Extension documents** (`spec/v2/ext/`) use the labels defined in [`spec/v2/ext/README.md`](./spec/v2/ext/README.md#maturity-labels): `Draft`, `Stable`, `Retired` and `Note`. Each label has a mechanical predicate, and `scripts/check-ext-status-coherence.mjs` checks the labels against committed conformance evidence. A label changes when its predicate is met, not by hand.
+
+---
+
+## Change rules per artifact
+
+### Prose specs (`spec/v2/**/*.md`)
+
+- Every document has a status line (see above).
+- Use RFC 2119 keywords (MUST, SHOULD, MAY, MUST NOT, SHOULD NOT) only for genuinely normative requirements.
+- Link companion documents by relative path. From the repo root, use `[capabilities.md](./spec/v2/core/capabilities.md)`; inside a spec directory, link peers by filename.
+- The v2 prose is rendered verbatim on openwop.dev. Keep it readable: short paragraphs, bullets instead of MUST-stacked walls, citations on a Sources line. `scripts/check-spec-readability.mjs` runs in the gate.
 
 ### An RFC MUST NOT state a rule a core doc owns
 
-Before landing any normative sentence in an `RFCS/*.md`, do two things by hand:
+Before you land any normative sentence in `RFCS/*.md`:
 
 1. **Open the `spec/v2/core/*.md` that owns the rule** and read what it already says.
-2. **Grep `conformance/src/scenarios/`** for a scenario asserting it.
+2. **Grep `conformance/src/scenarios/`** for a scenario that asserts it.
 
-`openwop-check.sh` does **not** cross-check an RFC's normative claims against the
-core spec or the suite. The corpus can hold a direct contradiction with every
-gate green, and has: RFC 0180 §A.4a asserted that an era-2 reader MUST *accept* a
-type the codemap does not name, while `persistence.md` §The reader rule,
-`events.md` §Era-2 and RFC 0176 §A.3 all require the opposite, and
-`v2-unmapped-type-refused` witnessed both halves of the opposite. It reversed a
-tracked migration decision (`openwop.migration.C9.3`) from inside a document
-about registration procedure, and was caught only when a host implemented it and
-would have turned a certified bundle red.
+The gate does **not** cross-check an RFC's normative claims against the core spec or the suite. The corpus can hold a direct contradiction with every check green. This has happened: an RFC reversed a reader rule owned by `persistence.md` and `events.md`, and it was caught only when a host implemented it.
 
-**Ownership is the test.** A reader rule belongs to RFC 0176 and `persistence.md`,
-not to whichever RFC happens to find a problem with it. When an RFC's argument is
-sound but the rule is not its to state, record the problem as an open question
-there and move the change to the owning doc — with the conformance scenarios
-moved in the same PR.
+**Ownership is the test.** When an RFC's argument is sound but the rule is not its to state, record the problem as an open question in the RFC and move the change to the owning document, with its conformance scenarios, in the same PR.
 
-**This is a process rule because it does not automate.** Three mechanical proxies
-were designed and measured against the corpus, and all three fail:
+This stays a manual rule because it does not automate. Mechanical proxies (an RFC naming an error code another doc owns; an RFC MUST lacking a scenario) were measured against the corpus: they produce either noise or no signal. The defective RFC above satisfied every structural proxy; the contradiction was semantic.
 
-| Proxy | Result |
-| --- | --- |
-| RFC asserts a MUST naming an error code, and the core doc owning that code does not cite the RFC | 367 findings, ~all noise — generic codes like `validation_error` appear in five core docs |
-| Same, restricted to codes owned by 1–2 non-registry core docs | 35 findings, 0 real — a core doc absorbing a rule without citing the RFC number is normal |
-| RFC asserting a MUST must name an existing conformance scenario | **0 signal** — all 178 Active/Accepted RFCs already comply, §A.4a included |
-
-The third is the instructive one: **the defective RFC satisfied every structural
-proxy.** It cited `events.md`. It named scenarios. The contradiction was
-semantic, and nothing in the corpus's shape distinguishes it from agreement.
-
-### JSON Schemas (`schemas/*.schema.json`)
+### JSON Schemas (`schemas/v2/*.schema.json`)
 
 - Every schema declares `$schema: "https://json-schema.org/draft/2020-12/schema"`.
-- Every schema has a `$id` that's a URL under `https://openwop.dev/spec/v1/<name>.schema.json` (a `schemas/v2/` schema: under `https://openwop.dev/spec/v2/`).
-- Use `additionalProperties: false` on every object — explicit field lists are mandatory for spec docs even if a runtime relaxes them.
-- New required fields: bump the schema's implicit minor version + update CHANGELOG.md. New optional fields are non-breaking.
+- Every schema has an `$id` under `https://openwop.dev/spec/v2/<name>.schema.json`. (The frozen flat v1 schemas use `https://openwop.dev/spec/v1/`.)
+- Use `additionalProperties: false` on every object. Explicit field lists are mandatory, even if a runtime is more lenient.
+- New optional fields are additive. New required fields are breaking (see [`COMPATIBILITY.md`](./COMPATIBILITY.md)). Either way, add a `CHANGELOG.md` line.
+- Don't run `scripts/derive-v2-schemas.mjs --write`. The v2 schemas were seeded from v1 once and have since been edited by hand; the gate runs it with `--check` only.
 
-### Pack-internal JSON Schemas (`packs/<name>/schemas/*.schema.json`)
+Pack-internal schemas (inside a pack's `schemas/` directory) follow the rules in [`openwop/openwop-registry`](https://github.com/openwop/openwop-registry). The pack-manifest schemas themselves stay normative here.
 
-> **Moved:** the pack ecosystem (`packs/` source + the `registry/` catalog) now lives in [`openwop/openwop-registry`](https://github.com/openwop/openwop-registry). Pack contributions, the rules below, and the pack/registry validation gate (`scripts/registry-check.sh`) apply in that repo. The pack-manifest _schemas_ remain normative here under `schemas/` (vendored into the registry repo with a drift guard).
+### OpenAPI and AsyncAPI
 
-Distinct from the spec-corpus schemas above. These live inside a pack's tarball and are referenced via `pack.json` (`configSchemaRef` / `inputSchemaRef` / `outputSchemaRef` for nodes; `handoff.{task,return}SchemaRef` for agent manifests per RFC 0003 §D). Rules:
+There are two layers:
 
-- `$schema: "https://json-schema.org/draft/2020-12/schema"` — same as spec corpus.
-- `$id` MUST use the **registry-canonical, version-bearing** form: `https://packs.openwop.dev/<pack-name>/<version>/<file-name>.schema.json`. The version segment MUST match `pack.json.version`. This keeps `$id` immutable across pack version bumps — caching tools that key on `$id` see distinct documents per pack version (per JSON Schema 2020-12 `$id` immutability semantics).
-- `additionalProperties: false` on every object — same discipline as spec corpus.
-- Pack `version` bump: regenerate every `$id` in the pack's `schemas/` directory to the new version. The registry repo's `scripts/check-pack-schema-ids.mjs` enforces this (run locally via `npm run check`, and in `packs-check` CI); `--fix` regenerates them. **Correction (2026-08-05):** this line previously said `scripts/precheck-packs.mjs` SHOULD catch drift — it does not check `$id` at all, and the only enforcement lived in an inline heredoc inside a CI workflow, so it could not be run locally. A routine version bump then left `main` red for four days.
+- **`api/openapi.yaml` and `api/asyncapi.yaml`** are the v1 wire documents. They are also the **source** that `scripts/derive-v2-api.py` reads.
+- **`api/v2/openapi.yaml`, `api/v2/asyncapi.yaml` and `api/seams-v2.yaml`** are **derived**. The script strips the `/v1` prefix, moves seam operations to `api/seams-v2.yaml`, adds the `OpenWOP-Version` header, renames headers, points `$ref`s into `schemas/v2/`, and replaces reader-facing prose from `scripts/derive-v2-api-prose.yaml`. Its header lists every rule.
 
-### OpenAPI / AsyncAPI
+So, to change the v2 API:
 
-- Reference JSON Schemas via cross-file `$ref` (`../schemas/<name>.schema.json`); never inline.
-- Lint must pass: `redocly lint api/openapi.yaml` and `asyncapi validate api/asyncapi.yaml` from `@asyncapi/cli`.
-- Bundle must succeed: `redocly bundle api/openapi.yaml` and `asyncapi bundle api/asyncapi.yaml`.
-- New endpoints: add a `tag`, an `operationId`, request/response schemas, and at least one error response.
+1. Edit the source (`api/openapi.yaml` / `api/asyncapi.yaml`), or `scripts/derive-v2-api-prose.yaml` for a description string. Don't edit `api/v2/` by hand: the gate's `--check` compares a fresh derivation to the committed bytes.
+2. Run `python3 scripts/derive-v2-api.py --write` (requires PyYAML).
+3. Commit the source and the regenerated outputs together.
+
+Rules for the documents:
+
+- Reference JSON Schemas by cross-file `$ref`; never inline them.
+- New endpoints need a `tag`, an `operationId`, request and response schemas, and at least one error response.
+- Both layers must lint clean: the gate lints `api/openapi.yaml` and `api/asyncapi.yaml` (steps 2–3) and `api/v2/openapi.yaml`, `api/v2/asyncapi.yaml` and `api/seams-v2.yaml` (step 10). See "Useful commands" below.
 
 ### Conformance suite (`conformance/`)
 
-- Each new scenario file in `conformance/src/scenarios/` follows the existing pattern:
-  - Top-of-file docstring stating the spec doc(s) being verified.
+- Each scenario file in `conformance/src/scenarios/` follows the existing pattern:
+  - A top-of-file docstring naming the spec document(s) it verifies.
   - `describe('category: …', …)` blocks per assertion group.
-  - `expect(…, driver.describe('spec.md §section', 'requirement'))` so failure messages cite the requirement.
-- New fixtures go in `conformance/fixtures/` AND must be added to `fixtures.md`'s catalog table + per-fixture contracts. The `spec-corpus-validity.test.ts` round-trip test will fail otherwise.
-- Server-free scenarios (those not requiring `OPENWOP_BASE_URL`) MUST run in <1s. CI gates on this.
-- **Never return early in silence (RFC 0148 §A).** A test that returns before its first `expect` is a pass with zero assertions — an *unclassified return*. Gate a profile with `behaviorGate(profile, advertised)` (records `inapplicable` / `skipped` and fails strict mode on an advertised-missing seam); for every other early return say why with `softSkip(kind, reason)` — `return softSkip('inapplicable', 'host does not advertise X')` — or `return seamAbsent(reason)` when the host advertises a capability but the seam answers 404/403 (`blocked` in default mode, a failure under `OPENWOP_REQUIRE_BEHAVIOR=true`; a 403 is not a pass). The runner records a zero-assertion file with no note as `blocked` with a fixed marker (`UNCLASSIFIED_RETURN_DETAIL`), which certification still treats as unclassified — the bundle row is honest, and the pressure to say why survives. **If you skip with vitest's `ctx.skip()`, write the note first:** `ctx.skip()` throws, so a `softSkip(...)` placed after it is dead code and the file reports as unclassified anyway (seven files carried exactly that for a suite minor).
+  - Assertions that cite the requirement they test, so a failure message names it.
+- A new scenario file needs a row in `conformance/scenario-majors.json`, which says which major(s) it targets. Regenerate it with `conformance/scripts/generate-scenario-majors.mjs`: a file named `v2-*` targets major 2. A file with no row never runs.
+- New fixtures go in `conformance/fixtures/` **and** in the `fixtures.md` catalog. `spec-corpus-validity.test.ts` fails otherwise.
+- **Never return early in silence (RFC 0148 §A).** A test that returns before its first `expect` is a pass with zero assertions.
+  - Gate a profile with `behaviorGate(profile, advertised)`.
+  - For any other early return, say why: `return softSkip('inapplicable', 'host does not advertise X')`, or `return seamAbsent(reason)` when the host advertises a capability but the seam answers 404/403.
+  - If you use vitest's `ctx.skip()`, call `softSkip(...)` first: `ctx.skip()` throws, so anything after it never runs.
+  - The runner records a zero-assertion file with no note as `blocked`, and certification treats that as unclassified.
+- **Ask whether the condition is causable, not just whether the property is observable.** If a scenario needs a host seam, an operator precondition or a process death to cause its condition, gate on that; don't assert the nearest thing the suite can cause.
+- **When a conforming host fails and a lenient one passes, suspect the scenario first.** Check that every field the scenario requires is in the published contract.
 
-- **Before writing a scenario, ask whether the condition is CAUSABLE, not just whether the property is OBSERVABLE.** These come apart constantly and the failure is silent, because a scenario built on the wrong half still runs and still goes green. RFC 0158's `duplicate-delivery` is the worked example: duplicate effects are perfectly observable, but §C.7 is about a host's queue *redelivering accepted work*, and the suite cannot make a queue redeliver — a same-`Idempotency-Key` retry witnesses Layer-1 client dedup instead, a different mechanism wearing the same name. Between two sessions this distinction produced **four wrong scenario designs in one day**, always in the same direction: the property was checkable, the condition was not, and the scenario ended up asserting something adjacent while reading as coverage. If the condition needs a host seam, an operator precondition, or a process death, say so and gate on it — do not substitute the nearest causable thing.
-- **When a conforming host FAILS and a lenient one PASSES, suspect the oracle before the host.** The default reflex runs the other way, and the default reflex was wrong here. `webhook-signed-delivery.test.ts` required a `subscriptionId` field that `api/openapi.yaml` does not define and `webhooks.md` does not show — so a host implementing only the published contract failed at the first assertion, while the postgres reference host passed because it returns **both** names, one labelled a historical alias in its own source. **A reference implementation's compatibility shim hid a contract error from everyone who was not equally lenient**, for as long as the shim existed. Surfaced by a tier-2 host's failing conformance run; diagnosed by a tier-1 host session that went looking for why nothing had ever reddened. The corollary for reference hosts: a shim that accepts more than the contract costs the suite its only signal — if you add one, add a test that the *contract* shape is what the scenario asserts.
-- **A wrong comment that cites its authority is worse than a wrong comment that doesn't.** Formulated by a tier-2 host after finding that its webhook signature prefix had been *deliberately removed* on a misreading of `webhooks.md`, and the misreading then written into the signing module's docblock **citing that spec section as its justification**: *"a comment that cites a source it contradicts is worse than no comment — it converts a mistake into a documented decision."* An unsupported wrong comment is a mistake the next reader can catch by checking. **A wrong comment that names its authority is armoured** — the reader follows the citation, finds a real section, and stops there. It defends the error with the artifact that refutes it. So when you cite a spec section in a comment, quote the clause you are relying on, and when you correct such a comment, record that the citation was wrong rather than silently repointing it.
-- **When you sabotage-check a scenario, verify the sabotage is PRESENT IN THE TREE before you trust the result.** A sabotage that silently fails to apply is *indistinguishable from a test that fails to catch* — both produce a green, and the green is the thing you are looking at. This nearly published a false negative: a patch script asserted a unique match on a string that occurred three times, threw, never applied, and the subsequent rebuild-and-run passed against **unmodified code** — one step from reporting "the scenario does not catch this", which was the opposite of the truth. `grep` for the injected marker, or diff the built artifact, and only then run. **Sabotage verification needs its own positive control**, for exactly the reason the scenario under test needs one.
+### Two rules for scripts
 
-### TypeScript reference SDK (`sdk/typescript/`)
-
-> **Moved:** the three reference SDKs (TypeScript, Python, Go) now live in [`openwop/openwop-sdks`](https://github.com/openwop/openwop-sdks); SDK contributions and the SDK build/lint/parity gate (`scripts/sdks-check.sh`) apply in that repo. The rules below are retained because they remain the contract a spec change imposes on the SDKs.
-
-- Every endpoint in `api/openapi.yaml` should map to ONE method on `OpenwopClient`. If you add an endpoint to the spec, add the corresponding SDK method in a paired `openwop-sdks` PR.
-- Types come from the spec — extend `src/types.ts` rather than redefining shapes inline.
-- `tsc --noEmit` must pass with `strict + exactOptionalPropertyTypes`. No `as any`, no `@ts-ignore`.
-- Zero runtime dependencies remains a goal. New deps need a stated reason in the PR description.
-
-### Reference applications (`apps/`)
-
-> **Moved:** the deployable reference app was extracted to [`openwop/openwop-app`](https://github.com/openwop/openwop-app), and the single-file demos + conformance-target hosts to [`openwop/openwop-examples`](https://github.com/openwop/openwop-examples). Contributions to either go to those repos; the conventions below travel with them.
-
-A separate tier from the single-file demos and `examples/hosts/` conformance-test targets (both in `openwop-examples`). Each reference app is a deployable template — backend + frontend + Dockerfile + auth + storage + observability wired together.
-
-Conventions when contributing a new sample (or a new BE/FE under an existing one):
-
-- **Layout.** Backends live under `apps/<sample>/backend/<language>/`; frontends under `apps/<sample>/frontend/<framework>/`. Mirror an existing sample's structure.
-- **Boundary discipline.** Anything sample-specific (stub auth, demo packs, local workflows) MUST live under `local.*` or `sample.*` namespaces — never under `core.*`, `openwop.*`, or `vendor.<org>.*`. The `host-extensions.md` namespace rule applies inside `apps/` exactly as it does in production hosts.
-- **Honest discovery.** The `/.well-known/openwop` advertisement MUST reflect what the sample actually implements. Do not claim profiles or capabilities that are stubbed — downgrade the advertisement instead.
-- **Banned patterns.** No `as any`, `@ts-ignore`, or `@ts-nocheck` in `apps/<sample>/<lane>/<language>/src/`. Production-grade hygiene applies even though samples are non-normative — the sample teaches by example.
-- **Dependencies.** Sample dependencies are local to the sample; root `npm install` and the spec corpus are unaffected. New deps need a one-line justification in the PR.
-- **CI.** Sample CI runs in its own workflow step. A sample failure does NOT block a spec release; the gate stays scoped to spec/SDK/conformance/security.
-- **Public docs.** Mention the sample in the root `README.md` "Reference applications" section + add a `[Unreleased]` line in `CHANGELOG.md`. Do NOT introduce deployment-target language ("Cloud Run", "AWS Lambda", "Fly.io") into `README.md` / `QUICKSTART.md` — `spec-corpus-validity.test.ts` enforces neutrality there. The sample's own README is the place for deployment specifics.
-- **Documentation.** Each `apps/<sample>/` has a `README.md` (run instructions + honest pass-matrix) and `ARCHITECTURE.md` (component map + boundary discipline). The latter cites where each spec requirement is implemented in the sample.
+- **Never write the literal you are policing.** A checker that greps the tree for a string must not contain that string, in a comment, an example or its own error message. Build it from parts or read it from the registry the rule comes from.
+- **Assert every anchor before you edit anything.** A script that edits several files in sequence stops at the first anchor it can't find, and every later edit silently doesn't happen. Resolve all anchors first, then write.
+- **Never run a global substitution over a lockfile or a generated file.** A version bump touches a known set of sites; edit each by address. A blanket `sed` over `package-lock.json` once rewrote an unrelated dependency's version.
 
 ---
 
-## The CI gate
+## Regenerating derived files and running the gate
 
-A openwop-spec PR is mergeable when:
-
-1. `redocly lint api/openapi.yaml` — clean.
-2. `asyncapi validate api/asyncapi.yaml` — clean.
-3. Every JSON Schema compiles via Ajv2020 (covered by `conformance/src/scenarios/spec-corpus-validity.test.ts`).
-4. Every fixture validates against `workflow-definition.schema.json` (covered by `conformance/src/scenarios/fixtures-valid.test.ts`).
-5. Every prose doc carries a `Status:` legend tag (covered by `spec-corpus-validity.test.ts`).
-6. The `openwop-conformance --offline` server-free subset passes.
-7. `CHANGELOG.md` updated when changing any artifact: one line under `[Unreleased]`, as `- **Short lead.** one sentence` saying what changed for an implementer. Leave out hashes, pass counts and how the change was found; those belong in `evidence/`, the RFC and the PR. A release moves its lines out of `[Unreleased]` into its own `## [X.Y.Z] — date — headline` section. `scripts/check-changelog-shape.mjs` enforces the shape.
-8. Every commit on the PR carries a `Signed-off-by:` trailer per the DCO (see §"Sign your commits" below).
-
-(The SDK build + per-SDK lint gates moved to `openwop-sdks` with the SDKs — that repo's `scripts/sdks-check.sh` covers TypeScript `tsc`/ESLint, Python `ruff`, Go `go vet`/`gofmt`, and cross-SDK parity.)
-
-Run the full local check from the repo root:
+Many files are generated from others: the v2 API, the gap and register views, `docs/PROTOCOL-STATUS.md`, the requirement registry, the spec-artifacts package, and more. Never hand-edit them. After a change, run the generators in this order, then the gate:
 
 ```bash
+python3 scripts/derive-v2-api.py --write
+node scripts/generate-gaps.mjs --write
+node scripts/generate-core-standard-manifest.mjs --write
+node scripts/generate-assurance-status.mjs --write
+node scripts/generate-protocol-status.mjs --write
+(cd conformance && node scripts/generate-scenario-majors.mjs --write)
+(cd conformance && node scripts/generate-requirement-registry.mjs --write)
+node scripts/generate-spec-artifacts.mjs --write
+node scripts/generate-review-packet.mjs --write
+node scripts/generate-v1-eos-clock.mjs --write
+node scripts/report-v2-witness-coverage.mjs --write
+node scripts/check-spec-coherence.mjs --write
+
 npm run openwop:check
 ```
 
-Equivalent direct script:
+Skip a generator only if you are sure none of its inputs changed. An edit made after the chain can make one stale again, so run the chain last.
 
-```bash
-bash scripts/openwop-check.sh
-```
+`npm run openwop:check` (`scripts/openwop-check.sh`) is the merge gate. It mirrors `.github/workflows/openwop-spec.yml` and runs ten steps:
 
-### Optional pre-commit guard
+1. Conformance suite: typecheck, host-free scenarios, and the corpus-coherence tests (every schema compiles, every fixture validates, links resolve, prose carries a status line).
+2. `api/openapi.yaml` lints clean (redocly).
+3. `api/asyncapi.yaml` validates (AsyncAPI CLI).
+4. Generated surfaces are current, plus the register, RFC-status and waiver checks.
+5. Publish metadata and npm package contents.
+6. Security invariants: every protocol-tier MUST NOT in `SECURITY/invariants.yaml` has a matching public test.
+7. Published-layout collection.
+8. Advertised package versions.
+9. Published-version identity.
+10. The v2 tree: declaration, generators, spec-readability budget, paths, deprecation dates, retirement and surface monotonicity, bundle maturity, the Accepted predicate, and lint/validation of `api/v2/openapi.yaml`, `api/v2/asyncapi.yaml` and `api/seams-v2.yaml`.
 
-Install once per clone to catch the most common author-side slip
-(staging an RFC change without regenerating `docs/PROTOCOL-STATUS.md`
-and `README.md`):
+Beyond the gate, a PR also needs:
+
+- **A `CHANGELOG.md` line** under `[Unreleased]` when it changes any artifact, in the form `- **Short lead.** one sentence` saying what changed for an implementer. Leave out commit hashes, pass counts and how the change was found. `scripts/check-changelog-shape.mjs` enforces the shape.
+- **A `Signed-off-by:` trailer** on every commit (see "Sign your commits" below).
+
+### Optional pre-commit hook
 
 ```bash
 bash scripts/install-git-hooks.sh
 ```
 
-This symlinks `scripts/hooks/pre-commit` into `.git/hooks/`. The
-hook is fast (<1s) and only fires when staged paths match
-`RFCS/*.md`. Heavier validation stays in CI.
-
-### Two rules for the scripts you write
-
-**Never write the literal you are policing.** A checker that greps the tree for a string must not contain that string — not in its docblock, not in an example, not in its own error message. `check-conformance-registry` once explained, in a comment, the exact spelling it forbade, and from then on the file it lived in was the one hit its own grep reported (#1151). Name the literal indirectly ("the retired cursor name"), build it from parts, or read it from the registry the rule comes from.
-
-**Assert every anchor before you edit anything.** A version-bump script that
-edits ten files in sequence will stop at the first anchor it cannot find — and
-everything after it silently does not happen. Twice in one day a CHANGELOG entry
-was skipped that way, and the per-package `check-shipped-changelog` caught one of
-them a cut later while the root file went unnoticed. Resolve every anchor first,
-then write; or make each edit its own step whose failure is visible.
-
-**Never run a global substitution over a lockfile or a generated file.** A version bump is a handful of known sites — `package.json`, the lockfile's root `version` and `packages[""]` block, the release manifest, the publish-metadata expectations — and each is edited by address. A `sed …/2.3.1/2.3.2/g` over `package-lock.json` rewrote an unrelated dependency's recorded version against its `resolved` tarball, and nothing noticed for two cuts. Edit by line, then audit the lockfile entry-by-entry (`version` against `resolved`) before a cut.
-
----
-
-## Coordination with the impl plan
-
-When a spec PR proposes a change that interacts with a reference implementation:
-
-- **Cosmetic / additive** (new field, new event type as opt-in, new endpoint): merge spec PR independently. Impl will catch up.
-- **Breaking impl assumptions** (schema bump on existing event, new required field, removed field): coordinate via `WORKFLOW-PROTOCOL-openwop-PLAN.md` "Cross-cuts to impl plan" section. Add a `CC-N` entry. The impl plan owner approves before merge.
-
-Cross-cuts currently tracked: CC-1 (recursionLimit invariant — partial), CC-2 (typed channels — deferred), CC-3 (OTel taxonomy — done), CC-4 (maxNodeExecutions — done).
+This links `scripts/hooks/pre-commit` into `.git/hooks/`. It is fast (under a second) and fires only when staged paths match `RFCS/*.md`, catching an RFC change staged without regenerating `docs/PROTOCOL-STATUS.md` and `README.md`.
 
 ---
 
 ## Process
 
-The openwop spec doesn't yet have a formal committee. Until one exists:
+- **Pull requests** go to this repository, labelled `openwop-spec` when they touch the spec corpus.
+- **Issues:** name the document, the section, the requirement that is unclear or contradictory, and the impact on implementations.
+- **Compatibility:** [`COMPATIBILITY.md`](./COMPATIBILITY.md) decides what is additive and what is breaking.
+- **Normative changes** need an RFC: see [`RFCS/README.md`](./RFCS/README.md).
+- **Review rules** (approvals, comment windows and how they are waived while the project has one maintainer) are in [`GOVERNANCE.md`](./GOVERNANCE.md), in "Decision making", "Spec change process" and "Sole-steward operation". Every waived comment window is recorded in the waiver ledger in [`MAINTAINERS.md`](./MAINTAINERS.md).
 
-- **PRs**: opened against the implementation repo, labeled `openwop-spec`. Merge bar is "two reviewers from different organizations" once the spec leaves DRAFT.
-- **Issues**: see `README.md` §Reporting issues — include doc filename, section heading, RFC 2119 requirement that's unclear or contradictory, and implementation impact.
-- **Backwards compat**: `COMPATIBILITY.md` decides what is additive and what is breaking.
+### Bootstrap-phase notes
+
+Older RFCs cite this section for the comment-window waiver and one-approval review used while the project has a single maintainer. Those rules now live in [`GOVERNANCE.md`](./GOVERNANCE.md) §"Sole-steward operation", and every waiver is recorded in [`MAINTAINERS.md`](./MAINTAINERS.md).
 
 ---
 
 ## Sign your commits (DCO)
 
-Every commit on a pull request MUST carry a `Signed-off-by:` trailer. This is the [Developer Certificate of Origin](https://developercertificate.org/) — the lightweight alternative to a CLA. By signing off, you assert you have the right to submit the work under the project's license (Apache-2.0 for code, CC-BY-4.0 for spec text).
-
-How to sign:
+Every commit on a pull request MUST carry a `Signed-off-by:` trailer. This is the [Developer Certificate of Origin](https://developercertificate.org/), a lightweight alternative to a CLA. By signing off, you assert you have the right to submit the work under the project's license (Apache-2.0 for code, CC-BY-4.0 for spec text).
 
 ```bash
 git commit -s -m "your message"             # adds Signed-off-by automatically
-git commit --amend -s --no-edit             # add to an existing commit
-git rebase --signoff -i HEAD~3              # add to the last 3 commits
+git commit --amend -s --no-edit             # add it to an existing commit
+git rebase --signoff HEAD~3                 # add it to the last 3 commits
 ```
 
-The DCO check is wired through the [DCO bot](https://github.com/dcoapp/app); it runs on every PR and blocks merge until every commit is signed off. A failing DCO check is the only "fix-forward" the maintainer set explicitly allows: amend + force-push and we'll re-run.
+The [DCO bot](https://github.com/dcoapp/app) runs on every PR and blocks merge until every commit is signed off. To fix a failing check, amend, force-push, and it re-runs.
 
-**Bootstrap-phase reality (until `MAINTAINERS.md` lists a non-steward maintainer):** the steward currently lands commits directly on `main` without a PR gate, so the DCO bot does not run on those commits in practice. Commits authored in bootstrap phase have shipped with `Co-Authored-By:` trailers (for AI-assistant attribution) but without `Signed-off-by:`. This is a documented drift between the stated rule and current practice. The MUST above becomes operationally enforceable once the PR-based workflow re-engages — i.e., as soon as a non-steward maintainer joins per the `ROADMAP.md` migration tripwire. Until then, contributors submitting PRs SHOULD sign their commits; the steward's direct-to-`main` commits are exempt by practice but the exemption is recorded here for transparency.
+While the project has one maintainer (see [`GOVERNANCE.md`](./GOVERNANCE.md) §"Sole-steward operation"), the steward's own commits to `main` don't go through a PR, so the DCO bot doesn't see them and they may lack the trailer. That exemption is recorded here for transparency. It ends when a second maintainer joins. External contributions MUST be signed.
 
 ---
 
-## Triage SLA
+## Response times
 
 A maintainer will respond to your PR or issue within:
 
-- **24 hours** for security-flagged issues (per `SECURITY.md`).
+- **24 hours** for security-flagged issues (see [`SECURITY.md`](./SECURITY.md)).
 - **7 calendar days** for everything else.
 
-"Respond" means substantive: a review, a redirect, or a "I'll get to this by ~date." Silence past 7 days means the maintainer rotation isn't keeping up; ping `@davidscotttufts` directly.
+"Respond" means substantive: a review, a redirect, or a date by which it will be looked at. If 7 days pass without one, ping the lead maintainer listed in [`MAINTAINERS.md`](./MAINTAINERS.md).
 
-If your PR sits past 14 days without a substantive response, that's a maintainer-set capacity problem, not a quality problem with your contribution. We document this honestly so contributors can decide whether to wait.
-
----
-
-## Bootstrap-phase notes (2026-05-05)
-
-Until `MAINTAINERS.md` lists at least one maintainer not affiliated with the original steward (per the `ROADMAP.md` migration tripwire), the following bootstrap-phase rules apply:
-
-- **One-approval review.** Branch-protection on `main` requires one maintainer approval. Post-bootstrap (when MAINTAINERS.md grows past one), this becomes two approvals from different organizations per `GOVERNANCE.md` §"Decision making."
-- **Conformance scenario authorship.** PRs touching `conformance/src/scenarios/` or `conformance/src/lib/` route through `CODEOWNERS` to the lead maintainer. Same elevation post-bootstrap (cross-org reviewers required).
-- **Spec corpus changes.** Same elevation logic — `CODEOWNERS` routes `/spec/v1/`, `/api/`, `/schemas/` to the lead maintainer; cross-org review post-bootstrap.
-- **DCO `Signed-off-by:` exemption.** The steward's direct-to-`main` commits ship without `Signed-off-by:` trailers in practice (see §"Sign your commits (DCO)" above). External contributors submitting PRs MUST still sign every commit. The exemption ends when the PR-based workflow re-engages with the first non-steward maintainer.
-- **`bash scripts/openwop-check.sh` before push.** The 8-step gate is fast (~30s warm cache) and surfaces fixture-catalog drift, schema discipline breaks, and conformance-validity issues before they hit `origin/main`. Run it before every push to avoid red gates on `main` that block other contributors.
-- **RFC comment-window waivers.** Additive RFCs (7-day window) MAY be promoted Draft → Active by steward decision when the comment window would only serve as a delay against zero external reviewers. Each waived RFC MUST record the waiver in its `Updated` field. RFCs 0009 and 0010 are the worked examples — see `MAINTAINERS.md` §"Bootstrap-phase RFC waivers" for the running list.
-
-The bootstrap-phase amendment is filed as RFC 0005 in the `RFCS/` directory.
+A PR waiting more than 14 days without a substantive response is a maintainer capacity problem, not a problem with your contribution.
 
 ---
 
-## Useful one-liners
+## Useful commands
 
 ```bash
-# Validate every schema compiles + fixtures + spec corpus, all server-free
-# (build the CLI once first: cd conformance && npm install && npm run build:cli)
+# Host-free conformance subset
+# (build the CLI once: cd conformance && npm install && npm run build:cli)
 conformance/dist/cli.js --offline
 
-# Lint OpenAPI (pinned — matches the openwop-check.sh gate; @latest races the npm cache)
+# Lint OpenAPI (pinned to the gate's version)
 npx -y -p @redocly/cli@2.31.4 redocly lint api/openapi.yaml
+(cd api/v2 && npx -y -p @redocly/cli@2.31.4 redocly lint openapi.yaml)
+npx -y -p @redocly/cli@2.31.4 redocly lint api/seams-v2.yaml --config api/v2/redocly.yaml
 
-# Validate AsyncAPI (pinned — 4.1.1 is the last Node-22-compatible release)
+# Validate AsyncAPI (4.1.1 is the last Node-22-compatible release)
 npx -y -p @asyncapi/cli@4.1.1 asyncapi validate api/asyncapi.yaml
+npx -y -p @asyncapi/cli@4.1.1 asyncapi validate api/v2/asyncapi.yaml
 
-# Build the TS SDK (lives in openwop-sdks now)
-(cd ../openwop-sdks/sdk/typescript && npm install && npm run build)
-
-# Find every prose doc that's still STUB-tier (candidates for promotion)
-grep -l "Status:.*STUB" *.md
+# Check that api/v2 matches its source
+python3 scripts/derive-v2-api.py --check
 ```

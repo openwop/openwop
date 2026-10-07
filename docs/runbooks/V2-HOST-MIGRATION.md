@@ -1,6 +1,8 @@
 # v2 Host Migration Runbook
 
-> **Status: v1 (2026-09-04).** Step-by-step procedure for migrating a live OpenWOP host from major 1 to major 2 without downtime and without rewriting a single historical event row. Targets a host operator who already serves v1 in production. Pairs with `spec/v2/core/persistence.md`, `spec/v2/core/versioning.md`, and RFC 0167 §F.
+Step-by-step procedure for migrating a live OpenWOP host from major 1 to major 2 without downtime and without rewriting a single historical event row. Targets a host operator who still serves v1. Pairs with [`spec/v2/core/persistence.md`](../../spec/v2/core/persistence.md), [`spec/v2/core/versioning.md`](../../spec/v2/core/versioning.md), and RFC 0167 §F.
+
+> v1 reached end of support on 2026-10-04 ([RFC 0234](../../RFCS/0234-maintainer-set-v1-end-of-support.md)). A host MAY now drop the `1.<n>` member from `protocolVersions[]` (`versioning.md` §5); it is permitted, not forced. A host still serving v1 can follow Phases 0–4 and then retire v1 (Phase 6) whenever it is ready.
 
 This runbook is the product of two real migrations run in parallel — a tier-1 host (`openwop-app`, SQLite + Postgres) and a tier-2 host (MyndHyve, Firestore). **Twenty corpus defects were found during those two migrations, and every one of them was found by implementing the contract rather than by reading it.** That is the reason this document exists: the second migration was measurably cheaper than the first, and a third should be cheaper still.
 
@@ -12,7 +14,7 @@ Everything below that reads like an over-specific warning is an over-specific wa
 
 You operate a host that serves major 1 in production, with persisted event logs you cannot afford to lose or rewrite, and you want to serve major 2.
 
-**NOT covered:** building a host from scratch (start from `spec/v2/core/` and the `v2-reference` example instead — it was written from the spec rather than from v1 host code, which is what made it useful as a front-door witness); registry pack migration (`docs/runbooks/PACK-LIFECYCLE.md`); SDK upgrades.
+**NOT covered:** building a host from scratch (start from `spec/v2/core/`, [`docs/IMPLEMENT-CORE.md`](../IMPLEMENT-CORE.md), and the `v2-reference` host in [`openwop/openwop-examples`](https://github.com/openwop/openwop-examples) instead — it was written from the spec rather than from v1 host code, which is what made it useful as a front-door witness); registry pack migration (`docs/runbooks/PACK-LIFECYCLE.md`); SDK upgrades.
 
 ---
 
@@ -149,9 +151,9 @@ Without it your signature attests **integrity only**: it proves the bundle was n
 
 **4.2c Count what witnesses, not what passes.** Fifty-three of fifty-five v2 files "passed" on one host; **thirty-four** executed an assertion. The other nineteen were seam-gated and soft-skipped `blocked` — a ✓ that is a statement about the gate, not the host. RFC 0167 §G.2's Coexistence gate names `fork-a-v1-run`, which is one of the nineteen, so the seams surface (§4.1b) is on the corpus's critical path, not only on yours. Report the executed count beside the pass count, always.
 
-**4.2d The bundle's target is the origin the discovery document is served from — and "mounted" means the host answered, not the hosting layer.** A tier-1 host's public origin rewrote `/.well-known/**` and `/v1/**` to its backend and let fourteen of the fifteen major-2 manifest roots fall through to the SPA shell: `200 text/html`, no `OpenWOP-Version`, for `/runs`, `/webhooks`, `/interrupts`, `/agents`. One hop behind, the Cloud Run URL answered every path correctly. Every witness the host had run was against localhost or that direct URL and was right about the code; a second-party witness against the origin failed seventeen scenarios on the fallback. A bundle cut against the direct URL attests a build nobody reaches through the origin whose `discovery.sha256` it binds. **Probe the origin, cheaply, before any cut:** `POST /runs` with body `{` and `OpenWOP-Version: 2.0` — the host answers `400` with the error envelope and the header; a framework parser mounted before negotiation answers an HTML `400` or a `500` with no header; a hosting fallback answers `200 text/html`. Three different failures, one request that creates nothing, and the suite's `v2-malformed-body-envelope` and `v2-advertised-path-space-served` both now insist on the header for the same reason: a response without it did not come from the host.
+**4.2d The bundle's target is the origin the discovery document is served from — and "mounted" means the host answered, not the hosting layer.** A tier-1 host's public origin rewrote `/.well-known/**` and `/v1/**` to its backend and let fourteen of the fifteen major-2 manifest roots fall through to the SPA shell: `200 text/html`, no `OpenWOP-Version`, for `/runs`, `/webhooks`, `/interrupts`, `/agents`. One hop behind, the direct service URL answered every path correctly. Every witness the host had run was against localhost or that direct URL and was right about the code; a second-party witness against the origin failed seventeen scenarios on the fallback. A bundle cut against the direct URL attests a build nobody reaches through the origin whose `discovery.sha256` it binds. **Probe the origin, cheaply, before any cut:** `POST /runs` with body `{` and `OpenWOP-Version: 2.0` — the host answers `400` with the error envelope and the header; a framework parser mounted before negotiation answers an HTML `400` or a `500` with no header; a hosting fallback answers `200 text/html`. Three different failures, one request that creates nothing, and the suite's `v2-malformed-body-envelope` and `v2-advertised-path-space-served` both now insist on the header for the same reason: a response without it did not come from the host.
 
-**4.2e Read the serving revision by build commit, never by serial — and shift traffic by name.** Cloud Run's `latestReady` follows the revision *serial*, and serials are not monotonic with creation time (one service ran `00684 → 00686 → 00666 → 00691 → 00668` across a day). A deploy that created a Ready revision with a *lower* serial than the one serving saw it **retired** while `latestRevision: true` kept routing to yesterday's build, and `gcloud` printed *"revision 00691-hay deployed, serving 100%"* — truthfully, of the wrong revision. When a deploy "succeeds" onto the previous commit, look for a `Retired` revision with a lower serial before looking for a missing build. Verify the serving revision (`percent == 100`) by the build commit it carries; after a build, shift traffic **by the name of `status.latestCreatedRevisionName`** once its commit is proven, not `--to-latest`.
+**4.2e Read the serving revision by build commit, never by serial — and shift traffic by name.** On the tier-1 host's serverless platform, `latestReady` follows the revision *serial*, and serials are not monotonic with creation time (one service ran `00684 → 00686 → 00666 → 00691 → 00668` across a day). A deploy that created a Ready revision with a *lower* serial than the one serving saw it **retired** while `latestRevision: true` kept routing to yesterday's build, and `gcloud` printed *"revision 00691-hay deployed, serving 100%"* — truthfully, of the wrong revision. When a deploy "succeeds" onto the previous commit, look for a `Retired` revision with a lower serial before looking for a missing build. Verify the serving revision (`percent == 100`) by the build commit it carries; after a build, shift traffic **by the name of `status.latestCreatedRevisionName`** once its commit is proven, not `--to-latest`.
 
 **4.3 Read the dispositions, not the exit code.** See "Verify the artifact" below.
 
@@ -165,21 +167,17 @@ Record the target major and the applicable set beside any total you intend anyon
 
 ---
 
-## Phase 5 — Anchor
+## Phase 5 — List the host
 
-The v1 end-of-support clock is computed from the matrix and the public history (`overview.md` §v1 end-of-support; `scripts/generate-v1-eos-clock.mjs`); a host's contribution to it is one file and two commits.
+With v1's end-of-support date already set (RFC 0234), a host's bundle no longer moves any clock. Listing still matters: it is how a reader finds the host and its evidence.
 
-**5.1 The row PR carries the bundle.** With your INTEROP-MATRIX v2-table row, check the signed bundle in as `evidence/v2-host-bundles/<host.name>.json` — `host.name` exactly as the bundle spells it, because the generator reads the row's name and looks for that file. The cut gate (`check-cut-gates.mjs --host-bundle`) must already pass on it; the matrix row must name the host before that gate does.
+**5.1 The row PR carries the bundle.** With your INTEROP-MATRIX v2-table row, check the signed bundle in as `evidence/v2-host-bundles/<host.name>.json` — `host.name` exactly as the bundle spells it. The cut gate (`check-cut-gates.mjs --host-bundle`) must already pass on it; the matrix row must name the host before that gate does.
 
-**5.2 Non-vacuous means witnessed.** The bundle anchors only if some claimed profile carries `witnessCount ≥ 1` — an executed pass with assertions on that profile's floor. `certified` does not matter for the anchor (seams-gated `blocked` rows keep it false and that is the honest state); `witnessCount` does. A bundle cut on a suite before rc.45 reports `witnessCount: 0` on every v2 profile whatever it witnessed, because the emitter read the v1 floor table; re-cut on rc.45 or later.
-
-**5.3 The anchor is the merge, so it lands in a follow-up commit.** The generated `evidence/v1-end-of-support.json` records the committer date of the first commit at which your file was non-vacuous, read from `git log` on main. A PR branch cannot know its own squash-merge date, so the row PR is followed by one commit that runs `node scripts/generate-v1-eos-clock.mjs --write` and commits the result. Between the two, `--check` on main fails naming exactly this; that window is minutes and visible, which is the point — a check that stayed green through it would be a green that hides a stale date. Re-certifying later replaces the file and does not move the anchor; a row removed from the v2 table removes the host from the set and the date re-derives.
-
-**5.4 Read the state, every run.** `check-removal-dates` prints `clock: …` on every run; `check-retention-floors` prints the floor state and, with `--network`, whether each old-major artifact is still installable. "Not anchored", "far away" and "due" are three different sentences on purpose.
+**5.2 Non-vacuous means witnessed.** A bundle counts only if some claimed profile carries `witnessCount ≥ 1` — an executed pass with assertions on that profile's floor. `certified` can honestly stay false (seams-gated `blocked` rows keep it false); `witnessCount` cannot be zero.
 
 ## Phase 6 — Retirement, rehearsed
 
-Retirement is one step, not a sequence: `versioning.md` §5 makes it atomic, because through the overlap `preferredVersion` MUST name a `1.x` member, so dropping v1 from `protocolVersions[]` and flipping the preference are the same act. Build it as **one flag**, and rehearse the flag before you hold the date.
+Retirement is one step, not a sequence: `versioning.md` §5 makes it atomic, because while a host serves both majors `preferredVersion` MUST name a `1.x` member, so dropping v1 from `protocolVersions[]` and flipping the preference are the same act. Build it as **one flag**, and rehearse the flag before you flip it.
 
 **6.1 A test suite is not a rehearsal.** The tier-2 host built retirement as a single switch, covered it with unit tests that pinned the whole atomic set — `protocolVersions ["2.0"]`, external `/v1` a major-2 `404`, header `1` → `406`, bare ids `400 validation_error`, the §A.5 twin gone — and had 3,158 of them green. Then it deployed a throwaway service from the production image with the flag on and cut the suite at it: **106 / 11 / 87 / 22 blocked**, every block *"run did not settle."* Nothing in the unit suite could have seen it, because the thing that broke was not a request anyone in the test made.
 
@@ -187,7 +185,7 @@ Retirement is one step, not a sequence: `versioning.md` §5 makes it atomic, bec
 
 **6.3 Queued work outlives the flag.** Tasks minted before the flip carry the old address in their payload. Keep the old route answering for the drain window and retire it after the queue is empty, not with the flag.
 
-**6.4 Run §5's other hazard test at the same time.** `manifest top-level segments ∩ anything else served unversioned` — on the host that found it, `{agents, prompts, runs}`. Retirement flips every header-less request from major 1 to major 2, so a page sitting on a manifest name starts answering the operation. Resolve it before end-of-support: move the page, or serve it under §1.4's conditions.
+**6.4 Run §5's other hazard test at the same time.** `manifest top-level segments ∩ anything else served unversioned` — on the host that found it, `{agents, prompts, runs}`. Retirement flips every header-less request from major 1 to major 2, so a page sitting on a manifest name starts answering the operation. Resolve it before you retire v1: move the page, or serve it under §1.4's conditions.
 
 **6.5 Cut the suite against the rehearsal, not against the tests.** The tier-2 host's second cut, with the callbacks moved, was **134 / 4 / 89 / 0** and certified `openwop-core-standard` with v1 retired. Two cautions from the same lane: a `1.0` scalar `protocolVersion` beside `["2.0"]` is a v1-twin leftover that two independent hosts shipped, and **never run two hosts against one webhook receiver** — a dead-letter row failed `6 ≤ 5` because a second lane shared the tunnel and the queue in the same minutes, which reads exactly like a host defect.
 
@@ -227,7 +225,7 @@ The same rule applies to publishing: a green publish job is a wrapper claim. A r
 
 ## Deploy notes
 
-- **Read the serving revision by traffic percentage, never by index or "latest ready".** On Cloud Run, `status.latestReadyRevisionName` returns the most recently *ready* revision — which a 0%-traffic tagged revision satisfies. The serving revision is the traffic entry at `percent === 100`. Two sessions independently reported the wrong revision from that field on the same day; one of them drew a correct conclusion from it **by luck**, because both candidate revisions happened to predate the thing being checked.
+- **Read the serving revision by traffic percentage, never by index or "latest ready".** On that platform, `status.latestReadyRevisionName` returns the most recently *ready* revision — which a 0%-traffic tagged revision satisfies. The serving revision is the traffic entry at `percent === 100`. Two sessions independently reported the wrong revision from that field on the same day; one of them drew a correct conclusion from it **by luck**, because both candidate revisions happened to predate the thing being checked.
 - **Writing a secret is a promise; a revision serving it is the witness.** A secret reference resolved as `latest` is resolved **once, at revision start**. Appending a new version does nothing until something redeploys — the credential returns `401`, which reads exactly like a missing credential.
 - **Backend first, then frontend**, if you serve both.
 - **Redeploy a content-identical half rather than leave build stamps disagreeing.** It feels wasteful. It is not: a verifier that reports "frontend MISMATCH ← someone else's deploy is live" *falsely and permanently* sends the next operator hunting a parallel deployer who does not exist. **A gate that cries wolf once gets ignored the time it is right.**
@@ -330,7 +328,7 @@ The rule generalises: a preflight that checks a process exists proves less than 
 ## See also
 
 - `spec/v2/core/persistence.md` — era key, reader and writer rules, the coexistence table
-- `spec/v2/core/versioning.md` — the overlap rule and header grammar
+- `spec/v2/core/versioning.md` — the overlap, retirement and header grammar
 - `spec/v2/core/conformance.md` — bundle v3, signature attribution
 - RFC 0167 §F — the ten cut-gate predicates, rendered by `scripts/check-cut-gates.mjs`
-- `examples/hosts/v2-reference` — a host written from the spec rather than from v1 host code
+- `v2-reference` in [`openwop/openwop-examples`](https://github.com/openwop/openwop-examples) — a host written from the spec rather than from v1 host code

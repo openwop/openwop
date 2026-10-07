@@ -8,7 +8,7 @@ The full text is published at the URL above and is licensed under [CC BY 4.0](ht
 
 Report unacceptable behavior to **<conduct@openwop.ai>**.
 
-Reports are read by the maintainers listed in [`GOVERNANCE.md`](./GOVERNANCE.md). All reports are kept confidential. Maintainers will acknowledge receipt and follow up with a resolution as quickly as the project's resourcing allows. The project is in early incubation; firm response-time SLAs will be added to this document once a maintainer rotation is in place.
+Reports are read by the maintainers listed in [`MAINTAINERS.md`](./MAINTAINERS.md) and kept confidential. Maintainers acknowledge each report and follow up with a resolution as quickly as they can. This document will state response times once there is a maintainer rotation.
 
 ## Enforcement
 

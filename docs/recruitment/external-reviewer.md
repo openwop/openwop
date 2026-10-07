@@ -1,12 +1,12 @@
 # External Reviewer Recruitment
 
-> **Status: framework ready, no candidates contacted (2026-05-21).** New surface created per GOV-5 in `docs/KNOWN-LIMITS.md:78` — "Add at least one external reviewer before maintainer promotion." Distinct from the audit work (`SECURITY/outreach/external-audit/`) and host/pack recruitment — this is an **ongoing technical-review participant**, not a one-shot audit firm.
+> **Status: framework ready; no candidates contacted.** Closes the governance limit in [`docs/KNOWN-LIMITS.md`](../KNOWN-LIMITS.md): "Add at least one external reviewer before maintainer promotion." Distinct from the security audit (`SECURITY/outreach/external-audit/`) and from host and pack recruitment: this is an **ongoing technical-review participant**, not a one-shot audit firm.
 
 ## Why this matters
 
-The bootstrap-phase rule in `CONTRIBUTING.md` is one-approval-merge until `MAINTAINERS.md` lists a non-steward maintainer. That works for shipping velocity but creates a credibility gap: every normative change in the spec corpus has been reviewed by exactly one person (the steward). A standards review will flag this regardless of how clean the spec text is.
+Until `MAINTAINERS.md` lists a non-steward maintainer, the project runs under `GOVERNANCE.md` §"Sole-steward operation": one approval merges. That keeps shipping fast but leaves a credibility gap. Every normative change in the corpus, including the v2 core (30 documents under `spec/v2/core/`) and the 228 `Accepted` RFCs, has been reviewed by one person, the steward. A standards review will flag this however clean the spec text is.
 
-GOV-5 closes the gap **before** any maintainer promotion: invite an external reviewer to be the second pair of eyes on the next 2–3 normative RFCs. The reviewer is not a maintainer (no merge rights, no governance vote) — they are a **named approving reviewer** in the RFC `## Reviewers` section. Their public approval is the artifact.
+An external reviewer closes the gap **before** any maintainer promotion: invite an external reviewer to be the second pair of eyes on the next 2–3 normative RFCs. The reviewer is not a maintainer (no merge rights, no governance vote) — they are a **named approving reviewer** in the RFC `## Reviewers` section. Their public approval is the artifact.
 
 The external standards-readiness review explicitly flagged governance neutrality (GOVERNANCE.md §"Path to working group") as a blocker. An external reviewer on record is the cheapest non-trivial move toward that neutrality without requiring a full maintainer promotion or vendor-neutral-org migration.
 
@@ -40,23 +40,17 @@ Hi <Name>,
 
 I'm the steward of OpenWOP (https://openwop.dev) — an open wire-protocol
 for durable workflow orchestration with first-class multi-agent +
-HITL primitives. The project is currently in a "credible incubating
-protocol, weak open standard candidate" posture per a recent
-standards-acceptance review: technically deep, but every normative
-review to date has been single-reviewer.
+HITL primitives. Version 2 of the protocol is released, with a public
+conformance suite and certified reference hosts, but every
+normative review to date has been single-reviewer.
 
 I'd like to invite you to be the named external reviewer on ONE
-specific RFC — the choice depending on your domain interest:
+open RFC, chosen by your domain interest:
 
-- RFC <NNNN> (Multi-agent execution model) — planner/worker handoff,
-  replay determinism under nondeterministic models, cross-host
-  causation. ~3,000 words. Estimated review effort: 4-8 hours over
-  2 weeks.
-- RFC <NNNN> (Sandbox execution contract) — host-side isolation
-  guarantees for pack-loaded typeIds. Smaller surface but bigger
-  security stakes.
-- RFC <NNNN> (Multi-region + cross-engine guarantees) — idempotency
-  + replay determinism across regions + multi-engine ordering.
+- RFC <NNNN> (<title>) — <one-line scope>. Estimated review
+  effort: 4-8 hours over 2 weeks.
+- RFC <NNNN> (<title>) — <one-line scope>.
+- RFC <NNNN> (<title>) — <one-line scope>.
 
 You would NOT be a maintainer (no merge rights, no governance vote).
 You would be a named approving reviewer in the RFC's `## Reviewers`
@@ -84,4 +78,4 @@ When a reply comes in:
 
 ## Outreach log
 
-_(empty — no outreach sent yet as of 2026-05-21)_
+_(empty — no outreach sent yet)_

@@ -1,153 +1,97 @@
-# OpenWOP Production-Profile Runbook
+# Production Runbook
 
-> OPS-1 from `plans/openwop-protocol-gap-closure-plan.md`. Operator playbook for booting an OpenWOP host that honors `openwop-production` per [RFC 0009](../RFCS/0009-production-profile-conformance.md). Lets you reproduce the production claim locally before deploying.
+> Informative. An operator checklist for running an OpenWOP v2 host that claims the `production` profile. It adds no obligation. The normative bar is [`spec/v2/core/conformance.md`](../spec/v2/core/conformance.md) §"Production profile" (RFC 0009).
 
-The production profile is a behavioral contract, not just a string in your capabilities advertisement. This page is the operator's checklist for satisfying it.
+`production` is a behavioral contract, not a string in your discovery document. This page is the checklist for meeting it. If you are building a host from scratch, start with [`IMPLEMENTER-PATH.md`](./IMPLEMENTER-PATH.md); this page assumes the basics work.
 
-If you're building a new host, see [`docs/IMPLEMENTER-PATH.md`](./IMPLEMENTER-PATH.md) first. This page assumes you've shipped the basics and want to claim `openwop-production`.
-
----
-
-## What `openwop-production` requires
-
-Per [`spec/v1/production-profile.md`](../spec/v1/production-profile.md) (RFC 0009), a host claiming the profile MUST:
-
-1. **Backpressure with 503 + Retry-After** — when in-flight runs exceed the host's advertised cap, `POST /v1/runs` returns 503 with a `Retry-After` header.
-2. **Event-log retention sweeper** — events older than the advertised retention window are eligible for garbage collection per [`replay.md`](../spec/v1/replay.md) §"Retention and garbage collection".
-3. **Claim acquisition + crash recovery** — runs are owned by a single host process at a time; orphaned runs are reclaimed by a peer.
-4. **Audit-log integrity** — hash-chained event log with Ed25519 checkpoint signatures per [`auth-profiles.md`](../spec/v1/auth-profiles.md) §"openwop-audit-log-integrity".
-5. **Production logs** — structured terminal-run logs with `runId` + `status` + `errorCode` + `durationMs`.
-6. **Every claimed auth profile passes under strict mode** — no claiming-without-implementing.
-
-The reference implementation is the Postgres host at [`examples/hosts/postgres/`](https://github.com/openwop/openwop-examples/tree/main/examples/hosts/postgres). The rest of this page distills its operator-facing surface.
+Configuration names (environment variables, file paths) are host-specific. Example and reference hosts, with their own operator READMEs, live in [openwop/openwop-examples](https://github.com/openwop/openwop-examples).
 
 ---
 
-## Boot a production claim locally
+## What `production` requires
+
+From `conformance.md` §"Production profile", a host claiming it:
+
+1. passes `openwop-core-standard`, publishes the suite version and command it ran, and documents every optional profile it claims;
+2. serves the events channel or poll, and should serve both ([`events.md`](../spec/v2/core/events.md));
+3. persists run state and event logs outside process memory, replayable after a restart, including recovery of stale claims;
+4. tolerates at least five retries of one `Idempotency-Key` within its retention window ([`idempotency.md`](../spec/v2/core/idempotency.md));
+5. logs run id, tenant or project id, terminal status, error code and correlation id for each run, and should export the `openwop.*` OpenTelemetry spans and metrics.
+
+And its three facets:
+
+| Facet | What you operate |
+| --- | --- |
+| `backpressure` | At capacity, answer `503 service_unavailable` with `Retry-After`. Omit the header for a hold longer than 24 hours. |
+| `retention` | Document event-log retention, at least 7 days for snapshots and events unless the host is labelled development-only. An expired run answers `404 not_found` or `410 run_expired`, preferably `410` when you know it expired. |
+| `debugBundle` | Debug bundles ([`schemas/v2/debug-bundle.schema.json`](../schemas/v2/debug-bundle.schema.json)) redact secrets and tokens and mark truncation explicitly. Document your truncation limits. |
+
+### Durability is evidence, not a flag
+
+[`persistence.md`](../spec/v2/core/persistence.md) §"Durable acceptance and recovery" binds every host that accepts work: make accepted work durable in the same transaction as its record, separate liveness from duration bounds, **declare a recovery bound per enforcing mechanism**, dedupe duplicate delivery, and drive poison work to a terminal state.
+
+A durability rung (`durable-single-instance`, `durable-multi-instance`, `multi-region-qualified`) is claimed only with the evidence RFC 0158 §D names, from tests in which a process was actually terminated. Discovery carries no rung; the certification bundle does ([`conformance.md`](../spec/v2/core/conformance.md) §"Bundle v3").
+
+---
+
+## Verify the claim
+
+Run the suite in behavioral mode against the deployed host ([`conformance/README.md`](../conformance/README.md) has the full flag reference):
 
 ```bash
-# 1. Required production env vars
-export OPENWOP_PG_DSN=postgresql://...   # real Postgres OR `pglite` (test only)
-export OPENWOP_API_KEY=hk_live_<value>
-export OPENWOP_AUDIT_KEY_DIR=/var/lib/openwop/keys
-
-# 2. Optional auth-extension profiles (advertise only what you wire)
-export OPENWOP_SECONDARY_API_KEY=hk_rotation_overlap   # advertises openwop-auth-api-key-rotation
-export OPENWOP_TENANT2_API_KEY=hk_tenant2              # advertises openwop-discovery-auth-scoped
-export OPENWOP_OAUTH2_ISSUER_URL=https://auth.example.com/
-export OPENWOP_OAUTH2_AUDIENCE=https://your-host.example.com
-export OPENWOP_OIDC_ISSUER_URL=https://accounts.example.com/
-export OPENWOP_OIDC_AUDIENCE=https://your-host.example.com
-export OPENWOP_MTLS_CERT_PATH=/etc/openwop/mtls/server.crt
-export OPENWOP_MTLS_KEY_PATH=/etc/openwop/mtls/server.key
-export OPENWOP_MTLS_CA_PATH=/etc/openwop/mtls/ca.bundle
-export OPENWOP_MTLS_REQUIRED=true
-
-# 3. Optional capability surfaces
-export OPENWOP_MEMORY_COMPACTION=true                  # RFC 0012; only if you implement SR-1 carry-forward
-export OPENWOP_AI_POLICY_OPENAI=optional               # 4-mode policy per host-capabilities.md §host.aiProviders
-export OPENWOP_AI_POLICY_ANTHROPIC=optional
-export OPENWOP_MCP_SERVER_<ID>=https://mcp.example.com # one env var per configured MCP server
-
-# 4. Webhook signing
-export OPENWOP_WEBHOOK_SIGNING_SECRET=hk_webhook_secret
-
-# 5. Boot
-cd examples/hosts/postgres
-npm ci && npm run build && npm start
+npx @openwop/openwop-conformance \
+  --base-url https://your-host.example.com \
+  --api-key "$OPENWOP_CONFORMANCE_KEY" \
+  --target-major 2 \
+  --require-behavior
 ```
 
-For an SDK quickstart against this host, see [`sdk/python/QUICKSTART.md`](https://github.com/openwop/openwop-sdks/blob/main/sdk/python/QUICKSTART.md) or [`sdk/go/QUICKSTART.md`](https://github.com/openwop/openwop-sdks/blob/main/sdk/go/QUICKSTART.md).
+`--certify` writes a signed bundle you can publish as evidence. Any profile you do not implement must be declared as an opt-out; never let a soft-skipped scenario stand in for one you claim. A `blocked` row denies certification ([`conformance.md`](../spec/v2/core/conformance.md) §"Certification"), so preflight every opt-in surface before you cut a bundle.
+
+Scenarios to watch for this profile include `v2-production-backpressure`, `audit-log-integrity` and `audit-checkpoint-signature` (when you advertise `auditLogIntegrity`), and the scenario for each authentication lane you advertise.
 
 ---
 
-## Verify the claim with conformance
+## Limits to advertise honestly
 
-```bash
-# Strict mode + opt-out the profiles you genuinely don't implement.
-OPENWOP_BASE_URL=https://your-host.example.com \
-OPENWOP_API_KEY=hk_test_for_conformance \
-OPENWOP_REQUIRE_BEHAVIOR=true \
-OPENWOP_OPTED_OUT_PROFILES=  \
-npx openwop-conformance
-```
+`limits` and its run-level clamps are defined in [`runs.md`](../spec/v2/core/runs.md). Advertise what you actually enforce:
 
-The scenarios that MUST pass for an `openwop-production` claim:
+| Limit | What it controls |
+| --- | --- |
+| `limits.maxNodeExecutions` | Node starts per run; a breach emits `cap.breached` and fails with `recursion_limit_exceeded`. |
+| `limits.maxRunDurationMs` | Wall clock per run from `run.started`; a breach fails with `run_timeout`. |
+| `limits.maxLoopIterations` | Orchestrator turns; a breach fails with `loop_limit_exceeded`. |
+| `limits.envelopesPerTurn`, `clarificationRounds`, `schemaRounds` | Per-turn, per-task and per-envelope caps. |
 
-- `production-backpressure.test.ts` — saturates inflight cap, expects 503 + Retry-After.
-- `production-retention-expiry.test.ts` — verifies retention sweep envelope per `replay.md`.
-- `audit-log-integrity.test.ts` — `/v1/audit/verify` + checkpoint signature verification.
-- Each auth-extension profile scenario you claim (`auth-api-key-rotation.test.ts`, etc.).
-
-Postgres reference numbers: 781 passed / 1 known flake / 38 skipped / 30 todo (850 total) per [`INTEROP-MATRIX.md`](../INTEROP-MATRIX.md). 91.9% total; 96.4% of applicable. The one documented failure (`webhook-signed-delivery`) passes in isolation and is a full-suite timing collision, not a host bug.
+Your in-flight cap, the point at which `backpressure` starts answering `503`, is a host setting. Choose it from load testing, not a guess.
 
 ---
 
-## Operational limits to advertise honestly
+## Observability
 
-The Postgres reference host's discovery payload includes:
-
-| Limit                             |      Default | What it controls                                              |
-| --------------------------------- | -----------: | ------------------------------------------------------------- |
-| `limits.envelopesPerTurn`         |           50 | Max envelopes in a single turn (anti-runaway-loop).           |
-| `limits.maxNodeExecutions`        |         1000 | Hard cap on node executions per run; triggers `cap.breached`. |
-| `limits.maxRunDurationSeconds`    |         3600 | Wall-clock cap per run.                                       |
-| `limits.inflight.max`             |          100 | Max concurrent in-flight runs before 503 backpressure.        |
-| `limits.retentionDays`            |            7 | Event-log retention window.                                   |
-| `httpClient.maxResponseBodyBytes` |        1 MiB | SSRF-guard cap on `core.http.request` response bodies.        |
-| `aiProviders.maxConcurrentCalls`  | per-provider | Operator-defined; advertise actual value.                     |
-
-These map to env vars (`OPENWOP_LIMITS_*`) — see the Postgres host README for the full list. **Advertise what you actually enforce.**
+- Export OpenTelemetry traces and metrics under the `openwop.*` namespace.
+- Propagate W3C Trace Context on onward hops as [`interop.md`](../spec/v2/core/interop.md) §"Trace context" describes. Trace context is never an authorization input.
+- Emit one structured log line per terminal run with the fields `production` requires.
 
 ---
 
-## Strict-mode invocation matrix
+## Routine checks
 
-The four reference hosts publish their strict-mode postures with explicit opt-outs:
-
-| Host          | Required env for strict-mode green                                                                                                                                                                   |
-| ------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| **In-memory** | `OPENWOP_OPTED_OUT_PROFILES=openwop-production,openwop-auth-*,openwop-discovery-auth-scoped,openwop-audit-log-integrity` — minimal posture, opts out of everything beyond the wire-core surface.     |
-| **SQLite**    | `OPENWOP_OPTED_OUT_PROFILES=openwop-production,openwop-auth-oauth2-client-credentials,openwop-auth-oidc-user-bearer,openwop-auth-mtls,openwop-discovery-auth-scoped,openwop-replay-retention-expiry` |
-| **Python**    | `OPENWOP_OPTED_OUT_PROFILES=<21 profiles>` — see INTEROP-MATRIX Python row.                                                                                                                          |
-| **Postgres**  | `OPENWOP_REQUIRE_BEHAVIOR=true` with NO opt-outs (claims everything end-to-end).                                                                                                                     |
-
-Production hosts claiming `openwop-production` should match Postgres's "no opt-outs" posture.
-
----
-
-## Observability you should wire
-
-Per [`observability.md`](../spec/v1/observability.md):
-
-- **OTel traces** under the canonical `openwop.*` namespace. OTLP/HTTP-JSON, HTTP-protobuf, and gRPC all supported.
-- **Metrics** (advertised under `capabilities.observability.metrics.names[]`):
-  - `openwop.run.backlog`
-  - `openwop.queue.depth`
-  - `openwop.run.duration`
-  - `openwop.idempotency.cross_region_conflicts_total` (only when claiming multi-region)
-- **Structured logs**: at minimum a `run.terminal` event per run with `level` / `runId` / `workflowId` / `tenantId` / `status` / `errorCode` / `correlationId` / `timestamp` fields.
-
----
-
-## What you check daily
-
-- **Backpressure alert**: 503 rate vs your inflight cap.
-- **Retention sweep**: events older than `retentionDays` are evicted on schedule.
-- **Audit checkpoint cadence**: per the host's `checkpointIntervalEntries` + `checkpointIntervalSeconds` advertisement.
-- **Audit-log re-anchor (CF-11)**: export checkpoints via the host's export helper + run `node scripts/verify-audit-checkpoints.mjs <bundle>` from an independent machine. Exit 0 = chain valid.
-- **Webhook delivery success**: HMAC verification on the receiver side; circuit-breaker state.
-- **SSE longevity (CF-10)**: run `node conformance/soak/sse-longevity.mjs` for 10–30 minutes against the host; alert when `longestQuietSeconds` exceeds the heartbeat interval or `reconnects > 0`.
-- **Load profile (OPS-2)**: run `node conformance/soak/load-profile.mjs` against a non-prod replica before each release. Compare `p50`/`p95`/`p99` create-run latency to the prior release's baseline; alert on >2× regression.
-- **Strict-mode conformance**: re-run weekly to catch drift.
+| Check | How |
+| --- | --- |
+| Backpressure | Track the `503` rate against your in-flight cap. |
+| Retention | Confirm runs past the window answer `410 run_expired` or `404`, and that the sweeper runs on schedule. |
+| Audit checkpoints | If you advertise `auditLogIntegrity`, check checkpoint cadence against `checkpointIntervalEntries` and `checkpointIntervalSeconds`, and verify an exported checkpoint set from an independent machine with `node scripts/verify-audit-checkpoints.mjs <bundle>`. |
+| Webhooks | Watch dead-letter volume; receivers verify signatures ([`webhooks.md`](../spec/v2/core/webhooks.md)). |
+| Stream longevity | Run `node conformance/soak/sse-longevity.mjs` for 10 to 30 minutes; alert when the longest quiet gap exceeds your heartbeat interval or reconnects occur. |
+| Load | Run `node conformance/soak/load-profile.mjs` against a non-production replica before each release; compare create-run latency percentiles with the previous release. |
+| Conformance drift | Re-run the behavioral suite on a schedule and after every deploy. |
 
 ---
 
 ## See also
 
-- [`docs/IMPLEMENTER-PATH.md`](./IMPLEMENTER-PATH.md) — getting started.
-- [`docs/PROFILE-DECISION-GUIDE.md`](https://github.com/openwop/openwop/blob/48c1f569eb8a8f4ed3ae95bdacf7e757707ce855/docs/PROFILE-DECISION-GUIDE.md) — which profiles to claim.
-- [`docs/IMPLEMENTATION-CERTIFICATION.md`](https://github.com/openwop/openwop/blob/48c1f569eb8a8f4ed3ae95bdacf7e757707ce855/docs/IMPLEMENTATION-CERTIFICATION.md) — how to publish your evidence.
-- [`spec/v1/production-profile.md`](../spec/v1/production-profile.md) — normative production-profile contract.
-- [`examples/hosts/postgres/README.md`](https://github.com/openwop/openwop-examples/blob/main/examples/hosts/postgres/README.md) — reference host operator guide.
-- [`examples/hosts/postgres/conformance-full.md`](https://github.com/openwop/openwop-examples/blob/main/examples/hosts/postgres/conformance-full.md) — current production-claim evidence.
+- [`SECURITY-OPERATOR-GUIDE.md`](./SECURITY-OPERATOR-GUIDE.md): the security surfaces to turn on.
+- [`IMPLEMENTER-PATH.md`](./IMPLEMENTER-PATH.md): getting started.
+- [`spec/v2/core/conformance.md`](../spec/v2/core/conformance.md): the profile, bundle v3 and certification.
+- [`INTEROP-MATRIX.md`](../INTEROP-MATRIX.md): what each known host advertises and has evidenced.

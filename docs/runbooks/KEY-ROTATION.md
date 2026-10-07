@@ -1,24 +1,26 @@
 # Key rotation
 
-> **Status: runbook.** Two different key surfaces are rotated two different ways, for one structural reason: **a pack can be re-signed and a certification bundle cannot.** Read the split first; the procedures are not interchangeable.
+Two key surfaces are rotated two different ways, for one structural reason: **a pack can be re-signed and a certification bundle cannot.** Read the split first; the procedures are not interchangeable.
 
 ## The split
 
 | | Host bundle signing | Pack publishing |
 |---|---|---|
-| Where the key is published | the host's own `/.well-known/openwop`, `signingKeys[]` | `registry/.well-known/openwop-registry.json` |
+| Where the key is published | the host's own `/.well-known/openwop`, `signingKeys[]` | the registry's `.well-known/openwop-registry.json`, `signingKeys[]` |
 | Encoding | raw 32-byte Ed25519 public key, base64url unpadded — **exactly 43 characters** | SPKI PEM |
 | Trust root | **self-asserted.** A verifier resolves `keyId` in the host's own document; no list the steward keeps | steward-mediated, with `permittedNamespaces` |
-| Old key after rotation | **MUST stay listed, forever** | MAY be removed — but only after every pack it signed is re-signed or yanked |
-| Governing text | `spec/v2/core/conformance.md` §Bundle v3 | `spec/v1/registry-operations.md`, `docs/runbooks/PACK-LIFECYCLE.md` |
+| Old key after rotation | **MUST stay listed, forever** | MUST stay listed while any served version names it (yanked versions stay served) |
+| Governing text | [`spec/v2/core/conformance.md`](../../spec/v2/core/conformance.md) §"Bundle v3" | [`spec/v2/core/packs.md`](../../spec/v2/core/packs.md) §"Signing", [RFC 0222](../../RFCS/0222-v2-registry-operations.md) §C |
 
-The asymmetry is not an inconsistency. A pack is a mutable artifact you can publish again under a new key. **A certification bundle is immutable evidence** — it was signed once, over a witness digest, and re-signing it would mean re-cutting it against a host that has since changed. So the registry can retire a key by removing it after a re-sign wave, and a host never can.
+The asymmetry is not an inconsistency. A pack can be published again, as a new version, under a new key. **A certification bundle is immutable evidence** — it was signed once, over a witness digest, and re-signing it would mean re-cutting it against a host that has since changed.
 
 ## Host bundle-signing rotation
 
-`spec/v2/core/conformance.md` is normative and blunt about the failure mode:
+`spec/v2/core/conformance.md` §"Bundle v3" is normative:
 
-> A retired key MUST stay listed, because removing it silently invalidates every bundle it already signed.
+> A retired key MUST stay listed.
+
+Removing it silently invalidates every bundle it already signed.
 
 Procedure:
 
@@ -39,7 +41,11 @@ Set it anyway. It is a promise to a reader, and the reader has no other signal.
 
 ## Pack-publishing rotation
 
-See `docs/runbooks/PACK-LIFECYCLE.md` §"Signing key rotation" and `docs/PACK-AUTHOR-QUICKSTART.md`. The old key is marked `status: "rotated"`, the new key is added `active`, and removal is permitted **only after** every pack signed by the old key has been re-signed under the new one or yanked. That precondition is what makes removal safe here and impossible for bundles.
+See [`PACK-LIFECYCLE.md`](./PACK-LIFECYCLE.md) §"Key rotation". Add the new key with `status: "active"` and change the old key's `status` to any other value (the registry uses `rotated`). Only an `active` key may sign a new publication.
+
+The old key stays listed. `packs.md` requires a key to stay listed while any served version names it, and a verifier MUST NOT refuse a version because its key is not `active`. A yanked version is still served, so yanking does not release its key either. In practice a pack-signing key is retired, not removed — the same outcome as for bundles, reached by a different rule.
+
+Compromise is a different procedure: [`INCIDENT-RESPONSE.md`](./INCIDENT-RESPONSE.md) incident class 3.
 
 ## Known gap
 

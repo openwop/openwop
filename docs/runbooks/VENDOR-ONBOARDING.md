@@ -1,65 +1,60 @@
 # Vendor Onboarding Runbook
 
-> **Status: v1 (2026-05-12).** Step-by-step procedure for adding a new external vendor namespace + publisher key to `packs.openwop.dev`. Targets registry maintainers + the vendor's first authorized publisher. Pairs with `spec/v1/registry-operations.md` §"Submission validation" + `registry/README.md` §"Signing keys + namespace assignments".
+> **Status: current (v2).** How a new organization claims a `vendor.<org>.*` namespace and registers its own publisher key at `packs.openwop.dev`. For registry maintainers and the vendor's first publisher. The normative signing rules are [`spec/v2/core/packs.md`](../../spec/v2/core/packs.md) §Signing; the namespace and trust-tier policy is [RFC 0043](../../RFCS/0043-registry-and-extension-policy.md) (indexed at [`docs/governance/registry-policy.md`](../governance/registry-policy.md)).
 
-This runbook covers the namespace-claim PR for vendors who want to publish under `vendor.<org>.*`. The first openwop vendor onboarding (MyndHyve) executed this procedure on 2026-05-11 (openwop/openwop#2). Subsequent onboardings follow the same pattern.
+The registry and all of its tooling live in [openwop/openwop-registry](https://github.com/openwop/openwop-registry). Every step below is a pull request or a command in a clone of that repository, not this one.
 
 ---
 
 ## When to use this runbook
 
-A new organization wants to publish OpenWOP node packs under their own `vendor.<org>.*` namespace AND use their own signing key (not `openwop-registry-root`).
+An organization wants to publish packs under its own `vendor.<org>.*` namespace, signed with its own key.
 
-NOT covered:
+Not covered:
 
-- **`community.<author>.*` publishes** — community namespaces are open-publish; no maintainer review of the namespace itself. Anyone can claim a `community.your-handle.*` name on first publish.
-- **`core.openwop.*` publishes** — reserved for openwop-project maintainers. Different review process.
-- **`private.<host>.*` packs** — host-internal only. MUST NOT appear on `packs.openwop.dev`.
+- **`community.<author>.*`** — open-publish; there is no namespace review.
+- **`core.openwop.*`** — reserved for project maintainers.
+- **`private.<host>.*`** — host-internal only; never published to `packs.openwop.dev`.
 
 ---
 
-## Pre-flight (vendor side)
+## Pre-flight (vendor)
 
-The vendor MUST have:
+The vendor needs:
 
-- A GitHub organization that owns the repository they'll author packs from (e.g., `acme/openwop-packs`).
-- An Ed25519 keypair generated on an isolated workstation. The PRIVATE key never leaves the vendor's secured infrastructure.
-- A point-of-contact for the openwop maintainer to coordinate with.
+- A GitHub organization that owns the repository it will author packs from.
+- An Ed25519 keypair generated on an isolated workstation. The private key never leaves the vendor's infrastructure.
+- A named point of contact.
 
-### Generate the keypair (vendor)
+### Generate the keypair
 
 ```bash
-# Run on the vendor's secured workstation (NOT in any CI pipeline).
+# On a secured workstation, never in CI.
 mkdir -p ~/.openwop-keys
 openssl genpkey -algorithm ed25519 -out ~/.openwop-keys/<org>-internal-1.private.pem
 openssl pkey -in ~/.openwop-keys/<org>-internal-1.private.pem -pubout \
   -out ~/.openwop-keys/<org>-internal-1.public.pem
 chmod 600 ~/.openwop-keys/<org>-internal-1.private.pem
 
-# Verify it's a 32-byte Ed25519 public key
+# Confirm it is an Ed25519 public key
 openssl pkey -in ~/.openwop-keys/<org>-internal-1.public.pem -pubin -text -noout
 ```
 
-Send ONLY the `.public.pem` file to the openwop maintainer via the namespace-claim PR. The private key stays with the vendor.
+Only the `.public.pem` goes into the pull request.
 
 ---
 
-## Step 1 — Vendor opens namespace-claim PR
+## Step 1 — Vendor opens the namespace-claim PR
 
-Branch off `openwop/openwop` `main`. The PR adds:
+Open a pull request against `openwop/openwop-registry` that adds:
 
 ### A. `registry/keys/<org>-internal-1.pub`
 
-Copy the public key file from the vendor's workstation. Verify it's PEM-encoded and 113 bytes (Ed25519 public key SPKI).
-
 ```bash
-cp ~/.openwop-keys/<org>-internal-1.public.pem \
-   registry/keys/<org>-internal-1.pub
+cp ~/.openwop-keys/<org>-internal-1.public.pem registry/keys/<org>-internal-1.pub
 ```
 
-### B. `registry/.well-known/openwop-registry.json` updates
-
-Two additions:
+### B. Entries in `registry/.well-known/openwop-registry.json`
 
 ```jsonc
 {
@@ -71,8 +66,7 @@ Two additions:
       "publicKeyUrl": "/keys/<org>-internal-1.pub",
       "permittedNamespaces": ["vendor.<org>.*"],
       "operator": "<Org Display Name> (https://<org-domain>)",
-      "status": "active",
-      "_note": "First external vendor namespace under packs.openwop.dev. Per spec/v1/registry-operations.md §Step 1, vendor.<org>.* publishes MUST verify against this key; submissions from any other key MUST be refused at PR review."
+      "status": "active"
     }
   ],
   "namespaceAssignments": [
@@ -88,124 +82,102 @@ Two additions:
 }
 ```
 
-### C. `registry/README.md` table update
+Every `signingKeys[]` entry must carry `keyId`, `publicKeyUrl`, `permittedNamespaces` and `status`; the conformance leg for RFC 0222 reads all four.
 
-Add a row to the "Signing keys + namespace assignments" table:
+### C. A row in the registry README's signing-key table
 
 ```markdown
-| `<org>-internal-1` | <Org Display Name> | `vendor.<org>.*` | active (online publishing key) |
+| `<org>-internal-1` | <Org Display Name> | `vendor.<org>.*` | active |
 ```
 
-### D. PR description checklist
+### D. PR description
 
 ```markdown
 ## Namespace claim: vendor.<org>.*
 
 **Claimant:** <Org Display Name> (https://<org-domain>)
-**Maintainer contact:** <GitHub handle of vendor's point-of-contact>
+**Point of contact:** <GitHub handle>
 **First pack release ETA:** <YYYY-MM-DD>
 
 ### Verification
 
-- [ ] `registry/keys/<org>-internal-1.pub` is a 32-byte Ed25519 SPKI
-- [ ] Public key matches the fingerprint shared via [out-of-band channel]
-- [ ] `permittedNamespaces` is scoped to `vendor.<org>.*` only (no overlap with other vendors)
-- [ ] No existing publisher key holds `vendor.<org>.*` in its `permittedNamespaces`
+- [ ] `registry/keys/<org>-internal-1.pub` is an Ed25519 SPKI public key
+- [ ] The key fingerprint matches one shared out of band
+- [ ] `permittedNamespaces` is exactly `vendor.<org>.*`
+- [ ] No other key already holds `vendor.<org>.*`
 
 ### Why this vendor
 
-<one-paragraph justification — what the vendor builds, why they need
-their own openwop pack namespace, what packs they plan to publish>
+<one paragraph: what the vendor builds and which packs it plans to publish>
 ```
 
 ---
 
 ## Step 2 — Maintainer review
 
-Reviewer (openwop project maintainer) verifies:
+The reviewing maintainer checks:
 
-1. **Identity.** Does the GitHub account opening the PR control the claimed org? Cross-check via:
-   - GitHub org membership of the PR author
-   - DNS TXT record on `<org-domain>` containing the public-key fingerprint (optional but recommended for external vendors)
-   - A public statement (blog post / press release / signed message) declaring the namespace claim
+1. **Identity.** The PR author controls the claimed organization: GitHub org membership, and optionally a DNS TXT record on `<org-domain>` carrying the key fingerprint or a public statement of the claim.
+2. **Key shape.** `openssl pkey -in registry/keys/<org>-internal-1.pub -pubin -text -noout` prints an `ED25519 Public-Key` block.
+3. **Exclusivity.** `permittedNamespaces` is scoped to `vendor.<org>.*` only. Two vendors never share a key.
+4. **No conflict.** The namespace is not already in `namespaceAssignments[]`.
+5. **Gate passes.** openwop-registry's `registry-publish` workflow and `npm run check` are green.
 
-2. **Public-key shape.** Verify the file is a valid Ed25519 public key:
-
-   ```bash
-   openssl pkey -in registry/keys/<org>-internal-1.pub -pubin -text -noout
-   # Expects: "ED25519 Public-Key:" line + 32-byte hex dump
-   ```
-
-3. **Namespace exclusivity.** `permittedNamespaces` MUST be scoped to `vendor.<org>.*` only. Two vendors MUST NOT share a key.
-
-4. **No conflict.** `vendor.<org>.*` MUST NOT already be claimed in `namespaceAssignments[]`.
-
-5. **CI passes.** `registry-publish.yml` runs:
-   - JSON parse validation
-   - Schema validation (`registry-version-manifest.schema.json`)
-   - Build-index check (no drift)
-   - Sig verification (skipped on this PR — no new packs)
-   - Conformance check (skipped on this PR — no new packs)
-
-If all 5 pass: approve + squash-merge. Firebase Hosting auto-deploys via the WIF pipeline within ~2 min.
+If all five hold, approve and merge. The registry deploys on merge.
 
 ---
 
-## Step 3 — Verify post-deploy
-
-After merge, the vendor should verify their key is reachable:
+## Step 3 — Verify after deploy
 
 ```bash
-curl -sI https://packs.openwop.dev/keys/<org>-internal-1.pub
-# Expects: HTTP/2 200, content-type: application/octet-stream
-curl -sS https://packs.openwop.dev/.well-known/openwop-registry | \
+curl -sI https://packs.openwop.dev/keys/<org>-internal-1.pub   # 200
+curl -sS https://packs.openwop.dev/.well-known/openwop-registry.json | \
   jq '.signingKeys[] | select(.keyId == "<org>-internal-1")'
 ```
 
-If both succeed, the vendor can publish their first pack.
-
 ---
 
-## Step 4 — Vendor's first pack publish
+## Step 4 — First pack publish
 
-Vendor uses the standard pack-publishing flow:
+In a clone of openwop-registry:
 
 ```bash
-# in an openwop-registry clone
-node scripts/new-pack.mjs vendor.<org>.<pack>
-# ...edit pack.json, index.mjs, schemas/
+node scripts/new-pack.mjs --pack vendor.<org>.<pack>
+# edit pack.json, index.mjs, schemas/
 node scripts/auto-register.mjs --tree v2 \
   --key-file ~/.openwop-keys/<org>-internal-1.private.pem \
   --key-id <org>-internal-1 --scheme ed25519-canonical-json
 node registry/scripts/verify-signatures.mjs --tree v2 && npm run check
-# Open PR against openwop/openwop-registry (see docs/PACK-AUTHOR-QUICKSTART.md)
 ```
 
-The Stage 2 CI gates (`registry/scripts/verify-signatures.mjs`) cross-check the keyId against the namespace allow-list claimed in Step 1. A pack signed by `<org>-internal-1` MUST be in `vendor.<org>.*` — any mismatch fails CI.
+Then open a PR against openwop-registry. See [`docs/PACK-AUTHOR-QUICKSTART.md`](../PACK-AUTHOR-QUICKSTART.md) for authoring.
+
+The gate checks each signature against the key's `permittedNamespaces`: a pack signed by `<org>-internal-1` must be named `vendor.<org>.*`, and the key must be `active`.
 
 ---
 
-## Step 5 — Annual key rotation (vendor)
+## Step 5 — Key rotation
 
-Each authorized publisher key SHOULD rotate annually. See `KEY-ROTATION.md` (companion runbook) for the rotation procedure.
+Publisher keys should rotate annually. See [`KEY-ROTATION.md`](./KEY-ROTATION.md).
 
 ---
 
 ## Common pitfalls
 
-| Symptom                                                    | Likely cause                                              | Fix                                                                          |
-| ---------------------------------------------------------- | --------------------------------------------------------- | ---------------------------------------------------------------------------- |
-| Sig verification fails on first PR                         | `keyId` in pack.json doesn't match registered key         | Re-build pack with correct `--key-id`                                        |
-| Sig verification fails: "key not authorized for namespace" | Pack name's namespace doesn't match `permittedNamespaces` | Rename the pack OR add namespace to permittedNamespaces (Step 1)             |
-| Public-key URL 404s after merge                            | Firebase Hosting deploy failed (check Actions tab)        | Wait + retry; if persistent, manually `firebase deploy --only hosting:packs` |
-| `gh pr create` fails                                       | PR author lacks write access to openwop/openwop           | Fork → open PR from fork; maintainer can merge from any source               |
+| Symptom | Likely cause | Fix |
+| --- | --- | --- |
+| Signature verification fails | `keyId` in the manifest's `signing` block does not match the registered key | Re-sign with the correct `--key-id`. |
+| "key not authorized for namespace" | The pack name is outside the key's `permittedNamespaces` | Rename the pack, or amend the claim in Step 1. |
+| Public key 404s after merge | Deploy not finished or failed | Check openwop-registry's Actions tab and re-run the deploy. |
+| Cannot push a branch | No write access to openwop-registry | Open the PR from a fork. |
 
 ---
 
 ## See also
 
-- [`spec/v1/registry-operations.md`](../../spec/v1/registry-operations.md) §"Submission validation"
-- [`registry/README.md`](https://github.com/openwop/openwop-registry/blob/main/registry/README.md) §"Signing keys + namespace assignments"
-- [`docs/runbooks/PACK-LIFECYCLE.md`](./PACK-LIFECYCLE.md) — yank/deprecate/unpublish flows
-- [`docs/runbooks/INCIDENT-RESPONSE.md`](./INCIDENT-RESPONSE.md) — what to do when a key or pack is compromised
-- [`docs/AUTHORING-CANVAS-PACKS.md`](../AUTHORING-CANVAS-PACKS.md) — how to author the first pack after onboarding
+- [`spec/v2/core/packs.md`](../../spec/v2/core/packs.md) §Signing
+- [RFC 0222](../../RFCS/0222-v2-registry-operations.md) — v2 registry operations
+- [`PACK-LIFECYCLE.md`](./PACK-LIFECYCLE.md) — deprecate, yank, new versions
+- [`INCIDENT-RESPONSE.md`](./INCIDENT-RESPONSE.md) — key or pack compromise
+- [`docs/PACK-AUTHOR-QUICKSTART.md`](../PACK-AUTHOR-QUICKSTART.md) — authoring your first pack
+- [openwop/openwop-registry](https://github.com/openwop/openwop-registry) — the registry tree, scripts, and CI gate

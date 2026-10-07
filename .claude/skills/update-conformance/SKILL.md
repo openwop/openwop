@@ -1,11 +1,11 @@
 ---
 name: update-conformance
-description: Sync the conformance suite (@openwop/openwop-conformance) to a spec change. Adds/edits scenarios in conformance/src/scenarios/, fixtures in conformance/fixtures/ + fixtures.md catalog, capability gating per coverage.md, CHANGELOG entry, and bumps suite version per the spec major/minor rule.
+description: Sync the conformance suite (@openwop/openwop-conformance) to a spec change. Adds/edits v2 scenarios (conformance/src/scenarios/v2-*.test.ts) with req()-framed assertions and softSkip early returns, regenerates scenario-majors.json and the requirement registry, updates fixtures + fixtures.md, capability gating per coverage.md, and the conformance CHANGELOG entry for the open release cycle.
 ---
 
 # Update Conformance Suite (openwop)
 
-You are now in **Conformance Sync Mode** — a workflow for syncing changes from the openwop spec corpus (`spec/v1/`, `RFCS/`, `schemas/`, `api/`) to the black-box conformance suite at `conformance/` and the published package `@openwop/openwop-conformance`.
+You are now in **Conformance Sync Mode** — a workflow for syncing a change in the openwop spec corpus to the black-box conformance suite at `conformance/`, published as `@openwop/openwop-conformance`.
 
 ## Task: $ARGUMENTS
 
@@ -13,13 +13,15 @@ You are now in **Conformance Sync Mode** — a workflow for syncing changes from
 
 ## Reference
 
-- **Spec corpus:** `spec/v1/`, `RFCS/`, `schemas/`, `api/openapi.yaml`, `api/asyncapi.yaml`
-- **Conformance package:** `conformance/` — published as `@openwop/openwop-conformance` on npm
-- **Coverage map:** `conformance/coverage.md` — table of which spec sections are covered, including the §"Capability-gated scenarios" subsection
-- **Fixtures catalog:** `conformance/fixtures.md` — every file in `conformance/fixtures/` must appear with its contract
-- **Suite README:** `conformance/README.md` — how to run the suite against a target host
-- **CLI:** `conformance/src/cli.ts` — installs as `openwop-conformance`; supports `--offline` server-free subset
-- **Per-package CHANGELOG:** `conformance/CHANGELOG.md`
+- **Normative spec (v2, current):** `spec/v2/core/*.md`, `spec/v2/ext/`, families in `spec/v2/declaration.json`
+- **v2 wire:** `api/v2/openapi.yaml`, `api/v2/asyncapi.yaml` (derived from `api/openapi.yaml` by `scripts/derive-v2-api.py`), `schemas/v2/`
+- **Frozen v1:** `spec/v1/`, flat `schemas/*.schema.json`, `api/openapi.yaml`, `api/asyncapi.yaml`. v1 reached end of support on 2026-10-04 (RFC 0234). Do not add v1 scenarios for new behavior.
+- **RFCs:** `RFCS/`
+- **Coverage map:** `conformance/coverage.md` — spec surface → scenario, plus §"Capability-gated scenarios: shape vs behavior"
+- **Fixtures catalog:** `conformance/fixtures.md` — every file in `conformance/fixtures/` appears with its contract
+- **Suite README:** `conformance/README.md` — running the suite, env vars (`OPENWOP_BASE_URL`, `OPENWOP_API_KEY`, `OPENWOP_TARGET_MAJOR`, `OPENWOP_REQUIRE_BEHAVIOR`)
+- **CLI:** `conformance/src/cli.ts` — installs as `openwop-conformance`; `--target-major <1|2>`, `--offline`, `--require-behavior`
+- **CHANGELOG:** `conformance/CHANGELOG.md` — one heading per release cycle
 
 ---
 
@@ -30,50 +32,48 @@ You are now in **Conformance Sync Mode** — a workflow for syncing changes from
 ```
 conformance/
 ├── src/
-│   ├── cli.ts                 # Entry point — installs as openwop-conformance
-│   ├── setup.ts               # Test harness setup, capability resolution, driver init
-│   ├── lib/                   # Shared helpers (assertion framing, capability gating)
-│   └── scenarios/             # Black-box assertions, one file per spec area
-│       ├── spec-corpus-validity.test.ts    # Ajv2020 compile every schema, round-trip fixtures
-│       ├── fixtures-valid.test.ts          # Validate every fixture against workflow-definition.schema.json
-│       └── <area>.test.ts                  # Per-spec-doc scenarios
-├── fixtures/                  # Canonical wire fixtures (workflows, events, capabilities)
-├── fixtures.md                # Catalog + per-fixture contracts
-├── coverage.md                # Spec section → scenario mapping; capability-gated section
-├── package.json               # @openwop/openwop-conformance
-├── tsconfig.json              # strict
-└── vitest.config.ts           # Vitest runner config
+│   ├── cli.ts                    # Entry point (openwop-conformance)
+│   ├── setup.ts, global-setup.ts # Harness setup, requirement recording, corpus stamp
+│   ├── lib/                      # Helpers: driver, v2 (gateFamily), requirement-ids (req), soft-skip, seams
+│   ├── coherence/                # Server-free corpus checks (spec-corpus-validity, codemap, ...)
+│   └── scenarios/                # Host scenarios; v2-*.test.ts target major 2
+├── fixtures/ + fixtures.md       # Canonical wire fixtures and their catalog
+├── coverage.md                   # Spec surface → scenario map
+├── scenario-majors.json          # GENERATED: which major(s) each scenario file targets
+├── requirements.json             # GENERATED: one record per it()
+├── requirement-aliases.json      # Old id → new id when an it() is reworded
+├── scripts/                      # generate-scenario-majors.mjs, generate-requirement-registry.mjs, ...
+├── vitest.config.ts              # Host scenarios
+├── vitest.coherence.config.ts    # npm run test:coherence
+└── vitest.selftest.config.ts     # npm run test:self (src/lib/*.test.ts)
 ```
 
 ### Key patterns
 
 | Pattern | Detail |
 |---|---|
-| **Scenario shape** | Top-of-file docstring naming the spec doc(s); `describe('category: ...', ...)` blocks per assertion group; `expect(..., driver.describe('spec.md §section', 'requirement'))` framing |
-| **Capability gating** | Scenarios that test optional surface skip when the host doesn't advertise the relevant `/.well-known/openwop` flag — wrapper utility in `src/lib/` |
-| **Server-free subset** | `--offline` flag runs `spec-corpus-validity.test.ts` + `fixtures-valid.test.ts` + any scenario that doesn't need `OPENWOP_BASE_URL`. Runtime budget: <1s per scenario (CI gate) |
-| **Strict-mode** | `OPENWOP_REQUIRE_BEHAVIOR=true` per `conformance/coverage.md` §"Capability-gated scenarios" — fails when a host advertises a capability but its scenarios fail |
-| **Suite versioning** | `@openwop/openwop-conformance` major tracks spec major (1.x for v1); minor adds scenarios; patch yanks/fixes. Hosts advertise the suite version they pass (`INTEROP-MATRIX.md`) |
-| **Build** | `npm run build:cli` — `tsc -p tsconfig.build.json` → `dist/cli.js`; `chmod +x` |
-| **Test runner** | Vitest 3.x |
-| **Schema engine** | Ajv 8 + ajv-formats |
+| **File naming** | A new v2 scenario is `conformance/src/scenarios/v2-<area>.test.ts`. The `v2-` prefix is what targets it at major 2. |
+| **Majors** | `conformance/scenario-majors.json` is generated by `conformance/scripts/generate-scenario-majors.mjs`: a `v2-*` file targets `[2]`; a file listed in its `BOTH_MAJORS` set targets `[1, 2]`; every other file targets `[1]`. A new file with no row never runs, so regenerate after adding one. |
+| **Assertion framing** | Every assertion message is `req(id, section, requirement)` from `src/lib/requirement-ids.ts`. Ids look like `openwop.requirement.<rfc>.<slug>`. `driver.describe(...)` and string-literal `expect` messages are rejected by `scripts/check-req-only.mjs`. |
+| **One id per `it`** | One `it` body cites one explicit id. Two different ids in one `it` lose a row (the ledger keeps the last). Several `it`s may share one id. |
+| **Early returns** | Never a bare `return;` in an `it` body. Write `return softSkip('inapplicable' \| 'skipped' \| 'blocked', reason)` or `return seamAbsent(reason)` (`src/lib/soft-skip.ts`). A softSkip after an assertion is policed by `scripts/check-softskip-after-assert.mjs`. |
+| **Family gating** | At major 2 the presence of a family record in discovery is the claim; there is no `.supported` field. Gate with `gateFamily('<family>')` from `src/lib/v2.ts` and record `inapplicable` when absent. |
+| **Strict mode** | `--require-behavior` / `OPENWOP_REQUIRE_BEHAVIOR=true`: an advertised family whose behavior can't be witnessed fails instead of skipping. |
+| **Server-free subset** | `--offline` runs the declared server-free subset; coherence tests run under `npm run test:coherence`. |
+| **Build** | `npm run build:cli` (`tsc -p tsconfig.build.json`). Typecheck with `npm run typecheck`. Never run bare `tsc -p tsconfig.json` in `conformance/`; it emits `.js` files that shadow the sources. |
 
 ### Coordinated artifacts
 
-Per `CONTRIBUTING.md` §"Conformance suite":
-
 | Change in spec | Conformance impact |
 |---|---|
-| New schema in `schemas/` | `spec-corpus-validity.test.ts` automatically picks it up via Ajv compile; new scenarios may be needed if behavior is normative |
-| New endpoint in `api/openapi.yaml` | New scenario in `conformance/src/scenarios/`; possibly new fixture; SDK method added (per `/code-review`) |
-| New event in `api/asyncapi.yaml` | New scenario asserting the event shape + emission conditions; SSE stream-mode test if applicable |
-| New required field in an existing schema | All existing fixtures using that schema must be updated; `fixtures-valid.test.ts` will fail otherwise — pair the spec change with the fixture refresh |
-| New optional field | Existing fixtures unchanged; new scenario asserting the field is forward-compatible |
-| New capability in `capabilities.schema.json` | New scenario gated on `host.<flag>.supported`; coverage.md §"Capability-gated scenarios" updated |
-| New profile in `profiles.md` | New scenario asserting profile predicate; INTEROP-MATRIX rows updated |
-| New SECURITY MUST-NOT | Invariant row in `SECURITY/invariants.yaml` + matching public scenario (gate enforced by `scripts/check-security-invariants.sh`) |
-| RFC moves Draft → Active | Reserve scenario file names in `conformance/src/scenarios/`; implement when RFC reaches Accepted |
-| RFC moves Active → Accepted | Scenarios merged; coverage.md updated; suite minor bumped |
+| New schema in `schemas/v2/` | `spec-corpus-validity.test.ts` (in `src/coherence/`) compiles it; add scenarios if the behavior is normative |
+| New endpoint in `api/v2/openapi.yaml` (via `api/openapi.yaml` + `scripts/derive-v2-api.py`) | New `v2-*` scenario; possibly a fixture |
+| New event in `api/v2/asyncapi.yaml` | Scenario asserting the event shape and emission conditions; codemap coherence test covers the mapping |
+| New required field in a closed v2 object | A major change (`COMPATIBILITY.md` §2.4). Stop and run `/architect`. |
+| New optional field | Existing fixtures unchanged; scenario asserting the field when present |
+| New family or facet in `spec/v2/declaration.json` / `spec/v2/facets/` | Gated scenario via `gateFamily(...)`; coverage.md row |
+| New SECURITY MUST-NOT | Row in `SECURITY/invariants.yaml` + matching public scenario (`scripts/check-security-invariants.sh`) |
+| RFC Draft → Active / Accepted | Scenarios named in the RFC's Conformance section exist and pass on the hosts the RFC's acceptance criteria name |
 
 ---
 
@@ -81,209 +81,142 @@ Per `CONTRIBUTING.md` §"Conformance suite":
 
 ### Step 1: Identify what changed in the spec
 
-Read the relevant files in the spec corpus to understand the change:
-
 ```bash
-# Recent corpus changes
-git log --oneline -20 -- spec/v1/ schemas/ api/ RFCS/
-git diff HEAD~1 -- spec/v1/ schemas/ api/
+git log --oneline -20 -- spec/v2/ schemas/v2/ api/ RFCS/
+git diff origin/main -- spec/v2/ schemas/v2/ api/
 
-# What scenarios cover the affected docs today
-git diff HEAD~1 --name-only -- spec/v1/ | xargs -I{} basename {} | sed 's/\.md$//' | while read doc; do
-  echo "=== Scenarios covering $doc ==="
-  grep -rl "$doc" conformance/src/scenarios/ 2>/dev/null
+# Which scenarios cite the touched v2 docs today
+git diff origin/main --name-only -- spec/v2/core spec/v2/ext | while read f; do
+  echo "=== Scenarios citing $f ==="
+  grep -rl "$f" conformance/src/scenarios/ 2>/dev/null
 done
 ```
 
-Identify the **lane**:
-- New endpoint → need scenario(s) covering request/response, error cases, idempotency
-- New event → need scenario asserting emission conditions + stream-mode visibility
-- New schema field → need scenario asserting the field appears (if required) or is optional (if optional)
-- New capability → need gated scenario set
-- New profile → need profile-predicate scenario
-- New invariant → need public test enforcing the MUST-NOT
-- New RFC at Accepted → need scenarios covering the RFC's "Conformance" section
+Identify the lane:
+- New endpoint → request/response, error cases, idempotency
+- New event → emission conditions and stream visibility
+- New schema field → field present and valid when emitted
+- New family or facet → gated scenario set
+- New invariant → public test enforcing the MUST-NOT
+- RFC moving to Active or Accepted → scenarios for the RFC's Conformance section
 
 ### Step 2: Find the right scenario file
 
-Search `conformance/src/scenarios/` for the appropriate file:
-
 ```bash
-# Existing scenarios by area
-ls conformance/src/scenarios/
-
-# Find the closest existing scenario for the touched spec doc
-grep -rl "spec/v1/<doc>.md\|spec.v1.<doc>\.md" conformance/src/scenarios/
+ls conformance/src/scenarios/v2-*.test.ts
+grep -rl "spec/v2/core/<doc>.md" conformance/src/scenarios/
 ```
 
-**Decision:**
-- An existing scenario file covers this area → extend it with a new `describe` block
-- No existing file → create `conformance/src/scenarios/<area>.test.ts`
-
-File naming: one scenario file per spec area, named after the spec doc it primarily verifies (e.g., `interrupt.test.ts`, `capabilities.test.ts`, `webhooks.test.ts`).
+- An existing `v2-*` file covers the area → add an `it`
+- None does → create `conformance/src/scenarios/v2-<area>.test.ts`
 
 ### Step 3: Draft the scenario
 
-Follow the canonical pattern per `CONTRIBUTING.md` §"Conformance suite":
+Model it on an existing v2 file, for example `conformance/src/scenarios/v2-bound-id-kinds.test.ts`.
 
 ```typescript
-// conformance/src/scenarios/<area>.test.ts
-//
-// Verifies: spec/v1/<area>.md §<Section heading>
-// Verifies: RFCS/NNNN-<slug>.md §Proposal (if RFC-bound)
-//
-// Capability gating: requires `host.<flag>.supported = true` advertised in /.well-known/openwop
-
+/**
+ * spec/v2/core/<doc>.md §<Section> (RFC NNNN §X) — <what this file witnesses>.
+ *
+ * @see spec/v2/core/<doc>.md §<Section>
+ * @see RFCS/NNNN-<slug>.md
+ */
 import { describe, it, expect } from 'vitest';
-import { driver, capability } from '../lib';
+import { driver } from '../lib/driver.js';
+import { v2Discovery, gateFamily } from '../lib/v2.js';
+import { softSkip } from '../lib/soft-skip.js';
+import { req } from '../lib/requirement-ids.js';
 
-describe('<area>: <capability>', () => {
-  describe('positive: <happy path>', () => {
-    it('asserts <wire shape>', async () => {
-      await capability.requires('host.<flag>.supported');
-      const run = await driver.startRun(/* fixture */);
-      // ...
-      expect(run.<field>, driver.describe('<area>.md §<Section>', '<requirement>')).toEqual(/* expected */);
-    });
-  });
+const DOC = 'spec/v2/core/<doc>.md §<Section>';
+const ID = 'openwop.requirement.NNNN.<slug>';
 
-  describe('negative: <error path>', () => {
-    it('rejects <invalid input>', async () => {
-      const result = await driver.startRunExpectingError(/* bad fixture */);
-      expect(result.status, driver.describe('<area>.md §<Section>', '<error requirement>')).toBe(400);
-      expect(result.body.code, driver.describe('<area>.md §<Section>', '<error code>')).toBe('<canonical error code>');
-    });
+describe('v2 <area> (<doc>.md §<Section>)', () => {
+  it('<one requirement, stated as behavior>', async () => {
+    if (!(await v2Discovery())) return softSkip('blocked', 'v2 discovery unreachable');
+    if (!(await gateFamily('<family>'))) return softSkip('inapplicable', '<family> family not advertised');
+    const res = await driver.post('/<path>', { /* body */ });
+    expect(res.status, req(ID, DOC, '<the MUST, quoted or paraphrased>')).toBe(201);
   });
 });
 ```
 
-Per `CONTRIBUTING.md` and `conformance/coverage.md`:
-
-- Top-of-file docstring naming the spec doc(s)
-- `describe('category: ...', ...)` per group
-- Every `expect(...)` uses `driver.describe('spec.md §section', 'requirement')` framing
-- Capability gating via `capability.requires('host.<flag>.supported')` (skip if not advertised) OR runs unconditionally if surface is mandatory v1 core
-- Server-free scenarios: <1s runtime (CI gate)
-- Positive AND negative cases (every error code path tested)
+Rules:
+- Cite `spec/v2/core` or `spec/v2/ext` sections, never `spec/v1`, for new behavior.
+- Unversioned paths are the v2 surface. Don't hard-code `/v1/`.
+- Every early return is `softSkip(kind, reason)` or `seamAbsent(reason)`.
+- One explicit requirement id per `it`.
+- Cover positive and negative paths (each documented error code).
+- Server-free legs belong in `src/coherence/` when they test the corpus rather than a host.
 
 ### Step 4: Add fixtures (if needed)
 
-If the new surface requires a new wire fixture:
-
-```bash
-# Place under conformance/fixtures/
-ls conformance/fixtures/
-```
-
-Each fixture is canonical wire data — a `workflow-definition.json`, an event payload, a capabilities response, etc. Per `CONTRIBUTING.md`:
-
-- New fixtures MUST be added to `conformance/fixtures.md`'s catalog table + per-fixture contracts. `spec-corpus-validity.test.ts` round-trip test will fail otherwise.
-- Fixtures must validate against their target schema (`fixtures-valid.test.ts` enforces this)
-- File naming: `<area>-<scenario>.json`
-
-Update `conformance/fixtures.md`:
-
-```markdown
-## Catalog
-
-| File | Schema | Purpose | Used by |
-|---|---|---|---|
-| `<area>-<scenario>.json` | `schemas/<name>.schema.json` | <one-line> | `conformance/src/scenarios/<area>.test.ts` |
-```
+- Place the fixture under `conformance/fixtures/` and add it to `conformance/fixtures.md` (catalog row + per-fixture contract).
+- It must validate against its target schema (`fixtures-valid.test.ts`).
+- Fixtures are public: no deployment identifiers, secrets, internal URLs, or tenant ids.
 
 ### Step 5: Update coverage.md
 
-`conformance/coverage.md` maps spec sections to scenarios. Add a row for every spec section the new scenario verifies. For capability-gated scenarios, add a row under §"Capability-gated scenarios" naming the flag.
+Add a row to `conformance/coverage.md` §"Coverage by protocol surface" for each section the scenario witnesses. For a gated scenario, add the family under §"Capability-gated scenarios: shape vs behavior".
 
-```markdown
-## Coverage
-
-| Spec section | Scenario | Status |
-|---|---|---|
-| `<area>.md §<Section>` | `conformance/src/scenarios/<area>.test.ts` → `<area>: <capability>` | Covered |
-
-## Capability-gated scenarios
-
-| Capability | Flag | Scenarios |
-|---|---|---|
-| <Name> | `host.<flag>.supported` | `<area>.test.ts` |
-```
-
-### Step 6: Verify locally
+### Step 6: Regenerate and verify
 
 ```bash
-# Typecheck
-( cd conformance && npx tsc --noEmit )
+# Generated surfaces a new scenario touches
+node conformance/scripts/generate-scenario-majors.mjs --write
+node conformance/scripts/generate-requirement-registry.mjs --write
 
-# Server-free subset (the `--offline` gate; <1s scenarios only)
-( cd conformance && npx vitest run src/scenarios/spec-corpus-validity.test.ts src/scenarios/fixtures-valid.test.ts )
+# Lints on scenario shape
+node scripts/check-req-only.mjs
+node scripts/check-softskip-after-assert.mjs
 
-# Full suite against a local host (in-memory reference)
-( cd ../openwop-examples/examples/hosts/in-memory && npm start &
-  sleep 2
-  OPENWOP_BASE_URL=http://localhost:3000 ( cd ../../../conformance && npx vitest run )
-)
+# Typecheck and suite self-tests
+( cd conformance && npm run typecheck && npm run test:self )
 
-# Strict-mode if the new scenario is capability-gated
-OPENWOP_BASE_URL=http://localhost:3000 OPENWOP_REQUIRE_BEHAVIOR=true \
-  ( cd conformance && npx vitest run src/scenarios/<area>.test.ts )
+# Coherence tests (server-free)
+( cd conformance && npm run test:coherence )
 
-# Build the CLI (validates emit)
-( cd conformance && npm run build:cli )
-ls -la conformance/dist/cli.js
+# Against a local v2 reference host (openwop-examples/examples/hosts/v2-reference,
+# `npm start`, default 127.0.0.1:3838 — use a private port if another session runs one)
+OPENWOP_BASE_URL=http://127.0.0.1:3838 OPENWOP_API_KEY=<key> OPENWOP_TARGET_MAJOR=2 \
+  ( cd conformance && npx vitest run src/scenarios/v2-<area>.test.ts )
+
+# Strict mode for a gated scenario
+OPENWOP_REQUIRE_BEHAVIOR=true OPENWOP_TARGET_MAJOR=2 OPENWOP_BASE_URL=... OPENWOP_API_KEY=... \
+  ( cd conformance && npx vitest run src/scenarios/v2-<area>.test.ts )
 ```
 
-### Step 7: Update CHANGELOG + suite version
+Sabotage-prove a new witness: break the host behavior locally and confirm the scenario fails, then restore.
+
+Before opening the PR, run the full regen chain and then the gate:
 
 ```bash
-# Per-package CHANGELOG for new scenarios (minor bump if additive)
-cat conformance/CHANGELOG.md
+python3 scripts/derive-v2-api.py --write && node scripts/generate-gaps.mjs --write && \
+node scripts/generate-core-standard-manifest.mjs --write && node scripts/generate-assurance-status.mjs --write && \
+node scripts/generate-protocol-status.mjs --write && node conformance/scripts/generate-scenario-majors.mjs --write && \
+node conformance/scripts/generate-requirement-registry.mjs --write && node scripts/generate-spec-artifacts.mjs --write && \
+node scripts/generate-review-packet.mjs --write && node scripts/generate-v1-eos-clock.mjs --write && \
+node scripts/report-v2-witness-coverage.mjs --write && node scripts/check-spec-coherence.mjs --write
+npm run openwop:check
 ```
 
-Add under `[Unreleased]`:
+### Step 7: CHANGELOG and version
 
-```markdown
-### Added
-- Scenario `<area>: <capability>` covering `spec/v1/<area>.md §<Section>` (gated on `host.<flag>.supported`)
+Add the entry under the open cycle's heading at the top of `conformance/CHANGELOG.md` (name the new scenario file, the requirement ids, and the spec section). If no cycle is open, the cycle-opening PR bumps the version sites; see `/release`.
 
-### Changed
-- (none)
-```
+Versioning follows `COMPATIBILITY.md` §2.3–§2.4: a new scenario is a measurement, not a spec break. A host's recorded pass at an earlier suite version stands.
 
-**Version bump rules (per `COMPATIBILITY.md` §1):**
-- Additive scenarios → bump conformance suite **minor** (e.g., 1.0.0 → 1.1.0). Hosts that passed 1.0.0 are not required to pass 1.1.0; they advertise the version they pass.
-- Yank/fix → patch
-- Spec major bump → suite major bump
+### Step 8: Reference-host evidence
 
-### Step 8: Update reference-host evidence
-
-After scenarios land, the reference hosts that advertise the affected profile must re-run the suite and update their `conformance.md`:
-
-```bash
-# For each host that should advertise the new surface
-for host in in-memory sqlite python; do
-  echo "Run conformance against $host, update ../openwop-examples/examples/hosts/$host/conformance.md with:"
-  echo "  - Suite version"
-  echo "  - Command used"
-  echo "  - Target URL class"
-  echo "  - Pass/fail/skip counts"
-done
-
-# INTEROP-MATRIX.md row reflects the new profile claim
-grep -E '^\| \*\*(In-memory|SQLite|Python in-memory)\*\*' INTEROP-MATRIX.md
-```
-
-If a host can't pass the new scenarios but previously advertised the relevant profile → **either implement the missing surface, OR downgrade the advertisement in INTEROP-MATRIX**. Don't quietly leave a dishonest claim.
+Committed host bundles live in `evidence/v2-host-bundles/*.json`, and `INTEROP-MATRIX.md` reads its counts from them. A new scenario changes what the next cut measures; it does not change a committed bundle. If a host advertises the family and can't pass the new scenario, it either implements the behavior or narrows its advertisement. Don't leave a dishonest claim. Bundles are re-cut by the host repos (the v2 reference host is cut in `openwop-examples`).
 
 ### Step 9: Report
 
-Summarize:
 - What changed in the spec
-- What scenarios + fixtures were added
-- coverage.md update
-- conformance/CHANGELOG.md entry
-- Suite version impact (minor/patch)
-- Reference-host evidence refreshes pending
+- Scenarios, requirement ids, and fixtures added
+- coverage.md and fixtures.md updates
+- CHANGELOG entry
+- Generated files regenerated
+- Host evidence re-cuts owed
 
 ---
 
@@ -291,67 +224,52 @@ Summarize:
 
 ### Adding a new endpoint
 
-1. Identify the spec doc + section (`spec/v1/rest-endpoints.md` plus area-specific doc)
-2. Add scenarios to the area-specific scenario file (e.g., `webhooks.test.ts` for a webhook endpoint)
-3. Positive case: happy-path request → expected response
-4. Negative cases: each documented error code from the OpenAPI definition
-5. Idempotency case (if applicable per `idempotency.md`): same `Idempotency-Key` → same response
-6. Capability-gate if the endpoint is optional surface
-7. Update coverage.md
-8. Bump suite minor; add CHANGELOG entry
+1. Find the section in `spec/v2/core/` (or `spec/v2/ext/`) and the operation in `api/v2/openapi.yaml`.
+2. Add an `it` per requirement to the area's `v2-*` file.
+3. Positive case, then each documented error code (read codes through `readErrorCode` in `src/lib/error-envelope.ts`).
+4. Idempotency leg if the operation takes `Idempotency-Key`.
+5. Gate on the owning family if the operation is optional.
+6. coverage.md row; CHANGELOG entry.
 
 ### Adding a new event type
 
-1. Identify the spec doc + section (`spec/v1/<area>.md` plus `stream-modes.md`)
-2. Add scenario asserting the event is emitted under the documented conditions
-3. Add scenarios for each stream mode (`values` / `updates` / `messages` / `debug`) where the event should be visible
-4. Negative case: stream modes where the event must NOT appear
-5. SSE-specific: heartbeat / `:` comment line interaction
-6. Webhook subscription scenario if the event is webhook-eligible
-7. Capability-gate if the event is optional
-8. Update coverage.md, fixtures.md
+1. Find the event in `spec/v2/core/events.md` (or the owning doc) and `api/v2/asyncapi.yaml`.
+2. Assert it is emitted under the documented conditions, and not emitted where it must not be.
+3. Webhook leg if the event is webhook-eligible.
+4. Gate on the owning family if optional.
 
-### Adding a new capability flag
+### Adding a new family or facet
 
-1. Identify the flag in `capabilities.schema.json` and `host-capabilities.md`
-2. Add scenario asserting:
-   - When advertised, the host implements the documented surface
-   - When NOT advertised, the host returns 501 / 404 / capability-missing-error on the gated endpoint
-3. Cross-add gating to every scenario that depends on the flag
-4. Update coverage.md §"Capability-gated scenarios"
-5. INTEROP-MATRIX: reference hosts that advertise the flag update their `conformance.md`
+1. Find the row in `spec/v2/declaration.json` and the facet in `spec/v2/facets/`. `schemas/v2/capabilities.schema.json` is generated from them by `scripts/generate-from-declaration.mjs`.
+2. Assert that an advertised record has the documented shape and that the behavior holds.
+3. Gate every dependent leg with `gateFamily('<family>')`.
+4. coverage.md §"Capability-gated scenarios: shape vs behavior".
+
+### Promoting a v1 scenario to both majors
+
+Add the file to `BOTH_MAJORS` in `conformance/scripts/generate-scenario-majors.mjs` only when the rule holds unchanged at major 2 **and** its gate and paths are major-aware (no `.supported` gate, no hard-coded `/v1/`; resolve through `targetMajor()` in `src/lib/seams.ts`). Read the generator's header before doing it.
 
 ### Adding a new SECURITY invariant
 
-1. Add row to `SECURITY/invariants.yaml`:
-   ```yaml
-   - id: INV-<NNN>
-     must_not: <one-line MUST-NOT>
-     spec_section: <area>.md §<Section>
-     test_file: conformance/src/scenarios/<area>.test.ts
-   ```
-2. Add scenario asserting the negative case (operation that violates the MUST-NOT must be rejected)
-3. Run `bash scripts/check-security-invariants.sh` to verify the invariant ↔ test linkage holds
+1. Add an entry to `SECURITY/invariants.yaml` following the header's field list (`id`, `tier`, `severity`, `threat_model`, `tests`).
+2. Add a scenario asserting the violating operation is rejected.
+3. Run `bash scripts/check-security-invariants.sh`.
 
-### Updating after an RFC moves Active → Accepted
+### An RFC moves Active → Accepted
 
-1. Read the RFC's "Conformance" + "Acceptance criteria" sections
-2. Verify scenarios exist for each requirement listed
-3. If scenarios are stubbed (`it.todo(`), implement them
-4. Update coverage.md to mark covered
-5. Bump suite minor
-6. Update RFC Status to `Accepted` with the date
+1. Read the RFC's Conformance and Acceptance criteria sections.
+2. Confirm each named scenario exists, is in `scenario-majors.json`, and is witnessed on the hosts the criteria name (read the bundles in `evidence/v2-host-bundles/`).
+3. coverage.md marks it covered.
 
 ---
 
 ## Important notes
 
-- The conformance package is **published**. `npm publish` for `@openwop/openwop-conformance` is gated on `npm run openwop:check` passing — including `scripts/openwop-check-publish-metadata.sh` and `scripts/check-npm-pack-contents.sh`. A bad scenario landing on `main` will block release.
-- Scenarios are **the source of truth for behavior**. When prose and scenario diverge, the scenario wins and the prose is updated to match. Never the reverse.
-- **Capability gating is the only acceptable way to add scenarios for optional surface.** Adding unconditional scenarios for optional surface breaks every host that didn't opt in, retroactively invalidating their `1.x.0` conformance pass.
-- **Strict-mode (`OPENWOP_REQUIRE_BEHAVIOR=true`)** is for hosts that want to test rigor against capabilities they advertise. It is not the default.
-- Fixtures are **public**. Don't include private deployment identifiers, secrets, internal URLs, or tenant IDs.
-- After scenarios land, ensure the **TypeScript SDK is in sync**: every endpoint has a method on `OpenwopClient` (per `CONTRIBUTING.md` §"TypeScript reference SDK").
+- The suite is published together with `@openwop/spec-artifacts` (exact peer pin). Publishing is gated on `npm run openwop:check`. A bad scenario on `main` blocks the release.
+- Scenarios are the source of truth for behavior. When prose and a scenario disagree, find out which is wrong; don't silently change either.
+- Gating is the only acceptable way to test optional surface. An ungated scenario for optional surface fails every host that didn't opt in.
+- `spec/v1/` is frozen. Don't edit it to fit a scenario.
+- A quarantined scenario still owes its hosts a witness; don't treat quarantine as done.
 
 ---
 
@@ -359,13 +277,12 @@ Summarize:
 
 | Command | Action |
 |---|---|
-| `proceed` | Begin Step 1 — identify spec change |
-| `scaffold <area>` | Create or edit the scenario file with the canonical pattern |
+| `proceed` | Begin Step 1 — identify the spec change |
+| `scenario <area>` | Create or extend `v2-<area>.test.ts` with the canonical pattern |
 | `fixture <name>` | Add a fixture + `fixtures.md` row |
-| `gate <flag>` | Wrap selected scenarios in `capability.requires('host.<flag>.supported')` and add a coverage.md row |
-| `bump <minor\|patch>` | Update `conformance/package.json` + CHANGELOG accordingly |
-| `verify` | Run Step 6 — typecheck + server-free + against in-memory host |
-| `evidence <host>` | Update `../openwop-examples/examples/hosts/<host>/conformance.md` with fresh pass/fail/skip counts |
+| `gate <family>` | Wrap legs in `gateFamily('<family>')` and add a coverage.md row |
+| `regen` | Regenerate `scenario-majors.json` and `requirements.json` |
+| `verify` | Run Step 6 |
 | `report` | Generate the Step 9 summary |
 | `done` | Complete sync |
 
@@ -375,9 +292,10 @@ Summarize:
 
 | Skill | Purpose |
 |---|---|
-| `/architect` | Pre-implementation review — wire-shape + version-negotiation + capability gating |
-| `/code-review` | Banned-pattern + assertion-framing review of the scenarios |
-| `/nfr` | NFR checklist — confirms coverage.md, fixtures.md, CHANGELOG, INTEROP-MATRIX updates |
-| `/update-docs` | Sync README "Document index" + ROADMAP if the change closes a gap |
-| `/cleanup audit fixtures` | Verify every fixture in `conformance/fixtures/` is registered in `fixtures.md` |
-| `/pr` | Create the PR — applies `openwop-spec` label |
+| `/architect` | Pre-implementation review — wire shape, versioning, family gating |
+| `/code-review` | Banned-pattern and assertion-framing review of the scenarios |
+| `/nfr` | NFR checklist — coverage.md, fixtures.md, CHANGELOG, INTEROP-MATRIX |
+| `/update-docs` | Sync README and ROADMAP if the change closes a gap |
+| `/cleanup audit fixtures` | Verify every fixture is registered in `fixtures.md` |
+| `/release` | Cycle-opening version bump and publish |
+| `/pr` | Create the PR — applies the `openwop-spec` label |

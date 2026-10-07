@@ -32,7 +32,7 @@ import { fileURLToPath } from 'node:url';
 const ROOT = resolve(dirname(fileURLToPath(import.meta.url)), '..');
 const PARA_MAX = 90;
 const CELL_MAX = 40;
-const V1_BASELINE = 120;
+const V1_BASELINE = 119;
 const OWN_RFC = /RFC 0\d{3}/;
 
 const words = (s) => s.replace(/`[^`]*`/g, 'x').split(/\s+/).filter(Boolean).length;

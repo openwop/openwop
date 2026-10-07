@@ -8,7 +8,7 @@
 >
 > _(Historical 2026-05-26 canary verdict, for the record: NOT YET ACCEPTED — the advertisement then served a 0%-traffic canary, was conformance-env-gated, and the production binding was deferred to Slice B. All three are now resolved per the verdict above.)_
 
-> **⚠ DRAFT — conformance verified on the canary; traffic promote pending.** The
+> _(Historical, 2026-05-26, superseded by the verdicts above.)_ **DRAFT — conformance verified on the canary; traffic promote pending.** The
 > four 0071 scenarios pass against the `rfc0071`-tagged canary revision
 > (`workflow-runtime-00392-bug`, serving **0% traffic**), MyndHyve-side
 > suite-verified 2026-05-26. The **promote to 100% traffic** and the
@@ -16,12 +16,11 @@
 > before this is final evidence. Until traffic is promoted, cite this as
 > "canary-verified," not "live on the production endpoint."
 
-**Status: 📥 Graduating `Active → Accepted` (Phase 1) — 2026-05-26 (canary-verified, promote pending).** Openwop-side
-companion to the migration request at
-[`0071-artifact-type-packs-migration-request.md`](https://github.com/openwop/openwop/blob/48c1f569eb8a8f4ed3ae95bdacf7e757707ce855/docs/openwop-adoption/0071-artifact-type-packs-migration-request.md).
+**Status: historical record. RFC 0071 is `Accepted`** (Phase 1 on 2026-05-27, Phase 2 the same day). Openwop-side
+companion to the migration request filed with
+[RFC 0071](../../RFCS/0071-artifact-type-and-chat-card-packs.md).
 Canonical per-row evidence belongs in [`../../INTEROP-MATRIX.md`](../../INTEROP-MATRIX.md);
-this file is the index + the migration story, mirroring the
-[0045–0054 cohort format](https://github.com/openwop/openwop/blob/48c1f569eb8a8f4ed3ae95bdacf7e757707ce855/docs/openwop-adoption/0045-0054-cohort-summary.md).
+this file is the index + the migration story.
 
 MyndHyve is the non-steward host whose advertisement + passing conformance
 fires the `Active → Accepted` gate for RFC 0071 Phase 1
@@ -122,8 +121,7 @@ it cuts. **4 files / 15 tests passed** against the canary tag URL, 2026-05-26.
 ## Migration map — status
 
 The 16 `vendor.myndhyve.*` artifact types from the request's
-[migration map](https://github.com/openwop/openwop/blob/48c1f569eb8a8f4ed3ae95bdacf7e757707ce855/docs/openwop-adoption/0071-artifact-type-packs-migration-request.md#migration-map--your-artifacttypedefinition--openwop-artifacttype)
-are advertised with `schemaVersion: 1`. The reverse-DNS rename lands on the
+migration map are advertised with `schemaVersion: 1`. The reverse-DNS rename lands on the
 wire: MyndHyve's `CORE_ARTIFACT_TYPE_IDS` (`prd`/`theme`/`plan`/`screen`)
 publish under `vendor.myndhyve.*` (`core.*` reserved for the working group);
 bare legacy strings from external callers remain valid as the unregistered
@@ -163,7 +161,7 @@ serves the production endpoint; until then they read `canary-verified`.)_
 
 ## References
 
-- Request: [`0071-artifact-type-packs-migration-request.md`](https://github.com/openwop/openwop/blob/48c1f569eb8a8f4ed3ae95bdacf7e757707ce855/docs/openwop-adoption/0071-artifact-type-packs-migration-request.md)
 - RFC: [`../../RFCS/0071-artifact-type-and-chat-card-packs.md`](../../RFCS/0071-artifact-type-and-chat-card-packs.md)
-- Spec: [`../../spec/v1/artifact-type-packs.md`](../../spec/v1/artifact-type-packs.md), [`../../spec/v1/host-capabilities.md`](../../spec/v1/host-capabilities.md) §host.artifactTypes
+- Spec (v2, current): [`../../spec/v2/core/artifact-type-packs.md`](../../spec/v2/core/artifact-type-packs.md)
+- Spec (v1, frozen; what this evidence was measured against): [`../../spec/v1/artifact-type-packs.md`](../../spec/v1/artifact-type-packs.md), [`../../spec/v1/host-capabilities.md`](../../spec/v1/host-capabilities.md) §host.artifactTypes
 - PR: openwop/openwop#270

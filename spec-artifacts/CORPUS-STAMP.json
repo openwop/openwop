@@ -13,7 +13,7 @@
     "api/v2/asyncapi.yaml": "f5b14bc6edc7a7ad798cb280b1824aa46582a4cce450fb5ef079d84349b6e58e",
     "api/v2/openapi.yaml": "391814e12addeb810f20a4818b2f49a103a6b3d6262679e696bb14c4699d6402",
     "api/v2/redocly.yaml": "1e66b60e6118ad11a823bb620678be464d99dfe50a40e3e6f93ec9429b88b34c",
-    "schemas/README.md": "a829e3208413062388e52ab6ba714d35889c9c7645db38a290b0c4f4992cd3da",
+    "schemas/README.md": "276fc1d51eb08e14e9127b9fd27761d7046ee33c12000f3a64a801322db8bf58",
     "schemas/a2a-task-state.schema.json": "75d5049dea8bd873ff0e7546f1c60c8d36c219bec7084264360be54a8be30ae1",
     "schemas/a2ui-surface-delta-frame.schema.json": "970d434e4fdcb925de64aaace91eb83bfbcfd8f76757a9ce9f339eda5fb3f4e8",
     "schemas/agent-deployment-transition.schema.json": "1ac987fed0f380fa5b4e9a40e8e13316e5ae42d03a0ff42db4be6273e1bfe9f4",
@@ -221,7 +221,7 @@
     "spec/v1/migrations.schema.json": "886779aa6c22e646db097f5df210adb018a4dd14a7b815465a18c8a7056c8f72",
     "spec/v1/operation-path-manifest.json": "f988f7ebf58ff192e999e2a71192066052f837acc03c91d047d6050ca21a83b0",
     "spec/v1/spec-gaps.json": "ea9612af55bea9dae3e82223d4f714243f8f590b0193f1188257b13491a38afc",
-    "spec/v2/README.md": "ddea90d7cf14aefffe1a43eeeecd4222dadad1d1e5ac64dceb073990eb93d9ef",
+    "spec/v2/README.md": "c58acd84bb67c69043d9f777cbaa16d03e4f0f0a8158d2984526b69981067a14",
     "spec/v2/core/artifact-type-packs.md": "f734740cc3963f86c9f273a7dace26291bba2855161ddd3540618131a2c8d13e",
     "spec/v2/core/capabilities.md": "8218c44f90782df9630dd276e004def162dad989464cba85e7fc42d987bb61f8",
     "spec/v2/core/conformance.md": "3ca291e63bc70a6ef829ae8759ad0ded3741ea7aa507bbbdffc57de443ab2ae2",
@@ -317,5 +317,5 @@
     "spec/v2/retention-floors.json": "eaf3722d95c79947af1d4269ef85117e126518c588cfcf1a2b21b97269f51624",
     "spec/v2/surface-baseline.json": "a2f690b3222532cc625d94f195d84d4b62a5b3e2b7ab02c164297e0483c32a9d"
   },
-  "corpusCommit": "48c1f569eb8a8f4ed3ae95bdacf7e757707ce855"
+  "corpusCommit": "9858acc1b7d53590a37030f9ef447dd4dc9eb883"
 }

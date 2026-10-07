@@ -1,6 +1,8 @@
-# OpenWOP Spec v1 — JSON Schemas
+# OpenWOP v1 JSON Schemas (frozen)
 
-> **Status: FINAL v1 (2026-05-10).** Per-row RFC status words are checked against `RFCS/` by `scripts/check-rfc-status-coherence.mjs` (RFC 0178 §E.1); the column is generated in Phase 3. Hand-authored from prose specs. JSON Schema 2020-12. Validate with Ajv2020 (`require('ajv/dist/2020')`), `python-jsonschema`, or any other 2020-12 implementation. Implementations MAY pin to these schemas; servers MUST accept any JSON document that validates against them.
+> **Status: FINAL v1, frozen.** These flat `schemas/*.schema.json` files are the v1 wire contract. v1 reached end of support on 2026-10-04 ([RFC 0234](https://github.com/openwop/openwop/blob/main/RFCS/0234-maintainer-set-v1-end-of-support.md)), and this tree is kept as history: it is not edited. **For v2, the current major, use [`schemas/v2/`](./v2/)**, with `$id`s under `https://openwop.dev/spec/v2/`.
+
+The index below describes each v1 schema and the v1 prose document it came from. Per-row RFC status words are checked against `RFCS/` by `scripts/check-rfc-status-coherence.mjs` (RFC 0178 §E.1). The schemas use JSON Schema 2020-12; validate with Ajv2020 (`require('ajv/dist/2020')`), `python-jsonschema`, or any other 2020-12 implementation.
 
 | Schema | Source spec | Coverage |
 |---|---|---|
@@ -46,7 +48,7 @@
 | `connection-pack-manifest.schema.json` | `connection-packs.md` + RFC 0095 | DRAFT — manifest for `kind: "connection"` registry packs (RFC 0095). Peer to the node/workflow-chain/prompt/artifact-type/chat-card pack manifests; disjoint via the `kind` discriminator. Distributes a portable provider definition — auth endpoints, read/write scope groups, exactly-one reach (`mcp`/`openapi`/`integration`) — that the RFC 0045/0047 `provider` string resolves against. Carries NO credential material (`connection-pack-no-credential-material`). |
 | `frontend-plugin-manifest.schema.json` | `frontend-plugin-packs.md` + RFC 0117 | DRAFT — manifest for `kind: "frontend-plugin"` registry packs (RFC 0117). Peer to the other pack manifests; disjoint via the `kind` discriminator. Distributes a signed, SANDBOXED UI extension — one or more `uiPlugins[]` (a `pluginId`, a `surface`, an opaque `entry` bundle, a closed `hostApi` allowlist). A backend `runtime` member is FORBIDDEN (`not: {}`). Loaded only in a cross-origin sandbox (`frontend-plugin-isolation`). |
 | `ui-plugin-message.schema.json` | `frontend-plugin-packs.md` + RFC 0117 | DRAFT — the `ui-plugin/1` `postMessage` host-RPC envelope (RFC 0117) between a sandboxed front-end plugin and its host: a plugin→host `request` (closed `method` allowlist), a host→plugin `response` (`ok`+`result` or `ok:false`+`error`), or a host→plugin `event`. Carries the optimistic-concurrency `version` token and the `artifact_conflict` + `currentVersion` shape (`frontend-plugin-rpc-allowlist` / `frontend-plugin-no-byok`). |
-| `conformance-certification-bundle.schema.json` | `conformance-certification.md` + RFC 0089 | **DEPRECATED** (RFC 0148; `--certify` defaults to bundle v2 since suite 1.152.0; v1 ceases to substantiate a new certification after 2026-11-10; removal scheduled for v2.0 per `spec/v1/deprecations.json`) — machine-readable attestation binding a host's claimed profiles to the reproducible run that substantiates them (suite version + per-scenario pass list + host identity/commit + captured discovery document). Out-of-band; a consumer re-derives each claim via the §B binding rule. |
+| `conformance-certification-bundle.schema.json` | `conformance-certification.md` + RFC 0089 | **DEPRECATED** (RFC 0148; `--certify` defaults to bundle v2 since suite 1.152.0; v1 ceases to substantiate a new certification after 2026-11-10; it has no `schemas/v2/` counterpart, per `spec/v1/deprecations.json`) — machine-readable attestation binding a host's claimed profiles to the reproducible run that substantiates them (suite version + per-scenario pass list + host identity/commit + captured discovery document). Out-of-band; a consumer re-derives each claim via the §B binding rule. |
 | `conversation-event.schema.json` | `channels-and-reducers.md` + conversation RFC | Multi-turn conversation event shape for orchestrator-driven HITL flows |
 | `conversation-turn.schema.json` | `channels-and-reducers.md` + conversation RFC | Conversation turn shape for user/agent/system messages |
 | `core-conformance-mock-agent-config.schema.json` | `node-packs.md` + RFC 0023 | Config shape for the conformance-only `core.conformance.mock-agent` typeId — drives `agent.*` event emission on cue (`mockReasoning` / `mockToolCalls` / `mockHandoff` / `mockDecision` / `mockConfidence`). Hosts MUST refuse this typeId for production tenants unless `capabilities.conformance.mockAgent` is advertised. |
@@ -62,7 +64,7 @@
 | `prompt-pack-manifest.schema.json` | `prompts.md` §"Discovery & distribution" + RFC 0028 | Manifest for `kind: "prompt"` registry packs. Peer to `node-pack-manifest.schema.json` (RFC 0003) and `workflow-chain-pack-manifest.schema.json` (RFC 0013); disjoint via the `kind` discriminator. Distributes curated PromptTemplate collections via the same signed-tarball + Ed25519 + SRI pipeline. |
 | `prompt-ref.schema.json` | `prompts.md` + RFC 0027 | Reference to a PromptTemplate. `oneOf` accepts the stringy form (`prompt:templateId@version`) or a structured object with `libraryId` / `templateId` / `version` / `variableOverrides`. |
 | `prompt-template.schema.json` | `prompts.md` + RFC 0027 | Named, versioned, variable-bound prompt body. Carries `templateId` + SemVer `version` + `kind` (via `prompt-kind.schema.json`) + Mustache `text` + typed `variables[]` + optional `modelHints` + `meta` provenance (incl. RFC 0028 `packName` + `packVersion` when pack-sourced). |
-| `registry-version-manifest.schema.json` | `registry-operations.md` | Registry-augmented version manifest served at `GET /v1/packs/{name}/-/{version}.json`. Extends the bare pack-manifest contract with registry-side metadata (integrity hash, signing-block polymorphism, lifecycle flags). Enforced by the `Validate version manifests against registry-version-manifest schema` step in `.github/workflows/registry-publish.yml`. |
+| `registry-version-manifest.schema.json` | `registry-operations.md` | Registry-augmented version manifest served at `GET /v1/packs/{name}/-/{version}.json`. Extends the bare pack-manifest contract with registry-side metadata (integrity hash, signing-block polymorphism, lifecycle flags). Enforced by the registry's publish workflow in [`openwop/openwop-registry`](https://github.com/openwop/openwop-registry). |
 | `orchestrator-decision.schema.json` | `node-packs.md` + orchestrator RFC | Decision output shape for orchestrator routing nodes |
 | `run-ancestry-response.schema.json` | `multi-agent-execution.md` + RFC 0040 | Response body for `GET /v1/runs/{runId}/ancestry` — names the run's immediate parent in the cross-host composition chain (or `parent: null` for top-level runs). Capability-gated on `capabilities.multiAgent.executionModel.crossHostCausation.ancestryEndpointSupported`. |
 | `run-diff-response.schema.json` | `rest-endpoints.md` + RFC 0054 | Response body for `GET /v1/runs/{runId}:diff?against={otherRunId}` — deterministic, replay-aware structured diff of two runs (`divergedAtSeq` + `eventDiffs[]` + `stateDiff`). |
@@ -74,7 +76,7 @@
 | `subject.schema.json` | `auth.md` §"The Subject record" + RFC 0165 | DRAFT — issuer-scoped, lane-typed identity record carried as `owner.subject` on `RunSnapshot` and the `run.started` echo; opaque `subjectId` (no `@`/whitespace), `keyClass` iff saml/scim, optional bounded `actor` chain. Optional in v1.x; the v2 major requires it. |
 | `residency.schema.json` | RFC 0129 + `capabilities.md` §dataResidency | OPTIONAL data-residency `{region}` constraint on `POST /v1/runs` (honor-or-reject admission) |
 | `credential-provenance.schema.json` | `host-capabilities.md` §"Credential provenance + egress policy" (RFC 0079) | Metadata about a host-issued credential at the tool/egress boundary — `credentialId`/`issuer`/`audiences`(+scopes/expiry/redaction/audit-correlation). Secret-free (SR-1); the §C audience-binding MUST is evaluated against `audiences`. |
-| `security-advisory.schema.json` | `registry-operations.md` + INCIDENT-RESPONSE runbook | Registry-owned CVE advisory record at `registry/security/advisories.json`. One entry per disclosed vulnerability — id, severity, affected pack-name + SemVer range, optional fixedIn/advisoryUrl/credits. Enforced by `check-advisories.mjs` in `.github/workflows/registry-publish.yml`. |
+| `security-advisory.schema.json` | `registry-operations.md` + INCIDENT-RESPONSE runbook | Registry-owned CVE advisory record, kept in [`openwop/openwop-registry`](https://github.com/openwop/openwop-registry). One entry per disclosed vulnerability — id, severity, affected pack-name + SemVer range, optional fixedIn/advisoryUrl/credits. Enforced by that repository's publish checks. |
 | `trigger-subscription.schema.json` | `trigger-bridge.md` (RFC 0083) | Durable inbound-trigger subscription record — `subscriptionId`/`source`/`state` (active/paused/failed/dead-lettered) + `dedupEnabled`/`retryPolicy` + the webhooks.md register keys. Backs the `openwop-trigger-bridge` profile; content-free of inbound payloads (SR-1). |
 | `trigger-event.schema.json` | `trigger-bridge.md` §F (RFC 0099) | The normalized external-event envelope handed to a started run as `ctx.triggerData` (webhook/email/form). In-run only — never event-logged; `trigger.delivery.attempted` stays content-free. Per-source one-of; `contentTrust: "untrusted"`; `AttachmentRef.ref` is a host-internal handle, never a fetchable URL (`trigger-ingestion-ssrf` / `trigger-ingestion-content-redaction`). |
 | `trigger-subscription-registration.schema.json` | `trigger-bridge.md` §F (RFC 0099) | The `POST /v1/trigger-subscriptions` create request — binds an external `source` to a `workflowId` with a dedup config + a source-authenticity `verification` policy. The portable create surface RFC 0083 UQ1 left per-source. |
@@ -122,24 +124,3 @@ import jsonschema
 schema = json.load(open('run-event.schema.json'))
 jsonschema.validate(my_event, schema)  # raises ValidationError on failure
 ```
-
-## Cross-reference
-
-- **Conformance test suite (P2-F4)** — black-box tests that fixture-validate against these schemas.
-- **Reference SDKs (P2-F3)** — generate types via `quicktype` or `json-schema-to-typescript`.
-- **OpenAPI 3.1 YAML** — references these schemas via `$ref` instead of inlining.
-
-## Open gaps
-
-| # | Gap | Owner |
-|---|---|---|
-| JS1 | Per-`RunEventType` payload schemas — done (2026-04-26: `run-event-payloads.schema.json` covers all 38 variants in ~15 shape families). Top-level `run-event.schema.json` `payload` stays permissive for forward-compat; consumers MAY pin strict validation via `$defs.<typeId>`. | ✅ |
-| JS2 | `Capabilities` schema — done (2026-04-26: `capabilities.schema.json` lifted from `Capabilities.ts`) | ✅ |
-| JS3 | `RunOptions` schema (configurable + tags + metadata) — done (2026-04-26: `run-options.schema.json` lifted from `run-options.md`) | ✅ |
-| JS4 | Channel-write event payload schema — done (2026-04-26: `channel-written-payload.schema.json` lifted from channels-and-reducers.md §Channel write event) | ✅ |
-| JS5 | Error-envelope schema — done (2026-04-26: `error-envelope.schema.json` hoisted from inline OpenAPI) | ✅ |
-| JS6 | `RunSnapshot` schema — done (2026-04-26: `run-snapshot.schema.json` hoisted from inline OpenAPI) | ✅ |
-
-## Versioning
-
-Schemas are versioned via `$id` URL (`/spec/v1/`). Breaking changes go to `/spec/v2/`. Non-breaking additions stay on v1 with `$comment` notes documenting added fields.

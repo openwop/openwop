@@ -11,7 +11,7 @@ Per `GOVERNANCE.md` §"Spec change process":
 | Editorial: typos, prose clarifications, link fixes                                                                  | No — direct PR                      |
 | Non-normative: new examples, optional reference notes                                                               | No — direct PR with CHANGELOG entry |
 | **Normative addition (backward-compatible)**: new optional fields, new SHOULD recommendations, additive event types | **Yes**                             |
-| **Breaking change**: anything that invalidates an existing v1 conformance pass                                      | **Yes** — also requires a v2 plan   |
+| **Breaking change**: anything that invalidates an existing conformance pass on the current major                   | **Yes** — ships in the next major, with its migration plan (`COMPATIBILITY.md` §5) |
 | **v2 retirement**: removing an unevidenced v2 surface in a 2.x minor (`COMPATIBILITY.md` §3a, RFC 0197)            | **Yes** — the RFC cites the `check-v2-retirement.mjs` report; normative-addition window (7 days) |
 
 Refactors that don't touch wire shapes don't need an RFC. When in doubt, file an RFC and ask in the issue thread.

@@ -1,8 +1,8 @@
 # OpenWOP Quickstart
 
-> **Status: v2.** This guide speaks the v2 wire ([`spec/v2/core/`](./spec/v2/core/overview.md), [`api/v2/openapi.yaml`](./api/v2/openapi.yaml)). It covers discovery, auth, the run lifecycle, live events (SSE, poll, webhooks), fork and replay, `configurable`, node packs, conformance, and SDKs, and links the normative text for each. Every response below was captured from the v2 reference host ([`examples/hosts/v2-reference`](https://github.com/openwop/openwop-examples/tree/main/examples/hosts/v2-reference), booted on port 3990) and abbreviated.
+> **Status: v2.** This guide speaks the v2 wire ([`spec/v2/core/`](./spec/v2/core/overview.md), [`api/v2/openapi.yaml`](./api/v2/openapi.yaml)). It covers discovery, auth, the run lifecycle, live events (SSE, poll, webhooks), fork and replay, `configurable`, node packs, conformance, and SDKs, and links the normative text for each. Every response below was captured from the v2 reference host ([`examples/hosts/v2-reference`](https://github.com/openwop/openwop-examples/tree/main/examples/hosts/v2-reference)) and abbreviated. The capture ran on port 3990, so URLs in the responses say `3990`; the host's default port is 3838.
 >
-> Still talking to a host over `/v1/…`? The v1 walkthrough this guide replaced is in git history: `git show 1b33fe1a:QUICKSTART.md`. Moving a client across is [`docs/migration/v1-to-v2.md`](./docs/migration/v1-to-v2.md) §"If you are a client, not a host".
+> Still calling `/v1/…`? v1 reached end of support on 2026-10-04 ([RFC 0234](./RFCS/0234-maintainer-set-v1-end-of-support.md)). [`docs/migration/v1-to-v2.md`](./docs/migration/v1-to-v2.md) §"If you are a client, not a host" covers moving a client across.
 
 > **Audience:** developers calling an OpenWOP v2 host for the first time.
 > **Prerequisites:** the host's base URL and an API key it issued you. No host yet? [`QUICKSTART-10MIN.md`](./QUICKSTART-10MIN.md) boots one on your laptop.
@@ -16,12 +16,12 @@ Implementing a host rather than calling one? Read [`docs/IMPLEMENT-CORE.md`](./d
 
 **Paths are unversioned.** A v2 operation lives at `/runs`, `/runs/{runId}`, `/webhooks`, and so on. There is no `/v2/` prefix ([`versioning.md`](./spec/v2/core/versioning.md) §1.2).
 
-**Every request carries `OpenWOP-Version: 2`.** Until v1 end-of-support (not before 2026-12-04, per [`evidence/v1-end-of-support.json`](./evidence/v1-end-of-support.json)), a host serves both majors and its `preferredVersion` names the 1.x one. A request with no header gets `preferredVersion`'s major, which is v1 ([`versioning.md`](./spec/v2/core/versioning.md) §1.1, §1.3). The header is the only thing that selects v2. Every call below sends it, and every response names the contract that produced it in its own `OpenWOP-Version` header (§1.4).
+**Send `OpenWOP-Version: 2` on every request.** An unversioned path is the v2 surface whether or not the header is present. The exception is `/.well-known/openwop`: without the header it returns the representation named by the host's `preferredVersion`, and a host that still serves v1 may name a 1.x version there ([`versioning.md`](./spec/v2/core/versioning.md) §1.3). Sending the header everywhere keeps discovery on v2 too. Every response names the contract that produced it in its own `OpenWOP-Version` header (§1.4).
 
 The examples use two shell variables:
 
 ```bash
-export OPENWOP_URL=http://127.0.0.1:3990   # your host's origin, no path
+export OPENWOP_URL=http://127.0.0.1:3838   # your host's origin, no path
 export TOKEN=openwop-v2-dev-key            # the reference host's default dev key
 ```
 
@@ -65,11 +65,11 @@ How to read it:
 
 - `protocolVersions[]` lists every major the host serves. If `2.x` is missing, this host doesn't speak v2. Asking for a major it doesn't list gets `406 protocol_version_unsupported`, and the error's `details.protocolVersions` repeats the list.
 - The root is closed. Every family is a **capability record** `{ status, since, until?, witness, …facets }`, and a record that is present is the claim. v2 has no `supported: true` flags: a host that doesn't offer a family leaves its key out ([`capabilities.md`](./spec/v2/core/capabilities.md) §2).
-- `preferredVersion: "1.11"` on a v2 document is normal during the overlap. It names the header-less default, not the major you are speaking.
+- `preferredVersion: "1.11"` means this host still serves the frozen v1 wire. It names the representation header-less discovery returns, not the major you are speaking.
 - Resend the `ETag` in `If-None-Match` and you get `304` (§1.1).
 - Profiles such as `openwop-core-standard` are not wire fields. They are predicates over this document, published in [`spec/v2/profiles.json`](./spec/v2/profiles.json) (§7).
 
-The same request without the header returns the v1 document, `OpenWOP-Version: 1.11`.
+On this host, the same request without the header returns the v1 document, `OpenWOP-Version: 1.11`.
 
 📖 **Read:** [`capabilities.md`](./spec/v2/core/capabilities.md) for the record type, the closed root, and the family list. The machine-readable operation list is [`api/v2/openapi.yaml`](./api/v2/openapi.yaml); the path manifest also names a self-describing `GET /openapi.json` (`getOpenApiSpec`).
 
@@ -305,7 +305,7 @@ openwop-event-type: run.completed
 openwop-timestamp: 1790487809
 openwop-signature: sha256=0646da74498de78ee4354c970994cb423c66f065fbe2575456fc46ab4361a705
 openwop-signature-algorithm: v1
-x-openwop-webhook-id: …   (the same five values again, dual-emitted through the overlap)
+x-openwop-webhook-id: …   (the same five values again: a host serving both majors sends both header families)
 
 {"runId":"openwop-reference-tenant/OFJLUFpBp-YkcTUc2Fs-a4rm","workspaceId":"default","event":{"eventId":"XOoCbot1DI2wY_esWklfztYk","type":"run.completed","payload":{"outputs":{},"durationMs":7},"sequence":3,…}}
 ```
@@ -420,14 +420,14 @@ The node declarations, runtime block, and remaining fields are defined by [`sche
 
 ## 8. Certify your implementation
 
-The suite is [`@openwop/openwop-conformance`](https://www.npmjs.com/package/@openwop/openwop-conformance) (2.42.x). Install it with its exact-pinned peer, the corpus artifacts, at the same version:
+The suite is [`@openwop/openwop-conformance`](https://www.npmjs.com/package/@openwop/openwop-conformance). It exact-pins its peer, [`@openwop/spec-artifacts`](https://www.npmjs.com/package/@openwop/spec-artifacts), so install both at the same version:
 
 ```bash
-npm install --save-dev --legacy-peer-deps @openwop/openwop-conformance@2.42.6 @openwop/spec-artifacts@2.42.6
+npm install --save-dev --legacy-peer-deps @openwop/openwop-conformance @openwop/spec-artifacts
 npx openwop-conformance --base-url $OPENWOP_URL --api-key $TOKEN --target-major 2
 ```
 
-**Pass `--target-major 2`.** Without it, the suite picks the major from the host's `preferredVersion`, and during the overlap that is 1. Other useful flags:
+**Pass `--target-major 2`.** Without it, the suite picks the major from the host's `preferredVersion`, which is 1.x on a host that still serves v1. Other useful flags:
 
 - `--filter "<pattern>"` runs a subset.
 - `--require-behavior` fails an advertised behavior the suite can't observe, instead of soft-skipping it.
@@ -441,48 +441,30 @@ Every run ends with the RFC 0148 dispositions: `executed-pass`, `executed-fail`,
 
 ## 9. SDKs
 
-Each reference SDK has a v2 line that sends `OpenWOP-Version` on every request, calls only unversioned paths, and never calls `/v1/…`. The 1.x lines are unchanged for v1 hosts. The sources and READMEs are in [`openwop/openwop-sdks`](https://github.com/openwop/openwop-sdks).
+The reference SDKs are at 2.5.0. Each sends `OpenWOP-Version` on every request and calls only unversioned paths. Sources and READMEs are in [`openwop/openwop-sdks`](https://github.com/openwop/openwop-sdks).
 
-| Language | v2 package | Install | Source |
+| Language | Package | Install | Source in `openwop/openwop-sdks` |
 | --- | --- | --- | --- |
-| TypeScript | `@openwop/openwop` 2.x | `npm install @openwop/openwop@2` | `sdk/typescript-v2/` |
-| Python | `openwop-client` 2.x | `pip install "openwop-client>=2,<3"` | `sdk/python-v2/` |
-| Go | `github.com/openwop/openwop-sdks/go/v2` | `go get github.com/openwop/openwop-sdks/go/v2` | `go/v2/` |
+| TypeScript | `@openwop/openwop` | `npm install @openwop/openwop@2` | [`sdk/typescript-v2/`](https://github.com/openwop/openwop-sdks/tree/main/sdk/typescript-v2) |
+| Python | `openwop-client` | `pip install "openwop-client>=2,<3"` | [`sdk/python-v2/`](https://github.com/openwop/openwop-sdks/tree/main/sdk/python-v2) |
+| Go | `github.com/openwop/openwop-sdks/go/v2` | `go get github.com/openwop/openwop-sdks/go/v2` | [`go/v2/`](https://github.com/openwop/openwop-sdks/tree/main/go/v2) |
 
-The TypeScript client (2.3.0), run against the reference host:
-
-```typescript
-import { OpenwopClient } from '@openwop/openwop';
-
-const client = new OpenwopClient({ baseUrl: process.env.OPENWOP_URL!, apiKey: process.env.TOKEN! });
-
-const caps = await client.discovery.capabilities();      // the closed v2 root
-const { runId } = await client.runs.create(
-  { workflowId: 'conformance-multi-node' },
-  { idempotencyKey: crypto.randomUUID() },
-);
-for await (const event of client.runs.events(runId)) {   // SSE, closes after the terminal event
-  console.log(event.sequence, event.type);
-}
-console.log((await client.runs.get(runId)).status);      // "completed"
-```
-
-Import webhook verification from `@openwop/openwop/webhooks` (`verifyWebhookSignature`). The Python and Go READMEs show the same flow.
+[`QUICKSTART-10MIN.md`](./QUICKSTART-10MIN.md) §"Minute 5–8" runs a complete TypeScript example (discover, create, stream, read the snapshot). Import webhook verification from `@openwop/openwop/webhooks` (`verifyWebhookSignature`). The Python and Go READMEs show the same flow.
 
 ---
 
 ## 10. Storage and persistence (host authors)
 
-v2 core has no storage-adapter interface. It specifies what a host must persist and how it reads older logs: the era key (`eventLogSchemaVersion`, `3` for v2-written runs), the reader rule for v1-written logs, and runs pinned to v1. All of this is in [`persistence.md`](./spec/v2/core/persistence.md). The non-normative v1 adapter interface (`RunEventLogIO`, `SuspendIO`) is still at [`spec/v1/storage-adapters.md`](./spec/v1/storage-adapters.md) if your engine uses it.
+v2 core has no storage-adapter interface. [`persistence.md`](./spec/v2/core/persistence.md) specifies what a host must persist and how it reads older logs: the era key (`eventLogSchemaVersion`, `3` for v2-written runs), the reader rule for v1-written logs, and runs pinned to v1. The storage services a host offers to node packs are in [`storage.md`](./spec/v2/core/storage.md).
 
 ---
 
 ## 11. Reference hosts and the reference app
 
 - **v2 reference host.** [`openwop-examples/examples/hosts/v2-reference`](https://github.com/openwop/openwop-examples/tree/main/examples/hosts/v2-reference) is a single-process SQLite host implemented from `spec/v2/core/`. It served every response in this guide. [`QUICKSTART-10MIN.md`](./QUICKSTART-10MIN.md) boots it.
-- **Reference application.** [`openwop/openwop-app`](https://github.com/openwop/openwop-app) is a backend + React frontend template that serves both majors. It is the tier-1 host at `app.openwop.dev` in the INTEROP-MATRIX v2 table. See its README for how to run it.
+- **Reference application.** [`openwop/openwop-app`](https://github.com/openwop/openwop-app) is a backend + React frontend template that serves v2. It is the tier-1 host at `app.openwop.dev` in the INTEROP-MATRIX v2 table. See its README for how to run it.
 
-The in-memory and SQLite example hosts stay on the 1.x line through the overlap and don't serve v2.
+The in-memory and SQLite example hosts in `openwop-examples` serve only the frozen v1 wire.
 
 ---
 

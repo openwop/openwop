@@ -1,53 +1,54 @@
 # External Audit — Outreach Status
 
-> **Last updated: 2026-05-21.** Tracker for the outreach round defined in `README.md`. Update each row as replies come in. The authoritative engagement-state-machine lives in `SECURITY/external-audit-engagement.md` §8 — this file is the per-vendor detail that doesn't belong in the master scope doc.
->
-> **Drafts freshness re-confirmed 2026-05-21.** Five per-vendor drafts (`trail-of-bits.md`, `ncc-group.md`, `doyensec.md`, `cure53.md`, `latacora.md`) re-read against current `SECURITY/external-audit-engagement.md` scope. Scope is current per the 2026-05-21 refresh (RFCs 0014–0024+0026 added to in-scope list; RFCs 0027–0033 in scope as gated extensions; RFC 0013 in scope post-Acceptance). Drafts remain send-ready; **the only blocker is the steward sending them.** External-action gate SEC-1 per `docs/KNOWN-LIMITS.md:73` cannot close until send.
->
-> **Standards-review urgency note (2026-05-21).** External review engagement is the single highest-leverage move for credibility per the recent external standards-readiness review. Until at least three vendor quotes are in hand, the project's security posture is reviewer-flagged as insufficient regardless of how many invariants the suite enforces.
+**The engagement has not started.** No outreach has been sent to any vendor, no quote has been received, and no vendor has been selected. [`SECURITY/external-audit-findings.json`](../../external-audit-findings.json) is empty because no review has run. This is external-action gate SEC-1 in [`docs/KNOWN-LIMITS.md`](../../../docs/KNOWN-LIMITS.md) §"External-action gates".
 
-**Maintenance convention:** update this file in the **same git commit** that responds to or acknowledges a vendor reply. Co-located updates prevent silent staleness — 5 vendors × ~4 status transitions = ~20 edits over a 2-month window; without the commit-with-the-reply rule the file decays.
+The engagement plan, scope, selection weighting and state tracker are in [`SECURITY/external-audit-engagement.md`](../../external-audit-engagement.md). This file holds only the per-vendor detail.
+
+## The scope must be re-cut before anything is sent
+
+The five per-vendor drafts in this directory (`trail-of-bits.md`, `ncc-group.md`, `doyensec.md`, `cure53.md`, `latacora.md`) were written against the v1 corpus, with a scope framed around RFCs 0014–0033. That scope no longer describes the protocol:
+
+- v2 is the current major, and v1 reached end of support on 2026-10-04 ([RFC 0234](../../../RFCS/0234-maintainer-set-v1-end-of-support.md)).
+- The normative surface a review should cover is [`spec/v2/core/`](../../../spec/v2/core/), the wire in `api/v2/` and `schemas/v2/`, and [`SECURITY/invariants.yaml`](../../invariants.yaml).
+- The packs in scope live in [`openwop/openwop-registry`](https://github.com/openwop/openwop-registry), not this repository.
+
+Before the round is sent, re-cut the scope in `external-audit-engagement.md` for v2, then update each draft to match. Do not send the drafts as they stand.
 
 ## Per-vendor status
 
 | Vendor        | Outreach sent | First reply received | Quote received | Range (USD) | Window | Decision | Final status |
 | ------------- | ------------- | -------------------- | -------------- | ----------- | ------ | -------- | ------------ |
-| Trail of Bits | —             | —                    | —              | —           | —      | —        | Pending      |
-| NCC Group     | —             | —                    | —              | —           | —      | —        | Pending      |
-| Doyensec      | —             | —                    | —              | —           | —      | —        | Pending      |
-| Cure53        | —             | —                    | —              | —           | —      | —        | Pending      |
-| Latacora      | —             | —                    | —              | —           | —      | —        | Pending      |
+| Trail of Bits | —             | —                    | —              | —           | —      | —        | Not sent     |
+| NCC Group     | —             | —                    | —              | —           | —      | —        | Not sent     |
+| Doyensec      | —             | —                    | —              | —           | —      | —        | Not sent     |
+| Cure53        | —             | —                    | —              | —           | —      | —        | Not sent     |
+| Latacora      | —             | —                    | —              | —           | —      | —        | Not sent     |
 
 Decision values: `selected` / `declined-by-us` / `declined-by-vendor` / `no-response`.
 
 ## How to update
 
-When you send the outreach round:
+Update this file in the same commit that sends outreach or records a reply, so it cannot drift silently.
 
-```bash
-# Set Outreach sent dates to today on all five rows.
-```
+- **On send:** set `Outreach sent` to the date and `Final status` to `Pending`.
+- **On a reply:** fill in `First reply received`, `Quote received`, `Range` and `Window`.
+- **With two or more viable quotes:** move `Final status` to `pending-decision`.
+- **On decision:** `selected` for the chosen vendor, `declined-by-us` for the rest, `declined-by-vendor` if a vendor passes.
 
-When a reply comes in: fill in `First reply received`, `Quote received`, `Range`, `Window`. Move `Final status` to `pending-decision` when you have ≥2 viable quotes; `selected` for the winner; `declined-by-us` for the rest you decline; `declined-by-vendor` if they pass.
+## Selection
 
-## Selection workflow
-
-Per `SECURITY/external-audit-engagement.md` §4 selection weighting:
+Score each quote 1–5 against the weighting in `external-audit-engagement.md` §4:
 
 - Track record on protocol-level reviews: 40%
-- LLM/workflow/agent-adjacent experience: 25%
+- LLM, workflow or agent-adjacent experience: 25%
 - Schedule fit: 15%
 - Public-report quality: 10%
 - Cost: 10%
 
-When you have ≥2 quotes back, score each on a 1-5 scale per criterion in a separate calc (this tracker stays high-level). Highest weighted score wins, ties broken by schedule fit.
+The highest weighted score wins; schedule fit breaks ties.
 
 ## After selection
 
-1. Move `SECURITY/external-audit-engagement.md` §8 status tracker forward:
-   - "Vendor selected" → date + chosen vendor's name
-   - "Contract signed" → date when signed
-   - "Repository commit pinned" → the commit hash that's the audit subject
-   - "Kickoff" → date the review begins
-2. Reply to the four non-selected vendors declining with a short courtesy note.
-3. This file's last row gets one of `selected` (winner) or `declined-by-us` (the four passed-over) — final state is then archival.
+1. Move the `external-audit-engagement.md` §8 tracker forward: vendor selected, contract signed, the repository commit pinned as the audit subject, kickoff date.
+2. Send a short courtesy note to each vendor not selected.
+3. Record the final decision for every row here. The file is then archival.

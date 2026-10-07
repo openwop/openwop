@@ -12,188 +12,162 @@ Use this checklist to verify a change meets every non-functional requirement bef
 ## CRITICAL: Compatibility (per `COMPATIBILITY.md`)
 
 - [ ] Change is classified in PR body: **additive** / **safety-fix** / **breaking**
-- [ ] If additive (§2.1): new fields are optional with documented default; new event types declared as opt-in; existing clients ignore unknown event types
-- [ ] If safety-fix (§3): RFC filed with 90-day public window OR embargoed-disclosure per `SECURITY.md`; ships with migration tooling; `version-negotiation.md` runbook section added; `CHANGELOG.md` `### Security` entry cites the advisory ID
-- [ ] If breaking: deferred to v2; not in this PR
+- [ ] If additive (§2.1, §2.4): new fields are optional; adding an OPTIONAL property to a closed v2 object is additive; new event types declared as opt-in
+- [ ] If safety-fix (§3): RFC filed with 90-day public window OR embargoed disclosure per `SECURITY.md`; ships with migration tooling; `CHANGELOG.md` `### Security` entry cites the advisory ID
+- [ ] If breaking (a new REQUIRED property, opening/closing an object, narrowing a type): waits for the next major; not in this PR
 - [ ] No existing required field made optional, removed, or type-changed (§2.2)
 - [ ] No existing event-type shape changed (§2.2)
 - [ ] No existing endpoint contract changed (§2.2; additive optional fields aside)
 - [ ] No existing `MUST` requirement relaxed (§2.2)
 - [ ] No existing error code or HTTP status meaning changed (§2.2)
+- [ ] Any v2 surface retirement follows `COMPATIBILITY.md` §3a and `spec/v2/core/overview.md` §0a
+- [ ] `spec/v1/` untouched (frozen tree; v1 reached end of support by RFC 0234)
 
 ## CRITICAL: SECURITY invariants (per `SECURITY/invariants.yaml`)
 
 - [ ] `bash scripts/check-security-invariants.sh` passes — every protocol-tier MUST-NOT has at least one matching public test
-- [ ] If the change introduces a new MUST-NOT, the invariant row + at least one `conformance/src/scenarios/` test land in the same PR
-- [ ] BYOK credential material never appears in event payloads, debug bundles, webhook deliveries, or RBAC-readable logs (`auth.md`, `SECURITY/threat-model-secret-leakage.md`)
-- [ ] `MemoryAdapter` SR-1 secret-redaction invariant holds (`agent-memory.md`)
-- [ ] Cross-tenant CTI-1 invariant holds (`agent-memory.md`)
-- [ ] Threat-model docs updated where the threat surface shifts (`SECURITY/threat-model-auth-profiles.md`, `-node-packs.md`, `-prompt-injection.md`, `-provider-policy.md`, `-secret-leakage.md`)
+- [ ] If the change introduces a new MUST-NOT, the invariant row (with a `witness` class) + at least one `conformance/src/scenarios/` test land in the same PR
+- [ ] BYOK credential material never appears in event payloads, debug bundles, webhook deliveries, or RBAC-readable logs (`spec/v2/core/identity.md`, `spec/v2/core/security-defaults.md`, `SECURITY/threat-model-secret-leakage.md`)
+- [ ] Cross-tenant isolation holds (`spec/v2/core/storage.md`, `spec/v2/core/persistence.md`)
+- [ ] New surface covered by the obligation table in `spec/v2/core/security-defaults.md`
+- [ ] Threat-model docs updated where the threat surface shifts (`SECURITY/threat-model-*.md`)
 
-## CRITICAL: Replay + fork safety (per `replay.md`)
+## CRITICAL: Replay + fork safety (per `spec/v2/core/replay.md`)
 
 - [ ] New event records include all non-deterministic state in their payload — no regenerated timestamps, IDs, or local clocks at fork time
-- [ ] `POST /v1/runs/{runId}:fork` against historical checkpoints unchanged in behavior
-- [ ] Reducer changes per `channels-and-reducers.md` preserve commutativity/idempotency where spec promises it
+- [ ] `POST /runs/{runId}:fork` against historical checkpoints unchanged in behavior
+- [ ] New side effects are suppressed on a replay fork, not re-fired
 
 ---
 
 ## HIGH: Spec corpus hygiene (per `CONTRIBUTING.md`)
 
-### Prose specs (`spec/v1/*.md`, `RFCS/*.md`)
-- [ ] `Status:` legend tag present (STUB / DRAFT / OUTLINE / FINAL)
-- [ ] Draft date updated where prose changed
+### Prose specs (`spec/v2/core/*.md`, `spec/v2/ext/`, `RFCS/*.md`)
+- [ ] Core docs carry the `> **Status: …**` banner and a "Why this exists" section
 - [ ] RFC 2119 keywords (MUST, SHOULD, MAY, MUST NOT, SHOULD NOT) used consistently — no lowercase "should" / "must" as normative imperative
-- [ ] Cross-references use relative paths (from repo root: `./spec/v1/<doc>.md`; from inside `spec/v1`: peer filename)
-- [ ] New surface area carries a "Why this exists" paragraph + "Open spec gaps" table
-- [ ] No inline JSON Schemas — schemas live under `schemas/` with `$ref`s
+- [ ] Every new MUST has a witness class and a requirement id (`spec/v2/core/conformance.md`)
+- [ ] The rule lives in the core doc that owns it; an RFC does not restate it
+- [ ] Cross-references use relative paths that resolve
+- [ ] `node scripts/check-spec-readability.mjs` and `node scripts/check-core-budget.mjs` pass (v2 prose renders verbatim on openwop.dev)
+- [ ] No inline JSON Schemas — schemas live under `schemas/v2/` with `$ref`s
 
-### JSON Schemas (`schemas/*.schema.json`)
+### JSON Schemas (`schemas/v2/*.schema.json`)
 - [ ] `"$schema": "https://json-schema.org/draft/2020-12/schema"`
-- [ ] `"$id": "https://openwop.dev/spec/v1/<name>.schema.json"`
+- [ ] `"$id": "https://openwop.dev/spec/v2/<name>.schema.json"`
 - [ ] Every object has `"additionalProperties": false`
 - [ ] Required fields listed explicitly
-- [ ] New required field → schema implicit minor version bumped + CHANGELOG entry
-- [ ] New optional field → marked optional; existing implementations not invalidated
+- [ ] `schemas/v2/capabilities.schema.json` not hand-edited — it is generated from `spec/v2/declaration.json` + `spec/v2/facets/` by `scripts/generate-from-declaration.mjs`
+- [ ] `node scripts/check-v2-schemas.mjs` and `node scripts/derive-v2-schemas.mjs --check` pass (never run `derive-v2-schemas.mjs --write`)
 - [ ] At least one positive + one negative example per RFC template requirement (where added by RFC)
 
-### OpenAPI (`api/openapi.yaml`) + AsyncAPI (`api/asyncapi.yaml`)
-- [ ] All schemas referenced via cross-file `$ref` (`../schemas/<name>.schema.json`) — never inline
-- [ ] `redocly lint api/openapi.yaml` clean
-- [ ] `asyncapi validate api/asyncapi.yaml` clean
-- [ ] `redocly bundle` and `asyncapi bundle` succeed
+### OpenAPI + AsyncAPI
+- [ ] Edits made to the source (`api/openapi.yaml`, or the inline seams in `scripts/derive-v2-api.py`), then `api/v2/` regenerated — never a hand edit to `api/v2/openapi.yaml` / `api/v2/asyncapi.yaml`
+- [ ] `python3 scripts/derive-v2-api.py --check` clean
+- [ ] Redocly and AsyncAPI clean at the versions `scripts/openwop-check.sh` pins (`@redocly/cli@2.31.4`, `@asyncapi/cli@4.1.1`)
+- [ ] `node scripts/check-path-parity.mjs` clean; new operations appear in `spec/v2/path-manifest.json`
 - [ ] New endpoint: `tag`, `operationId`, request/response schemas, ≥1 error response
 - [ ] New AsyncAPI channel: message-name + payload schema reference; security scheme inherited
 
-## HIGH: Conformance coverage (per `CONTRIBUTING.md` §"Conformance suite")
+## HIGH: Conformance coverage (per `conformance/coverage.md`)
 
-- [ ] Each new scenario in `conformance/src/scenarios/` opens with a docstring naming the spec doc(s) verified
-- [ ] `describe('category: …', …)` blocks per assertion group
-- [ ] `expect(…, driver.describe('spec.md §section', 'requirement'))` so failure messages cite the requirement
+- [ ] Each new v2 scenario is `conformance/src/scenarios/v2-*.test.ts` and opens with a docstring naming the `spec/v2` doc(s) verified
+- [ ] `conformance/scenario-majors.json` regenerated (`node conformance/scripts/generate-scenario-majors.mjs --write`); a file with no row never runs
+- [ ] Assertions use `req(id, section, requirement)` as the message; one explicit requirement id per `it` (`node scripts/check-req-only.mjs`)
+- [ ] No bare `return` in an `it` body — `return softSkip(kind, reason)`
 - [ ] New fixtures in `conformance/fixtures/` AND added to `fixtures.md` catalog table + per-fixture contracts
-- [ ] `spec-corpus-validity.test.ts` round-trip passes (`npm run openwop:check` step 2/8)
-- [ ] `fixtures-valid.test.ts` round-trip passes
-- [ ] Server-free scenarios run in <1s
-- [ ] Capability-gated scenarios respect `host.<capability>.supported` flags per `conformance/coverage.md` §"Capability-gated scenarios"
+- [ ] `src/coherence/spec-corpus-validity.test.ts` and `fixtures-valid.test.ts` pass
+- [ ] Family-gated scenarios gate on the record's presence (no `.supported` seat at v2) per `conformance/coverage.md` §"Capability-gated scenarios"
 - [ ] `conformance/coverage.md` coverage table updated
 
-## HIGH: SDK contract alignment (per `CONTRIBUTING.md` §"TypeScript reference SDK")
+## HIGH: SDK impact
 
-- [ ] Every new endpoint in `api/openapi.yaml` maps to exactly one method on `OpenwopClient`
-- [ ] Types extend `../openwop-sdks/sdk/typescript/src/types.ts`; no inline shape redefinitions
-- [ ] `( cd ../openwop-sdks/sdk/typescript && npx tsc --noEmit )` clean with `strict + exactOptionalPropertyTypes`
-- [ ] No `as any`, no `@ts-ignore`, no `@ts-nocheck` in `../openwop-sdks/sdk/typescript/src/`
-- [ ] Zero runtime deps remains the goal — any new dep has a stated reason in the PR description
-- [ ] Python SDK (`../openwop-sdks/sdk/python/`): stdlib-only port; `ruff check ../openwop-sdks/sdk/python/` clean
-- [ ] Go SDK (`../openwop-sdks/sdk/go/`): `go vet ./...` clean; `gofmt -l .` produces no output
+- [ ] SDKs live in `openwop/openwop-sdks`. If the change adds an endpoint, event or type to `api/v2/`, the PR says so and an issue is filed there
 
 ## HIGH: Capability + profile coherence
 
-- [ ] New optional surface advertised in `/.well-known/openwop` via `capabilities.schema.json`
-- [ ] `Capabilities-Etag` semantics unchanged unless RFC explicitly says otherwise (`capabilities-change-detection.md`)
-- [ ] In-package vs network-superset shapes both updated where applicable (`capabilities.md`)
-- [ ] If a new profile is introduced, predicate defined in `profiles.md`
-- [ ] INTEROP-MATRIX rows updated for any host whose advertisement changes
-- [ ] Scale-profile claim (`minimal` / `production` / `high-throughput`) still defensible (`scale-profiles.md`)
-- [ ] Production-profile claim kept honest — operational evidence, not discovery-payload predicates (`production-profile.md`)
+- [ ] New optional surface is a family row in `spec/v2/declaration.json` with its facet in `spec/v2/facets/`, and carries a `witness` class
+- [ ] Discovery caching stays standard `ETag` / `If-None-Match` (`spec/v2/core/capabilities.md` §1.1)
+- [ ] If a new profile is introduced, its predicate is in the declaration (`spec/v2/profiles.json` is generated)
+- [ ] INTEROP-MATRIX rows updated for any host whose certified claim changes
+- [ ] Production-profile claim kept honest — operational evidence, not discovery-payload predicates (`spec/v2/core/conformance.md` §"Production profile")
 
-## HIGH: Stream-mode + observability coherence
+## HIGH: Observability coherence
 
-- [ ] New events visible in correct stream mode(s) (`values` / `updates` / `messages` / `debug`) per `stream-modes.md`
-- [ ] New spans, events, metric kinds stay under canonical `openwop.*` OTel namespace (`observability.md`, `host-extensions.md`)
-- [ ] Vendor-host telemetry stays under vendor namespaces, never `openwop.*`
+- [ ] New spans, events, metric kinds stay under the canonical `openwop.*` namespace
+- [ ] Vendor-host extensions stay under `extensions.<org>.<name>`, never `openwop.*`
 
-## HIGH: HMAC + signed webhooks (per `webhooks.md`)
+## HIGH: Signed webhooks (per `spec/v2/core/webhooks.md`)
 
-- [ ] `{timestamp}.{rawBody}` HMAC signing recipe unchanged
-- [ ] Replay-attack-resistant verification recipe preserved in SDK helpers
-- [ ] Circuit-breaker + best-effort delivery semantics unchanged unless RFC'd
+- [ ] `OpenWOP-Timestamp` / `OpenWOP-Signature` HMAC-SHA256 signing recipe unchanged
+- [ ] Durable delivery and circuit-breaker semantics unchanged unless RFC'd
 
-## HIGH: Idempotency (per `idempotency.md`)
+## HIGH: Idempotency (per `spec/v2/core/idempotency.md`)
 
 - [ ] New write endpoints accept `Idempotency-Key`
-- [ ] Engine-side `invocationId` collapse rules apply
-- [ ] SDK helpers expose both layers
+- [ ] Effect-identity collapse rules apply
 
-## HIGH: Version negotiation (per `version-negotiation.md`)
+## HIGH: Versioning (per `spec/v2/core/versioning.md`)
 
-- [ ] Engine version axis impact named
-- [ ] Per-run event-log version axis impact named
-- [ ] Per-event version axis impact named
-- [ ] Runtime pinning impact named
-- [ ] If deploy-skew risk exists, `version-negotiation.md` runbook section added
+- [ ] New operations use unversioned paths (no `/v1/`, no `/v2/` path space)
+- [ ] `OpenWOP-Version` header handling unchanged (it selects the major of the `/.well-known/openwop` representation)
 
 ---
 
-## MEDIUM: Governance + bootstrap-phase compliance (per `GOVERNANCE.md`, `CONTRIBUTING.md`)
+## MEDIUM: Governance (per `GOVERNANCE.md`, `CONTRIBUTING.md`, `RFCS/README.md`)
 
 - [ ] Every commit on the PR carries `Signed-off-by:` trailer (DCO bot blocks merge otherwise)
-- [ ] Conventional Commit prefix matches lane (`spec(v1):`, `feat(host-sqlite):`, `feat(sdk-ts):`, `feat(conformance):`, `feat(registry):`, `fix:`, `docs:`, `chore:`, `build:`)
-- [ ] PR labeled `openwop-spec` if it touches `spec/v1/`, `api/`, `schemas/`, or `RFCS/`
-- [ ] RFC comment window respected: additive = 7 days; safety-fix = 90 days or embargo; breaking = 30 days
-- [ ] One-approval review (bootstrap rule); CODEOWNERS routes spec/conformance to lead maintainer
-- [ ] Tripwire considered: vendor-neutral migration (`ROADMAP.md`) — has this PR moved the project closer to or further from the second-maintainer threshold?
+- [ ] Conventional Commit prefix matches the lane (`spec(X.Y.Z):`, `rfc(NNNN):`, `conformance(X.Y.Z):`, `errata(<doc or X.Y.Z>):`, `release(X.Y.Z):`, `fix:`, `docs(<area>):`, `chore:`, `build:`)
+- [ ] PR labeled `openwop-spec` if it touches `spec/`, `api/`, `schemas/`, or `RFCS/`
+- [ ] RFC comment window respected: normative addition = 7 days; breaking = 30 days; safety-fix = 90 days or embargo; any waiver recorded in the RFC's `Updated` field
+- [ ] CODEOWNERS review obtained
 
-## MEDIUM: Node-pack + agent-pack hygiene (per `node-packs.md`, `RFCS/0003`, `registry-operations.md`)
+## MEDIUM: Pack hygiene (per `spec/v2/core/packs.md`)
 
-- [ ] New pack manifests validate against `node-pack-manifest.schema.json`
-- [ ] Agent packs validate against `agent-manifest.schema.json`
+- [ ] New pack manifests validate against their manifest schema
 - [ ] Pack signing recipe (Ed25519) preserved
-- [ ] Registry HTTP API contract changes (if any) RFC'd
-- [ ] Submission / validation / deprecation / yank / signing-key rotation flows unchanged unless RFC'd
+- [ ] Registry contract changes (if any) RFC'd; the registry itself lives in `openwop/openwop-registry`
 
-## MEDIUM: Reference-host coherence
+## MEDIUM: Host evidence honesty
 
-- [ ] Each touched host (`../openwop-examples/examples/hosts/in-memory`, `../openwop-examples/examples/hosts/sqlite`, `../openwop-examples/examples/hosts/python`) still passes the suite version it advertises
-- [ ] Host `conformance.md` evidence file updated (suite version, command used, target URL class, pass/fail/skip counts) — no private deployment identifiers or secrets
-- [ ] INTEROP-MATRIX row reflects the new advertised profile set honestly
-- [ ] If host gained a new profile claim, evidence file confirms it; otherwise marked "Not claimed"
-
-## MEDIUM: Multi-agent surface (RFCs 0002–0008)
-
-- [ ] `AgentRef` wire shape unchanged unless RFC explicitly proposes it (`RFCS/0002`)
-- [ ] Reasoning events (`agent.reasoned`, `agent.toolCalled`, `agent.toolReturned`, `agent.handoff`, `agent.decided`, `runOrchestrator.decided`) follow established envelope shape
-- [ ] Agent packs (`RFCS/0003`) and memory layer (`RFCS/0004`) coherent
-- [ ] Conversation (`RFCS/0005`), orchestrator (`RFCS/0006`), dispatch (`RFCS/0007`) integrations verified
-- [ ] WASM ABI (`RFCS/0008`) — if change touches it, note Draft → Active gating
+- [ ] Committed bundles in `evidence/v2-host-bundles/` still back every INTEROP-MATRIX claim the change affects
+- [ ] A changed claim gets a re-cut bundle or a downgraded row — never an edited count
 
 ---
 
 ## LOW: Documentation surfacing
 
-- [ ] README "Document index" table updated if a new spec doc landed
-- [ ] CHANGELOG.md `[Unreleased]` line added
-- [ ] ROADMAP entry added/updated if the change closes a known gap from `docs/PROTOCOL-GAP-CLOSURE-PLAN.md`
+- [ ] README "Document index" table updated if a new core doc landed
+- [ ] CHANGELOG.md `[Unreleased]` line added (one short entry per change; `node scripts/check-changelog-shape.mjs`)
+- [ ] ROADMAP updated if the change closes a tracked gap
 - [ ] MAINTAINERS.md untouched unless governance change
-- [ ] Site (under `../openwop-site/site/`) regenerates from spec corpus cleanly (only check if `../openwop-site/site/src/build.mjs` or templates changed)
 
 ## LOW: Release-readiness (only when bumping packages)
 
-- [ ] `bash scripts/openwop-check-publish-metadata.sh` clean (no placeholder URLs, stale module paths)
-- [ ] `bash scripts/check-npm-pack-contents.sh` clean (no package content leaks)
-- [ ] `bash scripts/check-python-go-release-surface.sh` clean
-- [ ] `@openwop/openwop`, `@openwop/openwop-conformance`, `openwop-client` (PyPI), `github.com/openwop/openwop/sdk/go` version bumps follow `PUBLISHING.md`
+- [ ] `bash scripts/openwop-check-publish-metadata.sh` clean
+- [ ] `bash scripts/check-npm-pack-contents.sh` clean
+- [ ] `@openwop/openwop-conformance` and `@openwop/spec-artifacts` bumped together per `PUBLISHING.md` (the `/release` skill lists every version site)
 
 ---
 
 ## Quick Verification Commands
 
 ```bash
-# One-shot full gate (mirrors .github/workflows/openwop-spec.yml)
+# Regen chain — run once, immediately before the gate, whenever a source of a generated surface changed
+python3 scripts/derive-v2-api.py --write && node scripts/generate-gaps.mjs --write && node scripts/generate-core-standard-manifest.mjs --write && node scripts/generate-assurance-status.mjs --write && node scripts/generate-protocol-status.mjs --write && node conformance/scripts/generate-scenario-majors.mjs --write && node conformance/scripts/generate-requirement-registry.mjs --write && node scripts/generate-spec-artifacts.mjs --write && node scripts/generate-review-packet.mjs --write && node scripts/generate-v1-eos-clock.mjs --write && node scripts/report-v2-witness-coverage.mjs --write && node scripts/check-spec-coherence.mjs --write
+
+# Full gate (scripts/openwop-check.sh, 10 steps; mirrors .github/workflows/openwop-spec.yml)
 npm run openwop:check
 
-# Per-step:
-( cd ../openwop-sdks/sdk/typescript && npx tsc --noEmit && npm test )
-( cd conformance && npx tsc --noEmit && npx vitest run )
-npx -y @redocly/cli@latest lint api/openapi.yaml
-npx -y @asyncapi/cli@latest validate api/asyncapi.yaml
+# Fast pieces:
+( cd conformance && npm run typecheck && npm run test:self )
+node scripts/check-req-only.mjs
 bash scripts/check-security-invariants.sh
 
 # DCO check (every commit signed)
 git log --no-merges -10 --format='%h %s%n%b' | grep -B1 'Signed-off-by:' | head -40
 
 # RFC 2119 lowercase audit on changed prose
-git diff --name-only | grep -E '^(spec/v1|RFCS)/.*\.md$' | xargs -I{} grep -nE '\b(must|should|may|must not|should not)\b' {} | grep -v 'MUST\|SHOULD\|MAY'
+git diff --name-only | grep -E '^(spec/v2|RFCS)/.*\.md$' | xargs -I{} grep -nE '\b(must|should|may|must not|should not)\b' {} | grep -v 'MUST\|SHOULD\|MAY'
 ```
 
 ---
@@ -205,7 +179,7 @@ git diff --name-only | grep -E '^(spec/v1|RFCS)/.*\.md$' | xargs -I{} grep -nE '
 | `/code-review` | Post-implementation technical review (banned patterns, schema/OpenAPI discipline) |
 | `/architect` | Pre-implementation protocol-architect review (wire-shape, version negotiation, capability gating) |
 | `/ux-review` | Prose readability + RFC 2119 + cross-link integrity |
-| `/ts-check` | Root-cause analysis for tsc / ruff / go-vet errors |
+| `/ts-check` | Root-cause analysis for typecheck and lint errors in this repo |
 | `/update-conformance` | Sync conformance scenarios / fixtures / coverage.md to a spec change |
 | `/update-docs` | Sync README, CHANGELOG, INTEROP-MATRIX, RFC index |
 | `/pr` | Create pull request with the right template |
