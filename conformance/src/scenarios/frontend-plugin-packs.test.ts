@@ -5,25 +5,17 @@
  * plus the manifest shape and the `ui-plugin/1` host-RPC + version-token concurrency
  * contract.
  *
- * Two layers:
+ * The always-on schema layer (manifest and `ui-plugin/1` message shapes) reads
+ * only the corpus, so it lives in `src/coherence/frontend-plugin-schemas.test.ts`
+ * (RFC 0238 G3). What stays here reads a host:
  *
- *   A. Always-on, server-free schema probe — `frontend-plugin-manifest.schema.json`
- *      and `ui-plugin-message.schema.json` enforce the wire shape: a valid manifest /
- *      message validates; a backend `runtime` member, a `uiPlugins[]` entry missing
- *      `entry`, an out-of-allowlist `method`, and any envelope `additionalProperties`
- *      are rejected. The `version`-token concurrency contract (the `artifact_conflict`
- *      error code + `currentVersion`) is schema-pinned. No credential-bearing field is
- *      admitted on the envelope (`frontend-plugin-no-byok`).
- *
- *   B. Capability-gated behavioral leg — on a host advertising
- *      `capabilities.uiPlugins.supported: true` that exposes the
- *      `POST /v1/host/sample/ui-plugin/rpc` test seam, an undeclared-method request
- *      MUST be refused with `method_not_allowed` (`frontend-plugin-rpc-allowlist`), and
- *      a stale `artifact.write` MUST be refused with `artifact_conflict` + `currentVersion`
- *      and MUST NOT persist (§Concurrency). Hosts without the seam soft-skip (404);
- *      unadvertised hosts skip via the behavior gate. (No conformant host advertises
- *      `uiPlugins` yet — these legs soft-skip until the openwop-app reference host (ADR
- *      0153) lands, the first witness that graduates the invariants to protocol.)
+ *   - the `uiPlugins` isolation advertisement, on a host that advertises it; and
+ *   - the capability-gated host-RPC legs over the v1 test seam
+ *     `POST /v1/host/sample/ui-plugin/rpc`: an undeclared method is refused with
+ *     `method_not_allowed` (`frontend-plugin-rpc-allowlist`), and a stale
+ *     `artifact.write` is refused with `artifact_conflict` + `currentVersion` and
+ *     does not persist. Hosts without the seam soft-skip (404). The v2 witness is
+ *     `v2-ui-plugin-boundary` (RFC 0238).
  *
  * @see spec/v1/frontend-plugin-packs.md
  * @see SECURITY/invariants.yaml ids: frontend-plugin-{isolation,egress,rpc-allowlist,no-byok}
@@ -31,160 +23,11 @@
  */
 
 import { describe, it, expect } from 'vitest';
-import { readFileSync } from 'node:fs';
-import { join } from 'node:path';
-import Ajv2020 from 'ajv/dist/2020.js';
-import addFormats from 'ajv-formats';
-import { SCHEMAS_DIR } from '../lib/paths.js';
 import { driver } from '../lib/driver.js';
 import { behaviorGate } from '../lib/behavior-gate.js';
 import { readCapabilityFamily } from '../lib/discovery-capabilities.js';
 import { req } from '../lib/requirement-ids.js';
 import { softSkip } from '../lib/soft-skip.js';
-
-const MANIFEST_SCHEMA = join(SCHEMAS_DIR, 'frontend-plugin-manifest.schema.json');
-const MESSAGE_SCHEMA = join(SCHEMAS_DIR, 'ui-plugin-message.schema.json');
-
-function validManifest(): Record<string, unknown> {
-  return {
-    name: 'vendor.acme.canvas-editor',
-    version: '1.0.0',
-    kind: 'frontend-plugin',
-    engines: { openwop: '>=1.2.0' },
-    uiPlugins: [
-      {
-        pluginId: 'app-builder',
-        surface: 'artifact-viewer',
-        entry: 'ui/app-builder.mjs',
-        hostApi: ['artifact.read', 'artifact.write'],
-      },
-    ],
-  };
-}
-
-describe('frontend-plugin manifest: schema layer (always-on, server-free)', () => {
-  const ajv = new Ajv2020({ allErrors: true, strict: false });
-  addFormats(ajv);
-  const validate = ajv.compile(JSON.parse(readFileSync(MANIFEST_SCHEMA, 'utf8')));
-
-  it('a well-formed frontend-plugin manifest validates', () => {
-    expect(
-      validate(validManifest()),
-      req('openwop.it.frontend-plugin-packs.a-well-formed-frontend-plugin-manifest-validates', 'frontend-plugin-packs.md', `frontend-plugin-packs.md §The pack — a valid manifest MUST validate. Errors: ${JSON.stringify(validate.errors)}`),
-    ).toBe(true);
-  });
-
-  it('a backend `runtime` member is rejected (a plugin is sandboxed UI, not a node entry)', () => {
-    const m = { ...validManifest(), runtime: { language: 'javascript', entry: 'index.mjs' } };
-    expect(
-      validate(m),
-      req('openwop.it.frontend-plugin-packs.a-backend-runtime-member-is-rejected-a-plugin-is-sandboxed-ui-not-a-node-entry', 'frontend-plugin-packs.md', 'node-packs.md §Pack kinds — a kind:"frontend-plugin" manifest carrying `runtime` MUST be rejected (pack_kind_invalid)'),
-    ).toBe(false);
-  });
-
-  it('a uiPlugins[] entry missing `entry` is rejected', () => {
-    const m = validManifest();
-    delete (m.uiPlugins as Array<Record<string, unknown>>)[0].entry;
-    expect(validate(m), req('openwop.it.frontend-plugin-packs.a-uiplugins-entry-missing-entry-is-rejected', 'frontend-plugin-packs.md', 'a uiPlugins[] entry missing `entry` MUST NOT validate')).toBe(false);
-  });
-
-  it('an `entry` path with `..` traversal is rejected', () => {
-    const m = validManifest();
-    (m.uiPlugins as Array<Record<string, unknown>>)[0].entry = '../escape.mjs';
-    expect(validate(m), req('openwop.it.frontend-plugin-packs.an-entry-path-with-traversal-is-rejected', 'frontend-plugin-packs.md', 'an `entry` path MUST NOT contain `..` (path-traversal)')).toBe(false);
-  });
-
-  it('a hostApi method outside the closed allowlist is rejected (frontend-plugin-rpc-allowlist)', () => {
-    const m = validManifest();
-    (m.uiPlugins as Array<Record<string, unknown>>)[0].hostApi = ['artifact.read', 'host.exec'];
-    expect(
-      validate(m),
-      req('openwop.it.frontend-plugin-packs.a-hostapi-method-outside-the-closed-allowlist-is-rejected-frontend-plugin-rpc-al', 'frontend-plugin-packs.md', 'frontend-plugin-packs.md §Host-RPC — only the closed allowlist methods are permitted; `host.exec` MUST NOT validate'),
-    ).toBe(false);
-  });
-
-  it('an empty uiPlugins[] is rejected (a pack MUST declare at least one plugin)', () => {
-    const m = { ...validManifest(), uiPlugins: [] };
-    expect(validate(m), req('openwop.it.frontend-plugin-packs.an-empty-uiplugins-is-rejected-a-pack-must-declare-at-least-one-plugin', 'frontend-plugin-packs.md', 'a frontend-plugin pack MUST declare at least one uiPlugins[] entry')).toBe(false);
-  });
-
-  it('a canvas-preview entry with canvasTypes + host.announce validates (RFC 0130)', () => {
-    const m = validManifest();
-    (m.uiPlugins as Array<Record<string, unknown>>)[0] = {
-      pluginId: 'gantt-preview',
-      surface: 'canvas-preview',
-      canvasTypes: ['canvas.gantt'],
-      entry: 'ui/preview.html',
-      hostApi: ['artifact.read', 'host.announce'],
-    };
-    expect(
-      validate(m),
-      req('openwop.it.frontend-plugin-packs.a-canvas-preview-entry-with-canvastypes-host-announce-validates-rfc-0130', 'RFC 0130', `frontend-plugin-packs.md §The pack (RFC 0130) — a canvas-preview entry MUST validate. Errors: ${JSON.stringify(validate.errors)}`),
-    ).toBe(true);
-  });
-
-  it('a surface outside the closed set is still rejected (RFC 0130 keeps the enum closed)', () => {
-    const m = validManifest();
-    (m.uiPlugins as Array<Record<string, unknown>>)[0].surface = 'omni-panel';
-    expect(
-      validate(m),
-      req('openwop.it.frontend-plugin-packs.a-surface-outside-the-closed-set-is-still-rejected-rfc-0130-keeps-the-enum-close', 'RFC 0130', 'frontend-plugin-packs.md §The pack — the surface enum stays closed; an unknown surface MUST NOT validate'),
-    ).toBe(false);
-  });
-});
-
-describe('ui-plugin/1 message: schema layer (always-on, server-free)', () => {
-  const ajv = new Ajv2020({ allErrors: true, strict: false });
-  addFormats(ajv);
-  const validate = ajv.compile(JSON.parse(readFileSync(MESSAGE_SCHEMA, 'utf8')));
-
-  it('a valid artifact.write request carrying a version token validates', () => {
-    const reqBody = {
-      openwop: 'ui-plugin/1',
-      type: 'request',
-      id: 7,
-      method: 'artifact.write',
-      params: { artifactId: 'a-1', version: 'opaque-v1', payload: {} },
-    };
-    expect(validate(reqBody), req('openwop.it.frontend-plugin-packs.a-valid-artifact-write-request-carrying-a-version-token-validates', 'frontend-plugin-packs.md', `a valid artifact.write request MUST validate. Errors: ${JSON.stringify(validate.errors)}`)).toBe(true);
-  });
-
-  it('an artifact_conflict response carries currentVersion (version-token concurrency)', () => {
-    const res = {
-      openwop: 'ui-plugin/1',
-      type: 'response',
-      id: 7,
-      ok: false,
-      error: { code: 'artifact_conflict', currentVersion: 'opaque-v2' },
-    };
-    expect(
-      validate(res),
-      req('openwop.it.frontend-plugin-packs.an-artifact-conflict-response-carries-currentversion-version-token-concurrency', 'frontend-plugin-packs.md', `frontend-plugin-packs.md §Concurrency — a stale write surfaces artifact_conflict + currentVersion. Errors: ${JSON.stringify(validate.errors)}`),
-    ).toBe(true);
-  });
-
-  it('a request with a method outside the allowlist is schema-rejected', () => {
-    const reqBody = { openwop: 'ui-plugin/1', type: 'request', id: 1, method: 'host.exec' };
-    expect(validate(reqBody), req('openwop.it.frontend-plugin-packs.a-request-with-a-method-outside-the-allowlist-is-schema-rejected', 'frontend-plugin-packs.md', 'a method outside the ui-plugin/1 allowlist MUST NOT validate')).toBe(false);
-  });
-
-  it('a message without the ui-plugin/1 protocol tag is rejected', () => {
-    const reqBody = { openwop: 'ui-plugin/2', type: 'request', id: 1, method: 'artifact.read' };
-    expect(validate(reqBody), req('openwop.it.frontend-plugin-packs.a-message-without-the-ui-plugin-1-protocol-tag-is-rejected', 'frontend-plugin-packs.md', 'a host MUST ignore messages whose ui-plugin tag it does not recognize')).toBe(false);
-  });
-
-  it('no credential-bearing field is admitted on the envelope (frontend-plugin-no-byok)', () => {
-    // additionalProperties:false on every envelope variant — a stray apiKey/token at the
-    // envelope root cannot ride the boundary.
-    for (const leak of ['apiKey', 'token', 'clientSecret', 'authorization']) {
-      const reqBody = { openwop: 'ui-plugin/1', type: 'request', id: 1, method: 'artifact.read', [leak]: 'xxx' };
-      expect(
-        validate(reqBody),
-        req('openwop.it.frontend-plugin-packs.no-credential-bearing-field-is-admitted-on-the-envelope-frontend-plugin-no-byok', 'frontend-plugin-packs.md', `frontend-plugin-no-byok — a credential-named envelope field ("${leak}") MUST NOT validate (additionalProperties:false)`),
-      ).toBe(false);
-    }
-  });
-});
 
 describe('frontend-plugin: isolation advertisement (always-on, capability shape)', () => {
   // RFC 0119: `isolation` is a categorical model, not a single browser const. A conformant host

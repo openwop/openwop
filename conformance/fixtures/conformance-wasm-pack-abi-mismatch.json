@@ -1,0 +1,41 @@
+{
+  "id": "conformance-wasm-pack-abi-mismatch",
+  "name": "Conformance: WASM Pack ABI Mismatch (Refused at Load)",
+  "version": "1.0",
+  "description": "node-pack-runtimes.md §WASM fixture. Invokes `vendor.openwop.misbehaving.abi-bomb`, whose module reports `openwop_abi_version()` 999, which no host lists. A host advertising this fixture says its operator offered `conformance/fixtures/wasm-packs/misbehaving-abi/` to its loader; a conforming host rejected the pack at load, so `nodePackRuntimes.wasm.loadedPacks` (when advertised) omits it, and the run is refused at creation or ends without the node completing. Fixture-only; not signed for the registry.",
+  "nodes": [
+    {
+      "id": "abi",
+      "typeId": "vendor.openwop.misbehaving.abi-bomb",
+      "name": "ABI bomb",
+      "position": {
+        "x": 0,
+        "y": 0
+      },
+      "config": {},
+      "inputs": {}
+    }
+  ],
+  "edges": [],
+  "triggers": [
+    {
+      "id": "manual",
+      "type": "manual",
+      "enabled": true
+    }
+  ],
+  "variables": [],
+  "metadata": {
+    "tags": [
+      "conformance",
+      "wasm",
+      "node-pack",
+      "rfc-0008",
+      "abi-version",
+      "misbehaving"
+    ]
+  },
+  "settings": {
+    "timeout": 10000
+  }
+}
