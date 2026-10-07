@@ -25,7 +25,9 @@
  * The host-tier predicates are read from a certification bundle v3
  * (schemas/v2/certification-bundle.schema.json): Witness needs at least one
  * ledger row per v2 requirement id; Coexistence needs the four named scenarios'
- * ids at `executed-pass`; Front door needs `executedFail === 0` on a host whose
+ * ids at `executed-pass` (a host past v1 end-of-support whose signed document
+ * lists no 1.x member is excused the two overlap-scoped ones, and a leg the host
+ * never reached reports `blocked`, not `fail`); Front door needs `executedFail === 0` on a host whose
  * `host.name` the INTEROP-MATRIX lists as implemented from `spec/v2/core/`.
  */
 import { spawnSync } from 'node:child_process';
@@ -55,6 +57,20 @@ const COEXISTENCE_PREFIXES = [
   'openwop.requirement.0176.v1-signed-webhook-accepted',
   'openwop.requirement.0177.manifest-ceiling-refused',
 ];
+// The two of those whose obligation is scoped to the overlap, and so lapses
+// when a host retires v1 (RFC 0234 §A.2): dual-stack is `versioning.md` §5
+// "Through the overlap", the v1-signed receive rule is `webhooks.md` §"Dual
+// emission through the overlap". The other two bind after retirement: a reader
+// MUST keep forking a retired shape (`overview.md` §0a), and the engine-range
+// ceiling has nothing to do with which majors a host serves.
+const OVERLAP_SCOPED = new Set([
+  'openwop.requirement.0172.dual-stack-negotiation',
+  'openwop.requirement.0176.v1-signed-webhook-accepted',
+]);
+// What a retired host shows instead of dual-stack: §1.3 row 2, a header naming
+// the major it no longer serves answered 406 with the list echoed. The scenario
+// takes that branch exactly when protocolVersions[] carries no 1.x member.
+const RETIREMENT_WITNESS = 'openwop.requirement.0172.version-header-honored';
 
 function run(cmd, args, cwd = ROOT) {
   const r = spawnSync(cmd, args, { cwd, encoding: 'utf8', timeout: 900_000 });
@@ -361,7 +377,11 @@ const corpusWitness = [node('check-declaration.mjs'), node('check-core-budget.mj
 let hb = null;
 try { hb = loadBundle(); } catch (e) { corpusWitness.push({ ok: false, evidence: '--host-bundle', tail: e.message }); }
 let hd = null;
-try { hd = loadDiscovery(hb); } catch (e) { corpusWitness.push({ ok: false, evidence: '--host-discovery', tail: e.message }); }
+// Kept apart from corpusWitness: when a bundle WAS read, corpusWitness[2] is
+// never consulted, so a substituted discovery document used to vanish here and
+// surface only as the "no discovery supplied" block in Front door.
+let discoveryError = null;
+try { hd = loadDiscovery(hb); } catch (e) { discoveryError = { ok: false, evidence: '--host-discovery', tail: e.message }; corpusWitness.push(discoveryError); }
 
 if (!hb) {
   // A bundle that was GIVEN but could not be read is a failure, not a block —
@@ -420,15 +440,34 @@ if (!hb) {
       tail: nonPass.length === 0 ? 'every non-pass row states a reason' : `${nonPass.length} non-pass row(s) state no reason: ${nonPass.slice(0, 3).map((r) => r.id).join(', ')}`,
     },
   ]);
+  // Retirement is read from the SIGNED discovery document only — never from a
+  // file handed over beside the bundle, never from a row's free-text reason —
+  // and only on or after the v1 end-of-support date, before which a host that
+  // drops v1 breaks the overlap MUST (`versioning.md` §1.1, §5).
+  const eos = (() => { try { return readJson('evidence/v1-end-of-support.json').endOfSupportNotBefore; } catch { return undefined; } })();
+  const majors = hd?.attested && Array.isArray(hd.doc.protocolVersions) ? hd.doc.protocolVersions.map((v) => String(v).split('.')[0]) : null;
+  const retired = majors !== null && majors.includes('2') && !majors.includes('1')
+    && typeof eos === 'string' && new Date().toISOString().slice(0, 10) >= eos;
+  const witnessRows = byId.get(RETIREMENT_WITNESS) ?? [];
+  const retirementWitnessed = witnessRows.length > 0 && witnessRows.every((x) => x.result === 'executed-pass');
   gate('Coexistence', COEXISTENCE_PREFIXES.map((prefix) => {
     const legs = rows.filter((r) => r.id === prefix || r.id.startsWith(`${prefix}.`));
-    const pass = legs.length > 0 && legs.every((x) => x.result === 'executed-pass');
     const counts = legs.reduce((m, x) => ({ ...m, [x.result]: (m[x.result] ?? 0) + 1 }), {});
-    return {
-      ok: pass,
-      evidence: `${hb.path} ${prefix}.*`,
-      tail: legs.length ? `${legs.length} leg(s): ${Object.entries(counts).map(([k, v]) => `${k}=${v}`).join(' ')}` : 'no row — the scenario did not run',
-    };
+    const tally = `${legs.length} leg(s): ${Object.entries(counts).map(([k, v]) => `${k}=${v}`).join(' ')}`;
+    const evidence = `${hb.path} ${prefix}.*`;
+    if (legs.length === 0) return { ok: false, evidence, tail: 'no row — the scenario did not run' };
+    if (legs.every((x) => x.result === 'executed-pass')) return { ok: true, evidence, tail: tally };
+    if (legs.some((x) => x.result === 'executed-fail')) return { ok: false, evidence, tail: tally };
+    if (retired && OVERLAP_SCOPED.has(prefix)) {
+      return retirementWitnessed
+        ? { ok: true, evidence, tail: `${tally} — v1 retired (signed protocolVersions [${hd.doc.protocolVersions.join(', ')}], end of support ${eos}); the overlap obligation lapsed and ${RETIREMENT_WITNESS} is executed-pass` }
+        : { ok: false, evidence, tail: `${tally} — v1 retired, but ${RETIREMENT_WITNESS} is not executed-pass, so nothing shows the host refuses the major it dropped` };
+    }
+    // Not passed, not failed: the host did not reach the leg (no seams profile,
+    // an omitted family). That is absent evidence, not a defect — `blocked`,
+    // whose rows say why. The v2 cut itself still needs a bundle that passes.
+    const why = [...new Set(legs.filter((x) => x.result !== 'executed-pass').map((x) => x.detail).filter(Boolean))].slice(0, 1).join('');
+    return blocked(evidence, `${tally} — unwitnessed on this host${why ? `: ${why.slice(0, 160)}` : ''}`);
   }));
   const suiteRow = suiteVersionCheck(hb);
   const totals = hb.bundle.results?.totals ?? {};
@@ -458,7 +497,7 @@ if (!hb) {
             'Open the PR that adds your bundle under evidence/v2-host-bundles/ and your row to INTEROP-MATRIX.md; ' +
             'this check turns green when it lands. Nothing about your host is failing here.',
         },
-    signatureCheck(hb, hd),
+    discoveryError ?? signatureCheck(hb, hd),
   ]);
 }
 

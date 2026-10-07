@@ -12,7 +12,7 @@ The full measurement history (every per-deploy note, superseded row and per-capa
 
 ## v2 — the current major
 
-Each row shows the host's newest certified bundle and the suite version that measured it. Verify any row with `node scripts/check-cut-gates.mjs --host-bundle <bundle>`, or the bundle's signature with `npx @openwop/openwop-conformance --verify <bundle> --host-key <key>`.
+Each row shows the host's newest certified bundle and the suite version that measured it. Verify any row with `node scripts/check-cut-gates.mjs --host-bundle <bundle>`, or the bundle's signature with `npx @openwop/openwop-conformance --verify <bundle> --host-key <key>`. Its Coexistence group reports `blocked` for a host that does not mount the conformance seams, since the fork and pack-ceiling legs run only through them. A host that has dropped v1 is excused the two overlap legs once it refuses the dropped major.
 
 | Host | Who runs it | Suite (cut) | pass / fail / blocked / inapplicable / skipped | Certified profiles | Evidence tier | Bundle |
 | --- | --- | --- | --- | --- | --- | --- |
