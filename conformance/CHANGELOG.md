@@ -1,5 +1,9 @@
 # `@openwop/openwop-conformance` Changelog
 
+## [2.45.24] — 2026-10-06 — the README document-index check reads `spec/v2/core`
+
+- **No scenario change.** The coherence test `spec-corpus-validity` checks that the root README's document index lists every `spec/v2/core` doc exactly once and that its **Total** matches; it checked `spec/v1`. The two requirement ids are renamed to match, which changes the packed `requirements.json`.
+
 ## [2.45.23] — 2026-10-06 — `0184.mint-no-tilde` also mints under the second-tenant credential; RFC 0237 filed
 
 - **Erratum: `host.announce` is a `ui-plugin/1` request method at v2.** The v2 `ui-plugin-message.schema.json` request enum omitted it, although the manifest `hostApi` enum and the `uiPlugins.hostApi` facet admit it (RFC 0130), so a host advertising it had to refuse it at `dispatchUiPluginRequest`. The schema is now hand-owned (no v1 seed marker). Found by openwop-app (ADR 0840).

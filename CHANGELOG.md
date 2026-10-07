@@ -8,6 +8,7 @@ Entries before this file was condensed carried full development detail. That tex
 
 ## [Unreleased]
 
+- **README rewritten for v2.** The root README now leads with v2: status, install, a v2 core-doc index (30 docs), quickstart and repositories; v1 is named only as end-of-support. The coherence test for the document index checks `spec/v2/core` instead of `spec/v1` (2.45.24 cycle; renamed requirement ids).
 - **2.45.23 cycle (suite):** purpose labels are witnessed on a real onward hop. `v2-purpose-propagation-onward` hands the host a label through the §22 A2A `invoke` seam, now defined in `api/seams-v2.yaml`, and the suite's peer checks what arrives. The witness is seam-gated; a normative path is still owed.
 - **WASM fixture packs.** Two hand-written WebAssembly node packs (`conformance/fixtures/wasm-packs/`: a memory bomb and an ABI-999 pack) replace the Rust build an operator needed. New `v2-wasm-memory-cap` witnesses the §WASM memory ceiling at major 2.
 - **RFC 0239 filed and Active (window waived).** `multiPartyConversation`'s roster gets an input seat: `conversation.md` binds the roster to `core.conversationGate` config and names the two refusals; `errors.json` registers `conversation_speaker_not_participant` and `conversation_roster_exceeded` (both `422`).
@@ -27,7 +28,6 @@ Entries before this file was condensed carried full development detail. That tex
 - **RFC 0235 Active (window waived).** `runs.md` §Caching and encoding now defines the match; `capabilities.md` §1.1 and the OpenAPI descriptions cite it, and the discovery `ETag` is a "Validator", not "Strong". Suite 2.45.18 carries the four legs.
 - **2.45.18 cycle (suite):** the corpus-only legs of the `v2-*-static` scenarios move to `src/coherence/` and leave the host bundle (`conformance.md` §Two products). `.supported` wording leaves 38 v2 schema descriptions (presence is the claim). No rule changed.
 - **Witness-coverage report sees `recordSchemaLeg`.** Its gate detector missed the private `onFamily` gate, so 24 advertisement scenarios witnessed nothing in the report. Moving the static legs exposed it: four families read v1-only while their v2 advertisement witnesses ran. Still 73/73.
-- **Correction to the 2.45.17 notes.** openwop-app's 304 failures were not spelling-dependent. A CDN edge answered `200` to the first conditional reaching a node that had not seen the object (hit-for-pass on a `no-store` response), then `304`. The witnesses are right, and intermittently red on such an origin.
 
 ## [2.45.23] — 2026-10-06 — RFCs 0237–0239 Active; purpose labels and minted ids witnessed further
 
@@ -59,6 +59,7 @@ Entries before this file was condensed carried full development detail. That tex
 
 - **`If-None-Match` is evaluated as RFC 9110 defines it.** RFC 0235 (`Active`): `*` and weakly compared lists match, only where the answer would be `2xx`; `no-cache` does not suppress it. Four new legs on both 304 scenarios.
 - **Host bundles get smaller, on purpose.** Seven `v2-*-static` scenarios read only the corpus and moved to `src/coherence/`, so every host's 2.45.18 bundle has fewer rows than its 2.45.17 one. That is not a regression.
+- **Correction to the 2.45.17 notes.** openwop-app's 304 failures were not spelling-dependent. A CDN edge answered `200` to the first conditional reaching a node that had not seen the object (hit-for-pass on a `no-store` response), then `304`. The witnesses are right, and intermittently red on such an origin.
 
 ## [2.45.17] — 2026-10-04 — ETag rules: discovery's 304 witnessed at major 2, every client spelling covered
 
