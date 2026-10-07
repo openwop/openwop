@@ -5,6 +5,7 @@
 - **No scenario change.** The coherence test `spec-corpus-validity` checks that the root README's document index lists every `spec/v2/core` doc exactly once and that its **Total** matches; it checked `spec/v1`. The two requirement ids are renamed to match, which changes the packed `requirements.json`.
 - **Package README and metadata.** The README drops a 107-line block that repeated the dated coverage notes verbatim; the package description names v2; `tsconfig.json` sets `noEmit`, so a bare `tsc -p tsconfig.json` no longer writes `.js` files beside the sources.
 - **Package docs rewritten for v2.** The README is the npm page again: install, protocol majors, a coverage summary by area (the dated per-RFC notes stay in this changelog), and a corrected "Resolving the contract" (the contract is the `@openwop/spec-artifacts` peer, not vendored). `coverage.md` leads with v2 coverage by core doc; `fixtures.md` uses v2 paths and catalogs `wasm-sandbox/` and `upstream/a2a-v1.0.1/`.
+- **Erratum (packed contract): `provider_policy_denied`'s `details.reason`** is documented as `provider_disabled`, `byok_required`, `byok_required_but_unresolved` or `model_not_allowed`, the spelling the v1 scenario `providerPolicyEnforcement` already expects; the registry said kebab-case.
 
 ## [2.45.23] — 2026-10-06 — `0184.mint-no-tilde` also mints under the second-tenant credential; RFC 0237 filed
 

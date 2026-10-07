@@ -115,7 +115,7 @@ A `ctx` outcome that resolves instead of rejecting is a result value, not an err
 | `budget_model_denied` | 422 | false | `{ model }`, optional | The run's resolved model is outside its budget's `modelAllow`, or inside its `modelDeny`, so it was refused before the call. |
 | `service_unavailable` | 503 | true | open; MUST NOT carry any retry-timing field (`errors.md` §Retry timing) | The host is at capacity. Retry after the `Retry-After` header when present. |
 | `run_expired` | 410 | false | `{ runId }`, optional | The run, or the part of its event log the request needs, was purged under the host's documented retention. |
-| `provider_policy_denied` | 422 | false | `{ provider, reason }`, `reason` optional (`provider-disabled`, `model-not-allowed`, …) | Host provider policy refused the model or provider before the call, so the node failed. |
+| `provider_policy_denied` | 422 | false | `{ provider, reason }`, `reason` optional (`provider_disabled`, `byok_required`, `byok_required_but_unresolved`, `model_not_allowed`; erratum 2.45.24, which corrected a kebab-case spelling no host emits) | Host provider policy refused the model or provider before the call, so the node failed. |
 | `eval_gate_unmet` | 422 | false | `{ evalRunId }`, optional | A deployment transition was refused because the eval run its gate requires is not terminal and passing. |
 
 Why these nine, and not v1's seventy:

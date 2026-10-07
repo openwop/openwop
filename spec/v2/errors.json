@@ -1364,7 +1364,7 @@
           "reason": {
             "type": "string",
             "minLength": 1,
-            "description": "OPTIONAL. The policy cause (`provider-disabled`, `model-not-allowed`, …)."
+            "description": "OPTIONAL. The policy cause: `provider_disabled`, `byok_required`, `byok_required_but_unresolved` or `model_not_allowed` (host-services.md §aiProviders). Any other value is a vendor cause."
           }
         },
         "additionalProperties": true

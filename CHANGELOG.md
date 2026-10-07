@@ -8,6 +8,7 @@ Entries before this file was condensed carried full development detail. That tex
 
 ## [Unreleased]
 
+- **Erratum: `provider_policy_denied` reasons are snake_case.** The registry (from RFC 0228) spelled `details.reason` in kebab-case; the prose, v1 and every measured host use `provider_disabled`, `byok_required`, `byok_required_but_unresolved`, `model_not_allowed`. They are reasons, not codes.
 - **Corpus cleanup, part 2.** Root docs, the conformance package docs, the remaining `docs/` guides and the maintainer skills are rewritten v2-first: current versions, the 2026-10-04 v1 end of support, the real 10-step gate and two-package release; stale history is gone.
 - **Corpus cleanup, part 1.** Deleted 22 dated docs (plans, audit reports, closed handoffs, superseded guides; live links now use permalinks), 10 one-off scripts, the dead `cve-scan` workflow and `.gitignore` rules for moved directories; v2-first templates; `noEmit` in `conformance/tsconfig.json`.
 - **README rewritten for v2.** The root README now leads with v2: status, install, a v2 core-doc index (30 docs), quickstart and repositories; v1 is named only as end-of-support. The coherence test for the document index checks `spec/v2/core` instead of `spec/v1` (2.45.24 cycle; renamed requirement ids).
@@ -27,7 +28,6 @@ Entries before this file was condensed carried full development detail. That tex
 - **2.45.19 cycle (suite):** new leg `0184.mint-no-tilde` — a host MUST NOT mint a tenant-bound id containing `~` (RFC 0184 §A.2). It bites only when the suite's credential sits in a non-clean tenant; openwop-app's defect (app ADR 0814) hid behind `default`.
 - **Erratum: `identity.md` §5 grammar table matches `ids.schema.json` again.** `tenantId` gets its own row with the `anon:` prefix its pattern has had since 2.0.0. `typeId` gains the `@<semver>` pin from RFC 0187. No wire change. `check-id-kinds-bound` now compares the table against the schema.
 - **RFC 0235 filed (Draft).** "Matching the `ETag`" was undefined, and the matrix hosts read it three ways. It binds `If-None-Match` to RFC 9110 §13.1.2 (`*`, lists, weak comparison), evaluated only where the answer would be `2xx` and not suppressed by `Cache-Control: no-cache`.
-- **RFC 0235 Active (window waived).** `runs.md` §Caching and encoding now defines the match; `capabilities.md` §1.1 and the OpenAPI descriptions cite it, and the discovery `ETag` is a "Validator", not "Strong". Suite 2.45.18 carries the four legs.
 
 ## [2.45.23] — 2026-10-06 — RFCs 0237–0239 Active; purpose labels and minted ids witnessed further
 
@@ -62,6 +62,7 @@ Entries before this file was condensed carried full development detail. That tex
 - **Correction to the 2.45.17 notes.** openwop-app's 304 failures were not spelling-dependent. A CDN edge answered `200` to the first conditional reaching a node that had not seen the object (hit-for-pass on a `no-store` response), then `304`. The witnesses are right, and intermittently red on such an origin.
 - **Witness-coverage report sees `recordSchemaLeg`.** Its gate detector missed the private `onFamily` gate, so 24 advertisement scenarios witnessed nothing in the report. Moving the static legs exposed it: four families read v1-only while their v2 advertisement witnesses ran. Still 73/73.
 - **2.45.18 cycle (suite):** the corpus-only legs of the `v2-*-static` scenarios move to `src/coherence/` and leave the host bundle (`conformance.md` §Two products). `.supported` wording leaves 38 v2 schema descriptions (presence is the claim). No rule changed.
+- **RFC 0235 Active (window waived).** `runs.md` §Caching and encoding now defines the match; `capabilities.md` §1.1 and the OpenAPI descriptions cite it, and the discovery `ETag` is a "Validator", not "Strong". Suite 2.45.18 carries the four legs.
 
 ## [2.45.17] — 2026-10-04 — ETag rules: discovery's 304 witnessed at major 2, every client spelling covered
 
