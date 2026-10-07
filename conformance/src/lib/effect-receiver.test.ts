@@ -66,3 +66,24 @@ describe('effect-receiver — one destination per exercise', () => {
     expect(Date.now() - started).toBeGreaterThanOrEqual(250);
   });
 });
+
+describe('effect-receiver — a pinned port that is already held', () => {
+  it('fails at once with the cause instead of hanging (MyndHyve 2.45.18, port 8787)', async () => {
+    const { createServer } = await import('node:http');
+    const holder = createServer();
+    await new Promise<void>((r) => holder.listen(0, '127.0.0.1', () => r()));
+    const addr = holder.address();
+    const port = typeof addr === 'object' && addr ? addr.port : 0;
+    const before = process.env['OPENWOP_WEBHOOK_RECEIVER_PORT'];
+    process.env['OPENWOP_WEBHOOK_RECEIVER_PORT'] = String(port);
+    const started = Date.now();
+    try {
+      await expect(startEffectReceiver()).rejects.toThrow(/could not bind .*EADDRINUSE/);
+      expect(Date.now() - started).toBeLessThan(2_000);
+    } finally {
+      if (before === undefined) delete process.env['OPENWOP_WEBHOOK_RECEIVER_PORT'];
+      else process.env['OPENWOP_WEBHOOK_RECEIVER_PORT'] = before;
+      await new Promise<void>((r) => holder.close(() => r()));
+    }
+  });
+});

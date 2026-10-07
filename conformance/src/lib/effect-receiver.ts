@@ -137,7 +137,18 @@ export async function startEffectReceiver(opts: EffectReceiverOptions = {}): Pro
   const pinned = Number(process.env['OPENWOP_WEBHOOK_RECEIVER_PORT'] ?? '');
   const bindPort = Number.isInteger(pinned) && pinned > 0 && pinned < 65536 ? pinned : 0;
   const binding = receiverBinding();
-  await new Promise<void>((resolve) => server.listen(bindPort, binding.bind, () => resolve()));
+  // A pinned port already held (another process, or another listener in this
+  // one) emits `error`, not the listen callback. Without this handler the promise
+  // never settled and a duplicate-delivery leg hung to its 180 s timeout instead
+  // of failing with the cause (MyndHyve's 2.45.18 cut, port 8787; scoped-receiver
+  // has had the same handler since 2.39.3).
+  await new Promise<void>((resolve, reject) => {
+    const onError = (err: Error): void => {
+      reject(new Error(`effect receiver could not bind ${binding.bind}:${bindPort} — ${err.message}. A pinned OPENWOP_WEBHOOK_RECEIVER_PORT must be free for this process (another process holds it?)`));
+    };
+    server.once('error', onError);
+    server.listen(bindPort, binding.bind, () => { server.off('error', onError); resolve(); });
+  });
   const addr = server.address();
   const port = typeof addr === 'object' && addr ? addr.port : 0;
   const localUrl = `http://${binding.advertise}:${port}${path}`;
