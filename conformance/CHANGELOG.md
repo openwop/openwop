@@ -1,5 +1,10 @@
 # `@openwop/openwop-conformance` Changelog
 
+## [2.45.25] — 2026-10-07 — `v2-wasm-abi-reject`; the frontend-plugin schema legs leave host bundles
+
+- **New `v2-wasm-abi-reject` (`openwop.requirement.node-pack-runtimes.wasm-abi-reject`).** Gated on `nodePackRuntimes.wasm` and the new operator-installed fixture `conformance-wasm-pack-abi-mismatch`, which invokes `vendor.openwop.misbehaving.abi-bomb` (the `misbehaving-abi` pack, ABI version 999). Loading is not a protocol operation, so the leg reads what a rejection at load prevents: the pack in an advertised `loadedPacks`, and the node completing. The run must be refused at creation (4xx) or end without that node completing; a 401/403/429/5xx is `blocked`. Proof: a 9-case self-test double (`lib/wasm-abi-reject-witness.test.ts`). No RFC was needed: both observations already exist.
+- **No scenario change (RFC 0238 G3).** The 13 always-on schema legs of `frontend-plugin-packs` read only the corpus, so they move to `src/coherence/frontend-plugin-schemas.test.ts` and leave host bundles; their ids become `openwop.it.frontend-plugin-schemas.*`, which changes the packed `requirements.json`. The host-reading legs stay.
+
 ## [2.45.24] — 2026-10-07 — the effect receiver fails fast on a held pinned port; the README index check reads `spec/v2/core`
 
 - **The effect receiver fails fast on a held pinned port.** With `OPENWOP_WEBHOOK_RECEIVER_PORT` pinned to a port another process holds, `startEffectReceiver` attached no `error` handler, so `EADDRINUSE` never settled its `listen` promise and the `0158`/`0194` duplicate-delivery rows hung to their 180 s timeout instead of failing with the cause. It now rejects at once with the bind error, as `scoped-receiver` has since 2.39.3. Self-test: a held port rejects in under 2 s; without the handler the test times out. Reported by MyndHyve (2.45.18 cut, port 8787).

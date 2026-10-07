@@ -8,6 +8,7 @@ Entries before this file was condensed carried full development detail. That tex
 
 ## [Unreleased]
 
+- **2.45.25 cycle (suite):** new `v2-wasm-abi-reject` reads a WASM pack's rejection at load from what it prevents: the ABI-999 pack listed in `loadedPacks`, or its node completing (`conformance-wasm-pack-abi-mismatch`). The `frontend-plugin-packs` schema legs move to `src/coherence/` (RFC 0238 G3).
 - **Erratum: `provider_policy_denied` reasons are snake_case.** The registry (from RFC 0228) spelled `details.reason` in kebab-case; the prose, v1 and every measured host use `provider_disabled`, `byok_required`, `byok_required_but_unresolved`, `model_not_allowed`. They are reasons, not codes.
 - **Corpus cleanup, part 2.** Root docs, the conformance package docs, the remaining `docs/` guides and the maintainer skills are rewritten v2-first: current versions, the 2026-10-04 v1 end of support, the real 10-step gate and two-package release; stale history is gone.
 - **Corpus cleanup, part 1.** Deleted 22 dated docs (plans, audit reports, closed handoffs, superseded guides; live links now use permalinks), 10 one-off scripts, the dead `cve-scan` workflow and `.gitignore` rules for moved directories; v2-first templates; `noEmit` in `conformance/tsconfig.json`.
@@ -27,7 +28,6 @@ Entries before this file was condensed carried full development detail. That tex
 - **RFC 0235 Accepted (provisional).** Tier-1 evidence: the v2 reference host's certified public cut on published suite 2.45.18 (build `e5f27708`, 497/0/0) records all four `If-None-Match` requirement ids `executed-pass`. Gaps G1 and G2 closed; risk R1 mitigated.
 - **2.45.19 cycle (suite):** new leg `0184.mint-no-tilde` — a host MUST NOT mint a tenant-bound id containing `~` (RFC 0184 §A.2). It bites only when the suite's credential sits in a non-clean tenant; openwop-app's defect (app ADR 0814) hid behind `default`.
 - **Erratum: `identity.md` §5 grammar table matches `ids.schema.json` again.** `tenantId` gets its own row with the `anon:` prefix its pattern has had since 2.0.0. `typeId` gains the `@<semver>` pin from RFC 0187. No wire change. `check-id-kinds-bound` now compares the table against the schema.
-- **RFC 0235 filed (Draft).** "Matching the `ETag`" was undefined, and the matrix hosts read it three ways. It binds `If-None-Match` to RFC 9110 §13.1.2 (`*`, lists, weak comparison), evaluated only where the answer would be `2xx` and not suppressed by `Cache-Control: no-cache`.
 
 ## [2.45.24] — 2026-10-07 — `provider_policy_denied` reasons erratum; v2-first corpus cleanup
 

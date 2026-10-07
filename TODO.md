@@ -255,8 +255,8 @@ Defects outside the spec:
       openwop-app serves `getUiPluginFrame` and `dispatchUiPluginRequest` (both allowlist halves
       server-side), mounts plugins from the frame URL, installs `ui-plugin-pack-narrow` and
       `ui-plugin-narrow-artifact`, advertises `uiPlugins.served`, and cuts certified (G1).
-- [ ] **Move the always-on schema legs of `frontend-plugin-packs.test.ts` to `src/coherence/`**
-      (RFC 0238 G3; `conformance.md` §Two products).
+- [x] **Move the always-on schema legs of `frontend-plugin-packs.test.ts` to `src/coherence/`**
+      (RFC 0238 G3; `conformance.md` §Two products). Done in 2.45.25: `src/coherence/frontend-plugin-schemas.test.ts`.
 - [ ] **RFC 0239** (`Active` 2026-10-06, window waived): the council roster seat. Owed for
       `Accepted`: a host advertising `multiPartyConversation` serves the two council fixtures and
       records the three `openwop.requirement.0239.*` ids on a certified bundle (G1).
@@ -269,11 +269,12 @@ Defects outside the spec:
       to SHOULD: RFC 0240); and
       dropping the required `declared` / `advertised` booleans, which bring back `supported:false`
       under another name.
-- [ ] **Fixture-gated wave-3 legs not yet written.** (`multiPartyConversation`'s roster legs ship
+- [x] **Fixture-gated wave-3 legs not yet written.** (`multiPartyConversation`'s roster legs ship
       with RFC 0239.) The WASM fixture packs now exist (`conformance/fixtures/wasm-packs/`), and
-      `v2-wasm-memory-cap` witnesses the memory ceiling. **Still owed: the ABI-rejection leg.** A
-      host refuses a pack at load, which is not a protocol operation, so the refusal has no
-      observation path (the RFC 0233 shape: a read of loaded packs and refused loads). Needs an RFC.
+      `v2-wasm-memory-cap` witnesses the memory ceiling. The ABI-rejection leg needed no RFC:
+      `v2-wasm-abi-reject` reads the refusal from what it prevents — the pack in the existing
+      `nodePackRuntimes.wasm.loadedPacks`, and the node of `conformance-wasm-pack-abi-mismatch`
+      completing — so both observations are normative (discovery, run creation and the event poll).
 - [x] **Schema-only legs in `*-static` scenarios belong in `src/coherence/`** (`conformance.md` §Two
       products: a check that reads only the corpus MUST NOT appear in a host bundle). Sweep the
       wave-1/2 `v2-*-static` scenarios: keep the legs that read host output, move the rest.

@@ -12,7 +12,7 @@ Every v2 core family now has a v2 normative home (RFC 0189). Many of its rules a
 - **At v1 end-of-support:** the 0 v1-only families, and the 0 obligation units attributed to them, lose their only witness.
 - **Obligation units (899 in `spec/v2/core/`):** 611 (68%) sit in a section a major-2 scenario cites; 288 sit in 99 sections no major-2 scenario cites.
 - **Declaration links:** 0 core families declare `floorScenarios`; 2 declare `requirementIds`. The family-to-test link exists only in scenario code and citations, although `overview.md` §What a MUST means says every core MUST has an id in `requirements.json`.
-- **Scenarios:** 649 registered, 209 run at major 2. 33 major-2 citations name a v2 core section this script cannot match to a heading (see Citation gaps).
+- **Scenarios:** 650 registered, 210 run at major 2. 33 major-2 citations name a v2 core section this script cannot match to a heading (see Citation gaps).
 
 ## How to read it
 
@@ -63,7 +63,7 @@ Every v2 core family now has a v2 normative home (RFC 0189). Many of its rules a
 | `hostEvents` | witnessable-gated | **v2-witnessed** | 3 (3) | `v2-host-event-delivery`, `v2-stream-mode-refusal` | – |
 | `modelCapabilities` | witnessable-gated | **v2-witnessed** | 3 (0) | `v2-model-capabilities-advertisement` | `envelope-variant-discriminator-static`, `model-capability-insufficient`, `model-capability-substituted`, `node-module-required-capabilities-shape` |
 | `multiPartyConversation` | witnessable-gated | **v2-witnessed** | 3 (3) | `v2-multi-party-conversation-advertisement`, `v2-multi-party-council` | `multi-party-conversation-behavioral`, `multi-party-conversation-shape` |
-| `nodePackRuntimes` | claims-check | **v2-witnessed** | 3 (2) | `v2-node-pack-runtimes-advertisement`, `v2-wasm-memory-cap` | `wasm-pack-abi-version-rejection`, `wasm-pack-invoke-completed`, `wasm-pack-invoke-suspended`, `wasm-pack-load` +2 |
+| `nodePackRuntimes` | claims-check | **v2-witnessed** | 3 (2) | `v2-node-pack-runtimes-advertisement`, `v2-wasm-abi-reject`, `v2-wasm-memory-cap` | `wasm-pack-abi-version-rejection`, `wasm-pack-invoke-completed`, `wasm-pack-invoke-suspended`, `wasm-pack-load` +2 |
 | `nosql` | claims-check | **v2-witnessed** | 3 (0) | `v2-storage-cross-tenant-isolation` | – |
 | `sql` | witnessable-gated | **v2-witnessed** | 3 (0) | `v2-storage-cross-tenant-isolation` | `sql-injection-rejection`, `sql-transaction-atomicity` |
 | `agents` | witnessable-gated | **v2-witnessed** | 2 (0) | `v2-a2a-agent-cards`, `v2-agent-org-chart-served-shape`, `v2-dispatch-input-mapping` | `agent-capability-degraded-projection`, `agent-channel-dispatch`, `agent-deployment-lifecycle`, `agent-eval-run` +17 |
@@ -422,8 +422,8 @@ node scripts/report-v2-witness-coverage.mjs --write  # regenerate this file
     "familiesWithRequirementIds": 2
   },
   "scenarios": {
-    "registered": 649,
-    "major2": 209
+    "registered": 650,
+    "major2": 210
   },
   "unresolvedV2Citations": 33,
   "major2ScenariosCitingNoCoreDoc": 65,
