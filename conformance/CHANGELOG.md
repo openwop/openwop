@@ -1,6 +1,6 @@
 # `@openwop/openwop-conformance` Changelog
 
-## [2.45.24] — 2026-10-06 — the README document-index check reads `spec/v2/core`
+## [2.45.24] — 2026-10-07 — the effect receiver fails fast on a held pinned port; the README index check reads `spec/v2/core`
 
 - **The effect receiver fails fast on a held pinned port.** With `OPENWOP_WEBHOOK_RECEIVER_PORT` pinned to a port another process holds, `startEffectReceiver` attached no `error` handler, so `EADDRINUSE` never settled its `listen` promise and the `0158`/`0194` duplicate-delivery rows hung to their 180 s timeout instead of failing with the cause. It now rejects at once with the bind error, as `scoped-receiver` has since 2.39.3. Self-test: a held port rejects in under 2 s; without the handler the test times out. Reported by MyndHyve (2.45.18 cut, port 8787).
 - **No scenario change.** The coherence test `spec-corpus-validity` checks that the root README's document index lists every `spec/v2/core` doc exactly once and that its **Total** matches; it checked `spec/v1`. The two requirement ids are renamed to match, which changes the packed `requirements.json`.
