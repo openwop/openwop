@@ -257,9 +257,9 @@ Defects outside the spec:
       `ui-plugin-narrow-artifact`, advertises `uiPlugins.served`, and cuts certified (G1).
 - [x] **Move the always-on schema legs of `frontend-plugin-packs.test.ts` to `src/coherence/`**
       (RFC 0238 G3; `conformance.md` §Two products). Done in 2.45.25: `src/coherence/frontend-plugin-schemas.test.ts`.
-- [ ] **RFC 0239** (`Active` 2026-10-06, window waived): the council roster seat. Owed for
-      `Accepted`: a host advertising `multiPartyConversation` serves the two council fixtures and
-      records the three `openwop.requirement.0239.*` ids on a certified bundle (G1).
+- [x] **RFC 0239** `Accepted` (provisional) 2026-10-07 on the v2 reference host's certified 2.45.23
+      cut (512/0/0, build `1492562f`). Owed: the RFC 0156 §B review; G2 (a host whose
+      `maxParticipants` is 64 or more cannot be shown an oversized roster) stays external.
 - [ ] **RFCs owed before these legs can bind:** (the plugin-origin seat is RFC 0238; the roster
       seat is RFC 0239); a
       `nondeterminismPolicy.sources[]` seat (RFC 0237); a purpose-label carrier the suite can receive

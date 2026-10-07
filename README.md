@@ -13,7 +13,7 @@
 
 **v1 has reached end of support** ([RFC 0234](./RFCS/0234-maintainer-set-v1-end-of-support.md)). The v1 tree is frozen at [`spec/v1/`](./spec/v1/README.md) for clients that still speak it; new work targets v2. Migration: [`docs/migration/v1-to-v2.md`](./docs/migration/v1-to-v2.md).
 
-> **RFC status (236 RFCs excluding template):** RFCs that are `Accepted` (228), that are `Active` (6 — RFC 0121, RFC 0222, RFC 0228, RFC 0237, RFC 0238, RFC 0239), and that are `Draft` (1 — RFC 0038 Parked). Per-RFC detail: [`docs/PROTOCOL-STATUS.md`](./docs/PROTOCOL-STATUS.md).
+> **RFC status (236 RFCs excluding template):** RFCs that are `Accepted` (229), that are `Active` (5 — RFC 0121, RFC 0222, RFC 0228, RFC 0237, RFC 0238), and that are `Draft` (1 — RFC 0038 Parked). Per-RFC detail: [`docs/PROTOCOL-STATUS.md`](./docs/PROTOCOL-STATUS.md).
 
 What the protocol does not yet prove is listed in [`docs/KNOWN-LIMITS.md`](./docs/KNOWN-LIMITS.md).
 

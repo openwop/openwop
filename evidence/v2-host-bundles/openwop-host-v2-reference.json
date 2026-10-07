@@ -1,12 +1,12 @@
 {
   "bundleVersion": "3",
-  "generatedAt": "2026-10-05T23:48:50.509Z",
+  "generatedAt": "2026-10-07T13:40:03.562Z",
   "suite": {
     "name": "@openwop/openwop-conformance",
-    "version": "2.45.21",
+    "version": "2.45.23",
     "targetMajor": 2,
-    "specArtifactsVersion": "2.45.21",
-    "stampSha256": "ee91d9e41fbcdc73f379cf977fee5ac3e44590a80349c693da2cc5f3a566c68b"
+    "specArtifactsVersion": "2.45.23",
+    "stampSha256": "e5dd83c74b66bafc57b6581c3f2640da984c25a7700306294d2728dc721e1dfe"
   },
   "host": {
     "name": "openwop-host-v2-reference",
@@ -14,13 +14,13 @@
     "vendor": "openwop (reference example)",
     "build": {
       "kind": "commit",
-      "id": "9543718c772709f7530031e4b94f4472fb3aca84"
+      "id": "1492562fc3d5addad667867fd7acc34f77b25e56"
     },
     "signingKeyId": "v2-reference-4"
   },
   "discovery": {
     "url": "http://127.0.0.1:3838/.well-known/openwop",
-    "sha256": "16c36986159e666ac20f880ed86e4350189a4a64c4adcef03bf13cd608172872",
+    "sha256": "0a1af9565d123422e75dcac4e55e02117309673b35d4e1d52775c759a0bc81bf",
     "protocolVersions": [
       "1.11",
       "2.0"
@@ -71,6 +71,8 @@
         "conformance-interrupt-quorum",
         "conformance-mcp-client",
         "conformance-multi-node",
+        "conformance-multi-party-council",
+        "conformance-multi-party-council-oversize",
         "conformance-noop",
         "conformance-replay-ordinal-loop",
         "conformance-safefetch-probe"
@@ -408,6 +410,13 @@
         "until": "2.1",
         "witness": "claims-check"
       },
+      "multiPartyConversation": {
+        "status": "experimental",
+        "since": "2.0",
+        "until": "2.1",
+        "witness": "witnessable-gated",
+        "maxParticipants": 8
+      },
       "oauth": {
         "status": "experimental",
         "since": "2.0",
@@ -461,7 +470,7 @@
         "until": "2.1",
         "witness": "witnessable-gated",
         "checkpointSignatureAlgorithm": "ed25519",
-        "checkpointPublicKey": "MCowBQYDK2VwAyEA8VKJGRbOdcHx7vCNZ1JjAfEFBByqil5S15jTU0g4jNY=",
+        "checkpointPublicKey": "MCowBQYDK2VwAyEApcOJTYw1hIrS0pYAueSsRgaW0x5iTrwW4+g8XOIWyEA=",
         "checkpointIntervalEntries": 1000,
         "checkpointIntervalSeconds": 300
       },
@@ -525,10 +534,10 @@
   ],
   "results": {
     "totals": {
-      "executedPass": 505,
+      "executedPass": 512,
       "executedFail": 0,
       "skipped": 10,
-      "inapplicable": 262,
+      "inapplicable": 272,
       "blocked": 0
     },
     "requirements": [
@@ -580,7 +589,7 @@
         "id": "openwop.scenario.fixtures-valid",
         "scenario": "fixtures-valid.test.ts",
         "result": "executed-pass",
-        "assertions": 423
+        "assertions": 432
       },
       {
         "id": "openwop.scenario.inbound-credential-no-passthrough",
@@ -650,7 +659,7 @@
         "id": "openwop.scenario.v2-a2a-push-delivery",
         "scenario": "v2-a2a-push-delivery.test.ts",
         "result": "executed-pass",
-        "assertions": 25
+        "assertions": 26
       },
       {
         "id": "openwop.scenario.v2-a2ui-v09-surface",
@@ -763,7 +772,7 @@
         "id": "openwop.scenario.v2-bound-id-path-projection",
         "scenario": "v2-bound-id-path-projection.test.ts",
         "result": "executed-pass",
-        "assertions": 8
+        "assertions": 9
       },
       {
         "id": "openwop.scenario.v2-budget-enforcement",
@@ -800,14 +809,14 @@
         "id": "openwop.scenario.v2-capability-maturity-bounded",
         "scenario": "v2-capability-maturity-bounded.test.ts",
         "result": "executed-pass",
-        "assertions": 30,
-        "detail": "partial-witness: inapplicable: unwitnessable until the first persisted-class retirement row is due (RFC 0197 §A.3 Falsifiability): corpus 2.45.21: 0 persisted-class v2-minor retirement row(s), 0 v2→v2 migration row(s) — no retired member exists for a post-2.N event to carry. Before one does, a scenario would be vacuous, and a row that cannot fail is not a witness. This leg asserts the moment such a row falls due."
+        "assertions": 31,
+        "detail": "partial-witness: inapplicable: unwitnessable until the first persisted-class retirement row is due (RFC 0197 §A.3 Falsifiability): corpus 2.45.23: 0 persisted-class v2-minor retirement row(s), 0 v2→v2 migration row(s) — no retired member exists for a post-2.N event to carry. Before one does, a scenario would be vacuous, and a row that cannot fail is not a witness. This leg asserts the moment such a row falls due."
       },
       {
         "id": "openwop.scenario.v2-capability-record-shape",
         "scenario": "v2-capability-record-shape.test.ts",
         "result": "executed-pass",
-        "assertions": 190
+        "assertions": 197
       },
       {
         "id": "openwop.scenario.v2-chain-pin-exact",
@@ -1259,9 +1268,14 @@
       {
         "id": "openwop.scenario.v2-multi-party-conversation-advertisement",
         "scenario": "v2-multi-party-conversation-advertisement.test.ts",
-        "result": "inapplicable",
-        "assertions": 0,
-        "detail": "every test returned early through behaviorGate with zero assertions: profile not advertised in the captured discovery set"
+        "result": "executed-pass",
+        "assertions": 2
+      },
+      {
+        "id": "openwop.scenario.v2-multi-party-council",
+        "scenario": "v2-multi-party-council.test.ts",
+        "result": "executed-pass",
+        "assertions": 3
       },
       {
         "id": "openwop.scenario.v2-negotiation-authenticated",
@@ -1291,6 +1305,13 @@
       {
         "id": "openwop.scenario.v2-nondeterminism-policy-advertisement",
         "scenario": "v2-nondeterminism-policy-advertisement.test.ts",
+        "result": "inapplicable",
+        "assertions": 0,
+        "detail": "every test returned early through behaviorGate with zero assertions: profile not advertised in the captured discovery set"
+      },
+      {
+        "id": "openwop.scenario.v2-nondeterminism-sources",
+        "scenario": "v2-nondeterminism-sources.test.ts",
         "result": "inapplicable",
         "assertions": 0,
         "detail": "every test returned early through behaviorGate with zero assertions: profile not advertised in the captured discovery set"
@@ -1482,6 +1503,13 @@
       {
         "id": "openwop.scenario.v2-purpose-propagation-advertisement",
         "scenario": "v2-purpose-propagation-advertisement.test.ts",
+        "result": "inapplicable",
+        "assertions": 0,
+        "detail": "every test returned early through behaviorGate with zero assertions: profile not advertised in the captured discovery set"
+      },
+      {
+        "id": "openwop.scenario.v2-purpose-propagation-onward",
+        "scenario": "v2-purpose-propagation-onward.test.ts",
         "result": "inapplicable",
         "assertions": 0,
         "detail": "every test returned early through behaviorGate with zero assertions: profile not advertised in the captured discovery set"
@@ -1739,6 +1767,13 @@
         "detail": "every test returned early through behaviorGate with zero assertions: profile not advertised in the captured discovery set"
       },
       {
+        "id": "openwop.scenario.v2-ui-plugin-boundary",
+        "scenario": "v2-ui-plugin-boundary.test.ts",
+        "result": "inapplicable",
+        "assertions": 0,
+        "detail": "every test returned early through behaviorGate with zero assertions: profile not advertised in the captured discovery set"
+      },
+      {
         "id": "openwop.scenario.v2-ui-plugins-advertisement",
         "scenario": "v2-ui-plugins-advertisement.test.ts",
         "result": "inapplicable",
@@ -1776,6 +1811,13 @@
         "assertions": 4
       },
       {
+        "id": "openwop.scenario.v2-wasm-memory-cap",
+        "scenario": "v2-wasm-memory-cap.test.ts",
+        "result": "inapplicable",
+        "assertions": 0,
+        "detail": "every test returned early through behaviorGate with zero assertions: profile not advertised in the captured discovery set"
+      },
+      {
         "id": "openwop.scenario.v2-webhook-delivery-isolation",
         "scenario": "v2-webhook-delivery-isolation.test.ts",
         "result": "executed-pass",
@@ -1786,7 +1828,7 @@
         "scenario": "v2-webhook-delivery-shape.test.ts",
         "result": "executed-pass",
         "assertions": 13,
-        "detail": "partial-witness: inapplicable: no run.started delivery for the seeded era-2 run inside 15s — this host does not fan out seeded history, so the era-2 fan-out branch is unobservable here (recorded under openwop.family.conformance). no run.started delivery bearing this exercise's nonce fc04f5590cb14c563c arrived, and nothing else reached this listener either — the registered destination is the public front https://seeds-minds-optics-mobiles.trycloudflare.com/hook/fx/fc04f5590cb14c563c (OPENWOP_WEBHOOK_RECEIVER_URL) and this listener answers on http://127.0.0.1:3841/fx/fc04f5590cb14c563c, port 3841"
+        "detail": "partial-witness: inapplicable: no run.started delivery for the seeded era-2 run inside 15s — this host does not fan out seeded history, so the era-2 fan-out branch is unobservable here (recorded under openwop.family.conformance). no run.started delivery bearing this exercise's nonce 60007409656c0db3d7 arrived, and nothing else reached this listener either — the registered destination is the public front https://mount-allocation-gaming-investigations.trycloudflare.com/hook/fx/60007409656c0db3d7 (OPENWOP_WEBHOOK_RECEIVER_URL) and this listener answers on http://127.0.0.1:3841/fx/60007409656c0db3d7, port 3841"
       },
       {
         "id": "openwop.floor.v2-webhook-durable-delivery",
@@ -1890,13 +1932,13 @@
         "id": "openwop.it.fixtures-valid.every-fixture-has-a-manual-trigger-so-the-conformance-driver-can-start-it",
         "scenario": "fixtures-valid.test.ts",
         "result": "executed-pass",
-        "assertions": 109
+        "assertions": 112
       },
       {
         "id": "openwop.it.fixtures-valid.every-fixture-id-matches-its-filename",
         "scenario": "fixtures-valid.test.ts",
         "result": "executed-pass",
-        "assertions": 109
+        "assertions": 112
       },
       {
         "id": "openwop.it.fixtures-valid.every-fixture-templateid-matches-its-filename",
@@ -1980,7 +2022,7 @@
         "id": "openwop.it.fixtures-valid.validates-against-workflow-definition-schema-json",
         "scenario": "fixtures-valid.test.ts",
         "result": "executed-pass",
-        "assertions": 109
+        "assertions": 112
       },
       {
         "id": "openwop.it.jcs-vectors.a-non-i-json-native-value-is-refused-at-the-value-boundary",
@@ -2400,7 +2442,7 @@
           "recovery": {
             "class": "single-instance-restart",
             "boundMs": 6000,
-            "observedMs": 1698
+            "observedMs": 1699
           }
         }
       },
@@ -2413,7 +2455,7 @@
           "recovery": {
             "class": "single-instance-restart",
             "boundMs": 6000,
-            "observedMs": 1781
+            "observedMs": 2045
           }
         }
       },
@@ -2494,19 +2536,19 @@
         "id": "openwop.requirement.0169.capability-record-shape.required-fields",
         "scenario": "v2-capability-record-shape.test.ts",
         "result": "executed-pass",
-        "assertions": 112
+        "assertions": 116
       },
       {
         "id": "openwop.requirement.0169.capability-record-shape.until-iff-not-stable",
         "scenario": "v2-capability-record-shape.test.ts",
         "result": "executed-pass",
-        "assertions": 53
+        "assertions": 55
       },
       {
         "id": "openwop.requirement.0169.capability-record-shape.until-not-past",
         "scenario": "v2-capability-record-shape.test.ts",
         "result": "executed-pass",
-        "assertions": 25
+        "assertions": 26
       },
       {
         "id": "openwop.requirement.0169.profiles-derived-only.derivable",
@@ -2716,7 +2758,7 @@
       },
       {
         "id": "openwop.requirement.0171.error-registry.no-retry-details",
-        "scenario": "v2-production-backpressure.test.ts",
+        "scenario": "v2-error-registry.test.ts",
         "result": "executed-pass",
         "assertions": 1
       },
@@ -2816,7 +2858,7 @@
         "scenario": "v2-webhook-delivery-shape.test.ts",
         "result": "executed-pass",
         "assertions": 13,
-        "detail": "partial-witness: inapplicable: no run.started delivery for the seeded era-2 run inside 15s — this host does not fan out seeded history, so the era-2 fan-out branch is unobservable here (recorded under openwop.family.conformance). no run.started delivery bearing this exercise's nonce fc04f5590cb14c563c arrived, and nothing else reached this listener either — the registered destination is the public front https://seeds-minds-optics-mobiles.trycloudflare.com/hook/fx/fc04f5590cb14c563c (OPENWOP_WEBHOOK_RECEIVER_URL) and this listener answers on http://127.0.0.1:3841/fx/fc04f5590cb14c563c, port 3841"
+        "detail": "partial-witness: inapplicable: no run.started delivery for the seeded era-2 run inside 15s — this host does not fan out seeded history, so the era-2 fan-out branch is unobservable here (recorded under openwop.family.conformance). no run.started delivery bearing this exercise's nonce 60007409656c0db3d7 arrived, and nothing else reached this listener either — the registered destination is the public front https://mount-allocation-gaming-investigations.trycloudflare.com/hook/fx/60007409656c0db3d7 (OPENWOP_WEBHOOK_RECEIVER_URL) and this listener answers on http://127.0.0.1:3841/fx/60007409656c0db3d7, port 3841"
       },
       {
         "id": "openwop.requirement.0171.webhook-egress-refused",
@@ -3034,21 +3076,21 @@
         "scenario": "v2-webhook-durable-delivery.test.ts",
         "result": "executed-pass",
         "assertions": 4,
-        "detail": "observed: 4/4 subscribed event(s) delivered, 0 duplicate arrival(s); slowest first arrival 292ms after the run was created; cap (default 90000ms; advertised maxElapsedMs none): waited ≤90000ms"
+        "detail": "observed: 4/4 subscribed event(s) delivered, 0 duplicate arrival(s); slowest first arrival 91ms after the run was created; cap (default 90000ms; advertised maxElapsedMs none): waited ≤90000ms"
       },
       {
         "id": "openwop.requirement.0173.webhook-durable-delivery",
         "scenario": "v2-webhook-durable-delivery.test.ts",
         "result": "executed-pass",
         "assertions": 9,
-        "detail": "observed: cap (default 90000ms; advertised maxElapsedMs none): waited ≤90000ms; 3 attempt(s), last attempt after 1694ms"
+        "detail": "observed: cap (default 90000ms; advertised maxElapsedMs none): waited ≤90000ms; 3 attempt(s), last attempt after 1695ms"
       },
       {
         "id": "openwop.requirement.0173.webhook-durable-delivery.dead-letter",
         "scenario": "v2-webhook-durable-delivery.test.ts",
         "result": "executed-pass",
         "assertions": 6,
-        "detail": "observed: cap (default 90000ms; advertised maxElapsedMs none): waited ≤90000ms; 5 attempt(s), last attempt after 7995ms, sink after 9240ms"
+        "detail": "observed: cap (default 90000ms; advertised maxElapsedMs none): waited ≤90000ms; 5 attempt(s), last attempt after 7945ms, sink after 8955ms"
       },
       {
         "id": "openwop.requirement.0175.legacy-profiles-absent",
@@ -3340,7 +3382,7 @@
         "id": "openwop.requirement.0184.mint-no-tilde",
         "scenario": "v2-bound-id-path-projection.test.ts",
         "result": "executed-pass",
-        "assertions": 1
+        "assertions": 2
       },
       {
         "id": "openwop.requirement.0185.payload-vendor-hatch",
@@ -3378,7 +3420,7 @@
         "scenario": "v2-webhook-durable-delivery.test.ts",
         "result": "executed-pass",
         "assertions": 3,
-        "detail": "observed: cap (default 90000ms; advertised maxElapsedMs none): waited ≤90000ms; 5 attempt(s), last attempt after 7996ms, sink after 9136ms"
+        "detail": "observed: cap (default 90000ms; advertised maxElapsedMs none): waited ≤90000ms; 5 attempt(s), last attempt after 7968ms, sink after 9193ms"
       },
       {
         "id": "openwop.requirement.0188.dead-letter-read",
@@ -3409,14 +3451,14 @@
         "id": "openwop.requirement.0197.maturity-not-overstated",
         "scenario": "v2-capability-maturity-bounded.test.ts",
         "result": "executed-pass",
-        "assertions": 30
+        "assertions": 31
       },
       {
         "id": "openwop.requirement.0197.retired-not-emitted",
         "scenario": "v2-capability-maturity-bounded.test.ts",
         "result": "inapplicable",
         "assertions": 0,
-        "detail": "unwitnessable until the first persisted-class retirement row is due (RFC 0197 §A.3 Falsifiability): corpus 2.45.21: 0 persisted-class v2-minor retirement row(s), 0 v2→v2 migration row(s) — no retired member exists for a post-2.N event to carry. Before one does, a scenario would be vacuous, and a row that cannot fail is not a witness. This leg asserts the moment such a row falls due."
+        "detail": "unwitnessable until the first persisted-class retirement row is due (RFC 0197 §A.3 Falsifiability): corpus 2.45.23: 0 persisted-class v2-minor retirement row(s), 0 v2→v2 migration row(s) — no retired member exists for a post-2.N event to carry. Before one does, a scenario would be vacuous, and a row that cannot fail is not a witness. This leg asserts the moment such a row falls due."
       },
       {
         "id": "openwop.requirement.0198.advertised-via-discover",
@@ -4138,7 +4180,7 @@
         "id": "openwop.requirement.0214.a2a-push-no-openwop-signature",
         "scenario": "v2-a2a-push-delivery.test.ts",
         "result": "executed-pass",
-        "assertions": 2
+        "assertions": 3
       },
       {
         "id": "openwop.requirement.0214.a2a-push-no-redirect",
@@ -4420,6 +4462,66 @@
         "scenario": "v2-host-event-delivery.test.ts",
         "result": "executed-pass",
         "assertions": 5
+      },
+      {
+        "id": "openwop.requirement.0237.declared-source-replays",
+        "scenario": "v2-nondeterminism-sources.test.ts",
+        "result": "inapplicable",
+        "assertions": 0,
+        "detail": "the host lists no nondeterminismPolicy.sources"
+      },
+      {
+        "id": "openwop.requirement.0237.no-false-advertisement",
+        "scenario": "v2-nondeterminism-policy-advertisement.test.ts",
+        "result": "inapplicable",
+        "assertions": 0,
+        "detail": "the host does not advertise nondeterminismPolicy"
+      },
+      {
+        "id": "openwop.requirement.0238.ui-plugin.frame-deny-egress",
+        "scenario": "v2-ui-plugin-boundary.test.ts",
+        "result": "inapplicable",
+        "assertions": 0,
+        "detail": "the host does not advertise uiPlugins.served"
+      },
+      {
+        "id": "openwop.requirement.0238.ui-plugin.frame-isolated",
+        "scenario": "v2-ui-plugin-boundary.test.ts",
+        "result": "inapplicable",
+        "assertions": 0,
+        "detail": "the host does not advertise uiPlugins.served"
+      },
+      {
+        "id": "openwop.requirement.0238.ui-plugin.no-byok",
+        "scenario": "v2-ui-plugin-boundary.test.ts",
+        "result": "inapplicable",
+        "assertions": 0,
+        "detail": "the host does not advertise uiPlugins.served"
+      },
+      {
+        "id": "openwop.requirement.0238.ui-plugin.rpc-allowlist",
+        "scenario": "v2-ui-plugin-boundary.test.ts",
+        "result": "inapplicable",
+        "assertions": 0,
+        "detail": "the host does not advertise uiPlugins.served"
+      },
+      {
+        "id": "openwop.requirement.0239.council.roster-carried",
+        "scenario": "v2-multi-party-council.test.ts",
+        "result": "executed-pass",
+        "assertions": 1
+      },
+      {
+        "id": "openwop.requirement.0239.council.roster-exceeded",
+        "scenario": "v2-multi-party-council.test.ts",
+        "result": "executed-pass",
+        "assertions": 1
+      },
+      {
+        "id": "openwop.requirement.0239.council.speaker-refused",
+        "scenario": "v2-multi-party-council.test.ts",
+        "result": "executed-pass",
+        "assertions": 1
       },
       {
         "id": "openwop.requirement.agent-runtime.advert-record-schema",
@@ -4776,7 +4878,7 @@
         "scenario": "v2-cors-preflight.test.ts",
         "result": "executed-pass",
         "assertions": 1,
-        "detail": "observed: origin https://conformance.invalid: 36/58 operation(s) granted, 0 not admitting their set"
+        "detail": "observed: origin https://conformance.invalid: 36/60 operation(s) granted, 0 not admitting their set"
       },
       {
         "id": "openwop.requirement.httpClient.ssrf-address-spellings-refused",
@@ -4892,16 +4994,14 @@
       {
         "id": "openwop.requirement.multi-party-conversation.advert-record-schema",
         "scenario": "v2-multi-party-conversation-advertisement.test.ts",
-        "result": "inapplicable",
-        "assertions": 0,
-        "detail": "the host does not advertise multiPartyConversation"
+        "result": "executed-pass",
+        "assertions": 1
       },
       {
         "id": "openwop.requirement.multi-party-conversation.max-participants",
         "scenario": "v2-multi-party-conversation-advertisement.test.ts",
-        "result": "inapplicable",
-        "assertions": 0,
-        "detail": "the host does not advertise multiPartyConversation"
+        "result": "executed-pass",
+        "assertions": 1
       },
       {
         "id": "openwop.requirement.node-pack-runtimes.advert-record-schema",
@@ -4916,6 +5016,13 @@
         "result": "inapplicable",
         "assertions": 0,
         "detail": "the host does not advertise nodePackRuntimes"
+      },
+      {
+        "id": "openwop.requirement.node-pack-runtimes.wasm-memory-cap",
+        "scenario": "v2-wasm-memory-cap.test.ts",
+        "result": "inapplicable",
+        "assertions": 0,
+        "detail": "the host does not advertise nodePackRuntimes.wasm"
       },
       {
         "id": "openwop.requirement.nondeterminism-policy.advert-record-schema",
@@ -5206,6 +5313,20 @@
       {
         "id": "openwop.requirement.purpose-propagation.advert-record-schema",
         "scenario": "v2-purpose-propagation-advertisement.test.ts",
+        "result": "inapplicable",
+        "assertions": 0,
+        "detail": "the host does not advertise purposePropagation"
+      },
+      {
+        "id": "openwop.requirement.purpose-propagation.empty-no-onward",
+        "scenario": "v2-purpose-propagation-onward.test.ts",
+        "result": "inapplicable",
+        "assertions": 0,
+        "detail": "the host does not advertise purposePropagation"
+      },
+      {
+        "id": "openwop.requirement.purpose-propagation.onward-reemit-no-widen",
+        "scenario": "v2-purpose-propagation-onward.test.ts",
         "result": "inapplicable",
         "assertions": 0,
         "detail": "the host does not advertise purposePropagation"
@@ -5532,7 +5653,7 @@
       }
     ]
   },
-  "assertionCount": 5214,
+  "assertionCount": 5262,
   "detail": {
     "nonPass": [
       {
@@ -5721,17 +5842,17 @@
         "reason": "every test returned early through behaviorGate with zero assertions: profile not advertised in the captured discovery set"
       },
       {
-        "id": "openwop.scenario.v2-multi-party-conversation-advertisement",
-        "result": "inapplicable",
-        "reason": "every test returned early through behaviorGate with zero assertions: profile not advertised in the captured discovery set"
-      },
-      {
         "id": "openwop.scenario.v2-node-pack-runtimes-advertisement",
         "result": "inapplicable",
         "reason": "every test returned early through behaviorGate with zero assertions: profile not advertised in the captured discovery set"
       },
       {
         "id": "openwop.scenario.v2-nondeterminism-policy-advertisement",
+        "result": "inapplicable",
+        "reason": "every test returned early through behaviorGate with zero assertions: profile not advertised in the captured discovery set"
+      },
+      {
+        "id": "openwop.scenario.v2-nondeterminism-sources",
         "result": "inapplicable",
         "reason": "every test returned early through behaviorGate with zero assertions: profile not advertised in the captured discovery set"
       },
@@ -5797,6 +5918,11 @@
       },
       {
         "id": "openwop.scenario.v2-purpose-propagation-advertisement",
+        "result": "inapplicable",
+        "reason": "every test returned early through behaviorGate with zero assertions: profile not advertised in the captured discovery set"
+      },
+      {
+        "id": "openwop.scenario.v2-purpose-propagation-onward",
         "result": "inapplicable",
         "reason": "every test returned early through behaviorGate with zero assertions: profile not advertised in the captured discovery set"
       },
@@ -5881,7 +6007,17 @@
         "reason": "every test returned early through behaviorGate with zero assertions: profile not advertised in the captured discovery set"
       },
       {
+        "id": "openwop.scenario.v2-ui-plugin-boundary",
+        "result": "inapplicable",
+        "reason": "every test returned early through behaviorGate with zero assertions: profile not advertised in the captured discovery set"
+      },
+      {
         "id": "openwop.scenario.v2-ui-plugins-advertisement",
+        "result": "inapplicable",
+        "reason": "every test returned early through behaviorGate with zero assertions: profile not advertised in the captured discovery set"
+      },
+      {
+        "id": "openwop.scenario.v2-wasm-memory-cap",
         "result": "inapplicable",
         "reason": "every test returned early through behaviorGate with zero assertions: profile not advertised in the captured discovery set"
       },
@@ -6133,7 +6269,7 @@
       {
         "id": "openwop.requirement.0197.retired-not-emitted",
         "result": "inapplicable",
-        "reason": "unwitnessable until the first persisted-class retirement row is due (RFC 0197 §A.3 Falsifiability): corpus 2.45.21: 0 persisted-class v2-minor retirement row(s), 0 v2→v2 migration row(s) — no retired member exists for a post-2.N event to carry. Before one does, a scenario would be vacuous, and a row that cannot fail is not a witness. This leg asserts the moment such a row falls due."
+        "reason": "unwitnessable until the first persisted-class retirement row is due (RFC 0197 §A.3 Falsifiability): corpus 2.45.23: 0 persisted-class v2-minor retirement row(s), 0 v2→v2 migration row(s) — no retired member exists for a post-2.N event to carry. Before one does, a scenario would be vacuous, and a row that cannot fail is not a witness. This leg asserts the moment such a row falls due."
       },
       {
         "id": "openwop.requirement.0200.challenge-401",
@@ -6274,6 +6410,36 @@
         "id": "openwop.requirement.0233.provider-registry.unique",
         "result": "skipped",
         "reason": "operator declared an honest opt-out via OPENWOP_OPTED_OUT_PROFILES: connections.packsSupported"
+      },
+      {
+        "id": "openwop.requirement.0237.declared-source-replays",
+        "result": "inapplicable",
+        "reason": "the host lists no nondeterminismPolicy.sources"
+      },
+      {
+        "id": "openwop.requirement.0237.no-false-advertisement",
+        "result": "inapplicable",
+        "reason": "the host does not advertise nondeterminismPolicy"
+      },
+      {
+        "id": "openwop.requirement.0238.ui-plugin.frame-deny-egress",
+        "result": "inapplicable",
+        "reason": "the host does not advertise uiPlugins.served"
+      },
+      {
+        "id": "openwop.requirement.0238.ui-plugin.frame-isolated",
+        "result": "inapplicable",
+        "reason": "the host does not advertise uiPlugins.served"
+      },
+      {
+        "id": "openwop.requirement.0238.ui-plugin.no-byok",
+        "result": "inapplicable",
+        "reason": "the host does not advertise uiPlugins.served"
+      },
+      {
+        "id": "openwop.requirement.0238.ui-plugin.rpc-allowlist",
+        "result": "inapplicable",
+        "reason": "the host does not advertise uiPlugins.served"
       },
       {
         "id": "openwop.requirement.agent-runtime.advert-record-schema",
@@ -6511,16 +6677,6 @@
         "reason": "the host does not advertise modelCapabilities"
       },
       {
-        "id": "openwop.requirement.multi-party-conversation.advert-record-schema",
-        "result": "inapplicable",
-        "reason": "the host does not advertise multiPartyConversation"
-      },
-      {
-        "id": "openwop.requirement.multi-party-conversation.max-participants",
-        "result": "inapplicable",
-        "reason": "the host does not advertise multiPartyConversation"
-      },
-      {
         "id": "openwop.requirement.node-pack-runtimes.advert-record-schema",
         "result": "inapplicable",
         "reason": "the host does not advertise nodePackRuntimes"
@@ -6529,6 +6685,11 @@
         "id": "openwop.requirement.node-pack-runtimes.wasm-facet-shape",
         "result": "inapplicable",
         "reason": "the host does not advertise nodePackRuntimes"
+      },
+      {
+        "id": "openwop.requirement.node-pack-runtimes.wasm-memory-cap",
+        "result": "inapplicable",
+        "reason": "the host does not advertise nodePackRuntimes.wasm"
       },
       {
         "id": "openwop.requirement.nondeterminism-policy.advert-record-schema",
@@ -6702,6 +6863,16 @@
       },
       {
         "id": "openwop.requirement.purpose-propagation.advert-record-schema",
+        "result": "inapplicable",
+        "reason": "the host does not advertise purposePropagation"
+      },
+      {
+        "id": "openwop.requirement.purpose-propagation.empty-no-onward",
+        "result": "inapplicable",
+        "reason": "the host does not advertise purposePropagation"
+      },
+      {
+        "id": "openwop.requirement.purpose-propagation.onward-reemit-no-widen",
         "result": "inapplicable",
         "reason": "the host does not advertise purposePropagation"
       },
@@ -6900,11 +7071,11 @@
   "durability": {
     "rung": "durable-single-instance"
   },
-  "witnessSha256": "1e7ca25b7f0182305bbe823da587372463ad940a0b7bbe4386142e0a4c732e3b",
+  "witnessSha256": "df7ac1ebb0a44c283a191f75e23893f0c1744721132e29c5ff4c86d3aa2ac789",
   "signature": {
     "alg": "ed25519",
     "keyId": "v2-reference-4",
-    "sig": "D6SuDm_K4fqHMEAaoqhsh5oR5xElapjotM4LQC4Bv_idv7WSmBADJoUr4QOUXhSYORg8gN8k2TPSoLVS-MIhDA",
+    "sig": "GTX95jT8MkvJqPkGwMRQCRIrMTjXkCZp2K1EpUEr06oqnJ4l1L8hdRSWibw_o1jw5XASQT8GsqmqDJDuMnyaBg",
     "over": [
       "witnessSha256",
       "host.build",
