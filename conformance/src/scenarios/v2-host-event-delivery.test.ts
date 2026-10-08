@@ -26,9 +26,11 @@
  *
  * Judged by `lib/host-event-witness.ts`, whose self-test convicts each defect.
  *
- * Dispositions: discovery unreadable ⇒ `blocked`; seams profile or `hostEvents`
- * not advertised ⇒ `inapplicable`; seam unwired, or no `example.*` type of the
- * needed class advertised ⇒ `seamAbsent`; no second-tenant credential
+ * Dispositions: discovery unreadable ⇒ `blocked`; `hostEvents` not advertised ⇒
+ * `inapplicable`; seams profile not advertised ⇒ `inapplicable` for every leg but
+ * `ephemeral-refused`, which causes no event and runs on any advertised
+ * ephemeral type (none listed ⇒ `inapplicable`); seam unwired, or no `example.*`
+ * type of the needed class advertised ⇒ `seamAbsent`; no second-tenant credential
  * (`OPENWOP_TEST_TENANT_B_API_KEY`) ⇒ `inapplicable` for the tenant leg.
  *
  * @see RFCS/0236-host-events.md
@@ -46,7 +48,7 @@ import { readErrorCode } from '../lib/error-envelope.js';
 import { absenceIsUnmeasured, noDeliveryCause, startScopedReceiver, type ScopedHit, type ScopedReceiver } from '../lib/scoped-receiver.js';
 import { createReceiverState, verifyWebhookDelivery } from '../lib/webhook-receiver.js';
 import {
-  advertisedTypes, exampleType, judgeEnvelope, judgeHostBody, judgeNoFanOut, judgeNoResume, judgeTenantScope, type AdvertisedType, type Finding,
+  advertisedTypeOf, advertisedTypes, exampleType, judgeEnvelope, judgeHostBody, judgeNoFanOut, judgeNoResume, judgeTenantScope, type AdvertisedType, type Finding,
 } from '../lib/host-event-witness.js';
 
 export const REQUIRES_HOST_CALLBACK = 'the host POSTs host-event webhook deliveries to the suite-owned scoped receiver behind OPENWOP_WEBHOOK_RECEIVER_URL';
@@ -77,15 +79,22 @@ const assertAll = (id: string, doc: string, findings: readonly Finding[]): void 
 type Skip = { kind: 'blocked' | 'inapplicable' | 'seam'; reason: string };
 const skip = (s: Skip): undefined => (s.kind === 'seam' ? seamAbsent(s.reason) : softSkip(s.kind, s.reason));
 
-/** The shared gate: the advertised types, or why the leg cannot run. */
-async function gate(): Promise<{ types: AdvertisedType[]; record: Record<string, unknown> } | Skip> {
+/** The family gate: the advertised types, or why the leg cannot run. Needs no seam. */
+async function familyGate(): Promise<{ types: AdvertisedType[]; record: Record<string, unknown>; doc: Record<string, unknown> } | Skip> {
   let doc: Record<string, unknown> | null;
   try { doc = await v2Discovery(); } catch { doc = null; }
   if (!doc) return { kind: 'blocked', reason: 'v2 discovery unreachable — /.well-known/openwop did not answer 200 JSON under OpenWOP-Version: 2.0' };
   const record = await familyAdvertised('hostEvents');
   if (record === null) return { kind: 'inapplicable', reason: 'the host does not advertise hostEvents' };
-  if (!seamsProfileAdvertised(doc)) return { kind: 'inapplicable', reason: 'seams profile not advertised — the suite cannot cause a host event without the RFC 0236 §G emit seam' };
-  return { types: advertisedTypes(record), record };
+  return { types: advertisedTypes(record), record, doc };
+}
+
+/** The shared gate for the legs that cause an event: the family gate plus the §G seam. */
+async function gate(): Promise<{ types: AdvertisedType[]; record: Record<string, unknown> } | Skip> {
+  const g = await familyGate();
+  if ('kind' in g) return g;
+  if (!seamsProfileAdvertised(g.doc)) return { kind: 'inapplicable', reason: 'seams profile not advertised — the suite cannot cause a host event without the RFC 0236 §G emit seam' };
+  return { types: g.types, record: g.record };
 }
 
 function pick(types: readonly AdvertisedType[], delivery: AdvertisedType['delivery']): AdvertisedType | Skip {
@@ -160,10 +169,13 @@ describe('v2 host events (RFC 0236 — seam-gated)', () => {
   }, 20_000);
 
   it('registerWebhook refuses an ephemeral host-event type with 400 validation_error', async () => {
-    const g = await gate();
+    // Causes no event, so it needs no §G seam: any advertised ephemeral type will do (a
+    // production host with `channel.presence` witnesses it).
+    const g = await familyGate();
     if ('kind' in g) return skip(g);
-    const e = pick(g.types, 'ephemeral');
-    if ('kind' in e) return skip(e);
+    const type = advertisedTypeOf(g.types, 'ephemeral');
+    if (type === null) return softSkip('inapplicable', 'hostEvents.types lists no ephemeral type, so there is none to refuse');
+    const e = { type, delivery: 'ephemeral' as const };
     const res = await http(() => driver.post('/webhooks', { url: 'https://example.com/openwop-conformance-0236', events: [e.type], secret: SECRET }));
     if (res === null) return softSkip('blocked', 'POST /webhooks unreachable (fetch failed)');
     const id = (res.json as { webhookId?: unknown } | null)?.webhookId;

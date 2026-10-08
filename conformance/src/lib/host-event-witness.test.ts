@@ -4,7 +4,7 @@
  */
 import { describe, it, expect } from 'vitest';
 import {
-  advertisedTypes, exampleType, judgeEnvelope, judgeHostBody, judgeNoFanOut, judgeNoResume, judgeTenantScope, type AdvertisedType, type Frame,
+  advertisedTypeOf, advertisedTypes, exampleType, judgeEnvelope, judgeHostBody, judgeNoFanOut, judgeNoResume, judgeTenantScope, type AdvertisedType, type Frame,
 } from './host-event-witness.js';
 import { v2Validator } from './v2.js';
 
@@ -24,6 +24,13 @@ describe('host-event-witness judges', () => {
     expect(types).toEqual([D, E]);
     expect(exampleType(types, 'durable')).toBe(D.type);
     expect(exampleType(types, 'ephemeral')).toBe(E.type);
+  });
+
+  it('picks any advertised type of a class for a leg that causes no event, preferring example.*', () => {
+    const prod: AdvertisedType[] = [{ type: 'crm.lead-created', delivery: 'durable' }, { type: 'channel.presence', delivery: 'ephemeral' }];
+    expect(advertisedTypeOf(prod, 'ephemeral')).toBe('channel.presence');
+    expect(advertisedTypeOf([...prod, { type: 'example.ping', delivery: 'ephemeral' }], 'ephemeral')).toBe('example.ping');
+    expect(advertisedTypeOf([{ type: 'crm.lead-created', delivery: 'durable' }], 'ephemeral')).toBeNull();
   });
 
   it('envelope: passes a conforming durable and ephemeral frame', () => {

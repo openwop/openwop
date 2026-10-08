@@ -8,6 +8,7 @@ Entries before this file was condensed carried full development detail. That tex
 
 ## [Unreleased]
 
+- **2.45.26 cycle (suite):** `0236.webhook.ephemeral-refused` no longer needs the §G emit seam. It causes no event, so it runs on any host advertising an ephemeral `hostEvents` type (`channel.presence` on a production host). The other five RFC 0236 legs still need the seam.
 - **RFC 0238 Accepted (provisional).** Tier-1 evidence: openwop-app's certified cut on suite 2.45.23 at `api.openwop.dev` (379/0/0, build `e33f3a19c`) records the four ui-plugin boundary ids `executed-pass`; gaps G1 and G3 close, so the packed `gaps.json` changes.
 - **RFC 0239 Accepted (provisional).** Tier-1 evidence: the v2 reference host's certified public cut on suite 2.45.23 (512/0/0, build `1492562f`) records the three council-roster ids `executed-pass`; gap G1 closes, so the packed `gaps.json` changes. openwop-app's production cut (`90e7f78ee`) is a second witness.
 - **2.45.25 cycle (suite):** new `v2-wasm-abi-reject` reads a WASM pack's rejection at load from what it prevents: the ABI-999 pack listed in `loadedPacks`, or its node completing (`conformance-wasm-pack-abi-mismatch`). The `frontend-plugin-packs` schema legs move to `src/coherence/` (RFC 0238 G3).
@@ -23,7 +24,6 @@ Entries before this file was condensed carried full development detail. That tex
 - **RFC 0237 filed and Active (window waived).** `nondeterminismPolicy.sources` (`clock`, `random`, `id`, `env`, `x-*`): a `replay` fork reproduces each, witnessed by `conformance-nondeterminism`. `declared: false` and `advertised: false` are not v2 states; both go at 3.0.
 - **2.45.22 cycle (suite):** `v2-data-residency-admission` runs its reject leg when `dataResidency.regions` is empty. Such a host must refuse every residency constraint; it used to skip both legs and pass while ignoring them.
 - **RFC 0236 Accepted (provisional).** Tier-1 evidence: the v2 reference host's certified public cut on suite 2.45.21 (505/0/0, build `9543718c`) records all six host-event ids `executed-pass`; gaps G1 and G2 close, so the packed `gaps.json` changes.
-- **2.45.21 cycle (suite):** `v2-host-event-delivery` splits no-fan-out into its own `it`, so `0236.webhook.host-variant` records a row. A bundle records one requirement id per `it`, and the shared `it` hid it.
 - **`channelPresence` restated at v2.** `conversation.md` adds RFC 0110's advertise ⇒ emit and no-delivery-to-a-non-member rules, witnessed by `v2-channel-presence-delivery` through the §13 seam (now in `api/seams-v2.yaml`) and invariant `channel-presence-member-only-delivery`.
 - **RFC 0235 Accepted (provisional).** Tier-1 evidence: the v2 reference host's certified public cut on published suite 2.45.18 (build `e5f27708`, 497/0/0) records all four `If-None-Match` requirement ids `executed-pass`. Gaps G1 and G2 closed; risk R1 mitigated.
 - **2.45.19 cycle (suite):** new leg `0184.mint-no-tilde` — a host MUST NOT mint a tenant-bound id containing `~` (RFC 0184 §A.2). It bites only when the suite's credential sits in a non-clean tenant; openwop-app's defect (app ADR 0814) hid behind `default`.
