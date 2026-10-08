@@ -1,6 +1,6 @@
 # `@openwop/openwop-conformance` Changelog
 
-## [2.45.29] — unreleased — RFC 0241 Accepted
+## [2.45.29] — 2026-10-08 — purpose labels witnessed without a seam; RFC 0241 Accepted
 
 - **`v2-purpose-propagation-onward` witnesses purpose labels through normative operations.** New fixture `conformance-purpose-relay`: routed as the only skill of one agent's A2A card, it relays an inbound A2A message's text to the suite's fake peer through `core.conformance.a2a-invoke`. The suite labels the inbound message with `metadata.openwop.permittedPurposes`, finds the agent through `GET /agents` and `GetExtendedAgentCard`, and reads the onward label at its peer; a nonce matches each onward message to its inbound one. The §22 seam stays as the fallback, and each note names the path. A host with the fixture advertised but no card routing it, or with the suite's peer not running, records `blocked`. Self-test double: a widened label, a dropped label and a call made under `[]` each fail their leg (`lib/purpose-relay-witness.test.ts`). Proven on a seams-off v2 reference host (openwop-examples #166): both rows `executed-pass`, and each defect `executed-fail`. This replaces the planned RFC 0240: the label already arrives on a real carrier.
 - **No scenario change.** RFC 0241 goes `Accepted` on the v2 reference host's certified seams-off cut on 2.45.28; its gaps G1 and G2 close, which changes the packed `spec/v1/gaps.json`.
