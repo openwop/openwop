@@ -14300,8 +14300,8 @@
       "surface": "No host installs `conformance-nondeterminism` or lists `nondeterminismPolicy.sources`.",
       "witness": "unclassified",
       "requirementId": null,
-      "disposition": "externally-gated",
-      "target": "v2-reference-nondeterminism-fixture",
+      "disposition": "closed",
+      "target": null,
       "sources": [
         {
           "file": "RFCS/registers/0237-nondeterminism-sources.gaps.md",
@@ -14317,8 +14317,8 @@
       "surface": "No host bundle records the two `openwop.requirement.0237.*` ids yet; the legs shipped in suite 2.45.23.",
       "witness": "unclassified",
       "requirementId": null,
-      "disposition": "carried",
-      "target": "openwop.gap.0237.2",
+      "disposition": "closed",
+      "target": null,
       "sources": [
         {
           "file": "RFCS/registers/0237-nondeterminism-sources.gaps.md",
