@@ -14436,8 +14436,8 @@
       "surface": "No host serves `POST /host/events/test` or lists the §A types, so no production host can witness RFC 0236's event-causing legs.",
       "witness": "unclassified",
       "requirementId": null,
-      "disposition": "externally-gated",
-      "target": "host-event-test-trigger-host",
+      "disposition": "closed",
+      "target": null,
       "sources": [
         {
           "file": "RFCS/registers/0241-host-event-test-trigger.gaps.md",
@@ -14453,8 +14453,8 @@
       "surface": "No host bundle records the six `openwop.requirement.0236.*` ids with §B as the cause.",
       "witness": "unclassified",
       "requirementId": null,
-      "disposition": "carried",
-      "target": "openwop.gap.0241.2",
+      "disposition": "closed",
+      "target": null,
       "sources": [
         {
           "file": "RFCS/registers/0241-host-event-test-trigger.gaps.md",

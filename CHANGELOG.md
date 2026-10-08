@@ -8,7 +8,7 @@ Entries before this file was condensed carried full development detail. That tex
 
 ## [Unreleased]
 
-- **2.45.28 cycle (suite):** `0199.mcp-url-mode` and `0199.a2a-auth-required` record `inapplicable`, not `blocked`, without the seams profile; the webhook backoff check tolerates a constant per-attempt round trip (the second gap exceeds the first by a quarter, not 1.5x). Found by the public seams-off cut.
+- **RFC 0241 Accepted (provisional).** Tier-1 evidence: the v2 reference host's certified public cut with the seams profile off, on suite 2.45.28 (420/0/0, build `bb7c5930`), causes all six RFC 0236 rows through `POST /host/events/test`; gaps G1 and G2 close, so the packed `gaps.json` changes.
 - **RFC 0237 Accepted (provisional).** Tier-1 evidence: the v2 reference host's certified public cut on suite 2.45.25 (517/0/0, build `a8e6db64`) lists `clock`, `random` and `id` and records both nondeterminism ids `executed-pass`; gaps G1 and G2 close, so the packed `gaps.json` changes.
 - **2.45.26 cycle (suite):** `0236.webhook.ephemeral-refused` no longer needs the §G emit seam. It causes no event, so it runs on any host advertising an ephemeral `hostEvents` type (`channel.presence` on a production host). The other five use RFC 0241's trigger when listed, else the seam.
 - **RFC 0238 Accepted (provisional).** Tier-1 evidence: openwop-app's certified cut on suite 2.45.23 at `api.openwop.dev` (379/0/0, build `e33f3a19c`) records the four ui-plugin boundary ids `executed-pass`; gaps G1 and G3 close, so the packed `gaps.json` changes.

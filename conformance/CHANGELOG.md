@@ -1,5 +1,9 @@
 # `@openwop/openwop-conformance` Changelog
 
+## [2.45.29] — unreleased — RFC 0241 Accepted
+
+- **No scenario change.** RFC 0241 goes `Accepted` on the v2 reference host's certified seams-off cut on 2.45.28; its gaps G1 and G2 close, which changes the packed `spec/v1/gaps.json`.
+
 ## [2.45.28] — 2026-10-08 — two more seam-driven legs, and the backoff ratio, on a public seam-free cut
 
 - **Found by the v2 reference host's first public seams-off cut** (2.45.27, RFC 0241's evidence): all seven target rows `executed-pass`, but four other rows kept the bundle from certifying. Neither shows on a loopback cut.

@@ -44,7 +44,7 @@ Grouping below is a reading aid only: it assigns each RFC to the risk class its 
 | [0235](../RFCS/0235-if-none-match-evaluation.md) | `If-None-Match` is evaluated as HTTP defines it | `Accepted` | steward override of RFC 0147 §A.6 | tier-1 — the v2 reference host | `not-reviewed` |
 | [0238](../RFCS/0238-ui-plugin-observation-path.md) | a host's front-end plugin boundary is observable | `Accepted` | steward override of RFC 0147 §A.6 | tier-1 — openwop-app, the steward's production host: its certified cut on published suite… | `not-reviewed` |
 | [0239](../RFCS/0239-council-roster-input.md) | a council's roster has an input seat and its refusals have codes | `Accepted` | steward override of RFC 0147 §A.6 | tier-1 — the v2 reference host | `not-reviewed` |
-| [0241](../RFCS/0241-host-event-test-trigger.md) | a host event can be triggered on demand for test | `Active` | steward override of RFC 0147 §A.6 | not declared (predates RFC 0174 §B.1, or not yet Accepted) | `not-reviewed` |
+| [0241](../RFCS/0241-host-event-test-trigger.md) | a host event can be triggered on demand for test | `Accepted` | steward override of RFC 0147 §A.6 | tier-1 — the v2 reference host | `not-reviewed` |
 
 ## Tenant isolation (6)
 
