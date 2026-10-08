@@ -1,5 +1,12 @@
 # `@openwop/openwop-conformance` Changelog
 
+## [2.45.28] — unreleased — two more seam-driven legs, and the backoff ratio, on a public seam-free cut
+
+- **Found by the v2 reference host's first public seams-off cut** (2.45.27, RFC 0241's evidence): all seven target rows `executed-pass`, but four other rows kept the bundle from certifying. Neither shows on a loopback cut.
+  - **`0199.mcp-url-mode` (`v2-mcp-mount-map`) and `0199.a2a-auth-required` (`v2-a2a-operation-map`):** both mint a fresh Subject through the credential mint seam, without checking for the seams profile, and recorded `blocked` when it was absent. They run only where `oauth.credentialInterrupt` is advertised, which this host does only with an https public base. Now `inapplicable` without the seams profile.
+  - **`v2-webhook-durable-delivery`, the exponential-backoff check:** it required the second retry gap to be at least 1.5x the first. Each gap also carries a constant, the receiver round trip a host waits on before scheduling the retry, so the gaps are B + c and 2B + c; through a tunnel (c ≈ 270 ms, base 500 ms) a correct host measured 1.43x. The second gap must now exceed the first by at least a quarter of it.
+- Proven on the v2 reference host: seams off with an https base, both 0199 rows `inapplicable`; the backoff leg passes on the host as is, and fails (510 ms after 604 ms) with the backoff made constant.
+
 ## [2.45.27] — 2026-10-08 — a seam-free host's seam-driven legs record `inapplicable`, not `blocked`
 
 - **Three scenarios recorded `blocked` on a host without the seams profile**, which denies the bundle certification, where the rest of the suite records a seam-driven leg `inapplicable`. Found by the v2 reference host's first seams-off cut (RFC 0241's evidence): 11 rows `blocked`, all `executed-pass` with the seams profile.

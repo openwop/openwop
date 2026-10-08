@@ -34,7 +34,7 @@ import { loadEnv } from '../lib/env.js';
 import { softSkip } from '../lib/soft-skip.js';
 import { SCHEMAS_DIR } from '../lib/paths.js';
 import { req } from '../lib/requirement-ids.js';
-import { SEAMS_PREFIX } from '../lib/seams.js';
+import { SEAMS_PREFIX, seamsProfileAdvertised } from '../lib/seams.js';
 
 export const HOST_CALLBACK_NOT_REQUIRED = 'the suite is the MCP client: every leg POSTs JSON-RPC to the mount the host advertises in mcp.serverUrls; nothing harness-hosted is handed to the host';
 
@@ -308,6 +308,7 @@ describe('RFC 0208 — v2-mcp-mount-map (host as MCP 2026-07-28 server, gated on
     if (oauth?.['credentialInterrupt'] !== true) return softSkip('inapplicable', 'oauth.credentialInterrupt is not advertised — the host raises no credential interrupt to bridge (RFC 0199 §C.1)');
     const missing = needFixtures(['conformance-credential']);
     if (missing) return softSkip('blocked', missing);
+    if (!seamsProfileAdvertised(await v2Discovery().catch(() => null))) return softSkip('inapplicable', 'a fresh Subject is minted through the seams profile (credential mint seam) — conformance.seamsProfile is not openwop-conformance-seams-v2');
     const minted = await driver.post(`${SEAMS_PREFIX}/sample/auth/credential/mint`, { lane: 'api-key' }).catch(() => null);
     const bearer = (minted?.json as { credential?: unknown } | undefined)?.credential;
     if (typeof bearer !== 'string') return softSkip('blocked', 'the credential mint seam did not mint a fresh Subject — a Subject that may already hold a credential makes the leg vacuous');

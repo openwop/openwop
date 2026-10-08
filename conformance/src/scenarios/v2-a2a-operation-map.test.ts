@@ -38,7 +38,7 @@ import { isFixtureAdvertised } from '../lib/fixtures.js';
 import { softSkip } from '../lib/soft-skip.js';
 import { SCHEMAS_DIR } from '../lib/paths.js';
 import { req } from '../lib/requirement-ids.js';
-import { SEAMS_PREFIX } from '../lib/seams.js';
+import { SEAMS_PREFIX, seamsProfileAdvertised } from '../lib/seams.js';
 import { unservedDestination } from '../lib/scoped-receiver.js';
 import { errorInfos, normaliseErrorData, isOpenwopEnvelope, A2A_ERROR_DOMAIN } from '../lib/a2a-error-info.js';
 
@@ -513,6 +513,7 @@ describe('RFC 0208 — v2-a2a-operation-map (host as A2A 1.0 server, gated on a2
     const oauth = await familyAdvertised('oauth');
     if (oauth?.['credentialInterrupt'] !== true) return softSkip('inapplicable', 'oauth.credentialInterrupt is not advertised — the host raises no credential interrupt to project (RFC 0199 §C.1)');
     if (!isFixtureAdvertised('conformance-credential')) return softSkip('blocked', 'fixture conformance-credential is not in the advertised fixtures[]');
+    if (!seamsProfileAdvertised(await v2Discovery().catch(() => null))) return softSkip('inapplicable', 'a fresh Subject is minted through the seams profile (credential mint seam) — conformance.seamsProfile is not openwop-conformance-seams-v2');
     // A fresh Subject, so no credential another scenario acquired satisfies the node.
     const minted = await driver.post(`${SEAMS_PREFIX}/sample/auth/credential/mint`, { lane: 'api-key' }).catch(() => null);
     const bearer = (minted?.json as { credential?: unknown } | undefined)?.credential;

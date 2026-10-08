@@ -1,6 +1,6 @@
 {
   "name": "@openwop/openwop-conformance",
-  "version": "2.45.27",
+  "version": "2.45.28",
   "description": "Black-box conformance suite for OpenWOP hosts (v2 current; v1 scenarios retained for the frozen v1 tree).",
   "repository": {
     "type": "git",
@@ -56,6 +56,6 @@
     "@openwop/spec-artifacts": "file:../spec-artifacts"
   },
   "peerDependencies": {
-    "@openwop/spec-artifacts": "2.45.27"
+    "@openwop/spec-artifacts": "2.45.28"
   }
 }
