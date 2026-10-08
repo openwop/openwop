@@ -2,10 +2,16 @@
 
 **OpenWOP is an open, wire-level protocol for multi-agent workflow orchestration.** It defines how AI agents, deterministic tools, sub-workflows and human reviewers take turns inside one durable, suspendable, replayable run, and how independent hosts (workflow engines, SDKs, debuggers, agent runtimes) interoperate over the same contract.
 
-- **Try it:** [app.openwop.dev](https://app.openwop.dev/), the reference workflow-engine app ([privacy](https://app.openwop.dev/privacy)).
-- **Read the paper:** [_OpenWOP: A Vendor-Neutral Protocol for Durable, Portable Agentic Workflow Orchestration_](https://doi.org/10.5281/zenodo.20576239) (Zenodo, CC BY 4.0; evidence in [`openwop/openwop-paper`](https://github.com/openwop/openwop-paper)).
-- **Watch:** [What is OpenWOP?](https://www.youtube.com/watch?v=d5wD-NrhW3M) (two minutes); every film is at [openwop.dev/videos](https://openwop.dev/videos/).
-- **Build a host:** start with [`docs/IMPLEMENT-CORE.md`](./docs/IMPLEMENT-CORE.md), not with the whole corpus.
+## Start here
+
+> **New to OpenWOP?** Watch the [one-and-a-half-minute film](https://www.youtube.com/watch?v=d5wD-NrhW3M), then pick one:
+>
+> - **Try it, no sign-up:** [app.openwop.dev](https://app.openwop.dev/), the reference app ([privacy](https://app.openwop.dev/privacy)).
+> - **Run it on your own computer:** the [quickstart](https://openwop.dev/quickstart/) starts a small practice host in a few minutes.
+> - **Build a host:** start with [`docs/IMPLEMENT-CORE.md`](./docs/IMPLEMENT-CORE.md), not with the whole corpus. We are looking for the first independent implementation; [open an issue](https://github.com/openwop/openwop/issues/new) if you are trying one.
+> - **See every repository:** the SDKs, CLI, examples, packs and white-label app are listed at [github.com/openwop](https://github.com/openwop).
+
+More: [every film](https://openwop.dev/videos/) · [the paper](https://doi.org/10.5281/zenodo.20576239) (Zenodo, CC BY 4.0; evidence in [`openwop/openwop-paper`](https://github.com/openwop/openwop-paper)) · [openwop.dev](https://openwop.dev/)
 
 ## Status
 
