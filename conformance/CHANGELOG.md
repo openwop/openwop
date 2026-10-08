@@ -1,10 +1,10 @@
 # `@openwop/openwop-conformance` Changelog
 
-## [2.45.26] — 2026-10-07 — RFC 0236's legs run without the seam (RFC 0241 Active)
+## [2.45.26] — 2026-10-08 — RFC 0236's legs run without the seam (RFC 0241 Active)
 
 - **No scenario change.** RFC 0237 goes `Accepted` on the v2 reference host's certified 2.45.25 cut; its gaps G1 and G2 close, which changes the packed `spec/v1/gaps.json`.
 - **`v2-host-event-delivery` causes events through RFC 0241's `POST /host/events/test`** when the host lists the reserved `host-test.durable-triggered` / `host-test.ephemeral-triggered` types, else through the §G seam, so a seam-free production host witnesses all six `openwop.requirement.0236.*` rows. New leg `openwop.requirement.0241.trigger.bound-by-listing`: each listed class is accepted with its reserved type, an unlisted class is `400 validation_error`, and nothing is served (`404`/`405`) when no `host-test.*` type is listed. Proven on a seams-off v2 reference host: all eight rows `executed-pass`; a trigger answering a real type, and a frame reaching a second tenant, each `executed-fail`. The self-test double gains the trigger choice and the binding judge.
-- **`v2-host-event-delivery`: `0236.webhook.ephemeral-refused` no longer gates on the seams profile.** It registers a webhook naming an ephemeral type and expects `400 validation_error`; it causes no event, so the §G emit seam was never needed. It now runs on any host advertising `hostEvents` with an ephemeral type, preferring an `example.*` one (a production host's `channel.presence` will do), and records `inapplicable` when none is listed. Proven on a seam-free v2 reference host: `executed-pass`, and `executed-fail` with the refusal removed. The five legs that cause an event still need the seam until a normative trigger exists (RFC 0241, planned).
+- **`v2-host-event-delivery`: `0236.webhook.ephemeral-refused` no longer gates on the seams profile.** It registers a webhook naming an ephemeral type and expects `400 validation_error`; it causes no event, so the §G emit seam was never needed. It now runs on any host advertising `hostEvents` with an ephemeral type, preferring an `example.*` one (a production host's `channel.presence` will do), and records `inapplicable` when none is listed. Proven on a seam-free v2 reference host: `executed-pass`, and `executed-fail` with the refusal removed. The five legs that cause an event use RFC 0241's trigger when the host lists it (next bullet).
 
 ## [2.45.25] — 2026-10-07 — `v2-wasm-abi-reject`; the frontend-plugin schema legs leave host bundles
 

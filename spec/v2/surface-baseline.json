@@ -4,7 +4,7 @@
     "schemas/v2/**/*.json",
     "spec/v2/path-manifest.json"
   ],
-  "release": "2.45.25",
+  "release": "2.45.26",
   "kinds": {
     "union": [
       "channel",
@@ -18,7 +18,7 @@
       "type"
     ]
   },
-  "count": 8760,
+  "count": 8761,
   "surfaces": [
     "schemas/v2/a2a-task-state.schema.json#/contextId|type|string",
     "schemas/v2/a2a-task-state.schema.json#/interruptKind|enum-member|\"approval\"",
@@ -8762,6 +8762,7 @@
     "spec/v2/path-manifest.json#|operation|GET /workflows/{workflowId}",
     "spec/v2/path-manifest.json#|operation|POST /agents/{agentId}/deployments",
     "spec/v2/path-manifest.json#|operation|POST /content/pages",
+    "spec/v2/path-manifest.json#|operation|POST /host/events/test",
     "spec/v2/path-manifest.json#|operation|POST /host/ui-plugins/{packName}/{pluginId}/rpc",
     "spec/v2/path-manifest.json#|operation|POST /interrupts/{token}",
     "spec/v2/path-manifest.json#|operation|POST /prompts",
