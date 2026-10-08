@@ -4,10 +4,10 @@
 | ----------------- | --------------------------------------------------------------- |
 | **RFC**           | 0237                                                            |
 | **Title**         | Declared nondeterminism names its sources; `false` is not a v2 state |
-| **Status**        | `Active`                                                        |
+| **Status**        | `Accepted`                                                      |
 | **Author(s)**     | David Tufts (@davidscotttufts)                                  |
 | **Created**       | 2026-10-06                                                      |
-| **Updated**       | 2026-10-06 — `Draft` → `Active`, comment window waived by the maintainer (2026-10-06, in this session: "yes to both", answering whether to waive 0237's window and move it to Active), recorded as a STEWARD OVERRIDE of RFC 0147 §A.6 in MAINTAINERS.md. §A–§D are merged; `v2-nondeterminism-sources` and the §C legs ship in suite 2.45.23, each failing on its sabotage against a double. · 2026-10-06 — filed `Draft` after an `/architect` ruling (2026-10-06). The 7-day comment window opens with the pull request. |
+| **Updated**       | 2026-10-08 — **`Active → Accepted`, provisional pending the RFC 0156 §B retrospective review** (STEWARD OVERRIDE of RFC 0147 §A.6, register row `not-reviewed`). Evidence tier: tier-1 — the v2 reference host (openwop-examples), a reference example and not a production host: its certified public cut on published suite 2.45.25 (`evidence/v2-host-bundles/openwop-host-v2-reference.json`; build `commit:a8e6db64`, witness `3c4834409163`, signed `v2-reference-4`, 517 pass / 0 fail / 0 blocked, every claimed profile certified, egress guard closed, nothing relaxed; openwop-examples #161–#162) records both `openwop.requirement.0237.*` ids `executed-pass`, with `clock`, `random` and `id` listed. Gaps G1 and G2 are closed on that cut; G3 stays for 3.0. · 2026-10-06 — `Draft` → `Active`, comment window waived by the maintainer (2026-10-06, in this session: "yes to both", answering whether to waive 0237's window and move it to Active), recorded as a STEWARD OVERRIDE of RFC 0147 §A.6 in MAINTAINERS.md. §A–§D are merged; `v2-nondeterminism-sources` and the §C legs ship in suite 2.45.23, each failing on its sabotage against a double. · 2026-10-06 — filed `Draft` after an `/architect` ruling (2026-10-06). The 7-day comment window opens with the pull request. |
 | **Affects**       | `spec/v2/core/replay.md` §Declared nondeterminism · `spec/v2/core/events.md` §Envelope contracts · `spec/v2/declaration.json` (`nondeterminismPolicy` facets and witness class) · `schemas/v2/capabilities.schema.json` (generated) · `spec/v1/deprecations.json` (a 3.0 row) · `conformance/fixtures/` (`conformance-nondeterminism`) · new `v2-nondeterminism-sources.test.ts` |
 | **Compatibility** | `additive` per COMPATIBILITY.md §2.4: an optional facet, a fixture and a gated leg, plus a prose statement of `capabilities.md` §2 for two families. No schema narrows. |
 | **Supersedes**    | —                                                               |
@@ -110,7 +110,7 @@ None. Two were decided at `Active` (2026-10-06, steward):
 
 - [x] `Active`: §A–§D merged; `sources` in `spec/v2/declaration.json`; the fixture in `conformance/fixtures.md`; the 3.0 deprecation row; `CHANGELOG.md`.
 - [x] `v2-nondeterminism-sources` and the §C legs ship in suite 2.45.23, each failing on its sabotage against a double: a fork that draws again fails the replay leg, and `declared: false` fails the §C leg.
-- [ ] `Accepted`: a certified major-2 bundle records `openwop.requirement.0237.declared-source-replays` and `openwop.requirement.0237.no-false-advertisement` `executed-pass`.
+- [x] `Accepted`: a certified major-2 bundle records `openwop.requirement.0237.declared-source-replays` and `openwop.requirement.0237.no-false-advertisement` `executed-pass`. *(2026-10-08: the v2 reference host's certified public cut on published suite 2.45.25, build `commit:a8e6db64`; both `executed-pass`.)*
 
 ## References
 

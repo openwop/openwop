@@ -248,9 +248,15 @@ Defects outside the spec:
       residency nowhere and MUST refuse every constraint. Since 2.45.22 the reject leg binds there (it
       used to skip). At the next major, also decide whether `capabilities.md` §2 bars advertising a family
       with no region.
-- [ ] **RFC 0237** (`Active` 2026-10-06, window waived): `nondeterminismPolicy.sources[]`. Owed for `Accepted`:
-      a host lists `sources`, installs `conformance-nondeterminism` (reserved `core.conformance.nondeterminism`),
-      and a certified bundle records `0237.declared-source-replays` and `0237.no-false-advertisement`.
+- [x] **RFC 0237** `Accepted` (provisional) 2026-10-08 on the v2 reference host's certified 2.45.25 cut
+      (517/0/0, build `a8e6db64`; sources `clock`, `random`, `id`). Owed: the RFC 0156 §B review; G3 (drop
+      the `declared` boolean) at 3.0.
+- [ ] **`negotiation.decided` (found by openwop-app, ADR 0858 P4, 2026-10-07).** (1) `interop.md`'s example
+      event uses other field names and an outcome `downgraded`, but the closed payload schema admits only
+      `accepted` | `refused`, so a downgrade records as `accepted` with the lower version; align the two, and
+      decide whether no-silent-downgrade needs `downgraded`. (2) It is a run event, so an INBOUND negotiation
+      (a host's own A2A card or route, its MCP server's `initialize`) has no run to log on: say whether the MUST
+      binds only in-run negotiation, or give it a runless home (a host-event type, RFC 0236).
 - [x] **RFC 0238** `Accepted` (provisional) 2026-10-07 on openwop-app's certified 2.45.23 cut at
       `api.openwop.dev` (379/0/0, build `e33f3a19c`). Owed: the RFC 0156 §B review; R2 (an embedding
       the suite cannot see) is reviewed with each host's certification; G2 stays external.

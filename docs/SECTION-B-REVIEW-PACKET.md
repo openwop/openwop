@@ -125,7 +125,7 @@ Grouping below is a reading aid only: it assigns each RFC to the risk class its 
 | [0197](../RFCS/0197-v2-surfaces-retired-never-reshaped.md) | v2 surfaces are retired, never reshaped | `Accepted` | steward override of RFC 0147 §A.6 | tier-1 — the v2 reference host | `not-reviewed` |
 | [0216](../RFCS/0216-colocated-witness-for-harness-trust-anchor-rows.md) | a colocated companion bundle is marked, and witnesses only the rows that need the suite's own issuer | `Accepted` | steward override of RFC 0147 §A.6 | corpus gate — no host tier | `not-reviewed` |
 | [0234](../RFCS/0234-maintainer-set-v1-end-of-support.md) | an accepted RFC may set v1 end-of-support earlier than the computed date | `Accepted` | steward override of RFC 0147 §A.6 | corpus gate — `v2-eos-clock | `not-reviewed` |
-| [0237](../RFCS/0237-nondeterminism-sources.md) | Declared nondeterminism names its sources | `Active` | steward override of RFC 0147 §A.6 | not declared (predates RFC 0174 §B.1, or not yet Accepted) | `not-reviewed` |
+| [0237](../RFCS/0237-nondeterminism-sources.md) | Declared nondeterminism names its sources | `Accepted` | steward override of RFC 0147 §A.6 | tier-1 — the v2 reference host | `not-reviewed` |
 
 ## Governance (6)
 
