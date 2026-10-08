@@ -78,7 +78,7 @@ No new error code: every refusal above is already in `spec/v2/errors.json`.
 1. **Do nothing.** The six RFC 0236 rows stay unwitnessable on every production host, and `host-event-tenant-isolation` keeps a seam-only witness, against `conformance.md` §Witness class.
 2. **Demote the requirements to SHOULD.** Not available for a protocol-tier cross-tenant MUST-NOT, and it would weaken the rule to fit the suite.
 3. **A ping on `registerWebhook`** (GitHub's pattern). It covers the durable webhook legs only: nothing reaches the stream, and there is no ephemeral event.
-4. **A `test: true` flag on the host-event envelope** instead of reserved types. It changes the closed `host-event.schema.json` and costs budgeted words, and is needed only if a test event reused a real type, which §A.2 forbids. The type is already the filter key (`events[]`, `event:`). RFC 0240 (purpose labels) has no type to reserve and needs a flag; the two RFCs share the rest of their shape.
+4. **A `test: true` flag on the host-event envelope** instead of reserved types. It changes the closed `host-event.schema.json` and costs budgeted words, and is needed only if a test event reused a real type, which §A.2 forbids. The type is already the filter key (`events[]`, `event:`). Purpose labels needed neither: their label already arrives on a real carrier, an inbound A2A message, so the suite drives that through the fixture `conformance-purpose-relay` (suite 2.45.29) and no RFC was filed.
 5. **A `hostEvents.testEvents` facet.** It would say twice what the listed types already say.
 
 ## Decisions
@@ -94,7 +94,7 @@ Settled in the `/architect` review (2026-10-07):
 
 - **v2 reference host** (`openwop-examples`): list both §A types with the seams profile off, and serve §B through the emit path the §G seam already uses. Its certified cut with seams off is the tier-1 evidence.
 - **openwop-app:** the same, beside its 175 durable types. Its production cut becomes RFC 0236's tier-2 witness.
-- Shared with RFC 0240: a canonical operation (never a `/conformance/seams` path), scoped to the caller's tenant and refusable like any operation, an ordinary rate limit and no new error code.
+- The same rules held for the purpose-label witness, which needed no new operation: a normative path (never a `/conformance/seams` path), scoped to the caller's tenant and refusable like any operation, and no new error code.
 
 ## Acceptance criteria
 
@@ -105,6 +105,6 @@ Settled in the `/architect` review (2026-10-07):
 ## References
 
 - RFC 0236 (host events), §G the emit seam.
-- RFC 0240 (planned): the same pattern for purpose labels.
+- `conformance/fixtures.md` §`conformance-purpose-relay`: the purpose-label witness, through an inbound A2A message instead of a trigger.
 - `spec/v2/core/conformance.md` §Witness class; `spec/v2/core/events.md` §Host events; `spec/v2/core/webhooks.md` §Delivery.
 - GitHub webhook `ping`; Stripe test events.

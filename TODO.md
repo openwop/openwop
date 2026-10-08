@@ -273,10 +273,10 @@ Defects outside the spec:
 - [ ] **RFCs owed before these legs can bind:** (the plugin-origin seat is RFC 0238; the roster
       seat is RFC 0239); a
       `nondeterminismPolicy.sources[]` seat (RFC 0237); a purpose-label carrier the suite can receive
-      (2.45.23 adds a SEAM-GATED witness: the §22 A2A `invoke` seam takes `permittedPurposes`, and
-      `v2-purpose-propagation-onward` reads the onward message. The family is declared `witnessable-gated`,
-      so a normative observation path is still owed per `conformance.md` §Witness class, or a demotion
-      to SHOULD: RFC 0240); and
+      (DONE without an RFC in 2.45.29: the fixture `conformance-purpose-relay` takes a labelled inbound
+      A2A message and relays it to the suite's peer, so `v2-purpose-propagation-onward` needs no seam;
+      the number 0240 was never filed. Owed: a certified cut of a host advertising `purposePropagation`,
+      the v2 reference host first, openwop-examples #166); and
       dropping the required `declared` / `advertised` booleans, which bring back `supported:false`
       under another name.
 - [x] **Fixture-gated wave-3 legs not yet written.** (`multiPartyConversation`'s roster legs ship
