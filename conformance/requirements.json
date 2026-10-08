@@ -35437,15 +35437,10 @@
     {
       "id": "openwop.it.v2-purpose-propagation-onward.a-received-label-is-re-emitted-on-the-onward-message-never-widened",
       "file": "v2-purpose-propagation-onward.test.ts",
-      "line": 83,
+      "line": 147,
       "title": "a received label is re-emitted on the onward message, never widened",
       "explicitId": "openwop.requirement.purpose-propagation.onward-reemit-no-widen",
       "citations": [
-        {
-          "section": "spec/v2/core/security-defaults.md §Onward hops",
-          "requirement": null,
-          "interpolated": true
-        },
         {
           "section": "spec/v2/core/security-defaults.md §Onward hops",
           "requirement": null,
@@ -35456,7 +35451,7 @@
     {
       "id": "openwop.it.v2-purpose-propagation-onward.an-empty-label-means-no-onward-call-while-an-unlabelled-control-call-goes-throug",
       "file": "v2-purpose-propagation-onward.test.ts",
-      "line": 102,
+      "line": 164,
       "title": "an empty label means no onward call, while an unlabelled control call goes through",
       "explicitId": "openwop.requirement.purpose-propagation.empty-no-onward",
       "citations": [

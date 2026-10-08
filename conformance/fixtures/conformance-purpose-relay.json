@@ -1,0 +1,26 @@
+{
+  "id": "conformance-purpose-relay",
+  "name": "Conformance: Purpose Relay",
+  "version": "1.0",
+  "description": "security-defaults.md §Onward hops. Routed as the only skill of one agent's A2A card: an inbound A2A message starts it, and one core.conformance.a2a-invoke node sends that message's text parts on to the A2A peer the operator configured. The suite labels the inbound message with metadata.openwop.permittedPurposes and reads the onward message at its peer. See conformance/fixtures.md.",
+  "nodes": [
+    {
+      "id": "relay",
+      "typeId": "core.conformance.a2a-invoke",
+      "name": "Relay the inbound message",
+      "position": { "x": 0, "y": 0 },
+      "config": {
+        "skill": "echo",
+        "forward": "inbound-message"
+      },
+      "inputs": {}
+    }
+  ],
+  "edges": [],
+  "triggers": [
+    { "id": "manual", "type": "manual", "enabled": true }
+  ],
+  "variables": [],
+  "metadata": { "tags": ["conformance", "a2a", "purpose-propagation"] },
+  "settings": { "timeout": 30000 }
+}
