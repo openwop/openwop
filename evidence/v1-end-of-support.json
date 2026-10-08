@@ -25,13 +25,13 @@
     },
     {
       "name": "myndhyve",
-      "matrixVersion": "e609c637",
+      "matrixVersion": "a4ee6491",
       "bundle": "evidence/v2-host-bundles/myndhyve.json",
       "present": true,
       "latest": {
-        "suiteVersion": "2.45.18",
+        "suiteVersion": "2.45.25",
         "targetMajor": 2,
-        "witnessSha256": "e96224b30f061183adb956ea10234655e1afcac269cad5c8cfce098bff0e3838",
+        "witnessSha256": "99623228d9a18c35b6a7280b03abc2b3132e8faf66c2aca3136a592ff00f9fec",
         "evidenceTiers": [
           "self"
         ],
