@@ -32919,7 +32919,7 @@
     {
       "id": "openwop.it.v2-mcp-mount-map.form-mode-is-never-emitted-for-a-nested-schema-or-a-sensitive-format-password-fi",
       "file": "v2-mcp-mount-map.test.ts",
-      "line": 344,
+      "line": 345,
       "title": "form mode is never emitted for a nested schema or a sensitive (format password) field",
       "explicitId": "openwop.requirement.0199.form-mode-no-secret",
       "citations": [
@@ -38110,7 +38110,7 @@
     {
       "id": "openwop.it.v2-webhook-durable-delivery.an-exhausted-delivery-is-dead-lettered-never-dropped",
       "file": "v2-webhook-durable-delivery.test.ts",
-      "line": 430,
+      "line": 435,
       "title": "an exhausted delivery is dead-lettered, never dropped",
       "explicitId": "openwop.requirement.0173.webhook-durable-delivery.dead-letter",
       "citations": [
@@ -38149,7 +38149,7 @@
     {
       "id": "openwop.it.v2-webhook-durable-delivery.the-dead-letter-read-is-served-and-its-records-carry-no-payload",
       "file": "v2-webhook-durable-delivery.test.ts",
-      "line": 539,
+      "line": 544,
       "title": "the dead-letter read is served and its records carry no payload",
       "explicitId": "openwop.requirement.0188.dead-letter-read",
       "citations": [
@@ -38162,7 +38162,7 @@
     {
       "id": "openwop.it.v2-webhook-durable-delivery.after-unregister-the-dead-letter-read-answers-404-not-found-as-for-a-subscriptio",
       "file": "v2-webhook-durable-delivery.test.ts",
-      "line": 560,
+      "line": 565,
       "title": "after unregister, the dead-letter read answers 404 not_found, as for a subscription that never existed",
       "explicitId": "openwop.requirement.0217.dead-letter-read-after-unregister",
       "citations": [
@@ -38189,7 +38189,7 @@
     {
       "id": "openwop.it.v2-webhook-durable-delivery.a-dead-letter-record-carries-no-delivered-payload",
       "file": "v2-webhook-durable-delivery.test.ts",
-      "line": 593,
+      "line": 598,
       "title": "a dead-letter record carries no delivered payload",
       "explicitId": "openwop.requirement.0188.dead-letter-content-free",
       "citations": [
@@ -38207,7 +38207,7 @@
     {
       "id": "openwop.it.v2-webhook-durable-delivery.every-logged-event-of-a-subscribed-type-reaches-a-healthy-receiver-at-least-once",
       "file": "v2-webhook-durable-delivery.test.ts",
-      "line": 688,
+      "line": 693,
       "title": "every logged event of a subscribed type reaches a healthy receiver at least once within the retry bound",
       "explicitId": "openwop.requirement.0173.webhook-delivery-complete",
       "citations": [
