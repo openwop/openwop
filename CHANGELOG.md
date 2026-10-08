@@ -29,6 +29,10 @@ Entries before this file was condensed carried full development detail. That tex
 - **`channelPresence` restated at v2.** `conversation.md` adds RFC 0110's advertise ⇒ emit and no-delivery-to-a-non-member rules, witnessed by `v2-channel-presence-delivery` through the §13 seam (now in `api/seams-v2.yaml`) and invariant `channel-presence-member-only-delivery`.
 - **Erratum: `identity.md` §5 grammar table matches `ids.schema.json` again.** `tenantId` gets its own row with the `anon:` prefix its pattern has had since 2.0.0. `typeId` gains the `@<semver>` pin from RFC 0187. No wire change. `check-id-kinds-bound` now compares the table against the schema.
 
+## [2.45.27] — 2026-10-08 — a seam-free host's seam-driven legs record `inapplicable`
+
+- **Suite:** without the seams profile, `v2-pack-isolation`, two MCP negotiation legs and the quorum leg of `v2-approval-reject-disposition` record `inapplicable`, not `blocked`, so a seam-free host can certify. Found by the reference host's seams-off cut for RFC 0241.
+
 ## [2.45.26] — 2026-10-08 — RFC 0241 Active: host events triggered without a seam; RFC 0237 Accepted
 
 - **RFC 0241 Active (window waived):** `POST /host/events/test` (`emitTestHostEvent`, `webhooks:manage`) emits one empty event of a reserved `host-test.*` type to the caller's tenant, on a host listing those types. `host-event-tenant-isolation` becomes `witnessable-gated`.
