@@ -14429,6 +14429,40 @@
       ]
     },
     {
+      "id": "openwop.gap.0241.1",
+      "rfc": "0241",
+      "local": "G1",
+      "section": "§B, §D",
+      "surface": "No host serves `POST /host/events/test` or lists the §A types, so no production host can witness RFC 0236's event-causing legs.",
+      "witness": "unclassified",
+      "requirementId": null,
+      "disposition": "externally-gated",
+      "target": "host-event-test-trigger-host",
+      "sources": [
+        {
+          "file": "RFCS/registers/0241-host-event-test-trigger.gaps.md",
+          "token": "G1"
+        }
+      ]
+    },
+    {
+      "id": "openwop.gap.0241.2",
+      "rfc": "0241",
+      "local": "G2",
+      "section": "§D",
+      "surface": "No host bundle records the six `openwop.requirement.0236.*` ids with §B as the cause.",
+      "witness": "unclassified",
+      "requirementId": null,
+      "disposition": "carried",
+      "target": "openwop.gap.0241.2",
+      "sources": [
+        {
+          "file": "RFCS/registers/0241-host-event-test-trigger.gaps.md",
+          "token": "G2"
+        }
+      ]
+    },
+    {
       "id": "openwop.gap.spec.a2a-integration.g1",
       "rfc": "0152",
       "local": "G1",

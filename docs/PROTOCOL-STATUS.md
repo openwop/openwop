@@ -12,7 +12,7 @@
 | OpenAPI operations | 59 | `api/openapi.yaml` |
 | AsyncAPI version | 3.1.0 | `api/asyncapi.yaml` |
 | Conformance scenario files | 650 | `conformance/src/scenarios/*.test.ts` |
-| RFCs tracked | 236 | `RFCS/[0-9][0-9][0-9][0-9]-*.md`, excluding template |
+| RFCs tracked | 237 | `RFCS/[0-9][0-9][0-9][0-9]-*.md`, excluding template |
 
 ## Artifact Versions
 
@@ -72,7 +72,7 @@
 |---|---:|
 | Accepted | 230 |
 | Active | 4 |
-| Draft | 1 |
+| Draft | 2 |
 | Superseded | 1 |
 
 | RFC | Title | Status |
@@ -313,6 +313,7 @@
 | RFC 0237 | Declared nondeterminism names its sources; `false` is not a v2 state | Active |
 | RFC 0238 | a host's front-end plugin boundary is observable | Accepted |
 | RFC 0239 | a council's roster has an input seat and its refusals have codes | Accepted |
+| RFC 0241 | a host event can be triggered on demand for test | Draft |
 
 ## SDK Helper Coverage
 
@@ -336,7 +337,7 @@ The pack registry now lives in the [`openwop-registry`](https://github.com/openw
 
 ## Active Follow-Ups
 
-- 1 RFC still `Draft` (RFC 0038) — advance with schema/conformance proof or defer.
+- 2 RFCs still `Draft` (RFC 0038, RFC 0241) — advance with schema/conformance proof or defer.
 - 4 RFCs `Active` (RFC 0121, RFC 0222, RFC 0228, RFC 0237) — wire-shape MAY shift compatibly within v1.x until promotion to `Accepted`.
 - External audit, non-steward host recruitment, and non-steward maintainer recruitment remain external-action gates.
 - Multi-region idempotency and some optional-profile behavior checks remain lower-confidence than the core wire contract.

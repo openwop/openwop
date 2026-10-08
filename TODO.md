@@ -259,6 +259,10 @@ Defects outside the spec:
 - [x] **RFC 0239** `Accepted` (provisional) 2026-10-07 on the v2 reference host's certified 2.45.23
       cut (512/0/0, build `1492562f`). Owed: the RFC 0156 §B review; G2 (a host whose
       `maxParticipants` is 64 or more cannot be shown an oversized roster) stays external.
+- [ ] **RFC 0241** (`Draft`, 2026-10-07): a normative trigger for host events, `POST /host/events/test`,
+      bound by listing the reserved `host-test.*` types in `hostEvents.types[]`. It lets a seam-free
+      production host witness RFC 0236's event-causing legs and `host-event-tenant-isolation`.
+      The v2 reference host and then openwop-app serve it (G1).
 - [ ] **RFCs owed before these legs can bind:** (the plugin-origin seat is RFC 0238; the roster
       seat is RFC 0239); a
       `nondeterminismPolicy.sources[]` seat (RFC 0237); a purpose-label carrier the suite can receive
