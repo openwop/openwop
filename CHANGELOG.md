@@ -29,6 +29,13 @@ Entries before this file was condensed carried full development detail. That tex
 - **2.45.19 cycle (suite):** new leg `0184.mint-no-tilde` — a host MUST NOT mint a tenant-bound id containing `~` (RFC 0184 §A.2). It bites only when the suite's credential sits in a non-clean tenant; openwop-app's defect (app ADR 0814) hid behind `default`.
 - **Erratum: `identity.md` §5 grammar table matches `ids.schema.json` again.** `tenantId` gets its own row with the `anon:` prefix its pattern has had since 2.0.0. `typeId` gains the `@<semver>` pin from RFC 0187. No wire change. `check-id-kinds-bound` now compares the table against the schema.
 
+## [2.45.25] — 2026-10-07 — RFCs 0238 and 0239 Accepted; WASM ABI rejection witnessed
+
+- **RFC 0238 Accepted (provisional):** the front-end plugin boundary, on openwop-app's certified 2.45.23 production cut (379/0/0, build `e33f3a19c`); gaps G1 and G3 close, so the packed `gaps.json` changes.
+- **RFC 0239 Accepted (provisional):** the council roster's input seat, on the v2 reference host's certified 2.45.23 cut (512/0/0); openwop-app's production cut `90e7f78ee` (398/0/0) is the second, tier-2 witness.
+- **Suite:** new `v2-wasm-abi-reject` reads a WASM pack's rejection at load from what it prevents (the ABI-999 pack loaded, or its node completing). The 13 corpus-only `frontend-plugin-packs` schema legs move to `src/coherence/` and leave host bundles (RFC 0238 G3).
+- **Tooling:** `check-cut-gates` excuses a host past v1 end of support the two overlap-only Coexistence legs, once its signed discovery lists no 1.x and it refuses the dropped major; legs a host never reached report `blocked`, not `fail`.
+
 ## [2.45.24] — 2026-10-07 — `provider_policy_denied` reasons erratum; v2-first corpus cleanup
 
 - **Erratum (packed contract):** `provider_policy_denied` `details.reason` values are snake_case (`provider_disabled`, `byok_required`, `byok_required_but_unresolved`, `model_not_allowed`), as the prose, v1 and every measured host spell them.
