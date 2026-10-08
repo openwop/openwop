@@ -119,7 +119,7 @@ describe('RFC 0175 §D.1 — negotiation-authenticated (gated on a2a/mcp + seams
     if (!doc) return softSkip('blocked', 'discovery unreachable');
     const facet = await familyAdvertised('mcp');
     if (!facet) return softSkip('inapplicable', 'mcp facet not advertised — no negotiation to authenticate');
-    if (!seamsProfileAdvertised(doc)) return softSkip('blocked', 'the unauthenticated exchange is driven through the seams profile — conformance.seamsProfile is not openwop-conformance-seams-v2');
+    if (!seamsProfileAdvertised(doc)) return softSkip('inapplicable', 'the unauthenticated exchange is driven through the seams profile — conformance.seamsProfile is not openwop-conformance-seams-v2');
     const preferred = String(facet['preferredVersion']);
     if (!(MCP_LOWER < preferred)) return softSkip('blocked', `mcp.preferredVersion is ${preferred}, at or below the lowest revision the suite server can offer (${MCP_LOWER}) — no lower revision can be offered`);
     const server = new McpFakeServer({ protocolVersions: ['2025-06-18'] });

@@ -33,7 +33,7 @@ import { describe, it, expect } from 'vitest';
 import { driver } from '../lib/driver.js';
 import { v2Discovery, gateFamily } from '../lib/v2.js';
 import { seamsProfileAdvertised, SEAMS_PREFIX } from '../lib/seams.js';
-import { softSkip, seamAbsent } from '../lib/soft-skip.js';
+import { softSkip, seamAbsent, type SoftSkipKind } from '../lib/soft-skip.js';
 import { req } from '../lib/requirement-ids.js';
 
 const ISOLATION_MODELS = ['wasm', 'process', 'container', 'vm'];
@@ -55,12 +55,19 @@ async function gated(): Promise<Record<string, unknown> | null> {
   return sandbox;
 }
 
-/** Drive one misbehaving typeId through the sandbox seam; null (reason recorded) when the seam is absent. */
+/**
+ * The kind `invoke` recorded when it returned null. A leg returns this kind, not
+ * a fixed `blocked`: a seam-free host records `inapplicable` here, and a second
+ * `blocked` on top of it outranked that and denied the bundle certification.
+ */
+let invokeSkip: SoftSkipKind = 'blocked';
+
+/** Drive one misbehaving typeId through the sandbox seam; null (reason recorded, kind in `invokeSkip`) when the seam is absent. */
 async function invoke(typeId: string, extra: Record<string, unknown> = {}): Promise<InvokeResult | null> {
   const doc = await discovery();
-  if (!doc || !seamsProfileAdvertised(doc)) { softSkip('inapplicable', `the ${typeId} leg is seam-driven — seams profile (conformance.seamsProfile = openwop-conformance-seams-v2) not advertised`); return null; }
+  if (!doc || !seamsProfileAdvertised(doc)) { invokeSkip = 'inapplicable'; softSkip('inapplicable', `the ${typeId} leg is seam-driven — seams profile (conformance.seamsProfile = openwop-conformance-seams-v2) not advertised`); return null; }
   const res = await driver.post(INVOKE, { typeId, ...extra });
-  if (res.status === 404 || res.status === 403 || res.status === 405) { seamAbsent(`host advertises sandbox but ${INVOKE} answered ${res.status} — the ${typeId} leg is unobservable (host-sample-test-seams.md §8)`); return null; }
+  if (res.status === 404 || res.status === 403 || res.status === 405) { invokeSkip = 'blocked'; seamAbsent(`host advertises sandbox but ${INVOKE} answered ${res.status} — the ${typeId} leg is unobservable (host-sample-test-seams.md §8)`); return null; }
   // The same id is ALSO asserted by its own `it` above, and that is the copy the
   // registry can see: `generate-requirement-registry.mjs` harvests `req(…)` only
   // within an `it`, so this helper-level call alone left the id out of
@@ -108,58 +115,58 @@ describe('RFC 0173 §B — pack-isolation (gated on sandbox)', () => {
   it('node-pack-sandbox-fs-gated: a host filesystem read is refused', async () => {
     if (!(await gated())) return softSkip('inapplicable', 'gate not met (reason recorded above)');
     const r = await invoke('misbehave.fs-escape-read');
-    if (!r) return softSkip('blocked', 'seam unavailable (reason recorded above)');
+    if (!r) return softSkip(invokeSkip, 'seam leg not driven (reason recorded above)');
     expectEscape('openwop.requirement.0173.pack-isolation.fs-read', r, 'host-fs-escape', 'node-pack-sandbox-fs-gated');
   });
 
   it('node-pack-sandbox-fs-gated: a host filesystem write is refused', async () => {
     if (!(await gated())) return softSkip('inapplicable', 'gate not met (reason recorded above)');
     const r = await invoke('misbehave.fs-escape-write');
-    if (!r) return softSkip('blocked', 'seam unavailable (reason recorded above)');
+    if (!r) return softSkip(invokeSkip, 'seam leg not driven (reason recorded above)');
     expectEscape('openwop.requirement.0173.pack-isolation.fs-write', r, 'host-fs-escape', 'node-pack-sandbox-fs-gated');
   });
 
   it('node-pack-sandbox-no-env: the host environment does not leak', async () => {
     if (!(await gated())) return softSkip('inapplicable', 'gate not met (reason recorded above)');
     const r = await invoke('misbehave.env-leak');
-    if (!r) return softSkip('blocked', 'seam unavailable (reason recorded above)');
+    if (!r) return softSkip(invokeSkip, 'seam leg not driven (reason recorded above)');
     expectEscape('openwop.requirement.0173.pack-isolation.no-env', r, 'host-env-leak', 'node-pack-sandbox-no-env');
   });
 
   it('node-pack-sandbox-network-gated: ungated network egress is refused', async () => {
     if (!(await gated())) return softSkip('inapplicable', 'gate not met (reason recorded above)');
     const r = await invoke('misbehave.network-escape');
-    if (!r) return softSkip('blocked', 'seam unavailable (reason recorded above)');
+    if (!r) return softSkip(invokeSkip, 'seam leg not driven (reason recorded above)');
     expectEscape('openwop.requirement.0173.pack-isolation.network', r, 'network-escape', 'node-pack-sandbox-network-gated');
   });
 
   it('node-pack-sandbox-no-process: host process access is refused', async () => {
     if (!(await gated())) return softSkip('inapplicable', 'gate not met (reason recorded above)');
     const r = await invoke('misbehave.process-escape');
-    if (!r) return softSkip('blocked', 'seam unavailable (reason recorded above)');
+    if (!r) return softSkip(invokeSkip, 'seam leg not driven (reason recorded above)');
     expectEscape('openwop.requirement.0173.pack-isolation.no-process', r, 'host-process-escape', 'node-pack-sandbox-no-process');
   });
 
   it('node-pack-sandbox-timeout: exceeding wallClockLimitMs fails with sandbox_timeout', async () => {
     if (!(await gated())) return softSkip('inapplicable', 'gate not met (reason recorded above)');
     const r = await invoke('misbehave.timeout');
-    if (!r) return softSkip('blocked', 'seam unavailable (reason recorded above)');
+    if (!r) return softSkip(invokeSkip, 'seam leg not driven (reason recorded above)');
     expect(r.error?.code, req('openwop.requirement.0173.pack-isolation.timeout', 'security-defaults.md §Sandbox isolation', 'node-pack-sandbox-timeout: a wall-clock overrun MUST fail with sandbox_timeout')).toBe('sandbox_timeout');
   });
 
   it('node-pack-sandbox-memory-cap: exceeding memoryLimitBytes fails with sandbox_memory_exceeded', async () => {
     if (!(await gated())) return softSkip('inapplicable', 'gate not met (reason recorded above)');
     const r = await invoke('misbehave.memory-bomb');
-    if (!r) return softSkip('blocked', 'seam unavailable (reason recorded above)');
+    if (!r) return softSkip(invokeSkip, 'seam leg not driven (reason recorded above)');
     expect(r.error?.code, req('openwop.requirement.0173.pack-isolation.memory-cap', 'security-defaults.md §Sandbox isolation', 'node-pack-sandbox-memory-cap: a memory overrun MUST fail with sandbox_memory_exceeded')).toBe('sandbox_memory_exceeded');
   });
 
   it('node-pack-sandbox-isolated-context: a pack cannot mutate state another invocation sees', async () => {
     if (!(await gated())) return softSkip('inapplicable', 'gate not met (reason recorded above)');
     const first = await invoke('misbehave.cross-pack-mutate');
-    if (!first) return softSkip('blocked', 'seam unavailable (reason recorded above)');
+    if (!first) return softSkip(invokeSkip, 'seam leg not driven (reason recorded above)');
     const second = await invoke('misbehave.cross-pack-mutate');
-    if (!second) return softSkip('blocked', 'seam unavailable (reason recorded above)');
+    if (!second) return softSkip(invokeSkip, 'seam leg not driven (reason recorded above)');
     for (const r of [first, second]) {
       expect(r.error, req('openwop.requirement.0173.pack-isolation.isolated-context', 'host-sample-test-seams.md §8', 'misbehave.cross-pack-mutate is not a failure mode — it MUST return a result')).toBeUndefined();
       expect(

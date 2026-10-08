@@ -116,7 +116,7 @@ describe('RFC 0175 §D.2 — minimum-version-refused (gated on a2a/mcp + seams)'
     if (!doc) return softSkip('blocked', 'discovery unreachable');
     const facet = await familyAdvertised('mcp');
     if (!facet) return softSkip('inapplicable', 'mcp facet not advertised — no floor to enforce');
-    if (!seamsProfileAdvertised(doc)) return softSkip('blocked', 'the below-floor exchange is driven through the seams profile — conformance.seamsProfile is not openwop-conformance-seams-v2');
+    if (!seamsProfileAdvertised(doc)) return softSkip('inapplicable', 'the below-floor exchange is driven through the seams profile — conformance.seamsProfile is not openwop-conformance-seams-v2');
     const floor = String(facet['minimumRevision']);
     if (!(MCP_LOWEST < floor)) {
       return softSkip('blocked', `the advertised mcp.minimumRevision (${floor}) is at or below the lowest revision the suite server can offer (${MCP_LOWEST}) — nothing below the floor can be offered`);

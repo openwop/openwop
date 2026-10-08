@@ -8,8 +8,8 @@ Entries before this file was condensed carried full development detail. That tex
 
 ## [Unreleased]
 
+- **2.45.27 cycle (suite):** on a host without the seams profile, `v2-pack-isolation`, the MCP legs of `v2-negotiation-authenticated` and `v2-minimum-version-refused`, and the quorum leg of `v2-approval-reject-disposition` record `inapplicable`, not `blocked`. Found by the reference host's seams-off cut.
 - **RFC 0237 Accepted (provisional).** Tier-1 evidence: the v2 reference host's certified public cut on suite 2.45.25 (517/0/0, build `a8e6db64`) lists `clock`, `random` and `id` and records both nondeterminism ids `executed-pass`; gaps G1 and G2 close, so the packed `gaps.json` changes.
-- **RFC 0241 filed and Active (window waived).** `POST /host/events/test` (`webhooks:manage`) emits one empty test event of a reserved `host-test.*` type to the caller's tenant, on a host listing those types. `host-event-tenant-isolation` becomes `witnessable-gated`.
 - **2.45.26 cycle (suite):** `0236.webhook.ephemeral-refused` no longer needs the §G emit seam. It causes no event, so it runs on any host advertising an ephemeral `hostEvents` type (`channel.presence` on a production host). The other five use RFC 0241's trigger when listed, else the seam.
 - **RFC 0238 Accepted (provisional).** Tier-1 evidence: openwop-app's certified cut on suite 2.45.23 at `api.openwop.dev` (379/0/0, build `e33f3a19c`) records the four ui-plugin boundary ids `executed-pass`; gaps G1 and G3 close, so the packed `gaps.json` changes.
 - **RFC 0239 Accepted (provisional).** Tier-1 evidence: the v2 reference host's certified public cut on suite 2.45.23 (512/0/0, build `1492562f`) records the three council-roster ids `executed-pass`; gap G1 closes, so the packed `gaps.json` changes. openwop-app's production cut (`90e7f78ee`) is a second witness.
