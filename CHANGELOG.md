@@ -10,7 +10,7 @@ Entries before this file was condensed carried full development detail. That tex
 
 - **RFC 0237 Accepted (provisional).** Tier-1 evidence: the v2 reference host's certified public cut on suite 2.45.25 (517/0/0, build `a8e6db64`) lists `clock`, `random` and `id` and records both nondeterminism ids `executed-pass`; gaps G1 and G2 close, so the packed `gaps.json` changes.
 - **RFC 0241 filed and Active (window waived).** `POST /host/events/test` (`webhooks:manage`) emits one empty test event of a reserved `host-test.*` type to the caller's tenant, on a host listing those types. `host-event-tenant-isolation` becomes `witnessable-gated`.
-- **2.45.26 cycle (suite):** `0236.webhook.ephemeral-refused` no longer needs the §G emit seam. It causes no event, so it runs on any host advertising an ephemeral `hostEvents` type (`channel.presence` on a production host). The other five RFC 0236 legs still need the seam.
+- **2.45.26 cycle (suite):** `0236.webhook.ephemeral-refused` no longer needs the §G emit seam. It causes no event, so it runs on any host advertising an ephemeral `hostEvents` type (`channel.presence` on a production host). The other five use RFC 0241's trigger when listed, else the seam.
 - **RFC 0238 Accepted (provisional).** Tier-1 evidence: openwop-app's certified cut on suite 2.45.23 at `api.openwop.dev` (379/0/0, build `e33f3a19c`) records the four ui-plugin boundary ids `executed-pass`; gaps G1 and G3 close, so the packed `gaps.json` changes.
 - **RFC 0239 Accepted (provisional).** Tier-1 evidence: the v2 reference host's certified public cut on suite 2.45.23 (512/0/0, build `1492562f`) records the three council-roster ids `executed-pass`; gap G1 closes, so the packed `gaps.json` changes. openwop-app's production cut (`90e7f78ee`) is a second witness.
 - **2.45.25 cycle (suite):** new `v2-wasm-abi-reject` reads a WASM pack's rejection at load from what it prevents: the ABI-999 pack listed in `loadedPacks`, or its node completing (`conformance-wasm-pack-abi-mismatch`). The `frontend-plugin-packs` schema legs move to `src/coherence/` (RFC 0238 G3).
@@ -28,6 +28,13 @@ Entries before this file was condensed carried full development detail. That tex
 - **RFC 0236 Accepted (provisional).** Tier-1 evidence: the v2 reference host's certified public cut on suite 2.45.21 (505/0/0, build `9543718c`) records all six host-event ids `executed-pass`; gaps G1 and G2 close, so the packed `gaps.json` changes.
 - **`channelPresence` restated at v2.** `conversation.md` adds RFC 0110's advertise ⇒ emit and no-delivery-to-a-non-member rules, witnessed by `v2-channel-presence-delivery` through the §13 seam (now in `api/seams-v2.yaml`) and invariant `channel-presence-member-only-delivery`.
 - **Erratum: `identity.md` §5 grammar table matches `ids.schema.json` again.** `tenantId` gets its own row with the `anon:` prefix its pattern has had since 2.0.0. `typeId` gains the `@<semver>` pin from RFC 0187. No wire change. `check-id-kinds-bound` now compares the table against the schema.
+
+## [2.45.26] — 2026-10-08 — RFC 0241 Active: host events triggered without a seam; RFC 0237 Accepted
+
+- **RFC 0241 Active (window waived):** `POST /host/events/test` (`emitTestHostEvent`, `webhooks:manage`) emits one empty event of a reserved `host-test.*` type to the caller's tenant, on a host listing those types. `host-event-tenant-isolation` becomes `witnessable-gated`.
+- **Suite:** `v2-host-event-delivery` causes its events through RFC 0241's trigger when listed, else the §G seam, so a seam-free production host can witness all six `openwop.requirement.0236.*` rows; new leg `0241.trigger.bound-by-listing`. `0236.webhook.ephemeral-refused` no longer needs the seam.
+- **RFC 0237 Accepted (provisional):** nondeterminism sources, on the v2 reference host's certified 2.45.25 cut (517/0/0, build `a8e6db64`); gaps G1 and G2 close, so the packed `gaps.json` changes.
+- **Evidence:** openwop-app's certified 2.45.25 production cut (`ff77747c9`, 398/0/0) is its canonical bundle; it passes the Witness and Front-door cut gates.
 
 ## [2.45.25] — 2026-10-07 — RFCs 0238 and 0239 Accepted; WASM ABI rejection witnessed
 
