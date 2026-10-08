@@ -30,6 +30,14 @@ export function exampleType(types: readonly AdvertisedType[], delivery: Advertis
   return types.find((t) => t.type.startsWith('example.') && t.delivery === delivery)?.type ?? null;
 }
 
+/**
+ * Any advertised type of the class, preferring the conformance `example.*` one. For a leg
+ * that only names a type and causes no event, so it runs on a host without the §G seam.
+ */
+export function advertisedTypeOf(types: readonly AdvertisedType[], delivery: AdvertisedType['delivery']): string | null {
+  return exampleType(types, delivery) ?? types.find((t) => t.delivery === delivery)?.type ?? null;
+}
+
 /** The frame carrying `eventId`, parsed, or null. */
 export function frameFor(frames: readonly Frame[], eventId: string): { frame: Frame; envelope: Record<string, unknown> } | null {
   for (const frame of frames) {

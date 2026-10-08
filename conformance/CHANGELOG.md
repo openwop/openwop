@@ -1,5 +1,9 @@
 # `@openwop/openwop-conformance` Changelog
 
+## [2.45.26] — 2026-10-07 — RFC 0236's ephemeral-refusal leg runs without the seam
+
+- **`v2-host-event-delivery`: `0236.webhook.ephemeral-refused` no longer gates on the seams profile.** It registers a webhook naming an ephemeral type and expects `400 validation_error`; it causes no event, so the §G emit seam was never needed. It now runs on any host advertising `hostEvents` with an ephemeral type, preferring an `example.*` one (a production host's `channel.presence` will do), and records `inapplicable` when none is listed. Proven on a seam-free v2 reference host: `executed-pass`, and `executed-fail` with the refusal removed. The five legs that cause an event still need the seam until a normative trigger exists (RFC 0241, planned).
+
 ## [2.45.25] — 2026-10-07 — `v2-wasm-abi-reject`; the frontend-plugin schema legs leave host bundles
 
 - **New `v2-wasm-abi-reject` (`openwop.requirement.node-pack-runtimes.wasm-abi-reject`).** Gated on `nodePackRuntimes.wasm` and the new operator-installed fixture `conformance-wasm-pack-abi-mismatch`, which invokes `vendor.openwop.misbehaving.abi-bomb` (the `misbehaving-abi` pack, ABI version 999). Loading is not a protocol operation, so the leg reads what a rejection at load prevents: the pack in an advertised `loadedPacks`, and the node completing. The run must be refused at creation (4xx) or end without that node completing; a 401/403/429/5xx is `blocked`. Proof: a 9-case self-test double (`lib/wasm-abi-reject-witness.test.ts`). No RFC was needed: both observations already exist.

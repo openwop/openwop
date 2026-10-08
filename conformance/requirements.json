@@ -31353,7 +31353,7 @@
     {
       "id": "openwop.it.v2-host-event-delivery.an-emitted-durable-host-event-arrives-on-host-events-as-a-valid-envelope",
       "file": "v2-host-event-delivery.test.ts",
-      "line": 131,
+      "line": 140,
       "title": "an emitted durable host event arrives on /host/events as a valid envelope",
       "explicitId": "openwop.requirement.0236.host-event.envelope",
       "citations": [
@@ -31366,7 +31366,7 @@
     {
       "id": "openwop.it.v2-host-event-delivery.an-ephemeral-host-event-has-no-id-and-is-not-redelivered-after-last-event-id",
       "file": "v2-host-event-delivery.test.ts",
-      "line": 145,
+      "line": 154,
       "title": "an ephemeral host event has no id: and is not redelivered after Last-Event-ID",
       "explicitId": null,
       "citations": []
@@ -31374,7 +31374,7 @@
     {
       "id": "openwop.it.v2-host-event-delivery.registerwebhook-refuses-an-ephemeral-host-event-type-with-400-validation-error",
       "file": "v2-host-event-delivery.test.ts",
-      "line": 162,
+      "line": 171,
       "title": "registerWebhook refuses an ephemeral host-event type with 400 validation_error",
       "explicitId": "openwop.requirement.0236.webhook.ephemeral-refused",
       "citations": [
@@ -31392,7 +31392,7 @@
     {
       "id": "openwop.it.v2-host-event-delivery.a-subscribed-durable-host-event-is-delivered-as-hostevent-signed",
       "file": "v2-host-event-delivery.test.ts",
-      "line": 175,
+      "line": 187,
       "title": "a subscribed durable host event is delivered as { hostEvent }, signed",
       "explicitId": "openwop.requirement.0236.webhook.host-variant",
       "citations": [
@@ -31406,7 +31406,7 @@
     {
       "id": "openwop.it.v2-host-event-delivery.the-same-subscription-never-receives-the-ephemeral-host-event",
       "file": "v2-host-event-delivery.test.ts",
-      "line": 211,
+      "line": 223,
       "title": "the same subscription never receives the ephemeral host event",
       "explicitId": null,
       "citations": []
@@ -31414,7 +31414,7 @@
     {
       "id": "openwop.it.v2-host-event-delivery.a-second-tenant-receives-nothing-for-the-first-tenant-s-host-event",
       "file": "v2-host-event-delivery.test.ts",
-      "line": 224,
+      "line": 236,
       "title": "a second tenant receives nothing for the first tenant’s host event",
       "explicitId": null,
       "citations": []
