@@ -3559,6 +3559,78 @@ paths:
         - runs:read
       - OpenIdConnect:
         - runs:read
+  /host/events/test:
+    post:
+      tags:
+      - host
+      operationId: emitTestHostEvent
+      summary: Emit one test host event to the caller's tenant
+      description: 'Bound on a host listing `host-test.durable-triggered` or `host-test.ephemeral-triggered` in `hostEvents.types[]`,
+        served for each listed class and otherwise answered `404`. Emits one event of the requested class''s reserved type,
+        with an empty payload, through the ordinary host-event path: envelope, `/host/events`, `{ hostEvent }` webhooks, delivery
+        class and tenant gate. It belongs to the caller''s tenant and to `workspaceId` when given, and MUST NOT reach another.
+        A `delivery` whose type is not listed is `400 validation_error`; another tenant''s `workspaceId` is `403 id_tenant_mismatch`,
+        an unknown one `404`. A host SHOULD rate-limit it more tightly than reads.'
+      parameters:
+      - $ref: '#/components/parameters/IdempotencyKey'
+      - $ref: '#/components/parameters/OpenWOPVersion'
+      - $ref: '#/components/parameters/OpenWOPClientVersion'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              additionalProperties: false
+              required:
+              - delivery
+              properties:
+                delivery:
+                  type: string
+                  enum:
+                  - durable
+                  - ephemeral
+                workspaceId:
+                  $ref: ../../schemas/v2/ids.schema.json#/$defs/workspaceId
+      responses:
+        '202':
+          description: Emitted; `eventId` is the envelope's.
+          content:
+            application/json:
+              schema:
+                type: object
+                additionalProperties: false
+                required:
+                - eventId
+                - type
+                properties:
+                  eventId:
+                    $ref: ../../schemas/v2/ids.schema.json#/$defs/eventId
+                  type:
+                    type: string
+                    enum:
+                    - host-test.durable-triggered
+                    - host-test.ephemeral-triggered
+          headers:
+            OpenWOP-Version:
+              $ref: '#/components/headers/OpenWOPVersion'
+        '400':
+          $ref: '#/components/responses/ValidationError'
+        '401':
+          $ref: '#/components/responses/Unauthenticated'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '429':
+          $ref: '#/components/responses/RateLimited'
+      security:
+      - ApiKeyAuth:
+        - webhooks:manage
+      - OAuth2:
+        - webhooks:manage
+      - OpenIdConnect:
+        - webhooks:manage
 components:
   securitySchemes:
     ApiKeyAuth:

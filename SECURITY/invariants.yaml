@@ -2849,10 +2849,11 @@ invariants:
       heartbeat a tenant owns, is delivered only to that tenant's
       subscribers on the hostEvents channel; a webhook subscription receives only
       host events of its own tenant. Witnessed with a second tenant's
-      credential (OPENWOP_TEST_TENANT_B_API_KEY) through the §G emit seam.
-      Mirrors CTI-1.
-    witness: seam-gated
-    witnessReview: reviewed-2026-10-05
+      credential (OPENWOP_TEST_TENANT_B_API_KEY). The event is caused through
+      `POST /host/events/test` (RFC 0241) on a host listing the reserved
+      `host-test.*` types, else through the §G emit seam. Mirrors CTI-1.
+    witness: witnessable-gated
+    witnessReview: reviewed-2026-10-07
 
   - id: annotation-content-redaction
     tier: protocol

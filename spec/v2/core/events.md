@@ -32,7 +32,7 @@ A run is its append-only event log. Every snapshot, stream, poll, fork and diff 
 ^(?!openwop\.)[a-z][a-z0-9]*(-[a-z0-9]+)*\.[a-z][a-z0-9]*(-[a-z0-9]+)*(\.[a-z][a-z0-9]*(-[a-z0-9]+)*)?$
 ```
 
-- **Naming.** A protocol type is `domain.verb-ed`: kebab-case, exactly two segments, past tense for a transition (`run.started`, `node.suspend-failed`, `run.resume-started`). `domain.noun` is permitted only for an emitted artifact (`output.chunk`, `provider.usage`, `channel.presence`, `agent.handoff`, `envelope.refusal`, `agent.reasoning-delta`, `voice.synthesis-chunk`, `voice.endpoint-candidate`); each exception is recorded in the codemap.
+- **Naming.** A protocol type is `domain.verb-ed`: kebab-case, exactly two segments, past tense for a transition (`run.started`, `node.suspend-failed`). `domain.noun` is permitted only for an emitted artifact (`output.chunk`, `channel.presence`); each exception is recorded in the codemap.
 - **Reserved prefix.** `openwop.` is the only reserved prefix. `core.`, `community.`, `vendor.`, `private.` and `local.` are pack namespaces, not event namespaces; a type under them is invalid.
 - **Vendor events.** A vendor type's first segment MUST be an org registered in the `extensions` object of `spec/v2/declaration.json` (the org registry, not the `extensions` metadata key a host publishes in discovery). An unregistered org fails validation. An org in `reservedOrgs` is forbidden and never registered. `extensionsKeyPattern` is the shape a vendor type must have, not a permission to use it. `example` is held by the protocol for documentation and conformance and is never assignable to a vendor.
 - **Growth.** The registry grows by the closed-enum rule in [overview.md](overview.md) §0. A producer MUST NOT emit an unregistered protocol type. A consumer MUST accept an unknown registered member and MUST NOT act on it.
@@ -127,10 +127,11 @@ With `bufferMs` (0..5000) the host accumulates events into one `event: batch` fr
 
 #### `hostEvents`
 
-A host event belongs to no run: its envelope (`schemas/v2/host-event.schema.json`) has no `runId` or `sequence`. `hostEvents.types[]` lists each emitted type and its `delivery`, `durable` or `ephemeral`. A host advertising it:
+A host event's envelope (`schemas/v2/host-event.schema.json`) has no `runId` or `sequence`. `hostEvents.types[]` lists each emitted type with its `delivery` class. A host advertising it:
 
 - MUST deliver each listed type here, `event:` being the type and `data:` the envelope, and MUST emit no other type or class;
-- MUST confine an event naming a `workspaceId` to that workspace, and an ephemeral event to subscribers it is visible to.
+- MUST confine an event naming a `workspaceId` to that workspace, and an ephemeral event to subscribers it is visible to;
+- MUST emit each listed `host-test.*` type, only through `emitTestHostEvent`, to the caller's tenant.
 
 An ephemeral event MUST NOT be persisted, redelivered on reconnection, or sent through webhooks, A2A push or any sink; its frame has no `id:`. A durable event's `id:` is its `eventId`, and a host SHOULD honour `Last-Event-ID` for it within retention. A vendor payload MUST NOT carry secrets.
 

@@ -4,7 +4,7 @@
  */
 import { describe, it, expect } from 'vitest';
 import {
-  advertisedTypeOf, advertisedTypes, exampleType, judgeEnvelope, judgeHostBody, judgeNoFanOut, judgeNoResume, judgeTenantScope, type AdvertisedType, type Frame,
+  TEST_TYPES, advertisedTypeOf, advertisedTypes, exampleType, judgeEnvelope, judgeTriggerBinding, testTypeListed, triggerOf, judgeHostBody, judgeNoFanOut, judgeNoResume, judgeTenantScope, type AdvertisedType, type Frame,
 } from './host-event-witness.js';
 import { v2Validator } from './v2.js';
 
@@ -31,6 +31,29 @@ describe('host-event-witness judges', () => {
     expect(advertisedTypeOf(prod, 'ephemeral')).toBe('channel.presence');
     expect(advertisedTypeOf([...prod, { type: 'example.ping', delivery: 'ephemeral' }], 'ephemeral')).toBe('example.ping');
     expect(advertisedTypeOf([{ type: 'crm.lead-created', delivery: 'durable' }], 'ephemeral')).toBeNull();
+  });
+
+  it('RFC 0241: the trigger is chosen by the listed host-test types, else the seam', () => {
+    const both: AdvertisedType[] = [{ type: TEST_TYPES.durable, delivery: 'durable' }, { type: TEST_TYPES.ephemeral, delivery: 'ephemeral' }];
+    expect(triggerOf(both, false)).toBe('normative');
+    expect(triggerOf([D, E], true)).toBe('seam');
+    expect(triggerOf([D, E], false)).toBeNull();
+    expect(testTypeListed(both, 'ephemeral')).toBe(TEST_TYPES.ephemeral);
+    // a reserved name listed under the wrong class does not bind the trigger
+    expect(testTypeListed([{ type: TEST_TYPES.durable, delivery: 'ephemeral' }], 'durable')).toBeNull();
+  });
+
+  it('RFC 0241 §B.1–§B.2: the binding judge convicts each defect', () => {
+    const durableOnly: AdvertisedType[] = [{ type: TEST_TYPES.durable, delivery: 'durable' }];
+    const fails = (f: ReturnType<typeof judgeTriggerBinding>): boolean => f.some((x) => !x.ok);
+    expect(fails(judgeTriggerBinding(durableOnly, 'durable', 202, undefined, TEST_TYPES.durable))).toBe(false);
+    expect(fails(judgeTriggerBinding(durableOnly, 'ephemeral', 400, 'validation_error', undefined))).toBe(false);
+    expect(fails(judgeTriggerBinding([D], 'durable', 404, 'not_found', undefined))).toBe(false);
+    // a listed class refused; a real type returned; an unlisted class served; served while nothing is listed
+    expect(fails(judgeTriggerBinding(durableOnly, 'durable', 404, 'not_found', undefined))).toBe(true);
+    expect(fails(judgeTriggerBinding(durableOnly, 'durable', 202, undefined, 'crm.lead-created'))).toBe(true);
+    expect(fails(judgeTriggerBinding(durableOnly, 'ephemeral', 202, undefined, TEST_TYPES.ephemeral))).toBe(true);
+    expect(fails(judgeTriggerBinding([D], 'durable', 202, undefined, TEST_TYPES.durable))).toBe(true);
   });
 
   it('envelope: passes a conforming durable and ephemeral frame', () => {

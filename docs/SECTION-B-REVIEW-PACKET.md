@@ -6,7 +6,7 @@
 
 RFC 0156 §B: RFCs affecting auth, identity, tenant isolation, secrets, packs, execution sandboxing, idempotency, replay, external effects, conformance/certification, or governance **MUST** receive a retrospective **cross-organization** review. Every RFC below was accepted with its public comment window shortened, either under the bootstrap waiver or by explicit steward override of RFC 0147 §A.6. Each such acceptance is **provisional** until a reviewer from an organization other than the steward's records an outcome.
 
-This packet is for that reviewer. **117 RFCs are listed; 117 have no discharging outcome.** The steward, the steward's sessions, and steward-affiliated hosts (MyndHyve is tier-2, not independent) cannot supply the review. Recording one of their reviews as `ratified` is the substitution §B's last clause forbids.
+This packet is for that reviewer. **118 RFCs are listed; 118 have no discharging outcome.** The steward, the steward's sessions, and steward-affiliated hosts (MyndHyve is tier-2, not independent) cannot supply the review. Recording one of their reviews as `ratified` is the substitution §B's last clause forbids.
 
 ## How to review one RFC
 
@@ -21,7 +21,7 @@ This packet is for that reviewer. **117 RFCs are listed; 117 have no discharging
 
 Grouping below is a reading aid only: it assigns each RFC to the risk class its waiver recorded, else to the first §B area its title names. It is not a scope assessment.
 
-## Identity and authorization (19)
+## Identity and authorization (20)
 
 | RFC | Title | Status | Waiver | Evidence tier | Outcome |
 | --- | --- | --- | --- | --- | --- |
@@ -44,6 +44,7 @@ Grouping below is a reading aid only: it assigns each RFC to the risk class its 
 | [0235](../RFCS/0235-if-none-match-evaluation.md) | `If-None-Match` is evaluated as HTTP defines it | `Accepted` | steward override of RFC 0147 §A.6 | tier-1 — the v2 reference host | `not-reviewed` |
 | [0238](../RFCS/0238-ui-plugin-observation-path.md) | a host's front-end plugin boundary is observable | `Accepted` | steward override of RFC 0147 §A.6 | tier-1 — openwop-app, the steward's production host: its certified cut on published suite… | `not-reviewed` |
 | [0239](../RFCS/0239-council-roster-input.md) | a council's roster has an input seat and its refusals have codes | `Accepted` | steward override of RFC 0147 §A.6 | tier-1 — the v2 reference host | `not-reviewed` |
+| [0241](../RFCS/0241-host-event-test-trigger.md) | a host event can be triggered on demand for test | `Active` | steward override of RFC 0147 §A.6 | not declared (predates RFC 0174 §B.1, or not yet Accepted) | `not-reviewed` |
 
 ## Tenant isolation (6)
 

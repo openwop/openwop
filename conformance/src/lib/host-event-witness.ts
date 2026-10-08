@@ -4,7 +4,7 @@
  * self-test (`host-event-witness.test.ts`) can feed each one a defect and show
  * it convicts.
  *
- * The scenario owns the I/O (the `/host/events` stream, the emit seam, the
+ * The scenario owns the I/O (the `/host/events` stream, the RFC 0241 trigger or the emit seam, the
  * scoped webhook receiver). This file owns only "given what arrived, which
  * `events.md` §Host events / `webhooks.md` §Delivery rule failed?".
  */
@@ -36,6 +36,44 @@ export function exampleType(types: readonly AdvertisedType[], delivery: Advertis
  */
 export function advertisedTypeOf(types: readonly AdvertisedType[], delivery: AdvertisedType['delivery']): string | null {
   return exampleType(types, delivery) ?? types.find((t) => t.delivery === delivery)?.type ?? null;
+}
+
+/** RFC 0241 §A — the reserved test types, one per delivery class. */
+export const TEST_TYPES = { durable: 'host-test.durable-triggered', ephemeral: 'host-test.ephemeral-triggered' } as const;
+
+/** The reserved test type of a class, when the host lists it (RFC 0241 §B.1: listing it binds the trigger). */
+export function testTypeListed(types: readonly AdvertisedType[], delivery: AdvertisedType['delivery']): string | null {
+  return types.some((t) => t.type === TEST_TYPES[delivery] && t.delivery === delivery) ? TEST_TYPES[delivery] : null;
+}
+
+/** How the suite causes a host event: the normative trigger when a test type is listed, else the §G seam. */
+export type Trigger = 'normative' | 'seam';
+export function triggerOf(types: readonly AdvertisedType[], seamsProfile: boolean): Trigger | null {
+  if (testTypeListed(types, 'durable') !== null || testTypeListed(types, 'ephemeral') !== null) return 'normative';
+  return seamsProfile ? 'seam' : null;
+}
+
+/**
+ * RFC 0241 §B.1–§B.2 — `emitTestHostEvent` is served exactly for the listed classes: a class whose
+ * type is not listed is refused (`404`/`405` when none is listed, `400 validation_error` otherwise),
+ * and a listed class is accepted with `202` and its reserved type.
+ */
+export function judgeTriggerBinding(types: readonly AdvertisedType[], delivery: AdvertisedType['delivery'], status: number, code: string | undefined, returnedType: unknown): Finding[] {
+  const listed = testTypeListed(types, delivery) !== null;
+  const anyListed = triggerOf(types, false) === 'normative';
+  if (listed) {
+    return [status === 202 && returnedType === TEST_TYPES[delivery]
+      ? ok(`emitTestHostEvent accepts the listed ${delivery} class`)
+      : bad(`emitTestHostEvent MUST accept the listed ${delivery} class with 202 and type ${TEST_TYPES[delivery]}; got ${status} ${String(code ?? returnedType ?? '')}`.trim())];
+  }
+  if (!anyListed) {
+    return [status === 404 || status === 405
+      ? ok('emitTestHostEvent is not served while no host-test type is listed')
+      : bad(`a host listing no host-test.* type MUST NOT serve emitTestHostEvent; got ${status}`)];
+  }
+  return [status === 400 && code === 'validation_error'
+    ? ok(`emitTestHostEvent refuses the unlisted ${delivery} class`)
+    : bad(`emitTestHostEvent MUST refuse the unlisted ${delivery} class with 400 validation_error; got ${status} ${code ?? ''}`.trim())];
 }
 
 /** The frame carrying `eventId`, parsed, or null. */

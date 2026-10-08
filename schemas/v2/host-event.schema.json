@@ -64,6 +64,48 @@
           }
         }
       }
+    },
+    {
+      "if": {
+        "properties": {
+          "type": {
+            "const": "host-test.durable-triggered"
+          }
+        }
+      },
+      "then": {
+        "properties": {
+          "delivery": {
+            "const": "durable"
+          },
+          "payload": {
+            "type": "object",
+            "maxProperties": 0,
+            "description": "RFC 0241 §A: a caller-triggered test event (`emitTestHostEvent`) carries no payload."
+          }
+        }
+      }
+    },
+    {
+      "if": {
+        "properties": {
+          "type": {
+            "const": "host-test.ephemeral-triggered"
+          }
+        }
+      },
+      "then": {
+        "properties": {
+          "delivery": {
+            "const": "ephemeral"
+          },
+          "payload": {
+            "type": "object",
+            "maxProperties": 0,
+            "description": "RFC 0241 §A: a caller-triggered test event (`emitTestHostEvent`) carries no payload."
+          }
+        }
+      }
     }
   ],
   "examples": [

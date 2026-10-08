@@ -4,11 +4,11 @@
 | ----------------- | --------------------------------------------------------------- |
 | **RFC**           | 0241                                                            |
 | **Title**         | a host event can be triggered on demand for test                |
-| **Status**        | `Draft`                                                         |
+| **Status**        | `Active`                                                        |
 | **Author(s)**     | David Tufts (@davidscotttufts)                                  |
 | **Created**       | 2026-10-07                                                      |
-| **Updated**       | 2026-10-07 — filed `Draft` after an `/architect` design review (2026-10-07) of one problem: every RFC 0236 requirement except one, and the protocol-tier invariant `host-event-tenant-isolation`, can be caused only through the §G emit seam, which production hosts do not serve. |
-| **Affects**       | a new optional v2 operation `POST /host/events/test` (`api/v2/openapi.yaml`, added in `scripts/derive-v2-api.py` as a v2-only operation) · two reserved protocol host-event types and their payload schema (new `schemas/v2/host-test-payload.schema.json`) · `spec/v2/core/events.md` §Host events · `conformance/src/scenarios/v2-host-event-delivery.test.ts` and `lib/host-event-witness.ts` · `SECURITY/invariants.yaml` (`host-event-tenant-isolation`) |
+| **Updated**       | 2026-10-07 — `Draft` → `Active`, comment window waived by the maintainer (2026-10-07: "Waive, go Active"), recorded as a STEWARD OVERRIDE of RFC 0147 §A.6 in MAINTAINERS.md. §A–§D are merged; `v2-host-event-delivery` causes its events through §B when the host lists the §A types (suite 2.45.26). · 2026-10-07 — filed `Draft` after an `/architect` design review (2026-10-07) of one problem: every RFC 0236 requirement except one, and the protocol-tier invariant `host-event-tenant-isolation`, can be caused only through the §G emit seam, which production hosts do not serve. |
+| **Affects**       | a new optional v2 operation `POST /host/events/test` (`api/v2/openapi.yaml`, added in `scripts/derive-v2-api.py` as a v2-only operation) · two reserved protocol host-event types, bound in `schemas/v2/host-event.schema.json` · `spec/v2/core/events.md` §Host events · `conformance/src/scenarios/v2-host-event-delivery.test.ts` and `lib/host-event-witness.ts` · `SECURITY/invariants.yaml` (`host-event-tenant-isolation`) |
 | **Compatibility** | `additive` (COMPATIBILITY.md §2.4): one optional operation, bound only on a host that lists one of two reserved types in its `hostEvents` record. A host that lists neither is bound exactly as today. |
 | **Supersedes**    | —                                                               |
 | **Superseded by** | —                                                               |
@@ -34,7 +34,7 @@ Two protocol host-event types, each with a fixed delivery class:
 | `host-test.durable-triggered` | `durable` |
 | `host-test.ephemeral-triggered` | `ephemeral` |
 
-- **A.1.** Their payload is an empty closed object (`schemas/v2/host-test-payload.schema.json`: `{ "type": "object", "additionalProperties": false }`).
+- **A.1.** `host-event.schema.json` binds each to its delivery class and an empty closed payload (`{ "type": "object", "maxProperties": 0 }`), as it binds `channel.presence`.
 - **A.2.** A host MUST emit them only in answer to §B, and MUST NOT emit any other type in answer to §B.
 - **A.3.** They follow `events.md` §Naming (`domain.verb-ed`). The type is the marker: a subscriber that does not want test events does not name them in `events[]`, and §B takes no `type`, so it cannot be used to produce a real type.
 
@@ -98,8 +98,8 @@ Settled in the `/architect` review (2026-10-07):
 
 ## Acceptance criteria
 
-- [ ] `Active`: §A–§C merged (`events.md`, `host-test-payload.schema.json`, the operation in `scripts/derive-v2-api.py`, `spec/v2/path-manifest.json`); `CHANGELOG.md` records it.
-- [ ] `v2-host-event-delivery` causes events through §B when listed, with each new defect failing its leg in the self-test double.
+- [x] `Active`: the comment window was waived on the record (maintainer, 2026-10-07; MAINTAINERS.md). §A–§C merged (`events.md`, `host-event.schema.json`, the operation in `scripts/derive-v2-api.py`, `spec/v2/path-manifest.json`); `CHANGELOG.md` records it.
+- [x] `v2-host-event-delivery` causes events through §B when listed, with each new defect failing its leg in the self-test double.
 - [ ] `Accepted`: a certified major-2 bundle from a host with the seams profile off records the six `openwop.requirement.0236.*` ids `executed-pass`, with §B as the cause.
 
 ## References
