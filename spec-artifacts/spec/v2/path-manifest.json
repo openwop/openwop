@@ -241,6 +241,18 @@
       "requestBody": false
     },
     {
+      "method": "POST",
+      "path": "/host/events/test",
+      "operationId": "emitTestHostEvent",
+      "requestHeaders": [
+        "Idempotency-Key",
+        "OpenWOP-Client-Version",
+        "OpenWOP-Version"
+      ],
+      "authenticated": true,
+      "requestBody": true
+    },
+    {
       "method": "GET",
       "path": "/host/ui-plugins/{packName}/{pluginId}/frame",
       "operationId": "getUiPluginFrame",
@@ -699,7 +711,7 @@
     }
   ],
   "counts": {
-    "operations": 60,
+    "operations": 61,
     "channels": 2
   }
 }

@@ -1,11 +1,13 @@
 /**
  * v2 — host events (RFC 0236; `spec/v2/core/events.md` §Host events,
- * `webhooks.md` §Delivery; suite 2.45.20, target major 2; seam-gated).
+ * `webhooks.md` §Delivery; suite 2.45.20, target major 2; RFC 0241 trigger in 2.45.26).
  *
  * A host event belongs to no run: its envelope has no `runId` and no
  * `sequence`. It rides `/host/events` beside the heartbeat messages and, when
- * durable, webhooks. The suite cannot cause one unaided, so every leg drives
- * the §G emit seam with the `example.*` types a seams-profile host advertises.
+ * durable, webhooks. The suite causes one through `POST /host/events/test`
+ * (RFC 0241) when the host lists the reserved `host-test.*` types, so a
+ * seam-free production host witnesses every leg; otherwise through the RFC 0236
+ * §G emit seam with the `example.*` types a seams-profile host advertises.
  *
  *   0236.host-event.envelope         an emitted durable event arrives as a valid
  *                                    envelope, `event:` = type, `id:` = eventId;
@@ -22,18 +24,22 @@
  *                                    the host-variant leg observed: a bundle
  *                                    records one requirement id per `it`);
  *   0236.host-event.tenant-isolation a second tenant's stream receives nothing
- *                                    for the first tenant's event.
+ *                                    for the first tenant's event;
+ *   0241.trigger.bound-by-listing    `emitTestHostEvent` accepts each listed
+ *                                    `host-test.*` class and refuses the rest
+ *                                    (`404`/`405` when none is listed).
  *
  * Judged by `lib/host-event-witness.ts`, whose self-test convicts each defect.
  *
  * Dispositions: discovery unreadable ⇒ `blocked`; `hostEvents` not advertised ⇒
- * `inapplicable`; seams profile not advertised ⇒ `inapplicable` for every leg but
- * `ephemeral-refused`, which causes no event and runs on any advertised
- * ephemeral type (none listed ⇒ `inapplicable`); seam unwired, or no `example.*`
+ * `inapplicable`; neither a listed `host-test.*` type nor the seams profile ⇒
+ * `inapplicable` for every event-causing leg (not `ephemeral-refused`, which causes no event and runs on any advertised
+ * ephemeral type, none listed ⇒ `inapplicable`); a listed trigger that fails ⇒ `blocked`; seam unwired, or no `example.*`
  * type of the needed class advertised ⇒ `seamAbsent`; no second-tenant credential
  * (`OPENWOP_TEST_TENANT_B_API_KEY`) ⇒ `inapplicable` for the tenant leg.
  *
  * @see RFCS/0236-host-events.md
+ * @see RFCS/0241-host-event-test-trigger.md
  * @see spec/v2/core/events.md §Host events
  */
 
@@ -48,7 +54,7 @@ import { readErrorCode } from '../lib/error-envelope.js';
 import { absenceIsUnmeasured, noDeliveryCause, startScopedReceiver, type ScopedHit, type ScopedReceiver } from '../lib/scoped-receiver.js';
 import { createReceiverState, verifyWebhookDelivery } from '../lib/webhook-receiver.js';
 import {
-  advertisedTypeOf, advertisedTypes, exampleType, judgeEnvelope, judgeHostBody, judgeNoFanOut, judgeNoResume, judgeTenantScope, type AdvertisedType, type Finding,
+  TEST_TYPES, advertisedTypeOf, advertisedTypes, exampleType, judgeEnvelope, judgeTriggerBinding, testTypeListed, triggerOf, type Trigger, judgeHostBody, judgeNoFanOut, judgeNoResume, judgeTenantScope, type AdvertisedType, type Finding,
 } from '../lib/host-event-witness.js';
 
 export const REQUIRES_HOST_CALLBACK = 'the host POSTs host-event webhook deliveries to the suite-owned scoped receiver behind OPENWOP_WEBHOOK_RECEIVER_URL';
@@ -62,6 +68,8 @@ const ID_HOST_BODY = 'openwop.requirement.0236.webhook.host-variant';
 const ID_NO_FAN_OUT = 'openwop.requirement.0236.ephemeral.no-fan-out';
 const ID_TENANT = 'openwop.requirement.0236.host-event.tenant-isolation';
 const SEAM = seamPath('/v1/host/sample/host-events/emit');
+const TRIGGER = '/host/events/test';
+const ID_BINDING = 'openwop.requirement.0241.trigger.bound-by-listing';
 const V2 = { 'OpenWOP-Version': '2.0' };
 const STREAM_MS = 3_000;
 const SECRET = 'openwop-conformance-host-event-secret-0236';
@@ -89,27 +97,39 @@ async function familyGate(): Promise<{ types: AdvertisedType[]; record: Record<s
   return { types: advertisedTypes(record), record, doc };
 }
 
-/** The shared gate for the legs that cause an event: the family gate plus the §G seam. */
-async function gate(): Promise<{ types: AdvertisedType[]; record: Record<string, unknown> } | Skip> {
+/**
+ * The shared gate for the legs that cause an event: the family gate plus a way to cause one —
+ * the RFC 0241 trigger when the host lists a `host-test.*` type, else the RFC 0236 §G seam.
+ */
+async function gate(): Promise<{ types: AdvertisedType[]; record: Record<string, unknown>; trigger: Trigger } | Skip> {
   const g = await familyGate();
   if ('kind' in g) return g;
-  if (!seamsProfileAdvertised(g.doc)) return { kind: 'inapplicable', reason: 'seams profile not advertised — the suite cannot cause a host event without the RFC 0236 §G emit seam' };
-  return { types: g.types, record: g.record };
+  const trigger = triggerOf(g.types, seamsProfileAdvertised(g.doc));
+  if (trigger === null) return { kind: 'inapplicable', reason: 'no way to cause a host event: hostEvents.types lists no host-test.* type (RFC 0241) and the seams profile is not advertised (RFC 0236 §G)' };
+  return { types: g.types, record: g.record, trigger };
 }
 
-function pick(types: readonly AdvertisedType[], delivery: AdvertisedType['delivery']): AdvertisedType | Skip {
-  const type = exampleType(types, delivery);
+/** The type the suite causes for a class: the reserved test type under the trigger, the `example.*` type under the seam. */
+function pick(g: { types: readonly AdvertisedType[]; trigger: Trigger }, delivery: AdvertisedType['delivery']): AdvertisedType | Skip {
+  if (g.trigger === 'normative') {
+    const type = testTypeListed(g.types, delivery);
+    return type === null ? { kind: 'inapplicable', reason: `hostEvents.types lists no ${TEST_TYPES[delivery]}, so the suite cannot cause a ${delivery} host event (RFC 0241 §B.1)` } : { type, delivery };
+  }
+  const type = exampleType(g.types, delivery);
   return type === null
     ? { kind: 'seam', reason: `no example.* ${delivery} type is advertised in hostEvents.types — RFC 0236 §G: a seams-profile host advertises one for the suite to drive` }
     : { type, delivery };
 }
 
-async function emit(type: string): Promise<string | Skip> {
-  const res = await http(() => driver.post(SEAM, { type }));
-  if (res === null) return { kind: 'blocked', reason: `${SEAM} unreachable (fetch failed)` };
-  if (res.status === 404 || res.status === 405) return { kind: 'seam', reason: `${SEAM} not mounted (${res.status}) — RFC 0236 §G` };
+/** Cause one host event of `t` through the gate's trigger; its `eventId`, or why none was produced. */
+async function emit(trigger: Trigger, t: AdvertisedType): Promise<string | Skip> {
+  const path = trigger === 'normative' ? TRIGGER : SEAM;
+  const body = trigger === 'normative' ? { delivery: t.delivery } : { type: t.type };
+  const res = await http(() => driver.post(path, body));
+  if (res === null) return { kind: 'blocked', reason: `${path} unreachable (fetch failed)` };
+  if (trigger === 'seam' && (res.status === 404 || res.status === 405)) return { kind: 'seam', reason: `${SEAM} not mounted (${res.status}) — RFC 0236 §G` };
   const eventId = (res.json as { eventId?: unknown } | null)?.eventId;
-  if (res.status !== 202 || typeof eventId !== 'string') return { kind: 'blocked', reason: `${SEAM} answered ${res.status} ${readErrorCode(res.json) ?? ''} for ${type}, so no event was produced`.trim() };
+  if (res.status !== 202 || typeof eventId !== 'string') return { kind: 'blocked', reason: `${path} answered ${res.status} ${readErrorCode(res.json) ?? ''} for ${t.type}, so no event was produced`.trim() };
   return eventId;
 }
 
@@ -136,14 +156,14 @@ afterEach(async () => {
   if (receiver) { receiver.server.close(); receiver = null; }
 });
 
-describe('v2 host events (RFC 0236 — seam-gated)', () => {
+describe('v2 host events (RFC 0236; caused through RFC 0241 or the §G seam)', () => {
   it('an emitted durable host event arrives on /host/events as a valid envelope', async () => {
     const g = await gate();
     if ('kind' in g) return skip(g);
-    const d = pick(g.types, 'durable');
+    const d = pick(g, 'durable');
     if ('kind' in d) return skip(d);
     let eventId: string | Skip = '';
-    const frames = await streamWhile(async () => { eventId = await emit(d.type); });
+    const frames = await streamWhile(async () => { eventId = await emit(g.trigger, d); });
     if (typeof eventId !== 'string') return skip(eventId);
     assertAll(ID_ENVELOPE, DOC, judgeEnvelope(frames, eventId, d, hostEvent));
     if (await familyAdvertised('channelPresence')) {
@@ -154,13 +174,13 @@ describe('v2 host events (RFC 0236 — seam-gated)', () => {
   it('an ephemeral host event has no id: and is not redelivered after Last-Event-ID', async () => {
     const g = await gate();
     if ('kind' in g) return skip(g);
-    const d = pick(g.types, 'durable');
-    const e = pick(g.types, 'ephemeral');
+    const d = pick(g, 'durable');
+    const e = pick(g, 'ephemeral');
     if ('kind' in d) return skip(d);
     if ('kind' in e) return skip(e);
     let durableId: string | Skip = '';
     let ephemeralId: string | Skip = '';
-    const frames = await streamWhile(async () => { durableId = await emit(d.type); await sleep(150); ephemeralId = await emit(e.type); });
+    const frames = await streamWhile(async () => { durableId = await emit(g.trigger, d); await sleep(150); ephemeralId = await emit(g.trigger, e); });
     if (typeof durableId !== 'string') return skip(durableId);
     if (typeof ephemeralId !== 'string') return skip(ephemeralId);
     assertAll(ID_NO_RESUME, DOC, judgeEnvelope(frames, ephemeralId, e, hostEvent));
@@ -189,8 +209,8 @@ describe('v2 host events (RFC 0236 — seam-gated)', () => {
     const g = await gate();
     if ('kind' in g) return skip(g);
     if ((await familyAdvertised('webhooks')) === null) return softSkip('inapplicable', 'the host does not advertise webhooks');
-    const d = pick(g.types, 'durable');
-    const e = pick(g.types, 'ephemeral');
+    const d = pick(g, 'durable');
+    const e = pick(g, 'ephemeral');
     if ('kind' in d) return skip(d);
     if ('kind' in e) return skip(e);
     const hits: ScopedHit[] = [];
@@ -204,9 +224,9 @@ describe('v2 host events (RFC 0236 — seam-gated)', () => {
     const webhookId = (reg.json as { webhookId?: unknown } | null)?.webhookId;
     expect(reg.status, req(ID_HOST_BODY, 'spec/v2/core/webhooks.md §Surfaces', `events[] naming the advertised durable host-event type ${d.type} MUST be accepted; got ${reg.status} ${readErrorCode(reg.json) ?? ''}`)).toBe(201);
     if (typeof webhookId === 'string') registered.push(webhookId);
-    const ephemeralId = await emit(e.type);
+    const ephemeralId = await emit(g.trigger, e);
     if (typeof ephemeralId !== 'string') return skip(ephemeralId);
-    const durableId = await emit(d.type);
+    const durableId = await emit(g.trigger, d);
     if (typeof durableId !== 'string') return skip(durableId);
     for (let waited = 0; waited < 15_000 && !hits.some((h) => h.body.includes(durableId)); waited += 250) await sleep(250);
     const hit = hits.find((h) => h.body.includes(durableId));
@@ -225,25 +245,39 @@ describe('v2 host events (RFC 0236 — seam-gated)', () => {
     const g = await gate();
     if ('kind' in g) return skip(g);
     if ((await familyAdvertised('webhooks')) === null) return softSkip('inapplicable', 'the host does not advertise webhooks');
-    const d = pick(g.types, 'durable');
-    const e = pick(g.types, 'ephemeral');
+    const d = pick(g, 'durable');
+    const e = pick(g, 'ephemeral');
     if ('kind' in d) return skip(d);
     if ('kind' in e) return skip(e);
     if ('skipped' in fanOut) return softSkip('blocked', `no-fan-out reads the deliveries the host-variant leg observed, and ${fanOut.skipped}`);
     assertAll(ID_NO_FAN_OUT, DOC, [judgeNoFanOut(fanOut.bodies, fanOut.ephemeralId)]);
   });
 
+  it('emitTestHostEvent is served exactly for the listed host-test classes', async () => {
+    // RFC 0241 §B.1–§B.2: listing a host-test type binds the trigger for that class, and only it.
+    const g = await familyGate();
+    if ('kind' in g) return skip(g);
+    const findings: Finding[] = [];
+    for (const delivery of ['durable', 'ephemeral'] as const) {
+      // Each class: a listed one is accepted with its reserved type, an unlisted one refused.
+      const res = await http(() => driver.post(TRIGGER, { delivery }));
+      if (res === null) return softSkip('blocked', `${TRIGGER} unreachable (fetch failed)`);
+      findings.push(...judgeTriggerBinding(g.types, delivery, res.status, readErrorCode(res.json) ?? undefined, (res.json as { type?: unknown } | null)?.type));
+    }
+    assertAll(ID_BINDING, 'spec/v2/core/events.md §Host events', findings);
+  }, 20_000);
+
   it('a second tenant receives nothing for the first tenant’s host event', async () => {
     const g = await gate();
     if ('kind' in g) return skip(g);
-    const d = pick(g.types, 'durable');
+    const d = pick(g, 'durable');
     if ('kind' in d) return skip(d);
     const other = process.env['OPENWOP_TEST_TENANT_B_API_KEY']?.trim();
     if (!other) return softSkip('inapplicable', 'OPENWOP_TEST_TENANT_B_API_KEY (a credential bound to a second tenant) is not set — the cross-tenant check needs it');
     if (other === process.env['OPENWOP_API_KEY']?.trim()) return softSkip('blocked', 'OPENWOP_TEST_TENANT_B_API_KEY equals OPENWOP_API_KEY — the second credential must resolve to a different tenant');
     let eventId: string | Skip = '';
     const otherStream = streamWhile(async () => undefined, { bearer: other });
-    const own = await streamWhile(async () => { eventId = await emit(d.type); });
+    const own = await streamWhile(async () => { eventId = await emit(g.trigger, d); });
     const theirs = await otherStream;
     if (typeof eventId !== 'string') return skip(eventId);
     assertAll(ID_TENANT, DOC, judgeTenantScope(own, theirs, eventId));

@@ -532,6 +532,33 @@ def v2_openapi_and_seams():
             'the host routes a workflow to carries `a2aTenant`, the opaque A2A `tenant` value of that agent\'s card (interop.md §Per-agent cards).')
     paths['/host/events'] = {'get': {'tags': ['host'], 'operationId': 'streamHostEvents', 'summary': 'Stream host-scoped events (`heartbeat.*` and host events) as SSE', 'description': ('The default `hostEvents` address; a host MAY declare another under `heartbeat.deliveryChannel`. Every message is delivered only within the caller\'s tenant (RFC 0236 §D). Carries '
                                                                                                                                                                                 'no run data.'), 'responses': {'200': {'description': '`text/event-stream` of `hostEvents` messages.', 'content': {'text/event-stream': {'schema': {'type': 'string'}}}}, '401': {'$ref': '#/components/responses/Unauthenticated'}}}}
+    # RFC 0241 — the normative trigger for host events. The suite could cause one only
+    # through the §G seam (RFC 0236), so a seam-free host could not witness §B–§D;
+    # conformance.md §Witness class forbids a seam-only witness for those MUSTs.
+    paths['/host/events/test'] = {'post': {
+        'tags': ['host'],
+        'operationId': 'emitTestHostEvent',
+        'summary': 'Emit one test host event to the caller\'s tenant',
+        'description': ('Bound on a host listing `host-test.durable-triggered` or `host-test.ephemeral-triggered` in `hostEvents.types[]`, '
+                        'served for each listed class and otherwise answered `404`. Emits one event of the requested class\'s reserved type, '
+                        'with an empty payload, through the ordinary host-event path: envelope, `/host/events`, `{ hostEvent }` webhooks, '
+                        'delivery class and tenant gate. It belongs to the caller\'s tenant and to `workspaceId` when given, and MUST NOT '
+                        'reach another. A `delivery` whose type is not listed is `400 validation_error`; another tenant\'s `workspaceId` is '
+                        '`403 id_tenant_mismatch`, an unknown one `404`. A host SHOULD rate-limit it more tightly than reads.'),
+        'parameters': [{'$ref': '#/components/parameters/IdempotencyKey'}],
+        'requestBody': {'required': True, 'content': {'application/json': {'schema': {'type': 'object', 'additionalProperties': False,
+                        'required': ['delivery'], 'properties': {'delivery': {'type': 'string', 'enum': ['durable', 'ephemeral']},
+                        'workspaceId': {'$ref': '../../schemas/v2/ids.schema.json#/$defs/workspaceId'}}}}}},
+        'responses': {
+            '202': {'description': 'Emitted; `eventId` is the envelope\'s.', 'content': {'application/json': {'schema': {'type': 'object',
+                    'additionalProperties': False, 'required': ['eventId', 'type'], 'properties': {
+                    'eventId': {'$ref': '../../schemas/v2/ids.schema.json#/$defs/eventId'},
+                    'type': {'type': 'string', 'enum': ['host-test.durable-triggered', 'host-test.ephemeral-triggered']}}}}}},
+            '400': {'$ref': '#/components/responses/ValidationError'},
+            '401': {'$ref': '#/components/responses/Unauthenticated'},
+            '403': {'$ref': '#/components/responses/Forbidden'},
+            '404': {'$ref': '#/components/responses/NotFound'},
+            '429': {'$ref': '#/components/responses/RateLimited'}}}}
     doc['paths'] = paths
     comps = doc.setdefault('components', {})
     comps.setdefault('parameters', {})['OpenWOPVersion'] = {'name': 'OpenWOP-Version', 'in': 'header', 'required': False, 'schema': {'type': 'string', 'pattern': '^(0|[1-9][0-9]*)\\.(0|[1-9][0-9]*)$'}, 'description': ("Selects one of the host's listed major.minor versions. Absent, `/.well-known/openwop` uses `preferredVersion` and every other unversioned path is v2; an "
@@ -726,6 +753,7 @@ def v2_openapi_and_seams():
         'getRunEffects': ['runs:read'],
         'getUiPluginFrame': ['manifest:read'],
         'dispatchUiPluginRequest': ['artifacts:read'],
+        'emitTestHostEvent': ['webhooks:manage'],
         'listRuns': ['runs:read'],
         'listConnectionProviders': ['manifest:read'],
         'listWebhookDeadLetters': ['webhooks:manage'],

@@ -10,7 +10,7 @@ Every v2 core family now has a v2 normative home (RFC 0189). Many of its rules a
 
 - **Families (74 core):** 74 v2-witnessed, 0 v1-only, 0 unwitnessed. Of the 56 `witnessable-gated` families, 0 are v1-only; every unwitnessed family is `claims-check`.
 - **At v1 end-of-support:** the 0 v1-only families, and the 0 obligation units attributed to them, lose their only witness.
-- **Obligation units (899 in `spec/v2/core/`):** 611 (68%) sit in a section a major-2 scenario cites; 288 sit in 99 sections no major-2 scenario cites.
+- **Obligation units (900 in `spec/v2/core/`):** 612 (68%) sit in a section a major-2 scenario cites; 288 sit in 99 sections no major-2 scenario cites.
 - **Declaration links:** 0 core families declare `floorScenarios`; 2 declare `requirementIds`. The family-to-test link exists only in scenario code and citations, although `overview.md` §What a MUST means says every core MUST has an id in `requirements.json`.
 - **Scenarios:** 650 registered, 210 run at major 2. 33 major-2 citations name a v2 core section this script cannot match to a heading (see Citation gaps).
 
@@ -53,6 +53,7 @@ Every v2 core family now has a v2 normative home (RFC 0189). Many of its rules a
 | `queueBus` | witnessable-gated | **v2-witnessed** | 5 (5) | `v2-queue-cross-tenant-isolation` | `queue-ack-nack-dlq`, `queue-cross-tenant-isolation`, `queue-publish-consume-roundtrip`, `stream-subscribe-from-beginning` |
 | `subWorkflow` | claims-check | **v2-witnessed** | 5 (0) | `v2-sub-workflow-advertisement` | `dispatch-input-mapping`, `dispatchLoop` |
 | `workflowChainPacks` | witnessable-gated | **v2-witnessed** | 5 (1) | `v2-chain-pin-exact` | `chain-subchain-fanout`, `workflow-chain-deferred-parameters`, `workflow-chain-expansion`, `workflow-chain-host-expansion` +2 |
+| `hostEvents` | witnessable-gated | **v2-witnessed** | 4 (4) | `v2-host-event-delivery`, `v2-stream-mode-refusal` | – |
 | `mcp` | seam-gated | **v2-witnessed** | 4 (4) | `v2-interop-trace-context`, `v2-mcp-client-results`, `v2-mcp-mount-map`, `v2-mcp-tasks` +5 | `mcp-2026-07-28-discover`, `mcp-cache-tenant-scope`, `mcp-current-auth-boundary`, `mcp-extension-opacity` +9 |
 | `providerUsage` | witnessable-gated | **v2-witnessed** | 4 (0) | `v2-provider-usage-advertisement`, `v2-provider-usage-emission` | `provider-usage` |
 | `toolHooks` | witnessable-gated | **v2-witnessed** | 4 (4) | `v2-tool-authorization-fail-closed` | `safefetch-behavior`, `safefetch-live-audit`, `tool-hooks-authorization-fail-closed`, `tool-hooks-content-free` +4 |
@@ -60,7 +61,6 @@ Every v2 core family now has a v2 normative home (RFC 0189). Many of its rules a
 | `envelopeStrictness` | claims-check | **v2-witnessed** | 3 (3) | `v2-a2ui-v09-surface`, `v2-envelope-reasoning-shape` | – |
 | `fs` | witnessable-gated | **v2-witnessed** | 3 (3) | `v2-fs-sandbox-escape-refused` | `fs-path-traversal` |
 | `heartbeat` | witnessable-gated | **v2-witnessed** | 3 (3) | `v2-stream-mode-refusal` | `heartbeat-capability-shape`, `heartbeat-fires-once-per-tick`, `heartbeat-idempotent-no-spam`, `heartbeat-runtime-bound` |
-| `hostEvents` | witnessable-gated | **v2-witnessed** | 3 (3) | `v2-host-event-delivery`, `v2-stream-mode-refusal` | – |
 | `modelCapabilities` | witnessable-gated | **v2-witnessed** | 3 (0) | `v2-model-capabilities-advertisement` | `envelope-variant-discriminator-static`, `model-capability-insufficient`, `model-capability-substituted`, `node-module-required-capabilities-shape` |
 | `multiPartyConversation` | witnessable-gated | **v2-witnessed** | 3 (3) | `v2-multi-party-conversation-advertisement`, `v2-multi-party-council` | `multi-party-conversation-behavioral`, `multi-party-conversation-shape` |
 | `nodePackRuntimes` | claims-check | **v2-witnessed** | 3 (2) | `v2-node-pack-runtimes-advertisement`, `v2-wasm-abi-reject`, `v2-wasm-memory-cap` | `wasm-pack-abi-version-rejection`, `wasm-pack-invoke-completed`, `wasm-pack-invoke-suspended`, `wasm-pack-load` +2 |
@@ -111,7 +111,7 @@ Every v2 core family now has a v2 normative home (RFC 0189). Many of its rules a
 | `connection-packs.md` | 10 | 0 (0%) | `connections` |
 | `conversation.md` | 6 | 6 (100%) | `multiPartyConversation`, `conversationTurnModelProvenance`, `channelPresence` |
 | `errors.md` | 18 | 18 (100%) | – |
-| `events.md` | 67 | 41 (61%) | `supportedEnvelopes`, `schemaVersions`, `envelopeStrictness`, `envelopeContracts`, `envelopes`, `feedback`, `providerUsage`, `heartbeat`, `hostEvents` |
+| `events.md` | 68 | 42 (62%) | `supportedEnvelopes`, `schemaVersions`, `envelopeStrictness`, `envelopeContracts`, `envelopes`, `feedback`, `providerUsage`, `heartbeat`, `hostEvents` |
 | `execution.md` | 34 | 0 (0%) | `selfHostedRunner`, `multiAgent`, `agents`, `subWorkflow` |
 | `form-content-packs.md` | 11 | 1 (9%) | `forms` |
 | `headers.md` | 7 | 5 (71%) | – |
@@ -411,8 +411,8 @@ node scripts/report-v2-witness-coverage.mjs --write  # regenerate this file
     }
   },
   "obligationUnits": {
-    "total": 899,
-    "inV2CitedSections": 611,
+    "total": 900,
+    "inV2CitedSections": 612,
     "inUncitedSections": 288,
     "sectionsWithObligations": 271,
     "sectionsWithNoV2Citation": 99
