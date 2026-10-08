@@ -1,5 +1,13 @@
 # `@openwop/openwop-conformance` Changelog
 
+## [2.45.27] — unreleased — a seam-free host's seam-driven legs record `inapplicable`, not `blocked`
+
+- **Three scenarios recorded `blocked` on a host without the seams profile**, which denies the bundle certification, where the rest of the suite records a seam-driven leg `inapplicable`. Found by the v2 reference host's first seams-off cut (RFC 0241's evidence): 11 rows `blocked`, all `executed-pass` with the seams profile.
+  - **`v2-pack-isolation` (8 rows):** `invoke` recorded `inapplicable`, then each leg added `blocked` (`seam unavailable`), which outranks it. A leg now returns the kind `invoke` recorded; a seams host whose sandbox seam answers 404 is still `blocked`.
+  - **`v2-negotiation-authenticated` and `v2-minimum-version-refused`, MCP legs:** `blocked` without the seams profile, where their A2A twins say `inapplicable`. Now `inapplicable`.
+  - **`v2-approval-reject-disposition`, the quorum leg:** the resume value's `voter` is a suite convention, not a protocol field, so a seam-free host rightly counts the bearer, and one bearer cannot cause a majority. That is now `inapplicable`; a seams host that ignores `voter` is still `blocked`.
+- Proven on the v2 reference host: seams off, the 11 rows `inapplicable` and none `blocked`; seams on, all 28 rows of the four files `executed-pass`; seams on with `voter` ignored, the quorum row `blocked`.
+
 ## [2.45.26] — 2026-10-08 — RFC 0236's legs run without the seam (RFC 0241 Active)
 
 - **No scenario change.** RFC 0237 goes `Accepted` on the v2 reference host's certified 2.45.25 cut; its gaps G1 and G2 close, which changes the packed `spec/v1/gaps.json`.

@@ -59,7 +59,8 @@
  * The quorum leg presents distinct votes on one bearer through the resume
  * value's `voter` member, as `interrupt-quorum-resolution` does at major 1. A
  * host that counts both votes as one principal cannot be driven to a majority
- * this way; that records `blocked`, not a failure.
+ * this way: that records `blocked` on a host advertising the seams profile, and
+ * `inapplicable` on one without it, which rightly counts only the bearer.
  *
  * @see spec/v2/core/interrupt.md §Rejection
  * @see spec/v2/errors.json approval_rejected
@@ -68,7 +69,8 @@
 
 import { describe, it, expect } from 'vitest';
 import { driver, type OpenWOPResponse } from '../lib/driver.js';
-import { gateFamily } from '../lib/v2.js';
+import { gateFamily, v2Discovery } from '../lib/v2.js';
+import { seamsProfileAdvertised } from '../lib/seams.js';
 import { isFixtureAdvertised } from '../lib/fixtures.js';
 import { readErrorCode } from '../lib/error-envelope.js';
 import { softSkip } from '../lib/soft-skip.js';
@@ -190,6 +192,10 @@ describe('RFC 0223 — v2-approval-reject-disposition (gated on interrupt + conf
     const terminal = await waitStatus(s.runId, TERMINAL, 10_000);
     if (between === 'waiting-approval' && terminal?.['status'] === 'waiting-approval') {
       await http(() => driver.post(`/runs/${enc(s.runId)}/cancel`, {}));
+      // `voter` is a suite convention, not a protocol field: a host without the
+      // seams profile rightly counts the bearer, and one bearer cannot cause a
+      // majority there. Only a seams host that ignores it is `blocked`.
+      if (!seamsProfileAdvertised(await v2Discovery().catch(() => null))) return softSkip('inapplicable', 'the host counted both votes as one approver: one bearer, and the resume value\'s voter stand-in is a seams-profile convention this seam-free host rightly ignores; a majority needs distinct principals');
       return softSkip('blocked', 'the host counted both votes as one approver (one bearer; the resume value\'s voter was not honoured), so a majority could not be caused');
     }
     expect(between, req(id, DOC, 'one reject of three under majority does not decide the gate: the run MUST stay waiting-approval')).toBe('waiting-approval');
