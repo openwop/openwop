@@ -1,7 +1,7 @@
 openapi: 3.1.0
 info:
   title: OpenWOP v2 API
-  version: 2.45.27
+  version: 2.45.28
   summary: REST surface for declaring, executing, suspending, resuming, and observing multi-step workflows.
   description: 'The OpenWOP v2 REST API. Paths are unversioned and served at the bare origin; a client selects a version with
     the `OpenWOP-Version` header from the host''s `protocolVersions[]`. Conformance seams and test-mode operations are not
