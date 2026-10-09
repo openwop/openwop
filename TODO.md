@@ -275,8 +275,9 @@ Defects outside the spec:
       `nondeterminismPolicy.sources[]` seat (RFC 0237); a purpose-label carrier the suite can receive
       (DONE without an RFC in 2.45.29: the fixture `conformance-purpose-relay` takes a labelled inbound
       A2A message and relays it to the suite's peer, so `v2-purpose-propagation-onward` needs no seam;
-      the number 0240 was never filed. Owed: a certified cut of a host advertising `purposePropagation`,
-      the v2 reference host first, openwop-examples #166); and
+      the number 0240 was never filed. Witnessed: the v2 reference host's certified 2.45.29 cut
+      (524/0/0, build `bb1a42d6`) records both onward rows `executed-pass` through the relay, the
+      family's first certified witness; openwop-examples #166, #169); and
       dropping the required `declared` / `advertised` booleans, which bring back `supported:false`
       under another name.
 - [x] **Fixture-gated wave-3 legs not yet written.** (`multiPartyConversation`'s roster legs ship
