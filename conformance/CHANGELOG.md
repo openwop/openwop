@@ -1,6 +1,6 @@
 # `@openwop/openwop-conformance` Changelog
 
-## [2.45.30] — unreleased — the seams profile floor is seam-driven
+## [2.45.30] — 2026-10-09 — the seams profile floor is seam-driven
 
 - **`openwop-conformance-seams-v2` no longer certifies on a host that mounts no seams.** Its predicate is a `conformance` block at the discovery root, deliberately necessary and not sufficient: on a host that does not advertise `conformance.seamsProfile`, every floor leg records `inapplicable`, so the profile is claimed with `witnessCount 0` and not certified. But a floor row is recorded per scenario file, and two floor files had a leg that runs without a seam. openwop-app's production bundle `4683d9f89` (suite 2.45.28) carries a `conformance` block holding only `certificationBundleUrl`, and certified the profile on the facet leg alone.
   - **The facet leg** of `v2-v1-signed-webhook-accepted` (`0176.v1-signed-webhook-accepted.facet`) moves to `v2-webhooks-v1-scheme-listed`.
