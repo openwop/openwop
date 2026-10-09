@@ -47,9 +47,9 @@
       "bundle": "evidence/v2-host-bundles/openwop-workflow-engine.json",
       "present": true,
       "latest": {
-        "suiteVersion": "2.45.25",
+        "suiteVersion": "2.45.28",
         "targetMajor": 2,
-        "witnessSha256": "41b6ccb425f8b3b25709ff98c365f75552ac540410d885061484d2334cba7fc8",
+        "witnessSha256": "0b290461dc03c208bd139dcfe1ce70c04de4bb4f7acba90ab54ca1bdf0e14da1",
         "evidenceTiers": [
           "self"
         ],

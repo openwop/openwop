@@ -268,8 +268,14 @@ Defects outside the spec:
 - [x] **RFC 0241** `Accepted` (provisional) 2026-10-08 on the v2 reference host's certified
       seams-off public cut on 2.45.28 (420/0/0, build `bb7c5930`): all six RFC 0236 rows and
       `0241.trigger.bound-by-listing` caused through `POST /host/events/test`. Owed: the RFC 0156 §B review.
-- [ ] **openwop-app serves RFC 0241's trigger** (lists the two `host-test.*` types beside its durable
-      ones), so its production cut becomes RFC 0236's tier-2 witness; owner openwop-app-ba.
+- [x] **openwop-app serves RFC 0241's trigger** (openwop-app #4623): its certified production cut
+      `4683d9f89` (2.45.28, 423/0/0) passes all six `0236.*` rows and `0241.trigger.bound-by-listing`,
+      RFC 0236's tier-2 witness.
+- [ ] **The seams profile is claimed by a host that mounts no seams.** Its predicate tests only that a
+      `conformance` block exists, and the floor `v2-v1-signed-webhook-accepted` passes on its seam-free
+      facet leg, so openwop-app `4683d9f89` (block = `certificationBundleUrl` only) certifies
+      `openwop-conformance-seams-v2`. Fix: the profile certifies only when `conformance.seamsProfile`
+      names it, or the floor counts only seam-driven legs.
 - [ ] **RFCs owed before these legs can bind:** (the plugin-origin seat is RFC 0238; the roster
       seat is RFC 0239); a
       `nondeterminismPolicy.sources[]` seat (RFC 0237); a purpose-label carrier the suite can receive
