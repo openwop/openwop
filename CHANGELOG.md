@@ -29,6 +29,10 @@ Entries before this file was condensed carried full development detail. That tex
 - **`channelPresence` restated at v2.** `conversation.md` adds RFC 0110's advertise ⇒ emit and no-delivery-to-a-non-member rules, witnessed by `v2-channel-presence-delivery` through the §13 seam (now in `api/seams-v2.yaml`) and invariant `channel-presence-member-only-delivery`.
 - **Erratum: `identity.md` §5 grammar table matches `ids.schema.json` again.** `tenantId` gets its own row with the `anon:` prefix its pattern has had since 2.0.0. `typeId` gains the `@<semver>` pin from RFC 0187. No wire change. `check-id-kinds-bound` now compares the table against the schema.
 
+## [2.45.30] — 2026-10-09 — the seams profile floor is seam-driven
+
+- **Suite:** `openwop-conformance-seams-v2` no longer certifies on a host that mounts no seams. Two seam-free legs move out of its floor files into `v2-webhooks-v1-scheme-listed` and `v2-effect-ledger-keying`, ids unchanged; a coherence check keeps every floor leg seam-driven.
+
 ## [2.45.29] — 2026-10-08 — purpose labels witnessed without a seam; RFC 0241 Accepted
 
 - **Suite:** new fixture `conformance-purpose-relay` relays a labelled inbound A2A message to the suite's peer, so `v2-purpose-propagation-onward` witnesses `security-defaults.md` §Onward hops through normative operations; the §22 seam stays as a fallback. No RFC was needed.
