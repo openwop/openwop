@@ -7,8 +7,10 @@
  * HMAC-SHA256 with the subscription secret); this adds no signature scheme and
  * per-subscription secrets are unchanged across the cut (`spec/v2/core/webhooks.md`
  * §Dual emission through the overlap; persistence.md §Everything else a v1 host
- * persisted; migration row C9.9). The facet's `signatureAlgorithms[]` MUST list
- * `"v1"` (webhooks.md §Surfaces).
+ * persisted; migration row C9.9). The facet check (`signatureAlgorithms[]` lists
+ * `"v1"`) needs no seam and lives in `v2-webhooks-v1-scheme-listed.test.ts`
+ * since 2.45.30: this file is a floor of `openwop-conformance-seams-v2`, so
+ * every leg in it MUST be seam-driven (`coherence/seams-floor-legs-gated.test.ts`).
  *
  * The receiver under test is the HOST's inbound receiver path — the v2 host as
  * a subscriber (its trigger bridge, its A2A/MCP peer callbacks) — which the
@@ -76,16 +78,6 @@ async function deliver(secret: string, delivery: { headers: Record<string, strin
 }
 
 describe('RFC 0176 §D.2 — v1-signed-webhook-accepted (gated on webhooks + seams)', () => {
-  it('the webhooks facet lists scheme "v1" — the scheme a v1-signed delivery is verified under', async () => {
-    const doc = await discovery();
-    if (!doc) return softSkip('blocked', 'discovery unreachable');
-    const webhooks = await gateFamily('webhooks');
-    if (!webhooks) return softSkip('inapplicable', 'webhooks family not advertised (gate recorded under openwop.family.webhooks)');
-    const algorithms = webhooks['signatureAlgorithms'];
-    expect(Array.isArray(algorithms), req('openwop.requirement.0176.v1-signed-webhook-accepted.facet', 'spec/v2/core/webhooks.md §Surfaces', 'the webhooks facet is { signatureAlgorithms[] }')).toBe(true);
-    expect(algorithms, req('openwop.requirement.0176.v1-signed-webhook-accepted.facet', 'spec/v2/core/webhooks.md §Surfaces', 'signatureAlgorithms MUST list "v1" — the cut adds no signature scheme (RFC 0176 §D.2)')).toContain('v1');
-  });
-
   it('the host\'s v2 receiver path accepts an X-openwop-*-only scheme-v1 delivery and refuses a tampered one', async () => {
     const doc = await discovery();
     if (!doc) return softSkip('blocked', 'discovery unreachable');

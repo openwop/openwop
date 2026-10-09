@@ -137,7 +137,7 @@ Each scenario file records its disposition and assertion count in `<report-dir>/
 
 ## What's Covered
 
-The current suite has 650 scenario files under `src/scenarios/`. By target major ([`scenario-majors.json`](./scenario-majors.json)): 210 files run against a v2 host and 455 against a v1 host; 15 of them run at both.
+The current suite has 652 scenario files under `src/scenarios/`. By target major ([`scenario-majors.json`](./scenario-majors.json)): 212 files run against a v2 host and 455 against a v1 host; 15 of them run at both.
 
 The v2 scenarios (`src/scenarios/v2-*.test.ts`) cover, by area:
 
@@ -147,7 +147,7 @@ The v2 scenarios (`src/scenarios/v2-*.test.ts`) cover, by area:
 | Runs | Create, read, list, cancel, bulk cancel, pause/resume, run options and limits, outputs on completion, snapshots | `v2-created-run-readable`, `v2-run-cancel`, `v2-run-pause-resume`, `v2-run-options-limits`, `v2-run-completed-outputs` |
 | Events and streaming | Closed event types, SSE projection, `Last-Event-ID` resumption, poll cursors, terminal-event-once | `v2-stream-sse-projection`, `v2-sse-last-event-id-cursor`, `v2-poll-cursor-v2`, `v2-terminal-event-once` |
 | Errors and headers | The error registry and envelope, malformed bodies, CORS preflight, header scheme | `v2-error-registry`, `v2-malformed-body-envelope`, `v2-cors-preflight`, `v2-header-scheme` |
-| Idempotency | Key grammar, in-flight concurrency, effect identity | `v2-idempotency-key-grammar`, `v2-idempotency-in-flight`, `v2-effect-identity-business-key` |
+| Idempotency | Key grammar, in-flight concurrency, effect identity | `v2-idempotency-key-grammar`, `v2-idempotency-in-flight`, `v2-effect-identity-business-key`, `v2-effect-ledger-keying` |
 | Interrupts and approvals | Resolve after terminal, token scheme, approver enforcement, reject disposition, credential interrupts | `v2-interrupt-resolve-terminal`, `v2-approver-enforced`, `v2-credential-interrupt` |
 | Replay and fork | Fork prefix and ancestry, refusals, replay side-effect suppression, forking a v1 run | `v2-run-fork-prefix`, `v2-run-fork-refusals`, `v2-replay-suppression-ordinal` |
 | Identity, auth and OAuth | Auth challenges, bound ids, workspace scope from identity, OIDC audience, protected-resource metadata, PKCE | `v2-auth-challenge`, `v2-bound-id-kinds`, `v2-oidc-id-token-audience`, `v2-oauth-client-pkce-state-iss` |
@@ -166,7 +166,7 @@ Three kinds of scenario share the tree:
 - **Host** checks drive a live host over HTTP.
 - **Gated** checks run only when the host advertises the family, profile or fixture they need, and otherwise record `inapplicable` or `blocked` with a reason. `--require-behavior` turns an advertised-but-unwitnessable behaviour into a failure.
 
-Current source tree: 650 scenario files. [`coverage.md`](./coverage.md) maps each spec document and every OpenAPI operation to its scenarios. [`CHANGELOG.md`](./CHANGELOG.md) records when each scenario landed.
+Current source tree: 652 scenario files. [`coverage.md`](./coverage.md) maps each spec document and every OpenAPI operation to its scenarios. [`CHANGELOG.md`](./CHANGELOG.md) records when each scenario landed.
 
 ## How the 2.x suite is built
 
