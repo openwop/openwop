@@ -10,9 +10,9 @@ Every v2 core family now has a v2 normative home (RFC 0189). Many of its rules a
 
 - **Families (74 core):** 74 v2-witnessed, 0 v1-only, 0 unwitnessed. Of the 56 `witnessable-gated` families, 0 are v1-only; every unwitnessed family is `claims-check`.
 - **At v1 end-of-support:** the 0 v1-only families, and the 0 obligation units attributed to them, lose their only witness.
-- **Obligation units (900 in `spec/v2/core/`):** 612 (68%) sit in a section a major-2 scenario cites; 288 sit in 99 sections no major-2 scenario cites.
+- **Obligation units (899 in `spec/v2/core/`):** 612 (68%) sit in a section a major-2 scenario cites; 287 sit in 99 sections no major-2 scenario cites.
 - **Declaration links:** 0 core families declare `floorScenarios`; 2 declare `requirementIds`. The family-to-test link exists only in scenario code and citations, although `overview.md` §What a MUST means says every core MUST has an id in `requirements.json`.
-- **Scenarios:** 652 registered, 212 run at major 2. 33 major-2 citations name a v2 core section this script cannot match to a heading (see Citation gaps).
+- **Scenarios:** 653 registered, 213 run at major 2. 34 major-2 citations name a v2 core section this script cannot match to a heading (see Citation gaps).
 
 ## How to read it
 
@@ -54,7 +54,7 @@ Every v2 core family now has a v2 normative home (RFC 0189). Many of its rules a
 | `subWorkflow` | claims-check | **v2-witnessed** | 5 (0) | `v2-sub-workflow-advertisement` | `dispatch-input-mapping`, `dispatchLoop` |
 | `workflowChainPacks` | witnessable-gated | **v2-witnessed** | 5 (1) | `v2-chain-pin-exact` | `chain-subchain-fanout`, `workflow-chain-deferred-parameters`, `workflow-chain-expansion`, `workflow-chain-host-expansion` +2 |
 | `hostEvents` | witnessable-gated | **v2-witnessed** | 4 (4) | `v2-host-event-delivery`, `v2-stream-mode-refusal` | – |
-| `mcp` | seam-gated | **v2-witnessed** | 4 (4) | `v2-interop-trace-context`, `v2-mcp-client-results`, `v2-mcp-mount-map`, `v2-mcp-tasks` +5 | `mcp-2026-07-28-discover`, `mcp-cache-tenant-scope`, `mcp-current-auth-boundary`, `mcp-extension-opacity` +9 |
+| `mcp` | seam-gated | **v2-witnessed** | 4 (4) | `v2-interop-trace-context`, `v2-mcp-client-results`, `v2-mcp-mount-map`, `v2-mcp-tasks` +6 | `mcp-2026-07-28-discover`, `mcp-cache-tenant-scope`, `mcp-current-auth-boundary`, `mcp-extension-opacity` +9 |
 | `providerUsage` | witnessable-gated | **v2-witnessed** | 4 (0) | `v2-provider-usage-advertisement`, `v2-provider-usage-emission` | `provider-usage` |
 | `toolHooks` | witnessable-gated | **v2-witnessed** | 4 (4) | `v2-tool-authorization-fail-closed` | `safefetch-behavior`, `safefetch-live-audit`, `tool-hooks-authorization-fail-closed`, `tool-hooks-content-free` +4 |
 | `budget` | witnessable-gated | **v2-witnessed** | 3 (3) | `v2-configurable-closed`, `v2-run-options-limits` | `budget-enforcement`, `budget-policy-shape` |
@@ -83,7 +83,7 @@ Every v2 core family now has a v2 normative home (RFC 0189). Many of its rules a
 | `conversationTurnModelProvenance` | witnessable-gated | **v2-witnessed** | 1 (1) | `v2-conversation-turn-model-provenance-advertisement`, `v2-conversation-turn-model-provenance` | `conversation-turn-model-provenance-shape` |
 | `promptLibrary` | claims-check | **v2-witnessed** | 1 (0) | `v2-prompt-library-advertisement` | – |
 | `schemaVersions` | witnessable-gated | **v2-witnessed** | 1 (1) | `v2-a2ui-v09-surface` | `aiEnvelope.schemaDrift` |
-| `a2a` | seam-gated | **v2-witnessed** | 0 (0) | `v2-a2a-agent-cards`, `v2-a2a-client-error-details`, `v2-a2a-operation-map`, `v2-a2a-push-delivery` +6 | `a2a-1-0-agent-card`, `a2a-1-0-task-roundtrip`, `a2a-card-runtime-consistency`, `a2a-peer-authority` +2 |
+| `a2a` | seam-gated | **v2-witnessed** | 0 (0) | `v2-a2a-agent-cards`, `v2-a2a-client-error-details`, `v2-a2a-operation-map`, `v2-a2a-push-delivery` +7 | `a2a-1-0-agent-card`, `a2a-1-0-task-roundtrip`, `a2a-card-runtime-consistency`, `a2a-peer-authority` +2 |
 | `auditLogIntegrity` | witnessable-gated | **v2-witnessed** | 0 (0) | `audit-checkpoint-signature`, `audit-log-integrity` | `strict-behavior-gate` |
 | `auth` | seam-gated | **v2-witnessed** | 0 (0) | `audit-checkpoint-signature`, `audit-log-integrity`, `v2-assurance-downgrade-audited`, `v2-lane-exp-only-bound` +3 | `auth-api-key-rotation`, `auth-mtls`, `auth-oauth2-client-credentials`, `auth-oidc-user-bearer` +6 |
 | `authorization` | witnessable-gated | **v2-witnessed** | 0 (0) | `v2-authorization-advertisement` | `approval-gate-flow`, `authorization-fail-closed`, `authorization-roles-shape`, `compensation-recovery` |
@@ -119,7 +119,7 @@ Every v2 core family now has a v2 normative home (RFC 0189). Many of its rules a
 | `i18n.md` | 17 | 4 (24%) | `i18n`, `content` |
 | `idempotency.md` | 25 | 20 (80%) | `idempotency` |
 | `identity.md` | 64 | 55 (86%) | `anonymousActor`, `authorization`, `auth` |
-| `interop.md` | 54 | 41 (76%) | `a2a`, `mcp` |
+| `interop.md` | 53 | 41 (77%) | `a2a`, `mcp` |
 | `interrupt.md` | 46 | 43 (93%) | `interrupt` |
 | `node-pack-runtimes.md` | 3 | 2 (67%) | `nodePackRuntimes` |
 | `oauth.md` | 13 | 11 (85%) | `credentials`, `oauth` |
@@ -161,10 +161,10 @@ Sections with the most obligation units and no major-2 citation. A doc-level cit
 | `form-content-packs.md` § Validation | forms | 5 |
 | `host-services.md` § Composition | prompts | 5 |
 | `i18n.md` § `Accept-Language` | i18n | 5 |
-| `interop.md` § Negotiation is a protocol | shared | 5 |
 | `overview.md` § Profile claim vocabulary | shared | 5 |
 | `events.md` § `providerUsage` | providerUsage | 4 |
 | `form-content-packs.md` § Instantiation | forms | 4 |
+| `interop.md` § Negotiation is a protocol | shared | 4 |
 | `versioning.md` § 4. One release identity | shared | 4 |
 | `conformance.md` § Requirement ids | production | 3 |
 
@@ -174,7 +174,7 @@ These 65 major-2 scenarios cite no `spec/v2/core` document (only RFCs, schemas o
 
 `audit-anomaly-shape`, `audit-checkpoint-vectors`, `context-budget-transcript-bound`, `context-summarization-replay`, `otel-mcp-semconv-projection`, `v2-advertised-fixtures-exist`, `v2-agent-org-chart-served-shape`, `v2-agent-runtime-advertisement`, `v2-ai-envelope-advertisement`, `v2-ai-providers-advertisement`, `v2-artifact-type-schema-url`, `v2-artifact-types-advertisement`, `v2-auth-challenge`, `v2-authorization-advertisement`, `v2-budget-enforcement`, `v2-budget-exhaustion-facet`, `v2-channel-presence-advertisement`, `v2-content-locale-keys`, `v2-conversation-turn-model-provenance-advertisement`, `v2-conversation-turn-parts`, `v2-credentials-advertisement`, `v2-data-residency-advertisement`, `v2-dead-letter-advertisement`, `v2-dispatch-input-mapping`, `v2-dispatch-loop`, `v2-durability-recovery`, `v2-envelope-tier-one-subset-static`, `v2-envelopes-advertisement`, `v2-ext-family-claims`, `v2-ext-rest-transport`, `v2-i18n-negotiation`, `v2-limits-envelope-caps-advertisement`, `v2-model-capabilities-advertisement`, `v2-model-capability-insufficient`, `v2-multi-party-conversation-advertisement`, `v2-negotiation-authenticated`, `v2-negotiation-decided-emitted`, `v2-node-pack-runtimes-advertisement`, `v2-payload-seats-0186`, `v2-payload-vendor-hatch`, `v2-portability-advertisement`, `v2-production-backpressure`, `v2-prompt-all-four-kinds-events`, `v2-prompt-end-to-end-events`, `v2-prompt-library-advertisement`, `v2-prompt-list-and-fetch`, `v2-prompt-mutable-lifecycle`, `v2-prompt-pack-install`, `v2-prompt-render-deterministic`, `v2-prompt-resolution-chain-event`, `v2-protected-resource-metadata`, `v2-provider-conflict`, `v2-provider-usage-advertisement`, `v2-provider-usage-emission`, `v2-purpose-propagation-advertisement`, `v2-run-execution-bounds`, `v2-scheduling-advertisement`, `v2-self-hosted-runner-advertisement`, `v2-sub-workflow-advertisement`, `v2-subworkflow-input-mapping`, `v2-subworkflow-linkage`, `v2-table-schema-enforcement`, `v2-trigger-dead-letter-read`, `v2-ui-plugins-advertisement`, `v2-webhook-message-id-stable`
 
-33 major-2 citations name a v2 core section that matches no heading (most are `tool-catalog.md` §A–§F, RFC section letters):
+34 major-2 citations name a v2 core section that matches no heading (most are `tool-catalog.md` §A–§F, RFC section letters):
 
 - spec/v2/core/tool-catalog.md §B (6)
 - spec/v2/core/tool-catalog.md §C (5)
@@ -183,6 +183,7 @@ These 65 major-2 scenarios cite no `spec/v2/core` document (only RFCs, schemas o
 - spec/v2/core/interop.md §A2A multi-turn (3)
 - spec/v2/core/interop.md §The floor (2)
 - spec/v2/core/interop.md §The refresh SLA (2)
+- spec/v2/core/interop.md §The audit event (1)
 - spec/v2/core/replay.md §Determinism guarantees (1)
 - spec/v2/core/tool-catalog.md §A (1)
 - spec/v2/core/tool-catalog.md §C-1 (1)
@@ -411,9 +412,9 @@ node scripts/report-v2-witness-coverage.mjs --write  # regenerate this file
     }
   },
   "obligationUnits": {
-    "total": 900,
+    "total": 899,
     "inV2CitedSections": 612,
-    "inUncitedSections": 288,
+    "inUncitedSections": 287,
     "sectionsWithObligations": 271,
     "sectionsWithNoV2Citation": 99
   },
@@ -422,10 +423,10 @@ node scripts/report-v2-witness-coverage.mjs --write  # regenerate this file
     "familiesWithRequirementIds": 2
   },
   "scenarios": {
-    "registered": 652,
-    "major2": 212
+    "registered": 653,
+    "major2": 213
   },
-  "unresolvedV2Citations": 33,
+  "unresolvedV2Citations": 34,
   "major2ScenariosCitingNoCoreDoc": 65,
   "risks": {
     "listed": 20,

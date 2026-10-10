@@ -4,10 +4,10 @@
 | ----------------- | --------------------------------------------------------------- |
 | **RFC**           | 0242                                                            |
 | **Title**         | a negotiation record says what was asked for, and an inbound negotiation has a home |
-| **Status**        | `Draft`                                                         |
+| **Status**        | `Active`                                                        |
 | **Author(s)**     | David Tufts (@davidscotttufts)                                  |
 | **Created**       | 2026-10-10                                                      |
-| **Updated**       | 2026-10-10 — filed `Draft` after an `/architect` design review (2026-10-10) of two defects openwop-app found implementing `negotiation.decided` (its ADR 0858 P4): the event cannot record a downgrade, and an inbound negotiation has no log to land on. |
+| **Updated**       | 2026-10-10 — `Draft` → `Active`, comment window waived by the maintainer (2026-10-10: "waive it"), recorded as a STEWARD OVERRIDE of RFC 0147 §A.6 in MAINTAINERS.md. §A–§D are merged (suite 2.46.0). Proven against the v2 reference host carrying the §B implementation (openwop-examples, `rfc0242/inbound-negotiation-record`): every `0242.*` leg passes, and fails when the host drops `requested`. · 2026-10-10 — filed `Draft` after an `/architect` design review (2026-10-10) of two defects openwop-app found implementing `negotiation.decided` (its ADR 0858 P4): the event cannot record a downgrade, and an inbound negotiation has no log to land on. |
 | **Affects**       | `schemas/v2/run-event-payloads.schema.json` `$defs/negotiationDecided` (one optional property; seeded, so its seed rule in `scripts/derive-v2-schemas.mjs`) · `schemas/v2/host-event.schema.json` (one reserved protocol type) · `spec/v2/core/interop.md` §The audit event · `spec/v2/core/events.md` §Host events · `conformance/src/scenarios/v2-negotiation-decided-emitted.test.ts` and a new `v2-negotiation-decided-inbound.test.ts` · `SECURITY/invariants.yaml` (`a2a-version-no-silent-downgrade`, `mcp-version-no-silent-downgrade`) |
 | **Compatibility** | `additive` (COMPATIBILITY.md §2.4): one optional property on a closed payload, and one reserved type on the optional `hostEvents` family. No field is renamed or removed, no enum changes, no MUST relaxes. |
 | **Supersedes**    | —                                                               |
@@ -94,8 +94,8 @@ Settled in the `/architect` review (2026-10-10):
 
 ## Acceptance criteria
 
-- [ ] `Active`: §A–§C merged; `CHANGELOG.md` records it.
-- [ ] `v2-negotiation-decided-emitted` asserts `requested`, and `v2-negotiation-decided-inbound` ships, each sabotage-proved against a host that omits `requested` or records nothing inbound.
+- [x] `Active`: the comment window was waived on the record (maintainer, 2026-10-10; MAINTAINERS.md). §A–§C merged; `CHANGELOG.md` records it.
+- [x] `v2-negotiation-decided-emitted` asserts `requested`, and `v2-negotiation-decided-inbound` ships, each sabotage-proved against a host that omits `requested` or records nothing inbound.
 - [ ] `Accepted`: a certified major-2 bundle records `openwop.requirement.0242.*` `executed-pass` for A.2 (inbound), B.2 and B.3.
 
 ## References

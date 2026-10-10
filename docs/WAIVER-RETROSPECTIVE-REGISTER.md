@@ -171,5 +171,6 @@ to land — and until then the zero is visibly a blocked obligation rather than 
 | 0238 | a host's front-end plugin boundary is observable (authorization and certification; additive; STEWARD OVERRIDE of RFC 0147 §A.6) | in-scope-pending-assessment | — | — | `not-reviewed` |
 | 0239 | a council's roster has an input seat and its refusals have codes (authorization and certification; additive; STEWARD OVERRIDE of RFC 0147 §A.6) | in-scope-pending-assessment | — | — | `not-reviewed` |
 | 0241 | a host event can be triggered on demand for test (authorization and certification; additive; STEWARD OVERRIDE of RFC 0147 §A.6) | in-scope-pending-assessment | — | — | `not-reviewed` |
+| 0242 | a negotiation record says what was asked for, and an inbound negotiation has a home (certification; additive; STEWARD OVERRIDE of RFC 0147 §A.6) | in-scope-pending-assessment | — | — | `not-reviewed` |
 | 0236 | Host events — events without a run-log position (isolation; additive with a safety-fix clause; STEWARD OVERRIDE of RFC 0147 §A.6) | in-scope-pending-assessment | — | — | `not-reviewed` |
 | 0237 | Declared nondeterminism names its sources (certification; additive; STEWARD OVERRIDE of RFC 0147 §A.6) | in-scope-pending-assessment | — | — | `not-reviewed` |

@@ -20,7 +20,7 @@
     "type": {
       "type": "string",
       "pattern": "^[a-z][a-z0-9]*(-[a-z0-9]+)*\\.[a-z][a-z0-9]*(-[a-z0-9]+)*$",
-      "description": "A protocol host-event type (`channel.presence`) or a vendor type `org.name` whose org is registered (`events.md` §Naming)."
+      "description": "A protocol host-event type (`channel.presence`, `negotiation.decided`, `host-test.*`) or a vendor type `org.name` whose org is registered (`events.md` §Naming)."
     },
     "timestamp": {
       "type": "string",
@@ -103,6 +103,26 @@
             "type": "object",
             "maxProperties": 0,
             "description": "RFC 0241 §A: a caller-triggered test event (`emitTestHostEvent`) carries no payload."
+          }
+        }
+      }
+    },
+    {
+      "if": {
+        "properties": {
+          "type": {
+            "const": "negotiation.decided"
+          }
+        }
+      },
+      "then": {
+        "properties": {
+          "delivery": {
+            "const": "durable"
+          },
+          "payload": {
+            "$ref": "run-event-payloads.schema.json#/$defs/negotiationDecided",
+            "description": "RFC 0242 §B: a negotiation made outside any run (an inbound A2A or MCP exchange), recorded with the run event's payload."
           }
         }
       }

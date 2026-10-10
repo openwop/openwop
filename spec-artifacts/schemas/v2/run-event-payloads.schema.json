@@ -4340,6 +4340,10 @@
           "type": "string",
           "description": "The version or revision decided (absent when refused below the floor)."
         },
+        "requested": {
+          "type": "string",
+          "description": "RFC 0242 §A — the version or revision the requesting side named: inbound, the caller's (`A2A-Version`, MCP `initialize` `protocolVersion`); outbound, the one the host asked the peer for. MUST be present whenever one was named. A downgrade is an `accepted` record whose `version` differs from it."
+        },
         "floor": {
           "type": "string"
         },

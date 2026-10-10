@@ -1,8 +1,16 @@
 # `@openwop/openwop-conformance` Changelog
 
-## [2.45.31] — unreleased — RFC 0242: a negotiation record says what was asked for
+## [2.46.0] — unreleased — RFC 0242: a negotiation record says what was asked for, and an inbound negotiation has a home
 
-- **Cycle opened by RFC 0242 (Draft).** The RFC's gap register changes the packed `gaps.json`, so the suite version moves. Its scenario changes (`requested` on `v2-negotiation-decided-emitted`, and the new `v2-negotiation-decided-inbound`) land with `Active`.
+A minor, not a patch: `host-event.schema.json` gains a cross-file `$ref` to `run-event-payloads.schema.json#/$defs/negotiationDecided` (COMPATIBILITY.md §2.1). A validator that pre-registers a fixed list of peer schemas must register `run-event-payloads.schema.json` before compiling `host-event.schema.json`.
+
+- **`requested` on `negotiation.decided` (RFC 0242 §A).** `v2-negotiation-decided-emitted` gains two legs, `0242.requested.outbound` and `.mcp`: the record's `requested` equals the version the host's client named to the suite's peer, read from what the peer received. A downgrade is now visible as an `accepted` record whose `version` differs from `requested`.
+- **New `v2-negotiation-decided-inbound` (RFC 0242 §B).** Gated on an inbound A2A or MCP surface (`a2a.agentCardUrl`, `mcp.serverUrls`, `mcp.serverMount`), with no seam:
+  - `0242.inbound.listed`: such a host lists `negotiation.decided` as a durable `hostEvents` type.
+  - `0242.inbound.recorded` / `.refused` (and `.mcp`): with `/host/events` open, an authenticated inbound exchange naming `preferredVersion`, then one naming a version below the floor, each leaves a durable, runless `negotiation.decided` host event with the right `outcome` and `requested`.
+  - Proven against the v2 reference host with the §B implementation: every leg passes, and every record leg fails when the host drops `requested`. On a host that serves A2A or MCP inbound without listing the type, `listed` fails and the record legs are `inapplicable`, naming it.
+- **New lib `negotiation-record.ts`** with self-tests: `askedVersion`, `judgeRequested`, `judgeListed`, `judgeInboundRecord`.
+- **What a host's next bundle shows:** a host that serves A2A or MCP inbound records `0242.inbound.listed` `executed-fail` until it lists the type; the v2 reference host and openwop-app follow (RFC 0242 G1). A host that advertises neither surface is unaffected.
 
 ## [2.45.30] — 2026-10-09 — the seams profile floor is seam-driven
 

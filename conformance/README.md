@@ -137,7 +137,7 @@ Each scenario file records its disposition and assertion count in `<report-dir>/
 
 ## What's Covered
 
-The current suite has 652 scenario files under `src/scenarios/`. By target major ([`scenario-majors.json`](./scenario-majors.json)): 212 files run against a v2 host and 455 against a v1 host; 15 of them run at both.
+The current suite has 653 scenario files under `src/scenarios/`. By target major ([`scenario-majors.json`](./scenario-majors.json)): 213 files run against a v2 host and 455 against a v1 host; 15 of them run at both.
 
 The v2 scenarios (`src/scenarios/v2-*.test.ts`) cover, by area:
 
@@ -166,7 +166,7 @@ Three kinds of scenario share the tree:
 - **Host** checks drive a live host over HTTP.
 - **Gated** checks run only when the host advertises the family, profile or fixture they need, and otherwise record `inapplicable` or `blocked` with a reason. `--require-behavior` turns an advertised-but-unwitnessable behaviour into a failure.
 
-Current source tree: 652 scenario files. [`coverage.md`](./coverage.md) maps each spec document and every OpenAPI operation to its scenarios. [`CHANGELOG.md`](./CHANGELOG.md) records when each scenario landed.
+Current source tree: 653 scenario files. [`coverage.md`](./coverage.md) maps each spec document and every OpenAPI operation to its scenarios. [`CHANGELOG.md`](./CHANGELOG.md) records when each scenario landed.
 
 ## How the 2.x suite is built
 
