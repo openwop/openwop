@@ -274,6 +274,7 @@ Defects outside the spec:
 - [x] **The seams profile is claimed by a host that mounts no seams** (openwop-app `4683d9f89`):
       fixed in 2.45.30. The two seam-free floor legs moved to their own files, and
       `coherence/seams-floor-legs-gated` keeps every floor leg seam-driven.
+      Witnessed in production: openwop-app's 2.45.30 cut `7643ddb8e` no longer marks the profile certified.
 - [ ] **RFCs owed before these legs can bind:** (the plugin-origin seat is RFC 0238; the roster
       seat is RFC 0239); a
       `nondeterminismPolicy.sources[]` seat (RFC 0237); a purpose-label carrier the suite can receive
