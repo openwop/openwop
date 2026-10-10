@@ -1,7 +1,7 @@
 {
   "$schema": "./gaps.schema.json",
   "version": 1,
-  "updated": "2026-10-09",
+  "updated": "2026-10-10",
   "witnessClasses": [
     "witnessable-unaided",
     "witnessable-gated",
@@ -14458,6 +14458,40 @@
       "sources": [
         {
           "file": "RFCS/registers/0241-host-event-test-trigger.gaps.md",
+          "token": "G2"
+        }
+      ]
+    },
+    {
+      "id": "openwop.gap.0242.1",
+      "rfc": "0242",
+      "local": "G1",
+      "section": "§B, §D",
+      "surface": "No host records an inbound negotiation as a host event or lists the reserved type, so B.2 and B.3 have no witness.",
+      "witness": "unclassified",
+      "requirementId": null,
+      "disposition": "externally-gated",
+      "target": "negotiation-inbound-host",
+      "sources": [
+        {
+          "file": "RFCS/registers/0242-negotiation-decided-requested-and-inbound.gaps.md",
+          "token": "G1"
+        }
+      ]
+    },
+    {
+      "id": "openwop.gap.0242.2",
+      "rfc": "0242",
+      "local": "G2",
+      "section": "§A.3",
+      "surface": "No host in `INTEROP-MATRIX.md` offers a version between its floor and its preferred version, so no host can be shown to record a downgrade above the floor.",
+      "witness": "unclassified",
+      "requirementId": null,
+      "disposition": "carried",
+      "target": "openwop.gap.0242.2",
+      "sources": [
+        {
+          "file": "RFCS/registers/0242-negotiation-decided-requested-and-inbound.gaps.md",
           "token": "G2"
         }
       ]

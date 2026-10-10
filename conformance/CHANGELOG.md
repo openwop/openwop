@@ -1,5 +1,9 @@
 # `@openwop/openwop-conformance` Changelog
 
+## [2.45.31] — unreleased — RFC 0242: a negotiation record says what was asked for
+
+- **Cycle opened by RFC 0242 (Draft).** The RFC's gap register changes the packed `gaps.json`, so the suite version moves. Its scenario changes (`requested` on `v2-negotiation-decided-emitted`, and the new `v2-negotiation-decided-inbound`) land with `Active`.
+
 ## [2.45.30] — 2026-10-09 — the seams profile floor is seam-driven
 
 - **`openwop-conformance-seams-v2` no longer certifies on a host that mounts no seams.** Its predicate is a `conformance` block at the discovery root, deliberately necessary and not sufficient: on a host that does not advertise `conformance.seamsProfile`, every floor leg records `inapplicable`, so the profile is claimed with `witnessCount 0` and not certified. But a floor row is recorded per scenario file, and two floor files had a leg that runs without a seam. openwop-app's production bundle `4683d9f89` (suite 2.45.28) carries a `conformance` block holding only `certificationBundleUrl`, and certified the profile on the facet leg alone.
