@@ -251,6 +251,12 @@ Defects outside the spec:
 - [x] **RFC 0237** `Accepted` (provisional) 2026-10-08 on the v2 reference host's certified 2.45.25 cut
       (517/0/0, build `a8e6db64`; sources `clock`, `random`, `id`). Owed: the RFC 0156 §B review; G3 (drop
       the `declared` boolean) at 3.0.
+- [ ] **`auth.subjectLinkKey` is unenforced at v2 (found by openwop-app, ADR 0812, 2026-10-10).** `identity.md` §3
+      says advertising both `saml` and `scim` lanes implies the link contract and that the key names its class,
+      but `spec/v2/facets/auth.schema.json` neither requires the key with both lanes (RFC 0164 §A.3's v1 rule) nor
+      forbids it with one. Ruled for openwop-app: advertise it only with both lanes. Owed: make that a MUST with a
+      witness, and decide whether the conditional is additive or waits for 3.0 (`COMPATIBILITY.md` §2.4).
+      Ruling for `negotiation.decided` below: additive RFC (optional `requested` + an inbound host-event home).
 - [ ] **`negotiation.decided` (found by openwop-app, ADR 0858 P4, 2026-10-07).** (1) `interop.md`'s example
       event uses other field names and an outcome `downgraded`, but the closed payload schema admits only
       `accepted` | `refused`, so a downgrade records as `accepted` with the lower version; align the two, and
