@@ -49,7 +49,7 @@
       "latest": {
         "suiteVersion": "2.45.30",
         "targetMajor": 2,
-        "witnessSha256": "f4bf80dda470242998582dafb7346f6ef40b362bbb65b6935fd5eab9aaefb475",
+        "witnessSha256": "3c3303c9d97738f07eaa7c28220472dfe12078a11265c0986f211465ae36ae19",
         "evidenceTiers": [
           "self"
         ],
