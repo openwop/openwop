@@ -8,6 +8,7 @@ Entries before this file was condensed carried full development detail. That tex
 
 ## [Unreleased]
 
+- **RFC 0242 filed (Draft).** `negotiation.decided` gains an optional `requested`, so a downgrade is visible as `version` ≠ `requested`, and a negotiation with no run (an inbound A2A or MCP exchange) is recorded as a durable host event. Found by openwop-app.
 - **2.45.30 cycle (suite): the seams profile floor is seam-driven.** A seam-free leg in two floor files certified `openwop-conformance-seams-v2` on openwop-app, which mounts no seams. Both legs move to their own files, ids unchanged; a coherence check guards the floor.
 - **RFC 0241 Accepted (provisional).** Tier-1 evidence: the v2 reference host's certified public cut with the seams profile off, on suite 2.45.28 (420/0/0, build `bb7c5930`), causes all six RFC 0236 rows through `POST /host/events/test`; gaps G1 and G2 close, so the packed `gaps.json` changes.
 - **RFC 0237 Accepted (provisional).** Tier-1 evidence: the v2 reference host's certified public cut on suite 2.45.25 (517/0/0, build `a8e6db64`) lists `clock`, `random` and `id` and records both nondeterminism ids `executed-pass`; gaps G1 and G2 close, so the packed `gaps.json` changes.
@@ -24,7 +25,6 @@ Entries before this file was condensed carried full development detail. That tex
 - **RFC 0238 filed and Active (window waived); `host.announce` erratum.** `uiPlugins.served`, `getUiPluginFrame` and `dispatchUiPluginRequest`; `packs.md` binds the frame as the only mount. The four `frontend-plugin-*` invariants become `witnessable-gated` through `v2-ui-plugin-boundary`.
 - **2.45.23 cycle (suite):** `0184.mint-no-tilde` also mints one run under the second-tenant credential, so a host whose primary tenant is clean can still make the leg bite by binding tenant B to a non-clean tenant.
 - **RFC 0237 filed and Active (window waived).** `nondeterminismPolicy.sources` (`clock`, `random`, `id`, `env`, `x-*`): a `replay` fork reproduces each, witnessed by `conformance-nondeterminism`. `declared: false` and `advertised: false` are not v2 states; both go at 3.0.
-- **2.45.22 cycle (suite):** `v2-data-residency-admission` runs its reject leg when `dataResidency.regions` is empty. Such a host must refuse every residency constraint; it used to skip both legs and pass while ignoring them.
 - **RFC 0236 Accepted (provisional).** Tier-1 evidence: the v2 reference host's certified public cut on suite 2.45.21 (505/0/0, build `9543718c`) records all six host-event ids `executed-pass`; gaps G1 and G2 close, so the packed `gaps.json` changes.
 - **`channelPresence` restated at v2.** `conversation.md` adds RFC 0110's advertise ⇒ emit and no-delivery-to-a-non-member rules, witnessed by `v2-channel-presence-delivery` through the §13 seam (now in `api/seams-v2.yaml`) and invariant `channel-presence-member-only-delivery`.
 - **Erratum: `identity.md` §5 grammar table matches `ids.schema.json` again.** `tenantId` gets its own row with the `anon:` prefix its pattern has had since 2.0.0. `typeId` gains the `@<semver>` pin from RFC 0187. No wire change. `check-id-kinds-bound` now compares the table against the schema.

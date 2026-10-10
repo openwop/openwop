@@ -265,13 +265,11 @@ Defects outside the spec:
       but `spec/v2/facets/auth.schema.json` neither requires the key with both lanes (RFC 0164 §A.3's v1 rule) nor
       forbids it with one. Ruled for openwop-app: advertise it only with both lanes. Owed: make that a MUST with a
       witness, and decide whether the conditional is additive or waits for 3.0 (`COMPATIBILITY.md` §2.4).
-      Ruling for `negotiation.decided` below: additive RFC (optional `requested` + an inbound host-event home).
-- [ ] **`negotiation.decided` (found by openwop-app, ADR 0858 P4, 2026-10-07).** (1) `interop.md`'s example
-      event uses other field names and an outcome `downgraded`, but the closed payload schema admits only
-      `accepted` | `refused`, so a downgrade records as `accepted` with the lower version; align the two, and
-      decide whether no-silent-downgrade needs `downgraded`. (2) It is a run event, so an INBOUND negotiation
-      (a host's own A2A card or route, its MCP server's `initialize`) has no run to log on: say whether the MUST
-      binds only in-run negotiation, or give it a runless home (a host-event type, RFC 0236).
+      `negotiation.decided` is RFC 0242, below.
+- [ ] **RFC 0242** (`Draft`, 2026-10-10; window waived by the maintainer): `negotiation.decided` gains an
+      optional `requested`, so a downgrade reads as `version` ≠ `requested`, and a negotiation with no run
+      (inbound A2A or MCP) is recorded as a durable host event. Found by openwop-app (ADR 0858 P4, 2026-10-07).
+      The v2 reference host and then openwop-app emit it (G1).
 - [x] **RFC 0238** `Accepted` (provisional) 2026-10-07 on openwop-app's certified 2.45.23 cut at
       `api.openwop.dev` (379/0/0, build `e33f3a19c`). Owed: the RFC 0156 §B review; R2 (an embedding
       the suite cannot see) is reviewed with each host's certification; G2 stays external.
