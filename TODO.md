@@ -251,6 +251,15 @@ Defects outside the spec:
 - [x] **RFC 0237** `Accepted` (provisional) 2026-10-08 on the v2 reference host's certified 2.45.25 cut
       (517/0/0, build `a8e6db64`; sources `clock`, `random`, `id`). Owed: the RFC 0156 §B review; G3 (drop
       the `declared` boolean) at 3.0.
+- [ ] **Three v2 discovery gaps (found by openwop-app #4676, ADR 0858, 2026-10-10).** (1) `multiAgent.version`
+      ≥3 requires `executionModel.crossHostCausation` (and N implies phases 1..N) only in schema descriptions; no
+      conditional or witness enforces it. (2) `executionModel.confidenceEscalationInterruptKind` still admits
+      `^x-host-…`, but the v2 interrupt `kind` is closed (`interrupt.md`, `suspend-request.schema.json`; vendor kinds
+      ride `custom` + `customKind`), so advertising one promises an interrupt the payload schema rejects. (3) The
+      RFC 0118/0126 fan-out descriptor (`fanOutPolicies`, `joinModes`, `onChildFailureModes`, `maxFanOut`,
+      `perItemInput`) has no v2 seat and no migration row; only `agents.dispatch` (boolean) survives, and the v1
+      rule refusing a `joinPolicy.mode` outside `joinModes` lost its gate. Ruled for openwop-app: claim the
+      highest fully-implemented level, advertise `clarification`, use `agents.dispatch`, publish no fan-out block.
 - [ ] **`auth.subjectLinkKey` is unenforced at v2 (found by openwop-app, ADR 0812, 2026-10-10).** `identity.md` §3
       says advertising both `saml` and `scim` lanes implies the link contract and that the key names its class,
       but `spec/v2/facets/auth.schema.json` neither requires the key with both lanes (RFC 0164 §A.3's v1 rule) nor
