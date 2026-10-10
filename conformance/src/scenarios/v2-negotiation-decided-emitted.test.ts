@@ -22,6 +22,9 @@
  * Callback-shaped (the host calls the suite's peer): unwitnessable when the
  * host is in a separate network namespace — `../lib/host-callback.ts`.
  *
+ * RFC 0242 §A.2 adds two legs: the record's `requested` equals the version the
+ * host's client named to the suite's peer (read from what the peer received).
+ *
  * @see spec/v2/core/interop.md §Negotiation is a protocol
  */
 
@@ -39,6 +42,7 @@ import { getA2AFakePeer } from '../lib/a2a-fake-peer.js';
 import { getMcpFakeServer } from '../lib/mcp-fake-server.js';
 import { softSkip, seamAbsent } from '../lib/soft-skip.js';
 import { req } from '../lib/requirement-ids.js';
+import { askedVersion, judgeRequested } from '../lib/negotiation-record.js';
 
 export const REQUIRES_HOST_CALLBACK = "the host's A2A/MCP client calls the suite's fake peer/server through the invoke seams; the negotiation.decided event is then read on the host's own log";
 
@@ -83,7 +87,10 @@ function originDigest(url: string): string {
   return createHash('sha256').update(new URL(url).origin, 'utf8').digest('hex');
 }
 
-async function leg(protocol: 'a2a' | 'mcp', id: string): Promise<void> {
+type Exchange = { driven: { status: number; body: Record<string, unknown> }; runId: string; decided: EventRow[]; peer: NonNullable<ReturnType<typeof getA2AFakePeer>> | NonNullable<ReturnType<typeof getMcpFakeServer>>; validate: NonNullable<ReturnType<typeof payloadValidator>> };
+
+/** Gate, drive one exchange through the seam, and read the run's records; `undefined` once a skip is recorded. */
+async function exchange(protocol: 'a2a' | 'mcp'): Promise<Exchange | undefined> {
   const doc = await discovery();
   if (!doc) return softSkip('blocked', 'discovery unreachable');
   const facet = await familyAdvertised(protocol);
@@ -94,15 +101,31 @@ async function leg(protocol: 'a2a' | 'mcp', id: string): Promise<void> {
   peer.reset();
   const validate = payloadValidator();
   if (!validate) return softSkip('blocked', 'run-event-payloads.schema.json#/$defs/negotiationDecided not readable from SCHEMAS_DIR');
-
   const driven = await drive(protocol, peer.hostFacingEndpoint());
   if (!driven) return softSkip('blocked', 'invoke seam unavailable (reason recorded above)');
   const runId = driven.body['runId'];
   if (typeof runId !== 'string') {
     return softSkip('blocked', `the ${protocol} invoke seam answered ${driven.status} without a runId — the host log that carries ${EVENT} is not addressable from the suite (the seam MUST name the run whose log recorded the decision)`);
   }
-  const events = await eventsOf(runId);
-  const decided = events.filter((e) => e.type === EVENT);
+  const decided = (await eventsOf(runId)).filter((e) => e.type === EVENT);
+  return { driven, runId, decided, peer, validate };
+}
+
+/** RFC 0242 §A.2: the record names the version the host asked the peer for. */
+async function requestedLeg(protocol: 'a2a' | 'mcp', id: string): Promise<void> {
+  const x = await exchange(protocol);
+  if (!x) return;
+  const named = askedVersion(protocol, x.peer.invocations());
+  if (named === null) return softSkip('inapplicable', `the host's ${protocol} client named no version to the suite's peer, so RFC 0242 §A.2 does not require requested`);
+  expect(x.decided.length, req(id, 'interop.md §The audit event', `the exchange MUST leave ${EVENT} on run ${x.runId} (RFC 0175 §D.3)`)).toBeGreaterThan(0);
+  const f = judgeRequested(x.decided[x.decided.length - 1]!.payload ?? {}, named);
+  expect(f.ok, req(id, 'interop.md §The audit event', f.message)).toBe(true);
+}
+
+async function leg(protocol: 'a2a' | 'mcp', id: string): Promise<void> {
+  const x = await exchange(protocol);
+  if (!x) return;
+  const { driven, runId, decided, peer, validate } = x;
   expect(
     decided.length,
     req(id, 'interop.md §The audit event', `every ${protocol} negotiation outcome MUST emit ${EVENT} on the host's own event log (RFC 0175 §D.3) — none found on run ${runId}`),
@@ -145,5 +168,11 @@ describe('RFC 0175 §D.3 — negotiation-decided-emitted (gated on a2a/mcp + sea
   });
   it('an MCP exchange leaves negotiation.decided on the host log', async () => {
     await leg('mcp', 'openwop.requirement.0175.negotiation-decided-emitted.mcp');
+  });
+  it('an A2A record names the version the host asked for (RFC 0242 §A.2)', async () => {
+    await requestedLeg('a2a', 'openwop.requirement.0242.requested.outbound');
+  });
+  it('an MCP record names the revision the host asked for (RFC 0242 §A.2)', async () => {
+    await requestedLeg('mcp', 'openwop.requirement.0242.requested.outbound.mcp');
   });
 });

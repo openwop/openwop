@@ -266,7 +266,7 @@ Defects outside the spec:
       forbids it with one. Ruled for openwop-app: advertise it only with both lanes. Owed: make that a MUST with a
       witness, and decide whether the conditional is additive or waits for 3.0 (`COMPATIBILITY.md` §2.4).
       `negotiation.decided` is RFC 0242, below.
-- [ ] **RFC 0242** (`Draft`, 2026-10-10; window waived by the maintainer): `negotiation.decided` gains an
+- [ ] **RFC 0242** (`Active` 2026-10-10, window waived by the maintainer; suite 2.46.0): `negotiation.decided` gains an
       optional `requested`, so a downgrade reads as `version` ≠ `requested`, and a negotiation with no run
       (inbound A2A or MCP) is recorded as a durable host event. Found by openwop-app (ADR 0858 P4, 2026-10-07).
       The v2 reference host and then openwop-app emit it (G1).
