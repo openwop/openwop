@@ -133,6 +133,8 @@ A host event's envelope (`schemas/v2/host-event.schema.json`) has no `runId` or 
 - MUST confine an event naming a `workspaceId` to that workspace, and an ephemeral event to subscribers it is visible to;
 - MUST emit each listed `host-test.*` type, only through `emitTestHostEvent`, to the caller's tenant.
 
+`negotiation.decided` is reserved and durable ([interop.md](interop.md)).
+
 An ephemeral event MUST NOT be persisted, redelivered on reconnection, or sent through webhooks, A2A push or any sink; its frame has no `id:`. A durable event's `id:` is its `eventId`, and a host SHOULD honour `Last-Event-ID` for it within retention. A vendor payload MUST NOT carry secrets.
 
 #### `heartbeat`

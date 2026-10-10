@@ -41,18 +41,11 @@ When no `A2A-Version` header is present, a host MUST serve the agent card of `pr
 
 **The floor.** A negotiation that would land below `minimumVersion` / `minimumRevision` MUST fail closed with `interop_version_unsupported` (`spec/v2/errors.json`), whether or not host policy permits an explicit downgrade above the floor.
 
-**The audit event.** Every negotiation outcome, including the refused one, MUST emit a `negotiation.decided` event on the host's own event log:
-
-```jsonc
-{ "protocol": "a2a" | "mcp", "peer": "<origin digest>", "requested": "…",
-  "negotiated": "…" | null, "outcome": "accepted" | "downgraded" | "refused", "reason": "…" }
-```
-
-The event is content-free: `peer` MUST be a digest of the peer origin, never the origin in clear. The event is the normative witness of the invariants `a2a-version-no-silent-downgrade` and `mcp-version-no-silent-downgrade`.
+**The audit event.** Every negotiation outcome, refusals included, MUST emit a content-free `negotiation.decided` record (`run-event-payloads.schema.json#/$defs/negotiationDecided`): on its run's log, or, with no run, as the caller's durable host event. `peerDigest` MUST be the peer origin's digest; `requested` MUST carry any version the requester named. It witnesses `a2a-version-no-silent-downgrade` and `mcp-version-no-silent-downgrade`. A host serving either protocol inbound (`a2a.agentCardUrl`, `mcp.serverUrls`, `mcp.serverMount`) MUST list it as a durable `hostEvents` type.
 
 **The refresh SLA.** A host MUST re-evaluate its advertised `versions[]` / `revisions[]` against the upstream registry within the window its `refreshedAt` declares, and that window MUST NOT exceed 90 days. An advertisement older than its window is non-conformant.
 
-**Downgrade above the floor.** A host MAY accept an authenticated request for a version between the floor and `preferredVersion`; the event then reports `outcome: downgraded`.
+**Downgrade above the floor.** A host MAY accept an authenticated request for a version between the floor and `preferredVersion`; its record is `accepted` with a `version` other than `requested`.
 
 ## The operation mappings
 

@@ -1937,6 +1937,8 @@ invariants:
     threat_model: SECURITY/threat-model-secret-leakage.md
     tests:
       - conformance/src/scenarios/a2a-version-negotiation.test.ts
+      - conformance/src/scenarios/v2-negotiation-decided-emitted.test.ts
+      - conformance/src/scenarios/v2-negotiation-decided-inbound.test.ts
     note: |
       RFC 0152 §B. A host MUST NOT silently downgrade an authenticated
       request. The danger is that a silent downgrade SUCCEEDS: the caller
@@ -1958,6 +1960,8 @@ invariants:
     threat_model: SECURITY/threat-model-secret-leakage.md
     tests:
       - conformance/src/scenarios/mcp-version-negotiation.test.ts
+      - conformance/src/scenarios/v2-negotiation-decided-emitted.test.ts
+      - conformance/src/scenarios/v2-negotiation-decided-inbound.test.ts
     note: |
       RFC 0153 §A/§B, the MCP half of the above. Additionally: the
       revision on the wire MUST be MCP's date form, because `latest` or
