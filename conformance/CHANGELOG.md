@@ -1,6 +1,6 @@
 # `@openwop/openwop-conformance` Changelog
 
-## [2.46.0] — unreleased — RFC 0242: a negotiation record says what was asked for, and an inbound negotiation has a home
+## [2.46.0] — 2026-10-10 — RFC 0242: a negotiation record says what was asked for, and an inbound negotiation has a home
 
 A minor, not a patch: `host-event.schema.json` gains a cross-file `$ref` to `run-event-payloads.schema.json#/$defs/negotiationDecided` (COMPATIBILITY.md §2.1). A validator that pre-registers a fixed list of peer schemas must register `run-event-payloads.schema.json` before compiling `host-event.schema.json`.
 
