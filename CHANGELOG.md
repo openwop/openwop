@@ -29,6 +29,11 @@ Entries before this file was condensed carried full development detail. That tex
 - **`channelPresence` restated at v2.** `conversation.md` adds RFC 0110's advertise ⇒ emit and no-delivery-to-a-non-member rules, witnessed by `v2-channel-presence-delivery` through the §13 seam (now in `api/seams-v2.yaml`) and invariant `channel-presence-member-only-delivery`.
 - **Erratum: `identity.md` §5 grammar table matches `ids.schema.json` again.** `tenantId` gets its own row with the `anon:` prefix its pattern has had since 2.0.0. `typeId` gains the `@<semver>` pin from RFC 0187. No wire change. `check-id-kinds-bound` now compares the table against the schema.
 
+## [2.46.0] — 2026-10-10 — RFC 0242: a negotiation record says what was asked for, and an inbound negotiation has a home
+
+- **Wire:** `negotiation.decided` gains an optional `requested`; a downgrade is `accepted` with `version` ≠ `requested`. A runless (inbound A2A or MCP) negotiation is the durable host event `negotiation.decided`, which an inbound host MUST list. Minor: a new cross-file `$ref` (COMPATIBILITY.md §2.1).
+- **Suite:** new `v2-negotiation-decided-inbound` (five legs) and two `requested` legs in `v2-negotiation-decided-emitted`.
+
 ## [2.45.30] — 2026-10-09 — the seams profile floor is seam-driven
 
 - **Suite:** `openwop-conformance-seams-v2` no longer certifies on a host that mounts no seams. Two seam-free legs move out of its floor files into `v2-webhooks-v1-scheme-listed` and `v2-effect-ledger-keying`, ids unchanged; a coherence check keeps every floor leg seam-driven.
