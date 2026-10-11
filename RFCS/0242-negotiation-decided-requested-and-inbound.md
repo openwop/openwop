@@ -4,10 +4,10 @@
 | ----------------- | --------------------------------------------------------------- |
 | **RFC**           | 0242                                                            |
 | **Title**         | a negotiation record says what was asked for, and an inbound negotiation has a home |
-| **Status**        | `Active`                                                        |
+| **Status**        | `Accepted`                                                      |
 | **Author(s)**     | David Tufts (@davidscotttufts)                                  |
 | **Created**       | 2026-10-10                                                      |
-| **Updated**       | 2026-10-10 — `Draft` → `Active`, comment window waived by the maintainer (2026-10-10: "waive it"), recorded as a STEWARD OVERRIDE of RFC 0147 §A.6 in MAINTAINERS.md. §A–§D are merged (suite 2.46.0). Proven against the v2 reference host carrying the §B implementation (openwop-examples, `rfc0242/inbound-negotiation-record`): every `0242.*` leg passes, and fails when the host drops `requested`. · 2026-10-10 — filed `Draft` after an `/architect` design review (2026-10-10) of two defects openwop-app found implementing `negotiation.decided` (its ADR 0858 P4): the event cannot record a downgrade, and an inbound negotiation has no log to land on. |
+| **Updated**       | 2026-10-11 — **`Active → Accepted`, provisional pending the RFC 0156 §B retrospective review** (STEWARD OVERRIDE of RFC 0147 §A.6, register row `not-reviewed`). Evidence tier: tier-1 — the v2 reference host (openwop-examples), a reference example and not a production host: its certified public cut on published suite 2.46.0 (`evidence/v2-host-bundles/openwop-host-v2-reference-2.46.0.json`, build `commit:d16cac40`, witness `622b2d3b90fd`, signed `v2-reference-4`, 531 pass / 1 fail, all three claimed profiles certified) records all seven `openwop.requirement.0242.*` ids `executed-pass`. Its one failure, `v2-webhook-message-id-stable`, is a suite defect (a receiver `close()` held open by the tunnel; fixed in 2.46.1), not a host or RFC 0242 row. G1 closes; G2 is externally gated on the tripwire RFC 0175 G6 shares. · 2026-10-10 — `Draft` → `Active`, comment window waived by the maintainer (2026-10-10: "waive it"), recorded as a STEWARD OVERRIDE of RFC 0147 §A.6 in MAINTAINERS.md. §A–§D are merged (suite 2.46.0). Proven against the v2 reference host carrying the §B implementation (openwop-examples, `rfc0242/inbound-negotiation-record`): every `0242.*` leg passes, and fails when the host drops `requested`. · 2026-10-10 — filed `Draft` after an `/architect` design review (2026-10-10) of two defects openwop-app found implementing `negotiation.decided` (its ADR 0858 P4): the event cannot record a downgrade, and an inbound negotiation has no log to land on. |
 | **Affects**       | `schemas/v2/run-event-payloads.schema.json` `$defs/negotiationDecided` (one optional property; seeded, so its seed rule in `scripts/derive-v2-schemas.mjs`) · `schemas/v2/host-event.schema.json` (one reserved protocol type) · `spec/v2/core/interop.md` §The audit event · `spec/v2/core/events.md` §Host events · `conformance/src/scenarios/v2-negotiation-decided-emitted.test.ts` and a new `v2-negotiation-decided-inbound.test.ts` · `SECURITY/invariants.yaml` (`a2a-version-no-silent-downgrade`, `mcp-version-no-silent-downgrade`) |
 | **Compatibility** | `additive` (COMPATIBILITY.md §2.4): one optional property on a closed payload, and one reserved type on the optional `hostEvents` family. No field is renamed or removed, no enum changes, no MUST relaxes. |
 | **Supersedes**    | —                                                               |
@@ -59,11 +59,11 @@ The type name is shared with the run event on purpose. `channel.presence` is alr
 
 | Requirement | Observable — what an outside party sees | Who can cause the condition | Verdict |
 | --- | --- | --- | --- |
-| A.2 `requested` set, outbound | `requested` on the run's `negotiation.decided`, equal to the version the exchange named | the suite, through the §22/§23 invoke seams | witnessable — gated (seam drives the exchange; the record is read on the normative surface) |
-| A.2 `requested` set, inbound | `requested` on the host event, equal to the version the suite named | the suite, as an inbound A2A or MCP client | witnessable — gated |
+| A.2 `requested` set, outbound | `requested` on the run's `negotiation.decided`, equal to the version the exchange named | the suite, through the §22/§23 invoke seams (`openwop.requirement.0242.requested.outbound`, `openwop.requirement.0242.requested.outbound.mcp`) | witnessable — gated (seam drives the exchange; the record is read on the normative surface) |
+| A.2 `requested` set, inbound | `requested` on the host event, equal to the version the suite named | the suite, as an inbound A2A or MCP client (`openwop.requirement.0242.inbound.recorded`, `openwop.requirement.0242.inbound.recorded.mcp`) | witnessable — gated |
 | A.3 a downgrade reads as one | an `accepted` record with `version` ≠ `requested` | the suite, against a host whose `versions[]` spans floor to preferred | witnessable — gated; no host in `INTEROP-MATRIX.md` offers such a span today (G2) |
-| B.2 runless home | a `negotiation.decided` frame on `/host/events` for an inbound exchange, `delivery: durable`, no `runId` | the suite, as an inbound client | witnessable — gated |
-| B.3 listed when inbound is served | `hostEvents.types[]` contains the durable type whenever the inbound facet fields are present | the suite, reading discovery | witnessable — unaided |
+| B.2 runless home | a `negotiation.decided` frame on `/host/events` for an inbound exchange, `delivery: durable`, no `runId` | the suite, as an inbound client (`openwop.requirement.0242.inbound.recorded`, `openwop.requirement.0242.inbound.refused`, `openwop.requirement.0242.inbound.recorded.mcp`, `openwop.requirement.0242.inbound.refused.mcp`) | witnessable — gated |
+| B.3 listed when inbound is served | `hostEvents.types[]` contains the durable type whenever the inbound facet fields are present | the suite, reading discovery (`openwop.requirement.0242.inbound.listed`) | witnessable — unaided |
 | B.4 unauthenticated exchange recorded | nothing reaches any tenant | — | unwitnessable — the record has no tenant audience by construction |
 
 ## Compatibility
@@ -96,7 +96,7 @@ Settled in the `/architect` review (2026-10-10):
 
 - [x] `Active`: the comment window was waived on the record (maintainer, 2026-10-10; MAINTAINERS.md). §A–§C merged; `CHANGELOG.md` records it.
 - [x] `v2-negotiation-decided-emitted` asserts `requested`, and `v2-negotiation-decided-inbound` ships, each sabotage-proved against a host that omits `requested` or records nothing inbound.
-- [ ] `Accepted`: a certified major-2 bundle records `openwop.requirement.0242.*` `executed-pass` for A.2 (inbound), B.2 and B.3.
+- [x] `Accepted`: a certified major-2 bundle records `openwop.requirement.0242.*` `executed-pass` for A.2 (inbound), B.2 and B.3. *(2026-10-11: the v2 reference host's certified public cut on published suite 2.46.0, build `commit:d16cac40`; all seven `0242.*` ids `executed-pass`, the two outbound `requested` legs included.)*
 
 ## References
 

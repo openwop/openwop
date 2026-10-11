@@ -1,5 +1,9 @@
 # `@openwop/openwop-conformance` Changelog
 
+## [2.46.1] — unreleased — the modal webhook receiver closes through a tunnel
+
+- **`startModalReceiver().close()` no longer hangs on a keep-alive socket.** Through a public tunnel the tunnel client holds a keep-alive connection open, and a bare `server.close()` waits for it: the v2 reference host's certified public cut on 2.46.0 recorded `v2-webhook-message-id-stable` `executed-fail` with "Hook timed out in 30000ms" in its `afterEach`, while the host's deliveries were correct (the loopback rehearsal passed the same leg). `close()` now closes idle and then all connections, the idiom `scoped-receiver.ts` already used. No assertion changes.
+
 ## [2.46.0] — 2026-10-10 — RFC 0242: a negotiation record says what was asked for, and an inbound negotiation has a home
 
 A minor, not a patch: `host-event.schema.json` gains a cross-file `$ref` to `run-event-payloads.schema.json#/$defs/negotiationDecided` (COMPATIBILITY.md §2.1). A validator that pre-registers a fixed list of peer schemas must register `run-event-payloads.schema.json` before compiling `host-event.schema.json`.

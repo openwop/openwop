@@ -14470,8 +14470,8 @@
       "surface": "No host records an inbound negotiation as a host event or lists the reserved type, so B.2 and B.3 have no witness.",
       "witness": "unclassified",
       "requirementId": null,
-      "disposition": "externally-gated",
-      "target": "negotiation-inbound-host",
+      "disposition": "closed",
+      "target": null,
       "sources": [
         {
           "file": "RFCS/registers/0242-negotiation-decided-requested-and-inbound.gaps.md",
@@ -14487,8 +14487,8 @@
       "surface": "No host in `INTEROP-MATRIX.md` offers a version between its floor and its preferred version, so no host can be shown to record a downgrade above the floor.",
       "witness": "unclassified",
       "requirementId": null,
-      "disposition": "carried",
-      "target": "openwop.gap.0242.2",
+      "disposition": "externally-gated",
+      "target": "host-floor-below-preferred",
       "sources": [
         {
           "file": "RFCS/registers/0242-negotiation-decided-requested-and-inbound.gaps.md",
