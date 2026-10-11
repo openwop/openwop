@@ -8,8 +8,8 @@ Entries before this file was condensed carried full development detail. That tex
 
 ## [Unreleased]
 
-- **RFC 0242 Active (window waived); 2.46.0 cycle.** `negotiation.decided` gains an optional `requested`, so a downgrade shows as `version` ≠ `requested`. A negotiation with no run (inbound A2A or MCP) is a durable host event. New scenario `v2-negotiation-decided-inbound`, needing no seam.
-- **2.45.30 cycle (suite): the seams profile floor is seam-driven.** A seam-free leg in two floor files certified `openwop-conformance-seams-v2` on openwop-app, which mounts no seams. Both legs move to their own files, ids unchanged; a coherence check guards the floor.
+- **RFC 0242 Accepted (provisional).** Tier-1 evidence: the v2 reference host's certified public cut on suite 2.46.0 (531/1/0, build `d16cac40`) records all seven `0242.*` ids `executed-pass`; G1 closes, so the packed `gaps.json` changes. The one failure was a suite defect.
+- **2.46.1 cycle (suite):** the modal webhook receiver's `close()` closes idle and then all connections, so a keep-alive socket held by a public tunnel no longer times out `v2-webhook-message-id-stable`'s `afterEach`. No assertion changes.
 - **RFC 0241 Accepted (provisional).** Tier-1 evidence: the v2 reference host's certified public cut with the seams profile off, on suite 2.45.28 (420/0/0, build `bb7c5930`), causes all six RFC 0236 rows through `POST /host/events/test`; gaps G1 and G2 close, so the packed `gaps.json` changes.
 - **RFC 0237 Accepted (provisional).** Tier-1 evidence: the v2 reference host's certified public cut on suite 2.45.25 (517/0/0, build `a8e6db64`) lists `clock`, `random` and `id` and records both nondeterminism ids `executed-pass`; gaps G1 and G2 close, so the packed `gaps.json` changes.
 - **RFC 0238 Accepted (provisional).** Tier-1 evidence: openwop-app's certified cut on suite 2.45.23 at `api.openwop.dev` (379/0/0, build `e33f3a19c`) records the four ui-plugin boundary ids `executed-pass`; gaps G1 and G3 close, so the packed `gaps.json` changes.

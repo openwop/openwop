@@ -535,7 +535,12 @@ export async function startModalReceiver(): Promise<{
     const front = resolveRegistrationUrl(`${local}/`);
     return { url: `${front.url.replace(/\/+$/, '')}/${nonce}/${mode}`, tunnelled: front.tunnelled };
   };
-  const close = (): Promise<void> => new Promise<void>((resolve) => server.close(() => resolve()));
+  const close = (): Promise<void> => new Promise<void>((resolve) => {
+    // A keep-alive socket held open through a tunnel must not keep close() pending.
+    (server as Server & { closeIdleConnections?: () => void }).closeIdleConnections?.();
+    server.close(() => resolve());
+    (server as Server & { closeAllConnections?: () => void }).closeAllConnections?.();
+  });
   return { server, nonce, hits, urlFor, close };
 }
 
