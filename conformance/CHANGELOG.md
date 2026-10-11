@@ -1,6 +1,6 @@
 # `@openwop/openwop-conformance` Changelog
 
-## [2.46.1] — unreleased — the modal webhook receiver closes through a tunnel
+## [2.46.1] — 2026-10-11 — the modal webhook receiver closes through a tunnel
 
 - **`startModalReceiver().close()` no longer hangs on a keep-alive socket.** Through a public tunnel the tunnel client holds a keep-alive connection open, and a bare `server.close()` waits for it: the v2 reference host's certified public cut on 2.46.0 recorded `v2-webhook-message-id-stable` `executed-fail` with "Hook timed out in 30000ms" in its `afterEach`, while the host's deliveries were correct (the loopback rehearsal passed the same leg). `close()` now closes idle and then all connections, the idiom `scoped-receiver.ts` already used. No assertion changes.
 

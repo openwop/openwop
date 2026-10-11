@@ -29,6 +29,11 @@ Entries before this file was condensed carried full development detail. That tex
 - **`channelPresence` restated at v2.** `conversation.md` adds RFC 0110's advertise ⇒ emit and no-delivery-to-a-non-member rules, witnessed by `v2-channel-presence-delivery` through the §13 seam (now in `api/seams-v2.yaml`) and invariant `channel-presence-member-only-delivery`.
 - **Erratum: `identity.md` §5 grammar table matches `ids.schema.json` again.** `tenantId` gets its own row with the `anon:` prefix its pattern has had since 2.0.0. `typeId` gains the `@<semver>` pin from RFC 0187. No wire change. `check-id-kinds-bound` now compares the table against the schema.
 
+## [2.46.1] — 2026-10-11 — the modal webhook receiver closes through a tunnel; RFC 0242 Accepted
+
+- **Suite:** `startModalReceiver().close()` closes idle and then all connections, so a keep-alive socket held by a public tunnel no longer times out `v2-webhook-message-id-stable`'s `afterEach`. No assertion changes.
+- **RFC 0242 Accepted (provisional)** on the v2 reference host's certified 2.46.0 cut; G1 closes.
+
 ## [2.46.0] — 2026-10-10 — RFC 0242: a negotiation record says what was asked for, and an inbound negotiation has a home
 
 - **Wire:** `negotiation.decided` gains an optional `requested`; a downgrade is `accepted` with `version` ≠ `requested`. A runless (inbound A2A or MCP) negotiation is the durable host event `negotiation.decided`, which an inbound host MUST list. Minor: a new cross-file `$ref` (COMPATIBILITY.md §2.1).
