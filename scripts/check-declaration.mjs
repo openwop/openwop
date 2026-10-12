@@ -18,6 +18,9 @@
  *      `pack_peer_dependency_undefined` rule, run against the inventory, not a
  *      sibling checkout);
  *   8. requirement ids are real (conformance/requirements.json) or `planned:`.
+ *  13. every profile predicate entry resolves: a family is a declared family, a
+ *      metadata entry is a kept metadata key or `key.member` naming a property of
+ *      that key's generated schema (capabilities.md §7; 2.46.2).
  *   (RFC 0220 §A) every ext family carries extensionName = kebab(key), no core
  *   family carries one, and each ext README header agrees with its row by value
  *   (witness, technical, adoption) and names `extensions.<org>.<extensionName>`.
@@ -138,6 +141,22 @@ const SEAM_TOKEN = /seamsProfileAdvertised|SEAMS_PREFIX|lib\/seams\.js|lib\/era2
 // witnesses (a seam that forks a v1 run needs `replay`). So for it the family
 // clause inverts: every floor file MUST carry the seam token; the family gates
 // are the witnessed family's, not the profile's, and are not checked.
+// 13. An unresolvable predicate entry derives nothing and fails silently: until
+// 2.46.2 the seams predicate was the bare `conformance` key, true for any host
+// publishing a bundle URL, and nothing here could have said so.
+const v2caps = read('schemas/v2/capabilities.schema.json').properties ?? {};
+const familyKeys = new Set(decl.families.filter((f) => f.anchor !== 'deleted').map((f) => f.key));
+const keptMetadata = new Set(decl.metadata.filter((m) => m.disposition === 'kept').map((m) => m.key));
+for (const p of decl.profiles) {
+  for (const f of p.predicate?.families ?? []) if (!familyKeys.has(f)) failures.push(`${p.id}: predicate family \`${f}\` is not a declared family`);
+  for (const m of p.predicate?.metadata ?? []) {
+    const [key, member, ...rest] = m.split('.');
+    if (rest.length > 0) { failures.push(`${p.id}: predicate metadata \`${m}\` has more than one member segment (capabilities.md §7 allows key or key.member)`); continue; }
+    if (!keptMetadata.has(key)) { failures.push(`${p.id}: predicate metadata \`${key}\` is not a kept metadata key`); continue; }
+    if (member !== undefined && !(member in (v2caps[key]?.properties ?? {}))) failures.push(`${p.id}: predicate metadata \`${m}\` names no property of the generated \`${key}\` schema`);
+  }
+}
+
 const SEAMS_PROFILE = 'openwop-conformance-seams-v2';
 let floorFilesRead = 0;
 for (const p of decl.profiles) {

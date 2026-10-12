@@ -6,7 +6,8 @@
  * declaration file, published in `spec/v2/profiles.json`; it is never a wire
  * field. The host's v2 document MUST NOT carry a root `profiles[]`, and every
  * profile in the registry MUST be derivable from the document alone: every
- * listed family present as a record and every listed metadata key present.
+ * listed family present as a record and every listed metadata entry present
+ * (a key, or `key.member`).
  * `profiles.json` is read from the spec tree beside `SCHEMAS_DIR`; under a
  * layout that does not ship it the derivation leg records `blocked`.
  */
@@ -17,6 +18,7 @@ import { join } from 'node:path';
 import { v2Discovery } from '../lib/v2.js';
 import { SCHEMAS_DIR } from '../lib/paths.js';
 import { softSkip } from '../lib/soft-skip.js';
+import { metadataPresent } from '../lib/v2-profiles.js';
 import { req } from '../lib/requirement-ids.js';
 
 const DOC = 'spec/v2/core/capabilities.md §7';
@@ -41,7 +43,7 @@ function isRecord(v: unknown): v is Record<string, unknown> {
 function derive(doc: Record<string, unknown>, p: ProfileRow): boolean {
   const families = p.predicate.families ?? [];
   const metadata = p.predicate.metadata ?? [];
-  return families.every((f) => isRecord(doc[f])) && metadata.every((m) => doc[m] !== undefined);
+  return families.every((f) => isRecord(doc[f])) && metadata.every((m) => metadataPresent(doc, m));
 }
 
 describe('v2 profiles-derived-only (RFC 0169 §C.1, §C.3)', () => {

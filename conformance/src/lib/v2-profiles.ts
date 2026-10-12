@@ -77,11 +77,29 @@ export function v2RegistryAvailable(): boolean {
 }
 
 /**
+ * Is one predicate `metadata` entry present in `doc`? An entry is a metadata
+ * key, or `key.member` for one member of it (capabilities.md §7).
+ *
+ * The member form exists for the seams profile. Its advert is
+ * `conformance.seamsProfile` (conformance.md §The seams profile), but the
+ * `conformance` block also carries `certificationBundleUrl` and `mockAgent`.
+ * Until 2.46.2 the predicate was the bare key, so a host that published only a
+ * bundle URL claimed the profile, and four openwop-app bundles certified it
+ * with no seam mounted.
+ */
+export function metadataPresent(doc: Record<string, unknown>, entry: string): boolean {
+  const dot = entry.indexOf('.');
+  if (dot < 0) return doc[entry] !== undefined;
+  const v = doc[entry.slice(0, dot)];
+  return typeof v === 'object' && v !== null && !Array.isArray(v) && (v as Record<string, unknown>)[entry.slice(dot + 1)] !== undefined;
+}
+
+/**
  * Every profile the declaration derives at major 2, or `null` when the registry
  * is unavailable (see the module docblock — `null` is not `[]`).
  *
  * The predicate is the registry's own: every listed family present as a record,
- * every listed metadata key present at the root. Nothing here is hand-written
+ * every listed metadata entry present ({@link metadataPresent}). Nothing here is hand-written
  * per profile, so adding a v2 profile is a corpus edit and not a code edit.
  */
 export function v2ProfileIds(doc: DiscoveryPayload): readonly string[] | null {
@@ -97,7 +115,7 @@ export function v2ProfileIds(doc: DiscoveryPayload): readonly string[] | null {
     if (typeof p.id !== 'string') continue;
     const families = Array.isArray(p.predicate?.families) ? (p.predicate.families as unknown[]).map(String) : [];
     const metadata = Array.isArray(p.predicate?.metadata) ? (p.predicate.metadata as unknown[]).map(String) : [];
-    if (families.every(isRecord) && metadata.every((k) => root[k] !== undefined)) out.push(p.id);
+    if (families.every(isRecord) && metadata.every((k) => metadataPresent(root, k))) out.push(p.id);
   }
   return out;
 }

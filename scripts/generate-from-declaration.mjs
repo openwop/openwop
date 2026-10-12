@@ -373,7 +373,7 @@ function buildSchema() {
 
 function buildProfiles() {
   return {
-    $comment: 'GENERATED from spec/v2/declaration.json (RFC 0169 §C.1). A profile is a predicate over the declaration: every listed family present as a record (and every listed metadata key present). No profiles[] exists at the v2 root.',
+    $comment: 'GENERATED from spec/v2/declaration.json (RFC 0169 §C.1). A profile is a predicate over the declaration: every listed family present as a record (and every listed metadata entry present: a key, or `key.member`). No profiles[] exists at the v2 root.',
     generatedFrom: 'spec/v2/declaration.json',
     profiles: decl.profiles.map((p) => ({ id: p.id, ...(p.summary ? { summary: p.summary } : {}), predicate: p.predicate, floorScenarios: p.floorScenarios ?? [], requirementIds: p.requirementIds ?? [], ...(p.note ? { note: p.note } : {}) })),
   };
