@@ -34711,7 +34711,7 @@
     {
       "id": "openwop.it.v2-profiles-derived-only.the-v2-document-carries-no-root-profiles",
       "file": "v2-profiles-derived-only.test.ts",
-      "line": 48,
+      "line": 50,
       "title": "the v2 document carries no root `profiles[]`",
       "explicitId": "openwop.requirement.0169.profiles-derived-only.no-root-profiles",
       "citations": [
@@ -34724,7 +34724,7 @@
     {
       "id": "openwop.it.v2-profiles-derived-only.every-registry-profile-is-derivable-from-the-document-the-discovery-core-predica",
       "file": "v2-profiles-derived-only.test.ts",
-      "line": 54,
+      "line": 56,
       "title": "every registry profile is derivable from the document; the discovery-core predicate holds on a valid document",
       "explicitId": "openwop.requirement.0169.profiles-derived-only.derivable",
       "citations": [
@@ -44764,7 +44764,7 @@
     {
       "id": "openwop.it.seams-floor-legs-gated.every-leg-of-a-seams-profile-floor-file-reaches-a-seams-gate-before-its-first-as",
       "file": "seams-floor-legs-gated.test.ts",
-      "line": 84,
+      "line": 82,
       "title": "every leg of a seams-profile floor file reaches a seams gate before its first assertion",
       "explicitId": "openwop.it.seams-floor-legs-gated.every-leg-of-a-seams-profile-floor-file-reaches-a-seams-gate-before-its-first-a",
       "citations": [

@@ -433,13 +433,13 @@ Rows with `anchor: ext` are documented under `spec/v2/ext/<key>/`. Each document
 
 ## 7. Profiles
 
-A profile is a predicate over the declaration file, published in `spec/v2/profiles.json` (generated): every listed family is present as a record, and every listed metadata key is present.
+A profile is a predicate over the declaration, published in `spec/v2/profiles.json` (generated): every listed family is present as a record, and every listed metadata key, or `key.member`, is present.
 
 | Profile | Predicate |
 | --- | --- |
 | `openwop-discovery-core` | Metadata `protocolVersions`, `preferredVersion` |
 | `openwop-core-standard` | Families `interrupt`, `replay`, `webhooks`, `idempotency`, `eventLog`, plus the 2.0.0 floor scenarios and requirement ids the declaration names |
-| `openwop-conformance-seams-v2` | The seams profile ([`conformance.md`](conformance.md)); forbidden from the capability namespace |
+| `openwop-conformance-seams-v2` | Metadata `conformance.seamsProfile` ([`conformance.md`](conformance.md)); forbidden from the capability namespace |
 
 - The v2 root has no `profiles[]`; a host that emits one MUST fail schema validation (§3).
 - The facet `auth.lanes[]` ([`identity.md`](identity.md)) replaces `auth.profiles`. `a2a.profiles[]` and `mcp.profiles[]` are facets too ([`interop.md`](interop.md)).

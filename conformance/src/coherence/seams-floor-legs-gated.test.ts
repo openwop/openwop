@@ -1,12 +1,10 @@
 /**
  * The seams profile's floor holds seam-driven legs only (suite 2.45.30).
  *
- * `openwop-conformance-seams-v2` is claimed by any host whose discovery carries
- * a `conformance` block (`spec/v2/profiles.json`: the predicate is necessary,
- * not sufficient). On a host that does not advertise
- * `conformance.seamsProfile`, every floor leg is meant to record
- * `inapplicable`, so the profile is claimed with `witnessCount 0` and never
- * certified. A floor row is recorded per scenario FILE, so one seam-free leg in
+ * `openwop-conformance-seams-v2` is claimed by a host whose discovery advertises
+ * `conformance.seamsProfile` (`spec/v2/profiles.json`; until 2.46.2 any
+ * `conformance` block). A floor leg still gates on the advert itself, so a
+ * host without it records every floor leg `inapplicable` and never certifies. A floor row is recorded per scenario FILE, so one seam-free leg in
  * a floor file passes the floor on its own. Until 2.45.30 two floor files had
  * one (`v2-v1-signed-webhook-accepted`'s facet leg and
  * `v2-effect-identity-business-key`'s ledger read), and openwop-app's

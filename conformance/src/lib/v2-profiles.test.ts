@@ -1,5 +1,5 @@
 import { describe, it, expect, vi } from 'vitest';
-import { v2ProfileIds, v2ProfileDerivable, v2RegistryAvailable, v2RegistryPath } from './v2-profiles.js';
+import { metadataPresent, v2ProfileIds, v2ProfileDerivable, v2RegistryAvailable, v2RegistryPath } from './v2-profiles.js';
 import { profileDerivable } from './profiles.js';
 
 // RFC 0169 §C.1 — the shape a real v2 host advertises.
@@ -42,6 +42,27 @@ describe('v2 profile derivation (RFC 0169 §C.1)', () => {
     // …and a family that is present but not a RECORD does not count. A host
     // advertising `webhooks: true` has answered a different question.
     expect(v2ProfileIds({ ...V2_DECLARATION, webhooks: true })).not.toContain('openwop-core-standard');
+  });
+
+  // 2.46.2: the seams predicate is `conformance.seamsProfile`, not the bare
+  // `conformance` key. openwop-app publishes `conformance.certificationBundleUrl`
+  // with no seam mounted, and the bare key derived (and certified) the profile.
+  it('derives openwop-conformance-seams-v2 from conformance.seamsProfile, not from the conformance block', () => {
+    const SEAMS = 'openwop-conformance-seams-v2';
+    expect(v2ProfileIds(V2_DECLARATION)).not.toContain(SEAMS);
+    expect(v2ProfileIds({ ...V2_DECLARATION, conformance: { certificationBundleUrl: 'https://host.example/bundle' } })).not.toContain(SEAMS);
+    expect(v2ProfileIds({ ...V2_DECLARATION, conformance: { mockAgent: true } })).not.toContain(SEAMS);
+    expect(v2ProfileIds({ ...V2_DECLARATION, conformance: { seamsProfile: SEAMS } })).toContain(SEAMS);
+    expect(v2ProfileIds({ ...V2_DECLARATION, conformance: { seamsProfile: SEAMS, certificationBundleUrl: 'https://host.example/bundle' } })).toContain(SEAMS);
+  });
+
+  it('metadataPresent reads a key or one member of it', () => {
+    expect(metadataPresent({ preferredVersion: '2.0' }, 'preferredVersion')).toBe(true);
+    expect(metadataPresent({}, 'preferredVersion')).toBe(false);
+    expect(metadataPresent({ conformance: { seamsProfile: 'x' } }, 'conformance.seamsProfile')).toBe(true);
+    expect(metadataPresent({ conformance: {} }, 'conformance.seamsProfile')).toBe(false);
+    expect(metadataPresent({ conformance: 'seamsProfile' }, 'conformance.seamsProfile')).toBe(false);
+    expect(metadataPresent({ conformance: ['seamsProfile'] }, 'conformance.seamsProfile')).toBe(false);
   });
 
   it('does not derive a v2 profile from a v1 discovery payload', () => {

@@ -1,5 +1,11 @@
 # `@openwop/openwop-conformance` Changelog
 
+## [2.46.2] — unreleased — the seams profile is derived from its advert
+
+- **`openwop-conformance-seams-v2` derives from `conformance.seamsProfile`, not from any `conformance` block.** The predicate was the bare `conformance` metadata key, which also carries `certificationBundleUrl` and `mockAgent`. A host that published only a bundle URL claimed the profile, so its claim flapped with whether the URL was set (openwop-app, 7 cuts on 2.45.30 with no host change), and four openwop-app bundles (`openwop-workflow-engine-2.35.1`, `-2.43.0`, `-2.44.0`, `-2.45.28-4683d9f89`) certified it with no seam mounted. A predicate `metadata` entry may now name one member, `key.member` (capabilities.md §7); `v2ProfileIds` and `v2-profiles-derived-only` share one `metadataPresent`.
+- **What a host's next bundle shows:** a host with a `conformance` block but no `seamsProfile` no longer lists the profile. `--verify` of the four bundles above now refuses their seams-v2 certification (`profile-not-derivable`, scoped to that profile); their other certifications stand. The v2 reference host and MyndHyve are unaffected.
+- **`check-declaration` rule 13:** every predicate entry resolves to a declared family, a kept metadata key, or `key.member` naming a property of that key's generated schema.
+
 ## [2.46.1] — 2026-10-11 — the modal webhook receiver closes through a tunnel
 
 - **`startModalReceiver().close()` no longer hangs on a keep-alive socket.** Through a public tunnel the tunnel client holds a keep-alive connection open, and a bare `server.close()` waits for it: the v2 reference host's certified public cut on 2.46.0 recorded `v2-webhook-message-id-stable` `executed-fail` with "Hook timed out in 30000ms" in its `afterEach`, while the host's deliveries were correct (the loopback rehearsal passed the same leg). `close()` now closes idle and then all connections, the idiom `scoped-receiver.ts` already used. No assertion changes.

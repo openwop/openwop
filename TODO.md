@@ -314,6 +314,12 @@ Defects outside the spec:
       when the 2.45.18 cycle opens. The legs themselves are right.
 - [x] **`otel-emission-grpc` is attributed to `nodePackRuntimes`** in the coverage report. It is
       about OTel export.
+- [x] **The seams profile derived from the whole `conformance` block** (found by openwop-app-67,
+      2026-10-12). Fixed in 2.46.2: the predicate is `conformance.seamsProfile`, and
+      `check-declaration` rule 13 resolves every predicate entry. Four signed openwop-app bundles
+      (`openwop-workflow-engine-2.35.1`, `-2.43.0`, `-2.44.0`, `-2.45.28-4683d9f89`) certify seams-v2
+      with only `certificationBundleUrl`; they stay as evidence, and `--verify` on 2.46.2 refuses only
+      that certification. openwop-app's production host has never mounted the seams.
 
 ## Pattern checks (no code owed; read new scenarios against these)
 
