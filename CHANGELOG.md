@@ -29,6 +29,11 @@ Entries before this file was condensed carried full development detail. That tex
 - **RFC 0236 Accepted (provisional).** Tier-1 evidence: the v2 reference host's certified public cut on suite 2.45.21 (505/0/0, build `9543718c`) records all six host-event ids `executed-pass`; gaps G1 and G2 close, so the packed `gaps.json` changes.
 - **Erratum: `identity.md` §5 grammar table matches `ids.schema.json` again.** `tenantId` gets its own row with the `anon:` prefix its pattern has had since 2.0.0. `typeId` gains the `@<semver>` pin from RFC 0187. No wire change. `check-id-kinds-bound` now compares the table against the schema.
 
+## [2.46.2] — 2026-10-12 — the seams profile is derived from its advert
+
+- **Suite:** `openwop-conformance-seams-v2` derives from `conformance.seamsProfile`, not from any `conformance` block; `capabilities.md` §7 lets a predicate entry name one member (`key.member`), and `check-declaration` resolves every entry.
+- **Evidence:** four openwop-app bundles that certified seams-v2 with only `certificationBundleUrl` now verify without that certification. No scenario assertion changes.
+
 ## [2.46.1] — 2026-10-11 — the modal webhook receiver closes through a tunnel; RFC 0242 Accepted
 
 - **Suite:** `startModalReceiver().close()` closes idle and then all connections, so a keep-alive socket held by a public tunnel no longer times out `v2-webhook-message-id-stable`'s `afterEach`. No assertion changes.
