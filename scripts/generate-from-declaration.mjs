@@ -174,6 +174,7 @@ const rewriteSupportedProse = (d) => {
   for (const [from, to] of SUPPORTED_REWRITES) out = out.split(from).join(to);
   for (const [from, to] of V1_PATH_REWRITES) out = out.split(from).join(to);
   for (const [from, to] of RFC_0228_REWRITES) if (out.includes(from)) { out = out.split(from).join(to); RFC_0228_USED.add(from); }
+  for (const [from, to] of EXECUTION_MODEL_REWRITES) if (out.includes(from)) { out = out.split(from).join(to); RFC_0228_USED.add(from); }
   return out;
 };
 
@@ -195,6 +196,23 @@ const RFC_0228_REWRITES = [
   ['False or absent = every `/prompts*` request returns `501 capability_not_provided`.',
    'False or absent = every `/prompts*` request answers `404 not_found`.'],
   ['When `false` or absent, those endpoints return 501.', 'When `false` or absent, those endpoints answer `404 not_found`.'],
+];
+// Suite 2.46.3 — multiAgent.executionModel descriptions that v2 prose overrules.
+// The levels are cumulative (execution.md §multiAgent), so "`version: 3`" read
+// as "exactly 3" let a level-5 host omit the level-3 sub-block. Level 2 fires a
+// `clarification` or `approval` interrupt, and the v2 interrupt `kind` is closed,
+// so the `x-host-` member and the RFC 0044 §C kind-mapping document describe
+// nothing a v2 host can do. The schema keeps the pattern (narrowing it is a
+// major change, COMPATIBILITY.md §2.4); `v2-multi-agent-advertisement` enforces
+// the prose. Same unused-row failure as RFC_0228_REWRITES.
+const EXECUTION_MODEL_REWRITES = [
+  ['Hosts advertising `version: 3` MUST advertise this sub-block with a stable `hostId`.',
+   'Hosts advertising `version` 3 or higher MUST advertise this sub-block with a non-empty, stable `hostId`.'],
+  ['Hosts advertising `version: 4` MUST advertise this sub-block.', 'Hosts advertising `version` 4 or higher MUST advertise this sub-block.'],
+  ['Hosts advertising `version: 4` MUST set this to `true`.', 'Hosts advertising `version` 4 or higher MUST set this to `true`.'],
+  ['vendor-extension kinds use the canonical host-extension namespace `^x-host-<host>-<kind>$` per `spec/v1/host-extensions.md` §"Canonical prefixes".',
+   'at v2 the value MUST be one of them (`execution.md` §multiAgent, level 2). The v2 interrupt `kind` is closed, so an `x-host-` value promises an interrupt the payload schema rejects; the pattern remains only so a v1-era document validates, and is removed at 3.0.'],
+  [' Hosts using vendor kinds MUST also publish a non-normative kind-mapping document per RFC 0044 §C.', ''],
 ];
 const RFC_0228_USED = new Set();
 // RFC 0228 §G — the v2 spellings `events.md` §envelopes requires, added beside
@@ -399,8 +417,8 @@ function buildAliases() {
 
 const outputs = [[OUT_SCHEMA, widenReliabilityEvents(buildSchema())], [OUT_PROFILES, buildProfiles()], [OUT_ALIASES, buildAliases()]];
 {
-  const unused = RFC_0228_REWRITES.filter(([from]) => !RFC_0228_USED.has(from));
-  if (unused.length) { console.error(`generate-from-declaration FAILED — ${unused.length} RFC 0228 rewrite(s) matched no seeded description:\n  ${unused.map(([f]) => f.slice(0, 100)).join('\n  ')}`); process.exit(1); }
+  const unused = [...RFC_0228_REWRITES, ...EXECUTION_MODEL_REWRITES].filter(([from]) => !RFC_0228_USED.has(from));
+  if (unused.length) { console.error(`generate-from-declaration FAILED — ${unused.length} RFC 0228 or executionModel rewrite(s) matched no seeded description:\n  ${unused.map(([f]) => f.slice(0, 100)).join('\n  ')}`); process.exit(1); }
 }
 const render = (o) => JSON.stringify(o, null, 2) + '\n';
 // RFC 0192 §C — the 27th occurrence cannot appear silently.

@@ -251,20 +251,24 @@ Defects outside the spec:
 - [x] **RFC 0237** `Accepted` (provisional) 2026-10-08 on the v2 reference host's certified 2.45.25 cut
       (517/0/0, build `a8e6db64`; sources `clock`, `random`, `id`). Owed: the RFC 0156 §B review; G3 (drop
       the `declared` boolean) at 3.0.
-- [ ] **Three v2 discovery gaps (found by openwop-app #4676, ADR 0858, 2026-10-10).** (1) `multiAgent.version`
-      ≥3 requires `executionModel.crossHostCausation` (and N implies phases 1..N) only in schema descriptions; no
-      conditional or witness enforces it. (2) `executionModel.confidenceEscalationInterruptKind` still admits
-      `^x-host-…`, but the v2 interrupt `kind` is closed (`interrupt.md`, `suspend-request.schema.json`; vendor kinds
-      ride `custom` + `customKind`), so advertising one promises an interrupt the payload schema rejects. (3) The
-      RFC 0118/0126 fan-out descriptor (`fanOutPolicies`, `joinModes`, `onChildFailureModes`, `maxFanOut`,
-      `perItemInput`) has no v2 seat and no migration row; only `agents.dispatch` (boolean) survives, and the v1
-      rule refusing a `joinPolicy.mode` outside `joinModes` lost its gate. Ruled for openwop-app: claim the
-      highest fully-implemented level, advertise `clarification`, use `agents.dispatch`, publish no fan-out block.
-- [ ] **`auth.subjectLinkKey` is unenforced at v2 (found by openwop-app, ADR 0812, 2026-10-10).** `identity.md` §3
-      says advertising both `saml` and `scim` lanes implies the link contract and that the key names its class,
-      but `spec/v2/facets/auth.schema.json` neither requires the key with both lanes (RFC 0164 §A.3's v1 rule) nor
-      forbids it with one. Ruled for openwop-app: advertise it only with both lanes. Owed: make that a MUST with a
-      witness, and decide whether the conditional is additive or waits for 3.0 (`COMPATIBILITY.md` §2.4).
+- [ ] **Three v2 discovery gaps (found by openwop-app #4676, ADR 0858, 2026-10-10).** Suite 2.46.3 witnesses
+      (1) and (2) from discovery (`v2-multi-agent-advertisement`): level >= 3 needs `crossHostCausation` with a
+      `hostId`, level >= 4 needs `replayDeterminism` with `refusalDivergenceEmission: true`, and the escalation kind
+      is `clarification` or `approval`. The descriptions were corrected (corrections log, 2026-10-12). MyndHyve
+      advertises `x-host-myndhyve-low-confidence` and records that row `executed-fail` until it changes. Still owed:
+      (3) the fan-out seat. The `dispatch-config` / `orchestrator-decision` descriptions now say a v2 host refuses
+      `parallel` and `nextWorkerInputs`, but a seat (`fanOutPolicies`, `joinModes`, `onChildFailureModes`,
+      `maxFanOut`, `perItemInput`) is a normative addition and needs an RFC. v2 has no registration endpoint, so the
+      RFC must also name where the refusal is observed. The v1→v2 mapping cannot be a migration row: v1 rows live
+      in the frozen `spec/v1/migrations.json`.
+- [ ] **Next major: the multiAgent and auth conditionals into the schema.** `executionModel.version >= 3 ⇒
+      crossHostCausation` (with `hostId` required), `>= 4 ⇒ replayDeterminism`, drop the `x-host-` member of
+      `confidenceEscalationInterruptKind`, and `saml` + `scim` lanes ⇒ `subjectLinkKey`. Each is a conditional
+      `required` or a narrowed pattern (COMPATIBILITY.md §2.4); the suite carries them in 2.x.
+- [ ] **`auth.subjectLinkKey` with one lane (found by openwop-app, ADR 0812, 2026-10-10).** Suite 2.46.3 witnesses
+      the existing half (`v2-auth-subject-link-key`: both lanes ⇒ the key; `identity.md` §3 now says MUST). Owed:
+      forbidding the key without both lanes is a new MUST NOT, so it needs an RFC (with the fan-out seat above).
+      Twenty committed openwop-app bundles advertise `opaque-idp` without `saml`; they are reported, not re-judged.
       `negotiation.decided` is RFC 0242, below.
 - [x] **RFC 0242** `Accepted` (provisional) 2026-10-11 on the v2 reference host's certified public cut on 2.46.0
       (build `d16cac40`, all seven `0242.*` ids pass). Owed: the RFC 0156 §B review; G2 (no host's `versions[]`

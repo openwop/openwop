@@ -1,5 +1,17 @@
 # `@openwop/openwop-conformance` Changelog
 
+## [2.46.3] — 2026-10-12 — discovery rules the schema cannot carry
+
+Four rules from openwop-app's v2 discovery review (#4676, ADR 0858, ADR 0812). Each is stated in prose or a schema description, and none can go into the schema within 2.x: a conditional `required` or a narrowed pattern is a major change (COMPATIBILITY.md §2.4). The suite carries them, following RFC 0210 §C; the schema changes are booked for 3.0 (TODO.md).
+
+- **New `v2-multi-agent-advertisement`** (claims-check, wave 4 of `family-advert-witness.ts`):
+  - `multiAgent.level3-cross-host-causation`: at `executionModel.version` >= 3 the host advertises `crossHostCausation` with a non-empty `hostId`. The levels are cumulative, so the description's "`version: 3`" now reads "3 or higher".
+  - `multiAgent.level4-replay-determinism`: at >= 4, `replayDeterminism` with `refusalDivergenceEmission: true`.
+  - `multiAgent.escalation-kind-canonical`: `confidenceEscalationInterruptKind` is `clarification` or `approval`. Level 2 fires one of the two, and the v2 interrupt `kind` is closed, so an `x-host-` value promises an interrupt the payload schema rejects. The description no longer points at `spec/v1/host-extensions.md` or an RFC 0044 §C kind-mapping document.
+- **New `v2-auth-subject-link-key`:** a host advertising both the `saml` and `scim` lanes advertises `auth.subjectLinkKey` (`identity.md` §3 now says MUST, as RFC 0164 §A.3 did at v1). Forbidding the key with one lane is a new rule and needs an RFC.
+- **Fan-out has no v2 seat.** The `dispatch-config` and `orchestrator-decision` descriptions named `capabilities.dispatch.*` and `POST /v1/workflows`. They now say plainly that a v2 host refuses `fanOutPolicy: "parallel"` and a non-empty `nextWorkerInputs` until a seat is added. That was already the rule, because the seat could not be advertised. `dispatch-config.schema.json` is hand-owned from here. Adding one needs an RFC.
+- **What a host's next bundle shows:** MyndHyve advertises `x-host-myndhyve-low-confidence` and will record `escalation-kind-canonical` `executed-fail`. Its committed bundles stay valid measurements at their suite versions (§2.3). openwop-app (level 5) and the v2 reference host pass or are `inapplicable`.
+
 ## [2.46.2] — 2026-10-12 — the seams profile is derived from its advert
 
 - **`openwop-conformance-seams-v2` derives from `conformance.seamsProfile`, not from any `conformance` block.** The predicate was the bare `conformance` metadata key, which also carries `certificationBundleUrl` and `mockAgent`. A host that published only a bundle URL claimed the profile, so its claim flapped with whether the URL was set (openwop-app, 7 cuts on 2.45.30 with no host change), and four openwop-app bundles (`openwop-workflow-engine-2.35.1`, `-2.43.0`, `-2.44.0`, `-2.45.28-4683d9f89`) certified it with no seam mounted. A predicate `metadata` entry may now name one member, `key.member` (capabilities.md §7); `v2ProfileIds` and `v2-profiles-derived-only` share one `metadataPresent`.

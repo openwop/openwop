@@ -58,7 +58,7 @@ At level 2:
 - The host MUST serialize sibling children's writes to the shared scope per parent run. A host advertising `crossChildMemoryConcurrency: "advisory"` is exempt, and SHOULD document last-write-wins.
 - The host MUST persist memory snapshots by log index: before `fromSeq`, a fork's memory reads MUST return the source run's memory as of `fromSeq`, or the fork is refused ([replay.md](replay.md)).
 
-At level 3, with `crossHostCausation` advertised:
+At level 3, which requires `crossHostCausation`:
 
 - An event whose `causationId` names an event on another host MUST carry `causationHostId`, equal to that host's `crossHostCausation.hostId`; a same-host one MUST NOT.
 - The host MUST propagate the run's trace context into every outbound MCP request and A2A message, and adopt an inbound one, per [interop.md](interop.md).

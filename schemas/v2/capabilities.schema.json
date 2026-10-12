@@ -2612,7 +2612,7 @@
                   "pattern": "^x-host-[a-z][a-z0-9-]*-[a-z][a-z0-9-]*$"
                 }
               ],
-              "description": "RFC 0044 — the literal `interrupt.kind` the host emits when escalating a below-floor confidence decision per RFC 0039 §A. `clarification` and `approval` are the canonical values matching the clarify-OR-approval choice in RFC 0039 §A; vendor-extension kinds use the canonical host-extension namespace `^x-host-<host>-<kind>$` per `spec/v1/host-extensions.md` §\"Canonical prefixes\". When advertised, hosts MUST emit an interrupt of the advertised kind on every confidence-escalation event AND the host's downstream `interrupt.md` mapping determines the `waiting-*` terminal status. Absent: conformance assumes the host uses one of the two canonical kinds (the relaxed assertion accepts either). Hosts using vendor kinds MUST also publish a non-normative kind-mapping document per RFC 0044 §C."
+              "description": "RFC 0044 — the literal `interrupt.kind` the host emits when escalating a below-floor confidence decision per RFC 0039 §A. `clarification` and `approval` are the canonical values matching the clarify-OR-approval choice in RFC 0039 §A; at v2 the value MUST be one of them (`execution.md` §multiAgent, level 2). The v2 interrupt `kind` is closed, so an `x-host-` value promises an interrupt the payload schema rejects; the pattern remains only so a v1-era document validates, and is removed at 3.0. When advertised, hosts MUST emit an interrupt of the advertised kind on every confidence-escalation event AND the host's downstream `interrupt.md` mapping determines the `waiting-*` terminal status. Absent: conformance assumes the host uses one of the two canonical kinds (the relaxed assertion accepts either)."
             },
             "crossChildMemoryConcurrency": {
               "type": "string",
@@ -2624,7 +2624,7 @@
             },
             "crossHostCausation": {
               "type": "object",
-              "description": "RFC 0040 §D — Phase 3 cross-host causation linking. When advertised, the host honors the cross-host `causationId` extension (a `causationHostId` field on event payloads pointing at the originating host), W3C `traceparent` propagation across MCP + A2A composition boundaries, and (when `ancestryEndpointSupported: true`) the `GET /runs/{runId}/ancestry` cross-host parent-chain endpoint. Hosts advertising `version: 3` MUST advertise this sub-block with a stable `hostId`.",
+              "description": "RFC 0040 §D — Phase 3 cross-host causation linking. When advertised, the host honors the cross-host `causationId` extension (a `causationHostId` field on event payloads pointing at the originating host), W3C `traceparent` propagation across MCP + A2A composition boundaries, and (when `ancestryEndpointSupported: true`) the `GET /runs/{runId}/ancestry` cross-host parent-chain endpoint. Hosts advertising `version` 3 or higher MUST advertise this sub-block with a non-empty, stable `hostId`.",
               "additionalProperties": false,
               "properties": {
                 "hostId": {
@@ -2640,7 +2640,7 @@
             },
             "replayDeterminism": {
               "type": "object",
-              "description": "RFC 0041 §D — Phase 4 replay determinism. When advertised, the host honors the LLM cache-key recipe in `replay.md` §\"LLM cache-key recipe\" as NORMATIVE (graduated from informative for version >= 4), emits `replay.divergedAtRefusal` events + fails with `replay_diverged_at_refusal` on refusal-divergence (RFC 0041 §B), and guarantees observable-output-sequence determinism per RFC 0041 §C. Hosts advertising `version: 4` MUST advertise this sub-block.",
+              "description": "RFC 0041 §D — Phase 4 replay determinism. When advertised, the host honors the LLM cache-key recipe in `replay.md` §\"LLM cache-key recipe\" as NORMATIVE (graduated from informative for version >= 4), emits `replay.divergedAtRefusal` events + fails with `replay_diverged_at_refusal` on refusal-divergence (RFC 0041 §B), and guarantees observable-output-sequence determinism per RFC 0041 §C. Hosts advertising `version` 4 or higher MUST advertise this sub-block.",
               "additionalProperties": false,
               "properties": {
                 "llmCacheKeyRecipe": {
@@ -2657,7 +2657,7 @@
                 },
                 "refusalDivergenceEmission": {
                   "type": "boolean",
-                  "description": "Host emits `replay.divergedAtRefusal` events + fails replay with `error.code: replay_diverged_at_refusal` per RFC 0041 §B. Hosts advertising `version: 4` MUST set this to `true`."
+                  "description": "Host emits `replay.divergedAtRefusal` events + fails replay with `error.code: replay_diverged_at_refusal` per RFC 0041 §B. Hosts advertising `version` 4 or higher MUST set this to `true`."
                 }
               }
             },
