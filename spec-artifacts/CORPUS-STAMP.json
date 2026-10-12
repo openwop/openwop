@@ -1,7 +1,7 @@
 {
   "_comment": "Provenance of @openwop/spec-artifacts (RFC 0168 §D.2). files: SHA-256 per file; the conformance suite compares the installed peer against dist/spec-artifacts.lock.json at start.",
   "package": "@openwop/spec-artifacts",
-  "version": "2.46.2",
+  "version": "2.46.3",
   "corpusTag": "v2.46.2",
   "files": {
     "api/.redocly.lint-ignore.yaml": "bf5a8350b88a72fa43f59605ed8d903ed24b6cfccda5e45509c9f6ed9ee4e712",
@@ -117,7 +117,7 @@
     "schemas/v2/artifact.schema.json": "85b9dc284d39b99d2a66fa8cbf47f2dd3d8526d3bd6cc411ad315b372de38975",
     "schemas/v2/audit-verify-result.schema.json": "14af8e9283510f0a40e48a2059c929ee44e0fc9fa3cc66a95bfbe90b17c48297",
     "schemas/v2/budget-policy.schema.json": "1de68095db0beb5c7a4be629de26e79f62ebbe748a88d46f36e768edfd1f0d68",
-    "schemas/v2/capabilities.schema.json": "d859a413ff463ec39acc32a9cb76f2e8c7419e45683d6b7f886861765a9c36c7",
+    "schemas/v2/capabilities.schema.json": "6dc5d67585d6e9a18ab6a0b9b4c9b70b821517b401218fa855539636fb0b5974",
     "schemas/v2/certification-bundle.schema.json": "5cfa7fb5247160333e33a58b60d42bcd4e5269d8391d6a112d301e14828892ed",
     "schemas/v2/channel-presence-payload.schema.json": "fc03df0c20cc12a25f7ee6a47503a4c5931d79fe3d5ff24815e8fd7c1bcb9a87",
     "schemas/v2/channel-written-payload.schema.json": "ccecff3c71a3275ad8db035ac0e04db25e6f8d23cf091ddbcd5a60d1be1cbb6b",
@@ -133,7 +133,7 @@
     "schemas/v2/credential-provenance.schema.json": "f86b09e94b1c524dec7d1c6353965665ae8891e9517faef6e742d639c5578c99",
     "schemas/v2/credential-reference.schema.json": "ea699ce30f58fb2c32d4279158b3f730f70be7b2dc8c3037693a76e66eb3e001",
     "schemas/v2/debug-bundle.schema.json": "0ec1e0bca9c0a359cc6cf3448e5200a1c3d3d5b1e5efaa6605231477daaf3fee",
-    "schemas/v2/dispatch-config.schema.json": "5718c1ed7d95672e618bcb1f1da8e38180e144b12151307afc3aba1314dfcef0",
+    "schemas/v2/dispatch-config.schema.json": "c2da8c7075e120c6204499a48dbf1a95a54e30ab897331425ac37660a53ad216",
     "schemas/v2/effect-ledger-projection.schema.json": "0d118d385a43921118a76888449c5c3c5618eab1b80914b84a0a1b48d18822c1",
     "schemas/v2/effect-seam-manifest.schema.json": "197ef9944ab027a50d1b9352f317cbbc12c8ad955fdb14650fb90477052ffef0",
     "schemas/v2/envelopes/clarification.request.schema.json": "9e39d7b09f0b3ce7902d6aa19ca0eb52867b634efc78a881469c4d44fb3333e7",
@@ -161,7 +161,7 @@
     "schemas/v2/memory-entry.schema.json": "290576ae84f4fef4cdf975932b87963283b11c50ea3d2654b32cd96aa6537c3d",
     "schemas/v2/memory-list-options.schema.json": "01ceb7370c4eacd227d2c9b7e1951ee16650abe26a32dc9d6a8e46a07a39093f",
     "schemas/v2/node-pack-manifest.schema.json": "3eb2db1d84f0b8dbde917686c72c121788a4ce6e42cf13d497a3b68564546d0e",
-    "schemas/v2/orchestrator-decision.schema.json": "4d4b4c5fe73c22a1f42242b403650206ad58fd981f8fd45795894cebe3a514ae",
+    "schemas/v2/orchestrator-decision.schema.json": "1b8146b1d050dc48e3900928c5a0b89874433b3b7fa9ee59c037557b80bd0910",
     "schemas/v2/org-chart-responsibility-view.schema.json": "8a2565e4cdc6737a3946a70799f93642808b92f9c8d56dcdff3a0782053b89a1",
     "schemas/v2/pack-lockfile.schema.json": "2685417702c105146b780cd99154296a46578fbb10d81c8c713348ee26fea898",
     "schemas/v2/part.schema.json": "08b75eaec9a0b4a8cedca7bab732dd906b52b0749eaa444ec1ac015aa43519a5",
@@ -208,7 +208,7 @@
     "schemas/workspace-file.schema.json": "464de85c2a068243084ee9c1d969bc7cd5d8f7948574e58450d6493c38a0e1e4",
     "spec/v1/alias-detectors.json": "22444c22bb88c568339ef512553f9fc38146e22b566d11ab8608f655d688d19c",
     "spec/v1/capability-declaration-classes.json": "e7729aed5c4b4e1dd02abab0530f14cc95f5d4070fe51fb139e7f5cccefa00c6",
-    "spec/v1/core-standard-manifest.json": "ca8ad2e3392b1cc1c1cd6ce6072f8a000c1a8a68ced7c319944297d90f114f87",
+    "spec/v1/core-standard-manifest.json": "c65192dc000e6ad0f7b6eb641ddbf59a905fb09a702cb23d31b8cc807a85b81c",
     "spec/v1/deprecations.json": "e723bc11d7272c71789ad1303bb7f21809a8a024abf57594f9d5c35dc199ece9",
     "spec/v1/deprecations.schema.json": "3e393c405d2a41b467d8c5e3c468549078df1ce6a6d2588fc488097b95d9b55b",
     "spec/v1/end-of-support.json": "35f0bf3b70fe78b16e2a2fd81a153fc27e703f6c16376c6fe7cdf1f4f2c4e6d4",
@@ -229,13 +229,13 @@
     "spec/v2/core/conversation.md": "8d6abedf6af408a74577753bfca24719d318e2632e10b45ff5d63bdcf31a8aaa",
     "spec/v2/core/errors.md": "e48838701b86bbfe0ffee77b18a8ffc4e5f04724b4318507d9771da653f8da0f",
     "spec/v2/core/events.md": "370621629c2439747f2e4ddab4780eea4345354f79e5098739d66823873f3105",
-    "spec/v2/core/execution.md": "8a0c9db1bbfb97c008ab9328b7333c1cc3318196e78bfbefb49e781bdf4f9d44",
+    "spec/v2/core/execution.md": "2cabb386aea55f70b6e4d10b2b637819589b6cf980325853024ee4b5a3f346d5",
     "spec/v2/core/form-content-packs.md": "02931227899676fd4581a27017be2a6c4953904717be9b81c29d12f87ab3917d",
     "spec/v2/core/headers.md": "f69fe81e4a3ad21879bb85948660c16860eb05bf152928c31aa4898f6d7d1887",
     "spec/v2/core/host-services.md": "168a40935a03867ee82461b5d83d05578be25ee3e5af4eb080587b891231e242",
     "spec/v2/core/i18n.md": "882904b7d59f992ab1e5f7346167161a54cf665b8fee47e64a3862cf9133a580",
     "spec/v2/core/idempotency.md": "adbd317a6ebb57c2759c076297b31f67def9e391576bccd0bbea787b13e85872",
-    "spec/v2/core/identity.md": "02656ffa413b5546342b8580ae928a74e621460746df74d7db50ff4df41d2310",
+    "spec/v2/core/identity.md": "3110138944189c378b0ca959ce1bfe5e808e6fdfc9481afeee128c899db05547",
     "spec/v2/core/interop.md": "6ec8259117bdb387b9323ca22c707b3b8571c00034e461c4ce79f4070c4d6b4a",
     "spec/v2/core/interrupt.md": "10f15dfe30baa0fc748aea0a067f9b271bea316fde6b598d78f77edc296f698a",
     "spec/v2/core/node-pack-runtimes.md": "e1088cb69b8c3c67256c494063328916c2980ab1aa97a7063de25bab82fdb1e5",
@@ -317,5 +317,5 @@
     "spec/v2/retention-floors.json": "eaf3722d95c79947af1d4269ef85117e126518c588cfcf1a2b21b97269f51624",
     "spec/v2/surface-baseline.json": "473b133e092e3107893e23f5d7e8d42d117ad894e4d3db5042a780431302ee84"
   },
-  "corpusCommit": "24368a14552d28c785adeea7b72647e8f6ae664e"
+  "corpusCommit": "531a1bc76591a115113391ec633ec60e1705ffbd"
 }

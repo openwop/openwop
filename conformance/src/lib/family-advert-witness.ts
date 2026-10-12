@@ -9,6 +9,11 @@
  * facet legs; `conversationTurnModelProvenance`, `channelPresence`,
  * `nondeterminismPolicy`, `promptLibrary` and `envelopeContracts` carry no facet
  * a host-binding v2 rule gives meaning to, so they get the record leg only.
+ * Wave 4 (suite 2.46.3): the `multiAgent.executionModel` sub-blocks a version
+ * level requires and the escalation kind it may name, and `auth.subjectLinkKey`
+ * under the two linking lanes. These rules live in prose and schema
+ * descriptions, not in the schema itself: a conditional `required` or a narrowed
+ * enum is a major change (COMPATIBILITY.md §2.4), so the suite carries them.
  *
  * A claims-check family is witnessed by what the host says about itself, so
  * every leg here reads the discovery record alone. Each leg checks one facet
@@ -69,7 +74,8 @@ export type AdvertFamily =
   | 'scheduling' | 'artifactTypes' | 'aiEnvelope' | 'deadLetter' | 'portability'
   | 'dataResidency' | 'conversationTurnModelProvenance' | 'multiPartyConversation' | 'channelPresence'
   | 'nodePackRuntimes' | 'uiPlugins' | 'purposePropagation' | 'nondeterminismPolicy'
-  | 'agentRuntime' | 'promptLibrary' | 'envelopeContracts';
+  | 'agentRuntime' | 'promptLibrary' | 'envelopeContracts'
+  | 'multiAgent' | 'auth';
 
 export function recordSchemaLeg(profile: MajorProfile, discovery: unknown, family: AdvertFamily, doc: string): AdvertOutcome {
   return onFamily(profile, discovery, family, (rec) => observed([bySchema(`/properties/${family}`, rec, doc, `the ${family} record`)]));
@@ -408,4 +414,83 @@ export const agentRuntimeImpliesManifestRuntimeLeg = (p: MajorProfile, d: unknow
   const agents = p.family(d, 'agents');
   const ok = agents !== null && isRecord(agents['manifestRuntime']);
   return observed([{ ok, doc: 'host-services.md §agentRuntime', message: `a host advertising agentRuntime MUST also advertise agents.manifestRuntime${ok ? '' : agents === null ? ' (agents is absent)' : ' (agents.manifestRuntime is absent)'}` }]);
+});
+
+// ---------------------------------------------------------------------------
+// Wave 4 — multiAgent.executionModel (execution.md §multiAgent) and auth (identity.md §3)
+// ---------------------------------------------------------------------------
+
+const MA_DOC = 'execution.md §multiAgent';
+
+/** The executionModel facet and its integer level, or a skip when either is absent. */
+function executionModel(rec: Record<string, unknown>, atLeast: number): { em: Record<string, unknown> } | AdvertOutcome {
+  const em = rec['executionModel'];
+  if (!isRecord(em)) return inapplicable('the host does not advertise multiAgent.executionModel');
+  const v = em['version'];
+  if (typeof v !== 'number' || !Number.isInteger(v)) return observed([{ ok: false, doc: MA_DOC, message: 'multiAgent.executionModel.version MUST be an integer' }]);
+  if (v < atLeast) return inapplicable(`multiAgent.executionModel.version is ${v} (< ${atLeast})`);
+  return { em };
+}
+const isOutcome = (x: unknown): x is AdvertOutcome => isRecord(x) && typeof x['kind'] === 'string';
+
+/**
+ * Level 3 (cumulative): "Hosts advertising `version: 3` MUST advertise this
+ * sub-block with a stable `hostId`" — the `causationHostId` rule reads that id.
+ */
+export const multiAgentCrossHostCausationLeg = (p: MajorProfile, d: unknown): AdvertOutcome => onFamily(p, d, 'multiAgent', (rec) => {
+  const got = executionModel(rec, 3);
+  if (isOutcome(got)) return got;
+  const chc = got.em['crossHostCausation'];
+  const hostId = isRecord(chc) ? chc['hostId'] : undefined;
+  return observed([
+    { ok: isRecord(chc), doc: MA_DOC, message: 'a host at executionModel.version >= 3 MUST advertise executionModel.crossHostCausation' },
+    { ok: typeof hostId === 'string' && hostId.length > 0, doc: MA_DOC, message: 'executionModel.crossHostCausation MUST carry a non-empty hostId (the causationHostId value)' },
+  ]);
+});
+
+/**
+ * Level 4 (cumulative): "Hosts advertising `version: 4` MUST advertise this
+ * sub-block" and "MUST set [`refusalDivergenceEmission`] to `true`".
+ */
+export const multiAgentReplayDeterminismLeg = (p: MajorProfile, d: unknown): AdvertOutcome => onFamily(p, d, 'multiAgent', (rec) => {
+  const got = executionModel(rec, 4);
+  if (isOutcome(got)) return got;
+  const rd = got.em['replayDeterminism'];
+  return observed([
+    { ok: isRecord(rd), doc: MA_DOC, message: 'a host at executionModel.version >= 4 MUST advertise executionModel.replayDeterminism' },
+    { ok: isRecord(rd) && rd['refusalDivergenceEmission'] === true, doc: MA_DOC, message: 'executionModel.replayDeterminism.refusalDivergenceEmission MUST be true at version >= 4' },
+  ]);
+});
+
+export const ESCALATION_KINDS = ['clarification', 'approval'] as const;
+
+/**
+ * `confidenceEscalationInterruptKind`: level 2 fires "a `clarification`
+ * interrupt (preferred) or an `approval` interrupt", and the host MUST emit the
+ * kind it advertises. The schema still admits `x-host-…` (removing it narrows a
+ * type); the v2 interrupt `kind` is closed, so such a value promises an interrupt
+ * the payload schema rejects. This leg enforces the prose.
+ */
+export const multiAgentEscalationKindLeg = (p: MajorProfile, d: unknown): AdvertOutcome => onFamily(p, d, 'multiAgent', (rec) => {
+  const em = rec['executionModel'];
+  if (!isRecord(em)) return inapplicable('the host does not advertise multiAgent.executionModel');
+  const k = em['confidenceEscalationInterruptKind'];
+  if (k === undefined) return inapplicable('the host does not advertise executionModel.confidenceEscalationInterruptKind (optional)');
+  const ok = (ESCALATION_KINDS as readonly unknown[]).includes(k);
+  return observed([{ ok, doc: MA_DOC, message: `executionModel.confidenceEscalationInterruptKind MUST be clarification or approval at v2${ok ? '' : ` (got ${JSON.stringify(k)})`}` }]);
+});
+
+export const SUBJECT_LINK_KEY_CLASSES = ['opaque-idp', 'configured-immutable'] as const;
+
+/**
+ * identity.md §3: "Advertising both `saml` and `scim` lanes implies the link
+ * contract. The `auth.subjectLinkKey` facet … names the key class the host forms
+ * links under." A host that forms links names their class.
+ */
+export const authSubjectLinkKeyLeg = (p: MajorProfile, d: unknown): AdvertOutcome => onFamily(p, d, 'auth', (rec) => {
+  const lanes = Array.isArray(rec['lanes']) ? (rec['lanes'] as unknown[]).map((l) => (isRecord(l) ? l['lane'] : undefined)) : [];
+  if (!(lanes.includes('saml') && lanes.includes('scim'))) return inapplicable('the host does not advertise both the saml and scim lanes');
+  const k = rec['subjectLinkKey'];
+  const ok = (SUBJECT_LINK_KEY_CLASSES as readonly unknown[]).includes(k);
+  return observed([{ ok, doc: 'identity.md §3', message: `a host advertising both the saml and scim lanes MUST advertise auth.subjectLinkKey (opaque-idp or configured-immutable)${ok ? '' : ` (got ${JSON.stringify(k)})`}` }]);
 });

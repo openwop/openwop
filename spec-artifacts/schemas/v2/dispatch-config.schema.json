@@ -32,7 +32,7 @@
         "parallel"
       ],
       "default": "sequential",
-      "description": "Behavior when `decision.kind === 'next-worker'` and `nextWorkerIds.length > 1`. `'sequential'` (default) dispatches each in array order, blocking on each child terminal before starting the next; the dispatch node's output reports the LAST child's `childRunId`/`childStatus` (intermediate child-run identifiers surface in the run's event log via standard `node.*` events). `'reject'` fails the dispatch with a structured `'fan_out_unsupported'` error envelope per `error-envelope.md`. `'parallel'` (RFC 0118) dispatches ALL `nextWorkerIds[i]` as child runs concurrently (bounded by `maxConcurrency`) and joins on their terminals per `joinPolicy`; it REQUIRES the host to advertise `capabilities.dispatch.fanOutSupported: true` — a host that does not MUST surface a `validation_error` at `POST /v1/workflows`."
+      "description": "Behavior when `decision.kind === 'next-worker'` and `nextWorkerIds.length > 1`. `'sequential'` (default) dispatches each in array order, blocking on each child terminal before starting the next; the dispatch node's output reports the LAST child's `childRunId`/`childStatus` (intermediate child-run identifiers surface in the run's event log via standard `node.*` events). `'reject'` fails the dispatch with a structured `'fan_out_unsupported'` error envelope per `error-envelope.md`. `'parallel'` (RFC 0118) dispatches ALL `nextWorkerIds[i]` as child runs concurrently (bounded by `maxConcurrency`) and joins on their terminals per `joinPolicy`; it REQUIRES a fan-out advertisement that the closed v2 capability record has no seat for (v1 `capabilities.dispatch.fanOutSupported`, `fanOutPolicies`, `joinModes`, `onChildFailureModes`, `maxFanOut`), so until one is added a v2 host MUST refuse a `core.dispatch` node pinning it with `validation_error` when the workflow is loaded."
     },
     "joinPolicy": {
       "type": "object",
@@ -71,7 +71,7 @@
     "maxConcurrency": {
       "type": "integer",
       "minimum": 1,
-      "description": "RFC 0118. Maximum number of children dispatched concurrently under `fanOutPolicy: 'parallel'`. When `nextWorkerIds.length` exceeds this, the host dispatches in waves of at most `maxConcurrency`, starting a queued child as each in-flight child terminates (the host MUST NOT silently drop children above the ceiling). Absent → host-defined effective concurrency (a host MAY cap to protect itself and MUST advertise that cap as `capabilities.dispatch.maxFanOut`). The EFFECTIVE concurrency is `min(maxConcurrency ?? ∞, capabilities.dispatch.maxFanOut ?? ∞)`. Does not change join semantics — `joinPolicy` evaluates over the full `nextWorkerIds` set. Meaningful only under `fanOutPolicy: 'parallel'`."
+      "description": "RFC 0118. Maximum number of children dispatched concurrently under `fanOutPolicy: 'parallel'`. When `nextWorkerIds.length` exceeds this, the host dispatches in waves of at most `maxConcurrency`, starting a queued child as each in-flight child terminates (the host MUST NOT silently drop children above the ceiling). Absent → host-defined effective concurrency (a host MAY cap to protect itself; v1 advertised the cap as `capabilities.dispatch.maxFanOut`, which has no v2 seat). The EFFECTIVE concurrency is `min(maxConcurrency ?? ∞, the host's cap ?? ∞)`. Does not change join semantics — `joinPolicy` evaluates over the full `nextWorkerIds` set. Meaningful only under `fanOutPolicy: 'parallel'`."
     },
     "iterationCap": {
       "type": "integer",
@@ -142,6 +142,5 @@
         "onChildFailure": "fail-fast"
       }
     }
-  ],
-  "x-openwop-seeded-from": "v1"
+  ]
 }

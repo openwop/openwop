@@ -17,6 +17,7 @@ import {
   subWorkflowInputMappingLeg,
   agentRuntimeImpliesManifestRuntimeLeg, dataResidencyRegionsLeg, multiPartyMaxParticipantsLeg, nodePackRuntimesWasmLeg,
   purposePropagatesOnwardLeg, uiPluginsHostApiLeg, uiPluginsIsolationLeg, uiPluginsMaxEntryBytesLeg, uiPluginsSurfacesLeg,
+  authSubjectLinkKeyLeg, multiAgentCrossHostCausationLeg, multiAgentEscalationKindLeg, multiAgentReplayDeterminismLeg,
 } from './family-advert-witness.js';
 
 const V2 = majorProfile(2);
@@ -371,5 +372,43 @@ describe('family-advert witness wave 3: agentRuntime implies agents.manifestRunt
   });
   it('is inapplicable when agentRuntime is not advertised, whatever agents says', () => {
     inapplicable(agentRuntimeImpliesManifestRuntimeLeg(V2, { agents: { ...exp } }));
+  });
+});
+
+describe('family-advert witness wave 4: multiAgent.executionModel levels and auth.subjectLinkKey', () => {
+  const ma = (em: Record<string, unknown> | undefined): Record<string, unknown> => ({ multiAgent: { ...head, status: 'experimental', until: '2.1', ...(em ? { executionModel: em } : {}) } });
+  const v5 = { version: 5, confidenceEscalationInterruptKind: 'clarification', crossHostCausation: { hostId: 'h', ancestryEndpointSupported: true }, replayDeterminism: { llmCacheKeyRecipe: 'spec-rfc-0041', refusalDivergenceEmission: true } };
+  const authDoc = (lanes: string[], key?: string): Record<string, unknown> => ({ auth: { ...head, lanes: lanes.map((lane) => ({ lane, issuers: ['i'], minimumAssurance: 'bearer', revocation: 'next-request' })), ...(key ? { subjectLinkKey: key } : {}) } });
+
+  it('a conforming level-5 record passes all three legs', () => {
+    passes(multiAgentCrossHostCausationLeg(V2, ma(v5)));
+    passes(multiAgentReplayDeterminismLeg(V2, ma(v5)));
+    passes(multiAgentEscalationKindLeg(V2, ma(v5)));
+  });
+  it('level 3 without crossHostCausation, or with an empty hostId, fails', () => {
+    expect(failed(multiAgentCrossHostCausationLeg(V2, ma({ version: 3 })))).toHaveLength(2);
+    expect(failed(multiAgentCrossHostCausationLeg(V2, ma({ version: 3, crossHostCausation: { hostId: '' } })))).toHaveLength(1);
+  });
+  it('level 4 without replayDeterminism, or with refusalDivergenceEmission false, fails', () => {
+    const { replayDeterminism: _rd, ...noRd } = v5;
+    expect(failed(multiAgentReplayDeterminismLeg(V2, ma(noRd)))).toHaveLength(2);
+    expect(failed(multiAgentReplayDeterminismLeg(V2, ma({ ...v5, replayDeterminism: { refusalDivergenceEmission: false } })))).toHaveLength(1);
+  });
+  it('an x-host escalation kind fails; approval passes', () => {
+    expect(failed(multiAgentEscalationKindLeg(V2, ma({ ...v5, confidenceEscalationInterruptKind: 'x-host-acme-low-confidence' })))).toHaveLength(1);
+    passes(multiAgentEscalationKindLeg(V2, ma({ ...v5, confidenceEscalationInterruptKind: 'approval' })));
+  });
+  it('below the level, or with the facet absent, each leg is inapplicable', () => {
+    expect(failed(multiAgentCrossHostCausationLeg(V2, ma({ version: 2 })))).toEqual(['skip:inapplicable']);
+    expect(failed(multiAgentReplayDeterminismLeg(V2, ma({ version: 3, crossHostCausation: { hostId: 'h' } })))).toEqual(['skip:inapplicable']);
+    expect(failed(multiAgentEscalationKindLeg(V2, ma({ version: 2 })))).toEqual(['skip:inapplicable']);
+    expect(failed(multiAgentCrossHostCausationLeg(V2, ma(undefined)))).toEqual(['skip:inapplicable']);
+    expect(failed(multiAgentCrossHostCausationLeg(V2, {}))).toEqual(['skip:inapplicable']);
+  });
+  it('both linking lanes require subjectLinkKey; one lane is inapplicable', () => {
+    passes(authSubjectLinkKeyLeg(V2, authDoc(['saml', 'scim'], 'opaque-idp')));
+    expect(failed(authSubjectLinkKeyLeg(V2, authDoc(['saml', 'scim'])))).toHaveLength(1);
+    expect(failed(authSubjectLinkKeyLeg(V2, authDoc(['saml', 'scim'], 'email')))).toHaveLength(1);
+    expect(failed(authSubjectLinkKeyLeg(V2, authDoc(['saml'], 'opaque-idp')))).toEqual(['skip:inapplicable']);
   });
 });
