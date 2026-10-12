@@ -269,7 +269,7 @@ Defects outside the spec:
 - [x] **RFC 0242** `Accepted` (provisional) 2026-10-11 on the v2 reference host's certified public cut on 2.46.0
       (build `d16cac40`, all seven `0242.*` ids pass). Owed: the RFC 0156 §B review; G2 (no host's `versions[]`
       spans floor to preferred) stays externally gated; openwop-app emits `requested` when it next touches negotiation.
-      Re-cut the reference on 2.46.1 to replace its canonical bundle (the 2.46.0 cut's one failure was a suite defect).
+      Done: the reference's certified 2.46.1 cut (533/0/0, build `f905c3b0`) is now its canonical bundle.
 - [x] **RFC 0238** `Accepted` (provisional) 2026-10-07 on openwop-app's certified 2.45.23 cut at
       `api.openwop.dev` (379/0/0, build `e33f3a19c`). Owed: the RFC 0156 §B review; R2 (an embedding
       the suite cannot see) is reviewed with each host's certification; G2 stays external.
