@@ -32,6 +32,11 @@ on:
         description: 'Override the clock date (YYYY-MM-DD) to check the schedule ahead'
         required: false
 
+# Least privilege: every job here only reads the repo. A job that needs more
+# declares it on the job (job-level permissions replace these, not add to them).
+permissions:
+  contents: read
+
 jobs:
   normative-home-clock:
     name: Do all v2 core families have a home that survives v1 end-of-support?

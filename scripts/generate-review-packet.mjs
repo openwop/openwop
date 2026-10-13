@@ -48,7 +48,7 @@ for (const line of reg.split('\n')) {
 const rfcFiles = readdirSync(join(ROOT, 'RFCS')).filter((f) => /^\d{4}-.*\.md$/.test(f));
 const fileFor = (n) => rfcFiles.find((f) => f.startsWith(`${n}-`));
 const clip = (s, n) => (s.length > n ? `${s.slice(0, n - 1).trimEnd()}…` : s);
-const cell = (s) => s.replace(/\|/g, '\\|').replace(/\s+/g, ' ').trim();
+const cell = (s) => s.replace(/\\/g, '\\\\').replace(/\|/g, '\\|').replace(/\s+/g, ' ').trim();
 
 const groups = new Map(AREAS.map(([name]) => [name, []]));
 groups.set('Other (assign during review)', []);

@@ -150,7 +150,7 @@ const namesKey = (text, key, facets = []) => {
   // editorial "a future v1.x evolution MAY widen the projection" note under its
   // own section heading. One closed namespace whose post-dot token is the family
   // key by construction.
-  if (new RegExp(`(^|${B})\`?capabilities\.${key}\`?($|${A})`).test(text)) return true;
+  if (new RegExp(`(^|${B})\`?capabilities\\.${key}\`?($|${A})`).test(text)) return true;
   for (const f of facets) {
     if (new RegExp(`(^|${B})\`?${key}\\.${f}\\b`).test(text)) return true;
   }

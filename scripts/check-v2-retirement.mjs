@@ -288,7 +288,7 @@ for (const s of baseline?.surfaces ?? []) {
   const [site, kind, value] = s.split('|');
   baselineSites.add(site);
   if (kind === 'property') baselineSites.add(`${site}${site.endsWith('#') ? '/' : '/'}${value}`);
-  if (kind === 'required') baselineRequired.add(`${site}/${value}`.replace('#/', '#/'));
+  if (kind === 'required') baselineRequired.add(`${site}/${value}`);
 }
 const profileFamilies = new Set();
 for (const p of profiles.profiles ?? []) for (const f of p.predicate?.families ?? []) profileFamilies.add(typeof f === 'string' ? f : f?.key ?? f?.family);

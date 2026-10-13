@@ -33,6 +33,11 @@ on:
       - 'openwop-conformance/v*'
       - 'openwop-spec-artifacts/v*'
 
+# Least privilege: every job here only reads the repo. A job that needs more
+# declares it on the job (job-level permissions replace these, not add to them).
+permissions:
+  contents: read
+
 jobs:
   validate-tag:
     runs-on: ubuntu-latest
@@ -113,6 +118,9 @@ jobs:
     needs: validate-tag
     if: startsWith(github.ref, 'refs/tags/v')
     runs-on: ubuntu-latest
+    # No checkout and no GITHUB_TOKEN use: the issue is filed with the
+    # cross-repo SDKS_RELEASE_DISPATCH_TOKEN, so the job token needs nothing.
+    permissions: {}
     steps:
       - name: Announce required openwop-sdks release
         run: |

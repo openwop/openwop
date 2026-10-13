@@ -28,6 +28,11 @@ concurrency:
 env:
   NODE_VERSION: '24'
 
+# Least privilege: every job here only reads the repo. A job that needs more
+# declares it on the job (job-level permissions replace these, not add to them).
+permissions:
+  contents: read
+
 jobs:
   # Validates the spec corpus is internally consistent: schemas compile,
   # OpenAPI/AsyncAPI lint, fixtures validate, prose docs carry status tags.
