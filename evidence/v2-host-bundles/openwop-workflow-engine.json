@@ -1,12 +1,12 @@
 {
   "bundleVersion": "3",
-  "generatedAt": "2026-10-13T04:27:08.484Z",
+  "generatedAt": "2026-10-13T07:25:41.657Z",
   "suite": {
     "name": "@openwop/openwop-conformance",
-    "version": "2.46.3",
+    "version": "2.46.4",
     "targetMajor": 2,
-    "specArtifactsVersion": "2.46.3",
-    "stampSha256": "982ec02aa2b5d1d3ec6a64da49429f3361125a0a2bc02aa669c3efff64da1b01"
+    "specArtifactsVersion": "2.46.4",
+    "stampSha256": "81bd0894e7ad0d539784a6fb3ac038bddd46d7da22870e6da68295c1df0f2eee"
   },
   "host": {
     "name": "openwop-workflow-engine",
@@ -14,13 +14,13 @@
     "vendor": "openwop-app",
     "build": {
       "kind": "commit",
-      "id": "294a17d8a504878a5672f39101af8c65fe708e90"
+      "id": "8d2adcbe8135f08cf2c510214dab13b5b829f830"
     },
     "signingKeyId": "openwop-app-bundle-2"
   },
   "discovery": {
     "url": "https://api.openwop.dev/.well-known/openwop",
-    "sha256": "a364e8812720ada60247de2ed39b989ca40ae1783c4d4294c4217a560a956951",
+    "sha256": "701e6425aa7efddbf373177cca52a3207a16f49938b6f09afe3c645da888e8fb",
     "protocolVersions": [
       "2.0"
     ],
@@ -97,6 +97,7 @@
         "conformance-dispatch-cross-worker-handoff-child-a",
         "conformance-dispatch-cross-worker-handoff-child-b",
         "conformance-dispatch-deterministic-fail-child",
+        "conformance-dispatch-fanout-race",
         "conformance-dispatch-input-mapping",
         "conformance-dispatch-input-mapping-child",
         "conformance-dispatch-input-mapping-no-default",
@@ -1473,7 +1474,18 @@
           ],
           "requiresBounds": true
         },
-        "dispatch": true
+        "dispatch": true,
+        "fanOut": {
+          "joinModes": [
+            "wait-all"
+          ],
+          "onChildFailureModes": [
+            "collect",
+            "absorb"
+          ],
+          "maxFanOut": 16,
+          "perItemInput": true
+        }
       },
       "multiAgent": {
         "status": "experimental",
@@ -2024,10 +2036,10 @@
   ],
   "results": {
     "totals": {
-      "executedPass": 437,
+      "executedPass": 440,
       "executedFail": 0,
       "skipped": 11,
-      "inapplicable": 371,
+      "inapplicable": 372,
       "blocked": 0
     },
     "requirements": [
@@ -2081,7 +2093,7 @@
         "id": "openwop.scenario.fixtures-valid",
         "scenario": "fixtures-valid.test.ts",
         "result": "executed-pass",
-        "assertions": 438
+        "assertions": 441
       },
       {
         "id": "openwop.scenario.inbound-credential-no-passthrough",
@@ -2186,6 +2198,12 @@
         "result": "inapplicable",
         "assertions": 0,
         "detail": "every test returned early through behaviorGate with zero assertions: profile not advertised in the captured discovery set"
+      },
+      {
+        "id": "openwop.scenario.v2-agents-fan-out",
+        "scenario": "v2-agents-fan-out.test.ts",
+        "result": "executed-pass",
+        "assertions": 4
       },
       {
         "id": "openwop.scenario.v2-ai-envelope-advertisement",
@@ -2314,7 +2332,7 @@
         "scenario": "v2-capability-maturity-bounded.test.ts",
         "result": "executed-pass",
         "assertions": 47,
-        "detail": "partial-witness: inapplicable: unwitnessable until the first persisted-class retirement row is due (RFC 0197 §A.3 Falsifiability): corpus 2.46.3: 0 persisted-class v2-minor retirement row(s), 0 v2→v2 migration row(s) — no retired member exists for a post-2.N event to carry. Before one does, a scenario would be vacuous, and a row that cannot fail is not a witness. This leg asserts the moment such a row falls due."
+        "detail": "partial-witness: inapplicable: unwitnessable until the first persisted-class retirement row is due (RFC 0197 §A.3 Falsifiability): corpus 2.46.4: 0 persisted-class v2-minor retirement row(s), 0 v2→v2 migration row(s) — no retired member exists for a post-2.N event to carry. Before one does, a scenario would be vacuous, and a row that cannot fail is not a witness. This leg asserts the moment such a row falls due."
       },
       {
         "id": "openwop.scenario.v2-capability-record-shape",
@@ -2626,7 +2644,7 @@
         "id": "openwop.scenario.v2-id-grammar",
         "scenario": "v2-id-grammar.test.ts",
         "result": "executed-pass",
-        "assertions": 9
+        "assertions": 11
       },
       {
         "id": "openwop.scenario.v2-idempotency-in-flight",
@@ -3403,7 +3421,7 @@
         "scenario": "v2-webhook-secret-rotation.test.ts",
         "result": "executed-pass",
         "assertions": 12,
-        "detail": "partial-witness: inapplicable: the post-overlap leg is not observed: the advertised webhooks.secretRotation.overlapSeconds is 86400s (expiry 2026-10-14T04:17:27.906Z) and the suite wait cap is 90000ms, and the seams profile is not advertised, so the optional shortenRotationOverlap seam (host-sample-test-seams.md §29) is not offered; raise OPENWOP_WEBHOOK_RETRY_WAIT_MS past the overlap, or serve the seam, to witness it"
+        "detail": "partial-witness: inapplicable: the post-overlap leg is not observed: the advertised webhooks.secretRotation.overlapSeconds is 86400s (expiry 2026-10-14T07:19:21.938Z) and the suite wait cap is 90000ms, and the seams profile is not advertised, so the optional shortenRotationOverlap seam (host-sample-test-seams.md §29) is not offered; raise OPENWOP_WEBHOOK_RETRY_WAIT_MS past the overlap, or serve the seam, to witness it"
       },
       {
         "id": "openwop.scenario.v2-webhook-standard-webhooks-delivery",
@@ -3529,13 +3547,13 @@
         "id": "openwop.it.fixtures-valid.every-fixture-has-a-manual-trigger-so-the-conformance-driver-can-start-it",
         "scenario": "fixtures-valid.test.ts",
         "result": "executed-pass",
-        "assertions": 114
+        "assertions": 115
       },
       {
         "id": "openwop.it.fixtures-valid.every-fixture-id-matches-its-filename",
         "scenario": "fixtures-valid.test.ts",
         "result": "executed-pass",
-        "assertions": 114
+        "assertions": 115
       },
       {
         "id": "openwop.it.fixtures-valid.every-fixture-templateid-matches-its-filename",
@@ -3619,7 +3637,7 @@
         "id": "openwop.it.fixtures-valid.validates-against-workflow-definition-schema-json",
         "scenario": "fixtures-valid.test.ts",
         "result": "executed-pass",
-        "assertions": 114
+        "assertions": 115
       },
       {
         "id": "openwop.it.jcs-vectors.a-non-i-json-native-value-is-refused-at-the-value-boundary",
@@ -4567,7 +4585,7 @@
         "id": "openwop.requirement.0170.id-grammar.events",
         "scenario": "v2-id-grammar.test.ts",
         "result": "executed-pass",
-        "assertions": 2
+        "assertions": 4
       },
       {
         "id": "openwop.requirement.0170.id-grammar.snapshot",
@@ -5040,21 +5058,21 @@
         "scenario": "v2-webhook-durable-delivery.test.ts",
         "result": "executed-pass",
         "assertions": 4,
-        "detail": "observed: 4/4 subscribed event(s) delivered, 0 duplicate arrival(s); slowest first arrival 1567ms after the run was created; cap (default 90000ms; advertised maxElapsedMs none): waited ≤90000ms"
+        "detail": "observed: 4/4 subscribed event(s) delivered, 0 duplicate arrival(s); slowest first arrival 1571ms after the run was created; cap (default 90000ms; advertised maxElapsedMs none): waited ≤90000ms"
       },
       {
         "id": "openwop.requirement.0173.webhook-durable-delivery",
         "scenario": "v2-webhook-durable-delivery.test.ts",
         "result": "executed-pass",
         "assertions": 9,
-        "detail": "observed: cap (default 90000ms; advertised maxElapsedMs none): waited ≤90000ms; 3 attempt(s), last attempt after 8072ms"
+        "detail": "observed: cap (default 90000ms; advertised maxElapsedMs none): waited ≤90000ms; 3 attempt(s), last attempt after 8035ms"
       },
       {
         "id": "openwop.requirement.0173.webhook-durable-delivery.dead-letter",
         "scenario": "v2-webhook-durable-delivery.test.ts",
         "result": "executed-pass",
         "assertions": 5,
-        "detail": "partial-witness: inapplicable: host does not advertise the webhooks.deadLetter facet — RFC 0188 §A.5 makes the read a 404 rather than an obligation, so the sink half of §Durability is unwitnessable here (the retry half above passed) · observed: cap (default 90000ms; advertised maxElapsedMs none): waited ≤90000ms; 5 attempt(s), last attempt after 34312ms, sink not observed"
+        "detail": "partial-witness: inapplicable: host does not advertise the webhooks.deadLetter facet — RFC 0188 §A.5 makes the read a 404 rather than an obligation, so the sink half of §Durability is unwitnessable here (the retry half above passed) · observed: cap (default 90000ms; advertised maxElapsedMs none): waited ≤90000ms; 5 attempt(s), last attempt after 34080ms, sink not observed"
       },
       {
         "id": "openwop.requirement.0175.legacy-profiles-absent",
@@ -5428,7 +5446,7 @@
         "scenario": "v2-capability-maturity-bounded.test.ts",
         "result": "inapplicable",
         "assertions": 0,
-        "detail": "unwitnessable until the first persisted-class retirement row is due (RFC 0197 §A.3 Falsifiability): corpus 2.46.3: 0 persisted-class v2-minor retirement row(s), 0 v2→v2 migration row(s) — no retired member exists for a post-2.N event to carry. Before one does, a scenario would be vacuous, and a row that cannot fail is not a witness. This leg asserts the moment such a row falls due."
+        "detail": "unwitnessable until the first persisted-class retirement row is due (RFC 0197 §A.3 Falsifiability): corpus 2.46.4: 0 persisted-class v2-minor retirement row(s), 0 v2→v2 migration row(s) — no retired member exists for a post-2.N event to carry. Before one does, a scenario would be vacuous, and a row that cannot fail is not a witness. This leg asserts the moment such a row falls due."
       },
       {
         "id": "openwop.requirement.0198.advertised-via-discover",
@@ -5628,7 +5646,7 @@
         "scenario": "v2-webhook-secret-rotation.test.ts",
         "result": "executed-pass",
         "assertions": 12,
-        "detail": "partial-witness: inapplicable: the post-overlap leg is not observed: the advertised webhooks.secretRotation.overlapSeconds is 86400s (expiry 2026-10-14T04:17:27.906Z) and the suite wait cap is 90000ms, and the seams profile is not advertised, so the optional shortenRotationOverlap seam (host-sample-test-seams.md §29) is not offered; raise OPENWOP_WEBHOOK_RETRY_WAIT_MS past the overlap, or serve the seam, to witness it"
+        "detail": "partial-witness: inapplicable: the post-overlap leg is not observed: the advertised webhooks.secretRotation.overlapSeconds is 86400s (expiry 2026-10-14T07:19:21.938Z) and the suite wait cap is 90000ms, and the seams profile is not advertised, so the optional shortenRotationOverlap seam (host-sample-test-seams.md §29) is not offered; raise OPENWOP_WEBHOOK_RETRY_WAIT_MS past the overlap, or serve the seam, to witness it"
       },
       {
         "id": "openwop.requirement.0204.annotations-derived",
@@ -6094,13 +6112,13 @@
       },
       {
         "id": "openwop.requirement.0235.if-none-match.304-carries-etag",
-        "scenario": "v2-discovery-etag.test.ts",
+        "scenario": "v2-run-snapshot-etag.test.ts",
         "result": "executed-pass",
         "assertions": 1
       },
       {
         "id": "openwop.requirement.0235.if-none-match.no-cache-ignored",
-        "scenario": "v2-discovery-etag.test.ts",
+        "scenario": "v2-run-snapshot-etag.test.ts",
         "result": "executed-pass",
         "assertions": 1
       },
@@ -6112,7 +6130,7 @@
       },
       {
         "id": "openwop.requirement.0235.if-none-match.rfc9110-match",
-        "scenario": "v2-discovery-etag.test.ts",
+        "scenario": "v2-run-snapshot-etag.test.ts",
         "result": "executed-pass",
         "assertions": 1
       },
@@ -6220,6 +6238,25 @@
         "result": "inapplicable",
         "assertions": 0,
         "detail": "the host advertises no inbound A2A or MCP surface (a2a.agentCardUrl, mcp.serverUrls, mcp.serverMount)"
+      },
+      {
+        "id": "openwop.requirement.0243.fan-out-needs-dispatch",
+        "scenario": "v2-agents-fan-out.test.ts",
+        "result": "executed-pass",
+        "assertions": 1
+      },
+      {
+        "id": "openwop.requirement.0243.subject-link-key-needs-both-lanes",
+        "scenario": "v2-auth-subject-link-key.test.ts",
+        "result": "inapplicable",
+        "assertions": 0,
+        "detail": "the host does not advertise auth.subjectLinkKey"
+      },
+      {
+        "id": "openwop.requirement.0243.unadmitted-fan-out-refused",
+        "scenario": "v2-agents-fan-out.test.ts",
+        "result": "executed-pass",
+        "assertions": 3
       },
       {
         "id": "openwop.requirement.agent-runtime.advert-record-schema",
@@ -7372,7 +7409,7 @@
       }
     ]
   },
-  "assertionCount": 4774,
+  "assertionCount": 4792,
   "detail": {
     "nonPass": [
       {
@@ -8613,7 +8650,7 @@
       {
         "id": "openwop.requirement.0197.retired-not-emitted",
         "result": "inapplicable",
-        "reason": "unwitnessable until the first persisted-class retirement row is due (RFC 0197 §A.3 Falsifiability): corpus 2.46.3: 0 persisted-class v2-minor retirement row(s), 0 v2→v2 migration row(s) — no retired member exists for a post-2.N event to carry. Before one does, a scenario would be vacuous, and a row that cannot fail is not a witness. This leg asserts the moment such a row falls due."
+        "reason": "unwitnessable until the first persisted-class retirement row is due (RFC 0197 §A.3 Falsifiability): corpus 2.46.4: 0 persisted-class v2-minor retirement row(s), 0 v2→v2 migration row(s) — no retired member exists for a post-2.N event to carry. Before one does, a scenario would be vacuous, and a row that cannot fail is not a witness. This leg asserts the moment such a row falls due."
       },
       {
         "id": "openwop.requirement.0198.advertised-via-discover",
@@ -8909,6 +8946,11 @@
         "id": "openwop.requirement.0242.inbound.listed",
         "result": "inapplicable",
         "reason": "the host advertises no inbound A2A or MCP surface (a2a.agentCardUrl, mcp.serverUrls, mcp.serverMount)"
+      },
+      {
+        "id": "openwop.requirement.0243.subject-link-key-needs-both-lanes",
+        "result": "inapplicable",
+        "reason": "the host does not advertise auth.subjectLinkKey"
       },
       {
         "id": "openwop.requirement.agent-runtime.advert-record-schema",
@@ -9287,11 +9329,11 @@
       }
     ]
   },
-  "witnessSha256": "12627266193829b8ed4d72d5cb9c4c493db5273691a2bac4de773a05058aef0b",
+  "witnessSha256": "c4966ce0ebed0921fb0410619d8424e30ec72dcb82e8c569200e214431e304fa",
   "signature": {
     "alg": "ed25519",
     "keyId": "openwop-app-bundle-2",
-    "sig": "obylTqVhQVsxeTiuFl0gaZjPdGzKvg2VsiBFWy3C97coVscNofXtKaL_X0ri6KvLPA9Ohh9mt-ueGmhgWmjHDA",
+    "sig": "_rQksq6fT1d9rJ2sedHM3n-mB1H76STRXUaTdV45b0MpoVx0IPpqtEwvFOi7EuCAagcHwA1DIDV4KDcGHcpZAA",
     "over": [
       "witnessSha256",
       "host.build",
