@@ -14501,11 +14501,11 @@
       "rfc": "0243",
       "local": "G1",
       "section": "§A.2, §Conformance",
-      "surface": "No host seeds `conformance-dispatch-fanout-race`, so the `createRun` refusal has no witness; every host records the leg `inapplicable`.",
+      "surface": "No host seeded `conformance-dispatch-fanout-race`, so the `createRun` refusal had no witness.",
       "witness": "unclassified",
       "requirementId": null,
-      "disposition": "transferred",
-      "target": "TODO.md",
+      "disposition": "closed",
+      "target": null,
       "sources": [
         {
           "file": "RFCS/registers/0243-dispatch-fan-out-seat.gaps.md",
@@ -14521,8 +14521,8 @@
       "surface": "No fixture drives a live parallel fan-out or a supervisor emitting `nextWorkerInputs`, so `maxFanOut` waves and the `perItemInput` refusal have no v2 leg.",
       "witness": "unclassified",
       "requirementId": null,
-      "disposition": "externally-gated",
-      "target": "host-advertises-agents-fanOut",
+      "disposition": "transferred",
+      "target": "TODO.md",
       "sources": [
         {
           "file": "RFCS/registers/0243-dispatch-fan-out-seat.gaps.md",

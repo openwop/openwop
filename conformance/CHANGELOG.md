@@ -1,3 +1,8 @@
+## [2.46.5] — unreleased — RFC 0243 Accepted; a fan-out prediction corrected
+
+- **No assertion changes.** This cycle opens because RFC 0243's gap G1 closes, which changes the packed `spec/v1/gaps.json`.
+- **Correction to the [2.46.4] notes.** They said both fan-out rows are `inapplicable` everywhere. On a host advertising `agents.dispatch: true` that seeds and lists every fixture the package ships, `conformance-dispatch-fanout-race` is listed, so `0243.unadmitted-fan-out-refused` runs. It records `executed-fail` unless the host advertises `agents.fanOut` with the modes it runs or refuses the workflow at `POST /runs` with `400 validation_error` and `details.requiredCapability`. Leaving the fixture out of `fixtures` keeps the row `inapplicable`. The rule did not change; only the prediction was wrong.
+
 # `@openwop/openwop-conformance` Changelog
 
 ## [2.46.4] — 2026-10-12 — RFC 0243: parallel fan-out has a v2 seat, and a link key needs both linking lanes
