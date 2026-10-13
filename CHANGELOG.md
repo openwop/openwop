@@ -29,6 +29,12 @@ Entries before this file was condensed carried full development detail. That tex
 - **RFC 0237 filed and Active (window waived).** `nondeterminismPolicy.sources` (`clock`, `random`, `id`, `env`, `x-*`): a `replay` fork reproduces each, witnessed by `conformance-nondeterminism`. `declared: false` and `advertised: false` are not v2 states; both go at 3.0.
 - **Erratum: `identity.md` §5 grammar table matches `ids.schema.json` again.** `tenantId` gets its own row with the `anon:` prefix its pattern has had since 2.0.0. `typeId` gains the `@<semver>` pin from RFC 0187. No wire change. `check-id-kinds-bound` now compares the table against the schema.
 
+## [2.46.4] — 2026-10-12 — RFC 0243: parallel fan-out has a v2 seat, and a link key needs both linking lanes
+
+- **Spec:** optional `agents.fanOut` (`joinModes`, `onChildFailureModes`, `maxFanOut`, `perItemInput`), refused at `createRun` with `details.requiredCapability` where not admitted; `identity.md` §3: `auth.subjectLinkKey` MUST NOT appear without both linking lanes. RFC 0243 `Active`, window waived.
+- **Suite:** new `v2-agents-fan-out` (fixture `conformance-dispatch-fanout-race`); `v2-auth-subject-link-key` gains the both-lanes leg.
+- **Evidence:** no host advertises `fanOut` or seeds the fixture; the reference host passes §B; openwop-app's current adverts carry no key.
+
 ## [2.46.3] — 2026-10-12 — discovery rules the schema cannot carry
 
 - **Suite:** `v2-multi-agent-advertisement` (levels 3 and 4 need their sub-blocks; the escalation kind is `clarification` or `approval`) and `v2-auth-subject-link-key` (both linking lanes need the key). Descriptions corrected; the schema changes wait for 3.0.

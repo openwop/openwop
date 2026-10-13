@@ -4,7 +4,7 @@
     "schemas/v2/**/*.json",
     "spec/v2/path-manifest.json"
   ],
-  "release": "2.46.3",
+  "release": "2.46.4",
   "kinds": {
     "union": [
       "channel",
@@ -18,7 +18,7 @@
       "type"
     ]
   },
-  "count": 8761,
+  "count": 8781,
   "surfaces": [
     "schemas/v2/a2a-task-state.schema.json#/contextId|type|string",
     "schemas/v2/a2a-task-state.schema.json#/interruptKind|enum-member|\"approval\"",
@@ -943,6 +943,25 @@
     "schemas/v2/capabilities.schema.json#/agents/evalSuite|property|maxTasksPerSuite",
     "schemas/v2/capabilities.schema.json#/agents/evalSuite|property|modes",
     "schemas/v2/capabilities.schema.json#/agents/evalSuite|type|object",
+    "schemas/v2/capabilities.schema.json#/agents/fanOut/joinModes/[]|enum-member|\"first\"",
+    "schemas/v2/capabilities.schema.json#/agents/fanOut/joinModes/[]|enum-member|\"quorum\"",
+    "schemas/v2/capabilities.schema.json#/agents/fanOut/joinModes/[]|enum-member|\"race\"",
+    "schemas/v2/capabilities.schema.json#/agents/fanOut/joinModes/[]|enum-member|\"wait-all\"",
+    "schemas/v2/capabilities.schema.json#/agents/fanOut/joinModes|type|array",
+    "schemas/v2/capabilities.schema.json#/agents/fanOut/maxFanOut|type|integer",
+    "schemas/v2/capabilities.schema.json#/agents/fanOut/onChildFailureModes/[]|enum-member|\"absorb\"",
+    "schemas/v2/capabilities.schema.json#/agents/fanOut/onChildFailureModes/[]|enum-member|\"collect\"",
+    "schemas/v2/capabilities.schema.json#/agents/fanOut/onChildFailureModes/[]|enum-member|\"fail-fast\"",
+    "schemas/v2/capabilities.schema.json#/agents/fanOut/onChildFailureModes|type|array",
+    "schemas/v2/capabilities.schema.json#/agents/fanOut/perItemInput|type|boolean",
+    "schemas/v2/capabilities.schema.json#/agents/fanOut|closed|true",
+    "schemas/v2/capabilities.schema.json#/agents/fanOut|property|joinModes",
+    "schemas/v2/capabilities.schema.json#/agents/fanOut|property|maxFanOut",
+    "schemas/v2/capabilities.schema.json#/agents/fanOut|property|onChildFailureModes",
+    "schemas/v2/capabilities.schema.json#/agents/fanOut|property|perItemInput",
+    "schemas/v2/capabilities.schema.json#/agents/fanOut|required|joinModes",
+    "schemas/v2/capabilities.schema.json#/agents/fanOut|required|onChildFailureModes",
+    "schemas/v2/capabilities.schema.json#/agents/fanOut|type|object",
     "schemas/v2/capabilities.schema.json#/agents/goals/continuation/[]|enum-member|\"commitment\"",
     "schemas/v2/capabilities.schema.json#/agents/goals/continuation/[]|enum-member|\"heartbeat\"",
     "schemas/v2/capabilities.schema.json#/agents/goals/continuation/[]|enum-member|\"manual\"",
@@ -1068,6 +1087,7 @@
     "schemas/v2/capabilities.schema.json#/agents|property|dispatch",
     "schemas/v2/capabilities.schema.json#/agents|property|dispatchMapping",
     "schemas/v2/capabilities.schema.json#/agents|property|evalSuite",
+    "schemas/v2/capabilities.schema.json#/agents|property|fanOut",
     "schemas/v2/capabilities.schema.json#/agents|property|goals",
     "schemas/v2/capabilities.schema.json#/agents|property|liveRuntime",
     "schemas/v2/capabilities.schema.json#/agents|property|manifestRuntime",
