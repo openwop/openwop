@@ -1,0 +1,83 @@
+{
+  "id": "conformance-dispatch-per-item-mismatch",
+  "name": "Conformance: Dispatch Per-Item Length Mismatch",
+  "version": "1.0",
+  "description": "A next-worker decision whose nextWorkerInputs is shorter than nextWorkerIds. Every host fails the dispatch node with validation_error and dispatches no child (RFC 0126, orchestrator-decision.schema.json nextWorkerInputs).",
+  "nodes": [
+    {
+      "id": "supervisor",
+      "typeId": "core.orchestrator.supervisor",
+      "name": "Supervisor",
+      "position": {
+        "x": 0,
+        "y": 0
+      },
+      "config": {
+        "mockDispatchPlan": [
+          {
+            "kind": "next-worker",
+            "nextWorkerIds": [
+              "conformance-dispatch-input-mapping-child",
+              "conformance-dispatch-input-mapping-child"
+            ],
+            "nextWorkerInputs": [
+              {
+                "childGreeting": "item-a"
+              }
+            ]
+          },
+          {
+            "kind": "terminate",
+            "reason": "goal-reached"
+          }
+        ]
+      },
+      "inputs": {}
+    },
+    {
+      "id": "dispatch",
+      "typeId": "core.dispatch",
+      "name": "Dispatch",
+      "position": {
+        "x": 200,
+        "y": 0
+      },
+      "config": {
+        "workerDispatchModel": "child-run",
+        "fanOutPolicy": "sequential"
+      },
+      "inputs": {}
+    }
+  ],
+  "edges": [
+    {
+      "id": "e1",
+      "sourceNodeId": "supervisor",
+      "targetNodeId": "dispatch"
+    },
+    {
+      "id": "e2",
+      "sourceNodeId": "dispatch",
+      "targetNodeId": "supervisor"
+    }
+  ],
+  "triggers": [
+    {
+      "id": "manual",
+      "type": "manual",
+      "enabled": true
+    }
+  ],
+  "variables": [],
+  "metadata": {
+    "tags": [
+      "conformance",
+      "dispatch",
+      "per-item-input"
+    ]
+  },
+  "settings": {
+    "timeout": 60000,
+    "maxRetries": 0
+  }
+}

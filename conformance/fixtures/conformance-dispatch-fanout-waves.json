@@ -1,0 +1,84 @@
+{
+  "id": "conformance-dispatch-fanout-waves",
+  "name": "Conformance: Dispatch Fan-Out Waves",
+  "version": "1.0",
+  "description": "A parallel fan-out of three conformance-delay children with maxConcurrency 2: at most two children run at once, and none is dropped (RFC 0243 \u00a7A.3).",
+  "nodes": [
+    {
+      "id": "supervisor",
+      "typeId": "core.orchestrator.supervisor",
+      "name": "Supervisor",
+      "position": {
+        "x": 0,
+        "y": 0
+      },
+      "config": {
+        "mockDispatchPlan": [
+          {
+            "kind": "next-worker",
+            "nextWorkerIds": [
+              "conformance-delay",
+              "conformance-delay",
+              "conformance-delay"
+            ]
+          },
+          {
+            "kind": "terminate",
+            "reason": "goal-reached"
+          }
+        ]
+      },
+      "inputs": {}
+    },
+    {
+      "id": "dispatch",
+      "typeId": "core.dispatch",
+      "name": "Dispatch",
+      "position": {
+        "x": 200,
+        "y": 0
+      },
+      "config": {
+        "workerDispatchModel": "child-run",
+        "fanOutPolicy": "parallel",
+        "maxConcurrency": 2,
+        "joinPolicy": {
+          "mode": "wait-all",
+          "onChildFailure": "collect"
+        }
+      },
+      "inputs": {}
+    }
+  ],
+  "edges": [
+    {
+      "id": "e1",
+      "sourceNodeId": "supervisor",
+      "targetNodeId": "dispatch"
+    },
+    {
+      "id": "e2",
+      "sourceNodeId": "dispatch",
+      "targetNodeId": "supervisor"
+    }
+  ],
+  "triggers": [
+    {
+      "id": "manual",
+      "type": "manual",
+      "enabled": true
+    }
+  ],
+  "variables": [],
+  "metadata": {
+    "tags": [
+      "conformance",
+      "dispatch",
+      "fan-out"
+    ]
+  },
+  "settings": {
+    "timeout": 60000,
+    "maxRetries": 0
+  }
+}

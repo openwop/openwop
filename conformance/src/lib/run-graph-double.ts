@@ -30,6 +30,10 @@ export interface DoubleRun {
   readonly status: string;
   readonly variables?: Record<string, unknown> | undefined;
   readonly inputs?: Record<string, unknown> | undefined;
+  /** Further snapshot members (`startedAt`, `completedAt`, …). */
+  readonly snapshot?: Record<string, unknown> | undefined;
+  /** Refuse the create with this answer instead of making the run. */
+  readonly refuse?: { readonly status: number; readonly body: unknown } | undefined;
   readonly events?: readonly DoubleEvent[];
   /** The `GET /runs/{runId}/ancestry` answer, given the run's own id. Unset: 404. */
   readonly ancestry?: ((self: string) => { readonly status: number; readonly body: unknown }) | undefined;
@@ -103,6 +107,7 @@ export class RunGraphDouble {
       const self = this.mint();
       const run = this.opts.onCreate?.(workflowId, (child) => { const id = this.mint(); this.runs.set(id, child); return id; }, self);
       if (run === undefined) return this.send(res, 404, { error: 'not_found', message: `no workflow ${workflowId}` });
+      if (run.refuse !== undefined) return this.send(res, run.refuse.status, run.refuse.body);
       this.runs.set(self, { workflowId, ...run });
       return this.send(res, 201, { runId: self, status: 'running' });
     }
@@ -128,6 +133,7 @@ export class RunGraphDouble {
         runId: id, workflowId: run.workflowId ?? 'double', status: run.status,
         ...(run.variables === undefined ? {} : { variables: run.variables }),
         ...(run.inputs === undefined ? {} : { inputs: run.inputs }),
+        ...(run.snapshot ?? {}),
       });
     }
 
