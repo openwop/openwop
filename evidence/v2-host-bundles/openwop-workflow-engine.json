@@ -1,6 +1,6 @@
 {
   "bundleVersion": "3",
-  "generatedAt": "2026-10-12T15:46:04.497Z",
+  "generatedAt": "2026-10-13T00:14:24.267Z",
   "suite": {
     "name": "@openwop/openwop-conformance",
     "version": "2.46.2",
@@ -14,13 +14,13 @@
     "vendor": "openwop-app",
     "build": {
       "kind": "commit",
-      "id": "9627e75ec16fc584685741be4d71f954b5f17a09"
+      "id": "e5359a5139a6974bf54d824d2827327f2bc82985"
     },
     "signingKeyId": "openwop-app-bundle-2"
   },
   "discovery": {
     "url": "https://api.openwop.dev/.well-known/openwop",
-    "sha256": "413f8dac4399c2900d9c93a4b892411eedec9958d120e93de6e5883c20d97add",
+    "sha256": "e8c4c147841aa313e315820ace36e1203546291a8d0f3bddd77278f48b78f9bc",
     "protocolVersions": [
       "2.0"
     ],
@@ -2001,6 +2001,9 @@
         "since": "2.0",
         "until": "2.1",
         "witness": "claims-check"
+      },
+      "conformance": {
+        "certificationBundleUrl": "https://api.openwop.dev/host/openwop-app/conformance/certification-bundle/major-2"
       }
     }
   },
@@ -3386,7 +3389,7 @@
         "scenario": "v2-webhook-secret-rotation.test.ts",
         "result": "executed-pass",
         "assertions": 12,
-        "detail": "partial-witness: inapplicable: the post-overlap leg is not observed: the advertised webhooks.secretRotation.overlapSeconds is 86400s (expiry 2026-10-13T15:38:16.916Z) and the suite wait cap is 90000ms, and the seams profile is not advertised, so the optional shortenRotationOverlap seam (host-sample-test-seams.md §29) is not offered; raise OPENWOP_WEBHOOK_RETRY_WAIT_MS past the overlap, or serve the seam, to witness it"
+        "detail": "partial-witness: inapplicable: the post-overlap leg is not observed: the advertised webhooks.secretRotation.overlapSeconds is 86400s (expiry 2026-10-14T00:09:39.592Z) and the suite wait cap is 90000ms, and the seams profile is not advertised, so the optional shortenRotationOverlap seam (host-sample-test-seams.md §29) is not offered; raise OPENWOP_WEBHOOK_RETRY_WAIT_MS past the overlap, or serve the seam, to witness it"
       },
       {
         "id": "openwop.scenario.v2-webhook-standard-webhooks-delivery",
@@ -5023,21 +5026,21 @@
         "scenario": "v2-webhook-durable-delivery.test.ts",
         "result": "executed-pass",
         "assertions": 4,
-        "detail": "observed: 4/4 subscribed event(s) delivered, 0 duplicate arrival(s); slowest first arrival 606ms after the run was created; cap (default 90000ms; advertised maxElapsedMs none): waited ≤90000ms"
+        "detail": "observed: 4/4 subscribed event(s) delivered, 0 duplicate arrival(s); slowest first arrival 1588ms after the run was created; cap (default 90000ms; advertised maxElapsedMs none): waited ≤90000ms"
       },
       {
         "id": "openwop.requirement.0173.webhook-durable-delivery",
         "scenario": "v2-webhook-durable-delivery.test.ts",
         "result": "executed-pass",
         "assertions": 9,
-        "detail": "observed: cap (default 90000ms; advertised maxElapsedMs none): waited ≤90000ms; 3 attempt(s), last attempt after 7989ms"
+        "detail": "observed: cap (default 90000ms; advertised maxElapsedMs none): waited ≤90000ms; 3 attempt(s), last attempt after 7964ms"
       },
       {
         "id": "openwop.requirement.0173.webhook-durable-delivery.dead-letter",
         "scenario": "v2-webhook-durable-delivery.test.ts",
         "result": "executed-pass",
         "assertions": 5,
-        "detail": "partial-witness: inapplicable: host does not advertise the webhooks.deadLetter facet — RFC 0188 §A.5 makes the read a 404 rather than an obligation, so the sink half of §Durability is unwitnessable here (the retry half above passed) · observed: cap (default 90000ms; advertised maxElapsedMs none): waited ≤90000ms; 5 attempt(s), last attempt after 34100ms, sink not observed"
+        "detail": "partial-witness: inapplicable: host does not advertise the webhooks.deadLetter facet — RFC 0188 §A.5 makes the read a 404 rather than an obligation, so the sink half of §Durability is unwitnessable here (the retry half above passed) · observed: cap (default 90000ms; advertised maxElapsedMs none): waited ≤90000ms; 5 attempt(s), last attempt after 33987ms, sink not observed"
       },
       {
         "id": "openwop.requirement.0175.legacy-profiles-absent",
@@ -5611,7 +5614,7 @@
         "scenario": "v2-webhook-secret-rotation.test.ts",
         "result": "executed-pass",
         "assertions": 12,
-        "detail": "partial-witness: inapplicable: the post-overlap leg is not observed: the advertised webhooks.secretRotation.overlapSeconds is 86400s (expiry 2026-10-13T15:38:16.916Z) and the suite wait cap is 90000ms, and the seams profile is not advertised, so the optional shortenRotationOverlap seam (host-sample-test-seams.md §29) is not offered; raise OPENWOP_WEBHOOK_RETRY_WAIT_MS past the overlap, or serve the seam, to witness it"
+        "detail": "partial-witness: inapplicable: the post-overlap leg is not observed: the advertised webhooks.secretRotation.overlapSeconds is 86400s (expiry 2026-10-14T00:09:39.592Z) and the suite wait cap is 90000ms, and the seams profile is not advertised, so the optional shortenRotationOverlap seam (host-sample-test-seams.md §29) is not offered; raise OPENWOP_WEBHOOK_RETRY_WAIT_MS past the overlap, or serve the seam, to witness it"
       },
       {
         "id": "openwop.requirement.0204.annotations-derived",
@@ -6077,13 +6080,13 @@
       },
       {
         "id": "openwop.requirement.0235.if-none-match.304-carries-etag",
-        "scenario": "v2-run-snapshot-etag.test.ts",
+        "scenario": "v2-discovery-etag.test.ts",
         "result": "executed-pass",
         "assertions": 1
       },
       {
         "id": "openwop.requirement.0235.if-none-match.no-cache-ignored",
-        "scenario": "v2-run-snapshot-etag.test.ts",
+        "scenario": "v2-discovery-etag.test.ts",
         "result": "executed-pass",
         "assertions": 1
       },
@@ -6095,7 +6098,7 @@
       },
       {
         "id": "openwop.requirement.0235.if-none-match.rfc9110-match",
-        "scenario": "v2-run-snapshot-etag.test.ts",
+        "scenario": "v2-discovery-etag.test.ts",
         "result": "executed-pass",
         "assertions": 1
       },
@@ -6144,10 +6147,10 @@
       },
       {
         "id": "openwop.requirement.0237.no-false-advertisement",
-        "scenario": "v2-envelope-contracts-advertisement.test.ts",
+        "scenario": "v2-nondeterminism-policy-advertisement.test.ts",
         "result": "inapplicable",
         "assertions": 0,
-        "detail": "the host does not advertise envelopeContracts"
+        "detail": "the host does not advertise nondeterminismPolicy"
       },
       {
         "id": "openwop.requirement.0238.ui-plugin.frame-deny-egress",
@@ -6908,9 +6911,9 @@
       },
       {
         "id": "openwop.requirement.prompts.resolution-precedes-composition",
-        "scenario": "v2-prompt-end-to-end-events.test.ts",
+        "scenario": "v2-prompt-all-four-kinds-events.test.ts",
         "result": "executed-pass",
-        "assertions": 5
+        "assertions": 9
       },
       {
         "id": "openwop.requirement.prompts.unknown-template-404",
@@ -7330,7 +7333,7 @@
       }
     ]
   },
-  "assertionCount": 4772,
+  "assertionCount": 4776,
   "detail": {
     "nonPass": [
       {
@@ -8856,7 +8859,7 @@
       {
         "id": "openwop.requirement.0237.no-false-advertisement",
         "result": "inapplicable",
-        "reason": "the host does not advertise envelopeContracts"
+        "reason": "the host does not advertise nondeterminismPolicy"
       },
       {
         "id": "openwop.requirement.0242.inbound.listed",
@@ -9235,11 +9238,11 @@
       }
     ]
   },
-  "witnessSha256": "498c19ad8431df8525e95e26b961a19edef60bf0b0aefbbea440e72a156e63fa",
+  "witnessSha256": "f6340a476eb3c0f2c5327e3d415a6858831e092bb288c105ebed504f5a233615",
   "signature": {
     "alg": "ed25519",
     "keyId": "openwop-app-bundle-2",
-    "sig": "zyasIom7XQ2Bs-Gqu-YntszupyzYUEtZDlpjbug2VYlHInMI0jplII5qjpUrfeqPNVNecbrCoR-UuS8SQqcpCw",
+    "sig": "C7J58uoaKSDKl-ajGSr_IXNPCAjT9dUnPcCYN3_udc1x07nn1xbyVYz8OwifkhF1wjSZXKsoIjySY9dM1YITAw",
     "over": [
       "witnessSha256",
       "host.build",
