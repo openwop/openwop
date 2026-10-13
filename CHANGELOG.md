@@ -8,7 +8,7 @@ Entries before this file was condensed carried full development detail. That tex
 
 ## [Unreleased]
 
-- **2.46.3 cycle (suite): four discovery rules the schema cannot carry are witnessed.** `multiAgent` levels 3 and 4 need their sub-blocks; the escalation kind is `clarification` or `approval`; both linking lanes need `auth.subjectLinkKey`. Schema changes wait for 3.0.
+- **RFC 0243 filed and Active (window waived); 2.46.4 cycle (suite).** `agents.fanOut` gives RFC 0118 parallel fan-out a v2 seat (`joinModes`, `onChildFailureModes`, `maxFanOut`, `perItemInput`), refused at `createRun` where not admitted; `auth.subjectLinkKey` MUST NOT appear without both linking lanes.
 - **2.46.2 cycle (suite): the seams profile is derived from its advert.** Its predicate is `conformance.seamsProfile`, not the whole `conformance` block (`capabilities.md` §7 `key.member`). Four openwop-app bundles certified it with only `certificationBundleUrl`; `--verify` now refuses that certification.
 - **RFC 0242 Accepted (provisional).** Tier-1 evidence: the v2 reference host's certified public cut on suite 2.46.0 (531/1/0, build `d16cac40`) records all seven `0242.*` ids `executed-pass`; G1 closes, so the packed `gaps.json` changes. The one failure was a suite defect.
 - **2.46.1 cycle (suite):** the modal webhook receiver's `close()` closes idle and then all connections, so a keep-alive socket held by a public tunnel no longer times out `v2-webhook-message-id-stable`'s `afterEach`. No assertion changes.

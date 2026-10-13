@@ -1,0 +1,37 @@
+{
+  "id": "conformance-dispatch-fanout-race",
+  "name": "Conformance: Dispatch Fan-Out Race",
+  "version": "1.0",
+  "description": "A core.dispatch node pinning fanOutPolicy parallel with a race join. A host that does not admit it must refuse it (RFC 0243).",
+  "nodes": [
+    {
+      "id": "orchestrator",
+      "typeId": "core.orchestrator.supervisor",
+      "name": "Supervisor",
+      "position": { "x": 0, "y": 0 },
+      "config": {},
+      "inputs": {}
+    },
+    {
+      "id": "dispatch",
+      "typeId": "core.dispatch",
+      "name": "Dispatch",
+      "position": { "x": 200, "y": 0 },
+      "config": {
+        "workerDispatchModel": "child-run",
+        "fanOutPolicy": "parallel",
+        "joinPolicy": { "mode": "race", "onChildFailure": "collect" }
+      },
+      "inputs": {}
+    }
+  ],
+  "edges": [
+    { "id": "e1", "sourceNodeId": "orchestrator", "targetNodeId": "dispatch" }
+  ],
+  "triggers": [
+    { "id": "manual", "type": "manual", "enabled": true }
+  ],
+  "variables": [],
+  "metadata": { "tags": ["conformance", "dispatch", "fan-out"] },
+  "settings": { "timeout": 60000, "maxRetries": 0 }
+}

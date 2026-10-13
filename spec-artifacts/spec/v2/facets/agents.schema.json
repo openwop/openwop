@@ -256,6 +256,54 @@
       "default": false,
       "description": "RFC 0022. When `true`, the host honors `inputMapping` / `outputMapping` / `perWorkerInputMappings` / `perWorkerOutputMappings` on `DispatchConfig` — building child inputs from parent variables before dispatch and harvesting child variables into parent variables on completion. Implies (but does NOT require) `agents.dispatch: true`. Hosts that set `agents.dispatch: true` but omit / `false` this flag MUST refuse workflows that carry non-empty mapping fields at registration with `validation_error` + `details.requiredCapability: 'agents.dispatchMapping'`."
     },
+    "fanOut": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "joinModes",
+        "onChildFailureModes"
+      ],
+      "description": "RFC 0243. OPTIONAL. Present, the host accepts `fanOutPolicy: 'parallel'` on a `core.dispatch` node (`dispatch-config.schema.json`) and joins its children per `joinPolicy`. Absent, it accepts `sequential` and `reject` only. A host MUST NOT advertise `fanOut` without `agents.dispatch: true`. `joinModes` lists the `joinPolicy.mode` values it implements and `onChildFailureModes` the `joinPolicy.onChildFailure` values. `maxFanOut` is its breadth ceiling: the effective concurrency is `min(config.maxConcurrency ?? ∞, maxFanOut ?? ∞)`, children beyond it are dispatched in waves and none is dropped, and absent means no stated ceiling. `perItemInput: true` means it honors `NextWorkerDecision.nextWorkerInputs` (`orchestrator-decision.schema.json`); without it, a non-empty `nextWorkerInputs` MUST fail the dispatch node with `validation_error` and dispatch no child. A host MUST refuse a workflow whose `core.dispatch` node pins what this facet does not admit (`parallel` with `fanOut` absent, a `joinPolicy.mode` outside `joinModes`, a `joinPolicy.onChildFailure` outside `onChildFailureModes`) with `validation_error`, and `details.requiredCapability` names the seat it lacks: `agents.fanOut`, `agents.fanOut.joinModes` or `agents.fanOut.onChildFailureModes`. It MUST refuse when it loads the workflow. If such a workflow is nonetheless readable (`getWorkflow` returns it), `createRun` naming it MUST return `400 validation_error` with that `details.requiredCapability` and create no run.",
+      "properties": {
+        "joinModes": {
+          "type": "array",
+          "minItems": 1,
+          "uniqueItems": true,
+          "items": {
+            "enum": [
+              "wait-all",
+              "quorum",
+              "first",
+              "race"
+            ]
+          },
+          "description": "The `joinPolicy.mode` values the host implements."
+        },
+        "onChildFailureModes": {
+          "type": "array",
+          "minItems": 1,
+          "uniqueItems": true,
+          "items": {
+            "enum": [
+              "collect",
+              "fail-fast",
+              "absorb"
+            ]
+          },
+          "description": "The `joinPolicy.onChildFailure` values the host implements."
+        },
+        "maxFanOut": {
+          "type": "integer",
+          "minimum": 1,
+          "description": "The host's ceiling on children in flight at once for one dispatch node."
+        },
+        "perItemInput": {
+          "type": "boolean",
+          "default": false,
+          "description": "When `true`, the host honors `NextWorkerDecision.nextWorkerInputs`."
+        }
+      }
+    },
     "reasoning": {
       "type": "object",
       "description": "Reasoning-event verbosity configuration.",

@@ -160,7 +160,7 @@ The record and both `SubjectRef`s are closed; `a`, `b`, `keyClass`, `issuer`, `t
 
 Deactivation sets `deniedAt`; the SAML decision path MUST consult it (the leaver contract). The link is a reference, not a merge: nothing rewrites a subject already stamped on a run.
 
-Advertising both `saml` and `scim` lanes implies the link contract, and the host MUST advertise `auth.subjectLinkKey` (`opaque-idp | configured-immutable`), naming its link-key class.
+Advertising both `saml` and `scim` lanes implies the link contract: the host MUST then advertise `auth.subjectLinkKey` (`opaque-idp | configured-immutable`), and MUST NOT otherwise.
 
 ## 4. Resume tokens
 

@@ -256,18 +256,16 @@ Defects outside the spec:
       `hostId`, level >= 4 needs `replayDeterminism` with `refusalDivergenceEmission: true`, and the escalation kind
       is `clarification` or `approval`. The descriptions were corrected (corrections log, 2026-10-12). MyndHyve
       advertises `x-host-myndhyve-low-confidence` and records that row `executed-fail` until it changes. Still owed:
-      (3) the fan-out seat. The `dispatch-config` / `orchestrator-decision` descriptions now say a v2 host refuses
-      `parallel` and `nextWorkerInputs`, but a seat (`fanOutPolicies`, `joinModes`, `onChildFailureModes`,
-      `maxFanOut`, `perItemInput`) is a normative addition and needs an RFC. v2 has no registration endpoint, so the
-      RFC must also name where the refusal is observed. The v1→v2 mapping cannot be a migration row: v1 rows live
-      in the frozen `spec/v1/migrations.json`.
+      (3) the fan-out seat: RFC 0243 (`Active`, 2.46.4) adds `agents.fanOut` and observes the refusal at
+      `createRun`. Owed for `Accepted` (RFC 0243 G1): the v2 reference host seeds `conformance-dispatch-fanout-race`
+      and refuses it, and a certified cut records `0243.unadmitted-fan-out-refused`.
 - [ ] **Next major: the multiAgent and auth conditionals into the schema.** `executionModel.version >= 3 ⇒
       crossHostCausation` (with `hostId` required), `>= 4 ⇒ replayDeterminism`, drop the `x-host-` member of
       `confidenceEscalationInterruptKind`, and `saml` + `scim` lanes ⇒ `subjectLinkKey`. Each is a conditional
       `required` or a narrowed pattern (COMPATIBILITY.md §2.4); the suite carries them in 2.x.
 - [ ] **`auth.subjectLinkKey` with one lane (found by openwop-app, ADR 0812, 2026-10-10).** Suite 2.46.3 witnesses
-      the existing half (`v2-auth-subject-link-key`: both lanes ⇒ the key; `identity.md` §3 now says MUST). Owed:
-      forbidding the key without both lanes is a new MUST NOT, so it needs an RFC (with the fan-out seat above).
+      the existing half (`v2-auth-subject-link-key`: both lanes ⇒ the key; `identity.md` §3 now says MUST). The
+      converse is RFC 0243 §B (`0243.subject-link-key-needs-both-lanes`, 2.46.4).
       Twenty committed openwop-app bundles advertise `opaque-idp` without `saml`; they are reported, not re-judged.
       `negotiation.decided` is RFC 0242, below.
 - [x] **RFC 0242** `Accepted` (provisional) 2026-10-11 on the v2 reference host's certified public cut on 2.46.0

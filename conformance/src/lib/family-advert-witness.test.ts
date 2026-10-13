@@ -17,6 +17,7 @@ import {
   subWorkflowInputMappingLeg,
   agentRuntimeImpliesManifestRuntimeLeg, dataResidencyRegionsLeg, multiPartyMaxParticipantsLeg, nodePackRuntimesWasmLeg,
   purposePropagatesOnwardLeg, uiPluginsHostApiLeg, uiPluginsIsolationLeg, uiPluginsMaxEntryBytesLeg, uiPluginsSurfacesLeg,
+  agentsFanOutDispatchLeg, authSubjectLinkKeyLanesLeg, fanOutRefusalSeats,
   authSubjectLinkKeyLeg, multiAgentCrossHostCausationLeg, multiAgentEscalationKindLeg, multiAgentReplayDeterminismLeg,
 } from './family-advert-witness.js';
 
@@ -410,5 +411,33 @@ describe('family-advert witness wave 4: multiAgent.executionModel levels and aut
     expect(failed(authSubjectLinkKeyLeg(V2, authDoc(['saml', 'scim'])))).toHaveLength(1);
     expect(failed(authSubjectLinkKeyLeg(V2, authDoc(['saml', 'scim'], 'email')))).toHaveLength(1);
     expect(failed(authSubjectLinkKeyLeg(V2, authDoc(['saml'], 'opaque-idp')))).toEqual(['skip:inapplicable']);
+  });
+});
+
+describe('family-advert witness: wave 5 (RFC 0243)', () => {
+  const authDoc = (lanes: string[], key?: string): Record<string, unknown> => ({ auth: { ...head, lanes: lanes.map((lane) => ({ lane, issuers: ['i'], minimumAssurance: 'bearer', revocation: 'next-request' })), ...(key ? { subjectLinkKey: key } : {}) } });
+  const agents = (o: Record<string, unknown>): Record<string, unknown> => ({ agents: { ...head, witness: 'witnessable-gated', ...o } });
+  const fanOut = { joinModes: ['wait-all'], onChildFailureModes: ['collect'] };
+
+  it('subjectLinkKey beside both lanes passes; with one lane or none it fails; without the key it is inapplicable', () => {
+    passes(authSubjectLinkKeyLanesLeg(V2, authDoc(['saml', 'scim'], 'opaque-idp')));
+    expect(failed(authSubjectLinkKeyLanesLeg(V2, authDoc(['oidc'], 'opaque-idp')))).toHaveLength(1);
+    expect(failed(authSubjectLinkKeyLanesLeg(V2, authDoc(['saml'], 'configured-immutable')))).toHaveLength(1);
+    inapplicable(authSubjectLinkKeyLanesLeg(V2, authDoc(['saml', 'scim'])));
+    inapplicable(authSubjectLinkKeyLanesLeg(V2, {}));
+  });
+  it('fanOut beside dispatch: true passes; without it fails; without fanOut it is inapplicable', () => {
+    passes(agentsFanOutDispatchLeg(V2, agents({ dispatch: true, fanOut })));
+    expect(failed(agentsFanOutDispatchLeg(V2, agents({ fanOut })))).toHaveLength(1);
+    expect(failed(agentsFanOutDispatchLeg(V2, agents({ dispatch: false, fanOut })))).toHaveLength(1);
+    inapplicable(agentsFanOutDispatchLeg(V2, agents({ dispatch: true })));
+    inapplicable(agentsFanOutDispatchLeg(V2, {}));
+  });
+  it('the refusal names agents.fanOut when absent, the lacking mode seat otherwise, and nothing when admitted', () => {
+    expect(fanOutRefusalSeats({ dispatch: true }, 'race', 'collect')).toEqual(['agents.fanOut']);
+    expect(fanOutRefusalSeats({ fanOut }, 'race', 'collect')).toEqual(['agents.fanOut.joinModes']);
+    expect(fanOutRefusalSeats({ fanOut: { joinModes: ['race'], onChildFailureModes: ['absorb'] } }, 'race', 'collect')).toEqual(['agents.fanOut.onChildFailureModes']);
+    expect(fanOutRefusalSeats({ fanOut: { joinModes: ['wait-all'], onChildFailureModes: ['absorb'] } }, 'race', 'collect')).toHaveLength(2);
+    expect(fanOutRefusalSeats({ fanOut: { joinModes: ['race'], onChildFailureModes: ['collect'] } }, 'race', 'collect')).toBeNull();
   });
 });
