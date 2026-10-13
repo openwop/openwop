@@ -1,7 +1,7 @@
 {
   "$schema": "./gaps.schema.json",
   "version": 1,
-  "updated": "2026-10-12",
+  "updated": "2026-10-13",
   "witnessClasses": [
     "witnessable-unaided",
     "witnessable-gated",
@@ -14492,6 +14492,40 @@
       "sources": [
         {
           "file": "RFCS/registers/0242-negotiation-decided-requested-and-inbound.gaps.md",
+          "token": "G2"
+        }
+      ]
+    },
+    {
+      "id": "openwop.gap.0243.1",
+      "rfc": "0243",
+      "local": "G1",
+      "section": "§A.2, §Conformance",
+      "surface": "No host seeds `conformance-dispatch-fanout-race`, so the `createRun` refusal has no witness; every host records the leg `inapplicable`.",
+      "witness": "unclassified",
+      "requirementId": null,
+      "disposition": "transferred",
+      "target": "TODO.md",
+      "sources": [
+        {
+          "file": "RFCS/registers/0243-dispatch-fan-out-seat.gaps.md",
+          "token": "G1"
+        }
+      ]
+    },
+    {
+      "id": "openwop.gap.0243.2",
+      "rfc": "0243",
+      "local": "G2",
+      "section": "§A.3, §A.4",
+      "surface": "No fixture drives a live parallel fan-out or a supervisor emitting `nextWorkerInputs`, so `maxFanOut` waves and the `perItemInput` refusal have no v2 leg.",
+      "witness": "unclassified",
+      "requirementId": null,
+      "disposition": "externally-gated",
+      "target": "host-advertises-agents-fanOut",
+      "sources": [
+        {
+          "file": "RFCS/registers/0243-dispatch-fan-out-seat.gaps.md",
           "token": "G2"
         }
       ]

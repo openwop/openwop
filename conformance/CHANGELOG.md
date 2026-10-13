@@ -1,5 +1,14 @@
 # `@openwop/openwop-conformance` Changelog
 
+## [2.46.4] — 2026-10-12 — RFC 0243: parallel fan-out has a v2 seat, and a link key needs both linking lanes
+
+- **`agents.fanOut` (RFC 0243 §A).** An optional facet: presence means the host runs `fanOutPolicy: "parallel"`, with `joinModes`, `onChildFailureModes`, `maxFanOut` and `perItemInput` carrying the v1 `capabilities.dispatch.*` descriptor. The `dispatch-config` and `orchestrator-decision` descriptions now point at it.
+- **New `v2-agents-fan-out`:**
+  - `0243.fan-out-needs-dispatch` (claims-check, wave 5 of `family-advert-witness.ts`): `agents.fanOut` only beside `agents.dispatch: true`.
+  - `0243.unadmitted-fan-out-refused`: on a host with `agents.dispatch: true` that does not admit a `race` join with `collect`, the new fixture `conformance-dispatch-fanout-race`, if advertised and readable, is refused at `POST /runs` with `400 validation_error` and `details.requiredCapability` naming the missing seat. A fixture `getWorkflow` cannot read is `inapplicable`: a refusal at load cannot be told apart from a fixture never seeded.
+- **`v2-auth-subject-link-key` gains `0243.subject-link-key-needs-both-lanes` (RFC 0243 §B):** a host advertising `auth.subjectLinkKey` advertises both the `saml` and `scim` lanes.
+- **What a host's next bundle shows:** no host advertises `agents.fanOut` or seeds the fixture, so both fan-out rows are `inapplicable` everywhere. openwop-app's live advertisement no longer carries `subjectLinkKey`, so the new auth row is `inapplicable` there; the v2 reference host advertises both lanes with the key and passes.
+
 ## [2.46.3] — 2026-10-12 — discovery rules the schema cannot carry
 
 Four rules from openwop-app's v2 discovery review (#4676, ADR 0858, ADR 0812). Each is stated in prose or a schema description, and none can go into the schema within 2.x: a conditional `required` or a narrowed pattern is a major change (COMPATIBILITY.md §2.4). The suite carries them, following RFC 0210 §C; the schema changes are booked for 3.0 (TODO.md).

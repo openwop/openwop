@@ -14,6 +14,8 @@
  * under the two linking lanes. These rules live in prose and schema
  * descriptions, not in the schema itself: a conditional `required` or a narrowed
  * enum is a major change (COMPATIBILITY.md §2.4), so the suite carries them.
+ * Wave 5 (suite 2.46.4, RFC 0243): `auth.subjectLinkKey` only beside both
+ * linking lanes, and `agents.fanOut` only beside `agents.dispatch: true`.
  *
  * A claims-check family is witnessed by what the host says about itself, so
  * every leg here reads the discovery record alone. Each leg checks one facet
@@ -75,7 +77,7 @@ export type AdvertFamily =
   | 'dataResidency' | 'conversationTurnModelProvenance' | 'multiPartyConversation' | 'channelPresence'
   | 'nodePackRuntimes' | 'uiPlugins' | 'purposePropagation' | 'nondeterminismPolicy'
   | 'agentRuntime' | 'promptLibrary' | 'envelopeContracts'
-  | 'multiAgent' | 'auth';
+  | 'multiAgent' | 'auth' | 'agents';
 
 export function recordSchemaLeg(profile: MajorProfile, discovery: unknown, family: AdvertFamily, doc: string): AdvertOutcome {
   return onFamily(profile, discovery, family, (rec) => observed([bySchema(`/properties/${family}`, rec, doc, `the ${family} record`)]));
@@ -494,3 +496,43 @@ export const authSubjectLinkKeyLeg = (p: MajorProfile, d: unknown): AdvertOutcom
   const ok = (SUBJECT_LINK_KEY_CLASSES as readonly unknown[]).includes(k);
   return observed([{ ok, doc: 'identity.md §3', message: `a host advertising both the saml and scim lanes MUST advertise auth.subjectLinkKey (opaque-idp or configured-immutable)${ok ? '' : ` (got ${JSON.stringify(k)})`}` }]);
 });
+
+/**
+ * RFC 0243 §B, identity.md §3: the link-key class names the link contract, and
+ * only both linking lanes imply one. A key with either lane missing promises a
+ * link the host cannot form.
+ */
+export const authSubjectLinkKeyLanesLeg = (p: MajorProfile, d: unknown): AdvertOutcome => onFamily(p, d, 'auth', (rec) => {
+  if (rec['subjectLinkKey'] === undefined) return inapplicable('the host does not advertise auth.subjectLinkKey');
+  const lanes = Array.isArray(rec['lanes']) ? (rec['lanes'] as unknown[]).map((l) => (isRecord(l) ? l['lane'] : undefined)) : [];
+  const missing = ['saml', 'scim'].filter((l) => !lanes.includes(l));
+  const ok = missing.length === 0;
+  return observed([{ ok, doc: 'identity.md §3', message: `a host MUST NOT advertise auth.subjectLinkKey without both the saml and scim lanes${ok ? '' : ` (missing ${missing.join(', ')})`}` }]);
+});
+
+/**
+ * RFC 0243 §A.1: `agents.fanOut` is a mode of `core.dispatch`, so it is
+ * advertised only beside `agents.dispatch: true`.
+ */
+export const agentsFanOutDispatchLeg = (p: MajorProfile, d: unknown): AdvertOutcome => onFamily(p, d, 'agents', (rec) => {
+  if (!isRecord(rec['fanOut'])) return inapplicable('the host does not advertise agents.fanOut');
+  const ok = rec['dispatch'] === true;
+  return observed([{ ok, doc: 'agents.schema.json §fanOut', message: `a host MUST NOT advertise agents.fanOut without agents.dispatch: true${ok ? '' : ` (got dispatch ${JSON.stringify(rec['dispatch'])})`}` }]);
+});
+
+/**
+ * RFC 0243 §A.2: the seats a refusal of a `parallel` dispatch pinning `mode`
+ * and `onChildFailure` may name in `details.requiredCapability`, given the
+ * host's `agents` record; `null` when the host admits that dispatch. A host
+ * lacking both modes may name either.
+ */
+export function fanOutRefusalSeats(agents: Record<string, unknown>, mode: string, onChildFailure: string): string[] | null {
+  const fanOut = agents['fanOut'];
+  if (!isRecord(fanOut)) return ['agents.fanOut'];
+  const lacks = (k: string, v: string): boolean => !(Array.isArray(fanOut[k]) && (fanOut[k] as unknown[]).includes(v));
+  const seats = [
+    ...(lacks('joinModes', mode) ? ['agents.fanOut.joinModes'] : []),
+    ...(lacks('onChildFailureModes', onChildFailure) ? ['agents.fanOut.onChildFailureModes'] : []),
+  ];
+  return seats.length > 0 ? seats : null;
+}

@@ -85,7 +85,7 @@ At level 6, with `verifier` advertised:
 
 | Facets | Records |
 | --- | --- |
-| `profile`, `modelClasses`, `orchestratorPattern`, `orchestrator`, `dispatch`, `dispatchMapping`, `reasoning`, `subRunAttestation` | `dispatch-config` |
+| `profile`, `modelClasses`, `orchestratorPattern`, `orchestrator`, `dispatch`, `dispatchMapping`, `fanOut`, `reasoning`, `subRunAttestation` | `dispatch-config` |
 | `manifestRuntime`, `liveRuntime` | `agent-manifest`, `agent-inventory-response` |
 | `memoryBackends`, `memoryConsolidation`, `commitments` | `memory-entry` ([host-services.md](host-services.md)) |
 | `evalSuite` | `agent-eval-suite`, `eval-summary` |
