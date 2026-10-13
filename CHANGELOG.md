@@ -29,6 +29,11 @@ Entries before this file was condensed carried full development detail. That tex
 - **RFC 0237 filed and Active (window waived).** `nondeterminismPolicy.sources` (`clock`, `random`, `id`, `env`, `x-*`): a `replay` fork reproduces each, witnessed by `conformance-nondeterminism`. `declared: false` and `advertised: false` are not v2 states; both go at 3.0.
 - **Erratum: `identity.md` §5 grammar table matches `ids.schema.json` again.** `tenantId` gets its own row with the `anon:` prefix its pattern has had since 2.0.0. `typeId` gains the `@<semver>` pin from RFC 0187. No wire change. `check-id-kinds-bound` now compares the table against the schema.
 
+## [2.46.5] — 2026-10-13 — RFC 0243 Accepted; a fan-out prediction corrected
+
+- **RFC 0243 `Accepted` (provisional).** openwop-app's 2.46.4 cut (`8d2adcbe8`) passes both fan-out ids; the reference host's 2.46.4 cut (`89a8931f`, 536/0/0) passes the link-key id. G1 closes, so the packed `gaps.json` changes. No assertion changes.
+- **Correction:** the 2.46.4 evidence note was wrong. A host with `agents.dispatch: true` that lists every packaged fixture runs `0243.unadmitted-fan-out-refused`, and fails it if it accepts `parallel` without the facet or the `createRun` refusal.
+
 ## [2.46.4] — 2026-10-12 — RFC 0243: parallel fan-out has a v2 seat, and a link key needs both linking lanes
 
 - **Spec:** optional `agents.fanOut` (`joinModes`, `onChildFailureModes`, `maxFanOut`, `perItemInput`), refused at `createRun` with `details.requiredCapability` where not admitted; `identity.md` §3: `auth.subjectLinkKey` MUST NOT appear without both linking lanes. RFC 0243 `Active`, window waived.

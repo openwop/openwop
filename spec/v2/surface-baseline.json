@@ -4,7 +4,7 @@
     "schemas/v2/**/*.json",
     "spec/v2/path-manifest.json"
   ],
-  "release": "2.46.4",
+  "release": "2.46.5",
   "kinds": {
     "union": [
       "channel",
