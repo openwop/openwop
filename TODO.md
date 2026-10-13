@@ -259,10 +259,10 @@ Defects outside the spec:
       (3) the fan-out seat: RFC 0243 `Accepted` (provisional) 2026-10-13. openwop-app advertises `agents.fanOut`
       and its certified 2.46.4 cut (`8d2adcbe8`) records `0243.unadmitted-fan-out-refused` `executed-pass`.
       Owed: the RFC 0156 §B review, and RFC 0243 G2 (below).
-- [ ] **RFC 0243 G2: legs for `maxFanOut` waves and the `perItemInput` refusal.** No fixture drives a live parallel
-      fan-out or a supervisor emitting `nextWorkerInputs`. openwop-app advertises `agents.fanOut` (`maxFanOut` 16,
-      `perItemInput: true`) since 2026-10-13, so both legs now have a host to run against. The `perItemInput` leg
-      needs the mock-AI seam (seam-gated).
+- [ ] **RFC 0243 G2: `maxFanOut` waves and the `perItemInput` gate.** Legs written in suite 2.46.6
+      (`v2-agents-fan-out-waves`, three fixtures driven by a supervisor `mockDispatchPlan`, no seam). Owed: a certified
+      openwop-app cut that lists the fixtures and records `0243.max-fan-out-waves` and `0243.per-item-input-gated`
+      `executed-pass`, then G2 closes (packed `gaps.json`, so a cycle).
 - [ ] **Next major: the multiAgent and auth conditionals into the schema.** `executionModel.version >= 3 ⇒
       crossHostCausation` (with `hostId` required), `>= 4 ⇒ replayDeterminism`, drop the `x-host-` member of
       `confidenceEscalationInterruptKind`, and `saml` + `scim` lanes ⇒ `subjectLinkKey`. Each is a conditional
