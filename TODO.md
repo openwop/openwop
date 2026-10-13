@@ -257,8 +257,9 @@ Defects outside the spec:
       is `clarification` or `approval`. The descriptions were corrected (corrections log, 2026-10-12). MyndHyve
       advertises `x-host-myndhyve-low-confidence` and records that row `executed-fail` until it changes. Still owed:
       (3) the fan-out seat: RFC 0243 (`Active`, 2.46.4) adds `agents.fanOut` and observes the refusal at
-      `createRun`. Owed for `Accepted` (RFC 0243 G1): the v2 reference host seeds `conformance-dispatch-fanout-race`
-      and refuses it, and a certified cut records `0243.unadmitted-fan-out-refused`.
+      `createRun`. Owed for `Accepted` (RFC 0243 G1): a host with `agents.dispatch: true` (openwop-app; the reference
+      host has none) seeds `conformance-dispatch-fanout-race` and refuses it at `createRun`, or advertises
+      `agents.fanOut`, and its certified cut records `0243.unadmitted-fan-out-refused`.
 - [ ] **Next major: the multiAgent and auth conditionals into the schema.** `executionModel.version >= 3 ⇒
       crossHostCausation` (with `hostId` required), `>= 4 ⇒ replayDeterminism`, drop the `x-host-` member of
       `confidenceEscalationInterruptKind`, and `saml` + `scim` lanes ⇒ `subjectLinkKey`. Each is a conditional
