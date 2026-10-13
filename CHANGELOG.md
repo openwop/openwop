@@ -8,7 +8,7 @@ Entries before this file was condensed carried full development detail. That tex
 
 ## [Unreleased]
 
-- **RFC 0243 Accepted (provisional); 2.46.5 cycle.** Tier-1: openwop-app's 2.46.4 cut (`8d2adcbe8`) passes both fan-out ids, the reference host's (`89a8931f`) the link-key id. Correction: a dispatch host listing every packaged fixture runs the refusal row, so the 2.46.4 "`inapplicable` everywhere" note was wrong.
+- **2.46.6 cycle (suite): RFC 0243 G2 legs.** New `v2-agents-fan-out-waves`: `maxFanOut` waves (none dropped, no more than the ceiling in flight), the `perItemInput` gate (honored, or fail closed) and the `nextWorkerInputs` length rule. Three fixtures carry a supervisor `mockDispatchPlan`, so no seam is needed.
 - **2.46.2 cycle (suite): the seams profile is derived from its advert.** Its predicate is `conformance.seamsProfile`, not the whole `conformance` block (`capabilities.md` §7 `key.member`). Four openwop-app bundles certified it with only `certificationBundleUrl`; `--verify` now refuses that certification.
 - **RFC 0242 Accepted (provisional).** Tier-1 evidence: the v2 reference host's certified public cut on suite 2.46.0 (531/1/0, build `d16cac40`) records all seven `0242.*` ids `executed-pass`; G1 closes, so the packed `gaps.json` changes. The one failure was a suite defect.
 - **2.46.1 cycle (suite):** the modal webhook receiver's `close()` closes idle and then all connections, so a keep-alive socket held by a public tunnel no longer times out `v2-webhook-message-id-stable`'s `afterEach`. No assertion changes.

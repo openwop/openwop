@@ -69,6 +69,9 @@ All fixtures MUST advertise:
 | Prompt All Four Kinds                     | `conformance-prompt-all-four-kinds`                                                             | RFC 0027 §A four-kind dispatch coverage with a MULTI-ENTRY `fewShotPromptRefs[]` array. Single `mock-ai` node with one ref per singular-kind slot (`systemPromptRef`, `userPromptRef`, `schemaHintPromptRef`) + two distinct templateIds in `fewShotPromptRefs[]`; host MUST emit 5 `agent.promptResolved` events (one per slot) AND 5 `prompt.composed` events. Multi-entry few-shot is the regression pin for `fewShotPromptRefs[slotIndex]` per-index resolution — a host that hard-codes `[0]` would emit the same template twice in the few-shot events and fail the per-templateId assertion. Capability-gated on `capabilities.prompts.supported`. | `completed`                                                                         | ≤ 10s                        |
 | Dispatch Loop                             | `conformance-dispatch-loop`                                                                     | Verifies `core.dispatch` loop mechanism                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                   | `completed`                                                                         | ≤ 30s                        |
 | Dispatch Fan-Out Race | `conformance-dispatch-fanout-race` | RFC 0243 §A.2 — a `core.dispatch` node pinning `fanOutPolicy: 'parallel'` with a `race` join. A host that does not admit it refuses it at load, or at `createRun` with `400 validation_error` and `details.requiredCapability` (`v2-agents-fan-out`) | refused; no run | ≤ 5s |
+| Dispatch Fan-Out Waves | `conformance-dispatch-fanout-waves` | RFC 0243 §A.3 — a parallel `core.dispatch` (`maxConcurrency: 2`, `wait-all`/`collect`) whose supervisor's `mockDispatchPlan` names three `conformance-delay` children. At most `min(2, maxFanOut)` run at once and none is dropped. Gated on `agents.fanOut` admitting `wait-all` with `collect`. | `completed` | ≤ 30s |
+| Dispatch Per-Item Input | `conformance-dispatch-per-item` | RFC 0243 §A.4 — a sequential `core.dispatch` whose decision dispatches `conformance-dispatch-input-mapping-child` twice with `nextWorkerInputs` `item-a`, `item-b`. At `agents.fanOut.perItemInput: true` each child receives its item; otherwise the dispatch node fails `validation_error` and no child is dispatched. | `completed`, or `failed` without `perItemInput` | ≤ 30s |
+| Dispatch Per-Item Length Mismatch | `conformance-dispatch-per-item-mismatch` | `orchestrator-decision.schema.json` `nextWorkerInputs` — one item for two children. Every dispatch host fails the dispatch node `validation_error` and dispatches no child. | `failed` | ≤ 30s |
 | Interrupt — Quorum                        | `conformance-interrupt-quorum`                                                                  | Verifies `openwop-interrupt-quorum` profile (multi-approver, majority rejection)                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                          | `completed` after 3 accepts, `failed` after quorum reject (major 2: `approval_rejected`) | unbounded (suspends)         |
 | Interrupt — External Event                | `conformance-interrupt-external-event`                                                          | Verifies `openwop-interrupt-external-event` profile (correlation-matched callback)                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                        | `completed` after matching POST, `failed` on timeout                                | ≤ 60s (timeoutMs configured) |
 | Interrupt — Auth Required                 | `conformance-interrupt-auth-required`                                                           | Verifies `openwop-interrupt-auth-required` profile (bearer-token resume only)                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                             | `completed` after bearer resolve                                                    | unbounded (suspends)         |
@@ -395,6 +398,47 @@ The `messages`-mode stream fixture (AI token streaming) is covered by the determ
 
 ---
 
+
+### `conformance-dispatch-fanout-waves`
+
+- **Purpose**: observe the RFC 0243 §A.3 breadth rule: the effective concurrency is `min(config.maxConcurrency, maxFanOut)`, children beyond it run in waves, and none is dropped (`spec/v2/facets/agents.schema.json` §fanOut).
+- **Topology**: `core.orchestrator.supervisor` ⇄ `core.dispatch`. The supervisor's `config.mockDispatchPlan` is `next-worker` with `nextWorkerIds` three times `conformance-delay`, then `terminate`. The dispatch node is `{ workerDispatchModel: "child-run", fanOutPolicy: "parallel", maxConcurrency: 2, joinPolicy: { mode: "wait-all", onChildFailure: "collect" } }`.
+- **Inputs**: none. Each child sleeps its default `delayMs` (1000).
+- **Conformance test driver**:
+  1. Skip unless `agents.dispatch` is `true`, `agents.fanOut` lists `wait-all` and `collect`, and discovery `fixtures` lists this fixture and `conformance-delay`.
+  2. POST `/runs` with `{workflowId: "conformance-dispatch-fanout-waves"}`; poll until terminal.
+  3. **Assert** the run completed; one `dispatch.fanned-out` with `childCount` 3 and any `maxConcurrency` at most `min(2, maxFanOut)`; one `dispatch.joined` with `completedCount` 3, `failedCount` 0 and a `mergeOrder` of 3.
+  4. Read each child (`node.dispatched`, else `mergeOrder`). **Assert** three children, each `completed`, and that no more than `min(2, maxFanOut)` of their `startedAt`..`completedAt` windows overlap by more than 100 ms.
+- **Terminal status**: `completed`.
+- **Server prerequisites**: the supervisor emits the `mockDispatchPlan` verbatim, as for `conformance-dispatch-cross-worker-handoff`.
+
+---
+
+### `conformance-dispatch-per-item`
+
+- **Purpose**: observe the RFC 0243 §A.4 gate on `nextWorkerInputs`: honored at `agents.fanOut.perItemInput: true`, failed closed otherwise.
+- **Topology**: `core.orchestrator.supervisor` ⇄ `core.dispatch` (`fanOutPolicy: "sequential"`). The `mockDispatchPlan` is `next-worker` with `nextWorkerIds` twice `conformance-dispatch-input-mapping-child` and `nextWorkerInputs` `[{childGreeting: "item-a"}, {childGreeting: "item-b"}]`, then `terminate`.
+- **Inputs**: none.
+- **Conformance test driver**:
+  1. Skip unless `agents.dispatch` is `true` and discovery `fixtures` lists this fixture and `conformance-dispatch-input-mapping-child`.
+  2. POST `/runs`; poll until terminal; read each child found by `node.dispatched`.
+  3. At `perItemInput: true`, **assert** the run completed, two children were dispatched, and their `inputs.childGreeting` are `item-a` and `item-b`.
+  4. Otherwise, **assert** the dispatch node's `node.failed` carries `error.code: "validation_error"`, no child was dispatched, and the run ended `failed`. A `400 validation_error` at `createRun` also satisfies this step.
+- **Terminal status**: `completed` at `perItemInput: true`; otherwise `failed`.
+- **Server prerequisites**: as `conformance-dispatch-fanout-waves`.
+
+---
+
+### `conformance-dispatch-per-item-mismatch`
+
+- **Purpose**: observe the length rule on `nextWorkerInputs` (`orchestrator-decision.schema.json`): a length that differs from `nextWorkerIds` fails the dispatch node with `validation_error` and dispatches no child.
+- **Topology**: as `conformance-dispatch-per-item`, with one item for two children.
+- **Inputs**: none.
+- **Conformance test driver**: steps 1, 2 and 4 of `conformance-dispatch-per-item`, on every dispatch host.
+- **Terminal status**: `failed`.
+- **Server prerequisites**: as `conformance-dispatch-fanout-waves`.
+
+---
 
 ### `conformance-dispatch-fanout-race`
 

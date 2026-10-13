@@ -35,6 +35,8 @@ export interface RunRead { readonly status: number; readonly snapshot: Record<st
 export interface ObservedRun {
   readonly workflowId: string;
   readonly createStatus: number;
+  /** The `createRun` response body. */
+  readonly createBody?: unknown;
   readonly runId: string | undefined;
   readonly terminalStatus: string | undefined;
   /** The last `GET /runs/{runId}` body. */
@@ -78,11 +80,11 @@ export async function observeRun(profile: MajorProfile, workflowId: string, opts
   const created = await driver.post(profile.runsPath, { workflowId });
   const runId = isRecord(created.json) && typeof created.json['runId'] === 'string' ? created.json['runId'] : undefined;
   if ((created.status !== 201 && created.status !== 202) || runId === undefined) {
-    return { workflowId, createStatus: created.status, runId: undefined, terminalStatus: undefined, snapshot: {}, events: [] };
+    return { workflowId, createStatus: created.status, createBody: created.json, runId: undefined, terminalStatus: undefined, snapshot: {}, events: [] };
   }
   const r = await pollTerminal(profile, runId, opts);
   const status = r.snapshot['status'];
-  return { workflowId, createStatus: created.status, runId, terminalStatus: typeof status === 'string' ? status : undefined, snapshot: r.snapshot, events: await readEvents(profile, runId) };
+  return { workflowId, createStatus: created.status, createBody: created.json, runId, terminalStatus: typeof status === 'string' ? status : undefined, snapshot: r.snapshot, events: await readEvents(profile, runId) };
 }
 
 /** The create was accepted and the fixture run ended `completed`, as its catalog entry says. */

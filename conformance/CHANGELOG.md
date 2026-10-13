@@ -1,3 +1,12 @@
+## [2.46.6] — unreleased — RFC 0243 G2: fan-out waves and per-item input
+
+- **New `v2-agents-fan-out-waves`** (three ids, legs in `lib/fan-out-witness.ts`). The v1 twins drove a seam v2 does not carry; these run fixtures whose supervisor emits its `mockDispatchPlan`.
+  - `0243.max-fan-out-waves`, on `conformance-dispatch-fanout-waves`: three `conformance-delay` children under `maxConcurrency: 2` all complete, `dispatch.fanned-out` and `dispatch.joined` count three, and no more than `min(2, maxFanOut)` child windows overlap by more than 100 ms. Gated on `agents.fanOut` admitting `wait-all` with `collect`.
+  - `0243.per-item-input-gated`, on `conformance-dispatch-per-item`: at `agents.fanOut.perItemInput: true` each child receives its own `nextWorkerInputs` item; on any other dispatch host the dispatch node fails `validation_error` and no child is dispatched (a `400 validation_error` at `createRun` also satisfies it).
+  - `agents.dispatch-per-item-length-mismatch`, on `conformance-dispatch-per-item-mismatch`: one item for two children fails the dispatch node `validation_error`, no child, on every dispatch host.
+- **What a host's next bundle shows:** the fixtures are opt-in through discovery `fixtures`, so a host that does not list them records all three `inapplicable`. A dispatch host that lists the per-item fixtures and drops `nextWorkerInputs` records `executed-fail`.
+- `ObservedRun` gains an optional `createBody`; the run-graph double can refuse a create and add snapshot members.
+
 ## [2.46.5] — 2026-10-13 — RFC 0243 Accepted; a fan-out prediction corrected
 
 - **No assertion changes.** This cycle opens because RFC 0243's gap G1 closes, which changes the packed `spec/v1/gaps.json`.
