@@ -7,7 +7,7 @@
 | **Status**        | `Active`                                                        |
 | **Author(s)**     | David Tufts (@davidscotttufts)                                  |
 | **Created**       | 2026-10-12                                                      |
-| **Updated**       | 2026-10-12 — `Draft` → `Active` in the filing PR, comment window waived by the maintainer (2026-10-12: "Waive the comment window"), recorded as a STEWARD OVERRIDE of RFC 0147 §A.6 in MAINTAINERS.md. §A and §B are merged with suite 2.46.4. Filed after the `/architect` review of 2026-10-12 found four v2 discovery gaps (openwop-app #4676, ADR 0858, ADR 0812). Suite 2.46.3 carried the two that needed no new rule; this RFC carries the two that do. |
+| **Updated**       | 2026-10-13 — gap G1's witness is a production host: the leg runs only where `agents.dispatch: true` is advertised, and the v2 reference host advertises no `dispatch` (openwop-app is the candidate; the register row is rewritten when G1 closes). · 2026-10-12 — `Draft` → `Active` in the filing PR, comment window waived by the maintainer (2026-10-12: "Waive the comment window"), recorded as a STEWARD OVERRIDE of RFC 0147 §A.6 in MAINTAINERS.md. §A and §B are merged with suite 2.46.4. Filed after the `/architect` review of 2026-10-12 found four v2 discovery gaps (openwop-app #4676, ADR 0858, ADR 0812). Suite 2.46.3 carried the two that needed no new rule; this RFC carries the two that do. |
 | **Affects**       | `spec/v2/facets/agents.schema.json` (one optional facet, `fanOut`) · `spec/v2/declaration.json` (`agents.facets[]`) · `schemas/v2/capabilities.schema.json` (generated) · `schemas/v2/dispatch-config.schema.json` and `schemas/v2/orchestrator-decision.schema.json` (descriptions) · `spec/v2/core/execution.md` §agents (the facet table) · `spec/v2/core/identity.md` §3 · fixture `conformance-dispatch-fanout-race` · new `conformance/src/scenarios/v2-agents-fan-out.test.ts` · `v2-auth-subject-link-key.test.ts` (a second leg) |
 | **Compatibility** | `additive` (COMPATIBILITY.md §2.4): one optional facet on the closed `agents` record. No field is renamed, removed or narrowed, and no MUST relaxes. §B adds a MUST NOT that no host's live advertisement breaks today (§Compatibility). |
 | **Supersedes**    | —                                                               |
@@ -97,7 +97,7 @@ A host that implements RFC 0118 at v2 advertises `fanOut` with the modes it runs
 - [x] Schema updated (`agents.schema.json`, generated `capabilities.schema.json`, the two description edits).
 - [x] Conformance scenarios covering the new surface (`v2-agents-fan-out`, `v2-auth-subject-link-key`).
 - [x] CHANGELOG entry under suite 2.46.4.
-- [ ] A certified major-2 bundle records `openwop.requirement.0243.unadmitted-fan-out-refused` `executed-pass` from a host that seeds the fixture (G1), and `0243.subject-link-key-needs-both-lanes` `executed-pass`.
+- [ ] A certified major-2 bundle records `openwop.requirement.0243.unadmitted-fan-out-refused` `executed-pass` from a host advertising `agents.dispatch: true` that seeds the fixture (G1; the v2 reference host advertises no `dispatch`, so this is a production host), and `0243.subject-link-key-needs-both-lanes` `executed-pass` on a certified bundle from a host advertising `subjectLinkKey` (the v2 reference host; openwop-app advertises no key, so the row is `inapplicable` there).
 
 ## References
 
