@@ -42,6 +42,11 @@ on:
       - 'scripts/check-workflow-chain-expansion-sync.mjs'
       - '.github/workflows/conformance-soak.yml'
 
+# Least privilege: every job here only reads the repo. A job that needs more
+# declares it on the job (job-level permissions replace these, not add to them).
+permissions:
+  contents: read
+
 jobs:
   # SP-01 (2026-08-18): the RFC 0013 expansion drift guard runs in its OWN job.
   # It used to be step 4 of `host-conformance`, and because a failing step aborts

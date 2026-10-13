@@ -134,8 +134,16 @@ function artifactVersions() {
 
 function yamlInfoVersion(rel) {
   if (!exists(rel)) return 'absent';
-  const m = /^info:\s*\n(?:[ \t]+[^\n]*\n)*?[ \t]+version:\s*['"]?([^'"\n]+)['"]?/m.exec(read(rel));
-  return m ? m[1].trim() : 'unknown';
+  // A line scan of the indented block under `info:`, not one multiline regex:
+  // the regex form backtracked exponentially on whitespace-only lines (CodeQL
+  // js/redos). Same answer — the first `version:` child, quotes stripped.
+  const lines = read(rel).split('\n');
+  for (let i = lines.findIndex((l) => /^info:\s*$/.test(l)) + 1; i > 0 && i < lines.length && /^[ \t]/.test(lines[i]); i++) {
+    const m = /^[ \t]+version:(.*)$/.exec(lines[i]);
+    const v = m && /^['"]?([^'"]*)/.exec(m[1].trim())[1].trim();
+    if (v) return v;
+  }
+  return 'unknown';
 }
 
 /**

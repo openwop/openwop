@@ -544,7 +544,7 @@ const summary = {
 
 // ------------------------------------------------------------------- markdown
 const pct = (a, b) => (b ? `${Math.round((100 * a) / b)}%` : '–');
-const esc = (s) => String(s).replace(/\|/g, '\\|');
+const esc = (s) => String(s).replace(/\\/g, '\\\\').replace(/\|/g, '\\|');
 function markdown() {
   const L = [];
   L.push('# v2 witness coverage', '');

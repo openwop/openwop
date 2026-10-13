@@ -62,6 +62,11 @@ on:
       - 'conformance/**'
       - '.github/workflows/postgres-host-conformance.yml'
 
+# Least privilege: every job here only reads the repo. A job that needs more
+# declares it on the job (job-level permissions replace these, not add to them).
+permissions:
+  contents: read
+
 jobs:
   in-host-smoke:
     name: Postgres host — in-host smoke suite

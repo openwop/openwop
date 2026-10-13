@@ -23,7 +23,7 @@ const MANIFEST = JSON.parse(readFileSync(join(ROOT, 'spec', 'v2', 'path-manifest
 const MANIFEST_TEMPLATES = [...new Set([...MANIFEST.operations.map((o) => o.path), ...MANIFEST.channels.map((c) => c.address)])]
   .filter((p) => p !== '/.well-known/openwop' && p !== '/openapi.json')
   .sort((a, b) => b.length - a.length)
-  .map((t) => new RegExp('^' + t.split('/').slice(1).map((s) => (s.startsWith('{') ? '(?:\\{[A-Za-z]+\\}|[A-Za-z0-9._~-]+)' : s.replace(/[.:]/g, '\\$&'))).join('/') + '(?=$|[^A-Za-z0-9._~{}/-])'));
+  .map((t) => new RegExp('^' + t.split('/').slice(1).map((s) => (s.startsWith('{') ? '(?:\\{[A-Za-z]+\\}|[A-Za-z0-9._~-]+)' : s.replace(/[.*+?^${}()|[\]\\:]/g, '\\$&'))).join('/') + '(?=$|[^A-Za-z0-9._~{}/-])'));
 
 export function unversionManifestSpellings(text) {
   return text.replace(/\/v1\/([^\s"'`)\]>,\\]*)/g, (whole, rest) => (MANIFEST_TEMPLATES.some((re) => re.test(rest)) ? `/${rest}` : whole));

@@ -35,6 +35,11 @@ on:
         required: false
         default: '24'
 
+# Least privilege: every job here only reads the repo. A job that needs more
+# declares it on the job (job-level permissions replace these, not add to them).
+permissions:
+  contents: read
+
 jobs:
   pending-release:
     name: Is main's conformance pin published?
