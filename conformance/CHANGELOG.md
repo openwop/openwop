@@ -1,3 +1,10 @@
+## [2.46.7] — unreleased — one id per leg
+
+- **Registry: a requirement id passed through a helper is registered.** A scenario writing `assert(ID_X, judge(o))`, where the helper calls `req(id, …)`, registered `explicitId: null`. `src/setup.ts` labels a soft-skipped row from `explicitId`, so on a host where the leg was `inapplicable` the row read `openwop.it.<file>.<slug>`, and on a host where it ran, the requirement id. One leg, two ids, depending on the host. Found by openwop-app-8f on `v2-agents-fan-out-waves`.
+  - The generator now takes the first `openwop.requirement.*` const passed as a call's first argument when the body has no `req()`. 20 records in 7 files gain their id, and no existing id changes: `v2-agents-fan-out-waves`, `v2-dispatch-loop`, `v2-dispatch-input-mapping`, `v2-subworkflow-input-mapping`, `v2-subworkflow-linkage`, `v2-host-event-delivery`, `v2-safefetch-ssrf-refused`.
+  - **What a host's next bundle shows:** those legs' non-executed rows are renamed from `openwop.it.*` to their requirement ids. Executed rows are unchanged. A bundle cut on an older suite lacks rows for the three 2.46.6 ids under `check-cut-gates` Witness, which is the usual currency effect.
+  - A self-test pins the registered ids for two of the files.
+
 ## [2.46.6] — 2026-10-13 — RFC 0243 G2: fan-out waves and per-item input
 
 - **New `v2-agents-fan-out-waves`** (three ids, legs in `lib/fan-out-witness.ts`). The v1 twins drove a seam v2 does not carry; these run fixtures whose supervisor emits its `mockDispatchPlan`.

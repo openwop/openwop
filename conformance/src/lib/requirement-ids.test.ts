@@ -9,6 +9,9 @@
  */
 
 import { describe, it, expect } from 'vitest';
+import { readFileSync } from 'node:fs';
+import { join } from 'node:path';
+import { PKG_ROOT_PATH } from './paths.js';
 import {
   IT_ID_GRAMMAR,
   ItIdAllocator,
@@ -94,5 +97,29 @@ describe('requirement-ids: explicit override', () => {
     expect(msg).toBe('[unknown@unknown] auth-profiles.md §Subject linking: deactivation MUST deny');
     expect(takeExplicitRequirementId()).toBe('openwop.auth.subject-link.leaver-deny');
     expect(takeExplicitRequirementId()).toBeNull();
+  });
+});
+
+describe('requirement registry: ids passed through a helper', () => {
+  // A scenario that writes `assert(ID_X, judge(o))` and calls `req(id, …)` inside the
+  // helper used to register `explicitId: null`. Its soft-skipped rows were then labelled
+  // `openwop.it.<file>.<slug>`, while an executed row carried the requirement id, so one
+  // leg had two ids depending on the host (found by openwop-app-8f, 2026-10-13). The
+  // generator now takes a requirement-id const passed to any call in the body. The
+  // registry is pinned to the generator by its --check, so reading it pins the generator.
+  const records = (JSON.parse(readFileSync(join(PKG_ROOT_PATH, 'requirements.json'), 'utf8')) as { records: Array<{ file: string; explicitId: string | null }> }).records;
+  const idsOf = (file: string): Array<string | null> => records.filter((r) => r.file === file).map((r) => r.explicitId);
+
+  it('registers the helper-passed ids of v2-dispatch-loop and v2-agents-fan-out-waves', () => {
+    expect(idsOf('v2-dispatch-loop.test.ts')).toEqual([
+      'openwop.requirement.multi-agent.supervisor-loop-terminates',
+      'openwop.requirement.multi-agent.decision-recorded-well-formed',
+      'openwop.requirement.multi-agent.decision-iteration-monotonic',
+    ]);
+    expect(idsOf('v2-agents-fan-out-waves.test.ts')).toEqual([
+      'openwop.requirement.0243.max-fan-out-waves',
+      'openwop.requirement.0243.per-item-input-gated',
+      'openwop.requirement.agents.dispatch-per-item-length-mismatch',
+    ]);
   });
 });

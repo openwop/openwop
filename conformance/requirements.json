@@ -6,7 +6,7 @@
     "tests": 2800,
     "withStableId": 2800,
     "interpolatedTitles": 0,
-    "explicitIds": 2653
+    "explicitIds": 2673
   },
   "records": [
     {
@@ -28111,7 +28111,7 @@
       "file": "v2-agents-fan-out-waves.test.ts",
       "line": 64,
       "title": "children beyond the effective ceiling are dispatched in waves, and none is dropped",
-      "explicitId": null,
+      "explicitId": "openwop.requirement.0243.max-fan-out-waves",
       "citations": []
     },
     {
@@ -28119,7 +28119,7 @@
       "file": "v2-agents-fan-out-waves.test.ts",
       "line": 72,
       "title": "nextWorkerInputs reaches each child at perItemInput: true, and fails closed without it",
-      "explicitId": null,
+      "explicitId": "openwop.requirement.0243.per-item-input-gated",
       "citations": []
     },
     {
@@ -28127,7 +28127,7 @@
       "file": "v2-agents-fan-out-waves.test.ts",
       "line": 80,
       "title": "a nextWorkerInputs length that differs from nextWorkerIds fails the dispatch node and dispatches no child",
-      "explicitId": null,
+      "explicitId": "openwop.requirement.agents.dispatch-per-item-length-mismatch",
       "citations": []
     },
     {
@@ -30205,7 +30205,7 @@
       "file": "v2-dispatch-input-mapping.test.ts",
       "line": 59,
       "title": "inputMapping projects the parent variable into the dispatched child inputs",
-      "explicitId": null,
+      "explicitId": "openwop.requirement.agents.dispatch-input-mapping-projection",
       "citations": []
     },
     {
@@ -30213,7 +30213,7 @@
       "file": "v2-dispatch-input-mapping.test.ts",
       "line": 65,
       "title": "an unset parent variable projects to undefined: the child input is absent, never null",
-      "explicitId": null,
+      "explicitId": "openwop.requirement.agents.dispatch-input-mapping-unset-undefined",
       "citations": []
     },
     {
@@ -30221,7 +30221,7 @@
       "file": "v2-dispatch-loop.test.ts",
       "line": 63,
       "title": "each turn records its decision and terminate completes the run",
-      "explicitId": null,
+      "explicitId": "openwop.requirement.multi-agent.supervisor-loop-terminates",
       "citations": []
     },
     {
@@ -30229,7 +30229,7 @@
       "file": "v2-dispatch-loop.test.ts",
       "line": 69,
       "title": "every recorded decision is well-formed and the deciding agent never changes",
-      "explicitId": null,
+      "explicitId": "openwop.requirement.multi-agent.decision-recorded-well-formed",
       "citations": []
     },
     {
@@ -30237,7 +30237,7 @@
       "file": "v2-dispatch-loop.test.ts",
       "line": 75,
       "title": "at executionModel.version >= 5, iteration is 1-based and increments by exactly 1 per turn",
-      "explicitId": null,
+      "explicitId": "openwop.requirement.multi-agent.decision-iteration-monotonic",
       "citations": []
     },
     {
@@ -31457,7 +31457,7 @@
       "file": "v2-host-event-delivery.test.ts",
       "line": 174,
       "title": "an ephemeral host event has no id: and is not redelivered after Last-Event-ID",
-      "explicitId": null,
+      "explicitId": "openwop.requirement.0236.ephemeral.no-resume",
       "citations": []
     },
     {
@@ -31497,7 +31497,7 @@
       "file": "v2-host-event-delivery.test.ts",
       "line": 243,
       "title": "the same subscription never receives the ephemeral host event",
-      "explicitId": null,
+      "explicitId": "openwop.requirement.0236.ephemeral.no-fan-out",
       "citations": []
     },
     {
@@ -31505,7 +31505,7 @@
       "file": "v2-host-event-delivery.test.ts",
       "line": 256,
       "title": "emitTestHostEvent is served exactly for the listed host-test classes",
-      "explicitId": null,
+      "explicitId": "openwop.requirement.0241.trigger.bound-by-listing",
       "citations": []
     },
     {
@@ -31513,7 +31513,7 @@
       "file": "v2-host-event-delivery.test.ts",
       "line": 270,
       "title": "a second tenant receives nothing for the first tenant’s host event",
-      "explicitId": null,
+      "explicitId": "openwop.requirement.0236.host-event.tenant-isolation",
       "citations": []
     },
     {
@@ -36585,7 +36585,7 @@
       "file": "v2-safefetch-ssrf-refused.test.ts",
       "line": 166,
       "title": "an RFC 1918 target is refused egress_denied, ssrf-blocked",
-      "explicitId": null,
+      "explicitId": "openwop.requirement.httpClient.ssrf-rfc1918-refused",
       "citations": []
     },
     {
@@ -36593,7 +36593,7 @@
       "file": "v2-safefetch-ssrf-refused.test.ts",
       "line": 172,
       "title": "a link-local or cloud-metadata target is refused egress_denied, ssrf-blocked",
-      "explicitId": null,
+      "explicitId": "openwop.requirement.httpClient.ssrf-link-local-metadata-refused",
       "citations": []
     },
     {
@@ -37375,7 +37375,7 @@
       "file": "v2-subworkflow-input-mapping.test.ts",
       "line": 57,
       "title": "inputMapping seeds the child variable bag at creation",
-      "explicitId": null,
+      "explicitId": "openwop.requirement.sub-workflow.input-mapping-seeds-child",
       "citations": []
     },
     {
@@ -37383,7 +37383,7 @@
       "file": "v2-subworkflow-input-mapping.test.ts",
       "line": 63,
       "title": "the mapped parent value lands after and over the child defaultValue",
-      "explicitId": null,
+      "explicitId": "openwop.requirement.sub-workflow.input-mapping-overrides-default",
       "citations": []
     },
     {
@@ -37391,7 +37391,7 @@
       "file": "v2-subworkflow-input-mapping.test.ts",
       "line": 69,
       "title": "an unset parent variable arrives undefined, never an error or null",
-      "explicitId": null,
+      "explicitId": "openwop.requirement.sub-workflow.input-mapping-unset-undefined",
       "citations": []
     },
     {
@@ -37399,7 +37399,7 @@
       "file": "v2-subworkflow-linkage.test.ts",
       "line": 59,
       "title": "node.completed for the core.subWorkflow node carries outputs.childRunId and outputs.childStatus",
-      "explicitId": null,
+      "explicitId": "openwop.requirement.sub-workflow.node-completed-child-outputs",
       "citations": []
     },
     {
@@ -37407,7 +37407,7 @@
       "file": "v2-subworkflow-linkage.test.ts",
       "line": 65,
       "title": "outputMapping copies the child variable into the parent after the child completes",
-      "explicitId": null,
+      "explicitId": "openwop.requirement.sub-workflow.output-mapping-copied",
       "citations": []
     },
     {
@@ -37415,7 +37415,7 @@
       "file": "v2-subworkflow-linkage.test.ts",
       "line": 71,
       "title": "getRunAncestry names the parent run with cause core.subWorkflow",
-      "explicitId": null,
+      "explicitId": "openwop.requirement.sub-workflow.ancestry-parent-link",
       "citations": []
     },
     {
