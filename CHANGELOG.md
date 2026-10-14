@@ -28,6 +28,11 @@ Entries before this file was condensed carried full development detail. That tex
 - **2.45.23 cycle (suite):** `0184.mint-no-tilde` also mints one run under the second-tenant credential, so a host whose primary tenant is clean can still make the leg bite by binding tenant B to a non-clean tenant.
 - **Erratum: `identity.md` §5 grammar table matches `ids.schema.json` again.** `tenantId` gets its own row with the `anon:` prefix its pattern has had since 2.0.0. `typeId` gains the `@<semver>` pin from RFC 0187. No wire change. `check-id-kinds-bound` now compares the table against the schema.
 
+## [2.46.7] — 2026-10-14 — one id per leg; RFC 0243 G2 closes
+
+- **Suite:** a requirement id passed through a helper (`assert(ID, judge(o))`) is registered, so a soft-skipped row of such a leg carries the requirement id, not a title-derived `openwop.it.*` id: 20 legs in 7 files. Executed rows are unchanged; a diff by id shows renames, not result changes.
+- **RFC 0243 G2 closed:** openwop-app's certified 2.46.6 cut (`44960bca5`, 444/0/0) passes all three G2 ids. The packed `gaps.json` changes. No assertion changes.
+
 ## [2.46.6] — 2026-10-13 — RFC 0243 G2: fan-out waves and per-item input
 
 - **Suite:** new `v2-agents-fan-out-waves`: `maxFanOut` waves (none dropped, no more than the ceiling in flight), the `perItemInput` gate (honored, or fail closed with `validation_error`) and the `nextWorkerInputs` length rule. Three opt-in fixtures carry a supervisor `mockDispatchPlan`; no seam.
