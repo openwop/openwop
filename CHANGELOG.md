@@ -29,6 +29,11 @@ Entries before this file was condensed carried full development detail. That tex
 - **2.45.23 cycle (suite):** `0184.mint-no-tilde` also mints one run under the second-tenant credential, so a host whose primary tenant is clean can still make the leg bite by binding tenant B to a non-clean tenant.
 - **Erratum: `identity.md` §5 grammar table matches `ids.schema.json` again.** `tenantId` gets its own row with the `anon:` prefix its pattern has had since 2.0.0. `typeId` gains the `@<semver>` pin from RFC 0187. No wire change. `check-id-kinds-bound` now compares the table against the schema.
 
+## [2.46.8] — 2026-10-14 — RFC 0244 Active: eval trajectories, repeated trials, fail-closed fixture miss
+
+- **RFC 0244 `Active` (comment window waived).** Optional v2 fields let an eval suite hold a task to a tool path (`expected.trajectory`), run repeated trials with normative pass@k / pass^k (within 1e-9 relative), and fail closed on a fixture miss (`fixtures.onMiss`), each behind an `agents.evalSuite` member.
+- **Suite:** new `v2-eval-trajectory-trials`, the reference grader `lib/eval-trajectory.ts`, and three eval-suite fixtures run against the scripted agent `core.conformance.agents.scripted`. No host advertises the members yet, so the host legs are `inapplicable`.
+
 ## [2.46.7] — 2026-10-14 — one id per leg; RFC 0243 G2 closes
 
 - **Suite:** a requirement id passed through a helper (`assert(ID, judge(o))`) is registered, so a soft-skipped row of such a leg carries the requirement id, not a title-derived `openwop.it.*` id: 20 legs in 7 files. Executed rows are unchanged; a diff by id shows renames, not result changes.
