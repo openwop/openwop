@@ -8,7 +8,6 @@ Entries before this file was condensed carried full development detail. That tex
 
 ## [Unreleased]
 
-- **RFC 0244 filed and Active (window waived); 2.46.8 cycle (suite).** Eval suites can hold a task to a tool path (`expected.trajectory`), run repeated trials with normative pass@k / pass^k, and fail closed on a fixture miss, each behind an optional `agents.evalSuite` member.
 - **RFC 0243 G2 closes.** openwop-app's certified production cut on suite 2.46.6 (444/0/0, build `44960bca5`) records `0243.max-fan-out-waves`, `0243.per-item-input-gated` and `agents.dispatch-per-item-length-mismatch` `executed-pass`; the packed `gaps.json` changes.
 - **2.46.7 cycle (suite): one id per leg.** A requirement id passed through a helper (`assert(ID, judge(o))`) is now in `requirements.json`. Before, a soft-skipped row of such a leg took a title-derived `openwop.it.*` id while an executed row carried the requirement id: 20 legs in 7 files.
 - **2.46.2 cycle (suite): the seams profile is derived from its advert.** Its predicate is `conformance.seamsProfile`, not the whole `conformance` block (`capabilities.md` §7 `key.member`). Four openwop-app bundles certified it with only `certificationBundleUrl`; `--verify` now refuses that certification.
@@ -28,6 +27,11 @@ Entries before this file was condensed carried full development detail. That tex
 - **RFC 0238 filed and Active (window waived); `host.announce` erratum.** `uiPlugins.served`, `getUiPluginFrame` and `dispatchUiPluginRequest`; `packs.md` binds the frame as the only mount. The four `frontend-plugin-*` invariants become `witnessable-gated` through `v2-ui-plugin-boundary`.
 - **2.45.23 cycle (suite):** `0184.mint-no-tilde` also mints one run under the second-tenant credential, so a host whose primary tenant is clean can still make the leg bite by binding tenant B to a non-clean tenant.
 - **Erratum: `identity.md` §5 grammar table matches `ids.schema.json` again.** `tenantId` gets its own row with the `anon:` prefix its pattern has had since 2.0.0. `typeId` gains the `@<semver>` pin from RFC 0187. No wire change. `check-id-kinds-bound` now compares the table against the schema.
+
+## [2.46.9] — 2026-10-14 — RFC 0244 §D: a fail-closed trial scores 0
+
+- **RFC 0244 §D amended in place.** A trial that fails closed MUST report `score: 0` as well as `passed: false`. No host advertised `fixtureMatching` before the change.
+- **Suite:** `0244.fixture-miss-fails` now also asserts `score: 0` on the missed task's summary entry and on every `eval.scored` it emits.
 
 ## [2.46.8] — 2026-10-14 — RFC 0244 Active: eval trajectories, repeated trials, fail-closed fixture miss
 

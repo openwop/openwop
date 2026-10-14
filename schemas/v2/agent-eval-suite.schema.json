@@ -315,7 +315,7 @@
                   "fail",
                   "live"
                 ],
-                "description": "RFC 0244 §D. MAY. `fail`: a call matching no unconsumed entry MUST NOT reach a live tool or any external side effect; the host returns a tool error to the agent, counts it in the task's `fixtureMissCount`, and reports the trial `passed: false`. `live`: a miss MAY call the live tool, and the task's `fixtureMissCount` MUST then be > 0. Absent: the RFC 0081 behaviour is unchanged (a host SHOULD treat it as `fail`). Requires `agents.evalSuite.fixtureMatching`, as does `toolResponses[].args`."
+                "description": "RFC 0244 §D. MAY. `fail`: a call matching no unconsumed entry MUST NOT reach a live tool or any external side effect; the host returns a tool error to the agent, counts it in the task's `fixtureMissCount`, and reports the trial `passed: false` and `score: 0`. `live`: a miss MAY call the live tool, and the task's `fixtureMissCount` MUST then be > 0. Absent: the RFC 0081 behaviour is unchanged (a host SHOULD treat it as `fail`). Requires `agents.evalSuite.fixtureMatching`, as does `toolResponses[].args`."
               }
             }
           }

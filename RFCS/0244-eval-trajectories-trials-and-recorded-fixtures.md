@@ -7,7 +7,7 @@
 | **Status**        | `Active`                                                        |
 | **Author(s)**     | David Tufts (@davidscotttufts)                                  |
 | **Created**       | 2026-10-14                                                      |
-| **Updated**       | 2026-10-14 — **`Draft` → `Active` in the filing PR, comment window waived by the maintainer (user instruction 2026-10-14)**; STEWARD OVERRIDE of RFC 0147 §A.6 recorded in `MAINTAINERS.md`. Wire surface: the v2 `agent-eval-suite`, `eval-summary` and `run-event-payloads` fields and four `agents.evalSuite` members; suite 2.46.8 adds `v2-eval-trajectory-trials` and three eval-suite fixtures. `Accepted` waits on a host advertising `trajectory` and `trials` and passing the gated legs (G9). All seven Unresolved questions resolved. |
+| **Updated**       | 2026-10-14 — §D amended in place: a trial that fails closed MUST report `score: 0` as well as `passed: false` (suite 2.46.9). · 2026-10-14 — **`Draft` → `Active` in the filing PR, comment window waived by the maintainer (user instruction 2026-10-14)**; STEWARD OVERRIDE of RFC 0147 §A.6 recorded in `MAINTAINERS.md`. Wire surface: the v2 `agent-eval-suite`, `eval-summary` and `run-event-payloads` fields and four `agents.evalSuite` members; suite 2.46.8 adds `v2-eval-trajectory-trials` and three eval-suite fixtures. `Accepted` waits on a host advertising `trajectory` and `trials` and passing the gated legs (G9). All seven Unresolved questions resolved. |
 | **Affects**       | `schemas/v2/agent-eval-suite.schema.json` (optional `expected.trajectory`, `kind: "trajectory"`, `trials`, `fixtures.onMiss`, `toolResponses[].args`/`argsMatch`) · `schemas/v2/eval-summary.schema.json` (optional per-task `trajectory`, `trials`, `efficiency`, `fixtureMissCount`; optional suite `trialStats`; optional `regression.verdict`/`method`/`pairedTaskCount`) · `schemas/v2/run-event-payloads.schema.json` (optional `trialIndex`, `scoreLabel`, `evaluatorType` on `eval.scored`; optional `trialCount` on `eval.started`) · `spec/v2/facets/agents.schema.json` (optional `evalSuite.trajectory`, `evalSuite.trials`, `evalSuite.fixtureMatching`, `evalSuite.regressionVerdict`) · `spec/v2/core/execution.md` §agents · `SECURITY/invariants.yaml` (`eval-summary-no-content-leak` scope note) · fixture `conformance-eval-trajectory` · new `conformance/src/scenarios/v2-eval-trajectory-trials.test.ts` · extended `agent-eval-suite-shape.test.ts` · new non-normative `docs/eval-otel-mapping.md` |
 | **Compatibility** | `additive` per `COMPATIBILITY.md` §2.4. Every new field is optional and every new capability facet is optional. A suite that uses none of them is graded exactly as RFC 0081 grades it today. No field is renamed, removed or narrowed, and no MUST relaxes. |
 | **Supersedes**    | —                                                               |
@@ -159,7 +159,9 @@ Each is a mean over the task's trials, and each is counted inside the task's inv
 **`onMiss: "fail"`.** A call that matches no unconsumed entry **MUST NOT** reach a live tool or any external side effect. The host **MUST**:
 - return a tool error to the agent;
 - count the miss in the per-task `fixtureMissCount`;
-- report the trial `passed: false`.
+- report the trial `passed: false` **and `score: 0`**.
+
+(Amended 2026-10-14, after `Active` and before any host advertised `fixtureMatching`. Both implementing hosts, MyndHyve and openwop-app, converged on it. The text above said only `passed: false`. That let a trial that failed closed keep its output score, so `passRule: "mean"` or the aggregate `passScore` could pass a suite in which every trial failed closed, which is the cassette trap §D exists to close. No host could have relied on the old text, so this is an in-place amendment, not a new RFC: RFCS/README §"When a correction needs a new number".)
 
 **`onMiss: "live"`.** A miss **MAY** call the live tool. The task's summary entry **MUST** then carry `fixtureMissCount` > 0, so a reader can see that the eval was not fully fixtured.
 
@@ -290,6 +292,7 @@ If four trials match, the task entry is `trials:{n:5, passedCount:4, meanScore:0
 | §C MUST NOT gate on efficiency | a task with high counts still passes | the suite (scripted many-call agent) | witnessable |
 | §D first-unconsumed selection | which fixture response was served to each repeated call | needs an agent that really calls tools and exposes what it received; the mock agent's results are scripted, not served | **seam-gated** (G2) |
 | §D `onMiss: "fail"` blocks live side effects | `fixtureMissCount = 1` and `passed:false` (witnessable); "the live tool was never invoked" needs an effect counter | the suite for the report; a conformance tool with an observable counter for the no-live-call half | **seam-gated** until that tool exists (G2) |
+| §D a fail-closed trial reports `score: 0` and `passed: false` | the missed task's `eval.scored.score` and its summary `score` are 0 | the suite causes the miss via `conformance-eval-fixture-miss` | witnessable |
 | §D `onMiss: "live"` reports the miss | `fixtureMissCount > 0` | the suite | witnessable |
 | §E `scoreLabel` pattern | schema | the suite | witnessable |
 | §F pairing by `taskId` and `pairedTaskCount` | `pairedTaskCount` = shared task count between baseline and candidate | the suite (two eval runs with overlapping task sets) | witnessable |
