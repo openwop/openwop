@@ -128,7 +128,7 @@ Grouping below is a reading aid only: it assigns each RFC to the risk class its 
 | [0234](../RFCS/0234-maintainer-set-v1-end-of-support.md) | an accepted RFC may set v1 end-of-support earlier than the computed date | `Accepted` | steward override of RFC 0147 §A.6 | corpus gate — `v2-eos-clock | `not-reviewed` |
 | [0237](../RFCS/0237-nondeterminism-sources.md) | Declared nondeterminism names its sources | `Accepted` | steward override of RFC 0147 §A.6 | tier-1 — the v2 reference host | `not-reviewed` |
 | [0242](../RFCS/0242-negotiation-decided-requested-and-inbound.md) | a negotiation record says what was asked for, and an inbound negotiation has a home | `Accepted` | steward override of RFC 0147 §A.6 | tier-1 — the v2 reference host | `not-reviewed` |
-| [0244](../RFCS/0244-eval-trajectories-trials-and-recorded-fixtures.md) | eval suites grade the tool path, run repeated trials, and fail closed on a fixture miss | `Active` | steward override of RFC 0147 §A.6 | not declared (predates RFC 0174 §B.1, or not yet Accepted) | `not-reviewed` |
+| [0244](../RFCS/0244-eval-trajectories-trials-and-recorded-fixtures.md) | eval suites grade the tool path, run repeated trials, and fail closed on a fixture miss | `Accepted` | steward override of RFC 0147 §A.6 | tier-2 — one certified host, the independent second host | `not-reviewed` |
 
 ## Governance (6)
 

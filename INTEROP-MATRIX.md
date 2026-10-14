@@ -17,13 +17,13 @@ Each row shows the host's newest certified bundle and the suite version that mea
 | Host | Who runs it | Suite (cut) | pass / fail / blocked / inapplicable / skipped | Certified profiles | Evidence tier | Bundle |
 | --- | --- | --- | --- | --- | --- | --- |
 | **`openwop-host-v2-reference@2.0.0-rc.1`** — the v2 reference example ([`examples/hosts/v2-reference`](https://github.com/openwop/openwop-examples/tree/main/examples/hosts/v2-reference)) | Steward, reference example (tier 1). Built from `spec/v2/core/`. | 2.46.4 (2026-10-13, build `89a8931f`) | 536 / 0 / 0 / 271 / 10 | `openwop-discovery-core` · `openwop-core-standard` · `openwop-conformance-seams-v2` | `self` | [`openwop-host-v2-reference.json`](./evidence/v2-host-bundles/openwop-host-v2-reference.json) |
-| **`myndhyve@a4ee6491`** — MyndHyve `workflow-runtime`, production at `api.myndhyve.ai` | Steward-affiliated, production (tier 2) | 2.45.25 (2026-10-08, build `a4ee6491`) | 397 / 0 / 0 / 389 / 17 | `openwop-discovery-core` · `openwop-core-standard` | `self` | [`myndhyve.json`](./evidence/v2-host-bundles/myndhyve.json) |
+| **`myndhyve@65785814`** — MyndHyve `workflow-runtime`, production at `api.myndhyve.ai` | Steward-affiliated, production (tier 2) | 2.46.9 (2026-10-14, build `65785814`) | 413 / 2 / 0 / 405 / 17 | `openwop-discovery-core` · `openwop-core-standard` | `self` | [`myndhyve.json`](./evidence/v2-host-bundles/myndhyve.json) |
 | **`openwop-workflow-engine@0.1.0`** — openwop-app, production at `app.openwop.dev` (protocol origin `api.openwop.dev`) | Steward, production (tier 1) | 2.46.6 (2026-10-14, build `44960bca5`) | 444 / 0 / 0 / 372 / 11 | `openwop-discovery-core` · `openwop-core-standard` | `self` | [`openwop-workflow-engine.json`](./evidence/v2-host-bundles/openwop-workflow-engine.json) |
 
 Notes on the rows:
 - The `@<version>` in each host cell is the label the v1 end-of-support clock recorded when it anchored ([`evidence/v1-end-of-support.json`](./evidence/v1-end-of-support.json)). The bundle carries the host's current version and build.
 - **openwop-app** serves v2 only: its newest bundle advertises `protocolVersions: ["2.0"]`. It certified `openwop-conformance-seams-v2` on a 0%-traffic side revision of its production image, with the seams switched on ([`openwop-workflow-engine-side-rev-rfc0199-2.42.2.json`](./evidence/v2-host-bundles/openwop-workflow-engine-side-rev-rfc0199-2.42.2.json), suite 2.42.2). Production does not expose the seams. Four earlier production bundles (2.35.1, 2.43.0, 2.44.0, 2.45.28 `4683d9f89`) also record seams-v2 as certified, but each advertises only `conformance.certificationBundleUrl`: the predicate read the whole `conformance` block until suite 2.46.2, and `--verify` on 2.46.2 refuses that certification.
-- **MyndHyve** is closed source. Its bundle is verified against the key its live discovery document publishes. Its bundles advertise `confidenceEscalationInterruptKind: "x-host-myndhyve-low-confidence"`. Suite 2.46.3 rules that a v2 host advertises `clarification` or `approval` there, so the next cut records `openwop.requirement.multiAgent.escalation-kind-canonical` `executed-fail` until MyndHyve changes it.
+- **MyndHyve** is closed source. Its bundle is verified against the key its live discovery document publishes. Its bundles advertise `confidenceEscalationInterruptKind: "x-host-myndhyve-low-confidence"`. Suite 2.46.3 rules that a v2 host advertises `clarification` or `approval` there, so its 2.46.9 cut records `openwop.requirement.multiAgent.escalation-kind-canonical` `executed-fail` (its two failures) until MyndHyve changes it.
 - **Evidence tier** is the bundle's own field (RFC 0148). Every bundle here is `self`: the host operator cut it.
 - Older and side bundles for each host stay under [`evidence/v2-host-bundles/`](./evidence/v2-host-bundles/), named `<host>-<suite>[-<scope>].json`.
 
@@ -73,6 +73,7 @@ Optional capabilities each production host has advertised and demonstrated. The 
 | SAML ⟷ SCIM subject linking | 0159, 0163 | ✓ | ◐ (SAML only) |
 | Front-end plugin packs | 0117, 0119 | ✓ | — |
 | A2UI surface deltas | 0114 | ◐ (not advertised) | — |
+| Eval trajectories, repeated trials, fail-closed fixtures | 0244 | — (forthcoming, app ADR 0889) | ✓ |
 
 ## Composition partners
 
