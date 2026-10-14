@@ -1029,7 +1029,7 @@ Every task targets **the scripted agent `core.conformance.agents.scripted`**. It
 | --- | --- | --- |
 | `conformance-eval-trajectory` | `agents.evalSuite.trajectory` | each task's `trajectory` counts equal `lib/eval-trajectory.ts`'s grade of the script; an unmatched trajectory fails; a `kind: "trajectory"` task scores 1 or 0; the log carries one `agent.tool-called` per scripted call |
 | `conformance-eval-trials` | `agents.evalSuite.trials` | `eval.started.trialCount: 3`; three `eval.scored` per task with `trialIndex` 0..2; the per-task `trials` block and `trialStats` equal the §B formulas. Without the facet: `400 validation_error` at `createRun` |
-| `conformance-eval-fixture-miss` | `agents.evalSuite.fixtureMatching` | `missed` reports `fixtureMissCount: 1` and `passed: false`; `served` passes with no miss. That no live tool ran is not observable here (RFC 0244 G2) |
+| `conformance-eval-fixture-miss` | `agents.evalSuite.fixtureMatching` | `missed` reports `fixtureMissCount: 1`, `passed: false` and `score: 0` (summary and every `eval.scored`); `served` passes with no miss. That no live tool ran is not observable here (RFC 0244 G2) |
 
 ## OAuth provider fixtures
 

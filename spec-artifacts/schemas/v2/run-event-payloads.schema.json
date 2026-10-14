@@ -3457,7 +3457,7 @@
           "type": "number",
           "minimum": 0,
           "maximum": 1,
-          "description": "Task score (0.0\u20131.0)."
+          "description": "Task score (0.0\u20131.0). RFC 0244 \u00a7D: a trial that fails closed (a miss under `onMiss: \"fail\"`) MUST report 0."
         },
         "passed": {
           "type": "boolean",

@@ -25,7 +25,8 @@
  *      `eval.scored` per task per trial with contiguous `trialIndex`, and the
  *      per-task `trials` block and `trialStats` equal the §B formulas.
  *   5. `conformance-eval-fixture-miss` — the missed task reports
- *      `fixtureMissCount: 1` and `passed: false`; the served one passes.
+ *      `fixtureMissCount: 1`, `passed: false` and `score: 0` (summary and
+ *      every `eval.scored`); the served one passes.
  *      That no live tool ran is seam-gated (RFC 0244 G2) and not asserted.
  *   6. Refusal — a host advertising `agents.evalSuite` without `trials` that
  *      lists `conformance-eval-trials` refuses it at createRun with
@@ -231,6 +232,10 @@ describe('v2 RFC 0244 — host behaviour', () => {
     const served = taskEntry(o.summary, 'served');
     expect(missed?.['fixtureMissCount'], req(ID_MISS, DOC, 'the missed task MUST report fixtureMissCount 1')).toBe(1);
     expect(missed?.['passed'], req(ID_MISS, DOC, 'a miss under onMiss "fail" MUST fail the trial')).toBe(false);
+    expect(missed?.['score'], req(ID_MISS, DOC, 'a trial that fails closed MUST report score 0 in the summary')).toBe(0);
+    const missedScored = o.events.filter((e) => e.type === 'eval.scored' && e.payload['taskId'] === 'missed');
+    expect(missedScored.length, req(ID_MISS, DOC, 'the missed task MUST emit eval.scored')).toBeGreaterThan(0);
+    for (const e of missedScored) expect(e.payload['score'], req(ID_MISS, DOC, 'eval.scored for a trial that fails closed MUST carry score 0')).toBe(0);
     expect(served?.['passed'], req(ID_MISS, DOC, 'a served task MUST still pass')).toBe(true);
     expect(served?.['fixtureMissCount'] ?? 0, req(ID_MISS, DOC, 'a served task MUST NOT report a miss')).toBe(0);
   });

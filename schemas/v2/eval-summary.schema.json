@@ -240,7 +240,7 @@
           "fixtureMissCount": {
             "type": "integer",
             "minimum": 0,
-            "description": "RFC 0244 \u00a7D. Tool calls that matched no unconsumed fixture entry, summed over the task's trials."
+            "description": "RFC 0244 \u00a7D. Tool calls that matched no unconsumed fixture entry, summed over the task's trials. A trial that fails closed (a miss under `onMiss: \"fail\"`) MUST report `score: 0` as well as `passed: false`."
           }
         }
       }

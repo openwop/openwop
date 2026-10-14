@@ -31028,7 +31028,7 @@
     {
       "id": "openwop.it.v2-eval-trajectory-trials.the-rfc-0244-suite-summary-and-event-fields-validate-and-the-negatives-are-refus",
       "file": "v2-eval-trajectory-trials.test.ts",
-      "line": 113,
+      "line": 114,
       "title": "the RFC 0244 suite, summary and event fields validate and the negatives are refused",
       "explicitId": "openwop.requirement.0244.wire-shape",
       "citations": [
@@ -31067,7 +31067,7 @@
     {
       "id": "openwop.it.v2-eval-trajectory-trials.the-rfc-0244-additions-are-content-free-eval-summary-no-content-leak",
       "file": "v2-eval-trajectory-trials.test.ts",
-      "line": 136,
+      "line": 137,
       "title": "the RFC 0244 additions are content-free (eval-summary-no-content-leak)",
       "explicitId": "openwop.requirement.0244.content-free",
       "citations": [
@@ -31084,7 +31084,7 @@
     {
       "id": "openwop.it.v2-eval-trajectory-trials.the-eval-suite-fixtures-validate-against-the-v2-suite-schema",
       "file": "v2-eval-trajectory-trials.test.ts",
-      "line": 143,
+      "line": 144,
       "title": "the eval-suite fixtures validate against the v2 suite schema",
       "explicitId": "openwop.requirement.0244.fixtures-valid",
       "citations": [
@@ -31098,7 +31098,7 @@
     {
       "id": "openwop.it.v2-eval-trajectory-trials.a-trajectory-suite-is-graded-per-the-reference-grader",
       "file": "v2-eval-trajectory-trials.test.ts",
-      "line": 152,
+      "line": 153,
       "title": "a trajectory suite is graded per the reference grader",
       "explicitId": "openwop.requirement.0244.trajectory-graded",
       "citations": [
@@ -31132,7 +31132,7 @@
     {
       "id": "openwop.it.v2-eval-trajectory-trials.repeated-trials-emit-one-eval-scored-per-task-per-trial",
       "file": "v2-eval-trajectory-trials.test.ts",
-      "line": 188,
+      "line": 189,
       "title": "repeated trials emit one eval.scored per task per trial",
       "explicitId": "openwop.requirement.0244.trials-per-task",
       "citations": [
@@ -31150,7 +31150,7 @@
     {
       "id": "openwop.it.v2-eval-trajectory-trials.the-per-task-trials-block-and-trialstats-follow-the-b-formulas",
       "file": "v2-eval-trajectory-trials.test.ts",
-      "line": 199,
+      "line": 200,
       "title": "the per-task trials block and trialStats follow the §B formulas",
       "explicitId": "openwop.requirement.0244.trial-stats-formula",
       "citations": [
@@ -31189,7 +31189,7 @@
     {
       "id": "openwop.it.v2-eval-trajectory-trials.a-fixture-miss-under-onmiss-fail-fails-the-trial-and-is-counted",
       "file": "v2-eval-trajectory-trials.test.ts",
-      "line": 222,
+      "line": 223,
       "title": "a fixture miss under onMiss \"fail\" fails the trial and is counted",
       "explicitId": "openwop.requirement.0244.fixture-miss-fails",
       "citations": [
@@ -31200,6 +31200,18 @@
         {
           "section": "agents.schema.json §evalSuite (RFC 0244)",
           "requirement": "a miss under onMiss \"fail\" MUST fail the trial"
+        },
+        {
+          "section": "agents.schema.json §evalSuite (RFC 0244)",
+          "requirement": "a trial that fails closed MUST report score 0 in the summary"
+        },
+        {
+          "section": "agents.schema.json §evalSuite (RFC 0244)",
+          "requirement": "the missed task MUST emit eval.scored"
+        },
+        {
+          "section": "agents.schema.json §evalSuite (RFC 0244)",
+          "requirement": "eval.scored for a trial that fails closed MUST carry score 0"
         },
         {
           "section": "agents.schema.json §evalSuite (RFC 0244)",
@@ -31214,7 +31226,7 @@
     {
       "id": "openwop.it.v2-eval-trajectory-trials.a-suite-using-an-unadvertised-rfc-0244-feature-is-refused-at-createrun",
       "file": "v2-eval-trajectory-trials.test.ts",
-      "line": 238,
+      "line": 243,
       "title": "a suite using an unadvertised RFC 0244 feature is refused at createRun",
       "explicitId": "openwop.requirement.0244.unadvertised-feature-refused",
       "citations": [
