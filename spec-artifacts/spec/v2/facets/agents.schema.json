@@ -133,7 +133,7 @@
     },
     "evalSuite": {
       "type": "object",
-      "description": "RFC 0081. The host runs portable `agent-eval-suite.schema.json` suites as eval runs (`mode: eval` on `createRun`, runs.md) and terminates each with an `eval-summary.schema.json` scorecard as the run's output. Hosts that omit this block reject `mode: eval` (runs.md). A host advertising this MUST execute each task as a child agent invocation, reusing the `agent.invocation-*` bracket and the `agent.*` and `provider.usage` events, score it, and MUST emit exactly one `eval.started`, one `eval.scored` per task after that task's terminal `agent.decided`, and one `eval.completed` before `run.completed`. When a task carries `fixtures`, the host MUST inject `fixtures.toolResponses` in place of live tool calls and seed `fixtures.memorySeed` into the agent's read snapshot before the invocation; `live-shadow` alone ignores fixtures. Seeded memory is tenant-scoped and redacted like any memory write. The `eval.*` events and the summary are content-free (SECURITY invariant `eval-summary-no-content-leak`) and are recorded facts: a replay re-reads a score, never re-judges. An eval run, its suite, fixtures and summary are scoped to the caller's owner triple; a suite or summary MUST NOT be readable across tenants. A human MAY override an auto-score with an annotation on its `eval.scored` event. Composes per-task cost (`provider.usage`) and the regression baseline diff.",
+      "description": "RFC 0081. The host runs portable `agent-eval-suite.schema.json` suites as eval runs (`mode: eval` on `createRun`, runs.md) and terminates each with an `eval-summary.schema.json` scorecard as the run's output. Hosts that omit this block reject `mode: eval` (runs.md). A host advertising this MUST execute each task as a child agent invocation, reusing the `agent.invocation-*` bracket and the `agent.*` and `provider.usage` events, score it, and MUST emit exactly one `eval.started`, one `eval.scored` per task after that task's terminal `agent.decided`, and one `eval.completed` before `run.completed`. When a task carries `fixtures`, the host MUST inject `fixtures.toolResponses` in place of live tool calls and seed `fixtures.memorySeed` into the agent's read snapshot before the invocation; `live-shadow` alone ignores fixtures. Seeded memory is tenant-scoped and redacted like any memory write. The `eval.*` events and the summary are content-free (SECURITY invariant `eval-summary-no-content-leak`) and are recorded facts: a replay re-reads a score, never re-judges. An eval run, its suite, fixtures and summary are scoped to the caller's owner triple; a suite or summary MUST NOT be readable across tenants. A human MAY override an auto-score with an annotation on its `eval.scored` event. Composes per-task cost (`provider.usage`) and the regression baseline diff. RFC 0244: a suite that uses `expected.trajectory` or `kind: \"trajectory\"`, `trials.count` > 1 (or above `trials.maxTrials`), `fixtures.onMiss` or `toolResponses[].args` on a host that does not advertise the matching member (`trajectory`, `trials`, `fixtureMatching`) MUST be refused at run-create with `400 validation_error` naming the field; the host MUST NOT grade it as if the field were absent. Each trial is a recorded fact; per-task efficiency counts (`toolCallCount`, `modelCallCount`, tokens) are reported, never gated.",
       "additionalProperties": false,
       "properties": {
         "modes": {
@@ -160,6 +160,33 @@
           "type": "number",
           "minimum": 0,
           "description": "MAY. Host ceiling on total eval-run cost; composes RFC 0084 budget enforcement when advertised."
+        },
+        "trajectory": {
+          "type": "boolean",
+          "description": "RFC 0244 §A. `true`: the host grades `expected.trajectory` and `kind: \"trajectory\"` with the four match modes, `forbidden`, `argsMatch` and `includeDelegates`, and reports the per-task `trajectory` counts."
+        },
+        "trials": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": [
+            "maxTrials"
+          ],
+          "description": "RFC 0244 §B. Presence: the host runs `trials.count` > 1, emits `eval.scored` once per task per trial with `trialIndex` and `eval.started.trialCount`, and computes the per-task `trials` block and `trialStats` by the normative formulas. A host value agrees with a formula when |host − formula| ≤ 1e-9 · max(1, |formula|); hosts MUST agree to within that tolerance, and need not reproduce any particular float evaluation order.",
+          "properties": {
+            "maxTrials": {
+              "type": "integer",
+              "minimum": 2,
+              "description": "The largest `trials.count` the host runs; a suite above it is refused at run-create with `400 validation_error`."
+            }
+          }
+        },
+        "fixtureMatching": {
+          "type": "boolean",
+          "description": "RFC 0244 §D. `true`: the host honours `toolResponses[].args` / `argsMatch` (first unconsumed match) and `fixtures.onMiss`, and reports `fixtureMissCount`."
+        },
+        "regressionVerdict": {
+          "type": "boolean",
+          "description": "RFC 0244 §F. `true`: in `regression` mode the host reports `regression.verdict`, `method`, `alpha` and `pairedTaskCount`, pairing tasks by `taskId`."
         }
       }
     },

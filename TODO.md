@@ -248,6 +248,17 @@ Defects outside the spec:
       cut (497/0/0, build `e5f27708`). Owed: the RFC 0156 §B review. MyndHyve implements RFC 9110 and
       was invited to cut on 2.45.18; openwop-app's public origin still has the CDN-edge `304` issue.
 - [x] **RFC 0236** `Accepted` (provisional) 2026-10-05 on the v2 reference host's certified 2.45.21 cut (505/0/0, build `9543718c`). Owed: the RFC 0156 §B review; openwop-app ADR 0812 is the tier-2 follow-on.
+- [ ] **RFC 0081 `Accepted` evidence is weaker than its header says (observed 2026-10-14, not fixed).** The
+      header cites MyndHyve's `agents.evalSuite` advertisement and a steward-driven eval run. MyndHyve
+      de-advertised `evalSuite` on 2026-10-02 (myndhyve#586), and that witness was a sample seam
+      (`/v1/host/sample/agents/eval-run`) with no real agent run. openwop-app refuses `mode: eval`
+      (`422`). So no host serves a real `mode: "eval"` run today. Owed: a re-witness on a real eval run
+      (openwop-app ADR 0889 and MyndHyve's RFC 0244 work both implement it), or an amendment recording
+      the evidence gap. RFC 0244 G11 / R9 track the dependency.
+- [ ] **RFC 0244** `Active` 2026-10-14 (window waived), suite 2.46.8. Owed for `Accepted` (G9/G11): a host
+      advertising `agents.evalSuite.trajectory` and `trials`, seeding the eval-suite fixtures, and a
+      certified cut recording `0244.trajectory-graded` / `trials-per-task` / `trial-stats-formula`
+      executed-pass. G2 (a suite-owned effect counter for §D's no-live-call half) stays open.
 - [ ] **Next major: `dataResidency.regions` `minItems: 1`.** /architect ruling 2026-10-05: narrowing is a major
       (COMPATIBILITY.md §2.4), and not a safety fix. Within v2 an empty list is a claim: the host honours
       residency nowhere and MUST refuse every constraint. Since 2.45.22 the reject leg binds there (it

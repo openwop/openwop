@@ -1,3 +1,12 @@
+## [2.46.8] — 2026-10-14 — RFC 0244: eval trajectories, repeated trials, fail-closed fixture miss
+
+- **New `v2-eval-trajectory-trials`:**
+  - Server-free: the RFC 0244 suite, summary and `eval.*` fields validate; the negatives and the content-free negatives (`eval-summary-no-content-leak`) are refused; the three eval-suite fixtures validate.
+  - Host legs, each gated on its `agents.evalSuite` member (`trajectory`, `trials`, `fixtureMatching`) and its fixture: `0244.trajectory-graded`, `0244.trials-per-task`, `0244.trial-stats-formula`, `0244.fixture-miss-fails`, and `0244.unadvertised-feature-refused` (a trials suite on a host without `trials` → `400 validation_error`).
+- **New `lib/eval-trajectory.ts`:** the reference grader the host legs compare against, with self-tests (the four modes, `forbidden`, `argsMatch`, the mode-independent `matchedCount`, and the §B formulas over a fixed `(n, c, k)` table).
+- **New `fixtures/eval-suites/`:** `conformance-eval-trajectory`, `conformance-eval-trials`, `conformance-eval-fixture-miss`. These are `AgentEvalSuite` documents run against the suite-defined scripted agent `core.conformance.agents.scripted` (contract in `fixtures.md`).
+- **What a host's next bundle shows:** no host advertises the new members or seeds the fixtures, so every host leg is `inapplicable`. The server-free legs pass everywhere.
+
 ## [2.46.7] — 2026-10-14 — one id per leg; RFC 0243 G2 closes
 
 - **RFC 0243 G2 closes.** No assertion changes; the packed `spec/v1/gaps.json` changes. openwop-app's certified 2.46.6 cut (build `44960bca5`) records all three G2 ids `executed-pass`.

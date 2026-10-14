@@ -131,6 +131,116 @@
                 }
               }
             }
+          },
+          "trajectory": {
+            "type": "object",
+            "additionalProperties": false,
+            "required": [
+              "mode",
+              "matched",
+              "expectedCount",
+              "observedCount",
+              "matchedCount",
+              "forbiddenCount"
+            ],
+            "description": "RFC 0244 \u00a7A. The trajectory grade of the task's last trial, as counts only: never tool names, arguments or results (`eval-summary-no-content-leak`). `expectedCount` is the number of `calls`, `observedCount` the number of graded `agent.tool-called` events, `forbiddenCount` the observed calls to a `forbidden` tool. `matchedCount` is mode-independent: the size of a maximum one-to-one matching between expected and observed calls under each call's `argsMatch`, ignoring order. Precision is `matchedCount/observedCount`, recall `matchedCount/expectedCount`.",
+            "properties": {
+              "mode": {
+                "type": "string",
+                "enum": [
+                  "exact",
+                  "in-order",
+                  "any-order",
+                  "subset"
+                ]
+              },
+              "matched": {
+                "type": "boolean"
+              },
+              "expectedCount": {
+                "type": "integer",
+                "minimum": 0
+              },
+              "observedCount": {
+                "type": "integer",
+                "minimum": 0
+              },
+              "matchedCount": {
+                "type": "integer",
+                "minimum": 0
+              },
+              "forbiddenCount": {
+                "type": "integer",
+                "minimum": 0
+              }
+            }
+          },
+          "trials": {
+            "type": "object",
+            "additionalProperties": false,
+            "required": [
+              "n",
+              "passedCount",
+              "meanScore",
+              "passAtK",
+              "passHatK"
+            ],
+            "description": "RFC 0244 \u00a7B. With n trials of which c passed, and the suite's k: `passAtK` = 1 - C(n-c,k)/C(n,k), `passHatK` = C(c,k)/C(n,k) (0 when c < k), `meanScore` the mean trial score. The task's `score` is `meanScore`. A host value agrees with a formula when |host \u2212 formula| \u2264 1e-9 \u00b7 max(1, |formula|); hosts MUST agree to within that tolerance, and need not reproduce any particular float evaluation order.",
+            "properties": {
+              "n": {
+                "type": "integer",
+                "minimum": 1
+              },
+              "passedCount": {
+                "type": "integer",
+                "minimum": 0
+              },
+              "meanScore": {
+                "type": "number",
+                "minimum": 0,
+                "maximum": 1
+              },
+              "passAtK": {
+                "type": "number",
+                "minimum": 0,
+                "maximum": 1
+              },
+              "passHatK": {
+                "type": "number",
+                "minimum": 0,
+                "maximum": 1
+              }
+            }
+          },
+          "efficiency": {
+            "type": "object",
+            "additionalProperties": false,
+            "description": "RFC 0244 \u00a7C. Reported, never gated: a host MUST NOT fail a task or a suite on these. Means over the task's trials, counted inside its invocation brackets; judge calls excluded.",
+            "properties": {
+              "toolCallCount": {
+                "type": "number",
+                "minimum": 0,
+                "description": "`agent.tool-called` events."
+              },
+              "modelCallCount": {
+                "type": "number",
+                "minimum": 0,
+                "description": "`provider.usage` events."
+              },
+              "inputTokens": {
+                "type": "number",
+                "minimum": 0
+              },
+              "outputTokens": {
+                "type": "number",
+                "minimum": 0
+              }
+            }
+          },
+          "fixtureMissCount": {
+            "type": "integer",
+            "minimum": 0,
+            "description": "RFC 0244 \u00a7D. Tool calls that matched no unconsumed fixture entry, summed over the task's trials."
           }
         }
       }
@@ -165,6 +275,62 @@
         "diffRef": {
           "type": "string",
           "description": "MAY. A pointer to `GET /runs/{runId}:diff?against={baselineRunId}` (RFC 0054) for the structural delta."
+        },
+        "verdict": {
+          "type": "string",
+          "enum": [
+            "improved",
+            "regressed",
+            "unchanged",
+            "inconclusive"
+          ],
+          "description": "RFC 0244 \u00a7F. MAY. Computed over tasks present in both runs, paired by `taskId`. A host MUST report `inconclusive` rather than `improved` or `regressed` when its method cannot distinguish the runs at `alpha`. Requires `agents.evalSuite.regressionVerdict`."
+        },
+        "method": {
+          "type": "string",
+          "pattern": "^[a-z0-9][a-z0-9-]{0,63}$",
+          "description": "RFC 0244 \u00a7F. The statistical method behind `verdict`. RECOMMENDED: `paired-bootstrap`, `mcnemar`, `sign-test`, `paired-t`."
+        },
+        "alpha": {
+          "type": "number",
+          "exclusiveMinimum": 0,
+          "maximum": 1,
+          "description": "RFC 0244 \u00a7F. The significance level the method used."
+        },
+        "pairedTaskCount": {
+          "type": "integer",
+          "minimum": 0,
+          "description": "RFC 0244 \u00a7F. Tasks present in both runs."
+        }
+      }
+    },
+    "trialStats": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "k",
+        "passAtK",
+        "passHatK"
+      ],
+      "description": "RFC 0244 \u00a7B. Present when the suite ran more than one trial per task. `passAtK` / `passHatK` are the means of the per-task values; `scoreStderr` is the sample standard deviation of the per-task `meanScore` values divided by the square root of `taskCount` (clustered by task), omitted when `taskCount` < 2. A host value agrees with a formula when |host \u2212 formula| \u2264 1e-9 \u00b7 max(1, |formula|); hosts MUST agree to within that tolerance, and need not reproduce any particular float evaluation order.",
+      "properties": {
+        "k": {
+          "type": "integer",
+          "minimum": 1
+        },
+        "passAtK": {
+          "type": "number",
+          "minimum": 0,
+          "maximum": 1
+        },
+        "passHatK": {
+          "type": "number",
+          "minimum": 0,
+          "maximum": 1
+        },
+        "scoreStderr": {
+          "type": "number",
+          "minimum": 0
         }
       }
     }

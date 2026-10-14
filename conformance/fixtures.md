@@ -69,6 +69,9 @@ All fixtures MUST advertise:
 | Prompt All Four Kinds                     | `conformance-prompt-all-four-kinds`                                                             | RFC 0027 §A four-kind dispatch coverage with a MULTI-ENTRY `fewShotPromptRefs[]` array. Single `mock-ai` node with one ref per singular-kind slot (`systemPromptRef`, `userPromptRef`, `schemaHintPromptRef`) + two distinct templateIds in `fewShotPromptRefs[]`; host MUST emit 5 `agent.promptResolved` events (one per slot) AND 5 `prompt.composed` events. Multi-entry few-shot is the regression pin for `fewShotPromptRefs[slotIndex]` per-index resolution — a host that hard-codes `[0]` would emit the same template twice in the few-shot events and fail the per-templateId assertion. Capability-gated on `capabilities.prompts.supported`. | `completed`                                                                         | ≤ 10s                        |
 | Dispatch Loop                             | `conformance-dispatch-loop`                                                                     | Verifies `core.dispatch` loop mechanism                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                   | `completed`                                                                         | ≤ 30s                        |
 | Dispatch Fan-Out Race | `conformance-dispatch-fanout-race` | RFC 0243 §A.2 — a `core.dispatch` node pinning `fanOutPolicy: 'parallel'` with a `race` join. A host that does not admit it refuses it at load, or at `createRun` with `400 validation_error` and `details.requiredCapability` (`v2-agents-fan-out`) | refused; no run | ≤ 5s |
+| Eval — Trajectory | `conformance-eval-trajectory` | RFC 0244 §A — an `AgentEvalSuite` under `eval-suites/` (not a workflow), run with `mode: eval` against the scripted agent; five tasks whose tool paths match / miss each mode and a forbidden call (`v2-eval-trajectory-trials`) | eval run `completed`; per-task grade as the reference grader | ≤ 30s |
+| Eval — Trials | `conformance-eval-trials` | RFC 0244 §B — two tasks × `trials.count: 3`, `k: 2`; one always passes, one always fails (`v2-eval-trajectory-trials`) | eval run `completed`, or `400` where `trials` is unadvertised | ≤ 30s |
+| Eval — Fixture Miss | `conformance-eval-fixture-miss` | RFC 0244 §D — `onMiss: "fail"`; one task served by an args-matched fixture, one that misses it (`v2-eval-trajectory-trials`) | eval run `completed`; the missed task fails | ≤ 30s |
 | Dispatch Fan-Out Waves | `conformance-dispatch-fanout-waves` | RFC 0243 §A.3 — a parallel `core.dispatch` (`maxConcurrency: 2`, `wait-all`/`collect`) whose supervisor's `mockDispatchPlan` names three `conformance-delay` children. At most `min(2, maxFanOut)` run at once and none is dropped. Gated on `agents.fanOut` admitting `wait-all` with `collect`. | `completed` | ≤ 30s |
 | Dispatch Per-Item Input | `conformance-dispatch-per-item` | RFC 0243 §A.4 — a sequential `core.dispatch` whose decision dispatches `conformance-dispatch-input-mapping-child` twice with `nextWorkerInputs` `item-a`, `item-b`. At `agents.fanOut.perItemInput: true` each child receives its item; otherwise the dispatch node fails `validation_error` and no child is dispatched. | `completed`, or `failed` without `perItemInput` | ≤ 30s |
 | Dispatch Per-Item Length Mismatch | `conformance-dispatch-per-item-mismatch` | `orchestrator-decision.schema.json` `nextWorkerInputs` — one item for two children. Every dispatch host fails the dispatch node `validation_error` and dispatches no child. | `failed` | ≤ 30s |
@@ -1011,6 +1014,22 @@ Unlike the other sub-directories, this one also carries **deliberately-invalid**
 | `negative-low-confidence-with-custom-data`                | refused | `kind:"low-confidence"` carrying `CustomData`. Passed before 2.36.0. |
 
 ---
+
+## Eval-suite fixtures (RFC 0244)
+
+The `fixtures/eval-suites/` sub-directory holds `AgentEvalSuite` documents (`../schemas/v2/agent-eval-suite.schema.json`), validated server-free by `v2-eval-trajectory-trials.test.ts`. They are not workflows, so the top-level sweep never reads them. A host that runs them seeds each verbatim, lists its id (the file stem) in discovery `fixtures`, and resolves `evalSuiteRef: "https://conformance.openwop.dev/eval-suites/<id>"` to it.
+
+Every task targets **the scripted agent `core.conformance.agents.scripted`**. Its contract:
+
+- `input.script` is an ordered list of `{ tool, arguments? }`. The agent makes exactly those tool calls, in order, each emitting `agent.tool-called` with `agentId: "core.conformance.agents.scripted"`, `toolName: tool` and `inputs: arguments`.
+- Each call goes through the host's eval tool boundary. In a task with `fixtures.toolResponses`, the RFC 0244 §D selection and `onMiss` rules apply. Otherwise the host answers the call with its own `arguments`. No scripted call reaches a live tool or an external effect.
+- After the last call the agent decides, and its output is `input.output`.
+
+| Fixture | Facet | What the suite asserts |
+| --- | --- | --- |
+| `conformance-eval-trajectory` | `agents.evalSuite.trajectory` | each task's `trajectory` counts equal `lib/eval-trajectory.ts`'s grade of the script; an unmatched trajectory fails; a `kind: "trajectory"` task scores 1 or 0; the log carries one `agent.tool-called` per scripted call |
+| `conformance-eval-trials` | `agents.evalSuite.trials` | `eval.started.trialCount: 3`; three `eval.scored` per task with `trialIndex` 0..2; the per-task `trials` block and `trialStats` equal the §B formulas. Without the facet: `400 validation_error` at `createRun` |
+| `conformance-eval-fixture-miss` | `agents.evalSuite.fixtureMatching` | `missed` reports `fixtureMissCount: 1` and `passed: false`; `served` passes with no miss. That no live tool ran is not observable here (RFC 0244 G2) |
 
 ## OAuth provider fixtures
 

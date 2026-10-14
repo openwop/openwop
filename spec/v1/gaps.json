@@ -14531,6 +14531,193 @@
       ]
     },
     {
+      "id": "openwop.gap.0244.1",
+      "rfc": "0244",
+      "local": "G1",
+      "section": "§Conformance",
+      "surface": "Whether an eval task's `agentId` can target `core.conformance.mock-agent` (a workflow node type carrying an `agent` block), or whether the fixture needs a conformance manifest agent whose dispatch replays `mockToolCalls`.",
+      "witness": "unclassified",
+      "requirementId": null,
+      "disposition": "closed",
+      "target": null,
+      "sources": [
+        {
+          "file": "RFCS/registers/0244-eval-trajectories-trials-and-recorded-fixtures.gaps.md",
+          "token": "G1"
+        }
+      ]
+    },
+    {
+      "id": "openwop.gap.0244.2",
+      "rfc": "0244",
+      "local": "G2",
+      "section": "§D, §Falsifiability",
+      "surface": "There is no conformance *tool* with an observable effect counter. `mock-agent` scripts tool results and invokes nothing, and `core.conformance.side-effect` is a node. So \"a miss never reaches the live tool\" and \"first-unconsumed selection\" cannot be caused from outside.",
+      "witness": "unclassified",
+      "requirementId": null,
+      "disposition": "transferred",
+      "target": "TODO.md",
+      "sources": [
+        {
+          "file": "RFCS/registers/0244-eval-trajectories-trials-and-recorded-fixtures.gaps.md",
+          "token": "G2"
+        }
+      ]
+    },
+    {
+      "id": "openwop.gap.0244.3",
+      "rfc": "0244",
+      "local": "G3",
+      "section": "§B",
+      "surface": "Trial memory isolation has no causable probe. It needs a scripted agent that writes memory in trial 0 and reads it in trial 1.",
+      "witness": "unclassified",
+      "requirementId": null,
+      "disposition": "transferred",
+      "target": "TODO.md",
+      "sources": [
+        {
+          "file": "RFCS/registers/0244-eval-trajectories-trials-and-recorded-fixtures.gaps.md",
+          "token": "G3"
+        }
+      ]
+    },
+    {
+      "id": "openwop.gap.0244.4",
+      "rfc": "0244",
+      "local": "G4",
+      "section": "§E",
+      "surface": "`evaluatorType` copies OpenTelemetry PR #359, which is unmerged as of 2026-10-12.",
+      "witness": "unclassified",
+      "requirementId": null,
+      "disposition": "closed",
+      "target": null,
+      "sources": [
+        {
+          "file": "RFCS/registers/0244-eval-trajectories-trials-and-recorded-fixtures.gaps.md",
+          "token": "G4"
+        }
+      ]
+    },
+    {
+      "id": "openwop.gap.0244.5",
+      "rfc": "0244",
+      "local": "G5",
+      "section": "Implementation notes, UQ 7",
+      "surface": "There is no portable way to say \"fixtures = the recorded tool boundary of run X\". It is the highest-value practice found, and it cannot ride the suite, because suites carry no host ids.",
+      "witness": "unclassified",
+      "requirementId": null,
+      "disposition": "transferred",
+      "target": "TODO.md",
+      "sources": [
+        {
+          "file": "RFCS/registers/0244-eval-trajectories-trials-and-recorded-fixtures.gaps.md",
+          "token": "G5"
+        }
+      ]
+    },
+    {
+      "id": "openwop.gap.0244.6",
+      "rfc": "0244",
+      "local": "G6",
+      "section": "§A",
+      "surface": "Whether `agent.tool-called.inputs` is ever redacted on the v2 wire, which would make `argsMatch` unrecomputable from outside (UQ 6).",
+      "witness": "unclassified",
+      "requirementId": null,
+      "disposition": "closed",
+      "target": null,
+      "sources": [
+        {
+          "file": "RFCS/registers/0244-eval-trajectories-trials-and-recorded-fixtures.gaps.md",
+          "token": "G6"
+        }
+      ]
+    },
+    {
+      "id": "openwop.gap.0244.7",
+      "rfc": "0244",
+      "local": "G7",
+      "section": "§F",
+      "surface": "Method vocabulary: open string vs closed enum (UQ 5).",
+      "witness": "unclassified",
+      "requirementId": null,
+      "disposition": "closed",
+      "target": null,
+      "sources": [
+        {
+          "file": "RFCS/registers/0244-eval-trajectories-trials-and-recorded-fixtures.gaps.md",
+          "token": "G7"
+        }
+      ]
+    },
+    {
+      "id": "openwop.gap.0244.8",
+      "rfc": "0244",
+      "local": "G8",
+      "section": "§A",
+      "surface": "Sub-agent calls inside a task's bracket: included in the trajectory or not (UQ 2). This interacts with RFC 0243 fan-out.",
+      "witness": "unclassified",
+      "requirementId": null,
+      "disposition": "closed",
+      "target": null,
+      "sources": [
+        {
+          "file": "RFCS/registers/0244-eval-trajectories-trials-and-recorded-fixtures.gaps.md",
+          "token": "G8"
+        }
+      ]
+    },
+    {
+      "id": "openwop.gap.0244.9",
+      "rfc": "0244",
+      "local": "G9",
+      "section": "Implementation notes",
+      "surface": "No host advertises even RFC 0081 `agents.evalSuite` in the v2 production cut. openwop-app answers `422`. The RFC cannot reach `Accepted` without one.",
+      "witness": "unclassified",
+      "requirementId": null,
+      "disposition": "externally-gated",
+      "target": "host-advertises-evalSuite-trajectory-and-trials",
+      "sources": [
+        {
+          "file": "RFCS/registers/0244-eval-trajectories-trials-and-recorded-fixtures.gaps.md",
+          "token": "G9"
+        }
+      ]
+    },
+    {
+      "id": "openwop.gap.0244.10",
+      "rfc": "0244",
+      "local": "G10",
+      "section": "§Conformance",
+      "surface": "The `testing.mockProviders` gate. The behavioural legs need test keys, so a production-only bundle reads them as `inapplicable`.",
+      "witness": "unclassified",
+      "requirementId": null,
+      "disposition": "externally-gated",
+      "target": "host-seeds-eval-suite-fixtures",
+      "sources": [
+        {
+          "file": "RFCS/registers/0244-eval-trajectories-trials-and-recorded-fixtures.gaps.md",
+          "token": "G10"
+        }
+      ]
+    },
+    {
+      "id": "openwop.gap.0244.11",
+      "rfc": "0244",
+      "local": "G11",
+      "section": "Implementation notes, G9",
+      "surface": "MyndHyve de-advertised `agents.evalSuite` on 2026-10-02 (myndhyve#586). Its RFC 0081 witness was a sample seam with no real agent run, so **no host serves a real `mode: \"eval\"` run today**. RFC 0081's `Accepted` evidence is weaker than that RFC's header says. That is flagged in `TODO.md`, not fixed here.",
+      "witness": "unclassified",
+      "requirementId": null,
+      "disposition": "externally-gated",
+      "target": "a-host-serves-a-real-mode-eval-run",
+      "sources": [
+        {
+          "file": "RFCS/registers/0244-eval-trajectories-trials-and-recorded-fixtures.gaps.md",
+          "token": "G11"
+        }
+      ]
+    },
+    {
       "id": "openwop.gap.spec.a2a-integration.g1",
       "rfc": "0152",
       "local": "G1",

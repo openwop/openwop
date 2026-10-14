@@ -2906,6 +2906,7 @@ invariants:
     threat_model: SECURITY/threat-model-secret-leakage.md
     tests:
       - conformance/src/scenarios/agent-eval-suite-shape.test.ts
+      - conformance/src/scenarios/v2-eval-trajectory-trials.test.ts
     note: |
       RFC 0081 §F. An EvalSummary (eval-summary.schema.json) and the
       eval.started/eval.scored/eval.completed events MUST NOT carry task
@@ -2916,7 +2917,12 @@ invariants:
       projection. The summary schema is additionalProperties:false at every
       level; the always-on agent-eval-suite-shape.test.ts content-free
       negatives (a task entry with a taskOutput body; a safetyFinding with an
-      excerpt) are the public test.
+      excerpt) are the public test. RFC 0244 §H extends the scope to the
+      fields it adds: the per-task trajectory block is counts only (no tool
+      names, arguments or results), trials / efficiency / trialStats /
+      fixtureMissCount / regression.verdict are scalars, and
+      eval.scored.scoreLabel is pattern-bound so it cannot carry prose. The
+      v2 public test is v2-eval-trajectory-trials.test.ts's shape negatives.
     witness: claims-check
     witnessReview: initial-mechanical-2026-09-02
 

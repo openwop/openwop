@@ -1438,6 +1438,10 @@ describe.skipIf(FIXTURES_DOC_PATH === null)('spec-corpus: fixtures.json catalog 
     ...readdirSync(PACK_MANIFEST_FIXTURES_DIR)
       .filter((f) => f.endsWith('.json'))
       .map((f) => f.replace(/\.json$/, '')),
+    // RFC 0244 eval-suite fixtures: AgentEvalSuite documents, seeded by id like a workflow fixture.
+    ...readdirSync(join(FIXTURES_DIR, 'eval-suites'))
+      .filter((f) => f.endsWith('.json'))
+      .map((f) => f.replace(/\.json$/, '')),
     ...readdirSync(PROMPT_TEMPLATE_FIXTURES_DIR)
       .filter((f) => f.endsWith('.json'))
       .map((f) => f.replace(/\.json$/, '')),
