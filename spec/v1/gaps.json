@@ -14674,8 +14674,8 @@
       "surface": "No host advertises even RFC 0081 `agents.evalSuite` in the v2 production cut. openwop-app answers `422`. The RFC cannot reach `Accepted` without one.",
       "witness": "unclassified",
       "requirementId": null,
-      "disposition": "externally-gated",
-      "target": "host-advertises-evalSuite-trajectory-and-trials",
+      "disposition": "closed",
+      "target": null,
       "sources": [
         {
           "file": "RFCS/registers/0244-eval-trajectories-trials-and-recorded-fixtures.gaps.md",
@@ -14691,8 +14691,8 @@
       "surface": "The `testing.mockProviders` gate. The behavioural legs need test keys, so a production-only bundle reads them as `inapplicable`.",
       "witness": "unclassified",
       "requirementId": null,
-      "disposition": "externally-gated",
-      "target": "host-seeds-eval-suite-fixtures",
+      "disposition": "closed",
+      "target": null,
       "sources": [
         {
           "file": "RFCS/registers/0244-eval-trajectories-trials-and-recorded-fixtures.gaps.md",
@@ -14708,8 +14708,8 @@
       "surface": "MyndHyve de-advertised `agents.evalSuite` on 2026-10-02 (myndhyve#586). Its RFC 0081 witness was a sample seam with no real agent run, so **no host serves a real `mode: \"eval\"` run today**. RFC 0081's `Accepted` evidence is weaker than that RFC's header says. That is flagged in `TODO.md`, not fixed here.",
       "witness": "unclassified",
       "requirementId": null,
-      "disposition": "externally-gated",
-      "target": "a-host-serves-a-real-mode-eval-run",
+      "disposition": "closed",
+      "target": null,
       "sources": [
         {
           "file": "RFCS/registers/0244-eval-trajectories-trials-and-recorded-fixtures.gaps.md",

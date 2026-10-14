@@ -21,7 +21,7 @@
 | Artifact | Version | Source | Cadence |
 |---|---|---|---|
 | Spec corpus (root) | 1.1.0 | `package.json` | bumps only on a coordinated spec release |
-| Conformance suite `@openwop/openwop-conformance` | 2.46.9 | `conformance/package.json` | minor on scenario add/remove |
+| Conformance suite `@openwop/openwop-conformance` | 2.46.10 | `conformance/package.json` | minor on scenario add/remove |
 | OpenAPI `info.version` | 1.1.0 | `api/openapi.yaml` | hand-maintained in v1.x; generated from the corpus tag at v2 (RFC 0172 sectionB #14) |
 | AsyncAPI `info.version` | 1.1.0 | `api/asyncapi.yaml` | as above |
 | TypeScript SDK `@openwop/openwop` (2.x, current) | 2.5.0 | openwop-sdks `sdk/typescript-v2/package.json` (via `evidence/cross-repo-manifests.json`) | v2-only; npm `latest` |
@@ -70,8 +70,8 @@
 
 | Status | Count |
 |---|---:|
-| Accepted | 234 |
-| Active | 4 |
+| Accepted | 235 |
+| Active | 3 |
 | Draft | 1 |
 | Superseded | 1 |
 
@@ -316,7 +316,7 @@
 | RFC 0241 | a host event can be triggered on demand for test | Accepted |
 | RFC 0242 | a negotiation record says what was asked for, and an inbound negotiation has a home | Accepted |
 | RFC 0243 | parallel fan-out has a v2 seat, and a link key needs both linking lanes | Accepted |
-| RFC 0244 | Eval suites grade the tool path, run repeated trials, and fail closed on a fixture miss | Active |
+| RFC 0244 | Eval suites grade the tool path, run repeated trials, and fail closed on a fixture miss | Accepted |
 
 ## SDK Helper Coverage
 
@@ -341,7 +341,7 @@ The pack registry now lives in the [`openwop-registry`](https://github.com/openw
 ## Active Follow-Ups
 
 - 1 RFC still `Draft` (RFC 0038) — advance with schema/conformance proof or defer.
-- 4 RFCs `Active` (RFC 0121, RFC 0222, RFC 0228, RFC 0244) — wire-shape MAY shift compatibly within v1.x until promotion to `Accepted`.
+- 3 RFCs `Active` (RFC 0121, RFC 0222, RFC 0228) — wire-shape MAY shift compatibly within v1.x until promotion to `Accepted`.
 - External audit, non-steward host recruitment, and non-steward maintainer recruitment remain external-action gates.
 - Multi-region idempotency and some optional-profile behavior checks remain lower-confidence than the core wire contract.
 

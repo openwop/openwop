@@ -252,13 +252,17 @@ Defects outside the spec:
       header cites MyndHyve's `agents.evalSuite` advertisement and a steward-driven eval run. MyndHyve
       de-advertised `evalSuite` on 2026-10-02 (myndhyve#586), and that witness was a sample seam
       (`/v1/host/sample/agents/eval-run`) with no real agent run. openwop-app refuses `mode: eval`
-      (`422`). So no host serves a real `mode: "eval"` run today. Owed: a re-witness on a real eval run
-      (openwop-app ADR 0889 and MyndHyve's RFC 0244 work both implement it), or an amendment recording
-      the evidence gap. RFC 0244 G11 / R9 track the dependency.
-- [ ] **RFC 0244** `Active` 2026-10-14 (window waived), suite 2.46.8. Owed for `Accepted` (G9/G11): a host
-      advertising `agents.evalSuite.trajectory` and `trials`, seeding the eval-suite fixtures, and a
-      certified cut recording `0244.trajectory-graded` / `trials-per-task` / `trial-stats-formula`
-      executed-pass. G2 (a suite-owned effect counter for §D's no-live-call half) stays open.
+      (`422`). **Update 2026-10-14:** MyndHyve re-advertises `evalSuite` and its certified 2.46.9 cut drives
+      real `mode: "eval"` runs through the RFC 0244 legs (RFC 0244 G11 closed). Still owed: RFC 0081's own
+      rows re-witnessed at major 2, or an amendment to RFC 0081's header recording the evidence gap.
+- [x] **RFC 0244** `Accepted` (provisional) 2026-10-14 on MyndHyve's certified 2.46.9 cut (tier-2, build
+      `65785814`, `myndhyve-2.46.9.json`). Owed: the RFC 0156 §B review; openwop-app's own witness (#4797, app ADR 0889);
+      and the suite residue below.
+- [ ] **RFC 0244 suite residue.** (G2) a suite-owned counter tool, so §D's "a miss never reaches a live tool" and
+      first-unconsumed selection become witnessable rather than seam-gated. (G3) a scripted memory write/read across
+      trials for §B isolation. (G5) a portable "fixtures = run X" reference (follow-up RFC). Legs not yet probed:
+      §B cost counts every trial, §C efficiency counts and the never-gated rule, §D `onMiss: "live"`, §F pairing
+      (needs a `regression` fixture).
 - [ ] **Next major: `dataResidency.regions` `minItems: 1`.** /architect ruling 2026-10-05: narrowing is a major
       (COMPATIBILITY.md §2.4), and not a safety fix. Within v2 an empty list is a claim: the host honours
       residency nowhere and MUST refuse every constraint. Since 2.45.22 the reject leg binds there (it

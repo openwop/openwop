@@ -1,3 +1,7 @@
+## [2.46.10] — 2026-10-14 — RFC 0244 Accepted (provisional)
+
+- **No assertion changes.** RFC 0244 flips to `Accepted` (provisional) on MyndHyve's certified 2.46.9 cut, so the packed `spec/v1/gaps.json` changes (G9, G10 and G11 close).
+
 ## [2.46.9] — 2026-10-14 — RFC 0244 §D: a fail-closed trial scores 0
 
 - **`v2-eval-trajectory-trials` `0244.fixture-miss-fails`** also asserts `score: 0` on the missed task's summary entry and on each of its `eval.scored` events (RFC 0244 §D, amended in place). Both implementing hosts converged on the rule: without it, `passRule: "mean"` or the aggregate `passScore` could pass a suite whose trials all failed closed.
