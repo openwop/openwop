@@ -29,6 +29,11 @@ Entries before this file was condensed carried full development detail. That tex
 - **RFC 0237 filed and Active (window waived).** `nondeterminismPolicy.sources` (`clock`, `random`, `id`, `env`, `x-*`): a `replay` fork reproduces each, witnessed by `conformance-nondeterminism`. `declared: false` and `advertised: false` are not v2 states; both go at 3.0.
 - **Erratum: `identity.md` §5 grammar table matches `ids.schema.json` again.** `tenantId` gets its own row with the `anon:` prefix its pattern has had since 2.0.0. `typeId` gains the `@<semver>` pin from RFC 0187. No wire change. `check-id-kinds-bound` now compares the table against the schema.
 
+## [2.46.6] — 2026-10-13 — RFC 0243 G2: fan-out waves and per-item input
+
+- **Suite:** new `v2-agents-fan-out-waves`: `maxFanOut` waves (none dropped, no more than the ceiling in flight), the `perItemInput` gate (honored, or fail closed with `validation_error`) and the `nextWorkerInputs` length rule. Three opt-in fixtures carry a supervisor `mockDispatchPlan`; no seam.
+- **Evidence:** proven against a local openwop-app with sabotage of each rule; a host that does not list the fixtures records the three rows `inapplicable`.
+
 ## [2.46.5] — 2026-10-13 — RFC 0243 Accepted; a fan-out prediction corrected
 
 - **RFC 0243 `Accepted` (provisional).** openwop-app's 2.46.4 cut (`8d2adcbe8`) passes both fan-out ids; the reference host's 2.46.4 cut (`89a8931f`, 536/0/0) passes the link-key id. G1 closes, so the packed `gaps.json` changes. No assertion changes.

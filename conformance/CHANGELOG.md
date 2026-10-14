@@ -1,4 +1,4 @@
-## [2.46.6] — unreleased — RFC 0243 G2: fan-out waves and per-item input
+## [2.46.6] — 2026-10-13 — RFC 0243 G2: fan-out waves and per-item input
 
 - **New `v2-agents-fan-out-waves`** (three ids, legs in `lib/fan-out-witness.ts`). The v1 twins drove a seam v2 does not carry; these run fixtures whose supervisor emits its `mockDispatchPlan`.
   - `0243.max-fan-out-waves`, on `conformance-dispatch-fanout-waves`: three `conformance-delay` children under `maxConcurrency: 2` all complete, `dispatch.fanned-out` and `dispatch.joined` count three, and no more than `min(2, maxFanOut)` child windows overlap by more than 100 ms. Gated on `agents.fanOut` admitting `wait-all` with `collect`.
