@@ -1,4 +1,4 @@
-## [2.46.7] — unreleased — one id per leg
+## [2.46.7] — 2026-10-14 — one id per leg; RFC 0243 G2 closes
 
 - **RFC 0243 G2 closes.** No assertion changes; the packed `spec/v1/gaps.json` changes. openwop-app's certified 2.46.6 cut (build `44960bca5`) records all three G2 ids `executed-pass`.
 - **Registry: a requirement id passed through a helper is registered.** A scenario writing `assert(ID_X, judge(o))`, where the helper calls `req(id, …)`, registered `explicitId: null`. `src/setup.ts` labels a soft-skipped row from `explicitId`, so on a host where the leg was `inapplicable` the row read `openwop.it.<file>.<slug>`, and on a host where it ran, the requirement id. One leg, two ids, depending on the host. Found by openwop-app-8f on `v2-agents-fan-out-waves`.
