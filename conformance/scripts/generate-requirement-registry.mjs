@@ -10,7 +10,7 @@
  *     "file":      "<file>.test.ts",
  *     "line":      <1-based line of the it()>,
  *     "title":     "<literal title, or null when interpolated>",
- *     "explicitId": "<first arg of a req() call inside the body, or null>",
+ *     "explicitId": "<first arg of a req() call inside the body, else a requirement-id const passed to a helper call there, or null>",
  *     "citations": [ { "section": "...", "requirement": "..." } ]   // literal driver.describe() / req() args in the body
  *   }
  *
@@ -120,6 +120,15 @@ function localConsts(body, consts) {
   return out;
 }
 
+/**
+ * A requirement id passed through a helper counts too. `assert(ID_X, judge(o))`
+ * calls `req(id, …)` inside the helper, out of this body's reach, so its records
+ * read `explicitId: null` and a soft-skipped row was labelled by its title while
+ * an executed row carried ID_X: one leg, two ids, depending on the host (found by
+ * openwop-app on `v2-agents-fan-out-waves`, 2026-10-13; seven files had it). A
+ * `req()` in the body still wins; otherwise the first const bound to an
+ * `openwop.requirement.*` literal passed as a call's first argument is the id.
+ */
 function collectCitations(body, src, moduleConsts = new Map()) {
   const consts = localConsts(body, moduleConsts);
   const literalOrConst = (node) => {
@@ -129,6 +138,7 @@ function collectCitations(body, src, moduleConsts = new Map()) {
   };
   const citations = [];
   let explicitId = null;
+  let helperId = null;
   const visit = (node) => {
     if (ts.isCallExpression(node)) {
       const e = node.expression;
@@ -137,7 +147,11 @@ function collectCitations(body, src, moduleConsts = new Map()) {
         const requirement = literalText(node.arguments[1]);
         if (section !== null && requirement !== null) citations.push({ section, requirement });
         else citations.push({ section: section ?? null, requirement: requirement ?? null, interpolated: true });
-      } else if (ts.isIdentifier(e) && e.text === 'req') {
+      } else if (!(ts.isIdentifier(e) && e.text === 'req') && node.arguments.length > 0 && ts.isIdentifier(node.arguments[0])) {
+        const id = consts.get(node.arguments[0].text) ?? null;
+        if (id !== null && id.startsWith('openwop.requirement.') && helperId === null) helperId = id;
+      }
+      if (ts.isIdentifier(e) && e.text === 'req') {
         const id = literalOrConst(node.arguments[0]);
         if (id !== null && explicitId === null) explicitId = id;
         const section = literalOrConst(node.arguments[1]);
@@ -148,7 +162,7 @@ function collectCitations(body, src, moduleConsts = new Map()) {
     ts.forEachChild(node, visit);
   };
   visit(body);
-  return { citations, explicitId };
+  return { citations, explicitId: explicitId ?? helperId };
 }
 
 export function generate() {
