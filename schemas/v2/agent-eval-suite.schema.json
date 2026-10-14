@@ -81,6 +81,34 @@
         }
       }
     },
+    "trials": {
+      "type": "object",
+      "additionalProperties": false,
+      "description": "RFC 0244 §B. MAY. Repeated trials. A host MUST run each task `count` times, each as its own child agent invocation started from the same fixtures and `memorySeed` snapshot; memory one trial writes MUST NOT be visible to another trial of the run, and a fixture cursor resets per trial. `k` MUST NOT exceed `count` (a suite rule, not a schema conditional). `count` > 1 requires `agents.evalSuite.trials` with `count` <= `maxTrials`, else the suite is refused at run-create with `400 validation_error`. Cost ceilings count every trial.",
+      "properties": {
+        "count": {
+          "type": "integer",
+          "minimum": 1,
+          "default": 1,
+          "description": "Trials per task."
+        },
+        "k": {
+          "type": "integer",
+          "minimum": 1,
+          "description": "The k of pass@k and pass^k. Absent: `count`."
+        },
+        "passRule": {
+          "type": "string",
+          "enum": [
+            "all",
+            "any",
+            "mean"
+          ],
+          "default": "all",
+          "description": "A task passes when: `all`, every trial passed; `any`, at least one did; `mean`, the mean trial score >= `thresholds.passScore`."
+        }
+      }
+    },
     "tasks": {
       "type": "array",
       "minItems": 1,
@@ -114,9 +142,10 @@
                 "type": "string",
                 "enum": [
                   "golden",
-                  "rubric"
+                  "rubric",
+                  "trajectory"
                 ],
-                "description": "Scoring mode for this task. A suite declaring a non-`golden`/`rubric` `modes` entry (e.g. `adversarial`) still scores each task via one of these two `kind`s."
+                "description": "Scoring mode for this task. A suite declaring a non-`golden`/`rubric` `modes` entry (e.g. `adversarial`) still scores each task via one of these two `kind`s. `trajectory` (RFC 0244 §A): the task is graded on its tool path alone; its score is 1 when `trajectory` matched and 0 otherwise, and it carries `trajectory` and neither `match` nor `rubric` (a suite rule, not a schema conditional: COMPATIBILITY.md §2.4)."
               },
               "match": {
                 "type": "object",
@@ -166,6 +195,71 @@
                     }
                   }
                 }
+              },
+              "trajectory": {
+                "type": "object",
+                "additionalProperties": false,
+                "required": [
+                  "match",
+                  "calls"
+                ],
+                "description": "RFC 0244 §A. MAY. The tool path the task is held to, graded from the `agent.tool-called` events in each trial's `agent.invocation-*` bracket whose `agentId` is the task's target agent (every call in the bracket when `includeDelegates` is true). On a `golden` or `rubric` task a trial MUST NOT pass unless the trajectory matched, and its score stays the output score. Requires `agents.evalSuite.trajectory`; a host that does not advertise it MUST refuse the suite at run-create with `400 validation_error`.",
+                "properties": {
+                  "match": {
+                    "type": "string",
+                    "enum": [
+                      "exact",
+                      "in-order",
+                      "any-order",
+                      "subset"
+                    ],
+                    "description": "`exact`: same length, and the i-th observed call matches the i-th expected call. `in-order`: the expected calls match a subsequence of the observed calls, in order; extra calls allowed. `any-order`: each expected call matches a distinct observed call, any order; extra calls allowed. `subset`: every observed call matches some expected call; no tool outside `calls` was called."
+                  },
+                  "calls": {
+                    "type": "array",
+                    "items": {
+                      "type": "object",
+                      "additionalProperties": false,
+                      "required": [
+                        "tool"
+                      ],
+                      "properties": {
+                        "tool": {
+                          "type": "string",
+                          "minLength": 1,
+                          "description": "The `<scope>:<tool-id>` compared with the event's `toolName`."
+                        },
+                        "args": {
+                          "description": "MAY. The expected arguments, compared under `argsMatch`. Suite content: never echoed onto the wire."
+                        },
+                        "argsMatch": {
+                          "type": "string",
+                          "enum": [
+                            "ignore",
+                            "exact",
+                            "subset"
+                          ],
+                          "description": "RFC 0244 §A. How `args` is compared with the call's `inputs`. `ignore` (default): not compared. `exact`: `inputs` JSON-deep-equals `args`. `subset`: every key path in `args` is present in `inputs` with a JSON-deep-equal value. The host compares the call as executed, before any wire redaction."
+                        }
+                      }
+                    },
+                    "description": "The expected calls, in order where the mode reads order."
+                  },
+                  "forbidden": {
+                    "type": "array",
+                    "uniqueItems": true,
+                    "items": {
+                      "type": "string",
+                      "minLength": 1
+                    },
+                    "description": "MAY. Tools that MUST NOT be called. One call to any of them makes the trajectory unmatched, whatever the mode."
+                  },
+                  "includeDelegates": {
+                    "type": "boolean",
+                    "default": false,
+                    "description": "MAY. `true` grades every `agent.tool-called` in the bracket, delegates and fan-out children included, in log order. Default: the target agent's own calls only."
+                  }
+                }
               }
             }
           },
@@ -176,7 +270,7 @@
             "properties": {
               "toolResponses": {
                 "type": "array",
-                "description": "Canned tool results keyed by tool invocation, injected in place of live tool calls.",
+                "description": "Canned tool results keyed by tool invocation, injected in place of live tool calls. RFC 0244 §D: each call is served the first unconsumed entry whose `tool` and `args` match; an entry is consumed once, so repeated calls walk a scripted sequence.",
                 "items": {
                   "type": "object",
                   "additionalProperties": false,
@@ -191,6 +285,18 @@
                     },
                     "response": {
                       "description": "The canned result the host returns for that tool. Opaque."
+                    },
+                    "args": {
+                      "description": "RFC 0244 §D. MAY. The arguments this response answers, compared under `argsMatch`. Absent with `argsMatch` absent: the entry answers any call to `tool`."
+                    },
+                    "argsMatch": {
+                      "type": "string",
+                      "enum": [
+                        "ignore",
+                        "exact",
+                        "subset"
+                      ],
+                      "description": "RFC 0244 §A. How `args` is compared with the call's `inputs`. `ignore` (default): not compared. `exact`: `inputs` JSON-deep-equals `args`. `subset`: every key path in `args` is present in `inputs` with a JSON-deep-equal value. The host compares the call as executed, before any wire redaction."
                     }
                   }
                 }
@@ -202,12 +308,19 @@
                   "type": "object",
                   "additionalProperties": true
                 }
+              },
+              "onMiss": {
+                "type": "string",
+                "enum": [
+                  "fail",
+                  "live"
+                ],
+                "description": "RFC 0244 §D. MAY. `fail`: a call matching no unconsumed entry MUST NOT reach a live tool or any external side effect; the host returns a tool error to the agent, counts it in the task's `fixtureMissCount`, and reports the trial `passed: false`. `live`: a miss MAY call the live tool, and the task's `fixtureMissCount` MUST then be > 0. Absent: the RFC 0081 behaviour is unchanged (a host SHOULD treat it as `fail`). Requires `agents.evalSuite.fixtureMatching`, as does `toolResponses[].args`."
               }
             }
           }
         }
       }
     }
-  },
-  "x-openwop-seeded-from": "v1"
+  }
 }

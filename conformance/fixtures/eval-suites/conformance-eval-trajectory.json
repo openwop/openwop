@@ -1,0 +1,202 @@
+{
+  "suiteId": "core.openwop.evals.conformance-eval-trajectory",
+  "version": "1.0.0",
+  "targetAgentId": "core.conformance.agents.scripted",
+  "modes": [
+    "golden"
+  ],
+  "thresholds": {
+    "passScore": 0.5
+  },
+  "tasks": [
+    {
+      "taskId": "in-order-match",
+      "input": {
+        "script": [
+          {
+            "tool": "conformance.eval:lookup",
+            "arguments": {
+              "orderId": "o-1"
+            }
+          },
+          {
+            "tool": "conformance.eval:note",
+            "arguments": {
+              "text": "checked"
+            }
+          },
+          {
+            "tool": "conformance.eval:refund",
+            "arguments": {
+              "orderId": "o-1",
+              "amountMinor": 4200
+            }
+          }
+        ],
+        "output": "done"
+      },
+      "expected": {
+        "kind": "golden",
+        "match": {
+          "strategy": "contains",
+          "value": "done"
+        },
+        "trajectory": {
+          "match": "in-order",
+          "calls": [
+            {
+              "tool": "conformance.eval:lookup"
+            },
+            {
+              "tool": "conformance.eval:refund",
+              "args": {
+                "amountMinor": 4200
+              },
+              "argsMatch": "subset"
+            }
+          ]
+        }
+      }
+    },
+    {
+      "taskId": "in-order-wrong-order",
+      "input": {
+        "script": [
+          {
+            "tool": "conformance.eval:refund",
+            "arguments": {
+              "orderId": "o-1",
+              "amountMinor": 4200
+            }
+          },
+          {
+            "tool": "conformance.eval:lookup",
+            "arguments": {
+              "orderId": "o-1"
+            }
+          }
+        ],
+        "output": "done"
+      },
+      "expected": {
+        "kind": "golden",
+        "match": {
+          "strategy": "contains",
+          "value": "done"
+        },
+        "trajectory": {
+          "match": "in-order",
+          "calls": [
+            {
+              "tool": "conformance.eval:lookup"
+            },
+            {
+              "tool": "conformance.eval:refund"
+            }
+          ]
+        }
+      }
+    },
+    {
+      "taskId": "forbidden-hit",
+      "input": {
+        "script": [
+          {
+            "tool": "conformance.eval:lookup",
+            "arguments": {
+              "orderId": "o-1"
+            }
+          },
+          {
+            "tool": "conformance.eval:refund-all",
+            "arguments": {}
+          }
+        ],
+        "output": "done"
+      },
+      "expected": {
+        "kind": "golden",
+        "match": {
+          "strategy": "contains",
+          "value": "done"
+        },
+        "trajectory": {
+          "match": "any-order",
+          "calls": [
+            {
+              "tool": "conformance.eval:lookup"
+            }
+          ],
+          "forbidden": [
+            "conformance.eval:refund-all"
+          ]
+        }
+      }
+    },
+    {
+      "taskId": "trajectory-only-subset",
+      "input": {
+        "script": [
+          {
+            "tool": "conformance.eval:lookup",
+            "arguments": {
+              "orderId": "o-1"
+            }
+          },
+          {
+            "tool": "conformance.eval:lookup",
+            "arguments": {
+              "orderId": "o-2"
+            }
+          }
+        ],
+        "output": "done"
+      },
+      "expected": {
+        "kind": "trajectory",
+        "trajectory": {
+          "match": "subset",
+          "calls": [
+            {
+              "tool": "conformance.eval:lookup"
+            },
+            {
+              "tool": "conformance.eval:refund"
+            }
+          ]
+        }
+      }
+    },
+    {
+      "taskId": "exact-args-mismatch",
+      "input": {
+        "script": [
+          {
+            "tool": "conformance.eval:refund",
+            "arguments": {
+              "orderId": "o-1",
+              "amountMinor": 100
+            }
+          }
+        ],
+        "output": "done"
+      },
+      "expected": {
+        "kind": "trajectory",
+        "trajectory": {
+          "match": "exact",
+          "calls": [
+            {
+              "tool": "conformance.eval:refund",
+              "args": {
+                "orderId": "o-1",
+                "amountMinor": 4200
+              },
+              "argsMatch": "exact"
+            }
+          ]
+        }
+      }
+    }
+  ]
+}

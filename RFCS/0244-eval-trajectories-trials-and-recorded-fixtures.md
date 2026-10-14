@@ -4,10 +4,10 @@
 | ----------------- | --------------------------------------------------------------- |
 | **RFC**           | 0244                                                            |
 | **Title**         | Eval suites grade the tool path, run repeated trials, and fail closed on a fixture miss |
-| **Status**        | `Draft`                                                         |
+| **Status**        | `Active`                                                        |
 | **Author(s)**     | David Tufts (@davidscotttufts)                                  |
 | **Created**       | 2026-10-14                                                      |
-| **Updated**       | 2026-10-14 — all seven Unresolved questions resolved (§Unresolved questions); the maintainer waived the 7-day comment window and asked for `Active` |
+| **Updated**       | 2026-10-14 — **`Draft` → `Active` in the filing PR, comment window waived by the maintainer (user instruction 2026-10-14)**; STEWARD OVERRIDE of RFC 0147 §A.6 recorded in `MAINTAINERS.md`. Wire surface: the v2 `agent-eval-suite`, `eval-summary` and `run-event-payloads` fields and four `agents.evalSuite` members; suite 2.46.8 adds `v2-eval-trajectory-trials` and three eval-suite fixtures. `Accepted` waits on a host advertising `trajectory` and `trials` and passing the gated legs (G9). All seven Unresolved questions resolved. |
 | **Affects**       | `schemas/v2/agent-eval-suite.schema.json` (optional `expected.trajectory`, `kind: "trajectory"`, `trials`, `fixtures.onMiss`, `toolResponses[].args`/`argsMatch`) · `schemas/v2/eval-summary.schema.json` (optional per-task `trajectory`, `trials`, `efficiency`, `fixtureMissCount`; optional suite `trialStats`; optional `regression.verdict`/`method`/`pairedTaskCount`) · `schemas/v2/run-event-payloads.schema.json` (optional `trialIndex`, `scoreLabel`, `evaluatorType` on `eval.scored`; optional `trialCount` on `eval.started`) · `spec/v2/facets/agents.schema.json` (optional `evalSuite.trajectory`, `evalSuite.trials`, `evalSuite.fixtureMatching`, `evalSuite.regressionVerdict`) · `spec/v2/core/execution.md` §agents · `SECURITY/invariants.yaml` (`eval-summary-no-content-leak` scope note) · fixture `conformance-eval-trajectory` · new `conformance/src/scenarios/v2-eval-trajectory-trials.test.ts` · extended `agent-eval-suite-shape.test.ts` · new non-normative `docs/eval-otel-mapping.md` |
 | **Compatibility** | `additive` per `COMPATIBILITY.md` §2.4. Every new field is optional and every new capability facet is optional. A suite that uses none of them is graded exactly as RFC 0081 grades it today. No field is renamed, removed or narrowed, and no MUST relaxes. |
 | **Supersedes**    | —                                                               |
@@ -95,7 +95,7 @@ A call to any tool listed in `forbidden` **MUST** make the trajectory unmatched,
 "trajectory": { "mode": "in-order", "matched": false, "expectedCount": 2, "observedCount": 3, "matchedCount": 1, "forbiddenCount": 1 }
 ```
 
-Counts only. Precision (`matchedCount/observedCount`) and recall (`matchedCount/expectedCount`) are derivable, so they are not carried. It **MUST NOT** carry tool names, arguments or results (§H). With trials (§B), the block describes the **last** trial, and `trials` carries the pass counts.
+Counts only. `matchedCount` is mode-independent: the size of a maximum one-to-one matching between expected and observed calls under each call's `argsMatch`, ignoring order (added at `Active`, so two hosts count the same thing). Precision (`matchedCount/observedCount`) and recall (`matchedCount/expectedCount`) are derivable, so they are not carried. It **MUST NOT** carry tool names, arguments or results (§H). With trials (§B), the block describes the **last** trial, and `trials` carries the pass counts.
 
 **Recomputable by design.** Because the trajectory grade is a pure function of the suite and of `agent.tool-called` events in the run's own log, any party that can read the run's events can recompute it. That is the falsifiability lever in §Conformance.
 
@@ -137,7 +137,7 @@ The suite gains an optional `trials` block:
 - `passAtK` and `passHatK`, the means of the per-task values;
 - `scoreStderr`, the standard error of `aggregateScore` clustered by task: the sample standard deviation of the per-task `meanScore` values divided by √(taskCount). It is omitted when taskCount < 2.
 
-The formulas are normative so that two hosts' numbers are comparable. How trials are scheduled stays host-internal.
+The formulas are normative so that two hosts' numbers are comparable. A host **MUST** agree with each formula to within `|host − formula| ≤ 1e-9 · max(1, |formula|)`; it need not reproduce any particular float evaluation order (added at `Active`: a host computing the binomials exactly can differ from a float product in the last bit). The suite's reference computes `C(a,k)/C(b,k)` as an exact rational. How trials are scheduled stays host-internal.
 
 **Cost.** `thresholds.maxCostUsd` and the host's `maxCostUsdPerSuite` **MUST** count every trial.
 
@@ -258,31 +258,32 @@ If four trials match, the task entry is `trials:{n:5, passedCount:4, meanScore:0
 - `agent-eval-run.test.ts` (gated on `agents.evalSuite`);
 - `v2-eval-mode-unadvertised-refused.test.ts`.
 
-**New and extended scenarios:**
+**New scenarios (suite 2.46.8).** The v1 `agent-eval-suite-shape.test.ts` stays as it is: it runs at major 1 against the frozen v1 schemas, and this RFC changes only v2.
 
-- **`agent-eval-suite-shape.test.ts` (extended, always on).**
+- **`v2-eval-trajectory-trials.test.ts`, server-free legs (always on).**
   - The new suite, summary and payload fields validate.
-  - Negatives: `superset` mode, `k > count`, prose `scoreLabel`, `trajectory` block with tool names, `kind: "trajectory"` carrying `match`.
-  - A pure-function check of the §B formulas against a fixed table of `(n, c, k)`.
-- **`v2-eval-trajectory-trials.test.ts` (new).** Gated on `agents.evalSuite.trajectory` / `trials` / `fixtureMatching`, and on `testing.mockProviders` (the canonical scripted-tool-call agent). It drives fixture `conformance-eval-trajectory`: a suite whose tasks target a `core.conformance.mock-agent` with scripted `mockToolCalls`.
-  - **Trajectory.** One task whose expectation matches the script, and one whose expectation does not (wrong order under `in-order`, and a `forbidden` hit). Asserts `passed` true and false respectively. **Independently recomputes** the trajectory grade from the run's `agent.tool-called` events and requires it to agree with the host's.
-  - **Trials.** `count: 3`. Asserts three `eval.scored` events for the task with `trialIndex` {0,1,2}, `eval.started.trialCount = 3`, and `passAtK` / `passHatK` equal to the formula over the observed per-trial `passed`.
-  - **Fail-closed miss.** `onMiss: "fail"` with a call whose args match no fixture. Asserts `fixtureMissCount = 1` and `passed: false`. Proving that no live side effect happened needs a conformance *tool* with an observable effect counter. `core.conformance.mock-agent` only emits scripted results and invokes nothing, and `core.conformance.side-effect` is a node, not a tool. Until such a tool exists, the "no live call" half is seam-gated (gap G2).
-  - **Refusal.** On a host advertising `evalSuite` without `trials`, a `count: 2` suite → `400 validation_error`.
-- **Fixture.** `conformance/fixtures/conformance-eval-trajectory.json`, plus a `fixtures.md` catalog row.
+  - Negatives: a `superset` mode, `trials.count: 0`, an unknown trajectory member, an unknown `evaluatorType`.
+  - Content-free negatives, the v2 public test for `eval-summary-no-content-leak`: a trajectory block naming tools, a prose `scoreLabel`.
+  - The three eval-suite fixtures validate.
+- **`lib/eval-trajectory.ts` + self-tests.** The suite's reference grader: the four modes, `forbidden`, `argsMatch`, the mode-independent `matchedCount`, and the §B formulas checked over a fixed `(n, c, k)` table. The host legs compare the host's grade with this one, never with itself.
+- **`v2-eval-trajectory-trials.test.ts`, host legs.** Each leg is gated on its `agents.evalSuite` member and its fixture in discovery `fixtures`. Every task targets the suite-defined scripted agent `core.conformance.agents.scripted` (contract in `fixtures.md`), so each trajectory is known in advance and no test key is needed.
+  - **Trajectory** (`conformance-eval-trajectory`). Five tasks cover a match under `in-order` with an args `subset`, a wrong order, a `forbidden` hit, a trajectory-only `subset` with repeats, and an `exact` args mismatch. For each task, the summary's `trajectory` block must equal the reference grade; an unmatched task must not pass; a trajectory-only task must score 1 or 0. The log must carry one `agent.tool-called` per scripted call.
+  - **Trials** (`conformance-eval-trials`, `count: 3`, `k: 2`). The leg checks `eval.started.trialCount`, `trialIndex` 0..2 once each per task, and the per-task `passedCount` / `meanScore` / `passAtK` / `passHatK`. It checks `trialStats.scoreStderr` against the formula over the observed per-trial events.
+  - **Fail-closed miss** (`conformance-eval-fixture-miss`). The missed task reports `fixtureMissCount: 1` and `passed: false`; the served task passes. That no live tool ran is not asserted: the scripted agent never reaches a live tool by contract, and a suite-owned effect counter is still owed (G2).
+  - **Refusal.** On a host advertising `evalSuite` without `trials` but listing `conformance-eval-trials`, `createRun` → `400 validation_error`.
 
-**INTEROP-MATRIX.** Four new sub-columns under `agents.evalSuite`. No host advertises them at `Draft`.
+**INTEROP-MATRIX.** Four new sub-columns under `agents.evalSuite`. No host advertises them yet.
 
 ### Falsifiability — one row per normative requirement
 
 | Requirement | Observable — what an outside party sees | Who can cause the condition | Verdict |
 | --- | --- | --- | --- |
-| §A match-mode semantics | `passed` on a task whose expectation is known to match / not match the scripted calls; the suite recomputes the grade from `agent.tool-called` | the suite, via a scripted conformance agent (test keys) | witnessable when `testing.mockProviders` is advertised |
+| §A match-mode semantics | the summary's `trajectory` block and `passed` vs the reference grade of the scripted calls; the log's `agent.tool-called` count | the suite, via the scripted agent and a seeded eval-suite fixture | witnessable where the host seeds `conformance-eval-trajectory` |
 | §A `argsMatch: exact`/`subset` | same, with arguments compared | the suite | witnessable **only if** the host's `agent.tool-called` carries `inputs` unredacted; a host emitting only `argsHash` makes arg matching seam-gated (UQ 6) |
 | §A `forbidden` fails the trajectory | `passed:false`, `forbiddenCount ≥ 1` | the suite (scripted forbidden call) | witnessable |
 | §A summary carries counts only | schema validation of the summary | the suite, unaided | witnessable |
 | §B `count` trials, contiguous `trialIndex` | number and indices of `eval.scored` per task | the suite, unaided | witnessable |
-| §B pass@k / pass^k / stderr formulas | summary values vs the formula over observed per-trial `passed` / `score` | the suite, unaided | witnessable |
+| §B pass@k / pass^k / stderr formulas | summary values vs the formula over observed per-trial `passed` / `score`, within 1e-9 relative | the suite, unaided | witnessable |
 | §B trial isolation (no memory bleed) | a trial reading memory a prior trial wrote | needs an agent that writes, then reads, memory across trials | seam-gated: causable only with a scripted memory-writing agent; deferred (G3) |
 | §B cost counts every trial | `totalCostUsd` vs summed `provider.usage` | the suite (mock `usage-only` provider) | witnessable when that mock is advertised |
 | §C efficiency counts | summary vs counted events inside the brackets | the suite, unaided | witnessable |
@@ -336,12 +337,12 @@ The realistic path is an app ADR that implements RFC 0081 (golden and regression
 
 ## Acceptance criteria
 
-- [ ] `spec/v2/core/execution.md` §agents and `spec/v2/facets/agents.schema.json` carry the four facets with their rules.
-- [ ] `agent-eval-suite`, `eval-summary` and `run-event-payloads` (v2) carry the optional fields, all objects `additionalProperties: false`.
-- [ ] `eval-summary-no-content-leak` scope note names the new fields; shape negatives cover them.
-- [ ] `agent-eval-suite-shape.test.ts` extended; `v2-eval-trajectory-trials.test.ts` and fixture `conformance-eval-trajectory` added with a `fixtures.md` row.
-- [ ] `docs/eval-otel-mapping.md` (non-normative) published.
-- [ ] CHANGELOG entry.
+- [x] `spec/v2/facets/agents.schema.json` carries the four `evalSuite` members with their rules in the descriptions (`execution.md` §agents already points facet rules there, so the core budget is unchanged).
+- [x] `agent-eval-suite`, `eval-summary` and `run-event-payloads` (v2) carry the optional fields, all objects `additionalProperties: false`. The two cross-field rules (`kind: "trajectory"` carries no `match`/`rubric`; `k` ≤ `count`) are suite rules, not schema conditionals (COMPATIBILITY.md §2.4).
+- [x] `eval-summary-no-content-leak` scope note names the new fields; the v2 shape negatives cover them.
+- [x] `v2-eval-trajectory-trials.test.ts` (server-free shape + four gated host legs) and the reference grader `lib/eval-trajectory.ts` with self-tests. The v1 `agent-eval-suite-shape.test.ts` is left alone: it runs at major 1 against the frozen v1 schemas. Three eval-suite fixtures under `fixtures/eval-suites/` with the scripted-agent contract in `fixtures.md`.
+- [x] `docs/integrations/eval-otel-mapping.md` (non-normative) published.
+- [x] CHANGELOG entry (2.46.8 cycle).
 - [ ] A host advertises at least `trajectory` and `trials` and passes the gated scenario non-vacuously under `OPENWOP_REQUIRE_BEHAVIOR=true`, OR this RFC records why reference-host implementation is deferred.
 
 ## References
