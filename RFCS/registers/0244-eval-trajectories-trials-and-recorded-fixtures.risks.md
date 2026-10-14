@@ -1,0 +1,12 @@
+# RFC 0244 — Risk register
+
+| ID | Risk | Likelihood | Impact | Score | Mitigation | Owner | Status |
+| --- | --- | --- | --- | --- | --- | --- | --- |
+| R1 | A consumer that infers `taskCount` by counting `eval.scored` miscounts on a suite with `trials.count > 1`. | M | L | Low | Opt-in only; `eval.started.trialCount` signals it, and RFC 0081 already carries `taskCount` on `eval.started`/`eval.completed`. Call it out in CHANGELOG. | Compatibility Architect | `open` |
+| R2 | Trials multiply eval cost N×, and a suite author sets `count: 50` on a judge-graded suite. | M | M | Med | §B makes both cost ceilings count every trial; the `maxTrials` advertisement caps it; run-create refuses above it. | Security Architect | `mitigated` by design |
+| R3 | Over-specifying trajectories pushes authors toward brittle `exact` suites, the failure practitioners warn about. | M | M | Med | The grading rule keeps outcome primary; spec prose recommends `in-order`/`any-order` + `forbidden`. Consider a SHOULD-NOT on `exact` for multi-call tasks. | Spec Architect | `open` |
+| R4 | `scoreLabel` becomes a covert content channel (e.g. a label per customer name). | L | M | Low | The pattern bounds it to 64 lowercase chars; the invariant scope note names it; the shape negative covers prose. Low cardinality is a SHOULD that cannot be enforced. | Security Architect | `open` |
+| R5 | OpenTelemetry renames `evaluator.type` values after this RFC freezes them. | M | L | Low | Marked provisional; the mapping doc is non-normative; re-check at `Active` (G4). | Spec Architect | `open` |
+| R6 | Two hosts both report `regressed` with different methods, and a reader treats them as comparable. | M | M | Med | `method` + `alpha` + `pairedTaskCount` are carried; UQ 5 weighs a closed vocabulary. | Spec Architect | `open` |
+| R7 | Fixture responses are an injection vector: a crafted `toolResponses` entry steers the agent under test. | M | M | Med | §H requires the same untrusted-content handling as live tool output; suites ship in signed packs (RFC 0003). Unwitnessable from outside, so it relies on the threat model. | Security Architect | `open` |
+| R8 | The RFC sits at `Draft` indefinitely, because no host implements even RFC 0081 (G9). | H | M | High | Owner: openwop-app steward. Target: an app ADR for RFC 0081 golden + regression by 2026-11-15; this RFC's §A/§B ride it. Do not move to `Active` without a committed host. | Reference Implementation Architect | `open` |
