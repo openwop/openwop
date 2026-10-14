@@ -7,7 +7,7 @@
 | **Status**        | `Draft`                                                         |
 | **Author(s)**     | David Tufts (@davidscotttufts)                                  |
 | **Created**       | 2026-10-14                                                      |
-| **Updated**       | 2026-10-14                                                      |
+| **Updated**       | 2026-10-14 — all seven Unresolved questions resolved (§Unresolved questions); the maintainer waived the 7-day comment window and asked for `Active` |
 | **Affects**       | `schemas/v2/agent-eval-suite.schema.json` (optional `expected.trajectory`, `kind: "trajectory"`, `trials`, `fixtures.onMiss`, `toolResponses[].args`/`argsMatch`) · `schemas/v2/eval-summary.schema.json` (optional per-task `trajectory`, `trials`, `efficiency`, `fixtureMissCount`; optional suite `trialStats`; optional `regression.verdict`/`method`/`pairedTaskCount`) · `schemas/v2/run-event-payloads.schema.json` (optional `trialIndex`, `scoreLabel`, `evaluatorType` on `eval.scored`; optional `trialCount` on `eval.started`) · `spec/v2/facets/agents.schema.json` (optional `evalSuite.trajectory`, `evalSuite.trials`, `evalSuite.fixtureMatching`, `evalSuite.regressionVerdict`) · `spec/v2/core/execution.md` §agents · `SECURITY/invariants.yaml` (`eval-summary-no-content-leak` scope note) · fixture `conformance-eval-trajectory` · new `conformance/src/scenarios/v2-eval-trajectory-trials.test.ts` · extended `agent-eval-suite-shape.test.ts` · new non-normative `docs/eval-otel-mapping.md` |
 | **Compatibility** | `additive` per `COMPATIBILITY.md` §2.4. Every new field is optional and every new capability facet is optional. A suite that uses none of them is graded exactly as RFC 0081 grades it today. No field is renamed, removed or narrowed, and no MUST relaxes. |
 | **Supersedes**    | —                                                               |
@@ -61,12 +61,13 @@ A task's `expected` block gains an optional `trajectory` object, and `expected.k
       { "tool": "crm:lookup-order", "argsMatch": "ignore" },
       { "tool": "billing:refund", "args": { "amountMinor": 4200 }, "argsMatch": "subset" }
     ],
-    "forbidden": ["billing:refund-all"]     // MAY; any call to one fails the trajectory
+    "forbidden": ["billing:refund-all"],    // MAY; any call to one fails the trajectory
+    "includeDelegates": false               // MAY; default false — only the target agent's own calls
   }
 }
 ```
 
-**The observed trajectory** of a trial is the ordered list of `agent.tool-called` events (`toolName`, `inputs`) recorded inside that trial's `agent.invocation-*` bracket.
+**The observed trajectory** of a trial is the ordered list of `agent.tool-called` events (`toolName`, `inputs`) recorded inside that trial's `agent.invocation-*` bracket whose `agentId` is the task's target agent. With `includeDelegates: true`, it is every `agent.tool-called` event in the bracket, delegates and fan-out children included, in log order.
 
 **Call matching.** An expected call matches an observed call when `tool` equals `toolName` and the arguments match under `argsMatch`:
 - `ignore` (the default): arguments are not compared.
@@ -177,7 +178,7 @@ These map onto `gen_ai.evaluation.score.label` and the provisional `gen_ai.evalu
 
 ### §F — The paired regression verdict
 
-For `regression` mode, `EvalSummary.regression` gains optional `verdict` (`"improved"` | `"regressed"` | `"unchanged"` | `"inconclusive"`), `method` (a host-named string, for example `paired-bootstrap`, `mcnemar` or `sign-test`), `alpha` (number, 0–1) and `pairedTaskCount`.
+For `regression` mode, `EvalSummary.regression` gains optional `verdict` (`"improved"` | `"regressed"` | `"unchanged"` | `"inconclusive"`), `method` (pattern `^[a-z0-9][a-z0-9-]{0,63}$`; RECOMMENDED values `paired-bootstrap`, `mcnemar`, `sign-test`, `paired-t`), `alpha` (number, 0–1) and `pairedTaskCount`.
 
 A host emitting `verdict`:
 - **MUST** compare only tasks present in both runs, paired by `taskId`;
@@ -306,13 +307,15 @@ If four trials match, the task entry is `trials:{n:5, passedCount:4, meanScore:0
 
 ## Unresolved questions
 
-1. **Default `passRule`.** `all` (pass^k-style, strict) suits regression suites. `mean` suits capability suites that are expected to start with a low pass rate. Should the default depend on `modes` (`regression` ⇒ `all`)?
-2. **Trajectory scope across sub-agents.** Should a task's observed trajectory include tool calls made by delegated child agents (RFC 0077 / 0243 fan-out) inside its bracket, or only the target agent's own calls? Proposed: own calls only, with an opt-in `includeDelegates`.
-3. **Efficiency thresholds.** Is there demand for `thresholds.maxToolCalls` / `maxTokens`? If so, it is a follow-up with its own facet.
-4. **`evaluatorType` stability.** It tracks OpenTelemetry PR #359, which is unmerged. If OpenTelemetry renames the values, does this RFC follow (a rename before `Active`) or keep its own?
-5. **Regression method registry.** Should `method` be a closed vocabulary (`paired-bootstrap`, `mcnemar`, `sign-test`) so verdicts are comparable, or stay open? Closed is more interoperable. Open is honest about how much of the statistics is host-chosen.
-6. **Arguments under redaction.** Where a host redacts `agent.tool-called.inputs` (secret-bearing tools), `argsMatch` cannot be recomputed from outside. Should the suite be allowed to match on `argsHash` instead, with the hash recipe pinned?
-7. **Recorded-run fixtures.** The most valuable practice found (replay a recorded run's tool boundary, then fork live) needs a portable way to say "fixtures = the tool boundary of run X". A `runId` cannot live in a portable suite (RFC 0081: no host-internal ids). Is this a run-create option (`configurable.evalFixtureRunId`), a host export to `toolResponses`, or out of scope? See G5.
+**All seven resolved 2026-10-14 for `Active`.** The maintainer waived the comment window. Each answer below is locked into §A–§G.
+
+1. **Default `passRule`.** Resolved: `all`, whatever the mode. A default that depends on the mode is a rule a reader has to look up. A capability suite sets `passRule: "mean"` explicitly.
+2. **Trajectory scope across sub-agents.** Resolved: by default, only the target agent's own calls count. The observed trajectory is the `agent.tool-called` events in the trial's bracket whose `agentId` equals the task's target agent. An optional `trajectory.includeDelegates: true` widens it to every `agent.tool-called` in the bracket, including RFC 0077 / 0243 delegates and fan-out children. Added to §A.
+3. **Efficiency thresholds.** Resolved: out of scope. §C stays reported-only; a gating threshold would be a follow-up RFC with its own facet.
+4. **`evaluatorType` stability.** Resolved: this RFC locks its own enum (`deterministic`, `llm_judge`, `human`). OpenTelemetry PR #359 was still unmerged on 2026-10-14 (`state: open`, last updated 2026-10-12). Following an OpenTelemetry rename is the job of the non-normative mapping doc, never of a wire change.
+5. **Regression method registry.** Resolved: open, but bounded. `method` matches `^[a-z0-9][a-z0-9-]{0,63}$`, and the spec RECOMMENDS the registered names `paired-bootstrap`, `mcnemar`, `sign-test` and `paired-t`. A host using another method MUST still name it.
+6. **Arguments under redaction.** Resolved: `argsMatch` is evaluated by the host against the call as executed, before any wire redaction. External recomputation of argument matching is possible only where `agent.tool-called.inputs` reaches the wire unredacted. Otherwise that leg is seam-gated, as the Falsifiability row already records. No `argsHash` matching is added: the hash recipe is not pinned across hosts.
+7. **Recorded-run fixtures.** Resolved: out of scope for this RFC. A host MAY export a recorded run's tool boundary as `toolResponses` with `args` and run it under `onMiss: "fail"`; §D already carries everything that needs. A portable "fixtures = run X" reference is left to a follow-up RFC (G5).
 
 ## Implementation notes (non-normative)
 
