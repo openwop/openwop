@@ -263,9 +263,9 @@ Defects outside the spec:
       trials for §B isolation. (G5) a portable "fixtures = run X" reference (follow-up RFC). Legs not yet probed:
       §B cost counts every trial, §C efficiency counts and the never-gated rule, §D `onMiss: "live"`, §F pairing
       (needs a `regression` fixture).
-- [ ] **RFC 0245** `Draft` 2026-10-15 (eval fixtures replay a recorded tool error as an error; AEV-6 from openwop-app).
-      Owed before `Active`: the comment window; then the schema field, the `fixtureErrors` facet, the
-      `conformance-eval-fixture-error` fixture and the two gated legs. Register rows: (G1) the agent-side half is
+- [ ] **RFC 0245** `Active` 2026-10-15, window waived (eval fixtures replay a recorded tool error as an error; AEV-6
+      from openwop-app). Schema field and `fixtureErrors` member landed. Owed: the `conformance-eval-fixture-error`
+      fixture and the two gated legs (`0245.fixture-error-replayed`, `0245.unadvertised-refused`), then a witness host. Register rows: (G1) the agent-side half is
       seam-gated with RFC 0244 G2; (G2) whether to register a tool-failure error code; (G3) the non-MCP agent shape.
 - [ ] **Next major: `dataResidency.regions` `minItems: 1`.** /architect ruling 2026-10-05: narrowing is a major
       (COMPATIBILITY.md §2.4), and not a safety fix. Within v2 an empty list is a claim: the host honours

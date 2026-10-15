@@ -18,7 +18,7 @@
       "type"
     ]
   },
-  "count": 8927,
+  "count": 8931,
   "surfaces": [
     "schemas/v2/a2a-task-state.schema.json#/contextId|type|string",
     "schemas/v2/a2a-task-state.schema.json#/interruptKind|enum-member|\"approval\"",
@@ -221,10 +221,12 @@
     "schemas/v2/agent-eval-suite.schema.json#/tasks/[]/fixtures/toolResponses/[]/argsMatch|enum-member|\"ignore\"",
     "schemas/v2/agent-eval-suite.schema.json#/tasks/[]/fixtures/toolResponses/[]/argsMatch|enum-member|\"subset\"",
     "schemas/v2/agent-eval-suite.schema.json#/tasks/[]/fixtures/toolResponses/[]/argsMatch|type|string",
+    "schemas/v2/agent-eval-suite.schema.json#/tasks/[]/fixtures/toolResponses/[]/isError|type|boolean",
     "schemas/v2/agent-eval-suite.schema.json#/tasks/[]/fixtures/toolResponses/[]/tool|type|string",
     "schemas/v2/agent-eval-suite.schema.json#/tasks/[]/fixtures/toolResponses/[]|closed|true",
     "schemas/v2/agent-eval-suite.schema.json#/tasks/[]/fixtures/toolResponses/[]|property|args",
     "schemas/v2/agent-eval-suite.schema.json#/tasks/[]/fixtures/toolResponses/[]|property|argsMatch",
+    "schemas/v2/agent-eval-suite.schema.json#/tasks/[]/fixtures/toolResponses/[]|property|isError",
     "schemas/v2/agent-eval-suite.schema.json#/tasks/[]/fixtures/toolResponses/[]|property|response",
     "schemas/v2/agent-eval-suite.schema.json#/tasks/[]/fixtures/toolResponses/[]|property|tool",
     "schemas/v2/agent-eval-suite.schema.json#/tasks/[]/fixtures/toolResponses/[]|required|tool",
@@ -981,6 +983,7 @@
     "schemas/v2/capabilities.schema.json#/agents/deployment|type|object",
     "schemas/v2/capabilities.schema.json#/agents/dispatchMapping|type|boolean",
     "schemas/v2/capabilities.schema.json#/agents/dispatch|type|boolean",
+    "schemas/v2/capabilities.schema.json#/agents/evalSuite/fixtureErrors|type|boolean",
     "schemas/v2/capabilities.schema.json#/agents/evalSuite/fixtureMatching|type|boolean",
     "schemas/v2/capabilities.schema.json#/agents/evalSuite/maxCostUsdPerSuite|type|number",
     "schemas/v2/capabilities.schema.json#/agents/evalSuite/maxTasksPerSuite|type|integer",
@@ -999,6 +1002,7 @@
     "schemas/v2/capabilities.schema.json#/agents/evalSuite/trials|required|maxTrials",
     "schemas/v2/capabilities.schema.json#/agents/evalSuite/trials|type|object",
     "schemas/v2/capabilities.schema.json#/agents/evalSuite|closed|true",
+    "schemas/v2/capabilities.schema.json#/agents/evalSuite|property|fixtureErrors",
     "schemas/v2/capabilities.schema.json#/agents/evalSuite|property|fixtureMatching",
     "schemas/v2/capabilities.schema.json#/agents/evalSuite|property|maxCostUsdPerSuite",
     "schemas/v2/capabilities.schema.json#/agents/evalSuite|property|maxTasksPerSuite",

@@ -184,6 +184,10 @@
           "type": "boolean",
           "description": "RFC 0244 §D. `true`: the host honours `toolResponses[].args` / `argsMatch` (first unconsumed match) and `fixtures.onMiss`, and reports `fixtureMissCount`."
         },
+        "fixtureErrors": {
+          "type": "boolean",
+          "description": "RFC 0245 §B/§C. `true`: a `toolResponses[]` entry with `isError: true` is returned to the agent as a tool error and recorded as `agent.tool-returned` with `error` and no `outcome` (plus `status: \"error\"` under tool hooks); it is not a fixture miss and is never retried live. A suite carrying `isError: true` on a host that does not advertise this MUST be refused with `400 validation_error`."
+        },
         "regressionVerdict": {
           "type": "boolean",
           "description": "RFC 0244 §F. `true`: in `regression` mode the host reports `regression.verdict`, `method`, `alpha` and `pairedTaskCount`, pairing tasks by `taskId`."

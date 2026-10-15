@@ -4,10 +4,10 @@
 | ----------------- | --------------------------------------------------------------- |
 | **RFC**           | 0245                                                            |
 | **Title**         | Eval fixtures replay a recorded tool error as an error          |
-| **Status**        | `Draft`                                                         |
+| **Status**        | `Active`                                                        |
 | **Author(s)**     | David Tufts (@davidscotttufts)                                  |
 | **Created**       | 2026-10-15                                                      |
-| **Updated**       | 2026-10-15                                                      |
+| **Updated**       | 2026-10-15 — **`Draft` → `Active` in the filing PR, comment window waived by the maintainer (user instruction 2026-10-15)**; STEWARD OVERRIDE of RFC 0147 §A.6 recorded in `MAINTAINERS.md`. Wire surface in this PR: optional v2 `toolResponses[].isError` and the `agents.evalSuite.fixtureErrors` member. The fixture `conformance-eval-fixture-error` and the two gated legs follow in the next suite cycle. `Accepted` waits on a host advertising `fixtureErrors` and passing `0245.fixture-error-replayed` non-vacuously. |
 | **Affects**       | `schemas/v2/agent-eval-suite.schema.json` (optional `fixtures.toolResponses[].isError`) · `spec/v2/facets/agents.schema.json` (optional `agents.evalSuite.fixtureErrors`) · `RFCS/0244` §D (extended, not amended) · conformance: `v2-eval-trajectory-trials.test.ts` (one new gated leg), one new eval-suite fixture |
 | **Compatibility** | `additive` per `COMPATIBILITY.md` §2.4. One optional item field and one optional capability member. A suite without `isError` is served exactly as RFC 0244 §D serves it today. No field is renamed, removed or narrowed, and no MUST relaxes. |
 | **Supersedes**    | —                                                               |
@@ -134,8 +134,8 @@ Like the RFC 0244 host legs, both drive the scripted conformance agent, so they 
 
 ## Acceptance criteria
 
-- [ ] `schemas/v2/agent-eval-suite.schema.json` carries optional `toolResponses[].isError` (boolean); the item stays `additionalProperties: false`.
-- [ ] `spec/v2/facets/agents.schema.json` carries `agents.evalSuite.fixtureErrors` with the §B and §C rules in its description.
+- [x] `schemas/v2/agent-eval-suite.schema.json` carries optional `toolResponses[].isError` (boolean); the item stays `additionalProperties: false`.
+- [x] `spec/v2/facets/agents.schema.json` carries `agents.evalSuite.fixtureErrors` with the §B and §C rules in its description.
 - [ ] The fixture `conformance-eval-fixture-error` under `fixtures/eval-suites/`, with its contract in `fixtures.md`.
 - [ ] The server-free legs and the two gated host legs in `v2-eval-trajectory-trials.test.ts`.
 - [ ] CHANGELOG entry.

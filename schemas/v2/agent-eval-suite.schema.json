@@ -297,6 +297,11 @@
                         "subset"
                       ],
                       "description": "RFC 0244 §A. How `args` is compared with the call's `inputs`. `ignore` (default): not compared. `exact`: `inputs` JSON-deep-equals `args`. `subset`: every key path in `args` is present in `inputs` with a JSON-deep-equal value. The host compares the call as executed, before any wire redaction."
+                    },
+                    "isError": {
+                      "type": "boolean",
+                      "default": false,
+                      "description": "RFC 0245 §A. MAY. `true`: the recorded call failed, and `response` is the error payload. A host serving this entry MUST return it to the agent as a tool error and emit `agent.tool-returned` with `error` and no `outcome`; it is not a fixture miss and is never retried live. Requires `agents.evalSuite.fixtureErrors`."
                     }
                   }
                 }
