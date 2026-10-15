@@ -8,6 +8,7 @@ Entries before this file was condensed carried full development detail. That tex
 
 ## [Unreleased]
 
+- **2.46.11 cycle (suite): a row two files witness is the same on every run.** Across files the ledger reader kept the last worker's line, so `assertions` and `scenario` changed between cuts with no result change. The worst result still wins; counts now sum and a tie names the first file.
 - **RFC 0243 G2 closes.** openwop-app's certified production cut on suite 2.46.6 (444/0/0, build `44960bca5`) records `0243.max-fan-out-waves`, `0243.per-item-input-gated` and `agents.dispatch-per-item-length-mismatch` `executed-pass`; the packed `gaps.json` changes.
 - **2.46.7 cycle (suite): one id per leg.** A requirement id passed through a helper (`assert(ID, judge(o))`) is now in `requirements.json`. Before, a soft-skipped row of such a leg took a title-derived `openwop.it.*` id while an executed row carried the requirement id: 20 legs in 7 files.
 - **2.46.2 cycle (suite): the seams profile is derived from its advert.** Its predicate is `conformance.seamsProfile`, not the whole `conformance` block (`capabilities.md` §7 `key.member`). Four openwop-app bundles certified it with only `certificationBundleUrl`; `--verify` now refuses that certification.

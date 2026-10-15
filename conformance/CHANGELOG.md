@@ -1,3 +1,10 @@
+## [2.46.11] — unreleased — a shared id reads the same on every run
+
+- **Ledger reader: one requirement id recorded by two scenario files.** Each file runs in its own worker, and `readLedgerFile` kept whichever line came last, so the row's `assertions` and `scenario` belonged to the worker that finished last. openwop-app's `prompts.resolution-precedes-composition` read 9 then 5 assertions on identical results.
+  - The least certifiable file still decides the result and keeps its detail, so a failure in either file is never masked (unchanged).
+  - New: the files' assertion counts sum, as the in-worker fold already sums legs, and a tie names the first file by name.
+  - **What a host's next bundle shows:** rows witnessed by two files carry the summed count and a fixed scenario. No result changes.
+
 ## [2.46.10] — 2026-10-14 — RFC 0244 Accepted (provisional)
 
 - **No assertion changes.** RFC 0244 flips to `Accepted` (provisional) on MyndHyve's certified 2.46.9 cut, so the packed `spec/v1/gaps.json` changes (G9, G10 and G11 close).

@@ -221,8 +221,12 @@ export function recordRequirement(
  */
 export function readLedgerFile(path: string): readonly LedgerEntry[] {
   if (!existsSync(path)) return [];
-  const rank: Record<Disposition, number> = { 'executed-fail': 0, blocked: 1, 'executed-pass': 2, skipped: 3, inapplicable: 4 };
-  const merged = new Map<string, LedgerEntry>();
+  const rank = CERTIFIABILITY_RANK;
+  // Pass 1, per (id, scenario file). `<=`, not `<`: a per-`it` FOLD (2.37.0)
+  // appends the cumulative row after the leg rows it folded, so on an equal
+  // disposition the LAST line is the one carrying the summed `assertionCount`.
+  // For genuinely duplicate lines the two are identical and the choice is a no-op.
+  const perFile = new Map<string, Map<string, LedgerEntry>>();
   for (const line of readFileSync(path, 'utf8').split('\n')) {
     if (line.trim() === '') continue;
     let e: LedgerEntry;
@@ -232,14 +236,32 @@ export function readLedgerFile(path: string): readonly LedgerEntry[] {
       continue;
     }
     if (typeof e.requirementId !== 'string' || !DISPOSITIONS.includes(e.disposition)) continue;
-    const prior = merged.get(e.requirementId);
-    // `<=`, not `<`: a per-`it` FOLD (2.37.0) appends the cumulative row after
-    // the leg rows it folded, so on an equal disposition the LAST line is the
-    // one carrying the summed `assertionCount`. For genuinely duplicate lines
-    // the two are identical and the choice is a no-op.
-    if (prior === undefined || rank[e.disposition] <= rank[prior.disposition]) merged.set(e.requirementId, e);
+    let files = perFile.get(e.requirementId);
+    if (files === undefined) perFile.set(e.requirementId, (files = new Map()));
+    const file = e.scenarioFile ?? '';
+    const prior = files.get(file);
+    if (prior === undefined || rank[e.disposition] <= rank[prior.disposition]) files.set(file, e);
   }
-  return [...merged.values()].sort((a, b) => a.requirementId.localeCompare(b.requirementId));
+  // Pass 2, across files (2.46.11). Two files that witness ONE id run in
+  // different workers, so "last line wins" made the row's `assertionCount` and
+  // `scenarioFile` whichever worker finished last: the same host read 9 then 5
+  // assertions for `prompts.resolution-precedes-composition` with no result
+  // change. The least certifiable file still decides the disposition and keeps
+  // its detail; counts sum, as the in-worker fold sums them; and a tie names
+  // the first file by name, so the row is the same on every run.
+  const merged: LedgerEntry[] = [];
+  for (const files of perFile.values()) {
+    const rows = [...files.values()].sort(
+      (a, b) => rank[a.disposition] - rank[b.disposition] || (a.scenarioFile ?? '').localeCompare(b.scenarioFile ?? ''),
+    );
+    const winner = rows[0]!;
+    if (rows.length === 1 || !rows.some((r) => r.assertionCount !== undefined)) {
+      merged.push(winner);
+      continue;
+    }
+    merged.push({ ...winner, assertionCount: rows.reduce((n, r) => n + (r.assertionCount ?? 0), 0) });
+  }
+  return merged.sort((a, b) => a.requirementId.localeCompare(b.requirementId));
 }
 
 /**
