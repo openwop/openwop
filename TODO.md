@@ -256,8 +256,8 @@ Defects outside the spec:
       real `mode: "eval"` runs through the RFC 0244 legs (RFC 0244 G11 closed). Still owed: RFC 0081's own
       rows re-witnessed at major 2, or an amendment to RFC 0081's header recording the evidence gap.
 - [x] **RFC 0244** `Accepted` (provisional) 2026-10-14 on MyndHyve's certified 2.46.9 cut (tier-2, build
-      `65785814`, `myndhyve-2.46.9.json`). Owed: the RFC 0156 §B review; openwop-app's own witness (#4797, app ADR 0889);
-      and the suite residue below.
+      `65785814`, `myndhyve-2.46.9.json`). Owed: the RFC 0156 §B review and the suite residue below. openwop-app advertises it since 2026-10-15
+      (2.46.9 cut `17090b1c8`: wire-shape, content-free, fixtures-valid pass; the seam-driven legs `inapplicable`).
 - [ ] **RFC 0244 suite residue.** (G2) a suite-owned counter tool, so §D's "a miss never reaches a live tool" and
       first-unconsumed selection become witnessable rather than seam-gated. (G3) a scripted memory write/read across
       trials for §B isolation. (G5) a portable "fixtures = run X" reference (follow-up RFC). Legs not yet probed:

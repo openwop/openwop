@@ -1,12 +1,12 @@
 {
   "bundleVersion": "3",
-  "generatedAt": "2026-10-14T07:15:57.540Z",
+  "generatedAt": "2026-10-15T03:23:36.694Z",
   "suite": {
     "name": "@openwop/openwop-conformance",
-    "version": "2.46.6",
+    "version": "2.46.9",
     "targetMajor": 2,
-    "specArtifactsVersion": "2.46.6",
-    "stampSha256": "4b005727a8561e054a7c97bb1466977ff703c6144ddf92da413c5875249b5495"
+    "specArtifactsVersion": "2.46.9",
+    "stampSha256": "f1b1f96913996ab189402abd465f66f0034775dc7f11b7ec0be033ad924b2482"
   },
   "host": {
     "name": "openwop-workflow-engine",
@@ -14,13 +14,13 @@
     "vendor": "openwop-app",
     "build": {
       "kind": "commit",
-      "id": "44960bca50abbd24d397ae7f5c95b4f7fafba3c8"
+      "id": "17090b1c8d224c22e1303cd743e571a41e143287"
     },
     "signingKeyId": "openwop-app-bundle-2"
   },
   "discovery": {
     "url": "https://api.openwop.dev/.well-known/openwop",
-    "sha256": "40853dc436bf31c85e4c5f7e39e443836ebf042521d4e705f8d15bbfbcae717c",
+    "sha256": "c12a8ea08fc5234778bf5b7eb46086e326d9ab2239d1da522456b0ebd0f4b86a",
     "protocolVersions": [
       "2.0"
     ],
@@ -1471,6 +1471,21 @@
           "departmentNesting": true,
           "responsibilityView": true
         },
+        "evalSuite": {
+          "modes": [
+            "golden",
+            "rubric",
+            "regression"
+          ],
+          "maxTasksPerSuite": 100,
+          "maxCostUsdPerSuite": 5,
+          "trajectory": true,
+          "trials": {
+            "maxTrials": 10
+          },
+          "fixtureMatching": true,
+          "regressionVerdict": true
+        },
         "proposals": {
           "artifactKinds": [
             "agent-pack",
@@ -2051,10 +2066,10 @@
   ],
   "results": {
     "totals": {
-      "executedPass": 444,
+      "executedPass": 446,
       "executedFail": 0,
       "skipped": 11,
-      "inapplicable": 372,
+      "inapplicable": 379,
       "blocked": 0
     },
     "requirements": [
@@ -2353,7 +2368,7 @@
         "scenario": "v2-capability-maturity-bounded.test.ts",
         "result": "executed-pass",
         "assertions": 47,
-        "detail": "partial-witness: inapplicable: unwitnessable until the first persisted-class retirement row is due (RFC 0197 §A.3 Falsifiability): corpus 2.46.6: 0 persisted-class v2-minor retirement row(s), 0 v2→v2 migration row(s) — no retired member exists for a post-2.N event to carry. Before one does, a scenario would be vacuous, and a row that cannot fail is not a witness. This leg asserts the moment such a row falls due."
+        "detail": "partial-witness: inapplicable: unwitnessable until the first persisted-class retirement row is due (RFC 0197 §A.3 Falsifiability): corpus 2.46.9: 0 persisted-class v2-minor retirement row(s), 0 v2→v2 migration row(s) — no retired member exists for a post-2.N event to carry. Before one does, a scenario would be vacuous, and a row that cannot fail is not a witness. This leg asserts the moment such a row falls due."
       },
       {
         "id": "openwop.scenario.v2-capability-record-shape",
@@ -2601,8 +2616,16 @@
       {
         "id": "openwop.scenario.v2-eval-mode-unadvertised-refused",
         "scenario": "v2-eval-mode-unadvertised-refused.test.ts",
+        "result": "inapplicable",
+        "assertions": 0,
+        "detail": "every test returned early through behaviorGate with zero assertions: profile not advertised in the captured discovery set"
+      },
+      {
+        "id": "openwop.scenario.v2-eval-trajectory-trials",
+        "scenario": "v2-eval-trajectory-trials.test.ts",
         "result": "executed-pass",
-        "assertions": 2
+        "assertions": 12,
+        "detail": "partial-witness: inapplicable: [inapplicable] the host does not advertise fixture conformance-eval-trajectory; [inapplicable] the host does not advertise fixture conformance-eval-trials; [inapplicable] the host does not advertise fixture conformance-eval-fixture-miss; [inapplicable] the host advertises agents.evalSuite.trials, so the trials suite is served"
       },
       {
         "id": "openwop.floor.v2-event-type-closed",
@@ -3442,7 +3465,7 @@
         "scenario": "v2-webhook-secret-rotation.test.ts",
         "result": "executed-pass",
         "assertions": 12,
-        "detail": "partial-witness: inapplicable: the post-overlap leg is not observed: the advertised webhooks.secretRotation.overlapSeconds is 86400s (expiry 2026-10-15T07:10:15.544Z) and the suite wait cap is 90000ms, and the seams profile is not advertised, so the optional shortenRotationOverlap seam (host-sample-test-seams.md §29) is not offered; raise OPENWOP_WEBHOOK_RETRY_WAIT_MS past the overlap, or serve the seam, to witness it"
+        "detail": "partial-witness: inapplicable: the post-overlap leg is not observed: the advertised webhooks.secretRotation.overlapSeconds is 86400s (expiry 2026-10-16T03:17:54.013Z) and the suite wait cap is 90000ms, and the seams profile is not advertised, so the optional shortenRotationOverlap seam (host-sample-test-seams.md §29) is not offered; raise OPENWOP_WEBHOOK_RETRY_WAIT_MS past the overlap, or serve the seam, to witness it"
       },
       {
         "id": "openwop.scenario.v2-webhook-standard-webhooks-delivery",
@@ -4034,20 +4057,6 @@
         "detail": "oauth not advertised at major 2 — the host is not an OAuth client"
       },
       {
-        "id": "openwop.it.v2-dispatch-input-mapping.an-unset-parent-variable-projects-to-undefined-the-child-input-is-absent-never-n",
-        "scenario": "v2-dispatch-input-mapping.test.ts",
-        "result": "inapplicable",
-        "assertions": 0,
-        "detail": "the host does not advertise agents.dispatchMapping: true, so inputMapping does not bind it (it must refuse the field at registration instead)"
-      },
-      {
-        "id": "openwop.it.v2-dispatch-input-mapping.inputmapping-projects-the-parent-variable-into-the-dispatched-child-inputs",
-        "scenario": "v2-dispatch-input-mapping.test.ts",
-        "result": "inapplicable",
-        "assertions": 0,
-        "detail": "the host does not advertise agents.dispatchMapping: true, so inputMapping does not bind it (it must refuse the field at registration instead)"
-      },
-      {
         "id": "openwop.it.v2-ext-family-claims.brand",
         "scenario": "v2-ext-family-claims.test.ts",
         "result": "inapplicable",
@@ -4368,20 +4377,6 @@
         "result": "skipped",
         "assertions": 0,
         "detail": "operator declared an honest opt-out via OPENWOP_OPTED_OUT_PROFILES: family.sandbox"
-      },
-      {
-        "id": "openwop.it.v2-safefetch-ssrf-refused.a-link-local-or-cloud-metadata-target-is-refused-egress-denied-ssrf-blocked",
-        "scenario": "v2-safefetch-ssrf-refused.test.ts",
-        "result": "inapplicable",
-        "assertions": 0,
-        "detail": "fixture conformance-safefetch-probe is not advertised — safeFetch has no protocol path, and the host does not claim the fixture that observes it"
-      },
-      {
-        "id": "openwop.it.v2-safefetch-ssrf-refused.an-rfc-1918-target-is-refused-egress-denied-ssrf-blocked",
-        "scenario": "v2-safefetch-ssrf-refused.test.ts",
-        "result": "inapplicable",
-        "assertions": 0,
-        "detail": "fixture conformance-safefetch-probe is not advertised — safeFetch has no protocol path, and the host does not claim the fixture that observes it"
       },
       {
         "id": "openwop.requirement.0004.memory-ref-one-tenant",
@@ -5079,21 +5074,21 @@
         "scenario": "v2-webhook-durable-delivery.test.ts",
         "result": "executed-pass",
         "assertions": 4,
-        "detail": "observed: 4/4 subscribed event(s) delivered, 0 duplicate arrival(s); slowest first arrival 596ms after the run was created; cap (default 90000ms; advertised maxElapsedMs none): waited ≤90000ms"
+        "detail": "observed: 4/4 subscribed event(s) delivered, 0 duplicate arrival(s); slowest first arrival 1516ms after the run was created; cap (default 90000ms; advertised maxElapsedMs none): waited ≤90000ms"
       },
       {
         "id": "openwop.requirement.0173.webhook-durable-delivery",
         "scenario": "v2-webhook-durable-delivery.test.ts",
         "result": "executed-pass",
         "assertions": 9,
-        "detail": "observed: cap (default 90000ms; advertised maxElapsedMs none): waited ≤90000ms; 3 attempt(s), last attempt after 8033ms"
+        "detail": "observed: cap (default 90000ms; advertised maxElapsedMs none): waited ≤90000ms; 3 attempt(s), last attempt after 8125ms"
       },
       {
         "id": "openwop.requirement.0173.webhook-durable-delivery.dead-letter",
         "scenario": "v2-webhook-durable-delivery.test.ts",
         "result": "executed-pass",
         "assertions": 5,
-        "detail": "partial-witness: inapplicable: host does not advertise the webhooks.deadLetter facet — RFC 0188 §A.5 makes the read a 404 rather than an obligation, so the sink half of §Durability is unwitnessable here (the retry half above passed) · observed: cap (default 90000ms; advertised maxElapsedMs none): waited ≤90000ms; 5 attempt(s), last attempt after 34101ms, sink not observed"
+        "detail": "partial-witness: inapplicable: host does not advertise the webhooks.deadLetter facet — RFC 0188 §A.5 makes the read a 404 rather than an obligation, so the sink half of §Durability is unwitnessable here (the retry half above passed) · observed: cap (default 90000ms; advertised maxElapsedMs none): waited ≤90000ms; 5 attempt(s), last attempt after 34188ms, sink not observed"
       },
       {
         "id": "openwop.requirement.0175.legacy-profiles-absent",
@@ -5467,7 +5462,7 @@
         "scenario": "v2-capability-maturity-bounded.test.ts",
         "result": "inapplicable",
         "assertions": 0,
-        "detail": "unwitnessable until the first persisted-class retirement row is due (RFC 0197 §A.3 Falsifiability): corpus 2.46.6: 0 persisted-class v2-minor retirement row(s), 0 v2→v2 migration row(s) — no retired member exists for a post-2.N event to carry. Before one does, a scenario would be vacuous, and a row that cannot fail is not a witness. This leg asserts the moment such a row falls due."
+        "detail": "unwitnessable until the first persisted-class retirement row is due (RFC 0197 §A.3 Falsifiability): corpus 2.46.9: 0 persisted-class v2-minor retirement row(s), 0 v2→v2 migration row(s) — no retired member exists for a post-2.N event to carry. Before one does, a scenario would be vacuous, and a row that cannot fail is not a witness. This leg asserts the moment such a row falls due."
       },
       {
         "id": "openwop.requirement.0198.advertised-via-discover",
@@ -5667,7 +5662,7 @@
         "scenario": "v2-webhook-secret-rotation.test.ts",
         "result": "executed-pass",
         "assertions": 12,
-        "detail": "partial-witness: inapplicable: the post-overlap leg is not observed: the advertised webhooks.secretRotation.overlapSeconds is 86400s (expiry 2026-10-15T07:10:15.544Z) and the suite wait cap is 90000ms, and the seams profile is not advertised, so the optional shortenRotationOverlap seam (host-sample-test-seams.md §29) is not offered; raise OPENWOP_WEBHOOK_RETRY_WAIT_MS past the overlap, or serve the seam, to witness it"
+        "detail": "partial-witness: inapplicable: the post-overlap leg is not observed: the advertised webhooks.secretRotation.overlapSeconds is 86400s (expiry 2026-10-16T03:17:54.013Z) and the suite wait cap is 90000ms, and the seams profile is not advertised, so the optional shortenRotationOverlap seam (host-sample-test-seams.md §29) is not offered; raise OPENWOP_WEBHOOK_RETRY_WAIT_MS past the overlap, or serve the seam, to witness it"
       },
       {
         "id": "openwop.requirement.0204.annotations-derived",
@@ -6292,6 +6287,59 @@
         "assertions": 3
       },
       {
+        "id": "openwop.requirement.0244.content-free",
+        "scenario": "v2-eval-trajectory-trials.test.ts",
+        "result": "executed-pass",
+        "assertions": 2
+      },
+      {
+        "id": "openwop.requirement.0244.fixture-miss-fails",
+        "scenario": "v2-eval-trajectory-trials.test.ts",
+        "result": "inapplicable",
+        "assertions": 0,
+        "detail": "the host does not advertise fixture conformance-eval-fixture-miss"
+      },
+      {
+        "id": "openwop.requirement.0244.fixtures-valid",
+        "scenario": "v2-eval-trajectory-trials.test.ts",
+        "result": "executed-pass",
+        "assertions": 3
+      },
+      {
+        "id": "openwop.requirement.0244.trajectory-graded",
+        "scenario": "v2-eval-trajectory-trials.test.ts",
+        "result": "inapplicable",
+        "assertions": 0,
+        "detail": "the host does not advertise fixture conformance-eval-trajectory"
+      },
+      {
+        "id": "openwop.requirement.0244.trial-stats-formula",
+        "scenario": "v2-eval-trajectory-trials.test.ts",
+        "result": "inapplicable",
+        "assertions": 0,
+        "detail": "the host does not advertise fixture conformance-eval-trials"
+      },
+      {
+        "id": "openwop.requirement.0244.trials-per-task",
+        "scenario": "v2-eval-trajectory-trials.test.ts",
+        "result": "inapplicable",
+        "assertions": 0,
+        "detail": "the host does not advertise fixture conformance-eval-trials"
+      },
+      {
+        "id": "openwop.requirement.0244.unadvertised-feature-refused",
+        "scenario": "v2-eval-trajectory-trials.test.ts",
+        "result": "inapplicable",
+        "assertions": 0,
+        "detail": "the host advertises agents.evalSuite.trials, so the trials suite is served"
+      },
+      {
+        "id": "openwop.requirement.0244.wire-shape",
+        "scenario": "v2-eval-trajectory-trials.test.ts",
+        "result": "executed-pass",
+        "assertions": 7
+      },
+      {
         "id": "openwop.requirement.agent-runtime.advert-record-schema",
         "scenario": "v2-agent-runtime-advertisement.test.ts",
         "result": "inapplicable",
@@ -6304,6 +6352,20 @@
         "result": "inapplicable",
         "assertions": 0,
         "detail": "the host does not advertise agentRuntime"
+      },
+      {
+        "id": "openwop.requirement.agents.dispatch-input-mapping-projection",
+        "scenario": "v2-dispatch-input-mapping.test.ts",
+        "result": "inapplicable",
+        "assertions": 0,
+        "detail": "the host does not advertise agents.dispatchMapping: true, so inputMapping does not bind it (it must refuse the field at registration instead)"
+      },
+      {
+        "id": "openwop.requirement.agents.dispatch-input-mapping-unset-undefined",
+        "scenario": "v2-dispatch-input-mapping.test.ts",
+        "result": "inapplicable",
+        "assertions": 0,
+        "detail": "the host does not advertise agents.dispatchMapping: true, so inputMapping does not bind it (it must refuse the field at registration instead)"
       },
       {
         "id": "openwop.requirement.agents.dispatch-per-item-length-mismatch",
@@ -6653,6 +6715,13 @@
         "detail": "fixture conformance-safefetch-probe is not advertised — safeFetch has no protocol path, and the host does not claim the fixture that observes it"
       },
       {
+        "id": "openwop.requirement.httpClient.ssrf-link-local-metadata-refused",
+        "scenario": "v2-safefetch-ssrf-refused.test.ts",
+        "result": "inapplicable",
+        "assertions": 0,
+        "detail": "fixture conformance-safefetch-probe is not advertised — safeFetch has no protocol path, and the host does not claim the fixture that observes it"
+      },
+      {
         "id": "openwop.requirement.httpClient.ssrf-loopback-refused",
         "scenario": "v2-safefetch-ssrf-refused.test.ts",
         "result": "inapplicable",
@@ -6661,6 +6730,13 @@
       },
       {
         "id": "openwop.requirement.httpClient.ssrf-resolved-name-refused",
+        "scenario": "v2-safefetch-ssrf-refused.test.ts",
+        "result": "inapplicable",
+        "assertions": 0,
+        "detail": "fixture conformance-safefetch-probe is not advertised — safeFetch has no protocol path, and the host does not claim the fixture that observes it"
+      },
+      {
+        "id": "openwop.requirement.httpClient.ssrf-rfc1918-refused",
         "scenario": "v2-safefetch-ssrf-refused.test.ts",
         "result": "inapplicable",
         "assertions": 0,
@@ -7026,9 +7102,9 @@
       },
       {
         "id": "openwop.requirement.prompts.resolution-precedes-composition",
-        "scenario": "v2-prompt-all-four-kinds-events.test.ts",
+        "scenario": "v2-prompt-end-to-end-events.test.ts",
         "result": "executed-pass",
-        "assertions": 9
+        "assertions": 5
       },
       {
         "id": "openwop.requirement.prompts.unknown-template-404",
@@ -7159,8 +7235,9 @@
       {
         "id": "openwop.requirement.runs.eval-mode-unadvertised-refused",
         "scenario": "v2-eval-mode-unadvertised-refused.test.ts",
-        "result": "executed-pass",
-        "assertions": 2
+        "result": "inapplicable",
+        "assertions": 0,
+        "detail": "the host advertises agents.evalSuite — mode: eval is served"
       },
       {
         "id": "openwop.requirement.runs.limits-bounds-shape",
@@ -7448,7 +7525,7 @@
       }
     ]
   },
-  "assertionCount": 4856,
+  "assertionCount": 4872,
   "detail": {
     "nonPass": [
       {
@@ -7638,6 +7715,11 @@
       },
       {
         "id": "openwop.scenario.v2-era-2-append-vocabulary",
+        "result": "inapplicable",
+        "reason": "every test returned early through behaviorGate with zero assertions: profile not advertised in the captured discovery set"
+      },
+      {
+        "id": "openwop.scenario.v2-eval-mode-unadvertised-refused",
         "result": "inapplicable",
         "reason": "every test returned early through behaviorGate with zero assertions: profile not advertised in the captured discovery set"
       },
@@ -8112,16 +8194,6 @@
         "reason": "oauth not advertised at major 2 — the host is not an OAuth client"
       },
       {
-        "id": "openwop.it.v2-dispatch-input-mapping.an-unset-parent-variable-projects-to-undefined-the-child-input-is-absent-never-n",
-        "result": "inapplicable",
-        "reason": "the host does not advertise agents.dispatchMapping: true, so inputMapping does not bind it (it must refuse the field at registration instead)"
-      },
-      {
-        "id": "openwop.it.v2-dispatch-input-mapping.inputmapping-projects-the-parent-variable-into-the-dispatched-child-inputs",
-        "result": "inapplicable",
-        "reason": "the host does not advertise agents.dispatchMapping: true, so inputMapping does not bind it (it must refuse the field at registration instead)"
-      },
-      {
         "id": "openwop.it.v2-ext-family-claims.brand",
         "result": "inapplicable",
         "reason": "no extensions[\"<org>.brand\"] record under a registered org — the host does not advertise brand"
@@ -8350,16 +8422,6 @@
         "id": "openwop.it.v2-pack-isolation.node-pack-sandbox-no-process-host-process-access-is-refused",
         "result": "skipped",
         "reason": "operator declared an honest opt-out via OPENWOP_OPTED_OUT_PROFILES: family.sandbox"
-      },
-      {
-        "id": "openwop.it.v2-safefetch-ssrf-refused.a-link-local-or-cloud-metadata-target-is-refused-egress-denied-ssrf-blocked",
-        "result": "inapplicable",
-        "reason": "fixture conformance-safefetch-probe is not advertised — safeFetch has no protocol path, and the host does not claim the fixture that observes it"
-      },
-      {
-        "id": "openwop.it.v2-safefetch-ssrf-refused.an-rfc-1918-target-is-refused-egress-denied-ssrf-blocked",
-        "result": "inapplicable",
-        "reason": "fixture conformance-safefetch-probe is not advertised — safeFetch has no protocol path, and the host does not claim the fixture that observes it"
       },
       {
         "id": "openwop.requirement.0004.memory-ref-one-tenant",
@@ -8689,7 +8751,7 @@
       {
         "id": "openwop.requirement.0197.retired-not-emitted",
         "result": "inapplicable",
-        "reason": "unwitnessable until the first persisted-class retirement row is due (RFC 0197 §A.3 Falsifiability): corpus 2.46.6: 0 persisted-class v2-minor retirement row(s), 0 v2→v2 migration row(s) — no retired member exists for a post-2.N event to carry. Before one does, a scenario would be vacuous, and a row that cannot fail is not a witness. This leg asserts the moment such a row falls due."
+        "reason": "unwitnessable until the first persisted-class retirement row is due (RFC 0197 §A.3 Falsifiability): corpus 2.46.9: 0 persisted-class v2-minor retirement row(s), 0 v2→v2 migration row(s) — no retired member exists for a post-2.N event to carry. Before one does, a scenario would be vacuous, and a row that cannot fail is not a witness. This leg asserts the moment such a row falls due."
       },
       {
         "id": "openwop.requirement.0198.advertised-via-discover",
@@ -8992,6 +9054,31 @@
         "reason": "the host does not advertise auth.subjectLinkKey"
       },
       {
+        "id": "openwop.requirement.0244.fixture-miss-fails",
+        "result": "inapplicable",
+        "reason": "the host does not advertise fixture conformance-eval-fixture-miss"
+      },
+      {
+        "id": "openwop.requirement.0244.trajectory-graded",
+        "result": "inapplicable",
+        "reason": "the host does not advertise fixture conformance-eval-trajectory"
+      },
+      {
+        "id": "openwop.requirement.0244.trial-stats-formula",
+        "result": "inapplicable",
+        "reason": "the host does not advertise fixture conformance-eval-trials"
+      },
+      {
+        "id": "openwop.requirement.0244.trials-per-task",
+        "result": "inapplicable",
+        "reason": "the host does not advertise fixture conformance-eval-trials"
+      },
+      {
+        "id": "openwop.requirement.0244.unadvertised-feature-refused",
+        "result": "inapplicable",
+        "reason": "the host advertises agents.evalSuite.trials, so the trials suite is served"
+      },
+      {
         "id": "openwop.requirement.agent-runtime.advert-record-schema",
         "result": "inapplicable",
         "reason": "the host does not advertise agentRuntime"
@@ -9000,6 +9087,16 @@
         "id": "openwop.requirement.agent-runtime.implies-manifest-runtime",
         "result": "inapplicable",
         "reason": "the host does not advertise agentRuntime"
+      },
+      {
+        "id": "openwop.requirement.agents.dispatch-input-mapping-projection",
+        "result": "inapplicable",
+        "reason": "the host does not advertise agents.dispatchMapping: true, so inputMapping does not bind it (it must refuse the field at registration instead)"
+      },
+      {
+        "id": "openwop.requirement.agents.dispatch-input-mapping-unset-undefined",
+        "result": "inapplicable",
+        "reason": "the host does not advertise agents.dispatchMapping: true, so inputMapping does not bind it (it must refuse the field at registration instead)"
       },
       {
         "id": "openwop.requirement.ai-envelope.advert-record-schema",
@@ -9117,12 +9214,22 @@
         "reason": "fixture conformance-safefetch-probe is not advertised — safeFetch has no protocol path, and the host does not claim the fixture that observes it"
       },
       {
+        "id": "openwop.requirement.httpClient.ssrf-link-local-metadata-refused",
+        "result": "inapplicable",
+        "reason": "fixture conformance-safefetch-probe is not advertised — safeFetch has no protocol path, and the host does not claim the fixture that observes it"
+      },
+      {
         "id": "openwop.requirement.httpClient.ssrf-loopback-refused",
         "result": "inapplicable",
         "reason": "fixture conformance-safefetch-probe is not advertised — safeFetch has no protocol path, and the host does not claim the fixture that observes it"
       },
       {
         "id": "openwop.requirement.httpClient.ssrf-resolved-name-refused",
+        "result": "inapplicable",
+        "reason": "fixture conformance-safefetch-probe is not advertised — safeFetch has no protocol path, and the host does not claim the fixture that observes it"
+      },
+      {
+        "id": "openwop.requirement.httpClient.ssrf-rfc1918-refused",
         "result": "inapplicable",
         "reason": "fixture conformance-safefetch-probe is not advertised — safeFetch has no protocol path, and the host does not claim the fixture that observes it"
       },
@@ -9267,6 +9374,11 @@
         "reason": "the host does not advertise budget"
       },
       {
+        "id": "openwop.requirement.runs.eval-mode-unadvertised-refused",
+        "result": "inapplicable",
+        "reason": "the host advertises agents.evalSuite — mode: eval is served"
+      },
+      {
         "id": "openwop.requirement.secrets.resolved-secret-absent",
         "result": "inapplicable",
         "reason": "fixture openwop-smoke-byok-roundtrip is not advertised — the host does not claim the store-canary fixture (a production host may withhold it; RFC 0229's run witness is that host's path)"
@@ -9368,11 +9480,11 @@
       }
     ]
   },
-  "witnessSha256": "305c06aef3b5dd5556602b84ca186aba56bf778c3ceee0220c0157279f50c28d",
+  "witnessSha256": "93340e430c7773fcafd4dc550c884d6ca9358f7282eefa5cb1e0533cffe46c09",
   "signature": {
     "alg": "ed25519",
     "keyId": "openwop-app-bundle-2",
-    "sig": "bQQIFw4UC8iiQ0kmvywYycA-ir447doghGxibQkS7VpnK6KSE7Y3Ag0GehNwGlOeSTOanzM2kBAxo0gkrdXuAg",
+    "sig": "V17g0-khOOTb-nZSwiJBoxLC-E-BwVpFoD7VwYLMu44cuJtCr_mohafDwj5Msw1tq0Os8xsDhtsCJC4GUiarCw",
     "over": [
       "witnessSha256",
       "host.build",

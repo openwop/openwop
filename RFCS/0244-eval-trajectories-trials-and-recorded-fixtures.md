@@ -323,12 +323,7 @@ If four trials match, the task entry is `trials:{n:5, passedCount:4, meanScore:0
 
 ## Implementation notes (non-normative)
 
-**Reference host.** openwop-app (the steward production host) does **not** advertise `agents.evalSuite` today: `mode: eval` answers `422`. Its eval work is host extension:
-- workflow eval sets with output/path assertions and an LLM judge (app ADR 0477);
-- online scoring (ADR 0480);
-- a deterministic workforce eval.
-
-The realistic path is an app ADR that implements RFC 0081 (golden and regression first) on the ADR 0477 machinery, followed by this RFC's trajectory and trials. The app's chat-dispatch mock provider cannot script tool calls today. Its workflow-lane `core.conformance.mock-agent` can, and that is the seam the conformance scenario uses.
+**Reference host.** openwop-app (the steward production host) advertises `agents.evalSuite` with `trajectory` and `trials` since 2026-10-15 (app ADR 0889, on the ADR 0477 eval machinery). Its certified production cut on suite 2.46.9 (`openwop-workflow-engine-2.46.9-17090b1c8.json`, 446/0/0) records `0244.wire-shape`, `0244.content-free` and `0244.fixtures-valid` `executed-pass`. The trajectory, trials and fixture-miss rows are `inapplicable` there by design: their fixtures drive the workflow-lane `core.conformance.mock-agent`, a conformance-posture seam the auth-posture production host does not list. openwop-app is therefore a production advertiser of this RFC, not a second witness of §A–§D; MyndHyve's cut remains the witness (G9).
 
 **Recorded fixtures (UQ 7).** Replay-to-checkpoint-then-fork (Chronicle, arXiv 2609.20625) maps directly onto `:fork`. A host can offer it today as a host extension: export a run's tool boundary as a `toolResponses` list with `args`, then run it with `onMiss: "fail"`. That needs nothing beyond §D.
 
