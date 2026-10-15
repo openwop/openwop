@@ -1,6 +1,6 @@
 {
   "bundleVersion": "3",
-  "generatedAt": "2026-10-14T18:24:03.236Z",
+  "generatedAt": "2026-10-15T11:49:06.695Z",
   "suite": {
     "name": "@openwop/openwop-conformance",
     "version": "2.46.9",
@@ -14,13 +14,13 @@
     "vendor": "myndhyve",
     "build": {
       "kind": "commit",
-      "id": "65785814138f726b286db6dd5c1701006921b563"
+      "id": "73befc109cbbca9dcc2b9d29c6f9876f92e663b5"
     },
     "signingKeyId": "myndhyve-bundle-2026-09b"
   },
   "discovery": {
     "url": "https://api.myndhyve.ai/.well-known/openwop",
-    "sha256": "f28f978a190b64bb46ffe44b544fb49258859276c75488094792647447736d32",
+    "sha256": "7b61ad3bc1088aed3faaf5f12e7b629ecaa29ab717aa760833d9ca630cdb8475",
     "protocolVersions": [
       "2.0"
     ],
@@ -346,7 +346,7 @@
             }
           },
           "confidenceEscalationFloor": 0.5,
-          "confidenceEscalationInterruptKind": "x-host-myndhyve-low-confidence",
+          "confidenceEscalationInterruptKind": "approval",
           "crossChildMemoryConcurrency": "strict",
           "crossHostCausation": {
             "hostId": "myndhyve",
@@ -1358,8 +1358,8 @@
   ],
   "results": {
     "totals": {
-      "executedPass": 413,
-      "executedFail": 2,
+      "executedPass": 415,
+      "executedFail": 0,
       "skipped": 17,
       "inapplicable": 405,
       "blocked": 0
@@ -1983,7 +1983,7 @@
         "id": "openwop.scenario.v2-idempotency-in-flight",
         "scenario": "v2-idempotency-in-flight.test.ts",
         "result": "executed-pass",
-        "assertions": 17,
+        "assertions": 8,
         "detail": "partial-witness: inapplicable: the held-claim leg is driven through the seams profile (RFC 0213 §B) — seams profile not advertised; the unaided leg above is this host's witness"
       },
       {
@@ -2133,9 +2133,8 @@
       {
         "id": "openwop.scenario.v2-multi-agent-advertisement",
         "scenario": "v2-multi-agent-advertisement.test.ts",
-        "result": "executed-fail",
-        "assertions": 5,
-        "detail": "1 test(s) failed — \"confidenceEscalationInterruptKind is clarification or approval\"; first failure: [myndhyve@cloud-run-65785814138f726b286db6dd5c1701006921b563] execution.md §multiAgent: executionModel.confidenceEscalationInterruptKind MUST be clarification or approval at v2 (got \"x-host-myndhyve-low-confidence\"): expected false to be true // Object.is equality"
+        "result": "executed-pass",
+        "assertions": 5
       },
       {
         "id": "openwop.scenario.v2-multi-party-conversation-advertisement",
@@ -3832,7 +3831,7 @@
           "recovery": {
             "class": "dispatch-hold",
             "boundMs": 45000,
-            "observedMs": 15981
+            "observedMs": 15579
           }
         }
       },
@@ -3845,7 +3844,7 @@
           "recovery": {
             "class": "dispatch-lease",
             "boundMs": 150000,
-            "observedMs": 71416
+            "observedMs": 69975
           }
         }
       },
@@ -4453,21 +4452,21 @@
         "scenario": "v2-webhook-durable-delivery.test.ts",
         "result": "executed-pass",
         "assertions": 4,
-        "detail": "observed: 4/4 subscribed event(s) delivered, 0 duplicate arrival(s); slowest first arrival 4326ms after the run was created; advertised-bound (maxElapsedMs 600000): waited ≤630000ms"
+        "detail": "observed: 4/4 subscribed event(s) delivered, 0 duplicate arrival(s); slowest first arrival 3627ms after the run was created; advertised-bound (maxElapsedMs 600000): waited ≤630000ms"
       },
       {
         "id": "openwop.requirement.0173.webhook-durable-delivery",
         "scenario": "v2-webhook-durable-delivery.test.ts",
         "result": "executed-pass",
         "assertions": 9,
-        "detail": "observed: advertised-bound (maxElapsedMs 600000): waited ≤630000ms; 3 attempt(s), last attempt after 45931ms"
+        "detail": "observed: advertised-bound (maxElapsedMs 600000): waited ≤630000ms; 3 attempt(s), last attempt after 45069ms"
       },
       {
         "id": "openwop.requirement.0173.webhook-durable-delivery.dead-letter",
         "scenario": "v2-webhook-durable-delivery.test.ts",
         "result": "executed-pass",
         "assertions": 6,
-        "detail": "observed: advertised-bound (maxElapsedMs 600000): waited ≤630000ms; 5 attempt(s), last attempt after 225686ms, sink after 227237ms"
+        "detail": "observed: advertised-bound (maxElapsedMs 600000): waited ≤630000ms; 5 attempt(s), last attempt after 224972ms, sink after 226486ms"
       },
       {
         "id": "openwop.requirement.0175.legacy-profiles-absent",
@@ -4802,7 +4801,7 @@
         "scenario": "v2-webhook-durable-delivery.test.ts",
         "result": "executed-pass",
         "assertions": 3,
-        "detail": "observed: advertised-bound (maxElapsedMs 600000): waited ≤630000ms; 5 attempt(s), last attempt after 224739ms, sink after 226179ms"
+        "detail": "observed: advertised-bound (maxElapsedMs 600000): waited ≤630000ms; 5 attempt(s), last attempt after 224973ms, sink after 226557ms"
       },
       {
         "id": "openwop.requirement.0188.dead-letter-read",
@@ -5237,7 +5236,7 @@
         "id": "openwop.requirement.0213.in-flight-loser-outcome",
         "scenario": "v2-idempotency-in-flight.test.ts",
         "result": "executed-pass",
-        "assertions": 14
+        "assertions": 5
       },
       {
         "id": "openwop.requirement.0213.in-flight-one-winner",
@@ -5556,10 +5555,10 @@
       },
       {
         "id": "openwop.requirement.0237.no-false-advertisement",
-        "scenario": "v2-nondeterminism-policy-advertisement.test.ts",
+        "scenario": "v2-envelope-contracts-advertisement.test.ts",
         "result": "inapplicable",
         "assertions": 0,
-        "detail": "the host does not advertise nondeterminismPolicy"
+        "detail": "the host does not advertise envelopeContracts"
       },
       {
         "id": "openwop.requirement.0238.ui-plugin.frame-deny-egress",
@@ -6209,9 +6208,8 @@
       {
         "id": "openwop.requirement.multiAgent.escalation-kind-canonical",
         "scenario": "v2-multi-agent-advertisement.test.ts",
-        "result": "executed-fail",
-        "assertions": 1,
-        "detail": "the test executed and failed in \"confidenceEscalationInterruptKind is clarification or approval\": [myndhyve@cloud-run-65785814138f726b286db6dd5c1701006921b563] execution.md §multiAgent: executionModel.confidenceEscalationInterruptKind MUST be clarification or approval at v2 (got \"x-host-myndhyve-low-confidence\"): expected false to be true // Object.is equality"
+        "result": "executed-pass",
+        "assertions": 1
       },
       {
         "id": "openwop.requirement.multiAgent.level3-cross-host-causation",
@@ -6903,7 +6901,7 @@
       }
     ]
   },
-  "assertionCount": 4197,
+  "assertionCount": 4179,
   "detail": {
     "nonPass": [
       {
@@ -7155,11 +7153,6 @@
         "id": "openwop.scenario.v2-mrtr-rounds-ceiling",
         "result": "inapplicable",
         "reason": "every test returned early through behaviorGate with zero assertions: profile not advertised in the captured discovery set"
-      },
-      {
-        "id": "openwop.scenario.v2-multi-agent-advertisement",
-        "result": "executed-fail",
-        "reason": "1 test(s) failed — \"confidenceEscalationInterruptKind is clarification or approval\"; first failure: [myndhyve@cloud-run-65785814138f726b286db6dd5c1701006921b563] execution.md §multiAgent: executionModel.confidenceEscalationInterruptKind MUST be clarification or approval at v2 (got \"x-host-myndhyve-low-confidence\"): expected false to be true // Object.is equality"
       },
       {
         "id": "openwop.scenario.v2-multi-party-conversation-advertisement",
@@ -8504,7 +8497,7 @@
       {
         "id": "openwop.requirement.0237.no-false-advertisement",
         "result": "inapplicable",
-        "reason": "the host does not advertise nondeterminismPolicy"
+        "reason": "the host does not advertise envelopeContracts"
       },
       {
         "id": "openwop.requirement.0238.ui-plugin.frame-deny-egress",
@@ -8700,11 +8693,6 @@
         "id": "openwop.requirement.multi-party-conversation.max-participants",
         "result": "inapplicable",
         "reason": "the host does not advertise multiPartyConversation"
-      },
-      {
-        "id": "openwop.requirement.multiAgent.escalation-kind-canonical",
-        "result": "executed-fail",
-        "reason": "the test executed and failed in \"confidenceEscalationInterruptKind is clarification or approval\": [myndhyve@cloud-run-65785814138f726b286db6dd5c1701006921b563] execution.md §multiAgent: executionModel.confidenceEscalationInterruptKind MUST be clarification or approval at v2 (got \"x-host-myndhyve-low-confidence\"): expected false to be true // Object.is equality"
       },
       {
         "id": "openwop.requirement.node-pack-runtimes.advert-record-schema",
@@ -9031,11 +9019,11 @@
   "durability": {
     "rung": "durable-single-instance"
   },
-  "witnessSha256": "d01fd3bbaebafe03a49a779d22aa5017da72d3438284c14918f5bacf2d481b27",
+  "witnessSha256": "20ddab6004501c8460e50aa9043d95e5ef1bf9e91a6a3b521d66d6ddba67afbe",
   "signature": {
     "alg": "ed25519",
     "keyId": "myndhyve-bundle-2026-09b",
-    "sig": "AU5a5EyYDEv0L4S5U7NAF9Tia-tNC2mYX56ms49gp1fVH9QOC9tavfslkoQL1c0E9X4CPwkRxjDz9EGwPXgjCg",
+    "sig": "264gkd58gPalI9yQ8GyqvAt0pLMHxqNvKYBhqzNtButqSY6SoDudSQVjWd-9s7syCURqcns89VMyOquPFjddCg",
     "over": [
       "witnessSha256",
       "host.build",
