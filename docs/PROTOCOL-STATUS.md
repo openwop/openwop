@@ -12,7 +12,7 @@
 | OpenAPI operations | 59 | `api/openapi.yaml` |
 | AsyncAPI version | 3.1.0 | `api/asyncapi.yaml` |
 | Conformance scenario files | 658 | `conformance/src/scenarios/*.test.ts` |
-| RFCs tracked | 241 | `RFCS/[0-9][0-9][0-9][0-9]-*.md`, excluding template |
+| RFCs tracked | 242 | `RFCS/[0-9][0-9][0-9][0-9]-*.md`, excluding template |
 
 ## Artifact Versions
 
@@ -72,7 +72,7 @@
 |---|---:|
 | Accepted | 235 |
 | Active | 4 |
-| Draft | 1 |
+| Draft | 2 |
 | Superseded | 1 |
 
 | RFC | Title | Status |
@@ -318,6 +318,7 @@
 | RFC 0243 | parallel fan-out has a v2 seat, and a link key needs both linking lanes | Accepted |
 | RFC 0244 | Eval suites grade the tool path, run repeated trials, and fail closed on a fixture miss | Accepted |
 | RFC 0245 | Eval fixtures replay a recorded tool error as an error | Active |
+| RFC 0246 | A trial that fails its trajectory cannot carry a task or a suite to a pass | Draft |
 
 ## SDK Helper Coverage
 
@@ -341,7 +342,7 @@ The pack registry now lives in the [`openwop-registry`](https://github.com/openw
 
 ## Active Follow-Ups
 
-- 1 RFC still `Draft` (RFC 0038) — advance with schema/conformance proof or defer.
+- 2 RFCs still `Draft` (RFC 0038, RFC 0246) — advance with schema/conformance proof or defer.
 - 4 RFCs `Active` (RFC 0121, RFC 0222, RFC 0228, RFC 0245) — wire-shape MAY shift compatibly within v1.x until promotion to `Accepted`.
 - External audit, non-steward host recruitment, and non-steward maintainer recruitment remain external-action gates.
 - Multi-region idempotency and some optional-profile behavior checks remain lower-confidence than the core wire contract.

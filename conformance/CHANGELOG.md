@@ -1,6 +1,7 @@
 ## [2.46.12] — unreleased — RFC 0245 Active (window waived)
 
 - **No assertion changes yet.** RFC 0245 (eval fixtures replay a recorded tool error as an error) is `Active`: the packed v2 `agent-eval-suite` schema gains optional `toolResponses[].isError`, the capability schema gains `agents.evalSuite.fixtureErrors`, and three gap rows change the packed `spec/v1/gaps.json`. The fixture and the two gated legs follow.
+- **No assertion changes.** RFC 0246 (safety-fix: a trajectory-failed trial cannot carry a task or a suite to a pass) enters `Draft` with two gap rows, so the packed `spec/v1/gaps.json` changes.
 
 ## [2.46.11] — 2026-10-15 — a shared id reads the same on every run
 
