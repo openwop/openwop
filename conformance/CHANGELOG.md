@@ -1,3 +1,7 @@
+## [2.46.12] — unreleased — RFC 0245 Active (window waived)
+
+- **No assertion changes yet.** RFC 0245 (eval fixtures replay a recorded tool error as an error) is `Active`: the packed v2 `agent-eval-suite` schema gains optional `toolResponses[].isError`, the capability schema gains `agents.evalSuite.fixtureErrors`, and three gap rows change the packed `spec/v1/gaps.json`. The fixture and the two gated legs follow.
+
 ## [2.46.11] — 2026-10-15 — a shared id reads the same on every run
 
 - **Ledger reader: one requirement id recorded by two scenario files.** Each file runs in its own worker, and `readLedgerFile` kept whichever line came last, so the row's `assertions` and `scenario` belonged to the worker that finished last. openwop-app's `prompts.resolution-precedes-composition` read 9 then 5 assertions on identical results.

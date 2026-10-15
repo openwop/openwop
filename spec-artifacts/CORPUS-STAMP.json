@@ -1,7 +1,7 @@
 {
   "_comment": "Provenance of @openwop/spec-artifacts (RFC 0168 §D.2). files: SHA-256 per file; the conformance suite compares the installed peer against dist/spec-artifacts.lock.json at start.",
   "package": "@openwop/spec-artifacts",
-  "version": "2.46.11",
+  "version": "2.46.12",
   "corpusTag": "v2.46.11",
   "files": {
     "api/.redocly.lint-ignore.yaml": "bf5a8350b88a72fa43f59605ed8d903ed24b6cfccda5e45509c9f6ed9ee4e712",
@@ -103,7 +103,7 @@
     "schemas/v2/a2ui-surface-delta-frame.schema.json": "6889c5da3fe7e76cb614038c0eea6774776fa640448558b258eb87fb50cb9b64",
     "schemas/v2/agent-deployment-transition.schema.json": "93a334ff042d51378c89fdd7134664271bf9592419bb5e3e00821ed06bc1904e",
     "schemas/v2/agent-deployment.schema.json": "d59b43fb62b522005ee22bc3bc53775a6777493e5e42d71812abc347625fa7fe",
-    "schemas/v2/agent-eval-suite.schema.json": "e80439bc6873a5d9a14122f81d16f7650104018d814bd316aafd3fc8b8225604",
+    "schemas/v2/agent-eval-suite.schema.json": "8b6dac5c6485c1fc4b7228efc0a87fa5c64fce89ddd228d4f92786b1b63e37b3",
     "schemas/v2/agent-inventory-response.schema.json": "5f74c3da946dfc3114624567a989717748081ab947b4d2af3f49034d67f4306b",
     "schemas/v2/agent-manifest.schema.json": "004ff150e955deebb9e64273de5093f5144b9b3895b09953e65aa74b61140778",
     "schemas/v2/agent-org-chart.schema.json": "113b079e1dce95908467cbef7f83e076fdb82aab5b0678fc1a43e32bfc9cbadf",
@@ -117,7 +117,7 @@
     "schemas/v2/artifact.schema.json": "85b9dc284d39b99d2a66fa8cbf47f2dd3d8526d3bd6cc411ad315b372de38975",
     "schemas/v2/audit-verify-result.schema.json": "14af8e9283510f0a40e48a2059c929ee44e0fc9fa3cc66a95bfbe90b17c48297",
     "schemas/v2/budget-policy.schema.json": "1de68095db0beb5c7a4be629de26e79f62ebbe748a88d46f36e768edfd1f0d68",
-    "schemas/v2/capabilities.schema.json": "a717d34d98201cefe1769421c468d22e124d1a46881f60683cb6e103843dbc9a",
+    "schemas/v2/capabilities.schema.json": "e638dae10b3e02c502f4c2d16394f4607eac11c16b5241cbbf0dd1e995185fd6",
     "schemas/v2/certification-bundle.schema.json": "5cfa7fb5247160333e33a58b60d42bcd4e5269d8391d6a112d301e14828892ed",
     "schemas/v2/channel-presence-payload.schema.json": "fc03df0c20cc12a25f7ee6a47503a4c5931d79fe3d5ff24815e8fd7c1bcb9a87",
     "schemas/v2/channel-written-payload.schema.json": "ccecff3c71a3275ad8db035ac0e04db25e6f8d23cf091ddbcd5a60d1be1cbb6b",
@@ -208,14 +208,14 @@
     "schemas/workspace-file.schema.json": "464de85c2a068243084ee9c1d969bc7cd5d8f7948574e58450d6493c38a0e1e4",
     "spec/v1/alias-detectors.json": "22444c22bb88c568339ef512553f9fc38146e22b566d11ab8608f655d688d19c",
     "spec/v1/capability-declaration-classes.json": "e7729aed5c4b4e1dd02abab0530f14cc95f5d4070fe51fb139e7f5cccefa00c6",
-    "spec/v1/core-standard-manifest.json": "2a845db8a673c2f5c95ff752fc7765fb72779abf589595e7bf9989f36216ea39",
+    "spec/v1/core-standard-manifest.json": "920cf7ccccfb66f6438fc72a477166d3757c5c6ca6e26d7d247f0a3b801334a0",
     "spec/v1/deprecations.json": "e723bc11d7272c71789ad1303bb7f21809a8a024abf57594f9d5c35dc199ece9",
     "spec/v1/deprecations.schema.json": "3e393c405d2a41b467d8c5e3c468549078df1ce6a6d2588fc488097b95d9b55b",
     "spec/v1/end-of-support.json": "35f0bf3b70fe78b16e2a2fd81a153fc27e703f6c16376c6fe7cdf1f4f2c4e6d4",
     "spec/v1/event-codemap.json": "3da60d884157793a360da532a9fcbbfb5285636db325a74cec94b34622186d97",
     "spec/v1/event-codemap.schema.json": "d05933b2e88103aff51a2f774df97b9bda065e0fc88dbd9b114cc47a32189174",
     "spec/v1/extensions.json": "79a60754aa16cbdbdb604f8e5c00038af535a1690a4d07bd5ff7c38f0256a7bc",
-    "spec/v1/gaps.json": "3bd864a64f6c9c69a3bfc4178d9c7df8dd625b682c1dbde1656b89a239c5a6f9",
+    "spec/v1/gaps.json": "95a12657ce1d96bfc5ccf14c077d242afe113e3742dec492df3e641e95e80484",
     "spec/v1/gaps.schema.json": "8fd83259f556553c9df0f53e7a82ca8c2a4771d471197f69b4e2ae0ceeacfd66",
     "spec/v1/migrations.json": "4c50760be70cb644d02427bcaf5749606700edf4513f423903cf3b1d12f5c300",
     "spec/v1/migrations.schema.json": "886779aa6c22e646db097f5df210adb018a4dd14a7b815465a18c8a7056c8f72",
@@ -281,7 +281,7 @@
     "spec/v2/ext/sandbox-runtime-notes/README.md": "0d1290fb1e20b2e35c0b15051541ab6546e4e2a6f693b4f912cb3f7d6a65e92c",
     "spec/v2/ext/webResearch/README.md": "b675e6f6646128d781b661f754c2393eed86e5935d16c3a22df582a5ce025b9b",
     "spec/v2/facets/a2a.schema.json": "b68bf5e29e455e46c2ad7cfcccf5963730ec2310ff9db81884550d8df30fd6ef",
-    "spec/v2/facets/agents.schema.json": "62a979d23219ca684bc16f91f81a4c92c2cb56e0f084d2e4f694c03e0c7125df",
+    "spec/v2/facets/agents.schema.json": "88fe144572c25e1b09b99fd83e2ad12b2611d4d7366b5d53c3a50d0310faad93",
     "spec/v2/facets/aiProviders.schema.json": "4eb911c2403b8f618325194855a1326680fbda2549dfbfe86a70dd2743f8fb12",
     "spec/v2/facets/auditLogIntegrity.schema.json": "9a7f81320c8f940c6f4129bc7dd895a4063231c5458a717a08c2cbf9bb886c46",
     "spec/v2/facets/auth.schema.json": "7d98bc81a0f7d307460d039eebfebd21388091bfe1d538762583940f94c0bd2a",
@@ -315,7 +315,7 @@
     "spec/v2/profiles.json": "b382b261c7844798575f7c1b37c934f0da19846016a2337d883d4f5ef6e05479",
     "spec/v2/release.json": "203adbfd38c222e739f8db654cf2bb453d61dcbdb74702949d933fa3dbad9baf",
     "spec/v2/retention-floors.json": "eaf3722d95c79947af1d4269ef85117e126518c588cfcf1a2b21b97269f51624",
-    "spec/v2/surface-baseline.json": "a566e5a039f75a076bde41640f4ecbea50fbae41bf4581aff69c2dad14b24b6a"
+    "spec/v2/surface-baseline.json": "9675df52802d2ac6d50aeb3161a5915934e21271350288133e8d3f0495426097"
   },
-  "corpusCommit": "398b842f0e19e8de6cd6b6c706b51bedcff77356"
+  "corpusCommit": "451f6ca77ff59f611019be63be2ee5a0cfa8f064"
 }
