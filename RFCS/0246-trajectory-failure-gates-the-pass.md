@@ -7,7 +7,7 @@
 | **Status**        | `Draft`                                                         |
 | **Author(s)**     | David Tufts (@davidscotttufts)                                  |
 | **Created**       | 2026-10-15                                                      |
-| **Updated**       | 2026-10-15 — filed as a **safety-fix** on the steward's decision (2026-10-15). 90-day public window (`COMPATIBILITY.md` §3), not waived. |
+| **Updated**       | 2026-10-15 — filed as a **safety-fix** on the steward's decision (2026-10-15). 90-day public window (`COMPATIBILITY.md` §3), not waived. UQ 1 resolved in the window: `gatedScore` is always present on a trajectory task. |
 | **Affects**       | `RFCS/0244` §A grading rule and §B task-level `passed` (corrected, not amended) · `schemas/v2/eval-summary.schema.json` (suite `passed` description; optional per-task `gatedScore`, optional suite `gatedAggregateScore`) · `schemas/v2/agent-eval-suite.schema.json` (`trials.passRule` description) · conformance: `v2-eval-trajectory-trials.test.ts` (two legs) · `docs/COMPATIBILITY-CORRECTIONS-LOG.md` |
 | **Compatibility** | `safety-fix` per `COMPATIBILITY.md` §3. It changes when a task and a suite report `passed`, so a host that conformed to RFC 0244 yesterday can be non-conforming today. The two new summary fields are additive. |
 | **Supersedes**    | —                                                               |
@@ -68,10 +68,11 @@ So a reader can still see "the answer was good, the path was wrong".
 ### §D — Making the gate readable
 
 Because `passed` can now disagree with `aggregateScore ≥ passScore`, the summary says why:
-- a per-task entry **MUST** carry `gatedScore` (the task gating score) whenever it differs from the task's `score`;
-- the summary **MUST** carry `gatedAggregateScore` (the gating aggregate) whenever any task carries `gatedScore`.
+- a per-task entry for a task with `expected.trajectory` **MUST** carry `gatedScore` (the task gating score), whether or not it differs from the task's `score`;
+- the summary **MUST** carry `gatedAggregateScore` (the gating aggregate) whenever any task has `expected.trajectory`;
+- for a task without `expected.trajectory`, `gatedScore` **MAY** be carried when it differs from `score` (a fixture miss), and is otherwise omitted.
 
-Both are numbers in 0–1 and content-free. Absent means "equal to the ungated value".
+Both are numbers in 0–1 and content-free. They are always present where a trajectory can gate, so a consumer reads one field and never infers "absent ⇒ ungated" (resolved in the window, 2026-10-15: that inference is exactly where a reader falls back to the ungated value, the bug this RFC closes).
 
 ### Examples
 
@@ -80,6 +81,8 @@ Both are numbers in 0–1 and content-free. Absent means "equal to the ungated v
 **Suite, `count: 1`, two tasks, `passScore: 0.7`.** Task 1 scores `0.9` and its trajectory matches. Task 2 scores `0.9` and takes the wrong path. RFC 0244 reports `aggregateScore: 0.9` and suite `passed: true`. Under this RFC: `aggregateScore: 0.9` (unchanged), task 2 `gatedScore: 0`, `gatedAggregateScore: 0.45`, suite `passed: false`.
 
 **No trajectory.** A suite with no `expected.trajectory` and no fixture misses is decided exactly as today, and carries neither new field.
+
+**Trajectory matched.** A trajectory task whose every trial matched still carries `gatedScore`, equal to its `score`.
 
 ## Compatibility
 
@@ -110,10 +113,10 @@ New legs in `v2-eval-trajectory-trials.test.ts`, gated on `agents.evalSuite.traj
 
 - **`openwop.requirement.0246.mean-gated`.** One task with `passRule: "mean"`, `count: 2`. The scripted agent produces the golden output (score `1`) and calls a `forbidden` tool in both trials. Asserted:
   - both `eval.scored` events carry `score: 1` and `passed: false`;
-  - the task entry has `trials.meanScore: 1`, `gatedScore: 0` and `passed: false`.
+  - the task entry has `trials.meanScore: 1`, `gatedScore: 0` and `passed: false`, and the summary carries `gatedAggregateScore`.
 - **`openwop.requirement.0246.suite-gated`.** Two tasks, `count: 1`. Task 1 matches its trajectory, and task 2 produces the golden output but takes the wrong path. Asserted:
   - `aggregateScore` equals the mean of the task scores, so it is unchanged;
-  - task 2 carries `gatedScore: 0`;
+  - both tasks carry `gatedScore`: task 1 equal to its `score`, task 2 `0`;
   - `gatedAggregateScore` equals the mean of the gating scores;
   - suite `passed` is `false`: `aggregateScore` is `1` and clears `0.6`, but `gatedAggregateScore` is `0.5`. An unmigrated host reports `true` here, so the leg can fail.
 - **Server-free.** `gatedScore` and `gatedAggregateScore` validate; a value outside 0–1 fails.
@@ -128,7 +131,7 @@ Like the RFC 0244 host legs, these drive the scripted conformance agent, so they
 | §B suite `passed` uses the gating aggregate | suite `passed` vs `gatedAggregateScore ≥ passScore` while `aggregateScore` clears it | the suite (`openwop.requirement.0246.suite-gated`) | witnessable (seam-gated) |
 | §A which trials gate to 0 | recomputable: RFC 0244 §A trajectory grading over each trial's `agent.tool-called` events | anyone reading the run's events | witnessable |
 | §C reported scores unchanged | `score`, `meanScore`, `aggregateScore` equal the RFC 0244 formulas | the suite (both legs) | witnessable |
-| §D `gatedScore` / `gatedAggregateScore` present when they differ | field presence on the two fixture tasks | the suite (both legs) | witnessable |
+| §D `gatedScore` on every trajectory task, `gatedAggregateScore` on any suite with one | presence and value on every fixture task, including the matched one | the suite (both legs) | witnessable |
 
 ## Alternatives considered
 
@@ -139,7 +142,7 @@ Like the RFC 0244 host legs, these drive the scripted conformance agent, so they
 
 ## Unresolved questions
 
-1. **Should `gatedScore` be required whenever a task has `expected.trajectory`**, rather than only when it differs? Always present is simpler to read, but it adds a field to every trajectory task.
+1. ~~Should `gatedScore` be required whenever a task has `expected.trajectory`, rather than only when it differs?~~ **Resolved 2026-10-15: always present** on a trajectory task, and `gatedAggregateScore` on any suite with one (§D). openwop-app's consumer-side argument: one field to read, no inference rule to get wrong, and a leg can assert presence as well as value.
 2. **Should a rubric `passScore` per task (if one is added later) follow the same gate?** None exists today. This RFC binds the two decisions that exist.
 
 ## Implementation notes (non-normative)

@@ -269,7 +269,7 @@ Defects outside the spec:
       seam-gated with RFC 0244 G2; (G2) whether to register a tool-failure error code; (G3) the non-MCP agent shape.
 - [ ] **RFC 0246** `Draft` 2026-10-15, **safety-fix**, 90-day window to 2027-01-13 (a trajectory-failed trial cannot carry
       a task or suite to `passed`; openwop-app eval remediation). Owed before `Active`: the window; a GitHub security
-      advisory for the `### Security` CHANGELOG entry (G1); decide UQ 1 (G2); then the schema fields, the
+      advisory for the `### Security` CHANGELOG entry (G1); then the schema fields, the
       `conformance-eval-trajectory-gate` fixture and the two legs, and the COMPATIBILITY-CORRECTIONS-LOG row.
 - [ ] **Next major: `dataResidency.regions` `minItems: 1`.** /architect ruling 2026-10-05: narrowing is a major
       (COMPATIBILITY.md §2.4), and not a safety fix. Within v2 an empty list is a claim: the host honours
