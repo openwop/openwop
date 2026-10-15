@@ -14718,6 +14718,57 @@
       ]
     },
     {
+      "id": "openwop.gap.0245.1",
+      "rfc": "0245",
+      "local": "G1",
+      "section": "§B, §Falsifiability",
+      "surface": "\"The agent receives the entry as a tool error\" cannot be caused from outside: the scripted conformance agent's results are scripted, so what it saw and which branch it took are not observable.",
+      "witness": "unclassified",
+      "requirementId": null,
+      "disposition": "transferred",
+      "target": "TODO.md",
+      "sources": [
+        {
+          "file": "RFCS/registers/0245-eval-fixtures-replay-tool-errors.gaps.md",
+          "token": "G1"
+        }
+      ]
+    },
+    {
+      "id": "openwop.gap.0245.2",
+      "rfc": "0245",
+      "local": "G2",
+      "section": "UQ 1",
+      "surface": "No registered error code for a failed tool execution, so a portable suite cannot assert `error.code`.",
+      "witness": "unclassified",
+      "requirementId": null,
+      "disposition": "transferred",
+      "target": "TODO.md",
+      "sources": [
+        {
+          "file": "RFCS/registers/0245-eval-fixtures-replay-tool-errors.gaps.md",
+          "token": "G2"
+        }
+      ]
+    },
+    {
+      "id": "openwop.gap.0245.3",
+      "rfc": "0245",
+      "local": "G3",
+      "section": "UQ 2",
+      "surface": "For a host-native (non-MCP) tool, the agent-facing error shape is host-defined.",
+      "witness": "unclassified",
+      "requirementId": null,
+      "disposition": "transferred",
+      "target": "TODO.md",
+      "sources": [
+        {
+          "file": "RFCS/registers/0245-eval-fixtures-replay-tool-errors.gaps.md",
+          "token": "G3"
+        }
+      ]
+    },
+    {
       "id": "openwop.gap.spec.a2a-integration.g1",
       "rfc": "0152",
       "local": "G1",

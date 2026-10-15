@@ -1,3 +1,7 @@
+## [2.46.12] — unreleased — RFC 0245 Draft
+
+- **No assertion changes.** RFC 0245 (eval fixtures replay a recorded tool error as an error) enters `Draft` with three gap rows, so the packed `spec/v1/gaps.json` changes.
+
 ## [2.46.11] — 2026-10-15 — a shared id reads the same on every run
 
 - **Ledger reader: one requirement id recorded by two scenario files.** Each file runs in its own worker, and `readLedgerFile` kept whichever line came last, so the row's `assertions` and `scenario` belonged to the worker that finished last. openwop-app's `prompts.resolution-precedes-composition` read 9 then 5 assertions on identical results.
