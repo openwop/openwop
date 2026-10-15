@@ -1,4 +1,4 @@
-## [2.46.11] — unreleased — a shared id reads the same on every run
+## [2.46.11] — 2026-10-15 — a shared id reads the same on every run
 
 - **Ledger reader: one requirement id recorded by two scenario files.** Each file runs in its own worker, and `readLedgerFile` kept whichever line came last, so the row's `assertions` and `scenario` belonged to the worker that finished last. openwop-app's `prompts.resolution-precedes-composition` read 9 then 5 assertions on identical results.
   - The least certifiable file still decides the result and keeps its detail, so a failure in either file is never masked (unchanged).

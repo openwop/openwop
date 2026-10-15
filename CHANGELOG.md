@@ -29,6 +29,10 @@ Entries before this file was condensed carried full development detail. That tex
 - **2.45.23 cycle (suite):** `0184.mint-no-tilde` also mints one run under the second-tenant credential, so a host whose primary tenant is clean can still make the leg bite by binding tenant B to a non-clean tenant.
 - **Erratum: `identity.md` §5 grammar table matches `ids.schema.json` again.** `tenantId` gets its own row with the `anon:` prefix its pattern has had since 2.0.0. `typeId` gains the `@<semver>` pin from RFC 0187. No wire change. `check-id-kinds-bound` now compares the table against the schema.
 
+## [2.46.11] — 2026-10-15 — a shared id reads the same on every run
+
+- **Suite:** a requirement id that two scenario files record now gets the same row on every run: the worst result still wins, assertion counts sum across files and a tie names the first file. Before, the last worker's line decided `assertions` and `scenario`. No result changes.
+
 ## [2.46.10] — 2026-10-14 — RFC 0244 Accepted (provisional)
 
 - **RFC 0244 `Accepted` (provisional).** Tier-2 evidence: MyndHyve's certified cut on suite 2.46.9 (build `65785814`) records the four host legs and the three server-free legs `executed-pass`. G9, G10 and G11 close. The packed `gaps.json` changes; no assertion changes.
