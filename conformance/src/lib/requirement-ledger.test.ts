@@ -14,8 +14,12 @@
  * @see requirement-ledger.ts, setup.ts
  */
 
+import { mkdtempSync, rmSync, writeFileSync } from 'node:fs';
+import { tmpdir } from 'node:os';
+import { join } from 'node:path';
 import { describe, it, expect, beforeEach } from 'vitest';
 import {
+  readLedgerFile,
   recordRequirement,
   hasRequirement,
   entryOf,
@@ -131,5 +135,47 @@ describe('requirement-ledger: fold (several `it` legs, one requirement id)', () 
   it('WITHOUT fold the conflict still throws — a scenario that classifies itself twice is an authoring bug', () => {
     recordRequirement(ID, 'executed-pass', undefined, { assertionCount: 4 });
     expect(() => recordRequirement(ID, 'executed-fail', 'and again')).toThrow(/already recorded/);
+  });
+});
+
+describe('readLedgerFile — one id witnessed by two files (2.46.11)', () => {
+  const read = (lines: readonly object[]): ReturnType<typeof readLedgerFile> => {
+    const dir = mkdtempSync(join(tmpdir(), 'owp-ledger-'));
+    try {
+      const path = join(dir, 'l.jsonl');
+      writeFileSync(path, lines.map((l) => JSON.stringify(l)).join('\n') + '\n');
+      return readLedgerFile(path);
+    } finally {
+      rmSync(dir, { recursive: true, force: true });
+    }
+  };
+  const A = { requirementId: ID, disposition: 'executed-pass', assertionCount: 4, scenarioFile: 'v2-b.test.ts' };
+  const B = { requirementId: ID, disposition: 'executed-pass', assertionCount: 5, scenarioFile: 'v2-a.test.ts' };
+
+  it('two passing files: counts sum and the row names the first file by name, in either worker order', () => {
+    for (const order of [[A, B], [B, A]]) {
+      const [row] = read(order);
+      expect(row?.disposition).toBe('executed-pass');
+      expect(row?.assertionCount).toBe(9);
+      expect(row?.scenarioFile).toBe('v2-a.test.ts');
+    }
+  });
+
+  it('a failing file still decides the disposition and keeps its detail, whichever worker wrote last', () => {
+    const fail = { requirementId: ID, disposition: 'executed-fail', detail: 'leg 2 failed', assertionCount: 2, scenarioFile: 'v2-b.test.ts' };
+    for (const order of [[fail, B], [B, fail]]) {
+      const [row] = read(order);
+      expect(row?.disposition).toBe('executed-fail');
+      expect(row?.detail).toBe('leg 2 failed');
+      expect(row?.scenarioFile).toBe('v2-b.test.ts');
+      expect(row?.assertionCount).toBe(7);
+    }
+  });
+
+  it("within one file the fold's cumulative last line is kept, not summed with the leg lines", () => {
+    const leg = { ...B, assertionCount: 2 };
+    const cumulative = { ...B, assertionCount: 5 };
+    const [row] = read([leg, cumulative, A]);
+    expect(row?.assertionCount).toBe(9);
   });
 });

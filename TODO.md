@@ -93,7 +93,7 @@ works through the CLI. Buying a plan is not covered by any autonomy grant, so as
       every capability family. Fixed and sabotage-proved, and the baseline gained 540 tuples.
 - [ ] Watch A2A PR #2068 (SubscribeToTask POST→GET prose), still open on 2026-09-27. If it
       merges, revisit the interop-map D1 exception.
-- [ ] **A row whose id two files record has an unstable `assertions` and `scenario`.** Found 2026-10-14 by
+- [x] **A row whose id two files record has an unstable `assertions` and `scenario`.** Fixed in 2.46.11. Found 2026-10-14 by
       openwop-app (69c → 70c, −4 assertions): `prompts.resolution-precedes-composition` is recorded by
       `v2-prompt-end-to-end-events` and `v2-prompt-all-four-kinds-events`. `readLedgerFile` keeps the least
       certifiable result, so a fail is never masked, but on equal results the last line wins: the row names
