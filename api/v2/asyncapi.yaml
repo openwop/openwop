@@ -56,6 +56,10 @@ operations:
               type: string
               pattern: ^(values|(updates|messages|debug)(,(updates|messages|debug))*)$
               default: updates
+            resumable:
+              type: boolean
+              default: false
+              description: RFC 0247 opt-in to a bounded close (events.md §Bounded close).
   subscribeHostEvents:
     action: receive
     channel:
@@ -64,6 +68,14 @@ operations:
     bindings:
       http:
         method: GET
+        query:
+          type: object
+          additionalProperties: false
+          properties:
+            resumable:
+              type: boolean
+              default: false
+              description: RFC 0247 opt-in to a bounded close (events.md §Bounded close).
 components:
   securitySchemes:
     ApiKeyAuth:

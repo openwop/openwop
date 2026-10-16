@@ -1,7 +1,7 @@
 {
   "$schema": "./gaps.schema.json",
   "version": 1,
-  "updated": "2026-10-15",
+  "updated": "2026-10-16",
   "witnessClasses": [
     "witnessable-unaided",
     "witnessable-gated",
@@ -14765,6 +14765,40 @@
         {
           "file": "RFCS/registers/0245-eval-fixtures-replay-tool-errors.gaps.md",
           "token": "G3"
+        }
+      ]
+    },
+    {
+      "id": "openwop.gap.0247.1",
+      "rfc": "0247",
+      "local": "G1",
+      "section": "§B, §Falsifiability",
+      "surface": "No suite leg observes a bounded close: it needs an opted-in stream held open on a live run past the advertised age, longer than the suite's stream waits budget for.",
+      "witness": "unclassified",
+      "requirementId": null,
+      "disposition": "transferred",
+      "target": "TODO.md",
+      "sources": [
+        {
+          "file": "RFCS/registers/0247-bounded-stream-lifetime.gaps.md",
+          "token": "G1"
+        }
+      ]
+    },
+    {
+      "id": "openwop.gap.0247.2",
+      "rfc": "0247",
+      "local": "G2",
+      "section": "UQ 2",
+      "surface": "A host behind a short front end closes sooner on that hop than its advertised `maxStreamAgeSec`; a consumer cannot learn the hop's bound.",
+      "witness": "unclassified",
+      "requirementId": null,
+      "disposition": "transferred",
+      "target": "TODO.md",
+      "sources": [
+        {
+          "file": "RFCS/registers/0247-bounded-stream-lifetime.gaps.md",
+          "token": "G2"
         }
       ]
     },

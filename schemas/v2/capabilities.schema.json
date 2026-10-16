@@ -561,6 +561,11 @@
           "type": "integer",
           "minimum": 1,
           "description": "RFC 0094 §H. Maximum REST request body size (bytes) the host accepts. Optional v1 field per `capabilities.md` §3 (previously documented as reserved — the closed `limits` object made advertising it a schema-validation failure). Hosts that advertise it MUST enforce it."
+        },
+        "maxStreamAgeSec": {
+          "type": "integer",
+          "minimum": 15,
+          "description": "RFC 0247. The longest, in seconds, this host holds a live `streamRunEvents` or `streamHostEvents` stream that the consumer opened with `resumable=true`. Only for such a stream, a host advertising this facet MAY end it before the run's terminal event (a bounded close) once it has been open 15 seconds, and MUST end it by this age. It MUST end at a frame boundary, MUST flush any pending batch first, and SHOULD first send an SSE `retry:` field (milliseconds). A host MUST NOT end an opted-in stream early unless it advertises this facet, and MUST NOT end a stream opened without `resumable=true` early whatever it advertises (events.md §Resuming with `Last-Event-ID`). A bounded close is never a terminal signal; only the terminal event is. A consumer that sent `resumable=true` MUST treat any close without the terminal event (a bounded close, a network drop, an intermediary's timeout) as non-terminal, and MUST reconnect with `resumable=true` and `Last-Event-ID` set to the last `id:` it received (no header if it received none). It SHOULD wait the `retry:` delay, or its own default of about one second, and SHOULD back off when reconnects fail or close without a frame. A consumer MUST handle such a close whether or not this facet is advertised. On `hostEvents` the consumer resumes from the last durable event's `id:`; ephemeral events missed in the gap are not redelivered (events.md §Host events)."
         }
       },
       "allOf": [
@@ -599,7 +604,7 @@
         }
       ],
       "description": "core/capabilities.md#limits — witness: witnessable-gated; maturity stable/none",
-      "x-openwop-seeded-from": "v1"
+      "x-openwop-facets-from": "spec/v2/facets/limits.schema.json"
     },
     "envelopeStrictness": {
       "type": "object",

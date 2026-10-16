@@ -18,7 +18,7 @@
       "type"
     ]
   },
-  "count": 8931,
+  "count": 8933,
   "surfaces": [
     "schemas/v2/a2a-task-state.schema.json#/contextId|type|string",
     "schemas/v2/a2a-task-state.schema.json#/interruptKind|enum-member|\"approval\"",
@@ -2325,6 +2325,7 @@
     "schemas/v2/capabilities.schema.json#/limits/maxNodeExecutions|type|integer",
     "schemas/v2/capabilities.schema.json#/limits/maxRequestBodyBytes|type|integer",
     "schemas/v2/capabilities.schema.json#/limits/maxRunDurationMs|type|integer",
+    "schemas/v2/capabilities.schema.json#/limits/maxStreamAgeSec|type|integer",
     "schemas/v2/capabilities.schema.json#/limits/schemaRounds|type|integer",
     "schemas/v2/capabilities.schema.json#/limits/since|type|string",
     "schemas/v2/capabilities.schema.json#/limits/status|enum-member|\"deprecated\"",
@@ -2345,6 +2346,7 @@
     "schemas/v2/capabilities.schema.json#/limits|property|maxNodeExecutions",
     "schemas/v2/capabilities.schema.json#/limits|property|maxRequestBodyBytes",
     "schemas/v2/capabilities.schema.json#/limits|property|maxRunDurationMs",
+    "schemas/v2/capabilities.schema.json#/limits|property|maxStreamAgeSec",
     "schemas/v2/capabilities.schema.json#/limits|property|schemaRounds",
     "schemas/v2/capabilities.schema.json#/limits|property|since",
     "schemas/v2/capabilities.schema.json#/limits|property|status",

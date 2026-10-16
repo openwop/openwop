@@ -709,6 +709,19 @@ def v2_openapi_and_seams():
                     p['schema'] = {'type': 'string', 'pattern': '^(values|(updates|messages|debug)(,(updates|messages|debug))*)$', 'default': 'updates'}
                     p['description'] = 'A stream mode from the closed set, or a comma-separated combination of them. `values` never combines.'
             op['parameters'] = [p for p in params if not (isinstance(p, dict) and p.get('name') == 'since')]
+            # RFC 0247: the consumer's opt-in to a bounded close (events.md §Bounded close). A query
+            # parameter, not a header, because a browser EventSource cannot set request headers.
+            if op.get('operationId') in ('streamRunEvents', 'streamHostEvents') and not any(isinstance(p, dict) and p.get('name') == 'resumable' for p in op['parameters']):
+                idx = next((i for i, p in enumerate(op['parameters']) if isinstance(p, dict) and p.get('in') == 'header' and p.get('name') == 'Last-Event-ID'), None)
+                param = {'in': 'query', 'name': 'resumable', 'schema': {'type': 'boolean', 'default': False},
+                         'description': ('RFC 0247. `true` says this consumer resumes with `Last-Event-ID` when the stream closes without the '
+                                         'terminal event, so a host advertising `limits.maxStreamAgeSec` MAY end it early (a bounded close, '
+                                         'never terminal). Absent or `false`, the host MUST hold a live stream open (events.md §Resuming with '
+                                         '`Last-Event-ID`). A consumer that sends it MUST resume with `resumable=true` and `Last-Event-ID`.')}
+                if idx is None:
+                    op['parameters'].insert(0, param)
+                else:
+                    op['parameters'].insert(idx, param)
             # RFC 0228 §H (errors.md §Unadvertised operations): an operation gated on a family or facet
             # the host does not advertise answers `404 not_found`, never v1's `501`, which carries no
             # registered code. Only the "Host does not advertise" 501s move; any other 501 stays.
@@ -823,8 +836,8 @@ def v2_asyncapi():
                                    'description': ('A long-lived SSE subscription that closes after a terminal run event. `Last-Event-ID` resumes from the '
                                                    'sequence after the supplied one. A mixed mode is the union of its filters, and each event carries its own '
                                                    '`event:` label (`stream-modes.md`).'),
-                                   'bindings': {'http': {'method': 'GET', 'query': {'type': 'object', 'additionalProperties': False, 'properties': {'streamMode': {'type': 'string', 'pattern': '^(values|(updates|messages|debug)(,(updates|messages|debug))*)$', 'default': 'updates'}}}}}},
-            'subscribeHostEvents': {'action': 'receive', 'channel': {'$ref': '#/channels/hostEvents'}, 'title': 'Subscribe to host events', 'bindings': {'http': {'method': 'GET'}}},
+                                   'bindings': {'http': {'method': 'GET', 'query': {'type': 'object', 'additionalProperties': False, 'properties': {'streamMode': {'type': 'string', 'pattern': '^(values|(updates|messages|debug)(,(updates|messages|debug))*)$', 'default': 'updates'}, 'resumable': {'type': 'boolean', 'default': False, 'description': 'RFC 0247 opt-in to a bounded close (events.md §Bounded close).'}}}}}},
+            'subscribeHostEvents': {'action': 'receive', 'channel': {'$ref': '#/channels/hostEvents'}, 'title': 'Subscribe to host events', 'bindings': {'http': {'method': 'GET', 'query': {'type': 'object', 'additionalProperties': False, 'properties': {'resumable': {'type': 'boolean', 'default': False, 'description': 'RFC 0247 opt-in to a bounded close (events.md §Bounded close).'}}}}}},
         },
         'components': comps,
     }
