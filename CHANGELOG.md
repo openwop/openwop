@@ -8,7 +8,7 @@ Entries before this file was condensed carried full development detail. That tex
 
 ## [Unreleased]
 
-- **RFC 0247 Active (window waived): bounded stream lifetime.** With `resumable=true` on `streamRunEvents` / `streamHostEvents`, a host advertising `limits.maxStreamAgeSec` MAY end a live stream after 15 s; it is not terminal and the consumer resumes with `Last-Event-ID`. Without the parameter nothing changes.
+- **RFC 0247 Accepted (provisional).** openwop-app's certified production cut on suite 2.46.12 (build `aee0febbc`, 446/0/0) advertises `limits.maxStreamAgeSec: 300` and passes all 12 `Last-Event-ID` resume rows; openwop-sdks 2.6.0 opts in and resumes. The RFC 0156 §B review is owed.
 - **2.46.11 cycle (suite): a row two files witness is the same on every run.** Across files the ledger reader kept the last worker's line, so `assertions` and `scenario` changed between cuts with no result change. The worst result still wins; counts now sum and a tie names the first file.
 - **RFC 0243 G2 closes.** openwop-app's certified production cut on suite 2.46.6 (444/0/0, build `44960bca5`) records `0243.max-fan-out-waves`, `0243.per-item-input-gated` and `agents.dispatch-per-item-length-mismatch` `executed-pass`; the packed `gaps.json` changes.
 - **2.46.7 cycle (suite): one id per leg.** A requirement id passed through a helper (`assert(ID, judge(o))`) is now in `requirements.json`. Before, a soft-skipped row of such a leg took a title-derived `openwop.it.*` id while an executed row carried the requirement id: 20 legs in 7 files.
