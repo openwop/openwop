@@ -8,6 +8,7 @@ Entries before this file was condensed carried full development detail. That tex
 
 ## [Unreleased]
 
+- **RFC 0247 Accepted (provisional).** openwop-app's certified production cut on suite 2.46.12 (build `aee0febbc`, 446/0/0) advertises `limits.maxStreamAgeSec: 300` and passes all 12 `Last-Event-ID` resume rows; openwop-sdks 2.6.0 opts in and resumes. The RFC 0156 §B review is owed.
 - **2.46.2 cycle (suite): the seams profile is derived from its advert.** Its predicate is `conformance.seamsProfile`, not the whole `conformance` block (`capabilities.md` §7 `key.member`). Four openwop-app bundles certified it with only `certificationBundleUrl`; `--verify` now refuses that certification.
 - **RFC 0242 Accepted (provisional).** Tier-1 evidence: the v2 reference host's certified public cut on suite 2.46.0 (531/1/0, build `d16cac40`) records all seven `0242.*` ids `executed-pass`; G1 closes, so the packed `gaps.json` changes. The one failure was a suite defect.
 - **2.46.1 cycle (suite):** the modal webhook receiver's `close()` closes idle and then all connections, so a keep-alive socket held by a public tunnel no longer times out `v2-webhook-message-id-stable`'s `afterEach`. No assertion changes.

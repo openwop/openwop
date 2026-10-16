@@ -271,10 +271,10 @@ Defects outside the spec:
       cannot carry a task or suite to `passed`). Suite 2.46.13 carries the fields, two fixtures and three legs. Owed: MyndHyve
       ships the gate (G3, the waiver's condition) and passes `0246.mean-gated` / `0246.suite-gated` on a certified cut for
       `Accepted`; publish advisory `GHSA-ffx7-pm5h-v6pq` with the 2.46.13 release; the RFC 0156 §B review.
-- [ ] **RFC 0247** `Active` 2026-10-15, window waived (bounded stream lifetime: `resumable=true` opt-in, `limits.maxStreamAgeSec`;
-      from openwop-app ADR 0897, Cloud Run hides client disconnects). Spec, facet and OpenAPI/AsyncAPI parameter landed. Owed: a host
-      bounding opted-in streams while passing the resume legs, and the v2 SDKs opting in. Register rows: (G1) no suite leg observes a
-      bounded close (needs a long-hold live run); (G2) a hop-specific bound is not discoverable.
+- [x] **RFC 0247** `Accepted` (provisional) 2026-10-16 (bounded stream lifetime). Host half: openwop-app 2.46.12 cut `aee0febbc`
+      advertises `maxStreamAgeSec: 300`, 12/12 resume rows pass; SDK half: openwop-sdks `v2.6.0`. Owed: the RFC 0156 §B review.
+      Register rows stay transferred here: (G1) no suite leg observes a bounded close (needs a long-hold live run); (G2) a
+      hop-specific bound is not discoverable.
 - [ ] **Next major: `dataResidency.regions` `minItems: 1`.** /architect ruling 2026-10-05: narrowing is a major
       (COMPATIBILITY.md §2.4), and not a safety fix. Within v2 an empty list is a claim: the host honours
       residency nowhere and MUST refuse every constraint. Since 2.45.22 the reject leg binds there (it
