@@ -30,6 +30,12 @@ Entries before this file was condensed carried full development detail. That tex
 
 - **RFC 0246 Active (safety fix, `GHSA-ffx7-pm5h-v6pq`): a trial that failed its trajectory cannot carry a task or a suite to a pass.** The `mean` task rule and suite `passed` read a gating score that counts it 0; reported scores are unchanged. 90-day window waived by recorded STEWARD OVERRIDE.
 
+## [2.46.13] — 2026-10-16 — RFC 0246: a trajectory-failed trial cannot carry a pass (safety fix)
+
+### Security
+
+- **RFC 0246 `Active` (safety fix, `GHSA-ffx7-pm5h-v6pq`):** a trajectory-failed trial counts 0 toward the `mean` task rule and suite `passed`, via optional `gatedScore` / `gatedAggregateScore`; reported scores are unchanged. Two new fixtures and three `0246.*` legs.
+
 ## [2.46.12] — 2026-10-16 — RFC 0245 and RFC 0247 Active
 
 - **RFC 0245 `Active`:** an eval fixture can record that a tool call failed (`toolResponses[].isError`, gated by `agents.evalSuite.fixtureErrors`), so a replay returns a tool error instead of a success. Schema only; the gated legs follow.
