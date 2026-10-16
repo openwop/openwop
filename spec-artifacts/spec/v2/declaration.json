@@ -206,7 +206,7 @@
     {
       "key": "limits",
       "kind": "family",
-      "normativeText": ["spec/v2/core/runs.md"],
+      "normativeText": ["spec/v2/core/runs.md", "spec/v2/core/events.md"],
       "anchor": "core",
       "section": "core/capabilities.md#limits",
       "peerDependencyId": "limits",
@@ -224,7 +224,8 @@
         "maxLoopIterations",
         "maxBudgetTokens",
         "maxBudgetCostUsd",
-        "maxRequestBodyBytes"
+        "maxRequestBodyBytes",
+        "maxStreamAgeSec"
       ],
       "floorScenarios": [],
       "requirementIds": [],

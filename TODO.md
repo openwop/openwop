@@ -267,6 +267,10 @@ Defects outside the spec:
       from openwop-app). Schema field and `fixtureErrors` member landed. Owed: the `conformance-eval-fixture-error`
       fixture and the two gated legs (`0245.fixture-error-replayed`, `0245.unadvertised-refused`), then a witness host. Register rows: (G1) the agent-side half is
       seam-gated with RFC 0244 G2; (G2) whether to register a tool-failure error code; (G3) the non-MCP agent shape.
+- [ ] **RFC 0247** `Active` 2026-10-15, window waived (bounded stream lifetime: `resumable=true` opt-in, `limits.maxStreamAgeSec`;
+      from openwop-app ADR 0897, Cloud Run hides client disconnects). Spec, facet and OpenAPI/AsyncAPI parameter landed. Owed: a host
+      bounding opted-in streams while passing the resume legs, and the v2 SDKs opting in. Register rows: (G1) no suite leg observes a
+      bounded close (needs a long-hold live run); (G2) a hop-specific bound is not discoverable.
 - [ ] **Next major: `dataResidency.regions` `minItems: 1`.** /architect ruling 2026-10-05: narrowing is a major
       (COMPATIBILITY.md §2.4), and not a safety fix. Within v2 an empty list is a claim: the host honours
       residency nowhere and MUST refuse every constraint. Since 2.45.22 the reject leg binds there (it

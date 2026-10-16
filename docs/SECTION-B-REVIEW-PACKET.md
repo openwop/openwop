@@ -6,7 +6,7 @@
 
 RFC 0156 §B: RFCs affecting auth, identity, tenant isolation, secrets, packs, execution sandboxing, idempotency, replay, external effects, conformance/certification, or governance **MUST** receive a retrospective **cross-organization** review. Every RFC below was accepted with its public comment window shortened, either under the bootstrap waiver or by explicit steward override of RFC 0147 §A.6. Each such acceptance is **provisional** until a reviewer from an organization other than the steward's records an outcome.
 
-This packet is for that reviewer. **122 RFCs are listed; 122 have no discharging outcome.** The steward, the steward's sessions, and steward-affiliated hosts (MyndHyve is tier-2, not independent) cannot supply the review. Recording one of their reviews as `ratified` is the substitution §B's last clause forbids.
+This packet is for that reviewer. **123 RFCs are listed; 123 have no discharging outcome.** The steward, the steward's sessions, and steward-affiliated hosts (MyndHyve is tier-2, not independent) cannot supply the review. Recording one of their reviews as `ratified` is the substitution §B's last clause forbids.
 
 ## How to review one RFC
 
@@ -142,7 +142,7 @@ Grouping below is a reading aid only: it assigns each RFC to the risk class its 
 | [0192](../RFCS/0192-facet-advertisement.md) | A facet is advertised by the presence of its key; the 26 descriptions that gated on a retired field | `Accepted` | bootstrap waiver | corpus gate — every requirement id in the falsifiability table carries a row in `evidence… | `not-reviewed` |
 | [0223](../RFCS/0223-approval-reject-disposition.md) | a rejected approval gate fails closed, and the failure is routable | `Accepted` | steward override of RFC 0147 §A.6 | tier-1 — the v2 reference host's certified public cut on published suite 2 | `not-reviewed` |
 
-## Other (assign during review) (46)
+## Other (assign during review) (47)
 
 | RFC | Title | Status | Waiver | Evidence tier | Outcome |
 | --- | --- | --- | --- | --- | --- |
@@ -192,4 +192,5 @@ Grouping below is a reading aid only: it assigns each RFC to the risk class its 
 | [0226](../RFCS/0226-shared-run-failure-codes.md) | three run-failure codes the hosts share, registered | `Accepted` | bootstrap waiver | tier-2 — all three hosts' latest certified bundles, each VERIFIED under the key its host… | `not-reviewed` |
 | [0228](../RFCS/0228-v1-host-service-error-codes.md) | the error codes v1 named for host services, decided for v2 | `Active` | bootstrap waiver | not declared (predates RFC 0174 §B.1, or not yet Accepted) | `not-reviewed` |
 | [0231](../RFCS/0231-budget-exhaustion-facet.md) | a host says which budget exhaustion behaviours it serves | `Accepted` | bootstrap waiver | tier-1 — the v2 reference host | `not-reviewed` |
+| [0247](../RFCS/0247-bounded-stream-lifetime.md) | bounded stream lifetime — an opted-in live stream may be ended early and is resumed | `Active` | bootstrap waiver | not declared (predates RFC 0174 §B.1, or not yet Accepted) | `not-reviewed` |
 
