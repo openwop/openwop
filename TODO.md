@@ -149,24 +149,15 @@ Defects outside the spec:
   - **v2 ports (gap G4):** all five exist; `v2-table-schema-enforcement` (2.45.8, fixture
     `conformance-table-schema-probe`) is the last. It has no host witness: no host advertises
     `tableStorage` at major 2. Not ported: v1's `budget_model_denied` leg.
-  - **Rename rows.** G2 is closed (reference host, certified 2.45.5). Still open, as the host
-    sessions report from source:
-    - G1 (MyndHyve): the `safeFetch` codes are renamed and certified (2.45.5 cut). The `503`
-      half is fixed in build cf84c7f64 (unit-witnessed; no `inflightCap` advertised). The
-      maintainer ruled (2026-10-03) it closes as unit-witnessed once a certified cut containing
-      it is in `evidence/`: MyndHyve's 2.45.10 cut (build e2fe80f33, myndhyve#594) qualifies when
-      checked in.
-    - G3 (openwop-app): fix up as openwop-app #4331, not merged. Maintainer decision
-      2026-10-02: it closes on a certified cut that contains the fix, recorded as unit-witnessed
-      with `v2-fs-sandbox-escape-refused` `inapplicable` (the host advertises neither `fs` nor
-      `tableStorage` at major 2).
-    - G6 (openwop-app): fixed and deployed (#4238); needs a certified cut.
+  - **Rename rows.** G1, G2, G3 and G6 are closed (G2 on the reference host's certified 2.45.5 cut;
+    G1, G3, G6 unit-witnessed 2026-10-16 on certified cuts containing the fixes: MyndHyve `73befc109`,
+    openwop-app `aee0febbc`). Still open:
     - G7 (MyndHyve): partly fixed (cf84c7f64); the maintainer accepted the partial fix and the
       run-creation `validation_error` leg is externally gated on a MyndHyve change.
 - [x] **MyndHyve follow-ups done (2026-10-02, its session):** `openwop-smoke-byok-roundtrip` is
       withdrawn from production (build 68718d731, myndhyve#591; its next cut records
       `v2-secret-canary-absent` `inapplicable`), and the sealed-row delete is tested before the
-      terminal on all three cap-breach paths. Still open there: RFC 0228 G1's `503` half and G7.
+      terminal on all three cap-breach paths. Still open there: RFC 0228 G7 (G1 closed 2026-10-16).
 - [x] **MyndHyve withdrew `triggerBridge.ingestion`** at both majors (build cf84c7f64, myndhyve#592,
       2026-10-03); `POST /trigger-subscriptions` answers `404`. RFC 0099's `Accepted` already discloses
       that its MyndHyve legs ran through the seam (#1868).
