@@ -1,6 +1,7 @@
-## [2.46.12] — unreleased — RFC 0245 Active (window waived)
+## [2.46.12] — 2026-10-16 — RFC 0245 and RFC 0247 Active
 
 - **No assertion changes yet.** RFC 0245 (eval fixtures replay a recorded tool error as an error) is `Active`: the packed v2 `agent-eval-suite` schema gains optional `toolResponses[].isError`, the capability schema gains `agents.evalSuite.fixtureErrors`, and three gap rows change the packed `spec/v1/gaps.json`. The fixture and the two gated legs follow.
+- **RFC 0247 `Active`: bounded stream lifetime.** The packed v2 surfaces gain the `resumable` query parameter on `streamRunEvents` and `streamHostEvents`, and the limits facet gains `maxStreamAgeSec`. No new leg (gap G1: a bounded close needs a long-held live run). A host that advertises nothing new, and a consumer that never sends `resumable=true`, see no change.
 
 ## [2.46.11] — 2026-10-15 — a shared id reads the same on every run
 
