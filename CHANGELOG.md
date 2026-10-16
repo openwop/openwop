@@ -8,6 +8,7 @@ Entries before this file was condensed carried full development detail. That tex
 
 ## [Unreleased]
 
+- **RFC 0246 Accepted (provisional).** MyndHyve deployed the gate (build `c8d511d84`) before advisory `GHSA-ffx7-pm5h-v6pq` was published; its certified 2.46.13 production cut (418/0/0) passes `0246.mean-gated` and `0246.suite-gated`. G3 closes, so the packed `gaps.json` changes. The RFC 0156 §B review is owed.
 - **RFC 0228: gaps G1, G3 and G6 close.** Unit-witnessed on certified cuts that contain the fixes (MyndHyve 2.46.9 `73befc109`; openwop-app 2.46.12 `aee0febbc`), by the maintainer rulings of 2026-10-02/03; the packed `gaps.json` changes. Still open: G7 and a `tableStorage` witness at major 2.
 - **RFC 0247 Accepted (provisional).** openwop-app's certified production cut on suite 2.46.12 (build `aee0febbc`, 446/0/0) advertises `limits.maxStreamAgeSec: 300` and passes all 12 `Last-Event-ID` resume rows; openwop-sdks 2.6.0 opts in and resumes. The RFC 0156 §B review is owed.
 - **2.46.2 cycle (suite): the seams profile is derived from its advert.** Its predicate is `conformance.seamsProfile`, not the whole `conformance` block (`capabilities.md` §7 `key.member`). Four openwop-app bundles certified it with only `certificationBundleUrl`; `--verify` now refuses that certification.

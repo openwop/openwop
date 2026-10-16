@@ -130,7 +130,7 @@ Grouping below is a reading aid only: it assigns each RFC to the risk class its 
 | [0237](../RFCS/0237-nondeterminism-sources.md) | Declared nondeterminism names its sources | `Accepted` | steward override of RFC 0147 §A.6 | tier-1 — the v2 reference host | `not-reviewed` |
 | [0242](../RFCS/0242-negotiation-decided-requested-and-inbound.md) | a negotiation record says what was asked for, and an inbound negotiation has a home | `Accepted` | steward override of RFC 0147 §A.6 | tier-1 — the v2 reference host | `not-reviewed` |
 | [0244](../RFCS/0244-eval-trajectories-trials-and-recorded-fixtures.md) | eval suites grade the tool path, run repeated trials, and fail closed on a fixture miss | `Accepted` | steward override of RFC 0147 §A.6 | tier-2 — one certified host, the independent second host | `not-reviewed` |
-| [0246](../RFCS/0246-trajectory-failure-gates-the-pass.md) | a trajectory-failed trial cannot carry a task or a suite to a pass | `Active` | bootstrap waiver | not declared (predates RFC 0174 §B.1, or not yet Accepted) | `not-reviewed` |
+| [0246](../RFCS/0246-trajectory-failure-gates-the-pass.md) | a trajectory-failed trial cannot carry a task or a suite to a pass | `Accepted` | steward override of RFC 0147 §A.6 | tier-2 — MyndHyve | `not-reviewed` |
 
 ## Governance (6)
 
