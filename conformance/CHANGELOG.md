@@ -1,3 +1,14 @@
+## [2.46.13] — unreleased — RFC 0246: a trajectory-failed trial cannot carry a pass (safety fix)
+
+### Security
+
+- **RFC 0246 (`GHSA-ffx7-pm5h-v6pq`): the eval pass decisions read a gating score.** Three new legs in `v2-eval-trajectory-trials`, judged by the new `lib/eval-gate-witness.ts`:
+  - `0246.gated-fields-shape` (server-free): `gatedScore` and `gatedAggregateScore` validate in 0–1.
+  - `0246.mean-gated`, on the new `conformance-eval-trajectory-gate-mean` (trajectory + trials): under `passRule: "mean"` a task whose two trials called a forbidden tool keeps `meanScore: 1`, carries `gatedScore: 0` and does not pass.
+  - `0246.suite-gated`, on the new `conformance-eval-trajectory-gate` (trajectory): `aggregateScore` 1 clears `passScore` 0.6, `gatedAggregateScore` 0.5 does not, and the suite does not pass.
+  - Both host legs also fail a host that zeroes the reported `score` instead (RFC 0246 §C).
+- **What a host's next bundle shows:** the fixtures are opt-in through discovery `fixtures`, so a host that does not list them records both host legs `inapplicable`. A host implementing RFC 0244 trajectories that lists them and has not adopted the gate records both `executed-fail`.
+
 ## [2.46.12] — 2026-10-16 — RFC 0245 and RFC 0247 Active
 
 - **No assertion changes yet.** RFC 0245 (eval fixtures replay a recorded tool error as an error) is `Active`: the packed v2 `agent-eval-suite` schema gains optional `toolResponses[].isError`, the capability schema gains `agents.evalSuite.fixtureErrors`, and three gap rows change the packed `spec/v1/gaps.json`. The fixture and the two gated legs follow.

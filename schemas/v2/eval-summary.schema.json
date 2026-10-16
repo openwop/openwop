@@ -43,9 +43,15 @@
       "maximum": 1,
       "description": "The suite-level score (0.0\u20131.0): the aggregation (host-defined, typically the mean) of per-task scores."
     },
+    "gatedAggregateScore": {
+      "type": "number",
+      "minimum": 0,
+      "maximum": 1,
+      "description": "RFC 0246 \u00a7A/\u00a7D. The aggregation used for `aggregateScore`, applied to the per-task `gatedScore`s instead of the task scores; suite `passed` reads it. MUST be present whenever any task has `expected.trajectory`. `aggregateScore` is unchanged (RFC 0246 \u00a7C)."
+    },
     "passed": {
       "type": "boolean",
-      "description": "Whether the run cleared the suite's `thresholds` (RFC 0081 \u00a7A) \u2014 `aggregateScore >= passScore` AND, when declared, `totalCostUsd <= maxCostUsd` AND the p95 latency bar. The load-bearing flag an RFC 0082 deployment gate may require (`requiredEval`)."
+      "description": "Whether the run cleared the suite's `thresholds` (RFC 0081 \u00a7A): the gating aggregate (`gatedAggregateScore`; `aggregateScore` when no task can gate) `>= passScore` AND, when declared, `totalCostUsd <= maxCostUsd` AND the p95 latency bar. RFC 0246 \u00a7B: a trial that failed its trajectory contributes 0 to the gating aggregate, so `passed` can be false while `aggregateScore >= passScore`. The load-bearing flag an RFC 0082 deployment gate may require (`requiredEval`)."
     },
     "taskCount": {
       "type": "integer",
@@ -84,6 +90,12 @@
             "minimum": 0,
             "maximum": 1,
             "description": "Task score (0.0\u20131.0)."
+          },
+          "gatedScore": {
+            "type": "number",
+            "minimum": 0,
+            "maximum": 1,
+            "description": "RFC 0246 \u00a7A/\u00a7D. The task gating score: the mean over its trials of the trial score, with 0 for a trial that failed its trajectory or failed closed on a fixture miss. MUST be present on a task with `expected.trajectory` (equal to `score` when every trial matched); MAY be present on another task only when it differs from `score`. Under `passRule: \"mean\"` the task `passed` reads it; `score` is unchanged (RFC 0246 \u00a7C)."
           },
           "passed": {
             "type": "boolean",

@@ -87,6 +87,7 @@ A call to any tool listed in `forbidden` **MUST** make the trajectory unmatched,
 
 **Grading rule.**
 - For `kind: "golden"` or `"rubric"` with a `trajectory`, the trial **MUST NOT** pass unless the trajectory matched. The trial's `score` stays the output score.
+  *(Corrected 2026-10-16 by RFC 0246, a safety fix: the score stays the output score, but the two pass decisions read a gating score in which this trial counts 0. See RFC 0246 §A–§B.)*
 - For `kind: "trajectory"`, `score` is `1` when matched and `0` otherwise, and `match`/`rubric` **MUST** be absent.
 
 **Reporting.** The per-task summary entry carries a content-free `trajectory` block:
@@ -131,6 +132,7 @@ The suite gains an optional `trials` block:
 **Task-level fields.**
 - The task's `score` is `meanScore`.
 - The task's `passed` follows `passRule`: `all` ⇔ `c = n`; `any` ⇔ `c ≥ 1`; `mean` ⇔ `meanScore ≥ thresholds.passScore`.
+  *(Corrected 2026-10-16 by RFC 0246: `mean` reads the task gating score, not `meanScore`, and the suite `passed` reads the gating aggregate. `meanScore` is unchanged.)*
 
 **Suite level.** `EvalSummary.trialStats` carries:
 - `k`;

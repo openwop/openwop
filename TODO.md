@@ -267,6 +267,10 @@ Defects outside the spec:
       from openwop-app). Schema field and `fixtureErrors` member landed. Owed: the `conformance-eval-fixture-error`
       fixture and the two gated legs (`0245.fixture-error-replayed`, `0245.unadvertised-refused`), then a witness host. Register rows: (G1) the agent-side half is
       seam-gated with RFC 0244 G2; (G2) whether to register a tool-failure error code; (G3) the non-MCP agent shape.
+- [ ] **RFC 0246** `Active` 2026-10-16, **safety-fix**, 90-day window waived by STEWARD OVERRIDE (a trajectory-failed trial
+      cannot carry a task or suite to `passed`). Suite 2.46.13 carries the fields, two fixtures and three legs. Owed: MyndHyve
+      ships the gate (G3, the waiver's condition) and passes `0246.mean-gated` / `0246.suite-gated` on a certified cut for
+      `Accepted`; publish advisory `GHSA-ffx7-pm5h-v6pq` with the 2.46.13 release; the RFC 0156 §B review.
 - [x] **RFC 0247** `Accepted` (provisional) 2026-10-16 (bounded stream lifetime). Host half: openwop-app 2.46.12 cut `aee0febbc`
       advertises `maxStreamAgeSec: 300`, 12/12 resume rows pass; SDK half: openwop-sdks `v2.6.0`. Owed: the RFC 0156 §B review.
       Register rows stay transferred here: (G1) no suite leg observes a bounded close (needs a long-hold live run); (G2) a

@@ -105,7 +105,7 @@
             "mean"
           ],
           "default": "all",
-          "description": "A task passes when: `all`, every trial passed; `any`, at least one did; `mean`, the mean trial score >= `thresholds.passScore`."
+          "description": "A task passes when: `all`, every trial passed; `any`, at least one did; `mean`, the task gating score >= `thresholds.passScore` (RFC 0246 §B: the mean over trials of the trial score, with 0 for a trial that failed its trajectory or failed closed; `meanScore` itself is unchanged)."
         }
       }
     },
