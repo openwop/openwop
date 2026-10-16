@@ -1,7 +1,7 @@
 asyncapi: 3.1.0
 info:
   title: OpenWOP v2 event streams
-  version: 2.46.11
+  version: 2.46.12
   description: 'OpenWOP v2 event streams over SSE. The run-events channel''s address is the OpenAPI path key, and the server
     pathname is empty (bare origin). `streamMode` is a stream mode from the closed set, or a comma-separated combination of
     them; `values` never combines. `hostEvents` has a default address, `/host/events`; a host MAY declare another under `heartbeat.deliveryChannel`.
@@ -56,6 +56,10 @@ operations:
               type: string
               pattern: ^(values|(updates|messages|debug)(,(updates|messages|debug))*)$
               default: updates
+            resumable:
+              type: boolean
+              default: false
+              description: RFC 0247 opt-in to a bounded close (events.md §Bounded close).
   subscribeHostEvents:
     action: receive
     channel:
@@ -64,6 +68,14 @@ operations:
     bindings:
       http:
         method: GET
+        query:
+          type: object
+          additionalProperties: false
+          properties:
+            resumable:
+              type: boolean
+              default: false
+              description: RFC 0247 opt-in to a bounded close (events.md §Bounded close).
 components:
   securitySchemes:
     ApiKeyAuth:

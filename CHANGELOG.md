@@ -8,6 +8,7 @@ Entries before this file was condensed carried full development detail. That tex
 
 ## [Unreleased]
 
+- **RFC 0247 Active (window waived): bounded stream lifetime.** With `resumable=true` on `streamRunEvents` / `streamHostEvents`, a host advertising `limits.maxStreamAgeSec` MAY end a live stream after 15 s; it is not terminal and the consumer resumes with `Last-Event-ID`. Without the parameter nothing changes.
 - **2.46.11 cycle (suite): a row two files witness is the same on every run.** Across files the ledger reader kept the last worker's line, so `assertions` and `scenario` changed between cuts with no result change. The worst result still wins; counts now sum and a tie names the first file.
 - **RFC 0243 G2 closes.** openwop-app's certified production cut on suite 2.46.6 (444/0/0, build `44960bca5`) records `0243.max-fan-out-waves`, `0243.per-item-input-gated` and `agents.dispatch-per-item-length-mismatch` `executed-pass`; the packed `gaps.json` changes.
 - **2.46.7 cycle (suite): one id per leg.** A requirement id passed through a helper (`assert(ID, judge(o))`) is now in `requirements.json`. Before, a soft-skipped row of such a leg took a title-derived `openwop.it.*` id while an executed row carried the requirement id: 20 legs in 7 files.
@@ -19,8 +20,7 @@ Entries before this file was condensed carried full development detail. That tex
 - **RFC 0239 Accepted (provisional).** Tier-1 evidence: the v2 reference host's certified public cut on suite 2.45.23 (512/0/0, build `1492562f`) records the three council-roster ids `executed-pass`; gap G1 closes, so the packed `gaps.json` changes. openwop-app's production cut (`90e7f78ee`) is a second witness.
 - **2.45.25 cycle (suite):** new `v2-wasm-abi-reject` reads a WASM pack's rejection at load from what it prevents: the ABI-999 pack listed in `loadedPacks`, or its node completing (`conformance-wasm-pack-abi-mismatch`). The `frontend-plugin-packs` schema legs move to `src/coherence/` (RFC 0238 G3).
 - **Erratum: `provider_policy_denied` reasons are snake_case.** The registry (from RFC 0228) spelled `details.reason` in kebab-case; the prose, v1 and every measured host use `provider_disabled`, `byok_required`, `byok_required_but_unresolved`, `model_not_allowed`. They are reasons, not codes.
-- **Corpus cleanup, part 2.** Root docs, the conformance package docs, the remaining `docs/` guides and the maintainer skills are rewritten v2-first: current versions, the 2026-10-04 v1 end of support, the real 10-step gate and two-package release; stale history is gone.
-- **Corpus cleanup, part 1.** Deleted 22 dated docs (plans, audit reports, closed handoffs, superseded guides; live links now use permalinks), 10 one-off scripts, the dead `cve-scan` workflow and `.gitignore` rules for moved directories; v2-first templates; `noEmit` in `conformance/tsconfig.json`.
+- **Corpus cleanup.** Deleted 22 dated docs (live links use permalinks), 10 one-off scripts, the dead `cve-scan` workflow and stale `.gitignore` rules; `noEmit` in `conformance/tsconfig.json`. Root, package and `docs/` guides, templates and skills are rewritten v2-first (2026-10-04 v1 end of support, 10-step gate).
 - **README rewritten for v2.** The root README now leads with v2: status, install, a v2 core-doc index (30 docs), quickstart and repositories; v1 is named only as end-of-support. The coherence test for the document index checks `spec/v2/core` instead of `spec/v1` (2.45.24 cycle; renamed requirement ids).
 - **2.45.23 cycle (suite):** purpose labels are witnessed on a real onward hop. `v2-purpose-propagation-onward` hands the host a label through the §22 A2A `invoke` seam, now defined in `api/seams-v2.yaml`, and the suite's peer checks what arrives. The witness is seam-gated; a normative path is still owed.
 - **WASM fixture packs.** Two hand-written WebAssembly node packs (`conformance/fixtures/wasm-packs/`: a memory bomb and an ABI-999 pack) replace the Rust build an operator needed. New `v2-wasm-memory-cap` witnesses the §WASM memory ceiling at major 2.
@@ -28,6 +28,11 @@ Entries before this file was condensed carried full development detail. That tex
 - **RFC 0238 filed and Active (window waived); `host.announce` erratum.** `uiPlugins.served`, `getUiPluginFrame` and `dispatchUiPluginRequest`; `packs.md` binds the frame as the only mount. The four `frontend-plugin-*` invariants become `witnessable-gated` through `v2-ui-plugin-boundary`.
 - **2.45.23 cycle (suite):** `0184.mint-no-tilde` also mints one run under the second-tenant credential, so a host whose primary tenant is clean can still make the leg bite by binding tenant B to a non-clean tenant.
 - **Erratum: `identity.md` §5 grammar table matches `ids.schema.json` again.** `tenantId` gets its own row with the `anon:` prefix its pattern has had since 2.0.0. `typeId` gains the `@<semver>` pin from RFC 0187. No wire change. `check-id-kinds-bound` now compares the table against the schema.
+
+## [2.46.12] — 2026-10-16 — RFC 0245 and RFC 0247 Active
+
+- **RFC 0245 `Active`:** an eval fixture can record that a tool call failed (`toolResponses[].isError`, gated by `agents.evalSuite.fixtureErrors`), so a replay returns a tool error instead of a success. Schema only; the gated legs follow.
+- **RFC 0247 `Active`:** with `resumable=true` on `streamRunEvents` / `streamHostEvents`, a host advertising `limits.maxStreamAgeSec` may end a live stream after 15 s; the close is not terminal and the consumer resumes with `Last-Event-ID`. No assertion changes.
 
 ## [2.46.11] — 2026-10-15 — a shared id reads the same on every run
 

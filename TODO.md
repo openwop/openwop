@@ -271,6 +271,10 @@ Defects outside the spec:
       a task or suite to `passed`; openwop-app eval remediation). Owed before `Active`: the window; a GitHub security
       advisory for the `### Security` CHANGELOG entry (G1); then the schema fields, the
       `conformance-eval-trajectory-gate` fixture and the two legs, and the COMPATIBILITY-CORRECTIONS-LOG row.
+- [ ] **RFC 0247** `Active` 2026-10-15, window waived (bounded stream lifetime: `resumable=true` opt-in, `limits.maxStreamAgeSec`;
+      from openwop-app ADR 0897, Cloud Run hides client disconnects). Spec, facet and OpenAPI/AsyncAPI parameter landed. Owed: a host
+      bounding opted-in streams while passing the resume legs, and the v2 SDKs opting in. Register rows: (G1) no suite leg observes a
+      bounded close (needs a long-hold live run); (G2) a hop-specific bound is not discoverable.
 - [ ] **Next major: `dataResidency.regions` `minItems: 1`.** /architect ruling 2026-10-05: narrowing is a major
       (COMPATIBILITY.md §2.4), and not a safety fix. Within v2 an empty list is a claim: the host honours
       residency nowhere and MUST refuse every constraint. Since 2.45.22 the reject leg binds there (it

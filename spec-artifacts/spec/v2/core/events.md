@@ -1,7 +1,7 @@
 # Events
 
 > **Status: Stable.**
-> **Normative home:** `heartbeat`, `hostEvents`, `envelopeContracts`, `envelopes`, `feedback`, `providerUsage`, `supportedEnvelopes`, `schemaVersions`, `envelopeStrictness`.
+> **Normative home:** `heartbeat`, `hostEvents`, `envelopeContracts`, `envelopes`, `feedback`, `providerUsage`, `supportedEnvelopes`, `schemaVersions`, `envelopeStrictness`, `limits`.
 
 ## Why this exists
 
@@ -100,7 +100,7 @@ Each frame carries `id:` (the `sequence`), `event:` (the v2 `type`, in a single 
 - `batch` — `bufferMs`; `data:` is an array of `RunEventDoc`.
 - `ai.message.chunk` — `messages` mode; `data:` is the `outputChunk` payload, persisted as type `output.chunk`.
 
-A host MUST set `Content-Type: text/event-stream`, MUST emit a keep-alive comment at least every 30 seconds, and MUST close the connection after the run's terminal event (`run.completed`, `run.failed`, `run.cancelled`).
+A host MUST set `Content-Type: text/event-stream`, MUST emit a keep-alive comment at least every 30 seconds, and MUST close the connection after the run's terminal event.
 
 #### Resuming with `Last-Event-ID`
 
@@ -111,6 +111,10 @@ A host MUST set `Content-Type: text/event-stream`, MUST emit a keep-alive commen
 - A host MUST NOT refuse a well-formed non-negative integer `Last-Event-ID` because no event carries that sequence. Any other value SHOULD be refused with `400 validation_error`.
 - The header is evaluated only after the caller is authorized to read the run. For a run the caller cannot read, the response MUST be the one the host gives without the header.
 - In `values` mode, resumption MUST emit a `state.snapshot` first.
+
+#### Bounded close
+
+With `resumable=true`, a host advertising `limits.maxStreamAgeSec` MAY end a live stream early, per that facet. That close is not terminal; the consumer MUST resume with `Last-Event-ID`.
 
 #### Batching and subscribers
 
@@ -171,7 +175,7 @@ The response is `{ runId, events, lastSequence, status, isTerminal }` (closed):
 A run's log MUST contain exactly one terminal run event: `run.completed`, `run.failed` or `run.cancelled`.
 
 - After it, the log MUST NOT contain another terminal run event, `run.started`, `run.resumed`, `run.resume-started`, `run.paused`, `run.restored-from-snapshot`, any `node.*` event or any `interrupt.*` event.
-- `compensation.*` events and `run.dead-lettered` MAY follow it (a compensating host unwinds after a cancelled parent). Vendor-prefixed types are unconstrained.
+- `compensation.*` events and `run.dead-lettered` MAY follow it. Vendor-prefixed types are unconstrained.
 - A host that receives work for a run whose terminal event is recorded (a duplicate delivery, a late worker) MUST NOT append forward-execution events for it, SHOULD record the refusal in its operational log, and MUST NOT surface the refusal as a run event.
 
 ## Era-2 logs
@@ -189,7 +193,7 @@ An `eventLogSchemaVersion` of `2` means v1-written. Every reader, diff included,
 
 `supportedEnvelopes.kinds` is the catalog. A host advertising it MUST refuse an emitted `type` that is neither universal nor a member, with `unknown_envelope_kind`.
 
-An absent `kinds` is not an empty catalog and is not an unrestricted one: a host advertising `supportedEnvelopes` without it has made no catalog claim, and an engine MUST refuse every non-universal kind rather than admit it unchecked.
+An absent `kinds` is not an empty catalog and is not an unrestricted one: an engine MUST refuse every non-universal kind.
 
 ### `schemaVersions`
 
@@ -223,7 +227,7 @@ An absent `kinds` is not an empty catalog and is not an unrestricted one: a host
 A host advertising `providerUsage` MUST emit exactly one `provider.usage` per LLM provider invocation, before that node's `node.completed`. A host that does not advertise it omits the event.
 
 - `inputTokens` and `outputTokens` MUST replay identically; `costEstimateUsd` MAY be omitted on replay.
-- **`providerUsage.costEstimates`** advertises that the host stamps a derived cost on the event. That figure is an estimate from the host's own rate table; a consumer MUST NOT treat it as a billed amount.
+- **`providerUsage.costEstimates`** advertises that the host stamps a derived cost on the event. It is an estimate from the host's rate table; a consumer MUST NOT treat it as a billed amount.
 - The payload MUST NOT carry credential refs, hashed credential identifiers, or prompt or response text (invariant `provider-usage-no-credential-leak`).
 - `providerUsage.currency` is the ISO 4217 currency of `costEstimateUsd`; absent means USD.
 
@@ -253,4 +257,4 @@ Under `reliability.completion.distinguishesTruncation`, an envelope is complete 
 - On exhaustion the host MUST emit `envelope.retry-exhausted` with that `finalReason` and `cap.breached` `kind: "schema"`, and fail the node with `envelope_truncation_unrecoverable` or `envelope_invalid`.
 - Lenient-parse recovery consumes no retry. It emits `envelope.recovery-applied` once per recovery, carrying only the path and an optional byte offset.
 
-*Sources: RFCs 0026, 0030, 0032, 0033, 0056, 0060, 0171, 0172, 0176, 0185, 0194, 0213, 0236.*
+*Sources: RFCs 0026, 0030, 0032, 0033, 0056, 0060, 0171, 0172, 0176, 0185, 0194, 0213, 0236, 0247.*

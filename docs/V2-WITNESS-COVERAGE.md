@@ -10,7 +10,7 @@ Every v2 core family now has a v2 normative home (RFC 0189). Many of its rules a
 
 - **Families (74 core):** 74 v2-witnessed, 0 v1-only, 0 unwitnessed. Of the 56 `witnessable-gated` families, 0 are v1-only; every unwitnessed family is `claims-check`.
 - **At v1 end-of-support:** the 0 v1-only families, and the 0 obligation units attributed to them, lose their only witness.
-- **Obligation units (900 in `spec/v2/core/`):** 613 (68%) sit in a section a major-2 scenario cites; 287 sit in 99 sections no major-2 scenario cites.
+- **Obligation units (901 in `spec/v2/core/`):** 614 (68%) sit in a section a major-2 scenario cites; 287 sit in 99 sections no major-2 scenario cites.
 - **Declaration links:** 0 core families declare `floorScenarios`; 2 declare `requirementIds`. The family-to-test link exists only in scenario code and citations, although `overview.md` §What a MUST means says every core MUST has an id in `requirements.json`.
 - **Scenarios:** 658 registered, 218 run at major 2. 34 major-2 citations name a v2 core section this script cannot match to a heading (see Citation gaps).
 
@@ -111,7 +111,7 @@ Every v2 core family now has a v2 normative home (RFC 0189). Many of its rules a
 | `connection-packs.md` | 10 | 0 (0%) | `connections` |
 | `conversation.md` | 6 | 6 (100%) | `multiPartyConversation`, `conversationTurnModelProvenance`, `channelPresence` |
 | `errors.md` | 18 | 18 (100%) | – |
-| `events.md` | 68 | 42 (62%) | `supportedEnvelopes`, `schemaVersions`, `envelopeStrictness`, `envelopeContracts`, `envelopes`, `feedback`, `providerUsage`, `heartbeat`, `hostEvents` |
+| `events.md` | 69 | 43 (62%) | `supportedEnvelopes`, `schemaVersions`, `limits`, `envelopeStrictness`, `envelopeContracts`, `envelopes`, `feedback`, `providerUsage`, `heartbeat`, `hostEvents` |
 | `execution.md` | 34 | 0 (0%) | `selfHostedRunner`, `multiAgent`, `agents`, `subWorkflow` |
 | `form-content-packs.md` | 11 | 1 (9%) | `forms` |
 | `headers.md` | 7 | 5 (71%) | – |
@@ -412,10 +412,10 @@ node scripts/report-v2-witness-coverage.mjs --write  # regenerate this file
     }
   },
   "obligationUnits": {
-    "total": 900,
-    "inV2CitedSections": 613,
+    "total": 901,
+    "inV2CitedSections": 614,
     "inUncitedSections": 287,
-    "sectionsWithObligations": 271,
+    "sectionsWithObligations": 272,
     "sectionsWithNoV2Citation": 99
   },
   "declarationLinks": {
