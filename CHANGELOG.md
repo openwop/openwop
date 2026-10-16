@@ -8,10 +8,6 @@ Entries before this file was condensed carried full development detail. That tex
 
 ## [Unreleased]
 
-- **RFC 0247 Active (window waived): bounded stream lifetime.** With `resumable=true` on `streamRunEvents` / `streamHostEvents`, a host advertising `limits.maxStreamAgeSec` MAY end a live stream after 15 s; it is not terminal and the consumer resumes with `Last-Event-ID`. Without the parameter nothing changes.
-- **2.46.11 cycle (suite): a row two files witness is the same on every run.** Across files the ledger reader kept the last worker's line, so `assertions` and `scenario` changed between cuts with no result change. The worst result still wins; counts now sum and a tie names the first file.
-- **RFC 0243 G2 closes.** openwop-app's certified production cut on suite 2.46.6 (444/0/0, build `44960bca5`) records `0243.max-fan-out-waves`, `0243.per-item-input-gated` and `agents.dispatch-per-item-length-mismatch` `executed-pass`; the packed `gaps.json` changes.
-- **2.46.7 cycle (suite): one id per leg.** A requirement id passed through a helper (`assert(ID, judge(o))`) is now in `requirements.json`. Before, a soft-skipped row of such a leg took a title-derived `openwop.it.*` id while an executed row carried the requirement id: 20 legs in 7 files.
 - **2.46.2 cycle (suite): the seams profile is derived from its advert.** Its predicate is `conformance.seamsProfile`, not the whole `conformance` block (`capabilities.md` §7 `key.member`). Four openwop-app bundles certified it with only `certificationBundleUrl`; `--verify` now refuses that certification.
 - **RFC 0242 Accepted (provisional).** Tier-1 evidence: the v2 reference host's certified public cut on suite 2.46.0 (531/1/0, build `d16cac40`) records all seven `0242.*` ids `executed-pass`; G1 closes, so the packed `gaps.json` changes. The one failure was a suite defect.
 - **2.46.1 cycle (suite):** the modal webhook receiver's `close()` closes idle and then all connections, so a keep-alive socket held by a public tunnel no longer times out `v2-webhook-message-id-stable`'s `afterEach`. No assertion changes.
@@ -28,6 +24,10 @@ Entries before this file was condensed carried full development detail. That tex
 - **RFC 0238 filed and Active (window waived); `host.announce` erratum.** `uiPlugins.served`, `getUiPluginFrame` and `dispatchUiPluginRequest`; `packs.md` binds the frame as the only mount. The four `frontend-plugin-*` invariants become `witnessable-gated` through `v2-ui-plugin-boundary`.
 - **2.45.23 cycle (suite):** `0184.mint-no-tilde` also mints one run under the second-tenant credential, so a host whose primary tenant is clean can still make the leg bite by binding tenant B to a non-clean tenant.
 - **Erratum: `identity.md` §5 grammar table matches `ids.schema.json` again.** `tenantId` gets its own row with the `anon:` prefix its pattern has had since 2.0.0. `typeId` gains the `@<semver>` pin from RFC 0187. No wire change. `check-id-kinds-bound` now compares the table against the schema.
+
+### Security
+
+- **RFC 0246 Active (safety fix, `GHSA-ffx7-pm5h-v6pq`): a trial that failed its trajectory cannot carry a task or a suite to a pass.** The `mean` task rule and suite `passed` read a gating score that counts it 0; reported scores are unchanged. 90-day window waived by recorded STEWARD OVERRIDE.
 
 ## [2.46.12] — 2026-10-16 — RFC 0245 and RFC 0247 Active
 

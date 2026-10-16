@@ -14776,8 +14776,8 @@
       "surface": "`COMPATIBILITY.md` §3 requires a `### Security` CHANGELOG entry citing an advisory ID per `SECURITY.md`; no advisory exists yet.",
       "witness": "unclassified",
       "requirementId": null,
-      "disposition": "transferred",
-      "target": "TODO.md",
+      "disposition": "closed",
+      "target": null,
       "sources": [
         {
           "file": "RFCS/registers/0246-trajectory-failure-gates-the-pass.gaps.md",
@@ -14799,6 +14799,23 @@
         {
           "file": "RFCS/registers/0246-trajectory-failure-gates-the-pass.gaps.md",
           "token": "G2"
+        }
+      ]
+    },
+    {
+      "id": "openwop.gap.0246.3",
+      "rfc": "0246",
+      "local": "G3",
+      "section": "§Compatibility",
+      "surface": "MyndHyve (build `73befc109`) implements RFC 0244 and decides both the `mean` task pass and the suite `passed` on output scores, so it is in the harm set; the window waiver is conditional on its fix.",
+      "witness": "unclassified",
+      "requirementId": null,
+      "disposition": "transferred",
+      "target": "TODO.md",
+      "sources": [
+        {
+          "file": "RFCS/registers/0246-trajectory-failure-gates-the-pass.gaps.md",
+          "token": "G3"
         }
       ]
     },

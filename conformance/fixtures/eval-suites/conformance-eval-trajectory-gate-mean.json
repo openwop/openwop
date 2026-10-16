@@ -1,0 +1,54 @@
+{
+  "suiteId": "core.openwop.evals.conformance-eval-trajectory-gate-mean",
+  "version": "1.0.0",
+  "targetAgentId": "core.conformance.agents.scripted",
+  "modes": [
+    "golden"
+  ],
+  "thresholds": {
+    "passScore": 0.6
+  },
+  "trials": {
+    "count": 2,
+    "k": 2,
+    "passRule": "mean"
+  },
+  "tasks": [
+    {
+      "taskId": "path-wrong",
+      "input": {
+        "script": [
+          {
+            "tool": "conformance.eval:lookup",
+            "arguments": {
+              "orderId": "o-1"
+            }
+          },
+          {
+            "tool": "conformance.eval:refund-all",
+            "arguments": {}
+          }
+        ],
+        "output": "done"
+      },
+      "expected": {
+        "kind": "golden",
+        "match": {
+          "strategy": "contains",
+          "value": "done"
+        },
+        "trajectory": {
+          "match": "any-order",
+          "calls": [
+            {
+              "tool": "conformance.eval:lookup"
+            }
+          ],
+          "forbidden": [
+            "conformance.eval:refund-all"
+          ]
+        }
+      }
+    }
+  ]
+}

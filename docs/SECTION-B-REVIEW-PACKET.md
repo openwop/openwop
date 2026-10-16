@@ -6,7 +6,7 @@
 
 RFC 0156 §B: RFCs affecting auth, identity, tenant isolation, secrets, packs, execution sandboxing, idempotency, replay, external effects, conformance/certification, or governance **MUST** receive a retrospective **cross-organization** review. Every RFC below was accepted with its public comment window shortened, either under the bootstrap waiver or by explicit steward override of RFC 0147 §A.6. Each such acceptance is **provisional** until a reviewer from an organization other than the steward's records an outcome.
 
-This packet is for that reviewer. **123 RFCs are listed; 123 have no discharging outcome.** The steward, the steward's sessions, and steward-affiliated hosts (MyndHyve is tier-2, not independent) cannot supply the review. Recording one of their reviews as `ratified` is the substitution §B's last clause forbids.
+This packet is for that reviewer. **124 RFCs are listed; 124 have no discharging outcome.** The steward, the steward's sessions, and steward-affiliated hosts (MyndHyve is tier-2, not independent) cannot supply the review. Recording one of their reviews as `ratified` is the substitution §B's last clause forbids.
 
 ## How to review one RFC
 
@@ -113,7 +113,7 @@ Grouping below is a reading aid only: it assigns each RFC to the risk class its 
 | [0205](../RFCS/0205-run-artifacts-and-turns-speak-a2a-parts.md) | run artifacts and conversation content speak A2A Parts | `Accepted` | bootstrap waiver | tier-1 — the v2 reference host | `not-reviewed` |
 | [0207](../RFCS/0207-trace-context-across-mcp-and-a2a.md) | trace context across MCP and A2A, and debug-bundle spans that join the trace | `Accepted` | bootstrap waiver | tier-1 — the v2 reference host | `not-reviewed` |
 
-## Conformance and certification (13)
+## Conformance and certification (14)
 
 | RFC | Title | Status | Waiver | Evidence tier | Outcome |
 | --- | --- | --- | --- | --- | --- |
@@ -130,6 +130,7 @@ Grouping below is a reading aid only: it assigns each RFC to the risk class its 
 | [0237](../RFCS/0237-nondeterminism-sources.md) | Declared nondeterminism names its sources | `Accepted` | steward override of RFC 0147 §A.6 | tier-1 — the v2 reference host | `not-reviewed` |
 | [0242](../RFCS/0242-negotiation-decided-requested-and-inbound.md) | a negotiation record says what was asked for, and an inbound negotiation has a home | `Accepted` | steward override of RFC 0147 §A.6 | tier-1 — the v2 reference host | `not-reviewed` |
 | [0244](../RFCS/0244-eval-trajectories-trials-and-recorded-fixtures.md) | eval suites grade the tool path, run repeated trials, and fail closed on a fixture miss | `Accepted` | steward override of RFC 0147 §A.6 | tier-2 — one certified host, the independent second host | `not-reviewed` |
+| [0246](../RFCS/0246-trajectory-failure-gates-the-pass.md) | a trajectory-failed trial cannot carry a task or a suite to a pass | `Active` | bootstrap waiver | not declared (predates RFC 0174 §B.1, or not yet Accepted) | `not-reviewed` |
 
 ## Governance (6)
 

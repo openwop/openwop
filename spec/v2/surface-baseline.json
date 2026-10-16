@@ -18,7 +18,7 @@
       "type"
     ]
   },
-  "count": 8933,
+  "count": 8937,
   "surfaces": [
     "schemas/v2/a2a-task-state.schema.json#/contextId|type|string",
     "schemas/v2/a2a-task-state.schema.json#/interruptKind|enum-member|\"approval\"",
@@ -5701,6 +5701,7 @@
     "schemas/v2/eval-summary.schema.json#/evaluatedModelClass|enum-member|\"research\"",
     "schemas/v2/eval-summary.schema.json#/evaluatedModelClass|enum-member|\"writing\"",
     "schemas/v2/eval-summary.schema.json#/evaluatedModelClass|type|string",
+    "schemas/v2/eval-summary.schema.json#/gatedAggregateScore|type|number",
     "schemas/v2/eval-summary.schema.json#/passedCount|type|integer",
     "schemas/v2/eval-summary.schema.json#/passed|type|boolean",
     "schemas/v2/eval-summary.schema.json#/pinnedNodeIds|type|array",
@@ -5740,6 +5741,7 @@
     "schemas/v2/eval-summary.schema.json#/tasks/[]/efficiency|property|toolCallCount",
     "schemas/v2/eval-summary.schema.json#/tasks/[]/efficiency|type|object",
     "schemas/v2/eval-summary.schema.json#/tasks/[]/fixtureMissCount|type|integer",
+    "schemas/v2/eval-summary.schema.json#/tasks/[]/gatedScore|type|number",
     "schemas/v2/eval-summary.schema.json#/tasks/[]/latencyMs|type|integer",
     "schemas/v2/eval-summary.schema.json#/tasks/[]/passed|type|boolean",
     "schemas/v2/eval-summary.schema.json#/tasks/[]/safetyFindings/[]/kind|type|string",
@@ -5803,6 +5805,7 @@
     "schemas/v2/eval-summary.schema.json#/tasks/[]|property|costUsd",
     "schemas/v2/eval-summary.schema.json#/tasks/[]|property|efficiency",
     "schemas/v2/eval-summary.schema.json#/tasks/[]|property|fixtureMissCount",
+    "schemas/v2/eval-summary.schema.json#/tasks/[]|property|gatedScore",
     "schemas/v2/eval-summary.schema.json#/tasks/[]|property|latencyMs",
     "schemas/v2/eval-summary.schema.json#/tasks/[]|property|passed",
     "schemas/v2/eval-summary.schema.json#/tasks/[]|property|safetyFindings",
@@ -5833,6 +5836,7 @@
     "schemas/v2/eval-summary.schema.json#|closed|true",
     "schemas/v2/eval-summary.schema.json#|property|aggregateScore",
     "schemas/v2/eval-summary.schema.json#|property|evaluatedModelClass",
+    "schemas/v2/eval-summary.schema.json#|property|gatedAggregateScore",
     "schemas/v2/eval-summary.schema.json#|property|passed",
     "schemas/v2/eval-summary.schema.json#|property|passedCount",
     "schemas/v2/eval-summary.schema.json#|property|pinnedNodeIds",

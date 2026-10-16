@@ -267,10 +267,10 @@ Defects outside the spec:
       from openwop-app). Schema field and `fixtureErrors` member landed. Owed: the `conformance-eval-fixture-error`
       fixture and the two gated legs (`0245.fixture-error-replayed`, `0245.unadvertised-refused`), then a witness host. Register rows: (G1) the agent-side half is
       seam-gated with RFC 0244 G2; (G2) whether to register a tool-failure error code; (G3) the non-MCP agent shape.
-- [ ] **RFC 0246** `Draft` 2026-10-15, **safety-fix**, 90-day window to 2027-01-13 (a trajectory-failed trial cannot carry
-      a task or suite to `passed`; openwop-app eval remediation). Owed before `Active`: the window; a GitHub security
-      advisory for the `### Security` CHANGELOG entry (G1); then the schema fields, the
-      `conformance-eval-trajectory-gate` fixture and the two legs, and the COMPATIBILITY-CORRECTIONS-LOG row.
+- [ ] **RFC 0246** `Active` 2026-10-16, **safety-fix**, 90-day window waived by STEWARD OVERRIDE (a trajectory-failed trial
+      cannot carry a task or suite to `passed`). Suite 2.46.13 carries the fields, two fixtures and three legs. Owed: MyndHyve
+      ships the gate (G3, the waiver's condition) and passes `0246.mean-gated` / `0246.suite-gated` on a certified cut for
+      `Accepted`; publish advisory `GHSA-ffx7-pm5h-v6pq` with the 2.46.13 release; the RFC 0156 §B review.
 - [ ] **RFC 0247** `Active` 2026-10-15, window waived (bounded stream lifetime: `resumable=true` opt-in, `limits.maxStreamAgeSec`;
       from openwop-app ADR 0897, Cloud Run hides client disconnects). Spec, facet and OpenAPI/AsyncAPI parameter landed. Owed: a host
       bounding opted-in streams while passing the resume legs, and the v2 SDKs opting in. Register rows: (G1) no suite leg observes a

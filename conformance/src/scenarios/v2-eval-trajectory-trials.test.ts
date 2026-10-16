@@ -32,7 +32,20 @@
  *      lists `conformance-eval-trials` refuses it at createRun with
  *      `400 validation_error`.
  *
+ * RFC 0246 (safety fix): a trial that failed its trajectory counts 0 in the
+ * two pass decisions, while every reported score is unchanged. Judges in
+ * `lib/eval-gate-witness.ts`.
+ *   7. Server-free — `gatedScore` and `gatedAggregateScore` validate; a value
+ *      outside 0–1 is refused.
+ *   8. `conformance-eval-trajectory-gate-mean` (trajectory + trials) — under
+ *      `passRule: "mean"` a task whose two trials took a forbidden path keeps
+ *      `meanScore: 1` and does not pass (`gatedScore: 0`).
+ *   9. `conformance-eval-trajectory-gate` (trajectory) — `aggregateScore` 1
+ *      clears `passScore` 0.6, the gating aggregate 0.5 does not, so the suite
+ *      does not pass. An RFC 0244-only host reports `passed: true` on both.
+ *
  * @see RFCS/0244-eval-trajectories-trials-and-recorded-fixtures.md
+ * @see RFCS/0246-trajectory-failure-gates-the-pass.md
  */
 
 import { describe, it, expect } from 'vitest';
@@ -48,6 +61,7 @@ import { isFixtureAdvertised } from '../lib/fixtures.js';
 import { FIXTURES_DIR } from '../lib/paths.js';
 import { pollTerminal, readEvents, isRecord, type Ev } from '../lib/fixture-run-observer.js';
 import { gradeTrajectory, passAtK, passHatK, scoreStderr, withinTolerance, type TrajectorySpec } from '../lib/eval-trajectory.js';
+import { judgeMeanGated, judgeSuiteGated } from '../lib/eval-gate-witness.js';
 
 const PROFILE = majorProfile(2);
 const UNREADABLE = 'v2 discovery unreachable — /.well-known/openwop did not answer 200 JSON under OpenWOP-Version: 2.0';
@@ -62,6 +76,10 @@ const ID_TRIALS = 'openwop.requirement.0244.trials-per-task';
 const ID_TRIAL_STATS = 'openwop.requirement.0244.trial-stats-formula';
 const ID_MISS = 'openwop.requirement.0244.fixture-miss-fails';
 const ID_REFUSED = 'openwop.requirement.0244.unadvertised-feature-refused';
+const ID_GATED_SHAPE = 'openwop.requirement.0246.gated-fields-shape';
+const ID_MEAN_GATED = 'openwop.requirement.0246.mean-gated';
+const ID_SUITE_GATED = 'openwop.requirement.0246.suite-gated';
+const DOC_0246 = 'eval-summary.schema.json gatedScore / gatedAggregateScore (RFC 0246)';
 
 interface Task { taskId: string; input: { script: Array<{ tool: string; arguments?: unknown }>; output: string }; expected: { kind: string; trajectory?: TrajectorySpec } }
 interface Suite { tasks: Task[]; trials?: { count: number; k?: number; passRule?: string } }
@@ -142,10 +160,18 @@ describe('v2 RFC 0244 — wire shape (server-free)', () => {
   });
 
   it('the eval-suite fixtures validate against the v2 suite schema', () => {
-    for (const id of ['conformance-eval-trajectory', 'conformance-eval-trials', 'conformance-eval-fixture-miss']) {
+    for (const id of ['conformance-eval-trajectory', 'conformance-eval-trials', 'conformance-eval-fixture-miss', 'conformance-eval-trajectory-gate', 'conformance-eval-trajectory-gate-mean']) {
       const r = suiteSchema(fixture(id));
       expect(r.ok, req(ID_FIXTURES, 'fixtures.md §eval-suites', `${id} MUST validate: ${r.errors}`)).toBe(true);
     }
+  });
+
+  it('the RFC 0246 gating fields validate and stay in 0–1', () => {
+    const base = { suiteId: 'core.openwop.evals.x', suiteVersion: '1.0.0', aggregateScore: 1, passed: false, taskCount: 1, passedCount: 0 };
+    const ok = { ...base, gatedAggregateScore: 0, tasks: [{ taskId: 't', score: 1, gatedScore: 0, passed: false }] };
+    expect(summarySchema(ok).ok, req(ID_GATED_SHAPE, DOC_0246, `gatedScore and gatedAggregateScore MUST validate: ${summarySchema(ok).errors}`)).toBe(true);
+    expect(summarySchema({ ...ok, gatedAggregateScore: 1.5 }).ok, req(ID_GATED_SHAPE, DOC_0246, 'gatedAggregateScore above 1 MUST be refused')).toBe(false);
+    expect(summarySchema({ ...ok, tasks: [{ taskId: 't', score: 1, gatedScore: -0.1, passed: false }] }).ok, req(ID_GATED_SHAPE, DOC_0246, 'a negative gatedScore MUST be refused')).toBe(false);
   });
 });
 
@@ -254,5 +280,29 @@ describe('v2 RFC 0244 — host behaviour', () => {
     if (res.status === 201 && runId !== undefined) await http(() => driver.post(`${PROFILE.runsPath}/${PROFILE.idSegment(runId)}/cancel`, {}));
     expect(res.status, req(ID_REFUSED, DOC, `a trials suite on a host without agents.evalSuite.trials MUST be refused with 400 (got ${res.status})`)).toBe(400);
     expect(readErrorCode(res.json), req(ID_REFUSED, DOC, 'the refusal MUST carry validation_error')).toBe('validation_error');
+  });
+
+  it('under passRule "mean" a task whose trials failed their trajectory does not pass (RFC 0246)', async () => {
+    const { doc, facet } = await evalSuiteFacet();
+    if (!doc) return softSkip('blocked', UNREADABLE);
+    if (facet?.['trajectory'] !== true) return softSkip('inapplicable', 'the host does not advertise agents.evalSuite.trajectory');
+    if (!isRecord(facet['trials'])) return softSkip('inapplicable', 'the host does not advertise agents.evalSuite.trials, so passRule "mean" over trials does not apply');
+    const id = 'conformance-eval-trajectory-gate-mean';
+    if (!isFixtureAdvertised(id)) return softSkip('inapplicable', `the host does not advertise fixture ${id}`);
+    const o = await runSuite(id);
+    if (o.kind === 'skip') return softSkip(o.disposition, o.reason);
+    const scoredRows = o.events.filter((e) => e.type === 'eval.scored').map((e) => e.payload);
+    for (const x of judgeMeanGated(o.summary, scoredRows, fixture(id).trials!.count)) expect(x.ok, req(ID_MEAN_GATED, x.doc, x.message)).toBe(true);
+  });
+
+  it('a suite whose tasks failed their trajectory does not pass on the output scores (RFC 0246)', async () => {
+    const { doc, facet } = await evalSuiteFacet();
+    if (!doc) return softSkip('blocked', UNREADABLE);
+    if (facet?.['trajectory'] !== true) return softSkip('inapplicable', 'the host does not advertise agents.evalSuite.trajectory');
+    const id = 'conformance-eval-trajectory-gate';
+    if (!isFixtureAdvertised(id)) return softSkip('inapplicable', `the host does not advertise fixture ${id}`);
+    const o = await runSuite(id);
+    if (o.kind === 'skip') return softSkip(o.disposition, o.reason);
+    for (const x of judgeSuiteGated(o.summary, 0.6)) expect(x.ok, req(ID_SUITE_GATED, x.doc, x.message)).toBe(true);
   });
 });

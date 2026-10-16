@@ -3,10 +3,10 @@
   "generatedFrom": "src/scenarios/*.test.ts",
   "counts": {
     "files": 746,
-    "tests": 2808,
-    "withStableId": 2808,
+    "tests": 2811,
+    "withStableId": 2811,
     "interpolatedTitles": 0,
-    "explicitIds": 2681
+    "explicitIds": 2684
   },
   "records": [
     {
@@ -31028,7 +31028,7 @@
     {
       "id": "openwop.it.v2-eval-trajectory-trials.the-rfc-0244-suite-summary-and-event-fields-validate-and-the-negatives-are-refus",
       "file": "v2-eval-trajectory-trials.test.ts",
-      "line": 114,
+      "line": 132,
       "title": "the RFC 0244 suite, summary and event fields validate and the negatives are refused",
       "explicitId": "openwop.requirement.0244.wire-shape",
       "citations": [
@@ -31067,7 +31067,7 @@
     {
       "id": "openwop.it.v2-eval-trajectory-trials.the-rfc-0244-additions-are-content-free-eval-summary-no-content-leak",
       "file": "v2-eval-trajectory-trials.test.ts",
-      "line": 137,
+      "line": 155,
       "title": "the RFC 0244 additions are content-free (eval-summary-no-content-leak)",
       "explicitId": "openwop.requirement.0244.content-free",
       "citations": [
@@ -31084,7 +31084,7 @@
     {
       "id": "openwop.it.v2-eval-trajectory-trials.the-eval-suite-fixtures-validate-against-the-v2-suite-schema",
       "file": "v2-eval-trajectory-trials.test.ts",
-      "line": 144,
+      "line": 162,
       "title": "the eval-suite fixtures validate against the v2 suite schema",
       "explicitId": "openwop.requirement.0244.fixtures-valid",
       "citations": [
@@ -31096,9 +31096,31 @@
       ]
     },
     {
+      "id": "openwop.it.v2-eval-trajectory-trials.the-rfc-0246-gating-fields-validate-and-stay-in-0-1",
+      "file": "v2-eval-trajectory-trials.test.ts",
+      "line": 169,
+      "title": "the RFC 0246 gating fields validate and stay in 0–1",
+      "explicitId": "openwop.requirement.0246.gated-fields-shape",
+      "citations": [
+        {
+          "section": "eval-summary.schema.json gatedScore / gatedAggregateScore (RFC 0246)",
+          "requirement": null,
+          "interpolated": true
+        },
+        {
+          "section": "eval-summary.schema.json gatedScore / gatedAggregateScore (RFC 0246)",
+          "requirement": "gatedAggregateScore above 1 MUST be refused"
+        },
+        {
+          "section": "eval-summary.schema.json gatedScore / gatedAggregateScore (RFC 0246)",
+          "requirement": "a negative gatedScore MUST be refused"
+        }
+      ]
+    },
+    {
       "id": "openwop.it.v2-eval-trajectory-trials.a-trajectory-suite-is-graded-per-the-reference-grader",
       "file": "v2-eval-trajectory-trials.test.ts",
-      "line": 153,
+      "line": 179,
       "title": "a trajectory suite is graded per the reference grader",
       "explicitId": "openwop.requirement.0244.trajectory-graded",
       "citations": [
@@ -31132,7 +31154,7 @@
     {
       "id": "openwop.it.v2-eval-trajectory-trials.repeated-trials-emit-one-eval-scored-per-task-per-trial",
       "file": "v2-eval-trajectory-trials.test.ts",
-      "line": 189,
+      "line": 215,
       "title": "repeated trials emit one eval.scored per task per trial",
       "explicitId": "openwop.requirement.0244.trials-per-task",
       "citations": [
@@ -31150,7 +31172,7 @@
     {
       "id": "openwop.it.v2-eval-trajectory-trials.the-per-task-trials-block-and-trialstats-follow-the-b-formulas",
       "file": "v2-eval-trajectory-trials.test.ts",
-      "line": 200,
+      "line": 226,
       "title": "the per-task trials block and trialStats follow the §B formulas",
       "explicitId": "openwop.requirement.0244.trial-stats-formula",
       "citations": [
@@ -31189,7 +31211,7 @@
     {
       "id": "openwop.it.v2-eval-trajectory-trials.a-fixture-miss-under-onmiss-fail-fails-the-trial-and-is-counted",
       "file": "v2-eval-trajectory-trials.test.ts",
-      "line": 223,
+      "line": 249,
       "title": "a fixture miss under onMiss \"fail\" fails the trial and is counted",
       "explicitId": "openwop.requirement.0244.fixture-miss-fails",
       "citations": [
@@ -31226,7 +31248,7 @@
     {
       "id": "openwop.it.v2-eval-trajectory-trials.a-suite-using-an-unadvertised-rfc-0244-feature-is-refused-at-createrun",
       "file": "v2-eval-trajectory-trials.test.ts",
-      "line": 243,
+      "line": 269,
       "title": "a suite using an unadvertised RFC 0244 feature is refused at createRun",
       "explicitId": "openwop.requirement.0244.unadvertised-feature-refused",
       "citations": [
@@ -31238,6 +31260,34 @@
         {
           "section": "agents.schema.json §evalSuite (RFC 0244)",
           "requirement": "the refusal MUST carry validation_error"
+        }
+      ]
+    },
+    {
+      "id": "openwop.it.v2-eval-trajectory-trials.under-passrule-mean-a-task-whose-trials-failed-their-trajectory-does-not-pass-rf",
+      "file": "v2-eval-trajectory-trials.test.ts",
+      "line": 285,
+      "title": "under passRule \"mean\" a task whose trials failed their trajectory does not pass (RFC 0246)",
+      "explicitId": "openwop.requirement.0246.mean-gated",
+      "citations": [
+        {
+          "section": null,
+          "requirement": null,
+          "interpolated": true
+        }
+      ]
+    },
+    {
+      "id": "openwop.it.v2-eval-trajectory-trials.a-suite-whose-tasks-failed-their-trajectory-does-not-pass-on-the-output-scores-r",
+      "file": "v2-eval-trajectory-trials.test.ts",
+      "line": 298,
+      "title": "a suite whose tasks failed their trajectory does not pass on the output scores (RFC 0246)",
+      "explicitId": "openwop.requirement.0246.suite-gated",
+      "citations": [
+        {
+          "section": null,
+          "requirement": null,
+          "interpolated": true
         }
       ]
     },

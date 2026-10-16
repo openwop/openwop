@@ -4,11 +4,11 @@
 | ----------------- | --------------------------------------------------------------- |
 | **RFC**           | 0246                                                            |
 | **Title**         | A trial that fails its trajectory cannot carry a task or a suite to a pass |
-| **Status**        | `Draft`                                                         |
+| **Status**        | `Active`                                                        |
 | **Author(s)**     | David Tufts (@davidscotttufts)                                  |
 | **Created**       | 2026-10-15                                                      |
-| **Updated**       | 2026-10-15 — filed as a **safety-fix** on the steward's decision (2026-10-15). 90-day public window (`COMPATIBILITY.md` §3), not waived. UQ 1 resolved in the window: `gatedScore` is always present on a trajectory task. |
-| **Affects**       | `RFCS/0244` §A grading rule and §B task-level `passed` (corrected, not amended) · `schemas/v2/eval-summary.schema.json` (suite `passed` description; optional per-task `gatedScore`, optional suite `gatedAggregateScore`) · `schemas/v2/agent-eval-suite.schema.json` (`trials.passRule` description) · conformance: `v2-eval-trajectory-trials.test.ts` (two legs) · `docs/COMPATIBILITY-CORRECTIONS-LOG.md` |
+| **Updated**       | 2026-10-16 — **`Draft` → `Active`, the 90-day public window of `COMPATIBILITY.md` §3 waived by the maintainer: comment window waived, not run** (steward direction 2026-10-16: "We need to find a way to waive this 90 day period", then "Yes to both, record the override and finish #2003"). **STEWARD OVERRIDE — outside the bootstrap grant**, of two rules: the §3 90-day window (no embargo is claimed; the defect was public in this PR from filing), and **RFC 0147 §A.6**, which forbids shortening the window for an RFC affecting certification (this RFC adds `0246.*` rows to every major-2 bundle). Rationale, recorded in `MAINTAINERS.md`: the window exists to give implementers time to migrate, and the only implementers of `agents.evalSuite.trajectory` are the steward's own hosts. openwop-app already applies the gate as host policy. MyndHyve (build `73befc109`) is in the harm set for both decisions (`evalGrading.ts` mean rule, `evalRunner.ts` suite aggregate, read from code 2026-10-16), and the override is conditional on its fix shipping first or with this RFC. Advisory `GHSA-ffx7-pm5h-v6pq` (draft). Conformance in suite 2.46.13: two fixtures, `0246.gated-fields-shape`, `0246.mean-gated`, `0246.suite-gated`. The evidence gate is not waived: `Accepted` needs a certified bundle passing both host legs. The RFC 0156 §B review is owed. · 2026-10-15 — filed as a **safety-fix** on the steward's decision (2026-10-15). 90-day public window (`COMPATIBILITY.md` §3), not waived. UQ 1 resolved in the window: `gatedScore` is always present on a trajectory task. |
+| **Affects**       | `RFCS/0244` §A grading rule and §B task-level `passed` (corrected, not amended) · `schemas/v2/eval-summary.schema.json` (suite `passed` description; optional per-task `gatedScore`, optional suite `gatedAggregateScore`) · `schemas/v2/agent-eval-suite.schema.json` (`trials.passRule` description) · conformance: `v2-eval-trajectory-trials.test.ts` (three legs), fixtures `conformance-eval-trajectory-gate` and `conformance-eval-trajectory-gate-mean`, `lib/eval-gate-witness.ts` · `docs/COMPATIBILITY-CORRECTIONS-LOG.md` |
 | **Compatibility** | `safety-fix` per `COMPATIBILITY.md` §3. It changes when a task and a suite report `passed`, so a host that conformed to RFC 0244 yesterday can be non-conforming today. The two new summary fields are additive. |
 | **Supersedes**    | —                                                               |
 | **Superseded by** | —                                                               |
@@ -109,17 +109,19 @@ Every other suite, and every reported score, is unchanged.
 
 ## Conformance
 
-New legs in `v2-eval-trajectory-trials.test.ts`, gated on `agents.evalSuite.trajectory` and a new fixture `conformance-eval-trajectory-gate` (scripted agent, golden output scoring `1`, `passScore: 0.6`):
+New legs in `v2-eval-trajectory-trials.test.ts`, judged by `lib/eval-gate-witness.ts`. Each drives a fixture whose scripted agent produces the golden output (score `1`), with `passScore: 0.6`. A suite's `trials` block is suite-wide, so the two host legs need two fixtures:
 
-- **`openwop.requirement.0246.mean-gated`.** One task with `passRule: "mean"`, `count: 2`. The scripted agent produces the golden output (score `1`) and calls a `forbidden` tool in both trials. Asserted:
+- **`openwop.requirement.0246.mean-gated`**, on `conformance-eval-trajectory-gate-mean`, gated on `agents.evalSuite.trajectory` and `agents.evalSuite.trials`. One task with `passRule: "mean"`, `count: 2`. The scripted agent produces the golden output (score `1`) and calls a `forbidden` tool in both trials. Asserted:
   - both `eval.scored` events carry `score: 1` and `passed: false`;
   - the task entry has `trials.meanScore: 1`, `gatedScore: 0` and `passed: false`, and the summary carries `gatedAggregateScore`.
-- **`openwop.requirement.0246.suite-gated`.** Two tasks, `count: 1`. Task 1 matches its trajectory, and task 2 produces the golden output but takes the wrong path. Asserted:
+- **`openwop.requirement.0246.suite-gated`**, on `conformance-eval-trajectory-gate` (no `trials` block, so a host without `trials` runs it), gated on `agents.evalSuite.trajectory`. Two tasks, `count: 1`. Task 1 matches its trajectory, and task 2 produces the golden output but takes the wrong path. Asserted:
   - `aggregateScore` equals the mean of the task scores, so it is unchanged;
   - both tasks carry `gatedScore`: task 1 equal to its `score`, task 2 `0`;
   - `gatedAggregateScore` equals the mean of the gating scores;
   - suite `passed` is `false`: `aggregateScore` is `1` and clears `0.6`, but `gatedAggregateScore` is `0.5`. An unmigrated host reports `true` here, so the leg can fail.
-- **Server-free.** `gatedScore` and `gatedAggregateScore` validate; a value outside 0–1 fails.
+- **`openwop.requirement.0246.gated-fields-shape`** (server-free). `gatedScore` and `gatedAggregateScore` validate; a value outside 0–1 fails.
+
+Both host legs also fail a host that "fixes" the gate by zeroing the reported `score`, which §C forbids.
 
 Like the RFC 0244 host legs, these drive the scripted conformance agent, so they are `inapplicable` on a host that does not list the fixture.
 
@@ -151,12 +153,12 @@ Like the RFC 0244 host legs, these drive the scripted conformance agent, so they
 
 ## Acceptance criteria
 
-- [ ] `schemas/v2/eval-summary.schema.json` carries optional per-task `gatedScore` and suite `gatedAggregateScore` (0–1), and the suite `passed` description names the gating aggregate.
-- [ ] `schemas/v2/agent-eval-suite.schema.json` `trials.passRule` description names the gating score for `mean`.
-- [ ] RFC 0244's §A grading rule and §B task-level line carry a dated pointer to this RFC.
-- [ ] The fixture `conformance-eval-trajectory-gate`, the two gated legs and the server-free shape legs.
-- [ ] `docs/COMPATIBILITY-CORRECTIONS-LOG.md` records the safety-fix classification.
-- [ ] A `CHANGELOG.md` entry under `### Security`, citing the advisory ID per `SECURITY.md`.
+- [x] `schemas/v2/eval-summary.schema.json` carries optional per-task `gatedScore` and suite `gatedAggregateScore` (0–1), and the suite `passed` description names the gating aggregate.
+- [x] `schemas/v2/agent-eval-suite.schema.json` `trials.passRule` description names the gating score for `mean`.
+- [x] RFC 0244's §A grading rule and §B task-level line carry a dated pointer to this RFC.
+- [x] The fixtures `conformance-eval-trajectory-gate` and `conformance-eval-trajectory-gate-mean`, the two gated legs and the server-free shape leg.
+- [x] `docs/COMPATIBILITY-CORRECTIONS-LOG.md` records the safety-fix classification.
+- [x] A `CHANGELOG.md` entry under `### Security`, citing the advisory ID per `SECURITY.md` (`GHSA-ffx7-pm5h-v6pq`).
 - [ ] A host passes both legs non-vacuously under `OPENWOP_REQUIRE_BEHAVIOR=true`.
 
 ## References
