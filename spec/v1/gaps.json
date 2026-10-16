@@ -13552,8 +13552,8 @@
       "surface": "MyndHyve emits `ssrf_blocked` and `fetch_failed` from `ctx.http.safeFetch` (`host/safeFetch.ts:68`), and a `503 service_unavailable` carrying `details.retryAfter` and `details.inflightCap` (`middleware/backpressureGate.ts:54-57`), which `errors.md` §Retry timing forbids.",
       "witness": "unclassified",
       "requirementId": null,
-      "disposition": "externally-gated",
-      "target": "myndhyve-host-cut",
+      "disposition": "closed",
+      "target": null,
       "sources": [
         {
           "file": "RFCS/registers/0228-v1-host-service-error-codes.gaps.md",
@@ -13586,8 +13586,8 @@
       "surface": "openwop-app throws `path_outside_sandbox` (`host/durable/durableFs.ts:20`, `:27`) and `table_schema_violation` (`durableTable.ts:69`) from `ctx` storage; its `ads-publish-*` packs branch on the five `secret_*` names.",
       "witness": "unclassified",
       "requirementId": null,
-      "disposition": "externally-gated",
-      "target": "openwop-app-host-cut",
+      "disposition": "closed",
+      "target": null,
       "sources": [
         {
           "file": "RFCS/registers/0228-v1-host-service-error-codes.gaps.md",
@@ -13637,8 +13637,8 @@
       "surface": "openwop-app answers ungated `/prompts*` with `501 capability_not_provided` (`routes/prompts.ts:147`, `:174`, `:178`, `:202`, `:242`), at a status the registry does not give that code, and emits `prompt_ref_ambiguous` (`:214`, `:330`) and the `aiProviders` modality codes.",
       "witness": "unclassified",
       "requirementId": null,
-      "disposition": "externally-gated",
-      "target": "openwop-app-host-cut",
+      "disposition": "closed",
+      "target": null,
       "sources": [
         {
           "file": "RFCS/registers/0228-v1-host-service-error-codes.gaps.md",

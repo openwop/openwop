@@ -1,3 +1,7 @@
+## [2.46.14] — unreleased — RFC 0228: gaps G1, G3 and G6 close
+
+- **No assertion changes.** The packed `spec/v1/gaps.json` changes: RFC 0228 G1 (MyndHyve), G3 and G6 (openwop-app) close, unit-witnessed on certified cuts in `evidence/` that contain the fixes (MyndHyve 2.46.9 `73befc109`; openwop-app 2.46.12 `aee0febbc`). G7 stays open.
+
 ## [2.46.13] — 2026-10-16 — RFC 0246: a trajectory-failed trial cannot carry a pass (safety fix)
 
 ### Security
