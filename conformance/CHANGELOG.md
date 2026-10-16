@@ -1,4 +1,4 @@
-## [2.46.13] — unreleased — RFC 0246: a trajectory-failed trial cannot carry a pass (safety fix)
+## [2.46.13] — 2026-10-16 — RFC 0246: a trajectory-failed trial cannot carry a pass (safety fix)
 
 ### Security
 
