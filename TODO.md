@@ -149,15 +149,13 @@ Defects outside the spec:
   - **v2 ports (gap G4):** all five exist; `v2-table-schema-enforcement` (2.45.8, fixture
     `conformance-table-schema-probe`) is the last. It has no host witness: no host advertises
     `tableStorage` at major 2. Not ported: v1's `budget_model_denied` leg.
-  - **Rename rows.** G1, G2, G3 and G6 are closed (G2 on the reference host's certified 2.45.5 cut;
-    G1, G3, G6 unit-witnessed 2026-10-16 on certified cuts containing the fixes: MyndHyve `73befc109`,
-    openwop-app `aee0febbc`). Still open:
-    - G7 (MyndHyve): partly fixed (cf84c7f64); the maintainer accepted the partial fix and the
-      run-creation `validation_error` leg is externally gated on a MyndHyve change.
+  - **Rename rows.** All closed: G2 on the reference host's certified 2.45.5 cut; G1, G3, G6
+    unit-witnessed 2026-10-16 on certified cuts containing the fixes (MyndHyve `73befc109`,
+    openwop-app `aee0febbc`); G7 2026-10-17 on MyndHyve's certified `c8d511d84` cut plus its live probe.
 - [x] **MyndHyve follow-ups done (2026-10-02, its session):** `openwop-smoke-byok-roundtrip` is
       withdrawn from production (build 68718d731, myndhyve#591; its next cut records
       `v2-secret-canary-absent` `inapplicable`), and the sealed-row delete is tested before the
-      terminal on all three cap-breach paths. Still open there: RFC 0228 G7 (G1 closed 2026-10-16).
+      terminal on all three cap-breach paths. RFC 0228 G1 and G7 are closed (2026-10-16, 2026-10-17).
 - [x] **MyndHyve withdrew `triggerBridge.ingestion`** at both majors (build cf84c7f64, myndhyve#592,
       2026-10-03); `POST /trigger-subscriptions` answers `404`. RFC 0099's `Accepted` already discloses
       that its MyndHyve legs ran through the seam (#1868).

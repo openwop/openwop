@@ -1,3 +1,7 @@
+## [2.46.15] — unreleased — RFC 0228: gap G7 closes
+
+- **No assertion changes.** The packed `spec/v1/gaps.json` changes: RFC 0228 G7 (MyndHyve's run-creation `validation_error` leg) closes on MyndHyve's certified 2.46.13 cut (`c8d511d84`), which contains myndhyve#597, with a live probe of that build. Every RFC 0228 rename row is now closed.
+
 ## [2.46.14] — 2026-10-16 — RFC 0246 Accepted; RFC 0228 gaps G1, G3 and G6 close
 
 - **No assertion changes.** The packed `spec/v1/gaps.json` changes: RFC 0246 G3 closes on MyndHyve's certified 2.46.13 cut (`c8d511d84`), the acceptance witness for `0246.mean-gated` and `0246.suite-gated`.

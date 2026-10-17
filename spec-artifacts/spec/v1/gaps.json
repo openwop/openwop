@@ -1,7 +1,7 @@
 {
   "$schema": "./gaps.schema.json",
   "version": 1,
-  "updated": "2026-10-16",
+  "updated": "2026-10-17",
   "witnessClasses": [
     "witnessable-unaided",
     "witnessable-gated",
@@ -13654,8 +13654,8 @@
       "surface": "MyndHyve fails a run with `no_active_deployment` (`runExecutor.ts:2182`), emits the `aiProviders` modality codes, and answers an agent-deployment denial as `{ error, detail }` (`routes/agents.ts:719`) with unregistered codes (`illegal_transition`, `canary_unsupported`, `no_deployment`, `transition_denied`). The top-level `detail` breaks the envelope's `additionalProperties: false`.",
       "witness": "unclassified",
       "requirementId": null,
-      "disposition": "externally-gated",
-      "target": "myndhyve-run-creation-channel-validation",
+      "disposition": "closed",
+      "target": null,
       "sources": [
         {
           "file": "RFCS/registers/0228-v1-host-service-error-codes.gaps.md",
