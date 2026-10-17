@@ -32,6 +32,10 @@ Entries before this file was condensed carried full development detail. That tex
 
 - **RFC 0246 Active (safety fix, `GHSA-ffx7-pm5h-v6pq`): a trial that failed its trajectory cannot carry a task or a suite to a pass.** The `mean` task rule and suite `passed` read a gating score that counts it 0; reported scores are unchanged. 90-day window waived by recorded STEWARD OVERRIDE.
 
+## [2.46.15] — 2026-10-17 — RFC 0228 gap G7 closes
+
+- **RFC 0228:** G7 closes on MyndHyve's certified 2.46.13 cut (`c8d511d84`), which contains its run-creation `validation_error` leg (myndhyve#597), with a live probe of that build. Every rename row is closed; a `tableStorage` witness (G4) is still owed. No assertion changes; the packed `gaps.json` changes.
+
 ## [2.46.14] — 2026-10-16 — RFC 0246 Accepted; RFC 0228 gaps G1, G3 and G6 close
 
 - **RFC 0246 `Accepted` (provisional):** MyndHyve's certified 2.46.13 production cut (`c8d511d84`, 418/0/0) passes `0246.mean-gated` and `0246.suite-gated`; advisory `GHSA-ffx7-pm5h-v6pq` is published. G3 closes.
