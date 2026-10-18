@@ -143,16 +143,6 @@ Defects outside the spec:
 
 ## 7 — Follow-ups from 2026-10-01
 
-- [ ] **RFC 0228's last open box: the rename rows** (state 2026-10-02).
-  - **Certified `egress_denied` row: done.** The v2 reference host's certified 2.45.6 cut records
-    all five `httpClient.ssrf-*` requirements `executed-pass`, and the acceptance box is ticked.
-    MyndHyve's certified 2.45.5 cut adds a tier-2 witness: all five rows `executed-pass`.
-  - **v2 ports (gap G4):** all five exist; `v2-table-schema-enforcement` (2.45.8, fixture
-    `conformance-table-schema-probe`) is the last. It has no host witness: no host advertises
-    `tableStorage` at major 2. Not ported: v1's `budget_model_denied` leg.
-  - **Rename rows.** All closed: G2 on the reference host's certified 2.45.5 cut; G1, G3, G6
-    unit-witnessed 2026-10-16 on certified cuts containing the fixes (MyndHyve `73befc109`,
-    openwop-app `aee0febbc`); G7 2026-10-17 on MyndHyve's certified `c8d511d84` cut plus its live probe.
 - [x] **MyndHyve follow-ups done (2026-10-02, its session):** `openwop-smoke-byok-roundtrip` is
       withdrawn from production (build 68718d731, myndhyve#591; its next cut records
       `v2-secret-canary-absent` `inapplicable`), and the sealed-row delete is tested before the

@@ -1,7 +1,7 @@
 {
   "$schema": "./gaps.schema.json",
   "version": 1,
-  "updated": "2026-10-17",
+  "updated": "2026-10-18",
   "witnessClasses": [
     "witnessable-unaided",
     "witnessable-gated",
@@ -13603,8 +13603,8 @@
       "surface": "No v2 scenario exercises a host-service refusal: `fs-path-traversal`, `table-schema-enforcement`, `budget-enforcement`, `budget-policy-shape` and `production-backpressure` are major-1 only.",
       "witness": "unclassified",
       "requirementId": null,
-      "disposition": "externally-gated",
-      "target": "v2-host-service-ports",
+      "disposition": "closed",
+      "target": null,
       "sources": [
         {
           "file": "RFCS/registers/0228-v1-host-service-error-codes.gaps.md",
