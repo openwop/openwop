@@ -1,6 +1,6 @@
 {
   "bundleVersion": "3",
-  "generatedAt": "2026-10-17T13:28:17.303Z",
+  "generatedAt": "2026-10-18T13:48:07.636Z",
   "suite": {
     "name": "@openwop/openwop-conformance",
     "version": "2.46.14",
@@ -14,13 +14,13 @@
     "vendor": "openwop-app",
     "build": {
       "kind": "commit",
-      "id": "420fe1891d52a441d0b25e74c4a5f6adb8868c62"
+      "id": "ddcf7f944db6e19fc870c1f1a4c735034ef1fe6a"
     },
     "signingKeyId": "openwop-app-bundle-2"
   },
   "discovery": {
     "url": "https://api.openwop.dev/.well-known/openwop",
-    "sha256": "1e5c9ba8ff0e5f3104943ee3a0968fbf097a439a76b6a338675ed3eb671bfb38",
+    "sha256": "7b65f72307052c5995ba59fc752572503d7bc0b7b213dda4e577a620888e8cf8",
     "protocolVersions": [
       "2.0"
     ],
@@ -153,6 +153,7 @@
         "conformance-subworkflow-mid-run-mutation",
         "conformance-subworkflow-mid-run-mutation-child",
         "conformance-subworkflow-parent",
+        "conformance-table-schema-probe",
         "conformance-version-fold",
         "conformance-workflow-variable-format-advisory"
       ],
@@ -1822,6 +1823,14 @@
               "raw"
             ]
           },
+          "kicktodo.challenge-lesson-batch": {
+            "validated": true,
+            "registrationSource": "host",
+            "validation": "closed",
+            "export": [
+              "json"
+            ]
+          },
           "kicktodo.challenge-plan": {
             "validated": true,
             "registrationSource": "host",
@@ -2053,9 +2062,6 @@
         "since": "2.0",
         "until": "2.1",
         "witness": "claims-check"
-      },
-      "conformance": {
-        "certificationBundleUrl": "https://api.openwop.dev/host/openwop-app/conformance/certification-bundle/major-2"
       }
     }
   },
@@ -2075,10 +2081,10 @@
   ],
   "results": {
     "totals": {
-      "executedPass": 453,
+      "executedPass": 457,
       "executedFail": 0,
       "skipped": 11,
-      "inapplicable": 375,
+      "inapplicable": 371,
       "blocked": 0
     },
     "requirements": [
@@ -2296,7 +2302,7 @@
         "id": "openwop.scenario.v2-artifact-types-advertisement",
         "scenario": "v2-artifact-types-advertisement.test.ts",
         "result": "executed-pass",
-        "assertions": 31,
+        "assertions": 32,
         "detail": "partial-witness: inapplicable: the host advertises none of artifactTypes.store, render, export"
       },
       {
@@ -2703,7 +2709,7 @@
         "id": "openwop.scenario.v2-idempotency-in-flight",
         "scenario": "v2-idempotency-in-flight.test.ts",
         "result": "executed-pass",
-        "assertions": 14,
+        "assertions": 11,
         "detail": "partial-witness: inapplicable: the held-claim leg is driven through the seams profile (RFC 0213 §B) — seams profile not advertised; the unaided leg above is this host's witness"
       },
       {
@@ -3326,9 +3332,8 @@
       {
         "id": "openwop.scenario.v2-table-schema-enforcement",
         "scenario": "v2-table-schema-enforcement.test.ts",
-        "result": "inapplicable",
-        "assertions": 0,
-        "detail": "every test returned early through behaviorGate with zero assertions: profile not advertised in the captured discovery set"
+        "result": "executed-pass",
+        "assertions": 3
       },
       {
         "id": "openwop.scenario.v2-terminal-event-once",
@@ -3474,7 +3479,7 @@
         "scenario": "v2-webhook-secret-rotation.test.ts",
         "result": "executed-pass",
         "assertions": 12,
-        "detail": "partial-witness: inapplicable: the post-overlap leg is not observed: the advertised webhooks.secretRotation.overlapSeconds is 86400s (expiry 2026-10-18T13:24:22.370Z) and the suite wait cap is 90000ms, and the seams profile is not advertised, so the optional shortenRotationOverlap seam (host-sample-test-seams.md §29) is not offered; raise OPENWOP_WEBHOOK_RETRY_WAIT_MS past the overlap, or serve the seam, to witness it"
+        "detail": "partial-witness: inapplicable: the post-overlap leg is not observed: the advertised webhooks.secretRotation.overlapSeconds is 86400s (expiry 2026-10-19T13:40:10.138Z) and the suite wait cap is 90000ms, and the seams profile is not advertised, so the optional shortenRotationOverlap seam (host-sample-test-seams.md §29) is not offered; raise OPENWOP_WEBHOOK_RETRY_WAIT_MS past the overlap, or serve the seam, to witness it"
       },
       {
         "id": "openwop.scenario.v2-webhook-standard-webhooks-delivery",
@@ -5083,21 +5088,21 @@
         "scenario": "v2-webhook-durable-delivery.test.ts",
         "result": "executed-pass",
         "assertions": 4,
-        "detail": "observed: 4/4 subscribed event(s) delivered, 0 duplicate arrival(s); slowest first arrival 1542ms after the run was created; cap (default 90000ms; advertised maxElapsedMs none): waited ≤90000ms"
+        "detail": "observed: 4/4 subscribed event(s) delivered, 0 duplicate arrival(s); slowest first arrival 730ms after the run was created; cap (default 90000ms; advertised maxElapsedMs none): waited ≤90000ms"
       },
       {
         "id": "openwop.requirement.0173.webhook-durable-delivery",
         "scenario": "v2-webhook-durable-delivery.test.ts",
         "result": "executed-pass",
         "assertions": 9,
-        "detail": "observed: cap (default 90000ms; advertised maxElapsedMs none): waited ≤90000ms; 3 attempt(s), last attempt after 7950ms"
+        "detail": "observed: cap (default 90000ms; advertised maxElapsedMs none): waited ≤90000ms; 3 attempt(s), last attempt after 8046ms"
       },
       {
         "id": "openwop.requirement.0173.webhook-durable-delivery.dead-letter",
         "scenario": "v2-webhook-durable-delivery.test.ts",
         "result": "executed-pass",
         "assertions": 5,
-        "detail": "partial-witness: inapplicable: host does not advertise the webhooks.deadLetter facet — RFC 0188 §A.5 makes the read a 404 rather than an obligation, so the sink half of §Durability is unwitnessable here (the retry half above passed) · observed: cap (default 90000ms; advertised maxElapsedMs none): waited ≤90000ms; 5 attempt(s), last attempt after 34036ms, sink not observed"
+        "detail": "partial-witness: inapplicable: host does not advertise the webhooks.deadLetter facet — RFC 0188 §A.5 makes the read a 404 rather than an obligation, so the sink half of §Durability is unwitnessable here (the retry half above passed) · observed: cap (default 90000ms; advertised maxElapsedMs none): waited ≤90000ms; 5 attempt(s), last attempt after 34045ms, sink not observed"
       },
       {
         "id": "openwop.requirement.0175.legacy-profiles-absent",
@@ -5671,7 +5676,7 @@
         "scenario": "v2-webhook-secret-rotation.test.ts",
         "result": "executed-pass",
         "assertions": 12,
-        "detail": "partial-witness: inapplicable: the post-overlap leg is not observed: the advertised webhooks.secretRotation.overlapSeconds is 86400s (expiry 2026-10-18T13:24:22.370Z) and the suite wait cap is 90000ms, and the seams profile is not advertised, so the optional shortenRotationOverlap seam (host-sample-test-seams.md §29) is not offered; raise OPENWOP_WEBHOOK_RETRY_WAIT_MS past the overlap, or serve the seam, to witness it"
+        "detail": "partial-witness: inapplicable: the post-overlap leg is not observed: the advertised webhooks.secretRotation.overlapSeconds is 86400s (expiry 2026-10-19T13:40:10.138Z) and the suite wait cap is 90000ms, and the seams profile is not advertised, so the optional shortenRotationOverlap seam (host-sample-test-seams.md §29) is not offered; raise OPENWOP_WEBHOOK_RETRY_WAIT_MS past the overlap, or serve the seam, to witness it"
       },
       {
         "id": "openwop.requirement.0204.annotations-derived",
@@ -5864,7 +5869,7 @@
         "id": "openwop.requirement.0213.in-flight-loser-outcome",
         "scenario": "v2-idempotency-in-flight.test.ts",
         "result": "executed-pass",
-        "assertions": 11
+        "assertions": 8
       },
       {
         "id": "openwop.requirement.0213.in-flight-one-winner",
@@ -6459,7 +6464,7 @@
         "id": "openwop.requirement.artifact-types.per-type-entry-shape",
         "scenario": "v2-artifact-types-advertisement.test.ts",
         "result": "executed-pass",
-        "assertions": 30
+        "assertions": 31
       },
       {
         "id": "openwop.requirement.auth.subject-link-key-advertised",
@@ -7436,23 +7441,20 @@
       {
         "id": "openwop.requirement.storage.table-schema-control-insert-completes",
         "scenario": "v2-table-schema-enforcement.test.ts",
-        "result": "inapplicable",
-        "assertions": 0,
-        "detail": "conformance-table-schema-probe fixture not advertised — tableStorage has no protocol path, and the host has not opted in to the unaided schema witness"
+        "result": "executed-pass",
+        "assertions": 1
       },
       {
         "id": "openwop.requirement.storage.table-schema-insert-mistyped-refused",
         "scenario": "v2-table-schema-enforcement.test.ts",
-        "result": "inapplicable",
-        "assertions": 0,
-        "detail": "conformance-table-schema-probe fixture not advertised — tableStorage has no protocol path, and the host has not opted in to the unaided schema witness"
+        "result": "executed-pass",
+        "assertions": 1
       },
       {
         "id": "openwop.requirement.storage.table-schema-update-mistyped-refused",
         "scenario": "v2-table-schema-enforcement.test.ts",
-        "result": "inapplicable",
-        "assertions": 0,
-        "detail": "conformance-table-schema-probe fixture not advertised — tableStorage has no protocol path, and the host has not opted in to the unaided schema witness"
+        "result": "executed-pass",
+        "assertions": 1
       },
       {
         "id": "openwop.requirement.sub-workflow.advert-record-schema",
@@ -7548,7 +7550,7 @@
       }
     ]
   },
-  "assertionCount": 5024,
+  "assertionCount": 5026,
   "detail": {
     "nonPass": [
       {
@@ -7953,11 +7955,6 @@
       },
       {
         "id": "openwop.scenario.v2-subject-link-record",
-        "result": "inapplicable",
-        "reason": "every test returned early through behaviorGate with zero assertions: profile not advertised in the captured discovery set"
-      },
-      {
-        "id": "openwop.scenario.v2-table-schema-enforcement",
         "result": "inapplicable",
         "reason": "every test returned early through behaviorGate with zero assertions: profile not advertised in the captured discovery set"
       },
@@ -9457,21 +9454,6 @@
         "reason": "fs is not advertised in the v2 discovery root — the host exposes no ctx.fs to pack code"
       },
       {
-        "id": "openwop.requirement.storage.table-schema-control-insert-completes",
-        "result": "inapplicable",
-        "reason": "conformance-table-schema-probe fixture not advertised — tableStorage has no protocol path, and the host has not opted in to the unaided schema witness"
-      },
-      {
-        "id": "openwop.requirement.storage.table-schema-insert-mistyped-refused",
-        "result": "inapplicable",
-        "reason": "conformance-table-schema-probe fixture not advertised — tableStorage has no protocol path, and the host has not opted in to the unaided schema witness"
-      },
-      {
-        "id": "openwop.requirement.storage.table-schema-update-mistyped-refused",
-        "result": "inapplicable",
-        "reason": "conformance-table-schema-probe fixture not advertised — tableStorage has no protocol path, and the host has not opted in to the unaided schema witness"
-      },
-      {
         "id": "openwop.requirement.toolHooks.authorization-fail-closed-missing-scope",
         "result": "inapplicable",
         "reason": "toolHooks is not advertised in the v2 discovery root — no per-tool authorization obligation"
@@ -9483,11 +9465,11 @@
       }
     ]
   },
-  "witnessSha256": "e320ee20b942310648c74bc904bd7d0e0107ae26a7c2d28587397b95f75dcb80",
+  "witnessSha256": "711248b5df33710d96d89d4e46318dc2663faf895042e6ee5e499ba20ca5931c",
   "signature": {
     "alg": "ed25519",
     "keyId": "openwop-app-bundle-2",
-    "sig": "72z9w5jlN-ky0-GrkCdAF2PMn7d_ELAFYZ8fSkBg2IID4EHVqCbNAyCYfYDvL0Zc2dwMPCsn9szRcn1SqdqLDw",
+    "sig": "BVL-oBamoahI7R0vAjEmt54kLcVTYc_lpVq6lo1QUoQkxcSCZyxmQL2fftyv90cXZMCNWCUMuhYmWKjPvk5LAw",
     "over": [
       "witnessSha256",
       "host.build",

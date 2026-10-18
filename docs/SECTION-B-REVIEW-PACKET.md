@@ -193,7 +193,7 @@ Grouping below is a reading aid only: it assigns each RFC to the risk class its 
 | [0219](../RFCS/0219-client-version-header.md) | a client announces the protocol version it implements in `OpenWOP-Client-Version` | `Accepted` | bootstrap waiver | tier-1 — the v2 reference host's certified public cut on published suite 2 | `not-reviewed` |
 | [0224](../RFCS/0224-v2-audit-log-integrity.md) | audit-log integrity gets a v2 home | `Accepted` | bootstrap waiver | tier-1 — the v2 reference host's certified public cut on published suite 2 | `not-reviewed` |
 | [0226](../RFCS/0226-shared-run-failure-codes.md) | three run-failure codes the hosts share, registered | `Accepted` | bootstrap waiver | tier-2 — all three hosts' latest certified bundles, each VERIFIED under the key its host… | `not-reviewed` |
-| [0228](../RFCS/0228-v1-host-service-error-codes.md) | the error codes v1 named for host services, decided for v2 | `Active` | bootstrap waiver | not declared (predates RFC 0174 §B.1, or not yet Accepted) | `not-reviewed` |
+| [0228](../RFCS/0228-v1-host-service-error-codes.md) | the error codes v1 named for host services, decided for v2 | `Accepted` | bootstrap waiver | tier-1 — openwop-app's certified 2 | `not-reviewed` |
 | [0231](../RFCS/0231-budget-exhaustion-facet.md) | a host says which budget exhaustion behaviours it serves | `Accepted` | bootstrap waiver | tier-1 — the v2 reference host | `not-reviewed` |
 | [0247](../RFCS/0247-bounded-stream-lifetime.md) | bounded stream lifetime — an opted-in live stream may be ended early and is resumed | `Accepted` | bootstrap waiver | tier-1 on both halves | `not-reviewed` |
 

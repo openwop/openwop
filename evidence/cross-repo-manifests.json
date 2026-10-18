@@ -107,7 +107,7 @@
       }
     },
     "openwop-app": {
-      "commit": "420fe1891d52a441d0b25e74c4a5f6adb8868c62",
+      "commit": "ddcf7f944db6e19fc870c1f1a4c735034ef1fe6a",
       "files": {
         "backend/typescript/src/byok/ephemeralRunSecrets.ts": {
           "exists": true,
