@@ -32,6 +32,10 @@ Entries before this file was condensed carried full development detail. That tex
 
 - **RFC 0246 Active (safety fix, `GHSA-ffx7-pm5h-v6pq`): a trial that failed its trajectory cannot carry a task or a suite to a pass.** The `mean` task rule and suite `passed` read a gating score that counts it 0; reported scores are unchanged. 90-day window waived by recorded STEWARD OVERRIDE.
 
+## [2.46.16] — 2026-10-18 — RFC 0228 Accepted
+
+- **RFC 0228 `Accepted`:** openwop-app's certified 2.46.14 production cut (`ddcf7f944`, 457/0/0) records `v2-table-schema-enforcement` and its three `storage.table-schema-*` requirements `executed-pass`, so G4, its last open gap, closes. No assertion changes; the packed `gaps.json` carries G4 closed.
+
 ## [2.46.15] — 2026-10-17 — RFC 0228 gap G7 closes
 
 - **RFC 0228:** G7 closes on MyndHyve's certified 2.46.13 cut (`c8d511d84`), which contains its run-creation `validation_error` leg (myndhyve#597), with a live probe of that build. Every rename row is closed; a `tableStorage` witness (G4) is still owed. No assertion changes; the packed `gaps.json` changes.
