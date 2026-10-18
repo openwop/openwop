@@ -1,3 +1,13 @@
+## [2.46.17] — 2026-10-18 — RFC 0245: a recorded tool error replays as an error
+
+- **New fixture `fixtures/eval-suites/conformance-eval-fixture-error`.** One task calls `conformance.eval:lookup` twice. Its fixtures serve an `isError: true` entry, then a success.
+- **New legs in `v2-eval-trajectory-trials`:**
+  - `0245.fixture-error-shape` (server-free): an `isError` entry validates, and a string is refused.
+  - `0245.fixture-error-replayed`, gated on `fixtureErrors` + `fixtureMatching` and the fixture: the first call's `agent.tool-returned` carries `error {code, message}` and no `outcome` (`status: "error"` under tool hooks), the second carries `outcome`, and `fixtureMissCount` is 0.
+  - `0245.unadvertised-refused`: without `fixtureErrors`, the suite is refused with `400 validation_error`.
+  The judge is `lib/eval-fixture-error-witness.ts`; its self-tests fail each wrong host answer.
+- **Host impact: none today.** No host advertises `fixtureErrors`, so the replay leg records `inapplicable`. The refusal leg binds on a host that lists the fixture and advertises `evalSuite` without the member.
+
 ## [2.46.16] — 2026-10-18 — RFC 0228 Accepted: gap G4 closes
 
 - **No assertion changes.** The packed `spec/v1/gaps.json` changes: RFC 0228 G4 (a host witness of `v2-table-schema-enforcement`) closes on openwop-app's certified 2.46.14 production cut (`ddcf7f944`), and RFC 0228 goes `Accepted`.

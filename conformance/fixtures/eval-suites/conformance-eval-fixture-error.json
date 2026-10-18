@@ -1,0 +1,68 @@
+{
+  "suiteId": "core.openwop.evals.conformance-eval-fixture-error",
+  "version": "1.0.0",
+  "targetAgentId": "core.conformance.agents.scripted",
+  "modes": [
+    "golden"
+  ],
+  "tasks": [
+    {
+      "taskId": "recovers",
+      "input": {
+        "script": [
+          {
+            "tool": "conformance.eval:lookup",
+            "arguments": {
+              "orderId": "o-1"
+            }
+          },
+          {
+            "tool": "conformance.eval:lookup",
+            "arguments": {
+              "orderId": "o-1"
+            }
+          }
+        ],
+        "output": "done"
+      },
+      "expected": {
+        "kind": "golden",
+        "match": {
+          "strategy": "contains",
+          "value": "done"
+        }
+      },
+      "fixtures": {
+        "onMiss": "fail",
+        "toolResponses": [
+          {
+            "tool": "conformance.eval:lookup",
+            "args": {
+              "orderId": "o-1"
+            },
+            "argsMatch": "exact",
+            "isError": true,
+            "response": {
+              "content": [
+                {
+                  "type": "text",
+                  "text": "{\"error\":\"upstream_down\"}"
+                }
+              ]
+            }
+          },
+          {
+            "tool": "conformance.eval:lookup",
+            "args": {
+              "orderId": "o-1"
+            },
+            "argsMatch": "exact",
+            "response": {
+              "status": "shipped"
+            }
+          }
+        ]
+      }
+    }
+  ]
+}
