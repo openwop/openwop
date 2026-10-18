@@ -44,8 +44,21 @@
  *      clears `passScore` 0.6, the gating aggregate 0.5 does not, so the suite
  *      does not pass. An RFC 0244-only host reports `passed: true` on both.
  *
+ * RFC 0245: a fixture entry marked `isError: true` is replayed as a tool
+ * error, never as a success. Judge in `lib/eval-fixture-error-witness.ts`.
+ *  10. Server-free — an `isError: true` entry validates; a string `"true"` is
+ *      refused; `conformance-eval-fixture-error` validates (leg 2).
+ *  11. `conformance-eval-fixture-error` (fixtureErrors + fixtureMatching) —
+ *      the call served by the error entry is recorded with `error` and no
+ *      `outcome` (`status: "error"` under tool hooks), the next with
+ *      `outcome`, and `fixtureMissCount` is 0. The two-call sequence needs
+ *      RFC 0244 §D's first-unconsumed selection, hence `fixtureMatching`.
+ *  12. Refusal — a host advertising `agents.evalSuite` without `fixtureErrors`
+ *      that lists the fixture refuses it with `400 validation_error`.
+ *
  * @see RFCS/0244-eval-trajectories-trials-and-recorded-fixtures.md
  * @see RFCS/0246-trajectory-failure-gates-the-pass.md
+ * @see RFCS/0245-eval-fixtures-replay-tool-errors.md
  */
 
 import { describe, it, expect } from 'vitest';
@@ -62,6 +75,7 @@ import { FIXTURES_DIR } from '../lib/paths.js';
 import { pollTerminal, readEvents, isRecord, type Ev } from '../lib/fixture-run-observer.js';
 import { gradeTrajectory, passAtK, passHatK, scoreStderr, withinTolerance, type TrajectorySpec } from '../lib/eval-trajectory.js';
 import { judgeMeanGated, judgeSuiteGated } from '../lib/eval-gate-witness.js';
+import { judgeFixtureErrorReplayed } from '../lib/eval-fixture-error-witness.js';
 
 const PROFILE = majorProfile(2);
 const UNREADABLE = 'v2 discovery unreachable — /.well-known/openwop did not answer 200 JSON under OpenWOP-Version: 2.0';
@@ -80,8 +94,12 @@ const ID_GATED_SHAPE = 'openwop.requirement.0246.gated-fields-shape';
 const ID_MEAN_GATED = 'openwop.requirement.0246.mean-gated';
 const ID_SUITE_GATED = 'openwop.requirement.0246.suite-gated';
 const DOC_0246 = 'eval-summary.schema.json gatedScore / gatedAggregateScore (RFC 0246)';
+const ID_FIXTURE_ERROR_SHAPE = 'openwop.requirement.0245.fixture-error-shape';
+const ID_FIXTURE_ERROR = 'openwop.requirement.0245.fixture-error-replayed';
+const ID_FIXTURE_ERROR_REFUSED = 'openwop.requirement.0245.unadvertised-refused';
+const DOC_0245 = 'agents.schema.json §evalSuite.fixtureErrors (RFC 0245)';
 
-interface Task { taskId: string; input: { script: Array<{ tool: string; arguments?: unknown }>; output: string }; expected: { kind: string; trajectory?: TrajectorySpec } }
+interface Task { taskId: string; input: { script: Array<{ tool: string; arguments?: unknown }>; output: string }; expected: { kind: string; trajectory?: TrajectorySpec }; fixtures?: { toolResponses?: Array<Record<string, unknown>> } }
 interface Suite { tasks: Task[]; trials?: { count: number; k?: number; passRule?: string } }
 const fixture = (id: string): Suite => JSON.parse(readFileSync(join(FIXTURES_DIR, 'eval-suites', `${id}.json`), 'utf8')) as Suite;
 
@@ -160,7 +178,7 @@ describe('v2 RFC 0244 — wire shape (server-free)', () => {
   });
 
   it('the eval-suite fixtures validate against the v2 suite schema', () => {
-    for (const id of ['conformance-eval-trajectory', 'conformance-eval-trials', 'conformance-eval-fixture-miss', 'conformance-eval-trajectory-gate', 'conformance-eval-trajectory-gate-mean']) {
+    for (const id of ['conformance-eval-trajectory', 'conformance-eval-trials', 'conformance-eval-fixture-miss', 'conformance-eval-trajectory-gate', 'conformance-eval-trajectory-gate-mean', 'conformance-eval-fixture-error']) {
       const r = suiteSchema(fixture(id));
       expect(r.ok, req(ID_FIXTURES, 'fixtures.md §eval-suites', `${id} MUST validate: ${r.errors}`)).toBe(true);
     }
@@ -172,6 +190,14 @@ describe('v2 RFC 0244 — wire shape (server-free)', () => {
     expect(summarySchema(ok).ok, req(ID_GATED_SHAPE, DOC_0246, `gatedScore and gatedAggregateScore MUST validate: ${summarySchema(ok).errors}`)).toBe(true);
     expect(summarySchema({ ...ok, gatedAggregateScore: 1.5 }).ok, req(ID_GATED_SHAPE, DOC_0246, 'gatedAggregateScore above 1 MUST be refused')).toBe(false);
     expect(summarySchema({ ...ok, tasks: [{ taskId: 't', score: 1, gatedScore: -0.1, passed: false }] }).ok, req(ID_GATED_SHAPE, DOC_0246, 'a negative gatedScore MUST be refused')).toBe(false);
+  });
+
+  it('a fixture entry may be marked isError, and only as a boolean (RFC 0245 §A)', () => {
+    const base = fixture('conformance-eval-fixture-error');
+    const withIsError = (v: unknown): boolean => { const s = structuredClone(base) as Suite; s.tasks[0]!.fixtures!.toolResponses![0]!['isError'] = v; return suiteSchema(s).ok; };
+    expect(withIsError(true), req(ID_FIXTURE_ERROR_SHAPE, DOC_0245, `an isError: true entry MUST validate: ${suiteSchema(base).errors}`)).toBe(true);
+    expect(withIsError(false), req(ID_FIXTURE_ERROR_SHAPE, DOC_0245, 'an isError: false entry MUST validate')).toBe(true);
+    expect(withIsError('true'), req(ID_FIXTURE_ERROR_SHAPE, DOC_0245, 'a string isError MUST be refused')).toBe(false);
   });
 });
 
@@ -304,5 +330,35 @@ describe('v2 RFC 0244 — host behaviour', () => {
     const o = await runSuite(id);
     if (o.kind === 'skip') return softSkip(o.disposition, o.reason);
     for (const x of judgeSuiteGated(o.summary, 0.6)) expect(x.ok, req(ID_SUITE_GATED, x.doc, x.message)).toBe(true);
+  });
+
+  it('a fixture entry marked isError is replayed as a tool error, not a success (RFC 0245)', async () => {
+    const { doc, facet } = await evalSuiteFacet();
+    if (!doc) return softSkip('blocked', UNREADABLE);
+    if (facet?.['fixtureErrors'] !== true) return softSkip('inapplicable', 'the host does not advertise agents.evalSuite.fixtureErrors');
+    if (facet['fixtureMatching'] !== true) return softSkip('inapplicable', 'the host does not advertise agents.evalSuite.fixtureMatching, which the error-then-success sequence needs (RFC 0244 §D first unconsumed match)');
+    const id = 'conformance-eval-fixture-error';
+    if (!isFixtureAdvertised(id)) return softSkip('inapplicable', `the host does not advertise fixture ${id}`);
+    const o = await runSuite(id);
+    if (o.kind === 'skip') return softSkip(o.disposition, o.reason);
+    const hooks = doc['toolHooks'];
+    const prePostEvents = isRecord(hooks) && hooks['prePostEvents'] === true;
+    for (const x of judgeFixtureErrorReplayed(o.events, o.summary, { agentId: AGENT, prePostEvents })) expect(x.ok, req(ID_FIXTURE_ERROR, x.doc, x.message)).toBe(true);
+  });
+
+  it('a suite using isError is refused at createRun without fixtureErrors (RFC 0245 §C)', async () => {
+    const { doc, facet } = await evalSuiteFacet();
+    if (!doc) return softSkip('blocked', UNREADABLE);
+    if (facet === null) return softSkip('inapplicable', 'the host does not advertise agents.evalSuite (v2-eval-mode-unadvertised-refused covers it)');
+    if (facet['fixtureErrors'] === true) return softSkip('inapplicable', 'the host advertises agents.evalSuite.fixtureErrors, so the isError suite is served');
+    const id = 'conformance-eval-fixture-error';
+    if (!isFixtureAdvertised(id)) return softSkip('inapplicable', `the host does not advertise fixture ${id}`);
+    const res = await http(() => driver.post(PROFILE.runsPath, { mode: 'eval', evalSuiteRef: SUITE_URI(id), agentId: AGENT }));
+    if (res === null) return softSkip('blocked', 'POST /runs unreachable (fetch failed)');
+    if (res.status === 429) return softSkip('blocked', 'POST /runs answered 429 — the run budget, not the wire');
+    const runId = isRecord(res.json) && typeof res.json['runId'] === 'string' ? res.json['runId'] : undefined;
+    if (res.status === 201 && runId !== undefined) await http(() => driver.post(`${PROFILE.runsPath}/${PROFILE.idSegment(runId)}/cancel`, {}));
+    expect(res.status, req(ID_FIXTURE_ERROR_REFUSED, DOC_0245, `an isError suite on a host without agents.evalSuite.fixtureErrors MUST be refused with 400 (got ${res.status})`)).toBe(400);
+    expect(readErrorCode(res.json), req(ID_FIXTURE_ERROR_REFUSED, DOC_0245, 'the refusal MUST carry validation_error')).toBe('validation_error');
   });
 });

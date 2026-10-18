@@ -7,7 +7,7 @@
 | **Status**        | `Active`                                                        |
 | **Author(s)**     | David Tufts (@davidscotttufts)                                  |
 | **Created**       | 2026-10-15                                                      |
-| **Updated**       | 2026-10-15 — **`Draft` → `Active` in the filing PR, comment window waived by the maintainer (user instruction 2026-10-15)**; STEWARD OVERRIDE of RFC 0147 §A.6 recorded in `MAINTAINERS.md`. Wire surface in this PR: optional v2 `toolResponses[].isError` and the `agents.evalSuite.fixtureErrors` member. The fixture `conformance-eval-fixture-error` and the two gated legs follow in the next suite cycle. `Accepted` waits on a host advertising `fixtureErrors` and passing `0245.fixture-error-replayed` non-vacuously. |
+| **Updated**       | 2026-10-18 — suite 2.46.17: the fixture `conformance-eval-fixture-error` and the three legs land in `v2-eval-trajectory-trials.test.ts`, with the judge in `lib/eval-fixture-error-witness.ts` (self-tests fail each wrong host answer). Two changes from the Conformance text below: the replay leg also gates on `agents.evalSuite.fixtureMatching`, because its error-then-success sequence needs RFC 0244 §D's first-unconsumed selection; and the server-free leg carries its own id, `openwop.requirement.0245.fixture-error-shape`. Still open for `Accepted`: a host witness. · 2026-10-15 — **`Draft` → `Active` in the filing PR, comment window waived by the maintainer (user instruction 2026-10-15)**; STEWARD OVERRIDE of RFC 0147 §A.6 recorded in `MAINTAINERS.md`. Wire surface in this PR: optional v2 `toolResponses[].isError` and the `agents.evalSuite.fixtureErrors` member. The fixture `conformance-eval-fixture-error` and the two gated legs follow in the next suite cycle. `Accepted` waits on a host advertising `fixtureErrors` and passing `0245.fixture-error-replayed` non-vacuously. |
 | **Affects**       | `schemas/v2/agent-eval-suite.schema.json` (optional `fixtures.toolResponses[].isError`) · `spec/v2/facets/agents.schema.json` (optional `agents.evalSuite.fixtureErrors`) · `RFCS/0244` §D (extended, not amended) · conformance: `v2-eval-trajectory-trials.test.ts` (one new gated leg), one new eval-suite fixture |
 | **Compatibility** | `additive` per `COMPATIBILITY.md` §2.4. One optional item field and one optional capability member. A suite without `isError` is served exactly as RFC 0244 §D serves it today. No field is renamed, removed or narrowed, and no MUST relaxes. |
 | **Supersedes**    | —                                                               |
@@ -96,7 +96,7 @@ The schema closes the same hole from the other side: the item object is `additio
 
 **New, in `v2-eval-trajectory-trials.test.ts`:**
 - **Server-free.** A suite with `isError: true` validates; `isError: "true"` fails; the new fixture validates.
-- **Host leg, `openwop.requirement.0245.fixture-error-replayed`.** Gated on `agents.evalSuite.fixtureErrors` and the fixture `conformance-eval-fixture-error` in discovery `fixtures`. One task scripts `core.conformance.agents.scripted` to call the same tool twice, with fixtures serving an `isError: true` entry and then a success. The leg asserts:
+- **Host leg, `openwop.requirement.0245.fixture-error-replayed`.** Gated on `agents.evalSuite.fixtureErrors`, `agents.evalSuite.fixtureMatching` (the sequence needs RFC 0244 §D's first-unconsumed selection) and the fixture `conformance-eval-fixture-error` in discovery `fixtures`. One task scripts `core.conformance.agents.scripted` to call the same tool twice, with fixtures serving an `isError: true` entry and then a success. The leg asserts:
   - two `agent.tool-called` and two `agent.tool-returned` events for the task;
   - the first `agent.tool-returned` carries `error` (non-empty `code` and `message`) and no `outcome`, plus `status: "error"` when `toolHooks.prePostEvents` is advertised;
   - the second carries `outcome`;
@@ -114,7 +114,7 @@ Like the RFC 0244 host legs, both drive the scripted conformance agent, so they 
 | §B the agent receives it as a tool error | what the model saw, and the branch it took | needs an agent that really reads tool results and exposes its branch; the scripted agent's results are scripted | **seam-gated** (G1, the RFC 0244 G2 gap) |
 | §B never retried live | the live tool's invocation count | needs a conformance tool with an effect counter | **seam-gated** (RFC 0244 G2) |
 | §C refusal without `fixtureErrors` | `400 validation_error` | the suite, given a host advertising `evalSuite` without `fixtureErrors` that lists the fixture (`openwop.requirement.0245.unadvertised-refused`) | witnessable — gated: `inapplicable` on every host that advertises it |
-| §A schema | an `isError` suite validates; a string `isError` fails | the suite, unaided (`openwop.requirement.0245.fixture-error-replayed` server-free leg) | witnessable |
+| §A schema | an `isError` suite validates; a string `isError` fails | the suite, unaided (`openwop.requirement.0245.fixture-error-shape`, server-free) | witnessable |
 
 ## Alternatives considered
 
@@ -136,9 +136,9 @@ Like the RFC 0244 host legs, both drive the scripted conformance agent, so they 
 
 - [x] `schemas/v2/agent-eval-suite.schema.json` carries optional `toolResponses[].isError` (boolean); the item stays `additionalProperties: false`.
 - [x] `spec/v2/facets/agents.schema.json` carries `agents.evalSuite.fixtureErrors` with the §B and §C rules in its description.
-- [ ] The fixture `conformance-eval-fixture-error` under `fixtures/eval-suites/`, with its contract in `fixtures.md`.
-- [ ] The server-free legs and the two gated host legs in `v2-eval-trajectory-trials.test.ts`.
-- [ ] CHANGELOG entry.
+- [x] The fixture `conformance-eval-fixture-error` under `fixtures/eval-suites/`, with its contract in `fixtures.md`. *(2026-10-18, suite 2.46.17.)*
+- [x] The server-free legs and the two gated host legs in `v2-eval-trajectory-trials.test.ts`. *(2026-10-18, suite 2.46.17; judge `lib/eval-fixture-error-witness.ts`.)*
+- [x] CHANGELOG entry.
 - [ ] A host advertises `fixtureErrors` and passes `0245.fixture-error-replayed` non-vacuously under `OPENWOP_REQUIRE_BEHAVIOR=true`.
 
 ## References

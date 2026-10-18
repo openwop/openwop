@@ -242,8 +242,8 @@ Defects outside the spec:
       §B cost counts every trial, §C efficiency counts and the never-gated rule, §D `onMiss: "live"`, §F pairing
       (needs a `regression` fixture).
 - [ ] **RFC 0245** `Active` 2026-10-15, window waived (eval fixtures replay a recorded tool error as an error; AEV-6
-      from openwop-app). Schema field and `fixtureErrors` member landed. Owed: the `conformance-eval-fixture-error`
-      fixture and the two gated legs (`0245.fixture-error-replayed`, `0245.unadvertised-refused`), then a witness host. Register rows: (G1) the agent-side half is
+      from openwop-app). Schema field, `fixtureErrors` member, the `conformance-eval-fixture-error` fixture and the legs
+      landed (suite 2.46.17). Owed: a witness host advertising `fixtureErrors` + `fixtureMatching` and listing the fixture. Register rows: (G1) the agent-side half is
       seam-gated with RFC 0244 G2; (G2) whether to register a tool-failure error code; (G3) the non-MCP agent shape.
 - [x] **RFC 0246** `Accepted` (provisional) 2026-10-16, **safety-fix**, 90-day window waived by STEWARD OVERRIDE. MyndHyve
       deployed the gate (`c8d511d84`) before advisory `GHSA-ffx7-pm5h-v6pq` was published; its certified 2.46.13 cut passes
