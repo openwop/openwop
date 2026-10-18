@@ -32,6 +32,11 @@ Entries before this file was condensed carried full development detail. That tex
 
 - **RFC 0246 Active (safety fix, `GHSA-ffx7-pm5h-v6pq`): a trial that failed its trajectory cannot carry a task or a suite to a pass.** The `mean` task rule and suite `passed` read a gating score that counts it 0; reported scores are unchanged. 90-day window waived by recorded STEWARD OVERRIDE.
 
+## [2.46.17] — 2026-10-18 — RFC 0245 witness; RFC 0222 Accepted
+
+- **RFC 0245's witness lands:** new fixture `conformance-eval-fixture-error` and three legs. An `isError: true` fixture entry must replay as `agent.tool-returned` with `error` and no `outcome`, not a miss; without `fixtureErrors` the suite is refused. No host is affected yet.
+- **RFC 0222 `Accepted`:** a probe pack's yanked version on packs.openwop.dev gives `v2-registry-lifecycle` a non-vacuous pass.
+
 ## [2.46.16] — 2026-10-18 — RFC 0228 Accepted
 
 - **RFC 0228 `Accepted`:** openwop-app's certified 2.46.14 production cut (`ddcf7f944`, 457/0/0) records `v2-table-schema-enforcement` and its three `storage.table-schema-*` requirements `executed-pass`, so G4, its last open gap, closes. No assertion changes; the packed `gaps.json` carries G4 closed.
