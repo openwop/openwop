@@ -112,9 +112,7 @@ Spec problems:
       examples #98, witnessed on the certified 2.43.0 cut).
 - [x] Dangling `auth.md` references (#1681).
 - [x] Metadata key count: fixed by another session (#1671).
-- [x] v2 registry operations: **RFC 0222 `Active`** (#1702, #1710; registry #77, #79 gate).
-  - [ ] RFC 0222's last box: `v2-registry-lifecycle` leg 1 needs a non-partial pass, which needs a real
-        yanked v2 version on packs.openwop.dev. Do not yank a pack just to produce evidence.
+- [x] v2 registry operations: **RFC 0222 `Accepted`** 2026-10-18 (#1702, #1710; registry #77, #79 gate, #95/#96 probe yank).
 
 Defects outside the spec:
 - [x] v2-reference's substituted `workspaceId` (examples #99), and the delivery-shape leg now checks
