@@ -1,3 +1,7 @@
+## [2.46.18] — 2026-10-18 — RFC 0245: a success return need not carry outcome
+
+- **`0245.fixture-error-replayed` no longer requires `outcome` on the success return.** `outcome` is optional on `agent.tool-returned`, and RFC 0064 §F lets a host omit it. The leg now asserts that the second return carries no `error` (and no `status: "error"` under tool hooks). This is an erratum from openwop-app's implementation (ADR 0929). No host was judged under 2.46.17.
+
 ## [2.46.17] — 2026-10-18 — RFC 0245: a recorded tool error replays as an error
 
 - **New fixture `fixtures/eval-suites/conformance-eval-fixture-error`.** One task calls `conformance.eval:lookup` twice. Its fixtures serve an `isError: true` entry, then a success.

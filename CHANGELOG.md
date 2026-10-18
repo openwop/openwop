@@ -10,7 +10,7 @@ Entries before this file was condensed carried full development detail. That tex
 
 - **RFC 0156 §B retrospective review deferred by steward exemption.** The protocol has no user outside the steward's organizations, so an `Accepted` RFC no longer waits on or owes a §B review until it has one or a non-steward maintainer joins (`GOVERNANCE.md`). No review is recorded; rows stay `not-reviewed`.
 - **RFC 0246 Accepted (provisional).** MyndHyve deployed the gate (build `c8d511d84`) before advisory `GHSA-ffx7-pm5h-v6pq` was published; its certified 2.46.13 production cut (418/0/0) passes `0246.mean-gated` and `0246.suite-gated`. G3 closes, so the packed `gaps.json` changes. The RFC 0156 §B review is owed.
-- **2.46.17 cycle (suite): RFC 0245's witness.** New fixture `conformance-eval-fixture-error`: a recorded tool error must be replayed as `agent.tool-returned` with `error` and no `outcome`, and is not a fixture miss. Without `agents.evalSuite.fixtureErrors` the suite is refused with `400 validation_error`.
+- **2.46.18 cycle (suite): RFC 0245 erratum.** The replay leg no longer requires `outcome` on the success return (it is optional; RFC 0064 §F). It asserts only that the success carries no `error`. Found by openwop-app's implementation before any host was judged.
 - **RFC 0222 Accepted.** The steward published a probe pack (`vendor.openwop.lifecycle-probe` 1.0.0, 1.0.1) and yanked 1.0.0 by `[YANK]` PR (openwop-registry #95, #96); on packs.openwop.dev `v2-registry-lifecycle` records both legs `executed-pass`, no partial witness. §B review deferred by steward exemption.
 - **RFC 0228 Accepted.** openwop-app's certified 2.46.14 production cut (`ddcf7f944`, 457/0/0) records `v2-table-schema-enforcement` `executed-pass`, so gap G4 closes; G1, G3, G6 and G7 closed earlier on certified cuts containing the fixes. The packed `gaps.json` changes. §B review deferred by steward exemption.
 - **RFC 0247 Accepted (provisional).** openwop-app's certified production cut on suite 2.46.12 (build `aee0febbc`, 446/0/0) advertises `limits.maxStreamAgeSec: 300` and passes all 12 `Last-Event-ID` resume rows; openwop-sdks 2.6.0 opts in and resumes. The RFC 0156 §B review is owed.
@@ -31,6 +31,10 @@ Entries before this file was condensed carried full development detail. That tex
 ### Security
 
 - **RFC 0246 Active (safety fix, `GHSA-ffx7-pm5h-v6pq`): a trial that failed its trajectory cannot carry a task or a suite to a pass.** The `mean` task rule and suite `passed` read a gating score that counts it 0; reported scores are unchanged. 90-day window waived by recorded STEWARD OVERRIDE.
+
+## [2.46.18] — 2026-10-18 — RFC 0245 erratum: a success return need not carry outcome
+
+- **RFC 0245 erratum:** `0245.fixture-error-replayed` no longer requires `outcome` on the success return; `outcome` is optional and RFC 0064 §F lets a host omit it. The leg asserts the success carries no `error`. No host was judged under 2.46.17.
 
 ## [2.46.17] — 2026-10-18 — RFC 0245 witness; RFC 0222 Accepted
 

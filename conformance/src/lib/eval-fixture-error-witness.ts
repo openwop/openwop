@@ -8,8 +8,9 @@
  * an `isError: true` entry and then a success (RFC 0244 §D: first unconsumed
  * match). So the expected log is known in advance: two `agent.tool-called`
  * from the scripted agent, and two `agent.tool-returned` paired to them by
- * `callId` — the first with `error` and no `outcome`, the second with
- * `outcome`. A served error is not a miss, so `fixtureMissCount` stays 0.
+ * `callId` — the first with `error` and no `outcome`, the second with no
+ * `error` (`outcome` is optional on a success). A served error is not a miss,
+ * so `fixtureMissCount` stays 0.
  *
  * That the agent saw a tool error, and that no live tool ran, are seam-gated
  * (RFC 0245 G1, RFC 0244 G2) and not judged here.
@@ -67,8 +68,10 @@ export function judgeFixtureErrorReplayed(events: readonly Event[], summary: Rec
   if (second === undefined) {
     out.push(f(false, B, 'the second scripted call MUST have an agent.tool-returned with the same callId'));
   } else {
-    out.push(f('outcome' in second && second['outcome'] !== undefined, B, 'the call served by the following success entry MUST carry outcome'));
+    // A success is "not an error", not "carries outcome": `outcome` is optional
+    // on agent.tool-returned and RFC 0064 §F lets a host omit it (2.46.18).
     out.push(f(second['error'] === undefined, B, 'the call served by the following success entry MUST NOT carry error'));
+    if (opts.prePostEvents) out.push(f(second['status'] !== 'error', B, `under toolHooks.prePostEvents the success return MUST NOT carry status "error" (got ${JSON.stringify(second['status'])})`));
   }
 
   const tasks = Array.isArray(summary['tasks']) ? (summary['tasks'] as unknown[]).filter(isRec) : [];

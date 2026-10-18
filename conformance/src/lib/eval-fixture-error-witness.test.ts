@@ -52,8 +52,12 @@ describe('judgeFixtureErrorReplayed (RFC 0245 §B)', () => {
   });
   it('the success entry served as an error fails (entries consumed out of order)', () => {
     const fs = judge(log(ERR, ERR));
-    expect(fs.some((m) => /following success entry MUST carry outcome/.test(m))).toBe(true);
     expect(fs.some((m) => /following success entry MUST NOT carry error/.test(m))).toBe(true);
+    expect(fs.some((m) => /success return MUST NOT carry status "error"/.test(m))).toBe(true);
+  });
+  it('a success with no outcome passes — outcome is optional (RFC 0064 §F)', () => {
+    expect(judge(log(ERR, { status: 'ok' }))).toEqual([]);
+    expect(judge(log({ error: ERR.error }, {}), summary(), false)).toEqual([]);
   });
   it('a dropped return or an extra call fails', () => {
     expect(judge(log().slice(0, 3)).some((m) => /two agent\.tool-returned/.test(m))).toBe(true);

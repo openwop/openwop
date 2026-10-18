@@ -50,8 +50,8 @@
  *      refused; `conformance-eval-fixture-error` validates (leg 2).
  *  11. `conformance-eval-fixture-error` (fixtureErrors + fixtureMatching) —
  *      the call served by the error entry is recorded with `error` and no
- *      `outcome` (`status: "error"` under tool hooks), the next with
- *      `outcome`, and `fixtureMissCount` is 0. The two-call sequence needs
+ *      `outcome` (`status: "error"` under tool hooks), the next with no
+ *      `error` (`outcome` optional), and `fixtureMissCount` is 0. The two-call sequence needs
  *      RFC 0244 §D's first-unconsumed selection, hence `fixtureMatching`.
  *  12. Refusal — a host advertising `agents.evalSuite` without `fixtureErrors`
  *      that lists the fixture refuses it with `400 validation_error`.
