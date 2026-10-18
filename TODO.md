@@ -18,7 +18,7 @@
   **0230** (inbound webhook ingest contract). **0231** (budget exhaustion facet) went `Accepted`
   on 2026-10-02 (tier-1, the v2 reference host). **0038** is `Draft` (Parked). **0225**, **0226** and
   **0227** went `Accepted` since the last update (#1791, #1821, #1831). Every waived-window
-  `Accepted` RFC is **provisional** (RFC 0156 §B).
+  `Accepted` RFC has no RFC 0156 §B review; §B is deferred by steward exemption (2026-10-17).
 - **Suite:** **2.45.9 is published** (tag `v2.45.9`; npm `latest` for both packages). Releases since 2.44.2: 2.44.3–2.44.9, 2.45.0 (#1815, CORS preflight headers), 2.45.1
   (#1819), 2.45.2 (#1822), 2.45.3 (#1835), 2.45.4 (#1840: the unclaimed any-of floor fix, the v2
   ports of `production-backpressure` and `budget-enforcement`, the host-free gate), 2.45.5 (the
@@ -60,11 +60,12 @@ works through the CLI. Buying a plan is not covered by any autonomy grant, so as
 - [ ] Flip to `Accepted`. **Never flip on the advert-shape or §B.8 rows alone.** §B.8 proves
       scope rejection on the wire and nothing about storage or resolution (#856).
 
-## 2 — RFC 0156 §B retrospective reviews · **externally gated**
+## 2 — RFC 0156 §B retrospective reviews · **deferred by steward exemption (2026-10-17)**
 
-- [ ] Each provisional `Accepted` RFC needs a §B review. The review must be cross-organization,
-      so it cannot run until the non-steward tripwire fires. A steward self-review recorded as
-      `ratified` is the substitution §B forbids. Public call: #1609.
+- [ ] §B reviews are deferred while the protocol has no user outside the steward's organizations
+      (`GOVERNANCE.md` §"Sole-steward operation"). An `Accepted` RFC no longer waits on or owes one.
+      The exemption ends with the first outside user or non-steward maintainer; then every in-scope
+      register row is owed again. No row is `ratified` on the exemption's account. Public call: #1609.
 - [ ] RFC 0215 §A.3 per-tenant fair share (a SHOULD) is unmet on both deployed hosts. openwop-app
       needs a `tenant_id` on its delivery rows (their ADR 0752).
 

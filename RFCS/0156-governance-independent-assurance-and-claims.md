@@ -7,7 +7,7 @@
 | **Status** | `Accepted` |
 | **Author(s)** | David Tufts (@davidscotttufts) |
 | **Created** | 2026-08-11 |
-| **Updated** | 2026-08-12 (`Active` -> `Accepted`; 7-day comment window waived by the steward per `MAINTAINERS.md` §"Bootstrap-phase RFC waivers". **Landed:** RFC text and its gap/risk registers. **Carried forward, not closed:** cross-organization governance, the external audit, Tier-3 evidence, and machine-gated claims — all externally gated.) |
+| **Updated** | 2026-10-17 — **§B retrospective review deferred by steward exemption** until the protocol gains a user outside the steward's organizations or a non-steward maintainer joins (`GOVERNANCE.md` §"Sole-steward operation"). No §B outcome is recorded; register rows stay `not-reviewed` and §E is unchanged. · 2026-08-12 (`Active` -> `Accepted`; 7-day comment window waived by the steward per `MAINTAINERS.md` §"Bootstrap-phase RFC waivers". **Landed:** RFC text and its gap/risk registers. **Carried forward, not closed:** cross-organization governance, the external audit, Tier-3 evidence, and machine-gated claims — all externally gated.) |
 | **Affects** | `GOVERNANCE.md`, `MAINTAINERS.md`, `SECURITY.md`, `CONTRIBUTING.md`, `COMPATIBILITY.md`, `ROADMAP.md`, `INTEROP-MATRIX.md`, RFC 0038, release and claim tooling |
 | **Compatibility** | Governance/process change; no host wire break |
 | **Supersedes** | Bootstrap single-steward waiver practice once activation conditions are met |

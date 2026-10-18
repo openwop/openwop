@@ -80,6 +80,8 @@ RFC 0156 §B: RFCs affecting auth, identity, tenant isolation, secrets, packs, e
 
 This packet is for that reviewer. **${rows.length} RFCs are listed; ${open} have no discharging outcome.** The steward, the steward's sessions, and steward-affiliated hosts (MyndHyve is tier-2, not independent) cannot supply the review. Recording one of their reviews as \`ratified\` is the substitution §B's last clause forbids.
 
+**Enforcement is deferred.** On 2026-10-17 the maintainer deferred §B by steward exemption (\`GOVERNANCE.md\` §"Sole-steward operation") while the protocol has no user outside the steward's organizations. No outcome was recorded on its account. The packet is kept current for the day the exemption ends.
+
 ## How to review one RFC
 
 1. Read the RFC (linked) — Summary, Proposal, and \`### Falsifiability\`. The evidence tier in its \`Updated\` field names what witnessed it.
