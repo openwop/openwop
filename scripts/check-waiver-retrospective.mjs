@@ -108,8 +108,9 @@ process.stdout.write(`  ${rows.size} waived RFC(s), all present. Outcomes: `);
 process.stdout.write([...byOutcome].sort().map(([k, v]) => `${k}=${v}`).join(', ') + '\n');
 process.stdout.write(`  ${discharged} of ${rows.size} discharge §B (only \`ratified\` does).\n`);
 if (discharged < rows.size) {
-  process.stdout.write('  Not a failure: §B review is cross-organization and the non-steward-maintainer\n');
-  process.stdout.write('  tripwire has not fired, so a non-zero open count is the honest state.\n');
+  process.stdout.write('  Not a failure: §B review is deferred by steward exemption (2026-10-17, GOVERNANCE.md\n');
+  process.stdout.write('  §"Sole-steward operation") until the protocol has a user outside the steward\'s\n');
+  process.stdout.write('  organizations; a non-zero open count is the honest state, and no row is ratified.\n');
 }
 process.stdout.write('\n=== check-waiver-retrospective OK ===\n');
 process.exit(0);

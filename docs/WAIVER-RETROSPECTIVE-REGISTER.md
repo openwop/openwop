@@ -37,17 +37,13 @@ judgement that discharges a MUST, so it needs a recorded rationale and a reviewe
 sets for the review itself. Absent that, the conservative reading is in-scope, which is "silence MUST NOT
 mean ratified" applied one level up. Do not narrow this column mechanically.
 
-## The blocker, stated plainly
+## Deferred by steward exemption (2026-10-17)
 
-§B requires **cross-organization** review. `MAINTAINERS.md` lists one maintainer, and the
-≥1-non-steward-maintainer tripwire in `ROADMAP.md` has not fired. A steward self-review is not a
-cross-organization review, and recording one as `ratified` would be precisely the substitution the last
-clause of §B forbids.
+§B requires **cross-organization** review, and the project has no one outside the steward's organizations: `MAINTAINERS.md` lists one maintainer, and every host is the steward's or steward-affiliated. On 2026-10-17 the maintainer deferred §B by steward exemption (`GOVERNANCE.md` §"Sole-steward operation"). Until it ends, an `Accepted` RFC does not wait on or owe a §B review, and the open rows below are not reported as a blocker.
 
-**So zero discharged is the correct number today, not a backlog anyone here can burn down.** (The denominator is not written here because it grows with every waived RFC; `check-waiver-retrospective.mjs` prints the live tally.) It is gated on the
-same tripwire as the rest of the governance program. What this register changes is that the gap is now
-per-RFC and recordable rather than a single aggregate, so the day a reviewer exists the work has somewhere
-to land — and until then the zero is visibly a blocked obligation rather than an unstarted chore.
+The exemption is a deferral, not a review. **Zero discharged is still the correct number.** No row is marked `ratified`, `provisional` or `out-of-scope` on its account, because a steward self-review recorded as an outcome would be exactly the substitution §B's last clause forbids. The rows stay `not-reviewed` so the record is ready for the day a reviewer exists.
+
+**It ends when** the protocol gains a user outside the steward's organizations — an organization unaffiliated with the steward that runs a host, publishes a pack, ships an SDK or integration that depends on the protocol, or tells the project it is building on it — or the first non-steward maintainer joins, whichever comes first. From then every in-scope row is owed again, oldest high-risk first, and each new waived RFC owes its review.
 
 **For a reviewer:** start at [`SECTION-B-REVIEW-PACKET.md`](./SECTION-B-REVIEW-PACKET.md), a generated reading guide that groups every row by §B area with its status, waiver and evidence tier, and says how to record an outcome.
 
