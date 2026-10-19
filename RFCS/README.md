@@ -373,6 +373,7 @@ Of the 3 open (`Draft` or `Active`) RFCs, **1 is [Parked](#parked-rfcs)** on a n
 | [0245](./0245-eval-fixtures-replay-tool-errors.md) | Eval fixtures replay a recorded tool error as an error | `Accepted` |
 | [0246](./0246-trajectory-failure-gates-the-pass.md) | A trial that fails its trajectory cannot carry a task or a suite to a pass | `Accepted` |
 | [0247](./0247-bounded-stream-lifetime.md) | Bounded stream lifetime: a host may end an opted-in live SSE stream, and the consumer resumes with Last-Event-ID | `Accepted` |
+| [0248](./0248-callai-attempt-accounting-and-retry-policy.md) | `ctx.callAI` reports its provider attempts and output tokens (`attempts`), and takes a per-call `retry` policy (`maxAttempts`, `growMaxTokens`), both advertised under `aiProviders.callAccounting` | `Draft` |
 ## See also
 
 - `GOVERNANCE.md` — decision rules, maintainer roles, the broader spec change process.
