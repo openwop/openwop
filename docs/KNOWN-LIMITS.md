@@ -101,7 +101,6 @@ Several `Accepted` RFCs are provisional: their comment windows were waived and t
 | --- | --- | --- |
 | 0038 (Working Group charter) | `Draft` (parked) | Ratifies when the `GOVERNANCE.md` tripwire fires (at least three organizations and two non-steward hosts). The charter is written; the gate is adoption, not text. |
 | 0121 (Subscription provider auth) | `Active` (parked) | The remaining acceptance criteria hinge on Unresolved Question 1, a legal or terms-of-service citation for at least one named provider. Until that clears, no host advertises `subscription`. A standing decision, not an open action. |
-| 0245 (Eval fixtures replay a recorded tool error) | `Active` | The fixture `conformance-eval-fixture-error`, the server-free and gated legs in `v2-eval-trajectory-trials.test.ts`, and a host that advertises `fixtureErrors` and passes `0245.fixture-error-replayed` non-vacuously. |
 
 ---
 
