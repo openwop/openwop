@@ -241,21 +241,11 @@ Defects outside the spec:
       trials for §B isolation. (G5) a portable "fixtures = run X" reference (follow-up RFC). Legs not yet probed:
       §B cost counts every trial, §C efficiency counts and the never-gated rule, §D `onMiss: "live"`, §F pairing
       (needs a `regression` fixture).
-- [ ] **RFC 0245** `Active` 2026-10-15, window waived (eval fixtures replay a recorded tool error as an error; AEV-6
-      from openwop-app). Schema field, `fixtureErrors` member, the `conformance-eval-fixture-error` fixture and the legs
-      landed (suite 2.46.17; 2.46.18 erratum: the success return needs no `outcome`). Owed: a witness host.
-      **In flight (2026-10-18):** openwop-app-73 implements it (app ADR 0929, branch `feat/rfc0245-fixture-errors`),
-      pinned 2.46.18. The cut was due ~2026-10-19 01:00Z, after app trains 152/153. Pre-registered prediction against the
-      canonical `openwop-workflow-engine.json` (141c, `ddcf7f944`; 151c `ac39f630f` is row-identical, verified):
-      `0245.fixture-error-shape` and `0245.fixture-error-replayed` executed-pass, `0245.unadvertised-refused`
-      inapplicable, nothing else moves. Sabotage: serving the isError entry as a success reds the replay leg.
-      On arrival:
-      1. Verify with `--verify --host-key`: the served pointer matches the bucket copy, and `OPENWOP_BUILD_COMMIT` is
-         the live revision's.
-      2. Check the bundle in as canonical, using #2016's recipe.
-      3. Flip 0245 to `Accepted`: tier-1, "§B review deferred by steward exemption (2026-10-17)". No cycle is
-         needed unless a gap row closes. Register rows: (G1) the agent-side half is
-      seam-gated with RFC 0244 G2; (G2) whether to register a tool-failure error code; (G3) the non-MCP agent shape.
+- [x] **RFC 0245** `Accepted` 2026-10-19 (eval fixtures replay a recorded tool error as an error; AEV-6 from openwop-app).
+      Tier-1: openwop-app's certified 2.46.18 cut `3566445be` advertises `fixtureErrors` and passes
+      `0245.fixture-error-replayed` (2.46.18 erratum: a success return needs no `outcome`). Register rows stay here:
+      (G1) the agent-side half is seam-gated with RFC 0244 G2; (G2) whether to register a tool-failure error code;
+      (G3) the non-MCP agent shape.
 - [x] **RFC 0246** `Accepted` (provisional) 2026-10-16, **safety-fix**, 90-day window waived by STEWARD OVERRIDE. MyndHyve
       deployed the gate (`c8d511d84`) before advisory `GHSA-ffx7-pm5h-v6pq` was published; its certified 2.46.13 cut passes
       `0246.mean-gated` / `0246.suite-gated`. Owed: the RFC 0156 §B review; openwop-app's eval-fixture opt-in (second witness,

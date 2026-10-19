@@ -34,7 +34,7 @@
 | CLI `@openwop/cli` | 1.3.0 | openwop-cli `package.json` | speaks the wire directly; negotiates major 2 since 1.0.0 (the v1-only 0.18.x line is frozen on branch `cli-v1-frozen`) |
 | Registry `registryVersion` / `protocolVersion` | 1.0.0 / 1.0 | openwop-registry `.well-known/openwop-registry.json` | RFC 0172 sectionB #18; versioned by tree at v2 (RFC 0177 sectionA.3) |
 | openwop-registry corpus pin | v2.34.0 | openwop-registry `CORPUS_TAG` | as the SDK pin |
-| openwop-app corpus pin / suite pin | v2.46.14 / ^2.46.14 | openwop-app `schemas/CORPUS_TAG`, `backend/typescript/package.json` | tier-1 host; both must agree (RFC 0176 sectionE.1) |
+| openwop-app corpus pin / suite pin | v2.46.18 / ^2.46.18 | openwop-app `schemas/CORPUS_TAG`, `backend/typescript/package.json` | tier-1 host; both must agree (RFC 0176 sectionE.1) |
 | openwop-examples in-memory host / suite pin | 1.1.7 / ^1.152.0 | openwop-examples `examples/hosts/in-memory/package.json` | front-door witness host for the v2 RC (Phase 3 plan section11) |
 
 ## Version Axes
@@ -70,8 +70,8 @@
 
 | Status | Count |
 |---|---:|
-| Accepted | 239 |
-| Active | 2 |
+| Accepted | 240 |
+| Active | 1 |
 | Draft | 1 |
 | Superseded | 1 |
 
@@ -317,7 +317,7 @@
 | RFC 0242 | a negotiation record says what was asked for, and an inbound negotiation has a home | Accepted |
 | RFC 0243 | parallel fan-out has a v2 seat, and a link key needs both linking lanes | Accepted |
 | RFC 0244 | Eval suites grade the tool path, run repeated trials, and fail closed on a fixture miss | Accepted |
-| RFC 0245 | Eval fixtures replay a recorded tool error as an error | Active |
+| RFC 0245 | Eval fixtures replay a recorded tool error as an error | Accepted |
 | RFC 0246 | A trial that fails its trajectory cannot carry a task or a suite to a pass | Accepted |
 | RFC 0247 | Bounded stream lifetime: a host may end an opted-in live SSE stream, and the consumer resumes with Last-Event-ID | Accepted |
 
@@ -344,7 +344,7 @@ The pack registry now lives in the [`openwop-registry`](https://github.com/openw
 ## Active Follow-Ups
 
 - 1 RFC still `Draft` (RFC 0038) — advance with schema/conformance proof or defer.
-- 2 RFCs `Active` (RFC 0121, RFC 0245) — wire-shape MAY shift compatibly within v1.x until promotion to `Accepted`.
+- 1 RFC `Active` (RFC 0121) — wire-shape MAY shift compatibly within v1.x until promotion to `Accepted`.
 - External audit, non-steward host recruitment, and non-steward maintainer recruitment remain external-action gates.
 - Multi-region idempotency and some optional-profile behavior checks remain lower-confidence than the core wire contract.
 
