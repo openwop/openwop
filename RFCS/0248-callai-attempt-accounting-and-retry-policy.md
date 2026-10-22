@@ -7,8 +7,8 @@
 | **Status**        | `Active`                                                        |
 | **Author(s)**     | David Tufts (@davidscotttufts), for the Book AI pack (upstream proposal P7 items 2–3) |
 | **Created**       | 2026-10-19                                                      |
-| **Updated**       | 2026-10-22 — **`Draft` → `Active`**, comment window waived by the maintainer (2026-10-22: "Waive the comment window on RFC 0248 and proceed to active"). **STEWARD OVERRIDE of RFC 0147 §A.6**, which forbids shortening the window for an RFC affecting replay: §A.5 makes `attempts` part of the recorded outcome that a replay MUST reproduce. Recorded in `MAINTAINERS.md` §"Bootstrap-phase RFC waivers". RFC 0001 §5 note: the cross-organization approval rule is not yet active (one maintainer, one organization; `GOVERNANCE.md` §"Sole-steward operation"). The wire shape in §A–§C is now locked. The evidence gate is not waived: `Accepted` needs a deployed host advertising `aiProviders.callAccounting` and passing the `callai-attempt-accounting` legs. · 2026-10-19 — filed `Draft`. |
-| **Affects**       | `spec/v2/core/host-services.md` §`aiProviders` · `spec/v2/facets/aiProviders.schema.json` (one optional object) · `spec/v1/host-capabilities.md` §`ctx.callAI` (the same fields, for v1 readers) · one new conformance scenario + one fixture node · CHANGELOG |
+| **Updated**       | 2026-10-22 — **suite 2.46.19: the legs land, witnessed without a seam.** The mock-AI program seam this RFC named exists only at the frozen v1 path, and declaring it at v2 would raise the seam count, which `conformance.md` §Witness class forbids. So the fixture `conformance-callai-attempt-accounting` scripts the mock through its node's inputs, as RFC 0244's scripted agent does. The suite reads `provider.usage` (one per provider invocation, `events.md` §`providerUsage`), `envelope.retry-exhausted` and the node's outputs, all normative, so every row is `witnessable-gated` and no MUST is demoted. The rules live in the `aiProviders.callAccounting` facet descriptions: the core budget is at its cap, and RFC 0244/0245 set the precedent. The `spec/v1/host-capabilities.md` row is dropped, because `spec/v1/` is frozen. The wire in §A–§C is unchanged. · 2026-10-22 — **`Draft` → `Active`**, comment window waived by the maintainer (2026-10-22: "Waive the comment window on RFC 0248 and proceed to active"). **STEWARD OVERRIDE of RFC 0147 §A.6**, which forbids shortening the window for an RFC affecting replay: §A.5 makes `attempts` part of the recorded outcome that a replay MUST reproduce. Recorded in `MAINTAINERS.md` §"Bootstrap-phase RFC waivers". RFC 0001 §5 note: the cross-organization approval rule is not yet active (one maintainer, one organization; `GOVERNANCE.md` §"Sole-steward operation"). The wire shape in §A–§C is now locked. The evidence gate is not waived: `Accepted` needs a deployed host advertising `aiProviders.callAccounting` and passing the `callai-attempt-accounting` legs. · 2026-10-19 — filed `Draft`. |
+| **Affects**       | `spec/v2/facets/aiProviders.schema.json` (one optional object; its descriptions carry the §A and §B rules) · `spec/v2/core/host-services.md` §`aiProviders` (a one-line pointer, word-neutral) · `spec/v2/declaration.json` (`aiProviders` facets) · conformance: `v2-callai-attempt-accounting.test.ts`, fixture `conformance-callai-attempt-accounting` with node `conformance.callai.echo-attempts` · CHANGELOG |
 | **Compatibility** | `additive`                                                      |
 | **Supersedes**    | —                                                               |
 | **Superseded by** | —                                                               |
@@ -155,32 +155,33 @@ refused with `validation_error`, `details.field: "retry.maxAttempts"`.
 
 ## Conformance
 
-New scenario `callai-attempt-accounting`. It runs only when the matching flag is
-advertised. It drives the existing mock-AI program seam
-(`POST …/test/mock-ai/program`, used by `envelope-refusal-shape`) and a fixture
-node, `conformance.callai.echo-attempts`, that writes its `ctx.callAI` result's
-`attempts` to its output.
+New scenario `v2-callai-attempt-accounting`. It needs no seam. The fixture `conformance-callai-attempt-accounting`, listed in discovery `fixtures`, has one node, `conformance.callai.echo-attempts`. That node makes one `ctx.callAI` call through the host's conformance mock, which serves the run's `script` (one reply per provider request, contract in `fixtures.md`). It then writes the result's `attempts` to its output. The suite wrote the script, so it knows what each request returned. Where the host advertises `providerUsage`, `provider.usage` (exactly one per provider invocation) corroborates it. The mock clamps each reported `outputTokens` to that request's `maxTokens`, which makes budget growth visible. Judges live in `lib/callai-attempts-witness.ts`.
 
-| Case | Program | Expect |
+| Id | Case | Expect |
 | --- | --- | --- |
-| §A.1/A.2 | invalid JSON, then valid | `attempts.count: 2`; `outputTokens` = the two programmed usages summed |
-| §A.2 | an attempt without usage | `usageComplete: false` |
-| §B.1 | `maxAttempts: 1`, invalid JSON | one mock request; `envelope.retry.exhausted.totalAttempts: 1` |
-| §B.2 | `growMaxTokens: false`, truncation, then valid | the second request's `maxTokens` equals the first |
-| §B.5 | `maxAttempts: 0` | node fails `validation_error`, `details.field: retry.maxAttempts` |
-| §A.5 | replay fork of the §A.1 run | `attempts` byte-equal to the source |
+| `0248.attempts-count` | invalid JSON, then valid | `attempts.count` equals the `provider.usage` count |
+| `0248.output-tokens-sum` | the same run | `outputTokens` equals the scripted usages summed and the summed `provider.usage`; `usageComplete: true` |
+| `0248.usage-incomplete` | one reply with `usage: false` | `usageComplete: false` |
+| `0248.structured-output` | no `responseSchema`; then a mock declaring `native` | absent; then `"native"` |
+| `0248.attempts-replayed` | a replay fork of the count run | `attempts` byte-equal to the source |
+| `0248.max-attempts-cap` | `maxAttempts: 1`, invalid first reply | the call fails; at most one `provider.usage`; `retry-exhausted.totalAttempts: 1` when emitted |
+| `0248.no-budget-growth` | `growMaxTokens: false`, truncated, then a reply that fits only a grown budget | the call does not complete; no `provider.usage.outputTokens` above `maxTokens` |
+| `0248.retry-malformed-refused` | `maxAttempts: 0` | node fails `validation_error`, `details.field: retry.maxAttempts` |
+
+Each leg is gated on its `callAccounting` flag and the fixture, and the replay leg also on `replay.modes` including `replay`. A count run that fails because the host does not retry a schema violation is `blocked`, not judged.
 
 ### Falsifiability — one row per normative requirement
 
 | Requirement | Observable — what an outside party sees | Who can cause the condition | Verdict |
 | --- | --- | --- | --- |
-| §A.1 count = requests | the mock seam's request count vs `attempts.count` in the fixture node's output | the suite, via the mock-AI program seam | seam-gated |
-| §A.2 summed tokens / `usageComplete` | programmed usages vs the echoed `attempts` | the suite, via the seam | seam-gated |
-| §A.3 `structuredOutput` | the echoed value, for a provider the host maps natively | the suite, only where the mock declares a native mode | seam-gated |
-| §A.5 replay equality | source vs fork `node.completed` outputs | the suite (`:fork` replay) | witnessable |
-| §B.1 cap | the mock request count; `envelope.retry.exhausted.totalAttempts` | the suite, via the seam | seam-gated |
-| §B.2 no budget growth | `maxTokens` on each mock request (the seam records requests) | the suite, via the seam | seam-gated |
-| §B.5 malformed refused | `node.failed.error.code` + `details.field` | the suite, unaided | witnessable |
+| §A.1 count = requests | `attempts.count` vs the `provider.usage` count | the suite, through the fixture's script | witnessable-gated |
+| §A.2 summed tokens | `outputTokens` vs the scripted usages and the summed `provider.usage` | the suite, through the script | witnessable-gated |
+| §A.2 `usageComplete` | a scripted no-usage reply vs the echoed flag | the suite, through the script | witnessable-gated |
+| §A.3 `structuredOutput` | absent without `responseSchema`; the mode the script declared | the suite, through the script | witnessable-gated |
+| §A.5 replay equality | source vs fork `node.completed` outputs | the suite (`:fork` replay) | witnessable-gated |
+| §B.1 cap | the call's outcome; the `provider.usage` count; `retry-exhausted.totalAttempts` | the suite, through the script | witnessable-gated |
+| §B.2 no budget growth | the call's outcome; `provider.usage.outputTokens` against `maxTokens` (the mock clamps) | the suite, through the script | witnessable-gated |
+| §B.5 malformed refused | `node.failed.error.code` + `details.field` | the suite, unaided | witnessable-gated |
 
 ## Security considerations
 

@@ -1,3 +1,10 @@
+## [2.46.19] — 2026-10-22 — RFC 0248: ctx.callAI attempt accounting and retry policy
+
+- **New scenario `v2-callai-attempt-accounting`** with eight legs: `0248.attempts-count`, `output-tokens-sum`, `usage-incomplete`, `structured-output`, `attempts-replayed`, `max-attempts-cap`, `no-budget-growth` and `retry-malformed-refused`. They are gated on `aiProviders.callAccounting.attempts` / `.retryPolicy` and the fixture.
+- **New fixture `conformance-callai-attempt-accounting`.** Its node `conformance.callai.echo-attempts` makes one `ctx.callAI` call through the host's conformance mock, which serves the run's `script`, and echoes `attempts`. The mock clamps reported `outputTokens` to each request's `maxTokens`. No seam is used: the legs read `provider.usage`, `envelope.retry-exhausted` and node outputs. The judges are in `lib/callai-attempts-witness.ts`, and their self-tests fail each wrong host answer.
+- **`aiProviders.callAccounting {attempts, retryPolicy}`** is added to the facet, with the RFC 0248 rules in its descriptions.
+- **Host impact: none today.** No host advertises `callAccounting` or lists the fixture.
+
 ## [2.46.18] — 2026-10-18 — RFC 0245: a success return need not carry outcome
 
 - **`0245.fixture-error-replayed` no longer requires `outcome` on the success return.** `outcome` is optional on `agent.tool-returned`, and RFC 0064 §F lets a host omit it. The leg now asserts that the second return carries no `error` (and no `status: "error"` under tool hooks). This is an erratum from openwop-app's implementation (ADR 0929). No host was judged under 2.46.17.

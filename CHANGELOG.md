@@ -10,12 +10,12 @@ Entries before this file was condensed carried full development detail. That tex
 
 - **RFC 0156 §B retrospective review deferred by steward exemption.** The protocol has no user outside the steward's organizations, so an `Accepted` RFC no longer waits on or owes a §B review until it has one or a non-steward maintainer joins (`GOVERNANCE.md`). No review is recorded; rows stay `not-reviewed`.
 - **RFC 0246 Accepted (provisional).** MyndHyve deployed the gate (build `c8d511d84`) before advisory `GHSA-ffx7-pm5h-v6pq` was published; its certified 2.46.13 production cut (418/0/0) passes `0246.mean-gated` and `0246.suite-gated`. G3 closes, so the packed `gaps.json` changes. The RFC 0156 §B review is owed.
+- **2.46.19 cycle (suite): RFC 0248's witness.** New `aiProviders.callAccounting {attempts, retryPolicy}` and a fixture whose node makes one scripted `ctx.callAI` call and echoes its `attempts`. Eight legs check the count, summed tokens, the retry cap and no budget growth against `provider.usage`. No seam is used.
 - **RFC 0245 Accepted.** openwop-app's certified 2.46.18 production cut (`3566445be`, 459/0/0) advertises `agents.evalSuite.fixtureErrors` and replays a recorded tool error as an error (`0245.fixture-error-replayed`). §B review deferred by steward exemption.
 - **RFC 0222 Accepted.** The steward published a probe pack (`vendor.openwop.lifecycle-probe` 1.0.0, 1.0.1) and yanked 1.0.0 by `[YANK]` PR (openwop-registry #95, #96); on packs.openwop.dev `v2-registry-lifecycle` records both legs `executed-pass`, no partial witness. §B review deferred by steward exemption.
 - **RFC 0228 Accepted.** openwop-app's certified 2.46.14 production cut (`ddcf7f944`, 457/0/0) records `v2-table-schema-enforcement` `executed-pass`, so gap G4 closes; G1, G3, G6 and G7 closed earlier on certified cuts containing the fixes. The packed `gaps.json` changes. §B review deferred by steward exemption.
 - **RFC 0247 Accepted (provisional).** openwop-app's certified production cut on suite 2.46.12 (build `aee0febbc`, 446/0/0) advertises `limits.maxStreamAgeSec: 300` and passes all 12 `Last-Event-ID` resume rows; openwop-sdks 2.6.0 opts in and resumes. The RFC 0156 §B review is owed.
-- **2.46.2 cycle (suite): the seams profile is derived from its advert.** Its predicate is `conformance.seamsProfile`, not the whole `conformance` block (`capabilities.md` §7 `key.member`). Four openwop-app bundles certified it with only `certificationBundleUrl`; `--verify` now refuses that certification.
-- **2.46.1 cycle (suite):** the modal webhook receiver's `close()` closes idle and then all connections, so a keep-alive socket held by a public tunnel no longer times out `v2-webhook-message-id-stable`'s `afterEach`. No assertion changes.
+- **2.46.1–2.46.2 cycles (suite):** the seams profile is derived from `conformance.seamsProfile`, not the whole `conformance` block, so `--verify` refuses a certification carrying only `certificationBundleUrl`; the modal webhook receiver's `close()` also closes keep-alive sockets.
 - **RFCs 0241 and 0242 Accepted (provisional).** Tier-1: the v2 reference host's certified public cuts (0241 seams-off on 2.45.28, `bb7c5930`; 0242 on 2.46.0, `d16cac40`) witness every row; 0241 G1/G2 and 0242 G1 close, so the packed `gaps.json` changed.
 - **RFC 0238 and RFC 0239 Accepted (provisional).** Tier-1: openwop-app's 2.45.23 cut (379/0/0, `e33f3a19c`) passes the four ui-plugin ids; the reference host's 2.45.23 cut (512/0/0, `1492562f`) passes the three council-roster ids, openwop-app `90e7f78ee` a second witness. Gaps close.
 - **2.45.25 cycle (suite):** new `v2-wasm-abi-reject` reads a WASM pack's rejection at load from what it prevents: the ABI-999 pack listed in `loadedPacks`, or its node completing (`conformance-wasm-pack-abi-mismatch`). The `frontend-plugin-packs` schema legs move to `src/coherence/` (RFC 0238 G3).
@@ -31,6 +31,10 @@ Entries before this file was condensed carried full development detail. That tex
 ### Security
 
 - **RFC 0246 Active (safety fix, `GHSA-ffx7-pm5h-v6pq`): a trial that failed its trajectory cannot carry a task or a suite to a pass.** The `mean` task rule and suite `passed` read a gating score that counts it 0; reported scores are unchanged. 90-day window waived by recorded STEWARD OVERRIDE.
+
+## [2.46.19] — 2026-10-22 — RFC 0248: ctx.callAI attempt accounting and retry policy
+
+- **RFC 0248's witness lands:** facet member `aiProviders.callAccounting`, fixture `conformance-callai-attempt-accounting` and eight legs in `v2-callai-attempt-accounting`, read from `provider.usage` and node outputs, no seam. No host advertises it yet, so results are unchanged.
 
 ## [2.46.18] — 2026-10-18 — RFC 0245 erratum: a success return need not carry outcome
 

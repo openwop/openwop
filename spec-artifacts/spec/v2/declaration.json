@@ -715,7 +715,8 @@
         "maxInlineMediaBytes",
         "authModes",
         "policies",
-        "input"
+        "input",
+        "callAccounting"
       ],
       "floorScenarios": [],
       "requirementIds": [],

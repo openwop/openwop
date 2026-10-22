@@ -241,6 +241,11 @@ Defects outside the spec:
       trials for §B isolation. (G5) a portable "fixtures = run X" reference (follow-up RFC). Legs not yet probed:
       §B cost counts every trial, §C efficiency counts and the never-gated rule, §D `onMiss: "live"`, §F pairing
       (needs a `regression` fixture).
+- [ ] **RFC 0248** `Active` 2026-10-22, window waived (STEWARD OVERRIDE of RFC 0147 §A.6; `ctx.callAI` attempt
+      accounting + per-call retry policy, for the Book AI pack). Facet `aiProviders.callAccounting`, the fixture
+      `conformance-callai-attempt-accounting` and the eight legs landed in suite 2.46.19, without a seam. Owed: a witness host.
+      openwop-app-6a is implementing the host side: it advertises the flags, lists the fixture, and implements the
+      fixture node's scripted mock and the clamp.
 - [x] **RFC 0245** `Accepted` 2026-10-19 (eval fixtures replay a recorded tool error as an error; AEV-6 from openwop-app).
       Tier-1: openwop-app's certified 2.46.18 cut `3566445be` advertises `fixtureErrors` and passes
       `0245.fixture-error-replayed` (2.46.18 erratum: a success return needs no `outcome`). Register rows stay here:

@@ -3076,6 +3076,21 @@
               "description": "Optional host cap on a single inline (`data`) or `mediaRef` part."
             }
           }
+        },
+        "callAccounting": {
+          "type": "object",
+          "description": "RFC 0248. Each flag is independent; a pack MUST NOT rely on `attempts` or `retry` unless its flag is `true`.",
+          "properties": {
+            "attempts": {
+              "type": "boolean",
+              "description": "RFC 0248 §A — every `ctx.callAI` result carries `attempts { count, outputTokens?, usageComplete, structuredOutput? }`. `count` MUST equal the provider requests the call made, retries and a natural-language fallback included (a request refused before reaching the provider is not one). `outputTokens` MUST be the sum each attempt's provider reported; when any attempt reported none, `usageComplete` MUST be `false`. `structuredOutput` is present only when `responseSchema` was supplied: `native` when the final attempt used the provider's own structured-output mechanism, `prompt` when it used a prompt-embedded schema. `usage` keeps describing the attempt whose output the result carries. On replay `attempts` MUST equal the recorded value. A call that throws carries no result."
+            },
+            "retryPolicy": {
+              "type": "boolean",
+              "description": "RFC 0248 §B — `ctx.callAI` honours an optional request `retry { maxAttempts?: 1..16, growMaxTokens?: boolean (default true) }`. The host MUST NOT send more than `maxAttempts` provider requests for the call (above its own ceiling it clamps, never refuses). With `growMaxTokens: false` no attempt's `maxTokens` MAY exceed the request's (or the host default when the request names none). RFC 0032 events still fire, and a refusal is still never retried. A malformed `retry` (a non-integer, or out of range) MUST be refused with `validation_error` and `details.field` naming the key, never ignored."
+            }
+          },
+          "additionalProperties": false
         }
       },
       "allOf": [
