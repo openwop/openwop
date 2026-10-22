@@ -6,7 +6,7 @@
 
 RFC 0156 §B: RFCs affecting auth, identity, tenant isolation, secrets, packs, execution sandboxing, idempotency, replay, external effects, conformance/certification, or governance **MUST** receive a retrospective **cross-organization** review. Every RFC below was accepted with its public comment window shortened, either under the bootstrap waiver or by explicit steward override of RFC 0147 §A.6. Each such acceptance is **provisional** until a reviewer from an organization other than the steward's records an outcome.
 
-This packet is for that reviewer. **124 RFCs are listed; 124 have no discharging outcome.** The steward, the steward's sessions, and steward-affiliated hosts (MyndHyve is tier-2, not independent) cannot supply the review. Recording one of their reviews as `ratified` is the substitution §B's last clause forbids.
+This packet is for that reviewer. **125 RFCs are listed; 125 have no discharging outcome.** The steward, the steward's sessions, and steward-affiliated hosts (MyndHyve is tier-2, not independent) cannot supply the review. Recording one of their reviews as `ratified` is the substitution §B's last clause forbids.
 
 **Enforcement is deferred.** On 2026-10-17 the maintainer deferred §B by steward exemption (`GOVERNANCE.md` §"Sole-steward operation") while the protocol has no user outside the steward's organizations. No outcome was recorded on its account. The packet is kept current for the day the exemption ends.
 
@@ -90,7 +90,7 @@ Grouping below is a reading aid only: it assigns each RFC to the risk class its 
 | [0093](../RFCS/0093-protocol-hardening-webhooks-tokens-idempotency.md) | protocol hardening webhooks tokens idempotency | `Accepted` | bootstrap waiver | not declared (predates RFC 0174 §B.1, or not yet Accepted) | `not-reviewed` |
 | [0201](../RFCS/0201-standard-webhooks-signature-scheme.md) | Standard Webhooks as an opt-in companion signature scheme, with a signed delivery id, multi-signature rotatio… | `Accepted` | steward override of RFC 0147 §A.6 | tier-1 — the v2 reference host | `not-reviewed` |
 
-## Replay (5)
+## Replay (6)
 
 | RFC | Title | Status | Waiver | Evidence tier | Outcome |
 | --- | --- | --- | --- | --- | --- |
@@ -99,6 +99,7 @@ Grouping below is a reading aid only: it assigns each RFC to the risk class its 
 | [0218](../RFCS/0218-audit-checkpoint-preimage.md) | an audit checkpoint signs its Merkle root, and the root is pinned | `Accepted` | bootstrap waiver | tier-1 — the v2 reference host | `not-reviewed` |
 | [0225](../RFCS/0225-webhook-retry-max-elapsed.md) | a webhook host may advertise how long a delivery can keep retrying | `Accepted` | steward override of RFC 0147 §A.6 | tier-2 — MyndHyve's certified production cut on suite 2 | `not-reviewed` |
 | [0245](../RFCS/0245-eval-fixtures-replay-tool-errors.md) | eval fixtures replay a recorded tool error as an error | `Accepted` | steward override of RFC 0147 §A.6 | tier-1 — openwop-app's certified 2 | `not-reviewed` |
+| [0248](../RFCS/0248-callai-attempt-accounting-and-retry-policy.md) | `ctx.callAI` reports its provider attempts and takes a per-call retry policy | `Active` | steward override of RFC 0147 §A.6 | not declared (predates RFC 0174 §B.1, or not yet Accepted) | `not-reviewed` |
 
 ## External effects (10)
 
