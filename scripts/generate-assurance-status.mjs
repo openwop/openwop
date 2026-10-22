@@ -205,7 +205,7 @@ function projection(m) {
   lines.push('');
   lines.push('## Bootstrap waivers');
   lines.push('');
-  lines.push(`Source: \`${m.waivers.source}\`. **${m.waivers.bootstrapWaiversExercised}** RFC(s) reached \`Accepted\` under a waived comment window (${m.waivers.rfcs.join(', ')}); **${m.waivers.retrospectiveReviewsCompleted}** \`ratified\` retrospective review(s) — the only outcome that discharges RFC 0156 §B.`);
+  lines.push(`Source: \`${m.waivers.source}\`. **${m.waivers.bootstrapWaiversExercised}** RFC(s) had a comment window waived (${m.waivers.rfcs.join(', ')}); **${m.waivers.retrospectiveReviewsCompleted}** \`ratified\` retrospective review(s) — the only outcome that discharges RFC 0156 §B.`);
   const oc = m.waivers.outcomes ?? {};
   const ocKeys = Object.keys(oc).sort();
   if (ocKeys.length) {

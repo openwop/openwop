@@ -1,0 +1,24 @@
+{
+  "id": "conformance-callai-attempt-accounting",
+  "name": "Conformance: ctx.callAI attempt accounting and retry policy (RFC 0248)",
+  "version": "1.0",
+  "description": "Fixture for `v2-callai-attempt-accounting.test.ts` (RFC 0248; the rules are the `aiProviders.callAccounting` facet descriptions). One node, `conformance.callai.echo-attempts` (conformance-RESERVED). It makes exactly one `ctx.callAI` call through the host's conformance mock provider, passing `inputs.request` (`prompt`, and optionally `responseSchema`, `maxTokens`, `retry`) unchanged. The mock serves `inputs.script` to that call's provider requests in order, one entry per request: `{ kind: \"invalid-json\" | \"truncated\" | \"valid\", outputTokens?, usage?, structuredMode? }`; `invalid-json` is the reply `{ this is not json }` (a parse error, never the natural-language fallback), `valid` is a minimal instance of `responseSchema` (or `ok` without one); past the end it repeats the last entry. The mock reports `outputTokens = min(entry.outputTokens, the maxTokens THAT request carried)` (no clamp when the request carried none), and serves an entry whose `outputTokens` exceeds that budget as truncated. `usage: false` means that request reports no usage. For a call with `responseSchema`, the mock uses `structuredMode` (default `prompt`) as the request's structured-output mode. The node completes with `outputs.attempts`, the `attempts` record of the `ctx.callAI` result verbatim, and does no counting of its own. A call that throws fails the node with the error's code and details, unchanged. A host that does not advertise `aiProviders.callAccounting` MUST NOT advertise this fixture.",
+  "nodes": [
+    {
+      "id": "callai-echo",
+      "typeId": "conformance.callai.echo-attempts",
+      "name": "Echo ctx.callAI attempts",
+      "position": { "x": 0, "y": 0 },
+      "config": {},
+      "inputs": {}
+    }
+  ],
+  "edges": [],
+  "triggers": [{ "id": "manual", "type": "manual", "enabled": true }],
+  "variables": [
+    { "name": "request", "type": "object" },
+    { "name": "script", "type": "array" }
+  ],
+  "metadata": { "tags": ["conformance", "aiProviders", "callAccounting"] },
+  "settings": { "timeout": 0 }
+}

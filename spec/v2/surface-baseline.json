@@ -4,7 +4,7 @@
     "schemas/v2/**/*.json",
     "spec/v2/path-manifest.json"
   ],
-  "release": "2.46.18",
+  "release": "2.46.19",
   "kinds": {
     "union": [
       "channel",
@@ -18,7 +18,7 @@
       "type"
     ]
   },
-  "count": 8937,
+  "count": 8944,
   "surfaces": [
     "schemas/v2/a2a-task-state.schema.json#/contextId|type|string",
     "schemas/v2/a2a-task-state.schema.json#/interruptKind|enum-member|\"approval\"",
@@ -1205,6 +1205,12 @@
     "schemas/v2/capabilities.schema.json#/aiProviders/authModes|type|array",
     "schemas/v2/capabilities.schema.json#/aiProviders/byok/[]|type|string",
     "schemas/v2/capabilities.schema.json#/aiProviders/byok|type|array",
+    "schemas/v2/capabilities.schema.json#/aiProviders/callAccounting/attempts|type|boolean",
+    "schemas/v2/capabilities.schema.json#/aiProviders/callAccounting/retryPolicy|type|boolean",
+    "schemas/v2/capabilities.schema.json#/aiProviders/callAccounting|closed|true",
+    "schemas/v2/capabilities.schema.json#/aiProviders/callAccounting|property|attempts",
+    "schemas/v2/capabilities.schema.json#/aiProviders/callAccounting|property|retryPolicy",
+    "schemas/v2/capabilities.schema.json#/aiProviders/callAccounting|type|object",
     "schemas/v2/capabilities.schema.json#/aiProviders/imageGeneration|type|boolean",
     "schemas/v2/capabilities.schema.json#/aiProviders/input/maxBytesPerPart|type|integer",
     "schemas/v2/capabilities.schema.json#/aiProviders/input/modalities/[]|enum-member|\"audio\"",
@@ -1253,6 +1259,7 @@
     "schemas/v2/capabilities.schema.json#/aiProviders|closed|true",
     "schemas/v2/capabilities.schema.json#/aiProviders|property|authModes",
     "schemas/v2/capabilities.schema.json#/aiProviders|property|byok",
+    "schemas/v2/capabilities.schema.json#/aiProviders|property|callAccounting",
     "schemas/v2/capabilities.schema.json#/aiProviders|property|imageGeneration",
     "schemas/v2/capabilities.schema.json#/aiProviders|property|input",
     "schemas/v2/capabilities.schema.json#/aiProviders|property|maxInlineMediaBytes",

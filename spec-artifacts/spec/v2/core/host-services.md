@@ -5,7 +5,7 @@
 
 ## Why this exists
 
-A node pack invokes advertised `host.*` services through `ctx`. Each section below states the contract a host takes on by advertising that family.
+Node packs call advertised `host.*` services through `ctx`. Each section states the contract a host accepts by advertising that family.
 
 ## `aiEnvelope`
 
@@ -54,13 +54,14 @@ When every layer is null, the node fails only if its node type says so. A host h
 
 ## `aiProviders`
 
-A host advertising `aiProviders` MUST expose `ctx.callAI`. A `provider` that a `ctx` call names MUST be in `providers`; `byok` is in [runs.md](runs.md) §`ai` section.
+A host advertising `aiProviders` MUST expose `ctx.callAI`. A `provider` that a `ctx` call names MUST be in `providers`; `byok`: [runs.md](runs.md) §`ai`.
 
 - A part whose modality is absent from `input` MUST be rejected with `capability_not_provided`, never dropped. Non-text input is untrusted.
 - A `media.*` envelope inlines base64 only up to `maxInlineMediaBytes` (default 256 KiB); above that the host MUST use a `url`.
 - `imageGeneration`, `videoGeneration` and `speechSynthesis` add `ctx.callImageGenerator`, `callVideoGenerator` and `callSpeechSynthesizer`; `realtimeVoice` adds `callTranscriber` and streamed synthesis. Unadvertised synthesis or transcription MUST be rejected, never a no-op or whole-file fallback.
 - A video caller MUST honor `ctx.signal`. Synthesis MUST return exactly one of `url` or `base64`, and a `url` is served through the SSRF guard. The transcriber MUST reject inline or `mediaRef` audio.
 - `voiceId`, `streamRef` and `cachePrefixId` MUST NOT encode secrets. Transcripts are untrusted; an interim one MUST NOT be persisted or drive a side-effecting tool.
+- `callAccounting` reports `ctx.callAI` attempts and honors `retry`.
 
 `selfHosted` (operator-configured OpenAI-compatible endpoints) MUST be advertised only while one is configured and reachable. A host MUST NOT disclose an endpoint's location on any wire surface or in a provider id. A client MUST NOT infer capabilities from the id; an unadvertised one fails `capability_not_provided`.
 
@@ -129,7 +130,7 @@ A host advertising `runSecrets` MUST execute the node type `core.secret.witness`
 
 `modelCapabilities.advertised` lists the capability identifiers the active model offers; a host-private identifier MUST be prefixed `x-host-<host>-`.
 
-When a host advertising `modelCapabilities` dispatches a node that declares `requiredModelCapabilities`, it MUST check them before dispatch and act on the result:
+When a host advertising `modelCapabilities` dispatches a node that declares `requiredModelCapabilities`, it MUST check them before dispatch:
 
 - all met: dispatch;
 - unmet, with a `fallbackModel` declared, `substitutionSupported` advertised, and the fallback's provider in `aiProviders.providers` with a resolvable credential: emit `model.capability-substituted`, then dispatch the fallback;
@@ -214,4 +215,4 @@ A host advertising `memory` serves agent memory (`schemas/v2/memory-entry.schema
 - **Distillation runs.** A distillation run MUST read the ref's snapshot, MUST NOT re-expose a redacted secret at any recursion level, and MUST write an immutable, addressable archive, byte-stable per source set and budget, kept for `archiveRetention`. Under `indexEmitted` it updates `MEMORY-INDEX.json`, and a `.md` sibling MAY accompany it.
 - **Degraded agents.** When an agent's `memoryShape` needs a dimension the host lacks, its inventory entry MUST set `memoryDegraded` and `degradedMemoryDimensions`; the agent MAY still dispatch. A `role: skill` manifest MUST keep `memoryShape` scratchpad-only, enforced by schema.
 
-*Sources: RFCs 0004, 0012, 0017, 0027, 0028, 0029, 0031, 0048, 0052, 0055, 0057, 0059, 0062, 0064, 0067, 0076, 0079, 0080, 0091, 0105, 0106, 0108, 0113, 0116, 0121, 0131, 0144, 0228, 0229.*
+*Sources: RFCs 0004, 0012, 0017, 0027, 0028, 0029, 0031, 0048, 0052, 0055, 0057, 0059, 0062, 0064, 0067, 0076, 0079, 0080, 0091, 0105, 0106, 0108, 0113, 0116, 0121, 0131, 0144, 0228, 0229, 0248.*
