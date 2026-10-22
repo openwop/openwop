@@ -4,10 +4,10 @@
 | ----------------- | --------------------------------------------------------------- |
 | **RFC**           | 0248                                                            |
 | **Title**         | `ctx.callAI` reports its provider attempts and output tokens, and takes a per-call retry policy |
-| **Status**        | `Draft`                                                         |
-| **Author(s)**     | openwop-app host steward (for the Book AI pack, upstream proposal P7 items 2–3) |
+| **Status**        | `Active`                                                        |
+| **Author(s)**     | David Tufts (@davidscotttufts), for the Book AI pack (upstream proposal P7 items 2–3) |
 | **Created**       | 2026-10-19                                                      |
-| **Updated**       | 2026-10-19                                                      |
+| **Updated**       | 2026-10-22 — **`Draft` → `Active`**, comment window waived by the maintainer (2026-10-22: "Waive the comment window on RFC 0248 and proceed to active"). **STEWARD OVERRIDE of RFC 0147 §A.6**, which forbids shortening the window for an RFC affecting replay: §A.5 makes `attempts` part of the recorded outcome that a replay MUST reproduce. Recorded in `MAINTAINERS.md` §"Bootstrap-phase RFC waivers". RFC 0001 §5 note: the cross-organization approval rule is not yet active (one maintainer, one organization; `GOVERNANCE.md` §"Sole-steward operation"). The wire shape in §A–§C is now locked. The evidence gate is not waived: `Accepted` needs a deployed host advertising `aiProviders.callAccounting` and passing the `callai-attempt-accounting` legs. · 2026-10-19 — filed `Draft`. |
 | **Affects**       | `spec/v2/core/host-services.md` §`aiProviders` · `spec/v2/facets/aiProviders.schema.json` (one optional object) · `spec/v1/host-capabilities.md` §`ctx.callAI` (the same fields, for v1 readers) · one new conformance scenario + one fixture node · CHANGELOG |
 | **Compatibility** | `additive`                                                      |
 | **Supersedes**    | —                                                               |
@@ -199,3 +199,4 @@ retrying a refusal still holds when a cap is higher.
 ## Status history
 
 - 2026-10-19 — Draft.
+- 2026-10-22 — Active (comment window waived; STEWARD OVERRIDE of RFC 0147 §A.6, see Updated).

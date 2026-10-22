@@ -12,7 +12,7 @@
 | OpenAPI operations | 59 | `api/openapi.yaml` |
 | AsyncAPI version | 3.1.0 | `api/asyncapi.yaml` |
 | Conformance scenario files | 658 | `conformance/src/scenarios/*.test.ts` |
-| RFCs tracked | 243 | `RFCS/[0-9][0-9][0-9][0-9]-*.md`, excluding template |
+| RFCs tracked | 244 | `RFCS/[0-9][0-9][0-9][0-9]-*.md`, excluding template |
 
 ## Artifact Versions
 
@@ -71,7 +71,7 @@
 | Status | Count |
 |---|---:|
 | Accepted | 239 |
-| Active | 2 |
+| Active | 3 |
 | Draft | 1 |
 | Superseded | 1 |
 
@@ -320,6 +320,7 @@
 | RFC 0245 | Eval fixtures replay a recorded tool error as an error | Accepted |
 | RFC 0246 | A trial that fails its trajectory cannot carry a task or a suite to a pass | Accepted |
 | RFC 0247 | Bounded stream lifetime: a host may end an opted-in live SSE stream, and the consumer resumes with Last-Event-ID | Accepted |
+| RFC 0248 | `ctx.callAI` reports its provider attempts and output tokens, and takes a per-call retry policy | Active |
 
 ## SDK Helper Coverage
 
@@ -344,7 +345,7 @@ The pack registry now lives in the [`openwop-registry`](https://github.com/openw
 ## Active Follow-Ups
 
 - 1 RFC still `Draft` (RFC 0038) — advance with schema/conformance proof or defer.
-- 2 RFCs `Active` (RFC 0096, RFC 0121) — wire-shape MAY shift compatibly within v1.x until promotion to `Accepted`.
+- 3 RFCs `Active` (RFC 0096, RFC 0121, RFC 0248) — wire-shape MAY shift compatibly within v1.x until promotion to `Accepted`.
 - External audit, non-steward host recruitment, and non-steward maintainer recruitment remain external-action gates.
 - Multi-region idempotency and some optional-profile behavior checks remain lower-confidence than the core wire contract.
 
