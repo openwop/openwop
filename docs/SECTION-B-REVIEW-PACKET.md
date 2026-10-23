@@ -99,7 +99,7 @@ Grouping below is a reading aid only: it assigns each RFC to the risk class its 
 | [0218](../RFCS/0218-audit-checkpoint-preimage.md) | an audit checkpoint signs its Merkle root, and the root is pinned | `Accepted` | bootstrap waiver | tier-1 — the v2 reference host | `not-reviewed` |
 | [0225](../RFCS/0225-webhook-retry-max-elapsed.md) | a webhook host may advertise how long a delivery can keep retrying | `Accepted` | steward override of RFC 0147 §A.6 | tier-2 — MyndHyve's certified production cut on suite 2 | `not-reviewed` |
 | [0245](../RFCS/0245-eval-fixtures-replay-tool-errors.md) | eval fixtures replay a recorded tool error as an error | `Accepted` | steward override of RFC 0147 §A.6 | tier-1 — openwop-app's certified 2 | `not-reviewed` |
-| [0248](../RFCS/0248-callai-attempt-accounting-and-retry-policy.md) | `ctx.callAI` reports its provider attempts and takes a per-call retry policy | `Active` | steward override of RFC 0147 §A.6 | not declared (predates RFC 0174 §B.1, or not yet Accepted) | `not-reviewed` |
+| [0248](../RFCS/0248-callai-attempt-accounting-and-retry-policy.md) | `ctx.callAI` reports its provider attempts and takes a per-call retry policy | `Accepted` | steward override of RFC 0147 §A.6 | tier-1 — openwop-app's certified 2 | `not-reviewed` |
 
 ## External effects (10)
 
