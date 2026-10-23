@@ -1,26 +1,26 @@
 {
   "bundleVersion": "3",
-  "generatedAt": "2026-10-19T01:29:02.924Z",
+  "generatedAt": "2026-10-23T01:57:54.311Z",
   "suite": {
     "name": "@openwop/openwop-conformance",
-    "version": "2.46.18",
+    "version": "2.46.19",
     "targetMajor": 2,
-    "specArtifactsVersion": "2.46.18",
-    "stampSha256": "4e40e9463c8a0a9554e81e19d745f8dd90d59250be85da01cc3fc43eca1076f3"
+    "specArtifactsVersion": "2.46.19",
+    "stampSha256": "8b0bfeeda6c1a1e8bbac41bc73b01f70e71ad88ca5dc98aee4a373b6611db396"
   },
   "host": {
     "name": "openwop-workflow-engine",
-    "version": "0.5.1",
+    "version": "0.6.0",
     "vendor": "openwop-app",
     "build": {
       "kind": "commit",
-      "id": "3566445be3d6b994c7e8140365001b963b86fc65"
+      "id": "f17ee375358426741c9bbed333fdce61169068f6"
     },
     "signingKeyId": "openwop-app-bundle-2"
   },
   "discovery": {
     "url": "https://api.openwop.dev/.well-known/openwop",
-    "sha256": "13634ac9fd2f31b886cdb80c70d8bbeae726e515d56d07444eb55dcc8a425242",
+    "sha256": "337c9e7a575742c434c3c6be6acb72ff3444355f60d67299d97569fed9a9531d",
     "protocolVersions": [
       "2.0"
     ],
@@ -63,7 +63,7 @@
       ],
       "implementation": {
         "name": "openwop-workflow-engine",
-        "version": "0.5.1",
+        "version": "0.6.0",
         "vendor": "openwop-app"
       },
       "fixtures": [
@@ -79,6 +79,7 @@
         "conformance-approval-reject-routed",
         "conformance-approval-timeout",
         "conformance-approval-timeout-approve",
+        "conformance-callai-attempt-accounting",
         "conformance-cancellable",
         "conformance-cap-breach",
         "conformance-channel-ttl",
@@ -1419,7 +1420,11 @@
             "audio"
           ]
         },
-        "selfHosted": false
+        "selfHosted": false,
+        "callAccounting": {
+          "attempts": true,
+          "retryPolicy": true
+        }
       },
       "uiPlugins": {
         "status": "experimental",
@@ -1494,16 +1499,6 @@
           "fixtureMatching": true,
           "regressionVerdict": true,
           "fixtureErrors": true
-        },
-        "proposals": {
-          "artifactKinds": [
-            "agent-pack",
-            "workflow-chain-pack",
-            "prompt-template",
-            "automation"
-          ],
-          "duplicationDetection": false,
-          "activation": "direct-rbac"
         },
         "goals": {
           "judge": "verifier",
@@ -2083,7 +2078,7 @@
   ],
   "results": {
     "totals": {
-      "executedPass": 459,
+      "executedPass": 468,
       "executedFail": 0,
       "skipped": 11,
       "inapplicable": 372,
@@ -2140,7 +2135,7 @@
         "id": "openwop.scenario.fixtures-valid",
         "scenario": "fixtures-valid.test.ts",
         "result": "executed-pass",
-        "assertions": 450
+        "assertions": 453
       },
       {
         "id": "openwop.scenario.inbound-credential-no-passthrough",
@@ -2368,6 +2363,12 @@
         "assertions": 10
       },
       {
+        "id": "openwop.scenario.v2-callai-attempt-accounting",
+        "scenario": "v2-callai-attempt-accounting.test.ts",
+        "result": "executed-pass",
+        "assertions": 22
+      },
+      {
         "id": "openwop.scenario.v2-callback-url-guarded",
         "scenario": "v2-callback-url-guarded.test.ts",
         "result": "inapplicable",
@@ -2385,7 +2386,7 @@
         "scenario": "v2-capability-maturity-bounded.test.ts",
         "result": "executed-pass",
         "assertions": 47,
-        "detail": "partial-witness: inapplicable: unwitnessable until the first persisted-class retirement row is due (RFC 0197 §A.3 Falsifiability): corpus 2.46.18: 0 persisted-class v2-minor retirement row(s), 0 v2→v2 migration row(s) — no retired member exists for a post-2.N event to carry. Before one does, a scenario would be vacuous, and a row that cannot fail is not a witness. This leg asserts the moment such a row falls due."
+        "detail": "partial-witness: inapplicable: unwitnessable until the first persisted-class retirement row is due (RFC 0197 §A.3 Falsifiability): corpus 2.46.19: 0 persisted-class v2-minor retirement row(s), 0 v2→v2 migration row(s) — no retired member exists for a post-2.N event to carry. Before one does, a scenario would be vacuous, and a row that cannot fail is not a witness. This leg asserts the moment such a row falls due."
       },
       {
         "id": "openwop.scenario.v2-capability-record-shape",
@@ -3481,7 +3482,7 @@
         "scenario": "v2-webhook-secret-rotation.test.ts",
         "result": "executed-pass",
         "assertions": 12,
-        "detail": "partial-witness: inapplicable: the post-overlap leg is not observed: the advertised webhooks.secretRotation.overlapSeconds is 86400s (expiry 2026-10-20T01:21:04.395Z) and the suite wait cap is 90000ms, and the seams profile is not advertised, so the optional shortenRotationOverlap seam (host-sample-test-seams.md §29) is not offered; raise OPENWOP_WEBHOOK_RETRY_WAIT_MS past the overlap, or serve the seam, to witness it"
+        "detail": "partial-witness: inapplicable: the post-overlap leg is not observed: the advertised webhooks.secretRotation.overlapSeconds is 86400s (expiry 2026-10-24T01:48:54.639Z) and the suite wait cap is 90000ms, and the seams profile is not advertised, so the optional shortenRotationOverlap seam (host-sample-test-seams.md §29) is not offered; raise OPENWOP_WEBHOOK_RETRY_WAIT_MS past the overlap, or serve the seam, to witness it"
       },
       {
         "id": "openwop.scenario.v2-webhook-standard-webhooks-delivery",
@@ -3607,13 +3608,13 @@
         "id": "openwop.it.fixtures-valid.every-fixture-has-a-manual-trigger-so-the-conformance-driver-can-start-it",
         "scenario": "fixtures-valid.test.ts",
         "result": "executed-pass",
-        "assertions": 118
+        "assertions": 119
       },
       {
         "id": "openwop.it.fixtures-valid.every-fixture-id-matches-its-filename",
         "scenario": "fixtures-valid.test.ts",
         "result": "executed-pass",
-        "assertions": 118
+        "assertions": 119
       },
       {
         "id": "openwop.it.fixtures-valid.every-fixture-templateid-matches-its-filename",
@@ -3697,7 +3698,7 @@
         "id": "openwop.it.fixtures-valid.validates-against-workflow-definition-schema-json",
         "scenario": "fixtures-valid.test.ts",
         "result": "executed-pass",
-        "assertions": 118
+        "assertions": 119
       },
       {
         "id": "openwop.it.jcs-vectors.a-non-i-json-native-value-is-refused-at-the-value-boundary",
@@ -5090,21 +5091,21 @@
         "scenario": "v2-webhook-durable-delivery.test.ts",
         "result": "executed-pass",
         "assertions": 4,
-        "detail": "observed: 4/4 subscribed event(s) delivered, 0 duplicate arrival(s); slowest first arrival 1499ms after the run was created; cap (default 90000ms; advertised maxElapsedMs none): waited ≤90000ms"
+        "detail": "observed: 4/4 subscribed event(s) delivered, 0 duplicate arrival(s); slowest first arrival 755ms after the run was created; cap (default 90000ms; advertised maxElapsedMs none): waited ≤90000ms"
       },
       {
         "id": "openwop.requirement.0173.webhook-durable-delivery",
         "scenario": "v2-webhook-durable-delivery.test.ts",
         "result": "executed-pass",
         "assertions": 9,
-        "detail": "observed: cap (default 90000ms; advertised maxElapsedMs none): waited ≤90000ms; 3 attempt(s), last attempt after 8030ms"
+        "detail": "observed: cap (default 90000ms; advertised maxElapsedMs none): waited ≤90000ms; 3 attempt(s), last attempt after 7008ms"
       },
       {
         "id": "openwop.requirement.0173.webhook-durable-delivery.dead-letter",
         "scenario": "v2-webhook-durable-delivery.test.ts",
         "result": "executed-pass",
         "assertions": 5,
-        "detail": "partial-witness: inapplicable: host does not advertise the webhooks.deadLetter facet — RFC 0188 §A.5 makes the read a 404 rather than an obligation, so the sink half of §Durability is unwitnessable here (the retry half above passed) · observed: cap (default 90000ms; advertised maxElapsedMs none): waited ≤90000ms; 5 attempt(s), last attempt after 34064ms, sink not observed"
+        "detail": "partial-witness: inapplicable: host does not advertise the webhooks.deadLetter facet — RFC 0188 §A.5 makes the read a 404 rather than an obligation, so the sink half of §Durability is unwitnessable here (the retry half above passed) · observed: cap (default 90000ms; advertised maxElapsedMs none): waited ≤90000ms; 5 attempt(s), last attempt after 31974ms, sink not observed"
       },
       {
         "id": "openwop.requirement.0175.legacy-profiles-absent",
@@ -5478,7 +5479,7 @@
         "scenario": "v2-capability-maturity-bounded.test.ts",
         "result": "inapplicable",
         "assertions": 0,
-        "detail": "unwitnessable until the first persisted-class retirement row is due (RFC 0197 §A.3 Falsifiability): corpus 2.46.18: 0 persisted-class v2-minor retirement row(s), 0 v2→v2 migration row(s) — no retired member exists for a post-2.N event to carry. Before one does, a scenario would be vacuous, and a row that cannot fail is not a witness. This leg asserts the moment such a row falls due."
+        "detail": "unwitnessable until the first persisted-class retirement row is due (RFC 0197 §A.3 Falsifiability): corpus 2.46.19: 0 persisted-class v2-minor retirement row(s), 0 v2→v2 migration row(s) — no retired member exists for a post-2.N event to carry. Before one does, a scenario would be vacuous, and a row that cannot fail is not a witness. This leg asserts the moment such a row falls due."
       },
       {
         "id": "openwop.requirement.0198.advertised-via-discover",
@@ -5678,7 +5679,7 @@
         "scenario": "v2-webhook-secret-rotation.test.ts",
         "result": "executed-pass",
         "assertions": 12,
-        "detail": "partial-witness: inapplicable: the post-overlap leg is not observed: the advertised webhooks.secretRotation.overlapSeconds is 86400s (expiry 2026-10-20T01:21:04.395Z) and the suite wait cap is 90000ms, and the seams profile is not advertised, so the optional shortenRotationOverlap seam (host-sample-test-seams.md §29) is not offered; raise OPENWOP_WEBHOOK_RETRY_WAIT_MS past the overlap, or serve the seam, to witness it"
+        "detail": "partial-witness: inapplicable: the post-overlap leg is not observed: the advertised webhooks.secretRotation.overlapSeconds is 86400s (expiry 2026-10-24T01:48:54.639Z) and the suite wait cap is 90000ms, and the seams profile is not advertised, so the optional shortenRotationOverlap seam (host-sample-test-seams.md §29) is not offered; raise OPENWOP_WEBHOOK_RETRY_WAIT_MS past the overlap, or serve the seam, to witness it"
       },
       {
         "id": "openwop.requirement.0204.annotations-derived",
@@ -6387,6 +6388,54 @@
         "scenario": "v2-eval-trajectory-trials.test.ts",
         "result": "executed-pass",
         "assertions": 10
+      },
+      {
+        "id": "openwop.requirement.0248.attempts-count",
+        "scenario": "v2-callai-attempt-accounting.test.ts",
+        "result": "executed-pass",
+        "assertions": 3
+      },
+      {
+        "id": "openwop.requirement.0248.attempts-replayed",
+        "scenario": "v2-callai-attempt-accounting.test.ts",
+        "result": "executed-pass",
+        "assertions": 2
+      },
+      {
+        "id": "openwop.requirement.0248.max-attempts-cap",
+        "scenario": "v2-callai-attempt-accounting.test.ts",
+        "result": "executed-pass",
+        "assertions": 4
+      },
+      {
+        "id": "openwop.requirement.0248.no-budget-growth",
+        "scenario": "v2-callai-attempt-accounting.test.ts",
+        "result": "executed-pass",
+        "assertions": 3
+      },
+      {
+        "id": "openwop.requirement.0248.output-tokens-sum",
+        "scenario": "v2-callai-attempt-accounting.test.ts",
+        "result": "executed-pass",
+        "assertions": 5
+      },
+      {
+        "id": "openwop.requirement.0248.retry-malformed-refused",
+        "scenario": "v2-callai-attempt-accounting.test.ts",
+        "result": "executed-pass",
+        "assertions": 2
+      },
+      {
+        "id": "openwop.requirement.0248.structured-output",
+        "scenario": "v2-callai-attempt-accounting.test.ts",
+        "result": "executed-pass",
+        "assertions": 2
+      },
+      {
+        "id": "openwop.requirement.0248.usage-incomplete",
+        "scenario": "v2-callai-attempt-accounting.test.ts",
+        "result": "executed-pass",
+        "assertions": 1
       },
       {
         "id": "openwop.requirement.agent-runtime.advert-record-schema",
@@ -7571,7 +7620,7 @@
       }
     ]
   },
-  "assertionCount": 5048,
+  "assertionCount": 5098,
   "detail": {
     "nonPass": [
       {
@@ -8792,7 +8841,7 @@
       {
         "id": "openwop.requirement.0197.retired-not-emitted",
         "result": "inapplicable",
-        "reason": "unwitnessable until the first persisted-class retirement row is due (RFC 0197 §A.3 Falsifiability): corpus 2.46.18: 0 persisted-class v2-minor retirement row(s), 0 v2→v2 migration row(s) — no retired member exists for a post-2.N event to carry. Before one does, a scenario would be vacuous, and a row that cannot fail is not a witness. This leg asserts the moment such a row falls due."
+        "reason": "unwitnessable until the first persisted-class retirement row is due (RFC 0197 §A.3 Falsifiability): corpus 2.46.19: 0 persisted-class v2-minor retirement row(s), 0 v2→v2 migration row(s) — no retired member exists for a post-2.N event to carry. Before one does, a scenario would be vacuous, and a row that cannot fail is not a witness. This leg asserts the moment such a row falls due."
       },
       {
         "id": "openwop.requirement.0198.advertised-via-discover",
@@ -9491,11 +9540,11 @@
       }
     ]
   },
-  "witnessSha256": "839059a7100a3fad1f205de79c896111286bab961ebb599d1e364949f4e2f767",
+  "witnessSha256": "6c51baa2a296180b1c295cfa271aedf78a26f48654d569b156138f35f6cc4f47",
   "signature": {
     "alg": "ed25519",
     "keyId": "openwop-app-bundle-2",
-    "sig": "PJDLILJTtXVFGBt0_6d9zzzECHI1fivxWp7C2kiEjCfsTwbD5n8xlBJFIZCHLxzxOcvOepZM9y4PJYjvdGQMBA",
+    "sig": "Y7WCF1DtLA0mmTN31rHD4Awe5Uu-cknnafStosO3cxrAfijrxsRTdzy_xG0OuArSuDh_g-unAtBn-pqSXJ0NBA",
     "over": [
       "witnessSha256",
       "host.build",
