@@ -32,6 +32,13 @@
  *      lists `conformance-eval-trials` refuses it at createRun with
  *      `400 validation_error`.
  *
+ * RFC 0081 §C, on the `conformance-eval-trajectory` run (2.46.20). Judges in
+ * `lib/eval-envelope-witness.ts`.
+ *   - `eval.started` and `eval.completed` are emitted once each, bracketing
+ *     every `eval.scored`, and `eval.completed` precedes `run.completed`; its
+ *     counts equal the served summary's.
+ *   - The served `EvalSummary` validates, and its counts match its rows.
+ *
  * RFC 0246 (safety fix): a trial that failed its trajectory counts 0 in the
  * two pass decisions, while every reported score is unchanged. Judges in
  * `lib/eval-gate-witness.ts`.
@@ -73,6 +80,7 @@ import { majorProfile } from '../lib/major-profile.js';
 import { isFixtureAdvertised } from '../lib/fixtures.js';
 import { FIXTURES_DIR } from '../lib/paths.js';
 import { pollTerminal, readEvents, isRecord, type Ev } from '../lib/fixture-run-observer.js';
+import { judgeEvalEnvelope, judgeSummaryServed } from '../lib/eval-envelope-witness.js';
 import { gradeTrajectory, passAtK, passHatK, scoreStderr, withinTolerance, type TrajectorySpec } from '../lib/eval-trajectory.js';
 import { judgeMeanGated, judgeSuiteGated } from '../lib/eval-gate-witness.js';
 import { judgeFixtureErrorReplayed } from '../lib/eval-fixture-error-witness.js';
@@ -97,6 +105,9 @@ const DOC_0246 = 'eval-summary.schema.json gatedScore / gatedAggregateScore (RFC
 const ID_FIXTURE_ERROR_SHAPE = 'openwop.requirement.0245.fixture-error-shape';
 const ID_FIXTURE_ERROR = 'openwop.requirement.0245.fixture-error-replayed';
 const ID_FIXTURE_ERROR_REFUSED = 'openwop.requirement.0245.unadvertised-refused';
+const ID_ENVELOPE = 'openwop.requirement.0081.eval-envelope';
+const ID_SUMMARY = 'openwop.requirement.0081.summary-served';
+const DOC_0081 = 'run-event-payloads evalStarted / evalCompleted, eval-summary.schema.json (RFC 0081 §C)';
 const DOC_0245 = 'agents.schema.json §evalSuite.fixtureErrors (RFC 0245)';
 
 interface Task { taskId: string; input: { script: Array<{ tool: string; arguments?: unknown }>; output: string }; expected: { kind: string; trajectory?: TrajectorySpec }; fixtures?: { toolResponses?: Array<Record<string, unknown>> } }
@@ -107,6 +118,7 @@ const suiteSchema = v2Validator('agent-eval-suite');
 const summarySchema = v2Validator('eval-summary');
 const scored = v2RefValidator('run-event-payloads.schema.json#/$defs/evalScored');
 const started = v2RefValidator('run-event-payloads.schema.json#/$defs/evalStarted');
+const completedPayload = v2RefValidator('run-event-payloads.schema.json#/$defs/evalCompleted');
 
 async function http(fn: () => Promise<OpenWOPResponse>): Promise<OpenWOPResponse | null> {
   try { return await fn(); } catch { return null; }
@@ -223,6 +235,33 @@ describe('v2 RFC 0244 — host behaviour', () => {
     const calls = o.events.filter((e) => e.type === 'agent.tool-called' && e.payload['agentId'] === AGENT).length;
     const scripted = suite.tasks.reduce((a, t) => a + t.input.script.length, 0);
     expect(calls, req(ID_TRAJECTORY, DOC, `the log MUST carry one agent.tool-called per scripted call (${scripted})`)).toBe(scripted);
+  });
+
+  async function trajectoryRun(): Promise<{ skip: [Parameters<typeof softSkip>[0], string] } | { o: Extract<Observed, { kind: 'ok' }> }> {
+    const { doc, facet } = await evalSuiteFacet();
+    if (!doc) return { skip: ['blocked', UNREADABLE] };
+    if (facet?.['trajectory'] !== true) return { skip: ['inapplicable', 'the host does not advertise agents.evalSuite.trajectory'] };
+    const id = 'conformance-eval-trajectory';
+    if (!isFixtureAdvertised(id)) return { skip: ['inapplicable', `the host does not advertise fixture ${id}`] };
+    const o = await runSuite(id);
+    if (o.kind === 'skip') return { skip: [o.disposition, o.reason] };
+    return { o };
+  }
+
+  it('an eval run brackets its scores with one eval.started and one eval.completed (RFC 0081 §C)', async () => {
+    const r = await trajectoryRun();
+    if ('skip' in r) return softSkip(...r.skip);
+    for (const x of judgeEvalEnvelope(r.o.events, r.o.summary, { completedValid: completedPayload })) {
+      expect(x.ok, req(ID_ENVELOPE, DOC_0081, x.message)).toBe(true);
+    }
+  });
+
+  it('the served EvalSummary validates and its counts match its rows (RFC 0081 §C)', async () => {
+    const r = await trajectoryRun();
+    if ('skip' in r) return softSkip(...r.skip);
+    for (const x of judgeSummaryServed(r.o.summary, summarySchema)) {
+      expect(x.ok, req(ID_SUMMARY, DOC_0081, x.message)).toBe(true);
+    }
   });
 
   async function trialsRun(): Promise<{ skip: [Parameters<typeof softSkip>[0], string] } | { o: Extract<Observed, { kind: 'ok' }>; suite: Suite; n: number; k: number }> {

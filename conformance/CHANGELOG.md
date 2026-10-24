@@ -1,6 +1,8 @@
 ## [2.46.20] — unreleased — RFC 0249 Draft
 
-- **No assertion changes yet.** RFC 0249 (v2 proposal operations and an install read-back for RFC 0096) is filed as `Draft`. Its gap register lands in the packed `spec/v1/gaps.json`, which opens this cycle.
+- **Two new legs in `v2-eval-trajectory-trials` (RFC 0081 §C)**, on the existing `conformance-eval-trajectory` run, so no extra run: `0081.eval-envelope` (one `eval.started` and one `eval.completed` bracket every `eval.scored`, `eval.completed` precedes `run.completed`, and its counts equal the summary's) and `0081.summary-served` (the served `EvalSummary` validates and its counts match its rows). Judges in `lib/eval-envelope-witness.ts`, whose self-tests fail each wrong host answer. Before this, no v2 leg read `eval.completed`.
+- **Host impact:** hosts that advertise `agents.evalSuite.trajectory` and list the fixture (openwop-app, MyndHyve) run both legs. A host that omits `eval.completed` fails `0081.eval-envelope`.
+- RFC 0249 (v2 proposal operations and an install read-back for RFC 0096) is filed as `Draft`. Its gap register lands in the packed `spec/v1/gaps.json`, which opened this cycle.
 
 ## [2.46.19] — 2026-10-22 — RFC 0248: ctx.callAI attempt accounting and retry policy
 
