@@ -238,6 +238,12 @@ Defects outside the spec:
       trials for §B isolation. (G5) a portable "fixtures = run X" reference (follow-up RFC). Legs not yet probed:
       §B cost counts every trial, §C efficiency counts and the never-gated rule, §D `onMiss: "live"`, §F pairing
       (needs a `regression` fixture).
+- [ ] **RFC 0249** `Draft` 2026-10-24 (v2 proposal operations + install read-back, for RFC 0096). Comment window open. Owed
+      before `Active`: UQ 1–5 (submit scope; approval-gate apply shape; `readback` array vs implied; terminal-state error
+      code; host-owned field set for `prompt-template`). Phase 2: audit `getWorkflow` / `getAgent` as read-backs for
+      chain and agent packs (G2). The replay-fork rule needs a run that synthesizes a proposal (G3). `automation` has no
+      v2 read surface (G4). Host: openwop-app phase 1 is the user's call (asked via the app release manager, 2026-10-24).
+      MyndHyve must be warned before the suite release (R1).
 - [x] **RFC 0248** `Accepted` 2026-10-23 (`ctx.callAI` attempt accounting + per-call retry policy, for the Book AI pack).
       Tier-1: openwop-app's certified 2.46.19 cut `f17ee3753` advertises `aiProviders.callAccounting` and passes all eight
       `0248.*` legs (fixture opt-in app ADR 0967). Host tensions stay with the host (ADR 0966): a `usage: false` attempt
