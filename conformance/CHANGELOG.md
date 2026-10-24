@@ -1,4 +1,4 @@
-## [2.46.20] — unreleased — RFC 0249 Draft
+## [2.46.20] — 2026-10-24 — RFC 0081 eval envelope legs; RFC 0249 Draft
 
 - **Two new legs in `v2-eval-trajectory-trials` (RFC 0081 §C)**, on the existing `conformance-eval-trajectory` run, so no extra run: `0081.eval-envelope` (one `eval.started` and one `eval.completed` bracket every `eval.scored`, `eval.completed` precedes `run.completed`, and its counts equal the summary's) and `0081.summary-served` (the served `EvalSummary` validates and its counts match its rows). Judges in `lib/eval-envelope-witness.ts`, whose self-tests fail each wrong host answer. Before this, no v2 leg read `eval.completed`.
 - **Host impact:** hosts that advertise `agents.evalSuite.trajectory` and list the fixture (openwop-app, MyndHyve) run both legs. A host that omits `eval.completed` fails `0081.eval-envelope`.
