@@ -228,11 +228,18 @@ Defects outside the spec:
 - [x] **RFC 0236** `Accepted` (provisional) 2026-10-05 on the v2 reference host's certified 2.45.21 cut (505/0/0, build `9543718c`). Owed: the RFC 0156 §B review; openwop-app ADR 0812 is the tier-2 follow-on.
 - [ ] **RFC 0081 major-2 residue (correction note 2026-10-24 in the RFC).** The sample-seam witness is now covered by
       `mode: "eval"` runs (scripted conformance agent) on MyndHyve `c8d511d84` and openwop-app `f17ee3753` (RFC 0244 legs). Still owed: (1) a certified host cut
-      recording `0081.eval-envelope` and `0081.summary-served` (legs land in suite 2.46.20); (2) a
-      leg reaching the §E promotion seam (RFC 0082) from an eval result, or a ruling that §E is owned and witnessed by 0082.
+      recording `0081.eval-envelope` and `0081.summary-served` (legs land in suite 2.46.20); (2) §E —
+      ruled 2026-10-24: owned by RFC 0082 (see the RFC 0082 item).
 - [x] **RFC 0244** `Accepted` (provisional) 2026-10-14 on MyndHyve's certified 2.46.9 cut (tier-2, build
       `65785814`, `myndhyve-2.46.9.json`). Owed: the RFC 0156 §B review and the suite residue below. openwop-app advertises it since 2026-10-15
       (2.46.9 cut `17090b1c8`: wire-shape, content-free, fixtures-valid pass; the seam-driven legs `inapplicable`).
+- [ ] **RFC 0082 eval-gated promotion has no v2 witness** (ruling 2026-10-24, from RFC 0081 §E). The MUST (the `agents.deployment`
+      facet: verify `evalRunId` is terminal and passed before `deployment.promoted`, else `422 eval_gate_unmet`) was witnessed only by
+      the v1 sample seam in `agent-deployment-lifecycle.test.ts`. The v2 port needs no new surface: run `conformance-eval-trajectory`
+      (its summary is `passed: false`), then `transitionAgentDeployment` promote with that `evalRunId`; expect `422 eval_gate_unmet`,
+      no `deployment.promoted`, and the record unchanged. It needs a host that advertises `agents.deployment` and `evalSuite.trajectory`
+      with a promotable version of the scripted agent. Today that is MyndHyve only, with no session to prove it, and an unmet
+      precondition would record `blocked`. Build it with a host collaborator.
 - [ ] **RFC 0244 suite residue.** (G2) a suite-owned counter tool, so §D's "a miss never reaches a live tool" and
       first-unconsumed selection become witnessable rather than seam-gated. (G3) a scripted memory write/read across
       trials for §B isolation. (G5) a portable "fixtures = run X" reference (follow-up RFC). Legs not yet probed:

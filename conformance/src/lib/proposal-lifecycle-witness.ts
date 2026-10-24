@@ -16,6 +16,7 @@
 
 import { createHash } from 'node:crypto';
 import { canonicalJSON } from './jcs.js';
+import { readErrorCode } from './error-envelope.js';
 
 export interface ProposalFinding { readonly ok: boolean; readonly message: string }
 
@@ -25,13 +26,15 @@ export type Exchange = { readonly status: number; readonly json: unknown } | nul
 
 const isRec = (v: unknown): v is Rec => typeof v === 'object' && v !== null && !Array.isArray(v);
 const f = (ok: boolean, message: string): ProposalFinding => ({ ok, message });
-const code = (x: Exchange): string | undefined => {
-  const err = isRec(x?.json) ? x.json['error'] : undefined;
-  return isRec(err) && typeof err['code'] === 'string' ? err['code'] : undefined;
-};
+// The v2 envelope is flat: `{ error: "<code>", message, details? }`
+// (`error-envelope.schema.json`). `readErrorCode` reads it (and tolerates the
+// legacy nested form); `details` sits at the root.
+const code = (x: Exchange): string | undefined => readErrorCode(x?.json);
 const details = (x: Exchange): Rec => {
-  const err = isRec(x?.json) ? x.json['error'] : undefined;
-  return isRec(err) && isRec(err['details']) ? err['details'] : {};
+  const body = isRec(x?.json) ? x.json : {};
+  if (isRec(body['details'])) return body['details'];
+  const nested = body['error'];
+  return isRec(nested) && isRec(nested['details']) ? nested['details'] : {};
 };
 const shown = (x: Exchange): string => (x === null ? 'no answer' : `${x.status}${code(x) ? ` ${code(x)}` : ''}`);
 
