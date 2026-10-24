@@ -227,8 +227,8 @@ Defects outside the spec:
       was invited to cut on 2.45.18; openwop-app's public origin still has the CDN-edge `304` issue.
 - [x] **RFC 0236** `Accepted` (provisional) 2026-10-05 on the v2 reference host's certified 2.45.21 cut (505/0/0, build `9543718c`). Owed: the RFC 0156 §B review; openwop-app ADR 0812 is the tier-2 follow-on.
 - [ ] **RFC 0081 major-2 residue (correction note 2026-10-24 in the RFC).** The sample-seam witness is now covered by
-      `mode: "eval"` runs (scripted conformance agent) on MyndHyve `c8d511d84` and openwop-app `f17ee3753` (RFC 0244 legs). Still owed: (1) a v2 leg asserting
-      §C `eval.completed` is emitted last among `eval.*` and that the served summary validates against `eval-summary`; (2) a
+      `mode: "eval"` runs (scripted conformance agent) on MyndHyve `c8d511d84` and openwop-app `f17ee3753` (RFC 0244 legs). Still owed: (1) a certified host cut
+      recording `0081.eval-envelope` and `0081.summary-served` (legs land in suite 2.46.20); (2) a
       leg reaching the §E promotion seam (RFC 0082) from an eval result, or a ruling that §E is owned and witnessed by 0082.
 - [x] **RFC 0244** `Accepted` (provisional) 2026-10-14 on MyndHyve's certified 2.46.9 cut (tier-2, build
       `65785814`, `myndhyve-2.46.9.json`). Owed: the RFC 0156 §B review and the suite residue below. openwop-app advertises it since 2026-10-15
