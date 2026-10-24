@@ -32,6 +32,10 @@ Entries before this file was condensed carried full development detail. That tex
 
 - **RFC 0246 Active (safety fix, `GHSA-ffx7-pm5h-v6pq`): a trial that failed its trajectory cannot carry a task or a suite to a pass.** The `mean` task rule and suite `passed` read a gating score that counts it 0; reported scores are unchanged. 90-day window waived by recorded STEWARD OVERRIDE.
 
+## [2.46.21] — 2026-10-24 — RFC 0249 Active: v2 proposal operations
+
+- **RFC 0249's suite half:** `v2-proposal-lifecycle` (nine legs) and `0249.unadvertised-not-found`; the two RFC 0096 proposal invariants become `witnessable-gated`. openwop-app's pre-release build passes all nine on these judges. No host advertises `clientDrafts` yet.
+
 ## [2.46.20] — 2026-10-24 — RFC 0081 eval envelope legs; RFC 0249 Draft
 
 - **RFC 0081 §C at major 2:** `0081.eval-envelope` (one `eval.started` and one `eval.completed` bracket every `eval.scored`, before `run.completed`, with counts equal to the summary's) and `0081.summary-served`, on the existing trajectory run. openwop-app passes both on a pre-release probe. RFC 0249 filed as `Draft`.

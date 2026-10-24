@@ -1,4 +1,4 @@
-## [2.46.21] — unreleased — RFC 0249 Active: v2 proposal operations
+## [2.46.21] — 2026-10-24 — RFC 0249 Active: v2 proposal operations
 
 - **New scenario `v2-proposal-lifecycle`.** One client-submitted `prompt-template` proposal is driven through submit, revise and apply. The legs are `0249.shape` (server-free), `submit-kind-refused`, `draft-inert`, `apply-stale-refused`, `apply-unscoped-refused`, `apply-installs`, `readback-byte-match`, `terminal-refused` and `cross-tenant-not-found`. Judges are in `lib/proposal-lifecycle-witness.ts`, whose self-tests fail each wrong host answer, including a hash passed off as an install.
 - **Fix before release (found by openwop-app's pre-release run):** the judges read error codes from a nested `{error: {code}}`. The v2 envelope is flat (`{error: "<code>", message, details?}`), so three legs failed on a correct host. They now use `readErrorCode` and read `details` at the root; self-tests cover the flat form.
