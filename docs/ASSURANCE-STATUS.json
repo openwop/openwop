@@ -183,7 +183,7 @@
   },
   "risks": {
     "source": "RFCS/registers/*.risks.md + RFCS/*.risks.md (RFC 0166 tokens)",
-    "rowsScanned": 536,
+    "rowsScanned": 541,
     "openCriticalOrHigh": [
       {
         "rfc": "0058",
@@ -961,6 +961,34 @@
         "title": "An unauthenticated (signature-only) `ingestUrl` is abused to start runs.",
         "score": "High",
         "status": "`open` — reviewed at the RFC 0156 §B retrospective."
+      },
+      {
+        "rfc": "0250",
+        "id": "R1",
+        "title": "Cursor refusal reveals foreign event existence",
+        "score": "High",
+        "status": "Open"
+      },
+      {
+        "rfc": "0250",
+        "id": "R2",
+        "title": "Retention promise conflicts with privacy deletion",
+        "score": "High",
+        "status": "Open"
+      },
+      {
+        "rfc": "0250",
+        "id": "R3",
+        "title": "Backlog/live handoff loses or reorders events",
+        "score": "High",
+        "status": "Open"
+      },
+      {
+        "rfc": "0250",
+        "id": "R4",
+        "title": "Restart test is skipped but replay claim reports pass",
+        "score": "High",
+        "status": "Open"
       }
     ],
     "programOpenCriticalOrHigh": [
@@ -1390,6 +1418,34 @@
         "title": "An unauthenticated (signature-only) `ingestUrl` is abused to start runs.",
         "score": "High",
         "status": "`open` — reviewed at the RFC 0156 §B retrospective."
+      },
+      {
+        "rfc": "0250",
+        "id": "R1",
+        "title": "Cursor refusal reveals foreign event existence",
+        "score": "High",
+        "status": "Open"
+      },
+      {
+        "rfc": "0250",
+        "id": "R2",
+        "title": "Retention promise conflicts with privacy deletion",
+        "score": "High",
+        "status": "Open"
+      },
+      {
+        "rfc": "0250",
+        "id": "R3",
+        "title": "Backlog/live handoff loses or reorders events",
+        "score": "High",
+        "status": "Open"
+      },
+      {
+        "rfc": "0250",
+        "id": "R4",
+        "title": "Restart test is skipped but replay claim reports pass",
+        "score": "High",
+        "status": "Open"
       }
     ],
     "transferred": [

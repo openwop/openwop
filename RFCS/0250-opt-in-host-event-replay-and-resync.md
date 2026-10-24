@@ -152,6 +152,27 @@ describe('hostEvents: strict replay', () => {
 
 No reference host is marked implemented. `openwop-examples` v2 reference can supply ordinary replay/refusal evidence; openwop-app supplies real multi-process/large-event qualification. Update INTEROP-MATRIX only from actual signed measured bundles, with the new facet's dispositions. A new restart/purge seam, if needed, is a separately reviewed gap, not silently a test backdoor in production.
 
+### Falsifiability — proposed requirements, no witness shipped
+
+Every row is a proposed qualification obligation. A classification is not a test result. G2–G4 must resolve the exact fault/privacy fixtures before Active; all new scenarios remain planned.
+
+| Requirement | Observable — what an outside party sees | Who can cause the condition | Verdict |
+| --- | --- | --- | --- |
+| §A closed optional facet and positive retention | valid and invalid discovery objects accepted/rejected by the derived schema | suite with schema vectors | witnessable — unaided (planned) |
+| §A retention survives ordinary process replacement | a retained cursor replays after the serving process is replaced | operator with restart control; G4 | witnessable — gated (planned; absent control is blocked) |
+| §A newer event count does not shorten retention | an early cursor still replays after a large burst within the interval | operator with bounded retention and load fixtures; G2/G4 | witnessable — gated (planned) |
+| §B cursor-exclusive durable replay and live handoff | ordered durable IDs after the cursor with none missing at handoff | suite emit trigger plus two-producer scheduling control; G3/G4 | witnessable — gated (planned) |
+| §B no historical replay without a cursor | only newly emitted events arrive on a fresh subscription | suite with isolated tenant and event trigger | witnessable — gated (planned) |
+| §B ephemeral exclusion | recorded ephemeral ID is absent from a replay bounded by later durable markers | suite with durable and ephemeral triggers | witnessable — gated (planned) |
+| §B bounded-close reconnect and opaque IDs | replay resumes using the exact recorded ID and both mode parameters | suite with bounded-close host; consumer fixture | witnessable — gated (planned) |
+| §C unavailable cursor refuses before SSE | same 409 canonical envelope for expired, unknown, foreign, invisible and ephemeral IDs; no SSE prefix | suite with two tenants, narrowed credentials and retention fixture | witnessable — gated (planned) |
+| §C existing authorization and unsupported-mode errors | owning auth errors, unadvertised 404 and invalid-value 400; legacy regression outcomes | suite with discovery and credential variants | witnessable — gated (planned) |
+| §C consumer stops retrying the unavailable cursor | request log shows reconciliation action rather than a same-cursor retry loop | SDK maintainer with scripted transport | witnessable — unaided (planned SDK test) |
+| §D current visibility and no response secret echo | revoked membership removes delivery; response carries no injected cursor/payload/secret canary | suite with membership control and canaries; G2 | witnessable — gated (planned) |
+| §D no foreign cursor lookup, ephemeral persistence or raw diagnostic labels | wire observations cannot prove absence from internal stores, queries and telemetry | host operator can inspect actual stores/query traces/metric labels | unwitnessable externally; requires internal inspection and negative controls, not a claimed wire pass |
+| §D oversized internal notification preserves durable delivery | full durable event arrives and remains replayable across processes | operator with oversized payload and separate producer/subscriber; G4 | witnessable — gated (planned) |
+| §E generated API/binding and typed SDK opt-in | generated artifacts validate; SDK request and error handling match examples | corpus and SDK maintainers | witnessable — unaided (planned) |
+
 ## Alternatives considered
 
 1. **Keep legacy SHOULD and document local limits.** Valid for minimal hosts but cannot close explicit resync requirement; retained as the unchanged default.
