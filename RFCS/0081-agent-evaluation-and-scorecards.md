@@ -13,6 +13,20 @@
 | **Supersedes** | — |
 | **Superseded by** | — |
 
+> **Correction (2026-10-24): the `Accepted` witness recorded above was a sample seam. Major-2 evidence now stands in for it, with two parts still unwitnessed.** The `Updated` line credits MyndHyve with driving the §B `mode: "eval"` projection. The run the steward observed went through `/v1/host/sample/agents/eval-run`, a sample seam outside the run surface, and MyndHyve de-advertised `agents.evalSuite` on 2026-10-02 (myndhyve#586). So, as written, that line does not show an implementation.
+>
+> Since then, two certified production hosts drive `POST /runs {mode: "eval"}` runs of the scripted conformance agent through their production eval path to `completed`, read `GET /runs/{runId}/eval-summary` (200), and are judged on the served summary and on the `eval.started` / `eval.scored` events by `v2-eval-trajectory-trials`:
+> - MyndHyve's 2.46.13 cut (`myndhyve.json`, build `c8d511d84`);
+> - openwop-app's 2.46.19 cut (`openwop-workflow-engine.json`, build `f17ee3753`).
+>
+> On both, `0244.trajectory-graded`, `0244.trials-per-task` and `0244.content-free` are `executed-pass`. That witnesses this RFC's §A suite artifact, the §B projection, the §C summary and the content-free rule at major 2, under RFC 0244's requirement ids.
+>
+> **Still unwitnessed at major 2:**
+> - the §C terminal `eval.completed` and the event ordering. The frozen v1 `agent-eval-run.test.ts` asserted these, and no v2 leg does.
+> - the §E promotion seam. RFC 0082 enforces it, and no leg reaches it from an eval result.
+>
+> This note does **not** change the Status. The two gaps are tracked in `TODO.md`.
+
 ## Summary
 
 openwop can run an agent (RFC 0070/0072/0077) and observe its reasoning, tool calls, cost (RFC 0026), and human feedback (RFC 0056) — but it has **no portable way to answer "is this agent good enough to deploy?"**. Feedback (RFC 0056) is a post-hoc human quality signal, not a repeatable benchmark; run-diff (RFC 0054) compares two runs structurally but carries no notion of _score_ or _threshold_. A platform that wants to gate a model swap, a prompt change, or a pack publish on measurable quality has nowhere to put the eval suite, the scorecard, or the pass/fail bar. This RFC adds that surface **additively**: a portable **`AgentEvalSuite`** artifact (tasks + expected outputs or rubrics + tool/memory fixtures + allowed models + pass/fail thresholds, distributed in a pack tarball exactly like a `systemPromptRef`), an **eval run** that is a _projection over the existing run surface_ (`POST /v1/runs` with `mode: "eval"` against a suite — no bespoke executor), a content-free **`eval.{started,scored,completed}`** event family bracketing the existing `agent.*` / `provider.usage` events, an **`EvalSummary`** scorecard schema (score / cost / latency / regressions-vs-baseline / safety-findings / schema-validity), and a host-advertised **`agents.evalSuite`** capability naming which of five eval **modes** (golden / rubric / adversarial / regression / live-shadow) it supports. It composes — not duplicates — RFC 0054 (regression baseline), RFC 0026 (per-task cost), and RFC 0056 (human override of an auto-score), and defines the seam by which RFC 0082 deployment promotion MAY require an eval pass. No existing field, event, or endpoint changes.

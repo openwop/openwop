@@ -226,13 +226,10 @@ Defects outside the spec:
       cut (497/0/0, build `e5f27708`). Owed: the RFC 0156 §B review. MyndHyve implements RFC 9110 and
       was invited to cut on 2.45.18; openwop-app's public origin still has the CDN-edge `304` issue.
 - [x] **RFC 0236** `Accepted` (provisional) 2026-10-05 on the v2 reference host's certified 2.45.21 cut (505/0/0, build `9543718c`). Owed: the RFC 0156 §B review; openwop-app ADR 0812 is the tier-2 follow-on.
-- [ ] **RFC 0081 `Accepted` evidence is weaker than its header says (observed 2026-10-14, not fixed).** The
-      header cites MyndHyve's `agents.evalSuite` advertisement and a steward-driven eval run. MyndHyve
-      de-advertised `evalSuite` on 2026-10-02 (myndhyve#586), and that witness was a sample seam
-      (`/v1/host/sample/agents/eval-run`) with no real agent run. openwop-app refuses `mode: eval`
-      (`422`). **Update 2026-10-14:** MyndHyve re-advertises `evalSuite` and its certified 2.46.9 cut drives
-      real `mode: "eval"` runs through the RFC 0244 legs (RFC 0244 G11 closed). Still owed: RFC 0081's own
-      rows re-witnessed at major 2, or an amendment to RFC 0081's header recording the evidence gap.
+- [ ] **RFC 0081 major-2 residue (correction note 2026-10-24 in the RFC).** The sample-seam witness is now covered by
+      `mode: "eval"` runs (scripted conformance agent) on MyndHyve `c8d511d84` and openwop-app `f17ee3753` (RFC 0244 legs). Still owed: (1) a v2 leg asserting
+      §C `eval.completed` is emitted last among `eval.*` and that the served summary validates against `eval-summary`; (2) a
+      leg reaching the §E promotion seam (RFC 0082) from an eval result, or a ruling that §E is owned and witnessed by 0082.
 - [x] **RFC 0244** `Accepted` (provisional) 2026-10-14 on MyndHyve's certified 2.46.9 cut (tier-2, build
       `65785814`, `myndhyve-2.46.9.json`). Owed: the RFC 0156 §B review and the suite residue below. openwop-app advertises it since 2026-10-15
       (2.46.9 cut `17090b1c8`: wire-shape, content-free, fixtures-valid pass; the seam-driven legs `inapplicable`).
