@@ -250,11 +250,10 @@ Defects outside the spec:
       exceptions; stable replay order and live handoff; causable restart/trim/oversize fixtures without a public seam;
       and the steward review on #2035 (MUSTs with no outside witness, facet/error-row shape, the rules' core home within
       the 38,000-word budget). Before SDK rollout (G5, R5): SDK owners and a typed, non-looping resync.
-- [ ] **RFC 0249** `Active` 2026-10-24 (window waived by the user; v2 proposal operations + install read-back, for RFC 0096).
-      UQ 1–5 resolved by `/architect`. Suite legs land in 2.46.21 (`v2-proposal-lifecycle`). Host: openwop-app-6a builds phase
-      1 (app ADR 0970). `Accepted` needs its certified cut with the `0249.*` host legs `executed-pass`. Owed after that: phase 2
-      read-backs for chain and agent packs (G2), the replay-fork rule (G3), and `automation` (G4). **MyndHyve** advertises
-      `agents.proposals` at v2 without the operations, so it must be told before 2.46.21 ships (R1).
+- [x] **RFC 0249** `Accepted` 2026-10-24, with **RFC 0096** `Accepted` on the same cut. Tier-1: openwop-app's certified 2.46.21
+      cut 209c `34bfefddc` passes all nine `0249.*` legs (app ADR 0970/0972). Still owed: phase 2 read-backs for chain and agent
+      packs (G2), the replay-fork rule (G3), and `automation` (G4). MyndHyve advertises `agents.proposals` without the
+      operations (R1); its legs record `inapplicable`.
 - [x] **RFC 0248** `Accepted` 2026-10-23 (`ctx.callAI` attempt accounting + per-call retry policy, for the Book AI pack).
       Tier-1: openwop-app's certified 2.46.19 cut `f17ee3753` advertises `aiProviders.callAccounting` and passes all eight
       `0248.*` legs (fixture opt-in app ADR 0967). Host tensions stay with the host (ADR 0966): a `usage: false` attempt
