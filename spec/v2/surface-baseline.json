@@ -4,7 +4,7 @@
     "schemas/v2/**/*.json",
     "spec/v2/path-manifest.json"
   ],
-  "release": "2.46.22",
+  "release": "2.46.23",
   "kinds": {
     "union": [
       "channel",
@@ -18,7 +18,7 @@
       "type"
     ]
   },
-  "count": 9024,
+  "count": 9031,
   "surfaces": [
     "schemas/v2/a2a-task-state.schema.json#/contextId|type|string",
     "schemas/v2/a2a-task-state.schema.json#/interruptKind|enum-member|\"approval\"",
@@ -2127,6 +2127,11 @@
     "schemas/v2/capabilities.schema.json#/heartbeat|required|until",
     "schemas/v2/capabilities.schema.json#/heartbeat|required|witness",
     "schemas/v2/capabilities.schema.json#/heartbeat|type|object",
+    "schemas/v2/capabilities.schema.json#/hostEvents/replay/minRetentionSeconds|type|integer",
+    "schemas/v2/capabilities.schema.json#/hostEvents/replay|closed|true",
+    "schemas/v2/capabilities.schema.json#/hostEvents/replay|property|minRetentionSeconds",
+    "schemas/v2/capabilities.schema.json#/hostEvents/replay|required|minRetentionSeconds",
+    "schemas/v2/capabilities.schema.json#/hostEvents/replay|type|object",
     "schemas/v2/capabilities.schema.json#/hostEvents/since|type|string",
     "schemas/v2/capabilities.schema.json#/hostEvents/status|enum-member|\"deprecated\"",
     "schemas/v2/capabilities.schema.json#/hostEvents/status|enum-member|\"experimental\"",
@@ -2149,6 +2154,7 @@
     "schemas/v2/capabilities.schema.json#/hostEvents/witness|enum-member|\"witnessable-gated\"",
     "schemas/v2/capabilities.schema.json#/hostEvents/witness|enum-member|\"witnessable-unaided\"",
     "schemas/v2/capabilities.schema.json#/hostEvents|closed|true",
+    "schemas/v2/capabilities.schema.json#/hostEvents|property|replay",
     "schemas/v2/capabilities.schema.json#/hostEvents|property|since",
     "schemas/v2/capabilities.schema.json#/hostEvents|property|status",
     "schemas/v2/capabilities.schema.json#/hostEvents|property|types",
@@ -5621,6 +5627,7 @@
     "schemas/v2/error-envelope.schema.json#/error|enum-member|\"forbidden\"",
     "schemas/v2/error-envelope.schema.json#/error|enum-member|\"force_engine_version_forbidden\"",
     "schemas/v2/error-envelope.schema.json#/error|enum-member|\"fork_point_invalid\"",
+    "schemas/v2/error-envelope.schema.json#/error|enum-member|\"host_event_resync_required\"",
     "schemas/v2/error-envelope.schema.json#/error|enum-member|\"id_tenant_mismatch\"",
     "schemas/v2/error-envelope.schema.json#/error|enum-member|\"idempotency_in_flight\"",
     "schemas/v2/error-envelope.schema.json#/error|enum-member|\"idempotency_key_invalid\"",

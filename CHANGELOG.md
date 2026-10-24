@@ -8,6 +8,7 @@ Entries before this file was condensed carried full development detail. That tex
 
 ## [Unreleased]
 
+- **RFC 0250 Active (window waived): opt-in host-event replay.** `hostEvents.replay {minRetentionSeconds}` and `replay=required` resume a durable cursor in commit order, or refuse it `409 host_event_resync_required`, byte-identically for every unresumable cursor. The legs ship in 2.46.23.
 - **RFC 0250 Draft: opt-in host-event replay and resynchronization.** Proposes retained-cursor replay across process replacement and a tenant-safe explicit resync refusal, with unchanged legacy mode. Proposal and registers only; no wire, schema, SDK or host implementation ships with this draft.
 
 - **RFCs 0249 and 0096 Accepted.** openwop-app's certified 2.46.21 production cut (`34bfefddc`, 480/0/0) serves the seven `/proposals` operations: an unapplied draft is not served, and the installed template is JCS-equal to the reviewed revision. §B review deferred by steward exemption.
@@ -22,16 +23,19 @@ Entries before this file was condensed carried full development detail. That tex
 - **RFCs 0241 and 0242 Accepted (provisional).** Tier-1: the v2 reference host's certified public cuts (0241 seams-off on 2.45.28, `bb7c5930`; 0242 on 2.46.0, `d16cac40`) witness every row; 0241 G1/G2 and 0242 G1 close, so the packed `gaps.json` changed.
 - **RFC 0238 and RFC 0239 Accepted (provisional).** Tier-1: openwop-app's 2.45.23 cut (379/0/0, `e33f3a19c`) passes the four ui-plugin ids; the reference host's 2.45.23 cut (512/0/0, `1492562f`) passes the three council-roster ids, openwop-app `90e7f78ee` a second witness. Gaps close.
 - **2.45.25 cycle (suite):** new `v2-wasm-abi-reject` reads a WASM pack's rejection at load from what it prevents: the ABI-999 pack listed in `loadedPacks`, or its node completing (`conformance-wasm-pack-abi-mismatch`). The `frontend-plugin-packs` schema legs move to `src/coherence/` (RFC 0238 G3).
-- **Erratum: `provider_policy_denied` reasons are snake_case.** The registry (from RFC 0228) spelled `details.reason` in kebab-case; the prose, v1 and every measured host use `provider_disabled`, `byok_required`, `byok_required_but_unresolved`, `model_not_allowed`. They are reasons, not codes.
+- **Errata:** `provider_policy_denied` reasons are snake_case, as the prose, v1 and the suite always had; and the `identity.md` §5 grammar table matches `ids.schema.json` again (`tenantId` gets its own row with its `anon:` prefix).
 - **Corpus cleanup and v2-first guides.** Deleted 22 dated docs, 10 one-off scripts, dead workflows and ignore rules; conformance uses `noEmit`. README now indexes the 30 v2 core docs, quickstart and repositories; its coherence test follows v2. Guides and skills use the 10-step gate and mark v1 end-of-support.
 - **2.45.23 cycle (suite):** purpose labels are witnessed on a real onward hop through the §22 A2A `invoke` seam (`v2-purpose-propagation-onward`; seam-gated, a normative path is still owed), and `0184.mint-no-tilde` also mints under the second-tenant credential.
 - **WASM fixture packs.** Two hand-written WebAssembly node packs (`conformance/fixtures/wasm-packs/`: a memory bomb and an ABI-999 pack) replace the Rust build an operator needed. New `v2-wasm-memory-cap` witnesses the §WASM memory ceiling at major 2.
 - **RFCs 0238 and 0239 filed and Active (windows waived).** 0238: `uiPlugins.served`, `getUiPluginFrame`, `dispatchUiPluginRequest`; frame-only mounting (`packs.md`). 0239: the `multiPartyConversation` roster gets an input seat (`conversation_speaker_not_participant`, `conversation_roster_exceeded`, both `422`).
-- **Erratum: `identity.md` §5 grammar table matches `ids.schema.json` again.** `tenantId` gets its own row with the `anon:` prefix its pattern has had since 2.0.0. `typeId` gains the `@<semver>` pin from RFC 0187. No wire change. `check-id-kinds-bound` now compares the table against the schema.
 
 ### Security
 
 - **RFC 0246 Active (safety fix, `GHSA-ffx7-pm5h-v6pq`): a trial that failed its trajectory cannot carry a task or a suite to a pass.** The `mean` task rule and suite `passed` read a gating score that counts it 0; reported scores are unchanged. 90-day window waived by recorded STEWARD OVERRIDE.
+
+## [2.46.23] — 2026-10-24 — RFC 0250 Active: opt-in host-event replay
+
+- **RFC 0250's wire and legs:** `hostEvents.replay`, the `replay=required` query and `409 host_event_resync_required` on `streamHostEvents`, and `v2-host-event-strict-replay` (six legs). No host advertises it yet; openwop-app is implementing it.
 
 ## [2.46.22] — 2026-10-24 — RFCs 0249 and 0096 Accepted
 

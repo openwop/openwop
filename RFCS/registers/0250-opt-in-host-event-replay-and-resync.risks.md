@@ -1,11 +1,9 @@
-# RFC0250 — Risk register
-
-Qualitative planning judgments. David Tufts is proposed accountable sponsor; role owners need confirmation. High-risk review checkpoint 2026-10-31 is a proposed decision date, not a release promise.
+# RFC 0250 — Risk register
 
 | ID | Risk | Likelihood | Impact | Score | Mitigation | Owner | Target | Status |
 | --- | --- | --- | --- | --- | --- | --- | --- | --- |
-| R1 | Cursor refusal reveals foreign event existence | M | H | High | Tenant/visibility-scoped lookup, uniform response, foreign-vs-unknown witness | Security Architect | 2026-10-31 review; before Active | `transferred:TODO.md` — the RFC 0250 line; resolved before `Active` (no surface ships while `Draft`) |
-| R2 | Retention promise conflicts with privacy deletion | M | H | High | Resolve G2 with explicit exception and no secret-bearing diagnostics | Security Architect | 2026-10-31 review; before Active | `transferred:TODO.md` — the RFC 0250 line; resolved before `Active` (no surface ships while `Draft`) |
-| R3 | Backlog/live handoff loses or reorders events | M | H | High | Resolve G3 with storage watermark/ordered reader and two-producer fault witness | Spec + Conformance Architects | 2026-10-31 review; before Active | `transferred:TODO.md` — the RFC 0250 line; resolved before `Active` (no surface ships while `Draft`) |
-| R4 | Restart test is skipped but replay claim reports pass | M | H | High | Separate observable from causable; blocked disposition without operator condition; signed evidence | Conformance Architect | 2026-10-31 review; before acceptance | `transferred:TODO.md` — the RFC 0250 line; resolved before `Active` (no surface ships while `Draft`) |
-| R5 | SDK loops on resync refusal or old host ignores query | M | M | Med | Advertise/opt in first, typed non-retriable error, SDK regression cases | Compatibility Architect | Before SDK rollout | `transferred:TODO.md` — the RFC 0250 line; resolved before `Active` (no surface ships while `Draft`) |
+| R1 | Cursor refusal reveals foreign event existence | M | H | High | §C byte-identical refusals; `0250.refusal-uniform` compares a second tenant's real cursor with an unknown one | Security Architect | at `Active` | `mitigated` — by `0250.refusal-uniform`. |
+| R2 | Retention promise conflicts with privacy deletion | M | H | High | §D: lawful deletion, tenant removal and revoked visibility remove events from replay; nothing widens a view | Security Architect | at `Active` | `mitigated` — by §D. |
+| R3 | Backlog/live handoff loses or reorders events | M | H | High | §B commit order and no-gap handoff; `0250.resume-backlog` emits a live marker after reconnecting | Spec + Conformance Architects | at `Active` | `mitigated` — by `0250.resume-backlog`. |
+| R4 | A restart loses events but the cut reports pass | M | H | High | The suite cannot restart a host; a loss inside the window is a §B violation whenever a cut observes it. Disclosed in the falsifiability table | Conformance Architect | at `Active` | `accepted` — restart is not caused by the suite; the residual is disclosed, not hidden. |
+| R5 | SDK loops on resync refusal or old host ignores query | M | M | Med | Advertise-first opt-in; non-retriable error; SDK regression cases (G5) | Compatibility Architect | before SDK rollout | `transferred:TODO.md` — the RFC 0250 line. |

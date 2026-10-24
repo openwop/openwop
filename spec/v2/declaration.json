@@ -963,7 +963,7 @@
     {
       "key": "hostEvents",
       "kind": "family",
-      "normativeText": ["spec/v2/core/events.md"],
+      "normativeText": ["spec/v2/core/events.md", "spec/v2/facets/hostEvents.schema.json"],
       "anchor": "core",
       "section": "core/capabilities.md#hostEvents",
       "peerDependencyId": "hostEvents",
@@ -973,7 +973,8 @@
         "adoption": "none"
       },
       "facets": [
-        "types"
+        "types",
+        "replay"
       ],
       "floorScenarios": [],
       "requirementIds": [],

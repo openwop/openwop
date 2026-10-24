@@ -1,7 +1,7 @@
 openapi: 3.1.0
 info:
   title: OpenWOP v2 API
-  version: 2.46.22
+  version: 2.46.23
   summary: REST surface for declaring, executing, suspending, resuming, and observing multi-step workflows.
   description: 'The OpenWOP v2 REST API. Paths are unversioned and served at the bare origin; a client selects a version with
     the `OpenWOP-Version` header from the host''s `protocolVersions[]`. Conformance seams and test-mode operations are not
@@ -3560,6 +3560,15 @@ paths:
               $ref: '#/components/headers/OpenWOPVersion'
         '401':
           $ref: '#/components/responses/Unauthenticated'
+        '409':
+          description: '`host_event_resync_required`: the `replay=required` cursor cannot be resumed (RFC 0250).'
+          content:
+            application/json:
+              schema:
+                $ref: ../../schemas/v2/error-envelope.schema.json
+          headers:
+            OpenWOP-Version:
+              $ref: '#/components/headers/OpenWOPVersion'
       parameters:
       - in: query
         name: resumable
@@ -3570,6 +3579,16 @@ paths:
           event, so a host advertising `limits.maxStreamAgeSec` MAY end it early (a bounded close, never terminal). Absent
           or `false`, the host MUST hold a live stream open (events.md §Resuming with `Last-Event-ID`). A consumer that sends
           it MUST resume with `resumable=true` and `Last-Event-ID`.
+      - name: replay
+        in: query
+        required: false
+        schema:
+          type: string
+          enum:
+          - required
+        description: RFC 0250. Send only when `hostEvents.replay` is advertised, with `Last-Event-ID` naming a durable event.
+          The host replays every visible durable event after it, in commit order, then continues live; a cursor it cannot
+          resume is refused `409 host_event_resync_required` before any SSE byte, identically in every case.
       - $ref: '#/components/parameters/OpenWOPVersion'
       - $ref: '#/components/parameters/OpenWOPClientVersion'
       security:

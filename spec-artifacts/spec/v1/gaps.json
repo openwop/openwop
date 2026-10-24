@@ -14946,8 +14946,8 @@
       "surface": "Facet/query/error names and status",
       "witness": "unclassified",
       "requirementId": null,
-      "disposition": "transferred",
-      "target": "TODO.md",
+      "disposition": "closed",
+      "target": null,
       "sources": [
         {
           "file": "RFCS/registers/0250-opt-in-host-event-replay-and-resync.gaps.md",
@@ -14963,8 +14963,8 @@
       "surface": "Retention and lawful deletion/revocation exceptions",
       "witness": "unclassified",
       "requirementId": null,
-      "disposition": "transferred",
-      "target": "TODO.md",
+      "disposition": "closed",
+      "target": null,
       "sources": [
         {
           "file": "RFCS/registers/0250-opt-in-host-event-replay-and-resync.gaps.md",
@@ -14980,8 +14980,8 @@
       "surface": "Stable replay order and atomic live handoff",
       "witness": "unclassified",
       "requirementId": null,
-      "disposition": "transferred",
-      "target": "TODO.md",
+      "disposition": "closed",
+      "target": null,
       "sources": [
         {
           "file": "RFCS/registers/0250-opt-in-host-event-replay-and-resync.gaps.md",
@@ -14997,8 +14997,8 @@
       "surface": "Causable restart/trim/oversize tests without public backdoor",
       "witness": "unclassified",
       "requirementId": null,
-      "disposition": "transferred",
-      "target": "TODO.md",
+      "disposition": "closed",
+      "target": null,
       "sources": [
         {
           "file": "RFCS/registers/0250-opt-in-host-event-replay-and-resync.gaps.md",
@@ -15020,6 +15020,23 @@
         {
           "file": "RFCS/registers/0250-opt-in-host-event-replay-and-resync.gaps.md",
           "token": "G5"
+        }
+      ]
+    },
+    {
+      "id": "openwop.gap.0250.6",
+      "rfc": "0250",
+      "local": "G6",
+      "section": "Conformance",
+      "surface": "No host advertises `hostEvents.replay`.",
+      "witness": "unclassified",
+      "requirementId": null,
+      "disposition": "externally-gated",
+      "target": "a",
+      "sources": [
+        {
+          "file": "RFCS/registers/0250-opt-in-host-event-replay-and-resync.gaps.md",
+          "token": "G6"
         }
       ]
     },

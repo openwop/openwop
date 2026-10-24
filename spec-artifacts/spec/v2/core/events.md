@@ -68,7 +68,7 @@ The five contracts:
 
 ## The events channel
 
-`api/v2/asyncapi.yaml` declares one channel, `runEvents`, at `/runs/{runId}/events`, and `api/v2/openapi.yaml` declares the same path (`streamRunEvents`). The two MUST resolve to the same absolute path.
+`api/v2/asyncapi.yaml` declares one channel, `runEvents`, at `/runs/{runId}/events`, and `api/v2/openapi.yaml` the same path (`streamRunEvents`); both MUST resolve to one absolute path.
 
 ### Stream modes
 
@@ -139,7 +139,7 @@ A host event's envelope (`schemas/v2/host-event.schema.json`) has no `runId` or 
 
 `negotiation.decided` is reserved and durable ([interop.md](interop.md)).
 
-An ephemeral event MUST NOT be persisted, redelivered on reconnection, or sent through webhooks, A2A push or any sink; its frame has no `id:`. A durable event's `id:` is its `eventId`, and a host SHOULD honour `Last-Event-ID` for it within retention. A vendor payload MUST NOT carry secrets.
+An ephemeral event MUST NOT be persisted, redelivered on reconnection, or sent through webhooks, A2A push or any sink; its frame has no `id:`. A durable event's `id:` is its `eventId`; a host SHOULD honour `Last-Event-ID` for it within retention, and MUST under `hostEvents.replay`. A vendor payload MUST NOT carry secrets.
 
 #### `heartbeat`
 
