@@ -14946,8 +14946,8 @@
       "surface": "Facet/query/error names and status",
       "witness": "unclassified",
       "requirementId": null,
-      "disposition": "open",
-      "target": null,
+      "disposition": "transferred",
+      "target": "TODO.md",
       "sources": [
         {
           "file": "RFCS/registers/0250-opt-in-host-event-replay-and-resync.gaps.md",
@@ -14963,8 +14963,8 @@
       "surface": "Retention and lawful deletion/revocation exceptions",
       "witness": "unclassified",
       "requirementId": null,
-      "disposition": "open",
-      "target": null,
+      "disposition": "transferred",
+      "target": "TODO.md",
       "sources": [
         {
           "file": "RFCS/registers/0250-opt-in-host-event-replay-and-resync.gaps.md",
@@ -14980,8 +14980,8 @@
       "surface": "Stable replay order and atomic live handoff",
       "witness": "unclassified",
       "requirementId": null,
-      "disposition": "open",
-      "target": null,
+      "disposition": "transferred",
+      "target": "TODO.md",
       "sources": [
         {
           "file": "RFCS/registers/0250-opt-in-host-event-replay-and-resync.gaps.md",
@@ -14997,8 +14997,8 @@
       "surface": "Causable restart/trim/oversize tests without public backdoor",
       "witness": "unclassified",
       "requirementId": null,
-      "disposition": "open",
-      "target": null,
+      "disposition": "transferred",
+      "target": "TODO.md",
       "sources": [
         {
           "file": "RFCS/registers/0250-opt-in-host-event-replay-and-resync.gaps.md",
@@ -15014,8 +15014,8 @@
       "surface": "SDK owners/minors and application baseline reconciliation",
       "witness": "unclassified",
       "requirementId": null,
-      "disposition": "open",
-      "target": null,
+      "disposition": "transferred",
+      "target": "TODO.md",
       "sources": [
         {
           "file": "RFCS/registers/0250-opt-in-host-event-replay-and-resync.gaps.md",
