@@ -15,7 +15,9 @@ import {
 
 const failed = (fs: readonly ProposalFinding[]): string[] => fs.filter((x) => !x.ok).map((x) => x.message);
 const ex = (status: number, json: unknown = {}): Exchange => ({ status, json });
-const err = (status: number, code: string, details?: Record<string, unknown>): Exchange => ex(status, { error: { code, message: code, ...(details ? { details } : {}) } });
+// The canonical v2 envelope is flat (error-envelope.schema.json); `nested` is the legacy v1 form the reader tolerates.
+const err = (status: number, code: string, details?: Record<string, unknown>): Exchange => ex(status, { error: code, message: code, ...(details ? { details } : {}) });
+const nested = (status: number, code: string, details?: Record<string, unknown>): Exchange => ex(status, { error: { code, message: code, ...(details ? { details } : {}) } });
 const T = freshTemplate('n1', 'original text');
 const T2 = { ...T, text: 'revised text' };
 const ID = T['templateId'] as string;
@@ -100,6 +102,17 @@ describe('judgeTerminal', () => {
     const c = err(409, 'proposal_state_conflict', { state: 'applied', action: 'revise' });
     expect(failed(judgeTerminal(c, c))).toEqual([]);
     expect(failed(judgeTerminal(ex(200, { state: 'revised' }), c))).toHaveLength(2);
+  });
+});
+
+describe('the flat v2 error envelope (found by openwop-app on a correct host)', () => {
+  it('reads code and details from the flat envelope a v2 host serves', () => {
+    expect(failed(judgeSubmitKindRefused(ex(400, { error: 'validation_error', message: 'kind', details: { field: 'kind' } })))).toEqual([]);
+    expect(failed(judgeApplyStale(ex(409, { error: 'proposal_stale', message: 'stale' }), ex(200, { state: 'revised' }), ex(404)))).toEqual([]);
+    expect(failed(judgeTerminal(ex(409, { error: 'proposal_state_conflict', message: 'x', details: { state: 'applied', action: 'revise' } }), ex(409, { error: 'proposal_state_conflict', message: 'x', details: { state: 'applied', action: 'apply' } })))).toEqual([]);
+  });
+  it('still tolerates the legacy nested form', () => {
+    expect(failed(judgeApplyStale(nested(409, 'proposal_stale'), ex(200, { state: 'revised' }), ex(404)))).toEqual([]);
   });
 });
 

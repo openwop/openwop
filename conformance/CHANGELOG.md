@@ -1,6 +1,7 @@
 ## [2.46.21] — unreleased — RFC 0249 Active: v2 proposal operations
 
 - **New scenario `v2-proposal-lifecycle`.** One client-submitted `prompt-template` proposal is driven through submit, revise and apply. The legs are `0249.shape` (server-free), `submit-kind-refused`, `draft-inert`, `apply-stale-refused`, `apply-unscoped-refused`, `apply-installs`, `readback-byte-match`, `terminal-refused` and `cross-tenant-not-found`. Judges are in `lib/proposal-lifecycle-witness.ts`, whose self-tests fail each wrong host answer, including a hash passed off as an install.
+- **Fix before release (found by openwop-app's pre-release run):** the judges read error codes from a nested `{error: {code}}`. The v2 envelope is flat (`{error: "<code>", message, details?}`), so three legs failed on a correct host. They now use `readErrorCode` and read `details` at the root; self-tests cover the flat form.
 - **`0249.unadvertised-not-found`** in `v2-unadvertised-operation-not-found`: `GET /proposals` on a host without `agents.proposals` answers `404 not_found`.
 - **Gating.** The host legs need `agents.proposals` with `clientDrafts: true` and `readback` ∋ `prompt-template`, plus `OPENWOP_TEST_LOW_SCOPE_KEY` (read and write, no `proposals:apply`) and `OPENWOP_TEST_TENANT_B_API_KEY`. An unset key records `blocked`.
 - **Invariants.** `proposal-inert-until-applied` and `proposal-no-resynthesis` move `seam-gated` → `witnessable-gated`.
