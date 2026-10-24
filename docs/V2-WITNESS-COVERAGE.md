@@ -12,7 +12,7 @@ Every v2 core family now has a v2 normative home (RFC 0189). Many of its rules a
 - **At v1 end-of-support:** the 0 v1-only families, and the 0 obligation units attributed to them, lose their only witness.
 - **Obligation units (901 in `spec/v2/core/`):** 614 (68%) sit in a section a major-2 scenario cites; 287 sit in 99 sections no major-2 scenario cites.
 - **Declaration links:** 0 core families declare `floorScenarios`; 2 declare `requirementIds`. The family-to-test link exists only in scenario code and citations, although `overview.md` §What a MUST means says every core MUST has an id in `requirements.json`.
-- **Scenarios:** 659 registered, 219 run at major 2. 34 major-2 citations name a v2 core section this script cannot match to a heading (see Citation gaps).
+- **Scenarios:** 660 registered, 220 run at major 2. 34 major-2 citations name a v2 core section this script cannot match to a heading (see Citation gaps).
 
 ## How to read it
 
@@ -170,9 +170,9 @@ Sections with the most obligation units and no major-2 citation. A doc-level cit
 
 ## Citation gaps
 
-These 71 major-2 scenarios cite no `spec/v2/core` document (only RFCs, schemas or the interop map). Whatever they witness is invisible to the section counts above; `v2-durability-recovery`, for one, witnesses `persistence.md` §Durable acceptance through RFC 0158 only.
+These 72 major-2 scenarios cite no `spec/v2/core` document (only RFCs, schemas or the interop map). Whatever they witness is invisible to the section counts above; `v2-durability-recovery`, for one, witnesses `persistence.md` §Durable acceptance through RFC 0158 only.
 
-`audit-anomaly-shape`, `audit-checkpoint-vectors`, `context-budget-transcript-bound`, `context-summarization-replay`, `otel-mcp-semconv-projection`, `v2-advertised-fixtures-exist`, `v2-agent-org-chart-served-shape`, `v2-agent-runtime-advertisement`, `v2-agents-fan-out-waves`, `v2-agents-fan-out`, `v2-ai-envelope-advertisement`, `v2-ai-providers-advertisement`, `v2-artifact-type-schema-url`, `v2-artifact-types-advertisement`, `v2-auth-challenge`, `v2-auth-subject-link-key`, `v2-authorization-advertisement`, `v2-budget-enforcement`, `v2-budget-exhaustion-facet`, `v2-callai-attempt-accounting`, `v2-channel-presence-advertisement`, `v2-content-locale-keys`, `v2-conversation-turn-model-provenance-advertisement`, `v2-conversation-turn-parts`, `v2-credentials-advertisement`, `v2-data-residency-advertisement`, `v2-dead-letter-advertisement`, `v2-dispatch-input-mapping`, `v2-dispatch-loop`, `v2-durability-recovery`, `v2-envelope-tier-one-subset-static`, `v2-envelopes-advertisement`, `v2-eval-trajectory-trials`, `v2-ext-family-claims`, `v2-ext-rest-transport`, `v2-i18n-negotiation`, `v2-limits-envelope-caps-advertisement`, `v2-model-capabilities-advertisement`, `v2-model-capability-insufficient`, `v2-multi-agent-advertisement`, `v2-multi-party-conversation-advertisement`, `v2-negotiation-authenticated`, `v2-negotiation-decided-emitted`, `v2-node-pack-runtimes-advertisement`, `v2-payload-seats-0186`, `v2-payload-vendor-hatch`, `v2-portability-advertisement`, `v2-production-backpressure`, `v2-prompt-all-four-kinds-events`, `v2-prompt-end-to-end-events`, `v2-prompt-library-advertisement`, `v2-prompt-list-and-fetch`, `v2-prompt-mutable-lifecycle`, `v2-prompt-pack-install`, `v2-prompt-render-deterministic`, `v2-prompt-resolution-chain-event`, `v2-protected-resource-metadata`, `v2-provider-conflict`, `v2-provider-usage-advertisement`, `v2-provider-usage-emission`, `v2-purpose-propagation-advertisement`, `v2-run-execution-bounds`, `v2-scheduling-advertisement`, `v2-self-hosted-runner-advertisement`, `v2-sub-workflow-advertisement`, `v2-subworkflow-input-mapping`, `v2-subworkflow-linkage`, `v2-table-schema-enforcement`, `v2-trigger-dead-letter-read`, `v2-ui-plugins-advertisement`, `v2-webhook-message-id-stable`
+`audit-anomaly-shape`, `audit-checkpoint-vectors`, `context-budget-transcript-bound`, `context-summarization-replay`, `otel-mcp-semconv-projection`, `v2-advertised-fixtures-exist`, `v2-agent-org-chart-served-shape`, `v2-agent-runtime-advertisement`, `v2-agents-fan-out-waves`, `v2-agents-fan-out`, `v2-ai-envelope-advertisement`, `v2-ai-providers-advertisement`, `v2-artifact-type-schema-url`, `v2-artifact-types-advertisement`, `v2-auth-challenge`, `v2-auth-subject-link-key`, `v2-authorization-advertisement`, `v2-budget-enforcement`, `v2-budget-exhaustion-facet`, `v2-callai-attempt-accounting`, `v2-channel-presence-advertisement`, `v2-content-locale-keys`, `v2-conversation-turn-model-provenance-advertisement`, `v2-conversation-turn-parts`, `v2-credentials-advertisement`, `v2-data-residency-advertisement`, `v2-dead-letter-advertisement`, `v2-dispatch-input-mapping`, `v2-dispatch-loop`, `v2-durability-recovery`, `v2-envelope-tier-one-subset-static`, `v2-envelopes-advertisement`, `v2-eval-trajectory-trials`, `v2-ext-family-claims`, `v2-ext-rest-transport`, `v2-i18n-negotiation`, `v2-limits-envelope-caps-advertisement`, `v2-model-capabilities-advertisement`, `v2-model-capability-insufficient`, `v2-multi-agent-advertisement`, `v2-multi-party-conversation-advertisement`, `v2-negotiation-authenticated`, `v2-negotiation-decided-emitted`, `v2-node-pack-runtimes-advertisement`, `v2-payload-seats-0186`, `v2-payload-vendor-hatch`, `v2-portability-advertisement`, `v2-production-backpressure`, `v2-prompt-all-four-kinds-events`, `v2-prompt-end-to-end-events`, `v2-prompt-library-advertisement`, `v2-prompt-list-and-fetch`, `v2-prompt-mutable-lifecycle`, `v2-prompt-pack-install`, `v2-prompt-render-deterministic`, `v2-prompt-resolution-chain-event`, `v2-proposal-lifecycle`, `v2-protected-resource-metadata`, `v2-provider-conflict`, `v2-provider-usage-advertisement`, `v2-provider-usage-emission`, `v2-purpose-propagation-advertisement`, `v2-run-execution-bounds`, `v2-scheduling-advertisement`, `v2-self-hosted-runner-advertisement`, `v2-sub-workflow-advertisement`, `v2-subworkflow-input-mapping`, `v2-subworkflow-linkage`, `v2-table-schema-enforcement`, `v2-trigger-dead-letter-read`, `v2-ui-plugins-advertisement`, `v2-webhook-message-id-stable`
 
 34 major-2 citations name a v2 core section that matches no heading (most are `tool-catalog.md` §A–§F, RFC section letters):
 
@@ -423,11 +423,11 @@ node scripts/report-v2-witness-coverage.mjs --write  # regenerate this file
     "familiesWithRequirementIds": 2
   },
   "scenarios": {
-    "registered": 659,
-    "major2": 219
+    "registered": 660,
+    "major2": 220
   },
   "unresolvedV2Citations": 34,
-  "major2ScenariosCitingNoCoreDoc": 71,
+  "major2ScenariosCitingNoCoreDoc": 72,
   "risks": {
     "listed": 20,
     "staleQuotes": [],

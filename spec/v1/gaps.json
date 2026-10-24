@@ -14939,6 +14939,91 @@
       ]
     },
     {
+      "id": "openwop.gap.0250.1",
+      "rfc": "0250",
+      "local": "G1",
+      "section": "A/C",
+      "surface": "Facet/query/error names and status",
+      "witness": "unclassified",
+      "requirementId": null,
+      "disposition": "open",
+      "target": null,
+      "sources": [
+        {
+          "file": "RFCS/registers/0250-opt-in-host-event-replay-and-resync.gaps.md",
+          "token": "G1"
+        }
+      ]
+    },
+    {
+      "id": "openwop.gap.0250.2",
+      "rfc": "0250",
+      "local": "G2",
+      "section": "A/D",
+      "surface": "Retention and lawful deletion/revocation exceptions",
+      "witness": "unclassified",
+      "requirementId": null,
+      "disposition": "open",
+      "target": null,
+      "sources": [
+        {
+          "file": "RFCS/registers/0250-opt-in-host-event-replay-and-resync.gaps.md",
+          "token": "G2"
+        }
+      ]
+    },
+    {
+      "id": "openwop.gap.0250.3",
+      "rfc": "0250",
+      "local": "G3",
+      "section": "B",
+      "surface": "Stable replay order and atomic live handoff",
+      "witness": "unclassified",
+      "requirementId": null,
+      "disposition": "open",
+      "target": null,
+      "sources": [
+        {
+          "file": "RFCS/registers/0250-opt-in-host-event-replay-and-resync.gaps.md",
+          "token": "G3"
+        }
+      ]
+    },
+    {
+      "id": "openwop.gap.0250.4",
+      "rfc": "0250",
+      "local": "G4",
+      "section": "Conformance",
+      "surface": "Causable restart/trim/oversize tests without public backdoor",
+      "witness": "unclassified",
+      "requirementId": null,
+      "disposition": "open",
+      "target": null,
+      "sources": [
+        {
+          "file": "RFCS/registers/0250-opt-in-host-event-replay-and-resync.gaps.md",
+          "token": "G4"
+        }
+      ]
+    },
+    {
+      "id": "openwop.gap.0250.5",
+      "rfc": "0250",
+      "local": "G5",
+      "section": "E",
+      "surface": "SDK owners/minors and application baseline reconciliation",
+      "witness": "unclassified",
+      "requirementId": null,
+      "disposition": "open",
+      "target": null,
+      "sources": [
+        {
+          "file": "RFCS/registers/0250-opt-in-host-event-replay-and-resync.gaps.md",
+          "token": "G5"
+        }
+      ]
+    },
+    {
       "id": "openwop.gap.spec.a2a-integration.g1",
       "rfc": "0152",
       "local": "G1",
