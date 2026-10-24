@@ -4,10 +4,10 @@
 | ----------------- | --------------------------------------------------------------- |
 | **RFC**           | 0249                                                            |
 | **Title**         | Normative v2 operations for RFC 0096 proposals, a client-submitted draft, and an install read-back the suite can byte-compare |
-| **Status**        | `Active`                                                        |
+| **Status**        | `Accepted`                                                      |
 | **Author(s)**     | David Tufts (@davidscotttufts)                                  |
 | **Created**       | 2026-10-24                                                      |
-| **Updated**       | 2026-10-24 — **`Draft → Active`, comment window waived by the maintainer** (user instruction 2026-10-24: "waive the 7 day window for 0249"); STEWARD OVERRIDE of RFC 0147 §A.6 recorded in `MAINTAINERS.md`. UQ 1–5 resolved by `/architect` with openwop-app's measured constraints (ADR 0938): a third scope `proposals:apply`; an optional `artifactDigest` apply binding with `409 proposal_stale`; `approval-gate` apply opens a gate run; `readback` stays a separate array; `proposal_state_conflict` registered; only `meta` is host-owned; the read-back is tenant-scoped and `installedArtifact.id` is the artifact's `templateId`. Host half: openwop-app (ADR 0970). · 2026-10-24 — Draft, from the `/architect` ruling on RFC 0096's v2 gap. |
+| **Updated**       | 2026-10-24 — **`Active → Accepted`**; RFC 0156 §B review deferred by steward exemption (2026-10-17). Evidence tier: tier-1 — openwop-app's certified 2.46.21 production cut 209c (build `commit:34bfefddc`, revision `openwop-app-backend-01032-9ff`, 480/0/0, `--verify --host-key` VERIFIED) advertises `agents.proposals {artifactKinds: [prompt-template], activation: direct-rbac, clientDrafts, readback: [prompt-template]}` and records all nine `0249.*` host and shape legs `executed-pass` (39 assertions), as pre-registered. G1 closes. · 2026-10-24 — **`Draft → Active`, comment window waived by the maintainer** (user instruction 2026-10-24: "waive the 7 day window for 0249"); STEWARD OVERRIDE of RFC 0147 §A.6 recorded in `MAINTAINERS.md`. UQ 1–5 resolved by `/architect` with openwop-app's measured constraints (ADR 0938): a third scope `proposals:apply`; an optional `artifactDigest` apply binding with `409 proposal_stale`; `approval-gate` apply opens a gate run; `readback` stays a separate array; `proposal_state_conflict` registered; only `meta` is host-owned; the read-back is tenant-scoped and `installedArtifact.id` is the artifact's `templateId`. Host half: openwop-app (ADR 0970). · 2026-10-24 — Draft, from the `/architect` ruling on RFC 0096's v2 gap. |
 | **Affects**       | `api/openapi.yaml` → `api/v2/openapi.yaml` (seven operations, tag `proposals`) · `spec/v2/path-manifest.json` (generated) · `spec/v2/facets/agents.schema.json` `proposals` (optional `clientDrafts`, `readback`) · `schemas/v2/proposal.schema.json` (optional `activation.installedArtifact`, `artifactDigest`; the file leaves the v1 seed set) · new `schemas/v2/proposal-submit.schema.json`, `proposal-revise.schema.json`, `proposal-apply.schema.json`, `proposal-list-response.schema.json` · `spec/v2/errors.json` (`proposal_state_conflict`, `proposal_stale`, `proposal_install_conflict`) · scopes `proposals:read`, `proposals:write`, `proposals:apply` · `spec/v2/core/execution.md` (a one-line pointer, word-neutral) · `spec/v2/core/security-defaults.md` (one obligation row) · `SECURITY/invariants.yaml` (`proposal-inert-until-applied`, `proposal-no-resynthesis`: v2 tests, witness class) · conformance: `v2-proposal-lifecycle.test.ts` · CHANGELOG · openwop-sdks (follow-up) |
 | **Compatibility** | `additive`                                                      |
 | **Supersedes**    | —                                                               |
@@ -240,12 +240,12 @@ All five were resolved on 2026-10-24 by `/architect`, using openwop-app's measur
 
 ## Acceptance criteria
 
-- [ ] The seven operations in `api/openapi.yaml` and the derived `api/v2/openapi.yaml`, with `spec/v2/path-manifest.json` parity.
-- [ ] `agents.proposals.clientDrafts` and `readback`, and `activation.installedArtifact`, with the rules in their descriptions; `proposal-submit` and `proposal-revise` schemas.
-- [ ] The `execution.md` pointer and the `security-defaults.md` obligation row; `proposals:read` / `proposals:write` / `proposals:apply` and the three error codes registered.
-- [ ] `v2-proposal-lifecycle.test.ts` with the legs above, its judges and their self-tests; both invariants point at it and are `witnessable-gated`.
-- [ ] CHANGELOG entry; openwop-sdks issue filed.
-- [ ] A host advertises `agents.proposals` with `clientDrafts` and `readback ∋ prompt-template`, and a certified major-2 bundle records the `0249.*` host legs `executed-pass`.
+- [x] The seven operations in `api/openapi.yaml` and the derived `api/v2/openapi.yaml`, with `spec/v2/path-manifest.json` parity.
+- [x] `agents.proposals.clientDrafts` and `readback`, and `activation.installedArtifact`, with the rules in their descriptions; `proposal-submit` and `proposal-revise` schemas.
+- [x] The `security-defaults.md` obligation row (the `execution.md` pointer was dropped: `proposals` is already named there, and the kernel is at its 38,000-word cap); `proposals:read` / `proposals:write` / `proposals:apply` and the three error codes registered.
+- [x] `v2-proposal-lifecycle.test.ts` with the legs above, its judges and their self-tests; both invariants point at it and are `witnessable-gated`.
+- [x] CHANGELOG entry; openwop-sdks issue filed (openwop/openwop-sdks#59).
+- [x] A host advertises `agents.proposals` with `clientDrafts` and `readback ∋ prompt-template`, and a certified major-2 bundle records the `0249.*` host legs `executed-pass`.
 
 ## References
 
@@ -261,3 +261,4 @@ All five were resolved on 2026-10-24 by `/architect`, using openwop-app's measur
 
 - 2026-10-24 — Draft (openwop#2030).
 - 2026-10-24 — Active (comment window waived; STEWARD OVERRIDE of RFC 0147 §A.6, see Updated).
+- 2026-10-24 — Accepted (tier-1, openwop-app cut 209c `34bfefddc`; §B review deferred by steward exemption).

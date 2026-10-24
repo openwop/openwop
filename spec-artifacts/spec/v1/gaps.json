@@ -14861,8 +14861,8 @@
       "surface": "No host implements the seven operations. openwop-app does not advertise `agents.proposals`; MyndHyve advertises it at v1 only. openwop-app builds phase 1 (ADR 0970, user-directed 2026-10-24).",
       "witness": "unclassified",
       "requirementId": null,
-      "disposition": "externally-gated",
-      "target": "a",
+      "disposition": "closed",
+      "target": null,
       "sources": [
         {
           "file": "RFCS/registers/0249-proposal-operations-and-install-readback.gaps.md",

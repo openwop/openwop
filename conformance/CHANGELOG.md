@@ -1,3 +1,7 @@
+## [2.46.22] — 2026-10-24 — RFCs 0249 and 0096 Accepted
+
+- **No assertion changes.** RFC 0249's G1 closes on openwop-app's certified cut `34bfefddc` (all nine `0249.*` legs `executed-pass`), so the packed `spec/v1/gaps.json` changes.
+
 ## [2.46.21] — 2026-10-24 — RFC 0249 Active: v2 proposal operations
 
 - **New scenario `v2-proposal-lifecycle`.** One client-submitted `prompt-template` proposal is driven through submit, revise and apply. The legs are `0249.shape` (server-free), `submit-kind-refused`, `draft-inert`, `apply-stale-refused`, `apply-unscoped-refused`, `apply-installs`, `readback-byte-match`, `terminal-refused` and `cross-tenant-not-found`. Judges are in `lib/proposal-lifecycle-witness.ts`, whose self-tests fail each wrong host answer, including a hash passed off as an install.

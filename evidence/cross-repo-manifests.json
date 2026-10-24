@@ -107,7 +107,7 @@
       }
     },
     "openwop-app": {
-      "commit": "f17ee375358426741c9bbed333fdce61169068f6",
+      "commit": "34bfefddcb3f1b560c34103950f25c28742eb771",
       "files": {
         "backend/typescript/src/byok/ephemeralRunSecrets.ts": {
           "exists": true,
@@ -132,7 +132,7 @@
         },
         "backend/typescript/src/routes/prompts.ts": {
           "exists": true,
-          "sha256": "edc2050ad675e2a228621369fd7d35b4743ef9001e1f69f0f7574d8379e8760c",
+          "sha256": "807117a787dd85218c849850b4d541aaa3c4d9ae235240b72a7b3084630be707",
           "citedBy": [
             "conformance/coverage.md"
           ]
@@ -153,7 +153,7 @@
         },
         "backend/typescript/test/untrusted-marker.test.ts": {
           "exists": true,
-          "sha256": "6bd0d3e29cf026a000735b5ceb05eb9f56696bd5df4de62eea3b3fb98bd1981a",
+          "sha256": "2b0724f69dabc63b5220f94ca8e4a43c59ce0ea06671d5729a5c18cd3356fcd1",
           "citedBy": [
             "SECURITY/invariants.yaml"
           ]
@@ -258,8 +258,8 @@
       "corpusTag": "v2.34.0"
     },
     "openwop-app": {
-      "corpusTag": "v2.46.19",
-      "conformancePin": "^2.46.19"
+      "corpusTag": "v2.46.21",
+      "conformancePin": "^2.46.21"
     },
     "openwop-examples": {
       "inMemoryHost": "1.1.7",
