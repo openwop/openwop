@@ -1,3 +1,7 @@
+## [2.46.20] — unreleased — RFC 0249 Draft
+
+- **No assertion changes yet.** RFC 0249 (v2 proposal operations and an install read-back for RFC 0096) is filed as `Draft`. Its gap register lands in the packed `spec/v1/gaps.json`, which opens this cycle.
+
 ## [2.46.19] — 2026-10-22 — RFC 0248: ctx.callAI attempt accounting and retry policy
 
 - **New scenario `v2-callai-attempt-accounting`** with eight legs: `0248.attempts-count`, `output-tokens-sum`, `usage-incomplete`, `structured-output`, `attempts-replayed`, `max-attempts-cap`, `no-budget-growth` and `retry-malformed-refused`. They are gated on `aiProviders.callAccounting.attempts` / `.retryPolicy` and the fixture.

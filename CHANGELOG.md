@@ -8,6 +8,7 @@ Entries before this file was condensed carried full development detail. That tex
 
 ## [Unreleased]
 
+- **RFC 0249 Draft: v2 proposal operations.** Seven operations, client-submitted drafts and a JCS-checkable `installedArtifact` read-back make RFC 0096's inertness and byte-match rules observable at v2, starting with `prompt-template`. The comment window is open.
 - **RFC 0156 §B retrospective review deferred by steward exemption.** The protocol has no user outside the steward's organizations, so an `Accepted` RFC no longer waits on or owes a §B review until it has one or a non-steward maintainer joins (`GOVERNANCE.md`). No review is recorded; rows stay `not-reviewed`.
 - **RFC 0246 Accepted (provisional).** MyndHyve deployed the gate (build `c8d511d84`) before advisory `GHSA-ffx7-pm5h-v6pq` was published; its certified 2.46.13 production cut (418/0/0) passes `0246.mean-gated` and `0246.suite-gated`. G3 closes, so the packed `gaps.json` changes. The RFC 0156 §B review is owed.
 - **RFC 0248 Accepted.** openwop-app's certified 2.46.19 production cut (`f17ee3753`, 468/0/0) advertises `aiProviders.callAccounting` and passes all eight `0248.*` legs: attempt count, summed tokens, the retry cap and no budget growth. §B review deferred by steward exemption.
@@ -24,8 +25,7 @@ Entries before this file was condensed carried full development detail. That tex
 - **README rewritten for v2.** The root README now leads with v2: status, install, a v2 core-doc index (30 docs), quickstart and repositories; v1 is named only as end-of-support. The coherence test for the document index checks `spec/v2/core` instead of `spec/v1` (2.45.24 cycle; renamed requirement ids).
 - **2.45.23 cycle (suite):** purpose labels are witnessed on a real onward hop through the §22 A2A `invoke` seam (`v2-purpose-propagation-onward`; seam-gated, a normative path is still owed), and `0184.mint-no-tilde` also mints under the second-tenant credential.
 - **WASM fixture packs.** Two hand-written WebAssembly node packs (`conformance/fixtures/wasm-packs/`: a memory bomb and an ABI-999 pack) replace the Rust build an operator needed. New `v2-wasm-memory-cap` witnesses the §WASM memory ceiling at major 2.
-- **RFC 0239 filed and Active (window waived).** `multiPartyConversation`'s roster gets an input seat: `conversation.md` binds the roster to `core.conversationGate` config and names the two refusals; `errors.json` registers `conversation_speaker_not_participant` and `conversation_roster_exceeded` (both `422`).
-- **RFC 0238 filed and Active (window waived); `host.announce` erratum.** `uiPlugins.served`, `getUiPluginFrame` and `dispatchUiPluginRequest`; `packs.md` binds the frame as the only mount. The four `frontend-plugin-*` invariants become `witnessable-gated` through `v2-ui-plugin-boundary`.
+- **RFCs 0238 and 0239 filed and Active (windows waived).** 0238: `uiPlugins.served`, `getUiPluginFrame`, `dispatchUiPluginRequest`; frame-only mounting (`packs.md`). 0239: the `multiPartyConversation` roster gets an input seat (`conversation_speaker_not_participant`, `conversation_roster_exceeded`, both `422`).
 - **Erratum: `identity.md` §5 grammar table matches `ids.schema.json` again.** `tenantId` gets its own row with the `anon:` prefix its pattern has had since 2.0.0. `typeId` gains the `@<semver>` pin from RFC 0187. No wire change. `check-id-kinds-bound` now compares the table against the schema.
 
 ### Security

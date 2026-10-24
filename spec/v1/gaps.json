@@ -1,7 +1,7 @@
 {
   "$schema": "./gaps.schema.json",
   "version": 1,
-  "updated": "2026-10-22",
+  "updated": "2026-10-24",
   "witnessClasses": [
     "witnessable-unaided",
     "witnessable-gated",
@@ -14850,6 +14850,91 @@
         {
           "file": "RFCS/registers/0247-bounded-stream-lifetime.gaps.md",
           "token": "G2"
+        }
+      ]
+    },
+    {
+      "id": "openwop.gap.0249.1",
+      "rfc": "0249",
+      "local": "G1",
+      "section": "§Conformance",
+      "surface": "No host implements the seven operations. openwop-app does not advertise `agents.proposals`; MyndHyve advertises it at v1 only. Whether openwop-app builds phase 1 is with the user (relayed by the openwop-app release manager 2026-10-24).",
+      "witness": "unclassified",
+      "requirementId": null,
+      "disposition": "externally-gated",
+      "target": "a",
+      "sources": [
+        {
+          "file": "RFCS/registers/0249-proposal-operations-and-install-readback.gaps.md",
+          "token": "G1"
+        }
+      ]
+    },
+    {
+      "id": "openwop.gap.0249.2",
+      "rfc": "0249",
+      "local": "G2",
+      "section": "§D phase 2",
+      "surface": "`workflow-chain-pack` and `agent-pack` have no v2 operation that serves the installed bytes: `getWorkflow` serves one workflow, `getAgent` an inventory entry.",
+      "witness": "unclassified",
+      "requirementId": null,
+      "disposition": "transferred",
+      "target": "TODO.md",
+      "sources": [
+        {
+          "file": "RFCS/registers/0249-proposal-operations-and-install-readback.gaps.md",
+          "token": "G2"
+        }
+      ]
+    },
+    {
+      "id": "openwop.gap.0249.3",
+      "rfc": "0249",
+      "local": "G3",
+      "section": "§E",
+      "surface": "The replay-fork rule has no portable trigger: the suite cannot make a host synthesize a proposal from a run it controls.",
+      "witness": "unclassified",
+      "requirementId": null,
+      "disposition": "transferred",
+      "target": "TODO.md",
+      "sources": [
+        {
+          "file": "RFCS/registers/0249-proposal-operations-and-install-readback.gaps.md",
+          "token": "G3"
+        }
+      ]
+    },
+    {
+      "id": "openwop.gap.0249.4",
+      "rfc": "0249",
+      "local": "G4",
+      "section": "§D phase 3",
+      "surface": "`automation` (RFC 0052 job) has no v2 read surface at all.",
+      "witness": "unclassified",
+      "requirementId": null,
+      "disposition": "transferred",
+      "target": "TODO.md",
+      "sources": [
+        {
+          "file": "RFCS/registers/0249-proposal-operations-and-install-readback.gaps.md",
+          "token": "G4"
+        }
+      ]
+    },
+    {
+      "id": "openwop.gap.0249.5",
+      "rfc": "0249",
+      "local": "G5",
+      "section": "UQ 1–5",
+      "surface": "Submit scope, approval-gate shape, `readback` vs implied, the terminal-state error code, and the complete host-owned field set for `prompt-template`.",
+      "witness": "unclassified",
+      "requirementId": null,
+      "disposition": "transferred",
+      "target": "TODO.md",
+      "sources": [
+        {
+          "file": "RFCS/registers/0249-proposal-operations-and-install-readback.gaps.md",
+          "token": "G5"
         }
       ]
     },
