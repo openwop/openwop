@@ -1,11 +1,10 @@
-# RFC0250 — Gap register
+# RFC 0250 — Gap register
 
 | ID | Section | Question / missing input | Owner | Resolution path | Blocks |
 | --- | --- | --- | --- | --- | --- |
-| G1 | A/C | Facet/query/error names and status | Spec + Schema Architects | `transferred:TODO.md` 2026-10-24 (the RFC 0250 line) — decide before `Active`: core events/errors owner review and positive/negative examples | Active |
-| G2 | A/D | Retention and lawful deletion/revocation exceptions | Security Architect | `transferred:TODO.md` 2026-10-24 (the RFC 0250 line) — decide before `Active`: threat review and explicit privacy-safe text | Active |
-| G3 | B | Stable replay order and atomic live handoff | Spec + Conformance Architects | `transferred:TODO.md` 2026-10-24 (the RFC 0250 line) — decide before `Active`: two-producer fault model and host witness | Active |
-| G4 | Conformance | Causable restart/trim/oversize tests without public backdoor | Conformance Architect | `transferred:TODO.md` 2026-10-24 (the RFC 0250 line) — decide before `Active`: operator fixture design; honest blocked dispositions; any new seam separately reviewed | Active witness plan; Accepted execution |
-| G5 | E | SDK owners/minors and application baseline reconciliation | Compatibility Architect | `transferred:TODO.md` 2026-10-24 (the RFC 0250 line) — decide before SDK rollout: SDK owner decisions + consumer tests; no invented generic snapshot | SDK implementation/Accepted |
-
-No question is resolved by filing the Draft. Targets and accountable sponsor are proposed; no staffing commitment is implied.
+| G1 | A/C | Facet/query/error names and status | Spec + Schema Architects | `closed` 2026-10-24 — `/architect` at the `Active` flip: `hostEvents.replay {minRetentionSeconds}`, `replay=required`, `409 host_event_resync_required` (RFC §Unresolved questions 1). | — |
+| G2 | A/D | Retention and lawful deletion/revocation exceptions | Security Architect | `closed` 2026-10-24 — §D: removals only narrow a view; a removed cursor is refused as in §C. | — |
+| G3 | B | Stable replay order and atomic live handoff | Spec + Conformance Architects | `closed` 2026-10-24 — §B: commit order, internal, observed through sequential emits; `0250.resume-backlog` checks the handoff with a live marker. | — |
+| G4 | Conformance | Causable restart/trim/oversize tests without public backdoor | Conformance Architect | `closed` 2026-10-24 — no separate rows: a loss inside the window breaks §B wherever it happens; the RFC 0241 trigger causes every observable row, and no seam is added. | — |
+| G5 | E | SDK owners/minors and application baseline reconciliation | Compatibility Architect | `transferred:TODO.md` 2026-10-24 (the RFC 0250 line) — openwop-sdks exposes the opt-in and a non-retrying resync. | `Accepted` checklist item |
+| G6 | Conformance | No host advertises `hostEvents.replay`. | Conformance Architect | `externally-gated:a certified major-2 bundle with the 0250.* host legs executed-pass` — openwop-app implements it (EVENT-01). | `Accepted` |

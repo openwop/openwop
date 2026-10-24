@@ -1469,6 +1469,16 @@
       },
       "since": "2.46",
       "source": "spec/v2/facets/agents.schema.json §proposals; RFC 0249"
+    },
+    {
+      "code": "host_event_resync_required",
+      "meaning": "A replay=required host-event cursor cannot be resumed: it is unknown, another tenant's, an ephemeral event's, expired or removed. The body is identical in every case; the consumer reconciles through its own entity reads and opens a fresh stream.",
+      "httpStatus": 409,
+      "statusSource": "v2 decision",
+      "retriable": false,
+      "details": null,
+      "since": "2.46",
+      "source": "spec/v2/facets/hostEvents.schema.json §replay; RFC 0250"
     }
   ]
 }

@@ -532,6 +532,14 @@ def v2_openapi_and_seams():
             'the host routes a workflow to carries `a2aTenant`, the opaque A2A `tenant` value of that agent\'s card (interop.md §Per-agent cards).')
     paths['/host/events'] = {'get': {'tags': ['host'], 'operationId': 'streamHostEvents', 'summary': 'Stream host-scoped events (`heartbeat.*` and host events) as SSE', 'description': ('The default `hostEvents` address; a host MAY declare another under `heartbeat.deliveryChannel`. Every message is delivered only within the caller\'s tenant (RFC 0236 §D). Carries '
                                                                                                                                                                                 'no run data.'), 'responses': {'200': {'description': '`text/event-stream` of `hostEvents` messages.', 'content': {'text/event-stream': {'schema': {'type': 'string'}}}}, '401': {'$ref': '#/components/responses/Unauthenticated'}}}}
+    # RFC 0250 — opt-in strict replay. Without `replay=required` the stream is unchanged.
+    paths['/host/events']['get'].setdefault('parameters', []).append({
+        'name': 'replay', 'in': 'query', 'required': False, 'schema': {'type': 'string', 'enum': ['required']},
+        'description': ('RFC 0250. Send only when `hostEvents.replay` is advertised, with `Last-Event-ID` naming a durable event. The host '
+                        'replays every visible durable event after it, in commit order, then continues live; a cursor it cannot resume '
+                        'is refused `409 host_event_resync_required` before any SSE byte, identically in every case.')})
+    paths['/host/events']['get']['responses']['409'] = {'description': '`host_event_resync_required`: the `replay=required` cursor cannot be resumed (RFC 0250).',
+        'content': {'application/json': {'schema': {'$ref': '../../schemas/v2/error-envelope.schema.json'}}}}
     # RFC 0241 — the normative trigger for host events. The suite could cause one only
     # through the §G seam (RFC 0236), so a seam-free host could not witness §B–§D;
     # conformance.md §Witness class forbids a seam-only witness for those MUSTs.

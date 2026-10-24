@@ -4662,6 +4662,21 @@
               }
             }
           }
+        },
+        "replay": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": [
+            "minRetentionSeconds"
+          ],
+          "description": "RFC 0250. Strict replay on `streamHostEvents`, opted into per request with `replay=required` and a `Last-Event-ID` naming a durable event. A host advertising it MUST, for a cursor naming a durable event the caller can see that was emitted less than `minRetentionSeconds` ago, replay every durable event visible to the caller committed after it, each once and in the order the host committed them (events whose commits were concurrent have no defined order), never the cursor event itself and never an ephemeral event, then continue live with no gap. With `replay=required` and an absent or empty `Last-Event-ID`, the stream opens live and replays nothing. A cursor older than `minRetentionSeconds` MAY be resumed or refused. For any cursor it does not resume (unknown, another tenant's, an ephemeral event's, older than the bound, or one whose event was removed) it MUST answer `409 host_event_resync_required` before any SSE byte, with a status and body byte-identical across those cases. An event removed by lawful deletion, tenant removal or revoked visibility is left out of replay. Without `replay=required` behaviour is unchanged; a host that omits this member MAY ignore the parameter, and a client MUST NOT send it unless the host advertises the member.",
+          "properties": {
+            "minRetentionSeconds": {
+              "type": "integer",
+              "minimum": 1,
+              "description": "How long after emission a durable event stays resumable as a cursor, across ordinary process replacement and whatever the volume of newer events."
+            }
+          }
         }
       },
       "allOf": [

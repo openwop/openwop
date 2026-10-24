@@ -4,12 +4,12 @@
 | --- | --- |
 | **RFC** | 0250 |
 | **Title** | Opt-in host-event replay and explicit resynchronization |
-| **Status** | `Draft` |
+| **Status** | `Active` |
 | **Author(s)** | David Tufts (@davidscotttufts), proposed by Codex for review |
 | **Created** | 2026-10-24 |
-| **Updated** | 2026-10-24 — initial Draft; five architect passes completed; no comment window, approval, implementation or conformance pass implied |
+| **Updated** | 2026-10-24 — **`Draft → Active`, comment window waived by the maintainer** (user instruction 2026-10-24, choosing "Waive it" for RFC 0250); STEWARD OVERRIDE of RFC 0147 §A.6 recorded in `MAINTAINERS.md`. Revised by the steward's `/architect` ruling on the #2035 review: the facet is `{minRetentionSeconds}` (presence is the claim, no `mode`); every MUST is observable through the RFC 0241 trigger; restart, oversize and the no-foreign-lookup rule are not separate MUSTs, because losing a retained event or answering a foreign cursor differently already breaks §B or §C; the retention exceptions are stated; the error row has no details; the rules live in the `hostEvents` facet description. Host: openwop-app (EVENT-01). · 2026-10-24 — initial Draft, proposed by Codex (#2035). |
 | **Affects** | `spec/v2/core/events.md` §Host events; `core/capabilities.md`; `core/errors.md` via error registry; `spec/v2/facets/hostEvents.schema.json`; derived capabilities/error envelopes; `api/v2/openapi.yaml` and `asyncapi.yaml` through `scripts/derive-v2-api.py`; conformance; v2 SDKs and hosts |
-| **Compatibility** | `additive` proposed, conditional on review against `COMPATIBILITY.md` §§2.3–2.4; legacy requests unchanged |
+| **Compatibility** | `additive` |
 | **Supersedes** | — |
 | **Superseded by** | — |
 
@@ -23,195 +23,119 @@ RFC0236 requires durable event IDs and recommends cursor replay within retention
 
 A subscriber must distinguish a successfully resumed feed from one requiring a new authorized baseline. This proposal does not create a host-state snapshot API or promise that a collection-list snapshot is atomic with event emission; applications still reconcile through their existing entity APIs. The app plan tracks that integration as EVENT-01.
 
-### Intake and five-pass record
-
-| Input | Status / evidence |
-| --- | --- |
-| Implementer need | EVENT-01 in openwop-app dated competitive assessment; no public issue filed |
-| Existing normative owner | `spec/v2/core/events.md` §Host events; RFC0236 §§B–D; RFC0247 bounded close |
-| Existing witnesses | `v2-host-event-delivery.test.ts`; RFC0241 advertised test trigger; existing run SSE tests are not host-event replay proofs |
-| Threats / invariants | auth-profiles, secret-leakage, node-packs where producer code applies; existing `host-event-tenant-isolation`, SR-1, ephemeral no-persistence obligations |
-| Spec pass | Optional mode extends §Host events; it does not restate the run-log cursor rule or change legacy unknown-cursor handling |
-| Schema pass | Optional facet; optional query; one new registry error; no event fields or required root properties |
-| Security pass | Authenticate/authorize first; cursor lookups inside visible tenant/workspace domain; uniform unavailable response; no cursor/payload/key echoed |
-| Conformance pass | Suite can emit durable/ephemeral test events and request cursors; actual restart and retention trimming require operator-controlled conditions, recorded as gated evidence |
-| Compatibility pass | New facet/mode only; older readers retain old mode; suite minor and SDK minor required when implemented |
-| Number / base | Next unused number 0250 at refreshed `origin/main` 10633f3c (0249 is Active); recheck number before filing |
-| Standards | Template, RFC index, CONTRIBUTING, COMPATIBILITY, GOVERNANCE, MAINTAINERS, ROADMAP, INTEROP-MATRIX, SECURITY and invariant/threat library read; skill's old PROTOCOL-GAP-CLOSURE-PLAN path is absent, current ROADMAP/KNOWN-LIMITS used |
-
 ## Proposal
 
-### A. Optional replay facet
+### A. The facet
 
-In `spec/v2/facets/hostEvents.schema.json`, add this property to the existing properties object. The existing required list stays `["types"]`; final derived `hostEvents` family object remains closed. The schema remains draft 2020-12; generated capabilities carry the existing v2 `$id`.
+`spec/v2/facets/hostEvents.schema.json` gains an optional, closed member. The family's normative text gains that file, and `events.md` §Host events gains one pointer.
 
-```diff
- "properties": {
-+  "replay": {
-+    "type": "object",
-+    "additionalProperties": false,
-+    "required": ["mode", "minRetentionSeconds"],
-+    "properties": {
-+      "mode": { "const": "required-cursor-v1" },
-+      "minRetentionSeconds": { "type": "integer", "minimum": 1 }
-+    }
-+  },
-   "types": { "type": "array" }
- }
+```jsonc
+"replay": { "minRetentionSeconds": 3600 }   // integer >= 1; required inside the member
 ```
 
-This is a contextual diff sketch, not replacement of the existing types item schema. Absence means no strict-replay promise; it does not mean no legacy retention. No default retention duration is imposed on hosts. `minRetentionSeconds` is a proposed minimum interval for authorized durable-event resume, subject to UQ2's deletion/revocation boundary. Hosts MUST NOT advertise this facet unless they implement B–D. They MUST preserve its advertised retention across ordinary process replacement. Counts of newer events MUST NOT shorten that interval. This does not prescribe a DB, queue or internal event sequence.
+Presence is the claim. There is no mode string: a versioned behaviour changes through a new RFC, not an enum token. `minRetentionSeconds` is how long after emission a durable event stays resumable as a cursor, whatever the volume of newer events, across ordinary process replacement.
 
-### B. Request and success
+### B. Resume
 
-An authenticated consumer MAY send `replay=required` on `streamHostEvents` when discovery advertises A. With no `Last-Event-ID`, the host opens a live stream; it does not infer an initial historical cursor. With an authorized, retained durable cursor, the host MUST replay the visible durable events after that event, in original per-subscriber stream order, and join live delivery without a retention/live handoff gap. It MUST NOT re-emit the cursor event or any ephemeral event as replay. Event IDs remain opaque; consumers and hosts MUST NOT order them lexicographically. Internal durable ordering is not an added wire `sequence`.
+A consumer sends `replay=required` on `streamHostEvents` with `Last-Event-ID` naming a durable event. It MUST NOT send the parameter to a host that does not advertise `hostEvents.replay`, and such a host MAY ignore it. With an absent or empty `Last-Event-ID` the stream opens live and replays nothing: there is no position to resume and no cursor to refuse.
 
-`resumable=true` and `limits.maxStreamAgeSec` continue to operate as RFC0247 defines. A consumer reconnecting after a bounded close sends both mode parameters and the last durable ID. Network ambiguity still requires eventId deduplication; this RFC does not promise exactly-once application effects or exactly-once network delivery.
+For a cursor naming a durable event the caller can see, emitted less than `minRetentionSeconds` ago, a host advertising `hostEvents.replay` MUST:
+- replay every durable event visible to the caller that it committed after the cursor, each exactly once, in commit order;
+- never re-emit the cursor event, and never replay an ephemeral event;
+- then continue live with no gap at the backlog/live handoff.
 
-### C. Cursor unavailable
+Commit order binds events whose commits are ordered: one committed before the next was emitted. Events committed concurrently, for example by two instances at once, have no defined order between them, live or replayed. Commit order is the host's own. It is not put on the wire, event ids stay opaque, and the suite observes it only as the order of events it emitted one after another. Losing a retained event (on a process restart, or an oversized internal notification) is a violation of this section; there is no separate rule for each cause. `resumable=true` and the RFC 0247 bounded close work as before; network ambiguity still needs `eventId` de-duplication.
 
-For `replay=required` with a cursor it cannot honor, a host MUST return `409 host_event_resync_required` before writing SSE headers or frames. An expired, unknown, wrong delivery-class, foreign or invisible cursor produces the same response after normal authorization. The host MUST NOT look up a cursor in another tenant and expose whether it exists. Missing/invalid authentication and insufficient scope retain their owning auth/identity errors; this RFC cannot redefine them.
+### C. Refusal
 
-Proposed new `spec/v2/errors.json` row (the release minor in `since` is assigned at implementation, not invented here):
+A cursor older than `minRetentionSeconds` MAY be resumed or refused: the bound is a floor, so a host need not tie its refusal to its sweep timing. For any cursor it does not resume under `replay=required`, the host MUST answer `409 host_event_resync_required` before any SSE byte. That covers a cursor that is unknown, belongs to another tenant, names an ephemeral event, is older than the bound, or whose event was removed. The status and body MUST be byte-identical across those cases, so the refusal is not an oracle for another tenant's events. Authentication and scope failures keep their own answers.
 
-```json
-{
-  "code": "host_event_resync_required",
-  "meaning": "The requested strict host-event cursor cannot be resumed; the consumer must reconcile an authorized baseline.",
-  "httpStatus": 409,
-  "statusSource": "RFC 0250 section C",
-  "retriable": false,
-  "details": {
-    "type": "object", "additionalProperties": false,
-    "required": ["service", "reason"],
-    "properties": {
-      "service": {"const": "hostEvents"},
-      "reason": {"const": "cursor-unavailable"},
-      "correlationId": {"type": "string", "minLength": 1}
-    }
-  },
-  "source": "spec/v2/core/events.md section Host events"
-}
-```
+The registry row: `409`, `retriable: false`, `details: null`, `statusSource: "v2 decision"`. A consumer receiving it MUST NOT retry the same cursor: it reconciles through its own entity reads and opens a fresh stream. This RFC defines no snapshot.
 
-The snippet intentionally omits `since`: it is not a valid complete registry row until the target minor is assigned. The generated error envelope is not edited by hand. A client receiving this code MUST NOT loop on the same cursor. It reconciles authorized state by its existing application contract, then opens a fresh stream or uses an existing application checkpoint. This RFC does not invent a new snapshot watermark.
+### D. Retention exceptions and safety
 
-An unadvertised strict operation answers `404 not_found` per errors.md §Unadvertised operations. Unsupported query values answer the existing `400 validation_error`; requests with no replay parameter keep their existing behavior, including unknown-cursor behavior. A client MUST NOT assume an older host enforces this mode merely because an unknown query parameter was accepted.
+An event removed by lawful deletion, tenant removal or revoked visibility is left out of replay, and a cursor naming one is refused as in §C. These exceptions only ever remove events from a caller's view; none widens one (`host-event-tenant-isolation`). The replay store holds durable events only: the existing rule that an ephemeral event is never persisted is unchanged. A refusal echoes no cursor, payload, tenant id or secret.
 
-### D. Security and delivery
+### E. API
 
-RFC0236 tenant/workspace/visibility confinement and SR-1 continue to own the envelope's boundaries. Persist only durable events and the minimum metadata needed to resume; no ephemeral event may enter the replay store. Apply current authorization/visibility when replaying. A change in membership may remove visibility but MUST NOT widen it. No unavailable response echoes cursor IDs, event payload, tenant/workspace IDs or BYOK material. Host diagnostic metrics use bounded reason/class labels, not raw cursor or tenant labels.
-
-An oversized internal notification cannot silently drop a durable event while this mode is advertised. Internal publication uses a durable reference or another bounded transport; the wire envelope is unchanged. These are consequences of the replay/delivery promise, not a mandated internal queue design.
-
-### E. HTTP, AsyncAPI and SDK changes
-
-`streamHostEvents` keeps its existing operationId, `host` tag, address and auth schemes/scopes. Add optional query `replay`, enum `[required]`, no default, plus `Last-Event-ID` documentation and a 409 response `$ref` to the generated canonical error envelope. Preserve 200/401 and other existing errors. Update the **source generator** `scripts/derive-v2-api.py`, regenerate `api/v2/openapi.yaml`, and describe the same query in `subscribeHostEvents`' closed HTTP binding in `api/v2/asyncapi.yaml`. No new channel/message and no security-inheritance change. SDKs expose a typed opt-in and surface resync as a caller action, not automatic infinite retry.
+`streamHostEvents` gains the optional query `replay` (enum `[required]`) and a `409` response, through `scripts/derive-v2-api.py`. No new channel or message.
 
 ### Examples
 
 | Case | Result |
 | --- | --- |
-| Advertised `{replay:{mode:"required-cursor-v1",minRetentionSeconds:3600}}`, visible retained `eventId`, `replay=required&resumable=true` | 200; durable events after the cursor then live, no replayed ephemeral frame. 3600 is illustrative, not a default. |
-| Advertised strict replay, cursor expired or from foreign tenant | Same 409 canonical envelope with service=hostEvents, reason=cursor-unavailable; no cursor echo |
-| `minRetentionSeconds: 0`, unknown replay property, or mode with another string | Facet schema rejects |
-| Strict request to host with no replay facet | 404 not_found; legacy request without replay remains unchanged |
-| No Last-Event-ID with strict mode | New live subscription; no implied historical baseline |
+| Advertised `{replay:{minRetentionSeconds:3600}}`; `replay=required` with a retained durable cursor | `200`; the durable events after it, in commit order, then live |
+| The same request with an unknown, foreign, ephemeral or expired cursor | `409 host_event_resync_required`, the same bytes every time |
+| `{replay:{minRetentionSeconds:0}}`, or an unknown member | the facet schema refuses it |
+| No `replay=required` | unchanged behaviour, including today's unknown-cursor answer |
 
 ## Compatibility
 
-Proposed **additive** under COMPATIBILITY §§2.1, 2.3, 2.4: the facet is optional, the query is opt-in, existing events/IDs/legacy responses remain unchanged, no old capability becomes default-on, and no core required field or canonical error changes meaning. An older pinned validator need not accept a newer optional facet; version pinning follows current v2 rules. Reclassify if review discovers any existing consumer or host that the actual proposal invalidates. No change touches frozen v1, engine runtime pins, run-log eras, replay/fork copies or recorded event parsing. The new suite scenarios run only on the facet; they do not invalidate prior measured bundles.
+**Additive** (`COMPATIBILITY.md` §2.4): an optional facet member on a closed object, an opt-in query parameter, a new response on the opted-in path and one new error code. Requests without the parameter, the envelope, the run event log and every existing host are unchanged.
 
 ## Conformance
 
-Extend existing host-event witnesses rather than creating a second observer. Use RFC0241 listed test types when available, otherwise the existing conformance emit seam. New proposed `v2-host-event-strict-replay.test.ts` has one requirement ID per test and canonical witness dispositions. Fixture/judge positive and negative cases are registered in `conformance/fixtures.md`; server-free schema/judge cases target <1s, while a live stream test has an explicit bounded timeout.
+New scenario `v2-host-event-strict-replay`. It is gated on `hostEvents.replay` and the RFC 0241 trigger, with both `host-test.*` types listed. Judges are in `lib/host-event-replay-witness.ts`, whose self-tests fail each wrong host answer.
+
+| Id | Case | Expect |
+| --- | --- | --- |
+| `0250.shape` | (server-free) facet positives and negatives | validate / refuse |
+| `0250.resume-backlog` | emit D1, D2, ephemeral E, D3; reconnect with cursor D1; emit D4 live | exactly D2, D3, D4, in order; never D1 |
+| `0250.ephemeral-not-replayed` | the same stream | E's `eventId` never arrives |
+| `0250.cursor-refused` | an unknown cursor | `409 host_event_resync_required`, not `text/event-stream` |
+| `0250.refusal-uniform` | E's id; tenant B's real durable id (`OPENWOP_TEST_TENANT_B_API_KEY`) | the same status and bytes as the unknown cursor |
+| `0250.legacy-unchanged` | an unknown cursor without `replay=required` | not the new refusal |
+
+### Falsifiability — one row per normative requirement
 
 | Requirement | Observable — what an outside party sees | Who can cause the condition | Verdict |
 | --- | --- | --- | --- |
-| A facet closure/positive minimum | valid/invalid discovery examples | suite, server-free | witnessable |
-| B exclusive durable replay / no ephemeral replay | exactly the emitted durable backlog, cursor excluded; ephemeral absent | suite through existing listed emit trigger or seam | witnessable-gated |
-| B/D replay after process replacement | same retained cursor resumes emitted backlog on new process | operator restart/routing fixture | seam/operator-gated; unavailable fixture is blocked, not passing |
-| A promised retention is not count-trimmed | cursor inside advertised minimum remains resumable after newer events | operator controls volume/time; suite only bounded cases | gated; no full-duration proof without elapsed/operator control |
-| C unknown/foreign cursor refusal | identical 409 body, no leaked identifiers | suite + second-tenant credentials | witnessable-gated |
-| D normal authority before cursor | unchanged auth/scope refusal for invalid caller | suite with credential matrix | witnessable-gated |
-| D large event reaches other instance | same event observed on separately routed subscriber | operator routes two instances, producer emits bounded large fixture | operator-gated; new public size-test seam not invented |
-| C client avoids retry loop | SDK returns typed resync action instead of reconnect loop | SDK unit/integration harness | consumer-side; host suite cannot witness it |
-| D ephemeral never physically persisted | negative storage inspection plus stream/sink absence | operator/storage fixture | implementation evidence; black-box stream alone cannot prove storage absence |
-
-Illustrative scenario structure (not implemented):
-
-```ts
-/** spec/v2/core/events.md section Host events, RFC0250. */
-describe('hostEvents: strict replay', () => {
-  // Gate on hostEvents.replay.mode; emit through the current host-event trigger.
-  // Observe replay before judging; do not treat missing restart control as pass.
-  // expect(result, driver.describe('events.md section Host events',
-  //   '0250.cursor-exclusive')).toMatchObject(expected);
-});
-```
-
-No reference host is marked implemented. `openwop-examples` v2 reference can supply ordinary replay/refusal evidence; openwop-app supplies real multi-process/large-event qualification. Update INTEROP-MATRIX only from actual signed measured bundles, with the new facet's dispositions. A new restart/purge seam, if needed, is a separately reviewed gap, not silently a test backdoor in production.
-
-### Falsifiability — proposed requirements, no witness shipped
-
-Every row is a proposed qualification obligation. A classification is not a test result. G2–G4 must resolve the exact fault/privacy fixtures before Active; all new scenarios remain planned.
-
-| Requirement | Observable — what an outside party sees | Who can cause the condition | Verdict |
-| --- | --- | --- | --- |
-| §A closed optional facet and positive retention | valid and invalid discovery objects accepted/rejected by the derived schema | suite with schema vectors | witnessable — unaided (planned) |
-| §A retention survives ordinary process replacement | a retained cursor replays after the serving process is replaced | operator with restart control; G4 | witnessable — gated (planned; absent control is blocked) |
-| §A newer event count does not shorten retention | an early cursor still replays after a large burst within the interval | operator with bounded retention and load fixtures; G2/G4 | witnessable — gated (planned) |
-| §B cursor-exclusive durable replay and live handoff | ordered durable IDs after the cursor with none missing at handoff | suite emit trigger plus two-producer scheduling control; G3/G4 | witnessable — gated (planned) |
-| §B no historical replay without a cursor | only newly emitted events arrive on a fresh subscription | suite with isolated tenant and event trigger | witnessable — gated (planned) |
-| §B ephemeral exclusion | recorded ephemeral ID is absent from a replay bounded by later durable markers | suite with durable and ephemeral triggers | witnessable — gated (planned) |
-| §B bounded-close reconnect and opaque IDs | replay resumes using the exact recorded ID and both mode parameters | suite with bounded-close host; consumer fixture | witnessable — gated (planned) |
-| §C unavailable cursor refuses before SSE | same 409 canonical envelope for expired, unknown, foreign, invisible and ephemeral IDs; no SSE prefix | suite with two tenants, narrowed credentials and retention fixture | witnessable — gated (planned) |
-| §C existing authorization and unsupported-mode errors | owning auth errors, unadvertised 404 and invalid-value 400; legacy regression outcomes | suite with discovery and credential variants | witnessable — gated (planned) |
-| §C consumer stops retrying the unavailable cursor | request log shows reconciliation action rather than a same-cursor retry loop | SDK maintainer with scripted transport | witnessable — unaided (planned SDK test) |
-| §D current visibility and no response secret echo | revoked membership removes delivery; response carries no injected cursor/payload/secret canary | suite with membership control and canaries; G2 | witnessable — gated (planned) |
-| §D no foreign cursor lookup, ephemeral persistence or raw diagnostic labels | wire observations cannot prove absence from internal stores, queries and telemetry | host operator can inspect actual stores/query traces/metric labels | unwitnessable externally; requires internal inspection and negative controls, not a claimed wire pass |
-| §D oversized internal notification preserves durable delivery | full durable event arrives and remains replayable across processes | operator with oversized payload and separate producer/subscriber; G4 | witnessable — gated (planned) |
-| §E generated API/binding and typed SDK opt-in | generated artifacts validate; SDK request and error handling match examples | corpus and SDK maintainers | witnessable — unaided (planned) |
+| §A closed member, positive retention | schema vectors | the suite, server-free | witnessable-unaided |
+| §B backlog after the cursor, exactly once, in commit order, then live | the ids of the suite's own sequential emits | the suite, through the RFC 0241 trigger | witnessable-gated |
+| §B no ephemeral replay | the ephemeral event's `eventId` absent from the resumed stream | the suite | witnessable-gated |
+| §B retention survives restart and volume | a cursor inside the window still resumes | only by elapsed time or an operator restart; a loss breaks the §B row above when it happens | witnessable-gated (by the §B row; not separately caused) |
+| §C refusal before any SSE byte | `409` and its content type | the suite | witnessable-gated |
+| §C byte-identical refusals | unknown vs foreign vs ephemeral cursor bodies | the suite, with a second tenant | witnessable-gated |
+| §C the opt-in leaves legacy alone | an unknown cursor without the parameter | the suite | witnessable-gated |
+| §D lawful-deletion exception | a removed event absent from replay | only an operator who removes data | unwitnessable — the suite cannot remove a host's data; the rule only narrows a view |
 
 ## Alternatives considered
 
-1. **Keep legacy SHOULD and document local limits.** Valid for minimal hosts but cannot close explicit resync requirement; retained as the unchanged default.
-2. **Require strict replay on all existing hostEvents hosts.** Rejected: strengthens old behavior and breaks legacy implementations without opt-in.
-3. **Emit a resync marker as a host event.** Rejected: pollutes the advertised type union/delivery classes and mixes connection state with business events.
-4. **Use Last-Event-ID as a numeric sequence or add one to host-event envelope.** Rejected: breaks opaque IDs/runless envelope and existing readers.
-5. **Optional strict mode and explicit pre-stream error.** Chosen; requires an error registry/SDK update but preserves existing clients.
+1. **Keep the legacy SHOULD and document local limits.** That remains the default for hosts that don't opt in; it cannot give a consumer an explicit resync signal.
+2. **Require strict replay of every `hostEvents` host.** Rejected: it strengthens old behaviour without an opt-in.
+3. **Emit a resync marker as a host event.** Rejected: it mixes connection state into the business-event type union.
+4. **A numeric sequence on the host-event envelope.** Rejected: ids are opaque, and the envelope deliberately has no `sequence`.
+5. **Separate MUSTs for restart survival, oversize delivery and no foreign lookup.** Rejected at `Active`: none is observable from outside, and each is already a way of breaking §B or §C, which are.
 
 ## Unresolved questions
 
-1. Confirm facet/query/error names and 409 selection with core events/errors owners before Active; no substitute existing error names this exact state.
-2. State exact retention exceptions for lawful deletion, revoked visibility, host tenant removal and emergency security purge. Never weaken CTI-1 or invent a guarantee that lawful deletion is forbidden.
-3. Define original per-subscriber order and live/backlog handoff in distributed producers; opaque IDs are not an ordering key. Decide which concurrency/fault witness substantiates it.
-4. Are current emit fixtures sufficient to cause retention trim, oversize and process replacement? If not, define safe operator fixtures and honest blocked dispositions; a new wire test seam needs its own review.
-5. Assign concrete SDK implementation owners and eventual minor versions; initial baseline reconciliation remains application-specific, with no claim of snapshot atomicity.
+All five were resolved on 2026-10-24 by `/architect`:
+
+1. **Names:** `hostEvents.replay`, `replay=required` and `host_event_resync_required` (409). No existing code names this state.
+2. **Retention exceptions:** §D. Lawful deletion, tenant removal and revoked visibility remove events, and nothing widens a view.
+3. **Order and handoff:** commit order, internal to the host and observed through sequential emits; the backlog is followed by live delivery with no gap (§B).
+4. **Fixtures:** the RFC 0241 trigger causes every observable row. Restart and expiry are not separately caused, and no new seam is added.
+5. **SDKs:** a typed, non-retrying resync is owed by openwop-sdks (G5).
 
 ## Implementation notes (non-normative)
 
-Order: five-pass/comment review → Active and owning core/facet/error/API/scenario work → reference/app/SDK implementation with evidence → Accepted. No status auto-promotion by this planning task; normal governance/7-day ready-for-review window and required reviewers apply, with no invented waiver. The app may independently fix its durable log/oversized fan-out under existing RFC0236 now; it must wait for accepted new contract before advertising the strict facet. Proposed host stores/retention use existing Storage/outbox/erasure owners. Do not persist ephemeral events to simplify implementation.
-
-Gap/risk companions live in RFCS/registers per current RFC0174 placement. Planning source: openwop-app dated platform-gap-analysis, EVENT-01. Cross-cut: app runtime + SDKs + suite; coordinate those repositories through their existing plans, not a repository-wide release hold.
+The motivating host is openwop-app: a 1,000-frame process-local ring and a local-only oversized NOTIFY (`hostEventStream.ts`, app commit `87719df6f`). It implements this as EVENT-01, with a durable store, and advertises only after the suite release that carries the legs. The other `hostEvents` hosts (the v2 reference host and MyndHyve) are unaffected until they opt in.
 
 ## Acceptance criteria
 
-- [ ] Maintainer review resolves blocking UQs and compatibility classification; required comment/governance process completed.
-- [ ] Owning v2 events/capabilities text and facet/error registry data updated; error/capability schemas and API outputs generated and validated.
-- [ ] Positive/negative schema and live replay/refusal witnesses land; unavailable restart/retention conditions produce honest dispositions.
-- [ ] Relevant invariant coverage, fixture catalog, suite minor and CHANGELOG updated.
-- [ ] SDKs expose opt-in/resync and do not retry-loop; old mode regression cases pass.
-- [ ] Reference host and app evidence state exactly which retention/restart/large-event properties were measured; current signed bundles justify any advert.
-- [ ] Gap/risk sweep, current INTEROP-MATRIX and acceptance evidence justify Accepted; no unchecked item is converted to a claim.
+- [x] The facet member, the normative-text entry, the `events.md` pointer, the error row and the derived `streamHostEvents` parameter and `409`.
+- [x] `v2-host-event-strict-replay` with its six legs, judges and self-tests.
+- [ ] A host advertises `hostEvents.replay`, and a certified major-2 bundle records the five `0250.*` host legs `executed-pass`.
+- [ ] openwop-sdks exposes the opt-in and a non-retrying resync (G5).
 
 ## References
 
-- [Events](../spec/v2/core/events.md), [Capabilities](../spec/v2/core/capabilities.md), [Errors](../spec/v2/core/errors.md), [Compatibility](../COMPATIBILITY.md).
-- [RFC0236](0236-host-events.md), [RFC0241](0241-host-event-test-trigger.md), [RFC0247](0247-bounded-stream-lifetime.md).
+- [Events](../spec/v2/core/events.md) §Host events, [Capabilities](../spec/v2/core/capabilities.md), [Errors](../spec/v2/core/errors.md), [Compatibility](../COMPATIBILITY.md).
+- [RFC 0236](0236-host-events.md), [RFC 0241](0241-host-event-test-trigger.md), [RFC 0247](0247-bounded-stream-lifetime.md).
 - [Gap register](registers/0250-opt-in-host-event-replay-and-resync.gaps.md), [risk register](registers/0250-opt-in-host-event-replay-and-resync.risks.md).
-- [Original app implementation](https://github.com/openwop/openwop-app/blob/87719df6fed20cc26936ff22c808dc03c9b5d35f/backend/typescript/src/host/hostEventStream.ts).
+- The steward review on openwop/openwop#2035.
 
-### Recommendation
+## Status history
 
-GO for Draft discussion; CONDITIONAL before Active and NO-GO for advertisement. Five UQs remain; retention/privacy, ordering/handoff and witness causability block Active. No implementation, schema change, governance approval or independent measurement is claimed by this document.
+- 2026-10-24 — Draft (openwop#2035, proposed by Codex).
+- 2026-10-24 — Active (comment window waived; STEWARD OVERRIDE of RFC 0147 §A.6, see Updated).
