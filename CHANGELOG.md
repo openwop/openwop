@@ -36,6 +36,7 @@ Entries before this file was condensed carried full development detail. That tex
 ## [2.46.21] — 2026-10-24 — RFC 0249 Active: v2 proposal operations
 
 - **RFC 0249's suite half:** `v2-proposal-lifecycle` (nine legs) and `0249.unadvertised-not-found`; the two RFC 0096 proposal invariants become `witnessable-gated`. openwop-app's pre-release build passes all nine on these judges. No host advertises `clientDrafts` yet.
+- **RFC 0250 registers re-tokened.** Its five gap and five risk rows move from `open` to `transferred:TODO.md`, the `docs/witness-baseline.json` ratchet returns to zero open gaps, and openwop-app's evidence anchor returns to the certified build `f17ee3753`.
 
 ## [2.46.20] — 2026-10-24 — RFC 0081 eval envelope legs; RFC 0249 Draft
 

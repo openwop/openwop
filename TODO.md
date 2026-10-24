@@ -245,6 +245,11 @@ Defects outside the spec:
       trials for §B isolation. (G5) a portable "fixtures = run X" reference (follow-up RFC). Legs not yet probed:
       §B cost counts every trial, §C efficiency counts and the never-gated rule, §D `onMiss: "live"`, §F pairing
       (needs a `regression` fixture).
+- [ ] **RFC 0250** `Draft` 2026-10-24 (opt-in host-event replay and explicit resync; proposed by Codex, #2035). Owed
+      before `Active` (gap register G1–G4, risks R1–R4): facet/query/error names; the retention vs lawful-deletion
+      exceptions; stable replay order and live handoff; causable restart/trim/oversize fixtures without a public seam;
+      and the steward review on #2035 (MUSTs with no outside witness, facet/error-row shape, the rules' core home within
+      the 38,000-word budget). Before SDK rollout (G5, R5): SDK owners and a typed, non-looping resync.
 - [ ] **RFC 0249** `Active` 2026-10-24 (window waived by the user; v2 proposal operations + install read-back, for RFC 0096).
       UQ 1–5 resolved by `/architect`. Suite legs land in 2.46.21 (`v2-proposal-lifecycle`). Host: openwop-app-6a builds phase
       1 (app ADR 0970). `Accepted` needs its certified cut with the `0249.*` host legs `executed-pass`. Owed after that: phase 2
