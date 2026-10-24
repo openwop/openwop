@@ -8,6 +8,8 @@ Entries before this file was condensed carried full development detail. That tex
 
 ## [Unreleased]
 
+- **RFC 0250 Draft: opt-in host-event replay and resynchronization.** Proposes retained-cursor replay across process replacement and a tenant-safe explicit resync refusal, with unchanged legacy mode. Proposal and registers only; no wire, schema, SDK or host implementation ships with this draft.
+
 - **RFC 0249 Active (window waived): v2 proposal operations.** Seven `/proposals` operations, three scopes, `clientDrafts`, a digest-bound apply and a JCS-checked `installedArtifact` make RFC 0096's inertness and byte-match rules observable for `prompt-template`. The suite legs ship in 2.46.21.
 - **RFC 0156 §B retrospective review deferred by steward exemption.** The protocol has no user outside the steward's organizations, so an `Accepted` RFC no longer waits on or owes a §B review until it has one or a non-steward maintainer joins (`GOVERNANCE.md`). No review is recorded; rows stay `not-reviewed`.
 - **RFC 0246 Accepted (provisional).** MyndHyve deployed the gate (build `c8d511d84`) before advisory `GHSA-ffx7-pm5h-v6pq` was published; its certified 2.46.13 production cut (418/0/0) passes `0246.mean-gated` and `0246.suite-gated`. G3 closes, so the packed `gaps.json` changes. The RFC 0156 §B review is owed.
