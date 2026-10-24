@@ -58,6 +58,8 @@ tags:
   description: 'Localized authored content: public delivery and tenant-scoped admin CRUD. Gated on `capabilities.content.supported`.'
 - name: host
   description: Host-capability resources, such as the agent workspace file store (gated on `capabilities.workspace.*`).
+- name: proposals
+  description: Reviewable-learning proposals (RFC 0096, operations RFC 0249).
 - name: connections
   description: 'Connection-pack provider registry: the definitions a host resolves against and the registrations it refused.'
 paths:
@@ -3649,6 +3651,427 @@ paths:
         - webhooks:manage
       - OpenIdConnect:
         - webhooks:manage
+  /proposals:
+    get:
+      tags:
+      - proposals
+      operationId: listProposals
+      summary: List the caller's proposals
+      description: 'Gated on `agents.proposals`: a host that does not advertise it answers `404 not_found` (`errors.md` §Unadvertised
+        operations). A proposal another tenant owns is answered exactly as an id that does not exist. Scoped to the caller''s
+        tenant and workspace.'
+      parameters:
+      - name: state
+        in: query
+        required: false
+        schema:
+          type: string
+          enum:
+          - draft
+          - revised
+          - applied
+          - rejected
+          - archived
+      - name: kind
+        in: query
+        required: false
+        schema:
+          type: string
+          enum:
+          - agent-pack
+          - workflow-chain-pack
+          - prompt-template
+          - automation
+      - name: limit
+        in: query
+        required: false
+        schema:
+          type: integer
+          minimum: 1
+      - name: cursor
+        in: query
+        required: false
+        schema:
+          type: string
+          minLength: 1
+          maxLength: 2048
+      - $ref: '#/components/parameters/OpenWOPVersion'
+      - $ref: '#/components/parameters/OpenWOPClientVersion'
+      responses:
+        '401':
+          $ref: '#/components/responses/Unauthenticated'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '200':
+          description: One page of proposals.
+          content:
+            application/json:
+              schema:
+                $ref: ../../schemas/v2/proposal-list-response.schema.json
+          headers:
+            OpenWOP-Version:
+              $ref: '#/components/headers/OpenWOPVersion'
+        '400':
+          $ref: '#/components/responses/ValidationError'
+      security:
+      - ApiKeyAuth:
+        - proposals:read
+      - OAuth2:
+        - proposals:read
+      - OpenIdConnect:
+        - proposals:read
+    post:
+      tags:
+      - proposals
+      operationId: submitProposal
+      summary: Submit a client-authored draft
+      description: 'Gated on `agents.proposals`: a host that does not advertise it answers `404 not_found` (`errors.md` §Unadvertised
+        operations). A proposal another tenant owns is answered exactly as an id that does not exist. Served only when `agents.proposals.clientDrafts`
+        is `true`; otherwise `404 not_found`. The draft is held to every RFC 0096 rule, inertness first, with `provenance.sourceRunIds:
+        []`. A `kind` outside `artifactKinds` is `400 validation_error` with `details.field: kind`.'
+      parameters:
+      - $ref: '#/components/parameters/IdempotencyKey'
+      - $ref: '#/components/parameters/OpenWOPVersion'
+      - $ref: '#/components/parameters/OpenWOPClientVersion'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: ../../schemas/v2/proposal-submit.schema.json
+      responses:
+        '401':
+          $ref: '#/components/responses/Unauthenticated'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '201':
+          description: 'The draft, in `state: draft`.'
+          content:
+            application/json:
+              schema:
+                $ref: ../../schemas/v2/proposal.schema.json
+          headers:
+            OpenWOP-Version:
+              $ref: '#/components/headers/OpenWOPVersion'
+        '400':
+          $ref: '#/components/responses/ValidationError'
+      security:
+      - ApiKeyAuth:
+        - proposals:write
+      - OAuth2:
+        - proposals:write
+      - OpenIdConnect:
+        - proposals:write
+  /proposals/{proposalId}:
+    get:
+      tags:
+      - proposals
+      operationId: getProposal
+      summary: Read one proposal, including its inert artifact
+      description: 'Gated on `agents.proposals`: a host that does not advertise it answers `404 not_found` (`errors.md` §Unadvertised
+        operations). A proposal another tenant owns is answered exactly as an id that does not exist. Carries `artifactDigest`,
+        the value `applyProposal` binds to.'
+      parameters:
+      - name: proposalId
+        in: path
+        required: true
+        schema:
+          type: string
+          minLength: 1
+          maxLength: 256
+        description: The proposal. A proposal another tenant owns MUST be answered exactly as an unknown id (`404`).
+      - $ref: '#/components/parameters/OpenWOPVersion'
+      - $ref: '#/components/parameters/OpenWOPClientVersion'
+      responses:
+        '401':
+          $ref: '#/components/responses/Unauthenticated'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '200':
+          description: The proposal.
+          content:
+            application/json:
+              schema:
+                $ref: ../../schemas/v2/proposal.schema.json
+          headers:
+            OpenWOP-Version:
+              $ref: '#/components/headers/OpenWOPVersion'
+      security:
+      - ApiKeyAuth:
+        - proposals:read
+      - OAuth2:
+        - proposals:read
+      - OpenIdConnect:
+        - proposals:read
+    patch:
+      tags:
+      - proposals
+      operationId: reviseProposal
+      summary: Revise a draft
+      description: 'Gated on `agents.proposals`: a host that does not advertise it answers `404 not_found` (`errors.md` §Unadvertised
+        operations). A proposal another tenant owns is answered exactly as an id that does not exist. Sets `state: revised`
+        and MUST NOT activate. A terminal proposal (`applied`, `rejected`, `archived`) is refused `409 proposal_state_conflict`;
+        a lost concurrent update `409 proposal_stale`.'
+      parameters:
+      - name: proposalId
+        in: path
+        required: true
+        schema:
+          type: string
+          minLength: 1
+          maxLength: 256
+        description: The proposal. A proposal another tenant owns MUST be answered exactly as an unknown id (`404`).
+      - $ref: '#/components/parameters/OpenWOPVersion'
+      - $ref: '#/components/parameters/OpenWOPClientVersion'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: ../../schemas/v2/proposal-revise.schema.json
+      responses:
+        '401':
+          $ref: '#/components/responses/Unauthenticated'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '200':
+          description: The revised proposal.
+          content:
+            application/json:
+              schema:
+                $ref: ../../schemas/v2/proposal.schema.json
+          headers:
+            OpenWOP-Version:
+              $ref: '#/components/headers/OpenWOPVersion'
+        '400':
+          $ref: '#/components/responses/ValidationError'
+        '409':
+          description: '`proposal_state_conflict` (terminal) or `proposal_stale` (lost update).'
+          content:
+            application/json:
+              schema:
+                $ref: ../../schemas/v2/error-envelope.schema.json
+          headers:
+            OpenWOP-Version:
+              $ref: '#/components/headers/OpenWOPVersion'
+      security:
+      - ApiKeyAuth:
+        - proposals:write
+      - OAuth2:
+        - proposals:write
+      - OpenIdConnect:
+        - proposals:write
+    delete:
+      tags:
+      - proposals
+      operationId: archiveProposal
+      summary: Archive a proposal (soft)
+      description: 'Gated on `agents.proposals`: a host that does not advertise it answers `404 not_found` (`errors.md` §Unadvertised
+        operations). A proposal another tenant owns is answered exactly as an id that does not exist. Sets `state: archived`,
+        from `draft`, `revised` or `rejected`. On `applied` or `archived` it is refused `409 proposal_state_conflict`: archiving
+        uninstalls nothing, so an applied proposal is never relabelled; remove an installed artifact through its own store.'
+      parameters:
+      - name: proposalId
+        in: path
+        required: true
+        schema:
+          type: string
+          minLength: 1
+          maxLength: 256
+        description: The proposal. A proposal another tenant owns MUST be answered exactly as an unknown id (`404`).
+      - $ref: '#/components/parameters/OpenWOPVersion'
+      - $ref: '#/components/parameters/OpenWOPClientVersion'
+      responses:
+        '401':
+          $ref: '#/components/responses/Unauthenticated'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '200':
+          description: The archived proposal.
+          content:
+            application/json:
+              schema:
+                $ref: ../../schemas/v2/proposal.schema.json
+          headers:
+            OpenWOP-Version:
+              $ref: '#/components/headers/OpenWOPVersion'
+        '409':
+          description: '`proposal_state_conflict`: applied or already archived.'
+          content:
+            application/json:
+              schema:
+                $ref: ../../schemas/v2/error-envelope.schema.json
+          headers:
+            OpenWOP-Version:
+              $ref: '#/components/headers/OpenWOPVersion'
+      security:
+      - ApiKeyAuth:
+        - proposals:write
+      - OAuth2:
+        - proposals:write
+      - OpenIdConnect:
+        - proposals:write
+  /proposals/{proposalId}:apply:
+    post:
+      tags:
+      - proposals
+      operationId: applyProposal
+      summary: Activate a proposal and install its artifact
+      description: 'Gated on `agents.proposals`: a host that does not advertise it answers `404 not_found` (`errors.md` §Unadvertised
+        operations). A proposal another tenant owns is answered exactly as an id that does not exist. Routes through `agents.proposals.activation`.
+        Under `direct-rbac` the caller MUST hold `proposals:apply`; without it the host answers `403` with `error="insufficient_scope"`,
+        installs nothing and leaves `state` unchanged. Under `approval-gate` the host answers `202 {runId}` for a gate run
+        that suspends on an `approval` interrupt (`data.artifactType: "proposal"`), and installs only on `accept` (`interrupt.md`
+        §Approval).
+
+
+        The optional body binds the apply to the reviewed bytes: a sent `artifactDigest` that differs from the proposal''s
+        MUST be refused `409 proposal_stale`, installing nothing; a host MAY require it (`400`, `details.field: artifactDigest`).
+        On success `state` is `applied` and `activation.installedArtifact` names the v2 read that serves the installed artifact
+        in the applying tenant; its body minus the kind''s host-owned fields MUST be RFC 8785 (JCS) equal to the last-persisted
+        `artifact`. A store that refuses the install is `409 proposal_install_conflict` (`details.reason`); a terminal proposal
+        `409 proposal_state_conflict`.'
+      parameters:
+      - name: proposalId
+        in: path
+        required: true
+        schema:
+          type: string
+          minLength: 1
+          maxLength: 256
+        description: The proposal. A proposal another tenant owns MUST be answered exactly as an unknown id (`404`).
+      - $ref: '#/components/parameters/IdempotencyKey'
+      - $ref: '#/components/parameters/OpenWOPVersion'
+      - $ref: '#/components/parameters/OpenWOPClientVersion'
+      requestBody:
+        required: false
+        content:
+          application/json:
+            schema:
+              $ref: ../../schemas/v2/proposal-apply.schema.json
+      responses:
+        '401':
+          $ref: '#/components/responses/Unauthenticated'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '200':
+          description: Applied; `activation.installedArtifact` is populated.
+          content:
+            application/json:
+              schema:
+                $ref: ../../schemas/v2/proposal.schema.json
+          headers:
+            OpenWOP-Version:
+              $ref: '#/components/headers/OpenWOPVersion'
+        '202':
+          description: An approval-gate run was opened.
+          content:
+            application/json:
+              schema:
+                type: object
+                additionalProperties: false
+                required:
+                - runId
+                properties:
+                  runId:
+                    $ref: ../../schemas/v2/ids.schema.json#/$defs/runId
+          headers:
+            OpenWOP-Version:
+              $ref: '#/components/headers/OpenWOPVersion'
+        '400':
+          $ref: '#/components/responses/ValidationError'
+        '409':
+          description: '`proposal_stale`, `proposal_state_conflict` or `proposal_install_conflict`.'
+          content:
+            application/json:
+              schema:
+                $ref: ../../schemas/v2/error-envelope.schema.json
+          headers:
+            OpenWOP-Version:
+              $ref: '#/components/headers/OpenWOPVersion'
+      security:
+      - ApiKeyAuth:
+        - proposals:apply
+      - OAuth2:
+        - proposals:apply
+      - OpenIdConnect:
+        - proposals:apply
+  /proposals/{proposalId}:reject:
+    post:
+      tags:
+      - proposals
+      operationId: rejectProposal
+      summary: Reject a proposal
+      description: 'Gated on `agents.proposals`: a host that does not advertise it answers `404 not_found` (`errors.md` §Unadvertised
+        operations). A proposal another tenant owns is answered exactly as an id that does not exist. Sets `state: rejected`.
+        A terminal proposal is refused `409 proposal_state_conflict`.'
+      parameters:
+      - name: proposalId
+        in: path
+        required: true
+        schema:
+          type: string
+          minLength: 1
+          maxLength: 256
+        description: The proposal. A proposal another tenant owns MUST be answered exactly as an unknown id (`404`).
+      - $ref: '#/components/parameters/OpenWOPVersion'
+      - $ref: '#/components/parameters/OpenWOPClientVersion'
+      requestBody:
+        required: false
+        content:
+          application/json:
+            schema:
+              type: object
+              additionalProperties: false
+              properties:
+                reason:
+                  type: string
+                  maxLength: 2048
+                  description: SR-1 redaction-safe.
+      responses:
+        '401':
+          $ref: '#/components/responses/Unauthenticated'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '200':
+          description: The rejected proposal.
+          content:
+            application/json:
+              schema:
+                $ref: ../../schemas/v2/proposal.schema.json
+          headers:
+            OpenWOP-Version:
+              $ref: '#/components/headers/OpenWOPVersion'
+        '409':
+          description: '`proposal_state_conflict`.'
+          content:
+            application/json:
+              schema:
+                $ref: ../../schemas/v2/error-envelope.schema.json
+          headers:
+            OpenWOP-Version:
+              $ref: '#/components/headers/OpenWOPVersion'
+      security:
+      - ApiKeyAuth:
+        - proposals:write
+      - OAuth2:
+        - proposals:write
+      - OpenIdConnect:
+        - proposals:write
 components:
   securitySchemes:
     ApiKeyAuth:
@@ -3687,6 +4110,9 @@ components:
             content:read: Read authored content pages and locale settings
             content:write: Create, publish and translate authored content pages
             deploy:*: Drive an agent deployment state transition
+            proposals:read: Read proposals (RFC 0249).
+            proposals:write: Submit, revise, reject and archive proposals (RFC 0249).
+            proposals:apply: Activate a proposal and install its artifact (RFC 0249).
         authorizationCode:
           authorizationUrl: https://issuer.example/oauth2/authorize
           tokenUrl: https://issuer.example/oauth2/token
@@ -3711,6 +4137,9 @@ components:
             content:read: Read authored content pages and locale settings
             content:write: Create, publish and translate authored content pages
             deploy:*: Drive an agent deployment state transition
+            proposals:read: Read proposals (RFC 0249).
+            proposals:write: Submit, revise, reject and archive proposals (RFC 0249).
+            proposals:apply: Activate a proposal and install its artifact (RFC 0249).
     OpenIdConnect:
       type: openIdConnect
       openIdConnectUrl: https://issuer.example/.well-known/openid-configuration

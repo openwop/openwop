@@ -89,6 +89,7 @@
     "pageId": "no openwop id kind governs this surface; the grammar is the owning schema's own",
     "parentDepartmentId": "no openwop id kind governs this surface; the grammar is the owning schema's own",
     "proposalId": "no openwop id kind governs this surface; the grammar is the owning schema's own",
+    "operationId": "an OpenAPI operationId naming a read in spec/v2/path-manifest.json (RFC 0249 installedArtifact), not an entity id",
     "providerId": "a connection provider id is author-minted in a pack manifest and host-global (connection-packs.md §Provider identity); no openwop id kind governs it",
     "roleId": "no openwop id kind governs this surface; the grammar is the owning schema's own",
     "rosterId": "no openwop id kind governs this surface; the grammar is the owning schema's own",

@@ -1424,6 +1424,51 @@
       },
       "since": "2.45",
       "source": "spec/v2/core/conversation.md §multiPartyConversation; RFC 0239 §C"
+    },
+    {
+      "code": "proposal_state_conflict",
+      "meaning": "The proposal is terminal (applied, rejected or archived) and the action is not allowed; details.state and details.action name it.",
+      "httpStatus": 409,
+      "statusSource": "v2 decision",
+      "retriable": false,
+      "details": {
+        "type": "object",
+        "required": ["state", "action"],
+        "properties": {
+          "state": { "type": "string", "description": "The proposal's current state." },
+          "action": { "type": "string", "description": "The refused action: revise, apply or reject." }
+        },
+        "additionalProperties": true
+      },
+      "since": "2.46",
+      "source": "spec/v2/facets/agents.schema.json §proposals; RFC 0249"
+    },
+    {
+      "code": "proposal_stale",
+      "meaning": "The proposal changed since the caller read it: an apply's artifactDigest differs from the persisted artifact's, or a revise lost a concurrent update. Nothing was installed.",
+      "httpStatus": 409,
+      "statusSource": "v2 decision",
+      "retriable": false,
+      "details": null,
+      "since": "2.46",
+      "source": "spec/v2/facets/agents.schema.json §proposals; RFC 0249"
+    },
+    {
+      "code": "proposal_install_conflict",
+      "meaning": "The target store refused the install; details.reason is version-not-greater or read-only. Nothing was installed and the proposal's state is unchanged.",
+      "httpStatus": 409,
+      "statusSource": "v2 decision",
+      "retriable": false,
+      "details": {
+        "type": "object",
+        "required": ["reason"],
+        "properties": {
+          "reason": { "type": "string", "enum": ["version-not-greater", "read-only"], "description": "Why the store refused (RFC 0249 §D)." }
+        },
+        "additionalProperties": true
+      },
+      "since": "2.46",
+      "source": "spec/v2/facets/agents.schema.json §proposals; RFC 0249"
     }
   ]
 }

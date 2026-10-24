@@ -2,7 +2,7 @@
 
 > **Status: Stable.** Generated from `spec/v2/errors.json` by `scripts/generate-error-envelope.mjs`; do not edit.
 
-Every registered code (122 codes), by HTTP status. The registry is normative; this table restates it for reading. `retriable` and `statusSource` are in the registry. The rules are in [errors.md](../core/errors.md).
+Every registered code (125 codes), by HTTP status. The registry is normative; this table restates it for reading. `retriable` and `statusSource` are in the registry. The rules are in [errors.md](../core/errors.md).
 
 Code | Status
 --- | ---
@@ -73,6 +73,9 @@ Code | Status
 `interrupt_already_resolved` | 409
 `pack_dependency_conflict` | 409
 `pack_integrity_mismatch` | 409
+`proposal_install_conflict` | 409
+`proposal_stale` | 409
+`proposal_state_conflict` | 409
 `replay_context_summary_unavailable` | 409
 `replay_diverged_at_refusal` | 409
 `replay_memory_snapshot_unavailable` | 409

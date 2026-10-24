@@ -1,0 +1,24 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://openwop.dev/spec/v2/proposal-revise.schema.json",
+  "title": "ProposalRevise",
+  "description": "RFC 0249 §A. The `reviseProposal` body. Sets `state: revised` and MUST NOT activate. Refused `409 proposal_state_conflict` on a terminal proposal (`applied`, `rejected`, `archived`) and `409 proposal_stale` on a lost concurrent update.",
+  "type": "object",
+  "additionalProperties": false,
+  "minProperties": 1,
+  "properties": {
+    "artifact": {
+      "type": "object",
+      "additionalProperties": true,
+      "description": "The revised artifact, shaped by the proposal's `kind`."
+    },
+    "title": {
+      "type": "string",
+      "description": "Human-facing label. SR-1 redaction-safe."
+    },
+    "rationale": {
+      "type": "string",
+      "description": "Plain-language justification. SR-1 redaction-safe."
+    }
+  }
+}

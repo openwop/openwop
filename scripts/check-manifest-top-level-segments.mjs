@@ -42,7 +42,7 @@ const ROOT = join(dirname(fileURLToPath(import.meta.url)), '..');
  */
 const PINNED = [
   '.well-known', 'agents', 'audit', 'connection-providers', 'content', 'host', 'interrupts',
-  'openapi.json', 'prompts', 'prompts:render', 'runs', 'runs:bulk-cancel',
+  'openapi.json', 'prompts', 'proposals', 'prompts:render', 'runs', 'runs:bulk-cancel',
   'tools', 'trigger-subscriptions', 'webhooks', 'workflows',
 ];
 

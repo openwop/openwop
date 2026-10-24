@@ -1,0 +1,25 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://openwop.dev/spec/v2/proposal-list-response.schema.json",
+  "title": "ProposalListResponse",
+  "description": "RFC 0249 §A. One page of `listProposals`, scoped to the caller's tenant and workspace; a proposal another tenant owns never appears.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "items"
+  ],
+  "properties": {
+    "items": {
+      "type": "array",
+      "items": {
+        "$ref": "proposal.schema.json"
+      }
+    },
+    "nextCursor": {
+      "type": "string",
+      "minLength": 1,
+      "maxLength": 2048,
+      "description": "Opaque cursor for the next page; absent on the last."
+    }
+  }
+}

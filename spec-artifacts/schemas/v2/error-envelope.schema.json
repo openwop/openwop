@@ -2,7 +2,7 @@
   "$schema": "https://json-schema.org/draft/2020-12/schema",
   "$id": "https://openwop.dev/spec/v2/error-envelope.schema.json",
   "title": "ErrorEnvelope (v2)",
-  "description": "GENERATED from spec/v2/errors.json by scripts/generate-error-envelope.mjs (RFC 0171 §B.1). 122 registered codes; vendor codes match ^(?!openwop\\.)[a-z][a-z0-9]*(-[a-z0-9]+)*\\.[a-z][a-z0-9_]*$. Consumers MUST accept an unknown registered member and MUST NOT act on it (RFC 0171 §A.5).",
+  "description": "GENERATED from spec/v2/errors.json by scripts/generate-error-envelope.mjs (RFC 0171 §B.1). 125 registered codes; vendor codes match ^(?!openwop\\.)[a-z][a-z0-9]*(-[a-z0-9]+)*\\.[a-z][a-z0-9_]*$. Consumers MUST accept an unknown registered member and MUST NOT act on it (RFC 0171 §A.5).",
   "type": "object",
   "additionalProperties": false,
   "required": [
@@ -136,7 +136,10 @@
             "provider_policy_denied",
             "eval_gate_unmet",
             "conversation_speaker_not_participant",
-            "conversation_roster_exceeded"
+            "conversation_roster_exceeded",
+            "proposal_state_conflict",
+            "proposal_stale",
+            "proposal_install_conflict"
           ]
         },
         {
@@ -618,6 +621,75 @@
           }
         }
       }
+    },
+    {
+      "if": {
+        "properties": {
+          "error": {
+            "const": "proposal_state_conflict"
+          }
+        },
+        "required": [
+          "error"
+        ]
+      },
+      "then": {
+        "properties": {
+          "details": {
+            "type": "object",
+            "required": [
+              "state",
+              "action"
+            ],
+            "properties": {
+              "state": {
+                "type": "string",
+                "description": "The proposal's current state."
+              },
+              "action": {
+                "type": "string",
+                "description": "The refused action: revise, apply or reject."
+              }
+            },
+            "additionalProperties": true,
+            "x-openwop-error": "proposal_state_conflict"
+          }
+        }
+      }
+    },
+    {
+      "if": {
+        "properties": {
+          "error": {
+            "const": "proposal_install_conflict"
+          }
+        },
+        "required": [
+          "error"
+        ]
+      },
+      "then": {
+        "properties": {
+          "details": {
+            "type": "object",
+            "required": [
+              "reason"
+            ],
+            "properties": {
+              "reason": {
+                "type": "string",
+                "enum": [
+                  "version-not-greater",
+                  "read-only"
+                ],
+                "description": "Why the store refused (RFC 0249 §D)."
+              }
+            },
+            "additionalProperties": true,
+            "x-openwop-error": "proposal_install_conflict"
+          }
+        }
+      }
     }
   ],
   "x-openwop-http-status": {
@@ -742,7 +814,10 @@
     "provider_policy_denied": 422,
     "eval_gate_unmet": 422,
     "conversation_speaker_not_participant": 422,
-    "conversation_roster_exceeded": 422
+    "conversation_roster_exceeded": 422,
+    "proposal_state_conflict": 409,
+    "proposal_stale": 409,
+    "proposal_install_conflict": 409
   },
   "x-openwop-retriable": [
     "residency_unavailable",

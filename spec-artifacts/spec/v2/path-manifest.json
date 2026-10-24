@@ -378,6 +378,85 @@
     },
     {
       "method": "GET",
+      "path": "/proposals",
+      "operationId": "listProposals",
+      "requestHeaders": [
+        "OpenWOP-Client-Version",
+        "OpenWOP-Version"
+      ],
+      "authenticated": true,
+      "requestBody": false
+    },
+    {
+      "method": "POST",
+      "path": "/proposals",
+      "operationId": "submitProposal",
+      "requestHeaders": [
+        "Idempotency-Key",
+        "OpenWOP-Client-Version",
+        "OpenWOP-Version"
+      ],
+      "authenticated": true,
+      "requestBody": true
+    },
+    {
+      "method": "DELETE",
+      "path": "/proposals/{proposalId}",
+      "operationId": "archiveProposal",
+      "requestHeaders": [
+        "OpenWOP-Client-Version",
+        "OpenWOP-Version"
+      ],
+      "authenticated": true,
+      "requestBody": false
+    },
+    {
+      "method": "GET",
+      "path": "/proposals/{proposalId}",
+      "operationId": "getProposal",
+      "requestHeaders": [
+        "OpenWOP-Client-Version",
+        "OpenWOP-Version"
+      ],
+      "authenticated": true,
+      "requestBody": false
+    },
+    {
+      "method": "PATCH",
+      "path": "/proposals/{proposalId}",
+      "operationId": "reviseProposal",
+      "requestHeaders": [
+        "OpenWOP-Client-Version",
+        "OpenWOP-Version"
+      ],
+      "authenticated": true,
+      "requestBody": true
+    },
+    {
+      "method": "POST",
+      "path": "/proposals/{proposalId}:apply",
+      "operationId": "applyProposal",
+      "requestHeaders": [
+        "Idempotency-Key",
+        "OpenWOP-Client-Version",
+        "OpenWOP-Version"
+      ],
+      "authenticated": true,
+      "requestBody": true
+    },
+    {
+      "method": "POST",
+      "path": "/proposals/{proposalId}:reject",
+      "operationId": "rejectProposal",
+      "requestHeaders": [
+        "OpenWOP-Client-Version",
+        "OpenWOP-Version"
+      ],
+      "authenticated": true,
+      "requestBody": true
+    },
+    {
+      "method": "GET",
       "path": "/runs",
       "operationId": "listRuns",
       "requestHeaders": [
@@ -711,7 +790,7 @@
     }
   ],
   "counts": {
-    "operations": 61,
+    "operations": 68,
     "channels": 2
   }
 }

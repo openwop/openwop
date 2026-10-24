@@ -1,0 +1,15 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://openwop.dev/spec/v2/proposal-apply.schema.json",
+  "title": "ProposalApply",
+  "description": "RFC 0249 §C. The optional `applyProposal` body binding the apply to the bytes the reviewer read. A host MAY require it (`400 validation_error`, `details.field: artifactDigest`). A digest that differs from the proposal's current `artifactDigest` MUST be refused `409 proposal_stale`, installing nothing.",
+  "type": "object",
+  "additionalProperties": false,
+  "properties": {
+    "artifactDigest": {
+      "type": "string",
+      "pattern": "^sha256:[0-9a-f]{64}$",
+      "description": "`sha256:` + lowercase hex SHA-256 of the RFC 8785 (JCS) serialization of the reviewed `artifact`."
+    }
+  }
+}

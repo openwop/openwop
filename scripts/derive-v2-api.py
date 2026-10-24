@@ -559,6 +559,87 @@ def v2_openapi_and_seams():
             '403': {'$ref': '#/components/responses/Forbidden'},
             '404': {'$ref': '#/components/responses/NotFound'},
             '429': {'$ref': '#/components/responses/RateLimited'}}}}
+    # RFC 0249 — the proposal lifecycle (gated on agents.proposals). RFC 0096's two
+    # protocol-tier invariants (proposal-inert-until-applied, proposal-no-resynthesis)
+    # had only a v1 sample seam as witness, which conformance.md §Witness class forbids
+    # for a MUST; these operations plus the closed installedArtifact read-back are the
+    # normative observation path.
+    PRS = '../../schemas/v2/proposal.schema.json'
+    PR_ERR = {'content': {'application/json': {'schema': {'$ref': '../../schemas/v2/error-envelope.schema.json'}}}}
+    PR_ID = {'name': 'proposalId', 'in': 'path', 'required': True, 'schema': {'type': 'string', 'minLength': 1, 'maxLength': 256},
+             'description': 'The proposal. A proposal another tenant owns MUST be answered exactly as an unknown id (`404`).'}
+    PR_GATE = ('Gated on `agents.proposals`: a host that does not advertise it answers `404 not_found` (`errors.md` §Unadvertised operations). '
+               'A proposal another tenant owns is answered exactly as an id that does not exist.')
+    def pr_409(desc):
+        return dict({'description': desc}, **PR_ERR)
+    def pr_common(extra=None):
+        r = {'401': {'$ref': '#/components/responses/Unauthenticated'}, '403': {'$ref': '#/components/responses/Forbidden'},
+             '404': {'$ref': '#/components/responses/NotFound'}}
+        r.update(extra or {})
+        return r
+    paths['/proposals'] = {
+        'get': {'tags': ['proposals'], 'operationId': 'listProposals', 'summary': "List the caller's proposals",
+                'description': PR_GATE + ' Scoped to the caller\'s tenant and workspace.',
+                'parameters': [
+                    {'name': 'state', 'in': 'query', 'required': False, 'schema': {'type': 'string', 'enum': ['draft', 'revised', 'applied', 'rejected', 'archived']}},
+                    {'name': 'kind', 'in': 'query', 'required': False, 'schema': {'type': 'string', 'enum': ['agent-pack', 'workflow-chain-pack', 'prompt-template', 'automation']}},
+                    {'name': 'limit', 'in': 'query', 'required': False, 'schema': {'type': 'integer', 'minimum': 1}},
+                    {'name': 'cursor', 'in': 'query', 'required': False, 'schema': {'type': 'string', 'minLength': 1, 'maxLength': 2048}}],
+                'responses': pr_common({'200': {'description': 'One page of proposals.', 'content': {'application/json': {'schema': {'$ref': '../../schemas/v2/proposal-list-response.schema.json'}}}},
+                                        '400': {'$ref': '#/components/responses/ValidationError'}})},
+        'post': {'tags': ['proposals'], 'operationId': 'submitProposal', 'summary': 'Submit a client-authored draft',
+                 'description': (PR_GATE + ' Served only when `agents.proposals.clientDrafts` is `true`; otherwise `404 not_found`. '
+                                 'The draft is held to every RFC 0096 rule, inertness first, with `provenance.sourceRunIds: []`. A `kind` outside '
+                                 '`artifactKinds` is `400 validation_error` with `details.field: kind`.'),
+                 'parameters': [{'$ref': '#/components/parameters/IdempotencyKey'}],
+                 'requestBody': {'required': True, 'content': {'application/json': {'schema': {'$ref': '../../schemas/v2/proposal-submit.schema.json'}}}},
+                 'responses': pr_common({'201': {'description': 'The draft, in `state: draft`.', 'content': {'application/json': {'schema': {'$ref': PRS}}}},
+                                         '400': {'$ref': '#/components/responses/ValidationError'}})}}
+    paths['/proposals/{proposalId}'] = {
+        'get': {'tags': ['proposals'], 'operationId': 'getProposal', 'summary': 'Read one proposal, including its inert artifact',
+                'description': PR_GATE + ' Carries `artifactDigest`, the value `applyProposal` binds to.',
+                'parameters': [PR_ID],
+                'responses': pr_common({'200': {'description': 'The proposal.', 'content': {'application/json': {'schema': {'$ref': PRS}}}}})},
+        'patch': {'tags': ['proposals'], 'operationId': 'reviseProposal', 'summary': 'Revise a draft',
+                  'description': (PR_GATE + ' Sets `state: revised` and MUST NOT activate. A terminal proposal (`applied`, `rejected`, '
+                                  '`archived`) is refused `409 proposal_state_conflict`; a lost concurrent update `409 proposal_stale`.'),
+                  'parameters': [PR_ID],
+                  'requestBody': {'required': True, 'content': {'application/json': {'schema': {'$ref': '../../schemas/v2/proposal-revise.schema.json'}}}},
+                  'responses': pr_common({'200': {'description': 'The revised proposal.', 'content': {'application/json': {'schema': {'$ref': PRS}}}},
+                                          '400': {'$ref': '#/components/responses/ValidationError'},
+                                          '409': pr_409('`proposal_state_conflict` (terminal) or `proposal_stale` (lost update).')})},
+        'delete': {'tags': ['proposals'], 'operationId': 'archiveProposal', 'summary': 'Archive a proposal (soft)',
+                   'description': PR_GATE + ' Sets `state: archived`, from `draft`, `revised` or `rejected`. On `applied` or `archived` it is refused `409 proposal_state_conflict`: archiving uninstalls nothing, so an applied proposal is never relabelled; remove an installed artifact through its own store.',
+                   'parameters': [PR_ID],
+                   'responses': pr_common({'200': {'description': 'The archived proposal.', 'content': {'application/json': {'schema': {'$ref': PRS}}}},
+                                           '409': pr_409('`proposal_state_conflict`: applied or already archived.')})}}
+    paths['/proposals/{proposalId}:apply'] = {'post': {
+        'tags': ['proposals'], 'operationId': 'applyProposal', 'summary': 'Activate a proposal and install its artifact',
+        'description': (PR_GATE + ' Routes through `agents.proposals.activation`. Under `direct-rbac` the caller MUST hold `proposals:apply`; '
+                        'without it the host answers `403` with `error="insufficient_scope"`, installs nothing and leaves `state` unchanged. '
+                        'Under `approval-gate` the host answers `202 {runId}` for a gate run that suspends on an `approval` interrupt '
+                        '(`data.artifactType: "proposal"`), and installs only on `accept` (`interrupt.md` §Approval).\n\n'
+                        'The optional body binds the apply to the reviewed bytes: a sent `artifactDigest` that differs from the proposal\'s '
+                        'MUST be refused `409 proposal_stale`, installing nothing; a host MAY require it (`400`, `details.field: artifactDigest`). '
+                        'On success `state` is `applied` and `activation.installedArtifact` names the v2 read that serves the installed artifact '
+                        'in the applying tenant; its body minus the kind\'s host-owned fields MUST be RFC 8785 (JCS) equal to the last-persisted '
+                        '`artifact`. A store that refuses the install is `409 proposal_install_conflict` (`details.reason`); a terminal proposal '
+                        '`409 proposal_state_conflict`.'),
+        'parameters': [PR_ID, {'$ref': '#/components/parameters/IdempotencyKey'}],
+        'requestBody': {'required': False, 'content': {'application/json': {'schema': {'$ref': '../../schemas/v2/proposal-apply.schema.json'}}}},
+        'responses': pr_common({'200': {'description': 'Applied; `activation.installedArtifact` is populated.', 'content': {'application/json': {'schema': {'$ref': PRS}}}},
+                                '202': {'description': 'An approval-gate run was opened.', 'content': {'application/json': {'schema': {'type': 'object',
+                                        'additionalProperties': False, 'required': ['runId'], 'properties': {'runId': {'$ref': '../../schemas/v2/ids.schema.json#/$defs/runId'}}}}}},
+                                '400': {'$ref': '#/components/responses/ValidationError'},
+                                '409': pr_409('`proposal_stale`, `proposal_state_conflict` or `proposal_install_conflict`.')})}}
+    paths['/proposals/{proposalId}:reject'] = {'post': {
+        'tags': ['proposals'], 'operationId': 'rejectProposal', 'summary': 'Reject a proposal',
+        'description': PR_GATE + ' Sets `state: rejected`. A terminal proposal is refused `409 proposal_state_conflict`.',
+        'parameters': [PR_ID],
+        'requestBody': {'required': False, 'content': {'application/json': {'schema': {'type': 'object', 'additionalProperties': False,
+                        'properties': {'reason': {'type': 'string', 'maxLength': 2048, 'description': 'SR-1 redaction-safe.'}}}}}},
+        'responses': pr_common({'200': {'description': 'The rejected proposal.', 'content': {'application/json': {'schema': {'$ref': PRS}}}},
+                                '409': pr_409('`proposal_state_conflict`.')})}}
     doc['paths'] = paths
     comps = doc.setdefault('components', {})
     comps.setdefault('parameters', {})['OpenWOPVersion'] = {'name': 'OpenWOP-Version', 'in': 'header', 'required': False, 'schema': {'type': 'string', 'pattern': '^(0|[1-9][0-9]*)\\.(0|[1-9][0-9]*)$'}, 'description': ("Selects one of the host's listed major.minor versions. Absent, `/.well-known/openwop` uses `preferredVersion` and every other unversioned path is v2; an "
@@ -773,7 +854,24 @@ def v2_openapi_and_seams():
         'resolveConnectionProvider': ['manifest:read'],
         'rotateWebhookSecret': ['webhooks:manage'],
         'streamHostEvents': ['runs:read'],
+        'listProposals': ['proposals:read'],
+        'getProposal': ['proposals:read'],
+        'submitProposal': ['proposals:write'],
+        'reviseProposal': ['proposals:write'],
+        'archiveProposal': ['proposals:write'],
+        'rejectProposal': ['proposals:write'],
+        'applyProposal': ['proposals:apply'],
     }
+    # RFC 0249 — the three proposal scopes are new vocabulary; declare them on every flow.
+    PROPOSAL_SCOPES = {'proposals:read': 'Read proposals (RFC 0249).', 'proposals:write': 'Submit, revise, reject and archive proposals (RFC 0249).',
+                       'proposals:apply': 'Activate a proposal and install its artifact (RFC 0249).'}
+    for scheme in comps.get('securitySchemes', {}).values():
+        for flow in (scheme.get('flows') or {}).values():
+            if isinstance(flow.get('scopes'), dict):
+                flow['scopes'].update(PROPOSAL_SCOPES)
+    tags = doc.setdefault('tags', [])
+    if not any(t.get('name') == 'proposals' for t in tags):
+        tags.append({'name': 'proposals', 'description': 'Reviewable-learning proposals (RFC 0096, operations RFC 0249).'})
     for key, item in doc['paths'].items():
         for method, op in item.items():
             if method not in ('get', 'post', 'put', 'delete', 'patch'):
