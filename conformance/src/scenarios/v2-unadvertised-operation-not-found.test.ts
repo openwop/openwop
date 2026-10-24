@@ -14,6 +14,8 @@
  *             `404 not_found`.
  *   content   (hosts that do not advertise `content`) `GET /content/settings`
  *             answers `404 not_found`.
+ *   proposals (hosts that do not advertise `agents.proposals`) `GET /proposals`
+ *             answers `404 not_found` (RFC 0249).
  *
  * A host that advertises the facet records the leg `inapplicable`.
  */
@@ -59,6 +61,17 @@ describe('v2 unadvertised operations answer 404 not_found (RFC 0228 §H)', () =>
     if (res === null) return softSkip('blocked', 'GET /content/settings unreachable (fetch failed)');
     const ID = 'openwop.requirement.0228.unadvertised-content-not-found';
     expect(res.status, req(ID, DOC, `an operation gated on content, which the host does not advertise, MUST answer 404 (got ${res.status}; v1's 501 is not a v2 answer)`)).toBe(404);
+    expect(readErrorCode(res.json), req(ID, DOC, 'the 404 for an unadvertised gated operation MUST carry the registered code not_found')).toBe('not_found');
+  });
+  it('GET /proposals answers 404 not_found when agents.proposals is not advertised (RFC 0249)', async () => {
+    const doc = await discovery();
+    if (!doc) return softSkip('blocked', UNREACHABLE);
+    const agents = record(doc, 'agents');
+    if (agents !== null && record(agents, 'proposals') !== null) return softSkip('inapplicable', 'the host advertises agents.proposals — the /proposals surface is served');
+    const res = await get('/proposals');
+    if (res === null) return softSkip('blocked', 'GET /proposals unreachable (fetch failed)');
+    const ID = 'openwop.requirement.0249.unadvertised-not-found';
+    expect(res.status, req(ID, DOC, `an operation gated on agents.proposals, which the host does not advertise, MUST answer 404 (got ${res.status})`)).toBe(404);
     expect(readErrorCode(res.json), req(ID, DOC, 'the 404 for an unadvertised gated operation MUST carry the registered code not_found')).toBe('not_found');
   });
 });

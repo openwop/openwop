@@ -6,7 +6,7 @@
 
 RFC 0156 §B: RFCs affecting auth, identity, tenant isolation, secrets, packs, execution sandboxing, idempotency, replay, external effects, conformance/certification, or governance **MUST** receive a retrospective **cross-organization** review. Every RFC below was accepted with its public comment window shortened, either under the bootstrap waiver or by explicit steward override of RFC 0147 §A.6. Each such acceptance is **provisional** until a reviewer from an organization other than the steward's records an outcome.
 
-This packet is for that reviewer. **125 RFCs are listed; 125 have no discharging outcome.** The steward, the steward's sessions, and steward-affiliated hosts (MyndHyve is tier-2, not independent) cannot supply the review. Recording one of their reviews as `ratified` is the substitution §B's last clause forbids.
+This packet is for that reviewer. **126 RFCs are listed; 126 have no discharging outcome.** The steward, the steward's sessions, and steward-affiliated hosts (MyndHyve is tier-2, not independent) cannot supply the review. Recording one of their reviews as `ratified` is the substitution §B's last clause forbids.
 
 **Enforcement is deferred.** On 2026-10-17 the maintainer deferred §B by steward exemption (`GOVERNANCE.md` §"Sole-steward operation") while the protocol has no user outside the steward's organizations. No outcome was recorded on its account. The packet is kept current for the day the exemption ends.
 
@@ -116,7 +116,7 @@ Grouping below is a reading aid only: it assigns each RFC to the risk class its 
 | [0205](../RFCS/0205-run-artifacts-and-turns-speak-a2a-parts.md) | run artifacts and conversation content speak A2A Parts | `Accepted` | bootstrap waiver | tier-1 — the v2 reference host | `not-reviewed` |
 | [0207](../RFCS/0207-trace-context-across-mcp-and-a2a.md) | trace context across MCP and A2A, and debug-bundle spans that join the trace | `Accepted` | bootstrap waiver | tier-1 — the v2 reference host | `not-reviewed` |
 
-## Conformance and certification (14)
+## Conformance and certification (15)
 
 | RFC | Title | Status | Waiver | Evidence tier | Outcome |
 | --- | --- | --- | --- | --- | --- |
@@ -134,6 +134,7 @@ Grouping below is a reading aid only: it assigns each RFC to the risk class its 
 | [0242](../RFCS/0242-negotiation-decided-requested-and-inbound.md) | a negotiation record says what was asked for, and an inbound negotiation has a home | `Accepted` | steward override of RFC 0147 §A.6 | tier-1 — the v2 reference host | `not-reviewed` |
 | [0244](../RFCS/0244-eval-trajectories-trials-and-recorded-fixtures.md) | eval suites grade the tool path, run repeated trials, and fail closed on a fixture miss | `Accepted` | steward override of RFC 0147 §A.6 | tier-2 — one certified host, the independent second host | `not-reviewed` |
 | [0246](../RFCS/0246-trajectory-failure-gates-the-pass.md) | a trajectory-failed trial cannot carry a task or a suite to a pass | `Accepted` | steward override of RFC 0147 §A.6 | tier-2 — MyndHyve | `not-reviewed` |
+| [0249](../RFCS/0249-proposal-operations-and-install-readback.md) | v2 proposal operations and a verifiable install read-back | `Active` | steward override of RFC 0147 §A.6 | not declared (predates RFC 0174 §B.1, or not yet Accepted) | `not-reviewed` |
 
 ## Governance (6)
 

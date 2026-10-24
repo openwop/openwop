@@ -176,6 +176,16 @@ function checkDocument(label, relPath, { enforceTable }) {
   }
 
   const vocabulary = scopeVocabulary();
+  // A v2-only scope has no v1 home: `spec/v1/` is frozen. The v2 document may
+  // declare one on its OAuth2 flows only with a description citing the RFC that
+  // minted it (`(RFC NNNN)`), so a typo still has no way in (RFC 0249).
+  if (relPath.startsWith('api/v2/')) {
+    for (const flow of Object.values(flows)) {
+      for (const [s, desc] of Object.entries(flow?.scopes ?? {})) {
+        if (!vocabulary.has(s) && /\(RFC \d{4}\)/.test(String(desc))) vocabulary.add(s);
+      }
+    }
+  }
   const table = enforceTable ? restEndpointScopes() : null;
   let counted = 0;
   let publicOps = 0;
@@ -198,7 +208,7 @@ function checkDocument(label, relPath, { enforceTable }) {
       }
       for (const s of scopes) {
         if (!vocabulary.has(s)) {
-          failures.push(`${where}: scope \`${s}\` is in neither \`spec/v1/auth.md\` §Scopes nor its documented-extension table`);
+          failures.push(`${where}: scope \`${s}\` is in neither \`spec/v1/auth.md\` §Scopes nor its documented-extension table${relPath.startsWith('api/v2/') ? ', nor declared on the v2 OAuth2 flows with an "(RFC NNNN)" citation' : ''}`);
         }
       }
       if (table !== null) {

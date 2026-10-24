@@ -14858,7 +14858,7 @@
       "rfc": "0249",
       "local": "G1",
       "section": "§Conformance",
-      "surface": "No host implements the seven operations. openwop-app does not advertise `agents.proposals`; MyndHyve advertises it at v1 only. Whether openwop-app builds phase 1 is with the user (relayed by the openwop-app release manager 2026-10-24).",
+      "surface": "No host implements the seven operations. openwop-app does not advertise `agents.proposals`; MyndHyve advertises it at v1 only. openwop-app builds phase 1 (ADR 0970, user-directed 2026-10-24).",
       "witness": "unclassified",
       "requirementId": null,
       "disposition": "externally-gated",
@@ -14929,8 +14929,8 @@
       "surface": "Submit scope, approval-gate shape, `readback` vs implied, the terminal-state error code, and the complete host-owned field set for `prompt-template`.",
       "witness": "unclassified",
       "requirementId": null,
-      "disposition": "transferred",
-      "target": "TODO.md",
+      "disposition": "closed",
+      "target": null,
       "sources": [
         {
           "file": "RFCS/registers/0249-proposal-operations-and-install-readback.gaps.md",

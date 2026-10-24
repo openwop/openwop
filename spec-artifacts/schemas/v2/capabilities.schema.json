@@ -3532,7 +3532,7 @@
         },
         "proposals": {
           "type": "object",
-          "description": "RFC 0096 (`Active`). Reviewable learning — the host synthesizes reusable artifacts (skills/packs/templates/automations) from run/tool traces as INERT, reviewable drafts that MUST NOT influence the resolution, planning, or execution of any run until an authorized principal activates them. v2 defines no protocol path for the proposal surface. A host advertising this emits the content-free `proposal.created` / `proposal.activated` events. Activation is delegated to RFC 0051 approval-gate or RFC 0049 RBAC — no new authorization path. On `apply` the installed artifact MUST byte-match the last-persisted `artifact` (no silent re-synthesis). Hosts that omit this block do not synthesize proposals; the conformance scenarios skip cleanly. The redaction-safety of `rationale` and `provenance.sourceRunIds` and the lifecycle are in `proposal.schema.json`.",
+          "description": "RFC 0096 (`Active`), operations by RFC 0249. Reviewable learning — the host synthesizes reusable artifacts (skills/packs/templates/automations) from run/tool traces as INERT, reviewable drafts that MUST NOT influence the resolution, planning, or execution of any run until an authorized principal activates them. The surface is the seven `proposals` operations (`listProposals`, `getProposal`, `submitProposal`, `reviseProposal`, `applyProposal`, `rejectProposal`, `archiveProposal`; scopes `proposals:read`, `proposals:write`, `proposals:apply`); a host that omits this block answers each as `errors.md` §Unadvertised operations requires. A proposal another tenant owns MUST be answered exactly as an unknown id. `applied`, `rejected` and `archived` are terminal: revise, apply or reject on one, and archive on `applied` or `archived`, is refused `409 proposal_state_conflict`. A host advertising this emits the content-free `proposal.created` / `proposal.activated` events. Activation is delegated to RFC 0051 approval-gate (apply opens a gate run that suspends on an `approval` interrupt) or RFC 0049 RBAC (`proposals:apply`) — no new authorization path. On `apply` the installed artifact MUST byte-match the last-persisted `artifact` (no silent re-synthesis); `activation.installedArtifact` names the read that shows it. The redaction-safety of `rationale` and `provenance.sourceRunIds` and the lifecycle are in `proposal.schema.json`.",
           "additionalProperties": false,
           "required": [
             "artifactKinds",
@@ -3565,6 +3565,25 @@
                 "direct-rbac"
               ],
               "description": "`approval-gate`: `apply` MUST drive an RFC 0051 gate (role/scope/quorum, audited override) and MUST NOT install unless granted/overridden. `direct-rbac`: `apply` requires only the RFC 0049 scope the host advertises for activation. An `overridden` gate MUST be audited."
+            },
+            "clientDrafts": {
+              "type": "boolean",
+              "default": false,
+              "description": "RFC 0249 §B. When `true`, `submitProposal` accepts a client-authored draft. A submitted draft MUST be held to every rule a synthesized one is, inertness first, with `provenance.sourceRunIds: []`. Absent or `false`, `submitProposal` answers `404 not_found`."
+            },
+            "readback": {
+              "type": "array",
+              "uniqueItems": true,
+              "items": {
+                "type": "string",
+                "enum": [
+                  "agent-pack",
+                  "workflow-chain-pack",
+                  "prompt-template",
+                  "automation"
+                ]
+              },
+              "description": "RFC 0249 §D. The kinds whose installed artifact resolves through `activation.installedArtifact`; a subset of `artifactKinds`. For `prompt-template` the read is `getPromptTemplate`, only `meta` is host-owned, and while a proposal is unapplied `getPromptTemplate` / `listPromptTemplates` MUST NOT serve a template carrying its `(templateId, version)` and `POST /prompts:render` naming it MUST fail as for an unknown template. Install follows the prompts write in the applying tenant, and a refused install is `409 proposal_install_conflict`. A kind proposed but absent here has no outside read-back: its RFC 0096 rules bind but are not checkable from the wire (`workflow-chain-pack`, `agent-pack` and `automation` have no read-back at v2 today)."
             }
           }
         },

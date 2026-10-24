@@ -174,5 +174,6 @@ The exemption is a deferral, not a review. **Zero discharged is still the correc
 | 0246 | a trajectory-failed trial cannot carry a task or a suite to a pass (certification; safety-fix; STEWARD OVERRIDE of the COMPATIBILITY.md §3 90-day window and of RFC 0147 §A.6) | in-scope-pending-assessment | — | — | `not-reviewed` |
 | 0247 | bounded stream lifetime — an opted-in live stream may be ended early and is resumed (additive; bootstrap waiver, not a §A.6 override) | in-scope-pending-assessment | — | — | `not-reviewed` |
 | 0248 | `ctx.callAI` reports its provider attempts and takes a per-call retry policy (replay; additive; STEWARD OVERRIDE of RFC 0147 §A.6) | in-scope-pending-assessment | — | — | `not-reviewed` |
+| 0249 | v2 proposal operations and a verifiable install read-back (certification, security invariants; additive; STEWARD OVERRIDE of RFC 0147 §A.6) | in-scope-pending-assessment | — | — | `not-reviewed` |
 | 0236 | Host events — events without a run-log position (isolation; additive with a safety-fix clause; STEWARD OVERRIDE of RFC 0147 §A.6) | in-scope-pending-assessment | — | — | `not-reviewed` |
 | 0237 | Declared nondeterminism names its sources (certification; additive; STEWARD OVERRIDE of RFC 0147 §A.6) | in-scope-pending-assessment | — | — | `not-reviewed` |

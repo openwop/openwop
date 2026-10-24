@@ -4,11 +4,11 @@
 | ----------------- | --------------------------------------------------------------- |
 | **RFC**           | 0249                                                            |
 | **Title**         | Normative v2 operations for RFC 0096 proposals, a client-submitted draft, and an install read-back the suite can byte-compare |
-| **Status**        | `Draft`                                                         |
+| **Status**        | `Active`                                                        |
 | **Author(s)**     | David Tufts (@davidscotttufts)                                  |
 | **Created**       | 2026-10-24                                                      |
-| **Updated**       | 2026-10-24 — Draft, from the `/architect` ruling on RFC 0096's v2 gap. The comment window is open (not waived). |
-| **Affects**       | `api/openapi.yaml` → `api/v2/openapi.yaml` (seven operations, tag `proposals`) · `spec/v2/path-manifest.json` (generated) · `spec/v2/facets/agents.schema.json` `proposals` (optional `clientDrafts`, `readback`) · `schemas/v2/proposal.schema.json` (optional `activation.installedArtifact`; the file leaves the v1 seed set) · new `schemas/v2/proposal-submit.schema.json`, `proposal-revise.schema.json` · `spec/v2/core/execution.md` (a one-line pointer, word-neutral) · `spec/v2/core/security-defaults.md` (one obligation row) · `SECURITY/invariants.yaml` (`proposal-inert-until-applied`, `proposal-no-resynthesis`: v2 tests, witness class) · conformance: `v2-proposal-lifecycle.test.ts` · CHANGELOG · openwop-sdks (follow-up) |
+| **Updated**       | 2026-10-24 — **`Draft → Active`, comment window waived by the maintainer** (user instruction 2026-10-24: "waive the 7 day window for 0249"); STEWARD OVERRIDE of RFC 0147 §A.6 recorded in `MAINTAINERS.md`. UQ 1–5 resolved by `/architect` with openwop-app's measured constraints (ADR 0938): a third scope `proposals:apply`; an optional `artifactDigest` apply binding with `409 proposal_stale`; `approval-gate` apply opens a gate run; `readback` stays a separate array; `proposal_state_conflict` registered; only `meta` is host-owned; the read-back is tenant-scoped and `installedArtifact.id` is the artifact's `templateId`. Host half: openwop-app (ADR 0970). · 2026-10-24 — Draft, from the `/architect` ruling on RFC 0096's v2 gap. |
+| **Affects**       | `api/openapi.yaml` → `api/v2/openapi.yaml` (seven operations, tag `proposals`) · `spec/v2/path-manifest.json` (generated) · `spec/v2/facets/agents.schema.json` `proposals` (optional `clientDrafts`, `readback`) · `schemas/v2/proposal.schema.json` (optional `activation.installedArtifact`, `artifactDigest`; the file leaves the v1 seed set) · new `schemas/v2/proposal-submit.schema.json`, `proposal-revise.schema.json`, `proposal-apply.schema.json`, `proposal-list-response.schema.json` · `spec/v2/errors.json` (`proposal_state_conflict`, `proposal_stale`, `proposal_install_conflict`) · scopes `proposals:read`, `proposals:write`, `proposals:apply` · `spec/v2/core/execution.md` (a one-line pointer, word-neutral) · `spec/v2/core/security-defaults.md` (one obligation row) · `SECURITY/invariants.yaml` (`proposal-inert-until-applied`, `proposal-no-resynthesis`: v2 tests, witness class) · conformance: `v2-proposal-lifecycle.test.ts` · CHANGELOG · openwop-sdks (follow-up) |
 | **Compatibility** | `additive`                                                      |
 | **Supersedes**    | —                                                               |
 | **Superseded by** | —                                                               |
@@ -35,17 +35,21 @@ The suite cannot make a host synthesize a proposal from its own traces on demand
 
 ### §A — Operations
 
-All seven are unversioned paths under the `proposals` tag, gated on the `agents.proposals` facet. A host that does not advertise it MUST answer every one `404 capability_not_provided`, the `runs.md` pattern for an unadvertised mode.
+All seven are unversioned paths under the `proposals` tag, gated on the `agents.proposals` facet. A host that does not advertise it MUST answer every one `404 not_found`, as `errors.md` §Unadvertised operations requires of every unadvertised operation.
 
 | Operation | Method + path | Scope | Notes |
 | --- | --- | --- | --- |
 | `listProposals` | `GET /proposals?state=&kind=` | `proposals:read` | Paginated `{items, nextCursor?}`, scoped to the caller's tenant and workspace. |
 | `getProposal` | `GET /proposals/{proposalId}` | `proposals:read` | One `Proposal`, including the inert `artifact`. |
-| `submitProposal` | `POST /proposals` | `proposals:write` | Only when the facet advertises `clientDrafts: true`; otherwise `404 capability_not_provided`. Body `proposal-submit` → `201` with the `Proposal` in `draft`. |
-| `reviseProposal` | `PATCH /proposals/{proposalId}` | `proposals:write` | Body `proposal-revise`; sets `state: revised`. MUST NOT activate. Refused with `409` in a terminal state (code: UQ 4). |
-| `applyProposal` | `POST /proposals/{proposalId}:apply` | the facet's `activation` | §C. |
+| `submitProposal` | `POST /proposals` | `proposals:write` | Only when the facet advertises `clientDrafts: true`; otherwise `404 not_found`. Body `proposal-submit` → `201` with the `Proposal` in `draft`. |
+| `reviseProposal` | `PATCH /proposals/{proposalId}` | `proposals:write` | Body `proposal-revise`; sets `state: revised`. MUST NOT activate. |
+| `applyProposal` | `POST /proposals/{proposalId}:apply` | `proposals:apply` | Optional body `proposal-apply`; §C. |
 | `rejectProposal` | `POST /proposals/{proposalId}:reject` | `proposals:write` | `state: rejected`; optional `{reason}` (redaction-safe). |
 | `archiveProposal` | `DELETE /proposals/{proposalId}` | `proposals:write` | Soft: `state: archived`. |
+
+**States.** `applied`, `rejected` and `archived` are terminal. Revise, apply or reject on a terminal proposal MUST be refused `409 proposal_state_conflict` with `details {state, action}`. Archive is accepted from `draft`, `revised` and `rejected`; on `applied` or `archived` it is refused `409 proposal_state_conflict`. Archiving uninstalls nothing, and `archived` means terminal-inert, so an applied proposal is never relabelled as one. Removing an installed artifact goes through its own store (for `prompt-template`, `deletePromptTemplate`). A revise that loses a concurrent update MUST be refused `409 proposal_stale`.
+
+**Scopes.** `proposals:read`, `proposals:write` and `proposals:apply` are new scope vocabulary. Submitting, revising, rejecting and archiving a draft share `proposals:write`: a draft is inert, so authoring and revising carry the same risk. Activation has its own scope so a host can let a reviewer revise without letting them install.
 
 A proposal is owned by the RFC 0048 triple in `owner`. A host MUST NOT list, return, revise, apply, reject or archive a proposal for a caller outside that tenant, and MUST answer such a request exactly as it answers an id that does not exist (`404`), so the operation is not an existence oracle.
 
@@ -62,8 +66,13 @@ A proposal is owned by the RFC 0048 triple in `owner`. A host MUST NOT list, ret
 
 `applyProposal` routes through the facet's `activation`, as RFC 0096 §E.2 already requires:
 
-- `direct-rbac`: the caller MUST hold the scope the host advertises for activation. Without it the host answers `403` with `error="insufficient_scope"` (`identity.md`), installs nothing, and leaves `state` unchanged.
-- `approval-gate`: the host answers `202` with an interrupt token resolvable at `POST /interrupts/{token}` (`interrupt.md` §Approval) and installs only when the gate resolves `granted` or audited `overridden`. See UQ 2.
+- `direct-rbac`: the caller MUST hold `proposals:apply`. Without it the host answers `403` with `error="insufficient_scope"` (`identity.md`), installs nothing, and leaves `state` unchanged.
+- `approval-gate`: the host answers `202 {runId}` for a host-owned gate run that suspends on an `approval` interrupt with `data.artifactType: "proposal"` and `data.artifactId` the proposal id. Every `interrupt.md` §Approval rule applies unchanged: quorum, rejection, timeout and replay. On `accept` the host installs, sets `state: applied`, and the run completes. On a rejection or a timeout it installs nothing, the proposal's `state` is unchanged, and the run fails `approval_rejected`. No interrupt is raised outside a run.
+
+**Binding to what was reviewed.** The optional body `proposal-apply` is `{artifactDigest}`: `"sha256:"` followed by the lowercase hex SHA-256 of the RFC 8785 (JCS) serialization of the proposal's `artifact`. `getProposal` serves the same value as `artifactDigest`.
+
+- A host MAY require the binding. It then refuses an apply without it with `400 validation_error`, `details.field: artifactDigest`.
+- When a digest is sent and differs from the persisted artifact's, the host MUST refuse `409 proposal_stale` and install nothing. A reviewer approves exactly the bytes they read.
 
 On a successful install the host sets `state: applied` and populates a new optional, closed `activation.installedArtifact`:
 
@@ -76,7 +85,8 @@ On a successful install the host sets `state: applied` and populates a new optio
 }
 ```
 
-- `operationId` MUST name a GET operation in `spec/v2/path-manifest.json` that serves the installed artifact to a caller holding that operation's scope.
+- `operationId` MUST name a GET operation in `spec/v2/path-manifest.json` that serves the installed artifact to a caller in the applying tenant holding that operation's scope. The read is evaluated in that tenant's scope: for any other tenant, the installed artifact MUST NOT be served, listed or resolvable, and its read answers as an id that does not exist.
+- `id` MUST be the artifact's own identifier (for `prompt-template`, `artifact.templateId`). A host MUST NOT mint one.
 - **Byte-match.** The body that operation returns, with the kind's host-owned fields removed (§D), MUST be RFC 8785 (JCS) equal to the `artifact` last persisted on the proposal before apply. This is RFC 0096 §E.3 stated so that an outside party can check it.
 - `installedArtifactRef` (string) stays, optional and unchanged. A host MAY keep emitting it, and a client MUST NOT treat it as resolvable.
 
@@ -84,14 +94,26 @@ On a successful install the host sets `state: applied` and populates a new optio
 
 | Kind | Read operation | Host-owned fields excluded from the comparison | Phase |
 | --- | --- | --- | --- |
-| `prompt-template` | `getPromptTemplate` (`GET /prompts/{templateId}`) | `meta` | 1 |
+| `prompt-template` | `getPromptTemplate` (`GET /prompts/{templateId}`) | `meta` (removed from both sides) | 1 |
 | `workflow-chain-pack` | to be audited: `GET /workflows/{workflowId}` serves one installed workflow, not the pack | — | 2 |
 | `agent-pack` | to be audited: `GET /agents/{agentId}` serves an inventory entry, not the manifest bytes | — | 2 |
 | `automation` | none at v2 | — | 3 |
 
-A host MUST advertise in `agents.proposals.readback` (an optional array of kinds, unique items) only kinds whose `installedArtifact` resolves under this section. For a kind it proposes but cannot read back, the two invariants still bind, but no outside party can check them; the facet description says so per kind. This is disclosure, not a demotion.
+**Only `meta` is host-owned for `prompt-template`.** `prompt-template.schema.json` is closed, so a field the server sets MUST live under `meta`. A server-set top-level field is a schema violation, not an exclusion.
 
-**Inertness for `prompt-template`.** While a proposal with `kind: prompt-template` is in any state other than `applied`, the template it carries MUST NOT be served by `getPromptTemplate` or `listPromptTemplates`, and `POST /prompts:render` naming it MUST fail as it does for an unknown template. This is the observable form of RFC 0096 §E.1 for the one kind whose resolution surface v2 exposes.
+**Installing a `prompt-template`** behaves as the prompts write would in the applying tenant:
+- an absent `templateId` installs as `createPromptTemplate`;
+- a user-sourced template with a lower stored version installs as `updatePromptTemplate`;
+- an equal or higher stored version is refused `409 proposal_install_conflict`, `details.reason: "version-not-greater"`;
+- a pack-sourced or host template is refused `409 proposal_install_conflict`, `details.reason: "read-only"`.
+
+`version_conflict` is not reused: it means a pack version published with different content, and widening it would change a code's meaning.
+
+On each refusal the host installs nothing and leaves `state` unchanged.
+
+A host MUST advertise in `agents.proposals.readback` (an optional array of kinds, unique items, a subset of `artifactKinds`) only kinds whose `installedArtifact` resolves under this section. For a kind it proposes but cannot read back, the two invariants still bind, but no outside party can check them; the facet description says so per kind. This is disclosure, not a demotion.
+
+**Inertness for `prompt-template`.** While a proposal with `kind: prompt-template` is in any state other than `applied`, `getPromptTemplate` and `listPromptTemplates` MUST NOT serve a template carrying its `(templateId, version)`, and `POST /prompts:render` naming it MUST fail as it does for an unknown template. This is the observable form of RFC 0096 §E.1 for the one kind whose resolution surface v2 exposes.
 
 ### §E — Events and replay
 
@@ -142,18 +164,20 @@ A host advertising `agents.proposals` without these operations is not newly non-
 - No `v2-*` scenario reads a proposal.
 - `getPromptTemplate` is exercised by the prompts scenarios.
 
-**New scenario `v2-proposal-lifecycle.test.ts`.** It is gated on `agents.proposals` present, `clientDrafts: true` and `readback ∋ prompt-template`. Otherwise it records `inapplicable`. It is server-free on the shape legs.
+**New scenario `v2-proposal-lifecycle.test.ts`.** It is gated on `agents.proposals` present, `clientDrafts: true` and `readback ∋ prompt-template`. Otherwise it records `inapplicable`. The shape legs are server-free. A host leg whose harness key is unset records `blocked`, the `v2-auth-challenge` precedent: the suite will not infer a credential. Each run uses a fresh `templateId`.
 
 | Id | Case | Expect |
 | --- | --- | --- |
 | `0249.shape` | (server-free) `installedArtifact`, `proposal-submit`, `proposal-revise` positives and negatives | validate / refuse |
 | `0249.submit-kind-refused` | submit a kind outside `artifactKinds` | `400`, `details.field: kind` |
 | `0249.draft-inert` | submit a template draft; read and render it | `getPromptTemplate` `404`; `:render` fails; absent from `listPromptTemplates` |
-| `0249.apply-unscoped-refused` | `:apply` with a token lacking the activation scope (`direct-rbac`) | `403 insufficient_scope`; state unchanged; template still `404` |
-| `0249.apply-installs` | `:apply` with the scope | `state: applied`; `installedArtifact` resolves through `getPromptTemplate` |
+| `0249.apply-unscoped-refused` | `:apply` with `OPENWOP_TEST_LOW_SCOPE_KEY` (holds read and write, not `proposals:apply`; `direct-rbac`) | `403 insufficient_scope`; state unchanged; template still `404` |
+| `0249.apply-stale-refused` | `:apply` with an `artifactDigest` of the pre-revision artifact | `409 proposal_stale`; state unchanged; template still `404` |
+| `0249.apply-installs` | `:apply` with the scope and the current `artifactDigest` | `state: applied`; `installedArtifact {kind, operationId: getPromptTemplate, id: templateId}` resolves |
+| `0249.terminal-refused` | revise, then apply again, on the applied proposal | `409 proposal_state_conflict`, `details.state: applied` |
 | `0249.readback-byte-match` | revise to `T'`, then apply | the read-back minus `meta` is JCS-equal to `T'` and differs from `T` |
-| `0249.cross-tenant-not-found` | a second tenant's credentials read and apply the draft | `404` on both, identical to an unknown id |
-| `0249.unadvertised-refused` | a host without `agents.proposals` | `404 capability_not_provided` on `GET /proposals` |
+| `0249.cross-tenant-not-found` | `OPENWOP_TEST_TENANT_B_API_KEY` reads and applies the draft, then reads the installed template | `404` on each, identical to an unknown id |
+| `0249.unadvertised-not-found` | a host without `agents.proposals` | `404 not_found` on `GET /proposals` (`errors.md` §Unadvertised operations) |
 
 The `approval-gate` path and the replay-fork rule (§E) have no leg in phase 1. See UQ 2 and G3.
 
@@ -165,12 +189,15 @@ The `approval-gate` path and the replay-fork rule (§E) have no leg in phase 1. 
 
 | Requirement | Observable — what an outside party sees | Who can cause the condition | Verdict |
 | --- | --- | --- | --- |
-| §A unadvertised → `404 capability_not_provided` | the response to `GET /proposals` | the suite, unaided | witnessable-unaided |
+| §A unadvertised → `404 not_found` | the response to `GET /proposals` | the suite, unaided | witnessable-unaided |
 | §A tenant scoping, no oracle | a second tenant's `404` vs an unknown id's `404` | the suite, with two tenants' credentials | witnessable-gated |
 | §B kind validated | `400` + `details.field` | the suite | witnessable-gated |
 | §B `sourceRunIds: []`, no invented provenance | `getProposal` after submit | the suite | witnessable-gated |
 | §C unscoped apply refused, nothing installed | `403` + template still `404` | the suite, with a narrowed token | witnessable-gated |
 | §C `installedArtifact` resolves to a GET | the named operation answers `200` | the suite | witnessable-gated |
+| §C digest binding, mismatch refused | `409 proposal_stale` + template still `404` | the suite (it computes both digests) | witnessable-gated |
+| §C read-back tenant-scoped | tenant B's `getPromptTemplate` `404` vs an unknown id | the suite, with two tenants' credentials | witnessable-gated |
+| §A terminal states refused | `409 proposal_state_conflict` | the suite | witnessable-gated |
 | §C byte-match (JCS) | read-back minus host-owned fields vs the revised artifact | the suite (it wrote both) | witnessable-gated |
 | §D inertness, `prompt-template` | `404` on get, failed render, absent from list | the suite | witnessable-gated |
 | §D inertness, other kinds | no v2 surface resolves them | nobody outside the host | unwitnessable until phase 2/3 (disclosed in the facet) |
@@ -187,11 +214,13 @@ The `approval-gate` path and the replay-fork rule (§E) have no leg in phase 1. 
 
 ## Unresolved questions
 
-1. `clientDrafts` lets any `proposals:write` holder create an inert draft. Should submit need a separate scope (`proposals:submit`) so a host can let reviewers revise without letting them author?
-2. `approval-gate` apply outside a run: is `202` plus a token at `POST /interrupts/{token}` the right shape, or should apply open a run that suspends on an RFC 0051 approval interrupt, which the suite can already resolve?
-3. Should `readback` be a separate array, or should `installedArtifact` resolvability be implied by a kind's presence in `artifactKinds` once phase 2 lands?
-4. Which error code answers `PATCH` or `:apply` on a `rejected` or `archived` proposal: `run_state_conflict`'s sibling, a new `proposal_state_conflict`, or `409` with a reused code?
-5. For `prompt-template`, is `meta` the complete host-owned set, or does a host also normalize `version` on install?
+All five were resolved on 2026-10-24 by `/architect`, using openwop-app's measured constraints:
+
+1. **Submit scope:** no separate scope. `proposals:write` covers submit, revise, reject and archive. Activation gets `proposals:apply` (§A).
+2. **`approval-gate`:** apply opens a host-owned gate run that suspends on an `approval` interrupt, so no interrupt exists outside a run (§C).
+3. **`readback`:** a separate array, a subset of `artifactKinds`. Resolvability is claimed, never implied (§D).
+4. **Error codes:** `409 proposal_state_conflict` with `details {state, action}` for a terminal state, and `409 proposal_stale` for a lost update or a digest mismatch. An install the target store refuses is `409 proposal_install_conflict` with `details.reason`. All three are registered in `spec/v2/errors.json` (§A, §C, §D).
+5. **Host-owned fields:** `meta` only, because the template schema is closed. A host does not normalize `version`. Install follows the prompts write rules, and the read-back is tenant-scoped (§C, §D).
 
 ## Implementation notes (non-normative)
 
@@ -203,7 +232,7 @@ The `approval-gate` path and the replay-fork rule (§E) have no leg in phase 1. 
 4. The invariants rows.
 5. A suite release.
 
-**Hosts.** A host implements phase 1 by installing the applied artifact into its existing `/prompts` store. openwop-app's prompts store already serves `getPromptTemplate`. Whether it implements this is the user's decision (relayed 2026-10-24).
+**Hosts.** A host implements phase 1 by installing the applied artifact into its existing `/prompts` store. openwop-app's prompts store already serves `getPromptTemplate`. openwop-app implements it (ADR 0970).
 
 **Before the suite release.** Warn MyndHyve: its v1 advert of `agents.proposals`, carried into v2 discovery, makes the new legs run, and they report `blocked` until it implements the operations.
 
@@ -213,8 +242,8 @@ The `approval-gate` path and the replay-fork rule (§E) have no leg in phase 1. 
 
 - [ ] The seven operations in `api/openapi.yaml` and the derived `api/v2/openapi.yaml`, with `spec/v2/path-manifest.json` parity.
 - [ ] `agents.proposals.clientDrafts` and `readback`, and `activation.installedArtifact`, with the rules in their descriptions; `proposal-submit` and `proposal-revise` schemas.
-- [ ] The `execution.md` pointer and the `security-defaults.md` obligation row; `proposals:read` / `proposals:write` registered.
-- [ ] `v2-proposal-lifecycle.test.ts` with the eight legs, its judges and their self-tests; both invariants point at it and are `witnessable-gated`.
+- [ ] The `execution.md` pointer and the `security-defaults.md` obligation row; `proposals:read` / `proposals:write` / `proposals:apply` and the three error codes registered.
+- [ ] `v2-proposal-lifecycle.test.ts` with the legs above, its judges and their self-tests; both invariants point at it and are `witnessable-gated`.
 - [ ] CHANGELOG entry; openwop-sdks issue filed.
 - [ ] A host advertises `agents.proposals` with `clientDrafts` and `readback ∋ prompt-template`, and a certified major-2 bundle records the `0249.*` host legs `executed-pass`.
 
@@ -227,3 +256,8 @@ The `approval-gate` path and the replay-fork rule (§E) have no leg in phase 1. 
 - RFC 8785: JSON Canonicalization Scheme, as already used by `vectors/jcs-v1.json`.
 - `spec/v2/core/conformance.md` §Witness class; `spec/v2/core/interrupt.md` §Approval; `spec/v2/core/identity.md` (`insufficient_scope`); `spec/v2/core/replay.md` (recorded facts).
 - openwop-app ADR 0938 / openwop-app #5019: the re-grade that found no install.
+
+## Status history
+
+- 2026-10-24 — Draft (openwop#2030).
+- 2026-10-24 — Active (comment window waived; STEWARD OVERRIDE of RFC 0147 §A.6, see Updated).

@@ -3461,6 +3461,7 @@ invariants:
     threat_model: SECURITY/threat-model-prompt-injection.md
     tests:
       - conformance/src/scenarios/proposal-reviewable-learning.test.ts
+      - conformance/src/scenarios/v2-proposal-lifecycle.test.ts
     note: |
       RFC 0096 / agent-memory.md §"Reviewable learning" clause 1. A Proposal
       in any state other than `applied` MUST NOT influence the resolution,
@@ -3474,7 +3475,10 @@ invariants:
       (the `state` enum + open-`artifact` shape) + the capability-gated
       behavioral leg asserting a draft proposal leaves a matching run
       unchanged until applied.
-    witness: seam-gated
+      v2 (RFC 0249): `0249.draft-inert` in v2-proposal-lifecycle, gated on
+      agents.proposals with clientDrafts and readback ∋ prompt-template; other
+      kinds have no v2 read-back and are disclosed in the facet.
+    witness: witnessable-gated
     witnessReview: initial-mechanical-2026-09-02
 
   - id: proposal-no-resynthesis
@@ -3483,6 +3487,7 @@ invariants:
     threat_model: SECURITY/threat-model-prompt-injection.md
     tests:
       - conformance/src/scenarios/proposal-reviewable-learning.test.ts
+      - conformance/src/scenarios/v2-proposal-lifecycle.test.ts
     note: |
       RFC 0096 / agent-memory.md §"Reviewable learning" clause 3. On `apply`,
       the installed artifact MUST be the exact `artifact` payload last
@@ -3493,7 +3498,10 @@ invariants:
       the moment I approved it" trust gap. Public test: the capability-gated
       behavioral leg asserting the installed artifact byte-matches the
       last-persisted `artifact`.
-    witness: seam-gated
+      v2 (RFC 0249): `0249.readback-byte-match` in v2-proposal-lifecycle, gated on
+      agents.proposals with clientDrafts and readback ∋ prompt-template; other
+      kinds have no v2 read-back and are disclosed in the facet.
+    witness: witnessable-gated
     witnessReview: initial-mechanical-2026-09-02
 
   - id: goal-continuation-bounded

@@ -5,7 +5,7 @@
 
 ## Why this exists
 
-In v2 a security behavior is not an opt-in flag. This document is the obligation table: which surface binds which behavior, the invariant, and the witness.
+In v2 a security behavior is not an opt-in flag. This document maps each surface to the behavior it binds, its invariant and its witness.
 
 ## The rule
 
@@ -29,6 +29,7 @@ A security-load-bearing behavior is an obligation of the surface that needs it. 
 | an `oauth2` or `oidc` lane | protected-resource metadata and challenges ([identity.md §2.5](identity.md)) | witnessable-gated | `auth-challenge-no-oracle` |
 | any outbound request | no inbound credential on an onward hop (§Onward hops) | seam-gated | `inbound-credential-no-passthrough` |
 | `auditLogIntegrity` | a chained, checkpointed, verifiable audit log (§Audit-log integrity) | witnessable-gated | `audit-checkpoint-signed-over-root` |
+| `agents.proposals` | inert drafts, byte-matched install | witnessable-gated | `proposal-inert-until-applied`, `proposal-no-resynthesis` |
 
 ### Auth lanes
 
@@ -65,7 +66,7 @@ The remaining `sandbox` facets name the bound each invariant already carries: `a
 
 ### Compensation
 
-A host that advertises `compensation` MUST serve `GET /runs/{runId}/compensation` (`schemas/v2/compensation-projection.schema.json`), keyed on the node and attempt the operator family uses. The read projection and the operator action family are the canonical wire. A host that does not advertise `compensation` has no obligation.
+A host that advertises `compensation` MUST serve `GET /runs/{runId}/compensation` (`schemas/v2/compensation-projection.schema.json`), keyed on the node and attempt the operator family uses. The read projection and the operator action family are the canonical wire.
 
 The facets bind the policy shape (`schemas/v2/compensation-policy.schema.json`):
 

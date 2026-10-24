@@ -1,0 +1,37 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://openwop.dev/spec/v2/proposal-submit.schema.json",
+  "title": "ProposalSubmit",
+  "description": "RFC 0249 §B. The `submitProposal` body: a client-authored draft, accepted only when `agents.proposals.clientDrafts` is `true`. The host MUST refuse a `kind` outside `artifactKinds` with `400 validation_error` (`details.field: kind`), MUST set `provenance.sourceRunIds: []`, and MUST hold the draft to every RFC 0096 rule, inertness first.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "kind",
+    "artifact"
+  ],
+  "properties": {
+    "kind": {
+      "type": "string",
+      "enum": [
+        "agent-pack",
+        "workflow-chain-pack",
+        "prompt-template",
+        "automation"
+      ],
+      "description": "The artifact kind; MUST be one the host advertises in `artifactKinds`."
+    },
+    "artifact": {
+      "type": "object",
+      "additionalProperties": true,
+      "description": "The proposed artifact, shaped by `kind`'s own schema. Inert until applied; validated against that schema at apply (`422` on mismatch)."
+    },
+    "title": {
+      "type": "string",
+      "description": "Human-facing label. SR-1 redaction-safe."
+    },
+    "rationale": {
+      "type": "string",
+      "description": "Plain-language justification. SR-1 redaction-safe."
+    }
+  }
+}

@@ -1,3 +1,12 @@
+## [2.46.21] — unreleased — RFC 0249 Active: v2 proposal operations
+
+- **New scenario `v2-proposal-lifecycle`.** One client-submitted `prompt-template` proposal is driven through submit, revise and apply. The legs are `0249.shape` (server-free), `submit-kind-refused`, `draft-inert`, `apply-stale-refused`, `apply-unscoped-refused`, `apply-installs`, `readback-byte-match`, `terminal-refused` and `cross-tenant-not-found`. Judges are in `lib/proposal-lifecycle-witness.ts`, whose self-tests fail each wrong host answer, including a hash passed off as an install.
+- **`0249.unadvertised-not-found`** in `v2-unadvertised-operation-not-found`: `GET /proposals` on a host without `agents.proposals` answers `404 not_found`.
+- **Gating.** The host legs need `agents.proposals` with `clientDrafts: true` and `readback` ∋ `prompt-template`, plus `OPENWOP_TEST_LOW_SCOPE_KEY` (read and write, no `proposals:apply`) and `OPENWOP_TEST_TENANT_B_API_KEY`. An unset key records `blocked`.
+- **Invariants.** `proposal-inert-until-applied` and `proposal-no-resynthesis` move `seam-gated` → `witnessable-gated`.
+- **New top-level name `proposals`** is pinned in `check-manifest-top-level-segments`. No host in INTEROP-MATRIX serves `/proposals` unversioned: openwop-app's proposals are under `/host/openwop-app/`, and MyndHyve's v1 surface was `/v1/host/sample/proposals`.
+- **Host impact:** none today. No host advertises `clientDrafts`. MyndHyve advertises `agents.proposals` without it, so its legs are `inapplicable`.
+
 ## [2.46.20] — 2026-10-24 — RFC 0081 eval envelope legs; RFC 0249 Draft
 
 - **Two new legs in `v2-eval-trajectory-trials` (RFC 0081 §C)**, on the existing `conformance-eval-trajectory` run, so no extra run: `0081.eval-envelope` (one `eval.started` and one `eval.completed` bracket every `eval.scored`, `eval.completed` precedes `run.completed`, and its counts equal the summary's) and `0081.summary-served` (the served `EvalSummary` validates and its counts match its rows). Judges in `lib/eval-envelope-witness.ts`, whose self-tests fail each wrong host answer. Before this, no v2 leg read `eval.completed`.
