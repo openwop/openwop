@@ -31,6 +31,13 @@
  *   6. Refusal — a host advertising `agents.evalSuite` without `trials` that
  *      lists `conformance-eval-trials` refuses it at createRun with
  *      `400 validation_error`.
+ *   6a. §C efficiency (2.46.25) — on the trajectory run, and on the trials run
+ *      when served, each task's `efficiency.toolCallCount` equals its script
+ *      length (the mean over identical trials), and on the one-trial run the
+ *      counts sum to the log's `agent.tool-called` events. `efficiency` is
+ *      optional, so a host that reports none records `inapplicable`. Judge in
+ *      `lib/eval-efficiency-witness.ts`. The never-gated rule is not judged:
+ *      no fixture makes efficiency the only difference between two verdicts.
  *
  * RFC 0081 §C, on the `conformance-eval-trajectory` run (2.46.20). Judges in
  * `lib/eval-envelope-witness.ts`.
@@ -84,6 +91,7 @@ import { judgeEvalEnvelope, judgeSummaryServed } from '../lib/eval-envelope-witn
 import { gradeTrajectory, passAtK, passHatK, scoreStderr, withinTolerance, type TrajectorySpec } from '../lib/eval-trajectory.js';
 import { judgeMeanGated, judgeSuiteGated } from '../lib/eval-gate-witness.js';
 import { judgeFixtureErrorReplayed } from '../lib/eval-fixture-error-witness.js';
+import { judgeToolCallCount } from '../lib/eval-efficiency-witness.js';
 
 const PROFILE = majorProfile(2);
 const UNREADABLE = 'v2 discovery unreachable — /.well-known/openwop did not answer 200 JSON under OpenWOP-Version: 2.0';
@@ -98,6 +106,7 @@ const ID_TRIALS = 'openwop.requirement.0244.trials-per-task';
 const ID_TRIAL_STATS = 'openwop.requirement.0244.trial-stats-formula';
 const ID_MISS = 'openwop.requirement.0244.fixture-miss-fails';
 const ID_REFUSED = 'openwop.requirement.0244.unadvertised-feature-refused';
+const ID_EFFICIENCY = 'openwop.requirement.0244.efficiency-tool-calls';
 const ID_GATED_SHAPE = 'openwop.requirement.0246.gated-fields-shape';
 const ID_MEAN_GATED = 'openwop.requirement.0246.mean-gated';
 const ID_SUITE_GATED = 'openwop.requirement.0246.suite-gated';
@@ -309,6 +318,18 @@ describe('v2 RFC 0244 — host behaviour', () => {
     const stats = isRecord(o.summary['trialStats']) ? o.summary['trialStats'] : {};
     const se = scoreStderr(means);
     if (se !== undefined) expect(withinTolerance(Number(stats['scoreStderr']), se), req(ID_TRIAL_STATS, DOC, `trialStats.scoreStderr MUST equal sd(per-task means)/√T within 1e-9 relative (got ${String(stats['scoreStderr'])}, want ${se})`)).toBe(true);
+  });
+
+  it('efficiency.toolCallCount counts the scripted agent.tool-called events (§C)', async () => {
+    const r = await trajectoryRun();
+    if ('skip' in r) return softSkip(...r.skip);
+    const scriptedTasks = (s: Suite) => s.tasks.map((t) => ({ taskId: t.taskId, scriptLength: t.input.script.length }));
+    const logCalls = r.o.events.filter((e) => e.type === 'agent.tool-called' && e.payload['agentId'] === AGENT).length;
+    const verdicts = [judgeToolCallCount(r.o.summary, scriptedTasks(fixture('conformance-eval-trajectory')), logCalls)];
+    const t = await trialsRun();
+    if (!('skip' in t)) verdicts.push(judgeToolCallCount(t.o.summary, scriptedTasks(t.suite), undefined));
+    if (!verdicts.some((v) => v.applicable)) return softSkip('inapplicable', 'no task entry carries efficiency, which RFC 0244 §C makes optional');
+    for (const v of verdicts) for (const x of v.findings) expect(x.ok, req(ID_EFFICIENCY, 'eval-summary.schema.json efficiency (RFC 0244 §C)', x.message)).toBe(true);
   });
 
   it('a fixture miss under onMiss "fail" fails the trial and is counted', async () => {

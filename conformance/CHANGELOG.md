@@ -1,3 +1,8 @@
+## [2.46.25] — 2026-10-25 — RFC 0244 §C efficiency leg
+
+- **New leg `0244.efficiency-tool-calls` in `v2-eval-trajectory-trials`**, on the existing `conformance-eval-trajectory` run (and the `conformance-eval-trials` run when served), so no extra run. Each task's `efficiency.toolCallCount` must equal its script length, and on the one-trial run the counts must sum to the log's `agent.tool-called` events. Judge in `lib/eval-efficiency-witness.ts`.
+- **Host impact:** openwop-app and MyndHyve run it. A host that reports no `efficiency` records `inapplicable`; one that counts judge or other-agent calls fails.
+
 ## [2.46.24] — 2026-10-25 — RFC 0250 Accepted
 
 - **No assertion changes.** RFC 0250's G6 closes on openwop-app's certified cut `f94471e98` (all six `0250.*` legs `executed-pass`), so the packed `spec/v1/gaps.json` changes.

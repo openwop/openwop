@@ -242,9 +242,9 @@ Defects outside the spec:
       precondition would record `blocked`. Build it with a host collaborator.
 - [ ] **RFC 0244 suite residue.** (G2) a suite-owned counter tool, so §D's "a miss never reaches a live tool" and
       first-unconsumed selection become witnessable rather than seam-gated. (G3) a scripted memory write/read across
-      trials for §B isolation. (G5) a portable "fixtures = run X" reference (follow-up RFC). Legs not yet probed:
-      §B cost counts every trial, §C efficiency counts and the never-gated rule, §D `onMiss: "live"`, §F pairing
-      (needs a `regression` fixture).
+      trials for §B isolation. (G5) a portable "fixtures = run X" reference (follow-up RFC). §C `toolCallCount` has a leg from 2.46.25
+      (`0244.efficiency-tool-calls`). Legs not yet probed: §B cost counts every trial, §C `modelCallCount` / tokens and the
+      never-gated rule, §D `onMiss: "live"`, §F pairing (needs a `regression` fixture).
 - [x] **RFC 0250** `Accepted` 2026-10-25. Tier-1: openwop-app's certified 2.46.23 cut 217c `f94471e98` advertises
       `hostEvents.replay {minRetentionSeconds: 86400}` and passes all six `0250.*` legs (app ADR 0973, EVENT-01). Still owed:
       openwop-sdks opt-in and a non-retrying resync (G5, openwop/openwop-sdks#60).
