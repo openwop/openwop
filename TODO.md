@@ -245,10 +245,9 @@ Defects outside the spec:
       trials for §B isolation. (G5) a portable "fixtures = run X" reference (follow-up RFC). Legs not yet probed:
       §B cost counts every trial, §C efficiency counts and the never-gated rule, §D `onMiss: "live"`, §F pairing
       (needs a `regression` fixture).
-- [ ] **RFC 0250** `Active` 2026-10-24 (window waived by the user; opt-in host-event replay and explicit resync; proposed by
-      Codex, #2035, revised by `/architect`). Suite legs land in 2.46.23 (`v2-host-event-strict-replay`). Host: openwop-app-6a
-      (EVENT-01: a durable store replacing the 1,000-frame process ring). `Accepted` needs its certified cut with the
-      five `0250.*` host legs `executed-pass` (G6). Owed: openwop-sdks opt-in and a non-retrying resync (G5).
+- [x] **RFC 0250** `Accepted` 2026-10-25. Tier-1: openwop-app's certified 2.46.23 cut 217c `f94471e98` advertises
+      `hostEvents.replay {minRetentionSeconds: 86400}` and passes all six `0250.*` legs (app ADR 0973, EVENT-01). Still owed:
+      openwop-sdks opt-in and a non-retrying resync (G5, openwop/openwop-sdks#60).
 - [x] **RFC 0249** `Accepted` 2026-10-24, with **RFC 0096** `Accepted` on the same cut. Tier-1: openwop-app's certified 2.46.21
       cut 209c `34bfefddc` passes all nine `0249.*` legs (app ADR 0970/0972). Still owed: phase 2 read-backs for chain and agent
       packs (G2), the replay-fork rule (G3), and `automation` (G4). MyndHyve advertises `agents.proposals` without the

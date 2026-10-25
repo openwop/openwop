@@ -135,7 +135,7 @@ Grouping below is a reading aid only: it assigns each RFC to the risk class its 
 | [0244](../RFCS/0244-eval-trajectories-trials-and-recorded-fixtures.md) | eval suites grade the tool path, run repeated trials, and fail closed on a fixture miss | `Accepted` | steward override of RFC 0147 §A.6 | tier-2 — one certified host, the independent second host | `not-reviewed` |
 | [0246](../RFCS/0246-trajectory-failure-gates-the-pass.md) | a trajectory-failed trial cannot carry a task or a suite to a pass | `Accepted` | steward override of RFC 0147 §A.6 | tier-2 — MyndHyve | `not-reviewed` |
 | [0249](../RFCS/0249-proposal-operations-and-install-readback.md) | v2 proposal operations and a verifiable install read-back | `Accepted` | steward override of RFC 0147 §A.6 | tier-1 — openwop-app's certified 2 | `not-reviewed` |
-| [0250](../RFCS/0250-opt-in-host-event-replay-and-resync.md) | opt-in host-event replay and explicit resync | `Active` | steward override of RFC 0147 §A.6 | not declared (predates RFC 0174 §B.1, or not yet Accepted) | `not-reviewed` |
+| [0250](../RFCS/0250-opt-in-host-event-replay-and-resync.md) | opt-in host-event replay and explicit resync | `Accepted` | steward override of RFC 0147 §A.6 | tier-1 — openwop-app's certified 2 | `not-reviewed` |
 
 ## Governance (6)
 

@@ -4,10 +4,10 @@
 | --- | --- |
 | **RFC** | 0250 |
 | **Title** | Opt-in host-event replay and explicit resynchronization |
-| **Status** | `Active` |
+| **Status** | `Accepted` |
 | **Author(s)** | David Tufts (@davidscotttufts), proposed by Codex for review |
 | **Created** | 2026-10-24 |
-| **Updated** | 2026-10-24 — **`Draft → Active`, comment window waived by the maintainer** (user instruction 2026-10-24, choosing "Waive it" for RFC 0250); STEWARD OVERRIDE of RFC 0147 §A.6 recorded in `MAINTAINERS.md`. Revised by the steward's `/architect` ruling on the #2035 review: the facet is `{minRetentionSeconds}` (presence is the claim, no `mode`); every MUST is observable through the RFC 0241 trigger; restart, oversize and the no-foreign-lookup rule are not separate MUSTs, because losing a retained event or answering a foreign cursor differently already breaks §B or §C; the retention exceptions are stated; the error row has no details; the rules live in the `hostEvents` facet description. Host: openwop-app (EVENT-01). · 2026-10-24 — initial Draft, proposed by Codex (#2035). |
+| **Updated** | 2026-10-25 — **`Active → Accepted`**; RFC 0156 §B review deferred by steward exemption (2026-10-17). Evidence tier: tier-1 — openwop-app's certified 2.46.23 production cut 217c (build `commit:f94471e98`, revision `openwop-app-backend-01034-r5h`, 487/0/0, `--verify --host-key` VERIFIED) advertises `hostEvents.replay {minRetentionSeconds: 86400}` and records all six `0250.*` legs and the scenario `executed-pass` (25 assertions), as pre-registered. G6 closes. · 2026-10-24 — **`Draft → Active`, comment window waived by the maintainer** (user instruction 2026-10-24, choosing "Waive it" for RFC 0250); STEWARD OVERRIDE of RFC 0147 §A.6 recorded in `MAINTAINERS.md`. Revised by the steward's `/architect` ruling on the #2035 review: the facet is `{minRetentionSeconds}` (presence is the claim, no `mode`); every MUST is observable through the RFC 0241 trigger; restart, oversize and the no-foreign-lookup rule are not separate MUSTs, because losing a retained event or answering a foreign cursor differently already breaks §B or §C; the retention exceptions are stated; the error row has no details; the rules live in the `hostEvents` facet description. Host: openwop-app (EVENT-01). · 2026-10-24 — initial Draft, proposed by Codex (#2035). |
 | **Affects** | `spec/v2/core/events.md` §Host events; `core/capabilities.md`; `core/errors.md` via error registry; `spec/v2/facets/hostEvents.schema.json`; derived capabilities/error envelopes; `api/v2/openapi.yaml` and `asyncapi.yaml` through `scripts/derive-v2-api.py`; conformance; v2 SDKs and hosts |
 | **Compatibility** | `additive` |
 | **Supersedes** | — |
@@ -125,8 +125,8 @@ The motivating host is openwop-app: a 1,000-frame process-local ring and a local
 
 - [x] The facet member, the normative-text entry, the `events.md` pointer, the error row and the derived `streamHostEvents` parameter and `409`.
 - [x] `v2-host-event-strict-replay` with its six legs, judges and self-tests.
-- [ ] A host advertises `hostEvents.replay`, and a certified major-2 bundle records the five `0250.*` host legs `executed-pass`.
-- [ ] openwop-sdks exposes the opt-in and a non-retrying resync (G5).
+- [x] A host advertises `hostEvents.replay`, and a certified major-2 bundle records the five `0250.*` host legs `executed-pass` (openwop-app cut 217c, `f94471e98`).
+- [x] openwop-sdks issue filed for the opt-in and a non-retrying resync (G5, openwop/openwop-sdks#60); the SDK work itself is transferred.
 
 ## References
 
@@ -139,3 +139,4 @@ The motivating host is openwop-app: a 1,000-frame process-local ring and a local
 
 - 2026-10-24 — Draft (openwop#2035, proposed by Codex).
 - 2026-10-24 — Active (comment window waived; STEWARD OVERRIDE of RFC 0147 §A.6, see Updated).
+- 2026-10-25 — Accepted (tier-1, openwop-app cut 217c `f94471e98`; §B review deferred by steward exemption).
