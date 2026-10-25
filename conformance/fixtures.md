@@ -75,6 +75,8 @@ All fixtures MUST advertise:
 | Eval — Trajectory Gate | `conformance-eval-trajectory-gate` | RFC 0246 — two golden tasks scoring 1 at `passScore: 0.6`; `path-matched` keeps its trajectory, `path-wrong` calls a forbidden tool (`v2-eval-trajectory-trials`) | eval run `completed`; `aggregateScore` 1, `gatedAggregateScore` 0.5, suite `passed: false` | ≤ 30s |
 | Eval — Trajectory Gate (mean) | `conformance-eval-trajectory-gate-mean` | RFC 0246 — `trials: {count: 2, passRule: "mean"}`, one golden task scoring 1 that calls a forbidden tool in both trials (`v2-eval-trajectory-trials`) | eval run `completed`; `meanScore` 1, `gatedScore` 0, task `passed: false` | ≤ 30s |
 | Eval — Fixture Error | `conformance-eval-fixture-error` | RFC 0245 — `onMiss: "fail"`; one task calls the same tool twice, served first by an `isError: true` entry, then by a success (`v2-eval-trajectory-trials`) | eval run `completed`; the first call is recorded as a tool error | ≤ 30s |
+| Eval — Counter (live) | `conformance-eval-counter-live` | RFC 0244 §D, G2 — `onMiss: "live"`; one task makes four `conformance.eval:counter` calls that match no entry, so each runs the live counter (`v2-eval-trajectory-trials`) | eval run `completed`; four live `{key, count}` outcomes | ≤ 30s |
+| Eval — Counter (miss) | `conformance-eval-counter-miss` | RFC 0244 §D, G2 — `onMiss: "fail"`; three `inc S` calls against two exact entries, then an unmatched `inc F` (`v2-eval-trajectory-trials`) | eval run `completed`; `{served: 1}`, `{served: 2}`, then two tool errors | ≤ 30s |
 | Dispatch Fan-Out Waves | `conformance-dispatch-fanout-waves` | RFC 0243 §A.3 — a parallel `core.dispatch` (`maxConcurrency: 2`, `wait-all`/`collect`) whose supervisor's `mockDispatchPlan` names three `conformance-delay` children. At most `min(2, maxFanOut)` run at once and none is dropped. Gated on `agents.fanOut` admitting `wait-all` with `collect`. | `completed` | ≤ 30s |
 | Dispatch Per-Item Input | `conformance-dispatch-per-item` | RFC 0243 §A.4 — a sequential `core.dispatch` whose decision dispatches `conformance-dispatch-input-mapping-child` twice with `nextWorkerInputs` `item-a`, `item-b`. At `agents.fanOut.perItemInput: true` each child receives its item; otherwise the dispatch node fails `validation_error` and no child is dispatched. | `completed`, or `failed` without `perItemInput` | ≤ 30s |
 | Dispatch Per-Item Length Mismatch | `conformance-dispatch-per-item-mismatch` | `orchestrator-decision.schema.json` `nextWorkerInputs` — one item for two children. Every dispatch host fails the dispatch node `validation_error` and dispatches no child. | `failed` | ≤ 30s |
@@ -1046,17 +1048,27 @@ The `fixtures/eval-suites/` sub-directory holds `AgentEvalSuite` documents (`../
 Every task targets **the scripted agent `core.conformance.agents.scripted`**. Its contract:
 
 - `input.script` is an ordered list of `{ tool, arguments? }`. The agent makes exactly those tool calls, in order, each emitting `agent.tool-called` with `agentId: "core.conformance.agents.scripted"`, `toolName: tool` and `inputs: arguments`.
-- Each call goes through the host's eval tool boundary. In a task with `fixtures.toolResponses`, the RFC 0244 §D selection and `onMiss` rules apply. Otherwise the host answers the call with its own `arguments`. No scripted call reaches a live tool or an external effect.
+- Each call goes through the host's eval tool boundary. In a task with `fixtures.toolResponses`, the RFC 0244 §D selection and `onMiss` rules apply. Otherwise the host answers the call with its own `arguments`. No scripted call reaches a live tool or an external effect, except a miss on the counter tool under `onMiss: "live"` (below).
 - After the last call the agent decides, and its output is `input.output`.
 
 | Fixture | Facet | What the suite asserts |
 | --- | --- | --- |
 | `conformance-eval-trajectory` | `agents.evalSuite.trajectory` | each task's `trajectory` counts equal `lib/eval-trajectory.ts`'s grade of the script; an unmatched trajectory fails; a `kind: "trajectory"` task scores 1 or 0; the log carries one `agent.tool-called` per scripted call |
 | `conformance-eval-trials` | `agents.evalSuite.trials` | `eval.started.trialCount: 3`; three `eval.scored` per task with `trialIndex` 0..2; the per-task `trials` block and `trialStats` equal the §B formulas. Without the facet: `400 validation_error` at `createRun` |
-| `conformance-eval-fixture-miss` | `agents.evalSuite.fixtureMatching` | `missed` reports `fixtureMissCount: 1`, `passed: false` and `score: 0` (summary and every `eval.scored`); `served` passes with no miss. That no live tool ran is not observable here (RFC 0244 G2) |
+| `conformance-eval-fixture-miss` | `agents.evalSuite.fixtureMatching` | `missed` reports `fixtureMissCount: 1`, `passed: false` and `score: 0` (summary and every `eval.scored`); `served` passes with no miss. That no live tool ran is shown by the counter fixtures below (RFC 0244 G2) |
 | `conformance-eval-trajectory-gate` | `agents.evalSuite.trajectory` | RFC 0246: both tasks keep `score` 1 and `aggregateScore` 1; `path-matched` carries `gatedScore` 1 and `path-wrong` `gatedScore` 0; `gatedAggregateScore` 0.5; suite `passed: false` although `aggregateScore` clears `passScore` 0.6 |
 | `conformance-eval-trajectory-gate-mean` | `agents.evalSuite.trajectory` + `agents.evalSuite.trials` | RFC 0246: two `eval.scored` with `score` 1 and `passed: false`; `trials.meanScore` 1, `gatedScore` 0, task `passed: false`; the summary carries `gatedAggregateScore` |
 | `conformance-eval-fixture-error` | `agents.evalSuite.fixtureErrors` + `agents.evalSuite.fixtureMatching` | RFC 0245: two `agent.tool-called` and two `agent.tool-returned` for `conformance.eval:lookup`, paired by `callId`; the first return carries `error` with non-empty `code` and `message` and no `outcome` (`status: "error"` under `toolHooks.prePostEvents`), the second carries no `error` (`outcome` is optional; not `status: "error"` under tool hooks); `recovers` reports `fixtureMissCount: 0`. Without `fixtureErrors`: `400 validation_error`. That the agent saw an error and no live tool ran is not observable here (RFC 0245 G1, RFC 0244 G2) |
+| `conformance-eval-counter-live` | `agents.evalSuite.fixtureMatching` | run twice, before and after `conformance-eval-counter-miss`: `fixtureMissCount` > 0; the two live `inc L` counts are consecutive; the second run's first `L` is the first run's last plus one (else `blocked`), and its `F` and `S` reads equal the first run's |
+| `conformance-eval-counter-miss` | `agents.evalSuite.fixtureMatching` | the three `inc S` calls return `{served: 1}`, `{served: 2}`, then a tool error; `inc F` returns a tool error. Neither miss moves the live counter |
+
+**The counter tool `conformance.eval:counter` is conformance-RESERVED** (the pattern of `core.conformance.side-effect`). A host that lists either counter fixture in discovery `fixtures` MUST, at its eval tool boundary:
+
+- answer a call that reaches the live tool with inputs `{key, op}` as follows. `inc` adds one to a counter scoped to the caller's owner triple and `key`, then returns `{key, count}`. `read` returns `{key, count}` without changing it. A key never incremented reads `0`.
+- keep that state for at least an hour, across eval runs;
+- record `outcome` on `agent.tool-returned` for every counter call: the live `{key, count}`, or a served entry's `response` verbatim. A miss under `onMiss: "fail"` carries `error` instead.
+
+The counter has no external effect, so serving it is safe on a production tenant. Two concurrent cuts on one tenant make the persistence check fail; the legs then record `blocked`, not a failure.
 
 ## OAuth provider fixtures
 

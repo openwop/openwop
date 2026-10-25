@@ -31,6 +31,22 @@
  *   6. Refusal — a host advertising `agents.evalSuite` without `trials` that
  *      lists `conformance-eval-trials` refuses it at createRun with
  *      `400 validation_error`.
+ *   6a. §C efficiency (2.46.25) — on the trajectory run, and on the trials run
+ *      when served, each task's `efficiency.toolCallCount` equals its script
+ *      length (the mean over identical trials), and on the one-trial run the
+ *      counts sum to the log's `agent.tool-called` events. `efficiency` is
+ *      optional, so a host that reports none records `inapplicable`. Judge in
+ *      `lib/eval-efficiency-witness.ts`. The never-gated rule is not judged:
+ *      no fixture makes efficiency the only difference between two verdicts.
+ *   6b. §D through the counter tool `conformance.eval:counter` (2.46.25, G2),
+ *      gated on `fixtureMatching` and both counter fixtures in discovery.
+ *      Three sequential runs: `conformance-eval-counter-live` (A), then
+ *      `conformance-eval-counter-miss` (B), then the live suite again (C).
+ *      `0244.live-miss-counted` (A's misses ran live and are counted),
+ *      `0244.first-unconsumed` (B serves `{served: 1}`, `{served: 2}`, then a
+ *      tool error), `0244.miss-no-live-call` (the live counters B's misses
+ *      touched read the same in C as in A, once C proves the state persisted).
+ *      Judges in `lib/eval-counter-witness.ts`.
  *
  * RFC 0081 §C, on the `conformance-eval-trajectory` run (2.46.20). Judges in
  * `lib/eval-envelope-witness.ts`.
@@ -84,6 +100,8 @@ import { judgeEvalEnvelope, judgeSummaryServed } from '../lib/eval-envelope-witn
 import { gradeTrajectory, passAtK, passHatK, scoreStderr, withinTolerance, type TrajectorySpec } from '../lib/eval-trajectory.js';
 import { judgeMeanGated, judgeSuiteGated } from '../lib/eval-gate-witness.js';
 import { judgeFixtureErrorReplayed } from '../lib/eval-fixture-error-witness.js';
+import { judgeToolCallCount } from '../lib/eval-efficiency-witness.js';
+import { counterCalls, judgeFirstUnconsumed, judgeLiveMiss, judgeMissNoLiveCall, type CounterCall } from '../lib/eval-counter-witness.js';
 
 const PROFILE = majorProfile(2);
 const UNREADABLE = 'v2 discovery unreachable — /.well-known/openwop did not answer 200 JSON under OpenWOP-Version: 2.0';
@@ -98,6 +116,11 @@ const ID_TRIALS = 'openwop.requirement.0244.trials-per-task';
 const ID_TRIAL_STATS = 'openwop.requirement.0244.trial-stats-formula';
 const ID_MISS = 'openwop.requirement.0244.fixture-miss-fails';
 const ID_REFUSED = 'openwop.requirement.0244.unadvertised-feature-refused';
+const ID_EFFICIENCY = 'openwop.requirement.0244.efficiency-tool-calls';
+const ID_LIVE_MISS = 'openwop.requirement.0244.live-miss-counted';
+const ID_FIRST_UNCONSUMED = 'openwop.requirement.0244.first-unconsumed';
+const ID_NO_LIVE_CALL = 'openwop.requirement.0244.miss-no-live-call';
+const DOC_COUNTER = 'RFC 0244 §D, fixtures.md counter contract';
 const ID_GATED_SHAPE = 'openwop.requirement.0246.gated-fields-shape';
 const ID_MEAN_GATED = 'openwop.requirement.0246.mean-gated';
 const ID_SUITE_GATED = 'openwop.requirement.0246.suite-gated';
@@ -190,7 +213,7 @@ describe('v2 RFC 0244 — wire shape (server-free)', () => {
   });
 
   it('the eval-suite fixtures validate against the v2 suite schema', () => {
-    for (const id of ['conformance-eval-trajectory', 'conformance-eval-trials', 'conformance-eval-fixture-miss', 'conformance-eval-trajectory-gate', 'conformance-eval-trajectory-gate-mean', 'conformance-eval-fixture-error']) {
+    for (const id of ['conformance-eval-trajectory', 'conformance-eval-trials', 'conformance-eval-fixture-miss', 'conformance-eval-trajectory-gate', 'conformance-eval-trajectory-gate-mean', 'conformance-eval-fixture-error', 'conformance-eval-counter-live', 'conformance-eval-counter-miss']) {
       const r = suiteSchema(fixture(id));
       expect(r.ok, req(ID_FIXTURES, 'fixtures.md §eval-suites', `${id} MUST validate: ${r.errors}`)).toBe(true);
     }
@@ -309,6 +332,64 @@ describe('v2 RFC 0244 — host behaviour', () => {
     const stats = isRecord(o.summary['trialStats']) ? o.summary['trialStats'] : {};
     const se = scoreStderr(means);
     if (se !== undefined) expect(withinTolerance(Number(stats['scoreStderr']), se), req(ID_TRIAL_STATS, DOC, `trialStats.scoreStderr MUST equal sd(per-task means)/√T within 1e-9 relative (got ${String(stats['scoreStderr'])}, want ${se})`)).toBe(true);
+  });
+
+  it('efficiency.toolCallCount counts the scripted agent.tool-called events (§C)', async () => {
+    const r = await trajectoryRun();
+    if ('skip' in r) return softSkip(...r.skip);
+    const scriptedTasks = (s: Suite) => s.tasks.map((t) => ({ taskId: t.taskId, scriptLength: t.input.script.length }));
+    const logCalls = r.o.events.filter((e) => e.type === 'agent.tool-called' && e.payload['agentId'] === AGENT).length;
+    const verdicts = [judgeToolCallCount(r.o.summary, scriptedTasks(fixture('conformance-eval-trajectory')), logCalls)];
+    const t = await trialsRun();
+    if (!('skip' in t)) verdicts.push(judgeToolCallCount(t.o.summary, scriptedTasks(t.suite), undefined));
+    if (!verdicts.some((v) => v.applicable)) return softSkip('inapplicable', 'no task entry carries efficiency, which RFC 0244 §C makes optional');
+    for (const v of verdicts) for (const x of v.findings) expect(x.ok, req(ID_EFFICIENCY, 'eval-summary.schema.json efficiency (RFC 0244 §C)', x.message)).toBe(true);
+  });
+
+  type CounterRuns = { skip: [Parameters<typeof softSkip>[0], string] } | { a: CounterCall[]; b: CounterCall[]; c: CounterCall[]; aMisses: unknown };
+  let counterSeq: Promise<CounterRuns> | undefined;
+  /** A → B → C, strictly in order, once per worker: the three counter legs read the same runs. */
+  function counterRuns(): Promise<CounterRuns> {
+    counterSeq ??= (async (): Promise<CounterRuns> => {
+      const { doc, facet } = await evalSuiteFacet();
+      if (!doc) return { skip: ['blocked', UNREADABLE] };
+      if (facet?.['fixtureMatching'] !== true) return { skip: ['inapplicable', 'the host does not advertise agents.evalSuite.fixtureMatching'] };
+      for (const id of ['conformance-eval-counter-live', 'conformance-eval-counter-miss']) {
+        if (!isFixtureAdvertised(id)) return { skip: ['inapplicable', `the host does not advertise fixture ${id}, its opt-in to the counter-tool contract`] };
+      }
+      const a = await runSuiteOnce('conformance-eval-counter-live');
+      if (a.kind === 'skip') return { skip: [a.disposition, `run A: ${a.reason}`] };
+      const b = await runSuiteOnce('conformance-eval-counter-miss');
+      if (b.kind === 'skip') return { skip: [b.disposition, `run B: ${b.reason}`] };
+      const c = await runSuiteOnce('conformance-eval-counter-live');
+      if (c.kind === 'skip') return { skip: [c.disposition, `run C: ${c.reason}`] };
+      return { a: counterCalls(a.events, AGENT), b: counterCalls(b.events, AGENT), c: counterCalls(c.events, AGENT), aMisses: taskEntry(a.summary, 'live-counter')?.['fixtureMissCount'] };
+    })();
+    return counterSeq;
+  }
+
+  it('a miss under onMiss "live" reaches the live counter and is counted (§D)', async () => {
+    const r = await counterRuns();
+    if ('skip' in r) return softSkip(...r.skip);
+    const v = judgeLiveMiss(r.a, r.aMisses);
+    if (v.kind === 'blocked') return softSkip('blocked', v.reason);
+    for (const x of v.findings) expect(x.ok, req(ID_LIVE_MISS, DOC_COUNTER, x.message)).toBe(true);
+  });
+
+  it('repeated calls are served the first unconsumed fixture entry, once each (§D)', async () => {
+    const r = await counterRuns();
+    if ('skip' in r) return softSkip(...r.skip);
+    const v = judgeFirstUnconsumed(r.b);
+    if (v.kind === 'blocked') return softSkip('blocked', v.reason);
+    for (const x of v.findings) expect(x.ok, req(ID_FIRST_UNCONSUMED, DOC_COUNTER, x.message)).toBe(true);
+  });
+
+  it('a miss under onMiss "fail" never reaches the live counter (§D)', async () => {
+    const r = await counterRuns();
+    if ('skip' in r) return softSkip(...r.skip);
+    const v = judgeMissNoLiveCall(r.a, r.b, r.c);
+    if (v.kind === 'blocked') return softSkip('blocked', v.reason);
+    for (const x of v.findings) expect(x.ok, req(ID_NO_LIVE_CALL, DOC_COUNTER, x.message)).toBe(true);
   });
 
   it('a fixture miss under onMiss "fail" fails the trial and is counted', async () => {

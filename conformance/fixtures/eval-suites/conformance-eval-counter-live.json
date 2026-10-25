@@ -1,0 +1,68 @@
+{
+  "suiteId": "core.openwop.evals.conformance-eval-counter-live",
+  "version": "1.0.0",
+  "targetAgentId": "core.conformance.agents.scripted",
+  "modes": [
+    "golden"
+  ],
+  "tasks": [
+    {
+      "taskId": "live-counter",
+      "input": {
+        "script": [
+          {
+            "tool": "conformance.eval:counter",
+            "arguments": {
+              "key": "L",
+              "op": "inc"
+            }
+          },
+          {
+            "tool": "conformance.eval:counter",
+            "arguments": {
+              "key": "L",
+              "op": "inc"
+            }
+          },
+          {
+            "tool": "conformance.eval:counter",
+            "arguments": {
+              "key": "F",
+              "op": "read"
+            }
+          },
+          {
+            "tool": "conformance.eval:counter",
+            "arguments": {
+              "key": "S",
+              "op": "read"
+            }
+          }
+        ],
+        "output": "done"
+      },
+      "expected": {
+        "kind": "golden",
+        "match": {
+          "strategy": "contains",
+          "value": "done"
+        }
+      },
+      "fixtures": {
+        "onMiss": "live",
+        "toolResponses": [
+          {
+            "tool": "conformance.eval:lookup",
+            "args": {
+              "orderId": "o-1"
+            },
+            "argsMatch": "exact",
+            "response": {
+              "status": "shipped"
+            }
+          }
+        ]
+      }
+    }
+  ]
+}
