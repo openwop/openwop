@@ -1,3 +1,7 @@
+## [2.46.24] — 2026-10-25 — RFC 0250 Accepted
+
+- **No assertion changes.** RFC 0250's G6 closes on openwop-app's certified cut `f94471e98` (all six `0250.*` legs `executed-pass`), so the packed `spec/v1/gaps.json` changes.
+
 ## [2.46.23] — 2026-10-24 — RFC 0250 Active: opt-in host-event replay
 
 - **New scenario `v2-host-event-strict-replay`.** The legs are `0250.shape` (server-free), `resume-backlog`, `ephemeral-not-replayed`, `cursor-refused`, `refusal-uniform` and `legacy-unchanged`. The suite emits durable D1, D2, ephemeral E and durable D3 through the RFC 0241 trigger, then reconnects with `replay=required` from D1 and emits D4 live. Judges are in `lib/host-event-replay-witness.ts`; their self-tests fail each wrong host answer, including a foreign cursor answered differently (an oracle).

@@ -1,7 +1,7 @@
 {
   "$schema": "./gaps.schema.json",
   "version": 1,
-  "updated": "2026-10-24",
+  "updated": "2026-10-25",
   "witnessClasses": [
     "witnessable-unaided",
     "witnessable-gated",
@@ -15031,8 +15031,8 @@
       "surface": "No host advertises `hostEvents.replay`.",
       "witness": "unclassified",
       "requirementId": null,
-      "disposition": "externally-gated",
-      "target": "a",
+      "disposition": "closed",
+      "target": null,
       "sources": [
         {
           "file": "RFCS/registers/0250-opt-in-host-event-replay-and-resync.gaps.md",
