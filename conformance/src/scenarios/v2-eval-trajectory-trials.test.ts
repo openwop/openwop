@@ -38,6 +38,15 @@
  *      optional, so a host that reports none records `inapplicable`. Judge in
  *      `lib/eval-efficiency-witness.ts`. The never-gated rule is not judged:
  *      no fixture makes efficiency the only difference between two verdicts.
+ *   6c. §C model usage and §B cost (2.46.26), on the same runs. The per-task
+ *      `modelCallCount`, `inputTokens` and `outputTokens`, times the trial
+ *      count, sum to the agent's `provider.usage` inside its
+ *      `agent.invocation.*` brackets (judge and delegate calls excluded), or do
+ *      not exceed the run's usage when the host emits no brackets
+ *      (`0244.efficiency-model-usage`). On the trials run, `totalCostUsd` is
+ *      at least the agent's priced usage over all three trials
+ *      (`0244.cost-every-trial`). The scripted agent need not call a model, so
+ *      a run with no usage, no brackets or no prices records `inapplicable`.
  *   6b. §D through the counter tool `conformance.eval:counter` (2.46.25, G2),
  *      gated on `fixtureMatching` and both counter fixtures in discovery.
  *      Three sequential runs: `conformance-eval-counter-live` (A), then
@@ -100,7 +109,7 @@ import { judgeEvalEnvelope, judgeSummaryServed } from '../lib/eval-envelope-witn
 import { gradeTrajectory, passAtK, passHatK, scoreStderr, withinTolerance, type TrajectorySpec } from '../lib/eval-trajectory.js';
 import { judgeMeanGated, judgeSuiteGated } from '../lib/eval-gate-witness.js';
 import { judgeFixtureErrorReplayed } from '../lib/eval-fixture-error-witness.js';
-import { judgeToolCallCount } from '../lib/eval-efficiency-witness.js';
+import { agentUsage, judgeCostEveryTrial, judgeModelUsage, judgeToolCallCount } from '../lib/eval-efficiency-witness.js';
 import { counterCalls, judgeFirstUnconsumed, judgeLiveMiss, judgeMissNoLiveCall, type CounterCall } from '../lib/eval-counter-witness.js';
 
 const PROFILE = majorProfile(2);
@@ -117,6 +126,8 @@ const ID_TRIAL_STATS = 'openwop.requirement.0244.trial-stats-formula';
 const ID_MISS = 'openwop.requirement.0244.fixture-miss-fails';
 const ID_REFUSED = 'openwop.requirement.0244.unadvertised-feature-refused';
 const ID_EFFICIENCY = 'openwop.requirement.0244.efficiency-tool-calls';
+const ID_MODEL_USAGE = 'openwop.requirement.0244.efficiency-model-usage';
+const ID_COST_TRIALS = 'openwop.requirement.0244.cost-every-trial';
 const ID_LIVE_MISS = 'openwop.requirement.0244.live-miss-counted';
 const ID_FIRST_UNCONSUMED = 'openwop.requirement.0244.first-unconsumed';
 const ID_NO_LIVE_CALL = 'openwop.requirement.0244.miss-no-live-call';
@@ -344,6 +355,25 @@ describe('v2 RFC 0244 — host behaviour', () => {
     if (!('skip' in t)) verdicts.push(judgeToolCallCount(t.o.summary, scriptedTasks(t.suite), undefined));
     if (!verdicts.some((v) => v.applicable)) return softSkip('inapplicable', 'no task entry carries efficiency, which RFC 0244 §C makes optional');
     for (const v of verdicts) for (const x of v.findings) expect(x.ok, req(ID_EFFICIENCY, 'eval-summary.schema.json efficiency (RFC 0244 §C)', x.message)).toBe(true);
+  });
+
+  it('efficiency model and token counts match the agent\'s provider.usage (§C)', async () => {
+    const r = await trajectoryRun();
+    if ('skip' in r) return softSkip(...r.skip);
+    const ids = (s: Suite) => s.tasks.map((t) => t.taskId);
+    const verdicts = [judgeModelUsage(r.o.summary, ids(fixture('conformance-eval-trajectory')), agentUsage(r.o.events, AGENT), 1)];
+    const t = await trialsRun();
+    if (!('skip' in t)) verdicts.push(judgeModelUsage(t.o.summary, ids(t.suite), agentUsage(t.o.events, AGENT), t.n));
+    if (!verdicts.some((v) => v.applicable)) return softSkip('inapplicable', 'no run carries both a reported model count and provider.usage to check it against (the scripted agent need not call a model; RFC 0244 §C fields are optional)');
+    for (const v of verdicts) for (const x of v.findings) expect(x.ok, req(ID_MODEL_USAGE, 'eval-summary.schema.json efficiency (RFC 0244 §C)', x.message)).toBe(true);
+  });
+
+  it('totalCostUsd counts every trial (§B)', async () => {
+    const t = await trialsRun();
+    if ('skip' in t) return softSkip(...t.skip);
+    const v = judgeCostEveryTrial(t.o.summary, agentUsage(t.o.events, AGENT));
+    if (!v.applicable) return softSkip('inapplicable', 'the trials run carries no totalCostUsd, no agent.invocation.* brackets, or an unpriced provider.usage, so the per-trial cost is not observable');
+    for (const x of v.findings) expect(x.ok, req(ID_COST_TRIALS, 'agent-eval-suite.schema.json thresholds.maxCostUsd, eval-summary.schema.json totalCostUsd (RFC 0244 §B)', x.message)).toBe(true);
   });
 
   type CounterRuns = { skip: [Parameters<typeof softSkip>[0], string] } | { a: CounterCall[]; b: CounterCall[]; c: CounterCall[]; aMisses: unknown };
