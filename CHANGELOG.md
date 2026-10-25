@@ -32,6 +32,10 @@ Entries before this file was condensed carried full development detail. That tex
 
 - **RFC 0246 Active (safety fix, `GHSA-ffx7-pm5h-v6pq`): a trial that failed its trajectory cannot carry a task or a suite to a pass.** The `mean` task rule and suite `passed` read a gating score that counts it 0; reported scores are unchanged. 90-day window waived by recorded STEWARD OVERRIDE.
 
+## [2.46.25] — 2026-10-25 — RFC 0244 efficiency and counter-tool legs
+
+- **RFC 0244 suite residue:** a §C leg checks `efficiency.toolCallCount` against the scripted calls, and the reserved counter tool `conformance.eval:counter` with two fixtures makes §D's no-live-call and first-unconsumed rules observable (G2). No host lists the counter fixtures yet.
+
 ## [2.46.24] — 2026-10-25 — RFC 0250 Accepted
 
 - **RFC 0250 G6 closes** on openwop-app's certified cut `f94471e98`, which lands RFC 0250 at `Accepted`; the packed gap register changes, so the suite moves to 2.46.24. No assertion changes.
