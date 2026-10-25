@@ -1,3 +1,9 @@
+## [2.46.26] — 2026-10-25 — RFC 0244 model-usage and cost legs
+
+- **New leg `0244.efficiency-model-usage` in `v2-eval-trajectory-trials`**, on the existing trajectory and trials runs. Per-task `modelCallCount`, `inputTokens` and `outputTokens`, times the trial count, must sum to the agent's `provider.usage` inside its `agent.invocation.*` brackets (judge and delegate calls excluded); without brackets they must not exceed the run's usage.
+- **New leg `0244.cost-every-trial`**, on the trials run: `totalCostUsd` must be at least the agent's priced usage over all trials. Judges in `lib/eval-efficiency-witness.ts`.
+- **Host impact:** a run with no model usage, no brackets or unpriced usage records `inapplicable`; one that counts judge calls as the agent's, or prices one trial, fails.
+
 ## [2.46.25] — 2026-10-25 — RFC 0244 §C efficiency leg
 
 - **New leg `0244.efficiency-tool-calls` in `v2-eval-trajectory-trials`**, on the existing `conformance-eval-trajectory` run (and the `conformance-eval-trials` run when served), so no extra run. Each task's `efficiency.toolCallCount` must equal its script length, and on the one-trial run the counts must sum to the log's `agent.tool-called` events. Judge in `lib/eval-efficiency-witness.ts`.
