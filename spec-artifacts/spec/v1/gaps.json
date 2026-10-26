@@ -14555,8 +14555,8 @@
       "surface": "There is no conformance *tool* with an observable effect counter. `mock-agent` scripts tool results and invokes nothing, and `core.conformance.side-effect` is a node. So \"a miss never reaches the live tool\" and \"first-unconsumed selection\" cannot be caused from outside.",
       "witness": "unclassified",
       "requirementId": null,
-      "disposition": "transferred",
-      "target": "TODO.md",
+      "disposition": "closed",
+      "target": null,
       "sources": [
         {
           "file": "RFCS/registers/0244-eval-trajectories-trials-and-recorded-fixtures.gaps.md",
@@ -15037,6 +15037,57 @@
         {
           "file": "RFCS/registers/0250-opt-in-host-event-replay-and-resync.gaps.md",
           "token": "G6"
+        }
+      ]
+    },
+    {
+      "id": "openwop.gap.0251.1",
+      "rfc": "0251",
+      "local": "G1",
+      "section": "§B, §C",
+      "surface": "Root properties or a `configurable` section; refusal code and reasons",
+      "witness": "unclassified",
+      "requirementId": null,
+      "disposition": "closed",
+      "target": null,
+      "sources": [
+        {
+          "file": "RFCS/registers/0251-eval-run-mode-and-baseline-selection.gaps.md",
+          "token": "G1"
+        }
+      ]
+    },
+    {
+      "id": "openwop.gap.0251.2",
+      "rfc": "0251",
+      "local": "G2",
+      "section": "§Conformance",
+      "surface": "No host advertises `baselineSelection` or lists the two regression fixtures.",
+      "witness": "unclassified",
+      "requirementId": null,
+      "disposition": "externally-gated",
+      "target": "certified-host-cut",
+      "sources": [
+        {
+          "file": "RFCS/registers/0251-eval-run-mode-and-baseline-selection.gaps.md",
+          "token": "G2"
+        }
+      ]
+    },
+    {
+      "id": "openwop.gap.0251.3",
+      "rfc": "0251",
+      "local": "G3",
+      "section": "§B",
+      "surface": "SDKs expose the two properties and read the facet before sending them.",
+      "witness": "unclassified",
+      "requirementId": null,
+      "disposition": "transferred",
+      "target": "TODO.md",
+      "sources": [
+        {
+          "file": "RFCS/registers/0251-eval-run-mode-and-baseline-selection.gaps.md",
+          "token": "G3"
         }
       ]
     },

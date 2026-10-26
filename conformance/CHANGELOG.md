@@ -1,3 +1,9 @@
+## [2.46.28] — 2026-10-26 — RFC 0244 G2 closed; RFC 0251 and the §F legs
+
+- **New scenario `v2-eval-regression-baseline` (RFC 0251)** over two fixtures sharing one `suiteId` (`conformance-eval-regression-base` / `-candidate`), whose paired scores are equal while the aggregates differ by 1/3: `0251.shape` (server-free), `baseline-echoed`, `baseline-refused`, `baseline-uniform` (needs `OPENWOP_TEST_TENANT_B_API_KEY`, else `blocked`), `fields-refused`, and RFC 0244 §F `0244.regression-paired` and `regression-no-false-verdict`. Judges in `lib/eval-regression-witness.ts`.
+- **Host impact:** opt-in. The legs need `agents.evalSuite.baselineSelection` and both fixtures listed; no host does yet, so they record `inapplicable`.
+- **RFC 0244's G2 closes** on openwop-app's certified cut `fc9f666ed` (the three counter legs and `0244.efficiency-tool-calls` `executed-pass`), so the packed `spec/v1/gaps.json` changes.
+
 ## [2.46.27] — 2026-10-25 — RFC 0244 never-gated and trial-isolation legs
 
 - **New leg `0244.efficiency-never-gated` in `v2-eval-trajectory-trials`**, on the new fixture `conformance-eval-efficiency-ungated`: tasks `lean` (one scripted call) and `busy` (eight) share an output and an expectation, so `busy` must pass with `lean`'s score and the suite must pass at `passScore` 1. `blocked` when the calls never ran or `lean` fails. Judge `judgeNeverGated` in `lib/eval-efficiency-witness.ts`.

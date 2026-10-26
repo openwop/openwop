@@ -240,16 +240,20 @@ Defects outside the spec:
       no `deployment.promoted`, and the record unchanged. It needs a host that advertises `agents.deployment` and `evalSuite.trajectory`
       with a promotable version of the scripted agent. Today that is MyndHyve only, with no session to prove it, and an unmet
       precondition would record `blocked`. Build it with a host collaborator.
-- [ ] **RFC 0244 suite residue.** (G2) the counter tool `conformance.eval:counter` and its two fixtures land in 2.46.25
-      (`0244.live-miss-counted`, `first-unconsumed`, `miss-no-live-call`); G2 closes on a certified host row (openwop-app-6a builds it). (G3) a scripted memory write/read across
+- [ ] **RFC 0251** `Active` 2026-10-26 (window waived by the user): `createRun` `evalModes` / `baselineRunId`, facet
+      `agents.evalSuite.baselineSelection`; legs in `v2-eval-regression-baseline` (suite 2.46.28). Owed: (G2) a certified host cut
+      passing the `0251.*` and `0244.regression-*` legs (openwop-app-6a maps its `configurable` path onto the root properties);
+      (G3) an openwop-sdks issue for the two properties.
+- [ ] **RFC 0244 suite residue.** (G2) CLOSED 2026-10-26: the counter tool and its two fixtures (2.46.25) pass on openwop-app's
+      certified cut 226c (`fc9f666ed`, ADR 0977): `0244.live-miss-counted`, `first-unconsumed`, `miss-no-live-call`. (G3) a scripted memory write/read across
       trials for §B isolation. (G5) a portable "fixtures = run X" reference (follow-up RFC). §C `toolCallCount` has a leg from 2.46.25
       (`0244.efficiency-tool-calls`); 2.46.26 adds `0244.efficiency-model-usage` (§C model and token counts) and
       `0244.cost-every-trial` (§B); 2.46.27 adds `0244.efficiency-never-gated` (§C) and `0244.trial-memory-isolated`
       (§B, G3, through the reserved memory tool `conformance.eval:memory`). None is probed by a host yet: a host lists
       `conformance-eval-efficiency-ungated` / `conformance-eval-memory-isolation` to opt in. §F pairing has no leg and
       cannot get one yet: the eval `createRun` body has no field naming the baseline run (RFC 0081 carries
-      `baselineRunId` only on `eval.started` and the summary), so the suite cannot cause a pairing. That needs a
-      follow-up RFC adding an optional baseline field, gated on `regressionVerdict`.
+      `baselineRunId` only on `eval.started` and the summary), so the suite cannot cause a pairing. RFC 0251
+      (2.46.28) adds the optional `baselineRunId`, gated on `agents.evalSuite.baselineSelection`, and the §F legs.
 - [x] **RFC 0250** `Accepted` 2026-10-25. Tier-1: openwop-app's certified 2.46.23 cut 217c `f94471e98` advertises
       `hostEvents.replay {minRetentionSeconds: 86400}` and passes all six `0250.*` legs (app ADR 0973, EVENT-01). Still owed:
       openwop-sdks opt-in and a non-retrying resync (G5, openwop/openwop-sdks#60).
