@@ -123,7 +123,7 @@ openwop-app already validates and pairs as §C and §D require (`createEvalRun.t
 - [ ] The two `createRun` properties (derived `api/v2/openapi.yaml`) and the facet member (derived capabilities schema), with the rules in their descriptions.
 - [ ] `v2-eval-regression-baseline`, its two fixtures in `fixtures.md`, judges with self-tests.
 - [ ] A host advertises `baselineSelection`, and a certified major-2 bundle records the `0251.*` host legs and the two `0244.regression-*` legs `executed-pass`.
-- [ ] openwop-sdks issue filed for the two properties (G3).
+- [x] The two properties in the v2 SDKs (G3): openwop-sdks #62, 2026-10-26, implemented instead of filed as an issue.
 
 ## References
 
