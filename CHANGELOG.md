@@ -32,6 +32,10 @@ Entries before this file was condensed carried full development detail. That tex
 
 - **RFC 0246 Active (safety fix, `GHSA-ffx7-pm5h-v6pq`): a trial that failed its trajectory cannot carry a task or a suite to a pass.** The `mean` task rule and suite `passed` read a gating score that counts it 0; reported scores are unchanged. 90-day window waived by recorded STEWARD OVERRIDE.
 
+## [2.46.31] — 2026-10-26 — RFC 0252 Active
+
+- **RFC 0252 Active (window waived).** `createRun` gains optional `fixtureRuns`, mapping a suite task to a prior run whose recorded tool calls become its fixtures, served fail-closed. Gated on `agents.evalSuite.recordedFixtures`; an unusable source gets one `400` that never echoes the id.
+
 ## [2.46.30] — 2026-10-26 — RFC 0252 Draft
 
 - **RFC 0252 filed `Draft`.** Optional `createRun` `fixtureRuns` maps a suite task to a prior run; the host derives that task's fixtures from the run's recorded tool calls and serves them under `onMiss: "fail"` (facet `recordedFixtures`). Window to 2026-11-02, no waiver (RFC 0147 §A.6).

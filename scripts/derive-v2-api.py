@@ -788,8 +788,16 @@ def v2_openapi_and_seams():
             'description': ('RFC 0251 — the prior eval run a `regression` run is compared against; requires `regression` in '
                             '`evalModes`. Only to a host advertising `agents.evalSuite.baselineSelection`. An unusable baseline '
                             'is refused `400 validation_error`, identically whatever the reason.')}
+        branch['properties']['fixtureRuns'] = {
+            'type': 'object', 'minProperties': 1,
+            'propertyNames': {'type': 'string', 'minLength': 1},
+            'additionalProperties': {'$ref': '../../schemas/v2/ids.schema.json#/$defs/runId'},
+            'description': ('RFC 0252 — maps a suite `taskId` to a prior run whose recorded tool calls become that task\'s '
+                            'fixtures, served under `onMiss` `fail`. Only with `mode` `eval`, and only to a host advertising '
+                            '`agents.evalSuite.recordedFixtures`, whose description holds the refusal rules. An unusable source '
+                            'run is refused `400 validation_error`, identically whatever the reason.')}
     except (KeyError, TypeError, StopIteration):
-        raise SystemExit('derive-v2-api: createRun eval body not found (RFC 0251 patch)')
+        raise SystemExit('derive-v2-api: createRun eval body not found (RFC 0251/0252 patch)')
     # poll cursor + interrupt token grammar + per-operation header + one-member enums
     for key, item in doc['paths'].items():
         for method, op in list(item.items()):

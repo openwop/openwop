@@ -4,10 +4,10 @@
 | --- | --- |
 | **RFC** | 0252 |
 | **Title** | An eval task takes its fixtures from a recorded run |
-| **Status** | `Draft` |
+| **Status** | `Active` |
 | **Author(s)** | David Tufts (@davidscotttufts) |
 | **Created** | 2026-10-26 |
-| **Updated** | 2026-10-26 — filed `Draft` for the 7-day normative-addition comment window (ends 2026-11-02). No waiver: the RFC touches tenant isolation and the replay of recorded tool outcomes, so RFC 0147 §A.6 requires the full window. Follows RFC 0244 gap G5 (UQ 7). |
+| **Updated** | 2026-10-26 — **`Draft` → `Active`, comment window waived by the maintainer** (user instruction 2026-10-26: "Waive the comment window for RFC 0252 and work with other sessions to move it to accepted"); STEWARD OVERRIDE of RFC 0147 §A.6 recorded in `MAINTAINERS.md`. The five Unresolved questions are ruled below. The schema, facet, derived API, scenario `v2-eval-recorded-fixtures`, three fixtures and invariant `eval-fixture-run-tenant-scoped` land with suite 2.46.31. Filed `Draft` the same day (#2046). |
 | **Affects** | `api/openapi.yaml` `createRun` (one optional body property; derived `api/v2/openapi.yaml`) · `spec/v2/facets/agents.schema.json` (optional `agents.evalSuite.recordedFixtures`; derived `schemas/v2/capabilities.schema.json`) · `schemas/v2/run-event-payloads.schema.json` (optional `fixtureRuns` on `eval.started`) · `SECURITY/invariants.yaml` (one proposed row) · conformance (new `v2-eval-recorded-fixtures`, three eval-suite fixtures) · v2 SDKs · hosts advertising `agents.evalSuite` |
 | **Compatibility** | `additive` per `COMPATIBILITY.md` §2.4 |
 | **Supersedes** | — |
@@ -102,7 +102,7 @@ fixtureRuns:
 
 **Additive** (`COMPATIBILITY.md` §2.4): one optional property on the closed `createRun` body, one optional boolean on a closed facet, and one optional property on a closed event payload. A request without `fixtureRuns` is handled exactly as today. A host that does not advertise `recordedFixtures` is unaffected, and a client that reads the facet never sends the property to it. No MUST relaxes and no error code changes.
 
-**RFC 0147 §A.** The §A.1 freeze on optional wire capabilities is spent (struck 2026-08-20), so it does not bind. §A.6 does: the RFC touches tenant isolation (§C) and replays recorded tool outcomes (§D, §E), so it takes the full comment window with no waiver.
+**RFC 0147 §A.** The §A.1 freeze on optional wire capabilities is spent (struck 2026-08-20), so it does not bind. §A.6 does: the RFC touches tenant isolation (§C) and replays recorded tool outcomes (§D, §E), so it takes the full comment window. The maintainer waived it on 2026-10-26; that is a STEWARD OVERRIDE recorded in `MAINTAINERS.md`, and the evidence gate for `Accepted` is not waived.
 
 ## Conformance
 
@@ -154,21 +154,23 @@ The replay leg can fail: a host that ignores `fixtureRuns` answers the replay's 
 
 ## Unresolved questions
 
-1. **Calls across several invocations.** A source run may invoke the agent more than once. §D takes every call in sequence order, which a consuming matcher handles. Should a client be able to name one invocation instead?
-2. **`argsMatch` for derived entries.** `exact` is the safe default. Should the request let a client relax it to `subset`, for agents that add a timestamp to their inputs?
-3. **Memory.** §D derives tool answers only. Should the source run's memory reads also seed `memorySeed`?
-4. **An eval run as the source.** §C allows it; its calls may themselves have been fixture-served. Is replaying a replay useful, or confusing enough to refuse?
-5. **Model answers.** This RFC replays the tool boundary only; the agent's model calls run live. A recorded model boundary would be a separate RFC.
+All five were ruled on 2026-10-26 at `Draft → Active` by the steward:
+
+1. **Calls across several invocations:** every call of every invocation of the eval's `agentId`, in sequence order. A client cannot name one invocation; a consuming matcher handles repeats.
+2. **`argsMatch` for derived entries:** `exact` only. Relaxing it is a later, additive request field if an agent needs it.
+3. **Memory:** not seeded. §D derives tool answers only.
+4. **An eval run as the source:** allowed. §C asks only that the run invoked the agent and that the host holds its calls; the derivation reads what the agent saw, live or fixture-served. The scenario's source runs are eval runs.
+5. **Model answers:** out of scope; the agent's model calls run live. A recorded model boundary would be a separate RFC.
 
 ## Implementation notes (non-normative)
 
-openwop-app already records `agent.tool-called` / `agent.tool-returned` with `inputs` and `outcome` for the scripted agent and keeps the as-executed boundary for its eval fixtures, so derivation is a read of its own event store at run-create. A host that keeps only `argsHash` cannot derive `exact` entries and SHOULD NOT advertise `recordedFixtures`. Sequencing: `Draft` → window closes 2026-11-02 → `Active` with the schema, facet, derived API, scenario, fixtures and invariant → `Accepted` on a certified host cut. SDKs follow with the property and a facet read (G3).
+openwop-app already records `agent.tool-called` / `agent.tool-returned` with `inputs` and `outcome` for the scripted agent and keeps the as-executed boundary for its eval fixtures, so derivation is a read of its own event store at run-create. A host that keeps only `argsHash` cannot derive `exact` entries and SHOULD NOT advertise `recordedFixtures`. Sequencing: `Draft` → `Active` 2026-10-26 (window waived) with the schema, facet, derived API, scenario, fixtures and invariant → `Accepted` on a certified host cut (openwop-app is implementing the host side). SDKs follow with the property and a facet read (G3).
 
 ## Acceptance criteria
 
-- [ ] The `createRun` property (derived `api/v2/openapi.yaml`), the facet member (derived capabilities schema) and the `eval.started` property, with the rules in their descriptions.
-- [ ] `v2-eval-recorded-fixtures`, its three fixtures in `fixtures.md`, judges with self-tests.
-- [ ] The invariant `eval-fixture-run-tenant-scoped` and the two threat-model lines.
+- [x] The `createRun` property (derived `api/v2/openapi.yaml`), the facet member (derived capabilities schema) and the `eval.started` property, with the rules in their descriptions.
+- [x] `v2-eval-recorded-fixtures`, its three fixtures in `fixtures.md`, judges with self-tests.
+- [x] The invariant `eval-fixture-run-tenant-scoped` and the two threat-model lines.
 - [ ] A host advertises `recordedFixtures`, and a certified major-2 bundle records the `0252.*` host legs `executed-pass`.
 - [ ] The three v2 SDKs carry `fixtureRuns` (G3).
 

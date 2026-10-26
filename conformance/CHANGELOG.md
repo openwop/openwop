@@ -1,3 +1,8 @@
+## [2.46.31] — 2026-10-26 — RFC 0252 Active
+
+- **New scenario `v2-eval-recorded-fixtures` (RFC 0252)** over three fixtures and the counter tool, run in order source, replay (`fixtureRuns: {record: source}`), drift, then the source again as a probe: `0252.shape` (server-free), `source-replayed`, `drift-fails-closed`, `source-refused`, `source-uniform`, `fields-refused`. Judges in `lib/eval-recorded-fixtures-witness.ts` with self-tests.
+- **Host impact:** opt-in. The legs need `agents.evalSuite.recordedFixtures`, `fixtureMatching` and the three fixtures listed; no host does yet, so they record `inapplicable`. Listing a recorded fixture opts the host in to the counter-tool contract.
+
 ## [2.46.30] — 2026-10-26 — RFC 0252 Draft (no assertion changes)
 
 - **No scenario or assertion changes.** RFC 0252 (`Draft`) adds its gap register and RFC 0244's G5 row moves to it, so the packed `spec/v1/gaps.json` changes.

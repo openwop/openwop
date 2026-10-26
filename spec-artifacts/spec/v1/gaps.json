@@ -15099,8 +15099,8 @@
       "surface": "The five Unresolved questions (several invocations, `argsMatch`, memory, an eval run as source, model answers).",
       "witness": "unclassified",
       "requirementId": null,
-      "disposition": "transferred",
-      "target": "RFC",
+      "disposition": "closed",
+      "target": null,
       "sources": [
         {
           "file": "RFCS/registers/0252-eval-fixtures-from-a-recorded-run.gaps.md",
@@ -15113,7 +15113,7 @@
       "rfc": "0252",
       "local": "G2",
       "section": "§Conformance",
-      "surface": "No host advertises `recordedFixtures` or lists the three fixtures; the scenario and fixtures are not written.",
+      "surface": "No host advertises `recordedFixtures` or lists the three fixtures.",
       "witness": "unclassified",
       "requirementId": null,
       "disposition": "externally-gated",

@@ -6,7 +6,7 @@
 
 RFC 0156 §B: RFCs affecting auth, identity, tenant isolation, secrets, packs, execution sandboxing, idempotency, replay, external effects, conformance/certification, or governance **MUST** receive a retrospective **cross-organization** review. Every RFC below was accepted with its public comment window shortened, either under the bootstrap waiver or by explicit steward override of RFC 0147 §A.6. Each such acceptance is **provisional** until a reviewer from an organization other than the steward's records an outcome.
 
-This packet is for that reviewer. **128 RFCs are listed; 128 have no discharging outcome.** The steward, the steward's sessions, and steward-affiliated hosts (MyndHyve is tier-2, not independent) cannot supply the review. Recording one of their reviews as `ratified` is the substitution §B's last clause forbids.
+This packet is for that reviewer. **129 RFCs are listed; 129 have no discharging outcome.** The steward, the steward's sessions, and steward-affiliated hosts (MyndHyve is tier-2, not independent) cannot supply the review. Recording one of their reviews as `ratified` is the substitution §B's last clause forbids.
 
 **Enforcement is deferred.** On 2026-10-17 the maintainer deferred §B by steward exemption (`GOVERNANCE.md` §"Sole-steward operation") while the protocol has no user outside the steward's organizations. No outcome was recorded on its account. The packet is kept current for the day the exemption ends.
 
@@ -49,7 +49,7 @@ Grouping below is a reading aid only: it assigns each RFC to the risk class its 
 | [0241](../RFCS/0241-host-event-test-trigger.md) | a host event can be triggered on demand for test | `Accepted` | steward override of RFC 0147 §A.6 | tier-1 — the v2 reference host | `not-reviewed` |
 | [0243](../RFCS/0243-dispatch-fan-out-seat.md) | parallel fan-out has a v2 seat, and a link key needs both linking lanes | `Accepted` | steward override of RFC 0147 §A.6 | tier-1 on both halves | `not-reviewed` |
 
-## Tenant isolation (7)
+## Tenant isolation (8)
 
 | RFC | Title | Status | Waiver | Evidence tier | Outcome |
 | --- | --- | --- | --- | --- | --- |
@@ -60,6 +60,7 @@ Grouping below is a reading aid only: it assigns each RFC to the risk class its 
 | [0215](../RFCS/0215-webhook-delivery-isolation.md) | a webhook delivery does not wait on another subscription's receiver, and an unregistered subscription gets no… | `Accepted` | steward override of RFC 0147 §A.6 | tier-2 — MyndHyve | `not-reviewed` |
 | [0236](../RFCS/0236-host-events.md) | Host events — events without a run-log position | `Accepted` | steward override of RFC 0147 §A.6 | tier-1 — the v2 reference host | `not-reviewed` |
 | [0251](../RFCS/0251-eval-run-mode-and-baseline-selection.md) | an eval run names its modes and regression baseline | `Active` | steward override of RFC 0147 §A.6 | not declared (predates RFC 0174 §B.1, or not yet Accepted) | `not-reviewed` |
+| [0252](../RFCS/0252-eval-fixtures-from-a-recorded-run.md) | an eval task takes its fixtures from a recorded run | `Active` | steward override of RFC 0147 §A.6 | not declared (predates RFC 0174 §B.1, or not yet Accepted) | `not-reviewed` |
 
 ## Secrets (2)
 

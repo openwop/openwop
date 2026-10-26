@@ -4,7 +4,7 @@
     "schemas/v2/**/*.json",
     "spec/v2/path-manifest.json"
   ],
-  "release": "2.46.30",
+  "release": "2.46.31",
   "kinds": {
     "union": [
       "channel",
@@ -18,7 +18,7 @@
       "type"
     ]
   },
-  "count": 9033,
+  "count": 9035,
   "surfaces": [
     "schemas/v2/a2a-task-state.schema.json#/contextId|type|string",
     "schemas/v2/a2a-task-state.schema.json#/interruptKind|enum-member|\"approval\"",
@@ -995,6 +995,7 @@
     "schemas/v2/capabilities.schema.json#/agents/evalSuite/modes/[]|enum-member|\"rubric\"",
     "schemas/v2/capabilities.schema.json#/agents/evalSuite/modes/[]|type|string",
     "schemas/v2/capabilities.schema.json#/agents/evalSuite/modes|type|array",
+    "schemas/v2/capabilities.schema.json#/agents/evalSuite/recordedFixtures|type|boolean",
     "schemas/v2/capabilities.schema.json#/agents/evalSuite/regressionVerdict|type|boolean",
     "schemas/v2/capabilities.schema.json#/agents/evalSuite/trajectory|type|boolean",
     "schemas/v2/capabilities.schema.json#/agents/evalSuite/trials/maxTrials|type|integer",
@@ -1009,6 +1010,7 @@
     "schemas/v2/capabilities.schema.json#/agents/evalSuite|property|maxCostUsdPerSuite",
     "schemas/v2/capabilities.schema.json#/agents/evalSuite|property|maxTasksPerSuite",
     "schemas/v2/capabilities.schema.json#/agents/evalSuite|property|modes",
+    "schemas/v2/capabilities.schema.json#/agents/evalSuite|property|recordedFixtures",
     "schemas/v2/capabilities.schema.json#/agents/evalSuite|property|regressionVerdict",
     "schemas/v2/capabilities.schema.json#/agents/evalSuite|property|trajectory",
     "schemas/v2/capabilities.schema.json#/agents/evalSuite|property|trials",

@@ -132,7 +132,7 @@ Each threat model covers one attack surface. The invariant counts below are the 
 | [`threat-model-compensation.md`](./SECURITY/threat-model-compensation.md) | Compensation and partial failure: plans, inverse actions, approvals, dead letters, operator recovery (RFC 0151) | 5 |
 | [`threat-model-replay.md`](./SECURITY/threat-model-replay.md) | Replay and fork: recorded-fact re-emission, side-effect suppression, host-initiated fan-out | 4 |
 
-The threat models track invariants in `SECURITY/invariants.yaml` (225 rows as of 2026-10-26: 188 protocol-tier, 35 reference-impl-tier, 2 advisory).
+The threat models track invariants in `SECURITY/invariants.yaml` (226 rows as of 2026-10-26: 189 protocol-tier, 35 reference-impl-tier, 2 advisory).
 
 `scripts/check-security-invariants.sh` (step 6 of the 10-step `npm run openwop:check`) verifies that:
 

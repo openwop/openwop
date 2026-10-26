@@ -3430,6 +3430,18 @@
           "$ref": "ids.schema.json#/$defs/runId",
           "description": "MAY \u2014 for `regression` mode, the prior eval run this run is scored against."
         },
+        "fixtureRuns": {
+          "type": "object",
+          "minProperties": 1,
+          "propertyNames": {
+            "type": "string",
+            "minLength": 1
+          },
+          "additionalProperties": {
+            "$ref": "ids.schema.json#/$defs/runId"
+          },
+          "description": "RFC 0252 \u00a7E. The accepted `createRun` `fixtureRuns` map verbatim: each named `taskId` took its fixtures from that source run's recorded tool calls. MUST be present when the request carried `fixtureRuns`, and absent otherwise. A replay or fork re-reads it and MUST NOT resolve the source run again."
+        },
         "trialCount": {
           "type": "integer",
           "minimum": 2,
