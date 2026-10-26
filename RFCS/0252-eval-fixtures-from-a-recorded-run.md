@@ -135,12 +135,14 @@ The replay leg can fail: a host that ignores `fixtureRuns` answers the replay's 
 | §D no egress credential enters a derived entry | nothing on the wire: derived entries are never emitted | only the host's own code | unwitnessable: the entries never leave the host, so no outside party can read them; covered by the proposed invariant's reference-impl tier |
 | §E `fixtureRuns` echoed | `eval.started` | the suite | witnessable-gated: not probed by a host yet |
 | §E a replay does not re-resolve the source | a `:fork` of the eval run after the source is gone | the suite, on a host that deletes runs | unwitnessable: v2 has no portable run deletion, so the suite cannot remove the source |
+| Security: the derived copy shares the source's retention and erasure; a replay whose copy is gone is refused (SHOULD) | a `:fork` of the eval run after the source's content is erased | the suite, on a host that deletes runs | unwitnessable: v2 has no portable run deletion or erasure, so the suite cannot remove the source (as the §E row) |
 | §B a client never sends the property to a host without the member | the request on the wire | only a client | claims-check: a client obligation, not a host behaviour |
 
 ## Security
 
 - **Tenant isolation.** §C mirrors RFC 0251 §C. Accepting a foreign source would serve another tenant's tool results to the caller's agent and, through the agent's output, onto the caller's wire. One refusal for every unusable source, with no echoed id, keeps "another tenant's run" indistinguishable from "no such run". Proposed invariant at `Active`: `eval-fixture-run-tenant-scoped` (protocol tier; enforced by `0252.source-uniform`).
 - **Credentials.** §D reads the agent-side boundary. A tool whose credential the host injects at egress never shows that credential to the agent, so it never enters a derived entry.
+- **Retention and erasure of the derived copy.** §E forbids resolving the source again, so a host keeps the derived entries with the eval run, and they hold the source's as-executed tool content. That copy SHOULD be kept under the source's retention and erasure: when the source's tool content is purged or erased, so is every copy derived from it. A replay or fork of an eval run whose copy is gone SHOULD be refused, never derived again from the source and never run against live tools. A host that stores the copy where the source's deletion does not reach keeps personal data past an erasure request.
 - **External effects.** Every named task runs fail-closed. A changed agent that calls something new reaches no live tool, which is the point: replaying a production run must not repeat its effects.
 - **Threat models.** `SECURITY/threat-model-secret-leakage.md` (cross-tenant read) and `threat-model-replay.md` (recorded outcomes reused) gain a line naming §C and §E at `Active`.
 

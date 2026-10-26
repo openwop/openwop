@@ -66,7 +66,7 @@ Bounded by `capabilities.replay.sideEffectSuppression` (`none` / `recorded-outco
 
 ### 3.2a Eval fixtures from a recorded run (RFC 0252)
 
-An eval task may take its fixtures from a prior run's recorded tool calls (`createRun` `fixtureRuns`). Two replay risks follow. A changed agent calling something the source never recorded must not reach the live tool: the derived fixtures always run `onMiss: "fail"` (§D; `0252.drift-fails-closed`). And a replay or fork of the eval run re-reads `eval.started.fixtureRuns` and must not resolve the source again (§E), which no outside party can witness until v2 can delete a run (RFC 0252 G4). The cross-tenant half is `eval-fixture-run-tenant-scoped` in the secret-leakage model.
+An eval task may take its fixtures from a prior run's recorded tool calls (`createRun` `fixtureRuns`). Two replay risks follow. A changed agent calling something the source never recorded must not reach the live tool: the derived fixtures always run `onMiss: "fail"` (§D; `0252.drift-fails-closed`). And a replay or fork of the eval run re-reads `eval.started.fixtureRuns` and must not resolve the source again (§E), which no outside party can witness until v2 can delete a run (RFC 0252 G4). The cross-tenant half is `eval-fixture-run-tenant-scoped` in the secret-leakage model. The derived copy outlives the source unless the host ties them together: RFC 0252 Security asks that it share the source's retention and erasure, and that a replay whose copy is gone be refused rather than re-derived or run live.
 
 ### 3.3 Cache-key portability across tenants
 
