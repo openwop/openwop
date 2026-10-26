@@ -176,5 +176,6 @@ The exemption is a deferral, not a review. **Zero discharged is still the correc
 | 0248 | `ctx.callAI` reports its provider attempts and takes a per-call retry policy (replay; additive; STEWARD OVERRIDE of RFC 0147 §A.6) | in-scope-pending-assessment | — | — | `not-reviewed` |
 | 0249 | v2 proposal operations and a verifiable install read-back (certification, security invariants; additive; STEWARD OVERRIDE of RFC 0147 §A.6) | in-scope-pending-assessment | — | — | `not-reviewed` |
 | 0250 | opt-in host-event replay and explicit resync (certification; additive; STEWARD OVERRIDE of RFC 0147 §A.6) | in-scope-pending-assessment | — | — | `not-reviewed` |
+| 0251 | an eval run names its modes and regression baseline (certification, tenant isolation, security invariants; additive; STEWARD OVERRIDE of RFC 0147 §A.6) | in-scope-pending-assessment | — | — | `not-reviewed` |
 | 0236 | Host events — events without a run-log position (isolation; additive with a safety-fix clause; STEWARD OVERRIDE of RFC 0147 §A.6) | in-scope-pending-assessment | — | — | `not-reviewed` |
 | 0237 | Declared nondeterminism names its sources (certification; additive; STEWARD OVERRIDE of RFC 0147 §A.6) | in-scope-pending-assessment | — | — | `not-reviewed` |
