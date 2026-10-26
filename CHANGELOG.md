@@ -32,6 +32,10 @@ Entries before this file was condensed carried full development detail. That tex
 
 - **RFC 0246 Active (safety fix, `GHSA-ffx7-pm5h-v6pq`): a trial that failed its trajectory cannot carry a task or a suite to a pass.** The `mean` task rule and suite `passed` read a gating score that counts it 0; reported scores are unchanged. 90-day window waived by recorded STEWARD OVERRIDE.
 
+## [2.46.29] — 2026-10-26 — RFC 0082 eval-gated promotion at major 2
+
+- **RFC 0082 §E gets a v2 leg.** A promote citing a failed eval run must be refused `422 eval_gate_unmet` with the record unchanged; only the v1 sample seam checked this. Eval gating is host policy, so a host opts in with the fixture `conformance-eval-gate-failing`; none does yet.
+
 ## [2.46.28] — 2026-10-26 — RFC 0244 G2 closed; RFC 0251 Active
 
 - **RFC 0251 Active (window waived).** `createRun` gains optional `evalModes` and `baselineRunId`, gated on `agents.evalSuite.baselineSelection`. Every unusable baseline gets one `400 validation_error` that never echoes the id, so another tenant's run cannot be told from none. Unlocks RFC 0244 §F legs.

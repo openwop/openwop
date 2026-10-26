@@ -79,6 +79,7 @@ All fixtures MUST advertise:
 | Eval — Counter (miss) | `conformance-eval-counter-miss` | RFC 0244 §D, G2 — `onMiss: "fail"`; three `inc S` calls against two exact entries, then an unmatched `inc F` (`v2-eval-trajectory-trials`) | eval run `completed`; `{served: 1}`, `{served: 2}`, then two tool errors | ≤ 30s |
 | Eval — Efficiency Ungated | `conformance-eval-efficiency-ungated` | RFC 0244 §C — two golden tasks with one output, `lean` (1 call) and `busy` (8 calls), at `passScore: 1` (`v2-eval-trajectory-trials`) | eval run `completed`; both tasks and the suite pass | ≤ 30s |
 | Eval — Memory Isolation | `conformance-eval-memory-isolation` | RFC 0244 §B, G3 — `trials.count: 2`; one task seeds `seeded`, then reads it, reads `trial-note`, writes it and reads it back through `conformance.eval:memory` (`v2-eval-trajectory-trials`) | eval run `completed`; each trial reads the seed and finds no `trial-note` before its own write | ≤ 30s |
+| Eval — Gate Failing | `conformance-eval-gate-failing` | RFC 0082 §E — one task whose output never contains the golden `done`, so the summary is `passed: false`; its run is then cited by a `promote` of the scripted agent (`v2-deployment-eval-gate`) | eval run `completed`, `passed: false`; the promote is refused `422 eval_gate_unmet` | ≤ 30s |
 | Eval — Regression (base) | `conformance-eval-regression-base` | RFC 0251 — the baseline run: suite 1.0.0, `base-only` fails, `shared-a` and `shared-b` pass (`v2-eval-regression-baseline`) | eval run `completed`; `aggregateScore` 2/3 | ≤ 30s |
 | Eval — Regression (candidate) | `conformance-eval-regression-candidate` | RFC 0251, RFC 0244 §F — the same `suiteId` at 1.1.0: the two shared tasks unchanged, plus `candidate-only` (passes), run against the base run (`v2-eval-regression-baseline`) | eval run `completed`; `aggregateScore` 1; `scoreDelta` 1/3; `pairedTaskCount` 2; verdict neither `improved` nor `regressed` | ≤ 30s |
 | Dispatch Fan-Out Waves | `conformance-dispatch-fanout-waves` | RFC 0243 §A.3 — a parallel `core.dispatch` (`maxConcurrency: 2`, `wait-all`/`collect`) whose supervisor's `mockDispatchPlan` names three `conformance-delay` children. At most `min(2, maxFanOut)` run at once and none is dropped. Gated on `agents.fanOut` admitting `wait-all` with `collect`. | `completed` | ≤ 30s |
@@ -1067,6 +1068,7 @@ Every task targets **the scripted agent `core.conformance.agents.scripted`**. It
 | `conformance-eval-counter-miss` | `agents.evalSuite.fixtureMatching` | the three `inc S` calls return `{served: 1}`, `{served: 2}`, then a tool error; `inc F` returns a tool error. Neither miss moves the live counter |
 | `conformance-eval-efficiency-ungated` | `agents.evalSuite` | RFC 0244 §C never-gated: with all nine scripted calls in the log and `lean` passing, `busy` passes with `lean`'s score and the suite passes. A host MUST NOT fail either on `efficiency`, reported or not |
 | `conformance-eval-memory-isolation` | `agents.evalSuite.trials` | RFC 0244 §B isolation: both reads of `seeded` return `seed`; of the four `trial-note` reads, two return `written` (each trial's read-back) and two return `null` (each trial's first read). A later trial reading `written` first saw an earlier trial's write. Fewer than two read-backs record `blocked` |
+| `conformance-eval-gate-failing` | `agents.evalSuite` + `agents.deployment` | RFC 0082 §E: a `promote` of a `draft`, `test` or `staged` record of the scripted agent citing this run as `evalRunId` is refused `422 eval_gate_unmet`, and the record keeps its `state`, `channels` and `canaryPercent`. A summary that does not say `passed: false` records `blocked` |
 | `conformance-eval-regression-base` | `agents.evalSuite.baselineSelection` + `regression` in `modes` | run first with `evalModes: [golden]`; the baseline of the candidate run |
 | `conformance-eval-regression-candidate` | `agents.evalSuite.baselineSelection` + `regression` in `modes` (+ `regressionVerdict` for the §F legs) | run with `evalModes: [golden, regression]` and the base run as `baselineRunId`: both carriers name it, `scoreDelta` 1/3, `pairedTaskCount` 2, verdict neither `improved` nor `regressed`. Both fixtures share one `suiteId`, so a host's suite store resolves them by fixture id |
 
@@ -1077,6 +1079,13 @@ Every task targets **the scripted agent `core.conformance.agents.scripted`**. It
 - record `outcome` on `agent.tool-returned` for every counter call: the live `{key, count}`, or a served entry's `response` verbatim. A miss under `onMiss: "fail"` carries `error` instead.
 
 The counter has no external effect, so serving it is safe on a production tenant. Two concurrent cuts on one tenant make the persistence check fail; the legs then record `blocked`, not a failure.
+
+**`conformance-eval-gate-failing` declares an eval-gated promotion.** Whether a promote carries `requiredEval` is host policy, so listing this fixture in discovery `fixtures` is the host's statement that:
+
+- its approval gate for `promote` of `core.conformance.agents.scripted` carries `requiredEval`, so the promote's `evalRunId` is verified as the `agents.deployment` facet requires;
+- it holds at least one deployment record of that agent in `draft`, `test` or `staged`, readable at `GET /agents/core.conformance.agents.scripted/deployments` by the conformance credential, which also holds the `deploy:*` scope.
+
+A host whose gate the suite cannot reach (no promotable record) records `blocked`. A host that promotes anyway fails, and has moved that record: reset it before the next cut.
 
 **The memory tool `conformance.eval:memory` is conformance-RESERVED.** A host that lists `conformance-eval-memory-isolation` in discovery `fixtures` MUST, at its eval tool boundary:
 
