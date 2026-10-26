@@ -245,7 +245,7 @@ Defects outside the spec:
       (G3) an openwop-sdks issue for the two properties.
 - [ ] **RFC 0244 suite residue.** (G2) CLOSED 2026-10-26: the counter tool and its two fixtures (2.46.25) pass on openwop-app's
       certified cut 226c (`fc9f666ed`, ADR 0977): `0244.live-miss-counted`, `first-unconsumed`, `miss-no-live-call`. (G3) a scripted memory write/read across
-      trials for §B isolation. (G5) a portable "fixtures = run X" reference (follow-up RFC). §C `toolCallCount` has a leg from 2.46.25
+      trials for §B isolation. (G5) a portable "fixtures = run X" reference: RFC 0252 `Draft` 2026-10-26 (`createRun` `fixtureRuns`, facet `agents.evalSuite.recordedFixtures`), comment window to 2026-11-02, no waiver (RFC 0147 §A.6). §C `toolCallCount` has a leg from 2.46.25
       (`0244.efficiency-tool-calls`); 2.46.26 adds `0244.efficiency-model-usage` (§C model and token counts) and
       `0244.cost-every-trial` (§B); 2.46.27 adds `0244.efficiency-never-gated` (§C) and `0244.trial-memory-isolated`
       (§B, G3, through the reserved memory tool `conformance.eval:memory`). None is probed by a host yet: a host lists
