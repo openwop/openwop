@@ -770,6 +770,26 @@ def v2_openapi_and_seams():
         items['$ref'] = '../../schemas/v2/ids.schema.json#/$defs/runId'
     except (KeyError, TypeError):
         pass
+    # RFC 0251 — an eval run names its modes and its regression baseline. A v2 addition, applied by
+    # name: the v1 source is frozen. The refusal rules live in agents.evalSuite.baselineSelection.
+    cr = next((op for item in paths.values() for m, op in item.items()
+               if isinstance(op, dict) and op.get('operationId') == 'createRun'), None)
+    try:
+        body = cr['requestBody']['content']['application/json']['schema']
+        branch = next(b for b in body.get('allOf', [body]) if 'evalSuiteRef' in b.get('properties', {}))
+        branch['properties']['evalModes'] = {
+            'type': 'array', 'minItems': 1, 'uniqueItems': True,
+            'items': {'type': 'string', 'enum': ['golden', 'rubric', 'adversarial', 'regression', 'live-shadow']},
+            'description': ("RFC 0251 — the RFC 0081 §D modes this eval run exercises: a subset of the suite's and the host's "
+                            "`modes` (absent ⇒ the host's default). Only with `mode` `eval`, and only to a host advertising "
+                            '`agents.evalSuite.baselineSelection`, whose description holds the refusal rules.')}
+        branch['properties']['baselineRunId'] = {
+            '$ref': '../../schemas/v2/ids.schema.json#/$defs/runId',
+            'description': ('RFC 0251 — the prior eval run a `regression` run is compared against; requires `regression` in '
+                            '`evalModes`. Only to a host advertising `agents.evalSuite.baselineSelection`. An unusable baseline '
+                            'is refused `400 validation_error`, identically whatever the reason.')}
+    except (KeyError, TypeError, StopIteration):
+        raise SystemExit('derive-v2-api: createRun eval body not found (RFC 0251 patch)')
     # poll cursor + interrupt token grammar + per-operation header + one-member enums
     for key, item in doc['paths'].items():
         for method, op in list(item.items()):
