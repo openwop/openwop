@@ -1,0 +1,71 @@
+{
+  "suiteId": "core.openwop.evals.conformance-eval-memory-isolation",
+  "version": "1.0.0",
+  "targetAgentId": "core.conformance.agents.scripted",
+  "modes": [
+    "golden"
+  ],
+  "trials": {
+    "count": 2,
+    "k": 1,
+    "passRule": "all"
+  },
+  "tasks": [
+    {
+      "taskId": "write-then-read",
+      "input": {
+        "script": [
+          {
+            "tool": "conformance.eval:memory",
+            "arguments": {
+              "op": "read",
+              "id": "seeded"
+            }
+          },
+          {
+            "tool": "conformance.eval:memory",
+            "arguments": {
+              "op": "read",
+              "id": "trial-note"
+            }
+          },
+          {
+            "tool": "conformance.eval:memory",
+            "arguments": {
+              "op": "write",
+              "id": "trial-note",
+              "content": "written"
+            }
+          },
+          {
+            "tool": "conformance.eval:memory",
+            "arguments": {
+              "op": "read",
+              "id": "trial-note"
+            }
+          }
+        ],
+        "output": "done"
+      },
+      "expected": {
+        "kind": "golden",
+        "match": {
+          "strategy": "contains",
+          "value": "done"
+        }
+      },
+      "fixtures": {
+        "memorySeed": [
+          {
+            "id": "seeded",
+            "content": "seed",
+            "tags": [
+              "conformance"
+            ],
+            "createdAt": "2026-01-01T00:00:00Z"
+          }
+        ]
+      }
+    }
+  ]
+}

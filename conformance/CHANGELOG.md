@@ -1,6 +1,12 @@
-## [2.46.27] — 2026-10-26 — RFC 0244 G2 closed
+## [2.46.28] — 2026-10-26 — RFC 0244 G2 closed
 
 - **No assertion changes.** RFC 0244's G2 closes on openwop-app's certified cut `fc9f666ed` (the three counter legs and `0244.efficiency-tool-calls` `executed-pass`), so the packed `spec/v1/gaps.json` changes.
+
+## [2.46.27] — 2026-10-25 — RFC 0244 never-gated and trial-isolation legs
+
+- **New leg `0244.efficiency-never-gated` in `v2-eval-trajectory-trials`**, on the new fixture `conformance-eval-efficiency-ungated`: tasks `lean` (one scripted call) and `busy` (eight) share an output and an expectation, so `busy` must pass with `lean`'s score and the suite must pass at `passScore` 1. `blocked` when the calls never ran or `lean` fails. Judge `judgeNeverGated` in `lib/eval-efficiency-witness.ts`.
+- **New leg `0244.trial-memory-isolated` (RFC 0244 G3)**, on the new fixture `conformance-eval-memory-isolation` (`trials.count: 2`, gated on `agents.evalSuite.trials`), through the conformance-reserved memory tool `conformance.eval:memory` (contract in `fixtures.md`). Each trial must read the `memorySeed` entry, and its first read of `trial-note` must find nothing before its own write. Judge in `lib/eval-memory-witness.ts`; a tool whose writes never read back records `blocked`.
+- **Host impact:** none until a host lists a new fixture in discovery `fixtures`. Listing the memory fixture opts the host in to the memory-tool contract.
 
 ## [2.46.26] — 2026-10-25 — RFC 0244 model-usage and cost legs
 
