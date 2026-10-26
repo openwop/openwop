@@ -1,3 +1,7 @@
+## [2.46.31] — 2026-10-26 — RFC 0251 Accepted
+
+- **No assertion changes.** RFC 0251's G2 closes on openwop-app's certified cut `24b6a05ff` (the five `0251.*` legs and both `0244.regression-*` legs `executed-pass`), so the packed `spec/v1/gaps.json` changes.
+
 ## [2.46.30] — 2026-10-26 — RFC 0252 Draft (no assertion changes)
 
 - **No scenario or assertion changes.** RFC 0252 (`Draft`) adds its gap register and RFC 0244's G5 row moves to it, so the packed `spec/v1/gaps.json` changes.
