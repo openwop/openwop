@@ -15065,8 +15065,8 @@
       "surface": "No host advertises `baselineSelection` or lists the two regression fixtures.",
       "witness": "unclassified",
       "requirementId": null,
-      "disposition": "externally-gated",
-      "target": "certified-host-cut",
+      "disposition": "closed",
+      "target": null,
       "sources": [
         {
           "file": "RFCS/registers/0251-eval-run-mode-and-baseline-selection.gaps.md",
@@ -15082,8 +15082,8 @@
       "surface": "SDKs expose the two properties and read the facet before sending them.",
       "witness": "unclassified",
       "requirementId": null,
-      "disposition": "transferred",
-      "target": "TODO.md",
+      "disposition": "closed",
+      "target": null,
       "sources": [
         {
           "file": "RFCS/registers/0251-eval-run-mode-and-baseline-selection.gaps.md",

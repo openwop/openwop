@@ -4,10 +4,10 @@
 | --- | --- |
 | **RFC** | 0251 |
 | **Title** | A client names an eval run's modes and its regression baseline |
-| **Status** | `Active` |
+| **Status** | `Accepted` |
 | **Author(s)** | David Tufts (@davidscotttufts) |
 | **Created** | 2026-10-26 |
-| **Updated** | 2026-10-26 — filed **`Active`, comment window waived by the maintainer** (user instruction 2026-10-25, choosing "Waive it" for RFC 0251); STEWARD OVERRIDE of RFC 0147 §A.6 recorded in `MAINTAINERS.md`. Design by the steward's `/architect` ruling, with openwop-app-6a's read of the host code at `c0f991494`. |
+| **Updated** | 2026-10-26 — **`Active → Accepted`**; RFC 0156 §B review deferred by steward exemption (2026-10-17). Evidence tier: tier-1 — openwop-app's certified 2.46.28 production cut 230c (build `commit:24b6a05ff`, revision `openwop-app-backend-01051-nxf`, 500/0/11/376, `--host-key` zero rejections; app ADR 0983) advertises `agents.evalSuite.baselineSelection` and records the five `0251.*` legs, `0244.regression-paired`, `0244.regression-no-false-verdict` and `openwop.scenario.v2-eval-regression-baseline` (24 assertions) `executed-pass`, as pre-registered. G2 closes. · 2026-10-26 — filed **`Active`, comment window waived by the maintainer** (user instruction 2026-10-25, choosing "Waive it" for RFC 0251); STEWARD OVERRIDE of RFC 0147 §A.6 recorded in `MAINTAINERS.md`. Design by the steward's `/architect` ruling, with openwop-app-6a's read of the host code at `c0f991494`. |
 | **Affects** | `api/openapi.yaml` `createRun` (two optional body properties; derived `api/v2/openapi.yaml`) · `spec/v2/facets/agents.schema.json` (optional `agents.evalSuite.baselineSelection`; derived `schemas/v2/capabilities.schema.json`) · conformance (`v2-eval-regression-baseline`, two eval-suite fixtures) · v2 SDKs · hosts advertising `agents.evalSuite` |
 | **Compatibility** | `additive` per `COMPATIBILITY.md` §2.4 |
 | **Supersedes** | — |
@@ -90,12 +90,12 @@ New scenario `v2-eval-regression-baseline`, gated on `agents.evalSuite.baselineS
 
 | Requirement | Observable — what an outside party sees | Who can cause the condition | Verdict |
 | --- | --- | --- | --- |
-| §A, §B shapes | schema vectors | the suite, server-free | witnessable-unaided |
-| §B request-rule refusals | `400 validation_error` on each bad combination | the suite | witnessable-gated: not probed by a host yet |
-| §C unusable baseline refused, uniformly | the refusal for an unknown, another-suite and another tenant's run | the suite, with a second tenant | witnessable-gated: not probed by a host yet |
-| §D baseline echoed and `scoreDelta` | `eval.started`, the summary | the suite, through the two fixtures | witnessable-gated: not probed by a host yet |
-| RFC 0244 §F pairing and no false verdict | `pairedTaskCount`, `verdict` | the suite, through the two fixtures | witnessable-gated: not probed by a host yet |
-| §B a client never sends the properties to a host without the member | the request on the wire | only a client | claims-check: a client obligation, not a host behaviour |
+| §A, §B shapes | schema vectors | the suite, server-free | witnessable-unaided: `openwop.requirement.0251.shape` `executed-pass` on openwop-app's certified 2.46.28 cut 230c (build `24b6a05ff`) |
+| §B request-rule refusals | `400 validation_error` on each bad combination | the suite | witnessable-gated: `openwop.requirement.0251.fields-refused` `executed-pass` on openwop-app's certified 2.46.28 cut 230c (build `24b6a05ff`) |
+| §C unusable baseline refused, uniformly | the refusal for an unknown, another-suite and another tenant's run | the suite, with a second tenant | witnessable-gated: `openwop.requirement.0251.baseline-refused` and `openwop.requirement.0251.baseline-uniform` `executed-pass` on openwop-app's certified 2.46.28 cut 230c (build `24b6a05ff`) |
+| §D baseline echoed and `scoreDelta` | `eval.started`, the summary | the suite, through the two fixtures | witnessable-gated: `openwop.requirement.0251.baseline-echoed` `executed-pass` on openwop-app's certified 2.46.28 cut 230c (build `24b6a05ff`) |
+| RFC 0244 §F pairing and no false verdict | `pairedTaskCount`, `verdict` | the suite, through the two fixtures | witnessable-gated: `openwop.requirement.0244.regression-paired` and `openwop.requirement.0244.regression-no-false-verdict` `executed-pass` on openwop-app's certified 2.46.28 cut 230c (build `24b6a05ff`) |
+| §B a client never sends the properties to a host without the member | the request on the wire | only a client | unwitnessable — a client obligation: no host behaviour shows what a client would have sent to another host |
 
 ## Alternatives considered
 
@@ -120,9 +120,9 @@ openwop-app already validates and pairs as §C and §D require (`createEvalRun.t
 
 ## Acceptance criteria
 
-- [ ] The two `createRun` properties (derived `api/v2/openapi.yaml`) and the facet member (derived capabilities schema), with the rules in their descriptions.
-- [ ] `v2-eval-regression-baseline`, its two fixtures in `fixtures.md`, judges with self-tests.
-- [ ] A host advertises `baselineSelection`, and a certified major-2 bundle records the `0251.*` host legs and the two `0244.regression-*` legs `executed-pass`.
+- [x] The two `createRun` properties (derived `api/v2/openapi.yaml`) and the facet member (derived capabilities schema), with the rules in their descriptions.
+- [x] `v2-eval-regression-baseline`, its two fixtures in `fixtures.md`, judges with self-tests.
+- [x] A host advertises `baselineSelection`, and a certified major-2 bundle records the `0251.*` host legs and the two `0244.regression-*` legs `executed-pass`. *(2026-10-26: openwop-app's cut 230c, build `24b6a05ff`; `evidence/v2-host-bundles/openwop-workflow-engine-2.46.28-24b6a05ff.json`.)*
 - [x] The two properties in the v2 SDKs (G3): openwop-sdks #62, 2026-10-26, implemented instead of filed as an issue.
 
 ## References

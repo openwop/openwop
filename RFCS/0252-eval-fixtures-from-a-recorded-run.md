@@ -7,7 +7,7 @@
 | **Status** | `Active` |
 | **Author(s)** | David Tufts (@davidscotttufts) |
 | **Created** | 2026-10-26 |
-| **Updated** | 2026-10-26 — **`Draft` → `Active`, comment window waived by the maintainer** (user instruction 2026-10-26: "Waive the comment window for RFC 0252 and work with other sessions to move it to accepted"); STEWARD OVERRIDE of RFC 0147 §A.6 recorded in `MAINTAINERS.md`. The five Unresolved questions are ruled below. The schema, facet, derived API, scenario `v2-eval-recorded-fixtures`, three fixtures and invariant `eval-fixture-run-tenant-scoped` land with suite 2.46.31. Filed `Draft` the same day (#2046). |
+| **Updated** | 2026-10-26 — **`Draft` → `Active`, comment window waived by the maintainer** (user instruction 2026-10-26: "Waive the comment window for RFC 0252 and work with other sessions to move it to accepted"); STEWARD OVERRIDE of RFC 0147 §A.6 recorded in `MAINTAINERS.md`. The five Unresolved questions are ruled below. The schema, facet, derived API, scenario `v2-eval-recorded-fixtures`, three fixtures and invariant `eval-fixture-run-tenant-scoped` land with suite 2.46.32. Filed `Draft` the same day (#2046). |
 | **Affects** | `api/openapi.yaml` `createRun` (one optional body property; derived `api/v2/openapi.yaml`) · `spec/v2/facets/agents.schema.json` (optional `agents.evalSuite.recordedFixtures`; derived `schemas/v2/capabilities.schema.json`) · `schemas/v2/run-event-payloads.schema.json` (optional `fixtureRuns` on `eval.started`) · `SECURITY/invariants.yaml` (one proposed row) · conformance (new `v2-eval-recorded-fixtures`, three eval-suite fixtures) · v2 SDKs · hosts advertising `agents.evalSuite` |
 | **Compatibility** | `additive` per `COMPATIBILITY.md` §2.4 |
 | **Supersedes** | — |
