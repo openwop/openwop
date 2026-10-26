@@ -32,7 +32,9 @@ Entries before this file was condensed carried full development detail. That tex
 
 - **RFC 0246 Active (safety fix, `GHSA-ffx7-pm5h-v6pq`): a trial that failed its trajectory cannot carry a task or a suite to a pass.** The `mean` task rule and suite `passed` read a gating score that counts it 0; reported scores are unchanged. 90-day window waived by recorded STEWARD OVERRIDE.
 
-## [2.46.28] — 2026-10-26 — RFC 0244 G2 closed
+## [2.46.28] — 2026-10-26 — RFC 0244 G2 closed; RFC 0251 Active
+
+- **RFC 0251 Active (window waived).** `createRun` gains optional `evalModes` and `baselineRunId`, gated on `agents.evalSuite.baselineSelection`. Every unusable baseline gets one `400 validation_error` that never echoes the id, so another tenant's run cannot be told from none. Unlocks RFC 0244 §F legs.
 
 - **RFC 0244 G2 closed.** openwop-app's certified 2.46.25 production cut (`fc9f666ed`, 491/0/0) serves the counter tool and passes `0244.live-miss-counted`, `first-unconsumed` and `miss-no-live-call`: §D's no-live-call and first-unconsumed rules are witnessable-gated now, not seam-gated.
 

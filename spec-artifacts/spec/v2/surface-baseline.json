@@ -4,7 +4,7 @@
     "schemas/v2/**/*.json",
     "spec/v2/path-manifest.json"
   ],
-  "release": "2.46.27",
+  "release": "2.46.28",
   "kinds": {
     "union": [
       "channel",
@@ -18,7 +18,7 @@
       "type"
     ]
   },
-  "count": 9031,
+  "count": 9033,
   "surfaces": [
     "schemas/v2/a2a-task-state.schema.json#/contextId|type|string",
     "schemas/v2/a2a-task-state.schema.json#/interruptKind|enum-member|\"approval\"",
@@ -983,6 +983,7 @@
     "schemas/v2/capabilities.schema.json#/agents/deployment|type|object",
     "schemas/v2/capabilities.schema.json#/agents/dispatchMapping|type|boolean",
     "schemas/v2/capabilities.schema.json#/agents/dispatch|type|boolean",
+    "schemas/v2/capabilities.schema.json#/agents/evalSuite/baselineSelection|type|boolean",
     "schemas/v2/capabilities.schema.json#/agents/evalSuite/fixtureErrors|type|boolean",
     "schemas/v2/capabilities.schema.json#/agents/evalSuite/fixtureMatching|type|boolean",
     "schemas/v2/capabilities.schema.json#/agents/evalSuite/maxCostUsdPerSuite|type|number",
@@ -1002,6 +1003,7 @@
     "schemas/v2/capabilities.schema.json#/agents/evalSuite/trials|required|maxTrials",
     "schemas/v2/capabilities.schema.json#/agents/evalSuite/trials|type|object",
     "schemas/v2/capabilities.schema.json#/agents/evalSuite|closed|true",
+    "schemas/v2/capabilities.schema.json#/agents/evalSuite|property|baselineSelection",
     "schemas/v2/capabilities.schema.json#/agents/evalSuite|property|fixtureErrors",
     "schemas/v2/capabilities.schema.json#/agents/evalSuite|property|fixtureMatching",
     "schemas/v2/capabilities.schema.json#/agents/evalSuite|property|maxCostUsdPerSuite",

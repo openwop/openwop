@@ -15041,6 +15041,57 @@
       ]
     },
     {
+      "id": "openwop.gap.0251.1",
+      "rfc": "0251",
+      "local": "G1",
+      "section": "§B, §C",
+      "surface": "Root properties or a `configurable` section; refusal code and reasons",
+      "witness": "unclassified",
+      "requirementId": null,
+      "disposition": "closed",
+      "target": null,
+      "sources": [
+        {
+          "file": "RFCS/registers/0251-eval-run-mode-and-baseline-selection.gaps.md",
+          "token": "G1"
+        }
+      ]
+    },
+    {
+      "id": "openwop.gap.0251.2",
+      "rfc": "0251",
+      "local": "G2",
+      "section": "§Conformance",
+      "surface": "No host advertises `baselineSelection` or lists the two regression fixtures.",
+      "witness": "unclassified",
+      "requirementId": null,
+      "disposition": "externally-gated",
+      "target": "certified-host-cut",
+      "sources": [
+        {
+          "file": "RFCS/registers/0251-eval-run-mode-and-baseline-selection.gaps.md",
+          "token": "G2"
+        }
+      ]
+    },
+    {
+      "id": "openwop.gap.0251.3",
+      "rfc": "0251",
+      "local": "G3",
+      "section": "§B",
+      "surface": "SDKs expose the two properties and read the facet before sending them.",
+      "witness": "unclassified",
+      "requirementId": null,
+      "disposition": "transferred",
+      "target": "TODO.md",
+      "sources": [
+        {
+          "file": "RFCS/registers/0251-eval-run-mode-and-baseline-selection.gaps.md",
+          "token": "G3"
+        }
+      ]
+    },
+    {
       "id": "openwop.gap.spec.a2a-integration.g1",
       "rfc": "0152",
       "local": "G1",
