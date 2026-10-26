@@ -32,6 +32,10 @@ Entries before this file was condensed carried full development detail. That tex
 
 - **RFC 0246 Active (safety fix, `GHSA-ffx7-pm5h-v6pq`): a trial that failed its trajectory cannot carry a task or a suite to a pass.** The `mean` task rule and suite `passed` read a gating score that counts it 0; reported scores are unchanged. 90-day window waived by recorded STEWARD OVERRIDE.
 
+## [2.46.27] — 2026-10-25 — RFC 0244 never-gated and trial-isolation legs
+
+- **RFC 0244 suite residue:** a §C leg checks that a task with eight tool calls passes like one with one, and a §B leg checks through the reserved memory tool `conformance.eval:memory` that no trial sees memory another trial wrote (G3). Each has a new eval-suite fixture; no host lists them yet.
+
 ## [2.46.26] — 2026-10-25 — RFC 0244 model-usage and cost legs
 
 - **RFC 0244 suite residue:** a §C leg checks `modelCallCount` and the token sums against the scripted agent's `provider.usage` inside its invocation brackets, and a §B leg checks that `totalCostUsd` prices every trial. Both are `inapplicable` where the agent calls no model.

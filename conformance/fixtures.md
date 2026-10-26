@@ -77,6 +77,8 @@ All fixtures MUST advertise:
 | Eval — Fixture Error | `conformance-eval-fixture-error` | RFC 0245 — `onMiss: "fail"`; one task calls the same tool twice, served first by an `isError: true` entry, then by a success (`v2-eval-trajectory-trials`) | eval run `completed`; the first call is recorded as a tool error | ≤ 30s |
 | Eval — Counter (live) | `conformance-eval-counter-live` | RFC 0244 §D, G2 — `onMiss: "live"`; one task makes four `conformance.eval:counter` calls that match no entry, so each runs the live counter (`v2-eval-trajectory-trials`) | eval run `completed`; four live `{key, count}` outcomes | ≤ 30s |
 | Eval — Counter (miss) | `conformance-eval-counter-miss` | RFC 0244 §D, G2 — `onMiss: "fail"`; three `inc S` calls against two exact entries, then an unmatched `inc F` (`v2-eval-trajectory-trials`) | eval run `completed`; `{served: 1}`, `{served: 2}`, then two tool errors | ≤ 30s |
+| Eval — Efficiency Ungated | `conformance-eval-efficiency-ungated` | RFC 0244 §C — two golden tasks with one output, `lean` (1 call) and `busy` (8 calls), at `passScore: 1` (`v2-eval-trajectory-trials`) | eval run `completed`; both tasks and the suite pass | ≤ 30s |
+| Eval — Memory Isolation | `conformance-eval-memory-isolation` | RFC 0244 §B, G3 — `trials.count: 2`; one task seeds `seeded`, then reads it, reads `trial-note`, writes it and reads it back through `conformance.eval:memory` (`v2-eval-trajectory-trials`) | eval run `completed`; each trial reads the seed and finds no `trial-note` before its own write | ≤ 30s |
 | Dispatch Fan-Out Waves | `conformance-dispatch-fanout-waves` | RFC 0243 §A.3 — a parallel `core.dispatch` (`maxConcurrency: 2`, `wait-all`/`collect`) whose supervisor's `mockDispatchPlan` names three `conformance-delay` children. At most `min(2, maxFanOut)` run at once and none is dropped. Gated on `agents.fanOut` admitting `wait-all` with `collect`. | `completed` | ≤ 30s |
 | Dispatch Per-Item Input | `conformance-dispatch-per-item` | RFC 0243 §A.4 — a sequential `core.dispatch` whose decision dispatches `conformance-dispatch-input-mapping-child` twice with `nextWorkerInputs` `item-a`, `item-b`. At `agents.fanOut.perItemInput: true` each child receives its item; otherwise the dispatch node fails `validation_error` and no child is dispatched. | `completed`, or `failed` without `perItemInput` | ≤ 30s |
 | Dispatch Per-Item Length Mismatch | `conformance-dispatch-per-item-mismatch` | `orchestrator-decision.schema.json` `nextWorkerInputs` — one item for two children. Every dispatch host fails the dispatch node `validation_error` and dispatches no child. | `failed` | ≤ 30s |
@@ -1048,7 +1050,7 @@ The `fixtures/eval-suites/` sub-directory holds `AgentEvalSuite` documents (`../
 Every task targets **the scripted agent `core.conformance.agents.scripted`**. Its contract:
 
 - `input.script` is an ordered list of `{ tool, arguments? }`. The agent makes exactly those tool calls, in order, each emitting `agent.tool-called` with `agentId: "core.conformance.agents.scripted"`, `toolName: tool` and `inputs: arguments`.
-- Each call goes through the host's eval tool boundary. In a task with `fixtures.toolResponses`, the RFC 0244 §D selection and `onMiss` rules apply. Otherwise the host answers the call with its own `arguments`. No scripted call reaches a live tool or an external effect, except a miss on the counter tool under `onMiss: "live"` (below).
+- Each call goes through the host's eval tool boundary. In a task with `fixtures.toolResponses`, the RFC 0244 §D selection and `onMiss` rules apply. Otherwise the host answers the call with its own `arguments`. No scripted call reaches a live tool or an external effect, except a miss on the counter tool under `onMiss: "live"` and a call to the memory tool (both below).
 - After the last call the agent decides, and its output is `input.output`.
 
 | Fixture | Facet | What the suite asserts |
@@ -1061,6 +1063,8 @@ Every task targets **the scripted agent `core.conformance.agents.scripted`**. It
 | `conformance-eval-fixture-error` | `agents.evalSuite.fixtureErrors` + `agents.evalSuite.fixtureMatching` | RFC 0245: two `agent.tool-called` and two `agent.tool-returned` for `conformance.eval:lookup`, paired by `callId`; the first return carries `error` with non-empty `code` and `message` and no `outcome` (`status: "error"` under `toolHooks.prePostEvents`), the second carries no `error` (`outcome` is optional; not `status: "error"` under tool hooks); `recovers` reports `fixtureMissCount: 0`. Without `fixtureErrors`: `400 validation_error`. That the agent saw an error and no live tool ran is not observable here (RFC 0245 G1, RFC 0244 G2) |
 | `conformance-eval-counter-live` | `agents.evalSuite.fixtureMatching` | run twice, before and after `conformance-eval-counter-miss`: `fixtureMissCount` > 0; the two live `inc L` counts are consecutive; the second run's first `L` is the first run's last plus one (else `blocked`), and its `F` and `S` reads equal the first run's |
 | `conformance-eval-counter-miss` | `agents.evalSuite.fixtureMatching` | the three `inc S` calls return `{served: 1}`, `{served: 2}`, then a tool error; `inc F` returns a tool error. Neither miss moves the live counter |
+| `conformance-eval-efficiency-ungated` | `agents.evalSuite` | RFC 0244 §C never-gated: with all nine scripted calls in the log and `lean` passing, `busy` passes with `lean`'s score and the suite passes. A host MUST NOT fail either on `efficiency`, reported or not |
+| `conformance-eval-memory-isolation` | `agents.evalSuite.trials` | RFC 0244 §B isolation: both reads of `seeded` return `seed`; of the four `trial-note` reads, two return `written` (each trial's read-back) and two return `null` (each trial's first read). A later trial reading `written` first saw an earlier trial's write. Fewer than two read-backs record `blocked` |
 
 **The counter tool `conformance.eval:counter` is conformance-RESERVED** (the pattern of `core.conformance.side-effect`). A host that lists either counter fixture in discovery `fixtures` MUST, at its eval tool boundary:
 
@@ -1069,6 +1073,14 @@ Every task targets **the scripted agent `core.conformance.agents.scripted`**. It
 - record `outcome` on `agent.tool-returned` for every counter call: the live `{key, count}`, or a served entry's `response` verbatim. A miss under `onMiss: "fail"` carries `error` instead.
 
 The counter has no external effect, so serving it is safe on a production tenant. Two concurrent cuts on one tenant make the persistence check fail; the legs then record `blocked`, not a failure.
+
+**The memory tool `conformance.eval:memory` is conformance-RESERVED.** A host that lists `conformance-eval-memory-isolation` in discovery `fixtures` MUST, at its eval tool boundary:
+
+- answer every call to it from the agent's memory for the current trial: the store the task's `fixtures.memorySeed` seeds (RFC 0004 `MemoryAdapter` entries) and the agent's own memory writes land in. It is never served from `toolResponses` and never counted as a fixture miss.
+- answer `{op: "write", id, content}` by storing the entry and returning `{id}`, and `{op: "read", id}` by returning `{id, content}`, with `content: null` when the trial's memory holds no entry `id`;
+- record `outcome` on `agent.tool-returned` for every memory call.
+
+The tool reaches only the trial's eval memory, so it has no external effect. A host that answers it from a store other than the one its trials really use proves nothing about §B isolation, and the contract forbids it.
 
 ## OAuth provider fixtures
 

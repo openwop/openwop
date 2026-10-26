@@ -36,8 +36,20 @@
  *      length (the mean over identical trials), and on the one-trial run the
  *      counts sum to the log's `agent.tool-called` events. `efficiency` is
  *      optional, so a host that reports none records `inapplicable`. Judge in
- *      `lib/eval-efficiency-witness.ts`. The never-gated rule is not judged:
- *      no fixture makes efficiency the only difference between two verdicts.
+ *      `lib/eval-efficiency-witness.ts`.
+ *   6d. §C never-gated (2.46.27), `conformance-eval-efficiency-ungated`: two
+ *      tasks with one output and one expectation, `lean` (1 scripted call) and
+ *      `busy` (8). `busy` passes and scores what `lean` scores, and the suite
+ *      passes at `passScore` 1 (`0244.efficiency-never-gated`). `blocked` when
+ *      the calls never ran or `lean` itself fails. Gated on `agents.evalSuite`
+ *      and the fixture only: the rule binds whether or not a host reports
+ *      `efficiency`.
+ *   6e. §B trial isolation (2.46.27, G3), `conformance-eval-memory-isolation`,
+ *      gated on `trials`: two trials of read seed, read note, write note, read
+ *      note through the reserved memory tool `conformance.eval:memory`. Every
+ *      trial reads the seed, and each trial's first note read finds nothing
+ *      (`0244.trial-memory-isolated`); a tool whose writes never read back is
+ *      `blocked`. Judge in `lib/eval-memory-witness.ts`.
  *   6c. §C model usage and §B cost (2.46.26), on the same runs. The per-task
  *      `modelCallCount`, `inputTokens` and `outputTokens`, times the trial
  *      count, sum to the agent's `provider.usage` inside its
@@ -109,7 +121,8 @@ import { judgeEvalEnvelope, judgeSummaryServed } from '../lib/eval-envelope-witn
 import { gradeTrajectory, passAtK, passHatK, scoreStderr, withinTolerance, type TrajectorySpec } from '../lib/eval-trajectory.js';
 import { judgeMeanGated, judgeSuiteGated } from '../lib/eval-gate-witness.js';
 import { judgeFixtureErrorReplayed } from '../lib/eval-fixture-error-witness.js';
-import { agentUsage, judgeCostEveryTrial, judgeModelUsage, judgeToolCallCount } from '../lib/eval-efficiency-witness.js';
+import { agentUsage, judgeCostEveryTrial, judgeModelUsage, judgeNeverGated, judgeToolCallCount } from '../lib/eval-efficiency-witness.js';
+import { judgeTrialMemoryIsolated, memoryCalls } from '../lib/eval-memory-witness.js';
 import { counterCalls, judgeFirstUnconsumed, judgeLiveMiss, judgeMissNoLiveCall, type CounterCall } from '../lib/eval-counter-witness.js';
 
 const PROFILE = majorProfile(2);
@@ -128,6 +141,8 @@ const ID_REFUSED = 'openwop.requirement.0244.unadvertised-feature-refused';
 const ID_EFFICIENCY = 'openwop.requirement.0244.efficiency-tool-calls';
 const ID_MODEL_USAGE = 'openwop.requirement.0244.efficiency-model-usage';
 const ID_COST_TRIALS = 'openwop.requirement.0244.cost-every-trial';
+const ID_NEVER_GATED = 'openwop.requirement.0244.efficiency-never-gated';
+const ID_MEMORY_ISOLATED = 'openwop.requirement.0244.trial-memory-isolated';
 const ID_LIVE_MISS = 'openwop.requirement.0244.live-miss-counted';
 const ID_FIRST_UNCONSUMED = 'openwop.requirement.0244.first-unconsumed';
 const ID_NO_LIVE_CALL = 'openwop.requirement.0244.miss-no-live-call';
@@ -224,7 +239,7 @@ describe('v2 RFC 0244 — wire shape (server-free)', () => {
   });
 
   it('the eval-suite fixtures validate against the v2 suite schema', () => {
-    for (const id of ['conformance-eval-trajectory', 'conformance-eval-trials', 'conformance-eval-fixture-miss', 'conformance-eval-trajectory-gate', 'conformance-eval-trajectory-gate-mean', 'conformance-eval-fixture-error', 'conformance-eval-counter-live', 'conformance-eval-counter-miss']) {
+    for (const id of ['conformance-eval-trajectory', 'conformance-eval-trials', 'conformance-eval-fixture-miss', 'conformance-eval-trajectory-gate', 'conformance-eval-trajectory-gate-mean', 'conformance-eval-fixture-error', 'conformance-eval-counter-live', 'conformance-eval-counter-miss', 'conformance-eval-efficiency-ungated', 'conformance-eval-memory-isolation']) {
       const r = suiteSchema(fixture(id));
       expect(r.ok, req(ID_FIXTURES, 'fixtures.md §eval-suites', `${id} MUST validate: ${r.errors}`)).toBe(true);
     }
@@ -374,6 +389,37 @@ describe('v2 RFC 0244 — host behaviour', () => {
     const v = judgeCostEveryTrial(t.o.summary, agentUsage(t.o.events, AGENT));
     if (!v.applicable) return softSkip('inapplicable', 'the trials run carries no totalCostUsd, no agent.invocation.* brackets, or an unpriced provider.usage, so the per-trial cost is not observable');
     for (const x of v.findings) expect(x.ok, req(ID_COST_TRIALS, 'agent-eval-suite.schema.json thresholds.maxCostUsd, eval-summary.schema.json totalCostUsd (RFC 0244 §B)', x.message)).toBe(true);
+  });
+
+  it('a host does not fail a task or a suite on efficiency (§C)', async () => {
+    const { doc, facet } = await evalSuiteFacet();
+    if (!doc) return softSkip('blocked', UNREADABLE);
+    if (facet === null) return softSkip('inapplicable', 'the host does not advertise agents.evalSuite');
+    const id = 'conformance-eval-efficiency-ungated';
+    if (!isFixtureAdvertised(id)) return softSkip('inapplicable', `the host does not advertise fixture ${id}`);
+    const o = await runSuite(id);
+    if (o.kind === 'skip') return softSkip(o.disposition, o.reason);
+    const task = (taskId: string) => ({ taskId, scriptLength: fixture(id).tasks.find((t) => t.taskId === taskId)!.input.script.length });
+    const logCalls = o.events.filter((e) => e.type === 'agent.tool-called' && e.payload['agentId'] === AGENT).length;
+    const v = judgeNeverGated(o.summary, task('lean'), task('busy'), logCalls);
+    if ('blocked' in v) return softSkip('blocked', v.blocked);
+    for (const x of v.findings) expect(x.ok, req(ID_NEVER_GATED, 'eval-summary.schema.json efficiency (RFC 0244 §C)', x.message)).toBe(true);
+  });
+
+  it('memory one trial writes is not visible to another trial (§B)', async () => {
+    const { doc, facet } = await evalSuiteFacet();
+    if (!doc) return softSkip('blocked', UNREADABLE);
+    const trials = facet?.['trials'];
+    if (!isRecord(trials)) return softSkip('inapplicable', 'the host does not advertise agents.evalSuite.trials');
+    const id = 'conformance-eval-memory-isolation';
+    const n = fixture(id).trials!.count;
+    if (typeof trials['maxTrials'] === 'number' && trials['maxTrials'] < n) return softSkip('inapplicable', `the host advertises trials.maxTrials ${trials['maxTrials']}, below the fixture's ${n}`);
+    if (!isFixtureAdvertised(id)) return softSkip('inapplicable', `the host does not advertise fixture ${id}, its opt-in to the memory-tool contract`);
+    const o = await runSuite(id);
+    if (o.kind === 'skip') return softSkip(o.disposition, o.reason);
+    const v = judgeTrialMemoryIsolated(memoryCalls(o.events, AGENT), n);
+    if (v.kind === 'blocked') return softSkip('blocked', v.reason);
+    for (const x of v.findings) expect(x.ok, req(ID_MEMORY_ISOLATED, 'agent-eval-suite.schema.json trials, fixtures.md memory contract (RFC 0244 §B)', x.message)).toBe(true);
   });
 
   type CounterRuns = { skip: [Parameters<typeof softSkip>[0], string] } | { a: CounterCall[]; b: CounterCall[]; c: CounterCall[]; aMisses: unknown };

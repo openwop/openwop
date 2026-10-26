@@ -5,10 +5,12 @@
  * or dropping calls (too few), and a sum of means that disagrees with the log.
  * The model-usage and cost judges fail a judge's or a single trial's usage
  * counted as the agent's, and pass nothing on a run with no usage at all.
+ * The never-gated judge fails a host that fails the many-call task or the
+ * suite, and is `blocked` when the calls never ran or the control task failed.
  */
 
 import { describe, it, expect } from 'vitest';
-import { agentUsage, judgeCostEveryTrial, judgeModelUsage, judgeToolCallCount, type EfficiencyVerdict } from './eval-efficiency-witness.js';
+import { agentUsage, judgeCostEveryTrial, judgeModelUsage, judgeNeverGated, judgeToolCallCount, type EfficiencyVerdict } from './eval-efficiency-witness.js';
 
 const failed = (v: EfficiencyVerdict): string[] => v.findings.filter((x) => !x.ok).map((x) => x.message);
 const TASKS = [{ taskId: 'a', scriptLength: 3 }, { taskId: 'b', scriptLength: 2 }];
@@ -106,4 +108,20 @@ describe('judgeCostEveryTrial (RFC 0244 §B)', () => {
     expect(judgeCostEveryTrial(sum2(undefined, undefined, { totalCostUsd: 0.03 }), agentUsage([usage(1, 1, 0.03)], AGENT)).applicable).toBe(false);
     expect(judgeCostEveryTrial(sum2(undefined, undefined, { totalCostUsd: 0.03 }), agentUsage(bracket('i1', AGENT, [usage(1, 1)]), AGENT)).applicable).toBe(false);
   });
+});
+
+describe('judgeNeverGated (RFC 0244 §C)', () => {
+  const LEAN = { taskId: 'lean', scriptLength: 1 };
+  const BUSY = { taskId: 'busy', scriptLength: 8 };
+  const run = (busy: Record<string, unknown>, suitePassed = true, lean: Record<string, unknown> = { score: 1, passed: true }) => ({
+    passed: suitePassed,
+    tasks: [{ taskId: 'lean', ...lean }, { taskId: 'busy', ...busy }],
+  });
+  const findings = (v: ReturnType<typeof judgeNeverGated>): string[] => ('blocked' in v ? [`blocked: ${v.blocked}`] : failed(v));
+  it('a host that ignores efficiency passes', () => expect(findings(judgeNeverGated(run({ score: 1, passed: true }), LEAN, BUSY, 9))).toEqual([]));
+  it('failing the many-call task fails', () => expect(findings(judgeNeverGated(run({ score: 1, passed: false }, false), LEAN, BUSY, 9)).some((m) => /busy .*MUST pass/.test(m))).toBe(true));
+  it('docking the many-call task\'s score fails', () => expect(findings(judgeNeverGated(run({ score: 0.5, passed: true }), LEAN, BUSY, 9)).some((m) => /MUST score what lean scores/.test(m))).toBe(true));
+  it('failing the suite on efficiency fails', () => expect(findings(judgeNeverGated(run({ score: 1, passed: true }, false), LEAN, BUSY, 9)).some((m) => /suite MUST pass/.test(m))).toBe(true));
+  it('calls that never ran are blocked', () => expect('blocked' in judgeNeverGated(run({ score: 1, passed: true }), LEAN, BUSY, 2)).toBe(true));
+  it('a failing control task is blocked', () => expect('blocked' in judgeNeverGated(run({ score: 0, passed: false }, false, { score: 0, passed: false }), LEAN, BUSY, 9)).toBe(true));
 });
