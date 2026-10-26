@@ -1,3 +1,8 @@
+## [2.46.30] — 2026-10-26 — RFC 0252 Draft (no assertion changes)
+
+- **No scenario or assertion changes.** RFC 0252 (`Draft`) adds its gap register and RFC 0244's G5 row moves to it, so the packed `spec/v1/gaps.json` changes.
+- **Host impact:** none.
+
 ## [2.46.29] — 2026-10-26 — RFC 0082 eval-gated promotion at major 2
 
 - **New scenario `v2-deployment-eval-gate` (RFC 0082 §E).** It reads the scripted agent's deployment records and picks a `draft`, `test` or `staged` one. It then runs the new fixture `conformance-eval-gate-failing` (one task that always fails) and promotes that version, citing the failed run as `evalRunId`. `0082.eval-gate-unmet-refused` expects `422 eval_gate_unmet`, and `0082.eval-gate-unmet-unchanged` expects the record's `state`, `channels` and `canaryPercent` to be unchanged. A summary that does not say `passed: false`, or no promotable record, records `blocked`. Judges in `lib/deployment-eval-gate-witness.ts` with self-tests.

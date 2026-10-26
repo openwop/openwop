@@ -14607,7 +14607,7 @@
       "witness": "unclassified",
       "requirementId": null,
       "disposition": "transferred",
-      "target": "TODO.md",
+      "target": "RFC",
       "sources": [
         {
           "file": "RFCS/registers/0244-eval-trajectories-trials-and-recorded-fixtures.gaps.md",
@@ -15088,6 +15088,74 @@
         {
           "file": "RFCS/registers/0251-eval-run-mode-and-baseline-selection.gaps.md",
           "token": "G3"
+        }
+      ]
+    },
+    {
+      "id": "openwop.gap.0252.1",
+      "rfc": "0252",
+      "local": "G1",
+      "section": "§B, §C, §D",
+      "surface": "The five Unresolved questions (several invocations, `argsMatch`, memory, an eval run as source, model answers).",
+      "witness": "unclassified",
+      "requirementId": null,
+      "disposition": "transferred",
+      "target": "RFC",
+      "sources": [
+        {
+          "file": "RFCS/registers/0252-eval-fixtures-from-a-recorded-run.gaps.md",
+          "token": "G1"
+        }
+      ]
+    },
+    {
+      "id": "openwop.gap.0252.2",
+      "rfc": "0252",
+      "local": "G2",
+      "section": "§Conformance",
+      "surface": "No host advertises `recordedFixtures` or lists the three fixtures; the scenario and fixtures are not written.",
+      "witness": "unclassified",
+      "requirementId": null,
+      "disposition": "externally-gated",
+      "target": "certified-host-cut",
+      "sources": [
+        {
+          "file": "RFCS/registers/0252-eval-fixtures-from-a-recorded-run.gaps.md",
+          "token": "G2"
+        }
+      ]
+    },
+    {
+      "id": "openwop.gap.0252.3",
+      "rfc": "0252",
+      "local": "G3",
+      "section": "§B",
+      "surface": "SDKs expose `fixtureRuns` and read the facet before sending it.",
+      "witness": "unclassified",
+      "requirementId": null,
+      "disposition": "transferred",
+      "target": "openwop-sdks",
+      "sources": [
+        {
+          "file": "RFCS/registers/0252-eval-fixtures-from-a-recorded-run.gaps.md",
+          "token": "G3"
+        }
+      ]
+    },
+    {
+      "id": "openwop.gap.0252.4",
+      "rfc": "0252",
+      "local": "G4",
+      "section": "§E",
+      "surface": "\"A replay does not re-resolve the source\" has no outside witness: v2 has no portable run deletion.",
+      "witness": "unclassified",
+      "requirementId": null,
+      "disposition": "externally-gated",
+      "target": "portable-run-deletion",
+      "sources": [
+        {
+          "file": "RFCS/registers/0252-eval-fixtures-from-a-recorded-run.gaps.md",
+          "token": "G4"
         }
       ]
     },
