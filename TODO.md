@@ -242,7 +242,8 @@ Defects outside the spec:
 - [ ] **RFC 0252** `Active` 2026-10-26 (window waived by the user, STEWARD OVERRIDE): `createRun` `fixtureRuns`, facet
       `agents.evalSuite.recordedFixtures`, `eval.started.fixtureRuns`; legs in `v2-eval-recorded-fixtures` (suite 2.46.32) over the
       three `conformance-eval-recorded-*` fixtures and the counter tool. Owed: (G2) openwop-app-d8 implements the host side and
-      openwop-app-14 cuts a certified bundle passing the `0252.*` host legs; (G3) the three v2 SDKs carry `fixtureRuns`.
+      openwop-app-14 cuts a certified bundle passing the `0252.*` host legs. (G3) done 2026-10-26: openwop-sdks #63 adds `fixtureRuns`
+      to the three 2.x SDKs (re-vendored to v2.46.32); unreleased, next SDK tag 2.7.0.
 - [x] **RFC 0251** `Accepted` 2026-10-26. Tier-1: openwop-app's certified 2.46.28 cut 230c `24b6a05ff` (ADR 0983)
       advertises `agents.evalSuite.baselineSelection` and passes the five `0251.*` legs and both `0244.regression-*` legs.
       (G3) openwop-sdks #62 adds both properties to the three 2.x SDKs; unreleased, next SDK tag 2.7.0.

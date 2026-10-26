@@ -172,7 +172,7 @@ openwop-app already records `agent.tool-called` / `agent.tool-returned` with `in
 - [x] `v2-eval-recorded-fixtures`, its three fixtures in `fixtures.md`, judges with self-tests.
 - [x] The invariant `eval-fixture-run-tenant-scoped` and the two threat-model lines.
 - [ ] A host advertises `recordedFixtures`, and a certified major-2 bundle records the `0252.*` host legs `executed-pass`.
-- [ ] The three v2 SDKs carry `fixtureRuns` (G3).
+- [x] The three v2 SDKs carry `fixtureRuns` (G3): openwop-sdks #63, re-vendored to v2.46.32.
 
 ## References
 
