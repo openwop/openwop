@@ -1,3 +1,7 @@
+## [2.46.27] — 2026-10-26 — RFC 0244 G2 closed
+
+- **No assertion changes.** RFC 0244's G2 closes on openwop-app's certified cut `fc9f666ed` (the three counter legs and `0244.efficiency-tool-calls` `executed-pass`), so the packed `spec/v1/gaps.json` changes.
+
 ## [2.46.26] — 2026-10-25 — RFC 0244 model-usage and cost legs
 
 - **New leg `0244.efficiency-model-usage` in `v2-eval-trajectory-trials`**, on the existing trajectory and trials runs. Per-task `modelCallCount`, `inputTokens` and `outputTokens`, times the trial count, must sum to the agent's `provider.usage` inside its `agent.invocation.*` brackets (judge and delegate calls excluded); without brackets they must not exceed the run's usage.
