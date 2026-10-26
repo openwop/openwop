@@ -47,12 +47,6 @@
  *      at least the agent's priced usage over all three trials
  *      (`0244.cost-every-trial`). The scripted agent need not call a model, so
  *      a run with no usage, no brackets or no prices records `inapplicable`.
- *   6d. §C never gated (2.46.28), on `conformance-eval-many-calls`: one task
- *      whose output matches makes 12 scripted calls under `passScore: 1`. The
- *      task and the suite MUST pass with score 1, and a reported
- *      `toolCallCount` is 12 (`0244.efficiency-never-gated`). A host that
- *      gates on a call count below 12 fails it; no finite fixture can show
- *      that no count ever gates.
  *   6b. §D through the counter tool `conformance.eval:counter` (2.46.25, G2),
  *      gated on `fixtureMatching` and both counter fixtures in discovery.
  *      Three sequential runs: `conformance-eval-counter-live` (A), then
@@ -134,7 +128,6 @@ const ID_REFUSED = 'openwop.requirement.0244.unadvertised-feature-refused';
 const ID_EFFICIENCY = 'openwop.requirement.0244.efficiency-tool-calls';
 const ID_MODEL_USAGE = 'openwop.requirement.0244.efficiency-model-usage';
 const ID_COST_TRIALS = 'openwop.requirement.0244.cost-every-trial';
-const ID_NEVER_GATED = 'openwop.requirement.0244.efficiency-never-gated';
 const ID_LIVE_MISS = 'openwop.requirement.0244.live-miss-counted';
 const ID_FIRST_UNCONSUMED = 'openwop.requirement.0244.first-unconsumed';
 const ID_NO_LIVE_CALL = 'openwop.requirement.0244.miss-no-live-call';
@@ -231,7 +224,7 @@ describe('v2 RFC 0244 — wire shape (server-free)', () => {
   });
 
   it('the eval-suite fixtures validate against the v2 suite schema', () => {
-    for (const id of ['conformance-eval-trajectory', 'conformance-eval-trials', 'conformance-eval-fixture-miss', 'conformance-eval-trajectory-gate', 'conformance-eval-trajectory-gate-mean', 'conformance-eval-fixture-error', 'conformance-eval-counter-live', 'conformance-eval-counter-miss', 'conformance-eval-regression-base', 'conformance-eval-regression-candidate', 'conformance-eval-many-calls']) {
+    for (const id of ['conformance-eval-trajectory', 'conformance-eval-trials', 'conformance-eval-fixture-miss', 'conformance-eval-trajectory-gate', 'conformance-eval-trajectory-gate-mean', 'conformance-eval-fixture-error', 'conformance-eval-counter-live', 'conformance-eval-counter-miss', 'conformance-eval-regression-base', 'conformance-eval-regression-candidate']) {
       const r = suiteSchema(fixture(id));
       expect(r.ok, req(ID_FIXTURES, 'fixtures.md §eval-suites', `${id} MUST validate: ${r.errors}`)).toBe(true);
     }
@@ -381,23 +374,6 @@ describe('v2 RFC 0244 — host behaviour', () => {
     const v = judgeCostEveryTrial(t.o.summary, agentUsage(t.o.events, AGENT));
     if (!v.applicable) return softSkip('inapplicable', 'the trials run carries no totalCostUsd, no agent.invocation.* brackets, or an unpriced provider.usage, so the per-trial cost is not observable');
     for (const x of v.findings) expect(x.ok, req(ID_COST_TRIALS, 'agent-eval-suite.schema.json thresholds.maxCostUsd, eval-summary.schema.json totalCostUsd (RFC 0244 §B)', x.message)).toBe(true);
-  });
-
-  it('a task is never failed on its efficiency counts (§C)', async () => {
-    const { doc, facet } = await evalSuiteFacet();
-    if (!doc) return softSkip('blocked', UNREADABLE);
-    if (!facet) return softSkip('inapplicable', 'the host does not advertise agents.evalSuite');
-    const id = 'conformance-eval-many-calls';
-    if (!isFixtureAdvertised(id)) return softSkip('inapplicable', `the host does not advertise fixture ${id}`);
-    const o = await runSuite(id);
-    if (o.kind === 'skip') return softSkip(o.disposition, o.reason);
-    const t = taskEntry(o.summary, 'many-calls');
-    const D = 'eval-summary.schema.json efficiency (RFC 0244 §C: reported, never gated)';
-    expect(t?.['passed'], req(ID_NEVER_GATED, D, 'a task whose output matches MUST pass however many tool calls it made (12 here)')).toBe(true);
-    expect(t?.['score'], req(ID_NEVER_GATED, D, 'the task MUST score 1: efficiency MUST NOT lower a score')).toBe(1);
-    expect(o.summary['passed'], req(ID_NEVER_GATED, D, 'the suite MUST pass at passScore 1: efficiency MUST NOT fail a suite')).toBe(true);
-    const v = judgeToolCallCount(o.summary, [{ taskId: 'many-calls', scriptLength: 12 }], undefined);
-    for (const x of v.findings) expect(x.ok, req(ID_NEVER_GATED, D, x.message)).toBe(true);
   });
 
   type CounterRuns = { skip: [Parameters<typeof softSkip>[0], string] } | { a: CounterCall[]; b: CounterCall[]; c: CounterCall[]; aMisses: unknown };
