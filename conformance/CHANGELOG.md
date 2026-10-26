@@ -1,3 +1,8 @@
+## [2.46.29] — 2026-10-26 — RFC 0082 eval-gated promotion at major 2
+
+- **New scenario `v2-deployment-eval-gate` (RFC 0082 §E).** It reads the scripted agent's deployment records and picks a `draft`, `test` or `staged` one. It then runs the new fixture `conformance-eval-gate-failing` (one task that always fails) and promotes that version, citing the failed run as `evalRunId`. `0082.eval-gate-unmet-refused` expects `422 eval_gate_unmet`, and `0082.eval-gate-unmet-unchanged` expects the record's `state`, `channels` and `canaryPercent` to be unchanged. A summary that does not say `passed: false`, or no promotable record, records `blocked`. Judges in `lib/deployment-eval-gate-witness.ts` with self-tests.
+- **Host impact:** opt-in. The legs need `agents.deployment`, `agents.evalSuite` and the fixture in discovery `fixtures`. Listing it states that the host's promote of the scripted agent carries `requiredEval` and that it holds a promotable record (contract in `fixtures.md`). No host lists it yet, so the legs record `inapplicable`.
+
 ## [2.46.28] — 2026-10-26 — RFC 0244 G2 closed; RFC 0251 and the §F legs
 
 - **New scenario `v2-eval-regression-baseline` (RFC 0251)** over two fixtures sharing one `suiteId` (`conformance-eval-regression-base` / `-candidate`), whose paired scores are equal while the aggregates differ by 1/3: `0251.shape` (server-free), `baseline-echoed`, `baseline-refused`, `baseline-uniform` (needs `OPENWOP_TEST_TENANT_B_API_KEY`, else `blocked`), `fields-refused`, and RFC 0244 §F `0244.regression-paired` and `regression-no-false-verdict`. Judges in `lib/eval-regression-witness.ts`.

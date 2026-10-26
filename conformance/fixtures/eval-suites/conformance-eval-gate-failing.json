@@ -1,0 +1,34 @@
+{
+  "suiteId": "core.openwop.evals.conformance-eval-gate-failing",
+  "version": "1.0.0",
+  "targetAgentId": "core.conformance.agents.scripted",
+  "modes": [
+    "golden"
+  ],
+  "thresholds": {
+    "passScore": 1
+  },
+  "tasks": [
+    {
+      "taskId": "always-fails",
+      "input": {
+        "script": [
+          {
+            "tool": "conformance.eval:lookup",
+            "arguments": {
+              "orderId": "o-1"
+            }
+          }
+        ],
+        "output": "not the expected answer"
+      },
+      "expected": {
+        "kind": "golden",
+        "match": {
+          "strategy": "contains",
+          "value": "done"
+        }
+      }
+    }
+  ]
+}

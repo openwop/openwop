@@ -23,7 +23,7 @@
 >
 > **Still unwitnessed at major 2:**
 > - the §C terminal `eval.completed` and the event ordering. The frozen v1 `agent-eval-run.test.ts` asserted these, and no v2 leg does.
-> - the §E promotion seam. **Ruled 2026-10-24 (`/architect`): RFC 0082 owns it.** This RFC reserves only the reference shape, which is `agent-deployment-transition.schema.json#/properties/evalRunId`; the enforcing MUST is the `agents.deployment` facet description (`eval_gate_unmet`). Its v2 witness is owed by RFC 0082 through the normative `transitionAgentDeployment`. The v1 leg ran through a sample seam.
+> - the §E promotion seam. **Ruled 2026-10-24 (`/architect`): RFC 0082 owns it.** This RFC reserves only the reference shape, which is `agent-deployment-transition.schema.json#/properties/evalRunId`; the enforcing MUST is the `agents.deployment` facet description (`eval_gate_unmet`). Its v2 witness is owed by RFC 0082 through the normative `transitionAgentDeployment`. The v1 leg ran through a sample seam. Suite 2.46.29 ships that leg (`v2-deployment-eval-gate`, opt-in fixture `conformance-eval-gate-failing`); no host has run it yet.
 >
 > This note does **not** change the Status. The two gaps are tracked in `TODO.md`.
 

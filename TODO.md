@@ -233,13 +233,12 @@ Defects outside the spec:
 - [x] **RFC 0244** `Accepted` (provisional) 2026-10-14 on MyndHyve's certified 2.46.9 cut (tier-2, build
       `65785814`, `myndhyve-2.46.9.json`). Owed: the RFC 0156 §B review and the suite residue below. openwop-app advertises it since 2026-10-15
       (2.46.9 cut `17090b1c8`: wire-shape, content-free, fixtures-valid pass; the seam-driven legs `inapplicable`).
-- [ ] **RFC 0082 eval-gated promotion has no v2 witness** (ruling 2026-10-24, from RFC 0081 §E). The MUST (the `agents.deployment`
-      facet: verify `evalRunId` is terminal and passed before `deployment.promoted`, else `422 eval_gate_unmet`) was witnessed only by
-      the v1 sample seam in `agent-deployment-lifecycle.test.ts`. The v2 port needs no new surface: run `conformance-eval-trajectory`
-      (its summary is `passed: false`), then `transitionAgentDeployment` promote with that `evalRunId`; expect `422 eval_gate_unmet`,
-      no `deployment.promoted`, and the record unchanged. It needs a host that advertises `agents.deployment` and `evalSuite.trajectory`
-      with a promotable version of the scripted agent. Today that is MyndHyve only, with no session to prove it, and an unmet
-      precondition would record `blocked`. Build it with a host collaborator.
+- [ ] **RFC 0082 eval-gated promotion: v2 leg shipped, no host has run it** (ruling 2026-10-24, from RFC 0081 §E). Suite 2.46.29
+      adds `v2-deployment-eval-gate`: run `conformance-eval-gate-failing` (summary `passed: false`), then `transitionAgentDeployment`
+      promote with that `evalRunId`; expect `422 eval_gate_unmet` and the record unchanged (`0082.eval-gate-unmet-refused`,
+      `-unchanged`). Gated on `agents.deployment`, `agents.evalSuite` and the fixture, whose listing declares that the promote of the
+      scripted agent carries `requiredEval` and a promotable record exists. Owed: a host lists it and a certified cut records both legs
+      (MyndHyve advertises both facets today).
 - [ ] **RFC 0251** `Active` 2026-10-26 (window waived by the user): `createRun` `evalModes` / `baselineRunId`, facet
       `agents.evalSuite.baselineSelection`; legs in `v2-eval-regression-baseline` (suite 2.46.28). Owed: (G2) a certified host cut
       passing the `0251.*` and `0244.regression-*` legs (openwop-app-6a maps its `configurable` path onto the root properties);
