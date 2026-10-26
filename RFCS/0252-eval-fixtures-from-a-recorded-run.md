@@ -52,7 +52,7 @@ A host advertising `recordedFixtures` MUST refuse with `400 validation_error`, b
 
 ### §C — The source run
 
-A usable source run is a terminal run that the caller's owner triple can read, that holds at least one agent invocation of the eval's `agentId`, and for which the host still holds every one of that agent's tool calls as executed: its inputs, and its result or error. Every other value is refused with the same status and the same error code: a run that does not exist, belongs to another tenant, is not terminal, never invoked the agent, or whose calls the host no longer holds. The refusal MUST NOT echo the supplied id.
+A usable source run is a terminal run that the caller's owner triple can read, that holds at least one agent invocation of the eval's `agentId`, and for which the host still holds every one of that agent's tool calls as executed: its inputs, and its result or error. The host holds these in its own store; they need not appear on the wire, where `agent.tool-called` can carry `argsHash` alone and `agent.tool-returned` no `outcome`. Every other value is refused with the same status and the same error code: a run that does not exist (an id that does not decode included), belongs to another tenant, is not terminal, never invoked the agent, or whose calls the host no longer holds. The refusal MUST NOT echo the supplied id.
 
 A source run with a failed tool call is usable only on a host that also advertises `fixtureErrors` (RFC 0245); otherwise it is unusable and refused like the rest. A host is not required to retain calls for any period: it refuses what it cannot replay.
 
@@ -164,7 +164,7 @@ All five were ruled on 2026-10-26 at `Draft → Active` by the steward:
 
 ## Implementation notes (non-normative)
 
-openwop-app already records `agent.tool-called` / `agent.tool-returned` with `inputs` and `outcome` for the scripted agent and keeps the as-executed boundary for its eval fixtures, so derivation is a read of its own event store at run-create. A host that keeps only `argsHash` cannot derive `exact` entries and SHOULD NOT advertise `recordedFixtures`. Sequencing: `Draft` → `Active` 2026-10-26 (window waived) with the schema, facet, derived API, scenario, fixtures and invariant → `Accepted` on a certified host cut (openwop-app is implementing the host side). SDKs follow with the property and a facet read (G3).
+openwop-app already keeps the as-executed tool calls of the scripted agent for its eval fixtures, so derivation is a read of its own store at run-create. What it emits on the wire is a separate choice: a lane whose events carry `argsHash` alone is a usable source as long as the host holds the calls internally. openwop-app's live agent lane keeps its events content-free and gains an opt-in, internal-only record of its calls (ADR 0984). A host that holds only `argsHash`, with no internal record of the inputs, cannot derive `exact` entries and SHOULD NOT advertise `recordedFixtures`. Sequencing: `Draft` → `Active` 2026-10-26 (window waived) with the schema, facet, derived API, scenario, fixtures and invariant → `Accepted` on a certified host cut (openwop-app is implementing the host side). SDKs follow with the property and a facet read (G3).
 
 ## Acceptance criteria
 
