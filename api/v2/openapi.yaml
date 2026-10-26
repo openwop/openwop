@@ -275,6 +275,26 @@ paths:
                           minLength: 16
                           maxLength: 4096
                           writeOnly: true
+                  evalModes:
+                    type: array
+                    minItems: 1
+                    uniqueItems: true
+                    items:
+                      type: string
+                      enum:
+                      - golden
+                      - rubric
+                      - adversarial
+                      - regression
+                      - live-shadow
+                    description: 'RFC 0251 — the RFC 0081 §D modes this eval run exercises: a subset of the suite''s and the
+                      host''s `modes` (absent ⇒ the host''s default). Only with `mode` `eval`, and only to a host advertising
+                      `agents.evalSuite.baselineSelection`, whose description holds the refusal rules.'
+                  baselineRunId:
+                    $ref: ../../schemas/v2/ids.schema.json#/$defs/runId
+                    description: RFC 0251 — the prior eval run a `regression` run is compared against; requires `regression`
+                      in `evalModes`. Only to a host advertising `agents.evalSuite.baselineSelection`. An unusable baseline
+                      is refused `400 validation_error`, identically whatever the reason.
                 if:
                   properties:
                     mode:

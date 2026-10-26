@@ -1,0 +1,74 @@
+{
+  "suiteId": "core.openwop.evals.conformance-eval-regression",
+  "version": "1.0.0",
+  "targetAgentId": "core.conformance.agents.scripted",
+  "modes": [
+    "golden",
+    "regression"
+  ],
+  "tasks": [
+    {
+      "taskId": "base-only",
+      "input": {
+        "script": [
+          {
+            "tool": "conformance.eval:lookup",
+            "arguments": {
+              "orderId": "o-1"
+            }
+          }
+        ],
+        "output": "done"
+      },
+      "expected": {
+        "kind": "golden",
+        "match": {
+          "strategy": "contains",
+          "value": "never-in-output"
+        }
+      }
+    },
+    {
+      "taskId": "shared-a",
+      "input": {
+        "script": [
+          {
+            "tool": "conformance.eval:lookup",
+            "arguments": {
+              "orderId": "o-1"
+            }
+          }
+        ],
+        "output": "done"
+      },
+      "expected": {
+        "kind": "golden",
+        "match": {
+          "strategy": "contains",
+          "value": "done"
+        }
+      }
+    },
+    {
+      "taskId": "shared-b",
+      "input": {
+        "script": [
+          {
+            "tool": "conformance.eval:lookup",
+            "arguments": {
+              "orderId": "o-1"
+            }
+          }
+        ],
+        "output": "done"
+      },
+      "expected": {
+        "kind": "golden",
+        "match": {
+          "strategy": "contains",
+          "value": "done"
+        }
+      }
+    }
+  ]
+}

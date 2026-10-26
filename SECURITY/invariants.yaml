@@ -2900,6 +2900,21 @@ invariants:
     witness: witnessable-gated
     witnessReview: initial-mechanical-2026-09-02
 
+  - id: eval-baseline-tenant-scoped
+    tier: protocol
+    severity: high
+    threat_model: SECURITY/threat-model-secret-leakage.md
+    tests:
+      - conformance/src/scenarios/v2-eval-regression-baseline.test.ts
+    note: |
+      RFC 0251 §C. A host advertising agents.evalSuite.baselineSelection MUST
+      NOT accept another tenant's run as a regression baseline (its
+      aggregateScore would leak through regression.scoreDelta), and MUST
+      refuse it with the same status and code as an id that never existed,
+      without echoing the id. Witnessed with a second tenant's credential
+      (OPENWOP_TEST_TENANT_B_API_KEY): `0251.baseline-uniform`.
+    witness: witnessable-gated
+
   - id: eval-summary-no-content-leak
     tier: protocol
     severity: high

@@ -224,7 +224,7 @@ describe('v2 RFC 0244 — wire shape (server-free)', () => {
   });
 
   it('the eval-suite fixtures validate against the v2 suite schema', () => {
-    for (const id of ['conformance-eval-trajectory', 'conformance-eval-trials', 'conformance-eval-fixture-miss', 'conformance-eval-trajectory-gate', 'conformance-eval-trajectory-gate-mean', 'conformance-eval-fixture-error', 'conformance-eval-counter-live', 'conformance-eval-counter-miss']) {
+    for (const id of ['conformance-eval-trajectory', 'conformance-eval-trials', 'conformance-eval-fixture-miss', 'conformance-eval-trajectory-gate', 'conformance-eval-trajectory-gate-mean', 'conformance-eval-fixture-error', 'conformance-eval-counter-live', 'conformance-eval-counter-miss', 'conformance-eval-regression-base', 'conformance-eval-regression-candidate']) {
       const r = suiteSchema(fixture(id));
       expect(r.ok, req(ID_FIXTURES, 'fixtures.md §eval-suites', `${id} MUST validate: ${r.errors}`)).toBe(true);
     }
