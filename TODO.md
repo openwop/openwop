@@ -239,12 +239,16 @@ Defects outside the spec:
       `-unchanged`). Gated on `agents.deployment`, `agents.evalSuite` and the fixture, whose listing declares that the promote of the
       scripted agent carries `requiredEval` and a promotable record exists. Owed: a host lists it and a certified cut records both legs
       (MyndHyve advertises both facets today).
+- [ ] **RFC 0252** `Active` 2026-10-26 (window waived by the user, STEWARD OVERRIDE): `createRun` `fixtureRuns`, facet
+      `agents.evalSuite.recordedFixtures`, `eval.started.fixtureRuns`; legs in `v2-eval-recorded-fixtures` (suite 2.46.32) over the
+      three `conformance-eval-recorded-*` fixtures and the counter tool. Owed: (G2) openwop-app-d8 implements the host side and
+      openwop-app-14 cuts a certified bundle passing the `0252.*` host legs; (G3) the three v2 SDKs carry `fixtureRuns`.
 - [x] **RFC 0251** `Accepted` 2026-10-26. Tier-1: openwop-app's certified 2.46.28 cut 230c `24b6a05ff` (ADR 0983)
       advertises `agents.evalSuite.baselineSelection` and passes the five `0251.*` legs and both `0244.regression-*` legs.
       (G3) openwop-sdks #62 adds both properties to the three 2.x SDKs; unreleased, next SDK tag 2.7.0.
 - [ ] **RFC 0244 suite residue.** (G2) CLOSED 2026-10-26: the counter tool and its two fixtures (2.46.25) pass on openwop-app's
       certified cut 226c (`fc9f666ed`, ADR 0977): `0244.live-miss-counted`, `first-unconsumed`, `miss-no-live-call`. (G3) a scripted memory write/read across
-      trials for §B isolation. (G5) a portable "fixtures = run X" reference: RFC 0252 `Draft` 2026-10-26 (`createRun` `fixtureRuns`, facet `agents.evalSuite.recordedFixtures`), comment window to 2026-11-02, no waiver (RFC 0147 §A.6). §C `toolCallCount` has a leg from 2.46.25
+      trials for §B isolation. (G5) a portable "fixtures = run X" reference: RFC 0252 `Active` 2026-10-26 (see the RFC 0252 item). §C `toolCallCount` has a leg from 2.46.25
       (`0244.efficiency-tool-calls`); 2.46.26 adds `0244.efficiency-model-usage` (§C model and token counts) and
       `0244.cost-every-trial` (§B); 2.46.27 adds `0244.efficiency-never-gated` (§C) and `0244.trial-memory-isolated`
       (§B, G3, through the reserved memory tool `conformance.eval:memory`). On openwop-app's cut 230c

@@ -63,7 +63,7 @@ export function judgeRefused(a: Answer, suppliedId: string | undefined, what: st
     { ok: a.status === 400, message: `${what} MUST be refused 400 before the run starts (got ${a.status})` },
     { ok: readErrorCode(a.json) === 'validation_error', message: `${what} MUST be refused with validation_error (got ${JSON.stringify(readErrorCode(a.json))})` },
   ];
-  if (suppliedId !== undefined) out.push({ ok: !a.text.includes(suppliedId), message: `the refusal of ${what} MUST NOT echo the supplied baselineRunId` });
+  if (suppliedId !== undefined) out.push({ ok: !a.text.includes(suppliedId), message: `the refusal of ${what} MUST NOT echo the supplied run id` });
   return out;
 }
 

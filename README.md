@@ -19,13 +19,13 @@ More: [every film](https://openwop.dev/videos/) · [the paper](https://doi.org/1
 
 **v1 has reached end of support** ([RFC 0234](./RFCS/0234-maintainer-set-v1-end-of-support.md)). The v1 tree is frozen at [`spec/v1/`](./spec/v1/README.md) for clients that still speak it; new work targets v2. Migration: [`docs/migration/v1-to-v2.md`](./docs/migration/v1-to-v2.md).
 
-> **RFC status (248 RFCs excluding template):** RFCs that are `Accepted` (244), that are `Active` (1 — RFC 0121), and that are `Draft` (2 — RFC 0038 Parked, RFC 0252). Per-RFC detail: [`docs/PROTOCOL-STATUS.md`](./docs/PROTOCOL-STATUS.md).
+> **RFC status (248 RFCs excluding template):** RFCs that are `Accepted` (244), that are `Active` (2 — RFC 0121, RFC 0252), and that are `Draft` (1 — RFC 0038 Parked). Per-RFC detail: [`docs/PROTOCOL-STATUS.md`](./docs/PROTOCOL-STATUS.md).
 
 What the protocol does not yet prove is listed in [`docs/KNOWN-LIMITS.md`](./docs/KNOWN-LIMITS.md).
 
 ## Install
 
-> **Published artifacts.** Protocol contract, 2.x line: [`@openwop/openwop-conformance`](https://www.npmjs.com/package/@openwop/openwop-conformance) (npm, **v2.46.31**) with its exact-pinned contract peer [`@openwop/spec-artifacts`](https://www.npmjs.com/package/@openwop/spec-artifacts) (**v2.46.31**), both published from this repo on the corpus tag. Client SDKs, 2.x line: [`@openwop/openwop`](https://www.npmjs.com/package/@openwop/openwop) (npm, **v2.6.0**) · [`openwop-client`](https://pypi.org/project/openwop-client/) (PyPI, **v2.6.0**) · `github.com/openwop/openwop-sdks/go/v2` (Go modules; tag `go/v2.6.0`). The three SDKs ship from [`openwop/openwop-sdks`](https://github.com/openwop/openwop-sdks) at feature parity, and the conformance suite versions independently (currently **v2.46.31**). The 1.x SDK line ([`github.com/openwop/openwop-sdks/go`](https://pkg.go.dev/github.com/openwop/openwop-sdks/go) (Go modules, **v1.7.0**), `@openwop/openwop@1`, `openwop-client<2`) remains installable for v1 clients.
+> **Published artifacts.** Protocol contract, 2.x line: [`@openwop/openwop-conformance`](https://www.npmjs.com/package/@openwop/openwop-conformance) (npm, **v2.46.32**) with its exact-pinned contract peer [`@openwop/spec-artifacts`](https://www.npmjs.com/package/@openwop/spec-artifacts) (**v2.46.32**), both published from this repo on the corpus tag. Client SDKs, 2.x line: [`@openwop/openwop`](https://www.npmjs.com/package/@openwop/openwop) (npm, **v2.6.0**) · [`openwop-client`](https://pypi.org/project/openwop-client/) (PyPI, **v2.6.0**) · `github.com/openwop/openwop-sdks/go/v2` (Go modules; tag `go/v2.6.0`). The three SDKs ship from [`openwop/openwop-sdks`](https://github.com/openwop/openwop-sdks) at feature parity, and the conformance suite versions independently (currently **v2.46.32**). The 1.x SDK line ([`github.com/openwop/openwop-sdks/go`](https://pkg.go.dev/github.com/openwop/openwop-sdks/go) (Go modules, **v1.7.0**), `@openwop/openwop@1`, `openwop-client<2`) remains installable for v1 clients.
 
 Measure a host with the suite:
 
@@ -54,7 +54,7 @@ OpenWOP does not standardize the model call, the orchestration topology inside a
 
 ## Security and conformance
 
-> **SECURITY surface:** 225 invariants in [`SECURITY/invariants.yaml`](./SECURITY/invariants.yaml) — 188 protocol-tier (verified at the spec gate; every one has at least one public test in [`conformance/src/scenarios/`](./conformance/src/scenarios/)), 35 reference-impl-tier (verified by reference impls' CI), 2 advisory.
+> **SECURITY surface:** 226 invariants in [`SECURITY/invariants.yaml`](./SECURITY/invariants.yaml) — 189 protocol-tier (verified at the spec gate; every one has at least one public test in [`conformance/src/scenarios/`](./conformance/src/scenarios/)), 35 reference-impl-tier (verified by reference impls' CI), 2 advisory.
 
 The [conformance suite](./conformance/) decides compliance mechanically and signs a certification bundle per host. Each host's measured results are in [`INTEROP-MATRIX.md`](./INTEROP-MATRIX.md). To report a vulnerability, see [`SECURITY.md`](./SECURITY.md).
 

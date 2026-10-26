@@ -1,0 +1,46 @@
+{
+  "suiteId": "core.openwop.evals.conformance-eval-recorded-replay",
+  "version": "1.0.0",
+  "targetAgentId": "core.conformance.agents.scripted",
+  "modes": [
+    "golden"
+  ],
+  "tasks": [
+    {
+      "taskId": "record",
+      "input": {
+        "script": [
+          {
+            "tool": "conformance.eval:counter",
+            "arguments": {
+              "key": "P",
+              "op": "read"
+            }
+          },
+          {
+            "tool": "conformance.eval:counter",
+            "arguments": {
+              "key": "R",
+              "op": "inc"
+            }
+          },
+          {
+            "tool": "conformance.eval:counter",
+            "arguments": {
+              "key": "R",
+              "op": "read"
+            }
+          }
+        ],
+        "output": "done"
+      },
+      "expected": {
+        "kind": "golden",
+        "match": {
+          "strategy": "contains",
+          "value": "done"
+        }
+      }
+    }
+  ]
+}

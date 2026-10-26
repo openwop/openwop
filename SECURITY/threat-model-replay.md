@@ -64,6 +64,10 @@ The only place the distinction is knowable is the host, at the delivery boundary
 
 Bounded by `capabilities.replay.sideEffectSuppression` (`none` / `recorded-outcome`). A host advertising `recorded-outcome` returns the Nth recorded outcome for the Nth attempt and fails closed with `replay_source_missing` when it cannot. Covered by `replay-side-effect-suppression.test.ts`. Distinct from §3.1: that is the host projecting outward, this is a node calling outward.
 
+### 3.2a Eval fixtures from a recorded run (RFC 0252)
+
+An eval task may take its fixtures from a prior run's recorded tool calls (`createRun` `fixtureRuns`). Two replay risks follow. A changed agent calling something the source never recorded must not reach the live tool: the derived fixtures always run `onMiss: "fail"` (§D; `0252.drift-fails-closed`). And a replay or fork of the eval run re-reads `eval.started.fixtureRuns` and must not resolve the source again (§E), which no outside party can witness until v2 can delete a run (RFC 0252 G4). The cross-tenant half is `eval-fixture-run-tenant-scoped` in the secret-leakage model.
+
 ### 3.3 Cache-key portability across tenants
 
 A replay reuses the source's LLM cache key. If the key is not tenant-scoped, a fork created in one tenant can read a completion produced in another — see `replay-llm-cache-key-portable` and `cache-cross-tenant-isolation`.

@@ -2915,6 +2915,21 @@ invariants:
       (OPENWOP_TEST_TENANT_B_API_KEY): `0251.baseline-uniform`.
     witness: witnessable-gated
 
+  - id: eval-fixture-run-tenant-scoped
+    tier: protocol
+    severity: high
+    threat_model: SECURITY/threat-model-secret-leakage.md
+    tests:
+      - conformance/src/scenarios/v2-eval-recorded-fixtures.test.ts
+    note: |
+      RFC 0252 §C. A host advertising agents.evalSuite.recordedFixtures MUST
+      NOT accept another tenant's run as a fixtureRuns source (its recorded
+      tool results would be served to the caller's agent), and MUST refuse it
+      with the same status and code as an id that never existed, without
+      echoing the id. Witnessed with a second tenant's credential
+      (OPENWOP_TEST_TENANT_B_API_KEY): `0252.source-uniform`.
+    witness: witnessable-gated
+
   - id: eval-summary-no-content-leak
     tier: protocol
     severity: high

@@ -1,7 +1,7 @@
 openapi: 3.1.0
 info:
   title: OpenWOP v2 API
-  version: 2.46.31
+  version: 2.46.32
   summary: REST surface for declaring, executing, suspending, resuming, and observing multi-step workflows.
   description: 'The OpenWOP v2 REST API. Paths are unversioned and served at the bare origin; a client selects a version with
     the `OpenWOP-Version` header from the host''s `protocolVersions[]`. Conformance seams and test-mode operations are not
@@ -295,6 +295,18 @@ paths:
                     description: RFC 0251 — the prior eval run a `regression` run is compared against; requires `regression`
                       in `evalModes`. Only to a host advertising `agents.evalSuite.baselineSelection`. An unusable baseline
                       is refused `400 validation_error`, identically whatever the reason.
+                  fixtureRuns:
+                    type: object
+                    minProperties: 1
+                    propertyNames:
+                      type: string
+                      minLength: 1
+                    additionalProperties:
+                      $ref: ../../schemas/v2/ids.schema.json#/$defs/runId
+                    description: RFC 0252 — maps a suite `taskId` to a prior run whose recorded tool calls become that task's
+                      fixtures, served under `onMiss` `fail`. Only with `mode` `eval`, and only to a host advertising `agents.evalSuite.recordedFixtures`,
+                      whose description holds the refusal rules. An unusable source run is refused `400 validation_error`,
+                      identically whatever the reason.
                 if:
                   properties:
                     mode:
