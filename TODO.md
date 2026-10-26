@@ -242,7 +242,7 @@ Defects outside the spec:
 - [ ] **RFC 0251** `Active` 2026-10-26 (window waived by the user): `createRun` `evalModes` / `baselineRunId`, facet
       `agents.evalSuite.baselineSelection`; legs in `v2-eval-regression-baseline` (suite 2.46.28). Owed: (G2) a certified host cut
       passing the `0251.*` and `0244.regression-*` legs (openwop-app-6a maps its `configurable` path onto the root properties);
-      (G3) an openwop-sdks issue for the two properties.
+      (G3) done 2026-10-26: openwop-sdks #62 adds both properties to the three 2.x SDKs (re-vendored to v2.46.28); unreleased, next SDK tag 2.7.0.
 - [ ] **RFC 0244 suite residue.** (G2) CLOSED 2026-10-26: the counter tool and its two fixtures (2.46.25) pass on openwop-app's
       certified cut 226c (`fc9f666ed`, ADR 0977): `0244.live-miss-counted`, `first-unconsumed`, `miss-no-live-call`. (G3) a scripted memory write/read across
       trials for §B isolation. (G5) a portable "fixtures = run X" reference: RFC 0252 `Draft` 2026-10-26 (`createRun` `fixtureRuns`, facet `agents.evalSuite.recordedFixtures`), comment window to 2026-11-02, no waiver (RFC 0147 §A.6). §C `toolCallCount` has a leg from 2.46.25
