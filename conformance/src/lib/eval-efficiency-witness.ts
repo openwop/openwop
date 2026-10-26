@@ -12,7 +12,8 @@
  * agent calls a model, which the fixture contract leaves to the host.
  *
  * `efficiency` is optional on a summary entry, so a run whose entries carry
- * none is not evidence either way (`applicable: false`).
+ * none is not evidence either way (`applicable: false`). The never-gated rule
+ * (`judgeNeverGated`) holds whether or not a host reports `efficiency`.
  *
  * @see RFCS/0244-eval-trajectories-trials-and-recorded-fixtures.md §C
  */
@@ -136,4 +137,31 @@ export function judgeCostEveryTrial(summary: Rec, log: { bracketed: boolean; usa
   if (!costs.every((c) => typeof c === 'number')) return { applicable: false, findings: [] };
   const sum = (costs as number[]).reduce((a, b) => a + b, 0);
   return { applicable: true, findings: [{ ok: total >= sum || close(total, sum), message: `totalCostUsd MUST count every trial: it MUST be at least the ${sum} costEstimateUsd of the agent's ${log.usage.length} provider.usage events across all trials (got ${total})` }] };
+}
+
+/**
+ * §C "MUST NOT fail a task or a suite on" efficiency, on
+ * `conformance-eval-efficiency-ungated`: `lean` and `busy` share an output and
+ * an expectation and differ only in their scripted call counts, so efficiency
+ * is the only thing that can tell them apart. `busy` MUST pass and score what
+ * `lean` scores, and the suite (`passScore` 1) MUST pass. The verdict is
+ * `blocked` unless the log carries every scripted call (otherwise the
+ * difference was never produced) and `lean` passes (otherwise a failing `busy`
+ * could have another cause).
+ */
+export function judgeNeverGated(summary: Rec, lean: ScriptedTask, busy: ScriptedTask, toolCallsInLog: number): { blocked: string } | EfficiencyVerdict {
+  const want = lean.scriptLength + busy.scriptLength;
+  if (toolCallsInLog !== want) return { blocked: `the log carries ${toolCallsInLog} agent.tool-called events, not the ${want} scripted calls, so the two tasks' efficiency never differed` };
+  const entries = (Array.isArray(summary['tasks']) ? (summary['tasks'] as unknown[]) : []).filter(isRec);
+  const l = entries.find((e) => e['taskId'] === lean.taskId);
+  const b = entries.find((e) => e['taskId'] === busy.taskId);
+  if (l?.['passed'] !== true) return { blocked: `the control task ${lean.taskId} did not pass, so a failing ${busy.taskId} could have a cause other than efficiency` };
+  return {
+    applicable: true,
+    findings: [
+      { ok: b?.['passed'] === true, message: `task ${busy.taskId} (${busy.scriptLength} tool calls) MUST pass like ${lean.taskId} (${lean.scriptLength}): a host MUST NOT fail a task on efficiency (got passed ${String(b?.['passed'])})` },
+      { ok: typeof b?.['score'] === 'number' && b['score'] === l['score'], message: `task ${busy.taskId} MUST score what ${lean.taskId} scores (${String(l['score'])}): efficiency is informational (got ${String(b?.['score'])})` },
+      { ok: summary['passed'] === true, message: `the suite MUST pass at passScore 1 when both tasks pass: a host MUST NOT fail a suite on efficiency (got passed ${String(summary['passed'])})` },
+    ],
+  };
 }
