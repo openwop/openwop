@@ -32,9 +32,12 @@ Entries before this file was condensed carried full development detail. That tex
 
 - **RFC 0246 Active (safety fix, `GHSA-ffx7-pm5h-v6pq`): a trial that failed its trajectory cannot carry a task or a suite to a pass.** The `mean` task rule and suite `passed` read a gating score that counts it 0; reported scores are unchanged. 90-day window waived by recorded STEWARD OVERRIDE.
 
-## [2.46.33] — 2026-10-27 — RFC 0252 Accepted
+## [2.46.34] — 2026-10-27 — RFC 0244 G3 closed
 
 - **RFC 0244 G3 closed.** openwop-app's certified cut `2c8bc27d6` serves the reserved memory tool from each trial's own store and passes `0244.trial-memory-isolated`: every RFC 0244 row a host can cause is witnessed.
+
+## [2.46.33] — 2026-10-27 — RFC 0252 Accepted
+
 - **RFC 0252 Accepted.** openwop-app's certified 2.46.32 cut (`2c8bc27d6`) advertises `recordedFixtures` and passes all six `0252.*` legs: a replay serves the source's recorded answers, drift fails closed, an unusable source is refused uniformly. The derived copy SHOULD share the source's retention and erasure.
 - **Suite fix:** `v2-advertised-fixtures-exist` no longer starts an RFC 0244 eval suite as a workflow. Its fixed-index sample reached `conformance-eval-counter-miss` once RFC 0252 added three suites, and failed a correct host (the cut's two `executed-fail` rows).
 
