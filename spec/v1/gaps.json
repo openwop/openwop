@@ -1,7 +1,7 @@
 {
   "$schema": "./gaps.schema.json",
   "version": 1,
-  "updated": "2026-10-26",
+  "updated": "2026-10-27",
   "witnessClasses": [
     "witnessable-unaided",
     "witnessable-gated",
@@ -15116,8 +15116,8 @@
       "surface": "No host advertises `recordedFixtures` or lists the three fixtures.",
       "witness": "unclassified",
       "requirementId": null,
-      "disposition": "externally-gated",
-      "target": "certified-host-cut",
+      "disposition": "closed",
+      "target": null,
       "sources": [
         {
           "file": "RFCS/registers/0252-eval-fixtures-from-a-recorded-run.gaps.md",
@@ -15133,8 +15133,8 @@
       "surface": "SDKs expose `fixtureRuns` and read the facet before sending it.",
       "witness": "unclassified",
       "requirementId": null,
-      "disposition": "transferred",
-      "target": "openwop-sdks",
+      "disposition": "closed",
+      "target": null,
       "sources": [
         {
           "file": "RFCS/registers/0252-eval-fixtures-from-a-recorded-run.gaps.md",
