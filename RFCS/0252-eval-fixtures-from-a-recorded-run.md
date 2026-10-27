@@ -4,10 +4,10 @@
 | --- | --- |
 | **RFC** | 0252 |
 | **Title** | An eval task takes its fixtures from a recorded run |
-| **Status** | `Active` |
+| **Status** | `Accepted` |
 | **Author(s)** | David Tufts (@davidscotttufts) |
 | **Created** | 2026-10-26 |
-| **Updated** | 2026-10-26 — **`Draft` → `Active`, comment window waived by the maintainer** (user instruction 2026-10-26: "Waive the comment window for RFC 0252 and work with other sessions to move it to accepted"); STEWARD OVERRIDE of RFC 0147 §A.6 recorded in `MAINTAINERS.md`. The five Unresolved questions are ruled below. The schema, facet, derived API, scenario `v2-eval-recorded-fixtures`, three fixtures and invariant `eval-fixture-run-tenant-scoped` land with suite 2.46.32. Filed `Draft` the same day (#2046). |
+| **Updated** | 2026-10-27 — **`Active → Accepted`**; RFC 0156 §B review deferred by steward exemption (2026-10-17). Evidence tier: tier-1 — openwop-app's certified 2.46.32 production cut (build `commit:2c8bc27d6`, revision `openwop-app-backend-01058-sv8`, 506/2/11/378, `--host-key` zero rejections; app ADR 0984) advertises `agents.evalSuite.recordedFixtures` and records the six `0252.*` legs and `openwop.scenario.v2-eval-recorded-fixtures` (28 assertions) `executed-pass`. Its two `executed-fail` rows are `0168.advertised-fixtures-exist` and its scenario: a suite defect (the fixed-index sample reached an eval suite and started it as a workflow), fixed in 2.46.33. G2 closes. The Security section gains the derived copy's retention and erasure (SHOULD). · 2026-10-26 — **`Draft` → `Active`, comment window waived by the maintainer** (user instruction 2026-10-26: "Waive the comment window for RFC 0252 and work with other sessions to move it to accepted"); STEWARD OVERRIDE of RFC 0147 §A.6 recorded in `MAINTAINERS.md`. The five Unresolved questions are ruled below. The schema, facet, derived API, scenario `v2-eval-recorded-fixtures`, three fixtures and invariant `eval-fixture-run-tenant-scoped` land with suite 2.46.32. Filed `Draft` the same day (#2046). |
 | **Affects** | `api/openapi.yaml` `createRun` (one optional body property; derived `api/v2/openapi.yaml`) · `spec/v2/facets/agents.schema.json` (optional `agents.evalSuite.recordedFixtures`; derived `schemas/v2/capabilities.schema.json`) · `schemas/v2/run-event-payloads.schema.json` (optional `fixtureRuns` on `eval.started`) · `SECURITY/invariants.yaml` (one proposed row) · conformance (new `v2-eval-recorded-fixtures`, three eval-suite fixtures) · v2 SDKs · hosts advertising `agents.evalSuite` |
 | **Compatibility** | `additive` per `COMPATIBILITY.md` §2.4 |
 | **Supersedes** | — |
@@ -127,16 +127,16 @@ The replay leg can fail: a host that ignores `fixtureRuns` answers the replay's 
 
 | Requirement | Observable — what an outside party sees | Who can cause the condition | Verdict |
 | --- | --- | --- | --- |
-| §A, §B shapes | schema vectors | the suite, server-free | witnessable-unaided |
-| §B request-rule refusals | `400 validation_error` on each bad request | the suite | witnessable-gated: not probed by a host yet |
-| §C unusable source refused, uniformly | the refusal for an unknown run, a run without the agent, and another tenant's run | the suite, with a second tenant | witnessable-gated: not probed by a host yet |
-| §D recorded answers served, no live call | outcomes equal the source's; the counter does not move | the suite, through the counter tool | witnessable-gated: not probed by a host yet |
-| §D a miss fails closed | `fixtureMissCount`, `passed`, the counter | the suite, through the drift fixture | witnessable-gated: not probed by a host yet |
+| §A, §B shapes | schema vectors | the suite, server-free | witnessable-unaided: `openwop.requirement.0252.shape` `executed-pass` on openwop-app's certified 2.46.32 production cut (build `2c8bc27d6`) |
+| §B request-rule refusals | `400 validation_error` on each bad request | the suite | witnessable-gated: `openwop.requirement.0252.fields-refused` `executed-pass` on openwop-app's certified 2.46.32 production cut (build `2c8bc27d6`) |
+| §C unusable source refused, uniformly | the refusal for an unknown run, a run without the agent, and another tenant's run | the suite, with a second tenant | witnessable-gated: `openwop.requirement.0252.source-refused` and `openwop.requirement.0252.source-uniform` `executed-pass` on openwop-app's certified 2.46.32 production cut (build `2c8bc27d6`) |
+| §D recorded answers served, no live call | outcomes equal the source's; the counter does not move | the suite, through the counter tool | witnessable-gated: `openwop.requirement.0252.source-replayed` `executed-pass` on openwop-app's certified 2.46.32 production cut (build `2c8bc27d6`) |
+| §D a miss fails closed | `fixtureMissCount`, `passed`, the counter | the suite, through the drift fixture | witnessable-gated: `openwop.requirement.0252.drift-fails-closed` `executed-pass` on openwop-app's certified 2.46.32 production cut (build `2c8bc27d6`) |
 | §D no egress credential enters a derived entry | nothing on the wire: derived entries are never emitted | only the host's own code | unwitnessable: the entries never leave the host, so no outside party can read them; covered by the proposed invariant's reference-impl tier |
-| §E `fixtureRuns` echoed | `eval.started` | the suite | witnessable-gated: not probed by a host yet |
+| §E `fixtureRuns` echoed | `eval.started` | the suite | witnessable-gated: `openwop.requirement.0252.source-replayed` `executed-pass` on openwop-app's certified 2.46.32 production cut (build `2c8bc27d6`) (it reads the echo) |
 | §E a replay does not re-resolve the source | a `:fork` of the eval run after the source is gone | the suite, on a host that deletes runs | unwitnessable: v2 has no portable run deletion, so the suite cannot remove the source |
 | Security: the derived copy shares the source's retention and erasure; a replay whose copy is gone is refused (SHOULD) | a `:fork` of the eval run after the source's content is erased | the suite, on a host that deletes runs | unwitnessable: v2 has no portable run deletion or erasure, so the suite cannot remove the source (as the §E row) |
-| §B a client never sends the property to a host without the member | the request on the wire | only a client | claims-check: a client obligation, not a host behaviour |
+| §B a client never sends the property to a host without the member | the request on the wire | only a client | unwitnessable — a client obligation: no host behaviour shows what a client would have sent to another host |
 
 ## Security
 
@@ -166,14 +166,14 @@ All five were ruled on 2026-10-26 at `Draft → Active` by the steward:
 
 ## Implementation notes (non-normative)
 
-openwop-app already keeps the as-executed tool calls of the scripted agent for its eval fixtures, so derivation is a read of its own store at run-create. What it emits on the wire is a separate choice: a lane whose events carry `argsHash` alone is a usable source as long as the host holds the calls internally. openwop-app's live agent lane keeps its events content-free and gains an opt-in, internal-only record of its calls (ADR 0984). A host that holds only `argsHash`, with no internal record of the inputs, cannot derive `exact` entries and SHOULD NOT advertise `recordedFixtures`. Sequencing: `Draft` → `Active` 2026-10-26 (window waived) with the schema, facet, derived API, scenario, fixtures and invariant → `Accepted` on a certified host cut (openwop-app is implementing the host side). SDKs follow with the property and a facet read (G3).
+openwop-app already keeps the as-executed tool calls of the scripted agent for its eval fixtures, so derivation is a read of its own store at run-create. What it emits on the wire is a separate choice: a lane whose events carry `argsHash` alone is a usable source as long as the host holds the calls internally. openwop-app's live agent lane keeps its events content-free and gains an opt-in, internal-only record of its calls (ADR 0984). At `Accepted` the certified cut covers the scripted lane; the live-lane record is in progress (ADR 0984 D7, branch `d8/0984-oq1-live-source-record`), and the Security section's retention and erasure rule binds it. A host that holds only `argsHash`, with no internal record of the inputs, cannot derive `exact` entries and SHOULD NOT advertise `recordedFixtures`. Sequencing: `Draft` → `Active` 2026-10-26 (window waived) with the schema, facet, derived API, scenario, fixtures and invariant → `Accepted` 2026-10-27 on openwop-app's certified 2.46.32 cut (build `2c8bc27d6`). SDKs follow with the property and a facet read (G3).
 
 ## Acceptance criteria
 
 - [x] The `createRun` property (derived `api/v2/openapi.yaml`), the facet member (derived capabilities schema) and the `eval.started` property, with the rules in their descriptions.
 - [x] `v2-eval-recorded-fixtures`, its three fixtures in `fixtures.md`, judges with self-tests.
 - [x] The invariant `eval-fixture-run-tenant-scoped` and the two threat-model lines.
-- [ ] A host advertises `recordedFixtures`, and a certified major-2 bundle records the `0252.*` host legs `executed-pass`.
+- [x] A host advertises `recordedFixtures`, and a certified major-2 bundle records the `0252.*` host legs `executed-pass`. *(2026-10-27: openwop-app's 2.46.32 cut, build `2c8bc27d6`; `evidence/v2-host-bundles/openwop-workflow-engine-2.46.32-2c8bc27d6.json`.)*
 - [x] The three v2 SDKs carry `fixtureRuns` (G3): openwop-sdks #63, re-vendored to v2.46.32.
 
 ## References

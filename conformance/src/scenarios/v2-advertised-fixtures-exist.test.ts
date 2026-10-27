@@ -35,10 +35,13 @@
  */
 
 import { describe, it, expect } from 'vitest';
+import { readdirSync } from 'node:fs';
+import { join } from 'node:path';
 import { driver, type OpenWOPResponse } from '../lib/driver.js';
 import { v2Discovery } from '../lib/v2.js';
 import { softSkip } from '../lib/soft-skip.js';
 import { req } from '../lib/requirement-ids.js';
+import { FIXTURES_DIR } from '../lib/paths.js';
 
 const ID = 'openwop.requirement.0168.advertised-fixtures-exist';
 const DOC = 'RFC 0168 §C.3';
@@ -58,12 +61,29 @@ function advertisedIds(doc: Record<string, unknown>): string[] {
   return Array.isArray(raw) ? raw.filter((x): x is string => typeof x === 'string') : [];
 }
 
+/**
+ * The RFC 0244 eval suites share `fixtures[]` with workflows but are not
+ * workflows: a host starts one as `{mode: "eval", evalSuiteRef}`, never as a
+ * `workflowId`, so `POST /runs` with the suite id is a 404 on a conforming host.
+ * The sample once missed them by luck of index. RFC 0252 added three suites, the
+ * indices shifted, and the 2.46.32 production cut sampled
+ * `conformance-eval-counter-miss` and failed a correct host. Starting a suite here
+ * instead would run its tasks and move the counter state `v2-eval-trajectory-trials`
+ * reads. The eval scenarios start every suite they gate on, and one the host
+ * cannot start surfaces there as `blocked`.
+ */
+const EVAL_SUITE_IDS = new Set(
+  readdirSync(join(FIXTURES_DIR, 'eval-suites'))
+    .filter((f) => f.endsWith('.json'))
+    .map((f) => f.slice(0, -'.json'.length)),
+);
+
 describe('v2-advertised-fixtures-exist (RFC 0168 §C.3)', () => {
   it('a sampled advertised fixture is actually creatable, not just listed', async () => {
     const doc = await v2Discovery().catch(() => null);
     if (!doc) return softSkip('blocked', 'v2 discovery unreachable');
-    const ids = advertisedIds(doc);
-    if (ids.length === 0) return softSkip('inapplicable', 'the host advertises no fixtures[]');
+    const ids = advertisedIds(doc).filter((id) => !EVAL_SUITE_IDS.has(id));
+    if (ids.length === 0) return softSkip('inapplicable', 'the host advertises no workflow fixtures[]');
 
     // Deterministic sample spread across the sorted list, so a failure is
     // reproducible and a host cannot pass by luck of ordering.

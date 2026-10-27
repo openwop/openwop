@@ -239,22 +239,22 @@ Defects outside the spec:
       `-unchanged`). Gated on `agents.deployment`, `agents.evalSuite` and the fixture, whose listing declares that the promote of the
       scripted agent carries `requiredEval` and a promotable record exists. Owed: a host lists it and a certified cut records both legs
       (MyndHyve advertises both facets today).
-- [ ] **RFC 0252** `Active` 2026-10-26 (window waived by the user, STEWARD OVERRIDE): `createRun` `fixtureRuns`, facet
-      `agents.evalSuite.recordedFixtures`, `eval.started.fixtureRuns`; legs in `v2-eval-recorded-fixtures` (suite 2.46.32) over the
-      three `conformance-eval-recorded-*` fixtures and the counter tool. Owed: (G2) openwop-app-d8 implements the host side and
-      openwop-app-14 cuts a certified bundle passing the `0252.*` host legs. (G3) done 2026-10-26: openwop-sdks #63 adds `fixtureRuns`
-      to the three 2.x SDKs (re-vendored to v2.46.32); unreleased, next SDK tag 2.7.0.
+- [x] **RFC 0252** `Accepted` 2026-10-27. Tier-1: openwop-app's certified 2.46.32 cut `2c8bc27d6` (ADR 0984)
+      advertises `agents.evalSuite.recordedFixtures` and passes all six `0252.*` legs. (G3) openwop-sdks #63, released in SDK
+      2.7.0. Still owed on the host: the live-lane record (ADR 0984 D7, branch `d8/0984-oq1-live-source-record`). The cut's two
+      `0168.advertised-fixtures-exist` fails are a suite defect fixed in 2.46.33; a 2.46.33 re-cut follows the pin bump.
 - [x] **RFC 0251** `Accepted` 2026-10-26. Tier-1: openwop-app's certified 2.46.28 cut 230c `24b6a05ff` (ADR 0983)
       advertises `agents.evalSuite.baselineSelection` and passes the five `0251.*` legs and both `0244.regression-*` legs.
       (G3) openwop-sdks #62 adds both properties to the three 2.x SDKs; unreleased, next SDK tag 2.7.0.
 - [ ] **RFC 0244 suite residue.** (G2) CLOSED 2026-10-26: the counter tool and its two fixtures (2.46.25) pass on openwop-app's
       certified cut 226c (`fc9f666ed`, ADR 0977): `0244.live-miss-counted`, `first-unconsumed`, `miss-no-live-call`. (G3) a scripted memory write/read across
-      trials for §B isolation. (G5) a portable "fixtures = run X" reference: RFC 0252 `Active` 2026-10-26 (see the RFC 0252 item). §C `toolCallCount` has a leg from 2.46.25
+      trials for §B isolation. (G5) a portable "fixtures = run X" reference: RFC 0252 `Accepted` 2026-10-27 (see the RFC 0252 item). §C `toolCallCount` has a leg from 2.46.25
       (`0244.efficiency-tool-calls`); 2.46.26 adds `0244.efficiency-model-usage` (§C model and token counts) and
       `0244.cost-every-trial` (§B); 2.46.27 adds `0244.efficiency-never-gated` (§C) and `0244.trial-memory-isolated`
       (§B, G3, through the reserved memory tool `conformance.eval:memory`). On openwop-app's cut 230c
       (`24b6a05ff`) the never-gated leg and the two §F legs (through RFC 0251's `baselineRunId`) pass; model-usage and
-      cost read inapplicable (its scripted agent calls no model), and memory isolation is unlisted (G3 still owed by a host).
+      cost read inapplicable (its scripted agent calls no model). On cut `2c8bc27d6` (2.46.32) `0244.trial-memory-isolated`
+      passes too, so G3 has its host witness.
 - [x] **RFC 0250** `Accepted` 2026-10-25. Tier-1: openwop-app's certified 2.46.23 cut 217c `f94471e98` advertises
       `hostEvents.replay {minRetentionSeconds: 86400}` and passes all six `0250.*` legs (app ADR 0973, EVENT-01). Still owed:
       openwop-sdks opt-in and a non-retrying resync (G5, openwop/openwop-sdks#60).
