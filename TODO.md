@@ -241,7 +241,7 @@ Defects outside the spec:
       (MyndHyve advertises both facets today).
 - [x] **RFC 0252** `Accepted` 2026-10-27. Tier-1: openwop-app's certified 2.46.32 cut `2c8bc27d6` (ADR 0984)
       advertises `agents.evalSuite.recordedFixtures` and passes all six `0252.*` legs. (G3) openwop-sdks #63, released in SDK
-      2.7.0. Still owed on the host: the live-lane record (ADR 0984 D7, branch `d8/0984-oq1-live-source-record`). The cut's two
+      2.7.0. The live-lane record shipped 2026-10-27 (openwop-app #5304, ADR 0984 D7, build `dde96ce72`). The cut's two
       `0168.advertised-fixtures-exist` fails are a suite defect fixed in 2.46.33; a 2.46.33 re-cut follows the pin bump.
 - [x] **RFC 0251** `Accepted` 2026-10-26. Tier-1: openwop-app's certified 2.46.28 cut 230c `24b6a05ff` (ADR 0983)
       advertises `agents.evalSuite.baselineSelection` and passes the five `0251.*` legs and both `0244.regression-*` legs.
