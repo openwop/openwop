@@ -1,3 +1,7 @@
+## [2.46.34] — 2026-10-27 — RFC 0244 G3 closed
+
+- **No assertion changes.** RFC 0244's G3 closes on openwop-app's certified cut `2c8bc27d6` (`0244.trial-memory-isolated` `executed-pass`), so the packed `spec/v1/gaps.json` changes.
+
 ## [2.46.33] — 2026-10-27 — RFC 0252 Accepted
 
 - **Fix `v2-advertised-fixtures-exist` (RFC 0168 §C.3).** It sampled `fixtures[]` by fixed index and sent each id as `POST /runs {workflowId}`. An RFC 0244 eval suite is started as `{mode: "eval", evalSuiteRef}`, so that request is a correct 404. RFC 0252's three suites shifted the indices onto `conformance-eval-counter-miss`, and openwop-app's 2.46.32 cut recorded `0168.advertised-fixtures-exist` `executed-fail`. The sample now skips the suite's own eval-suite fixture ids; the eval scenarios start those.

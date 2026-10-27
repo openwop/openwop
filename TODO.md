@@ -247,8 +247,8 @@ Defects outside the spec:
       advertises `agents.evalSuite.baselineSelection` and passes the five `0251.*` legs and both `0244.regression-*` legs.
       (G3) openwop-sdks #62 adds both properties to the three 2.x SDKs; unreleased, next SDK tag 2.7.0.
 - [ ] **RFC 0244 suite residue.** (G2) CLOSED 2026-10-26: the counter tool and its two fixtures (2.46.25) pass on openwop-app's
-      certified cut 226c (`fc9f666ed`, ADR 0977): `0244.live-miss-counted`, `first-unconsumed`, `miss-no-live-call`. (G3) a scripted memory write/read across
-      trials for §B isolation. (G5) a portable "fixtures = run X" reference: RFC 0252 `Accepted` 2026-10-27 (see the RFC 0252 item). §C `toolCallCount` has a leg from 2.46.25
+      certified cut 226c (`fc9f666ed`, ADR 0977): `0244.live-miss-counted`, `first-unconsumed`, `miss-no-live-call`. (G3) CLOSED 2026-10-27: `0244.trial-memory-isolated`
+      passes on openwop-app's certified cut `2c8bc27d6` (ADR 0989). (G5) a portable "fixtures = run X" reference: RFC 0252 `Accepted` 2026-10-27 (see the RFC 0252 item). §C `toolCallCount` has a leg from 2.46.25
       (`0244.efficiency-tool-calls`); 2.46.26 adds `0244.efficiency-model-usage` (§C model and token counts) and
       `0244.cost-every-trial` (§B); 2.46.27 adds `0244.efficiency-never-gated` (§C) and `0244.trial-memory-isolated`
       (§B, G3, through the reserved memory tool `conformance.eval:memory`). On openwop-app's cut 230c

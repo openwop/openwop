@@ -14572,8 +14572,8 @@
       "surface": "Trial memory isolation has no causable probe. It needs a scripted agent that writes memory in trial 0 and reads it in trial 1.",
       "witness": "unclassified",
       "requirementId": null,
-      "disposition": "transferred",
-      "target": "TODO.md",
+      "disposition": "closed",
+      "target": null,
       "sources": [
         {
           "file": "RFCS/registers/0244-eval-trajectories-trials-and-recorded-fixtures.gaps.md",
