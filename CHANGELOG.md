@@ -34,7 +34,7 @@ Entries before this file was condensed carried full development detail. That tex
 
 ## [2.46.33] — 2026-10-27 — RFC 0252 Accepted
 
-- **RFC 0252 Accepted.** openwop-app's certified 2.46.32 production cut (`2c8bc27d6`, 506/2/0) advertises `recordedFixtures` and passes all six `0252.*` legs: a replay serves the source run's recorded answers with no live call, drift fails closed, and a foreign, unknown or bare source is refused uniformly. Its Security section adds that the derived copy SHOULD share the source's retention and erasure. §B review deferred by steward exemption.
+- **RFC 0252 Accepted.** openwop-app's certified 2.46.32 cut (`2c8bc27d6`) advertises `recordedFixtures` and passes all six `0252.*` legs: a replay serves the source's recorded answers, drift fails closed, an unusable source is refused uniformly. The derived copy SHOULD share the source's retention and erasure.
 - **Suite fix:** `v2-advertised-fixtures-exist` no longer starts an RFC 0244 eval suite as a workflow. Its fixed-index sample reached `conformance-eval-counter-miss` once RFC 0252 added three suites, and failed a correct host (the cut's two `executed-fail` rows).
 
 ## [2.46.32] — 2026-10-26 — RFC 0252 Active
