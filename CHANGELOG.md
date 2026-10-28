@@ -8,6 +8,7 @@ Entries before this file was condensed carried full development detail. That tex
 
 ## [Unreleased]
 
+- **openwop-app certified 2.46.33 production cut checked in.** Build `002e1ed15` (revision 01065-gd4): 508/0/0, signature verified. The two `0168.advertised-fixtures-exist` rows that failed on `2c8bc27d6` now pass, the suite defect fixed in 2.46.33. No other row changed.
 - **RFC 0250 Accepted.** openwop-app's certified 2.46.23 production cut (`f94471e98`, 487/0/0) advertises `hostEvents.replay`: a durable cursor resumes in commit order with no gap, and an unknown cursor is refused `409 host_event_resync_required` before any SSE byte. §B review deferred by steward exemption.
 
 - **RFCs 0249 and 0096 Accepted.** openwop-app's certified 2.46.21 production cut (`34bfefddc`, 480/0/0) serves the seven `/proposals` operations: an unapplied draft is not served, and the installed template is JCS-equal to the reviewed revision. §B review deferred by steward exemption.
