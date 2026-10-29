@@ -47,6 +47,27 @@
   2.44.5 (263 pass). `coordination` went `Stable` on MyndHyve's 2.45.2 cut (RFC 0220, #1828).
 - **Cuts:** every certified public cut needs a fresh operator approval.
 
+## 0 — MyndHyve now runs on openwop-app white-label (2026-10-29) · **reevaluate**
+
+The maintainer reported on 2026-10-29 that MyndHyve now runs on the openwop-app white-label. The live
+discovery documents show that this applies to only one of its two origins:
+
+| Origin | `implementation` | `agents.deployment` | `agents.proposals` |
+| --- | --- | --- | --- |
+| `myndhyve.ai` | `myndhyve 0.8.0`, the openwop-app codebase | absent | absent |
+| `api.myndhyve.ai` | `workflow-runtime 1.0.0`, the legacy codebase | advertised | 4 kinds, no operations (RFC 0249 R1) |
+
+Every MyndHyve bundle in `evidence/v2-host-bundles/` was cut against `api.myndhyve.ai`.
+
+- **Tier.** `myndhyve.ai` is openwop-app's code, so evidence from it is tier-1, not tier-2 (GOVERNANCE.md
+  §Acceptance evidence tiers: tier-2 is "a genuinely distinct codebase"). Only `api.myndhyve.ai` is still
+  tier-2, and only while it serves. Decide whether the legacy runtime keeps serving, and update
+  GOVERNANCE.md's "Today this is MyndHyve (`api.myndhyve.ai`)" and INTEROP-MATRIX.md when it retires.
+  Past tier-2 graduations stand: their evidence came from the legacy codebase.
+- **"Needs MyndHyve" now means "needs openwop-app code".** Re-read every open item and gap row
+  that names MyndHyve as the witness (about 50 registers mention MyndHyve or tier-2).
+- **RFC 0082** is the first case; see its item in §8.
+
 ## 1 — RFC 0121 subscription-rail witness · **owner openwop-77 (paused)**
 
 David cleared **GitHub Copilot only** (#1604). Anthropic, Google and OpenAI are **not** cleared,
@@ -237,8 +258,15 @@ Defects outside the spec:
       adds `v2-deployment-eval-gate`: run `conformance-eval-gate-failing` (summary `passed: false`), then `transitionAgentDeployment`
       promote with that `evalRunId`; expect `422 eval_gate_unmet` and the record unchanged (`0082.eval-gate-unmet-refused`,
       `-unchanged`). Gated on `agents.deployment`, `agents.evalSuite` and the fixture, whose listing declares that the promote of the
-      scripted agent carries `requiredEval` and a promotable record exists. Owed: a host lists it and a certified cut records both legs
-      (MyndHyve advertises both facets today).
+      scripted agent carries `requiredEval` and a promotable record exists. Owed: a host lists it and a certified cut records both legs.
+      **Reevaluate (2026-10-29, §0):** the 2026-10-24 ruling assumed MyndHyve would run this, because it advertised
+      `agents.deployment`. That is now true only of the legacy `api.myndhyve.ai`. Neither openwop-app nor the
+      white-label `myndhyve.ai` advertises `agents.deployment`, and openwop-app has no deployment code. On the 002e1ed15
+      cut, the scenario and both legs record `inapplicable`. RFC 0082 itself stays `Accepted` (on its v1 tier-2
+      evidence); only this v2 leg is owed. Pick one path:
+      (a) the legacy runtime lists the fixture and cuts on ≥ 2.46.29 (quick, but a witness on a retiring host);
+      (b) openwop-app builds `agents.deployment` (the white-label inherits it);
+      (c) record the leg as unwitnessed until a host needs deployment channels.
 - [x] **RFC 0252** `Accepted` 2026-10-27. Tier-1: openwop-app's certified 2.46.32 cut `2c8bc27d6` (ADR 0984)
       advertises `agents.evalSuite.recordedFixtures` and passes all six `0252.*` legs. (G3) openwop-sdks #63, released in SDK
       2.7.0. The live-lane record shipped 2026-10-27 (openwop-app #5304, ADR 0984 D7, build `dde96ce72`). The cut's two
@@ -262,6 +290,15 @@ Defects outside the spec:
       cut 209c `34bfefddc` passes all nine `0249.*` legs (app ADR 0970/0972). Still owed: phase 2 read-backs for chain and agent
       packs (G2), the replay-fork rule (G3), and `automation` (G4). MyndHyve advertises `agents.proposals` without the
       operations (R1); its legs record `inapplicable`.
+      **Audit 2026-10-29: G2 and G4 are spec gaps, and no host needs them yet.**
+      - G2: v2 has no GET that serves an installed pack. `getAgent` returns an `AgentInventoryEntry` and `getWorkflow`
+        returns one workflow; no pack read is in `path-manifest.json`.
+      - G4 is deeper. The `automation` artifact is "an RFC 0052 job spec", but no job-spec schema exists at either major.
+        `TriggerSubscription` (`source: schedule`) holds state only, has no read operation, and carries no
+        cron or workflow binding. openwop-app does have a host-namespaced `/host/openwop-app/scheduler/jobs`.
+      - No host proposes these kinds through the v2 operations: openwop-app proposes `prompt-template` only, and the
+        white-label `myndhyve.ai` does not advertise proposals. Leave both as disclosed gaps until a host does
+        (`readback` already discloses them). That host's need triggers the follow-up RFC.
 - [x] **RFC 0248** `Accepted` 2026-10-23 (`ctx.callAI` attempt accounting + per-call retry policy, for the Book AI pack).
       Tier-1: openwop-app's certified 2.46.19 cut `f17ee3753` advertises `aiProviders.callAccounting` and passes all eight
       `0248.*` legs (fixture opt-in app ADR 0967). Host tensions stay with the host (ADR 0966): a `usage: false` attempt
