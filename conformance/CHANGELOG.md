@@ -1,3 +1,7 @@
+## [2.46.35] — 2026-10-29 — MyndHyve's legacy runtime retired
+
+- **No assertion changes.** MyndHyve's legacy `workflow-runtime` (`api.myndhyve.ai`) retired on 2026-10-29; MyndHyve runs on the openwop-app white-label. Register rows that measured the legacy host close or re-gate, so the packed `spec/v1/gaps.json` changes.
+
 ## [2.46.34] — 2026-10-27 — RFC 0244 G3 closed
 
 - **No assertion changes.** RFC 0244's G3 closes on openwop-app's certified cut `2c8bc27d6` (`0244.trial-memory-isolated` `executed-pass`), so the packed `spec/v1/gaps.json` changes.
