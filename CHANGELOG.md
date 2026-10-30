@@ -33,12 +33,15 @@ Entries before this file was condensed carried full development detail. That tex
 
 - **RFC 0246 Active (safety fix, `GHSA-ffx7-pm5h-v6pq`): a trial that failed its trajectory cannot carry a task or a suite to a pass.** The `mean` task rule and suite `passed` read a gating score that counts it 0; reported scores are unchanged. 90-day window waived by recorded STEWARD OVERRIDE.
 
+## [2.46.36] — 2026-10-30 — RFCs 0255 and 0256 Active
+
+- **RFC 0255 and RFC 0256 `Active` (window waived).** 0255 deletes the AI Envelope from v2 with no deprecation period, through a `steward-deletion` corrections class that closes when an outside host appears. 0256 states the tool-turn contract. Neither changes the wire yet.
+
 ## [2.46.35] — 2026-10-29 — MyndHyve's legacy runtime retired
 
 - **No tier-2 host serves.** MyndHyve now runs on the openwop-app white-label (`myndhyve.ai`, tier 1), and its legacy `workflow-runtime` (`api.myndhyve.ai`, tier 2) retired on 2026-10-29. `evidence/host-tiers.json` records both.
 - **Tier checks.** `check-ext-status-coherence` refuses a bundle dated after its origin's retirement. `check-accepted-predicate` checks a claimed tier against the cited bundle's origin.
 - **`Stable` is historical (RFC 0220 erratum).** A retired host no longer demotes a family. Each `Stable` ext page names its newest qualifying bundle in a checked `last witnessed:` row; all 12 name MyndHyve's legacy 2.46.13 cut.
-- **RFC 0255 and RFC 0256 `Active` (window waived).** RFC 0255 deletes the AI Envelope from v2 with no deprecation period, through a `steward-deletion` corrections class that closes when an outside host appears. RFC 0256 states the tool-turn contract: channels, admission order, trust that restricts approvers, recovery and replay, provider-executed tools. Neither changes the wire in this entry.
 - **RFC 0254 `Active` (window waived).** The v2 deployment transition contract: `409 deployment_state_conflict`, one-step `promote`, rollback restores the prior incumbent, `transitionRunId` links the management run, a gated transition answers `202`.
 - **Registers.** Five rows that measured the legacy host close as moot (0176 G2, 0210 G5, 0221 G1, 0231 G6, 0234 G2), and three are re-gated (0177 G3, 0210 G4, 0220 G1).
 - **RFC 0253 filed `Draft`.** Proposes `getInstalledPack` (`GET /installed-packs/{packName}`), so an applied `workflow-chain-pack` or `agent-pack` proposal can be JCS-compared to the reviewed artifact (RFC 0249 G2). Registers only; no wire, schema or suite change yet.

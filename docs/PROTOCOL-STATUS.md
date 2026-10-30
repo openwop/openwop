@@ -12,7 +12,7 @@
 | OpenAPI operations | 59 | `api/openapi.yaml` |
 | AsyncAPI version | 3.1.0 | `api/asyncapi.yaml` |
 | Conformance scenario files | 665 | `conformance/src/scenarios/*.test.ts` |
-| RFCs tracked | 250 | `RFCS/[0-9][0-9][0-9][0-9]-*.md`, excluding template |
+| RFCs tracked | 252 | `RFCS/[0-9][0-9][0-9][0-9]-*.md`, excluding template |
 
 ## Artifact Versions
 
@@ -21,7 +21,7 @@
 | Artifact | Version | Source | Cadence |
 |---|---|---|---|
 | Spec corpus (root) | 1.1.0 | `package.json` | bumps only on a coordinated spec release |
-| Conformance suite `@openwop/openwop-conformance` | 2.46.35 | `conformance/package.json` | minor on scenario add/remove |
+| Conformance suite `@openwop/openwop-conformance` | 2.46.36 | `conformance/package.json` | minor on scenario add/remove |
 | OpenAPI `info.version` | 1.1.0 | `api/openapi.yaml` | hand-maintained in v1.x; generated from the corpus tag at v2 (RFC 0172 sectionB #14) |
 | AsyncAPI `info.version` | 1.1.0 | `api/asyncapi.yaml` | as above |
 | TypeScript SDK `@openwop/openwop` (2.x, current) | 2.5.0 | openwop-sdks `sdk/typescript-v2/package.json` (via `evidence/cross-repo-manifests.json`) | v2-only; npm `latest` |
@@ -71,7 +71,7 @@
 | Status | Count |
 |---|---:|
 | Accepted | 245 |
-| Active | 2 |
+| Active | 4 |
 | Draft | 2 |
 | Superseded | 1 |
 
@@ -327,6 +327,8 @@
 | RFC 0252 | An eval task takes its fixtures from a recorded run | Accepted |
 | RFC 0253 | One v2 read that serves an installed pack's `pack.json`, so an applied `workflow-chain-pack` or `agent-pack` proposal can be byte-compared | Draft |
 | RFC 0254 | The agent deployment transition contract at v2 | Active |
+| RFC 0255 | Delete the AI Envelope from v2, and license steward deletions through `corrections.json` while no outside host exists | Active |
+| RFC 0256 | How a host admits model output: three channels, one admission order, trust that restricts approvers, tool-turn recovery and replay, and declared provider-executed tools | Active |
 
 ## SDK Helper Coverage
 
@@ -351,7 +353,7 @@ The pack registry now lives in the [`openwop-registry`](https://github.com/openw
 ## Active Follow-Ups
 
 - 2 RFCs still `Draft` (RFC 0038, RFC 0253) — advance with schema/conformance proof or defer.
-- 2 RFCs `Active` (RFC 0121, RFC 0254) — wire-shape MAY shift compatibly within v1.x until promotion to `Accepted`.
+- 4 RFCs `Active` (RFC 0121, RFC 0254, RFC 0255, RFC 0256) — wire-shape MAY shift compatibly within v1.x until promotion to `Accepted`.
 - External audit, non-steward host recruitment, and non-steward maintainer recruitment remain external-action gates.
 - Multi-region idempotency and some optional-profile behavior checks remain lower-confidence than the core wire contract.
 
