@@ -149,7 +149,7 @@
     ],
     "retrospectiveReviewsCompleted": 0,
     "outcomes": {
-      "not-reviewed": 129
+      "not-reviewed": 130
     }
   },
   "audit": {
@@ -186,7 +186,7 @@
   },
   "risks": {
     "source": "RFCS/registers/*.risks.md + RFCS/*.risks.md (RFC 0166 tokens)",
-    "rowsScanned": 556,
+    "rowsScanned": 560,
     "openCriticalOrHigh": [
       {
         "rfc": "0058",

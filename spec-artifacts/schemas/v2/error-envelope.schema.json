@@ -2,7 +2,7 @@
   "$schema": "https://json-schema.org/draft/2020-12/schema",
   "$id": "https://openwop.dev/spec/v2/error-envelope.schema.json",
   "title": "ErrorEnvelope (v2)",
-  "description": "GENERATED from spec/v2/errors.json by scripts/generate-error-envelope.mjs (RFC 0171 §B.1). 126 registered codes; vendor codes match ^(?!openwop\\.)[a-z][a-z0-9]*(-[a-z0-9]+)*\\.[a-z][a-z0-9_]*$. Consumers MUST accept an unknown registered member and MUST NOT act on it (RFC 0171 §A.5).",
+  "description": "GENERATED from spec/v2/errors.json by scripts/generate-error-envelope.mjs (RFC 0171 §B.1). 127 registered codes; vendor codes match ^(?!openwop\\.)[a-z][a-z0-9]*(-[a-z0-9]+)*\\.[a-z][a-z0-9_]*$. Consumers MUST accept an unknown registered member and MUST NOT act on it (RFC 0171 §A.5).",
   "type": "object",
   "additionalProperties": false,
   "required": [
@@ -137,6 +137,7 @@
             "eval_gate_unmet",
             "conversation_speaker_not_participant",
             "conversation_roster_exceeded",
+            "deployment_state_conflict",
             "proposal_state_conflict",
             "proposal_stale",
             "proposal_install_conflict",
@@ -627,6 +628,41 @@
       "if": {
         "properties": {
           "error": {
+            "const": "deployment_state_conflict"
+          }
+        },
+        "required": [
+          "error"
+        ]
+      },
+      "then": {
+        "properties": {
+          "details": {
+            "type": "object",
+            "required": [
+              "state",
+              "transition"
+            ],
+            "properties": {
+              "state": {
+                "type": "string",
+                "description": "The deployment record's current state."
+              },
+              "transition": {
+                "type": "string",
+                "description": "The refused transition: promote, pause, deprecate, rollback or adjust-canary."
+              }
+            },
+            "additionalProperties": true,
+            "x-openwop-error": "deployment_state_conflict"
+          }
+        }
+      }
+    },
+    {
+      "if": {
+        "properties": {
+          "error": {
             "const": "proposal_state_conflict"
           }
         },
@@ -816,6 +852,7 @@
     "eval_gate_unmet": 422,
     "conversation_speaker_not_participant": 422,
     "conversation_roster_exceeded": 422,
+    "deployment_state_conflict": 409,
     "proposal_state_conflict": 409,
     "proposal_stale": 409,
     "proposal_install_conflict": 409,

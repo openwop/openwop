@@ -2,7 +2,7 @@
 
 > **Status: Stable.** Generated from `spec/v2/errors.json` by `scripts/generate-error-envelope.mjs`; do not edit.
 
-Every registered code (126 codes), by HTTP status. The registry is normative; this table restates it for reading. `retriable` and `statusSource` are in the registry. The rules are in [errors.md](../core/errors.md).
+Every registered code (127 codes), by HTTP status. The registry is normative; this table restates it for reading. `retriable` and `statusSource` are in the registry. The rules are in [errors.md](../core/errors.md).
 
 Code | Status
 --- | ---
@@ -67,6 +67,7 @@ Code | Status
 `signature_not_available` | 404
 `protocol_version_unsupported` | 406
 `connection_provider_conflict` | 409
+`deployment_state_conflict` | 409
 `envelope_correlation_conflict` | 409
 `host_event_resync_required` | 409
 `idempotency_in_flight` | 409
