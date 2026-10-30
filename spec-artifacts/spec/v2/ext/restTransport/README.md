@@ -9,6 +9,7 @@
 | **witness:** | `witnessable-gated` |
 | **technical:** | `stable` |
 | **adoption:** | `multi-witness` |
+| **last witnessed:** | `myndhyve-2.46.13-c8d511d84.json` — MyndHyve's legacy `workflow-runtime` (tier 2), suite 2.46.13, 2026-10-16; the host retired 2026-10-29 |
 | **peer-dependency id** | `restTransport` |
 | **advertised as** | `extensions.<org>.rest-transport` |
 | **declared facets** | `conditionalRunGet`, `contentEncodings` |

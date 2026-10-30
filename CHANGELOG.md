@@ -37,6 +37,7 @@ Entries before this file was condensed carried full development detail. That tex
 
 - **No tier-2 host serves.** MyndHyve now runs on the openwop-app white-label (`myndhyve.ai`, tier 1), and its legacy `workflow-runtime` (`api.myndhyve.ai`, tier 2) retired on 2026-10-29. `evidence/host-tiers.json` records both.
 - **Tier checks.** `check-ext-status-coherence` refuses a bundle dated after its origin's retirement. `check-accepted-predicate` checks a claimed tier against the cited bundle's origin.
+- **`Stable` is historical (RFC 0220 erratum).** A retired host no longer demotes a family. Each `Stable` ext page names its newest qualifying bundle in a checked `last witnessed:` row; all 12 name MyndHyve's legacy 2.46.13 cut.
 - **Registers.** Five rows that measured the legacy host close as moot (0176 G2, 0210 G5, 0221 G1, 0231 G6, 0234 G2), and three are re-gated (0177 G3, 0210 G4, 0220 G1).
 - **RFC 0253 filed `Draft`.** Proposes `getInstalledPack` (`GET /installed-packs/{packName}`), so an applied `workflow-chain-pack` or `agent-pack` proposal can be JCS-compared to the reviewed artifact (RFC 0249 G2). Registers only; no wire, schema or suite change yet.
 

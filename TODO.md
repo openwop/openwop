@@ -66,7 +66,7 @@ Done in this change:
   - **unchanged:** the rest name MyndHyve only as an example or ask for "a second host" generically (0071 G9/G10/R8, 0112/0113/0114/0115 G4, 0120 G5, 0124 G6, 0129 G4/R5, 0165 G6/G7, 0192 G1, 0220 G2, 0236 G5, 0128 R5, 0147 R20, 0177 R2, 0224 R1, 0249 R1). Each still needs a tier-2 or tier-3 host, and none serves.
 
 Still owed:
-- [ ] **The `Stable` tense (RFC 0220 amendment).** `spec/v2/ext/README.md` says a tier-2 host "serves" a `Stable` family, while the check reads historical bundles. All 12 `Stable` families rest on the retired legacy runtime. Rule it historical ("served it at a certified cut") and add a `Last witnessed:` line per family.
+- [x] **The `Stable` tense (RFC 0220 erratum, 2026-10-29).** `spec/v2/ext/README.md` says a tier-2 host "serves" a `Stable` family, while the check reads historical bundles. All 12 `Stable` families rest on the retired legacy runtime. Rule it historical ("served it at a certified cut") and add a `Last witnessed:` line per family.
 - [ ] **RFC 0082 v2 deployment test (path b, decided 2026-10-29):** port the deployment lifecycle/shape scenarios to v2; openwop-app builds `agents.deployment`. See the RFC 0082 item in §8.
 - [ ] **RFC 0249 G2 (installed-pack read-back):** drafted as [RFC 0253](./RFCS/0253-installed-pack-readback.md) (`Draft`, 2026-10-29); UQ 1–6 decide at `Active`. Its G3 owes a word-neutral `packs.md` pointer to the proposal install path when the core budget allows. G4 (automation) starts once RFC 0253 is `Active`.
 
