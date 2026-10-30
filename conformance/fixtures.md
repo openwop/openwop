@@ -723,6 +723,20 @@ Hosts that don't ship a BYOK SecretResolver MAY return `404` / `422` on the star
   3. **Replay** via `POST /runs/{runId}:fork {mode:"replay"}`; **assert** the fork's `agent.invocation.started` re-reads the SAME `resolvedAgentVersion`.
   4. **(Seam-guarded)** Move the `stable` channel via the deployment seam; **assert** a replay of the original run STILL carries the original pin — never re-resolving the moved channel.
 
+### At major 2: the deployment lifecycle (`v2-deployment-lifecycle`)
+
+At major 2, `v2-deployment-lifecycle.test.ts` drives `core.conformance.channel-agent` through `listAgentDeployments` and `transitionAgentDeployment` (`GET` / `POST /agents/core.conformance.channel-agent/deployments`). It moves the `stable` channel itself, so it needs no seam. A host that advertises `agents.deployment` and lists `conformance-agent-channel-dispatch` in discovery `fixtures` states that, at the start of every cut:
+
+- it holds exactly one record of `core.conformance.channel-agent` that is `active` on `stable`, at `canaryPercent` 100 or absent (the incumbent);
+- it holds at least one `draft` record of that agent (the candidate);
+- both are readable by the conformance credential at the `GET` above, and that credential holds the `deploy:*` scope;
+- no approval gate and no `requiredEval` applies to that credential's transitions of this agent, so a legal transition answers `200` with the updated record;
+- the run's `agent.invocation-started` carries `resolvedChannel` and `resolvedAgentVersion`, as above.
+
+The suite promotes the candidate `draft → test → staged → active` with `channel: "stable"` and `canaryPercent: 100`, adjusts its canary share to 50, then rolls it back. A run of this fixture started after that promote must resolve `stable` to the candidate; if it does not, the replay leg records `blocked`. The cut leaves the candidate `rolled-back`, or `active` on a host without `rollback`. The host restores both preconditions before the next cut, for example by minting a fresh `draft` version and resetting the incumbent. A host whose records do not meet them records `blocked`, never a failure.
+
+The scope leg sends a promote with `OPENWOP_TEST_LOW_SCOPE_KEY`, a key with no `deploy:*` scope. If that variable is unset, the leg records `blocked`.
+
 ---
 
 ## `conformance-artifact-emit` (RFC 0205 — an artifact the suite can read back)
