@@ -1,0 +1,9 @@
+# RFC 0253 — Gap register
+
+| ID | Section | Question / missing input | Owner | Resolution path | Blocks |
+| --- | --- | --- | --- | --- | --- |
+| G1 | §Conformance | No host advertises `readback` for a pack kind; the operation, scenario and fixtures are not written. openwop-app (tier-1) is the expected first implementer; the legacy MyndHyve runtime is retired, so there is no tier-2 host. | Conformance Architect | `externally-gated:certified-host-cut` — the wire and the scenario land at `Active`; a certified major-2 bundle with one pack kind's `0253.*` host legs `executed-pass` closes this. | `Accepted` |
+| G2 | §A–§F | The six Unresolved questions (namespace, `signing`, scope of the read, versions, files, workspace). | Spec Architect | `transferred:RFC 0253 Unresolved questions` 2026-10-29 — decided at `Draft → Active`, after the comment window. | `Active` |
+| G3 | §G | `packs.md` describes only the registry install path; a proposal install is a second path it does not mention. The core budget is at its cap (38,000 / 38,000), so no pointer is added. | Spec Architect | `transferred:TODO.md` 2026-10-29 — add a word-neutral pointer in `packs.md` when budget allows or a readability pass frees words. | none |
+| G4 | §E | The `read-only` refusal (a name or `agentId` the host installed itself) has no portable trigger: the suite cannot learn such a name on an arbitrary host. | Conformance Architect | `externally-gated:host-fixture-pack-name` — witnessable once a host lists a fixture pack it installed itself (the RFC 0248 fixture pattern); until then the falsifiability row says `seam-gated` with no leg. | none |
+| G5 | §Implementation notes | SDKs expose `getInstalledPack` and the union response type. | Compatibility Architect | `transferred:openwop-sdks` 2026-10-29 — filed after `Active`. | `Accepted` checklist item |
