@@ -23,6 +23,20 @@ const RFCS = join(ROOT, 'RFCS');
 const ledgerPath = join(ROOT, 'evidence', 'corpus-ledger.json');
 const ledger = existsSync(ledgerPath) ? JSON.parse(readFileSync(ledgerPath, 'utf8')) : { requirements: {} };
 const failures = [];
+// Bundles by origin tier, for the tier check (rule 3).
+const tierOf = new Map();
+const tiersPath = join(ROOT, 'evidence', 'host-tiers.json');
+if (existsSync(tiersPath)) for (const h of JSON.parse(readFileSync(tiersPath, 'utf8')).hosts ?? []) for (const o of h.origins ?? []) tierOf.set(o, h.tier);
+const bundleDir = join(ROOT, 'evidence', 'v2-host-bundles');
+const bundleIndex = (existsSync(bundleDir) ? readdirSync(bundleDir) : []).filter((n) => n.endsWith('.json')).map((file) => {
+  let b = {};
+  try { b = JSON.parse(readFileSync(join(bundleDir, file), 'utf8')); } catch { /* unreadable bundles are check-ext-status-coherence's finding */ }
+  let origin = null;
+  try { origin = new URL(b.discovery?.url ?? '').origin; } catch { /* no discovery.url: unknown tier */ }
+  const build = b.host?.build?.id;
+  return { file, tier: tierOf.get(origin) ?? 0, builds: typeof build === 'string' && /^[0-9a-f]{7,}$/.test(build) ? [build] : [] };
+});
+
 // Verdict cells that declare a witness class no `executed-pass` can ever have.
 const DECLARED_VERDICT = /seam-gated|negative[- ]existence|unwitnessable|witnessable\s*—\s*gated|host-pending/i;
 const hostGaps = [];
@@ -132,6 +146,24 @@ for (const f of readdirSync(RFCS).filter((n) => /^\d{4}-.*\.md$/.test(n)).sort()
   // declared no tier at all. GOVERNANCE §"Acceptance evidence tiers" names the
   // label; the RFC must state it.
   if (!/Evidence tier:\s*\**\s*(tier-[123]|corpus gate)/i.test(updated)) failures.push(`${f}: Updated declares no evidence tier — write \`Evidence tier: tier-N — <label>\` or \`Evidence tier: corpus gate — …\` (GOVERNANCE §"Acceptance evidence tiers")`);
+  // A claimed tier is checked against the bundle's ORIGIN (evidence/host-tiers.json),
+  // not taken from the prose. MyndHyve's white-label (2026-10-29) serves the
+  // tier-1 openwop-app codebase under a MyndHyve name: a cut against it labelled
+  // "tier-2" would otherwise pass. A cited bundle is a file in
+  // evidence/v2-host-bundles/ or a `commit:<hex>` build id one of them records.
+  const claimed = /Evidence tier:\s*\**\s*tier-([23])/i.exec(updated);
+  if (claimed) {
+    const want = Number(claimed[1]);
+    const cited = bundleIndex.filter((b) => updated.includes(b.file) || b.builds.some((id) => updated.includes(`commit:${id.slice(0, 7)}`)));
+    // A `commit:` cite no checked-in bundle records is unverifiable: the older
+    // flips cite builds whose bundles were never checked in (RFC 0226 cites
+    // MyndHyve's 2.44.3 `commit:a1755368`). Before RFC 0253 that is let
+    // through; from 0253 every cite must resolve.
+    const unresolved = [...updated.matchAll(/commit:([0-9a-f]{7,})/g)].map((m) => m[1]).filter((id) => !bundleIndex.some((b) => b.builds.some((x) => x.startsWith(id) || id.startsWith(x.slice(0, 7)))));
+    const strict = Number(f.slice(0, 4)) >= 253;
+    if (cited.length && (strict || !unresolved.length) && Math.max(...cited.map((b) => b.tier)) < want) failures.push(`${f}: claims tier-${want}, but every cited bundle comes from a lower-tier origin (${cited.map((b) => `${b.file} → tier ${b.tier || 'unknown'}`).join(', ')}; evidence/host-tiers.json)`);
+    if (strict && (!cited.length || unresolved.length)) failures.push(`${f}: claims tier-${want} but ${cited.length ? `cites builds no checked-in bundle records (${unresolved.join(', ')})` : 'cites no bundle in evidence/v2-host-bundles/ (by file name or `commit:<id>`)'}, so the tier cannot be checked`);
+  }
   const table = text.split(/^### Falsifiability[^\n]*$/m)[1]?.split(/^## /m)[0] ?? '';  // anchored — see the note at declaredIds above
   // Rule 4 iterated ids and therefore passed VACUOUSLY for an RFC that named
   // none: five of the fourteen Active RFCs had no Falsifiability section or a
