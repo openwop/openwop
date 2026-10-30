@@ -12,6 +12,7 @@
   - `0082.canary-adjusted` (with `canary`) and `0082.canary-unsupported-refused` (without it): `adjust-canary` to 50.
   - `0082.rollback-pointer` (with `rollback`): the version ends `rolled-back`, and its `rollbackPointer` names a version listed `active`.
 - Judges are in `lib/deployment-lifecycle-witness.ts`, with self-tests.
+- RFC 0253 (`Draft`) adds its gap register, which also lands in the packed `spec/v1/gaps.json`.
 - **Host impact:** opt-in. The legs need `agents.deployment` and the fixture listed in discovery `fixtures`. At major 2, listing it states the record preconditions in `fixtures.md`: one incumbent `active` on `stable`, one `draft`, and no gate on the conformance credential. No host advertises the facet today, so every leg records `inapplicable`.
 
 ## [2.46.34] — 2026-10-27 — RFC 0244 G3 closed

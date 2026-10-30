@@ -15160,6 +15160,91 @@
       ]
     },
     {
+      "id": "openwop.gap.0253.1",
+      "rfc": "0253",
+      "local": "G1",
+      "section": "§Conformance",
+      "surface": "No host advertises `readback` for a pack kind; the operation, scenario and fixtures are not written. openwop-app (tier-1) is the expected first implementer; the legacy MyndHyve runtime is retired, so there is no tier-2 host.",
+      "witness": "unclassified",
+      "requirementId": null,
+      "disposition": "externally-gated",
+      "target": "certified-host-cut",
+      "sources": [
+        {
+          "file": "RFCS/registers/0253-installed-pack-readback.gaps.md",
+          "token": "G1"
+        }
+      ]
+    },
+    {
+      "id": "openwop.gap.0253.2",
+      "rfc": "0253",
+      "local": "G2",
+      "section": "§A–§F",
+      "surface": "The six Unresolved questions (namespace, `signing`, scope of the read, versions, files, workspace).",
+      "witness": "unclassified",
+      "requirementId": null,
+      "disposition": "transferred",
+      "target": "RFC",
+      "sources": [
+        {
+          "file": "RFCS/registers/0253-installed-pack-readback.gaps.md",
+          "token": "G2"
+        }
+      ]
+    },
+    {
+      "id": "openwop.gap.0253.3",
+      "rfc": "0253",
+      "local": "G3",
+      "section": "§G",
+      "surface": "`packs.md` describes only the registry install path; a proposal install is a second path it does not mention. The core budget is at its cap (38,000 / 38,000), so no pointer is added.",
+      "witness": "unclassified",
+      "requirementId": null,
+      "disposition": "transferred",
+      "target": "TODO.md",
+      "sources": [
+        {
+          "file": "RFCS/registers/0253-installed-pack-readback.gaps.md",
+          "token": "G3"
+        }
+      ]
+    },
+    {
+      "id": "openwop.gap.0253.4",
+      "rfc": "0253",
+      "local": "G4",
+      "section": "§E",
+      "surface": "The `read-only` refusal (a name or `agentId` the host installed itself) has no portable trigger: the suite cannot learn such a name on an arbitrary host.",
+      "witness": "unclassified",
+      "requirementId": null,
+      "disposition": "externally-gated",
+      "target": "host-fixture-pack-name",
+      "sources": [
+        {
+          "file": "RFCS/registers/0253-installed-pack-readback.gaps.md",
+          "token": "G4"
+        }
+      ]
+    },
+    {
+      "id": "openwop.gap.0253.5",
+      "rfc": "0253",
+      "local": "G5",
+      "section": "§Implementation notes",
+      "surface": "SDKs expose `getInstalledPack` and the union response type.",
+      "witness": "unclassified",
+      "requirementId": null,
+      "disposition": "transferred",
+      "target": "openwop-sdks",
+      "sources": [
+        {
+          "file": "RFCS/registers/0253-installed-pack-readback.gaps.md",
+          "token": "G5"
+        }
+      ]
+    },
+    {
       "id": "openwop.gap.spec.a2a-integration.g1",
       "rfc": "0152",
       "local": "G1",
