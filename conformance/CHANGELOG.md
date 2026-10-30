@@ -1,7 +1,19 @@
 ## [2.46.35] — 2026-10-29 — MyndHyve's legacy runtime retired
 
-- **No assertion changes.** MyndHyve's legacy `workflow-runtime` (`api.myndhyve.ai`) retired on 2026-10-29; MyndHyve runs on the openwop-app white-label. Register rows that measured the legacy host close or re-gate, so the packed `spec/v1/gaps.json` changes.
-- RFC 0253 (`Draft`) adds its gap register, which also lands in the packed `spec/v1/gaps.json`. No assertion changes.
+- **Registers.** MyndHyve's legacy `workflow-runtime` (`api.myndhyve.ai`) retired on 2026-10-29; MyndHyve runs on the openwop-app white-label. Register rows that measured the legacy host close or re-gate, so the packed `spec/v1/gaps.json` changes.
+- **New scenario `v2-deployment-lifecycle` (RFC 0082 §B, §C, §E, §F).** It drives `core.conformance.channel-agent` through `listAgentDeployments` and `transitionAgentDeployment`, plus runs and a replay of the existing fixture `conformance-agent-channel-dispatch`, with no seam. Ten legs:
+  - `0082.list-valid`: the list answers 200 and every record validates against `agent-deployment.schema.json`.
+  - `0082.pin-recorded`: the run's `agent.invocation-started` carries `resolvedChannel: stable` and a version active on it.
+  - `0082.scope-fail-closed`: a promote sent with `OPENWOP_TEST_LOW_SCOPE_KEY` (no `deploy:*`) is refused 403 and the record does not move. If the key is unset, the leg records `blocked`.
+  - `0082.transition-illegal-refused`: `pause` and `deprecate` of a draft are refused 4xx and the record does not move. No error code is asserted, because the corpus names none.
+  - `0082.state-unadvertised-refused`: an otherwise legal transition into a state missing from `states` is `400 validation_error`.
+  - `0082.transition-legal`: `draft → test → staged → active` on `stable` each answer 200 with a valid record in the target state.
+  - `0082.replay-pin-reread`: after that promote moves `stable`, a replay of the first run still records its original version.
+  - `0082.canary-adjusted` (with `canary`) and `0082.canary-unsupported-refused` (without it): `adjust-canary` to 50.
+  - `0082.rollback-pointer` (with `rollback`): the version ends `rolled-back`, and its `rollbackPointer` names a version listed `active`.
+- Judges are in `lib/deployment-lifecycle-witness.ts`, with self-tests.
+- RFC 0253 (`Draft`) adds its gap register, which also lands in the packed `spec/v1/gaps.json`.
+- **Host impact:** opt-in. The legs need `agents.deployment` and the fixture listed in discovery `fixtures`. At major 2, listing it states the record preconditions in `fixtures.md`: one incumbent `active` on `stable`, one `draft`, and no gate on the conformance credential. No host advertises the facet today, so every leg records `inapplicable`.
 
 ## [2.46.34] — 2026-10-27 — RFC 0244 G3 closed
 
