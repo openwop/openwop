@@ -428,6 +428,10 @@
         },
         "contextType": {
           "type": "string"
+        },
+        "form": {
+          "$ref": "interrupt-form.schema.json",
+          "description": "OPTIONAL declarative form (RFC 0255 §E; interrupt.md §Forms). `questions` stays the fallback for a consumer that does not render it. A host MUST NOT raise an interrupt whose form fails this schema."
         }
       },
       "additionalProperties": false

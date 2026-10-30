@@ -428,7 +428,7 @@ Witness `witnessable-gated`; see [runs.md](runs.md) §List.
 Rows with `anchor: ext` are documented under `spec/v2/ext/<key>/`. Each document MUST declare `witness` and both maturity axes in its header ([`overview.md`](overview.md)). The families are `restTransport`, `a2uiSurface`, `brand`, `canvas`, `chat`, `coordination`, `dataIntegration`, `entities`, `kanban`, `knowledge`, `launchStudio`, `messaging`, `webResearch`.
 
 - Each is advertised under `extensions` (§3.2), never at the root. `a2uiSurface` is the exception: its contract is admitted through `schemaVersions.kinds`, and only its deprecated facet is an `extensions` record.
-- `restTransport` (`witnessable-gated`) and `a2uiSurface` (`seam-gated`) have behavioral witnesses. The other 11 are discovery-only reservations checked by `claims-check`.
+- `restTransport` (`witnessable-gated`) and `a2uiSurface` (`seam-gated`) have behavioral witnesses; the other 11 are discovery-only reservations `claims-check` checks.
 - An ext document's `Draft`/`Stable` label is a predicate over certified evidence ([`../ext/README.md`](../ext/README.md)). Becoming core takes its own RFC.
 
 ## 7. Profiles

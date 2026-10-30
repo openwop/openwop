@@ -4,7 +4,7 @@
 
 ## Why this exists
 
-`spec/v2/core/` is what a host implements to pass the 2.0.0 floor. This document sets the reading order, states the six axioms, and holds the rules other documents only reference.
+`spec/v2/core/` is what a host implements to pass the 2.0.0 floor. It sets the reading order, states the six axioms, and holds the rules other documents only reference.
 
 ## Reading order
 

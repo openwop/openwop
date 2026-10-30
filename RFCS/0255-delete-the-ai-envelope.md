@@ -79,6 +79,8 @@ Committed bundles are measurements at their own suite. They are not rewritten, a
 
 `interrupt.md` gains a short section stating the rules for a declarative form on an interrupt: closed catalog, no code execution, actions resolve only that interrupt, no network egress, no secret input, and redaction. The `a2ui-*` invariants are renamed to `interrupt-form-*` and each gets a test against a fixture run. The invariants MUST NOT lose their only witness at any commit.
 
+Decided 2026-10-30 with openwop-app: the form is `ClarificationData.form` (`schemas/v2/interrupt-form.schema.json`), an OPTIONAL property, since production's root-level keys fail the closed `ClarificationData`. It keeps the closed profile, so the envelope schema can go, and narrows the action to `resume`. Every input `id` is a `questions[].id`, and the form and its fallback both resume with `{ answers: [{ id, answer }] }`. `a2ui-untrusted-blocks-approval` becomes `interrupt-form-never-resolves-approval`: a form appears only on a clarification, so it cannot reach an approval; RFC 0256 §C governs untrusted approvals.
+
 ### Wire shape changes
 
 ```diff
@@ -121,7 +123,8 @@ Committed bundles are measurements at their own suite. They are not rewritten, a
 | §D census | a typed census differing from the scan fails `check-v2-retirement` | any contributor | witnessable — unaided (corpus) |
 | §D licence | an unlicensed removal fails, baseline regenerated or not | any contributor | witnessable — unaided (corpus) |
 | §D tier-3 | a new row with a tier-3 host fails; an old row does not | any contributor | witnessable — unaided (corpus) |
-| §E rules | `openwop.requirement.0255.interrupt-form-rules` | the suite with a fixture | witnessable — gated |
+| §E rules | `openwop.requirement.0255.interrupt-form-rules`, `-resume-answers`, `-refused` | the suite with a fixture | witnessable — gated |
+| §E profile | `openwop.requirement.0255.interrupt-form-profile`, `-never-resolves-approval`, `-bound-to-questions` | any contributor | witnessable — unaided (corpus) |
 
 ## Alternatives considered
 

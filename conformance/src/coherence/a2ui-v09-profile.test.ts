@@ -217,3 +217,77 @@ describe('RFC 0209 §D.14 — the ui.* / media.* kind carve-out', () => {
     expect(events.includes('universal kinds and the core content-primitive families `ui.*` and `media.*` excepted'), req('openwop.requirement.0209.kind-carve-out', 'RFC 0209 §D.14', 'events.md §"AI envelopes" MUST except the ui.* and media.* families from the <org>. namespacing rule, or no v2 host could advertise a kind v2 ships')).toBe(true);
   });
 });
+
+/**
+ * RFC 0255 §E — the declarative form on a `clarification` interrupt
+ * (`interrupt.md` §Forms) carries the same closed profile in its own file,
+ * `schemas/v2/interrupt-form.schema.json`, so the deletion of the envelope kind
+ * cannot take the closed catalog, the action confinement or the secret-input
+ * exclusion with it. Its action is tighter: `resume` only.
+ */
+const formSchema = read(join(SCHEMAS_DIR, 'v2', 'interrupt-form.schema.json'));
+const form = compile(formSchema);
+function relaxedForm(mutate: (defs: Json) => void): (doc: unknown) => { ok: boolean; errors: string } {
+  const s = clone(formSchema);
+  mutate((s as { $defs: Json }).$defs);
+  return compile(s);
+}
+const INPUTS = new Set(['TextField', 'CheckBox', 'ChoicePicker', 'DateTimeInput', 'field.text', 'field.date', 'field.select', 'field.checkbox']);
+/** Every input component id in a form, in either version. */
+function inputIds(f: Json): string[] {
+  const comps: Json[] = [];
+  const v1 = f['surface'] as { components?: Json[] } | undefined;
+  if (v1?.components) comps.push(...v1.components);
+  const v2s = Array.isArray(f['surfaces']) ? (f['surfaces'] as Json[]) : f['messages'] ? [f] : [];
+  for (const s of v2s) for (const m of (s['messages'] as Json[])) comps.push(...(((m['updateComponents'] as Json | undefined)?.['components'] as Json[] | undefined) ?? []));
+  return comps.filter((c) => INPUTS.has(String(c['component']))).map((c) => String(c['id']));
+}
+const fixtureNode = (id: string): { questions: Array<{ id: string }>; form: Json } => (read(join(FIXTURES_DIR, `${id}.json`)) as unknown as { nodes: Array<{ config: { questions: Array<{ id: string }>; form: Json } }> }).nodes[0]!.config;
+
+describe('RFC 0255 §E — the interrupt form carries the closed profile', () => {
+  it('every positive surface is a valid form, every negative is refused, and the form refuses the exchange target the envelope admits', () => {
+    for (const f of positives) {
+      const r = form(read(join(FX_DIR, f)));
+      expect(r.ok, req('openwop.requirement.0255.interrupt-form-profile', 'interrupt.md §Forms', `${f} MUST validate against interrupt-form.schema.json: ${r.errors}`)).toBe(true);
+    }
+    for (const f of readdirSync(FX_DIR).filter((n) => n.startsWith('negative-')).sort()) {
+      expect(form(read(join(FX_DIR, f))).ok, req('openwop.requirement.0255.interrupt-form-profile', 'interrupt.md §Forms', `${f} MUST fail interrupt-form.schema.json as it fails the envelope profile`)).toBe(false);
+    }
+    const exchange = clone(read(join(FX_DIR, positives[0] ?? 'positive-approve-brief.json')));
+    const comps = ((messagesOf(exchange)[1]!['updateComponents'] as Json)['components'] as Json[]);
+    const button = comps.find((c) => c['component'] === 'Button')!;
+    (button['action'] as { event: { name: string } }).event.name = 'exchange';
+    expect(profile(exchange).ok, req('openwop.requirement.0255.interrupt-form-profile', 'interrupt.md §Forms', 'control: the envelope profile admits an exchange action')).toBe(true);
+    expect(form(exchange).ok, req('openwop.requirement.0255.interrupt-form-profile', 'interrupt.md §Forms', 'a form action MUST resolve only its own interrupt — `exchange` is refused')).toBe(false);
+    const obscured = neg('textfield-obscured');
+    const loose = relaxedForm((d) => { ((((d['TextField'] as Json)['properties'] as Json)['variant']) as { enum: string[] }).enum.push('obscured'); });
+    expect(loose(obscured).ok, req('openwop.requirement.0255.interrupt-form-profile', 'interrupt.md §Forms', 'negative-textfield-obscured MUST pass the form once "obscured" is restored — the variant enum alone refuses it')).toBe(true);
+    const names = ((formSchema['$defs'] as Json)['component'] as { anyOf: Array<{ $ref: string }> }).anyOf.map((b) => b.$ref.replace('#/$defs/', ''));
+    for (const excluded of ['Image', 'Video', 'AudioPlayer', 'Icon']) {
+      expect(names, req('openwop.requirement.0255.interrupt-form-profile', 'interrupt.md §Forms', `${excluded} MUST NOT be a form component`)).not.toContain(excluded);
+    }
+  });
+
+  it('a form can appear only on a clarification, so it can never resolve an approval', () => {
+    const defs = read(join(SCHEMAS_DIR, 'v2', 'suspend-request.schema.json'))['$defs'] as Record<string, { properties?: Json }>;
+    const carriers = Object.entries(defs).filter(([, d]) => d.properties && 'form' in d.properties).map(([k]) => k);
+    expect(carriers, req('openwop.requirement.0255.interrupt-form-never-resolves-approval', 'interrupt.md §Forms', 'ClarificationData MUST be the only interrupt data shape carrying `form`')).toEqual(['ClarificationData']);
+    expect(((defs['ClarificationData']!.properties!['form'] as Json)['$ref']), req('openwop.requirement.0255.interrupt-form-never-resolves-approval', 'interrupt.md §Forms', 'ClarificationData.form MUST be the interrupt-form schema')).toBe('interrupt-form.schema.json');
+    const v1Target = (((((formSchema['$defs'] as Json)['actionButton'] as Json)['properties'] as Json)['action'] as Json)['properties'] as Json)['target'] as { enum: string[] };
+    const v2Name = ((((((formSchema['$defs'] as Json)['action'] as Json)['properties'] as Json)['event'] as Json)['properties'] as Json)['name']) as { enum: string[] };
+    expect([v1Target.enum, v2Name.enum], req('openwop.requirement.0255.interrupt-form-never-resolves-approval', 'interrupt.md §Forms', 'the only form action in either version MUST be `resume`')).toEqual([['resume'], ['resume']]);
+  });
+
+  it('the form fixtures bind their inputs to questions, and each probe is refused for exactly one reason', () => {
+    const ok = fixtureNode('conformance-interrupt-form');
+    expect(form(ok.form).ok, req('openwop.requirement.0255.interrupt-form-bound-to-questions', 'interrupt.md §Forms', `conformance-interrupt-form MUST carry a valid form: ${form(ok.form).errors}`)).toBe(true);
+    expect(inputIds(ok.form), req('openwop.requirement.0255.interrupt-form-bound-to-questions', 'interrupt.md §Forms', 'every input id MUST be a questions[].id')).toEqual(ok.questions.map((q) => q.id));
+    const refused = fixtureNode('conformance-interrupt-form-refused');
+    const loose = relaxedForm((d) => { ((((d['TextField'] as Json)['properties'] as Json)['variant']) as { enum: string[] }).enum.push('obscured'); });
+    expect([form(refused.form).ok, loose(refused.form).ok], req('openwop.requirement.0255.interrupt-form-bound-to-questions', 'interrupt.md §Forms', '-refused MUST fail the form schema, and only because of the obscured variant')).toEqual([false, true]);
+    expect(inputIds(refused.form), req('openwop.requirement.0255.interrupt-form-bound-to-questions', 'interrupt.md §Forms', '-refused MUST otherwise bind to its questions')).toEqual(refused.questions.map((q) => q.id));
+    const unbound = fixtureNode('conformance-interrupt-form-unbound');
+    expect(form(unbound.form).ok, req('openwop.requirement.0255.interrupt-form-bound-to-questions', 'interrupt.md §Forms', `-unbound MUST be schema-valid, so only the binding rule refuses it: ${form(unbound.form).errors}`)).toBe(true);
+    expect(inputIds(unbound.form).filter((id) => !unbound.questions.some((q) => q.id === id)), req('openwop.requirement.0255.interrupt-form-bound-to-questions', 'interrupt.md §Forms', '-unbound MUST carry an input bound to no question')).toEqual(['q2']);
+  });
+});

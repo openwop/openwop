@@ -1,0 +1,108 @@
+{
+  "id": "conformance-interrupt-form-refused",
+  "name": "Conformance: Clarification with a form that solicits a secret",
+  "version": "1.0",
+  "description": "RFC 0255 §E probe. Identical to conformance-interrupt-form except the TextField is variant obscured, which interrupt-form.schema.json excludes. A host MUST NOT raise this form. It exists to be refused.",
+  "nodes": [
+    {
+      "id": "ask",
+      "typeId": "core.clarificationGate",
+      "name": "Clarification Gate (form)",
+      "position": {
+        "x": 0,
+        "y": 0
+      },
+      "config": {
+        "questions": [
+          {
+            "id": "q1",
+            "question": "What is your favorite color?"
+          }
+        ],
+        "form": {
+          "version": "v0.9",
+          "catalogId": "https://a2ui.org/specification/v0_9/catalogs/basic/catalog.json",
+          "surfaceId": "favorite-color",
+          "messages": [
+            {
+              "version": "v0.9",
+              "createSurface": {
+                "surfaceId": "favorite-color",
+                "catalogId": "https://a2ui.org/specification/v0_9/catalogs/basic/catalog.json"
+              }
+            },
+            {
+              "version": "v0.9",
+              "updateComponents": {
+                "surfaceId": "favorite-color",
+                "components": [
+                  {
+                    "id": "root",
+                    "component": "Column",
+                    "children": [
+                      "heading",
+                      "q1",
+                      "submit"
+                    ]
+                  },
+                  {
+                    "id": "heading",
+                    "component": "Text",
+                    "text": "One detail, please",
+                    "variant": "h2"
+                  },
+                  {
+                    "id": "q1",
+                    "component": "TextField",
+                    "label": "Favorite color",
+                    "value": {
+                      "path": "/q1"
+                    },
+                    "variant": "obscured"
+                  },
+                  {
+                    "id": "submit-label",
+                    "component": "Text",
+                    "text": "Send"
+                  },
+                  {
+                    "id": "submit",
+                    "component": "Button",
+                    "child": "submit-label",
+                    "variant": "primary",
+                    "action": {
+                      "event": {
+                        "name": "resume"
+                      }
+                    }
+                  }
+                ]
+              }
+            }
+          ]
+        }
+      },
+      "inputs": {}
+    }
+  ],
+  "edges": [],
+  "triggers": [
+    {
+      "id": "manual",
+      "type": "manual",
+      "enabled": true
+    }
+  ],
+  "variables": [],
+  "metadata": {
+    "tags": [
+      "conformance",
+      "hitl",
+      "rfc-0255",
+      "probe"
+    ]
+  },
+  "settings": {
+    "timeout": 0
+  }
+}

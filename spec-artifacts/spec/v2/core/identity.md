@@ -78,7 +78,7 @@ Every lane is advertised as one member of the `auth.lanes[]` facet (`spec/v2/fac
 
 `lane`, `issuers[]` (min 1), `revocation` and `minimumAssurance` are REQUIRED on each member. `auth.lanes[].issuers[]` is the realm ([capabilities.md](capabilities.md)).
 
-`authorization.failClosed` advertises the fail-closed rule and MUST be `true` when present; it does not gate it (invariant `authorization-fail-closed`). `authorization.roles` is the host role catalog: a request is authorized when any role-derived scope matches the required scope, under the same scope-match semantics this document applies to a credential.
+`authorization.failClosed` advertises the fail-closed rule and MUST be `true` when present; it does not gate it (invariant `authorization-fail-closed`). `authorization.roles` is the host role catalog: a request is authorized when any role-derived scope matches the required scope, under the scope-match semantics for a credential.
 
 ### 2.2 Trust roots and revocation
 

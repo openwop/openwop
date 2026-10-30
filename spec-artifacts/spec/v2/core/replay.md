@@ -5,7 +5,7 @@
 
 ## Why this exists
 
-`POST /runs/{runId}:fork` makes any past run state re-executable: a replay proves current code reproduces recorded history; a branch explores an alternative from a recorded point. This document states what a fork MUST reproduce, what it MUST NOT re-fire, and how a host proves the second.
+`POST /runs/{runId}:fork` makes any past run state re-executable: a replay proves current code reproduces recorded history; a branch explores an alternative from a recorded point. Below: what a fork MUST reproduce, what it MUST NOT re-fire, and how a host proves the second.
 
 ## The surface
 

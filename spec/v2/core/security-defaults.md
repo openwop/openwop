@@ -5,7 +5,7 @@
 
 ## Why this exists
 
-In v2 a security behavior is not an opt-in flag. This document maps each surface to the behavior it binds, its invariant and its witness.
+In v2 a security behavior is not an opt-in flag. Each surface maps to the behavior it binds, its invariant and its witness.
 
 ## The rule
 
