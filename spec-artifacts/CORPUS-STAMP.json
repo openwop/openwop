@@ -101,8 +101,8 @@
     "schemas/ui-plugin-message.schema.json": "346638babf1f8ea7b161cde75c0038b518cd2cc5bf0631772e20a9b74c96b5dd",
     "schemas/v2/a2a-task-state.schema.json": "1810363e2d9bddb5997923bdac4044cc17c6f46ec5a40515d2ff21d9c82c1ad9",
     "schemas/v2/a2ui-surface-delta-frame.schema.json": "6889c5da3fe7e76cb614038c0eea6774776fa640448558b258eb87fb50cb9b64",
-    "schemas/v2/agent-deployment-transition.schema.json": "fb75e075d41dcb06afd4e43243d9ebbff09a05d6a1f179dfaeb15b73a7819f06",
-    "schemas/v2/agent-deployment.schema.json": "9cb2fc79c30c1c1abde6e42d1a0de42b6ab818fbd4d7eef215f8a6bcc95ed605",
+    "schemas/v2/agent-deployment-transition.schema.json": "fe2d56f9d8ccb5503c94f1f4dff8af5a7286cc304802b089d42d665ddefcf111",
+    "schemas/v2/agent-deployment.schema.json": "64d5f2848419b6ff797bcf34c0e5f4b05a612c3237d2cf0a034fb41f8b8ebc6b",
     "schemas/v2/agent-eval-suite.schema.json": "a49ad7a232ec781512375001f8d8c70ab073b69ca094f5251dbb30a0bbd972a7",
     "schemas/v2/agent-inventory-response.schema.json": "5f74c3da946dfc3114624567a989717748081ab947b4d2af3f49034d67f4306b",
     "schemas/v2/agent-manifest.schema.json": "004ff150e955deebb9e64273de5093f5144b9b3895b09953e65aa74b61140778",
@@ -117,7 +117,7 @@
     "schemas/v2/artifact.schema.json": "85b9dc284d39b99d2a66fa8cbf47f2dd3d8526d3bd6cc411ad315b372de38975",
     "schemas/v2/audit-verify-result.schema.json": "14af8e9283510f0a40e48a2059c929ee44e0fc9fa3cc66a95bfbe90b17c48297",
     "schemas/v2/budget-policy.schema.json": "1de68095db0beb5c7a4be629de26e79f62ebbe748a88d46f36e768edfd1f0d68",
-    "schemas/v2/capabilities.schema.json": "37f06b92693d708c5cc3ea04b7a50d501b3d25a643c1a68f88ae1e352bf02ec3",
+    "schemas/v2/capabilities.schema.json": "3c494e0914f766209017bf1d876852c3e4daa9f0d7e7e840f6cad23ad00d769d",
     "schemas/v2/certification-bundle.schema.json": "5cfa7fb5247160333e33a58b60d42bcd4e5269d8391d6a112d301e14828892ed",
     "schemas/v2/channel-presence-payload.schema.json": "fc03df0c20cc12a25f7ee6a47503a4c5931d79fe3d5ff24815e8fd7c1bcb9a87",
     "schemas/v2/channel-written-payload.schema.json": "ccecff3c71a3275ad8db035ac0e04db25e6f8d23cf091ddbcd5a60d1be1cbb6b",
@@ -285,7 +285,7 @@
     "spec/v2/ext/sandbox-runtime-notes/README.md": "0d1290fb1e20b2e35c0b15051541ab6546e4e2a6f693b4f912cb3f7d6a65e92c",
     "spec/v2/ext/webResearch/README.md": "2771686719161b811c2a50361815a334c58f09e442528fb8e23e4fcdcd42d630",
     "spec/v2/facets/a2a.schema.json": "b68bf5e29e455e46c2ad7cfcccf5963730ec2310ff9db81884550d8df30fd6ef",
-    "spec/v2/facets/agents.schema.json": "eee57b68f8d08e342800f8980a3807ab949b5ef4301577d46ccc8e967592ebc0",
+    "spec/v2/facets/agents.schema.json": "cc9abae19f500b8a2c6f2b3494284f6f9bb782cde7eec13e4f2f5363a1b44ad5",
     "spec/v2/facets/aiProviders.schema.json": "6e4327bcd48110686cc1adfd26ddd6fbbf4ff529c476dcc74eeff8c5ae9965ce",
     "spec/v2/facets/auditLogIntegrity.schema.json": "9a7f81320c8f940c6f4129bc7dd895a4063231c5458a717a08c2cbf9bb886c46",
     "spec/v2/facets/auth.schema.json": "7d98bc81a0f7d307460d039eebfebd21388091bfe1d538762583940f94c0bd2a",
@@ -310,7 +310,7 @@
     "spec/v2/generated/error-codes.md": "a184067ea983f7398001b7461732767e0773d7c8a820fc769efa7e4e858cc943",
     "spec/v2/harness-trust-anchors.json": "6007b92eae16a070fbc3777424efb0abfe865fda89d096963109b96282b91205",
     "spec/v2/harness-trust-anchors.schema.json": "372b5d92337c893d3449eff3f6bfd009ac09fdac285296d8bdbe0a08fff9e34c",
-    "spec/v2/id-field-bindings.json": "97e96b6c35c405d0408b5a877c5859714dbbf4507853de9aab381163371ac098",
+    "spec/v2/id-field-bindings.json": "a7f5d03f5684c02d5792cc52bb1d310c123840e338a499aec4e9b82faf4d3708",
     "spec/v2/interop-map.json": "02255dafe7eb55f61ca7f9ae7c21f079d1848a6756991343088975ac9d184b8d",
     "spec/v2/interop-map.schema.json": "0017c882df34ee215e2e0729de051490e09d43aac3d2c949285698ed51832f12",
     "spec/v2/migrations.json": "651954938a1e154c0b6f1e3dd6e105889d30de3bb65789f21de7f77a12869e9e",
@@ -320,7 +320,7 @@
     "spec/v2/profiles.json": "b382b261c7844798575f7c1b37c934f0da19846016a2337d883d4f5ef6e05479",
     "spec/v2/release.json": "28c53661beb7a649be7c474d495832d8920cdae8d1c17f9022fa14f11421d61b",
     "spec/v2/retention-floors.json": "eaf3722d95c79947af1d4269ef85117e126518c588cfcf1a2b21b97269f51624",
-    "spec/v2/surface-baseline.json": "609cba97ed37e5a52dbab35432a6fac9787fc0b035068c6f1c2179d542722497"
+    "spec/v2/surface-baseline.json": "9b2275c5649b410381590509f1a60b827f8d1915a429e05c0318e1f473851829"
   },
   "corpusCommit": "cddc595c6fcea6ff052ff1cfa199293737e04d53"
 }

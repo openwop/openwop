@@ -18,7 +18,7 @@
       "type"
     ]
   },
-  "count": 9035,
+  "count": 9039,
   "surfaces": [
     "schemas/v2/a2a-task-state.schema.json#/contextId|type|string",
     "schemas/v2/a2a-task-state.schema.json#/interruptKind|enum-member|\"approval\"",
@@ -133,6 +133,7 @@
     "schemas/v2/agent-deployment.schema.json#|property|evalRunId",
     "schemas/v2/agent-deployment.schema.json#|property|rollbackPointer",
     "schemas/v2/agent-deployment.schema.json#|property|state",
+    "schemas/v2/agent-deployment.schema.json#|property|transitionRunId",
     "schemas/v2/agent-deployment.schema.json#|property|version",
     "schemas/v2/agent-deployment.schema.json#|required|agentId",
     "schemas/v2/agent-deployment.schema.json#|required|state",
@@ -5573,6 +5574,7 @@
     "schemas/v2/error-envelope.schema.json#/details/supported/[]|enum-member|\"values\"",
     "schemas/v2/error-envelope.schema.json#/details/supported/[]|type|string",
     "schemas/v2/error-envelope.schema.json#/details/supported|type|array",
+    "schemas/v2/error-envelope.schema.json#/details/transition|type|string",
     "schemas/v2/error-envelope.schema.json#/details/type|type|string",
     "schemas/v2/error-envelope.schema.json#/details|property|action",
     "schemas/v2/error-envelope.schema.json#/details|property|dimension",
@@ -5592,6 +5594,7 @@
     "schemas/v2/error-envelope.schema.json#/details|property|speakerId",
     "schemas/v2/error-envelope.schema.json#/details|property|state",
     "schemas/v2/error-envelope.schema.json#/details|property|supported",
+    "schemas/v2/error-envelope.schema.json#/details|property|transition",
     "schemas/v2/error-envelope.schema.json#/details|property|type",
     "schemas/v2/error-envelope.schema.json#/details|type|object",
     "schemas/v2/error-envelope.schema.json#/error|enum-member|\"approval_rejected\"",
@@ -5621,6 +5624,7 @@
     "schemas/v2/error-envelope.schema.json#/error|enum-member|\"delegation_chain_too_long\"",
     "schemas/v2/error-envelope.schema.json#/error|enum-member|\"delegation_expired\"",
     "schemas/v2/error-envelope.schema.json#/error|enum-member|\"delegation_scope_amplified\"",
+    "schemas/v2/error-envelope.schema.json#/error|enum-member|\"deployment_state_conflict\"",
     "schemas/v2/error-envelope.schema.json#/error|enum-member|\"egress_denied\"",
     "schemas/v2/error-envelope.schema.json#/error|enum-member|\"envelope_correlation_conflict\"",
     "schemas/v2/error-envelope.schema.json#/error|enum-member|\"envelope_invalid\"",

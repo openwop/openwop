@@ -3267,6 +3267,7 @@ invariants:
     threat_model: SECURITY/threat-model-secret-leakage.md
     tests:
       - conformance/src/scenarios/agent-deployment-shape.test.ts
+      - conformance/src/scenarios/v2-deployment-lifecycle.test.ts
     note: |
       RFC 0082 §D. The four deployment.{promoted,rolled-back,canary.adjusted,
       state.changed} event payloads MUST carry ids, lifecycle states, scalars

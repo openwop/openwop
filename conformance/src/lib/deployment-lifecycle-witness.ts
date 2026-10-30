@@ -262,10 +262,9 @@ export function runIdOf(x: Accepted): string | undefined {
 export interface Expected { readonly v1: string; readonly def: string; readonly matches: (p: Rec) => boolean }
 
 /**
- * The `deployment.*` events a transition may record, any one of which
- * witnesses it. A resume (`promote` of a paused version) is the one transition
- * the corpus names two events for: `deployment.state.changed` describes pause
- * and resume, and the transition is a `promote`.
+ * The `deployment.*` event a transition must record. A resume (`promote` of a
+ * paused version) records `deployment.state.changed`, as pause and deprecate
+ * do; `deployment.promoted` records only a forward step (RFC 0254 §A).
  */
 export function expectedEvents(x: Accepted): Expected[] {
   const r = isRec(x.answer.json) ? x.answer.json : {};
@@ -273,7 +272,7 @@ export function expectedEvents(x: Accepted): Expected[] {
   const promoted: Expected = { v1: 'deployment.promoted', def: 'deploymentPromoted', matches: (p) => p['toVersion'] === x.version && p['toState'] === state };
   const changed: Expected = { v1: 'deployment.state.changed', def: 'deploymentStateChanged', matches: (p) => p['version'] === x.version && p['fromState'] === x.fromState && p['toState'] === state };
   switch (x.transition) {
-    case 'promote': return x.fromState === 'paused' ? [promoted, changed] : [promoted];
+    case 'promote': return x.fromState === 'paused' ? [changed] : [promoted];
     case 'pause':
     case 'deprecate': return [changed];
     case 'adjust-canary': return [{ v1: 'deployment.canary.adjusted', def: 'deploymentCanaryAdjusted', matches: (p) => p['version'] === x.version && p['toPercent'] === r['canaryPercent'] }];

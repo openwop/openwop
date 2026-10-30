@@ -7,7 +7,7 @@ import { describe, it, expect } from 'vitest';
 import {
   activeOn, challengeScopes, errorDetails, judgeBound, judgeCanaryAdjusted, judgeEventRecorded, judgeList, judgePinned,
   judgeReplayPinned, judgeResumed, judgeRolledBack, judgeRunLinked, judgeScopeRefused, judgeStateConflict, judgeStep,
-  judgeValidationRefused, pickDraft, promotionPath, type Accepted,
+  judgeValidationRefused, pickDraft, promotionPath, expectedEvents, type Accepted,
 } from './deployment-lifecycle-witness.js';
 
 const failed = (fs: { ok: boolean; message: string }[]): string[] => fs.filter((f) => !f.ok).map((f) => f.message);
@@ -161,5 +161,15 @@ describe('the management run (RFC 0254 §D)', () => {
     expect(failed(judgeEventRecorded(rolled, [ev('deployment.rolled-back', { agentId: A, fromVersion: '1.1.0', toVersion: '0.9.0', rollbackPointer: '0.9.0' })], typeOf, V))).toHaveLength(1);
     const canary = acc('adjust-canary', 'active', { ...draft, state: 'active', canaryPercent: 50, transitionRunId: 'run-m4' });
     expect(failed(judgeEventRecorded(canary, [ev('deployment.canary-adjusted', { agentId: A, version: '1.1.0', fromPercent: 100, toPercent: 50 })], typeOf, V))).toEqual([]);
+  });
+});
+
+describe('the event a transition records (RFC 0254 §A)', () => {
+  const resumed = { status: 200, json: { ...incumbent, state: 'active' } };
+  it('expects deployment.state.changed for a resume and deployment.promoted for a forward step', () => {
+    const resume: Accepted = { label: 'resume', transition: 'promote', version: '1.0.0', fromState: 'paused', answer: resumed };
+    expect(expectedEvents(resume).map((e) => e.v1)).toEqual(['deployment.state.changed']);
+    const step: Accepted = { label: 'step', transition: 'promote', version: '1.1.0', fromState: 'staged', answer: resumed };
+    expect(expectedEvents(step).map((e) => e.v1)).toEqual(['deployment.promoted']);
   });
 });

@@ -42,7 +42,7 @@
     "rollbackPointer": {
       "type": "string",
       "maxLength": 64,
-      "description": "MAY. For a `rolled-back` version, the version restored to `active` in its place: the version that was `active` on the same channel immediately before this one (RFC 0254 §C). Absent for non-rolled-back records."
+      "description": "MAY. For a `rolled-back` version, the version restored to `active` in its place: the most recent other version that was `active` on the same channel before this one and is not itself `rolled-back` (RFC 0254 §C). Absent for non-rolled-back records."
     },
     "channels": {
       "type": "array",

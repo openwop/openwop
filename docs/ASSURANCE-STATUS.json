@@ -15,7 +15,7 @@
   },
   "waivers": {
     "source": "RFCS/*.md, RFCS/registers/*",
-    "bootstrapWaiversExercised": 129,
+    "bootstrapWaiversExercised": 130,
     "rfcs": [
       "0042",
       "0043",
@@ -145,7 +145,8 @@
       "0249",
       "0250",
       "0251",
-      "0252"
+      "0252",
+      "0254"
     ],
     "retrospectiveReviewsCompleted": 0,
     "outcomes": {

@@ -24,7 +24,7 @@
         "rollback",
         "adjust-canary"
       ],
-      "description": "The lifecycle operation. `promote`: move exactly one step forward (draft→test→staged→active, over the advertised states), or resume paused→active. `pause`: active→paused. `deprecate`: active→deprecated. `rollback`: active→rolled-back, restoring the version that was active on the same channel immediately before. `adjust-canary`: change the active version's `canaryPercent`. The legal transitions are normative in `spec/v2/facets/agents.schema.json` §deployment (RFC 0254); an illegal one is `409 deployment_state_conflict`."
+      "description": "The lifecycle operation. `promote`: move exactly one step forward (draft→test→staged→active, over the advertised states), or resume paused→active. `pause`: active→paused. `deprecate`: active→deprecated. `rollback`: active→rolled-back, restoring the most recent other version that was active on the same channel before it and is not itself rolled-back. `adjust-canary`: change the active version's `canaryPercent`. The legal transitions are normative in `spec/v2/facets/agents.schema.json` §deployment (RFC 0254); an illegal one is `409 deployment_state_conflict`."
     },
     "toState": {
       "type": "string",

@@ -15,6 +15,7 @@
 - **Scope challenge.** `0082.scope-fail-closed` also requires code `forbidden`, and a `WWW-Authenticate` challenge, when sent, must name `scope="deploy:*"`.
 - **Four new legs.** `0082.promote-skip-refused`: a draft promoted straight to `active` gets the 409. `0082.resume-from-paused` (with `paused`): pause, then `promote` back to `active`. `0082.transition-run-linked`: every 200 record carries `transitionRunId`.
 - **The management run.** `0082.transition-event-recorded`: the `transitionRunId` run's events include the transition's `deployment.*` event, valid against `run-event-payloads`. It is the first behavioural witness of `deployment-event-no-content-leak`.
+- **Resume event.** A resume (`promote` of a paused version) must record `deployment.state.changed`; `deployment.promoted` is for forward steps only (RFC 0254 §A).
 - **Judges.** They are in `lib/deployment-lifecycle-witness.ts`, with self-tests; every new or tightened leg is sabotage-proved on a scratch host.
 - RFC 0253 (`Draft`) adds its gap register, which also lands in the packed `spec/v1/gaps.json`.
 - **Host impact:** opt-in. The legs need `agents.deployment` and the fixture listed in `fixtures`. Listing it at major 2 states the `fixtures.md` preconditions: an incumbent `active` on `stable`, a `draft`, no gate, and `runs:read` on the management run. No host advertises the facet, so every leg is `inapplicable`.

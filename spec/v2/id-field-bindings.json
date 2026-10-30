@@ -47,6 +47,7 @@
     "tenantId": "tenantId",
     "toAgentId": "agentId",
     "traceId": "traceId",
+    "transitionRunId": "runId",
     "triggerSubscriptionId": "subscriptionId",
     "typeId": "typeId",
     "webhookId": "subscriptionId",

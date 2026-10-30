@@ -7,7 +7,7 @@
 | **Status** | `Active` |
 | **Author(s)** | David Tufts (@davidscotttufts) |
 | **Created** | 2026-10-29 |
-| **Updated** | 2026-10-29 — **filed and moved `Draft` → `Active` the same day; the maintainer waived the comment window** (user instruction 2026-10-29: "proceed, and waive the comment window"). STEWARD OVERRIDE of RFC 0147 §A.6, recorded in `MAINTAINERS.md`. The rulings come from an `/architect` pass on the eight ambiguities that `v2-deployment-lifecycle` (#2060) reported, and the wire lands with this RFC. |
+| **Updated** | 2026-10-29 — **filed and moved `Draft` → `Active` the same day, comment window waived by the maintainer** (user instruction 2026-10-29: "proceed, and waive the comment window"). STEWARD OVERRIDE of RFC 0147 §A.6, recorded in `MAINTAINERS.md`. The rulings come from an `/architect` pass on the eight ambiguities that `v2-deployment-lifecycle` (#2060) reported, and the wire lands with this RFC. |
 | **Affects** | `spec/v2/facets/agents.schema.json` §deployment (the transition rules; derived `schemas/v2/capabilities.schema.json`) · `schemas/v2/agent-deployment.schema.json` (optional `transitionRunId`) · `schemas/v2/agent-deployment-transition.schema.json` (descriptions) · `spec/v2/errors.json` (`deployment_state_conflict`) · `scripts/derive-v2-api.py` (`transitionAgentDeployment` 202 and 409 at v2) · `SECURITY/invariants.yaml` · conformance (`v2-deployment-lifecycle`) |
 | **Compatibility** | `additive` per `COMPATIBILITY.md` §2.4 |
 | **Supersedes** | — |
@@ -54,7 +54,7 @@ The legal edges are:
 | `active` | `deprecated` | `deprecate` |
 | `active` | `rolled-back` | `rollback` |
 
-`adjust-canary` changes an `active` version's `canaryPercent` and does not change its state.
+`adjust-canary` changes an `active` version's `canaryPercent` and does not change its state. A resume records `deployment.state.changed`, as `pause` and `deprecate` do; `deployment.promoted` records only a forward step.
 
 - **`promote` moves one step.** An absent `toState` means the next state. A `toState` that is not the next state is refused.
 - **Refusal.** A transition the record's current state does not allow MUST be refused `409 deployment_state_conflict`, with `details.state` (the current state) and `details.transition`, and the record MUST NOT change.
@@ -69,7 +69,7 @@ The legal edges are:
 ### §C — Rollback
 
 - The request's `version` names the `active` version being rolled back.
-- The host restores the version that was `active` on the same channel immediately before it. That is the same version that takes the canary remainder.
+- The host restores the most recent other version that was `active` on the same channel before it and is not itself `rolled-back`. Normally that is the incumbent, the same version that takes the canary remainder.
 - `rollbackPointer` names the restored version, which is `active` afterwards.
 - With no such version, the rollback is `409 deployment_state_conflict`.
 
