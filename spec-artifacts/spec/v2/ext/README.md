@@ -25,8 +25,8 @@ Declared, but without qualifying interoperability evidence.
 
 ### `Stable`
 
-Witnessed: at least one host at evidence tier 2 or better serves it, and a
-**certified** bundle in `evidence/v2-host-bundles/` records the family's
+Witnessed: a host at evidence tier 2 or better served it at a certified cut.
+A **certified** bundle in `evidence/v2-host-bundles/` records the family's
 declared witness class as satisfied.
 
 **Predicate:** The family has at least one `executed-pass` row under its
@@ -34,6 +34,14 @@ witness id `openwop.family.<key>`, in a bundle that certifies at least one
 profile and whose `discovery.url` origin is listed at tier 2 or better in
 [`evidence/host-tiers.json`](https://github.com/openwop/openwop/blob/main/evidence/host-tiers.json). The seven-day
 comment window has also run since the promotion PR.
+
+**`Stable` is a historical witness.**
+
+- A host's retirement does not demote a family.
+- The page's `last witnessed:` header row names the newest qualifying bundle, so a
+  reader can see which host served it and when.
+- When no tier-2 or tier-3 host serves, a `Draft` family cannot graduate until one
+  does.
 
 The label means only what the family's witness class checks:
 
