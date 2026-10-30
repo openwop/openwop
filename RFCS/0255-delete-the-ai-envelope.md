@@ -148,7 +148,7 @@ Order is in the openwop-app plan: census, stand-alone security fixes, corpus lan
 
 ## Acceptance criteria
 
-- [ ] `corrections` class, gate changes and sabotage fixtures merged; `GOVERNANCE.md` and `COMPATIBILITY.md` amended; waivers logged.
+- [x] `corrections` class, gate changes and sabotage fixtures merged; `GOVERNANCE.md` and `COMPATIBILITY.md` amended; waivers logged.
 - [ ] Deletions merged; every deleted name absent from `spec/v2`, `schemas/v2`, `api/v2` and non-frozen scripts; `openwop:check` green apart from version-bump and cross-repo steps.
 - [ ] Suite published; one PR on openwop-app bumps the pin and deletes the host code.
 - [ ] A certified bundle on a deployed host carries `0255.*` at `executed-pass`. This is not waived.

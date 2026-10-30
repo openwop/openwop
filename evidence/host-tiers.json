@@ -15,10 +15,11 @@
       "origins": [
         "https://app.openwop.dev",
         "https://api.openwop.dev",
-        "https://myndhyve.ai"
+        "https://myndhyve.ai",
+        "https://rfc0199---openwop-app-backend-jkav3gnlqa-uc.a.run.app"
       ],
       "tier": 1,
-      "source": "GOVERNANCE.md §\"Acceptance evidence tiers\" — Tier 1, the steward-operated demo app. `api.openwop.dev` is its API origin; `myndhyve.ai` is the MyndHyve white-label of the same codebase (2026-10-29), so it is tier 1, not tier 2."
+      "source": "GOVERNANCE.md §\"Acceptance evidence tiers\" — Tier 1, the steward-operated demo app. `api.openwop.dev` is its API origin; `myndhyve.ai` is the MyndHyve white-label of the same codebase (2026-10-29), so it is tier 1, not tier 2. `rfc0199---openwop-app-backend-…run.app` is a 0%-traffic tagged side revision of its production image (RFC 0199 seams cut)."
     },
     {
       "name": "openwop-host-v2-reference",
@@ -27,6 +28,14 @@
       ],
       "tier": 1,
       "source": "GOVERNANCE.md §\"Acceptance evidence tiers\" — Tier 1, a reference host in openwop-examples"
+    },
+    {
+      "name": "openwop-app-colocated-companion",
+      "origins": [
+        "http://127.0.0.1:18099"
+      ],
+      "tier": 1,
+      "source": "GOVERNANCE.md §\"Acceptance evidence tiers\" — Tier 1, openwop-app run locally as the colocated companion of its own served host (RFC 0216 §C); steward-operated."
     }
   ]
 }

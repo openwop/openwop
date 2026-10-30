@@ -98,7 +98,10 @@ if (mode === 'write') {
     const aliasPath = join(ROOT, 'conformance', 'requirement-aliases.json');
     const ids = new Set();
     if (existsSync(reqPath)) for (const r of JSON.parse(readFileSync(reqPath, 'utf8')).records ?? []) if (r.id) ids.add(r.id);
-    if (existsSync(aliasPath)) for (const k of Object.keys(JSON.parse(readFileSync(aliasPath, 'utf8')).aliases ?? {})) ids.add(k);
+    if (existsSync(aliasPath)) {
+      const aliasFile = JSON.parse(readFileSync(aliasPath, 'utf8'));
+      for (const k of [...Object.keys(aliasFile.aliases ?? {}), ...Object.keys(aliasFile.tombstones ?? {})]) ids.add(k);
+    }
     // One namespace means one row per id. Two register rows sharing a local ID
     // (a G9 appended twice) generated two entries with the same id, and every
     // check above passed: the second silently shadowed the first for anyone

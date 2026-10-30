@@ -31,6 +31,17 @@
  *   R6 No independent host — no tier-3 / independent host is in the v2
  *                            INTEROP-MATRIX table or the end-of-support clock.
  *
+ * CORRECTIONS (§A.4, RFC 0255 §D). Every row's typed `priorShapeCensus.bundles`
+ * is re-measured, not believed: each pointer into the capabilities schema whose
+ * surface is gone from the tree is scanned through `bundlesCarrying`, and the
+ * typed count MUST equal the scan. A `w3c-class-3` row MUST also count 0. A
+ * `steward-deletion` row records whatever the scan finds, MUST NOT name a
+ * schema that reads persisted data, and is refused when NEW (absent from
+ * corrections.json at the last published tag) while a tier-3 host is listed
+ * in evidence/host-tiers.json or the INTEROP-MATRIX v2 table, or while a
+ * committed bundle comes from an origin neither lists. Rows already published
+ * are never re-judged on tiers.
+ *
  * A DUE row (the v2 release has reached `removeIn`) that is not `retirable`
  * FAILS, naming the predicate that held it back; the disposition is then to
  * reschedule `removeIn` to "3.0". A row that is not yet due is REPORTED with
@@ -45,6 +56,9 @@
  *   OPENWOP_CROSS_REPO_FILE    OPENWOP_V2_DECLARATION_FILE OPENWOP_V2_RELEASE_FILE
  *   OPENWOP_V2_CORRECTIONS_FILE OPENWOP_EOS_CLOCK_FILE     OPENWOP_INTEROP_MATRIX_FILE
  *   OPENWOP_V2_PROFILES_FILE   OPENWOP_V2_BASELINE_FILE    OPENWOP_TODAY
+ *   OPENWOP_HOST_TIERS_FILE    OPENWOP_V2_PUBLISHED_CORRECTIONS_FILE — the
+ *     corrections.json a row must be absent from to count as new; when the
+ *     corrections file is overridden and this is unset, every row is new.
  *   OPENWOP_V2_ROW_HISTORY_FILE — R2's git read, replaced by a fixture map
  *     { "<rowId>": { "firstCommit": "<ISO>", "minorAtCommit": "2.N" } }. It
  *     exists ONLY so the coherence twin can satisfy R2 while it sabotages some
@@ -58,6 +72,7 @@ import { readFileSync, existsSync, readdirSync } from 'node:fs';
 import { execFileSync } from 'node:child_process';
 import { dirname, join, resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
+import { fileAtLastTag } from './lib/published-tree.mjs';
 
 const ROOT = resolve(dirname(fileURLToPath(import.meta.url)), '..');
 const env = (k, ...fallback) => process.env[k] ?? join(ROOT, ...fallback);
@@ -73,6 +88,7 @@ const P = {
   crossRepo: env('OPENWOP_CROSS_REPO_FILE', 'evidence', 'cross-repo-manifests.json'),
   clock: process.env['OPENWOP_EOS_CLOCK_FILE'] ?? join(ROOT, 'evidence', 'v1-end-of-support.json'),
   matrix: env('OPENWOP_INTEROP_MATRIX_FILE', 'INTEROP-MATRIX.md'),
+  hostTiers: env('OPENWOP_HOST_TIERS_FILE', 'evidence', 'host-tiers.json'),
   rowHistory: process.env['OPENWOP_V2_ROW_HISTORY_FILE'] ?? null,
 };
 const TODAY = (process.env['OPENWOP_TODAY'] ?? new Date().toISOString()).slice(0, 10);
@@ -248,7 +264,10 @@ function evaluateRow(row, ctx) {
 }
 
 /** The Evidence-tier cells of the INTEROP-MATRIX v2 table. */
-function matrixEvidenceTiers(path) {
+function matrixEvidenceTiers(path) { return matrixColumn(path, /^Evidence tier$/i); }
+
+/** The cells of one column of the INTEROP-MATRIX v2 table. */
+function matrixColumn(path, column) {
   if (!existsSync(path)) return [];
   const text = readFileSync(path, 'utf8');
   const start = text.indexOf('\n## v2 ');
@@ -257,10 +276,10 @@ function matrixEvidenceTiers(path) {
   const end = rest.indexOf('\n## ', 1);
   const section = end < 0 ? rest : rest.slice(0, end);
   const lines = section.split('\n').filter((l) => l.trim().startsWith('|'));
-  const header = lines.find((l) => /\|\s*Evidence tier\s*\|/i.test(l));
+  const header = lines.find((l) => l.split('|').some((c) => column.test(c.trim())));
   if (!header) return [];
   const cols = header.split('|').map((c) => c.trim());
-  const idx = cols.findIndex((c) => /^Evidence tier$/i.test(c));
+  const idx = cols.findIndex((c) => column.test(c));
   if (idx < 0) return [];
   const out = [];
   for (const l of lines) {
@@ -318,13 +337,93 @@ for (const row of rows) {
 }
 
 // §A.4 — a correction is admitted only when R3 held for the PRIOR shape.
+// RFC 0255 §D — a steward deletion records its census instead, and its typed
+// count is re-measured like every other row's.
+const CAPS = 'schemas/v2/capabilities.schema.json#';
+/** The discovery path of a capabilities-schema pointer, or null (not discovery-visible, or under an array). */
+function discoveryPathOf(pointer) {
+  if (!pointer.startsWith(`${CAPS}/`)) return null;
+  const segs = pointer.slice(CAPS.length + 1).split('/').map((x) => x.replace(/~1/g, '/').replace(/~0/g, '~'));
+  return segs.includes('[]') || segs.some((x) => x === '') ? null : segs.join('.');
+}
+/** Persisted data is read through these; a steward deletion MUST NOT remove a reader (RFC 0255 §D). */
+const PERSISTED_READERS = [
+  'schemas/v2/run-event.schema.json', 'schemas/v2/run-event-payloads.schema.json', 'schemas/v2/run-orchestrator-decided-event.schema.json',
+  'schemas/v2/host-event.schema.json', 'schemas/v2/trigger-event.schema.json', 'schemas/v2/conversation-event.schema.json',
+  'schemas/v2/channel-presence-payload.schema.json', 'schemas/v2/channel-written-payload.schema.json', 'schemas/v2/effect-ledger-projection.schema.json',
+];
+const originOf = (u) => { try { return new URL(String(u)).origin; } catch { return null; } };
+
+// Which rows were already published? A row's tier verdict is taken once, when it is new.
+let publishedIds = null;
+let publishedSource;
+{
+  const seam = process.env['OPENWOP_V2_PUBLISHED_CORRECTIONS_FILE'];
+  if (seam) {
+    const pub = readJsonOrNull(seam);
+    if (!pub) { console.error(`=== check-v2-retirement FAILED — cannot read OPENWOP_V2_PUBLISHED_CORRECTIONS_FILE at ${seam} ===`); process.exit(1); }
+    publishedIds = new Set((pub.rows ?? []).map((r) => r.id));
+    publishedSource = seam;
+  } else if (process.env['OPENWOP_V2_CORRECTIONS_FILE']) {
+    publishedIds = new Set();
+    publishedSource = 'none (fixture corrections file; every row is new)';
+  } else {
+    try {
+      const at = fileAtLastTag(ROOT, 'spec/v2/corrections.json');
+      publishedIds = new Set(at.text === null ? [] : (JSON.parse(at.text).rows ?? []).map((r) => r.id));
+      publishedSource = at.tag;
+    } catch (e) {
+      console.error(`=== check-v2-retirement FAILED — cannot read the last published v2.* tag (${e.message.split('\n')[0]}); without it a new steward-deletion row cannot be told from a published one. Fetch tags and re-run. ===`);
+      process.exit(1);
+    }
+  }
+}
+
+// What stops a NEW steward-deletion row: a tier-3 host, or a bundle from an origin nobody listed.
+function stewardDeletionBlockers() {
+  const out = [];
+  const tiers = readJsonOrNull(P.hostTiers);
+  if (!tiers) return [`evidence/host-tiers.json is unreadable at ${P.hostTiers}, so the absence of a tier-3 host cannot be shown`];
+  const listed = new Set();
+  for (const h of tiers.hosts ?? []) {
+    for (const o of h.origins ?? []) listed.add(o);
+    if (h.tier === 3) out.push(`evidence/host-tiers.json lists ${h.name} at tier 3`);
+  }
+  for (const cell of ctx.matrixTiers) if (/independent|tier-3/i.test(cell)) out.push(`the INTEROP-MATRIX v2 table's Evidence tier column reads ${JSON.stringify(cell)}`);
+  for (const cell of matrixColumn(P.matrix, /^Who runs it$/i)) if (/independent|tier[- ]3/i.test(cell)) out.push(`the INTEROP-MATRIX v2 table's Who-runs-it column reads ${JSON.stringify(cell)}`);
+  const matrixText = existsSync(P.matrix) ? readFileSync(P.matrix, 'utf8') : '';
+  if (existsSync(P.bundles)) {
+    for (const f of readdirSync(P.bundles).filter((x) => x.endsWith('.json')).sort()) {
+      const origin = originOf(readJsonOrNull(join(P.bundles, f))?.discovery?.url);
+      if (origin && listed.has(origin)) continue;
+      if (origin && matrixText.includes(new URL(origin).host)) continue;
+      out.push(`${f} comes from ${origin ?? 'no readable discovery.url'}, which neither evidence/host-tiers.json nor the INTEROP-MATRIX lists`);
+    }
+  }
+  return out;
+}
+let blockers = null;
+
 let correctionsOk = 0;
 for (const c of corrections.rows ?? []) {
   const census = c.priorShapeCensus ?? {};
   const problems = [];
-  if (census.bundles !== 0) problems.push(`priorShapeCensus.bundles is ${census.bundles}, not 0 — a committed bundle carried the prior shape (this is P1, and P1 is exactly what §A.4 refuses)`);
+  const steward = c.class === 'steward-deletion';
+  const removedPaths = (c.pointers ?? []).filter((p) => !baselineSites.has(p)).map(discoveryPathOf).filter((x) => x !== null);
+  const scanned = new Set();
+  for (const path of removedPaths) for (const f of bundlesCarrying({ path }, P.bundles)) scanned.add(f);
+  if (census.bundles !== scanned.size) problems.push(`priorShapeCensus.bundles is ${census.bundles}, but ${scanned.size} committed bundle(s) carry a removed surface (${removedPaths.join(', ') || 'none discovery-visible'}) — a typed census is re-measured, never believed`);
+  if (!steward && census.bundles !== 0) problems.push(`priorShapeCensus.bundles is ${census.bundles}, not 0 — a committed bundle carried the prior shape (this is P1, and P1 is exactly what §A.4 refuses)`);
   if (census.manifests === null || census.manifests === undefined) problems.push('priorShapeCensus.manifests is null — no census was run, and a missing census is a failure, not a zero');
-  else if (census.manifests !== 0) problems.push(`priorShapeCensus.manifests is ${census.manifests}, not 0`);
+  else if (!steward && census.manifests !== 0) problems.push(`priorShapeCensus.manifests is ${census.manifests}, not 0`);
+  if (steward) {
+    if (!c.rfc) problems.push('a steward-deletion row MUST name the RFC that decided it');
+    for (const p of c.pointers ?? []) if (PERSISTED_READERS.some((r) => p === r || p.startsWith(`${r}#`))) problems.push(`${p} reads persisted data — a steward deletion MUST NOT remove a reader (RFC 0255 §D)`);
+    if (!publishedIds.has(c.id)) {
+      blockers ??= stewardDeletionBlockers();
+      for (const b of blockers) problems.push(`new steward-deletion row refused: ${b} (RFC 0255 §D — the class exists only while no outside host does)`);
+    }
+  }
   if (census.manifestsScanned !== null && census.manifestsScanned !== undefined && census.manifestsScanned === 0 && census.manifests === 0) problems.push('priorShapeCensus scanned 0 manifests — 0 of 0 witnesses nothing');
   // A §3 correction's prose entry lives in COMPATIBILITY.md or, since 2026-09-27, in the
   // corrections log that §3 points to.
@@ -336,10 +435,10 @@ for (const c of corrections.rows ?? []) {
   }
   if (problems.length > 0) failures.push(`${c.id}: ${problems.join(' | ')}`);
   else correctionsOk++;
-  report.push(`  ${c.id} (${c.date}, ${c.class}) — ${problems.length === 0 ? 'R3 holds for the prior shape' : 'R3 FAILS'}: ${c.pointers.length} pointer(s), ${census.bundles} bundle(s), ${census.manifests} of ${census.manifestsScanned} manifest(s)`);
+  report.push(`  ${c.id} (${c.date}, ${c.class}${steward ? publishedIds.has(c.id) ? ', published' : ', new' : ''}) — ${problems.length === 0 ? steward ? 'census re-measured' : 'R3 holds for the prior shape' : 'FAILS'}: ${c.pointers.length} pointer(s), ${census.bundles} bundle(s) typed / ${scanned.size} scanned, ${census.manifests} of ${census.manifestsScanned} manifest(s)`);
 }
 
-console.log(`check-v2-retirement inputs: release ${release.version}; ${rows.length} v2-minor deprecation row(s); ${(migrations.rows ?? []).length} v2→v2 migration row(s); ${(corrections.rows ?? []).length} correction row(s); ${existsSync(P.bundles) ? readdirSync(P.bundles).filter((f) => f.endsWith('.json')).length : 0} committed bundle(s); census ${ctx.census ? `${Object.keys(ctx.census).length} row(s)` : 'ABSENT'}; ${ctx.matrixTiers.length} v2 matrix evidence-tier cell(s); today ${TODAY}`);
+console.log(`check-v2-retirement inputs: release ${release.version}; ${rows.length} v2-minor deprecation row(s); ${(migrations.rows ?? []).length} v2→v2 migration row(s); ${(corrections.rows ?? []).length} correction row(s); ${existsSync(P.bundles) ? readdirSync(P.bundles).filter((f) => f.endsWith('.json')).length : 0} committed bundle(s); census ${ctx.census ? `${Object.keys(ctx.census).length} row(s)` : 'ABSENT'}; published corrections ${publishedSource}; ${ctx.matrixTiers.length} v2 matrix evidence-tier cell(s); today ${TODAY}`);
 for (const line of report) console.log(line);
 
 if (failures.length > 0) {

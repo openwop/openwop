@@ -57,6 +57,10 @@ interface Sabotage {
   tier?: string;
   matrixTier?: string;
   corrections?: unknown[];
+  /** RFC 0255 §D fixtures. */
+  publishedCorrections?: unknown[];
+  hostTiers?: Array<{ name: string; origins: string[]; tier: number }>;
+  extraBundles?: Record<string, unknown>;
 }
 
 function build(o: Sabotage): Record<string, string> {
@@ -67,7 +71,7 @@ function build(o: Sabotage): Record<string, string> {
   mkdirSync(bundles, { recursive: true });
   writeFileSync(join(bundles, 'fixture-host.json'), JSON.stringify({
     suite: { version: '2.35.0' },
-    discovery: { document: { protocolVersions: ['2.0'], connections: { status: 'experimental', since: '2.0', witness: 'witnessable-unaided', until: '2.99', ...(o.bundleCarries ? { transports: ['http', 'sse'] } : {}) } } },
+    discovery: { url: 'https://fixture-host.example/.well-known/openwop', document: { protocolVersions: ['2.0'], connections: { status: 'experimental', since: '2.0', witness: 'witnessable-unaided', until: '2.99', ...(o.bundleCarries ? { transports: ['http', 'sse'] } : {}) } } },
   }, null, 2));
 
   const deprecations = write('deprecations.json', {
@@ -94,6 +98,9 @@ function build(o: Sabotage): Record<string, string> {
     }],
   });
   const corrections = write('corrections.json', { $schema: './corrections.schema.json', version: 1, updated: '2026-09-22', rows: o.corrections ?? [] });
+  const publishedCorrections = write('published-corrections.json', { $schema: './corrections.schema.json', version: 1, updated: '2026-09-22', rows: o.publishedCorrections ?? [] });
+  const hostTiers = write('host-tiers.json', { hosts: o.hostTiers ?? [{ name: 'fixture-host', origins: ['https://fixture-host.example'], tier: 1 }] });
+  for (const [name, bundle] of Object.entries(o.extraBundles ?? {})) writeFileSync(join(bundles, name), JSON.stringify(bundle, null, 2));
   const today = new Date().toISOString().slice(0, 10);
   const census = o.censusNull
     ? { [ROW]: { count: null, manifestsScanned: null, registryCommit: null, registryCommitDate: null } }
@@ -121,6 +128,8 @@ function build(o: Sabotage): Record<string, string> {
     OPENWOP_EOS_CLOCK_FILE: clock,
     OPENWOP_INTEROP_MATRIX_FILE: matrix,
     OPENWOP_V2_ROW_HISTORY_FILE: history,
+    OPENWOP_V2_PUBLISHED_CORRECTIONS_FILE: publishedCorrections,
+    OPENWOP_HOST_TIERS_FILE: hostTiers,
   };
 }
 
@@ -201,4 +210,74 @@ describe('v2-retirement-gate (RFC 0197 §A.2 — R1–R6, one sabotage each)', (
     expect(b.status, req(CORRECTION_ID, CORRECTION_DOC, `a register row whose prose entry has been reworded away is an unrecorded shape change — it exited ${b.status}: ${b.out.slice(-400)}`)).not.toBe(0);
     expect(b.out, req(CORRECTION_ID, CORRECTION_DOC, 'the failure must name the drifted COMPATIBILITY.md entry')).toMatch(/COMPATIBILITY\.md no longer contains/);
   }, 120_000);
+});
+
+/**
+ * RFC 0255 §D — the steward-deletion class. The removed surface is a family no
+ * real schema has (`fixtureFamily`), so the committed baseline does not list
+ * it and the gate treats the pointer as a removal, which is when the census is
+ * re-measured. One input changes per case, from a row the gate admits.
+ */
+const STEWARD_ID = 'openwop.requirement.0255.steward-deletion-licence';
+const STEWARD_DOC = 'COMPATIBILITY.md §3a (RFC 0255 §D)';
+const REMOVED = 'schemas/v2/capabilities.schema.json#/fixtureFamily';
+const carrier = (url: string): unknown => ({ suite: { version: '2.46.0' }, discovery: { url, document: { protocolVersions: ['2.0'], fixtureFamily: { status: 'experimental' } } } });
+const stewardRow = (over: Record<string, unknown> = {}): Record<string, unknown> => ({
+  id: 'openwop.correction.v2.90', date: '2026-10-30', class: 'steward-deletion', rfc: '0255',
+  pointers: [REMOVED],
+  compatibilityEntry: 'the v2 bare pack-manifest `signing` block and `FragmentNode.config`',
+  priorShapeCensus: { bundles: 1, manifests: 3, manifestsScanned: 190, note: 'fixture: one bundle carries the family' },
+  ...over,
+});
+const carried = { 'carrier.json': carrier('https://fixture-host.example/.well-known/openwop') };
+
+describe('v2-retirement-gate (RFC 0255 §D — steward deletions)', () => {
+  it('POSITIVE CONTROL — a new steward-deletion row whose census matches the scan is admitted', () => {
+    if (V1_DIR === null) return softSkip('inapplicable', 'not a spec checkout');
+    const r = run({ corrections: [stewardRow()], extraBundles: carried });
+    expect(r.status, req(STEWARD_ID, STEWARD_DOC, `a steward deletion records its census whatever it is; with the census right and no outside host the gate MUST admit it — it exited ${r.status}: ${r.out.slice(-800)}`)).toBe(0);
+    expect(r.out, req(STEWARD_ID, STEWARD_DOC, 'the report must show the typed and the scanned census side by side')).toMatch(/1 bundle\(s\) typed \/ 1 scanned/);
+  }, 120_000);
+
+  it('a typed census of 0 is re-measured and REFUSED when a bundle carries the removed surface, for either class', () => {
+    if (V1_DIR === null) return softSkip('inapplicable', 'not a spec checkout');
+    for (const klass of ['steward-deletion', 'w3c-class-3']) {
+      const r = run({ corrections: [stewardRow({ class: klass, priorShapeCensus: { bundles: 0, manifests: 0, manifestsScanned: 190, note: 'fixture: typed 0' } })], extraBundles: carried });
+      expect(r.status, req(STEWARD_ID, STEWARD_DOC, `${klass}: a typed bundles: 0 with a bundle carrying the surface is the hole RFC 0255 §D closes — it exited ${r.status}: ${r.out.slice(-600)}`)).not.toBe(0);
+      expect(r.out, req(STEWARD_ID, STEWARD_DOC, `${klass}: the refusal must say the census is re-measured`)).toMatch(/priorShapeCensus\.bundles is 0, but 1 committed bundle\(s\) carry a removed surface/);
+    }
+  }, 240_000);
+
+  it('a new row is REFUSED while a tier-3 host is listed; a published row is NOT re-judged', () => {
+    if (V1_DIR === null) return softSkip('inapplicable', 'not a spec checkout');
+    const tiers = [{ name: 'fixture-host', origins: ['https://fixture-host.example'], tier: 1 }, { name: 'outside-host', origins: ['https://outside.example'], tier: 3 }];
+    const fresh = run({ corrections: [stewardRow()], extraBundles: carried, hostTiers: tiers });
+    expect(fresh.status, req(STEWARD_ID, STEWARD_DOC, `the class exists only while no outside host does — it exited ${fresh.status}: ${fresh.out.slice(-600)}`)).not.toBe(0);
+    expect(fresh.out, req(STEWARD_ID, STEWARD_DOC, 'the refusal must name the tier-3 host')).toMatch(/new steward-deletion row refused: evidence\/host-tiers\.json lists outside-host at tier 3/);
+    const old = run({ corrections: [stewardRow()], publishedCorrections: [stewardRow()], extraBundles: carried, hostTiers: tiers });
+    expect(old.status, req(STEWARD_ID, STEWARD_DOC, `a row published before the tier-3 host appeared MUST NOT turn red — it exited ${old.status}: ${old.out.slice(-600)}`)).toBe(0);
+  }, 240_000);
+
+  it('a new row is REFUSED while the INTEROP-MATRIX names an independent host', () => {
+    if (V1_DIR === null) return softSkip('inapplicable', 'not a spec checkout');
+    const r = run({ corrections: [stewardRow()], extraBundles: carried, matrixTier: 'independent' });
+    expect(r.status, req(STEWARD_ID, STEWARD_DOC, `the matrix is the second place an outside host shows up — it exited ${r.status}: ${r.out.slice(-600)}`)).not.toBe(0);
+    expect(r.out, req(STEWARD_ID, STEWARD_DOC, 'the refusal must quote the matrix cell')).toMatch(/new steward-deletion row refused: the INTEROP-MATRIX v2 table's Evidence tier column reads "independent"/);
+  }, 120_000);
+
+  it('a new row is REFUSED while a committed bundle comes from an origin nobody lists', () => {
+    if (V1_DIR === null) return softSkip('inapplicable', 'not a spec checkout');
+    const r = run({ corrections: [stewardRow()], extraBundles: { ...carried, 'stranger.json': { suite: { version: '2.46.0' }, discovery: { url: 'https://stranger.example/.well-known/openwop', document: {} } } } });
+    expect(r.status, req(STEWARD_ID, STEWARD_DOC, `an unlisted origin may be an outside host — it exited ${r.status}: ${r.out.slice(-600)}`)).not.toBe(0);
+    expect(r.out, req(STEWARD_ID, STEWARD_DOC, 'the refusal must name the bundle and its origin')).toMatch(/stranger\.json comes from https:\/\/stranger\.example, which neither evidence\/host-tiers\.json nor the INTEROP-MATRIX lists/);
+  }, 120_000);
+
+  it('a row removing a reader for persisted data is REFUSED, and so is one naming no RFC', () => {
+    if (V1_DIR === null) return softSkip('inapplicable', 'not a spec checkout');
+    const reader = run({ corrections: [stewardRow({ pointers: [REMOVED, 'schemas/v2/run-event-payloads.schema.json#/fixtureEvent'] })], extraBundles: carried });
+    expect(reader.status, req(STEWARD_ID, STEWARD_DOC, `stored events stay readable — it exited ${reader.status}: ${reader.out.slice(-600)}`)).not.toBe(0);
+    expect(reader.out, req(STEWARD_ID, STEWARD_DOC, 'the refusal must name the reader')).toMatch(/run-event-payloads\.schema\.json#\/fixtureEvent reads persisted data/);
+    const anonymous = run({ corrections: [stewardRow({ rfc: null })], extraBundles: carried });
+    expect(anonymous.status, req(STEWARD_ID, STEWARD_DOC, `a deletion names the RFC that decided it — it exited ${anonymous.status}`)).not.toBe(0);
+  }, 240_000);
 });

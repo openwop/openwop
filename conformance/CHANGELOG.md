@@ -1,6 +1,6 @@
 ## [2.46.36] — 2026-10-30 — RFCs 0255 and 0256 Active
 
-- **No suite change.** The cycle opens to carry the RFC 0255 and 0256 filings and their registers, which change the packed `spec/v1/gaps.json`.
+- **No scenario change.** The cycle carries the RFC 0255 and 0256 filings and the RFC 0255 §D licence. `requirement-aliases.json` gains a `tombstones` map: an id the sources no longer mint needs an alias or a tombstone naming the `steward-deletion` row that deleted its surface.
 
 ## [2.46.35] — 2026-10-29 — MyndHyve's legacy runtime retired
 
