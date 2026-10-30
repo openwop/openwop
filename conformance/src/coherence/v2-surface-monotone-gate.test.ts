@@ -262,3 +262,67 @@ describe('v2-surface-monotone-gate (RFC 0197 §A.1 / §B)', () => {
     expect(out, req(ID, DOC, 'the refusal must name the operation')).toMatch(/operation removed without a due retirement row.*POST \/fixture/s);
   }, 180_000);
 });
+
+/**
+ * RFC 0255 §D — the regeneration hole. Delete a surface and regenerate the
+ * committed baseline in the same change, and before equals after. The
+ * published baseline (the last tag's, here a seam) is the before no change
+ * can rewrite.
+ */
+const LAUNDER_ID = 'openwop.requirement.0255.baseline-regeneration-refused';
+const LAUNDER_DOC = 'spec/v2/core/overview.md §0a (RFC 0255 §D)';
+
+function launder(opts: { published: boolean; licensed: boolean }): { status: number | null; out: string } {
+  const dir = mkdtempSync(join(tmpdir(), 'openwop-0255-launder-'));
+  mkdirSync(join(dir, 'schemas', 'v2'), { recursive: true });
+  mkdirSync(join(dir, 'spec', 'v2'), { recursive: true });
+  const schemaPath = join(dir, 'schemas', 'v2', 'fixture.schema.json');
+  writeFileSync(schemaPath, JSON.stringify(BEFORE, null, 2));
+  writeFileSync(join(dir, 'spec', 'v2', 'release.json'), JSON.stringify({ version: '2.35.0' }, null, 2));
+  writeFileSync(join(dir, 'spec', 'v2', 'path-manifest.json'), JSON.stringify({ operations: [{ method: 'GET', path: '/fixture', operationId: 'getFixture' }], channels: [] }, null, 2));
+  const rows = opts.licensed
+    ? [{ id: 'openwop.correction.v2.90', date: '2026-10-30', class: 'steward-deletion', rfc: '0255', pointers: ['schemas/v2/fixture.schema.json#/transport'], compatibilityEntry: 'fixture', priorShapeCensus: { bundles: 0, manifests: 0, manifestsScanned: 1, note: 'fixture' } }]
+    : [];
+  for (const [name, key, value] of [['corrections', 'rows', rows], ['migrations', 'rows', []], ['deprecations', 'entries', []]] as const) {
+    writeFileSync(join(dir, `${name}.json`), JSON.stringify({ version: 1, updated: '2026-10-30', [key]: value }, null, 2));
+  }
+  const baseline = join(dir, 'surface-baseline.json');
+  const published = join(dir, 'published-baseline.json');
+  const env: Record<string, string | undefined> = {
+    ...process.env,
+    OPENWOP_V2_SCHEMAS_ROOT: dir,
+    OPENWOP_V2_BASELINE_FILE: baseline,
+    OPENWOP_V2_RELEASE_FILE: join(dir, 'spec', 'v2', 'release.json'),
+    OPENWOP_V2_CORRECTIONS_FILE: join(dir, 'corrections.json'),
+    OPENWOP_V2_MIGRATIONS_FILE: join(dir, 'migrations.json'),
+    OPENWOP_DEPRECATIONS_FILE: join(dir, 'deprecations.json'),
+  };
+  const gen = (): number | null => spawnSync('node', [GENERATOR, '--write'], { cwd: root, encoding: 'utf8', env, maxBuffer: 32 * 1024 * 1024 }).status;
+  if (gen() !== 0) return { status: -1, out: 'baseline generation failed' };
+  writeFileSync(published, readFileSync(baseline, 'utf8'));
+  const schema = JSON.parse(readFileSync(schemaPath, 'utf8')) as { properties: Record<string, unknown> };
+  delete schema.properties['transport'];
+  writeFileSync(schemaPath, JSON.stringify(schema, null, 2));
+  if (gen() !== 0) return { status: -1, out: 'baseline regeneration failed' };
+  if (opts.published) env['OPENWOP_V2_PUBLISHED_BASELINE_FILE'] = published;
+  const r = spawnSync('node', [GATE], { cwd: root, encoding: 'utf8', env, maxBuffer: 32 * 1024 * 1024 });
+  return { status: r.status, out: String(r.stdout ?? '') + String(r.stderr ?? '') };
+}
+
+describe('v2-surface-monotone-gate (RFC 0255 §D — a regenerated baseline launders nothing)', () => {
+  it('a property deleted with its baseline regenerated in the same change is REFUSED against the published baseline', () => {
+    if (V1_DIR === null) return softSkip('inapplicable', 'not a spec checkout');
+    const blind = launder({ published: false, licensed: false });
+    expect(blind.status, req(LAUNDER_ID, LAUNDER_DOC, `CONTROL: against the committed baseline alone the removal is invisible — that is the hole; it exited ${blind.status}: ${blind.out.slice(-400)}`)).toBe(0);
+    const r = launder({ published: true, licensed: false });
+    expect(r.status, req(LAUNDER_ID, LAUNDER_DOC, `the published baseline still lists the property, so its removal MUST need a licence — it exited ${r.status}: ${r.out.slice(-600)}`)).not.toBe(0);
+    expect(r.out, req(LAUNDER_ID, LAUNDER_DOC, 'the refusal must name the removed property')).toMatch(/property removed without a due retirement row or a corrections\.json row: schemas\/v2\/fixture\.schema\.json#\/transport/);
+  }, 180_000);
+
+  it('POSITIVE CONTROL — the same removal named by a steward-deletion row is licensed', () => {
+    if (V1_DIR === null) return softSkip('inapplicable', 'not a spec checkout');
+    const r = launder({ published: true, licensed: true });
+    expect(r.status, req(LAUNDER_ID, LAUNDER_DOC, `a corrections row is the licence the gate reads — it exited ${r.status}: ${r.out.slice(-600)}`)).toBe(0);
+    expect(r.out, req(LAUNDER_ID, LAUNDER_DOC, 'the gate must say what licensed it')).toMatch(/licensed: property schemas\/v2\/fixture\.schema\.json#\/transport — licensed by openwop\.correction\.v2\.90/);
+  }, 180_000);
+});

@@ -27,17 +27,31 @@
  * when an id present in the committed file is absent from the regenerated set
  * and has no row in `conformance/requirement-aliases.json` (a reword without
  * an alias orphans every bundle that cited the old id). `--write` rewrites.
+ *
+ * RFC 0255 §D — the ids that must survive are not only the committed file's:
+ * `--write` used to rewrite that file first, after which `--check` compared
+ * the tree with itself and a deleted scenario's ids vanished silently. Both
+ * modes now also read `requirements.json` at the last published `v2.*` tag,
+ * and every id published there (record id or explicit `req()` id) that the
+ * sources no longer mint needs an alias row or a TOMBSTONE in
+ * `requirement-aliases.json`: `tombstones: { "<id>": "<corrections row id>" }`,
+ * naming the `steward-deletion` row in spec/v2/corrections.json that deleted
+ * its surface. `--write` refuses, without writing, when one is missing.
+ * Seams: OPENWOP_PUBLISHED_REQUIREMENTS_FILE (the published registry, in place
+ * of git), OPENWOP_REQUIREMENT_ALIASES_FILE, OPENWOP_V2_CORRECTIONS_FILE.
  */
 
 import ts from 'typescript';
 import { readFileSync, readdirSync, writeFileSync, existsSync } from 'node:fs';
 import { fileURLToPath } from 'node:url';
 import { dirname, join, resolve } from 'node:path';
+import { fileAtLastTag } from '../../scripts/lib/published-tree.mjs';
 
 const CONF = resolve(dirname(fileURLToPath(import.meta.url)), '..');
 const SCENARIOS_DIR = join(CONF, 'src', 'scenarios');
 const OUT = join(CONF, 'requirements.json');
-const ALIASES = join(CONF, 'requirement-aliases.json');
+const ALIASES = process.env['OPENWOP_REQUIREMENT_ALIASES_FILE'] ?? join(CONF, 'requirement-aliases.json');
+const CORRECTIONS = process.env['OPENWOP_V2_CORRECTIONS_FILE'] ?? join(CONF, '..', 'spec', 'v2', 'corrections.json');
 
 const MAX_SLUG = 80;
 function slugTitle(title) {
@@ -221,7 +235,54 @@ function stable(obj) {
 const mode = process.argv.includes('--write') ? 'write' : process.argv.includes('--check') ? 'check' : 'report';
 const fresh = generate();
 
+/** Every id a record lets a bundle carry. */
+const idsOf = (records) => (records ?? []).flatMap((r) => [r.id, r.explicitId].filter((x) => x !== null && x !== undefined));
+
+/**
+ * RFC 0255 §D — ids published at the last tag or committed now that the
+ * sources no longer mint, with neither an alias nor a tombstone. Also checks
+ * every tombstone names a steward-deletion row and is not a live id.
+ */
+function orphanedIds() {
+  const problems = [];
+  const file = existsSync(ALIASES) ? JSON.parse(readFileSync(ALIASES, 'utf8')) : {};
+  const aliases = file.aliases ?? {};
+  const tombstones = file.tombstones ?? {};
+  const freshIds = new Set(idsOf(fresh.records));
+  let published;
+  const seam = process.env['OPENWOP_PUBLISHED_REQUIREMENTS_FILE'];
+  if (seam) published = { source: seam, records: JSON.parse(readFileSync(seam, 'utf8')).records };
+  else {
+    try {
+      const at = fileAtLastTag(join(CONF, '..'), 'conformance/requirements.json');
+      published = { source: at.tag, records: at.text === null ? [] : JSON.parse(at.text).records };
+    } catch (e) {
+      problems.push(`cannot read conformance/requirements.json at the last published v2.* tag (${e.message.split('\n')[0]}) — without it a deleted id cannot be told from one that never shipped; fetch tags and re-run`);
+      return { problems, source: 'unreadable' };
+    }
+  }
+  const committed = existsSync(OUT) ? JSON.parse(readFileSync(OUT, 'utf8')).records : [];
+  const must = new Set([...idsOf(published.records), ...idsOf(committed)]);
+  for (const id of must) {
+    if (freshIds.has(id) || id in aliases || id in tombstones) continue;
+    problems.push(`id ${id} was published (${published.source}) or committed and the sources no longer mint it — add an alias row (a reword) or a tombstone naming the steward-deletion row that deleted its surface (requirement-aliases.json \`tombstones\`)`);
+  }
+  const corrections = existsSync(CORRECTIONS) ? JSON.parse(readFileSync(CORRECTIONS, 'utf8')).rows ?? [] : [];
+  const steward = new Set(corrections.filter((c) => c.class === 'steward-deletion').map((c) => c.id));
+  for (const [id, row] of Object.entries(tombstones)) {
+    if (freshIds.has(id)) problems.push(`tombstone ${id}: the sources still mint this id — a live requirement cannot be tombstoned`);
+    if (!steward.has(row)) problems.push(`tombstone ${id} → ${row}: not a steward-deletion row in spec/v2/corrections.json — an id is retired only with the surface its row deleted`);
+  }
+  return { problems, source: published.source };
+}
+
 if (mode === 'write') {
+  const { problems } = orphanedIds();
+  if (problems.length > 0) {
+    console.error(`=== generate-requirement-registry --write REFUSED — ${problems.length} problem(s); conformance/requirements.json not written ===`);
+    for (const f of problems) console.error(`  ${f}`);
+    process.exit(1);
+  }
   writeFileSync(OUT, stable(fresh));
   if (!existsSync(ALIASES)) writeFileSync(ALIASES, stable({ $comment: 'old id → new id. Add a row when a test title is reworded so bundles citing the old id still resolve.', aliases: {} }));
   console.log(`wrote conformance/requirements.json: ${fresh.counts.tests} tests in ${fresh.counts.files} files (${fresh.counts.withStableId} stable ids, ${fresh.counts.interpolatedTitles} interpolated titles, ${fresh.counts.explicitIds} explicit req() ids)`);
@@ -244,6 +305,7 @@ if (mode === 'write') {
         failures.push(`id ${r.id} (${r.file}:${r.line}) no longer exists in the sources and has no alias row in requirement-aliases.json — a reworded title orphans bundles that cited it`);
       }
     }
+    failures.push(...orphanedIds().problems);
     for (const [oldId, newId] of Object.entries(aliases)) {
       if (!freshIds.has(newId)) failures.push(`alias ${oldId} → ${newId}: the target id does not exist`);
     }

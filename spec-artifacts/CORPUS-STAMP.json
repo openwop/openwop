@@ -219,7 +219,7 @@
     "spec/v1/event-codemap.json": "3da60d884157793a360da532a9fcbbfb5285636db325a74cec94b34622186d97",
     "spec/v1/event-codemap.schema.json": "d05933b2e88103aff51a2f774df97b9bda065e0fc88dbd9b114cc47a32189174",
     "spec/v1/extensions.json": "79a60754aa16cbdbdb604f8e5c00038af535a1690a4d07bd5ff7c38f0256a7bc",
-    "spec/v1/gaps.json": "ae19376611d43713e667dc31ce6f0868b00f3bdb51d991c77b44a4ec4c47e5ef",
+    "spec/v1/gaps.json": "ef7b3c8c64d2d07be7395ea579d73805ecd17b1b4629db711fca26ce3866a837",
     "spec/v1/gaps.schema.json": "8fd83259f556553c9df0f53e7a82ca8c2a4771d471197f69b4e2ae0ceeacfd66",
     "spec/v1/migrations.json": "4c50760be70cb644d02427bcaf5749606700edf4513f423903cf3b1d12f5c300",
     "spec/v1/migrations.schema.json": "886779aa6c22e646db097f5df210adb018a4dd14a7b815465a18c8a7056c8f72",
@@ -244,7 +244,7 @@
     "spec/v2/core/interrupt.md": "10f15dfe30baa0fc748aea0a067f9b271bea316fde6b598d78f77edc296f698a",
     "spec/v2/core/node-pack-runtimes.md": "e1088cb69b8c3c67256c494063328916c2980ab1aa97a7063de25bab82fdb1e5",
     "spec/v2/core/oauth.md": "c069ae4f9aae2eafe14c07c0bf709aa7ade0dcc821973d740400d49d901f7061",
-    "spec/v2/core/overview.md": "999cb657711d6c28e62032fc31a013cc175f7a981a3b012e4bf4a90a2b84344c",
+    "spec/v2/core/overview.md": "e2bfc6543ee3edbaa7101bbe8d603bfd7701578961574a8e78cc07cec56b3485",
     "spec/v2/core/packs.md": "74d9c804a71e0e0400e7a5667a918670bcb435be0702b4625ec774ef0f1aa359",
     "spec/v2/core/persistence.md": "249a1de353f421cdf92b9006a13a10afdb002f4029eb6a13520cc95252edb2ec",
     "spec/v2/core/portability.md": "ab13a6ca43544b9a6a91edfb377ec680c768d14be841c84fb79125b231426891",
@@ -257,7 +257,7 @@
     "spec/v2/core/webhooks.md": "b3be00624d07466606c81ff5069744428d16761e16d79807517b171d8293c262",
     "spec/v2/core/workflow-chain-packs.md": "fdce7a8477e269950a2bac05ee6eddbd66eb0b670b464d00054f7196ec05d29c",
     "spec/v2/corrections.json": "3a8d93e33865b692d26a3b6bfd3819766e206b2e0c2a69669baa4bf833d05a49",
-    "spec/v2/corrections.schema.json": "46bbffb954d13bd9995aebc912ceeb2544f7064331abf25fd6ab85c81a5cec94",
+    "spec/v2/corrections.schema.json": "44fd08d8ad8e6f2e59706a186528980670f0b60a6fdcde4ee9d560fc687c0ba3",
     "spec/v2/declaration.json": "c914e17b8be18ffd186dbd63556c5a06816562b949029413ba46f556e1cd0d54",
     "spec/v2/declaration.schema.json": "ef951633e4070899f64828f5cf1b5f4870270a0360f81dbb49b5b4d6cd407550",
     "spec/v2/eos-override.json": "4c72d2f6a658943b01c1de1643cf294642091933af7832f38ee5495df684cb2d",
@@ -322,5 +322,5 @@
     "spec/v2/retention-floors.json": "eaf3722d95c79947af1d4269ef85117e126518c588cfcf1a2b21b97269f51624",
     "spec/v2/surface-baseline.json": "d246b5f648ae8964f740f50a19cd1bd239105dccc7ca28c2e81ddf028abda439"
   },
-  "corpusCommit": "47560534957f7b7c106c9a7198405b51e3e39ca7"
+  "corpusCommit": "7f7ba2ed709e609142836681f82e00fea51fd89d"
 }

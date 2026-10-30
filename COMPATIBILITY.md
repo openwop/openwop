@@ -129,6 +129,7 @@ The rule is [`spec/v2/core/overview.md`](./spec/v2/core/overview.md) §0a; RFC 0
 - A retirement narrows emission; readers keep accepting persisted shapes for the life of the major.
 - `minClientVersion` MUST NOT be used to force a shape, because it refuses the whole client with `426`.
 - A Class 3 correction that changes a v2 shape is recorded as a row in `spec/v2/corrections.json` and passes the same bundle and registry scan.
+- **Steward deletion (RFC 0255 §D).** While no outside host exists, a `steward-deletion` row in `spec/v2/corrections.json` licenses removing a v2 surface in a 2.x minor, including a required one, without the six predicates. The row records the bundle census whatever it is, and `check-v2-retirement.mjs` re-measures it. It must not remove a reader for persisted data. A new row is refused while `evidence/host-tiers.json` or the INTEROP-MATRIX v2 table lists a tier-3 host, or while a committed bundle comes from an origin neither lists. Rows already published are never re-judged. A requirement id deleted with the surface is retired by a tombstone in `conformance/requirement-aliases.json` naming the row. The monotone gate compares against the baseline at the last published tag, so regenerating the committed baseline cannot hide a removal.
 
 The precedents the rule writes down:
 

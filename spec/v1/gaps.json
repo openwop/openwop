@@ -15337,8 +15337,8 @@
       "surface": "The gate changes and the `requirements` tombstone form are unbuilt; the trial measured 20 red gates with 1 at baseline and did not reach green",
       "witness": "unclassified",
       "requirementId": null,
-      "disposition": "transferred",
-      "target": "TODO.md",
+      "disposition": "closed",
+      "target": null,
       "sources": [
         {
           "file": "RFCS/registers/0255-delete-the-ai-envelope.gaps.md",

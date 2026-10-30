@@ -404,7 +404,6 @@ Defects outside the spec:
 
 Register rows transferred here. Each closes in the PR that does the work.
 
-- **0255 G2, R1 (steward).** The §D licence: `steward-deletion` corrections class, `check-v2-retirement` rescans every row through `bundlesCarrying`, `check-v2-surface-monotone` refuses an unlicensed same-release baseline change, the tier-3 refusal for new rows, requirement-id tombstones, declaration `anchor: "deleted"`, and the COMPATIBILITY / overview / GOVERNANCE amendments. Each gate change has a sabotage fixture.
 - **0255 G3, R3 (steward).** The `interrupt.md` interrupt-form section and the `interrupt-form-*` tests land before the old A2UI scenarios go, so no invariant loses its only witness.
 - **0255 G4, R6 (steward).** The core budget after deletion (measured 37,493 against 37,000), and a tree-wide grep for each deleted name.
 - **0255 R4 (openwop-app).** New pack versions without the `aiEnvelope` peer are published before the suite.

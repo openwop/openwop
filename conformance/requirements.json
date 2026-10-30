@@ -3,10 +3,10 @@
   "generatedFrom": "src/scenarios/*.test.ts",
   "counts": {
     "files": 753,
-    "tests": 2877,
-    "withStableId": 2877,
+    "tests": 2888,
+    "withStableId": 2888,
     "interpolatedTitles": 0,
-    "explicitIds": 2750
+    "explicitIds": 2761
   },
   "records": [
     {
@@ -47447,7 +47447,7 @@
     {
       "id": "openwop.it.v2-alias-covers-reword.the-corpus-gate-script-exits-0",
       "file": "v2-alias-covers-reword.test.ts",
-      "line": 32,
+      "line": 44,
       "title": "the corpus gate script exits 0",
       "explicitId": "openwop.requirement.0168.alias-covers-reword",
       "citations": [
@@ -47455,6 +47455,82 @@
           "section": "RFC 0168 §A.1",
           "requirement": null,
           "interpolated": true
+        }
+      ]
+    },
+    {
+      "id": "openwop.it.v2-alias-covers-reword.a-published-id-the-sources-no-longer-mint-with-no-alias-or-tombstone-fails-check",
+      "file": "v2-alias-covers-reword.test.ts",
+      "line": 80,
+      "title": "a published id the sources no longer mint, with no alias or tombstone, fails --check and --write refuses without writing",
+      "explicitId": "openwop.requirement.0255.requirement-tombstone",
+      "citations": [
+        {
+          "section": "COMPATIBILITY.md §3a (RFC 0255 §D)",
+          "requirement": null,
+          "interpolated": true
+        },
+        {
+          "section": "COMPATIBILITY.md §3a (RFC 0255 §D)",
+          "requirement": "the failure must name the id"
+        },
+        {
+          "section": "COMPATIBILITY.md §3a (RFC 0255 §D)",
+          "requirement": "the failure must name the remedy"
+        },
+        {
+          "section": "COMPATIBILITY.md §3a (RFC 0255 §D)",
+          "requirement": null,
+          "interpolated": true
+        },
+        {
+          "section": "COMPATIBILITY.md §3a (RFC 0255 §D)",
+          "requirement": "the refusal must say nothing was written"
+        },
+        {
+          "section": "COMPATIBILITY.md §3a (RFC 0255 §D)",
+          "requirement": "conformance/requirements.json must be byte-identical after a refused --write"
+        }
+      ]
+    },
+    {
+      "id": "openwop.it.v2-alias-covers-reword.positive-control-a-tombstone-naming-a-steward-deletion-row-retires-the-id",
+      "file": "v2-alias-covers-reword.test.ts",
+      "line": 93,
+      "title": "POSITIVE CONTROL — a tombstone naming a steward-deletion row retires the id",
+      "explicitId": "openwop.requirement.0255.requirement-tombstone",
+      "citations": [
+        {
+          "section": "COMPATIBILITY.md §3a (RFC 0255 §D)",
+          "requirement": null,
+          "interpolated": true
+        }
+      ]
+    },
+    {
+      "id": "openwop.it.v2-alias-covers-reword.a-tombstone-naming-a-non-steward-row-or-a-live-id-is-refused",
+      "file": "v2-alias-covers-reword.test.ts",
+      "line": 99,
+      "title": "a tombstone naming a non-steward row, or a live id, is REFUSED",
+      "explicitId": "openwop.requirement.0255.requirement-tombstone",
+      "citations": [
+        {
+          "section": "COMPATIBILITY.md §3a (RFC 0255 §D)",
+          "requirement": null,
+          "interpolated": true
+        },
+        {
+          "section": "COMPATIBILITY.md §3a (RFC 0255 §D)",
+          "requirement": "the refusal must say the row is not a steward deletion"
+        },
+        {
+          "section": "COMPATIBILITY.md §3a (RFC 0255 §D)",
+          "requirement": null,
+          "interpolated": true
+        },
+        {
+          "section": "COMPATIBILITY.md §3a (RFC 0255 §D)",
+          "requirement": "the refusal must name the live id"
         }
       ]
     },
@@ -49071,7 +49147,7 @@
     {
       "id": "openwop.it.v2-retirement-gate.the-committed-corpus-passes-and-the-gate-prints-its-inputs-rather-than-a-silent",
       "file": "v2-retirement-gate.test.ts",
-      "line": 148,
+      "line": 157,
       "title": "the committed corpus passes, and the gate prints its inputs rather than a silent zero",
       "explicitId": "openwop.requirement.0197.retirement-predicate",
       "citations": [
@@ -49089,7 +49165,7 @@
     {
       "id": "openwop.it.v2-retirement-gate.the-base-fixture-a-full-honest-retirement-is-reported-retirable-and-the-gate-exi",
       "file": "v2-retirement-gate.test.ts",
-      "line": 156,
+      "line": 165,
       "title": "the base fixture — a full, honest retirement — is reported `retirable` and the gate exits 0",
       "explicitId": "openwop.requirement.0197.retirement-predicate",
       "citations": [
@@ -49112,7 +49188,7 @@
     {
       "id": "openwop.requirement.0197.retirement-predicate",
       "file": "v2-retirement-gate.test.ts",
-      "line": 165,
+      "line": 174,
       "title": null,
       "explicitId": "openwop.requirement.0197.retirement-predicate",
       "citations": [
@@ -49136,7 +49212,7 @@
     {
       "id": "openwop.it.v2-retirement-gate.a-4-a-corrections-row-whose-prior-shape-a-committed-bundle-carried-is-refused",
       "file": "v2-retirement-gate.test.ts",
-      "line": 174,
+      "line": 183,
       "title": "§A.4 — a corrections row whose prior shape a committed bundle carried is REFUSED",
       "explicitId": "openwop.requirement.0197.correction-unevidenced",
       "citations": [
@@ -49154,7 +49230,7 @@
     {
       "id": "openwop.it.v2-retirement-gate.a-4-a-corrections-row-with-a-null-manifest-census-is-refused-and-a-drifted-compa",
       "file": "v2-retirement-gate.test.ts",
-      "line": 187,
+      "line": 196,
       "title": "§A.4 — a corrections row with a NULL manifest census is REFUSED, and a drifted COMPATIBILITY entry too",
       "explicitId": "openwop.requirement.0197.correction-unevidenced",
       "citations": [
@@ -49175,6 +49251,125 @@
         {
           "section": "COMPATIBILITY.md §3a (RFC 0197 §A.4)",
           "requirement": "the failure must name the drifted COMPATIBILITY.md entry"
+        }
+      ]
+    },
+    {
+      "id": "openwop.it.v2-retirement-gate.positive-control-a-new-steward-deletion-row-whose-census-matches-the-scan-is-adm",
+      "file": "v2-retirement-gate.test.ts",
+      "line": 235,
+      "title": "POSITIVE CONTROL — a new steward-deletion row whose census matches the scan is admitted",
+      "explicitId": "openwop.requirement.0255.steward-deletion-licence",
+      "citations": [
+        {
+          "section": "COMPATIBILITY.md §3a (RFC 0255 §D)",
+          "requirement": null,
+          "interpolated": true
+        },
+        {
+          "section": "COMPATIBILITY.md §3a (RFC 0255 §D)",
+          "requirement": "the report must show the typed and the scanned census side by side"
+        }
+      ]
+    },
+    {
+      "id": "openwop.it.v2-retirement-gate.a-typed-census-of-0-is-re-measured-and-refused-when-a-bundle-carries-the-removed",
+      "file": "v2-retirement-gate.test.ts",
+      "line": 242,
+      "title": "a typed census of 0 is re-measured and REFUSED when a bundle carries the removed surface, for either class",
+      "explicitId": "openwop.requirement.0255.steward-deletion-licence",
+      "citations": [
+        {
+          "section": "COMPATIBILITY.md §3a (RFC 0255 §D)",
+          "requirement": null,
+          "interpolated": true
+        },
+        {
+          "section": "COMPATIBILITY.md §3a (RFC 0255 §D)",
+          "requirement": null,
+          "interpolated": true
+        }
+      ]
+    },
+    {
+      "id": "openwop.it.v2-retirement-gate.a-new-row-is-refused-while-a-tier-3-host-is-listed-a-published-row-is-not-re-jud",
+      "file": "v2-retirement-gate.test.ts",
+      "line": 251,
+      "title": "a new row is REFUSED while a tier-3 host is listed; a published row is NOT re-judged",
+      "explicitId": "openwop.requirement.0255.steward-deletion-licence",
+      "citations": [
+        {
+          "section": "COMPATIBILITY.md §3a (RFC 0255 §D)",
+          "requirement": null,
+          "interpolated": true
+        },
+        {
+          "section": "COMPATIBILITY.md §3a (RFC 0255 §D)",
+          "requirement": "the refusal must name the tier-3 host"
+        },
+        {
+          "section": "COMPATIBILITY.md §3a (RFC 0255 §D)",
+          "requirement": null,
+          "interpolated": true
+        }
+      ]
+    },
+    {
+      "id": "openwop.it.v2-retirement-gate.a-new-row-is-refused-while-the-interop-matrix-names-an-independent-host",
+      "file": "v2-retirement-gate.test.ts",
+      "line": 261,
+      "title": "a new row is REFUSED while the INTEROP-MATRIX names an independent host",
+      "explicitId": "openwop.requirement.0255.steward-deletion-licence",
+      "citations": [
+        {
+          "section": "COMPATIBILITY.md §3a (RFC 0255 §D)",
+          "requirement": null,
+          "interpolated": true
+        },
+        {
+          "section": "COMPATIBILITY.md §3a (RFC 0255 §D)",
+          "requirement": "the refusal must quote the matrix cell"
+        }
+      ]
+    },
+    {
+      "id": "openwop.it.v2-retirement-gate.a-new-row-is-refused-while-a-committed-bundle-comes-from-an-origin-nobody-lists",
+      "file": "v2-retirement-gate.test.ts",
+      "line": 268,
+      "title": "a new row is REFUSED while a committed bundle comes from an origin nobody lists",
+      "explicitId": "openwop.requirement.0255.steward-deletion-licence",
+      "citations": [
+        {
+          "section": "COMPATIBILITY.md §3a (RFC 0255 §D)",
+          "requirement": null,
+          "interpolated": true
+        },
+        {
+          "section": "COMPATIBILITY.md §3a (RFC 0255 §D)",
+          "requirement": "the refusal must name the bundle and its origin"
+        }
+      ]
+    },
+    {
+      "id": "openwop.it.v2-retirement-gate.a-row-removing-a-reader-for-persisted-data-is-refused-and-so-is-one-naming-no-rf",
+      "file": "v2-retirement-gate.test.ts",
+      "line": 275,
+      "title": "a row removing a reader for persisted data is REFUSED, and so is one naming no RFC",
+      "explicitId": "openwop.requirement.0255.steward-deletion-licence",
+      "citations": [
+        {
+          "section": "COMPATIBILITY.md §3a (RFC 0255 §D)",
+          "requirement": null,
+          "interpolated": true
+        },
+        {
+          "section": "COMPATIBILITY.md §3a (RFC 0255 §D)",
+          "requirement": "the refusal must name the reader"
+        },
+        {
+          "section": "COMPATIBILITY.md §3a (RFC 0255 §D)",
+          "requirement": null,
+          "interpolated": true
         }
       ]
     },
@@ -49587,6 +49782,47 @@
         {
           "section": "spec/v2/core/overview.md §0a (RFC 0197 §A.1)",
           "requirement": "the refusal must name the operation"
+        }
+      ]
+    },
+    {
+      "id": "openwop.it.v2-surface-monotone-gate.a-property-deleted-with-its-baseline-regenerated-in-the-same-change-is-refused-a",
+      "file": "v2-surface-monotone-gate.test.ts",
+      "line": 313,
+      "title": "a property deleted with its baseline regenerated in the same change is REFUSED against the published baseline",
+      "explicitId": "openwop.requirement.0255.baseline-regeneration-refused",
+      "citations": [
+        {
+          "section": "spec/v2/core/overview.md §0a (RFC 0255 §D)",
+          "requirement": null,
+          "interpolated": true
+        },
+        {
+          "section": "spec/v2/core/overview.md §0a (RFC 0255 §D)",
+          "requirement": null,
+          "interpolated": true
+        },
+        {
+          "section": "spec/v2/core/overview.md §0a (RFC 0255 §D)",
+          "requirement": "the refusal must name the removed property"
+        }
+      ]
+    },
+    {
+      "id": "openwop.it.v2-surface-monotone-gate.positive-control-the-same-removal-named-by-a-steward-deletion-row-is-licensed",
+      "file": "v2-surface-monotone-gate.test.ts",
+      "line": 322,
+      "title": "POSITIVE CONTROL — the same removal named by a steward-deletion row is licensed",
+      "explicitId": "openwop.requirement.0255.baseline-regeneration-refused",
+      "citations": [
+        {
+          "section": "spec/v2/core/overview.md §0a (RFC 0255 §D)",
+          "requirement": null,
+          "interpolated": true
+        },
+        {
+          "section": "spec/v2/core/overview.md §0a (RFC 0255 §D)",
+          "requirement": "the gate must say what licensed it"
         }
       ]
     },

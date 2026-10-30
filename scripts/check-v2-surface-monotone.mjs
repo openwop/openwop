@@ -37,15 +37,21 @@
  *
  * G3 — the baseline records the release it was cut at, and this gate refuses a
  * baseline cut at a different release than `spec/v2/release.json`. That forces
- * the release PR to regenerate it. Stated plainly, because a gate should not
- * imply more than it checks: this does NOT catch a regeneration inside the same
- * release. The control for that is the deprecation register and code review of
- * the baseline diff, which is why the baseline is a sorted list of one-line
- * tuples rather than a re-indented blob.
+ * the release PR to regenerate it.
+ *
+ * RFC 0255 §D — a regeneration inside the same change used to launder a
+ * removal: delete a surface, regenerate the baseline, and before equals after.
+ * So the "before" is also the baseline at the last published `v2.*` tag
+ * (scripts/lib/published-tree.mjs), which no pull request can rewrite. A
+ * surface in either baseline and absent from the tree is a removal. On the
+ * real tree an unreadable tag fails closed; a fixture tree
+ * (OPENWOP_V2_SCHEMAS_ROOT) reads OPENWOP_V2_PUBLISHED_BASELINE_FILE and
+ * skips that leg, saying so, when it is unset.
  *
  * Test seams (used by conformance/src/coherence/v2-surface-monotone-gate):
  *   OPENWOP_V2_BASELINE_FILE  OPENWOP_V2_SCHEMAS_ROOT  OPENWOP_V2_RELEASE_FILE
  *   OPENWOP_V2_CORRECTIONS_FILE OPENWOP_V2_MIGRATIONS_FILE OPENWOP_DEPRECATIONS_FILE
+ *   OPENWOP_V2_PUBLISHED_BASELINE_FILE — the published "before", in place of git
  * `OPENWOP_V2_SCHEMAS_ROOT` names an alternative REPO ROOT whose `schemas/v2/`
  * and `spec/v2/path-manifest.json` are enumerated instead of this one's.
  *
@@ -57,6 +63,7 @@ import { spawnSync } from 'node:child_process';
 import { dirname, join, resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { enumerateTree } from './generate-v2-surface-baseline.mjs';
+import { fileAtLastTag } from './lib/published-tree.mjs';
 
 const ROOT = resolve(dirname(fileURLToPath(import.meta.url)), '..');
 const BASELINE = process.env['OPENWOP_V2_BASELINE_FILE'] ?? join(ROOT, 'spec', 'v2', 'surface-baseline.json');
@@ -87,6 +94,31 @@ function siteOf(t) {
 }
 
 const before = new Set(baseline.surfaces ?? []);
+
+// The published before (RFC 0255 §D). Its tuples join `before`, so a removal
+// or a restriction against the published baseline is judged exactly as one
+// against the committed baseline is.
+let publishedNote;
+{
+  const seam = process.env['OPENWOP_V2_PUBLISHED_BASELINE_FILE'];
+  let published = null;
+  if (seam) {
+    published = readJsonOrNull(seam);
+    if (!published) fail(`cannot read OPENWOP_V2_PUBLISHED_BASELINE_FILE at ${seam}`);
+    publishedNote = `published baseline ${seam} (${(published.surfaces ?? []).length} surfaces)`;
+  } else if (TREE_ROOT !== ROOT) {
+    publishedNote = 'published baseline: not compared (fixture tree, no OPENWOP_V2_PUBLISHED_BASELINE_FILE)';
+  } else {
+    let at;
+    try { at = fileAtLastTag(ROOT, 'spec/v2/surface-baseline.json'); } catch (e) {
+      fail(`cannot read the last published v2.* tag (${e.message.split('\n')[0]}). The published baseline is the before a pull request cannot regenerate; without it a removal plus a regenerated baseline passes. Fetch tags (git fetch --tags) and re-run.`);
+    }
+    if (at.text === null) fail(`spec/v2/surface-baseline.json does not exist at ${at.tag}`);
+    try { published = JSON.parse(at.text); } catch (e) { fail(`spec/v2/surface-baseline.json at ${at.tag} is not JSON: ${e.message}`); }
+    publishedNote = `published baseline ${at.tag} (${(published.surfaces ?? []).length} surfaces)`;
+  }
+  for (const s of published?.surfaces ?? []) before.add(s);
+}
 /** tuple → the `if` selectors of the `then` arms that alone impose it (required only). */
 const conditionals = new Map();
 const after = new Set(enumerateTree(TREE_ROOT, conditionals));
@@ -179,7 +211,7 @@ for (const t of removedTuples) {
 
 // ── report ──────────────────────────────────────────────────────────────────
 const addedUnion = addedTuples.filter((t) => ['property', 'enum-member', 'operation', 'channel'].includes(t.kind));
-console.log(`check-v2-surface-monotone: baseline ${baseline.count ?? before.size} surfaces at release ${baseline.release}; tree ${after.size}; ${addedUnion.length} addition(s) (additive, §B.5); ${removedUnion.length} removal tuple(s); ${newValueConditionals.length} new-value conditional(s); ${licences.length} licence pointer(s)${dueRetirementRows.length > 0 ? `; ${dueRetirementRows.length} due v2-minor row(s), check-v2-retirement ${retirementVerdict ? 'agrees' : 'REFUSES'}` : '; no due v2-minor row'}`);
+console.log(`check-v2-surface-monotone: baseline ${baseline.count ?? (baseline.surfaces ?? []).length} surfaces at release ${baseline.release}; tree ${after.size}; ${addedUnion.length} addition(s) (additive, §B.5); ${removedUnion.length} removal tuple(s); ${newValueConditionals.length} new-value conditional(s); ${licences.length} licence pointer(s); ${publishedNote}${dueRetirementRows.length > 0 ? `; ${dueRetirementRows.length} due v2-minor row(s), check-v2-retirement ${retirementVerdict ? 'agrees' : 'REFUSES'}` : '; no due v2-minor row'}`);
 for (const l of licensed.slice(0, 20)) console.log(`  licensed: ${l}`);
 for (const c of newValueConditionals) console.log(`  new-value conditional: ${c}`);
 if (failures.length > 0) {

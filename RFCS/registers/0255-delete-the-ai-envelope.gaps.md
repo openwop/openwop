@@ -3,7 +3,7 @@
 | ID | Section | Question / missing input | Owner | Resolution path | Blocks |
 | --- | --- | --- | --- | --- | --- |
 | G1 | Prerequisites | Production census not taken: `envelope_correlations`, fenced text in `invocation_log`, clarification checkpoints, `agent-clarification` toggle | Reference host | `closed` 2026-10-30 — census: 0 correlations, 0 stamped runs, 0 fenced invocation rows; 4 `ui.a2ui-surface` events stay readable | — |
-| G2 | §D | The gate changes and the `requirements` tombstone form are unbuilt; the trial measured 20 red gates with 1 at baseline and did not reach green | Compatibility Architect | `transferred:TODO.md` — iterate on a branch to green | `Active` |
+| G2 | §D | The gate changes and the `requirements` tombstone form are unbuilt; the trial measured 20 red gates with 1 at baseline and did not reach green | Compatibility Architect | `closed` 2026-10-30 — the `steward-deletion` class, the census rescan, the published-baseline leg, the tier-3 refusal and requirement tombstones landed with sabotage fixtures; declaration `anchor: "deleted"` already existed | — |
 | G3 | §E | The interrupt-form section and tests do not exist; `interrupt.md` has no A2UI text | Security Architect | `transferred:TODO.md` — write before deleting the witnesses | spec PR |
 | G4 | Budget | Kernel measured at 37,493 against a 37,000 cap after deletion | Spec Architect | `transferred:TODO.md` — trim about 500 words plus §E text | spec PR |
 | G5 | §A | Frontend v0.9 renderer: reported unfed, frontend not built in the trial | Reference host | `transferred:openwop-app-adr-1007` — confirm before deleting | host PR |
