@@ -3,10 +3,10 @@
   "generatedFrom": "src/scenarios/*.test.ts",
   "counts": {
     "files": 753,
-    "tests": 2873,
-    "withStableId": 2873,
+    "tests": 2877,
+    "withStableId": 2877,
     "interpolatedTitles": 0,
-    "explicitIds": 2746
+    "explicitIds": 2750
   },
   "records": [
     {
@@ -30201,7 +30201,7 @@
     {
       "id": "openwop.it.v2-deployment-lifecycle.lists-valid-deployment-records-of-the-fixture-agent",
       "file": "v2-deployment-lifecycle.test.ts",
-      "line": 269,
+      "line": 379,
       "title": "lists valid deployment records of the fixture agent",
       "explicitId": "openwop.requirement.0082.list-valid",
       "citations": []
@@ -30209,47 +30209,55 @@
     {
       "id": "openwop.it.v2-deployment-lifecycle.a-channel-bound-run-records-the-channel-and-the-version-it-resolved",
       "file": "v2-deployment-lifecycle.test.ts",
-      "line": 276,
+      "line": 386,
       "title": "a channel-bound run records the channel and the version it resolved",
       "explicitId": "openwop.requirement.0082.pin-recorded",
       "citations": []
     },
     {
-      "id": "openwop.it.v2-deployment-lifecycle.a-transition-without-a-deploy-scope-is-refused-and-moves-nothing",
+      "id": "openwop.it.v2-deployment-lifecycle.a-transition-without-the-deploy-scope-is-refused-403-forbidden-and-moves-nothing",
       "file": "v2-deployment-lifecycle.test.ts",
-      "line": 284,
-      "title": "a transition without a deploy:* scope is refused and moves nothing",
+      "line": 394,
+      "title": "a transition without the deploy:* scope is refused 403 forbidden and moves nothing",
       "explicitId": "openwop.requirement.0082.scope-fail-closed",
       "citations": []
     },
     {
-      "id": "openwop.it.v2-deployment-lifecycle.a-pause-or-deprecate-of-a-draft-is-refused-and-moves-nothing",
+      "id": "openwop.it.v2-deployment-lifecycle.a-pause-or-deprecate-of-a-draft-is-409-deployment-state-conflict-and-moves-nothi",
       "file": "v2-deployment-lifecycle.test.ts",
-      "line": 293,
-      "title": "a pause or deprecate of a draft is refused and moves nothing",
+      "line": 403,
+      "title": "a pause or deprecate of a draft is 409 deployment_state_conflict and moves nothing",
       "explicitId": "openwop.requirement.0082.transition-illegal-refused",
+      "citations": []
+    },
+    {
+      "id": "openwop.it.v2-deployment-lifecycle.a-promote-of-a-draft-straight-to-active-is-409-deployment-state-conflict-and-mov",
+      "file": "v2-deployment-lifecycle.test.ts",
+      "line": 412,
+      "title": "a promote of a draft straight to active is 409 deployment_state_conflict and moves nothing",
+      "explicitId": "openwop.requirement.0082.promote-skip-refused",
       "citations": []
     },
     {
       "id": "openwop.it.v2-deployment-lifecycle.a-transition-into-a-state-the-host-does-not-advertise-is-a-validation-error",
       "file": "v2-deployment-lifecycle.test.ts",
-      "line": 302,
+      "line": 424,
       "title": "a transition into a state the host does not advertise is a validation_error",
       "explicitId": "openwop.requirement.0082.state-unadvertised-refused",
       "citations": []
     },
     {
-      "id": "openwop.it.v2-deployment-lifecycle.a-draft-promotes-through-test-and-staged-to-active-on-a-channel",
+      "id": "openwop.it.v2-deployment-lifecycle.a-draft-promotes-one-step-at-a-time-over-the-advertised-states-to-active-on-a-ch",
       "file": "v2-deployment-lifecycle.test.ts",
-      "line": 315,
-      "title": "a draft promotes through test and staged to active on a channel",
+      "line": 437,
+      "title": "a draft promotes one step at a time over the advertised states to active on a channel",
       "explicitId": "openwop.requirement.0082.transition-legal",
       "citations": []
     },
     {
       "id": "openwop.it.v2-deployment-lifecycle.a-replay-re-reads-the-recorded-version-after-the-channel-moved",
       "file": "v2-deployment-lifecycle.test.ts",
-      "line": 329,
+      "line": 453,
       "title": "a replay re-reads the recorded version after the channel moved",
       "explicitId": "openwop.requirement.0082.replay-pin-reread",
       "citations": []
@@ -30257,7 +30265,7 @@
     {
       "id": "openwop.it.v2-deployment-lifecycle.adjust-canary-sets-the-share-on-a-canary-host",
       "file": "v2-deployment-lifecycle.test.ts",
-      "line": 340,
+      "line": 464,
       "title": "adjust-canary sets the share on a canary host",
       "explicitId": "openwop.requirement.0082.canary-adjusted",
       "citations": []
@@ -30265,17 +30273,41 @@
     {
       "id": "openwop.it.v2-deployment-lifecycle.a-host-without-canary-refuses-a-share-below-100",
       "file": "v2-deployment-lifecycle.test.ts",
-      "line": 352,
+      "line": 476,
       "title": "a host without canary refuses a share below 100",
       "explicitId": "openwop.requirement.0082.canary-unsupported-refused",
       "citations": []
     },
     {
-      "id": "openwop.it.v2-deployment-lifecycle.a-rollback-points-at-the-version-it-restored-to-active",
+      "id": "openwop.it.v2-deployment-lifecycle.a-rollback-restores-the-incumbent-and-points-at-it",
       "file": "v2-deployment-lifecycle.test.ts",
-      "line": 364,
-      "title": "a rollback points at the version it restored to active",
+      "line": 488,
+      "title": "a rollback restores the incumbent and points at it",
       "explicitId": "openwop.requirement.0082.rollback-pointer",
+      "citations": []
+    },
+    {
+      "id": "openwop.it.v2-deployment-lifecycle.a-paused-version-resumes-to-active-by-promote",
+      "file": "v2-deployment-lifecycle.test.ts",
+      "line": 500,
+      "title": "a paused version resumes to active by promote",
+      "explicitId": "openwop.requirement.0082.resume-from-paused",
+      "citations": []
+    },
+    {
+      "id": "openwop.it.v2-deployment-lifecycle.every-accepted-transition-names-its-deployment-management-run",
+      "file": "v2-deployment-lifecycle.test.ts",
+      "line": 509,
+      "title": "every accepted transition names its deployment-management run",
+      "explicitId": "openwop.requirement.0082.transition-run-linked",
+      "citations": []
+    },
+    {
+      "id": "openwop.it.v2-deployment-lifecycle.the-management-run-records-the-transition-s-content-free-deployment-event",
+      "file": "v2-deployment-lifecycle.test.ts",
+      "line": 517,
+      "title": "the management run records the transition's content-free deployment event",
+      "explicitId": "openwop.requirement.0082.transition-event-recorded",
       "citations": []
     },
     {

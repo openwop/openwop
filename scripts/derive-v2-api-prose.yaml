@@ -329,17 +329,6 @@
     verify that the referenced eval run is terminal and `EvalSummary.passed` before emitting `deployment.promoted`. On success it returns
     the updated deployment record and emits the matching content-free `deployment.*` event.'
 - was: |
-    Validation error, or a transition that the host's advertised
-    `states`/`canary` cannot satisfy, or `no_active_deployment` when a
-    referenced channel resolves to no active version.
-  now: '`validation_error`: the request is malformed, a transition the host''s advertised `states`/`canary` cannot satisfy, or a referenced
-    channel that resolves to no active version.'
-- was: |
-    Fail-closed authorization denial (the principal lacks the required
-    `deploy:*` scope — RFC 0049), or `eval_gate_unmet` when a `requiredEval`
-    gate's referenced eval run is not terminal-and-passed (RFC 0081).
-  now: Fail-closed authorization denial (the principal lacks the required `deploy:*` scope). An unmet `requiredEval` gate answers `422`.
-- was: |
     RFC 0086 §B — list the standing agent roster (named "digital-twin
     employee" instances + their workflow portfolios) visible to the
     caller. Capability-gated on `capabilities.agents.roster.supported:

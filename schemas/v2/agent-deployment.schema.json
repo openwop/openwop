@@ -2,7 +2,7 @@
   "$schema": "https://json-schema.org/draft/2020-12/schema",
   "$id": "https://openwop.dev/spec/v2/agent-deployment.schema.json",
   "title": "AgentDeployment",
-  "description": "RFC 0082 §C. A per-(agentId, version) deployment record: the host-runtime lifecycle state of one version of a manifest agent (RFC 0003/0070), distinct from the immutable AgentManifest (which is the pack-distribution descriptor) and from the registry's published semver tags (which version EXISTS, not which version SERVES). Holds the deployment `state`, the named `channels` that resolve to this version, the canary traffic share, the rollback pointer, and the provenance (`evalRunId`/`approvalGateId`) of the last transition. Content-free of any manifest body or credential material (SR-1). The record itself is host-internal; this schema is the canonical wire shape a host exposes via GET /agents/{agentId}/deployments (the endpoint lands at Active → Accepted per RFC 0082 §Conformance).",
+  "description": "RFC 0082 §C. A per-(agentId, version) deployment record: the host-runtime lifecycle state of one version of a manifest agent (RFC 0003/0070), distinct from the immutable AgentManifest (which is the pack-distribution descriptor) and from the registry's published semver tags (which version EXISTS, not which version SERVES). Holds the deployment `state`, the named `channels` that resolve to this version, the canary traffic share, the rollback pointer, and the provenance (`evalRunId`/`approvalGateId`) of the last transition. Content-free of any manifest body or credential material (SR-1). The record itself is host-internal; this schema is the canonical wire shape a host exposes via GET /agents/{agentId}/deployments (`listAgentDeployments`; RFC 0254 owns the v2 edits to this file).",
   "type": "object",
   "additionalProperties": false,
   "required": [
@@ -42,7 +42,7 @@
     "rollbackPointer": {
       "type": "string",
       "maxLength": 64,
-      "description": "MAY. For a `rolled-back` version, the version that was restored to `active` in its place (the recovery target). Absent for non-rolled-back records."
+      "description": "MAY. For a `rolled-back` version, the version restored to `active` in its place: the most recent other version that was `active` on the same channel before this one and is not itself `rolled-back` (RFC 0254 §C). Absent for non-rolled-back records."
     },
     "channels": {
       "type": "array",
@@ -61,7 +61,10 @@
       "type": "string",
       "minLength": 1,
       "description": "MAY. The RFC 0051 `approvalGate` that authorized the last transition (the §E human gate). Content-free reference."
+    },
+    "transitionRunId": {
+      "$ref": "ids.schema.json#/$defs/runId",
+      "description": "RFC 0254 §D. The deployment-management run that applied, or is applying, this record's last transition. A host MUST set it on every record a transition created or changed. The run carries that transition's `authorization.decided`, any approval interrupt and its `deployment.*` event, and is read through the ordinary run reads by a caller with `runs:read` in the same tenant. A refused transition creates no run and leaves this unchanged."
     }
-  },
-  "x-openwop-seeded-from": "v1"
+  }
 }

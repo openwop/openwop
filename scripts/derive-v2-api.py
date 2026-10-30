@@ -853,6 +853,23 @@ def v2_openapi_and_seams():
             if op.get('operationId') == 'transitionAgentDeployment' and '422' not in resps:
                 resps['422'] = {'description': '`eval_gate_unmet`: a `requiredEval` gate\'s referenced eval run is not terminal and passed.',
                                 'content': {'application/json': {'schema': {'$ref': '#/components/schemas/Error'}}}}
+            # RFC 0254 — the v2 transition contract. A transition the record's state refuses is
+            # `409 deployment_state_conflict`; a gated transition answers `202` with the record
+            # unchanged and `transitionRunId` naming the suspended management run. The 400 and 403
+            # descriptions inherited from v1 named an unregistered code and `eval_gate_unmet`.
+            if op.get('operationId') == 'transitionAgentDeployment':
+                err = {'application/json': {'schema': {'$ref': '#/components/schemas/Error'}}}
+                resps['200']['description'] = ('The deployment record after the applied transition. Its `transitionRunId` names the '
+                                               'deployment-management run that carries the transition\'s `deployment.*` event.')
+                resps['202'] = {'description': ('The transition is gated (RFC 0051): the management run is suspended on its approval '
+                                                'interrupt. The record is returned unchanged except for `transitionRunId`, which names that run.'),
+                                'content': {'application/json': {'schema': {'$ref': '../../schemas/v2/agent-deployment.schema.json'}}}}
+                resps['400'] = {'description': ('`validation_error`: the body is malformed, or names a state or `canaryPercent` the host '
+                                                'does not advertise (checked before the state machine).'), 'content': err}
+                resps['403'] = {'description': ('Fail-closed authorization denial: the principal lacks `deploy:*` (RFC 0049). '
+                                                'The challenge names `scope="deploy:*"`. No management run is created.'), 'content': err}
+                resps['409'] = {'description': ('`deployment_state_conflict`: the record\'s current state does not allow the transition '
+                                                '(an illegal edge, a `promote` that skips a step, or a rollback with no prior active version).'), 'content': err}
             for code, resp in op.get('responses', {}).items():
                 if isinstance(resp, dict) and '$ref' not in resp:
                     resp.setdefault('headers', {})['OpenWOP-Version'] = {'$ref': '#/components/headers/OpenWOPVersion'}

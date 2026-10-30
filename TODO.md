@@ -67,7 +67,7 @@ Done in this change:
 
 Still owed:
 - [x] **The `Stable` tense (RFC 0220 erratum, 2026-10-29).** `spec/v2/ext/README.md` says a tier-2 host "serves" a `Stable` family, while the check reads historical bundles. All 12 `Stable` families rest on the retired legacy runtime. Rule it historical ("served it at a certified cut") and add a `Last witnessed:` line per family.
-- [ ] **RFC 0082 v2 deployment test (path b, decided 2026-10-29):** port the deployment lifecycle/shape scenarios to v2; openwop-app builds `agents.deployment`. See the RFC 0082 item in §8.
+- [ ] **RFC 0082 v2 deployment test (path b, decided 2026-10-29).** Tests merged (#2060); the eight ambiguities were ruled by RFC 0254 (`Active`, window waived) and the legs tightened. Owed: openwop-app#5393 implements, then cuts on 2.46.35+. See the RFC 0082 item in §8.
 - [ ] **RFC 0249 G2 (installed-pack read-back):** drafted as [RFC 0253](./RFCS/0253-installed-pack-readback.md) (`Draft`, 2026-10-29); UQ 1–6 decide at `Active`. Its G3 owes a word-neutral `packs.md` pointer to the proposal install path when the core budget allows. G4 (automation) starts once RFC 0253 is `Active`.
 
 ## 1 — RFC 0121 subscription-rail witness · **owner openwop-77 (paused)**

@@ -725,17 +725,28 @@ Hosts that don't ship a BYOK SecretResolver MAY return `404` / `422` on the star
 
 ### At major 2: the deployment lifecycle (`v2-deployment-lifecycle`)
 
-At major 2, `v2-deployment-lifecycle.test.ts` drives `core.conformance.channel-agent` through `listAgentDeployments` and `transitionAgentDeployment` (`GET` / `POST /agents/core.conformance.channel-agent/deployments`). It moves the `stable` channel itself, so it needs no seam. A host that advertises `agents.deployment` and lists `conformance-agent-channel-dispatch` in discovery `fixtures` states that, at the start of every cut:
+At major 2, `v2-deployment-lifecycle.test.ts` drives `core.conformance.channel-agent` through `listAgentDeployments` and `transitionAgentDeployment` (`GET` / `POST /agents/core.conformance.channel-agent/deployments`), under the transition rules RFC 0254 adds to the `agents.deployment` facet. It moves the `stable` channel itself, so it needs no seam. A host that advertises `agents.deployment` and lists `conformance-agent-channel-dispatch` in discovery `fixtures` states that, at the start of every cut:
 
 - it holds exactly one record of `core.conformance.channel-agent` that is `active` on `stable`, at `canaryPercent` 100 or absent (the incumbent);
 - it holds at least one `draft` record of that agent (the candidate);
-- both are readable by the conformance credential at the `GET` above, and that credential holds the `deploy:*` scope;
-- no approval gate and no `requiredEval` applies to that credential's transitions of this agent, so a legal transition answers `200` with the updated record;
+- both are readable by the conformance credential at the `GET` above, and that credential holds the `deploy:*` scope and `runs:read`;
+- no approval gate and no `requiredEval` applies to that credential's transitions of this agent, so a legal transition answers `200` with the updated record, never `202`;
+- every `200` record carries `transitionRunId`, and the conformance credential can read that run through `GET /runs/{runId}/events/poll`; the run's events include the transition's `deployment.*` event;
 - the run's `agent.invocation-started` carries `resolvedChannel` and `resolvedAgentVersion`, as above.
 
-The suite promotes the candidate `draft → test → staged → active` with `channel: "stable"` and `canaryPercent: 100`, adjusts its canary share to 50, then rolls it back. A run of this fixture started after that promote must resolve `stable` to the candidate; if it does not, the replay leg records `blocked`. The cut leaves the candidate `rolled-back`, or `active` on a host without `rollback`. The host restores both preconditions before the next cut, for example by minting a fresh `draft` version and resetting the incumbent. A host whose records do not meet them records `blocked`, never a failure.
+The suite, in order:
 
-The scope leg sends a promote with `OPENWOP_TEST_LOW_SCOPE_KEY`, a key with no `deploy:*` scope. If that variable is unset, the leg records `blocked`.
+1. sends refused transitions, each of which must leave the records unchanged: a promote with `OPENWOP_TEST_LOW_SCOPE_KEY`, `pause` and `deprecate` of the candidate, a promote of the candidate with `toState: "active"`, and on a host advertising a subset of `states`, one transition into an unadvertised state;
+2. promotes the candidate one step at a time over the advertised states to `active`, the last step with `channel: "stable"` and `canaryPercent: 100`; the first step omits `toState`;
+3. runs this fixture again and replays the first run; a run started after that promote must resolve `stable` to the candidate, or the replay leg records `blocked`;
+4. adjusts the candidate's canary share to 50, then rolls it back, which must restore the incumbent to `active`;
+5. with `paused` advertised, pauses the version then `active` on `stable` (the incumbent after a rollback) and promotes it back to `active`.
+
+A refused transition that the host applies instead moves the candidate, and later legs then record `blocked`.
+
+**Restoring the preconditions between cuts.** A clean cut leaves the candidate `rolled-back` (or `active` on a host without `rollback`) and the incumbent `active` on `stable`. Before the next cut the host restores both preconditions, for example by minting a fresh `draft` version and resetting the incumbent to the only `active` record on `stable`. The suite does not reset them. A host whose records do not meet the preconditions records `blocked`, never a failure.
+
+The scope leg sends a promote with `OPENWOP_TEST_LOW_SCOPE_KEY`, a key with no `deploy:*` scope. It expects `403` with code `forbidden`; a `WWW-Authenticate` challenge, if sent, names `scope="deploy:*"`. If that variable is unset, the leg records `blocked`.
 
 ---
 

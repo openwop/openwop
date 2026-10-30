@@ -15245,6 +15245,74 @@
       ]
     },
     {
+      "id": "openwop.gap.0254.1",
+      "rfc": "0254",
+      "local": "G1",
+      "section": "§Conformance",
+      "surface": "No host advertises `agents.deployment` or lists `conformance-agent-channel-dispatch` at major 2.",
+      "witness": "unclassified",
+      "requirementId": null,
+      "disposition": "externally-gated",
+      "target": "openwop-app-5393",
+      "sources": [
+        {
+          "file": "RFCS/registers/0254-deployment-transitions-at-v2.gaps.md",
+          "token": "G1"
+        }
+      ]
+    },
+    {
+      "id": "openwop.gap.0254.2",
+      "rfc": "0254",
+      "local": "G2",
+      "section": "§D",
+      "surface": "A gated transition's `202` has no portable trigger: the suite cannot make a host gate a transition.",
+      "witness": "unclassified",
+      "requirementId": null,
+      "disposition": "externally-gated",
+      "target": "gated-deployment-fixture",
+      "sources": [
+        {
+          "file": "RFCS/registers/0254-deployment-transitions-at-v2.gaps.md",
+          "token": "G2"
+        }
+      ]
+    },
+    {
+      "id": "openwop.gap.0254.3",
+      "rfc": "0254",
+      "local": "G3",
+      "section": "§D",
+      "surface": "`transitionRunId` and the 202/409 responses need types in the v2 SDKs.",
+      "witness": "unclassified",
+      "requirementId": null,
+      "disposition": "transferred",
+      "target": "openwop-sdks",
+      "sources": [
+        {
+          "file": "RFCS/registers/0254-deployment-transitions-at-v2.gaps.md",
+          "token": "G3"
+        }
+      ]
+    },
+    {
+      "id": "openwop.gap.0254.4",
+      "rfc": "0254",
+      "local": "G4",
+      "section": "§A–§E",
+      "surface": "The eight questions `v2-deployment-lifecycle` reported (#2060).",
+      "witness": "unclassified",
+      "requirementId": null,
+      "disposition": "closed",
+      "target": null,
+      "sources": [
+        {
+          "file": "RFCS/registers/0254-deployment-transitions-at-v2.gaps.md",
+          "token": "G4"
+        }
+      ]
+    },
+    {
       "id": "openwop.gap.spec.a2a-integration.g1",
       "rfc": "0152",
       "local": "G1",

@@ -1,19 +1,24 @@
 ## [2.46.35] — 2026-10-29 — MyndHyve's legacy runtime retired
 
 - **Registers.** MyndHyve's legacy `workflow-runtime` (`api.myndhyve.ai`) retired on 2026-10-29; MyndHyve runs on the openwop-app white-label. Register rows that measured the legacy host close or re-gate, so the packed `spec/v1/gaps.json` changes.
-- **New scenario `v2-deployment-lifecycle` (RFC 0082 §B, §C, §E, §F).** It drives `core.conformance.channel-agent` through `listAgentDeployments` and `transitionAgentDeployment`, plus runs and a replay of the existing fixture `conformance-agent-channel-dispatch`, with no seam. Ten legs:
+- **New scenario `v2-deployment-lifecycle` (RFC 0082 §B, §C, §E, §F).** It drives `core.conformance.channel-agent` through `listAgentDeployments` and `transitionAgentDeployment`, plus runs and a replay of the existing fixture `conformance-agent-channel-dispatch`, with no seam. Fourteen legs:
   - `0082.list-valid`: the list answers 200 and every record validates against `agent-deployment.schema.json`.
   - `0082.pin-recorded`: the run's `agent.invocation-started` carries `resolvedChannel: stable` and a version active on it.
-  - `0082.scope-fail-closed`: a promote sent with `OPENWOP_TEST_LOW_SCOPE_KEY` (no `deploy:*`) is refused 403 and the record does not move. If the key is unset, the leg records `blocked`.
-  - `0082.transition-illegal-refused`: `pause` and `deprecate` of a draft are refused 4xx and the record does not move. No error code is asserted, because the corpus names none.
+  - `0082.scope-fail-closed`: a promote sent with `OPENWOP_TEST_LOW_SCOPE_KEY` (no `deploy:*`) is refused `403 forbidden` and the record does not move. If the key is unset, the leg records `blocked`.
+  - `0082.transition-illegal-refused`: `pause` and `deprecate` of a draft are refused and the record does not move.
   - `0082.state-unadvertised-refused`: an otherwise legal transition into a state missing from `states` is `400 validation_error`.
-  - `0082.transition-legal`: `draft → test → staged → active` on `stable` each answer 200 with a valid record in the target state.
+  - `0082.transition-legal`: the promotion path answers 200 at each step with a valid record in the target state.
   - `0082.replay-pin-reread`: after that promote moves `stable`, a replay of the first run still records its original version.
   - `0082.canary-adjusted` (with `canary`) and `0082.canary-unsupported-refused` (without it): `adjust-canary` to 50.
-  - `0082.rollback-pointer` (with `rollback`): the version ends `rolled-back`, and its `rollbackPointer` names a version listed `active`.
-- Judges are in `lib/deployment-lifecycle-witness.ts`, with self-tests.
+  - `0082.rollback-pointer` (with `rollback`): the version ends `rolled-back`, and its `rollbackPointer` names the restored version.
+- **RFC 0254 rulings.** An illegal edge must be `409 deployment_state_conflict` with `details.state` and `details.transition`. Absent `states` means all seven, so the walk runs. `promote` moves one step over the advertised states, the first without `toState`. A rollback must restore the incumbent.
+- **Scope challenge.** `0082.scope-fail-closed` also requires code `forbidden`, and a `WWW-Authenticate` challenge, when sent, must name `scope="deploy:*"`.
+- **Four new legs.** `0082.promote-skip-refused`: a draft promoted straight to `active` gets the 409. `0082.resume-from-paused` (with `paused`): pause, then `promote` back to `active`. `0082.transition-run-linked`: every 200 record carries `transitionRunId`.
+- **The management run.** `0082.transition-event-recorded`: the `transitionRunId` run's events include the transition's `deployment.*` event, valid against `run-event-payloads`. It is the first behavioural witness of `deployment-event-no-content-leak`.
+- **Resume event.** A resume (`promote` of a paused version) must record `deployment.state.changed`; `deployment.promoted` is for forward steps only (RFC 0254 §A).
+- **Judges.** They are in `lib/deployment-lifecycle-witness.ts`, with self-tests; every new or tightened leg is sabotage-proved on a scratch host.
 - RFC 0253 (`Draft`) adds its gap register, which also lands in the packed `spec/v1/gaps.json`.
-- **Host impact:** opt-in. The legs need `agents.deployment` and the fixture listed in discovery `fixtures`. At major 2, listing it states the record preconditions in `fixtures.md`: one incumbent `active` on `stable`, one `draft`, and no gate on the conformance credential. No host advertises the facet today, so every leg records `inapplicable`.
+- **Host impact:** opt-in. The legs need `agents.deployment` and the fixture listed in `fixtures`. Listing it at major 2 states the `fixtures.md` preconditions: an incumbent `active` on `stable`, a `draft`, no gate, and `runs:read` on the management run. No host advertises the facet, so every leg is `inapplicable`.
 
 ## [2.46.34] — 2026-10-27 — RFC 0244 G3 closed
 
