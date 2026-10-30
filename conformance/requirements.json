@@ -47472,7 +47472,11 @@
         },
         {
           "section": "COMPATIBILITY.md §3a (RFC 0255 §D)",
-          "requirement": "the failure must name the id and the remedy"
+          "requirement": "the failure must name the id"
+        },
+        {
+          "section": "COMPATIBILITY.md §3a (RFC 0255 §D)",
+          "requirement": "the failure must name the remedy"
         },
         {
           "section": "COMPATIBILITY.md §3a (RFC 0255 §D)",
@@ -47492,7 +47496,7 @@
     {
       "id": "openwop.it.v2-alias-covers-reword.positive-control-a-tombstone-naming-a-steward-deletion-row-retires-the-id",
       "file": "v2-alias-covers-reword.test.ts",
-      "line": 92,
+      "line": 93,
       "title": "POSITIVE CONTROL — a tombstone naming a steward-deletion row retires the id",
       "explicitId": "openwop.requirement.0255.requirement-tombstone",
       "citations": [
@@ -47506,7 +47510,7 @@
     {
       "id": "openwop.it.v2-alias-covers-reword.a-tombstone-naming-a-non-steward-row-or-a-live-id-is-refused",
       "file": "v2-alias-covers-reword.test.ts",
-      "line": 98,
+      "line": 99,
       "title": "a tombstone naming a non-steward row, or a live id, is REFUSED",
       "explicitId": "openwop.requirement.0255.requirement-tombstone",
       "citations": [

@@ -81,7 +81,8 @@ describe('v2-requirement-tombstones (RFC 0255 §D)', () => {
     if (V1_DIR === null) return softSkip('inapplicable', 'not a spec checkout');
     const r = drive({});
     expect(r.status, req(ID, DOC, `a dropped id orphans every bundle that cited it — it exited ${r.status}: ${r.out.slice(-600)}`)).not.toBe(0);
-    expect(r.out, req(ID, DOC, 'the failure must name the id and the remedy')).toMatch(new RegExp(`id ${GONE.replace(/\./g, '\\.')} was published .* tombstone`));
+    expect(r.out, req(ID, DOC, 'the failure must name the id')).toContain(`id ${GONE} was published`);
+    expect(r.out, req(ID, DOC, 'the failure must name the remedy')).toContain('tombstone');
     const before = digest();
     const w = drive({ mode: '--write' });
     expect(w.status, req(ID, DOC, `--write MUST refuse rather than launder the drop — it exited ${w.status}`)).not.toBe(0);
