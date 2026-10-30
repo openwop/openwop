@@ -33,6 +33,12 @@ Entries before this file was condensed carried full development detail. That tex
 
 - **RFC 0246 Active (safety fix, `GHSA-ffx7-pm5h-v6pq`): a trial that failed its trajectory cannot carry a task or a suite to a pass.** The `mean` task rule and suite `passed` read a gating score that counts it 0; reported scores are unchanged. 90-day window waived by recorded STEWARD OVERRIDE.
 
+## [2.46.35] — 2026-10-29 — MyndHyve's legacy runtime retired
+
+- **No tier-2 host serves.** MyndHyve now runs on the openwop-app white-label (`myndhyve.ai`, tier 1), and its legacy `workflow-runtime` (`api.myndhyve.ai`, tier 2) retired on 2026-10-29. `evidence/host-tiers.json` records both.
+- **Tier checks.** `check-ext-status-coherence` refuses a bundle dated after its origin's retirement. `check-accepted-predicate` checks a claimed tier against the cited bundle's origin.
+- **Registers.** Five rows that measured the legacy host close as moot (0176 G2, 0210 G5, 0221 G1, 0231 G6, 0234 G2), and three are re-gated (0177 G3, 0210 G4, 0220 G1).
+
 ## [2.46.34] — 2026-10-27 — RFC 0244 G3 closed
 
 - **RFC 0244 G3 closed.** openwop-app's certified cut `2c8bc27d6` serves the reserved memory tool from each trial's own store and passes `0244.trial-memory-isolated`: every RFC 0244 row a host can cause is witnessed.

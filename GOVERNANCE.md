@@ -68,7 +68,7 @@ Every spec change must:
 An RFC's `Active → Accepted` flip is backed by implementation evidence from a host. That evidence comes in three tiers, in increasing order of independence:
 
 1. **Tier 1 — steward-verified.** The steward's own host (a reference host in `openwop-examples`, or the steward-operated demo app) implements and passes the gated scenarios.
-2. **Tier 2 — steward-affiliated sibling host.** A separate deployment operated by the same maintainer organization — a genuinely distinct codebase and production environment, but not independent change control. Today this is **MyndHyve** (`api.myndhyve.ai`).
+2. **Tier 2 — steward-affiliated sibling host.** A separate deployment operated by the same maintainer organization — a genuinely distinct codebase and production environment, but not independent change control. This was **MyndHyve's legacy `workflow-runtime`** (`api.myndhyve.ai`), retired on 2026-10-29. Its certified bundles stay tier-2 evidence, but **no tier-2 host serves today**. MyndHyve now runs on the openwop-app white-label (`myndhyve.ai`), which is openwop-app's codebase and therefore **tier 1**. A cut against it is not tier-2 evidence. `evidence/host-tiers.json` maps each origin to its tier, and `scripts/check-accepted-predicate.mjs` checks a claimed tier against the cited bundle's origin.
 3. **Tier 3 — independent-organization host.** A host built and operated by an organization with no affiliation to the steward.
 
 A fourth label, **corpus gate — no host tier**, exists for RFCs whose every normative requirement is a property of the corpus or the suite rather than of a host (for example RFC 0169's declaration file, RFC 0174's governance predicates, RFC 0178's registers).
@@ -142,7 +142,7 @@ The registry and extension policy is [`RFCS/0043-registry-and-extension-policy.m
 
 Recorded 2026-09-02, to be retired when the "Path to working group" conditions above are met.
 
-The project currently has **one maintainer and one organization**. The only conforming hosts are the steward's own: tier-1 hosts (`openwop-app` and the v2 reference host) and the steward-affiliated tier-2 host (MyndHyve `workflow-runtime`), per `INTEROP-MATRIX.md`. No independent-organization host, maintainer, or user exists to wait for. So the project operates as follows, and says so rather than performing a review it cannot have:
+The project currently has **one maintainer and one organization**. The only conforming hosts are the steward's own: tier-1 hosts (`openwop-app` and the v2 reference host) and, until its retirement on 2026-10-29, the steward-affiliated tier-2 host (MyndHyve's legacy `workflow-runtime`), per `INTEROP-MATRIX.md`. No independent-organization host, maintainer, or user exists to wait for. So the project operates as follows, and says so rather than performing a review it cannot have:
 
 - **Comment windows may be waived and every waiver is recorded** in `MAINTAINERS.md` §"Bootstrap-phase RFC waivers", including the 30-day breaking-change window for the v2 major. Each such RFC's header carries the RFC 0001 §5 note that the cross-organization approval rule is not yet active, together with any rule the RFC overrides (for example RFC 0147 §A.6).
 - **The two-approval requirement in §"Amendments" is waived and recorded while one maintainer exists** (RFC 0174 §B.3), with the same retirement condition as the window waiver. An RFC that amends the decision rule names the waiver in its header, and `scripts/check-waiver-authority.mjs` fails one that does not.

@@ -1,7 +1,7 @@
 {
   "$schema": "./gaps.schema.json",
   "version": 1,
-  "updated": "2026-10-27",
+  "updated": "2026-10-30",
   "witnessClasses": [
     "witnessable-unaided",
     "witnessable-gated",
@@ -10203,8 +10203,8 @@
       "surface": "MyndHyve advertises `eventLogSchemaVersion: 1` while its run documents stamp `2` and the spec says `2`; the unification is a host change this RFC requires before the codemap runs.",
       "witness": "unwitnessable",
       "requirementId": null,
-      "disposition": "externally-gated",
-      "target": "myndhyve-phase-4-leg",
+      "disposition": "closed",
+      "target": null,
       "sources": [
         {
           "file": "RFCS/registers/0176-v2-persisted-data-and-coexistence.gaps.md",
@@ -10306,7 +10306,7 @@
       "witness": "unwitnessable",
       "requirementId": null,
       "disposition": "externally-gated",
-      "target": "myndhyve-phase-4-leg",
+      "target": "mirror-ingest-leg",
       "sources": [
         {
           "file": "RFCS/registers/0177-v2-registry-packs-and-extension-tail.gaps.md",
@@ -12685,8 +12685,8 @@
       "surface": "MyndHyve's committed bundle (`evidence/v2-host-bundles/myndhyve.json:488`) advertises `short-lived` / 3600 on `oidc` while the host performs no revocation re-check, and `INTEROP-MATRIX.md` row 18 certifies that bundle for `openwop-discovery-core` **and** `openwop-core-standard`. The §D.9 leg fails that advertisement from the suite minor that ships it, so MyndHyve's next cut is red until the host is corrected.",
       "witness": "unclassified",
       "requirementId": null,
-      "disposition": "externally-gated",
-      "target": "myndhyve-revocation-correction",
+      "disposition": "closed",
+      "target": null,
       "sources": [
         {
           "file": "RFCS/registers/0210-lane-revocation-rule-is-measured.gaps.md",
@@ -13144,8 +13144,8 @@
       "surface": "`a2uiSurface` has no tier-2 witness path. MyndHyve's v2 discovery drops `schemaVersions.kinds`, it serves no `POST /conformance/seams/sample/a2ui/emit-surface`, and its seams profile is off.",
       "witness": "unclassified",
       "requirementId": null,
-      "disposition": "transferred",
-      "target": "myndhyve/services/workflow-runtime",
+      "disposition": "externally-gated",
+      "target": "tier-2-or-3-host",
       "sources": [
         {
           "file": "RFCS/registers/0220-ext-families-graduate-on-evidence.gaps.md",
@@ -13229,8 +13229,8 @@
       "surface": "MyndHyve's behaviour for a secret-less registration is unmeasured.",
       "witness": "unclassified",
       "requirementId": null,
-      "disposition": "externally-gated",
-      "target": "myndhyve-next-cut",
+      "disposition": "closed",
+      "target": null,
       "sources": [
         {
           "file": "RFCS/registers/0221-generated-webhook-secret-returned-once.gaps.md",
@@ -13909,8 +13909,8 @@
       "surface": "MyndHyve's `interrupt` behaviour is reported from source by its session and was not measured.",
       "witness": "unclassified",
       "requirementId": null,
-      "disposition": "externally-gated",
-      "target": "myndhyve-host-cut",
+      "disposition": "closed",
+      "target": null,
       "sources": [
         {
           "file": "RFCS/registers/0231-budget-exhaustion-facet.gaps.md",
@@ -14164,8 +14164,8 @@
       "surface": "MyndHyve still serves first-party clients on 10 `/v1` roots with no major-2 twin.",
       "witness": "unclassified",
       "requirementId": null,
-      "disposition": "externally-gated",
-      "target": "myndhyve-v1-only-roots-migrated",
+      "disposition": "closed",
+      "target": null,
       "sources": [
         {
           "file": "RFCS/registers/0234-maintainer-set-v1-end-of-support.gaps.md",

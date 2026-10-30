@@ -43,9 +43,9 @@ The three v2 profiles are `openwop-discovery-core`, `openwop-core-standard` and 
 | --- | --- | --- |
 | `openwop-host-v2-reference` (openwop-examples) | 1 | all three |
 | openwop-app (`app.openwop.dev`) | 1 | `openwop-discovery-core`, `openwop-core-standard` |
-| MyndHyve (`api.myndhyve.ai`) | 2, steward-affiliated | `openwop-discovery-core`, `openwop-core-standard` |
+| MyndHyve legacy `workflow-runtime` (`api.myndhyve.ai`, **retired 2026-10-29**) | 2, steward-affiliated | `openwop-discovery-core`, `openwop-core-standard` (last cut 2.46.13) |
 
-No tier-3 (independent) host has certified any profile. Outreach is in [`docs/recruitment/external-host.md`](./recruitment/external-host.md). The first tier-3 row fires the vendor-neutral migration tripwire in [`ROADMAP.md`](../ROADMAP.md).
+No tier-2 host serves since 2026-10-29: MyndHyve now runs on the openwop-app white-label (`myndhyve.ai`), which is tier 1. No tier-3 (independent) host has certified any profile. Outreach is in [`docs/recruitment/external-host.md`](./recruitment/external-host.md). The first tier-3 row fires the vendor-neutral migration tripwire in [`ROADMAP.md`](../ROADMAP.md).
 
 ---
 

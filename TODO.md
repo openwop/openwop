@@ -47,6 +47,29 @@
   2.44.5 (263 pass). `coordination` went `Stable` on MyndHyve's 2.45.2 cut (RFC 0220, #1828).
 - **Cuts:** every certified public cut needs a fresh operator approval.
 
+## 0 — MyndHyve now runs on openwop-app white-label (2026-10-29)
+
+On 2026-10-29 the maintainer reported that MyndHyve runs on the openwop-app white-label (`myndhyve.ai`,
+`myndhyve 0.8.0`, the openwop-app codebase) and retired its legacy `workflow-runtime` (`api.myndhyve.ai`).
+Every MyndHyve bundle in `evidence/v2-host-bundles/` was cut against the legacy origin.
+
+Done in this change:
+- `evidence/host-tiers.json`:
+  - the legacy row is `retired: 2026-10-29`, and its bundles stay tier-2 evidence;
+  - `myndhyve.ai` and `api.openwop.dev` are tier 1 under openwop-app. 27 openwop-app bundles had read "tier unknown" because only `app.openwop.dev` was listed.
+- `scripts/check-ext-status-coherence.mjs` refuses a bundle dated after its origin's retirement.
+- `scripts/check-accepted-predicate.mjs` checks a claimed tier-2/3 against the cited bundle's origin. From RFC 0253 every cited build must resolve to a checked-in bundle.
+- GOVERNANCE.md, KNOWN-LIMITS.md and INTEROP-MATRIX.md now say that no tier-2 host serves.
+- Register triage of the 29 open rows that name MyndHyve or tier-2:
+  - **closed as moot** (they measured the legacy runtime): 0176 G2, 0210 G5, 0221 G1, 0231 G6, 0234 G2.
+  - **re-gated:** 0177 G3 (only the mirror ingest remains), 0220 G1 (`a2uiSurface` has no graduation path until a tier-2 or tier-3 host serves), and 0210 G4 (openwop-app is the only harness option left).
+  - **unchanged:** the rest name MyndHyve only as an example or ask for "a second host" generically (0071 G9/G10/R8, 0112/0113/0114/0115 G4, 0120 G5, 0124 G6, 0129 G4/R5, 0165 G6/G7, 0192 G1, 0220 G2, 0236 G5, 0128 R5, 0147 R20, 0177 R2, 0224 R1, 0249 R1). Each still needs a tier-2 or tier-3 host, and none serves.
+
+Still owed:
+- [ ] **The `Stable` tense (RFC 0220 amendment).** `spec/v2/ext/README.md` says a tier-2 host "serves" a `Stable` family, while the check reads historical bundles. All 12 `Stable` families rest on the retired legacy runtime. Rule it historical ("served it at a certified cut") and add a `Last witnessed:` line per family.
+- [ ] **RFC 0082 v2 deployment test (path b, decided 2026-10-29):** port the deployment lifecycle/shape scenarios to v2; openwop-app builds `agents.deployment`. See the RFC 0082 item in §8.
+- [ ] **RFC 0249 G2 (installed-pack read-back):** draft the RFC now; G4 (automation) starts once G2 is `Active`.
+
 ## 1 — RFC 0121 subscription-rail witness · **owner openwop-77 (paused)**
 
 David cleared **GitHub Copilot only** (#1604). Anthropic, Google and OpenAI are **not** cleared,
@@ -237,8 +260,14 @@ Defects outside the spec:
       adds `v2-deployment-eval-gate`: run `conformance-eval-gate-failing` (summary `passed: false`), then `transitionAgentDeployment`
       promote with that `evalRunId`; expect `422 eval_gate_unmet` and the record unchanged (`0082.eval-gate-unmet-refused`,
       `-unchanged`). Gated on `agents.deployment`, `agents.evalSuite` and the fixture, whose listing declares that the promote of the
-      scripted agent carries `requiredEval` and a promotable record exists. Owed: a host lists it and a certified cut records both legs
-      (MyndHyve advertises both facets today).
+      scripted agent carries `requiredEval` and a promotable record exists. Owed: a host lists it and a certified cut records both legs.
+      **Reevaluate (2026-10-29, §0):** the 2026-10-24 ruling assumed MyndHyve would run this, because it advertised
+      `agents.deployment`. That is now true only of the legacy `api.myndhyve.ai`. Neither openwop-app nor the
+      white-label `myndhyve.ai` advertises `agents.deployment`, and openwop-app has no deployment code. On the 002e1ed15
+      cut, the scenario and both legs record `inapplicable`. RFC 0082 itself stays `Accepted` (on its v1 tier-2
+      evidence); only this v2 leg is owed. **Decided 2026-10-29: path (b).** openwop-app builds `agents.deployment`, which the
+      white-label inherits, and the suite ports `agent-deployment-lifecycle` / `-shape` (major-1 only today) to v2.
+      The legacy runtime is retired, so a legacy cut is no longer possible.
 - [x] **RFC 0252** `Accepted` 2026-10-27. Tier-1: openwop-app's certified 2.46.32 cut `2c8bc27d6` (ADR 0984)
       advertises `agents.evalSuite.recordedFixtures` and passes all six `0252.*` legs. (G3) openwop-sdks #63, released in SDK
       2.7.0. The live-lane record shipped 2026-10-27 (openwop-app #5304, ADR 0984 D7, build `dde96ce72`). The cut's two
@@ -262,6 +291,15 @@ Defects outside the spec:
       cut 209c `34bfefddc` passes all nine `0249.*` legs (app ADR 0970/0972). Still owed: phase 2 read-backs for chain and agent
       packs (G2), the replay-fork rule (G3), and `automation` (G4). MyndHyve advertises `agents.proposals` without the
       operations (R1); its legs record `inapplicable`.
+      **Audit 2026-10-29: G2 and G4 are spec gaps, and no host needs them yet.**
+      - G2: v2 has no GET that serves an installed pack. `getAgent` returns an `AgentInventoryEntry` and `getWorkflow`
+        returns one workflow; no pack read is in `path-manifest.json`.
+      - G4 is deeper. The `automation` artifact is "an RFC 0052 job spec", but no job-spec schema exists at either major.
+        `TriggerSubscription` (`source: schedule`) holds state only, has no read operation, and carries no
+        cron or workflow binding. openwop-app does have a host-namespaced `/host/openwop-app/scheduler/jobs`.
+      - No host proposes these kinds through the v2 operations: openwop-app proposes `prompt-template` only, and the
+        white-label `myndhyve.ai` does not advertise proposals. Leave both as disclosed gaps until a host does
+        (`readback` already discloses them). That host's need triggers the follow-up RFC.
 - [x] **RFC 0248** `Accepted` 2026-10-23 (`ctx.callAI` attempt accounting + per-call retry policy, for the Book AI pack).
       Tier-1: openwop-app's certified 2.46.19 cut `f17ee3753` advertises `aiProviders.callAccounting` and passes all eight
       `0248.*` legs (fixture opt-in app ADR 0967). Host tensions stay with the host (ADR 0966): a `usage: false` attempt

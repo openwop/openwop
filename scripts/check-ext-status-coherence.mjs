@@ -35,11 +35,16 @@ const extFamilies = new Map(Object.entries(fams).filter(([, v]) => v && v.anchor
 
 const problems = [];
 const tiers = new Map();
+const retiredOn = new Map();
 const tierFile = join(ROOT, 'evidence', 'host-tiers.json');
 if (!existsSync(tierFile)) problems.push('evidence/host-tiers.json is missing — the tier half of the Stable predicate cannot be applied');
 else for (const h of readJson(tierFile).hosts ?? []) {
   if (!Number.isInteger(h.tier) || h.tier < 1 || h.tier > 3) { problems.push(`evidence/host-tiers.json: ${h.name}: tier must be 1, 2 or 3`); continue; }
-  for (const o of h.origins ?? []) tiers.set(o, h.tier);
+  // `retired`: the host no longer serves. Its certified bundles stay evidence
+  // (a graduation is not retroactively invalidated, GOVERNANCE.md), but a
+  // bundle generated after the date cannot have been cut against it.
+  if (h.retired !== undefined && !/^\d{4}-\d{2}-\d{2}$/.test(h.retired)) { problems.push(`evidence/host-tiers.json: ${h.name}: retired must be a YYYY-MM-DD date`); continue; }
+  for (const o of h.origins ?? []) { tiers.set(o, h.tier); if (h.retired) retiredOn.set(o, h.retired); }
 }
 const originOf = (url) => { try { return new URL(url).origin; } catch { return null; } };
 
@@ -60,6 +65,10 @@ for (const f of existsSync(bundlesDir) ? readdirSync(bundlesDir) : []) {
   if (!certified) continue;
   const origin = originOf(b.discovery?.url ?? '');
   const tier = origin ? tiers.get(origin) ?? 0 : 0;
+  const retired = origin ? retiredOn.get(origin) : undefined;
+  if (retired && typeof b.generatedAt === 'string' && b.generatedAt.slice(0, 10) > retired) {
+    problems.push(`${f}: generated ${b.generatedAt.slice(0, 10)}, after ${origin} was retired on ${retired} (evidence/host-tiers.json)`); continue;
+  }
   const name = `${f.replace(/\.json$/, '')} (${origin ?? 'no discovery.url'}, tier ${tier || 'unknown'})`;
   const rows = b.results?.requirements ?? [];
   for (const r of Array.isArray(rows) ? rows : Object.values(rows)) {
