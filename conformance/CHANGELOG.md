@@ -1,3 +1,7 @@
+## [2.46.36] — 2026-10-30 — RFCs 0255 and 0256 Active
+
+- **No suite change.** The cycle opens to carry the RFC 0255 and 0256 filings and their registers, which change the packed `spec/v1/gaps.json`.
+
 ## [2.46.35] — 2026-10-29 — MyndHyve's legacy runtime retired
 
 - **Registers.** MyndHyve's legacy `workflow-runtime` (`api.myndhyve.ai`) retired on 2026-10-29; MyndHyve runs on the openwop-app white-label. Register rows that measured the legacy host close or re-gate, so the packed `spec/v1/gaps.json` changes.

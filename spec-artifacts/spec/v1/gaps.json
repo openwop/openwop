@@ -15313,6 +15313,210 @@
       ]
     },
     {
+      "id": "openwop.gap.0255.1",
+      "rfc": "0255",
+      "local": "G1",
+      "section": "Prerequisites",
+      "surface": "Production census not taken: `envelope_correlations`, fenced text in `invocation_log`, clarification checkpoints, `agent-clarification` toggle",
+      "witness": "unclassified",
+      "requirementId": null,
+      "disposition": "closed",
+      "target": null,
+      "sources": [
+        {
+          "file": "RFCS/registers/0255-delete-the-ai-envelope.gaps.md",
+          "token": "G1"
+        }
+      ]
+    },
+    {
+      "id": "openwop.gap.0255.2",
+      "rfc": "0255",
+      "local": "G2",
+      "section": "§D",
+      "surface": "The gate changes and the `requirements` tombstone form are unbuilt; the trial measured 20 red gates with 1 at baseline and did not reach green",
+      "witness": "unclassified",
+      "requirementId": null,
+      "disposition": "transferred",
+      "target": "TODO.md",
+      "sources": [
+        {
+          "file": "RFCS/registers/0255-delete-the-ai-envelope.gaps.md",
+          "token": "G2"
+        }
+      ]
+    },
+    {
+      "id": "openwop.gap.0255.3",
+      "rfc": "0255",
+      "local": "G3",
+      "section": "§E",
+      "surface": "The interrupt-form section and tests do not exist; `interrupt.md` has no A2UI text",
+      "witness": "unclassified",
+      "requirementId": null,
+      "disposition": "transferred",
+      "target": "TODO.md",
+      "sources": [
+        {
+          "file": "RFCS/registers/0255-delete-the-ai-envelope.gaps.md",
+          "token": "G3"
+        }
+      ]
+    },
+    {
+      "id": "openwop.gap.0255.4",
+      "rfc": "0255",
+      "local": "G4",
+      "section": "Budget",
+      "surface": "Kernel measured at 37,493 against a 37,000 cap after deletion",
+      "witness": "unclassified",
+      "requirementId": null,
+      "disposition": "transferred",
+      "target": "TODO.md",
+      "sources": [
+        {
+          "file": "RFCS/registers/0255-delete-the-ai-envelope.gaps.md",
+          "token": "G4"
+        }
+      ]
+    },
+    {
+      "id": "openwop.gap.0255.5",
+      "rfc": "0255",
+      "local": "G5",
+      "section": "§A",
+      "surface": "Frontend v0.9 renderer: reported unfed, frontend not built in the trial",
+      "witness": "unclassified",
+      "requirementId": null,
+      "disposition": "transferred",
+      "target": "openwop-app-adr-1007",
+      "sources": [
+        {
+          "file": "RFCS/registers/0255-delete-the-ai-envelope.gaps.md",
+          "token": "G5"
+        }
+      ]
+    },
+    {
+      "id": "openwop.gap.0255.6",
+      "rfc": "0255",
+      "local": "G6",
+      "section": "Host",
+      "surface": "`api.myndhyve.ai` answered discovery with 81 kinds on 2026-10-30 after its recorded retirement",
+      "witness": "unclassified",
+      "requirementId": null,
+      "disposition": "transferred",
+      "target": "myndhyve-owner",
+      "sources": [
+        {
+          "file": "RFCS/registers/0255-delete-the-ai-envelope.gaps.md",
+          "token": "G6"
+        }
+      ]
+    },
+    {
+      "id": "openwop.gap.0255.7",
+      "rfc": "0255",
+      "local": "G7",
+      "section": "Schema",
+      "surface": "Dropping `envelope_correlations` is destructive and needs a migration on both backends",
+      "witness": "unclassified",
+      "requirementId": null,
+      "disposition": "transferred",
+      "target": "openwop-app-adr-1008",
+      "sources": [
+        {
+          "file": "RFCS/registers/0255-delete-the-ai-envelope.gaps.md",
+          "token": "G7"
+        }
+      ]
+    },
+    {
+      "id": "openwop.gap.0256.1",
+      "rfc": "0256",
+      "local": "G1",
+      "section": "§A",
+      "surface": "Production volume of inline tool syntax is unmeasured",
+      "witness": "unclassified",
+      "requirementId": null,
+      "disposition": "closed",
+      "target": null,
+      "sources": [
+        {
+          "file": "RFCS/registers/0256-tool-turn-contract.gaps.md",
+          "token": "G1"
+        }
+      ]
+    },
+    {
+      "id": "openwop.gap.0256.2",
+      "rfc": "0256",
+      "local": "G2",
+      "section": "§A",
+      "surface": "Two of 13 model paths were not fully checked, and 19 pack files with `JSON.parse` are unclassified",
+      "witness": "unclassified",
+      "requirementId": null,
+      "disposition": "transferred",
+      "target": "TODO.md",
+      "sources": [
+        {
+          "file": "RFCS/registers/0256-tool-turn-contract.gaps.md",
+          "token": "G2"
+        }
+      ]
+    },
+    {
+      "id": "openwop.gap.0256.3",
+      "rfc": "0256",
+      "local": "G3",
+      "section": "§D",
+      "surface": "`replayPolicy` is absent from the capability resolver, so no tool declares it",
+      "witness": "unclassified",
+      "requirementId": null,
+      "disposition": "transferred",
+      "target": "TODO.md",
+      "sources": [
+        {
+          "file": "RFCS/registers/0256-tool-turn-contract.gaps.md",
+          "token": "G3"
+        }
+      ]
+    },
+    {
+      "id": "openwop.gap.0256.4",
+      "rfc": "0256",
+      "local": "G4",
+      "section": "§D",
+      "surface": "`runToolLoop` passes no `onEvent`, so mid-loop events may not be durable (inferred)",
+      "witness": "unclassified",
+      "requirementId": null,
+      "disposition": "transferred",
+      "target": "TODO.md",
+      "sources": [
+        {
+          "file": "RFCS/registers/0256-tool-turn-contract.gaps.md",
+          "token": "G4"
+        }
+      ]
+    },
+    {
+      "id": "openwop.gap.0256.5",
+      "rfc": "0256",
+      "local": "G5",
+      "section": "§F",
+      "surface": "Provider connector behaviour is from secondhand sources",
+      "witness": "unclassified",
+      "requirementId": null,
+      "disposition": "transferred",
+      "target": "TODO.md",
+      "sources": [
+        {
+          "file": "RFCS/registers/0256-tool-turn-contract.gaps.md",
+          "token": "G5"
+        }
+      ]
+    },
+    {
       "id": "openwop.gap.spec.a2a-integration.g1",
       "rfc": "0152",
       "local": "G1",

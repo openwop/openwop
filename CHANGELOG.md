@@ -33,6 +33,10 @@ Entries before this file was condensed carried full development detail. That tex
 
 - **RFC 0246 Active (safety fix, `GHSA-ffx7-pm5h-v6pq`): a trial that failed its trajectory cannot carry a task or a suite to a pass.** The `mean` task rule and suite `passed` read a gating score that counts it 0; reported scores are unchanged. 90-day window waived by recorded STEWARD OVERRIDE.
 
+## [2.46.36] — 2026-10-30 — RFCs 0255 and 0256 Active
+
+- **RFC 0255 and RFC 0256 `Active` (window waived).** 0255 deletes the AI Envelope from v2 with no deprecation period, through a `steward-deletion` corrections class that closes when an outside host appears. 0256 states the tool-turn contract. Neither changes the wire yet.
+
 ## [2.46.35] — 2026-10-29 — MyndHyve's legacy runtime retired
 
 - **No tier-2 host serves.** MyndHyve now runs on the openwop-app white-label (`myndhyve.ai`, tier 1), and its legacy `workflow-runtime` (`api.myndhyve.ai`, tier 2) retired on 2026-10-29. `evidence/host-tiers.json` records both.

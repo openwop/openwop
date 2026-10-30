@@ -400,6 +400,16 @@ Defects outside the spec:
       with only `certificationBundleUrl`; they stay as evidence, and `--verify` on 2.46.2 refuses only
       that certification. openwop-app's production host has never mounted the seams.
 
+## 9 — RFC 0255 / 0256 implementation (2026-10-30)
+
+Register rows transferred here. Each closes in the PR that does the work.
+
+- **0255 G2, R1 (steward).** The §D licence: `steward-deletion` corrections class, `check-v2-retirement` rescans every row through `bundlesCarrying`, `check-v2-surface-monotone` refuses an unlicensed same-release baseline change, the tier-3 refusal for new rows, requirement-id tombstones, declaration `anchor: "deleted"`, and the COMPATIBILITY / overview / GOVERNANCE amendments. Each gate change has a sabotage fixture.
+- **0255 G3, R3 (steward).** The `interrupt.md` interrupt-form section and the `interrupt-form-*` tests land before the old A2UI scenarios go, so no invariant loses its only witness.
+- **0255 G4, R6 (steward).** The core budget after deletion (measured 37,493 against 37,000), and a tree-wide grep for each deleted name.
+- **0255 R4 (openwop-app).** New pack versions without the `aiEnvelope` peer are published before the suite.
+- **0256 G2–G5, R1–R4 (openwop-app, with spec follow-up).** Enumerate the remaining model paths and pack parsers; `replayPolicy` from tool descriptors; durable mid-loop events; primary provider docs; shadow counts before enforcing.
+
 ## Pattern checks (no code owed; read new scenarios against these)
 
 - **A transport failure is an unreadable observation, not a verdict.** A read that throws after
