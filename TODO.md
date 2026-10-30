@@ -67,7 +67,7 @@ Done in this change:
 
 Still owed:
 - [x] **The `Stable` tense (RFC 0220 erratum, 2026-10-29).** `spec/v2/ext/README.md` says a tier-2 host "serves" a `Stable` family, while the check reads historical bundles. All 12 `Stable` families rest on the retired legacy runtime. Rule it historical ("served it at a certified cut") and add a `Last witnessed:` line per family.
-- [ ] **RFC 0082 v2 deployment test (path b, decided 2026-10-29).** Tests merged (#2060); the eight ambiguities were ruled by RFC 0254 (`Active`, window waived) and the legs tightened. Owed: openwop-app#5393 implements, then cuts on 2.46.35+. See the RFC 0082 item in §8.
+- [x] **RFC 0082 v2 deployment test (path b, decided 2026-10-29).** Done 2026-10-30: openwop-app's certified 2.46.35 cut `72e610b3d` passes 14 `0082.*` legs and both eval-gate legs; RFC 0254 `Accepted`. The two subset-only refusal legs wait on a host advertising a subset (RFC 0254 G5).
 - [ ] **RFC 0249 G2 (installed-pack read-back):** drafted as [RFC 0253](./RFCS/0253-installed-pack-readback.md) (`Draft`, 2026-10-29); UQ 1–6 decide at `Active`. Its G3 owes a word-neutral `packs.md` pointer to the proposal install path when the core budget allows. G4 (automation) starts once RFC 0253 is `Active`.
 
 ## 1 — RFC 0121 subscription-rail witness · **owner openwop-77 (paused)**
@@ -256,7 +256,7 @@ Defects outside the spec:
 - [x] **RFC 0244** `Accepted` (provisional) 2026-10-14 on MyndHyve's certified 2.46.9 cut (tier-2, build
       `65785814`, `myndhyve-2.46.9.json`). Owed: the RFC 0156 §B review and the suite residue below. openwop-app advertises it since 2026-10-15
       (2.46.9 cut `17090b1c8`: wire-shape, content-free, fixtures-valid pass; the seam-driven legs `inapplicable`).
-- [ ] **RFC 0082 eval-gated promotion: v2 leg shipped, no host has run it** (ruling 2026-10-24, from RFC 0081 §E). Suite 2.46.29
+- [x] **RFC 0082 eval-gated promotion: v2 leg shipped; witnessed 2026-10-30** (openwop-app 2.46.35 cut `72e610b3d`: `0082.eval-gate-unmet-refused` and `-unchanged` `executed-pass`) (ruling 2026-10-24, from RFC 0081 §E). Suite 2.46.29
       adds `v2-deployment-eval-gate`: run `conformance-eval-gate-failing` (summary `passed: false`), then `transitionAgentDeployment`
       promote with that `evalRunId`; expect `422 eval_gate_unmet` and the record unchanged (`0082.eval-gate-unmet-refused`,
       `-unchanged`). Gated on `agents.deployment`, `agents.evalSuite` and the fixture, whose listing declares that the promote of the

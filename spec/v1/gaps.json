@@ -15252,8 +15252,8 @@
       "surface": "No host advertises `agents.deployment` or lists `conformance-agent-channel-dispatch` at major 2.",
       "witness": "unclassified",
       "requirementId": null,
-      "disposition": "externally-gated",
-      "target": "openwop-app-5393",
+      "disposition": "closed",
+      "target": null,
       "sources": [
         {
           "file": "RFCS/registers/0254-deployment-transitions-at-v2.gaps.md",
@@ -15309,6 +15309,23 @@
         {
           "file": "RFCS/registers/0254-deployment-transitions-at-v2.gaps.md",
           "token": "G4"
+        }
+      ]
+    },
+    {
+      "id": "openwop.gap.0254.5",
+      "rfc": "0254",
+      "local": "G5",
+      "section": "§A",
+      "surface": "`0082.state-unadvertised-refused` and `0082.canary-unsupported-refused` refuse a state or canary the host leaves out. The only implementation advertises all seven states and canary, so both record `inapplicable`.",
+      "witness": "unclassified",
+      "requirementId": null,
+      "disposition": "externally-gated",
+      "target": "subset-deployment-host",
+      "sources": [
+        {
+          "file": "RFCS/registers/0254-deployment-transitions-at-v2.gaps.md",
+          "token": "G5"
         }
       ]
     },

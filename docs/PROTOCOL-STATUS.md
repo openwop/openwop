@@ -34,7 +34,7 @@
 | CLI `@openwop/cli` | 1.3.0 | openwop-cli `package.json` | speaks the wire directly; negotiates major 2 since 1.0.0 (the v1-only 0.18.x line is frozen on branch `cli-v1-frozen`) |
 | Registry `registryVersion` / `protocolVersion` | 1.0.0 / 1.0 | openwop-registry `.well-known/openwop-registry.json` | RFC 0172 sectionB #18; versioned by tree at v2 (RFC 0177 sectionA.3) |
 | openwop-registry corpus pin | v2.34.0 | openwop-registry `CORPUS_TAG` | as the SDK pin |
-| openwop-app corpus pin / suite pin | v2.46.33 / ^2.46.33 | openwop-app `schemas/CORPUS_TAG`, `backend/typescript/package.json` | tier-1 host; both must agree (RFC 0176 sectionE.1) |
+| openwop-app corpus pin / suite pin | v2.46.35 / ^2.46.35 | openwop-app `schemas/CORPUS_TAG`, `backend/typescript/package.json` | tier-1 host; both must agree (RFC 0176 sectionE.1) |
 | openwop-examples in-memory host / suite pin | 1.1.7 / ^1.152.0 | openwop-examples `examples/hosts/in-memory/package.json` | front-door witness host for the v2 RC (Phase 3 plan section11) |
 
 ## Version Axes
@@ -70,8 +70,8 @@
 
 | Status | Count |
 |---|---:|
-| Accepted | 245 |
-| Active | 4 |
+| Accepted | 246 |
+| Active | 3 |
 | Draft | 2 |
 | Superseded | 1 |
 
@@ -326,7 +326,7 @@
 | RFC 0251 | A client names an eval run's modes and its regression baseline | Accepted |
 | RFC 0252 | An eval task takes its fixtures from a recorded run | Accepted |
 | RFC 0253 | One v2 read that serves an installed pack's `pack.json`, so an applied `workflow-chain-pack` or `agent-pack` proposal can be byte-compared | Draft |
-| RFC 0254 | The agent deployment transition contract at v2 | Active |
+| RFC 0254 | The agent deployment transition contract at v2 | Accepted |
 | RFC 0255 | Delete the AI Envelope from v2, and license steward deletions through `corrections.json` while no outside host exists | Active |
 | RFC 0256 | How a host admits model output: three channels, one admission order, trust that restricts approvers, tool-turn recovery and replay, and declared provider-executed tools | Active |
 
@@ -353,7 +353,7 @@ The pack registry now lives in the [`openwop-registry`](https://github.com/openw
 ## Active Follow-Ups
 
 - 2 RFCs still `Draft` (RFC 0038, RFC 0253) — advance with schema/conformance proof or defer.
-- 4 RFCs `Active` (RFC 0121, RFC 0254, RFC 0255, RFC 0256) — wire-shape MAY shift compatibly within v1.x until promotion to `Accepted`.
+- 3 RFCs `Active` (RFC 0121, RFC 0255, RFC 0256) — wire-shape MAY shift compatibly within v1.x until promotion to `Accepted`.
 - External audit, non-steward host recruitment, and non-steward maintainer recruitment remain external-action gates.
 - Multi-region idempotency and some optional-profile behavior checks remain lower-confidence than the core wire contract.
 

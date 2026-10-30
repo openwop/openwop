@@ -138,7 +138,7 @@ Grouping below is a reading aid only: it assigns each RFC to the risk class its 
 | [0246](../RFCS/0246-trajectory-failure-gates-the-pass.md) | a trajectory-failed trial cannot carry a task or a suite to a pass | `Accepted` | steward override of RFC 0147 §A.6 | tier-2 — MyndHyve | `not-reviewed` |
 | [0249](../RFCS/0249-proposal-operations-and-install-readback.md) | v2 proposal operations and a verifiable install read-back | `Accepted` | steward override of RFC 0147 §A.6 | tier-1 — openwop-app's certified 2 | `not-reviewed` |
 | [0250](../RFCS/0250-opt-in-host-event-replay-and-resync.md) | opt-in host-event replay and explicit resync | `Accepted` | steward override of RFC 0147 §A.6 | tier-1 — openwop-app's certified 2 | `not-reviewed` |
-| [0254](../RFCS/0254-deployment-transitions-at-v2.md) | the agent deployment transition contract at v2 | `Active` | steward override of RFC 0147 §A.6 | not declared (predates RFC 0174 §B.1, or not yet Accepted) | `not-reviewed` |
+| [0254](../RFCS/0254-deployment-transitions-at-v2.md) | the agent deployment transition contract at v2 | `Accepted` | steward override of RFC 0147 §A.6 | tier-1 — openwop-app's certified 2 | `not-reviewed` |
 | [0255](../RFCS/0255-delete-the-ai-envelope.md) | delete the AI Envelope from v2 | `Active` | steward override of RFC 0147 §A.6 | not declared (predates RFC 0174 §B.1, or not yet Accepted) | `not-reviewed` |
 
 ## Governance (7)
