@@ -107,7 +107,7 @@
       }
     },
     "openwop-app": {
-      "commit": "002e1ed1538b841fd739bf67ea6c969f54faada1",
+      "commit": "293f5dc716385e1e43c29f4c7f657b9d8e71a27c",
       "files": {
         "backend/typescript/src/byok/ephemeralRunSecrets.ts": {
           "exists": true,
@@ -125,7 +125,7 @@
         },
         "backend/typescript/src/host/webhookDeliveryWorker.ts": {
           "exists": true,
-          "sha256": "f06833ad547de5a58ff6941f860b698ad088dc72f065dad8bf692b65fd350348",
+          "sha256": "25fc925d9ee187baacd56f11c7a337b99e097e92efcaaa72555c1b88e9b4e36f",
           "citedBy": [
             "SECURITY/invariants.yaml"
           ]
