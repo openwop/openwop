@@ -1,6 +1,6 @@
 ## [2.46.35] — 2026-10-29 — MyndHyve's legacy runtime retired
 
-- **No assertion changes.** MyndHyve's legacy `workflow-runtime` (`api.myndhyve.ai`) retired on 2026-10-29; MyndHyve runs on the openwop-app white-label. Register rows that measured the legacy host close or re-gate, so the packed `spec/v1/gaps.json` changes.
+- **Registers.** MyndHyve's legacy `workflow-runtime` (`api.myndhyve.ai`) retired on 2026-10-29; MyndHyve runs on the openwop-app white-label. Register rows that measured the legacy host close or re-gate, so the packed `spec/v1/gaps.json` changes.
 - **New scenario `v2-deployment-lifecycle` (RFC 0082 §B, §C, §E, §F).** It drives `core.conformance.channel-agent` through `listAgentDeployments` and `transitionAgentDeployment`, plus runs and a replay of the existing fixture `conformance-agent-channel-dispatch`, with no seam. Ten legs:
   - `0082.list-valid`: the list answers 200 and every record validates against `agent-deployment.schema.json`.
   - `0082.pin-recorded`: the run's `agent.invocation-started` carries `resolvedChannel: stable` and a version active on it.
