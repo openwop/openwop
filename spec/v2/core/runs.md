@@ -5,7 +5,7 @@
 
 ## Why this exists
 
-A run is the unit of execution, ownership and observation. This document covers the run surface of `api/v2/openapi.yaml`: how a run is created, read, streamed, cancelled, paused, forked and diffed. Every host projects the same snapshot shape from the same event log ([events.md](events.md)).
+A run is the unit of execution, ownership and observation. It covers creating, reading, streaming, cancelling, pausing, forking and diffing one. Every host projects the same snapshot shape from the same event log ([events.md](events.md)).
 
 ## Identity
 

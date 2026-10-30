@@ -54,7 +54,7 @@ OpenWOP does not standardize the model call, the orchestration topology inside a
 
 ## Security and conformance
 
-> **SECURITY surface:** 226 invariants in [`SECURITY/invariants.yaml`](./SECURITY/invariants.yaml) — 189 protocol-tier (verified at the spec gate; every one has at least one public test in [`conformance/src/scenarios/`](./conformance/src/scenarios/)), 35 reference-impl-tier (verified by reference impls' CI), 2 advisory.
+> **SECURITY surface:** 232 invariants in [`SECURITY/invariants.yaml`](./SECURITY/invariants.yaml) — 193 protocol-tier (verified at the spec gate; every one has at least one public test in [`conformance/src/scenarios/`](./conformance/src/scenarios/)), 37 reference-impl-tier (verified by reference impls' CI), 2 advisory.
 
 The [conformance suite](./conformance/) decides compliance mechanically and signs a certification bundle per host. Each host's measured results are in [`INTEROP-MATRIX.md`](./INTEROP-MATRIX.md). To report a vulnerability, see [`SECURITY.md`](./SECURITY.md).
 

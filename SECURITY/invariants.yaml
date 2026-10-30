@@ -4967,3 +4967,94 @@ invariants:
       cadence row. Reference-impl at Active; graduates to protocol on a
       non-vacuous executed-pass in a committed certified v2 bundle.
     witness: witnessable-gated
+  - id: interrupt-form-action-confinement
+    tier: protocol
+    severity: critical
+    threat_model: SECURITY/threat-model-prompt-injection.md
+    tests:
+      - conformance/src/coherence/a2ui-v09-profile.test.ts
+      - conformance/src/scenarios/v2-interrupt-form-rules.test.ts
+    note: |
+      RFC 0255 §E (spec/v2/core/interrupt.md §Forms); the successor of
+      a2ui-action-confinement, which goes with the envelope kind. A form's only
+      action resolves the interrupt that carries it: `interrupt-form.schema.json`
+      closes `action.button.action.target` and `event.name` to `resume` (no
+      `exchange`, no `functionCall`, no URL), and the corpus leg shows the
+      envelope profile admits an `exchange` the form refuses. The scenario
+      resolves the positive fixture with `{ answers: [{ id, answer }] }`.
+    witness: witnessable-gated
+    witnessReview: reviewed-2026-10-30
+  - id: interrupt-form-never-resolves-approval
+    tier: protocol
+    severity: critical
+    threat_model: SECURITY/threat-model-prompt-injection.md
+    tests:
+      - conformance/src/coherence/a2ui-v09-profile.test.ts
+    note: |
+      RFC 0255 §E; restates a2ui-untrusted-blocks-approval, whose
+      `meta.contentTrust` and approval block lived on the envelope. A form can
+      appear only as `ClarificationData.form`, and its only action resolves that
+      clarification, so no form, trusted or not, can advance an approval gate.
+      Who may resolve an approval fed by untrusted content is RFC 0256 §C, not
+      this row. Corpus leg: ClarificationData is the only data shape carrying
+      `form`, and the only form action in either version is `resume`.
+    witness: claims-check
+    witnessReview: reviewed-2026-10-30
+  - id: interrupt-form-no-secret-input
+    tier: protocol
+    severity: high
+    threat_model: SECURITY/threat-model-prompt-injection.md
+    tests:
+      - conformance/src/coherence/a2ui-v09-profile.test.ts
+      - conformance/src/scenarios/v2-interrupt-form-rules.test.ts
+    note: |
+      RFC 0255 §E; successor of a2ui-surface-no-secret-input. A form MUST NOT
+      solicit a secret: `TextField.variant: "obscured"` is excluded, and a host
+      MUST NOT raise a form that fails the schema. Corpus leg: the obscured
+      negative fails the form only because of the variant enum. Scenario: the
+      `conformance-interrupt-form-refused` probe is never raised with its form,
+      against the positive fixture as control.
+    witness: witnessable-gated
+    witnessReview: reviewed-2026-10-30
+  - id: interrupt-form-bound-to-questions
+    tier: protocol
+    severity: high
+    threat_model: SECURITY/threat-model-prompt-injection.md
+    tests:
+      - conformance/src/coherence/a2ui-v09-profile.test.ts
+      - conformance/src/scenarios/v2-interrupt-form-rules.test.ts
+    note: |
+      RFC 0255 §E. Every form input `id` MUST be a `questions[].id`, so the
+      fallback and the form resume the same `{ answers: [{ id, answer }] }` and
+      a form cannot collect a field the node never asked for. Scenario: the
+      schema-valid `conformance-interrupt-form-unbound` probe is never raised
+      with its form.
+    witness: witnessable-gated
+    witnessReview: reviewed-2026-10-30
+  - id: interrupt-form-no-code-exec
+    tier: reference-impl
+    severity: critical
+    threat_model: SECURITY/threat-model-prompt-injection.md
+    tests:
+      - openwop-app:frontend/react/src/chat/a2ui/__tests__/a2ui-render-invariants.test.tsx
+    note: |
+      RFC 0255 §E; successor of a2ui-surface-no-code-exec, same witness. A
+      consumer rendering a form MUST render only the closed catalog and MUST NOT
+      execute or evaluate anything the form supplies; a malformed form renders
+      fail-closed. Render-side, so the server-oriented suite cannot observe it;
+      the closed schema is the precondition.
+    witness: claims-check
+    witnessReview: reviewed-2026-10-30
+  - id: interrupt-form-no-network-egress
+    tier: reference-impl
+    severity: high
+    threat_model: SECURITY/threat-model-prompt-injection.md
+    tests:
+      - openwop-app:frontend/react/src/chat/a2ui/__tests__/a2ui-render-invariants.test.tsx
+    note: |
+      RFC 0255 §E; successor of a2ui-surface-no-network-egress, same witness. A
+      rendered form MUST NOT fetch anything it supplies. The schema carries no
+      URL-bearing component (`Image`, `Video`, `AudioPlayer`, `Icon` excluded)
+      and no URL action target.
+    witness: claims-check
+    witnessReview: reviewed-2026-10-30

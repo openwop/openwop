@@ -10,9 +10,9 @@ Every v2 core family now has a v2 normative home (RFC 0189). Many of its rules a
 
 - **Families (74 core):** 74 v2-witnessed, 0 v1-only, 0 unwitnessed. Of the 56 `witnessable-gated` families, 0 are v1-only; every unwitnessed family is `claims-check`.
 - **At v1 end-of-support:** the 0 v1-only families, and the 0 obligation units attributed to them, lose their only witness.
-- **Obligation units (901 in `spec/v2/core/`):** 614 (68%) sit in a section a major-2 scenario cites; 287 sit in 99 sections no major-2 scenario cites.
+- **Obligation units (902 in `spec/v2/core/`):** 615 (68%) sit in a section a major-2 scenario cites; 287 sit in 99 sections no major-2 scenario cites.
 - **Declaration links:** 0 core families declare `floorScenarios`; 2 declare `requirementIds`. The family-to-test link exists only in scenario code and citations, although `overview.md` §What a MUST means says every core MUST has an id in `requirements.json`.
-- **Scenarios:** 665 registered, 225 run at major 2. 34 major-2 citations name a v2 core section this script cannot match to a heading (see Citation gaps).
+- **Scenarios:** 666 registered, 226 run at major 2. 34 major-2 citations name a v2 core section this script cannot match to a heading (see Citation gaps).
 
 ## How to read it
 
@@ -27,7 +27,7 @@ Every v2 core family now has a v2 normative home (RFC 0189). Many of its rules a
 | Family | Witness class | Verdict | Units (v2-cited) | Major-2 witnesses | Major-1-only witnesses |
 | --- | --- | --- | --- | --- | --- |
 | `production` | witnessable-gated | **v2-witnessed** | 49 (26) | `jcs-vectors`, `v2-bundle-v3-signed`, `v2-coherence-not-in-bundle`, `v2-relaxation-recorded` | `grpc-transport`, `production-backpressure`, `production-retention-expiry` |
-| `interrupt` | witnessable-gated | **v2-witnessed** | 46 (43) | `v2-approval-reject-disposition`, `v2-approver-enforced`, `v2-bound-id-kinds`, `v2-callback-url-guarded` +4 | `interrupt-approver-routing` |
+| `interrupt` | witnessable-gated | **v2-witnessed** | 47 (44) | `v2-approval-reject-disposition`, `v2-approver-enforced`, `v2-bound-id-kinds`, `v2-callback-url-guarded` +5 | `interrupt-approver-routing` |
 | `webhooks` | witnessable-gated | **v2-witnessed** | 38 (38) | `inbound-credential-no-passthrough`, `v2-a2a-operation-map`, `v2-bound-id-kinds`, `v2-host-event-delivery` +13 | `webhook-negative`, `webhook-sig-algorithm`, `webhook-signed-delivery`, `webhook-tenant-isolation` |
 | `packs` | claims-check | **v2-witnessed** | 36 (30) | `v2-manifest-ceiling-refused`, `v2-manifest-hatch-carried`, `v2-peer-dependency-declared`, `v2-registry-lifecycle` +1 | `pack-registry-isolation` |
 | `replay` | witnessable-gated | **v2-witnessed** | 36 (20) | `v2-a2a-push-delivery`, `v2-approval-reject-disposition`, `v2-effect-seam-manifest`, `v2-effect-seam-no-refire` +9 | `conversationReplayDeterminism`, `feedback-fork-not-copied`, `replay-fanout-suppression`, `replay-side-effect-suppression` |
@@ -120,7 +120,7 @@ Every v2 core family now has a v2 normative home (RFC 0189). Many of its rules a
 | `idempotency.md` | 25 | 20 (80%) | `idempotency` |
 | `identity.md` | 65 | 56 (86%) | `anonymousActor`, `authorization`, `auth` |
 | `interop.md` | 53 | 41 (77%) | `a2a`, `mcp` |
-| `interrupt.md` | 46 | 43 (93%) | `interrupt` |
+| `interrupt.md` | 47 | 44 (94%) | `interrupt` |
 | `node-pack-runtimes.md` | 3 | 2 (67%) | `nodePackRuntimes` |
 | `oauth.md` | 13 | 11 (85%) | `credentials`, `oauth` |
 | `overview.md` | 14 | 0 (0%) | – |
@@ -412,10 +412,10 @@ node scripts/report-v2-witness-coverage.mjs --write  # regenerate this file
     }
   },
   "obligationUnits": {
-    "total": 901,
-    "inV2CitedSections": 614,
+    "total": 902,
+    "inV2CitedSections": 615,
     "inUncitedSections": 287,
-    "sectionsWithObligations": 272,
+    "sectionsWithObligations": 273,
     "sectionsWithNoV2Citation": 99
   },
   "declarationLinks": {
@@ -423,8 +423,8 @@ node scripts/report-v2-witness-coverage.mjs --write  # regenerate this file
     "familiesWithRequirementIds": 2
   },
   "scenarios": {
-    "registered": 665,
-    "major2": 225
+    "registered": 666,
+    "major2": 226
   },
   "unresolvedV2Citations": 34,
   "major2ScenariosCitingNoCoreDoc": 77,

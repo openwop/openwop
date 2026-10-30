@@ -33,6 +33,10 @@ Per-kind rules:
 - `credential`: the resume value is `{ outcome }` and carries no credential.
 - An interrupt of any kind MUST NOT solicit credential material; a credential is acquired through `credential`.
 
+### Forms
+
+A `clarification` MAY carry `data.form` (`schemas/v2/interrupt-form.schema.json`); `questions` is the fallback. A host MUST NOT raise a form that fails that schema or has an input `id` outside `questions[].id`. Its action resolves only that interrupt; either way, the resume value is `{ answers: [{ id, answer }] }`. A consumer MUST render only the closed catalog and MUST NOT execute or fetch what the form supplies.
+
 ### Re-entry and resume values
 
 `key` is the deterministic re-entry key of one invocation. A host MUST derive it from at least the run, the node and the node's visit index: how many of that node's interrupts in this run had their resolution consumed before this execution began. Its spelling is host-defined.

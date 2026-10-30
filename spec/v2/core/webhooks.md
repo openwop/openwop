@@ -89,13 +89,13 @@ Best-effort delivery is not a conforming mode. A `3xx` response is a delivery fa
 
 ### Delivery isolation
 
-One subscription's slow or dead receiver MUST NOT delay another subscription's deliveries (invariant `webhook-delivery-isolation`). The rule constrains when an attempt starts, not how soon after its event, and names no mechanism; a sequential loop over a batch does not meet it.
+One subscription's slow or dead receiver MUST NOT delay another subscription's deliveries (invariant `webhook-delivery-isolation`). It constrains when an attempt starts, names no mechanism, and is not met by a sequential loop over a batch.
 
 A host MAY bound concurrent attempts beyond the floor of 8, and SHOULD NOT let one tenant's unanswered attempts occupy capacity another tenant's deliveries need.
 
 ### Unregister
 
-An attempt whose request the host had begun sending before `unregisterWebhook` answered `204` MAY complete. The unregister does not oblige the host to route that subscription's undelivered events to the dead-letter sink: the exhaustion rule governs deliveries of a live subscription.
+An attempt whose request the host had begun sending before `unregisterWebhook` answered `204` MAY complete. Its undelivered events need not reach the dead-letter sink, which serves a live subscription's exhausted deliveries.
 
 ### Dead letters
 

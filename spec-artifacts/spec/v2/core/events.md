@@ -34,7 +34,7 @@ A run is its append-only event log. Every snapshot, stream, poll, fork and diff 
 
 - **Naming.** A protocol type is `domain.verb-ed`: kebab-case, exactly two segments, past tense for a transition (`run.started`, `node.suspend-failed`). `domain.noun` is permitted only for an emitted artifact (`output.chunk`, `channel.presence`); each exception is recorded in the codemap.
 - **Reserved prefix.** `openwop.` is the only reserved prefix. `core.`, `community.`, `vendor.`, `private.` and `local.` are pack namespaces, not event namespaces; a type under them is invalid.
-- **Vendor events.** A vendor type's first segment MUST be an org registered in the `extensions` object of `spec/v2/declaration.json` (the org registry, not the `extensions` metadata key a host publishes in discovery). An unregistered org fails validation. An org in `reservedOrgs` is forbidden and never registered. `extensionsKeyPattern` is the shape a vendor type must have, not a permission to use it. `example` is held by the protocol for documentation and conformance and is never assignable to a vendor.
+- **Vendor events.** A vendor type's first segment MUST be an org registered in the `extensions` object of `spec/v2/declaration.json` (the org registry, not discovery's `extensions` key). An unregistered org fails validation. An org in `reservedOrgs` is forbidden and never registered. `extensionsKeyPattern` is the shape a vendor type must have, not a permission to use it. `example` is reserved for documentation and conformance, never a vendor.
 - **Growth.** The registry grows by the closed-enum rule in [overview.md](overview.md) §0. A producer MUST NOT emit an unregistered protocol type. A consumer MUST accept an unknown registered member and MUST NOT act on it.
 
 ## Payloads

@@ -5,7 +5,7 @@
 
 ## Why this exists
 
-How a v2 host reads what a v1 host wrote, what happens to a run in flight at the cut, and what each persisted store becomes — so two hosts read one log one way.
+How a v2 host reads what a v1 host wrote, handles a run in flight at the cut, and maps each persisted store, so two hosts read one log one way.
 
 ## The codemap is data
 

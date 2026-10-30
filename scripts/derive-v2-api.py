@@ -1097,7 +1097,7 @@ def headers_doc(doc):
     # every request (versioning.md §1.3, §1.5), so a host that grants an origin but refuses them in
     # preflight makes a conforming browser client impossible. The admitted set is the one above.
     lines += ['', '## Cross-origin preflight', '',
-              'A host that answers a CORS preflight for an operation by granting the requesting origin (`Access-Control-Allow-Origin`) MUST admit the operation\'s method in `Access-Control-Allow-Methods` and, in `Access-Control-Allow-Headers`, every request header `api/v2/openapi.yaml` declares for it, `Authorization` when it is authenticated and `Content-Type` when it takes a body, by listing them or by reflecting `Access-Control-Request-Headers`. A `*` does not admit `Authorization`. Which origins a host grants, and whether with credentials, is host policy. Admitting this table\'s union on every operation conforms.']
+              'A host granting an origin (`Access-Control-Allow-Origin`) in a CORS preflight for an operation MUST admit the operation\'s method in `Access-Control-Allow-Methods` and, in `Access-Control-Allow-Headers`, every request header `api/v2/openapi.yaml` declares for it, `Authorization` when it is authenticated and `Content-Type` when it takes a body, by listing them or by reflecting `Access-Control-Request-Headers`. A `*` does not admit `Authorization`. Which origins to grant, and whether with credentials, is host policy. Admitting this table\'s union on every operation conforms.']
     lines += ['', '## Response headers', '', '| Header | Operations | Meaning |', '| --- | --- | --- |']
     # A standard header shared by operations with different obligations gets one neutral
     # row; the MUST/SHOULD lives on each operation (D2, 2.36.2).

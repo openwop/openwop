@@ -1,6 +1,7 @@
 ## [2.46.36] — 2026-10-30 — RFCs 0255 and 0256 Active
 
-- **No scenario change.** The cycle carries the RFC 0255 and 0256 filings and the RFC 0255 §D licence. `requirement-aliases.json` gains a `tombstones` map: an id the sources no longer mint needs an alias or a tombstone naming the `steward-deletion` row that deleted its surface.
+- **New scenario `v2-interrupt-form-rules` (RFC 0255 §E).** Gated on the fixtures `conformance-interrupt-form`, `-refused` and `-unbound`, and inapplicable on a host advertising none of them. It asserts that a form arrives unchanged beside `questions`, that it resolves with `{ answers: [{ id, answer }] }`, and that neither probe is raised with its form. The corpus file `a2ui-v09-profile` gains three `0255.interrupt-form-*` legs.
+- **Filings.** The cycle carries the RFC 0255 and 0256 filings and the RFC 0255 §D licence. `requirement-aliases.json` gains a `tombstones` map: an id the sources no longer mint needs an alias or a tombstone naming the `steward-deletion` row that deleted its surface.
 
 ## [2.46.35] — 2026-10-29 — MyndHyve's legacy runtime retired
 

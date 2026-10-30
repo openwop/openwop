@@ -151,6 +151,6 @@ A receiver prefers the in-message value, ignores a malformed one, and MUST NOT d
 
 ## Threat model
 
-`SECURITY/threat-model-interop.md` is the threat model for this document. Peer identity and authorization at the boundary are governed by security-defaults.md; a peer MUST NOT gain authority the caller's Subject does not hold.
+Threat model: `SECURITY/threat-model-interop.md`. Peer identity and authorization at the boundary are governed by security-defaults.md; a peer MUST NOT gain authority the caller's Subject does not hold.
 
 *Sources: RFCs 0175, 0198, 0207, 0208, 0211, 0214.*
