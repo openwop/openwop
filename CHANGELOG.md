@@ -35,6 +35,7 @@ Entries before this file was condensed carried full development detail. That tex
 
 ## [2.46.36] — 2026-10-30 — RFCs 0255 and 0256 Active
 
+- **RFC 0254 Accepted.** openwop-app's certified 2.46.35 production cut (`72e610b3d`, 524/0/0) advertises `agents.deployment` and passes 14 `0082.*` legs plus both eval-gate legs. The two refusal legs for an unadvertised state or canary wait on a host advertising a subset.
 - **Forms on clarification interrupts (RFC 0255 §E).** `ClarificationData` gains an OPTIONAL `form` (`interrupt-form.schema.json`, the closed A2UI profile with `resume` as its only action). Its inputs bind to `questions`, and both resume with `{ answers }`. Six `interrupt-form-*` invariants succeed the `a2ui-*` rows.
 - **Steward-deletion licence (RFC 0255 §D).** `corrections.json` gains a `steward-deletion` class. Corrections censuses are re-measured against the bundles, the monotone gate also compares against the last published baseline, and dropped requirement ids need an alias or a tombstone.
 - **RFC 0255 and RFC 0256 `Active` (window waived).** 0255 deletes the AI Envelope from v2 with no deprecation period, through a `steward-deletion` corrections class that closes when an outside host appears. 0256 states the tool-turn contract. Neither changes the wire yet.

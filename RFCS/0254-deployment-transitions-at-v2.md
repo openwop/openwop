@@ -4,10 +4,10 @@
 | --- | --- |
 | **RFC** | 0254 |
 | **Title** | The agent deployment transition contract at v2 |
-| **Status** | `Active` |
+| **Status** | `Accepted` |
 | **Author(s)** | David Tufts (@davidscotttufts) |
 | **Created** | 2026-10-29 |
-| **Updated** | 2026-10-29 — **filed and moved `Draft` → `Active` the same day, comment window waived by the maintainer** (user instruction 2026-10-29: "proceed, and waive the comment window"). STEWARD OVERRIDE of RFC 0147 §A.6, recorded in `MAINTAINERS.md`. The rulings come from an `/architect` pass on the eight ambiguities that `v2-deployment-lifecycle` (#2060) reported, and the wire lands with this RFC. |
+| **Updated** | 2026-10-30 — **`Active` → `Accepted`**; §B review deferred by steward exemption (2026-10-17). Evidence tier: tier-1 — openwop-app's certified 2.46.35 production cut (build `commit:72e610b3d`, revision `openwop-app-backend-01100-rfw`, `OPENWOP_AGENT_DEPLOYMENT=on`, 524/0/0/377/11, `--host-key` zero rejections) advertises `agents.deployment` and records 14 `0082.*` legs `executed-pass`; `0082.state-unadvertised-refused` and `0082.canary-unsupported-refused` record `inapplicable` with the suite's reason (all seven states and canary advertised), owned by G5. G1 closes. 2026-10-29 — **filed and moved `Draft` → `Active` the same day, comment window waived by the maintainer** (user instruction 2026-10-29: "proceed, and waive the comment window"). STEWARD OVERRIDE of RFC 0147 §A.6, recorded in `MAINTAINERS.md`. The rulings come from an `/architect` pass on the eight ambiguities that `v2-deployment-lifecycle` (#2060) reported, and the wire lands with this RFC. |
 | **Affects** | `spec/v2/facets/agents.schema.json` §deployment (the transition rules; derived `schemas/v2/capabilities.schema.json`) · `schemas/v2/agent-deployment.schema.json` (optional `transitionRunId`) · `schemas/v2/agent-deployment-transition.schema.json` (descriptions) · `spec/v2/errors.json` (`deployment_state_conflict`) · `scripts/derive-v2-api.py` (`transitionAgentDeployment` 202 and 409 at v2) · `SECURITY/invariants.yaml` · conformance (`v2-deployment-lifecycle`) |
 | **Compatibility** | `additive` per `COMPATIBILITY.md` §2.4 |
 | **Supersedes** | — |
@@ -131,7 +131,7 @@ No existing MUST is relaxed and no field changes type. The v1 wire and `spec/v1/
 | §A an illegal edge is a 409 with the state | the status, `error.code` and `details.state`; the record unchanged | the suite | witnessable-gated: `openwop.requirement.0082.transition-illegal-refused` |
 | §A `promote` moves one step | draft→active refused 409, record unchanged | the suite | witnessable-gated: `openwop.requirement.0082.promote-skip-refused` |
 | §A paused→active is `promote` | pause, then promote, returns to `active` | the suite, on a host advertising `paused` | witnessable-gated: `openwop.requirement.0082.resume-from-paused` |
-| §A unadvertised state is a 400, checked first | `400 validation_error`, record unchanged | the suite, on a host advertising a subset | witnessable-gated: `openwop.requirement.0082.state-unadvertised-refused` |
+| §A unadvertised state is a 400, checked first | `400 validation_error`, record unchanged | the suite, on a host advertising a subset | witnessable — gated (host-pending, G5): needs a host advertising a `states` subset — `openwop.requirement.0082.state-unadvertised-refused` |
 | §B absent `states` means all seven | the walk runs and passes with `states` absent | the suite | witnessable-gated: `openwop.requirement.0082.transition-legal` |
 | §C rollback restores the incumbent | `rollbackPointer` equals the version active before the promote, and it is `active` | the suite, on a host advertising `rollback` | witnessable-gated: `openwop.requirement.0082.rollback-pointer` |
 | §D every accepted transition names its run | `transitionRunId` on each 200 record | the suite | witnessable-gated: `openwop.requirement.0082.transition-run-linked` |
@@ -169,7 +169,7 @@ None. The eight questions from #2060 are ruled in §A–§E.
 - [x] The rules are in the `agents.deployment` facet description; `deployment_state_conflict` is registered; `transitionRunId` is on the record; the v2 operation answers 202 and 409.
 - [x] `v2-deployment-lifecycle` witnesses §A–§E, and every new or tightened leg is sabotage-proved on a scratch host.
 - [x] `deployment-promotion-fail-closed` lists the v2 scenario.
-- [ ] A host advertising `agents.deployment` records the `0082.*` legs `executed-pass` on a certified cut — reason: openwop-app#5393 is the first implementation (G1).
+- [x] A host advertising `agents.deployment` records the `0082.*` legs `executed-pass` on a certified cut. openwop-app's 2.46.35 production cut (`openwop-workflow-engine-2.46.35-72e610b3d.json`, 524/0/0/377/11, signature verified) passes 14 of 16. The other two, `0082.state-unadvertised-refused` and `0082.canary-unsupported-refused`, refuse what a host leaves unadvertised. That host advertises all seven states and canary, so they record `inapplicable`, as this RFC's falsifiability table says ("on a host advertising a subset"). Their witness waits for such a host (G5).
 
 ## References
 
