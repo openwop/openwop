@@ -1426,6 +1426,24 @@
       "source": "spec/v2/core/conversation.md §multiPartyConversation; RFC 0239 §C"
     },
     {
+      "code": "deployment_state_conflict",
+      "meaning": "The deployment record's current state does not allow this transition; details.state and details.transition name it.",
+      "httpStatus": 409,
+      "statusSource": "v2 decision",
+      "retriable": false,
+      "details": {
+        "type": "object",
+        "required": ["state", "transition"],
+        "properties": {
+          "state": { "type": "string", "description": "The deployment record's current state." },
+          "transition": { "type": "string", "description": "The refused transition: promote, pause, deprecate, rollback or adjust-canary." }
+        },
+        "additionalProperties": true
+      },
+      "since": "2.46",
+      "source": "spec/v2/facets/agents.schema.json §deployment; RFC 0254"
+    },
+    {
       "code": "proposal_state_conflict",
       "meaning": "The proposal is terminal (applied, rejected or archived) and the action is not allowed; details.state and details.action name it.",
       "httpStatus": 409,

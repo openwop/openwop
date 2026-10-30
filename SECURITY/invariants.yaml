@@ -3333,6 +3333,7 @@ invariants:
     threat_model: SECURITY/threat-model-secret-leakage.md
     tests:
       - conformance/src/scenarios/agent-deployment-lifecycle.test.ts
+      - conformance/src/scenarios/v2-deployment-lifecycle.test.ts
     note: |
       RFC 0082 §E. A deployment state transition (promote / rollback / pause)
       MUST authorize fail-closed against the RFC 0049 deploy:* scope (absent /
