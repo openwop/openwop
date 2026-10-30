@@ -51,6 +51,8 @@ const originOf = (url) => { try { return new URL(url).origin; } catch { return n
 // certified passing rows: familyKey -> bundle names, split by tier
 const qualifying = new Map();
 const tierOneOnly = new Map();
+// familyKey -> the newest qualifying bundle(s) (equal generatedAt), for `last witnessed:`
+const newest = new Map();
 const add = (m, k, v) => { if (!m.has(k)) m.set(k, new Set()); m.get(k).add(v); };
 const bundlesDir = join(ROOT, 'evidence', 'v2-host-bundles');
 for (const f of existsSync(bundlesDir) ? readdirSync(bundlesDir) : []) {
@@ -77,6 +79,12 @@ for (const f of existsSync(bundlesDir) ? readdirSync(bundlesDir) : []) {
     const m = /^openwop\.family\.([A-Za-z0-9_-]+)$/.exec(id);
     if (!m) continue;
     add(tier >= 2 ? qualifying : tierOneOnly, m[1], name);
+    if (tier >= 2) {
+      const at = typeof b.generatedAt === 'string' ? b.generatedAt : '';
+      const cur = newest.get(m[1]);
+      if (!cur || at > cur.at) newest.set(m[1], { at, files: new Set([f]) });
+      else if (at === cur.at) cur.files.add(f);
+    }
   }
 }
 
@@ -101,6 +109,15 @@ for (const dir of readdirSync(EXT)) {
   const has = qualifying.has(fam);
   const technical = extFamilies.get(fam).maturity?.technical;
   if (status === 'Stable' && !has) problems.push(`${dir}: Stable, but no certified tier-2+ bundle carries an executed-pass row under openwop.family.${fam}${tierOneOnly.has(fam) ? ` (tier-1 only: ${[...tierOneOnly.get(fam)].join(', ')})` : ''} — demote to Draft with the date, do not hunt for a bundle`);
+  // `Stable` is historical (ext/README.md): a retired host does not demote a
+  // family, so the page names the bundle that last witnessed it, and that row
+  // must be the newest qualifying bundle, not a hand-typed claim.
+  if (status === 'Stable' && has) {
+    const lw = /^\|\s*\*\*last witnessed:\*\*\s*\|\s*`([^`]+\.json)`/m.exec(text);
+    const want = newest.get(fam);
+    if (!lw) problems.push(`${dir}: Stable, but no \`| **last witnessed:** | \`<bundle>.json\` … |\` header row names its newest qualifying bundle (${[...want.files].join(' or ')})`);
+    else if (!want.files.has(lw[1])) problems.push(`${dir}: last witnessed names ${lw[1]}, but the newest qualifying bundle is ${[...want.files].join(' or ')}`);
+  }
   if (status === 'Stable' && technical !== 'stable') problems.push(`${dir}: Stable, but the declaration row says technical: ${technical} — a promotion moves both`);
   if (status === 'Draft' && technical === 'stable') problems.push(`${dir}: Draft, but the declaration row says technical: stable`);
   if (status === 'Draft' && has) graduable.push(`${dir} — witnessed by ${[...qualifying.get(fam)].join(', ')}`);
