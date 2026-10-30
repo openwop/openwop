@@ -179,5 +179,7 @@ The exemption is a deferral, not a review. **Zero discharged is still the correc
 | 0251 | an eval run names its modes and regression baseline (certification, tenant isolation, security invariants; additive; STEWARD OVERRIDE of RFC 0147 §A.6) | in-scope-pending-assessment | — | — | `not-reviewed` |
 | 0252 | an eval task takes its fixtures from a recorded run (tenant isolation, replay, certification, security invariants; additive; STEWARD OVERRIDE of RFC 0147 §A.6) | in-scope-pending-assessment | — | — | `not-reviewed` |
 | 0254 | the agent deployment transition contract at v2 (certification, security invariants; additive; STEWARD OVERRIDE of RFC 0147 §A.6) | in-scope-pending-assessment | — | — | `not-reviewed` |
+| 0255 | delete the AI Envelope from v2 (certification, security invariants; breaking; STEWARD OVERRIDE of RFC 0147 §A.6) | in-scope-pending-assessment | — | — | `not-reviewed` |
+| 0256 | the tool-turn contract (approval and prompt-injection rules; additive; STEWARD OVERRIDE of RFC 0147 §A.6) | in-scope-pending-assessment | — | — | `not-reviewed` |
 | 0236 | Host events — events without a run-log position (isolation; additive with a safety-fix clause; STEWARD OVERRIDE of RFC 0147 §A.6) | in-scope-pending-assessment | — | — | `not-reviewed` |
 | 0237 | Declared nondeterminism names its sources (certification; additive; STEWARD OVERRIDE of RFC 0147 §A.6) | in-scope-pending-assessment | — | — | `not-reviewed` |
