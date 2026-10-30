@@ -7,7 +7,7 @@
 | **Status**        | `Accepted`                                                      |
 | **Author(s)**     | David Tufts (@davidscotttufts)                                  |
 | **Created**       | 2026-09-27                                                      |
-| **Updated**       | 2026-09-28: **`Active → Accepted`, provisional.** The RFC 0156 §B review is owed, and the §A.6 override stands as logged. **Evidence tier: tier-2 — steward-affiliated sibling host (MyndHyve) for §B and §C.1; tier-1 — steward-verified (the v2 reference host) for §C.2; corpus gate for §A, §D and §E.**
+| **Updated**       | 2026-10-29: **erratum — `Stable` is historical.** `spec/v2/ext/README.md` said a tier-2 host "serves" a `Stable` family, while §D.2's check reads checked-in bundles. MyndHyve's legacy runtime, the only tier-2 host, retired on 2026-10-29, which made the two disagree for all 12 `Stable` families. The prose now says "served it at a certified cut", and §D.3 adds a `last witnessed:` header row that the check verifies. No family changes status. · 2026-09-28: **`Active → Accepted`, provisional.** The RFC 0156 §B review is owed, and the §A.6 override stands as logged. **Evidence tier: tier-2 — steward-affiliated sibling host (MyndHyve) for §B and §C.1; tier-1 — steward-verified (the v2 reference host) for §C.2; corpus gate for §A, §D and §E.**
 
 - §B and §C.1 are witnessed on `evidence/v2-host-bundles/myndhyve-2.43.0.json`: MyndHyve production `workflow-runtime-00800-nug`, `commit:fc3b007cf`, suite 2.43.0, both profiles certified, 262/0/0. There, `openwop.family.{chat,dataIntegration,entities,kanban,knowledge,webResearch}` pass the claims-check, and `openwop.family.restTransport` passes the behavioral conditional-GET and coding legs.
 - §C.2 is witnessed on `evidence/v2-host-bundles/openwop-host-v2-reference.json` (#1727): the v2 reference host, `commit:bc8cc30`, suite 2.43.0, all three profiles certified, 406/0/0. There, `openwop.family.a2uiSurface` passes through the emit-surface seam.
@@ -95,6 +95,8 @@ It also enforces these rules:
 
 - A `Stable` doc's declaration row says `technical: stable`, and a `Draft` doc's does not.
 - A tier-1-only witness is reported as `NOT YET`, never as graduable.
+
+**§D.3** (erratum 2026-10-29) `Stable` is historical: a host's retirement does not demote a family. A `Stable` page carries a `| **last witnessed:** |` header row naming its newest qualifying bundle, and `check-ext-status-coherence.mjs` fails a page whose row is missing or names any other bundle.
 
 ### §E. Notes
 

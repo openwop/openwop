@@ -9,6 +9,7 @@
 | **witness:** | `claims-check` |
 | **technical:** | `stable` |
 | **adoption:** | `multi-witness` |
+| **last witnessed:** | `myndhyve-2.46.13-c8d511d84.json` — MyndHyve's legacy `workflow-runtime` (tier 2), suite 2.46.13, 2026-10-16; the host retired 2026-10-29 |
 | **peer-dependency id** | `knowledge` |
 | **advertised as** | `extensions.<org>.knowledge` |
 | **declared facets** | none defined |
