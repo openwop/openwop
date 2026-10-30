@@ -47,26 +47,28 @@
   2.44.5 (263 pass). `coordination` went `Stable` on MyndHyve's 2.45.2 cut (RFC 0220, #1828).
 - **Cuts:** every certified public cut needs a fresh operator approval.
 
-## 0 — MyndHyve now runs on openwop-app white-label (2026-10-29) · **reevaluate**
+## 0 — MyndHyve now runs on openwop-app white-label (2026-10-29)
 
-The maintainer reported on 2026-10-29 that MyndHyve now runs on the openwop-app white-label. The live
-discovery documents show that this applies to only one of its two origins:
+On 2026-10-29 the maintainer reported that MyndHyve runs on the openwop-app white-label (`myndhyve.ai`,
+`myndhyve 0.8.0`, the openwop-app codebase) and retired its legacy `workflow-runtime` (`api.myndhyve.ai`).
+Every MyndHyve bundle in `evidence/v2-host-bundles/` was cut against the legacy origin.
 
-| Origin | `implementation` | `agents.deployment` | `agents.proposals` |
-| --- | --- | --- | --- |
-| `myndhyve.ai` | `myndhyve 0.8.0`, the openwop-app codebase | absent | absent |
-| `api.myndhyve.ai` | `workflow-runtime 1.0.0`, the legacy codebase | advertised | 4 kinds, no operations (RFC 0249 R1) |
+Done in this change:
+- `evidence/host-tiers.json`:
+  - the legacy row is `retired: 2026-10-29`, and its bundles stay tier-2 evidence;
+  - `myndhyve.ai` and `api.openwop.dev` are tier 1 under openwop-app. 27 openwop-app bundles had read "tier unknown" because only `app.openwop.dev` was listed.
+- `scripts/check-ext-status-coherence.mjs` refuses a bundle dated after its origin's retirement.
+- `scripts/check-accepted-predicate.mjs` checks a claimed tier-2/3 against the cited bundle's origin. From RFC 0253 every cited build must resolve to a checked-in bundle.
+- GOVERNANCE.md, KNOWN-LIMITS.md and INTEROP-MATRIX.md now say that no tier-2 host serves.
+- Register triage of the 29 open rows that name MyndHyve or tier-2:
+  - **closed as moot** (they measured the legacy runtime): 0176 G2, 0210 G5, 0221 G1, 0231 G6, 0234 G2.
+  - **re-gated:** 0177 G3 (only the mirror ingest remains), 0220 G1 (`a2uiSurface` has no graduation path until a tier-2 or tier-3 host serves), and 0210 G4 (openwop-app is the only harness option left).
+  - **unchanged:** the rest name MyndHyve only as an example or ask for "a second host" generically (0071 G9/G10/R8, 0112/0113/0114/0115 G4, 0120 G5, 0124 G6, 0129 G4/R5, 0165 G6/G7, 0192 G1, 0220 G2, 0236 G5, 0128 R5, 0147 R20, 0177 R2, 0224 R1, 0249 R1). Each still needs a tier-2 or tier-3 host, and none serves.
 
-Every MyndHyve bundle in `evidence/v2-host-bundles/` was cut against `api.myndhyve.ai`.
-
-- **Tier.** `myndhyve.ai` is openwop-app's code, so evidence from it is tier-1, not tier-2 (GOVERNANCE.md
-  §Acceptance evidence tiers: tier-2 is "a genuinely distinct codebase"). Only `api.myndhyve.ai` is still
-  tier-2, and only while it serves. Decide whether the legacy runtime keeps serving, and update
-  GOVERNANCE.md's "Today this is MyndHyve (`api.myndhyve.ai`)" and INTEROP-MATRIX.md when it retires.
-  Past tier-2 graduations stand: their evidence came from the legacy codebase.
-- **"Needs MyndHyve" now means "needs openwop-app code".** Re-read every open item and gap row
-  that names MyndHyve as the witness (about 50 registers mention MyndHyve or tier-2).
-- **RFC 0082** is the first case; see its item in §8.
+Still owed:
+- [ ] **The `Stable` tense (RFC 0220 amendment).** `spec/v2/ext/README.md` says a tier-2 host "serves" a `Stable` family, while the check reads historical bundles. All 12 `Stable` families rest on the retired legacy runtime. Rule it historical ("served it at a certified cut") and add a `Last witnessed:` line per family.
+- [ ] **RFC 0082 v2 deployment test (path b, decided 2026-10-29):** port the deployment lifecycle/shape scenarios to v2; openwop-app builds `agents.deployment`. See the RFC 0082 item in §8.
+- [ ] **RFC 0249 G2 (installed-pack read-back):** draft the RFC now; G4 (automation) starts once G2 is `Active`.
 
 ## 1 — RFC 0121 subscription-rail witness · **owner openwop-77 (paused)**
 
@@ -263,10 +265,9 @@ Defects outside the spec:
       `agents.deployment`. That is now true only of the legacy `api.myndhyve.ai`. Neither openwop-app nor the
       white-label `myndhyve.ai` advertises `agents.deployment`, and openwop-app has no deployment code. On the 002e1ed15
       cut, the scenario and both legs record `inapplicable`. RFC 0082 itself stays `Accepted` (on its v1 tier-2
-      evidence); only this v2 leg is owed. Pick one path:
-      (a) the legacy runtime lists the fixture and cuts on ≥ 2.46.29 (quick, but a witness on a retiring host);
-      (b) openwop-app builds `agents.deployment` (the white-label inherits it);
-      (c) record the leg as unwitnessed until a host needs deployment channels.
+      evidence); only this v2 leg is owed. **Decided 2026-10-29: path (b).** openwop-app builds `agents.deployment`, which the
+      white-label inherits, and the suite ports `agent-deployment-lifecycle` / `-shape` (major-1 only today) to v2.
+      The legacy runtime is retired, so a legacy cut is no longer possible.
 - [x] **RFC 0252** `Accepted` 2026-10-27. Tier-1: openwop-app's certified 2.46.32 cut `2c8bc27d6` (ADR 0984)
       advertises `agents.evalSuite.recordedFixtures` and passes all six `0252.*` legs. (G3) openwop-sdks #63, released in SDK
       2.7.0. The live-lane record shipped 2026-10-27 (openwop-app #5304, ADR 0984 D7, build `dde96ce72`). The cut's two
