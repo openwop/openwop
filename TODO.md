@@ -404,8 +404,6 @@ Defects outside the spec:
 
 Register rows transferred here. Each closes in the PR that does the work.
 
-- **0255 G4, R6 (steward).** The core budget after deletion (measured 37,493 against 37,000, before §E's text, which already fits the current cap), and a tree-wide grep for each deleted name. The deletion PR also drops the six `a2ui-*` invariant rows their `interrupt-form-*` successors replace.
-- **0255 R4 (openwop-app).** New pack versions without the `aiEnvelope` peer are published before the suite.
 - **0256 G2–G5, R1–R4 (openwop-app, with spec follow-up).** Enumerate the remaining model paths and pack parsers; `replayPolicy` from tool descriptors; durable mid-loop events; primary provider docs; shadow counts before enforcing.
 
 ## Pattern checks (no code owed; read new scenarios against these)

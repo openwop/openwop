@@ -5,7 +5,7 @@
 
 ## Why this exists
 
-A run is the unit of execution, ownership and observation. It covers creating, reading, streaming, cancelling, pausing, forking and diffing one. Every host projects the same snapshot shape from the same event log ([events.md](events.md)).
+Creating, reading, streaming, cancelling, pausing, forking and diffing a run. Every host projects the same snapshot from the same event log ([events.md](events.md)).
 
 ## Identity
 
@@ -101,9 +101,9 @@ The `201` response is `{ runId, status, eventsUrl, statusUrl? }`. `status` is on
 
 ### Limits
 
-`limits` always carries `clarificationRounds` (per task), `schemaRounds` (per envelope) and `envelopesPerTurn` (per chat turn).
+`limits` always carries `clarificationRounds` (per task).
 
-- A host advertising `maxNodeExecutions`, `maxRunDurationMs` or `maxLoopIterations` MUST enforce it.
+- A host advertising `maxNodeExecutions`, `maxRunDurationMs`, `maxLoopIterations`, `maxToolRounds` or `maxRepairRounds` MUST enforce it.
 - On any breach the host MUST emit `cap.breached` and fail the node or run. The event carries `nodeId` for a `clarification` or `schema` breach. Its `observed` exceeds `limit` and MUST be reused on replay and fork, never recomputed.
 - `budget.maxTokens` and `budget.maxCostUsd` clamp to `maxBudgetTokens` and `maxBudgetCostUsd`.
 - `maxRequestBodyBytes` is the largest REST request body accepted.
@@ -112,16 +112,16 @@ The `201` response is `{ runId, status, eventsUrl, statusUrl? }`. `status` is on
 
 - `provider` MUST be in `aiProviders.providers`, else `400 validation_error`.
 - `credentialRef` MUST reference a provider in `aiProviders.byok`, else `403 credential_forbidden`. It never carries key material.
-- `mockProvider` is test-keys-only: a host MUST refuse it on a production credential with `403`.
-- `maxRefusals` is the refusal ceiling ([events.md](events.md) E5).
+- `mockProvider` is test-keys-only: a host MUST refuse it on a production credential (`403`).
+- `maxRefusals` is the refusal ceiling ([host-services.md](host-services.md) §Structured output).
 
 ### `distillation` section
 
-`tokenBudget` resolves to `min(tokenBudget, memory.distillation.maxTokenBudget)`. A run that cannot distill within it MUST fail atomically with `token_budget_exceeded`.
+`tokenBudget` resolves to `min(tokenBudget, memory.distillation.maxTokenBudget)`; a run that cannot distill within it MUST fail atomically with `token_budget_exceeded`.
 
 ### `budget` section
 
-`budget` caps a run's spend. The effective budget is the minimum across the `scopes` that apply (run, workflow, agent, project), clamped per §Limits; only the run scope has a wire surface. Whichever of `budget` and the `run` section binds first fires its own `cap.breached` kind.
+The effective budget is the minimum across the `scopes` that apply (run, workflow, agent, project), clamped per §Limits; only the run scope has a wire surface. Whichever of `budget` and the `run` section binds first fires its own `cap.breached` kind.
 
 - `budget.reserved` records the effective budget, and consumption is derived from `provider.usage`, `agent.toolCalled` and `node.retried`, never measured twice. A replay reuses both.
 - Under either `enforce` mode a host MUST emit `budget.reserved`, `budget.threshold-crossed` and `budget.exhausted`, and MAY coalesce `budget.consumed`.
@@ -187,7 +187,7 @@ Field rules:
 
 `cancelRun` accepts `{ reason? }` and answers `200 { runId, status }`, where `status` is `cancelling` or `cancelled`. The cascade MAY be asynchronous; the run emits `run.cancelled` when it completes.
 
-- A cancel on a terminal run (`completed`, `failed`, `cancelled`) MUST be refused with `409 run_terminal`. A `200` echoing the terminal state is non-conformant.
+- A cancel on a terminal run (`completed`, `failed`, `cancelled`) MUST be refused with `409 run_terminal`.
 - Cancelling a parent MUST NOT silently abandon an active compensation ([security-defaults.md](security-defaults.md)).
 - `run.cancelled.parentRunId` with `reason: parent-cancelled` records a cascade from a parent.
 

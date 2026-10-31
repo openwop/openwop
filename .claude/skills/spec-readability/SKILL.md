@@ -36,8 +36,6 @@ Read each hit that uses a regex, `includes`, a heading split, or a table-row pre
 | `capabilities.md` | `check-declaration`, `check-v2-normative-home`, `v2-front-door-counts`, `v2-facet-advertisement` | the 72 `### § <key>` headings (anchors), `## 5. Core families (N)`, the `\| facets \|` row phrases |
 | `identity.md` | `check-lane-revocation-rules` | the `### 2.2 ` table shape |
 | `errors.md` | `generate-error-envelope`, `v2-error-registry-prose-parity` | the generated region, every code backticked |
-| `events.md` | `v2-envelope-catalog` | `## The envelope-kind catalog` and its two phrases |
-| `versioning.md` | `v2-envelope-catalog` | the `\| 6 \|` axis row with `propertyNames` |
 | `security-defaults.md` | `v2-security-defaults-table`, `v2-push-credential-coherent` | the Witness/obligation table, §"Onward hops" phrases |
 | `interop.md`, `webhooks.md`, `replay.md` | `v2-push-credential-coherent` | `## A2A push delivery`, the push phrases the test lists |
 | `ext/*/README.md` | `check-ext-status-coherence`, `check-declaration` | `Status: Draft\|Stable\|Retired`, `witness:` `technical:` `adoption:` |

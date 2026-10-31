@@ -50,8 +50,12 @@ import { unsupportedWording } from './v2-supported-wording.mjs';
 const ROOT = resolve(dirname(fileURLToPath(import.meta.url)), '..');
 const SRC = join(ROOT, 'schemas'); const DST = join(SRC, 'v2');
 const API_SEEDS = ['a2a-task-state','agent-deployment-transition','agent-deployment','agent-inventory-response','agent-org-chart','agent-roster-entry','agent-roster-response','annotation-create','annotation','audit-verify-result','compact-tool-descriptor','error-envelope','eval-summary','heartbeat-evaluated','heartbeat-state-changed','localized-content-language-settings','localized-content-page-response','localized-content-page','localized-content-section','org-chart-responsibility-view','prompt-kind','prompt-ref','prompt-template','residency','run-ancestry-response','run-diff-response','run-event-payloads','run-event','run-options','run-snapshot','suspend-request','tool-descriptor','trigger-subscription-registration','trigger-subscription','workflow-definition','workspace-file-create','workspace-file'].map((s) => s + '.schema.json');
-const FAMILY_SEEDS = ['node-pack-manifest','agent-manifest','prompt-pack-manifest','workflow-chain-pack-manifest','connection-pack-manifest','chat-card-pack-manifest','artifact-type-pack-manifest','form-content-pack-manifest','frontend-plugin-manifest','registry-version-manifest','pack-lockfile','security-advisory','debug-bundle','export-bundle','ai-envelope','budget-policy','memory-entry','memory-list-options','conversation-event','conversation-turn','trigger-event','workload-identity','credential-reference','credential-provenance','dispatch-config','self-hosted-runner-dispatch-frame','self-hosted-runner-registration','self-hosted-runner-result-frame','ui-plugin-message','a2ui-surface-delta-frame','goal','proposal','agent-eval-suite','run-orchestrator-decided-event'].map((s) => s + '.schema.json');
-const ENVELOPES = readdirSync(join(SRC, 'envelopes')).filter((f) => f.endsWith('.schema.json')).map((f) => 'envelopes/' + f);
+const FAMILY_SEEDS = ['node-pack-manifest','agent-manifest','prompt-pack-manifest','workflow-chain-pack-manifest','connection-pack-manifest','chat-card-pack-manifest','artifact-type-pack-manifest','form-content-pack-manifest','frontend-plugin-manifest','registry-version-manifest','pack-lockfile','security-advisory','debug-bundle','export-bundle','budget-policy','memory-entry','memory-list-options','conversation-event','conversation-turn','trigger-event','workload-identity','credential-reference','credential-provenance','dispatch-config','self-hosted-runner-dispatch-frame','self-hosted-runner-registration','self-hosted-runner-result-frame','ui-plugin-message','goal','proposal','agent-eval-suite','run-orchestrator-decided-event'].map((s) => s + '.schema.json');
+// RFC 0255 §A — the AI Envelope is deleted from v2: no envelope schema is seeded,
+// and a v1 $ref to one is not followed (a seed rule, so --write cannot resurrect it).
+// RFC 0255 §A — the per-node and per-template envelope properties go with it.
+const ENVELOPE_PROPS = new Set(['envelopeContract', 'envelopeContractRef', 'envelopeType']);
+const ENVELOPE_DELETED = (f) => f === 'ai-envelope.schema.json' || f === 'a2ui-surface-delta-frame.schema.json' || f.startsWith('envelopes/');
 const NOT_COPIED = ['capabilities.schema.json', 'certification-bundle-v2.schema.json', 'conformance-certification-bundle.schema.json', 'core-conformance-mock-agent-config.schema.json'];
 // capabilities: GENERATED from the declaration; the two bundle schemas: replaced by certification-bundle (v3); the mock-agent config: seams profile (schemas/v2/seams/).
 
@@ -63,8 +67,8 @@ const ID_DEFS = JSON.parse(readFileSync(join(DST, 'ids.schema.json'), 'utf8')).$
 const BUNDLE_CONST = { 'debug-bundle.schema.json': '2', 'export-bundle.schema.json': '2' };
 
 function closure() {
-  const seen = new Set(); const q = [...API_SEEDS, ...FAMILY_SEEDS, ...ENVELOPES];
-  while (q.length) { const f = q.shift(); if (seen.has(f) || NOT_COPIED.includes(f)) continue; if (!existsSync(join(SRC, f))) { console.warn(`derive: ${f} not in v1 — skipped`); continue; } seen.add(f);
+  const seen = new Set(); const q = [...API_SEEDS, ...FAMILY_SEEDS];
+  while (q.length) { const f = q.shift(); if (seen.has(f) || NOT_COPIED.includes(f) || ENVELOPE_DELETED(f)) continue; if (!existsSync(join(SRC, f))) { console.warn(`derive: ${f} not in v1 — skipped`); continue; } seen.add(f);
     const t = readFileSync(join(SRC, f), 'utf8');
     for (const m of t.matchAll(/"\$ref"\s*:\s*"([^"#]+\.schema\.json)/g)) { let r = m[1].replace(/^\.\//, ''); if (r.startsWith('https://openwop.dev/spec/v1/')) r = r.slice(28); r = r.replace(/^\.\.\//, ''); if (f.startsWith('envelopes/') && !r.includes('/') && !existsSync(join(SRC, r)) && existsSync(join(SRC, 'envelopes', r))) r = 'envelopes/' + r; q.push(r); } }
   return [...seen].sort();
@@ -99,7 +103,7 @@ function transform(file, doc) {
       if (parentIsProps && /^x-openwop-/.test(k) && /manifest|prompt-template|agent-manifest|pack-lockfile/.test(rel)) nk = k.replace(/^x-openwop-/, 'openwop-'); // RFC 0171 §C.2
       if (k === 'patternProperties') { out[k] = Object.fromEntries(Object.entries(v).map(([pk, pv]) => [pk === '^(x-|vendor\\.)' && /manifest|prompt-template|agent-manifest/.test(rel) ? '^(openwop-|x-|vendor\\.)' : pk, walk(pv, null, false)])); continue; }
       if (k === '$ref' && typeof v === 'string' && v.startsWith('https://openwop.dev/spec/v1/')) { out[k] = v.replace('/spec/v1/', '/spec/v2/'); continue; }
-      out[nk] = (k === 'properties' || k === '$defs' || k === 'definitions') ? Object.fromEntries(Object.entries(v).map(([pk, pv]) => {
+      out[nk] = (k === 'properties' || k === '$defs' || k === 'definitions') ? Object.fromEntries(Object.entries(v).filter(([pk]) => !(k === 'properties' && ENVELOPE_PROPS.has(pk))).map(([pk, pv]) => {
         if (k === 'properties' && ID_KINDS[pk] && pv && pv.type === 'string' && !pv.$ref) return [pk, { $ref: idsRef(ID_KINDS[pk]), ...(pv.description ? { description: pv.description } : {}) }];
         if (k === 'properties' && /Ids$/.test(pk) && ID_KINDS[pk] && pv && pv.type === 'array' && pv.items?.type === 'string' && !pv.items.$ref) return [pk, walk({ ...pv, items: { $ref: idsRef(ID_KINDS[pk]), ...(pv.items.description ? { description: pv.items.description } : {}) } }, pk, false)];
         if (k === 'properties' && pk === 'engineVersion' && pv && pv.type === 'string') return [pk, { ...pv, type: 'integer', minimum: 0, description: (pv.description ? pv.description + ' ' : '') + 'v2: integer everywhere (RFC 0172 §B axis 3).' }];

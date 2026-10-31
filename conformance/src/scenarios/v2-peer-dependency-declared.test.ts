@@ -126,7 +126,7 @@ describe('v2-peer-dependency-declared (RFC 0177 §B.1/§B.2)', () => {
     const skip = await preflight();
     if (skip) return softSkip(skip.kind, skip.reason);
     if (!existsSync(ALIASES)) return softSkip('blocked', 'spec/v2/peer-dependency-aliases.json is not present in this layout — the alias row cannot be chosen');
-    const rows = (JSON.parse(readFileSync(ALIASES, 'utf8')) as { rows: AliasRow[] }).rows.filter((r) => !r.facets || r.facets.length === 0);
+    const rows = (JSON.parse(readFileSync(ALIASES, 'utf8')) as { rows: AliasRow[] }).rows.filter((r) => Boolean(r.family) && (!r.facets || r.facets.length === 0));
     let chosen: AliasRow | null = null;
     const fs = rows.find((r) => r.alias === 'host.fs');
     if (fs && (await familyAdvertised(fs.family))) chosen = fs;

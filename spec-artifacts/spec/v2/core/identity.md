@@ -5,7 +5,7 @@
 
 ## Why this exists
 
-The Subject owns every run. Every lane binds to a trust root and a revocation rule, the link and every id have a grammar, and tokens carry a prefix so a host can rotate them. Idempotency-key grammar is in [idempotency.md](idempotency.md).
+Who owns a run, how each lane binds and revokes, and the grammar of links, ids and tokens. Idempotency keys are in [idempotency.md](idempotency.md).
 
 ## 1. The Subject is the owner
 
@@ -42,7 +42,7 @@ On fork the host MUST copy `owner` verbatim onto the child: `tenant`, `workspace
 
 ### 1.4 A2A anonymous end users
 
-An end user reaching the host through an A2A peer is `kind: anonymous`, `lane: anonymous`, with the forwarding peer's subject as `actor`. Such a subject MUST NOT be linked.
+An A2A peer's end user is `kind: anonymous`, `lane: anonymous`, with the forwarding peer's subject as `actor`, and MUST NOT be linked.
 
 ### 1.5 `anonymousActor`
 
@@ -103,7 +103,7 @@ Every lane MUST name its trust root as `subject.issuer` and MUST advertise it in
 
 #### `exp-only`
 
-`exp-only` names a host that honors `exp` and never re-checks revocation: it consults no introspection endpoint, userinfo endpoint, revocation list, or host-side epoch or `validAfter` record. A credential revoked at the trust root is accepted until its own `exp`, so the enforced window is the only bound.
+`exp-only` names a host that honors `exp` and never re-checks revocation: it consults no introspection endpoint, userinfo endpoint, revocation list, or host-side epoch or `validAfter` record.
 
 - A host advertising `exp-only` on a lane MUST refuse a credential presented on that lane with `401 credential_lifetime_exceeded` when **either** `exp − iat` (total lifetime) **or** `exp − now` (remaining lifetime) exceeds the advertised `revocationWindowSeconds`.
 - A credential carrying no `iat` MUST be refused with the same code (§2.1 fail-closed).

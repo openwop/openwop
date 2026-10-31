@@ -311,175 +311,6 @@
       "pattern": "^(0|[1-9][0-9]*)\\.(0|[1-9][0-9]*)$",
       "description": "RFC 0172 §A.1 / RFC 0179 — the header-less default; MUST be a member of protocolVersions[]."
     },
-    "supportedEnvelopes": {
-      "type": "object",
-      "additionalProperties": false,
-      "required": [
-        "status",
-        "since",
-        "witness"
-      ],
-      "properties": {
-        "status": {
-          "enum": [
-            "stable",
-            "experimental",
-            "deprecated"
-          ]
-        },
-        "since": {
-          "type": "string",
-          "pattern": "^(0|[1-9][0-9]*)\\.(0|[1-9][0-9]*)$",
-          "description": "The minor of THIS HOST's own contract at which it began serving the family — a point on its protocolVersions[] timeline, not the corpus minor that introduced the family. The corpus states no per-family since (spec/v2/declaration.json carries witness and maturity and no since), and `status`/`until` are the host's stability claim absorbed from v1 tier/experimentalUntil, so all three describe the host's offering and `witness` is the record's one corpus-derived field. A since naming a minor absent from protocolVersions[] puts adjacent same-grammar fields on two different timelines and is a defect. Ruled 2026-09-11."
-        },
-        "until": {
-          "type": "string",
-          "pattern": "^((0|[1-9][0-9]*)\\.(0|[1-9][0-9]*)|\\d{4}-\\d{2}-\\d{2})$"
-        },
-        "witness": {
-          "enum": [
-            "witnessable-unaided",
-            "witnessable-gated",
-            "seam-gated",
-            "claims-check",
-            "negative-existence"
-          ]
-        },
-        "kinds": {
-          "type": "array",
-          "uniqueItems": true,
-          "items": {
-            "type": "string",
-            "minLength": 1,
-            "maxLength": 256
-          },
-          "description": "The envelope `type` strings this host recognizes, as in v1 `Capabilities.supportedEnvelopes`. Universal kinds (`clarification.request`, `schema.request`, `schema.response`, `error`) are always allowed and need not be listed. Every other member MUST be namespaced under the `<org>.` rule (`events.md`). ABSENT IS NOT `[]` AND IS NOT `all`: an engine MUST refuse every non-universal kind with `unknown_envelope_kind` when this seat is absent (`events.md` §\"The envelope-kind catalog\"). The refusal is what makes the protocol-tier invariant `prompt-injection-envelope-typecheck` enforceable at major 2."
-        }
-      },
-      "allOf": [
-        {
-          "if": {
-            "properties": {
-              "status": {
-                "const": "stable"
-              }
-            }
-          },
-          "then": {
-            "not": {
-              "required": [
-                "until"
-              ]
-            }
-          }
-        },
-        {
-          "if": {
-            "properties": {
-              "status": {
-                "enum": [
-                  "experimental",
-                  "deprecated"
-                ]
-              }
-            }
-          },
-          "then": {
-            "required": [
-              "until"
-            ]
-          }
-        }
-      ],
-      "description": "core/capabilities.md#supportedEnvelopes — witness: witnessable-gated; maturity stable/none; RFC 0193",
-      "x-openwop-facets-from": "spec/v2/facets/supportedEnvelopes.schema.json"
-    },
-    "schemaVersions": {
-      "type": "object",
-      "additionalProperties": false,
-      "required": [
-        "status",
-        "since",
-        "witness"
-      ],
-      "properties": {
-        "status": {
-          "enum": [
-            "stable",
-            "experimental",
-            "deprecated"
-          ]
-        },
-        "since": {
-          "type": "string",
-          "pattern": "^(0|[1-9][0-9]*)\\.(0|[1-9][0-9]*)$",
-          "description": "The minor of THIS HOST's own contract at which it began serving the family — a point on its protocolVersions[] timeline, not the corpus minor that introduced the family. The corpus states no per-family since (spec/v2/declaration.json carries witness and maturity and no since), and `status`/`until` are the host's stability claim absorbed from v1 tier/experimentalUntil, so all three describe the host's offering and `witness` is the record's one corpus-derived field. A since naming a minor absent from protocolVersions[] puts adjacent same-grammar fields on two different timelines and is a defect. Ruled 2026-09-11."
-        },
-        "until": {
-          "type": "string",
-          "pattern": "^((0|[1-9][0-9]*)\\.(0|[1-9][0-9]*)|\\d{4}-\\d{2}-\\d{2})$"
-        },
-        "witness": {
-          "enum": [
-            "witnessable-unaided",
-            "witnessable-gated",
-            "seam-gated",
-            "claims-check",
-            "negative-existence"
-          ]
-        },
-        "kinds": {
-          "type": "object",
-          "propertyNames": {
-            "type": "string",
-            "minLength": 1,
-            "maxLength": 256
-          },
-          "additionalProperties": {
-            "type": "integer",
-            "minimum": 0
-          },
-          "description": "Active schema version per envelope kind, as in v1 `Capabilities.schemaVersions` (e.g. `{\"vendor.acme.prd.create\": 2}`). A kind absent from this map has no advertised floor; an emitted `schemaVersion` is then compared against 0. An emitted version HIGHER than the advertised floor MUST be refused with `unknown_schema_version` regardless of strictness; LOWER is governed by `envelopeStrictness.mode` (`events.md` §\"The envelope-kind catalog\")."
-        }
-      },
-      "allOf": [
-        {
-          "if": {
-            "properties": {
-              "status": {
-                "const": "stable"
-              }
-            }
-          },
-          "then": {
-            "not": {
-              "required": [
-                "until"
-              ]
-            }
-          }
-        },
-        {
-          "if": {
-            "properties": {
-              "status": {
-                "enum": [
-                  "experimental",
-                  "deprecated"
-                ]
-              }
-            }
-          },
-          "then": {
-            "required": [
-              "until"
-            ]
-          }
-        }
-      ],
-      "description": "core/capabilities.md#schemaVersions — witness: witnessable-gated; maturity stable/none; RFC 0193",
-      "x-openwop-facets-from": "spec/v2/facets/schemaVersions.schema.json"
-    },
     "limits": {
       "type": "object",
       "additionalProperties": false,
@@ -487,9 +318,7 @@
         "status",
         "since",
         "witness",
-        "clarificationRounds",
-        "schemaRounds",
-        "envelopesPerTurn"
+        "clarificationRounds"
       ],
       "properties": {
         "status": {
@@ -520,17 +349,17 @@
         "clarificationRounds": {
           "type": "integer",
           "minimum": 0,
-          "description": "Maximum total clarification envelopes per task before the engine forces the LLM to proceed."
+          "description": "Maximum total clarification rounds per task before the engine forces the model to proceed."
         },
-        "schemaRounds": {
+        "maxToolRounds": {
+          "type": "integer",
+          "minimum": 1,
+          "description": "RFC 0255 §C. Optional. The most model rounds that end in tool calls a host runs in one model turn before it stops the loop. Hosts that advertise it MUST enforce it."
+        },
+        "maxRepairRounds": {
           "type": "integer",
           "minimum": 0,
-          "description": "Maximum total schema-validation rounds per envelope before the node fails."
-        },
-        "envelopesPerTurn": {
-          "type": "integer",
-          "minimum": 0,
-          "description": "Maximum total envelopes the LLM may emit in a single chat turn."
+          "description": "RFC 0255 §C. Optional. The most times a host re-asks the model to repair output that failed its structured-output schema before the node fails. Hosts that advertise it MUST enforce it."
         },
         "maxNodeExecutions": {
           "type": "integer",
@@ -605,315 +434,6 @@
       ],
       "description": "core/capabilities.md#limits — witness: witnessable-gated; maturity stable/none",
       "x-openwop-facets-from": "spec/v2/facets/limits.schema.json"
-    },
-    "envelopeStrictness": {
-      "type": "object",
-      "additionalProperties": false,
-      "required": [
-        "status",
-        "since",
-        "witness"
-      ],
-      "properties": {
-        "status": {
-          "enum": [
-            "stable",
-            "experimental",
-            "deprecated"
-          ]
-        },
-        "since": {
-          "type": "string",
-          "pattern": "^(0|[1-9][0-9]*)\\.(0|[1-9][0-9]*)$",
-          "description": "The minor of THIS HOST's own contract at which it began serving the family — a point on its protocolVersions[] timeline, not the corpus minor that introduced the family. The corpus states no per-family since (spec/v2/declaration.json carries witness and maturity and no since), and `status`/`until` are the host's stability claim absorbed from v1 tier/experimentalUntil, so all three describe the host's offering and `witness` is the record's one corpus-derived field. A since naming a minor absent from protocolVersions[] puts adjacent same-grammar fields on two different timelines and is a defect. Ruled 2026-09-11."
-        },
-        "until": {
-          "type": "string",
-          "pattern": "^((0|[1-9][0-9]*)\\.(0|[1-9][0-9]*)|\\d{4}-\\d{2}-\\d{2})$"
-        },
-        "witness": {
-          "enum": [
-            "witnessable-unaided",
-            "witnessable-gated",
-            "seam-gated",
-            "claims-check",
-            "negative-existence"
-          ]
-        },
-        "mode": {
-          "enum": [
-            "warn",
-            "strict"
-          ],
-          "description": "Schema-version drift handling. `warn` (the default when this seat is absent, as in v1): an engine MUST attempt validation against the advertised version and log `envelope_schema_version_drift`. `strict`: the same condition MUST refuse with `unknown_schema_version`. Drift ABOVE the advertised floor refuses under both (`events.md` §\"The envelope-kind catalog\")."
-        }
-      },
-      "allOf": [
-        {
-          "if": {
-            "properties": {
-              "status": {
-                "const": "stable"
-              }
-            }
-          },
-          "then": {
-            "not": {
-              "required": [
-                "until"
-              ]
-            }
-          }
-        },
-        {
-          "if": {
-            "properties": {
-              "status": {
-                "enum": [
-                  "experimental",
-                  "deprecated"
-                ]
-              }
-            }
-          },
-          "then": {
-            "required": [
-              "until"
-            ]
-          }
-        }
-      ],
-      "description": "core/capabilities.md#envelopeStrictness — witness: claims-check; maturity experimental/none; RFC 0193",
-      "x-openwop-facets-from": "spec/v2/facets/envelopeStrictness.schema.json"
-    },
-    "envelopeContracts": {
-      "type": "object",
-      "additionalProperties": false,
-      "required": [
-        "status",
-        "since",
-        "witness",
-        "advertised"
-      ],
-      "properties": {
-        "status": {
-          "enum": [
-            "stable",
-            "experimental",
-            "deprecated"
-          ]
-        },
-        "since": {
-          "type": "string",
-          "pattern": "^(0|[1-9][0-9]*)\\.(0|[1-9][0-9]*)$",
-          "description": "The minor of THIS HOST's own contract at which it began serving the family — a point on its protocolVersions[] timeline, not the corpus minor that introduced the family. The corpus states no per-family since (spec/v2/declaration.json carries witness and maturity and no since), and `status`/`until` are the host's stability claim absorbed from v1 tier/experimentalUntil, so all three describe the host's offering and `witness` is the record's one corpus-derived field. A since naming a minor absent from protocolVersions[] puts adjacent same-grammar fields on two different timelines and is a defect. Ruled 2026-09-11."
-        },
-        "until": {
-          "type": "string",
-          "pattern": "^((0|[1-9][0-9]*)\\.(0|[1-9][0-9]*)|\\d{4}-\\d{2}-\\d{2})$"
-        },
-        "witness": {
-          "enum": [
-            "witnessable-unaided",
-            "witnessable-gated",
-            "seam-gated",
-            "claims-check",
-            "negative-existence"
-          ]
-        },
-        "advertised": {
-          "type": "boolean",
-          "description": "Host's node-pack manifests carry `EnvelopeContract` blocks."
-        }
-      },
-      "allOf": [
-        {
-          "if": {
-            "properties": {
-              "status": {
-                "const": "stable"
-              }
-            }
-          },
-          "then": {
-            "not": {
-              "required": [
-                "until"
-              ]
-            }
-          }
-        },
-        {
-          "if": {
-            "properties": {
-              "status": {
-                "enum": [
-                  "experimental",
-                  "deprecated"
-                ]
-              }
-            }
-          },
-          "then": {
-            "required": [
-              "until"
-            ]
-          }
-        }
-      ],
-      "description": "core/capabilities.md#envelopeContracts — witness: claims-check; maturity experimental/none",
-      "x-openwop-seeded-from": "v1"
-    },
-    "envelopes": {
-      "type": "object",
-      "additionalProperties": false,
-      "required": [
-        "status",
-        "since",
-        "witness"
-      ],
-      "properties": {
-        "status": {
-          "enum": [
-            "stable",
-            "experimental",
-            "deprecated"
-          ]
-        },
-        "since": {
-          "type": "string",
-          "pattern": "^(0|[1-9][0-9]*)\\.(0|[1-9][0-9]*)$",
-          "description": "The minor of THIS HOST's own contract at which it began serving the family — a point on its protocolVersions[] timeline, not the corpus minor that introduced the family. The corpus states no per-family since (spec/v2/declaration.json carries witness and maturity and no since), and `status`/`until` are the host's stability claim absorbed from v1 tier/experimentalUntil, so all three describe the host's offering and `witness` is the record's one corpus-derived field. A since naming a minor absent from protocolVersions[] puts adjacent same-grammar fields on two different timelines and is a defect. Ruled 2026-09-11."
-        },
-        "until": {
-          "type": "string",
-          "pattern": "^((0|[1-9][0-9]*)\\.(0|[1-9][0-9]*)|\\d{4}-\\d{2}-\\d{2})$"
-        },
-        "witness": {
-          "enum": [
-            "witnessable-unaided",
-            "witnessable-gated",
-            "seam-gated",
-            "claims-check",
-            "negative-existence"
-          ]
-        },
-        "reasoning": {
-          "type": "object",
-          "description": "RFC 0030 §A + §C. Host's envelope payload schemas support the OPTIONAL `reasoning` field on kinds where multi-step reasoning materially improves output quality; the host's system-prompt-injection helper instructs the model to populate it. Absent block = no advertisement (the field MAY still appear on envelope schemas; this advertisement signals the host's prompt-injection posture).",
-          "additionalProperties": false,
-          "properties": {
-            "promptDirective": {
-              "type": "string",
-              "enum": [
-                "mandatory",
-                "advisory",
-                "off"
-              ],
-              "description": "Strength of the host's system-prompt instruction to populate `reasoning`. `mandatory`: the directive is firmly worded (the host instructs the model very forcefully to emit `reasoning`). `advisory` (default when absent): the directive is suggestive. `off`: the host emits no directive — applications that want `reasoning` populated must inject the instruction themselves. Note: `mandatory` is a prompt-injection posture, NOT a wire-level refusal contract — hosts MUST NOT reject envelopes where `reasoning` is absent regardless of this value."
-            }
-          }
-        },
-        "tierOneSubsetCompliance": {
-          "type": "string",
-          "enum": [
-            "strict",
-            "warn",
-            "off"
-          ],
-          "description": "RFC 0030 §B + §C. Host's self-attested compliance posture for the Tier-1 cross-vendor structured-output subset documented in `spec/v1/structured-output-subset.md`. `strict`: every host-served envelope schema passes the static subset-compliance check (object-root, `additionalProperties: false` everywhere, every property in `required`, no `oneOf`/`allOf`/`not`/`prefixItems`/`propertyNames`, no string format/pattern/length constraints, no number bounds, no array bounds, ≤5 nesting depth, ≤100 property count). `warn`: host serves non-compliant schemas but logs the violations. `off` (default when absent): no self-attestation. The conformance-suite static-subset scenario gates on this flag."
-        },
-        "reliability": {
-          "type": "object",
-          "additionalProperties": false,
-          "description": "RFC 0032 §C. Host emits the envelope-reliability event family on documented adverse paths. Hosts advertise the family by emitting the record AND explicitly list the events they emit via `events[]`. A host advertising this facet MUST include at least `envelope.retry-exhausted` and `envelope.refusal` in `events[]` (the two MUST-tier events). The other four (`envelope.retry-attempted`, `envelope.truncated`, `envelope.nl-to-format-engaged`, `envelope.recovery-applied`) are SHOULD/MAY-tier per RFC 0032 §B and may be omitted.",
-          "properties": {
-            "events": {
-              "type": "array",
-              "items": {
-                "type": "string",
-                "enum": [
-                  "envelope.retry.attempted",
-                  "envelope.retry.exhausted",
-                  "envelope.refusal",
-                  "envelope.truncated",
-                  "envelope.nlToFormat.engaged",
-                  "envelope.recovery.applied",
-                  "envelope.retry-attempted",
-                  "envelope.retry-exhausted",
-                  "envelope.nl-to-format-engaged",
-                  "envelope.recovery-applied"
-                ]
-              },
-              "uniqueItems": true,
-              "description": "Subset of the six reliability events the host actually emits, by their v2 names. A host advertising this facet MUST include `envelope.retry-exhausted` and `envelope.refusal`. The four v1 dotted names (`envelope.retry.attempted`, `envelope.retry.exhausted`, `envelope.nlToFormat.engaged`, `envelope.recovery.applied`) are deprecated aliases, removed in 3.0; a consumer MUST treat each as its hyphenated equivalent (RFC 0228 §G). Conformance scenarios soft-skip for events absent from this list (the event-emission assertion is skipped; other host behavior assertions remain in force)."
-            },
-            "maxRetryAttempts": {
-              "type": "integer",
-              "minimum": 1,
-              "maximum": 16,
-              "description": "Host's retry budget per envelope emission. Conformance scenarios use this to construct fixtures that exercise the retry-exhausted path. Independent of `capabilities.limits.schemaRounds` (which is the engine-side per-emission cap) — `maxRetryAttempts` reports the host's actual configured value, not the spec's upper bound."
-            },
-            "completion": {
-              "type": "object",
-              "additionalProperties": false,
-              "required": [
-                "distinguishesTruncation"
-              ],
-              "description": "RFC 0033 §E. Host's self-attested envelope-completion contract posture — does the host distinguish truncation from schema-violation in its retry routing per RFC 0033 §A + §B + §C?",
-              "properties": {
-                "distinguishesTruncation": {
-                  "type": "boolean",
-                  "description": "Host implements RFC 0033's truncation-vs-schema-violation retry-routing distinction: truncation → increased output budget (NO corrective fragment); schema-violation → corrective system fragment (NO budget increase). When `false` or absent, the host conflates the two paths (legacy behavior); RFC 0033 conformance scenarios soft-skip."
-                },
-                "truncationBudgetMultiplier": {
-                  "type": "number",
-                  "minimum": 1,
-                  "maximum": 8,
-                  "description": "Host's per-attempt output-budget multiplier on truncation retries. Informational; clients MAY surface this in cost-estimation UIs. Defaults to 2 when absent and `distinguishesTruncation: true`. Spec recommendation is 2× per RFC 0033 §B."
-                }
-              }
-            }
-          }
-        }
-      },
-      "allOf": [
-        {
-          "if": {
-            "properties": {
-              "status": {
-                "const": "stable"
-              }
-            }
-          },
-          "then": {
-            "not": {
-              "required": [
-                "until"
-              ]
-            }
-          }
-        },
-        {
-          "if": {
-            "properties": {
-              "status": {
-                "enum": [
-                  "experimental",
-                  "deprecated"
-                ]
-              }
-            }
-          },
-          "then": {
-            "required": [
-              "until"
-            ]
-          }
-        }
-      ],
-      "description": "core/capabilities.md#envelopes — witness: claims-check; maturity experimental/none; RFC 0030",
-      "x-openwop-seeded-from": "v1"
     },
     "prompts": {
       "type": "object",
@@ -3091,6 +2611,80 @@
             }
           },
           "additionalProperties": false
+        },
+        "reasoning": {
+          "type": "object",
+          "description": "RFC 0030 §A, moved from the deleted `envelopes` family by RFC 0255 §A. The host's prompt posture for an optional `reasoning` property in a `responseSchema` (host-services.md §Structured output). Absent: no advertisement.",
+          "additionalProperties": false,
+          "properties": {
+            "promptDirective": {
+              "type": "string",
+              "enum": [
+                "mandatory",
+                "advisory",
+                "off"
+              ],
+              "description": "Strength of the host's instruction to populate `reasoning`: `mandatory` (firmly worded), `advisory` (the default when absent) or `off` (no instruction; an application that wants it injects its own). A prompt posture, not a refusal contract: a host MUST NOT reject output without `reasoning` whatever this says."
+            }
+          }
+        },
+        "tierOneSubsetCompliance": {
+          "type": "string",
+          "enum": [
+            "strict",
+            "warn",
+            "off"
+          ],
+          "description": "RFC 0030 §B, moved from the deleted `envelopes` family by RFC 0255 §A. The host's self-attested posture for the Tier 1 cross-vendor structured-output subset: `strict` (every structured-output schema the host sends a provider passes the subset check), `warn` (it sends non-compliant schemas and logs the violations) or `off` (the default when absent: no attestation)."
+        },
+        "reliability": {
+          "type": "object",
+          "additionalProperties": false,
+          "description": "RFC 0032 §C, moved from the deleted `envelopes` family by RFC 0255 §A. The host emits the structured-output reliability events on the adverse paths in host-services.md §Structured output, and lists the ones it emits in `events[]`.",
+          "properties": {
+            "events": {
+              "type": "array",
+              "items": {
+                "type": "string",
+                "enum": [
+                  "envelope.retry-attempted",
+                  "envelope.retry-exhausted",
+                  "envelope.refusal",
+                  "envelope.truncated",
+                  "envelope.nl-to-format-engaged",
+                  "envelope.recovery-applied"
+                ]
+              },
+              "uniqueItems": true,
+              "description": "The reliability events the host emits. A host advertising this facet MUST include `envelope.retry-exhausted` and `envelope.refusal`."
+            },
+            "maxRetryAttempts": {
+              "type": "integer",
+              "minimum": 1,
+              "maximum": 16,
+              "description": "The host's configured retry budget per structured-output call. The suite uses it to build fixtures that reach the retry-exhausted path."
+            },
+            "completion": {
+              "type": "object",
+              "additionalProperties": false,
+              "required": [
+                "distinguishesTruncation"
+              ],
+              "description": "RFC 0033 §E. Whether the host routes truncation and schema violation to different retries (host-services.md §Structured output).",
+              "properties": {
+                "distinguishesTruncation": {
+                  "type": "boolean",
+                  "description": "`true`: truncation retries raise the output budget with no corrective fragment, and schema-violation retries add a corrective fragment with no budget increase. `false` or absent: the host does not distinguish them."
+                },
+                "truncationBudgetMultiplier": {
+                  "type": "number",
+                  "minimum": 1,
+                  "maximum": 8,
+                  "description": "The per-attempt output-budget multiplier on a truncation retry; 2 when absent and `distinguishesTruncation` is `true`. Informational."
+                }
+              }
+            }
+          }
         }
       },
       "allOf": [
@@ -5236,83 +4830,6 @@
         }
       ],
       "description": "core/capabilities.md#forms — witness: claims-check; maturity experimental/none; RFC 0137",
-      "x-openwop-seeded-from": "v1"
-    },
-    "aiEnvelope": {
-      "type": "object",
-      "additionalProperties": false,
-      "required": [
-        "status",
-        "since",
-        "witness"
-      ],
-      "properties": {
-        "status": {
-          "enum": [
-            "stable",
-            "experimental",
-            "deprecated"
-          ]
-        },
-        "since": {
-          "type": "string",
-          "pattern": "^(0|[1-9][0-9]*)\\.(0|[1-9][0-9]*)$",
-          "description": "The minor of THIS HOST's own contract at which it began serving the family — a point on its protocolVersions[] timeline, not the corpus minor that introduced the family. The corpus states no per-family since (spec/v2/declaration.json carries witness and maturity and no since), and `status`/`until` are the host's stability claim absorbed from v1 tier/experimentalUntil, so all three describe the host's offering and `witness` is the record's one corpus-derived field. A since naming a minor absent from protocolVersions[] puts adjacent same-grammar fields on two different timelines and is a defect. Ruled 2026-09-11."
-        },
-        "until": {
-          "type": "string",
-          "pattern": "^((0|[1-9][0-9]*)\\.(0|[1-9][0-9]*)|\\d{4}-\\d{2}-\\d{2})$"
-        },
-        "witness": {
-          "enum": [
-            "witnessable-unaided",
-            "witnessable-gated",
-            "seam-gated",
-            "claims-check",
-            "negative-existence"
-          ]
-        },
-        "await": {
-          "type": "boolean",
-          "description": "`true` ⇒ `ctx.aiEnvelope.await` is ALSO exposed. `generate` is required whenever the family is advertised; `await` is required only when this sub-flag is."
-        }
-      },
-      "allOf": [
-        {
-          "if": {
-            "properties": {
-              "status": {
-                "const": "stable"
-              }
-            }
-          },
-          "then": {
-            "not": {
-              "required": [
-                "until"
-              ]
-            }
-          }
-        },
-        {
-          "if": {
-            "properties": {
-              "status": {
-                "enum": [
-                  "experimental",
-                  "deprecated"
-                ]
-              }
-            }
-          },
-          "then": {
-            "required": [
-              "until"
-            ]
-          }
-        }
-      ],
-      "description": "core/capabilities.md#aiEnvelope — witness: witnessable-gated; maturity experimental/none; RFC 0144",
       "x-openwop-seeded-from": "v1"
     },
     "promptLibrary": {

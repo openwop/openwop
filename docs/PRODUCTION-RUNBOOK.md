@@ -61,7 +61,7 @@ Scenarios to watch for this profile include `v2-production-backpressure`, `audit
 | `limits.maxNodeExecutions` | Node starts per run; a breach emits `cap.breached` and fails with `recursion_limit_exceeded`. |
 | `limits.maxRunDurationMs` | Wall clock per run from `run.started`; a breach fails with `run_timeout`. |
 | `limits.maxLoopIterations` | Orchestrator turns; a breach fails with `loop_limit_exceeded`. |
-| `limits.envelopesPerTurn`, `clarificationRounds`, `schemaRounds` | Per-turn, per-task and per-envelope caps. |
+| `limits.clarificationRounds`, `maxToolRounds`, `maxRepairRounds` | Clarification rounds per task, tool rounds per model turn, and structured-output repair rounds per call. |
 
 Your in-flight cap, the point at which `backpressure` starts answering `503`, is a host setting. Choose it from load testing, not a guess.
 

@@ -4,7 +4,7 @@
 
 ## Why this exists
 
-A host advertises what it supports in one discovery document. Every capability family in it is one record type on a closed root, generated from one declaration file. That file also mints the pack peer-dependency identifiers and the `§` anchors below. Profiles are derived predicates, never a wire field.
+A host advertises what it supports in one discovery document: one record type per family on a closed root, generated from one declaration file that also mints the pack peer-dependency identifiers and the `§` anchors below. Profiles are derived predicates, never a wire field.
 
 ## 1. One well-known resource
 
@@ -13,11 +13,11 @@ A host advertises what it supports in one discovery document. Every capability f
 - No header ⇒ the v1 document, with `protocolVersions[]` and `preferredVersion` added, through the overlap.
 - `OpenWOP-Version: 2` ⇒ the closed v2 root.
 
-A single fetch answers the major the client speaks and names the other. A v2 root MUST NOT contain a v1 sub-object; one document never carries per-major sub-objects.
+A v2 root MUST NOT contain a v1 sub-object; one document never carries per-major sub-objects.
 
 ### 1.1 Cache validators
 
-A host MUST emit a standard `ETag` on the discovery document and MUST honor `If-None-Match` with `304` ([runs.md](runs.md) §Caching and encoding). The v2 representation has no `Capabilities-Etag`: the document's bytes are its negotiation identity. A host that changes semantics without changing bytes is non-conformant.
+A host MUST emit a standard `ETag` on the discovery document and MUST honor `If-None-Match` with `304` ([runs.md](runs.md) §Caching and encoding). The v2 representation has no `Capabilities-Etag`. A host that changes semantics without changing bytes is non-conformant.
 
 ### 1.2 Removal triggers
 
@@ -95,6 +95,7 @@ These keys are not part of the v2 root:
 | `grpc` | Unwitnessable, so not advertisable ([`interop.md`](interop.md) §gRPC) |
 | `Capabilities-Etag`, `auth.subjectLinking`, `replay.fork`, bare `a2a.supported` / `mcp.supported`, the `openwop-core` alias | Rows `C2.1`–`C2.10` in `spec/v1/migrations.json` give each its codemod |
 | `host.media`, `host.collaboration` | A closed root cannot represent reserved slots |
+| `aiEnvelope`, `supportedEnvelopes`, `schemaVersions`, `envelopeStrictness`, `envelopeContracts`, `envelopes` | The AI Envelope was deleted (correction `openwop.correction.v2.5`) |
 
 `host.workspace` is the declared family `workspace`. `minimumSuiteVersion` lives in the declaration file ([`versioning.md`](versioning.md) axis 9).
 
@@ -109,37 +110,17 @@ These keys are not part of the v2 root:
 - the floor scenarios and requirement ids that define `openwop-core-standard`;
 - the profile predicates (§7).
 
-Operation paths live in `spec/v2/path-manifest.json` ([`versioning.md`](versioning.md)). The declaration is generated from nothing and checked against everything (`scripts/check-declaration.mjs`).
+Operation paths live in `spec/v2/path-manifest.json` ([`versioning.md`](versioning.md)). `scripts/check-declaration.mjs` checks the declaration against everything.
 
-## 5. Core families (74)
+## 5. Core families (68)
 
 Each heading below is a `spec/v2/declaration.json` row with `anchor: core`. `scripts/check-declaration.mjs` MUST fail when a heading here, a root key in the generated schema, or a pack peer-dependency identifier names a family the declaration does not. The peer-dependency identifier is identical to the key ([`packs.md`](packs.md)).
 
 Under each heading: the family's witness class. Its facets are named in its normative home (§2 says where they are decided). Maturity axes are §8; the owning RFC is the row's `owningRfc`.
 
-### § supportedEnvelopes
-
-Witness `witnessable-gated`.
-
-### § schemaVersions
-
-Witness `witnessable-gated`.
-
 ### § limits
 
 Witness `witnessable-gated`.
-
-### § envelopeStrictness
-
-Witness `claims-check`.
-
-### § envelopeContracts
-
-Witness `claims-check`.
-
-### § envelopes
-
-Witness `claims-check`.
 
 ### § prompts
 
@@ -285,10 +266,6 @@ Witness `witnessable-gated`.
 
 Witness `claims-check`.
 
-### § aiEnvelope
-
-Witness `witnessable-gated`.
-
 ### § promptLibrary
 
 Witness `claims-check`.
@@ -423,12 +400,12 @@ Witness `witnessable-gated`.
 Witness `witnessable-gated`; see [runs.md](runs.md) §List.
 
 
-## 6. Extension families (13)
+## 6. Extension families (12)
 
-Rows with `anchor: ext` are documented under `spec/v2/ext/<key>/`. Each document MUST declare `witness` and both maturity axes in its header ([`overview.md`](overview.md)). The families are `restTransport`, `a2uiSurface`, `brand`, `canvas`, `chat`, `coordination`, `dataIntegration`, `entities`, `kanban`, `knowledge`, `launchStudio`, `messaging`, `webResearch`.
+Rows with `anchor: ext` are documented under `spec/v2/ext/<key>/`. Each document MUST declare `witness` and both maturity axes in its header ([`overview.md`](overview.md)). The families are `restTransport`, `brand`, `canvas`, `chat`, `coordination`, `dataIntegration`, `entities`, `kanban`, `knowledge`, `launchStudio`, `messaging`, `webResearch`.
 
-- Each is advertised under `extensions` (§3.2), never at the root. `a2uiSurface` is the exception: its contract is admitted through `schemaVersions.kinds`, and only its deprecated facet is an `extensions` record.
-- `restTransport` (`witnessable-gated`) and `a2uiSurface` (`seam-gated`) have behavioral witnesses; the other 11 are discovery-only reservations `claims-check` checks.
+- Each is advertised under `extensions` (§3.2), never at the root.
+- `restTransport` (`witnessable-gated`) has a behavioral witness; the other 11 are discovery-only reservations `claims-check` checks.
 - An ext document's `Draft`/`Stable` label is a predicate over certified evidence ([`../ext/README.md`](../ext/README.md)). Becoming core takes its own RFC.
 
 ## 7. Profiles

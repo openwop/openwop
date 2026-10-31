@@ -5,7 +5,7 @@
 
 ## Why this exists
 
-A tenant's reusable estate moves between hosts as one export bundle, and lands on the destination under the importing caller's identity. An adapter that turns another platform's export into a bundle is host tooling.
+A tenant's reusable estate moves between hosts as one export bundle, and lands on the destination under the importing caller's identity.
 
 ## The export bundle
 

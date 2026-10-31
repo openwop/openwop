@@ -119,12 +119,12 @@
         "schemaRef": {
           "type": "string",
           "minLength": 1,
-          "description": "Path inside the pack tarball to the artifact's JSON Schema (Draft 2020-12). The target schema SHOULD set `additionalProperties: false` at its top level when `validation` is `closed` (RFC 0075 relaxed this from MUST; an `open` schema tolerates extra fields), and MUST declare an `$id` under the publishing host's `{HostBase}/schemas/artifacts/{artifactTypeId}.schema.json` namespace, mirroring the envelope convention in `ai-envelope.md` \u00a7\"Canonical schema location\". For a pack published through a registry, the publishing host is the registry: its origin is `{HostBase}`, and the `$id` carries no pack version \u2014 an artifact type's identity is stable across pack versions, and `schemaVersion` versions the schema."
+          "description": "Path inside the pack tarball to the artifact's JSON Schema (Draft 2020-12). The target schema SHOULD set `additionalProperties: false` at its top level when `validation` is `closed` (RFC 0075 relaxed this from MUST; an `open` schema tolerates extra fields), and MUST declare an `$id` under the publishing host's `{HostBase}/schemas/artifacts/{artifactTypeId}.schema.json` namespace. For a pack published through a registry, the publishing host is the registry: its origin is `{HostBase}`, and the `$id` carries no pack version \u2014 an artifact type's identity is stable across pack versions, and `schemaVersion` versions the schema."
         },
         "schemaVersion": {
           "type": "integer",
           "minimum": 0,
-          "description": "Non-negative integer artifact-schema version, parallel to the per-kind integer in `capabilities.schemaVersions`. Absent \u21d2 treated as 0. Bumped when the artifact schema changes shape. A version *declaration*, not a validation guarantee (RFC 0075 / P1-2)."
+          "description": "Non-negative integer artifact-schema version, Absent \u21d2 treated as 0. Bumped when the artifact schema changes shape. A version *declaration*, not a validation guarantee (RFC 0075 / P1-2)."
         },
         "validation": {
           "type": "string",
@@ -183,7 +183,7 @@
     "RenderingHint": {
       "type": "object",
       "additionalProperties": false,
-      "description": "Advisory rendering hint. Reuses the closed vocabulary defined in ai-envelope.md \u00a7\"Rendering hints\" (RFC 0055). Advisory only \u2014 consumers MUST degrade gracefully and MUST NOT treat this as a validation input. The `card` display value is reserved for envelopes and is excluded here (durable artifacts are not transient chat cards).",
+      "description": "Advisory rendering hint. Reuses the closed vocabulary RFC 0055 defines. Advisory only \u2014 consumers MUST degrade gracefully and MUST NOT treat this as a validation input. The `card` display value is reserved for envelopes and is excluded here (durable artifacts are not transient chat cards).",
       "properties": {
         "display": {
           "type": "string",

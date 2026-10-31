@@ -17,7 +17,7 @@ A v2 host MUST advertise two root fields, both REQUIRED in `schemas/v2/capabilit
 
 A host that drops v1 advertises a `2.x` `preferredVersion`; its header-less representation becomes the closed v2 root.
 
-A v2 consumer reads `preferredVersion` as the header-less default. When it is absent on a v1 document, the default is `max(protocolVersions[])`, else `protocolVersion`.
+A v2 consumer reads `preferredVersion` as the header-less default; absent on a v1 document, the default is `max(protocolVersions[])`, else `protocolVersion`.
 
 ### 1.2 Paths
 
@@ -31,7 +31,7 @@ Advertising a major is a claim about the whole **path space**, not about `/.well
 - If `/v1/<op>` answers and the unversioned `/<op>` returns `404` under the advertised major, the host MUST NOT advertise that major until the surface is reachable.
 - Seam and proprietary paths are not manifest operations and need no per-major twin.
 
-`spec/v2/path-manifest.json` (generated) lists operations (`method`, `path`, `operationId`) and channels (`name`, `address`) on a bare origin. Every path in it is unversioned; the pairing above compares each row with its `/v1` twin, derived by prefixing.
+`spec/v2/path-manifest.json` (generated) lists unversioned operations (`method`, `path`, `operationId`) and channels (`name`, `address`); each row's `/v1` twin is derived by prefixing.
 
 OpenAPI (`api/v2/openapi.yaml`), AsyncAPI (`api/v2/asyncapi.yaml`) and any kept proto MUST resolve to identical absolute paths for the shared event stream (`scripts/check-path-parity.mjs`). Seams are in [conformance.md](conformance.md).
 
@@ -51,9 +51,9 @@ A request on a `/v1/…` path key MUST NOT carry `OpenWOP-Version` with a value 
 
 ### 1.4 The response header
 
-Every protocol response MUST carry `OpenWOP-Version: <major>.<minor>` naming the contract that produced it, `/v1/` responses included (REQUIRED in v2). Reporting a version other than the one used is a silent downgrade and non-conformant (scenario `dual-stack-negotiation`).
+Every protocol response MUST carry `OpenWOP-Version: <major>.<minor>` naming the contract that produced it, `/v1/` responses included (REQUIRED in v2). Reporting another version is a silent downgrade (scenario `dual-stack-negotiation`).
 
-A *protocol response* is one produced by an operation named in `spec/v2/path-manifest.json` (or its `/v1/` twin through the overlap). A shell, hosting fallback, conformance seam or proprietary route has no protocol version to name.
+A *protocol response* is one produced by an operation in `spec/v2/path-manifest.json` (or its `/v1/` twin through the overlap); a shell, hosting fallback, seam or proprietary route is not one.
 
 On a manifest-named path:
 
@@ -76,7 +76,7 @@ Otherwise the page MUST move off the shared name.
 
 When both majors are advertised, a v2 client MUST select the highest major it implements that the host lists. A v1 client (no header, `/v1/` paths) is unaffected.
 
-A client announces the protocol version it implements in the `OpenWOP-Client-Version` request header, as `<major>.<minor>` or `<major>.<minor>.<patch>` (non-negative integers, no leading zeros). The value is the corpus release the client is built against (§4), not an SDK or product version.
+A client announces the corpus release it is built against (§4), not an SDK or product version, in the `OpenWOP-Client-Version` request header, as `<major>.<minor>` or `<major>.<minor>.<patch>` (non-negative integers, no leading zeros).
 
 - A client SHOULD send it on every request under major 2.
 - The header is optional on every operation and never selects a major (§1.3). A host MUST NOT choose a major or a representation from it.
@@ -89,11 +89,11 @@ A client announces the protocol version it implements in the `OpenWOP-Client-Ver
 - It MUST use the axis-1 grammar.
 - A client is below it when the client's major and minor, compared as integers, are less than the floor's. The patch never decides.
 - A host MAY refuse a client below it. A refusal MUST be `426` `client_version_unsupported`, and MAY carry `details.minClientVersion` naming the floor ([errors.md](errors.md)).
-- The discovery document is not exempt: a client refused there learns the floor from `details.minClientVersion`.
+- The discovery document is not exempt.
 
 A host MUST NOT answer `426` `client_version_unsupported` to a request that does not carry a well-formed `OpenWOP-Client-Version` below its advertised `minClientVersion`.
 
-This header rule binds requests served under major 2. A request served under major 1 follows that major's frozen text.
+This header rule binds requests served under major 2; major 1 follows its frozen text.
 
 Open gap: RFC 9110 §15.5.22 requires an `Upgrade` header on every `426`. This floor departs from it, and no `Upgrade` value is defined yet.
 
@@ -113,7 +113,7 @@ Dispositions:
 | 3 | `engineVersion` | unify: integer everywhere; codemod `openwop.codemod.engine-version-unify` | `integer, minimum 0` | this document |
 | 4 | `eventLogSchemaVersion` | first-class, the era key | integer; v2 writes `3` | `persistence.md` |
 | 5 | per-event `schemaVersion` | first-class; §0 growth rule | integer | `events.md` |
-| 6 | `schemaVersions` map | first-class; the map moves into the record's `kinds` seat | `propertyNames` = the envelope-kind grammar, values `integer, minimum 0`; not a closed enum — a vendor kind is host-published, never corpus-declared | `events.md` |
+| 6 | `schemaVersions` map | delete | — | `capabilities.md` |
 | 7 | `version.pinned` | first-class; the v1-pinned-run disposition | integer min/max | `persistence.md` |
 | 8 | `contractProvenance` | delete | — | `capabilities.md` |
 | 9 | `minimumSuiteVersion` | retire into `spec/v2/declaration.json` | semver | `capabilities.md` |
@@ -127,7 +127,7 @@ Dispositions:
 | 17 | webhook signature scheme | retire into `deprecations.json` | — | `webhooks.md` |
 | 18 | pack `engines.openwop` + `registryVersion` | first-class with the absent-ceiling rule | semver range / semver | `packs.md` |
 
-- One grammar covers protocol, envelope-kind and pack axes wherever a version is `<major>.<minor>` (#1, #2, #11, #15).
+- One grammar covers protocol and pack axes wherever a version is `<major>.<minor>` (#1, #2, #11, #15).
 - `typeId@<semver>` is a pack axis (`packs.md`); the `2` in `typeId@2.0.0` never means `OpenWOP-Version: 2`.
 
 ### 2.1 `engineVersion` (axis 3)
@@ -144,12 +144,12 @@ Dispositions:
 
 - `spec/v2/core/` and `spec/v2/ext/<key>/` hold the prose.
 - `schemas/v2/` holds every v2 schema, with `$id` under `https://openwop.dev/spec/v2/`; the site publishes them at `/spec/v2/`.
-- The flat `schemas/` tree (v1 `$id`s) is read-only. v1 `$id` values are immutable identifiers: a domain move is answered by a redirect, never a rewrite.
+- The flat `schemas/` tree is read-only; its v1 `$id`s are immutable, so a domain move is answered by a redirect, never a rewrite.
 - AsyncAPI `servers.production.pathname` is empty; every channel address carries its own path, as OpenAPI path keys do.
 
 ## 4. One release identity
 
-The corpus tag `v2.<minor>.<patch>` (release candidates `v2.0.0-rc.<n>`) is the only release event; suite, SDKs, registry and site derive from it. `spec/v2/release.json` carries the next tag as `version`, and only the release PR that cuts the tag bumps it.
+The corpus tag `v2.<minor>.<patch>` (release candidates `v2.0.0-rc.<n>`) is the only release event; suite, SDKs, registry and site derive from it. `spec/v2/release.json` carries the next tag as `version`, bumped only by the release PR.
 
 - Every human-surface version (README banner, `docs/PROTOCOL-STATUS.md`, OpenAPI and AsyncAPI `info.version`, `conformance/package.json`) MUST be generated from it and checked with `--check` in the merge gate.
 - The published tarball digest MUST equal the tree's as a release precondition.
@@ -176,7 +176,7 @@ The overlap ends at v1 end-of-support ([overview.md](overview.md)). From then a 
 
 ### Host-proprietary paths: `/host/<org>/…`
 
-Every vendor namespace — capability records ([capabilities.md](capabilities.md) §3.2), error codes, event types, pack properties — is keyed to an org registered in `spec/v2/declaration.json`; paths join that pattern.
+Every vendor namespace — capability records ([capabilities.md](capabilities.md) §3.2), error codes, event types, pack properties, paths — is keyed to an org registered in `spec/v2/declaration.json`.
 
 - A host MAY serve operations the manifest does not name under `/host/<org>/…` for its registered org. Such a path has no major, is served regardless of `OpenWOP-Version`, is never a protocol operation, is never measured, and is outside §1.4.
 - An org MUST NOT be named after a manifest segment under `/host/` (`reservedOrgs`).
@@ -188,4 +188,4 @@ Every vendor namespace — capability records ([capabilities.md](capabilities.md
 
 Rows `C5.1`–`C5.9` are `spec/v1/migrations.json` entries (`C5.2` is owned by `events.md`). The persisted-data disposition for each is `not-persisted`, except `C5.1` (legacy-stamped) and `C5.7` (never-upgraded).
 
-*Sources: RFCs 0167, 0168, 0172, 0176, 0179, 0181, 0193, 0219.*
+*Sources: RFCs 0167, 0168, 0172, 0176, 0179, 0181, 0193, 0219, 0255.*

@@ -208,30 +208,6 @@ def v2_openapi_and_seams():
             'properties': {'secret': {'type': 'string', 'minLength': 1}, 'headers': {'type': 'object', 'additionalProperties': {'type': 'string'}}, 'body': {'type': 'string'}}}}}},
         'responses': {'200': {'description': 'The verifier verdict.', 'content': {'application/json': {'schema': {'type': 'object', 'additionalProperties': False, 'required': ['accepted'], 'properties': {'accepted': {'type': 'boolean'}, 'reason': {'type': 'string'}}}}}},
             '400': {'$ref': '#/components/responses/ValidationError'}, '401': {'$ref': '#/components/responses/Unauthenticated'}}}}
-    # RFC 0209 §A–§C witness: the v2 emit-surface seam (v1 host-sample-test-seams.md §15, re-cut for schema version 2).
-    seams['paths']['/conformance/seams/sample/a2ui/emit-surface'] = {'post': {'tags': ['Seams'], 'operationId': 'emitA2uiSurface',
-        'summary': 'Admit one `ui.a2ui-surface` envelope into a run through the production admission path',
-        'description': ('Supplies one `ui.a2ui-surface` envelope for the host to admit. A real one is emitted by a model inside a '
-                        'node turn, so the suite cannot choose one from the canonical wire; this seam supplies the envelope '
-                        'only.\n\nThe host MUST admit it through its production envelope-admission path and MUST record it exactly '
-                        'as production would. That path covers the envelope-kind catalog (`supportedEnvelopes`, `schemaVersions`, '
-                        '`envelopeStrictness`; events.md §"The envelope-kind catalog"), validation against the one per-kind branch '
-                        'the schema version selects (never the `anyOf` union), the cross-field rules (every message `surfaceId` '
-                        'equals the payload `surfaceId`; a `createSurface.catalogId` equals the payload `catalogId`), the '
-                        'surface-fold guard (spec/v2/ext/a2uiSurface/README.md §"The fold"), trust propagation, and SR-1 '
-                        'redaction. It MUST NOT be a mock that records without those rules. `envelope.nodeId`, when present, binds '
-                        'the surface to that node, so a surface emitted at a node suspended on an `approval` interrupt is the '
-                        'surface whose `resume` action would resolve it (§"Trust": a tainted fold blocks that '
-                        'interrupt).\n\nRefusals use the canonical error envelope: `422 unknown_schema_version` above the floor, or '
-                        'below it under `strict`; `422 envelope_invalid` for a payload that fails its branch, a cross-field rule, '
-                        'or the fold guard; `422 unknown_envelope_kind` when the host does not list the kind. `details` SHOULD '
-                        'name the rule. A host that has not wired the seam answers `404`/`405`, and the scenario records '
-                        '`inapplicable`.'),
-        'requestBody': {'required': True, 'content': {'application/json': {'schema': {'type': 'object', 'additionalProperties': False, 'required': ['runId', 'envelope'],
-            'properties': {'runId': {'$ref': '../schemas/v2/ids.schema.json#/$defs/runId'}, 'envelope': {'$ref': '../schemas/v2/ai-envelope.schema.json', 'description': 'A complete AI envelope whose `type` is `ui.a2ui-surface`; `schemaVersion` selects the payload branch.'}}}}}},
-        'responses': {'201': {'description': 'Admitted and recorded; `sequence` is the run event that records the envelope.', 'content': {'application/json': {'schema': {'type': 'object', 'additionalProperties': False, 'required': ['sequence'], 'properties': {'sequence': {'type': 'integer', 'minimum': 0}}}}}},
-            '400': {'$ref': '#/components/responses/ValidationError'}, '401': {'$ref': '#/components/responses/Unauthenticated'}, '404': {'$ref': '#/components/responses/NotFound'},
-            '422': {'description': 'Refused by envelope admission (`unknown_schema_version`, `envelope_invalid`, `unknown_envelope_kind`).', 'content': {'application/json': {'schema': {'$ref': '#/components/schemas/Error'}}}}}}}
     # RFC 0199 §A–§C witnesses: the OAuth-client seams. The seam supplies the provider's endpoints (the suite's
     # authorization-server double) and nothing else; the URL, the callback and the refresh are production paths.
     seams['paths']['/conformance/seams/sample/oauth/authorize-start'] = {'post': {'tags': ['Seams'], 'operationId': 'startOAuthAuthorization',

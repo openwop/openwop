@@ -5,7 +5,7 @@
 
 ## Why this exists
 
-An artifact-type pack binds an `artifactTypeId` to a JSON Schema, an advisory rendering hint and export formats, so two hosts mean the same thing by one type. The manifest is `schemas/v2/artifact-type-pack-manifest.schema.json`, whose descriptions carry the per-field rules; installation and signing follow [packs.md](packs.md).
+An artifact-type pack binds an `artifactTypeId` to a JSON Schema, an advisory rendering hint and export formats. The manifest is `schemas/v2/artifact-type-pack-manifest.schema.json`, whose descriptions carry the per-field rules; installation and signing follow [packs.md](packs.md).
 
 A registry MUST refuse a manifest that mixes `kind: "artifact-type"` with `nodes[]`, `chains[]` or `prompts[]`, with `pack_kind_invalid`.
 

@@ -4,21 +4,19 @@
 
 ## Why this exists
 
-`spec/v2/core/` is what a host implements to pass the 2.0.0 floor. It sets the reading order, states the six axioms, and holds the rules other documents only reference.
+`spec/v2/core/` is what a host implements to pass the 2.0.0 floor: reading order, the six axioms, and rules other documents reference.
 
 ## Reading order
 
-1. [`overview.md`](overview.md) — axioms, §0, §0a, claim vocabulary, the `ext/` rule
-2. [`versioning.md`](versioning.md) — major negotiation, `OpenWOP-Version`, the 18 axes, release identity
-3. [`capabilities.md`](capabilities.md) — the well-known resource, record type, closed root, derived profiles
-4. [`identity.md`](identity.md) — Subject, lanes, `SubjectLink`, id grammars, resume tokens
-5. [`runs.md`](runs.md) — create, get, cancel, fork; `configurable`; snapshot; owner
-6. [`events.md`](events.md), [`errors.md`](errors.md), [`headers.md`](headers.md) — event `oneOf`, payload and error registries, `OpenWOP-*` headers
-7. [`interrupt.md`](interrupt.md), [`idempotency.md`](idempotency.md), [`replay.md`](replay.md), [`conversation.md`](conversation.md), [`execution.md`](execution.md) — run-side surfaces
-8. [`persistence.md`](persistence.md) — era key, v1 reader rule, pinned runs
-9. [`security-defaults.md`](security-defaults.md), [`webhooks.md`](webhooks.md), [`interop.md`](interop.md), [`host-services.md`](host-services.md), [`storage.md`](storage.md), [`tool-catalog.md`](tool-catalog.md), [`i18n.md`](i18n.md), [`portability.md`](portability.md) — surface obligations, signatures, A2A and MCP, host services, storage, locale, estate export
-10. [`packs.md`](packs.md), [`node-pack-runtimes.md`](node-pack-runtimes.md), [`connection-packs.md`](connection-packs.md), [`form-content-packs.md`](form-content-packs.md), [`workflow-chain-packs.md`](workflow-chain-packs.md), [`artifact-type-packs.md`](artifact-type-packs.md) — pack identity, engines ceiling
-11. [`conformance.md`](conformance.md) — requirement ids, witness classes, bundle v3, seams profile
+1. [`overview.md`](overview.md) — axioms, §0, §0a, claims, `ext/`
+2. [`versioning.md`](versioning.md) — `OpenWOP-Version`, version axes
+3. [`capabilities.md`](capabilities.md) — discovery, profiles
+4. [`identity.md`](identity.md) — Subject, `SubjectLink`, id grammars
+5. [`runs.md`](runs.md), [`events.md`](events.md), [`errors.md`](errors.md), [`headers.md`](headers.md) — runs, `configurable`, event `oneOf`, registries, `OpenWOP-*` headers
+6. [`interrupt.md`](interrupt.md), [`idempotency.md`](idempotency.md), [`replay.md`](replay.md), [`conversation.md`](conversation.md), [`execution.md`](execution.md), [`persistence.md`](persistence.md)
+7. [`security-defaults.md`](security-defaults.md), [`webhooks.md`](webhooks.md), [`interop.md`](interop.md), [`host-services.md`](host-services.md), [`storage.md`](storage.md), [`tool-catalog.md`](tool-catalog.md), [`i18n.md`](i18n.md), [`portability.md`](portability.md)
+8. [`packs.md`](packs.md), [`node-pack-runtimes.md`](node-pack-runtimes.md), [`connection-packs.md`](connection-packs.md), [`form-content-packs.md`](form-content-packs.md), [`workflow-chain-packs.md`](workflow-chain-packs.md), [`artifact-type-packs.md`](artifact-type-packs.md)
+9. [`conformance.md`](conformance.md) — requirement ids, witness classes, bundles, seams
 
 ## Axioms in force
 
@@ -31,7 +29,7 @@
 
 ## §0 Closed-enum growth rule
 
-A registry-backed enum (event types, error codes, envelope kinds, reason vocabularies, lanes) grows by adding a row to its registry and regenerating.
+A registry-backed enum (event types, error codes, reason vocabularies, lanes) grows by adding a row to its registry and regenerating.
 
 - Consumers MUST accept an unknown member of a registry-backed enum and MUST NOT act on it.
 - Producers MUST NOT emit an unregistered member.
@@ -46,7 +44,7 @@ A 2.x minor MAY remove a surface only when `scripts/check-v2-retirement.mjs` pro
 1. Its replacement shipped in an earlier 2.x minor.
 2. A `v2-minor` row in `spec/v1/deprecations.json` named the removal minor at least two minors and 30 days earlier.
 3. No committed v2 host bundle and no published registry manifest carries it.
-4. It is an optional family, facet, enum member or envelope kind, so its absence is already a 2.0 state.
+4. It is an optional family, facet or enum member, so its absence is already a 2.0 state.
 5. Its family is `experimental` in `spec/v2/declaration.json`.
 6. No independent host is in the INTEROP-MATRIX v2 table.
 

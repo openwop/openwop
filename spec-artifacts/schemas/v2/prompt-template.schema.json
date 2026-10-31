@@ -66,10 +66,6 @@
           "type": "integer",
           "minimum": 1,
           "description": "Suggested max-tokens ceiling."
-        },
-        "envelopeType": {
-          "type": "string",
-          "description": "Suggested AI Envelope kind to use with this template, per RFC 0021. Opaque string in v1.x; future RFC MAY cross-validate against capabilities.supportedEnvelopes."
         }
       }
     },

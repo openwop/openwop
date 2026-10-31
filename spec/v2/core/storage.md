@@ -5,7 +5,7 @@
 
 ## Why this exists
 
-A node pack keeps files, records and indexes in storage services the host provides, reached through `ctx` ([host-services.md](host-services.md)). Each family below is a contract a host takes on by advertising it.
+Storage a host provides to node packs through `ctx` ([host-services.md](host-services.md)); each family binds when advertised.
 
 ## Operations
 
@@ -41,7 +41,7 @@ A refused call carries `not_found`, `forbidden`, `validation_error`, or `storage
 - A path that escapes the root, whether absolute, through `..` segments or through a symlink, MUST be refused. The host MUST NOT follow such a link partially.
 - A permission denial MUST fail the call, never succeed silently or fall through.
 - A read of a file over `maxFileSizeBytes` MAY fail rather than stream.
-- The `image` (with its `formats`), `pdf` and `transport` (`ftp`, `sftp`, `ssh`) sub-surfaces are optional, and gate the pack delegates that use them.
+- The `image` (with its `formats`), `pdf` and `transport` (`ftp`, `sftp`, `ssh`) sub-surfaces are optional.
 
 ## `kvStorage`
 

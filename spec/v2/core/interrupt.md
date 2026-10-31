@@ -5,7 +5,7 @@
 
 ## Why this exists
 
-`interrupt` is how a run waits for something outside itself: a decision, an answer, an event, a conversation turn. Every kind shares one payload shape, event pair, resolve contract and token scheme.
+`interrupt` is how a run waits on something outside itself; every kind shares one payload shape, event pair, resolve contract and token scheme.
 
 ## Payload
 
@@ -102,7 +102,7 @@ The token grammar and the `interrupt.tokenAlgs[]` / `kid` check are [identity.md
 
 - **Expiry.** Every token MUST carry `expiresAt`. The default SHOULD be 30 minutes, and a host MUST cap the lifetime at the interrupt's `timeoutMs` when one exists. A token MUST NOT outlive the interrupt it resolves; past `expiresAt` the host MUST answer `410 interrupt_expired`.
 - **Invalidation.** A token MUST be invalidated when its interrupt is resolved or its run is cancelled or completed. Later use MUST answer `409 interrupt_already_resolved`.
-- **Verification.** MAC comparison MUST be constant-time. `kid` selects the verification secret, so secrets rotate without orphaning tokens.
+- **Verification.** MAC comparison MUST be constant-time. `kid` selects the verification secret.
 - **Intent.** A token minted with `intent: resolve` authorizes both operations. A host MAY mint `intent: inspect` tokens; a resolve with one MUST be refused with `403`.
 
 ## Approval

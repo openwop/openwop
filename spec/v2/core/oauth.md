@@ -5,7 +5,7 @@
 
 ## Why this exists
 
-A connector node needs a token a user granted to a third party. The host obtains, stores and refreshes it and hands it to the node's sandbox; a pack names a provider and scopes and never touches the grant. Here the host is an OAuth client; [identity.md](identity.md) covers it as a protected resource.
+The host obtains, stores and refreshes the third-party tokens a connector node needs; a pack names a provider and scopes and never touches the grant. Here the host is an OAuth client; [identity.md](identity.md) covers it as a protected resource.
 
 ## Credentials
 
@@ -15,7 +15,7 @@ A host advertising `credentials` MUST resolve a `{ ref, scope }` reference (`sch
 - A failed resolution is `credential_not_found`, `credential_forbidden` (outside the caller's scope; fail closed) or `credential_scope_unsupported` (a scope not in `credentials.scopes`).
 - With `credentials.sharing`, every reference within a scope resolves one stored credential.
 - With `credentials.rotation` `two-key-overlap`, old and new material both resolve during the grace window; after it the old fails `credential_not_found`.
-- `credentials.encryptionAtRest` is a claim about storage; it gates nothing.
+- `credentials.encryptionAtRest` gates nothing.
 
 ## Token lifecycle
 

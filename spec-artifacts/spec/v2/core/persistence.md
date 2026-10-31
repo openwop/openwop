@@ -5,7 +5,7 @@
 
 ## Why this exists
 
-How a v2 host reads what a v1 host wrote, handles a run in flight at the cut, and maps each persisted store, so two hosts read one log one way.
+How a v2 host reads what a v1 host wrote, handles a run in flight at the cut, and maps each persisted store.
 
 ## The codemap is data
 
@@ -29,7 +29,7 @@ How a v2 host reads what a v1 host wrote, handles a run in flight at the cut, an
 
 Discovery MUST advertise the value the host writes for new runs and nothing else; a host MUST hold one constant for this axis.
 
-Absent stays era `2` forever; it is never backfilled.
+Absent stays era `2` forever.
 
 - A host MUST NOT rewrite historical rows to add an explicit `2`, and a reader MUST NOT require one.
 - A host with more than one creation path MUST begin stamping `3` on all of them in the same change. An unstamped path's runs read as era `2`.
@@ -44,7 +44,7 @@ The snapshot field is required on the wire, and MAY be synthesized: for an era-`
 - MUST serve the cursor contract of [events.md §"Poll"](events.md) over that log;
 - MUST NOT emit an event `type` the codemap does not name.
 
-The record makes no separate storage claim. Its `crossEngineOrdering` facet is a replay property, specified in [replay.md §"Cross-engine ordering"](replay.md).
+Its `crossEngineOrdering` facet is a replay property, specified in [replay.md §"Cross-engine ordering"](replay.md).
 
 ## The reader rule
 
@@ -101,7 +101,7 @@ Multi-region skew is read-side only: after the cut, a v2 region MUST NOT accept 
 - **Certification bundles** — never upgraded. A v1 bundle substantiates no new certification after 2026-11-10; every host produces a fresh v2-rc bundle before the cut ([conformance.md](conformance.md)).
 - **Webhook deliveries** — dual-emitted, and queued deliveries drained, per [webhooks.md §"Dual emission through the overlap"](webhooks.md).
 - **Interrupt resume tokens** — drained, per [identity.md](identity.md) §4.
-- **Layer-1 and Layer-2 records** (idempotency, idempotent responses, invocation claims and logs, effect-escape ledger, dispatch outbox, envelope correlations) — unchanged; keyed on ids the cut does not rename. `GET /runs/{runId}/effects` and `GET /runs/{runId}/compensation` are new reads over them ([security-defaults.md](security-defaults.md)).
+- **Layer-1 and Layer-2 records** (idempotency, idempotent responses, invocation claims and logs, effect-escape ledger, dispatch outbox) — unchanged; keyed on ids the cut does not rename. `GET /runs/{runId}/effects` and `GET /runs/{runId}/compensation` are new reads over them ([security-defaults.md](security-defaults.md)).
 - **Owner stamps** — a run without a Subject is legacy-stamped per [identity.md](identity.md) §1.2. A host's stored owner fields are projected to the Subject; the projection is the host's to name.
 - **Audit log** — never upgraded.
 
@@ -139,6 +139,6 @@ Template — one row per store:
 - **Duplicates** — duplicate delivery of accepted work MUST NOT produce duplicate external effects. The host MUST dedupe on an identity that survives redelivery ([idempotency.md](idempotency.md)).
 - **Poison work** — work that fails deterministically MUST reach a terminal, operator-visible state within a bounded number of attempts.
 
-A host MAY claim a qualification rung (`durable-single-instance`, `durable-multi-instance`, `multi-region-qualified`; cumulative) only with the evidence [RFC 0158 §D](https://github.com/openwop/openwop/blob/main/RFCS/0158-durable-execution-and-disaster-recovery-qualification.md) names for it, and MUST NOT claim one from tests in which no process was terminated. A rung is evidence, not a capability: discovery carries none, and the certification bundle publishes the rung and its bounds ([conformance.md §Bundle v3](conformance.md)).
+A host MAY claim a qualification rung (`durable-single-instance`, `durable-multi-instance`, `multi-region-qualified`; cumulative) only with the evidence [RFC 0158 §D](https://github.com/openwop/openwop/blob/main/RFCS/0158-durable-execution-and-disaster-recovery-qualification.md) names for it, and MUST NOT claim one from tests in which no process was terminated. Discovery carries no rung; the certification bundle publishes it and its bounds ([conformance.md §Bundle v3](conformance.md)).
 
 *Sources: RFCs 0041, 0158, 0170, 0171, 0172, 0176, 0180, 0185, 0186, 0187.*

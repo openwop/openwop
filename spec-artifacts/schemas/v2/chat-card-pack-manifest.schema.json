@@ -82,7 +82,7 @@
       "additionalProperties": {
         "type": "string"
       },
-      "description": "Engine-supplied capabilities the pack consumes (e.g., `{ \"host.aiEnvelope\": \"supported\", \"host.chat.cards\": \"supported\" }`). Resolved against the host's advertised capabilities at register time."
+      "description": "Engine-supplied capabilities the pack consumes (e.g., `{ \"host.chat.cards\": \"supported\" }`). Resolved against the host's advertised capabilities at register time."
     },
     "cards": {
       "type": "array",
@@ -119,7 +119,7 @@
         "schemaVersion": {
           "type": "integer",
           "minimum": 0,
-          "description": "Non-negative integer card-schema version (the envelope/artifact integer-version axis). Absent \u21d2 treated as 0."
+          "description": "Non-negative integer card-schema version (the artifact integer-version axis). Absent \u21d2 treated as 0."
         },
         "prompt": {
           "$ref": "#/$defs/PromptSpec"

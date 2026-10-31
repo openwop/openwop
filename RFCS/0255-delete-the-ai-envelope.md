@@ -113,7 +113,8 @@ Decided 2026-10-30 with openwop-app: the form is `ClarificationData.form` (`sche
 ## Conformance
 
 - **Deleted:** every scenario for a deleted surface. All seven `aiEnvelope.*` are major 1 and are already frozen history; the deletion affects the major-2 scenarios `v2-ai-envelope-advertisement`, `v2-envelope-contracts-advertisement`, `v2-envelopes-advertisement`, `v2-limits-envelope-caps-advertisement`, `v2-a2ui-v09-surface`.
-- **New:** `v2-envelope-surfaces-absent` (unaided), `v2-provider-output-reliability` (structured output through the mock provider: truncation, refusal, recovery, reasoning), `v2-interrupt-form-rules`, and `check-steward-deletions` as a corpus gate.
+- **New:** `v2-envelope-surfaces-absent` (unaided), `v2-provider-output-reliability` (structured output through the mock provider: truncation, exhaustion, refusal), `v2-interrupt-form-rules`, and the steward-deletion legs of `check-v2-retirement` and `check-v2-surface-monotone` as corpus gates.
+- **Re-pointed:** `v2-envelopes-advertisement` became `v2-structured-output-advertisement` (the `aiProviders` facets), `v2-limits-envelope-caps-advertisement` became `v2-limits-clarification-rounds-advertisement`, and the `a2ui-v09-profile` corpus legs judge `interrupt-form.schema.json`. Their ids carry alias rows; every other retired id carries a tombstone naming `openwop.correction.v2.5`.
 
 ### Falsifiability
 
@@ -123,6 +124,7 @@ Decided 2026-10-30 with openwop-app: the form is `ClarificationData.form` (`sche
 | §D census | a typed census differing from the scan fails `check-v2-retirement` | any contributor | witnessable — unaided (corpus) |
 | §D licence | an unlicensed removal fails, baseline regenerated or not | any contributor | witnessable — unaided (corpus) |
 | §D tier-3 | a new row with a tier-3 host fails; an old row does not | any contributor | witnessable — unaided (corpus) |
+| §A reliability | `openwop.requirement.0255.provider-output-truncation`, `-exhaustion`, `-refusal` | the suite with the attempt-accounting fixture | witnessable — gated |
 | §E rules | `openwop.requirement.0255.interrupt-form-rules`, `-resume-answers`, `-refused` | the suite with a fixture | witnessable — gated |
 | §E profile | `openwop.requirement.0255.interrupt-form-profile`, `-never-resolves-approval`, `-bound-to-questions` | any contributor | witnessable — unaided (corpus) |
 
@@ -146,13 +148,13 @@ Order is in the openwop-app plan: census, stand-alone security fixes, corpus lan
 ## Prerequisites
 
 - [x] Census of production, 2026-10-30 (see Motivation). Chat transcripts were not scanned; chat has no replay path that would read them.
-- [ ] Run-lane clarification no longer uses an envelope: one host tool, `openwop:ask-user`, with `clarificationRounds` enforced and its schema generated from `CLARIFICATION_LIMITS`.
-- [ ] New versions of `vendor.myndhyve.ai`, `.brand` and `.web-research` published without the `aiEnvelope` peer.
+- [x] Run-lane clarification no longer uses an envelope (openwop-app ADR 1006, #5413, live on `85fba5fa8` 2026-10-31): one host tool, `openwop:ask-user`, with `clarificationRounds` enforced and its schema generated from `CLARIFICATION_LIMITS`.
+- [x] New versions of `vendor.myndhyve.ai`, `.brand` and `.web-research` published without the `aiEnvelope` peer (openwop-registry #103, `f228326`: brand, kanban and web-research 2.0.0; `vendor.myndhyve.ai` 1.0.1 and 1.0.2 yanked).
 
 ## Acceptance criteria
 
 - [x] `corrections` class, gate changes and sabotage fixtures merged; `GOVERNANCE.md` and `COMPATIBILITY.md` amended; waivers logged.
-- [ ] Deletions merged; every deleted name absent from `spec/v2`, `schemas/v2`, `api/v2` and non-frozen scripts; `openwop:check` green apart from version-bump and cross-repo steps.
+- [x] Deletions merged (row `openwop.correction.v2.5`); every deleted name absent from `spec/v2`, `schemas/v2`, `api/v2` and non-frozen scripts; `openwop:check` green apart from version-bump and cross-repo steps.
 - [ ] Suite published; one PR on openwop-app bumps the pin and deletes the host code.
 - [ ] A certified bundle on a deployed host carries `0255.*` at `executed-pass`. This is not waived.
 - [ ] SDKs, examples, registry, site and adopters carry no deleted name.

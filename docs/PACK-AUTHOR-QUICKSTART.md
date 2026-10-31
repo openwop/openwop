@@ -61,7 +61,7 @@ The scaffolded `pack.json` is already a v2 manifest ([`packs.md`](../spec/v2/cor
 
 - **`kind: "node"`** is required. v1's "absent means node" reading doesn't exist in v2.
 - **`engines.openwop`** needs a `>=` lower bound and an explicit `<` major ceiling that admits 2, such as `">=1.0.0 <3.0.0"`. A v2 host treats a range with no upper bound as `<2.0.0` and refuses it with `pack_engine_unsupported`.
-- **`peerDependencies`** keys are capability family keys from [`spec/v2/declaration.json`](../spec/v2/declaration.json), such as `aiEnvelope`, `secrets`, or `aiProviders`. A dotted v1 key (`host.aiEnvelope`) or a facet path isn't an identifier. Name facets in `peerDependenciesMeta.<family>.facets[]`. A key the declaration doesn't name gets `pack_peer_dependency_undefined`.
+- **`peerDependencies`** keys are capability family keys from [`spec/v2/declaration.json`](../spec/v2/declaration.json), such as `agentRuntime`, `secrets`, or `aiProviders`. A dotted v1 key (`host.secrets`) or a facet path isn't an identifier. Name facets in `peerDependenciesMeta.<family>.facets[]`. A key the declaration doesn't name gets `pack_peer_dependency_undefined`.
 - **Don't add a `signing` block.** The build step writes the v2 block for you. The v1 block `{ method, keyId, signatureRef }` fails v2 validation.
 - Set `version` (semver) and `nodes[]` (each with its `typeId`, `version`, and schema refs). When you bump `version`, bump the version segment of every schema `$id` in `schemas/` too.
 

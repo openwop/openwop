@@ -99,6 +99,7 @@ if (existsSync(evidencePath)) {
   const inv = read('evidence/cross-repo-manifests.json').registryPeerDependencyKeys ?? {};
   const aliases = existsSync(join(ROOT, 'spec', 'v2', 'peer-dependency-aliases.json')) ? read('spec/v2/peer-dependency-aliases.json').rows : [];
   for (const row of aliases) if (row.unresolved) failures.push(`registry peer-dependency key \`${row.alias}\` (${row.publishedUses} published use(s)) resolves to no family, facet, or alias — pack_peer_dependency_undefined on a v2 host (RFC 0177 §B.1)`);
+  for (const row of aliases) if (row.deletedFamily && row.currentUses !== 0) failures.push(`registry peer-dependency key \`${row.alias}\` names the deleted family \`${row.deletedFamily}\` and ${row.currentUses ?? 'an uncounted number of'} pack(s) still need it at their newest non-yanked version — publish versions without it before the deletion (RFC 0255 §D)`);
   if (!Object.keys(inv).length) console.warn('check-declaration: evidence/cross-repo-manifests.json carries no registryPeerDependencyKeys inventory yet — the alias leg is vacuous until generate-cross-repo-evidence.mjs --write runs with the registry checkout');
 }
 

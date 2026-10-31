@@ -5,7 +5,7 @@
 
 ## Why this exists
 
-`POST /runs/{runId}:fork` makes any past run state re-executable: a replay proves current code reproduces recorded history; a branch explores an alternative from a recorded point. Below: what a fork MUST reproduce, what it MUST NOT re-fire, and how a host proves the second.
+`POST /runs/{runId}:fork` re-executes a past run state: a replay reproduces recorded history under current code; a branch explores an alternative. Below: what a fork MUST reproduce, what it MUST NOT re-fire, and how a host proves the second.
 
 ## The surface
 
@@ -62,7 +62,7 @@ When a replayed node produces an event different from the source at the same seq
 
 Divergence codes (`spec/v2/errors.json`):
 
-- **`replay_diverged_at_refusal`** (fork fails, `409`) — the source obtained a valid envelope and the replay a refusal, or the reverse. The host MUST NOT substitute silently; it MUST emit `replay.diverged-at-refusal` naming the node and both envelope kinds and fail the replay with this code.
+- **`replay_diverged_at_refusal`** (fork fails, `409`) — the source obtained valid model output and the replay a refusal, or the reverse. The host MUST NOT substitute silently; it MUST emit `replay.diverged-at-refusal` naming both outcomes and fail the replay with this code.
 - **`replay_source_missing`** (`node.failed` payload; the fork request still returns `201`) — a side-effecting node reached with no recorded source outcome (§Suppression).
 - **`replay_memory_snapshot_unavailable`** (fork refused, `409`) — the host cannot serve memory state as-of `fromSeq`. It MUST refuse rather than substitute current memory; `details.fromSeq` SHOULD name the index.
 - **`replay_context_summary_unavailable`** (fork refused, `409`) — the host advertises `multiAgent.executionModel.contextBudget.summarization` and cannot serve, as-of `fromSeq`, a summary artifact (`context.summarized.summaryRef`) the replay would reuse. It MUST refuse rather than re-summarize; `details.fromSeq` SHOULD name the index.
@@ -88,7 +88,7 @@ Pure nodes and LLM calls served from the invocation log MUST re-execute live.
 
 ### The effect-seam manifest
 
-A host advertising `replay` MUST publish `schemas/v2/effect-seam-manifest.schema.json`-shaped data at `GET /host/effect-seams`: `{ manifestVersion: "1", host: { name, build }, seams[] }`, one row per outbound effect path its node runtime can reach, `{ seam, kind, guarded: true, guardedBy, branchReFires?, note? }`. The host owns the list. The suite drives one seam of each kind it can reach and observes no re-fire (`effect-seam-manifest`, [conformance.md](conformance.md)).
+A host advertising `replay` MUST publish `schemas/v2/effect-seam-manifest.schema.json`-shaped data at `GET /host/effect-seams`: `{ manifestVersion: "1", host: { name, build }, seams[] }`, one row per outbound effect path its node runtime can reach, `{ seam, kind, guarded: true, guardedBy, branchReFires?, note? }`. The host owns the list; the suite drives one seam per kind (`effect-seam-manifest`, [conformance.md](conformance.md)).
 
 `kind` names the outbound wire mechanism the seam leaves the host by — not the suite's driving mechanism, and not the business purpose. It MUST be one of `http`, `smtp`, `queue`, `storage`, `provider-sdk`, `webhook-fanout`, `other`.
 

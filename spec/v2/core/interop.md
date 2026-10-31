@@ -5,7 +5,7 @@
 
 ## Why this exists
 
-A2A and MCP are embedded protocols: a host advertises them, negotiates a version, and records every negotiation. Capability shapes are in [capabilities.md](capabilities.md); the peer identity is the Subject of [identity.md](identity.md).
+A host advertises A2A and MCP, negotiates a version, and records every negotiation. Capability shapes are in [capabilities.md](capabilities.md); the peer identity is the Subject of [identity.md](identity.md).
 
 ## REST is the wire
 
@@ -55,7 +55,7 @@ When no `A2A-Version` header is present, a host MUST serve the agent card of `pr
 - MUST refuse a row whose `requires` facet it does not advertise with the row's error;
 - MUST list every feature the map requires for that profile.
 
-What the map does not name is opaque: it MUST round-trip where upstream requires it and MUST NOT become authority, a prompt segment, a tool call or a workflow variable. A patch release that re-maps a row is a map edit; patch numbers are never negotiated.
+What the map does not name is opaque: it MUST round-trip where upstream requires it and MUST NOT become authority, a prompt segment, a tool call or a workflow variable. Patch numbers are never negotiated.
 
 **Isolation.** On either interface:
 
@@ -135,7 +135,7 @@ The card MUST NOT carry anything the inventory entry may not, and does not repla
 
 ## gRPC
 
-gRPC is not part of the core wire. Its document lives at `spec/v2/ext/grpc-transport/` with `witness: unwitnessable` and `adoption: none`; its requirements are SHOULDs of that extension.
+gRPC is not part of the core wire; see `spec/v2/ext/grpc-transport/` (`witness: unwitnessable`, `adoption: none`).
 
 - A host MUST NOT advertise a `grpc` capability block.
 - `api/v2/openapi.yaml` and the AsyncAPI document are the only canonical API descriptions.

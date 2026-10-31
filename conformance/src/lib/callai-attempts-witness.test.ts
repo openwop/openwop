@@ -15,7 +15,7 @@ import {
 
 const failed = (fs: readonly Finding[]): string[] => fs.filter((x) => !x.ok).map((x) => x.message);
 const run = (over: Partial<CaseRun> = {}): CaseRun => ({
-  runId: 'r', status: 'completed', attempts: undefined, errorCode: null, errorField: undefined, usage: [], exhaustedTotal: undefined, startedSeq: 3, ...over,
+  runId: 'r', status: 'completed', attempts: undefined, errorCode: null, errorField: undefined, usage: [], exhaustedTotal: undefined, startedSeq: 3, types: [], capBreachedKinds: [], ...over,
 });
 const usage = (...t: number[]) => t.map((outputTokens) => ({ provider: 'mock', model: 'mock-mini', inputTokens: 1, outputTokens }));
 

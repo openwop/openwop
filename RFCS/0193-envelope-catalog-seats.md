@@ -4,14 +4,14 @@
 | ----------------- | --------------------------------------------------------------- |
 | **RFC**           | 0193                                                            |
 | **Title**         | the three envelope families whose payload the v2 generator dropped in silence, the live `stable` record with nothing in it, and the guard that stops the fourth |
-| **Status**        | `Accepted`                                                        |
+| **Status**        | `Superseded`                                                        |
 | **Author(s)**     | David Tufts (@davidscotttufts)                                  |
 | **Created**       | 2026-09-19                                                      |
 | **Updated**       | 2026-09-19 (`Draft → Active` in the filing PR. **Comment window waived** (additive, 7-day) by the steward under `GOVERNANCE.md` §"Sole-steward operation" and logged in `MAINTAINERS.md` §"Bootstrap-phase RFC waivers". RFC 0147 §A.6 IS engaged — this changes a prompt-injection surface — and the §A.6 treatment is discharged in §E below rather than waived.) · **Active → Accepted 2026-09-19.** Evidence tier: corpus gate. Every requirement id in §F carries a row minted by `conformance/src/coherence/v2-envelope-catalog.test.ts`, and the generator guard is exercised by sabotage (removing a seat file makes the generator refuse by family name), not by a clean-tree exit 0. |
 | **Affects**       | `scripts/generate-from-declaration.mjs` · `spec/v2/facets/{supportedEnvelopes,schemaVersions,envelopeStrictness}.schema.json` · `spec/v2/core/events.md` · `spec/v2/core/versioning.md` · `spec/v2/declaration.json` · `spec/v2/errors.json` · `SECURITY/invariants.yaml` |
 | **Compatibility** | `additive`                                                      |
 | **Supersedes**    | —                                                               |
-| **Superseded by** | —                                                               |
+| **Superseded by** | RFC 0255 (2026-10-31), which deleted the three envelope-catalog families it seated from v2 under steward-deletion row `openwop.correction.v2.5`. Its requirement ids carry tombstones or alias rows.                                                               |
 
 ## Summary
 

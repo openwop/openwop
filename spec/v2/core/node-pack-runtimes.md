@@ -5,7 +5,7 @@
 
 ## Why this exists
 
-The v2 contract for the language a node pack runs in. It also lets a `remote` pack name its MCP server by an inline MCP Registry record instead of a bare URL. The shape is `$defs/Runtime` in `schemas/v2/node-pack-manifest.schema.json`.
+The language a node pack runs in, and how a `remote` pack names its MCP server, by URL or an inline MCP Registry record. The shape is `$defs/Runtime` in `schemas/v2/node-pack-manifest.schema.json`.
 
 ## Languages
 

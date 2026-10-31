@@ -19,7 +19,7 @@ More: [every film](https://openwop.dev/videos/) · [the paper](https://doi.org/1
 
 **v1 has reached end of support** ([RFC 0234](./RFCS/0234-maintainer-set-v1-end-of-support.md)). The v1 tree is frozen at [`spec/v1/`](./spec/v1/README.md) for clients that still speak it; new work targets v2. Migration: [`docs/migration/v1-to-v2.md`](./docs/migration/v1-to-v2.md).
 
-> **RFC status (252 RFCs excluding template):** RFCs that are `Accepted` (246), that are `Active` (3 — RFC 0121, RFC 0255, RFC 0256), and that are `Draft` (2 — RFC 0038 Parked, RFC 0253). Per-RFC detail: [`docs/PROTOCOL-STATUS.md`](./docs/PROTOCOL-STATUS.md).
+> **RFC status (252 RFCs excluding template):** RFCs that are `Accepted` (244), that are `Active` (3 — RFC 0121, RFC 0255, RFC 0256), and that are `Draft` (2 — RFC 0038 Parked, RFC 0253). Per-RFC detail: [`docs/PROTOCOL-STATUS.md`](./docs/PROTOCOL-STATUS.md).
 
 What the protocol does not yet prove is listed in [`docs/KNOWN-LIMITS.md`](./docs/KNOWN-LIMITS.md).
 
@@ -54,7 +54,7 @@ OpenWOP does not standardize the model call, the orchestration topology inside a
 
 ## Security and conformance
 
-> **SECURITY surface:** 232 invariants in [`SECURITY/invariants.yaml`](./SECURITY/invariants.yaml) — 193 protocol-tier (verified at the spec gate; every one has at least one public test in [`conformance/src/scenarios/`](./conformance/src/scenarios/)), 37 reference-impl-tier (verified by reference impls' CI), 2 advisory.
+> **SECURITY surface:** 224 invariants in [`SECURITY/invariants.yaml`](./SECURITY/invariants.yaml) — 187 protocol-tier (verified at the spec gate; every one has at least one public test in [`conformance/src/scenarios/`](./conformance/src/scenarios/)), 35 reference-impl-tier (verified by reference impls' CI), 2 advisory.
 
 The [conformance suite](./conformance/) decides compliance mechanically and signs a certification bundle per host. Each host's measured results are in [`INTEROP-MATRIX.md`](./INTEROP-MATRIX.md). To report a vulnerability, see [`SECURITY.md`](./SECURITY.md).
 

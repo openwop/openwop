@@ -43,15 +43,15 @@ The obligations are [identity.md §2](identity.md) and bind on advertisement:
 
 ### Replay suppression
 
-Side-effect suppression with `recorded-outcome` semantics is the only conforming behavior; `none` is not a value. Stated in replay.md §Suppression and §"The effect-seam manifest"; the `replay-side-effect-suppression` scenario witnesses it.
+`recorded-outcome` suppression is the only conforming behavior; `none` is not a value (replay.md §Suppression, §"The effect-seam manifest"; `replay-side-effect-suppression`).
 
 ### Webhook durability
 
-Durable delivery means retries per the advertised policy with backoff, dead-letter on exhaustion, and at-least-once delivery; best-effort is not a conforming delivery mode. Stated in webhooks.md §Durability; the `webhook-durable-delivery` scenario witnesses it.
+Retries per the advertised policy with backoff, dead-letter on exhaustion, and at-least-once delivery (webhooks.md §Durability; `webhook-durable-delivery`).
 
 ### Approver enforcement
 
-A resolver not in the list, group, or role MUST be refused; `refKinds[]` stays a facet. Stated in interrupt.md §"Approver enforcement"; the `approver-enforced` scenario witnesses it.
+A resolver not in the list, group, or role MUST be refused; `refKinds[]` stays a facet (interrupt.md §"Approver enforcement"; `approver-enforced`).
 
 ### Sandbox isolation
 
@@ -60,13 +60,13 @@ A host that executes third-party packs:
 - MUST enforce the eight `node-pack-sandbox-*` invariants of `SECURITY/invariants.yaml`: `no-process`, `network-gated`, `fs-gated`, `no-env`, `timeout`, `memory-cap`, `isolated-context`, `no-eval`;
 - MUST advertise `sandbox.isolationModel ∈ wasm | process | container | vm` (`spec/v2/facets/sandbox.schema.json`). `node:vm` is not a value. `sandbox.isolationModel` names the mechanism and never relaxes the property.
 
-A host that cannot isolate MUST NOT execute third-party packs; it MAY register and validate them. The `no-eval` row stays reference-impl in `ext/sandbox-runtime-notes`. The `pack-isolation` scenario drives the eight legs.
+A host that cannot isolate MUST NOT execute third-party packs; it MAY register and validate them. The `no-eval` row stays reference-impl in `ext/sandbox-runtime-notes`; `pack-isolation` drives the eight legs.
 
-The remaining `sandbox` facets name the bound each invariant already carries: `allowedHostCalls` is the host-call allowlist `network-gated` and `fs-gated` enforce, `memoryLimitBytes` is the ceiling of `memory-cap`, and `wallClockLimitMs` is the ceiling of `timeout`. An advertised bound MUST be enforced; none of the three gates the invariant, which binds whether or not the facet is advertised.
+`allowedHostCalls` (for `network-gated`, `fs-gated`), `memoryLimitBytes` (`memory-cap`) and `wallClockLimitMs` (`timeout`) name bounds the invariants already carry. An advertised bound MUST be enforced; none gates its invariant, which binds whether or not the facet is advertised.
 
 ### Compensation
 
-A host that advertises `compensation` MUST serve `GET /runs/{runId}/compensation` (`schemas/v2/compensation-projection.schema.json`), keyed on the node and attempt the operator family uses. The read projection and the operator action family are the canonical wire.
+A host that advertises `compensation` MUST serve `GET /runs/{runId}/compensation` (`schemas/v2/compensation-projection.schema.json`), keyed on the node and attempt the operator family uses.
 
 The facets bind the policy shape (`schemas/v2/compensation-policy.schema.json`):
 
@@ -76,7 +76,7 @@ The facets bind the policy shape (`schemas/v2/compensation-policy.schema.json`):
 
 ### Layer-2 effect identity
 
-Layer-2 effect identity is keyed on business identity; the activity recipe is the fallback. A host that advertises `idempotency` MUST serve `GET /runs/{runId}/effects`; the keying, provider-key, retention and projection rules are idempotency.md §"Layer 2: effect identity".
+A host that advertises `idempotency` MUST serve `GET /runs/{runId}/effects`; the keying, provider-key, retention and projection rules are idempotency.md §"Layer 2: effect identity".
 
 ### Onward hops
 
@@ -101,11 +101,11 @@ A host advertising `auditLogIntegrity` MUST keep an audit log a privileged insid
 - MUST sign a checkpoint anchoring at most `checkpointIntervalEntries` entries, and anchor an entry within `checkpointIntervalSeconds` of its append. The range, leaves, root and signature are [RFC 0218 §A](https://github.com/openwop/openwop/blob/main/RFCS/0218-audit-checkpoint-preimage.md); the signature is Ed25519 (`checkpointSignatureAlgorithm`) under `checkpointPublicKey`, a key used for no other surface;
 - MUST serve `GET /audit/verify` (scope `audit:read`), answering `schemas/v2/audit-verify-result.schema.json` with every checkpoint whose `atSequence` is in the range, ascending, and the anomalies of [RFC 0218 §C](https://github.com/openwop/openwop/blob/main/RFCS/0218-audit-checkpoint-preimage.md). A host that does not advertise the family MAY omit the operation.
 
-The `audit-log-integrity` and `audit-checkpoint-signature` scenarios witness the verify body, each signature, and the cadence. The root is not witnessable from outside, because entries are not on the wire; tamper detection is a host-internal test.
+`audit-log-integrity` and `audit-checkpoint-signature` witness the verify body, each signature, and the cadence.
 
 ## Relaxations
 
-A relaxation, where one is legitimate — a development deployment, a single-tenant appliance — is an operator setting, never a discovery field. Every relaxation a host runs under MUST be recorded in its certification bundle as `host.relaxations[]` (`schemas/v2/certification-bundle.schema.json`): `{ obligation, durability, reason }`, `durability ∈ session | deployment | persisted`.
+A legitimate relaxation (a development deployment, a single-tenant appliance) is an operator setting, never a discovery field. Every relaxation a host runs under MUST be recorded in its certification bundle as `host.relaxations[]` (`schemas/v2/certification-bundle.schema.json`): `{ obligation, durability, reason }`, `durability ∈ session | deployment | persisted`.
 
 | Durability | Meaning |
 | --- | --- |
