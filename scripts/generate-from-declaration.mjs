@@ -210,6 +210,20 @@ const EXECUTION_MODEL_REWRITES = [
    'at v2 the value MUST be one of them (`execution.md` §multiAgent, level 2). The v2 interrupt `kind` is closed, so an `x-host-` value promises an interrupt the payload schema rejects; the pattern remains only so a v1-era document validates, and is removed at 3.0.'],
   [' Hosts using vendor kinds MUST also publish a non-normative kind-mapping document per RFC 0044 §C.', ''],
 ];
+// RFC 0255 — v1 seed prose naming a family the AI Envelope deletion removed.
+// Applied to EVERY description of the built schema (rewriteDeletedNames), not
+// only through projectV1FacetSchema, which never descends into
+// additionalProperties: the artifactTypes sentence sits under types.*.
+const RFC_0255_REWRITES = [
+  [' Decoupled from `schemaVersions`, which is a version DECLARATION only.', ''],
+];
+function rewriteDeletedNames(node) {
+  if (Array.isArray(node)) return node.map(rewriteDeletedNames);
+  if (!node || typeof node !== 'object') return node;
+  const out = Object.fromEntries(Object.entries(node).map(([k, v]) => [k, rewriteDeletedNames(v)]));
+  if (typeof out.description === 'string') for (const [from, to] of RFC_0255_REWRITES) if (out.description.includes(from)) { out.description = out.description.split(from).join(to); RFC_0228_USED.add(from); }
+  return out;
+}
 const RFC_0228_USED = new Set();
 // Seeded descriptions that name a v1 route. v2 defines no protocol path for
 // portability export or import (spec/v2/core/portability.md §Routes); `GET
@@ -407,9 +421,9 @@ function buildAliases() {
   return { $comment: 'GENERATED (RFC 0177 §B.2) from the registry peer-dependency key inventory recorded in evidence/cross-repo-manifests.json — never from a sibling checkout. A row with unresolved:true is a key no declaration family or facet explains; check-declaration.mjs fails on it. A row with deletedFamily names a family a steward deletion removed (RFC 0255 §D); it fails only while currentUses, its count among each pack\'s newest non-yanked v2 version, is above 0.', generatedFrom: ['spec/v2/declaration.json', 'evidence/cross-repo-manifests.json#registryPeerDependencyKeys'], rows };
 }
 
-const outputs = [[OUT_SCHEMA, buildSchema()], [OUT_PROFILES, buildProfiles()], [OUT_ALIASES, buildAliases()]];
+const outputs = [[OUT_SCHEMA, rewriteDeletedNames(buildSchema())], [OUT_PROFILES, buildProfiles()], [OUT_ALIASES, buildAliases()]];
 {
-  const unused = [...RFC_0228_REWRITES, ...EXECUTION_MODEL_REWRITES].filter(([from]) => !RFC_0228_USED.has(from));
+  const unused = [...RFC_0228_REWRITES, ...EXECUTION_MODEL_REWRITES, ...RFC_0255_REWRITES].filter(([from]) => !RFC_0228_USED.has(from));
   if (unused.length) { console.error(`generate-from-declaration FAILED — ${unused.length} RFC 0228 or executionModel rewrite(s) matched no seeded description:\n  ${unused.map(([f]) => f.slice(0, 100)).join('\n  ')}`); process.exit(1); }
 }
 const render = (o) => JSON.stringify(o, null, 2) + '\n';

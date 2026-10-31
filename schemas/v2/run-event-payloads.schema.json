@@ -1810,7 +1810,7 @@
     },
     "capBreached": {
       "type": "object",
-      "description": "Emitted when a CapabilityLimit is exceeded. Protocol-level limits use the engine kinds (clarificationRounds / schemaRounds / envelopesPerTurn / maxNodeExecutions). RFC 0008 \u00a7K WASM-runtime caps use the wasm-* kinds (memory ceiling, fuel exhaustion, execution-time wall-clock). RFC 0058 run-execution bounds use the run-scoped run-duration (wall-clock timeout; limit=resolvedMs, observed=elapsedMs) and loop-iterations (agent-loop ceiling; limit=resolvedMax, observed=iterationCount) kinds.",
+      "description": "Emitted when a CapabilityLimit is exceeded. Protocol-level limits use the engine kinds (`clarification`, `node-executions`); `schema` and `envelopes` stay readable in stored logs from before RFC 0255. RFC 0008 \u00a7K WASM-runtime caps use the wasm-* kinds (memory ceiling, fuel exhaustion, execution-time wall-clock). RFC 0058 run-execution bounds use the run-scoped run-duration (wall-clock timeout; limit=resolvedMs, observed=elapsedMs) and loop-iterations (agent-loop ceiling; limit=resolvedMax, observed=iterationCount) kinds.",
       "required": [
         "kind",
         "limit",
@@ -2215,7 +2215,7 @@
             "trusted",
             "untrusted"
           ],
-          "description": "Aggregate trust marker. `untrusted` iff ANY contributing input was tagged untrusted per RFC 0020 \u00a7D / AIEnvelope.meta.contentTrust propagation. When `untrusted`, the composed bodies MUST contain `<UNTRUSTED>...</UNTRUSTED>` markers around the untrusted segments."
+          "description": "Aggregate trust marker. `untrusted` iff ANY contributing input was tagged untrusted per RFC 0020 \u00a7D. When `untrusted`, the composed bodies MUST contain `<UNTRUSTED>...</UNTRUSTED>` markers around the untrusted segments."
         },
         "causationHostId": {
           "type": "string",
@@ -2426,7 +2426,7 @@
             "string",
             "null"
           ],
-          "description": "Diagnostic text from the failing attempt. MUST NOT contain prompt or response substring excerpts; hosts SHOULD limit to validator output (e.g., \"required field 'steps' missing\"). Subject to SR-1 redaction per `ai-envelope.md` \u00a7\"Redaction (SR-1 carry-forward)\"."
+          "description": "Diagnostic text from the failing attempt. MUST NOT contain prompt or response substring excerpts; hosts SHOULD limit to validator output (e.g., \"required field 'steps' missing\"). Subject to the host's secret redaction (`host-services.md` \u00a7Structured output)."
         }
       }
     },
