@@ -149,7 +149,9 @@ if (dueRetirementRows.length > 0) {
     }
   }
 }
-const licensedBy = (site) => licences.find((l) => site === l.pointer || site.startsWith(`${l.pointer}/`)) ?? null;
+// An enum member is licensed only by a pointer naming that member (`<site>=<value>`),
+// so a row deleting three error codes cannot license deleting a fourth.
+const licensedBy = (site, value) => licences.find((l) => site === l.pointer || site.startsWith(`${l.pointer}/`) || (value !== undefined && l.pointer === `${site}=${String(value).replace(/^"|"$/g, '')}`)) ?? null;
 
 // ── removals ────────────────────────────────────────────────────────────────
 const removedTuples = [...before].filter((s) => !after.has(s)).map(parse);
@@ -164,7 +166,7 @@ const licensed = [];
 for (const t of removedUnion) {
   const site = siteOf(t);
   if (isUnderARemovedProperty(site)) continue;
-  const lic = licensedBy(site);
+  const lic = licensedBy(site, t.kind === 'enum-member' ? t.value : undefined);
   if (lic) { licensed.push(`${t.kind} ${site}${t.kind === 'enum-member' ? ` = ${t.value}` : ''} — licensed by ${lic.why}`); continue; }
   failures.push(`${t.kind} removed without a due retirement row or a corrections.json row: ${site}${['enum-member'].includes(t.kind) ? ` = ${t.value}` : ''}`);
 }

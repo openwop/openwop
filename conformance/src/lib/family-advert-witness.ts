@@ -1,13 +1,14 @@
 /**
  * The advertisement-shape witness at major 2. Wave 1: the claims-check AI
- * families `envelopes`, `limits` (the three envelope caps), `modelCapabilities`
- * and `aiProviders`. Wave 2: the record and facet shapes of `selfHostedRunner`,
+ * families `limits` (`clarificationRounds`), `modelCapabilities` and
+ * `aiProviders`, whose structured-output facets came from the `envelopes`
+ * family RFC 0255 deleted. Wave 2: the record and facet shapes of `selfHostedRunner`,
  * `credentials`, `authorization`, `providerUsage`, `subWorkflow`, `scheduling`,
- * `artifactTypes`, `aiEnvelope`, `deadLetter` and `portability`. Wave 3: the
+ * `artifactTypes`, `deadLetter` and `portability`. Wave 3: the
  * families no host serves at v2 — `dataResidency`, `multiPartyConversation`,
  * `nodePackRuntimes`, `uiPlugins`, `purposePropagation` and `agentRuntime` get
  * facet legs; `conversationTurnModelProvenance`, `channelPresence`,
- * `nondeterminismPolicy`, `promptLibrary` and `envelopeContracts` carry no facet
+ * `nondeterminismPolicy` and `promptLibrary` carry no facet
  * a host-binding v2 rule gives meaning to, so they get the record leg only.
  * Wave 4 (suite 2.46.3): the `multiAgent.executionModel` sub-blocks a version
  * level requires and the escalation kind it may name, and `auth.subjectLinkKey`
@@ -71,12 +72,12 @@ function onFamily(profile: MajorProfile, discovery: unknown, family: string, leg
 
 /** The record as a whole against its seat in the capabilities schema. Catches every v1 shape v2 retired (`supported`, `selfHosted[]`, the per-provider `authModes` map, …). */
 export type AdvertFamily =
-  | 'envelopes' | 'modelCapabilities' | 'aiProviders'
+  | 'modelCapabilities' | 'aiProviders'
   | 'selfHostedRunner' | 'credentials' | 'authorization' | 'providerUsage' | 'subWorkflow'
-  | 'scheduling' | 'artifactTypes' | 'aiEnvelope' | 'deadLetter' | 'portability'
+  | 'scheduling' | 'artifactTypes' | 'deadLetter' | 'portability'
   | 'dataResidency' | 'conversationTurnModelProvenance' | 'multiPartyConversation' | 'channelPresence'
   | 'nodePackRuntimes' | 'uiPlugins' | 'purposePropagation' | 'nondeterminismPolicy'
-  | 'agentRuntime' | 'promptLibrary' | 'envelopeContracts'
+  | 'agentRuntime' | 'promptLibrary'
   | 'multiAgent' | 'auth' | 'agents';
 
 export function recordSchemaLeg(profile: MajorProfile, discovery: unknown, family: AdvertFamily, doc: string): AdvertOutcome {
@@ -84,86 +85,72 @@ export function recordSchemaLeg(profile: MajorProfile, discovery: unknown, famil
 }
 
 // ---------------------------------------------------------------------------
-// envelopes — spec/v2/core/events.md §`envelopes`
+// aiProviders structured output — spec/v2/core/host-services.md §Structured output
 // ---------------------------------------------------------------------------
 
-const ENV_DOC = 'events.md §envelopes';
-const ENV = '/properties/envelopes/properties';
+const SO_DOC = 'host-services.md §Structured output';
+const SO = '/properties/aiProviders/properties';
 
-/** `envelopes.reasoning`: an object whose `promptDirective` is one of three values; no `supported` seat at v2. */
-export const envelopesReasoningLeg = (p: MajorProfile, d: unknown): AdvertOutcome => onFamily(p, d, 'envelopes', (rec) => {
+/** `aiProviders.reasoning`: an object whose `promptDirective` is one of three values. */
+export const structuredOutputReasoningLeg = (p: MajorProfile, d: unknown): AdvertOutcome => onFamily(p, d, 'aiProviders', (rec) => {
   const r = rec['reasoning'];
-  if (r === undefined) return inapplicable('the host does not advertise envelopes.reasoning (optional)');
-  const out = [bySchema(`${ENV}/reasoning`, r, ENV_DOC, 'envelopes.reasoning')];
+  if (r === undefined) return inapplicable('the host does not advertise aiProviders.reasoning (optional)');
+  const out = [bySchema(`${SO}/reasoning`, r, SO_DOC, 'aiProviders.reasoning')];
   if (isRecord(r) && r['promptDirective'] !== undefined) {
-    out.push({ ok: ['mandatory', 'advisory', 'off'].includes(String(r['promptDirective'])), doc: ENV_DOC, message: `envelopes.reasoning.promptDirective MUST be mandatory, advisory or off (got ${JSON.stringify(r['promptDirective'])})` });
+    out.push({ ok: ['mandatory', 'advisory', 'off'].includes(String(r['promptDirective'])), doc: SO_DOC, message: `aiProviders.reasoning.promptDirective MUST be mandatory, advisory or off (got ${JSON.stringify(r['promptDirective'])})` });
   }
   return observed(out);
 });
 
-/** `envelopes.tierOneSubsetCompliance`: one of strict, warn, off. */
-export const envelopesTierOneLeg = (p: MajorProfile, d: unknown): AdvertOutcome => onFamily(p, d, 'envelopes', (rec) => {
+/** `aiProviders.tierOneSubsetCompliance`: one of strict, warn, off. */
+export const structuredOutputTierOneLeg = (p: MajorProfile, d: unknown): AdvertOutcome => onFamily(p, d, 'aiProviders', (rec) => {
   const v = rec['tierOneSubsetCompliance'];
-  if (v === undefined) return inapplicable('the host does not advertise envelopes.tierOneSubsetCompliance (optional)');
-  return observed([bySchema(`${ENV}/tierOneSubsetCompliance`, v, ENV_DOC, 'envelopes.tierOneSubsetCompliance')]);
+  if (v === undefined) return inapplicable('the host does not advertise aiProviders.tierOneSubsetCompliance (optional)');
+  return observed([bySchema(`${SO}/tierOneSubsetCompliance`, v, SO_DOC, 'aiProviders.tierOneSubsetCompliance')]);
 });
 
-/** The six reliability events by their v2 names, and the four v1 dotted names v2 accepts as aliases until 3.0 (RFC 0228 §G). */
+/** The six reliability events, by their v2 names. */
 export const RELIABILITY_EVENTS = ['envelope.retry-attempted', 'envelope.retry-exhausted', 'envelope.refusal', 'envelope.truncated', 'envelope.nl-to-format-engaged', 'envelope.recovery-applied'] as const;
-export const RELIABILITY_ALIASES: Readonly<Record<string, string>> = {
-  'envelope.retry.attempted': 'envelope.retry-attempted',
-  'envelope.retry.exhausted': 'envelope.retry-exhausted',
-  'envelope.nlToFormat.engaged': 'envelope.nl-to-format-engaged',
-  'envelope.recovery.applied': 'envelope.recovery-applied',
-};
-/** A listed reliability event by its v2 name: an alias folds to its hyphenated equivalent; anything else is returned unchanged. */
-export const canonicalReliabilityEvent = (e: string): string => RELIABILITY_ALIASES[e] ?? e;
 
-/**
- * `envelopes.reliability`: `events[]` names only reliability events (v2 name
- * or v1 alias), and — after folding aliases — includes the two MUST-tier ones;
- * `maxRetryAttempts` is an integer in [1, 16].
- */
-export const envelopesReliabilityLeg = (p: MajorProfile, d: unknown): AdvertOutcome => onFamily(p, d, 'envelopes', (rec) => {
+/** `aiProviders.reliability`: `events[]` names only reliability events and includes the two MUST-tier ones. */
+export const structuredOutputReliabilityLeg = (p: MajorProfile, d: unknown): AdvertOutcome => onFamily(p, d, 'aiProviders', (rec) => {
   const r = rec['reliability'];
-  if (r === undefined) return inapplicable('the host does not advertise envelopes.reliability (optional)');
-  const out = [bySchema(`${ENV}/reliability`, r, ENV_DOC, 'envelopes.reliability')];
+  if (r === undefined) return inapplicable('the host does not advertise aiProviders.reliability (optional)');
+  const out = [bySchema(`${SO}/reliability`, r, SO_DOC, 'aiProviders.reliability')];
   const events = isRecord(r) ? r['events'] : undefined;
   if (!Array.isArray(events)) {
-    out.push({ ok: false, doc: ENV_DOC, message: `a host advertising envelopes.reliability MUST list the events it emits in reliability.events[] (got ${JSON.stringify(events)})` });
+    out.push({ ok: false, doc: SO_DOC, message: `a host advertising aiProviders.reliability MUST list the events it emits in reliability.events[] (got ${JSON.stringify(events)})` });
     return observed(out);
   }
-  const canonical = new Set(events.filter((e): e is string => typeof e === 'string').map(canonicalReliabilityEvent));
   for (const e of events) {
-    const name = typeof e === 'string' ? canonicalReliabilityEvent(e) : undefined;
-    out.push({ ok: name !== undefined && (RELIABILITY_EVENTS as readonly string[]).includes(name), doc: ENV_DOC, message: `reliability.events[] MUST name only reliability events, by v2 name or v1 alias (got ${JSON.stringify(e)})` });
+    out.push({ ok: typeof e === 'string' && (RELIABILITY_EVENTS as readonly string[]).includes(e), doc: SO_DOC, message: `reliability.events[] MUST name only reliability events (got ${JSON.stringify(e)})` });
   }
   for (const must of ['envelope.retry-exhausted', 'envelope.refusal']) {
-    out.push({ ok: canonical.has(must), doc: ENV_DOC, message: `a host advertising envelopes.reliability MUST emit and list ${must} (aliases folded; listed: ${JSON.stringify(events)})` });
+    out.push({ ok: events.includes(must), doc: SO_DOC, message: `a host advertising aiProviders.reliability MUST emit and list ${must} (listed: ${JSON.stringify(events)})` });
   }
   return observed(out);
 });
 
-/** `envelopes.reliability.completion`: `distinguishesTruncation` is a boolean; `truncationBudgetMultiplier` a number in [1, 8]. */
-export const envelopesCompletionLeg = (p: MajorProfile, d: unknown): AdvertOutcome => onFamily(p, d, 'envelopes', (rec) => {
+/** `aiProviders.reliability.completion`: `distinguishesTruncation` is a boolean; `truncationBudgetMultiplier` a number in [1, 8]. */
+export const structuredOutputCompletionLeg = (p: MajorProfile, d: unknown): AdvertOutcome => onFamily(p, d, 'aiProviders', (rec) => {
   const r = rec['reliability'];
   const c = isRecord(r) ? r['completion'] : undefined;
-  if (c === undefined) return inapplicable('the host does not advertise envelopes.reliability.completion (optional)');
-  const out = [bySchema(`${ENV}/reliability/properties/completion`, c, ENV_DOC, 'envelopes.reliability.completion')];
+  if (c === undefined) return inapplicable('the host does not advertise aiProviders.reliability.completion (optional)');
+  const out = [bySchema(`${SO}/reliability/properties/completion`, c, SO_DOC, 'aiProviders.reliability.completion')];
   const dt = isRecord(c) ? c['distinguishesTruncation'] : undefined;
-  out.push({ ok: typeof dt === 'boolean', doc: ENV_DOC, message: `reliability.completion.distinguishesTruncation MUST be a boolean (got ${JSON.stringify(dt)})` });
+  out.push({ ok: typeof dt === 'boolean', doc: SO_DOC, message: `reliability.completion.distinguishesTruncation MUST be a boolean (got ${JSON.stringify(dt)})` });
   return observed(out);
 });
 
 // ---------------------------------------------------------------------------
-// limits — spec/v2/core/runs.md §Limits: the three envelope caps
+// limits — spec/v2/core/runs.md §Limits: the cap every record carries
 // ---------------------------------------------------------------------------
 
-export const ENVELOPE_CAPS = ['clarificationRounds', 'schemaRounds', 'envelopesPerTurn'] as const;
-export type EnvelopeCap = (typeof ENVELOPE_CAPS)[number];
+export const ALWAYS_CARRIED_CAPS = ['clarificationRounds'] as const;
+export type AlwaysCarriedCap = (typeof ALWAYS_CARRIED_CAPS)[number];
 
 /** `limits.<cap>`: present (runs.md: "`limits` always carries" it) and a non-negative integer. */
-export const limitsCapLeg = (p: MajorProfile, d: unknown, cap: EnvelopeCap): AdvertOutcome => onFamily(p, d, 'limits', (rec) => {
+export const limitsCapLeg = (p: MajorProfile, d: unknown, cap: AlwaysCarriedCap): AdvertOutcome => onFamily(p, d, 'limits', (rec) => {
   const v = rec[cap];
   const doc = 'runs.md §Limits';
   if (v === undefined) return observed([{ ok: false, doc, message: `limits MUST always carry ${cap} (absent)` }]);

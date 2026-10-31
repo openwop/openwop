@@ -16,13 +16,13 @@ A manifest's `engines.openwop` MUST match the grammar in `schemas/v2/node-pack-m
 - `pack_runtime_requirement_unmet` remains a runtime-requirement code and MUST NOT be used for the protocol major.
 - Both checks MUST run at install on every publication path — the canonical registry, a vendor registry's write API, and a mirror ingest.
 
-The range is a claim about the pack's own surface, not about run semantics. Admitting major M asserts that:
+The range is a claim about the pack's own surface. Admitting major M asserts that:
 
 - the manifest validates against the `schemas/v2/` manifest schema for its `kind`;
 - every `peerDependencies` key resolves (§"Peer-dependency identifiers");
 - the version carries a §Signing signature.
 
-Each conjunct keeps its own refusal code. A mechanical ceiling bump is not a verification.
+Each conjunct keeps its own refusal code.
 
 ## The `packs` capability
 
@@ -59,7 +59,7 @@ Facet paths are not identifiers: a pack requires a family by its key and names f
 
 ## The alias table
 
-`spec/v2/peer-dependency-aliases.json` is generated from the declaration file and the published-manifest inventory, never hand-kept. It is how a v1-era key reaches a v2 family through the overlap. Each row is `{ alias, family, facets?, publishedUses, removalTrigger }`.
+`spec/v2/peer-dependency-aliases.json` is generated from the declaration file and the published-manifest inventory, never hand-kept. Each row is `{ alias, family, facets?, publishedUses, removalTrigger }`.
 
 A v2 host MAY resolve an alias through the table during the overlap, and MUST NOT resolve one after v1 end-of-support (`removalTrigger: v1-end-of-support`).
 
@@ -82,7 +82,6 @@ Every pack-authored document MUST admit `patternProperties` `^(openwop-|x-|vendo
 `signing` on a version manifest (`schemas/v2/registry-version-manifest.schema.json`) is the closed object `{ keyId, scheme }`, both REQUIRED:
 
 - **`scheme`** MUST be `ed25519-canonical-json`: a detached 64-byte Ed25519 signature over the RFC 8785 (JCS) bytes of `pack.json` inside a deterministic tarball. The input MUST satisfy `conformance.md` §"Canonical JSON".
-- **`keyId`** is the signing key id.
 - A block carrying `method`, `publicKeyRef` or `signatureRef` fails validation.
 
 The same block applies to a **bare manifest** — the `pack.json` inside the tarball, which is the document the signature covers. `signing` is OPTIONAL there; when present it MUST be the identical closed `{ keyId, scheme }` object, on every bare manifest kind.

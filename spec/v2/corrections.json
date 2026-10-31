@@ -2,7 +2,7 @@
   "$schema": "./corrections.schema.json",
   "$comment": "RFC 0197 §A.4 — v2 Class-3 corrections. Seeded with P3 only. The 2.8.2 removal of `workflowChainPacks.deferredParameters` and `.hostExpansionSeam` (P1) is deliberately NOT seeded: a committed bundle carried `deferredParameters` and then failed `capabilities-root-closed`, so the row would fail R3 — which is the point. P1 is recorded as the motivating defect in COMPATIBILITY.md §3a, not laundered into this register.",
   "version": 1,
-  "updated": "2026-09-30",
+  "updated": "2026-10-31",
   "rows": [
     {
       "id": "openwop.correction.v2.1",
@@ -76,6 +76,45 @@
         "manifests": 0,
         "manifestsScanned": 157,
         "note": "The prior shape is behavioral: an event failing a `required` verification moved its subscription to `dead-lettered` with `state.changed.reason: signature-invalid` (v1 trigger-bridge.md §F.2 and the registration schema's `verification` description; v2 webhooks.md §Inbound triggers read the same way). Host census, read-only, 2026-09-30: openwop-app 5ee8cc064 returns `rejected` on a failed check and transitions a subscription only on `retry-exhausted`; MyndHyve 02e5d7fd2 performs no inbound verification (no `ingestion.verification[]`) and has no `dead-lettered` subscription state; no openwop-examples a6d61a6 reference host implements trigger ingestion. So no host implements the prior behavior and nothing conforming stops conforming. Bundle leg: 0 of 18 committed evidence/v2-host-bundles/*.json carry a trigger-bridge row (every trigger scenario is major-1 only); the six MyndHyve bundles advertise `triggerBridge.ingestion` without `verification[]`. Registry leg: a verification policy is a registration-request field, not a manifest field; 0 of 157 pack.json documents on openwop-registry origin/main (3b85bb4) carry one. Only a description changed, so check-v2-surface-monotone sees no change. Had a host implemented the prior rule, COMPATIBILITY.md §3's safety-fix exception would apply: the prior rule is an unauthenticated denial of service that no additive option closes."
+      }
+    },
+    {
+      "id": "openwop.correction.v2.5",
+      "date": "2026-10-31",
+      "class": "steward-deletion",
+      "rfc": "0255",
+      "pointers": [
+        "schemas/v2/capabilities.schema.json#/aiEnvelope",
+        "schemas/v2/capabilities.schema.json#/supportedEnvelopes",
+        "schemas/v2/capabilities.schema.json#/schemaVersions",
+        "schemas/v2/capabilities.schema.json#/envelopeStrictness",
+        "schemas/v2/capabilities.schema.json#/envelopeContracts",
+        "schemas/v2/capabilities.schema.json#/envelopes",
+        "schemas/v2/capabilities.schema.json#/limits/schemaRounds",
+        "schemas/v2/capabilities.schema.json#/limits/envelopesPerTurn",
+        "schemas/v2/ai-envelope.schema.json#",
+        "schemas/v2/a2ui-surface-delta-frame.schema.json#",
+        "schemas/v2/envelopes/clarification.request.schema.json#",
+        "schemas/v2/envelopes/error.schema.json#",
+        "schemas/v2/envelopes/media.audio.schema.json#",
+        "schemas/v2/envelopes/media.file.schema.json#",
+        "schemas/v2/envelopes/media.image.schema.json#",
+        "schemas/v2/envelopes/schema.request.schema.json#",
+        "schemas/v2/envelopes/schema.response.schema.json#",
+        "schemas/v2/envelopes/ui.a2ui-surface.schema.json#",
+        "schemas/v2/workflow-definition.schema.json#/nodes/[]/envelopeContract",
+        "schemas/v2/node-pack-manifest.schema.json#/nodes/[]/envelopeContractRef",
+        "schemas/v2/prompt-template.schema.json#/modelHints/envelopeType",
+        "schemas/v2/error-envelope.schema.json#/error=envelope_correlation_conflict",
+        "schemas/v2/error-envelope.schema.json#/error=unknown_envelope_kind",
+        "schemas/v2/error-envelope.schema.json#/error=unknown_schema_version"
+      ],
+      "compatibilityEntry": "the AI Envelope, deleted from v2 by steward decision",
+      "priorShapeCensus": {
+        "bundles": 56,
+        "manifests": 13,
+        "manifestsScanned": 656,
+        "note": "Bundle leg: re-measured by check-v2-retirement through bundlesCarrying for every discovery-visible pointer; the typed count is that scan. The ext family a2uiSurface had no capabilities seat, so no bundle can carry it. Registry leg, openwop-registry origin/main f228326, read-only 2026-10-30: 13 of 656 published version manifests (registry/v1 and registry/v2) name a deleted surface. Eleven are vendor.myndhyve packs whose peerDependencies name aiEnvelope or host.aiEnvelope; their current versions (brand, kanban and web-research 2.0.0, registry#103) do not, and vendor.myndhyve.ai 1.0.1 and 1.0.2 are yanked, so no pack's newest non-yanked v2 version needs a deleted family (evidence/cross-repo-manifests.json registryCurrentPeerDependencyKeys). The other two are vendor.openwop.workflow-chain-sample 1.0.0 and 1.0.1, which carry envelopeType only inside opaque node config that no schema reads. Production census of the deleted run surfaces (RFC 0255 Motivation): 0 envelope_correlations rows, 0 fenced emissions in invocation_log, 4 stored ui.a2ui-surface events. Those 4 stay readable: run-event-payloads keeps the event type, and no persisted-data reader is removed."
       }
     }
   ]

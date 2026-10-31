@@ -137,7 +137,7 @@ Each scenario file records its disposition and assertion count in `<report-dir>/
 
 ## What's Covered
 
-The current suite has 666 scenario files under `src/scenarios/`. By target major ([`scenario-majors.json`](./scenario-majors.json)): 226 files run against a v2 host and 455 against a v1 host; 15 of them run at both.
+The current suite has 663 scenario files under `src/scenarios/`. By target major ([`scenario-majors.json`](./scenario-majors.json)): 223 files run against a v2 host and 455 against a v1 host; 15 of them run at both.
 
 The v2 scenarios (`src/scenarios/v2-*.test.ts`) cover, by area:
 
@@ -156,7 +156,7 @@ The v2 scenarios (`src/scenarios/v2-*.test.ts`) cover, by area:
 | Durability and execution | Recovery after a kill, effect seams that never re-fire, execution bounds, budgets | `v2-durability-recovery`, `v2-effect-seam-no-refire`, `v2-run-execution-bounds`, `v2-budget-enforcement` |
 | Packs and composition | Pack isolation, peer dependencies, sub-workflow dispatch and input mapping, chain pins, WASM memory caps and ABI rejection, registry lifecycle | `v2-pack-isolation`, `v2-subworkflow-linkage`, `v2-chain-pin-exact`, `v2-wasm-memory-cap`, `v2-wasm-abi-reject` |
 | AI, prompts and agents | AI envelopes, providers and usage, prompt libraries and rendering, model capabilities, conversations, multi-party councils | `v2-prompt-render-deterministic`, `v2-provider-usage-emission`, `v2-conversation-turn-parts`, `v2-multi-party-council` |
-| Interop | A2A agent cards and operation map, MCP mounts and tasks, A2UI v0.9 surfaces, trace context | `v2-a2a-operation-map`, `v2-mcp-mount-map`, `v2-a2ui-v09-surface`, `v2-interop-trace-context` |
+| Interop | A2A agent cards and operation map, MCP mounts and tasks, trace context | `v2-a2a-operation-map`, `v2-mcp-mount-map`, `v2-interop-trace-context` |
 | Family advertisements | Each optional capability family's discovery record validates against its schema seat | `v2-*-advertisement` |
 | Certification | Signed v3 bundles, recorded relaxations, corpus-coherence rows never entering a bundle | `v2-bundle-v3-signed`, `v2-relaxation-recorded`, `v2-coherence-not-in-bundle` |
 
@@ -166,7 +166,7 @@ Three kinds of scenario share the tree:
 - **Host** checks drive a live host over HTTP.
 - **Gated** checks run only when the host advertises the family, profile or fixture they need, and otherwise record `inapplicable` or `blocked` with a reason. `--require-behavior` turns an advertised-but-unwitnessable behaviour into a failure.
 
-Current source tree: 666 scenario files. [`coverage.md`](./coverage.md) maps each spec document and every OpenAPI operation to its scenarios. [`CHANGELOG.md`](./CHANGELOG.md) records when each scenario landed.
+Current source tree: 663 scenario files. [`coverage.md`](./coverage.md) maps each spec document and every OpenAPI operation to its scenarios. [`CHANGELOG.md`](./CHANGELOG.md) records when each scenario landed.
 
 ## How the 2.x suite is built
 

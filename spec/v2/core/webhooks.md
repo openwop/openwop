@@ -5,7 +5,7 @@
 
 ## Why this exists
 
-A client registers a URL and an event filter once; the host POSTs matching events, signed, as they happen. Durable delivery binds with the surface — a signed event that may be dropped is not a delivery contract.
+A client registers a URL and an event filter once; the host POSTs matching events, signed, as they happen, and durably.
 
 ## Surfaces
 
@@ -20,8 +20,6 @@ On `registerWebhook`, `url` MUST be `https://` and `events[]` MUST be non-empty 
 
 When `registerWebhook` omits `secret`, the host MUST generate one and return it as `secret` in the `201`. That response is the only one that carries it. A supplied secret MUST NOT be echoed.
 
-A `204` from `unregisterWebhook` ends the subscription's deliveries, including retries already scheduled (§Durability).
-
 A subscription MUST receive only events from runs within its tenant scope, and only host events of its tenant; cross-tenant delivery is a protocol violation whatever the filter says (invariant `webhook-cross-tenant-isolation`). `tags` narrows delivery to runs whose options carry an overlapping tag.
 
 ## Delivery
@@ -30,7 +28,7 @@ The delivery envelope is generated from the event's payload definition (events.m
 
 - The body MUST validate against `schemas/v2/webhook-delivery.schema.json`.
 - `workspaceId` is present exactly when `RunSnapshot.owner.workspace` is ([identity.md §1](identity.md)); a host MUST NOT substitute its tenant id for an absent workspace.
-- The envelope's `runId` MUST use the tenant-bound form of [identity.md §5](identity.md), matching the nested event and every response representation, even though no versioned request exists at delivery time.
+- The envelope's `runId` MUST use the tenant-bound form of [identity.md §5](identity.md), matching the nested event and every response representation.
 
 ### Headers
 
@@ -85,11 +83,11 @@ Durable delivery is an obligation of the `webhooks` surface ([security-defaults.
 - after `unregisterWebhook` answers `204`, not start any further attempt for that subscription, including attempts already scheduled for retry (invariant `webhook-unregister-stops-delivery`);
 - dead-letter a `payload_unprojectable` delivery (events.md §Era-2) on the first attempt, never retry it.
 
-Best-effort delivery is not a conforming mode. A `3xx` response is a delivery failure, retried under the same policy. `webhook-durable-delivery` witnesses it.
+A `3xx` response is a delivery failure, retried under the same policy (`webhook-durable-delivery`).
 
 ### Delivery isolation
 
-One subscription's slow or dead receiver MUST NOT delay another subscription's deliveries (invariant `webhook-delivery-isolation`). It constrains when an attempt starts, names no mechanism, and is not met by a sequential loop over a batch.
+One subscription's slow or dead receiver MUST NOT delay another subscription's deliveries (invariant `webhook-delivery-isolation`). A sequential loop over a batch does not meet it.
 
 A host MAY bound concurrent attempts beyond the floor of 8, and SHOULD NOT let one tenant's unanswered attempts occupy capacity another tenant's deliveries need.
 
@@ -99,7 +97,7 @@ An attempt whose request the host had begun sending before `unregisterWebhook` a
 
 ### Dead letters
 
-This is the delivery sink, not the run sink of the `deadLetter` family ([runs.md](runs.md) §Dead letters).
+Not the run sink of the `deadLetter` family ([runs.md](runs.md) §Dead letters):
 
 - A host advertising `webhooks.deadLetter` MUST serve `GET /webhooks/{webhookId}/dead-letters`.
 - A record names a delivery and MUST NOT carry the delivered body, the delivery headers, or the subscription secret.

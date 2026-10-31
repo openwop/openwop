@@ -1,5 +1,5 @@
 {
-  "$comment": "RFC 0169 §A.2/§B.3 — supported: string[] becomes providers[]; imageGeneration/videoGeneration are facets",
+  "$comment": "RFC 0169 §A.2/§B.3 — supported: string[] becomes providers[]; imageGeneration/videoGeneration are facets. RFC 0255 §A moved reasoning, tierOneSubsetCompliance and reliability here from the deleted envelopes family; reliability.events[] carries the v2 names only.",
   "properties": {
     "providers": {
       "type": "array",
@@ -119,6 +119,63 @@
         }
       },
       "additionalProperties": false
+    },
+    "reasoning": {
+      "type": "object",
+      "description": "RFC 0030 §A, moved from the deleted `envelopes` family by RFC 0255 §A. The host's prompt posture for an optional `reasoning` property in a `responseSchema` (host-services.md §Structured output). Absent: no advertisement.",
+      "additionalProperties": false,
+      "properties": {
+        "promptDirective": {
+          "type": "string",
+          "enum": ["mandatory", "advisory", "off"],
+          "description": "Strength of the host's instruction to populate `reasoning`: `mandatory` (firmly worded), `advisory` (the default when absent) or `off` (no instruction; an application that wants it injects its own). A prompt posture, not a refusal contract: a host MUST NOT reject output without `reasoning` whatever this says."
+        }
+      }
+    },
+    "tierOneSubsetCompliance": {
+      "type": "string",
+      "enum": ["strict", "warn", "off"],
+      "description": "RFC 0030 §B, moved from the deleted `envelopes` family by RFC 0255 §A. The host's self-attested posture for the Tier 1 cross-vendor structured-output subset: `strict` (every structured-output schema the host sends a provider passes the subset check), `warn` (it sends non-compliant schemas and logs the violations) or `off` (the default when absent: no attestation)."
+    },
+    "reliability": {
+      "type": "object",
+      "additionalProperties": false,
+      "description": "RFC 0032 §C, moved from the deleted `envelopes` family by RFC 0255 §A. The host emits the structured-output reliability events on the adverse paths in host-services.md §Structured output, and lists the ones it emits in `events[]`.",
+      "properties": {
+        "events": {
+          "type": "array",
+          "items": {
+            "type": "string",
+            "enum": ["envelope.retry-attempted", "envelope.retry-exhausted", "envelope.refusal", "envelope.truncated", "envelope.nl-to-format-engaged", "envelope.recovery-applied"]
+          },
+          "uniqueItems": true,
+          "description": "The reliability events the host emits. A host advertising this facet MUST include `envelope.retry-exhausted` and `envelope.refusal`."
+        },
+        "maxRetryAttempts": {
+          "type": "integer",
+          "minimum": 1,
+          "maximum": 16,
+          "description": "The host's configured retry budget per structured-output call. The suite uses it to build fixtures that reach the retry-exhausted path."
+        },
+        "completion": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": ["distinguishesTruncation"],
+          "description": "RFC 0033 §E. Whether the host routes truncation and schema violation to different retries (host-services.md §Structured output).",
+          "properties": {
+            "distinguishesTruncation": {
+              "type": "boolean",
+              "description": "`true`: truncation retries raise the output budget with no corrective fragment, and schema-violation retries add a corrective fragment with no budget increase. `false` or absent: the host does not distinguish them."
+            },
+            "truncationBudgetMultiplier": {
+              "type": "number",
+              "minimum": 1,
+              "maximum": 8,
+              "description": "The per-attempt output-budget multiplier on a truncation retry; 2 when absent and `distinguishesTruncation` is `true`. Informational."
+            }
+          }
+        }
+      }
     }
   },
   "required": [

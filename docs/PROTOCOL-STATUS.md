@@ -11,7 +11,7 @@
 | JSON Schemas | 82 | `schemas/*.schema.json` |
 | OpenAPI operations | 59 | `api/openapi.yaml` |
 | AsyncAPI version | 3.1.0 | `api/asyncapi.yaml` |
-| Conformance scenario files | 666 | `conformance/src/scenarios/*.test.ts` |
+| Conformance scenario files | 663 | `conformance/src/scenarios/*.test.ts` |
 | RFCs tracked | 252 | `RFCS/[0-9][0-9][0-9][0-9]-*.md`, excluding template |
 
 ## Artifact Versions
@@ -70,10 +70,10 @@
 
 | Status | Count |
 |---|---:|
-| Accepted | 246 |
+| Accepted | 244 |
 | Active | 3 |
 | Draft | 2 |
-| Superseded | 1 |
+| Superseded | 3 |
 
 | RFC | Title | Status |
 |---|---|---|
@@ -266,7 +266,7 @@
 | RFC 0190 | the kernel budget's denominator follows the home gate's acceptance, and its cap grows only as debt is retired | Accepted |
 | RFC 0191 | the reciprocal normative-home marker: why no regex over prose can decide a semantic claim, and what to do instead | Accepted |
 | RFC 0192 | the v2 facet advertisement semantic, the 26 descriptions that still gated on a retired field, and the generator that stops the 27th | Accepted |
-| RFC 0193 | the three envelope families whose payload the v2 generator dropped in silence, the live `stable` record with nothing in it, and the guard that stops the fourth | Accepted |
+| RFC 0193 | the three envelope families whose payload the v2 generator dropped in silence, the live `stable` record with nothing in it, and the guard that stops the fourth | Superseded |
 | RFC 0194 | a run's terminal event is emitted once and ends its forward execution | Accepted |
 | RFC 0195 | a certification bundle's declarations are signed, and an unobserved requirement is `blocked` | Accepted |
 | RFC 0196 | `callbackUrl` is refused or delivered under the egress guard, and an embedded IPv4 address is judged as IPv4 | Accepted |
@@ -282,7 +282,7 @@
 | RFC 0206 | Localized-content locale keys use a case-canonical BCP 47 subset (language, optional script, optional region) instead of `ll(-RR)`, so a host can author content for every tag its `i18n` annex negotiates | Accepted |
 | RFC 0207 | W3C Trace Context carried in MCP `params._meta` and A2A `Message.metadata.openwop` beside the HTTP header that stays conforming, debug-bundle spans that carry `traceId` / `kind` / `status`, and an optional versioned OTel `mcp.*` projection | Accepted |
 | RFC 0208 | v2 homes the A2A and MCP operation mappings | Accepted |
-| RFC 0209 | `ui.a2ui-surface` schema version 2 carries real A2UI v0.9 server-to-client messages (a closed OpenWOP profile of the basic catalog), while the 0.9.1 seven-component tree stays readable forever. The RFC 0114 delta frame is deprecated in v2, and v2 regains the `ui.*`/`media.*` kind carve-out | Accepted |
+| RFC 0209 | `ui.a2ui-surface` schema version 2 carries real A2UI v0.9 server-to-client messages (a closed OpenWOP profile of the basic catalog), while the 0.9.1 seven-component tree stays readable forever. The RFC 0114 delta frame is deprecated in v2, and v2 regains the `ui.*`/`media.*` kind carve-out | Superseded |
 | RFC 0210 | a lane's revocation rule is measured, and a host that only honours `exp` says so | Accepted |
 | RFC 0211 | an A2A error's details are an ErrorInfo, and an A2A interface never answers in the OpenWOP envelope | Accepted |
 | RFC 0212 | canonical JSON is RFC 8785 JCS, and a certification preimage does not depend on the machine that computed it | Accepted |

@@ -1,26 +1,26 @@
 /**
- * a2ui-v09-profile — RFC 0209 §A–§B and §D.14, the server-free legs (corpus gate).
+ * a2ui-v09-profile — the closed A2UI v0.9 profile an interrupt form carries
+ * (RFC 0255 §E, `interrupt.md` §Forms), server-free legs (corpus gate).
  *
- * `ui.a2ui-surface` at per-kind schema version 2 is an ordered run of A2UI v0.9
- * server-to-client messages restricted to a closed OpenWOP profile of the basic
- * catalog. These legs need no host, so they live here and mint their ids into
- * `evidence/corpus-ledger.json` (RFC 0168 §D.1); the seam-gated legs are in
- * `src/scenarios/v2-a2ui-v09-surface.test.ts`.
+ * The `ui.a2ui-surface` envelope kind that first defined this profile (RFC 0209)
+ * is deleted from v2 (RFC 0255 §A). The profile survives in
+ * `schemas/v2/interrupt-form.schema.json`, so these legs judge that file. They
+ * need no host, so they mint their ids into `evidence/corpus-ledger.json`
+ * (RFC 0168 §D.1); the host legs are in `src/scenarios/v2-interrupt-form-rules.test.ts`.
  *
- * Every negative is checked twice. It must fail the profile, AND it must pass a
- * copy of the profile with exactly the restriction under test removed. The
- * second check is what makes the row able to fail: a negative that the profile
+ * Every negative is checked twice. It must fail the form schema, AND it must pass
+ * a copy of the schema with exactly the restriction under test removed. The
+ * second check is what makes the row able to fail: a negative that the schema
  * refuses for some unrelated reason (a typo in the fixture, a missing required
- * field) passes the first check and fails the second. Where the RFC says
- * upstream A2UI accepts a negative, that is asserted too — it is the evidence
- * that the profile, not A2UI, is doing the refusing.
+ * field) passes the first check and fails the second. Where upstream A2UI
+ * accepts a negative, that is asserted too — it is the evidence that the
+ * profile, not A2UI, is doing the refusing.
  *
  * Upstream is the three a2ui.org files vendored under
  * `fixtures/upstream/a2ui-v0.9/`, pinned by SHA-256 (RFC 0209 §References).
  *
- * @see RFCS/0209-v2-a2ui-surfaces-are-a2ui-v0-9.md
- * @see spec/v2/ext/a2uiSurface/README.md
- * @see schemas/v2/envelopes/ui.a2ui-surface.schema.json
+ * @see RFCS/0255-delete-the-ai-envelope.md §E
+ * @see schemas/v2/interrupt-form.schema.json
  */
 
 import { describe, it, expect } from 'vitest';
@@ -29,9 +29,9 @@ import addFormats from 'ajv-formats';
 import { createHash } from 'node:crypto';
 import { readFileSync, readdirSync } from 'node:fs';
 import { join } from 'node:path';
-import { SCHEMAS_DIR, FIXTURES_DIR, SPEC_V2_DIR, V1_DIR } from '../lib/paths.js';
-import { req } from '../lib/requirement-ids.js';
+import { SCHEMAS_DIR, FIXTURES_DIR, V1_DIR } from '../lib/paths.js';
 import { softSkip } from '../lib/soft-skip.js';
+import { req } from '../lib/requirement-ids.js';
 
 type Json = Record<string, unknown>;
 const read = (p: string): Json => JSON.parse(readFileSync(p, 'utf8')) as Json;
@@ -46,29 +46,21 @@ const PINS: Record<string, string> = {
   'catalog.json': '8cc94d0a482e67048f9fc989964ca5da56fe42f531d919315a508989fb22e13e',
   'common_types.json': 'ac79788e95e5bdf0a39808953593a53c1bc9fcdcdb55480f4610613c6591e94c',
 };
-const UNIVERSAL_KINDS = ['clarification.request', 'schema.request', 'schema.response', 'error'];
 
-const surfaceSchema = read(join(SCHEMAS_DIR, 'v2', 'envelopes', 'ui.a2ui-surface.schema.json'));
-const v1Schema = read(join(SCHEMAS_DIR, 'envelopes', 'ui.a2ui-surface.schema.json'));
-
-/** A standalone schema for one branch of the v2 kind schema (the `$defs` travel with it). */
-function branch(schema: Json, def: 'payloadV1' | 'payloadV2'): Json {
-  return { $schema: 'https://json-schema.org/draft/2020-12/schema', $ref: `#/$defs/${def}`, $defs: (schema as { $defs: Json }).$defs };
-}
+const formSchema = read(join(SCHEMAS_DIR, 'v2', 'interrupt-form.schema.json'));
 function compile(schema: Json): (doc: unknown) => { ok: boolean; errors: string } {
   const ajv = new Ajv2020({ strict: false, allErrors: true });
   addFormats(ajv);
   const v = ajv.compile(schema);
   return (doc) => ({ ok: v(doc) as boolean, errors: ajv.errorsText(v.errors, { separator: '; ' }).slice(0, 600) });
 }
-const profile = compile(branch(surfaceSchema, 'payloadV2'));
-const v1Branch = compile(branch(surfaceSchema, 'payloadV1'));
+const form = compile(formSchema);
 
-/** The profile with one restriction removed — the sabotage each negative must survive. */
-function relaxed(mutate: (defs: Json) => void): (doc: unknown) => { ok: boolean; errors: string } {
-  const s = clone(surfaceSchema);
+/** The form schema with one restriction removed — the sabotage each negative must survive. */
+function relaxedForm(mutate: (defs: Json) => void): (doc: unknown) => { ok: boolean; errors: string } {
+  const s = clone(formSchema);
   mutate((s as { $defs: Json }).$defs);
-  return compile(branch(s, 'payloadV2'));
+  return compile(s);
 }
 
 /** Upstream A2UI v0.9 server_to_client.json with the basic catalog and common types bound. */
@@ -84,6 +76,7 @@ function upstream(): (doc: unknown) => { ok: boolean; errors: string } {
   return (doc) => ({ ok: v(doc) as boolean, errors: ajv.errorsText(v.errors, { separator: '; ' }).slice(0, 600) });
 }
 const up = upstream();
+const NOT_A_CHECKOUT = 'not a spec checkout — this corpus gate reads the repository tree';
 
 const positives = readdirSync(FX_DIR).filter((f) => f.startsWith('positive-') && f.endsWith('.json')).sort();
 const neg = (name: string): Json => read(join(FX_DIR, `negative-${name}.json`));
@@ -91,130 +84,104 @@ const messagesOf = (p: Json): Json[] => (p['messages'] as Json[]);
 /** The one message of a negative that carries the mutation (index into messages[]). */
 function upstreamVerdict(p: Json, index: number): boolean { return up(messagesOf(p)[index]).ok; }
 
-describe('RFC 0209 §B.4 — the profile is a subset of upstream A2UI v0.9', () => {
-  it('the vendored upstream files are the pinned bytes; every positive validates against payloadV2 and each of its messages against upstream', () => {
+describe('RFC 0255 §E — the form profile is a subset of upstream A2UI v0.9', () => {
+  it('the vendored upstream files are the pinned bytes; every positive is a valid form and each of its messages against upstream', () => {
+    if (V1_DIR === null) return softSkip('inapplicable', NOT_A_CHECKOUT);
     for (const [file, sha] of Object.entries(PINS)) {
       const got = createHash('sha256').update(readFileSync(join(UP_DIR, file))).digest('hex');
-      expect(got, req('openwop.requirement.0209.profile-subset-of-upstream', 'RFC 0209 §References', `fixtures/upstream/a2ui-v0.9/${file} MUST be the pinned a2ui.org bytes (sha256 ${sha})`)).toBe(sha);
+      expect(got, req('openwop.requirement.0255.interrupt-form-profile', 'interrupt.md §Forms', `fixtures/upstream/a2ui-v0.9/${file} MUST be the pinned a2ui.org bytes (sha256 ${sha})`)).toBe(sha);
     }
-    expect((read(join(UP_DIR, 'catalog.json')))['$id'], req('openwop.requirement.0209.profile-subset-of-upstream', 'RFC 0209 §A.2', 'the vendored basic catalog $id IS the catalogId the profile pins')).toBe(BASIC_CATALOG);
-    expect(positives.length, req('openwop.requirement.0209.profile-subset-of-upstream', 'RFC 0209 §B.4', 'fixtures/a2ui-v09/ MUST carry at least one positive surface')).toBeGreaterThan(0);
+    expect((read(join(UP_DIR, 'catalog.json')))['$id'], req('openwop.requirement.0255.interrupt-form-profile', 'interrupt.md §Forms', 'the vendored basic catalog $id IS the catalogId the profile pins')).toBe(BASIC_CATALOG);
+    expect(positives.length, req('openwop.requirement.0255.interrupt-form-profile', 'interrupt.md §Forms', 'fixtures/a2ui-v09/ MUST carry at least one positive surface')).toBeGreaterThan(0);
     for (const f of positives) {
       const p = read(join(FX_DIR, f));
-      const r = profile(p);
-      expect(r.ok, req('openwop.requirement.0209.profile-subset-of-upstream', 'RFC 0209 §A.2', `${f} MUST validate against $defs/payloadV2: ${r.errors}`)).toBe(true);
+      const r = form(p);
+      expect(r.ok, req('openwop.requirement.0255.interrupt-form-profile', 'interrupt.md §Forms', `${f} MUST validate against interrupt-form.schema.json: ${r.errors}`)).toBe(true);
       messagesOf(p).forEach((m, i) => {
         const u = up(m);
-        expect(u.ok, req('openwop.requirement.0209.profile-subset-of-upstream', 'RFC 0209 §B.4', `${f} messages[${i}] (${Object.keys(m).find((k) => k !== 'version')}) MUST validate against upstream A2UI v0.9 server_to_client.json: ${u.errors}`)).toBe(true);
+        expect(u.ok, req('openwop.requirement.0255.interrupt-form-profile', 'interrupt.md §Forms', `${f} messages[${i}] (${Object.keys(m).find((k) => k !== 'version')}) MUST validate against upstream A2UI v0.9 server_to_client.json: ${u.errors}`)).toBe(true);
       });
     }
   });
 });
 
-describe('RFC 0209 §B.7 — actions are the server-event arm, resume | exchange only', () => {
+describe('RFC 0255 §E — a form action is the server-event arm, resume only', () => {
   it('a functionCall action (openUrl) and an event.name outside the allowlist are refused, and only because of $defs/action', () => {
-    const loose = relaxed((d) => { d['action'] = { anyOf: [{ type: 'object', required: ['event'], properties: { event: { type: 'object', required: ['name'], properties: { name: { type: 'string' }, context: { type: 'object' } } } } }, { type: 'object', required: ['functionCall'] }] }; });
+    if (V1_DIR === null) return softSkip('inapplicable', NOT_A_CHECKOUT);
+    const loose = relaxedForm((d) => { d['action'] = { anyOf: [{ type: 'object', required: ['event'], properties: { event: { type: 'object', required: ['name'], properties: { name: { type: 'string' }, context: { type: 'object' } } } } }, { type: 'object', required: ['functionCall'] }] }; });
     for (const name of ['functioncall-openurl', 'event-name-deleteall']) {
       const p = neg(name);
-      expect(profile(p).ok, req('openwop.requirement.0209.action-confined', 'RFC 0209 §B.7', `negative-${name} MUST fail $defs/payloadV2 (a2ui-action-confinement)`)).toBe(false);
+      expect(form(p).ok, req('openwop.requirement.0255.interrupt-form-profile', 'interrupt.md §Forms', `negative-${name} MUST fail interrupt-form.schema.json (interrupt-form-action-confinement)`)).toBe(false);
       const l = loose(p);
-      expect(l.ok, req('openwop.requirement.0209.action-confined', 'RFC 0209 §B.7', `negative-${name} MUST pass the profile once $defs/action admits upstream's Action arms — otherwise it fails for another reason and witnesses nothing: ${l.errors}`)).toBe(true);
-      expect(upstreamVerdict(p, 1), req('openwop.requirement.0209.action-confined', 'RFC 0209 §Examples', `upstream A2UI accepts negative-${name} — the refusal is the profile's`)).toBe(true);
+      expect(l.ok, req('openwop.requirement.0255.interrupt-form-profile', 'interrupt.md §Forms', `negative-${name} MUST pass the form once $defs/action admits upstream's Action arms — otherwise it fails for another reason and witnesses nothing: ${l.errors}`)).toBe(true);
+      expect(upstreamVerdict(p, 1), req('openwop.requirement.0255.interrupt-form-profile', 'interrupt.md §Forms', `upstream A2UI accepts negative-${name} — the refusal is the profile's`)).toBe(true);
     }
   });
 });
 
-describe('RFC 0209 §B.8 — no secret input', () => {
+describe('RFC 0255 §E — no secret input', () => {
   it('TextField.variant "obscured" is refused, and only because the variant enum excludes it', () => {
+    if (V1_DIR === null) return softSkip('inapplicable', NOT_A_CHECKOUT);
     const p = neg('textfield-obscured');
-    expect(profile(p).ok, req('openwop.requirement.0209.no-secret-input', 'RFC 0209 §B.8', 'negative-textfield-obscured MUST fail $defs/payloadV2 (a2ui-surface-no-secret-input)')).toBe(false);
-    const loose = relaxed((d) => { ((((d['TextField'] as Json)['properties'] as Json)['variant']) as { enum: string[] }).enum.push('obscured'); });
+    expect(form(p).ok, req('openwop.requirement.0255.interrupt-form-profile', 'interrupt.md §Forms', 'negative-textfield-obscured MUST fail interrupt-form.schema.json (interrupt-form-no-secret-input)')).toBe(false);
+    const loose = relaxedForm((d) => { ((((d['TextField'] as Json)['properties'] as Json)['variant']) as { enum: string[] }).enum.push('obscured'); });
     const l = loose(p);
-    expect(l.ok, req('openwop.requirement.0209.no-secret-input', 'RFC 0209 §B.8', `negative-textfield-obscured MUST pass once "obscured" is restored to the variant enum: ${l.errors}`)).toBe(true);
-    expect(upstreamVerdict(p, 1), req('openwop.requirement.0209.no-secret-input', 'RFC 0209 §Examples', 'upstream A2UI accepts an obscured TextField — the refusal is the profile\'s')).toBe(true);
+    expect(l.ok, req('openwop.requirement.0255.interrupt-form-profile', 'interrupt.md §Forms', `negative-textfield-obscured MUST pass once "obscured" is restored to the variant enum: ${l.errors}`)).toBe(true);
+    expect(upstreamVerdict(p, 1), req('openwop.requirement.0255.interrupt-form-profile', 'interrupt.md §Forms', 'upstream A2UI accepts an obscured TextField — the refusal is the profile\'s')).toBe(true);
   });
 });
 
-describe('RFC 0209 §B.5–§B.6 — no egress-bearing components', () => {
+describe('RFC 0255 §E — no egress-bearing components', () => {
   it('Image and theme.iconUrl are refused, each only because of its exclusion; no URL-fetching component is in the profile', () => {
+    if (V1_DIR === null) return softSkip('inapplicable', NOT_A_CHECKOUT);
     {
     const p = neg('image-component');
-    expect(profile(p).ok, req('openwop.requirement.0209.no-egress-components', 'RFC 0209 §B.6', 'negative-image-component MUST fail $defs/payloadV2 (a2ui-surface-no-network-egress)')).toBe(false);
-    const loose = relaxed((d) => {
+    expect(form(p).ok, req('openwop.requirement.0255.interrupt-form-profile', 'interrupt.md §Forms', 'negative-image-component MUST fail interrupt-form.schema.json (interrupt-form-no-network-egress)')).toBe(false);
+    const loose = relaxedForm((d) => {
       d['Image'] = { type: 'object', additionalProperties: false, required: ['id', 'component', 'url'], properties: { id: { $ref: '#/$defs/componentId' }, component: { type: 'string', enum: ['Image'] }, url: { type: 'string' } } };
       ((d['component'] as { anyOf: Json[] }).anyOf).push({ $ref: '#/$defs/Image' });
     });
     const l = loose(p);
-    expect(l.ok, req('openwop.requirement.0209.no-egress-components', 'RFC 0209 §B.6', `negative-image-component MUST pass once Image joins the component anyOf: ${l.errors}`)).toBe(true);
-    expect(upstreamVerdict(p, 1), req('openwop.requirement.0209.no-egress-components', 'RFC 0209 §Examples', 'upstream A2UI accepts an Image component — the refusal is the profile\'s')).toBe(true);
+    expect(l.ok, req('openwop.requirement.0255.interrupt-form-profile', 'interrupt.md §Forms', `negative-image-component MUST pass once Image joins the component anyOf: ${l.errors}`)).toBe(true);
+    expect(upstreamVerdict(p, 1), req('openwop.requirement.0255.interrupt-form-profile', 'interrupt.md §Forms', 'upstream A2UI accepts an Image component — the refusal is the profile\'s')).toBe(true);
     }
     {
     const p = neg('theme-iconurl');
-    expect(profile(p).ok, req('openwop.requirement.0209.no-egress-components', 'RFC 0209 §B.5', 'negative-theme-iconurl MUST fail $defs/payloadV2')).toBe(false);
-    const loose = relaxed((d) => { const theme = ((((d['createSurface'] as Json)['properties'] as Json)['createSurface'] as Json)['properties'] as Json)['theme'] as Json; (theme['properties'] as Json)['iconUrl'] = { type: 'string' }; });
+    expect(form(p).ok, req('openwop.requirement.0255.interrupt-form-profile', 'interrupt.md §Forms', 'negative-theme-iconurl MUST fail interrupt-form.schema.json')).toBe(false);
+    const loose = relaxedForm((d) => { const theme = ((((d['createSurface'] as Json)['properties'] as Json)['createSurface'] as Json)['properties'] as Json)['theme'] as Json; (theme['properties'] as Json)['iconUrl'] = { type: 'string' }; });
     const l = loose(p);
-    expect(l.ok, req('openwop.requirement.0209.no-egress-components', 'RFC 0209 §B.5', `negative-theme-iconurl MUST pass once theme admits iconUrl: ${l.errors}`)).toBe(true);
-    expect(upstreamVerdict(p, 0), req('openwop.requirement.0209.no-egress-components', 'RFC 0209 §Examples', 'upstream A2UI accepts theme.iconUrl — the refusal is the profile\'s')).toBe(true);
+    expect(l.ok, req('openwop.requirement.0255.interrupt-form-profile', 'interrupt.md §Forms', `negative-theme-iconurl MUST pass once theme admits iconUrl: ${l.errors}`)).toBe(true);
+    expect(upstreamVerdict(p, 0), req('openwop.requirement.0255.interrupt-form-profile', 'interrupt.md §Forms', 'upstream A2UI accepts theme.iconUrl — the refusal is the profile\'s')).toBe(true);
     }
-    const names = ((surfaceSchema['$defs'] as Json)['component'] as { anyOf: Array<{ $ref: string }> }).anyOf.map((b) => b.$ref.replace('#/$defs/', ''));
+    const names = ((formSchema['$defs'] as Json)['component'] as { anyOf: Array<{ $ref: string }> }).anyOf.map((b) => b.$ref.replace('#/$defs/', ''));
     for (const excluded of ['Image', 'Video', 'AudioPlayer', 'Icon']) {
-      expect(names, req('openwop.requirement.0209.no-egress-components', 'RFC 0209 §B.6', `${excluded} MUST NOT be a member of $defs/component`)).not.toContain(excluded);
+      expect(names, req('openwop.requirement.0255.interrupt-form-profile', 'interrupt.md §Forms', `${excluded} MUST NOT be a member of $defs/component`)).not.toContain(excluded);
     }
   });
 });
 
-describe('RFC 0209 §A.2 — the catalog is pinned', () => {
+describe('RFC 0255 §E — the catalog is pinned', () => {
   it('a foreign catalogId is refused, and only because catalogId is an enum', () => {
+    if (V1_DIR === null) return softSkip('inapplicable', NOT_A_CHECKOUT);
     const p = neg('foreign-catalog');
-    expect(profile(p).ok, req('openwop.requirement.0209.catalog-pinned', 'RFC 0209 §A.2', 'negative-foreign-catalog MUST fail $defs/payloadV2 — catalogId is the host-pinned set, never a free string')).toBe(false);
-    const loose = relaxed((d) => { d['catalogId'] = { type: 'string' }; });
+    expect(form(p).ok, req('openwop.requirement.0255.interrupt-form-profile', 'interrupt.md §Forms', 'negative-foreign-catalog MUST fail interrupt-form.schema.json — catalogId is the host-pinned set, never a free string')).toBe(false);
+    const loose = relaxedForm((d) => { d['catalogId'] = { type: 'string' }; });
     const l = loose(p);
-    expect(l.ok, req('openwop.requirement.0209.catalog-pinned', 'RFC 0209 §A.2', `negative-foreign-catalog MUST pass once catalogId is a free string: ${l.errors}`)).toBe(true);
-    expect(((surfaceSchema['$defs'] as Json)['catalogId'] as { enum: string[] }).enum, req('openwop.requirement.0209.catalog-pinned', 'RFC 0209 §A.2', 'the pinned set is exactly the basic catalog today')).toEqual([BASIC_CATALOG]);
+    expect(l.ok, req('openwop.requirement.0255.interrupt-form-profile', 'interrupt.md §Forms', `negative-foreign-catalog MUST pass once catalogId is a free string: ${l.errors}`)).toBe(true);
+    expect(((formSchema['$defs'] as Json)['catalogId'] as { enum: string[] }).enum, req('openwop.requirement.0255.interrupt-form-profile', 'interrupt.md §Forms', 'the pinned set is exactly the basic catalog today')).toEqual([BASIC_CATALOG]);
   });
 });
 
-describe('RFC 0209 §B.6 — closed components, no FunctionCall values', () => {
+describe('RFC 0255 §E — closed components, no FunctionCall values', () => {
   it('an extra component property and a formatString text value are refused (the second is accepted upstream)', () => {
+    if (V1_DIR === null) return softSkip('inapplicable', NOT_A_CHECKOUT);
     for (const name of ['extra-property', 'formatstring-label']) {
-      expect(profile(neg(name)).ok, req('openwop.it.a2ui-v09-profile.closed-components-no-function-values', 'RFC 0209 §B.6', `negative-${name} MUST fail $defs/payloadV2`)).toBe(false);
+      expect(form(neg(name)).ok, req('openwop.it.a2ui-v09-profile.closed-components-no-function-values', 'interrupt.md §Forms', `negative-${name} MUST fail interrupt-form.schema.json`)).toBe(false);
     }
-    const loose = relaxed((d) => { (d['dynString'] as { anyOf: Json[] }).anyOf.push({ type: 'object', required: ['call'] }); });
-    expect(loose(neg('formatstring-label')).ok, req('openwop.it.a2ui-v09-profile.closed-components-no-function-values', 'RFC 0209 §B.6', 'negative-formatstring-label MUST pass once dynString admits a FunctionCall')).toBe(true);
-    expect(upstreamVerdict(neg('formatstring-label'), 1), req('openwop.it.a2ui-v09-profile.closed-components-no-function-values', 'RFC 0209 §Examples', 'upstream A2UI accepts a formatString text value — the refusal is the profile\'s')).toBe(true);
-    expect(upstreamVerdict(neg('extra-property'), 1), req('openwop.it.a2ui-v09-profile.closed-components-no-function-values', 'RFC 0209 §Examples', 'upstream A2UI also refuses an extra property (unevaluatedProperties: false)')).toBe(false);
-  });
-});
-
-describe('RFC 0209 §A.1 — the version-1 branch is the seeded tree, unchanged', () => {
-  it('$defs/payloadV1 equals the v1 kind schema (only `component` renamed), and the two branches are disjoint', () => {
-    const v1Defs = clone(v1Schema['$defs'] as Json);
-    const renamed = JSON.parse(JSON.stringify(v1Defs).split('"#/$defs/component"').join('"#/$defs/componentV1"')) as Json;
-    renamed['componentV1'] = renamed['component']; delete renamed['component'];
-    const v2Defs = surfaceSchema['$defs'] as Json;
-    for (const [k, v] of Object.entries(renamed)) {
-      expect(v2Defs[k], req('openwop.it.a2ui-v09-profile.v1-branch-unchanged', 'RFC 0209 §A.1', `$defs/${k} MUST equal the v1 schema's definition byte for byte in content`)).toEqual(v);
-    }
-    const pv1 = v2Defs['payloadV1'] as Json;
-    for (const k of ['type', 'required', 'additionalProperties', 'properties']) {
-      expect(pv1[k], req('openwop.it.a2ui-v09-profile.v1-branch-unchanged', 'RFC 0209 §A.1', `$defs/payloadV1.${k} MUST equal the v1 root's ${k}`)).toEqual(v1Schema[k]);
-    }
-    const v1 = { catalogVersion: '0.9.1', surface: { title: 'Kickoff', components: [{ component: 'heading', text: 'Kickoff', level: 2 }, { component: 'field.text', id: 'name', label: 'Name', required: true }, { component: 'action.button', id: 'go', label: 'Go', action: { target: 'resume' } }] } };
-    expect(v1Branch(v1).ok, req('openwop.it.a2ui-v09-profile.v1-branch-unchanged', 'RFC 0209 §A.1', 'a version-1 surface MUST validate against $defs/payloadV1')).toBe(true);
-    expect(profile(v1).ok, req('openwop.it.a2ui-v09-profile.v1-branch-unchanged', 'RFC 0209 §A.1', 'a version-1 surface MUST NOT validate against $defs/payloadV2 — the branches are disjoint')).toBe(false);
-    const v2 = read(join(FX_DIR, positives[0] ?? 'positive-approve-brief.json'));
-    expect(v1Branch(v2).ok, req('openwop.it.a2ui-v09-profile.v1-branch-unchanged', 'RFC 0209 §A.1', 'a version-2 surface MUST NOT validate against $defs/payloadV1')).toBe(false);
-  });
-});
-
-describe('RFC 0209 §D.14 — the ui.* / media.* kind carve-out', () => {
-  it('every v2 envelope kind is universal or ui.* / media.*, and events.md states the carve-out', () => {
-    if (V1_DIR === null || SPEC_V2_DIR === null) return softSkip('inapplicable', 'not a spec checkout — spec/v2/core/events.md is absent from this layout');
-    const kinds = readdirSync(join(SCHEMAS_DIR, 'v2', 'envelopes')).filter((f) => f.endsWith('.schema.json')).map((f) => f.replace(/\.schema\.json$/, ''));
-    const orphaned = kinds.filter((k) => !UNIVERSAL_KINDS.includes(k) && !/^(ui|media)\./.test(k));
-    expect(orphaned, req('openwop.requirement.0209.kind-carve-out', 'RFC 0209 §D.14', `every kind under schemas/v2/envelopes/ MUST be universal or in ui.* / media.* (orphaned: ${orphaned.join(', ')})`)).toEqual([]);
-    const events = readFileSync(join(SPEC_V2_DIR, 'core', 'events.md'), 'utf8');
-    expect(events.includes('universal kinds and the core content-primitive families `ui.*` and `media.*` excepted'), req('openwop.requirement.0209.kind-carve-out', 'RFC 0209 §D.14', 'events.md §"AI envelopes" MUST except the ui.* and media.* families from the <org>. namespacing rule, or no v2 host could advertise a kind v2 ships')).toBe(true);
+    const loose = relaxedForm((d) => { (d['dynString'] as { anyOf: Json[] }).anyOf.push({ type: 'object', required: ['call'] }); });
+    expect(loose(neg('formatstring-label')).ok, req('openwop.it.a2ui-v09-profile.closed-components-no-function-values', 'interrupt.md §Forms', 'negative-formatstring-label MUST pass once dynString admits a FunctionCall')).toBe(true);
+    expect(upstreamVerdict(neg('formatstring-label'), 1), req('openwop.it.a2ui-v09-profile.closed-components-no-function-values', 'interrupt.md §Forms', 'upstream A2UI accepts a formatString text value — the refusal is the profile\'s')).toBe(true);
+    expect(upstreamVerdict(neg('extra-property'), 1), req('openwop.it.a2ui-v09-profile.closed-components-no-function-values', 'interrupt.md §Forms', 'upstream A2UI also refuses an extra property (unevaluatedProperties: false)')).toBe(false);
   });
 });
 
@@ -225,13 +192,6 @@ describe('RFC 0209 §D.14 — the ui.* / media.* kind carve-out', () => {
  * cannot take the closed catalog, the action confinement or the secret-input
  * exclusion with it. Its action is tighter: `resume` only.
  */
-const formSchema = read(join(SCHEMAS_DIR, 'v2', 'interrupt-form.schema.json'));
-const form = compile(formSchema);
-function relaxedForm(mutate: (defs: Json) => void): (doc: unknown) => { ok: boolean; errors: string } {
-  const s = clone(formSchema);
-  mutate((s as { $defs: Json }).$defs);
-  return compile(s);
-}
 const INPUTS = new Set(['TextField', 'CheckBox', 'ChoicePicker', 'DateTimeInput', 'field.text', 'field.date', 'field.select', 'field.checkbox']);
 /** Every input component id in a form, in either version. */
 function inputIds(f: Json): string[] {
@@ -245,19 +205,21 @@ function inputIds(f: Json): string[] {
 const fixtureNode = (id: string): { questions: Array<{ id: string }>; form: Json } => (read(join(FIXTURES_DIR, `${id}.json`)) as unknown as { nodes: Array<{ config: { questions: Array<{ id: string }>; form: Json } }> }).nodes[0]!.config;
 
 describe('RFC 0255 §E — the interrupt form carries the closed profile', () => {
-  it('every positive surface is a valid form, every negative is refused, and the form refuses the exchange target the envelope admits', () => {
+  it('every positive surface is a valid form, every negative is refused, and the form refuses an exchange target', () => {
+    if (V1_DIR === null) return softSkip('inapplicable', NOT_A_CHECKOUT);
     for (const f of positives) {
       const r = form(read(join(FX_DIR, f)));
       expect(r.ok, req('openwop.requirement.0255.interrupt-form-profile', 'interrupt.md §Forms', `${f} MUST validate against interrupt-form.schema.json: ${r.errors}`)).toBe(true);
     }
     for (const f of readdirSync(FX_DIR).filter((n) => n.startsWith('negative-')).sort()) {
-      expect(form(read(join(FX_DIR, f))).ok, req('openwop.requirement.0255.interrupt-form-profile', 'interrupt.md §Forms', `${f} MUST fail interrupt-form.schema.json as it fails the envelope profile`)).toBe(false);
+      expect(form(read(join(FX_DIR, f))).ok, req('openwop.requirement.0255.interrupt-form-profile', 'interrupt.md §Forms', `${f} MUST fail interrupt-form.schema.json`)).toBe(false);
     }
     const exchange = clone(read(join(FX_DIR, positives[0] ?? 'positive-approve-brief.json')));
     const comps = ((messagesOf(exchange)[1]!['updateComponents'] as Json)['components'] as Json[]);
     const button = comps.find((c) => c['component'] === 'Button')!;
     (button['action'] as { event: { name: string } }).event.name = 'exchange';
-    expect(profile(exchange).ok, req('openwop.requirement.0255.interrupt-form-profile', 'interrupt.md §Forms', 'control: the envelope profile admits an exchange action')).toBe(true);
+    const withExchange = relaxedForm((d) => { (((((d['action'] as Json)['properties'] as Json)['event'] as Json)['properties'] as Json)['name'] as { enum: string[] }).enum.push('exchange'); });
+    expect(withExchange(exchange).ok, req('openwop.requirement.0255.interrupt-form-profile', 'interrupt.md §Forms', 'control: the form admits an exchange action once `exchange` joins the event name enum')).toBe(true);
     expect(form(exchange).ok, req('openwop.requirement.0255.interrupt-form-profile', 'interrupt.md §Forms', 'a form action MUST resolve only its own interrupt — `exchange` is refused')).toBe(false);
     const obscured = neg('textfield-obscured');
     const loose = relaxedForm((d) => { ((((d['TextField'] as Json)['properties'] as Json)['variant']) as { enum: string[] }).enum.push('obscured'); });
@@ -269,6 +231,7 @@ describe('RFC 0255 §E — the interrupt form carries the closed profile', () =>
   });
 
   it('a form can appear only on a clarification, so it can never resolve an approval', () => {
+    if (V1_DIR === null) return softSkip('inapplicable', NOT_A_CHECKOUT);
     const defs = read(join(SCHEMAS_DIR, 'v2', 'suspend-request.schema.json'))['$defs'] as Record<string, { properties?: Json }>;
     const carriers = Object.entries(defs).filter(([, d]) => d.properties && 'form' in d.properties).map(([k]) => k);
     expect(carriers, req('openwop.requirement.0255.interrupt-form-never-resolves-approval', 'interrupt.md §Forms', 'ClarificationData MUST be the only interrupt data shape carrying `form`')).toEqual(['ClarificationData']);
@@ -279,6 +242,7 @@ describe('RFC 0255 §E — the interrupt form carries the closed profile', () =>
   });
 
   it('the form fixtures bind their inputs to questions, and each probe is refused for exactly one reason', () => {
+    if (V1_DIR === null) return softSkip('inapplicable', NOT_A_CHECKOUT);
     const ok = fixtureNode('conformance-interrupt-form');
     expect(form(ok.form).ok, req('openwop.requirement.0255.interrupt-form-bound-to-questions', 'interrupt.md §Forms', `conformance-interrupt-form MUST carry a valid form: ${form(ok.form).errors}`)).toBe(true);
     expect(inputIds(ok.form), req('openwop.requirement.0255.interrupt-form-bound-to-questions', 'interrupt.md §Forms', 'every input id MUST be a questions[].id')).toEqual(ok.questions.map((q) => q.id));

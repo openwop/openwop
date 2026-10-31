@@ -22,7 +22,7 @@ A form instantiated from a pack advertised through `forms.contentPacks` MUST be 
 
 - A host MUST degrade an unrecognized field type to plain text rather than failing the instantiation.
 - A host MUST NOT execute anything carried by the pack.
-- A pack-authored string, and any value collected through an instantiated template, is untrusted input. When one is interpolated into a prompt, the composed envelope MUST carry `meta.contentTrust: "untrusted"`, so a downstream reader can tell authored text from pack-supplied text.
+- A pack-authored string, and any value collected through an instantiated template, is untrusted input. When one is interpolated into a prompt, the composition MUST record `contentTrust: "untrusted"` ([host-services.md](host-services.md) §Composition), so a downstream reader can tell authored text from pack-supplied text.
 
 ## Localized strings
 

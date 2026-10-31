@@ -1,11 +1,11 @@
 # Events
 
 > **Status: Stable.**
-> **Normative home:** `heartbeat`, `hostEvents`, `envelopeContracts`, `envelopes`, `feedback`, `providerUsage`, `supportedEnvelopes`, `schemaVersions`, `envelopeStrictness`, `limits`.
+> **Normative home:** `heartbeat`, `hostEvents`, `feedback`, `providerUsage`, `limits`.
 
 ## Why this exists
 
-A run is its append-only event log. Every snapshot, stream, poll, fork and diff is a projection of it. There is one closed envelope, type registry, payload registry, ordering field, events channel and poll cursor.
+A run is its append-only event log. Every snapshot, stream, poll, fork and diff is a projection of it.
 
 ## The envelope
 
@@ -17,7 +17,7 @@ A run is its append-only event log. Every snapshot, stream, poll, fork and diff 
 | `schemaVersion` | Per-event schema version, integer ≥ 1, first-class |
 | `engineVersion` | Integer ≥ 0 everywhere |
 | `eventId` | Host-minted, opaque |
-| `causationId` | The `eventId`, or AI-envelope `correlationId`, that caused this event |
+| `causationId` | The `eventId` that caused this event |
 | `timestamp` | ISO 8601 |
 
 - Persisted logs are never renumbered.
@@ -34,7 +34,7 @@ A run is its append-only event log. Every snapshot, stream, poll, fork and diff 
 
 - **Naming.** A protocol type is `domain.verb-ed`: kebab-case, exactly two segments, past tense for a transition (`run.started`, `node.suspend-failed`). `domain.noun` is permitted only for an emitted artifact (`output.chunk`, `channel.presence`); each exception is recorded in the codemap.
 - **Reserved prefix.** `openwop.` is the only reserved prefix. `core.`, `community.`, `vendor.`, `private.` and `local.` are pack namespaces, not event namespaces; a type under them is invalid.
-- **Vendor events.** A vendor type's first segment MUST be an org registered in the `extensions` object of `spec/v2/declaration.json` (the org registry, not discovery's `extensions` key). An unregistered org fails validation. An org in `reservedOrgs` is forbidden and never registered. `extensionsKeyPattern` is the shape a vendor type must have, not a permission to use it. `example` is reserved for documentation and conformance, never a vendor.
+- **Vendor events.** A vendor type's first segment MUST be an org registered in the `extensions` object of `spec/v2/declaration.json` (the org registry, not discovery's `extensions` key). An unregistered org fails validation. An org in `reservedOrgs` is forbidden and never registered. `extensionsKeyPattern` is a vendor type's shape, not a permission to use it. `example` is reserved for documentation and conformance, never a vendor.
 - **Growth.** The registry grows by the closed-enum rule in [overview.md](overview.md) §0. A producer MUST NOT emit an unregistered protocol type. A consumer MUST accept an unknown registered member and MUST NOT act on it.
 
 ## Payloads
@@ -50,21 +50,6 @@ Specific payloads:
 - `run.started` carries the `owner` block ([identity.md](identity.md) §1.1).
 - `run.cancelled` carries `reason`, `cancelledBy`, `durationMs`, and `parentRunId`.
 - `run.completed` MUST carry `outputs` as an object. An empty object is valid; an absent key is not. This separates "no outputs" from "outputs not rendered".
-
-## AI envelopes: E1–E5
-
-`schemas/v2/ai-envelope.schema.json` is the shape an LLM emits; the engine records its acceptance as one or more `RunEventDoc`s.
-
-- `correlationId` and `meta.source` are REQUIRED on every envelope. An engine MUST reject an envelope that omits either; nothing is synthesized.
-- An envelope kind MUST be namespaced under the same `<org>.` rule as events, universal kinds and the core content-primitive families `ui.*` and `media.*` excepted.
-
-The five contracts:
-
-- **E1 partial reassembly.** Every chunk of one partial emission carries the same `correlationId`, and the events that record them are ordered by `sequence`. The emission is complete at the first recorded chunk with `partial: false`. A consumer MAY render progressively but MUST NOT enable any action before that event.
-- **E2 multi-turn correlation.** Each turn is an envelope with its own `correlationId`; every event it produces carries `causationId = correlationId`. A re-emission with a `correlationId` already recorded in the run MUST return the cached outcome and MUST NOT emit new events.
-- **E3 vendor kinds.** The registry of vendor kinds is `spec/v2/declaration.json`. A kind whose org is not registered is invalid.
-- **E4 sub-typing.** `$ref` composition, as in the payload registry above.
-- **E5 refusal × retry.** `configurable.ai.maxRefusals` ([runs.md](runs.md)) is the ceiling on `envelope.refusal` events a run records. A host MUST NOT retry the emission that produced a refusal.
 
 ## The events channel
 
@@ -185,32 +170,7 @@ An `eventLogSchemaVersion` of `2` means v1-written. Every reader, diff included,
 - A projection MUST NOT silently drop a property: it carries it or fails with `500 payload_unprojectable` (hatch `^(openwop-|x-|vendor\.)`).
 - Fork and replay over an era-2 parent are in [replay.md](replay.md).
 
-## The envelope-kind catalog
-
-`supportedEnvelopes`, `schemaVersions` and `envelopeStrictness` are one flow, read in that order on every inbound envelope.
-
-### `supportedEnvelopes`
-
-`supportedEnvelopes.kinds` is the catalog. A host advertising it MUST refuse an emitted `type` that is neither universal nor a member, with `unknown_envelope_kind`.
-
-An absent `kinds` is not an empty catalog and is not an unrestricted one: an engine MUST refuse every non-universal kind.
-
-### `schemaVersions`
-
-`schemaVersions.kinds` maps a kind to its advertised floor; a kind absent from the map has a floor of `0`. An emitted `schemaVersion` above the floor MUST be refused with `unknown_schema_version`, whatever the strictness. `ui.a2ui-surface` at schema version 2 is specified by `ext/a2uiSurface/README.md`.
-
-### `envelopeStrictness`
-
-`envelopeStrictness.mode` governs drift below the floor only. A host MUST NOT read an absent `mode` as "no checking".
-
-- Under `warn` (the value when the seat is absent), an engine MUST validate against the advertised version and log `envelope_schema_version_drift`.
-- Under `strict`, the same condition MUST refuse with `unknown_schema_version`.
-
-## Envelope contracts
-
-`envelopeContracts` advertises that a host enforces per-node envelope permission sets; `advertised: false` is not a v2 state. A host advertising it MUST refuse a node whose emitted envelope `type` is neither universal nor listed in that node's accepted set. It MUST refuse it distinctly from the capability-gated `typeId` refusal: the two stack rather than substitute.
-
-## Envelope, feedback and usage facets
+## Feedback and usage facets
 
 ### `feedback`
 
@@ -230,31 +190,5 @@ A host advertising `providerUsage` MUST emit exactly one `provider.usage` per LL
 - **`providerUsage.costEstimates`** advertises that the host stamps a derived cost on the event. It is an estimate from the host's rate table; a consumer MUST NOT treat it as a billed amount.
 - The payload MUST NOT carry credential refs, hashed credential identifiers, or prompt or response text (invariant `provider-usage-no-credential-leak`).
 - `providerUsage.currency` is the ISO 4217 currency of `costEstimateUsd`; absent means USD.
-
-### `envelopes`
-
-**`envelopes.tierOneSubsetCompliance`** advertises that the host accepts the Tier 1 structured-output subset shared across major providers. A host advertising it MUST accept an envelope restricted to that subset from any provider it advertises, rather than refusing on provider-specific grounds.
-
-`envelopes.reasoning` advertises the host's prompt posture for the optional payload field `reasoning`.
-
-- `reasoning` SHOULD be the first property where the schema dialect orders properties. A vendor kind whose payload needs multi-step reasoning SHOULD declare it as optional.
-- Where a payload schema permits it, a host SHOULD instruct the model to populate it. A host MUST NOT reject an envelope without it, whatever `promptDirective` says.
-- A host MUST NOT route on `reasoning`. A known secret in the input MUST NOT appear verbatim in it, in derived events, span attributes or the debug bundle (invariant `envelope-reasoning-secret-redaction`).
-
-A host advertising `envelopes.reliability`:
-
-- MUST emit `envelope.retry-exhausted` and `envelope.refusal`, and list in `reliability.events[]` both of them and only the other reliability events it emits;
-- SHOULD emit `envelope.retry-attempted` before each retry past the first;
-- MUST pass `previousError`, `finalError` and `refusalText` through the secret redaction applied to envelope payloads (invariants `envelope-refusal-no-prompt-leak`, `envelope-recovery-no-content-leak`);
-- MUST replay `totalAttempts`, `outputTokenCount` and the recovery `path` identically. `refusalText` MAY differ, and a consumer MUST tolerate `null`.
-
-Under `reliability.completion.distinguishesTruncation`, an envelope is complete only on a clean provider stop with a payload that validates against its kind's schema.
-
-- **Truncation** (no clean stop, whatever the payload): the host MUST emit `envelope.truncated`. A retry SHOULD raise the output budget, by `truncationBudgetMultiplier` (default 2), and MUST NOT carry a schema-correcting fragment.
-- **Schema violation** (clean stop, invalid payload): a retry's corrective fragment SHOULD reproduce the validator's failure and MUST NOT contain text from the model's output. The retry MUST NOT raise the output budget.
-- **Refusal** is terminal: the node MUST fail with `envelope_refusal`.
-- Each retry past the first MUST emit `envelope.retry-attempted` with that `reason`. Both paths count against `limits.schemaRounds`.
-- On exhaustion the host MUST emit `envelope.retry-exhausted` with that `finalReason` and `cap.breached` `kind: "schema"`, and fail the node with `envelope_truncation_unrecoverable` or `envelope_invalid`.
-- Lenient-parse recovery consumes no retry. It emits `envelope.recovery-applied` once per recovery, carrying only the path and an optional byte offset.
 
 *Sources: RFCs 0026, 0030, 0032, 0033, 0056, 0060, 0171, 0172, 0176, 0185, 0194, 0213, 0236, 0247.*

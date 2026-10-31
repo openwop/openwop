@@ -5,7 +5,7 @@
 
 ## Why this exists
 
-The v2 evidence contract: how a requirement is asserted and witnessed, how the seams are mounted, what the suite ships, and what a bundle proves. Profiles are in [overview.md](overview.md); the capability vocabulary the suite gates on is in [capabilities.md](capabilities.md).
+How a requirement is asserted and witnessed, how seams mount, what the suite ships, and what a bundle proves. Profiles are in [overview.md](overview.md); the capability vocabulary is in [capabilities.md](capabilities.md).
 
 ## Requirement ids
 
@@ -98,7 +98,7 @@ A signature that cannot be resolved to a published key attests **integrity only*
 - At major 2 a requirement a test did not observe records `blocked`, even when the test asserted setup facts first.
 - An `executed-pass` carrying a `partial-witness:` detail is reserved for a leg that observed its requirement and skipped an optional extra.
 - A verifier MUST derive the operator's opt-outs from the signed `skipped` rows and MUST reject a bundle whose captured discovery document advertises one of them (`opted-out-but-advertised`).
-- v1 and v2 bundles are never upgraded to v3; a bundle is evidence at its own version.
+- v1 and v2 bundles are never upgraded to v3.
 
 ### Colocated companion
 

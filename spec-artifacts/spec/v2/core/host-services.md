@@ -1,15 +1,11 @@
 # Host services
 
 > **Status: Stable.**
-> **Normative home:** `aiEnvelope`, `promptLibrary`, `prompts`, `aiProviders`, `agentRuntime`, `mcp`, `workspace`, `secrets`, `modelCapabilities`, `scheduling`, `queueBus`, `toolHooks`, `httpClient`, `memory`.
+> **Normative home:** `promptLibrary`, `prompts`, `aiProviders`, `agentRuntime`, `mcp`, `workspace`, `secrets`, `modelCapabilities`, `scheduling`, `queueBus`, `toolHooks`, `httpClient`, `memory`.
 
 ## Why this exists
 
 Node packs call advertised `host.*` services through `ctx`. Each section states the contract a host accepts by advertising that family.
-
-## `aiEnvelope`
-
-A host advertising `aiEnvelope` MUST expose `ctx.aiEnvelope.generate` to pack code, and MUST expose `ctx.aiEnvelope.await` when, and only when, it advertises `aiEnvelope.await`. A host MUST refuse a node whose `typeId` requires the family when it does not advertise it.
 
 ## `promptLibrary`
 
@@ -57,7 +53,7 @@ When every layer is null, the node fails only if its node type says so. A host h
 A host advertising `aiProviders` MUST expose `ctx.callAI`. A `provider` that a `ctx` call names MUST be in `providers`; `byok`: [runs.md](runs.md) §`ai`.
 
 - A part whose modality is absent from `input` MUST be rejected with `capability_not_provided`, never dropped. Non-text input is untrusted.
-- A `media.*` envelope inlines base64 only up to `maxInlineMediaBytes` (default 256 KiB); above that the host MUST use a `url`.
+- Generated media is inlined as base64 only up to `maxInlineMediaBytes` (default 256 KiB); above that the host MUST use a `url`.
 - `imageGeneration`, `videoGeneration` and `speechSynthesis` add `ctx.callImageGenerator`, `callVideoGenerator` and `callSpeechSynthesizer`; `realtimeVoice` adds `callTranscriber` and streamed synthesis. Unadvertised synthesis or transcription MUST be rejected, never a no-op or whole-file fallback.
 - A video caller MUST honor `ctx.signal`. Synthesis MUST return exactly one of `url` or `base64`, and a `url` is served through the SSRF guard. The transcriber MUST reject inline or `mediaRef` audio.
 - `voiceId`, `streamRef` and `cachePrefixId` MUST NOT encode secrets. Transcripts are untrusted; an interim one MUST NOT be persisted or drive a side-effecting tool.
@@ -78,6 +74,33 @@ A host advertising `aiProviders` MUST expose `ctx.callAI`. A `provider` that a `
 - `restricted` refuses a model matching no `allowedModels` glob (`model_not_allowed`). An empty `restricted` policy MUST fail closed.
 
 A refusal's `error` MUST be `policies.errorCode` (default `provider_policy_denied`, else a vendor code); its `details.reason` SHOULD name the cause above, and it MUST NOT echo the policy. Each decision SHOULD be audited. A resolver outage SHOULD fail open.
+
+### Structured output
+
+These facets govern a `ctx.callAI` call that supplies `responseSchema`.
+
+**`tierOneSubsetCompliance`** advertises that the host accepts the Tier 1 structured-output subset shared across major providers. A host advertising it MUST accept a schema restricted to that subset for any provider it advertises, rather than refusing on provider-specific grounds.
+
+`reasoning` advertises the host's prompt posture for an optional `reasoning` property in the response schema.
+
+- Where the schema permits it, a host SHOULD instruct the model to populate it. A host MUST NOT reject output without it, whatever `promptDirective` says.
+- A host MUST NOT route on `reasoning`. A known secret in the input MUST NOT appear verbatim in it, in derived events, span attributes or the debug bundle (invariant `envelope-reasoning-secret-redaction`).
+
+A host advertising `reliability`:
+
+- MUST emit `envelope.retry-exhausted` and `envelope.refusal`, and list in `reliability.events[]` both of them and only the other reliability events it emits;
+- SHOULD emit `envelope.retry-attempted` before each retry past the first;
+- MUST pass `previousError`, `finalError` and `refusalText` through its secret redaction (invariants `envelope-refusal-no-prompt-leak`, `envelope-recovery-no-content-leak`);
+- MUST replay `totalAttempts`, `outputTokenCount` and the recovery `path` identically. `refusalText` MAY differ, and a consumer MUST tolerate `null`.
+
+Under `reliability.completion.distinguishesTruncation`, output is complete only on a clean provider stop with a payload that validates against `responseSchema`.
+
+- **Truncation** (no clean stop): the host MUST emit `envelope.truncated`. A retry SHOULD raise the output budget, by `truncationBudgetMultiplier` (default 2), and MUST NOT carry a schema-correcting fragment.
+- **Schema violation** (clean stop, invalid payload): a retry's corrective fragment SHOULD reproduce the validator's failure and MUST NOT contain text from the model's output. The retry MUST NOT raise the output budget.
+- **Refusal** is terminal: the host MUST NOT retry it, and the node MUST fail with `envelope_refusal`. `configurable.ai.maxRefusals` ([runs.md](runs.md)) caps the `envelope.refusal` events a run records.
+- Each retry past the first MUST emit `envelope.retry-attempted` with that `reason`. Both paths count against `limits.maxRepairRounds` when it is advertised.
+- On exhaustion the host MUST emit `envelope.retry-exhausted` with that `finalReason` and `cap.breached` `kind: "schema"`, and fail the node with `envelope_truncation_unrecoverable` or `envelope_invalid`.
+- Lenient-parse recovery consumes no retry. It emits `envelope.recovery-applied` once per recovery, carrying only the path and an optional byte offset.
 
 A host advertising `promptPrefixCache` MAY honor `cachePrefixId` per routed provider, and otherwise MUST ignore it. It MUST key the cache by (authenticated tenant, `cachePrefixId`) and MUST NOT persist prompt or response substrings keyed by it. The envelope and `provider.usage` token counts MUST match on hit and miss, and on replay.
 

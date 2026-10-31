@@ -1,20 +1,20 @@
 {
-  "$comment": "RFC 0247 — the limits facets, hand-decided from the v1 seed with the nine seeded shapes unchanged, plus maxStreamAgeSec (bounded close of an opted-in event stream; events.md §Bounded close).",
+  "$comment": "RFC 0247 — the limits facets, hand-decided from the v1 seed with the nine seeded shapes unchanged, plus maxStreamAgeSec (bounded close of an opted-in event stream; events.md §Bounded close). RFC 0255 §C removed schemaRounds and envelopesPerTurn with the AI Envelope and added the OPTIONAL maxToolRounds and maxRepairRounds.",
   "properties": {
     "clarificationRounds": {
       "type": "integer",
       "minimum": 0,
-      "description": "Maximum total clarification envelopes per task before the engine forces the LLM to proceed."
+      "description": "Maximum total clarification rounds per task before the engine forces the model to proceed."
     },
-    "schemaRounds": {
+    "maxToolRounds": {
+      "type": "integer",
+      "minimum": 1,
+      "description": "RFC 0255 §C. Optional. The most model rounds that end in tool calls a host runs in one model turn before it stops the loop. Hosts that advertise it MUST enforce it."
+    },
+    "maxRepairRounds": {
       "type": "integer",
       "minimum": 0,
-      "description": "Maximum total schema-validation rounds per envelope before the node fails."
-    },
-    "envelopesPerTurn": {
-      "type": "integer",
-      "minimum": 0,
-      "description": "Maximum total envelopes the LLM may emit in a single chat turn."
+      "description": "RFC 0255 §C. Optional. The most times a host re-asks the model to repair output that failed its structured-output schema before the node fails. Hosts that advertise it MUST enforce it."
     },
     "maxNodeExecutions": {
       "type": "integer",
@@ -53,8 +53,6 @@
     }
   },
   "required": [
-    "clarificationRounds",
-    "schemaRounds",
-    "envelopesPerTurn"
+    "clarificationRounds"
   ]
 }

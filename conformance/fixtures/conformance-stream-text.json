@@ -6,11 +6,10 @@
   "nodes": [
     {
       "id": "ai",
-      "typeId": "core.ai.callPrompt",
+      "typeId": "core.conformance.stream-text",
       "name": "AI Call (mock-routed)",
       "position": { "x": 0, "y": 0 },
       "config": {
-        "promptId": "conformance.stream-text-noop",
         "expectsStreaming": true
       },
       "inputs": {}

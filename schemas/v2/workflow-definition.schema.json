@@ -241,10 +241,6 @@
           "$ref": "agent-ref.schema.json",
           "description": "Multi-Agent Shift Phase 1. Optional compile-time pinning of which agent executes this node. When set, the engine surfaces this AgentRef on the `RunSnapshot.agent` field while the node is active, and emits an `agent.handoff` event when control transitions from the prior node's agent (if different). Resolution at runtime: the engine MAY override via dispatch (RFC 0012 / `core.dispatch`) or orchestrator decision (RFC 0011); the node's `agent?` is the default authoring-time pin, not a hard binding."
         },
-        "envelopeContract": {
-          "type": "object",
-          "additionalProperties": true
-        },
         "artifactType": {
           "type": "string",
           "description": "Artifact type this node produces or reviews (first-class typed field — replaces the deprecated config.outputArtifactType bag entry)."

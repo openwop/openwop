@@ -27,7 +27,7 @@
         "pointers": {
           "type": "array",
           "minItems": 1,
-          "description": "Every schema pointer the correction moved, as `<repo-relative file>#<INSTANCE pointer>` \u2014 the document-shaped path scripts/generate-v2-surface-baseline.mjs prints (`#/signing`, `#/chains/[]/dag/nodes/[]/config`), never the schema-shaped one (`#/properties/signing`), because a `$defs` name is not a surface. scripts/check-v2-surface-monotone.mjs matches a baseline removal against this list, so a pointer left out is a removal the monotone gate refuses.",
+          "description": "Every schema pointer the correction moved, as `<repo-relative file>#<INSTANCE pointer>` \u2014 the document-shaped path scripts/generate-v2-surface-baseline.mjs prints (`#/signing`, `#/chains/[]/dag/nodes/[]/config`), never the schema-shaped one (`#/properties/signing`), because a `$defs` name is not a surface. scripts/check-v2-surface-monotone.mjs matches a baseline removal against this list, so a pointer left out is a removal the monotone gate refuses. An enum member is named by appending `=<member>` to its site (`schemas/v2/error-envelope.schema.json#/error=unknown_envelope_kind`); the bare site licenses every member under it, so name members when only some go.",
           "items": { "type": "string", "pattern": "^[A-Za-z0-9_./-]+#(/[^#|]*)?$" }
         },
         "compatibilityEntry": { "type": "string", "minLength": 1, "description": "A literal substring of the COMPATIBILITY.md §3 \"correction on record\" entry, which is kept in docs/COMPATIBILITY-CORRECTIONS-LOG.md. The gate fails when it drifts — a register row whose prose entry has been reworded away is an unrecorded shape change." },

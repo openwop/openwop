@@ -510,7 +510,8 @@ This fixture closes F5 without requiring any new server-side test infrastructure
 
 - **Consuming scenario**: `conformance/src/scenarios/stream-text-fixture.test.ts` (added 2026-06-11; previously this fixture had no consuming scenario).
 - **Purpose**: verify the `messages` SSE stream mode end-to-end through a deterministic AI mock. Without a mock provider, conformance suites can't exercise streaming AI without burning real API budget; with one, the test is fully reproducible.
-- **Fixture topology**: a single `core.ai.callPrompt` (or similar AI-bearing typeId) node. The node's actual prompt content is irrelevant — the conformance driver intercepts the AI dispatch via `configurable.mockProvider`.
+- **Fixture topology**: a single `core.conformance.stream-text` node (conformance-RESERVED), config `{ expectsStreaming: true }`. It names no prompt: the conformance driver supplies the model output through `configurable.mockProvider`.
+- **Disposition**: neither the fixture nor the `stream-text` mock advertised ⇒ `inapplicable`; the mock without the fixture ⇒ `blocked`; the fixture without the mock ⇒ `inapplicable`. The scenario targets major 1 only.
 - **Inputs**: none.
 - **Conformance test driver**:
   1. POST `/runs` with body:
@@ -803,6 +804,7 @@ The fixtures reference these typeIds:
 | `core.approvalGate`           | approval                                               | Call `ctx.interrupt({kind: 'approval', ...})`                                                                                                                                            |
 | `core.conformance.hold` | replay-side-effect, replay-ordinal-loop | Conformance-RESERVED (openwop#1769). Completes after `inputs.delayMs`; its outputs are exactly its resolved inputs, `delayMs` included, under the same keys. It performs nothing observable outside the run's own event log. A host advertising a fixture that uses it MUST NOT classify it side-effecting (`replay.md` §Suppression rule 1) and MUST re-execute it live in a replay. |
 | `core.clarificationGate`      | clarification                                          | Call `ctx.interrupt({kind: 'clarification', ...})` with `data.questions` from `config.questions`, and `data.form` from `config.form` verbatim when present (RFC 0255 §E)                                                                                                                                       |
+| `core.conformance.stream-text` | stream-text | Conformance-RESERVED (RFC 0255). One model call whose output comes from `configurable.mockProvider` (`stream-text`), streamed as `output.chunk` frames in `messages` mode; `config.expectsStreaming: true`. It names no prompt |
 | `conformance.requiresMissing` | capability-missing                                     | Declares `requires: ['conformance.never-provided']`; engine MUST refuse dispatch. Opt-in fixture registration is recommended so production deployments don't expose the fixture surface. |
 | `conformance.artifact.emit` | artifact-emit | Opt-in (RFC 0205). Produce one artifact of `config.artifactType` with payload `config.data`; emit `artifact.created` naming it; readable through `getArtifact`. |
 | `conformance.oauth.use` | credential | Opt-in (RFC 0199). Resolve the credential `config.auth` names for the run's Subject, refreshing host-side; no credential ⇒ a `credential` interrupt (with the facet) or a failed node. Never carries token material on any surface. |
@@ -869,10 +871,12 @@ For `v2-tool-catalog-annotations`' unclassified-MCP leg, a host that advertises 
 
 | Field | Meaning |
 |---|---|
-| `kind` | `invalid-json` (a clean stop with the reply `{ this is not json }`: a parse error, so it never engages the natural-language fallback), `truncated` (a `max_tokens` stop), or `valid` (a minimal instance of `responseSchema`, or `ok` without one) |
+| `kind` | `invalid-json` (a clean stop with the reply `{ this is not json }`: a parse error, so it never engages the natural-language fallback), `truncated` (a `max_tokens` stop), `valid` (a minimal instance of `responseSchema`, or `ok` without one), or `refusal` (the provider declines: a safety stop with refusal text, RFC 0255). A host whose mock cannot serve `refusal` leaves the `v2-provider-output-reliability` refusal leg `blocked` |
 | `outputTokens` | The tokens the reply uses. The mock reports `min(outputTokens, the maxTokens that request carried)`, and serves an entry over that budget as truncated. With no `maxTokens` on the request, there is no clamp |
 | `usage: false` | The request reports no usage |
 | `structuredMode` | For a call with `responseSchema`: `native` or `prompt` (default) is the structured-output mode that request used |
+
+`v2-provider-output-reliability` (RFC 0255) runs three more scripts through the same fixture and reads the run's reliability events (`host-services.md` §Structured output).
 
 **Output.** The node completes with `outputs.attempts`, the `attempts` record of the `ctx.callAI` result verbatim. A call that throws fails the node with the error's code and details unchanged: a malformed `retry` is `validation_error` with `details.field` naming the key.
 
@@ -1171,7 +1175,7 @@ Prompt-template fixtures are exercised by the server-free `fixtures-valid.test.t
 
 ## A2UI v0.9 surface fixtures (RFC 0209)
 
-The `fixtures/a2ui-v09/` sub-directory (suite 2.36.0) holds `ui.a2ui-surface` payloads at per-kind **schema version 2** — ordered runs of A2UI v0.9 server-to-client messages in the OpenWOP profile of the basic catalog (`schemas/v2/envelopes/ui.a2ui-surface.schema.json` `$defs/payloadV2`; `spec/v2/ext/a2uiSurface/README.md`). They are NOT `WorkflowDefinition`s and are NOT seeded into a server. The corpus gate (`src/coherence/a2ui-v09-profile.test.ts`) validates the positive against the profile and each of its messages against the vendored upstream schemas; each negative must fail the profile AND pass a copy of the profile with only the restriction under test removed, so it can fail for no other reason. `v2-a2ui-v09-surface.test.ts` emits the positive through the v2 emit-surface seam. Like `interrupt-payloads/`, this directory carries deliberately-invalid `negative-` files; the top-level workflow sweep never reads sub-directories.
+The `fixtures/a2ui-v09/` sub-directory (suite 2.36.0) holds A2UI v0.9 surfaces — ordered runs of server-to-client messages in the OpenWOP profile of the basic catalog. They were written for the `ui.a2ui-surface` envelope kind RFC 0255 deleted; they now exercise the same profile as an interrupt form (`schemas/v2/interrupt-form.schema.json`; `interrupt.md` §Forms). They are NOT `WorkflowDefinition`s and are NOT seeded into a server. The corpus gate (`src/coherence/a2ui-v09-profile.test.ts`) validates the positive against the profile and each of its messages against the vendored upstream schemas; each negative must fail the profile AND pass a copy of the profile with only the restriction under test removed, so it can fail for no other reason. Like `interrupt-payloads/`, this directory carries deliberately-invalid `negative-` files; the top-level workflow sweep never reads sub-directories.
 
 | Fixture | Expect | Upstream A2UI | Purpose |
 | --- | --- | --- | --- |

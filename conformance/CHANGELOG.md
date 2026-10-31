@@ -1,5 +1,8 @@
-## [2.46.36] — 2026-10-30 — RFCs 0255 and 0256 Active
+## [2.46.36] — 2026-10-31 — The AI Envelope is deleted from v2
 
+- **Envelope scenarios removed (RFC 0255).** Ten major-2 envelope and A2UI files are deleted, and their ids carry tombstones naming `openwop.correction.v2.5`. `v2-structured-output-advertisement` and `v2-limits-clarification-rounds-advertisement` replace the advertisement files they re-point, with alias rows. Major-1 scenarios are unchanged.
+- **New scenarios.** `v2-envelope-surfaces-absent` (unaided) refuses a discovery document that still publishes a deleted family or limit. `v2-provider-output-reliability` drives the attempt-accounting fixture through truncation, exhaustion and refusal; the fixture's mock gains a `refusal` script kind.
+- **Fixture.** `conformance-stream-text` runs `core.conformance.stream-text` and names no prompt. A host serving the mock without the fixture records `blocked`.
 - **New scenario `v2-interrupt-form-rules` (RFC 0255 §E).** Gated on the fixtures `conformance-interrupt-form`, `-refused` and `-unbound`, and inapplicable on a host advertising none of them. It asserts that a form arrives unchanged beside `questions`, that it resolves with `{ answers: [{ id, answer }] }`, and that neither probe is raised with its form. The corpus file `a2ui-v09-profile` gains three `0255.interrupt-form-*` legs.
 - **Filings.** The cycle carries the RFC 0255 and 0256 filings and the RFC 0255 §D licence. `requirement-aliases.json` gains a `tombstones` map: an id the sources no longer mint needs an alias or a tombstone naming the `steward-deletion` row that deleted its surface.
 

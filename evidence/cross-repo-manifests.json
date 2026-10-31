@@ -237,6 +237,27 @@
     "secrets.resolveInPack": 3,
     "webResearch": 4
   },
+  "registryCurrentPeerDependencyKeys": {
+    "a2a": 1,
+    "agentRuntime": 25,
+    "agents": 9,
+    "aiProviders": 45,
+    "brand": 1,
+    "canvas": 1,
+    "chat": 1,
+    "coordination": 1,
+    "dataIntegration": 1,
+    "entities": 1,
+    "fs": 2,
+    "kanban": 2,
+    "knowledge": 1,
+    "launchStudio": 1,
+    "mcp": 1,
+    "messaging": 2,
+    "queueBus": 2,
+    "secrets": 3,
+    "webResearch": 2
+  },
   "registryManifestCensus": {},
   "siblingVersions": {
     "openwop-sdks": {

@@ -9,7 +9,7 @@ import { describe, expect, it } from 'vitest';
 import { majorProfile } from './major-profile.js';
 import {
   aiProvidersAuthModesShapeLeg, aiProvidersInlineMediaLeg, aiProvidersPromptPrefixCacheLeg, aiProvidersSelfHostedLeg,
-  canonicalReliabilityEvent, envelopesCompletionLeg, envelopesReasoningLeg, envelopesReliabilityLeg, envelopesTierOneLeg, limitsCapLeg,
+  structuredOutputCompletionLeg, structuredOutputReasoningLeg, structuredOutputReliabilityLeg, structuredOutputTierOneLeg, limitsCapLeg,
   modelCapabilitiesAdvertisedLeg, modelCapabilitiesSubstitutionLeg, recordSchemaLeg, type AdvertFamily, type AdvertOutcome,
   artifactTypesGlobalFacetsLeg, artifactTypesPerTypeLeg, authorizationFailClosedLeg, authorizationRolesLeg,
   credentialsRotationLeg, credentialsScopesLeg, deadLetterRetentionDaysLeg, portabilityImportDryRunLeg, portabilityKindsLeg,
@@ -23,16 +23,18 @@ import {
 
 const V2 = majorProfile(2);
 const head = { status: 'stable', since: '2.0', witness: 'claims-check' } as const;
-const envelopes = (o: Record<string, unknown> = {}): Record<string, unknown> => ({
-  envelopes: {
+const so = (o: Record<string, unknown> = {}): Record<string, unknown> => ({
+  aiProviders: {
     ...head,
+    witness: 'witnessable-gated',
+    providers: ['anthropic'],
     reasoning: { promptDirective: 'advisory' },
     tierOneSubsetCompliance: 'warn',
     reliability: { events: ['envelope.retry-exhausted', 'envelope.refusal', 'envelope.truncated'], maxRetryAttempts: 2, completion: { distinguishesTruncation: true, truncationBudgetMultiplier: 2 } },
     ...o,
   },
 });
-const limits = (o: Record<string, unknown> = {}): Record<string, unknown> => ({ limits: { ...head, witness: 'witnessable-gated', clarificationRounds: 3, schemaRounds: 2, envelopesPerTurn: 5, ...o } });
+const limits = (o: Record<string, unknown> = {}): Record<string, unknown> => ({ limits: { ...head, witness: 'witnessable-gated', clarificationRounds: 3, ...o } });
 const mc = (o: Record<string, unknown> = {}): Record<string, unknown> => ({ modelCapabilities: { ...head, witness: 'witnessable-gated', advertised: ['structured-output', 'vision-input', 'x-host-acme-long-memory'], substitutionSupported: true, ...o } });
 const ap = (o: Record<string, unknown> = {}): Record<string, unknown> => ({
   aiProviders: { ...head, witness: 'witnessable-gated', providers: ['anthropic', 'openai'], byok: ['anthropic'], selfHosted: false, authModes: ['apiKey', 'oauth-pkce'], maxInlineMediaBytes: 262144, promptPrefixCache: true, ...o },
@@ -43,51 +45,48 @@ const passes = (o: AdvertOutcome): void => { expect(o.kind).toBe('observed'); ex
 const fails = (o: AdvertOutcome): void => { expect(o.kind).toBe('observed'); expect(failed(o).length).toBeGreaterThan(0); };
 const inapplicable = (o: AdvertOutcome): void => { expect(o).toMatchObject({ kind: 'skip', disposition: 'inapplicable' }); };
 
-describe('family-advert witness: envelopes (events.md §envelopes)', () => {
+describe('family-advert witness: aiProviders structured output (host-services.md §Structured output)', () => {
   it('a conforming record passes every leg', () => {
-    const d = envelopes();
-    passes(recordSchemaLeg(V2, d, 'envelopes', 'x'));
-    passes(envelopesReasoningLeg(V2, d));
-    passes(envelopesTierOneLeg(V2, d));
-    passes(envelopesReliabilityLeg(V2, d));
-    passes(envelopesCompletionLeg(V2, d));
+    const d = so();
+    passes(recordSchemaLeg(V2, d, 'aiProviders', 'x'));
+    passes(structuredOutputReasoningLeg(V2, d));
+    passes(structuredOutputTierOneLeg(V2, d));
+    passes(structuredOutputReliabilityLeg(V2, d));
+    passes(structuredOutputCompletionLeg(V2, d));
   });
 
-  it('the v1 dotted names are accepted as aliases until 3.0, and fold to the v2 MUST-tier names', () => {
-    const d = envelopes({ reliability: { events: ['envelope.retry.attempted', 'envelope.retry.exhausted', 'envelope.refusal', 'envelope.nlToFormat.engaged', 'envelope.recovery.applied'] } });
-    passes(recordSchemaLeg(V2, d, 'envelopes', 'x'));
-    passes(envelopesReliabilityLeg(V2, d));
-    expect(canonicalReliabilityEvent('envelope.retry.exhausted')).toBe('envelope.retry-exhausted');
+  it('the v1 dotted reliability names are not v2 members', () => {
+    fails(structuredOutputReliabilityLeg(V2, so({ reliability: { events: ['envelope.retry.exhausted', 'envelope.refusal'] } })));
   });
 
   it.each<[string, Record<string, unknown>, (d: unknown) => AdvertOutcome]>([
-    ['a v1 `supported` seat on the record', { supported: true }, (d) => recordSchemaLeg(V2, d, 'envelopes', 'x')],
-    ['a v1 `reasoning.supported` seat', { reasoning: { supported: true, promptDirective: 'advisory' } }, (d) => envelopesReasoningLeg(V2, d)],
-    ['an unknown promptDirective', { reasoning: { promptDirective: 'always' } }, (d) => envelopesReasoningLeg(V2, d)],
-    ['an unknown tierOneSubsetCompliance', { tierOneSubsetCompliance: 'lenient' }, (d) => envelopesTierOneLeg(V2, d)],
-    ['reliability without envelope.refusal', { reliability: { events: ['envelope.retry-exhausted'] } }, (d) => envelopesReliabilityLeg(V2, d)],
-    ['reliability without retry-exhausted (either spelling)', { reliability: { events: ['envelope.refusal', 'envelope.retry-attempted'] } }, (d) => envelopesReliabilityLeg(V2, d)],
-    ['a non-reliability event listed', { reliability: { events: ['envelope.retry-exhausted', 'envelope.refusal', 'envelope.refused'] } }, (d) => envelopesReliabilityLeg(V2, d)],
-    ['reliability with no events[]', { reliability: { maxRetryAttempts: 2 } }, (d) => envelopesReliabilityLeg(V2, d)],
-    ['maxRetryAttempts out of range', { reliability: { events: ['envelope.retry-exhausted', 'envelope.refusal'], maxRetryAttempts: 17 } }, (d) => envelopesReliabilityLeg(V2, d)],
-    ['a string distinguishesTruncation', { reliability: { events: ['envelope.retry-exhausted', 'envelope.refusal'], completion: { distinguishesTruncation: 'yes' } } }, (d) => envelopesCompletionLeg(V2, d)],
-    ['a completion block without distinguishesTruncation', { reliability: { events: ['envelope.retry-exhausted', 'envelope.refusal'], completion: { truncationBudgetMultiplier: 2 } } }, (d) => envelopesCompletionLeg(V2, d)],
-    ['a truncationBudgetMultiplier above 8', { reliability: { events: ['envelope.retry-exhausted', 'envelope.refusal'], completion: { distinguishesTruncation: true, truncationBudgetMultiplier: 9 } } }, (d) => envelopesCompletionLeg(V2, d)],
+    ['a v1 `supported` seat on the record', { supported: true }, (d) => recordSchemaLeg(V2, d, 'aiProviders', 'x')],
+    ['a v1 `reasoning.supported` seat', { reasoning: { supported: true, promptDirective: 'advisory' } }, (d) => structuredOutputReasoningLeg(V2, d)],
+    ['an unknown promptDirective', { reasoning: { promptDirective: 'always' } }, (d) => structuredOutputReasoningLeg(V2, d)],
+    ['an unknown tierOneSubsetCompliance', { tierOneSubsetCompliance: 'lenient' }, (d) => structuredOutputTierOneLeg(V2, d)],
+    ['reliability without envelope.refusal', { reliability: { events: ['envelope.retry-exhausted'] } }, (d) => structuredOutputReliabilityLeg(V2, d)],
+    ['reliability without retry-exhausted (either spelling)', { reliability: { events: ['envelope.refusal', 'envelope.retry-attempted'] } }, (d) => structuredOutputReliabilityLeg(V2, d)],
+    ['a non-reliability event listed', { reliability: { events: ['envelope.retry-exhausted', 'envelope.refusal', 'envelope.refused'] } }, (d) => structuredOutputReliabilityLeg(V2, d)],
+    ['reliability with no events[]', { reliability: { maxRetryAttempts: 2 } }, (d) => structuredOutputReliabilityLeg(V2, d)],
+    ['maxRetryAttempts out of range', { reliability: { events: ['envelope.retry-exhausted', 'envelope.refusal'], maxRetryAttempts: 17 } }, (d) => structuredOutputReliabilityLeg(V2, d)],
+    ['a string distinguishesTruncation', { reliability: { events: ['envelope.retry-exhausted', 'envelope.refusal'], completion: { distinguishesTruncation: 'yes' } } }, (d) => structuredOutputCompletionLeg(V2, d)],
+    ['a completion block without distinguishesTruncation', { reliability: { events: ['envelope.retry-exhausted', 'envelope.refusal'], completion: { truncationBudgetMultiplier: 2 } } }, (d) => structuredOutputCompletionLeg(V2, d)],
+    ['a truncationBudgetMultiplier above 8', { reliability: { events: ['envelope.retry-exhausted', 'envelope.refusal'], completion: { distinguishesTruncation: true, truncationBudgetMultiplier: 9 } } }, (d) => structuredOutputCompletionLeg(V2, d)],
   ])('defect: %s fails its leg', (_what, over, leg) => {
-    fails(leg(envelopes(over)));
+    fails(leg(so(over)));
   });
 
   it('an absent family or facet is inapplicable, never a pass', () => {
-    inapplicable(recordSchemaLeg(V2, {}, 'envelopes', 'x'));
-    inapplicable(envelopesReasoningLeg(V2, { envelopes: { ...head } }));
-    inapplicable(envelopesTierOneLeg(V2, { envelopes: { ...head } }));
-    inapplicable(envelopesReliabilityLeg(V2, { envelopes: { ...head } }));
-    inapplicable(envelopesCompletionLeg(V2, { envelopes: { ...head, reliability: { events: ['envelope.retry-exhausted', 'envelope.refusal'] } } }));
+    inapplicable(recordSchemaLeg(V2, {}, 'aiProviders', 'x'));
+    inapplicable(structuredOutputReasoningLeg(V2, { aiProviders: { ...head, providers: ['anthropic'] } }));
+    inapplicable(structuredOutputTierOneLeg(V2, { aiProviders: { ...head, providers: ['anthropic'] } }));
+    inapplicable(structuredOutputReliabilityLeg(V2, { aiProviders: { ...head, providers: ['anthropic'] } }));
+    inapplicable(structuredOutputCompletionLeg(V2, { aiProviders: { ...head, providers: ['anthropic'], reliability: { events: ['envelope.retry-exhausted', 'envelope.refusal'] } } }));
   });
 });
 
-describe('family-advert witness: limits envelope caps (runs.md §Limits)', () => {
-  const caps = ['clarificationRounds', 'schemaRounds', 'envelopesPerTurn'] as const;
+describe('family-advert witness: limits clarificationRounds (runs.md §Limits)', () => {
+  const caps = ['clarificationRounds'] as const;
 
   it('conforming caps pass; zero is a valid cap', () => {
     for (const c of caps) passes(limitsCapLeg(V2, limits(), c));
@@ -103,7 +102,7 @@ describe('family-advert witness: limits envelope caps (runs.md §Limits)', () =>
   });
 
   it('a host that does not advertise limits is inapplicable', () => {
-    inapplicable(limitsCapLeg(V2, {}, 'schemaRounds'));
+    inapplicable(limitsCapLeg(V2, {}, 'clarificationRounds'));
   });
 });
 
@@ -175,7 +174,6 @@ const CONFORMING: Readonly<Record<string, Record<string, unknown>>> = {
   subWorkflow: { ...exp, witness: 'claims-check', inputMapping: true },
   scheduling: { ...exp, cron: true, delayed: true, calendar: false, maxFutureHorizon: 'P90D' },
   artifactTypes: { ...exp, store: true, render: false, export: ['pdf'], types: { 'vendor.acme.prd': { validated: true, validation: 'open', schemaVersion: 1, registrationSource: 'host' } } },
-  aiEnvelope: { ...exp, await: true },
   deadLetter: { ...exp, retentionDays: 7 },
   portability: { ...exp, export: true, import: true, kinds: ['agent', 'pack'], dryRun: true },
 };
@@ -190,7 +188,6 @@ const LEGS: Readonly<Record<string, Readonly<Record<string, LegFn>>>> = {
   subWorkflow: { inputMapping: subWorkflowInputMappingLeg },
   scheduling: { forms: schedulingFormsLeg },
   artifactTypes: { global: artifactTypesGlobalFacetsLeg, perType: artifactTypesPerTypeLeg },
-  aiEnvelope: {},
   deadLetter: { retentionDays: deadLetterRetentionDaysLeg },
   portability: { importDryRun: portabilityImportDryRunLeg, kinds: portabilityKindsLeg },
 };
@@ -252,10 +249,6 @@ describe('family-advert witness wave 2: each defect fails only its own leg', () 
     fails(recordSchemaLeg(V2, d, family as AdvertFamily, 'x'));
   });
 
-  it('aiEnvelope: a non-boolean await fails the record leg', () => {
-    fails(recordSchemaLeg(V2, doc2('aiEnvelope', { await: 'yes' }), 'aiEnvelope', 'x'));
-  });
-
   it('the record leg convicts the record header too: experimental without until, stable with until', () => {
     fails(recordSchemaLeg(V2, doc2('deadLetter', { until: undefined }), 'deadLetter', 'x'));
     fails(recordSchemaLeg(V2, doc2('deadLetter', { status: 'stable' }), 'deadLetter', 'x'));
@@ -291,7 +284,6 @@ const CONFORMING3: Readonly<Record<string, Record<string, unknown>>> = {
   purposePropagation: { ...exp, propagatesOnward: true },
   nondeterminismPolicy: { ...exp, declared: true },
   promptLibrary: { ...exp, witness: 'claims-check' },
-  envelopeContracts: { ...exp, witness: 'claims-check', advertised: true },
 };
 const doc3 = (family: string, over: Record<string, unknown> = {}): Record<string, unknown> => ({ [family]: { ...CONFORMING3[family], ...over } });
 const LEGS3: Readonly<Record<string, Readonly<Record<string, LegFn>>>> = {
@@ -346,7 +338,6 @@ describe('family-advert witness wave 3: each defect fails only its own leg', () 
   it.each<[string, Record<string, unknown>]>([
     ['nondeterminismPolicy', { declared: 'yes' }],
     ['nondeterminismPolicy', { declared: undefined }],
-    ['envelopeContracts', { advertised: undefined }],
     ['conversationTurnModelProvenance', { maxParticipants: 3 }],
     ['channelPresence', { persisted: false }],
     ['promptLibrary', { pinned: true }],

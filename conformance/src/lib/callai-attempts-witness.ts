@@ -33,7 +33,7 @@ export const NODE_ID = 'callai-echo';
 const DOC_A = 'aiProviders.schema.json §callAccounting.attempts (RFC 0248 §A)';
 const DOC_B = 'aiProviders.schema.json §callAccounting.retryPolicy (RFC 0248 §B)';
 
-export interface ScriptEntry { readonly kind: 'invalid-json' | 'truncated' | 'valid'; readonly outputTokens?: number; readonly usage?: false; readonly structuredMode?: 'native' | 'prompt' }
+export interface ScriptEntry { readonly kind: 'invalid-json' | 'truncated' | 'valid' | 'refusal'; readonly outputTokens?: number; readonly usage?: false; readonly structuredMode?: 'native' | 'prompt' }
 export interface Case { readonly request: Record<string, unknown>; readonly script: readonly ScriptEntry[] }
 
 const SCHEMA = { type: 'object', properties: { answer: { type: 'string' } }, required: ['answer'] };
@@ -51,6 +51,12 @@ export const CASES = {
   cap: { request: { prompt: 'conformance', responseSchema: SCHEMA, maxTokens: BUDGET, retry: { maxAttempts: 1 } }, script: [{ kind: 'invalid-json', outputTokens: 10 }, { kind: 'valid', outputTokens: 20 }] },
   /** §B.2: truncated, then a reply that fits only a grown budget. */
   growth: { request: { prompt: 'conformance', responseSchema: SCHEMA, maxTokens: BUDGET, retry: { growMaxTokens: false } }, script: [{ kind: 'truncated', outputTokens: BUDGET }, { kind: 'valid', outputTokens: 150 }] },
+  /** RFC 0255 §A (host-services.md §Structured output): truncated, then valid. */
+  truncation: { request: { prompt: 'conformance', responseSchema: SCHEMA, maxTokens: BUDGET }, script: [{ kind: 'truncated', outputTokens: BUDGET }, { kind: 'valid', outputTokens: 20 }] },
+  /** RFC 0255 §A: every reply violates the schema, so the repair budget runs out. */
+  exhaustion: { request: { prompt: 'conformance', responseSchema: SCHEMA, maxTokens: BUDGET, retry: { maxAttempts: 2 } }, script: [{ kind: 'invalid-json', outputTokens: 10 }] },
+  /** RFC 0255 §A: the provider refuses; a refusal is never retried. */
+  refusal: { request: { prompt: 'conformance', responseSchema: SCHEMA, maxTokens: BUDGET }, script: [{ kind: 'refusal' }, { kind: 'valid', outputTokens: 20 }] },
   /** §B.5: maxAttempts out of range. */
   malformed: { request: { prompt: 'conformance', maxTokens: BUDGET, retry: { maxAttempts: 0 } }, script: [{ kind: 'valid', outputTokens: 5 }] },
 } as const satisfies Record<string, Case>;
@@ -66,6 +72,10 @@ export interface CaseRun {
   readonly usage: readonly Record<string, unknown>[];
   readonly exhaustedTotal: number | undefined;
   readonly startedSeq: number | undefined;
+  /** Every event `type` of the run, in log order. */
+  readonly types: readonly string[];
+  /** `cap.breached` payload `kind`s, in log order. */
+  readonly capBreachedKinds: readonly unknown[];
 }
 
 export interface Finding { readonly ok: boolean; readonly doc: string; readonly message: string }
@@ -117,6 +127,8 @@ export async function observe(runId: string, status: string): Promise<CaseRun | 
     usage: of('provider.usage'),
     exhaustedTotal: typeof exhausted?.['totalAttempts'] === 'number' ? exhausted['totalAttempts'] : undefined,
     startedSeq: typeof started?.['sequence'] === 'number' ? started['sequence'] : undefined,
+    types: mine.map((e) => String(e['type'])),
+    capBreachedKinds: of('cap.breached').map((p) => p['kind']),
   };
 }
 

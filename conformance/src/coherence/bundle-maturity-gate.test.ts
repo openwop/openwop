@@ -17,9 +17,9 @@
  *   1. the committed corpus — green, and the gate states which suite makes
  *      §C.7 binding.
  *   2. MyndHyve's superseded 2.35.1 document, re-labelled with a suite version
- *      at or above the RFC's, FAILS with 38 — the sabotage the RFC names.
+ *      at or above the RFC's, FAILS with 36 — the sabotage the RFC names (38 when written; two of its overstated families were deleted by RFC 0255).
  *   3. flipping one family to `stable` in a fixture declaration drops the
- *      count to 37, so the number is derived from the comparison rather than
+ *      count to 35, so the number is derived from the comparison rather than
  *      from a constant somebody typed.
  *   4. the same document at its own suite is REPORTED, not failed, and the
  *      report names the families and the gap row. A "reported" disposition
@@ -95,24 +95,24 @@ describe('bundle-maturity-gate (RFC 0197 §C.7 / D1)', () => {
     if (!existsSync(SOURCE)) return softSkip('blocked', 'evidence/fixtures/0197-myndhyve-2.35.1-overstated.json is absent, so the sabotage has no subject');
     const r = relabelled('2.36.0');
     expect(r.status, req(ID, DOC, `§C.7 is a MUST for a bundle cut on the first suite release that ships this RFC; the ONLY difference from the green run is the suite label — it exited ${r.status}: ${r.out.slice(-600)}`)).not.toBe(0);
-    expect(r.overstated, req(ID, DOC, `the count must be the real one measured from the real document (38), not a constant — it read ${r.overstated}`)).toBe(38);
+    expect(r.overstated, req(ID, DOC, `the count must be the real one measured from the real document (36), not a constant — it read ${r.overstated}`)).toBe(36);
     expect(r.out, req(ID, DOC, 'the failure must tell the host what to do: re-cut as experimental with a future `until`, or promote the family by RFC')).toMatch(/Re-cut with `status: "experimental"`.*or promote the family by RFC/s);
   }, 120_000);
 
-  it('the count is DERIVED — promoting one family in the declaration drops 38 to 37', () => {
+  it('the count is DERIVED — promoting one family in the declaration drops 36 to 35', () => {
     if (V1_DIR === null) return softSkip('inapplicable', 'not a spec checkout');
     if (!existsSync(SOURCE)) return softSkip('blocked', 'evidence/fixtures/0197-myndhyve-2.35.1-overstated.json is absent, so the sabotage has no subject');
     const r = relabelled('2.36.0', 'packs');
-    expect(r.overstated, req(ID, DOC, `with \`packs\` promoted to stable in the declaration the count MUST fall by exactly one; a gate reading a hard-coded 38 would not move. It read ${r.overstated}`)).toBe(37);
+    expect(r.overstated, req(ID, DOC, `with \`packs\` promoted to stable in the declaration the count MUST fall by exactly one; a gate reading a hard-coded 36 would not move. It read ${r.overstated}`)).toBe(35);
     expect(r.out, req(ID, DOC, 'the promoted family must no longer be named in the overstated list')).not.toMatch(/packs\(corpus:experimental\)/);
   }, 120_000);
 
-  it('a bundle whose suite is BELOW the RFC’s is reported, not failed, even with the same 38', () => {
+  it('a bundle whose suite is BELOW the RFC’s is reported, not failed, even with the same 36', () => {
     if (V1_DIR === null) return softSkip('inapplicable', 'not a spec checkout');
     if (!existsSync(SOURCE)) return softSkip('blocked', 'evidence/fixtures/0197-myndhyve-2.35.1-overstated.json is absent, so the sabotage has no subject');
     const r = relabelled('2.35.1');
     expect(r.status, req(ID, DOC, `the positive control for D1: identical content, an earlier suite label, and the gate MUST NOT fail — otherwise "reported" is a fiction. It exited ${r.status}: ${r.out.slice(-400)}`)).toBe(0);
-    expect(r.overstated, req(ID, DOC, 'the same 38 are still counted and printed; reported is not the same as unmeasured')).toBe(38);
+    expect(r.overstated, req(ID, DOC, 'the same 36 are still counted and printed; reported is not the same as unmeasured')).toBe(36);
     expect(r.out, req(ID, DOC, 'the reported row must cite COMPATIBILITY.md §2.3 — an old pass stays a measurement at the suite that measured it')).toMatch(/stays a valid measurement at its own suite/);
     expect(r.out, req(ID, DOC, 'a "reported" disposition that printed nothing would be indistinguishable from a clean tree; the report MUST name the gap row that owes the re-cut')).toMatch(/openwop\.gap\.0197\.1 \(G1\)/);
     expect(r.out, req(ID, DOC, 'the report MUST name the families by key, not just count them — a number nobody can act on is not a report')).toMatch(/packs\(corpus:experimental\)/);

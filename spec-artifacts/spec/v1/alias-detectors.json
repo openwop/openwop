@@ -298,28 +298,10 @@
       "deprecation": "openwop.deprecation.observability-test-seams-facet"
     },
     {
-      "alias": "v2 A2UI delta frame schema (RFC 0114 JSON-Patch transport)",
-      "file": "schemas/v2/a2ui-surface-delta-frame.schema.json",
-      "token": "RFC 0114",
-      "deprecation": "openwop.deprecation.v2-a2ui-delta-frame"
-    },
-    {
-      "alias": "v2 a2uiSurface.deltaTransport facet",
-      "file": "spec/v2/declaration.json",
-      "token": "\"deltaTransport\"",
-      "deprecation": "openwop.deprecation.v2-a2ui-delta-transport-facet"
-    },
-    {
       "alias": "optional `locale` on InterruptPayload.data and the resume payload",
       "file": "spec/v1/i18n.md",
       "token": "## `locale` field on `InterruptPayload`",
       "deprecation": "openwop.deprecation.interrupt-locale-field"
-    },
-    {
-      "alias": "envelopes.reliability.events[] v1 dotted names",
-      "file": "schemas/v2/capabilities.schema.json",
-      "token": "\"envelope.retry.exhausted\"",
-      "deprecation": "openwop.deprecation.v2-reliability-dotted-event-names"
     },
     {
       "alias": "per-provider aiProviders facets (selfHosted[], authModes map, promptPrefixCache.providers, realtimeVoice sub-flags)",
@@ -343,12 +325,6 @@
       "alias": "nondeterminismPolicy.declared required boolean",
       "file": "schemas/v2/capabilities.schema.json",
       "token": "\"declared\": {",
-      "deprecation": "openwop.deprecation.v2-family-false-booleans"
-    },
-    {
-      "alias": "envelopeContracts.advertised required boolean",
-      "file": "schemas/v2/capabilities.schema.json",
-      "token": "Host's node-pack manifests carry `EnvelopeContract` blocks.",
       "deprecation": "openwop.deprecation.v2-family-false-booleans"
     }
   ]

@@ -2,7 +2,7 @@
   "$schema": "https://openwop.dev/spec/v2/errors.schema.json",
   "$comment": "RFC 0171 §B.1 — the error registry: one row per code {code, meaning?, httpStatus, retriable, details, since, deprecated?}. schemas/v2/error-envelope.schema.json is GENERATED from it (scripts/generate-error-envelope.mjs). Retry timing lives in Retry-After only (§B.2). statusSource records whether the status was stated in v1 prose, a v1 convention, or decided here. details is null until a code's details schema is registered (a null row means details is an open object for that code — closure over details is the RFC 0171 Phase 3 follow-up G-row).",
   "version": "2.0",
-  "updated": "2026-10-06",
+  "updated": "2026-10-30",
   "vendorCodePattern": "^(?!openwop\\.)[a-z][a-z0-9]*(-[a-z0-9]+)*\\.[a-z][a-z0-9_]*$",
   "rows": [
     {
@@ -638,16 +638,6 @@
       "source": "spec/v1/connection-packs.md; RFC 0177 §D.1 fail-closed"
     },
     {
-      "code": "envelope_correlation_conflict",
-      "meaning": "An envelope reuses a correlationId already seen in this run with a different type.",
-      "httpStatus": 409,
-      "statusSource": "v1 prose",
-      "retriable": false,
-      "details": null,
-      "since": "1.0",
-      "source": "spec/v1/ai-envelope.md E2 (correlationId type conflict)"
-    },
-    {
       "code": "idempotency_in_flight",
       "meaning": "A request with the same idempotency key is still being processed.",
       "httpStatus": 409,
@@ -911,7 +901,7 @@
     },
     {
       "code": "envelope_invalid",
-      "meaning": "An AI envelope failed validation and was refused.",
+      "meaning": "Structured AI output still failed its schema when the repair budget ran out, so the node failed.",
       "httpStatus": 422,
       "statusSource": "v1 convention",
       "retriable": false,
@@ -1166,26 +1156,6 @@
       "details": null,
       "since": "1.0",
       "source": "spec/v1/rest-endpoints.md §Error response shape"
-    },
-    {
-      "code": "unknown_envelope_kind",
-      "meaning": "The envelope's type is neither universal nor in the host's supported catalog.",
-      "httpStatus": 422,
-      "statusSource": "v1 prose",
-      "retriable": false,
-      "details": null,
-      "since": "1.0",
-      "source": "spec/v1/ai-envelope.md §\"Refusal taxonomy\" (unknown type, not in supportedEnvelopes)"
-    },
-    {
-      "code": "unknown_schema_version",
-      "meaning": "The envelope's schemaVersion is above the version the host advertises for that kind.",
-      "httpStatus": 422,
-      "statusSource": "v1 prose",
-      "retriable": false,
-      "details": null,
-      "since": "1.0",
-      "source": "spec/v1/ai-envelope.md §\"Schema version advertisement\" (emitted schemaVersion above the advertised floor)"
     },
     {
       "code": "storage_limit_exceeded",

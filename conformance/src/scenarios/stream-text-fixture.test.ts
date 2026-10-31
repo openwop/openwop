@@ -87,13 +87,21 @@ async function isStreamTextMockAdvertised(): Promise<boolean> {
   return Array.isArray(testing?.mockProviders) && testing.mockProviders.includes('stream-text');
 }
 
-/** Why the gate below holds, as RFC 0148 §A names it (openwop#1686: a describe-level skip recorded no disposition). */
-const GATE_WHY: readonly [SoftSkipKind, string] =
-  (!isFixtureAdvertised(FIXTURE_ID)) ? ['blocked', `the \`${FIXTURE_ID}\` fixture is not advertised`] as const : ['blocked', 'the gate held for no named reason'] as const;
+/**
+ * Why the fixture gate holds, as RFC 0148 §A names it (openwop#1686: a
+ * describe-level skip recorded no disposition). The mock is what makes the
+ * fixture runnable, so a host serving the mock without the fixture is blocked;
+ * a host serving neither has nothing to stream through and is inapplicable.
+ */
+async function gateWhy(): Promise<readonly [SoftSkipKind, string]> {
+  return (await isStreamTextMockAdvertised())
+    ? ['blocked', `the stream-text mock provider is advertised but the \`${FIXTURE_ID}\` fixture is not`] as const
+    : ['inapplicable', `neither the \`${FIXTURE_ID}\` fixture nor the stream-text mock provider is advertised`] as const;
+}
 
 describe('stream-text-fixture: messages-mode fold through the stream-text mock (F1)', () => {
   it('delivers the mocked tokens in order, terminates with isLast + meta, and server-closes', async () => {
-    if (SKIP_NO_FIXTURE) return softSkip(...GATE_WHY);
+    if (SKIP_NO_FIXTURE) return softSkip(...(await gateWhy()));
     if (!(await isStreamTextMockAdvertised())) {
       // eslint-disable-next-line no-console
       console.warn(
@@ -196,7 +204,7 @@ describe('stream-text-fixture: messages-mode fold through the stream-text mock (
   });
 
   it('an unknown mockProvider.id is rejected with 400 unsupported_mock_provider', async () => {
-    if (SKIP_NO_FIXTURE) return softSkip(...GATE_WHY);
+    if (SKIP_NO_FIXTURE) return softSkip(...(await gateWhy()));
     if (!(await isStreamTextMockAdvertised())) {
       // eslint-disable-next-line no-console
       console.warn('[stream-text-fixture] stream-text mock not advertised; skipping negative leg');

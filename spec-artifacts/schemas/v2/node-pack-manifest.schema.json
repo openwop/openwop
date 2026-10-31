@@ -240,10 +240,6 @@
           },
           "description": "Per-output-port metadata. Keys are output port names; values are per-port markers. Currently the only marker is `sensitive`; future additions live alongside (additionalProperties: true on each port)."
         },
-        "envelopeContractRef": {
-          "type": "string",
-          "description": "Optional path to a JSON document declaring the LLM envelope contract for AI-backed nodes."
-        },
         "artifact": {
           "type": "object",
           "properties": {

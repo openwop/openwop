@@ -1,7 +1,7 @@
 {
   "$schema": "./gaps.schema.json",
   "version": 1,
-  "updated": "2026-10-30",
+  "updated": "2026-10-31",
   "witnessClasses": [
     "witnessable-unaided",
     "witnessable-gated",
@@ -15388,8 +15388,8 @@
       "surface": "Kernel measured at 37,493 against a 37,000 cap after deletion",
       "witness": "unclassified",
       "requirementId": null,
-      "disposition": "transferred",
-      "target": "TODO.md",
+      "disposition": "closed",
+      "target": null,
       "sources": [
         {
           "file": "RFCS/registers/0255-delete-the-ai-envelope.gaps.md",

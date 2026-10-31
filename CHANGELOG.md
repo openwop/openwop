@@ -33,8 +33,9 @@ Entries before this file was condensed carried full development detail. That tex
 
 - **RFC 0246 Active (safety fix, `GHSA-ffx7-pm5h-v6pq`): a trial that failed its trajectory cannot carry a task or a suite to a pass.** The `mean` task rule and suite `passed` read a gating score that counts it 0; reported scores are unchanged. 90-day window waived by recorded STEWARD OVERRIDE.
 
-## [2.46.36] — 2026-10-30 — RFCs 0255 and 0256 Active
+## [2.46.36] — 2026-10-31 — The AI Envelope is deleted from v2
 
+- **The AI Envelope is deleted (RFC 0255 §A).** Its seven families, the envelope schemas and two `limits` caps are removed under steward-deletion row `openwop.correction.v2.5`. `reasoning`, `tierOneSubsetCompliance` and `reliability` move to `aiProviders`; `limits` gains OPTIONAL `maxToolRounds` and `maxRepairRounds`.
 - **RFC 0254 Accepted.** openwop-app's certified 2.46.35 production cut (`72e610b3d`, 524/0/0) advertises `agents.deployment` and passes 14 `0082.*` legs plus both eval-gate legs. The two refusal legs for an unadvertised state or canary wait on a host advertising a subset.
 - **Forms on clarification interrupts (RFC 0255 §E).** `ClarificationData` gains an OPTIONAL `form` (`interrupt-form.schema.json`, the closed A2UI profile with `resume` as its only action). Its inputs bind to `questions`, and both resume with `{ answers }`. Six `interrupt-form-*` invariants succeed the `a2ui-*` rows.
 - **Steward-deletion licence (RFC 0255 §D).** `corrections.json` gains a `steward-deletion` class. Corrections censuses are re-measured against the bundles, the monotone gate also compares against the last published baseline, and dropped requirement ids need an alias or a tombstone.

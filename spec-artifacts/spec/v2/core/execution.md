@@ -9,7 +9,7 @@ A step can run on a user's machine, in a child run, or under a supervisor loop; 
 
 ## `selfHostedRunner`
 
-A runner is a user-operated process that dials out, holds credentials the host cannot reach, and executes single model or tool steps. On host-defined paths, it receives dispatch frames over SSE and POSTs result frames. A host MUST NOT advertise `selfHostedRunner` unless it accepts registrations, routes matching dispatch and delivers results.
+A runner is a user-operated process that dials out, holds credentials the host cannot reach, receives dispatch frames over SSE on host-defined paths, and POSTs results of single model or tool steps. A host MUST NOT advertise `selfHostedRunner` unless it accepts registrations, routes matching dispatch and delivers results.
 
 - **Records.** A registration (`schemas/v2/self-hosted-runner-registration.schema.json`) MUST NOT appear in discovery. `dispatchKinds` lists `model`, `tool` or both.
 - **Subject isolation.** A host MUST NOT route a step to a runner its run's subject does not own, and MUST match on subject before capability.
@@ -30,7 +30,7 @@ A runner is a user-operated process that dials out, holds credentials the host c
 - **`inputMapping`** (`childVar → parentVar`) seeds the child once, at creation, after and over its `variables[].defaultValue`, which MUST seed first. An unset parent variable MUST arrive undefined, never an error or `null`. A host not advertising `subWorkflow.inputMapping` MUST refuse a non-empty `inputMapping` at registration with `validation_error`, naming it in `details.requiredCapability`.
 - **`outputMapping`** (`parentVar → childVar`). After the child completes, the host MUST copy each mapped variable into the parent, without throwing on or copying an undefined one.
 - **`propagateCancellation`** (default `true`) cancels the child with its parent.
-- **Parent link.** Where `getRunAncestry` is served, the child's `parent` MUST be the parent run, with `cause: "core.subWorkflow"`. It does not name the dispatching node; that node's `node.completed` carries `outputs.childRunId`. `parentRunId` is fork lineage, not this link.
+- **Parent link.** Where `getRunAncestry` is served, the child's `parent` MUST be the parent run, with `cause: "core.subWorkflow"`. `parentRunId` is fork lineage, not this link.
 
 ## `multiAgent`
 

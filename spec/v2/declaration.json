@@ -171,37 +171,13 @@
     },
     {
       "key": "supportedEnvelopes",
-      "kind": "family",
-      "normativeText": ["spec/v2/core/events.md"],
-      "anchor": "core",
-      "section": "core/capabilities.md#supportedEnvelopes",
-      "peerDependencyId": "supportedEnvelopes",
-      "witness": "witnessable-gated",
-      "maturity": {
-        "technical": "stable",
-        "adoption": "none"
-      },
-      "facets": ["kinds"],
-      "floorScenarios": [],
-      "requirementIds": [],
-      "owningRfc": "0193"
+      "anchor": "deleted",
+      "reason": "RFC 0255 \u00a7A \u2014 the AI Envelope, removed by steward-deletion row openwop.correction.v2.5"
     },
     {
       "key": "schemaVersions",
-      "kind": "family",
-      "normativeText": ["spec/v2/core/events.md"],
-      "anchor": "core",
-      "section": "core/capabilities.md#schemaVersions",
-      "peerDependencyId": "schemaVersions",
-      "witness": "witnessable-gated",
-      "maturity": {
-        "technical": "stable",
-        "adoption": "none"
-      },
-      "facets": ["kinds"],
-      "floorScenarios": [],
-      "requirementIds": [],
-      "owningRfc": "0193"
+      "anchor": "deleted",
+      "reason": "RFC 0255 \u00a7A \u2014 the AI Envelope, removed by steward-deletion row openwop.correction.v2.5"
     },
     {
       "key": "limits",
@@ -217,8 +193,8 @@
       },
       "facets": [
         "clarificationRounds",
-        "schemaRounds",
-        "envelopesPerTurn",
+        "maxToolRounds",
+        "maxRepairRounds",
         "maxNodeExecutions",
         "maxRunDurationMs",
         "maxLoopIterations",
@@ -233,60 +209,18 @@
     },
     {
       "key": "envelopeStrictness",
-      "kind": "family",
-      "normativeText": ["spec/v2/core/events.md"],
-      "anchor": "core",
-      "section": "core/capabilities.md#envelopeStrictness",
-      "peerDependencyId": "envelopeStrictness",
-      "witness": "claims-check",
-      "maturity": {
-        "technical": "experimental",
-        "adoption": "none"
-      },
-      "facets": ["mode"],
-      "floorScenarios": [],
-      "requirementIds": [],
-      "owningRfc": "0193"
+      "anchor": "deleted",
+      "reason": "RFC 0255 \u00a7A \u2014 the AI Envelope, removed by steward-deletion row openwop.correction.v2.5"
     },
     {
       "key": "envelopeContracts",
-      "kind": "family",
-      "normativeText": ["spec/v2/core/events.md"],
-      "anchor": "core",
-      "section": "core/capabilities.md#envelopeContracts",
-      "peerDependencyId": "envelopeContracts",
-      "witness": "claims-check",
-      "maturity": {
-        "technical": "experimental",
-        "adoption": "none"
-      },
-      "facets": [
-        "advertised"
-      ],
-      "floorScenarios": [],
-      "requirementIds": [],
-      "owningRfc": null
+      "anchor": "deleted",
+      "reason": "RFC 0255 \u00a7A \u2014 the AI Envelope, removed by steward-deletion row openwop.correction.v2.5"
     },
     {
       "key": "envelopes",
-      "kind": "family",
-      "normativeText": ["spec/v2/core/events.md"],
-      "anchor": "core",
-      "section": "core/capabilities.md#envelopes",
-      "peerDependencyId": "envelopes",
-      "witness": "claims-check",
-      "maturity": {
-        "technical": "experimental",
-        "adoption": "none"
-      },
-      "facets": [
-        "reasoning",
-        "tierOneSubsetCompliance",
-        "reliability"
-      ],
-      "floorScenarios": [],
-      "requirementIds": [],
-      "owningRfc": "0030"
+      "anchor": "deleted",
+      "reason": "RFC 0255 \u00a7A \u2014 the AI Envelope, removed by steward-deletion row openwop.correction.v2.5; reasoning, tierOneSubsetCompliance and reliability moved to aiProviders"
     },
     {
       "key": "prompts",
@@ -716,7 +650,10 @@
         "authModes",
         "policies",
         "input",
-        "callAccounting"
+        "callAccounting",
+        "reasoning",
+        "tierOneSubsetCompliance",
+        "reliability"
       ],
       "floorScenarios": [],
       "requirementIds": [],
@@ -1096,22 +1033,8 @@
     },
     {
       "key": "aiEnvelope",
-      "kind": "family",
-      "normativeText": ["spec/v2/core/host-services.md"],
-      "anchor": "core",
-      "section": "core/capabilities.md#aiEnvelope",
-      "peerDependencyId": "aiEnvelope",
-      "witness": "witnessable-gated",
-      "maturity": {
-        "technical": "experimental",
-        "adoption": "none"
-      },
-      "facets": [
-        "await"
-      ],
-      "floorScenarios": [],
-      "requirementIds": [],
-      "owningRfc": "0144"
+      "anchor": "deleted",
+      "reason": "RFC 0255 \u00a7A \u2014 the AI Envelope, removed by steward-deletion row openwop.correction.v2.5"
     },
     {
       "key": "promptLibrary",
@@ -1817,23 +1740,8 @@
     },
     {
       "key": "a2uiSurface",
-      "kind": "family",
-      "anchor": "ext",
-      "section": "ext/a2uiSurface/",
-      "peerDependencyId": "a2uiSurface",
-      "extensionName": "a2ui-surface",
-      "witness": "seam-gated",
-      "maturity": {
-        "technical": "experimental",
-        "adoption": "none"
-      },
-      "facets": [
-        "deltaTransport"
-      ],
-      "floorScenarios": [],
-      "requirementIds": [],
-      "owningRfc": "0209",
-      "reason": "RFC 0169 \u00a7C.5 (ext/); RFC 0220 \u00a7C: the witness is seam-gated (v2-a2ui-v09-surface drives the emit-surface seam; the family row is its family-witness leg); RFC 0209: the ext README is the v2 contract for `ui.a2ui-surface` schema version 2; facet `deltaTransport` deprecated for v2 (RFC 0197 retirement path)"
+      "anchor": "deleted",
+      "reason": "RFC 0255 \u00a7A \u2014 the AI Envelope, removed by steward-deletion row openwop.correction.v2.5"
     },
     {
       "key": "brand",

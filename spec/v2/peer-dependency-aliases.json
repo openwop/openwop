@@ -1,10 +1,18 @@
 {
-  "$comment": "GENERATED (RFC 0177 §B.2) from the registry peer-dependency key inventory recorded in evidence/cross-repo-manifests.json — never from a sibling checkout. A row with unresolved:true is a key no declaration family or facet explains; check-declaration.mjs fails on it.",
+  "$comment": "GENERATED (RFC 0177 §B.2) from the registry peer-dependency key inventory recorded in evidence/cross-repo-manifests.json — never from a sibling checkout. A row with unresolved:true is a key no declaration family or facet explains; check-declaration.mjs fails on it. A row with deletedFamily names a family a steward deletion removed (RFC 0255 §D); it fails only while currentUses, its count among each pack's newest non-yanked v2 version, is above 0.",
   "generatedFrom": [
     "spec/v2/declaration.json",
     "evidence/cross-repo-manifests.json#registryPeerDependencyKeys"
   ],
   "rows": [
+    {
+      "alias": "aiEnvelope",
+      "family": null,
+      "publishedUses": 6,
+      "removalTrigger": "v1-end-of-support",
+      "deletedFamily": "aiEnvelope",
+      "currentUses": 0
+    },
     {
       "alias": "aiProviders.imageGeneration",
       "family": "aiProviders",
@@ -31,18 +39,19 @@
     },
     {
       "alias": "host.aiEnvelope",
-      "family": "aiEnvelope",
+      "family": null,
       "publishedUses": 4,
-      "removalTrigger": "v1-end-of-support"
+      "removalTrigger": "v1-end-of-support",
+      "deletedFamily": "aiEnvelope",
+      "currentUses": 0
     },
     {
       "alias": "host.aiEnvelope.await",
-      "family": "aiEnvelope",
-      "facets": [
-        "await"
-      ],
+      "family": null,
       "publishedUses": 1,
-      "removalTrigger": "v1-end-of-support"
+      "removalTrigger": "v1-end-of-support",
+      "deletedFamily": "aiEnvelope",
+      "currentUses": 0
     },
     {
       "alias": "host.brand",
