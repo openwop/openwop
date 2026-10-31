@@ -35,7 +35,7 @@ Per-kind rules:
 
 ### Forms
 
-A `clarification` MAY carry `data.form` (`schemas/v2/interrupt-form.schema.json`); `questions` is the fallback. A host MUST NOT raise a form that fails that schema or has an input `id` outside `questions[].id`. Its action resolves only that interrupt; either way, the resume value is `{ answers: [{ id, answer }] }`. A consumer MUST render only the closed catalog and MUST NOT execute or fetch what the form supplies.
+A `clarification` MAY carry `data.form` (`schemas/v2/interrupt-form.schema.json`); `questions` is the fallback. A host MUST NOT raise a form that fails that schema or has an input `id` outside `questions[].id`. Its action resolves only that interrupt, with the same resume value as the fallback. A consumer MUST render only the closed catalog and MUST NOT execute or fetch what the form supplies.
 
 ### Re-entry and resume values
 
@@ -48,6 +48,7 @@ A `clarification` MAY carry `data.form` (`schemas/v2/interrupt-form.schema.json`
 - On recovery the engine MUST consult the event log, find the prior `interrupt.resolved`, and return the persisted `resumeValue` without emitting a second `interrupt.requested`.
 - An in-memory cache MAY serve in-process replays but MUST NOT replace the event log for cross-process replays.
 - A host MUST validate the resume value against `resumeSchema` when one is declared, and MUST refuse a failing value with `400 validation_error`.
+- A host MUST accept `{ answers: [{ id, answer }] }`, each `id` a `questions[].id`, as a `clarification` resume value, with or without a form.
 
 `timeoutMs`, when set, is the interrupt's own deadline; for an approval gate see §Rejection.
 

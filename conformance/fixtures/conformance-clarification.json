@@ -2,7 +2,7 @@
   "id": "conformance-clarification",
   "name": "Conformance: Clarification",
   "version": "1.0",
-  "description": "Suspends on a clarification interrupt with one fixed question. Resume schema: {answers: {q1: string}}.",
+  "description": "Suspends on a clarification interrupt with one fixed question. Resume value: {answers: [{id: 'q1', answer: string}]} (interrupt.md §Re-entry and resume values).",
   "nodes": [
     {
       "id": "ask",

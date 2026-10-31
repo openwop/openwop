@@ -324,7 +324,7 @@ The `messages`-mode stream fixture (AI token streaming) is covered by the determ
 - **Behavior**:
   1. Run starts and reaches a `clarificationGate` node.
   2. Server emits `clarification.requested` carrying `questions: [{id: "q1", question: "What is your favorite color?"}]`.
-  3. After client POSTs `{answers: {q1: "blue"}}`, server emits `clarification.resolved`.
+  3. After client POSTs `{answers: [{id: "q1", answer: "blue"}]}`, server emits `clarification.resolved`.
   4. Run reaches `completed`.
 - **Terminal status (after resolve)**: `completed`.
 
