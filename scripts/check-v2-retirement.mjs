@@ -34,7 +34,9 @@
  * CORRECTIONS (§A.4, RFC 0255 §D). Every row's typed `priorShapeCensus.bundles`
  * is re-measured, not believed: each pointer into the capabilities schema whose
  * surface is gone from the tree is scanned through `bundlesCarrying`, and the
- * typed count MUST equal the scan. A `w3c-class-3` row MUST also count 0. A
+ * typed count MUST equal the scan, except that a PUBLISHED `steward-deletion`
+ * row's scan may fall below its census as hosts re-cut without the surface
+ * (never rise above it). A `w3c-class-3` row MUST also count 0. A
  * `steward-deletion` row records whatever the scan finds, MUST NOT name a
  * schema that reads persisted data, and is refused when NEW (absent from
  * corrections.json at the last published tag) while a tier-3 host is listed
@@ -412,7 +414,10 @@ for (const c of corrections.rows ?? []) {
   const removedPaths = (c.pointers ?? []).filter((p) => !baselineSites.has(p)).map(discoveryPathOf).filter((x) => x !== null);
   const scanned = new Set();
   for (const path of removedPaths) for (const f of bundlesCarrying({ path }, P.bundles)) scanned.add(f);
-  if (census.bundles !== scanned.size) problems.push(`priorShapeCensus.bundles is ${census.bundles}, but ${scanned.size} committed bundle(s) carry a removed surface (${removedPaths.join(', ') || 'none discovery-visible'}) — a typed census is re-measured, never believed`);
+  // A published steward deletion's census is the count at deletion. Hosts then re-cut without the surface,
+  // so the scan may fall below it; it may never rise above it (a bundle that re-acquired the surface).
+  const shrinks = steward && publishedIds.has(c.id);
+  if (shrinks ? scanned.size > census.bundles : census.bundles !== scanned.size) problems.push(`priorShapeCensus.bundles is ${census.bundles}, but ${scanned.size} committed bundle(s) carry a removed surface (${removedPaths.join(', ') || 'none discovery-visible'}) — a typed census is re-measured, never believed${shrinks ? '; a published steward deletion\'s scan may fall below its census, never rise above it' : ''}`);
   if (!steward && census.bundles !== 0) problems.push(`priorShapeCensus.bundles is ${census.bundles}, not 0 — a committed bundle carried the prior shape (this is P1, and P1 is exactly what §A.4 refuses)`);
   if (census.manifests === null || census.manifests === undefined) problems.push('priorShapeCensus.manifests is null — no census was run, and a missing census is a failure, not a zero');
   else if (!steward && census.manifests !== 0) problems.push(`priorShapeCensus.manifests is ${census.manifests}, not 0`);
