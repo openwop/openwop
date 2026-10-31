@@ -305,9 +305,9 @@
     "spec/v2/path-manifest.json": "20f598f56df460ad3ed50aba3d6bc2933ea16a3c96ce125da1c5dd6989d4155c",
     "spec/v2/peer-dependency-aliases.json": "cbf62f551f9295b0ac7ba6cc0466abb153563354a57b0622f3ec6e6689cba47e",
     "spec/v2/profiles.json": "b382b261c7844798575f7c1b37c934f0da19846016a2337d883d4f5ef6e05479",
-    "spec/v2/release.json": "634aaeb00bbed05914af14a4b7de15534d5f8aa2d145f6998d4a01a1d03bb3b6",
+    "spec/v2/release.json": "713b33eb4de710eff421b7fcce5da7804f3bfd21a732a6413078975708340a74",
     "spec/v2/retention-floors.json": "eaf3722d95c79947af1d4269ef85117e126518c588cfcf1a2b21b97269f51624",
     "spec/v2/surface-baseline.json": "98c0c7a13e06c0631e01f8cb6e92a048c85d0cc2417506a362203ec097e6c281"
   },
-  "corpusCommit": "1cdc6338e0f4459f65fd4b7426b791b5068d2ef8"
+  "corpusCommit": "d5efdfe7a61729ca748f79833f144c572c7225dd"
 }
