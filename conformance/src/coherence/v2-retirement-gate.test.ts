@@ -256,7 +256,18 @@ describe('v2-retirement-gate (RFC 0255 §D — steward deletions)', () => {
     expect(fresh.out, req(STEWARD_ID, STEWARD_DOC, 'the refusal must name the tier-3 host')).toMatch(/new steward-deletion row refused: evidence\/host-tiers\.json lists outside-host at tier 3/);
     const old = run({ corrections: [stewardRow()], publishedCorrections: [stewardRow()], extraBundles: carried, hostTiers: tiers });
     expect(old.status, req(STEWARD_ID, STEWARD_DOC, `a row published before the tier-3 host appeared MUST NOT turn red — it exited ${old.status}: ${old.out.slice(-600)}`)).toBe(0);
-  }, 240_000);
+    // A published row's scan may fall below its census as hosts re-cut without the surface, never rise above it; a new row must match.
+    const two = stewardRow({ priorShapeCensus: { bundles: 2, manifests: 3, manifestsScanned: 190, note: 'fixture: two bundles carried it at deletion' } });
+    const fell = run({ corrections: [two], publishedCorrections: [two], extraBundles: carried });
+    expect(fell.status, req(STEWARD_ID, STEWARD_DOC, `a host re-cut without the deleted surface MUST NOT turn the published row red — it exited ${fell.status}: ${fell.out.slice(-600)}`)).toBe(0);
+    expect(fell.out, req(STEWARD_ID, STEWARD_DOC, 'the report must still show typed and scanned side by side')).toMatch(/2 bundle\(s\) typed \/ 1 scanned/);
+    const unpublished = run({ corrections: [two], extraBundles: carried });
+    expect(unpublished.status, req(STEWARD_ID, STEWARD_DOC, `a NEW row's census MUST equal the scan — it exited ${unpublished.status}: ${unpublished.out.slice(-600)}`)).not.toBe(0);
+    const zero = stewardRow({ priorShapeCensus: { bundles: 0, manifests: 3, manifestsScanned: 190, note: 'fixture: typed 0' } });
+    const rose = run({ corrections: [zero], publishedCorrections: [zero], extraBundles: carried });
+    expect(rose.status, req(STEWARD_ID, STEWARD_DOC, `a bundle carrying the surface beyond the published census is a regression — it exited ${rose.status}: ${rose.out.slice(-600)}`)).not.toBe(0);
+    expect(rose.out, req(STEWARD_ID, STEWARD_DOC, 'the refusal must say the scan may not rise above the census')).toMatch(/never rise above it/);
+  }, 600_000);
 
   it('a new row is REFUSED while the INTEROP-MATRIX names an independent host', () => {
     if (V1_DIR === null) return softSkip('inapplicable', 'not a spec checkout');

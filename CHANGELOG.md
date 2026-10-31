@@ -33,6 +33,11 @@ Entries before this file was condensed carried full development detail. That tex
 
 - **RFC 0246 Active (safety fix, `GHSA-ffx7-pm5h-v6pq`): a trial that failed its trajectory cannot carry a task or a suite to a pass.** The `mean` task rule and suite `passed` read a gating score that counts it 0; reported scores are unchanged. 90-day window waived by recorded STEWARD OVERRIDE.
 
+## [2.46.37] — 2026-10-31 — One clarification resume value
+
+- **Erratum: one clarification resume value.** `interrupt.md` now states that a host MUST accept `{ answers: [{ id, answer }] }` as a `clarification` resume value, with or without a form. `fixtures.md` and `conformance-clarification` taught a keyed `{answers: {q1}}`, which v1 never defined.
+- **RFC 0255 §E witnessed on the v2 reference host.** Its certified 2.46.36 public cut (`f8f079bf`, 541/0/0) passes `0255.interrupt-form-rules`, `-resume-answers`, `-refused` and `0255.surfaces-absent`. A published steward-deletion census may now fall as hosts re-cut, never rise.
+
 ## [2.46.36] — 2026-10-31 — The AI Envelope is deleted from v2
 
 - **The AI Envelope is deleted (RFC 0255 §A).** Its seven families, the envelope schemas and two `limits` caps are removed under steward-deletion row `openwop.correction.v2.5`. `reasoning`, `tierOneSubsetCompliance` and `reliability` move to `aiProviders`; `limits` gains OPTIONAL `maxToolRounds` and `maxRepairRounds`.

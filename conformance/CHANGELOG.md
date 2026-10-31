@@ -1,3 +1,9 @@
+## [2.46.37] — 2026-10-31 — One clarification resume value
+
+- **New scenario `v2-clarification-resume-answers`.** Gated on `conformance-clarification`: the array `{ answers: [{ id: "q1", answer: "blue" }] }` resolves the clarification with a 2xx and the run completes. Before this, only the form row resolved a plain clarification shape at major 2.
+- **Fixture text.** `fixtures.md` §conformance-clarification and the fixture's description name the array, not the keyed `{answers: {q1}}`.
+- **Coherence.** `v2-retirement-gate` covers the published steward-deletion census: the scan may fall below it, never rise above it, and a new row must match.
+
 ## [2.46.36] — 2026-10-31 — The AI Envelope is deleted from v2
 
 - **Envelope scenarios removed (RFC 0255).** Ten major-2 envelope and A2UI files are deleted, and their ids carry tombstones naming `openwop.correction.v2.5`. `v2-structured-output-advertisement` and `v2-limits-clarification-rounds-advertisement` replace the advertisement files they re-point, with alias rows. Major-1 scenarios are unchanged.
