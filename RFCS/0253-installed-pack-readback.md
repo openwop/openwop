@@ -7,8 +7,8 @@
 | **Status**        | `Draft`                                                         |
 | **Author(s)**     | David Tufts (@davidscotttufts)                                  |
 | **Created**       | 2026-10-29                                                      |
-| **Updated**       | 2026-10-29 — Draft, closing RFC 0249 gap G2 after the 2026-10-29 audit (#2056) found no v2 operation that serves an installed pack. |
-| **Affects**       | `api/openapi.yaml` → `api/v2/openapi.yaml` (one operation, `getInstalledPack`) · `spec/v2/path-manifest.json` (generated) · `spec/v2/facets/agents.schema.json` `proposals.readback` (description only; the enum already admits both kinds) · `schemas/v2/proposal.schema.json` `activation.installedArtifact` (description only) · `SECURITY/invariants.yaml` (`proposal-inert-until-applied`, `proposal-no-resynthesis`: a second test file) · conformance: new `v2-proposal-pack-readback.test.ts` · CHANGELOG · openwop-sdks (follow-up) |
+| **Updated**       | 2026-10-31 — UQ 1–6 decided after an /architect review (maintainer-approved): `private.*` names only, `signing` refused, proposal installs only, one version, files deferred, tenant-wide. §D discloses the late-bound prompt refs; the pack threat model and the facet gain a line each; legs `0253.namespace-refused` and `0253.signing-refused`. Still `Draft`. 2026-10-29 — Draft, closing RFC 0249 gap G2 after the 2026-10-29 audit (#2056) found no v2 operation that serves an installed pack. |
+| **Affects**       | `api/openapi.yaml` → `api/v2/openapi.yaml` (one operation, `getInstalledPack`) · `spec/v2/path-manifest.json` (generated) · `spec/v2/facets/agents.schema.json` `proposals.readback` (description only; the enum already admits both kinds) · `schemas/v2/proposal.schema.json` `activation.installedArtifact` (description only) · `SECURITY/threat-model-node-packs.md` (one line: the proposal install path) · `SECURITY/invariants.yaml` (`proposal-inert-until-applied`, `proposal-no-resynthesis`: a second test file) · conformance: new `v2-proposal-pack-readback.test.ts` · CHANGELOG · openwop-sdks (follow-up) |
 | **Compatibility** | `additive`                                                      |
 | **Supersedes**    | —                                                               |
 | **Superseded by** | —                                                               |
@@ -26,7 +26,7 @@ The audit (2026-10-29, #2056) found:
 - **No pack read at v2.** `spec/v2/path-manifest.json` has no operation that serves a pack. The only pack endpoints in `api/openapi.yaml` are the v1 test registry `/v1/packs-test/...`, a seam that is not in the v2 manifest.
 - **`getWorkflow` is not a pack read.** It serves one registered workflow. A chain pack is an author-time abstraction: its chains are expanded into a parent definition, and a runtime sub-chain child is registered under a host-derived id (`workflow-chain-packs.md` §Co-registered children). Nothing a workflow read returns is the pack's bytes.
 - **`getAgent` is not a pack read.** It returns an `AgentInventoryEntry` (`schemas/v2/agent-inventory-response.schema.json`), a host-shaped view of one agent, not the manifest.
-- **An agent pack is a node pack.** There is no separate agent-pack schema at v1 or v2. An agent pack is a `pack.json` that validates against `schemas/v2/node-pack-manifest.schema.json` with `kind: "node"` (or absent) and a non-empty `agents[]`, each entry an `agent-manifest.schema.json` (RFC 0003, Alternatives 1). A pure-agent pack sets `runtime.language: "remote"`.
+- **An agent pack is a node pack.** There is no separate agent-pack schema at v1 or v2. An agent pack is a `pack.json` that validates against `schemas/v2/node-pack-manifest.schema.json` with `kind: "node"` (required at v2) and a non-empty `agents[]`, each entry an `agent-manifest.schema.json` (RFC 0003, Alternatives 1). A pure-agent pack sets `runtime.language: "remote"`.
 - **An agent manifest can point into a tarball.** `systemPromptRef`, `evalSuiteRef`, `handoff.taskSchemaRef` and `handoff.returnSchemaRef` are tarball-relative paths. A proposal carries only `artifact`, a JSON object, so it has nowhere to carry those files, and a read of `pack.json` alone cannot show them.
 
 `spec/v2/core/conformance.md` §Witness class requires a MUST whose only witness is missing to gain an observation path or be disclosed. RFC 0249 chose disclosure for these kinds in phase 1. This RFC mints the path for phase 2.
@@ -46,8 +46,9 @@ No host proposes either kind at v2 today. openwop-app advertises `artifactKinds:
 - `manifest:read` is the scope `getWorkflow` already uses for reading definitions. No new scope is minted.
 - **Advertisement.** The operation is advertised when `agents.proposals.readback` contains `workflow-chain-pack` or `agent-pack`. A host that does not advertise it answers `404 not_found`, as `errors.md` §Unadvertised operations requires.
 - **Tenant scoping.** The read is evaluated in the caller's tenant. A pack installed in another tenant MUST be answered exactly as a name that is not installed (`404`), so the operation is not an existence oracle. This is RFC 0249 §C's read-back rule, applied to a second operation.
-- **One version per tenant.** The read serves the version currently installed in the caller's tenant. `installedArtifact.version` carries the version the apply installed, so a client can tell when a later install has replaced it (UQ 4).
-- **What it serves.** A host MUST serve, through this read, every pack installed in the tenant by `applyProposal`. A host MAY also serve packs it installed from a registry; this RFC places no obligation on them (UQ 3).
+- **One version per tenant.** The read serves the version currently installed in the caller's tenant. `installedArtifact.version` carries the version the apply installed, so a client can tell when a later install has replaced it. The byte-match obligation (§C) holds while the installed version equals `installedArtifact.version`. A host that keeps several versions of one name in a tenant does not advertise `readback` for the kind (UQ 4, decided).
+- **What it serves.** A host MUST serve, through this read, every pack installed in the tenant by `applyProposal`. A host MAY also serve packs it installed from a registry or ships itself; this RFC places no obligation on them, and the tenant-scoping rule still applies (UQ 3, decided).
+- **Visibility.** A pack installed by apply is visible tenant-wide, whatever workspace the proposal's `owner` names; `installScope` has no workspace level. A host that installs packs per workspace does not advertise `readback` for the kind. Because the install is tenant-wide, `proposals:apply` (or the approval gate's quorum) for a pack kind is a tenant-level install decision (UQ 6, decided).
 
 The response is the bare manifest, not an envelope. Install metadata (source, time, integrity) has no field in the body; both manifest schemas are closed apart from the vendor hatch, and a host MUST NOT add hatch properties the installed artifact did not carry.
 
@@ -72,11 +73,14 @@ The host-owned field set is **empty** for both kinds. The body `getInstalledPack
 
 The `meta` precedent does not carry over. `prompt-template` has a `meta` member where server-set values must live. Neither pack manifest has one: each is closed apart from the pack-authored vendor hatch (`^(openwop-|x-|vendor\.)`), and `packs.md` §The manifest schema family makes hatch values pack-authored and untrusted. A host-set value therefore has no lawful place in the body, and excluding nothing keeps the comparison exact.
 
-The one field a host might want to own is `signing`. A proposal has no tarball and no detached signature, so a `signing` block on a proposed pack would claim registry provenance that cannot be verified. A host advertising `readback` for the kind MUST refuse to apply an artifact carrying `signing` with `422` (RFC 0249 §B: an artifact that does not validate for its kind), and MUST NOT add one at install (UQ 2).
+The one field a host might want to own is `signing`. A proposal has no tarball and no detached signature, so a `signing` block on a proposed pack would claim registry provenance that cannot be verified. A host advertising `readback` for the kind MUST refuse to apply an artifact carrying `signing` with `422` (RFC 0249 §B: an artifact that does not validate for its kind), and MUST NOT add one at install (UQ 2, decided).
 
 ### §D — What a proposed pack may contain
 
 A manifest-only install can be byte-compared only if the manifest is the whole artifact. On a host whose `readback` contains the kind, at apply:
+
+**Both kinds.** `name` MUST start with `private.`. A proposed pack named under `core.*`, `vendor.*` or `community.*` is refused: RFC 0043 §A ties those prefixes to registry verification that a draft written in a tenant has never had, and a `private.*` name cannot collide with a later registry install (UQ 1, decided).
+
 
 **`agent-pack`.** The artifact MUST validate against `node-pack-manifest.schema.json` with a non-empty `agents[]`, and:
 
@@ -84,11 +88,13 @@ A manifest-only install can be byte-compared only if the manifest is the whole a
 - MUST set `runtime.language: "remote"`, as a pure-agent pack already must, and the host MUST NOT dereference `runtime.entry` for it;
 - every agent MUST carry an inline `systemPrompt`, and MUST NOT carry `systemPromptRef`, `evalSuiteRef`, `handoff.taskSchemaRef` or `handoff.returnSchemaRef`.
 
+**Late-bound prompt references (disclosed).** An agent MAY carry `promptLibraryRef` and `promptOverrides`. They do not point into a tarball. They name prompt templates in the tenant's store, resolved at run time, and those templates can change after the pack is reviewed. With an inline `systemPrompt` a `system`-kind override has no effect; overrides for other kinds do. Byte-match covers the manifest, not what these references resolve to. A reviewer reads each referenced template on its own, through `getPromptTemplate`, which RFC 0249 already reads back.
+
 **`workflow-chain-pack`.** The artifact MUST validate against `workflow-chain-pack-manifest.schema.json`. A chain manifest has no tarball-relative field, so no further restriction applies. Every node and sub-chain reference stays exact-pinned (`workflow-chain-packs.md` §Exact pins).
 
 A violation is refused `422` and installs nothing; the proposal's `state` is unchanged.
 
-**The referenced-files decision.** This RFC discloses rather than covers the tarball files. A proposed agent that needs a typed handoff or a portable eval suite cannot be proposed through a read-back-advertised kind in phase 2. `handoff: {}` remains valid, so a `role: "skill"` agent (which requires `handoff`) can still be proposed, with an opaque payload contract. Carrying files in a proposal is UQ 5.
+**The referenced-files decision.** This RFC discloses rather than covers the tarball files. A proposed agent that needs a typed handoff or a portable eval suite cannot be proposed through a read-back-advertised kind in phase 2. `handoff: {}` remains valid, so a `role: "skill"` agent (which requires `handoff`) can still be proposed, with an opaque payload contract. Carrying files in a proposal is deferred to a later phase (UQ 5, decided).
 
 ### §E — Install semantics
 
@@ -113,13 +119,15 @@ After apply, the agents are resolvable only in the applying tenant: `getAgent` f
 
 ### §G — Where the rules live
 
-The core budget is at its cap (38,000 / 38,000 words, `check-core-budget.mjs`), so, as in RFC 0249 §F, no core doc gains words. After merge at `Active`:
+The core budget is effectively full (36,784 / 36,800 words on 2026-10-31, `check-core-budget.mjs`), so, as in RFC 0249 §F, no core doc gains words. After merge at `Active`:
 
 | Rule | Owner |
 | --- | --- |
 | §A operation, scope, advertisement, tenant scoping, what it serves | the `getInstalledPack` description in `api/openapi.yaml` (derived into `api/v2/openapi.yaml`) |
 | §B `id` and `version` for pack kinds; §C empty host-owned set | `schemas/v2/proposal.schema.json` `activation.installedArtifact` description |
-| §C `signing` refused; §D content rules; §E install conflicts; §F inertness | `spec/v2/facets/agents.schema.json` `proposals.readback` description (the `agents` family's `normativeText`) |
+| §A visibility and apply scope; §C `signing` refused; §D namespace, content rules and the late-binding disclosure; §E install conflicts; §F inertness | `spec/v2/facets/agents.schema.json` `proposals.readback` description (the `agents` family's `normativeText`) |
+
+`SECURITY/threat-model-node-packs.md` gains one line: this path installs a pack without the registry's signing or supply-chain checks, and its mitigations are review, byte-match, `private.*` names only, no `nodes`, and an inline system prompt.
 
 `packs.md` and `workflow-chain-packs.md` are unchanged: their install, signing and pin rules bind a registry install as before, and this RFC adds a second, proposal-only install path that their rules do not describe. Whether `packs.md` should gain a pointer when budget allows is G3.
 
@@ -138,6 +146,7 @@ The core budget is at its cap (38,000 / 38,000 words, `check-core-budget.mjs`), 
 - An agent-pack artifact whose agent carries `systemPromptRef: "prompts/a.md"` → `:apply` `422`; `GET /installed-packs/…` still `404`.
 - An agent-pack artifact with a non-empty `nodes[]` → `:apply` `422`.
 - A chain-pack artifact carrying `signing {keyId, scheme}` → `:apply` `422`.
+- An agent-pack artifact named `vendor.acme.triage` → `:apply` `422`; `GET /installed-packs/vendor.acme.triage` still `404`.
 - Tenant B: `GET /installed-packs/private.conf.a1b2` → `404`, the same answer as an unknown name.
 - `installedArtifact {kind:"agent-pack", operationId:"getAgent", id:"conf-a1b2"}` fails §B: `getAgent` does not serve the pack.
 
@@ -173,7 +182,9 @@ No migration is needed.
 | `0253.agent-draft-inert` | submit an agent pack; read it | `getInstalledPack` `404`; `getAgent` `404`; absent from `listAgents` |
 | `0253.agent-apply-installs` | revise, then apply | as for chains; `getAgent` now `200` |
 | `0253.agent-readback-byte-match` | read the installed pack | JCS-equal to the revision, not to the first draft |
-| `0253.agent-file-ref-refused` | apply an agent pack whose agent carries `systemPromptRef` | `422`; `getInstalledPack` and `getAgent` still `404`; state unchanged |
+| `0253.agent-file-ref-refused` | apply an agent pack whose agent carries `systemPromptRef`; then one with a non-empty `nodes[]` | `422` on each; `getInstalledPack` and `getAgent` still `404`; state unchanged |
+| `0253.namespace-refused` | apply a chain pack named `vendor.<random>.chains` | `422`; `getInstalledPack` still `404`; state unchanged |
+| `0253.signing-refused` | apply a chain pack carrying `signing` | `422`; `getInstalledPack` still `404`; state unchanged |
 | `0253.install-conflict` | submit and apply a second proposal with the same name and version | `409 proposal_install_conflict`, `details.reason: version-not-greater` |
 | `0253.cross-tenant-not-found` | `OPENWOP_TEST_TENANT_B_API_KEY` reads the installed pack and agent | `404` on each, identical to an unknown name |
 
@@ -191,9 +202,11 @@ No migration is needed.
 | §A no host-added hatch property | the read-back body vs the artifact | the suite | witnessable-gated (via the byte-match leg) |
 | §B `id` = `name`, `version` present | `installedArtifact` on the applied proposal | the suite | witnessable-gated |
 | §C byte-match, empty host-owned set | JCS equality of the read-back and the revision | the suite (it wrote both) | witnessable-gated |
-| §C `signing` refused | `422`; still `404` | the suite | witnessable-gated (no host leg in the first cut; a `0253.signing-refused` leg is cheap to add at `Active`) |
+| §C `signing` refused | `422`; still `404` | the suite | witnessable-gated (`0253.signing-refused`) |
 | §C no `signing` added at install | the read-back has no `signing` | the suite | witnessable-gated (via the byte-match leg) |
+| §D `private.*` names only | `422`; still `404` | the suite | witnessable-gated (`0253.namespace-refused`) |
 | §D no `nodes`, inline prompt, no file refs | `422`; still `404` | the suite | witnessable-gated |
+| §A visibility tenant-wide | another workspace's read in the same tenant | the suite, with a second workspace's credentials | witnessable-gated in principle; no leg (no portable harness key for a second workspace) |
 | §D `runtime.entry` not dereferenced | — | nobody outside the host: a fetch to a URL the suite does not control is not observable, and a suite-controlled URL witnesses only that host's egress policy | **unwitnessable** — disclosed; the suite uses an unroutable entry so a host that fetches gains nothing (R3) |
 | §E version-not-greater refused | `409` + `reason` | the suite | witnessable-gated |
 | §E read-only (registry or other pack) refused | `409` + `reason: read-only` | only when the suite knows a name or `agentId` the host installed itself | seam-gated in practice: no portable way to learn such a name; no leg (G4) |
@@ -211,14 +224,16 @@ No migration is needed.
 7. **Cover the tarball files** (a `files` map in the artifact, or a second read for a referenced file). Rejected for phase 2: it changes what a proposal artifact is (no longer a `pack.json`), needs a file-level byte-match rule and a path-traversal rule for client-supplied paths. UQ 5.
 8. **A pack-namespace rule for proposed packs.** See UQ 1; not adopted in the Draft.
 
-## Unresolved questions
+## Decided questions
 
-1. **Namespace.** Should a host advertising `readback` for a pack kind refuse a proposed `name` outside `private.*`? It would stop a client draft claiming `vendor.<org>.*` or `community.*` inside a tenant (RFC 0043 §A ties those to registry verification) and would make a later registry install of the same name impossible to collide with. The cost: a host that synthesizes packs must name them `private.*`.
-2. **`signing`.** §C refuses a proposed `signing` block. The alternative is to make `signing` the one host-owned field (removed from both sides), letting a host sign a local install with its own key. That needs a verifier rule for a non-registry key, which `packs.md` §Signing does not have.
-3. **Scope of the read.** Should `getInstalledPack` serve every pack installed in the tenant, including registry installs, under its own facet flag? That would make it a general marketplace read (useful to SDKs and UIs), and would invite an envelope for install metadata (Alternative 5).
-4. **Versions.** One installed version per `(tenant, name)` is assumed. If a host keeps several (per workspace, or side by side), should the read take `?version=`, and should the byte-match read name it?
-5. **Files.** Should a later phase let a proposed agent pack carry its referenced files (system prompt, handoff schemas, eval suite), and how would they be read back?
-6. **Workspace.** A proposal's `owner` may name a workspace. Is a pack installed by apply visible tenant-wide (as §A states), or only in that workspace, like `getAgent`'s `installScope: 'tenant'` approval rule?
+Decided 2026-10-31 after an /architect review, approved by the maintainer.
+
+1. **Namespace: `private.*` only.** A host advertising `readback` for a pack kind refuses any other name with `422` (§D). Only the prefix is required, not `private.<host>.*`: a client cannot know the host segment, and the suite's `private.conformance.<random>` names comply.
+2. **`signing`: refused**, as §C drafted. Making it host-owned needs a verifier rule for a non-registry key, which `packs.md` §Signing does not have. Reopen when a host wants to sign a local install.
+3. **Scope of the read: proposal installs.** Registry and host-shipped packs stay MAY, with no facet flag and no envelope (Alternatives 5 and 6). A general installed-pack read is a separate RFC.
+4. **Versions: one per `(tenant, name)`**, no `?version=`. Byte-match holds while the installed version equals `installedArtifact.version` (§A). A multi-version host does not advertise `readback` for the kind.
+5. **Files: deferred** to a later phase. §D discloses them, and also discloses the late-bound `promptLibraryRef` and `promptOverrides`.
+6. **Workspace: tenant-wide** (§A), consistent with `installScope` (`host` or `tenant`). A workspace-scoped host does not advertise `readback` for the kind, and `proposals:apply` for a pack kind is a tenant-level install decision.
 
 ## Implementation notes (non-normative)
 
@@ -255,3 +270,4 @@ No migration is needed.
 ## Status history
 
 - 2026-10-29 — Draft.
+- 2026-10-31 — UQ 1–6 decided (/architect review, maintainer-approved); still Draft.
