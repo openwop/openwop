@@ -2574,7 +2574,7 @@
         "input": {
           "type": "object",
           "additionalProperties": false,
-          "description": "RFC 0091. Multimodal PERCEPTION input on `ctx.callAI` — the modalities a `callAI` message ContentPart may carry as model INPUT. Absent ⇒ text-only (today's behavior); a `string` message content is always valid. Distinct from `imageGeneration` (output) and the `ai-envelope.md` media emission types (output). **Restored 2026-09-19:** the v2 override had reduced this to `{type: object, additionalProperties: true}` — an open object with no properties, no enum and no description — so anything validated, including a misspelled member. It was one of only TWO such facets in the whole v2 schema. MyndHyve's live major-2 document already advertises exactly the v1 shape, so restoring the constraint rejects nothing published and makes a typo fail instead of ship.",
+          "description": "RFC 0091. Multimodal PERCEPTION input on `ctx.callAI` — the modalities a `callAI` message ContentPart may carry as model INPUT. Absent ⇒ text-only (today's behavior); a `string` message content is always valid. Distinct from `imageGeneration` (output). **Restored 2026-09-19:** the v2 override had reduced this to `{type: object, additionalProperties: true}` — an open object with no properties, no enum and no description — so anything validated, including a misspelled member. It was one of only TWO such facets in the whole v2 schema. MyndHyve's live major-2 document already advertises exactly the v1 shape, so restoring the constraint rejects nothing published and makes a typo fail instead of ship.",
           "properties": {
             "modalities": {
               "type": "array",
@@ -4679,7 +4679,7 @@
             "properties": {
               "validated": {
                 "type": "boolean",
-                "description": "The runtime validation guarantee — `true` ⇒ the host validates this type before emit, so emits `registered: true`. Decoupled from `schemaVersions`, which is a version DECLARATION only."
+                "description": "The runtime validation guarantee — `true` ⇒ the host validates this type before emit, so emits `registered: true`."
               },
               "validation": {
                 "type": "string",

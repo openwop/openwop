@@ -33,6 +33,10 @@ Entries before this file was condensed carried full development detail. That tex
 
 - **RFC 0246 Active (safety fix, `GHSA-ffx7-pm5h-v6pq`): a trial that failed its trajectory cannot carry a task or a suite to a pass.** The `mean` task rule and suite `passed` read a gating score that counts it 0; reported scores are unchanged. 90-day window waived by recorded STEWARD OVERRIDE.
 
+## [2.46.38] — 2026-10-31 — Last AI Envelope names out of v2 descriptions
+
+- **Descriptions.** Six v2 schema and facet descriptions still named the deleted AI Envelope (`ai-envelope.md`, `ctx.aiEnvelope.generate`, `AIEnvelope.meta`, `schemaRounds` / `envelopesPerTurn`, `schemaVersions`). They now point at `ctx.callAI` and `host-services.md` §Structured output. No shape changes.
+
 ## [2.46.37] — 2026-10-31 — One clarification resume value
 
 - **Erratum: one clarification resume value.** `interrupt.md` now states that a host MUST accept `{ answers: [{ id, answer }] }` as a `clarification` resume value, with or without a form. `fixtures.md` and `conformance-clarification` taught a keyed `{answers: {q1}}`, which v1 never defined.

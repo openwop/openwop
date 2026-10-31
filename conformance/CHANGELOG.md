@@ -1,3 +1,7 @@
+## [2.46.38] — 2026-10-31 — Last AI Envelope names out of v2 descriptions
+
+- **No suite change.** The cycle carries description-only edits to six v2 schemas and facets, which change the packed `@openwop/spec-artifacts`.
+
 ## [2.46.37] — 2026-10-31 — One clarification resume value
 
 - **New scenario `v2-clarification-resume-answers`.** Gated on `conformance-clarification`: the array `{ answers: [{ id: "q1", answer: "blue" }] }` resolves the clarification with a 2xx and the run completes. Before this, only the form row resolved a plain clarification shape at major 2.

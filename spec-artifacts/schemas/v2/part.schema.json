@@ -2,7 +2,7 @@
   "$schema": "https://json-schema.org/draft/2020-12/schema",
   "$id": "https://openwop.dev/spec/v2/part.schema.json",
   "title": "Part",
-  "description": "RFC 0205 §D. An A2A v1.0.1 `Part`, transcribed from `specification/a2a.proto` `message Part` at tag v1.0.1 with the JSON member names A2A spec §5.5 requires (camelCase). Exactly one of `text`, `raw`, `url`, `data` is present: member presence is the discriminator (A2A spec §14 \"Current Pattern (v1.0)\"), and the v0.3 `kind` member is not part of the shape. A2A commits no JSON Schema of its own (`specification/json/README.md`: `a2a.json` is a non-normative build artifact), so this file is the corpus's transcription. `oneOf` is deliberate: this schema describes a host-emitted wire object, not an LLM-emitted envelope payload (ai-envelope.md §\"Schema discipline\" scopes its `oneOf` ban to the latter).",
+  "description": "RFC 0205 §D. An A2A v1.0.1 `Part`, transcribed from `specification/a2a.proto` `message Part` at tag v1.0.1 with the JSON member names A2A spec §5.5 requires (camelCase). Exactly one of `text`, `raw`, `url`, `data` is present: member presence is the discriminator (A2A spec §14 \"Current Pattern (v1.0)\"), and the v0.3 `kind` member is not part of the shape. A2A commits no JSON Schema of its own (`specification/json/README.md`: `a2a.json` is a non-normative build artifact), so this file is the corpus's transcription. `oneOf` is deliberate: this schema describes a host-emitted wire object, not model output.",
   "type": "object",
   "additionalProperties": false,
   "properties": {
