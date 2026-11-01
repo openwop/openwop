@@ -107,7 +107,7 @@
       }
     },
     "openwop-app": {
-      "commit": "72e610b3dd7bd45d1a75fa199b21be508742fe7d",
+      "commit": "9f4cca7d40143012306bdf090444441175035c12",
       "files": {
         "backend/typescript/src/byok/ephemeralRunSecrets.ts": {
           "exists": true,
@@ -279,8 +279,8 @@
       "corpusTag": "v2.34.0"
     },
     "openwop-app": {
-      "corpusTag": "v2.46.35",
-      "conformancePin": "^2.46.35"
+      "corpusTag": "v2.46.36",
+      "conformancePin": "^2.46.36"
     },
     "openwop-examples": {
       "inMemoryHost": "1.1.7",

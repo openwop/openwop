@@ -1,12 +1,12 @@
 {
   "bundleVersion": "3",
-  "generatedAt": "2026-10-30T18:27:19.703Z",
+  "generatedAt": "2026-11-01T00:09:23.001Z",
   "suite": {
     "name": "@openwop/openwop-conformance",
-    "version": "2.46.35",
+    "version": "2.46.36",
     "targetMajor": 2,
-    "specArtifactsVersion": "2.46.35",
-    "stampSha256": "5cb533414c9111da403eecf8554a3559823601abe1537f91ae796733cce87f31"
+    "specArtifactsVersion": "2.46.36",
+    "stampSha256": "cb6e90b07993a5d6bc3f7b5a182fc1184a7a8db0886220dc7f7b5da649d93e69"
   },
   "host": {
     "name": "openwop-workflow-engine",
@@ -14,13 +14,13 @@
     "vendor": "openwop-app",
     "build": {
       "kind": "commit",
-      "id": "72e610b3dd7bd45d1a75fa199b21be508742fe7d"
+      "id": "9f4cca7d40143012306bdf090444441175035c12"
     },
     "signingKeyId": "openwop-app-bundle-2"
   },
   "discovery": {
     "url": "https://api.openwop.dev/.well-known/openwop",
-    "sha256": "c53eae514567ac5d50165f5590df74b1f2792863c37e0c2e4f279cf473e661c8",
+    "sha256": "22cfca65017d9acc0b08c2e0100b4cf5945157c0dc310408f172bedf4d83a442",
     "protocolVersions": [
       "2.0"
     ],
@@ -157,7 +157,6 @@
         "conformance-prompt-end-to-end",
         "conformance-run-duration-breach",
         "conformance-storage-probe",
-        "conformance-stream-text",
         "conformance-subworkflow-child",
         "conformance-subworkflow-input-mapping",
         "conformance-subworkflow-input-mapping-child",
@@ -370,15 +369,7 @@
             "boardReview",
             "resourceMonitor",
             "taskAssign",
-            "taskCreateBatch",
-            "taskGet",
             "timelinePlan"
-          ],
-          "unavailable": [
-            {
-              "node": "task.decompose",
-              "needs": "ctx.aiEnvelope"
-            }
           ]
         },
         "openwop-app.knowledge": {
@@ -414,12 +405,6 @@
             "fetchBatch",
             "research",
             "search"
-          ],
-          "unavailable": [
-            {
-              "node": "research synthesis (ctx.aiEnvelope.generate)",
-              "needs": "ctx.aiEnvelope"
-            }
           ]
         },
         "openwop-app.messaging": {
@@ -479,8 +464,6 @@
         "since": "2.0",
         "witness": "witnessable-gated",
         "clarificationRounds": 5,
-        "schemaRounds": 3,
-        "envelopesPerTurn": 32,
         "maxNodeExecutions": 1000,
         "maxRunDurationMs": 600000,
         "maxRequestBodyBytes": 1048576,
@@ -1465,6 +1448,25 @@
         "callAccounting": {
           "attempts": true,
           "retryPolicy": true
+        },
+        "reasoning": {
+          "promptDirective": "advisory"
+        },
+        "tierOneSubsetCompliance": "warn",
+        "reliability": {
+          "events": [
+            "envelope.retry-attempted",
+            "envelope.retry-exhausted",
+            "envelope.refusal",
+            "envelope.truncated",
+            "envelope.nl-to-format-engaged",
+            "envelope.recovery-applied"
+          ],
+          "maxRetryAttempts": 3,
+          "completion": {
+            "distinguishesTruncation": true,
+            "truncationBudgetMultiplier": 2
+          }
         }
       },
       "uiPlugins": {
@@ -1612,16 +1614,6 @@
           },
           "statefulResume": true
         }
-      },
-      "envelopes": {
-        "status": "experimental",
-        "since": "2.0",
-        "until": "2.1",
-        "witness": "claims-check",
-        "reasoning": {
-          "promptDirective": "advisory"
-        },
-        "tierOneSubsetCompliance": "warn"
       },
       "httpClient": {
         "status": "experimental",
@@ -2153,7 +2145,7 @@
       "executedPass": 524,
       "executedFail": 0,
       "skipped": 11,
-      "inapplicable": 377,
+      "inapplicable": 363,
       "blocked": 0
     },
     "requirements": [
@@ -2207,7 +2199,7 @@
         "id": "openwop.scenario.fixtures-valid",
         "scenario": "fixtures-valid.test.ts",
         "result": "executed-pass",
-        "assertions": 453
+        "assertions": 462
       },
       {
         "id": "openwop.scenario.inbound-credential-no-passthrough",
@@ -2281,13 +2273,6 @@
         "detail": "every test returned early through behaviorGate with zero assertions: profile not advertised in the captured discovery set"
       },
       {
-        "id": "openwop.scenario.v2-a2ui-v09-surface",
-        "scenario": "v2-a2ui-v09-surface.test.ts",
-        "result": "inapplicable",
-        "assertions": 0,
-        "detail": "every test returned early through behaviorGate with zero assertions: profile not advertised in the captured discovery set"
-      },
-      {
         "id": "openwop.scenario.v2-advertised-fixtures-exist",
         "scenario": "v2-advertised-fixtures-exist.test.ts",
         "result": "executed-pass",
@@ -2324,13 +2309,6 @@
         "scenario": "v2-agents-fan-out.test.ts",
         "result": "executed-pass",
         "assertions": 4
-      },
-      {
-        "id": "openwop.scenario.v2-ai-envelope-advertisement",
-        "scenario": "v2-ai-envelope-advertisement.test.ts",
-        "result": "inapplicable",
-        "assertions": 0,
-        "detail": "every test returned early through behaviorGate with zero assertions: profile not advertised in the captured discovery set"
       },
       {
         "id": "openwop.scenario.v2-ai-providers-advertisement",
@@ -2457,14 +2435,14 @@
         "id": "openwop.scenario.v2-capability-maturity-bounded",
         "scenario": "v2-capability-maturity-bounded.test.ts",
         "result": "executed-pass",
-        "assertions": 47,
-        "detail": "partial-witness: inapplicable: unwitnessable until the first persisted-class retirement row is due (RFC 0197 §A.3 Falsifiability): corpus 2.46.35: 0 persisted-class v2-minor retirement row(s), 0 v2→v2 migration row(s) — no retired member exists for a post-2.N event to carry. Before one does, a scenario would be vacuous, and a row that cannot fail is not a witness. This leg asserts the moment such a row falls due."
+        "assertions": 46,
+        "detail": "partial-witness: inapplicable: unwitnessable until the first persisted-class retirement row is due (RFC 0197 §A.3 Falsifiability): corpus 2.46.36: 0 persisted-class v2-minor retirement row(s), 0 v2→v2 migration row(s) — no retired member exists for a post-2.N event to carry. Before one does, a scenario would be vacuous, and a row that cannot fail is not a witness. This leg asserts the moment such a row falls due."
       },
       {
         "id": "openwop.scenario.v2-capability-record-shape",
         "scenario": "v2-capability-record-shape.test.ts",
         "result": "executed-pass",
-        "assertions": 313
+        "assertions": 306
       },
       {
         "id": "openwop.scenario.v2-chain-pin-exact",
@@ -2594,7 +2572,7 @@
         "id": "openwop.scenario.v2-deployment-lifecycle",
         "scenario": "v2-deployment-lifecycle.test.ts",
         "result": "executed-pass",
-        "assertions": 77,
+        "assertions": 81,
         "detail": "partial-witness: inapplicable: [inapplicable] the host advertises all seven states, so no state is unadvertised; [inapplicable] the host advertises agents.deployment.canary"
       },
       {
@@ -2664,31 +2642,10 @@
         "assertions": 6
       },
       {
-        "id": "openwop.scenario.v2-envelope-contracts-advertisement",
-        "scenario": "v2-envelope-contracts-advertisement.test.ts",
-        "result": "inapplicable",
-        "assertions": 0,
-        "detail": "every test returned early through behaviorGate with zero assertions: profile not advertised in the captured discovery set"
-      },
-      {
-        "id": "openwop.scenario.v2-envelope-reasoning-shape",
-        "scenario": "v2-envelope-reasoning-shape.test.ts",
+        "id": "openwop.scenario.v2-envelope-surfaces-absent",
+        "scenario": "v2-envelope-surfaces-absent.test.ts",
         "result": "executed-pass",
-        "assertions": 20
-      },
-      {
-        "id": "openwop.scenario.v2-envelope-tier-one-subset-static",
-        "scenario": "v2-envelope-tier-one-subset-static.test.ts",
-        "result": "inapplicable",
-        "assertions": 0,
-        "detail": "every test returned early through behaviorGate with zero assertions: profile not advertised in the captured discovery set"
-      },
-      {
-        "id": "openwop.scenario.v2-envelopes-advertisement",
-        "scenario": "v2-envelopes-advertisement.test.ts",
-        "result": "executed-pass",
-        "assertions": 4,
-        "detail": "partial-witness: inapplicable: [inapplicable] the host does not advertise envelopes.reliability (optional); [inapplicable] the host does not advertise envelopes.reliability.completion (optional)"
+        "assertions": 1
       },
       {
         "id": "openwop.scenario.v2-era-2-append-vocabulary",
@@ -2838,6 +2795,13 @@
         "detail": "every test returned early through behaviorGate with zero assertions: profile not advertised in the captured discovery set"
       },
       {
+        "id": "openwop.scenario.v2-interrupt-form-rules",
+        "scenario": "v2-interrupt-form-rules.test.ts",
+        "result": "inapplicable",
+        "assertions": 0,
+        "detail": "every test returned early through behaviorGate with zero assertions: profile not advertised in the captured discovery set"
+      },
+      {
         "id": "openwop.scenario.v2-interrupt-resolve-terminal",
         "scenario": "v2-interrupt-resolve-terminal.test.ts",
         "result": "executed-pass",
@@ -2870,10 +2834,10 @@
         "detail": "partial-witness: inapplicable: host advertises neither a2a nor mcp — no profiles[] to check for a -legacy id"
       },
       {
-        "id": "openwop.scenario.v2-limits-envelope-caps-advertisement",
-        "scenario": "v2-limits-envelope-caps-advertisement.test.ts",
+        "id": "openwop.scenario.v2-limits-clarification-rounds-advertisement",
+        "scenario": "v2-limits-clarification-rounds-advertisement.test.ts",
         "result": "executed-pass",
-        "assertions": 6
+        "assertions": 2
       },
       {
         "id": "openwop.scenario.v2-localized-content-delivery",
@@ -3150,7 +3114,7 @@
         "id": "openwop.scenario.v2-prompt-list-and-fetch",
         "scenario": "v2-prompt-list-and-fetch.test.ts",
         "result": "executed-pass",
-        "assertions": 54,
+        "assertions": 58,
         "detail": "partial-witness: inapplicable: prompts.endpointsSupported is advertised — the gate is on"
       },
       {
@@ -3203,6 +3167,12 @@
         "scenario": "v2-provider-conflict.test.ts",
         "result": "executed-pass",
         "assertions": 9
+      },
+      {
+        "id": "openwop.scenario.v2-provider-output-reliability",
+        "scenario": "v2-provider-output-reliability.test.ts",
+        "result": "executed-pass",
+        "assertions": 10
       },
       {
         "id": "openwop.scenario.v2-provider-usage-advertisement",
@@ -3417,6 +3387,12 @@
         "assertions": 16
       },
       {
+        "id": "openwop.scenario.v2-structured-output-advertisement",
+        "scenario": "v2-structured-output-advertisement.test.ts",
+        "result": "executed-pass",
+        "assertions": 15
+      },
+      {
         "id": "openwop.scenario.v2-sub-workflow-advertisement",
         "scenario": "v2-sub-workflow-advertisement.test.ts",
         "result": "executed-pass",
@@ -3591,7 +3567,7 @@
         "scenario": "v2-webhook-secret-rotation.test.ts",
         "result": "executed-pass",
         "assertions": 12,
-        "detail": "partial-witness: inapplicable: the post-overlap leg is not observed: the advertised webhooks.secretRotation.overlapSeconds is 86400s (expiry 2026-10-31T18:18:28.277Z) and the suite wait cap is 90000ms, and the seams profile is not advertised, so the optional shortenRotationOverlap seam (host-sample-test-seams.md §29) is not offered; raise OPENWOP_WEBHOOK_RETRY_WAIT_MS past the overlap, or serve the seam, to witness it"
+        "detail": "partial-witness: inapplicable: the post-overlap leg is not observed: the advertised webhooks.secretRotation.overlapSeconds is 86400s (expiry 2026-11-02T00:05:00.910Z) and the suite wait cap is 90000ms, and the seams profile is not advertised, so the optional shortenRotationOverlap seam (host-sample-test-seams.md §29) is not offered; raise OPENWOP_WEBHOOK_RETRY_WAIT_MS past the overlap, or serve the seam, to witness it"
       },
       {
         "id": "openwop.scenario.v2-webhook-standard-webhooks-delivery",
@@ -3717,13 +3693,13 @@
         "id": "openwop.it.fixtures-valid.every-fixture-has-a-manual-trigger-so-the-conformance-driver-can-start-it",
         "scenario": "fixtures-valid.test.ts",
         "result": "executed-pass",
-        "assertions": 119
+        "assertions": 122
       },
       {
         "id": "openwop.it.fixtures-valid.every-fixture-id-matches-its-filename",
         "scenario": "fixtures-valid.test.ts",
         "result": "executed-pass",
-        "assertions": 119
+        "assertions": 122
       },
       {
         "id": "openwop.it.fixtures-valid.every-fixture-templateid-matches-its-filename",
@@ -3807,7 +3783,7 @@
         "id": "openwop.it.fixtures-valid.validates-against-workflow-definition-schema-json",
         "scenario": "fixtures-valid.test.ts",
         "result": "executed-pass",
-        "assertions": 119
+        "assertions": 122
       },
       {
         "id": "openwop.it.jcs-vectors.a-non-i-json-native-value-is-refused-at-the-value-boundary",
@@ -4100,27 +4076,6 @@
         "detail": "a2a not advertised at major 2"
       },
       {
-        "id": "openwop.it.v2-a2ui-v09-surface.a-message-whose-surfaceid-differs-from-the-payload-surfaceid-is-refused",
-        "scenario": "v2-a2ui-v09-surface.test.ts",
-        "result": "inapplicable",
-        "assertions": 0,
-        "detail": "host does not advertise conformance.seamsProfile: openwop-conformance-seams-v2 — the emit-surface seam is the only way the suite can choose an envelope (RFC 0209 Falsifiability)"
-      },
-      {
-        "id": "openwop.it.v2-a2ui-v09-surface.a-recorded-version-2-surface-is-returned-byte-equal-on-poll-and-carried-by-a-for",
-        "scenario": "v2-a2ui-v09-surface.test.ts",
-        "result": "inapplicable",
-        "assertions": 0,
-        "detail": "host does not advertise conformance.seamsProfile: openwop-conformance-seams-v2 — the emit-surface seam is the only way the suite can choose an envelope (RFC 0209 Falsifiability)"
-      },
-      {
-        "id": "openwop.it.v2-a2ui-v09-surface.a-version-2-surface-is-admitted-and-a-version-1-body-under-schema-version-2-is-r",
-        "scenario": "v2-a2ui-v09-surface.test.ts",
-        "result": "inapplicable",
-        "assertions": 0,
-        "detail": "host does not advertise conformance.seamsProfile: openwop-conformance-seams-v2 — the emit-surface seam is the only way the suite can choose an envelope (RFC 0209 Falsifiability)"
-      },
-      {
         "id": "openwop.it.v2-agent-org-chart-served-shape.serves-the-org-chart-read-pair-in-the-exact-v2-schema-shape",
         "scenario": "v2-agent-org-chart-served-shape.test.ts",
         "result": "executed-pass",
@@ -4202,6 +4157,27 @@
         "result": "inapplicable",
         "assertions": 0,
         "detail": "no extensions[\"<org>.entities\"] record under a registered org — the host does not advertise entities"
+      },
+      {
+        "id": "openwop.it.v2-interrupt-form-rules.a-clarification-raised-with-a-form-carries-it-unchanged-beside-questions-in-a-va",
+        "scenario": "v2-interrupt-form-rules.test.ts",
+        "result": "inapplicable",
+        "assertions": 0,
+        "detail": "conformance-interrupt-form is not advertised — forms are OPTIONAL and this host claims none"
+      },
+      {
+        "id": "openwop.it.v2-interrupt-form-rules.a-form-resolves-with-answers-id-answer-and-the-run-completes",
+        "scenario": "v2-interrupt-form-rules.test.ts",
+        "result": "inapplicable",
+        "assertions": 0,
+        "detail": "conformance-interrupt-form is not advertised — forms are OPTIONAL and this host claims none"
+      },
+      {
+        "id": "openwop.it.v2-interrupt-form-rules.a-form-that-fails-the-schema-or-binds-an-input-to-no-question-is-never-raised",
+        "scenario": "v2-interrupt-form-rules.test.ts",
+        "result": "inapplicable",
+        "assertions": 0,
+        "detail": "conformance-interrupt-form is not advertised — forms are OPTIONAL and this host claims none"
       },
       {
         "id": "openwop.it.v2-mcp-client-results.an-unknown-serverid-rejects-with-not-found",
@@ -4572,7 +4548,7 @@
         "id": "openwop.requirement.0082.list-valid",
         "scenario": "v2-deployment-lifecycle.test.ts",
         "result": "executed-pass",
-        "assertions": 5
+        "assertions": 9
       },
       {
         "id": "openwop.requirement.0082.pin-recorded",
@@ -4781,19 +4757,19 @@
         "id": "openwop.requirement.0169.capability-record-shape.required-fields",
         "scenario": "v2-capability-record-shape.test.ts",
         "result": "executed-pass",
-        "assertions": 180
+        "assertions": 176
       },
       {
         "id": "openwop.requirement.0169.capability-record-shape.until-iff-not-stable",
         "scenario": "v2-capability-record-shape.test.ts",
         "result": "executed-pass",
-        "assertions": 89
+        "assertions": 87
       },
       {
         "id": "openwop.requirement.0169.capability-record-shape.until-not-past",
         "scenario": "v2-capability-record-shape.test.ts",
         "result": "executed-pass",
-        "assertions": 44
+        "assertions": 43
       },
       {
         "id": "openwop.requirement.0169.profiles-derived-only.derivable",
@@ -5310,21 +5286,21 @@
         "scenario": "v2-webhook-durable-delivery.test.ts",
         "result": "executed-pass",
         "assertions": 4,
-        "detail": "observed: 4/4 subscribed event(s) delivered, 0 duplicate arrival(s); slowest first arrival 1695ms after the run was created; cap (default 90000ms; advertised maxElapsedMs none): waited ≤90000ms"
+        "detail": "observed: 4/4 subscribed event(s) delivered, 0 duplicate arrival(s); slowest first arrival 749ms after the run was created; cap (default 90000ms; advertised maxElapsedMs none): waited ≤90000ms"
       },
       {
         "id": "openwop.requirement.0173.webhook-durable-delivery",
         "scenario": "v2-webhook-durable-delivery.test.ts",
         "result": "executed-pass",
         "assertions": 9,
-        "detail": "observed: cap (default 90000ms; advertised maxElapsedMs none): waited ≤90000ms; 3 attempt(s), last attempt after 8037ms"
+        "detail": "observed: cap (default 90000ms; advertised maxElapsedMs none): waited ≤90000ms; 3 attempt(s), last attempt after 7978ms"
       },
       {
         "id": "openwop.requirement.0173.webhook-durable-delivery.dead-letter",
         "scenario": "v2-webhook-durable-delivery.test.ts",
         "result": "executed-pass",
         "assertions": 5,
-        "detail": "partial-witness: inapplicable: host does not advertise the webhooks.deadLetter facet — RFC 0188 §A.5 makes the read a 404 rather than an obligation, so the sink half of §Durability is unwitnessable here (the retry half above passed) · observed: cap (default 90000ms; advertised maxElapsedMs none): waited ≤90000ms; 5 attempt(s), last attempt after 33964ms, sink not observed"
+        "detail": "partial-witness: inapplicable: host does not advertise the webhooks.deadLetter facet — RFC 0188 §A.5 makes the read a 404 rather than an obligation, so the sink half of §Durability is unwitnessable here (the retry half above passed) · observed: cap (default 90000ms; advertised maxElapsedMs none): waited ≤90000ms; 5 attempt(s), last attempt after 34022ms, sink not observed"
       },
       {
         "id": "openwop.requirement.0175.legacy-profiles-absent",
@@ -5691,14 +5667,14 @@
         "id": "openwop.requirement.0197.maturity-not-overstated",
         "scenario": "v2-capability-maturity-bounded.test.ts",
         "result": "executed-pass",
-        "assertions": 47
+        "assertions": 46
       },
       {
         "id": "openwop.requirement.0197.retired-not-emitted",
         "scenario": "v2-capability-maturity-bounded.test.ts",
         "result": "inapplicable",
         "assertions": 0,
-        "detail": "unwitnessable until the first persisted-class retirement row is due (RFC 0197 §A.3 Falsifiability): corpus 2.46.35: 0 persisted-class v2-minor retirement row(s), 0 v2→v2 migration row(s) — no retired member exists for a post-2.N event to carry. Before one does, a scenario would be vacuous, and a row that cannot fail is not a witness. This leg asserts the moment such a row falls due."
+        "detail": "unwitnessable until the first persisted-class retirement row is due (RFC 0197 §A.3 Falsifiability): corpus 2.46.36: 0 persisted-class v2-minor retirement row(s), 0 v2→v2 migration row(s) — no retired member exists for a post-2.N event to carry. Before one does, a scenario would be vacuous, and a row that cannot fail is not a witness. This leg asserts the moment such a row falls due."
       },
       {
         "id": "openwop.requirement.0198.advertised-via-discover",
@@ -5898,7 +5874,7 @@
         "scenario": "v2-webhook-secret-rotation.test.ts",
         "result": "executed-pass",
         "assertions": 12,
-        "detail": "partial-witness: inapplicable: the post-overlap leg is not observed: the advertised webhooks.secretRotation.overlapSeconds is 86400s (expiry 2026-10-31T18:18:28.277Z) and the suite wait cap is 90000ms, and the seams profile is not advertised, so the optional shortenRotationOverlap seam (host-sample-test-seams.md §29) is not offered; raise OPENWOP_WEBHOOK_RETRY_WAIT_MS past the overlap, or serve the seam, to witness it"
+        "detail": "partial-witness: inapplicable: the post-overlap leg is not observed: the advertised webhooks.secretRotation.overlapSeconds is 86400s (expiry 2026-11-02T00:05:00.910Z) and the suite wait cap is 90000ms, and the seams profile is not advertised, so the optional shortenRotationOverlap seam (host-sample-test-seams.md §29) is not offered; raise OPENWOP_WEBHOOK_RETRY_WAIT_MS past the overlap, or serve the seam, to witness it"
       },
       {
         "id": "openwop.requirement.0204.annotations-derived",
@@ -6009,48 +5985,6 @@
         "scenario": "v2-implementation-informational.test.ts",
         "result": "executed-pass",
         "assertions": 3
-      },
-      {
-        "id": "openwop.requirement.0209.catalog-equality",
-        "scenario": "v2-a2ui-v09-surface.test.ts",
-        "result": "inapplicable",
-        "assertions": 0,
-        "detail": "host does not advertise conformance.seamsProfile: openwop-conformance-seams-v2 — the emit-surface seam is the only way the suite can choose an envelope (RFC 0209 Falsifiability)"
-      },
-      {
-        "id": "openwop.requirement.0209.fold-guarded",
-        "scenario": "v2-a2ui-v09-surface.test.ts",
-        "result": "inapplicable",
-        "assertions": 0,
-        "detail": "host does not advertise conformance.seamsProfile: openwop-conformance-seams-v2 — the emit-surface seam is the only way the suite can choose an envelope (RFC 0209 Falsifiability)"
-      },
-      {
-        "id": "openwop.requirement.0209.legacy-readable",
-        "scenario": "v2-a2ui-v09-surface.test.ts",
-        "result": "inapplicable",
-        "assertions": 0,
-        "detail": "host does not advertise conformance.seamsProfile: openwop-conformance-seams-v2 — the emit-surface seam is the only way the suite can choose an envelope (RFC 0209 Falsifiability)"
-      },
-      {
-        "id": "openwop.requirement.0209.render-needs-root",
-        "scenario": "v2-a2ui-v09-surface.test.ts",
-        "result": "inapplicable",
-        "assertions": 0,
-        "detail": "unwitnessable by this suite (RFC 0209 §C.9 Falsifiability verdict): a render-side guarantee, and a server-oriented suite cannot observe a renderer. The fold guard the server CAN observe is openwop.requirement.0209.fold-guarded, above. The render half is witnessed as a reference-app client probe (tier: reference-impl, the a2ui-surface-no-code-exec precedent): openwop/openwop-app frontend/react/src/chat/a2ui/__tests__/a2ui-v09-render-needs-root.test.tsx (openwop-app#4121, ADR 0749). Removing the `if (!state.renderable)` guard in frontend/react/src/chat/a2ui/v09/A2uiV09Surface.tsx turns 2 of its 4 cases red. This row records that the suite reached the requirement, and it is not a pass."
-      },
-      {
-        "id": "openwop.requirement.0209.taint-sticky",
-        "scenario": "v2-a2ui-v09-surface.test.ts",
-        "result": "inapplicable",
-        "assertions": 0,
-        "detail": "host does not advertise conformance.seamsProfile: openwop-conformance-seams-v2 — the emit-surface seam is the only way the suite can choose an envelope (RFC 0209 Falsifiability)"
-      },
-      {
-        "id": "openwop.requirement.0209.version-selects-branch",
-        "scenario": "v2-a2ui-v09-surface.test.ts",
-        "result": "inapplicable",
-        "assertions": 0,
-        "detail": "host does not advertise conformance.seamsProfile: openwop-conformance-seams-v2 — the emit-surface seam is the only way the suite can choose an envelope (RFC 0209 Falsifiability)"
       },
       {
         "id": "openwop.requirement.0210.credential-lifetime-code",
@@ -6431,10 +6365,10 @@
       },
       {
         "id": "openwop.requirement.0237.no-false-advertisement",
-        "scenario": "v2-envelope-contracts-advertisement.test.ts",
+        "scenario": "v2-nondeterminism-policy-advertisement.test.ts",
         "result": "inapplicable",
         "assertions": 0,
-        "detail": "the host does not advertise envelopeContracts"
+        "detail": "the host does not advertise nondeterminismPolicy"
       },
       {
         "id": "openwop.requirement.0238.ui-plugin.frame-deny-egress",
@@ -6882,6 +6816,30 @@
         "assertions": 3
       },
       {
+        "id": "openwop.requirement.0255.provider-output-exhaustion",
+        "scenario": "v2-provider-output-reliability.test.ts",
+        "result": "executed-pass",
+        "assertions": 4
+      },
+      {
+        "id": "openwop.requirement.0255.provider-output-refusal",
+        "scenario": "v2-provider-output-reliability.test.ts",
+        "result": "executed-pass",
+        "assertions": 4
+      },
+      {
+        "id": "openwop.requirement.0255.provider-output-truncation",
+        "scenario": "v2-provider-output-reliability.test.ts",
+        "result": "executed-pass",
+        "assertions": 2
+      },
+      {
+        "id": "openwop.requirement.0255.surfaces-absent",
+        "scenario": "v2-envelope-surfaces-absent.test.ts",
+        "result": "executed-pass",
+        "assertions": 1
+      },
+      {
         "id": "openwop.requirement.agent-runtime.advert-record-schema",
         "scenario": "v2-agent-runtime-advertisement.test.ts",
         "result": "inapplicable",
@@ -6916,13 +6874,6 @@
         "assertions": 4
       },
       {
-        "id": "openwop.requirement.ai-envelope.advert-record-schema",
-        "scenario": "v2-ai-envelope-advertisement.test.ts",
-        "result": "inapplicable",
-        "assertions": 0,
-        "detail": "the host does not advertise aiEnvelope"
-      },
-      {
         "id": "openwop.requirement.ai-providers.advert-record-schema",
         "scenario": "v2-ai-providers-advertisement.test.ts",
         "result": "executed-pass",
@@ -6951,6 +6902,36 @@
       {
         "id": "openwop.requirement.ai-providers.self-hosted-boolean",
         "scenario": "v2-ai-providers-advertisement.test.ts",
+        "result": "executed-pass",
+        "assertions": 1
+      },
+      {
+        "id": "openwop.requirement.aiProviders.completion-advert-shape",
+        "scenario": "v2-structured-output-advertisement.test.ts",
+        "result": "executed-pass",
+        "assertions": 2
+      },
+      {
+        "id": "openwop.requirement.aiProviders.reasoning-advert-shape",
+        "scenario": "v2-structured-output-advertisement.test.ts",
+        "result": "executed-pass",
+        "assertions": 2
+      },
+      {
+        "id": "openwop.requirement.aiProviders.reliability-events-advert",
+        "scenario": "v2-structured-output-advertisement.test.ts",
+        "result": "executed-pass",
+        "assertions": 9
+      },
+      {
+        "id": "openwop.requirement.aiProviders.structured-output-record",
+        "scenario": "v2-structured-output-advertisement.test.ts",
+        "result": "executed-pass",
+        "assertions": 1
+      },
+      {
+        "id": "openwop.requirement.aiProviders.tier-one-subset-compliance-value",
+        "scenario": "v2-structured-output-advertisement.test.ts",
         "result": "executed-pass",
         "assertions": 1
       },
@@ -7161,82 +7142,6 @@
         "assertions": 1
       },
       {
-        "id": "openwop.requirement.envelope-contracts.advert-record-schema",
-        "scenario": "v2-envelope-contracts-advertisement.test.ts",
-        "result": "inapplicable",
-        "assertions": 0,
-        "detail": "the host does not advertise envelopeContracts"
-      },
-      {
-        "id": "openwop.requirement.envelopes.advert-record-schema",
-        "scenario": "v2-envelopes-advertisement.test.ts",
-        "result": "executed-pass",
-        "assertions": 1
-      },
-      {
-        "id": "openwop.requirement.envelopes.completion-advert-shape",
-        "scenario": "v2-envelopes-advertisement.test.ts",
-        "result": "inapplicable",
-        "assertions": 0,
-        "detail": "the host does not advertise envelopes.reliability.completion (optional)"
-      },
-      {
-        "id": "openwop.requirement.envelopes.reasoning-absent-accepted",
-        "scenario": "v2-envelope-reasoning-shape.test.ts",
-        "result": "executed-pass",
-        "assertions": 3
-      },
-      {
-        "id": "openwop.requirement.envelopes.reasoning-advert-shape",
-        "scenario": "v2-envelopes-advertisement.test.ts",
-        "result": "executed-pass",
-        "assertions": 2
-      },
-      {
-        "id": "openwop.requirement.envelopes.reasoning-declared-optional-string",
-        "scenario": "v2-envelope-reasoning-shape.test.ts",
-        "result": "executed-pass",
-        "assertions": 9
-      },
-      {
-        "id": "openwop.requirement.envelopes.reasoning-non-string-rejected",
-        "scenario": "v2-envelope-reasoning-shape.test.ts",
-        "result": "executed-pass",
-        "assertions": 3
-      },
-      {
-        "id": "openwop.requirement.envelopes.reasoning-omitted-from-schema-response",
-        "scenario": "v2-envelope-reasoning-shape.test.ts",
-        "result": "executed-pass",
-        "assertions": 2
-      },
-      {
-        "id": "openwop.requirement.envelopes.reasoning-present-accepted",
-        "scenario": "v2-envelope-reasoning-shape.test.ts",
-        "result": "executed-pass",
-        "assertions": 3
-      },
-      {
-        "id": "openwop.requirement.envelopes.reliability-events-advert",
-        "scenario": "v2-envelopes-advertisement.test.ts",
-        "result": "inapplicable",
-        "assertions": 0,
-        "detail": "the host does not advertise envelopes.reliability (optional)"
-      },
-      {
-        "id": "openwop.requirement.envelopes.tier-one-strict-advertised-kinds",
-        "scenario": "v2-envelope-tier-one-subset-static.test.ts",
-        "result": "inapplicable",
-        "assertions": 0,
-        "detail": "envelopes.tierOneSubsetCompliance is \"warn\", not \"strict\" — the strict walk binds only a strict host"
-      },
-      {
-        "id": "openwop.requirement.envelopes.tier-one-subset-compliance-value",
-        "scenario": "v2-envelopes-advertisement.test.ts",
-        "result": "executed-pass",
-        "assertions": 1
-      },
-      {
         "id": "openwop.requirement.errors.event-code-registered",
         "scenario": "v2-error-registry.test.ts",
         "result": "executed-pass",
@@ -7310,19 +7215,7 @@
       },
       {
         "id": "openwop.requirement.limits.clarification-rounds-advertised",
-        "scenario": "v2-limits-envelope-caps-advertisement.test.ts",
-        "result": "executed-pass",
-        "assertions": 2
-      },
-      {
-        "id": "openwop.requirement.limits.envelopes-per-turn-advertised",
-        "scenario": "v2-limits-envelope-caps-advertisement.test.ts",
-        "result": "executed-pass",
-        "assertions": 2
-      },
-      {
-        "id": "openwop.requirement.limits.schema-rounds-advertised",
-        "scenario": "v2-limits-envelope-caps-advertisement.test.ts",
+        "scenario": "v2-limits-clarification-rounds-advertisement.test.ts",
         "result": "executed-pass",
         "assertions": 2
       },
@@ -7547,13 +7440,13 @@
         "id": "openwop.requirement.prompts.list-filters",
         "scenario": "v2-prompt-list-and-fetch.test.ts",
         "result": "executed-pass",
-        "assertions": 24
+        "assertions": 26
       },
       {
         "id": "openwop.requirement.prompts.list-shape",
         "scenario": "v2-prompt-list-and-fetch.test.ts",
         "result": "executed-pass",
-        "assertions": 24
+        "assertions": 26
       },
       {
         "id": "openwop.requirement.prompts.mutable-gate-off-404",
@@ -8064,7 +7957,7 @@
       }
     ]
   },
-  "assertionCount": 5666,
+  "assertionCount": 5680,
   "detail": {
     "nonPass": [
       {
@@ -8113,22 +8006,12 @@
         "reason": "every test returned early through behaviorGate with zero assertions: profile not advertised in the captured discovery set"
       },
       {
-        "id": "openwop.scenario.v2-a2ui-v09-surface",
-        "result": "inapplicable",
-        "reason": "every test returned early through behaviorGate with zero assertions: profile not advertised in the captured discovery set"
-      },
-      {
         "id": "openwop.scenario.v2-advertised-path-space-served",
         "result": "inapplicable",
         "reason": "every test returned early through behaviorGate with zero assertions: profile not advertised in the captured discovery set"
       },
       {
         "id": "openwop.scenario.v2-agent-runtime-advertisement",
-        "result": "inapplicable",
-        "reason": "every test returned early through behaviorGate with zero assertions: profile not advertised in the captured discovery set"
-      },
-      {
-        "id": "openwop.scenario.v2-ai-envelope-advertisement",
         "result": "inapplicable",
         "reason": "every test returned early through behaviorGate with zero assertions: profile not advertised in the captured discovery set"
       },
@@ -8243,16 +8126,6 @@
         "reason": "every test returned early through behaviorGate with zero assertions: profile not advertised in the captured discovery set"
       },
       {
-        "id": "openwop.scenario.v2-envelope-contracts-advertisement",
-        "result": "inapplicable",
-        "reason": "every test returned early through behaviorGate with zero assertions: profile not advertised in the captured discovery set"
-      },
-      {
-        "id": "openwop.scenario.v2-envelope-tier-one-subset-static",
-        "result": "inapplicable",
-        "reason": "every test returned early through behaviorGate with zero assertions: profile not advertised in the captured discovery set"
-      },
-      {
         "id": "openwop.scenario.v2-era-2-append-vocabulary",
         "result": "inapplicable",
         "reason": "every test returned early through behaviorGate with zero assertions: profile not advertised in the captured discovery set"
@@ -8274,6 +8147,11 @@
       },
       {
         "id": "openwop.scenario.v2-interop-trace-context",
+        "result": "inapplicable",
+        "reason": "every test returned early through behaviorGate with zero assertions: profile not advertised in the captured discovery set"
+      },
+      {
+        "id": "openwop.scenario.v2-interrupt-form-rules",
         "result": "inapplicable",
         "reason": "every test returned early through behaviorGate with zero assertions: profile not advertised in the captured discovery set"
       },
@@ -8673,21 +8551,6 @@
         "reason": "a2a not advertised at major 2"
       },
       {
-        "id": "openwop.it.v2-a2ui-v09-surface.a-message-whose-surfaceid-differs-from-the-payload-surfaceid-is-refused",
-        "result": "inapplicable",
-        "reason": "host does not advertise conformance.seamsProfile: openwop-conformance-seams-v2 — the emit-surface seam is the only way the suite can choose an envelope (RFC 0209 Falsifiability)"
-      },
-      {
-        "id": "openwop.it.v2-a2ui-v09-surface.a-recorded-version-2-surface-is-returned-byte-equal-on-poll-and-carried-by-a-for",
-        "result": "inapplicable",
-        "reason": "host does not advertise conformance.seamsProfile: openwop-conformance-seams-v2 — the emit-surface seam is the only way the suite can choose an envelope (RFC 0209 Falsifiability)"
-      },
-      {
-        "id": "openwop.it.v2-a2ui-v09-surface.a-version-2-surface-is-admitted-and-a-version-1-body-under-schema-version-2-is-r",
-        "result": "inapplicable",
-        "reason": "host does not advertise conformance.seamsProfile: openwop-conformance-seams-v2 — the emit-surface seam is the only way the suite can choose an envelope (RFC 0209 Falsifiability)"
-      },
-      {
         "id": "openwop.it.v2-approval-reject-disposition.a-rejected-gate-looped-back-to-itself-is-asked-again-under-a-new-key-and-the-fir",
         "result": "inapplicable",
         "reason": "fixture conformance-approval-reject-loopback is not advertised — the host does not run cycles"
@@ -8741,6 +8604,21 @@
         "id": "openwop.it.v2-ext-family-claims.entities",
         "result": "inapplicable",
         "reason": "no extensions[\"<org>.entities\"] record under a registered org — the host does not advertise entities"
+      },
+      {
+        "id": "openwop.it.v2-interrupt-form-rules.a-clarification-raised-with-a-form-carries-it-unchanged-beside-questions-in-a-va",
+        "result": "inapplicable",
+        "reason": "conformance-interrupt-form is not advertised — forms are OPTIONAL and this host claims none"
+      },
+      {
+        "id": "openwop.it.v2-interrupt-form-rules.a-form-resolves-with-answers-id-answer-and-the-run-completes",
+        "result": "inapplicable",
+        "reason": "conformance-interrupt-form is not advertised — forms are OPTIONAL and this host claims none"
+      },
+      {
+        "id": "openwop.it.v2-interrupt-form-rules.a-form-that-fails-the-schema-or-binds-an-input-to-no-question-is-never-raised",
+        "result": "inapplicable",
+        "reason": "conformance-interrupt-form is not advertised — forms are OPTIONAL and this host claims none"
       },
       {
         "id": "openwop.it.v2-mcp-client-results.an-unknown-serverid-rejects-with-not-found",
@@ -9295,7 +9173,7 @@
       {
         "id": "openwop.requirement.0197.retired-not-emitted",
         "result": "inapplicable",
-        "reason": "unwitnessable until the first persisted-class retirement row is due (RFC 0197 §A.3 Falsifiability): corpus 2.46.35: 0 persisted-class v2-minor retirement row(s), 0 v2→v2 migration row(s) — no retired member exists for a post-2.N event to carry. Before one does, a scenario would be vacuous, and a row that cannot fail is not a witness. This leg asserts the moment such a row falls due."
+        "reason": "unwitnessable until the first persisted-class retirement row is due (RFC 0197 §A.3 Falsifiability): corpus 2.46.36: 0 persisted-class v2-minor retirement row(s), 0 v2→v2 migration row(s) — no retired member exists for a post-2.N event to carry. Before one does, a scenario would be vacuous, and a row that cannot fail is not a witness. This leg asserts the moment such a row falls due."
       },
       {
         "id": "openwop.requirement.0198.advertised-via-discover",
@@ -9458,36 +9336,6 @@
         "reason": "mcp.client not advertised — no run path makes an outbound MCP call (the §23 seam leg covers the client)"
       },
       {
-        "id": "openwop.requirement.0209.catalog-equality",
-        "result": "inapplicable",
-        "reason": "host does not advertise conformance.seamsProfile: openwop-conformance-seams-v2 — the emit-surface seam is the only way the suite can choose an envelope (RFC 0209 Falsifiability)"
-      },
-      {
-        "id": "openwop.requirement.0209.fold-guarded",
-        "result": "inapplicable",
-        "reason": "host does not advertise conformance.seamsProfile: openwop-conformance-seams-v2 — the emit-surface seam is the only way the suite can choose an envelope (RFC 0209 Falsifiability)"
-      },
-      {
-        "id": "openwop.requirement.0209.legacy-readable",
-        "result": "inapplicable",
-        "reason": "host does not advertise conformance.seamsProfile: openwop-conformance-seams-v2 — the emit-surface seam is the only way the suite can choose an envelope (RFC 0209 Falsifiability)"
-      },
-      {
-        "id": "openwop.requirement.0209.render-needs-root",
-        "result": "inapplicable",
-        "reason": "unwitnessable by this suite (RFC 0209 §C.9 Falsifiability verdict): a render-side guarantee, and a server-oriented suite cannot observe a renderer. The fold guard the server CAN observe is openwop.requirement.0209.fold-guarded, above. The render half is witnessed as a reference-app client probe (tier: reference-impl, the a2ui-surface-no-code-exec precedent): openwop/openwop-app frontend/react/src/chat/a2ui/__tests__/a2ui-v09-render-needs-root.test.tsx (openwop-app#4121, ADR 0749). Removing the `if (!state.renderable)` guard in frontend/react/src/chat/a2ui/v09/A2uiV09Surface.tsx turns 2 of its 4 cases red. This row records that the suite reached the requirement, and it is not a pass."
-      },
-      {
-        "id": "openwop.requirement.0209.taint-sticky",
-        "result": "inapplicable",
-        "reason": "host does not advertise conformance.seamsProfile: openwop-conformance-seams-v2 — the emit-surface seam is the only way the suite can choose an envelope (RFC 0209 Falsifiability)"
-      },
-      {
-        "id": "openwop.requirement.0209.version-selects-branch",
-        "result": "inapplicable",
-        "reason": "host does not advertise conformance.seamsProfile: openwop-conformance-seams-v2 — the emit-surface seam is the only way the suite can choose an envelope (RFC 0209 Falsifiability)"
-      },
-      {
         "id": "openwop.requirement.0210.credential-lifetime-code",
         "result": "inapplicable",
         "reason": "lane oidc trusts https://securetoken.google.com/openwop-dev, and no harness issuer is configured (OPENWOP_TEST_OIDC_ISSUER_URL unset): the suite holds a signing key for none of the host's trust roots, so no token it mints could be accepted. A host claims the harness by listing it in the lane's issuers[] (RFC 0168 §C.1's reading for suite instruments)"
@@ -9585,7 +9433,7 @@
       {
         "id": "openwop.requirement.0237.no-false-advertisement",
         "result": "inapplicable",
-        "reason": "the host does not advertise envelopeContracts"
+        "reason": "the host does not advertise nondeterminismPolicy"
       },
       {
         "id": "openwop.requirement.0242.inbound.listed",
@@ -9641,11 +9489,6 @@
         "id": "openwop.requirement.agents.dispatch-input-mapping-unset-undefined",
         "result": "inapplicable",
         "reason": "the host does not advertise agents.dispatchMapping: true, so inputMapping does not bind it (it must refuse the field at registration instead)"
-      },
-      {
-        "id": "openwop.requirement.ai-envelope.advert-record-schema",
-        "result": "inapplicable",
-        "reason": "the host does not advertise aiEnvelope"
       },
       {
         "id": "openwop.requirement.ai-providers.max-inline-media-bytes",
@@ -9726,26 +9569,6 @@
         "id": "openwop.requirement.credentials.scopes-subset",
         "result": "inapplicable",
         "reason": "the host does not advertise credentials"
-      },
-      {
-        "id": "openwop.requirement.envelope-contracts.advert-record-schema",
-        "result": "inapplicable",
-        "reason": "the host does not advertise envelopeContracts"
-      },
-      {
-        "id": "openwop.requirement.envelopes.completion-advert-shape",
-        "result": "inapplicable",
-        "reason": "the host does not advertise envelopes.reliability.completion (optional)"
-      },
-      {
-        "id": "openwop.requirement.envelopes.reliability-events-advert",
-        "result": "inapplicable",
-        "reason": "the host does not advertise envelopes.reliability (optional)"
-      },
-      {
-        "id": "openwop.requirement.envelopes.tier-one-strict-advertised-kinds",
-        "result": "inapplicable",
-        "reason": "envelopes.tierOneSubsetCompliance is \"warn\", not \"strict\" — the strict walk binds only a strict host"
       },
       {
         "id": "openwop.requirement.headers.cors-preflight-admits",
@@ -10009,11 +9832,11 @@
       }
     ]
   },
-  "witnessSha256": "d6e84cef45f27ee3c4485fb40b8cfd0ec0b14619710f70517fa6742a35377cc6",
+  "witnessSha256": "90dba637db15714887058aafe9174aeb3ed0492a7c000872dbc4fda3bf38d9b8",
   "signature": {
     "alg": "ed25519",
     "keyId": "openwop-app-bundle-2",
-    "sig": "a9N0NzPJ4fPpdz0pevRKMwGFDqe5dYt5Swg8q4SRjkdpzmMEgPwqiZKwCmYi_ypnMpC5K3JLNYmVi4-qatBrCA",
+    "sig": "ZhwlFp7HjYgUvnSWcN7Qpd8FtKU-7x3V40-mtSt_56xx7uN1WWiZHgP7WphzvLMed8TDiT2RKJ87dJtLQbTrDQ",
     "over": [
       "witnessSha256",
       "host.build",
