@@ -15286,8 +15286,8 @@
       "surface": "`transitionRunId` and the 202/409 responses need types in the v2 SDKs.",
       "witness": "unclassified",
       "requirementId": null,
-      "disposition": "transferred",
-      "target": "openwop-sdks",
+      "disposition": "closed",
+      "target": null,
       "sources": [
         {
           "file": "RFCS/registers/0254-deployment-transitions-at-v2.gaps.md",
@@ -15405,8 +15405,8 @@
       "surface": "Frontend v0.9 renderer: reported unfed, frontend not built in the trial",
       "witness": "unclassified",
       "requirementId": null,
-      "disposition": "transferred",
-      "target": "openwop-app-adr-1007",
+      "disposition": "closed",
+      "target": null,
       "sources": [
         {
           "file": "RFCS/registers/0255-delete-the-ai-envelope.gaps.md",

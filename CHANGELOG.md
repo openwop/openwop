@@ -33,6 +33,10 @@ Entries before this file was condensed carried full development detail. That tex
 
 - **RFC 0246 Active (safety fix, `GHSA-ffx7-pm5h-v6pq`): a trial that failed its trajectory cannot carry a task or a suite to a pass.** The `mean` task rule and suite `passed` read a gating score that counts it 0; reported scores are unchanged. 90-day window waived by recorded STEWARD OVERRIDE.
 
+## [2.46.40] — 2026-11-01 — Two delivered gaps close
+
+- **RFC 0255 G5 and RFC 0254 G3 closed.** openwop-app #5416 keeps the v0.9 renderer for interrupt forms with the envelope gone (certified cut `9f4cca7d4`); openwop-sdks 2.9.0 types `transitionRunId` and the RFC 0254 answers. No wire or suite change; the packed `gaps.json` changes.
+
 ## [2.46.39] — 2026-10-31 — Read back an installed pack (RFC 0253 Active)
 
 - **RFC 0253 Active (window waived).** `getInstalledPack`, `GET /installed-packs/{packName}`, serves a proposal-installed `pack.json`, so an applied `workflow-chain-pack` or `agent-pack` proposal byte-matches with nothing host-owned. Additive: binds only a host listing a pack kind in `readback`.

@@ -1,3 +1,7 @@
+## [2.46.40] — 2026-11-01 — No suite change
+
+- **Version only.** Ships with corpus 2.46.40, which closes two gap-register rows; no scenario, fixture or library changed.
+
 ## [2.46.39] — 2026-10-31 — Read back an installed pack (RFC 0253)
 
 - **New scenario `v2-proposal-pack-readback` (RFC 0253).** A server-free leg (`0253.shape`) and eleven host legs gated per pack kind on `agents.proposals` with `clientDrafts` and the kind in `artifactKinds` and `readback`: inertness, apply, byte-match, §D refusals, install conflict, cross-tenant reads.
