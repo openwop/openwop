@@ -4,10 +4,10 @@
 | ----------------- | --------------------------------------------------------------- |
 | **RFC**           | 0255                                                            |
 | **Title**         | Delete the AI Envelope from v2, and license steward deletions through `corrections.json` while no outside host exists |
-| **Status**        | `Active`                                                        |
+| **Status**        | `Accepted`                                                      |
 | **Author(s)**     | David Tufts (@davidscotttufts)                                  |
 | **Created**       | 2026-10-30                                                      |
-| **Updated**       | 2026-10-30 — **filed and moved `Draft` → `Active` the same day, comment window waived by the maintainer** (user instruction 2026-10-30: "Waive the 7 day comment window"). STEWARD OVERRIDE of RFC 0147 §A.6, recorded in `MAINTAINERS.md`. This RFC is `breaking`, so the window waived is the 30-day one; the instruction named 7 days and the waiver is recorded as the maintainer's intent to run none. Rewritten after trial deletions of the corpus and of openwop-app; the tool-turn contract moved to RFC 0256. |
+| **Updated**       | 2026-10-31 — **`Active` → `Accepted`**; §B review deferred by steward exemption (2026-10-17). Evidence tier: tier-1 — openwop-app's certified 2.46.36 production cut (`openwop-workflow-engine-2.46.36-9f4cca7d4.json`, build `commit:9f4cca7d4`, revision `openwop-app-backend-01112-559`, 524/0/0/363/11, `--host-key` zero rejections) records `0255.surfaces-absent`, `0255.provider-output-truncation`, `-exhaustion` and `-refusal` `executed-pass`; the reference host's certified 2.46.36 cut (`openwop-host-v2-reference.json`, build `commit:3b713a15`, 541/0/0) records the §E legs `0255.interrupt-form-rules`, `-resume-answers` and `-refused` `executed-pass`. 2026-10-30 — **filed and moved `Draft` → `Active` the same day, comment window waived by the maintainer** (user instruction 2026-10-30: "Waive the 7 day comment window"). STEWARD OVERRIDE of RFC 0147 §A.6, recorded in `MAINTAINERS.md`. This RFC is `breaking`, so the window waived is the 30-day one; the instruction named 7 days and the waiver is recorded as the maintainer's intent to run none. Rewritten after trial deletions of the corpus and of openwop-app; the tool-turn contract moved to RFC 0256. |
 | **Affects**       | **Deleted:** families `aiEnvelope`, `supportedEnvelopes`, `schemaVersions`, `envelopeStrictness`, `envelopeContracts`, `envelopes`, `a2uiSurface`; `schemas/v2/ai-envelope.schema.json`, `schemas/v2/envelopes/`, `a2ui-surface-delta-frame`; `limits.envelopesPerTurn`, `limits.schemaRounds`. **Changed:** `spec/v2/core/events.md`, `host-services.md`, `runs.md`, `versioning.md`, `capabilities.md`, `replay.md`, `persistence.md`, `overview.md`, `interrupt.md`; `spec/v2/corrections.json` and schema; `COMPATIBILITY.md` §3a; `GOVERNANCE.md`; `scripts/check-v2-retirement.mjs`, `check-v2-surface-monotone.mjs`, `derive-v2-schemas.mjs`, `derive-v2-api.py`; `SECURITY/invariants.yaml`; conformance |
 | **Compatibility** | `breaking` by `COMPATIBILITY.md` §2.2; lands in a 2.x minor through §D |
 | **Supersedes**    | —                                                               |
@@ -155,9 +155,9 @@ Order is in the openwop-app plan: census, stand-alone security fixes, corpus lan
 
 - [x] `corrections` class, gate changes and sabotage fixtures merged; `GOVERNANCE.md` and `COMPATIBILITY.md` amended; waivers logged.
 - [x] Deletions merged (row `openwop.correction.v2.5`); every deleted name absent from `spec/v2`, `schemas/v2`, `api/v2` and non-frozen scripts; `openwop:check` green apart from version-bump and cross-repo steps.
-- [ ] Suite published; one PR on openwop-app bumps the pin and deletes the host code.
-- [ ] A certified bundle on a deployed host carries `0255.*` at `executed-pass`. This is not waived.
-- [ ] SDKs, examples, registry, site and adopters carry no deleted name.
+- [x] Suite published; one PR on openwop-app bumps the pin and deletes the host code. Suite 2.46.36 (2026-10-31); openwop-app #5416 (`ba0d3893e`, ADR 1007) pins it and deletes the acceptor, normalizers, A2UI surface admission and delta transport.
+- [x] A certified bundle on a deployed host carries `0255.*` at `executed-pass`. This is not waived. openwop-app's production cut `9f4cca7d4` carries `0255.surfaces-absent` and the three `0255.provider-output-*` legs; the reference host's cut carries the three §E legs. Against openwop-app's previous cut `72e610b3d`, no row changes result; the 31 rows that leave are the deleted surfaces' own.
+- [x] SDKs, examples, registry, site and adopters carry no deleted name. SDK 2.8.0 (openwop-sdks #66, #67), site (openwop-site #234), registry (#104), the v2 reference host (openwop-examples #179); the remaining hits in openwop-examples are v1 hosts, where the names are still valid v1 wire.
 
 ## References
 
