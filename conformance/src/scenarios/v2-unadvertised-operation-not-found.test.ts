@@ -16,6 +16,8 @@
  *             answers `404 not_found`.
  *   proposals (hosts that do not advertise `agents.proposals`) `GET /proposals`
  *             answers `404 not_found` (RFC 0249).
+ *   installed-packs (hosts whose `agents.proposals.readback` lists no pack kind)
+ *             `GET /installed-packs/{packName}` answers `404 not_found` (RFC 0253).
  *
  * A host that advertises the facet records the leg `inapplicable`.
  */
@@ -72,6 +74,20 @@ describe('v2 unadvertised operations answer 404 not_found (RFC 0228 §H)', () =>
     if (res === null) return softSkip('blocked', 'GET /proposals unreachable (fetch failed)');
     const ID = 'openwop.requirement.0249.unadvertised-not-found';
     expect(res.status, req(ID, DOC, `an operation gated on agents.proposals, which the host does not advertise, MUST answer 404 (got ${res.status})`)).toBe(404);
+    expect(readErrorCode(res.json), req(ID, DOC, 'the 404 for an unadvertised gated operation MUST carry the registered code not_found')).toBe('not_found');
+  });
+
+  it('GET /installed-packs/{packName} answers 404 not_found when readback lists no pack kind (RFC 0253)', async () => {
+    const doc = await discovery();
+    if (!doc) return softSkip('blocked', UNREACHABLE);
+    const agents = record(doc, 'agents');
+    const proposals = agents === null ? null : record(agents, 'proposals');
+    const rb = Array.isArray(proposals?.['readback']) ? (proposals['readback'] as unknown[]) : [];
+    if (rb.includes('workflow-chain-pack') || rb.includes('agent-pack')) return softSkip('inapplicable', 'the host reads back a pack kind — getInstalledPack is served');
+    const res = await get('/installed-packs/private.conformance.unadvertised');
+    if (res === null) return softSkip('blocked', 'GET /installed-packs/{packName} unreachable (fetch failed)');
+    const ID = 'openwop.requirement.0253.unadvertised-not-found';
+    expect(res.status, req(ID, DOC, `getInstalledPack, gated on a pack kind in agents.proposals.readback, which the host does not advertise, MUST answer 404 (got ${res.status})`)).toBe(404);
     expect(readErrorCode(res.json), req(ID, DOC, 'the 404 for an unadvertised gated operation MUST carry the registered code not_found')).toBe('not_found');
   });
 });

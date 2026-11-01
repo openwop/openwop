@@ -92,6 +92,8 @@ Per the two-tier registry pattern (platform catalog + workspace approved list).
 | Authority bypass     | Pack auto-approves itself via manifest field                 | Manifest fields cannot grant approval; approval is host-state               | `node-pack-approval-host-state` |
 | Privilege escalation | Pack approved at one workspace runs in a different workspace | Resolver scopes approval per workspace; cross-workspace use rejected        | `node-pack-approval-scope`      |
 
+**Proposal install path (RFC 0253).** Applying a `workflow-chain-pack` or `agent-pack` proposal installs a pack with no registry signing or supply-chain check. The mitigations are human review of the exact bytes, the byte-match read-back (`proposal-no-resynthesis`), `private.*` names only, no `nodes`, and an inline system prompt. The install is tenant-wide, so its apply is a tenant-level decision.
+
 ### 4.4 Sandbox execution (T4, T5)
 
 Host loads pack module in `vm.createContext` with no built-in `require`, no network unless declared, no filesystem unless declared.

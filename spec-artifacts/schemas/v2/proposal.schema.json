@@ -142,7 +142,7 @@
             "operationId",
             "id"
           ],
-          "description": "RFC 0249 §C. The v2 read that serves the installed artifact. `operationId` names a GET operation in `spec/v2/path-manifest.json`, evaluated in the applying tenant's scope; for any other tenant the installed artifact answers as an unknown id. The body that operation returns, with the kind's host-owned fields removed from both sides (`meta` for `prompt-template`), MUST be RFC 8785 (JCS) equal to the `artifact` last persisted before apply.",
+          "description": "RFC 0249 §C. The v2 read that serves the installed artifact. `operationId` names a GET operation in `spec/v2/path-manifest.json`, evaluated in the applying tenant's scope; for any other tenant the installed artifact answers as an unknown id. The body that operation returns, with the kind's host-owned fields removed from both sides (`meta` for `prompt-template`; none for `workflow-chain-pack` and `agent-pack`, RFC 0253 §C), MUST be RFC 8785 (JCS) equal to the `artifact` last persisted before apply. For the two pack kinds the obligation holds while the installed version equals `version`.",
           "properties": {
             "kind": {
               "type": "string",
@@ -157,17 +157,17 @@
             "operationId": {
               "type": "string",
               "minLength": 1,
-              "description": "A GET operation in `spec/v2/path-manifest.json` (for `prompt-template`, `getPromptTemplate`)."
+              "description": "A GET operation in `spec/v2/path-manifest.json` (for `prompt-template`, `getPromptTemplate`; for `workflow-chain-pack` and `agent-pack`, `getInstalledPack`)."
             },
             "id": {
               "type": "string",
               "minLength": 1,
-              "description": "The path parameter that operation takes. It MUST be the artifact's own identifier (for `prompt-template`, `artifact.templateId`); a host MUST NOT mint one."
+              "description": "The path parameter that operation takes. It MUST be the artifact's own identifier (for `prompt-template`, `artifact.templateId`; for the two pack kinds, `artifact.name`); a host MUST NOT mint one."
             },
             "version": {
               "type": "string",
               "minLength": 1,
-              "description": "The installed version, when the read surface is versioned."
+              "description": "The installed version, when the read surface is versioned. REQUIRED for `workflow-chain-pack` and `agent-pack`, where it is `artifact.version` (RFC 0253 §B)."
             }
           }
         }

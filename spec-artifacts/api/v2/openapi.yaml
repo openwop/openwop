@@ -1,7 +1,7 @@
 openapi: 3.1.0
 info:
   title: OpenWOP v2 API
-  version: 2.46.38
+  version: 2.46.39
   summary: REST surface for declaring, executing, suspending, resuming, and observing multi-step workflows.
   description: 'The OpenWOP v2 REST API. Paths are unversioned and served at the bare origin; a client selects a version with
     the `OpenWOP-Version` header from the host''s `protocolVersions[]`. Conformance seams and test-mode operations are not
@@ -4144,6 +4144,60 @@ paths:
         - proposals:write
       - OpenIdConnect:
         - proposals:write
+  /installed-packs/{packName}:
+    get:
+      tags:
+      - proposals
+      operationId: getInstalledPack
+      summary: Read a pack installed in the caller's tenant
+      description: 'Advertised when `agents.proposals.readback` contains `workflow-chain-pack` or `agent-pack`; a host that
+        does not advertise it answers `404 not_found` (`errors.md` §Unadvertised operations). Evaluated in the caller''s tenant:
+        a pack installed in another tenant MUST be answered exactly as a name that is not installed (`404`). A host MUST serve
+        every pack `applyProposal` installed in the tenant, at the version currently installed; it MAY also serve packs it
+        installed from a registry or ships itself.
+
+
+        The body is the bare installed `pack.json`, validating against `workflow-chain-pack-manifest` when `kind` is `"workflow-chain"`,
+        else `node-pack-manifest`. It carries no install metadata, and a host MUST NOT add a vendor-hatch property the installed
+        artifact did not carry. For a proposal-installed pack it MUST be RFC 8785 (JCS) equal to the applied proposal''s `artifact`,
+        with nothing removed from either side.'
+      parameters:
+      - name: packName
+        in: path
+        required: true
+        schema:
+          type: string
+          minLength: 1
+          maxLength: 256
+          pattern: ^(core|vendor|community|private)\.[a-z][a-z0-9_-]*(\.[a-z][a-zA-Z0-9_-]*)+$
+        description: The manifest `name`.
+      - $ref: '#/components/parameters/OpenWOPVersion'
+      - $ref: '#/components/parameters/OpenWOPClientVersion'
+      responses:
+        '401':
+          $ref: '#/components/responses/Unauthenticated'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '200':
+          description: The installed pack.json.
+          content:
+            application/json:
+              schema:
+                oneOf:
+                - $ref: ../../schemas/v2/workflow-chain-pack-manifest.schema.json
+                - $ref: ../../schemas/v2/node-pack-manifest.schema.json
+          headers:
+            OpenWOP-Version:
+              $ref: '#/components/headers/OpenWOPVersion'
+      security:
+      - ApiKeyAuth:
+        - manifest:read
+      - OAuth2:
+        - manifest:read
+      - OpenIdConnect:
+        - manifest:read
 components:
   securitySchemes:
     ApiKeyAuth:

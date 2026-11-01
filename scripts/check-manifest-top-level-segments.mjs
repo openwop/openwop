@@ -41,7 +41,7 @@ const ROOT = join(dirname(fileURLToPath(import.meta.url)), '..');
  * point: it is the acknowledgement that the §5 intersection just moved.
  */
 const PINNED = [
-  '.well-known', 'agents', 'audit', 'connection-providers', 'content', 'host', 'interrupts',
+  '.well-known', 'agents', 'audit', 'connection-providers', 'content', 'host', 'installed-packs', 'interrupts',
   'openapi.json', 'prompts', 'proposals', 'prompts:render', 'runs', 'runs:bulk-cancel',
   'tools', 'trigger-subscriptions', 'webhooks', 'workflows',
 ];

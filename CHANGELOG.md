@@ -33,6 +33,12 @@ Entries before this file was condensed carried full development detail. That tex
 
 - **RFC 0246 Active (safety fix, `GHSA-ffx7-pm5h-v6pq`): a trial that failed its trajectory cannot carry a task or a suite to a pass.** The `mean` task rule and suite `passed` read a gating score that counts it 0; reported scores are unchanged. 90-day window waived by recorded STEWARD OVERRIDE.
 
+## [2.46.39] — 2026-10-31 — Read back an installed pack (RFC 0253 Active)
+
+- **RFC 0253 Active (window waived).** `getInstalledPack`, `GET /installed-packs/{packName}`, serves a proposal-installed `pack.json`, so an applied `workflow-chain-pack` or `agent-pack` proposal byte-matches with nothing host-owned. Additive: binds only a host listing a pack kind in `readback`.
+- **§D at apply.** A proposed pack is `private.*` only, never carries `signing`, and an agent pack is remote-only with inline prompts and no `nodes` or file refs; a violation is `422`. The facet, `installedArtifact` and the pack threat model carry the rules.
+- **Suite.** `v2-proposal-pack-readback` (12 ids) and `0253.unadvertised-not-found`; both proposal invariants list it. No host advertises a pack kind in `readback` yet.
+
 ## [2.46.38] — 2026-10-31 — Last AI Envelope names out of v2 descriptions
 
 - **Descriptions.** Six v2 schema and facet descriptions still named the deleted AI Envelope (`ai-envelope.md`, `ctx.aiEnvelope.generate`, `AIEnvelope.meta`, `schemaRounds` / `envelopesPerTurn`, `schemaVersions`). They now point at `ctx.callAI` and `host-services.md` §Structured output. No shape changes.
