@@ -1,3 +1,9 @@
+## [2.46.39] — 2026-10-31 — Read back an installed pack (RFC 0253)
+
+- **New scenario `v2-proposal-pack-readback` (RFC 0253).** A server-free leg (`0253.shape`) and eleven host legs gated per pack kind on `agents.proposals` with `clientDrafts` and the kind in `artifactKinds` and `readback`: inertness, apply, byte-match, §D refusals, install conflict, cross-tenant reads.
+- **Judges** in `lib/proposal-pack-readback-witness.ts` with eight self-tests. A §D refusal at submit counts when nothing installs. Before merge every host leg failed its targeted sabotage on a fake host and passed a conforming one.
+- **`v2-unadvertised-operation-not-found`** gains `0253.unadvertised-not-found`: `GET /installed-packs/{packName}` is `404 not_found` when `readback` lists no pack kind.
+
 ## [2.46.38] — 2026-10-31 — Last AI Envelope names out of v2 descriptions
 
 - **No suite change.** The cycle carries description-only edits to six v2 schemas and facets, which change the packed `@openwop/spec-artifacts`.

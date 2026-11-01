@@ -4,10 +4,10 @@
 | ----------------- | --------------------------------------------------------------- |
 | **RFC**           | 0253                                                            |
 | **Title**         | One v2 read that serves an installed pack's `pack.json`, so an applied `workflow-chain-pack` or `agent-pack` proposal can be byte-compared |
-| **Status**        | `Draft`                                                         |
+| **Status**        | `Active`                                                        |
 | **Author(s)**     | David Tufts (@davidscotttufts)                                  |
 | **Created**       | 2026-10-29                                                      |
-| **Updated**       | 2026-10-31 — UQ 1–6 decided after an /architect review (maintainer-approved): `private.*` names only, `signing` refused, proposal installs only, one version, files deferred, tenant-wide. §D discloses the late-bound prompt refs; the pack threat model and the facet gain a line each; legs `0253.namespace-refused` and `0253.signing-refused`. Still `Draft`. 2026-10-29 — Draft, closing RFC 0249 gap G2 after the 2026-10-29 audit (#2056) found no v2 operation that serves an installed pack. |
+| **Updated**       | 2026-10-31 — **`Draft → Active`, comment window waived by the maintainer** (user instruction 2026-10-31: "proceed", in reply to the offer to waive the window that ran to 2026-11-05). STEWARD OVERRIDE of RFC 0147 §A.6 (§A scopes the read to the caller's tenant), recorded in `MAINTAINERS.md`. Lands `getInstalledPack`, the §G descriptions, the threat-model line, `v2-proposal-pack-readback` (12 ids) and `0253.unadvertised-not-found`; suite 2.46.39. No host advertises a pack kind in `readback` yet. Earlier 2026-10-31 — UQ 1–6 decided after an /architect review (maintainer-approved): `private.*` names only, `signing` refused, proposal installs only, one version, files deferred, tenant-wide. §D discloses the late-bound prompt refs; the pack threat model and the facet gain a line each; legs `0253.namespace-refused` and `0253.signing-refused`. Still `Draft`. 2026-10-29 — Draft, closing RFC 0249 gap G2 after the 2026-10-29 audit (#2056) found no v2 operation that serves an installed pack. |
 | **Affects**       | `api/openapi.yaml` → `api/v2/openapi.yaml` (one operation, `getInstalledPack`) · `spec/v2/path-manifest.json` (generated) · `spec/v2/facets/agents.schema.json` `proposals.readback` (description only; the enum already admits both kinds) · `schemas/v2/proposal.schema.json` `activation.installedArtifact` (description only) · `SECURITY/threat-model-node-packs.md` (one line: the proposal install path) · `SECURITY/invariants.yaml` (`proposal-inert-until-applied`, `proposal-no-resynthesis`: a second test file) · conformance: new `v2-proposal-pack-readback.test.ts` · CHANGELOG · openwop-sdks (follow-up) |
 | **Compatibility** | `additive`                                                      |
 | **Supersedes**    | —                                                               |
@@ -171,7 +171,7 @@ No migration is needed.
 - `agentPackInstall.test.ts` and `agentPackExport.test.ts` are major 1 only and fixture-gated (`conformance-agent-pack-export`). The export leg projects workspace agents back into `AgentManifest`s; it is a v1 test fixture, not a v2 operation, and does not serve the installed `pack.json`.
 - No v2 scenario reads an installed pack.
 
-**New scenario `v2-proposal-pack-readback.test.ts`.** One set of legs per kind, each gated on `agents.proposals` with `clientDrafts: true`, `artifactKinds ∋ kind` and `readback ∋ kind`; otherwise `inapplicable`. A harness key that is unset records `blocked` (the `v2-auth-challenge` precedent). Each run uses a fresh `private.conformance.<random>` name and, for agent packs, a fresh `agentId`. The chain fixture reuses the bundled `workflow-chain-sample.pack.json` under a fresh name.
+**New scenario `v2-proposal-pack-readback.test.ts`.** One set of legs per kind, each gated on `agents.proposals` with `clientDrafts: true`, `artifactKinds ∋ kind` and `readback ∋ kind`; otherwise `inapplicable`. A harness key that is unset records `blocked` (the `v2-auth-challenge` precedent). Each run uses a fresh `private.conformance.<random>` name and, for agent packs, a fresh `agentId`. The artifacts are generated per run (`freshChainPack`, `freshAgentPack` in `lib/proposal-pack-readback-witness.ts`), so no fixture file is added; the bundled `workflow-chain-sample.pack.json` is not used because its `vendor.*` name and v1 `engines` range would break §D.
 
 | Id | Case | Expect |
 | --- | --- | --- |
@@ -187,6 +187,7 @@ No migration is needed.
 | `0253.signing-refused` | apply a chain pack carrying `signing` | `422`; `getInstalledPack` still `404`; state unchanged |
 | `0253.install-conflict` | submit and apply a second proposal with the same name and version | `409 proposal_install_conflict`, `details.reason: version-not-greater` |
 | `0253.cross-tenant-not-found` | `OPENWOP_TEST_TENANT_B_API_KEY` reads the installed pack and agent | `404` on each, identical to an unknown name |
+| `0253.unadvertised-not-found` | (in `v2-unadvertised-operation-not-found`) a host whose `readback` lists no pack kind | `GET /installed-packs/{name}` `404 not_found` |
 
 **Invariants.** When the legs ship, `proposal-inert-until-applied` and `proposal-no-resynthesis` add `v2-proposal-pack-readback.test.ts` to `tests`, and their notes name the pack legs. Their witness class stays `witnessable-gated`. No new invariant is minted: tenant scoping and byte-match are already the two rows' and RFC 0249's rules.
 
@@ -241,7 +242,7 @@ Decided 2026-10-31 after an /architect review, approved by the maintainer.
 
 1. `api/openapi.yaml` (or the v2 seam in `scripts/derive-v2-api.py`, since the v1 document is frozen) gains `getInstalledPack`; regenerate `api/v2/` and the path manifest.
 2. The three descriptions in §G.
-3. The scenario, a judge library (reuse `lib/proposal-lifecycle-witness.ts` where it is kind-neutral) with self-tests that fail each wrong host answer, two fixtures in `conformance/fixtures.md`, and the invariant rows.
+3. The scenario, a judge library (reuse `lib/proposal-lifecycle-witness.ts` where it is kind-neutral) with self-tests that fail each wrong host answer, and the invariant rows.
 4. A suite release.
 
 **Hosts.** A host whose store keeps the installed `pack.json` verbatim serves the read from it. A host that normalizes a manifest on install (fills defaults, reorders, drops hatch properties) will fail byte-match and must keep the original bytes alongside its normalized form (R1).
@@ -250,10 +251,10 @@ Decided 2026-10-31 after an /architect review, approved by the maintainer.
 
 ## Acceptance criteria
 
-- [ ] `getInstalledPack` in `api/openapi.yaml` / the derive seam and the derived `api/v2/openapi.yaml`, with `spec/v2/path-manifest.json` parity.
-- [ ] The §G descriptions in `proposal.schema.json` and `agents.schema.json`.
-- [ ] `v2-proposal-pack-readback.test.ts` with the legs above, its judges and their self-tests; both invariants list it.
-- [ ] CHANGELOG entry; an openwop-sdks issue filed.
+- [x] `getInstalledPack` in `api/openapi.yaml` / the derive seam and the derived `api/v2/openapi.yaml`, with `spec/v2/path-manifest.json` parity.
+- [x] The §G descriptions in `proposal.schema.json` and `agents.schema.json`. *(2026-10-31, with the threat-model line.)*
+- [x] `v2-proposal-pack-readback.test.ts` with the legs above, its judges and their self-tests; both invariants list it. *(2026-10-31, suite 2.46.39. Before merge every host leg was run against a fake host: it passes a conforming one, and each of ten sabotages — a served draft, a host-added field, a re-synthesis, an accepted `vendor.*` name, `signing` or file ref, an equal-version replace, a foreign `200`, a listed draft agent, a minted id — fails the leg it targets.)*
+- [ ] CHANGELOG entry *(done 2026-10-31)*; the openwop-sdks `getInstalledPack` method and response union are owed.
 - [ ] A host advertises `readback` containing at least one pack kind, and a certified major-2 bundle records that kind's `0253.*` legs `executed-pass` (tier-1).
 
 ## References
@@ -271,3 +272,4 @@ Decided 2026-10-31 after an /architect review, approved by the maintainer.
 
 - 2026-10-29 — Draft.
 - 2026-10-31 — UQ 1–6 decided (/architect review, maintainer-approved); still Draft.
+- 2026-10-31 — Active (comment window waived); wire, descriptions and suite legs land in 2.46.39.

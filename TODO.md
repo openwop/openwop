@@ -68,7 +68,7 @@ Done in this change:
 Still owed:
 - [x] **The `Stable` tense (RFC 0220 erratum, 2026-10-29).** `spec/v2/ext/README.md` says a tier-2 host "serves" a `Stable` family, while the check reads historical bundles. All 12 `Stable` families rest on the retired legacy runtime. Rule it historical ("served it at a certified cut") and add a `Last witnessed:` line per family.
 - [x] **RFC 0082 v2 deployment test (path b, decided 2026-10-29).** Done 2026-10-30: openwop-app's certified 2.46.35 cut `72e610b3d` passes 14 `0082.*` legs and both eval-gate legs; RFC 0254 `Accepted`. The two subset-only refusal legs wait on a host advertising a subset (RFC 0254 G5).
-- [ ] **RFC 0249 G2 (installed-pack read-back):** drafted as [RFC 0253](./RFCS/0253-installed-pack-readback.md) (`Draft`, 2026-10-29); UQ 1–6 decided 2026-10-31 (/architect review, maintainer-approved). Its G3 owes a word-neutral `packs.md` pointer to the proposal install path when the core budget allows. G4 (automation) starts once RFC 0253 is `Active`.
+- [ ] **RFC 0249 G2 (installed-pack read-back):** drafted as [RFC 0253](./RFCS/0253-installed-pack-readback.md) (`Active` 2026-10-31, window waived; suite 2.46.39 carries `getInstalledPack` and `v2-proposal-pack-readback`). `Accepted` waits on a host listing a pack kind in `readback` and a certified cut; openwop-sdks owes `getInstalledPack`. Its G3 owes a word-neutral `packs.md` pointer to the proposal install path when the core budget allows. G4 (automation) starts once RFC 0253 is `Active`.
 
 ## 1 — RFC 0121 subscription-rail witness · **owner openwop-77 (paused)**
 

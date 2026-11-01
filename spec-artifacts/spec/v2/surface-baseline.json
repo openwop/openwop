@@ -4,7 +4,7 @@
     "schemas/v2/**/*.json",
     "spec/v2/path-manifest.json"
   ],
-  "release": "2.46.38",
+  "release": "2.46.39",
   "kinds": {
     "union": [
       "channel",
@@ -18,7 +18,7 @@
       "type"
     ]
   },
-  "count": 8913,
+  "count": 8914,
   "surfaces": [
     "schemas/v2/a2a-task-state.schema.json#/contextId|type|string",
     "schemas/v2/a2a-task-state.schema.json#/interruptKind|enum-member|\"approval\"",
@@ -8886,6 +8886,7 @@
     "spec/v2/path-manifest.json#|operation|GET /host/effect-seams",
     "spec/v2/path-manifest.json#|operation|GET /host/events",
     "spec/v2/path-manifest.json#|operation|GET /host/ui-plugins/{packName}/{pluginId}/frame",
+    "spec/v2/path-manifest.json#|operation|GET /installed-packs/{packName}",
     "spec/v2/path-manifest.json#|operation|GET /interrupts/{token}",
     "spec/v2/path-manifest.json#|operation|GET /openapi.json",
     "spec/v2/path-manifest.json#|operation|GET /prompts",

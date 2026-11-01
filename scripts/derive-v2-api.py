@@ -624,6 +624,25 @@ def v2_openapi_and_seams():
                         'properties': {'reason': {'type': 'string', 'maxLength': 2048, 'description': 'SR-1 redaction-safe.'}}}}}},
         'responses': pr_common({'200': {'description': 'The rejected proposal.', 'content': {'application/json': {'schema': {'$ref': PRS}}}},
                                 '409': pr_409('`proposal_state_conflict`.')})}}
+    # RFC 0253 — the read-back for the two pack kinds. Outside the registry tree, so
+    # it cannot be read as a registry path; the body is the bare installed pack.json.
+    paths['/installed-packs/{packName}'] = {'get': {
+        'tags': ['proposals'], 'operationId': 'getInstalledPack', 'summary': "Read a pack installed in the caller's tenant",
+        'description': ('Advertised when `agents.proposals.readback` contains `workflow-chain-pack` or `agent-pack`; a host that does not '
+                        'advertise it answers `404 not_found` (`errors.md` §Unadvertised operations). Evaluated in the caller\'s tenant: a pack '
+                        'installed in another tenant MUST be answered exactly as a name that is not installed (`404`). A host MUST serve every '
+                        'pack `applyProposal` installed in the tenant, at the version currently installed; it MAY also serve packs it installed '
+                        'from a registry or ships itself.\n\n'
+                        'The body is the bare installed `pack.json`, validating against `workflow-chain-pack-manifest` when `kind` is '
+                        '`"workflow-chain"`, else `node-pack-manifest`. It carries no install metadata, and a host MUST NOT add a vendor-hatch '
+                        'property the installed artifact did not carry. For a proposal-installed pack it MUST be RFC 8785 (JCS) equal to the '
+                        'applied proposal\'s `artifact`, with nothing removed from either side.'),
+        'parameters': [{'name': 'packName', 'in': 'path', 'required': True,
+                        'schema': {'type': 'string', 'minLength': 1, 'maxLength': 256, 'pattern': '^(core|vendor|community|private)\\.[a-z][a-z0-9_-]*(\\.[a-z][a-zA-Z0-9_-]*)+$'},
+                        'description': 'The manifest `name`.'}],
+        'responses': pr_common({'200': {'description': 'The installed pack.json.', 'content': {'application/json': {'schema': {'oneOf': [
+            {'$ref': '../../schemas/v2/workflow-chain-pack-manifest.schema.json'},
+            {'$ref': '../../schemas/v2/node-pack-manifest.schema.json'}]}}}}})}}
     doc['paths'] = paths
     comps = doc.setdefault('components', {})
     comps.setdefault('parameters', {})['OpenWOPVersion'] = {'name': 'OpenWOP-Version', 'in': 'header', 'required': False, 'schema': {'type': 'string', 'pattern': '^(0|[1-9][0-9]*)\\.(0|[1-9][0-9]*)$'}, 'description': ("Selects one of the host's listed major.minor versions. Absent, `/.well-known/openwop` uses `preferredVersion` and every other unversioned path is v2; an "
@@ -890,6 +909,7 @@ def v2_openapi_and_seams():
         'archiveProposal': ['proposals:write'],
         'rejectProposal': ['proposals:write'],
         'applyProposal': ['proposals:apply'],
+        'getInstalledPack': ['manifest:read'],
     }
     # RFC 0249 — the three proposal scopes are new vocabulary; declare them on every flow.
     PROPOSAL_SCOPES = {'proposals:read': 'Read proposals (RFC 0249).', 'proposals:write': 'Submit, revise, reject and archive proposals (RFC 0249).',

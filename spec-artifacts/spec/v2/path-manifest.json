@@ -276,6 +276,17 @@
     },
     {
       "method": "GET",
+      "path": "/installed-packs/{packName}",
+      "operationId": "getInstalledPack",
+      "requestHeaders": [
+        "OpenWOP-Client-Version",
+        "OpenWOP-Version"
+      ],
+      "authenticated": true,
+      "requestBody": false
+    },
+    {
+      "method": "GET",
       "path": "/interrupts/{token}",
       "operationId": "inspectInterruptByToken",
       "requestHeaders": [
@@ -790,7 +801,7 @@
     }
   ],
   "counts": {
-    "operations": 68,
+    "operations": 69,
     "channels": 2
   }
 }
