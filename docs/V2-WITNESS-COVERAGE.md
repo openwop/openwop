@@ -10,9 +10,9 @@ Every v2 core family now has a v2 normative home (RFC 0189). Many of its rules a
 
 - **Families (68 core):** 68 v2-witnessed, 0 v1-only, 0 unwitnessed. Of the 53 `witnessable-gated` families, 0 are v1-only; every unwitnessed family is `claims-check`.
 - **At v1 end-of-support:** the 0 v1-only families, and the 0 obligation units attributed to them, lose their only witness.
-- **Obligation units (889 in `spec/v2/core/`):** 623 (70%) sit in a section a major-2 scenario cites; 266 sit in 95 sections no major-2 scenario cites.
+- **Obligation units (889 in `spec/v2/core/`):** 628 (71%) sit in a section a major-2 scenario cites; 261 sit in 94 sections no major-2 scenario cites.
 - **Declaration links:** 0 core families declare `floorScenarios`; 2 declare `requirementIds`. The family-to-test link exists only in scenario code and citations, although `overview.md` §What a MUST means says every core MUST has an id in `requirements.json`.
-- **Scenarios:** 665 registered, 225 run at major 2. 34 major-2 citations name a v2 core section this script cannot match to a heading (see Citation gaps).
+- **Scenarios:** 666 registered, 226 run at major 2. 34 major-2 citations name a v2 core section this script cannot match to a heading (see Citation gaps).
 
 ## How to read it
 
@@ -30,7 +30,7 @@ Every v2 core family now has a v2 normative home (RFC 0189). Many of its rules a
 | `interrupt` | witnessable-gated | **v2-witnessed** | 48 (45) | `v2-approval-reject-disposition`, `v2-approver-enforced`, `v2-bound-id-kinds`, `v2-callback-url-guarded` +6 | `interrupt-approver-routing` |
 | `webhooks` | witnessable-gated | **v2-witnessed** | 38 (38) | `inbound-credential-no-passthrough`, `v2-a2a-operation-map`, `v2-bound-id-kinds`, `v2-host-event-delivery` +13 | `webhook-negative`, `webhook-sig-algorithm`, `webhook-signed-delivery`, `webhook-tenant-isolation` |
 | `packs` | claims-check | **v2-witnessed** | 36 (30) | `v2-manifest-ceiling-refused`, `v2-manifest-hatch-carried`, `v2-peer-dependency-declared`, `v2-registry-lifecycle` +1 | `pack-registry-isolation` |
-| `replay` | witnessable-gated | **v2-witnessed** | 36 (20) | `v2-a2a-push-delivery`, `v2-approval-reject-disposition`, `v2-effect-seam-manifest`, `v2-effect-seam-no-refire` +9 | `conversationReplayDeterminism`, `feedback-fork-not-copied`, `replay-fanout-suppression`, `replay-side-effect-suppression` |
+| `replay` | witnessable-gated | **v2-witnessed** | 36 (20) | `v2-a2a-push-delivery`, `v2-all-terminals-skipped`, `v2-approval-reject-disposition`, `v2-effect-seam-manifest` +10 | `conversationReplayDeterminism`, `feedback-fork-not-copied`, `replay-fanout-suppression`, `replay-side-effect-suppression` |
 | `eventLog` | claims-check | **v2-witnessed** | 35 (25) | `v2-era-2-append-vocabulary`, `v2-era-key`, `v2-era-stamp-universal`, `v2-fork-a-v1-run` +3 | `cross-engine-append-behavior`, `cross-engine-append-ordering`, `multi-region-idempotency` |
 | `aiProviders` | witnessable-gated | **v2-witnessed** | 27 (13) | `v2-ai-providers-advertisement`, `v2-provider-output-reliability`, `v2-structured-output-advertisement` | `ai-envelope-shape`, `aiproviders-selfhosted-honesty`, `aiproviders-subscription-scope`, `byok-auth-modes` +12 |
 | `idempotency` | witnessable-gated | **v2-witnessed** | 25 (20) | `v2-bound-id-kinds`, `v2-effect-identity-business-key`, `v2-effect-ledger-keying`, `v2-idempotency-key-grammar` +1 | `compensation-recovery`, `multi-region-idempotency-behavior`, `multi-region-idempotency`, `replay-llm-cache-key` +1 |
@@ -50,7 +50,7 @@ Every v2 core family now has a v2 normative home (RFC 0189). Many of its rules a
 | `httpClient` | witnessable-gated | **v2-witnessed** | 7 (7) | `v2-safefetch-ssrf-refused` | `egress-audience-binding`, `egress-decision-content-free`, `http-client-ssrf`, `safefetch-behavior` +1 |
 | `workspace` | witnessable-gated | **v2-witnessed** | 7 (7) | `v2-workspace-scope-from-identity` | `agent-loop-iteration-monotonic`, `agent-loop-stateful-resume`, `agent-loop-version5-shape`, `agent-loop-workspace-snapshot` +4 |
 | `queueBus` | witnessable-gated | **v2-witnessed** | 5 (5) | `v2-queue-cross-tenant-isolation` | `queue-ack-nack-dlq`, `queue-cross-tenant-isolation`, `queue-publish-consume-roundtrip`, `stream-subscribe-from-beginning` |
-| `subWorkflow` | claims-check | **v2-witnessed** | 5 (0) | `v2-sub-workflow-advertisement` | `dispatch-input-mapping`, `dispatchLoop` |
+| `subWorkflow` | claims-check | **v2-witnessed** | 5 (5) | `v2-all-terminals-skipped`, `v2-sub-workflow-advertisement` | `dispatch-input-mapping`, `dispatchLoop` |
 | `workflowChainPacks` | witnessable-gated | **v2-witnessed** | 5 (1) | `v2-chain-pin-exact` | `chain-subchain-fanout`, `workflow-chain-deferred-parameters`, `workflow-chain-expansion`, `workflow-chain-host-expansion` +2 |
 | `hostEvents` | witnessable-gated | **v2-witnessed** | 4 (4) | `v2-host-event-delivery`, `v2-host-event-strict-replay`, `v2-stream-mode-refusal` | – |
 | `mcp` | seam-gated | **v2-witnessed** | 4 (4) | `v2-interop-trace-context`, `v2-mcp-client-results`, `v2-mcp-mount-map`, `v2-mcp-tasks` +6 | `mcp-2026-07-28-discover`, `mcp-cache-tenant-scope`, `mcp-current-auth-boundary`, `mcp-extension-opacity` +9 |
@@ -106,7 +106,7 @@ Every v2 core family now has a v2 normative home (RFC 0189). Many of its rules a
 | `conversation.md` | 6 | 6 (100%) | `multiPartyConversation`, `conversationTurnModelProvenance`, `channelPresence` |
 | `errors.md` | 18 | 18 (100%) | – |
 | `events.md` | 44 | 37 (84%) | `limits`, `feedback`, `providerUsage`, `heartbeat`, `hostEvents` |
-| `execution.md` | 34 | 0 (0%) | `selfHostedRunner`, `multiAgent`, `agents`, `subWorkflow` |
+| `execution.md` | 34 | 5 (15%) | `selfHostedRunner`, `multiAgent`, `agents`, `subWorkflow` |
 | `form-content-packs.md` | 11 | 1 (9%) | `forms` |
 | `headers.md` | 7 | 5 (71%) | – |
 | `host-services.md` | 105 | 74 (70%) | `prompts`, `secrets`, `modelCapabilities`, `aiProviders`, `memory`, `queueBus`, `scheduling`, `toolHooks`, `httpClient`, `promptLibrary`, `agentRuntime`, `workspace`, `mcp` |
@@ -149,7 +149,6 @@ Sections with the most obligation units and no major-2 citation. A doc-level cit
 | `artifact-type-packs.md` § Schema distribution | artifactTypes | 5 |
 | `conformance.md` § Witness class | production | 5 |
 | `connection-packs.md` § Provider identity | connections | 5 |
-| `execution.md` § `subWorkflow` | subWorkflow | 5 |
 | `form-content-packs.md` § Validation | forms | 5 |
 | `host-services.md` § Composition | prompts | 5 |
 | `i18n.md` § `Accept-Language` | i18n | 5 |
@@ -161,6 +160,7 @@ Sections with the most obligation units and no major-2 citation. A doc-level cit
 | `conformance.md` § Requirement ids | production | 3 |
 | `conformance.md` § Whose fact is the reason? | production | 3 |
 | `conformance.md` § The seams profile | production | 3 |
+| `connection-packs.md` § Resolution | connections | 3 |
 
 ## Citation gaps
 
@@ -407,18 +407,18 @@ node scripts/report-v2-witness-coverage.mjs --write  # regenerate this file
   },
   "obligationUnits": {
     "total": 889,
-    "inV2CitedSections": 623,
-    "inUncitedSections": 266,
+    "inV2CitedSections": 628,
+    "inUncitedSections": 261,
     "sectionsWithObligations": 267,
-    "sectionsWithNoV2Citation": 95
+    "sectionsWithNoV2Citation": 94
   },
   "declarationLinks": {
     "familiesWithFloorScenarios": 0,
     "familiesWithRequirementIds": 2
   },
   "scenarios": {
-    "registered": 665,
-    "major2": 225
+    "registered": 666,
+    "major2": 226
   },
   "unresolvedV2Citations": 34,
   "major2ScenariosCitingNoCoreDoc": 77,

@@ -52,6 +52,9 @@ All fixtures MUST advertise:
 | Approval (refine)                         | `conformance-approval-refine`                                                                   | RFC 0183 — refine resolution carries action + refineFeedback                                                        |
 | Approval (edit-accept)                    | `conformance-approval-edit-accept`                                                                 | RFC 0183 — edit-accept resolution carries action + editedArtifactData                                                        |
 | Approval (reject routed) | `conformance-approval-reject-routed` | RFC 0223 G1 — a rejected gate is routed over an `any_failed` edge; its `all_success` sibling never runs | `completed` after reject | unbounded (suspends) |
+| Error route only | `conformance-error-route-only` | RFC 0257 — the only terminal sits behind `any_failed`; it is skipped with no condition anywhere | `completed` with `skippedTerminals` | < 1s |
+| All terminals skipped | `conformance-all-terminals-skipped` | RFC 0257 — a `truthy` edge on `payload.ok` declines (`{ok:false}`) or fires (`{ok:true}`) | `completed`, with or without `skippedTerminals` | < 1s |
+| Sub-workflow (child reaches no terminal) | `conformance-subworkflow-skip-parent` | RFC 0257 §B — a `core.subWorkflow` child completes with `skippedTerminals`; the parent continues | `completed` | < 2s |
 | Approval (timeout) | `conformance-approval-timeout` | RFC 0223 G2 — a 1500 ms `timeoutMs`, no `onTimeout`: the host's timer resolves the gate rejected | `failed` (`approval_rejected`) after the timeout | ~1.5 s + the host's sweep |
 | Approval (timeout, onTimeout approve) | `conformance-approval-timeout-approve` | openwop#1696 — a 1500 ms `timeoutMs` with `onTimeout: approve`: a timeout never grants, so the gate still resolves rejected | `failed` (`approval_rejected`) after the timeout | ~1.5 s + the host's sweep |
 | Approval (reject loops back) | `conformance-approval-reject-loopback` | openwop#1697 — a rejected gate routed back to itself through `revise` is asked again under a new `key` | `waiting-approval` again after one reject (the suite cancels) | unbounded (suspends) |
@@ -283,6 +286,37 @@ The `messages`-mode stream fixture (AI token streaming) is covered by the determ
   7. Run reaches `completed`.
 - **Terminal status (after reject)**: `completed`.
 - **Why it is separate from `conformance-approval`**: that fixture has no edges, and giving it some would force every host to re-register a registered definition.
+
+### `conformance-error-route-only`
+
+- **Purpose**: witness RFC 0257 on a graph with no edge condition (`run-event-payloads.schema.json` `$defs/runCompleted.skippedTerminals`).
+- **Inputs**: none.
+- **Behavior**:
+  1. `start` (`core.noop`) MUST run to `node.completed`.
+  2. `on-fail` (incoming edge `triggerRule: any_failed`) MUST NOT run. It is the only terminal.
+  3. The run MUST end `run.completed` with `skippedTerminals` `["on-fail"]`, and the log MUST NOT carry `run.failed`.
+- **Terminal status**: `completed`.
+
+### `conformance-all-terminals-skipped`
+
+- **Purpose**: witness RFC 0257 on a declining edge condition, with a positive control.
+- **Inputs**: `payload` (object, required) — `{ok: boolean}`.
+- **Behavior**:
+  1. `check` (`core.identity`) echoes `payload`; its `node.completed` `outputs` is `{payload}`.
+  2. The edge to `act` carries `{type: "truthy", left: "payload.ok"}`, resolved as a dot path into `check`'s `outputs`.
+  3. With `{ok: false}`, `act` MUST NOT run and the run MUST end `run.completed` with `skippedTerminals` `["act"]`.
+  4. With `{ok: true}`, `act` MUST run and the run MUST end `run.completed` with no `skippedTerminals`.
+- **Terminal status**: `completed` on both inputs.
+
+### `conformance-subworkflow-skip-parent`
+
+- **Purpose**: witness RFC 0257 §B (`spec/v2/core/execution.md` §`subWorkflow`, Output).
+- **Inputs**: none. **Requires** `conformance-error-route-only` registered as the child.
+- **Behavior**:
+  1. `subwf-call` (`core.subWorkflow`, `onChildFailure: fail-parent`) dispatches the child, which ends `run.completed` with `skippedTerminals` `["on-fail"]`.
+  2. `subwf-call` MUST emit `node.completed` with `outputs.childStatus` `"completed"` and `outputs.childSkippedTerminals` `["on-fail"]`.
+  3. `parent-end` runs, and the parent ends `run.completed`.
+- **Terminal status**: `completed`.
 
 ### `conformance-approval-timeout`
 

@@ -1,3 +1,9 @@
+## [2.46.41] — 2026-11-02 — Every terminal skipped ends completed (RFC 0257)
+
+- **New scenario `v2-all-terminals-skipped` (RFC 0257).** `0257.shape` (server-free) and five host legs: a trigger-rule skip, a condition skip with its positive control, a replay fork, and a `core.subWorkflow` parent. Each leg gates on its fixture in `fixtures[]`.
+- **New fixtures** `conformance-error-route-only`, `conformance-all-terminals-skipped` and `conformance-subworkflow-skip-parent`, with catalog rows and contracts in `fixtures.md`.
+- **Judges** in `lib/skipped-terminals-witness.ts` with five self-tests. Before merge every host leg failed its targeted sabotage on a fake host and passed a conforming one.
+
 ## [2.46.40] — 2026-11-01 — No suite change
 
 - **Version only.** Ships with corpus 2.46.40, which closes two gap-register rows; no scenario, fixture or library changed.

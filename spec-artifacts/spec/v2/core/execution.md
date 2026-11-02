@@ -26,7 +26,7 @@ A runner is a user-operated process that dials out, holds credentials the host c
 - **`workflowId`.** A host MUST refuse the parent run with `node_config_invalid` when that workflow is not loaded.
 - **`waitForCompletion`** defaults to `true`; a host MAY refuse `false` with `validation_error`.
 - **`onChildFailure`.** `fail-parent` (default) fails the node and the run; `absorb` records the failure and continues.
-- **Output.** `node.completed` MUST carry `outputs.childRunId` and `outputs.childStatus` (`completed | failed | cancelled`), and MAY add fields.
+- **Output.** `node.completed` MUST carry `outputs.childRunId` and `outputs.childStatus` (`completed | failed | cancelled`), and MAY add fields. A child's `skippedTerminals` MUST arrive as `outputs.childSkippedTerminals`; `onChildFailure` does not apply.
 - **`inputMapping`** (`childVar → parentVar`) seeds the child once, at creation, after and over its `variables[].defaultValue`, which MUST seed first. An unset parent variable MUST arrive undefined, never an error or `null`. A host not advertising `subWorkflow.inputMapping` MUST refuse a non-empty `inputMapping` at registration with `validation_error`, naming it in `details.requiredCapability`.
 - **`outputMapping`** (`parentVar → childVar`). After the child completes, the host MUST copy each mapped variable into the parent, without throwing on or copying an undefined one.
 - **`propagateCancellation`** (default `true`) cancels the child with its parent.

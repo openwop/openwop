@@ -33,6 +33,13 @@ Entries before this file was condensed carried full development detail. That tex
 
 - **RFC 0246 Active (safety fix, `GHSA-ffx7-pm5h-v6pq`): a trial that failed its trajectory cannot carry a task or a suite to a pass.** The `mean` task rule and suite `passed` read a gating score that counts it 0; reported scores are unchanged. 90-day window waived by recorded STEWARD OVERRIDE.
 
+## [2.46.41] — 2026-11-02 — Every terminal skipped ends completed (RFC 0257 Active)
+
+- **RFC 0257 Active (window waived).** A run with no failed node whose every terminal was skipped MUST end `run.completed`, never `run.failed`, carrying `skippedTerminals` (every terminal once, in `nodes[]` order). The rule lives in the `runCompleted.skippedTerminals` description. Additive.
+- **`core.subWorkflow`.** A child that completed with `skippedTerminals` arrives as `outputs.childSkippedTerminals` with `childStatus: "completed"`; `onChildFailure` does not apply (`execution.md` §`subWorkflow`).
+- **`EdgeCondition.left` pinned.** A host that evaluates conditions resolves `left` as a dot path into the source node's `node.completed` `outputs`; a missing segment is undefined. `workflow-definition.schema.json` is no longer seeded from v1.
+- **Suite.** `v2-all-terminals-skipped` (6 ids) and three fixtures. Legs are `inapplicable` until a host advertises them; openwop-app #5466 implements the host side.
+
 ## [2.46.40] — 2026-11-01 — Two delivered gaps close
 
 - **RFC 0255 G5 and RFC 0254 G3 closed.** openwop-app #5416 keeps the v0.9 renderer for interrupt forms with the envelope gone (certified cut `9f4cca7d4`); openwop-sdks 2.9.0 types `transitionRunId` and the RFC 0254 answers. No wire or suite change; the packed `gaps.json` changes.

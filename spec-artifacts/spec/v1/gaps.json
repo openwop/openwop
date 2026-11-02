@@ -1,7 +1,7 @@
 {
   "$schema": "./gaps.schema.json",
   "version": 1,
-  "updated": "2026-11-01",
+  "updated": "2026-11-02",
   "witnessClasses": [
     "witnessable-unaided",
     "witnessable-gated",
@@ -15530,6 +15530,210 @@
         {
           "file": "RFCS/registers/0256-tool-turn-contract.gaps.md",
           "token": "G5"
+        }
+      ]
+    },
+    {
+      "id": "openwop.gap.0257.1",
+      "rfc": "0257",
+      "local": "G1",
+      "section": "§Implementation notes",
+      "surface": "**High.** `spec/v2/core` is at 36,784 of 36,800 words (`scripts/check-core-budget.mjs`, 2026-11-02). §A and §B need about 120 words, so the spec text cannot merge as written.",
+      "witness": "unclassified",
+      "requirementId": null,
+      "disposition": "closed",
+      "target": null,
+      "sources": [
+        {
+          "file": "RFCS/registers/0257-run-status-when-every-terminal-is-skipped.gaps.md",
+          "token": "G1"
+        }
+      ]
+    },
+    {
+      "id": "openwop.gap.0257.2",
+      "rfc": "0257",
+      "local": "G2",
+      "section": "§Conformance",
+      "surface": "**High.** The `truthy` fixture depends on `left: \"payload.ok\"` resolving against `core.identity`'s `output.payload`. v2 does not pin `left` path resolution, so two conforming hosts could evaluate the fixture differently.",
+      "witness": "unclassified",
+      "requirementId": null,
+      "disposition": "closed",
+      "target": null,
+      "sources": [
+        {
+          "file": "RFCS/registers/0257-run-status-when-every-terminal-is-skipped.gaps.md",
+          "token": "G2"
+        }
+      ]
+    },
+    {
+      "id": "openwop.gap.0257.3",
+      "rfc": "0257",
+      "local": "G3",
+      "section": "§Proposal",
+      "surface": "**Medium.** The general run-completion predicate (when a run is `completed` vs `failed`) is not in the v2 core. This RFC defines one arm only.",
+      "witness": "unclassified",
+      "requirementId": null,
+      "disposition": "transferred",
+      "target": "RFC",
+      "sources": [
+        {
+          "file": "RFCS/registers/0257-run-status-when-every-terminal-is-skipped.gaps.md",
+          "token": "G3"
+        }
+      ]
+    },
+    {
+      "id": "openwop.gap.0257.4",
+      "rfc": "0257",
+      "local": "G4",
+      "section": "§Proposal",
+      "surface": "**Medium.** A failed node with every terminal skipped is out of scope. By code read, openwop-app fails with the node's error and the reference host completes when the failure was routed.",
+      "witness": "unclassified",
+      "requirementId": null,
+      "disposition": "transferred",
+      "target": "RFC",
+      "sources": [
+        {
+          "file": "RFCS/registers/0257-run-status-when-every-terminal-is-skipped.gaps.md",
+          "token": "G4"
+        }
+      ]
+    },
+    {
+      "id": "openwop.gap.0257.5",
+      "rfc": "0257",
+      "local": "G5",
+      "section": "§Proposal",
+      "surface": "**Medium.** Trigger-rule semantics over a skipped source are undefined at v2. By code read, `all_success` with one completed and one skipped source fires on openwop-app and skips on the reference host. This changes which graphs reach the state, not the rule.",
+      "witness": "unclassified",
+      "requirementId": null,
+      "disposition": "transferred",
+      "target": "RFC",
+      "sources": [
+        {
+          "file": "RFCS/registers/0257-run-status-when-every-terminal-is-skipped.gaps.md",
+          "token": "G5"
+        }
+      ]
+    },
+    {
+      "id": "openwop.gap.0257.6",
+      "rfc": "0257",
+      "local": "G6",
+      "section": "§Conformance",
+      "surface": "**Medium.** The v2 reference host does not evaluate edge `condition` at run time (code read, openwop-examples `f28b78d`), and no v2 rule requires a host to. Only openwop-app can witness the condition legs.",
+      "witness": "unclassified",
+      "requirementId": null,
+      "disposition": "transferred",
+      "target": "RFC",
+      "sources": [
+        {
+          "file": "RFCS/registers/0257-run-status-when-every-terminal-is-skipped.gaps.md",
+          "token": "G6"
+        }
+      ]
+    },
+    {
+      "id": "openwop.gap.0257.7",
+      "rfc": "0257",
+      "local": "G7",
+      "section": "§Motivation",
+      "surface": "**Low.** openwop-app emits no `node.skipped` event (code read: skips are debug log lines), and no v2 rule requires one. The marker is the only on-wire evidence on that host.",
+      "witness": "unclassified",
+      "requirementId": null,
+      "disposition": "transferred",
+      "target": "RFC",
+      "sources": [
+        {
+          "file": "RFCS/registers/0257-run-status-when-every-terminal-is-skipped.gaps.md",
+          "token": "G7"
+        }
+      ]
+    },
+    {
+      "id": "openwop.gap.0257.8",
+      "rfc": "0257",
+      "local": "G8",
+      "section": "§Definitions",
+      "surface": "**Medium.** A definition with no terminal node, and whether a `disabled: true` node is terminal-eligible.",
+      "witness": "unclassified",
+      "requirementId": null,
+      "disposition": "closed",
+      "target": null,
+      "sources": [
+        {
+          "file": "RFCS/registers/0257-run-status-when-every-terminal-is-skipped.gaps.md",
+          "token": "G8"
+        }
+      ]
+    },
+    {
+      "id": "openwop.gap.0257.9",
+      "rfc": "0257",
+      "local": "G9",
+      "section": "§Wire shape",
+      "surface": "**Low.** Whether an added optional payload property bumps the event's per-event `schemaVersion`. No precedent found.",
+      "witness": "unclassified",
+      "requirementId": null,
+      "disposition": "closed",
+      "target": null,
+      "sources": [
+        {
+          "file": "RFCS/registers/0257-run-status-when-every-terminal-is-skipped.gaps.md",
+          "token": "G9"
+        }
+      ]
+    },
+    {
+      "id": "openwop.gap.0257.10",
+      "rfc": "0257",
+      "local": "G10",
+      "section": "§Motivation",
+      "surface": "**Medium.** Of the 9 chains listed in the openwop-app write-up, only `career.apply` is run-confirmed; 8 come from a static scan. The production rate of `all_terminals_skipped` failures is unmeasured, so the size of the behavior change on openwop-app is unknown.",
+      "witness": "unclassified",
+      "requirementId": null,
+      "disposition": "closed",
+      "target": null,
+      "sources": [
+        {
+          "file": "RFCS/registers/0257-run-status-when-every-terminal-is-skipped.gaps.md",
+          "token": "G10"
+        }
+      ]
+    },
+    {
+      "id": "openwop.gap.0257.11",
+      "rfc": "0257",
+      "local": "G11",
+      "section": "§Proposal",
+      "surface": "**Medium.** What openwop-app puts in `run.completed.outputs` when no terminal completed was not measured, and the core never defines how `outputs` is derived.",
+      "witness": "unclassified",
+      "requirementId": null,
+      "disposition": "closed",
+      "target": null,
+      "sources": [
+        {
+          "file": "RFCS/registers/0257-run-status-when-every-terminal-is-skipped.gaps.md",
+          "token": "G11"
+        }
+      ]
+    },
+    {
+      "id": "openwop.gap.0257.12",
+      "rfc": "0257",
+      "local": "G12",
+      "section": "§References",
+      "surface": "**Low.** The prior-art descriptions (Airflow, Argo, GitHub Actions, Step Functions, BPMN) are from the author's knowledge and were not re-checked against current documentation.",
+      "witness": "unclassified",
+      "requirementId": null,
+      "disposition": "transferred",
+      "target": "RFC",
+      "sources": [
+        {
+          "file": "RFCS/registers/0257-run-status-when-every-terminal-is-skipped.gaps.md",
+          "token": "G12"
         }
       ]
     },

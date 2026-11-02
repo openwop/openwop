@@ -1,0 +1,56 @@
+{
+  "id": "conformance-error-route-only",
+  "name": "Conformance: Error route only",
+  "version": "1.0",
+  "description": "RFC 0257. start succeeds, and the only terminal on-fail is reached over an any_failed edge, so it is skipped with no condition anywhere. The run MUST end run.completed with skippedTerminals [\"on-fail\"]. Conformance scenario: v2-all-terminals-skipped.test.ts.",
+  "nodes": [
+    {
+      "id": "start",
+      "typeId": "core.noop",
+      "name": "Start",
+      "position": {
+        "x": 0,
+        "y": 0
+      },
+      "config": {},
+      "inputs": {}
+    },
+    {
+      "id": "on-fail",
+      "typeId": "core.noop",
+      "name": "On failure",
+      "position": {
+        "x": 200,
+        "y": 0
+      },
+      "config": {},
+      "inputs": {}
+    }
+  ],
+  "edges": [
+    {
+      "id": "start-on-fail",
+      "sourceNodeId": "start",
+      "targetNodeId": "on-fail",
+      "triggerRule": "any_failed"
+    }
+  ],
+  "triggers": [
+    {
+      "id": "manual",
+      "type": "manual",
+      "enabled": true
+    }
+  ],
+  "variables": [],
+  "metadata": {
+    "tags": [
+      "conformance",
+      "skipped-terminals"
+    ]
+  },
+  "settings": {
+    "timeout": 60000,
+    "maxRetries": 0
+  }
+}
