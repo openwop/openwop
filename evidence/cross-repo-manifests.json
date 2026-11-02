@@ -107,7 +107,7 @@
       }
     },
     "openwop-app": {
-      "commit": "9f4cca7d40143012306bdf090444441175035c12",
+      "commit": "5eea40da259798343614dbe8e66d765175f1a43c",
       "files": {
         "backend/typescript/src/byok/ephemeralRunSecrets.ts": {
           "exists": true,
@@ -139,7 +139,7 @@
         },
         "backend/typescript/test/agent-dispatch-route.test.ts": {
           "exists": true,
-          "sha256": "8722cbc0029388c4357007010c7a20e8a0009c1d5a261d528f563353ba4ae2eb",
+          "sha256": "a10136a76adf2bb5c9b41d7baa1bdd7929e927b86cc04852a058f10681c9d8a6",
           "citedBy": [
             "conformance/coverage.md"
           ]
@@ -160,7 +160,7 @@
         },
         "frontend/react/src/chat/a2ui/__tests__/a2ui-render-invariants.test.tsx": {
           "exists": true,
-          "sha256": "36ecd50db96e27b6206a8ff633fb4931e8c081520a6a339a4986e406c52c2fbf",
+          "sha256": "733a4a82884e441f796da4cd24169dd3c6beb8544f71b7aef88078383ee11458",
           "citedBy": [
             "SECURITY/invariants.yaml"
           ]
@@ -279,8 +279,8 @@
       "corpusTag": "v2.34.0"
     },
     "openwop-app": {
-      "corpusTag": "v2.46.36",
-      "conformancePin": "^2.46.36"
+      "corpusTag": "v2.46.38",
+      "conformancePin": "^2.46.38"
     },
     "openwop-examples": {
       "inMemoryHost": "1.1.7",

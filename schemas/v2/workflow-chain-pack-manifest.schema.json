@@ -563,7 +563,7 @@
         },
         "left": {
           "type": "string",
-          "description": "Left operand path (e.g., 'status', 'output.approved'). Required for every operator except `expression`."
+          "description": "Left operand path. Required for every operator except `expression`. Resolved as for a top-level definition edge: a dot path into the source node's `node.completed` `outputs` object (RFC 0257)."
         },
         "right": {
           "description": "Right operand value (any JSON value). Meaningless for `truthy`/`falsy` (RFC 0134)."

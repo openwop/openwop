@@ -1,0 +1,71 @@
+{
+  "id": "conformance-all-terminals-skipped",
+  "name": "Conformance: All terminals skipped",
+  "version": "1.0",
+  "description": "RFC 0257. check echoes payload; act runs only when payload.ok is truthy (left resolves as a dot path into check's node.completed outputs). payload {ok:false} ends run.completed with skippedTerminals [\"act\"]; payload {ok:true} ends run.completed with no marker. Conformance scenario: v2-all-terminals-skipped.test.ts.",
+  "nodes": [
+    {
+      "id": "check",
+      "typeId": "core.identity",
+      "name": "Check",
+      "position": {
+        "x": 0,
+        "y": 0
+      },
+      "config": {},
+      "inputs": {
+        "payload": {
+          "type": "variable",
+          "variableName": "payload"
+        }
+      }
+    },
+    {
+      "id": "act",
+      "typeId": "core.noop",
+      "name": "Act",
+      "position": {
+        "x": 200,
+        "y": 0
+      },
+      "config": {},
+      "inputs": {}
+    }
+  ],
+  "edges": [
+    {
+      "id": "check-act",
+      "sourceNodeId": "check",
+      "targetNodeId": "act",
+      "condition": {
+        "type": "truthy",
+        "left": "payload.ok"
+      }
+    }
+  ],
+  "triggers": [
+    {
+      "id": "manual",
+      "type": "manual",
+      "enabled": true
+    }
+  ],
+  "variables": [
+    {
+      "name": "payload",
+      "type": "object",
+      "description": "{ok: boolean} \u2014 whether act runs.",
+      "required": true
+    }
+  ],
+  "metadata": {
+    "tags": [
+      "conformance",
+      "skipped-terminals"
+    ]
+  },
+  "settings": {
+    "timeout": 60000,
+    "maxRetries": 0
+  }
+}

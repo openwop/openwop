@@ -15541,8 +15541,8 @@
       "surface": "**High.** `spec/v2/core` is at 36,784 of 36,800 words (`scripts/check-core-budget.mjs`, 2026-11-02). §A and §B need about 120 words, so the spec text cannot merge as written.",
       "witness": "unclassified",
       "requirementId": null,
-      "disposition": "transferred",
-      "target": "RFC",
+      "disposition": "closed",
+      "target": null,
       "sources": [
         {
           "file": "RFCS/registers/0257-run-status-when-every-terminal-is-skipped.gaps.md",
@@ -15558,8 +15558,8 @@
       "surface": "**High.** The `truthy` fixture depends on `left: \"payload.ok\"` resolving against `core.identity`'s `output.payload`. v2 does not pin `left` path resolution, so two conforming hosts could evaluate the fixture differently.",
       "witness": "unclassified",
       "requirementId": null,
-      "disposition": "transferred",
-      "target": "RFC",
+      "disposition": "closed",
+      "target": null,
       "sources": [
         {
           "file": "RFCS/registers/0257-run-status-when-every-terminal-is-skipped.gaps.md",
@@ -15660,8 +15660,8 @@
       "surface": "**Medium.** A definition with no terminal node, and whether a `disabled: true` node is terminal-eligible.",
       "witness": "unclassified",
       "requirementId": null,
-      "disposition": "transferred",
-      "target": "RFC",
+      "disposition": "closed",
+      "target": null,
       "sources": [
         {
           "file": "RFCS/registers/0257-run-status-when-every-terminal-is-skipped.gaps.md",
@@ -15677,8 +15677,8 @@
       "surface": "**Low.** Whether an added optional payload property bumps the event's per-event `schemaVersion`. No precedent found.",
       "witness": "unclassified",
       "requirementId": null,
-      "disposition": "transferred",
-      "target": "RFC",
+      "disposition": "closed",
+      "target": null,
       "sources": [
         {
           "file": "RFCS/registers/0257-run-status-when-every-terminal-is-skipped.gaps.md",
@@ -15694,8 +15694,8 @@
       "surface": "**Medium.** Of the 9 chains listed in the openwop-app write-up, only `career.apply` is run-confirmed; 8 come from a static scan. The production rate of `all_terminals_skipped` failures is unmeasured, so the size of the behavior change on openwop-app is unknown.",
       "witness": "unclassified",
       "requirementId": null,
-      "disposition": "transferred",
-      "target": "RFC",
+      "disposition": "closed",
+      "target": null,
       "sources": [
         {
           "file": "RFCS/registers/0257-run-status-when-every-terminal-is-skipped.gaps.md",
@@ -15711,8 +15711,8 @@
       "surface": "**Medium.** What openwop-app puts in `run.completed.outputs` when no terminal completed was not measured, and the core never defines how `outputs` is derived.",
       "witness": "unclassified",
       "requirementId": null,
-      "disposition": "transferred",
-      "target": "RFC",
+      "disposition": "closed",
+      "target": null,
       "sources": [
         {
           "file": "RFCS/registers/0257-run-status-when-every-terminal-is-skipped.gaps.md",

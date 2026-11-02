@@ -1,0 +1,76 @@
+{
+  "id": "conformance-subworkflow-skip-parent",
+  "name": "Conformance: Sub-workflow (child reaches no terminal)",
+  "version": "1.0",
+  "description": "RFC 0257 \u00a7B. Dispatches conformance-error-route-only, which completes with skippedTerminals [\"on-fail\"]. The core.subWorkflow node MUST complete with childStatus completed and childSkippedTerminals [\"on-fail\"] under the default fail-parent, and the parent completes. Conformance scenario: v2-all-terminals-skipped.test.ts.",
+  "nodes": [
+    {
+      "id": "parent-start",
+      "typeId": "core.noop",
+      "name": "Parent Start",
+      "position": {
+        "x": 0,
+        "y": 0
+      },
+      "config": {},
+      "inputs": {}
+    },
+    {
+      "id": "subwf-call",
+      "typeId": "core.subWorkflow",
+      "name": "Invoke Child",
+      "position": {
+        "x": 200,
+        "y": 0
+      },
+      "config": {
+        "workflowId": "conformance-error-route-only",
+        "waitForCompletion": true,
+        "onChildFailure": "fail-parent"
+      },
+      "inputs": {}
+    },
+    {
+      "id": "parent-end",
+      "typeId": "core.noop",
+      "name": "Parent End",
+      "position": {
+        "x": 400,
+        "y": 0
+      },
+      "config": {},
+      "inputs": {}
+    }
+  ],
+  "edges": [
+    {
+      "id": "ep1",
+      "sourceNodeId": "parent-start",
+      "targetNodeId": "subwf-call"
+    },
+    {
+      "id": "ep2",
+      "sourceNodeId": "subwf-call",
+      "targetNodeId": "parent-end"
+    }
+  ],
+  "triggers": [
+    {
+      "id": "manual",
+      "type": "manual",
+      "enabled": true
+    }
+  ],
+  "variables": [],
+  "metadata": {
+    "tags": [
+      "conformance",
+      "subworkflow",
+      "skipped-terminals"
+    ]
+  },
+  "settings": {
+    "timeout": 60000,
+    "maxRetries": 0
+  }
+}

@@ -4,11 +4,11 @@
 | ----------------- | --------------------------------------------------------------- |
 | **RFC**           | 0257                                                            |
 | **Title**         | A run in which no node failed and every terminal node was skipped ends `completed`, and says so on `run.completed` |
-| **Status**        | `Draft`                                                         |
+| **Status**        | `Active`                                                        |
 | **Author(s)**     | David Tufts (@davidscotttufts)                                  |
 | **Created**       | 2026-11-02                                                      |
-| **Updated**       | 2026-11-02 — filed `Draft`. Registers only; no spec, schema or suite change yet. The RFC 0001 §5 cross-organization approval rule is not yet active (`GOVERNANCE.md` §"Sole-steward operation"). |
-| **Affects**       | `spec/v2/core/events.md` §Payloads and §"The terminal event" (one rule) · `spec/v2/core/execution.md` §`subWorkflow` (one output field) · `schemas/v2/run-event-payloads.schema.json` `$defs/runCompleted` (one optional property) · `spec/v2/surface-baseline.json` (regenerated) · conformance: one new scenario, two new fixtures, one fixture variant · `conformance/fixtures.md` · CHANGELOG. v1 is frozen and is not touched. |
+| **Updated**       | 2026-11-02 — **`Draft → Active` the same day, comment window waived by the maintainer** (confirmed in the openwop-be session, 2026-11-02: "Yes, waive it", after openwop-app-14 relayed the instruction "skip the 7 day comment window and move to active"). STEWARD OVERRIDE of RFC 0147 §A.6 (§A.4 binds replay), recorded in `MAINTAINERS.md`. UQ 1–8 decided and R1/R6 dispositioned (maintainer-approved); see §Decisions. Lands the `runCompleted.skippedTerminals` rule, the `execution.md` §`subWorkflow` Output line, the `EdgeCondition.left` resolution pin, `v2-all-terminals-skipped` and three fixtures in suite 2.46.41. Earlier 2026-11-02 — filed `Draft`. Registers only; no spec, schema or suite change yet. The RFC 0001 §5 cross-organization approval rule is not yet active (`GOVERNANCE.md` §"Sole-steward operation"). |
+| **Affects**       | `schemas/v2/run-event-payloads.schema.json` `$defs/runCompleted` (one optional property; its description is §A's normative home) · `spec/v2/core/execution.md` §`subWorkflow` (one Output sentence) · `schemas/v2/workflow-definition.schema.json` and `workflow-chain-pack-manifest.schema.json` `EdgeCondition.left` (description: the resolution pin) · `spec/v2/surface-baseline.json` (regenerated) · conformance: one new scenario, two new fixtures, one fixture variant · `conformance/fixtures.md` · CHANGELOG. v1 is frozen and is not touched. |
 | **Compatibility** | `additive` per `COMPATIBILITY.md` §4 ("new normative requirement on a previously undefined behavior") and §2.4 (an optional property on a closed v2 object). It changes observed behavior on one tier-1 host; see §Compatibility. |
 | **Supersedes**    | —                                                               |
 | **Superseded by** | —                                                               |
@@ -92,11 +92,11 @@ Whether to add an author declaration (option C) as well is Unresolved question 1
 
 ### Definitions
 
-- **Terminal node.** A node of the run's definition, after chain expansion, with no outgoing edge. A node whose only outgoing edges close a cycle is not terminal. (RFC 0065's informal definition, made normative.)
+- **Terminal node.** A node of the run's definition, after chain expansion, with no outgoing edge. A node whose only outgoing edges close a cycle is not terminal. A `disabled: true` node counts like any other node. (RFC 0065's informal definition, made normative.) A definition with no terminal node never reaches this RFC's state.
 - **Quiescent.** No node of the run is ready, running or suspended, and the host will schedule none without new input.
 - A node's **latest outcome** is the last of `node.completed`, `node.failed` or `node.skipped` the host recorded for it, or the equivalent internal state on a host that does not emit `node.skipped`.
 
-### §A — Disposition (`spec/v2/core/events.md` §"The terminal event")
+### §A — Disposition (home: `run-event-payloads.schema.json` `$defs/runCompleted.skippedTerminals`)
 
 When a run is quiescent, its definition has at least one terminal node, no terminal node's latest outcome is completed, no node's latest outcome is failed, and no rule that ends the run on its own cause applies (cancellation, `run_timeout`, a breached cap, `recursion_limit_exceeded`):
 
@@ -108,7 +108,7 @@ When a run is quiescent, its definition has at least one terminal node, no termi
 
 The state where a node failed and every terminal was skipped is **not** governed by this RFC (see §"Open spec gaps", row 2).
 
-### §B — `core.subWorkflow` parent (`spec/v2/core/execution.md` §`subWorkflow`)
+### §B — `core.subWorkflow` parent (`spec/v2/core/execution.md` §`subWorkflow`, Output)
 
 When the child's terminal event is `run.completed` carrying `skippedTerminals`:
 
@@ -190,8 +190,8 @@ Negative — validates, but violates §A.1 (a failure with no failed node, for t
 3. **Trigger-rule semantics over a skipped source.** Not defined at v2. By code read the hosts differ on `all_success` with one completed and one skipped source (openwop-app fires the target; the reference host skips it). This changes which graphs reach this RFC's state, not the rule.
 4. **Edge-condition evaluation is optional at v2.** RFC 0134 binds only "a host that evaluates `EdgeCondition`", and the reference host does not.
 5. **`node.skipped` emission is not required**, and openwop-app emits none.
-6. **`left` path resolution** against a node's outputs is not pinned at v2. The conformance fixture below depends on it.
-7. **A definition with no terminal node** (every node has an outgoing edge) and **`disabled: true` nodes** are not addressed.
+6. ~~**`left` path resolution**~~ — pinned by this RFC (G2): a host that evaluates `EdgeCondition` resolves `left` as a dot path into the source node's `node.completed` `outputs`; a missing segment is undefined. openwop-app already does this; the reference host does not evaluate conditions.
+7. ~~**A definition with no terminal node** and **`disabled: true` nodes**~~ — decided (UQ 8): the first never reaches this state; a disabled node counts like any other.
 
 ## Compatibility
 
@@ -229,21 +229,23 @@ No existing scenario reaches the state this RFC governs.
 
 ### New scenario (planned): `v2-all-terminals-skipped.test.ts`
 
-Targets major 2 (row in `conformance/scenario-majors.json`). Top-of-file docstring cites `spec/v2/core/events.md` §"The terminal event" and `execution.md` §`subWorkflow`. Each fixture is advertised through discovery `fixtures[]`; a fixture the host does not list records `blocked` for its leg (the existing rule), never a pass.
+Targets major 2 (row in `conformance/scenario-majors.json`). Top-of-file docstring cites `spec/v2/core/events.md` §"The terminal event" and `execution.md` §`subWorkflow`. Each fixture is advertised through discovery `fixtures[]`; a fixture the host does not list records `inapplicable` for its leg (the existing fixture convention: a `blocked` row on a conforming host is a release blocker), never a pass.
 
 | Leg | Fixture and input | Asserts |
 | --- | --- | --- |
 | `0257.trigger-rule-skip-completes` | `conformance-error-route-only`: `start` (`core.noop`) → `on-fail` (`core.noop`) over `triggerRule: "any_failed"`. No input. | `run.completed`; `skippedTerminals` deep-equals `["on-fail"]`; no `run.failed` in the log. Needs no condition evaluation, so it runs on both steward hosts. |
 | `0257.condition-skip-completes` | `conformance-all-terminals-skipped`: `check` (`core.identity`) → `act` (`core.noop`) over `{ "type": "truthy", "left": "payload.ok" }`. Input `payload: { ok: false }`. | `run.completed`; `skippedTerminals` deep-equals `["act"]`; no `run.failed`. |
 | `0257.terminal-completed-no-marker` | Same fixture, input `payload: { ok: true }`. | `run.completed` **without** `skippedTerminals`. This is the positive control: a host that ignores the condition runs `act` on both inputs and fails the previous leg rather than passing both. |
-| `0257.replay-same-disposition` | Gated on `replay` advertising `modes` ⊇ `replay`. Fork the `ok: false` run with `mode: "replay"`. | The fork ends `run.completed` with the same `skippedTerminals`. |
+| `0257.replay-same-disposition` | Gated on `replay` advertising `modes` ⊇ `replay`. Fork the `conformance-error-route-only` run with `mode: "replay"` from its first `node.started` (no condition evaluation needed, so both steward hosts can run it). | The fork ends `run.completed` with the same `skippedTerminals`. |
 | `0257.subworkflow-child-skipped` | Gated on `subWorkflow`. `conformance-subworkflow-skip-parent` → child `conformance-error-route-only`. | Parent `run.completed`; the parent node's `node.completed.outputs.childStatus === "completed"` and `childSkippedTerminals` deep-equals `["on-fail"]`. |
 
-Server-free: a coherence assertion that `$defs/runCompleted.properties.skippedTerminals` exists with `minItems: 1` and `uniqueItems: true`, and that the negative example above fails validation.
+Server-free (`0257.shape`): `runCompleted` validates with and without `skippedTerminals`; an empty list and a repeated id fail.
+
+Shipped 2026-11-02 in suite 2.46.41, with judges in `lib/skipped-terminals-witness.ts` (five self-tests). Before merge every host leg ran against a fake host: it passes a conforming one, and each sabotage (a `run.failed`, a missing marker, an ignored condition, a marker beside a completed terminal, a replay that changes the disposition) fails the leg it targets.
 
 ### Fixtures
 
-New `conformance/fixtures/conformance-error-route-only.json`, `conformance-all-terminals-skipped.json` and `conformance-subworkflow-skip-parent.json`, each with a row in the `conformance/fixtures.md` catalog table and a per-fixture contract, using only typeIds existing fixtures already use (`core.noop`, `core.identity`, `core.subWorkflow`). The `truthy` fixture depends on `left: "payload.ok"` resolving against `core.identity`'s `output.payload`, which v2 does not pin (gap G7).
+New `conformance/fixtures/conformance-error-route-only.json`, `conformance-all-terminals-skipped.json` and `conformance-subworkflow-skip-parent.json`, each with a row in the `conformance/fixtures.md` catalog table and a per-fixture contract, using only typeIds existing fixtures already use (`core.noop`, `core.identity`, `core.subWorkflow`). The `truthy` fixture's `left: "payload.ok"` resolves into `core.identity`'s `outputs.payload` under the pin above (gap G2, closed).
 
 ### Capability gating
 
@@ -263,12 +265,13 @@ The legs assert only what §A and §B state. Nothing is stricter than the spec t
 
 | Requirement | Observable — what an outside party sees | Who can cause the condition | Verdict |
 | --- | --- | --- | --- |
-| §A.1 ends `completed`, never `run.failed` | the terminal event type in the log | the suite, by running an advertised fixture (`v2-all-terminals-skipped.test.ts`, planned) | witnessable — unaided (fixture-advertised; an unlisted fixture is `blocked`) |
+| §A.1 ends `completed`, never `run.failed` | the terminal event type in the log | the suite, by running an advertised fixture (`v2-all-terminals-skipped.test.ts`) | witnessable — unaided (fixture-advertised; an unlisted fixture is `inapplicable`) |
 | §A.2 `skippedTerminals` lists every terminal, once, in `nodes[]` order | the `run.completed` payload | the suite, same fixtures | witnessable — unaided (fixture-advertised) |
 | §A.3 absent when a terminal completed | the `run.completed` payload on the `ok: true` input | the suite | witnessable — unaided (fixture-advertised) |
 | §A.4 replay reproduces the disposition | the fork's terminal event and marker | the suite, via `forkRun` | witnessable — gated (`replay`) |
 | §A.4 does not depend on host configuration, clock or instance | — | only the operator can change a host's configuration | unwitnessable — the suite cannot vary host configuration; the replay leg witnesses only that a re-derivation agrees with the recorded one |
 | §B.1 parent carries `childStatus: "completed"` and `childSkippedTerminals` | the parent node's `node.completed` outputs | the suite, via the parent fixture | witnessable — gated (`subWorkflow`) |
+| G2 `left` resolves into the source's `outputs` | the condition legs (`ok: false` declines, `ok: true` fires) | the suite | witnessable — unaided (fixture-advertised), on a host that evaluates conditions |
 
 ## Alternatives considered
 
@@ -302,7 +305,22 @@ A marker on `run.completed` carries the same information without that cost.
 
 **F. Do nothing.** Leaves the two steward hosts disagreeing on the terminal event type for the same graph, with no marker on either wire that would let a client tell the difference. Every consumer of `childStatus`, dead letters and retry policy keeps acting on whichever host it happens to talk to. Rejected; the disagreement is the reason this RFC exists.
 
-## Unresolved questions
+## Decisions
+
+Decided 2026-11-02 at `Active`, approved by the maintainer in the openwop-be session.
+
+1. **No author declaration (option C) now.** A `core.fail` terminal at the routing point says it; a setting can be added later, defaulting to this rule.
+2. **`skippedTerminals`, a node id list.** Not a token.
+3. **No `RunSnapshot` projection.** The marker lives on `run.completed` only.
+4. **`outputs` stays open** (§A.5). openwop-app measured `{}` for this state (2026-11-02).
+5. **No metrics or OTel signal.** Operators alert on the marker.
+6. **No per-event `schemaVersion` bump** for an added optional property.
+7. **Homes.** §A lives in the `runCompleted.skippedTerminals` description; §B is one sentence in `execution.md` §`subWorkflow` (core 36,795 / 36,800).
+8. **No terminal node:** not this state. **`disabled` nodes** count like any other.
+
+**Risks.** R1 (silent success hides routing defects) is accepted: the marker and the `core.fail` guidance are the mitigations. R6 (parents stop failing on a child that reached no terminal) is accepted: no outside host exists (`GOVERNANCE.md` §"Sole-steward operation"), and openwop-app measured zero production runs in this state (G10), so no deployed parent changes behavior.
+
+## Unresolved questions (as filed)
 
 1. **Add option C now?** Should the spec also add an author declaration that makes "no terminal completed" a failure, defaulting to this RFC's rule? The proposal says not yet; reviewers who expect many routers without a default branch may disagree.
 2. **Marker name and shape.** `skippedTerminals` (a node id list) or a closed outcome token such as `terminalOutcome: "none-completed"`? The list is more useful to a person reading a run. The token extends better if partial-skip outcomes are ever reported.
@@ -323,10 +341,10 @@ A marker on `run.completed` carries the same information without that cost.
 
 ## Acceptance criteria
 
-- [ ] Spec text merged (`events.md` §"The terminal event", `execution.md` §`subWorkflow`) within the core word budget.
-- [ ] `schemas/v2/run-event-payloads.schema.json` `$defs/runCompleted.skippedTerminals` added; `spec/v2/surface-baseline.json` regenerated; `check-v2-surface-monotone.mjs` passes.
-- [ ] `v2-all-terminals-skipped.test.ts` with its three fixtures and catalog rows, in a suite minor.
-- [ ] CHANGELOG entries (corpus and `conformance/CHANGELOG.md`).
+- [x] Spec text merged (the `runCompleted.skippedTerminals` description, `execution.md` §`subWorkflow`) within the core word budget. *(2026-11-02.)*
+- [x] `schemas/v2/run-event-payloads.schema.json` `$defs/runCompleted.skippedTerminals` added; `spec/v2/surface-baseline.json` regenerated; `check-v2-surface-monotone.mjs` passes.
+- [x] `v2-all-terminals-skipped.test.ts` with its three fixtures and catalog rows, in a suite release (2.46.41).
+- [x] CHANGELOG entries (corpus and `conformance/CHANGELOG.md`).
 - [ ] openwop-app passes every leg on a certified production cut, including `0257.condition-skip-completes` and its positive control.
 - [ ] The v2 reference host passes `0257.trigger-rule-skip-completes`, or the RFC records why it does not.
 - [ ] Register sweep: every gap and risk row closed, transferred or carried.
