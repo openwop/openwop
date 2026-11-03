@@ -11,7 +11,7 @@ import { v2Validator } from './v2.js';
 import type { Exchange, ProposalFinding } from './proposal-lifecycle-witness.js';
 import {
   agentIdOf, freshAgentPack, freshChainPack, judgeInstallConflict, judgePackApplied, judgePackInert,
-  judgePackReadback, judgePackRefused, judgePackRefusedAtSubmit, packMatches,
+  judgePackReadback, judgePackRefused, judgePackRefusedAtSubmit, packContentViolations, packMatches,
 } from './proposal-pack-readback-witness.js';
 
 const failed = (fs: readonly ProposalFinding[]): string[] => fs.filter((x) => !x.ok).map((x) => x.message);
@@ -29,6 +29,15 @@ describe('the fresh artifacts', () => {
     expect(String(C['name'])).toMatch(/^private\./);
     expect(String(A['name'])).toMatch(/^private\./);
     expect(AID).toBe(`${String(A['name'])}.triage`);
+  });
+
+  it('pin every chain node reference exactly, so a host that enforces §Exact pins accepts the chain', () => {
+    expect(packContentViolations('workflow-chain-pack', C)).toEqual([]);
+    const chains = C['chains'] as Array<Record<string, unknown>>;
+    const unpinned = { ...C, chains: [{ ...chains[0], dag: { nodes: [{ id: 'n1', typeId: 'core.noop' }] } }] };
+    const ranged = { ...C, chains: [{ ...chains[0], dag: { nodes: [{ id: 'n1', typeId: 'core.noop@^1.0.0' }] } }] };
+    expect(packContentViolations('workflow-chain-pack', unpinned)).toHaveLength(1);
+    expect(packContentViolations('workflow-chain-pack', ranged)).toHaveLength(1);
   });
 });
 

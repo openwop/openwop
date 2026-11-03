@@ -39,7 +39,11 @@ export function packMatches(served: unknown, artifact: unknown): boolean {
 
 const ENGINES = { openwop: '>=2.0 <3.0.0' };
 
-/** A fresh one-chain `private.*` chain pack the host has never seen. */
+/**
+ * A fresh one-chain `private.*` chain pack the host has never seen. Its node
+ * reference is exact-pinned: `workflow-chain-packs.md` §Exact pins makes a host
+ * refuse a chain whose reference carries no version.
+ */
 export function freshChainPack(nonce: string, description: string): Rec {
   const name = `private.conformance.c${nonce}`;
   return {
@@ -47,7 +51,7 @@ export function freshChainPack(nonce: string, description: string): Rec {
     chains: [{
       chainId: `${name}.passthrough`, version: '1.0.0', label: 'Pass through', description,
       parameters: { type: 'object', properties: {} },
-      dag: { nodes: [{ id: 'n1', typeId: 'core.noop' }] },
+      dag: { nodes: [{ id: 'n1', typeId: 'core.noop@1.0.0' }] },
     }],
   };
 }
@@ -80,6 +84,14 @@ export function packContentViolations(kind: PackKind, pack: Rec): string[] {
   const out: string[] = [];
   if (typeof pack['name'] !== 'string' || !pack['name'].startsWith('private.')) out.push('name outside private.*');
   if ('signing' in pack) out.push('carries signing');
+  if (kind === 'workflow-chain-pack') {
+    for (const c of Array.isArray(pack['chains']) ? pack['chains'].filter(isRec) : []) {
+      const dag = isRec(c['dag']) ? c['dag'] : {};
+      for (const n of Array.isArray(dag['nodes']) ? dag['nodes'].filter(isRec) : []) {
+        if (typeof n['typeId'] !== 'string' || !/@\d+\.\d+\.\d+$/.test(n['typeId'])) out.push(`${String(c['chainId'])}: node ${String(n['id'])} is not exact-pinned`);
+      }
+    }
+  }
   if (kind === 'agent-pack') {
     if (Array.isArray(pack['nodes']) && pack['nodes'].length > 0) out.push('carries nodes');
     const rt = isRec(pack['runtime']) ? pack['runtime'] : {};

@@ -1,3 +1,8 @@
+## [2.46.42] — 2026-11-03 — The fresh chain pack is exact-pinned (RFC 0253)
+
+- **`freshChainPack` pins its node** (`core.noop@1.0.0`). At 2.46.41 it referenced `core.noop` with no version, which `workflow-chain-packs.md` §Exact pins makes a host refuse, so a conforming host failed the chain apply, read-back and conflict legs.
+- **`packContentViolations` checks chain pins**, and a self-test fails an unpinned or ranged node reference.
+
 ## [2.46.41] — 2026-11-02 — Every terminal skipped ends completed (RFC 0257)
 
 - **New scenario `v2-all-terminals-skipped` (RFC 0257).** `0257.shape` (server-free) and five host legs: a trigger-rule skip, a condition skip with its positive control, a replay fork, and a `core.subWorkflow` parent. Each leg gates on its fixture in `fixtures[]`.
