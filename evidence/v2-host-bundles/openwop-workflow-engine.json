@@ -1,26 +1,26 @@
 {
   "bundleVersion": "3",
-  "generatedAt": "2026-11-01T00:09:23.001Z",
+  "generatedAt": "2026-11-03T00:10:54.494Z",
   "suite": {
     "name": "@openwop/openwop-conformance",
-    "version": "2.46.36",
+    "version": "2.46.41",
     "targetMajor": 2,
-    "specArtifactsVersion": "2.46.36",
-    "stampSha256": "cb6e90b07993a5d6bc3f7b5a182fc1184a7a8db0886220dc7f7b5da649d93e69"
+    "specArtifactsVersion": "2.46.41",
+    "stampSha256": "a5703e792453c0efc123828acb280b329f61a4bf8253a182cc9d9cb214b3a8df"
   },
   "host": {
     "name": "openwop-workflow-engine",
-    "version": "0.9.0",
+    "version": "0.10.0",
     "vendor": "openwop-app",
     "build": {
       "kind": "commit",
-      "id": "9f4cca7d40143012306bdf090444441175035c12"
+      "id": "d2c7e089bb752e90546ac14281fb3fcdca5282da"
     },
     "signingKeyId": "openwop-app-bundle-2"
   },
   "discovery": {
     "url": "https://api.openwop.dev/.well-known/openwop",
-    "sha256": "22cfca65017d9acc0b08c2e0100b4cf5945157c0dc310408f172bedf4d83a442",
+    "sha256": "428156472008ae3cf97674b0e70d8827ab03d0e5021d036c89e5febd40dc1048",
     "protocolVersions": [
       "2.0"
     ],
@@ -63,7 +63,7 @@
       ],
       "implementation": {
         "name": "openwop-workflow-engine",
-        "version": "0.9.0",
+        "version": "0.10.0",
         "vendor": "openwop-app"
       },
       "fixtures": [
@@ -73,6 +73,7 @@
         "conformance-agent-pack-handoff-schema-validation",
         "conformance-agent-pack-install",
         "conformance-agent-pack-provenance",
+        "conformance-all-terminals-skipped",
         "conformance-approval",
         "conformance-approval-edit-accept",
         "conformance-approval-refine",
@@ -116,6 +117,7 @@
         "conformance-envelope-retry-exhausted",
         "conformance-envelope-truncated",
         "conformance-envelope-truncation-cap-exhaustion",
+        "conformance-error-route-only",
         "conformance-eval-counter-live",
         "conformance-eval-counter-miss",
         "conformance-eval-efficiency-ungated",
@@ -137,6 +139,9 @@
         "conformance-identity",
         "conformance-interrupt-auth-required",
         "conformance-interrupt-external-event",
+        "conformance-interrupt-form",
+        "conformance-interrupt-form-refused",
+        "conformance-interrupt-form-unbound",
         "conformance-interrupt-parent-child-cancel",
         "conformance-interrupt-parent-child-cancel-child",
         "conformance-interrupt-quorum",
@@ -164,6 +169,7 @@
         "conformance-subworkflow-mid-run-mutation",
         "conformance-subworkflow-mid-run-mutation-child",
         "conformance-subworkflow-parent",
+        "conformance-subworkflow-skip-parent",
         "conformance-table-schema-probe",
         "conformance-version-fold",
         "conformance-workflow-variable-format-advisory"
@@ -2142,10 +2148,10 @@
   ],
   "results": {
     "totals": {
-      "executedPass": 524,
+      "executedPass": 541,
       "executedFail": 0,
       "skipped": 11,
-      "inapplicable": 363,
+      "inapplicable": 369,
       "blocked": 0
     },
     "requirements": [
@@ -2199,7 +2205,7 @@
         "id": "openwop.scenario.fixtures-valid",
         "scenario": "fixtures-valid.test.ts",
         "result": "executed-pass",
-        "assertions": 462
+        "assertions": 471
       },
       {
         "id": "openwop.scenario.inbound-credential-no-passthrough",
@@ -2316,6 +2322,12 @@
         "result": "executed-pass",
         "assertions": 3,
         "detail": "partial-witness: inapplicable: [inapplicable] the host does not advertise aiProviders.maxInlineMediaBytes (default 256 KiB); [inapplicable] the host does not advertise aiProviders.promptPrefixCache"
+      },
+      {
+        "id": "openwop.scenario.v2-all-terminals-skipped",
+        "scenario": "v2-all-terminals-skipped.test.ts",
+        "result": "executed-pass",
+        "assertions": 18
       },
       {
         "id": "openwop.scenario.v2-approval-reject-disposition",
@@ -2436,7 +2448,7 @@
         "scenario": "v2-capability-maturity-bounded.test.ts",
         "result": "executed-pass",
         "assertions": 46,
-        "detail": "partial-witness: inapplicable: unwitnessable until the first persisted-class retirement row is due (RFC 0197 §A.3 Falsifiability): corpus 2.46.36: 0 persisted-class v2-minor retirement row(s), 0 v2→v2 migration row(s) — no retired member exists for a post-2.N event to carry. Before one does, a scenario would be vacuous, and a row that cannot fail is not a witness. This leg asserts the moment such a row falls due."
+        "detail": "partial-witness: inapplicable: unwitnessable until the first persisted-class retirement row is due (RFC 0197 §A.3 Falsifiability): corpus 2.46.41: 0 persisted-class v2-minor retirement row(s), 0 v2→v2 migration row(s) — no retired member exists for a post-2.N event to carry. Before one does, a scenario would be vacuous, and a row that cannot fail is not a witness. This leg asserts the moment such a row falls due."
       },
       {
         "id": "openwop.scenario.v2-capability-record-shape",
@@ -2464,6 +2476,12 @@
         "result": "inapplicable",
         "assertions": 0,
         "detail": "every test returned early through behaviorGate with zero assertions: profile not advertised in the captured discovery set"
+      },
+      {
+        "id": "openwop.scenario.v2-clarification-resume-answers",
+        "scenario": "v2-clarification-resume-answers.test.ts",
+        "result": "executed-pass",
+        "assertions": 3
       },
       {
         "id": "openwop.scenario.v2-client-version-header",
@@ -2572,7 +2590,7 @@
         "id": "openwop.scenario.v2-deployment-lifecycle",
         "scenario": "v2-deployment-lifecycle.test.ts",
         "result": "executed-pass",
-        "assertions": 81,
+        "assertions": 83,
         "detail": "partial-witness: inapplicable: [inapplicable] the host advertises all seven states, so no state is unadvertised; [inapplicable] the host advertises agents.deployment.canary"
       },
       {
@@ -2766,7 +2784,7 @@
         "id": "openwop.scenario.v2-id-grammar",
         "scenario": "v2-id-grammar.test.ts",
         "result": "executed-pass",
-        "assertions": 11
+        "assertions": 13
       },
       {
         "id": "openwop.scenario.v2-idempotency-in-flight",
@@ -2797,9 +2815,8 @@
       {
         "id": "openwop.scenario.v2-interrupt-form-rules",
         "scenario": "v2-interrupt-form-rules.test.ts",
-        "result": "inapplicable",
-        "assertions": 0,
-        "detail": "every test returned early through behaviorGate with zero assertions: profile not advertised in the captured discovery set"
+        "result": "executed-pass",
+        "assertions": 10
       },
       {
         "id": "openwop.scenario.v2-interrupt-resolve-terminal",
@@ -3114,7 +3131,7 @@
         "id": "openwop.scenario.v2-prompt-list-and-fetch",
         "scenario": "v2-prompt-list-and-fetch.test.ts",
         "result": "executed-pass",
-        "assertions": 58,
+        "assertions": 60,
         "detail": "partial-witness: inapplicable: prompts.endpointsSupported is advertised — the gate is on"
       },
       {
@@ -3154,6 +3171,13 @@
         "scenario": "v2-proposal-lifecycle.test.ts",
         "result": "executed-pass",
         "assertions": 39
+      },
+      {
+        "id": "openwop.scenario.v2-proposal-pack-readback",
+        "scenario": "v2-proposal-pack-readback.test.ts",
+        "result": "executed-pass",
+        "assertions": 9,
+        "detail": "partial-witness: inapplicable: [inapplicable] the host does not advertise workflow-chain-pack in both agents.proposals.artifactKinds and readback; [inapplicable] the host does not advertise agent-pack in both agents.proposals.artifactKinds and readback"
       },
       {
         "id": "openwop.scenario.v2-protected-resource-metadata",
@@ -3472,9 +3496,9 @@
       {
         "id": "openwop.scenario.v2-unadvertised-operation-not-found",
         "scenario": "v2-unadvertised-operation-not-found.test.ts",
-        "result": "inapplicable",
-        "assertions": 0,
-        "detail": "every test returned early through behaviorGate with zero assertions: profile not advertised in the captured discovery set"
+        "result": "executed-pass",
+        "assertions": 2,
+        "detail": "partial-witness: inapplicable: [inapplicable] the host advertises prompts.endpointsSupported — the /prompts* surface is served; [inapplicable] the host advertises content — the /content/* surface is served; [inapplicable] the host advertises agents.proposals — the /proposals surface is served"
       },
       {
         "id": "openwop.scenario.v2-unmapped-type-refused",
@@ -3567,7 +3591,7 @@
         "scenario": "v2-webhook-secret-rotation.test.ts",
         "result": "executed-pass",
         "assertions": 12,
-        "detail": "partial-witness: inapplicable: the post-overlap leg is not observed: the advertised webhooks.secretRotation.overlapSeconds is 86400s (expiry 2026-11-02T00:05:00.910Z) and the suite wait cap is 90000ms, and the seams profile is not advertised, so the optional shortenRotationOverlap seam (host-sample-test-seams.md §29) is not offered; raise OPENWOP_WEBHOOK_RETRY_WAIT_MS past the overlap, or serve the seam, to witness it"
+        "detail": "partial-witness: inapplicable: the post-overlap leg is not observed: the advertised webhooks.secretRotation.overlapSeconds is 86400s (expiry 2026-11-04T00:02:58.240Z) and the suite wait cap is 90000ms, and the seams profile is not advertised, so the optional shortenRotationOverlap seam (host-sample-test-seams.md §29) is not offered; raise OPENWOP_WEBHOOK_RETRY_WAIT_MS past the overlap, or serve the seam, to witness it"
       },
       {
         "id": "openwop.scenario.v2-webhook-standard-webhooks-delivery",
@@ -3693,13 +3717,13 @@
         "id": "openwop.it.fixtures-valid.every-fixture-has-a-manual-trigger-so-the-conformance-driver-can-start-it",
         "scenario": "fixtures-valid.test.ts",
         "result": "executed-pass",
-        "assertions": 122
+        "assertions": 125
       },
       {
         "id": "openwop.it.fixtures-valid.every-fixture-id-matches-its-filename",
         "scenario": "fixtures-valid.test.ts",
         "result": "executed-pass",
-        "assertions": 122
+        "assertions": 125
       },
       {
         "id": "openwop.it.fixtures-valid.every-fixture-templateid-matches-its-filename",
@@ -3783,7 +3807,7 @@
         "id": "openwop.it.fixtures-valid.validates-against-workflow-definition-schema-json",
         "scenario": "fixtures-valid.test.ts",
         "result": "executed-pass",
-        "assertions": 122
+        "assertions": 125
       },
       {
         "id": "openwop.it.jcs-vectors.a-non-i-json-native-value-is-refused-at-the-value-boundary",
@@ -4159,27 +4183,6 @@
         "detail": "no extensions[\"<org>.entities\"] record under a registered org — the host does not advertise entities"
       },
       {
-        "id": "openwop.it.v2-interrupt-form-rules.a-clarification-raised-with-a-form-carries-it-unchanged-beside-questions-in-a-va",
-        "scenario": "v2-interrupt-form-rules.test.ts",
-        "result": "inapplicable",
-        "assertions": 0,
-        "detail": "conformance-interrupt-form is not advertised — forms are OPTIONAL and this host claims none"
-      },
-      {
-        "id": "openwop.it.v2-interrupt-form-rules.a-form-resolves-with-answers-id-answer-and-the-run-completes",
-        "scenario": "v2-interrupt-form-rules.test.ts",
-        "result": "inapplicable",
-        "assertions": 0,
-        "detail": "conformance-interrupt-form is not advertised — forms are OPTIONAL and this host claims none"
-      },
-      {
-        "id": "openwop.it.v2-interrupt-form-rules.a-form-that-fails-the-schema-or-binds-an-input-to-no-question-is-never-raised",
-        "scenario": "v2-interrupt-form-rules.test.ts",
-        "result": "inapplicable",
-        "assertions": 0,
-        "detail": "conformance-interrupt-form is not advertised — forms are OPTIONAL and this host claims none"
-      },
-      {
         "id": "openwop.it.v2-mcp-client-results.an-unknown-serverid-rejects-with-not-found",
         "scenario": "v2-mcp-client-results.test.ts",
         "result": "inapplicable",
@@ -4548,7 +4551,7 @@
         "id": "openwop.requirement.0082.list-valid",
         "scenario": "v2-deployment-lifecycle.test.ts",
         "result": "executed-pass",
-        "assertions": 9
+        "assertions": 11
       },
       {
         "id": "openwop.requirement.0082.pin-recorded",
@@ -4813,7 +4816,7 @@
         "id": "openwop.requirement.0170.id-grammar.events",
         "scenario": "v2-id-grammar.test.ts",
         "result": "executed-pass",
-        "assertions": 4
+        "assertions": 6
       },
       {
         "id": "openwop.requirement.0170.id-grammar.snapshot",
@@ -5286,21 +5289,21 @@
         "scenario": "v2-webhook-durable-delivery.test.ts",
         "result": "executed-pass",
         "assertions": 4,
-        "detail": "observed: 4/4 subscribed event(s) delivered, 0 duplicate arrival(s); slowest first arrival 749ms after the run was created; cap (default 90000ms; advertised maxElapsedMs none): waited ≤90000ms"
+        "detail": "observed: 4/4 subscribed event(s) delivered, 0 duplicate arrival(s); slowest first arrival 1660ms after the run was created; cap (default 90000ms; advertised maxElapsedMs none): waited ≤90000ms"
       },
       {
         "id": "openwop.requirement.0173.webhook-durable-delivery",
         "scenario": "v2-webhook-durable-delivery.test.ts",
         "result": "executed-pass",
         "assertions": 9,
-        "detail": "observed: cap (default 90000ms; advertised maxElapsedMs none): waited ≤90000ms; 3 attempt(s), last attempt after 7978ms"
+        "detail": "observed: cap (default 90000ms; advertised maxElapsedMs none): waited ≤90000ms; 3 attempt(s), last attempt after 8083ms"
       },
       {
         "id": "openwop.requirement.0173.webhook-durable-delivery.dead-letter",
         "scenario": "v2-webhook-durable-delivery.test.ts",
         "result": "executed-pass",
         "assertions": 5,
-        "detail": "partial-witness: inapplicable: host does not advertise the webhooks.deadLetter facet — RFC 0188 §A.5 makes the read a 404 rather than an obligation, so the sink half of §Durability is unwitnessable here (the retry half above passed) · observed: cap (default 90000ms; advertised maxElapsedMs none): waited ≤90000ms; 5 attempt(s), last attempt after 34022ms, sink not observed"
+        "detail": "partial-witness: inapplicable: host does not advertise the webhooks.deadLetter facet — RFC 0188 §A.5 makes the read a 404 rather than an obligation, so the sink half of §Durability is unwitnessable here (the retry half above passed) · observed: cap (default 90000ms; advertised maxElapsedMs none): waited ≤90000ms; 5 attempt(s), last attempt after 34094ms, sink not observed"
       },
       {
         "id": "openwop.requirement.0175.legacy-profiles-absent",
@@ -5674,7 +5677,7 @@
         "scenario": "v2-capability-maturity-bounded.test.ts",
         "result": "inapplicable",
         "assertions": 0,
-        "detail": "unwitnessable until the first persisted-class retirement row is due (RFC 0197 §A.3 Falsifiability): corpus 2.46.36: 0 persisted-class v2-minor retirement row(s), 0 v2→v2 migration row(s) — no retired member exists for a post-2.N event to carry. Before one does, a scenario would be vacuous, and a row that cannot fail is not a witness. This leg asserts the moment such a row falls due."
+        "detail": "unwitnessable until the first persisted-class retirement row is due (RFC 0197 §A.3 Falsifiability): corpus 2.46.41: 0 persisted-class v2-minor retirement row(s), 0 v2→v2 migration row(s) — no retired member exists for a post-2.N event to carry. Before one does, a scenario would be vacuous, and a row that cannot fail is not a witness. This leg asserts the moment such a row falls due."
       },
       {
         "id": "openwop.requirement.0198.advertised-via-discover",
@@ -5874,7 +5877,7 @@
         "scenario": "v2-webhook-secret-rotation.test.ts",
         "result": "executed-pass",
         "assertions": 12,
-        "detail": "partial-witness: inapplicable: the post-overlap leg is not observed: the advertised webhooks.secretRotation.overlapSeconds is 86400s (expiry 2026-11-02T00:05:00.910Z) and the suite wait cap is 90000ms, and the seams profile is not advertised, so the optional shortenRotationOverlap seam (host-sample-test-seams.md §29) is not offered; raise OPENWOP_WEBHOOK_RETRY_WAIT_MS past the overlap, or serve the seam, to witness it"
+        "detail": "partial-witness: inapplicable: the post-overlap leg is not observed: the advertised webhooks.secretRotation.overlapSeconds is 86400s (expiry 2026-11-04T00:02:58.240Z) and the suite wait cap is 90000ms, and the seams profile is not advertised, so the optional shortenRotationOverlap seam (host-sample-test-seams.md §29) is not offered; raise OPENWOP_WEBHOOK_RETRY_WAIT_MS past the overlap, or serve the seam, to witness it"
       },
       {
         "id": "openwop.requirement.0204.annotations-derived",
@@ -6816,6 +6819,113 @@
         "assertions": 3
       },
       {
+        "id": "openwop.requirement.0253.agent-apply-installs",
+        "scenario": "v2-proposal-pack-readback.test.ts",
+        "result": "inapplicable",
+        "assertions": 0,
+        "detail": "the host does not advertise agent-pack in both agents.proposals.artifactKinds and readback"
+      },
+      {
+        "id": "openwop.requirement.0253.agent-draft-inert",
+        "scenario": "v2-proposal-pack-readback.test.ts",
+        "result": "inapplicable",
+        "assertions": 0,
+        "detail": "the host does not advertise agent-pack in both agents.proposals.artifactKinds and readback"
+      },
+      {
+        "id": "openwop.requirement.0253.agent-file-ref-refused",
+        "scenario": "v2-proposal-pack-readback.test.ts",
+        "result": "inapplicable",
+        "assertions": 0,
+        "detail": "the host does not advertise agent-pack in both agents.proposals.artifactKinds and readback"
+      },
+      {
+        "id": "openwop.requirement.0253.agent-readback-byte-match",
+        "scenario": "v2-proposal-pack-readback.test.ts",
+        "result": "inapplicable",
+        "assertions": 0,
+        "detail": "the host does not advertise agent-pack in both agents.proposals.artifactKinds and readback"
+      },
+      {
+        "id": "openwop.requirement.0253.chain-apply-installs",
+        "scenario": "v2-proposal-pack-readback.test.ts",
+        "result": "inapplicable",
+        "assertions": 0,
+        "detail": "the host does not advertise workflow-chain-pack in both agents.proposals.artifactKinds and readback"
+      },
+      {
+        "id": "openwop.requirement.0253.chain-draft-inert",
+        "scenario": "v2-proposal-pack-readback.test.ts",
+        "result": "inapplicable",
+        "assertions": 0,
+        "detail": "the host does not advertise workflow-chain-pack in both agents.proposals.artifactKinds and readback"
+      },
+      {
+        "id": "openwop.requirement.0253.chain-readback-byte-match",
+        "scenario": "v2-proposal-pack-readback.test.ts",
+        "result": "inapplicable",
+        "assertions": 0,
+        "detail": "the host does not advertise workflow-chain-pack in both agents.proposals.artifactKinds and readback"
+      },
+      {
+        "id": "openwop.requirement.0253.cross-tenant-not-found",
+        "scenario": "v2-proposal-pack-readback.test.ts",
+        "result": "inapplicable",
+        "assertions": 0,
+        "detail": "the host does not advertise agent-pack in both agents.proposals.artifactKinds and readback"
+      },
+      {
+        "id": "openwop.requirement.0253.install-conflict",
+        "scenario": "v2-proposal-pack-readback.test.ts",
+        "result": "inapplicable",
+        "assertions": 0,
+        "detail": "the host does not advertise agent-pack in both agents.proposals.artifactKinds and readback"
+      },
+      {
+        "id": "openwop.requirement.0253.namespace-refused",
+        "scenario": "v2-proposal-pack-readback.test.ts",
+        "result": "inapplicable",
+        "assertions": 0,
+        "detail": "the host does not advertise agent-pack in both agents.proposals.artifactKinds and readback"
+      },
+      {
+        "id": "openwop.requirement.0253.shape",
+        "scenario": "v2-proposal-pack-readback.test.ts",
+        "result": "executed-pass",
+        "assertions": 9
+      },
+      {
+        "id": "openwop.requirement.0253.signing-refused",
+        "scenario": "v2-proposal-pack-readback.test.ts",
+        "result": "inapplicable",
+        "assertions": 0,
+        "detail": "the host does not advertise agent-pack in both agents.proposals.artifactKinds and readback"
+      },
+      {
+        "id": "openwop.requirement.0253.unadvertised-not-found",
+        "scenario": "v2-unadvertised-operation-not-found.test.ts",
+        "result": "executed-pass",
+        "assertions": 2
+      },
+      {
+        "id": "openwop.requirement.0255.interrupt-form-refused",
+        "scenario": "v2-interrupt-form-rules.test.ts",
+        "result": "executed-pass",
+        "assertions": 3
+      },
+      {
+        "id": "openwop.requirement.0255.interrupt-form-resume-answers",
+        "scenario": "v2-interrupt-form-rules.test.ts",
+        "result": "executed-pass",
+        "assertions": 3
+      },
+      {
+        "id": "openwop.requirement.0255.interrupt-form-rules",
+        "scenario": "v2-interrupt-form-rules.test.ts",
+        "result": "executed-pass",
+        "assertions": 4
+      },
+      {
         "id": "openwop.requirement.0255.provider-output-exhaustion",
         "scenario": "v2-provider-output-reliability.test.ts",
         "result": "executed-pass",
@@ -6838,6 +6948,42 @@
         "scenario": "v2-envelope-surfaces-absent.test.ts",
         "result": "executed-pass",
         "assertions": 1
+      },
+      {
+        "id": "openwop.requirement.0257.condition-skip-completes",
+        "scenario": "v2-all-terminals-skipped.test.ts",
+        "result": "executed-pass",
+        "assertions": 3
+      },
+      {
+        "id": "openwop.requirement.0257.replay-same-disposition",
+        "scenario": "v2-all-terminals-skipped.test.ts",
+        "result": "executed-pass",
+        "assertions": 2
+      },
+      {
+        "id": "openwop.requirement.0257.shape",
+        "scenario": "v2-all-terminals-skipped.test.ts",
+        "result": "executed-pass",
+        "assertions": 4
+      },
+      {
+        "id": "openwop.requirement.0257.subworkflow-child-skipped",
+        "scenario": "v2-all-terminals-skipped.test.ts",
+        "result": "executed-pass",
+        "assertions": 4
+      },
+      {
+        "id": "openwop.requirement.0257.terminal-completed-no-marker",
+        "scenario": "v2-all-terminals-skipped.test.ts",
+        "result": "executed-pass",
+        "assertions": 2
+      },
+      {
+        "id": "openwop.requirement.0257.trigger-rule-skip-completes",
+        "scenario": "v2-all-terminals-skipped.test.ts",
+        "result": "executed-pass",
+        "assertions": 3
       },
       {
         "id": "openwop.requirement.agent-runtime.advert-record-schema",
@@ -7152,7 +7298,7 @@
         "scenario": "v2-cors-preflight.test.ts",
         "result": "inapplicable",
         "assertions": 0,
-        "detail": "no operation's preflight granted origin https://conformance.invalid (Access-Control-Allow-Origin neither it nor *): the host does not serve that origin cross-origin, which is host policy. An operator whose host allowlists origins sets OPENWOP_CORS_ORIGIN to one of them to be witnessed · observed: origin https://conformance.invalid: 0/68 operation(s) granted, 0 not admitting their set"
+        "detail": "no operation's preflight granted origin https://conformance.invalid (Access-Control-Allow-Origin neither it nor *): the host does not serve that origin cross-origin, which is host policy. An operator whose host allowlists origins sets OPENWOP_CORS_ORIGIN to one of them to be witnessed · observed: origin https://conformance.invalid: 0/69 operation(s) granted, 0 not admitting their set"
       },
       {
         "id": "openwop.requirement.httpClient.ssrf-address-spellings-refused",
@@ -7212,6 +7358,12 @@
         "scenario": "v2-i18n-negotiation.test.ts",
         "result": "executed-pass",
         "assertions": 2
+      },
+      {
+        "id": "openwop.requirement.interrupt.clarification-resume-answers",
+        "scenario": "v2-clarification-resume-answers.test.ts",
+        "result": "executed-pass",
+        "assertions": 3
       },
       {
         "id": "openwop.requirement.limits.clarification-rounds-advertised",
@@ -7440,13 +7592,13 @@
         "id": "openwop.requirement.prompts.list-filters",
         "scenario": "v2-prompt-list-and-fetch.test.ts",
         "result": "executed-pass",
-        "assertions": 26
+        "assertions": 27
       },
       {
         "id": "openwop.requirement.prompts.list-shape",
         "scenario": "v2-prompt-list-and-fetch.test.ts",
         "result": "executed-pass",
-        "assertions": 26
+        "assertions": 27
       },
       {
         "id": "openwop.requirement.prompts.mutable-gate-off-404",
@@ -7957,7 +8109,7 @@
       }
     ]
   },
-  "assertionCount": 5680,
+  "assertionCount": 5794,
   "detail": {
     "nonPass": [
       {
@@ -8147,11 +8299,6 @@
       },
       {
         "id": "openwop.scenario.v2-interop-trace-context",
-        "result": "inapplicable",
-        "reason": "every test returned early through behaviorGate with zero assertions: profile not advertised in the captured discovery set"
-      },
-      {
-        "id": "openwop.scenario.v2-interrupt-form-rules",
         "result": "inapplicable",
         "reason": "every test returned early through behaviorGate with zero assertions: profile not advertised in the captured discovery set"
       },
@@ -8357,11 +8504,6 @@
       },
       {
         "id": "openwop.scenario.v2-tool-catalog-annotations",
-        "result": "inapplicable",
-        "reason": "every test returned early through behaviorGate with zero assertions: profile not advertised in the captured discovery set"
-      },
-      {
-        "id": "openwop.scenario.v2-unadvertised-operation-not-found",
         "result": "inapplicable",
         "reason": "every test returned early through behaviorGate with zero assertions: profile not advertised in the captured discovery set"
       },
@@ -8604,21 +8746,6 @@
         "id": "openwop.it.v2-ext-family-claims.entities",
         "result": "inapplicable",
         "reason": "no extensions[\"<org>.entities\"] record under a registered org — the host does not advertise entities"
-      },
-      {
-        "id": "openwop.it.v2-interrupt-form-rules.a-clarification-raised-with-a-form-carries-it-unchanged-beside-questions-in-a-va",
-        "result": "inapplicable",
-        "reason": "conformance-interrupt-form is not advertised — forms are OPTIONAL and this host claims none"
-      },
-      {
-        "id": "openwop.it.v2-interrupt-form-rules.a-form-resolves-with-answers-id-answer-and-the-run-completes",
-        "result": "inapplicable",
-        "reason": "conformance-interrupt-form is not advertised — forms are OPTIONAL and this host claims none"
-      },
-      {
-        "id": "openwop.it.v2-interrupt-form-rules.a-form-that-fails-the-schema-or-binds-an-input-to-no-question-is-never-raised",
-        "result": "inapplicable",
-        "reason": "conformance-interrupt-form is not advertised — forms are OPTIONAL and this host claims none"
       },
       {
         "id": "openwop.it.v2-mcp-client-results.an-unknown-serverid-rejects-with-not-found",
@@ -9173,7 +9300,7 @@
       {
         "id": "openwop.requirement.0197.retired-not-emitted",
         "result": "inapplicable",
-        "reason": "unwitnessable until the first persisted-class retirement row is due (RFC 0197 §A.3 Falsifiability): corpus 2.46.36: 0 persisted-class v2-minor retirement row(s), 0 v2→v2 migration row(s) — no retired member exists for a post-2.N event to carry. Before one does, a scenario would be vacuous, and a row that cannot fail is not a witness. This leg asserts the moment such a row falls due."
+        "reason": "unwitnessable until the first persisted-class retirement row is due (RFC 0197 §A.3 Falsifiability): corpus 2.46.41: 0 persisted-class v2-minor retirement row(s), 0 v2→v2 migration row(s) — no retired member exists for a post-2.N event to carry. Before one does, a scenario would be vacuous, and a row that cannot fail is not a witness. This leg asserts the moment such a row falls due."
       },
       {
         "id": "openwop.requirement.0198.advertised-via-discover",
@@ -9471,6 +9598,61 @@
         "reason": "the host advertises agents.proposals — the /proposals surface is served"
       },
       {
+        "id": "openwop.requirement.0253.agent-apply-installs",
+        "result": "inapplicable",
+        "reason": "the host does not advertise agent-pack in both agents.proposals.artifactKinds and readback"
+      },
+      {
+        "id": "openwop.requirement.0253.agent-draft-inert",
+        "result": "inapplicable",
+        "reason": "the host does not advertise agent-pack in both agents.proposals.artifactKinds and readback"
+      },
+      {
+        "id": "openwop.requirement.0253.agent-file-ref-refused",
+        "result": "inapplicable",
+        "reason": "the host does not advertise agent-pack in both agents.proposals.artifactKinds and readback"
+      },
+      {
+        "id": "openwop.requirement.0253.agent-readback-byte-match",
+        "result": "inapplicable",
+        "reason": "the host does not advertise agent-pack in both agents.proposals.artifactKinds and readback"
+      },
+      {
+        "id": "openwop.requirement.0253.chain-apply-installs",
+        "result": "inapplicable",
+        "reason": "the host does not advertise workflow-chain-pack in both agents.proposals.artifactKinds and readback"
+      },
+      {
+        "id": "openwop.requirement.0253.chain-draft-inert",
+        "result": "inapplicable",
+        "reason": "the host does not advertise workflow-chain-pack in both agents.proposals.artifactKinds and readback"
+      },
+      {
+        "id": "openwop.requirement.0253.chain-readback-byte-match",
+        "result": "inapplicable",
+        "reason": "the host does not advertise workflow-chain-pack in both agents.proposals.artifactKinds and readback"
+      },
+      {
+        "id": "openwop.requirement.0253.cross-tenant-not-found",
+        "result": "inapplicable",
+        "reason": "the host does not advertise agent-pack in both agents.proposals.artifactKinds and readback"
+      },
+      {
+        "id": "openwop.requirement.0253.install-conflict",
+        "result": "inapplicable",
+        "reason": "the host does not advertise agent-pack in both agents.proposals.artifactKinds and readback"
+      },
+      {
+        "id": "openwop.requirement.0253.namespace-refused",
+        "result": "inapplicable",
+        "reason": "the host does not advertise agent-pack in both agents.proposals.artifactKinds and readback"
+      },
+      {
+        "id": "openwop.requirement.0253.signing-refused",
+        "result": "inapplicable",
+        "reason": "the host does not advertise agent-pack in both agents.proposals.artifactKinds and readback"
+      },
+      {
         "id": "openwop.requirement.agent-runtime.advert-record-schema",
         "result": "inapplicable",
         "reason": "the host does not advertise agentRuntime"
@@ -9573,7 +9755,7 @@
       {
         "id": "openwop.requirement.headers.cors-preflight-admits",
         "result": "inapplicable",
-        "reason": "no operation's preflight granted origin https://conformance.invalid (Access-Control-Allow-Origin neither it nor *): the host does not serve that origin cross-origin, which is host policy. An operator whose host allowlists origins sets OPENWOP_CORS_ORIGIN to one of them to be witnessed · observed: origin https://conformance.invalid: 0/68 operation(s) granted, 0 not admitting their set"
+        "reason": "no operation's preflight granted origin https://conformance.invalid (Access-Control-Allow-Origin neither it nor *): the host does not serve that origin cross-origin, which is host policy. An operator whose host allowlists origins sets OPENWOP_CORS_ORIGIN to one of them to be witnessed · observed: origin https://conformance.invalid: 0/69 operation(s) granted, 0 not admitting their set"
       },
       {
         "id": "openwop.requirement.httpClient.ssrf-address-spellings-refused",
@@ -9832,11 +10014,11 @@
       }
     ]
   },
-  "witnessSha256": "90dba637db15714887058aafe9174aeb3ed0492a7c000872dbc4fda3bf38d9b8",
+  "witnessSha256": "d45ef6ffc43c58e678a5ee9767367c5f20b27f89d6e6b867e11a51fbd7e62964",
   "signature": {
     "alg": "ed25519",
     "keyId": "openwop-app-bundle-2",
-    "sig": "ZhwlFp7HjYgUvnSWcN7Qpd8FtKU-7x3V40-mtSt_56xx7uN1WWiZHgP7WphzvLMed8TDiT2RKJ87dJtLQbTrDQ",
+    "sig": "bNL2EwyBZyrBie19wO-D8QfxcTTkT1NdAv7w9t7bzU61UKM-hV33GGg_JzvnfxM_u9Hixyw_Em6ntB9uhI9HDw",
     "over": [
       "witnessSha256",
       "host.build",

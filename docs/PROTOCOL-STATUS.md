@@ -24,17 +24,17 @@
 | Conformance suite `@openwop/openwop-conformance` | 2.46.41 | `conformance/package.json` | minor on scenario add/remove |
 | OpenAPI `info.version` | 1.1.0 | `api/openapi.yaml` | hand-maintained in v1.x; generated from the corpus tag at v2 (RFC 0172 sectionB #14) |
 | AsyncAPI `info.version` | 1.1.0 | `api/asyncapi.yaml` | as above |
-| TypeScript SDK `@openwop/openwop` (2.x, current) | 2.5.0 | openwop-sdks `sdk/typescript-v2/package.json` (via `evidence/cross-repo-manifests.json`) | v2-only; npm `latest` |
-| Python SDK `openwop-client` (2.x, current) | 2.5.0 | openwop-sdks `sdk/python-v2/pyproject.toml` | v2-only; `openwop-client>=2,<3` |
-| Go SDK `github.com/openwop/openwop-sdks/go/v2` (2.x, current) | 2.5.0 | openwop-sdks `go/v2/CHANGELOG.md` head (tag-versioned `go/v2.Y.Z`; no version file) | v2-only |
+| TypeScript SDK `@openwop/openwop` (2.x, current) | 2.10.0 | openwop-sdks `sdk/typescript-v2/package.json` (via `evidence/cross-repo-manifests.json`) | v2-only; npm `latest` |
+| Python SDK `openwop-client` (2.x, current) | 2.10.0 | openwop-sdks `sdk/python-v2/pyproject.toml` | v2-only; `openwop-client>=2,<3` |
+| Go SDK `github.com/openwop/openwop-sdks/go/v2` (2.x, current) | 2.10.0 | openwop-sdks `go/v2/CHANGELOG.md` head (tag-versioned `go/v2.Y.Z`; no version file) | v2-only |
 | TypeScript SDK `@openwop/openwop` (1.x) | 1.10.0 | openwop-sdks `sdk/typescript/package.json` | maintained parallel line through the v1 overlap; npm `latest-1` |
 | Python SDK `openwop-client` (1.x) | 1.8.0 | openwop-sdks `sdk/python/pyproject.toml` | as above; `openwop-client<2` |
 | Go SDK `github.com/openwop/openwop-sdks/go` (1.x) | 1.7.0 | openwop-sdks `go/CHANGELOG.md` head (tag-versioned `go/v1.Y.Z`; no version file) | as above |
-| openwop-sdks corpus pin | v2.43.0 | openwop-sdks `CORPUS_TAG` | bumped only by a re-vendor PR (RFC 0176 sectionE.1) |
-| CLI `@openwop/cli` | 1.3.0 | openwop-cli `package.json` | speaks the wire directly; negotiates major 2 since 1.0.0 (the v1-only 0.18.x line is frozen on branch `cli-v1-frozen`) |
+| openwop-sdks corpus pin | v2.46.41 | openwop-sdks `CORPUS_TAG` | bumped only by a re-vendor PR (RFC 0176 sectionE.1) |
+| CLI `@openwop/cli` | 1.9.0 | openwop-cli `package.json` | speaks the wire directly; negotiates major 2 since 1.0.0 (the v1-only 0.18.x line is frozen on branch `cli-v1-frozen`) |
 | Registry `registryVersion` / `protocolVersion` | 1.0.0 / 1.0 | openwop-registry `.well-known/openwop-registry.json` | RFC 0172 sectionB #18; versioned by tree at v2 (RFC 0177 sectionA.3) |
-| openwop-registry corpus pin | v2.34.0 | openwop-registry `CORPUS_TAG` | as the SDK pin |
-| openwop-app corpus pin / suite pin | v2.46.38 / ^2.46.38 | openwop-app `schemas/CORPUS_TAG`, `backend/typescript/package.json` | tier-1 host; both must agree (RFC 0176 sectionE.1) |
+| openwop-registry corpus pin | v2.46.36 | openwop-registry `CORPUS_TAG` | as the SDK pin |
+| openwop-app corpus pin / suite pin | v2.46.41 / ^2.46.41 | openwop-app `schemas/CORPUS_TAG`, `backend/typescript/package.json` | tier-1 host; both must agree (RFC 0176 sectionE.1) |
 | openwop-examples in-memory host / suite pin | 1.1.7 / ^1.152.0 | openwop-examples `examples/hosts/in-memory/package.json` | front-door witness host for the v2 RC (Phase 3 plan section11) |
 
 ## Version Axes
@@ -70,8 +70,8 @@
 
 | Status | Count |
 |---|---:|
-| Accepted | 245 |
-| Active | 4 |
+| Accepted | 246 |
+| Active | 3 |
 | Draft | 1 |
 | Superseded | 3 |
 
@@ -329,7 +329,7 @@
 | RFC 0254 | The agent deployment transition contract at v2 | Accepted |
 | RFC 0255 | Delete the AI Envelope from v2, and license steward deletions through `corrections.json` while no outside host exists | Accepted |
 | RFC 0256 | How a host admits model output: three channels, one admission order, trust that restricts approvers, tool-turn recovery and replay, and declared provider-executed tools | Active |
-| RFC 0257 | A run in which no node failed and every terminal node was skipped ends `completed`, and says so on `run.completed` | Active |
+| RFC 0257 | A run in which no node failed and every terminal node was skipped ends `completed`, and says so on `run.completed` | Accepted |
 
 ## SDK Helper Coverage
 
@@ -354,7 +354,7 @@ The pack registry now lives in the [`openwop-registry`](https://github.com/openw
 ## Active Follow-Ups
 
 - 1 RFC still `Draft` (RFC 0038) — advance with schema/conformance proof or defer.
-- 4 RFCs `Active` (RFC 0121, RFC 0253, RFC 0256, RFC 0257) — wire-shape MAY shift compatibly within v1.x until promotion to `Accepted`.
+- 3 RFCs `Active` (RFC 0121, RFC 0253, RFC 0256) — wire-shape MAY shift compatibly within v1.x until promotion to `Accepted`.
 - External audit, non-steward host recruitment, and non-steward maintainer recruitment remain external-action gates.
 - Multi-region idempotency and some optional-profile behavior checks remain lower-confidence than the core wire contract.
 
