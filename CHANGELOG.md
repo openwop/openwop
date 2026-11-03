@@ -33,6 +33,10 @@ Entries before this file was condensed carried full development detail. That tex
 
 - **RFC 0246 Active (safety fix, `GHSA-ffx7-pm5h-v6pq`): a trial that failed its trajectory cannot carry a task or a suite to a pass.** The `mean` task rule and suite `passed` read a gating score that counts it 0; reported scores are unchanged. 90-day window waived by recorded STEWARD OVERRIDE.
 
+## [2.46.42] — 2026-11-03 — Exact-pinned chain pack in the RFC 0253 legs
+
+- **Suite fix (RFC 0253).** The chain pack the `v2-proposal-pack-readback` legs submit now pins `core.noop@1.0.0`. Unpinned, a host enforcing `workflow-chain-packs.md` §Exact pins refused it, and the chain apply, read-back and conflict legs failed a conforming host. No wire change.
+
 ## [2.46.41] — 2026-11-02 — Every terminal skipped ends completed (RFC 0257 Active)
 
 - **RFC 0257 Active (window waived).** A run with no failed node whose every terminal was skipped MUST end `run.completed`, never `run.failed`, carrying `skippedTerminals` (every terminal once, in `nodes[]` order). The rule lives in the `runCompleted.skippedTerminals` description. Additive.
