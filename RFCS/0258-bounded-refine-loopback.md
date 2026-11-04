@@ -70,6 +70,8 @@ A loopback edge **MUST NOT** carry `condition`, `sourceOutput`, `targetInput` or
 
 ### §B — Admission
 
+**The cycle exemption, exactly.** v2 definition validation refuses cycles on hosts that do not run them. This RFC exempts one edge kind and no other: a declared `loopback` edge MAY close a cycle, and only from an approval gate back to an ancestor of that gate. Every other cycle keeps its host-defined treatment.
+
 A host that advertises `capabilities.loopback` (§E) **MUST** refuse, with `400 validation_error`, at registration, instantiation from a chain, and run creation with an inline definition, a definition in which:
 
 1. the forward graph has a cycle;
@@ -98,7 +100,7 @@ When the gate's approval interrupt resolves with `action: "refine"` and the loop
 
    `outputs` is the target's own `node.completed.outputs` from that round (what the reviewer was shown, as the target produced it), and `refineFeedback` is the gate's `interrupt.resolved.refineFeedback` from that round. The host **MUST** rebuild the array from the run's event log. It **MUST NOT** add timestamps, principals, run ids or interrupt keys, so the same rounds yield the same bytes in any run, replay or fork. On the target's first visit the port receives `[]`.
 5. **Limits still apply.** Every re-execution counts toward `recursionLimit` and `limits.maxNodeExecutions` (runs.md §run section). A retry inside a round stays in that round's visit.
-6. **Replay and fork.** A `replay` fork reproduces each round from the recorded markers and resolutions. A fork whose prefix ends after a marked `node.completed` **MUST** resume with the region re-armed by that marker, not with the gate completed.
+6. **Replay and fork.** The round count and each visit's interrupt key **MUST** come from recorded events (the markers and the gate's `interrupt.resolved` events), never from a live counter, so a fork taken at round *k* reproduces round *k*. A `replay` fork reproduces each round from the recorded markers and resolutions. A fork whose prefix ends after a marked `node.completed` **MUST** resume with the region re-armed by that marker, not with the gate completed.
 
 When the resolution is any other action, the edge is not taken and the gate settles exactly as it would without one: `accept` / `edit-accept` complete it and release its forward edges, and `reject` follows interrupt.md §Rejection.
 
@@ -106,14 +108,21 @@ When the resolution is any other action, the edge is not taken and the gate sett
 
 The gate's `ApprovalData` **MUST** carry `loopback: { round, maxIterations, exhausted }` on every visit of a gate that is the source of a loopback edge, where `round` is the number of rounds taken before this visit and `exhausted` is `round >= maxIterations`. Then:
 
-- **`onExhausted: "withdraw"`** (default). On an exhausted visit the host **MUST** omit `refine` from `actions`, and **MUST** refuse a `refine` resume with `400 validation_error` (interrupt.md §Approval already enforces `actions` on resolve). The gate stays open with its other actions and the run does not fail. A gate whose only action is `refine` cannot be withdrawn; on its exhausted visit the host **MUST** fail the run as for `"fail"`.
+- **`onExhausted: "withdraw"`** (default). On an exhausted visit the host **MUST** omit `refine` from `actions`, and **MUST** refuse a `refine` resume with `400 validation_error` (interrupt.md §Approval already enforces `actions` on resolve). No event marks the withdrawal beyond that visit's `interrupt.requested` (whose `ApprovalData.loopback.exhausted` is `true`); the host **MUST NOT** emit `workflow.loopback-limit` or `cap.breached` for it. The run stays `waiting-approval`, and its terminal status is whatever the remaining actions produce: `accept` / `edit-accept` complete the gate and release its forward edges, `reject` follows interrupt.md §Rejection. A gate whose only action is `refine` cannot be withdrawn; on its exhausted visit the host **MUST** fail the run as for `"fail"`.
 - **`onExhausted: "fail"`.** `refine` stays offered. A `refine` resolution on an exhausted visit **MUST** emit `workflow.loopback-limit { nodeId: <gate>, iterations: maxIterations, limit: maxIterations }`, then `cap.breached { kind: "loopback-iterations", limit: maxIterations, observed: maxIterations + 1 }`, and fail the run with `loop_limit_exceeded` and `failedNodeId` naming the gate. The interrupt still records `action: "refine"`.
 
 So a cap of 3 allows three refines: four artifacts are shown, the fourth without "refine".
 
 ### §E — Capability
 
-`capabilities.loopback` (optional, closed): `{ "maxIterations": integer >= 1 }`, the host's ceiling for any edge's `maxIterations`. Present means the host implements §§A–D. A client **MUST NOT** submit a definition carrying `loopback` to a host that does not advertise it.
+`capabilities.loopback` (optional, closed): `{ "maxIterations": integer >= 1 }`, the host's ceiling for any edge's `maxIterations`. A host MAY set it as low as it likes and MUST advertise the value it enforces (§B.5 refuses above it). Present means the host implements §§A–D. A client **MUST NOT** submit a definition carrying `loopback` to a host that does not advertise it.
+
+### §E.1 — Loopback edges are not forward edges (RFC 0257, trigger rules)
+
+A loopback edge is not part of the forward graph for any other rule. In particular:
+
+- **Trigger rules.** A target's `triggerRule` is evaluated over its incoming forward edges only. A loopback edge that is not taken contributes nothing and never makes its target `skipped`.
+- **RFC 0257.** "Terminal node" is computed on the forward graph: a gate whose only outgoing edge is a loopback edge is terminal. This refines RFC 0257's "a node whose only outgoing edges close a cycle is not terminal" for declared loopback edges. A run that ends after an `accept` on such a gate completed a terminal, so `skippedTerminals` is absent. A loopback edge never adds a node to `skippedTerminals`.
 
 ### §F — Chain packs (home: `workflow-chain-pack-manifest.schema.json` `$defs/FragmentEdge.loopback`)
 
@@ -271,7 +280,7 @@ Server-free legs (always run): the negative schema rows above against `schemas/v
 3. `history-from-log` needs the target's inputs to be observable. `core.noop` echoing its inputs on `node.completed.outputs` is the current convention; confirm, or add a dedicated `core.echo`.
 4. Should `ApprovalData.loopback` also be required on `interrupt.resolved`? This draft records it on the request only.
 5. Is `400 validation_error` the right refusal for §B, or a dedicated `loopback_invalid` code with `details.reason`?
-6. Should the 7-day comment window be waived, as for RFC 0257? The host implementation behind a default-off flag does not need it to start.
+6. The comment window. This RFC binds replay (§C.6), so RFC 0147 §A.6 forbids a bootstrap waiver, and only the steward can override it. Until it flips, this merges as a `Draft` and hosts keep it default-off and unadvertised.
 
 ## Implementation notes (non-normative)
 
