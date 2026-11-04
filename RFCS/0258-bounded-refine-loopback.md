@@ -254,7 +254,7 @@ Server-free legs (always run): the negative schema rows above against `schemas/v
 | §A shape and exclusions | schema validation | the suite, server-free | witnessable |
 | §B.1–B.4 refusals | `400 validation_error` on registration | the suite | witnessable — gated |
 | §B.5 ceiling | `400` for `maxIterations` above the advertised ceiling | the suite (reads the ceiling) | witnessable — gated |
-| §B.6 non-gate source | — | depends on what a host can determine statically | **host-judged; not witnessed** (MAY-shaped in effect) |
+| §B.6 non-gate source | — | depends on what a host can determine statically | **unwitnessable** — host-judged: what a host can determine statically is not observable on the wire, so the rule is MAY-shaped in effect (UQ 7) |
 | §B non-advertiser refuses | `capability_required` | the suite, against a host without the facet | witnessable — on non-advertisers |
 | §C.1 marker | `node.completed.loopback` | the suite (one refine) | witnessable — gated |
 | §C.2 nothing leaves the region | `apply` has no `node.started`/`node.skipped` before accept | the suite | witnessable — gated |
