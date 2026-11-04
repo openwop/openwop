@@ -15813,8 +15813,8 @@
       "surface": "**Medium.** `outputs` in a history entry can be large (a full draft per round), and every round is re-delivered. No size bound.",
       "witness": "unclassified",
       "requirementId": null,
-      "disposition": "closed",
-      "target": null,
+      "disposition": "transferred",
+      "target": "TODO.md",
       "sources": [
         {
           "file": "RFCS/registers/0258-bounded-refine-loopback.gaps.md",
