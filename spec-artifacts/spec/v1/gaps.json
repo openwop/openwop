@@ -1,7 +1,7 @@
 {
   "$schema": "./gaps.schema.json",
   "version": 1,
-  "updated": "2026-11-03",
+  "updated": "2026-11-04",
   "witnessClasses": [
     "witnessable-unaided",
     "witnessable-gated",
@@ -15734,6 +15734,312 @@
         {
           "file": "RFCS/registers/0257-run-status-when-every-terminal-is-skipped.gaps.md",
           "token": "G12"
+        }
+      ]
+    },
+    {
+      "id": "openwop.gap.0258.1",
+      "rfc": "0258",
+      "local": "G1",
+      "section": "§Implementation notes",
+      "surface": "**High.** `spec/v2/core` is at 36,795 of 36,800 words (`scripts/check-core-budget.mjs`, 2026-11-04). §C and §D cannot land as core prose.",
+      "witness": "unclassified",
+      "requirementId": null,
+      "disposition": "closed",
+      "target": null,
+      "sources": [
+        {
+          "file": "RFCS/registers/0258-bounded-refine-loopback.gaps.md",
+          "token": "G1"
+        }
+      ]
+    },
+    {
+      "id": "openwop.gap.0258.2",
+      "rfc": "0258",
+      "local": "G2",
+      "section": "§Conformance",
+      "surface": "**High.** `history-from-log` needs the target's inputs to be observable on the wire (Unresolved 3). openwop-app `core.noop` echoes its inputs as outputs (`bootstrap/nodes.ts`, `{ ...inputs }`); the v2 reference host is unchecked.",
+      "witness": "unclassified",
+      "requirementId": null,
+      "disposition": "transferred",
+      "target": "RFC",
+      "sources": [
+        {
+          "file": "RFCS/registers/0258-bounded-refine-loopback.gaps.md",
+          "token": "G2"
+        }
+      ]
+    },
+    {
+      "id": "openwop.gap.0258.3",
+      "rfc": "0258",
+      "local": "G3",
+      "section": "§B.6",
+      "surface": "**Medium.** \"A node the host can determine will never raise an approval interrupt offering refine\" is host-judged. Two hosts can admit different definitions.",
+      "witness": "unclassified",
+      "requirementId": null,
+      "disposition": "transferred",
+      "target": "RFC",
+      "sources": [
+        {
+          "file": "RFCS/registers/0258-bounded-refine-loopback.gaps.md",
+          "token": "G3"
+        }
+      ]
+    },
+    {
+      "id": "openwop.gap.0258.4",
+      "rfc": "0258",
+      "local": "G4",
+      "section": "§Proposal",
+      "surface": "**Medium.** Only `on: \"refine\"`. Reject loops and conditioned non-gate loops stay undeclared, host-defined cycles (Unresolved 1).",
+      "witness": "unclassified",
+      "requirementId": null,
+      "disposition": "transferred",
+      "target": "RFC",
+      "sources": [
+        {
+          "file": "RFCS/registers/0258-bounded-refine-loopback.gaps.md",
+          "token": "G4"
+        }
+      ]
+    },
+    {
+      "id": "openwop.gap.0258.5",
+      "rfc": "0258",
+      "local": "G5",
+      "section": "§C.4",
+      "surface": "**Medium.** `outputs` in a history entry can be large (a full draft per round), and every round is re-delivered. No size bound.",
+      "witness": "unclassified",
+      "requirementId": null,
+      "disposition": "transferred",
+      "target": "TODO.md",
+      "sources": [
+        {
+          "file": "RFCS/registers/0258-bounded-refine-loopback.gaps.md",
+          "token": "G5"
+        }
+      ]
+    },
+    {
+      "id": "openwop.gap.0258.6",
+      "rfc": "0258",
+      "local": "G6",
+      "section": "§D",
+      "surface": "**Low.** A gate whose `actions` hold only `refine` fails on its exhausted visit even under `withdraw`. Whether to refuse such a definition at §B instead.",
+      "witness": "unclassified",
+      "requirementId": null,
+      "disposition": "transferred",
+      "target": "RFC",
+      "sources": [
+        {
+          "file": "RFCS/registers/0258-bounded-refine-loopback.gaps.md",
+          "token": "G6"
+        }
+      ]
+    },
+    {
+      "id": "openwop.gap.0258.7",
+      "rfc": "0258",
+      "local": "G7",
+      "section": "§References",
+      "surface": "**Low.** Prior-art descriptions (BPMN, Temporal, LangGraph, Step Functions) are from the author's knowledge, not a fresh survey.",
+      "witness": "unclassified",
+      "requirementId": null,
+      "disposition": "transferred",
+      "target": "TODO.md",
+      "sources": [
+        {
+          "file": "RFCS/registers/0258-bounded-refine-loopback.gaps.md",
+          "token": "G7"
+        }
+      ]
+    },
+    {
+      "id": "openwop.gap.0258.8",
+      "rfc": "0258",
+      "local": "G8",
+      "section": "§Conformance",
+      "surface": "**Medium.** No second host is committed to implementing it. The v2 reference host runs plain cycles and would need §B admission and the marker.",
+      "witness": "unclassified",
+      "requirementId": null,
+      "disposition": "externally-gated",
+      "target": "second-host-commitment",
+      "sources": [
+        {
+          "file": "RFCS/registers/0258-bounded-refine-loopback.gaps.md",
+          "token": "G8"
+        }
+      ]
+    },
+    {
+      "id": "openwop.gap.0258.9",
+      "rfc": "0258",
+      "local": "G9",
+      "section": "§Motivation",
+      "surface": "**Low.** Book AI's use case was relayed in one message (2026-11-04); the other \"generate → review → revise\" users are inferred, not surveyed.",
+      "witness": "unclassified",
+      "requirementId": null,
+      "disposition": "externally-gated",
+      "target": "second-use-case",
+      "sources": [
+        {
+          "file": "RFCS/registers/0258-bounded-refine-loopback.gaps.md",
+          "token": "G9"
+        }
+      ]
+    },
+    {
+      "id": "openwop.gap.0259.1",
+      "rfc": "0259",
+      "local": "G1",
+      "section": "§Proposal",
+      "surface": "**High.** Which seat records a token resolution: a new Subject `kind` in `resolvedBy`, a separate schema under an `anyOf`, or a sibling property?",
+      "witness": "unclassified",
+      "requirementId": null,
+      "disposition": "closed",
+      "target": null,
+      "sources": [
+        {
+          "file": "RFCS/registers/0259-interrupt-resolved-via.gaps.md",
+          "token": "G1"
+        }
+      ]
+    },
+    {
+      "id": "openwop.gap.0259.2",
+      "rfc": "0259",
+      "local": "G2",
+      "section": "§Motivation",
+      "surface": "**High.** What the one known consumer needs to accept a link approval.",
+      "witness": "unclassified",
+      "requirementId": null,
+      "disposition": "closed",
+      "target": null,
+      "sources": [
+        {
+          "file": "RFCS/registers/0259-interrupt-resolved-via.gaps.md",
+          "token": "G2"
+        }
+      ]
+    },
+    {
+      "id": "openwop.gap.0259.3",
+      "rfc": "0259",
+      "local": "G3",
+      "section": "§A.4",
+      "surface": "**Medium.** The eligibility rule (ACL'd interrupt ⇒ `boundTo` or refuse) has no witness: the suite cannot name itself in a host's approver list.",
+      "witness": "unclassified",
+      "requirementId": null,
+      "disposition": "transferred",
+      "target": "RFC",
+      "sources": [
+        {
+          "file": "RFCS/registers/0259-interrupt-resolved-via.gaps.md",
+          "token": "G3"
+        }
+      ]
+    },
+    {
+      "id": "openwop.gap.0259.4",
+      "rfc": "0259",
+      "local": "G4",
+      "section": "§Open spec gaps",
+      "surface": "**Medium.** MCP `requestState` and inbound-webhook resumes have no `scheme` member.",
+      "witness": "unclassified",
+      "requirementId": null,
+      "disposition": "transferred",
+      "target": "RFC",
+      "sources": [
+        {
+          "file": "RFCS/registers/0259-interrupt-resolved-via.gaps.md",
+          "token": "G4"
+        }
+      ]
+    },
+    {
+      "id": "openwop.gap.0259.5",
+      "rfc": "0259",
+      "local": "G5",
+      "section": "§Conformance",
+      "surface": "**Medium.** No host implements `readInterruptToken` yet, so every host leg records `inapplicable` or `blocked` until one does.",
+      "witness": "unclassified",
+      "requirementId": null,
+      "disposition": "transferred",
+      "target": "RFC",
+      "sources": [
+        {
+          "file": "RFCS/registers/0259-interrupt-resolved-via.gaps.md",
+          "token": "G5"
+        }
+      ]
+    },
+    {
+      "id": "openwop.gap.0259.6",
+      "rfc": "0259",
+      "local": "G6",
+      "section": "§A.5",
+      "surface": "**Low.** No dedicated fork leg for `resolvedVia`.",
+      "witness": "unclassified",
+      "requirementId": null,
+      "disposition": "transferred",
+      "target": "RFC",
+      "sources": [
+        {
+          "file": "RFCS/registers/0259-interrupt-resolved-via.gaps.md",
+          "token": "G6"
+        }
+      ]
+    },
+    {
+      "id": "openwop.gap.0259.7",
+      "rfc": "0259",
+      "local": "G7",
+      "section": "§References",
+      "surface": "**Low.** The share-link prior art (Google Docs, Notion) is from the author's knowledge, not re-checked against current documentation.",
+      "witness": "unclassified",
+      "requirementId": null,
+      "disposition": "transferred",
+      "target": "RFC",
+      "sources": [
+        {
+          "file": "RFCS/registers/0259-interrupt-resolved-via.gaps.md",
+          "token": "G7"
+        }
+      ]
+    },
+    {
+      "id": "openwop.gap.0259.8",
+      "rfc": "0259",
+      "local": "G8",
+      "section": "§Status",
+      "surface": "**High.** Whether the 7-day window may be waived.",
+      "witness": "unclassified",
+      "requirementId": null,
+      "disposition": "transferred",
+      "target": "RFC",
+      "sources": [
+        {
+          "file": "RFCS/registers/0259-interrupt-resolved-via.gaps.md",
+          "token": "G8"
+        }
+      ]
+    },
+    {
+      "id": "openwop.gap.0259.9",
+      "rfc": "0259",
+      "local": "G9",
+      "section": "§A.4",
+      "surface": "**Medium.** Book AI's follow-up: will the host state single use, expiry, the issue window, and host-issued links only?",
+      "witness": "unclassified",
+      "requirementId": null,
+      "disposition": "closed",
+      "target": null,
+      "sources": [
+        {
+          "file": "RFCS/registers/0259-interrupt-resolved-via.gaps.md",
+          "token": "G9"
         }
       ]
     },

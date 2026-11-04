@@ -40,11 +40,11 @@ Source: `INTEROP-MATRIX.md`. A host from a different organization publishes vali
 
 ## Versions
 
-Source: `conformance/package.json, CHANGELOG.md`. Conformance suite **2.46.42**; corpus release **2.46.42** (2026-11-03).
+Source: `conformance/package.json, CHANGELOG.md`. Conformance suite **2.46.43**; corpus release **2.46.43** (2026-11-04).
 
 ## Open Critical / High program risks
 
-Source: `RFCS/registers/*.risks.md + RFCS/*.risks.md (RFC 0166 tokens)` (579 rows scanned). **111** open across all registers, of which **61** belong to the RFC 0147 program (RFCs ≥ 0147) — the set RFC 0156's claims are gated on. Older registers were never dispositioned; `Open` there means "the mitigation is the normative MUST in the row", not an unaddressed risk:
+Source: `RFCS/registers/*.risks.md + RFCS/*.risks.md (RFC 0166 tokens)` (592 rows scanned). **113** open across all registers, of which **63** belong to the RFC 0147 program (RFCs ≥ 0147) — the set RFC 0156's claims are gated on. Older registers were never dispositioned; `Open` there means "the mitigation is the normative MUST in the row", not an unaddressed risk:
 
 Of those, **7** are explicitly **transferred** to a named tracked surface (0147/R2, 0147/R3, 0147/R12, 0147/R14, 0219/R1, 0253/R2, 0256/R2) — real and open, but dispositioned. A register sweep turns on "Closed **or transferred**", so both are reported; an open row and a transferred row are not the same state and are not reported as one.
 
@@ -161,6 +161,8 @@ Of those, **7** are explicitly **transferred** to a named tracked surface (0147/
 | 0177 | R2 — A mirror or vendor registry installs a `<2.0.0` pack on a v2 host | High | `open` |
 | 0229 | R1 — A host implements §A.2 loosely: its resolver chain lets a `run:` ref fall through to a stored or environment secret, recreating the oracle this RFC removes. | High | `open` — mitigated once the §F.3 leg ships with its negative control. |
 | 0230 | R1 — An unauthenticated (signature-only) `ingestUrl` is abused to start runs. | High | `open` — reviewed at the RFC 0156 §B retrospective. |
+| 0258 | R1 — A host derives the visit or the re-arm from in-memory state rather than the log, and a fork cut mid-loop resumes with the gate completed: downstream runs on round-1 data, or a side-effect node fires on a refine. | High | open |
+| 0258 | R2 — Per-visit keys collide on hosts whose suspend nodes supply their own resume key (openwop-app's `core.chat.approvalGate` uses its node id), so visit 1 is handed visit 0's `refine` and the loop drives itself to the cap. | High | open |
 
 ## Permitted claims (RFC 0147 §A)
 
