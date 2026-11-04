@@ -65,6 +65,7 @@ Persisted in Firestore at `runs/{runId}/events/{eventId}`. Read by clients, repl
 | Information disclosure | LLM error response containing the `Authorization` header is persisted as `node.failed` payload | All payloads pass through `sanitizeErrorMessageForLog` before persist      | `secret-leakage-eventlog-payload`  |
 | Information disclosure | Workflow variable marked sensitive but routed through generic `setVariable` action             | Sensitive markers enforced at the variable layer, not the action layer     | `secret-leakage-eventlog-variable` |
 | Tampering              | Operator with write access modifies persisted event to remove redaction marker                 | Out of scope (operator with write access is trusted; covered by host RBAC) | —                                  |
+| Information disclosure | A host records the interrupt resume token, a segment of it, or a bare digest of it on `interrupt.resolved` (`resolvedVia.tokenRef`), so the log confirms a leaked token | RFC 0259 §A.3: `tokenRef` is a reference, never token material, and is not computable from the token without a host-held secret; `v2-interrupt-resolved-via` leg 4 refuses the token, its segments and any digest run | — (pending a host witness; RFC 0259 UQ 3) |
 
 ### 4.2 OTel spans
 

@@ -1444,7 +1444,47 @@
         "resumeValue": {},
         "resolvedBy": {
           "$ref": "subject.schema.json",
-          "description": "v1 interrupt.md MUST (`decidedBy` on approval.received / `resolvedBy` on interrupt.resolved) carried into v2 as the resolving Subject."
+          "description": "v1 interrupt.md MUST (`decidedBy` on approval.received / `resolvedBy` on interrupt.resolved) carried into v2 as the resolving Subject. RFC 0259 §A.1: it names only a Subject the resolving request authenticated on a lane (identity.md §2.1). A host MUST NOT record here a Subject that the request merely presented a resume token for, named in its body, or was addressed by; when nothing authenticated, it is absent, and the instrument is `resolvedVia`."
+        },
+        "resolvedVia": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": ["scheme"],
+          "description": "RFC 0259 — the instrument of a resolution, a separate axis from `resolvedBy` (who authenticated). A host advertising `interrupt.resolvedVia: true` MUST record it, `scheme: \"interrupt-token\"`, on every resolution through `resolveInterruptByToken` or any host surface that presents that interrupt's resume token, and MUST NOT record it on any other resolution. It is recorded history: replay and `forkRun` MUST copy it verbatim with the rest of the payload and MUST NOT recompute it.",
+          "properties": {
+            "scheme": {
+              "type": "string",
+              "enum": ["interrupt-token"],
+              "description": "RFC 0259 §A.2. `interrupt-token`: an interrupt resume token (identity.md §4) was presented. Grows under overview.md §0: a consumer MUST NOT act on a member it does not recognize."
+            },
+            "tokenRef": {
+              "type": "string",
+              "pattern": "^[A-Za-z0-9._~-]{16,128}$",
+              "description": "RFC 0259 §A.3 — OPTIONAL. A reference to the presented token, never token material: it MUST NOT equal or contain the token or any of its segments, and MUST NOT be computable from the token without a host-held secret (a bare or truncated digest of the token is forbidden). It SHOULD be minted independently and stored with the token."
+            },
+            "boundTo": {
+              "allOf": [
+                { "$ref": "subject.schema.json" },
+                {
+                  "properties": {
+                    "kind": { "enum": ["user", "agent"] },
+                    "issuer": { "not": { "const": "urn:openwop:legacy" } }
+                  }
+                }
+              ],
+              "description": "RFC 0259 §A.4 — the Subject the HOST addressed this link to. A host MUST set it only when (a) the host itself issued the link to that Subject (for example an approval email it sent), never a member-generated or pasted link, and (b) on this request it verified its own MAC, under a key it holds, over the token and that Subject. Built with the mapping the host uses for `owner.subject`; `tenant` equals the run tenant. A host that sets it MUST honour the token's `expiresAt` and invalidation (interrupt.md §Tokens) and MUST count at most one vote per `boundTo` for an interrupt. Attribution, not authentication: a bound link can be forwarded. When the interrupt declares eligibility (interrupt.md §Approver enforcement), a host advertising `interrupt.resolvedVia` MUST carry it on a token resolution or refuse that resolution."
+            },
+            "mintedAt": {
+              "type": "string",
+              "format": "date-time",
+              "description": "RFC 0259 §A.4 — when the presented token was issued. A host SHOULD record it with `boundTo`, so a consumer can refuse a link older than its own window."
+            },
+            "expiresAt": {
+              "type": "string",
+              "format": "date-time",
+              "description": "RFC 0259 §A.4 — the presented token's `expiresAt` (interrupt.md §Tokens). A host SHOULD record it with `boundTo`."
+            }
+          }
         },
         "decision": {
           "type": "string",
