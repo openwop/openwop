@@ -1,3 +1,7 @@
+## [2.46.43] — 2026-11-04 — Two RFCs filed as Draft: bounded loopback and resolvedVia
+
+- **No suite change.** RFCs 0258 and 0259 add gap rows, which change the packed `spec/v1/gaps.json` and `CORPUS-STAMP.json`; no scenario, fixture or schema moves.
+
 ## [2.46.42] — 2026-11-03 — The fresh chain pack is exact-pinned (RFC 0253)
 
 - **`freshChainPack` pins its node** (`core.noop@1.0.0`). At 2.46.41 it referenced `core.noop` with no version, which `workflow-chain-packs.md` §Exact pins makes a host refuse, so a conforming host failed the chain apply, read-back and conflict legs.

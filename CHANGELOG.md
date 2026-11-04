@@ -33,6 +33,11 @@ Entries before this file was condensed carried full development detail. That tex
 
 - **RFC 0246 Active (safety fix, `GHSA-ffx7-pm5h-v6pq`): a trial that failed its trajectory cannot carry a task or a suite to a pass.** The `mean` task rule and suite `passed` read a gating score that counts it 0; reported scores are unchanged. 90-day window waived by recorded STEWARD OVERRIDE.
 
+## [2.46.43] — 2026-11-04 — Two RFCs filed as Draft: bounded loopback and resolvedVia
+
+- **RFC 0258 (Draft).** A declared, bounded loopback edge from an approval gate back to the node it reviews: a `refine` re-runs that region with the round history rebuilt from the log, and the cap is required and never unlimited. Text and registers only; no wire change until `Active`.
+- **RFC 0259 (Draft).** `interrupt.resolved` gains an optional `resolvedVia` recording a token resolution's instrument and a host-attested addressee beside `resolvedBy`, which keeps naming only an authenticated Subject. Text and registers only.
+
 ## [2.46.42] — 2026-11-03 — Exact-pinned chain pack in the RFC 0253 legs
 
 - **Suite fix (RFC 0253).** The chain pack the `v2-proposal-pack-readback` legs submit now pins `core.noop@1.0.0`. Unpinned, a host enforcing `workflow-chain-packs.md` §Exact pins refused it, and the chain apply, read-back and conflict legs failed a conforming host. No wire change.
