@@ -7,7 +7,7 @@
 | **Status**        | `Draft` |
 | **Author(s)**     | David Tufts (@davidscotttufts) |
 | **Created**       | 2026-11-04 |
-| **Updated**       | 2026-11-04 — filed `Draft`. Registers only; no spec, schema or suite change yet. The schema diffs below are the proposal and land with the `Active` flip. No host advertises anything. |
+| **Updated**       | 2026-11-04 — Draft revision: §C.4 states the `historyInput` entry shape exactly and adds a host-advertised per-entry size cap (`capabilities.loopback.maxHistoryEntryBytes` >= 4096 in the `loopback` facet, measured over JCS, typed `{truncated, bytes}` marker; UQ 7.5), at Book AI's request. No status, schema or suite change. Earlier 2026-11-04 — filed `Draft`. Registers only; no spec, schema or suite change yet. The schema diffs below are the proposal and land with the `Active` flip. No host advertises anything. |
 | **Affects**       | `schemas/v2/workflow-definition.schema.json` `$defs/WorkflowEdge` (one optional property, new `$defs/EdgeLoopback`) · `schemas/v2/workflow-chain-pack-manifest.schema.json` `$defs/FragmentEdge` (same property) · `schemas/v2/run-event-payloads.schema.json` `$defs/nodeCompleted` (one optional property), `$defs/capBreached.kind` (one enum member), `$defs/workflowLoopbackLimit` (description binds it) · `schemas/v2/suspend-request.schema.json` `$defs/ApprovalData` (one optional property) · `schemas/v2/capabilities.schema.json` (one optional top-level facet `loopback`) · no new `spec/v2/core` prose: the core is at 36,795 of 36,800 words, so §§A–F are homed in the schema descriptions above, as RFC 0257 did (gap G1) · `spec/v2/surface-baseline.json` (regenerated) · conformance: one scenario, three fixtures · `conformance/fixtures.md` · CHANGELOG. v1 is frozen and is not touched. |
 | **Compatibility** | `additive` per `COMPATIBILITY.md` §2.4 (optional properties on closed v2 objects, a new optional capability facet, one new enum member on an event payload whose consumers MUST accept unknown members). Nothing changes for a definition without `loopback`. |
 | **Supersedes**    | — |
@@ -98,7 +98,18 @@ When the gate's approval interrupt resolves with `action: "refine"` and the loop
    { "round": 1, "outputs": { "candidate": "…" }, "refineFeedback": { "scope": "whole", "text": "Darker, and shorter." } }
    ```
 
-   `outputs` is the target's own `node.completed.outputs` from that round (what the reviewer was shown, as the target produced it), and `refineFeedback` is the gate's `interrupt.resolved.refineFeedback` from that round. The host **MUST** rebuild the array from the run's event log. It **MUST NOT** add timestamps, principals, run ids or interrupt keys, so the same rounds yield the same bytes in any run, replay or fork. On the target's first visit the port receives `[]`.
+   Each entry is a closed object:
+
+   | Field | Type | Present | Value |
+   | --- | --- | --- | --- |
+   | `round` | integer >= 1 | always | the round this entry records (the marker's `round`) |
+   | `outputs` | object | always | the target's own `node.completed.outputs` from that round, i.e. what the reviewer was shown, as the target produced it. A single-port producer's value is `outputs.<port>` (Book AI: `outputs.candidate`). |
+   | `refineFeedback` | object | when the resolution carried it | the gate's `interrupt.resolved.refineFeedback` from that round (RFC 0183 shape; free text is `refineFeedback.text`) |
+
+   The array has exactly one entry per round taken, so its length is at most `maxIterations`. The host **MUST** rebuild the array from the run's event log. It **MUST NOT** add timestamps, principals, run ids or interrupt keys, so the same rounds yield the same bytes in any run, replay or fork. On the target's first visit the port receives `[]`.
+
+   **Size cap.** A host advertising `capabilities.loopback` **MUST** advertise `maxHistoryEntryBytes` (§E), and it **MUST** be at least 4096 so a host cannot starve the loop. A round's size is the UTF-8 byte length of the JSON Canonicalization Scheme (RFC 8785, JCS) serialization of its recorded `node.completed.outputs`; every host measures the same bytes. When that size exceeds `maxHistoryEntryBytes`, the entry's `outputs` **MUST** be replaced by the typed marker `{ "truncated": true, "bytes": <that length> }`. `round` and `refineFeedback` are kept unchanged. The marker is computed from the recorded outputs only, and JCS makes the measurement independent of key order and whitespace, so a replay or fork on any host yields the same entry. A consumer that finds `truncated: true` knows the round happened and what the reviewer said, not what they were shown.
+
 5. **Limits still apply.** Every re-execution counts toward `recursionLimit` and `limits.maxNodeExecutions` (runs.md §run section). A retry inside a round stays in that round's visit.
 6. **Replay and fork.** The round count and each visit's interrupt key **MUST** come from recorded events (the markers and the gate's `interrupt.resolved` events), never from a live counter, so a fork taken at round *k* reproduces round *k*. A `replay` fork reproduces each round from the recorded markers and resolutions. A fork whose prefix ends after a marked `node.completed` **MUST** resume with the region re-armed by that marker, not with the gate completed.
 
@@ -115,7 +126,7 @@ So a cap of 3 allows three refines: four artifacts are shown, the fourth without
 
 ### §E — Capability
 
-`capabilities.loopback` (optional, closed): `{ "maxIterations": integer >= 1 }`, the host's ceiling for any edge's `maxIterations`. A host MAY set it as low as it likes and MUST advertise the value it enforces (§B.5 refuses above it). Present means the host implements §§A–D. A client **MUST NOT** submit a definition carrying `loopback` to a host that does not advertise it.
+`capabilities.loopback` (optional, closed): `{ "maxIterations": integer >= 1, "maxHistoryEntryBytes": integer >= 4096 }`. `maxIterations` is the host's ceiling for any edge's `maxIterations`; `maxHistoryEntryBytes` is §C.4's per-entry `outputs` cap, measured over JCS. Both are members of the `loopback` facet (UQ 7.1: homed in `spec/v2/declaration.json` + `spec/v2/facets/`, from which `capabilities.schema.json` is generated). A host MAY set it as low as it likes and MUST advertise the value it enforces (§B.5 refuses above it). Present means the host implements §§A–D. A client **MUST NOT** submit a definition carrying `loopback` to a host that does not advertise it.
 
 ### §E.1 — Loopback edges are not forward edges (RFC 0257, trigger rules)
 
@@ -181,7 +192,7 @@ The edge-level exclusions in §A (no `condition`, `sourceOutput`, `targetInput`,
 +      , "loopback-iterations" ] } } }
 ```
 
-`schemas/v2/suspend-request.schema.json` `ApprovalData` gains `loopback: { round: integer >= 0, maxIterations: integer >= 1, exhausted: boolean }`, all required, closed. `schemas/v2/capabilities.schema.json` gains top-level `loopback: { maxIterations: integer >= 1 }`, required, closed.
+`schemas/v2/suspend-request.schema.json` `ApprovalData` gains `loopback: { round: integer >= 0, maxIterations: integer >= 1, exhausted: boolean }`, all required, closed. `schemas/v2/capabilities.schema.json` gains top-level `loopback: { maxIterations: integer >= 1, maxHistoryEntryBytes: integer >= 4096 }`, both required, closed (homed per UQ 7.1).
 
 ### Examples
 
@@ -260,6 +271,7 @@ Server-free legs (always run): the negative schema rows above against `schemas/v
 | §C.2 nothing leaves the region | `apply` has no `node.started`/`node.skipped` before accept | the suite | witnessable — gated |
 | §C.3 re-arm and new key | second `node.started` for `draft`, second `interrupt.requested` with a new key | the suite | witnessable — gated |
 | §C.4 history from the log, no run-scoped bytes | `rounds` content | the suite, if the target's inputs are observable (`core.noop` echoes) | witnessable — gated, see Unresolved 3 |
+| §C.4 size cap | an entry over `maxHistoryEntryBytes` arrives as `{truncated: true, bytes}` with `round` and `refineFeedback` intact | the suite (a fixture producer whose output exceeds the advertised cap) | witnessable — gated |
 | §C.5 limits | `recursion_limit_exceeded` with a small `recursionLimit` | the suite | witnessable — gated (not in the first scenario) |
 | §C.6 replay | fork behaviour | the suite, with `replay` | witnessable — doubly gated |
 | §D withdraw / fail | `actions`, `400`, events, terminal | the suite | witnessable — gated |
@@ -287,6 +299,7 @@ Server-free legs (always run): the negative schema rows above against `schemas/v
    2. §B's "a host that does not advertise `capabilities.loopback` MUST refuse with `capability_required`" binds every existing host to new behaviour, and every one of them would fail it. Scope the MUST to advertisers. For non-advertisers it remains §E's client rule plus the closed `WorkflowEdge` schema.
    3. §B.6 is an unwitnessable MUST, as the falsifiability table already admits. Either make it witnessable (a closed list of gate types) or make it a SHOULD.
    4. The comment window can be waived only by the steward, given directly to openwop-be (RFC 0147 §A.6: this RFC binds replay). See UQ 6.
+   5. §C.4's size cap (Draft revision, 2026-11-04): confirm the 4096 floor, JCS (RFC 8785) as the measure, and that a truncated entry keeps `refineFeedback`. Register gap G5 is left as filed, so the corpus stamp does not move; its disposition changes with the `Active` flip.
 
 ## Implementation notes (non-normative)
 
