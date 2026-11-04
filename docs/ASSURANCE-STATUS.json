@@ -191,7 +191,7 @@
   },
   "risks": {
     "source": "RFCS/registers/*.risks.md + RFCS/*.risks.md (RFC 0166 tokens)",
-    "rowsScanned": 579,
+    "rowsScanned": 586,
     "openCriticalOrHigh": [
       {
         "rfc": "0058",
@@ -969,6 +969,20 @@
         "title": "An unauthenticated (signature-only) `ingestUrl` is abused to start runs.",
         "score": "High",
         "status": "`open` — reviewed at the RFC 0156 §B retrospective."
+      },
+      {
+        "rfc": "0258",
+        "id": "R1",
+        "title": "A host derives the visit or the re-arm from in-memory state rather than the log, and a fork cut mid-loop resumes with the gate completed: downstream runs on round-1 data, or a side-effect node fires on a refine.",
+        "score": "High",
+        "status": "open"
+      },
+      {
+        "rfc": "0258",
+        "id": "R2",
+        "title": "Per-visit keys collide on hosts whose suspend nodes supply their own resume key (openwop-app's `core.chat.approvalGate` uses its node id), so visit 1 is handed visit 0's `refine` and the loop drives itself to the cap.",
+        "score": "High",
+        "status": "open"
       }
     ],
     "programOpenCriticalOrHigh": [
@@ -1398,6 +1412,20 @@
         "title": "An unauthenticated (signature-only) `ingestUrl` is abused to start runs.",
         "score": "High",
         "status": "`open` — reviewed at the RFC 0156 §B retrospective."
+      },
+      {
+        "rfc": "0258",
+        "id": "R1",
+        "title": "A host derives the visit or the re-arm from in-memory state rather than the log, and a fork cut mid-loop resumes with the gate completed: downstream runs on round-1 data, or a side-effect node fires on a refine.",
+        "score": "High",
+        "status": "open"
+      },
+      {
+        "rfc": "0258",
+        "id": "R2",
+        "title": "Per-visit keys collide on hosts whose suspend nodes supply their own resume key (openwop-app's `core.chat.approvalGate` uses its node id), so visit 1 is handed visit 0's `refine` and the loop drives itself to the cap.",
+        "score": "High",
+        "status": "open"
       }
     ],
     "transferred": [
