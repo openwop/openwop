@@ -282,6 +282,12 @@ Server-free legs (always run): the negative schema rows above against `schemas/v
 5. Is `400 validation_error` the right refusal for §B, or a dedicated `loopback_invalid` code with `details.reason`?
 6. The comment window. This RFC binds replay (§C.6), so RFC 0147 §A.6 forbids a bootstrap waiver, and only the steward can override it. Until it flips, this merges as a `Draft` and hosts keep it default-off and unadvertised.
 
+7. **openwop-be review, to fix before `Active` (2026-11-04):**
+   1. The capability facet belongs in `spec/v2/declaration.json` and `spec/v2/facets/`; `capabilities.schema.json` is generated from them, so §E's diff targets the wrong file.
+   2. §B's "a host that does not advertise `capabilities.loopback` MUST refuse with `capability_required`" binds every existing host to new behaviour, and every one of them would fail it. Scope the MUST to advertisers. For non-advertisers it remains §E's client rule plus the closed `WorkflowEdge` schema.
+   3. §B.6 is an unwitnessable MUST, as the falsifiability table already admits. Either make it witnessable (a closed list of gate types) or make it a SHOULD.
+   4. The comment window can be waived only by the steward, given directly to openwop-be (RFC 0147 §A.6: this RFC binds replay). See UQ 6.
+
 ## Implementation notes (non-normative)
 
 openwop-app (ADR to be reserved there) plans four PRs behind a default-off host flag, advertising `capabilities.loopback` only once this RFC is `Active` with the shape locked:

@@ -15745,7 +15745,7 @@
       "surface": "**High.** `spec/v2/core` is at 36,795 of 36,800 words (`scripts/check-core-budget.mjs`, 2026-11-04). §C and §D cannot land as core prose.",
       "witness": "unclassified",
       "requirementId": null,
-      "disposition": "open",
+      "disposition": "closed",
       "target": null,
       "sources": [
         {
@@ -15762,8 +15762,8 @@
       "surface": "**High.** `history-from-log` needs the target's inputs to be observable on the wire (Unresolved 3). openwop-app `core.noop` echoes its inputs as outputs (`bootstrap/nodes.ts`, `{ ...inputs }`); the v2 reference host is unchecked.",
       "witness": "unclassified",
       "requirementId": null,
-      "disposition": "open",
-      "target": null,
+      "disposition": "transferred",
+      "target": "RFC",
       "sources": [
         {
           "file": "RFCS/registers/0258-bounded-refine-loopback.gaps.md",
@@ -15779,8 +15779,8 @@
       "surface": "**Medium.** \"A node the host can determine will never raise an approval interrupt offering refine\" is host-judged. Two hosts can admit different definitions.",
       "witness": "unclassified",
       "requirementId": null,
-      "disposition": "open",
-      "target": null,
+      "disposition": "transferred",
+      "target": "RFC",
       "sources": [
         {
           "file": "RFCS/registers/0258-bounded-refine-loopback.gaps.md",
@@ -15796,8 +15796,8 @@
       "surface": "**Medium.** Only `on: \"refine\"`. Reject loops and conditioned non-gate loops stay undeclared, host-defined cycles (Unresolved 1).",
       "witness": "unclassified",
       "requirementId": null,
-      "disposition": "open",
-      "target": null,
+      "disposition": "transferred",
+      "target": "RFC",
       "sources": [
         {
           "file": "RFCS/registers/0258-bounded-refine-loopback.gaps.md",
@@ -15813,8 +15813,8 @@
       "surface": "**Medium.** `outputs` in a history entry can be large (a full draft per round), and every round is re-delivered. No size bound.",
       "witness": "unclassified",
       "requirementId": null,
-      "disposition": "open",
-      "target": null,
+      "disposition": "transferred",
+      "target": "TODO.md",
       "sources": [
         {
           "file": "RFCS/registers/0258-bounded-refine-loopback.gaps.md",
@@ -15830,8 +15830,8 @@
       "surface": "**Low.** A gate whose `actions` hold only `refine` fails on its exhausted visit even under `withdraw`. Whether to refuse such a definition at §B instead.",
       "witness": "unclassified",
       "requirementId": null,
-      "disposition": "open",
-      "target": null,
+      "disposition": "transferred",
+      "target": "RFC",
       "sources": [
         {
           "file": "RFCS/registers/0258-bounded-refine-loopback.gaps.md",
@@ -15847,8 +15847,8 @@
       "surface": "**Low.** Prior-art descriptions (BPMN, Temporal, LangGraph, Step Functions) are from the author's knowledge, not a fresh survey.",
       "witness": "unclassified",
       "requirementId": null,
-      "disposition": "open",
-      "target": null,
+      "disposition": "transferred",
+      "target": "TODO.md",
       "sources": [
         {
           "file": "RFCS/registers/0258-bounded-refine-loopback.gaps.md",
@@ -15864,8 +15864,8 @@
       "surface": "**Medium.** No second host is committed to implementing it. The v2 reference host runs plain cycles and would need §B admission and the marker.",
       "witness": "unclassified",
       "requirementId": null,
-      "disposition": "open",
-      "target": null,
+      "disposition": "externally-gated",
+      "target": "second-host-commitment",
       "sources": [
         {
           "file": "RFCS/registers/0258-bounded-refine-loopback.gaps.md",
@@ -15881,8 +15881,8 @@
       "surface": "**Low.** Book AI's use case was relayed in one message (2026-11-04); the other \"generate → review → revise\" users are inferred, not surveyed.",
       "witness": "unclassified",
       "requirementId": null,
-      "disposition": "open",
-      "target": null,
+      "disposition": "externally-gated",
+      "target": "second-use-case",
       "sources": [
         {
           "file": "RFCS/registers/0258-bounded-refine-loopback.gaps.md",
