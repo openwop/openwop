@@ -1707,6 +1707,7 @@
       "facets": [
         "refKinds",
         "tokenAlgs",
+        "resolvedVia",
         "callbackDelivery"
       ],
       "floorScenarios": [],

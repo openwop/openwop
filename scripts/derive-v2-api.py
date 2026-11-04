@@ -281,6 +281,24 @@ def v2_openapi_and_seams():
         'responses': {'200': {'description': 'The credential is revoked.', 'content': {'application/json': {'schema': {'type': 'object', 'additionalProperties': False, 'required': ['revoked'],
                 'properties': {'revoked': {'type': 'boolean', 'const': True}, 'lane': {'type': 'string'}}}}}},
             '400': {'$ref': '#/components/responses/ValidationError'}, '401': {'$ref': '#/components/responses/Unauthenticated'}, '404': {'$ref': '#/components/responses/NotFound'}}}}
+    # RFC 0259 §C.1: read the resume token of one suspended interrupt, and optionally a host binding of it to the caller,
+    # so the suite can resolve through resolveInterruptByToken and observe `resolvedVia`. Test-only; production paths.
+    seams['paths']['/conformance/seams/sample/interrupts/token'] = {'post': {'tags': ['Seams'], 'operationId': 'readInterruptToken',
+        'summary': 'Read the resume token of a suspended interrupt in a run the caller owns',
+        'description': (('Returns the resume token the host issued for the open interrupt on `nodeId` of `runId` (a run the '
+                         'authenticated caller created), exactly as its production issuance path minted it. With `bind: true` it '
+                         'also returns `resumeValueMembers`: the members the host\'s own production binding path would put in a '
+                         'presentation it addresses to the CALLER (for example a signed voter), which the suite merges into the '
+                         '`resumeValue` it posts to `POST /interrupts/{token}`. The seam mints nothing the production path does not '
+                         'and resolves nothing. `404` when the seam is not wired or no open interrupt '
+                         'matches (including one already resolved).')),
+        'requestBody': {'required': True, 'content': {'application/json': {'schema': {'type': 'object', 'additionalProperties': False, 'required': ['runId', 'nodeId'],
+            'properties': {'runId': {'$ref': '../schemas/v2/ids.schema.json#/$defs/runId'}, 'nodeId': {'$ref': '../schemas/v2/ids.schema.json#/$defs/nodeId'},
+                'bind': {'type': 'boolean', 'description': 'Also return a binding of the presentation to the caller; absent ⇒ false.'}}}}}},
+        'responses': {'200': {'description': 'The token, and the binding when asked for.', 'content': {'application/json': {'schema': {'type': 'object', 'additionalProperties': False, 'required': ['token'],
+                'properties': {'token': {'type': 'string', 'minLength': 1, 'description': 'The resume token (identity.md §4).'},
+                    'resumeValueMembers': {'type': 'object', 'description': 'Present only when `bind` was true and the host binds presentations. Host-defined members; the suite merges them into `resumeValue` unchanged.'}}}}}},
+            '400': {'$ref': '#/components/responses/ValidationError'}, '401': {'$ref': '#/components/responses/Unauthenticated'}, '404': {'$ref': '#/components/responses/NotFound'}}}}
     # RFC 0111 (host-sample-test-seams.md §14; corrected 2026-09-26, suite 2.41.0): the transcript-window accounting seam,
     # additive at major 2. `entries[]` is the text the host fed; REQUIRED for tokenCounter `chars`, the only recountable unit.
     seams['paths']['/conformance/seams/sample/agent/transcript-window'] = {'get': {'tags': ['Seams'], 'operationId': 'getTranscriptWindow',
