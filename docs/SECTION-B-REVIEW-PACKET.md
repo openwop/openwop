@@ -61,7 +61,7 @@ Grouping below is a reading aid only: it assigns each RFC to the risk class its 
 | [0236](../RFCS/0236-host-events.md) | Host events — events without a run-log position | `Accepted` | steward override of RFC 0147 §A.6 | tier-1 — the v2 reference host | `not-reviewed` |
 | [0251](../RFCS/0251-eval-run-mode-and-baseline-selection.md) | an eval run names its modes and regression baseline | `Accepted` | steward override of RFC 0147 §A.6 | tier-1 — openwop-app's certified 2 | `not-reviewed` |
 | [0252](../RFCS/0252-eval-fixtures-from-a-recorded-run.md) | an eval task takes its fixtures from a recorded run | `Accepted` | steward override of RFC 0147 §A.6 | tier-1 — openwop-app's certified 2 | `not-reviewed` |
-| [0253](../RFCS/0253-installed-pack-readback.md) | read back an installed workflow-chain or agent pack | `Active` | steward override of RFC 0147 §A.6 | not declared (predates RFC 0174 §B.1, or not yet Accepted) | `not-reviewed` |
+| [0253](../RFCS/0253-installed-pack-readback.md) | read back an installed workflow-chain or agent pack | `Accepted` | steward override of RFC 0147 §A.6 | tier-1 — openwop-app's certified 2 | `not-reviewed` |
 
 ## Secrets (2)
 

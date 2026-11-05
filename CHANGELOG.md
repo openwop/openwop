@@ -8,7 +8,7 @@ Entries before this file was condensed carried full development detail. That tex
 
 ## [Unreleased]
 
-- **RFCs 0255 and 0257 Accepted.** openwop-app's certified 2.46.36 cut (`9f4cca7d4`, 524/0/0) has no AI Envelope surface; its 2.46.41 cut (`d2c7e089b`, 541/0/0) passes all six `0257.*` legs. The reference host passes the §E form legs and emits `skippedTerminals`. The 2.46.33 cuts (`002e1ed15`, `293f5dc71`) are in too.
+- **RFCs 0255, 0257 and 0253 Accepted.** openwop-app's certified cuts: 2.46.36 (`9f4cca7d4`) has no AI Envelope surface; 2.46.41 (`d2c7e089b`) passes the six `0257.*` legs; 2.46.42 (`d69c1cc76`, 550/0/0) passes every `0253.*` host leg for both pack kinds. The reference host passes the §E form legs.
 - **RFC 0250 Accepted.** openwop-app's certified 2.46.23 production cut (`f94471e98`, 487/0/0) advertises `hostEvents.replay`: a durable cursor resumes in commit order with no gap, and an unknown cursor is refused `409 host_event_resync_required` before any SSE byte. §B review deferred by steward exemption.
 
 - **RFCs 0249 and 0096 Accepted.** openwop-app's certified 2.46.21 production cut (`34bfefddc`, 480/0/0) serves the seven `/proposals` operations: an unapplied draft is not served, and the installed template is JCS-equal to the reviewed revision. §B review deferred by steward exemption.
