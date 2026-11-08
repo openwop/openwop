@@ -55,6 +55,8 @@ All fixtures MUST advertise:
 | Error route only | `conformance-error-route-only` | RFC 0257 — the only terminal sits behind `any_failed`; it is skipped with no condition anywhere | `completed` with `skippedTerminals` | < 1s |
 | All terminals skipped | `conformance-all-terminals-skipped` | RFC 0257 — a `truthy` edge on `payload.ok` declines (`{ok:false}`) or fires (`{ok:true}`) | `completed`, with or without `skippedTerminals` | < 1s |
 | Sub-workflow (child reaches no terminal) | `conformance-subworkflow-skip-parent` | RFC 0257 §B — a `core.subWorkflow` child completes with `skippedTerminals`; the parent continues | `completed` | < 2s |
+| Bounded loopback (withdraw) | `conformance-loopback-refine` | RFC 0258 — a refine loops `gate` back to `draft` with the round history; after two refines `refine` is withdrawn | `completed` after accept | unbounded (suspends) |
+| Bounded loopback (fail) | `conformance-loopback-refine-fail` | RFC 0258 §D — `maxIterations: 1`, `onExhausted: fail`; a refine on the exhausted visit fails the run | `failed` (`loop_limit_exceeded`) | unbounded (suspends) |
 | Approval (timeout) | `conformance-approval-timeout` | RFC 0223 G2 — a 1500 ms `timeoutMs`, no `onTimeout`: the host's timer resolves the gate rejected | `failed` (`approval_rejected`) after the timeout | ~1.5 s + the host's sweep |
 | Approval (timeout, onTimeout approve) | `conformance-approval-timeout-approve` | openwop#1696 — a 1500 ms `timeoutMs` with `onTimeout: approve`: a timeout never grants, so the gate still resolves rejected | `failed` (`approval_rejected`) after the timeout | ~1.5 s + the host's sweep |
 | Approval (reject loops back) | `conformance-approval-reject-loopback` | openwop#1697 — a rejected gate routed back to itself through `revise` is asked again under a new `key` | `waiting-approval` again after one reject (the suite cancels) | unbounded (suspends) |
@@ -307,6 +309,27 @@ The `messages`-mode stream fixture (AI token streaming) is covered by the determ
   3. With `{ok: false}`, `act` MUST NOT run and the run MUST end `run.completed` with `skippedTerminals` `["act"]`.
   4. With `{ok: true}`, `act` MUST run and the run MUST end `run.completed` with no `skippedTerminals`.
 - **Terminal status**: `completed` on both inputs.
+
+### `conformance-loopback-refine`
+
+- **Purpose**: witness RFC 0258 §§C–D: the re-arm, the round history and withdrawal on exhaustion.
+- **Inputs**: none.
+- **Behavior**:
+  1. `draft` (`core.identity`) echoes its inputs. Its only input is the loopback's `historyInput` port `rounds`, so its `node.completed` `outputs` is `{rounds: [...]}`: `[]` on the first visit, then one `{round, outputs, refineFeedback}` entry per round, oldest first.
+  2. `gate` (`core.approvalGate`, actions accept/reject/refine) suspends. Each request's `ApprovalData.loopback` reads `{round, maxIterations: 2, exhausted}`.
+  3. A `refine` with `refineFeedback` completes `gate` with the marker `loopback {edgeId: "again", targetNodeId: "draft", round, rearmed: ["draft", "gate"]}`; `draft` runs again and `gate` is asked again under a new key. `apply` MUST NOT start.
+  4. After two refines, the third request omits `refine`, and a `refine` resume answers `400 validation_error` with the run still `waiting-approval`.
+  5. `accept` completes `gate`; `apply` runs once.
+- **Terminal status**: `completed`.
+- **Requires**: the `loopback` family with `maxIterations >= 2`.
+
+### `conformance-loopback-refine-fail`
+
+- **Purpose**: witness RFC 0258 §D `onExhausted: fail`.
+- **Inputs**: none.
+- **Behavior**: the same graph with `maxIterations: 1` and `onExhausted: "fail"`. The first refine loops. A refine on the exhausted second visit emits `workflow.loopback-limit {nodeId: "gate", iterations: 1, limit: 1}`, then `cap.breached {kind: "loopback-iterations", limit: 1, observed: 2}`, then `run.failed` with `loop_limit_exceeded` and `failedNodeId: "gate"`.
+- **Terminal status**: `failed`.
+- **Requires**: the `loopback` family.
 
 ### `conformance-subworkflow-skip-parent`
 

@@ -4,11 +4,11 @@
 | ----------------- | ----- |
 | **RFC**           | 0258 |
 | **Title**         | Bounded refine loopback for approval gates |
-| **Status**        | `Draft` |
+| **Status**        | `Active` |
 | **Author(s)**     | David Tufts (@davidscotttufts) |
 | **Created**       | 2026-11-04 |
-| **Updated**       | 2026-11-04 — Draft revision: §C.4 states the `historyInput` entry shape exactly and adds a host-advertised per-entry size cap (`capabilities.loopback.maxHistoryEntryBytes` >= 4096 in the `loopback` facet, measured over JCS, typed `{truncated, bytes}` marker; UQ 7.5), at Book AI's request. No status, schema or suite change. Earlier 2026-11-04 — filed `Draft`. Registers only; no spec, schema or suite change yet. The schema diffs below are the proposal and land with the `Active` flip. No host advertises anything. |
-| **Affects**       | `schemas/v2/workflow-definition.schema.json` `$defs/WorkflowEdge` (one optional property, new `$defs/EdgeLoopback`) · `schemas/v2/workflow-chain-pack-manifest.schema.json` `$defs/FragmentEdge` (same property) · `schemas/v2/run-event-payloads.schema.json` `$defs/nodeCompleted` (one optional property), `$defs/capBreached.kind` (one enum member), `$defs/workflowLoopbackLimit` (description binds it) · `schemas/v2/suspend-request.schema.json` `$defs/ApprovalData` (one optional property) · `schemas/v2/capabilities.schema.json` (one optional top-level facet `loopback`) · no new `spec/v2/core` prose: the core is at 36,795 of 36,800 words, so §§A–F are homed in the schema descriptions above, as RFC 0257 did (gap G1) · `spec/v2/surface-baseline.json` (regenerated) · conformance: one scenario, three fixtures · `conformance/fixtures.md` · CHANGELOG. v1 is frozen and is not touched. |
+| **Updated**       | 2026-11-08 — **`Draft → Active`, comment window waived by the maintainer** (user instruction to openwop-be, 2026-11-08: "skip the comment window and proceed with implementation by collaborating with an openwop-app session"). STEWARD OVERRIDE of RFC 0147 §A.6 (§C.6 binds replay), recorded in `MAINTAINERS.md`. The wire lands in suite 2.46.44: `$defs/EdgeLoopback` on `WorkflowEdge` and `FragmentEdge`, the `node.completed` marker, `ApprovalData.loopback`, `cap.breached` kind `loopback-iterations`, the `workflow.loopback-limit` emitting rule, and the core family `loopback` (`spec/v2/declaration.json`, `spec/v2/facets/loopback.schema.json`); plus `v2-bounded-loopback` (7 ids) and two fixtures. UQ 1–7 decided below. §B now binds only advertisers, and §B.6 is a SHOULD. openwop-app implements it (its ADR 1058, #5583 and a follow-up) behind a default-off flag. Earlier 2026-11-04 — Draft revision: §C.4 states the `historyInput` entry shape exactly and adds a host-advertised per-entry size cap (`capabilities.loopback.maxHistoryEntryBytes` >= 4096 in the `loopback` facet, measured over JCS, typed `{truncated, bytes}` marker; UQ 7.5), at Book AI's request. No status, schema or suite change. Earlier 2026-11-04 — filed `Draft`. Registers only; no spec, schema or suite change yet. The schema diffs below are the proposal and land with the `Active` flip. No host advertises anything. |
+| **Affects**       | `schemas/v2/workflow-definition.schema.json` `$defs/WorkflowEdge` (one optional property, new `$defs/EdgeLoopback`) · `schemas/v2/workflow-chain-pack-manifest.schema.json` `$defs/FragmentEdge` (same property) · `schemas/v2/run-event-payloads.schema.json` `$defs/nodeCompleted` (one optional property), `$defs/capBreached.kind` (one enum member), `$defs/workflowLoopbackLimit` (description binds it) · `schemas/v2/suspend-request.schema.json` `$defs/ApprovalData` (one optional property) · `spec/v2/declaration.json` + `spec/v2/facets/loopback.schema.json` (a new core family `loopback`; `schemas/v2/capabilities.schema.json` regenerated) · `spec/v2/core/capabilities.md` (its heading) · no new `spec/v2/core` prose: the core is at 36,795 of 36,800 words, so §§A–F are homed in the schema descriptions above, as RFC 0257 did (gap G1) · `spec/v2/surface-baseline.json` (regenerated) · conformance: one scenario, two fixtures · `conformance/fixtures.md` · CHANGELOG. v1 is frozen and is not touched. |
 | **Compatibility** | `additive` per `COMPATIBILITY.md` §2.4 (optional properties on closed v2 objects, a new optional capability facet, one new enum member on an event payload whose consumers MUST accept unknown members). Nothing changes for a definition without `loopback`. |
 | **Supersedes**    | — |
 | **Superseded by** | — |
@@ -79,9 +79,9 @@ A host that advertises `capabilities.loopback` (§E) **MUST** refuse, with `400 
 3. the region is not closed: some node of the region other than the gate has an outgoing forward edge to a node outside the region;
 4. two loopback edges have regions that share a node;
 5. a loopback edge's `maxIterations` exceeds `capabilities.loopback.maxIterations`;
-6. the gate is a node the host can determine will never raise an `approval` interrupt offering `refine`.
+6. (SHOULD, not MUST) the gate is a node the host can determine will never raise an `approval` interrupt offering `refine`. What a host can determine statically is host-judged, so this item is a SHOULD.
 
-Edges from outside the region into it are allowed; their sources are not re-run. A host that does not advertise `capabilities.loopback` **MUST** refuse any definition carrying `loopback` with `capability_required`, and **MUST NOT** run the edge as a plain cycle or drop it. (A host validating against the closed v2 schema of an earlier suite already refuses it.)
+Edges from outside the region into it are allowed; their sources are not re-run. A host that does not advertise `capabilities.loopback` **MUST NOT** run a `loopback` edge as a plain cycle or drop it. It refuses the definition, with `capability_required` or `validation_error`; a host validating against the closed v2 `WorkflowEdge` of an earlier suite already answers `validation_error`.
 
 `settings.maxLoopbackIterations` is unchanged: it **MUST NOT** admit a cycle or bound a loopback edge.
 
@@ -126,7 +126,7 @@ So a cap of 3 allows three refines: four artifacts are shown, the fourth without
 
 ### §E — Capability
 
-`capabilities.loopback` (optional, closed): `{ "maxIterations": integer >= 1, "maxHistoryEntryBytes": integer >= 4096 }`. `maxIterations` is the host's ceiling for any edge's `maxIterations`; `maxHistoryEntryBytes` is §C.4's per-entry `outputs` cap, measured over JCS. Both are members of the `loopback` facet (UQ 7.1: homed in `spec/v2/declaration.json` + `spec/v2/facets/`, from which `capabilities.schema.json` is generated). A host MAY set it as low as it likes and MUST advertise the value it enforces (§B.5 refuses above it). Present means the host implements §§A–D. A client **MUST NOT** submit a definition carrying `loopback` to a host that does not advertise it.
+`capabilities.loopback` (optional, closed): `{ "maxIterations": integer >= 1, "maxHistoryEntryBytes": integer >= 4096 }`. `maxIterations` is the host's ceiling for any edge's `maxIterations`; `maxHistoryEntryBytes` is §C.4's per-entry `outputs` cap, measured over JCS. Both are members of the `loopback` facet (Decided 7.1: homed in `spec/v2/declaration.json` + `spec/v2/facets/`, from which `capabilities.schema.json` is generated). A host MAY set it as low as it likes and MUST advertise the value it enforces (§B.5 refuses above it). Present means the host implements §§A–D. A client **MUST NOT** submit a definition carrying `loopback` to a host that does not advertise it.
 
 ### §E.1 — Loopback edges are not forward edges (RFC 0257, trigger rules)
 
@@ -192,7 +192,7 @@ The edge-level exclusions in §A (no `condition`, `sourceOutput`, `targetInput`,
 +      , "loopback-iterations" ] } } }
 ```
 
-`schemas/v2/suspend-request.schema.json` `ApprovalData` gains `loopback: { round: integer >= 0, maxIterations: integer >= 1, exhausted: boolean }`, all required, closed. `schemas/v2/capabilities.schema.json` gains top-level `loopback: { maxIterations: integer >= 1, maxHistoryEntryBytes: integer >= 4096 }`, both required, closed (homed per UQ 7.1).
+`schemas/v2/suspend-request.schema.json` `ApprovalData` gains `loopback: { round: integer >= 0, maxIterations: integer >= 1, exhausted: boolean }`, all required, closed. `spec/v2/declaration.json` gains the core family `loopback` with facets `maxIterations: integer >= 1` and `maxHistoryEntryBytes: integer >= 4096`, both required (`spec/v2/facets/loopback.schema.json`); `schemas/v2/capabilities.schema.json` is regenerated from it.
 
 ### Examples
 
@@ -224,7 +224,7 @@ Negative:
 | a loopback edge that also carries `condition` | schema: §A exclusion |
 | `candidate → review`, `candidate → notify`, loopback `review → candidate` | §B.3: `notify` leaves the region |
 | loopback `review → candidate` where `candidate` is not upstream of `review` | §B.2 |
-| any `loopback` on a host without `capabilities.loopback` | §B, `capability_required` |
+| any `loopback` on a host without `capabilities.loopback` | §B: refused, `capability_required` or `validation_error` |
 
 ## Compatibility
 
@@ -242,18 +242,16 @@ Existing: `v2-approval-reject-disposition.test.ts` (leg 8 uses an undeclared rej
 
 New scenario `v2-bounded-loopback.test.ts`, gated on `capabilities.loopback`; `inapplicable` without it. Fixtures:
 
-- `conformance-loopback-refine`: `draft` (`core.noop`) → `gate` (`core.approvalGate`, actions accept/reject/refine) → `apply` (`core.noop`), loopback `gate → draft` `{ on: refine, maxIterations: 2, historyInput: "rounds" }`.
+- `conformance-loopback-refine`: `draft` (`core.identity`, which echoes its inputs) → `gate` (`core.approvalGate`, actions accept/reject/refine) → `apply` (`core.noop`), loopback `gate → draft` `{ on: refine, maxIterations: 2, historyInput: "rounds" }`.
 - `conformance-loopback-refine-fail`: the same with `onExhausted: "fail"`, `maxIterations: 1`.
-- `conformance-loopback-open-region`: adds `draft → side`; MUST be refused (§B.3).
 
 | Requirement id (`openwop.requirement.0258.*`) | Leg |
 | --- | --- |
 | `refine-rearms` | refine once: the gate's `node.completed` carries `loopback {round: 1, rearmed: [draft, gate]}`, `draft` starts again, a second `interrupt.requested` with a different `key`, `apply` never started |
-| `history-from-log` | `draft`'s second `node.started`/inputs or its `node.completed` echo shows `rounds` = one entry with round 1's `outputs` and `refineFeedback`, no timestamp |
+| `history-from-log` | `draft`'s `node.completed` echo shows `rounds`: `[]`, then one entry per round with exactly `round`, that round's `outputs` and its `refineFeedback`, oldest first |
 | `approval-data-loopback` | each request's `ApprovalData.loopback` reads `{0,2,false}`, `{1,2,false}`, `{2,2,true}` |
 | `withdraw-refine` | after two refines, the third request's `actions` omit `refine`, a refine resume answers `400 validation_error`, the run is still `waiting-approval`; accept completes it and `apply` runs once |
 | `fail-on-exhausted` | `-fail` fixture: refine, refine → `workflow.loopback-limit`, `cap.breached {kind: loopback-iterations}`, `run.failed` `loop_limit_exceeded`, `failedNodeId: gate` |
-| `open-region-refused` | registering `-open-region` answers `400 validation_error` |
 | `replay-rearms` (gated also on `replay` mode `replay`) | a replay fork at round 1's marked `node.completed` reaches the gate's second visit without a new caller decision for round 1 |
 
 Server-free legs (always run): the negative schema rows above against `schemas/v2`.
@@ -263,15 +261,15 @@ Server-free legs (always run): the negative schema rows above against `schemas/v
 | Requirement | Observable | Who can cause it | Verdict |
 | --- | --- | --- | --- |
 | §A shape and exclusions | schema validation | the suite, server-free | witnessable |
-| §B.1–B.4 refusals | `400 validation_error` on registration | the suite | witnessable — gated |
-| §B.5 ceiling | `400` for `maxIterations` above the advertised ceiling | the suite (reads the ceiling) | witnessable — gated |
-| §B.6 non-gate source | — | depends on what a host can determine statically | **unwitnessable** — host-judged: what a host can determine statically is not observable on the wire, so the rule is MAY-shaped in effect (UQ 7) |
-| §B non-advertiser refuses | `capability_required` | the suite, against a host without the facet | witnessable — on non-advertisers |
+| §B.1–B.4 refusals | — | — | **unwitnessable** — v2 exposes no operation through which a client submits a definition (no workflow registration, no inline definition on `createRun`), so a host's admission refusal never reaches the wire |
+| §B.5 ceiling | — | — | **unwitnessable** — as §B.1–B.4: no client-submitted definition at v2 |
+| §B.6 non-gate source (SHOULD) | — | depends on what a host can determine statically | **unwitnessable** — host-judged: what a host can determine statically is not observable on the wire, which is why it is a SHOULD |
+| §B non-advertiser never runs the edge | — | — | **unwitnessable** — as §B.1–B.4: no client-submitted definition at v2 |
 | §C.1 marker | `node.completed.loopback` | the suite (one refine) | witnessable — gated |
 | §C.2 nothing leaves the region | `apply` has no `node.started`/`node.skipped` before accept | the suite | witnessable — gated |
 | §C.3 re-arm and new key | second `node.started` for `draft`, second `interrupt.requested` with a new key | the suite | witnessable — gated |
-| §C.4 history from the log, no run-scoped bytes | `rounds` content | the suite, if the target's inputs are observable (`core.noop` echoes) | witnessable — gated, see Unresolved 3 |
-| §C.4 size cap | an entry over `maxHistoryEntryBytes` arrives as `{truncated: true, bytes}` with `round` and `refineFeedback` intact | the suite (a fixture producer whose output exceeds the advertised cap) | witnessable — gated |
+| §C.4 history from the log, no run-scoped bytes | `rounds` content | the suite (`core.identity` echoes its inputs) | witnessable — gated |
+| §C.4 size cap | an entry over `maxHistoryEntryBytes` arrives as `{truncated: true, bytes}` with `round` and `refineFeedback` intact | the suite (a fixture producer whose output exceeds the advertised cap) | witnessable — gated (not in the first scenario) |
 | §C.5 limits | `recursion_limit_exceeded` with a small `recursionLimit` | the suite | witnessable — gated (not in the first scenario) |
 | §C.6 replay | fork behaviour | the suite, with `replay` | witnessable — doubly gated |
 | §D withdraw / fail | `actions`, `400`, events, terminal | the suite | witnessable — gated |
@@ -281,25 +279,26 @@ Server-free legs (always run): the negative schema rows above against `schemas/v
 1. **Do nothing.** Every loop stays a fresh run (Book AI's workaround) or an undeclared cycle whose bound differs per host. Rejected: the duplication of paid upstream work and the per-host bound are the two problems.
 2. **`refineTo: <nodeId>` on the gate's config.** The smallest change for one host. Rejected: v2 does not schema node `config`, so the protocol could not validate or carry it; it would have to be added to every gate type separately (`core.approvalGate`, `core.chat.approvalGate`, `core.interrupt`); a builder cannot draw it as an edge; and admitting a cycle is a graph decision, not a node's.
 3. **Bind `settings.maxLoopbackIterations` to undeclared cycles** (openwop#1748 reading 1). Rejected: one number per definition cannot bound two loops differently, it does not say which settle takes the loop, and it would change the meaning of every existing cyclic definition on hosts that run cycles today.
-4. **Conditioned loopback on any node** (`condition` + `maxIterations`, no `on`). More general. Deferred (Unresolved 1): a non-gate loop has no reviewer, so "withdraw" has no meaning and the region rules need a failed-settle story (a retry after a failure reads as the same visit today). Starting with the gate keeps every rule witnessable.
+4. **Conditioned loopback on any node** (`condition` + `maxIterations`, no `on`). More general. Deferred (Decided 1): a non-gate loop has no reviewer, so "withdraw" has no meaning and the region rules need a failed-settle story (a retry after a failure reads as the same visit today). Starting with the gate keeps every rule witnessable.
 5. **Feedback in a run variable.** The lead design for one host. Rejected: run variables are not rebuilt from the log on that host, so a fork cut mid-loop would hand the target a different history and the replayed model call would diverge. §C.4 rebuilds from recorded events instead.
 6. **A separate `workflow.looped-back` event for the re-arm.** Rejected in favour of a field on the gate's own `node.completed`: one event, no window between the gate settling and the re-arm being recorded, and no v2-only event row (the event codemap is keyed on v1 names).
 
-## Unresolved questions
+## Decided questions
 
-1. Should a later revision admit `on: "reject"` and conditioned non-gate loopbacks (Alternative 4)? What does a failed settle mean for visits and retries there?
-2. Should `historyInput` entries carry `decidedBy`? It is useful to an agent ("the editor asked for…") but is a principal reference in model-bound text. This draft says no.
-3. `history-from-log` needs the target's inputs to be observable. `core.noop` echoing its inputs on `node.completed.outputs` is the current convention; confirm, or add a dedicated `core.echo`.
-4. Should `ApprovalData.loopback` also be required on `interrupt.resolved`? This draft records it on the request only.
-5. Is `400 validation_error` the right refusal for §B, or a dedicated `loopback_invalid` code with `details.reason`?
-6. The comment window. This RFC binds replay (§C.6), so RFC 0147 §A.6 forbids a bootstrap waiver, and only the steward can override it. Until it flips, this merges as a `Draft` and hosts keep it default-off and unadvertised.
+Decided 2026-11-08 at `Draft → Active`:
 
-7. **openwop-be review, to fix before `Active` (2026-11-04):**
-   1. The capability facet belongs in `spec/v2/declaration.json` and `spec/v2/facets/`; `capabilities.schema.json` is generated from them, so §E's diff targets the wrong file.
-   2. §B's "a host that does not advertise `capabilities.loopback` MUST refuse with `capability_required`" binds every existing host to new behaviour, and every one of them would fail it. Scope the MUST to advertisers. For non-advertisers it remains §E's client rule plus the closed `WorkflowEdge` schema.
-   3. §B.6 is an unwitnessable MUST, as the falsifiability table already admits. Either make it witnessable (a closed list of gate types) or make it a SHOULD.
-   4. The comment window can be waived only by the steward, given directly to openwop-be (RFC 0147 §A.6: this RFC binds replay). See UQ 6.
-   5. §C.4's size cap (Draft revision, 2026-11-04): confirm the 4096 floor, JCS (RFC 8785) as the measure, and that a truncated entry keeps `refineFeedback`. Register gap G5 is left as filed, so the corpus stamp does not move; its disposition changes with the `Active` flip.
+1. **Reject loops and conditioned non-gate loops.** Deferred to a later revision. This revision admits only `on: "refine"`, and a failed settle's meaning for visits and retries is that revision's question.
+2. **`decidedBy` in history entries.** No. An entry carries `round`, `outputs` and `refineFeedback` only, so no principal reaches model-bound text.
+3. **Observing the target's inputs.** `core.identity` echoes its inputs on `node.completed.outputs`, the convention RFC 0257's fixtures already use. No `core.echo` is added.
+4. **`ApprovalData.loopback` on `interrupt.resolved`.** No. It is recorded on the request only; the resolution already records the action and the feedback.
+5. **The §B refusal code.** `400 validation_error`, with no dedicated code. A host MAY add `details.reason`.
+6. **The comment window.** Waived by the maintainer on 2026-11-08, a steward override of RFC 0147 §A.6.
+7. **openwop-be review items.**
+   1. Done: the facet is homed in `spec/v2/declaration.json` + `spec/v2/facets/loopback.schema.json`.
+   2. Done: §B's refusal MUST binds advertisers. A non-advertiser MUST NOT run or drop the edge, with either refusal code.
+   3. Done: §B.6 is a SHOULD.
+   4. Done: the window is waived (item 6).
+   5. Confirmed: the 4096 floor, JCS as the measure, and that a truncated entry keeps `refineFeedback`.
 
 ## Implementation notes (non-normative)
 
@@ -314,10 +313,10 @@ Prior art: BPMN 2.0 loops back through gateways with no built-in bound; Temporal
 
 ## Acceptance criteria
 
-- [ ] Normative text merged in its schema-description homes (gap G1).
-- [ ] Schemas updated; `spec/v2/surface-baseline.json` regenerated.
-- [ ] `v2-bounded-loopback.test.ts` and its three fixtures in the suite.
-- [ ] CHANGELOG entry.
+- [x] Normative text merged in its schema-description homes (gap G1). *(2026-11-08, 2.46.44.)*
+- [x] Schemas updated; `spec/v2/surface-baseline.json` regenerated. *(2026-11-08.)*
+- [x] `v2-bounded-loopback.test.ts` and its two fixtures in the suite. *(2026-11-08, 2.46.44; judges in `lib/bounded-loopback-witness.ts`, whose self-tests fail each judge on a sabotaged log.)*
+- [x] CHANGELOG entry. *(2026-11-08.)*
 - [ ] A certified host bundle records the `0258.*` rows `executed-pass` (openwop-app is the planned first witness; the v2 reference host is not committed to).
 
 ## References
@@ -326,3 +325,8 @@ Prior art: BPMN 2.0 loops back through gateways with no built-in bound; Temporal
 - openwop#1748 (`settings.maxLoopbackIterations` unbound), openwop#1697 (per-visit keys), RFC 0183 (refine fidelity), RFC 0223 (reject disposition), RFC 0257 (skipped terminals), RFC 0133 (sub-chains), RFC 0185 (vendor hatch on closed defs).
 - openwop-app ADR 0772 D5 (an earlier host design for loopback, never shipped) and ADR 1002 (the invocation log, already split per visit).
 - Registers: `RFCS/registers/0258-bounded-refine-loopback.gaps.md`, `RFCS/registers/0258-bounded-refine-loopback.risks.md`.
+
+## Status history
+
+- 2026-11-04 — Draft; Draft revision (§C.4 entry shape and size cap, #2084).
+- 2026-11-08 — Active (comment window waived); wire, scenario and fixtures land in 2.46.44.

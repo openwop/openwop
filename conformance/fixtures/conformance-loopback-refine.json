@@ -1,0 +1,90 @@
+{
+  "id": "conformance-loopback-refine",
+  "name": "Conformance: Bounded loopback (refine, withdraw)",
+  "version": "1.0",
+  "description": "RFC 0258. draft (core.identity, echoes its inputs) → gate (core.approvalGate, accept/reject/refine) → apply (core.noop), plus a loopback edge gate → draft {on: refine, maxIterations: 2, historyInput: rounds}. Each refine re-runs draft and asks gate again; draft echoes the round history it received. After two refines the third visit omits refine (onExhausted defaults to withdraw), and accept runs apply once. Conformance scenario: v2-bounded-loopback.test.ts.",
+  "nodes": [
+    {
+      "id": "draft",
+      "typeId": "core.identity",
+      "name": "Draft",
+      "position": {
+        "x": 0,
+        "y": 0
+      },
+      "config": {},
+      "inputs": {}
+    },
+    {
+      "id": "gate",
+      "typeId": "core.approvalGate",
+      "name": "Review",
+      "position": {
+        "x": 200,
+        "y": 0
+      },
+      "config": {
+        "title": "Conformance loopback review (conformance-loopback-refine)",
+        "description": "Conformance suite — refine to loop back to draft.",
+        "actions": [
+          "accept",
+          "reject",
+          "refine"
+        ]
+      },
+      "inputs": {}
+    },
+    {
+      "id": "apply",
+      "typeId": "core.noop",
+      "name": "Apply",
+      "position": {
+        "x": 400,
+        "y": 0
+      },
+      "config": {},
+      "inputs": {}
+    }
+  ],
+  "edges": [
+    {
+      "id": "draft-gate",
+      "sourceNodeId": "draft",
+      "targetNodeId": "gate"
+    },
+    {
+      "id": "again",
+      "sourceNodeId": "gate",
+      "targetNodeId": "draft",
+      "loopback": {
+        "on": "refine",
+        "maxIterations": 2,
+        "historyInput": "rounds"
+      }
+    },
+    {
+      "id": "gate-apply",
+      "sourceNodeId": "gate",
+      "targetNodeId": "apply",
+      "triggerRule": "all_success"
+    }
+  ],
+  "triggers": [
+    {
+      "id": "manual",
+      "type": "manual",
+      "enabled": true
+    }
+  ],
+  "variables": [],
+  "metadata": {
+    "tags": [
+      "conformance",
+      "hitl",
+      "loopback"
+    ]
+  },
+  "settings": {
+    "timeout": 0
+  }
+}
