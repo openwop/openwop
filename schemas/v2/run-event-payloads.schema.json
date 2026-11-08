@@ -1236,6 +1236,18 @@
         "durationMs": {
           "type": "integer",
           "minimum": 0
+        },
+        "loopback": {
+          "type": "object",
+          "description": "RFC 0258 \u00a7C.1 \u2014 this completion of an approval gate took a declared loopback edge (workflow-definition.schema.json $defs/EdgeLoopback). `round` is this taking's 1-based number and `rearmed` lists every region node in nodes[] order. The marker is the only record of the decision: the host MUST decide a re-arm from it, never by re-evaluating the resolution, on replay, fork and recovery, and MUST NOT evaluate the gate's other outgoing edges for this settle. A replay fork whose prefix ends after a marked completion resumes with the region re-armed.",
+          "required": ["edgeId", "targetNodeId", "round", "rearmed"],
+          "properties": {
+            "edgeId": { "type": "string", "minLength": 1 },
+            "targetNodeId": { "$ref": "ids.schema.json#/$defs/nodeId" },
+            "round": { "type": "integer", "minimum": 1 },
+            "rearmed": { "type": "array", "items": { "$ref": "ids.schema.json#/$defs/nodeId" }, "minItems": 2, "uniqueItems": true }
+          },
+          "additionalProperties": false
         }
       },
       "patternProperties": { "^(openwop-|x-|vendor\\.)": { "description": "Vendor / host extension escape hatch (RFC 0185 \u00a7B). This def was `additionalProperties: true` in v1 and closed in v2 with no hatch and no migration row, so every extra key a host LEGITIMATELY recorded under v1 became invalid at the cut with nowhere to put it. Two production hosts independently lost data to that: one drops 32 distinct keys at the major-2 read (the conversation content among them), the other projects era-3 rows ON WRITE and lost a variable's value AT REST. A property matching this pattern is carried opaquely \u2014 a host MUST NOT interpret it, and MUST NOT silently drop it (RFC 0185 \u00a7C)." } },
@@ -1819,7 +1831,7 @@
     },
     "workflowLoopbackLimit": {
       "type": "object",
-      "description": "Emitted when a request-changes loop hits its `maxLoopbackIterations` cap.",
+      "description": "Emitted when a loop hits its cap. RFC 0258 \u00a7D binds one emitting rule: a `refine` resolution on the exhausted visit of a gate whose loopback edge declares `onExhausted: fail` MUST emit it (`nodeId` the gate, `iterations` and `limit` both maxIterations), then `cap.breached` with kind `loopback-iterations`, and fail the run with `loop_limit_exceeded`. `settings.maxLoopbackIterations` binds nothing and admits no cycle.",
       "required": [
         "nodeId",
         "iterations"
@@ -1879,7 +1891,8 @@
             "budget-tokens",
             "budget-cost",
             "budget-tool-calls",
-            "budget-retries"
+            "budget-retries",
+            "loopback-iterations"
           ]
         },
         "limit": {
