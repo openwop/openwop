@@ -1,3 +1,8 @@
+## [2.46.44] — 2026-11-08 — Bounded loopback and resolvedVia go Active
+
+- **RFC 0258.** `v2-bounded-loopback`: a server-free shape leg and six host legs (re-arm, history from the log, `ApprovalData.loopback`, withdraw, fail on exhaustion, replay re-arm), gated on the `loopback` family and the `conformance-loopback-refine` / `-fail` fixtures. Judges in `lib/bounded-loopback-witness.ts`.
+- **RFC 0259.** `v2-interrupt-resolved-via`: a server-free shape leg and six host legs on the `readInterruptToken` seam, gated on `interrupt.resolvedVia`.
+
 ## [2.46.43] — 2026-11-04 — Two RFCs filed as Draft: bounded loopback and resolvedVia
 
 - **No suite change.** RFCs 0258 and 0259 add gap rows, which change the packed `spec/v1/gaps.json` and `CORPUS-STAMP.json`; no scenario, fixture or schema moves.

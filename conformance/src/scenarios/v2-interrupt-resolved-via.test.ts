@@ -249,9 +249,9 @@ describe('v2 RFC 0259 — token resolutions (host, seam-gated)', () => {
     if ('blocked' in r) return seamAbsent(r.blocked);
     if (r.refused) {
       expect(r.refused, req(R('forged-binding-binds-no-one'), DOC, 'refusing a presentation whose binding does not verify satisfies §A.4')).toBe(true);
-      return;
+    } else {
+      expect(obj(r.payload?.['resolvedVia'])?.['boundTo'], req(R('forged-binding-binds-no-one'), DOC, 'a host MUST NOT set boundTo from a binding it did not make (§A.4)')).toBeUndefined();
+      expect(r.payload?.['resolvedBy'], req(R('forged-binding-binds-no-one'), DOC, 'and MUST NOT record the claimed name in resolvedBy (§A.1)')).toBeUndefined();
     }
-    expect(obj(r.payload?.['resolvedVia'])?.['boundTo'], req(R('forged-binding-binds-no-one'), DOC, 'a host MUST NOT set boundTo from a binding it did not make (§A.4)')).toBeUndefined();
-    expect(r.payload?.['resolvedBy'], req(R('forged-binding-binds-no-one'), DOC, 'and MUST NOT record the claimed name in resolvedBy (§A.1)')).toBeUndefined();
   });
 });

@@ -1694,6 +1694,27 @@
       "facetsFrom": "spec/v2/facets/runList.schema.json"
     },
     {
+      "key": "loopback",
+      "kind": "family",
+      "normativeText": ["spec/v2/core/execution.md", "schemas/v2/workflow-definition.schema.json"],
+      "anchor": "core",
+      "section": "core/capabilities.md#loopback",
+      "peerDependencyId": "loopback",
+      "witness": "witnessable-gated",
+      "maturity": {
+        "technical": "experimental",
+        "adoption": "none"
+      },
+      "facets": [
+        "maxIterations",
+        "maxHistoryEntryBytes"
+      ],
+      "floorScenarios": [],
+      "requirementIds": [],
+      "owningRfc": "0258",
+      "facetsFrom": "spec/v2/facets/loopback.schema.json"
+    },
+    {
       "key": "interrupt",
       "kind": "family",
       "anchor": "core",
@@ -1707,6 +1728,7 @@
       "facets": [
         "refKinds",
         "tokenAlgs",
+        "resolvedVia",
         "callbackDelivery"
       ],
       "floorScenarios": [],

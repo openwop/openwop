@@ -1,7 +1,7 @@
 openapi: 3.1.0
 info:
   title: OpenWOP conformance seams profile (openwop-conformance-seams-v2)
-  version: 2.46.43
+  version: 2.46.44
   description: 'The OpenWOP conformance seams profile (`openwop-conformance-seams-v2`): test-only operations in their own
     path space, `/conformance/seams/…`. The profile is versioned and validated against the canonical v2 schemas with no tolerance
     path. It is not a capability: a host advertises the profile, never a `testSeams` flag.
@@ -1151,6 +1151,61 @@ paths:
                     const: true
                   lane:
                     type: string
+        '400':
+          $ref: '#/components/responses/ValidationError'
+        '401':
+          $ref: '#/components/responses/Unauthenticated'
+        '404':
+          $ref: '#/components/responses/NotFound'
+  /conformance/seams/sample/interrupts/token:
+    post:
+      tags:
+      - Seams
+      operationId: readInterruptToken
+      summary: Read the resume token of a suspended interrupt in a run the caller owns
+      description: 'Returns the resume token the host issued for the open interrupt on `nodeId` of `runId` (a run the authenticated
+        caller created), exactly as its production issuance path minted it. With `bind: true` it also returns `resumeValueMembers`:
+        the members the host''s own production binding path would put in a presentation it addresses to the CALLER (for example
+        a signed voter), which the suite merges into the `resumeValue` it posts to `POST /interrupts/{token}`. The seam mints
+        nothing the production path does not and resolves nothing. `404` when the seam is not wired or no open interrupt matches
+        (including one already resolved).'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              additionalProperties: false
+              required:
+              - runId
+              - nodeId
+              properties:
+                runId:
+                  $ref: ../schemas/v2/ids.schema.json#/$defs/runId
+                nodeId:
+                  $ref: ../schemas/v2/ids.schema.json#/$defs/nodeId
+                bind:
+                  type: boolean
+                  description: Also return a binding of the presentation to the caller; absent ⇒ false.
+      responses:
+        '200':
+          description: The token, and the binding when asked for.
+          content:
+            application/json:
+              schema:
+                type: object
+                additionalProperties: false
+                required:
+                - token
+                properties:
+                  token:
+                    type: string
+                    minLength: 1
+                    description: The resume token (identity.md §4).
+                  resumeValueMembers:
+                    type: object
+                    description: Present only when `bind` was true and the host binds presentations. Host-defined members;
+                      the suite merges them into `resumeValue` unchanged.
         '400':
           $ref: '#/components/responses/ValidationError'
         '401':

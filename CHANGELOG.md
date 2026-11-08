@@ -33,6 +33,12 @@ Entries before this file was condensed carried full development detail. That tex
 
 - **RFC 0246 Active (safety fix, `GHSA-ffx7-pm5h-v6pq`): a trial that failed its trajectory cannot carry a task or a suite to a pass.** The `mean` task rule and suite `passed` read a gating score that counts it 0; reported scores are unchanged. 90-day window waived by recorded STEWARD OVERRIDE.
 
+## [2.46.44] — 2026-11-08 — Bounded loopback and resolvedVia go Active
+
+- **RFC 0258 Active (window waived).** A `WorkflowEdge.loopback` from an approval gate back to the node it reviews: a `refine` re-runs that region with the round history rebuilt from the log; the gate's `node.completed` marks the re-arm and the cap is required. New core family `loopback`.
+- **RFC 0259 Active (window waived).** `interrupt.resolved.resolvedVia` records a token resolution's instrument and a host-attested addressee beside `resolvedBy`, which names only an authenticated Subject. Facet `interrupt.resolvedVia`; seam `readInterruptToken`.
+- **Suite.** `v2-bounded-loopback` (7 ids, two fixtures) and `v2-interrupt-resolved-via` (7 ids). No host advertises either yet.
+
 ## [2.46.43] — 2026-11-04 — Two RFCs filed as Draft: bounded loopback and resolvedVia
 
 - **RFC 0258 (Draft).** A declared, bounded loopback edge from an approval gate back to the node it reviews: a `refine` re-runs that region with the round history rebuilt from the log, and the cap is required and never unlimited. Text and registers only; no wire change until `Active`.

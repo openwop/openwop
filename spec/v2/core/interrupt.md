@@ -102,6 +102,7 @@ A host that does not advertise it SHOULD refuse the member and MUST NOT claim de
 The token grammar and the `interrupt.tokenAlgs[]` / `kid` check are [identity.md](identity.md) §4 (`401 interrupt_token_invalid`).
 
 - **Expiry.** Every token MUST carry `expiresAt`. The default SHOULD be 30 minutes, and a host MUST cap the lifetime at the interrupt's `timeoutMs` when one exists. A token MUST NOT outlive the interrupt it resolves; past `expiresAt` the host MUST answer `410 interrupt_expired`.
+- **Instrument.** A host advertising `interrupt.resolvedVia` MUST record `resolvedVia` on every token resolution, and MUST carry `boundTo` or refuse a token resolution of an interrupt that declares eligibility. `resolvedBy` names only an authenticated Subject (`run-event-payloads.schema.json` `$defs/interruptResolved`).
 - **Invalidation.** A token MUST be invalidated when its interrupt is resolved or its run is cancelled or completed. Later use MUST answer `409 interrupt_already_resolved`.
 - **Verification.** MAC comparison MUST be constant-time. `kid` selects the verification secret.
 - **Intent.** A token minted with `intent: resolve` authorizes both operations. A host MAY mint `intent: inspect` tokens; a resolve with one MUST be refused with `403`.

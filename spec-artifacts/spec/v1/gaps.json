@@ -1,7 +1,7 @@
 {
   "$schema": "./gaps.schema.json",
   "version": 1,
-  "updated": "2026-11-04",
+  "updated": "2026-11-08",
   "witnessClasses": [
     "witnessable-unaided",
     "witnessable-gated",
@@ -15762,8 +15762,8 @@
       "surface": "**High.** `history-from-log` needs the target's inputs to be observable on the wire (Unresolved 3). openwop-app `core.noop` echoes its inputs as outputs (`bootstrap/nodes.ts`, `{ ...inputs }`); the v2 reference host is unchecked.",
       "witness": "unclassified",
       "requirementId": null,
-      "disposition": "transferred",
-      "target": "RFC",
+      "disposition": "closed",
+      "target": null,
       "sources": [
         {
           "file": "RFCS/registers/0258-bounded-refine-loopback.gaps.md",
@@ -15779,8 +15779,8 @@
       "surface": "**Medium.** \"A node the host can determine will never raise an approval interrupt offering refine\" is host-judged. Two hosts can admit different definitions.",
       "witness": "unclassified",
       "requirementId": null,
-      "disposition": "transferred",
-      "target": "RFC",
+      "disposition": "closed",
+      "target": null,
       "sources": [
         {
           "file": "RFCS/registers/0258-bounded-refine-loopback.gaps.md",
@@ -15813,8 +15813,8 @@
       "surface": "**Medium.** `outputs` in a history entry can be large (a full draft per round), and every round is re-delivered. No size bound.",
       "witness": "unclassified",
       "requirementId": null,
-      "disposition": "transferred",
-      "target": "TODO.md",
+      "disposition": "closed",
+      "target": null,
       "sources": [
         {
           "file": "RFCS/registers/0258-bounded-refine-loopback.gaps.md",
@@ -15830,8 +15830,8 @@
       "surface": "**Low.** A gate whose `actions` hold only `refine` fails on its exhausted visit even under `withdraw`. Whether to refuse such a definition at §B instead.",
       "witness": "unclassified",
       "requirementId": null,
-      "disposition": "transferred",
-      "target": "RFC",
+      "disposition": "closed",
+      "target": null,
       "sources": [
         {
           "file": "RFCS/registers/0258-bounded-refine-loopback.gaps.md",
@@ -16017,8 +16017,8 @@
       "surface": "**High.** Whether the 7-day window may be waived.",
       "witness": "unclassified",
       "requirementId": null,
-      "disposition": "transferred",
-      "target": "RFC",
+      "disposition": "closed",
+      "target": null,
       "sources": [
         {
           "file": "RFCS/registers/0259-interrupt-resolved-via.gaps.md",

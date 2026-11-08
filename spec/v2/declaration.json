@@ -1696,6 +1696,7 @@
     {
       "key": "loopback",
       "kind": "family",
+      "normativeText": ["spec/v2/core/execution.md", "schemas/v2/workflow-definition.schema.json"],
       "anchor": "core",
       "section": "core/capabilities.md#loopback",
       "peerDependencyId": "loopback",

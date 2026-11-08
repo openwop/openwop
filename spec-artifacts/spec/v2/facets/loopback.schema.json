@@ -1,0 +1,19 @@
+{
+  "$comment": "RFC 0258 §E — the bounded-loopback family's facets: the ceiling the host enforces on an edge's maxIterations (§B.5), and the per-entry size cap on a round's outputs in the historyInput array, measured over the RFC 8785 (JCS) serialization (§C.4). Both are required: present means the host implements §§A–D.",
+  "properties": {
+    "maxIterations": {
+      "type": "integer",
+      "minimum": 1,
+      "description": "RFC 0258 §B.5, §E — the most rounds this host admits on any loopback edge. A definition whose edge declares more MUST be refused with 400 validation_error."
+    },
+    "maxHistoryEntryBytes": {
+      "type": "integer",
+      "minimum": 4096,
+      "description": "RFC 0258 §C.4 — a round's outputs whose JCS serialization is longer than this many UTF-8 bytes arrive in the history as { truncated: true, bytes }. The floor keeps a host from starving the loop."
+    }
+  },
+  "required": [
+    "maxIterations",
+    "maxHistoryEntryBytes"
+  ]
+}
