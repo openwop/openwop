@@ -13611,7 +13611,7 @@
     {
       "id": "openwop.it.fixtures-valid.finds-at-least-one-fixture-file",
       "file": "fixtures-valid.test.ts",
-      "line": 49,
+      "line": 56,
       "title": "finds at least one fixture file",
       "explicitId": "openwop.it.fixtures-valid.finds-at-least-one-fixture-file",
       "citations": [
@@ -13624,7 +13624,7 @@
     {
       "id": "openwop.it.fixtures-valid.validates-against-workflow-definition-schema-json",
       "file": "fixtures-valid.test.ts",
-      "line": 54,
+      "line": 61,
       "title": null,
       "explicitId": "openwop.it.fixtures-valid.validates-against-workflow-definition-schema-json",
       "citations": [
@@ -13638,7 +13638,7 @@
     {
       "id": "openwop.it.fixtures-valid.every-fixture-id-matches-its-filename",
       "file": "fixtures-valid.test.ts",
-      "line": 64,
+      "line": 76,
       "title": "every fixture id matches its filename",
       "explicitId": "openwop.it.fixtures-valid.every-fixture-id-matches-its-filename",
       "citations": [
@@ -13652,7 +13652,7 @@
     {
       "id": "openwop.it.fixtures-valid.every-fixture-has-a-manual-trigger-so-the-conformance-driver-can-start-it",
       "file": "fixtures-valid.test.ts",
-      "line": 75,
+      "line": 87,
       "title": "every fixture has a manual trigger so the conformance driver can start it",
       "explicitId": "openwop.it.fixtures-valid.every-fixture-has-a-manual-trigger-so-the-conformance-driver-can-start-it",
       "citations": [
@@ -13666,7 +13666,7 @@
     {
       "id": "openwop.it.fixtures-valid.finds-at-least-one-pack-manifest-fixture-private-scope-coverage",
       "file": "fixtures-valid.test.ts",
-      "line": 123,
+      "line": 135,
       "title": "finds at least one pack-manifest fixture (private-scope coverage)",
       "explicitId": "openwop.it.fixtures-valid.finds-at-least-one-pack-manifest-fixture-private-scope-coverage",
       "citations": [
@@ -13679,7 +13679,7 @@
     {
       "id": "openwop.it.fixtures-valid.pack-manifests-validates-against-its-kind-s-manifest-schema",
       "file": "fixtures-valid.test.ts",
-      "line": 128,
+      "line": 140,
       "title": null,
       "explicitId": "openwop.it.fixtures-valid.pack-manifests-validates-against-its-kind-s-manifest-schema",
       "citations": [
@@ -13693,7 +13693,7 @@
     {
       "id": "openwop.it.fixtures-valid.the-private-scope-fixture-exercises-the-v1-0-private-pack-pattern",
       "file": "fixtures-valid.test.ts",
-      "line": 148,
+      "line": 160,
       "title": "the private-scope fixture exercises the v1.0 private-pack pattern",
       "explicitId": "openwop.it.fixtures-valid.the-private-scope-fixture-exercises-the-v1-0-private-pack-pattern",
       "citations": [
@@ -13706,7 +13706,7 @@
     {
       "id": "openwop.it.fixtures-valid.finds-at-least-one-connection-pack-fixture-rfc-0095-coverage",
       "file": "fixtures-valid.test.ts",
-      "line": 182,
+      "line": 194,
       "title": "finds at least one connection-pack fixture (RFC 0095 coverage)",
       "explicitId": "openwop.it.fixtures-valid.finds-at-least-one-connection-pack-fixture-rfc-0095-coverage",
       "citations": [
@@ -13719,7 +13719,7 @@
     {
       "id": "openwop.it.fixtures-valid.connection-packs-validates-against-connection-pack-manifest-schema-json",
       "file": "fixtures-valid.test.ts",
-      "line": 187,
+      "line": 199,
       "title": null,
       "explicitId": "openwop.it.fixtures-valid.connection-packs-validates-against-connection-pack-manifest-schema-json",
       "citations": [
@@ -13733,7 +13733,7 @@
     {
       "id": "openwop.it.fixtures-valid.finds-at-least-one-trigger-event-fixture-rfc-0099-coverage",
       "file": "fixtures-valid.test.ts",
-      "line": 222,
+      "line": 234,
       "title": "finds at least one trigger-event fixture (RFC 0099 coverage)",
       "explicitId": "openwop.it.fixtures-valid.finds-at-least-one-trigger-event-fixture-rfc-0099-coverage",
       "citations": [
@@ -13746,7 +13746,7 @@
     {
       "id": "openwop.it.fixtures-valid.trigger-events-validates-against-its-schema",
       "file": "fixtures-valid.test.ts",
-      "line": 227,
+      "line": 239,
       "title": null,
       "explicitId": "openwop.it.fixtures-valid.trigger-events-validates-against-its-schema",
       "citations": [
@@ -13760,7 +13760,7 @@
     {
       "id": "openwop.it.fixtures-valid.finds-at-least-one-prompt-template-fixture",
       "file": "fixtures-valid.test.ts",
-      "line": 265,
+      "line": 277,
       "title": "finds at least one prompt-template fixture",
       "explicitId": "openwop.it.fixtures-valid.finds-at-least-one-prompt-template-fixture",
       "citations": [
@@ -13773,7 +13773,7 @@
     {
       "id": "openwop.it.fixtures-valid.prompt-templates-validates-against-prompt-template-schema-json",
       "file": "fixtures-valid.test.ts",
-      "line": 273,
+      "line": 285,
       "title": null,
       "explicitId": "openwop.it.fixtures-valid.prompt-templates-validates-against-prompt-template-schema-json",
       "citations": [
@@ -13787,7 +13787,7 @@
     {
       "id": "openwop.it.fixtures-valid.every-fixture-templateid-matches-its-filename",
       "file": "fixtures-valid.test.ts",
-      "line": 288,
+      "line": 300,
       "title": "every fixture templateId matches its filename",
       "explicitId": "openwop.it.fixtures-valid.every-fixture-templateid-matches-its-filename",
       "citations": [
@@ -13801,7 +13801,7 @@
     {
       "id": "openwop.it.fixtures-valid.every-secret-source-variable-lives-in-a-fixture-tagged-for-the-secret-redaction",
       "file": "fixtures-valid.test.ts",
-      "line": 307,
+      "line": 319,
       "title": "every secret-source variable lives in a fixture tagged for the secret-redaction scenario",
       "explicitId": "openwop.it.fixtures-valid.every-secret-source-variable-lives-in-a-fixture-tagged-for-the-secret-redaction",
       "citations": [
@@ -13815,7 +13815,7 @@
     {
       "id": "openwop.it.fixtures-valid.v1-v2-one-positive-per-kind-and-every-one-validates-including-the-minimal-conver",
       "file": "fixtures-valid.test.ts",
-      "line": 373,
+      "line": 385,
       "title": "v1 + v2: one positive per kind, and every one validates — including the minimal conversation.start / conversation.close",
       "explicitId": "openwop.it.fixtures-valid.interrupt-payloads-positive-per-kind-validates",
       "citations": [
@@ -13833,7 +13833,7 @@
     {
       "id": "openwop.it.fixtures-valid.v1-v2-every-mismatched-kind-data-negative-is-refused-and-only-because-of-the-bin",
       "file": "fixtures-valid.test.ts",
-      "line": 387,
+      "line": 399,
       "title": "v1 + v2: every mismatched kind/data negative is refused, and only because of the binding",
       "explicitId": "openwop.it.fixtures-valid.interrupt-payloads-mismatched-kind-data-refused",
       "citations": [
