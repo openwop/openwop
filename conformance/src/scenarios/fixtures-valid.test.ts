@@ -12,7 +12,6 @@ import addFormats from 'ajv-formats';
 import type { ErrorObject } from 'ajv';
 import { FIXTURES_DIR, SCHEMAS_DIR } from '../lib/paths.js';
 import { req } from '../lib/requirement-ids.js';
-import { v2Validator } from '../lib/v2.js';
 
 // Layout-aware paths — `lib/paths.ts` resolves these for both repo
 // checkouts (schemas one level above the conformance package) and the
@@ -42,6 +41,13 @@ describe('fixtures: workflow-definition schema validity', () => {
   }
   // The root schema is already registered under its $id above; compile via getSchema.
   const validate = ajv.getSchema('workflow-definition.schema.json') ?? ajv.compile(JSON.parse(readFileSync(SCHEMA_PATH, 'utf8')));
+  // The v2 tree, for fixtures tagged `v2-only` (below). Loaded here rather than
+  // through lib/v2.ts, which imports the driver and would make this file host-bound.
+  const ajv2 = new Ajv2020({ allErrors: true, strict: false });
+  addFormats(ajv2);
+  const V2_DIR = join(SCHEMAS_DIR, 'v2');
+  for (const file of readdirSync(V2_DIR).filter((f) => f.endsWith('.schema.json'))) ajv2.addSchema(JSON.parse(readFileSync(join(V2_DIR, file), 'utf8')) as Record<string, unknown>);
+  const validateV2 = ajv2.getSchema('https://openwop.dev/spec/v2/workflow-definition.schema.json');
 
   const files = readdirSync(FIXTURES_DIR)
     .filter((f) => f.endsWith('.json')) // top-level only — sub-dirs hold non-workflow fixtures
@@ -58,9 +64,9 @@ describe('fixtures: workflow-definition schema validity', () => {
       // carry (RFC 0258's `WorkflowEdge.loopback`), so it is judged by the v2
       // schema instead. v1 is end-of-support (RFC 0234) and is never edited.
       const v2Only = Array.isArray(data?.metadata?.tags) && data.metadata.tags.includes('v2-only');
-      const v2 = v2Only ? v2Validator('workflow-definition.schema.json')(data) : null;
-      const ok = v2 ? v2.ok : validate(data);
-      const errors = v2 ? v2.errors : (validate.errors ?? [])
+      const judge = v2Only && validateV2 ? validateV2 : validate;
+      const ok = v2Only && !validateV2 ? false : judge(data);
+      const errors = (judge.errors ?? [])
         .map((e: ErrorObject) => `${e.instancePath || '/'}: ${e.message}`)
         .join('\n');
       expect(ok, req('openwop.it.fixtures-valid.validates-against-workflow-definition-schema-json', 'fixtures-valid.test.ts (no spec citation in file)', `Fixture ${file} fails workflow-definition schema:\n${errors}`)).toBe(true);
