@@ -540,9 +540,39 @@
           ],
           "default": "all_success",
           "description": "Optional fan-in / error-routing rule — the SAME shape and enum as a top-level workflow edge's `triggerRule` (workflow-definition.schema.json §WorkflowEdge). Governs how the target node fires given its incoming edges: `all_success` (default — every incoming edge's source succeeded), `any_success`, `all_complete` (fire when all sources have finished regardless of success — best-effort completion), `none_failed`, `any_failed`. Additive (RFC 0125): omitting it is identical to `all_success`, the implicit prior behavior. Mirrors the RFC 0013 2026-07-03 `condition` amendment's WorkflowEdge→FragmentEdge move. Expansion MUST carry this value onto the resulting `WorkflowEdge` so the scheduler honors it (see `workflow-chain-packs.md` §\"Expansion semantics\")."
+        },
+        "loopback": {
+          "$ref": "#/$defs/EdgeLoopback",
+          "description": "RFC 0258 §F — the same shape as a workflow edge's loopback (workflow-definition.schema.json §EdgeLoopback). Expansion MUST carry it verbatim onto the resulting WorkflowEdge. A loopback joins two nodes of one fragment; a sub-chain is one node of its parent, so a loopback never crosses a sub-chain boundary."
         }
       },
-      "additionalProperties": false
+      "additionalProperties": false,
+      "allOf": [
+        {
+          "if": {
+            "required": [
+              "loopback"
+            ]
+          },
+          "then": {
+            "not": {
+              "anyOf": [
+                {
+                  "required": [
+                    "condition"
+                  ]
+                },
+                {
+                  "required": [
+                    "triggerRule"
+                  ]
+                }
+              ]
+            }
+          },
+          "$comment": "RFC 0258 §A — a loopback edge carries no condition or trigger rule."
+        }
+      ]
     },
     "EdgeCondition": {
       "type": "object",
@@ -571,6 +601,43 @@
         "expression": {
           "type": "string",
           "description": "Used when type='expression'."
+        }
+      },
+      "additionalProperties": false
+    },
+    "EdgeLoopback": {
+      "type": "object",
+      "description": "RFC 0258 §A — a declared, bounded loopback. The edge runs from an approval gate (sourceNodeId) back to an ancestor of it (targetNodeId); the target, the gate and every node on a forward path between them are the region. A `refine` resolution of the gate takes the edge: the region re-runs as new visits, and the gate is asked again under a new interrupt key. A loopback edge is not a forward edge: trigger rules and RFC 0257's terminal set are computed without it (§E.1). Only a host advertising the `loopback` family admits it, and that host MUST refuse with 400 validation_error a definition whose forward graph has a cycle, whose target is not a forward ancestor of the gate, whose region has a forward edge leaving it from a node other than the gate, whose two loopback regions share a node, or whose maxIterations exceeds the advertised ceiling (§B). A host that does not advertise it MUST NOT run the edge as a plain cycle or drop it.",
+      "required": [
+        "on",
+        "maxIterations"
+      ],
+      "properties": {
+        "on": {
+          "type": "string",
+          "enum": [
+            "refine"
+          ],
+          "description": "RFC 0258 §A — the approval action that takes the edge. This revision admits only `refine`."
+        },
+        "maxIterations": {
+          "type": "integer",
+          "minimum": 1,
+          "description": "RFC 0258 §A, §D — the most rounds this edge may be taken in one run. Required; there is no default and no zero, so an unbounded loop cannot be declared."
+        },
+        "onExhausted": {
+          "type": "string",
+          "enum": [
+            "withdraw",
+            "fail"
+          ],
+          "default": "withdraw",
+          "description": "RFC 0258 §D — after maxIterations rounds. `withdraw` (default): the exhausted visit omits `refine` from `actions`, a refine resume answers 400 validation_error, and the run stays open (a gate whose only action is refine fails the run as for `fail`). `fail`: refine stays offered, and a refine on the exhausted visit emits workflow.loopback-limit, then cap.breached {kind: loopback-iterations}, and fails the run with loop_limit_exceeded naming the gate."
+        },
+        "historyInput": {
+          "type": "string",
+          "minLength": 1,
+          "description": "RFC 0258 §C.4 — when present, the target receives on this input port an array with one entry per round taken so far, oldest first: { round, outputs, refineFeedback? }. `outputs` is the target's own node.completed.outputs from that round and `refineFeedback` the gate's interrupt.resolved.refineFeedback. The host MUST rebuild it from the event log and MUST NOT add timestamps, principals, run ids or interrupt keys; the first visit receives []. When the RFC 8785 (JCS) serialization of a round's outputs exceeds the advertised loopback.maxHistoryEntryBytes, that entry's outputs MUST be { truncated: true, bytes: <its UTF-8 length> }, with round and refineFeedback kept."
         }
       },
       "additionalProperties": false

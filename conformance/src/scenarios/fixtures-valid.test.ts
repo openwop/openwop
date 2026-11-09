@@ -41,6 +41,13 @@ describe('fixtures: workflow-definition schema validity', () => {
   }
   // The root schema is already registered under its $id above; compile via getSchema.
   const validate = ajv.getSchema('workflow-definition.schema.json') ?? ajv.compile(JSON.parse(readFileSync(SCHEMA_PATH, 'utf8')));
+  // The v2 tree, for fixtures tagged `v2-only` (below). Loaded here rather than
+  // through lib/v2.ts, which imports the driver and would make this file host-bound.
+  const ajv2 = new Ajv2020({ allErrors: true, strict: false });
+  addFormats(ajv2);
+  const V2_DIR = join(SCHEMAS_DIR, 'v2');
+  for (const file of readdirSync(V2_DIR).filter((f) => f.endsWith('.schema.json'))) ajv2.addSchema(JSON.parse(readFileSync(join(V2_DIR, file), 'utf8')) as Record<string, unknown>);
+  const validateV2 = ajv2.getSchema('https://openwop.dev/spec/v2/workflow-definition.schema.json');
 
   const files = readdirSync(FIXTURES_DIR)
     .filter((f) => f.endsWith('.json')) // top-level only — sub-dirs hold non-workflow fixtures
@@ -53,8 +60,13 @@ describe('fixtures: workflow-definition schema validity', () => {
   for (const file of files) {
     it(`${file} validates against workflow-definition.schema.json`, () => {
       const data = JSON.parse(readFileSync(join(FIXTURES_DIR, file), 'utf8'));
-      const ok = validate(data);
-      const errors = (validate.errors ?? [])
+      // A fixture tagged `v2-only` uses a construct the frozen v1 wire cannot
+      // carry (RFC 0258's `WorkflowEdge.loopback`), so it is judged by the v2
+      // schema instead. v1 is end-of-support (RFC 0234) and is never edited.
+      const v2Only = Array.isArray(data?.metadata?.tags) && data.metadata.tags.includes('v2-only');
+      const judge = v2Only && validateV2 ? validateV2 : validate;
+      const ok = v2Only && !validateV2 ? false : judge(data);
+      const errors = (judge.errors ?? [])
         .map((e: ErrorObject) => `${e.instancePath || '/'}: ${e.message}`)
         .join('\n');
       expect(ok, req('openwop.it.fixtures-valid.validates-against-workflow-definition-schema-json', 'fixtures-valid.test.ts (no spec citation in file)', `Fixture ${file} fails workflow-definition schema:\n${errors}`)).toBe(true);

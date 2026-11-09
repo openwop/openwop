@@ -388,6 +388,29 @@
               "description": "Opaque role refs to notify."
             }
           }
+        },
+        "loopback": {
+          "type": "object",
+          "description": "RFC 0258 §D — present on every visit of a gate that is the source of a loopback edge, and only there. `round` is the number of rounds taken before this visit; `exhausted` is round >= maxIterations.",
+          "required": [
+            "round",
+            "maxIterations",
+            "exhausted"
+          ],
+          "properties": {
+            "round": {
+              "type": "integer",
+              "minimum": 0
+            },
+            "maxIterations": {
+              "type": "integer",
+              "minimum": 1
+            },
+            "exhausted": {
+              "type": "boolean"
+            }
+          },
+          "additionalProperties": false
         }
       },
       "additionalProperties": false

@@ -22,6 +22,10 @@
         ]
       }
     },
+    "resolvedVia": {
+      "type": "boolean",
+      "description": "RFC 0259 — true only if the host records `interrupt.resolved.resolvedVia` on every token resolution (run-event-payloads.schema.json $defs/interruptResolved.resolvedVia), and carries `boundTo` or refuses a token resolution of an interrupt that declares eligibility."
+    },
     "callbackDelivery": {
       "type": "boolean",
       "description": "RFC 0196 \u00a7A.1 \u2014 true only if the host delivers to createRun.callbackUrl (interrupt.md \u00a7Callback delivery). A host advertising it MUST hold callbackUrl to the webhooks.md \u00a7Egress guard at create time and at delivery."

@@ -1,0 +1,92 @@
+{
+  "id": "conformance-loopback-refine-fail",
+  "name": "Conformance: Bounded loopback (refine, fail on exhaustion)",
+  "version": "1.0",
+  "description": "RFC 0258 §D. The same graph with maxIterations 1 and onExhausted: fail. The first refine loops; a refine on the exhausted second visit emits workflow.loopback-limit, then cap.breached {kind: loopback-iterations}, and fails the run with loop_limit_exceeded naming gate. Conformance scenario: v2-bounded-loopback.test.ts.",
+  "nodes": [
+    {
+      "id": "draft",
+      "typeId": "core.identity",
+      "name": "Draft",
+      "position": {
+        "x": 0,
+        "y": 0
+      },
+      "config": {},
+      "inputs": {}
+    },
+    {
+      "id": "gate",
+      "typeId": "core.approvalGate",
+      "name": "Review",
+      "position": {
+        "x": 200,
+        "y": 0
+      },
+      "config": {
+        "title": "Conformance loopback review (conformance-loopback-refine-fail)",
+        "description": "Conformance suite — refine to loop back to draft.",
+        "actions": [
+          "accept",
+          "reject",
+          "refine"
+        ]
+      },
+      "inputs": {}
+    },
+    {
+      "id": "apply",
+      "typeId": "core.noop",
+      "name": "Apply",
+      "position": {
+        "x": 400,
+        "y": 0
+      },
+      "config": {},
+      "inputs": {}
+    }
+  ],
+  "edges": [
+    {
+      "id": "draft-gate",
+      "sourceNodeId": "draft",
+      "targetNodeId": "gate"
+    },
+    {
+      "id": "again",
+      "sourceNodeId": "gate",
+      "targetNodeId": "draft",
+      "loopback": {
+        "on": "refine",
+        "maxIterations": 1,
+        "historyInput": "rounds",
+        "onExhausted": "fail"
+      }
+    },
+    {
+      "id": "gate-apply",
+      "sourceNodeId": "gate",
+      "targetNodeId": "apply",
+      "triggerRule": "all_success"
+    }
+  ],
+  "triggers": [
+    {
+      "id": "manual",
+      "type": "manual",
+      "enabled": true
+    }
+  ],
+  "variables": [],
+  "metadata": {
+    "tags": [
+      "conformance",
+      "hitl",
+      "loopback",
+      "v2-only"
+    ]
+  },
+  "settings": {
+    "timeout": 0
+  }
+}

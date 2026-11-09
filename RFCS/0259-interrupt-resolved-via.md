@@ -4,11 +4,11 @@
 | ----------------- | --------------------------------------------------------------- |
 | **RFC**           | 0259                                                            |
 | **Title**         | `interrupt.resolved` records the instrument of a token resolution (`resolvedVia`) beside who authenticated (`resolvedBy`) |
-| **Status**        | `Draft`                                                         |
+| **Status**        | `Active`                                                        |
 | **Author(s)**     | David Tufts (@davidscotttufts)                                  |
 | **Created**       | 2026-11-04                                                      |
-| **Updated**       | 2026-11-04 — filed as `Draft`. This RFC touches identity and authorization, so `Draft → Active` runs the full comment window: RFC 0147 §A.6 forbids a bootstrap waiver here, and only the maintainer may override it, directly. The wire shape may still move during the window. An independent architect review (§Alternatives 1) replaced the filed-for shape — a new Subject `kind` — before any text was written. |
-| **Affects**       | `schemas/v2/run-event-payloads.schema.json` `$defs/interruptResolved` (`resolvedBy` description = §A.1's normative home; new optional `resolvedVia` = §A.2–§A.5's) · `spec/v2/facets/interrupt.schema.json` + `spec/v2/declaration.json` (new optional `resolvedVia` facet; `schemas/v2/capabilities.schema.json` regenerated) · `SECURITY/threat-model-secret-leakage.md` (one row) · `api/seams-v2.yaml` + `scripts/derive-v2-api.py` (new seam `readInterruptToken`) · conformance: new scenario `v2-interrupt-resolved-via.test.ts` · CHANGELOG. `subject.schema.json` is NOT changed. v1 is frozen and not touched. |
+| **Updated**       | 2026-11-08 — **`Draft → Active`, comment window waived by the maintainer** (user instruction to openwop-be, 2026-11-08: "skip the comment window and proceed with implementation by collaborating with an openwop-app session"). STEWARD OVERRIDE of RFC 0147 §A.6 (identity and authorization), recorded in `MAINTAINERS.md`. Lands the `interruptResolved.resolvedVia` schema and the `resolvedBy` description, the `interrupt.resolvedVia` facet, the `readInterruptToken` seam, the threat-model row and `v2-interrupt-resolved-via` (7 ids) in suite 2.46.44, from the drafted `rfc/0259-resolved-via-impl`. UQ 1–6 decided below; §A.1 is classified a restatement (additive). openwop-app implements it (its ADR 1059, #5585) behind a default-off flag. Earlier 2026-11-04 — filed as `Draft`. This RFC touches identity and authorization, so `Draft → Active` runs the full comment window: RFC 0147 §A.6 forbids a bootstrap waiver here, and only the maintainer may override it, directly. The wire shape may still move during the window. An independent architect review (§Alternatives 1) replaced the filed-for shape — a new Subject `kind` — before any text was written. |
+| **Affects**       | `schemas/v2/run-event-payloads.schema.json` `$defs/interruptResolved` (`resolvedBy` description = §A.1's normative home; new optional `resolvedVia` = §A.2–§A.5's) · `spec/v2/facets/interrupt.schema.json` + `spec/v2/declaration.json` (new optional `resolvedVia` facet; `schemas/v2/capabilities.schema.json` regenerated) · `spec/v2/core/interrupt.md` §Tokens (one bullet: the facet's normative-home naming) · `SECURITY/threat-model-secret-leakage.md` (one row) · `api/seams-v2.yaml` + `scripts/derive-v2-api.py` (new seam `readInterruptToken`) · conformance: new scenario `v2-interrupt-resolved-via.test.ts` · CHANGELOG. `subject.schema.json` is NOT changed. v1 is frozen and not touched. |
 | **Compatibility** | `additive` per `COMPATIBILITY.md` §2.1 / §2.4 (an optional property on a closed v2 object; an optional facet boolean; a new seam). §A.1 states, for one resolve surface, what identity.md §2.1 already requires of every lane. |
 | **Supersedes**    | —                                                               |
 | **Superseded by** | —                                                               |
@@ -208,14 +208,16 @@ Leg 4's 8-character-run heuristic is a suite judgement of "computable from the t
 5. **Host vendor keys under the RFC 0185 hatch.** Rejected: a hatch member MUST NOT be interpreted (RFC 0185 §C), so no consumer could rely on it.
 6. **Do nothing.** A token resolution stays indistinguishable from an unrecorded one, and Book AI cannot accept approvals made through the host's own links.
 
-## Unresolved questions
+## Decided questions
 
-1. Should the MCP `requestState` resume and inbound-webhook resume get `scheme` members now? Deferred (Open gap 1): neither presents an interrupt token.
-2. How can the suite witness §A.4's eligibility rule? It would need the seam to also return a ref the host accepts for the caller in `approversList`, or a fixture parameter. Deferred to a seam revision once a host implements the binding.
-3. Should §A.1 and §A.3 be registered as `SECURITY/invariants.yaml` rows? Yes once a host witnesses them; registering before is the deferral pattern RFC 0167 §C forbids.
-4. When the binding target is an approver ref with no login lane the host can attest, what `lane` does `boundTo` carry? This RFC's answer is the owner mapping; a host that has none MUST omit `boundTo`, and under §A.4's eligibility rule then refuses. Revisit if a host finds that too strict.
-5. **(Before `Active`, maintainer note.)** Is §A.1 a restatement or a new obligation? It restates `identity.md` §2.1 ("bind the verified identity to the request, never to an asserted header") for the token surface. If review finds it adds anything beyond §2.1, that part is classified as a safety fix rather than additive. Measured on openwop-app's signed-voter path (its ADR 0899): a token resolution with a signed `voter` records no `resolvedBy` (`routes/interrupts.ts` passes only `capabilityToken` on the token routes; ADR 0932 D2). So the one host with that path already complies, and the classification decides wording, not behaviour, there.
-6. **(Before `Active`, maintainer note.)** §A.4(b) — the host's own MAC check — is host-judged: the suite cannot verify a MAC it does not hold. Leg 7 witnesses only that an altered binding binds no one. The falsifiability row says so.
+Decided 2026-11-08 at `Draft → Active`:
+
+1. **`scheme` members for MCP `requestState` and inbound-webhook resumes.** Deferred (Open gap 1): neither presents an interrupt token.
+2. **Witnessing §A.4's eligibility rule.** Deferred to a seam revision once a host implements the binding.
+3. **`SECURITY/invariants.yaml` rows for §A.1 and §A.3.** Not yet: they are registered once a host witnesses them (RFC 0167 §C).
+4. **`boundTo.lane` with no attestable login lane.** The owner mapping, as written. A host with none omits `boundTo` and, under §A.4's eligibility rule, refuses. Revisit if a host finds that too strict.
+5. **§A.1: restatement or new obligation.** A restatement of `identity.md` §2.1 ("bind the verified identity to the request, never to an asserted header") for the token surface, so the RFC stays `additive`. The one host with a signed-voter path already records no `resolvedBy` on a token resolution (openwop-app ADR 0899, ADR 0932 D2).
+6. **§A.4(b), the host's MAC check.** Host-judged, as the falsifiability row says. Leg 7 witnesses only that an altered binding binds no one.
 
 ## Implementation notes (non-normative)
 
@@ -225,13 +227,12 @@ Leg 4's 8-character-run heuristic is a suite judgement of "computable from the t
 
 ## Acceptance criteria
 
-- [ ] Comment window run (`Draft → Active`; RFC 0147 §A.6).
-- [ ] Schema updated: `interruptResolved.resolvedVia`; `resolvedBy` description; facet boolean via `declaration.json`; the threat-model row.
-- [ ] Seam added to `api/seams-v2.yaml` through `scripts/derive-v2-api.py`.
-- [ ] Conformance scenario `v2-interrupt-resolved-via.test.ts` (one server-free leg, six host legs).
+- [x] Comment window run (`Draft → Active`; RFC 0147 §A.6). *(Waived by the maintainer, 2026-11-08.)*
+- [x] Schema updated: `interruptResolved.resolvedVia`; `resolvedBy` description; facet boolean via `declaration.json`; the threat-model row. *(2026-11-08, 2.46.44.)*
+- [x] Seam added to `api/seams-v2.yaml` through `scripts/derive-v2-api.py`. *(2026-11-08.)*
+- [x] Conformance scenario `v2-interrupt-resolved-via.test.ts` (one server-free leg, six host legs). *(2026-11-08, 2.46.44.)*
 
-The three items above are drafted on branch `rfc/0259-resolved-via-impl` and are not in the filing PR: a `Draft` RFC ships no requirement (`check-rfc-status-coherence`, draft-enforced), and the wire shape may still move during the window. They are opened as their own PR at `Active`.
-- [ ] CHANGELOG entry (`[Unreleased]` is at its 20-bullet cap; the maintainer places it at the next cut).
+- [x] CHANGELOG entry. *(2.46.44 release section.)*
 - [ ] A host implements §A–§C and its bundle records legs 2, 3 and 5 `executed-pass` (leg 6 where the caller is a person).
 - [ ] Register sweep (`RFCS/registers/0259-*.gaps.md`, `.risks.md`).
 
@@ -241,3 +242,8 @@ The three items above are drafted on branch `rfc/0259-resolved-via-impl` and are
 - RFC 0170 (v2 identity), RFC 0183 (`interruptResolved` action fidelity), RFC 0185 (extension hatch), RFC 0167 §C, RFC 0234 (v1 end of support), RFC 0257 (normative home in a schema description).
 - openwop-app ADR 0478, 0899 (voter binding), 0932 (resume schema and `resolvedBy`), 1040 D6 (`RESBY-CAP-1`).
 - Prior art: OAuth 2.0 bearer tokens (RFC 6750) — possession is authorization, not identity; Google Docs / Notion share links — "anyone with the link" is recorded as anonymous, a named invitee as that person.
+
+## Status history
+
+- 2026-11-04 — Draft.
+- 2026-11-08 — Active (comment window waived); schema, facet, seam, threat-model row and scenario land in 2.46.44.

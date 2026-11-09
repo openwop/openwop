@@ -1,7 +1,7 @@
 # Execution
 
 > **Status: Stable.**
-> **Normative home:** `selfHostedRunner`, `subWorkflow`, `multiAgent`, `agents`.
+> **Normative home:** `selfHostedRunner`, `subWorkflow`, `loopback`, `multiAgent`, `agents`.
 
 ## Why this exists
 
@@ -31,6 +31,14 @@ A runner is a user-operated process that dials out, holds credentials the host c
 - **`outputMapping`** (`parentVar → childVar`). After the child completes, the host MUST copy each mapped variable into the parent, without throwing on or copying an undefined one.
 - **`propagateCancellation`** (default `true`) cancels the child with its parent.
 - **Parent link.** Where `getRunAncestry` is served, the child's `parent` MUST be the parent run, with `cause: "core.subWorkflow"`. `parentRunId` is fork lineage, not this link.
+
+## `loopback`
+
+A `loopback` edge runs from an approval gate back to an ancestor of it; a `refine` resolution re-runs that region and asks the gate again under a new key (`workflow-definition.schema.json` `$defs/EdgeLoopback`).
+
+- **Admission.** A host advertising `loopback` MUST refuse a definition whose loopback breaks the region rules there, or whose `maxIterations` exceeds its advertised `loopback.maxIterations`. A host that does not advertise it MUST NOT run a loopback edge as a plain cycle.
+- **Re-arm.** The gate's `node.completed` MUST carry the `loopback` marker, and replay and fork MUST re-arm from it.
+- **History.** The `historyInput` port MUST receive the round history rebuilt from the log. An entry whose JCS size exceeds `loopback.maxHistoryEntryBytes` carries a `truncated` marker.
 
 ## `multiAgent`
 
