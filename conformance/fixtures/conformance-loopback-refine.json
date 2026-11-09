@@ -81,7 +81,8 @@
     "tags": [
       "conformance",
       "hitl",
-      "loopback"
+      "loopback",
+      "v2-only"
     ]
   },
   "settings": {

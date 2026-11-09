@@ -12,6 +12,7 @@ import addFormats from 'ajv-formats';
 import type { ErrorObject } from 'ajv';
 import { FIXTURES_DIR, SCHEMAS_DIR } from '../lib/paths.js';
 import { req } from '../lib/requirement-ids.js';
+import { v2Validator } from '../lib/v2.js';
 
 // Layout-aware paths — `lib/paths.ts` resolves these for both repo
 // checkouts (schemas one level above the conformance package) and the
@@ -53,8 +54,13 @@ describe('fixtures: workflow-definition schema validity', () => {
   for (const file of files) {
     it(`${file} validates against workflow-definition.schema.json`, () => {
       const data = JSON.parse(readFileSync(join(FIXTURES_DIR, file), 'utf8'));
-      const ok = validate(data);
-      const errors = (validate.errors ?? [])
+      // A fixture tagged `v2-only` uses a construct the frozen v1 wire cannot
+      // carry (RFC 0258's `WorkflowEdge.loopback`), so it is judged by the v2
+      // schema instead. v1 is end-of-support (RFC 0234) and is never edited.
+      const v2Only = Array.isArray(data?.metadata?.tags) && data.metadata.tags.includes('v2-only');
+      const v2 = v2Only ? v2Validator('workflow-definition.schema.json')(data) : null;
+      const ok = v2 ? v2.ok : validate(data);
+      const errors = v2 ? v2.errors : (validate.errors ?? [])
         .map((e: ErrorObject) => `${e.instancePath || '/'}: ${e.message}`)
         .join('\n');
       expect(ok, req('openwop.it.fixtures-valid.validates-against-workflow-definition-schema-json', 'fixtures-valid.test.ts (no spec citation in file)', `Fixture ${file} fails workflow-definition schema:\n${errors}`)).toBe(true);

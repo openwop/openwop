@@ -312,6 +312,7 @@ The `messages`-mode stream fixture (AI token streaming) is covered by the determ
 
 ### `conformance-loopback-refine`
 
+- **Tagged** `v2-only`: `fixtures-valid` validates it against `schemas/v2/workflow-definition.schema.json`, because the frozen v1 wire cannot carry `loopback`.
 - **Purpose**: witness RFC 0258 §§C–D: the re-arm, the round history and withdrawal on exhaustion.
 - **Inputs**: none.
 - **Behavior**:
@@ -325,6 +326,7 @@ The `messages`-mode stream fixture (AI token streaming) is covered by the determ
 
 ### `conformance-loopback-refine-fail`
 
+- **Tagged** `v2-only`: `fixtures-valid` validates it against `schemas/v2/workflow-definition.schema.json`, because the frozen v1 wire cannot carry `loopback`.
 - **Purpose**: witness RFC 0258 §D `onExhausted: fail`.
 - **Inputs**: none.
 - **Behavior**: the same graph with `maxIterations: 1` and `onExhausted: "fail"`. The first refine loops. A refine on the exhausted second visit emits `workflow.loopback-limit {nodeId: "gate", iterations: 1, limit: 1}`, then `cap.breached {kind: "loopback-iterations", limit: 1, observed: 2}`, then `run.failed` with `loop_limit_exceeded` and `failedNodeId: "gate"`.
