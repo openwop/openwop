@@ -28,7 +28,7 @@ A resolution through `resolveInterruptByToken` proves possession of a resume tok
 ### Who hits it
 
 - **openwop-app** resolves through a bare token on three surfaces (`POST /v1/interrupts/{token}`, the decide-by-email confirm form, an internal helper) and records no `resolvedBy` there by design (its ADR 0932 D2, ADR 1040 D6). The emailed links already carry a host MAC over `(token, voter)` (its ADR 0478 / 0899), so the host *knows* whom it addressed the link to and has nowhere to say so.
-- **Book AI**, an openwop-app tenant product, applies an AI-drafted change only when the approval of record maps to the book's owner or a co-author. It reads the gate's latest `interrupt.resolved` and requires `resolvedBy.kind === "user"`, no `actor`, a person lane, the run tenant, and a `subjectId` it matches forward. A share-link approval carries no `resolvedBy`, so it falls back to a receipt Book AI writes only on its own route, and an approval made through the host's link **fails to apply**. Book AI's stated requirement (2026-11-04): accept a link approval only under a **host-attested** binding to a full user Subject; the minter does not count ("sharing isn't approving"); an unbound link is refused; keep the token off the record.
+- **Book AI**, an openwop-app tenant product, applies an AI-drafted change only when the approval of record maps to the book's owner or a co-author. It reads the gate's latest `interrupt.resolved` and requires `resolvedBy.kind === "user"`, no `actor`, a person lane, the run tenant, and a `subjectId` it matches forward. A share-link approval carries no `resolvedBy`, so it falls back to a receipt Book AI writes only on its own route, and an approval made through the host's link **fails to apply**. Book AI's stated requirement (2026-11-04): accept a link approval only under a **host-attested** binding to a full user Subject; the minter does not count ("sharing isn't approving"); an unbound link is refused; keep the token off the record. Book AI later narrowed this (2026-11-09): it applies a change only on a signed-in `resolvedBy` and treats `resolvedVia` as audit, not approval. The motivation stands: a consumer still cannot tell a link resolution from an unrecorded one without this RFC.
 
 ### Why the spec
 
@@ -121,7 +121,7 @@ Negative — valid JSON, forbidden by §A.1: `"resolvedBy": { …kind:"user"… 
 ### Security considerations
 
 - **No token on the record.** §A.3 forbids the token, its segments and any bare digest; the suite checks all three (§Conformance leg 4). `tokenRef` is optional, so the default is to carry nothing derived from the token at all.
-- **Attribution is not authentication — the residual risk, stated.** A bound link is a bearer credential addressed to one person. Anyone that person forwards it to, and anyone who reads their mailbox, can use it, and the record will still name the addressee. §A.4 narrows the window (host-issued links only, expiry and single vote honoured, `mintedAt`/`expiresAt` on the record so a consumer can apply a shorter window of its own) but cannot close it: closing it needs the person to authenticate, which is the run-scoped surface. A consumer that treats `boundTo` as that person's decision — Book AI does, by an explicit policy decision — accepts this residual risk, and the normative text says so rather than implying a login.
+- **Attribution is not authentication — the residual risk, stated.** A bound link is a bearer credential addressed to one person. Anyone that person forwards it to, and anyone who reads their mailbox, can use it, and the record will still name the addressee. §A.4 narrows the window (host-issued links only, expiry and single vote honoured, `mintedAt`/`expiresAt` on the record so a consumer can apply a shorter window of its own) but cannot close it: closing it needs the person to authenticate, which is the run-scoped surface. A consumer that treats `boundTo` as that person's decision accepts this residual risk, and the normative text says so rather than implying a login. Book AI declines it (decided 2026-11-09): it applies a change only on a signed-in `resolvedBy`, and reads `resolvedVia` for audit.
 - **No identity laundering.** §A.1 closes the obvious misuse — copying a body `voter` into `resolvedBy` — on every host, advertised or not.
 - **Threat model.** `SECURITY/threat-model-secret-leakage.md` §4.1 gains a row: a resume token, a segment or a digest of it on `interrupt.resolved` would let the log confirm a leaked token; §A.3 and leg 4 are the mitigation.
 - **Privacy.** `boundTo` is a person's Subject, as `resolvedBy` already is; it adds no new PII class. Subject erasure works by unlinking at the identity record, never by rewriting the event log (`replay.md`: history is fixed). The `subjectId` grammar already forbids PII (`ids.schema.json#/$defs/subjectId`).
@@ -146,7 +146,7 @@ Negative — valid JSON, forbidden by §A.1: `"resolvedBy": { …kind:"user"… 
 - The seam is new, test-only, and gated on the seams profile.
 - §A.1 tightens nothing a conformant host does: `identity.md` §2.1 already forbids binding to an asserted identity, and no `interruptResolved.resolvedBy` emitted from an unauthenticated token presentation can be an authenticated Subject. A host that copies a body `voter` into `resolvedBy` today violates §2.1 already; §A.1 makes the case explicit and witnessable.
 - `subject.schema.json` is untouched, so `owner.subject`, `run.started.owner`, the `actor` chain and `SubjectLink` are unaffected. This is the point of choosing a sibling property (§Alternatives 1).
-- **A consumer that switches on `resolvedBy`** is unaffected by an unbound token resolution: `resolvedBy` stays absent, as today. Book AI's receipt fallback keeps working; it learns `resolvedVia.boundTo` when it chooses.
+- **A consumer that switches on `resolvedBy`** is unaffected by an unbound token resolution: `resolvedBy` stays absent, as today. Book AI's receipt fallback keeps working; it reads `resolvedVia` for audit only.
 
 ## Conformance
 
@@ -222,7 +222,7 @@ Decided 2026-11-08 at `Draft → Active`:
 ## Implementation notes (non-normative)
 
 - openwop-app: the token surfaces call `resolveAndResume(…, { capabilityToken: true })`. The host work is to record `resolvedVia { scheme: "interrupt-token" }` there, derive `boundTo` from a verified `(token, voter)` MAC (`verifyVoterBinding`) through the same Subject mapping as the run-owner stamp, omit `tokenRef` (one token per interrupt), and refuse an unbound token resolution of an ACL'd interrupt when advertising. Behind a host flag defaulting off until this RFC's shape is on `main`.
-- Book AI: read `resolvedVia.boundTo` when `resolvedBy` is absent, with the same checks it applies to `resolvedBy` today.
+- Book AI (decided 2026-11-09): applies an approved change only when `resolvedBy` names an owner or co-author on a session, OIDC or SAML lane. It never treats `resolvedVia.boundTo` as an approver, because a forwarded or scanned link proves who it was sent to, not who used it. It reads `resolvedVia` for audit.
 - Reference host: the seam is a thin read of the stored token; the recording is one property on the resolve path.
 
 ## Acceptance criteria
