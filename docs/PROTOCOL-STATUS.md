@@ -12,7 +12,7 @@
 | OpenAPI operations | 59 | `api/openapi.yaml` |
 | AsyncAPI version | 3.1.0 | `api/asyncapi.yaml` |
 | Conformance scenario files | 670 | `conformance/src/scenarios/*.test.ts` |
-| RFCs tracked | 260 | `RFCS/[0-9][0-9][0-9][0-9]-*.md`, excluding template |
+| RFCs tracked | 261 | `RFCS/[0-9][0-9][0-9][0-9]-*.md`, excluding template |
 
 ## Artifact Versions
 
@@ -72,7 +72,7 @@
 |---|---:|
 | Accepted | 247 |
 | Active | 8 |
-| Draft | 2 |
+| Draft | 3 |
 | Superseded | 3 |
 
 | RFC | Title | Status |
@@ -337,6 +337,7 @@
 | RFC 0262 | The `telemetry` family: a v2 claim that a host exports OTLP traces, with an optional OTel GenAI semantic-conventions mapping | Active |
 | RFC 0263 | A cited conformance leg must be shown able to fail: the sabotage ledger, and requirement ids on every witnessable Falsifiability row | Active |
 | RFC 0264 | core-family adoption is derived from bundles, and an unwitnessed family has a review date | Draft |
+| RFC 0265 | compensation behavior is witnessed at v2 through a failing fixture | Draft |
 
 ## SDK Helper Coverage
 
@@ -360,7 +361,7 @@ The pack registry now lives in the [`openwop-registry`](https://github.com/openw
 
 ## Active Follow-Ups
 
-- 2 RFCs still `Draft` (RFC 0038, RFC 0264) — advance with schema/conformance proof or defer.
+- 3 RFCs still `Draft` (RFC 0038, RFC 0264, RFC 0265) — advance with schema/conformance proof or defer.
 - 8 RFCs `Active` (RFC 0121, RFC 0256, RFC 0258, RFC 0259, RFC 0260, RFC 0261, RFC 0262, RFC 0263) — wire-shape MAY shift compatibly within v1.x until promotion to `Accepted`.
 - External audit, non-steward host recruitment, and non-steward maintainer recruitment remain external-action gates.
 - Multi-region idempotency and some optional-profile behavior checks remain lower-confidence than the core wire contract.

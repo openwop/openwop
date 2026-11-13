@@ -16537,6 +16537,74 @@
       ]
     },
     {
+      "id": "openwop.gap.0265.1",
+      "rfc": "0265",
+      "local": "G1",
+      "section": "§Status",
+      "surface": "**High.** The 7-day comment window has not run. The Phase 2 waiver (2026-11-13) covered RFCs 0260–0263 only.",
+      "witness": "unclassified",
+      "requirementId": null,
+      "disposition": "transferred",
+      "target": "RFC",
+      "sources": [
+        {
+          "file": "RFCS/registers/0265-compensation-unwind-witness.gaps.md",
+          "token": "G1"
+        }
+      ]
+    },
+    {
+      "id": "openwop.gap.0265.2",
+      "rfc": "0265",
+      "local": "G2",
+      "section": "§Falsifiability",
+      "surface": "**Medium.** The two registration refusals in `security-defaults.md` §Compensation have no v2 observable.",
+      "witness": "unclassified",
+      "requirementId": null,
+      "disposition": "transferred",
+      "target": "RFC",
+      "sources": [
+        {
+          "file": "RFCS/registers/0265-compensation-unwind-witness.gaps.md",
+          "token": "G2"
+        }
+      ]
+    },
+    {
+      "id": "openwop.gap.0265.3",
+      "rfc": "0265",
+      "local": "G3",
+      "section": "§A",
+      "surface": "**Medium.** No host serves `core.conformance.compensable-effect` yet; the five legs are `inapplicable` everywhere until one does.",
+      "witness": "unclassified",
+      "requirementId": null,
+      "disposition": "transferred",
+      "target": "RFC",
+      "sources": [
+        {
+          "file": "RFCS/registers/0265-compensation-unwind-witness.gaps.md",
+          "token": "G3"
+        }
+      ]
+    },
+    {
+      "id": "openwop.gap.0265.4",
+      "rfc": "0265",
+      "local": "G4",
+      "section": "§B",
+      "surface": "**Low.** `manualIntervention` has no behavioral leg.",
+      "witness": "unclassified",
+      "requirementId": null,
+      "disposition": "transferred",
+      "target": "RFC",
+      "sources": [
+        {
+          "file": "RFCS/registers/0265-compensation-unwind-witness.gaps.md",
+          "token": "G4"
+        }
+      ]
+    },
+    {
       "id": "openwop.gap.spec.a2a-integration.g1",
       "rfc": "0152",
       "local": "G1",
