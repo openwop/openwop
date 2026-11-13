@@ -4,15 +4,11 @@
 
 The engagement plan, scope, selection weighting and state tracker are in [`SECURITY/external-audit-engagement.md`](../../external-audit-engagement.md). This file holds only the per-vendor detail.
 
-## The scope must be re-cut before anything is sent
+## The scope is re-cut; the drafts are not
 
-The five per-vendor drafts in this directory (`trail-of-bits.md`, `ncc-group.md`, `doyensec.md`, `cure53.md`, `latacora.md`) were written against the v1 corpus, with a scope framed around RFCs 0014–0033. That scope no longer describes the protocol:
+`external-audit-engagement.md` was re-scoped for v2 on 2026-11-13: `spec/v2/core/`, the v2 reference host, the reference application's backend, the conformance suite and the SDKs (v1 reached end of support on 2026-10-04, [RFC 0234](../../../RFCS/0234-maintainer-set-v1-end-of-support.md)).
 
-- v2 is the current major, and v1 reached end of support on 2026-10-04 ([RFC 0234](../../../RFCS/0234-maintainer-set-v1-end-of-support.md)).
-- The normative surface a review should cover is [`spec/v2/core/`](../../../spec/v2/core/), the wire in `api/v2/` and `schemas/v2/`, and [`SECURITY/invariants.yaml`](../../invariants.yaml).
-- The packs in scope live in [`openwop/openwop-registry`](https://github.com/openwop/openwop-registry), not this repository.
-
-Before the round is sent, re-cut the scope in `external-audit-engagement.md` for v2, then update each draft to match. Do not send the drafts as they stand.
+The five per-vendor drafts in this directory (`trail-of-bits.md`, `ncc-group.md`, `doyensec.md`, `cure53.md`, `latacora.md`) were written against the v1 corpus and still describe that scope. Update each to match the engagement document before the round is sent, and do not send them as they stand. Sending commits the project to spending money, so it also needs the steward's explicit go.
 
 ## Per-vendor status
 
