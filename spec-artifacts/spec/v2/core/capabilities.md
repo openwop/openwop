@@ -112,7 +112,7 @@ These keys are not part of the v2 root:
 
 Operation paths live in `spec/v2/path-manifest.json` ([`versioning.md`](versioning.md)). `scripts/check-declaration.mjs` checks the declaration against everything.
 
-## 5. Core families (69)
+## 5. Core families (70)
 
 Each heading below is a `spec/v2/declaration.json` row with `anchor: core`. `scripts/check-declaration.mjs` MUST fail when a heading here, a root key in the generated schema, or a pack peer-dependency identifier names a family the declaration does not. The peer-dependency identifier is identical to the key ([`packs.md`](packs.md)).
 
@@ -402,6 +402,10 @@ Witness `witnessable-gated`; see [runs.md](runs.md) §List.
 ### § loopback
 
 Witness `witnessable-gated`.
+
+### § telemetry
+
+Witness `witnessable-gated`; see [telemetry.md](telemetry.md).
 
 
 ## 6. Extension families (12)

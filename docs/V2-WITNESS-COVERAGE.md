@@ -8,11 +8,11 @@ Every v2 core family now has a v2 normative home (RFC 0189). Many of its rules a
 
 ## Headline
 
-- **Families (69 core):** 69 v2-witnessed, 0 v1-only, 0 unwitnessed. Of the 54 `witnessable-gated` families, 0 are v1-only; every unwitnessed family is `claims-check`.
+- **Families (70 core):** 70 v2-witnessed, 0 v1-only, 0 unwitnessed. Of the 55 `witnessable-gated` families, 0 are v1-only; every unwitnessed family is `claims-check`.
 - **At v1 end-of-support:** the 0 v1-only families, and the 0 obligation units attributed to them, lose their only witness.
-- **Obligation units (893 in `spec/v2/core/`):** 629 (70%) sit in a section a major-2 scenario cites; 264 sit in 95 sections no major-2 scenario cites.
+- **Obligation units (900 in `spec/v2/core/`):** 629 (70%) sit in a section a major-2 scenario cites; 271 sit in 97 sections no major-2 scenario cites.
 - **Declaration links:** 0 core families declare `floorScenarios`; 2 declare `requirementIds`. The family-to-test link exists only in scenario code and citations, although `overview.md` §What a MUST means says every core MUST has an id in `requirements.json`.
-- **Scenarios:** 668 registered, 228 run at major 2. 34 major-2 citations name a v2 core section this script cannot match to a heading (see Citation gaps).
+- **Scenarios:** 670 registered, 230 run at major 2. 34 major-2 citations name a v2 core section this script cannot match to a heading (see Citation gaps).
 
 ## How to read it
 
@@ -37,7 +37,7 @@ Every v2 core family now has a v2 normative home (RFC 0189). Many of its rules a
 | `multiAgent` | claims-check | **v2-witnessed** | 19 (0) | `context-budget-transcript-bound`, `context-summarization-replay`, `v2-dispatch-loop`, `v2-multi-agent-advertisement` +1 | `agent-loop-iteration-monotonic`, `agent-loop-stateful-resume`, `agent-loop-version5-shape`, `agent-loop-workspace-snapshot` +11 |
 | `i18n` | witnessable-gated | **v2-witnessed** | 17 (4) | `v2-i18n-negotiation`, `v2-localized-content-delivery` | `i18n-negotiation`, `localized-content-delivery` |
 | `prompts` | witnessable-gated | **v2-witnessed** | 16 (6) | `v2-prompt-template-shape` | `prompt-all-four-kinds-events`, `prompt-composed-secret-redaction`, `prompt-composed-trust-marker`, `prompt-end-to-end-events` +11 |
-| `secrets` | witnessable-gated | **v2-witnessed** | 16 (16) | `v2-secret-canary-absent`, `v2-secrets-run-witness` | `envelope-reasoning-secret-redaction`, `secret-leakage-otel-attribute` |
+| `secrets` | witnessable-gated | **v2-witnessed** | 16 (16) | `v2-secret-canary-absent`, `v2-secrets-run-witness`, `v2-telemetry-export` | `envelope-reasoning-secret-redaction`, `secret-leakage-otel-attribute` |
 | `toolCatalog` | witnessable-gated | **v2-witnessed** | 14 (11) | `auth-challenge-no-oracle`, `tool-catalog-compact-projection`, `tool-catalog-projection`, `tool-descriptor-shape` +1 | `tool-session-lifecycle` |
 | `oauth` | witnessable-gated | **v2-witnessed** | 13 (11) | `v2-a2a-operation-map`, `v2-credential-interrupt`, `v2-mcp-mount-map`, `v2-oauth-client-pkce-state-iss` +1 | `byok-auth-modes`, `oauth-authorization-code-roundtrip`, `oauth-capability-shape`, `oauth-connector-redaction` |
 | `memory` | witnessable-gated | **v2-witnessed** | 12 (12) | `context-budget-transcript-bound`, `context-summarization-replay`, `memory-attribution-replay-stable`, `v2-memory-cross-tenant-isolation` | `agentMemoryRedactionContract`, `agentMemoryRoundTrip`, `distillation-index-roundtrip`, `distillation-secret-carryforward` +14 |
@@ -48,6 +48,7 @@ Every v2 core family now has a v2 normative home (RFC 0189). Many of its rules a
 | `selfHostedRunner` | witnessable-gated | **v2-witnessed** | 8 (0) | `v2-self-hosted-runner-advertisement` | `self-hosted-runner` |
 | `anonymousActor` | seam-gated | **v2-witnessed** | 7 (0) | `v2-mcp-mount-map` | `anonymous-actor-audit-opaque`, `anonymous-actor-default-deny`, `anonymous-actor-egress-guarded`, `anonymous-actor-no-secret-reach` +4 |
 | `httpClient` | witnessable-gated | **v2-witnessed** | 7 (7) | `v2-safefetch-ssrf-refused` | `egress-audience-binding`, `egress-decision-content-free`, `http-client-ssrf`, `safefetch-behavior` +1 |
+| `telemetry` | witnessable-gated | **v2-witnessed** | 7 (0) | `v2-telemetry-export` | – |
 | `workspace` | witnessable-gated | **v2-witnessed** | 7 (7) | `v2-workspace-scope-from-identity` | `agent-loop-iteration-monotonic`, `agent-loop-stateful-resume`, `agent-loop-version5-shape`, `agent-loop-workspace-snapshot` +4 |
 | `queueBus` | witnessable-gated | **v2-witnessed** | 5 (5) | `v2-queue-cross-tenant-isolation` | `queue-ack-nack-dlq`, `queue-cross-tenant-isolation`, `queue-publish-consume-roundtrip`, `stream-subscribe-from-beginning` |
 | `subWorkflow` | claims-check | **v2-witnessed** | 5 (5) | `v2-all-terminals-skipped`, `v2-sub-workflow-advertisement` | `dispatch-input-mapping`, `dispatchLoop` |
@@ -126,6 +127,7 @@ Every v2 core family now has a v2 normative home (RFC 0189). Many of its rules a
 | `runs.md` | 73 | 70 (96%) | `limits`, `dataResidency`, `conversationPrimitive`, `deadLetter`, `budget`, `runList` |
 | `security-defaults.md` | 27 | 19 (70%) | `purposePropagation`, `sandbox`, `compensation`, `auditLogIntegrity` |
 | `storage.md` | 19 | 8 (42%) | `fs`, `kvStorage`, `tableStorage`, `sql`, `nosql`, `vectorStore`, `searchIndex`, `blobStorage`, `cache` |
+| `telemetry.md` | 7 | 0 (0%) | `telemetry` |
 | `tool-catalog.md` | 14 | 11 (79%) | `toolCatalog` |
 | `versioning.md` | 41 | 34 (83%) | – |
 | `webhooks.md` | 38 | 38 (100%) | `webhooks`, `triggerBridge` |
@@ -147,6 +149,7 @@ Sections with the most obligation units and no major-2 citation. A doc-level cit
 | `portability.md` § Import rules | portability | 6 |
 | `replay.md` § Determinism caveats (`replay` mode) | replay | 6 |
 | `replay.md` § Divergence | replay | 6 |
+| `telemetry.md` § Export | telemetry | 6 |
 | `artifact-type-packs.md` § Schema distribution | artifactTypes | 5 |
 | `conformance.md` § Witness class | production | 5 |
 | `connection-packs.md` § Provider identity | connections | 5 |
@@ -161,13 +164,12 @@ Sections with the most obligation units and no major-2 citation. A doc-level cit
 | `conformance.md` § Requirement ids | production | 3 |
 | `conformance.md` § Whose fact is the reason? | production | 3 |
 | `conformance.md` § The seams profile | production | 3 |
-| `connection-packs.md` § Resolution | connections | 3 |
 
 ## Citation gaps
 
-These 79 major-2 scenarios cite no `spec/v2/core` document (only RFCs, schemas or the interop map). Whatever they witness is invisible to the section counts above; `v2-durability-recovery`, for one, witnesses `persistence.md` §Durable acceptance through RFC 0158 only.
+These 80 major-2 scenarios cite no `spec/v2/core` document (only RFCs, schemas or the interop map). Whatever they witness is invisible to the section counts above; `v2-durability-recovery`, for one, witnesses `persistence.md` §Durable acceptance through RFC 0158 only.
 
-`audit-anomaly-shape`, `audit-checkpoint-vectors`, `context-budget-transcript-bound`, `context-summarization-replay`, `otel-mcp-semconv-projection`, `v2-advertised-fixtures-exist`, `v2-agent-org-chart-served-shape`, `v2-agent-runtime-advertisement`, `v2-agents-fan-out-waves`, `v2-agents-fan-out`, `v2-ai-providers-advertisement`, `v2-artifact-type-schema-url`, `v2-artifact-types-advertisement`, `v2-auth-challenge`, `v2-auth-subject-link-key`, `v2-authorization-advertisement`, `v2-bounded-loopback`, `v2-budget-enforcement`, `v2-budget-exhaustion-facet`, `v2-callai-attempt-accounting`, `v2-channel-presence-advertisement`, `v2-content-locale-keys`, `v2-conversation-turn-model-provenance-advertisement`, `v2-conversation-turn-parts`, `v2-credentials-advertisement`, `v2-data-residency-advertisement`, `v2-dead-letter-advertisement`, `v2-deployment-eval-gate`, `v2-deployment-lifecycle`, `v2-dispatch-input-mapping`, `v2-dispatch-loop`, `v2-durability-recovery`, `v2-envelope-surfaces-absent`, `v2-eval-recorded-fixtures`, `v2-eval-regression-baseline`, `v2-eval-trajectory-trials`, `v2-ext-family-claims`, `v2-ext-rest-transport`, `v2-host-event-strict-replay`, `v2-i18n-negotiation`, `v2-interrupt-resolved-via`, `v2-limits-clarification-rounds-advertisement`, `v2-model-capabilities-advertisement`, `v2-model-capability-insufficient`, `v2-multi-agent-advertisement`, `v2-multi-party-conversation-advertisement`, `v2-negotiation-authenticated`, `v2-negotiation-decided-emitted`, `v2-node-pack-runtimes-advertisement`, `v2-payload-seats-0186`, `v2-payload-vendor-hatch`, `v2-portability-advertisement`, `v2-production-backpressure`, `v2-prompt-all-four-kinds-events`, `v2-prompt-end-to-end-events`, `v2-prompt-library-advertisement`, `v2-prompt-list-and-fetch`, `v2-prompt-mutable-lifecycle`, `v2-prompt-pack-install`, `v2-prompt-render-deterministic`, `v2-prompt-resolution-chain-event`, `v2-proposal-lifecycle`, `v2-proposal-pack-readback`, `v2-protected-resource-metadata`, `v2-provider-conflict`, `v2-provider-usage-advertisement`, `v2-provider-usage-emission`, `v2-purpose-propagation-advertisement`, `v2-run-execution-bounds`, `v2-scheduling-advertisement`, `v2-self-hosted-runner-advertisement`, `v2-structured-output-advertisement`, `v2-sub-workflow-advertisement`, `v2-subworkflow-input-mapping`, `v2-subworkflow-linkage`, `v2-table-schema-enforcement`, `v2-trigger-dead-letter-read`, `v2-ui-plugins-advertisement`, `v2-webhook-message-id-stable`
+`audit-anomaly-shape`, `audit-checkpoint-vectors`, `context-budget-transcript-bound`, `context-summarization-replay`, `otel-mcp-semconv-projection`, `v2-advertised-fixtures-exist`, `v2-agent-org-chart-served-shape`, `v2-agent-runtime-advertisement`, `v2-agents-fan-out-waves`, `v2-agents-fan-out`, `v2-ai-providers-advertisement`, `v2-artifact-type-schema-url`, `v2-artifact-types-advertisement`, `v2-auth-challenge`, `v2-auth-subject-link-key`, `v2-authorization-advertisement`, `v2-bounded-loopback`, `v2-budget-enforcement`, `v2-budget-exhaustion-facet`, `v2-callai-attempt-accounting`, `v2-channel-presence-advertisement`, `v2-content-locale-keys`, `v2-conversation-turn-model-provenance-advertisement`, `v2-conversation-turn-parts`, `v2-credentials-advertisement`, `v2-data-residency-advertisement`, `v2-dead-letter-advertisement`, `v2-deployment-eval-gate`, `v2-deployment-lifecycle`, `v2-dispatch-input-mapping`, `v2-dispatch-loop`, `v2-durability-recovery`, `v2-envelope-surfaces-absent`, `v2-eval-recorded-fixtures`, `v2-eval-regression-baseline`, `v2-eval-trajectory-trials`, `v2-ext-family-claims`, `v2-ext-rest-transport`, `v2-host-event-strict-replay`, `v2-i18n-negotiation`, `v2-interrupt-resolved-via`, `v2-limits-clarification-rounds-advertisement`, `v2-model-capabilities-advertisement`, `v2-model-capability-insufficient`, `v2-multi-agent-advertisement`, `v2-multi-party-conversation-advertisement`, `v2-negotiation-authenticated`, `v2-negotiation-decided-emitted`, `v2-node-pack-runtimes-advertisement`, `v2-payload-seats-0186`, `v2-payload-vendor-hatch`, `v2-portability-advertisement`, `v2-production-backpressure`, `v2-prompt-all-four-kinds-events`, `v2-prompt-end-to-end-events`, `v2-prompt-library-advertisement`, `v2-prompt-list-and-fetch`, `v2-prompt-mutable-lifecycle`, `v2-prompt-pack-install`, `v2-prompt-render-deterministic`, `v2-prompt-resolution-chain-event`, `v2-proposal-lifecycle`, `v2-proposal-pack-readback`, `v2-protected-resource-metadata`, `v2-provider-conflict`, `v2-provider-usage-advertisement`, `v2-provider-usage-emission`, `v2-purpose-propagation-advertisement`, `v2-replay-llm-cache-key`, `v2-run-execution-bounds`, `v2-scheduling-advertisement`, `v2-self-hosted-runner-advertisement`, `v2-structured-output-advertisement`, `v2-sub-workflow-advertisement`, `v2-subworkflow-input-mapping`, `v2-subworkflow-linkage`, `v2-table-schema-enforcement`, `v2-trigger-dead-letter-read`, `v2-ui-plugins-advertisement`, `v2-webhook-message-id-stable`
 
 34 major-2 citations name a v2 core section that matches no heading (most are `tool-catalog.md` §A–§F, RFC section letters):
 
@@ -384,8 +386,8 @@ node scripts/report-v2-witness-coverage.mjs --write  # regenerate this file
 ```json
 {
   "families": {
-    "total": 69,
-    "v2-witnessed": 69,
+    "total": 70,
+    "v2-witnessed": 70,
     "v1-only": 0,
     "unwitnessed": 0
   },
@@ -401,28 +403,28 @@ node scripts/report-v2-witness-coverage.mjs --write  # regenerate this file
       "unwitnessed": 0
     },
     "witnessable-gated": {
-      "v2-witnessed": 54,
+      "v2-witnessed": 55,
       "v1-only": 0,
       "unwitnessed": 0
     }
   },
   "obligationUnits": {
-    "total": 893,
+    "total": 900,
     "inV2CitedSections": 629,
-    "inUncitedSections": 264,
-    "sectionsWithObligations": 268,
-    "sectionsWithNoV2Citation": 95
+    "inUncitedSections": 271,
+    "sectionsWithObligations": 270,
+    "sectionsWithNoV2Citation": 97
   },
   "declarationLinks": {
     "familiesWithFloorScenarios": 0,
     "familiesWithRequirementIds": 2
   },
   "scenarios": {
-    "registered": 668,
-    "major2": 228
+    "registered": 670,
+    "major2": 230
   },
   "unresolvedV2Citations": 34,
-  "major2ScenariosCitingNoCoreDoc": 79,
+  "major2ScenariosCitingNoCoreDoc": 80,
   "risks": {
     "listed": 20,
     "staleQuotes": [],

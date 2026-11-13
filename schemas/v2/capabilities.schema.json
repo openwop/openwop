@@ -1555,6 +1555,13 @@
         },
         "effectSeamsManifest": {
           "const": "/host/effect-seams"
+        },
+        "llmCacheKeyRecipe": {
+          "type": "string",
+          "enum": [
+            "openwop-llm-key-2"
+          ],
+          "description": "RFC 0260 §A–§B (normative home). The cache-key recipe for every LLM-calling node. Absent ⇒ the RFC 0041 recipe (replay.md). Present ⇒ the host MUST compute every LLM-calling node's key as lowercase hex SHA-256 over JCS of {recipe, model, provider, messages, tools, toolChoice, responseSchema, params}; params MUST name temperature, maxTokens, stop, seed, topP, topK, frequencyPenalty, presencePenalty (null when not sent; stop sorted by UTF-16 code unit and de-duplicated), with every other output-shaping parameter under params.extra; a string message content is one text part; request, trace, tenant, run, node ids, timestamps and credentials MUST NOT enter the key. A host advertising this MUST advertise idempotency. A consumer MUST NOT act on an unrecognized value."
         }
       },
       "allOf": [
@@ -7079,6 +7086,7 @@
           ]
         },
         "multiRegion": {
+          "description": "RFC 0261 (normative home). When advertised, the Layer-1 record claim for (authenticatedTenantId, canonicalEndpointId, callerIdempotencyKey) MUST be decided linearizably across every region serving the endpoint before any region starts work under that key. Of two concurrent first writes in different regions exactly one MUST win; the other MUST follow idempotency.md §Concurrency and MUST NOT start work. A region that cannot complete or read the claim MUST NOT start work and MUST answer 409 idempotency_in_flight. A Layer-2 effect identity claimed in one region MUST NOT be performed in another; a region that cannot read the claim MUST NOT perform the effect. Collapsing a duplicate effect record is not at-most-once issuance: only crossRegion fenced-effects promises that, and a reconciled-records host MUST NOT describe its effects as exactly-once.",
           "type": "object",
           "additionalProperties": false,
           "properties": {
@@ -7150,7 +7158,7 @@
         }
       ],
       "description": "core/capabilities.md#idempotency — witness: witnessable-gated; maturity experimental/none; RFC 0150",
-      "x-openwop-seeded-from": "v1"
+      "x-openwop-facets-from": "spec/v2/facets/idempotency.schema.json"
     },
     "eventLog": {
       "type": "object",
@@ -8134,6 +8142,108 @@
       ],
       "description": "core/capabilities.md#loopback — witness: witnessable-gated; maturity experimental/none; RFC 0258",
       "x-openwop-facets-from": "spec/v2/facets/loopback.schema.json"
+    },
+    "telemetry": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "status",
+        "since",
+        "witness",
+        "otlp"
+      ],
+      "properties": {
+        "status": {
+          "enum": [
+            "stable",
+            "experimental",
+            "deprecated"
+          ]
+        },
+        "since": {
+          "type": "string",
+          "pattern": "^(0|[1-9][0-9]*)\\.(0|[1-9][0-9]*)$",
+          "description": "The minor of THIS HOST's own contract at which it began serving the family — a point on its protocolVersions[] timeline, not the corpus minor that introduced the family. The corpus states no per-family since (spec/v2/declaration.json carries witness and maturity and no since), and `status`/`until` are the host's stability claim absorbed from v1 tier/experimentalUntil, so all three describe the host's offering and `witness` is the record's one corpus-derived field. A since naming a minor absent from protocolVersions[] puts adjacent same-grammar fields on two different timelines and is a defect. Ruled 2026-09-11."
+        },
+        "until": {
+          "type": "string",
+          "pattern": "^((0|[1-9][0-9]*)\\.(0|[1-9][0-9]*)|\\d{4}-\\d{2}-\\d{2})$"
+        },
+        "witness": {
+          "enum": [
+            "witnessable-unaided",
+            "witnessable-gated",
+            "seam-gated",
+            "claims-check",
+            "negative-existence"
+          ]
+        },
+        "otlp": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": [
+            "protocols"
+          ],
+          "properties": {
+            "protocols": {
+              "type": "array",
+              "minItems": 1,
+              "uniqueItems": true,
+              "items": {
+                "enum": [
+                  "http/protobuf",
+                  "http/json",
+                  "grpc"
+                ]
+              },
+              "description": "RFC 0262 §A, §B.1 — the OTLP transports the host can export traces over, to the endpoint the operator configures with the standard OTEL_EXPORTER_OTLP_* settings."
+            }
+          },
+          "description": "RFC 0262 §B — advertising telemetry binds the export rules in spec/v2/core/telemetry.md: an openwop.run span per run, an openwop.node.<typeId> span per node execution, an inbound traceparent continued, and no credential material or resolved secret in any exported span."
+        },
+        "genAiSemconv": {
+          "type": "string",
+          "pattern": "^(0|[1-9][0-9]*)\\.(0|[1-9][0-9]*)\\.(0|[1-9][0-9]*)$",
+          "description": "RFC 0262 §C — the OpenTelemetry GenAI semantic-conventions version the host maps model calls to. With it, each model-call span MUST carry the gen_ai.* attributes that version defines for a chat call: operation name, provider, request model, and input and output token usage. Absent means no GenAI mapping claim."
+        }
+      },
+      "allOf": [
+        {
+          "if": {
+            "properties": {
+              "status": {
+                "const": "stable"
+              }
+            }
+          },
+          "then": {
+            "not": {
+              "required": [
+                "until"
+              ]
+            }
+          }
+        },
+        {
+          "if": {
+            "properties": {
+              "status": {
+                "enum": [
+                  "experimental",
+                  "deprecated"
+                ]
+              }
+            }
+          },
+          "then": {
+            "required": [
+              "until"
+            ]
+          }
+        }
+      ],
+      "description": "core/capabilities.md#telemetry — witness: witnessable-gated; maturity experimental/none; RFC 0262",
+      "x-openwop-facets-from": "spec/v2/facets/telemetry.schema.json"
     },
     "interrupt": {
       "type": "object",

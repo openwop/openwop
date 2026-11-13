@@ -4901,3 +4901,24 @@ invariants:
       and no URL action target.
     witness: claims-check
     witnessReview: reviewed-2026-10-30
+  - id: telemetry-export-no-secret
+    tier: protocol
+    severity: high
+    threat_model: SECURITY/threat-model-secret-leakage.md
+    tests:
+      - conformance/src/scenarios/v2-telemetry-export.test.ts
+      - conformance/src/scenarios/otel-collector-canary-inspection.test.ts
+    note: |
+      RFC 0262 §E. A host advertising the v2 `telemetry` family MUST NOT put
+      credential material or a resolved secret in any span name, span
+      attribute, span event, link or resource attribute it exports over OTLP
+      (spec/v2/core/telemetry.md; the export-side instance of
+      host-services.md §`secrets`). Witnessed on the export path, not a host
+      scrape seam: `v2-telemetry-export` leg `0262.no-secret-in-spans` runs
+      `openwop-smoke-byok-roundtrip` with the suite collector and scans every
+      captured span surface with the digest and plaintext detectors
+      (lib/secret-scan.ts); a run whose export captured nothing records
+      `blocked`. `otel-collector-canary-inspection` is the server-free proof
+      that the collector scan finds a planted canary.
+    witness: witnessable-gated
+    witnessReview: reviewed-2026-11-13

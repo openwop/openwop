@@ -10,7 +10,14 @@
  *   4. every requirement id its falsifiability table names has at least one
  *      executed-pass row in a cited host bundle or in evidence/corpus-ledger.json
  *      (the corpus ledger check-spec-coherence.mjs emits — P3-E); a `(corpus)`
- *      verdict row is satisfied by the corpus ledger only.
+ *      verdict row is satisfied by the corpus ledger only;
+ *   5. (RFC 0263 §C, from RFC 0260) every id the table names on a witnessable
+ *      row has an `executed-fail` row in evidence/sabotage-ledger.json, on a
+ *      subject other than a certified bundle;
+ *   6. (RFC 0263 §A, from RFC 0258, Active as well as Accepted) every
+ *      witnessable Falsifiability row names an id or says `planned`, and from
+ *      RFC 0260 a `planned` row blocks Accepted.
+ *   Rules 5 and 6 and the ledger's shape are scripts/lib/sabotage-ledger.mjs.
  * Green with "0 v2 Accepted RFCs" today; the predicate exists so the first flip
  * runs through it.
  */
@@ -18,10 +25,15 @@ import { readFileSync, readdirSync, existsSync } from 'node:fs';
 import { join, dirname, resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { companionWitness, isCompanion } from './lib/companion-pairing.mjs';
+import { idRuleFailures, ledgerShapeFailures, sabotageRuleFailures } from './lib/sabotage-ledger.mjs';
 const ROOT = resolve(dirname(fileURLToPath(import.meta.url)), '..');
 const RFCS = join(ROOT, 'RFCS');
 const ledgerPath = join(ROOT, 'evidence', 'corpus-ledger.json');
 const ledger = existsSync(ledgerPath) ? JSON.parse(readFileSync(ledgerPath, 'utf8')) : { requirements: {} };
+// RFC 0263 §B — red runs that show a cited leg can fail.
+const sabotagePath = join(ROOT, 'evidence', 'sabotage-ledger.json');
+const sabotage = existsSync(sabotagePath) ? JSON.parse(readFileSync(sabotagePath, 'utf8')) : { rows: [] };
+const certifiedDigests = new Set();
 const failures = [];
 // Bundles by origin tier, for the tier check (rule 3).
 const tierOf = new Map();
@@ -82,6 +94,7 @@ const companionNotes = [];
     // 0168 §E.1) supplied acceptance witnesses exactly like a certified one.
     // An acceptance may not rest on evidence the evidence format itself refuses.
     const profiles = doc.claimedProfiles ?? [];
+    if (profiles.length > 0 && profiles.every((p) => p.certified === true) && typeof doc.witnessSha256 === 'string') certifiedDigests.add(doc.witnessSha256);
     if (profiles.length === 0 || !profiles.every((p) => p.certified === true)) {
       uncertified.push(`${b} (${profiles.filter((p) => !p.certified).map((p) => p.id).join(', ') || 'no claimed profiles'})`);
       continue;
@@ -112,7 +125,17 @@ const companionNotes = [];
       ? `${c.name}: colocated companion paired with ${w.pairedWith} — ${w.counted.size} harness-trust-anchor row(s) counted, ${w.discarded.length} other executed-pass row(s) not counted (RFC 0216 §C)`
       : `${c.name}: colocated companion pairs with no certified served-host bundle (${Object.entries(w.failures).map(([n, f]) => `${n}: ${f.join('+')}`).join('; ') || 'none of the same host'}) — none of its ${w.discarded.length} executed-pass row(s) counted (RFC 0216 §C)`);
   }
-} let checked = 0;
+}
+// RFC 0263 §B (ledger shape) and §A (rule 6): from RFC 0258, an Active or
+// Accepted RFC names a requirement id on every witnessable Falsifiability row.
+// Rule 4 reads ids only from the table, so a table that names none — 0258 and
+// 0259 as filed — let rule 4 pass with nothing to look up.
+failures.push(...ledgerShapeFailures(sabotage, certifiedDigests));
+for (const f of readdirSync(RFCS).filter((n) => /^\d{4}-.*\.md$/.test(n)).sort()) {
+  const text = readFileSync(join(RFCS, f), 'utf8');
+  failures.push(...idRuleFailures(f, (/\|\s*\*\*Status\*\*\s*\|\s*`([^`]+)`/.exec(text) ?? [])[1], text));
+}
+let checked = 0;
 for (const f of readdirSync(RFCS).filter((n) => /^\d{4}-.*\.md$/.test(n)).sort()) {
   const n = Number(f.slice(0, 4)); if (n < 167) continue;
   const text = readFileSync(join(RFCS, f), 'utf8');
@@ -137,6 +160,9 @@ for (const f of readdirSync(RFCS).filter((n) => /^\d{4}-.*\.md$/.test(n)).sort()
     if (!evidence || /^(—|-|TBD|pending|n\/a)$/i.test(evidence)) failures.push(`${f}: acceptance table row ${cells[1]} has no evidence (${JSON.stringify(cells[2]?.slice(0, 60))})`);
   }
   if (!acc.trim() || (tableRows.length === 0 && !/^- \[/m.test(acc))) failures.push(`${f}: Acceptance criteria section is empty or has neither checkboxes nor a table`);
+  // RFC 0263 §C (rule 5): from RFC 0260, every id the table names on a
+  // witnessable row has a red run in evidence/sabotage-ledger.json.
+  failures.push(...sabotageRuleFailures(f, status, text, sabotage));
   const reg = readdirSync(join(RFCS, 'registers')).find((r) => r.startsWith(f.slice(0, 4)) && r.endsWith('.gaps.md'));
   if (reg && /\|\s*`open`/.test(readFileSync(join(RFCS, 'registers', reg), 'utf8'))) failures.push(`${f}: register carries an open gap`);
   const updated = (/\|\s*\*\*Updated\*\*\s*\|([^\n]*)/.exec(text) ?? [, ''])[1];

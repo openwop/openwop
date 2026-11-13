@@ -1,7 +1,7 @@
 {
   "$schema": "./gaps.schema.json",
   "version": 1,
-  "updated": "2026-11-08",
+  "updated": "2026-11-13",
   "witnessClasses": [
     "witnessable-unaided",
     "witnessable-gated",
@@ -16040,6 +16040,431 @@
         {
           "file": "RFCS/registers/0259-interrupt-resolved-via.gaps.md",
           "token": "G9"
+        }
+      ]
+    },
+    {
+      "id": "openwop.gap.0260.1",
+      "rfc": "0260",
+      "local": "G1",
+      "section": "§Compatibility",
+      "surface": "**High.** Safety-fix (every replaying host switches) or opt-in (an advertised recipe id)?",
+      "witness": "unclassified",
+      "requirementId": null,
+      "disposition": "closed",
+      "target": null,
+      "sources": [
+        {
+          "file": "RFCS/registers/0260-llm-cache-key-recipe-2.gaps.md",
+          "token": "G1"
+        }
+      ]
+    },
+    {
+      "id": "openwop.gap.0260.2",
+      "rfc": "0260",
+      "local": "G2",
+      "section": "§Status",
+      "surface": "**High.** Whether the comment window may be waived for a replay-class RFC.",
+      "witness": "unclassified",
+      "requirementId": null,
+      "disposition": "closed",
+      "target": null,
+      "sources": [
+        {
+          "file": "RFCS/registers/0260-llm-cache-key-recipe-2.gaps.md",
+          "token": "G2"
+        }
+      ]
+    },
+    {
+      "id": "openwop.gap.0260.3",
+      "rfc": "0260",
+      "local": "G3",
+      "section": "§Conformance",
+      "surface": "**High.** Is there a witness that needs no seam?",
+      "witness": "unclassified",
+      "requirementId": null,
+      "disposition": "closed",
+      "target": null,
+      "sources": [
+        {
+          "file": "RFCS/registers/0260-llm-cache-key-recipe-2.gaps.md",
+          "token": "G3"
+        }
+      ]
+    },
+    {
+      "id": "openwop.gap.0260.4",
+      "rfc": "0260",
+      "local": "G4",
+      "section": "§B.2",
+      "surface": "**Medium.** RFC 0041 left the canonical message form open.",
+      "witness": "unclassified",
+      "requirementId": null,
+      "disposition": "closed",
+      "target": null,
+      "sources": [
+        {
+          "file": "RFCS/registers/0260-llm-cache-key-recipe-2.gaps.md",
+          "token": "G4"
+        }
+      ]
+    },
+    {
+      "id": "openwop.gap.0260.5",
+      "rfc": "0260",
+      "local": "G5",
+      "section": "§C.3",
+      "surface": "**Medium.** Replay matching by the source record's recipe has no witness: the suite cannot change a host's recipe mid-test.",
+      "witness": "unclassified",
+      "requirementId": null,
+      "disposition": "transferred",
+      "target": "RFC",
+      "sources": [
+        {
+          "file": "RFCS/registers/0260-llm-cache-key-recipe-2.gaps.md",
+          "token": "G5"
+        }
+      ]
+    },
+    {
+      "id": "openwop.gap.0260.6",
+      "rfc": "0260",
+      "local": "G6",
+      "section": "§Acceptance criteria",
+      "surface": "**Medium.** No host advertises the facet or the fixture yet, so every host leg records `inapplicable`.",
+      "witness": "unclassified",
+      "requirementId": null,
+      "disposition": "transferred",
+      "target": "RFC",
+      "sources": [
+        {
+          "file": "RFCS/registers/0260-llm-cache-key-recipe-2.gaps.md",
+          "token": "G6"
+        }
+      ]
+    },
+    {
+      "id": "openwop.gap.0260.7",
+      "rfc": "0260",
+      "local": "G7",
+      "section": "§B.1",
+      "surface": "**Low.** Whether `reasoning` / `effort` parameters belong in the named set.",
+      "witness": "unclassified",
+      "requirementId": null,
+      "disposition": "transferred",
+      "target": "RFC",
+      "sources": [
+        {
+          "file": "RFCS/registers/0260-llm-cache-key-recipe-2.gaps.md",
+          "token": "G7"
+        }
+      ]
+    },
+    {
+      "id": "openwop.gap.0261.1",
+      "rfc": "0261",
+      "local": "G1",
+      "section": "§Status",
+      "surface": "**High.** Whether the 7-day window may be waived.",
+      "witness": "unclassified",
+      "requirementId": null,
+      "disposition": "closed",
+      "target": null,
+      "sources": [
+        {
+          "file": "RFCS/registers/0261-multi-region-concurrent-first-write.gaps.md",
+          "token": "G1"
+        }
+      ]
+    },
+    {
+      "id": "openwop.gap.0261.2",
+      "rfc": "0261",
+      "local": "G2",
+      "section": "§Conformance",
+      "surface": "**Medium.** No scenario witnesses §A or §C; no host advertises `multiRegion`.",
+      "witness": "unclassified",
+      "requirementId": null,
+      "disposition": "transferred",
+      "target": "RFC",
+      "sources": [
+        {
+          "file": "RFCS/registers/0261-multi-region-concurrent-first-write.gaps.md",
+          "token": "G2"
+        }
+      ]
+    },
+    {
+      "id": "openwop.gap.0261.3",
+      "rfc": "0261",
+      "local": "G3",
+      "section": "§Unresolved questions",
+      "surface": "**Medium.** The fate of the losing run when a `reconciled-records` partition heals.",
+      "witness": "unclassified",
+      "requirementId": null,
+      "disposition": "transferred",
+      "target": "RFC",
+      "sources": [
+        {
+          "file": "RFCS/registers/0261-multi-region-concurrent-first-write.gaps.md",
+          "token": "G3"
+        }
+      ]
+    },
+    {
+      "id": "openwop.gap.0261.4",
+      "rfc": "0261",
+      "local": "G4",
+      "section": "§Unresolved questions",
+      "surface": "**Low.** Whether to add an observable home-region hint so §A can be witnessed without operator help.",
+      "witness": "unclassified",
+      "requirementId": null,
+      "disposition": "transferred",
+      "target": "RFC",
+      "sources": [
+        {
+          "file": "RFCS/registers/0261-multi-region-concurrent-first-write.gaps.md",
+          "token": "G4"
+        }
+      ]
+    },
+    {
+      "id": "openwop.gap.0261.5",
+      "rfc": "0261",
+      "local": "G5",
+      "section": "§Proposal",
+      "surface": "**High.** Where the normative text lives, given the core word budget and that the facets are seeded from the frozen v1 schema.",
+      "witness": "unclassified",
+      "requirementId": null,
+      "disposition": "closed",
+      "target": null,
+      "sources": [
+        {
+          "file": "RFCS/registers/0261-multi-region-concurrent-first-write.gaps.md",
+          "token": "G5"
+        }
+      ]
+    },
+    {
+      "id": "openwop.gap.0262.1",
+      "rfc": "0262",
+      "local": "G1",
+      "section": "§A",
+      "surface": "**High.** Re-shape the `observability` metadata into a family, or add a new family?",
+      "witness": "unclassified",
+      "requirementId": null,
+      "disposition": "closed",
+      "target": null,
+      "sources": [
+        {
+          "file": "RFCS/registers/0262-telemetry-family.gaps.md",
+          "token": "G1"
+        }
+      ]
+    },
+    {
+      "id": "openwop.gap.0262.2",
+      "rfc": "0262",
+      "local": "G2",
+      "section": "§Status",
+      "surface": "**High.** Whether the comment window may be waived.",
+      "witness": "unclassified",
+      "requirementId": null,
+      "disposition": "closed",
+      "target": null,
+      "sources": [
+        {
+          "file": "RFCS/registers/0262-telemetry-family.gaps.md",
+          "token": "G2"
+        }
+      ]
+    },
+    {
+      "id": "openwop.gap.0262.3",
+      "rfc": "0262",
+      "local": "G3",
+      "section": "§Conformance",
+      "surface": "**Medium.** No host advertises `telemetry`, so every host leg records `inapplicable` until one does.",
+      "witness": "unclassified",
+      "requirementId": null,
+      "disposition": "transferred",
+      "target": "RFC",
+      "sources": [
+        {
+          "file": "RFCS/registers/0262-telemetry-family.gaps.md",
+          "token": "G3"
+        }
+      ]
+    },
+    {
+      "id": "openwop.gap.0262.4",
+      "rfc": "0262",
+      "local": "G4",
+      "section": "§Conformance",
+      "surface": "**Medium.** A deployed host's exporter cannot reach a collector on the suite's loopback; the certify run needs a public front for the collector, as the webhook receiver has.",
+      "witness": "unclassified",
+      "requirementId": null,
+      "disposition": "transferred",
+      "target": "RFC",
+      "sources": [
+        {
+          "file": "RFCS/registers/0262-telemetry-family.gaps.md",
+          "token": "G4"
+        }
+      ]
+    },
+    {
+      "id": "openwop.gap.0262.5",
+      "rfc": "0262",
+      "local": "G5",
+      "section": "§Security",
+      "surface": "**Medium.** Whether a host may decline to continue an untrusted caller's `traceparent`.",
+      "witness": "unclassified",
+      "requirementId": null,
+      "disposition": "transferred",
+      "target": "RFC",
+      "sources": [
+        {
+          "file": "RFCS/registers/0262-telemetry-family.gaps.md",
+          "token": "G5"
+        }
+      ]
+    },
+    {
+      "id": "openwop.gap.0262.6",
+      "rfc": "0262",
+      "local": "G6",
+      "section": "§F",
+      "surface": "**Low.** The fate of the `observability` metadata at v3.",
+      "witness": "unclassified",
+      "requirementId": null,
+      "disposition": "transferred",
+      "target": "RFC",
+      "sources": [
+        {
+          "file": "RFCS/registers/0262-telemetry-family.gaps.md",
+          "token": "G6"
+        }
+      ]
+    },
+    {
+      "id": "openwop.gap.0262.7",
+      "rfc": "0262",
+      "local": "G7",
+      "section": "§B.5",
+      "surface": "**Low.** Metrics are a SHOULD with no v2 vocabulary.",
+      "witness": "unclassified",
+      "requirementId": null,
+      "disposition": "transferred",
+      "target": "RFC",
+      "sources": [
+        {
+          "file": "RFCS/registers/0262-telemetry-family.gaps.md",
+          "token": "G7"
+        }
+      ]
+    },
+    {
+      "id": "openwop.gap.0262.8",
+      "rfc": "0262",
+      "local": "G8",
+      "section": "§Compatibility",
+      "surface": "**Low.** A replay fork's spans have no rule linking them to the source run's trace.",
+      "witness": "unclassified",
+      "requirementId": null,
+      "disposition": "transferred",
+      "target": "RFC",
+      "sources": [
+        {
+          "file": "RFCS/registers/0262-telemetry-family.gaps.md",
+          "token": "G8"
+        }
+      ]
+    },
+    {
+      "id": "openwop.gap.0263.1",
+      "rfc": "0263",
+      "local": "G1",
+      "section": "§Status",
+      "surface": "**High.** Whether the 7-day window may be waived for a certification rule.",
+      "witness": "unclassified",
+      "requirementId": null,
+      "disposition": "closed",
+      "target": null,
+      "sources": [
+        {
+          "file": "RFCS/registers/0263-sabotage-ledger.gaps.md",
+          "token": "G1"
+        }
+      ]
+    },
+    {
+      "id": "openwop.gap.0263.2",
+      "rfc": "0263",
+      "local": "G2",
+      "section": "§A",
+      "surface": "**High.** Would §A refuse a table that is honest but has a row with no leg yet?",
+      "witness": "unclassified",
+      "requirementId": null,
+      "disposition": "closed",
+      "target": null,
+      "sources": [
+        {
+          "file": "RFCS/registers/0263-sabotage-ledger.gaps.md",
+          "token": "G2"
+        }
+      ]
+    },
+    {
+      "id": "openwop.gap.0263.3",
+      "rfc": "0263",
+      "local": "G3",
+      "section": "§C",
+      "surface": "**Medium.** RFCs below 0260 have no ledger rows, though many legs were sabotaged when written (records in docstrings and commits).",
+      "witness": "unclassified",
+      "requirementId": null,
+      "disposition": "transferred",
+      "target": "RFC",
+      "sources": [
+        {
+          "file": "RFCS/registers/0263-sabotage-ledger.gaps.md",
+          "token": "G3"
+        }
+      ]
+    },
+    {
+      "id": "openwop.gap.0263.4",
+      "rfc": "0263",
+      "local": "G4",
+      "section": "§B",
+      "surface": "**Low.** A row's `subject.build` may name a sabotaged build that exists only locally.",
+      "witness": "unclassified",
+      "requirementId": null,
+      "disposition": "transferred",
+      "target": "RFC",
+      "sources": [
+        {
+          "file": "RFCS/registers/0263-sabotage-ledger.gaps.md",
+          "token": "G4"
+        }
+      ]
+    },
+    {
+      "id": "openwop.gap.0263.5",
+      "rfc": "0263",
+      "local": "G5",
+      "section": "§Conformance",
+      "surface": "**Medium.** The three `0263.*` ids have no `executed-pass` row in `evidence/corpus-ledger.json` until the regen chain runs `check-spec-coherence.mjs` on the merged tree.",
+      "witness": "unclassified",
+      "requirementId": null,
+      "disposition": "transferred",
+      "target": "RFC",
+      "sources": [
+        {
+          "file": "RFCS/registers/0263-sabotage-ledger.gaps.md",
+          "token": "G5"
         }
       ]
     },

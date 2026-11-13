@@ -460,7 +460,8 @@
       "facets": [
         "modes",
         "retention",
-        "effectSeamsManifest"
+        "effectSeamsManifest",
+        "llmCacheKeyRecipe"
       ],
       "floorScenarios": [],
       "requirementIds": [],
@@ -1519,7 +1520,8 @@
       ],
       "floorScenarios": [],
       "requirementIds": [],
-      "owningRfc": "0150"
+      "owningRfc": "0150",
+      "facetsFrom": "spec/v2/facets/idempotency.schema.json"
     },
     {
       "key": "eventLog",
@@ -1713,6 +1715,27 @@
       "requirementIds": [],
       "owningRfc": "0258",
       "facetsFrom": "spec/v2/facets/loopback.schema.json"
+    },
+    {
+      "key": "telemetry",
+      "kind": "family",
+      "normativeText": ["spec/v2/core/telemetry.md"],
+      "anchor": "core",
+      "section": "core/capabilities.md#telemetry",
+      "peerDependencyId": "telemetry",
+      "witness": "witnessable-gated",
+      "maturity": {
+        "technical": "experimental",
+        "adoption": "none"
+      },
+      "facets": [
+        "otlp",
+        "genAiSemconv"
+      ],
+      "floorScenarios": [],
+      "requirementIds": [],
+      "owningRfc": "0262",
+      "facetsFrom": "spec/v2/facets/telemetry.schema.json"
     },
     {
       "key": "interrupt",

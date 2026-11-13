@@ -25,6 +25,13 @@
     },
     "effectSeamsManifest": {
       "const": "/host/effect-seams"
+    },
+    "llmCacheKeyRecipe": {
+      "type": "string",
+      "enum": [
+        "openwop-llm-key-2"
+      ],
+      "description": "RFC 0260 §A–§B (normative home). The cache-key recipe for every LLM-calling node. Absent ⇒ the RFC 0041 recipe (replay.md). Present ⇒ the host MUST compute every LLM-calling node's key as lowercase hex SHA-256 over JCS of {recipe, model, provider, messages, tools, toolChoice, responseSchema, params}; params MUST name temperature, maxTokens, stop, seed, topP, topK, frequencyPenalty, presencePenalty (null when not sent; stop sorted by UTF-16 code unit and de-duplicated), with every other output-shaping parameter under params.extra; a string message content is one text part; request, trace, tenant, run, node ids, timestamps and credentials MUST NOT enter the key. A host advertising this MUST advertise idempotency. A consumer MUST NOT act on an unrecognized value."
     }
   },
   "required": [

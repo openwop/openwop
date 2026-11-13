@@ -1,0 +1,23 @@
+{
+  "id": "conformance-llm-cache-key",
+  "name": "Conformance: LLM cache key recipe 2 (RFC 0260)",
+  "version": "1.0",
+  "description": "Fixture for `v2-replay-llm-cache-key.test.ts` (RFC 0260; the rules are the `replay.llmCacheKeyRecipe` facet description and the effect-ledger `cacheKey` description). One node, `conformance.callai.cache-key` (conformance-RESERVED). It makes exactly one `ctx.callAI` call through the host's conformance mock provider, whose provider id is `conformance-mock` and model id `conformance-mock-1`. The call sends one message `{role: \"user\", content: inputs.request.prompt}`, no tools, no toolChoice, no responseSchema, and exactly the parameters in `inputs.request.params` (keys from recipe 2's named set: `temperature`, `maxTokens`, `stop`, `seed`, `topP`, `topK`, `frequencyPenalty`, `presencePenalty`), nothing more. The mock replies `ok`. The host records the call on `GET /runs/{runId}/effects` under this node's id, carrying `cacheKey`. The node completes with `outputs.text`, the reply. A host that does not advertise `replay.llmCacheKeyRecipe` MUST NOT advertise this fixture.",
+  "nodes": [
+    {
+      "id": "llm-call",
+      "typeId": "conformance.callai.cache-key",
+      "name": "One ctx.callAI call through the conformance mock",
+      "position": { "x": 0, "y": 0 },
+      "config": {},
+      "inputs": {}
+    }
+  ],
+  "edges": [],
+  "triggers": [{ "id": "manual", "type": "manual", "enabled": true }],
+  "variables": [
+    { "name": "request", "type": "object" }
+  ],
+  "metadata": { "tags": ["conformance", "replay", "llmCacheKeyRecipe"] },
+  "settings": { "timeout": 0 }
+}
