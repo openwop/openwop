@@ -27,7 +27,7 @@ a new host:
 | Profile | Predicate | Floor scenarios |
 | --- | --- | --- |
 | `openwop-discovery-core` | metadata `protocolVersions`, `preferredVersion` | 3: `v2-capabilities-root-closed`, `v2-preferred-version-default`, `v2-version-header-honored` |
-| `openwop-core-standard` | families `interrupt`, `replay`, `webhooks`, `idempotency`, `eventLog` | 13: `v2-interrupt-token-scheme`, `v2-effect-seam-manifest`, `v2-webhook-durable-delivery`, `v2-idempotency-key-grammar`, `v2-era-key`, `v2-era-stamp-universal`, `v2-event-type-closed`, `v2-poll-cursor-v2`, `v2-run-cancel`, `v2-run-bulk-cancel`, `v2-run-pause-resume`, `v2-run-options-limits`, `v2-sse-last-event-id` |
+| `openwop-core-standard` | families `interrupt`, `replay`, `webhooks`, `idempotency`, `eventLog` | 14: `v2-interrupt-token-scheme`, `v2-effect-seam-manifest`, `v2-webhook-durable-delivery`, `v2-idempotency-key-grammar`, `v2-era-key`, `v2-era-stamp-universal`, `v2-event-type-closed`, `v2-poll-cursor-v2`, `v2-run-cancel`, `v2-run-bulk-cancel`, `v2-run-pause-resume`, `v2-run-options-limits`, `v2-sse-last-event-id`, `v2-sse-last-event-id-cursor` |
 
 `overview.md` §"Profile claim vocabulary" fixes what a claim means: an
 unqualified "OpenWOP conformant" statement MUST mean `openwop-core-standard`, and

@@ -31,7 +31,7 @@ v2 has no `profiles[]` field on the discovery root and no `auth.profiles`. A pro
 | Profile | When you hold it |
 | --- | --- |
 | `openwop-discovery-core` | Your v2 root carries `protocolVersions` and `preferredVersion`. Discovery only; a claim MUST say so (`overview.md` §"Profile claim vocabulary"). |
-| `openwop-core-standard` | Your root advertises the families `interrupt`, `replay`, `webhooks`, `idempotency` and `eventLog`, and you pass its 13 floor scenarios. This is what an unqualified "OpenWOP conformant" statement MUST mean. |
+| `openwop-core-standard` | Your root advertises the families `interrupt`, `replay`, `webhooks`, `idempotency` and `eventLog`, and you pass its 14 floor scenarios. This is what an unqualified "OpenWOP conformant" statement MUST mean. |
 | `openwop-conformance-seams-v2` | You mount the test seams at `/conformance/seams/…` (`api/seams-v2.yaml`) and advertise a root `conformance` block naming it (`spec/v2/profiles.json` note). A test instrument, not a capability (`conformance.md` §"The seams profile"). |
 | Optional families | `agents`, `memory`, `packs`, `compensation`, `a2a`, `mcp`, `runList` and the rest of `capabilities.md` §5 — 71 core families and 13 `ext/` families. Advertise only what you implement. |
 
@@ -158,7 +158,15 @@ Open a PR adding a row to the **v2** table in [`INTEROP-MATRIX.md`](../INTEROP-M
 
 A row carries the suite version that measured it and is never rewritten to a suite that did not run. The date your bundle is committed there is also an input to the v1 end-of-support clock (`overview.md`).
 
-**Check:** PR merges; your host has a public row in the v2 table.
+**Your evidence tier.** [`GOVERNANCE.md`](../GOVERNANCE.md) §"Acceptance evidence tiers" places every host in one of three tiers, and [`evidence/host-tiers.json`](../evidence/host-tiers.json) maps each bundle's discovery origin to its tier. Every host in the matrix today is the steward's own. If your organization has no affiliation with the steward, your host is **tier 3**, the first one. Say so in the PR and name your organization; adding your origin to `host-tiers.json` is a governance act, and the steward does it in the same PR. A tier-3 bundle is the one thing the project cannot produce for itself:
+
+- It fires the INTEROP-MATRIX "first non-steward row" milestone (GOVERNANCE.md §"Acceptance evidence tiers").
+- It ends the steward's exemption from cross-organization review of waived RFCs (GOVERNANCE.md §"Sole-steward operation"), so those reviews are owed from then on.
+- It is half of what `docs/ASSURANCE-STATUS.md` requires before the project may say "independently validated"; the other half is an independent security audit.
+
+Your bundle must be served from a deployed origin. A loopback or tunnel origin is never tiered. It must also be one you cut yourself: a bundle the steward generates against your host is not independent evidence.
+
+**Check:** PR merges; your host has a public row in the v2 table and an origin in `host-tiers.json`.
 
 ---
 
