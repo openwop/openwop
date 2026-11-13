@@ -118,6 +118,16 @@ OpenWOP is intentionally narrow. These surfaces belong to hosts, vendors and ado
 
 ---
 
+## Corrections that wait for the next major
+
+These are known defects whose only fix is a breaking change at v2 ([`COMPATIBILITY.md`](../COMPATIBILITY.md) §2.4: closing an object or adding a REQUIRED property invalidates an existing pass). They are listed so the next major's charter starts from them.
+
+| Surface | Defect | v3 change |
+| --- | --- | --- |
+| `testing` and `compliance` discovery metadata (`schemas/v2/capabilities.schema.json`) | Both objects are `additionalProperties: true`, so a misspelt member (for example `mockProvider`) validates instead of failing. Every other root object is closed. | Close both objects. |
+
+---
+
 ## See also
 
 - [`docs/PROTOCOL-STATUS.md`](./PROTOCOL-STATUS.md) — generated repository state.
