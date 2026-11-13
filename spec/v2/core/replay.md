@@ -11,10 +11,11 @@
 
 A host advertising `replay` ([capabilities.md](capabilities.md)) serves `forkRun` (`api/v2/openapi.yaml`, `POST /runs/{runId}:fork`) and `getEffectSeamManifest` (`GET /host/effect-seams`).
 
-The `replay` facet (`spec/v2/facets/replay.schema.json`) is `{ modes[], retention?, effectSeamsManifest }`:
+The `replay` facet (`spec/v2/facets/replay.schema.json`) is `{ modes[], retention?, effectSeamsManifest, llmCacheKeyRecipe? }`:
 
 - `modes` enumerates `replay | branch` (the `forkRun` `mode` values);
-- `effectSeamsManifest` is the constant `/host/effect-seams`.
+- `effectSeamsManifest` is the constant `/host/effect-seams`;
+- `llmCacheKeyRecipe`, when present, names the recipe that replaces the default LLM cache key.
 
 Suppression is the only conforming replay behavior; no field turns it off, and `none` is not a value.
 
@@ -130,4 +131,4 @@ A host advertising `replay` MUST document retention for source snapshots, source
 
 `nondeterminismPolicy.sources` lists the sources a host declares rather than suppresses: `clock`, `random`, `id`, `env` or `x-*`. A host MUST record each value drawn from a listed source where it is read, and a `replay` fork MUST reproduce it. An unlisted, unsuppressed source is a replay defect. `declared: false` is not a v2 state.
 
-*Sources: RFCs 0036, 0039, 0041, 0057, 0104, 0111, 0140, 0173, 0176, 0194, 0228.*
+*Sources: RFCs 0036, 0039, 0041, 0057, 0104, 0111, 0140, 0173, 0176, 0194, 0228, 0260.*

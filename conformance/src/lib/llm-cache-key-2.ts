@@ -66,7 +66,7 @@ export const FIXTURE = 'conformance-llm-cache-key';
 export const NODE_ID = 'llm-call';
 export const FIXTURE_PROVIDER = 'conformance-mock';
 export const FIXTURE_MODEL = 'conformance-mock-1';
-export function fixtureInputs(prompt: string, params: Partial<Record<NamedParam, unknown>>): KeyInputs {
+export function fixtureInputs(prompt: string, params: NonNullable<KeyInputs['params']>): KeyInputs {
   return { model: FIXTURE_MODEL, provider: FIXTURE_PROVIDER, messages: [{ role: 'user', content: prompt }], params };
 }
 

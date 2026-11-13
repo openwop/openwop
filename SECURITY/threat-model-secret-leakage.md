@@ -75,6 +75,7 @@ Persisted in Firestore at `runs/{runId}/events/{eventId}`. Read by clients, repl
 | ---------------------- | --------------------------------------------------------------------------------------- | --------------------------------------------------------------------------------------------------------------- | ------------------------------- |
 | Information disclosure | `span.recordException(rawError)` where `rawError.message` contains echoed Authorization | `recordSanitizedException` helper sanitizes both `.message` AND `.stack`                                        | `secret-leakage-otel-exception` |
 | Information disclosure | `span.setAttribute('http.request.header.authorization', headerValue)`                   | OTel attribute allowlist excludes `authorization` (engine layer); host layer forbids non-allowlisted attributes | `secret-leakage-otel-attribute` |
+| Information disclosure | A `telemetry` host (RFC 0262) exports a span whose attribute or event carries a resolved secret to the operator's OTLP endpoint | The export path redacts span attributes and events before they leave the host | `telemetry-export-no-secret` |
 
 ### 4.3 Error envelope
 

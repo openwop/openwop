@@ -42,6 +42,7 @@ const WORDS = [
   'eleven', 'twelve', 'thirteen', 'fourteen', 'fifteen', 'sixteen', 'seventeen', 'eighteen',
   'nineteen', 'twenty', 'twenty-one', 'twenty-two', 'twenty-three', 'twenty-four', 'twenty-five',
   'twenty-six', 'twenty-seven', 'twenty-eight', 'twenty-nine', 'thirty',
+  'thirty-one', 'thirty-two', 'thirty-three', 'thirty-four', 'thirty-five',
 ] as const;
 
 /** Every prose site that states how many documents `spec/v2/core/` holds. */

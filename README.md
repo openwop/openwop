@@ -15,7 +15,7 @@ More: [every film](https://openwop.dev/videos/) · [the paper](https://doi.org/1
 
 ## Status
 
-**The protocol is at major 2.** [`spec/v2/core/`](./spec/v2/core/) is the normative tree: thirty `Stable` documents under a kernel word budget, with optional extensions in [`spec/v2/ext/`](./spec/v2/ext/) and one declaration file, [`spec/v2/declaration.json`](./spec/v2/declaration.json). The corpus version is in [`spec/v2/release.json`](./spec/v2/release.json).
+**The protocol is at major 2.** [`spec/v2/core/`](./spec/v2/core/) is the normative tree: thirty-one `Stable` documents under a kernel word budget, with optional extensions in [`spec/v2/ext/`](./spec/v2/ext/) and one declaration file, [`spec/v2/declaration.json`](./spec/v2/declaration.json). The corpus version is in [`spec/v2/release.json`](./spec/v2/release.json).
 
 **v1 has reached end of support** ([RFC 0234](./RFCS/0234-maintainer-set-v1-end-of-support.md)). The v1 tree is frozen at [`spec/v1/`](./spec/v1/README.md) for clients that still speak it; new work targets v2. Migration: [`docs/migration/v1-to-v2.md`](./docs/migration/v1-to-v2.md).
 
