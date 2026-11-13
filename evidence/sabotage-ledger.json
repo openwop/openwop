@@ -1,0 +1,4 @@
+{
+  "$comment": "RFC 0263 §B — red runs that show a cited conformance leg can fail. One row per sabotage: the requirement id, the scenario, one sentence naming what was broken, the subject it ran on ({host, build}; never a certified committed bundle — that recorded the pass), the suite version, result executed-fail, and the date. witnessSha256 is optional (the red bundle's digest, when one was cut). Checked by scripts/check-accepted-predicate.mjs rules 5 and 6 and scripts/check-sabotage-ledger.mjs (scripts/lib/sabotage-ledger.mjs). From RFC 0260, an RFC goes Accepted only when every id its Falsifiability table names on a witnessable row has a row here. Older RFCs are not retroactively invalidated; a backfill is invited (RFCS/registers/0263-sabotage-ledger.gaps.md).",
+  "rows": []
+}

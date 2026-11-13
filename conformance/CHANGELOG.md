@@ -1,3 +1,9 @@
+## [2.47.0] — 2026-11-13 — Cache-key recipe 2, telemetry export, sabotage ledger
+
+- **RFC 0260.** `v2-replay-llm-cache-key`: a server-free shape leg, an unaided implies-idempotency leg, and four host legs on `GET /runs/{runId}/effects` (key recorded, parameters in the key, stable, portable), gated on `replay.llmCacheKeyRecipe` and the `conformance-llm-cache-key` fixture. Judges in `lib/llm-cache-key-2.ts`.
+- **RFC 0262.** `v2-telemetry-export`: a server-free shape leg and five legs against the suite OTLP collector (run span, node span, `traceparent`, no secret in spans, GenAI attributes), gated on the `telemetry` family.
+- **RFC 0263.** `v2-sabotage-ledger` (coherence) drives `check-accepted-predicate` rules 5 and 6 on fixture trees, with positive and negative controls.
+
 ## [2.46.44] — 2026-11-08 — Bounded loopback and resolvedVia go Active
 
 - **RFC 0258.** `v2-bounded-loopback`: a server-free shape leg and six host legs (re-arm, history from the log, `ApprovalData.loopback`, withdraw, fail on exhaustion, replay re-arm), gated on the `loopback` family and the `conformance-loopback-refine` / `-fail` fixtures. Judges in `lib/bounded-loopback-witness.ts`.

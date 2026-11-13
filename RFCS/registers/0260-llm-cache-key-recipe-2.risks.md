@@ -1,0 +1,9 @@
+# RFC 0260 — Risk register
+
+| ID | Risk | Likelihood | Impact | Score | Mitigation | Owner | Target | Status |
+| --- | --- | --- | --- | --- | --- | --- | --- | --- |
+| R1 | A host advertises the facet but keeps matching old records by recipe 2, so every pre-adoption recorded result reads as missing and replays fail `replay_source_missing`. | M | M | Med | §C.3: a record with no `cacheKey` is matched by RFC 0041's recipe; a fork copies `cacheKey` verbatim. | Spec Architect | at `Active` | `accepted` 2026-11-13 — stated in the normative text; unwitnessable (G5). |
+| R2 | The recorded digest is a confirmation oracle: a reader who guesses a low-entropy prompt can check the guess against the ledger. | L | M | Low | The effect ledger is tenant-scoped and served to the run's readers, who can already read the run's inputs; `cacheKey` carries no preimage (§C.2). | Security Architect | at `Active` | `accepted` 2026-11-13 — no new reader gains access. |
+| R3 | A consumer validating against an older pinned closed effect-ledger schema rejects a record carrying `cacheKey`. | M | L | Low | `COMPATIBILITY.md` §2.4: an optional addition is additive and consumers pin; the CHANGELOG names the property. | Schema Architect | at `Active` | `accepted` |
+| R4 | A host puts a parameter it sends under the wrong name, or leaves one out of `extra`, and two different requests still share a key. | M | M | Med | The suite witnesses the named set only (leg 3); `extra` is a claims-check row. | Conformance Architect | at `Accepted` | `accepted` 2026-11-13 — residual, stated in the Falsifiability table. |
+| R5 | A host never records provider calls on the effect ledger, so the legs record `blocked`, not `executed-fail`. | M | L | Low | The scenario names the cause (idempotency.md §Composition) in the blocked reason, and a blocked row stops a profile certifying. | Conformance Architect | at host implementation | `accepted` 2026-11-13 |

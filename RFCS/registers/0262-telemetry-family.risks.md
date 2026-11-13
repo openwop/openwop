@@ -1,0 +1,9 @@
+# RFC 0262 — Risk register
+
+| ID | Risk | Likelihood | Impact | Score | Mitigation | Owner | Target | Status |
+| --- | --- | --- | --- | --- | --- | --- | --- | --- |
+| R1 | A host exports a resolved secret in a span attribute (for example an `Authorization` header captured by HTTP auto-instrumentation) and the operator's collector stores it. | M | H | High | §E MUST NOT; protocol-tier invariant `telemetry-export-no-secret`; leg 5 scans every captured span surface for the store canary with the digest and plaintext detectors, and an empty export records `blocked`. | Security Architect | at `Accepted` | `accepted` 2026-11-13 — witnessed once a host advertises the family (G3). |
+| R2 | A host advertises `telemetry` and exports nothing, and the family reads as witnessed. | M | M | Med | Every host leg records `blocked` when the collector captured no span for the run, and a bundle with a `blocked` row does not certify. | Conformance Architect | at `Active` | `accepted` 2026-11-13 |
+| R3 | Upstream renames a `gen_ai.*` attribute and a host's mapping goes stale. | H | L | Med | `genAiSemconv` pins the version the host maps; §C names the minimum set in terms of that version; the leg accepts either provider attribute name. | Spec Architect | at `Active` | `accepted` 2026-11-13 |
+| R4 | A shared operator collector mixes several tenants' run ids. | M | M | Med | Run ids are tenant-bound; `openwop.tenant_id` stays out of the MUST set; routing by resource attributes is the operator's. | Security Architect | at `Active` | `accepted` 2026-11-13 — residual, stated in Security considerations. |
+| R5 | A consumer pinned to an older closed v2 discovery schema rejects a document carrying `telemetry`. | M | M | Med | `COMPATIBILITY.md` §2.4: an optional root family is additive and consumers pin; CHANGELOG names the family. | Schema Architect | at `Active` | `accepted` 2026-11-13 |

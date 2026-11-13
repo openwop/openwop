@@ -185,5 +185,9 @@ The exemption is a deferral, not a review. **Zero discharged is still the correc
 | 0257 | run status when every terminal node is skipped (replay, run lifecycle; additive; STEWARD OVERRIDE of RFC 0147 §A.6) | in-scope-pending-assessment | — | — | `not-reviewed` |
 | 0258 | bounded refine loopback for approval gates (replay, run lifecycle; additive; STEWARD OVERRIDE of RFC 0147 §A.6) | in-scope-pending-assessment | — | — | `not-reviewed` |
 | 0259 | `interrupt.resolved` records the instrument of a token resolution (identity, authorization; additive; STEWARD OVERRIDE of RFC 0147 §A.6) | in-scope-pending-assessment | — | — | `not-reviewed` |
+| 0260 | LLM cache key recipe 2 (replay; additive; STEWARD OVERRIDE of RFC 0147 §A.6) | in-scope-pending-assessment | — | — | `not-reviewed` |
+| 0261 | concurrent first writes under idempotency.multiRegion (idempotency, external effects; additive; STEWARD OVERRIDE of RFC 0147 §A.6) | in-scope-pending-assessment | — | — | `not-reviewed` |
+| 0262 | the telemetry family (secrets; additive; STEWARD OVERRIDE of RFC 0147 §A.6) | in-scope-pending-assessment | — | — | `not-reviewed` |
+| 0263 | the sabotage ledger (conformance and certification; additive; STEWARD OVERRIDE of RFC 0147 §A.6) | in-scope-pending-assessment | — | — | `not-reviewed` |
 | 0236 | Host events — events without a run-log position (isolation; additive with a safety-fix clause; STEWARD OVERRIDE of RFC 0147 §A.6) | in-scope-pending-assessment | — | — | `not-reviewed` |
 | 0237 | Declared nondeterminism names its sources (certification; additive; STEWARD OVERRIDE of RFC 0147 §A.6) | in-scope-pending-assessment | — | — | `not-reviewed` |

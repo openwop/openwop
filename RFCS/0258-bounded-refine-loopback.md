@@ -260,19 +260,19 @@ Server-free legs (always run): the negative schema rows above against `schemas/v
 
 | Requirement | Observable | Who can cause it | Verdict |
 | --- | --- | --- | --- |
-| §A shape and exclusions | schema validation | the suite, server-free | witnessable |
+| §A shape and exclusions | schema validation — `openwop.requirement.0258.shape` | the suite, server-free | witnessable |
 | §B.1–B.4 refusals | — | — | **unwitnessable** — v2 exposes no operation through which a client submits a definition (no workflow registration, no inline definition on `createRun`), so a host's admission refusal never reaches the wire |
 | §B.5 ceiling | — | — | **unwitnessable** — as §B.1–B.4: no client-submitted definition at v2 |
 | §B.6 non-gate source (SHOULD) | — | depends on what a host can determine statically | **unwitnessable** — host-judged: what a host can determine statically is not observable on the wire, which is why it is a SHOULD |
 | §B non-advertiser never runs the edge | — | — | **unwitnessable** — as §B.1–B.4: no client-submitted definition at v2 |
-| §C.1 marker | `node.completed.loopback` | the suite (one refine) | witnessable — gated |
-| §C.2 nothing leaves the region | `apply` has no `node.started`/`node.skipped` before accept | the suite | witnessable — gated |
-| §C.3 re-arm and new key | second `node.started` for `draft`, second `interrupt.requested` with a new key | the suite | witnessable — gated |
-| §C.4 history from the log, no run-scoped bytes | `rounds` content | the suite (`core.identity` echoes its inputs) | witnessable — gated |
-| §C.4 size cap | an entry over `maxHistoryEntryBytes` arrives as `{truncated: true, bytes}` with `round` and `refineFeedback` intact | the suite (a fixture producer whose output exceeds the advertised cap) | witnessable — gated (not in the first scenario) |
-| §C.5 limits | `recursion_limit_exceeded` with a small `recursionLimit` | the suite | witnessable — gated (not in the first scenario) |
-| §C.6 replay | fork behaviour | the suite, with `replay` | witnessable — doubly gated |
-| §D withdraw / fail | `actions`, `400`, events, terminal | the suite | witnessable — gated |
+| §C.1 marker | `node.completed.loopback` — `openwop.requirement.0258.refine-rearms` | the suite (one refine) | witnessable — gated |
+| §C.2 nothing leaves the region | `apply` has no `node.started`/`node.skipped` before accept — `openwop.requirement.0258.refine-rearms` | the suite | witnessable — gated |
+| §C.3 re-arm and new key | second `node.started` for `draft`, second `interrupt.requested` with a new key — `openwop.requirement.0258.refine-rearms` | the suite | witnessable — gated |
+| §C.4 history from the log, no run-scoped bytes | `rounds` content — `openwop.requirement.0258.history-from-log` | the suite (`core.identity` echoes its inputs) | witnessable — gated |
+| §C.4 size cap | an entry over `maxHistoryEntryBytes` arrives as `{truncated: true, bytes}` with `round` and `refineFeedback` intact | the suite (a fixture producer whose output exceeds the advertised cap) | witnessable — gated (planned: not in the first scenario) |
+| §C.5 limits | `recursion_limit_exceeded` with a small `recursionLimit` | the suite | witnessable — gated (planned: not in the first scenario) |
+| §C.6 replay | fork behaviour — `openwop.requirement.0258.replay-rearms` | the suite, with `replay` | witnessable — doubly gated |
+| §D withdraw / fail | `ApprovalData.loopback`, `actions`, `400`, events, terminal — `openwop.requirement.0258.approval-data-loopback`, `openwop.requirement.0258.withdraw-refine`, `openwop.requirement.0258.fail-on-exhausted` | the suite | witnessable — gated |
 
 ## Alternatives considered
 

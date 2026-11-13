@@ -385,6 +385,10 @@ Of the 5 open (`Draft` or `Active`) RFCs, **1 is [Parked](#parked-rfcs)** on a n
 | [0257](./0257-run-status-when-every-terminal-is-skipped.md) | A run in which no node failed and every terminal node was skipped ends `completed`, and says so on `run.completed` | `Accepted` |
 | [0258](./0258-bounded-refine-loopback.md) | A declared, bounded loopback from an approval gate to the node it reviews: a refine re-runs that region with the round history, and the cap is never unlimited | `Active` |
 | [0259](./0259-interrupt-resolved-via.md) | `interrupt.resolved` records the instrument of a token resolution (`resolvedVia`) | `Active` |
+| [0260](./0260-llm-cache-key-recipe-2.md) | LLM cache key recipe 2: every sampling parameter enters the key, and the key is recorded on the effect ledger (opt-in) | `Active` |
+| [0261](./0261-multi-region-concurrent-first-write.md) | Under `idempotency.multiRegion`, a concurrent first write has exactly one winner and no effect is performed twice | `Active` |
+| [0262](./0262-telemetry-family.md) | The `telemetry` family: OTLP export, run and node spans, no secret in spans, an optional GenAI mapping | `Active` |
+| [0263](./0263-sabotage-ledger.md) | A cited row must be shown able to fail: the sabotage ledger, and ids on every witnessable falsifiability row | `Active` |
 ## See also
 
 - `GOVERNANCE.md` — decision rules, maintainer roles, the broader spec change process.

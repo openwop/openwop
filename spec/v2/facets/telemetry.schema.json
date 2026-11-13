@@ -1,0 +1,26 @@
+{
+  "$comment": "RFC 0262 §A — the telemetry family's facets. `otlp` is required: present means the host exports OTLP traces per spec/v2/core/telemetry.md. `genAiSemconv` is optional: present means model-call spans carry that version's gen_ai.* attributes (§C).",
+  "properties": {
+    "otlp": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["protocols"],
+      "properties": {
+        "protocols": {
+          "type": "array",
+          "minItems": 1,
+          "uniqueItems": true,
+          "items": { "enum": ["http/protobuf", "http/json", "grpc"] },
+          "description": "RFC 0262 §A, §B.1 — the OTLP transports the host can export traces over, to the endpoint the operator configures with the standard OTEL_EXPORTER_OTLP_* settings."
+        }
+      },
+      "description": "RFC 0262 §B — advertising telemetry binds the export rules in spec/v2/core/telemetry.md: an openwop.run span per run, an openwop.node.<typeId> span per node execution, an inbound traceparent continued, and no credential material or resolved secret in any exported span."
+    },
+    "genAiSemconv": {
+      "type": "string",
+      "pattern": "^(0|[1-9][0-9]*)\\.(0|[1-9][0-9]*)\\.(0|[1-9][0-9]*)$",
+      "description": "RFC 0262 §C — the OpenTelemetry GenAI semantic-conventions version the host maps model calls to. With it, each model-call span MUST carry the gen_ai.* attributes that version defines for a chat call: operation name, provider, request model, and input and output token usage. Absent means no GenAI mapping claim."
+    }
+  },
+  "required": ["otlp"]
+}

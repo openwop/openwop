@@ -33,6 +33,14 @@ Entries before this file was condensed carried full development detail. That tex
 
 - **RFC 0246 Active (safety fix, `GHSA-ffx7-pm5h-v6pq`): a trial that failed its trajectory cannot carry a task or a suite to a pass.** The `mean` task rule and suite `passed` read a gating score that counts it 0; reported scores are unchanged. 90-day window waived by recorded STEWARD OVERRIDE.
 
+## [2.47.0] — 2026-11-13 — Four protocol-gap RFCs go Active
+
+- **RFC 0260 Active (window waived).** Opt-in cache-key recipe 2: `replay.llmCacheKeyRecipe: "openwop-llm-key-2"` puts every sampling parameter (`maxTokens`, `stop`, `seed`, …) in an LLM node's key, and the effect ledger records it as `cacheKey`.
+- **RFC 0261 Active (window waived).** Under `idempotency.multiRegion`, a concurrent first write has exactly one winner and an effect claimed in one region is never performed in another. Claims-check until a host advertises it.
+- **RFC 0262 Active (window waived).** The `telemetry` core family and `spec/v2/core/telemetry.md`: OTLP export, `openwop.run` and `openwop.node.<typeId>` spans, an inbound `traceparent` continued, no secret in any span, and an optional GenAI mapping.
+- **RFC 0263 Active (window waived).** Every witnessable falsifiability row names its requirement ids (RFC 0258 and 0259 tables backfilled), and from RFC 0260 a cited id needs an `executed-fail` row in `evidence/sabotage-ledger.json` before `Accepted`.
+- **Suite.** `v2-replay-llm-cache-key` (6 ids, fixture `conformance-llm-cache-key`), `v2-telemetry-export` (6 ids) and the `v2-sabotage-ledger` coherence test. No host advertises the new surfaces yet.
+
 ## [2.46.44] — 2026-11-08 — Bounded loopback and resolvedVia go Active
 
 - **RFC 0258 Active (window waived).** A `WorkflowEdge.loopback` from an approval gate back to the node it reviews: a `refine` re-runs that region with the round history rebuilt from the log; the gate's `node.completed` marks the re-arm and the cap is required. New core family `loopback`.

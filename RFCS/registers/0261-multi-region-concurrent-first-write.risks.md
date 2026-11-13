@@ -1,0 +1,8 @@
+# RFC 0261 — Risk register
+
+| ID | Risk | Likelihood | Impact | Score | Mitigation | Owner | Target | Status |
+| --- | --- | --- | --- | --- | --- | --- | --- | --- |
+| R1 | A host advertises `multiRegion` with a per-region insert-if-absent claim, starts two runs for one key, and issues an external effect twice. | M | H | High | §A.1 names that design as non-conformant; §C.1 forbids the second performance; the requirements are `claims-check` and the host states them in `conformance.md`. | Spec Architect | at a host's first `multiRegion` advertisement | `accepted` 2026-11-13 — unwitnessable without operator control; stated in the normative text. |
+| R2 | §B.1's fail-closed `409` under partition reduces availability, and a host drops `multiRegion` rather than meet it. | M | M | Med | Availability under partition is the documented price of the promise; a host that prefers availability advertises `crossRegion: reconciled-records` without `multiRegion` and makes no exactly-once claim (§C.2). | Spec Architect | at `Active` | `accepted` 2026-11-13 |
+| R3 | A reader still takes "collapse a duplicate effect" in `idempotency.md` as an at-most-once issuance promise. | M | M | Med | §C.2 states the reading in the facet's description; `docs/KNOWN-LIMITS.md` lists the multi-region simulators as major-1 only. | Spec Architect | at `Active` | `accepted` 2026-11-13 |
+| R4 | Moving the facet descriptions out of the seeded copy changes the generated capabilities schema in a way a validator notices. | L | M | Low | Shapes, types and enums are copied unchanged; only descriptions change; `check-declaration` and the v2 discovery round-trip run before merge. | Schema Architect | at merge | `accepted` 2026-11-13 |
