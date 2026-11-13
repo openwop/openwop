@@ -16469,6 +16469,74 @@
       ]
     },
     {
+      "id": "openwop.gap.0264.1",
+      "rfc": "0264",
+      "local": "G1",
+      "section": "§Status",
+      "surface": "**High.** The 7-day comment window has not run. The Phase 2 waiver (2026-11-13) covered RFCs 0260–0263 only.",
+      "witness": "unclassified",
+      "requirementId": null,
+      "disposition": "transferred",
+      "target": "RFC",
+      "sources": [
+        {
+          "file": "RFCS/registers/0264-core-adoption-derived.gaps.md",
+          "token": "G1"
+        }
+      ]
+    },
+    {
+      "id": "openwop.gap.0264.2",
+      "rfc": "0264",
+      "local": "G2",
+      "section": "§A.2",
+      "surface": "**Medium.** Whether a retired host's last bundle should keep counting toward adoption.",
+      "witness": "unclassified",
+      "requirementId": null,
+      "disposition": "transferred",
+      "target": "RFC",
+      "sources": [
+        {
+          "file": "RFCS/registers/0264-core-adoption-derived.gaps.md",
+          "token": "G2"
+        }
+      ]
+    },
+    {
+      "id": "openwop.gap.0264.3",
+      "rfc": "0264",
+      "local": "G3",
+      "section": "§A.3",
+      "surface": "**Medium.** The 2026-11-13 counts (18 / 24 / 16 / 12) came from a text match on discovery documents, not from the script §A specifies.",
+      "witness": "unclassified",
+      "requirementId": null,
+      "disposition": "transferred",
+      "target": "RFC",
+      "sources": [
+        {
+          "file": "RFCS/registers/0264-core-adoption-derived.gaps.md",
+          "token": "G3"
+        }
+      ]
+    },
+    {
+      "id": "openwop.gap.0264.4",
+      "rfc": "0264",
+      "local": "G4",
+      "section": "§B.6",
+      "surface": "**Medium.** Each family at `none` needs a stated plan before its first `keep` row can be written.",
+      "witness": "unclassified",
+      "requirementId": null,
+      "disposition": "transferred",
+      "target": "RFC",
+      "sources": [
+        {
+          "file": "RFCS/registers/0264-core-adoption-derived.gaps.md",
+          "token": "G4"
+        }
+      ]
+    },
+    {
       "id": "openwop.gap.spec.a2a-integration.g1",
       "rfc": "0152",
       "local": "G1",
