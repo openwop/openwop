@@ -69,6 +69,25 @@ for (const r of rows) {
   groups.get(area).push({ ...r, file: f, status, tier: clip(tier, 90), override });
 }
 
+// A reading order, not a scope or risk assessment: the steward's pick of the ten
+// waived RFCs whose wire or certification consequence is widest, so a first
+// reviewer starts where an error would cost the most. Each must be a register row.
+const START_HERE = [
+  ['0167', 'cut the v2 major itself under a waived 30-day breaking-change window'],
+  ['0234', 'ended v1 support early, a normative safeguard for third-party v1 consumers'],
+  ['0170', 'tenant-bound identifiers and the auth lanes every request runs through'],
+  ['0173', 'the obligation table: which protecting behaviour an advertised surface binds'],
+  ['0150', 'effect identity and split-brain: whether a retried or replayed effect fires twice'],
+  ['0148', 'what a certification row must show before it counts as a pass'],
+  ['0216', 'which rows a colocated companion bundle may certify, and so what production must witness'],
+  ['0220', 'which bundles count as evidence for an extension family to become Stable'],
+  ['0199', 'the host acting as an OAuth client and holding third-party credentials'],
+  ['0201', 'webhook signatures, signed delivery ids and secret rotation'],
+];
+const byRfc = new Map(rows.map((r) => [r.rfc, r]));
+for (const [rfc] of START_HERE) if (!byRfc.has(rfc)) throw new Error(`START_HERE names RFC ${rfc}, which is not a row in the register`);
+const fileOf = (rfc) => [...groups.values()].flat().find((r) => r.rfc === rfc)?.file;
+
 const open = rows.filter((r) => r.outcome !== 'ratified').length;
 let md = `# RFC 0156 §B retrospective-review packet
 
@@ -92,6 +111,14 @@ This packet is for that reviewer. **${rows.length} RFCs are listed; ${open} have
    - Is anything claimed as witnessed that the cited evidence does not show?
 3. Record one outcome from §B's closed vocabulary (\`ratified | corrective-rfc-required | provisional | withdrawn\`) by a pull request that edits the RFC's row in \`docs/WAIVER-RETROSPECTIVE-REGISTER.md\`: your organization in **Reviewer org**, the date, the outcome. For anything but \`ratified\`, open an issue naming the defect or the pending work and link it from the PR. The PR must be authored by the reviewer (DCO sign-off), not by the steward on the reviewer's behalf.
 4. You may also narrow the **§B scope** column (\`out-of-scope\` with a one-line rationale). That too is a reviewer judgement, never a mechanical one.
+
+## Where to start
+
+If you can review only a few, start with these ten. The order is the steward's reading of where a defect would reach furthest across the wire or into certification. It is a reading order, not a scope or risk assessment, and it records no outcome.
+
+| # | RFC | Why it is here | Outcome |
+| --- | --- | --- | --- |
+${START_HERE.map(([rfc, why], i) => `| ${i + 1} | ${fileOf(rfc) ? `[${rfc}](../RFCS/${fileOf(rfc)})` : rfc} | ${cell(why)} | \`${byRfc.get(rfc).outcome}\` |`).join('\n')}
 
 Grouping below is a reading aid only: it assigns each RFC to the risk class its waiver recorded, else to the first §B area its title names. It is not a scope assessment.
 

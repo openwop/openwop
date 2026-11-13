@@ -24,6 +24,7 @@ Source: `SECURITY/external-audit-engagement.md §8, SECURITY/external-audit-find
 | --- | --- |
 | Engagement doc drafted | 2026-05-10 |
 | Per-vendor outreach drafts ready | 2026-05-11 |
+| Scope re-cut for v2 | 2026-11-13 |
 | Vendor outreach sent | — |
 | Quotes received | — |
 | Vendor selected | — |

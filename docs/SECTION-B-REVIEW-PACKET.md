@@ -21,6 +21,23 @@ This packet is for that reviewer. **136 RFCs are listed; 136 have no discharging
 3. Record one outcome from §B's closed vocabulary (`ratified | corrective-rfc-required | provisional | withdrawn`) by a pull request that edits the RFC's row in `docs/WAIVER-RETROSPECTIVE-REGISTER.md`: your organization in **Reviewer org**, the date, the outcome. For anything but `ratified`, open an issue naming the defect or the pending work and link it from the PR. The PR must be authored by the reviewer (DCO sign-off), not by the steward on the reviewer's behalf.
 4. You may also narrow the **§B scope** column (`out-of-scope` with a one-line rationale). That too is a reviewer judgement, never a mechanical one.
 
+## Where to start
+
+If you can review only a few, start with these ten. The order is the steward's reading of where a defect would reach furthest across the wire or into certification. It is a reading order, not a scope or risk assessment, and it records no outcome.
+
+| # | RFC | Why it is here | Outcome |
+| --- | --- | --- | --- |
+| 1 | [0167](../RFCS/0167-openwop-v2-umbrella.md) | cut the v2 major itself under a waived 30-day breaking-change window | `not-reviewed` |
+| 2 | [0234](../RFCS/0234-maintainer-set-v1-end-of-support.md) | ended v1 support early, a normative safeguard for third-party v1 consumers | `not-reviewed` |
+| 3 | [0170](../RFCS/0170-v2-identity.md) | tenant-bound identifiers and the auth lanes every request runs through | `not-reviewed` |
+| 4 | [0173](../RFCS/0173-v2-security-defaults.md) | the obligation table: which protecting behaviour an advertised surface binds | `not-reviewed` |
+| 5 | [0150](../RFCS/0150-effect-identity-replay-and-split-brain-safety.md) | effect identity and split-brain: whether a retried or replayed effect fires twice | `not-reviewed` |
+| 6 | [0148](../RFCS/0148-non-vacuous-conformance-certification.md) | what a certification row must show before it counts as a pass | `not-reviewed` |
+| 7 | [0216](../RFCS/0216-colocated-witness-for-harness-trust-anchor-rows.md) | which rows a colocated companion bundle may certify, and so what production must witness | `not-reviewed` |
+| 8 | [0220](../RFCS/0220-ext-families-graduate-on-evidence.md) | which bundles count as evidence for an extension family to become Stable | `not-reviewed` |
+| 9 | [0199](../RFCS/0199-outbound-oauth-client-and-credential-interrupt.md) | the host acting as an OAuth client and holding third-party credentials | `not-reviewed` |
+| 10 | [0201](../RFCS/0201-standard-webhooks-signature-scheme.md) | webhook signatures, signed delivery ids and secret rotation | `not-reviewed` |
+
 Grouping below is a reading aid only: it assigns each RFC to the risk class its waiver recorded, else to the first §B area its title names. It is not a scope assessment.
 
 ## Identity and authorization (22)

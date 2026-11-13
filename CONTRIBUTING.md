@@ -206,10 +206,10 @@ While the project has one maintainer (see [`GOVERNANCE.md`](./GOVERNANCE.md) §"
 
 A maintainer will respond to your PR or issue within:
 
-- **24 hours** for security-flagged issues (see [`SECURITY.md`](./SECURITY.md)).
-- **7 calendar days** for everything else.
+- **Security reports:** don't open a public issue or PR. Report privately as [`SECURITY.md`](./SECURITY.md) describes; its response times (acknowledgment within 3 business days) are the project's only security commitment.
+- **Everything else:** within **5 business days**, the same commitment a maintainer makes in [`MAINTAINERS.md`](./MAINTAINERS.md).
 
-"Respond" means substantive: a review, a redirect, or a date by which it will be looked at. If 7 days pass without one, ping the lead maintainer listed in [`MAINTAINERS.md`](./MAINTAINERS.md).
+"Respond" means substantive: a review, a redirect, or a date by which it will be looked at. If 5 business days pass without one, ping the lead maintainer listed in [`MAINTAINERS.md`](./MAINTAINERS.md).
 
 A PR waiting more than 14 days without a substantive response is a maintainer capacity problem, not a problem with your contribution.
 

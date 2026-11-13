@@ -1,8 +1,8 @@
 # External Security Review — Engagement Document
 
-> **Status: DRAFT, scope-pinned 2026-05-15.** Vendor-neutral scoping document for the external security review referenced in `SECURITY.md` §9. Solicit quotes against this scope; finalize after vendor selection. Embargo terms align with the disclosure SLA in `SECURITY.md` §6.
+> **Status: DRAFT, re-scoped for v2 on 2026-11-13. Not sent.** Vendor-neutral scoping document for the external security review referenced in `SECURITY.md` §9. Solicit quotes against this scope; finalize after vendor selection. Embargo terms align with the disclosure SLA in `SECURITY.md` §6. Sending outreach commits the project to spending money, so it needs the steward's explicit go; this re-scope is not that go.
 >
-> **Scope-pin note (SEC-2 close-out, 2026-05-15; refreshed 2026-05-21).** Repo state has advanced since the 2026-05-10 draft: RFC ladder 0001–0024 + 0026 all `Accepted` (25 RFCs); RFC 0025 remains `Draft`; RFCs 0027–0033 are `Active` (extensions in flight, gated behind capability advertisements — see INTEROP-MATRIX.md); the Postgres reference host has joined the implementation list and claims `openwop-production` end-to-end; mTLS termination + reasoning-event emission + memory compaction + host-side pack consumption + workflow-chain expansion + envelope-accept pipeline are now mechanically verified on Postgres; high-stakes `core.openwop.{ai,http,mcp,triggers}` packs are built + signed in-tree but remain audit-gated for public publication. The audit engages against the commit pinned in §3 at kickoff.
+> **Re-scope note (2026-11-13).** The May 2026 scope covered the v1 corpus (RFCs 0001–0033, the in-memory, SQLite, Python and Postgres example hosts). v1 reached end of support on 2026-10-04 ([RFC 0234](../RFCS/0234-maintainer-set-v1-end-of-support.md)), so §1, §2.1, §2.2, §2.3 and §5 now describe the v2 protocol. §2.1.1 is unchanged: it records a decision taken in May whose obligations still bind.
 >
 > **Steward pre-audit publication decision (2026-05-17).** The single steward has elected to publish `core.openwop.*` packs to `packs.openwop.dev` **prior to** the external review reaching `Completed`. The list of publications and the rationale are recorded in §2.1.1 below. This decision does **not** retract the audit requirement — the engagement remains live and the post-audit obligations (§2.1.1, last paragraph) bind every published pack listed.
 
@@ -12,7 +12,7 @@ This document defines what the openwop project asks of an external security revi
 
 ## 1. Why a review
 
-The openwop protocol is approaching first non-steward adoption. Several invariants the protocol claims — secret redaction, append-only audit logs, signed node packs, prompt-injection containment — depend on the host honoring them. The conformance suite mechanically verifies many of these end-to-end against the reference host. An independent review:
+The openwop protocol is at v2 and has no host outside the steward's organization yet. Several invariants the protocol claims — secret redaction, tenant isolation, signed node packs, signed certification bundles, prompt-injection containment — depend on the host honoring them. `SECURITY/invariants.yaml` lists 224 of them, and the conformance suite verifies many end-to-end against two hosts the steward operates. Nobody outside the project has reviewed any of them. An independent review:
 
 - Validates that the documented threat models cover the realistic attack surface.
 - Identifies invariants stated in the spec that are _not_ mechanically enforced.
@@ -25,30 +25,27 @@ The openwop protocol is approaching first non-steward adoption. Several invarian
 
 ### 2.1 In scope
 
-The review covers the protocol corpus + reference implementations as of the engagement-kickoff date. Specifically:
+The review covers the v2 protocol corpus and its reference implementations at the commit pinned at kickoff. `spec/v1/` is a frozen tree past end of support and is out of scope. Specifically:
 
-**Documents:**
+**Documents (v2):**
 
-- `spec/v1/auth.md` and `spec/v1/auth-profiles.md` (including OAuth2 client-credentials, OIDC user-bearer, mTLS, key rotation, and `openwop-audit-log-integrity` profiles)
-- `spec/v1/webhooks.md` (HMAC signing, replay-attack-resistant verification, signature-algorithm versioning)
-- `spec/v1/node-packs.md` and `spec/v1/registry-operations.md` (Ed25519 signing, supply-chain controls, registry submission/yank/rotation)
-- `spec/v1/mcp-integration.md` (MCP trust boundary, `<UNTRUSTED>` marker discipline)
-- `spec/v1/idempotency.md` §"Multi-region idempotency annex" (cross-region conflict resolution)
-- All five threat models in `SECURITY/`:
-  - `threat-model-auth-profiles.md`
-  - `threat-model-secret-leakage.md`
-  - `threat-model-prompt-injection.md`
-  - `threat-model-node-packs.md`
-  - `threat-model-provider-policy.md`
-- `SECURITY/invariants.yaml` and the `scripts/check-security-invariants.sh` CI gate
+- `spec/v2/core/identity.md`, `oauth.md` and `security-defaults.md`: the auth lanes (API key, OIDC, session, workload, mTLS), tenant-bound identifiers, the obligation table that binds a protecting behaviour to an advertised surface, and the compensation section.
+- `spec/v2/core/interrupt.md`: the `ow2.<alg>.<kid>.<payload>.<mac>` resume-token scheme, approver enforcement, and the token-presentation record (RFC 0259 `resolvedVia`).
+- `spec/v2/core/webhooks.md`: signing, replay-resistant verification, secret rotation and the SSRF refusal set.
+- `spec/v2/core/idempotency.md` and `replay.md`: Layer-1 and Layer-2 identity, effect suppression on replay and fork, and the multi-region rules.
+- `spec/v2/core/packs.md`, `node-pack-runtimes.md` and `workflow-chain-packs.md`: Ed25519 pack signing, install-time fail-closed checks, and pack isolation.
+- `spec/v2/core/interop.md`: the MCP 2026-07-28 and A2A 1.0 trust boundaries, untrusted-content discipline, and trace-context propagation.
+- `spec/v2/core/storage.md` and `persistence.md`: cross-tenant isolation across the storage surfaces.
+- `spec/v2/core/conformance.md`: the signed certification bundle (Ed25519 over `{witnessSha256, host.build, suite.version, discovery.sha256}`) and the colocated-companion pairing rules (RFC 0216).
+- The nine threat models in `SECURITY/` (`threat-model-*.md`).
+- `SECURITY/invariants.yaml` (224 rows) and the `scripts/check-security-invariants.sh` gate.
 
 **Implementation:**
 
-- The TypeScript reference host at `examples/hosts/in-memory/` (~570 LOC) and SQLite reference host at `examples/hosts/sqlite/` (~700 LOC) AT THE PINNED COMMIT
-- The Python reference host at `examples/hosts/python/` (~600 LOC) AT THE PINNED COMMIT
-- **The Postgres reference host at `examples/hosts/postgres/` (~4300 LOC) AT THE PINNED COMMIT** — first host claiming `openwop-production` end-to-end. Implements MemoryAdapter + agent reasoning events + memory compaction (RFC 0012) + OAuth2-CC + OIDC user-bearer + mTLS termination + API-key rotation + auth-scoped discovery + Ed25519 pack consumption with SRI + signature + lockfile fail-closed enforcement.
-- The conformance suite at `conformance/` AT THE PINNED COMMIT (review the assertions, not just the protocol surface)
-- The three reference SDKs (TypeScript, Python, Go) AT THE PINNED COMMIT
+- The v2 reference host, `openwop/openwop-examples` `examples/hosts/v2-reference/` (about 11,000 lines of TypeScript, node:http + better-sqlite3 + node:crypto), at the pinned commit.
+- The reference application, `openwop/openwop-app`, backend only: auth and tenant isolation, the idempotency store, interrupt-token issuance and resolution, the MCP server mount, and pack isolation. Deployment configuration stays out of scope (§2.3).
+- The conformance suite at `conformance/` at the pinned commit. Review the assertions, not only the protocol surface: a row whose assertions cannot fail is a finding.
+- The three SDKs in `openwop/openwop-sdks` (TypeScript, Python, Go) at the pinned commit.
 
 **Spec-canonical `core.openwop.*` node packs (high-stakes, REQUIRED before publication):**
 These packs are advertised throughout the spec and will become permanent immutable artifacts on `packs.openwop.dev` once published. The audit MUST cover each before `(name, 1.0.0)` is published. ~~Until then they remain unpublished in this repo (source under `packs/core.openwop.*/`).~~ See §2.1.1 below: the steward elected to publish ahead of audit completion on 2026-05-17.
@@ -84,16 +81,15 @@ Publication condition: each pack listed above moves from "in-tree" to "published
 
 **RFCs (state at engagement kickoff):**
 
-- RFCs 0002–0007 (multi-agent extensions — agent identity, agent packs, memory, conversation, orchestrator, dispatch) — all `Accepted`.
-- RFC 0008 (WASM ABI for node packs) — `Accepted`; review the ABI and reference loader/conformance scenarios including the misbehaving-memory + misbehaving-abi packs.
-- RFC 0009 (Production-Profile Conformance) — `Accepted`; review the production-profile mechanics on the Postgres reference host (backpressure 503 + retention sweep + audit-log integrity claim).
-- RFC 0010 (Auth-Profile Conformance) — `Accepted`; review the four production-auth profile claims (OAuth2-CC, OIDC, mTLS, API-key rotation) and the canary-redaction discipline.
-- RFC 0011 (Auth-Scoped Discovery Advertisement) — `Accepted`; review the strict-subset projection logic that prevents the discovery payload from leaking capabilities into a less-privileged principal.
-- RFC 0012 (Memory Compaction Profile) — `Accepted` 2026-05-15; review the SR-1 carry-forward invariant (§D) end-to-end (the host's `applyCompactionRedaction` re-applies the BYOK redaction harness to summarization output before persistence; failure mode is silent leakage of secrets the summarizer hallucinated).
-- RFC 0013 (Workflow-chain packs) — `Accepted` 2026-05-18; in scope. Review the signed-pack expansion semantics + cross-tenant pack-loading isolation.
-- RFCs 0014–0024 + 0026 — all `Accepted`; capability-surface RFCs (host.fs / host.kvStorage / host.tableStorage / host.queueBus / host.sql / host.blobStorage / host.mcp.serverMount / AI envelope primitive / dispatch input-output mapping / conformance agent-event emitters / reasoning streaming / provider-usage events) are in scope per the post-2026-05-15 expansion.
-- RFC 0025 (Test-mode registry namespace) — `Active` 2026-05-25; conformance-only mirror surface, out of scope (the test-mode catalog is isolated from production per RFC 0025 §C and the reference impl env-gates the surface off by default).
-- RFCs 0027–0033 (prompt templates / library endpoints / override hierarchy / envelope reasoning / envelope variants + model capabilities / envelope reliability events / envelope completion contract) — `Active`; in scope as gated extensions. Review the BYOK redaction carry-forward across reasoning field + envelope acceptor + downstream projections.
+The core documents above own the rules, and an RFC never restates a rule a core document owns. The RFCs below are the security-relevant ones a reviewer should read for rationale and for the threats each one names. Statuses are as of 2026-11-13 and are re-checked at kickoff from `docs/PROTOCOL-STATUS.md`.
+
+- RFC 0167 (the v2 umbrella) and RFC 0170 (v2 identity: lanes, tenant-bound ids).
+- RFCs 0148–0150 (non-vacuous certification, machine-contract reconciliation, and effect identity, replay and split-brain safety), the Workstream 1–3 children of RFC 0147.
+- RFC 0151 (compensation and partial failure) and RFC 0158 (durable execution and disaster-recovery qualification).
+- RFCs 0152 and 0153 (A2A 1.0 and MCP 2026-07-28 composition), RFC 0175 (transports and embedded protocols) and RFC 0204 (the host MCP client).
+- RFC 0173 (v2 security defaults, including pack isolation and the effect-seam manifest), RFC 0199 (the outbound OAuth client and credential interrupt) and RFC 0201 (the Standard Webhooks signature scheme and secret rotation).
+- RFC 0216 (colocated companion bundles), because it decides which evidence counts and an error there would let an unwitnessed row certify.
+- RFC 0259 (`interrupt.resolved.resolvedVia`; `Active`): a forwarded link and a bound link must never be recorded as a signed-in approval.
 
 ### 2.1.1 Steward pre-audit publication decision (2026-05-17)
 
@@ -151,24 +147,26 @@ The single steward has elected to publish the following 17 `core.openwop.*` pack
 
 The deliverable MUST include explicit findings on:
 
-1. **Secret redaction (SR-1)** — does the spec + reference impl guarantee that BYOK plaintext never reaches persisted state, debug bundles, audit logs, or event streams under any combination of node-pack code paths?
-2. **Audit-log integrity** — is the hash chain + signed checkpoint design in `auth-profiles.md` §"Audit-log integrity" sound against the documented threat model (admin-with-storage-write but not signing-key access)?
-3. **Webhook HMAC** — is the `{timestamp}.{rawBody}` HMAC scheme resistant to the documented replay attacks; does the algorithm-versioning header preserve forward compatibility without enabling downgrade attacks?
-4. **Node-pack signing** — is the Ed25519 signing + tarball-integrity model robust against tampering, key rotation timing attacks, and the documented supply-chain threats in `threat-model-node-packs.md`?
-5. **Prompt-injection containment (MCP integration)** — does the `<UNTRUSTED>` marker discipline survive realistic adversarial MCP tool responses? Are there code paths where tool output silently merges into trusted state?
-6. **Multi-tenant isolation** — can a tenant influence another tenant's runs via shared idempotency cache, shared registry index, shared signing-key fingerprints, or shared in-flight event streams?
-7. **WASM ABI safety** (RFC 0008 §G + §K) — do the deterministic-time / deterministic-random / memory-cap invariants close the obvious side-channel + DoS paths?
-8. **Replay safety** — does fork-from-arbitrary-event preserve secret redaction and idempotency invariants? Can a `replay` mode resurrect deleted memory content per RFC 0004 §A?
-9. **Memory compaction carry-forward (RFC 0012 §D)** — does the host's redaction-on-derived-content harness actually re-redact summarizer output? Can an adversarial source-entry sequence get the compactor to emit a non-canonical `<REDACTED:...>` form-leak that escapes the canonical `[REDACTED:...]` substitution? Review `examples/hosts/postgres/src/memory-adapter.ts` `applyCompactionRedaction` + the SR-1 carry-forward conformance scenario.
-10. **Pack-consumer fail-closed posture** — host-side install-time checks per `node-packs.md` §"Dependency resolution + lockfile" + §"Signing recipe" (SRI integrity, Ed25519 signature, version drift, lockfile parse). Review `examples/hosts/postgres/src/pack-consumer.ts` + the 9-path host smoke; verify the host cannot mount a pack whose any check fails.
+1. **Secret redaction.** Do the spec and both implementations guarantee that BYOK plaintext never reaches persisted state, debug bundles, audit records, event streams or webhook deliveries, under any combination of pack code paths?
+2. **Tenant isolation.** Can a tenant influence another tenant's runs through the idempotency store, tenant-bound identifiers, storage surfaces, dead-letter reads, host events or in-flight event streams? Does a foreign-tenant id fail without revealing whether it exists?
+3. **Interrupt tokens.** Is the `ow2` HMAC token scheme sound against forgery, key-id confusion and replay? Does a token presentation ever get recorded as an authenticated approval, and can a bound link's binding be forged or transplanted?
+4. **Webhook signing.** Is the signing scheme resistant to the documented replay attacks, and does secret rotation's overlap window avoid a downgrade or a window where an old secret still verifies after it should not?
+5. **Node-pack signing and isolation.** Is the Ed25519 signing and tarball-integrity model robust against tampering and key-rotation attacks? Does the host refuse to mount a pack that fails any install-time check? Does the pack-isolation runtime contain an untrusted pack's filesystem, network and environment access?
+6. **Untrusted content across MCP and A2A.** Does tool and peer output ever merge silently into trusted state? Is trace context propagated without leaking tenant identifiers?
+7. **Replay safety.** Does a fork from an arbitrary event preserve secret redaction, idempotency and effect suppression? Can a replay re-fire an external effect, or return a cached result recorded for a different request?
+8. **Certification integrity.** Can a host produce a signed bundle that certifies a profile it does not meet: a vacuous row, a transplanted witness, a companion bundle counting rows it may not, or a bundle whose `host.build` does not match the served build?
+
+Each answer names the core-document section and the invariant rows it tested.
 
 ### 2.3 Out of scope
 
-- Production deployments (Firebase Hosting config, DNS, runtime ops). The review covers the protocol + reference impl; deployment hardening is the deployer's responsibility.
-- Code quality / non-security style review.
-- Performance / load testing.
-- LLM provider APIs themselves (we trust the providers' own security posture; openwop's wrapper is in scope).
-- Code paths flagged "non-normative" or "host extension" — these are vendor responsibility per `host-extensions.md`.
+- The frozen v1 tree (`spec/v1/`) and the retired v1 example hosts.
+- Production deployments (hosting and CDN configuration, DNS, runtime operations). The review covers the protocol and the reference implementations; deployment hardening is the deployer's responsibility.
+- Code quality or non-security style review.
+- Performance and load testing.
+- LLM provider APIs themselves. openwop's wrapper around them is in scope.
+- Host extensions under `extensions.<org>.*`, which are the vendor's responsibility.
+- Conformance test seams (`/conformance/seams/…`), which no production host serves, except where a seam's existence would let a production host certify falsely (§2.2 question 8).
 
 ---
 
@@ -183,7 +181,7 @@ The review produces:
    - Affected files + line ranges
    - Suggested remediation
 2. **Executive summary** (≤ 3 pages) suitable for posting to the public site.
-3. **Threat-model annotations** — the reviewer marks each MUST/MUST-NOT in the five threat models as either (a) adequately enforced by spec + reference impl, (b) enforced by spec but not mechanically verified, or (c) underspecified.
+3. **Threat-model annotations** — the reviewer marks each MUST/MUST-NOT in the nine threat models as either (a) adequately enforced by spec + reference impl, (b) enforced by spec but not mechanically verified, or (c) underspecified.
 4. **Remediation tracker** — issue list as machine-readable JSON (`SECURITY/external-audit-findings.json`) so the project can map findings to advisory IDs in the `openwop-SA-YYYY-NNNN` format.
 5. **Optional retest** within 90 days after remediation lands.
 
@@ -215,9 +213,9 @@ The project prefers fixed-bid engagements over time-and-materials. Time-and-mate
 
 The project commits to the following before kickoff:
 
-- `openwop-audit-log-integrity` conformance scenarios PASS on the reference host. Reviewers should not pay rates to verify claims that aren't yet mechanically enforced.
-- All Phase-1 / Phase-2 work from `docs/PROTOCOL-GAP-CLOSURE-PLAN.md` is landed (no in-flight normative changes during the review window).
-- Repository at a pinned commit hash, frozen for the review duration.
+- Both reference implementations have a current certified v2 bundle committed under `evidence/v2-host-bundles/`, with 0 executed-fail and 0 blocked rows. Reviewers should not pay rates to verify claims that aren't yet mechanically enforced.
+- No security-relevant RFC is in its comment window during the review, so the surface does not move under the reviewers.
+- The corpus, the reference host and the reference application each pinned at a commit, frozen for the review duration.
 - A maintainer is available to answer reviewer questions within 1 business day.
 
 ---
@@ -233,7 +231,7 @@ The project commits to the following before kickoff:
 
 ## 7. Budget
 
-Target range: **$15,000 – $40,000 USD** for a fixed-bid engagement covering scope §2.1 and deliverable §3.
+Target range: **$15,000 – $40,000 USD** for a fixed-bid engagement covering scope §2.1 and deliverable §3. The range was set in May 2026 against the v1 scope and has not been re-estimated for v2; the steward confirms it before outreach.
 
 - The lower end is realistic for a focused engagement covering only the auth + webhook + node-pack + audit-log layers (~80 hours).
 - The upper end covers the full multi-agent + WASM ABI scope (~200 hours), including a retest.
@@ -248,6 +246,7 @@ A retest after remediation lands counts as 25% additional cost, capped at $10,00
 | -------------------------------- | ------ | -------------------------------------------------------------------------------------------------------------------------------------------------- |
 | Engagement doc drafted           | ✅     | 2026-05-10                                                                                                                                         |
 | Per-vendor outreach drafts ready | ✅     | 2026-05-11 — see `SECURITY/outreach/external-audit/` (5 vendors). Per-vendor reply status tracked in `SECURITY/outreach/external-audit/STATUS.md`. |
+| Scope re-cut for v2              | ✅     | 2026-11-13 — this document. The five per-vendor drafts still describe the v1 scope and are updated before sending.                                 |
 | Vendor outreach sent             | —      | TBD                                                                                                                                                |
 | Quotes received                  | —      | TBD                                                                                                                                                |
 | Vendor selected                  | —      | TBD                                                                                                                                                |
@@ -266,6 +265,6 @@ This file gets updated as each step completes. The `SECURITY.md` §9 link points
 
 - `SECURITY.md` (disclosure SLA, advisory format)
 - `COMPATIBILITY.md` §3 (safety-fix exception window)
-- `SECURITY/threat-model-*.md` (five threat models)
+- `SECURITY/threat-model-*.md` (nine threat models)
 - `SECURITY/invariants.yaml` (machine-readable invariants the review verifies)
-- `docs/PROTOCOL-GAP-CLOSURE-PLAN.md` Track 9 (governance + interop evidence)
+- `docs/ASSURANCE-STATUS.md` (the claims this review would unlock) and `docs/KNOWN-LIMITS.md` §"External-action gates" (SEC-1)
