@@ -161,7 +161,7 @@ Each answer names the core-document section and the invariant rows it tested.
 ### 2.3 Out of scope
 
 - The frozen v1 tree (`spec/v1/`) and the retired v1 example hosts.
-- Production deployments (Cloud Run and Firebase Hosting configuration, DNS, runtime operations). The review covers the protocol and the reference implementations; deployment hardening is the deployer's responsibility.
+- Production deployments (hosting and CDN configuration, DNS, runtime operations). The review covers the protocol and the reference implementations; deployment hardening is the deployer's responsibility.
 - Code quality or non-security style review.
 - Performance and load testing.
 - LLM provider APIs themselves. openwop's wrapper around them is in scope.
