@@ -126,6 +126,8 @@ Rules for the documents:
 Many files are generated from others: the v2 API, the gap and register views, `docs/PROTOCOL-STATUS.md`, the requirement registry, the spec-artifacts package, and more. Never hand-edit them. After a change, run the generators in this order, then the gate:
 
 ```bash
+node scripts/derive-core-adoption.mjs --write
+node scripts/generate-from-declaration.mjs --write
 python3 scripts/derive-v2-api.py --write
 node scripts/generate-gaps.mjs --write
 node scripts/generate-core-standard-manifest.mjs --write

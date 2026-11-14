@@ -33,6 +33,12 @@ Entries before this file was condensed carried full development detail. That tex
 
 - **RFC 0246 Active (safety fix, `GHSA-ffx7-pm5h-v6pq`): a trial that failed its trajectory cannot carry a task or a suite to a pass.** The `mean` task rule and suite `passed` read a gating score that counts it 0; reported scores are unchanged. 90-day window waived by recorded STEWARD OVERRIDE.
 
+## [2.48.0] — 2026-11-13 — Derived core adoption and a compensation-unwind witness
+
+- **RFC 0264 Active (window waived).** `scripts/derive-core-adoption.mjs` derives each core family's `maturity.adoption` from certified bundles (today 18 `none`, 24 `single-witness`, 28 `multi-witness`). Each family at `none` carries a dated review row in `evidence/core-adoption-review.json`.
+- **RFC 0265 Active (window waived).** The fixture `conformance-compensate-unwind` (three compensable effects, then a failure) lets the suite cause an unwind with no seam. `v2-compensation-unwind` checks the order, count and replay behavior through normative paths only.
+- **Suite.** The `v2-compensation-unwind` scenario (5 ids) and the `v2-core-adoption-derived` coherence test (3 ids). The projection schema now states that `attempts[]` is in the order the host made the attempts.
+
 ## [2.47.0] — 2026-11-13 — Four protocol-gap RFCs go Active
 
 - **RFC 0260 Active (window waived).** Opt-in cache-key recipe 2: `replay.llmCacheKeyRecipe: "openwop-llm-key-2"` puts every sampling parameter (`maxTokens`, `stop`, `seed`, …) in an LLM node's key, and the effect ledger records it as `cacheKey`.

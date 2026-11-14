@@ -1,6 +1,6 @@
 {
   "$schema": "https://openwop.dev/spec/v2/declaration.schema.json",
-  "$comment": "RFC 0169 \u00a7B \u2014 the one declaration file. Hand-reviewed source (generated FROM nothing, checked AGAINST everything by scripts/check-declaration.mjs). schemas/v2/capabilities.schema.json, spec/v2/profiles.json and spec/v2/peer-dependency-aliases.json are generated from it. Seeded 2026-09-03 (Phase 3, P3-A) from the v1 registries this file retires: every v1 root key is listed with an anchor (core | ext | deleted) so no slot is reserved-but-undefined (\u00a7B.3). Values marked planned:* are minted by the suite in P3-E (RFC 0178 precedent). adoption is re-derived from INTEROP-MATRIX bundle evidence at each RC (generator --check). Vendor-org registration procedure: RFC 0180 \u00a7A \u2014 the corpus is the sole registrar, an entry takes effect on the @openwop/spec-artifacts release that carries it, and a shipped entry is append-only because deregistering an org retroactively converts every log already written under it from pass-through to refusal.",
+  "$comment": "RFC 0169 \u00a7B \u2014 the one declaration file. Hand-reviewed source (generated FROM nothing, checked AGAINST everything by scripts/check-declaration.mjs). schemas/v2/capabilities.schema.json, spec/v2/profiles.json and spec/v2/peer-dependency-aliases.json are generated from it. Seeded 2026-09-03 (Phase 3, P3-A) from the v1 registries this file retires: every v1 root key is listed with an anchor (core | ext | deleted) so no slot is reserved-but-undefined (\u00a7B.3). Values marked planned:* are minted by the suite in P3-E (RFC 0178 precedent). adoption on core rows is derived from committed bundles by scripts/derive-core-adoption.mjs (RFC 0264); ext rows by RFC 0220. Vendor-org registration procedure: RFC 0180 \u00a7A \u2014 the corpus is the sole registrar, an entry takes effect on the @openwop/spec-artifacts release that carries it, and a shipped entry is append-only because deregistering an org retroactively converts every log already written under it from pass-through to refusal.",
   "version": "2.0",
   "updated": "2026-09-03",
   "witnessClasses": [
@@ -189,7 +189,7 @@
       "witness": "witnessable-gated",
       "maturity": {
         "technical": "stable",
-        "adoption": "none"
+        "adoption": "multi-witness"
       },
       "facets": [
         "clarificationRounds",
@@ -232,7 +232,7 @@
       "witness": "witnessable-gated",
       "maturity": {
         "technical": "experimental",
-        "adoption": "none"
+        "adoption": "multi-witness"
       },
       "facets": [
         "endpointsSupported",
@@ -312,7 +312,7 @@
       "witness": "witnessable-gated",
       "maturity": {
         "technical": "experimental",
-        "adoption": "none"
+        "adoption": "multi-witness"
       },
       "facets": [
         "packsSupported",
@@ -336,7 +336,7 @@
       "witness": "witnessable-gated",
       "maturity": {
         "technical": "experimental",
-        "adoption": "none"
+        "adoption": "single-witness"
       },
       "facets": [
         "dispatchKinds"
@@ -355,7 +355,7 @@
       "witness": "witnessable-gated",
       "maturity": {
         "technical": "experimental",
-        "adoption": "none"
+        "adoption": "single-witness"
       },
       "facets": [
         "propagatesOnward"
@@ -374,7 +374,7 @@
       "witness": "witnessable-gated",
       "maturity": {
         "technical": "experimental",
-        "adoption": "none"
+        "adoption": "single-witness"
       },
       "facets": [
         "regions"
@@ -414,7 +414,7 @@
       "witness": "witnessable-gated",
       "maturity": {
         "technical": "experimental",
-        "adoption": "none"
+        "adoption": "single-witness"
       },
       "facets": [
         "scopes",
@@ -436,7 +436,7 @@
       "witness": "witnessable-gated",
       "maturity": {
         "technical": "experimental",
-        "adoption": "none"
+        "adoption": "multi-witness"
       },
       "facets": [
         "targets",
@@ -455,7 +455,7 @@
       "witness": "witnessable-gated",
       "maturity": {
         "technical": "experimental",
-        "adoption": "none"
+        "adoption": "multi-witness"
       },
       "facets": [
         "modes",
@@ -481,7 +481,7 @@
       "witness": "witnessable-gated",
       "maturity": {
         "technical": "experimental",
-        "adoption": "none"
+        "adoption": "single-witness"
       },
       "facets": [
         "grants",
@@ -503,7 +503,7 @@
       "witness": "witnessable-gated",
       "maturity": {
         "technical": "experimental",
-        "adoption": "none"
+        "adoption": "single-witness"
       },
       "facets": [
         "failClosed",
@@ -523,7 +523,7 @@
       "witness": "witnessable-gated",
       "maturity": {
         "technical": "experimental",
-        "adoption": "none"
+        "adoption": "multi-witness"
       },
       "facets": [
         "maxParticipants"
@@ -542,7 +542,7 @@
       "witness": "witnessable-gated",
       "maturity": {
         "technical": "experimental",
-        "adoption": "none"
+        "adoption": "single-witness"
       },
       "facets": [],
       "floorScenarios": [],
@@ -576,7 +576,7 @@
       "witness": "claims-check",
       "maturity": {
         "technical": "experimental",
-        "adoption": "none"
+        "adoption": "multi-witness"
       },
       "facets": [
         "executionModel"
@@ -596,7 +596,7 @@
       "witness": "witnessable-gated",
       "maturity": {
         "technical": "experimental",
-        "adoption": "none"
+        "adoption": "multi-witness"
       },
       "facets": [
         "advertised",
@@ -616,7 +616,7 @@
       "witness": "witnessable-gated",
       "maturity": {
         "technical": "experimental",
-        "adoption": "none"
+        "adoption": "multi-witness"
       },
       "facets": [
         "costEstimates",
@@ -636,7 +636,7 @@
       "witness": "witnessable-gated",
       "maturity": {
         "technical": "experimental",
-        "adoption": "none"
+        "adoption": "multi-witness"
       },
       "facets": [
         "providers",
@@ -672,7 +672,7 @@
       "witness": "witnessable-gated",
       "maturity": {
         "technical": "experimental",
-        "adoption": "none"
+        "adoption": "multi-witness"
       },
       "facets": [
         "profile",
@@ -711,7 +711,7 @@
       "witness": "witnessable-gated",
       "maturity": {
         "technical": "experimental",
-        "adoption": "none"
+        "adoption": "multi-witness"
       },
       "facets": [
         "maxEntrySizeBytes",
@@ -739,7 +739,7 @@
       "witness": "claims-check",
       "maturity": {
         "technical": "experimental",
-        "adoption": "none"
+        "adoption": "multi-witness"
       },
       "facets": [],
       "floorScenarios": [],
@@ -756,7 +756,7 @@
       "witness": "claims-check",
       "maturity": {
         "technical": "experimental",
-        "adoption": "none"
+        "adoption": "multi-witness"
       },
       "facets": [
         "inputMapping"
@@ -798,7 +798,7 @@
       "witness": "witnessable-gated",
       "maturity": {
         "technical": "experimental",
-        "adoption": "none"
+        "adoption": "single-witness"
       },
       "facets": [
         "maxKeyBytes",
@@ -821,7 +821,7 @@
       "witness": "witnessable-gated",
       "maturity": {
         "technical": "experimental",
-        "adoption": "none"
+        "adoption": "single-witness"
       },
       "facets": [
         "maxRowsPerTable",
@@ -864,7 +864,7 @@
       "witness": "witnessable-gated",
       "maturity": {
         "technical": "experimental",
-        "adoption": "none"
+        "adoption": "multi-witness"
       },
       "facets": [
         "cron",
@@ -908,7 +908,7 @@
       "witness": "witnessable-gated",
       "maturity": {
         "technical": "experimental",
-        "adoption": "none"
+        "adoption": "multi-witness"
       },
       "facets": [
         "types",
@@ -951,7 +951,7 @@
       "witness": "witnessable-gated",
       "maturity": {
         "technical": "experimental",
-        "adoption": "none"
+        "adoption": "multi-witness"
       },
       "facets": [
         "sources",
@@ -975,7 +975,7 @@
       "witness": "witnessable-gated",
       "maturity": {
         "technical": "experimental",
-        "adoption": "none"
+        "adoption": "multi-witness"
       },
       "facets": [
         "ssrfGuard",
@@ -999,7 +999,7 @@
       "witness": "witnessable-gated",
       "maturity": {
         "technical": "experimental",
-        "adoption": "none"
+        "adoption": "multi-witness"
       },
       "facets": [
         "store",
@@ -1020,7 +1020,7 @@
       "witness": "claims-check",
       "maturity": {
         "technical": "experimental",
-        "adoption": "none"
+        "adoption": "single-witness"
       },
       "facets": [
         "contentPacks"
@@ -1081,7 +1081,7 @@
       "witness": "witnessable-gated",
       "maturity": {
         "technical": "experimental",
-        "adoption": "none"
+        "adoption": "multi-witness"
       },
       "facets": [
         "retentionDays"
@@ -1099,7 +1099,7 @@
       "witness": "witnessable-gated",
       "maturity": {
         "technical": "experimental",
-        "adoption": "none"
+        "adoption": "multi-witness"
       },
       "facets": [
         "deadLetter",
@@ -1125,7 +1125,7 @@
       "witness": "witnessable-gated",
       "maturity": {
         "technical": "experimental",
-        "adoption": "none"
+        "adoption": "single-witness"
       },
       "facets": [
         "subscriptionStates",
@@ -1149,7 +1149,7 @@
       "witness": "seam-gated",
       "maturity": {
         "technical": "experimental",
-        "adoption": "none"
+        "adoption": "single-witness"
       },
       "facets": [
         "versions",
@@ -1203,7 +1203,7 @@
       "witness": "witnessable-gated",
       "maturity": {
         "technical": "experimental",
-        "adoption": "none"
+        "adoption": "single-witness"
       },
       "facets": [
         "declared",
@@ -1224,7 +1224,7 @@
       "witness": "witnessable-gated",
       "maturity": {
         "technical": "experimental",
-        "adoption": "none"
+        "adoption": "single-witness"
       },
       "facets": [
         "versioned",
@@ -1246,7 +1246,7 @@
       "witness": "witnessable-gated",
       "maturity": {
         "technical": "experimental",
-        "adoption": "none"
+        "adoption": "single-witness"
       },
       "facets": [
         "isolation",
@@ -1270,7 +1270,7 @@
       "witness": "witnessable-gated",
       "maturity": {
         "technical": "experimental",
-        "adoption": "none"
+        "adoption": "single-witness"
       },
       "facets": [
         "datasources",
@@ -1311,7 +1311,7 @@
       "witness": "witnessable-gated",
       "maturity": {
         "technical": "experimental",
-        "adoption": "none"
+        "adoption": "single-witness"
       },
       "facets": [
         "collections",
@@ -1351,7 +1351,7 @@
       "witness": "witnessable-gated",
       "maturity": {
         "technical": "experimental",
-        "adoption": "none"
+        "adoption": "single-witness"
       },
       "facets": [
         "buckets",
@@ -1372,7 +1372,7 @@
       "witness": "witnessable-gated",
       "maturity": {
         "technical": "experimental",
-        "adoption": "none"
+        "adoption": "single-witness"
       },
       "facets": [
         "maxValueBytes",
@@ -1391,7 +1391,7 @@
       "witness": "witnessable-gated",
       "maturity": {
         "technical": "experimental",
-        "adoption": "none"
+        "adoption": "single-witness"
       },
       "facets": [
         "subChains"
@@ -1434,7 +1434,7 @@
       "witness": "seam-gated",
       "maturity": {
         "technical": "experimental",
-        "adoption": "none"
+        "adoption": "single-witness"
       },
       "facets": [
         "revisions",
@@ -1463,7 +1463,7 @@
       "witness": "witnessable-gated",
       "maturity": {
         "technical": "experimental",
-        "adoption": "none"
+        "adoption": "single-witness"
       },
       "facets": [
         "isolationModel",
@@ -1488,7 +1488,7 @@
       "witness": "seam-gated",
       "maturity": {
         "technical": "experimental",
-        "adoption": "none"
+        "adoption": "multi-witness"
       },
       "facets": [
         "profileVersion",
@@ -1509,7 +1509,7 @@
       "witness": "witnessable-gated",
       "maturity": {
         "technical": "experimental",
-        "adoption": "none"
+        "adoption": "multi-witness"
       },
       "facets": [
         "multiRegion",
@@ -1576,7 +1576,7 @@
       "witness": "seam-gated",
       "maturity": {
         "technical": "experimental",
-        "adoption": "none"
+        "adoption": "multi-witness"
       },
       "facets": [
         "lanes",
@@ -1599,7 +1599,7 @@
       "witness": "witnessable-gated",
       "maturity": {
         "technical": "experimental",
-        "adoption": "none"
+        "adoption": "single-witness"
       },
       "facets": [
         "checkpointSignatureAlgorithm",
@@ -1622,7 +1622,7 @@
       "witness": "witnessable-gated",
       "maturity": {
         "technical": "experimental",
-        "adoption": "none"
+        "adoption": "multi-witness"
       },
       "facets": [
         "defaultLocale",
@@ -1642,7 +1642,7 @@
       "witness": "witnessable-gated",
       "maturity": {
         "technical": "experimental",
-        "adoption": "none"
+        "adoption": "multi-witness"
       },
       "facets": [
         "baseLocale",
@@ -1662,7 +1662,7 @@
       "witness": "witnessable-gated",
       "maturity": {
         "technical": "experimental",
-        "adoption": "none"
+        "adoption": "single-witness"
       },
       "facets": [
         "export",
@@ -1684,7 +1684,7 @@
       "witness": "witnessable-gated",
       "maturity": {
         "technical": "experimental",
-        "adoption": "none"
+        "adoption": "multi-witness"
       },
       "facets": [
         "maxPageSize",
@@ -1746,7 +1746,7 @@
       "witness": "witnessable-gated",
       "maturity": {
         "technical": "experimental",
-        "adoption": "none"
+        "adoption": "multi-witness"
       },
       "facets": [
         "refKinds",

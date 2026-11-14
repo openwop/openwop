@@ -1,3 +1,8 @@
+## [2.48.0] — 2026-11-13 — Compensation unwind and derived adoption
+
+- **RFC 0265.** `v2-compensation-unwind`: five host legs gated on `compensation` and the `conformance-compensate-unwind` fixture (legs 3 and 5 also on `idempotency`), reading only the event log, `GET /runs/{runId}/compensation`, `GET /runs/{runId}/effects` and a replay fork. The judges live in `lib/compensation-unwind.ts`, with a self-test that includes sabotage cases.
+- **RFC 0264.** `v2-core-adoption-derived` (coherence) drives `scripts/derive-core-adoption.mjs` on fixture trees: a derived value against a hand edit, missing, stale and overdue review rows, and a renewal that only changes the date.
+
 ## [2.47.0] — 2026-11-13 — Cache-key recipe 2, telemetry export, sabotage ledger
 
 - **RFC 0260.** `v2-replay-llm-cache-key`: a server-free shape leg, an unaided implies-idempotency leg, and four host legs on `GET /runs/{runId}/effects` (key recorded, parameters in the key, stable, portable), gated on `replay.llmCacheKeyRecipe` and the `conformance-llm-cache-key` fixture. Judges in `lib/llm-cache-key-2.ts`.

@@ -1,7 +1,7 @@
 {
   "$schema": "./gaps.schema.json",
   "version": 1,
-  "updated": "2026-11-13",
+  "updated": "2026-11-14",
   "witnessClasses": [
     "witnessable-unaided",
     "witnessable-gated",
@@ -16465,6 +16465,142 @@
         {
           "file": "RFCS/registers/0263-sabotage-ledger.gaps.md",
           "token": "G5"
+        }
+      ]
+    },
+    {
+      "id": "openwop.gap.0264.1",
+      "rfc": "0264",
+      "local": "G1",
+      "section": "§Status",
+      "surface": "**High.** Whether the 7-day comment window may be waived.",
+      "witness": "unclassified",
+      "requirementId": null,
+      "disposition": "closed",
+      "target": null,
+      "sources": [
+        {
+          "file": "RFCS/registers/0264-core-adoption-derived.gaps.md",
+          "token": "G1"
+        }
+      ]
+    },
+    {
+      "id": "openwop.gap.0264.2",
+      "rfc": "0264",
+      "local": "G2",
+      "section": "§A.2",
+      "surface": "**Medium.** Whether a retired host's last bundle should keep counting toward adoption.",
+      "witness": "unclassified",
+      "requirementId": null,
+      "disposition": "closed",
+      "target": null,
+      "sources": [
+        {
+          "file": "RFCS/registers/0264-core-adoption-derived.gaps.md",
+          "token": "G2"
+        }
+      ]
+    },
+    {
+      "id": "openwop.gap.0264.3",
+      "rfc": "0264",
+      "local": "G3",
+      "section": "§A.3",
+      "surface": "**Medium.** The 2026-11-13 counts (18 / 24 / 16 / 12) came from a text match on discovery documents, not from the script §A specifies.",
+      "witness": "unclassified",
+      "requirementId": null,
+      "disposition": "closed",
+      "target": null,
+      "sources": [
+        {
+          "file": "RFCS/registers/0264-core-adoption-derived.gaps.md",
+          "token": "G3"
+        }
+      ]
+    },
+    {
+      "id": "openwop.gap.0264.4",
+      "rfc": "0264",
+      "local": "G4",
+      "section": "§B.6",
+      "surface": "**Medium.** Each family at `none` needs a stated plan before its first `keep` row can be written.",
+      "witness": "unclassified",
+      "requirementId": null,
+      "disposition": "closed",
+      "target": null,
+      "sources": [
+        {
+          "file": "RFCS/registers/0264-core-adoption-derived.gaps.md",
+          "token": "G4"
+        }
+      ]
+    },
+    {
+      "id": "openwop.gap.0265.1",
+      "rfc": "0265",
+      "local": "G1",
+      "section": "§Status",
+      "surface": "**High.** Whether the 7-day comment window may be waived.",
+      "witness": "unclassified",
+      "requirementId": null,
+      "disposition": "closed",
+      "target": null,
+      "sources": [
+        {
+          "file": "RFCS/registers/0265-compensation-unwind-witness.gaps.md",
+          "token": "G1"
+        }
+      ]
+    },
+    {
+      "id": "openwop.gap.0265.2",
+      "rfc": "0265",
+      "local": "G2",
+      "section": "§Falsifiability",
+      "surface": "**Medium.** The two registration refusals in `security-defaults.md` §Compensation have no v2 observable.",
+      "witness": "unclassified",
+      "requirementId": null,
+      "disposition": "closed",
+      "target": null,
+      "sources": [
+        {
+          "file": "RFCS/registers/0265-compensation-unwind-witness.gaps.md",
+          "token": "G2"
+        }
+      ]
+    },
+    {
+      "id": "openwop.gap.0265.3",
+      "rfc": "0265",
+      "local": "G3",
+      "section": "§A",
+      "surface": "**Medium.** No host serves `core.conformance.compensable-effect` yet; the five legs are `inapplicable` everywhere until one does.",
+      "witness": "unclassified",
+      "requirementId": null,
+      "disposition": "transferred",
+      "target": "RFC",
+      "sources": [
+        {
+          "file": "RFCS/registers/0265-compensation-unwind-witness.gaps.md",
+          "token": "G3"
+        }
+      ]
+    },
+    {
+      "id": "openwop.gap.0265.4",
+      "rfc": "0265",
+      "local": "G4",
+      "section": "§B",
+      "surface": "**Low.** `manualIntervention` has no behavioral leg.",
+      "witness": "unclassified",
+      "requirementId": null,
+      "disposition": "closed",
+      "target": null,
+      "sources": [
+        {
+          "file": "RFCS/registers/0265-compensation-unwind-witness.gaps.md",
+          "token": "G4"
         }
       ]
     },

@@ -1,0 +1,70 @@
+{
+  "id": "conformance-compensate-unwind",
+  "name": "Conformance: Compensate Unwind",
+  "version": "1.0",
+  "description": "RFC 0265 fixture for `v2-compensation-unwind.test.ts`: the condition an unwind exists for, caused by the suite unaided. Three effect nodes run in sequence (`e1` → `e2` → `e3`) and succeed; the last node, `fail` (`core.fail`, the always-fails node `conformance-failure` uses), then fails deterministically, so the run has committed effects and a `node-failure` trigger. Each effect node declares a node-level `compensation` whose inverse is the same reserved type with `inputMapping.inverse: true`, and `settings.compensation` asks for a `reverse-completion` unwind on `node-failure`. `core.conformance.compensable-effect` is a conformance-RESERVED typeId (same pattern as `core.conformance.side-effect`): a host that advertises `compensation` and serves this fixture MUST map it to a node it records on the Layer-2 effect ledger (`GET /runs/{runId}/effects`) as exactly one effect per execution, forward and inverse alike, and MUST run it as the inverse action when its resolved inputs carry `inverse: true`. What the effect does is irrelevant; that it is recorded once per execution is the whole contract. The suite reads the unwind through normative paths only: the event log (`compensation.requested` before `compensation.started`), `GET /runs/{runId}/compensation` (attempts in the order `e3, e2, e1`, the reverse of forward completion) and the effect ledger (three inverse records, none added by a `mode: \"replay\"` fork). Serving the fixture is OPTIONAL; a host that does not list it in discovery `fixtures[]` is `inapplicable` for every leg.",
+  "nodes": [
+    {
+      "id": "e1",
+      "typeId": "core.conformance.compensable-effect",
+      "name": "Effect 1",
+      "position": { "x": 0, "y": 0 },
+      "config": {},
+      "inputs": {},
+      "compensation": {
+        "nodeTypeId": "core.conformance.compensable-effect",
+        "inputMapping": { "inverse": true }
+      }
+    },
+    {
+      "id": "e2",
+      "typeId": "core.conformance.compensable-effect",
+      "name": "Effect 2",
+      "position": { "x": 200, "y": 0 },
+      "config": {},
+      "inputs": {},
+      "compensation": {
+        "nodeTypeId": "core.conformance.compensable-effect",
+        "inputMapping": { "inverse": true }
+      }
+    },
+    {
+      "id": "e3",
+      "typeId": "core.conformance.compensable-effect",
+      "name": "Effect 3",
+      "position": { "x": 400, "y": 0 },
+      "config": {},
+      "inputs": {},
+      "compensation": {
+        "nodeTypeId": "core.conformance.compensable-effect",
+        "inputMapping": { "inverse": true }
+      }
+    },
+    {
+      "id": "fail",
+      "typeId": "core.fail",
+      "name": "Fail",
+      "position": { "x": 600, "y": 0 },
+      "config": {},
+      "inputs": {}
+    }
+  ],
+  "edges": [
+    { "id": "e1-e2", "sourceNodeId": "e1", "targetNodeId": "e2" },
+    { "id": "e2-e3", "sourceNodeId": "e2", "targetNodeId": "e3" },
+    { "id": "e3-fail", "sourceNodeId": "e3", "targetNodeId": "fail" }
+  ],
+  "triggers": [
+    { "id": "manual", "type": "manual", "enabled": true }
+  ],
+  "variables": [],
+  "metadata": { "tags": ["conformance"] },
+  "settings": {
+    "timeout": 30000,
+    "maxRetries": 0,
+    "compensation": {
+      "orderingModel": "reverse-completion",
+      "triggers": ["node-failure"]
+    }
+  }
+}
