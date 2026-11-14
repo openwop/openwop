@@ -6,7 +6,7 @@
 
 RFC 0156 §B: RFCs affecting auth, identity, tenant isolation, secrets, packs, execution sandboxing, idempotency, replay, external effects, conformance/certification, or governance **MUST** receive a retrospective **cross-organization** review. Every RFC below was accepted with its public comment window shortened, either under the bootstrap waiver or by explicit steward override of RFC 0147 §A.6. Each such acceptance is **provisional** until a reviewer from an organization other than the steward's records an outcome.
 
-This packet is for that reviewer. **140 RFCs are listed; 140 have no discharging outcome.** The steward, the steward's sessions, and steward-affiliated hosts (MyndHyve is tier-2, not independent) cannot supply the review. Recording one of their reviews as `ratified` is the substitution §B's last clause forbids.
+This packet is for that reviewer. **142 RFCs are listed; 142 have no discharging outcome.** The steward, the steward's sessions, and steward-affiliated hosts (MyndHyve is tier-2, not independent) cannot supply the review. Recording one of their reviews as `ratified` is the substitution §B's last clause forbids.
 
 **Enforcement is deferred.** On 2026-10-17 the maintainer deferred §B by steward exemption (`GOVERNANCE.md` §"Sole-steward operation") while the protocol has no user outside the steward's organizations. No outcome was recorded on its account. The packet is kept current for the day the exemption ends.
 
@@ -113,7 +113,7 @@ Grouping below is a reading aid only: it assigns each RFC to the risk class its 
 | [0201](../RFCS/0201-standard-webhooks-signature-scheme.md) | Standard Webhooks as an opt-in companion signature scheme, with a signed delivery id, multi-signature rotatio… | `Accepted` | steward override of RFC 0147 §A.6 | tier-1 — the v2 reference host | `not-reviewed` |
 | [0261](../RFCS/0261-multi-region-concurrent-first-write.md) | concurrent first writes under idempotency.multiRegion | `Active` | steward override of RFC 0147 §A.6 | not declared (predates RFC 0174 §B.1, or not yet Accepted) | `not-reviewed` |
 
-## Replay (9)
+## Replay (10)
 
 | RFC | Title | Status | Waiver | Evidence tier | Outcome |
 | --- | --- | --- | --- | --- | --- |
@@ -126,6 +126,7 @@ Grouping below is a reading aid only: it assigns each RFC to the risk class its 
 | [0257](../RFCS/0257-run-status-when-every-terminal-is-skipped.md) | run status when every terminal node is skipped | `Accepted` | steward override of RFC 0147 §A.6 | tier-1 — openwop-app's certified 2 | `not-reviewed` |
 | [0258](../RFCS/0258-bounded-refine-loopback.md) | bounded refine loopback for approval gates | `Active` | steward override of RFC 0147 §A.6 | not declared (predates RFC 0174 §B.1, or not yet Accepted) | `not-reviewed` |
 | [0260](../RFCS/0260-llm-cache-key-recipe-2.md) | LLM cache key recipe 2 | `Active` | steward override of RFC 0147 §A.6 | not declared (predates RFC 0174 §B.1, or not yet Accepted) | `not-reviewed` |
+| [0265](../RFCS/0265-compensation-unwind-witness.md) | a v2 compensation-unwind witness | `Active` | steward override of RFC 0147 §A.6 | not declared (predates RFC 0174 §B.1, or not yet Accepted) | `not-reviewed` |
 
 ## External effects (10)
 
@@ -142,7 +143,7 @@ Grouping below is a reading aid only: it assigns each RFC to the risk class its 
 | [0205](../RFCS/0205-run-artifacts-and-turns-speak-a2a-parts.md) | run artifacts and conversation content speak A2A Parts | `Accepted` | bootstrap waiver | tier-1 — the v2 reference host | `not-reviewed` |
 | [0207](../RFCS/0207-trace-context-across-mcp-and-a2a.md) | trace context across MCP and A2A, and debug-bundle spans that join the trace | `Accepted` | bootstrap waiver | tier-1 — the v2 reference host | `not-reviewed` |
 
-## Conformance and certification (19)
+## Conformance and certification (20)
 
 | RFC | Title | Status | Waiver | Evidence tier | Outcome |
 | --- | --- | --- | --- | --- | --- |
@@ -165,6 +166,7 @@ Grouping below is a reading aid only: it assigns each RFC to the risk class its 
 | [0254](../RFCS/0254-deployment-transitions-at-v2.md) | the agent deployment transition contract at v2 | `Accepted` | steward override of RFC 0147 §A.6 | tier-1 — openwop-app's certified 2 | `not-reviewed` |
 | [0255](../RFCS/0255-delete-the-ai-envelope.md) | delete the AI Envelope from v2 | `Accepted` | steward override of RFC 0147 §A.6 | tier-1 — openwop-app's certified 2 | `not-reviewed` |
 | [0263](../RFCS/0263-sabotage-ledger.md) | the sabotage ledger | `Active` | steward override of RFC 0147 §A.6 | not declared (predates RFC 0174 §B.1, or not yet Accepted) | `not-reviewed` |
+| [0264](../RFCS/0264-core-adoption-derived.md) | core-family adoption derived from bundles | `Active` | steward override of RFC 0147 §A.6 | not declared (predates RFC 0174 §B.1, or not yet Accepted) | `not-reviewed` |
 
 ## Governance (7)
 

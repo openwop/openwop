@@ -1,7 +1,7 @@
 {
   "$schema": "./gaps.schema.json",
   "version": 1,
-  "updated": "2026-11-13",
+  "updated": "2026-11-14",
   "witnessClasses": [
     "witnessable-unaided",
     "witnessable-gated",
@@ -16473,11 +16473,11 @@
       "rfc": "0264",
       "local": "G1",
       "section": "§Status",
-      "surface": "**High.** The 7-day comment window has not run. The Phase 2 waiver (2026-11-13) covered RFCs 0260–0263 only.",
+      "surface": "**High.** Whether the 7-day comment window may be waived.",
       "witness": "unclassified",
       "requirementId": null,
-      "disposition": "transferred",
-      "target": "RFC",
+      "disposition": "closed",
+      "target": null,
       "sources": [
         {
           "file": "RFCS/registers/0264-core-adoption-derived.gaps.md",
@@ -16493,8 +16493,8 @@
       "surface": "**Medium.** Whether a retired host's last bundle should keep counting toward adoption.",
       "witness": "unclassified",
       "requirementId": null,
-      "disposition": "transferred",
-      "target": "RFC",
+      "disposition": "closed",
+      "target": null,
       "sources": [
         {
           "file": "RFCS/registers/0264-core-adoption-derived.gaps.md",
@@ -16510,8 +16510,8 @@
       "surface": "**Medium.** The 2026-11-13 counts (18 / 24 / 16 / 12) came from a text match on discovery documents, not from the script §A specifies.",
       "witness": "unclassified",
       "requirementId": null,
-      "disposition": "transferred",
-      "target": "RFC",
+      "disposition": "closed",
+      "target": null,
       "sources": [
         {
           "file": "RFCS/registers/0264-core-adoption-derived.gaps.md",
@@ -16527,8 +16527,8 @@
       "surface": "**Medium.** Each family at `none` needs a stated plan before its first `keep` row can be written.",
       "witness": "unclassified",
       "requirementId": null,
-      "disposition": "transferred",
-      "target": "RFC",
+      "disposition": "closed",
+      "target": null,
       "sources": [
         {
           "file": "RFCS/registers/0264-core-adoption-derived.gaps.md",
@@ -16541,11 +16541,11 @@
       "rfc": "0265",
       "local": "G1",
       "section": "§Status",
-      "surface": "**High.** The 7-day comment window has not run. The Phase 2 waiver (2026-11-13) covered RFCs 0260–0263 only.",
+      "surface": "**High.** Whether the 7-day comment window may be waived.",
       "witness": "unclassified",
       "requirementId": null,
-      "disposition": "transferred",
-      "target": "RFC",
+      "disposition": "closed",
+      "target": null,
       "sources": [
         {
           "file": "RFCS/registers/0265-compensation-unwind-witness.gaps.md",
@@ -16561,8 +16561,8 @@
       "surface": "**Medium.** The two registration refusals in `security-defaults.md` §Compensation have no v2 observable.",
       "witness": "unclassified",
       "requirementId": null,
-      "disposition": "transferred",
-      "target": "RFC",
+      "disposition": "closed",
+      "target": null,
       "sources": [
         {
           "file": "RFCS/registers/0265-compensation-unwind-witness.gaps.md",
@@ -16595,8 +16595,8 @@
       "surface": "**Low.** `manualIntervention` has no behavioral leg.",
       "witness": "unclassified",
       "requirementId": null,
-      "disposition": "transferred",
-      "target": "RFC",
+      "disposition": "closed",
+      "target": null,
       "sources": [
         {
           "file": "RFCS/registers/0265-compensation-unwind-witness.gaps.md",

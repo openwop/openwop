@@ -12,7 +12,7 @@ Every v2 core family now has a v2 normative home (RFC 0189). Many of its rules a
 - **At v1 end-of-support:** the 0 v1-only families, and the 0 obligation units attributed to them, lose their only witness.
 - **Obligation units (900 in `spec/v2/core/`):** 629 (70%) sit in a section a major-2 scenario cites; 271 sit in 97 sections no major-2 scenario cites.
 - **Declaration links:** 0 core families declare `floorScenarios`; 2 declare `requirementIds`. The family-to-test link exists only in scenario code and citations, although `overview.md` §What a MUST means says every core MUST has an id in `requirements.json`.
-- **Scenarios:** 670 registered, 230 run at major 2. 34 major-2 citations name a v2 core section this script cannot match to a heading (see Citation gaps).
+- **Scenarios:** 671 registered, 231 run at major 2. 34 major-2 citations name a v2 core section this script cannot match to a heading (see Citation gaps).
 
 ## How to read it
 
@@ -30,10 +30,10 @@ Every v2 core family now has a v2 normative home (RFC 0189). Many of its rules a
 | `production` | witnessable-gated | **v2-witnessed** | 49 (26) | `jcs-vectors`, `v2-bundle-v3-signed`, `v2-coherence-not-in-bundle`, `v2-relaxation-recorded` | `grpc-transport`, `production-backpressure`, `production-retention-expiry` |
 | `webhooks` | witnessable-gated | **v2-witnessed** | 38 (38) | `inbound-credential-no-passthrough`, `v2-a2a-operation-map`, `v2-bound-id-kinds`, `v2-host-event-delivery` +13 | `webhook-negative`, `webhook-sig-algorithm`, `webhook-signed-delivery`, `webhook-tenant-isolation` |
 | `packs` | claims-check | **v2-witnessed** | 36 (30) | `v2-manifest-ceiling-refused`, `v2-manifest-hatch-carried`, `v2-peer-dependency-declared`, `v2-registry-lifecycle` +1 | `pack-registry-isolation` |
-| `replay` | witnessable-gated | **v2-witnessed** | 36 (20) | `v2-a2a-push-delivery`, `v2-all-terminals-skipped`, `v2-approval-reject-disposition`, `v2-bounded-loopback` +11 | `conversationReplayDeterminism`, `feedback-fork-not-copied`, `replay-fanout-suppression`, `replay-side-effect-suppression` |
+| `replay` | witnessable-gated | **v2-witnessed** | 36 (20) | `v2-a2a-push-delivery`, `v2-all-terminals-skipped`, `v2-approval-reject-disposition`, `v2-bounded-loopback` +12 | `conversationReplayDeterminism`, `feedback-fork-not-copied`, `replay-fanout-suppression`, `replay-side-effect-suppression` |
 | `eventLog` | claims-check | **v2-witnessed** | 35 (25) | `v2-era-2-append-vocabulary`, `v2-era-key`, `v2-era-stamp-universal`, `v2-fork-a-v1-run` +3 | `cross-engine-append-behavior`, `cross-engine-append-ordering`, `multi-region-idempotency` |
 | `aiProviders` | witnessable-gated | **v2-witnessed** | 27 (13) | `v2-ai-providers-advertisement`, `v2-provider-output-reliability`, `v2-structured-output-advertisement` | `ai-envelope-shape`, `aiproviders-selfhosted-honesty`, `aiproviders-subscription-scope`, `byok-auth-modes` +12 |
-| `idempotency` | witnessable-gated | **v2-witnessed** | 25 (20) | `v2-bound-id-kinds`, `v2-effect-identity-business-key`, `v2-effect-ledger-keying`, `v2-idempotency-key-grammar` +1 | `compensation-recovery`, `multi-region-idempotency-behavior`, `multi-region-idempotency`, `replay-llm-cache-key` +1 |
+| `idempotency` | witnessable-gated | **v2-witnessed** | 25 (20) | `v2-bound-id-kinds`, `v2-compensation-unwind`, `v2-effect-identity-business-key`, `v2-effect-ledger-keying` +2 | `compensation-recovery`, `multi-region-idempotency-behavior`, `multi-region-idempotency`, `replay-llm-cache-key` +1 |
 | `multiAgent` | claims-check | **v2-witnessed** | 19 (0) | `context-budget-transcript-bound`, `context-summarization-replay`, `v2-dispatch-loop`, `v2-multi-agent-advertisement` +1 | `agent-loop-iteration-monotonic`, `agent-loop-stateful-resume`, `agent-loop-version5-shape`, `agent-loop-workspace-snapshot` +11 |
 | `i18n` | witnessable-gated | **v2-witnessed** | 17 (4) | `v2-i18n-negotiation`, `v2-localized-content-delivery` | `i18n-negotiation`, `localized-content-delivery` |
 | `prompts` | witnessable-gated | **v2-witnessed** | 16 (6) | `v2-prompt-template-shape` | `prompt-all-four-kinds-events`, `prompt-composed-secret-redaction`, `prompt-composed-trust-marker`, `prompt-end-to-end-events` +11 |
@@ -85,7 +85,7 @@ Every v2 core family now has a v2 normative home (RFC 0189). Many of its rules a
 | `auth` | seam-gated | **v2-witnessed** | 0 (0) | `audit-checkpoint-signature`, `audit-log-integrity`, `v2-assurance-downgrade-audited`, `v2-auth-subject-link-key` +4 | `auth-api-key-rotation`, `auth-mtls`, `auth-oauth2-client-credentials`, `auth-oidc-user-bearer` +6 |
 | `authorization` | witnessable-gated | **v2-witnessed** | 0 (0) | `v2-authorization-advertisement` | `approval-gate-flow`, `authorization-fail-closed`, `authorization-roles-shape`, `compensation-recovery` |
 | `cache` | witnessable-gated | **v2-witnessed** | 0 (0) | `v2-storage-cross-tenant-isolation` | `cache-cross-tenant-isolation`, `cache-ttl-expiry` |
-| `compensation` | seam-gated | **v2-witnessed** | 0 (0) | `v2-compensation-read-projection` | `chain-compensation-expansion`, `compensation-behavior`, `compensation-recovery`, `workflow-chain-host-expansion` |
+| `compensation` | seam-gated | **v2-witnessed** | 0 (0) | `v2-compensation-read-projection`, `v2-compensation-unwind` | `chain-compensation-expansion`, `compensation-behavior`, `compensation-recovery`, `workflow-chain-host-expansion` |
 | `content` | witnessable-gated | **v2-witnessed** | 0 (0) | `v2-content-locale-keys`, `v2-localized-content-delivery` | `localized-content-delivery` |
 | `credentials` | witnessable-gated | **v2-witnessed** | 0 (0) | `v2-credentials-advertisement` | `credential-payload-redaction`, `credentials-capability-shape` |
 | `deadLetter` | witnessable-gated | **v2-witnessed** | 0 (0) | `v2-dead-letter-advertisement` | `deadletter-capability-shape`, `deadletter-retry-exhaustion` |
@@ -420,8 +420,8 @@ node scripts/report-v2-witness-coverage.mjs --write  # regenerate this file
     "familiesWithRequirementIds": 2
   },
   "scenarios": {
-    "registered": 670,
-    "major2": 230
+    "registered": 671,
+    "major2": 231
   },
   "unresolvedV2Citations": 34,
   "major2ScenariosCitingNoCoreDoc": 80,

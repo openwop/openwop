@@ -435,7 +435,7 @@ A profile is a predicate over the declaration, published in `spec/v2/profiles.js
 | Axis | Values | Source |
 | --- | --- | --- |
 | `technical` | `experimental \| stable \| deprecated` | The record's `status`, which MUST NOT exceed the declaration row |
-| `adoption` | `none \| single-witness \| multi-witness \| independent` | Derived from INTEROP-MATRIX bundle evidence |
+| `adoption` | `none \| single-witness \| multi-witness \| independent` | Derived from committed bundles; for core rows, by `scripts/derive-core-adoption.mjs` |
 
 - `stable` does not require a tier-3 host; `independent` records whether one exists.
 - There is no cap on the number of families: a family MAY exist at any count if it declares its witness class.
