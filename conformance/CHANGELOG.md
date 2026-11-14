@@ -1,3 +1,7 @@
+## [2.48.1] — 2026-11-14 — Fix the telemetry shape leg
+
+- **RFC 0262.** `v2-telemetry-export` (`0262.shape`): the positive records now carry `until`, because the schema requires it while a family is `experimental`. Before this fix the leg failed on every host. Reported by openwop-app-88 and openwop-app-14.
+
 ## [2.48.0] — 2026-11-13 — Compensation unwind and derived adoption
 
 - **RFC 0265.** `v2-compensation-unwind`: five host legs gated on `compensation` and the `conformance-compensate-unwind` fixture (legs 3 and 5 also on `idempotency`), reading only the event log, `GET /runs/{runId}/compensation`, `GET /runs/{runId}/effects` and a replay fork. The judges live in `lib/compensation-unwind.ts`, with a self-test that includes sabotage cases.
