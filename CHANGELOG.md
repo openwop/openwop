@@ -33,6 +33,10 @@ Entries before this file was condensed carried full development detail. That tex
 
 - **RFC 0246 Active (safety fix, `GHSA-ffx7-pm5h-v6pq`): a trial that failed its trajectory cannot carry a task or a suite to a pass.** The `mean` task rule and suite `passed` read a gating score that counts it 0; reported scores are unchanged. 90-day window waived by recorded STEWARD OVERRIDE.
 
+## [2.48.1] — 2026-11-14 — Fix the telemetry shape leg
+
+- **Suite fix.** `v2-telemetry-export`'s server-free shape leg built an `experimental` telemetry record with no `until`, which the capabilities schema requires. It therefore failed on every host, whether or not the host advertised `telemetry`. The record now carries `until`.
+
 ## [2.48.0] — 2026-11-13 — Derived core adoption and a compensation-unwind witness
 
 - **RFC 0264 Active (window waived).** `scripts/derive-core-adoption.mjs` derives each core family's `maturity.adoption` from certified bundles (today 18 `none`, 24 `single-witness`, 28 `multi-witness`). Each family at `none` carries a dated review row in `evidence/core-adoption-review.json`.

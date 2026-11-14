@@ -101,7 +101,7 @@ function spanSurfaces(spans: readonly CapturedSpan[]): Surface[] {
 describe('v2 RFC 0262 — telemetry facet shape (server-free)', () => {
   it('the telemetry record requires otlp.protocols from the closed transports; genAiSemconv is semver', () => {
     const v = v2RefValidator('capabilities.schema.json#/properties/telemetry');
-    const base = { status: 'experimental', since: '2.0', witness: 'witnessable-gated' };
+    const base = { status: 'experimental', since: '2.0', until: '2.1', witness: 'witnessable-gated' }; // capabilities.md: `until` is REQUIRED while experimental
     expect(v({ ...base, otlp: { protocols: ['http/protobuf'] } }).ok, req(R('shape'), DOC, 'a record with otlp.protocols MUST validate')).toBe(true);
     expect(v({ ...base, otlp: { protocols: ['grpc', 'http/json'] }, genAiSemconv: '1.37.0' }).ok, req(R('shape'), DOC, 'genAiSemconv as semver MUST validate')).toBe(true);
     expect(v({ ...base }).ok, req(R('shape'), DOC, 'otlp is REQUIRED')).toBe(false);
