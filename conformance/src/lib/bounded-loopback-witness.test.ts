@@ -4,7 +4,8 @@
  * round or region, a reused interrupt key, a forward edge released on a
  * refine, a history built from anything but the log, a stale ApprovalData, an
  * exhausted visit still offering refine, a wrong exhaustion sequence, and a
- * fork that decides round 1 again.
+ * fork that decides round 1 again. Object key order is not judged: a host
+ * whose store reorders keys (Postgres jsonb) still passes.
  */
 
 import { describe, it, expect } from 'vitest';
@@ -27,6 +28,11 @@ const e2 = { round: 2, outputs: { rounds: [e1] }, refineFeedback: fb2 };
 const v2 = draftDone([e1, e2]);
 const oneRefine: Ev[] = [started('draft'), v0, req('k0', 0), marker(1), started('draft'), v1, req('k1', 1)];
 const twoRefines: Ev[] = [...oneRefine, marker(2), started('draft'), v2, req('k2', 2, 2, ['accept', 'reject'])];
+// What a jsonb round trip does to an object: keys sorted by length, then bytewise.
+const jsonb = (v: unknown): unknown => Array.isArray(v) ? v.map(jsonb)
+  : v !== null && typeof v === 'object' ? Object.fromEntries(Object.entries(v).sort(([a], [b]) => a.length - b.length || (a < b ? -1 : a > b ? 1 : 0)).map(([k, x]) => [k, jsonb(x)]))
+  : v;
+const reordered = twoRefines.map((e) => jsonb(e) as Ev);
 
 describe('judgeRearm', () => {
   it('passes a conforming re-arm', () => { expect(failed(judgeRearm(oneRefine, REARM))).toEqual([]); });
@@ -52,11 +58,13 @@ describe('judgeHistory', () => {
     expect(failed(judgeHistory(short, { target: 'draft', port: 'rounds', feedback: [fb1, fb2] })).length).toBeGreaterThan(0);
     expect(failed(judgeHistory(twoRefines, { target: 'draft', port: 'rounds', feedback: [fb2, fb1] })).length).toBeGreaterThan(0);
   });
+  it('passes a log whose store reordered object keys', () => { expect(failed(judgeHistory(reordered, { target: 'draft', port: 'rounds', feedback: [fb1, fb2] }))).toEqual([]); });
 });
 
 describe('judgeApprovalData', () => {
   const want = [lb(0, 2), lb(1, 2), lb(2, 2)] as Array<{ round: number; maxIterations: number; exhausted: boolean }>;
   it('passes each visit read in order', () => { expect(failed(judgeApprovalData(twoRefines, 'gate', want))).toEqual([]); });
+  it('passes a log whose store reordered object keys', () => { expect(failed(judgeApprovalData(reordered, 'gate', want))).toEqual([]); });
   it('fails a round that never advances, and a missing visit', () => {
     const stale = twoRefines.map((e) => (e.type === 'interrupt.requested' ? req(String(e.payload?.['key']), 0) : e));
     expect(failed(judgeApprovalData(stale, 'gate', want))).toHaveLength(2);

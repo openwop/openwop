@@ -33,6 +33,10 @@ Entries before this file was condensed carried full development detail. That tex
 
 - **RFC 0246 Active (safety fix, `GHSA-ffx7-pm5h-v6pq`): a trial that failed its trajectory cannot carry a task or a suite to a pass.** The `mean` task rule and suite `passed` read a gating score that counts it 0; reported scores are unchanged. 90-day window waived by recorded STEWARD OVERRIDE.
 
+## [2.49.1] — 2026-11-14 — Compare RFC 0258 records structurally
+
+- **Suite fix.** `v2-bounded-loopback` compared serialized JSON, so a host whose store reorders object keys (Postgres `jsonb`) failed `0258.approval-data-loopback` and `0258.history-from-log` with the right values. The judges now compare structurally; array order still counts.
+
 ## [2.49.0] — 2026-11-14 — Gated legs for eventLog, budget and production
 
 - **Coverage sees profile gates.** `report-v2-witness-coverage.mjs` now treats `profile.family(doc, 'key')` as a gate. With that, the committed bundles already witness `secrets`, `budget` and `production` on one host each, and RFC 0264's derivation now reads 15 `none`, 27 `single-witness` and 28 `multi-witness`.
