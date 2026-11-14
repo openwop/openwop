@@ -96,6 +96,8 @@ Finally re-read each doc top to bottom. Can an implementer scan it?
 Run the whole regen chain in order, then the gate. See the `pr` skill; the chain is:
 
 ```bash
+node scripts/derive-core-adoption.mjs --write
+node scripts/generate-from-declaration.mjs --write
 python3 scripts/derive-v2-api.py --write
 node scripts/generate-gaps.mjs --write
 node scripts/generate-core-standard-manifest.mjs --write

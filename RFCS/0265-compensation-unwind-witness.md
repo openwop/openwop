@@ -4,10 +4,10 @@
 | ----------------- | --------------------------------------------------------------- |
 | **RFC**           | 0265                                                            |
 | **Title**         | compensation behavior is witnessed at v2 through a failing fixture |
-| **Status**        | `Draft`                                                         |
+| **Status**        | `Active`                                                        |
 | **Author(s)**     | David Tufts (@davidscotttufts)                                  |
 | **Created**       | 2026-11-13                                                      |
-| **Updated**       | 2026-11-13                                                      |
+| **Updated**       | 2026-11-13 — **`Draft` → `Active`, comment window waived by the maintainer** (David, 2026-11-13: "yes, skip the comment window, proceed with implementation"). STEWARD OVERRIDE of RFC 0147 §A.6, recorded in `MAINTAINERS.md`. Lands the fixture `conformance-compensate-unwind`, the scenario `v2-compensation-unwind` (5 ids), the `security-defaults.md` pointer and the invariant `tests:` rows. Unresolved questions settled with the draft's answers (UQ 1: the two registration refusals stay MUST, recorded unwitnessable; UQ 2: no `manualIntervention` leg yet; UQ 3: no `branch`-fork leg). Addresses finding P-006 of the August 2026 assessment. |
 | **Affects**       | new fixture `conformance/fixtures/conformance-compensate-unwind.json` + `fixtures.md` row, new scenario `conformance/src/scenarios/v2-compensation-unwind.test.ts`, `spec/v2/core/security-defaults.md` §Compensation (one pointer sentence), `SECURITY/invariants.yaml` (`tests:` of two rows) |
 | **Compatibility** | `additive` per `COMPATIBILITY.md` (no wire shape changes; new legs are gated on the family and the fixture) |
 | **Supersedes**    | —                                                               |
@@ -27,22 +27,28 @@ At v2, the only compensation evidence is `v2-compensation-read-projection`. All 
 
 ### §A. The fixture
 
-`conformance-compensate-unwind`: three nodes of the conformance-reserved type `core.conformance.compensable-effect`, in sequence (`e1 → e2 → e3`), then `core.conformance.fail`.
+`conformance-compensate-unwind`: three nodes of the conformance-reserved type `core.conformance.compensable-effect`, in sequence (`e1 → e2 → e3`), then `core.fail` (the failing node `conformance-failure` already uses).
 
-- Each effect node declares a node-level `compensation` whose inverse is the same reserved type with `inverse: true`.
+- Each effect node declares a node-level `compensation` whose `nodeTypeId` is the same reserved type, with `inputMapping: { inverse: true }`. Node-level `compensation` is a closed object, so the inverse flag travels as an input.
 - `settings.compensation` names `orderingModel: "reverse-completion"` and a `triggers` entry for node failure.
 - A host that advertises `compensation` and serves the fixture MUST map `core.conformance.compensable-effect` to a node it records on the effect ledger (`GET /runs/{runId}/effects`) as one effect per execution, forward and inverse alike.
 - Serving the fixture is OPTIONAL. A host that does not serve it is `inapplicable` for §B, exactly as for every other fixture-gated leg.
+- The effect ledger is owed under `idempotency` (idempotency.md), not under `compensation`. Legs 3 and 5 are therefore also gated on `idempotency`, and leg 5 on `replay.modes` containing `replay`.
 
 ### §B. What the suite checks
 
 The suite starts the fixture and waits for a terminal run. Each leg reads normative paths only.
 
 1. **Plan before first inverse** (`openwop.requirement.0265.plan-before-inverse`). In the run's event log, `compensation.requested` precedes the first `compensation.started` (asyncapi: "MUST follow `compensation.requested`").
-2. **Reverse-completion order** (`openwop.requirement.0265.reverse-completion`). The projection's `attempts[]` names `e3, e2, e1` in that order. That is the reverse of the order of the three forward `node.completed` events.
-3. **One inverse per forward effect** (`openwop.requirement.0265.inverse-once`). The effect ledger holds exactly three inverse effect records, one per forward effect, each `performed` once.
+2. **Reverse-completion order** (`openwop.requirement.0265.reverse-completion`). The projection's `attempts[]` names `e3, e2, e1` in that order. That is the reverse of the order of the three forward `node.completed` events. `attempts[]` is in the order the host made the attempts; this RFC adds that sentence to the projection schema's description, which before gave the array no order.
+3. **One inverse per forward effect** (`openwop.requirement.0265.inverse-once`). The ledger has no field that marks a record as an inverse, so the suite tells them apart by elimination:
+   - each effect node's earliest record is its forward record;
+   - records of `fail` are ignored;
+   - every other record is an inverse.
+
+   The leg requires exactly three inverse records with three distinct `effectId`s. If the forward records are missing too, the host has not mapped the reserved node to a ledgered effect, and the leg is `blocked`, not failed.
 4. **Projection agrees with events** (`openwop.requirement.0265.projection-agrees`). The projection's `status` is `completed` exactly when the log holds `compensation.completed`, and `plan[]` names the three effect nodes.
-5. **Replay does not re-fire** (`openwop.requirement.0265.replay-no-refire`). A `mode: "replay"` fork of the run adds no newly performed inverse effect to the fork's effect ledger. This is the black-box form of invariant `compensation-replay-no-refire` (replay.md §"Side-effect suppression").
+5. **Replay does not re-fire** (`openwop.requirement.0265.replay-no-refire`). A `mode: "replay"` fork of the run, from the source run's first event sequence, records no effect the source run did not make. A ledger keyed per run cannot tell a re-fired inverse from a re-fired forward effect, and replay.md §"Side-effect suppression" forbids both, so the leg fails on either. It is `blocked` when the source run recorded no inverse, so it cannot pass by comparing nothing with nothing. This is the black-box form of invariant `compensation-replay-no-refire`.
 
 ### §C. Pointer in core
 
@@ -50,7 +56,7 @@ The suite starts the fixture and waits for a terminal run. Each leg reads normat
 
 ### §D. The two invariants point at the new scenario
 
-In `SECURITY/invariants.yaml`, `compensation-replay-no-refire` adds `v2-compensation-unwind.test.ts` to `tests:`. `compensation-effect-id-retry-stable` does too, with leg 3: an inverse identity that is not stable shows as a second record.
+In `SECURITY/invariants.yaml`, `compensation-replay-no-refire` adds `v2-compensation-unwind.test.ts` to `tests:`. `compensation-effect-id-retry-stable` does not: the fixture's inverses never fail, so no retry happens and leg 3 cannot show an identity staying stable across retries.
 
 ## Compatibility
 
@@ -100,10 +106,10 @@ Sabotage plan, recorded in `evidence/sabotage-ledger.json` before `Accepted` (RF
 
 ## Acceptance criteria
 
-- [ ] Before `Active`: the 7-day comment window has run from filing, or a maintainer waiver is recorded in `MAINTAINERS.md`.
+- [x] Before `Active`: the 7-day comment window has run from filing, or a maintainer waiver is recorded in `MAINTAINERS.md` (waived 2026-11-13).
 - [ ] Fixture, `fixtures.md` row and `v2-compensation-unwind` scenario shipped in a suite release.
 - [ ] `security-defaults.md` pointer sentence; core budget re-checked.
-- [ ] `SECURITY/invariants.yaml` `tests:` updated for the two invariants.
+- [ ] `SECURITY/invariants.yaml` `tests:` updated for `compensation-replay-no-refire`.
 - [ ] The three sabotage rows in `evidence/sabotage-ledger.json`.
 - [ ] A certified bundle with the five `0265.*` rows `executed-pass` (tier named in `Updated`).
 

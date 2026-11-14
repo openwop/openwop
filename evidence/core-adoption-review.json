@@ -1,0 +1,131 @@
+{
+  "$comment": "RFC 0264 §B — one row per core family whose derived adoption is none (scripts/derive-core-adoption.mjs). A keep row is due at reviewBy; renewing it MUST change reason or plan. A retire row names the spec/v2/corrections.json row that removes the family.",
+  "rows": [
+    {
+      "family": "nodePackRuntimes",
+      "reviewBy": "2.50",
+      "decision": "keep",
+      "reason": "No host advertises the family; its only gating scenario (v2-node-pack-runtimes-advertisement) is inapplicable on all three.",
+      "plan": "Reference host advertises nodePackRuntimes for the runtimes it already loads, then re-cuts."
+    },
+    {
+      "family": "secrets",
+      "reviewBy": "2.50",
+      "decision": "keep",
+      "reason": "openwop-app and MyndHyve advertise secrets, but v2-secret-canary-absent comes back inapplicable on both, so no host witnesses it.",
+      "plan": "Find why the canary leg is inapplicable on an advertising host (facet gate or fixture), fix the suite or the host, and re-cut openwop-app."
+    },
+    {
+      "family": "anonymousActor",
+      "reviewBy": "2.50",
+      "decision": "keep",
+      "reason": "No host advertises it; the one gating scenario passes on the reference host without the record being present.",
+      "plan": "Reference host advertises anonymousActor where it serves anonymous seams; re-cut."
+    },
+    {
+      "family": "channelPresence",
+      "reviewBy": "2.50",
+      "decision": "keep",
+      "reason": "No host advertises it; the presence scenarios are inapplicable everywhere.",
+      "plan": "openwop-app's channel surface is the candidate; its owner decides whether to advertise at the next train."
+    },
+    {
+      "family": "fs",
+      "reviewBy": "2.50",
+      "decision": "keep",
+      "reason": "No host advertises a filesystem family.",
+      "plan": "Keep as an optional storage family; review whether any host plans one at 2.50, else retire."
+    },
+    {
+      "family": "queueBus",
+      "reviewBy": "2.50",
+      "decision": "keep",
+      "reason": "openwop-app advertises queueBus, but v2-queue-cross-tenant-isolation is inapplicable there.",
+      "plan": "Find why the isolation leg does not run on openwop-app (it needs a second tenant key) and re-cut with one."
+    },
+    {
+      "family": "heartbeat",
+      "reviewBy": "2.50",
+      "decision": "keep",
+      "reason": "The reference host advertises it, but no major-2 scenario gates on the family key.",
+      "plan": "Add a gating leg for the heartbeat rules (a suite gap, not an adoption gap)."
+    },
+    {
+      "family": "toolHooks",
+      "reviewBy": "2.50",
+      "decision": "keep",
+      "reason": "MyndHyve advertised it, but v2-tool-authorization-fail-closed was inapplicable on that cut.",
+      "plan": "Reference host or openwop-app implements a tool hook; else review for retirement at 2.50."
+    },
+    {
+      "family": "promptLibrary",
+      "reviewBy": "2.50",
+      "decision": "keep",
+      "reason": "No host advertises the family.",
+      "plan": "openwop-app's prompt library is the candidate; its owner decides whether to advertise."
+    },
+    {
+      "family": "agentRuntime",
+      "reviewBy": "2.50",
+      "decision": "keep",
+      "reason": "No host advertises the family.",
+      "plan": "openwop-app's agent runtime is the candidate; its owner decides whether to advertise."
+    },
+    {
+      "family": "budget",
+      "reviewBy": "2.50",
+      "decision": "keep",
+      "reason": "The reference host advertises it, but no major-2 scenario gates on the family key.",
+      "plan": "Add a gating leg for the budget rules (a suite gap, not an adoption gap)."
+    },
+    {
+      "family": "nosql",
+      "reviewBy": "2.50",
+      "decision": "keep",
+      "reason": "No host advertises it; openwop-app passes the storage isolation scenario under another storage family.",
+      "plan": "Keep as an optional storage family; review whether any host plans one at 2.50, else retire."
+    },
+    {
+      "family": "searchIndex",
+      "reviewBy": "2.50",
+      "decision": "keep",
+      "reason": "No host advertises it; openwop-app passes the storage isolation scenario under another storage family.",
+      "plan": "Keep as an optional storage family; review whether any host plans one at 2.50, else retire."
+    },
+    {
+      "family": "packs",
+      "reviewBy": "2.50",
+      "decision": "keep",
+      "reason": "openwop-app and MyndHyve advertise packs, but its three gating scenarios were inapplicable there; the reference host passes them without advertising the record.",
+      "plan": "Reconcile: the reference host advertises packs, or the scenarios' gate is corrected; then re-cut."
+    },
+    {
+      "family": "eventLog",
+      "reviewBy": "2.50",
+      "decision": "keep",
+      "reason": "All three hosts advertise it, but no major-2 scenario gates on the family key (claims-check family).",
+      "plan": "Add a claims leg that gates on eventLog (a suite gap, not an adoption gap)."
+    },
+    {
+      "family": "production",
+      "reviewBy": "2.50",
+      "decision": "keep",
+      "reason": "The reference host and MyndHyve advertise it, but no major-2 scenario gates on the family key.",
+      "plan": "Add a gating leg for the production rules (a suite gap, not an adoption gap)."
+    },
+    {
+      "family": "loopback",
+      "reviewBy": "2.50",
+      "decision": "keep",
+      "reason": "New (RFC 0258, 2026-11-08); no host advertised it at its last cut.",
+      "plan": "openwop-app's certified production cut with OPENWOP_BOUNDED_LOOPBACK=true (scheduled after 2026-11-14 00:00Z)."
+    },
+    {
+      "family": "telemetry",
+      "reviewBy": "2.50",
+      "decision": "keep",
+      "reason": "New (RFC 0262, 2026-11-13); no host has implemented it yet.",
+      "plan": "Reference host implements OTLP export and runs v2-telemetry-export."
+    }
+  ]
+}

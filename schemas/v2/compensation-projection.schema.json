@@ -54,6 +54,7 @@
       }
     },
     "attempts": {
+      "description": "RFC 0265 — the inverse-action attempts in the order the host made them.",
       "type": "array",
       "items": {
         "type": "object",

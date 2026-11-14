@@ -389,8 +389,8 @@ Of the 11 open (`Draft` or `Active`) RFCs, **1 is [Parked](#parked-rfcs)** on a 
 | [0261](./0261-multi-region-concurrent-first-write.md) | Under `idempotency.multiRegion`, a concurrent first write has exactly one winner and no effect is performed twice | `Active` |
 | [0262](./0262-telemetry-family.md) | The `telemetry` family: OTLP export, run and node spans, no secret in spans, an optional GenAI mapping | `Active` |
 | [0263](./0263-sabotage-ledger.md) | A cited row must be shown able to fail: the sabotage ledger, and ids on every witnessable falsifiability row | `Active` |
-| [0264](./0264-core-adoption-derived.md) | core-family adoption is derived from bundles, and an unwitnessed family has a review date | `Draft` |
-| [0265](./0265-compensation-unwind-witness.md) | compensation behavior is witnessed at v2 through a failing fixture | `Draft` |
+| [0264](./0264-core-adoption-derived.md) | core-family adoption is derived from bundles, and an unwitnessed family has a review date | `Active` |
+| [0265](./0265-compensation-unwind-witness.md) | compensation behavior is witnessed at v2 through a failing fixture | `Active` |
 ## See also
 
 - `GOVERNANCE.md` — decision rules, maintainer roles, the broader spec change process.

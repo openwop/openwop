@@ -1965,6 +1965,7 @@ invariants:
     threat_model: SECURITY/threat-model-compensation.md
     tests:
       - conformance/src/scenarios/compensation-behavior.test.ts
+      - conformance/src/scenarios/v2-compensation-unwind.test.ts
     note: |
       RFC 0151 §F. Replay defaults MUST use recorded compensation
       outcomes and MUST NOT re-fire inverse effects. A replay that

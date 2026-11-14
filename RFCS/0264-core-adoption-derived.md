@@ -4,10 +4,10 @@
 | ----------------- | --------------------------------------------------------------- |
 | **RFC**           | 0264                                                            |
 | **Title**         | core-family adoption is derived from bundles, and an unwitnessed family has a review date |
-| **Status**        | `Draft`                                                         |
+| **Status**        | `Active`                                                        |
 | **Author(s)**     | David Tufts (@davidscotttufts)                                  |
 | **Created**       | 2026-11-13                                                      |
-| **Updated**       | 2026-11-13                                                      |
+| **Updated**       | 2026-11-13 — **`Draft` → `Active`, comment window waived by the maintainer** (David, 2026-11-13: "yes, skip the comment window, proceed with implementation"). STEWARD OVERRIDE of RFC 0147 §A.6, recorded in `MAINTAINERS.md`. Lands `scripts/derive-core-adoption.mjs`, `evidence/core-adoption-review.json`, the derived `maturity.adoption` values on core rows, the `capabilities.md` §8 cell, and the coherence scenario `v2-core-adoption-derived` (3 ids). Unresolved questions settled with the draft's answers (UQ 1: a retired host's last bundle keeps counting; UQ 2: three minors; UQ 3: shared code). Addresses finding P-015 of the August 2026 assessment. |
 | **Affects**       | `spec/v2/declaration.json` (`maturity.adoption` on core rows), `spec/v2/core/capabilities.md` §8, new `scripts/derive-core-adoption.mjs`, new `evidence/core-adoption-review.json`, `scripts/openwop-check.sh` step 10, the regen chain |
 | **Compatibility** | `additive` per `COMPATIBILITY.md` (no wire shape changes; a generated schema `description` string changes) |
 | **Supersedes**    | —                                                               |
@@ -19,14 +19,13 @@
 
 ## Motivation
 
-- **The declared axis is wrong, and nobody can see it.** A reader of the declaration, or of the generated `capabilities.schema.json` descriptions ("maturity experimental/none"), learns that no host serves 69 families. An approximate join, made on 2026-11-13, of each family's gating scenarios against the three canonical host bundles gave these counts. A host was counted when it advertised the family and passed a scenario that gates on it.
+- **The declared axis is wrong, and nobody can see it.** A reader of the declaration, or of the generated `capabilities.schema.json` descriptions ("maturity experimental/none"), learns that no host serves 69 families. `derive-core-adoption.mjs`, run on 2026-11-13 over the three hosts with committed certified bundles (the reference host and openwop-app at tier 1, MyndHyve's legacy runtime at tier 2), gives these counts. None derives `independent`.
 
   | Hosts with an executed-pass gating row | Core families |
   | --- | --- |
   | 0 | 18 |
   | 1 | 24 |
-  | 2 | 16 |
-  | 3 | 12 |
+  | 2 or 3 | 28 |
 
   The 18 at zero are the real finding. The 52 others are understated.
 - **A hand-kept axis drifts.** RFC 0220 made the ext `Stable` predicate a script over bundles for this reason. Core adoption never got the same treatment, because core families have no `Stable` predicate to hang it on.
@@ -125,7 +124,7 @@ All requirements here are properties of the corpus. They are checked by a script
 
 ## Acceptance criteria
 
-- [ ] Before `Active`: the 7-day comment window has run from filing, or a maintainer waiver is recorded in `MAINTAINERS.md`. The script's own counts replace the 2026-11-13 estimate in Motivation.
+- [x] Before `Active`: the 7-day comment window has run from filing, or a maintainer waiver is recorded in `MAINTAINERS.md` (waived 2026-11-13). The script's own counts replace the 2026-11-13 estimate in Motivation.
 - [ ] `scripts/derive-core-adoption.mjs` with `--check` and `--write`, in `openwop:check` step 10 and the regen chain.
 - [ ] `evidence/core-adoption-review.json` with a `keep` row for every family then at `none`.
 - [ ] `capabilities.md` §8 cell as proposed; core budget re-checked.

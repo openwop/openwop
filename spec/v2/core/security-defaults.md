@@ -74,6 +74,8 @@ The facets bind the policy shape (`schemas/v2/compensation-policy.schema.json`):
 - `compensation.profileVersion` participates in the inverse-action identity, so a policy naming a different one MUST be refused.
 - `compensation.manualIntervention` is the `manual` status — a host advertising it records the unwind rather than abandoning it.
 
+A host shows an unwind by serving the `conformance-compensate-unwind` fixture.
+
 ### Layer-2 effect identity
 
 A host that advertises `idempotency` MUST serve `GET /runs/{runId}/effects`; the keying, provider-key, retention and projection rules are idempotency.md §"Layer 2: effect identity".
@@ -141,4 +143,4 @@ A threat model missing a sibling section fails the template gate.
 
 Rows `C6.1`–`C6.9` are `spec/v1/migrations.json` entries.
 
-*Sources: RFCs 0150, 0163, 0164, 0170, 0173, 0214, 0218, 0224.*
+*Sources: RFCs 0150, 0163, 0164, 0170, 0173, 0214, 0218, 0224, 0265.*
