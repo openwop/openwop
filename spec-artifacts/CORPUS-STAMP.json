@@ -1,17 +1,17 @@
 {
   "_comment": "Provenance of @openwop/spec-artifacts (RFC 0168 §D.2). files: SHA-256 per file; the conformance suite compares the installed peer against dist/spec-artifacts.lock.json at start.",
   "package": "@openwop/spec-artifacts",
-  "version": "2.48.1",
-  "corpusTag": "v2.48.1",
+  "version": "2.49.0",
+  "corpusTag": "v2.49.0",
   "files": {
     "api/.redocly.lint-ignore.yaml": "bf5a8350b88a72fa43f59605ed8d903ed24b6cfccda5e45509c9f6ed9ee4e712",
     "api/asyncapi.yaml": "d5ecb9ee6114582be3b1f662c84bfac9ae96dae7bacb853e461168f70a8e1c7d",
     "api/grpc/openwop.proto": "c3e72bb17cba514ee98feb6434e6c9b6ea6795bfd086489ec69fd882dd1ad977",
     "api/openapi.yaml": "ac6de5303872664b78ff419c035915593e01599e02835e777a0123de1baeb398",
     "api/redocly.yaml": "b0604c89b2ca6d5076ec25725c539dad44a741a811fe524439ee6daef8baa09f",
-    "api/seams-v2.yaml": "eb3f46e3dfa2474e14c5a095a35102f3347539144a6ef984e9ff8ea283a4578b",
-    "api/v2/asyncapi.yaml": "5bd64a201eca0b32389f1dc92c8c67e24405062dc36790488a7526453e320120",
-    "api/v2/openapi.yaml": "3c8c2e0f993fd52f57112a4b0715c70ae03dc333c0aa450ef0a707667b50fed6",
+    "api/seams-v2.yaml": "a4fd4fe1ea1bcefe5f015b9cb6af5bd89ec9d225eeffc39ca6ec1473c0964203",
+    "api/v2/asyncapi.yaml": "9ec0cac22964427c635e2fd836ca6d94397ccf14245b7c30f96b69d77033330a",
+    "api/v2/openapi.yaml": "d9c5921a1800d2ffde4807e4652d97616aec5dd75c22ba70860c111e4e660e15",
     "api/v2/redocly.yaml": "1e66b60e6118ad11a823bb620678be464d99dfe50a40e3e6f93ec9429b88b34c",
     "schemas/README.md": "276fc1d51eb08e14e9127b9fd27761d7046ee33c12000f3a64a801322db8bf58",
     "schemas/a2a-task-state.schema.json": "75d5049dea8bd873ff0e7546f1c60c8d36c219bec7084264360be54a8be30ae1",
@@ -115,7 +115,7 @@
     "schemas/v2/artifact.schema.json": "85b9dc284d39b99d2a66fa8cbf47f2dd3d8526d3bd6cc411ad315b372de38975",
     "schemas/v2/audit-verify-result.schema.json": "14af8e9283510f0a40e48a2059c929ee44e0fc9fa3cc66a95bfbe90b17c48297",
     "schemas/v2/budget-policy.schema.json": "1de68095db0beb5c7a4be629de26e79f62ebbe748a88d46f36e768edfd1f0d68",
-    "schemas/v2/capabilities.schema.json": "afae0c548cf91a915c2badca77b7c89cd0c657f100c2cd1db64de896c8da2bf0",
+    "schemas/v2/capabilities.schema.json": "f4b4fb4c32144026e97a1be4266cc7a87d349ac714dcac156e9d8512740d06a1",
     "schemas/v2/certification-bundle.schema.json": "f9e233dc3584c3cef78809d518749ce37cd1ee79ebbfe58163dc67eeac7802b1",
     "schemas/v2/channel-presence-payload.schema.json": "fc03df0c20cc12a25f7ee6a47503a4c5931d79fe3d5ff24815e8fd7c1bcb9a87",
     "schemas/v2/channel-written-payload.schema.json": "ccecff3c71a3275ad8db035ac0e04db25e6f8d23cf091ddbcd5a60d1be1cbb6b",
@@ -203,7 +203,7 @@
     "schemas/workspace-file.schema.json": "464de85c2a068243084ee9c1d969bc7cd5d8f7948574e58450d6493c38a0e1e4",
     "spec/v1/alias-detectors.json": "202a443678e592a515e33aad7f6ab679a07d8408809f2d4b0f59d156c84ffc65",
     "spec/v1/capability-declaration-classes.json": "e7729aed5c4b4e1dd02abab0530f14cc95f5d4070fe51fb139e7f5cccefa00c6",
-    "spec/v1/core-standard-manifest.json": "66d5e491537cfa04ebbe57bd26ad53c027c24e105e8b19e2426b1ed17aaa3b24",
+    "spec/v1/core-standard-manifest.json": "e6bbda0be8241175de9d93dc531c727184a02f5043b0a61a12bdfc6de4305451",
     "spec/v1/deprecations.json": "901fdab0a7212627f1838cbb06ae7b7204f0dff528299e56d3d938deecea27c1",
     "spec/v1/deprecations.schema.json": "3e393c405d2a41b467d8c5e3c468549078df1ce6a6d2588fc488097b95d9b55b",
     "spec/v1/end-of-support.json": "35f0bf3b70fe78b16e2a2fd81a153fc27e703f6c16376c6fe7cdf1f4f2c4e6d4",
@@ -250,7 +250,7 @@
     "spec/v2/core/workflow-chain-packs.md": "fdce7a8477e269950a2bac05ee6eddbd66eb0b670b464d00054f7196ec05d29c",
     "spec/v2/corrections.json": "5ee76d1ee87677a86d5d9ee2f477b88fc29f9f9d37611040b9ccb08f8f30fb2d",
     "spec/v2/corrections.schema.json": "02f6a0a9531e657693be311af0f59d6432f3efcf645f56ccbf39e5b141e6b641",
-    "spec/v2/declaration.json": "2d6415ee3b9a801d6a7c4de5ec1ab4d62441dded7b5a44ceb42be80f0a258ce9",
+    "spec/v2/declaration.json": "d8971c070358eb9ff6a94fdfb0ebc5638fd8f61b7d1d9cb816424bf1e70b8079",
     "spec/v2/declaration.schema.json": "ef951633e4070899f64828f5cf1b5f4870270a0360f81dbb49b5b4d6cd407550",
     "spec/v2/eos-override.json": "4c72d2f6a658943b01c1de1643cf294642091933af7832f38ee5495df684cb2d",
     "spec/v2/errors.json": "8b4d2ebab569b26f608323ca4c9adaf805ab515286d26532db23fcb97541787f",
@@ -309,9 +309,9 @@
     "spec/v2/path-manifest.json": "3720e502614f301efc7556e0bfcbfa7b7ad8a37c579256ba6bca82417a2728f1",
     "spec/v2/peer-dependency-aliases.json": "cbf62f551f9295b0ac7ba6cc0466abb153563354a57b0622f3ec6e6689cba47e",
     "spec/v2/profiles.json": "b382b261c7844798575f7c1b37c934f0da19846016a2337d883d4f5ef6e05479",
-    "spec/v2/release.json": "ca7dd7966a78c3feaff0becfe722bc64bf328d4ca18bcd2dd23edf69ed634358",
+    "spec/v2/release.json": "2d7d294978a1a23726e9608da583d81645e447a4315fcad45c990caed1a058a1",
     "spec/v2/retention-floors.json": "eaf3722d95c79947af1d4269ef85117e126518c588cfcf1a2b21b97269f51624",
-    "spec/v2/surface-baseline.json": "6dbb04ff500ca21eb6fa8e430851ddd8f0365d03feb8275ff27d46f6e3dbf879"
+    "spec/v2/surface-baseline.json": "735c19442cecd130148546a302c6eb8f838f83936b7e329e1988f2b12a547a9d"
   },
-  "corpusCommit": "d72335c7cb5656085cce8b879d196689c15809ba"
+  "corpusCommit": "cc71a07af3655fd18a498211819a96c4e3b1130d"
 }

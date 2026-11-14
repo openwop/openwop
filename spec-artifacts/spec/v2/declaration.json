@@ -285,7 +285,7 @@
       "witness": "witnessable-gated",
       "maturity": {
         "technical": "experimental",
-        "adoption": "none"
+        "adoption": "single-witness"
       },
       "facets": [
         "scopes",
@@ -1178,7 +1178,7 @@
       "witness": "witnessable-gated",
       "maturity": {
         "technical": "experimental",
-        "adoption": "none"
+        "adoption": "single-witness"
       },
       "facets": [
         "dimensions",
@@ -1555,7 +1555,7 @@
       "witness": "witnessable-gated",
       "maturity": {
         "technical": "experimental",
-        "adoption": "none"
+        "adoption": "single-witness"
       },
       "facets": [
         "backpressure",
