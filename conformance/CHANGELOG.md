@@ -1,3 +1,7 @@
+## [2.49.1] — 2026-11-14 — Compare RFC 0258 records structurally
+
+- **RFC 0258.** `lib/bounded-loopback-witness.ts` compared `JSON.stringify` output, so object key order mattered. `0258.approval-data-loopback` and `0258.history-from-log` failed on a host that persists through Postgres `jsonb`, which reorders keys. The judges now use structural equality, where array order still counts, and a self-test runs a key-reordered log through both. Reported by openwop-app-14 and openwop-app-88.
+
 ## [2.49.0] — 2026-11-14 — Gated legs for eventLog, budget and production
 
 - **`v2-event-log-family`** (gated on `eventLog`). The era is stamped on runs created by createRun and by forkRun. The poll cursor contract holds at every position of a settled log. Event types are codemap names or registered vendor types.

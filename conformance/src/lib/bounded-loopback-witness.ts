@@ -7,10 +7,14 @@
  * `suspend-request.schema.json`.
  */
 
+import { isDeepStrictEqual } from 'node:util';
+
 export interface Ev { type?: string; sequence?: number; nodeId?: string; payload?: Record<string, unknown> }
 export interface LoopFinding { ok: boolean; message: string }
 
 const ok = (cond: boolean, message: string): LoopFinding => ({ ok: cond, message });
+// Structural, not serialized: a host's store may reorder object keys (Postgres jsonb does). Array order still counts.
+const same = (a: unknown, b: unknown): boolean => isDeepStrictEqual(a, b);
 const nodeOf = (e: Ev): string | undefined => (typeof e.nodeId === 'string' ? e.nodeId : (e.payload?.['nodeId'] as string | undefined));
 const of = (log: readonly Ev[], type: string, nodeId?: string): Ev[] => log.filter((e) => e.type === type && (nodeId === undefined || nodeOf(e) === nodeId));
 
@@ -43,7 +47,7 @@ export function judgeRearm(log: readonly Ev[], o: { gate: string; target: string
   return [
     ok(marks.length === 1, `the gate's node.completed MUST carry loopback after one refine (found ${marks.length} marked completion(s))`),
     ok(m?.['edgeId'] === o.edgeId && m?.['targetNodeId'] === o.target && m?.['round'] === 1, `the marker MUST read {edgeId: ${o.edgeId}, targetNodeId: ${o.target}, round: 1} (got ${JSON.stringify(m)})`),
-    ok(JSON.stringify(m?.['rearmed']) === JSON.stringify(o.region), `rearmed MUST list the region in nodes[] order, ${JSON.stringify(o.region)} (got ${JSON.stringify(m?.['rearmed'])})`),
+    ok(same(m?.['rearmed'], o.region), `rearmed MUST list the region in nodes[] order, ${JSON.stringify(o.region)} (got ${JSON.stringify(m?.['rearmed'])})`),
     ok(of(log, 'node.started', o.target).length === 2, `the target MUST start again as a new visit (node.started ×${of(log, 'node.started', o.target).length}, want 2)`),
     ok(reqs.length === 2 && typeof keys[0] === 'string' && typeof keys[1] === 'string' && keys[0] !== keys[1], `the gate MUST be asked again under a different key (interrupt.requested ×${reqs.length}, keys ${JSON.stringify(keys)})`),
     ok(of(log, 'node.started', o.forward).length === 0, `nothing leaves the region on a refine: ${o.forward} MUST NOT start before accept`),
@@ -67,8 +71,8 @@ export function judgeHistory(log: readonly Ev[], o: { target: string; port: stri
       const en = (entry ?? {}) as Record<string, unknown>;
       const extra = Object.keys(en).filter((k) => !['round', 'outputs', 'refineFeedback'].includes(k));
       out.push(ok(en['round'] === i + 1, `visit ${visit} entry ${i}: round MUST be ${i + 1}, oldest first (got ${JSON.stringify(en['round'])})`));
-      out.push(ok(JSON.stringify(en['outputs']) === JSON.stringify(done[i]), `visit ${visit} entry ${i}: outputs MUST be the target's own round-${i + 1} outputs`));
-      out.push(ok(JSON.stringify(en['refineFeedback']) === JSON.stringify(o.feedback[i]), `visit ${visit} entry ${i}: refineFeedback MUST be round ${i + 1}'s (got ${JSON.stringify(en['refineFeedback'])})`));
+      out.push(ok(same(en['outputs'], done[i]), `visit ${visit} entry ${i}: outputs MUST be the target's own round-${i + 1} outputs`));
+      out.push(ok(same(en['refineFeedback'], o.feedback[i]), `visit ${visit} entry ${i}: refineFeedback MUST be round ${i + 1}'s (got ${JSON.stringify(en['refineFeedback'])})`));
       out.push(ok(extra.length === 0, `visit ${visit} entry ${i}: an entry MUST carry no other key (found ${JSON.stringify(extra)})`));
     });
   });
@@ -79,7 +83,7 @@ export function judgeHistory(log: readonly Ev[], o: { target: string; port: stri
 export function judgeApprovalData(log: readonly Ev[], gate: string, want: ReadonlyArray<{ round: number; maxIterations: number; exhausted: boolean }>): LoopFinding[] {
   const got = requestsOf(log, gate).map(approvalLoopback);
   const out: LoopFinding[] = [ok(got.length === want.length, `the gate MUST be asked ${want.length} time(s) (got ${got.length})`)];
-  want.forEach((w, i) => out.push(ok(JSON.stringify(got[i]) === JSON.stringify(w), `visit ${i}: ApprovalData.loopback MUST be ${JSON.stringify(w)} (got ${JSON.stringify(got[i])})`)));
+  want.forEach((w, i) => out.push(ok(same(got[i], w), `visit ${i}: ApprovalData.loopback MUST be ${JSON.stringify(w)} (got ${JSON.stringify(got[i])})`)));
   return out;
 }
 
