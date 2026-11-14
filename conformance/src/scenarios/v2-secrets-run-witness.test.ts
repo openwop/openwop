@@ -42,9 +42,22 @@ import { req } from '../lib/requirement-ids.js';
 import { readErrorCode } from '../lib/error-envelope.js';
 import { blockedDespiteAssertions, softSkip } from '../lib/soft-skip.js';
 import { CANARY_NAME, WITNESS_REF, WitnessHost, freshName, freshValue, hits, sha256Hex } from '../lib/run-secrets-witness.js';
+import { familyAdvertised } from '../lib/v2.js';
 
 const DOC = 'host-services.md §Run-supplied secrets (RFC 0229)';
 const host = new WitnessHost(2);
+
+/**
+ * The `secrets` record first, then the facet and fixture (`host.gate()`). With no
+ * record there is no `runSecrets`, so the verdict is unchanged; naming the family
+ * key here is what lets RFC 0264's derivation count a host that passes.
+ */
+async function gate(): ReturnType<WitnessHost['gate']> {
+  let record: Record<string, unknown> | null = null;
+  try { record = await familyAdvertised('secrets'); } catch { return host.gate(); }
+  if (record === null) return { ok: false, kind: 'inapplicable', reason: 'the secrets family is not advertised — no run-supplied secrets (RFC 0229 §D)' };
+  return host.gate();
+}
 
 interface Witnessed { runId: string; createText: string; status: string; matched: boolean | undefined; value: string; digestSupplied: boolean }
 type Outcome = { runs: [Witnessed, Witnessed] } | { skip: 'inapplicable' | 'blocked'; reason: string } | { refused: { status: number; detail: string } };
@@ -53,7 +66,7 @@ type Outcome = { runs: [Witnessed, Witnessed] } | { skip: 'inapplicable' | 'bloc
 let pair: Promise<Outcome> | undefined;
 function witnessedPair(): Promise<Outcome> {
   pair ??= (async (): Promise<Outcome> => {
-    const g = await host.gate();
+    const g = await gate();
     if (!g.ok) return { skip: g.kind, reason: g.reason };
     const out: Witnessed[] = [];
     for (const same of [true, false]) {
@@ -110,7 +123,7 @@ describe('RFC 0229 — v2-secrets-run-witness (gated on secrets.runSecrets + ope
   }, 90_000);
 
   it('a run: ref resolves only within the run that supplied it, and the witness refuses any other ref', async () => {
-    const g = await host.gate();
+    const g = await gate();
     if (!g.ok) return softSkip(g.kind, g.reason);
     const id = 'openwop.requirement.secrets.run-witness-scope-bound';
     const v = freshValue();
@@ -142,7 +155,7 @@ describe('RFC 0229 — v2-secrets-run-witness (gated on secrets.runSecrets + ope
   }, 180_000);
 
   it('the idempotency request digest excludes runSecrets: a retry differing only there replays, and its value is discarded', async () => {
-    const g = await host.gate();
+    const g = await gate();
     if (!g.ok) return softSkip(g.kind, g.reason);
     const id = 'openwop.requirement.secrets.run-secrets-outside-request-digest';
     const key = `openwop-witness-${randomUUID()}`;

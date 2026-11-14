@@ -1,3 +1,15 @@
+## [2.49.0] — 2026-11-14 — Gated legs for eventLog, budget and production
+
+- **`v2-event-log-family`** (gated on `eventLog`). The era is stamped on runs created by createRun and by forkRun. The poll cursor contract holds at every position of a settled log. Event types are codemap names or registered vendor types.
+- **`v2-budget-accounting`** (gated on `budget`).
+  - `consumed` is derived from `agent.tool-called`.
+  - The reserved limit is the one every accounting event names.
+  - `threshold-crossed` is emitted once, at the policy percent.
+
+  The judge is `lib/budget-accounting-witness.ts`, with a sabotage self-test.
+- **`v2-production-profile`** (gated on `production`). Five same-key create retries replay without a second run. An expired run answers `404 not_found` or `410 run_expired`; this leg needs the operator.
+- **`v2-secrets-run-witness`** gates on the `secrets` record before `secrets.runSecrets`. The verdict is unchanged; the change is so RFC 0264's derivation counts a host that passes.
+
 ## [2.48.1] — 2026-11-14 — Fix the telemetry shape leg
 
 - **RFC 0262.** `v2-telemetry-export` (`0262.shape`): the positive records now carry `until`, because the schema requires it while a family is `experimental`. Before this fix the leg failed on every host. Reported by openwop-app-88 and openwop-app-14.

@@ -405,6 +405,7 @@ The `messages`-mode stream fixture (AI token streaming) is covered by the determ
 - **Expected behavior**:
   - `POST /runs` with the same `Idempotency-Key` and same body twice → second response MUST replay the first (`openwop-Idempotent-Replay: true` header) and MUST NOT create a second run.
   - Same `Idempotency-Key` with a different body → 409.
+- **v2**: `v2-production-profile` replays one key across five retries (conformance.md §Production profile); each retry MUST return the first response's status and runId with `OpenWOP-Idempotent-Replay: true`.
 - **Terminal status**: `completed`.
 
 ### `conformance-cancellable`
@@ -537,7 +538,7 @@ The `messages`-mode stream fixture (AI token streaming) is covered by the determ
 
 ### `conformance-budget-tool-calls`
 
-- **Purpose**: spend a run budget unaided, so `budget` can be witnessed without a model or a seam (`v2-budget-enforcement`).
+- **Purpose**: spend a run budget unaided, so `budget` can be witnessed without a model or a seam (`v2-budget-enforcement`, `v2-budget-accounting`).
 - **Shape**: one `core.conformance.mock-agent` node with three `mockToolCalls`. Each call counts once against the `toolCalls` dimension.
 - **Inputs**: none.
 - **Expected behavior**: created with `configurable.budget = { maxToolCalls: 2, thresholdPercent: 50, onExhaustion: "fail" }`, the run emits `budget.reserved`, then `budget.threshold-crossed`, then `budget.exhausted`. A host advertising `enforce: "hard"` then emits `cap.breached` (`kind: "budget-tool-calls"`) and fails the run `budget_exhausted`; an `advisory` host lets it complete.
@@ -857,7 +858,7 @@ The scope leg sends a promote with `OPENWOP_TEST_LOW_SCOPE_KEY`, a key with no `
 `conformance-compensate-unwind` is what `v2-compensation-unwind` drives. Its effect node, `core.conformance.compensable-effect`, is conformance-RESERVED. A host that advertises `compensation` and serves the fixture maps it to a node it records on the effect ledger (`GET /runs/{runId}/effects`) as exactly one effect per execution, forward and inverse alike, and runs it as the inverse action when its resolved inputs carry `inverse: true`. What the effect does is irrelevant. A host that does not advertise `compensation` MUST NOT advertise the fixture: it would refuse the workflow's `settings.compensation` with `capability_required`.
 
 - **Shape**: `e1` → `e2` → `e3` (`core.conformance.compensable-effect`, each with node-level `compensation.nodeTypeId` = the same type and `inputMapping: { inverse: true }`) → `fail` (`core.fail`). `settings.compensation`: `orderingModel: "reverse-completion"`, `triggers: ["node-failure"]`.
-- **Inputs**: none.
+- **Inputs**: none. The `inputMapping` value `{ inverse: true }` is a literal constant, not a path into recorded outputs. The inverse is not a graph node and declares no compensation of its own, so naming the forward type as its own inverse is not a compensation cycle.
 - **Expected behavior**:
   1. `e1`, `e2` and `e3` complete in order; `fail` fails; the run ends `failed`.
   2. The log holds `compensation.requested` before the first `compensation.started`, and ends the unwind with `compensation.completed`.

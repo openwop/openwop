@@ -26,7 +26,8 @@
  *   gate  the scenario (or a lib helper it imports that gates on at most two
  *         families) names the family key as code: gateFamily('k'),
  *         familyAdvertised('k'), behaviorGate('k…' | 'openwop-k-in-kebab'),
- *         capabilityFamily(doc, 'k'), caps.k / capabilities.k / discovery.k,
+ *         capabilityFamily(doc, 'k'), profile.family(doc, 'k'),
+ *         caps.k / capabilities.k / discovery.k,
  *         (families as Record<string, unknown>)['k']. Comments are stripped
  *         and, for the property forms, string literals blanked first. A gate
  *         can be negative (skip WHEN advertised); it is still counted.
@@ -239,6 +240,9 @@ const GATE_RES = [
   /\b(?:caps|capabilities|discovery|disc|v2Doc)\??\.?\[\s*['"]([A-Za-z0-9]+)['"]\s*\]/g,
   /\bcapabilityFamily(?:<[^>]*>)?\([\s\S]{0,160}?,\s*['"]([A-Za-z0-9]+)['"]\s*\)/g,
   /as Record<string, unknown>\)\s*\[\s*['"]([A-Za-z0-9]+)['"]\s*\]/g,
+  // A profile's family accessor, `profile.family(discovery, 'budget')` (lib/*-witness.ts): the
+  // v1/v2-shared witnesses gate through it, and before RFC 0264 the report could not see them.
+  /\.family\(\s*[A-Za-z0-9_$.]+\s*,\s*['"`]([A-Za-z0-9]+)['"`]\s*\)/g,
 ];
 const camel = (k) => k.replace(/-([a-z0-9])/g, (_, c) => c.toUpperCase());
 // The call forms read their string argument; the property forms run on source
@@ -402,6 +406,7 @@ function selfTest() {
     ['.map over a const table', "const T = ['vectorStore'] as const;\nawait Promise.all(T.map((k) => gateFamily(k)));", ['vectorStore']],
     ['derived lib helper, two hops', "import { probeTwice } from '../lib/p.js';\nawait probeTwice('nosql');", ['nosql']],
     ['exported leg over the private onFamily gate', "function onFamily(p: unknown, d: unknown, family: string, leg: unknown) { return leg; }\nexport function schemaLeg(p: unknown, d: unknown, family: string, doc: string) { return onFamily(p, d, family, () => doc); }\nschemaLeg(P, doc, 'portability', DOC);", ['portability']],
+    ['a profile family accessor', "const family = profile.family(discovery, 'budget');", ['budget']],
     ['capabilityFamily through a param', "function cap(d: unknown, n: string) { return capabilityFamily(d, n); }\ncap(doc, 'queueBus');", ['queueBus']],
     ['NEG family key to a non-gate helper', "function leg(x: string) { console.log(x); }\nleg('kvStorage');\nconst msg = 'memory';", []],
     ['NEG gate in a comment', "// await familyAdvertised('nosql');\n/* gateFamily('sql') */", []],

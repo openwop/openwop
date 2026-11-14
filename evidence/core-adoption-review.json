@@ -9,13 +9,6 @@
       "plan": "Reference host advertises nodePackRuntimes for the runtimes it already loads, then re-cuts."
     },
     {
-      "family": "secrets",
-      "reviewBy": "2.50",
-      "decision": "keep",
-      "reason": "openwop-app and MyndHyve advertise secrets, but v2-secret-canary-absent comes back inapplicable on both, so no host witnesses it.",
-      "plan": "Find why the canary leg is inapplicable on an advertising host (facet gate or fixture), fix the suite or the host, and re-cut openwop-app."
-    },
-    {
       "family": "anonymousActor",
       "reviewBy": "2.50",
       "decision": "keep",
@@ -72,13 +65,6 @@
       "plan": "openwop-app's agent runtime is the candidate; its owner decides whether to advertise."
     },
     {
-      "family": "budget",
-      "reviewBy": "2.50",
-      "decision": "keep",
-      "reason": "The reference host advertises it, but no major-2 scenario gates on the family key.",
-      "plan": "Add a gating leg for the budget rules (a suite gap, not an adoption gap)."
-    },
-    {
       "family": "nosql",
       "reviewBy": "2.50",
       "decision": "keep",
@@ -105,13 +91,6 @@
       "decision": "keep",
       "reason": "All three hosts advertise it, but no major-2 scenario gates on the family key (claims-check family).",
       "plan": "Add a claims leg that gates on eventLog (a suite gap, not an adoption gap)."
-    },
-    {
-      "family": "production",
-      "reviewBy": "2.50",
-      "decision": "keep",
-      "reason": "The reference host and MyndHyve advertise it, but no major-2 scenario gates on the family key.",
-      "plan": "Add a gating leg for the production rules (a suite gap, not an adoption gap)."
     },
     {
       "family": "loopback",

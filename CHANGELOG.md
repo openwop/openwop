@@ -33,6 +33,11 @@ Entries before this file was condensed carried full development detail. That tex
 
 - **RFC 0246 Active (safety fix, `GHSA-ffx7-pm5h-v6pq`): a trial that failed its trajectory cannot carry a task or a suite to a pass.** The `mean` task rule and suite `passed` read a gating score that counts it 0; reported scores are unchanged. 90-day window waived by recorded STEWARD OVERRIDE.
 
+## [2.49.0] — 2026-11-14 — Gated legs for eventLog, budget and production
+
+- **Coverage sees profile gates.** `report-v2-witness-coverage.mjs` now treats `profile.family(doc, 'key')` as a gate. With that, the committed bundles already witness `secrets`, `budget` and `production` on one host each, and RFC 0264's derivation now reads 15 `none`, 27 `single-witness` and 28 `multi-witness`.
+- **Suite.** Three new scenarios: `v2-event-log-family`, `v2-budget-accounting` and `v2-production-profile`. `heartbeat` has no unaided cause at v2, so it gets no scenario.
+
 ## [2.48.1] — 2026-11-14 — Fix the telemetry shape leg
 
 - **Suite fix.** `v2-telemetry-export`'s server-free shape leg built an `experimental` telemetry record with no `until`, which the capabilities schema requires. It therefore failed on every host, whether or not the host advertised `telemetry`. The record now carries `until`.
