@@ -834,7 +834,7 @@
           }
         }
       ],
-      "description": "core/capabilities.md#secrets — witness: witnessable-gated; maturity experimental/none",
+      "description": "core/capabilities.md#secrets — witness: witnessable-gated; maturity experimental/single-witness",
       "x-openwop-seeded-from": "v1"
     },
     "connections": {
@@ -5668,7 +5668,7 @@
           }
         }
       ],
-      "description": "core/capabilities.md#budget — witness: witnessable-gated; maturity experimental/none; RFC 0084",
+      "description": "core/capabilities.md#budget — witness: witnessable-gated; maturity experimental/single-witness; RFC 0084",
       "x-openwop-seeded-from": "v1"
     },
     "nondeterminismPolicy": {
@@ -7363,7 +7363,7 @@
           }
         }
       ],
-      "description": "core/capabilities.md#production — witness: witnessable-gated; maturity experimental/none; RFC 0009",
+      "description": "core/capabilities.md#production — witness: witnessable-gated; maturity experimental/single-witness; RFC 0009",
       "x-openwop-seeded-from": "v1"
     },
     "auth": {

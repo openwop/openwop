@@ -138,6 +138,7 @@ describe('v2 eventLog family (persistence.md §The eventLog family)', () => {
     // The second creation path. forkRun is gated on `replay` (runs.md §Surface).
     const replay = await familyAdvertised('replay');
     const modes = Array.isArray(replay?.['modes']) ? (replay?.['modes'] as unknown[]).filter((m): m is string => typeof m === 'string') : [];
+    // partial-witness-ok: forkRun is a creation path only where replay advertises a fork mode; createRun, the only other, was judged above.
     if (replay === null || modes.length === 0) return softSkip('inapplicable', 'replay is not advertised with a fork mode — createRun is the only creation path the suite can drive, and it was judged above');
     const mode = modes.includes('branch') ? 'branch' : (modes[0] as string);
     const fork = await http(() => driver.post(`/runs/${enc(source.runId)}:fork`, { mode, fromSeq: 0 }));
