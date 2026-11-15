@@ -126,7 +126,7 @@ Grouping below is a reading aid only: it assigns each RFC to the risk class its 
 | [0257](../RFCS/0257-run-status-when-every-terminal-is-skipped.md) | run status when every terminal node is skipped | `Accepted` | steward override of RFC 0147 §A.6 | tier-1 — openwop-app's certified 2 | `not-reviewed` |
 | [0258](../RFCS/0258-bounded-refine-loopback.md) | bounded refine loopback for approval gates | `Active` | steward override of RFC 0147 §A.6 | not declared (predates RFC 0174 §B.1, or not yet Accepted) | `not-reviewed` |
 | [0260](../RFCS/0260-llm-cache-key-recipe-2.md) | LLM cache key recipe 2 | `Active` | steward override of RFC 0147 §A.6 | not declared (predates RFC 0174 §B.1, or not yet Accepted) | `not-reviewed` |
-| [0265](../RFCS/0265-compensation-unwind-witness.md) | a v2 compensation-unwind witness | `Active` | steward override of RFC 0147 §A.6 | not declared (predates RFC 0174 §B.1, or not yet Accepted) | `not-reviewed` |
+| [0265](../RFCS/0265-compensation-unwind-witness.md) | a v2 compensation-unwind witness | `Accepted` | steward override of RFC 0147 §A.6 | tier-1 — the v2 reference host's certified 2 | `not-reviewed` |
 
 ## External effects (10)
 

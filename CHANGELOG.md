@@ -8,7 +8,6 @@ Entries before this file was condensed carried full development detail. That tex
 
 ## [Unreleased]
 
-- **RFC 0265 Accepted.** The v2 reference host's certified 2.49.1 public cut (`d735ff3`, 581/0/0) passes all five `0265.*` compensation-unwind legs, and each leg is shown able to fail by a sabotage row in `evidence/sabotage-ledger.json`. The ledger also records red runs for RFC 0264's three corpus legs. §B review deferred by steward exemption.
 - **RFCs 0255, 0257 and 0253 Accepted.** openwop-app's certified cuts: 2.46.36 (`9f4cca7d4`) has no AI Envelope surface; 2.46.41 (`d2c7e089b`) passes the six `0257.*` legs; 2.46.42 (`d69c1cc76`, 550/0/0) passes every `0253.*` host leg for both pack kinds. The reference host passes the §E form legs.
 - **RFC 0250 Accepted.** openwop-app's certified 2.46.23 production cut (`f94471e98`, 487/0/0) advertises `hostEvents.replay`: a durable cursor resumes in commit order with no gap, and an unknown cursor is refused `409 host_event_resync_required` before any SSE byte. §B review deferred by steward exemption.
 
@@ -33,6 +32,11 @@ Entries before this file was condensed carried full development detail. That tex
 ### Security
 
 - **RFC 0246 Active (safety fix, `GHSA-ffx7-pm5h-v6pq`): a trial that failed its trajectory cannot carry a task or a suite to a pass.** The `mean` task rule and suite `passed` read a gating score that counts it 0; reported scores are unchanged. 90-day window waived by recorded STEWARD OVERRIDE.
+
+## [2.49.2] — 2026-11-15 — RFC 0265 Accepted; eventLog adoption re-derived
+
+- **RFC 0265 Accepted.** The reference host's certified 2.49.1 cut (`d735ff3`, 581/0/0) passes all five `0265.*` legs; `evidence/sabotage-ledger.json` shows each can fail, as do RFC 0264's three corpus legs. §B review deferred by steward exemption.
+- **Derived adoption.** With the new reference-host bundle, core family `eventLog` derives `single-witness` (was `none`), so `spec/v2/declaration.json` changes and its review row is removed (RFC 0264). No scenario changes.
 
 ## [2.49.1] — 2026-11-14 — Compare RFC 0258 records structurally
 

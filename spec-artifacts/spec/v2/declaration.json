@@ -1532,7 +1532,7 @@
       "witness": "claims-check",
       "maturity": {
         "technical": "experimental",
-        "adoption": "none"
+        "adoption": "single-witness"
       },
       "facets": [
         "crossEngineOrdering"
