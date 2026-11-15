@@ -1,4 +1,101 @@
 {
   "$comment": "RFC 0263 §B — red runs that show a cited conformance leg can fail. One row per sabotage: the requirement id, the scenario, one sentence naming what was broken, the subject it ran on ({host, build}; never a certified committed bundle — that recorded the pass), the suite version, result executed-fail, and the date. witnessSha256 is optional (the red bundle's digest, when one was cut). Checked by scripts/check-accepted-predicate.mjs rules 5 and 6 and scripts/check-sabotage-ledger.mjs (scripts/lib/sabotage-ledger.mjs). From RFC 0260, an RFC goes Accepted only when every id its Falsifiability table names on a witnessable row has a row here. Older RFCs are not retroactively invalidated; a backfill is invited (RFCS/registers/0263-sabotage-ledger.gaps.md).",
-  "rows": []
+  "rows": [
+    {
+      "requirementId": "openwop.requirement.0265.plan-before-inverse",
+      "scenario": "v2-compensation-unwind.test.ts",
+      "sabotage": "executor.ts unwind() emitted compensation.started before compensation.requested, so an inverse began before the durable plan was in the log.",
+      "subject": {
+        "host": "openwop-examples v2-reference",
+        "build": "d735ff3 (suite pin 2.49.1), sabotaged locally, in-memory store"
+      },
+      "suiteVersion": "2.49.1",
+      "result": "executed-fail",
+      "date": "2026-11-14"
+    },
+    {
+      "requirementId": "openwop.requirement.0265.reverse-completion",
+      "scenario": "v2-compensation-unwind.test.ts",
+      "sabotage": "executor.ts unwind() iterated the compensation plan in forward order, so attempts[] ran e1, e2, e3 instead of the reverse of forward completion.",
+      "subject": {
+        "host": "openwop-examples v2-reference",
+        "build": "d735ff3 (suite pin 2.49.1), sabotaged locally, in-memory store"
+      },
+      "suiteVersion": "2.49.1",
+      "result": "executed-fail",
+      "date": "2026-11-14"
+    },
+    {
+      "requirementId": "openwop.requirement.0265.inverse-once",
+      "scenario": "v2-compensation-unwind.test.ts",
+      "sabotage": "effects.ts performCompensationInverse claimed a second ledger row for each inverse, so every forward effect had two inverse records.",
+      "subject": {
+        "host": "openwop-examples v2-reference",
+        "build": "d735ff3 (suite pin 2.49.1), sabotaged locally, in-memory store"
+      },
+      "suiteVersion": "2.49.1",
+      "result": "executed-fail",
+      "date": "2026-11-14"
+    },
+    {
+      "requirementId": "openwop.requirement.0265.projection-agrees",
+      "scenario": "v2-compensation-unwind.test.ts",
+      "sabotage": "executor.ts unwind() set the projection status to partial when every inverse succeeded, while the event log still recorded compensation.completed.",
+      "subject": {
+        "host": "openwop-examples v2-reference",
+        "build": "d735ff3 (suite pin 2.49.1), sabotaged locally, in-memory store"
+      },
+      "suiteVersion": "2.49.1",
+      "result": "executed-fail",
+      "date": "2026-11-14"
+    },
+    {
+      "requirementId": "openwop.requirement.0265.replay-no-refire",
+      "scenario": "v2-compensation-unwind.test.ts",
+      "sabotage": "effects.ts skipped the replay branch of performCompensationInverse, so a replay fork recorded three inverse effects the source run never made.",
+      "subject": {
+        "host": "openwop-examples v2-reference",
+        "build": "d735ff3 (suite pin 2.49.1), sabotaged locally, in-memory store"
+      },
+      "suiteVersion": "2.49.1",
+      "result": "executed-fail",
+      "date": "2026-11-14"
+    },
+    {
+      "requirementId": "openwop.requirement.0264.adoption-derived",
+      "scenario": "v2-core-adoption-derived.test.ts",
+      "sabotage": "derive-core-adoption.mjs --check stopped comparing declared adoption with the derived value, so a hand-edited maturity.adoption was no longer refused.",
+      "subject": {
+        "host": "openwop corpus",
+        "build": "8fe8c6517 (suite 2.49.1), scripts/derive-core-adoption.mjs sabotaged locally"
+      },
+      "suiteVersion": "2.49.1",
+      "result": "executed-fail",
+      "date": "2026-11-15"
+    },
+    {
+      "requirementId": "openwop.requirement.0264.review-row-present",
+      "scenario": "v2-core-adoption-derived.test.ts",
+      "sabotage": "derive-core-adoption.mjs stopped requiring a review row for a family whose derived adoption is none, so a missing row passed.",
+      "subject": {
+        "host": "openwop corpus",
+        "build": "8fe8c6517 (suite 2.49.1), scripts/derive-core-adoption.mjs sabotaged locally"
+      },
+      "suiteVersion": "2.49.1",
+      "result": "executed-fail",
+      "date": "2026-11-15"
+    },
+    {
+      "requirementId": "openwop.requirement.0264.renewal-not-date-only",
+      "scenario": "v2-core-adoption-derived.test.ts",
+      "sabotage": "derive-core-adoption.mjs stopped comparing a keep row with the baseline, so a renewal that changed only reviewBy passed.",
+      "subject": {
+        "host": "openwop corpus",
+        "build": "8fe8c6517 (suite 2.49.1), scripts/derive-core-adoption.mjs sabotaged locally"
+      },
+      "suiteVersion": "2.49.1",
+      "result": "executed-fail",
+      "date": "2026-11-15"
+    }
+  ]
 }

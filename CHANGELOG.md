@@ -8,6 +8,7 @@ Entries before this file was condensed carried full development detail. That tex
 
 ## [Unreleased]
 
+- **RFC 0265 Accepted.** The v2 reference host's certified 2.49.1 public cut (`d735ff3`, 581/0/0) passes all five `0265.*` compensation-unwind legs, and each leg is shown able to fail by a sabotage row in `evidence/sabotage-ledger.json`. The ledger also records red runs for RFC 0264's three corpus legs. §B review deferred by steward exemption.
 - **RFCs 0255, 0257 and 0253 Accepted.** openwop-app's certified cuts: 2.46.36 (`9f4cca7d4`) has no AI Envelope surface; 2.46.41 (`d2c7e089b`) passes the six `0257.*` legs; 2.46.42 (`d69c1cc76`, 550/0/0) passes every `0253.*` host leg for both pack kinds. The reference host passes the §E form legs.
 - **RFC 0250 Accepted.** openwop-app's certified 2.46.23 production cut (`f94471e98`, 487/0/0) advertises `hostEvents.replay`: a durable cursor resumes in commit order with no gap, and an unknown cursor is refused `409 host_event_resync_required` before any SSE byte. §B review deferred by steward exemption.
 

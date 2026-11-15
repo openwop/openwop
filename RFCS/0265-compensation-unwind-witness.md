@@ -4,10 +4,10 @@
 | ----------------- | --------------------------------------------------------------- |
 | **RFC**           | 0265                                                            |
 | **Title**         | compensation behavior is witnessed at v2 through a failing fixture |
-| **Status**        | `Active`                                                        |
+| **Status**        | `Accepted`                                                      |
 | **Author(s)**     | David Tufts (@davidscotttufts)                                  |
 | **Created**       | 2026-11-13                                                      |
-| **Updated**       | 2026-11-13 — **`Draft` → `Active`, comment window waived by the maintainer** (David, 2026-11-13: "yes, skip the comment window, proceed with implementation"). STEWARD OVERRIDE of RFC 0147 §A.6, recorded in `MAINTAINERS.md`. Lands the fixture `conformance-compensate-unwind`, the scenario `v2-compensation-unwind` (5 ids), the `security-defaults.md` pointer and the invariant `tests:` rows. Unresolved questions settled with the draft's answers (UQ 1: the two registration refusals stay MUST, recorded unwitnessable; UQ 2: no `manualIntervention` leg yet; UQ 3: no `branch`-fork leg). Addresses finding P-006 of the August 2026 assessment. |
+| **Updated**       | 2026-11-15 — **`Active` → `Accepted`**; §B review deferred by steward exemption (2026-10-17). Evidence tier: tier-1 — the v2 reference host's certified 2.49.1 public cut (`openwop-host-v2-reference-2.49.1-d735ff3.json`, build `commit:d735ff3`, 581/0/0, egress guard closed, no relaxation, signed `v2-reference-4`): all five `0265.*` legs are `executed-pass`. Each leg was also made to fail on a sabotaged build of the same host (five `evidence/sabotage-ledger.json` rows, RFC 0263 §C), and each sabotage failed only its own leg. Host implementation: openwop-examples #187. Earlier 2026-11-13 — **`Draft` → `Active`, comment window waived by the maintainer** (David, 2026-11-13: "yes, skip the comment window, proceed with implementation"). STEWARD OVERRIDE of RFC 0147 §A.6, recorded in `MAINTAINERS.md`. Lands the fixture `conformance-compensate-unwind`, the scenario `v2-compensation-unwind` (5 ids), the `security-defaults.md` pointer and the invariant `tests:` rows. Unresolved questions settled with the draft's answers (UQ 1: the two registration refusals stay MUST, recorded unwitnessable; UQ 2: no `manualIntervention` leg yet; UQ 3: no `branch`-fork leg). Addresses finding P-006 of the August 2026 assessment. |
 | **Affects**       | new fixture `conformance/fixtures/conformance-compensate-unwind.json` + `fixtures.md` row, new scenario `conformance/src/scenarios/v2-compensation-unwind.test.ts`, `spec/v2/core/security-defaults.md` §Compensation (one pointer sentence), `SECURITY/invariants.yaml` (`tests:` of two rows) |
 | **Compatibility** | `additive` per `COMPATIBILITY.md` (no wire shape changes; new legs are gated on the family and the fixture) |
 | **Supersedes**    | —                                                               |
@@ -107,11 +107,11 @@ Sabotage plan, recorded in `evidence/sabotage-ledger.json` before `Accepted` (RF
 ## Acceptance criteria
 
 - [x] Before `Active`: the 7-day comment window has run from filing, or a maintainer waiver is recorded in `MAINTAINERS.md` (waived 2026-11-13).
-- [ ] Fixture, `fixtures.md` row and `v2-compensation-unwind` scenario shipped in a suite release.
-- [ ] `security-defaults.md` pointer sentence; core budget re-checked.
-- [ ] `SECURITY/invariants.yaml` `tests:` updated for `compensation-replay-no-refire`.
-- [ ] The three sabotage rows in `evidence/sabotage-ledger.json`.
-- [ ] A certified bundle with the five `0265.*` rows `executed-pass` (tier named in `Updated`).
+- [x] Fixture, `fixtures.md` row and `v2-compensation-unwind` scenario shipped in a suite release. *(suite 2.48.0)*
+- [x] `security-defaults.md` pointer sentence; core budget re-checked.
+- [x] `SECURITY/invariants.yaml` `tests:` updated for `compensation-replay-no-refire`.
+- [x] The sabotage rows in `evidence/sabotage-ledger.json`. *(five rows, one per leg, 2026-11-14)*
+- [x] A certified bundle with the five `0265.*` rows `executed-pass` (tier named in `Updated`). *(2026-11-15: reference host `d735ff3`, certified 2.49.1 cut, tier-1)*
 
 ## References
 

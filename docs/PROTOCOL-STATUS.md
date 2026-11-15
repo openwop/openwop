@@ -70,8 +70,8 @@
 
 | Status | Count |
 |---|---:|
-| Accepted | 247 |
-| Active | 10 |
+| Accepted | 248 |
+| Active | 9 |
 | Draft | 1 |
 | Superseded | 3 |
 
@@ -337,7 +337,7 @@
 | RFC 0262 | The `telemetry` family: a v2 claim that a host exports OTLP traces, with an optional OTel GenAI semantic-conventions mapping | Active |
 | RFC 0263 | A cited conformance leg must be shown able to fail: the sabotage ledger, and requirement ids on every witnessable Falsifiability row | Active |
 | RFC 0264 | core-family adoption is derived from bundles, and an unwitnessed family has a review date | Active |
-| RFC 0265 | compensation behavior is witnessed at v2 through a failing fixture | Active |
+| RFC 0265 | compensation behavior is witnessed at v2 through a failing fixture | Accepted |
 
 ## SDK Helper Coverage
 
@@ -362,7 +362,7 @@ The pack registry now lives in the [`openwop-registry`](https://github.com/openw
 ## Active Follow-Ups
 
 - 1 RFC still `Draft` (RFC 0038) — advance with schema/conformance proof or defer.
-- 10 RFCs `Active` (RFC 0121, RFC 0256, RFC 0258, RFC 0259, RFC 0260, RFC 0261, RFC 0262, RFC 0263, RFC 0264, RFC 0265) — wire-shape MAY shift compatibly within v1.x until promotion to `Accepted`.
+- 9 RFCs `Active` (RFC 0121, RFC 0256, RFC 0258, RFC 0259, RFC 0260, RFC 0261, RFC 0262, RFC 0263, RFC 0264) — wire-shape MAY shift compatibly within v1.x until promotion to `Accepted`.
 - External audit, non-steward host recruitment, and non-steward maintainer recruitment remain external-action gates.
 - Multi-region idempotency and some optional-profile behavior checks remain lower-confidence than the core wire contract.
 
