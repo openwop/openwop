@@ -4,10 +4,10 @@
 | ----------------- | --------------------------------------------------------------- |
 | **RFC**           | 0264                                                            |
 | **Title**         | core-family adoption is derived from bundles, and an unwitnessed family has a review date |
-| **Status**        | `Active`                                                        |
+| **Status**        | `Accepted`                                                      |
 | **Author(s)**     | David Tufts (@davidscotttufts)                                  |
 | **Created**       | 2026-11-13                                                      |
-| **Updated**       | 2026-11-13 — **`Draft` → `Active`, comment window waived by the maintainer** (David, 2026-11-13: "yes, skip the comment window, proceed with implementation"). STEWARD OVERRIDE of RFC 0147 §A.6, recorded in `MAINTAINERS.md`. Lands `scripts/derive-core-adoption.mjs`, `evidence/core-adoption-review.json`, the derived `maturity.adoption` values on core rows, the `capabilities.md` §8 cell, and the coherence scenario `v2-core-adoption-derived` (3 ids). Unresolved questions settled with the draft's answers (UQ 1: a retired host's last bundle keeps counting; UQ 2: three minors; UQ 3: shared code). Addresses finding P-015 of the August 2026 assessment. |
+| **Updated**       | 2026-11-15 — **`Active` → `Accepted`**; §B review deferred by steward exemption (2026-10-17). Evidence tier: corpus gate — every requirement is a property of the corpus, witnessed unaided. `evidence/corpus-ledger.json` records all three `0264.*` ids `executed-pass` from `v2-core-adoption-derived`, which `openwop:check` step 10 also runs on the live tree. Each of the five controls was made to fail by sabotaging `scripts/derive-core-adoption.mjs`, and each sabotage turned only its own control red (five `evidence/sabotage-ledger.json` rows, RFC 0263 §C). Live counts on 2.49.2: none 14 / single-witness 28 / multi-witness 28 / independent 0, with 14 review rows. Earlier 2026-11-13 — **`Draft` → `Active`, comment window waived by the maintainer** (David, 2026-11-13: "yes, skip the comment window, proceed with implementation"). STEWARD OVERRIDE of RFC 0147 §A.6, recorded in `MAINTAINERS.md`. Lands `scripts/derive-core-adoption.mjs`, `evidence/core-adoption-review.json`, the derived `maturity.adoption` values on core rows, the `capabilities.md` §8 cell, and the coherence scenario `v2-core-adoption-derived` (3 ids). Unresolved questions settled with the draft's answers (UQ 1: a retired host's last bundle keeps counting; UQ 2: three minors; UQ 3: shared code). Addresses finding P-015 of the August 2026 assessment. |
 | **Affects**       | `spec/v2/declaration.json` (`maturity.adoption` on core rows), `spec/v2/core/capabilities.md` §8, new `scripts/derive-core-adoption.mjs`, new `evidence/core-adoption-review.json`, `scripts/openwop-check.sh` step 10, the regen chain |
 | **Compatibility** | `additive` per `COMPATIBILITY.md` (no wire shape changes; a generated schema `description` string changes) |
 | **Supersedes**    | —                                                               |
@@ -99,9 +99,9 @@ All requirements here are properties of the corpus. They are checked by a script
 
 | Requirement | Observable — what an outside party sees | Who can cause the condition | Verdict |
 | --- | --- | --- | --- |
-| §A.1 adoption equals the derivation | `derive-core-adoption.mjs --check` exit and reason on fixture trees: a derived value, and a hand-edited one — `v2-core-adoption-derived.test.ts` (planned), `openwop.requirement.0264.adoption-derived` (corpus) | the suite, unaided | witnessable — unaided (corpus) |
-| §B.2 a `none` family has a current review row | the gate on fixture trees with no row, a stale row and an overdue `keep` row — `v2-core-adoption-derived.test.ts` (planned), `openwop.requirement.0264.review-row-present` (corpus) | the suite, unaided | witnessable — unaided (corpus) |
-| §B.3 a renewal states a new reason | the gate on a fixture whose only change since the baseline is `reviewBy` — `v2-core-adoption-derived.test.ts` (planned), `openwop.requirement.0264.renewal-not-date-only` (corpus) | the suite, unaided | witnessable — unaided (corpus) |
+| §A.1 adoption equals the derivation | `derive-core-adoption.mjs --check` exit and reason on fixture trees: a derived value, and a hand-edited one — `v2-core-adoption-derived.test.ts`, `openwop.requirement.0264.adoption-derived` (corpus) | the suite, unaided | witnessable — unaided (corpus) |
+| §B.2 a `none` family has a current review row | the gate on fixture trees with no row, a stale row and an overdue `keep` row — `v2-core-adoption-derived.test.ts`, `openwop.requirement.0264.review-row-present` (corpus) | the suite, unaided | witnessable — unaided (corpus) |
+| §B.3 a renewal states a new reason | the gate on a fixture whose only change since the baseline is `reviewBy` — `v2-core-adoption-derived.test.ts`, `openwop.requirement.0264.renewal-not-date-only` (corpus) | the suite, unaided | witnessable — unaided (corpus) |
 
 ## Alternatives considered
 
@@ -125,11 +125,11 @@ All requirements here are properties of the corpus. They are checked by a script
 ## Acceptance criteria
 
 - [x] Before `Active`: the 7-day comment window has run from filing, or a maintainer waiver is recorded in `MAINTAINERS.md` (waived 2026-11-13). The script's own counts replace the 2026-11-13 estimate in Motivation.
-- [ ] `scripts/derive-core-adoption.mjs` with `--check` and `--write`, in `openwop:check` step 10 and the regen chain.
-- [ ] `evidence/core-adoption-review.json` with a `keep` row for every family then at `none`.
-- [ ] `capabilities.md` §8 cell as proposed; core budget re-checked.
-- [ ] Coherence scenario `v2-core-adoption-derived` with the five controls, each shown able to fail. For this RFC the sabotage rows go in `evidence/sabotage-ledger.json` (RFC 0263 §C).
-- [ ] CHANGELOG entry; suite release carrying the regenerated schema descriptions.
+- [x] `scripts/derive-core-adoption.mjs` with `--check` and `--write`, in `openwop:check` step 10 and the regen chain. *(suite 2.48.0)*
+- [x] `evidence/core-adoption-review.json` with a `keep` row for every family then at `none`. *(18 rows at 2.48.0; 14 at 2.49.2 as families gained witnesses)*
+- [x] `capabilities.md` §8 cell as proposed; core budget re-checked.
+- [x] Coherence scenario `v2-core-adoption-derived` with the five controls, each shown able to fail. *(2026-11-15: five sabotage rows)* For this RFC the sabotage rows go in `evidence/sabotage-ledger.json` (RFC 0263 §C).
+- [x] CHANGELOG entry; suite release carrying the regenerated schema descriptions. *(2.48.0)*
 
 ## References
 
