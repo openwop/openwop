@@ -33,6 +33,11 @@ Entries before this file was condensed carried full development detail. That tex
 
 - **RFC 0246 Active (safety fix, `GHSA-ffx7-pm5h-v6pq`): a trial that failed its trajectory cannot carry a task or a suite to a pass.** The `mean` task rule and suite `passed` read a gating score that counts it 0; reported scores are unchanged. 90-day window waived by recorded STEWARD OVERRIDE.
 
+## [2.49.2] — 2026-11-15 — RFC 0265 Accepted; eventLog adoption re-derived
+
+- **RFC 0265 Accepted.** The reference host's certified 2.49.1 cut (`d735ff3`, 581/0/0) passes all five `0265.*` legs; `evidence/sabotage-ledger.json` shows each can fail, as do RFC 0264's three corpus legs. §B review deferred by steward exemption.
+- **Derived adoption.** With the new reference-host bundle, core family `eventLog` derives `single-witness` (was `none`), so `spec/v2/declaration.json` changes and its review row is removed (RFC 0264). No scenario changes.
+
 ## [2.49.1] — 2026-11-14 — Compare RFC 0258 records structurally
 
 - **Suite fix.** `v2-bounded-loopback` compared serialized JSON, so a host whose store reorders object keys (Postgres `jsonb`) failed `0258.approval-data-loopback` and `0258.history-from-log` with the right values. The judges now compare structurally; array order still counts.

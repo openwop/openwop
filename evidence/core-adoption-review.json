@@ -86,13 +86,6 @@
       "plan": "Reconcile: the reference host advertises packs, or the scenarios' gate is corrected; then re-cut."
     },
     {
-      "family": "eventLog",
-      "reviewBy": "2.50",
-      "decision": "keep",
-      "reason": "All three hosts advertise it, but no major-2 scenario gates on the family key (claims-check family).",
-      "plan": "Add a claims leg that gates on eventLog (a suite gap, not an adoption gap)."
-    },
-    {
       "family": "loopback",
       "reviewBy": "2.50",
       "decision": "keep",

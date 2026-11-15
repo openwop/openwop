@@ -7245,7 +7245,7 @@
           }
         }
       ],
-      "description": "core/capabilities.md#eventLog — witness: claims-check; maturity experimental/none; RFC 0036",
+      "description": "core/capabilities.md#eventLog — witness: claims-check; maturity experimental/single-witness; RFC 0036",
       "x-openwop-seeded-from": "v1"
     },
     "production": {
