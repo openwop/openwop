@@ -166,7 +166,7 @@ Grouping below is a reading aid only: it assigns each RFC to the risk class its 
 | [0254](../RFCS/0254-deployment-transitions-at-v2.md) | the agent deployment transition contract at v2 | `Accepted` | steward override of RFC 0147 §A.6 | tier-1 — openwop-app's certified 2 | `not-reviewed` |
 | [0255](../RFCS/0255-delete-the-ai-envelope.md) | delete the AI Envelope from v2 | `Accepted` | steward override of RFC 0147 §A.6 | tier-1 — openwop-app's certified 2 | `not-reviewed` |
 | [0263](../RFCS/0263-sabotage-ledger.md) | the sabotage ledger | `Active` | steward override of RFC 0147 §A.6 | not declared (predates RFC 0174 §B.1, or not yet Accepted) | `not-reviewed` |
-| [0264](../RFCS/0264-core-adoption-derived.md) | core-family adoption derived from bundles | `Active` | steward override of RFC 0147 §A.6 | not declared (predates RFC 0174 §B.1, or not yet Accepted) | `not-reviewed` |
+| [0264](../RFCS/0264-core-adoption-derived.md) | core-family adoption derived from bundles | `Accepted` | steward override of RFC 0147 §A.6 | corpus gate — every requirement is a property of the corpus, witnessed unaided | `not-reviewed` |
 
 ## Governance (7)
 

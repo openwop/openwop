@@ -96,6 +96,30 @@
       "suiteVersion": "2.49.1",
       "result": "executed-fail",
       "date": "2026-11-15"
+    },
+    {
+      "requirementId": "openwop.requirement.0264.review-row-present",
+      "scenario": "v2-core-adoption-derived.test.ts",
+      "sabotage": "derive-core-adoption.mjs stopped refusing a keep row whose reviewBy is below the release minor, so an overdue review passed.",
+      "subject": {
+        "host": "openwop corpus",
+        "build": "6d0888d75 (suite 2.49.2), scripts/derive-core-adoption.mjs sabotaged locally"
+      },
+      "suiteVersion": "2.49.2",
+      "result": "executed-fail",
+      "date": "2026-11-15"
+    },
+    {
+      "requirementId": "openwop.requirement.0264.adoption-derived",
+      "scenario": "v2-core-adoption-derived.test.ts",
+      "sabotage": "derive-core-adoption.mjs --check reported a failure on every tree, so the positive control (a correctly derived base tree) no longer passed.",
+      "subject": {
+        "host": "openwop corpus",
+        "build": "6d0888d75 (suite 2.49.2), scripts/derive-core-adoption.mjs sabotaged locally"
+      },
+      "suiteVersion": "2.49.2",
+      "result": "executed-fail",
+      "date": "2026-11-15"
     }
   ]
 }
