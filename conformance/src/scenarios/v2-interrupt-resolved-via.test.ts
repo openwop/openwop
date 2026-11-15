@@ -52,7 +52,15 @@ import { req } from '../lib/requirement-ids.js';
 import { scaledTimeoutMs } from '../lib/polling.js';
 
 const DOC = 'run-event-payloads.schema.json $defs/interruptResolved.resolvedBy + .resolvedVia (RFC 0259)';
-const R = (slug: string): string => `openwop.requirement.0259.${slug}`;
+// Literal ids, not a template helper: the requirement registry reads them statically, so a leg that
+// soft-skips before its first assertion still records its disposition under its own id.
+const ID_SHAPE = 'openwop.requirement.0259.shape';
+const ID_TOKEN_NO_SUBJECT = 'openwop.requirement.0259.token-resolve-names-no-subject';
+const ID_VIA_RECORDED = 'openwop.requirement.0259.resolved-via-recorded';
+const ID_TOKEN_REF_OPAQUE = 'openwop.requirement.0259.token-ref-opaque';
+const ID_RUN_NO_VIA = 'openwop.requirement.0259.run-resolve-no-via';
+const ID_BOUND_TO_CALLER = 'openwop.requirement.0259.bound-to-caller';
+const ID_FORGED_BINDING = 'openwop.requirement.0259.forged-binding-binds-no-one';
 const FIXTURE = 'conformance-approval';
 const NODE_ID = 'gate';
 const SEAM = `${SEAMS_PREFIX}/sample/interrupts/token`;
@@ -160,16 +168,16 @@ describe('v2 RFC 0259 — resolvedVia wire shape (server-free)', () => {
     const v = v2RefValidator('run-event-payloads.schema.json#/$defs/interruptResolved');
     const base = { nodeId: 'gate', interruptId: 'acme/0123456789abcdef', kind: 'approval', decision: 'granted', action: 'accept' };
     const person = { issuer: 'urn:example:session', subjectId: 'u_7f3a9c1e', tenant: 'acme', lane: 'session', kind: 'user' };
-    expect(v(base).ok, req(R('shape'), DOC, 'interrupt.resolved without resolvedVia MUST validate')).toBe(true);
-    expect(v({ ...base, resolvedVia: { scheme: 'interrupt-token' } }).ok, req(R('shape'), DOC, 'a bare token resolution (no resolvedBy) with resolvedVia MUST validate')).toBe(true);
-    expect(v({ ...base, resolvedVia: { scheme: 'interrupt-token', tokenRef: 'tr_0000synthetic0000', boundTo: person } }).ok, req(R('shape'), DOC, 'tokenRef and a user boundTo MUST validate')).toBe(true);
-    expect(v({ ...base, resolvedVia: {} }).ok, req(R('shape'), DOC, 'scheme is REQUIRED')).toBe(false);
-    expect(v({ ...base, resolvedVia: { scheme: 'share-link' } }).ok, req(R('shape'), DOC, 'an unregistered scheme MUST fail')).toBe(false);
-    expect(v({ ...base, resolvedVia: { scheme: 'interrupt-token', token: 'ow2.hs256.k.p.m' } }).ok, req(R('shape'), DOC, 'resolvedVia is closed: a token member MUST fail')).toBe(false);
-    expect(v({ ...base, resolvedVia: { scheme: 'interrupt-token', tokenRef: 'ow2.hs256.k.p.m' } }).ok, req(R('shape'), DOC, 'tokenRef is opaque: a dotted token-shaped value MUST fail the grammar')).toBe(false);
-    expect(v({ ...base, resolvedVia: { scheme: 'interrupt-token', boundTo: { ...person, kind: 'anonymous', lane: 'anonymous' } } }).ok, req(R('shape'), DOC, 'boundTo of kind anonymous MUST fail')).toBe(false);
-    expect(v({ ...base, resolvedVia: { scheme: 'interrupt-token', boundTo: { ...person, kind: 'workload', lane: 'workload' } } }).ok, req(R('shape'), DOC, 'boundTo of kind workload MUST fail')).toBe(false);
-    expect(v({ ...base, resolvedVia: { scheme: 'interrupt-token', boundTo: { ...person, issuer: 'urn:openwop:legacy' } } }).ok, req(R('shape'), DOC, 'boundTo with the legacy issuer MUST fail')).toBe(false);
+    expect(v(base).ok, req(ID_SHAPE, DOC, 'interrupt.resolved without resolvedVia MUST validate')).toBe(true);
+    expect(v({ ...base, resolvedVia: { scheme: 'interrupt-token' } }).ok, req(ID_SHAPE, DOC, 'a bare token resolution (no resolvedBy) with resolvedVia MUST validate')).toBe(true);
+    expect(v({ ...base, resolvedVia: { scheme: 'interrupt-token', tokenRef: 'tr_0000synthetic0000', boundTo: person } }).ok, req(ID_SHAPE, DOC, 'tokenRef and a user boundTo MUST validate')).toBe(true);
+    expect(v({ ...base, resolvedVia: {} }).ok, req(ID_SHAPE, DOC, 'scheme is REQUIRED')).toBe(false);
+    expect(v({ ...base, resolvedVia: { scheme: 'share-link' } }).ok, req(ID_SHAPE, DOC, 'an unregistered scheme MUST fail')).toBe(false);
+    expect(v({ ...base, resolvedVia: { scheme: 'interrupt-token', token: 'ow2.hs256.k.p.m' } }).ok, req(ID_SHAPE, DOC, 'resolvedVia is closed: a token member MUST fail')).toBe(false);
+    expect(v({ ...base, resolvedVia: { scheme: 'interrupt-token', tokenRef: 'ow2.hs256.k.p.m' } }).ok, req(ID_SHAPE, DOC, 'tokenRef is opaque: a dotted token-shaped value MUST fail the grammar')).toBe(false);
+    expect(v({ ...base, resolvedVia: { scheme: 'interrupt-token', boundTo: { ...person, kind: 'anonymous', lane: 'anonymous' } } }).ok, req(ID_SHAPE, DOC, 'boundTo of kind anonymous MUST fail')).toBe(false);
+    expect(v({ ...base, resolvedVia: { scheme: 'interrupt-token', boundTo: { ...person, kind: 'workload', lane: 'workload' } } }).ok, req(ID_SHAPE, DOC, 'boundTo of kind workload MUST fail')).toBe(false);
+    expect(v({ ...base, resolvedVia: { scheme: 'interrupt-token', boundTo: { ...person, issuer: 'urn:openwop:legacy' } } }).ok, req(ID_SHAPE, DOC, 'boundTo with the legacy issuer MUST fail')).toBe(false);
   });
 });
 
@@ -181,8 +189,8 @@ describe('v2 RFC 0259 — token resolutions (host, seam-gated)', () => {
     const r = await unboundResolution();
     if ('inapplicable' in r) return softSkip('inapplicable', r.inapplicable);
     if ('blocked' in r) return seamAbsent(r.blocked);
-    expect(r.payload, req(R('token-resolve-names-no-subject'), DOC, 'the token resolution logged no interrupt.resolved for the gate')).toBeDefined();
-    expect(r.payload?.['resolvedBy'], req(R('token-resolve-names-no-subject'), DOC, 'a resolution whose request authenticated nothing MUST NOT record resolvedBy (§A.1)')).toBeUndefined();
+    expect(r.payload, req(ID_TOKEN_NO_SUBJECT, DOC, 'the token resolution logged no interrupt.resolved for the gate')).toBeDefined();
+    expect(r.payload?.['resolvedBy'], req(ID_TOKEN_NO_SUBJECT, DOC, 'a resolution whose request authenticated nothing MUST NOT record resolvedBy (§A.1)')).toBeUndefined();
   });
 
   it('a host advertising interrupt.resolvedVia records scheme interrupt-token and no boundTo on an unbound token resolution', async () => {
@@ -194,8 +202,8 @@ describe('v2 RFC 0259 — token resolutions (host, seam-gated)', () => {
     if ('inapplicable' in r) return softSkip('inapplicable', r.inapplicable);
     if ('blocked' in r) return seamAbsent(r.blocked);
     const via = obj(r.payload?.['resolvedVia']);
-    expect(via?.['scheme'], req(R('resolved-via-recorded'), DOC, 'a host advertising interrupt.resolvedVia MUST record resolvedVia.scheme "interrupt-token" on a token resolution')).toBe('interrupt-token');
-    expect(via?.['boundTo'], req(R('resolved-via-recorded'), DOC, 'boundTo MUST be absent when the host bound the presentation to no one')).toBeUndefined();
+    expect(via?.['scheme'], req(ID_VIA_RECORDED, DOC, 'a host advertising interrupt.resolvedVia MUST record resolvedVia.scheme "interrupt-token" on a token resolution')).toBe('interrupt-token');
+    expect(via?.['boundTo'], req(ID_VIA_RECORDED, DOC, 'boundTo MUST be absent when the host bound the presentation to no one')).toBeUndefined();
   });
 
   it('tokenRef, when present, is not the token and not computable from it', async () => {
@@ -208,7 +216,7 @@ describe('v2 RFC 0259 — token resolutions (host, seam-gated)', () => {
     if ('blocked' in r) return seamAbsent(r.blocked);
     const tokenRef = obj(r.payload?.['resolvedVia'])?.['tokenRef'];
     if (typeof tokenRef !== 'string') return softSkip('inapplicable', 'the host records no tokenRef (OPTIONAL)');
-    expect(tokenRefFindings(tokenRef, r.token), req(R('token-ref-opaque'), DOC, 'tokenRef MUST NOT equal, contain or be a bare digest of the token or its segments (§A.3)')).toEqual([]);
+    expect(tokenRefFindings(tokenRef, r.token), req(ID_TOKEN_REF_OPAQUE, DOC, 'tokenRef MUST NOT equal, contain or be a bare digest of the token or its segments (§A.3)')).toEqual([]);
   });
 
   it('a run-scoped resolution records no resolvedVia', async () => {
@@ -221,8 +229,8 @@ describe('v2 RFC 0259 — token resolutions (host, seam-gated)', () => {
     const res = await http(() => driver.post(`/runs/${enc(s.runId)}/interrupts/${enc(NODE_ID)}`, { resumeValue: { action: 'accept' } }));
     if (res === null || res.status < 200 || res.status >= 300) return seamAbsent(`the run-scoped resolve answered ${res?.status ?? 'nothing'} — interrupt resolution owns that contract`);
     const payload = await resolvedPayload(s.runId);
-    expect(payload, req(R('run-resolve-no-via'), DOC, 'the run-scoped resolution logged no interrupt.resolved for the gate')).toBeDefined();
-    expect(payload?.['resolvedVia'], req(R('run-resolve-no-via'), DOC, 'resolvedVia MUST NOT be recorded on a resolution that presented no token')).toBeUndefined();
+    expect(payload, req(ID_RUN_NO_VIA, DOC, 'the run-scoped resolution logged no interrupt.resolved for the gate')).toBeDefined();
+    expect(payload?.['resolvedVia'], req(ID_RUN_NO_VIA, DOC, 'resolvedVia MUST NOT be recorded on a resolution that presented no token')).toBeUndefined();
   });
 
   it('a binding the host made to the caller is recorded as boundTo, equal to the caller\'s owner subject', async () => {
@@ -235,8 +243,8 @@ describe('v2 RFC 0259 — token resolutions (host, seam-gated)', () => {
     if ('blocked' in r) return seamAbsent(r.blocked);
     const owner = obj(obj((await logOf(r.runId)).find((e) => e.type === 'run.started')?.payload?.['owner'])?.['subject']);
     if (owner === undefined) return seamAbsent('run.started carried no owner.subject to compare boundTo against');
-    expect(obj(r.payload?.['resolvedVia'])?.['boundTo'], req(R('bound-to-caller'), DOC, 'boundTo MUST be the Subject the host bound the presentation to, built with the owner.subject mapping (§A.4)')).toEqual(owner);
-    expect(r.payload?.['resolvedBy'], req(R('bound-to-caller'), DOC, 'a bound but unauthenticated presentation still MUST NOT record resolvedBy (§A.1)')).toBeUndefined();
+    expect(obj(r.payload?.['resolvedVia'])?.['boundTo'], req(ID_BOUND_TO_CALLER, DOC, 'boundTo MUST be the Subject the host bound the presentation to, built with the owner.subject mapping (§A.4)')).toEqual(owner);
+    expect(r.payload?.['resolvedBy'], req(ID_BOUND_TO_CALLER, DOC, 'a bound but unauthenticated presentation still MUST NOT record resolvedBy (§A.1)')).toBeUndefined();
   });
 
   it('a binding altered to claim someone else binds no one', async () => {
@@ -248,10 +256,10 @@ describe('v2 RFC 0259 — token resolutions (host, seam-gated)', () => {
     if ('inapplicable' in r) return softSkip('inapplicable', r.inapplicable);
     if ('blocked' in r) return seamAbsent(r.blocked);
     if (r.refused) {
-      expect(r.refused, req(R('forged-binding-binds-no-one'), DOC, 'refusing a presentation whose binding does not verify satisfies §A.4')).toBe(true);
+      expect(r.refused, req(ID_FORGED_BINDING, DOC, 'refusing a presentation whose binding does not verify satisfies §A.4')).toBe(true);
     } else {
-      expect(obj(r.payload?.['resolvedVia'])?.['boundTo'], req(R('forged-binding-binds-no-one'), DOC, 'a host MUST NOT set boundTo from a binding it did not make (§A.4)')).toBeUndefined();
-      expect(r.payload?.['resolvedBy'], req(R('forged-binding-binds-no-one'), DOC, 'and MUST NOT record the claimed name in resolvedBy (§A.1)')).toBeUndefined();
+      expect(obj(r.payload?.['resolvedVia'])?.['boundTo'], req(ID_FORGED_BINDING, DOC, 'a host MUST NOT set boundTo from a binding it did not make (§A.4)')).toBeUndefined();
+      expect(r.payload?.['resolvedBy'], req(ID_FORGED_BINDING, DOC, 'and MUST NOT record the claimed name in resolvedBy (§A.1)')).toBeUndefined();
     }
   });
 });

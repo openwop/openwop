@@ -32,6 +32,11 @@ Entries before this file was condensed carried full development detail. That tex
 ### Security
 
 
+## [2.49.4] — 2026-11-15 — RFC 0259 legs record their ids when they skip
+
+- **Suite fix.** `v2-interrupt-resolved-via` built its requirement ids with a template helper the registry cannot read, so a leg that skipped before its first assertion recorded no row under its id. The ids are now literal constants; no assertion changes.
+- **Gap closed.** RFC 0259 G5 closes: the reference host implements `readInterruptToken`, so the packed `gaps.json` changes.
+
 ## [2.49.3] — 2026-11-15 — RFCs 0264 and 0263 Accepted
 
 - **RFCs 0264 and 0263 Accepted.** Corpus evidence: the corpus ledger records every `0264.*` and `0263.*` id `executed-pass`, and sabotage-ledger rows show each of their legs can fail. §B review deferred by steward exemption.

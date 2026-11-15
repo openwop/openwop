@@ -15966,8 +15966,8 @@
       "surface": "**Medium.** No host implements `readInterruptToken` yet, so every host leg records `inapplicable` or `blocked` until one does.",
       "witness": "unclassified",
       "requirementId": null,
-      "disposition": "transferred",
-      "target": "RFC",
+      "disposition": "closed",
+      "target": null,
       "sources": [
         {
           "file": "RFCS/registers/0259-interrupt-resolved-via.gaps.md",
