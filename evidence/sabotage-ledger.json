@@ -120,6 +120,42 @@
       "suiteVersion": "2.49.2",
       "result": "executed-fail",
       "date": "2026-11-15"
+    },
+    {
+      "requirementId": "openwop.requirement.0263.falsifiability-names-ids",
+      "scenario": "v2-sabotage-ledger.test.ts",
+      "sabotage": "idRuleFailures stopped refusing a witnessable Falsifiability row that names no requirement id and is not marked planned.",
+      "subject": {
+        "host": "openwop corpus",
+        "build": "8ba941a05 (suite 2.49.2), scripts/lib/sabotage-ledger.mjs sabotaged locally"
+      },
+      "suiteVersion": "2.49.2",
+      "result": "executed-fail",
+      "date": "2026-11-15"
+    },
+    {
+      "requirementId": "openwop.requirement.0263.sabotage-recorded-before-accepted",
+      "scenario": "v2-sabotage-ledger.test.ts",
+      "sabotage": "sabotageRuleFailures dropped the requirement-id match, so an executed-fail row for a different id satisfied §C.",
+      "subject": {
+        "host": "openwop corpus",
+        "build": "8ba941a05 (suite 2.49.2), scripts/lib/sabotage-ledger.mjs sabotaged locally"
+      },
+      "suiteVersion": "2.49.2",
+      "result": "executed-fail",
+      "date": "2026-11-15"
+    },
+    {
+      "requirementId": "openwop.requirement.0263.ledger-shape",
+      "scenario": "v2-sabotage-ledger.test.ts",
+      "sabotage": "ledgerShapeFailures skipped the certified-digest check, so a row naming a certified committed bundle as its red run passed.",
+      "subject": {
+        "host": "openwop corpus",
+        "build": "8ba941a05 (suite 2.49.2), scripts/lib/sabotage-ledger.mjs sabotaged locally"
+      },
+      "suiteVersion": "2.49.2",
+      "result": "executed-fail",
+      "date": "2026-11-15"
     }
   ]
 }

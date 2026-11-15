@@ -16459,8 +16459,8 @@
       "surface": "**Medium.** The three `0263.*` ids have no `executed-pass` row in `evidence/corpus-ledger.json` until the regen chain runs `check-spec-coherence.mjs` on the merged tree.",
       "witness": "unclassified",
       "requirementId": null,
-      "disposition": "transferred",
-      "target": "RFC",
+      "disposition": "closed",
+      "target": null,
       "sources": [
         {
           "file": "RFCS/registers/0263-sabotage-ledger.gaps.md",

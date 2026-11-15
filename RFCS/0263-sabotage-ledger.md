@@ -4,10 +4,10 @@
 | ----------------- | --------------------------------------------------------------- |
 | **RFC**           | 0263                                                            |
 | **Title**         | A cited conformance leg must be shown able to fail: the sabotage ledger, and requirement ids on every witnessable Falsifiability row |
-| **Status**        | `Active`                                                        |
+| **Status**        | `Accepted`                                                      |
 | **Author(s)**     | David Tufts (@davidscotttufts)                                  |
 | **Created**       | 2026-11-13                                                      |
-| **Updated**       | 2026-11-13 — filed directly at **`Active`, comment window waived by the maintainer** (David, 2026-11-13, on the protocol-gap plan's Phase 2: "waived"). STEWARD OVERRIDE of RFC 0147 §A.6 (conformance and certification), recorded in `MAINTAINERS.md`. Lands `evidence/sabotage-ledger.json` (empty), `scripts/lib/sabotage-ledger.mjs`, rules 5 and 6 in `scripts/check-accepted-predicate.mjs`, `scripts/check-sabotage-ledger.mjs`, the coherence scenario `v2-sabotage-ledger` (3 ids), and requirement ids on the witnessable Falsifiability rows of RFCs 0258 and 0259. Addresses finding P-001 of the August 2026 assessment ("certification can pass vacuous behavior"), which RFC 0148 narrowed. |
+| **Updated**       | 2026-11-15 — **`Active` → `Accepted`**; §B review deferred by steward exemption (2026-10-17). Evidence tier: corpus gate — every requirement is a property of the corpus, witnessed unaided. `evidence/corpus-ledger.json` records all three `0263.*` ids `executed-pass` from `v2-sabotage-ledger`. Each leg was made to fail by sabotaging `scripts/lib/sabotage-ledger.mjs` on the current tree, and each sabotage turned only its own leg red (three `evidence/sabotage-ledger.json` rows; the 2026-11-13 sabotages in the scenario docstring left no row). The first §C flips (RFCs 0264, 0265) went through the gate. Earlier 2026-11-13 — filed directly at **`Active`, comment window waived by the maintainer** (David, 2026-11-13, on the protocol-gap plan's Phase 2: "waived"). STEWARD OVERRIDE of RFC 0147 §A.6 (conformance and certification), recorded in `MAINTAINERS.md`. Lands `evidence/sabotage-ledger.json` (empty), `scripts/lib/sabotage-ledger.mjs`, rules 5 and 6 in `scripts/check-accepted-predicate.mjs`, `scripts/check-sabotage-ledger.mjs`, the coherence scenario `v2-sabotage-ledger` (3 ids), and requirement ids on the witnessable Falsifiability rows of RFCs 0258 and 0259. Addresses finding P-001 of the August 2026 assessment ("certification can pass vacuous behavior"), which RFC 0148 narrowed. |
 | **Affects**       | `scripts/check-accepted-predicate.mjs` (rules 5 and 6) · `scripts/lib/sabotage-ledger.mjs` (new; the rules' one implementation) · `scripts/check-sabotage-ledger.mjs` (new; the rules on a chosen directory) · `evidence/sabotage-ledger.json` (new) · `conformance/src/coherence/v2-sabotage-ledger.test.ts` (new) · `RFCS/0258-bounded-refine-loopback.md` and `RFCS/0259-interrupt-resolved-via.md` (ids added to their Falsifiability tables; no normative change) · CHANGELOG. No wire, schema, discovery or spec text changes. v1 is frozen and is not touched. |
 | **Compatibility** | `additive` per `COMPATIBILITY.md`. It adds a governance gate on the `Active → Accepted` transition. No host, bundle or published suite behaviour changes, and no RFC already `Accepted` is invalidated. |
 | **Supersedes**    | —                                                               |
@@ -110,8 +110,8 @@ The rules are a corpus gate, witnessed by the coherence scenario `v2-sabotage-le
 - [x] `scripts/lib/sabotage-ledger.mjs`, rules 5 and 6, `check-sabotage-ledger.mjs` and an empty `evidence/sabotage-ledger.json`. *(2026-11-13.)*
 - [x] Coherence scenario `v2-sabotage-ledger.test.ts` (3 ids), with its sabotages recorded in the docstring. *(2026-11-13.)*
 - [x] RFCs 0258 and 0259 name ids on their witnessable rows. *(2026-11-13.)*
-- [ ] The three `0263.*` ids record `executed-pass` in `evidence/corpus-ledger.json` (the corpus gate, run by `check-spec-coherence.mjs`).
-- [ ] Register sweep (`RFCS/registers/0263-*.gaps.md`, `.risks.md`).
+- [x] The three `0263.*` ids record `executed-pass` in `evidence/corpus-ledger.json` (the corpus gate, run by `check-spec-coherence.mjs`).
+- [x] Register sweep (`RFCS/registers/0263-*.gaps.md`, `.risks.md`). *(2026-11-15: G5 closed; R3 checked at the first §C flips)*
 
 ## References
 

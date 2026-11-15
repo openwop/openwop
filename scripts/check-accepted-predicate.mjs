@@ -201,7 +201,8 @@ for (const f of readdirSync(RFCS).filter((n) => /^\d{4}-.*\.md$/.test(n)).sort()
   // neither is unchecked and unadmitted — the gate says nothing about it, and
   // said nothing about the whole of RFC 0167, 0180, 0185 and 0186.
   if (!table.trim()) failures.push(`${f}: no \`### Falsifiability\` section — rule 4 has nothing to check (RFC 0174 §B.1, RFC 0178 §C.1)`);
-  const VERDICT = /witnessable|gated|corpus gate|not probed|negative[- ]existence|unwitnessable|host-pending|inspection|suite review/i;
+  // `claims-check` is a class in check-falsifiability.mjs's closed vocabulary; without it here an honest claims-check row passed one gate and failed this one.
+  const VERDICT = /witnessable|gated|corpus gate|not probed|negative[- ]existence|unwitnessable|host-pending|inspection|suite review|claims-check/i;
   for (const row of table.split('\n').filter((l) => /^\|/.test(l) && !/^\|\s*-{2,}/.test(l) && !/^\|\s*(Requirement|§?\s*Requirement)\b/i.test(l))) {
     if (/openwop\.requirement\./.test(row) || VERDICT.test(row)) continue;
     failures.push(`${f}: Falsifiability row is neither id-witnessed nor verdict-declared — ${row.trim().slice(0, 90)}`);
