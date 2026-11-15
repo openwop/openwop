@@ -1,3 +1,7 @@
+## [2.49.3] — 2026-11-15 — No scenario changes
+
+- **Contract only.** The packed `spec/v1/gaps.json` closes RFC 0263 G5. The suite's scenarios are unchanged from 2.49.2.
+
 ## [2.49.2] — 2026-11-15 — No scenario changes
 
 - **Contract only.** The packed `spec/v2/declaration.json` re-derives `eventLog` adoption as `single-witness` from the reference host's certified 2.49.1 bundle (RFC 0264). The suite's scenarios are unchanged from 2.49.1.
