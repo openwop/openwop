@@ -1,3 +1,7 @@
+## [2.49.6] — 2026-11-16 — Skipped legs keep ids minted by a helper
+
+- **Registry.** `generate-requirement-registry.mjs` resolves ids built by a one-parameter template helper (`const R = (slug) => \`openwop.requirement.NNNN.${slug}\``), whether passed to `req()`, to a helper, or bound to a `const` in the test body. 86 legs in 13 files that had no `explicitId` now carry one, so a leg that soft-skips before its first `req()` records its disposition under its own id (the RFC 0259 leg-4 failure, 2.49.4, in general form). Assertions are unchanged.
+
 ## [2.49.5] — 2026-11-16 — No scenario changes
 
 - **Contract only.** The packed `spec/v2/declaration.json` re-derives three adoption values from openwop-app's certified 2.49.1 bundle (RFC 0264). Scenarios are unchanged from 2.49.4. A host that does not advertise `budget` or `production` (gated since 2.49.0) must list `family.budget` / `family.production` in `OPENWOP_OPTED_OUT_PROFILES`.
