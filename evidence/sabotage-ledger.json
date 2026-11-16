@@ -816,6 +816,30 @@
       "suiteVersion": "2.49.6",
       "result": "executed-fail",
       "date": "2026-11-16"
+    },
+    {
+      "requirementId": "openwop.requirement.0208.map-coherent",
+      "scenario": "v2-interop-map-coherent.test.ts",
+      "sabotage": "The A2A SendMessage row's v2Operation was renamed createRunNoSuchOperation, so the map named an operation the v2 wire does not define.",
+      "subject": {
+        "host": "openwop corpus",
+        "build": "32ec11a01 (suite 2.49.6), spec/v2/interop-map.json sabotaged locally"
+      },
+      "suiteVersion": "2.49.6",
+      "result": "executed-fail",
+      "date": "2026-11-16"
+    },
+    {
+      "requirementId": "openwop.requirement.0255.interrupt-form-profile",
+      "scenario": "a2ui-v09-profile.test.ts",
+      "sabotage": "The form profile's action def was opened to any object, so a functionCall action (openUrl) and an event outside the allowlist validated.",
+      "subject": {
+        "host": "openwop corpus",
+        "build": "32ec11a01 (suite 2.49.6), schemas/v2/interrupt-form.schema.json sabotaged locally"
+      },
+      "suiteVersion": "2.49.6",
+      "result": "executed-fail",
+      "date": "2026-11-16"
     }
   ]
 }
