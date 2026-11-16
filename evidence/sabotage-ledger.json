@@ -516,6 +516,78 @@
       "suiteVersion": "2.49.6",
       "result": "executed-fail",
       "date": "2026-11-16"
+    },
+    {
+      "requirementId": "openwop.requirement.0168.bundle-signature-attributable",
+      "scenario": "v2-bundle-signature-attributable.test.ts",
+      "sabotage": "The v2 discovery root lost its signingKeys property, so a host had no published key a bundle signature could be attributed to.",
+      "subject": {
+        "host": "openwop corpus",
+        "build": "32ec11a01 (suite 2.49.6), schemas/v2/capabilities.schema.json sabotaged locally"
+      },
+      "suiteVersion": "2.49.6",
+      "result": "executed-fail",
+      "date": "2026-11-16"
+    },
+    {
+      "requirementId": "openwop.requirement.0168.bundle-signature-attributable.v1-root",
+      "scenario": "v2-bundle-signature-attributable.test.ts",
+      "sabotage": "The v1 discovery root lost its signingKeys property, so a v1-only host could not publish the key its v3 bundle is signed under.",
+      "subject": {
+        "host": "openwop corpus",
+        "build": "32ec11a01 (suite 2.49.6), schemas/capabilities.schema.json sabotaged locally"
+      },
+      "suiteVersion": "2.49.6",
+      "result": "executed-fail",
+      "date": "2026-11-16"
+    },
+    {
+      "requirementId": "openwop.requirement.0210.exp-only-lane-restricted",
+      "scenario": "v2-lane-exp-only-schema.test.ts",
+      "sabotage": "The §C.8 if/then refused exp-only on api-key only, so a session lane advertising exp-only validated.",
+      "subject": {
+        "host": "openwop corpus",
+        "build": "32ec11a01 (suite 2.49.6), spec/v2/facets/auth.schema.json sabotaged locally"
+      },
+      "suiteVersion": "2.49.6",
+      "result": "executed-fail",
+      "date": "2026-11-16"
+    },
+    {
+      "requirementId": "openwop.requirement.0210.lane-rule-surfaces-agree",
+      "scenario": "v2-lane-exp-only-schema.test.ts",
+      "sabotage": "The gate stopped comparing each lane's §2.2 rules with the suite's LANE_RULES, so a map wider than the table passed.",
+      "subject": {
+        "host": "openwop corpus",
+        "build": "32ec11a01 (suite 2.49.6), scripts/check-lane-revocation-rules.mjs sabotaged locally"
+      },
+      "suiteVersion": "2.49.6",
+      "result": "executed-fail",
+      "date": "2026-11-16"
+    },
+    {
+      "requirementId": "openwop.requirement.0171.error-registry-prose-parity",
+      "scenario": "v2-error-registry-prose-parity.test.ts",
+      "sabotage": "The approval_rejected row was removed from the generated code table, so the table no longer rendered every registered code.",
+      "subject": {
+        "host": "openwop corpus",
+        "build": "32ec11a01 (suite 2.49.6), spec/v2/generated/error-codes.md sabotaged locally"
+      },
+      "suiteVersion": "2.49.6",
+      "result": "executed-fail",
+      "date": "2026-11-16"
+    },
+    {
+      "requirementId": "openwop.requirement.0223.code-registered",
+      "scenario": "v2-error-registry-prose-parity.test.ts",
+      "sabotage": "approval_rejected was registered as retriable, so the run-ending rejection read as a retryable failure.",
+      "subject": {
+        "host": "openwop corpus",
+        "build": "32ec11a01 (suite 2.49.6), spec/v2/errors.json sabotaged locally"
+      },
+      "suiteVersion": "2.49.6",
+      "result": "executed-fail",
+      "date": "2026-11-16"
     }
   ]
 }
