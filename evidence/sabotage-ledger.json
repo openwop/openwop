@@ -204,6 +204,54 @@
       "suiteVersion": "2.49.6",
       "result": "executed-fail",
       "date": "2026-11-16"
+    },
+    {
+      "requirementId": "openwop.requirement.0189.ratchet-monotone",
+      "scenario": "v2-normative-home-gate.test.ts",
+      "sabotage": "The replay family's normativeText was removed from the committed declaration, so one family was undeclared against a baseline of zero.",
+      "subject": {
+        "host": "openwop corpus",
+        "build": "32ec11a01 (suite 2.49.6), spec/v2/declaration.json sabotaged locally"
+      },
+      "suiteVersion": "2.49.6",
+      "result": "executed-fail",
+      "date": "2026-11-16"
+    },
+    {
+      "requirementId": "openwop.requirement.0190.budget-cap",
+      "scenario": "v2-normative-home-gate.test.ts",
+      "sabotage": "The cap was computed as 25,000 + 200 x (homed - 9 + 1), one family's words more than the homed families earn.",
+      "subject": {
+        "host": "openwop corpus",
+        "build": "32ec11a01 (suite 2.49.6), scripts/check-core-budget.mjs sabotaged locally"
+      },
+      "suiteVersion": "2.49.6",
+      "result": "executed-fail",
+      "date": "2026-11-16"
+    },
+    {
+      "requirementId": "openwop.requirement.0190.fallback-applied",
+      "scenario": "v2-normative-home-gate.test.ts",
+      "sabotage": "The end-of-support verdict left undeclared families out of the fatal list, so a family with no home was no longer named as uncovered.",
+      "subject": {
+        "host": "openwop corpus",
+        "build": "32ec11a01 (suite 2.49.6), scripts/check-v2-normative-home.mjs sabotaged locally"
+      },
+      "suiteVersion": "2.49.6",
+      "result": "executed-fail",
+      "date": "2026-11-16"
+    },
+    {
+      "requirementId": "openwop.requirement.0190.v1carried-matches",
+      "scenario": "v2-normative-home-gate.test.ts",
+      "sabotage": "V1Carried was set to [replay], a family that is not v1-dependent, so it no longer equalled the computed v1-dependent set.",
+      "subject": {
+        "host": "openwop corpus",
+        "build": "32ec11a01 (suite 2.49.6), docs/normative-home-baseline.json sabotaged locally"
+      },
+      "suiteVersion": "2.49.6",
+      "result": "executed-fail",
+      "date": "2026-11-16"
     }
   ]
 }
