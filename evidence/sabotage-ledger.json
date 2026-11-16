@@ -492,6 +492,30 @@
       "suiteVersion": "2.49.6",
       "result": "executed-fail",
       "date": "2026-11-16"
+    },
+    {
+      "requirementId": "openwop.requirement.0192.facet-presence",
+      "scenario": "v2-facet-advertisement.test.ts",
+      "sabotage": "The facets row was weakened to SHOULD omit the key, with the absence exception dropped, so capabilities.md no longer stated the presence rule.",
+      "subject": {
+        "host": "openwop corpus",
+        "build": "32ec11a01 (suite 2.49.6), spec/v2/core/capabilities.md sabotaged locally"
+      },
+      "suiteVersion": "2.49.6",
+      "result": "executed-fail",
+      "date": "2026-11-16"
+    },
+    {
+      "requirementId": "openwop.requirement.0192.no-supported-ghost",
+      "scenario": "v2-facet-advertisement.test.ts",
+      "sabotage": "The generator's refusal of descriptions conditioning on the retired supported flag was disabled, so a reintroduced ghost reached the generated schema.",
+      "subject": {
+        "host": "openwop corpus",
+        "build": "32ec11a01 (suite 2.49.6), scripts/generate-from-declaration.mjs sabotaged locally"
+      },
+      "suiteVersion": "2.49.6",
+      "result": "executed-fail",
+      "date": "2026-11-16"
     }
   ]
 }
