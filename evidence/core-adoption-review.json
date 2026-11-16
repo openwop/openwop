@@ -86,13 +86,6 @@
       "plan": "Reconcile: the reference host advertises packs, or the scenarios' gate is corrected; then re-cut."
     },
     {
-      "family": "loopback",
-      "reviewBy": "2.50",
-      "decision": "keep",
-      "reason": "New (RFC 0258, 2026-11-08); no host advertised it at its last cut.",
-      "plan": "openwop-app's certified production cut with OPENWOP_BOUNDED_LOOPBACK=true (scheduled after 2026-11-14 00:00Z)."
-    },
-    {
       "family": "telemetry",
       "reviewBy": "2.50",
       "decision": "keep",

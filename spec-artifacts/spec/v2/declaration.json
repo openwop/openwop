@@ -285,7 +285,7 @@
       "witness": "witnessable-gated",
       "maturity": {
         "technical": "experimental",
-        "adoption": "single-witness"
+        "adoption": "multi-witness"
       },
       "facets": [
         "scopes",
@@ -1532,7 +1532,7 @@
       "witness": "claims-check",
       "maturity": {
         "technical": "experimental",
-        "adoption": "single-witness"
+        "adoption": "multi-witness"
       },
       "facets": [
         "crossEngineOrdering"
@@ -1705,7 +1705,7 @@
       "witness": "witnessable-gated",
       "maturity": {
         "technical": "experimental",
-        "adoption": "none"
+        "adoption": "single-witness"
       },
       "facets": [
         "maxIterations",
