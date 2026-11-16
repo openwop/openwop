@@ -16,9 +16,9 @@
 
 import { describe, it, expect } from 'vitest';
 import { spawnSync, type SpawnSyncReturns } from 'node:child_process';
-import { readFileSync, writeFileSync, mkdtempSync, cpSync, rmSync } from 'node:fs';
+import { readFileSync, writeFileSync, mkdtempSync, cpSync, rmSync, readdirSync, mkdirSync } from 'node:fs';
 import { tmpdir } from 'node:os';
-import { join } from 'node:path';
+import { join, relative } from 'node:path';
 import { SCHEMAS_DIR, V1_DIR } from '../lib/paths.js';
 import { req } from '../lib/requirement-ids.js';
 import { softSkip } from '../lib/soft-skip.js';
@@ -37,7 +37,7 @@ const root = join(SCHEMAS_DIR, '..');
 function inScratchCorpus(fn: (dir: string) => void): void {
   const dir = mkdtempSync(join(tmpdir(), 'openwop-sabotage-'));
   try {
-    for (const p of ['scripts', 'spec', 'schemas', 'docs', 'evidence']) {
+    for (const p of ['scripts', 'spec', 'schemas', 'docs', 'evidence', 'RFCS']) {
       cpSync(join(root, p), join(dir, p), { recursive: true });
     }
     fn(dir);
@@ -50,6 +50,11 @@ const BUDGET = 'check-core-budget.mjs';
 
 const tail = (r: SpawnSyncReturns<string>): string =>
   (String(r.stderr ?? '') + String(r.stdout ?? '')).trim().split('\n').slice(-6).join(' | ');
+// The WHOLE output. A leg that asserts only "refused" passes whichever rule refused,
+// so each sabotage leg below also asserts the reason its own rule prints. Found by the
+// RFC 0263 G3 backfill (2026-11-16): with the class, keyword, marker or deadline rule
+// removed, those legs stayed green because another rule refused the same mutation.
+const all = (r: SpawnSyncReturns<string>): string => String(r.stderr ?? '') + String(r.stdout ?? '');
 const run = (script: string, args: string[] = [], env: Record<string, string> = {}, cwd: string = root) =>
   spawnSync('node', [join(cwd, 'scripts', script), ...args], { cwd, encoding: 'utf8', maxBuffer: 32 * 1024 * 1024, env: { ...process.env, ...env } });
 
@@ -81,6 +86,19 @@ const undeclare = (key: string) => (s: string) => {
   return `${JSON.stringify(doc, null, 2)}\n`;
 };
 
+/**
+ * A probe document in the scratch corpus that passes every home rule except the one a
+ * leg measures: it carries the "Normative home" marker for `key` under a Status banner
+ * and names `key` in a paragraph, with or without an RFC 2119 obligation. Without it, a
+ * fixture borrowed from the tree was refused by an EARLIER rule (no marker, no paragraph
+ * naming the family), and the leg passed with its own rule removed.
+ */
+const probe = (dir: string, rel: string, key: string, obligation: boolean): void => {
+  const p = join(dir, rel);
+  mkdirSync(join(p, '..'), { recursive: true });
+  writeFileSync(p, `# Probe\n\n> **Status: Experimental.**\n> **Normative home:** \`${key}\`.\n\n## ${key}\n\nThe \`${key}\` family ${obligation ? 'MUST serve' : 'serves'} the prompts a host stores.\n`);
+};
+
 const declare = (key: string, home: string) => (s: string) => {
   const stripped = s.replace(new RegExp(`("key": "${key}",\\n\\s+"kind": "family",)(\\n\\s+"normativeText": \\[[^\\]]*\\],)`), '$1');
   return stripped.replace(new RegExp(`("key": "${key}",\\n(\\s+)"kind": "family",)`), (_m, head, pad) => `${head}\n${pad}"normativeText": ["${home}"],`);
@@ -91,9 +109,13 @@ describe('v2-normative-home-gate (RFC 0189 §A–§D, RFC 0190 §A–§C, RFC 01
     if (V1_DIR === null) return softSkip('inapplicable', 'not a spec checkout');
     withDeclaration(declare('promptLibrary', 'RFCS/0189-normative-home.md'), (dir) => {
       const rfcHome = run(HOME, [], {}, dir);
-      const refusedRfc = rfcHome.status !== 0 && /promptLibrary/.test(tail(rfcHome));
+      const refusedRfc = rfcHome.status !== 0 && /promptLibrary -> RFCS\/0189-normative-home\.md \(an RFC is history, not operative text/.test(all(rfcHome));
       let refusedExt = false;
-      withDeclaration(declare('promptLibrary', 'spec/v2/ext/README.md'), (d2) => { refusedExt = run(HOME, [], {}, d2).status !== 0; });
+      withDeclaration(declare('promptLibrary', 'spec/v2/ext/zz-probe/README.md'), (d2) => {
+        probe(d2, 'spec/v2/ext/zz-probe/README.md', 'promptLibrary', true);
+        const r = run(HOME, [], {}, d2);
+        refusedExt = r.status !== 0 && /promptLibrary -> ext-only \(spec\/v2\/ext\/ is the unwitnessed tail/.test(all(r));
+      });
       expect(refusedRfc && refusedExt,
         req('openwop.requirement.0189.home-class', 'RFC 0189 §A / RFC 0190 §B', `a refused class is refused: an RFC is history not operative text (${refusedRfc}), and spec/v2/ext/ is a co-pointer that may not stand alone (${refusedExt}) — ${tail(rfcHome)}`)).toBe(true);
     });
@@ -101,10 +123,11 @@ describe('v2-normative-home-gate (RFC 0189 §A–§D, RFC 0190 §A–§C, RFC 01
 
   it('a home that names the family but carries no obligation is refused', () => {
     if (V1_DIR === null) return softSkip('inapplicable', 'not a spec checkout');
-    withDeclaration(declare('promptLibrary', 'spec/v1/host-capabilities.md'), (dir) => {
+    withDeclaration(declare('promptLibrary', 'spec/v2/core/zz-probe.md'), (dir) => {
+      probe(dir, 'spec/v2/core/zz-probe.md', 'promptLibrary', false);
       const r = run(HOME, [], {}, dir);
-      expect(r.status !== 0 && /promptLibrary/.test(tail(r)),
-        req('openwop.requirement.0189.content-predicate', 'RFC 0189 §B', `§host.promptLibrary is titled for the family and carries zero MUSTs — refused — ${tail(r)}`)).toBe(true);
+      expect(r.status !== 0 && /promptLibrary \(named, but no MUST\/SHOULD\/MAY in a paragraph that names it/.test(all(r)),
+        req('openwop.requirement.0189.content-predicate', 'RFC 0189 §B', `a home that claims and names promptLibrary but carries no MUST/SHOULD/MAY is refused for exactly that — ${tail(r)}`)).toBe(true);
     });
   }, 180_000);
 
@@ -117,8 +140,15 @@ describe('v2-normative-home-gate (RFC 0189 §A–§D, RFC 0190 §A–§C, RFC 01
   it('the deadline can actually fire', () => {
     if (V1_DIR === null) return softSkip('inapplicable', 'not a spec checkout');
     withDeclaration(undeclare('replay'), (dir) => {
+      // The ratchet would exit 1 on its own (undeclared rises above a baseline of 0),
+      // so the baseline here admits the one undeclared family: the ratchets pass, and
+      // only the deadline can fail the run. Without --deadline the same tree exits 0.
+      const base = join(dir, 'docs', 'normative-home-baseline.json');
+      const b = JSON.parse(readFileSync(base, 'utf8')) as Record<string, unknown>;
+      writeFileSync(base, `${JSON.stringify({ ...b, undeclared: 1 }, null, 2)}\n`);
+      const quiet = run(HOME, [], { OPENWOP_NORMATIVE_HOME_TODAY: '2026-12-05' }, dir);
       const r = run(HOME, ['--deadline'], { OPENWOP_NORMATIVE_HOME_TODAY: '2026-12-05' }, dir);
-      expect(r.status, req('openwop.requirement.0189.deadline-live', 'RFC 0189 §D', `past end-of-support with a family undeclared the gate exits 1 — ${tail(r)}`)).toBe(1);
+      expect([quiet.status, r.status, /end-of-support \(\d{4}-\d{2}-\d{2}\) has passed/.test(all(r))], req('openwop.requirement.0189.deadline-live', 'RFC 0189 §D', `past end-of-support with a family undeclared, the ratchets pass (exit ${quiet.status}) and the deadline alone exits 1 — ${tail(r)}`)).toEqual([0, 1, true]);
     });
   }, 180_000);
 
@@ -126,9 +156,18 @@ describe('v2-normative-home-gate (RFC 0189 §A–§D, RFC 0190 §A–§C, RFC 01
     if (V1_DIR === null) return softSkip('inapplicable', 'not a spec checkout');
     const r = run(BUDGET);
     const out = tail(r);
-    const counted = /\(incl\. \d+ ext home\(s\) cited by a core family\)|words across \d+ document\(s\)/.test(out);
+    // RFC 0190 §A's set, computed here and not by the script: every .md under
+    // spec/v2/core/ (recursive), plus each spec/v2/ext/ document a core family
+    // declares as a home. The script prints one row per measured document.
+    const walk = (d: string): string[] => readdirSync(d, { withFileTypes: true }).flatMap((e) => e.isDirectory() ? walk(join(d, e.name)) : e.name.endsWith('.md') ? [join(d, e.name)] : []);
+    const v2 = join(root, 'spec', 'v2');
+    const decl = JSON.parse(readFileSync(join(v2, 'declaration.json'), 'utf8')) as { families: Array<{ anchor?: string; normativeText?: string[] }> };
+    const ext = [...new Set(decl.families.filter((f) => f.anchor === 'core').flatMap((f) => f.normativeText ?? []).filter((h) => h.startsWith('spec/v2/ext/')))];
+    const want = [...walk(join(v2, 'core')).map((p) => relative(v2, p)), ...ext.map((h) => h.slice('spec/v2/'.length))].sort();
+    const got = String(r.stdout ?? '').split('\n').map((l) => /^\s+\d+\s+(\S+\.md)$/.exec(l)?.[1]).filter((x): x is string => x !== undefined).sort();
+    const counted = JSON.stringify(got) === JSON.stringify(want);
     expect(r.status === 0 && counted,
-      req('openwop.requirement.0190.budget-denominator', 'RFC 0190 §A', `the measured set is spec/v2/core/** recursive plus any ext document a core family declares — where prose is FILED carries no budget consequence — ${out}`)).toBe(true);
+      req('openwop.requirement.0190.budget-denominator', 'RFC 0190 §A', `the measured set is spec/v2/core/** recursive plus any ext document a core family declares — where prose is FILED carries no budget consequence (measured ${got.length}, expected ${want.length}: only in the script [${got.filter((x) => !want.includes(x)).join(', ')}], only in §A [${want.filter((x) => !got.includes(x)).join(', ')}]) — ${out}`)).toBe(true);
   }, 180_000);
 
   it('the cap grows only as families are homed', () => {
@@ -163,7 +202,7 @@ describe('v2-normative-home-gate (RFC 0189 §A–§D, RFC 0190 §A–§C, RFC 01
     // claims `sandbox` and `compensation`, never `production`.
     withDeclaration(declare('production', 'spec/v2/core/security-defaults.md'), (dir) => {
       const r = run(HOME, [], {}, dir);
-      expect(r.status !== 0 && /production/.test(tail(r)),
+      expect(r.status !== 0 && /production -> spec\/v2\/core\/security-defaults\.md \(the document does not claim it/.test(all(r)),
         req('openwop.requirement.0191.home-marker', 'RFC 0191 §A', `security-defaults.md carries no "Normative home: production" marker, so it may not home the family however its prose reads — ${tail(r)}`)).toBe(true);
     });
   }, 180_000);
