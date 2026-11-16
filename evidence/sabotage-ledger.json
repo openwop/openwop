@@ -336,6 +336,78 @@
       "suiteVersion": "2.49.6",
       "result": "executed-fail",
       "date": "2026-11-16"
+    },
+    {
+      "requirementId": "openwop.requirement.0206.key-grammar",
+      "scenario": "locale-key-grammar.test.ts",
+      "sabotage": "The v1 section schema's locale patterns were restored to RFC 0103's ^[a-z]{2}(-[A-Z]{2})?$, so extended BCP 47 keys such as zh-Hant-TW no longer validated there.",
+      "subject": {
+        "host": "openwop corpus",
+        "build": "32ec11a01 (suite 2.49.6), schemas/localized-content-section.schema.json sabotaged locally"
+      },
+      "suiteVersion": "2.49.6",
+      "result": "executed-fail",
+      "date": "2026-11-16"
+    },
+    {
+      "requirementId": "openwop.requirement.0206.key-grammar-negatives",
+      "scenario": "locale-key-grammar.test.ts",
+      "sabotage": "The v2 section schema's locale patterns were made case-insensitive, so non-canonical tags such as EN, en-us and zh-hans validated.",
+      "subject": {
+        "host": "openwop corpus",
+        "build": "32ec11a01 (suite 2.49.6), schemas/v2/localized-content-section.schema.json sabotaged locally"
+      },
+      "suiteVersion": "2.49.6",
+      "result": "executed-fail",
+      "date": "2026-11-16"
+    },
+    {
+      "requirementId": "openwop.requirement.0206.wire-agreement",
+      "scenario": "locale-key-grammar.test.ts",
+      "sabotage": "The putContentSection body's locale pattern in api/openapi.yaml was left on RFC 0103's grammar while the schemas carried the new one.",
+      "subject": {
+        "host": "openwop corpus",
+        "build": "32ec11a01 (suite 2.49.6), api/openapi.yaml sabotaged locally"
+      },
+      "suiteVersion": "2.49.6",
+      "result": "executed-fail",
+      "date": "2026-11-16"
+    },
+    {
+      "requirementId": "openwop.requirement.0206.superset",
+      "scenario": "locale-key-grammar.test.ts",
+      "sabotage": "The v2 section schema's locale patterns required a three-letter language, so two-letter keys the RFC 0103 grammar admitted no longer validated.",
+      "subject": {
+        "host": "openwop corpus",
+        "build": "32ec11a01 (suite 2.49.6), schemas/v2/localized-content-section.schema.json sabotaged locally"
+      },
+      "suiteVersion": "2.49.6",
+      "result": "executed-fail",
+      "date": "2026-11-16"
+    },
+    {
+      "requirementId": "openwop.requirement.0206.script-family-fallback",
+      "scenario": "locale-key-grammar.test.ts",
+      "sabotage": "resolveSection skipped the language-script step, so zh-Hant-TW on {zh-Hant, zh} overlaid zh instead of zh-Hant.",
+      "subject": {
+        "host": "openwop corpus",
+        "build": "32ec11a01 (suite 2.49.6), conformance/src/lib/localized-content.ts sabotaged locally"
+      },
+      "suiteVersion": "2.49.6",
+      "result": "executed-fail",
+      "date": "2026-11-16"
+    },
+    {
+      "requirementId": "openwop.requirement.0206.old-sections-unchanged",
+      "scenario": "locale-key-grammar.test.ts",
+      "sabotage": "resolveSection tried any two-subtag prefix, not only a four-letter script subtag, so de-CH-1996 resolved differently from RFC 0103.",
+      "subject": {
+        "host": "openwop corpus",
+        "build": "32ec11a01 (suite 2.49.6), conformance/src/lib/localized-content.ts sabotaged locally"
+      },
+      "suiteVersion": "2.49.6",
+      "result": "executed-fail",
+      "date": "2026-11-16"
     }
   ]
 }
