@@ -234,7 +234,7 @@ Decided 2026-11-08 at `Draft → Active`:
 
 - [x] CHANGELOG entry. *(2.46.44 release section.)*
 - [ ] A host implements §A–§C and its bundle records legs 2, 3 and 5 `executed-pass` (leg 6 where the caller is a person).
-- [ ] Register sweep (`RFCS/registers/0259-*.gaps.md`, `.risks.md`).
+- [x] Register sweep (`RFCS/registers/0259-*.gaps.md`, `.risks.md`). *(2026-11-15: G5 closed; R2 open until a host mints `tokenRef`)*
 
 ## References
 

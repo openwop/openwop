@@ -6,7 +6,7 @@
     "tests": 2919,
     "withStableId": 2919,
     "interpolatedTitles": 0,
-    "explicitIds": 2763
+    "explicitIds": 2770
   },
   "records": [
     {
@@ -32923,9 +32923,9 @@
     {
       "id": "openwop.it.v2-interrupt-resolved-via.resolvedvia-is-a-closed-object-with-a-registered-scheme-boundto-is-a-non-legacy",
       "file": "v2-interrupt-resolved-via.test.ts",
-      "line": 159,
+      "line": 167,
       "title": "resolvedVia is a closed object with a registered scheme; boundTo is a non-legacy user or agent Subject",
-      "explicitId": null,
+      "explicitId": "openwop.requirement.0259.shape",
       "citations": [
         {
           "section": "run-event-payloads.schema.json $defs/interruptResolved.resolvedBy + .resolvedVia (RFC 0259)",
@@ -32972,9 +32972,9 @@
     {
       "id": "openwop.it.v2-interrupt-resolved-via.an-unauthenticated-token-resolution-records-no-resolvedby",
       "file": "v2-interrupt-resolved-via.test.ts",
-      "line": 177,
+      "line": 185,
       "title": "an unauthenticated token resolution records no resolvedBy",
-      "explicitId": null,
+      "explicitId": "openwop.requirement.0259.token-resolve-names-no-subject",
       "citations": [
         {
           "section": "run-event-payloads.schema.json $defs/interruptResolved.resolvedBy + .resolvedVia (RFC 0259)",
@@ -32989,9 +32989,9 @@
     {
       "id": "openwop.it.v2-interrupt-resolved-via.a-host-advertising-interrupt-resolvedvia-records-scheme-interrupt-token-and-no-b",
       "file": "v2-interrupt-resolved-via.test.ts",
-      "line": 188,
+      "line": 196,
       "title": "a host advertising interrupt.resolvedVia records scheme interrupt-token and no boundTo on an unbound token resolution",
-      "explicitId": null,
+      "explicitId": "openwop.requirement.0259.resolved-via-recorded",
       "citations": [
         {
           "section": "run-event-payloads.schema.json $defs/interruptResolved.resolvedBy + .resolvedVia (RFC 0259)",
@@ -33006,9 +33006,9 @@
     {
       "id": "openwop.it.v2-interrupt-resolved-via.tokenref-when-present-is-not-the-token-and-not-computable-from-it",
       "file": "v2-interrupt-resolved-via.test.ts",
-      "line": 201,
+      "line": 209,
       "title": "tokenRef, when present, is not the token and not computable from it",
-      "explicitId": null,
+      "explicitId": "openwop.requirement.0259.token-ref-opaque",
       "citations": [
         {
           "section": "run-event-payloads.schema.json $defs/interruptResolved.resolvedBy + .resolvedVia (RFC 0259)",
@@ -33019,9 +33019,9 @@
     {
       "id": "openwop.it.v2-interrupt-resolved-via.a-run-scoped-resolution-records-no-resolvedvia",
       "file": "v2-interrupt-resolved-via.test.ts",
-      "line": 214,
+      "line": 222,
       "title": "a run-scoped resolution records no resolvedVia",
-      "explicitId": null,
+      "explicitId": "openwop.requirement.0259.run-resolve-no-via",
       "citations": [
         {
           "section": "run-event-payloads.schema.json $defs/interruptResolved.resolvedBy + .resolvedVia (RFC 0259)",
@@ -33036,9 +33036,9 @@
     {
       "id": "openwop.it.v2-interrupt-resolved-via.a-binding-the-host-made-to-the-caller-is-recorded-as-boundto-equal-to-the-caller",
       "file": "v2-interrupt-resolved-via.test.ts",
-      "line": 228,
+      "line": 236,
       "title": "a binding the host made to the caller is recorded as boundTo, equal to the caller's owner subject",
-      "explicitId": null,
+      "explicitId": "openwop.requirement.0259.bound-to-caller",
       "citations": [
         {
           "section": "run-event-payloads.schema.json $defs/interruptResolved.resolvedBy + .resolvedVia (RFC 0259)",
@@ -33053,9 +33053,9 @@
     {
       "id": "openwop.it.v2-interrupt-resolved-via.a-binding-altered-to-claim-someone-else-binds-no-one",
       "file": "v2-interrupt-resolved-via.test.ts",
-      "line": 242,
+      "line": 250,
       "title": "a binding altered to claim someone else binds no one",
-      "explicitId": null,
+      "explicitId": "openwop.requirement.0259.forged-binding-binds-no-one",
       "citations": [
         {
           "section": "run-event-payloads.schema.json $defs/interruptResolved.resolvedBy + .resolvedVia (RFC 0259)",

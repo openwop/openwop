@@ -1,3 +1,7 @@
+## [2.49.4] — 2026-11-15 — RFC 0259 legs keep their ids on a skip
+
+- **RFC 0259.** `v2-interrupt-resolved-via` used `R('slug')` to build its ids. `generate-requirement-registry.mjs` resolves only literals and `const`s bound to them, so all seven legs were registered with no `explicitId`. A leg that soft-skipped before its first `req()` (leg 4 on a host that mints no `tokenRef`) then filed under its title-derived id, and no bundle row named `0259.token-ref-opaque`. The ids are now module-level literals; assertions are unchanged.
+
 ## [2.49.3] — 2026-11-15 — No scenario changes
 
 - **Contract only.** The packed `spec/v1/gaps.json` closes RFC 0263 G5. The suite's scenarios are unchanged from 2.49.2.
