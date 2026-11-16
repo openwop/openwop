@@ -156,6 +156,54 @@
       "suiteVersion": "2.49.2",
       "result": "executed-fail",
       "date": "2026-11-15"
+    },
+    {
+      "requirementId": "openwop.requirement.0262.run-span",
+      "scenario": "v2-telemetry-export.test.ts",
+      "sabotage": "telemetry.ts never exported the openwop.run span: the terminal-event branch that builds it was disabled, so a run exported only its node spans.",
+      "subject": {
+        "host": "openwop-examples v2-reference",
+        "build": "9617276 (suite pin 2.49.6), src/telemetry.ts sabotaged locally, in-memory store"
+      },
+      "suiteVersion": "2.49.6",
+      "result": "executed-fail",
+      "date": "2026-11-16"
+    },
+    {
+      "requirementId": "openwop.requirement.0262.node-span",
+      "scenario": "v2-telemetry-export.test.ts",
+      "sabotage": "telemetry.ts dropped openwop.node_attempt from every openwop.node.<typeId> span, leaving the run, node id and node type attributes in place.",
+      "subject": {
+        "host": "openwop-examples v2-reference",
+        "build": "9617276 (suite pin 2.49.6), src/telemetry.ts sabotaged locally, in-memory store"
+      },
+      "suiteVersion": "2.49.6",
+      "result": "executed-fail",
+      "date": "2026-11-16"
+    },
+    {
+      "requirementId": "openwop.requirement.0262.traceparent-continued",
+      "scenario": "v2-telemetry-export.test.ts",
+      "sabotage": "telemetry.ts ignored the run's stored traceparent and derived the trace id from the run id, so a run created in a caller's trace exported into a new one.",
+      "subject": {
+        "host": "openwop-examples v2-reference",
+        "build": "9617276 (suite pin 2.49.6), src/telemetry.ts sabotaged locally, in-memory store"
+      },
+      "suiteVersion": "2.49.6",
+      "result": "executed-fail",
+      "date": "2026-11-16"
+    },
+    {
+      "requirementId": "openwop.requirement.0262.no-secret-in-spans",
+      "scenario": "v2-telemetry-export.test.ts",
+      "sabotage": "telemetry.ts put the resolved store canary on each node span as a debug.resolved attribute, so the byok run's spans carried the secret's plaintext.",
+      "subject": {
+        "host": "openwop-examples v2-reference",
+        "build": "9617276 (suite pin 2.49.6), src/telemetry.ts sabotaged locally, in-memory store"
+      },
+      "suiteVersion": "2.49.6",
+      "result": "executed-fail",
+      "date": "2026-11-16"
     }
   ]
 }
