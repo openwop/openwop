@@ -456,6 +456,42 @@
       "suiteVersion": "2.49.6",
       "result": "executed-fail",
       "date": "2026-11-16"
+    },
+    {
+      "requirementId": "openwop.requirement.0203.mcpserver-subset",
+      "scenario": "node-pack-mcp-server-record.test.ts",
+      "sabotage": "McpServerRecord.description was widened from maxLength 100 to 200, past the upstream server.json bound, so a boundary probe the subset accepted failed upstream.",
+      "subject": {
+        "host": "openwop corpus",
+        "build": "32ec11a01 (suite 2.49.6), schemas/v2/node-pack-manifest.schema.json sabotaged locally"
+      },
+      "suiteVersion": "2.49.6",
+      "result": "executed-fail",
+      "date": "2026-11-16"
+    },
+    {
+      "requirementId": "openwop.requirement.0203.language-remote-only",
+      "scenario": "node-pack-mcp-server-record.test.ts",
+      "sabotage": "The Runtime def lost its if/else, so mcpServer validated under a non-remote runtime language.",
+      "subject": {
+        "host": "openwop corpus",
+        "build": "32ec11a01 (suite 2.49.6), schemas/v2/node-pack-manifest.schema.json sabotaged locally"
+      },
+      "suiteVersion": "2.49.6",
+      "result": "executed-fail",
+      "date": "2026-11-16"
+    },
+    {
+      "requirementId": "openwop.requirement.0203.entry-binding",
+      "scenario": "node-pack-mcp-server-record.test.ts",
+      "sabotage": "remoteEntryBinding stopped comparing runtime.entry with mcpServer.remotes[0].url, so a mismatched entry was not refused.",
+      "subject": {
+        "host": "openwop corpus",
+        "build": "32ec11a01 (suite 2.49.6), conformance/src/lib/node-pack-runtime.ts sabotaged locally"
+      },
+      "suiteVersion": "2.49.6",
+      "result": "executed-fail",
+      "date": "2026-11-16"
     }
   ]
 }
