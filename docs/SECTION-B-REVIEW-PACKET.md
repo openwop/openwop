@@ -65,7 +65,7 @@ Grouping below is a reading aid only: it assigns each RFC to the risk class its 
 | [0239](../RFCS/0239-council-roster-input.md) | a council's roster has an input seat and its refusals have codes | `Accepted` | steward override of RFC 0147 §A.6 | tier-1 — the v2 reference host | `not-reviewed` |
 | [0241](../RFCS/0241-host-event-test-trigger.md) | a host event can be triggered on demand for test | `Accepted` | steward override of RFC 0147 §A.6 | tier-1 — the v2 reference host | `not-reviewed` |
 | [0243](../RFCS/0243-dispatch-fan-out-seat.md) | parallel fan-out has a v2 seat, and a link key needs both linking lanes | `Accepted` | steward override of RFC 0147 §A.6 | tier-1 on both halves | `not-reviewed` |
-| [0259](../RFCS/0259-interrupt-resolved-via.md) | `interrupt.resolved` records the instrument of a token resolution | `Active` | steward override of RFC 0147 §A.6 | not declared (predates RFC 0174 §B.1, or not yet Accepted) | `not-reviewed` |
+| [0259](../RFCS/0259-interrupt-resolved-via.md) | `interrupt.resolved` records the instrument of a token resolution | `Accepted` | steward override of RFC 0147 §A.6 | tier-1 — the v2 reference host's certified 2 | `not-reviewed` |
 
 ## Tenant isolation (9)
 
