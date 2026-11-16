@@ -834,7 +834,7 @@
           }
         }
       ],
-      "description": "core/capabilities.md#secrets — witness: witnessable-gated; maturity experimental/single-witness",
+      "description": "core/capabilities.md#secrets — witness: witnessable-gated; maturity experimental/multi-witness",
       "x-openwop-seeded-from": "v1"
     },
     "connections": {
@@ -7245,7 +7245,7 @@
           }
         }
       ],
-      "description": "core/capabilities.md#eventLog — witness: claims-check; maturity experimental/single-witness; RFC 0036",
+      "description": "core/capabilities.md#eventLog — witness: claims-check; maturity experimental/multi-witness; RFC 0036",
       "x-openwop-seeded-from": "v1"
     },
     "production": {
@@ -8140,7 +8140,7 @@
           }
         }
       ],
-      "description": "core/capabilities.md#loopback — witness: witnessable-gated; maturity experimental/none; RFC 0258",
+      "description": "core/capabilities.md#loopback — witness: witnessable-gated; maturity experimental/single-witness; RFC 0258",
       "x-openwop-facets-from": "spec/v2/facets/loopback.schema.json"
     },
     "telemetry": {

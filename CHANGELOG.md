@@ -32,6 +32,11 @@ Entries before this file was condensed carried full development detail. That tex
 ### Security
 
 
+## [2.49.5] — 2026-11-16 — RFC 0258 Accepted; three adoption values re-derived
+
+- **RFC 0258 Accepted.** openwop-app's certified 2.49.1 production cut (`bff8b2dfd`) passes all seven `0258.*` bounded-loopback legs, once suite 2.49.1 compared records structurally. Single witness. §B review deferred by steward exemption.
+- **Derived adoption.** With openwop-app's new bundle, `loopback` derives `single-witness` (was `none`; its review row is removed), and `secrets` and `eventLog` derive `multi-witness`. The packed declaration changes; no scenario changes.
+
 ## [2.49.4] — 2026-11-15 — RFC 0259 legs record their ids when they skip
 
 - **Suite fix.** `v2-interrupt-resolved-via` built its requirement ids with a template helper the registry cannot read, so a leg that skipped before its first assertion recorded no row under its id. The ids are now literal constants; no assertion changes.
