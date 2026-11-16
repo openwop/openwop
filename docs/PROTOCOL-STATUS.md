@@ -70,8 +70,8 @@
 
 | Status | Count |
 |---|---:|
-| Accepted | 251 |
-| Active | 6 |
+| Accepted | 252 |
+| Active | 5 |
 | Draft | 1 |
 | Superseded | 3 |
 
@@ -331,7 +331,7 @@
 | RFC 0256 | How a host admits model output: three channels, one admission order, trust that restricts approvers, tool-turn recovery and replay, and declared provider-executed tools | Active |
 | RFC 0257 | A run in which no node failed and every terminal node was skipped ends `completed`, and says so on `run.completed` | Accepted |
 | RFC 0258 | Bounded refine loopback for approval gates | Accepted |
-| RFC 0259 | `interrupt.resolved` records the instrument of a token resolution (`resolvedVia`) beside who authenticated (`resolvedBy`) | Active |
+| RFC 0259 | `interrupt.resolved` records the instrument of a token resolution (`resolvedVia`) beside who authenticated (`resolvedBy`) | Accepted |
 | RFC 0260 | LLM cache key recipe 2 (`openwop-llm-key-2`): the replay cache key for an LLM-calling node covers every sampling and output-shaping parameter, and is recorded on the effect ledger | Active |
 | RFC 0261 | Under `idempotency.multiRegion`, two regions' concurrent first writes for one record key have exactly one winner, and a claimed effect is not performed in a second region | Active |
 | RFC 0262 | The `telemetry` family: a v2 claim that a host exports OTLP traces, with an optional OTel GenAI semantic-conventions mapping | Active |
@@ -362,7 +362,7 @@ The pack registry now lives in the [`openwop-registry`](https://github.com/openw
 ## Active Follow-Ups
 
 - 1 RFC still `Draft` (RFC 0038) — advance with schema/conformance proof or defer.
-- 6 RFCs `Active` (RFC 0121, RFC 0256, RFC 0259, RFC 0260, RFC 0261, RFC 0262) — wire-shape MAY shift compatibly within v1.x until promotion to `Accepted`.
+- 5 RFCs `Active` (RFC 0121, RFC 0256, RFC 0260, RFC 0261, RFC 0262) — wire-shape MAY shift compatibly within v1.x until promotion to `Accepted`.
 - External audit, non-steward host recruitment, and non-steward maintainer recruitment remain external-action gates.
 - Multi-region idempotency and some optional-profile behavior checks remain lower-confidence than the core wire contract.
 
