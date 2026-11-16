@@ -840,6 +840,66 @@
       "suiteVersion": "2.49.6",
       "result": "executed-fail",
       "date": "2026-11-16"
+    },
+    {
+      "requirementId": "openwop.requirement.0189.home-class",
+      "scenario": "v2-normative-home-gate.test.ts",
+      "sabotage": "RFCS/ was classed as a core home, so an RFC declared as a family's home was no longer refused as history, not operative text.",
+      "subject": {
+        "host": "openwop corpus",
+        "build": "921409dc3 (suite 2.49.7, the leg strengthened by the RFC 0263 G3 backfill), scripts/check-v2-normative-home.mjs sabotaged locally"
+      },
+      "suiteVersion": "2.49.7",
+      "result": "executed-fail",
+      "date": "2026-11-16"
+    },
+    {
+      "requirementId": "openwop.requirement.0189.content-predicate",
+      "scenario": "v2-normative-home-gate.test.ts",
+      "sabotage": "The keyword requirement was dropped from the content predicate, so a home that claims and names the family with no MUST, SHOULD or MAY resolved it.",
+      "subject": {
+        "host": "openwop corpus",
+        "build": "921409dc3 (suite 2.49.7, the leg strengthened by the RFC 0263 G3 backfill), scripts/check-v2-normative-home.mjs sabotaged locally"
+      },
+      "suiteVersion": "2.49.7",
+      "result": "executed-fail",
+      "date": "2026-11-16"
+    },
+    {
+      "requirementId": "openwop.requirement.0191.home-marker",
+      "scenario": "v2-normative-home-gate.test.ts",
+      "sabotage": "The Normative-home claim check was disabled, so a document that does not claim the family could home it.",
+      "subject": {
+        "host": "openwop corpus",
+        "build": "921409dc3 (suite 2.49.7, the leg strengthened by the RFC 0263 G3 backfill), scripts/check-v2-normative-home.mjs sabotaged locally"
+      },
+      "suiteVersion": "2.49.7",
+      "result": "executed-fail",
+      "date": "2026-11-16"
+    },
+    {
+      "requirementId": "openwop.requirement.0189.deadline-live",
+      "scenario": "v2-normative-home-gate.test.ts",
+      "sabotage": "The --deadline branch was disabled, so past end-of-support a family with no declared home no longer failed the run.",
+      "subject": {
+        "host": "openwop corpus",
+        "build": "921409dc3 (suite 2.49.7, the leg strengthened by the RFC 0263 G3 backfill), scripts/check-v2-normative-home.mjs sabotaged locally"
+      },
+      "suiteVersion": "2.49.7",
+      "result": "executed-fail",
+      "date": "2026-11-16"
+    },
+    {
+      "requirementId": "openwop.requirement.0190.budget-denominator",
+      "scenario": "v2-normative-home-gate.test.ts",
+      "sabotage": "The budget also measured spec/v2/generated/, so a generated registry restatement that RFC 0227 keeps unbudgeted counted against the core cap.",
+      "subject": {
+        "host": "openwop corpus",
+        "build": "921409dc3 (suite 2.49.7, the leg strengthened by the RFC 0263 G3 backfill), scripts/check-core-budget.mjs sabotaged locally"
+      },
+      "suiteVersion": "2.49.7",
+      "result": "executed-fail",
+      "date": "2026-11-16"
     }
   ]
 }
