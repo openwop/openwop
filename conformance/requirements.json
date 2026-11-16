@@ -6,7 +6,7 @@
     "tests": 2919,
     "withStableId": 2919,
     "interpolatedTitles": 0,
-    "explicitIds": 2770
+    "explicitIds": 2856
   },
   "records": [
     {
@@ -26942,7 +26942,7 @@
       "file": "v2-a2a-agent-cards.test.ts",
       "line": 141,
       "title": "a2a.agentCards implies the a2a-1.0 profile, agents.manifestRuntime and capabilities.extendedAgentCard on the public card",
-      "explicitId": null,
+      "explicitId": "openwop.requirement.0202.advertisement",
       "citations": [
         {
           "section": "spec/v2/core/interop.md §\"Per-agent cards\" (RFC 0202)",
@@ -26964,7 +26964,7 @@
       "file": "v2-a2a-agent-cards.test.ts",
       "line": 153,
       "title": "a2aTenant is schema-valid, stable across reads, and contains no identifier the host disclosed",
-      "explicitId": null,
+      "explicitId": "openwop.requirement.0202.routing-value",
       "citations": [
         {
           "section": "schemas/v2/agent-inventory-response.schema.json",
@@ -27001,7 +27001,7 @@
       "file": "v2-a2a-agent-cards.test.ts",
       "line": 185,
       "title": "GetExtendedAgentCard with tenant R returns that agent's card, projected from the entry and the host card",
-      "explicitId": null,
+      "explicitId": "openwop.requirement.0202.card-projection",
       "citations": [
         {
           "section": "spec/v2/core/interop.md §\"Per-agent cards\" (RFC 0202)",
@@ -27070,7 +27070,7 @@
       "file": "v2-a2a-agent-cards.test.ts",
       "line": 216,
       "title": "the per-agent card carries nothing the inventory entry may not (SR-1)",
-      "explicitId": null,
+      "explicitId": "openwop.requirement.0202.card-sr1",
       "citations": [
         {
           "section": "spec/v2/core/interop.md §\"Per-agent cards\" (RFC 0202)",
@@ -27089,7 +27089,7 @@
       "file": "v2-a2a-agent-cards.test.ts",
       "line": 230,
       "title": "an unauthenticated request carrying R is refused exactly as one carrying a never-minted value",
-      "explicitId": null,
+      "explicitId": "openwop.requirement.0202.auth-before-resolve",
       "citations": [
         {
           "section": null,
@@ -27113,7 +27113,7 @@
       "file": "v2-a2a-agent-cards.test.ts",
       "line": 241,
       "title": "another tenant's R is answered exactly as a never-minted one on every A2A operation",
-      "explicitId": null,
+      "explicitId": "openwop.requirement.0202.identical-refusal",
       "citations": [
         {
           "section": "spec/v2/core/interop.md §\"Per-agent cards\" (RFC 0202)",
@@ -27136,7 +27136,7 @@
       "file": "v2-a2a-agent-cards.test.ts",
       "line": 267,
       "title": "the public card lists no per-agent routing value",
-      "explicitId": null,
+      "explicitId": "openwop.requirement.0202.public-card-no-r",
       "citations": [
         {
           "section": "spec/v2/core/interop.md §\"Per-agent cards\" (RFC 0202)",
@@ -27160,7 +27160,7 @@
       "file": "v2-a2a-agent-cards.test.ts",
       "line": 284,
       "title": "a task started through R is a run in the caller's tenant of record",
-      "explicitId": null,
+      "explicitId": "openwop.requirement.0202.tenant-of-record",
       "citations": [
         {
           "section": "spec/v2/core/interop.md §\"Per-agent cards\" (RFC 0202)",
@@ -27202,7 +27202,7 @@
       "file": "v2-a2a-operation-map.test.ts",
       "line": 136,
       "title": "a message carrying taskId without contextId is answered with the task's contextId",
-      "explicitId": null,
+      "explicitId": "openwop.requirement.0208.a2a-context-inferred",
       "citations": [
         {
           "section": "spec/v2/core/interop.md §\"The operation mappings\" (RFC 0208)",
@@ -27233,7 +27233,7 @@
       "file": "v2-a2a-operation-map.test.ts",
       "line": 150,
       "title": "a message whose contextId is not its task's is refused invalid-parameters and changes nothing",
-      "explicitId": null,
+      "explicitId": "openwop.requirement.0208.a2a-context-mismatch-refused",
       "citations": [
         {
           "section": "spec/v2/core/interop.md §\"The operation mappings\" (RFC 0208)",
@@ -27260,7 +27260,7 @@
       "file": "v2-a2a-operation-map.test.ts",
       "line": 165,
       "title": "a message to a retained terminal task is refused UnsupportedOperationError, and appends no event",
-      "explicitId": null,
+      "explicitId": "openwop.requirement.0208.a2a-terminal-unsupported",
       "citations": [
         {
           "section": "spec/v2/core/interop.md §\"The operation mappings\" (RFC 0208)",
@@ -27287,7 +27287,7 @@
       "file": "v2-a2a-operation-map.test.ts",
       "line": 180,
       "title": "an unknown task and another tenant's task are answered by the same TaskNotFoundError",
-      "explicitId": null,
+      "explicitId": "openwop.requirement.0208.a2a-unreadable-not-found",
       "citations": [
         {
           "section": "identity.md §5; a2a.operations GetTask",
@@ -27311,7 +27311,7 @@
       "file": "v2-a2a-operation-map.test.ts",
       "line": 201,
       "title": "an unknown task and another tenant's task carry equivalent ErrorInfo details (RFC 0211 §D)",
-      "explicitId": null,
+      "explicitId": "openwop.requirement.0211.a2a-unreadable-not-found-details",
       "citations": [
         {
           "section": "identity.md §5; a2a.operations GetTask",
@@ -27344,7 +27344,7 @@
       "file": "v2-a2a-operation-map.test.ts",
       "line": 223,
       "title": "Task.status.state is the map's projection of the run status at every observed state",
-      "explicitId": null,
+      "explicitId": "openwop.requirement.0208.a2a-state-projection",
       "citations": [
         {
           "section": "interop-map.json a2a.taskState",
@@ -27367,7 +27367,7 @@
       "file": "v2-a2a-operation-map.test.ts",
       "line": 248,
       "title": "the JSON-RPC error codes the suite can cause are the A2A 1.0.1 codes",
-      "explicitId": null,
+      "explicitId": "openwop.requirement.0208.a2a-error-codes",
       "citations": [
         {
           "section": "spec/v2/core/interop.md §\"The operation mappings\" (RFC 0208)",
@@ -27390,7 +27390,7 @@
       "file": "v2-a2a-operation-map.test.ts",
       "line": 262,
       "title": "a row whose requires facet is not advertised is refused with the row's error",
-      "explicitId": null,
+      "explicitId": "openwop.requirement.0208.row-requires-refused",
       "citations": [
         {
           "section": "spec/v2/core/interop.md §\"The operation mappings\" (RFC 0208)",
@@ -27527,7 +27527,7 @@
       "file": "v2-a2a-operation-map.test.ts",
       "line": 402,
       "title": "ListTasks returns only what listRuns returns to the same Subject; tenant and contextId never select",
-      "explicitId": null,
+      "explicitId": "openwop.requirement.0208.a2a-list-scoped",
       "citations": [
         {
           "section": "spec/v2/core/interop.md §\"The operation mappings\" (RFC 0208)",
@@ -27564,7 +27564,7 @@
       "file": "v2-a2a-operation-map.test.ts",
       "line": 435,
       "title": "an A2A error's data is an array carrying one ErrorInfo with the map row's reason and the A2A domain",
-      "explicitId": null,
+      "explicitId": "openwop.requirement.0211.a2a-error-data-shape",
       "citations": [
         {
           "section": "spec/v2/core/interop.md §\"The operation mappings\" (RFC 0208)",
@@ -27598,7 +27598,7 @@
       "file": "v2-a2a-operation-map.test.ts",
       "line": 456,
       "title": "no response on the card's JSON-RPC interface URL is the OpenWOP error envelope",
-      "explicitId": null,
+      "explicitId": "openwop.requirement.0211.a2a-no-openwop-envelope",
       "citations": [
         {
           "section": null,
@@ -27616,7 +27616,7 @@
       "file": "v2-a2a-operation-map.test.ts",
       "line": 476,
       "title": "VersionNotSupportedError carries ErrorInfo VERSION_NOT_SUPPORTED, and supportedVersions is a comma-joined subset of the card",
-      "explicitId": null,
+      "explicitId": "openwop.requirement.0211.a2a-version-not-supported-shape",
       "citations": [
         {
           "section": "a2a.errors VersionNotSupportedError",
@@ -27640,7 +27640,7 @@
       "file": "v2-a2a-operation-map.test.ts",
       "line": 494,
       "title": "an HTTP+JSON interface answers an A2A error with google.rpc.Status carrying the ErrorInfo",
-      "explicitId": null,
+      "explicitId": "openwop.requirement.0211.a2a-httpjson-status",
       "citations": [
         {
           "section": null,
@@ -27695,7 +27695,7 @@
       "file": "v2-a2a-push-delivery.test.ts",
       "line": 189,
       "title": "§A/§C — a transition after registration is POSTed to the registered destination with the registered Authorization",
-      "explicitId": null,
+      "explicitId": "openwop.requirement.0214.a2a-push-delivery-authenticated",
       "citations": [
         {
           "section": null,
@@ -27727,7 +27727,7 @@
       "file": "v2-a2a-push-delivery.test.ts",
       "line": 203,
       "title": "§C — an A2A push carries no OpenWOP signature",
-      "explicitId": null,
+      "explicitId": "openwop.requirement.0214.a2a-push-no-openwop-signature",
       "citations": [
         {
           "section": "spec/v2/core/interop.md §\"A2A push delivery\" (RFC 0214)",
@@ -27745,7 +27745,7 @@
       "file": "v2-a2a-push-delivery.test.ts",
       "line": 215,
       "title": "§B — a 3xx from the destination is a failed delivery: the redirect target receives nothing, credential or not",
-      "explicitId": null,
+      "explicitId": "openwop.requirement.0214.a2a-push-no-redirect",
       "citations": [
         {
           "section": "spec/v2/core/interop.md §\"A2A push delivery\" (RFC 0214)",
@@ -27769,7 +27769,7 @@
       "file": "v2-a2a-push-delivery.test.ts",
       "line": 237,
       "title": "§A — after Delete no further push reaches that destination, while a live config on the same task still receives",
-      "explicitId": null,
+      "explicitId": "openwop.requirement.0214.a2a-push-discard-on-delete",
       "citations": [
         {
           "section": "spec/v2/core/interop.md §\"A2A push delivery\" (RFC 0214)",
@@ -27798,7 +27798,7 @@
       "file": "v2-a2a-push-delivery.test.ts",
       "line": 263,
       "title": "§D — a replay fork of a pushed run delivers nothing to the source run's destination",
-      "explicitId": null,
+      "explicitId": "openwop.requirement.0214.a2a-push-fork-no-push",
       "citations": [
         {
           "section": "spec/v2/core/interop.md §\"A2A push delivery\" (RFC 0214)",
@@ -28098,7 +28098,7 @@
       "file": "v2-approval-reject-disposition.test.ts",
       "line": 143,
       "title": "a rejected gate with no routing edge fails the run with approval_rejected",
-      "explicitId": null,
+      "explicitId": "openwop.requirement.0223.reject-fails-run",
       "citations": [
         {
           "section": "spec/v2/core/interrupt.md §Rejection (RFC 0223)",
@@ -28121,7 +28121,7 @@
       "file": "v2-approval-reject-disposition.test.ts",
       "line": 154,
       "title": "interrupt.resolved records action reject and decision rejected",
-      "explicitId": null,
+      "explicitId": "openwop.requirement.0223.reject-recorded",
       "citations": [
         {
           "section": null,
@@ -28140,7 +28140,7 @@
       "file": "v2-approval-reject-disposition.test.ts",
       "line": 167,
       "title": "the gate node fails with approval_rejected, not retryable, and run.failed names it",
-      "explicitId": null,
+      "explicitId": "openwop.requirement.0223.reject-fails-node",
       "citations": [
         {
           "section": "spec/v2/core/interrupt.md §Rejection (RFC 0223)",
@@ -28161,7 +28161,7 @@
       "file": "v2-approval-reject-disposition.test.ts",
       "line": 180,
       "title": "a majority reject decides the quorum gate on the deciding vote and fails the run with approval_rejected",
-      "explicitId": null,
+      "explicitId": "openwop.requirement.0223.quorum-reject-fails-run",
       "citations": [
         {
           "section": "spec/v2/core/interrupt.md §Rejection (RFC 0223)",
@@ -28187,7 +28187,7 @@
       "file": "v2-approval-reject-disposition.test.ts",
       "line": 207,
       "title": "a rejected gate routed over an any_failed edge fails as a node, its all_success sibling never runs, and the run completes",
-      "explicitId": null,
+      "explicitId": "openwop.requirement.0223.reject-routed",
       "citations": [
         {
           "section": "spec/v2/core/interrupt.md §Rejection (RFC 0223)",
@@ -28213,7 +28213,7 @@
       "file": "v2-approval-reject-disposition.test.ts",
       "line": 226,
       "title": "an unresolved gate past its timeoutMs with no onTimeout is resolved rejected by the host and fails the run naming the gate",
-      "explicitId": null,
+      "explicitId": "openwop.requirement.0223.timeout-rejects",
       "citations": [
         {
           "section": "spec/v2/core/interrupt.md §Rejection (RFC 0223)",
@@ -28234,7 +28234,7 @@
       "file": "v2-approval-reject-disposition.test.ts",
       "line": 245,
       "title": "a gate whose onTimeout is approve still resolves rejected on timeout and fails the run: a timeout never grants",
-      "explicitId": null,
+      "explicitId": "openwop.requirement.0223.timeout-never-grants",
       "citations": [
         {
           "section": "spec/v2/core/interrupt.md §Rejection (RFC 0223)",
@@ -28256,7 +28256,7 @@
       "file": "v2-approval-reject-disposition.test.ts",
       "line": 263,
       "title": "a rejected gate looped back to itself is asked again under a new key, and the first rejection is not replayed",
-      "explicitId": null,
+      "explicitId": "openwop.requirement.0223.reject-loopback-reasks",
       "citations": [
         {
           "section": "spec/v2/core/interrupt.md §Re-entry and resume values",
@@ -28794,7 +28794,7 @@
       "file": "v2-bounded-loopback.test.ts",
       "line": 128,
       "title": "EdgeLoopback, the marker, ApprovalData.loopback, the cap kind and the facet validate as declared",
-      "explicitId": null,
+      "explicitId": "openwop.requirement.0258.shape",
       "citations": [
         {
           "section": "workflow-definition.schema.json $defs/EdgeLoopback; run-event-payloads.schema.json $defs/nodeCompleted.loopback (RFC 0258)",
@@ -28868,7 +28868,7 @@
       "file": "v2-bounded-loopback.test.ts",
       "line": 159,
       "title": "a refine re-arms the region: the marker, a new visit of the target, a new key, nothing released forward",
-      "explicitId": null,
+      "explicitId": "openwop.requirement.0258.refine-rearms",
       "citations": []
     },
     {
@@ -28876,7 +28876,7 @@
       "file": "v2-bounded-loopback.test.ts",
       "line": 167,
       "title": "the target receives the round history rebuilt from the log, with no run-scoped bytes",
-      "explicitId": null,
+      "explicitId": "openwop.requirement.0258.history-from-log",
       "citations": []
     },
     {
@@ -28884,7 +28884,7 @@
       "file": "v2-bounded-loopback.test.ts",
       "line": 175,
       "title": "each visit of the gate carries ApprovalData.loopback {round, maxIterations, exhausted}",
-      "explicitId": null,
+      "explicitId": "openwop.requirement.0258.approval-data-loopback",
       "citations": []
     },
     {
@@ -28892,7 +28892,7 @@
       "file": "v2-bounded-loopback.test.ts",
       "line": 185,
       "title": "the exhausted visit withdraws refine, refuses a refine resume, and accept completes the run",
-      "explicitId": null,
+      "explicitId": "openwop.requirement.0258.withdraw-refine",
       "citations": [
         {
           "section": "workflow-definition.schema.json $defs/EdgeLoopback; run-event-payloads.schema.json $defs/nodeCompleted.loopback (RFC 0258)",
@@ -28921,7 +28921,7 @@
       "file": "v2-bounded-loopback.test.ts",
       "line": 198,
       "title": "under onExhausted: fail, a refine on the exhausted visit fails the run with loop_limit_exceeded",
-      "explicitId": null,
+      "explicitId": "openwop.requirement.0258.fail-on-exhausted",
       "citations": []
     },
     {
@@ -28929,7 +28929,7 @@
       "file": "v2-bounded-loopback.test.ts",
       "line": 214,
       "title": "a replay fork at round 1's marked completion re-arms and asks the gate again",
-      "explicitId": null,
+      "explicitId": "openwop.requirement.0258.replay-rearms",
       "citations": []
     },
     {
@@ -29914,7 +29914,7 @@
       "file": "v2-credential-interrupt.test.ts",
       "line": 109,
       "title": "a node with no credential suspends on a credential interrupt with a closed CredentialData, status waiting-input",
-      "explicitId": null,
+      "explicitId": "openwop.requirement.0199.credential-interrupt",
       "citations": [
         {
           "section": "spec/v2/core/oauth.md §The credential interrupt (RFC 0199 §C)",
@@ -29951,7 +29951,7 @@
       "file": "v2-credential-interrupt.test.ts",
       "line": 135,
       "title": "a caller resolve of authorized is refused while no credential resolves, and a resume value cannot carry a credential",
-      "explicitId": null,
+      "explicitId": "openwop.requirement.0199.credential-resume-rechecked",
       "citations": [
         {
           "section": "spec/v2/core/oauth.md §The credential interrupt (RFC 0199 §C)",
@@ -29982,7 +29982,7 @@
       "file": "v2-credential-interrupt.test.ts",
       "line": 152,
       "title": "connectUrl is not pre-authenticated and begins the grant only for the initiating Subject",
-      "explicitId": null,
+      "explicitId": "openwop.requirement.0199.credential-interrupt",
       "citations": [
         {
           "section": "spec/v2/core/oauth.md §The credential interrupt (RFC 0199 §C)",
@@ -30015,7 +30015,7 @@
       "file": "v2-credential-interrupt.test.ts",
       "line": 175,
       "title": "the grant completes through connectUrl, the host resolves the interrupt itself and the run continues",
-      "explicitId": null,
+      "explicitId": "openwop.requirement.0199.credential-interrupt",
       "citations": [
         {
           "section": "spec/v2/core/oauth.md §The credential interrupt (RFC 0199 §C)",
@@ -30047,7 +30047,7 @@
       "file": "v2-credential-interrupt.test.ts",
       "line": 195,
       "title": "declined fails the node with connector_auth_declined",
-      "explicitId": null,
+      "explicitId": "openwop.requirement.0199.credential-declined",
       "citations": [
         {
           "section": "spec/v2/core/oauth.md §The credential interrupt (RFC 0199 §C)",
@@ -30074,7 +30074,7 @@
       "file": "v2-credential-interrupt.test.ts",
       "line": 210,
       "title": "a terminal refresh failure emits connector.auth-expired, then suspends with reason expired",
-      "explicitId": null,
+      "explicitId": "openwop.requirement.0199.credential-interrupt",
       "citations": [
         {
           "section": "spec/v2/core/oauth.md §The credential interrupt (RFC 0199 §C)",
@@ -30111,7 +30111,7 @@
       "file": "v2-credential-interrupt.test.ts",
       "line": 238,
       "title": "without oauth.credentialInterrupt, a terminal refresh failure fails the node connector_auth_expired and raises no interrupt",
-      "explicitId": null,
+      "explicitId": "openwop.requirement.0199.refresh-failure-fails-node",
       "citations": [
         {
           "section": "spec/v2/core/oauth.md §The credential interrupt (RFC 0199 §C)",
@@ -31868,7 +31868,7 @@
       "explicitId": "openwop.family.brand",
       "citations": [
         {
-          "section": null,
+          "section": "spec/v2/ext/brand/README.md §Conformance",
           "requirement": null,
           "interpolated": true
         }
@@ -31882,7 +31882,7 @@
       "explicitId": "openwop.family.canvas",
       "citations": [
         {
-          "section": null,
+          "section": "spec/v2/ext/canvas/README.md §Conformance",
           "requirement": null,
           "interpolated": true
         }
@@ -31896,7 +31896,7 @@
       "explicitId": "openwop.family.chat",
       "citations": [
         {
-          "section": null,
+          "section": "spec/v2/ext/chat/README.md §Conformance",
           "requirement": null,
           "interpolated": true
         }
@@ -31910,7 +31910,7 @@
       "explicitId": "openwop.family.coordination",
       "citations": [
         {
-          "section": null,
+          "section": "spec/v2/ext/coordination/README.md §Conformance",
           "requirement": null,
           "interpolated": true
         }
@@ -31924,7 +31924,7 @@
       "explicitId": "openwop.family.dataIntegration",
       "citations": [
         {
-          "section": null,
+          "section": "spec/v2/ext/dataIntegration/README.md §Conformance",
           "requirement": null,
           "interpolated": true
         }
@@ -31938,7 +31938,7 @@
       "explicitId": "openwop.family.entities",
       "citations": [
         {
-          "section": null,
+          "section": "spec/v2/ext/entities/README.md §Conformance",
           "requirement": null,
           "interpolated": true
         }
@@ -31952,7 +31952,7 @@
       "explicitId": "openwop.family.kanban",
       "citations": [
         {
-          "section": null,
+          "section": "spec/v2/ext/kanban/README.md §Conformance",
           "requirement": null,
           "interpolated": true
         }
@@ -31966,7 +31966,7 @@
       "explicitId": "openwop.family.knowledge",
       "citations": [
         {
-          "section": null,
+          "section": "spec/v2/ext/knowledge/README.md §Conformance",
           "requirement": null,
           "interpolated": true
         }
@@ -31980,7 +31980,7 @@
       "explicitId": "openwop.family.launchStudio",
       "citations": [
         {
-          "section": null,
+          "section": "spec/v2/ext/launchStudio/README.md §Conformance",
           "requirement": null,
           "interpolated": true
         }
@@ -31994,7 +31994,7 @@
       "explicitId": "openwop.family.messaging",
       "citations": [
         {
-          "section": null,
+          "section": "spec/v2/ext/messaging/README.md §Conformance",
           "requirement": null,
           "interpolated": true
         }
@@ -32008,7 +32008,7 @@
       "explicitId": "openwop.family.webResearch",
       "citations": [
         {
-          "section": null,
+          "section": "spec/v2/ext/webResearch/README.md §Conformance",
           "requirement": null,
           "interpolated": true
         }
@@ -32817,7 +32817,7 @@
       "file": "v2-interrupt-form-rules.test.ts",
       "line": 98,
       "title": "a clarification raised with a form carries it unchanged, beside questions, in a valid InterruptPayload",
-      "explicitId": null,
+      "explicitId": "openwop.requirement.0255.interrupt-form-rules",
       "citations": [
         {
           "section": "spec/v2/core/interrupt.md §Forms (RFC 0255 §E)",
@@ -32843,7 +32843,7 @@
       "file": "v2-interrupt-form-rules.test.ts",
       "line": 111,
       "title": "a form resolves with { answers: [{ id, answer }] } and the run completes",
-      "explicitId": null,
+      "explicitId": "openwop.requirement.0255.interrupt-form-resume-answers",
       "citations": [
         {
           "section": "spec/v2/core/interrupt.md §Forms (RFC 0255 §E)",
@@ -32865,7 +32865,7 @@
       "file": "v2-interrupt-form-rules.test.ts",
       "line": 124,
       "title": "a form that fails the schema or binds an input to no question is never raised",
-      "explicitId": null,
+      "explicitId": "openwop.requirement.0255.interrupt-form-refused",
       "citations": [
         {
           "section": "spec/v2/core/interrupt.md §Forms (RFC 0255 §E)",
@@ -33723,7 +33723,7 @@
       "file": "v2-mcp-mount-map.test.ts",
       "line": 97,
       "title": "a host claiming mcp-2026-07-28 lists every feature the map requires for it",
-      "explicitId": null,
+      "explicitId": "openwop.requirement.0208.mcp-features-required",
       "citations": [
         {
           "section": "interop.md §\"The operation mappings\"; interop-map.json mcp.features requiredFor",
@@ -33737,7 +33737,7 @@
       "file": "v2-mcp-mount-map.test.ts",
       "line": 104,
       "title": "server/discover supportedVersions equals mcp.revisions, with resultType and cache hints",
-      "explicitId": null,
+      "explicitId": "openwop.requirement.0208.mcp-discover-revisions",
       "citations": [
         {
           "section": "interop-map.json mcp.methods server/discover",
@@ -33767,7 +33767,7 @@
       "file": "v2-mcp-mount-map.test.ts",
       "line": 116,
       "title": "header/body disagreement fails closed -32020 before version selection; an unsupported revision is -32022",
-      "explicitId": null,
+      "explicitId": "openwop.requirement.0208.mcp-header-body-consistent",
       "citations": [
         {
           "section": "interop-map.json mcp.headers MCP-Protocol-Version",
@@ -33800,7 +33800,7 @@
       "file": "v2-mcp-mount-map.test.ts",
       "line": 131,
       "title": "tools/list needs no initialize and no session; results carry cache hints and agree across requests",
-      "explicitId": null,
+      "explicitId": "openwop.requirement.0208.mcp-stateless",
       "citations": [
         {
           "section": "interop-map.json mcp.methods initialize | Mcp-Session-Id",
@@ -33838,7 +33838,7 @@
       "file": "v2-mcp-mount-map.test.ts",
       "line": 147,
       "title": "tools/call answers a completed run isError false and a failed run isError true, never a JSON-RPC error",
-      "explicitId": null,
+      "explicitId": "openwop.requirement.0208.mcp-tool-outcome",
       "citations": [
         {
           "section": "interop-map.json mcp.methods tools/call",
@@ -33870,7 +33870,7 @@
       "file": "v2-mcp-mount-map.test.ts",
       "line": 162,
       "title": "a run started by tools/call records run.started.transport mcp",
-      "explicitId": null,
+      "explicitId": "openwop.requirement.0208.mcp-run-transport",
       "citations": [
         {
           "section": "interop-map.json mcp.methods tools/call",
@@ -33889,7 +33889,7 @@
       "file": "v2-mcp-mount-map.test.ts",
       "line": 197,
       "title": "a suspending tool answers InputRequiredResult; the retry resolves it; requestState is single use and forgery-proof",
-      "explicitId": null,
+      "explicitId": "openwop.requirement.0208.mcp-mrtr-server",
       "citations": [
         {
           "section": "interop-map.json mcp.meta clientCapabilities",
@@ -33931,7 +33931,7 @@
       "file": "v2-mcp-mount-map.test.ts",
       "line": 222,
       "title": "the MRTR input-request key is the open interrupt’s interruptId, never the node it suspended on",
-      "explicitId": null,
+      "explicitId": "openwop.requirement.0208.mcp-mrtr-input-request-key",
       "citations": [
         {
           "section": "interop-map.json mcp.mrtr InputRequiredResult (host as server)",
@@ -33970,7 +33970,7 @@
       "file": "v2-mcp-mount-map.test.ts",
       "line": 260,
       "title": "a list that differs per caller is cacheScope private",
-      "explicitId": null,
+      "explicitId": "openwop.requirement.0208.mcp-cache-scope",
       "citations": [
         {
           "section": "interop-map.json mcp.methods tools/list",
@@ -33988,7 +33988,7 @@
       "file": "v2-mcp-mount-map.test.ts",
       "line": 277,
       "title": "unknown _meta extension keys and capabilities.extensions are opaque: processed normally, granting nothing",
-      "explicitId": null,
+      "explicitId": "openwop.requirement.0208.mcp-extension-opacity",
       "citations": [
         {
           "section": null,
@@ -34006,7 +34006,7 @@
       "file": "v2-mcp-mount-map.test.ts",
       "line": 286,
       "title": "an unauthenticated request is refused at the boundary unless anonymousActor is advertised",
-      "explicitId": null,
+      "explicitId": "openwop.requirement.0208.mcp-auth-boundary",
       "citations": [
         {
           "section": "interop-map.json mcp.authorization",
@@ -34953,7 +34953,7 @@
       "file": "v2-oauth-client-pkce-state-iss.test.ts",
       "line": 67,
       "title": "sends PKCE S256 and the verifier at the token endpoint hashes to the challenge",
-      "explicitId": null,
+      "explicitId": "openwop.requirement.0199.pkce-s256",
       "citations": [
         {
           "section": "spec/v2/core/oauth.md §The authorization-code client (RFC 0199 §A)",
@@ -34999,7 +34999,7 @@
       "file": "v2-oauth-client-pkce-state-iss.test.ts",
       "line": 90,
       "title": "sends a fresh state per grant, and a forged, missing or replayed state makes no token request",
-      "explicitId": null,
+      "explicitId": "openwop.requirement.0199.state-single-use",
       "citations": [
         {
           "section": null,
@@ -35042,7 +35042,7 @@
       "file": "v2-oauth-client-pkce-state-iss.test.ts",
       "line": 129,
       "title": "a callback authenticated as another Subject makes no token request and stores nothing",
-      "explicitId": null,
+      "explicitId": "openwop.requirement.0199.same-user-callback",
       "citations": [
         {
           "section": "spec/v2/core/oauth.md §The authorization-code client (RFC 0199 §A)",
@@ -35065,7 +35065,7 @@
       "file": "v2-oauth-client-pkce-state-iss.test.ts",
       "line": 151,
       "title": "a wrong or missing iss (with authorization_response_iss_parameter_supported) makes no token request",
-      "explicitId": null,
+      "explicitId": "openwop.requirement.0199.iss-validated",
       "citations": [
         {
           "section": null,
@@ -35089,7 +35089,7 @@
       "file": "v2-oauth-client-pkce-state-iss.test.ts",
       "line": 179,
       "title": "issuer-less providers get redirect URIs no other provider shares",
-      "explicitId": null,
+      "explicitId": "openwop.requirement.0199.iss-validated",
       "citations": [
         {
           "section": "spec/v2/core/oauth.md §The authorization-code client (RFC 0199 §A)",
@@ -35107,7 +35107,7 @@
       "file": "v2-oauth-client-pkce-state-iss.test.ts",
       "line": 195,
       "title": "the redirect URI is fixed per provider whatever the request carries",
-      "explicitId": null,
+      "explicitId": "openwop.requirement.0199.redirect-uri-fixed",
       "citations": [
         {
           "section": null,
@@ -35126,7 +35126,7 @@
       "file": "v2-oauth-mcp-reach-discovery.test.ts",
       "line": 85,
       "title": "a reach.mcp + oauth2 pack without issuer validates, and its grant is refused with no authorization URL",
-      "explicitId": null,
+      "explicitId": "openwop.requirement.0199.mcp-metadata-bound",
       "citations": [
         {
           "section": "schemas/v2/connection-pack-manifest.schema.json (issuer stays optional, RFC 0199 §E.2)",
@@ -35145,7 +35145,7 @@
       "file": "v2-oauth-mcp-reach-discovery.test.ts",
       "line": 97,
       "title": "a reach.mcp provider declaring pkce unsupported is refused with no authorization URL",
-      "explicitId": null,
+      "explicitId": "openwop.requirement.0199.mcp-pkce-verified",
       "citations": [
         {
           "section": null,
@@ -35159,7 +35159,7 @@
       "file": "v2-oauth-mcp-reach-discovery.test.ts",
       "line": 107,
       "title": "sends resource (RFC 8707) equal to the canonical server URI on the authorization and the token request",
-      "explicitId": null,
+      "explicitId": "openwop.requirement.0199.resource-indicator",
       "citations": [
         {
           "section": "spec/v2/core/oauth.md §The authorization-code client (MCP reach; RFC 0199 §B)",
@@ -35188,7 +35188,7 @@
       "file": "v2-oauth-mcp-reach-discovery.test.ts",
       "line": 126,
       "title": "discovery verifies and never selects: a PRM naming another issuer, or metadata naming another token endpoint, is refused and contacted nowhere",
-      "explicitId": null,
+      "explicitId": "openwop.requirement.0199.mcp-metadata-bound",
       "citations": [
         {
           "section": null,
@@ -35215,7 +35215,7 @@
       "file": "v2-oauth-mcp-reach-discovery.test.ts",
       "line": 150,
       "title": "refuses a provider whose authorization-server metadata does not list S256",
-      "explicitId": null,
+      "explicitId": "openwop.requirement.0199.mcp-pkce-verified",
       "citations": [
         {
           "section": null,
@@ -35229,7 +35229,7 @@
       "file": "v2-oauth-mcp-reach-discovery.test.ts",
       "line": 166,
       "title": "pins the verified tuple at registration and refuses a later discovery that disagrees",
-      "explicitId": null,
+      "explicitId": "openwop.requirement.0199.mcp-metadata-bound",
       "citations": [
         {
           "section": "spec/v2/core/oauth.md §The authorization-code client (MCP reach; RFC 0199 §B)",
@@ -37278,7 +37278,7 @@
       "file": "v2-replay-llm-cache-key.test.ts",
       "line": 102,
       "title": "the effect-ledger record admits cacheKey {recipe, digest} and refuses anything else",
-      "explicitId": null,
+      "explicitId": "openwop.requirement.0260.shape",
       "citations": [
         {
           "section": "replay facet llmCacheKeyRecipe + effect-ledger-projection cacheKey (RFC 0260)",
@@ -37311,7 +37311,7 @@
       "file": "v2-replay-llm-cache-key.test.ts",
       "line": 117,
       "title": "a host advertising replay.llmCacheKeyRecipe also advertises idempotency",
-      "explicitId": null,
+      "explicitId": "openwop.requirement.0260.implies-idempotency",
       "citations": [
         {
           "section": "replay facet llmCacheKeyRecipe + effect-ledger-projection cacheKey (RFC 0260)",
@@ -37324,7 +37324,7 @@
       "file": "v2-replay-llm-cache-key.test.ts",
       "line": 125,
       "title": "the provider-call record carries cacheKey with recipe openwop-llm-key-2",
-      "explicitId": null,
+      "explicitId": "openwop.requirement.0260.key-recorded",
       "citations": []
     },
     {
@@ -37332,7 +37332,7 @@
       "file": "v2-replay-llm-cache-key.test.ts",
       "line": 133,
       "title": "two runs that differ only in maxTokens have different keys",
-      "explicitId": null,
+      "explicitId": "openwop.requirement.0260.params-in-key",
       "citations": []
     },
     {
@@ -37340,7 +37340,7 @@
       "file": "v2-replay-llm-cache-key.test.ts",
       "line": 143,
       "title": "two identical runs have the same key",
-      "explicitId": null,
+      "explicitId": "openwop.requirement.0260.key-stable",
       "citations": []
     },
     {
@@ -37348,7 +37348,7 @@
       "file": "v2-replay-llm-cache-key.test.ts",
       "line": 153,
       "title": "the key equals recipe 2 recomputed over the inputs the fixture pins",
-      "explicitId": null,
+      "explicitId": "openwop.requirement.0260.key-portable",
       "citations": []
     },
     {
@@ -39014,7 +39014,7 @@
       "file": "v2-telemetry-export.test.ts",
       "line": 102,
       "title": "the telemetry record requires otlp.protocols from the closed transports; genAiSemconv is semver",
-      "explicitId": null,
+      "explicitId": "openwop.requirement.0262.shape",
       "citations": [
         {
           "section": "spec/v2/core/telemetry.md (RFC 0262)",
@@ -39047,7 +39047,7 @@
       "file": "v2-telemetry-export.test.ts",
       "line": 115,
       "title": "a run exports an openwop.run span with its run and workflow ids",
-      "explicitId": null,
+      "explicitId": "openwop.requirement.0262.run-span",
       "citations": [
         {
           "section": "spec/v2/core/telemetry.md (RFC 0262)",
@@ -39064,7 +39064,7 @@
       "file": "v2-telemetry-export.test.ts",
       "line": 125,
       "title": "each node execution exports an openwop.node.<typeId> span with its node attributes",
-      "explicitId": null,
+      "explicitId": "openwop.requirement.0262.node-span",
       "citations": [
         {
           "section": "spec/v2/core/telemetry.md (RFC 0262)",
@@ -39089,7 +39089,7 @@
       "file": "v2-telemetry-export.test.ts",
       "line": 139,
       "title": "a run created with a traceparent exports its spans in that trace",
-      "explicitId": null,
+      "explicitId": "openwop.requirement.0262.traceparent-continued",
       "citations": [
         {
           "section": "spec/v2/core/telemetry.md (RFC 0262)",
@@ -39102,7 +39102,7 @@
       "file": "v2-telemetry-export.test.ts",
       "line": 149,
       "title": "no exported span carries the resolved store secret",
-      "explicitId": null,
+      "explicitId": "openwop.requirement.0262.no-secret-in-spans",
       "citations": [
         {
           "section": "spec/v2/core/telemetry.md (RFC 0262)",
@@ -39115,7 +39115,7 @@
       "file": "v2-telemetry-export.test.ts",
       "line": 167,
       "title": "a host advertising genAiSemconv puts the gen_ai attributes on the model-call span",
-      "explicitId": null,
+      "explicitId": "openwop.requirement.0262.gen-ai-attributes",
       "citations": [
         {
           "section": "spec/v2/core/telemetry.md (RFC 0262)",

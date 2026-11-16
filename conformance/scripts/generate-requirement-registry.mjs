@@ -120,12 +120,49 @@ function constStrings(src) {
  * absent from requirements.json while the corpus ledger carried it (ADR 0745
  * corpus defect 4, openwop-app). Same failure as the module-level case above.
  */
-function localConsts(body, consts) {
+/**
+ * Module-level id helpers of the one shape the scenarios use,
+ * `const R = (slug) => \`openwop.requirement.0260.${slug}\``, so `R('shape')`
+ * resolves to `openwop.requirement.0260.shape`. Thirteen files mint their ids
+ * this way, and before this a leg that soft-skipped before its first req()
+ * recorded `explicitId: null` and fell back to its title-derived id. That is how
+ * RFC 0259's `token-ref-opaque` had no row of its own on the reference host
+ * (fixed there by literal ids in 2.49.4). Only a one-parameter arrow whose body
+ * is a template with that parameter as its one substitution qualifies. A
+ * `const id = R('slug')` inside a test body resolves the same way.
+ */
+function idTemplates(src) {
+  const out = new Map();
+  for (const st of src.statements) {
+    if (!ts.isVariableStatement(st)) continue;
+    for (const d of st.declarationList.declarations) {
+      const fn = d.initializer;
+      if (!ts.isIdentifier(d.name) || fn === undefined || !ts.isArrowFunction(fn) || fn.parameters.length !== 1) continue;
+      const param = fn.parameters[0].name;
+      const body = fn.body;
+      if (!ts.isIdentifier(param) || !ts.isTemplateExpression(body) || body.templateSpans.length !== 1) continue;
+      const span = body.templateSpans[0];
+      if (!ts.isIdentifier(span.expression) || span.expression.text !== param.text) continue;
+      out.set(d.name.text, { head: body.head.text, tail: span.literal.text });
+    }
+  }
+  return out;
+}
+
+/** `R('slug')` for a helper `idTemplates` found, else null. */
+function templateId(node, templates) {
+  if (node === undefined || !ts.isCallExpression(node) || !ts.isIdentifier(node.expression) || node.arguments.length !== 1) return null;
+  const t = templates.get(node.expression.text);
+  const slug = literalText(node.arguments[0]);
+  return t !== undefined && slug !== null ? `${t.head}${slug}${t.tail}` : null;
+}
+
+function localConsts(body, consts, templates = new Map()) {
   const out = new Map(consts);
   const visit = (node) => {
     if (ts.isVariableDeclaration(node) && ts.isIdentifier(node.name) && node.initializer !== undefined
       && ts.isVariableDeclarationList(node.parent) && (node.parent.flags & ts.NodeFlags.Const) !== 0) {
-      const text = literalText(node.initializer);
+      const text = literalText(node.initializer) ?? templateId(node.initializer, templates);
       if (text !== null) out.set(node.name.text, text);
     }
     ts.forEachChild(node, visit);
@@ -143,10 +180,11 @@ function localConsts(body, consts) {
  * `req()` in the body still wins; otherwise the first const bound to an
  * `openwop.requirement.*` literal passed as a call's first argument is the id.
  */
-function collectCitations(body, src, moduleConsts = new Map()) {
-  const consts = localConsts(body, moduleConsts);
+function collectCitations(body, src, moduleConsts = new Map(), templates = new Map()) {
+  const consts = localConsts(body, moduleConsts, templates);
+  const fromTemplate = (node) => templateId(node, templates);
   const literalOrConst = (node) => {
-    const direct = literalText(node);
+    const direct = literalText(node) ?? fromTemplate(node);
     if (direct !== null) return direct;
     return node !== undefined && ts.isIdentifier(node) ? consts.get(node.text) ?? null : null;
   };
@@ -161,8 +199,8 @@ function collectCitations(body, src, moduleConsts = new Map()) {
         const requirement = literalText(node.arguments[1]);
         if (section !== null && requirement !== null) citations.push({ section, requirement });
         else citations.push({ section: section ?? null, requirement: requirement ?? null, interpolated: true });
-      } else if (!(ts.isIdentifier(e) && e.text === 'req') && node.arguments.length > 0 && ts.isIdentifier(node.arguments[0])) {
-        const id = consts.get(node.arguments[0].text) ?? null;
+      } else if (!(ts.isIdentifier(e) && e.text === 'req') && node.arguments.length > 0 && (ts.isIdentifier(node.arguments[0]) || fromTemplate(node.arguments[0]) !== null)) {
+        const id = ts.isIdentifier(node.arguments[0]) ? consts.get(node.arguments[0].text) ?? null : fromTemplate(node.arguments[0]);
         if (id !== null && id.startsWith('openwop.requirement.') && helperId === null) helperId = id;
       }
       if (ts.isIdentifier(e) && e.text === 'req') {
@@ -192,13 +230,14 @@ export function generate() {
     const src = ts.createSourceFile(full, readFileSync(full, 'utf8'), ts.ScriptTarget.Latest, true);
     const stem = file.replace(/\.test\.ts$/, '');
     const consts = constStrings(src);
+    const templates = idTemplates(src);
     const seen = new Map();
     const visit = (node) => {
       if (isItCall(node)) {
         const title = literalText(node.arguments[0]);
         const line = src.getLineAndCharacterOfPosition(node.getStart(src)).line + 1;
         const body = node.arguments[1];
-        const { citations, explicitId } = body !== undefined ? collectCitations(body, src, consts) : { citations: [], explicitId: null };
+        const { citations, explicitId } = body !== undefined ? collectCitations(body, src, consts, templates) : { citations: [], explicitId: null };
         if (title === null) {
           // Suite 2.0.0: an interpolated title with an explicit req() id IS stable — the id is the explicit one.
           if (explicitId === null) interpolatedTitles++;

@@ -122,4 +122,19 @@ describe('requirement registry: ids passed through a helper', () => {
       'openwop.requirement.agents.dispatch-per-item-length-mismatch',
     ]);
   });
+
+  // Thirteen files mint ids through `const R = (slug) => \`openwop.requirement.NNNN.${slug}\``.
+  // The generator resolves `R('slug')`, passed to req() or a helper or bound to a const,
+  // so a leg that soft-skips before its first assertion keeps its own id.
+  it('registers ids minted through an R(slug) template helper', () => {
+    expect(idsOf('v2-replay-llm-cache-key.test.ts')).toEqual([
+      'openwop.requirement.0260.shape',
+      'openwop.requirement.0260.implies-idempotency',
+      'openwop.requirement.0260.key-recorded',
+      'openwop.requirement.0260.params-in-key',
+      'openwop.requirement.0260.key-stable',
+      'openwop.requirement.0260.key-portable',
+    ]);
+    expect(idsOf('v2-mcp-mount-map.test.ts')).toContain('openwop.requirement.0208.mcp-header-body-consistent');
+  });
 });
