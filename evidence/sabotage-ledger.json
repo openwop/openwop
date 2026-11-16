@@ -744,6 +744,78 @@
       "suiteVersion": "2.49.6",
       "result": "executed-fail",
       "date": "2026-11-16"
+    },
+    {
+      "requirementId": "openwop.requirement.0197.no-reshape",
+      "scenario": "v2-surface-monotone-gate.test.ts",
+      "sabotage": "artifact.schema.json lost its optional description property, a reshape of a published v2 surface with no retirement row.",
+      "subject": {
+        "host": "openwop corpus",
+        "build": "32ec11a01 (suite 2.49.6), schemas/v2/artifact.schema.json sabotaged locally"
+      },
+      "suiteVersion": "2.49.6",
+      "result": "executed-fail",
+      "date": "2026-11-16"
+    },
+    {
+      "requirementId": "openwop.requirement.0197.retirement-predicate",
+      "scenario": "v2-retirement-gate.test.ts",
+      "sabotage": "R3's committed-bundle census was disabled, so a DUE row whose discovery value a committed v2 host bundle still carries was reported retirable.",
+      "subject": {
+        "host": "openwop corpus",
+        "build": "32ec11a01 (suite 2.49.6), scripts/check-v2-retirement.mjs sabotaged locally"
+      },
+      "suiteVersion": "2.49.6",
+      "result": "executed-fail",
+      "date": "2026-11-16"
+    },
+    {
+      "requirementId": "openwop.requirement.0197.reader-accepts-retired",
+      "scenario": "removal-dates-minor.test.ts",
+      "sabotage": "The persisted-class reader checks were disabled, so a DUE retirement whose reader schema had lost the member (or carried it unannotated) passed.",
+      "subject": {
+        "host": "openwop corpus",
+        "build": "32ec11a01 (suite 2.49.6), scripts/check-removal-dates.mjs sabotaged locally"
+      },
+      "suiteVersion": "2.49.6",
+      "result": "executed-fail",
+      "date": "2026-11-16"
+    },
+    {
+      "requirementId": "openwop.requirement.0197.correction-unevidenced",
+      "scenario": "v2-retirement-gate.test.ts",
+      "sabotage": "The corrections pass ignored priorShapeCensus.bundles, so a correction whose prior shape a committed bundle carried was accepted.",
+      "subject": {
+        "host": "openwop corpus",
+        "build": "32ec11a01 (suite 2.49.6), scripts/check-v2-retirement.mjs sabotaged locally"
+      },
+      "suiteVersion": "2.49.6",
+      "result": "executed-fail",
+      "date": "2026-11-16"
+    },
+    {
+      "requirementId": "openwop.requirement.0200.openapi-security-declared",
+      "scenario": "openapi-security-declared.test.ts",
+      "sabotage": "The createRun operation in api/v2/openapi.yaml dropped its OpenIdConnect security alternative, leaving two of the three RFC 0200 §F.2 requires.",
+      "subject": {
+        "host": "openwop corpus",
+        "build": "32ec11a01 (suite 2.49.6), api/v2/openapi.yaml sabotaged locally"
+      },
+      "suiteVersion": "2.49.6",
+      "result": "executed-fail",
+      "date": "2026-11-16"
+    },
+    {
+      "requirementId": "openwop.requirement.0204.annotations-schema",
+      "scenario": "tool-descriptor-annotations.test.ts",
+      "sabotage": "The annotations object was opened (additionalProperties true), so a descriptor carrying annotations.title or another extra member validated.",
+      "subject": {
+        "host": "openwop corpus",
+        "build": "32ec11a01 (suite 2.49.6), schemas/v2/tool-descriptor.schema.json sabotaged locally"
+      },
+      "suiteVersion": "2.49.6",
+      "result": "executed-fail",
+      "date": "2026-11-16"
     }
   ]
 }
