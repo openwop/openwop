@@ -648,6 +648,102 @@
       "suiteVersion": "2.49.6",
       "result": "executed-fail",
       "date": "2026-11-16"
+    },
+    {
+      "requirementId": "openwop.requirement.0168.req-only-assertions",
+      "scenario": "v2-req-only-assertions.test.ts",
+      "sabotage": "A scenario gained expect(1, 'a literal message'), an assertion message that maps to no requirement id.",
+      "subject": {
+        "host": "openwop corpus",
+        "build": "32ec11a01 (suite 2.49.6), conformance/src/scenarios/v2-telemetry-export.test.ts sabotaged locally"
+      },
+      "suiteVersion": "2.49.6",
+      "result": "executed-fail",
+      "date": "2026-11-16"
+    },
+    {
+      "requirementId": "openwop.requirement.0168.alias-covers-reword",
+      "scenario": "v2-alias-covers-reword.test.ts",
+      "sabotage": "The published id openwop.requirement.0191.home-marker was reworded in its source with no alias row, so the registry dropped an id hosts had already been measured on.",
+      "subject": {
+        "host": "openwop corpus",
+        "build": "32ec11a01 (suite 2.49.6), conformance/src/coherence/v2-normative-home-gate.test.ts sabotaged locally"
+      },
+      "suiteVersion": "2.49.6",
+      "result": "executed-fail",
+      "date": "2026-11-16"
+    },
+    {
+      "requirementId": "openwop.requirement.0168.witness-required",
+      "scenario": "v2-witness-required.test.ts",
+      "sabotage": "The replay family's witness was set to trust-me, a value outside the closed set of wire classes.",
+      "subject": {
+        "host": "openwop corpus",
+        "build": "32ec11a01 (suite 2.49.6), spec/v2/declaration.json sabotaged locally"
+      },
+      "suiteVersion": "2.49.6",
+      "result": "executed-fail",
+      "date": "2026-11-16"
+    },
+    {
+      "requirementId": "openwop.requirement.0168.seams-not-in-canonical",
+      "scenario": "v2-seams-not-in-canonical.test.ts",
+      "sabotage": "The canonical v2 OpenAPI gained a /packs-test/probe operation, a test-mode seam the public wire must not carry.",
+      "subject": {
+        "host": "openwop corpus",
+        "build": "32ec11a01 (suite 2.49.6), api/v2/openapi.yaml sabotaged locally"
+      },
+      "suiteVersion": "2.49.6",
+      "result": "executed-fail",
+      "date": "2026-11-16"
+    },
+    {
+      "requirementId": "openwop.requirement.0168.spec-artifacts-digest",
+      "scenario": "v2-spec-artifacts-digest.test.ts",
+      "sabotage": "A packed schema in spec-artifacts/ was altered by one byte, so the package no longer equalled the corpus it stamps.",
+      "subject": {
+        "host": "openwop corpus",
+        "build": "32ec11a01 (suite 2.49.6), spec-artifacts/schemas/v2/a2a-task-state.schema.json sabotaged locally"
+      },
+      "suiteVersion": "2.49.6",
+      "result": "executed-fail",
+      "date": "2026-11-16"
+    },
+    {
+      "requirementId": "openwop.requirement.0172.release-identity",
+      "scenario": "v2-release-identity.test.ts",
+      "sabotage": "spec/v2/release.json named 2.49.99 while every derived surface still carried 2.49.6.",
+      "subject": {
+        "host": "openwop corpus",
+        "build": "32ec11a01 (suite 2.49.6), spec/v2/release.json sabotaged locally"
+      },
+      "suiteVersion": "2.49.6",
+      "result": "executed-fail",
+      "date": "2026-11-16"
+    },
+    {
+      "requirementId": "openwop.requirement.0169.declaration-parity",
+      "scenario": "v2-declaration-parity.test.ts",
+      "sabotage": "The replay family's peerDependencyId was set to replay-v2, so the declaration no longer agreed with its own key.",
+      "subject": {
+        "host": "openwop corpus",
+        "build": "32ec11a01 (suite 2.49.6), spec/v2/declaration.json sabotaged locally"
+      },
+      "suiteVersion": "2.49.6",
+      "result": "executed-fail",
+      "date": "2026-11-16"
+    },
+    {
+      "requirementId": "openwop.requirement.0177.one-signing-scheme",
+      "scenario": "v2-one-signing-scheme.test.ts",
+      "sabotage": "The registry version manifest's signing object regained a method property, the v1 field v2 retired.",
+      "subject": {
+        "host": "openwop corpus",
+        "build": "32ec11a01 (suite 2.49.6), schemas/v2/registry-version-manifest.schema.json sabotaged locally"
+      },
+      "suiteVersion": "2.49.6",
+      "result": "executed-fail",
+      "date": "2026-11-16"
     }
   ]
 }
