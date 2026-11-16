@@ -408,6 +408,54 @@
       "suiteVersion": "2.49.6",
       "result": "executed-fail",
       "date": "2026-11-16"
+    },
+    {
+      "requirementId": "openwop.requirement.0205.part-schema-upstream",
+      "scenario": "a2a-parts-schemas.test.ts",
+      "sabotage": "part.schema.json gained a filename2 property that a2a.proto v1.0.1's Part message does not declare.",
+      "subject": {
+        "host": "openwop corpus",
+        "build": "32ec11a01 (suite 2.49.6), schemas/v2/part.schema.json sabotaged locally"
+      },
+      "suiteVersion": "2.49.6",
+      "result": "executed-fail",
+      "date": "2026-11-16"
+    },
+    {
+      "requirementId": "openwop.requirement.0205.turn-parts-shape",
+      "scenario": "a2a-parts-schemas.test.ts",
+      "sabotage": "Both v2 turn defs dropped minItems from parts, so an empty parts array validated.",
+      "subject": {
+        "host": "openwop corpus",
+        "build": "32ec11a01 (suite 2.49.6), schemas/v2/conversation-turn.schema.json and conversation-event.schema.json sabotaged locally"
+      },
+      "suiteVersion": "2.49.6",
+      "result": "executed-fail",
+      "date": "2026-11-16"
+    },
+    {
+      "requirementId": "openwop.requirement.0205.turn-mirror-sync",
+      "scenario": "a2a-parts-schemas.test.ts",
+      "sabotage": "The ConversationTurn def in conversation-event.schema.json gained maxItems 64 on parts, so the two turn defs' parts subschemas were no longer deep-equal.",
+      "subject": {
+        "host": "openwop corpus",
+        "build": "32ec11a01 (suite 2.49.6), schemas/v2/conversation-event.schema.json sabotaged locally"
+      },
+      "suiteVersion": "2.49.6",
+      "result": "executed-fail",
+      "date": "2026-11-16"
+    },
+    {
+      "requirementId": "openwop.requirement.0205.export-media-type",
+      "scenario": "a2a-parts-schemas.test.ts",
+      "sabotage": "The exportFormats item pattern lost its media-type branch, so lowercase media types such as application/pdf no longer validated.",
+      "subject": {
+        "host": "openwop corpus",
+        "build": "32ec11a01 (suite 2.49.6), schemas/v2/artifact-type-pack-manifest.schema.json sabotaged locally"
+      },
+      "suiteVersion": "2.49.6",
+      "result": "executed-fail",
+      "date": "2026-11-16"
     }
   ]
 }
