@@ -588,6 +588,66 @@
       "suiteVersion": "2.49.6",
       "result": "executed-fail",
       "date": "2026-11-16"
+    },
+    {
+      "requirementId": "openwop.requirement.0167.child-parts",
+      "scenario": "v2-umbrella-child-parts.test.ts",
+      "sabotage": "The first migration row (child C2) was renumbered openwop.migration.C1.1, so its id no longer carried the child it belongs to.",
+      "subject": {
+        "host": "openwop corpus",
+        "build": "32ec11a01 (suite 2.49.6), spec/v1/migrations.json sabotaged locally"
+      },
+      "suiteVersion": "2.49.6",
+      "result": "executed-fail",
+      "date": "2026-11-16"
+    },
+    {
+      "requirementId": "openwop.requirement.0167.migration-deprecation-bound",
+      "scenario": "v2-umbrella-migration-deprecation.test.ts",
+      "sabotage": "The remove row openwop.migration.C2.1 lost its deprecationId, so a removal carried no scheduled deprecation.",
+      "subject": {
+        "host": "openwop corpus",
+        "build": "32ec11a01 (suite 2.49.6), spec/v1/migrations.json sabotaged locally"
+      },
+      "suiteVersion": "2.49.6",
+      "result": "executed-fail",
+      "date": "2026-11-16"
+    },
+    {
+      "requirementId": "openwop.requirement.0167.codemod-legs",
+      "scenario": "v2-umbrella-codemod-legs.test.ts",
+      "sabotage": "The capabilities-wrapper-removal codemod's expected.json gained a stray member, so transform(input.json) no longer equalled it.",
+      "subject": {
+        "host": "openwop corpus",
+        "build": "32ec11a01 (suite 2.49.6), codemods/openwop.codemod.capabilities-wrapper-removal/fixtures/expected.json sabotaged locally"
+      },
+      "suiteVersion": "2.49.6",
+      "result": "executed-fail",
+      "date": "2026-11-16"
+    },
+    {
+      "requirementId": "openwop.requirement.0167.codemod-at-active",
+      "scenario": "v2-umbrella-codemod-at-active.test.ts",
+      "sabotage": "openwop.migration.C2.1, a codemod-able row of an Active child, lost its codemod reference.",
+      "subject": {
+        "host": "openwop corpus",
+        "build": "32ec11a01 (suite 2.49.6), spec/v1/migrations.json sabotaged locally"
+      },
+      "suiteVersion": "2.49.6",
+      "result": "executed-fail",
+      "date": "2026-11-16"
+    },
+    {
+      "requirementId": "openwop.requirement.0167.alias-covered",
+      "scenario": "v2-umbrella-alias-covered.test.ts",
+      "sabotage": "The detector for openwop.deprecation.capabilities-wrapper was removed, so a visible deprecated alias had no detector to verify its removal.",
+      "subject": {
+        "host": "openwop corpus",
+        "build": "32ec11a01 (suite 2.49.6), spec/v1/alias-detectors.json sabotaged locally"
+      },
+      "suiteVersion": "2.49.6",
+      "result": "executed-fail",
+      "date": "2026-11-16"
     }
   ]
 }
