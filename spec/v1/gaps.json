@@ -1,7 +1,7 @@
 {
   "$schema": "./gaps.schema.json",
   "version": 1,
-  "updated": "2026-11-16",
+  "updated": "2026-11-17",
   "witnessClasses": [
     "witnessable-unaided",
     "witnessable-gated",
@@ -16289,8 +16289,8 @@
       "surface": "**Medium.** No host advertises `telemetry`, so every host leg records `inapplicable` until one does.",
       "witness": "unclassified",
       "requirementId": null,
-      "disposition": "transferred",
-      "target": "RFC",
+      "disposition": "closed",
+      "target": null,
       "sources": [
         {
           "file": "RFCS/registers/0262-telemetry-family.gaps.md",
@@ -16306,8 +16306,8 @@
       "surface": "**Medium.** A deployed host's exporter cannot reach a collector on the suite's loopback; the certify run needs a public front for the collector, as the webhook receiver has.",
       "witness": "unclassified",
       "requirementId": null,
-      "disposition": "transferred",
-      "target": "RFC",
+      "disposition": "closed",
+      "target": null,
       "sources": [
         {
           "file": "RFCS/registers/0262-telemetry-family.gaps.md",

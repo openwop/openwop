@@ -125,7 +125,7 @@ Every host leg records `blocked`, not a pass, when the collector captured no spa
 | §B.3 node span exported | an `openwop.node.<typeId>` span with the four attributes — `openwop.requirement.0262.node-span` | the suite (the same run) | witnessable — gated (family + collector) |
 | §B.4 inbound trace continued | the run's spans carry the suite-minted `traceId` — `openwop.requirement.0262.traceparent-continued` | the suite (`createRun` with `traceparent`) | witnessable — gated (family + collector) |
 | §E no secret in exported spans | the canary absent from every captured span surface — `openwop.requirement.0262.no-secret-in-spans` | the suite (one BYOK roundtrip run) | witnessable — gated (family + collector + fixture) |
-| §C GenAI attributes | the model-call span's `gen_ai.*` attributes — `openwop.requirement.0262.gen-ai-attributes` | the suite (one mock-provider `ctx.callAI` run) | witnessable — gated (facet + collector + fixture) |
+| §C GenAI attributes | the model-call span's `gen_ai.*` attributes — `openwop.requirement.0262.gen-ai-attributes` | the suite (one mock-provider `ctx.callAI` run) | host-pending — witnessable, gated on facet + collector + fixture, once a host advertises the OPTIONAL `genAiSemconv`. None does, so the facet stays unwitnessed at `Accepted`; the leg records `inapplicable` (2026-11-17) |
 | §B.1 configured endpoint honoured | — | the operator, at host boot | claims-check — the suite cannot set a host's environment; legs 2–6 show it was honoured for the suite's collector |
 
 ## Alternatives considered

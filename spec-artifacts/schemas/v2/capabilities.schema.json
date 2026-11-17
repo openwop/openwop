@@ -8242,7 +8242,7 @@
           }
         }
       ],
-      "description": "core/capabilities.md#telemetry — witness: witnessable-gated; maturity experimental/none; RFC 0262",
+      "description": "core/capabilities.md#telemetry — witness: witnessable-gated; maturity experimental/single-witness; RFC 0262",
       "x-openwop-facets-from": "spec/v2/facets/telemetry.schema.json"
     },
     "interrupt": {

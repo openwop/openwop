@@ -32,6 +32,11 @@ Entries before this file was condensed carried full development detail. That tex
 ### Security
 
 
+## [2.49.7] — 2026-11-17 — RFC 0262 Accepted; sabotage backfill
+
+- **RFC 0262 Accepted.** The reference host's certified 2.49.6 cut (`ed00ba4`, 589/0/0) exports run and node spans over OTLP in the caller's trace with no secret in any span; each host leg went red on a sabotaged build. G3 and G4 close, so the packed `gaps.json` changes. §B review deferred by steward exemption.
+- **Sabotage backfill (RFC 0263 G3).** `evidence/sabotage-ledger.json` gains a red run for every corpus-gate requirement of the RFCs Accepted before 0260 (58 rows). Five `v2-normative-home-gate` legs that passed with their own rule removed now assert that rule's reason.
+
 ## [2.49.6] — 2026-11-16 — Skipped legs keep ids minted by a helper
 
 - **Requirement ids from `R(slug)` helpers.** Thirteen scenarios mint ids through a template helper; the requirement registry now resolves it, so 86 more legs that soft-skip before their first assertion file under their own `openwop.requirement.*` id instead of a title-derived one.
