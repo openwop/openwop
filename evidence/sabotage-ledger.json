@@ -924,6 +924,54 @@
       "suiteVersion": "2.49.6",
       "result": "executed-fail",
       "date": "2026-11-17"
+    },
+    {
+      "requirementId": "openwop.requirement.0260.key-recorded",
+      "scenario": "v2-replay-llm-cache-key.test.ts",
+      "sabotage": "omit: the provider-call record carried no cacheKey while replay.llmCacheKeyRecipe was advertised.",
+      "subject": {
+        "host": "openwop-app workflow-engine",
+        "build": "ba48f05c9 (openwop-app main, suite pin 2.49.6), sabotaged locally through its test-seam switch OPENWOP_SABOTAGE_LLM_KEY, in-memory store"
+      },
+      "suiteVersion": "2.49.6",
+      "result": "executed-fail",
+      "date": "2026-11-17"
+    },
+    {
+      "requirementId": "openwop.requirement.0260.params-in-key",
+      "scenario": "v2-replay-llm-cache-key.test.ts",
+      "sabotage": "drop-max-tokens: maxTokens was hashed as null, so two calls differing only in maxTokens shared one key.",
+      "subject": {
+        "host": "openwop-app workflow-engine",
+        "build": "ba48f05c9 (openwop-app main, suite pin 2.49.6), sabotaged locally through its test-seam switch OPENWOP_SABOTAGE_LLM_KEY, in-memory store"
+      },
+      "suiteVersion": "2.49.6",
+      "result": "executed-fail",
+      "date": "2026-11-17"
+    },
+    {
+      "requirementId": "openwop.requirement.0260.key-stable",
+      "scenario": "v2-replay-llm-cache-key.test.ts",
+      "sabotage": "nonce: a per-call nonce entered the recipe-2 preimage, so two identical calls recorded different keys.",
+      "subject": {
+        "host": "openwop-app workflow-engine",
+        "build": "ba48f05c9 (openwop-app main, suite pin 2.49.6), sabotaged locally through its test-seam switch OPENWOP_SABOTAGE_LLM_KEY, in-memory store"
+      },
+      "suiteVersion": "2.49.6",
+      "result": "executed-fail",
+      "date": "2026-11-17"
+    },
+    {
+      "requirementId": "openwop.requirement.0260.key-portable",
+      "scenario": "v2-replay-llm-cache-key.test.ts",
+      "sabotage": "model: the preimage named a different model id, so the recorded digest no longer equalled recipe 2 recomputed over the fixture's inputs.",
+      "subject": {
+        "host": "openwop-app workflow-engine",
+        "build": "ba48f05c9 (openwop-app main, suite pin 2.49.6), sabotaged locally through its test-seam switch OPENWOP_SABOTAGE_LLM_KEY, in-memory store"
+      },
+      "suiteVersion": "2.49.6",
+      "result": "executed-fail",
+      "date": "2026-11-17"
     }
   ]
 }
