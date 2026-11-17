@@ -49336,7 +49336,7 @@
     {
       "id": "openwop.it.v2-normative-home-gate.a-refused-home-class-is-refused-by-name",
       "file": "v2-normative-home-gate.test.ts",
-      "line": 90,
+      "line": 108,
       "title": "a refused home class is refused by name",
       "explicitId": "openwop.requirement.0189.home-class",
       "citations": [
@@ -49350,7 +49350,7 @@
     {
       "id": "openwop.it.v2-normative-home-gate.a-home-that-names-the-family-but-carries-no-obligation-is-refused",
       "file": "v2-normative-home-gate.test.ts",
-      "line": 102,
+      "line": 124,
       "title": "a home that names the family but carries no obligation is refused",
       "explicitId": "openwop.requirement.0189.content-predicate",
       "citations": [
@@ -49364,7 +49364,7 @@
     {
       "id": "openwop.it.v2-normative-home-gate.the-ratchets-hold-on-the-committed-tree",
       "file": "v2-normative-home-gate.test.ts",
-      "line": 111,
+      "line": 134,
       "title": "the ratchets hold on the committed tree",
       "explicitId": "openwop.requirement.0189.ratchet-monotone",
       "citations": [
@@ -49378,7 +49378,7 @@
     {
       "id": "openwop.it.v2-normative-home-gate.the-deadline-can-actually-fire",
       "file": "v2-normative-home-gate.test.ts",
-      "line": 117,
+      "line": 140,
       "title": "the deadline can actually fire",
       "explicitId": "openwop.requirement.0189.deadline-live",
       "citations": [
@@ -49392,7 +49392,7 @@
     {
       "id": "openwop.it.v2-normative-home-gate.the-budget-measures-what-the-home-gate-accepts",
       "file": "v2-normative-home-gate.test.ts",
-      "line": 125,
+      "line": 155,
       "title": "the budget measures what the home gate accepts",
       "explicitId": "openwop.requirement.0190.budget-denominator",
       "citations": [
@@ -49406,7 +49406,7 @@
     {
       "id": "openwop.it.v2-normative-home-gate.the-cap-grows-only-as-families-are-homed",
       "file": "v2-normative-home-gate.test.ts",
-      "line": 134,
+      "line": 173,
       "title": "the cap grows only as families are homed",
       "explicitId": "openwop.requirement.0190.budget-cap",
       "citations": [
@@ -49420,7 +49420,7 @@
     {
       "id": "openwop.it.v2-normative-home-gate.the-end-of-support-fallback-is-applied-not-printed",
       "file": "v2-normative-home-gate.test.ts",
-      "line": 142,
+      "line": 181,
       "title": "the end-of-support fallback is applied, not printed",
       "explicitId": "openwop.requirement.0190.fallback-applied",
       "citations": [
@@ -49434,7 +49434,7 @@
     {
       "id": "openwop.it.v2-normative-home-gate.v1carried-matches-the-computed-v1-dependent-set",
       "file": "v2-normative-home-gate.test.ts",
-      "line": 153,
+      "line": 192,
       "title": "v1Carried matches the computed v1-dependent set",
       "explicitId": "openwop.requirement.0190.v1carried-matches",
       "citations": [
@@ -49448,7 +49448,7 @@
     {
       "id": "openwop.it.v2-normative-home-gate.a-home-that-does-not-claim-the-family-is-refused",
       "file": "v2-normative-home-gate.test.ts",
-      "line": 159,
+      "line": 198,
       "title": "a home that does not claim the family is refused",
       "explicitId": "openwop.requirement.0191.home-marker",
       "citations": [

@@ -96,7 +96,7 @@ No existing scenario drives two regions at major 2. The major-1 simulators (`mul
 
 - [x] Normative text merged in its schema-description home (`spec/v2/facets/idempotency.schema.json`). *(2026-11-13.)*
 - [x] CHANGELOG entry. *(2026-11-13.)*
-- [ ] A host advertises `idempotency.multiRegion`, states §A–§C in its `conformance.md`, and its certified bundle records `0261.*` as `claims-check` rows with a stated reason. deferred: no host advertises the facet; this box is the `Accepted` gate.
+- [ ] A host advertises `idempotency.multiRegion`, states §A–§C in its `conformance.md`, and its certified bundle records `0261.*` as `claims-check` rows with a stated reason. deferred: no host advertises the facet; this box is the `Accepted` gate. *(2026-11-16: openwop-app was asked and checked. It runs in one region, `us-central1`, so it does not advertise `multiRegion`, and no other host is multi-region. Blocked on a multi-region host.)*
 - [ ] Register sweep (`RFCS/registers/0261-*.gaps.md`, `.risks.md`).
 
 ## References

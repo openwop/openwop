@@ -156,6 +156,774 @@
       "suiteVersion": "2.49.2",
       "result": "executed-fail",
       "date": "2026-11-15"
+    },
+    {
+      "requirementId": "openwop.requirement.0262.run-span",
+      "scenario": "v2-telemetry-export.test.ts",
+      "sabotage": "telemetry.ts never exported the openwop.run span: the terminal-event branch that builds it was disabled, so a run exported only its node spans.",
+      "subject": {
+        "host": "openwop-examples v2-reference",
+        "build": "9617276 (suite pin 2.49.6), src/telemetry.ts sabotaged locally, in-memory store"
+      },
+      "suiteVersion": "2.49.6",
+      "result": "executed-fail",
+      "date": "2026-11-16"
+    },
+    {
+      "requirementId": "openwop.requirement.0262.node-span",
+      "scenario": "v2-telemetry-export.test.ts",
+      "sabotage": "telemetry.ts dropped openwop.node_attempt from every openwop.node.<typeId> span, leaving the run, node id and node type attributes in place.",
+      "subject": {
+        "host": "openwop-examples v2-reference",
+        "build": "9617276 (suite pin 2.49.6), src/telemetry.ts sabotaged locally, in-memory store"
+      },
+      "suiteVersion": "2.49.6",
+      "result": "executed-fail",
+      "date": "2026-11-16"
+    },
+    {
+      "requirementId": "openwop.requirement.0262.traceparent-continued",
+      "scenario": "v2-telemetry-export.test.ts",
+      "sabotage": "telemetry.ts ignored the run's stored traceparent and derived the trace id from the run id, so a run created in a caller's trace exported into a new one.",
+      "subject": {
+        "host": "openwop-examples v2-reference",
+        "build": "9617276 (suite pin 2.49.6), src/telemetry.ts sabotaged locally, in-memory store"
+      },
+      "suiteVersion": "2.49.6",
+      "result": "executed-fail",
+      "date": "2026-11-16"
+    },
+    {
+      "requirementId": "openwop.requirement.0262.no-secret-in-spans",
+      "scenario": "v2-telemetry-export.test.ts",
+      "sabotage": "telemetry.ts put the resolved store canary on each node span as a debug.resolved attribute, so the byok run's spans carried the secret's plaintext.",
+      "subject": {
+        "host": "openwop-examples v2-reference",
+        "build": "9617276 (suite pin 2.49.6), src/telemetry.ts sabotaged locally, in-memory store"
+      },
+      "suiteVersion": "2.49.6",
+      "result": "executed-fail",
+      "date": "2026-11-16"
+    },
+    {
+      "requirementId": "openwop.requirement.0189.ratchet-monotone",
+      "scenario": "v2-normative-home-gate.test.ts",
+      "sabotage": "The replay family's normativeText was removed from the committed declaration, so one family was undeclared against a baseline of zero.",
+      "subject": {
+        "host": "openwop corpus",
+        "build": "32ec11a01 (suite 2.49.6), spec/v2/declaration.json sabotaged locally"
+      },
+      "suiteVersion": "2.49.6",
+      "result": "executed-fail",
+      "date": "2026-11-16"
+    },
+    {
+      "requirementId": "openwop.requirement.0190.budget-cap",
+      "scenario": "v2-normative-home-gate.test.ts",
+      "sabotage": "The cap was computed as 25,000 + 200 x (homed - 9 + 1), one family's words more than the homed families earn.",
+      "subject": {
+        "host": "openwop corpus",
+        "build": "32ec11a01 (suite 2.49.6), scripts/check-core-budget.mjs sabotaged locally"
+      },
+      "suiteVersion": "2.49.6",
+      "result": "executed-fail",
+      "date": "2026-11-16"
+    },
+    {
+      "requirementId": "openwop.requirement.0190.fallback-applied",
+      "scenario": "v2-normative-home-gate.test.ts",
+      "sabotage": "The end-of-support verdict left undeclared families out of the fatal list, so a family with no home was no longer named as uncovered.",
+      "subject": {
+        "host": "openwop corpus",
+        "build": "32ec11a01 (suite 2.49.6), scripts/check-v2-normative-home.mjs sabotaged locally"
+      },
+      "suiteVersion": "2.49.6",
+      "result": "executed-fail",
+      "date": "2026-11-16"
+    },
+    {
+      "requirementId": "openwop.requirement.0190.v1carried-matches",
+      "scenario": "v2-normative-home-gate.test.ts",
+      "sabotage": "V1Carried was set to [replay], a family that is not v1-dependent, so it no longer equalled the computed v1-dependent set.",
+      "subject": {
+        "host": "openwop corpus",
+        "build": "32ec11a01 (suite 2.49.6), docs/normative-home-baseline.json sabotaged locally"
+      },
+      "suiteVersion": "2.49.6",
+      "result": "executed-fail",
+      "date": "2026-11-16"
+    },
+    {
+      "requirementId": "openwop.requirement.0216.anchor-list-closed",
+      "scenario": "v2-colocated-companion.test.ts",
+      "sabotage": "Clause (b) was disabled, so an anchor outside the schema's closed enum no longer refused the list.",
+      "subject": {
+        "host": "openwop corpus",
+        "build": "32ec11a01 (suite 2.49.6), scripts/check-harness-trust-anchors.mjs sabotaged locally"
+      },
+      "suiteVersion": "2.49.6",
+      "result": "executed-fail",
+      "date": "2026-11-16"
+    },
+    {
+      "requirementId": "openwop.requirement.0216.deployment-in-preimage",
+      "scenario": "v2-colocated-companion.test.ts",
+      "sabotage": "witnessDigest left host.deployment out of the preimage, so a companion's marker no longer changed its signed digest.",
+      "subject": {
+        "host": "openwop corpus",
+        "build": "32ec11a01 (suite 2.49.6), conformance/src/lib/certification-bundle-v3.ts sabotaged locally"
+      },
+      "suiteVersion": "2.49.6",
+      "result": "executed-fail",
+      "date": "2026-11-16"
+    },
+    {
+      "requirementId": "openwop.requirement.0216.companion-anchor-rows-only",
+      "scenario": "v2-colocated-companion.test.ts",
+      "sabotage": "A paired companion counted every executed-pass row, not only the rows on the harness-trust-anchor list.",
+      "subject": {
+        "host": "openwop corpus",
+        "build": "32ec11a01 (suite 2.49.6), scripts/lib/companion-pairing.mjs sabotaged locally"
+      },
+      "suiteVersion": "2.49.6",
+      "result": "executed-fail",
+      "date": "2026-11-16"
+    },
+    {
+      "requirementId": "openwop.requirement.0216.companion-same-image",
+      "scenario": "v2-colocated-companion.test.ts",
+      "sabotage": "Same-image compared only that both builds were image digests, not that the two digests were equal.",
+      "subject": {
+        "host": "openwop corpus",
+        "build": "32ec11a01 (suite 2.49.6), scripts/lib/companion-pairing.mjs sabotaged locally"
+      },
+      "suiteVersion": "2.49.6",
+      "result": "executed-fail",
+      "date": "2026-11-16"
+    },
+    {
+      "requirementId": "openwop.requirement.0216.companion-attributable",
+      "scenario": "v2-colocated-companion.test.ts",
+      "sabotage": "An attestation that did not verify under the named published key no longer blocked pairing.",
+      "subject": {
+        "host": "openwop corpus",
+        "build": "32ec11a01 (suite 2.49.6), scripts/lib/companion-pairing.mjs sabotaged locally"
+      },
+      "suiteVersion": "2.49.6",
+      "result": "executed-fail",
+      "date": "2026-11-16"
+    },
+    {
+      "requirementId": "openwop.requirement.0216.companion-equivalent",
+      "scenario": "v2-colocated-companion.test.ts",
+      "sabotage": "Equivalent-discovery checked only that both documents existed, not that their normalized forms were equal.",
+      "subject": {
+        "host": "openwop corpus",
+        "build": "32ec11a01 (suite 2.49.6), scripts/lib/companion-pairing.mjs sabotaged locally"
+      },
+      "suiteVersion": "2.49.6",
+      "result": "executed-fail",
+      "date": "2026-11-16"
+    },
+    {
+      "requirementId": "openwop.requirement.0216.legacy-companion",
+      "scenario": "v2-colocated-companion.test.ts",
+      "sabotage": "isCompanion dropped the legacy unmarked-companion digests, so the committed 2026-09-25 companion was read as a served host.",
+      "subject": {
+        "host": "openwop corpus",
+        "build": "32ec11a01 (suite 2.49.6), scripts/lib/companion-pairing.mjs sabotaged locally"
+      },
+      "suiteVersion": "2.49.6",
+      "result": "executed-fail",
+      "date": "2026-11-16"
+    },
+    {
+      "requirementId": "openwop.requirement.0206.key-grammar",
+      "scenario": "locale-key-grammar.test.ts",
+      "sabotage": "The v1 section schema's locale patterns were restored to RFC 0103's ^[a-z]{2}(-[A-Z]{2})?$, so extended BCP 47 keys such as zh-Hant-TW no longer validated there.",
+      "subject": {
+        "host": "openwop corpus",
+        "build": "32ec11a01 (suite 2.49.6), schemas/localized-content-section.schema.json sabotaged locally"
+      },
+      "suiteVersion": "2.49.6",
+      "result": "executed-fail",
+      "date": "2026-11-16"
+    },
+    {
+      "requirementId": "openwop.requirement.0206.key-grammar-negatives",
+      "scenario": "locale-key-grammar.test.ts",
+      "sabotage": "The v2 section schema's locale patterns were made case-insensitive, so non-canonical tags such as EN, en-us and zh-hans validated.",
+      "subject": {
+        "host": "openwop corpus",
+        "build": "32ec11a01 (suite 2.49.6), schemas/v2/localized-content-section.schema.json sabotaged locally"
+      },
+      "suiteVersion": "2.49.6",
+      "result": "executed-fail",
+      "date": "2026-11-16"
+    },
+    {
+      "requirementId": "openwop.requirement.0206.wire-agreement",
+      "scenario": "locale-key-grammar.test.ts",
+      "sabotage": "The putContentSection body's locale pattern in api/openapi.yaml was left on RFC 0103's grammar while the schemas carried the new one.",
+      "subject": {
+        "host": "openwop corpus",
+        "build": "32ec11a01 (suite 2.49.6), api/openapi.yaml sabotaged locally"
+      },
+      "suiteVersion": "2.49.6",
+      "result": "executed-fail",
+      "date": "2026-11-16"
+    },
+    {
+      "requirementId": "openwop.requirement.0206.superset",
+      "scenario": "locale-key-grammar.test.ts",
+      "sabotage": "The v2 section schema's locale patterns required a three-letter language, so two-letter keys the RFC 0103 grammar admitted no longer validated.",
+      "subject": {
+        "host": "openwop corpus",
+        "build": "32ec11a01 (suite 2.49.6), schemas/v2/localized-content-section.schema.json sabotaged locally"
+      },
+      "suiteVersion": "2.49.6",
+      "result": "executed-fail",
+      "date": "2026-11-16"
+    },
+    {
+      "requirementId": "openwop.requirement.0206.script-family-fallback",
+      "scenario": "locale-key-grammar.test.ts",
+      "sabotage": "resolveSection skipped the language-script step, so zh-Hant-TW on {zh-Hant, zh} overlaid zh instead of zh-Hant.",
+      "subject": {
+        "host": "openwop corpus",
+        "build": "32ec11a01 (suite 2.49.6), conformance/src/lib/localized-content.ts sabotaged locally"
+      },
+      "suiteVersion": "2.49.6",
+      "result": "executed-fail",
+      "date": "2026-11-16"
+    },
+    {
+      "requirementId": "openwop.requirement.0206.old-sections-unchanged",
+      "scenario": "locale-key-grammar.test.ts",
+      "sabotage": "resolveSection tried any two-subtag prefix, not only a four-letter script subtag, so de-CH-1996 resolved differently from RFC 0103.",
+      "subject": {
+        "host": "openwop corpus",
+        "build": "32ec11a01 (suite 2.49.6), conformance/src/lib/localized-content.ts sabotaged locally"
+      },
+      "suiteVersion": "2.49.6",
+      "result": "executed-fail",
+      "date": "2026-11-16"
+    },
+    {
+      "requirementId": "openwop.requirement.0205.part-schema-upstream",
+      "scenario": "a2a-parts-schemas.test.ts",
+      "sabotage": "part.schema.json gained a filename2 property that a2a.proto v1.0.1's Part message does not declare.",
+      "subject": {
+        "host": "openwop corpus",
+        "build": "32ec11a01 (suite 2.49.6), schemas/v2/part.schema.json sabotaged locally"
+      },
+      "suiteVersion": "2.49.6",
+      "result": "executed-fail",
+      "date": "2026-11-16"
+    },
+    {
+      "requirementId": "openwop.requirement.0205.turn-parts-shape",
+      "scenario": "a2a-parts-schemas.test.ts",
+      "sabotage": "Both v2 turn defs dropped minItems from parts, so an empty parts array validated.",
+      "subject": {
+        "host": "openwop corpus",
+        "build": "32ec11a01 (suite 2.49.6), schemas/v2/conversation-turn.schema.json and conversation-event.schema.json sabotaged locally"
+      },
+      "suiteVersion": "2.49.6",
+      "result": "executed-fail",
+      "date": "2026-11-16"
+    },
+    {
+      "requirementId": "openwop.requirement.0205.turn-mirror-sync",
+      "scenario": "a2a-parts-schemas.test.ts",
+      "sabotage": "The ConversationTurn def in conversation-event.schema.json gained maxItems 64 on parts, so the two turn defs' parts subschemas were no longer deep-equal.",
+      "subject": {
+        "host": "openwop corpus",
+        "build": "32ec11a01 (suite 2.49.6), schemas/v2/conversation-event.schema.json sabotaged locally"
+      },
+      "suiteVersion": "2.49.6",
+      "result": "executed-fail",
+      "date": "2026-11-16"
+    },
+    {
+      "requirementId": "openwop.requirement.0205.export-media-type",
+      "scenario": "a2a-parts-schemas.test.ts",
+      "sabotage": "The exportFormats item pattern lost its media-type branch, so lowercase media types such as application/pdf no longer validated.",
+      "subject": {
+        "host": "openwop corpus",
+        "build": "32ec11a01 (suite 2.49.6), schemas/v2/artifact-type-pack-manifest.schema.json sabotaged locally"
+      },
+      "suiteVersion": "2.49.6",
+      "result": "executed-fail",
+      "date": "2026-11-16"
+    },
+    {
+      "requirementId": "openwop.requirement.0203.mcpserver-subset",
+      "scenario": "node-pack-mcp-server-record.test.ts",
+      "sabotage": "McpServerRecord.description was widened from maxLength 100 to 200, past the upstream server.json bound, so a boundary probe the subset accepted failed upstream.",
+      "subject": {
+        "host": "openwop corpus",
+        "build": "32ec11a01 (suite 2.49.6), schemas/v2/node-pack-manifest.schema.json sabotaged locally"
+      },
+      "suiteVersion": "2.49.6",
+      "result": "executed-fail",
+      "date": "2026-11-16"
+    },
+    {
+      "requirementId": "openwop.requirement.0203.language-remote-only",
+      "scenario": "node-pack-mcp-server-record.test.ts",
+      "sabotage": "The Runtime def lost its if/else, so mcpServer validated under a non-remote runtime language.",
+      "subject": {
+        "host": "openwop corpus",
+        "build": "32ec11a01 (suite 2.49.6), schemas/v2/node-pack-manifest.schema.json sabotaged locally"
+      },
+      "suiteVersion": "2.49.6",
+      "result": "executed-fail",
+      "date": "2026-11-16"
+    },
+    {
+      "requirementId": "openwop.requirement.0203.entry-binding",
+      "scenario": "node-pack-mcp-server-record.test.ts",
+      "sabotage": "remoteEntryBinding stopped comparing runtime.entry with mcpServer.remotes[0].url, so a mismatched entry was not refused.",
+      "subject": {
+        "host": "openwop corpus",
+        "build": "32ec11a01 (suite 2.49.6), conformance/src/lib/node-pack-runtime.ts sabotaged locally"
+      },
+      "suiteVersion": "2.49.6",
+      "result": "executed-fail",
+      "date": "2026-11-16"
+    },
+    {
+      "requirementId": "openwop.requirement.0192.facet-presence",
+      "scenario": "v2-facet-advertisement.test.ts",
+      "sabotage": "The facets row was weakened to SHOULD omit the key, with the absence exception dropped, so capabilities.md no longer stated the presence rule.",
+      "subject": {
+        "host": "openwop corpus",
+        "build": "32ec11a01 (suite 2.49.6), spec/v2/core/capabilities.md sabotaged locally"
+      },
+      "suiteVersion": "2.49.6",
+      "result": "executed-fail",
+      "date": "2026-11-16"
+    },
+    {
+      "requirementId": "openwop.requirement.0192.no-supported-ghost",
+      "scenario": "v2-facet-advertisement.test.ts",
+      "sabotage": "The generator's refusal of descriptions conditioning on the retired supported flag was disabled, so a reintroduced ghost reached the generated schema.",
+      "subject": {
+        "host": "openwop corpus",
+        "build": "32ec11a01 (suite 2.49.6), scripts/generate-from-declaration.mjs sabotaged locally"
+      },
+      "suiteVersion": "2.49.6",
+      "result": "executed-fail",
+      "date": "2026-11-16"
+    },
+    {
+      "requirementId": "openwop.requirement.0168.bundle-signature-attributable",
+      "scenario": "v2-bundle-signature-attributable.test.ts",
+      "sabotage": "The v2 discovery root lost its signingKeys property, so a host had no published key a bundle signature could be attributed to.",
+      "subject": {
+        "host": "openwop corpus",
+        "build": "32ec11a01 (suite 2.49.6), schemas/v2/capabilities.schema.json sabotaged locally"
+      },
+      "suiteVersion": "2.49.6",
+      "result": "executed-fail",
+      "date": "2026-11-16"
+    },
+    {
+      "requirementId": "openwop.requirement.0168.bundle-signature-attributable.v1-root",
+      "scenario": "v2-bundle-signature-attributable.test.ts",
+      "sabotage": "The v1 discovery root lost its signingKeys property, so a v1-only host could not publish the key its v3 bundle is signed under.",
+      "subject": {
+        "host": "openwop corpus",
+        "build": "32ec11a01 (suite 2.49.6), schemas/capabilities.schema.json sabotaged locally"
+      },
+      "suiteVersion": "2.49.6",
+      "result": "executed-fail",
+      "date": "2026-11-16"
+    },
+    {
+      "requirementId": "openwop.requirement.0210.exp-only-lane-restricted",
+      "scenario": "v2-lane-exp-only-schema.test.ts",
+      "sabotage": "The §C.8 if/then refused exp-only on api-key only, so a session lane advertising exp-only validated.",
+      "subject": {
+        "host": "openwop corpus",
+        "build": "32ec11a01 (suite 2.49.6), spec/v2/facets/auth.schema.json sabotaged locally"
+      },
+      "suiteVersion": "2.49.6",
+      "result": "executed-fail",
+      "date": "2026-11-16"
+    },
+    {
+      "requirementId": "openwop.requirement.0210.lane-rule-surfaces-agree",
+      "scenario": "v2-lane-exp-only-schema.test.ts",
+      "sabotage": "The gate stopped comparing each lane's §2.2 rules with the suite's LANE_RULES, so a map wider than the table passed.",
+      "subject": {
+        "host": "openwop corpus",
+        "build": "32ec11a01 (suite 2.49.6), scripts/check-lane-revocation-rules.mjs sabotaged locally"
+      },
+      "suiteVersion": "2.49.6",
+      "result": "executed-fail",
+      "date": "2026-11-16"
+    },
+    {
+      "requirementId": "openwop.requirement.0171.error-registry-prose-parity",
+      "scenario": "v2-error-registry-prose-parity.test.ts",
+      "sabotage": "The approval_rejected row was removed from the generated code table, so the table no longer rendered every registered code.",
+      "subject": {
+        "host": "openwop corpus",
+        "build": "32ec11a01 (suite 2.49.6), spec/v2/generated/error-codes.md sabotaged locally"
+      },
+      "suiteVersion": "2.49.6",
+      "result": "executed-fail",
+      "date": "2026-11-16"
+    },
+    {
+      "requirementId": "openwop.requirement.0223.code-registered",
+      "scenario": "v2-error-registry-prose-parity.test.ts",
+      "sabotage": "approval_rejected was registered as retriable, so the run-ending rejection read as a retryable failure.",
+      "subject": {
+        "host": "openwop corpus",
+        "build": "32ec11a01 (suite 2.49.6), spec/v2/errors.json sabotaged locally"
+      },
+      "suiteVersion": "2.49.6",
+      "result": "executed-fail",
+      "date": "2026-11-16"
+    },
+    {
+      "requirementId": "openwop.requirement.0167.child-parts",
+      "scenario": "v2-umbrella-child-parts.test.ts",
+      "sabotage": "The first migration row (child C2) was renumbered openwop.migration.C1.1, so its id no longer carried the child it belongs to.",
+      "subject": {
+        "host": "openwop corpus",
+        "build": "32ec11a01 (suite 2.49.6), spec/v1/migrations.json sabotaged locally"
+      },
+      "suiteVersion": "2.49.6",
+      "result": "executed-fail",
+      "date": "2026-11-16"
+    },
+    {
+      "requirementId": "openwop.requirement.0167.migration-deprecation-bound",
+      "scenario": "v2-umbrella-migration-deprecation.test.ts",
+      "sabotage": "The remove row openwop.migration.C2.1 lost its deprecationId, so a removal carried no scheduled deprecation.",
+      "subject": {
+        "host": "openwop corpus",
+        "build": "32ec11a01 (suite 2.49.6), spec/v1/migrations.json sabotaged locally"
+      },
+      "suiteVersion": "2.49.6",
+      "result": "executed-fail",
+      "date": "2026-11-16"
+    },
+    {
+      "requirementId": "openwop.requirement.0167.codemod-legs",
+      "scenario": "v2-umbrella-codemod-legs.test.ts",
+      "sabotage": "The capabilities-wrapper-removal codemod's expected.json gained a stray member, so transform(input.json) no longer equalled it.",
+      "subject": {
+        "host": "openwop corpus",
+        "build": "32ec11a01 (suite 2.49.6), codemods/openwop.codemod.capabilities-wrapper-removal/fixtures/expected.json sabotaged locally"
+      },
+      "suiteVersion": "2.49.6",
+      "result": "executed-fail",
+      "date": "2026-11-16"
+    },
+    {
+      "requirementId": "openwop.requirement.0167.codemod-at-active",
+      "scenario": "v2-umbrella-codemod-at-active.test.ts",
+      "sabotage": "openwop.migration.C2.1, a codemod-able row of an Active child, lost its codemod reference.",
+      "subject": {
+        "host": "openwop corpus",
+        "build": "32ec11a01 (suite 2.49.6), spec/v1/migrations.json sabotaged locally"
+      },
+      "suiteVersion": "2.49.6",
+      "result": "executed-fail",
+      "date": "2026-11-16"
+    },
+    {
+      "requirementId": "openwop.requirement.0167.alias-covered",
+      "scenario": "v2-umbrella-alias-covered.test.ts",
+      "sabotage": "The detector for openwop.deprecation.capabilities-wrapper was removed, so a visible deprecated alias had no detector to verify its removal.",
+      "subject": {
+        "host": "openwop corpus",
+        "build": "32ec11a01 (suite 2.49.6), spec/v1/alias-detectors.json sabotaged locally"
+      },
+      "suiteVersion": "2.49.6",
+      "result": "executed-fail",
+      "date": "2026-11-16"
+    },
+    {
+      "requirementId": "openwop.requirement.0168.req-only-assertions",
+      "scenario": "v2-req-only-assertions.test.ts",
+      "sabotage": "A scenario gained expect(1, 'a literal message'), an assertion message that maps to no requirement id.",
+      "subject": {
+        "host": "openwop corpus",
+        "build": "32ec11a01 (suite 2.49.6), conformance/src/scenarios/v2-telemetry-export.test.ts sabotaged locally"
+      },
+      "suiteVersion": "2.49.6",
+      "result": "executed-fail",
+      "date": "2026-11-16"
+    },
+    {
+      "requirementId": "openwop.requirement.0168.alias-covers-reword",
+      "scenario": "v2-alias-covers-reword.test.ts",
+      "sabotage": "The published id openwop.requirement.0191.home-marker was reworded in its source with no alias row, so the registry dropped an id hosts had already been measured on.",
+      "subject": {
+        "host": "openwop corpus",
+        "build": "32ec11a01 (suite 2.49.6), conformance/src/coherence/v2-normative-home-gate.test.ts sabotaged locally"
+      },
+      "suiteVersion": "2.49.6",
+      "result": "executed-fail",
+      "date": "2026-11-16"
+    },
+    {
+      "requirementId": "openwop.requirement.0168.witness-required",
+      "scenario": "v2-witness-required.test.ts",
+      "sabotage": "The replay family's witness was set to trust-me, a value outside the closed set of wire classes.",
+      "subject": {
+        "host": "openwop corpus",
+        "build": "32ec11a01 (suite 2.49.6), spec/v2/declaration.json sabotaged locally"
+      },
+      "suiteVersion": "2.49.6",
+      "result": "executed-fail",
+      "date": "2026-11-16"
+    },
+    {
+      "requirementId": "openwop.requirement.0168.seams-not-in-canonical",
+      "scenario": "v2-seams-not-in-canonical.test.ts",
+      "sabotage": "The canonical v2 OpenAPI gained a /packs-test/probe operation, a test-mode seam the public wire must not carry.",
+      "subject": {
+        "host": "openwop corpus",
+        "build": "32ec11a01 (suite 2.49.6), api/v2/openapi.yaml sabotaged locally"
+      },
+      "suiteVersion": "2.49.6",
+      "result": "executed-fail",
+      "date": "2026-11-16"
+    },
+    {
+      "requirementId": "openwop.requirement.0168.spec-artifacts-digest",
+      "scenario": "v2-spec-artifacts-digest.test.ts",
+      "sabotage": "A packed schema in spec-artifacts/ was altered by one byte, so the package no longer equalled the corpus it stamps.",
+      "subject": {
+        "host": "openwop corpus",
+        "build": "32ec11a01 (suite 2.49.6), spec-artifacts/schemas/v2/a2a-task-state.schema.json sabotaged locally"
+      },
+      "suiteVersion": "2.49.6",
+      "result": "executed-fail",
+      "date": "2026-11-16"
+    },
+    {
+      "requirementId": "openwop.requirement.0172.release-identity",
+      "scenario": "v2-release-identity.test.ts",
+      "sabotage": "spec/v2/release.json named 2.49.99 while every derived surface still carried 2.49.6.",
+      "subject": {
+        "host": "openwop corpus",
+        "build": "32ec11a01 (suite 2.49.6), spec/v2/release.json sabotaged locally"
+      },
+      "suiteVersion": "2.49.6",
+      "result": "executed-fail",
+      "date": "2026-11-16"
+    },
+    {
+      "requirementId": "openwop.requirement.0169.declaration-parity",
+      "scenario": "v2-declaration-parity.test.ts",
+      "sabotage": "The replay family's peerDependencyId was set to replay-v2, so the declaration no longer agreed with its own key.",
+      "subject": {
+        "host": "openwop corpus",
+        "build": "32ec11a01 (suite 2.49.6), spec/v2/declaration.json sabotaged locally"
+      },
+      "suiteVersion": "2.49.6",
+      "result": "executed-fail",
+      "date": "2026-11-16"
+    },
+    {
+      "requirementId": "openwop.requirement.0177.one-signing-scheme",
+      "scenario": "v2-one-signing-scheme.test.ts",
+      "sabotage": "The registry version manifest's signing object regained a method property, the v1 field v2 retired.",
+      "subject": {
+        "host": "openwop corpus",
+        "build": "32ec11a01 (suite 2.49.6), schemas/v2/registry-version-manifest.schema.json sabotaged locally"
+      },
+      "suiteVersion": "2.49.6",
+      "result": "executed-fail",
+      "date": "2026-11-16"
+    },
+    {
+      "requirementId": "openwop.requirement.0197.no-reshape",
+      "scenario": "v2-surface-monotone-gate.test.ts",
+      "sabotage": "artifact.schema.json lost its optional description property, a reshape of a published v2 surface with no retirement row.",
+      "subject": {
+        "host": "openwop corpus",
+        "build": "32ec11a01 (suite 2.49.6), schemas/v2/artifact.schema.json sabotaged locally"
+      },
+      "suiteVersion": "2.49.6",
+      "result": "executed-fail",
+      "date": "2026-11-16"
+    },
+    {
+      "requirementId": "openwop.requirement.0197.retirement-predicate",
+      "scenario": "v2-retirement-gate.test.ts",
+      "sabotage": "R3's committed-bundle census was disabled, so a DUE row whose discovery value a committed v2 host bundle still carries was reported retirable.",
+      "subject": {
+        "host": "openwop corpus",
+        "build": "32ec11a01 (suite 2.49.6), scripts/check-v2-retirement.mjs sabotaged locally"
+      },
+      "suiteVersion": "2.49.6",
+      "result": "executed-fail",
+      "date": "2026-11-16"
+    },
+    {
+      "requirementId": "openwop.requirement.0197.reader-accepts-retired",
+      "scenario": "removal-dates-minor.test.ts",
+      "sabotage": "The persisted-class reader checks were disabled, so a DUE retirement whose reader schema had lost the member (or carried it unannotated) passed.",
+      "subject": {
+        "host": "openwop corpus",
+        "build": "32ec11a01 (suite 2.49.6), scripts/check-removal-dates.mjs sabotaged locally"
+      },
+      "suiteVersion": "2.49.6",
+      "result": "executed-fail",
+      "date": "2026-11-16"
+    },
+    {
+      "requirementId": "openwop.requirement.0197.correction-unevidenced",
+      "scenario": "v2-retirement-gate.test.ts",
+      "sabotage": "The corrections pass ignored priorShapeCensus.bundles, so a correction whose prior shape a committed bundle carried was accepted.",
+      "subject": {
+        "host": "openwop corpus",
+        "build": "32ec11a01 (suite 2.49.6), scripts/check-v2-retirement.mjs sabotaged locally"
+      },
+      "suiteVersion": "2.49.6",
+      "result": "executed-fail",
+      "date": "2026-11-16"
+    },
+    {
+      "requirementId": "openwop.requirement.0200.openapi-security-declared",
+      "scenario": "openapi-security-declared.test.ts",
+      "sabotage": "The createRun operation in api/v2/openapi.yaml dropped its OpenIdConnect security alternative, leaving two of the three RFC 0200 §F.2 requires.",
+      "subject": {
+        "host": "openwop corpus",
+        "build": "32ec11a01 (suite 2.49.6), api/v2/openapi.yaml sabotaged locally"
+      },
+      "suiteVersion": "2.49.6",
+      "result": "executed-fail",
+      "date": "2026-11-16"
+    },
+    {
+      "requirementId": "openwop.requirement.0204.annotations-schema",
+      "scenario": "tool-descriptor-annotations.test.ts",
+      "sabotage": "The annotations object was opened (additionalProperties true), so a descriptor carrying annotations.title or another extra member validated.",
+      "subject": {
+        "host": "openwop corpus",
+        "build": "32ec11a01 (suite 2.49.6), schemas/v2/tool-descriptor.schema.json sabotaged locally"
+      },
+      "suiteVersion": "2.49.6",
+      "result": "executed-fail",
+      "date": "2026-11-16"
+    },
+    {
+      "requirementId": "openwop.requirement.0208.map-coherent",
+      "scenario": "v2-interop-map-coherent.test.ts",
+      "sabotage": "The A2A SendMessage row's v2Operation was renamed createRunNoSuchOperation, so the map named an operation the v2 wire does not define.",
+      "subject": {
+        "host": "openwop corpus",
+        "build": "32ec11a01 (suite 2.49.6), spec/v2/interop-map.json sabotaged locally"
+      },
+      "suiteVersion": "2.49.6",
+      "result": "executed-fail",
+      "date": "2026-11-16"
+    },
+    {
+      "requirementId": "openwop.requirement.0255.interrupt-form-profile",
+      "scenario": "a2ui-v09-profile.test.ts",
+      "sabotage": "The form profile's action def was opened to any object, so a functionCall action (openUrl) and an event outside the allowlist validated.",
+      "subject": {
+        "host": "openwop corpus",
+        "build": "32ec11a01 (suite 2.49.6), schemas/v2/interrupt-form.schema.json sabotaged locally"
+      },
+      "suiteVersion": "2.49.6",
+      "result": "executed-fail",
+      "date": "2026-11-16"
+    },
+    {
+      "requirementId": "openwop.requirement.0189.home-class",
+      "scenario": "v2-normative-home-gate.test.ts",
+      "sabotage": "RFCS/ was classed as a core home, so an RFC declared as a family's home was no longer refused as history, not operative text.",
+      "subject": {
+        "host": "openwop corpus",
+        "build": "921409dc3 (suite 2.49.7, the leg strengthened by the RFC 0263 G3 backfill), scripts/check-v2-normative-home.mjs sabotaged locally"
+      },
+      "suiteVersion": "2.49.7",
+      "result": "executed-fail",
+      "date": "2026-11-16"
+    },
+    {
+      "requirementId": "openwop.requirement.0189.content-predicate",
+      "scenario": "v2-normative-home-gate.test.ts",
+      "sabotage": "The keyword requirement was dropped from the content predicate, so a home that claims and names the family with no MUST, SHOULD or MAY resolved it.",
+      "subject": {
+        "host": "openwop corpus",
+        "build": "921409dc3 (suite 2.49.7, the leg strengthened by the RFC 0263 G3 backfill), scripts/check-v2-normative-home.mjs sabotaged locally"
+      },
+      "suiteVersion": "2.49.7",
+      "result": "executed-fail",
+      "date": "2026-11-16"
+    },
+    {
+      "requirementId": "openwop.requirement.0191.home-marker",
+      "scenario": "v2-normative-home-gate.test.ts",
+      "sabotage": "The Normative-home claim check was disabled, so a document that does not claim the family could home it.",
+      "subject": {
+        "host": "openwop corpus",
+        "build": "921409dc3 (suite 2.49.7, the leg strengthened by the RFC 0263 G3 backfill), scripts/check-v2-normative-home.mjs sabotaged locally"
+      },
+      "suiteVersion": "2.49.7",
+      "result": "executed-fail",
+      "date": "2026-11-16"
+    },
+    {
+      "requirementId": "openwop.requirement.0189.deadline-live",
+      "scenario": "v2-normative-home-gate.test.ts",
+      "sabotage": "The --deadline branch was disabled, so past end-of-support a family with no declared home no longer failed the run.",
+      "subject": {
+        "host": "openwop corpus",
+        "build": "921409dc3 (suite 2.49.7, the leg strengthened by the RFC 0263 G3 backfill), scripts/check-v2-normative-home.mjs sabotaged locally"
+      },
+      "suiteVersion": "2.49.7",
+      "result": "executed-fail",
+      "date": "2026-11-16"
+    },
+    {
+      "requirementId": "openwop.requirement.0190.budget-denominator",
+      "scenario": "v2-normative-home-gate.test.ts",
+      "sabotage": "The budget also measured spec/v2/generated/, so a generated registry restatement that RFC 0227 keeps unbudgeted counted against the core cap.",
+      "subject": {
+        "host": "openwop corpus",
+        "build": "921409dc3 (suite 2.49.7, the leg strengthened by the RFC 0263 G3 backfill), scripts/check-core-budget.mjs sabotaged locally"
+      },
+      "suiteVersion": "2.49.7",
+      "result": "executed-fail",
+      "date": "2026-11-16"
+    },
+    {
+      "requirementId": "openwop.requirement.0262.shape",
+      "scenario": "v2-telemetry-export.test.ts",
+      "sabotage": "The generated telemetry record dropped minItems from otlp.protocols, so a record advertising an empty transport list validated.",
+      "subject": {
+        "host": "openwop corpus",
+        "build": "3ab63b82c (suite 2.49.7), schemas/v2/capabilities.schema.json sabotaged locally"
+      },
+      "suiteVersion": "2.49.7",
+      "result": "executed-fail",
+      "date": "2026-11-17"
+    },
+    {
+      "requirementId": "openwop.requirement.0262.gen-ai-attributes",
+      "scenario": "v2-telemetry-export.test.ts",
+      "sabotage": "The model-call span lost its gen_ai.usage token counts (test-seam switch OPENWOP_SABOTAGE_GENAI=drop-usage), so a host advertising genAiSemconv 1.37.0 left the usage attributes off.",
+      "subject": {
+        "host": "openwop-app workflow-engine",
+        "build": "c01a456d4 (feat/rfc0262-genai-semconv, suite pin 2.49.6), sabotaged locally through its test-seam switch, in-memory store"
+      },
+      "suiteVersion": "2.49.6",
+      "result": "executed-fail",
+      "date": "2026-11-17"
     }
   ]
 }

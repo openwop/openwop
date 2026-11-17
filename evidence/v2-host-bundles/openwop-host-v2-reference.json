@@ -1,12 +1,12 @@
 {
   "bundleVersion": "3",
-  "generatedAt": "2026-11-16T06:48:25.636Z",
+  "generatedAt": "2026-11-17T00:50:13.027Z",
   "suite": {
     "name": "@openwop/openwop-conformance",
-    "version": "2.49.5",
+    "version": "2.49.6",
     "targetMajor": 2,
-    "specArtifactsVersion": "2.49.5",
-    "stampSha256": "4a07d9fba7e764c6f5b07af83c82465637e772b102ef8e90f170228b6b8eb3e7"
+    "specArtifactsVersion": "2.49.6",
+    "stampSha256": "eab3852e8e32ca8267c9e883c9ee9c0d3bd45aab20e468b4a7515e296e016a5c"
   },
   "host": {
     "name": "openwop-host-v2-reference",
@@ -14,13 +14,13 @@
     "vendor": "openwop (reference example)",
     "build": {
       "kind": "commit",
-      "id": "44c4e595a115937767053e20b9ad02e9fb582a0c"
+      "id": "ed00ba49590e3cdb58fee9e197ead20b9e4ab3d1"
     },
     "signingKeyId": "v2-reference-4"
   },
   "discovery": {
     "url": "http://127.0.0.1:3838/.well-known/openwop",
-    "sha256": "bb04dd474563d5fbb09a0c143095c5744f8e238a705a45fbbd4f62ed54c09b6f",
+    "sha256": "44a673f97992da314e7b9b3984ec33b9ae4a614d8a1e3aa9d81d198f5983e4f7",
     "protocolVersions": [
       "1.11",
       "2.0"
@@ -83,7 +83,9 @@
         "conformance-noop",
         "conformance-purpose-relay",
         "conformance-replay-ordinal-loop",
-        "conformance-safefetch-probe"
+        "conformance-safefetch-probe",
+        "conformance-secret-resolve-then-fail",
+        "openwop-smoke-byok-roundtrip"
       ],
       "testing": {
         "testKeyPrefix": "ow2k_"
@@ -183,6 +185,23 @@
           "days": 30
         },
         "effectSeamsManifest": "/host/effect-seams"
+      },
+      "secrets": {
+        "status": "experimental",
+        "since": "2.0",
+        "until": "2.1",
+        "witness": "witnessable-gated"
+      },
+      "telemetry": {
+        "status": "experimental",
+        "since": "2.0",
+        "until": "2.1",
+        "witness": "witnessable-gated",
+        "otlp": {
+          "protocols": [
+            "http/json"
+          ]
+        }
       },
       "webhooks": {
         "status": "experimental",
@@ -508,7 +527,7 @@
         "until": "2.1",
         "witness": "witnessable-gated",
         "checkpointSignatureAlgorithm": "ed25519",
-        "checkpointPublicKey": "MCowBQYDK2VwAyEAViYsbKtWf5MROUylwfAOQRVVwrKV23S5KBO1qu/aVrw=",
+        "checkpointPublicKey": "MCowBQYDK2VwAyEAyGl7Me48I13naBHQ2Tgt/ecP8COotkt1LzZ51z1+dFQ=",
         "checkpointIntervalEntries": 1000,
         "checkpointIntervalSeconds": 300
       },
@@ -549,10 +568,10 @@
   ],
   "results": {
     "totals": {
-      "executedPass": 581,
+      "executedPass": 589,
       "executedFail": 0,
       "skipped": 11,
-      "inapplicable": 370,
+      "inapplicable": 362,
       "blocked": 0
     },
     "requirements": [
@@ -857,14 +876,14 @@
         "id": "openwop.scenario.v2-capability-maturity-bounded",
         "scenario": "v2-capability-maturity-bounded.test.ts",
         "result": "executed-pass",
-        "assertions": 30,
-        "detail": "partial-witness: inapplicable: unwitnessable until the first persisted-class retirement row is due (RFC 0197 §A.3 Falsifiability): corpus 2.49.5: 0 persisted-class v2-minor retirement row(s), 0 v2→v2 migration row(s) — no retired member exists for a post-2.N event to carry. Before one does, a scenario would be vacuous, and a row that cannot fail is not a witness. This leg asserts the moment such a row falls due."
+        "assertions": 32,
+        "detail": "partial-witness: inapplicable: unwitnessable until the first persisted-class retirement row is due (RFC 0197 §A.3 Falsifiability): corpus 2.49.6: 0 persisted-class v2-minor retirement row(s), 0 v2→v2 migration row(s) — no retired member exists for a post-2.N event to carry. Before one does, a scenario would be vacuous, and a row that cannot fail is not a witness. This leg asserts the moment such a row falls due."
       },
       {
         "id": "openwop.scenario.v2-capability-record-shape",
         "scenario": "v2-capability-record-shape.test.ts",
         "result": "executed-pass",
-        "assertions": 194
+        "assertions": 208
       },
       {
         "id": "openwop.scenario.v2-chain-pin-exact",
@@ -1235,7 +1254,7 @@
         "scenario": "v2-interop-trace-context.test.ts",
         "result": "executed-pass",
         "assertions": 13,
-        "detail": "partial-witness: inapplicable: the suite OTLP collector is not started — the inbound A2A adopt rule is observable only through exported spans (REQUIRES_HOST_CALLBACK)"
+        "detail": "partial-witness: inapplicable: no span for the SendMessage arrived at the suite OTLP collector — the host exports no OTLP to this suite (REQUIRES_HOST_CALLBACK)"
       },
       {
         "id": "openwop.scenario.v2-interrupt-form-rules",
@@ -1799,9 +1818,8 @@
       {
         "id": "openwop.scenario.v2-secret-canary-absent",
         "scenario": "v2-secret-canary-absent.test.ts",
-        "result": "inapplicable",
-        "assertions": 0,
-        "detail": "every test returned early through behaviorGate with zero assertions: profile not advertised in the captured discovery set"
+        "result": "executed-pass",
+        "assertions": 5
       },
       {
         "id": "openwop.scenario.v2-secrets-run-witness",
@@ -1894,8 +1912,8 @@
         "id": "openwop.scenario.v2-telemetry-export",
         "scenario": "v2-telemetry-export.test.ts",
         "result": "executed-pass",
-        "assertions": 6,
-        "detail": "partial-witness: inapplicable: the telemetry family is not advertised — no export claim"
+        "assertions": 14,
+        "detail": "partial-witness: inapplicable: fixture conformance-callai-attempt-accounting is not advertised"
       },
       {
         "id": "openwop.scenario.v2-terminal-event-once",
@@ -1999,7 +2017,7 @@
         "scenario": "v2-webhook-delivery-shape.test.ts",
         "result": "executed-pass",
         "assertions": 13,
-        "detail": "partial-witness: inapplicable: no run.started delivery for the seeded era-2 run inside 15s — this host does not fan out seeded history, so the era-2 fan-out branch is unobservable here (recorded under openwop.family.conformance). no run.started delivery bearing this exercise's nonce 4ab3d82b8060f82ece arrived, and nothing else reached this listener either — the registered destination is the public front https://jade-flood-twiki-vinyl.trycloudflare.com/hook/fx/4ab3d82b8060f82ece (OPENWOP_WEBHOOK_RECEIVER_URL) and this listener answers on http://127.0.0.1:3841/fx/4ab3d82b8060f82ece, port 3841"
+        "detail": "partial-witness: inapplicable: no run.started delivery for the seeded era-2 run inside 15s — this host does not fan out seeded history, so the era-2 fan-out branch is unobservable here (recorded under openwop.family.conformance). no run.started delivery bearing this exercise's nonce 19d4f65bcfb69e38c0 arrived, and nothing else reached this listener either — the registered destination is the public front https://limit-readily-attract-pix.trycloudflare.com/hook/fx/19d4f65bcfb69e38c0 (OPENWOP_WEBHOOK_RECEIVER_URL) and this listener answers on http://127.0.0.1:3841/fx/19d4f65bcfb69e38c0, port 3841"
       },
       {
         "id": "openwop.floor.v2-webhook-durable-delivery",
@@ -2306,67 +2324,11 @@
         "assertions": 2
       },
       {
-        "id": "openwop.it.v2-a2a-operation-map.an-http-json-interface-answers-an-a2a-error-with-google-rpc-status-carrying-the",
-        "scenario": "v2-a2a-operation-map.test.ts",
-        "result": "inapplicable",
-        "assertions": 0,
-        "detail": "the card lists no HTTP+JSON interface at 1.0 — RFC 0211 §B binds only a host that lists one"
-      },
-      {
         "id": "openwop.it.v2-agent-org-chart-served-shape.serves-the-org-chart-read-pair-in-the-exact-v2-schema-shape",
         "scenario": "v2-agent-org-chart-served-shape.test.ts",
         "result": "inapplicable",
         "assertions": 0,
         "detail": "agents.orgChart not advertised in the v2 discovery document"
-      },
-      {
-        "id": "openwop.it.v2-bounded-loopback.a-refine-re-arms-the-region-the-marker-a-new-visit-of-the-target-a-new-key-nothi",
-        "scenario": "v2-bounded-loopback.test.ts",
-        "result": "inapplicable",
-        "assertions": 0,
-        "detail": "fixture conformance-loopback-refine is not advertised"
-      },
-      {
-        "id": "openwop.it.v2-bounded-loopback.a-replay-fork-at-round-1-s-marked-completion-re-arms-and-asks-the-gate-again",
-        "scenario": "v2-bounded-loopback.test.ts",
-        "result": "inapplicable",
-        "assertions": 0,
-        "detail": "fixture conformance-loopback-refine is not advertised"
-      },
-      {
-        "id": "openwop.it.v2-bounded-loopback.each-visit-of-the-gate-carries-approvaldata-loopback-round-maxiterations-exhaust",
-        "scenario": "v2-bounded-loopback.test.ts",
-        "result": "inapplicable",
-        "assertions": 0,
-        "detail": "fixture conformance-loopback-refine is not advertised"
-      },
-      {
-        "id": "openwop.it.v2-bounded-loopback.the-exhausted-visit-withdraws-refine-refuses-a-refine-resume-and-accept-complete",
-        "scenario": "v2-bounded-loopback.test.ts",
-        "result": "inapplicable",
-        "assertions": 0,
-        "detail": "fixture conformance-loopback-refine is not advertised"
-      },
-      {
-        "id": "openwop.it.v2-bounded-loopback.the-target-receives-the-round-history-rebuilt-from-the-log-with-no-run-scoped-by",
-        "scenario": "v2-bounded-loopback.test.ts",
-        "result": "inapplicable",
-        "assertions": 0,
-        "detail": "fixture conformance-loopback-refine is not advertised"
-      },
-      {
-        "id": "openwop.it.v2-bounded-loopback.under-onexhausted-fail-a-refine-on-the-exhausted-visit-fails-the-run-with-loop-l",
-        "scenario": "v2-bounded-loopback.test.ts",
-        "result": "inapplicable",
-        "assertions": 0,
-        "detail": "fixture conformance-loopback-refine-fail is not advertised"
-      },
-      {
-        "id": "openwop.it.v2-credential-interrupt.without-oauth-credentialinterrupt-a-terminal-refresh-failure-fails-the-node-conn",
-        "scenario": "v2-credential-interrupt.test.ts",
-        "result": "inapplicable",
-        "assertions": 0,
-        "detail": "oauth.credentialInterrupt is advertised — the host suspends instead (the legs above)"
       },
       {
         "id": "openwop.it.v2-ext-family-claims.brand",
@@ -2458,83 +2420,6 @@
         "result": "inapplicable",
         "assertions": 0,
         "detail": "no extensions[\"<org>.rest-transport\"] record under a registered org — the host does not advertise restTransport"
-      },
-      {
-        "id": "openwop.it.v2-mcp-mount-map.a-list-that-differs-per-caller-is-cachescope-private",
-        "scenario": "v2-mcp-mount-map.test.ts",
-        "result": "inapplicable",
-        "assertions": 0,
-        "detail": "the tool list is byte-identical for both tenants — the cacheScope private rule has nothing to bind on this host"
-      },
-      {
-        "id": "openwop.it.v2-replay-llm-cache-key.a-host-advertising-replay-llmcachekeyrecipe-also-advertises-idempotency",
-        "scenario": "v2-replay-llm-cache-key.test.ts",
-        "result": "inapplicable",
-        "assertions": 0,
-        "detail": "the host does not advertise replay.llmCacheKeyRecipe"
-      },
-      {
-        "id": "openwop.it.v2-replay-llm-cache-key.the-key-equals-recipe-2-recomputed-over-the-inputs-the-fixture-pins",
-        "scenario": "v2-replay-llm-cache-key.test.ts",
-        "result": "inapplicable",
-        "assertions": 0,
-        "detail": "the host does not advertise replay.llmCacheKeyRecipe \"openwop-llm-key-2\" (absent ⇒ the RFC 0041 recipe, opt-in per RFC 0260)"
-      },
-      {
-        "id": "openwop.it.v2-replay-llm-cache-key.the-provider-call-record-carries-cachekey-with-recipe-openwop-llm-key-2",
-        "scenario": "v2-replay-llm-cache-key.test.ts",
-        "result": "inapplicable",
-        "assertions": 0,
-        "detail": "the host does not advertise replay.llmCacheKeyRecipe \"openwop-llm-key-2\" (absent ⇒ the RFC 0041 recipe, opt-in per RFC 0260)"
-      },
-      {
-        "id": "openwop.it.v2-replay-llm-cache-key.two-identical-runs-have-the-same-key",
-        "scenario": "v2-replay-llm-cache-key.test.ts",
-        "result": "inapplicable",
-        "assertions": 0,
-        "detail": "the host does not advertise replay.llmCacheKeyRecipe \"openwop-llm-key-2\" (absent ⇒ the RFC 0041 recipe, opt-in per RFC 0260)"
-      },
-      {
-        "id": "openwop.it.v2-replay-llm-cache-key.two-runs-that-differ-only-in-maxtokens-have-different-keys",
-        "scenario": "v2-replay-llm-cache-key.test.ts",
-        "result": "inapplicable",
-        "assertions": 0,
-        "detail": "the host does not advertise replay.llmCacheKeyRecipe \"openwop-llm-key-2\" (absent ⇒ the RFC 0041 recipe, opt-in per RFC 0260)"
-      },
-      {
-        "id": "openwop.it.v2-telemetry-export.a-host-advertising-genaisemconv-puts-the-gen-ai-attributes-on-the-model-call-spa",
-        "scenario": "v2-telemetry-export.test.ts",
-        "result": "inapplicable",
-        "assertions": 0,
-        "detail": "the telemetry family is not advertised — no export claim"
-      },
-      {
-        "id": "openwop.it.v2-telemetry-export.a-run-created-with-a-traceparent-exports-its-spans-in-that-trace",
-        "scenario": "v2-telemetry-export.test.ts",
-        "result": "inapplicable",
-        "assertions": 0,
-        "detail": "the telemetry family is not advertised — no export claim"
-      },
-      {
-        "id": "openwop.it.v2-telemetry-export.a-run-exports-an-openwop-run-span-with-its-run-and-workflow-ids",
-        "scenario": "v2-telemetry-export.test.ts",
-        "result": "inapplicable",
-        "assertions": 0,
-        "detail": "the telemetry family is not advertised — no export claim"
-      },
-      {
-        "id": "openwop.it.v2-telemetry-export.each-node-execution-exports-an-openwop-node-typeid-span-with-its-node-attributes",
-        "scenario": "v2-telemetry-export.test.ts",
-        "result": "inapplicable",
-        "assertions": 0,
-        "detail": "the telemetry family is not advertised — no export claim"
-      },
-      {
-        "id": "openwop.it.v2-telemetry-export.no-exported-span-carries-the-resolved-store-secret",
-        "scenario": "v2-telemetry-export.test.ts",
-        "result": "inapplicable",
-        "assertions": 0,
-        "detail": "the telemetry family is not advertised — no export claim"
       },
       {
         "id": "openwop.requirement.0004.memory-ref-one-tenant",
@@ -2811,7 +2696,7 @@
           "recovery": {
             "class": "single-instance-restart",
             "boundMs": 6000,
-            "observedMs": 1629
+            "observedMs": 1620
           }
         }
       },
@@ -2824,7 +2709,7 @@
           "recovery": {
             "class": "single-instance-restart",
             "boundMs": 6000,
-            "observedMs": 1626
+            "observedMs": 1623
           }
         }
       },
@@ -2905,19 +2790,19 @@
         "id": "openwop.requirement.0169.capability-record-shape.required-fields",
         "scenario": "v2-capability-record-shape.test.ts",
         "result": "executed-pass",
-        "assertions": 112
+        "assertions": 120
       },
       {
         "id": "openwop.requirement.0169.capability-record-shape.until-iff-not-stable",
         "scenario": "v2-capability-record-shape.test.ts",
         "result": "executed-pass",
-        "assertions": 55
+        "assertions": 59
       },
       {
         "id": "openwop.requirement.0169.capability-record-shape.until-not-past",
         "scenario": "v2-capability-record-shape.test.ts",
         "result": "executed-pass",
-        "assertions": 27
+        "assertions": 29
       },
       {
         "id": "openwop.requirement.0169.profiles-derived-only.derivable",
@@ -3227,7 +3112,7 @@
         "scenario": "v2-webhook-delivery-shape.test.ts",
         "result": "executed-pass",
         "assertions": 13,
-        "detail": "partial-witness: inapplicable: no run.started delivery for the seeded era-2 run inside 15s — this host does not fan out seeded history, so the era-2 fan-out branch is unobservable here (recorded under openwop.family.conformance). no run.started delivery bearing this exercise's nonce 4ab3d82b8060f82ece arrived, and nothing else reached this listener either — the registered destination is the public front https://jade-flood-twiki-vinyl.trycloudflare.com/hook/fx/4ab3d82b8060f82ece (OPENWOP_WEBHOOK_RECEIVER_URL) and this listener answers on http://127.0.0.1:3841/fx/4ab3d82b8060f82ece, port 3841"
+        "detail": "partial-witness: inapplicable: no run.started delivery for the seeded era-2 run inside 15s — this host does not fan out seeded history, so the era-2 fan-out branch is unobservable here (recorded under openwop.family.conformance). no run.started delivery bearing this exercise's nonce 19d4f65bcfb69e38c0 arrived, and nothing else reached this listener either — the registered destination is the public front https://limit-readily-attract-pix.trycloudflare.com/hook/fx/19d4f65bcfb69e38c0 (OPENWOP_WEBHOOK_RECEIVER_URL) and this listener answers on http://127.0.0.1:3841/fx/19d4f65bcfb69e38c0, port 3841"
       },
       {
         "id": "openwop.requirement.0171.webhook-egress-refused",
@@ -3445,21 +3330,21 @@
         "scenario": "v2-webhook-durable-delivery.test.ts",
         "result": "executed-pass",
         "assertions": 4,
-        "detail": "observed: 4/4 subscribed event(s) delivered, 0 duplicate arrival(s); slowest first arrival 175ms after the run was created; cap (default 90000ms; advertised maxElapsedMs none): waited ≤90000ms"
+        "detail": "observed: 4/4 subscribed event(s) delivered, 0 duplicate arrival(s); slowest first arrival 121ms after the run was created; cap (default 90000ms; advertised maxElapsedMs none): waited ≤90000ms"
       },
       {
         "id": "openwop.requirement.0173.webhook-durable-delivery",
         "scenario": "v2-webhook-durable-delivery.test.ts",
         "result": "executed-pass",
         "assertions": 9,
-        "detail": "observed: cap (default 90000ms; advertised maxElapsedMs none): waited ≤90000ms; 3 attempt(s), last attempt after 1761ms"
+        "detail": "observed: cap (default 90000ms; advertised maxElapsedMs none): waited ≤90000ms; 3 attempt(s), last attempt after 1783ms"
       },
       {
         "id": "openwop.requirement.0173.webhook-durable-delivery.dead-letter",
         "scenario": "v2-webhook-durable-delivery.test.ts",
         "result": "executed-pass",
         "assertions": 6,
-        "detail": "observed: cap (default 90000ms; advertised maxElapsedMs none): waited ≤90000ms; 5 attempt(s), last attempt after 8028ms, sink after 9229ms"
+        "detail": "observed: cap (default 90000ms; advertised maxElapsedMs none): waited ≤90000ms; 5 attempt(s), last attempt after 8036ms, sink after 9125ms"
       },
       {
         "id": "openwop.requirement.0175.legacy-profiles-absent",
@@ -3789,7 +3674,7 @@
         "scenario": "v2-webhook-durable-delivery.test.ts",
         "result": "executed-pass",
         "assertions": 3,
-        "detail": "observed: cap (default 90000ms; advertised maxElapsedMs none): waited ≤90000ms; 5 attempt(s), last attempt after 8013ms, sink after 9206ms"
+        "detail": "observed: cap (default 90000ms; advertised maxElapsedMs none): waited ≤90000ms; 5 attempt(s), last attempt after 7972ms, sink after 9194ms"
       },
       {
         "id": "openwop.requirement.0188.dead-letter-read",
@@ -3820,14 +3705,14 @@
         "id": "openwop.requirement.0197.maturity-not-overstated",
         "scenario": "v2-capability-maturity-bounded.test.ts",
         "result": "executed-pass",
-        "assertions": 30
+        "assertions": 32
       },
       {
         "id": "openwop.requirement.0197.retired-not-emitted",
         "scenario": "v2-capability-maturity-bounded.test.ts",
         "result": "inapplicable",
         "assertions": 0,
-        "detail": "unwitnessable until the first persisted-class retirement row is due (RFC 0197 §A.3 Falsifiability): corpus 2.49.5: 0 persisted-class v2-minor retirement row(s), 0 v2→v2 migration row(s) — no retired member exists for a post-2.N event to carry. Before one does, a scenario would be vacuous, and a row that cannot fail is not a witness. This leg asserts the moment such a row falls due."
+        "detail": "unwitnessable until the first persisted-class retirement row is due (RFC 0197 §A.3 Falsifiability): corpus 2.49.6: 0 persisted-class v2-minor retirement row(s), 0 v2→v2 migration row(s) — no retired member exists for a post-2.N event to carry. Before one does, a scenario would be vacuous, and a row that cannot fail is not a witness. This leg asserts the moment such a row falls due."
       },
       {
         "id": "openwop.requirement.0198.advertised-via-discover",
@@ -3972,6 +3857,13 @@
         "scenario": "v2-oauth-client-pkce-state-iss.test.ts",
         "result": "executed-pass",
         "assertions": 4
+      },
+      {
+        "id": "openwop.requirement.0199.refresh-failure-fails-node",
+        "scenario": "v2-credential-interrupt.test.ts",
+        "result": "inapplicable",
+        "assertions": 0,
+        "detail": "oauth.credentialInterrupt is advertised — the host suspends instead (the legs above)"
       },
       {
         "id": "openwop.requirement.0199.resource-indicator",
@@ -4216,7 +4108,7 @@
         "scenario": "v2-interop-trace-context.test.ts",
         "result": "inapplicable",
         "assertions": 0,
-        "detail": "the suite OTLP collector is not started — the inbound A2A adopt rule is observable only through exported spans (REQUIRES_HOST_CALLBACK)"
+        "detail": "no span for the SendMessage arrived at the suite OTLP collector — the host exports no OTLP to this suite (REQUIRES_HOST_CALLBACK)"
       },
       {
         "id": "openwop.requirement.0207.a2a-malformed-ignored",
@@ -4241,7 +4133,7 @@
         "scenario": "otel-mcp-semconv-projection.test.ts",
         "result": "inapplicable",
         "assertions": 0,
-        "detail": "the mcp.* projection is optional and observable only through OTLP export to the suite collector, which is not started in this run (OPENWOP_OTEL_COLLECTOR) — no mcp.* span can arrive"
+        "detail": "no span carrying an mcp.* attribute reached the suite collector — the host does not project onto the OTel MCP conventions (optional, RFC 0207 §D.12)"
       },
       {
         "id": "openwop.requirement.0207.mcp-server-adopts-meta",
@@ -4308,6 +4200,13 @@
         "scenario": "v2-mcp-mount-map.test.ts",
         "result": "executed-pass",
         "assertions": 2
+      },
+      {
+        "id": "openwop.requirement.0208.mcp-cache-scope",
+        "scenario": "v2-mcp-mount-map.test.ts",
+        "result": "inapplicable",
+        "assertions": 0,
+        "detail": "the tool list is byte-identical for both tenants — the cacheScope private rule has nothing to bind on this host"
       },
       {
         "id": "openwop.requirement.0208.mcp-discover-revisions",
@@ -4408,6 +4307,13 @@
         "scenario": "v2-a2a-operation-map.test.ts",
         "result": "executed-pass",
         "assertions": 9
+      },
+      {
+        "id": "openwop.requirement.0211.a2a-httpjson-status",
+        "scenario": "v2-a2a-operation-map.test.ts",
+        "result": "inapplicable",
+        "assertions": 0,
+        "detail": "the card lists no HTTP+JSON interface at 1.0 — RFC 0211 §B binds only a host that lists one"
       },
       {
         "id": "openwop.requirement.0211.a2a-no-openwop-envelope",
@@ -5509,10 +5415,52 @@
         "assertions": 3
       },
       {
+        "id": "openwop.requirement.0258.approval-data-loopback",
+        "scenario": "v2-bounded-loopback.test.ts",
+        "result": "inapplicable",
+        "assertions": 0,
+        "detail": "fixture conformance-loopback-refine is not advertised"
+      },
+      {
+        "id": "openwop.requirement.0258.fail-on-exhausted",
+        "scenario": "v2-bounded-loopback.test.ts",
+        "result": "inapplicable",
+        "assertions": 0,
+        "detail": "fixture conformance-loopback-refine-fail is not advertised"
+      },
+      {
+        "id": "openwop.requirement.0258.history-from-log",
+        "scenario": "v2-bounded-loopback.test.ts",
+        "result": "inapplicable",
+        "assertions": 0,
+        "detail": "fixture conformance-loopback-refine is not advertised"
+      },
+      {
+        "id": "openwop.requirement.0258.refine-rearms",
+        "scenario": "v2-bounded-loopback.test.ts",
+        "result": "inapplicable",
+        "assertions": 0,
+        "detail": "fixture conformance-loopback-refine is not advertised"
+      },
+      {
+        "id": "openwop.requirement.0258.replay-rearms",
+        "scenario": "v2-bounded-loopback.test.ts",
+        "result": "inapplicable",
+        "assertions": 0,
+        "detail": "fixture conformance-loopback-refine is not advertised"
+      },
+      {
         "id": "openwop.requirement.0258.shape",
         "scenario": "v2-bounded-loopback.test.ts",
         "result": "executed-pass",
         "assertions": 19
+      },
+      {
+        "id": "openwop.requirement.0258.withdraw-refine",
+        "scenario": "v2-bounded-loopback.test.ts",
+        "result": "inapplicable",
+        "assertions": 0,
+        "detail": "fixture conformance-loopback-refine is not advertised"
       },
       {
         "id": "openwop.requirement.0259.bound-to-caller",
@@ -5558,16 +5506,82 @@
         "assertions": 2
       },
       {
+        "id": "openwop.requirement.0260.implies-idempotency",
+        "scenario": "v2-replay-llm-cache-key.test.ts",
+        "result": "inapplicable",
+        "assertions": 0,
+        "detail": "the host does not advertise replay.llmCacheKeyRecipe"
+      },
+      {
+        "id": "openwop.requirement.0260.key-portable",
+        "scenario": "v2-replay-llm-cache-key.test.ts",
+        "result": "inapplicable",
+        "assertions": 0,
+        "detail": "the host does not advertise replay.llmCacheKeyRecipe \"openwop-llm-key-2\" (absent ⇒ the RFC 0041 recipe, opt-in per RFC 0260)"
+      },
+      {
+        "id": "openwop.requirement.0260.key-recorded",
+        "scenario": "v2-replay-llm-cache-key.test.ts",
+        "result": "inapplicable",
+        "assertions": 0,
+        "detail": "the host does not advertise replay.llmCacheKeyRecipe \"openwop-llm-key-2\" (absent ⇒ the RFC 0041 recipe, opt-in per RFC 0260)"
+      },
+      {
+        "id": "openwop.requirement.0260.key-stable",
+        "scenario": "v2-replay-llm-cache-key.test.ts",
+        "result": "inapplicable",
+        "assertions": 0,
+        "detail": "the host does not advertise replay.llmCacheKeyRecipe \"openwop-llm-key-2\" (absent ⇒ the RFC 0041 recipe, opt-in per RFC 0260)"
+      },
+      {
+        "id": "openwop.requirement.0260.params-in-key",
+        "scenario": "v2-replay-llm-cache-key.test.ts",
+        "result": "inapplicable",
+        "assertions": 0,
+        "detail": "the host does not advertise replay.llmCacheKeyRecipe \"openwop-llm-key-2\" (absent ⇒ the RFC 0041 recipe, opt-in per RFC 0260)"
+      },
+      {
         "id": "openwop.requirement.0260.shape",
         "scenario": "v2-replay-llm-cache-key.test.ts",
         "result": "executed-pass",
         "assertions": 6
       },
       {
+        "id": "openwop.requirement.0262.gen-ai-attributes",
+        "scenario": "v2-telemetry-export.test.ts",
+        "result": "inapplicable",
+        "assertions": 0,
+        "detail": "fixture conformance-callai-attempt-accounting is not advertised"
+      },
+      {
+        "id": "openwop.requirement.0262.no-secret-in-spans",
+        "scenario": "v2-telemetry-export.test.ts",
+        "result": "executed-pass",
+        "assertions": 1
+      },
+      {
+        "id": "openwop.requirement.0262.node-span",
+        "scenario": "v2-telemetry-export.test.ts",
+        "result": "executed-pass",
+        "assertions": 4
+      },
+      {
+        "id": "openwop.requirement.0262.run-span",
+        "scenario": "v2-telemetry-export.test.ts",
+        "result": "executed-pass",
+        "assertions": 2
+      },
+      {
         "id": "openwop.requirement.0262.shape",
         "scenario": "v2-telemetry-export.test.ts",
         "result": "executed-pass",
         "assertions": 6
+      },
+      {
+        "id": "openwop.requirement.0262.traceparent-continued",
+        "scenario": "v2-telemetry-export.test.ts",
+        "result": "executed-pass",
+        "assertions": 1
       },
       {
         "id": "openwop.requirement.0265.inverse-once",
@@ -6513,51 +6527,48 @@
       {
         "id": "openwop.requirement.secrets.resolved-secret-absent",
         "scenario": "v2-secret-canary-absent.test.ts",
-        "result": "inapplicable",
-        "assertions": 0,
-        "detail": "secrets family not advertised — no obligation"
+        "result": "executed-pass",
+        "assertions": 2
       },
       {
         "id": "openwop.requirement.secrets.resolved-secret-absent-in-fork",
         "scenario": "v2-secret-canary-absent.test.ts",
-        "result": "inapplicable",
-        "assertions": 0,
-        "detail": "secrets family not advertised — no obligation"
+        "result": "executed-pass",
+        "assertions": 1
       },
       {
         "id": "openwop.requirement.secrets.resolved-secret-absent-on-failure",
         "scenario": "v2-secret-canary-absent.test.ts",
-        "result": "inapplicable",
-        "assertions": 0,
-        "detail": "secrets family not advertised — no obligation"
+        "result": "executed-pass",
+        "assertions": 2
       },
       {
         "id": "openwop.requirement.secrets.run-secrets-outside-request-digest",
         "scenario": "v2-secrets-run-witness.test.ts",
         "result": "inapplicable",
         "assertions": 0,
-        "detail": "the secrets family is not advertised — no run-supplied secrets (RFC 0229 §D)"
+        "detail": "secrets.runSecrets is not advertised — the host offers no run-supplied secrets (RFC 0229 §D)"
       },
       {
         "id": "openwop.requirement.secrets.run-witness-redacted",
         "scenario": "v2-secrets-run-witness.test.ts",
         "result": "inapplicable",
         "assertions": 0,
-        "detail": "the secrets family is not advertised — no run-supplied secrets (RFC 0229 §D)"
+        "detail": "secrets.runSecrets is not advertised — the host offers no run-supplied secrets (RFC 0229 §D)"
       },
       {
         "id": "openwop.requirement.secrets.run-witness-resolves",
         "scenario": "v2-secrets-run-witness.test.ts",
         "result": "inapplicable",
         "assertions": 0,
-        "detail": "the secrets family is not advertised — no run-supplied secrets (RFC 0229 §D)"
+        "detail": "secrets.runSecrets is not advertised — the host offers no run-supplied secrets (RFC 0229 §D)"
       },
       {
         "id": "openwop.requirement.secrets.run-witness-scope-bound",
         "scenario": "v2-secrets-run-witness.test.ts",
         "result": "inapplicable",
         "assertions": 0,
-        "detail": "the secrets family is not advertised — no run-supplied secrets (RFC 0229 §D)"
+        "detail": "secrets.runSecrets is not advertised — the host offers no run-supplied secrets (RFC 0229 §D)"
       },
       {
         "id": "openwop.requirement.self-hosted-runner.advert-record-schema",
@@ -6785,7 +6796,7 @@
       }
     ]
   },
-  "assertionCount": 5888,
+  "assertionCount": 5946,
   "detail": {
     "nonPass": [
       {
@@ -7084,11 +7095,6 @@
         "reason": "every test returned early through behaviorGate with zero assertions: profile not advertised in the captured discovery set"
       },
       {
-        "id": "openwop.scenario.v2-secret-canary-absent",
-        "result": "inapplicable",
-        "reason": "every test returned early through behaviorGate with zero assertions: profile not advertised in the captured discovery set"
-      },
-      {
         "id": "openwop.scenario.v2-secrets-run-witness",
         "result": "inapplicable",
         "reason": "every test returned early through behaviorGate with zero assertions: profile not advertised in the captured discovery set"
@@ -7184,49 +7190,9 @@
         "reason": "toolCatalog.compactView not advertised at major 2"
       },
       {
-        "id": "openwop.it.v2-a2a-operation-map.an-http-json-interface-answers-an-a2a-error-with-google-rpc-status-carrying-the",
-        "result": "inapplicable",
-        "reason": "the card lists no HTTP+JSON interface at 1.0 — RFC 0211 §B binds only a host that lists one"
-      },
-      {
         "id": "openwop.it.v2-agent-org-chart-served-shape.serves-the-org-chart-read-pair-in-the-exact-v2-schema-shape",
         "result": "inapplicable",
         "reason": "agents.orgChart not advertised in the v2 discovery document"
-      },
-      {
-        "id": "openwop.it.v2-bounded-loopback.a-refine-re-arms-the-region-the-marker-a-new-visit-of-the-target-a-new-key-nothi",
-        "result": "inapplicable",
-        "reason": "fixture conformance-loopback-refine is not advertised"
-      },
-      {
-        "id": "openwop.it.v2-bounded-loopback.a-replay-fork-at-round-1-s-marked-completion-re-arms-and-asks-the-gate-again",
-        "result": "inapplicable",
-        "reason": "fixture conformance-loopback-refine is not advertised"
-      },
-      {
-        "id": "openwop.it.v2-bounded-loopback.each-visit-of-the-gate-carries-approvaldata-loopback-round-maxiterations-exhaust",
-        "result": "inapplicable",
-        "reason": "fixture conformance-loopback-refine is not advertised"
-      },
-      {
-        "id": "openwop.it.v2-bounded-loopback.the-exhausted-visit-withdraws-refine-refuses-a-refine-resume-and-accept-complete",
-        "result": "inapplicable",
-        "reason": "fixture conformance-loopback-refine is not advertised"
-      },
-      {
-        "id": "openwop.it.v2-bounded-loopback.the-target-receives-the-round-history-rebuilt-from-the-log-with-no-run-scoped-by",
-        "result": "inapplicable",
-        "reason": "fixture conformance-loopback-refine is not advertised"
-      },
-      {
-        "id": "openwop.it.v2-bounded-loopback.under-onexhausted-fail-a-refine-on-the-exhausted-visit-fails-the-run-with-loop-l",
-        "result": "inapplicable",
-        "reason": "fixture conformance-loopback-refine-fail is not advertised"
-      },
-      {
-        "id": "openwop.it.v2-credential-interrupt.without-oauth-credentialinterrupt-a-terminal-refresh-failure-fails-the-node-conn",
-        "result": "inapplicable",
-        "reason": "oauth.credentialInterrupt is advertised — the host suspends instead (the legs above)"
       },
       {
         "id": "openwop.it.v2-ext-family-claims.brand",
@@ -7292,61 +7258,6 @@
         "id": "openwop.it.v2-ext-rest-transport.each-coding-in-contentencodings-is-produced-when-asked-for-alone-and-decodes-to",
         "result": "inapplicable",
         "reason": "no extensions[\"<org>.rest-transport\"] record under a registered org — the host does not advertise restTransport"
-      },
-      {
-        "id": "openwop.it.v2-mcp-mount-map.a-list-that-differs-per-caller-is-cachescope-private",
-        "result": "inapplicable",
-        "reason": "the tool list is byte-identical for both tenants — the cacheScope private rule has nothing to bind on this host"
-      },
-      {
-        "id": "openwop.it.v2-replay-llm-cache-key.a-host-advertising-replay-llmcachekeyrecipe-also-advertises-idempotency",
-        "result": "inapplicable",
-        "reason": "the host does not advertise replay.llmCacheKeyRecipe"
-      },
-      {
-        "id": "openwop.it.v2-replay-llm-cache-key.the-key-equals-recipe-2-recomputed-over-the-inputs-the-fixture-pins",
-        "result": "inapplicable",
-        "reason": "the host does not advertise replay.llmCacheKeyRecipe \"openwop-llm-key-2\" (absent ⇒ the RFC 0041 recipe, opt-in per RFC 0260)"
-      },
-      {
-        "id": "openwop.it.v2-replay-llm-cache-key.the-provider-call-record-carries-cachekey-with-recipe-openwop-llm-key-2",
-        "result": "inapplicable",
-        "reason": "the host does not advertise replay.llmCacheKeyRecipe \"openwop-llm-key-2\" (absent ⇒ the RFC 0041 recipe, opt-in per RFC 0260)"
-      },
-      {
-        "id": "openwop.it.v2-replay-llm-cache-key.two-identical-runs-have-the-same-key",
-        "result": "inapplicable",
-        "reason": "the host does not advertise replay.llmCacheKeyRecipe \"openwop-llm-key-2\" (absent ⇒ the RFC 0041 recipe, opt-in per RFC 0260)"
-      },
-      {
-        "id": "openwop.it.v2-replay-llm-cache-key.two-runs-that-differ-only-in-maxtokens-have-different-keys",
-        "result": "inapplicable",
-        "reason": "the host does not advertise replay.llmCacheKeyRecipe \"openwop-llm-key-2\" (absent ⇒ the RFC 0041 recipe, opt-in per RFC 0260)"
-      },
-      {
-        "id": "openwop.it.v2-telemetry-export.a-host-advertising-genaisemconv-puts-the-gen-ai-attributes-on-the-model-call-spa",
-        "result": "inapplicable",
-        "reason": "the telemetry family is not advertised — no export claim"
-      },
-      {
-        "id": "openwop.it.v2-telemetry-export.a-run-created-with-a-traceparent-exports-its-spans-in-that-trace",
-        "result": "inapplicable",
-        "reason": "the telemetry family is not advertised — no export claim"
-      },
-      {
-        "id": "openwop.it.v2-telemetry-export.a-run-exports-an-openwop-run-span-with-its-run-and-workflow-ids",
-        "result": "inapplicable",
-        "reason": "the telemetry family is not advertised — no export claim"
-      },
-      {
-        "id": "openwop.it.v2-telemetry-export.each-node-execution-exports-an-openwop-node-typeid-span-with-its-node-attributes",
-        "result": "inapplicable",
-        "reason": "the telemetry family is not advertised — no export claim"
-      },
-      {
-        "id": "openwop.it.v2-telemetry-export.no-exported-span-carries-the-resolved-store-secret",
-        "result": "inapplicable",
-        "reason": "the telemetry family is not advertised — no export claim"
       },
       {
         "id": "openwop.requirement.0004.memory-ref-one-tenant",
@@ -7531,7 +7442,12 @@
       {
         "id": "openwop.requirement.0197.retired-not-emitted",
         "result": "inapplicable",
-        "reason": "unwitnessable until the first persisted-class retirement row is due (RFC 0197 §A.3 Falsifiability): corpus 2.49.5: 0 persisted-class v2-minor retirement row(s), 0 v2→v2 migration row(s) — no retired member exists for a post-2.N event to carry. Before one does, a scenario would be vacuous, and a row that cannot fail is not a witness. This leg asserts the moment such a row falls due."
+        "reason": "unwitnessable until the first persisted-class retirement row is due (RFC 0197 §A.3 Falsifiability): corpus 2.49.6: 0 persisted-class v2-minor retirement row(s), 0 v2→v2 migration row(s) — no retired member exists for a post-2.N event to carry. Before one does, a scenario would be vacuous, and a row that cannot fail is not a witness. This leg asserts the moment such a row falls due."
+      },
+      {
+        "id": "openwop.requirement.0199.refresh-failure-fails-node",
+        "result": "inapplicable",
+        "reason": "oauth.credentialInterrupt is advertised — the host suspends instead (the legs above)"
       },
       {
         "id": "openwop.requirement.0200.challenge-401",
@@ -7581,12 +7497,17 @@
       {
         "id": "openwop.requirement.0207.a2a-inbound-adopts",
         "result": "inapplicable",
-        "reason": "the suite OTLP collector is not started — the inbound A2A adopt rule is observable only through exported spans (REQUIRES_HOST_CALLBACK)"
+        "reason": "no span for the SendMessage arrived at the suite OTLP collector — the host exports no OTLP to this suite (REQUIRES_HOST_CALLBACK)"
       },
       {
         "id": "openwop.requirement.0207.mcp-semconv-stamped",
         "result": "inapplicable",
-        "reason": "the mcp.* projection is optional and observable only through OTLP export to the suite collector, which is not started in this run (OPENWOP_OTEL_COLLECTOR) — no mcp.* span can arrive"
+        "reason": "no span carrying an mcp.* attribute reached the suite collector — the host does not project onto the OTel MCP conventions (optional, RFC 0207 §D.12)"
+      },
+      {
+        "id": "openwop.requirement.0208.mcp-cache-scope",
+        "result": "inapplicable",
+        "reason": "the tool list is byte-identical for both tenants — the cacheScope private rule has nothing to bind on this host"
       },
       {
         "id": "openwop.requirement.0210.credential-lifetime-code",
@@ -7607,6 +7528,11 @@
         "id": "openwop.requirement.0210.exp-only-remaining-bound",
         "result": "inapplicable",
         "reason": "no advertised lane names revocation \"exp-only\" (advertised: api-key=next-request, session=next-request, saml=not-on-or-after, scim=bound-connection, workload=delegation-expiry) — §B binds the host that advertises the member and binds no other"
+      },
+      {
+        "id": "openwop.requirement.0211.a2a-httpjson-status",
+        "result": "inapplicable",
+        "reason": "the card lists no HTTP+JSON interface at 1.0 — RFC 0211 §B binds only a host that lists one"
       },
       {
         "id": "openwop.requirement.0213.last-event-id-malformed",
@@ -8024,9 +7950,69 @@
         "reason": "operator declared an honest opt-out via OPENWOP_OPTED_OUT_PROFILES: family.subWorkflow"
       },
       {
+        "id": "openwop.requirement.0258.approval-data-loopback",
+        "result": "inapplicable",
+        "reason": "fixture conformance-loopback-refine is not advertised"
+      },
+      {
+        "id": "openwop.requirement.0258.fail-on-exhausted",
+        "result": "inapplicable",
+        "reason": "fixture conformance-loopback-refine-fail is not advertised"
+      },
+      {
+        "id": "openwop.requirement.0258.history-from-log",
+        "result": "inapplicable",
+        "reason": "fixture conformance-loopback-refine is not advertised"
+      },
+      {
+        "id": "openwop.requirement.0258.refine-rearms",
+        "result": "inapplicable",
+        "reason": "fixture conformance-loopback-refine is not advertised"
+      },
+      {
+        "id": "openwop.requirement.0258.replay-rearms",
+        "result": "inapplicable",
+        "reason": "fixture conformance-loopback-refine is not advertised"
+      },
+      {
+        "id": "openwop.requirement.0258.withdraw-refine",
+        "result": "inapplicable",
+        "reason": "fixture conformance-loopback-refine is not advertised"
+      },
+      {
         "id": "openwop.requirement.0259.token-ref-opaque",
         "result": "inapplicable",
         "reason": "the host records no tokenRef (OPTIONAL)"
+      },
+      {
+        "id": "openwop.requirement.0260.implies-idempotency",
+        "result": "inapplicable",
+        "reason": "the host does not advertise replay.llmCacheKeyRecipe"
+      },
+      {
+        "id": "openwop.requirement.0260.key-portable",
+        "result": "inapplicable",
+        "reason": "the host does not advertise replay.llmCacheKeyRecipe \"openwop-llm-key-2\" (absent ⇒ the RFC 0041 recipe, opt-in per RFC 0260)"
+      },
+      {
+        "id": "openwop.requirement.0260.key-recorded",
+        "result": "inapplicable",
+        "reason": "the host does not advertise replay.llmCacheKeyRecipe \"openwop-llm-key-2\" (absent ⇒ the RFC 0041 recipe, opt-in per RFC 0260)"
+      },
+      {
+        "id": "openwop.requirement.0260.key-stable",
+        "result": "inapplicable",
+        "reason": "the host does not advertise replay.llmCacheKeyRecipe \"openwop-llm-key-2\" (absent ⇒ the RFC 0041 recipe, opt-in per RFC 0260)"
+      },
+      {
+        "id": "openwop.requirement.0260.params-in-key",
+        "result": "inapplicable",
+        "reason": "the host does not advertise replay.llmCacheKeyRecipe \"openwop-llm-key-2\" (absent ⇒ the RFC 0041 recipe, opt-in per RFC 0260)"
+      },
+      {
+        "id": "openwop.requirement.0262.gen-ai-attributes",
+        "result": "inapplicable",
+        "reason": "fixture conformance-callai-attempt-accounting is not advertised"
       },
       {
         "id": "openwop.requirement.agent-runtime.advert-record-schema",
@@ -8499,39 +8485,24 @@
         "reason": "the host does not advertise scheduling"
       },
       {
-        "id": "openwop.requirement.secrets.resolved-secret-absent",
-        "result": "inapplicable",
-        "reason": "secrets family not advertised — no obligation"
-      },
-      {
-        "id": "openwop.requirement.secrets.resolved-secret-absent-in-fork",
-        "result": "inapplicable",
-        "reason": "secrets family not advertised — no obligation"
-      },
-      {
-        "id": "openwop.requirement.secrets.resolved-secret-absent-on-failure",
-        "result": "inapplicable",
-        "reason": "secrets family not advertised — no obligation"
-      },
-      {
         "id": "openwop.requirement.secrets.run-secrets-outside-request-digest",
         "result": "inapplicable",
-        "reason": "the secrets family is not advertised — no run-supplied secrets (RFC 0229 §D)"
+        "reason": "secrets.runSecrets is not advertised — the host offers no run-supplied secrets (RFC 0229 §D)"
       },
       {
         "id": "openwop.requirement.secrets.run-witness-redacted",
         "result": "inapplicable",
-        "reason": "the secrets family is not advertised — no run-supplied secrets (RFC 0229 §D)"
+        "reason": "secrets.runSecrets is not advertised — the host offers no run-supplied secrets (RFC 0229 §D)"
       },
       {
         "id": "openwop.requirement.secrets.run-witness-resolves",
         "result": "inapplicable",
-        "reason": "the secrets family is not advertised — no run-supplied secrets (RFC 0229 §D)"
+        "reason": "secrets.runSecrets is not advertised — the host offers no run-supplied secrets (RFC 0229 §D)"
       },
       {
         "id": "openwop.requirement.secrets.run-witness-scope-bound",
         "result": "inapplicable",
-        "reason": "the secrets family is not advertised — no run-supplied secrets (RFC 0229 §D)"
+        "reason": "secrets.runSecrets is not advertised — the host offers no run-supplied secrets (RFC 0229 §D)"
       },
       {
         "id": "openwop.requirement.self-hosted-runner.advert-record-schema",
@@ -8698,11 +8669,11 @@
   "durability": {
     "rung": "durable-single-instance"
   },
-  "witnessSha256": "942d7bc9e143443d1af6608b68c93c900571d027be8f56f12b25b78d318f51a4",
+  "witnessSha256": "dff34111fcc3e796106f19190a99c6e052f5b0c4ff17a697dea2252c4c959562",
   "signature": {
     "alg": "ed25519",
     "keyId": "v2-reference-4",
-    "sig": "vkxrOOFpGBwBJpTO7HGI0OFAzD7gBE1EhFxPpLtkUd0qAEfLyBl2yXtripNuBHAntXupeyzaMuKVwBhGj3MQCQ",
+    "sig": "j7AyS_bcQrlVSPH1yQMmqM3Pv5EZkY-brg1GYyciU9R9Los61l9X0WJQSZ1OjG6wOtGAO3zKwdkjZjEaXRXvBQ",
     "over": [
       "witnessSha256",
       "host.build",
