@@ -84,13 +84,6 @@
       "decision": "keep",
       "reason": "openwop-app and MyndHyve advertise packs, but its three gating scenarios were inapplicable there; the reference host passes them without advertising the record.",
       "plan": "Reconcile: the reference host advertises packs, or the scenarios' gate is corrected; then re-cut."
-    },
-    {
-      "family": "telemetry",
-      "reviewBy": "2.50",
-      "decision": "keep",
-      "reason": "New (RFC 0262, 2026-11-13); no host has implemented it yet.",
-      "plan": "Reference host implements OTLP export and runs v2-telemetry-export."
     }
   ]
 }
