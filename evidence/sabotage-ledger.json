@@ -900,6 +900,18 @@
       "suiteVersion": "2.49.7",
       "result": "executed-fail",
       "date": "2026-11-16"
+    },
+    {
+      "requirementId": "openwop.requirement.0262.shape",
+      "scenario": "v2-telemetry-export.test.ts",
+      "sabotage": "The generated telemetry record dropped minItems from otlp.protocols, so a record advertising an empty transport list validated.",
+      "subject": {
+        "host": "openwop corpus",
+        "build": "3ab63b82c (suite 2.49.7), schemas/v2/capabilities.schema.json sabotaged locally"
+      },
+      "suiteVersion": "2.49.7",
+      "result": "executed-fail",
+      "date": "2026-11-17"
     }
   ]
 }
