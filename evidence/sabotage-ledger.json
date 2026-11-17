@@ -972,6 +972,30 @@
       "suiteVersion": "2.49.6",
       "result": "executed-fail",
       "date": "2026-11-17"
+    },
+    {
+      "requirementId": "openwop.requirement.0260.implies-idempotency",
+      "scenario": "v2-replay-llm-cache-key.test.ts",
+      "sabotage": "The v2 discovery document dropped its idempotency record while replay.llmCacheKeyRecipe stayed advertised, so the facet was claimed with no effect ledger behind it.",
+      "subject": {
+        "host": "openwop-app workflow-engine",
+        "build": "ba48f05c9 (openwop-app main, suite pin 2.49.6), routes/discovery.ts sabotaged locally, in-memory store"
+      },
+      "suiteVersion": "2.49.6",
+      "result": "executed-fail",
+      "date": "2026-11-17"
+    },
+    {
+      "requirementId": "openwop.requirement.0260.shape",
+      "scenario": "v2-replay-llm-cache-key.test.ts",
+      "sabotage": "The effect-ledger projection's cacheKey object was opened (additionalProperties true), so a record carrying a preimage validated.",
+      "subject": {
+        "host": "openwop corpus",
+        "build": "59792c50a (suite 2.49.7), schemas/v2/effect-ledger-projection.schema.json sabotaged locally"
+      },
+      "suiteVersion": "2.49.7",
+      "result": "executed-fail",
+      "date": "2026-11-17"
     }
   ]
 }
