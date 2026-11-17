@@ -70,8 +70,8 @@
 
 | Status | Count |
 |---|---:|
-| Accepted | 252 |
-| Active | 5 |
+| Accepted | 253 |
+| Active | 4 |
 | Draft | 1 |
 | Superseded | 3 |
 
@@ -334,7 +334,7 @@
 | RFC 0259 | `interrupt.resolved` records the instrument of a token resolution (`resolvedVia`) beside who authenticated (`resolvedBy`) | Accepted |
 | RFC 0260 | LLM cache key recipe 2 (`openwop-llm-key-2`): the replay cache key for an LLM-calling node covers every sampling and output-shaping parameter, and is recorded on the effect ledger | Active |
 | RFC 0261 | Under `idempotency.multiRegion`, two regions' concurrent first writes for one record key have exactly one winner, and a claimed effect is not performed in a second region | Active |
-| RFC 0262 | The `telemetry` family: a v2 claim that a host exports OTLP traces, with an optional OTel GenAI semantic-conventions mapping | Active |
+| RFC 0262 | The `telemetry` family: a v2 claim that a host exports OTLP traces, with an optional OTel GenAI semantic-conventions mapping | Accepted |
 | RFC 0263 | A cited conformance leg must be shown able to fail: the sabotage ledger, and requirement ids on every witnessable Falsifiability row | Accepted |
 | RFC 0264 | core-family adoption is derived from bundles, and an unwitnessed family has a review date | Accepted |
 | RFC 0265 | compensation behavior is witnessed at v2 through a failing fixture | Accepted |
@@ -362,7 +362,7 @@ The pack registry now lives in the [`openwop-registry`](https://github.com/openw
 ## Active Follow-Ups
 
 - 1 RFC still `Draft` (RFC 0038) — advance with schema/conformance proof or defer.
-- 5 RFCs `Active` (RFC 0121, RFC 0256, RFC 0260, RFC 0261, RFC 0262) — wire-shape MAY shift compatibly within v1.x until promotion to `Accepted`.
+- 4 RFCs `Active` (RFC 0121, RFC 0256, RFC 0260, RFC 0261) — wire-shape MAY shift compatibly within v1.x until promotion to `Accepted`.
 - External audit, non-steward host recruitment, and non-steward maintainer recruitment remain external-action gates.
 - Multi-region idempotency and some optional-profile behavior checks remain lower-confidence than the core wire contract.
 

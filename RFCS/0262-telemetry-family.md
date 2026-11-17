@@ -4,10 +4,10 @@
 | ----------------- | --------------------------------------------------------------- |
 | **RFC**           | 0262                                                            |
 | **Title**         | The `telemetry` family: a v2 claim that a host exports OTLP traces, with an optional OTel GenAI semantic-conventions mapping |
-| **Status**        | `Active`                                                        |
+| **Status**        | `Accepted`                                                      |
 | **Author(s)**     | David Tufts (@davidscotttufts)                                  |
 | **Created**       | 2026-11-13                                                      |
-| **Updated**       | 2026-11-13 — filed directly as **`Active`, comment window waived by the maintainer** (decision recorded 2026-11-13: "waived", for the Phase 2 RFCs of the protocol-gap program). §E adds a SECURITY invariant (spans MUST NOT carry secrets), a secrets rule, so this is a STEWARD OVERRIDE of RFC 0147 §A.6, recorded in `MAINTAINERS.md`. Lands the `telemetry` family row, `spec/v2/facets/telemetry.schema.json`, `spec/v2/core/telemetry.md`, the invariant row and `v2-telemetry-export` (6 ids). Closes assessment finding P-020 (August 2026) once a host's certified bundle records the legs. |
+| **Updated**       | 2026-11-17 — **`Active` → `Accepted`**; §B review deferred by steward exemption (2026-10-17). Evidence tier: tier-1 — the v2 reference host's certified 2.49.6 public cut (`openwop-host-v2-reference-2.49.6-ed00ba4.json`, build `commit:ed00ba4`, 589/0/0, egress guard closed, no relaxation, signed `v2-reference-4`). `0262.run-span`, `node-span`, `traceparent-continued` and `no-secret-in-spans` are `executed-pass`, exported to the suite's collector over loopback. `gen-ai-attributes` is `inapplicable` (no `genAiSemconv` claim). Each of the four host legs was also made to fail on its own, on a sabotaged build of the same host (four `evidence/sabotage-ledger.json` rows, RFC 0263 §C). Host implementation: openwop-examples #190 (a dependency-free OTLP/HTTP-JSON exporter, and the store canary that binds the `secrets` family). G3 and G4 close. The witness is the reference host, by the maintainer's decision of 2026-11-16: a deployed host's exporter could reach the suite's collector only through a production configuration change. Earlier 2026-11-13 — filed directly as **`Active`, comment window waived by the maintainer** (decision recorded 2026-11-13: "waived", for the Phase 2 RFCs of the protocol-gap program). §E adds a SECURITY invariant (spans MUST NOT carry secrets), a secrets rule, so this is a STEWARD OVERRIDE of RFC 0147 §A.6, recorded in `MAINTAINERS.md`. Lands the `telemetry` family row, `spec/v2/facets/telemetry.schema.json`, `spec/v2/core/telemetry.md`, the invariant row and `v2-telemetry-export` (6 ids). Closes assessment finding P-020 (August 2026) once a host's certified bundle records the legs. |
 | **Affects**       | `spec/v2/declaration.json` (new core family `telemetry`; `schemas/v2/capabilities.schema.json` and `spec/v2/profiles.json` regenerated) · `spec/v2/facets/telemetry.schema.json` (new) · `spec/v2/core/telemetry.md` (new core doc, the family's normative home) · `spec/v2/core/conformance.md` (the one SHOULD on `openwop.*` spans points here) · the `observability` metadata description (names `telemetry` as the v2 claim) · `SECURITY/invariants.yaml` (one row) · conformance: new scenario `v2-telemetry-export.test.ts` · CHANGELOG. v1 (`spec/v1/observability.md`) is frozen and not touched. |
 | **Compatibility** | `additive` per `COMPATIBILITY.md` §2.4: a new optional core family. A host that does not advertise it is unaffected; the `observability` metadata key keeps its shape. |
 | **Supersedes**    | —                                                               |
@@ -151,12 +151,12 @@ Every host leg records `blocked`, not a pass, when the collector captured no spa
 ## Acceptance criteria
 
 - [x] Comment window run (`Draft → Active`; RFC 0147 §A.6). *(Waived by the maintainer, 2026-11-13.)*
-- [ ] Family row, facet schema and `spec/v2/core/telemetry.md` merged; capabilities schema and profiles regenerated.
-- [ ] `SECURITY/invariants.yaml` row `telemetry-export-no-secret` with `v2-telemetry-export.test.ts` as its test.
-- [ ] `v2-telemetry-export.test.ts` in a published suite.
-- [ ] CHANGELOG entry.
-- [ ] A certified host bundle records `0262.run-span`, `0262.node-span`, `0262.traceparent-continued` and `0262.no-secret-in-spans` `executed-pass` (and `0262.gen-ai-attributes` if the host advertises `genAiSemconv`), each with a sabotage record that ran red.
-- [ ] Register sweep (`RFCS/registers/0262-*.gaps.md`, `.risks.md`).
+- [x] Family row, facet schema and `spec/v2/core/telemetry.md` merged; capabilities schema and profiles regenerated. *(2.47.0.)*
+- [x] `SECURITY/invariants.yaml` row `telemetry-export-no-secret` with `v2-telemetry-export.test.ts` as its test. *(2.47.0.)*
+- [x] `v2-telemetry-export.test.ts` in a published suite. *(2.47.0; its ids resolve from 2.49.6.)*
+- [x] CHANGELOG entry. *(2.47.0; Accepted in 2.49.7.)*
+- [x] A certified host bundle records `0262.run-span`, `0262.node-span`, `0262.traceparent-continued` and `0262.no-secret-in-spans` `executed-pass` (and `0262.gen-ai-attributes` if the host advertises `genAiSemconv`), each with a sabotage record that ran red. *(2026-11-17: the reference host's certified 2.49.6 cut, build `commit:ed00ba4`; four ledger rows.)*
+- [x] Register sweep (`RFCS/registers/0262-*.gaps.md`, `.risks.md`). *(2026-11-17: G3 and G4 closed.)*
 
 ## References
 
