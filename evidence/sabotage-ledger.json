@@ -912,6 +912,18 @@
       "suiteVersion": "2.49.7",
       "result": "executed-fail",
       "date": "2026-11-17"
+    },
+    {
+      "requirementId": "openwop.requirement.0262.gen-ai-attributes",
+      "scenario": "v2-telemetry-export.test.ts",
+      "sabotage": "The model-call span lost its gen_ai.usage token counts (test-seam switch OPENWOP_SABOTAGE_GENAI=drop-usage), so a host advertising genAiSemconv 1.37.0 left the usage attributes off.",
+      "subject": {
+        "host": "openwop-app workflow-engine",
+        "build": "c01a456d4 (feat/rfc0262-genai-semconv, suite pin 2.49.6), sabotaged locally through its test-seam switch, in-memory store"
+      },
+      "suiteVersion": "2.49.6",
+      "result": "executed-fail",
+      "date": "2026-11-17"
     }
   ]
 }
