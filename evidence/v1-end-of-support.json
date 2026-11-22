@@ -43,13 +43,13 @@
     },
     {
       "name": "openwop-workflow-engine",
-      "matrixVersion": "0.1.0",
+      "matrixVersion": "0.17.0",
       "bundle": "evidence/v2-host-bundles/openwop-workflow-engine.json",
       "present": true,
       "latest": {
-        "suiteVersion": "2.49.1",
+        "suiteVersion": "2.49.7",
         "targetMajor": 2,
-        "witnessSha256": "72dabb67600ea408a0596e1f1c2bd5d4dc1515fde304fd3fa9e0103d6e3c2a3f",
+        "witnessSha256": "9caf922b998a1cbc415f89201828baafb8591ff47a93ac7d456078d30f03cf92",
         "evidenceTiers": [
           "self"
         ],

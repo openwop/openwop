@@ -32,6 +32,10 @@ Entries before this file was condensed carried full development detail. That tex
 ### Security
 
 
+## [2.49.8] — 2026-11-22 — RFC 0260 Accepted
+
+- **RFC 0260 Accepted.** openwop-app's certified 2.49.7 cut (`2640fa782`, 573/0/0) passes every `0260.*` leg: each sampling parameter enters the LLM cache key, recorded on the effect ledger. Each leg has a red sabotage run (RFC 0263 §C). G6 closes. §B review deferred by steward exemption.
+
 ## [2.49.7] — 2026-11-17 — RFC 0262 Accepted; sabotage backfill
 
 - **RFC 0262 Accepted.** The reference host's certified 2.49.6 cut (`ed00ba4`, 589/0/0) exports run and node spans over OTLP in the caller's trace with no secret in any span; each host leg went red on a sabotaged build. G3 and G4 close, so the packed `gaps.json` changes. §B review deferred by steward exemption.
