@@ -1,3 +1,7 @@
+## [2.49.8] — 2026-11-22 — RFC 0260 Accepted
+
+- No scenario change. The corpus records RFC 0260 Accepted on openwop-app's certified 2.49.7 cut; the packed gap register and status surfaces change.
+
 ## [2.49.7] — 2026-11-17 — Five normative-home legs can fail on their own rule
 
 - **`v2-normative-home-gate`.** The RFC 0263 G3 backfill found five legs that stayed green with their rule removed: `0189.home-class`, `0189.content-predicate`, `0191.home-marker` and `0189.deadline-live`, because an earlier rule refused the same fixture, and `0190.budget-denominator`, which read only a summary line. Each sabotage leg now runs on a probe document that passes every other rule, and asserts the reason its own rule prints. The scratch corpus copies `RFCS/`, `deadline-live` admits the undeclared family so only the deadline can exit 1, and the denominator leg compares the measured rows with the RFC 0190 §A set.

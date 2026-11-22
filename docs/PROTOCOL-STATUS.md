@@ -21,7 +21,7 @@
 | Artifact | Version | Source | Cadence |
 |---|---|---|---|
 | Spec corpus (root) | 1.1.0 | `package.json` | bumps only on a coordinated spec release |
-| Conformance suite `@openwop/openwop-conformance` | 2.49.7 | `conformance/package.json` | minor on scenario add/remove |
+| Conformance suite `@openwop/openwop-conformance` | 2.49.8 | `conformance/package.json` | minor on scenario add/remove |
 | OpenAPI `info.version` | 1.1.0 | `api/openapi.yaml` | hand-maintained in v1.x; generated from the corpus tag at v2 (RFC 0172 sectionB #14) |
 | AsyncAPI `info.version` | 1.1.0 | `api/asyncapi.yaml` | as above |
 | TypeScript SDK `@openwop/openwop` (2.x, current) | 2.10.0 | openwop-sdks `sdk/typescript-v2/package.json` (via `evidence/cross-repo-manifests.json`) | v2-only; npm `latest` |
@@ -31,10 +31,10 @@
 | Python SDK `openwop-client` (1.x) | 1.8.0 | openwop-sdks `sdk/python/pyproject.toml` | as above; `openwop-client<2` |
 | Go SDK `github.com/openwop/openwop-sdks/go` (1.x) | 1.7.0 | openwop-sdks `go/CHANGELOG.md` head (tag-versioned `go/v1.Y.Z`; no version file) | as above |
 | openwop-sdks corpus pin | v2.46.41 | openwop-sdks `CORPUS_TAG` | bumped only by a re-vendor PR (RFC 0176 sectionE.1) |
-| CLI `@openwop/cli` | 2.0.0 | openwop-cli `package.json` | speaks the wire directly; negotiates major 2 since 1.0.0 (the v1-only 0.18.x line is frozen on branch `cli-v1-frozen`) |
+| CLI `@openwop/cli` | 2.1.0 | openwop-cli `package.json` | speaks the wire directly; negotiates major 2 since 1.0.0 (the v1-only 0.18.x line is frozen on branch `cli-v1-frozen`) |
 | Registry `registryVersion` / `protocolVersion` | 1.0.0 / 1.0 | openwop-registry `.well-known/openwop-registry.json` | RFC 0172 sectionB #18; versioned by tree at v2 (RFC 0177 sectionA.3) |
 | openwop-registry corpus pin | v2.46.36 | openwop-registry `CORPUS_TAG` | as the SDK pin |
-| openwop-app corpus pin / suite pin | v2.46.42 / ^2.46.42 | openwop-app `schemas/CORPUS_TAG`, `backend/typescript/package.json` | tier-1 host; both must agree (RFC 0176 sectionE.1) |
+| openwop-app corpus pin / suite pin | v2.49.7 / ^2.49.7 | openwop-app `schemas/CORPUS_TAG`, `backend/typescript/package.json` | tier-1 host; both must agree (RFC 0176 sectionE.1) |
 | openwop-examples in-memory host / suite pin | 1.1.7 / ^1.152.0 | openwop-examples `examples/hosts/in-memory/package.json` | front-door witness host for the v2 RC (Phase 3 plan section11) |
 
 ## Version Axes
@@ -70,8 +70,8 @@
 
 | Status | Count |
 |---|---:|
-| Accepted | 253 |
-| Active | 4 |
+| Accepted | 254 |
+| Active | 3 |
 | Draft | 1 |
 | Superseded | 3 |
 
@@ -332,7 +332,7 @@
 | RFC 0257 | A run in which no node failed and every terminal node was skipped ends `completed`, and says so on `run.completed` | Accepted |
 | RFC 0258 | Bounded refine loopback for approval gates | Accepted |
 | RFC 0259 | `interrupt.resolved` records the instrument of a token resolution (`resolvedVia`) beside who authenticated (`resolvedBy`) | Accepted |
-| RFC 0260 | LLM cache key recipe 2 (`openwop-llm-key-2`): the replay cache key for an LLM-calling node covers every sampling and output-shaping parameter, and is recorded on the effect ledger | Active |
+| RFC 0260 | LLM cache key recipe 2 (`openwop-llm-key-2`): the replay cache key for an LLM-calling node covers every sampling and output-shaping parameter, and is recorded on the effect ledger | Accepted |
 | RFC 0261 | Under `idempotency.multiRegion`, two regions' concurrent first writes for one record key have exactly one winner, and a claimed effect is not performed in a second region | Active |
 | RFC 0262 | The `telemetry` family: a v2 claim that a host exports OTLP traces, with an optional OTel GenAI semantic-conventions mapping | Accepted |
 | RFC 0263 | A cited conformance leg must be shown able to fail: the sabotage ledger, and requirement ids on every witnessable Falsifiability row | Accepted |
@@ -362,7 +362,7 @@ The pack registry now lives in the [`openwop-registry`](https://github.com/openw
 ## Active Follow-Ups
 
 - 1 RFC still `Draft` (RFC 0038) — advance with schema/conformance proof or defer.
-- 4 RFCs `Active` (RFC 0121, RFC 0256, RFC 0260, RFC 0261) — wire-shape MAY shift compatibly within v1.x until promotion to `Accepted`.
+- 3 RFCs `Active` (RFC 0121, RFC 0256, RFC 0261) — wire-shape MAY shift compatibly within v1.x until promotion to `Accepted`.
 - External audit, non-steward host recruitment, and non-steward maintainer recruitment remain external-action gates.
 - Multi-region idempotency and some optional-profile behavior checks remain lower-confidence than the core wire contract.
 
