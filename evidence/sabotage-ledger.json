@@ -996,6 +996,594 @@
       "suiteVersion": "2.49.7",
       "result": "executed-fail",
       "date": "2026-11-17"
+    },
+    {
+      "requirementId": "openwop.requirement.0198.advertised-via-discover",
+      "scenario": "v2-mcp-tasks.test.ts",
+      "sabotage": "mcp-server.ts dropped `extensions` from MCP_SERVER_FEATURES, so discovery mcp.features no longer listed it while server/discover still served the Tasks extension.",
+      "subject": {
+        "host": "openwop-examples v2-reference",
+        "build": "ed00ba4 (suite pin 2.49.6), src/mcp-server.ts and src/interrupts.ts sabotaged locally, one rule per boot, SQLite in a temp dir"
+      },
+      "suiteVersion": "2.49.6",
+      "result": "executed-fail",
+      "date": "2026-11-24"
+    },
+    {
+      "requirementId": "openwop.requirement.0198.task-when-nonterminal",
+      "scenario": "v2-mcp-tasks.test.ts",
+      "sabotage": "mcp-server.ts toolsCall ignored the declared Tasks extension and waited for the run to settle, so a call on a non-terminal run was never answered CreateTaskResult.",
+      "subject": {
+        "host": "openwop-examples v2-reference",
+        "build": "ed00ba4 (suite pin 2.49.6), src/mcp-server.ts and src/interrupts.ts sabotaged locally, one rule per boot, SQLite in a temp dir"
+      },
+      "suiteVersion": "2.49.6",
+      "result": "executed-fail",
+      "date": "2026-11-24"
+    },
+    {
+      "requirementId": "openwop.requirement.0198.task-id-is-run-id",
+      "scenario": "v2-mcp-tasks.test.ts",
+      "sabotage": "mcp-server.ts taskOf minted a fresh `<tenant>~2F<uuid>` taskId instead of projecting the run id, so getRun on the unprojected taskId did not find the run the call started.",
+      "subject": {
+        "host": "openwop-examples v2-reference",
+        "build": "ed00ba4 (suite pin 2.49.6), src/mcp-server.ts and src/interrupts.ts sabotaged locally, one rule per boot, SQLite in a temp dir"
+      },
+      "suiteVersion": "2.49.6",
+      "result": "executed-fail",
+      "date": "2026-11-24"
+    },
+    {
+      "requirementId": "openwop.requirement.0198.task-status-projection",
+      "scenario": "v2-mcp-tasks.test.ts",
+      "sabotage": "mcp-server.ts taskOf projected a failed run as status `failed` instead of `completed` with result.isError true.",
+      "subject": {
+        "host": "openwop-examples v2-reference",
+        "build": "ed00ba4 (suite pin 2.49.6), src/mcp-server.ts and src/interrupts.ts sabotaged locally, one rule per boot, SQLite in a temp dir"
+      },
+      "suiteVersion": "2.49.6",
+      "result": "executed-fail",
+      "date": "2026-11-24"
+    },
+    {
+      "requirementId": "openwop.requirement.0198.task-update-resolves-once",
+      "scenario": "v2-mcp-tasks.test.ts",
+      "sabotage": "mcp-server.ts tasksUpdate answered a repeat update (interrupt already resolved or run terminal) with a -32602 error instead of an empty acknowledgement.",
+      "subject": {
+        "host": "openwop-examples v2-reference",
+        "build": "ed00ba4 (suite pin 2.49.6), src/mcp-server.ts and src/interrupts.ts sabotaged locally, one rule per boot, SQLite in a temp dir"
+      },
+      "suiteVersion": "2.49.6",
+      "result": "executed-fail",
+      "date": "2026-11-24"
+    },
+    {
+      "requirementId": "openwop.requirement.0198.task-update-approver-checked",
+      "scenario": "v2-mcp-tasks.test.ts",
+      "sabotage": "interrupts.ts skipped the approversList check, so a tasks/update from a caller not in the list resolved the approval.",
+      "subject": {
+        "host": "openwop-examples v2-reference",
+        "build": "ed00ba4 (suite pin 2.49.6), src/mcp-server.ts and src/interrupts.ts sabotaged locally, one rule per boot, SQLite in a temp dir"
+      },
+      "suiteVersion": "2.49.6",
+      "result": "executed-fail",
+      "date": "2026-11-24"
+    },
+    {
+      "requirementId": "openwop.requirement.0198.task-get-read-only",
+      "scenario": "v2-mcp-tasks.test.ts",
+      "sabotage": "mcp-server.ts tasksGet appended a log.appended event to the run log on every read.",
+      "subject": {
+        "host": "openwop-examples v2-reference",
+        "build": "ed00ba4 (suite pin 2.49.6), src/mcp-server.ts and src/interrupts.ts sabotaged locally, one rule per boot, SQLite in a temp dir"
+      },
+      "suiteVersion": "2.49.6",
+      "result": "executed-fail",
+      "date": "2026-11-24"
+    },
+    {
+      "requirementId": "openwop.requirement.0198.task-unreadable-not-found",
+      "scenario": "v2-mcp-tasks.test.ts",
+      "sabotage": "mcp-server.ts taskRun answered another tenant's taskId with a distinct -32602 message (`task belongs to another tenant`) instead of the one `task not found`.",
+      "subject": {
+        "host": "openwop-examples v2-reference",
+        "build": "ed00ba4 (suite pin 2.49.6), src/mcp-server.ts and src/interrupts.ts sabotaged locally, one rule per boot, SQLite in a temp dir"
+      },
+      "suiteVersion": "2.49.6",
+      "result": "executed-fail",
+      "date": "2026-11-24"
+    },
+    {
+      "requirementId": "openwop.requirement.0198.listen-omits-unreadable",
+      "scenario": "v2-mcp-tasks.test.ts",
+      "sabotage": "mcp-server.ts subscriptionsListen acknowledged every requested taskId, including ones the caller cannot read.",
+      "subject": {
+        "host": "openwop-examples v2-reference",
+        "build": "ed00ba4 (suite pin 2.49.6), src/mcp-server.ts and src/interrupts.ts sabotaged locally, one rule per boot, SQLite in a temp dir"
+      },
+      "suiteVersion": "2.49.6",
+      "result": "executed-fail",
+      "date": "2026-11-24"
+    },
+    {
+      "requirementId": "openwop.requirement.0198.task-cancel-cancels-run",
+      "scenario": "v2-mcp-tasks.test.ts",
+      "sabotage": "mcp-server.ts tasksCancel acknowledged without cancelling the run.",
+      "subject": {
+        "host": "openwop-examples v2-reference",
+        "build": "ed00ba4 (suite pin 2.49.6), src/mcp-server.ts and src/interrupts.ts sabotaged locally, one rule per boot, SQLite in a temp dir"
+      },
+      "suiteVersion": "2.49.6",
+      "result": "executed-fail",
+      "date": "2026-11-24"
+    },
+    {
+      "requirementId": "openwop.requirement.0198.disconnect-cancels-run",
+      "scenario": "v2-mcp-tasks.test.ts",
+      "sabotage": "mcp-server.ts removed the close handler's cancel, so a client disconnect before the answer left the run it started running.",
+      "subject": {
+        "host": "openwop-examples v2-reference",
+        "build": "ed00ba4 (suite pin 2.49.6), src/mcp-server.ts and src/interrupts.ts sabotaged locally, one rule per boot, SQLite in a temp dir"
+      },
+      "suiteVersion": "2.49.6",
+      "result": "executed-fail",
+      "date": "2026-11-24"
+    },
+    {
+      "requirementId": "openwop.requirement.0198.task-survives-disconnect",
+      "scenario": "v2-mcp-tasks.test.ts",
+      "sabotage": "mcp-server.ts cancelled the run on any close, including one after CreateTaskResult was fully sent.",
+      "subject": {
+        "host": "openwop-examples v2-reference",
+        "build": "ed00ba4 (suite pin 2.49.6), src/mcp-server.ts and src/interrupts.ts sabotaged locally, one rule per boot, SQLite in a temp dir"
+      },
+      "suiteVersion": "2.49.6",
+      "result": "executed-fail",
+      "date": "2026-11-24"
+    },
+    {
+      "requirementId": "openwop.requirement.0198.no-server-cancelled",
+      "scenario": "v2-mcp-tasks.test.ts",
+      "sabotage": "mcp-server.ts wrote a notifications/cancelled frame on a blocking SSE tools/call whose run was cancelled, before the response.",
+      "subject": {
+        "host": "openwop-examples v2-reference",
+        "build": "ed00ba4 (suite pin 2.49.6), src/mcp-server.ts and src/interrupts.ts sabotaged locally, one rule per boot, SQLite in a temp dir"
+      },
+      "suiteVersion": "2.49.6",
+      "result": "executed-fail",
+      "date": "2026-11-24"
+    },
+    {
+      "requirementId": "openwop.requirement.0236.host-event.envelope",
+      "scenario": "v2-host-event-delivery.test.ts",
+      "sabotage": "host-events.ts framed each host event without its timestamp, so the /host/events data was not a valid envelope.",
+      "subject": {
+        "host": "openwop-examples v2-reference",
+        "build": "ed00ba4 (suite pin 2.49.6), src/host-events.ts and src/webhooks.ts sabotaged locally, one rule per boot, SQLite in a temp dir"
+      },
+      "suiteVersion": "2.49.6",
+      "result": "executed-fail",
+      "date": "2026-11-24"
+    },
+    {
+      "requirementId": "openwop.requirement.0236.ephemeral.no-resume",
+      "scenario": "v2-host-event-delivery.test.ts",
+      "sabotage": "host-events.ts framed ephemeral host events with an id: and retained them, so a Last-Event-ID resume redelivered one.",
+      "subject": {
+        "host": "openwop-examples v2-reference",
+        "build": "ed00ba4 (suite pin 2.49.6), src/host-events.ts and src/webhooks.ts sabotaged locally, one rule per boot, SQLite in a temp dir"
+      },
+      "suiteVersion": "2.49.6",
+      "result": "executed-fail",
+      "date": "2026-11-24"
+    },
+    {
+      "requirementId": "openwop.requirement.0236.webhook.ephemeral-refused",
+      "scenario": "v2-host-event-delivery.test.ts",
+      "sabotage": "webhooks.ts accepted a registration whose events[] named an ephemeral host-event type.",
+      "subject": {
+        "host": "openwop-examples v2-reference",
+        "build": "ed00ba4 (suite pin 2.49.6), src/host-events.ts and src/webhooks.ts sabotaged locally, one rule per boot, SQLite in a temp dir"
+      },
+      "suiteVersion": "2.49.6",
+      "result": "executed-fail",
+      "date": "2026-11-24"
+    },
+    {
+      "requirementId": "openwop.requirement.0236.webhook.host-variant",
+      "scenario": "v2-host-event-delivery.test.ts",
+      "sabotage": "webhooks.ts delivered a host event as { event } instead of { hostEvent }.",
+      "subject": {
+        "host": "openwop-examples v2-reference",
+        "build": "ed00ba4 (suite pin 2.49.6), src/host-events.ts and src/webhooks.ts sabotaged locally, one rule per boot, SQLite in a temp dir"
+      },
+      "suiteVersion": "2.49.6",
+      "result": "executed-fail",
+      "date": "2026-11-24"
+    },
+    {
+      "requirementId": "openwop.requirement.0236.ephemeral.no-fan-out",
+      "scenario": "v2-host-event-delivery.test.ts",
+      "sabotage": "host-events.ts fanned ephemeral host events out to webhooks, and webhooks.ts delivered them to every v2 subscription.",
+      "subject": {
+        "host": "openwop-examples v2-reference",
+        "build": "ed00ba4 (suite pin 2.49.6), src/host-events.ts and src/webhooks.ts sabotaged locally, one rule per boot, SQLite in a temp dir"
+      },
+      "suiteVersion": "2.49.6",
+      "result": "executed-fail",
+      "date": "2026-11-24"
+    },
+    {
+      "requirementId": "openwop.requirement.0241.trigger.bound-by-listing",
+      "scenario": "v2-host-event-delivery.test.ts",
+      "sabotage": "host-events.ts refused POST /host/events/test for the ephemeral class although hostEvents.types listed its reserved type.",
+      "subject": {
+        "host": "openwop-examples v2-reference",
+        "build": "ed00ba4 (suite pin 2.49.6), src/host-events.ts and src/webhooks.ts sabotaged locally, one rule per boot, SQLite in a temp dir"
+      },
+      "suiteVersion": "2.49.6",
+      "result": "executed-fail",
+      "date": "2026-11-24"
+    },
+    {
+      "requirementId": "openwop.requirement.0236.host-event.tenant-isolation",
+      "scenario": "v2-host-event-delivery.test.ts",
+      "sabotage": "host-events.ts wrote every host event to every /host/events subscriber, whatever the tenant.",
+      "subject": {
+        "host": "openwop-examples v2-reference",
+        "build": "ed00ba4 (suite pin 2.49.6), src/host-events.ts and src/webhooks.ts sabotaged locally, one rule per boot, SQLite in a temp dir"
+      },
+      "suiteVersion": "2.49.6",
+      "result": "executed-fail",
+      "date": "2026-11-24"
+    },
+    {
+      "requirementId": "openwop.requirement.0204.call-tool-verbatim",
+      "scenario": "v2-mcp-client-results.test.ts",
+      "sabotage": "mcp-client.ts callTool stripped _meta from the server CallToolResult.",
+      "subject": {
+        "host": "openwop-examples v2-reference",
+        "build": "ed00ba4 (suite pin 2.49.6), src/mcp-client.ts sabotaged locally, one rule per boot, SQLite in a temp dir"
+      },
+      "suiteVersion": "2.49.6",
+      "result": "executed-fail",
+      "date": "2026-11-24"
+    },
+    {
+      "requirementId": "openwop.requirement.0204.call-tool-iserror-resolves",
+      "scenario": "v2-mcp-client-results.test.ts",
+      "sabotage": "mcp-client.ts callTool rejected a CallToolResult carrying isError: true.",
+      "subject": {
+        "host": "openwop-examples v2-reference",
+        "build": "ed00ba4 (suite pin 2.49.6), src/mcp-client.ts sabotaged locally, one rule per boot, SQLite in a temp dir"
+      },
+      "suiteVersion": "2.49.6",
+      "result": "executed-fail",
+      "date": "2026-11-24"
+    },
+    {
+      "requirementId": "openwop.requirement.0204.list-tools-page",
+      "scenario": "v2-mcp-client-results.test.ts",
+      "sabotage": "mcp-client.ts listTools dropped the caller cursor from tools/list.",
+      "subject": {
+        "host": "openwop-examples v2-reference",
+        "build": "ed00ba4 (suite pin 2.49.6), src/mcp-client.ts sabotaged locally, one rule per boot, SQLite in a temp dir"
+      },
+      "suiteVersion": "2.49.6",
+      "result": "executed-fail",
+      "date": "2026-11-24"
+    },
+    {
+      "requirementId": "openwop.requirement.0204.server-health",
+      "scenario": "v2-mcp-client-results.test.ts",
+      "sabotage": "mcp-client.ts serverHealth reported an unreachable server as the session state `disconnected`.",
+      "subject": {
+        "host": "openwop-examples v2-reference",
+        "build": "ed00ba4 (suite pin 2.49.6), src/mcp-client.ts sabotaged locally, one rule per boot, SQLite in a temp dir"
+      },
+      "suiteVersion": "2.49.6",
+      "result": "executed-fail",
+      "date": "2026-11-24"
+    },
+    {
+      "requirementId": "openwop.requirement.0204.reject-unknown-server",
+      "scenario": "v2-mcp-client-results.test.ts",
+      "sabotage": "mcp-client.ts resolved an unknown serverId to the first configured server instead of rejecting not_found.",
+      "subject": {
+        "host": "openwop-examples v2-reference",
+        "build": "ed00ba4 (suite pin 2.49.6), src/mcp-client.ts sabotaged locally, one rule per boot, SQLite in a temp dir"
+      },
+      "suiteVersion": "2.49.6",
+      "result": "executed-fail",
+      "date": "2026-11-24"
+    },
+    {
+      "requirementId": "openwop.requirement.0207.mcp-traceparent-carried",
+      "scenario": "v2-interop-trace-context.test.ts",
+      "sabotage": "mcp-client.ts (ctx.mcp) and interop.ts (the MCP invoke seam) sent tools/call with no traceparent in either _meta or the header.",
+      "subject": {
+        "host": "openwop-examples v2-reference",
+        "build": "ed00ba4 (suite pin 2.49.6), src/mcp-client.ts, src/interop.ts, src/mcp-server.ts and src/a2a-server.ts sabotaged locally, one rule per boot, SQLite in a temp dir"
+      },
+      "suiteVersion": "2.49.6",
+      "result": "executed-fail",
+      "date": "2026-11-24"
+    },
+    {
+      "requirementId": "openwop.requirement.0207.mcp-server-adopts-meta",
+      "scenario": "v2-interop-trace-context.test.ts",
+      "sabotage": "mcp-server.ts took the transport header as the parent ahead of a valid params._meta.traceparent.",
+      "subject": {
+        "host": "openwop-examples v2-reference",
+        "build": "ed00ba4 (suite pin 2.49.6), src/mcp-client.ts, src/interop.ts, src/mcp-server.ts and src/a2a-server.ts sabotaged locally, one rule per boot, SQLite in a temp dir"
+      },
+      "suiteVersion": "2.49.6",
+      "result": "executed-fail",
+      "date": "2026-11-24"
+    },
+    {
+      "requirementId": "openwop.requirement.0207.mcp-malformed-ignored",
+      "scenario": "v2-interop-trace-context.test.ts",
+      "sabotage": "mcp-server.ts answered a malformed params._meta.traceparent with -32602 instead of ignoring it.",
+      "subject": {
+        "host": "openwop-examples v2-reference",
+        "build": "ed00ba4 (suite pin 2.49.6), src/mcp-client.ts, src/interop.ts, src/mcp-server.ts and src/a2a-server.ts sabotaged locally, one rule per boot, SQLite in a temp dir"
+      },
+      "suiteVersion": "2.49.6",
+      "result": "executed-fail",
+      "date": "2026-11-24"
+    },
+    {
+      "requirementId": "openwop.requirement.0207.a2a-malformed-ignored",
+      "scenario": "v2-interop-trace-context.test.ts",
+      "sabotage": "a2a-server.ts answered a malformed metadata.openwop.traceparent with an invalid-params error instead of ignoring it.",
+      "subject": {
+        "host": "openwop-examples v2-reference",
+        "build": "ed00ba4 (suite pin 2.49.6), src/mcp-client.ts, src/interop.ts, src/mcp-server.ts and src/a2a-server.ts sabotaged locally, one rule per boot, SQLite in a temp dir"
+      },
+      "suiteVersion": "2.49.6",
+      "result": "executed-fail",
+      "date": "2026-11-24"
+    },
+    {
+      "requirementId": "openwop.requirement.0207.a2a-traceparent-carried",
+      "scenario": "v2-interop-trace-context.test.ts",
+      "sabotage": "interop.ts (the A2A invoke seam) sent SendMessage with no traceparent in metadata.openwop or the header.",
+      "subject": {
+        "host": "openwop-examples v2-reference",
+        "build": "ed00ba4 (suite pin 2.49.6), src/mcp-client.ts, src/interop.ts, src/mcp-server.ts and src/a2a-server.ts sabotaged locally, one rule per boot, SQLite in a temp dir"
+      },
+      "suiteVersion": "2.49.6",
+      "result": "executed-fail",
+      "date": "2026-11-24"
+    },
+    {
+      "requirementId": "openwop.requirement.0242.inbound.listed",
+      "scenario": "v2-negotiation-decided-inbound.test.ts",
+      "sabotage": "host-events.ts left negotiation.decided out of hostEvents.types while inbound A2A and MCP were served.",
+      "subject": {
+        "host": "openwop-examples v2-reference",
+        "build": "ed00ba4 (suite pin 2.49.6), src/interop.ts and src/host-events.ts sabotaged locally, one rule per boot, SQLite in a temp dir"
+      },
+      "suiteVersion": "2.49.6",
+      "result": "executed-fail",
+      "date": "2026-11-24"
+    },
+    {
+      "requirementId": "openwop.requirement.0242.inbound.recorded",
+      "scenario": "v2-negotiation-decided-inbound.test.ts",
+      "sabotage": "interop.ts auditInbound recorded nothing for an accepted inbound A2A exchange.",
+      "subject": {
+        "host": "openwop-examples v2-reference",
+        "build": "ed00ba4 (suite pin 2.49.6), src/interop.ts and src/host-events.ts sabotaged locally, one rule per boot, SQLite in a temp dir"
+      },
+      "suiteVersion": "2.49.6",
+      "result": "executed-fail",
+      "date": "2026-11-24"
+    },
+    {
+      "requirementId": "openwop.requirement.0242.inbound.refused",
+      "scenario": "v2-negotiation-decided-inbound.test.ts",
+      "sabotage": "interop.ts auditInbound recorded nothing for a refused inbound A2A exchange.",
+      "subject": {
+        "host": "openwop-examples v2-reference",
+        "build": "ed00ba4 (suite pin 2.49.6), src/interop.ts and src/host-events.ts sabotaged locally, one rule per boot, SQLite in a temp dir"
+      },
+      "suiteVersion": "2.49.6",
+      "result": "executed-fail",
+      "date": "2026-11-24"
+    },
+    {
+      "requirementId": "openwop.requirement.0242.inbound.recorded.mcp",
+      "scenario": "v2-negotiation-decided-inbound.test.ts",
+      "sabotage": "interop.ts auditInbound recorded nothing for an accepted inbound MCP exchange.",
+      "subject": {
+        "host": "openwop-examples v2-reference",
+        "build": "ed00ba4 (suite pin 2.49.6), src/interop.ts and src/host-events.ts sabotaged locally, one rule per boot, SQLite in a temp dir"
+      },
+      "suiteVersion": "2.49.6",
+      "result": "executed-fail",
+      "date": "2026-11-24"
+    },
+    {
+      "requirementId": "openwop.requirement.0242.inbound.refused.mcp",
+      "scenario": "v2-negotiation-decided-inbound.test.ts",
+      "sabotage": "interop.ts auditInbound recorded nothing for a refused inbound MCP exchange.",
+      "subject": {
+        "host": "openwop-examples v2-reference",
+        "build": "ed00ba4 (suite pin 2.49.6), src/interop.ts and src/host-events.ts sabotaged locally, one rule per boot, SQLite in a temp dir"
+      },
+      "suiteVersion": "2.49.6",
+      "result": "executed-fail",
+      "date": "2026-11-24"
+    },
+    {
+      "requirementId": "openwop.requirement.0175.negotiation-decided-emitted",
+      "scenario": "v2-negotiation-decided-emitted.test.ts",
+      "sabotage": "interop.ts audit appended no negotiation.decided to the run log for an outbound A2A or MCP exchange.",
+      "subject": {
+        "host": "openwop-examples v2-reference",
+        "build": "ed00ba4 (suite pin 2.49.6), src/interop.ts sabotaged locally, one rule per boot, SQLite in a temp dir"
+      },
+      "suiteVersion": "2.49.6",
+      "result": "executed-fail",
+      "date": "2026-11-24"
+    },
+    {
+      "requirementId": "openwop.requirement.0242.requested.outbound",
+      "scenario": "v2-negotiation-decided-emitted.test.ts",
+      "sabotage": "interop.ts audit left `requested` out of the outbound A2A negotiation.decided record.",
+      "subject": {
+        "host": "openwop-examples v2-reference",
+        "build": "ed00ba4 (suite pin 2.49.6), src/interop.ts sabotaged locally, one rule per boot, SQLite in a temp dir"
+      },
+      "suiteVersion": "2.49.6",
+      "result": "executed-fail",
+      "date": "2026-11-24"
+    },
+    {
+      "requirementId": "openwop.requirement.0242.requested.outbound.mcp",
+      "scenario": "v2-negotiation-decided-emitted.test.ts",
+      "sabotage": "interop.ts audit left `requested` out of the outbound MCP negotiation.decided record.",
+      "subject": {
+        "host": "openwop-examples v2-reference",
+        "build": "ed00ba4 (suite pin 2.49.6), src/interop.ts sabotaged locally, one rule per boot, SQLite in a temp dir"
+      },
+      "suiteVersion": "2.49.6",
+      "result": "executed-fail",
+      "date": "2026-11-24"
+    },
+    {
+      "requirementId": "openwop.requirement.0170.lane-issuer-advertised",
+      "scenario": "v2-lane-issuer-advertised.test.ts",
+      "sabotage": "discovery.ts advertised the api-key lane without minimumAssurance (the members leg).",
+      "subject": {
+        "host": "openwop-examples v2-reference",
+        "build": "ed00ba4 (suite pin 2.49.6), src/discovery.ts sabotaged locally, one rule per boot, SQLite in a temp dir"
+      },
+      "suiteVersion": "2.49.6",
+      "result": "executed-fail",
+      "date": "2026-11-24"
+    },
+    {
+      "requirementId": "openwop.requirement.0170.lane-issuer-advertised.members",
+      "scenario": "v2-lane-issuer-advertised.test.ts",
+      "sabotage": "discovery.ts advertised the api-key lane without minimumAssurance.",
+      "subject": {
+        "host": "openwop-examples v2-reference",
+        "build": "ed00ba4 (suite pin 2.49.6), src/discovery.ts sabotaged locally, one rule per boot, SQLite in a temp dir"
+      },
+      "suiteVersion": "2.49.6",
+      "result": "executed-fail",
+      "date": "2026-11-24"
+    },
+    {
+      "requirementId": "openwop.requirement.0170.lane-issuer-advertised.lane-rule",
+      "scenario": "v2-lane-issuer-advertised.test.ts",
+      "sabotage": "discovery.ts advertised the api-key lane with revocation `delegation-expiry`, a rule its identity.md §2.2 row does not list.",
+      "subject": {
+        "host": "openwop-examples v2-reference",
+        "build": "ed00ba4 (suite pin 2.49.6), src/discovery.ts sabotaged locally, one rule per boot, SQLite in a temp dir"
+      },
+      "suiteVersion": "2.49.6",
+      "result": "executed-fail",
+      "date": "2026-11-24"
+    },
+    {
+      "requirementId": "openwop.requirement.0170.lane-issuer-advertised.window",
+      "scenario": "v2-lane-issuer-advertised.test.ts",
+      "sabotage": "discovery.ts advertised the oidc lane (revocation exp-and-recheck) without revocationWindowSeconds.",
+      "subject": {
+        "host": "openwop-examples v2-reference",
+        "build": "ed00ba4 (suite pin 2.49.6), src/discovery.ts sabotaged locally, one rule per boot, SQLite in a temp dir, OPENWOP_OIDC_ISSUER_URL set so an oidc lane is advertised"
+      },
+      "suiteVersion": "2.49.6",
+      "result": "executed-fail",
+      "date": "2026-11-24"
+    },
+    {
+      "requirementId": "openwop.requirement.0173.webhook-durable-delivery",
+      "scenario": "v2-webhook-durable-delivery.test.ts",
+      "sabotage": "webhooks.ts dead-lettered a delivery on its first failed attempt instead of retrying it.",
+      "subject": {
+        "host": "openwop-examples v2-reference",
+        "build": "ed00ba4 (suite pin 2.49.6), src/webhooks.ts sabotaged locally, one rule per boot, SQLite in a temp dir"
+      },
+      "suiteVersion": "2.49.6",
+      "result": "executed-fail",
+      "date": "2026-11-24"
+    },
+    {
+      "requirementId": "openwop.requirement.0173.webhook-durable-delivery.dead-letter",
+      "scenario": "v2-webhook-durable-delivery.test.ts",
+      "sabotage": "webhooks.ts marked an exhausted delivery delivered instead of dead-lettering it.",
+      "subject": {
+        "host": "openwop-examples v2-reference",
+        "build": "ed00ba4 (suite pin 2.49.6), src/webhooks.ts sabotaged locally, one rule per boot, SQLite in a temp dir"
+      },
+      "suiteVersion": "2.49.6",
+      "result": "executed-fail",
+      "date": "2026-11-24"
+    },
+    {
+      "requirementId": "openwop.requirement.0188.dead-letter-read",
+      "scenario": "v2-webhook-durable-delivery.test.ts",
+      "sabotage": "webhooks.ts answered GET /webhooks/{webhookId}/dead-letters 404 not_found on a host advertising webhooks.deadLetter.",
+      "subject": {
+        "host": "openwop-examples v2-reference",
+        "build": "ed00ba4 (suite pin 2.49.6), src/webhooks.ts sabotaged locally, one rule per boot, SQLite in a temp dir"
+      },
+      "suiteVersion": "2.49.6",
+      "result": "executed-fail",
+      "date": "2026-11-24"
+    },
+    {
+      "requirementId": "openwop.requirement.0217.dead-letter-read-after-unregister",
+      "scenario": "v2-webhook-durable-delivery.test.ts",
+      "sabotage": "webhooks.ts served an empty dead-letter page for an unregistered subscription instead of 404 not_found.",
+      "subject": {
+        "host": "openwop-examples v2-reference",
+        "build": "ed00ba4 (suite pin 2.49.6), src/webhooks.ts sabotaged locally, one rule per boot, SQLite in a temp dir"
+      },
+      "suiteVersion": "2.49.6",
+      "result": "executed-fail",
+      "date": "2026-11-24"
+    },
+    {
+      "requirementId": "openwop.requirement.0214.a2a-push-secrets-not-returned",
+      "scenario": "v2-a2a-operation-map.test.ts",
+      "sabotage": "a2a-push.ts returned the config token and authentication.credentials on read.",
+      "subject": {
+        "host": "openwop-examples v2-reference",
+        "build": "ed00ba4 (suite pin 2.49.6), src/a2a-push.ts sabotaged locally, one rule per boot, SQLite in a temp dir, egress guard closed and OPENWOP_A2A_PUSH=1"
+      },
+      "suiteVersion": "2.49.6",
+      "result": "executed-fail",
+      "date": "2026-11-24"
+    },
+    {
+      "requirementId": "openwop.requirement.0214.a2a-push-register-ssrf",
+      "scenario": "v2-a2a-operation-map.test.ts",
+      "sabotage": "a2a-push.ts skipped the egress check, so CreateTaskPushNotificationConfig accepted a non-https or private destination.",
+      "subject": {
+        "host": "openwop-examples v2-reference",
+        "build": "ed00ba4 (suite pin 2.49.6), src/a2a-push.ts sabotaged locally, one rule per boot, SQLite in a temp dir, egress guard closed and OPENWOP_A2A_PUSH=1"
+      },
+      "suiteVersion": "2.49.6",
+      "result": "executed-fail",
+      "date": "2026-11-24"
+    },
+    {
+      "requirementId": "openwop.requirement.0214.a2a-push-config-isolation",
+      "scenario": "v2-a2a-operation-map.test.ts",
+      "sabotage": "a2a-push.ts GetTaskPushNotificationConfig returned another task's config instead of not found.",
+      "subject": {
+        "host": "openwop-examples v2-reference",
+        "build": "ed00ba4 (suite pin 2.49.6), src/a2a-push.ts sabotaged locally, one rule per boot, SQLite in a temp dir, egress guard closed and OPENWOP_A2A_PUSH=1"
+      },
+      "suiteVersion": "2.49.6",
+      "result": "executed-fail",
+      "date": "2026-11-24"
     }
   ]
 }
