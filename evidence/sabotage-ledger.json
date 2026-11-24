@@ -1992,6 +1992,366 @@
       "suiteVersion": "2.49.6",
       "result": "executed-fail",
       "date": "2026-11-24"
+    },
+    {
+      "requirementId": "openwop.requirement.0202.advertisement",
+      "scenario": "v2-a2a-agent-cards.test.ts",
+      "sabotage": "a2a-server.ts set capabilities.extendedAgentCard false on the public card while a2a.agentCards was advertised.",
+      "subject": {
+        "host": "openwop-examples v2-reference",
+        "build": "ed00ba4 (suite pin 2.49.6), src/a2a-server.ts, src/agents.ts and src/router.ts sabotaged locally, one rule per boot, SQLite in a temp dir"
+      },
+      "suiteVersion": "2.49.6",
+      "result": "executed-fail",
+      "date": "2026-11-24"
+    },
+    {
+      "requirementId": "openwop.requirement.0202.routing-value",
+      "scenario": "v2-a2a-agent-cards.test.ts",
+      "sabotage": "agents.ts minted a2aTenant as ag-<tenant>-<hmac>, so the routing value encoded the tenant of record.",
+      "subject": {
+        "host": "openwop-examples v2-reference",
+        "build": "ed00ba4 (suite pin 2.49.6), src/a2a-server.ts, src/agents.ts and src/router.ts sabotaged locally, one rule per boot, SQLite in a temp dir"
+      },
+      "suiteVersion": "2.49.6",
+      "result": "executed-fail",
+      "date": "2026-11-24"
+    },
+    {
+      "requirementId": "openwop.requirement.0202.card-projection",
+      "scenario": "v2-a2a-agent-cards.test.ts",
+      "sabotage": "a2a-server.ts named the per-agent card with the host card's name instead of the inventory entry's persona.",
+      "subject": {
+        "host": "openwop-examples v2-reference",
+        "build": "ed00ba4 (suite pin 2.49.6), src/a2a-server.ts, src/agents.ts and src/router.ts sabotaged locally, one rule per boot, SQLite in a temp dir"
+      },
+      "suiteVersion": "2.49.6",
+      "result": "executed-fail",
+      "date": "2026-11-24"
+    },
+    {
+      "requirementId": "openwop.requirement.0202.card-sr1",
+      "scenario": "v2-a2a-agent-cards.test.ts",
+      "sabotage": "agents.ts and a2a-server.ts carried the agent's system-prompt body into the per-agent card.",
+      "subject": {
+        "host": "openwop-examples v2-reference",
+        "build": "ed00ba4 (suite pin 2.49.6), src/a2a-server.ts, src/agents.ts and src/router.ts sabotaged locally, one rule per boot, SQLite in a temp dir"
+      },
+      "suiteVersion": "2.49.6",
+      "result": "executed-fail",
+      "date": "2026-11-24"
+    },
+    {
+      "requirementId": "openwop.requirement.0202.auth-before-resolve",
+      "scenario": "v2-a2a-agent-cards.test.ts",
+      "sabotage": "router.ts resolved the routing value of an unauthenticated A2A request before authenticating it, refusing a real R 400 where a never-minted one got 401.",
+      "subject": {
+        "host": "openwop-examples v2-reference",
+        "build": "ed00ba4 (suite pin 2.49.6), src/a2a-server.ts, src/agents.ts and src/router.ts sabotaged locally, one rule per boot, SQLite in a temp dir"
+      },
+      "suiteVersion": "2.49.6",
+      "result": "executed-fail",
+      "date": "2026-11-24"
+    },
+    {
+      "requirementId": "openwop.requirement.0202.identical-refusal",
+      "scenario": "v2-a2a-agent-cards.test.ts",
+      "sabotage": "a2a-server.ts refused another tenant's routing value with a distinct message instead of the never-minted refusal.",
+      "subject": {
+        "host": "openwop-examples v2-reference",
+        "build": "ed00ba4 (suite pin 2.49.6), src/a2a-server.ts, src/agents.ts and src/router.ts sabotaged locally, one rule per boot, SQLite in a temp dir"
+      },
+      "suiteVersion": "2.49.6",
+      "result": "executed-fail",
+      "date": "2026-11-24"
+    },
+    {
+      "requirementId": "openwop.requirement.0202.public-card-no-r",
+      "scenario": "v2-a2a-agent-cards.test.ts",
+      "sabotage": "a2a-server.ts listed an agent's routing value as the interface tenant on the unauthenticated public card.",
+      "subject": {
+        "host": "openwop-examples v2-reference",
+        "build": "ed00ba4 (suite pin 2.49.6), src/a2a-server.ts, src/agents.ts and src/router.ts sabotaged locally, one rule per boot, SQLite in a temp dir"
+      },
+      "suiteVersion": "2.49.6",
+      "result": "executed-fail",
+      "date": "2026-11-24"
+    },
+    {
+      "requirementId": "openwop.requirement.0202.tenant-of-record",
+      "scenario": "v2-a2a-agent-cards.test.ts",
+      "sabotage": "a2a-server.ts created a task started through R under a different tenant than the caller's.",
+      "subject": {
+        "host": "openwop-examples v2-reference",
+        "build": "ed00ba4 (suite pin 2.49.6), src/a2a-server.ts, src/agents.ts and src/router.ts sabotaged locally, one rule per boot, SQLite in a temp dir"
+      },
+      "suiteVersion": "2.49.6",
+      "result": "executed-fail",
+      "date": "2026-11-24"
+    },
+    {
+      "requirementId": "openwop.requirement.0168.advertised-fixtures-exist",
+      "scenario": "v2-advertised-fixtures-exist.test.ts",
+      "sabotage": "server.ts advertised every workflow fixture under an id the host does not install, so a sampled advertised fixture could not be created.",
+      "subject": {
+        "host": "openwop-examples v2-reference",
+        "build": "ed00ba4 (suite pin 2.49.6), src/server.ts sabotaged locally, one rule per boot, SQLite in a temp dir"
+      },
+      "suiteVersion": "2.49.6",
+      "result": "executed-fail",
+      "date": "2026-11-24"
+    },
+    {
+      "requirementId": "openwop.requirement.0169.capability-record-shape",
+      "scenario": "v2-capability-record-shape.test.ts",
+      "sabotage": "server.ts removed `since` from every family record in the v2 discovery document.",
+      "subject": {
+        "host": "openwop-examples v2-reference",
+        "build": "ed00ba4 (suite pin 2.49.6), src/server.ts sabotaged locally, one rule per boot, SQLite in a temp dir"
+      },
+      "suiteVersion": "2.49.6",
+      "result": "executed-fail",
+      "date": "2026-11-24"
+    },
+    {
+      "requirementId": "openwop.requirement.0169.capabilities-root-closed",
+      "scenario": "v2-capabilities-root-closed.test.ts",
+      "sabotage": "server.ts added an undeclared root key (vendorNote) to the v2 discovery document.",
+      "subject": {
+        "host": "openwop-examples v2-reference",
+        "build": "ed00ba4 (suite pin 2.49.6), src/server.ts sabotaged locally, one rule per boot, SQLite in a temp dir"
+      },
+      "suiteVersion": "2.49.6",
+      "result": "executed-fail",
+      "date": "2026-11-24"
+    },
+    {
+      "requirementId": "openwop.requirement.0169.profiles-derived-only",
+      "scenario": "v2-profiles-derived-only.test.ts",
+      "sabotage": "server.ts added a root profiles[] to the v2 discovery document.",
+      "subject": {
+        "host": "openwop-examples v2-reference",
+        "build": "ed00ba4 (suite pin 2.49.6), src/server.ts sabotaged locally, one rule per boot, SQLite in a temp dir"
+      },
+      "suiteVersion": "2.49.6",
+      "result": "executed-fail",
+      "date": "2026-11-24"
+    },
+    {
+      "requirementId": "openwop.requirement.0170.owner-subject-required",
+      "scenario": "v2-owner-subject-required.test.ts",
+      "sabotage": "runs.ts rendered RunSnapshot.owner as { tenant, principal } with no subject.",
+      "subject": {
+        "host": "openwop-examples v2-reference",
+        "build": "ed00ba4 (suite pin 2.49.6), src/runs.ts sabotaged locally, one rule per boot, SQLite in a temp dir"
+      },
+      "suiteVersion": "2.49.6",
+      "result": "executed-fail",
+      "date": "2026-11-24"
+    },
+    {
+      "requirementId": "openwop.requirement.0170.assurance-downgrade-audited",
+      "scenario": "v2-assurance-downgrade-audited.test.ts",
+      "sabotage": "identity.ts accepted a workload identity with no key binding below the key-bound floor, recording it as key-bound.",
+      "subject": {
+        "host": "openwop-examples v2-reference",
+        "build": "ed00ba4 (suite pin 2.49.6), src/identity.ts sabotaged locally, one rule per boot, SQLite in a temp dir"
+      },
+      "suiteVersion": "2.49.6",
+      "result": "executed-fail",
+      "date": "2026-11-24"
+    },
+    {
+      "requirementId": "openwop.requirement.0170.revocation-honored",
+      "scenario": "v2-revocation-honored.test.ts",
+      "sabotage": "identity.ts ignored revoked_at, so a revoked credential still authenticated.",
+      "subject": {
+        "host": "openwop-examples v2-reference",
+        "build": "ed00ba4 (suite pin 2.49.6), src/identity.ts sabotaged locally, one rule per boot, SQLite in a temp dir"
+      },
+      "suiteVersion": "2.49.6",
+      "result": "executed-fail",
+      "date": "2026-11-24"
+    },
+    {
+      "requirementId": "openwop.requirement.0170.id-grammar",
+      "scenario": "v2-id-grammar.test.ts",
+      "sabotage": "ids.ts refused a run id with another tenant's segment 400 validation_error instead of 403 id_tenant_mismatch or 404 not_found.",
+      "subject": {
+        "host": "openwop-examples v2-reference",
+        "build": "ed00ba4 (suite pin 2.49.6), src/ids.ts sabotaged locally, one rule per boot, SQLite in a temp dir"
+      },
+      "suiteVersion": "2.49.6",
+      "result": "executed-fail",
+      "date": "2026-11-24"
+    },
+    {
+      "requirementId": "openwop.requirement.0170.idempotency-key-grammar",
+      "scenario": "v2-idempotency-key-grammar.test.ts",
+      "sabotage": "router.ts accepted an Idempotency-Key outside the grammar.",
+      "subject": {
+        "host": "openwop-examples v2-reference",
+        "build": "ed00ba4 (suite pin 2.49.6), src/router.ts sabotaged locally, one rule per boot, SQLite in a temp dir"
+      },
+      "suiteVersion": "2.49.6",
+      "result": "executed-fail",
+      "date": "2026-11-24"
+    },
+    {
+      "requirementId": "openwop.requirement.0170.interrupt-token-scheme",
+      "scenario": "v2-interrupt-token-scheme.test.ts",
+      "sabotage": "interrupts.ts answered a token under a kid the host does not hold 404 not_found instead of 401 interrupt_token_invalid.",
+      "subject": {
+        "host": "openwop-examples v2-reference",
+        "build": "ed00ba4 (suite pin 2.49.6), src/interrupts.ts sabotaged locally, one rule per boot, SQLite in a temp dir"
+      },
+      "suiteVersion": "2.49.6",
+      "result": "executed-fail",
+      "date": "2026-11-24"
+    },
+    {
+      "requirementId": "openwop.requirement.0171.event-type-closed",
+      "scenario": "v2-event-type-closed.test.ts",
+      "sabotage": "events.ts appended an event of type zzunadvertised.peeked, a vendor type under an org the host does not advertise, after every run.started.",
+      "subject": {
+        "host": "openwop-examples v2-reference",
+        "build": "ed00ba4 (suite pin 2.49.6), src/events.ts sabotaged locally, one rule per boot, SQLite in a temp dir"
+      },
+      "suiteVersion": "2.49.6",
+      "result": "executed-fail",
+      "date": "2026-11-24"
+    },
+    {
+      "requirementId": "openwop.requirement.0171.payload-registry-closed",
+      "scenario": "v2-payload-registry-closed.test.ts",
+      "sabotage": "events.ts added an unregistered field to every run.started payload.",
+      "subject": {
+        "host": "openwop-examples v2-reference",
+        "build": "ed00ba4 (suite pin 2.49.6), src/events.ts sabotaged locally, one rule per boot, SQLite in a temp dir"
+      },
+      "suiteVersion": "2.49.6",
+      "result": "executed-fail",
+      "date": "2026-11-24"
+    },
+    {
+      "requirementId": "openwop.requirement.0171.error-registry",
+      "scenario": "v2-error-registry.test.ts",
+      "sabotage": "router.ts answered not_found errors with the unregistered code resource_missing.",
+      "subject": {
+        "host": "openwop-examples v2-reference",
+        "build": "ed00ba4 (suite pin 2.49.6), src/router.ts sabotaged locally, one rule per boot, SQLite in a temp dir"
+      },
+      "suiteVersion": "2.49.6",
+      "result": "executed-fail",
+      "date": "2026-11-24"
+    },
+    {
+      "requirementId": "openwop.requirement.0171.header-scheme",
+      "scenario": "v2-header-scheme.test.ts",
+      "sabotage": "router.ts sent no OpenWOP-Version header on any response.",
+      "subject": {
+        "host": "openwop-examples v2-reference",
+        "build": "ed00ba4 (suite pin 2.49.6), src/router.ts sabotaged locally, one rule per boot, SQLite in a temp dir"
+      },
+      "suiteVersion": "2.49.6",
+      "result": "executed-fail",
+      "date": "2026-11-24"
+    },
+    {
+      "requirementId": "openwop.requirement.0171.configurable-closed",
+      "scenario": "v2-configurable-closed.test.ts",
+      "sabotage": "runs.ts accepted an unknown key in configurable instead of 400 validation_error.",
+      "subject": {
+        "host": "openwop-examples v2-reference",
+        "build": "ed00ba4 (suite pin 2.49.6), src/runs.ts sabotaged locally, one rule per boot, SQLite in a temp dir"
+      },
+      "suiteVersion": "2.49.6",
+      "result": "executed-fail",
+      "date": "2026-11-24"
+    },
+    {
+      "requirementId": "openwop.requirement.0171.poll-cursor-v2",
+      "scenario": "v2-poll-cursor-v2.test.ts",
+      "sabotage": "runs.ts ignored afterSequence on the poll, returning from sequence 0.",
+      "subject": {
+        "host": "openwop-examples v2-reference",
+        "build": "ed00ba4 (suite pin 2.49.6), src/runs.ts sabotaged locally, one rule per boot, SQLite in a temp dir"
+      },
+      "suiteVersion": "2.49.6",
+      "result": "executed-fail",
+      "date": "2026-11-24"
+    },
+    {
+      "requirementId": "openwop.requirement.0172.preferred-version-default",
+      "scenario": "v2-preferred-version-default.test.ts",
+      "sabotage": "router.ts served a header-less request on an unversioned non-discovery path as major 1.",
+      "subject": {
+        "host": "openwop-examples v2-reference",
+        "build": "ed00ba4 (suite pin 2.49.6), src/router.ts sabotaged locally, one rule per boot, SQLite in a temp dir"
+      },
+      "suiteVersion": "2.49.6",
+      "result": "executed-fail",
+      "date": "2026-11-24"
+    },
+    {
+      "requirementId": "openwop.requirement.0172.dual-stack-negotiation",
+      "scenario": "v2-dual-stack-negotiation.test.ts",
+      "sabotage": "router.ts answered an unlisted OpenWOP-Version major 400 validation_error instead of 406 protocol_version_unsupported.",
+      "subject": {
+        "host": "openwop-examples v2-reference",
+        "build": "ed00ba4 (suite pin 2.49.6), src/router.ts sabotaged locally, one rule per boot, SQLite in a temp dir"
+      },
+      "suiteVersion": "2.49.6",
+      "result": "executed-fail",
+      "date": "2026-11-24"
+    },
+    {
+      "requirementId": "openwop.requirement.0172.min-client-version",
+      "scenario": "v2-min-client-version.test.ts",
+      "sabotage": "router.ts answered a client below minClientVersion 400 validation_error instead of serving it or refusing 426.",
+      "subject": {
+        "host": "openwop-examples v2-reference",
+        "build": "ed00ba4 (suite pin 2.49.6), src/router.ts sabotaged locally, one rule per boot, SQLite in a temp dir"
+      },
+      "suiteVersion": "2.49.6",
+      "result": "executed-fail",
+      "date": "2026-11-24"
+    },
+    {
+      "requirementId": "openwop.requirement.0172.version-header-honored",
+      "scenario": "v2-version-header-honored.test.ts",
+      "sabotage": "router.ts served the v1 discovery representation to a request carrying OpenWOP-Version: 2.0.",
+      "subject": {
+        "host": "openwop-examples v2-reference",
+        "build": "ed00ba4 (suite pin 2.49.6), src/router.ts sabotaged locally, one rule per boot, SQLite in a temp dir"
+      },
+      "suiteVersion": "2.49.6",
+      "result": "executed-fail",
+      "date": "2026-11-24"
+    },
+    {
+      "requirementId": "openwop.requirement.0168.bundle-v3-signed",
+      "scenario": "v2-bundle-v3-signed.test.ts",
+      "sabotage": "certification-bundle-v3.ts verifyBundleV3 stopped comparing witnessSha256 with the digest of the rows, so a flipped witnessSha256 verified.",
+      "subject": {
+        "host": "openwop corpus",
+        "build": "a7d36cd6c (suite 2.49.8), conformance/src/lib/certification-bundle-v3.ts sabotaged locally"
+      },
+      "suiteVersion": "2.49.8",
+      "result": "executed-fail",
+      "date": "2026-11-24"
+    },
+    {
+      "requirementId": "openwop.requirement.0168.coherence-not-in-bundle",
+      "scenario": "v2-coherence-not-in-bundle.test.ts",
+      "sabotage": "certification-bundle.schema.json dropped the corpus-coherence lookahead from the requirement id pattern, so a v3 bundle carrying a coherence id validated.",
+      "subject": {
+        "host": "openwop corpus",
+        "build": "a7d36cd6c (suite 2.49.8), schemas/v2/certification-bundle.schema.json sabotaged locally"
+      },
+      "suiteVersion": "2.49.8",
+      "result": "executed-fail",
+      "date": "2026-11-24"
     }
   ]
 }
