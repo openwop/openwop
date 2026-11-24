@@ -2352,6 +2352,318 @@
       "suiteVersion": "2.49.8",
       "result": "executed-fail",
       "date": "2026-11-24"
+    },
+    {
+      "requirementId": "openwop.requirement.0173.effect-seam-no-refire",
+      "scenario": "v2-effect-seam-no-refire.test.ts",
+      "sabotage": "effects.ts performed http.fetch again on a replay fork instead of resolving the source run's recorded outcome.",
+      "subject": {
+        "host": "openwop-examples v2-reference",
+        "build": "ed00ba4 (suite pin 2.49.6), src/effects.ts sabotaged locally, one rule per boot, SQLite in a temp dir"
+      },
+      "suiteVersion": "2.49.6",
+      "result": "executed-fail",
+      "date": "2026-11-24"
+    },
+    {
+      "requirementId": "openwop.requirement.0173.effect-seam-manifest",
+      "scenario": "v2-effect-seam-manifest.test.ts",
+      "sabotage": "effects.ts listed the http.fetch seam in GET /host/effect-seams with guarded: false.",
+      "subject": {
+        "host": "openwop-examples v2-reference",
+        "build": "ed00ba4 (suite pin 2.49.6), src/effects.ts sabotaged locally, one rule per boot, SQLite in a temp dir"
+      },
+      "suiteVersion": "2.49.6",
+      "result": "executed-fail",
+      "date": "2026-11-24"
+    },
+    {
+      "requirementId": "openwop.requirement.0173.pack-isolation",
+      "scenario": "v2-pack-isolation.test.ts",
+      "sabotage": "sandbox.ts advertised sandbox.isolationModel node:vm.",
+      "subject": {
+        "host": "openwop-examples v2-reference",
+        "build": "ed00ba4 (suite pin 2.49.6), src/sandbox.ts sabotaged locally, one rule per boot, SQLite in a temp dir"
+      },
+      "suiteVersion": "2.49.6",
+      "result": "executed-fail",
+      "date": "2026-11-24"
+    },
+    {
+      "requirementId": "openwop.requirement.0173.compensation-read-projection",
+      "scenario": "v2-compensation-read-projection.test.ts",
+      "sabotage": "effects.ts projected a fresh run's compensation as status pending instead of none.",
+      "subject": {
+        "host": "openwop-examples v2-reference",
+        "build": "ed00ba4 (suite pin 2.49.6), src/effects.ts sabotaged locally, one rule per boot, SQLite in a temp dir"
+      },
+      "suiteVersion": "2.49.6",
+      "result": "executed-fail",
+      "date": "2026-11-24"
+    },
+    {
+      "requirementId": "openwop.requirement.0175.no-transport-advertisement",
+      "scenario": "v2-no-transport-advertisement.test.ts",
+      "sabotage": "server.ts added supportedTransports to the v2 discovery root.",
+      "subject": {
+        "host": "openwop-examples v2-reference",
+        "build": "ed00ba4 (suite pin 2.49.6), src/server.ts sabotaged locally, one rule per boot, SQLite in a temp dir"
+      },
+      "suiteVersion": "2.49.6",
+      "result": "executed-fail",
+      "date": "2026-11-24"
+    },
+    {
+      "requirementId": "openwop.requirement.0175.legacy-profiles-absent",
+      "scenario": "v2-legacy-profiles-absent.test.ts",
+      "sabotage": "server.ts listed an a2a-0.3-legacy id in a2a.profiles.",
+      "subject": {
+        "host": "openwop-examples v2-reference",
+        "build": "ed00ba4 (suite pin 2.49.6), src/server.ts sabotaged locally, one rule per boot, SQLite in a temp dir"
+      },
+      "suiteVersion": "2.49.6",
+      "result": "executed-fail",
+      "date": "2026-11-24"
+    },
+    {
+      "requirementId": "openwop.requirement.0175.minimum-version-refused",
+      "scenario": "v2-minimum-version-refused.test.ts",
+      "sabotage": "interop.ts accepted a peer that offered only a version below minimumVersion.",
+      "subject": {
+        "host": "openwop-examples v2-reference",
+        "build": "ed00ba4 (suite pin 2.49.6), src/interop.ts sabotaged locally, one rule per boot, SQLite in a temp dir"
+      },
+      "suiteVersion": "2.49.6",
+      "result": "executed-fail",
+      "date": "2026-11-24"
+    },
+    {
+      "requirementId": "openwop.requirement.0175.refresh-sla",
+      "scenario": "v2-refresh-sla.test.ts",
+      "sabotage": "interop.ts advertised refreshedAt 2025-01-01 on the a2a and mcp facets, outside the 90-day window.",
+      "subject": {
+        "host": "openwop-examples v2-reference",
+        "build": "ed00ba4 (suite pin 2.49.6), src/interop.ts sabotaged locally, one rule per boot, SQLite in a temp dir"
+      },
+      "suiteVersion": "2.49.6",
+      "result": "executed-fail",
+      "date": "2026-11-24"
+    },
+    {
+      "requirementId": "openwop.requirement.0176.v1-events-translated",
+      "scenario": "v2-v1-events-translated.test.ts",
+      "sabotage": "codemap.ts returned an era-2 log's stored v1 type names unchanged instead of translating them.",
+      "subject": {
+        "host": "openwop-examples v2-reference",
+        "build": "ed00ba4 (suite pin 2.49.6), src/codemap.ts sabotaged locally, one rule per boot, SQLite in a temp dir"
+      },
+      "suiteVersion": "2.49.6",
+      "result": "executed-fail",
+      "date": "2026-11-24"
+    },
+    {
+      "requirementId": "openwop.requirement.0176.era-key",
+      "scenario": "v2-era-key.test.ts",
+      "sabotage": "runs.ts reported eventLogSchemaVersion 2 on a new run's snapshot while discovery advertised 3.",
+      "subject": {
+        "host": "openwop-examples v2-reference",
+        "build": "ed00ba4 (suite pin 2.49.6), src/runs.ts sabotaged locally, one rule per boot, SQLite in a temp dir"
+      },
+      "suiteVersion": "2.49.6",
+      "result": "executed-fail",
+      "date": "2026-11-24"
+    },
+    {
+      "requirementId": "openwop.requirement.0176.unmapped-type-refused",
+      "scenario": "v2-unmapped-type-refused.test.ts",
+      "sabotage": "codemap.ts read an unmapped, unprefixed era-2 type under its own name instead of failing 500 event_type_unmapped.",
+      "subject": {
+        "host": "openwop-examples v2-reference",
+        "build": "ed00ba4 (suite pin 2.49.6), src/codemap.ts sabotaged locally, one rule per boot, SQLite in a temp dir"
+      },
+      "suiteVersion": "2.49.6",
+      "result": "executed-fail",
+      "date": "2026-11-24"
+    },
+    {
+      "requirementId": "openwop.requirement.0176.pinned-run-disposition",
+      "scenario": "v2-pinned-run-disposition.test.ts",
+      "sabotage": "executor.ts let a run pinned to a change id the host does not implement continue instead of cancelling it with v1_pin_unsupported.",
+      "subject": {
+        "host": "openwop-examples v2-reference",
+        "build": "ed00ba4 (suite pin 2.49.6), src/executor.ts sabotaged locally, one rule per boot, SQLite in a temp dir"
+      },
+      "suiteVersion": "2.49.6",
+      "result": "executed-fail",
+      "date": "2026-11-24"
+    },
+    {
+      "requirementId": "openwop.requirement.0176.well-known-one-resource",
+      "scenario": "v2-well-known-one-resource.test.ts",
+      "sabotage": "server.ts trimmed protocolVersions[] on the header-less discovery representation, so it no longer equalled the v2 one.",
+      "subject": {
+        "host": "openwop-examples v2-reference",
+        "build": "ed00ba4 (suite pin 2.49.6), src/server.ts sabotaged locally, one rule per boot, SQLite in a temp dir"
+      },
+      "suiteVersion": "2.49.6",
+      "result": "executed-fail",
+      "date": "2026-11-24"
+    },
+    {
+      "requirementId": "openwop.requirement.0176.well-known-one-resource.v2-representation",
+      "scenario": "v2-well-known-one-resource.test.ts",
+      "sabotage": "server.ts added a capabilities wrapper key to the v2 discovery representation.",
+      "subject": {
+        "host": "openwop-examples v2-reference",
+        "build": "ed00ba4 (suite pin 2.49.6), src/server.ts sabotaged locally, one rule per boot, SQLite in a temp dir"
+      },
+      "suiteVersion": "2.49.6",
+      "result": "executed-fail",
+      "date": "2026-11-24"
+    },
+    {
+      "requirementId": "openwop.requirement.0176.v1-signed-webhook-accepted",
+      "scenario": "v2-v1-signed-webhook-accepted.test.ts",
+      "sabotage": "webhooks.ts accepted a scheme-v1 delivery whose signature did not match.",
+      "subject": {
+        "host": "openwop-examples v2-reference",
+        "build": "ed00ba4 (suite pin 2.49.6), src/webhooks.ts sabotaged locally, one rule per boot, SQLite in a temp dir"
+      },
+      "suiteVersion": "2.49.6",
+      "result": "executed-fail",
+      "date": "2026-11-24"
+    },
+    {
+      "requirementId": "openwop.requirement.0176.era-2-append-vocabulary",
+      "scenario": "v2-era-2-append-vocabulary.test.ts",
+      "sabotage": "codemap.ts stored a host append to an era-2 run in v2 vocabulary.",
+      "subject": {
+        "host": "openwop-examples v2-reference",
+        "build": "ed00ba4 (suite pin 2.49.6), src/codemap.ts sabotaged locally, one rule per boot, SQLite in a temp dir"
+      },
+      "suiteVersion": "2.49.6",
+      "result": "executed-fail",
+      "date": "2026-11-24"
+    },
+    {
+      "requirementId": "openwop.requirement.0176.era-stamp-universal",
+      "scenario": "v2-era-stamp-universal.test.ts",
+      "sabotage": "runs.ts stamped new runs era 2 while discovery advertised 3.",
+      "subject": {
+        "host": "openwop-examples v2-reference",
+        "build": "ed00ba4 (suite pin 2.49.6), src/runs.ts sabotaged locally, one rule per boot, SQLite in a temp dir"
+      },
+      "suiteVersion": "2.49.6",
+      "result": "executed-fail",
+      "date": "2026-11-24"
+    },
+    {
+      "requirementId": "openwop.requirement.0177.manifest-ceiling-refused",
+      "scenario": "v2-manifest-ceiling-refused.test.ts",
+      "sabotage": "packs.ts read an engines.openwop range with no upper bound as admitting every major.",
+      "subject": {
+        "host": "openwop-examples v2-reference",
+        "build": "ed00ba4 (suite pin 2.49.6), src/packs.ts sabotaged locally, one rule per boot, SQLite in a temp dir"
+      },
+      "suiteVersion": "2.49.6",
+      "result": "executed-fail",
+      "date": "2026-11-24"
+    },
+    {
+      "requirementId": "openwop.requirement.0177.peer-dependency-declared",
+      "scenario": "v2-peer-dependency-declared.test.ts",
+      "sabotage": "packs.ts accepted a peerDependencies key the declaration does not name.",
+      "subject": {
+        "host": "openwop-examples v2-reference",
+        "build": "ed00ba4 (suite pin 2.49.6), src/packs.ts sabotaged locally, one rule per boot, SQLite in a temp dir"
+      },
+      "suiteVersion": "2.49.6",
+      "result": "executed-fail",
+      "date": "2026-11-24"
+    },
+    {
+      "requirementId": "openwop.requirement.0177.manifest-hatch-carried",
+      "scenario": "v2-manifest-hatch-carried.test.ts",
+      "sabotage": "packs.ts refused a manifest carrying an x- field instead of ignoring it.",
+      "subject": {
+        "host": "openwop-examples v2-reference",
+        "build": "ed00ba4 (suite pin 2.49.6), src/packs.ts sabotaged locally, one rule per boot, SQLite in a temp dir"
+      },
+      "suiteVersion": "2.49.6",
+      "result": "executed-fail",
+      "date": "2026-11-24"
+    },
+    {
+      "requirementId": "openwop.requirement.0177.chain-pin-exact",
+      "scenario": "v2-chain-pin-exact.test.ts",
+      "sabotage": "chains.ts registered a chain whose references pinned a range.",
+      "subject": {
+        "host": "openwop-examples v2-reference",
+        "build": "ed00ba4 (suite pin 2.49.6), src/chains.ts sabotaged locally, one rule per boot, SQLite in a temp dir"
+      },
+      "suiteVersion": "2.49.6",
+      "result": "executed-fail",
+      "date": "2026-11-24"
+    },
+    {
+      "requirementId": "openwop.requirement.0184.bound-id-path-projection",
+      "scenario": "v2-bound-id-path-projection.test.ts",
+      "sabotage": "ids.ts accepted a malformed ~ escape in a bound-id path segment instead of refusing it.",
+      "subject": {
+        "host": "openwop-examples v2-reference",
+        "build": "ed00ba4 (suite pin 2.49.6), src/ids.ts sabotaged locally, one rule per boot, SQLite in a temp dir"
+      },
+      "suiteVersion": "2.49.6",
+      "result": "executed-fail",
+      "date": "2026-11-24"
+    },
+    {
+      "requirementId": "openwop.requirement.0173.relaxation-recorded",
+      "scenario": "v2-relaxation-recorded.test.ts",
+      "sabotage": "certification-bundle-v3.ts verifyBundleV3 stopped refusing a bundle that certified a profile its own recorded relaxation denies.",
+      "subject": {
+        "host": "openwop corpus",
+        "build": "a7d36cd6c (suite 2.49.8), conformance/src/lib/certification-bundle-v3.ts sabotaged locally"
+      },
+      "suiteVersion": "2.49.8",
+      "result": "executed-fail",
+      "date": "2026-11-24"
+    },
+    {
+      "requirementId": "openwop.requirement.0173.approver-enforced",
+      "scenario": "v2-approver-enforced.test.ts",
+      "sabotage": "interrupts.ts skipped the approversList check, so a resolver outside the list resolved the approval gate.",
+      "subject": {
+        "host": "openwop-examples v2-reference",
+        "build": "ed00ba4 (suite pin 2.49.6), src/interrupts.ts sabotaged locally, one rule per boot, SQLite in a temp dir"
+      },
+      "suiteVersion": "2.49.6",
+      "result": "executed-fail",
+      "date": "2026-11-24"
+    },
+    {
+      "requirementId": "openwop.requirement.0175.negotiation-authenticated",
+      "scenario": "v2-negotiation-authenticated.test.ts",
+      "sabotage": "interop.ts let an unauthenticated exchange settle on a version below preferredVersion.",
+      "subject": {
+        "host": "openwop-examples v2-reference",
+        "build": "ed00ba4 (suite pin 2.49.6), src/interop.ts sabotaged locally, one rule per boot, SQLite in a temp dir"
+      },
+      "suiteVersion": "2.49.6",
+      "result": "executed-fail",
+      "date": "2026-11-24"
+    },
+    {
+      "requirementId": "openwop.requirement.0175.mrtr-rounds-ceiling",
+      "scenario": "v2-mrtr-rounds-ceiling.test.ts",
+      "sabotage": "interop.ts (the MCP invoke seam) sent an MRTR round past mcp.mrtr.maxRounds instead of refusing it mcp_mrtr_rounds_exceeded.",
+      "subject": {
+        "host": "openwop-examples v2-reference",
+        "build": "ed00ba4 (suite pin 2.49.6), src/interop.ts sabotaged locally, one rule per boot, SQLite in a temp dir"
+      },
+      "suiteVersion": "2.49.6",
+      "result": "executed-fail",
+      "date": "2026-11-24"
     }
   ]
 }
