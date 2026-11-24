@@ -2246,18 +2246,6 @@
       "date": "2026-11-24"
     },
     {
-      "requirementId": "openwop.requirement.errors.event-code-registered",
-      "scenario": "v2-error-registry.test.ts",
-      "sabotage": "executor.ts failed nodes with the unregistered error code node_exploded.",
-      "subject": {
-        "host": "openwop-examples v2-reference",
-        "build": "ed00ba4 (suite pin 2.49.6), src/executor.ts sabotaged locally, one rule per boot, SQLite in a temp dir"
-      },
-      "suiteVersion": "2.49.6",
-      "result": "executed-fail",
-      "date": "2026-11-24"
-    },
-    {
       "requirementId": "openwop.requirement.0171.header-scheme",
       "scenario": "v2-header-scheme.test.ts",
       "sabotage": "router.ts sent no OpenWOP-Version header on any response.",
