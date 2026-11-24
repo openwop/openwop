@@ -3096,6 +3096,558 @@
       "suiteVersion": "2.49.8",
       "result": "executed-fail",
       "date": "2026-11-24"
+    },
+    {
+      "requirementId": "openwop.requirement.0170.subject-link-record",
+      "scenario": "v2-subject-link-record.test.ts",
+      "sabotage": "saml-scim.ts left deniedAt unset when SCIM deactivated a linked principal.",
+      "subject": {
+        "host": "openwop-examples v2-reference",
+        "build": "ed00ba4 (suite pin 2.49.6), src/saml-scim.ts sabotaged locally, one rule per boot, SQLite in a temp dir, with the repo's synthetic SAML IdP on loopback"
+      },
+      "suiteVersion": "2.49.6",
+      "result": "executed-fail",
+      "date": "2026-11-24"
+    },
+    {
+      "requirementId": "openwop.requirement.0176.fork-a-v1-run",
+      "scenario": "v2-fork-a-v1-run.test.ts",
+      "sabotage": "replay.ts dropped the last event of the inherited prefix when forking an era-2 run.",
+      "subject": {
+        "host": "openwop-examples v2-reference",
+        "build": "ed00ba4 (suite pin 2.49.6), src/replay.ts sabotaged locally, one rule per boot, SQLite in a temp dir"
+      },
+      "suiteVersion": "2.49.6",
+      "result": "executed-fail",
+      "date": "2026-11-24"
+    },
+    {
+      "requirementId": "openwop.requirement.0244.trajectory-graded",
+      "scenario": "v2-eval-trajectory-trials.test.ts",
+      "sabotage": "src/host/evals/trajectory.ts inverted the trajectory match verdict.",
+      "subject": {
+        "host": "openwop-app workflow-engine",
+        "build": "a07093131d (suite pin 2.49.8), sabotaged locally in its own conformance/run.ts harness (in-process, SQLite in a temp dir, OPENWOP_AGENT_DEPLOYMENT=on, OPENWOP_TRIGGER_INBOUND_SIGNING=true), one rule per run"
+      },
+      "suiteVersion": "2.49.8",
+      "result": "executed-fail",
+      "date": "2026-11-24"
+    },
+    {
+      "requirementId": "openwop.requirement.0244.trials-per-task",
+      "scenario": "v2-eval-trajectory-trials.test.ts",
+      "sabotage": "src/host/evals/agentEvalRun.ts ran one trial fewer than trials.count.",
+      "subject": {
+        "host": "openwop-app workflow-engine",
+        "build": "a07093131d (suite pin 2.49.8), sabotaged locally in its own conformance/run.ts harness (in-process, SQLite in a temp dir, OPENWOP_AGENT_DEPLOYMENT=on, OPENWOP_TRIGGER_INBOUND_SIGNING=true), one rule per run"
+      },
+      "suiteVersion": "2.49.8",
+      "result": "executed-fail",
+      "date": "2026-11-24"
+    },
+    {
+      "requirementId": "openwop.requirement.0244.trial-stats-formula",
+      "scenario": "v2-eval-trajectory-trials.test.ts",
+      "sabotage": "src/host/evals/trialStats.ts reported a per-task meanScore that is not the mean of the trial scores.",
+      "subject": {
+        "host": "openwop-app workflow-engine",
+        "build": "a07093131d (suite pin 2.49.8), sabotaged locally in its own conformance/run.ts harness (in-process, SQLite in a temp dir, OPENWOP_AGENT_DEPLOYMENT=on, OPENWOP_TRIGGER_INBOUND_SIGNING=true), one rule per run"
+      },
+      "suiteVersion": "2.49.8",
+      "result": "executed-fail",
+      "date": "2026-11-24"
+    },
+    {
+      "requirementId": "openwop.requirement.0244.trial-memory-isolated",
+      "scenario": "v2-eval-trajectory-trials.test.ts",
+      "sabotage": "src/host/evals/agentEvalRun.ts shared one ephemeral memory store across trials.",
+      "subject": {
+        "host": "openwop-app workflow-engine",
+        "build": "a07093131d (suite pin 2.49.8), sabotaged locally in its own conformance/run.ts harness (in-process, SQLite in a temp dir, OPENWOP_AGENT_DEPLOYMENT=on, OPENWOP_TRIGGER_INBOUND_SIGNING=true), one rule per run"
+      },
+      "suiteVersion": "2.49.8",
+      "result": "executed-fail",
+      "date": "2026-11-24"
+    },
+    {
+      "requirementId": "openwop.requirement.0244.efficiency-tool-calls",
+      "scenario": "v2-eval-trajectory-trials.test.ts",
+      "sabotage": "src/host/evals/efficiency.ts counted each agent.tool-called event twice.",
+      "subject": {
+        "host": "openwop-app workflow-engine",
+        "build": "a07093131d (suite pin 2.49.8), sabotaged locally in its own conformance/run.ts harness (in-process, SQLite in a temp dir, OPENWOP_AGENT_DEPLOYMENT=on, OPENWOP_TRIGGER_INBOUND_SIGNING=true), one rule per run"
+      },
+      "suiteVersion": "2.49.8",
+      "result": "executed-fail",
+      "date": "2026-11-24"
+    },
+    {
+      "requirementId": "openwop.requirement.0244.efficiency-never-gated",
+      "scenario": "v2-eval-trajectory-trials.test.ts",
+      "sabotage": "src/host/evals/agentEvalRun.ts failed a trial that made more than two tool calls.",
+      "subject": {
+        "host": "openwop-app workflow-engine",
+        "build": "a07093131d (suite pin 2.49.8), sabotaged locally in its own conformance/run.ts harness (in-process, SQLite in a temp dir, OPENWOP_AGENT_DEPLOYMENT=on, OPENWOP_TRIGGER_INBOUND_SIGNING=true), one rule per run"
+      },
+      "suiteVersion": "2.49.8",
+      "result": "executed-fail",
+      "date": "2026-11-24"
+    },
+    {
+      "requirementId": "openwop.requirement.0244.first-unconsumed",
+      "scenario": "v2-eval-trajectory-trials.test.ts",
+      "sabotage": "src/host/evals/agentEvalRun.ts never marked a fixture entry consumed, so repeated calls got the first entry again.",
+      "subject": {
+        "host": "openwop-app workflow-engine",
+        "build": "a07093131d (suite pin 2.49.8), sabotaged locally in its own conformance/run.ts harness (in-process, SQLite in a temp dir, OPENWOP_AGENT_DEPLOYMENT=on, OPENWOP_TRIGGER_INBOUND_SIGNING=true), one rule per run"
+      },
+      "suiteVersion": "2.49.8",
+      "result": "executed-fail",
+      "date": "2026-11-24"
+    },
+    {
+      "requirementId": "openwop.requirement.0244.miss-no-live-call",
+      "scenario": "v2-eval-trajectory-trials.test.ts",
+      "sabotage": "src/host/evals/agentEvalRun.ts called the live tool on a miss under onMiss fail.",
+      "subject": {
+        "host": "openwop-app workflow-engine",
+        "build": "a07093131d (suite pin 2.49.8), sabotaged locally in its own conformance/run.ts harness (in-process, SQLite in a temp dir, OPENWOP_AGENT_DEPLOYMENT=on, OPENWOP_TRIGGER_INBOUND_SIGNING=true), one rule per run"
+      },
+      "suiteVersion": "2.49.8",
+      "result": "executed-fail",
+      "date": "2026-11-24"
+    },
+    {
+      "requirementId": "openwop.requirement.0244.fixture-miss-fails",
+      "scenario": "v2-eval-trajectory-trials.test.ts",
+      "sabotage": "src/host/evals/agentEvalRun.ts served a fail-closed miss as a successful empty result.",
+      "subject": {
+        "host": "openwop-app workflow-engine",
+        "build": "a07093131d (suite pin 2.49.8), sabotaged locally in its own conformance/run.ts harness (in-process, SQLite in a temp dir, OPENWOP_AGENT_DEPLOYMENT=on, OPENWOP_TRIGGER_INBOUND_SIGNING=true), one rule per run"
+      },
+      "suiteVersion": "2.49.8",
+      "result": "executed-fail",
+      "date": "2026-11-24"
+    },
+    {
+      "requirementId": "openwop.requirement.0244.live-miss-counted",
+      "scenario": "v2-eval-trajectory-trials.test.ts",
+      "sabotage": "src/host/evals/agentEvalRun.ts did not count a live miss under onMiss live.",
+      "subject": {
+        "host": "openwop-app workflow-engine",
+        "build": "a07093131d (suite pin 2.49.8), sabotaged locally in its own conformance/run.ts harness (in-process, SQLite in a temp dir, OPENWOP_AGENT_DEPLOYMENT=on, OPENWOP_TRIGGER_INBOUND_SIGNING=true), one rule per run"
+      },
+      "suiteVersion": "2.49.8",
+      "result": "executed-fail",
+      "date": "2026-11-24"
+    },
+    {
+      "requirementId": "openwop.requirement.0245.fixture-error-replayed",
+      "scenario": "v2-eval-trajectory-trials.test.ts",
+      "sabotage": "src/host/evals/agentEvalRun.ts served a fixture entry marked isError as a success.",
+      "subject": {
+        "host": "openwop-app workflow-engine",
+        "build": "a07093131d (suite pin 2.49.8), sabotaged locally in its own conformance/run.ts harness (in-process, SQLite in a temp dir, OPENWOP_AGENT_DEPLOYMENT=on, OPENWOP_TRIGGER_INBOUND_SIGNING=true), one rule per run"
+      },
+      "suiteVersion": "2.49.8",
+      "result": "executed-fail",
+      "date": "2026-11-24"
+    },
+    {
+      "requirementId": "openwop.requirement.0246.mean-gated",
+      "scenario": "v2-eval-trajectory-trials.test.ts",
+      "sabotage": "src/host/evals/agentEvalRun.ts gated a mean-rule task on its raw mean score, ignoring trajectory failures.",
+      "subject": {
+        "host": "openwop-app workflow-engine",
+        "build": "a07093131d (suite pin 2.49.8), sabotaged locally in its own conformance/run.ts harness (in-process, SQLite in a temp dir, OPENWOP_AGENT_DEPLOYMENT=on, OPENWOP_TRIGGER_INBOUND_SIGNING=true), one rule per run"
+      },
+      "suiteVersion": "2.49.8",
+      "result": "executed-fail",
+      "date": "2026-11-24"
+    },
+    {
+      "requirementId": "openwop.requirement.0246.suite-gated",
+      "scenario": "v2-eval-trajectory-trials.test.ts",
+      "sabotage": "src/host/evals/agentEvalRun.ts summed raw task mean scores into the suite gate score.",
+      "subject": {
+        "host": "openwop-app workflow-engine",
+        "build": "a07093131d (suite pin 2.49.8), sabotaged locally in its own conformance/run.ts harness (in-process, SQLite in a temp dir, OPENWOP_AGENT_DEPLOYMENT=on, OPENWOP_TRIGGER_INBOUND_SIGNING=true), one rule per run"
+      },
+      "suiteVersion": "2.49.8",
+      "result": "executed-fail",
+      "date": "2026-11-24"
+    },
+    {
+      "requirementId": "openwop.requirement.0082.transition-illegal-refused",
+      "scenario": "v2-deployment-lifecycle.test.ts",
+      "sabotage": "src/features/agent-deployments/service.ts allowed pause from any state.",
+      "subject": {
+        "host": "openwop-app workflow-engine",
+        "build": "a07093131d (suite pin 2.49.8), sabotaged locally in its own conformance/run.ts harness (in-process, SQLite in a temp dir, OPENWOP_AGENT_DEPLOYMENT=on, OPENWOP_TRIGGER_INBOUND_SIGNING=true), one rule per run"
+      },
+      "suiteVersion": "2.49.8",
+      "result": "executed-fail",
+      "date": "2026-11-24"
+    },
+    {
+      "requirementId": "openwop.requirement.0082.promote-skip-refused",
+      "scenario": "v2-deployment-lifecycle.test.ts",
+      "sabotage": "src/features/agent-deployments/service.ts promoted straight to a requested toState that skips the next state.",
+      "subject": {
+        "host": "openwop-app workflow-engine",
+        "build": "a07093131d (suite pin 2.49.8), sabotaged locally in its own conformance/run.ts harness (in-process, SQLite in a temp dir, OPENWOP_AGENT_DEPLOYMENT=on, OPENWOP_TRIGGER_INBOUND_SIGNING=true), one rule per run"
+      },
+      "suiteVersion": "2.49.8",
+      "result": "executed-fail",
+      "date": "2026-11-24"
+    },
+    {
+      "requirementId": "openwop.requirement.0082.resume-from-paused",
+      "scenario": "v2-deployment-lifecycle.test.ts",
+      "sabotage": "src/features/agent-deployments/service.ts promoted a paused version to the next lifecycle state instead of back to active.",
+      "subject": {
+        "host": "openwop-app workflow-engine",
+        "build": "a07093131d (suite pin 2.49.8), sabotaged locally in its own conformance/run.ts harness (in-process, SQLite in a temp dir, OPENWOP_AGENT_DEPLOYMENT=on, OPENWOP_TRIGGER_INBOUND_SIGNING=true), one rule per run"
+      },
+      "suiteVersion": "2.49.8",
+      "result": "executed-fail",
+      "date": "2026-11-24"
+    },
+    {
+      "requirementId": "openwop.requirement.0082.rollback-pointer",
+      "scenario": "v2-deployment-lifecycle.test.ts",
+      "sabotage": "src/features/agent-deployments/service.ts rolled back without recording rollbackPointer.",
+      "subject": {
+        "host": "openwop-app workflow-engine",
+        "build": "a07093131d (suite pin 2.49.8), sabotaged locally in its own conformance/run.ts harness (in-process, SQLite in a temp dir, OPENWOP_AGENT_DEPLOYMENT=on, OPENWOP_TRIGGER_INBOUND_SIGNING=true), one rule per run"
+      },
+      "suiteVersion": "2.49.8",
+      "result": "executed-fail",
+      "date": "2026-11-24"
+    },
+    {
+      "requirementId": "openwop.requirement.0082.transition-run-linked",
+      "scenario": "v2-deployment-lifecycle.test.ts",
+      "sabotage": "src/features/agent-deployments/service.ts wrote the transition without its transitionRunId.",
+      "subject": {
+        "host": "openwop-app workflow-engine",
+        "build": "a07093131d (suite pin 2.49.8), sabotaged locally in its own conformance/run.ts harness (in-process, SQLite in a temp dir, OPENWOP_AGENT_DEPLOYMENT=on, OPENWOP_TRIGGER_INBOUND_SIGNING=true), one rule per run"
+      },
+      "suiteVersion": "2.49.8",
+      "result": "executed-fail",
+      "date": "2026-11-24"
+    },
+    {
+      "requirementId": "openwop.requirement.0082.transition-event-recorded",
+      "scenario": "v2-deployment-lifecycle.test.ts",
+      "sabotage": "src/features/agent-deployments/service.ts appended no deployment event for a transition.",
+      "subject": {
+        "host": "openwop-app workflow-engine",
+        "build": "a07093131d (suite pin 2.49.8), sabotaged locally in its own conformance/run.ts harness (in-process, SQLite in a temp dir, OPENWOP_AGENT_DEPLOYMENT=on, OPENWOP_TRIGGER_INBOUND_SIGNING=true), one rule per run"
+      },
+      "suiteVersion": "2.49.8",
+      "result": "executed-fail",
+      "date": "2026-11-24"
+    },
+    {
+      "requirementId": "openwop.requirement.0083.trigger-delivery.dedup",
+      "scenario": "v2-trigger-bridge-delivery.test.ts",
+      "sabotage": "src/host/triggerBridgeService.ts ignored the dedup index, so a repeated delivery started a second run.",
+      "subject": {
+        "host": "openwop-app workflow-engine",
+        "build": "a07093131d (suite pin 2.49.8), sabotaged locally in its own conformance/run.ts harness (in-process, SQLite in a temp dir, OPENWOP_AGENT_DEPLOYMENT=on, OPENWOP_TRIGGER_INBOUND_SIGNING=true), one rule per run"
+      },
+      "suiteVersion": "2.49.8",
+      "result": "executed-fail",
+      "date": "2026-11-24"
+    },
+    {
+      "requirementId": "openwop.requirement.0230.stale-timestamp-refused",
+      "scenario": "v2-trigger-bridge-delivery.test.ts",
+      "sabotage": "src/routes/triggerBridge.ts accepted a signed ingest whose timestamp was outside the tolerance.",
+      "subject": {
+        "host": "openwop-app workflow-engine",
+        "build": "a07093131d (suite pin 2.49.8), sabotaged locally in its own conformance/run.ts harness (in-process, SQLite in a temp dir, OPENWOP_AGENT_DEPLOYMENT=on, OPENWOP_TRIGGER_INBOUND_SIGNING=true), one rule per run"
+      },
+      "suiteVersion": "2.49.8",
+      "result": "executed-fail",
+      "date": "2026-11-24"
+    },
+    {
+      "requirementId": "openwop.requirement.0230.signing-secret-once",
+      "scenario": "v2-trigger-bridge-delivery.test.ts",
+      "sabotage": "src/routes/triggerBridge.ts did not return the signing secret at registration.",
+      "subject": {
+        "host": "openwop-app workflow-engine",
+        "build": "a07093131d (suite pin 2.49.8), sabotaged locally in its own conformance/run.ts harness (in-process, SQLite in a temp dir, OPENWOP_AGENT_DEPLOYMENT=on, OPENWOP_TRIGGER_INBOUND_SIGNING=true), one rule per run"
+      },
+      "suiteVersion": "2.49.8",
+      "result": "executed-fail",
+      "date": "2026-11-24"
+    },
+    {
+      "requirementId": "openwop.requirement.0232.trigger-dead-letters.paging",
+      "scenario": "v2-trigger-dead-letter-read.test.ts",
+      "sabotage": "src/host/triggerBridgeService.ts returned every dead letter, ignoring the page limit.",
+      "subject": {
+        "host": "openwop-app workflow-engine",
+        "build": "a07093131d (suite pin 2.49.8), sabotaged locally in its own conformance/run.ts harness (in-process, SQLite in a temp dir, OPENWOP_AGENT_DEPLOYMENT=on, OPENWOP_TRIGGER_INBOUND_SIGNING=true), one rule per run"
+      },
+      "suiteVersion": "2.49.8",
+      "result": "executed-fail",
+      "date": "2026-11-24"
+    },
+    {
+      "requirementId": "openwop.requirement.0232.trigger-dead-letters.cursor-bound",
+      "scenario": "v2-trigger-dead-letter-read.test.ts",
+      "sabotage": "src/routes/triggerBridge.ts accepted a dead-letter cursor minted for another subscription.",
+      "subject": {
+        "host": "openwop-app workflow-engine",
+        "build": "a07093131d (suite pin 2.49.8), sabotaged locally in its own conformance/run.ts harness (in-process, SQLite in a temp dir, OPENWOP_AGENT_DEPLOYMENT=on, OPENWOP_TRIGGER_INBOUND_SIGNING=true), one rule per run"
+      },
+      "suiteVersion": "2.49.8",
+      "result": "executed-fail",
+      "date": "2026-11-24"
+    },
+    {
+      "requirementId": "openwop.requirement.0251.fields-refused",
+      "scenario": "v2-eval-regression-baseline.test.ts",
+      "sabotage": "src/host/evals/createEvalRun.ts accepted baselineRunId without regression in evalModes.",
+      "subject": {
+        "host": "openwop-app workflow-engine",
+        "build": "a07093131d (suite pin 2.49.8), sabotaged locally in its own conformance/run.ts harness (in-process, SQLite in a temp dir, OPENWOP_AGENT_DEPLOYMENT=on, OPENWOP_TRIGGER_INBOUND_SIGNING=true), one rule per run"
+      },
+      "suiteVersion": "2.49.8",
+      "result": "executed-fail",
+      "date": "2026-11-24"
+    },
+    {
+      "requirementId": "openwop.requirement.0251.baseline-refused",
+      "scenario": "v2-eval-regression-baseline.test.ts",
+      "sabotage": "src/host/evals/createEvalRun.ts accepted an unusable baselineRunId.",
+      "subject": {
+        "host": "openwop-app workflow-engine",
+        "build": "a07093131d (suite pin 2.49.8), sabotaged locally in its own conformance/run.ts harness (in-process, SQLite in a temp dir, OPENWOP_AGENT_DEPLOYMENT=on, OPENWOP_TRIGGER_INBOUND_SIGNING=true), one rule per run"
+      },
+      "suiteVersion": "2.49.8",
+      "result": "executed-fail",
+      "date": "2026-11-24"
+    },
+    {
+      "requirementId": "openwop.requirement.0251.baseline-echoed",
+      "scenario": "v2-eval-regression-baseline.test.ts",
+      "sabotage": "src/host/evals/agentEvalRun.ts left baselineRunId off eval.started.",
+      "subject": {
+        "host": "openwop-app workflow-engine",
+        "build": "a07093131d (suite pin 2.49.8), sabotaged locally in its own conformance/run.ts harness (in-process, SQLite in a temp dir, OPENWOP_AGENT_DEPLOYMENT=on, OPENWOP_TRIGGER_INBOUND_SIGNING=true), one rule per run"
+      },
+      "suiteVersion": "2.49.8",
+      "result": "executed-fail",
+      "date": "2026-11-24"
+    },
+    {
+      "requirementId": "openwop.requirement.0244.regression-paired",
+      "scenario": "v2-eval-regression-baseline.test.ts",
+      "sabotage": "src/host/evals/regressionVerdict.ts reported every candidate task as paired.",
+      "subject": {
+        "host": "openwop-app workflow-engine",
+        "build": "a07093131d (suite pin 2.49.8), sabotaged locally in its own conformance/run.ts harness (in-process, SQLite in a temp dir, OPENWOP_AGENT_DEPLOYMENT=on, OPENWOP_TRIGGER_INBOUND_SIGNING=true), one rule per run"
+      },
+      "suiteVersion": "2.49.8",
+      "result": "executed-fail",
+      "date": "2026-11-24"
+    },
+    {
+      "requirementId": "openwop.requirement.0244.regression-no-false-verdict",
+      "scenario": "v2-eval-regression-baseline.test.ts",
+      "sabotage": "src/host/evals/regressionVerdict.ts reported regressed whenever any task paired.",
+      "subject": {
+        "host": "openwop-app workflow-engine",
+        "build": "a07093131d (suite pin 2.49.8), sabotaged locally in its own conformance/run.ts harness (in-process, SQLite in a temp dir, OPENWOP_AGENT_DEPLOYMENT=on, OPENWOP_TRIGGER_INBOUND_SIGNING=true), one rule per run"
+      },
+      "suiteVersion": "2.49.8",
+      "result": "executed-fail",
+      "date": "2026-11-24"
+    },
+    {
+      "requirementId": "openwop.requirement.0252.fields-refused",
+      "scenario": "v2-eval-recorded-fixtures.test.ts",
+      "sabotage": "src/host/evals/recordedFixtures.ts accepted a fixtureRuns key naming no task of the suite.",
+      "subject": {
+        "host": "openwop-app workflow-engine",
+        "build": "a07093131d (suite pin 2.49.8), sabotaged locally in its own conformance/run.ts harness (in-process, SQLite in a temp dir, OPENWOP_AGENT_DEPLOYMENT=on, OPENWOP_TRIGGER_INBOUND_SIGNING=true), one rule per run"
+      },
+      "suiteVersion": "2.49.8",
+      "result": "executed-fail",
+      "date": "2026-11-24"
+    },
+    {
+      "requirementId": "openwop.requirement.0252.source-refused",
+      "scenario": "v2-eval-recorded-fixtures.test.ts",
+      "sabotage": "src/host/evals/recordedFixtures.ts accepted an unusable fixtureRuns source as an empty fixture set.",
+      "subject": {
+        "host": "openwop-app workflow-engine",
+        "build": "a07093131d (suite pin 2.49.8), sabotaged locally in its own conformance/run.ts harness (in-process, SQLite in a temp dir, OPENWOP_AGENT_DEPLOYMENT=on, OPENWOP_TRIGGER_INBOUND_SIGNING=true), one rule per run"
+      },
+      "suiteVersion": "2.49.8",
+      "result": "executed-fail",
+      "date": "2026-11-24"
+    },
+    {
+      "requirementId": "openwop.requirement.0252.source-replayed",
+      "scenario": "v2-eval-recorded-fixtures.test.ts",
+      "sabotage": "src/host/evals/agentEvalRun.ts ran a task named in fixtureRuns without its derived fixtures.",
+      "subject": {
+        "host": "openwop-app workflow-engine",
+        "build": "a07093131d (suite pin 2.49.8), sabotaged locally in its own conformance/run.ts harness (in-process, SQLite in a temp dir, OPENWOP_AGENT_DEPLOYMENT=on, OPENWOP_TRIGGER_INBOUND_SIGNING=true), one rule per run"
+      },
+      "suiteVersion": "2.49.8",
+      "result": "executed-fail",
+      "date": "2026-11-24"
+    },
+    {
+      "requirementId": "openwop.requirement.0252.drift-fails-closed",
+      "scenario": "v2-eval-recorded-fixtures.test.ts",
+      "sabotage": "src/host/evals/agentEvalRun.ts ran recorded fixtures under onMiss live instead of fail.",
+      "subject": {
+        "host": "openwop-app workflow-engine",
+        "build": "a07093131d (suite pin 2.49.8), sabotaged locally in its own conformance/run.ts harness (in-process, SQLite in a temp dir, OPENWOP_AGENT_DEPLOYMENT=on, OPENWOP_TRIGGER_INBOUND_SIGNING=true), one rule per run"
+      },
+      "suiteVersion": "2.49.8",
+      "result": "executed-fail",
+      "date": "2026-11-24"
+    },
+    {
+      "requirementId": "openwop.requirement.0177.provider-conflict",
+      "scenario": "v2-provider-conflict.test.ts",
+      "sabotage": "src/features/connections/connectionPackLoader.ts accepted a second definition of a bare provider id.",
+      "subject": {
+        "host": "openwop-app workflow-engine",
+        "build": "a07093131d (suite pin 2.49.8), sabotaged locally in its own conformance/run.ts harness (in-process, SQLite in a temp dir, OPENWOP_AGENT_DEPLOYMENT=on, OPENWOP_TRIGGER_INBOUND_SIGNING=true), one rule per run"
+      },
+      "suiteVersion": "2.49.8",
+      "result": "executed-fail",
+      "date": "2026-11-24"
+    },
+    {
+      "requirementId": "openwop.requirement.0233.provider-registry.unique",
+      "scenario": "v2-provider-conflict.test.ts",
+      "sabotage": "src/features/connections/providerRegistry.ts listed one provider id twice.",
+      "subject": {
+        "host": "openwop-app workflow-engine",
+        "build": "a07093131d (suite pin 2.49.8), sabotaged locally in its own conformance/run.ts harness (in-process, SQLite in a temp dir, OPENWOP_AGENT_DEPLOYMENT=on, OPENWOP_TRIGGER_INBOUND_SIGNING=true), one rule per run"
+      },
+      "suiteVersion": "2.49.8",
+      "result": "executed-fail",
+      "date": "2026-11-24"
+    },
+    {
+      "requirementId": "openwop.requirement.0200.prm-served",
+      "scenario": "v2-protected-resource-metadata.test.ts",
+      "sabotage": "src/middleware/auth.ts required a credential for /.well-known/oauth-protected-resource.",
+      "subject": {
+        "host": "openwop-app workflow-engine",
+        "build": "a07093131d (suite pin 2.49.8), sabotaged locally in its own conformance/run.ts harness (in-process, SQLite in a temp dir, OPENWOP_AGENT_DEPLOYMENT=on, OPENWOP_TRIGGER_INBOUND_SIGNING=true), one rule per run"
+      },
+      "suiteVersion": "2.49.8",
+      "result": "executed-fail",
+      "date": "2026-11-24"
+    },
+    {
+      "requirementId": "openwop.requirement.0200.prm-consistent",
+      "scenario": "v2-protected-resource-metadata.test.ts",
+      "sabotage": "src/routes/discovery.ts listed an authorization server in the protected-resource metadata that no auth lane names.",
+      "subject": {
+        "host": "openwop-app workflow-engine",
+        "build": "a07093131d (suite pin 2.49.8), sabotaged locally in its own conformance/run.ts harness (in-process, SQLite in a temp dir, OPENWOP_AGENT_DEPLOYMENT=on, OPENWOP_TRIGGER_INBOUND_SIGNING=true), one rule per run"
+      },
+      "suiteVersion": "2.49.8",
+      "result": "executed-fail",
+      "date": "2026-11-24"
+    },
+    {
+      "requirementId": "openwop.requirement.0200.challenge-401",
+      "scenario": "v2-auth-challenge.test.ts",
+      "sabotage": "src/middleware/authChallenge.ts left resource_metadata out of the 401 challenge.",
+      "subject": {
+        "host": "openwop-app workflow-engine",
+        "build": "a07093131d (suite pin 2.49.8), sabotaged locally in its own conformance/run.ts harness (in-process, SQLite in a temp dir, OPENWOP_AGENT_DEPLOYMENT=on, OPENWOP_TRIGGER_INBOUND_SIGNING=true), one rule per run"
+      },
+      "suiteVersion": "2.49.8",
+      "result": "executed-fail",
+      "date": "2026-11-24"
+    },
+    {
+      "requirementId": "openwop.requirement.0200.challenge-403-scope",
+      "scenario": "v2-auth-challenge.test.ts",
+      "sabotage": "src/host/protocolAuthorization.ts sent an insufficient_scope challenge naming no scope.",
+      "subject": {
+        "host": "openwop-app workflow-engine",
+        "build": "a07093131d (suite pin 2.49.8), sabotaged locally in its own conformance/run.ts harness (in-process, SQLite in a temp dir, OPENWOP_AGENT_DEPLOYMENT=on, OPENWOP_TRIGGER_INBOUND_SIGNING=true), one rule per run"
+      },
+      "suiteVersion": "2.49.8",
+      "result": "executed-fail",
+      "date": "2026-11-24"
+    },
+    {
+      "requirementId": "openwop.requirement.0243.fan-out-needs-dispatch",
+      "scenario": "v2-agents-fan-out.test.ts",
+      "sabotage": "src/routes/discovery.ts advertised agents.fanOut with dispatch false.",
+      "subject": {
+        "host": "openwop-app workflow-engine",
+        "build": "a07093131d (suite pin 2.49.8), sabotaged locally in its own conformance/run.ts harness (in-process, SQLite in a temp dir, OPENWOP_AGENT_DEPLOYMENT=on, OPENWOP_TRIGGER_INBOUND_SIGNING=true), one rule per run"
+      },
+      "suiteVersion": "2.49.8",
+      "result": "executed-fail",
+      "date": "2026-11-24"
+    },
+    {
+      "requirementId": "openwop.requirement.0243.unadmitted-fan-out-refused",
+      "scenario": "v2-agents-fan-out.test.ts",
+      "sabotage": "src/host/dispatchFanOut.ts admitted every fan-out configuration at createRun.",
+      "subject": {
+        "host": "openwop-app workflow-engine",
+        "build": "a07093131d (suite pin 2.49.8), sabotaged locally in its own conformance/run.ts harness (in-process, SQLite in a temp dir, OPENWOP_AGENT_DEPLOYMENT=on, OPENWOP_TRIGGER_INBOUND_SIGNING=true), one rule per run"
+      },
+      "suiteVersion": "2.49.8",
+      "result": "executed-fail",
+      "date": "2026-11-24"
+    },
+    {
+      "requirementId": "openwop.requirement.0243.max-fan-out-waves",
+      "scenario": "v2-agents-fan-out-waves.test.ts",
+      "sabotage": "src/host/dispatchFanOut.ts dropped children beyond the effective concurrency instead of dispatching them in waves.",
+      "subject": {
+        "host": "openwop-app workflow-engine",
+        "build": "a07093131d (suite pin 2.49.8), sabotaged locally in its own conformance/run.ts harness (in-process, SQLite in a temp dir, OPENWOP_AGENT_DEPLOYMENT=on, OPENWOP_TRIGGER_INBOUND_SIGNING=true), one rule per run"
+      },
+      "suiteVersion": "2.49.8",
+      "result": "executed-fail",
+      "date": "2026-11-24"
+    },
+    {
+      "requirementId": "openwop.requirement.0243.per-item-input-gated",
+      "scenario": "v2-agents-fan-out-waves.test.ts",
+      "sabotage": "src/bootstrap/nodes.ts dropped nextWorkerInputs, so no child received its per-item input.",
+      "subject": {
+        "host": "openwop-app workflow-engine",
+        "build": "a07093131d (suite pin 2.49.8), sabotaged locally in its own conformance/run.ts harness (in-process, SQLite in a temp dir, OPENWOP_AGENT_DEPLOYMENT=on, OPENWOP_TRIGGER_INBOUND_SIGNING=true), one rule per run"
+      },
+      "suiteVersion": "2.49.8",
+      "result": "executed-fail",
+      "date": "2026-11-24"
+    },
+    {
+      "requirementId": "openwop.requirement.0255.provider-output-truncation",
+      "scenario": "v2-provider-output-reliability.test.ts",
+      "sabotage": "src/aiProviders/aiProvidersHost.ts emitted no envelope.truncated for a truncated reply.",
+      "subject": {
+        "host": "openwop-app workflow-engine",
+        "build": "a07093131d (suite pin 2.49.8), sabotaged locally in its own conformance/run.ts harness (in-process, SQLite in a temp dir, OPENWOP_AGENT_DEPLOYMENT=on, OPENWOP_TRIGGER_INBOUND_SIGNING=true), one rule per run"
+      },
+      "suiteVersion": "2.49.8",
+      "result": "executed-fail",
+      "date": "2026-11-24"
     }
   ]
 }
