@@ -2664,6 +2664,438 @@
       "suiteVersion": "2.49.6",
       "result": "executed-fail",
       "date": "2026-11-24"
+    },
+    {
+      "requirementId": "openwop.requirement.0194.terminal-once",
+      "scenario": "v2-terminal-event-once.test.ts",
+      "sabotage": "executor.ts appended run.completed twice when a run completed.",
+      "subject": {
+        "host": "openwop-examples v2-reference",
+        "build": "ed00ba4 (suite pin 2.49.6), src/executor.ts sabotaged locally, one rule per boot, SQLite in a temp dir"
+      },
+      "suiteVersion": "2.49.6",
+      "result": "executed-fail",
+      "date": "2026-11-24"
+    },
+    {
+      "requirementId": "openwop.requirement.0197.maturity-not-overstated",
+      "scenario": "v2-capability-maturity-bounded.test.ts",
+      "sabotage": "discovery.ts advertised every family record as stable, above its corpus declaration row.",
+      "subject": {
+        "host": "openwop-examples v2-reference",
+        "build": "ed00ba4 (suite pin 2.49.6), src/discovery.ts sabotaged locally, one rule per boot, SQLite in a temp dir"
+      },
+      "suiteVersion": "2.49.6",
+      "result": "executed-fail",
+      "date": "2026-11-24"
+    },
+    {
+      "requirementId": "openwop.requirement.0199.form-mode-no-secret",
+      "scenario": "v2-mcp-mount-map.test.ts",
+      "sabotage": "mcp-server.ts sent a form-mode elicitation for a schema that is not form-eligible (a sensitive field) instead of URL mode.",
+      "subject": {
+        "host": "openwop-examples v2-reference",
+        "build": "ed00ba4 (suite pin 2.49.6), src/mcp-server.ts sabotaged locally, one rule per boot, SQLite in a temp dir"
+      },
+      "suiteVersion": "2.49.6",
+      "result": "executed-fail",
+      "date": "2026-11-24"
+    },
+    {
+      "requirementId": "openwop.requirement.0200.no-challenge-on-nondisclosure-404",
+      "scenario": "auth-challenge-no-oracle.test.ts",
+      "sabotage": "router.ts added a WWW-Authenticate insufficient_scope challenge to every 404.",
+      "subject": {
+        "host": "openwop-examples v2-reference",
+        "build": "ed00ba4 (suite pin 2.49.6), src/router.ts sabotaged locally, one rule per boot, SQLite in a temp dir"
+      },
+      "suiteVersion": "2.49.6",
+      "result": "executed-fail",
+      "date": "2026-11-24"
+    },
+    {
+      "requirementId": "openwop.requirement.0200.inbound-credential-no-passthrough",
+      "scenario": "inbound-credential-no-passthrough.test.ts",
+      "sabotage": "webhooks.ts forwarded the caller's Authorization bearer on every webhook delivery.",
+      "subject": {
+        "host": "openwop-examples v2-reference",
+        "build": "ed00ba4 (suite pin 2.49.6), src/webhooks.ts sabotaged locally, one rule per boot, SQLite in a temp dir"
+      },
+      "suiteVersion": "2.49.6",
+      "result": "executed-fail",
+      "date": "2026-11-24"
+    },
+    {
+      "requirementId": "openwop.requirement.0201.message-id-stable",
+      "scenario": "v2-webhook-message-id-stable.test.ts",
+      "sabotage": "webhooks.ts minted a fresh webhook-id on every attempt of one delivery.",
+      "subject": {
+        "host": "openwop-examples v2-reference",
+        "build": "ed00ba4 (suite pin 2.49.6), src/webhooks.ts sabotaged locally, one rule per boot, SQLite in a temp dir"
+      },
+      "suiteVersion": "2.49.6",
+      "result": "executed-fail",
+      "date": "2026-11-24"
+    },
+    {
+      "requirementId": "openwop.requirement.0201.endpoint-verification",
+      "scenario": "v2-webhook-endpoint-verification.test.ts",
+      "sabotage": "webhooks.ts accepted an endpoint verification with no echo, a wrong echo or a redirect.",
+      "subject": {
+        "host": "openwop-examples v2-reference",
+        "build": "ed00ba4 (suite pin 2.49.6), src/webhooks.ts sabotaged locally, one rule per boot, SQLite in a temp dir"
+      },
+      "suiteVersion": "2.49.6",
+      "result": "executed-fail",
+      "date": "2026-11-24"
+    },
+    {
+      "requirementId": "openwop.requirement.0201.secret-rotation",
+      "scenario": "v2-webhook-secret-rotation.test.ts",
+      "sabotage": "webhooks.ts stopped dual-signing with the previous secret during the rotation overlap.",
+      "subject": {
+        "host": "openwop-examples v2-reference",
+        "build": "ed00ba4 (suite pin 2.49.6), src/webhooks.ts sabotaged locally, one rule per boot, SQLite in a temp dir"
+      },
+      "suiteVersion": "2.49.6",
+      "result": "executed-fail",
+      "date": "2026-11-24"
+    },
+    {
+      "requirementId": "openwop.requirement.0204.mcp-unclassified-write",
+      "scenario": "v2-tool-catalog-annotations.test.ts",
+      "sabotage": "tool-catalog.ts published an unclassified MCP tool with safetyTier read instead of write.",
+      "subject": {
+        "host": "openwop-examples v2-reference",
+        "build": "ed00ba4 (suite pin 2.49.6), src/tool-catalog.ts sabotaged locally, one rule per boot, SQLite in a temp dir"
+      },
+      "suiteVersion": "2.49.6",
+      "result": "executed-fail",
+      "date": "2026-11-24"
+    },
+    {
+      "requirementId": "openwop.requirement.0204.annotations-derived",
+      "scenario": "v2-tool-catalog-annotations.test.ts",
+      "sabotage": "tool-catalog.ts inverted readOnlyHint, so the annotations were not the table function of the descriptor.",
+      "subject": {
+        "host": "openwop-examples v2-reference",
+        "build": "ed00ba4 (suite pin 2.49.6), src/tool-catalog.ts sabotaged locally, one rule per boot, SQLite in a temp dir"
+      },
+      "suiteVersion": "2.49.6",
+      "result": "executed-fail",
+      "date": "2026-11-24"
+    },
+    {
+      "requirementId": "openwop.requirement.0205.artifact-a2a-shape",
+      "scenario": "v2-artifact-a2a-shape.test.ts",
+      "sabotage": "run-artifacts.ts served the application/a2a+json artifact without its parts.",
+      "subject": {
+        "host": "openwop-examples v2-reference",
+        "build": "ed00ba4 (suite pin 2.49.6), src/run-artifacts.ts sabotaged locally, one rule per boot, SQLite in a temp dir"
+      },
+      "suiteVersion": "2.49.6",
+      "result": "executed-fail",
+      "date": "2026-11-24"
+    },
+    {
+      "requirementId": "openwop.requirement.0205.artifact-id-matches-path",
+      "scenario": "v2-artifact-a2a-shape.test.ts",
+      "sabotage": "run-artifacts.ts returned an artifactId that differed from the {artifactId} path segment.",
+      "subject": {
+        "host": "openwop-examples v2-reference",
+        "build": "ed00ba4 (suite pin 2.49.6), src/run-artifacts.ts sabotaged locally, one rule per boot, SQLite in a temp dir"
+      },
+      "suiteVersion": "2.49.6",
+      "result": "executed-fail",
+      "date": "2026-11-24"
+    },
+    {
+      "requirementId": "openwop.requirement.0205.turn-parts-emitted",
+      "scenario": "v2-conversation-turn-parts.test.ts",
+      "sabotage": "executor.ts emitted conversation turn parts outside the v2 turn def ({ bogus } instead of { text }).",
+      "subject": {
+        "host": "openwop-examples v2-reference",
+        "build": "ed00ba4 (suite pin 2.49.6), src/executor.ts sabotaged locally, one rule per boot, SQLite in a temp dir"
+      },
+      "suiteVersion": "2.49.6",
+      "result": "executed-fail",
+      "date": "2026-11-24"
+    },
+    {
+      "requirementId": "openwop.requirement.0213.in-flight-refused-under-hold",
+      "scenario": "v2-idempotency-in-flight.test.ts",
+      "sabotage": "router.ts ran a same-key create while the claim was held instead of refusing 409 idempotency_in_flight.",
+      "subject": {
+        "host": "openwop-examples v2-reference",
+        "build": "ed00ba4 (suite pin 2.49.6), src/router.ts sabotaged locally, one rule per boot, SQLite in a temp dir"
+      },
+      "suiteVersion": "2.49.6",
+      "result": "executed-fail",
+      "date": "2026-11-24"
+    },
+    {
+      "requirementId": "openwop.requirement.0215.no-head-of-line",
+      "scenario": "v2-webhook-delivery-isolation.test.ts",
+      "sabotage": "webhooks.ts started no attempt while any other was in flight, so unanswered subscriptions blocked a healthy one.",
+      "subject": {
+        "host": "openwop-examples v2-reference",
+        "build": "ed00ba4 (suite pin 2.49.6), src/webhooks.ts sabotaged locally, one rule per boot, SQLite in a temp dir"
+      },
+      "suiteVersion": "2.49.6",
+      "result": "executed-fail",
+      "date": "2026-11-24"
+    },
+    {
+      "requirementId": "openwop.requirement.0215.unregister-stops-delivery",
+      "scenario": "v2-webhook-unregister-stops-delivery.test.ts",
+      "sabotage": "webhooks.ts answered unregister 204 but kept the subscription, so attempts continued after it.",
+      "subject": {
+        "host": "openwop-examples v2-reference",
+        "build": "ed00ba4 (suite pin 2.49.6), src/webhooks.ts sabotaged locally, one rule per boot, SQLite in a temp dir"
+      },
+      "suiteVersion": "2.49.6",
+      "result": "executed-fail",
+      "date": "2026-11-24"
+    },
+    {
+      "requirementId": "openwop.requirement.0218.checkpoint-signature-over-root",
+      "scenario": "audit-checkpoint-signature.test.ts",
+      "sabotage": "audit.ts signed a different message than the checkpoint's Merkle root.",
+      "subject": {
+        "host": "openwop-examples v2-reference",
+        "build": "ed00ba4 (suite pin 2.49.6), src/audit.ts sabotaged locally, one rule per boot, SQLite in a temp dir"
+      },
+      "suiteVersion": "2.49.6",
+      "result": "executed-fail",
+      "date": "2026-11-24"
+    },
+    {
+      "requirementId": "openwop.requirement.0221.generated-secret-returned",
+      "scenario": "v2-webhook-generated-secret.test.ts",
+      "sabotage": "webhooks.ts did not return the generated secret on a secret-less registration.",
+      "subject": {
+        "host": "openwop-examples v2-reference",
+        "build": "ed00ba4 (suite pin 2.49.6), src/webhooks.ts sabotaged locally, one rule per boot, SQLite in a temp dir"
+      },
+      "suiteVersion": "2.49.6",
+      "result": "executed-fail",
+      "date": "2026-11-24"
+    },
+    {
+      "requirementId": "openwop.requirement.0235.if-none-match.only-on-2xx",
+      "scenario": "v2-run-snapshot-etag.test.ts",
+      "sabotage": "runs.ts answered 304 to a conditional read of a run the caller could not read, instead of the refusal.",
+      "subject": {
+        "host": "openwop-examples v2-reference",
+        "build": "ed00ba4 (suite pin 2.49.6), src/runs.ts sabotaged locally, one rule per boot, SQLite in a temp dir"
+      },
+      "suiteVersion": "2.49.6",
+      "result": "executed-fail",
+      "date": "2026-11-24"
+    },
+    {
+      "requirementId": "openwop.requirement.0237.declared-source-replays",
+      "scenario": "v2-nondeterminism-sources.test.ts",
+      "sabotage": "nondeterminism.ts drew fresh values on a replay fork instead of the recorded ones.",
+      "subject": {
+        "host": "openwop-examples v2-reference",
+        "build": "ed00ba4 (suite pin 2.49.6), src/nondeterminism.ts sabotaged locally, one rule per boot, SQLite in a temp dir"
+      },
+      "suiteVersion": "2.49.6",
+      "result": "executed-fail",
+      "date": "2026-11-24"
+    },
+    {
+      "requirementId": "openwop.requirement.0237.no-false-advertisement",
+      "scenario": "v2-nondeterminism-policy-advertisement.test.ts",
+      "sabotage": "discovery.ts advertised nondeterminismPolicy with declared: false.",
+      "subject": {
+        "host": "openwop-examples v2-reference",
+        "build": "ed00ba4 (suite pin 2.49.6), src/discovery.ts sabotaged locally, one rule per boot, SQLite in a temp dir"
+      },
+      "suiteVersion": "2.49.6",
+      "result": "executed-fail",
+      "date": "2026-11-24"
+    },
+    {
+      "requirementId": "openwop.requirement.0255.surfaces-absent",
+      "scenario": "v2-envelope-surfaces-absent.test.ts",
+      "sabotage": "server.ts published the deleted limit limits.envelopesPerTurn.",
+      "subject": {
+        "host": "openwop-examples v2-reference",
+        "build": "ed00ba4 (suite pin 2.49.6), src/server.ts sabotaged locally, one rule per boot, SQLite in a temp dir"
+      },
+      "suiteVersion": "2.49.6",
+      "result": "executed-fail",
+      "date": "2026-11-24"
+    },
+    {
+      "requirementId": "openwop.requirement.0185.payload-vendor-hatch",
+      "scenario": "v2-payload-vendor-hatch.test.ts",
+      "sabotage": "run-event-payloads.schema.json reopened variableChanged (additionalProperties true), so a bare unmodelled key validated.",
+      "subject": {
+        "host": "openwop corpus",
+        "build": "a9c100440 (suite 2.49.8), schemas/v2/run-event-payloads.schema.json sabotaged locally"
+      },
+      "suiteVersion": "2.49.8",
+      "result": "executed-fail",
+      "date": "2026-11-24"
+    },
+    {
+      "requirementId": "openwop.requirement.0186.payload-seats",
+      "scenario": "v2-payload-seats-0186.test.ts",
+      "sabotage": "suspend-request.schema.json added ignore to the ApprovalData.onTimeout enum.",
+      "subject": {
+        "host": "openwop corpus",
+        "build": "a9c100440 (suite 2.49.8), schemas/v2/suspend-request.schema.json sabotaged locally"
+      },
+      "suiteVersion": "2.49.8",
+      "result": "executed-fail",
+      "date": "2026-11-24"
+    },
+    {
+      "requirementId": "openwop.requirement.0208.implementation-shape",
+      "scenario": "v2-implementation-informational.test.ts",
+      "sabotage": "capabilities.schema.json opened implementation (additionalProperties true), so an unknown key validated.",
+      "subject": {
+        "host": "openwop corpus",
+        "build": "a9c100440 (suite 2.49.8), schemas/v2/capabilities.schema.json sabotaged locally"
+      },
+      "suiteVersion": "2.49.8",
+      "result": "executed-fail",
+      "date": "2026-11-24"
+    },
+    {
+      "requirementId": "openwop.requirement.0218.checkpoint-preimage-vectors",
+      "scenario": "audit-checkpoint-vectors.test.ts",
+      "sabotage": "audit-checkpoint-v1.json had one entry hash flipped, so it no longer chained.",
+      "subject": {
+        "host": "openwop corpus",
+        "build": "a9c100440 (suite 2.49.8), conformance/vectors/audit-checkpoint-v1.json sabotaged locally"
+      },
+      "suiteVersion": "2.49.8",
+      "result": "executed-fail",
+      "date": "2026-11-24"
+    },
+    {
+      "requirementId": "openwop.requirement.0244.wire-shape",
+      "scenario": "v2-eval-trajectory-trials.test.ts",
+      "sabotage": "the eval schemas admitted trajectory.match superset.",
+      "subject": {
+        "host": "openwop corpus",
+        "build": "a9c100440 (suite 2.49.8), schemas/v2 eval schemas sabotaged locally"
+      },
+      "suiteVersion": "2.49.8",
+      "result": "executed-fail",
+      "date": "2026-11-24"
+    },
+    {
+      "requirementId": "openwop.requirement.0244.content-free",
+      "scenario": "v2-eval-trajectory-trials.test.ts",
+      "sabotage": "the eval summary trajectory block was opened, so one naming tools validated.",
+      "subject": {
+        "host": "openwop corpus",
+        "build": "a9c100440 (suite 2.49.8), schemas/v2 eval schemas sabotaged locally"
+      },
+      "suiteVersion": "2.49.8",
+      "result": "executed-fail",
+      "date": "2026-11-24"
+    },
+    {
+      "requirementId": "openwop.requirement.0245.fixture-error-shape",
+      "scenario": "v2-eval-trajectory-trials.test.ts",
+      "sabotage": "the eval-suite fixture isError lost its boolean type, so a string isError validated.",
+      "subject": {
+        "host": "openwop corpus",
+        "build": "a9c100440 (suite 2.49.8), schemas/v2 eval schemas sabotaged locally"
+      },
+      "suiteVersion": "2.49.8",
+      "result": "executed-fail",
+      "date": "2026-11-24"
+    },
+    {
+      "requirementId": "openwop.requirement.0251.shape",
+      "scenario": "v2-eval-regression-baseline.test.ts",
+      "sabotage": "capabilities.schema.json dropped the boolean type of agents.evalSuite.baselineSelection.",
+      "subject": {
+        "host": "openwop corpus",
+        "build": "a9c100440 (suite 2.49.8), schemas/v2/capabilities.schema.json sabotaged locally"
+      },
+      "suiteVersion": "2.49.8",
+      "result": "executed-fail",
+      "date": "2026-11-24"
+    },
+    {
+      "requirementId": "openwop.requirement.0252.shape",
+      "scenario": "v2-eval-recorded-fixtures.test.ts",
+      "sabotage": "capabilities.schema.json dropped the boolean type of agents.evalSuite.recordedFixtures.",
+      "subject": {
+        "host": "openwop corpus",
+        "build": "a9c100440 (suite 2.49.8), schemas/v2/capabilities.schema.json sabotaged locally"
+      },
+      "suiteVersion": "2.49.8",
+      "result": "executed-fail",
+      "date": "2026-11-24"
+    },
+    {
+      "requirementId": "openwop.requirement.0194.terminal-once.duplicate-delivery",
+      "scenario": "v2-terminal-event-once.test.ts",
+      "sabotage": "executor.ts let a duplicate delivery of finished work run past the terminal guards and append a second terminal event.",
+      "subject": {
+        "host": "openwop-examples v2-reference",
+        "build": "ed00ba4 (suite pin 2.49.6), src/executor.ts sabotaged locally, one rule per boot, SQLite in a temp dir"
+      },
+      "suiteVersion": "2.49.6",
+      "result": "executed-fail",
+      "date": "2026-11-24"
+    },
+    {
+      "requirementId": "openwop.requirement.0243.subject-link-key-needs-both-lanes",
+      "scenario": "v2-auth-subject-link-key.test.ts",
+      "sabotage": "discovery.ts advertised auth.subjectLinkKey with the saml lane but not the scim lane.",
+      "subject": {
+        "host": "openwop-examples v2-reference",
+        "build": "ed00ba4 (suite pin 2.49.6), src/discovery.ts sabotaged locally, one rule per boot, SQLite in a temp dir"
+      },
+      "suiteVersion": "2.49.6",
+      "result": "executed-fail",
+      "date": "2026-11-24"
+    },
+    {
+      "requirementId": "openwop.requirement.0255.interrupt-form-rules",
+      "scenario": "v2-interrupt-form-rules.test.ts",
+      "sabotage": "executor.ts raised a clarification without the form its node declared.",
+      "subject": {
+        "host": "openwop-examples v2-reference",
+        "build": "ed00ba4 (suite pin 2.49.6), src/executor.ts sabotaged locally, one rule per boot, SQLite in a temp dir"
+      },
+      "suiteVersion": "2.49.6",
+      "result": "executed-fail",
+      "date": "2026-11-24"
+    },
+    {
+      "requirementId": "openwop.requirement.0208.mcp-features-required",
+      "scenario": "v2-mcp-mount-map.test.ts",
+      "sabotage": "mcp-server.ts dropped server-discover from mcp.features while claiming the mcp-2026-07-28 profile.",
+      "subject": {
+        "host": "openwop-examples v2-reference",
+        "build": "ed00ba4 (suite pin 2.49.6), src/mcp-server.ts sabotaged locally, one rule per boot, SQLite in a temp dir"
+      },
+      "suiteVersion": "2.49.6",
+      "result": "executed-fail",
+      "date": "2026-11-24"
+    },
+    {
+      "requirementId": "openwop.requirement.0218.anomaly-shape",
+      "scenario": "audit-anomaly-shape.test.ts",
+      "sabotage": "audit-verify-result.schema.json (v1 and v2) let anomalies[] items be anything, so an entry outside its kind's shape validated.",
+      "subject": {
+        "host": "openwop corpus",
+        "build": "a9c100440 (suite 2.49.8), schemas/audit-verify-result.schema.json and schemas/v2/audit-verify-result.schema.json sabotaged locally"
+      },
+      "suiteVersion": "2.49.8",
+      "result": "executed-fail",
+      "date": "2026-11-24"
     }
   ]
 }
