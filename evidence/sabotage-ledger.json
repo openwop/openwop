@@ -1584,6 +1584,414 @@
       "suiteVersion": "2.49.6",
       "result": "executed-fail",
       "date": "2026-11-24"
+    },
+    {
+      "requirementId": "openwop.requirement.0182.run-list.tenant-scoped",
+      "scenario": "v2-run-list.test.ts",
+      "sabotage": "runs.ts listRuns rendered every runId under another tenant segment, so the listed ids were not bound to the caller's tenant.",
+      "subject": {
+        "host": "openwop-examples v2-reference",
+        "build": "ed00ba4 (suite pin 2.49.6), src/runs.ts sabotaged locally, one rule per boot, SQLite in a temp dir"
+      },
+      "suiteVersion": "2.49.6",
+      "result": "executed-fail",
+      "date": "2026-11-24"
+    },
+    {
+      "requirementId": "openwop.requirement.0182.run-list.cursor-refused",
+      "scenario": "v2-run-list.test.ts",
+      "sabotage": "runs.ts accepted a cursor it did not mint (no HMAC check; a malformed one read as the first page).",
+      "subject": {
+        "host": "openwop-examples v2-reference",
+        "build": "ed00ba4 (suite pin 2.49.6), src/runs.ts sabotaged locally, one rule per boot, SQLite in a temp dir"
+      },
+      "suiteVersion": "2.49.6",
+      "result": "executed-fail",
+      "date": "2026-11-24"
+    },
+    {
+      "requirementId": "openwop.requirement.0182.run-list.filter-exact",
+      "scenario": "v2-run-list.test.ts",
+      "sabotage": "runs.ts listRuns ignored the workflowId filter, so a filtered list carried the conformance-approval run.",
+      "subject": {
+        "host": "openwop-examples v2-reference",
+        "build": "ed00ba4 (suite pin 2.49.6), src/runs.ts sabotaged locally, one rule per boot, SQLite in a temp dir, one conformance-approval run created before the suite so a second workflow exists"
+      },
+      "suiteVersion": "2.49.6",
+      "result": "executed-fail",
+      "date": "2026-11-24"
+    },
+    {
+      "requirementId": "openwop.requirement.0187.bound-id-kinds.webhook",
+      "scenario": "v2-bound-id-kinds.test.ts",
+      "sabotage": "webhooks.ts minted webhookId as an unbound random string with no tenant segment.",
+      "subject": {
+        "host": "openwop-examples v2-reference",
+        "build": "ed00ba4 (suite pin 2.49.6), src/webhooks.ts and src/interrupts.ts sabotaged locally, one rule per boot, SQLite in a temp dir"
+      },
+      "suiteVersion": "2.49.6",
+      "result": "executed-fail",
+      "date": "2026-11-24"
+    },
+    {
+      "requirementId": "openwop.requirement.0187.bound-id-kinds.webhook-emitted",
+      "scenario": "v2-bound-id-kinds.test.ts",
+      "sabotage": "webhooks.ts sent X-openwop-Webhook-Id as a freshly minted id, not the webhookId it had minted for the subscription.",
+      "subject": {
+        "host": "openwop-examples v2-reference",
+        "build": "ed00ba4 (suite pin 2.49.6), src/webhooks.ts and src/interrupts.ts sabotaged locally, one rule per boot, SQLite in a temp dir"
+      },
+      "suiteVersion": "2.49.6",
+      "result": "executed-fail",
+      "date": "2026-11-24"
+    },
+    {
+      "requirementId": "openwop.requirement.0187.bound-id-kinds.per-kind",
+      "scenario": "v2-bound-id-kinds.test.ts",
+      "sabotage": "interrupts.ts minted interruptId as an unbound random string with no tenant segment.",
+      "subject": {
+        "host": "openwop-examples v2-reference",
+        "build": "ed00ba4 (suite pin 2.49.6), src/webhooks.ts and src/interrupts.ts sabotaged locally, one rule per boot, SQLite in a temp dir"
+      },
+      "suiteVersion": "2.49.6",
+      "result": "executed-fail",
+      "date": "2026-11-24"
+    },
+    {
+      "requirementId": "openwop.requirement.0201.opt-in-only",
+      "scenario": "v2-webhook-standard-webhooks-delivery.test.ts",
+      "sabotage": "webhooks.ts added a webhook-id header to deliveries for subscriptions that did not opt into standard-webhooks-1.",
+      "subject": {
+        "host": "openwop-examples v2-reference",
+        "build": "ed00ba4 (suite pin 2.49.6), src/webhooks.ts sabotaged locally, one rule per boot, SQLite in a temp dir"
+      },
+      "suiteVersion": "2.49.6",
+      "result": "executed-fail",
+      "date": "2026-11-24"
+    },
+    {
+      "requirementId": "openwop.requirement.0201.registration-validated",
+      "scenario": "v2-webhook-standard-webhooks-delivery.test.ts",
+      "sabotage": "webhooks.ts echoed the caller-supplied secret in the 201.",
+      "subject": {
+        "host": "openwop-examples v2-reference",
+        "build": "ed00ba4 (suite pin 2.49.6), src/webhooks.ts sabotaged locally, one rule per boot, SQLite in a temp dir"
+      },
+      "suiteVersion": "2.49.6",
+      "result": "executed-fail",
+      "date": "2026-11-24"
+    },
+    {
+      "requirementId": "openwop.requirement.0201.delivery-signed",
+      "scenario": "v2-webhook-standard-webhooks-delivery.test.ts",
+      "sabotage": "webhooks.ts computed the Standard Webhooks signature over an empty id, so it did not cover webhook-id.",
+      "subject": {
+        "host": "openwop-examples v2-reference",
+        "build": "ed00ba4 (suite pin 2.49.6), src/webhooks.ts sabotaged locally, one rule per boot, SQLite in a temp dir"
+      },
+      "suiteVersion": "2.49.6",
+      "result": "executed-fail",
+      "date": "2026-11-24"
+    },
+    {
+      "requirementId": "openwop.requirement.0219.floor-comparison",
+      "scenario": "v2-client-version-header.test.ts",
+      "sabotage": "router.ts refused a client whose major.minor equalled minClientVersion.",
+      "subject": {
+        "host": "openwop-examples v2-reference",
+        "build": "ed00ba4 (suite pin 2.49.6), src/router.ts sabotaged locally, one rule per boot, SQLite in a temp dir"
+      },
+      "suiteVersion": "2.49.6",
+      "result": "executed-fail",
+      "date": "2026-11-24"
+    },
+    {
+      "requirementId": "openwop.requirement.0219.malformed-not-refused",
+      "scenario": "v2-client-version-header.test.ts",
+      "sabotage": "router.ts answered a malformed OpenWOP-Client-Version 400 validation_error instead of treating it as absent.",
+      "subject": {
+        "host": "openwop-examples v2-reference",
+        "build": "ed00ba4 (suite pin 2.49.6), src/router.ts sabotaged locally, one rule per boot, SQLite in a temp dir"
+      },
+      "suiteVersion": "2.49.6",
+      "result": "executed-fail",
+      "date": "2026-11-24"
+    },
+    {
+      "requirementId": "openwop.requirement.0219.absent-not-refused",
+      "scenario": "v2-client-version-header.test.ts",
+      "sabotage": "router.ts answered 426 client_version_unsupported to a request that carried no OpenWOP-Client-Version.",
+      "subject": {
+        "host": "openwop-examples v2-reference",
+        "build": "ed00ba4 (suite pin 2.49.6), src/router.ts sabotaged locally, one rule per boot, SQLite in a temp dir, the runner's readiness probe sending OpenWOP-Client-Version 9.9"
+      },
+      "suiteVersion": "2.49.6",
+      "result": "executed-fail",
+      "date": "2026-11-24"
+    },
+    {
+      "requirementId": "openwop.requirement.0235.if-none-match.rfc9110-match",
+      "scenario": "v2-discovery-etag.test.ts",
+      "sabotage": "discovery.ts matched If-None-Match only as an exact string, so a weak tag, a list and * did not match.",
+      "subject": {
+        "host": "openwop-examples v2-reference",
+        "build": "ed00ba4 (suite pin 2.49.6), src/discovery.ts and src/server.ts sabotaged locally, one rule per boot, SQLite in a temp dir"
+      },
+      "suiteVersion": "2.49.6",
+      "result": "executed-fail",
+      "date": "2026-11-24"
+    },
+    {
+      "requirementId": "openwop.requirement.0235.if-none-match.304-carries-etag",
+      "scenario": "v2-discovery-etag.test.ts",
+      "sabotage": "server.ts answered the discovery 304 without its ETag.",
+      "subject": {
+        "host": "openwop-examples v2-reference",
+        "build": "ed00ba4 (suite pin 2.49.6), src/discovery.ts and src/server.ts sabotaged locally, one rule per boot, SQLite in a temp dir"
+      },
+      "suiteVersion": "2.49.6",
+      "result": "executed-fail",
+      "date": "2026-11-24"
+    },
+    {
+      "requirementId": "openwop.requirement.0235.if-none-match.no-cache-ignored",
+      "scenario": "v2-discovery-etag.test.ts",
+      "sabotage": "server.ts skipped If-None-Match evaluation when the request carried Cache-Control: no-cache.",
+      "subject": {
+        "host": "openwop-examples v2-reference",
+        "build": "ed00ba4 (suite pin 2.49.6), src/discovery.ts and src/server.ts sabotaged locally, one rule per boot, SQLite in a temp dir"
+      },
+      "suiteVersion": "2.49.6",
+      "result": "executed-fail",
+      "date": "2026-11-24"
+    },
+    {
+      "requirementId": "openwop.requirement.0239.council.roster-carried",
+      "scenario": "v2-multi-party-council.test.ts",
+      "sabotage": "executor.ts opened the council conversation without participants on conversation.opened.",
+      "subject": {
+        "host": "openwop-examples v2-reference",
+        "build": "ed00ba4 (suite pin 2.49.6), src/executor.ts, src/interrupts.ts and src/runs.ts sabotaged locally, one rule per boot, SQLite in a temp dir"
+      },
+      "suiteVersion": "2.49.6",
+      "result": "executed-fail",
+      "date": "2026-11-24"
+    },
+    {
+      "requirementId": "openwop.requirement.0239.council.speaker-refused",
+      "scenario": "v2-multi-party-council.test.ts",
+      "sabotage": "interrupts.ts accepted a turn from a speaker off the roster.",
+      "subject": {
+        "host": "openwop-examples v2-reference",
+        "build": "ed00ba4 (suite pin 2.49.6), src/executor.ts, src/interrupts.ts and src/runs.ts sabotaged locally, one rule per boot, SQLite in a temp dir"
+      },
+      "suiteVersion": "2.49.6",
+      "result": "executed-fail",
+      "date": "2026-11-24"
+    },
+    {
+      "requirementId": "openwop.requirement.0239.council.roster-exceeded",
+      "scenario": "v2-multi-party-council.test.ts",
+      "sabotage": "runs.ts created a run whose conversation gate named more participants than maxParticipants.",
+      "subject": {
+        "host": "openwop-examples v2-reference",
+        "build": "ed00ba4 (suite pin 2.49.6), src/executor.ts, src/interrupts.ts and src/runs.ts sabotaged locally, one rule per boot, SQLite in a temp dir"
+      },
+      "suiteVersion": "2.49.6",
+      "result": "executed-fail",
+      "date": "2026-11-24"
+    },
+    {
+      "requirementId": "openwop.requirement.0208.row-requires-refused",
+      "scenario": "v2-a2a-operation-map.test.ts",
+      "sabotage": "a2a-server.ts answered SendStreamingMessage and SubscribeToTask -32601 instead of the row's UnsupportedOperationError -32004.",
+      "subject": {
+        "host": "openwop-examples v2-reference",
+        "build": "ed00ba4 (suite pin 2.49.6), src/a2a-server.ts sabotaged locally, one rule per boot, SQLite in a temp dir, egress guard closed and OPENWOP_A2A_PUSH=1"
+      },
+      "suiteVersion": "2.49.6",
+      "result": "executed-fail",
+      "date": "2026-11-24"
+    },
+    {
+      "requirementId": "openwop.requirement.0208.a2a-unreadable-not-found",
+      "scenario": "v2-a2a-operation-map.test.ts",
+      "sabotage": "a2a-server.ts answered a taskId with a foreign tenant segment as an invalid-params error instead of TaskNotFoundError.",
+      "subject": {
+        "host": "openwop-examples v2-reference",
+        "build": "ed00ba4 (suite pin 2.49.6), src/a2a-server.ts sabotaged locally, one rule per boot, SQLite in a temp dir, egress guard closed and OPENWOP_A2A_PUSH=1"
+      },
+      "suiteVersion": "2.49.6",
+      "result": "executed-fail",
+      "date": "2026-11-24"
+    },
+    {
+      "requirementId": "openwop.requirement.0208.a2a-list-scoped",
+      "scenario": "v2-a2a-operation-map.test.ts",
+      "sabotage": "a2a-server.ts ListTasks listed every tenant's runs instead of what listRuns returns to the caller.",
+      "subject": {
+        "host": "openwop-examples v2-reference",
+        "build": "ed00ba4 (suite pin 2.49.6), src/a2a-server.ts sabotaged locally, one rule per boot, SQLite in a temp dir, egress guard closed and OPENWOP_A2A_PUSH=1"
+      },
+      "suiteVersion": "2.49.6",
+      "result": "executed-fail",
+      "date": "2026-11-24"
+    },
+    {
+      "requirementId": "openwop.requirement.0208.a2a-context-inferred",
+      "scenario": "v2-a2a-operation-map.test.ts",
+      "sabotage": "a2a-server.ts answered a message carrying taskId and no contextId with a freshly minted contextId instead of the task's.",
+      "subject": {
+        "host": "openwop-examples v2-reference",
+        "build": "ed00ba4 (suite pin 2.49.6), src/a2a-server.ts sabotaged locally, one rule per boot, SQLite in a temp dir, egress guard closed and OPENWOP_A2A_PUSH=1"
+      },
+      "suiteVersion": "2.49.6",
+      "result": "executed-fail",
+      "date": "2026-11-24"
+    },
+    {
+      "requirementId": "openwop.requirement.0208.a2a-context-mismatch-refused",
+      "scenario": "v2-a2a-operation-map.test.ts",
+      "sabotage": "a2a-server.ts accepted a message whose contextId was not its task's.",
+      "subject": {
+        "host": "openwop-examples v2-reference",
+        "build": "ed00ba4 (suite pin 2.49.6), src/a2a-server.ts sabotaged locally, one rule per boot, SQLite in a temp dir, egress guard closed and OPENWOP_A2A_PUSH=1"
+      },
+      "suiteVersion": "2.49.6",
+      "result": "executed-fail",
+      "date": "2026-11-24"
+    },
+    {
+      "requirementId": "openwop.requirement.0208.a2a-terminal-unsupported",
+      "scenario": "v2-a2a-operation-map.test.ts",
+      "sabotage": "a2a-server.ts answered a message to a terminal task with TaskNotCancelableError instead of UnsupportedOperationError.",
+      "subject": {
+        "host": "openwop-examples v2-reference",
+        "build": "ed00ba4 (suite pin 2.49.6), src/a2a-server.ts sabotaged locally, one rule per boot, SQLite in a temp dir, egress guard closed and OPENWOP_A2A_PUSH=1"
+      },
+      "suiteVersion": "2.49.6",
+      "result": "executed-fail",
+      "date": "2026-11-24"
+    },
+    {
+      "requirementId": "openwop.requirement.0208.a2a-error-codes",
+      "scenario": "v2-a2a-operation-map.test.ts",
+      "sabotage": "a2a-server.ts answered CancelTask on a terminal task with -32042 instead of TaskNotCancelableError -32002.",
+      "subject": {
+        "host": "openwop-examples v2-reference",
+        "build": "ed00ba4 (suite pin 2.49.6), src/a2a-server.ts sabotaged locally, one rule per boot, SQLite in a temp dir, egress guard closed and OPENWOP_A2A_PUSH=1"
+      },
+      "suiteVersion": "2.49.6",
+      "result": "executed-fail",
+      "date": "2026-11-24"
+    },
+    {
+      "requirementId": "openwop.requirement.0223.reject-fails-run",
+      "scenario": "v2-approval-reject-disposition.test.ts",
+      "sabotage": "executor.ts resumed and completed a rejected gate instead of failing it with approval_rejected.",
+      "subject": {
+        "host": "openwop-examples v2-reference",
+        "build": "ed00ba4 (suite pin 2.49.6), src/executor.ts and src/interrupts.ts sabotaged locally, one rule per boot, SQLite in a temp dir"
+      },
+      "suiteVersion": "2.49.6",
+      "result": "executed-fail",
+      "date": "2026-11-24"
+    },
+    {
+      "requirementId": "openwop.requirement.0223.reject-recorded",
+      "scenario": "v2-approval-reject-disposition.test.ts",
+      "sabotage": "executor.ts recorded interrupt.resolved for a reject without its action and decision.",
+      "subject": {
+        "host": "openwop-examples v2-reference",
+        "build": "ed00ba4 (suite pin 2.49.6), src/executor.ts and src/interrupts.ts sabotaged locally, one rule per boot, SQLite in a temp dir"
+      },
+      "suiteVersion": "2.49.6",
+      "result": "executed-fail",
+      "date": "2026-11-24"
+    },
+    {
+      "requirementId": "openwop.requirement.0223.reject-fails-node",
+      "scenario": "v2-approval-reject-disposition.test.ts",
+      "sabotage": "executor.ts failed a rejected gate with retryable: true.",
+      "subject": {
+        "host": "openwop-examples v2-reference",
+        "build": "ed00ba4 (suite pin 2.49.6), src/executor.ts and src/interrupts.ts sabotaged locally, one rule per boot, SQLite in a temp dir"
+      },
+      "suiteVersion": "2.49.6",
+      "result": "executed-fail",
+      "date": "2026-11-24"
+    },
+    {
+      "requirementId": "openwop.requirement.0223.quorum-reject-fails-run",
+      "scenario": "v2-approval-reject-disposition.test.ts",
+      "sabotage": "interrupts.ts resolved a majority-reject quorum gate granted on the deciding vote, so the run completed.",
+      "subject": {
+        "host": "openwop-examples v2-reference",
+        "build": "ed00ba4 (suite pin 2.49.6), src/executor.ts and src/interrupts.ts sabotaged locally, one rule per boot, SQLite in a temp dir"
+      },
+      "suiteVersion": "2.49.6",
+      "result": "executed-fail",
+      "date": "2026-11-24"
+    },
+    {
+      "requirementId": "openwop.requirement.0223.reject-routed",
+      "scenario": "v2-approval-reject-disposition.test.ts",
+      "sabotage": "executor.ts failed the run on a rejected gate even when an any_failed edge admitted the failure.",
+      "subject": {
+        "host": "openwop-examples v2-reference",
+        "build": "ed00ba4 (suite pin 2.49.6), src/executor.ts and src/interrupts.ts sabotaged locally, one rule per boot, SQLite in a temp dir"
+      },
+      "suiteVersion": "2.49.6",
+      "result": "executed-fail",
+      "date": "2026-11-24"
+    },
+    {
+      "requirementId": "openwop.requirement.0223.timeout-rejects",
+      "scenario": "v2-approval-reject-disposition.test.ts",
+      "sabotage": "executor.ts never swept expired approval gates, so a gate past timeoutMs stayed open.",
+      "subject": {
+        "host": "openwop-examples v2-reference",
+        "build": "ed00ba4 (suite pin 2.49.6), src/executor.ts and src/interrupts.ts sabotaged locally, one rule per boot, SQLite in a temp dir"
+      },
+      "suiteVersion": "2.49.6",
+      "result": "executed-fail",
+      "date": "2026-11-24"
+    },
+    {
+      "requirementId": "openwop.requirement.0223.timeout-never-grants",
+      "scenario": "v2-approval-reject-disposition.test.ts",
+      "sabotage": "executor.ts resolved a timed-out gate whose onTimeout is approve as approved.",
+      "subject": {
+        "host": "openwop-examples v2-reference",
+        "build": "ed00ba4 (suite pin 2.49.6), src/executor.ts and src/interrupts.ts sabotaged locally, one rule per boot, SQLite in a temp dir"
+      },
+      "suiteVersion": "2.49.6",
+      "result": "executed-fail",
+      "date": "2026-11-24"
+    },
+    {
+      "requirementId": "openwop.requirement.0223.reject-loopback-reasks",
+      "scenario": "v2-approval-reject-disposition.test.ts",
+      "sabotage": "executor.ts derived the same interrupt key on every visit of a node, so a looped-back gate reused the first key.",
+      "subject": {
+        "host": "openwop-examples v2-reference",
+        "build": "ed00ba4 (suite pin 2.49.6), src/executor.ts and src/interrupts.ts sabotaged locally, one rule per boot, SQLite in a temp dir"
+      },
+      "suiteVersion": "2.49.6",
+      "result": "executed-fail",
+      "date": "2026-11-24"
+    },
+    {
+      "requirementId": "openwop.requirement.0223.replay-derives-rejection",
+      "scenario": "v2-approval-reject-disposition.test.ts",
+      "sabotage": "executor.ts recordedResolution never found the source's resolution, so a replay fork re-raised the gate instead of deriving the recorded rejection.",
+      "subject": {
+        "host": "openwop-examples v2-reference",
+        "build": "ed00ba4 (suite pin 2.49.6), src/executor.ts and src/interrupts.ts sabotaged locally, one rule per boot, SQLite in a temp dir"
+      },
+      "suiteVersion": "2.49.6",
+      "result": "executed-fail",
+      "date": "2026-11-24"
     }
   ]
 }
