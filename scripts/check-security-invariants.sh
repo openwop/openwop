@@ -293,4 +293,19 @@ fi
 
 echo "Threat-model pointers: all resolve; $TM_UNTRACED of $TOTAL are untraced (at baseline — a ratchet, not a pass)."
 echo
+
+# ── Witnessed at the current major (added 2026-11-25) ────────────────────────
+# A tests: glob that resolves says nothing about WHICH protocol major the file
+# runs at. v1 reached end of support on 2026-10-04 (RFC 0234), so a critical
+# invariant whose only tests run at major 1 checks no current host. The
+# report reads conformance/scenario-majors.json and fails when a protocol-tier
+# `critical` invariant has no test at major 2 and is not in the shrink-only
+# baseline SECURITY/invariant-v2-gaps.json (or when a listed id has gained cover).
+if ! node "$REPO_ROOT/scripts/report-invariant-majors.mjs" --check; then
+  echo
+  echo "=== check-security-invariants FAILED — a critical invariant is not witnessed at protocol major 2 ==="
+  echo "List every protocol-tier invariant with its majors: node scripts/report-invariant-majors.mjs"
+  exit 1
+fi
+echo
 echo "=== check-security-invariants OK — all protocol-tier invariants have test coverage ==="

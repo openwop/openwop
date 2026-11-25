@@ -80,7 +80,7 @@
         "properties": {
           "packName": {
             "type": "string",
-            "description": "Pack name (e.g., `vendor.myndhyve.ai`). MUST exist under registry/v1/packs/.",
+            "description": "Pack name (e.g., `vendor.myndhyve.ai`). MUST exist under `registry/v2/packs/`.",
             "pattern": "^[a-z][a-z0-9-]*(\\.[a-z][a-z0-9-]*)+$"
           },
           "versions": {

@@ -38,7 +38,7 @@ A host advertises `packs` when it serves the registry surface above:
 The registry is versioned by tree, not header. It publishes `registry/v2/packs/<name>/-/<version>.{json,sbom.json,sig,tgz}` as a parallel tree of re-signed manifests with regenerated SBOMs and index.
 
 - A signed compatibility overlay MUST be rejected; a mirror re-derives the signer at ingest.
-- `.well-known/openwop-registry.json` `endpoints` is the negotiation: it names both trees, and a client MUST resolve every registry path through it rather than construct one.
+- `.well-known/openwop-registry.json` `endpoints` is the negotiation: it names the v2 tree, and the v1 tree until the v1 installability floor (2027-09-05), and a client MUST resolve every registry path through it rather than construct one.
 - `publicKey` is unversioned.
 
 ## Peer-dependency identifiers

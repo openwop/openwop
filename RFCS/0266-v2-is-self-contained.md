@@ -105,6 +105,13 @@ A concept that no v2 schema, operation or event uses is not re-homed; its v2 ref
 
 **§E.3** `schemas/v2/registry-version-manifest.schema.json` and `security-advisory.schema.json` name `registry/v2/packs/` paths, not `/v1/packs/`.
 
+> **Progress 2026-11-25 (§E):**
+>
+> - **§E.1 live.** openwop-registry #112 is merged and deployed: `packs.openwop.dev/.well-known/openwop-registry.json` names `endpoints.v2` first and `protocolVersion: "2.0"`, and keeps the flat alias keys and `endpoints.v1` until the floor. The alias-key deprecation row is `openwop.deprecation.registry-discovery-flat-endpoint-keys` in `spec/v2/deprecations.json` (`removalTrigger: v1-installability-floor`).
+> - **§E.2 done (corpus 2.49.15).** `packs.md` §"The registry tree" reads "it names the v2 tree, and the v1 tree until the v1 installability floor (2027-09-05)". `check-core-budget` stays green (37,191 of 37,200 words).
+> - **§E.3 done (corpus 2.49.15).** The `registry-version-manifest` description names `/v2/packs/{name}/-/{version}.json`, and the `security-advisory` `packName` description names `registry/v2/packs/`.
+> - The `check-v2-self-contained --registry` witness for §E.1 is still planned.
+
 ## Compatibility
 
 `additive` on the wire: no v2 request, response, event, error code or discovery field changes. Every rule that moves (§A, §B) moves with its meaning unchanged; a reader who resolved it through v1 gets the same answer through v2.
@@ -161,7 +168,7 @@ A host-side witness for acceptance: a host's certified major-2 cut on a suite re
 - [ ] §B.2 homes merged (or UQ-1 deletions recorded); `check-core-budget` green.
 - [x] §C: no v2 artifact generated from a v1 input; no `x-openwop-seeded-from: v1`; PROTOCOL-STATUS counts from the v2 tree. (2026-11-25.)
 - [ ] §D: an `@openwop/spec-artifacts` release ships no v1 file; CHANGELOG names the last release that does.
-- [ ] §E: openwop-registry discovery updated and deployed; the alias-key deprecation row in `spec/v2/deprecations.json`.
+- [x] §E: openwop-registry discovery updated and deployed; the alias-key deprecation row in `spec/v2/deprecations.json`. (2026-11-25: openwop-registry #112; §E.2, §E.3 in corpus 2.49.15.)
 - [ ] **Host evidence (tier-1):** openwop-app's certified major-2 production cut on the suite release that ships §D, with the app's build and runtime reading no v1 corpus file (its `check-v1-reliance` extended to corpus inputs).
 - [ ] CHANGELOG entry; register sweep (`RFCS/registers/0266-*.gaps.md`, `.risks.md`).
 

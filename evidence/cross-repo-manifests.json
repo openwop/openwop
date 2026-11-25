@@ -3,7 +3,7 @@
   "generated": "2026-11-22",
   "repos": {
     "openwop-examples": {
-      "commit": "ed00ba49590e3cdb58fee9e197ead20b9e4ab3d1",
+      "commit": "775682a20967463b15166ddbf005188dcbe55468",
       "files": {
         "examples/hosts/postgres/src/audit-export.ts": {
           "exists": true,
@@ -29,6 +29,13 @@
         "examples/hosts/postgres/test/audit-checkpoint-export.test.ts": {
           "exists": true,
           "sha256": "a1f7099029fa7c48acac106be8b61667f1b9bfb52aa0f688a16871addbce5073",
+          "citedBy": [
+            "conformance/coverage.md"
+          ]
+        },
+        "examples/hosts/postgres/test/audit-tamper.test.ts": {
+          "exists": true,
+          "sha256": "4de52a5729fae814614bd8e321a44cca5e4c6b4cdd8262e092e7abfea624eb05",
           "citedBy": [
             "conformance/coverage.md"
           ]
@@ -73,13 +80,6 @@
           "sha256": "6852cd733ae0c6872bdc85a5110ec56b9123b8380c77d78b75e890315ac5c35a",
           "citedBy": [
             "SECURITY/invariants.yaml"
-          ]
-        },
-        "examples/hosts/sqlite/test/audit-tamper.test.ts": {
-          "exists": true,
-          "sha256": "92f56f71ce372c8477b2a0fd342b4e7314ccd7bdb0837d6015d91f09c7a5e349",
-          "citedBy": [
-            "conformance/coverage.md"
           ]
         },
         "examples/hosts/wasm-sandbox/": {

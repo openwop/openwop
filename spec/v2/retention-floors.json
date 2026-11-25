@@ -7,7 +7,7 @@
       "ecosystem": "npm",
       "name": "@openwop/openwop",
       "oldMajor": 1,
-      "lastOldMajor": "1.9.0",
+      "lastOldMajor": "1.10.0",
       "probe": { "url": "https://registry.npmjs.org/@openwop%2Fopenwop", "versionsAt": "versions" }
     },
     {
@@ -21,14 +21,14 @@
       "ecosystem": "pypi",
       "name": "openwop-client",
       "oldMajor": 1,
-      "lastOldMajor": "1.7.0",
+      "lastOldMajor": "1.8.0",
       "probe": { "url": "https://pypi.org/pypi/openwop-client/json", "versionsAt": "releases" }
     },
     {
       "ecosystem": "go",
       "name": "github.com/openwop/openwop-sdks/go",
       "oldMajor": 1,
-      "lastOldMajor": "v1.6.0",
+      "lastOldMajor": "v1.7.0",
       "probe": { "url": "https://proxy.golang.org/github.com/openwop/openwop-sdks/go/@v/list", "versionsAt": "lines" }
     }
   ]

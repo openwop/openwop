@@ -32,7 +32,9 @@ import { fileURLToPath } from 'node:url';
 const ROOT = resolve(dirname(fileURLToPath(import.meta.url)), '..');
 const PARA_MAX = 90;
 const CELL_MAX = 40;
-const V1_BASELINE = 109;
+// 111 since 2.49.15: RFC 0266 §E.2's packs.md sentence names the v1 registry tree and the
+// v1 installability floor, a live overlap rule (it binds until 2027-09-05).
+const V1_BASELINE = 111;
 const OWN_RFC = /RFC 0\d{3}/;
 
 const words = (s) => s.replace(/`[^`]*`/g, 'x').split(/\s+/).filter(Boolean).length;
