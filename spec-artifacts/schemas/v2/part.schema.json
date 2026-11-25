@@ -13,19 +13,19 @@
     "raw": {
       "type": "string",
       "contentEncoding": "base64",
-      "description": "a2a.proto: \"The `raw` byte content of a file. In JSON serialization, this is encoded as a base64 string.\" Bounded by host policy (a2a-integration.md D.3)."
+      "description": "a2a.proto: \"The `raw` byte content of a file. In JSON serialization, this is encoded as a base64 string.\" Outbound, bounded by host policy (re-homed from v1 `a2a-integration.md` D.3 by RFC 0266); inbound, the bytes are stored by reference and never inlined in the event log (`interop-map.json` `a2a.fields` `Part`)."
     },
     "url": {
       "type": "string",
       "format": "uri",
-      "description": "a2a.proto: \"A `url` pointing to the file's content.\" On an OpenWOP read it MUST NOT resolve beyond the caller's authorization (RFC 0205 §A.3; a2a-integration.md D.3); a consumer MUST NOT auto-fetch it without an egress decision (a2a-integration.md D.3 inbound)."
+      "description": "a2a.proto: \"A `url` pointing to the file's content.\" On an OpenWOP read it MUST NOT resolve beyond the caller's authorization (RFC 0205 §A.3); a consumer MUST NOT auto-fetch it without an egress decision (`interop-map.json` `a2a.fields` `Part`)."
     },
     "data": {
       "description": "a2a.proto: \"Arbitrary structured `data` as a JSON value (object, array, string, number, boolean, or null).\""
     },
     "metadata": {
       "type": "object",
-      "description": "a2a.proto: \"Optional. metadata associated with this part.\" OpenWOP fields live under `metadata.openwop.*` (a2a-integration.md).",
+      "description": "a2a.proto: \"Optional. metadata associated with this part.\" OpenWOP fields live under `metadata.openwop.*` (interop.md §\"The operation mappings\").",
       "additionalProperties": {}
     },
     "filename": {

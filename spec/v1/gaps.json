@@ -16629,8 +16629,8 @@
       "surface": "**Medium.** Whether any v2 operation serves the v1 debug bundle (UQ 1).",
       "witness": "unclassified",
       "requirementId": null,
-      "disposition": "transferred",
-      "target": "RFC",
+      "disposition": "closed",
+      "target": null,
       "sources": [
         {
           "file": "RFCS/registers/0266-v2-is-self-contained.gaps.md",
@@ -16646,8 +16646,8 @@
       "surface": "**Medium.** Whether the core-document homes fit `check-core-budget` (UQ 2).",
       "witness": "unclassified",
       "requirementId": null,
-      "disposition": "transferred",
-      "target": "RFC",
+      "disposition": "closed",
+      "target": null,
       "sources": [
         {
           "file": "RFCS/registers/0266-v2-is-self-contained.gaps.md",

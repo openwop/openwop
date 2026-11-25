@@ -1,7 +1,7 @@
 asyncapi: 3.1.0
 info:
   title: OpenWOP v2 event streams
-  version: 2.49.11
+  version: 2.49.12
   description: 'OpenWOP v2 event streams over SSE. The run-events channel''s address is the OpenAPI path key, and the server
     pathname is empty (bare origin). `streamMode` is a stream mode from the closed set, or a comma-separated combination of
     them; `values` never combines. `hostEvents` has a default address, `/host/events`; a host MAY declare another under `heartbeat.deliveryChannel`.
@@ -44,7 +44,8 @@ operations:
       $ref: '#/channels/runEvents'
     title: Subscribe to a run's events
     description: A long-lived SSE subscription that closes after a terminal run event. `Last-Event-ID` resumes from the sequence
-      after the supplied one. A mixed mode is the union of its filters, and each event carries its own `event:` label (`stream-modes.md`).
+      after the supplied one. A mixed mode is the union of its filters, and each event carries its own `event:` label (events.md
+      §Stream modes).
     bindings:
       http:
         method: GET

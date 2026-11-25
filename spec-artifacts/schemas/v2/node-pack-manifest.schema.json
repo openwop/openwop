@@ -2,7 +2,7 @@
   "$schema": "https://json-schema.org/draft/2020-12/schema",
   "$id": "https://openwop.dev/spec/v2/node-pack-manifest.schema.json",
   "title": "NodePackManifest",
-  "description": "Manifest for a published OpenWOP node pack \u2014 `pack.json` at the pack root. Language-neutral. See node-packs.md for the canonical contract.",
+  "description": "Manifest for a published OpenWOP node pack \u2014 `pack.json` at the pack root. Language-neutral. See `spec/v2/core/packs.md` for the canonical contract. An engine MUST resolve every pack a workflow declares at workflow-register time, before executing any node, verify its integrity and (when `signing` is present) its signature, and surface a load failure as `pack_load_failure` on the workflow-register response, not as a node-runtime failure (re-homed from v1 `node-packs.md` §\"Engine integration\" by RFC 0266).",
   "type": "object",
   "required": [
     "engines",
@@ -43,7 +43,7 @@
     },
     "name": {
       "type": "string",
-      "description": "Reverse-DNS pack name. Reserved scopes: `core.*` (spec-canonical), `vendor.<org>.*` (vendor-published), `community.<author>.*` (individual), `private.<host>.*` (host-internal \u2014 MUST NOT appear in `packs.openwop.dev`). `local.*` is for in-repo unpublished packs and MUST NOT appear in any registry. See node-packs.md \u00a7Naming for the full reservation table.",
+      "description": "Reverse-DNS pack name, `<scope>.<author>.<pack>`. This description is the v2 home of the pack-name tiers. Reserved scopes: `core.*` \u2014 spec-canonical packs maintained by the OpenWOP working group; third parties MUST NOT publish under it. `vendor.<org>.*` \u2014 vendor-published; the `<org>` segment is reserved on first publish, and a later publish from a different account is refused with `forbidden`. `community.<author>.*` \u2014 individual packs; a lighter reservation, enforced best-effort. `private.<host>.*` \u2014 host-internal packs on a single deployment's private registry; the operator-chosen `<host>` MUST NOT collide with a reserved value, and a `private.*` name MUST NOT appear in `packs.openwop.dev`. `local.*` is for in-repo unpublished packs and MUST NOT appear in any registry. (Re-homed from v1 `node-packs.md` \u00a7Naming by RFC 0266.)",
       "pattern": "^(core|vendor|community|private)\\.[a-z][a-z0-9_-]*(\\.[a-z][a-zA-Z0-9_-]*)+$",
       "minLength": 1,
       "maxLength": 256
@@ -233,7 +233,7 @@
               "sensitive": {
                 "type": "boolean",
                 "default": false,
-                "description": "When true, the engine masks this output port's value in `node.completed` event payloads. Use when a NodeModule ALWAYS handles sensitive data (e.g., a Salesforce upsert always touches PII). Workflows MAY override per-instance via `WorkflowNode.outputSensitivity`. See observability.md \u00a7Privacy classification (closes O5)."
+                "description": "When true, the engine masks this output port's value in `node.completed` event payloads. Use when a NodeModule ALWAYS handles sensitive data (e.g., a Salesforce upsert always touches PII). Workflows MAY override per-instance via `WorkflowNode.outputSensitivity`. The masking mode and rules are `capabilities.compliance.defaultMode`'s (closes O5)."
               }
             },
             "additionalProperties": false
@@ -298,7 +298,7 @@
           },
           "uniqueItems": true,
           "maxItems": 32,
-          "description": "RFC 0031 \u00a7B. Model capabilities this NodeModule requires the active model to advertise in `capabilities.modelCapabilities.advertised[]`. Distinct from `requires`, which gates on HOST capabilities (`capabilities.runtimeCapabilities[]`) \u2014 this field gates on MODEL capabilities. Spec-reserved identifiers: `structured-output`, `discriminator-enum`, `long-context`, `reasoning` (model-native thinking-tokens), `function-calling`. Host-private extensions MUST prefix with `x-host-<host>-` per `host-extensions.md` \u00a7\"Canonical-prefix table\". Empty array (or absent field) means no model-capability requirements. When the active model does not satisfy the declared set, the host MUST follow the dispatch flow in RFC 0031 \u00a7B: substitute to `fallbackModel` (emit `model.capability.substituted`) or refuse (emit `model.capability.insufficient` + terminate with `capability_not_provided`)."
+          "description": "RFC 0031 \u00a7B. Model capabilities this NodeModule requires the active model to advertise in `capabilities.modelCapabilities.advertised[]`. Distinct from `requires`, which gates on HOST capabilities (`capabilities.runtimeCapabilities[]`) \u2014 this field gates on MODEL capabilities. Spec-reserved identifiers: `structured-output`, `discriminator-enum`, `long-context`, `reasoning` (model-native thinking-tokens), `function-calling`. Host-private extensions MUST prefix with `x-host-<host>-` per the host-extension convention (`ids.schema.json` description). Empty array (or absent field) means no model-capability requirements. When the active model does not satisfy the declared set, the host MUST follow the dispatch flow in RFC 0031 \u00a7B: substitute to `fallbackModel` (emit `model.capability.substituted`) or refuse (emit `model.capability.insufficient` + terminate with `capability_not_provided`)."
         },
         "fallbackModel": {
           "type": "object",
@@ -325,7 +325,7 @@
       "additionalProperties": false,
       "patternProperties": {
         "^(openwop-|x-|vendor\\.)": {
-          "description": "Vendor / host extension escape hatch (RFC 0138). A property matching `^(x-|vendor\\.)` is a HOST EXTENSION: its semantics are unspecified by this protocol, and a consumer that does not recognize one MUST ignore it rather than reject the pack. Resolves the contradiction in `host-extensions.md` \u00a7\"Vendor-prefixed namespaces\", which requires a client receiving an unknown vendor-prefixed field to treat it as opaque \u2014 a field that `additionalProperties: false` previously made impossible to carry. SECURITY: an extension value is PACK-AUTHORED, therefore untrusted; \"ignore\" means ignore. See `node-packs.md` \u00a7\"Vendor extensions on pack manifests\" and the `pack-manifest-extension-opaque` invariant."
+          "description": "Vendor / host extension escape hatch (RFC 0138). A property matching `^(x-|vendor\\.)` is a HOST EXTENSION: its semantics are unspecified by this protocol, and a consumer that does not recognize one MUST ignore it rather than reject the pack. Resolves the contradiction in the host-extension convention (`ids.schema.json` description), which requires a client receiving an unknown vendor-prefixed field to treat it as opaque \u2014 a field that `additionalProperties: false` previously made impossible to carry. SECURITY: an extension value is PACK-AUTHORED, therefore untrusted; \"ignore\" means ignore. See `spec/v2/core/packs.md` \u00a7\"The manifest schema family\" and the `pack-manifest-extension-opaque` invariant."
         }
       }
     },
@@ -559,7 +559,7 @@
             "wasm-component",
             "remote"
           ],
-          "description": "How the engine loads the pack. See node-packs.md \u00a7runtime formats. `wasm` is the core-module WASM ABI (RFC 0008). `wasm-component` is the WASM Component Model variant (WIT-defined interfaces); hosts that advertise `nodePackRuntimes.wasmComponent` load it via wasmtime / wasmer Component Model runtimes. Both share the openwop ABI envelope; the wasm-component variant uses WIT interfaces instead of hand-rolled imports/exports."
+          "description": "How the engine loads the pack. See `spec/v2/core/node-pack-runtimes.md` \u00a7Languages. `wasm` is the core-module WASM ABI (RFC 0008). `wasm-component` is the WASM Component Model variant (WIT-defined interfaces); hosts that advertise `nodePackRuntimes.wasmComponent` load it via wasmtime / wasmer Component Model runtimes. Both share the openwop ABI envelope; the wasm-component variant uses WIT interfaces instead of hand-rolled imports/exports."
         },
         "entry": {
           "type": "string",
@@ -585,7 +585,7 @@
         "requires": {
           "type": "array",
           "uniqueItems": true,
-          "description": "RFC 0076. Abstract platform primitives the pack's runtime code exercises, for install-time sandbox gating. Runtime-agnostic (not language builtin names). Absent or [] \u21d2 no elevated platform needs. A sandbox host MUST evaluate this at install time and refuse (`pack_runtime_requirement_unmet`) any primitive it will not grant; see node-packs.md \u00a7\"Runtime platform requirements\".",
+          "description": "RFC 0076. Abstract platform primitives the pack's runtime code exercises, for install-time sandbox gating. Runtime-agnostic (not language builtin names). Absent or [] \u21d2 no elevated platform needs. A sandbox host MUST evaluate this at install time and refuse (`pack_runtime_requirement_unmet`) any primitive it will not grant \u2014 it MUST NOT silently install and fail at first invocation. A non-gating host MAY ignore the field for enforcement but SHOULD project it onto the pack's inventory entry. The field declares intent for gating, not an authorization grant: a host MUST still enforce its sandbox at runtime (an undeclared primitive is still denied). The vocabulary grows additively; when a finer-grained primitive is added, a host MUST treat its coarser parent as at-least-as-broad, and a host MUST NOT grant a primitive this schema does not list (re-homed from v1 `node-packs.md` \u00a7\"Runtime platform requirements\" by RFC 0266).",
           "items": {
             "oneOf": [
               {
@@ -752,7 +752,7 @@
   },
   "patternProperties": {
     "^(openwop-|x-|vendor\\.)": {
-      "description": "Vendor / host extension escape hatch (RFC 0138). A property matching `^(x-|vendor\\.)` is a HOST EXTENSION: its semantics are unspecified by this protocol, and a consumer that does not recognize one MUST ignore it rather than reject the pack. Resolves the contradiction in `host-extensions.md` \u00a7\"Vendor-prefixed namespaces\", which requires a client receiving an unknown vendor-prefixed field to treat it as opaque \u2014 a field that `additionalProperties: false` previously made impossible to carry. SECURITY: an extension value is PACK-AUTHORED, therefore untrusted; \"ignore\" means ignore. See `node-packs.md` \u00a7\"Vendor extensions on pack manifests\" and the `pack-manifest-extension-opaque` invariant."
+      "description": "Vendor / host extension escape hatch (RFC 0138). A property matching `^(x-|vendor\\.)` is a HOST EXTENSION: its semantics are unspecified by this protocol, and a consumer that does not recognize one MUST ignore it rather than reject the pack. Resolves the contradiction in the host-extension convention (`ids.schema.json` description), which requires a client receiving an unknown vendor-prefixed field to treat it as opaque \u2014 a field that `additionalProperties: false` previously made impossible to carry. SECURITY: an extension value is PACK-AUTHORED, therefore untrusted; \"ignore\" means ignore. See `spec/v2/core/packs.md` \u00a7\"The manifest schema family\" and the `pack-manifest-extension-opaque` invariant."
     }
   },
   "x-openwop-anyOf-note": "constraint fragments (kind-conditional requirements) \u2014 closure is the root's"

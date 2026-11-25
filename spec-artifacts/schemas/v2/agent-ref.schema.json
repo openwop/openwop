@@ -10,7 +10,7 @@
   "properties": {
     "agentId": {
       "$ref": "ids.schema.json#/$defs/agentId",
-      "description": "Globally-unique agent identifier. Naming convention mirrors `node-packs.md` §Naming — `<tier>.<org>.<pack>.<agent>` for vendor/community packs (`vendor.acme.support.tier1`); `core.<name>` for spec-canonical agents (`core.chat`, `core.research`); `host:<id>` slim-runtime form for host-internal AgentRefs that don't ship as packs. Host-internal `host:<id>` agents are valid AgentRefs at the wire level but MUST NOT be published as manifests (the `host:` namespace is reserved for runtime synthesis). External-identity-system compatibility (STD-4): hosts MAY map an `agentId` to a W3C DID, an A2A AgentCard URL, an AGNTCY gateway identifier, or other external identity primitive via host-internal mapping tables. The external identifier MUST NOT be embedded as the wire-level `agentId` (doing so would force resolver dependencies on every consumer); carry it under vendor metadata or as the `host:<scheme>:<id>` form. See `spec/v1/agent-ref-positioning.md` §\"Composition rules\" for the recommended mapping conventions."
+      "description": "Globally-unique agent identifier. Naming convention mirrors the pack-name tiers (`node-pack-manifest.schema.json` `name`) — `<tier>.<org>.<pack>.<agent>` for vendor/community packs (`vendor.acme.support.tier1`); `core.<name>` for spec-canonical agents (`core.chat`, `core.research`); `host:<id>` slim-runtime form for host-internal AgentRefs that don't ship as packs. Host-internal `host:<id>` agents are valid AgentRefs at the wire level but MUST NOT be published as manifests (the `host:` namespace is reserved for runtime synthesis). External-identity-system compatibility (STD-4): hosts MAY map an `agentId` to a W3C DID, an A2A AgentCard URL, an AGNTCY gateway identifier, or other external identity primitive via host-internal mapping tables. The external identifier MUST NOT be embedded as the wire-level `agentId` (doing so would force resolver dependencies on every consumer); carry it under vendor metadata or as the `host:<scheme>:<id>` form."
     },
     "name": {
       "type": "string",
@@ -30,13 +30,13 @@
         "classification",
         "retrieval"
       ],
-      "description": "Closed enum describing the agent's model-class envelope. Hosts that advertise `capabilities.agents.modelClasses` use this enum to filter agents at install / dispatch time. Vendor extensions ship under `<vendor>.<class>` per `host-extensions.md` (e.g., `openwop.creative-writing`) — vendor-extension values are NOT in the closed enum and MUST surface as unknown to strict consumers."
+      "description": "Closed enum describing the agent's model-class envelope. Hosts that advertise `capabilities.agents.modelClasses` use this enum to filter agents at install / dispatch time. Vendor extensions ship under `<vendor>.<class>` per the host-extension convention (`ids.schema.json` description) (e.g., `openwop.creative-writing`) — vendor-extension values are NOT in the closed enum and MUST surface as unknown to strict consumers."
     },
     "memoryRef": {
       "type": "string",
       "minLength": 1,
       "maxLength": 256,
-      "description": "Optional host-defined opaque reference to this agent's long-term memory. Resolved by the host's `MemoryAdapter` (see `agent-memory.md`); the wire-level shape is host-defined per the L2 disposition (mirrors `host-extensions.md` namespace conventions). Hosts that don't implement long-term memory MUST NOT emit this field; hosts that do MUST honor cross-tenant isolation (CTI-1)."
+      "description": "Optional host-defined opaque reference to this agent's long-term memory. Resolved by the host's `MemoryAdapter` (host-services.md §`memory`); the wire-level shape is host-defined per the L2 disposition (mirrors the host-extension convention (`ids.schema.json` description)). Hosts that don't implement long-term memory MUST NOT emit this field; hosts that do MUST honor cross-tenant isolation (CTI-1)."
     },
     "version": {
       "type": "string",

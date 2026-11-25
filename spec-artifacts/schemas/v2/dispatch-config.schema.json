@@ -47,7 +47,7 @@
             "race"
           ],
           "default": "wait-all",
-          "description": "When the join is satisfied. `'wait-all'` (default) — the dispatch node stays suspended until EVERY dispatched child reaches a terminal state (`completed`/`failed`/`cancelled`); the only mode that never discards a child's outcome. `'quorum'` — satisfied at `quorum` `completed` children (REQUIRES `quorum`, `1 ≤ quorum ≤ nextWorkerIds.length`; a missing/out-of-range `quorum` is a registration `validation_error`); in-flight children are cancelled per the `interrupt-profiles.md` parent-child cascade. `'first'` — satisfied at the first `completed`; remaining cancelled. `'race'` — satisfied at the first terminal of ANY kind (`completed` OR `failed`); remaining cancelled."
+          "description": "When the join is satisfied. `'wait-all'` (default) — the dispatch node stays suspended until EVERY dispatched child reaches a terminal state (`completed`/`failed`/`cancelled`); the only mode that never discards a child's outcome. `'quorum'` — satisfied at `quorum` `completed` children (REQUIRES `quorum`, `1 ≤ quorum ≤ nextWorkerIds.length`; a missing/out-of-range `quorum` is a registration `validation_error`); in-flight children are cancelled by the parent-child cancel cascade (`run-event-payloads.schema.json` `runCancelled.parentRunId`). `'first'` — satisfied at the first `completed`; remaining cancelled. `'race'` — satisfied at the first terminal of ANY kind (`completed` OR `failed`); remaining cancelled."
         },
         "quorum": {
           "type": "integer",

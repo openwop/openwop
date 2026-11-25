@@ -20,7 +20,7 @@
     },
     "name": {
       "type": "string",
-      "description": "Reverse-DNS pack name per `node-packs.md` \u00a7Naming. Reserved scopes are identical (`core.*` / `vendor.<org>.*` / `community.<author>.*` / `private.<host>.*`). Mirror of `prompt-pack-manifest.schema.json#/properties/name`.",
+      "description": "Reverse-DNS pack name per `node-pack-manifest.schema.json` `name` (the pack-name tiers). Reserved scopes are identical (`core.*` / `vendor.<org>.*` / `community.<author>.*` / `private.<host>.*`). Mirror of `prompt-pack-manifest.schema.json#/properties/name`.",
       "pattern": "^(core|vendor|community|private)\\.[a-z][a-z0-9_-]*(\\.[a-z][a-zA-Z0-9_-]*)+$",
       "minLength": 1,
       "maxLength": 256
@@ -171,12 +171,12 @@
         },
         "diffable": {
           "type": "boolean",
-          "description": "True if the artifact's schema supports structural diffing (informs run-diff tooling per rest-endpoints.md \u00a7:diff). Non-normative."
+          "description": "True if the artifact's schema supports structural diffing (informs run-diff tooling, runs.md \u00a7Diff and ancestry). Non-normative."
         }
       },
       "patternProperties": {
         "^(openwop-|x-|vendor\\.)": {
-          "description": "Vendor / host extension escape hatch (RFC 0138). A property matching `^(x-|vendor\\.)` is a HOST EXTENSION: its semantics are unspecified by this protocol, and a consumer that does not recognize one MUST ignore it rather than reject the pack. Resolves the contradiction in `host-extensions.md` \u00a7\"Vendor-prefixed namespaces\", which requires a client receiving an unknown vendor-prefixed field to treat it as opaque \u2014 a field that `additionalProperties: false` previously made impossible to carry. SECURITY: an extension value is PACK-AUTHORED, therefore untrusted; \"ignore\" means ignore. See `node-packs.md` \u00a7\"Vendor extensions on pack manifests\" and the `pack-manifest-extension-opaque` invariant."
+          "description": "Vendor / host extension escape hatch (RFC 0138). A property matching `^(x-|vendor\\.)` is a HOST EXTENSION: its semantics are unspecified by this protocol, and a consumer that does not recognize one MUST ignore it rather than reject the pack. Resolves the contradiction in the host-extension convention (`ids.schema.json` description), which requires a client receiving an unknown vendor-prefixed field to treat it as opaque \u2014 a field that `additionalProperties: false` previously made impossible to carry. SECURITY: an extension value is PACK-AUTHORED, therefore untrusted; \"ignore\" means ignore. See `spec/v2/core/packs.md` \u00a7\"The manifest schema family\" and the `pack-manifest-extension-opaque` invariant."
         }
       }
     },
@@ -237,7 +237,7 @@
   },
   "patternProperties": {
     "^(openwop-|x-|vendor\\.)": {
-      "description": "Vendor / host extension escape hatch (RFC 0138). A property matching `^(x-|vendor\\.)` is a HOST EXTENSION: its semantics are unspecified by this protocol, and a consumer that does not recognize one MUST ignore it rather than reject the pack. Resolves the contradiction in `host-extensions.md` \u00a7\"Vendor-prefixed namespaces\", which requires a client receiving an unknown vendor-prefixed field to treat it as opaque \u2014 a field that `additionalProperties: false` previously made impossible to carry. SECURITY: an extension value is PACK-AUTHORED, therefore untrusted; \"ignore\" means ignore. See `node-packs.md` \u00a7\"Vendor extensions on pack manifests\" and the `pack-manifest-extension-opaque` invariant."
+      "description": "Vendor / host extension escape hatch (RFC 0138). A property matching `^(x-|vendor\\.)` is a HOST EXTENSION: its semantics are unspecified by this protocol, and a consumer that does not recognize one MUST ignore it rather than reject the pack. Resolves the contradiction in the host-extension convention (`ids.schema.json` description), which requires a client receiving an unknown vendor-prefixed field to treat it as opaque \u2014 a field that `additionalProperties: false` previously made impossible to carry. SECURITY: an extension value is PACK-AUTHORED, therefore untrusted; \"ignore\" means ignore. See `spec/v2/core/packs.md` \u00a7\"The manifest schema family\" and the `pack-manifest-extension-opaque` invariant."
     }
   }
 }
