@@ -1,0 +1,50 @@
+{
+  "$comment": "Seeded from the frozen v1 discovery schema at the RFC 0266 §C cut-over (byte-equal to the 2.49.12 derivation); v2-owned since, edited by hand.",
+  "properties": {
+    "backpressure": {
+      "type": "object",
+      "description": "Backpressure envelope advertisement (conformance.md §Production profile).",
+      "properties": {
+        "inflightCap": {
+          "type": "integer",
+          "minimum": 1,
+          "description": "Optional host-side concurrent-inflight cap the conformance suite can saturate. When advertised, the production-backpressure scenario issues `inflightCap + 1` concurrent long-lived requests to deterministically force a 503. When absent, the scenario soft-skips the saturation step (envelope assertion still runs if a 503 happens to fire)."
+        },
+        "retryAfterSeconds": {
+          "type": "integer",
+          "minimum": 0,
+          "maximum": 86400,
+          "description": "Optional advertised Retry-After value in seconds the host returns on 503. When present, MUST equal the `Retry-After` header the host sends with `503 service_unavailable`. Upper bound 86400 (24h) — values beyond that are operationally indistinguishable from 'permanently denied'. Hosts needing longer holds SHOULD omit `Retry-After` entirely (RFC 0009 Q#2)."
+        }
+      },
+      "additionalProperties": false
+    },
+    "retention": {
+      "type": "object",
+      "description": "Event-retention advertisement (conformance.md §Production profile).",
+      "properties": {
+        "minWindowSeconds": {
+          "type": "integer",
+          "minimum": 604800,
+          "description": "Documented minimum retention window in seconds. Per conformance.md §Production profile, MUST be ≥ 604800 (7 days) for public hosts; development-only hosts MAY advertise a smaller window but MUST NOT advertise this facet while doing so."
+        },
+        "testForceExpire": {
+          "type": "boolean",
+          "description": "Host exposes a test-only force-expire hook the conformance suite can call (URL/method supplied via `OPENWOP_TEST_FORCE_EXPIRE_URL` / `OPENWOP_TEST_FORCE_EXPIRE_METHOD` env vars). When `false`, the production-retention-expiry scenario asserts only the 410/404 envelope shape on an operator-supplied already-expired run id (via `OPENWOP_TEST_EXPIRED_RUN_ID`); otherwise it soft-skips. RFC 0009 unresolved question #1 — endpoint normation is deferred."
+        }
+      },
+      "additionalProperties": false
+    },
+    "debugBundle": {
+      "type": "object",
+      "description": "Debug-bundle truncation advertisement (conformance.md §Production profile): the production-profile MUSTs for a debug bundle (`debug-bundle.schema.json`) — truncation metadata, redaction. v2 defines no debug-bundle operation; how a host serves a bundle is host-defined.",
+      "properties": {
+        "truncationMetadata": {
+          "type": "boolean",
+          "description": "When `true`, host surfaces `truncated: true` + non-empty `truncatedReason` (`debug-bundle.schema.json`) when caps are reached."
+        }
+      },
+      "additionalProperties": false
+    }
+  }
+}

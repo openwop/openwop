@@ -1,0 +1,59 @@
+{
+  "$comment": "Seeded from the frozen v1 discovery schema at the RFC 0266 §C cut-over (byte-equal to the 2.49.12 derivation); v2-owned since, edited by hand.",
+  "properties": {
+    "sandboxRoot": {
+      "type": "string",
+      "description": "Absolute path. Every fs operation is resolved relative to this root. MUST be set when this facet is present."
+    },
+    "maxFileSizeBytes": {
+      "type": "integer",
+      "minimum": 0,
+      "description": "Per-file size cap enforced on write. 0 = unlimited (NOT recommended). Reads of files larger than this MAY return `file_too_large`."
+    },
+    "image": {
+      "type": "object",
+      "description": "Image-processing sub-capability. Optional.",
+      "properties": {
+        "formats": {
+          "type": "array",
+          "items": {
+            "type": "string",
+            "enum": [
+              "jpeg",
+              "png",
+              "webp",
+              "avif",
+              "gif"
+            ]
+          }
+        }
+      },
+      "additionalProperties": false
+    },
+    "pdf": {
+      "type": "object",
+      "description": "PDF-processing sub-capability. Optional.",
+      "properties": {},
+      "additionalProperties": false
+    },
+    "transport": {
+      "type": "object",
+      "description": "Network file-transport sub-capabilities. Optional.",
+      "properties": {
+        "ftp": {
+          "type": "boolean"
+        },
+        "sftp": {
+          "type": "boolean"
+        },
+        "ssh": {
+          "type": "boolean"
+        }
+      },
+      "additionalProperties": false
+    }
+  },
+  "required": [
+    "sandboxRoot"
+  ]
+}

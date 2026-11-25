@@ -1,0 +1,33 @@
+{
+  "$comment": "Seeded from the frozen v1 discovery schema at the RFC 0266 §C cut-over (byte-equal to the 2.49.12 derivation); v2-owned since, edited by hand.",
+  "type": "object",
+  "description": "Privacy / compliance behavior advertised to clients (closes O5). Lets consumers know what masking mode is in effect so a `\"[REDACTED]\"` value in event log payloads is recognizable as a server-side mask vs an upstream null.",
+  "properties": {
+    "defaultMode": {
+      "type": "string",
+      "enum": [
+        "mask",
+        "omit",
+        "hash",
+        "passthrough"
+      ],
+      "description": "Server's default masking mode for fields marked sensitive. `mask` (default): replace with `\"[REDACTED]\"`. `omit`: drop the field entirely. `hash`: replace with `\"sha256:<hex>\"` for audit-only equality. `passthrough`: record as-is (NOT recommended for production). Workflow authors MAY override per-workflow via `metadata.complianceConfig.maskingMode`. PRIVACY CLASSIFICATION (re-homed from v1 `observability.md` §\"Privacy classification\" by RFC 0266): a field is marked sensitive by `WorkflowVariable.sensitive`, `WorkflowNode.outputSensitivity`, a pack's `nodes[].outputs[<port>].sensitive` or `ChannelDeclaration.sensitive`, and `WorkflowMetadata.complianceClass` sets the run's tier. A server SHOULD default to `mask` for any field marked sensitive, SHOULD apply masking before the event reaches the durable event log, and SHOULD apply one mode consistently within a run so replays produce identical event logs. The spec does not detect PII: authors and pack maintainers MUST annotate fields."
+    },
+    "supportedClasses": {
+      "type": "array",
+      "items": {
+        "type": "string",
+        "enum": [
+          "public",
+          "pii",
+          "phi",
+          "pci",
+          "regulated"
+        ]
+      },
+      "uniqueItems": true,
+      "description": "Compliance classes this server applies special handling for. A server MAY accept all five classes but only enforce stricter retention on a subset; this field declares the operational reality so workflow authors can choose a server appropriately."
+    }
+  },
+  "additionalProperties": true
+}

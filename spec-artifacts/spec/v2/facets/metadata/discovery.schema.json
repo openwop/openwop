@@ -1,0 +1,28 @@
+{
+  "$comment": "Seeded from the frozen v1 discovery schema at the RFC 0266 §C cut-over (byte-equal to the 2.49.12 derivation); v2-owned since, edited by hand.",
+  "type": "object",
+  "description": "Discovery advertisement (capabilities.md §1; the scoped-view rules are `authScoped`'s). Optional in v1; absence means the host serves only the public unauthenticated payload at /.well-known/openwop. Landed by RFC 0011.",
+  "properties": {
+    "authScoped": {
+      "type": "object",
+      "description": "Auth-scoped discovery advertisement. Hosts that return a different payload when called with Authorization than when called anonymously declare it here. The public payload MUST NOT reveal private tenant features, secret names, provider keys, or premium-only capabilities that would disclose customer configuration. The authenticated view MUST still satisfy the base capabilities.schema.json shape; it MAY omit capabilities the caller cannot use and MAY include optional fields hidden from the public payload. Scoped discovery MUST NOT become an authorization oracle: a caller learns only about capabilities it is allowed to use. (Re-homed from v1 `capabilities-change-detection.md` §\"Scoped capability views\" by RFC 0266.)",
+      "properties": {
+        "mode": {
+          "type": "string",
+          "enum": [
+            "same-endpoint",
+            "extension-endpoint"
+          ],
+          "description": "How the host exposes the auth-scoped view. `same-endpoint`: the canonical /.well-known/openwop returns a narrowed/enriched view when authenticated. `extension-endpoint`: a separate host route carries the scoped view (path advertised via `endpointPath`). Hosts using the third pattern from the spec annex (documentation pointer in the public payload) MAY omit this field."
+        },
+        "endpointPath": {
+          "type": "string",
+          "pattern": "^/",
+          "description": "When `mode: \"extension-endpoint\"` is advertised, the leading-slash relative path the host serves the scoped view from. The conformance scenario hits this path with bearer credentials. Absolute URLs are rejected at the schema level."
+        }
+      },
+      "additionalProperties": false
+    }
+  },
+  "additionalProperties": false
+}

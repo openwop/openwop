@@ -17,6 +17,5 @@
       "$ref": "https://openwop.dev/spec/v2/orchestrator-decision.schema.json"
     }
   },
-  "additionalProperties": false,
-  "x-openwop-seeded-from": "v1"
+  "additionalProperties": false
 }

@@ -1,0 +1,20 @@
+{
+  "$comment": "Seeded from the frozen v1 discovery schema at the RFC 0266 §C cut-over (byte-equal to the 2.49.12 derivation); v2-owned since, edited by hand.",
+  "properties": {
+    "crossEngineOrdering": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "orderingModel": {
+          "type": "string",
+          "enum": [
+            "lamport",
+            "vector-clock",
+            "global-sequencer"
+          ],
+          "description": "Mechanism the host uses to derive the total order. `lamport` = Lamport timestamps on each append. `vector-clock` = per-engine vector counters merged at read. `global-sequencer` = single sequencer assigns monotonic seq numbers (the Postgres reference host's posture)."
+        }
+      }
+    }
+  }
+}

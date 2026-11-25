@@ -1,0 +1,45 @@
+{
+  "$comment": "Seeded from the frozen v1 discovery schema at the RFC 0266 §C cut-over (byte-equal to the 2.49.12 derivation); v2-owned since, edited by hand.",
+  "type": "object",
+  "description": "Optional v1 hints about emitted spans/metrics/logs. The span contract is telemetry.md.",
+  "properties": {
+    "otel": {
+      "type": "object",
+      "description": "OTel-specific advertisement. Hosts that emit OTLP traces/metrics MAY advertise the transport protocols they support so collectors can configure exporters accordingly. Track 11 follow-up.",
+      "properties": {
+        "exportProtocols": {
+          "type": "array",
+          "items": {
+            "type": "string",
+            "enum": [
+              "http/json",
+              "http/protobuf",
+              "grpc"
+            ]
+          },
+          "uniqueItems": true,
+          "description": "OTLP export protocols the host supports emitting. `http/json` and `http/protobuf` are mandatory for hosts advertising OTel emission; `grpc` is opt-in per Track 11."
+        }
+      },
+      "additionalProperties": true
+    },
+    "testSeams": {
+      "type": "object",
+      "additionalProperties": false,
+      "description": "RFC 0034 — Conformance-only test seams under the host-extension namespace. Hosts that opt in expose introspection endpoints so cross-host conformance scenarios can verify BYOK canaries do not leak into OTel span attributes or debug-bundle exports. Production hosts SHOULD return 404 or 403 from these seams unless an env-gate (e.g., `OPENWOP_TEST_OTEL_SCRAPE=true`) is set.",
+      "properties": {
+        "otelScrape": {
+          "type": "boolean",
+          "description": "Host exposes `GET /v1/host/sample/test/otel/spans?runId=<id>` returning `{ spans: Array<{ name, attributes, events }> }` scoped to the run. Conformance verifies span attributes don't carry BYOK canaries. When advertised true, the host MUST serve a 200 response with the documented shape."
+        },
+        "debugBundleExport": {
+          "type": "boolean",
+          "description": "Host exposes a test-seam export returning a debug bundle (`debug-bundle.schema.json`); v2 defines no seam or operation path for it. Conformance verifies the serialized bundle doesn't carry BYOK canaries. When advertised true, the host MUST serve a 200 response with the documented shape."
+        }
+      },
+      "deprecated": true,
+      "x-openwop-remove-in": "3.0"
+    }
+  },
+  "additionalProperties": false
+}

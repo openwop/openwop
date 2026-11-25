@@ -31,6 +31,11 @@ Entries before this file was condensed carried full development detail. That tex
 
 ### Security
 
+## [2.49.13] — 2026-11-25 — RFC 0266 §C: v2 is generated from v2
+
+- **RFC 0266 §C: v2 is generated from v2.** `api/v2`, `api/seams-v2.yaml` and `schemas/v2` are their own source; the v1→v2 derivations are retired, facet shapes live in `spec/v2/facets/`, and the v1 gRPC proto copy is removed from `spec/v2` (v2 has no gRPC binding).
+- **v2-owned aggregates.** The gap aggregate moves to `spec/v2/gaps.json` and its input to `spec/v2/spec-gaps.json`; `spec/v1/core-standard-manifest.json` is frozen; PROTOCOL-STATUS counts the v2 tree; no v2 file cites v1 as a rule (to-rehome 0).
+
 ## [2.49.12] — 2026-11-25 — RFC 0266 §B.2: v2 owns its rules
 
 - **RFC 0266 §B.2: every rule v2 cited from frozen v1 now lives in v2.** Pack naming, agents[], lockfile, registry, x-host-, A2A, prompts, channels, observability and the rest moved into v2 schema descriptions (the core budget is full); to-rehome fell 212→16, all §C.

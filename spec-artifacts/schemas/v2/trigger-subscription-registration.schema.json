@@ -94,6 +94,5 @@
         "backoff": "exponential"
       }
     }
-  ],
-  "x-openwop-seeded-from": "v1"
+  ]
 }

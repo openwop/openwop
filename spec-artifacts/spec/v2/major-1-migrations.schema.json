@@ -140,7 +140,7 @@
             "type": "string",
             "pattern": "^openwop\\.gap\\.[0-9]{4}\\.[0-9]+$"
           },
-          "description": "spec/v1/gaps.json rows this migration closes or carries."
+          "description": "spec/v2/gaps.json rows this migration closes or carries."
         },
         "deprecationId": {
           "type": [

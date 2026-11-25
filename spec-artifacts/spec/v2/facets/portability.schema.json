@@ -1,0 +1,61 @@
+{
+  "$comment": "Seeded from the frozen v1 discovery schema at the RFC 0266 §C cut-over (byte-equal to the 2.49.12 derivation); v2-owned since, edited by hand.",
+  "properties": {
+    "export": {
+      "type": "boolean",
+      "default": false,
+      "description": "Host can emit an export bundle for the caller's tenant or workspace (portability.md)."
+    },
+    "import": {
+      "type": "boolean",
+      "default": false,
+      "description": "Host can import an export bundle via `POST /import`. When `true`, `dryRun` MUST also be `true` (a no-write plan preview is mandatory)."
+    },
+    "kinds": {
+      "type": "array",
+      "items": {
+        "type": "string",
+        "enum": [
+          "agent",
+          "pack",
+          "prompt-template",
+          "connection-ref",
+          "schedule",
+          "roster",
+          "org-chart"
+        ]
+      },
+      "uniqueItems": true,
+      "description": "Estate kinds this host can export/import."
+    },
+    "dryRun": {
+      "type": "boolean",
+      "default": true,
+      "description": "Import supports a no-write plan preview. MUST be true if `import` is true."
+    }
+  },
+  "allOf": [
+    {
+      "if": {
+        "properties": {
+          "import": {
+            "const": true
+          }
+        },
+        "required": [
+          "import"
+        ]
+      },
+      "then": {
+        "properties": {
+          "dryRun": {
+            "const": true
+          }
+        },
+        "required": [
+          "dryRun"
+        ]
+      }
+    }
+  ]
+}

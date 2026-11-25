@@ -1,0 +1,17 @@
+{
+  "$comment": "Seeded from the frozen v1 discovery schema at the RFC 0266 §C cut-over (byte-equal to the 2.49.12 derivation); v2-owned since, edited by hand.",
+  "properties": {
+    "regions": {
+      "type": "array",
+      "items": {
+        "type": "string",
+        "minLength": 1
+      },
+      "uniqueItems": true,
+      "description": "RFC 0129. Opaque operator region codes the host can pin a run to (e.g. `\"eu\"`, `\"us\"`, `\"eu-west-1\"`). No closed registry — codes are the host's own vocabulary (a global region enum would be unfalsifiable). A host MUST advertise a code here only if it can process a run entirely within it; a run-create `residency.region` not in this list MUST be rejected `residency_unavailable`."
+    }
+  },
+  "required": [
+    "regions"
+  ]
+}

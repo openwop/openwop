@@ -1,0 +1,158 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://openwop.dev/spec/v2/spec-gaps.schema.json",
+  "title": "OpenWOP prose spec-gap register",
+  "description": "Shape of spec/v2/spec-gaps.json (RFC 0174 §E.3; moved from the frozen v1 tree by RFC 0266 §C) — one hand-classified row per row of a v1 document's \"Open spec gaps\" section. generate-gaps.mjs joins the rows into spec/v2/gaps.json. Not a wire artifact; deliberately kept out of schemas/.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "$schema",
+    "version",
+    "updated",
+    "entries"
+  ],
+  "properties": {
+    "$schema": {
+      "const": "./spec-gaps.schema.json"
+    },
+    "$comment": {
+      "type": "string"
+    },
+    "version": {
+      "const": 1
+    },
+    "updated": {
+      "type": "string",
+      "pattern": "^[0-9]{4}-[0-9]{2}-[0-9]{2}$"
+    },
+    "entries": {
+      "type": "array",
+      "minItems": 1,
+      "items": {
+        "$ref": "#/$defs/entry"
+      }
+    }
+  },
+  "$defs": {
+    "entry": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "id",
+        "doc",
+        "local",
+        "section",
+        "surface",
+        "resolutionPath",
+        "owningRfc",
+        "disposition",
+        "dispositionEvidence",
+        "target",
+        "witness",
+        "rowKind",
+        "sources",
+        "movedFrom"
+      ],
+      "properties": {
+        "id": {
+          "type": "string",
+          "pattern": "^openwop\\.gap\\.spec\\.[a-z0-9-]+\\.[a-z0-9-]+$"
+        },
+        "doc": {
+          "type": "string",
+          "description": "The v1 document whose gap section held the row (history)."
+        },
+        "local": {
+          "type": "string",
+          "minLength": 1
+        },
+        "section": {
+          "type": [
+            "string",
+            "null"
+          ]
+        },
+        "surface": {
+          "type": "string",
+          "minLength": 1
+        },
+        "resolutionPath": {
+          "type": [
+            "string",
+            "null"
+          ]
+        },
+        "owningRfc": {
+          "type": [
+            "string",
+            "null"
+          ],
+          "pattern": "^[0-9]{4}$"
+        },
+        "disposition": {
+          "enum": [
+            "open",
+            "closed",
+            "carried",
+            "transferred",
+            "externally-gated"
+          ]
+        },
+        "dispositionEvidence": {
+          "type": [
+            "string",
+            "null"
+          ]
+        },
+        "target": {
+          "type": [
+            "string",
+            "null"
+          ]
+        },
+        "witness": {
+          "enum": [
+            "witnessable-unaided",
+            "witnessable-gated",
+            "seam-gated",
+            "claims-check",
+            "negative-existence",
+            "unwitnessable",
+            "unclassified"
+          ]
+        },
+        "rowKind": {
+          "enum": [
+            "table-id",
+            "table-row",
+            "bullet"
+          ]
+        },
+        "sources": {
+          "type": "array",
+          "minItems": 1,
+          "items": {
+            "type": "object",
+            "additionalProperties": false,
+            "required": [
+              "file",
+              "token"
+            ],
+            "properties": {
+              "file": {
+                "type": "string"
+              },
+              "token": {
+                "type": "string"
+              }
+            }
+          }
+        },
+        "movedFrom": {
+          "type": "string",
+          "description": "The row's id in the frozen spec/v1/spec-gaps.json."
+        }
+      }
+    }
+  }
+}

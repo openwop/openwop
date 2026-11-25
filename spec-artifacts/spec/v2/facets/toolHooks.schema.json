@@ -1,0 +1,17 @@
+{
+  "$comment": "Seeded from the frozen v1 discovery schema at the RFC 0266 §C cut-over (byte-equal to the 2.49.12 derivation); v2-owned since, edited by hand.",
+  "properties": {
+    "prePostEvents": {
+      "type": "boolean",
+      "description": "Host populates `argsHash`/`principal`/`transport` on `agent.toolCalled` + `status`/`durationMs` on `agent.toolReturned` for every external tool call."
+    },
+    "perToolAuthorization": {
+      "type": "boolean",
+      "description": "Host enforces per-tool scopes against the run principal (RFC 0049), fail-closed; a lacked-or-unevaluable scope yields `agent.toolReturned { status: 'forbidden' }` + a `forbidden` (403) error and the tool is never invoked."
+    },
+    "perToolRateLimit": {
+      "type": "boolean",
+      "description": "Host applies a per-`(principal, tool)` token-bucket rate limit; exhaustion yields `agent.toolReturned { status: 'rate_limited' }` + a `rate_limited` (429) error."
+    }
+  }
+}

@@ -137,6 +137,5 @@
       "description": "ISO 8601 timestamp the host recorded the annotation."
     }
   },
-  "additionalProperties": false,
-  "x-openwop-seeded-from": "v1"
+  "additionalProperties": false
 }

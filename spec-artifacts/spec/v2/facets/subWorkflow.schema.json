@@ -1,0 +1,10 @@
+{
+  "$comment": "Seeded from the frozen v1 discovery schema at the RFC 0266 §C cut-over (byte-equal to the 2.49.12 derivation); v2-owned since, edited by hand.",
+  "properties": {
+    "inputMapping": {
+      "type": "boolean",
+      "default": false,
+      "description": "RFC 0022 §B. When `true`, host honors the `inputMapping` field on `core.subWorkflow` configs — seeding the child workflow's initial variable bag from `parentVariables[parentKey]` projections, overriding any matching `variables[].defaultValue` declaration on the child. When `false` or absent, hosts MUST refuse workflows that carry a non-empty `inputMapping` at registration with `validation_error` + `details.requiredCapability: 'subWorkflow.inputMapping'`. Silent ignore is NOT conformant."
+    }
+  }
+}
