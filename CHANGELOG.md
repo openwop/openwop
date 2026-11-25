@@ -8,9 +8,6 @@ Entries before this file was condensed carried full development detail. That tex
 
 ## [Unreleased]
 
-- **RFC 0266 Active: v2 is self-contained.** v2 takes ownership of the deprecation and v1→v2 migration registers it cites, every v2 rule gets a v2 home instead of a frozen v1 document, v2 artifacts stop being generated from v1 inputs, `@openwop/spec-artifacts` stops shipping v1 contents after acceptance, and registry discovery names the v2 tree first (the v1 tree stays until the 2027-09-05 installability floor). No wire change. Comment window waived by the maintainer (steward override, `MAINTAINERS.md`).
-- **RFC 0266 §A: v2 owns its deprecation and v1→v2 migration registers.** New `spec/v2/deprecations.json` (3 rows moved from v1, plus the registry flat `endpoints` keys to 2027-09-05) and `major-1-migrations.json` (C2/C5/C6); four core docs cite them. Gates merge v1 and v2 by id, v2 winning.
-- **`docs/KNOWN-LIMITS.md` lists every open RFC.** Its "RFCs not yet `Accepted`" table named 0038 and 0121 only; it now also lists 0256 and 0261 with why each is still open. Part of the v2 migration, phase 1.
 - **RFCs 0255, 0257 and 0253 Accepted.** openwop-app's certified cuts: 2.46.36 (`9f4cca7d4`) has no AI Envelope surface; 2.46.41 (`d2c7e089b`) passes the six `0257.*` legs; 2.46.42 (`d69c1cc76`, 550/0/0) passes every `0253.*` host leg for both pack kinds. The reference host passes the §E form legs.
 - **RFC 0250 Accepted.** openwop-app's certified 2.46.23 production cut (`f94471e98`, 487/0/0) advertises `hostEvents.replay`: a durable cursor resumes in commit order with no gap, and an unknown cursor is refused `409 host_event_resync_required` before any SSE byte. §B review deferred by steward exemption.
 
@@ -34,6 +31,12 @@ Entries before this file was condensed carried full development detail. That tex
 
 ### Security
 
+## [2.49.10] — 2026-11-25 — RFC 0266 Active: v2 owns its registers
+
+- **RFC 0266 Active: v2 is self-contained.** No current v2 artifact may depend on frozen v1: v2 owns its registers, every v2 rule gets a v2 home, v2 stops being generated from v1, and the spec package drops v1 after acceptance. No wire change; comment window waived (`MAINTAINERS.md`).
+- **RFC 0266 §A: v2 owns its deprecation and v1→v2 migration registers.** New `spec/v2/deprecations.json` (3 rows moved from v1, plus the registry flat `endpoints` keys to 2027-09-05) and `major-1-migrations.json` (C2/C5/C6); four core docs cite them. Gates merge v1 and v2 by id, v2 winning.
+- **`docs/KNOWN-LIMITS.md` lists every open RFC.** Its "RFCs not yet `Accepted`" table named 0038 and 0121 only; it now also lists 0256 and 0261 with why each is still open. Part of the v2 migration, phase 1.
+- **Suite: a host that names no protocol major is measured at major 2.** `--target-major` still defaults to the host's `preferredVersion`, then `max(protocolVersions[])`; the last fallback is now 2 instead of 1, because v1 ended on 2026-10-04 (RFC 0234) and RFC 0168 §D removes the 1.x target at end of support.
 
 ## [2.49.9] — 2026-11-25 — Four legs catch the sabotage they missed
 

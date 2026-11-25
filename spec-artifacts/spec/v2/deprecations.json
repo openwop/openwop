@@ -1,0 +1,98 @@
+{
+  "$schema": "./deprecations.schema.json",
+  "version": 1,
+  "updated": "2026-11-25",
+  "entries": [
+    {
+      "id": "openwop.deprecation.packs-test-mode-facet",
+      "movedFrom": "openwop.deprecation.packs-test-mode-facet",
+      "status": "deprecated",
+      "surface": "`capabilities.packs.testMode` — the v2 advertisement of the v1 `/v1/packs-test/*` conformance-seam mirror",
+      "kind": "discovery-field",
+      "deprecatedIn": "2.10 (RFC 0189 Phase 1)",
+      "authority": "spec/v2/core/conformance.md §\"The seams profile\" (a test-seam capability flag MUST NOT be advertised) + spec/v2/path-manifest.json (no packs path in v2)",
+      "removeIn": "3.0",
+      "replacement": "`openwop-conformance-seams-v2` profile membership (`api/seams-v2.yaml`)",
+      "codemod": null,
+      "note": "NOT removed at 2.x. Unlike workflowChainPacks.deferredParameters/hostExpansionSeam (2.8.2), which no host advertised, TWO live v2 discovery documents carry this facet — evidence/v2-host-bundles/myndhyve.json and openwop-host-v2-reference.json — and the v2 root is additionalProperties:false, so removal breaks a published closed record with no host change (COMPATIBILITY.md §2.2; §3's second clause fails because deprecation is available and adequate).",
+      "sources": [
+        {
+          "file": "schemas/v2/capabilities.schema.json",
+          "token": "testMode"
+        },
+        {
+          "file": "spec/v2/core/packs.md",
+          "token": "`testMode` is DEPRECATED"
+        }
+      ],
+      "removalTrigger": "v1-end-of-support"
+    },
+    {
+      "id": "openwop.deprecation.observability-test-seams-facet",
+      "movedFrom": "openwop.deprecation.observability-test-seams-facet",
+      "status": "deprecated",
+      "surface": "`capabilities.observability.testSeams` — a test-seam flag in the capability namespace",
+      "kind": "discovery-field",
+      "deprecatedIn": "2.10 (RFC 0189 Phase 1)",
+      "authority": "spec/v2/core/conformance.md §\"The seams profile\" (a `testSeams` capability flag does not exist and MUST NOT be advertised)",
+      "removeIn": "3.0",
+      "replacement": "`openwop-conformance-seams-v2` profile membership (`api/seams-v2.yaml`)",
+      "codemod": null,
+      "note": "NOT removed at 2.x. MyndHyve's live v2 discovery document advertises `observability.testSeams: {\"otelScrape\": true}` (evidence/v2-host-bundles/myndhyve.json), so this is the same closed-record hazard as packs.testMode — not the 2.8.2 zero-bundle case.",
+      "sources": [
+        {
+          "file": "schemas/v2/capabilities.schema.json",
+          "token": "testSeams"
+        }
+      ],
+      "removalTrigger": "v1-end-of-support"
+    },
+    {
+      "id": "openwop.deprecation.v2-family-false-booleans",
+      "movedFrom": "openwop.deprecation.v2-family-false-booleans",
+      "status": "deprecated",
+      "surface": "`nondeterminismPolicy.declared`: a required boolean whose `false` value brings back `supported: false` (`envelopeContracts.advertised` left with its family, RFC 0255)",
+      "kind": "discovery-field",
+      "deprecatedIn": "2.45 (RFC 0237)",
+      "authority": "RFCS/0237-nondeterminism-sources.md §C (a host that does not offer either family omits it; `false` is not a v2 state)",
+      "removeIn": "3.0",
+      "replacement": "presence is the claim (capabilities.md §2); `nondeterminismPolicy.sources` names what is declared",
+      "codemod": null,
+      "note": "NOT removed at 2.x: both are REQUIRED facets, and overview.md §0a predicate 4 retires only optional surfaces; making them optional is an in-place reshape §0a also forbids. v2 only.",
+      "sources": [
+        {
+          "file": "spec/v2/core/replay.md",
+          "token": "`declared: false` is not a v2 state"
+        },
+        {
+          "file": "RFCS/0237-nondeterminism-sources.md",
+          "token": "The two required booleans cannot leave inside v2"
+        }
+      ]
+    },
+    {
+      "id": "openwop.deprecation.registry-discovery-flat-endpoint-keys",
+      "movedFrom": null,
+      "status": "deprecated",
+      "surface": "the flat v1-era alias keys at the top level of `.well-known/openwop-registry.json` `endpoints` — `registryIndex`, `packMetadata`, `versionManifest`, `versionTarball`, `versionSignature`",
+      "kind": "discovery-field",
+      "deprecatedIn": "RFC 0266",
+      "authority": "RFC 0266 §E.1 (`endpoints` names the v2 tree; the flat v1-era alias keys stay until the v1 installability floor and are deprecated by this row)",
+      "removeIn": "2.0",
+      "replacement": "`endpoints.v2.*` (`registryIndex`, `packMetadata`, `versionManifest`, `versionTarball`, `versionSignature`)",
+      "codemod": null,
+      "note": "Born in v2 (RFC 0266 §A.1). The floor is 2027-09-05, 12 months from the 2.0.0 publish (spec/v2/core/overview.md:74); until then the flat keys resolve the v1 tree so 1.x packages stay installable, and after it `endpoints` MAY name only the v2 tree (RFC 0266 §E.2). The registry discovery document is served by openwop-registry; the in-repo sources are the v2 negotiation rule and the published scenario that still reads the flat keys. `kind` is `discovery-field`, the closest existing kind: the surface is a field of a discovery document, the registry's rather than a host's.",
+      "sources": [
+        {
+          "file": "spec/v2/core/packs.md",
+          "token": "`.well-known/openwop-registry.json` `endpoints` is the negotiation"
+        },
+        {
+          "file": "conformance/src/scenarios/registry-public.test.ts",
+          "token": "body.endpoints?.versionTarball"
+        }
+      ],
+      "removalTrigger": "v1-installability-floor"
+    }
+  ]
+}
