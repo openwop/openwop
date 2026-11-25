@@ -7,7 +7,7 @@
 | **Status**        | `Active`                                                        |
 | **Author(s)**     | David Tufts (@davidscotttufts)                                  |
 | **Created**       | 2026-11-25                                                      |
-| **Updated**       | 2026-11-25 — filed straight to **`Active`**; comment window waived, not run, by the maintainer directly. **STEWARD OVERRIDE of RFC 0147 §A.6 — outside this grant** (recorded in `MAINTAINERS.md` §"Bootstrap-phase RFC waivers"). RFC 0001 §5: the cross-organization review this would otherwise get is deferred while the maintainer set is one organization. |
+| **Updated**       | 2026-11-25 — filed straight to **`Active`**; comment window waived, not run, by the maintainer directly. **STEWARD OVERRIDE of RFC 0147 §A.6 — outside this grant** (recorded in `MAINTAINERS.md` §"Bootstrap-phase RFC waivers"). RFC 0001 §5: the cross-organization review this would otherwise get is deferred while the maintainer set is one organization. 2026-11-25 — UQ 1 and UQ 2 resolved during §B.2 (note under Unresolved questions). |
 | **Affects**       | new `spec/v2/deprecations.json` + schema, new `spec/v2/major-1-migrations.json` + schema; `spec/v2/core/overview.md`, `capabilities.md`, `versioning.md`, `security-defaults.md`, `packs.md` (register and registry-tree citations); prose homes in `spec/v2/core/*` or `schemas/v2/*` descriptions for the concepts in §B.2; `scripts/derive-v2-api.py`, `scripts/derive-v2-schemas.mjs`; new gate `scripts/check-v2-self-contained.mjs`; `spec-artifacts/` package contents; `registry/.well-known/openwop-registry.json` (openwop-registry) |
 | **Compatibility** | `additive` on the wire (no request, response, event or discovery shape changes for a v2 host). §D changes the contents of the `@openwop/spec-artifacts` package and §E changes registry discovery after a dated floor; both carry a migration below. |
 | **Supersedes**    | —                                                               |
@@ -132,6 +132,11 @@ A host-side witness for acceptance: a host's certified major-2 cut on a suite re
 
 1. **Debug bundle.** Whether any v2 operation serves the v1 debug bundle. If none does, §B.2 deletes the v2 references instead of re-homing them. Decided during implementation by reading `path-manifest.json`; recorded in the gap register.
 2. **Word budget.** Whether §B.2's core-document sections fit `check-core-budget`. Where they do not, the rule moves into schema descriptions; the cap is not raised by this RFC.
+
+> **Resolved 2026-11-25 (§B.2 implementation; register G2, G3):**
+>
+> - **UQ 1.** No v2 operation serves a debug bundle: `spec/v2/path-manifest.json`, `api/v2/openapi.yaml` and `api/seams-v2.yaml` name no debug-bundle path. The concept is still used, by the `production.debugBundle` facet and `schemas/v2/debug-bundle.schema.json`, and `conformance.md` §"Production profile" already holds its rule, so it gets no `runs.md` section. The v2 references to v1 `debug-bundle.md` and to the v1 `GET /v1/runs/{runId}/debug-bundle` route are deleted, and the facet descriptions point at `conformance.md` and the schema. `observability.testSeams.debugBundleExport` describes a seam v2 does not serve; its removal is the existing `observability-test-seams-facet` deprecation row.
+> - **UQ 2.** The core budget had no room (37,180 of 37,200 words), so §B.2 homes are the v2 schema descriptions of the governed fields. The core sections named in the tables are where a pointer goes once the budget allows. Where a v2 core document already held the rule (`events.md` §"Stream modes", `runs.md` §"Run options", `i18n.md` §"Localized content", `conformance.md` §"Production profile", `host-services.md` §`prompts`, §`memory`, §`modelCapabilities`, `interrupt.md`, `execution.md`, `security-defaults.md` §"Audit-log integrity", `spec/v2/interop-map.json`), the citation is re-pointed and nothing is restated. The remaining `to-rehome` rows are §C inputs (the gRPC extension's v1 proto copy and the derived OpenAPI and AsyncAPI header and `info` blocks).
 
 ## Implementation notes (non-normative)
 
