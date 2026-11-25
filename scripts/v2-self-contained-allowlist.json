@@ -767,121 +767,22 @@
       "why": "errors.json `source` is row provenance (errors.schema: \"the document or decision the row came from\"); the row itself is the v2 rule"
     },
     {
-      "file": "spec/v2/ext/grpc-transport/openwop.proto",
+      "file": "spec/v2/facets/metadata/compliance.schema.json",
       "kind": "v1-doc",
-      "target": "rest-endpoints.md",
-      "fingerprint": "e511e833f90f",
-      "excerpt": "us: FINAL v1 (2026-05-12). Closes R3 in rest-endpoints.md",
+      "target": "observability.md",
+      "fingerprint": "b6d09ae62c39",
+      "excerpt": "IVACY CLASSIFICATION (re-homed from v1 `observability.md` §\\\"Privacy classification\\\" by RFC 026",
       "disposition": "history",
-      "why": "provenance: which v1 gap the proto closed"
+      "why": "provenance note: names the frozen v1 section this rule was re-homed from (RFC 0266 §B.2); the surrounding v2 description is the rule"
     },
     {
-      "file": "spec/v2/ext/grpc-transport/openwop.proto",
-      "kind": "v1-api",
-      "target": "api/openapi.yaml",
-      "fingerprint": "bbb7c0696961",
-      "excerpt": "// the corresponding REST operation in `api/openapi.yaml`; this file",
-      "disposition": "to-rehome",
-      "why": "v2 gRPC extension defines method semantics by the v1 OpenAPI; cite api/v2/openapi.yaml"
-    },
-    {
-      "file": "spec/v2/ext/grpc-transport/openwop.proto",
-      "kind": "v1-api",
-      "target": "api/openapi.yaml",
-      "fingerprint": "fec812468e39",
-      "excerpt": "// Method names: PascalCase form of `api/openapi.yaml` operationIds.",
-      "disposition": "to-rehome",
-      "why": "v2 gRPC extension defines method semantics by the v1 OpenAPI; cite api/v2/openapi.yaml"
-    },
-    {
-      "file": "spec/v2/ext/grpc-transport/openwop.proto",
-      "kind": "spec-v1",
-      "target": "spec/v1/grpc-transport.md",
-      "fingerprint": "14b0a135e3df",
-      "excerpt": "// Error mapping: see `spec/v1/grpc-transport.md` §\"Error mapping\".",
-      "disposition": "to-rehome",
-      "why": "v2 gRPC error mapping lives in a v1 doc; home: a v2 gRPC extension README under spec/v2/ext/grpc-transport/ — not in the §B.2 table"
-    },
-    {
-      "file": "spec/v2/ext/grpc-transport/openwop.proto",
-      "kind": "v1-api",
-      "target": "api/grpc/openwopv1",
-      "fingerprint": "cdac494bafbd",
-      "excerpt": "o_package = \"github.com/openwop/openwop/api/grpc/openwopv1\";",
-      "disposition": "to-rehome",
-      "why": "v2 gRPC extension defines method semantics by the v1 OpenAPI; cite api/v2/openapi.yaml"
-    },
-    {
-      "file": "spec/v2/ext/grpc-transport/openwop.proto",
-      "kind": "flat-schema",
-      "target": "schemas/capabilities.schema.json",
-      "fingerprint": "b7e73a7daddd",
-      "excerpt": "// Body matches schemas/capabilities.schema.json.",
-      "disposition": "to-rehome",
-      "why": "v2 gRPC message body defined by the flat v1 schema; cite schemas/v2/capabilities.schema.json"
-    },
-    {
-      "file": "spec/v2/ext/grpc-transport/openwop.proto",
-      "kind": "flat-schema",
-      "target": "schemas/workflow-definition.schema.json",
-      "fingerprint": "e3e442772d4b",
-      "excerpt": "// Body matches schemas/workflow-definition.schema.json.",
-      "disposition": "to-rehome",
-      "why": "v2 gRPC message body defined by the flat v1 schema; cite schemas/v2/workflow-definition.schema.json"
-    },
-    {
-      "file": "spec/v2/ext/grpc-transport/openwop.proto",
-      "kind": "flat-schema",
-      "target": "schemas/run-options.schema.json",
-      "fingerprint": "dd6a6e9196af",
-      "excerpt": "le.protobuf.Struct inputs = 2; // schemas/run-options.schema.json §inputs",
-      "disposition": "to-rehome",
-      "why": "v2 gRPC message body defined by the flat v1 schema; cite schemas/v2/run-options.schema.json"
-    },
-    {
-      "file": "spec/v2/ext/grpc-transport/openwop.proto",
-      "kind": "flat-schema",
-      "target": "schemas/run-options.schema.json",
-      "fingerprint": "0a52138d2053",
-      "excerpt": "le.protobuf.Struct configurable = 3; // schemas/run-options.schema.json §configurable",
-      "disposition": "to-rehome",
-      "why": "v2 gRPC message body defined by the flat v1 schema; cite schemas/v2/run-options.schema.json"
-    },
-    {
-      "file": "spec/v2/ext/grpc-transport/openwop.proto",
-      "kind": "flat-schema",
-      "target": "schemas/run-snapshot.schema.json",
-      "fingerprint": "e8070fe57665",
-      "excerpt": "// Body matches schemas/run-snapshot.schema.json.",
-      "disposition": "to-rehome",
-      "why": "v2 gRPC message body defined by the flat v1 schema; cite schemas/v2/run-snapshot.schema.json"
-    },
-    {
-      "file": "spec/v2/ext/grpc-transport/openwop.proto",
+      "file": "spec/v2/facets/metadata/discovery.schema.json",
       "kind": "v1-doc",
-      "target": "stream-modes.md",
-      "fingerprint": "71bf45918c97",
-      "excerpt": "g stream_modes = 3; // subset of stream-modes.md",
-      "disposition": "to-rehome",
-      "why": "v2 gRPC stream modes defined by a v1 doc; home: spec/v2/core/events.md §Stream modes (RFC 0266 §B.2)"
-    },
-    {
-      "file": "spec/v2/ext/grpc-transport/openwop.proto",
-      "kind": "flat-schema",
-      "target": "schemas/suspend-request.schema.json",
-      "fingerprint": "3d3a4902bbeb",
-      "excerpt": "// Body matches schemas/suspend-request.schema.json.",
-      "disposition": "to-rehome",
-      "why": "v2 gRPC message body defined by the flat v1 schema; cite schemas/v2/suspend-request.schema.json"
-    },
-    {
-      "file": "spec/v2/ext/grpc-transport/openwop.proto",
-      "kind": "flat-schema",
-      "target": "schemas/audit-verify-result.schema.json",
-      "fingerprint": "a401d4c551ea",
-      "excerpt": "// Body matches schemas/audit-verify-result.schema.json.",
-      "disposition": "to-rehome",
-      "why": "v2 gRPC message body defined by the flat v1 schema; cite schemas/v2/audit-verify-result.schema.json"
+      "target": "capabilities-change-detection.md",
+      "fingerprint": "5b5ba4bb03d5",
+      "excerpt": "t is allowed to use. (Re-homed from v1 `capabilities-change-detection.md` §\\\"Scoped capability views\\\" by RFC 02",
+      "disposition": "history",
+      "why": "provenance note: names the frozen v1 section this rule was re-homed from (RFC 0266 §B.2); the surrounding v2 description is the rule"
     },
     {
       "file": "spec/v2/facets/workflowChainPacks.schema.json",
@@ -952,15 +853,6 @@
       "target": "spec/v1/migrations.json",
       "fingerprint": "b842e8a560c9",
       "excerpt": "\"description\": \"RFC 0266 §A.2: the spec/v1/migrations.json row id this row was copied from, or nul",
-      "disposition": "history",
-      "why": "describes the v1 provenance of copied migration rows (movedFrom / v1 gap and deprecation ids)"
-    },
-    {
-      "file": "spec/v2/major-1-migrations.schema.json",
-      "kind": "spec-v1",
-      "target": "spec/v1/gaps.json",
-      "fingerprint": "104332629396",
-      "excerpt": "\"description\": \"spec/v1/gaps.json rows this migration closes or carries.\"",
       "disposition": "history",
       "why": "describes the v1 provenance of copied migration rows (movedFrom / v1 gap and deprecation ids)"
     },
@@ -1278,42 +1170,6 @@
       "excerpt": "hannel's name alone. (Re-homed from v1 `channels-and-reducers.md` §\\\"Channel access control\\\" by RFC 026",
       "disposition": "history",
       "why": "provenance note: names the frozen v1 section this rule was re-homed from (RFC 0266 §B.2); the surrounding v2 description is the rule"
-    },
-    {
-      "file": "api/v2/asyncapi.yaml",
-      "kind": "v1-api",
-      "target": "api/asyncapi.yaml",
-      "fingerprint": "18c701857db0",
-      "excerpt": "Generated from `api/asyncapi.yaml` by `scripts/derive-v2-api.py`; do not",
-      "disposition": "to-rehome",
-      "why": "v2 API is generated from the v1 document by derive-v2-api.py; RFC 0266 §C.1 makes api/v2 its own source"
-    },
-    {
-      "file": "api/v2/openapi.yaml",
-      "kind": "v1-api",
-      "target": "api/openapi.yaml",
-      "fingerprint": "177f0fbaa39c",
-      "excerpt": "Generated from `api/openapi.yaml` by `scripts/derive-v2-api.py`; do not",
-      "disposition": "to-rehome",
-      "why": "v2 API is generated from the v1 document by derive-v2-api.py; RFC 0266 §C.1 makes api/v2 its own source"
-    },
-    {
-      "file": "api/v2/openapi.yaml",
-      "kind": "spec-v1",
-      "target": "spec/v1/",
-      "fingerprint": "d50b2717efa4",
-      "excerpt": "url: https://openwop.dev/spec/v1/",
-      "disposition": "to-rehome",
-      "why": "v2 OpenAPI contact/externalDocs point readers at the v1 corpus; point at spec/v2/"
-    },
-    {
-      "file": "api/v2/openapi.yaml",
-      "kind": "spec-v1",
-      "target": "spec/v1/",
-      "fingerprint": "d50b2717efa4~2",
-      "excerpt": "url: https://openwop.dev/spec/v1/",
-      "disposition": "to-rehome",
-      "why": "v2 OpenAPI contact/externalDocs point readers at the v1 corpus; point at spec/v2/"
     }
   ]
 }

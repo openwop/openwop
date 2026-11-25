@@ -148,6 +148,8 @@ node scripts/derive-core-adoption.mjs --write && node scripts/generate-from-decl
 npm run openwop:check      # 10 steps; the same gate preflight runs
 ```
 
+Since RFC 0266 §C no step reads a v1 input to build a v2 file. `derive-v2-api.py --write` reads only `api/v2/`: it stamps `info.version` in `api/v2/openapi.yaml`, `api/v2/asyncapi.yaml` and `api/seams-v2.yaml` from `spec/v2/release.json` and regenerates `headers.md` and `path-manifest.json`; the rest of those documents is hand-edited. `generate-from-declaration.mjs` reads facet shapes from `spec/v2/facets/`. `generate-gaps.mjs` writes `spec/v2/gaps.json`; `spec/v1/gaps.json` is frozen and is not regenerated. `derive-v2-schemas.mjs` is retired.
+
 - [ ] `npm run openwop:check` ends OK. Hard gate.
 - [ ] `bash scripts/check-npm-pack-contents.sh` clean.
 - [ ] `ROADMAP.md` still matches what this release ships.

@@ -220,8 +220,8 @@ Every RFC 2119 keyword is a behavior gate, every cross-doc link is a promise, an
 ## Where the rules live
 
 - **Normative:** `spec/v2/core/*.md` (30 docs, all `Stable`) and `spec/v2/ext/` (labels `Draft`, `Stable`, `Retired`, `Note`, defined in `spec/v2/ext/README.md`). Families are declared in `spec/v2/declaration.json`.
-- **Wire:** `api/v2/openapi.yaml`, `api/v2/asyncapi.yaml` (generated from `api/openapi.yaml` by `scripts/derive-v2-api.py`), `schemas/v2/`.
-- **Frozen:** `spec/v1/` and the flat `schemas/*.schema.json`. `api/openapi.yaml` and `api/asyncapi.yaml` are the v1 wire; `api/openapi.yaml` is also the source `derive-v2-api.py` reads, so edit it only to change v2 through the derivation.
+- **Wire:** `api/v2/openapi.yaml`, `api/v2/asyncapi.yaml` (their own source), `schemas/v2/`.
+- **Frozen:** `spec/v1/` and the flat `schemas/*.schema.json`. `api/openapi.yaml` and `api/asyncapi.yaml` are the frozen v1 wire; nothing current reads them.
 - **Prose rules:** `CONTRIBUTING.md` §"Status labels" and §"Prose specs (`spec/v2/**/*.md`)".
 
 **Readability is a separate skill.** `spec/v2/**/*.md` renders verbatim on openwop.dev. Walls of stacked MUSTs, paragraph-sized table cells, RFC citations outside the `*Sources: …*` line, and v1 mentions are checked by `node scripts/check-spec-readability.mjs` (it runs in the gate) and fixed by `/spec-readability`, which verifies with `scripts/spec-fingerprint.mjs` that no rule changed. Run the check here; don't duplicate its rules.

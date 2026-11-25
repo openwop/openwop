@@ -57,11 +57,11 @@ Use this checklist to verify a change meets every non-functional requirement bef
 - [ ] Every object has `"additionalProperties": false`
 - [ ] Required fields listed explicitly
 - [ ] `schemas/v2/capabilities.schema.json` not hand-edited — it is generated from `spec/v2/declaration.json` + `spec/v2/facets/` by `scripts/generate-from-declaration.mjs`
-- [ ] `node scripts/check-v2-schemas.mjs` and `node scripts/derive-v2-schemas.mjs --check` pass (never run `derive-v2-schemas.mjs --write`)
+- [ ] `node scripts/check-v2-schemas.mjs` passes (no schema marked as seeded from v1)
 - [ ] At least one positive + one negative example per RFC template requirement (where added by RFC)
 
 ### OpenAPI + AsyncAPI
-- [ ] Edits made to the source (`api/openapi.yaml`, or the inline seams in `scripts/derive-v2-api.py`), then `api/v2/` regenerated — never a hand edit to `api/v2/openapi.yaml` / `api/v2/asyncapi.yaml`
+- [ ] Edits made directly in `api/v2/openapi.yaml` / `api/v2/asyncapi.yaml` / `api/seams-v2.yaml` (their own source), then `headers.md` and `path-manifest.json` regenerated — never an edit to the frozen `api/openapi.yaml`
 - [ ] `python3 scripts/derive-v2-api.py --check` clean
 - [ ] Redocly and AsyncAPI clean at the versions `scripts/openwop-check.sh` pins (`@redocly/cli@2.31.4`, `@asyncapi/cli@4.1.1`)
 - [ ] `node scripts/check-path-parity.mjs` clean; new operations appear in `spec/v2/path-manifest.json`

@@ -74,7 +74,7 @@ This stays a manual rule because it does not automate. Mechanical proxies (an RF
 - Every schema has an `$id` under `https://openwop.dev/spec/v2/<name>.schema.json`. (The frozen flat v1 schemas use `https://openwop.dev/spec/v1/`.)
 - Use `additionalProperties: false` on every object. Explicit field lists are mandatory, even if a runtime is more lenient.
 - New optional fields are additive. New required fields are breaking (see [`COMPATIBILITY.md`](./COMPATIBILITY.md)). Either way, add a `CHANGELOG.md` line.
-- Don't run `scripts/derive-v2-schemas.mjs --write`. The v2 schemas were seeded from v1 once and have since been edited by hand; the gate runs it with `--check` only.
+- Edit `schemas/v2/` directly. The v2 schemas were seeded from v1 once; since the RFC 0266 §C cut-over no generator reads a v1 schema and none carries a `x-openwop-seeded-from: v1` marker.
 
 Pack-internal schemas (inside a pack's `schemas/` directory) follow the rules in [`openwop/openwop-registry`](https://github.com/openwop/openwop-registry). The pack-manifest schemas themselves stay normative here.
 
@@ -82,14 +82,14 @@ Pack-internal schemas (inside a pack's `schemas/` directory) follow the rules in
 
 There are two layers:
 
-- **`api/openapi.yaml` and `api/asyncapi.yaml`** are the v1 wire documents. They are also the **source** that `scripts/derive-v2-api.py` reads.
-- **`api/v2/openapi.yaml`, `api/v2/asyncapi.yaml` and `api/seams-v2.yaml`** are **derived**. The script strips the `/v1` prefix, moves seam operations to `api/seams-v2.yaml`, adds the `OpenWOP-Version` header, renames headers, points `$ref`s into `schemas/v2/`, and replaces reader-facing prose from `scripts/derive-v2-api-prose.yaml`. Its header lists every rule.
+- **`api/openapi.yaml` and `api/asyncapi.yaml`** are the frozen v1 wire documents. Nothing current reads them.
+- **`api/v2/openapi.yaml`, `api/v2/asyncapi.yaml` and `api/seams-v2.yaml`** are the v2 documents, and they are their own source (RFC 0266 §C). Edit them directly. `scripts/derive-v2-api.py` derives `spec/v2/core/headers.md` and `spec/v2/path-manifest.json` from them.
 
 So, to change the v2 API:
 
-1. Edit the source (`api/openapi.yaml` / `api/asyncapi.yaml`), or `scripts/derive-v2-api-prose.yaml` for a description string. Don't edit `api/v2/` by hand: the gate's `--check` compares a fresh derivation to the committed bytes.
-2. Run `python3 scripts/derive-v2-api.py --write` (requires PyYAML).
-3. Commit the source and the regenerated outputs together.
+1. Edit `api/v2/openapi.yaml`, `api/v2/asyncapi.yaml` or `api/seams-v2.yaml`.
+2. Run `python3 scripts/derive-v2-api.py --write` (requires PyYAML) to regenerate `headers.md` and `path-manifest.json`.
+3. Commit the documents and the regenerated outputs together.
 
 Rules for the documents:
 
@@ -233,6 +233,6 @@ npx -y -p @redocly/cli@2.31.4 redocly lint api/seams-v2.yaml --config api/v2/red
 npx -y -p @asyncapi/cli@4.1.1 asyncapi validate api/asyncapi.yaml
 npx -y -p @asyncapi/cli@4.1.1 asyncapi validate api/v2/asyncapi.yaml
 
-# Check that api/v2 matches its source
+# Check that headers.md and path-manifest.json match api/v2
 python3 scripts/derive-v2-api.py --check
 ```

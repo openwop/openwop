@@ -40,7 +40,7 @@ The current normative corpus. `README.md`'s Document index lists every core doc 
 
 ### 2. The frozen v1 tree (`spec/v1/**`)
 
-v1 reached end of support (RFC 0234). `spec/v1/` is frozen: never edit or delete it, even when it looks stale. The flat `schemas/*.schema.json` and `api/openapi.yaml` / `api/asyncapi.yaml` are the v1 wire; `api/openapi.yaml` is also the source `scripts/derive-v2-api.py` reads to produce `api/v2/`, so it is not dead.
+v1 reached end of support (RFC 0234). `spec/v1/` is frozen: never edit or delete it, even when it looks stale. The flat `schemas/*.schema.json` and `api/openapi.yaml` / `api/asyncapi.yaml` are the v1 wire; Nothing current reads them: `api/v2/` is its own source (RFC 0266 §C).
 
 ### 3. Generated files
 
@@ -48,10 +48,10 @@ Never hand-edit or delete these; change the generator's input and regenerate:
 
 | File | Generator |
 |---|---|
-| `api/v2/*` | `scripts/derive-v2-api.py` (from `api/openapi.yaml`; inline seams live in the script) |
+| `spec/v2/core/headers.md`, `spec/v2/path-manifest.json`, `api/v2/*` `info.version` | `scripts/derive-v2-api.py` (from `api/v2/`; the rest of `api/v2/*` is hand-edited) |
 | `schemas/v2/capabilities.schema.json`, `spec/v2/profiles.json`, `spec/v2/peer-dependency-aliases.json` | `scripts/generate-from-declaration.mjs` |
 | `spec/v2/event-codemap.json`, `spec/v2/path-manifest.json`, `spec/v2/surface-baseline.json`, `spec/v2/generated/` | `generate-event-codemap.mjs`, `generate-operation-path-manifest.mjs`, `generate-v2-surface-baseline.mjs`, `generate-error-envelope.mjs` |
-| `spec/v1/gaps.json`, `spec/v1/core-standard-manifest.json` | `generate-gaps.mjs`, `generate-core-standard-manifest.mjs` |
+| `spec/v2/gaps.json`, `spec/v1/core-standard-manifest.json` | `generate-gaps.mjs`, `generate-core-standard-manifest.mjs` |
 | `docs/PROTOCOL-STATUS.md`, RFCS/README.md tally + Status column | `generate-protocol-status.mjs` |
 | `docs/ASSURANCE-STATUS.md` + `.json` | `generate-assurance-status.mjs` |
 | `docs/V2-WITNESS-COVERAGE.md` | `report-v2-witness-coverage.mjs` |
@@ -107,7 +107,7 @@ Every row is a public claim backed by a bundle in `evidence/v2-host-bundles/`. N
 
 ```
 schemas/v2/A.schema.json $refs schemas/v2/B.schema.json
-api/openapi.yaml $refs schemas/A.schema.json  → derive-v2-api.py → api/v2/openapi.yaml
+api/v2/openapi.yaml $refs ../../schemas/v2/A.schema.json
 
 Delete B → A's $ref breaks → the lint (gate steps 2/10) breaks
 ```

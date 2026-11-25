@@ -24,7 +24,10 @@
  *   1. a finding the allow-list does not name (a new v1 citation);
  *   2. an allow-list row no finding matches (stale — remove it);
  *   3. a malformed or duplicated allow-list row;
- *   4. with --require-zero-rehome, any `to-rehome` row (RFC 0266 acceptance).
+ *   4. with --require-zero-rehome, any `to-rehome` row (RFC 0266 acceptance);
+ *   5. RFC 0266 §C.1 — a scanned file carrying the v1 seed stamp (the
+ *      `x-openwop-seeded-from` annotation with the value `v1`). v2 is its own
+ *      source: no v2 schema is seeded from v1, so the stamp has no allow-list.
  *
  *   node scripts/check-v2-self-contained.mjs [--require-zero-rehome] [--json]
  *   node scripts/check-v2-self-contained.mjs --write-allowlist   (re-seed: keeps
@@ -41,6 +44,11 @@ const ROOT = join(dirname(fileURLToPath(import.meta.url)), '..');
 const ALLOWLIST = join(ROOT, 'scripts', 'v2-self-contained-allowlist.json');
 export const SCANNED = ['spec/v2', 'schemas/v2', 'api/v2'];
 export const DISPOSITIONS = ['history', 'to-rehome'];
+// Not scanned: a generated aggregate whose text is copied verbatim from outside the
+// scanned trees. spec/v2/gaps.json is generate-gaps.mjs's index of every RFCS/registers/
+// gap row (moved out of the frozen v1 tree by RFC 0266 §C); a register row naming a v1
+// document is RFC history, and listing it here would re-list RFCS/ row by row.
+export const NOT_SCANNED = new Set(['spec/v2/gaps.json']);
 const WINDOW = 40;
 
 const posix = (p) => p.split(sep).join('/');
@@ -57,7 +65,8 @@ function walk(dir, out = []) {
 /** Read the tree the gate scans: v2 files as { path, text }, and the v1-only doc names. */
 export function readTree(root = ROOT) {
   const files = SCANNED.flatMap((d) => walk(join(root, d)))
-    .map((p) => ({ path: posix(relative(root, p)), text: readFileSync(p, 'utf8') }));
+    .map((p) => ({ path: posix(relative(root, p)), text: readFileSync(p, 'utf8') }))
+    .filter((f) => !NOT_SCANNED.has(f.path));
   const v1Docs = readdirSync(join(root, 'spec', 'v1')).filter((n) => n.endsWith('.md'));
   return { files, v1Docs };
 }
@@ -111,6 +120,17 @@ export function scan({ files, v1Docs }) {
     });
   }
   return findings;
+}
+
+// The stamp's name is built from parts: a checker never writes the literal it polices.
+const SEED_STAMP = ['x', 'openwop', 'seeded', 'from'].join('-');
+const SEED_STAMP_RE = new RegExp(`["']?${SEED_STAMP}["']?\\s*:\\s*["']?v1(?![A-Za-z0-9_.-])`);
+
+/** RFC 0266 §C.1 — every scanned line that stamps a v2 artifact as seeded from v1. */
+export function seedStamps({ files }) {
+  const out = [];
+  for (const f of files) f.text.split('\n').forEach((line, i) => { if (SEED_STAMP_RE.test(line)) out.push(`v1 seed stamp (RFC 0266 §C.1): ${f.file ?? f.path}:${i + 1} — v2 is its own source; remove the stamp (the file is edited by hand)`); });
+  return out;
 }
 
 export const keyOf = (r) => `${r.file} | ${r.kind} | ${r.target} | ${r.fingerprint}`;
@@ -189,6 +209,11 @@ function selfTest() {
     ['a row with no why fails', () => evaluate(ok, { rows: allow.rows.map((r, i) => (i ? r : { ...r, why: '' })) }).failures.length, 1],
     ['a duplicated row fails', () => evaluate(ok, { rows: [...allow.rows, allow.rows[0]] }).failures.length, 1],
     ['--require-zero-rehome passes with only history rows', () => evaluate(ok, allow, { requireZeroRehome: true }).failures.length, 0],
+    ['a v1 seed stamp fails (fixture)', () => seedStamps(tree(edit('schemas/v2/x.schema.json', (t) => t.replace('}', `, "${SEED_STAMP}": "v1" }`)))).length, 1],
+    ['a stamp naming a non-v1 source is not a v1 seed stamp', () => seedStamps(tree(edit('schemas/v2/x.schema.json', (t) => t.replace('}', `, "${SEED_STAMP}": "declaration" }`)))).length, 0],
+    ['the generated gap aggregate is not scanned', () => real.files.filter((f) => NOT_SCANNED.has(f.path)).length, 0],
+    ['the tree carries no v1 seed stamp', () => seedStamps(real).length, 0],
+    ['a v1 seed stamp planted in a real v2 schema fails (real tree)', () => seedStamps({ files: real.files.map((f) => (f.path === 'schemas/v2/goal.schema.json' ? { ...f, text: f.text.replace(/\n}\n?$/, `,\n  "${SEED_STAMP}": "v1"\n}\n`) } : f)) }).length, 1],
     ['--require-zero-rehome fails on a to-rehome row', () => evaluate(ok, seed(ok, 'to-rehome'), { requireZeroRehome: true }).failures.length, 1],
     // The same legs on the real tree and the committed allow-list, in memory: nothing on disk changes.
     ['the committed allow-list matches the tree', () => evaluate(scan(real), realAllow).failures.length, 0],
@@ -224,6 +249,7 @@ if (isMain) {
     }
     const allow = JSON.parse(readFileSync(ALLOWLIST, 'utf8'));
     const { failures, matched } = evaluate(findings, allow, { requireZeroRehome: argv.includes('--require-zero-rehome') });
+    failures.push(...seedStamps(readTree()));
     if (argv.includes('--json')) console.log(JSON.stringify(matched, null, 2));
     if (failures.length) {
       console.error(`=== check-v2-self-contained FAILED — ${failures.length} problem(s) (RFC 0266 §B.1) ===`);
@@ -231,6 +257,6 @@ if (isMain) {
       if (failures.length > 60) console.error(`  … ${failures.length - 60} more`);
       process.exit(1);
     }
-    console.log(`=== check-v2-self-contained OK — every v1 reference in ${SCANNED.join(', ')} is allow-listed (RFC 0266 §B.1) ===\n${summary(matched)}`);
+    console.log(`=== check-v2-self-contained OK — every v1 reference in ${SCANNED.join(', ')} is allow-listed (RFC 0266 §B.1); no v1 seed stamp (§C.1) ===\n${summary(matched)}`);
   }
 }

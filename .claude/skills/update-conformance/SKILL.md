@@ -14,7 +14,7 @@ You are now in **Conformance Sync Mode** — a workflow for syncing a change in 
 ## Reference
 
 - **Normative spec (v2, current):** `spec/v2/core/*.md`, `spec/v2/ext/`, families in `spec/v2/declaration.json`
-- **v2 wire:** `api/v2/openapi.yaml`, `api/v2/asyncapi.yaml` (derived from `api/openapi.yaml` by `scripts/derive-v2-api.py`), `schemas/v2/`
+- **v2 wire:** `api/v2/openapi.yaml`, `api/v2/asyncapi.yaml` (their own source), `schemas/v2/`
 - **Frozen v1:** `spec/v1/`, flat `schemas/*.schema.json`, `api/openapi.yaml`, `api/asyncapi.yaml`. v1 reached end of support on 2026-10-04 (RFC 0234). Do not add v1 scenarios for new behavior.
 - **RFCs:** `RFCS/`
 - **Coverage map:** `conformance/coverage.md` — spec surface → scenario, plus §"Capability-gated scenarios: shape vs behavior"
@@ -67,7 +67,7 @@ conformance/
 | Change in spec | Conformance impact |
 |---|---|
 | New schema in `schemas/v2/` | `spec-corpus-validity.test.ts` (in `src/coherence/`) compiles it; add scenarios if the behavior is normative |
-| New endpoint in `api/v2/openapi.yaml` (via `api/openapi.yaml` + `scripts/derive-v2-api.py`) | New `v2-*` scenario; possibly a fixture |
+| New endpoint in `api/v2/openapi.yaml` | New `v2-*` scenario; possibly a fixture |
 | New event in `api/v2/asyncapi.yaml` | Scenario asserting the event shape and emission conditions; codemap coherence test covers the mapping |
 | New required field in a closed v2 object | A major change (`COMPATIBILITY.md` §2.4). Stop and run `/architect`. |
 | New optional field | Existing fixtures unchanged; scenario asserting the field when present |

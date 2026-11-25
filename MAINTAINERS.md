@@ -298,7 +298,7 @@ The repo holds `spec/v2/` (the current major) and `spec/v1/` (frozen since v1 en
 
 The release manager:
 
-1. Lands the additive prose, schema and RFC changes in `spec/v2/` and `schemas/v2/`. API changes go into the source documents `api/openapi.yaml` and `api/asyncapi.yaml` (or `scripts/derive-v2-api-prose.yaml`), and `api/v2/` is regenerated from them by `scripts/derive-v2-api.py` (`CONTRIBUTING.md` §"OpenAPI and AsyncAPI").
+1. Lands the additive prose, schema and RFC changes in `spec/v2/` and `schemas/v2/`. API changes are edited directly in `api/v2/openapi.yaml`, `api/v2/asyncapi.yaml` and `api/seams-v2.yaml`, which are their own source; `scripts/derive-v2-api.py` regenerates `headers.md` and `path-manifest.json` from them (`CONTRIBUTING.md` §"OpenAPI and AsyncAPI").
 2. Bumps `spec/v2/release.json` and the package version sites, and adds a `## [2.N.P]` section to `CHANGELOG.md` (`PUBLISHING.md` §"Version sites").
 3. Tags and publishes per `PUBLISHING.md`.
 
@@ -311,7 +311,7 @@ A new major is rare and touches every OpenWOP repository. The RFC that opens it 
 **In this repository:**
 
 1. Create `spec/vN/` beside the current major, and `schemas/vN/` with every `$id` under `https://openwop.dev/spec/vN/`. The previous major's directories stay in place and become read-only.
-2. Produce the new API documents, the seams document and the operation-path manifest. Decide, and write down, which document is the source and which are derived (for v2, `scripts/derive-v2-api.py` derives `api/v2/` from the v1 documents).
+2. Produce the new API documents, the seams document and the operation-path manifest. Decide, and write down, which document is the source and which are derived (v2 derived `api/v2/` from the v1 documents until RFC 0266 §C made `api/v2/` its own source; derive from the previous major once at most, then cut over).
 3. Enforce the deprecation register: every entry due at `N.0` is absent from the new tree, and the check fails otherwise.
 4. Publish the new suite major and `@openwop/spec-artifacts` per `PUBLISHING.md`, with the scenarios that run against both majors during the overlap.
 5. Add the `## [N.0.0]` CHANGELOG section: the one release where breaking changes are permitted.
