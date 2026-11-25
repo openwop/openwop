@@ -33,7 +33,7 @@ Entries before this file was condensed carried full development detail. That tex
 
 ## [2.49.16] — 2026-11-25 — The coverage doc names the v2 audit path
 
-- **`conformance/coverage.md` names `GET /audit/verify`.** The audit-log integrity rows said `/v1/audit/verify`; they now give the major-2 path first, with the v1 path as history. Docs only; no scenario or schema changed. The frozen `spec/v1/production-profile.md` still names the postgres host's 2026-05-11 `conformance-full.md`, now deleted; it is a dated statement in the read-only v1 tree and stays as written.
+- **`conformance/coverage.md` names `GET /audit/verify`.** The audit-log integrity rows said `/v1/audit/verify`; they now give the major-2 path first, with the v1 path as history. Docs only. The frozen `spec/v1/production-profile.md` keeps its dated 2026-05-11 citation.
 
 ## [2.49.15] — 2026-11-25 — Critical security invariants witnessed at v2
 
