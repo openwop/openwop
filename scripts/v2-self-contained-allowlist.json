@@ -1,4 +1,5 @@
 {
+  "$comment": "RFC 0266 §B.1 allow-list for scripts/check-v2-self-contained.mjs. One row per v1 reference in spec/v2/, schemas/v2/, api/v2/: (file, kind, target, fingerprint) is the key; excerpt is for the reader and is not compared. disposition `history` = the sentence names v1 as history or migration provenance and may stay; `to-rehome` = a rule RFC 0266 §B.2 moves into v2 (zero required for Accepted: --require-zero-rehome). When you remove a reference, remove its row; a new reference needs a row only if it is history.",
   "rows": [
     {
       "file": "spec/v2/alias-detectors.json",
@@ -1054,33 +1055,6 @@
       "why": "v2 gRPC message body defined by the flat v1 schema; cite schemas/v2/audit-verify-result.schema.json"
     },
     {
-      "file": "spec/v2/facets/idempotency.schema.json",
-      "kind": "spec-v1",
-      "target": "spec/v1/idempotency.md",
-      "fingerprint": "acefcfdd226b",
-      "excerpt": "`lexicographic-min-run-id` is the rule spec/v1/idempotency.md §'Guarantees under partition' MUSTs: th",
-      "disposition": "to-rehome",
-      "why": "v2 artifact cites a v1 doc as the home of a rule it relies on; home: spec/v2/core/idempotency.md (v2 twin exists; citation swap)"
-    },
-    {
-      "file": "spec/v2/facets/idempotency.schema.json",
-      "kind": "spec-v1",
-      "target": "spec/v1/idempotency.md",
-      "fingerprint": "4ad8285278f7",
-      "excerpt": "nonical conformance-checked surface per spec/v1/idempotency.md §'Multi-region idempotency (annex)'). T",
-      "disposition": "to-rehome",
-      "why": "v2 artifact cites a v1 doc as the home of a rule it relies on; home: spec/v2/core/idempotency.md (v2 twin exists; citation swap)"
-    },
-    {
-      "file": "spec/v2/facets/packs.schema.json",
-      "kind": "spec-v1",
-      "target": "spec/v1/deprecations.json",
-      "fingerprint": "be6e04021f35",
-      "excerpt": ": \"Deprecated 2026-09-18, removeIn 3.0 (spec/v1/deprecations.json). A test-seam flag in the capability na",
-      "disposition": "to-rehome",
-      "why": "cites the frozen v1 register for a live removeIn 3.0 deprecation; home: spec/v2/deprecations.json (RFC 0266 §A.1/§A.3)"
-    },
-    {
       "file": "spec/v2/facets/uiPlugins.schema.json",
       "kind": "v1-doc",
       "target": "host-extensions.md",
@@ -1182,29 +1156,11 @@
     {
       "file": "spec/v2/migrations.schema.json",
       "kind": "spec-v1",
-      "target": "spec/v1/deprecations.json",
-      "fingerprint": "55bffc7adb8c",
-      "excerpt": "e minor the new one shipped in, and the spec/v1/deprecations.json `v2-minor` row that schedules the remov",
-      "disposition": "to-rehome",
-      "why": "v2→v2 register points at spec/v1/deprecations.json for the row that schedules a 2.x removal; home: spec/v2/deprecations.json (RFC 0266 §A.1)"
-    },
-    {
-      "file": "spec/v2/migrations.schema.json",
-      "kind": "spec-v1",
       "target": "spec/v1/migrations.schema.json",
       "fingerprint": "3fa4c9abd257",
       "excerpt": "removal. This is not the v1→v2 program: spec/v1/migrations.schema.json keeps its C1–C11 child grammar, which i",
       "disposition": "history",
       "why": "contrasts the v2→v2 register with the frozen v1→v2 program grammar (history)"
-    },
-    {
-      "file": "spec/v2/migrations.schema.json",
-      "kind": "spec-v1",
-      "target": "spec/v1/deprecations.json",
-      "fingerprint": "10e2aa77dbc5",
-      "excerpt": "9]+(-[a-z0-9]+)*$\", \"description\": \"The spec/v1/deprecations.json row — `removalTrigger` containing `v2-m",
-      "disposition": "to-rehome",
-      "why": "v2→v2 register points at spec/v1/deprecations.json for the row that schedules a 2.x removal; home: spec/v2/deprecations.json (RFC 0266 §A.1)"
     },
     {
       "file": "spec/v2/profiles.json",
@@ -1631,33 +1587,6 @@
     },
     {
       "file": "schemas/v2/capabilities.schema.json",
-      "kind": "spec-v1",
-      "target": "spec/v1/deprecations.json",
-      "fingerprint": "be6e04021f35",
-      "excerpt": ": \"Deprecated 2026-09-18, removeIn 3.0 (spec/v1/deprecations.json). A test-seam flag in the capability na",
-      "disposition": "to-rehome",
-      "why": "cites the frozen v1 register for a live removeIn 3.0 deprecation; home: spec/v2/deprecations.json (RFC 0266 §A.1/§A.3)"
-    },
-    {
-      "file": "schemas/v2/capabilities.schema.json",
-      "kind": "spec-v1",
-      "target": "spec/v1/idempotency.md",
-      "fingerprint": "acefcfdd226b",
-      "excerpt": "`lexicographic-min-run-id` is the rule spec/v1/idempotency.md §'Guarantees under partition' MUSTs: th",
-      "disposition": "to-rehome",
-      "why": "v2 artifact cites a v1 doc as the home of a rule it relies on; home: spec/v2/core/idempotency.md (v2 twin exists; citation swap)"
-    },
-    {
-      "file": "schemas/v2/capabilities.schema.json",
-      "kind": "spec-v1",
-      "target": "spec/v1/idempotency.md",
-      "fingerprint": "4ad8285278f7",
-      "excerpt": "nonical conformance-checked surface per spec/v1/idempotency.md §'Multi-region idempotency (annex)'). T",
-      "disposition": "to-rehome",
-      "why": "v2 artifact cites a v1 doc as the home of a rule it relies on; home: spec/v2/core/idempotency.md (v2 twin exists; citation swap)"
-    },
-    {
-      "file": "schemas/v2/capabilities.schema.json",
       "kind": "v1-doc",
       "target": "production-profile.md",
       "fingerprint": "da52c1984f95",
@@ -1802,15 +1731,6 @@
     },
     {
       "file": "schemas/v2/connection-pack-manifest.schema.json",
-      "kind": "spec-v1",
-      "target": "spec/v1/connection-packs.md",
-      "fingerprint": "da3e5cc54a35",
-      "excerpt": "r.id` instead of host-locked code. See `spec/v1/connection-packs.md`.\",",
-      "disposition": "to-rehome",
-      "why": "v2 artifact cites a v1 doc as the home of a rule it relies on; home: spec/v2/core/connection-packs.md (v2 twin exists; citation swap)"
-    },
-    {
-      "file": "schemas/v2/connection-pack-manifest.schema.json",
       "kind": "v1-doc",
       "target": "node-packs.md",
       "fingerprint": "0954a1938a79",
@@ -1871,15 +1791,6 @@
       "excerpt": "-flight children are cancelled per the `interrupt-profiles.md` parent-child cascade. `'first'` — sati",
       "disposition": "to-rehome",
       "why": "v2 artifact cites a v1 doc as the home of a rule it relies on; home: spec/v2/core/interrupt.md — not in the §B.2 table"
-    },
-    {
-      "file": "schemas/v2/form-content-pack-manifest.schema.json",
-      "kind": "spec-v1",
-      "target": "spec/v1/form-content-packs.md",
-      "fingerprint": "ba649eab3c5d",
-      "excerpt": "oint via the `kind` discriminator. See `spec/v1/form-content-packs.md` for the canonical contract and RFC 013",
-      "disposition": "to-rehome",
-      "why": "v2 artifact cites a v1 doc as the home of a rule it relies on; home: spec/v2/core/form-content-packs.md (v2 twin exists; citation swap)"
     },
     {
       "file": "schemas/v2/form-content-pack-manifest.schema.json",
@@ -2359,24 +2270,6 @@
       "why": "v2 artifact cites a v1 doc as the home of a rule it relies on; home: spec/v2/core/packs.md §Names and agents (RFC 0266 §B.2)"
     },
     {
-      "file": "schemas/v2/run-diff-response.schema.json",
-      "kind": "spec-v1",
-      "target": "spec/v1/replay.md",
-      "fingerprint": "97e7deb81851",
-      "excerpt": "ure function of the two event logs (see spec/v1/replay.md determinism contract).\",",
-      "disposition": "to-rehome",
-      "why": "v2 artifact cites a v1 doc as the home of a rule it relies on; home: spec/v2/core/replay.md (v2 twin exists; citation swap)"
-    },
-    {
-      "file": "schemas/v2/run-diff-response.schema.json",
-      "kind": "spec-v1",
-      "target": "spec/v1/replay.md",
-      "fingerprint": "8588678a5a62",
-      "excerpt": "with replay.diverged.divergencePoint in spec/v1/replay.md.\"",
-      "disposition": "to-rehome",
-      "why": "v2 artifact cites a v1 doc as the home of a rule it relies on; home: spec/v2/core/replay.md (v2 twin exists; citation swap)"
-    },
-    {
       "file": "schemas/v2/run-event-payloads.schema.json",
       "kind": "spec-v1",
       "target": "spec/v1/multi-agent-execution.md",
@@ -2609,15 +2502,6 @@
       "excerpt": "h, SR-1-adjacent — a normative MUST in `self-hosted-runner.md` §Behavior verified by the gated confor",
       "disposition": "to-rehome",
       "why": "v2 artifact cites a v1 doc as the home of a rule it relies on; home: spec/v2/core/node-pack-runtimes.md or the schema description — not in the §B.2 table"
-    },
-    {
-      "file": "schemas/v2/suspend-request.schema.json",
-      "kind": "spec-v1",
-      "target": "spec/v1/interrupt.md",
-      "fingerprint": "3bba1aae52d4",
-      "excerpt": "ad) — the canonical HITL primitive. See spec/v1/interrupt.md for semantics. Discriminated by `kind`.",
-      "disposition": "to-rehome",
-      "why": "v2 artifact cites a v1 doc as the home of a rule it relies on; home: spec/v2/core/interrupt.md (v2 twin exists; citation swap)"
     },
     {
       "file": "schemas/v2/suspend-request.schema.json",
@@ -2907,6 +2791,5 @@
       "disposition": "to-rehome",
       "why": "v2 artifact cites a v1 doc as the home of a rule it relies on; home: spec/v2/core/runs.md §Run options (RFC 0266 §B.2)"
     }
-  ],
-  "$comment": "RFC 0266 §B.1 allow-list for scripts/check-v2-self-contained.mjs. One row per v1 reference in spec/v2/, schemas/v2/, api/v2/: (file, kind, target, fingerprint) is the key; excerpt is for the reader and is not compared. disposition `history` = the sentence names v1 as history or migration provenance and may stay; `to-rehome` = a rule RFC 0266 §B.2 moves into v2 (zero required for Accepted: --require-zero-rehome). When you remove a reference, remove its row; a new reference needs a row only if it is history."
+  ]
 }

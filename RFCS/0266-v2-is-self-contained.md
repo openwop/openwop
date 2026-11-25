@@ -56,6 +56,25 @@ v1 reached end of support on 2026-10-04 (RFC 0234), and its tree is frozen as hi
 
 A concept that no v2 schema, operation or event uses is not re-homed; its v2 references are deleted instead.
 
+> **Added 2026-11-25 (from the §B.1 gate's first inventory, `scripts/v2-self-contained-allowlist.json`):** the table above missed concepts that v2 files also cite only in v1. Their homes:
+>
+> | Concept (v1 home) | v2 home |
+> | --- | --- |
+> | A2A composition (`a2a-integration.md`) | `spec/v2/core/interop.md` §A2A |
+> | Localized content (`localized-content.md`) | `spec/v2/core/i18n.md` |
+> | Production profile (`production-profile.md`) | `spec/v2/core/conformance.md` §Profiles |
+> | Registry operations (`registry-operations.md`) | `spec/v2/core/packs.md` §"The registry tree" |
+> | Interrupt profiles (`interrupt-profiles.md`) | `spec/v2/core/interrupt.md` |
+> | Agent memory (`agent-memory.md`) | `spec/v2/core/host-services.md` §`memory` |
+> | Version negotiation (`version-negotiation.md`) | `spec/v2/core/versioning.md` |
+> | Multi-agent execution (`multi-agent-execution.md`) | `spec/v2/core/execution.md` |
+> | Auth profiles (`auth-profiles.md`) | `spec/v2/core/identity.md` |
+> | Capability change detection (`capabilities-change-detection.md`) | `spec/v2/core/capabilities.md` |
+> | REST endpoint catalogue (`rest-endpoints.md`) | `api/v2/openapi.yaml` (descriptions) |
+> | Frontend plugin packs (`frontend-plugin-packs.md`) | `spec/v2/core/packs.md` |
+>
+> Where a v2 twin document already exists (idempotency, interrupt, replay, connection packs, form-content packs), the reference is re-pointed, not re-homed.
+
 ### §C. v2 is generated from v2
 
 **§C.1** `api/v2/openapi.yaml`, `api/v2/asyncapi.yaml` and `schemas/v2/*` are their own source. `derive-v2-api.py` and `derive-v2-schemas.mjs` stop reading v1 inputs; after a one-time cut-over they either derive only from v2 sources or are retired, and `openwop-check.sh` stops running the v1→v2 derivation. No v2 schema carries `x-openwop-seeded-from: v1`.

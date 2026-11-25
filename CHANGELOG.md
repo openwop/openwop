@@ -8,7 +8,6 @@ Entries before this file was condensed carried full development detail. That tex
 
 ## [Unreleased]
 
-- **RFC 0266 §B.1: `check-v2-self-contained`.** A new gate lists every v1 reference in `spec/v2`, `schemas/v2` and `api/v2` (323 today: 98 history, 225 to-rehome) and fails on an unlisted one or a stale allow-list row; `--require-zero-rehome` is the acceptance check.
 - **RFCs 0255, 0257 and 0253 Accepted.** openwop-app's certified cuts: 2.46.36 (`9f4cca7d4`) has no AI Envelope surface; 2.46.41 (`d2c7e089b`) passes the six `0257.*` legs; 2.46.42 (`d69c1cc76`, 550/0/0) passes every `0253.*` host leg for both pack kinds. The reference host passes the §E form legs.
 - **RFC 0250 Accepted.** openwop-app's certified 2.46.23 production cut (`f94471e98`, 487/0/0) advertises `hostEvents.replay`: a durable cursor resumes in commit order with no gap, and an unknown cursor is refused `409 host_event_resync_required` before any SSE byte. §B review deferred by steward exemption.
 
@@ -31,6 +30,11 @@ Entries before this file was condensed carried full development detail. That tex
 - **RFCs 0238 and 0239 filed and Active (windows waived).** 0238: `uiPlugins.served`, `getUiPluginFrame`, `dispatchUiPluginRequest`; frame-only mounting (`packs.md`). 0239: the `multiPartyConversation` roster gets an input seat (`conversation_speaker_not_participant`, `conversation_roster_exceeded`, both `422`).
 
 ### Security
+
+## [2.49.11] — 2026-11-25 — RFC 0266 §B: the v2 citation gate
+
+- **RFC 0266 §B.1: `check-v2-self-contained`.** A new gate lists every v1 reference in `spec/v2`, `schemas/v2` and `api/v2` (323 today: 98 history, 225 to-rehome) and fails on an unlisted one or a stale allow-list row; `--require-zero-rehome` is the acceptance check.
+- **RFC 0266 §B: v2 cites v2.** Twin-doc references in v2 schemas now point at `spec/v2/core` (idempotency, replay, interrupt, connection and form-content packs) and the v2 deprecation register; RFC 0266's home table gains twelve concepts the gate found.
 
 ## [2.49.10] — 2026-11-25 — RFC 0266 Active: v2 owns its registers
 

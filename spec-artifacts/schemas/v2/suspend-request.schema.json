@@ -2,7 +2,7 @@
   "$schema": "https://json-schema.org/draft/2020-12/schema",
   "$id": "https://openwop.dev/spec/v2/suspend-request.schema.json",
   "title": "InterruptPayload",
-  "description": "Wire format for ctx.interrupt(payload) — the canonical HITL primitive. See spec/v1/interrupt.md for semantics. Discriminated by `kind`. The persisted `interrupt.requested` event carries this payload verbatim plus engine-assigned identity fields.",
+  "description": "Wire format for ctx.interrupt(payload) — the canonical HITL primitive. See spec/v2/core/interrupt.md for semantics. Discriminated by `kind`. The persisted `interrupt.requested` event carries this payload verbatim plus engine-assigned identity fields.",
   "type": "object",
   "required": [
     "kind",
