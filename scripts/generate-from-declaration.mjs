@@ -209,6 +209,9 @@ const EXECUTION_MODEL_REWRITES = [
   ['vendor-extension kinds use the canonical host-extension namespace `^x-host-<host>-<kind>$` per `spec/v1/host-extensions.md` §"Canonical prefixes".',
    'at v2 the value MUST be one of them (`execution.md` §multiAgent, level 2). The v2 interrupt `kind` is closed, so an `x-host-` value promises an interrupt the payload schema rejects; the pattern remains only so a v1-era document validates, and is removed at 3.0.'],
   [' Hosts using vendor kinds MUST also publish a non-normative kind-mapping document per RFC 0044 §C.', ''],
+  // RFC 0266 §B.2 — the host-extension convention's v2 home is ids.schema.json's description.
+  ['per `spec/v1/host-extensions.md` §"Canonical prefixes"; the matching algorithm',
+   'per the host-extension convention (`ids.schema.json` description); the matching algorithm'],
 ];
 // RFC 0255 — v1 seed prose naming a family the AI Envelope deletion removed.
 // Applied to EVERY description of the built schema (rewriteDeletedNames), not

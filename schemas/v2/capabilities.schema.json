@@ -2185,7 +2185,7 @@
                       "pattern": "^x-host-[a-z][a-z0-9-]*-[a-z][a-z0-9-]*$"
                     }
                   ],
-                  "description": "The LLM cache-key recipe the host honors. `spec-rfc-0041` = the canonical recipe in `replay.md` §\"LLM cache-key recipe\" §A + §B + §C. Vendor-specific recipes use the canonical host-extension namespace string matching `^x-host-<host>-<recipe-name>$` per `spec/v1/host-extensions.md` §\"Canonical prefixes\"; the matching algorithm MUST be documented at the host's discovery doc."
+                  "description": "The LLM cache-key recipe the host honors. `spec-rfc-0041` = the canonical recipe in `replay.md` §\"LLM cache-key recipe\" §A + §B + §C. Vendor-specific recipes use the canonical host-extension namespace string matching `^x-host-<host>-<recipe-name>$` per the host-extension convention (`ids.schema.json` description); the matching algorithm MUST be documented at the host's discovery doc."
                 },
                 "refusalDivergenceEmission": {
                   "type": "boolean",
@@ -5902,7 +5902,7 @@
             }
           ],
           "default": "cross-origin-iframe",
-          "description": "RFC 0117 (amended by RFC 0119). The categorical isolation model the host enforces for plugin bytes. `cross-origin-iframe` = a distinct-origin sandboxed browser frame (the browser default; §Isolation). `wasm`/`process`/`container`/`vm` mirror `sandbox.isolationModel` (RFC 0035) for non-browser hosts that enforce the SAME isolation property. Vendor-specific models advertise `^x-host-<host>-<key>$` per `host-extensions.md`. ALL values denote the SAME mandatory property (`frontend-plugin-isolation`): plugin bytes execute in a boundary with no access to the host's execution context / DOM / origin-storage / credentials, deny-egress by default, and all host interaction mediated by the closed `ui-plugin/1` RPC. The field names the MECHANISM, never relaxes the property. In-process / same-origin / module-federation loading is a protocol-tier MUST NOT regardless of the advertised value."
+          "description": "RFC 0117 (amended by RFC 0119). The categorical isolation model the host enforces for plugin bytes. `cross-origin-iframe` = a distinct-origin sandboxed browser frame (the browser default; §Isolation). `wasm`/`process`/`container`/`vm` mirror `sandbox.isolationModel` (RFC 0035) for non-browser hosts that enforce the SAME isolation property. Vendor-specific models advertise `^x-host-<host>-<key>$` per the host-extension convention (`ids.schema.json` description). ALL values denote the SAME mandatory property (`frontend-plugin-isolation`): plugin bytes execute in a boundary with no access to the host's execution context / DOM / origin-storage / credentials, deny-egress by default, and all host interaction mediated by the closed `ui-plugin/1` RPC. The field names the MECHANISM, never relaxes the property. In-process / same-origin / module-federation loading is a protocol-tier MUST NOT regardless of the advertised value."
         },
         "surfaces": {
           "type": "array",

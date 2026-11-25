@@ -2,7 +2,7 @@
   "$schema": "https://json-schema.org/draft/2020-12/schema",
   "$id": "https://openwop.dev/spec/v2/pack-lockfile.schema.json",
   "title": "PackLockfile",
-  "description": "Reproducible-build lockfile pinning resolved versions of every pack a workspace depends on. Per spec/v1/node-packs.md §\"Dependency resolution + lockfile\". A workspace records its lockfile alongside its workflow definitions; on subsequent installs the registry resolver MUST honor the lockfile's exact versions rather than re-running semver resolution. This guarantees that a workflow that ran against `vendor.openwop.rust-hello@1.0.0` will still run against `1.0.0` even after `1.0.1` is published.",
+  "description": "Reproducible-build lockfile pinning resolved versions of every pack a workspace depends on. This description is the v2 home of the lockfile resolution rules (re-homed from v1 `node-packs.md` §\"Dependency resolution + lockfile\" and §\"Transitive dependency resolution\" by RFC 0266). A workspace records its lockfile alongside its workflow definitions; on subsequent installs the registry resolver MUST honor the lockfile's exact versions rather than re-running semver resolution. This guarantees that a workflow that ran against `vendor.openwop.rust-hello@1.0.0` will still run against `1.0.0` even after `1.0.1` is published. When a lockfile is present a resolver MUST verify each entry's `integrity` (`pack_integrity_mismatch`) and, when recorded, its `signature` (`pack_signature_invalid`); MUST confirm the host advertises every entry's `peerDependencies` (`pack_peer_dependency_missing`); and MUST refuse a workspace that references a pack the lockfile does not list (`pack_lockfile_incomplete`). Integrity is verified per entry regardless of registry: there is no cross-registry trust transfer. A pinned version the registry no longer serves fails with `pack_version_not_found`. Resolution without a lockfile picks the highest version satisfying each range, recursing through each pack's `dependencies`; when two paths select different versions of one pack the resolver MUST search for a single version satisfying both ranges, and fails with `pack_dependency_conflict` when none does. Pack `dependencies` MUST form a DAG; re-entering a pack already on the active path fails with `pack_dependency_cycle`. Every resolved pack, direct and transitive, appears once in `packs[]`. Two resolvers run against the same registry snapshot, top-level manifests and overrides MUST produce byte-identical lockfiles: `packs[]` sorted by `name` then `version`, each `dependencies` map's keys sorted, canonical JSON.",
   "type": "object",
   "required": [
     "lockfileVersion",
@@ -34,7 +34,7 @@
     },
     "overrides": {
       "type": "object",
-      "description": "Optional override map per `node-packs.md` §\"Transitive dependency resolution\" §\"Override pinning\". Keys are pack names; values are exact pinned versions that resolvers MUST honor ahead of normal range resolution. The override version MUST still satisfy at least one parent's declared range — silently breaking the contract fails with `pack_dependency_conflict`. Use sparingly: security patches, conflict resolution, supply-chain pinning.",
+      "description": "Optional override map (override pinning). Keys are pack names; values are exact pinned versions that resolvers MUST honor ahead of normal range resolution. The override version MUST still satisfy at least one parent's declared range — silently breaking the contract fails with `pack_dependency_conflict`. Use sparingly: security patches, conflict resolution, supply-chain pinning.",
       "additionalProperties": {
         "type": "string",
         "minLength": 1,
@@ -49,7 +49,7 @@
         "format": "uri"
       },
       "uniqueItems": true,
-      "description": "Optional ordered list of fallback registry base URLs per `registry-operations.md` §\"Registry mirror + federation\". When a pack is not found in the primary `registry`, resolvers MUST consult each fallback in order. The first registry returning a 200 for the version manifest wins. Trust roots are per-registry — a fallback being listed here does NOT imply trust transitivity. Each pack's signature is verified against the issuing registry's `signingKeys[]` allow-list."
+      "description": "Optional ordered list of fallback registry base URLs (registry mirror and federation; re-homed from v1 `registry-operations.md` §\"Registry mirror + federation\" by RFC 0266). When a pack is not found in the primary `registry`, resolvers MUST consult each fallback in order. The first registry returning a 200 for the version manifest wins. Trust roots are per-registry — a fallback being listed here does NOT imply trust transitivity. Each pack's signature is verified against the issuing registry's `signingKeys[]` allow-list; listing a fallback does not trust every key it lists. A fallback that returns a transport-layer error (timeout, DNS, connection refused) is `pack_registry_unreachable` — the caller MAY retry on a different fallback or fail closed. A fetched pack whose signing key the issuing registry's `signingKeys[]` does not allow for the pack's namespace is `pack_namespace_unauthorized`."
     }
   },
   "additionalProperties": false,
@@ -67,7 +67,7 @@
           "minLength": 3,
           "maxLength": 256,
           "pattern": "^(core|vendor|community|private|local)\\.[a-z0-9][a-z0-9.-]*$",
-          "description": "Pack name per node-packs.md §\"Manifest format\" `name`. Reverse-DNS-style; namespace prefix is one of the canonical tiers."
+          "description": "Pack name per `node-pack-manifest.schema.json` `name`. Reverse-DNS-style; namespace prefix is one of the canonical tiers."
         },
         "version": {
           "type": "string",
@@ -87,7 +87,7 @@
         },
         "signature": {
           "type": "object",
-          "description": "Optional pack signature material (Ed25519 per node-packs.md §Signing). When present, resolvers MUST verify the signature against the publisher's advertised public key.",
+          "description": "Optional pack signature material (Ed25519). When present, resolvers MUST verify the signature against the publisher's advertised public key.",
           "required": [
             "algorithm",
             "publicKey",
@@ -134,6 +134,5 @@
       },
       "additionalProperties": false
     }
-  },
-  "x-openwop-seeded-from": "v1"
+  }
 }

@@ -14,7 +14,7 @@
   "properties": {
     "templateId": {
       "$ref": "ids.schema.json#/$defs/templateId",
-      "description": "Stable identifier. Convention: vendor-prefixed for portable templates (`vendor.acme.writer.v2`) or unprefixed for host-resident templates (`writer`). Same naming discipline as node-pack typeIds (host-extensions.md §\"Canonical-prefix table\")."
+      "description": "Stable identifier. Convention: vendor-prefixed for portable templates (`vendor.acme.writer.v2`) or unprefixed for host-resident templates (`writer`). Same naming discipline as node-pack typeIds (the canonical prefixes of the host-extension convention, `ids.schema.json` description)."
     },
     "version": {
       "type": "string",

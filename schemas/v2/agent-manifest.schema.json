@@ -2,7 +2,7 @@
   "$schema": "https://json-schema.org/draft/2020-12/schema",
   "$id": "https://openwop.dev/spec/v2/agent-manifest.schema.json",
   "title": "AgentManifest",
-  "description": "Manifest entry for an agent shipped inside a `pack.json`'s `agents[]` array. Carries everything a host needs to instantiate the agent without reading the rest of the pack tarball — only `systemPromptRef` and the two `*SchemaRef` fields under `handoff` reference external tarball files. See RFC 0003 + `node-packs.md` §`agents[]` extension.",
+  "description": "Manifest entry for an agent shipped inside a `pack.json`'s `agents[]` array. Carries everything a host needs to instantiate the agent without reading the rest of the pack tarball — only `systemPromptRef` and the two `*SchemaRef` fields under `handoff` reference external tarball files. See RFC 0003 + `node-pack-manifest.schema.json` `agents`.",
   "type": "object",
   "required": [
     "agentId",
@@ -12,7 +12,7 @@
   "properties": {
     "agentId": {
       "$ref": "ids.schema.json#/$defs/agentId",
-      "description": "Globally-unique manifest agentId. Pattern matches the namespace tiers from `node-packs.md` §Naming, MINUS the `host:<id>` slim-runtime form (which is reserved for host-internal AgentRefs and is NOT a valid manifest namespace). Convention: `<tier>.<org>.<pack>.<agent>` for vendor/community packs; `core.<name>` for spec-canonical agents."
+      "description": "Globally-unique manifest agentId. Pattern matches the pack-name tiers of `node-pack-manifest.schema.json` `name`, MINUS the `host:<id>` slim-runtime form (which is reserved for host-internal AgentRefs and is NOT a valid manifest namespace). Convention: `<tier>.<org>.<pack>.<agent>` for vendor/community packs; `core.<name>` for spec-canonical agents."
     },
     "persona": {
       "type": "string",
@@ -22,7 +22,7 @@
     },
     "modelClass": {
       "type": "string",
-      "description": "Closed enum from RFC 0002's `AgentRef` schema. Vendor extensions follow the `<vendor>.<class>` convention from `host-extensions.md` (e.g., `openwop.creative-writing`).",
+      "description": "Closed enum from RFC 0002's `AgentRef` schema. Vendor extensions follow the `<vendor>.<class>` form of the host-extension convention (`ids.schema.json` description) (e.g., `openwop.creative-writing`).",
       "enum": [
         "reasoning",
         "writing",
@@ -70,7 +70,7 @@
         "skill",
         "assistant"
       ],
-      "description": "RFC 0131. The manifest's kind — EXPLICIT, never inferred from other fields (`handoff` presence does NOT imply `skill`; an assistant may carry a typed entry contract for cross-host interop). `skill`: a composable, task-scoped capability invoked via `handoff` (task→return) and composed by an assistant/roster agent — stateless and replay-clean; declaring this value OPTS IN to the Skill profile (the `allOf` conditional below: MUST declare `handoff`, MUST constrain `memoryShape` to scratchpad-only). `assistant`: a top-level conversational agent a client talks to and that composes skills — no profile binds it. OPTIONAL; when ABSENT the manifest is UNCONSTRAINED — no profile binds it and its meaning is exactly today's (byte- and behavior-identical). Advisory about kind only — never widens `toolAllowlist`, `requiresCapabilities`, or any scope. See `node-packs.md` §`agents[]` (the field) and `agent-memory.md` §B (the memoryShape constraint + the §C-vs-§B reject/degrade contrast)."
+      "description": "RFC 0131. The manifest's kind — EXPLICIT, never inferred from other fields (`handoff` presence does NOT imply `skill`; an assistant may carry a typed entry contract for cross-host interop). `skill`: a composable, task-scoped capability invoked via `handoff` (task→return) and composed by an assistant/roster agent — stateless and replay-clean; declaring this value OPTS IN to the Skill profile (the `allOf` conditional below: MUST declare `handoff`, MUST constrain `memoryShape` to scratchpad-only). `assistant`: a top-level conversational agent a client talks to and that composes skills — no profile binds it. OPTIONAL; when ABSENT the manifest is UNCONSTRAINED — no profile binds it and its meaning is exactly today's (byte- and behavior-identical). Advisory about kind only — never widens `toolAllowlist`, `requiresCapabilities`, or any scope. A `skill` manifest that violates the profile fails schema validation at publish or install (`pack_validation_failed`) — an author error, NOT an RFC 0072 `degraded[]` runtime tier; invariant `agent-skill-profile-stateless` (re-homed from v1 `node-packs.md` §\"Dependency resolution + lockfile\" by RFC 0266). See `node-pack-manifest.schema.json` `agents` (the field) and `agent-memory.md` §B (the memoryShape constraint + the §C-vs-§B reject/degrade contrast)."
     },
     "memoryShape": {
       "type": "object",
