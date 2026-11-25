@@ -103,6 +103,7 @@ Several `Accepted` RFCs are provisional: their comment windows were waived and t
 | 0121 (Subscription provider auth) | `Active` (parked) | The remaining acceptance criteria hinge on Unresolved Question 1, a legal or terms-of-service citation for at least one named provider. Until that clears, no host advertises `subscription`. A standing decision, not an open action. |
 | 0256 (Tool-turn contract) | `Active` | Spec text, invariants and published scenarios are not all merged yet, and no host has certified every witnessable row on a production tool loop (the RFC's three open acceptance boxes). |
 | 0261 (Multi-region concurrent first write) | `Active` | Normative text and CHANGELOG are merged. No host advertises `idempotency.multiRegion`, so no certified bundle records the `0261.*` rows, and the register sweep is open. Its behavioural simulators run only at major 1 (§"Shape-only conformance coverage").
+| 0266 (v2 is self-contained) | `Active` | Filed 2026-11-25. The registers, the citation gate, the prose homes and the generator cut-over are repository work; acceptance also needs `@openwop/spec-artifacts` without v1 contents, the registry discovery update, and openwop-app's certified major-2 cut reading no v1 corpus file. |
 
 ---
 
