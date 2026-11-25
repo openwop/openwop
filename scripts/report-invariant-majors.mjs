@@ -69,7 +69,7 @@ export function measure(root = ROOT) {
       return { test: t, majors: [...ms].sort() };
     });
     const listed = new Set(inv.tests.filter((t) => t.startsWith(SCEN)).map((t) => t.slice(SCEN.length)));
-    const idRe = new RegExp(`(^|[^a-z0-9-])${inv.id.replace(/[-]/g, '\\-')}([^a-z0-9-]|$)`);
+    const idRe = new RegExp(`(^|[^a-z0-9-])${inv.id.replace(/[.*+?^${}()|[\]\\-]/g, '\\$&')}([^a-z0-9-]|$)`);
     const namedBy = v2Sources.filter(([f, src]) => !listed.has(f) && idRe.test(src)).map(([f]) => f);
     const runMajors = [...new Set(tests.flatMap((t) => t.majors))].sort();
     const twins = tests.flatMap((t) => {
