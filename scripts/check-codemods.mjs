@@ -15,8 +15,10 @@
  *     expected.json in memory and asserts its own comparator now FAILS —
  *     a comparator that cannot see a difference is not a witness.
  * Register integrity:
- *   - every `codemod` named in spec/v1/deprecations.json or
- *     spec/v1/migrations.json resolves to a directory here;
+ *   - every `codemod` named in the deprecation registers or the v1→v2
+ *     migration registers (spec/v1/ and spec/v2/, merged by id with the v2
+ *     row winning — RFC 0266 §A, scripts/lib/registers.mjs) resolves to a
+ *     directory here;
  *   - with --at-active: every migrations.json row of a codemod-able kind whose
  *     child RFC is Active has a codemod (the umbrella's Active predicate).
  *
@@ -25,6 +27,7 @@
 import { existsSync, readFileSync, readdirSync, statSync } from 'node:fs';
 import { dirname, join } from 'node:path';
 import { fileURLToPath, pathToFileURL } from 'node:url';
+import { loadDeprecations, loadMajor1Migrations } from './lib/registers.mjs';
 
 const ROOT = join(dirname(fileURLToPath(import.meta.url)), '..');
 const DIR = join(ROOT, 'codemods');
@@ -62,8 +65,8 @@ for (const id of ids) {
     if (!existsSync(join(base, 'README.md'))) failures.push(`${id}: README.md missing`);
   } catch (e) { failures.push(`${id}: ${e.message}`); }
 }
-const dep = JSON.parse(readFileSync(join(ROOT, 'spec/v1/deprecations.json'), 'utf8')).entries;
-const mig = JSON.parse(readFileSync(join(ROOT, 'spec/v1/migrations.json'), 'utf8')).rows;
+const dep = loadDeprecations(ROOT).entries;
+const mig = loadMajor1Migrations(ROOT).rows;
 const known = new Set(ids);
 for (const e of dep) if (e.codemod && !known.has(e.codemod)) failures.push(`deprecations.json ${e.id} names codemod ${e.codemod}, which is not under codemods/`);
 for (const r of mig) if (r.codemod && !known.has(r.codemod)) failures.push(`migrations.json ${r.id} names codemod ${r.codemod}, which is not under codemods/`);

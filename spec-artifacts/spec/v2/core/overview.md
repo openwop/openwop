@@ -21,7 +21,7 @@
 ## Axioms in force
 
 1. A MUST without a witness class is not a requirement.
-2. One name per thing. Every alias has a removal date in `spec/v1/deprecations.json` and a codemod id.
+2. One name per thing. Every alias has a removal date in `spec/v2/deprecations.json` and a codemod id.
 3. Closed by default. The discovery root, event envelope, payload and error registries, bundle, and `configurable` are `additionalProperties: false`. Vendor extension is one positive pattern in one namespace.
 4. Registers are data. Gaps, risks, deprecations, migrations, witness classes, and dispositions are files with schemas and gates; prose is checked against them, never the reverse.
 5. Security defaults are obligations of the surface. A protecting behavior binds when the surface is advertised, never when a flag is set.
@@ -42,7 +42,7 @@ A 2.x minor MUST NOT change the shape of an existing v2 surface; a new shape is 
 A 2.x minor MAY remove a surface only when `scripts/check-v2-retirement.mjs` proves all of the following; otherwise the removal waits for 3.0:
 
 1. Its replacement shipped in an earlier 2.x minor.
-2. A `v2-minor` row in `spec/v1/deprecations.json` named the removal minor at least two minors and 30 days earlier.
+2. A `v2-minor` row in `spec/v2/deprecations.json` named the removal minor at least two minors and 30 days earlier.
 3. No committed v2 host bundle and no published registry manifest carries it.
 4. It is an optional family, facet or enum member, so its absence is already a 2.0 state.
 5. Its family is `experimental` in `spec/v2/declaration.json`.

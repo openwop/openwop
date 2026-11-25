@@ -51,6 +51,7 @@
  * Test seams (used by conformance/src/coherence/v2-surface-monotone-gate):
  *   OPENWOP_V2_BASELINE_FILE  OPENWOP_V2_SCHEMAS_ROOT  OPENWOP_V2_RELEASE_FILE
  *   OPENWOP_V2_CORRECTIONS_FILE OPENWOP_V2_MIGRATIONS_FILE OPENWOP_DEPRECATIONS_FILE
+ *   OPENWOP_V2_DEPRECATIONS_FILE (RFC 0266 §A.1; the two registers merge, v2 wins)
  *   OPENWOP_V2_PUBLISHED_BASELINE_FILE — the published "before", in place of git
  * `OPENWOP_V2_SCHEMAS_ROOT` names an alternative REPO ROOT whose `schemas/v2/`
  * and `spec/v2/path-manifest.json` are enumerated instead of this one's.
@@ -64,6 +65,7 @@ import { dirname, join, resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { enumerateTree } from './generate-v2-surface-baseline.mjs';
 import { fileAtLastTag } from './lib/published-tree.mjs';
+import { deprecationPaths, loadDeprecations } from './lib/registers.mjs';
 
 const ROOT = resolve(dirname(fileURLToPath(import.meta.url)), '..');
 const BASELINE = process.env['OPENWOP_V2_BASELINE_FILE'] ?? join(ROOT, 'spec', 'v2', 'surface-baseline.json');
@@ -71,7 +73,8 @@ const TREE_ROOT = process.env['OPENWOP_V2_SCHEMAS_ROOT'] ?? ROOT;
 const RELEASE = process.env['OPENWOP_V2_RELEASE_FILE'] ?? join(ROOT, 'spec', 'v2', 'release.json');
 const CORRECTIONS = process.env['OPENWOP_V2_CORRECTIONS_FILE'] ?? join(ROOT, 'spec', 'v2', 'corrections.json');
 const MIGRATIONS = process.env['OPENWOP_V2_MIGRATIONS_FILE'] ?? join(ROOT, 'spec', 'v2', 'migrations.json');
-const DEPRECATIONS = process.env['OPENWOP_DEPRECATIONS_FILE'] ?? join(ROOT, 'spec', 'v1', 'deprecations.json');
+// RFC 0266 §A.1: the frozen v1 register and the v2 one, merged by id (v2 wins).
+const DEPRECATIONS = deprecationPaths(ROOT);
 
 const readJsonOrNull = (p) => { try { return JSON.parse(readFileSync(p, 'utf8')); } catch { return null; } };
 const fail = (msg) => { console.error(`=== check-v2-surface-monotone FAILED ===\n  ${msg}`); process.exit(1); };
@@ -129,7 +132,7 @@ const afterSites = new Set([...after].map((s) => parse(s).site));
 // ── what may license a removal ───────────────────────────────────────────────
 const corrections = readJsonOrNull(CORRECTIONS) ?? { rows: [] };
 const migrations = readJsonOrNull(MIGRATIONS) ?? { rows: [] };
-const deprecations = readJsonOrNull(DEPRECATIONS) ?? { entries: [] };
+const deprecations = (() => { try { return { entries: loadDeprecations(ROOT, DEPRECATIONS).entries }; } catch { return null; } })() ?? { entries: [] };
 const triggersOf = (e) => (Array.isArray(e.removalTrigger) ? e.removalTrigger : e.removalTrigger ? [e.removalTrigger] : []);
 const minorOf = (v) => { const m = /^(\d+)\.(\d+)/.exec(String(v ?? '')); return m ? [Number(m[1]), Number(m[2])] : null; };
 const cmpMinor = (a, b) => { const x = minorOf(a), y = minorOf(b); if (!x || !y) return NaN; return x[0] !== y[0] ? Math.sign(x[0] - y[0]) : Math.sign(x[1] - y[1]); };

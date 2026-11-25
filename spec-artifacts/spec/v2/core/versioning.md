@@ -186,6 +186,6 @@ Every vendor namespace — capability records ([capabilities.md](capabilities.md
 
 ## 6. Migration rows
 
-Rows `C5.1`–`C5.9` are `spec/v1/migrations.json` entries (`C5.2` is owned by `events.md`). The persisted-data disposition for each is `not-persisted`, except `C5.1` (legacy-stamped) and `C5.7` (never-upgraded).
+Rows `C5.1`–`C5.9` are `spec/v2/major-1-migrations.json` entries (`C5.2` is owned by `events.md`). The persisted-data disposition for each is `not-persisted`, except `C5.1` (legacy-stamped) and `C5.7` (never-upgraded).
 
 *Sources: RFCs 0167, 0168, 0172, 0176, 0179, 0181, 0193, 0219, 0255.*

@@ -13,15 +13,18 @@
 import { readFileSync, existsSync } from 'node:fs';
 import { join, dirname, resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
+import { deprecationPaths, loadDeprecations } from './lib/registers.mjs';
 const ROOT = resolve(dirname(fileURLToPath(import.meta.url)), '..');
 // RFC 0197 §A.2 test seams — the register, the release identity and the root the
 // `sources[].file` paths resolve against are overridable, so the coherence twin
 // can drive a `v2-minor` fixture row in both directions without writing into the
 // real register. Unset, they are the corpus's own files.
-const REGISTER_PATH = process.env['OPENWOP_DEPRECATIONS_FILE'] ?? join(ROOT, 'spec', 'v1', 'deprecations.json');
+// RFC 0266 §A.1: the frozen v1 register and the v2 one, merged by id (v2 wins);
+// OPENWOP_DEPRECATIONS_FILE / OPENWOP_V2_DEPRECATIONS_FILE override each.
+const REGISTER_PATHS = deprecationPaths(ROOT);
 const RELEASE_PATH = process.env['OPENWOP_V2_RELEASE_FILE'] ?? join(ROOT, 'spec', 'v2', 'release.json');
 const SOURCE_ROOT = process.env['OPENWOP_REMOVAL_SOURCE_ROOT'] ?? ROOT;
-const reg = JSON.parse(readFileSync(REGISTER_PATH, 'utf8'));
+const reg = { entries: loadDeprecations(ROOT, REGISTER_PATHS).entries };
 const servedMajor = existsSync(join(ROOT, 'spec', 'v2')) ? 2 : 1;
 // RFC 0197 §A.2 — the MINOR axis. Until this landed the script compared MAJORS
 // only ("removeIn major ≤ the served major ⇒ due"), so a row scheduled for

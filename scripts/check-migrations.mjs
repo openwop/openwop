@@ -1,9 +1,12 @@
 #!/usr/bin/env node
 /**
- * check-migrations — RFC 0167 §D: spec/v1/migrations.json is valid, internally
+ * check-migrations — RFC 0167 §D: spec/v1/migrations.json (with the C2/C5/C6 rows
+ * v2 holds in spec/v2/major-1-migrations.json, RFC 0266 §A.2, merged by id, the
+ * v2 row winning) is valid, internally
  * referential, and agrees with every child RFC's §Migration table.
  *
- *   1. schema      — validates against spec/v1/migrations.schema.json
+ *   1. schema      — each file validates against its own schema; a v2 row's
+ *                    movedFrom names a v1 row
  *   2. ids         — unique; child in the id equals the `child` field
  *   3. references  — deprecationId exists in deprecations.json; gapIds exist in
  *                    gaps.json; rename/remove/delete-alias rows carry a deprecationId
@@ -26,18 +29,26 @@ import { existsSync, readFileSync, readdirSync } from 'node:fs';
 import { createRequire } from 'node:module';
 import { dirname, join } from 'node:path';
 import { fileURLToPath } from 'node:url';
+import { deprecationPaths, loadDeprecations, loadMajor1Migrations, movedFromFailures } from './lib/registers.mjs';
 
 const ROOT = join(dirname(fileURLToPath(import.meta.url)), '..');
 const require = createRequire(join(ROOT, 'conformance', 'package.json'));
 const failures = [];
-const reg = JSON.parse(readFileSync(join(ROOT, 'spec/v1/migrations.json'), 'utf8'));
+// RFC 0266 §A.2 — the v1→v2 rows v2 prose cites (C2, C5, C6) are held by
+// spec/v2/major-1-migrations.json; the frozen v1 file keeps them as history.
+// Each file validates against its own schema; rules 2–5 run over the merge.
+const m1 = loadMajor1Migrations(ROOT);
+const reg = { rows: m1.rows };
 try {
   const { Ajv2020 } = require('ajv/dist/2020.js');
-  const ajv = new Ajv2020({ strict: false, allErrors: true });
-  const ok = ajv.validate(JSON.parse(readFileSync(join(ROOT, 'spec/v1/migrations.schema.json'), 'utf8')), reg);
-  if (!ok) for (const err of ajv.errors ?? []) failures.push(`schema: ${err.instancePath || '/'} ${err.message}`);
+  for (const [label, doc, schema] of [['spec/v1/migrations.json', m1.v1, 'spec/v1/migrations.schema.json'], ['spec/v2/major-1-migrations.json', m1.v2, 'spec/v2/major-1-migrations.schema.json']]) {
+    const ajv = new Ajv2020({ strict: false, allErrors: true });
+    const ok = ajv.validate(JSON.parse(readFileSync(join(ROOT, schema), 'utf8')), doc);
+    if (!ok) for (const err of ajv.errors ?? []) failures.push(`schema (${label}): ${err.instancePath || '/'} ${err.message}`);
+  }
 } catch (e) { failures.push(`schema: could not load Ajv from conformance/node_modules (${e.message})`); }
-const dep = new Set(JSON.parse(readFileSync(join(ROOT, 'spec/v1/deprecations.json'), 'utf8')).entries.map((e) => e.id));
+failures.push(...movedFromFailures('movedFrom (spec/v2/major-1-migrations.json)', m1.v1.rows ?? [], m1.v2.rows ?? []));
+const dep = new Set(loadDeprecations(ROOT, { ...deprecationPaths(ROOT), v1: join(ROOT, 'spec/v1/deprecations.json') }).entries.map((e) => e.id));
 const gaps = new Set(JSON.parse(readFileSync(join(ROOT, 'spec/v1/gaps.json'), 'utf8')).entries.map((g) => g.id));
 const seen = new Set();
 for (const r of reg.rows) {
@@ -67,7 +78,7 @@ for (const f of readdirSync(join(ROOT, 'RFCS')).filter((f) => /^\d{4}-.*\.md$/.t
 // ── 6. the v2→v2 register (RFC 0197 §A.2 R1) ────────────────────────────────
 const V2_REG = process.env['OPENWOP_V2_MIGRATIONS_FILE'] ?? join(ROOT, 'spec/v2/migrations.json');
 const V2_SCHEMA = join(ROOT, 'spec/v2/migrations.schema.json');
-const DEPRECATIONS = process.env['OPENWOP_DEPRECATIONS_FILE'] ?? join(ROOT, 'spec/v1/deprecations.json');
+const DEPRECATIONS = deprecationPaths(ROOT);
 let v2reg = null;
 try { v2reg = JSON.parse(readFileSync(V2_REG, 'utf8')); } catch (e) { failures.push(`v2: cannot read ${V2_REG} (${e.message}) — the register exists ahead of its first row precisely so R1 has somewhere to resolve`); }
 if (v2reg) {
@@ -76,7 +87,7 @@ if (v2reg) {
     const ajv = new Ajv2020({ strict: false, allErrors: true });
     if (!ajv.validate(JSON.parse(readFileSync(V2_SCHEMA, 'utf8')), v2reg)) for (const err of ajv.errors ?? []) failures.push(`v2 schema: ${err.instancePath || '/'} ${err.message}`);
   } catch (e) { failures.push(`v2 schema: could not load Ajv from conformance/node_modules (${e.message})`); }
-  const depEntries = (() => { try { return JSON.parse(readFileSync(DEPRECATIONS, 'utf8')).entries ?? []; } catch { return null; } })();
+  const depEntries = (() => { try { return loadDeprecations(ROOT, DEPRECATIONS).entries; } catch { return null; } })();
   const baseline = (() => { try { return JSON.parse(readFileSync(join(ROOT, 'spec/v2/surface-baseline.json'), 'utf8')); } catch { return null; } })();
   const sites = new Set();
   for (const s of baseline?.surfaces ?? []) {
@@ -90,8 +101,8 @@ if (v2reg) {
     if (v2seen.has(r.id)) failures.push(`v2 ids: duplicate ${r.id}`);
     v2seen.add(r.id);
     const dep = depEntries === null ? undefined : depEntries.find((e) => e.id === r.deprecationId);
-    if (depEntries === null) failures.push(`v2 references: ${r.id} — spec/v1/deprecations.json unreadable`);
-    else if (!dep) failures.push(`v2 references: ${r.id} names ${r.deprecationId}, which is not a row in spec/v1/deprecations.json`);
+    if (depEntries === null) failures.push(`v2 references: ${r.id} — the deprecation registers (spec/v1/, spec/v2/deprecations.json) are unreadable`);
+    else if (!dep) failures.push(`v2 references: ${r.id} names ${r.deprecationId}, which is not a row in spec/v1/ or spec/v2/deprecations.json`);
     else {
       const trig = Array.isArray(dep.removalTrigger) ? dep.removalTrigger : dep.removalTrigger ? [dep.removalTrigger] : [];
       if (!trig.includes('v2-minor')) failures.push(`v2 references: ${r.id} links ${dep.id}, whose removalTrigger is ${JSON.stringify(dep.removalTrigger)} — a v2→v2 migration row schedules a removal INSIDE major 2, so its deprecation row must carry v2-minor`);
@@ -108,4 +119,4 @@ if (v2reg) {
 
 if (failures.length > 0) { console.error(`=== check-migrations FAILED — ${failures.length} problem(s) ===`); for (const x of failures) console.error(`  ${x}`); process.exit(1); }
 const kinds = {}; for (const r of reg.rows) kinds[r.kind] = (kinds[r.kind] ?? 0) + 1;
-console.log(`=== check-migrations OK — ${reg.rows.length} rows across ${byChild.size} children ${JSON.stringify(kinds)}; ${tables} child RFC table(s) agree; ${reg.rows.filter((r) => r.codemod).length} row(s) with a codemod; spec/v2/migrations.json holds ${(v2reg?.rows ?? []).length} v2→v2 row(s) (an empty v2→v2 register is a legal state — RFC 0197) ===`);
+console.log(`=== check-migrations OK — ${reg.rows.length} rows across ${byChild.size} children ${JSON.stringify(kinds)}; ${tables} child RFC table(s) agree; ${reg.rows.filter((r) => r.codemod).length} row(s) with a codemod; ${(m1.v2.rows ?? []).length} row(s) held by spec/v2/major-1-migrations.json; spec/v2/migrations.json holds ${(v2reg?.rows ?? []).length} v2→v2 row(s) (an empty v2→v2 register is a legal state — RFC 0197) ===`);

@@ -1,6 +1,8 @@
 #!/usr/bin/env node
 /**
- * check-deprecations — keep spec/v1/deprecations.json honest (COMPATIBILITY.md §7).
+ * check-deprecations — keep the deprecation registers honest (COMPATIBILITY.md §7):
+ * the frozen spec/v1/deprecations.json and spec/v2/deprecations.json (RFC 0266 §A.1),
+ * read as one register merged by id with the v2 row winning (scripts/lib/registers.mjs).
  *
  * The register is an INDEX of deprecations the RFC process has already made
  * (status: deprecated) plus surfaces the v2 program proposes to deprecate but no
@@ -8,7 +10,9 @@
  * gate protects is that the index cannot drift away from the corpus it indexes.
  *
  * Checks:
- *   1. schema   — the register validates against spec/v1/deprecations.schema.json
+ *   1. schema   — each register validates against its own schema
+ *                 (spec/v1/ or spec/v2/deprecations.schema.json); a v2 row's
+ *                 movedFrom names a v1 row, a row born in v2 reuses no v1 id
  *   2. ids      — every `id` is unique
  *   3. sources  — every cited source file exists and still contains its token
  *                 (a reword that drops the deprecation text fails here)
@@ -33,38 +37,50 @@ import { existsSync, readFileSync } from 'node:fs';
 import { createRequire } from 'node:module';
 import { dirname, join } from 'node:path';
 import { fileURLToPath } from 'node:url';
+import { deprecationPaths, mergeById, movedFromFailures } from './lib/registers.mjs';
 
 const ROOT = join(dirname(fileURLToPath(import.meta.url)), '..');
-const REGISTER = join(ROOT, 'spec', 'v1', 'deprecations.json');
-const SCHEMA = join(ROOT, 'spec', 'v1', 'deprecations.schema.json');
+// RFC 0266 §A.1 — two registers: the frozen v1 file (history) and the v2 file
+// that owns every row whose removal trigger is a v2 event. Each validates
+// against its own schema; rules 2–6 run over the merge (the v2 row wins).
+const PATHS = deprecationPaths(ROOT);
+const REGISTERS = [
+  { label: 'spec/v1/deprecations.json', file: PATHS.v1, schema: join(ROOT, 'spec', 'v1', 'deprecations.schema.json') },
+  { label: 'spec/v2/deprecations.json', file: PATHS.v2, schema: join(ROOT, 'spec', 'v2', 'deprecations.schema.json') },
+];
 
 const failures = [];
 const fail = (m) => failures.push(m);
 
-let register;
-let schema;
-try {
-  register = JSON.parse(readFileSync(REGISTER, 'utf8'));
-  schema = JSON.parse(readFileSync(SCHEMA, 'utf8'));
-} catch (e) {
-  console.error(`check-deprecations: cannot read register or schema: ${e.message}`);
-  process.exit(1);
+for (const r of REGISTERS) {
+  try {
+    r.doc = JSON.parse(readFileSync(r.file, 'utf8'));
+    r.schemaDoc = JSON.parse(readFileSync(r.schema, 'utf8'));
+  } catch (e) {
+    console.error(`check-deprecations: cannot read register or schema (${r.label}): ${e.message}`);
+    process.exit(1);
+  }
 }
 
 // 1. schema — Ajv lives in conformance/node_modules (installed by openwop-check step 1).
 try {
   const require = createRequire(join(ROOT, 'conformance', 'package.json'));
   const Ajv2020 = require('ajv/dist/2020').default ?? require('ajv/dist/2020');
-  const ajv = new Ajv2020({ allErrors: true, strict: false });
-  const validate = ajv.compile(schema);
-  if (!validate(register)) {
-    for (const err of validate.errors ?? []) fail(`schema: ${err.instancePath || '/'} ${err.message}`);
+  for (const r of REGISTERS) {
+    const ajv = new Ajv2020({ allErrors: true, strict: false });
+    const validate = ajv.compile(r.schemaDoc);
+    if (!validate(r.doc)) {
+      for (const err of validate.errors ?? []) fail(`schema (${r.label}): ${err.instancePath || '/'} ${err.message}`);
+    }
   }
 } catch (e) {
   fail(`schema: could not load Ajv from conformance/node_modules (${e.message}); run \`npm install\` in conformance/ first`);
 }
 
-const entries = Array.isArray(register?.entries) ? register.entries : [];
+const v1Entries = Array.isArray(REGISTERS[0].doc?.entries) ? REGISTERS[0].doc.entries : [];
+const v2Entries = Array.isArray(REGISTERS[1].doc?.entries) ? REGISTERS[1].doc.entries : [];
+for (const f of movedFromFailures('movedFrom (spec/v2/deprecations.json)', v1Entries, v2Entries)) fail(f);
+const entries = mergeById(v1Entries, v2Entries);
 
 // 2. ids
 const seen = new Set();
@@ -99,7 +115,7 @@ for (const e of entries) {
 // 5. status — a deprecated row must be grounded in the corpus, not only the charter
 for (const e of entries) {
   if (e.status !== 'deprecated') continue;
-  const grounded = (e.sources ?? []).some((s) => /^(RFCS|spec\/v1|schemas|COMPATIBILITY\.md)/.test(s.file));
+  const grounded = (e.sources ?? []).some((s) => /^(RFCS|spec\/v[12]\/|schemas|COMPATIBILITY\.md)/.test(s.file));
   if (!grounded) fail(`status: ${e.id} is "deprecated" but cites no RFC, spec doc, or schema source`);
 }
 
@@ -137,4 +153,4 @@ if (failures.length > 0) {
   for (const f of failures) console.error(`  ${f}`);
   process.exit(1);
 }
-console.log(`=== check-deprecations OK — ${entries.length} entries (${deprecated} deprecated, ${proposed} proposed), every source still carries its token; ${v2MinorRows} row(s) carry the RFC 0197 v2-minor trigger ===`);
+console.log(`=== check-deprecations OK — ${entries.length} entries, ${v2Entries.length} from spec/v2/deprecations.json (${deprecated} deprecated, ${proposed} proposed), every source still carries its token; ${v2MinorRows} row(s) carry the RFC 0197 v2-minor trigger ===`);

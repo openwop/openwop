@@ -1,0 +1,13 @@
+{
+  "$comment": "RFC 0266 §A — the v2 alias inventory, beside the frozen spec/v1/alias-detectors.json (RFC 0167 §E). Same shape and meaning: each detector names a literal token that, while present in the named file, proves an alias is still in the corpus, and the deprecation row (spec/v1/ or spec/v2/deprecations.json, merged by id) that must cover it. scripts/check-alias-coverage.mjs reads both files. A detector for a row born in v2 lives here, because the v1 file is not edited (RFC 0234 §A.3).",
+  "version": 1,
+  "updated": "2026-11-25",
+  "detectors": [
+    {
+      "alias": "registry discovery flat v1-era endpoints keys",
+      "file": "conformance/src/scenarios/registry-public.test.ts",
+      "token": "body.endpoints?.versionTarball",
+      "deprecation": "openwop.deprecation.registry-discovery-flat-endpoint-keys"
+    }
+  ]
+}

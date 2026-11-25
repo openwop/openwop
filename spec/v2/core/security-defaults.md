@@ -141,6 +141,6 @@ A threat model missing a sibling section fails the template gate.
 
 ## Migration
 
-Rows `C6.1`–`C6.9` are `spec/v1/migrations.json` entries.
+Rows `C6.1`–`C6.9` are `spec/v2/major-1-migrations.json` entries.
 
 *Sources: RFCs 0150, 0163, 0164, 0170, 0173, 0214, 0218, 0224, 0265.*

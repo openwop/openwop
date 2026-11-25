@@ -1,3 +1,8 @@
+## [2.49.10] — 2026-11-25 — A host that names no major is measured at major 2
+
+- **`--target-major` fallback.** When a host names no major (no reachable discovery, or neither `preferredVersion` nor `protocolVersions`), the suite now runs major 2 instead of 1. v1 ended on 2026-10-04 (RFC 0234); RFC 0168 §D removes the 1.x target at end of support. Hosts that advertise their versions are measured as before.
+- **Registers.** Corpus checks read the RFC 0266 §A v2 registers (`spec/v2/deprecations.json`, `spec/v2/major-1-migrations.json`); no scenario change.
+
 ## [2.49.9] — 2026-11-25 — Four legs catch the sabotage they missed
 
 - **`v2-run-list`.** `0182.run-list.filter-exact` creates a `conformance-failure` run after the `conformance-noop` one, so a host that ignores `workflowId` lists it. On a store holding only noop runs the leg could not fail.
