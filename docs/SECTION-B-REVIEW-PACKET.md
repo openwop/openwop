@@ -6,7 +6,7 @@
 
 RFC 0156 §B: RFCs affecting auth, identity, tenant isolation, secrets, packs, execution sandboxing, idempotency, replay, external effects, conformance/certification, or governance **MUST** receive a retrospective **cross-organization** review. Every RFC below was accepted with its public comment window shortened, either under the bootstrap waiver or by explicit steward override of RFC 0147 §A.6. Each such acceptance is **provisional** until a reviewer from an organization other than the steward's records an outcome.
 
-This packet is for that reviewer. **142 RFCs are listed; 142 have no discharging outcome.** The steward, the steward's sessions, and steward-affiliated hosts (MyndHyve is tier-2, not independent) cannot supply the review. Recording one of their reviews as `ratified` is the substitution §B's last clause forbids.
+This packet is for that reviewer. **143 RFCs are listed; 143 have no discharging outcome.** The steward, the steward's sessions, and steward-affiliated hosts (MyndHyve is tier-2, not independent) cannot supply the review. Recording one of their reviews as `ratified` is the substitution §B's last clause forbids.
 
 **Enforcement is deferred.** On 2026-10-17 the maintainer deferred §B by steward exemption (`GOVERNANCE.md` §"Sole-steward operation") while the protocol has no user outside the steward's organizations. No outcome was recorded on its account. The packet is kept current for the day the exemption ends.
 
@@ -89,7 +89,7 @@ Grouping below is a reading aid only: it assigns each RFC to the risk class its 
 | [0229](../RFCS/0229-production-safe-secrets-witness.md) | a production host can witness secret resolution without an oracle | `Accepted` | steward override of RFC 0147 §A.6 | tier-2 — MyndHyve's certified production cut on published suite 2 | `not-reviewed` |
 | [0262](../RFCS/0262-telemetry-family.md) | the telemetry family | `Accepted` | steward override of RFC 0147 §A.6 | tier-1 — the v2 reference host's certified 2 | `not-reviewed` |
 
-## Packs and registry (11)
+## Packs and registry (12)
 
 | RFC | Title | Status | Waiver | Evidence tier | Outcome |
 | --- | --- | --- | --- | --- | --- |
@@ -104,6 +104,7 @@ Grouping below is a reading aid only: it assigns each RFC to the risk class its 
 | [0220](../RFCS/0220-ext-families-graduate-on-evidence.md) | an extension family graduates on evidence a script can read | `Accepted` | steward override of RFC 0147 §A.6 | tier-2 — steward-affiliated sibling host | `not-reviewed` |
 | [0222](../RFCS/0222-v2-registry-operations.md) | v2 registry operations — lifecycle by publication, key rotation, and the checks a registry refuses on | `Accepted` | bootstrap waiver | tier-1 — the steward-operated reference registry `packs | `not-reviewed` |
 | [0227](../RFCS/0227-generated-registry-tables-outside-the-budget.md) | a generated restatement of a registry is not kernel prose | `Accepted` | bootstrap waiver | corpus gate — every requirement id in the falsifiability table carries a row in `evidence… | `not-reviewed` |
+| [0266](../RFCS/0266-v2-is-self-contained.md) | v2 is self-contained: v2 registers, prose homes, generators, package contents, registry discovery | `Active` | steward override of RFC 0147 §A.6 | not declared (predates RFC 0174 §B.1, or not yet Accepted) | `not-reviewed` |
 
 ## Idempotency (3)
 

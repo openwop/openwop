@@ -191,5 +191,6 @@ The exemption is a deferral, not a review. **Zero discharged is still the correc
 | 0263 | the sabotage ledger (conformance and certification; additive; STEWARD OVERRIDE of RFC 0147 §A.6) | in-scope-pending-assessment | — | — | `not-reviewed` |
 | 0264 | core-family adoption derived from bundles (certification; additive; STEWARD OVERRIDE of RFC 0147 §A.6) | in-scope-pending-assessment | — | — | `not-reviewed` |
 | 0265 | a v2 compensation-unwind witness (external effects, replay, conformance; additive; STEWARD OVERRIDE of RFC 0147 §A.6) | in-scope-pending-assessment | — | — | `not-reviewed` |
+| 0266 | v2 is self-contained: v2 registers, prose homes, generators, package contents, registry discovery (corpus; additive on the wire; STEWARD OVERRIDE of RFC 0147 §A.6) | in-scope-pending-assessment | — | — | `not-reviewed` |
 | 0236 | Host events — events without a run-log position (isolation; additive with a safety-fix clause; STEWARD OVERRIDE of RFC 0147 §A.6) | in-scope-pending-assessment | — | — | `not-reviewed` |
 | 0237 | Declared nondeterminism names its sources (certification; additive; STEWARD OVERRIDE of RFC 0147 §A.6) | in-scope-pending-assessment | — | — | `not-reviewed` |
