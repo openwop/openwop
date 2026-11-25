@@ -171,7 +171,7 @@
         },
         "diffable": {
           "type": "boolean",
-          "description": "True if the artifact's schema supports structural diffing (informs run-diff tooling per rest-endpoints.md \u00a7:diff). Non-normative."
+          "description": "True if the artifact's schema supports structural diffing (informs run-diff tooling, runs.md \u00a7Diff and ancestry). Non-normative."
         }
       },
       "patternProperties": {

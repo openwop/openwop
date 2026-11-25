@@ -2,7 +2,7 @@
   "$schema": "https://json-schema.org/draft/2020-12/schema",
   "$id": "https://openwop.dev/spec/v2/self-hosted-runner-registration.schema.json",
   "title": "SelfHostedRunnerRegistration",
-  "description": "RFC 0122 §Registration + channel. The per-subject runtime record the host keeps for a registered runner after it dials in and authenticates with a host-minted, subject-scoped runner bearer (NEVER a provider credential). This record is per-subject runtime state and MUST NOT appear on `/.well-known/openwop` (only the `selfHostedRunner` capability block does). Work is addressed by `runnerId` (direct) or by capability-match; a capability match MUST filter on `subject` FIRST, then capability, so a subject's step is never routed to another subject's runner (subject-first match, SR-1-adjacent — a normative MUST in `self-hosted-runner.md` §Behavior verified by the gated conformance scenario).",
+  "description": "RFC 0122 §Registration + channel. The per-subject runtime record the host keeps for a registered runner after it dials in and authenticates with a host-minted, subject-scoped runner bearer (NEVER a provider credential). This record is per-subject runtime state and MUST NOT appear on `/.well-known/openwop` (only the `selfHostedRunner` capability block does). Work is addressed by `runnerId` (direct) or by capability-match; a capability match MUST filter on `subject` FIRST, then capability, so a subject's step is never routed to another subject's runner (subject-first match, SR-1-adjacent — a normative MUST in execution.md §`selfHostedRunner` (Subject isolation), verified by the gated conformance scenario).",
   "type": "object",
   "additionalProperties": false,
   "required": [
@@ -69,6 +69,5 @@
         ]
       }
     }
-  ],
-  "x-openwop-seeded-from": "v1"
+  ]
 }

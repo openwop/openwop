@@ -181,7 +181,7 @@
     },
     "spans": {
       "type": "array",
-      "description": "OTel-format spans per spec/v1/observability.md. Empty array if host doesn't emit spans.",
+      "description": "OTel-format spans (telemetry.md §Export). Empty array if host doesn't emit spans.",
       "items": {
         "type": "object",
         "required": [

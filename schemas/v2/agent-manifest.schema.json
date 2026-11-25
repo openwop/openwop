@@ -62,7 +62,7 @@
         "type": "string",
         "minLength": 1
       },
-      "description": "RFC 0092. Host-capability keys this agent needs to run fully — the agent-layer analogue of a node-pack's `peerDependencies`. Dotted identifiers from the discovery vocabulary (`capabilities.md` / `host-capabilities.md`), e.g. `host.workspace`, `aiProviders.toolCalling`, `multiAgent.executionModel.verifier`. A host that does NOT advertise a listed key MUST surface this agent as degraded on `GET /agents` via the existing `degraded[]` inventory field (RFC 0072 §C); it MAY still dispatch at the RFC 0070 floor, but a silent satisfied-looking entry is non-conformant. Advisory about NEED only — never widens the agent's authority. Absent ⇒ no declared requirements."
+      "description": "RFC 0092. Host-capability keys this agent needs to run fully — the agent-layer analogue of a node-pack's `peerDependencies`. Dotted identifiers from the discovery vocabulary (capabilities.md), e.g. `host.workspace`, `aiProviders.toolCalling`, `multiAgent.executionModel.verifier`. A host that does NOT advertise a listed key MUST surface this agent as degraded on `GET /agents` via the existing `degraded[]` inventory field (RFC 0072 §C); it MAY still dispatch at the RFC 0070 floor, but a silent satisfied-looking entry is non-conformant. Advisory about NEED only — never widens the agent's authority. Absent ⇒ no declared requirements."
     },
     "role": {
       "type": "string",
@@ -70,7 +70,7 @@
         "skill",
         "assistant"
       ],
-      "description": "RFC 0131. The manifest's kind — EXPLICIT, never inferred from other fields (`handoff` presence does NOT imply `skill`; an assistant may carry a typed entry contract for cross-host interop). `skill`: a composable, task-scoped capability invoked via `handoff` (task→return) and composed by an assistant/roster agent — stateless and replay-clean; declaring this value OPTS IN to the Skill profile (the `allOf` conditional below: MUST declare `handoff`, MUST constrain `memoryShape` to scratchpad-only). `assistant`: a top-level conversational agent a client talks to and that composes skills — no profile binds it. OPTIONAL; when ABSENT the manifest is UNCONSTRAINED — no profile binds it and its meaning is exactly today's (byte- and behavior-identical). Advisory about kind only — never widens `toolAllowlist`, `requiresCapabilities`, or any scope. A `skill` manifest that violates the profile fails schema validation at publish or install (`pack_validation_failed`) — an author error, NOT an RFC 0072 `degraded[]` runtime tier; invariant `agent-skill-profile-stateless` (re-homed from v1 `node-packs.md` §\"Dependency resolution + lockfile\" by RFC 0266). See `node-pack-manifest.schema.json` `agents` (the field) and `agent-memory.md` §B (the memoryShape constraint + the §C-vs-§B reject/degrade contrast)."
+      "description": "RFC 0131. The manifest's kind — EXPLICIT, never inferred from other fields (`handoff` presence does NOT imply `skill`; an assistant may carry a typed entry contract for cross-host interop). `skill`: a composable, task-scoped capability invoked via `handoff` (task→return) and composed by an assistant/roster agent — stateless and replay-clean; declaring this value OPTS IN to the Skill profile (the `allOf` conditional below: MUST declare `handoff`, MUST constrain `memoryShape` to scratchpad-only). `assistant`: a top-level conversational agent a client talks to and that composes skills — no profile binds it. OPTIONAL; when ABSENT the manifest is UNCONSTRAINED — no profile binds it and its meaning is exactly today's (byte- and behavior-identical). Advisory about kind only — never widens `toolAllowlist`, `requiresCapabilities`, or any scope. A `skill` manifest that violates the profile fails schema validation at publish or install (`pack_validation_failed`) — an author error, NOT an RFC 0072 `degraded[]` runtime tier; invariant `agent-skill-profile-stateless` (re-homed from v1 `node-packs.md` §\"Dependency resolution + lockfile\" by RFC 0266). See `node-pack-manifest.schema.json` `agents` (the field) and host-services.md §`memory`, Degraded agents (the memoryShape constraint, and why a skill manifest is rejected where a host lacking a dimension only degrades the agent)."
     },
     "memoryShape": {
       "type": "object",
@@ -133,12 +133,12 @@
     "promptLibraryRef": {
       "type": "string",
       "pattern": "^[a-z0-9][a-z0-9._-]{0,127}$",
-      "description": "RFC 0029 §B. Optional library identifier (per RFC 0028 §C) the agent draws fallback prompts from. When set AND `promptOverrides[kind]` is unset for a given kind, the host MAY look up a same-kind default template from this library at resolution time (layer-2 `agent-library-default` per the resolution chain in `spec/v1/prompts.md` §\"Resolution chain (normative)\"). NOT a replacement for `systemPrompt | systemPromptRef` — those remain the agent's intrinsic system-prompt declaration."
+      "description": "RFC 0029 §B. Optional library identifier (per RFC 0028 §C) the agent draws fallback prompts from. When set AND `promptOverrides[kind]` is unset for a given kind, the host MAY look up a same-kind default template from this library at resolution time (layer-2 `agent-library-default` of the resolution chain, host-services.md §`prompts`, Resolution). NOT a replacement for `systemPrompt | systemPromptRef` — those remain the agent's intrinsic system-prompt declaration."
     },
     "promptOverrides": {
       "type": "object",
       "additionalProperties": false,
-      "description": "RFC 0029 §B. Per-kind preferred PromptRefs that apply at resolution chain layer 2 (`agent-overrides`) per `spec/v1/prompts.md` §\"Resolution chain (normative)\". For `system` kind, applies ONLY when the manifest has no intrinsic `systemPrompt | systemPromptRef` (the intrinsic surface wins). For other kinds, applies whenever the node doesn't carry a layer-1 explicit override.",
+      "description": "RFC 0029 §B. Per-kind preferred PromptRefs that apply at resolution chain layer 2 (`agent-overrides`) per host-services.md §`prompts`, Resolution. For `system` kind, applies ONLY when the manifest has no intrinsic `systemPrompt | systemPromptRef` (the intrinsic surface wins). For other kinds, applies whenever the node doesn't carry a layer-1 explicit override.",
       "properties": {
         "system": {
           "$ref": "./prompt-ref.schema.json"

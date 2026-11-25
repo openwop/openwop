@@ -1000,7 +1000,7 @@ def v2_asyncapi():
             'subscribeRunEvents': {'action': 'receive', 'channel': {'$ref': '#/channels/runEvents'}, 'title': 'Subscribe to a run\'s events',
                                    'description': ('A long-lived SSE subscription that closes after a terminal run event. `Last-Event-ID` resumes from the '
                                                    'sequence after the supplied one. A mixed mode is the union of its filters, and each event carries its own '
-                                                   '`event:` label (`stream-modes.md`).'),
+                                                   '`event:` label (events.md §Stream modes).'),
                                    'bindings': {'http': {'method': 'GET', 'query': {'type': 'object', 'additionalProperties': False, 'properties': {'streamMode': {'type': 'string', 'pattern': '^(values|(updates|messages|debug)(,(updates|messages|debug))*)$', 'default': 'updates'}, 'resumable': {'type': 'boolean', 'default': False, 'description': 'RFC 0247 opt-in to a bounded close (events.md §Bounded close).'}}}}}},
             'subscribeHostEvents': {'action': 'receive', 'channel': {'$ref': '#/channels/hostEvents'}, 'title': 'Subscribe to host events', 'bindings': {'http': {'method': 'GET', 'query': {'type': 'object', 'additionalProperties': False, 'properties': {'resumable': {'type': 'boolean', 'default': False, 'description': 'RFC 0247 opt-in to a bounded close (events.md §Bounded close).'}}}}}},
         },

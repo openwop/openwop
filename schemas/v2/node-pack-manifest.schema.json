@@ -233,7 +233,7 @@
               "sensitive": {
                 "type": "boolean",
                 "default": false,
-                "description": "When true, the engine masks this output port's value in `node.completed` event payloads. Use when a NodeModule ALWAYS handles sensitive data (e.g., a Salesforce upsert always touches PII). Workflows MAY override per-instance via `WorkflowNode.outputSensitivity`. See observability.md \u00a7Privacy classification (closes O5)."
+                "description": "When true, the engine masks this output port's value in `node.completed` event payloads. Use when a NodeModule ALWAYS handles sensitive data (e.g., a Salesforce upsert always touches PII). Workflows MAY override per-instance via `WorkflowNode.outputSensitivity`. The masking mode and rules are `capabilities.compliance.defaultMode`'s (closes O5)."
               }
             },
             "additionalProperties": false

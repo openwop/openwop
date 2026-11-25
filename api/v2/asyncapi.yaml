@@ -44,7 +44,8 @@ operations:
       $ref: '#/channels/runEvents'
     title: Subscribe to a run's events
     description: A long-lived SSE subscription that closes after a terminal run event. `Last-Event-ID` resumes from the sequence
-      after the supplied one. A mixed mode is the union of its filters, and each event carries its own `event:` label (`stream-modes.md`).
+      after the supplied one. A mixed mode is the union of its filters, and each event carries its own `event:` label (events.md
+      §Stream modes).
     bindings:
       http:
         method: GET

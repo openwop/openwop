@@ -2,7 +2,7 @@
   "$schema": "https://json-schema.org/draft/2020-12/schema",
   "$id": "https://openwop.dev/spec/v2/artifact.schema.json",
   "title": "Artifact",
-  "description": "RFC 0205 §A/§D. An A2A v1.0.1 `Artifact`, transcribed from `specification/a2a.proto` `message Artifact` at tag v1.0.1 (camelCase per A2A spec §5.5). The body of `getArtifact` when it is served as `application/a2a+json` (spec/v2/core/runs.md); `artifactId` equals the path segment. The same shape a2a-integration.md D.3 projects over A2A, so one decoder reads both.",
+  "description": "RFC 0205 §A/§D. An A2A v1.0.1 `Artifact`, transcribed from `specification/a2a.proto` `message Artifact` at tag v1.0.1 (camelCase per A2A spec §5.5). The body of `getArtifact` when it is served as `application/a2a+json` (spec/v2/core/runs.md); `artifactId` equals the path segment. The same shape the A2A interface projects (`interop-map.json` `a2a.fields` `Artifact.artifactId`), so one decoder reads both.",
   "type": "object",
   "additionalProperties": false,
   "required": [

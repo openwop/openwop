@@ -1289,7 +1289,7 @@
       "code": "service_unavailable",
       "meaning": "The host is at capacity. Retry after the `Retry-After` header when present.",
       "httpStatus": 503,
-      "statusSource": "v1 prose (production-profile.md §Backpressure)",
+      "statusSource": "v1 prose (spec/v2/core/conformance.md §Production profile, re-homed by RFC 0266)",
       "retriable": true,
       "details": null,
       "since": "2.45",

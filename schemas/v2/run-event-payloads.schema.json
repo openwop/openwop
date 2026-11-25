@@ -831,7 +831,7 @@
             "child.cancelled",
             "output.harvested"
           ],
-          "description": "Which handoff-state-machine transition this event records. See spec/v1/multi-agent-execution.md \u00a7'Handoff state machine'."
+          "description": "Which handoff-state-machine transition this event records (execution.md \u00a7`multiAgent`). Only a transition the host's dispatch actually produces is emitted; a host MUST NOT synthesize the event for a phase its dispatch never surfaces (re-homed from v1 `multi-agent-execution.md` \u00a7\"Handoff state machine\" by RFC 0266)."
         },
         "workerId": {
           "type": "string",
@@ -1101,7 +1101,7 @@
         },
         "parentRunId": {
           "$ref": "ids.schema.json#/$defs/runId",
-          "description": "When this cancellation was triggered by a parent-cancel cascade (`interrupt-profiles.md \u00a7openwop-interrupt-cascade-cancel`), the parent runId that initiated it. Pairs with `reason: 'parent-cancelled'`. Absent for direct cancellations."
+          "description": "When this cancellation was triggered by a parent-cancel cascade, the parent runId that initiated it. Pairs with `reason: 'parent-cancelled'`. A cascaded-cancel `run.cancelled` MUST carry `reason: 'parent-cancelled'` and this field; a direct cancellation MUST NOT set it. Cancelling a parent either cancels its active child runs or follows a documented detach policy, and the child's open interrupts are invalidated (re-homed from v1 `interrupt-profiles.md` \u00a7`openwop-interrupt-cascade-cancel` by RFC 0266; runs.md \u00a7Cancel)."
         }
       },
       "patternProperties": { "^(openwop-|x-|vendor\\.)": { "description": "Vendor / host extension escape hatch (RFC 0185 \u00a7B). This def was `additionalProperties: true` in v1 and closed in v2 with no hatch and no migration row, so every extra key a host LEGITIMATELY recorded under v1 became invalid at the cut with nowhere to put it. Two production hosts independently lost data to that: one drops 32 distinct keys at the major-2 read (the conversation content among them), the other projects era-3 rows ON WRITE and lost a variable's value AT REST. A property matching this pattern is carried opaquely \u2014 a host MUST NOT interpret it, and MUST NOT silently drop it (RFC 0185 \u00a7C)." } },
@@ -1648,7 +1648,7 @@
     },
     "outputChunk": {
       "type": "object",
-      "description": "Emitted for streaming output (e.g., LLM token chunks). Stream-mode `messages` consumers see these. RFC 0094 \u00a7D single-sources the `ai.message.chunk` payload here: bare {nodeId, runId, chunk, isLast} is the minimum compliant payload per stream-modes.md \u00a7messages (the prior {nodeId, chunk}-only required set was the defective restatement). Tiered metadata per stream-modes.md \u00a7messages (S2 closure): `meta` adds Tier 1 typed slots and a Tier 2 provider-pass-through escape hatch.",
+      "description": "Emitted for streaming output (e.g., LLM token chunks). Stream-mode `messages` consumers see these. RFC 0094 \u00a7D single-sources the `ai.message.chunk` payload here: bare {nodeId, runId, chunk, isLast} is the minimum compliant payload, and a UI rendering streamed text MAY ignore `meta` (the prior {nodeId, chunk}-only required set was the defective restatement). Tiered metadata (`_chunkMeta`, which states the tier rules): `meta` adds Tier 1 typed slots and a Tier 2 provider-pass-through escape hatch. The `messages` stream mode is events.md \u00a7Stream modes.",
       "required": [
         "nodeId",
         "runId",
@@ -1683,7 +1683,7 @@
     },
     "_chunkMeta": {
       "type": "object",
-      "description": "Tiered metadata for ai.message.chunk / outputChunk payloads. See stream-modes.md \u00a7messages.",
+      "description": "Tiered metadata for ai.message.chunk / outputChunk payloads (the `messages` stream mode, events.md \u00a7Stream modes). `meta` is optional. Tier rules (re-homed from v1 `stream-modes.md` \u00a7messages by RFC 0266): when the server has data and a Tier 1 slot exists, it MUST populate the Tier 1 slot; it MAY also populate `providerExtensions` with the raw chunk for fidelity; a provider-specific field with no Tier 1 slot SHOULD live in `providerExtensions`, not at the top level. As Tier 1 slots are added, fields migrate from `providerExtensions` into typed slots, and the typed slot wins.",
       "properties": {
         "finishReason": {
           "type": "string",
@@ -1791,7 +1791,7 @@
     },
     "versionPinned": {
       "type": "object",
-      "description": "Emitted via `ctx.getVersion(changeId)` per Temporal-style versioning. See version-negotiation.md.",
+      "description": "Emitted via `ctx.getVersion(changeId)` per Temporal-style versioning. An engine MUST expose `ctx.getVersion(changeId, min, max)` on the node context: the first call for `(runId, changeId)` returns `max` and persists this event with `{ changeId, version: max }`; every later call in the same run, including after replay or recovery, returns the pinned value. `min` and `max` MUST be integers with `max >= min`, else the call throws a validation error. (Re-homed from v1 `version-negotiation.md` §\"Pinned change versions\" by RFC 0266; persistence.md §\"Runs pinned to v1\" and replay.md govern recorded pins.)",
       "required": [
         "changeId",
         "version"
@@ -1985,7 +1985,7 @@
     },
     "replayDivergedAtRefusal": {
       "type": "object",
-      "description": "RFC 0041 \u00a7B \u2014 emitted by `:fork` mode `replay` when the replay's LLM call returns a refusal but the original run got a valid envelope (or vice-versa: the original refused, the replay succeeded). Distinct from the generic `replay.diverged` event (which covers structural output/missing/extra/type-mismatch divergence) to let operators audit safety-policy shifts without filtering through the generic divergence stream. When this event fires, the host MUST also fail the replay with `error.code: \"replay_diverged_at_refusal\"` per `spec/v1/rest-endpoints.md` \u00a7\"Common error codes\". Capability-gated on `capabilities.multiAgent.executionModel.replayDeterminism.refusalDivergenceEmission: true`; non-Phase-4 hosts MUST NOT emit this event.",
+      "description": "RFC 0041 \u00a7B \u2014 emitted by `:fork` mode `replay` when the replay's LLM call returns a refusal but the original run got a valid envelope (or vice-versa: the original refused, the replay succeeded). Distinct from the generic `replay.diverged` event (which covers structural output/missing/extra/type-mismatch divergence) to let operators audit safety-policy shifts without filtering through the generic divergence stream. When this event fires, the host MUST also fail the replay with `error.code: \"replay_diverged_at_refusal\"` (`spec/v2/errors.json`). Capability-gated on `capabilities.multiAgent.executionModel.replayDeterminism.refusalDivergenceEmission: true`; non-Phase-4 hosts MUST NOT emit this event.",
       "required": [
         "sourceRunId",
         "atSequence",
@@ -2139,7 +2139,7 @@
     },
     "providerUsage": {
       "type": "object",
-      "description": "RFC 0026. Per-call usage record emitted after every LLM provider invocation. Durably persisted in the run event log; consumed by replay, webhook subscribers, billing reconciliation. The OTel `openwop.cost.*` attribute group (per `observability.md \u00a7\"Cost attribution attributes\"`) is the observability sibling \u2014 this event type is the durable record. Replay determinism: `inputTokens` + `outputTokens` MUST replay identically; `costEstimateUsd` MAY be omitted on replay, and so MAY the RFC 0116 cost-only `cacheReadTokens`/`cacheWriteTokens` (they are NOT replay-asserted \u2014 a prompt-prefix cache hit vs miss MUST NOT change `inputTokens`/`outputTokens` or the recorded envelope). The payload MUST NOT carry credentialRefs, hashed credential identifiers, or prompt/response substrings per `SECURITY/threat-model-secret-leakage.md \u00a7SR-1` (enforced by SECURITY invariant `provider-usage-no-credential-leak`).",
+      "description": "RFC 0026. Per-call usage record emitted after every LLM provider invocation. Durably persisted in the run event log; consumed by replay, webhook subscribers, billing reconciliation. The OTel `openwop.cost.*` attribute group (the allowlist `RunSnapshot.metrics.openwopCost` states) is the observability sibling \u2014 this event type is the durable record. Replay determinism: `inputTokens` + `outputTokens` MUST replay identically; `costEstimateUsd` MAY be omitted on replay, and so MAY the RFC 0116 cost-only `cacheReadTokens`/`cacheWriteTokens` (they are NOT replay-asserted \u2014 a prompt-prefix cache hit vs miss MUST NOT change `inputTokens`/`outputTokens` or the recorded envelope). The payload MUST NOT carry credentialRefs, hashed credential identifiers, or prompt/response substrings per `SECURITY/threat-model-secret-leakage.md \u00a7SR-1` (enforced by SECURITY invariant `provider-usage-no-credential-leak`).",
       "required": [
         "provider",
         "model",
@@ -2209,7 +2209,7 @@
     },
     "promptComposed": {
       "type": "object",
-      "description": "RFC 0027. Emitted once per (nodeId, kind) composition when a host resolves a PromptRef on a node and assembles its body for an LLM call. Gated on the host advertising `prompts` AND `capabilities.prompts.observability !== 'off'`. Body fields (`systemPrompt`, `userPrompt`, `variableBindings`) are populated only under `observability: 'full'`; under `hashed` the event carries only `hash` + `variableHashes`. Replay-deterministic over `(refs, variableHashes, contentTrust)` per `spec/v1/prompts.md \u00a7\"Replay determinism\"`. Secret-source variable values MUST be replaced with `[REDACTED:<secretId>]` markers per SECURITY invariant `prompt-composed-secret-redaction`; untrusted-input segments MUST be wrapped with `<UNTRUSTED>...</UNTRUSTED>` markers per SECURITY invariant `prompt-composed-trust-marker`.",
+      "description": "RFC 0027. Emitted once per (nodeId, kind) composition when a host resolves a PromptRef on a node and assembles its body for an LLM call. Gated on the host advertising `prompts` AND `capabilities.prompts.observability !== 'off'`. Body fields (`systemPrompt`, `userPrompt`, `variableBindings`) are populated only under `observability: 'full'`; under `hashed` the event carries only `hash` + `variableHashes`. Replay-deterministic over `(refs, variableHashes, contentTrust)` per host-services.md \u00a7`prompts`, Composition. Secret-source variable values MUST be replaced with `[REDACTED:<secretId>]` markers per SECURITY invariant `prompt-composed-secret-redaction`; untrusted-input segments MUST be wrapped with `<UNTRUSTED>...</UNTRUSTED>` markers per SECURITY invariant `prompt-composed-trust-marker`.",
       "required": [
         "nodeId",
         "refs",
@@ -2287,7 +2287,7 @@
     },
     "agentPromptResolved": {
       "type": "object",
-      "description": "RFC 0029 \u00a7B. Emitted once per (nodeId, kind) pair BEFORE the corresponding `prompt.composed` event (when emitted). Surfaces the four-layer resolution chain per `spec/v1/prompts.md` \u00a7\"Resolution chain (normative)\" so cross-host debuggers and multi-agent visualizers can render which PromptRef applied at this node and why. Gated on the host advertising `prompts`; payload is durable in the event log and participates in replay. Carries refs (not bodies), so emission is safe regardless of `capabilities.prompts.observability` \u2014 the secret-redaction + trust-marker invariants on `prompt.composed` (RFC 0027 \u00a7G) don't apply here.",
+      "description": "RFC 0029 \u00a7B. Emitted once per (nodeId, kind) pair BEFORE the corresponding `prompt.composed` event (when emitted). Surfaces the four-layer resolution chain (host-services.md \u00a7`prompts`, Resolution) so cross-host debuggers and multi-agent visualizers can render which PromptRef applied at this node and why. Gated on the host advertising `prompts`; payload is durable in the event log and participates in replay. Carries refs (not bodies), so emission is safe regardless of `capabilities.prompts.observability` \u2014 the secret-redaction + trust-marker invariants on `prompt.composed` (RFC 0027 \u00a7G) don't apply here.",
       "required": [
         "nodeId",
         "kind",
@@ -3972,7 +3972,7 @@
     },
     "deploymentPromoted": {
       "type": "object",
-      "description": "RFC 0082 \u00a7D. Emitted on the deployment-management run when a version is promoted into a new lifecycle state (the \u00a7E contract: authorized via RFC 0049 `deploy:*`, gated via RFC 0051 `approvalGate`, eval-verified via RFC 0081 when `requiredEval` is configured). Content-free: ids / state / scalars / content-free references only \u2014 NEVER a manifest body, prompt, or credential (SECURITY invariant `deployment-event-no-content-leak`; `additionalProperties:false` enforces it). A recorded-fact event per `replay.md` \u00a7\"Recorded-fact events\". Audit-logged with the acting principal (`auth.md`).",
+      "description": "RFC 0082 \u00a7D. Emitted on the deployment-management run when a version is promoted into a new lifecycle state (the \u00a7E contract: authorized via RFC 0049 `deploy:*`, gated via RFC 0051 `approvalGate`, eval-verified via RFC 0081 when `requiredEval` is configured). Content-free: ids / state / scalars / content-free references only \u2014 NEVER a manifest body, prompt, or credential (SECURITY invariant `deployment-event-no-content-leak`; `additionalProperties:false` enforces it). A recorded-fact event per `replay.md` \u00a7\"Recorded-fact events\". Audit-logged with the acting principal.",
       "additionalProperties": false,
       "required": [
         "agentId",

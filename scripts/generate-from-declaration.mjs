@@ -220,11 +220,49 @@ const EXECUTION_MODEL_REWRITES = [
 const RFC_0255_REWRITES = [
   [' Decoupled from `schemaVersions`, which is a version DECLARATION only.', ''],
 ];
+// RFC 0266 §B.2 — seeded descriptions that cited a v1 document as the home of a rule:
+// re-pointed to the v2 home, or the rule restated here (provenance note in the text).
+// Applied to every description (rewriteDeletedNames); an unused row fails the generator.
+const RFC_0266_REWRITES = [
+  ["Optional v1 hints about emitted spans/metrics/logs. See observability.md.",
+   "Optional v1 hints about emitted spans/metrics/logs. The span contract is telemetry.md."],
+  ["Workflow authors MAY override per-workflow via `metadata.complianceConfig.maskingMode`. See observability.md §Privacy classification.",
+   "Workflow authors MAY override per-workflow via `metadata.complianceConfig.maskingMode`. PRIVACY CLASSIFICATION (re-homed from v1 `observability.md` §\"Privacy classification\" by RFC 0266): a field is marked sensitive by `WorkflowVariable.sensitive`, `WorkflowNode.outputSensitivity`, a pack's `nodes[].outputs[<port>].sensitive` or `ChannelDeclaration.sensitive`, and `WorkflowMetadata.complianceClass` sets the run's tier. A server SHOULD default to `mask` for any field marked sensitive, SHOULD apply masking before the event reaches the durable event log, and SHOULD apply one mode consistently within a run so replays produce identical event logs. The spec does not detect PII: authors and pack maintainers MUST annotate fields."],
+  ["Discovery advertisement (capabilities-change-detection.md).",
+   "Discovery advertisement (capabilities.md §1; the scoped-view rules are `authScoped`'s)."],
+  ["Auth-scoped discovery advertisement (capabilities-change-detection.md §\"Scoped capability views\"). Hosts that return a different payload when called with Authorization than when called anonymously declare it here. The authenticated view MUST still satisfy the base capabilities.schema.json shape per the spec annex.",
+   "Auth-scoped discovery advertisement. Hosts that return a different payload when called with Authorization than when called anonymously declare it here. The public payload MUST NOT reveal private tenant features, secret names, provider keys, or premium-only capabilities that would disclose customer configuration. The authenticated view MUST still satisfy the base capabilities.schema.json shape; it MAY omit capabilities the caller cannot use and MAY include optional fields hidden from the public payload. Scoped discovery MUST NOT become an authorization oracle: a caller learns only about capabilities it is allowed to use. (Re-homed from v1 `capabilities-change-detection.md` §\"Scoped capability views\" by RFC 0266.)"],
+  ["at resolution chain layer 4 (`host-defaults`) per `spec/v1/prompts.md` §\"Resolution chain (normative)\".",
+   "at resolution chain layer 4 (`host-defaults`) per host-services.md §`prompts`, Resolution."],
+  ["at resolution chain layer 2 (`agent-overrides` / `agent-library-default`) per `spec/v1/prompts.md` §\"Resolution chain (normative)\".",
+   "at resolution chain layer 2 (`agent-overrides` / `agent-library-default`) per host-services.md §`prompts`, Resolution."],
+  ["(`multi-agent-execution.md` §\"Per-iteration state inputs\" input 3 — the same transcript `transcriptWindow` bounds)",
+   "(the log tail execution.md §`multiAgent` names as a turn input — the same transcript `transcriptWindow` bounds)"],
+  ["whose `summaryRef` artifact replay reuses (never re-summarizes) per `multi-agent-execution.md` §\"Context economy (RFC 0111)\".",
+   "whose `summaryRef` artifact replay reuses (never re-summarizes; execution.md §`multiAgent`)."],
+  ["TTL expiry (`agent-memory.md §TTL`)",
+   "TTL expiry (host-services.md §`memory`, Size and expiry)"],
+  ["(`trigger-bridge.md` §C)",
+   "(webhooks.md §Inbound triggers)"],
+  ["Backpressure envelope advertisement (production-profile.md §Backpressure).",
+   "Backpressure envelope advertisement (conformance.md §Production profile)."],
+  ["Event-retention advertisement (production-profile.md §\"Event retention\").",
+   "Event-retention advertisement (conformance.md §Production profile)."],
+  ["Per production-profile.md §\"Event retention\", MUST be ≥ 604800",
+   "Per conformance.md §Production profile, MUST be ≥ 604800"],
+  ["Debug-bundle truncation advertisement (production-profile.md §\"Debug bundle behavior\"). Stricter than the existing `capabilities.debugBundle` advertised per debug-bundle.md — this block adds the production-profile MUSTs (truncation metadata, redaction).",
+   "Debug-bundle truncation advertisement (conformance.md §Production profile): the production-profile MUSTs for a debug bundle (`debug-bundle.schema.json`) — truncation metadata, redaction. v2 defines no debug-bundle operation; how a host serves a bundle is host-defined."],
+  ["per debug-bundle.md §\"Bundle size limits\" when caps are reached.",
+   "(`debug-bundle.schema.json`) when caps are reached."],
+  ["Host exposes `POST /v1/host/sample/test/debug-bundle/export` returning the same payload shape as `GET /v1/runs/{runId}/debug-bundle` per `spec/v1/debug-bundle.md`.",
+   "Host exposes a test-seam export returning a debug bundle (`debug-bundle.schema.json`); v2 defines no seam or operation path for it."],
+];
 function rewriteDeletedNames(node) {
   if (Array.isArray(node)) return node.map(rewriteDeletedNames);
   if (!node || typeof node !== 'object') return node;
   const out = Object.fromEntries(Object.entries(node).map(([k, v]) => [k, rewriteDeletedNames(v)]));
   if (typeof out.description === 'string') for (const [from, to] of RFC_0255_REWRITES) if (out.description.includes(from)) { out.description = out.description.split(from).join(to); RFC_0228_USED.add(from); }
+  if (typeof out.description === 'string') for (const [from, to] of RFC_0266_REWRITES) if (out.description.includes(from)) { out.description = out.description.split(from).join(to); RFC_0228_USED.add(from); }
   return out;
 }
 const RFC_0228_USED = new Set();
@@ -426,7 +464,7 @@ function buildAliases() {
 
 const outputs = [[OUT_SCHEMA, rewriteDeletedNames(buildSchema())], [OUT_PROFILES, buildProfiles()], [OUT_ALIASES, buildAliases()]];
 {
-  const unused = [...RFC_0228_REWRITES, ...EXECUTION_MODEL_REWRITES, ...RFC_0255_REWRITES].filter(([from]) => !RFC_0228_USED.has(from));
+  const unused = [...RFC_0228_REWRITES, ...EXECUTION_MODEL_REWRITES, ...RFC_0255_REWRITES, ...RFC_0266_REWRITES].filter(([from]) => !RFC_0228_USED.has(from));
   if (unused.length) { console.error(`generate-from-declaration FAILED — ${unused.length} RFC 0228 or executionModel rewrite(s) matched no seeded description:\n  ${unused.map(([f]) => f.slice(0, 100)).join('\n  ')}`); process.exit(1); }
 }
 const render = (o) => JSON.stringify(o, null, 2) + '\n';

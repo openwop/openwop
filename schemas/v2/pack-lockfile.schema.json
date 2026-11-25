@@ -129,7 +129,7 @@
             "minLength": 1,
             "maxLength": 64
           },
-          "description": "Echo of this pack's manifest `peerDependencies` for audit. Resolvers MUST verify that the host's `/.well-known/openwop` advertises every key listed here (per host-capabilities.md §\"Capability negotiation\"). Lockfile records the host-capability values the workspace committed to at lockfile-write time; mismatches at install time MAY warn (host advertises richer set) but MUST fail if a peer-dep is missing."
+          "description": "Echo of this pack's manifest `peerDependencies` for audit. Resolvers MUST verify that the host's `/.well-known/openwop` advertises every key listed here. Lockfile records the host-capability values the workspace committed to at lockfile-write time; mismatches at install time MAY warn (host advertises richer set) but MUST fail if a peer-dep is missing."
         }
       },
       "additionalProperties": false
