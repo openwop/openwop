@@ -21,7 +21,7 @@ A host MUST emit a standard `ETag` on the discovery document and MUST honor `If-
 
 ### 1.2 Removal triggers
 
-Each `deprecations.json` row carries a `removalTrigger` (`v2.0-cut | v1-end-of-support`). The following MUST be absent from the v2 representation and MUST be removed from the v1 representation at v1 end-of-support ([`overview.md`](overview.md)):
+Each deprecation row carries a `removalTrigger`. `spec/v2/deprecations.json` holds every row a v2 event removes; the rows below are v1 history in `spec/v1/deprecations.json`. The following MUST be absent from the v2 representation and MUST be removed from the v1 representation at v1 end-of-support ([`overview.md`](overview.md)):
 
 - the wrapper (`capabilities-wrapper`);
 - the dotted mirror (`host-dotted-mirror`);
@@ -93,7 +93,7 @@ These keys are not part of the v2 root:
 | `contractProvenance` | An advisory self-declaration the wire cannot falsify |
 | `supportedTransports` | REST is the wire ([`interop.md`](interop.md)) |
 | `grpc` | Unwitnessable, so not advertisable ([`interop.md`](interop.md) §gRPC) |
-| `Capabilities-Etag`, `auth.subjectLinking`, `replay.fork`, bare `a2a.supported` / `mcp.supported`, the `openwop-core` alias | Rows `C2.1`–`C2.10` in `spec/v1/migrations.json` give each its codemod |
+| `Capabilities-Etag`, `auth.subjectLinking`, `replay.fork`, bare `a2a.supported` / `mcp.supported`, the `openwop-core` alias | Rows `C2.1`–`C2.10` in `spec/v2/major-1-migrations.json` give each its codemod |
 | `host.media`, `host.collaboration` | A closed root cannot represent reserved slots |
 | `aiEnvelope`, `supportedEnvelopes`, `schemaVersions`, `envelopeStrictness`, `envelopeContracts`, `envelopes` | The AI Envelope was deleted (correction `openwop.correction.v2.5`) |
 
@@ -452,6 +452,6 @@ A profile is a predicate over the declaration, published in `spec/v2/profiles.js
 
 ## 10. Migration rows
 
-Rows `C2.1`–`C2.10` are `spec/v1/migrations.json` entries. `openwop.codemod.discovery-document-v2` transforms `C2.2`–`C2.8`: it drops a family with `supported: false` and promotes a dotted-only declared family to its plain key.
+Rows `C2.1`–`C2.10` are `spec/v2/major-1-migrations.json` entries. `openwop.codemod.discovery-document-v2` transforms `C2.2`–`C2.8`: it drops a family with `supported: false` and promotes a dotted-only declared family to its plain key.
 
 *Sources: RFCs 0144, 0169, 0175, 0176, 0179, 0197. Each family's owning RFC is its `owningRfc` in [`declaration.json`](../declaration.json).*

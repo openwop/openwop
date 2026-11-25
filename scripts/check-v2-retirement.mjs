@@ -54,7 +54,8 @@
  * with OPENWOP_EOS_CLOCK_FILE, so `conformance/src/coherence/v2-retirement-gate`
  * can drive ONE predicate red at a time against a fixture: a row that fails for
  * the wrong predicate is a defect in the fixture, not a pass.
- *   OPENWOP_DEPRECATIONS_FILE  OPENWOP_V2_MIGRATIONS_FILE  OPENWOP_V2_BUNDLES_DIR
+ *   OPENWOP_DEPRECATIONS_FILE  OPENWOP_V2_DEPRECATIONS_FILE (RFC 0266 §A.1; merged, v2 wins)
+ *   OPENWOP_V2_MIGRATIONS_FILE  OPENWOP_V2_BUNDLES_DIR
  *   OPENWOP_CROSS_REPO_FILE    OPENWOP_V2_DECLARATION_FILE OPENWOP_V2_RELEASE_FILE
  *   OPENWOP_V2_CORRECTIONS_FILE OPENWOP_EOS_CLOCK_FILE     OPENWOP_INTEROP_MATRIX_FILE
  *   OPENWOP_V2_PROFILES_FILE   OPENWOP_V2_BASELINE_FILE    OPENWOP_TODAY
@@ -75,11 +76,13 @@ import { execFileSync } from 'node:child_process';
 import { dirname, join, resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { fileAtLastTag } from './lib/published-tree.mjs';
+import { V1_DEPRECATIONS, V2_DEPRECATIONS, deprecationPaths, loadDeprecations } from './lib/registers.mjs';
 
 const ROOT = resolve(dirname(fileURLToPath(import.meta.url)), '..');
 const env = (k, ...fallback) => process.env[k] ?? join(ROOT, ...fallback);
 const P = {
-  deprecations: env('OPENWOP_DEPRECATIONS_FILE', 'spec', 'v1', 'deprecations.json'),
+  // RFC 0266 §A.1: the frozen v1 register and the v2 one, merged by id (v2 wins).
+  deprecations: deprecationPaths(ROOT),
   migrations: env('OPENWOP_V2_MIGRATIONS_FILE', 'spec', 'v2', 'migrations.json'),
   corrections: env('OPENWOP_V2_CORRECTIONS_FILE', 'spec', 'v2', 'corrections.json'),
   declaration: env('OPENWOP_V2_DECLARATION_FILE', 'spec', 'v2', 'declaration.json'),
@@ -158,7 +161,7 @@ function rowHistory(rowId) {
   }
   let dates = [];
   try {
-    const out = execFileSync('git', ['-C', ROOT, 'log', '-S', JSON.stringify(rowId), '--format=%cI', '--', 'spec/v1/deprecations.json'], { encoding: 'utf8', maxBuffer: 16 * 1024 * 1024 });
+    const out = execFileSync('git', ['-C', ROOT, 'log', '-S', JSON.stringify(rowId), '--format=%cI', '--', V1_DEPRECATIONS, V2_DEPRECATIONS], { encoding: 'utf8', maxBuffer: 16 * 1024 * 1024 });
     dates = out.split('\n').map((s) => s.trim()).filter(Boolean);
   } catch { return { firstCommit: null, minorAtCommit: null, source: 'git (unavailable)' }; }
   if (dates.length === 0) return { firstCommit: null, minorAtCommit: null, source: 'git' };
@@ -200,7 +203,7 @@ function evaluateRow(row, ctx) {
   // ── R2 ────────────────────────────────────────────────────────────────────
   const hist = rowHistory(row.id);
   if (!hist.firstCommit) {
-    held.push(`R2 no commit in the public history introduces ${row.id} into spec/v1/deprecations.json (${hist.source}) — a removal cannot be announced by a row that has no history`);
+    held.push(`R2 no commit in the public history introduces ${row.id} into spec/v1/ or spec/v2/deprecations.json (${hist.source}) — a removal cannot be announced by a row that has no history`);
   } else {
     const age = daysBetween(hist.firstCommit.slice(0, 10), TODAY);
     if (age < ANNOUNCE_MIN_DAYS) held.push(`R2 announced ${age} day(s) ago (${hist.firstCommit.slice(0, 10)}), fewer than the ${ANNOUNCE_MIN_DAYS} RFC 0197 requires`);
@@ -293,7 +296,12 @@ function matrixColumn(path, column) {
   return out;
 }
 
-const deprecations = readJson(P.deprecations, 'spec/v1/deprecations.json');
+const deprecations = (() => {
+  try { return { entries: loadDeprecations(ROOT, P.deprecations).entries }; } catch (e) {
+    console.error(`check-v2-retirement: cannot read the deprecation registers (spec/v1/, spec/v2/deprecations.json): ${e.message}`);
+    process.exit(1);
+  }
+})();
 const migrations = readJson(P.migrations, 'spec/v2/migrations.json');
 const corrections = readJson(P.corrections, 'spec/v2/corrections.json');
 const declaration = readJson(P.declaration, 'spec/v2/declaration.json');

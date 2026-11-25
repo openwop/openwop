@@ -3,7 +3,8 @@
  * RFC 0178 §A.1 — every deprecation row with a schema-field / discovery-field
  * surface whose source is a v2 schema node is annotated `deprecated: true` and
  * `x-openwop-remove-in: "<major.minor>"` on that node, generated from
- * spec/v1/deprecations.json; api/v2/*.yaml operations named by a `path` row get
+ * spec/v1/ and spec/v2/deprecations.json (RFC 0266 §A.1, merged by id, the v2
+ * row winning); api/v2/*.yaml operations named by a `path` row get
  * `deprecated: true` + `x-openwop-remove-in`. The annotation is what makes
  * COMPATIBILITY §7 bind (RFC 0178).
  *
@@ -15,8 +16,10 @@
 import { readFileSync, writeFileSync, existsSync, readdirSync, statSync } from 'node:fs';
 import { join, dirname, resolve, relative } from 'node:path';
 import { fileURLToPath } from 'node:url';
+import { loadDeprecations } from './lib/registers.mjs';
 const ROOT = resolve(dirname(fileURLToPath(import.meta.url)), '..');
-const reg = JSON.parse(readFileSync(join(ROOT, 'spec', 'v1', 'deprecations.json'), 'utf8'));
+// RFC 0266 §A.1: the frozen v1 register and the v2 one, merged by id (v2 wins).
+const reg = { entries: loadDeprecations(ROOT).entries };
 const write = process.argv.includes('--write');
 const V2 = join(ROOT, 'schemas', 'v2');
 if (!existsSync(V2)) { console.log('=== generate-deprecation-annotations — schemas/v2/ does not exist yet; nothing to annotate ==='); process.exit(0); }
