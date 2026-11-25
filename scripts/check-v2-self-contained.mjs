@@ -42,19 +42,22 @@ import { fileURLToPath } from 'node:url';
 
 const ROOT = join(dirname(fileURLToPath(import.meta.url)), '..');
 const ALLOWLIST = join(ROOT, 'scripts', 'v2-self-contained-allowlist.json');
-export const SCANNED = ['spec/v2', 'schemas/v2', 'api/v2'];
+// api/seams-v2.yaml is the v2 conformance seams profile; it sits beside api/v2/, not in it.
+export const SCANNED = ['spec/v2', 'schemas/v2', 'api/v2', 'api/seams-v2.yaml'];
 export const DISPOSITIONS = ['history', 'to-rehome'];
-// Not scanned: a generated aggregate whose text is copied verbatim from outside the
-// scanned trees. spec/v2/gaps.json is generate-gaps.mjs's index of every RFCS/registers/
-// gap row (moved out of the frozen v1 tree by RFC 0266 §C); a register row naming a v1
-// document is RFC history, and listing it here would re-list RFCS/ row by row.
-export const NOT_SCANNED = new Set(['spec/v2/gaps.json']);
+// Not scanned: the gap registers, whose rows are history by construction (RFC 0266 §C
+// moved both out of the frozen v1 tree). spec/v2/gaps.json is generate-gaps.mjs's index
+// of every RFCS/registers/ gap row, copied verbatim; spec/v2/spec-gaps.json holds the rows
+// of the v1 documents' "Open spec gaps" sections, each naming the v1 document it came
+// from. Listing them here would re-list both registers row by row.
+export const NOT_SCANNED = new Set(['spec/v2/gaps.json', 'spec/v2/spec-gaps.json']);
 const WINDOW = 40;
 
 const posix = (p) => p.split(sep).join('/');
 
 function walk(dir, out = []) {
   if (!existsSync(dir)) return out;
+  if (!statSync(dir).isDirectory()) { out.push(dir); return out; }
   for (const name of readdirSync(dir).sort()) {
     const p = join(dir, name);
     if (statSync(p).isDirectory()) walk(p, out); else out.push(p);

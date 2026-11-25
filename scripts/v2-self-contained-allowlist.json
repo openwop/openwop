@@ -884,6 +884,15 @@
       "why": "provenance: the floor was seeded from the v1 manifest at P3-B"
     },
     {
+      "file": "spec/v2/spec-gaps.schema.json",
+      "kind": "spec-v1",
+      "target": "spec/v1/spec-gaps.json",
+      "fingerprint": "b75ed7d6803e",
+      "excerpt": "scription\": \"The row's id in the frozen spec/v1/spec-gaps.json.\"",
+      "disposition": "history",
+      "why": "movedFrom provenance: names the frozen v1 register a spec-gap row was moved from (RFC 0266 §C)"
+    },
+    {
       "file": "schemas/v2/a2a-task-state.schema.json",
       "kind": "v1-doc",
       "target": "a2a-integration.md",

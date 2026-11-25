@@ -232,7 +232,7 @@ paths:
       tags:
       - packs-test
       summary: Publish a pack tarball to the isolated test catalog.
-      description: 'Mirrors the registry''s `PUT /v1/packs/{name}/-/{version}.tgz` (`spec/v1/node-packs.md`). The request
+      description: 'Mirrors the registry''s `PUT /v1/packs/{name}/-/{version}.tgz` (`packs.md` §"The registry tree"). The request
         shape, response shape, status codes, and publish error catalog MUST be served verbatim: `invalid_pack_scope`, `invalid_pack_name`,
         `invalid_version`, `invalid_body`, eight `tarball_*` codes, `invalid_manifest`, `manifest_mismatch` (or the granular
         `manifest_name_mismatch` / `manifest_version_mismatch` pair), `pack_integrity_failure`, `unsupported_runtime`, `forbidden`,
@@ -240,7 +240,7 @@ paths:
 
 
         The test catalog MUST be isolated: a pack PUT here MUST NOT appear in `GET /v1/packs/{name}` listings. The mirrored
-        production path is registry-service surface (`registry-operations.md`), not defined in this document.'
+        production path is registry-service surface (`packs.md` §"The registry tree"), not defined in this document.'
       operationId: putTestPackTarball
       security:
       - ApiKeyAuth:
@@ -337,7 +337,7 @@ paths:
       summary: Fetch a published test-catalog tarball.
       description: 'Mirrors the registry''s `GET /v1/packs/{name}/-/{version}.tgz`. Returns the gzipped tarball bytes with
         `Content-Type: application/tar+gzip` and an `ETag: "sha256-..."` matching the manifest''s `tarballSha256`. The mirrored
-        production path is registry-service surface (`registry-operations.md`), not defined in this document.'
+        production path is registry-service surface (`packs.md` §"The registry tree"), not defined in this document.'
       operationId: getTestPackTarball
       security:
       - ApiKeyAuth:
@@ -383,10 +383,10 @@ paths:
       tags:
       - packs-test
       summary: Unpublish a test-catalog version (same unpublish-window semantics as the registry).
-      description: Mirrors the registry's `DELETE /v1/packs/{name}/-/{version}` (`spec/v1/node-packs.md`). Returns `400 unpublish_window_expired`
+      description: Mirrors the registry's `DELETE /v1/packs/{name}/-/{version}` (`packs.md` §"The registry tree"). Returns `400 unpublish_window_expired`
         for versions older than the registry's unpublish window (default 72h). Test-mode implementations MAY shorten the window
         for tractable conformance fixtures but MUST surface the same error code. The mirrored production path is registry-service
-        surface (`registry-operations.md`), not defined in this document.
+        surface (`packs.md` §"The registry tree"), not defined in this document.
       operationId: deleteTestPackVersion
       security:
       - ApiKeyAuth:
@@ -428,7 +428,7 @@ paths:
       summary: Fetch the detached Ed25519 signature for a test-catalog pack.
       description: Mirrors the registry's `GET /v1/packs/{name}/-/{version}.sig`. Returns the signature blob over `pack.json`
         for this version. MAY 302-redirect to a storage-backend signed URL. The mirrored production path is registry-service
-        surface (`registry-operations.md`), not defined in this document.
+        surface (`packs.md` §"The registry tree"), not defined in this document.
       operationId: getTestPackSignature
       security:
       - ApiKeyAuth:
@@ -468,7 +468,7 @@ paths:
                 $ref: ../schemas/v2/error-envelope.schema.json
         '404':
           description: '`signature_not_available`: the version is missing, yanked, or unsigned at publish time, or the registry''s
-            storage backend is unwired. The four cases are intentionally indistinguishable (spec/v1/node-packs.md). Also returned
+            storage backend is unwired. The four cases are intentionally indistinguishable (`signature_not_available` in `spec/v2/errors.json`). Also returned
             when the host does not advertise `capabilities.packs.testMode.supported: true`.'
           content:
             application/json:
@@ -1599,7 +1599,7 @@ components:
         type: string
         minLength: 3
         maxLength: 214
-      description: Reverse-DNS pack name per `spec/v1/node-packs.md` §Naming (e.g. `vendor.acme.salesforce-tools`).
+      description: Reverse-DNS pack name per the `name` description of `node-pack-manifest.schema.json` (e.g. `vendor.acme.salesforce-tools`).
     PackVersion:
       in: path
       name: version
