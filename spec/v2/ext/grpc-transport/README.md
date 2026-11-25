@@ -11,6 +11,6 @@ A non-normative note, not a declared family. v2 has no normative gRPC transport,
 | **adoption:** | `none` |
 | **advertised as** | not advertisable; v2 has no `grpc` discovery record |
 
-[`openwop.proto`](https://github.com/openwop/openwop/blob/main/spec/v2/ext/grpc-transport/openwop.proto) is a sketch only. It is not a v2 contract.
+v2 defines no gRPC operations and ships no `.proto` file. The proto that sat here was a byte-for-byte copy of the previous major's file, so it described that major's wire, not this one, and was removed. A v2 gRPC binding would need its own RFC, a proto generated from the v2 API, and a behavioral witness.
 
-*Sources: RFC 0094, RFC 0175.*
+*Sources: RFC 0094, RFC 0175, RFC 0266.*
