@@ -1,0 +1,98 @@
+{
+  "$comment": "Seeded from the frozen v1 discovery schema at the RFC 0266 §C cut-over (byte-equal to the 2.49.12 derivation); v2-owned since, edited by hand.",
+  "properties": {
+    "endpointsSupported": {
+      "type": "boolean",
+      "description": "RFC 0028 §A. When `true`, the host serves the `/prompts*` REST surface — at minimum the read endpoints (`listPromptTemplates`, `getPromptTemplate`, `renderPromptTemplate`). The mutating endpoints additionally require `mutableLibrary: true`; the pack-install path additionally requires `packsSupported: true`. False or absent = every `/prompts*` request answers `404 not_found`. Independent of the family record — a host MAY advertise the family with `endpointsSupported: false` (composition without library REST) or the family omitted and `endpointsSupported: true` (library REST against an external resolver, e.g., a façade host)."
+    },
+    "templateKinds": {
+      "type": "array",
+      "items": {
+        "$ref": "./prompt-kind.schema.json"
+      },
+      "uniqueItems": true,
+      "description": "Subset of PromptKind values the host accepts. Defaults to all four (`system`, `user`, `few-shot`, `schema-hint`) when omitted. The $ref resolves to the shared `prompt-kind.schema.json` `$def` per RFC 0027 §A — uses a relative URI so redocly's lint walker resolves it against the local file rather than fetching the openwop.dev URL."
+    },
+    "variableSources": {
+      "type": "array",
+      "items": {
+        "type": "string",
+        "enum": [
+          "input",
+          "variable",
+          "secret",
+          "context"
+        ]
+      },
+      "uniqueItems": true,
+      "description": "Subset of PromptVariable.source values the host supports. `secret` SHOULD only appear when the `secrets` family is advertised."
+    },
+    "maxTemplateBytes": {
+      "type": "integer",
+      "minimum": 1,
+      "maximum": 65536,
+      "description": "Host limit on PromptTemplate.text length. MUST NOT exceed the schema cap (65536). When advertised, the host MUST reject larger bodies on install + on `POST /prompts` (RFC 0028)."
+    },
+    "observability": {
+      "type": "string",
+      "enum": [
+        "off",
+        "hashed",
+        "full"
+      ],
+      "description": "How `prompt.composed` events expose resolved bodies. `off`: event not emitted. `hashed`: payload carries only sha256 + per-variable-binding hashes (no plaintext). `full`: payload carries the composed body with secret-sourced values redacted to `[REDACTED:<secretId>]` markers and untrusted segments wrapped in `<UNTRUSTED>` markers. Default when absent: `hashed`."
+    },
+    "packsSupported": {
+      "type": "boolean",
+      "description": "RFC 0028 §C. When `true`, the host installs `kind: \"prompt\"` registry packs and exposes their templates at `GET /prompts` with `meta.source: \"pack\"` + `meta.packName` + `meta.packVersion`. When `false` or absent, packs are not loaded; only host built-ins and (when `mutableLibrary: true`) user-created templates are visible."
+    },
+    "mutableLibrary": {
+      "type": "boolean",
+      "description": "RFC 0028 §C. When `true`, the host honors the mutating endpoints `POST /prompts`, `PUT /prompts/{templateId}`, `DELETE /prompts/{templateId}`. When `false` or absent, those endpoints answer `404 not_found`. Pack-sourced and host-built-in templates remain read-only even under `mutableLibrary: true` — deletion of those returns 403 per RFC 0028 §A."
+    },
+    "library": {
+      "type": "object",
+      "additionalProperties": false,
+      "description": "RFC 0028 §C. Per-library configuration knobs that influence how clients call the prompt surface.",
+      "properties": {
+        "id": {
+          "type": "string",
+          "description": "Host's library identifier exposed at `GET /prompts` (filterable via the structured `PromptRef.libraryId` field). Single-library hosts MAY omit this."
+        },
+        "renderEndpoint": {
+          "type": "string",
+          "format": "uri-reference",
+          "description": "Absolute or relative URI of the `:render` endpoint. Defaults to `/prompts:render`. Useful for hosts mounting the surface under a prefix."
+        },
+        "maxRenderRequestBytes": {
+          "type": "integer",
+          "minimum": 1,
+          "description": "Hard cap on `POST /prompts:render` request body size."
+        }
+      }
+    },
+    "defaults": {
+      "type": "object",
+      "additionalProperties": false,
+      "description": "RFC 0029 §B. Per-kind host-default PromptRefs that apply at resolution chain layer 4 (`host-defaults`) per host-services.md §`prompts`, Resolution. Advertised so clients can preview the full chain at edit time without dispatching a node. Hosts MAY ship per-kind defaults; the openwop spec ships none.",
+      "properties": {
+        "system": {
+          "$ref": "./prompt-ref.schema.json"
+        },
+        "user": {
+          "$ref": "./prompt-ref.schema.json"
+        },
+        "few-shot": {
+          "$ref": "./prompt-ref.schema.json"
+        },
+        "schema-hint": {
+          "$ref": "./prompt-ref.schema.json"
+        }
+      }
+    },
+    "agentBindings": {
+      "type": "boolean",
+      "description": "RFC 0029 §B. When `true`, the host honors `AgentManifest.promptOverrides[kind]` and `AgentManifest.promptLibraryRef` at resolution chain layer 2 (`agent-overrides` / `agent-library-default`) per host-services.md §`prompts`, Resolution. When `false` or absent, layer 2 is skipped — the host applies only layers 1, 3, 4. Conformance scenarios for agent-binding resolution are gated on this flag."
+    }
+  }
+}

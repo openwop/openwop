@@ -81,7 +81,7 @@ describe('v2-one-signing-scheme (RFC 0177 §C.3)', () => {
   // Same defect class, same measurement, so it lives beside the signing rule
   // rather than in a file of its own (a new coherence FILE changes the
   // certification-bundle id pattern — a wire schema — for a corpus-only check).
-  // `derive-v2-schemas.mjs` closes "an explicit open object with declared
+  // The v1 seed (`derive-v2-schemas.mjs`, retired by RFC 0266 §C) closed "an explicit open object with declared
   // properties"; `FragmentNode.config` documents ONE key (`subChainRef`, RFC
   // 0133) on a free-form map "host-validated against the referenced typeId's
   // config schema", so the seed closed it and 73 of 81 published v2 chain packs

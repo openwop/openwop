@@ -1,0 +1,23 @@
+{
+  "$comment": "Seeded from the frozen v1 discovery schema at the RFC 0266 §C cut-over (byte-equal to the 2.49.12 derivation); v2-owned since, edited by hand.",
+  "properties": {
+    "baseLocale": {
+      "type": "string",
+      "pattern": "^[a-zA-Z]{2,3}(-[a-zA-Z0-9]{2,8}){0,3}$",
+      "description": "The locale section `data` is authored in. MUST equal `capabilities.i18n.defaultLocale`."
+    },
+    "supportedLocales": {
+      "type": "array",
+      "uniqueItems": true,
+      "items": {
+        "type": "string",
+        "pattern": "^[a-zA-Z]{2,3}(-[a-zA-Z0-9]{2,8}){0,3}$"
+      },
+      "description": "BCP 47 tags the host has authored content translations for. MUST NOT contain `baseLocale`; `({baseLocale} ∪ supportedLocales)` MUST be a subset of `i18n.supportedLocales`."
+    }
+  },
+  "required": [
+    "baseLocale",
+    "supportedLocales"
+  ]
+}

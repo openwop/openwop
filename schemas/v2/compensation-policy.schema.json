@@ -86,6 +86,5 @@
       "default": "continue",
       "description": "RFC 0151 §C — cancellation of the parent run MUST NOT silently abandon an active compensation. `continue`: the unwind runs to its terminal rollup. `pause`: emit `compensation.paused` and hold for authorized intervention (the run's own `status` carries the wait). `manual`: emit `compensation.manual_intervention_required` and stop; rollup reads `manual`. `pause`/`manual` require `capabilities.compensation.manualIntervention: true`."
     }
-  },
-  "x-openwop-seeded-from": "v1"
+  }
 }

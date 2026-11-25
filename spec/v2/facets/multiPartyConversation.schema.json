@@ -1,0 +1,10 @@
+{
+  "$comment": "Seeded from the frozen v1 discovery schema at the RFC 0266 §C cut-over (byte-equal to the 2.49.12 derivation); v2-owned since, edited by hand.",
+  "properties": {
+    "maxParticipants": {
+      "type": "integer",
+      "minimum": 2,
+      "description": "RFC 0101. OPTIONAL host ceiling on the size of the `conversation.opened.participants` roster. A multi-party council has at least 2 participants. When advertised, the host MUST reject a `conversation.opened` whose `participants` array exceeds this count. Absent ⇒ the host does not bound the roster size on the wire."
+    }
+  }
+}

@@ -313,9 +313,6 @@ node "$(dirname "$0")/check-interop-map.mjs"
 node "$(dirname "$0")/check-shipped-changelog.mjs"
 node "$(dirname "$0")/generate-error-envelope.mjs" --check
 node "$(dirname "$0")/check-v2-schemas.mjs"
-# The seed set: every file still marked `x-openwop-seeded-from: v1` must equal its
-# derivation, or the next `--write` silently reverts a hand edit (RFC 0186 `onTimeout`).
-node "$(dirname "$0")/derive-v2-schemas.mjs" --check
 node "$(dirname "$0")/check-core-budget.mjs"
 # spec/v2 prose renders verbatim on openwop.dev: no RFC numbers in banners, headings or
 # running text, no text walls, no paragraph-sized table cells, and v1 mentions only fall.
@@ -329,9 +326,10 @@ node "$(dirname "$0")/check-changelog-shape.mjs"
 # gates on the TypeScript AST; its self-test proves detection and non-detection.
 node "$(dirname "$0")/report-v2-witness-coverage.mjs" --self-test
 node "$(dirname "$0")/derive-core-adoption.mjs"
+# RFC 0266 §C: api/v2 is its own source; this derives only headers.md and path-manifest.json from it.
 python3 "$(dirname "$0")/derive-v2-api.py" --check
-# 2.36.2 (D5): the generated AsyncAPI names v2 event types, never a v1 spelling copied
-# from api/asyncapi.yaml; host events are exempt (events.md §Host events, RFC 0060).
+# 2.36.2 (D5): the v2 AsyncAPI names v2 event types, never a v1 spelling; host events
+# are exempt (events.md §Host events, RFC 0060).
 python3 "$(dirname "$0")/check-asyncapi-codemap.py"
 # Same pinned + cached invocations as steps 2/3: a bare `npx -y @pkg` here re-resolved and reinstalled both CLIs (7 minutes on CI, which timed the job out).
 ( cd "$SPEC_ROOT/api/v2" && npm_config_cache="$NPM_CACHE" npx -y -p @redocly/cli@2.31.4 redocly lint openapi.yaml --format=summary 2>&1 | tail -2 )

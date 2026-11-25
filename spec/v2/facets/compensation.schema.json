@@ -1,0 +1,26 @@
+{
+  "$comment": "Seeded from the frozen v1 discovery schema at the RFC 0266 §C cut-over (byte-equal to the 2.49.12 derivation); v2-owned since, edited by hand.",
+  "properties": {
+    "profileVersion": {
+      "type": "string",
+      "pattern": "^[1-9][0-9]*$",
+      "description": "RFC 0151. Participates in the inverse-action identity, so a profile bump cannot silently collide with identities minted under the previous ordering rules."
+    },
+    "orderingModels": {
+      "type": "array",
+      "minItems": 1,
+      "uniqueItems": true,
+      "items": {
+        "enum": [
+          "reverse-completion",
+          "dependency-graph"
+        ]
+      },
+      "description": "RFC 0151 §A. A host that advertises compensation MUST implement `reverse-completion` and MAY additionally implement `dependency-graph`. `dependency-graph` MUST be a DAG and preserve reverse dependency order."
+    },
+    "manualIntervention": {
+      "type": "boolean",
+      "description": "RFC 0151 §C — the host can record `manual-intervention-required` rather than silently abandoning an unwind. Cancelling the parent MUST NOT abandon an active compensation: it continues, pauses for authorized intervention, or records this state."
+    }
+  }
+}

@@ -1,0 +1,34 @@
+{
+  "$comment": "Seeded from the frozen v1 discovery schema at the RFC 0266 §C cut-over (byte-equal to the 2.49.12 derivation); v2-owned since, edited by hand.",
+  "properties": {
+    "backends": {
+      "type": "array",
+      "items": {
+        "type": "string",
+        "enum": [
+          "rabbitmq",
+          "kafka",
+          "sqs",
+          "sns",
+          "pubsub",
+          "mqtt",
+          "nats",
+          "redis-streams",
+          "in-memory"
+        ]
+      }
+    },
+    "deadLetterSupported": {
+      "type": "boolean"
+    },
+    "stream": {
+      "type": "object",
+      "properties": {
+        "fromBeginning": {
+          "type": "boolean"
+        }
+      },
+      "additionalProperties": false
+    }
+  }
+}

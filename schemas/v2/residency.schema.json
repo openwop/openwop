@@ -14,6 +14,5 @@
       "minLength": 1,
       "description": "Requested processing region — an opaque operator code from the host's own vocabulary (e.g. `\"eu\"`, `\"us\"`, `\"eu-west-1\"`). Honored only if present in the host's advertised `capabilities.dataResidency.regions[]`; otherwise the run is rejected `residency_unavailable`."
     }
-  },
-  "x-openwop-seeded-from": "v1"
+  }
 }

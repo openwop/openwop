@@ -29,6 +29,5 @@
       "description": "Whether the predicate's state transitioned vs. the prior tick. `true` is the only path that may emit `heartbeat.stateChanged` and enqueue a run."
     }
   },
-  "additionalProperties": false,
-  "x-openwop-seeded-from": "v1"
+  "additionalProperties": false
 }

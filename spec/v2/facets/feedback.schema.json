@@ -1,0 +1,32 @@
+{
+  "$comment": "Seeded from the frozen v1 discovery schema at the RFC 0266 §C cut-over (byte-equal to the 2.49.12 derivation); v2-owned since, edited by hand.",
+  "properties": {
+    "targets": {
+      "type": "array",
+      "items": {
+        "type": "string",
+        "enum": [
+          "run",
+          "event",
+          "node"
+        ]
+      },
+      "uniqueItems": true,
+      "description": "Which annotation-target granularities the host accepts. Absent = `run` only."
+    },
+    "signals": {
+      "type": "array",
+      "items": {
+        "type": "string",
+        "enum": [
+          "rating",
+          "correction",
+          "label",
+          "flag"
+        ]
+      },
+      "uniqueItems": true,
+      "description": "Which signal kinds the host accepts. Absent = all four."
+    }
+  }
+}

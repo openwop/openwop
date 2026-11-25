@@ -1,0 +1,20 @@
+{
+  "$comment": "Seeded from the frozen v1 discovery schema at the RFC 0266 §C cut-over (byte-equal to the 2.49.12 derivation); v2-owned since, edited by hand.",
+  "properties": {
+    "defaultLocale": {
+      "type": "string",
+      "pattern": "^[a-zA-Z]{2,3}(-[a-zA-Z0-9]{2,8}){0,3}$",
+      "description": "BCP 47 language tag the host falls back to when no `Accept-Language` matches `supportedLocales`. Default: `\"en\"` when omitted."
+    },
+    "supportedLocales": {
+      "type": "array",
+      "minItems": 1,
+      "uniqueItems": true,
+      "items": {
+        "type": "string",
+        "pattern": "^[a-zA-Z]{2,3}(-[a-zA-Z0-9]{2,8}){0,3}$"
+      },
+      "description": "BCP 47 tags of locales the host has validated end-to-end for human-facing text. MUST contain `defaultLocale` when both are present."
+    }
+  }
+}

@@ -1,0 +1,17 @@
+{
+  "$comment": "Seeded from the frozen v1 discovery schema at the RFC 0266 §C cut-over (byte-equal to the 2.49.12 derivation); v2-owned since, edited by hand.",
+  "properties": {
+    "dispatchKinds": {
+      "type": "array",
+      "items": {
+        "type": "string",
+        "enum": [
+          "model",
+          "tool"
+        ]
+      },
+      "uniqueItems": true,
+      "description": "OPTIONAL. Which dispatch kinds the host routes to runners. A host MAY implement `model` first and add `tool` later behind the same capability gate (openwop-app ADR 0182 Phase 5 lands model-dispatch first). Absent ⇒ implementation-defined, but a host SHOULD enumerate what it actually routes."
+    }
+  }
+}

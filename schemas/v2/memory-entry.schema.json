@@ -40,6 +40,5 @@
       "description": "Optional TTL. When the host's clock passes this value, the entry MUST NOT be returned by `list` / `get`. Hosts MAY also delete expired entries from storage as a side effect."
     }
   },
-  "additionalProperties": false,
-  "x-openwop-seeded-from": "v1"
+  "additionalProperties": false
 }

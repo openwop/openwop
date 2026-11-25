@@ -1,0 +1,162 @@
+{
+  "$comment": "Seeded from the frozen v1 discovery schema at the RFC 0266 §C cut-over (byte-equal to the 2.49.12 derivation); v2-owned since, edited by hand.",
+  "properties": {
+    "executionModel": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "version"
+      ],
+      "properties": {
+        "version": {
+          "type": "integer",
+          "minimum": 1,
+          "maximum": 6,
+          "description": "Profile version. 1 = Phase 1 (execution-loop framework + planner→worker handoff). 2 = Phase 2 (confidence-floor escalation + agent-memory lifecycle, RFC 0039). 3 = Phase 3 (cross-host causation, RFC 0040). 4 = Phase 4 (replay determinism under nondeterministic models, RFC 0041). 5 = Phase 5 (stateful agent-loop lifecycle — per-iteration workspace+memory snapshot inputs, the observable `iteration` counter on `runOrchestrator.decided`, and stateful HITL resume, RFC 0061). 6 = Phase 6 (verifier/critic turn — the `agent.verified` event + `successCriteria` on the `terminate` decision, RFC 0090). A host advertising `version: N` MUST implement all phases 1..N additively."
+        },
+        "verifier": {
+          "type": "object",
+          "additionalProperties": false,
+          "description": "RFC 0090 (`version >= 6`). The verifier/critic turn: the host emits `agent.verified` over a prior result and (optionally) gates commit on the verdict. Absent ⇒ no verifier turn; conformance scenarios soft-skip.",
+          "properties": {
+            "gating": {
+              "type": "boolean",
+              "description": "Host enforces the RFC 0090 §B commit-gating contract: a `fail` verdict blocks merge/terminate (fail-closed, composing RFC 0063); `revise` routes back to an actor turn. Absent/false ⇒ the verdict is observability-only."
+            }
+          }
+        },
+        "confidenceEscalationFloor": {
+          "type": "number",
+          "minimum": 0.5,
+          "maximum": 1,
+          "description": "RFC 0039 §A. Operator-declared confidence floor at or above the spec floor of 0.5; when an OrchestratorDecision carries `confidence` below this floor, the host MUST escalate via a `clarify` or `escalate` interrupt instead of executing the decision. Absent: the spec floor 0.5 applies. Values < 0.5 are non-conformant; values > 1.0 are nonsense. Applies only when `version >= 2`."
+        },
+        "confidenceEscalationInterruptKind": {
+          "type": "string",
+          "anyOf": [
+            {
+              "const": "clarification"
+            },
+            {
+              "const": "approval"
+            },
+            {
+              "pattern": "^x-host-[a-z][a-z0-9-]*-[a-z][a-z0-9-]*$"
+            }
+          ],
+          "description": "RFC 0044 — the literal `interrupt.kind` the host emits when escalating a below-floor confidence decision per RFC 0039 §A. `clarification` and `approval` are the canonical values matching the clarify-OR-approval choice in RFC 0039 §A; at v2 the value MUST be one of them (`execution.md` §multiAgent, level 2). The v2 interrupt `kind` is closed, so an `x-host-` value promises an interrupt the payload schema rejects; the pattern remains only so a v1-era document validates, and is removed at 3.0. When advertised, hosts MUST emit an interrupt of the advertised kind on every confidence-escalation event AND the host's downstream `interrupt.md` mapping determines the `waiting-*` terminal status. Absent: conformance assumes the host uses one of the two canonical kinds (the relaxed assertion accepts either)."
+        },
+        "crossChildMemoryConcurrency": {
+          "type": "string",
+          "enum": [
+            "strict",
+            "advisory"
+          ],
+          "description": "RFC 0039 §B. Cross-child memory-write concurrency posture when version >= 2. `strict` (default when absent): the host serializes concurrent writes from sibling dispatched children to the parent's shared memory scope. `advisory`: the host opts out of the serialization MUST and documents last-write-wins semantics out-of-band. Hosts that choose advisory SHOULD also advertise their resolution rule under `crossChildMemoryConcurrencyResolution` (reserved field; follow-up clarification)."
+        },
+        "crossHostCausation": {
+          "type": "object",
+          "description": "RFC 0040 §D — Phase 3 cross-host causation linking. When advertised, the host honors the cross-host `causationId` extension (a `causationHostId` field on event payloads pointing at the originating host), W3C `traceparent` propagation across MCP + A2A composition boundaries, and (when `ancestryEndpointSupported: true`) the `GET /runs/{runId}/ancestry` cross-host parent-chain endpoint. Hosts advertising `version` 3 or higher MUST advertise this sub-block with a non-empty, stable `hostId`.",
+          "additionalProperties": false,
+          "properties": {
+            "hostId": {
+              "type": "string",
+              "minLength": 1,
+              "description": "Stable identifier for this host instance, used as the `causationHostId` value on cross-host events. SHOULD be a URL or DNS-style identifier (e.g., `myndhyve.ai/workflow-runtime`); the protocol does not normate a stricter format."
+            },
+            "ancestryEndpointSupported": {
+              "type": "boolean",
+              "description": "Host serves `GET /runs/{runId}/ancestry` returning the cross-host parent chain per RFC 0040 §C. Optional even when `crossHostCausation` is advertised — hosts that emit `causationHostId` but don't expose the ancestry-walking endpoint still satisfy the per-event chaining contract; this flag advertises the additional endpoint."
+            }
+          }
+        },
+        "replayDeterminism": {
+          "type": "object",
+          "description": "RFC 0041 §D — Phase 4 replay determinism. When advertised, the host honors the LLM cache-key recipe in `replay.md` §\"LLM cache-key recipe\" as NORMATIVE (graduated from informative for version >= 4), emits `replay.divergedAtRefusal` events + fails with `replay_diverged_at_refusal` on refusal-divergence (RFC 0041 §B), and guarantees observable-output-sequence determinism per RFC 0041 §C. Hosts advertising `version` 4 or higher MUST advertise this sub-block.",
+          "additionalProperties": false,
+          "properties": {
+            "llmCacheKeyRecipe": {
+              "type": "string",
+              "anyOf": [
+                {
+                  "const": "spec-rfc-0041"
+                },
+                {
+                  "pattern": "^x-host-[a-z][a-z0-9-]*-[a-z][a-z0-9-]*$"
+                }
+              ],
+              "description": "The LLM cache-key recipe the host honors. `spec-rfc-0041` = the canonical recipe in `replay.md` §\"LLM cache-key recipe\" §A + §B + §C. Vendor-specific recipes use the canonical host-extension namespace string matching `^x-host-<host>-<recipe-name>$` per the host-extension convention (`ids.schema.json` description); the matching algorithm MUST be documented at the host's discovery doc."
+            },
+            "refusalDivergenceEmission": {
+              "type": "boolean",
+              "description": "Host emits `replay.divergedAtRefusal` events + fails replay with `error.code: replay_diverged_at_refusal` per RFC 0041 §B. Hosts advertising `version` 4 or higher MUST set this to `true`."
+            }
+          }
+        },
+        "statefulResume": {
+          "type": "boolean",
+          "description": "RFC 0061 (`version >= 5`). When `true`, a `clarify`/`escalate` HITL suspend resumes the execution loop at the SAME iteration — the `runOrchestrator.decided.iteration` counter does not reset or skip — with the per-iteration memory (RFC 0039 MAE-3) + workspace (RFC 0059) snapshot lineage intact, so a mid-loop human interrupt does not lose progress. A distinct claim from plain replay re-entrancy (deterministic replay of a completed prefix); this is about a LIVE suspend preserving the counter. Omitted by hosts on `version < 5`."
+        },
+        "transcriptWindow": {
+          "type": "integer",
+          "minimum": 1,
+          "description": "RFC 0061 (`version >= 5`). Host-advertised count of recent event-log entries the host feeds each orchestrator turn as the iteration's transcript input (§C input 3). Advertise-and-honor; not a fixed wire constant. Absent ⇒ the host does not bound the transcript window on the wire."
+        },
+        "contextBudget": {
+          "type": "object",
+          "description": "RFC 0111 (`Active`, `version >= 5`). Opt-in, token-denominated bound on the orchestrator transcript the host feeds each iteration, plus a declared summarization contract for turns evicted beyond that budget. SCOPE: governs the RFC 0061 per-iteration ORCHESTRATOR-LOOP transcript (the log tail execution.md §`multiAgent` names as a turn input — the same transcript `transcriptWindow` bounds), NOT a general chat-conversation history. A host whose orchestrator loop does not run real model turns (e.g. a mock supervisor) MUST NOT advertise this block, exactly as it MUST NOT dishonestly advertise `transcriptWindow`. Budget-only advertisement (`transcriptTokenBudget` + `tokenCounter` WITHOUT `summarization`) is valid for a host that HAS a real orchestrator loop but does not summarize. Purely additive: a host that omits this block behaves exactly as today, including `transcriptWindow`'s `absent ⇒ unbounded` default (NOT flipped by this RFC). Complements (does not replace) the event-count `transcriptWindow`; when both bound a turn the host MUST honor whichever is tighter. Summarization here is a NONDETERMINISTIC host output governed exactly like an RFC 0041 envelope: each substitution MUST be recorded as a `context.summarized` event whose `summaryRef` artifact replay reuses (never re-summarizes; execution.md §`multiAgent`).",
+          "additionalProperties": false,
+          "properties": {
+            "transcriptTokenBudget": {
+              "type": "integer",
+              "minimum": 1,
+              "description": "RFC 0111. Max tokens of transcript the host feeds any single orchestrator turn, measured in the unit named by `tokenCounter`. Advertise-and-honor; complements (does not replace) `transcriptWindow`. When both are present the host MUST honor whichever bound is tighter for a given turn. Absent ⇒ no token bound on the transcript (only the event-count `transcriptWindow`, if any, applies)."
+            },
+            "tokenCounter": {
+              "type": "string",
+              "enum": [
+                "o200k_base",
+                "cl100k_base",
+                "chars",
+                "host-defined"
+              ],
+              "description": "RFC 0111. The unit `transcriptTokenBudget` is denominated in, so the bound is interpretable across hosts. REQUIRED when `transcriptTokenBudget` is present (enforced via the `if/then` clause). `o200k_base`/`cl100k_base` are tokenizer encodings; `chars` counts UTF-8/Unicode characters (a tokenizer-free unit a client can reason about directly); `host-defined` is an opaque host unit. Same enum as RFC 0113 `memory.injectionBudget.tokenCounter` — transcript (0111) and memory (0113) budgets denominate in one consistent vocabulary; no shared `$ref` (decoupled)."
+            },
+            "summarization": {
+              "type": "object",
+              "additionalProperties": false,
+              "description": "RFC 0111. Declared contract for turns evicted beyond `transcriptTokenBudget`. When this facet is present, the host MAY replace older in-window turns with a host-produced summary; it MUST keep the most recent `keepLastTurns` turns verbatim and MUST NOT summarize the active (most recent) turn. Each substitution MUST be recorded as a `context.summarized` event and is replay-governed under RFC 0041 (replay reuses the recorded `summaryRef`, never re-summarizes).",
+              "properties": {
+                "strategy": {
+                  "type": "string",
+                  "enum": [
+                    "sliding-window",
+                    "recursive",
+                    "map-reduce"
+                  ],
+                  "description": "RFC 0111. Informational descriptor of the host's summarization strategy. `sliding-window` keeps a recent verbatim tail and summarizes the prefix; `recursive` folds prior summaries into new ones; `map-reduce` summarizes chunks then combines. Does not change the replay-determinism contract — all strategies record `context.summarized` and reuse `summaryRef` on replay."
+                },
+                "keepLastTurns": {
+                  "type": "integer",
+                  "minimum": 0,
+                  "description": "RFC 0111. Number of most-recent turns kept verbatim at the head of the window; older in-window turns MAY be replaced by a summary. The active (most recent) turn MUST NOT be summarized regardless of this value. Absent ⇒ host-defined verbatim floor."
+                }
+              }
+            }
+          },
+          "if": {
+            "required": [
+              "transcriptTokenBudget"
+            ]
+          },
+          "then": {
+            "required": [
+              "transcriptTokenBudget",
+              "tokenCounter"
+            ]
+          }
+        }
+      }
+    }
+  }
+}

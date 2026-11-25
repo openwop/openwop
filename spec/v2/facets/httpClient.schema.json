@@ -1,0 +1,53 @@
+{
+  "$comment": "Seeded from the frozen v1 discovery schema at the RFC 0266 §C cut-over (byte-equal to the 2.49.12 derivation); v2-owned since, edited by hand.",
+  "properties": {
+    "ssrfGuard": {
+      "type": "boolean",
+      "description": "Host rejects egress to loopback / RFC 1918 / link-local / cloud-metadata addresses (resolve→pin→connect). MUST be `true` when this facet is present (the `http-client-ssrf-guard` invariant)."
+    },
+    "maxResponseBodyBytes": {
+      "type": "integer",
+      "minimum": 1,
+      "description": "Positive ceiling on a response body the host will buffer. Reused by `safeFetch`."
+    },
+    "requestTimeoutMs": {
+      "type": "integer",
+      "minimum": 1,
+      "description": "Host-enforced per-request wall-clock timeout (also applies to `safeFetch`)."
+    },
+    "methods": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      },
+      "description": "HTTP methods the client surface accepts (e.g. `GET`, `POST`)."
+    },
+    "safeFetch": {
+      "type": "object",
+      "description": "RFC 0076 §B. Host-provided `ctx.http.safeFetch(url, init?)` for pack runtime code — the pack-facing exposure of the SSRF-guarded client. When advertised, the host MUST apply the §host.http SSRF defense + clamps (incl. refusing `Connection: upgrade`), and — when `toolHooks.prePostEvents` is also advertised — MUST emit the `agent.toolCalled`/`agent.toolReturned` pair (`transport: 'http'`) for each call. A pack that uses `safeFetch` need not declare `net.dns` in `runtime.requires` (the host owns resolution; RFC 0076 §A).",
+      "additionalProperties": false,
+      "properties": {}
+    },
+    "egressPolicy": {
+      "type": "object",
+      "additionalProperties": false,
+      "description": "RFC 0079. The host evaluates credential provenance (`credential-provenance.schema.json`) + the audience-binding MUST (§C) on credentialed egress and emits `egress.decided` (§B). Requires `httpClient.safeFetch` (the egress mechanism). Absent ⇒ the host does not perform provenance binding (the RFC 0076 §B SSRF guard still applies); the conformance behavioral scenarios skip cleanly. Closes the credential↔destination-binding question RFC 0076 §B parked.",
+      "properties": {
+        "decisions": {
+          "type": "array",
+          "uniqueItems": true,
+          "items": {
+            "type": "string",
+            "enum": [
+              "allowed",
+              "denied",
+              "downgraded",
+              "approval-required"
+            ]
+          },
+          "description": "MAY — which decision outcomes the host implements. Absent ⇒ at least `allowed` + `denied`."
+        }
+      }
+    }
+  }
+}

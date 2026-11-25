@@ -31,6 +31,5 @@
       "uniqueItems": true,
       "description": "The union of the members' RFC 0086 `workflows[]` portfolios — 'what this department is collectively responsible for'. Deduped; descriptive only."
     }
-  },
-  "x-openwop-seeded-from": "v1"
+  }
 }

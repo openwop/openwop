@@ -13,8 +13,8 @@
  *      allow: `extensions.<org>.<name>`, `^(openwop-|x-|vendor\.)` on
  *      pack-authored documents, positive `<org>.` patterns in registry enums;
  *   4. no capability family carries a `supported` property (RFC 0169 §A.2);
- *   5. a file still marked `x-openwop-seeded-from: v1` is reported (seeded, not
- *      yet decided by its child) — counted, not failed, until the RC.
+ *   5. no file is marked as seeded from v1 (RFC 0266 §C.1: schemas/v2 is its
+ *      own source; the seed set was cut over at 2.49.12 and the marker dropped).
  * Green-with-a-report while schemas/v2/ holds only the generated capabilities
  * schema.
  */
@@ -28,7 +28,7 @@ if (!existsSync(DIR)) { console.log('=== check-v2-schemas — schemas/v2/ does n
 const require = createRequire(join(ROOT, 'conformance', 'package.json'));
 const { Ajv2020 } = require('ajv/dist/2020.js'); const addFormats = require('ajv-formats');
 const walk = (d) => readdirSync(d).flatMap((n) => { const p = join(d, n); return statSync(p).isDirectory() ? walk(p) : p.endsWith('.schema.json') ? [p] : []; });
-const files = walk(DIR).sort(); const failures = []; let seeded = 0;
+const files = walk(DIR).sort(); const failures = [];
 const ajv = new Ajv2020({ allErrors: true, strict: false, validateFormats: true }); addFormats(ajv);
 const docs = files.map((p) => [relative(DIR, p), JSON.parse(readFileSync(p, 'utf8'))]);
 for (const [rel, doc] of docs) { if (doc.$id !== `https://openwop.dev/spec/v2/${rel}`) failures.push(`${rel}: $id is ${doc.$id}`); try { ajv.addSchema(doc); } catch (e) { failures.push(`${rel}: addSchema — ${e.message}`); } }
@@ -36,7 +36,7 @@ const ROOT_CLOSED = ['capabilities.schema.json', 'certification-bundle.schema.js
 const ALLOWED_PATTERNS = new Set(['^(openwop-|x-|vendor\\.)', '^(x-|vendor\\.)']);
 for (const [rel, doc] of docs) {
   try { ajv.getSchema(doc.$id) ?? ajv.compile(doc); } catch (e) { failures.push(`${rel}: compile — ${e.message}`); }
-  if (doc['x-openwop-seeded-from'] === 'v1') seeded++;
+  if (doc['x-openwop-seeded-from'] === 'v1') failures.push(`${rel}: marked as seeded from v1 — schemas/v2 is its own source (RFC 0266 §C.1); drop the marker`);
   if (ROOT_CLOSED.includes(rel) && doc.additionalProperties !== false) failures.push(`${rel}: root must be additionalProperties:false (charter §F Closure)`);
   // A `properties` / `$defs` / `patternProperties` value is a MAP of schemas,
   // never a schema itself — a map that happens to hold a property named
@@ -83,4 +83,4 @@ for (const [rel, doc] of docs) {
   }
 }
 if (failures.length) { console.error(`=== check-v2-schemas FAILED — ${failures.length} problem(s) ===\n  ` + failures.slice(0, 60).join('\n  ') + (failures.length > 60 ? `\n  … ${failures.length - 60} more` : '')); process.exit(1); }
-console.log(`=== check-v2-schemas OK — ${files.length} schema(s) compile with $id under /spec/v2/, closure holds; ${seeded} still seeded-from-v1 (awaiting their child's hand edit) ===`);
+console.log(`=== check-v2-schemas OK — ${files.length} schema(s) compile with $id under /spec/v2/, closure holds; none seeded from v1 ===`);
