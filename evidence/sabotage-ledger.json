@@ -3648,6 +3648,270 @@
       "suiteVersion": "2.49.8",
       "result": "executed-fail",
       "date": "2026-11-24"
+    },
+    {
+      "requirementId": "openwop.requirement.0083.trigger-delivery.dead-letter",
+      "scenario": "v2-trigger-bridge-delivery.test.ts",
+      "sabotage": "routes/triggerBridge.ts paused the subscription when a signed post failed verification, so a refused event changed its state.",
+      "subject": {
+        "host": "openwop-app workflow-engine",
+        "build": "a07093131d (suite pin 2.49.8), sabotaged locally in its own conformance/run.ts harness (in-process, SQLite in a temp dir, OPENWOP_AGENT_DEPLOYMENT=on, OPENWOP_TRIGGER_INBOUND_SIGNING=true), one rule per run"
+      },
+      "suiteVersion": "2.49.8",
+      "result": "executed-fail",
+      "date": "2026-11-25"
+    },
+    {
+      "requirementId": "openwop.requirement.0083.trigger-delivery.causation",
+      "scenario": "v2-trigger-bridge-delivery.test.ts",
+      "sabotage": "host/triggerIngestionService.ts started the delivered run with no causationId, so run.started did not name the delivery.",
+      "subject": {
+        "host": "openwop-app workflow-engine",
+        "build": "a07093131d (suite pin 2.49.8), sabotaged locally in its own conformance/run.ts harness (in-process, SQLite in a temp dir, OPENWOP_AGENT_DEPLOYMENT=on, OPENWOP_TRIGGER_INBOUND_SIGNING=true), one rule per run"
+      },
+      "suiteVersion": "2.49.8",
+      "result": "executed-fail",
+      "date": "2026-11-25"
+    },
+    {
+      "requirementId": "openwop.requirement.0083.trigger-delivery.runless-attempt-content-free",
+      "scenario": "v2-trigger-bridge-delivery.test.ts",
+      "sabotage": "routes/triggerBridge.ts and host/triggerBridgeService.ts stored the refused post's raw body on its dead letter and served it on the read.",
+      "subject": {
+        "host": "openwop-app workflow-engine",
+        "build": "a07093131d (suite pin 2.49.8), sabotaged locally in its own conformance/run.ts harness (in-process, SQLite in a temp dir, OPENWOP_AGENT_DEPLOYMENT=on, OPENWOP_TRIGGER_INBOUND_SIGNING=true), one rule per run"
+      },
+      "suiteVersion": "2.49.8",
+      "result": "executed-fail",
+      "date": "2026-11-25"
+    },
+    {
+      "requirementId": "openwop.requirement.0232.trigger-dead-letters.tenant-bound",
+      "scenario": "v2-trigger-dead-letter-read.test.ts",
+      "sabotage": "middleware/v2Identity.ts let a foreign tenant-bound subscription id through to the dead-letter read instead of refusing it 403 id_tenant_mismatch.",
+      "subject": {
+        "host": "openwop-app workflow-engine",
+        "build": "a07093131d (suite pin 2.49.8), sabotaged locally in its own conformance/run.ts harness (in-process, SQLite in a temp dir, OPENWOP_AGENT_DEPLOYMENT=on, OPENWOP_TRIGGER_INBOUND_SIGNING=true), one rule per run"
+      },
+      "suiteVersion": "2.49.8",
+      "result": "executed-fail",
+      "date": "2026-11-25"
+    },
+    {
+      "requirementId": "openwop.requirement.0082.transition-legal",
+      "scenario": "v2-deployment-lifecycle.test.ts",
+      "sabotage": "features/agent-deployments/service.ts refused the legal promote out of draft with deployment_state_conflict.",
+      "subject": {
+        "host": "openwop-app workflow-engine",
+        "build": "a07093131d (suite pin 2.49.8), sabotaged locally in its own conformance/run.ts harness (in-process, SQLite in a temp dir, OPENWOP_AGENT_DEPLOYMENT=on, OPENWOP_TRIGGER_INBOUND_SIGNING=true), one rule per run"
+      },
+      "suiteVersion": "2.49.8",
+      "result": "executed-fail",
+      "date": "2026-11-25"
+    },
+    {
+      "requirementId": "openwop.requirement.0082.scope-fail-closed",
+      "scenario": "v2-deployment-lifecycle.test.ts",
+      "sabotage": "features/agent-deployments/v2Routes.ts skipped both the key-scope and the membership check, so a key without deploy:* moved the record.",
+      "subject": {
+        "host": "openwop-app workflow-engine",
+        "build": "a07093131d (suite pin 2.49.8), sabotaged locally in its own conformance/run.ts harness (in-process, SQLite in a temp dir, OPENWOP_AGENT_DEPLOYMENT=on, OPENWOP_TRIGGER_INBOUND_SIGNING=true), one rule per run"
+      },
+      "suiteVersion": "2.49.8",
+      "result": "executed-fail",
+      "date": "2026-11-25"
+    },
+    {
+      "requirementId": "openwop.requirement.0251.baseline-uniform",
+      "scenario": "v2-eval-regression-baseline.test.ts",
+      "sabotage": "host/evals/createEvalRun.ts refused another tenant's baselineRunId 403 forbidden while an unknown id stayed 400 validation_error.",
+      "subject": {
+        "host": "openwop-app workflow-engine",
+        "build": "a07093131d (suite pin 2.49.8), sabotaged locally in its own conformance/run.ts harness (in-process, SQLite in a temp dir, OPENWOP_AGENT_DEPLOYMENT=on, OPENWOP_TRIGGER_INBOUND_SIGNING=true), one rule per run"
+      },
+      "suiteVersion": "2.49.8",
+      "result": "executed-fail",
+      "date": "2026-11-25"
+    },
+    {
+      "requirementId": "openwop.requirement.0252.source-uniform",
+      "scenario": "v2-eval-recorded-fixtures.test.ts",
+      "sabotage": "routes/runs.ts and host/evals/recordedFixtures.ts refused another tenant's fixtureRuns source 403 forbidden while an unknown one stayed 400 validation_error.",
+      "subject": {
+        "host": "openwop-app workflow-engine",
+        "build": "a07093131d (suite pin 2.49.8), sabotaged locally in its own conformance/run.ts harness (in-process, SQLite in a temp dir, OPENWOP_AGENT_DEPLOYMENT=on, OPENWOP_TRIGGER_INBOUND_SIGNING=true), one rule per run"
+      },
+      "suiteVersion": "2.49.8",
+      "result": "executed-fail",
+      "date": "2026-11-25"
+    },
+    {
+      "requirementId": "openwop.requirement.0238.ui-plugin.frame-isolated",
+      "scenario": "v2-ui-plugin-boundary.test.ts",
+      "sabotage": "host/uiPluginRpc.ts added allow-same-origin to the frame's sandbox tokens.",
+      "subject": {
+        "host": "openwop-app workflow-engine",
+        "build": "a07093131d (suite pin 2.49.8), sabotaged locally in its own conformance/run.ts harness (in-process, SQLite in a temp dir, OPENWOP_AGENT_DEPLOYMENT=on, OPENWOP_TRIGGER_INBOUND_SIGNING=true), one rule per run, the ui-plugin fixture installed under a throwaway local operator-trust key"
+      },
+      "suiteVersion": "2.49.8",
+      "result": "executed-fail",
+      "date": "2026-11-25"
+    },
+    {
+      "requirementId": "openwop.requirement.0238.ui-plugin.frame-deny-egress",
+      "scenario": "v2-ui-plugin-boundary.test.ts",
+      "sabotage": "host/uiPluginRpc.ts added connect-src * to the frame policy of a plugin declaring no connectSrc.",
+      "subject": {
+        "host": "openwop-app workflow-engine",
+        "build": "a07093131d (suite pin 2.49.8), sabotaged locally in its own conformance/run.ts harness (in-process, SQLite in a temp dir, OPENWOP_AGENT_DEPLOYMENT=on, OPENWOP_TRIGGER_INBOUND_SIGNING=true), one rule per run, the ui-plugin fixture installed under a throwaway local operator-trust key"
+      },
+      "suiteVersion": "2.49.8",
+      "result": "executed-fail",
+      "date": "2026-11-25"
+    },
+    {
+      "requirementId": "openwop.requirement.0238.ui-plugin.rpc-allowlist",
+      "scenario": "v2-ui-plugin-boundary.test.ts",
+      "sabotage": "host/uiPluginRpc.ts dispatched any method with a handler, ignoring the plugin's declared allowlist.",
+      "subject": {
+        "host": "openwop-app workflow-engine",
+        "build": "a07093131d (suite pin 2.49.8), sabotaged locally in its own conformance/run.ts harness (in-process, SQLite in a temp dir, OPENWOP_AGENT_DEPLOYMENT=on, OPENWOP_TRIGGER_INBOUND_SIGNING=true), one rule per run, the ui-plugin fixture installed under a throwaway local operator-trust key"
+      },
+      "suiteVersion": "2.49.8",
+      "result": "executed-fail",
+      "date": "2026-11-25"
+    },
+    {
+      "requirementId": "openwop.requirement.0238.ui-plugin.no-byok",
+      "scenario": "v2-ui-plugin-boundary.test.ts",
+      "sabotage": "routes/uiPlugins.ts added a resolved canary credential to the artifact.read response.",
+      "subject": {
+        "host": "openwop-app workflow-engine",
+        "build": "a07093131d (suite pin 2.49.8), sabotaged locally in its own conformance/run.ts harness (in-process, SQLite in a temp dir, OPENWOP_AGENT_DEPLOYMENT=on, OPENWOP_TRIGGER_INBOUND_SIGNING=true), one rule per run, the ui-plugin fixture installed under a throwaway local operator-trust key"
+      },
+      "suiteVersion": "2.49.8",
+      "result": "executed-fail",
+      "date": "2026-11-25"
+    },
+    {
+      "requirementId": "openwop.requirement.0200.id-token-aud",
+      "scenario": "v2-oidc-id-token-audience.test.ts",
+      "sabotage": "middleware/oidcVerifier.ts skipped the aud check, so an ID token for another audience was accepted.",
+      "subject": {
+        "host": "openwop-app workflow-engine",
+        "build": "a07093131d (suite pin 2.49.8), sabotaged locally in its own conformance/run.ts harness (in-process, SQLite in a temp dir, OPENWOP_AGENT_DEPLOYMENT=on, OPENWOP_TRIGGER_INBOUND_SIGNING=true), one rule per run"
+      },
+      "suiteVersion": "2.49.8",
+      "result": "executed-fail",
+      "date": "2026-11-25"
+    },
+    {
+      "requirementId": "openwop.requirement.0210.exp-only-lifetime-bound",
+      "scenario": "v2-lane-exp-only-bound.test.ts",
+      "sabotage": "middleware/oidcVerifier.ts dropped the exp − iat bound, keeping only exp − now.",
+      "subject": {
+        "host": "openwop-app workflow-engine",
+        "build": "a07093131d (suite pin 2.49.8), sabotaged locally in its own conformance/run.ts harness (in-process, SQLite in a temp dir, OPENWOP_AGENT_DEPLOYMENT=on, OPENWOP_TRIGGER_INBOUND_SIGNING=true), one rule per run"
+      },
+      "suiteVersion": "2.49.8",
+      "result": "executed-fail",
+      "date": "2026-11-25"
+    },
+    {
+      "requirementId": "openwop.requirement.0210.exp-only-remaining-bound",
+      "scenario": "v2-lane-exp-only-bound.test.ts",
+      "sabotage": "middleware/oidcVerifier.ts dropped the exp − now bound, keeping only exp − iat.",
+      "subject": {
+        "host": "openwop-app workflow-engine",
+        "build": "a07093131d (suite pin 2.49.8), sabotaged locally in its own conformance/run.ts harness (in-process, SQLite in a temp dir, OPENWOP_AGENT_DEPLOYMENT=on, OPENWOP_TRIGGER_INBOUND_SIGNING=true), one rule per run"
+      },
+      "suiteVersion": "2.49.8",
+      "result": "executed-fail",
+      "date": "2026-11-25"
+    },
+    {
+      "requirementId": "openwop.requirement.0210.exp-only-control-accepted",
+      "scenario": "v2-lane-exp-only-bound.test.ts",
+      "sabotage": "middleware/oidcVerifier.ts refused every token as expired, the in-bounds control included.",
+      "subject": {
+        "host": "openwop-app workflow-engine",
+        "build": "a07093131d (suite pin 2.49.8), sabotaged locally in its own conformance/run.ts harness (in-process, SQLite in a temp dir, OPENWOP_AGENT_DEPLOYMENT=on, OPENWOP_TRIGGER_INBOUND_SIGNING=true), one rule per run"
+      },
+      "suiteVersion": "2.49.8",
+      "result": "executed-fail",
+      "date": "2026-11-25"
+    },
+    {
+      "requirementId": "openwop.requirement.0210.credential-lifetime-code",
+      "scenario": "v2-lane-exp-only-bound.test.ts",
+      "sabotage": "middleware/oidcVerifier.ts refused an over-lifetime token with the expired reason instead of credential_lifetime_exceeded.",
+      "subject": {
+        "host": "openwop-app workflow-engine",
+        "build": "a07093131d (suite pin 2.49.8), sabotaged locally in its own conformance/run.ts harness (in-process, SQLite in a temp dir, OPENWOP_AGENT_DEPLOYMENT=on, OPENWOP_TRIGGER_INBOUND_SIGNING=true), one rule per run"
+      },
+      "suiteVersion": "2.49.8",
+      "result": "executed-fail",
+      "date": "2026-11-25"
+    },
+    {
+      "requirementId": "openwop.requirement.0206.delivery-extended-locale",
+      "scenario": "v2-content-locale-keys.test.ts",
+      "sabotage": "features/cms/contentProtocolRoutes.ts refused a section write under the advertised extended tag es-419 with 400 validation_error.",
+      "subject": {
+        "host": "openwop-app workflow-engine",
+        "build": "a07093131d (suite pin 2.49.8), sabotaged locally in its own conformance/run.ts harness (in-process, SQLite in a temp dir, OPENWOP_AGENT_DEPLOYMENT=on, OPENWOP_TRIGGER_INBOUND_SIGNING=true), one rule per run"
+      },
+      "suiteVersion": "2.49.8",
+      "result": "executed-fail",
+      "date": "2026-11-25"
+    },
+    {
+      "requirementId": "openwop.requirement.0177.form-when-reuses-edge-conditions",
+      "scenario": "v2-form-when-reuses-edge-conditions.test.ts",
+      "sabotage": "form-content-pack-manifest.schema.json let a field when name the operator jsonata, outside the edge-condition set.",
+      "subject": {
+        "host": "openwop corpus",
+        "build": "spec-artifacts 2.49.8 (as vendored in openwop-app a07093131d), schemas/v2/form-content-pack-manifest.schema.json sabotaged locally in a copy named by OPENWOP_CONFORMANCE_ROOT, run through openwop-app's harness for the forms gate"
+      },
+      "suiteVersion": "2.49.8",
+      "result": "executed-fail",
+      "date": "2026-11-25"
+    },
+    {
+      "requirementId": "openwop.requirement.0199.refresh-failure-fails-node",
+      "scenario": "v2-credential-interrupt.test.ts",
+      "sabotage": "src/oauth.ts answered a terminally failed refresh as a resolved credential, so the node did not fail.",
+      "subject": {
+        "host": "openwop-examples v2-reference",
+        "build": "ed00ba4 (suite pin 2.49.6), src/oauth.ts sabotaged locally, one rule per boot, SQLite in a temp dir, OPENWOP_OAUTH_CREDENTIAL_INTERRUPT=false so the no-interrupt path runs"
+      },
+      "suiteVersion": "2.49.6",
+      "result": "executed-fail",
+      "date": "2026-11-25"
+    },
+    {
+      "requirementId": "openwop.requirement.0222.yanked-version-lifecycle",
+      "scenario": "v2-registry-lifecycle.test.ts",
+      "sabotage": "The per-pack index of vendor.openwop.lifecycle-probe stopped marking 1.0.0 yanked, so it disagreed with that version's manifest.",
+      "subject": {
+        "host": "openwop-registry tree",
+        "build": "e998bc057 (openwop-registry origin/main), served on loopback by registry/scripts/serve.mjs from a local copy of the tree, the copy sabotaged locally"
+      },
+      "suiteVersion": "2.49.6",
+      "result": "executed-fail",
+      "date": "2026-11-25"
+    },
+    {
+      "requirementId": "openwop.requirement.0222.signing-keys-cover-served-versions",
+      "scenario": "v2-registry-lifecycle.test.ts",
+      "sabotage": "The registry discovery document's signingKeys[] dropped openwop-team-1, which signed versions the tree still serves.",
+      "subject": {
+        "host": "openwop-registry tree",
+        "build": "e998bc057 (openwop-registry origin/main), served on loopback by registry/scripts/serve.mjs from a local copy of the tree, the copy sabotaged locally"
+      },
+      "suiteVersion": "2.49.6",
+      "result": "executed-fail",
+      "date": "2026-11-25"
     }
   ]
 }
