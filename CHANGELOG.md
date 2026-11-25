@@ -8,6 +8,7 @@ Entries before this file was condensed carried full development detail. That tex
 
 ## [Unreleased]
 
+- **Suite: a host that names no protocol major is measured at major 2.** `--target-major` still defaults to the host's `preferredVersion`, then `max(protocolVersions[])`; the last fallback (no discovery, or none of either) is now 2 instead of 1, because v1 reached end of support on 2026-10-04 (RFC 0234) and RFC 0168 §D removes the 1.x target at end of support. `docs/KNOWN-LIMITS.md` now lists all four open RFCs (adds 0256 and 0261). Part of the v2 migration, phase 1.
 - **RFCs 0255, 0257 and 0253 Accepted.** openwop-app's certified cuts: 2.46.36 (`9f4cca7d4`) has no AI Envelope surface; 2.46.41 (`d2c7e089b`) passes the six `0257.*` legs; 2.46.42 (`d69c1cc76`, 550/0/0) passes every `0253.*` host leg for both pack kinds. The reference host passes the §E form legs.
 - **RFC 0250 Accepted.** openwop-app's certified 2.46.23 production cut (`f94471e98`, 487/0/0) advertises `hostEvents.replay`: a durable cursor resumes in commit order with no gap, and an unknown cursor is refused `409 host_event_resync_required` before any SSE byte. §B review deferred by steward exemption.
 
