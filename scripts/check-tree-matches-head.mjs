@@ -56,7 +56,6 @@ const DERIVED = [
   'README.md',
   'RFCS/README.md',
   'docs/PROTOCOL-STATUS.md',
-  'spec/v1/core-standard-manifest.json',
   'conformance/README.md',
 ];
 

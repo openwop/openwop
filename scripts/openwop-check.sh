@@ -138,10 +138,8 @@ echo
 # this repo, so the guard can't run in this server-free local gate.
 echo "[4/10] Generated protocol status..."
 node "$SPEC_ROOT/scripts/generate-protocol-status.mjs" --check
-# RFC 0155 §B — the core-standard manifest is DERIVED, so it can go stale the
-# moment the corpus moves. Checking it here is the "generated from or checked
-# against" half of §B; without it the manifest would assert a floor nobody runs.
-node "$SPEC_ROOT/scripts/generate-core-standard-manifest.mjs" --check
+# spec/v1/core-standard-manifest.json (RFC 0155 §B) is frozen by RFC 0266 §C and no
+# longer regenerated; the v2 profile floors are spec/v2/profiles.json.
 # RFC 0149 §A/§Conformance — the canonical resolved operation-path manifest SDK
 # repositories consume is DERIVED from api/openapi.yaml; stale = SDKs consuming
 # paths the contract no longer resolves.

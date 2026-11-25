@@ -100,7 +100,6 @@ node scripts/derive-core-adoption.mjs --write
 node scripts/generate-from-declaration.mjs --write
 python3 scripts/derive-v2-api.py --write
 node scripts/generate-gaps.mjs --write
-node scripts/generate-core-standard-manifest.mjs --write
 node scripts/generate-assurance-status.mjs --write
 node scripts/generate-protocol-status.mjs --write
 (cd conformance && node scripts/generate-scenario-majors.mjs --write && node scripts/generate-requirement-registry.mjs --write)
