@@ -26,7 +26,7 @@
 #                 source pointer that lives in a sibling repository is
 #                 written repo-qualified as `<repo>:<path>`, where `<repo>`
 #                 is a repository under https://github.com/openwop — e.g.
-#                 `openwop-examples:examples/hosts/postgres/test/byok-roundtrip.test.ts`,
+#                 `openwop-examples:examples/hosts/postgres/test/pack-consumer.test.ts`,
 #                 `openwop-app:backend/typescript/test/untrusted-marker.test.ts`,
 #                 `openwop-registry:registry/scripts/verify-signatures.mjs`.
 #                 The same convention applies to paths cited in `note:` prose.
@@ -504,12 +504,16 @@ invariants:
     severity: high
     threat_model: SECURITY/threat-model-secret-leakage.md
     tests:
-      - openwop-examples:examples/hosts/postgres/test/byok-roundtrip.test.ts
-      - openwop-examples:examples/hosts/postgres/test/reasoning-event-emission.test.ts
+      - conformance/src/scenarios/v2-secret-canary-absent.test.ts
+      - conformance/src/scenarios/v2-secrets-run-witness.test.ts
     note: |
       Sensitive workflow variables MUST be masked per host's advertised
-      compliance.defaultMode. Verified in reference impl; conformance
-      implementation-specific coverage is enforced by conformant hosts.
+      compliance.defaultMode. At major 2 the resolved-secret canary and a
+      run-supplied secret are checked absent from the create answer, the
+      snapshot, the polled and SSE event log (`streamMode=debug`), the run
+      list and fork state. The v1 reference-impl tests (the postgres host's
+      byok-roundtrip and reasoning-event-emission) were removed with its
+      v1 wire; implementation-specific coverage is enforced by conformant hosts.
     witness: claims-check
     witnessReview: initial-mechanical-2026-09-02
 
@@ -639,15 +643,15 @@ invariants:
     severity: high
     threat_model: SECURITY/threat-model-secret-leakage.md
     tests:
-      - openwop-examples:examples/hosts/postgres/test/byok-roundtrip.test.ts
-      - openwop-examples:examples/hosts/postgres/test/ai-policy.test.ts
+      - conformance/src/scenarios/v2-secret-canary-absent.test.ts
     note: |
       Resolved credential material must not enter prompt context.
-      Verified by byok-roundtrip.test.ts (BYOK plaintext NEVER on
-      run variables, debug bundles, or event payloads — only the
-      [REDACTED:<id>] marker + content-hash) and ai-policy.test.ts
-      (4-mode policy enforcement: cleartext credential flows are
-      blocked at the policy layer before reaching the provider).
+      At major 2, `v2-secret-canary-absent.test.ts` holds host-services.md
+      §`secrets` ("Raw key material MUST NOT appear in any event, log,
+      trace, prompt, error, export or screenshot") over a completed run, a
+      failed run and a replay fork. The v1 reference-impl tests (the
+      postgres host's byok-roundtrip and ai-policy) were removed with its
+      v1 wire.
     witness: claims-check
     witnessReview: initial-mechanical-2026-09-02
 
@@ -1600,7 +1604,7 @@ invariants:
       Without a body-size cap, a hostile upstream can OOM the host
       by streaming unbounded responses into per-run variables. Both
       defenses are reference-impl-tested in
-      `openwop-examples:examples/hosts/postgres/test/http-client.test.ts`; this
+      `openwop-examples:examples/hosts/v2-reference/test/safe-fetch.test.ts`; this
       protocol-tier invariant asserts the advertisement contract so
       independent implementers cannot ship a partial guard silently.
       Upstream (cite checked live 2026-09-22; informative, the OpenWOP rule
@@ -2173,9 +2177,7 @@ invariants:
       RFC 0004 CTI-1: a host implementing `MemoryAdapter` MUST scope
       every list/get query by authenticated principal → tenant_id.
       Tenant A's `mem://shared-ref` entries MUST NOT surface from
-      tenant B's calls against the same `memoryRef`. Reference-impl
-      verification: `openwop-examples:examples/hosts/postgres/test/memory-adapter.test.ts`
-      §8 (CTI-1 cross-tenant probe).
+      tenant B's calls against the same `memoryRef`.
     witness: witnessable-gated
     witnessReview: initial-mechanical-2026-09-02
 
@@ -2752,10 +2754,7 @@ invariants:
       auth-profiles.md §"openwop-auth-api-key-rotation" §"Canary
       redaction": when a host rejects a bearer token, the 401
       response envelope MUST NOT echo the rejected token (or any
-      portion of it) in `message` / `details`. Reference-impl probe:
-      `openwop-examples:examples/hosts/postgres/test/auth-rotation-scoped.test.ts` §6
-      asserts the rejected-token canary doesn't appear in the
-      response body.
+      portion of it) in `message` / `details`.
       Upstream (cite checked live 2026-09-22; informative, the OpenWOP rule
       above is what binds): MCP 2026-07-28 Authorization §"Token Handling"
       (invalid or expired tokens MUST receive HTTP 401)

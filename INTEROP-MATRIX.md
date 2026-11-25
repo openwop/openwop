@@ -27,18 +27,17 @@ Notes on the rows:
 - **Evidence tier** is the bundle's own field (RFC 0148). Every bundle here is `self`: the host operator cut it.
 - Older and side bundles for each host stay under [`evidence/v2-host-bundles/`](./evidence/v2-host-bundles/), named `<host>-<suite>[-<scope>].json`.
 
-## v1 reference examples
+## Reference examples
 
-v1 reached end of support on 2026-10-04 ([RFC 0234](./RFCS/0234-maintainer-set-v1-end-of-support.md)); `spec/v1/` is frozen. Four reference examples in `openwop-examples` still serve the v1 wire and have no v2 bundle. Each was last measured at suite 1.130.0.
+v1 reached end of support on 2026-10-04 ([RFC 0234](./RFCS/0234-maintainer-set-v1-end-of-support.md)); `spec/v1/` is frozen, and no reference example in `openwop-examples` serves the v1 wire any more. Besides the certified v2 reference host above, three examples serve the v2 core floor. None publishes a certification bundle; each measures itself with the published suite at `--target-major 2` in its `conformance.md`.
 
 | Host | Repo / Path | Evidence |
 | --- | --- | --- |
-| **In-memory** (reference example) | [`examples/hosts/in-memory`](https://github.com/openwop/openwop-examples/tree/main/examples/hosts/in-memory) | [`conformance.md`](https://github.com/openwop/openwop-examples/blob/main/examples/hosts/in-memory/conformance.md) |
 | **SQLite** (reference example) | [`examples/hosts/sqlite`](https://github.com/openwop/openwop-examples/tree/main/examples/hosts/sqlite) | [`conformance.md`](https://github.com/openwop/openwop-examples/blob/main/examples/hosts/sqlite/conformance.md) |
-| **Python in-memory** (reference example) | [`examples/hosts/python`](https://github.com/openwop/openwop-examples/tree/main/examples/hosts/python) | [`conformance.md`](https://github.com/openwop/openwop-examples/blob/main/examples/hosts/python/conformance.md) |
-| **Postgres** (reference example) | [`examples/hosts/postgres`](https://github.com/openwop/openwop-examples/tree/main/examples/hosts/postgres) | [`conformance-full.md`](https://github.com/openwop/openwop-examples/blob/main/examples/hosts/postgres/conformance-full.md) |
+| **Postgres** (reference example) | [`examples/hosts/postgres`](https://github.com/openwop/openwop-examples/tree/main/examples/hosts/postgres) | [`conformance.md`](https://github.com/openwop/openwop-examples/blob/main/examples/hosts/postgres/conformance.md) |
+| **Python** (reference example) | [`examples/hosts/python`](https://github.com/openwop/openwop-examples/tree/main/examples/hosts/python) | [`conformance.md`](https://github.com/openwop/openwop-examples/blob/main/examples/hosts/python/conformance.md) |
 
-Each claims `openwop-discovery-core`; Postgres also claims the `production` profile. The full profile list is in each host's evidence file and in the [evidence log](./docs/INTEROP-EVIDENCE-LOG.md).
+Of the derived profiles each meets `openwop-discovery-core`; none serves `webhooks`, so none meets `openwop-core-standard`. The Postgres example also serves `auditLogIntegrity`. What the v1 examples claimed, and when they were last measured (suite 1.130.0), stays in the [evidence log](./docs/INTEROP-EVIDENCE-LOG.md#v1-reference-examples--profiles-claimed-moved-from-interop-matrixmd-2026-09-27).
 
 ## Capabilities by host
 

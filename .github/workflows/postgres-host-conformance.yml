@@ -1,102 +1,105 @@
 name: Postgres host — conformance regression gate
 
-# The Postgres reference host advertises production-profile.md as of
-# 2026-05-11. This workflow is the regression gate that catches drift
-# against that claim: every push to the host's code or to the
-# conformance suite re-runs the suite against a freshly-booted host.
+# The regression gate for the Postgres example host (openwop-examples
+# `examples/hosts/postgres`), a v2-only host since openwop-examples#197:
+# several host processes on one Postgres, claims held as session-level
+# advisory locks, and the `auditLogIntegrity` family.
 #
-# Two distinct passes:
+# Two jobs:
 #
-#   in-host-smoke — runs the host's full in-process test suite via
-#     `npm test` in `examples/hosts/postgres/`. The script chains every
-#     file under `test/*.test.ts` plus `npm run test:auth-rotation`
-#     for the env-dependent auth-rotation-scoped test (which needs
-#     three keys: primary + secondary + tenant2). The authoritative
-#     count of tests + their names live in `package.json`'s `test`
-#     script — this comment intentionally does NOT enumerate them so a
-#     new test landing only requires the script edit, not a workflow
-#     edit too.
+#   in-host — the host's own tests against a real Postgres service:
+#     `npm test` (the durability test, whose multi-process cases run because
+#     OPENWOP_PG_DSN is set: two host processes on one database, one
+#     SIGKILLed mid-run and its run taken over through the released advisory
+#     lock; a live lock keeping the other process off a run; plus the
+#     audit-tamper test that `conformance/coverage.md` cites), then
+#     `npm run test:siblings` (the audit-checkpoint export against this repo's
+#     `scripts/verify-audit-checkpoints.mjs`, and the pack consumer against
+#     openwop-registry's signed example pack).
 #
-#   external-suite — boots the host via `npm run start:pglite` (the
-#     pglite-backed entry point) and runs this lane's (major-1)
-#     conformance scenario files against it via `npx vitest run` in
-#     `conformance/`. Asserts a pass-rate floor.
+#   external-suite — boots the host on PGlite (`npm run start:pglite`) and
+#     runs the PUBLISHED suite the host pins, `@openwop/openwop-conformance@2.49.15`,
+#     at `--target-major 2`. The suite version is pinned, so the totals are
+#     fixed and the gate can be exact rather than a percentage:
 #
-# The floor's history, because a floor is only meaningful next to the
-# number it was set against:
+#       Measured 2026-11-25 (two full runs, identical; host conformance.md):
+#         Test files  1 failed | 238 passed (239)
+#         Tests       1 failed | 956 passed (957)
+#         Dispositions executed-pass 480 · executed-fail 2 · inapplicable 771
 #
-#   85%  (2026-05-11) — set against a then-measured 86.2% (588/682),
-#        when the denominator was the whole suite INCLUDING the tests
-#        `setup.ts` skips. Every major-2 scenario added anywhere
-#        therefore lowered this host's rate with zero change to its
-#        passes or failures, and the floor had to sit far below reality
-#        to absorb that drift.
-#   92%  (2026-09-23, this change) — #1492 cut the denominator to the
-#        lane's own files, so the measured rate stepped 84% -> 94% with
-#        no change in host behaviour. 25 consecutive runs between
-#        2026-09-22T17:01Z and 2026-09-23T11:26Z measured 94% every
-#        time (exact range 94.21%-94.41%, min 1758/1866). An 85% floor
-#        against a 94% reality tolerates ~176 newly-failing tests
-#        before it says anything; 92% tolerates ~45 — enough headroom
-#        for a spec-first RFC landing scenarios the reference host has
-#        not implemented yet, not enough to hide a regression.
+#     MIN_PASSED is the measured 956, MAX_EXECUTED_FAIL the measured 2, and
+#     the failing files must be exactly KNOWN_FAILING:
+#       - v2-effect-seam-manifest.test.ts — the host advertises `replay` but
+#         its node runtime reaches no outbound effect seam yet, so it publishes
+#         an empty `GET /host/effect-seams` list (the same gap as the SQLite
+#         host). Remove it, and raise MIN_PASSED, when webhooks land.
+#     Bump SUITE_VERSION together with the host's own pin, and re-measure.
 #
-# A drop below the floor means a genuine regression slipped in; the
-# gate fires and the merge is blocked. The step also prints the margin
-# above the floor on every run, so a slow slide is visible BEFORE it
-# trips rather than only on the run that breaks it.
-#
-# @see examples/hosts/postgres/conformance-full.md — the public-result
-#   evidence this workflow renews on every push.
+# The v1 lane this workflow used to run (the in-tree suite's major-1 files
+# against the v1 host, a 92% pass-rate floor) ended with the host's v1 wire.
 
 on:
   workflow_dispatch:
+  schedule:
+    # 06:30 UTC nightly: the host lives in another repo, so its own changes
+    # reach this gate on the cron (or a dispatch), not on a path trigger.
+    - cron: '30 6 * * *'
   push:
     branches: [main]
     paths:
-      - 'conformance/**'
-      - 'spec/v1/production-profile.md'
       - '.github/workflows/postgres-host-conformance.yml'
+      - 'scripts/verify-audit-checkpoints.mjs'
   pull_request:
     paths:
-      - 'conformance/**'
       - '.github/workflows/postgres-host-conformance.yml'
+      - 'scripts/verify-audit-checkpoints.mjs'
 
-# Least privilege: every job here only reads the repo. A job that needs more
-# declares it on the job (job-level permissions replace these, not add to them).
+# Least privilege: every job here only reads the repo.
 permissions:
   contents: read
 
+env:
+  SUITE_VERSION: '2.49.15'
+
 jobs:
-  in-host-smoke:
-    name: Postgres host — in-host smoke suite
+  in-host:
+    name: Postgres host — in-host tests (real Postgres, two processes)
     runs-on: ubuntu-latest
-    # 25, not 10: the sibling-reconstruction step installs the conformance
-    # suite, and vitest 4.1.x (a RUNTIME dependency) declares optional peers on
-    # the 5.0.0 tooling packages, each of which requires vitest 5.0.0. npm 12
-    # spends ~7 minutes resolving that contradiction. Same cause as the
-    # pr-checks.yml budgets; measured 2026-09-04 when this job was cancelled
-    # mid-reconstruction, not by a failing test.
-    timeout-minutes: 25
+    timeout-minutes: 15
+    services:
+      postgres:
+        image: postgres:16-alpine
+        env:
+          POSTGRES_PASSWORD: openwop
+          POSTGRES_DB: openwop
+        ports: ['5432:5432']
+        options: >-
+          --health-cmd "pg_isready -U postgres"
+          --health-interval 2s
+          --health-timeout 5s
+          --health-retries 20
 
     steps:
       - uses: actions/checkout@v6
 
-      # Reference hosts moved to openwop-examples; check them out alongside.
-      - name: Check out openwop-examples (reference hosts)
+      # The host imports the v2 reference host's contract modules
+      # (`../v2-reference/src/{artifacts,errors,ids,codemap}.ts`), so the whole
+      # checkout is needed, but only the Postgres package is installed.
+      - name: Check out openwop-examples (example hosts)
         uses: actions/checkout@v6
         with:
           repository: openwop/openwop-examples
           path: examples-ext
 
-      # The postgres host's in-host test suite assumes the old monorepo layout —
-      # pack-consumer.test.ts reads <root>/registry/v1/packs + <root>/registry/keys
-      # (now in openwop-registry). Check that out too.
-      - name: Check out openwop-registry (pack fixtures for pack-consumer test)
+      - name: Check out the signed example pack (openwop-registry)
         uses: actions/checkout@v6
         with:
           repository: openwop/openwop-registry
           path: registry-ext
+          sparse-checkout: |
+            registry/keys
+            registry/v1/packs/core.openwop.examples
+          sparse-checkout-cone-mode: false
 
       - uses: actions/setup-node@v6
         with:
@@ -106,38 +109,34 @@ jobs:
 
       - name: Install Postgres host
         working-directory: examples-ext/examples/hosts/postgres
-        run: npm ci
+        run: npm ci --legacy-peer-deps
 
-      # The host test suite expects spec-corpus + registry siblings at its REPO_ROOT
-      # (examples-ext/), via relative imports + join(REPO_ROOT, ...). Reconstruct
-      # that layout from the checked-out repos so the in-host smoke runs unchanged:
-      #   - conformance/src/lib/*           (spec corpus, stays here)  → mcp-client, oauth2-oidc, reasoning-event tests
-      #   - scripts/verify-audit-checkpoints.mjs (spec corpus)         → audit-checkpoint-export test
-      #   - registry/v1/packs + registry/keys (openwop-registry)       → pack-consumer test
-      - name: Reconstruct spec-corpus + registry siblings for host tests
-        run: |
-          npm --prefix conformance ci
-          ln -s "$GITHUB_WORKSPACE/conformance" examples-ext/conformance
-          ln -s "$GITHUB_WORKSPACE/scripts/verify-audit-checkpoints.mjs" \
-                examples-ext/scripts/verify-audit-checkpoints.mjs
-          ln -s "$GITHUB_WORKSPACE/registry-ext/registry" examples-ext/registry
+      - name: Typecheck
+        working-directory: examples-ext/examples/hosts/postgres
+        run: npm run typecheck
 
-      - name: Run in-host smoke suite
+      - name: Durability + audit-tamper tests
         working-directory: examples-ext/examples/hosts/postgres
         env:
-          OPENWOP_WEBHOOK_ALLOW_PRIVATE: 'true'
+          OPENWOP_PG_DSN: postgres://postgres:openwop@127.0.0.1:5432/openwop
         run: npm test
+        timeout-minutes: 5
+
+      - name: Audit-checkpoint export + pack consumer tests
+        working-directory: examples-ext/examples/hosts/postgres
+        env:
+          OPENWOP_SPEC_REPO: ${{ github.workspace }}
+          OPENWOP_REGISTRY_REPO: ${{ github.workspace }}/registry-ext
+        run: npm run test:siblings
+        timeout-minutes: 2
 
   external-suite:
-    name: Postgres host — full conformance suite (pass-rate ≥92%)
+    name: Postgres host — published suite at major 2 (exact floor)
     runs-on: ubuntu-latest
     timeout-minutes: 30
 
     steps:
-      - uses: actions/checkout@v6
-
-      # Reference hosts moved to openwop-examples; check them out alongside.
-      - name: Check out openwop-examples (reference hosts)
+      - name: Check out openwop-examples (example hosts)
         uses: actions/checkout@v6
         with:
           repository: openwop/openwop-examples
@@ -147,28 +146,27 @@ jobs:
         with:
           node-version: '24'
           cache: 'npm'
-          cache-dependency-path: |
-            examples-ext/examples/hosts/postgres/package-lock.json
-            conformance/package-lock.json
+          cache-dependency-path: examples-ext/examples/hosts/postgres/package-lock.json
 
       - name: Install Postgres host
         working-directory: examples-ext/examples/hosts/postgres
-        run: npm ci
+        run: npm ci --legacy-peer-deps
 
-      - name: Install conformance suite
-        working-directory: conformance
-        run: npm ci
-
-      - name: Boot Postgres host via pglite (background)
+      - name: Boot Postgres host on PGlite (background)
         working-directory: examples-ext/examples/hosts/postgres
         env:
-          OPENWOP_WEBHOOK_ALLOW_PRIVATE: 'true'
-          OPENWOP_PORT: '3839'
+          OPENWOP_PORT: '3841'
+          OPENWOP_API_KEY: openwop-postgres-dev-key
+          # A second key bound to tenant `openwop-postgres-tenant-b`, so the
+          # cross-tenant refusal scenarios run instead of skipping.
+          OPENWOP_TENANT2_API_KEY: openwop-postgres-tenant-b-key
+          OPENWOP_PG_DSN: ''
         run: |
-          nohup npm run start:pglite > /tmp/postgres-host.log 2>&1 &
+          # node --import tsx (not npm run / npx tsx) so the pid is the host itself.
+          nohup node --import tsx src/server.ts > /tmp/postgres-host.log 2>&1 &
           echo $! > /tmp/postgres-host.pid
           for i in {1..30}; do
-            if curl -sf "http://127.0.0.1:3839/.well-known/openwop" > /dev/null; then
+            if curl -sf -H 'OpenWOP-Version: 2' "http://127.0.0.1:${OPENWOP_PORT}/.well-known/openwop" > /dev/null; then
               echo "host ready"
               exit 0
             fi
@@ -178,121 +176,48 @@ jobs:
           cat /tmp/postgres-host.log
           exit 1
 
-      - name: Run full conformance suite
-        working-directory: conformance
+      - name: Published conformance suite at major 2
+        working-directory: examples-ext/examples/hosts/postgres
         env:
-          OPENWOP_BASE_URL: http://127.0.0.1:3839
-          OPENWOP_API_KEY: openwop-postgres-dev-key
-          OPENWOP_WEBHOOK_ALLOW_PRIVATE: 'true'
+          OPENWOP_TEST_TENANT_B_API_KEY: openwop-postgres-tenant-b-key
+          KNOWN_FAILING: 'v2-effect-seam-manifest.test.ts'
+          MIN_PASSED: '956'
+          MAX_EXECUTED_FAIL: '2'
         run: |
-          # Capture exit + stats; allow non-zero exit because the suite
-          # has known feature gaps (registry, stream-modes-buffer,
-          # cap-breach). Assert on pass-rate floor instead.
-          # Run only the files registered for this lane's target major (1).
-          # A major-2-only file is inapplicable here (setup.ts skips every one
-          # of its tests), but vitest still counts those skips in the `(total)`
-          # the floor divides by — so every v2 scenario added anywhere lowered
-          # this host's rate with zero change in its passes or failures
-          # (RFC 0208: +19 skipped, 85% -> 84%, passed and failed unchanged).
-          # Selecting the lane's files keeps the denominator to what this host
-          # is actually measured on; it does not hide a failure.
-          V1_FILES=$(node -e 'const m=require("./scenario-majors.json").majors;console.log(Object.keys(m).filter(f=>m[f].includes(1)).map(f=>"src/scenarios/"+f).join(" "))')
-          set +e
-          npx vitest run --reporter=default $V1_FILES 2>&1 | tee /tmp/conformance.out
-          set -e
-
-          # Extract `N passed | N failed | N skipped` from the summary.
-          # NOTE: the example line that used to sit here as a comment was read
-          # out of THIS LOG on 2026-08-25 and quoted as if it were a measurement
-          # (Actions echoes the run: script, so a comment is typographically
-          # identical to output). Illustrative shape only, deliberately not
-          # number-bearing: `Tests  <n> failed | <n> passed | ... (<total>)`.
-          PASSED=$(grep -oE '[0-9]+ passed' /tmp/conformance.out | tail -1 | awk '{print $1}')
-          TOTAL=$(grep -oE '\([0-9]+\)' /tmp/conformance.out | tail -1 | tr -d '()')
-          if [ -z "$PASSED" ] || [ -z "$TOTAL" ] || [ "$TOTAL" -eq 0 ]; then
-            echo "Failed to parse vitest summary" >&2
-            tail -20 /tmp/conformance.out
-            exit 1
-          fi
-
-          # Name every failing scenario before reducing them to a fraction.
-          # A pass-rate floor converts a specific, named, reproducible failure
-          # into an anonymous number: `webhook-signed-delivery` was red here on
-          # every run from 2026-08-09 to 2026-08-25 — a reference host
-          # contradicting webhooks.md — and the job reported success each time
-          # because the rate sat ~10 points above the floor. Nobody reads
-          # "N failed" as "one of these is a spec-conformance defect". This
-          # does not gate; it makes the fraction attributable.
-          # Strip ANSI first. vitest colourises the marker glyph itself, so the
-          # raw line is " <ESC>[31m❯<ESC>[39m src/scenarios/x.test.ts ...": an
-          # anchored ^\s*❯ never matches, and the FIRST version of this block
-          # printed EMPTY while a scenario was genuinely failing — a report
-          # that read "all clear" having matched nothing, which is the exact
-          # defect the block was added to prevent. Match on content, not glyphs.
-          echo "--- failing scenarios (not a gate; the floor below decides) ---"
+          # The suite exits non-zero on its one known failure; the floor below
+          # is the verdict, so the step's default `bash -e` must not end it here.
+          set +e -uo pipefail
+          npx -y "@openwop/openwop-conformance@${SUITE_VERSION}" \
+            --base-url http://127.0.0.1:3841 --api-key openwop-postgres-dev-key \
+            --target-major 2 --max-workers 2 2>&1 | tee /tmp/conformance.out
           sed -r 's/\x1b\[[0-9;]*[A-Za-z]//g' /tmp/conformance.out > /tmp/conformance.plain
-          NAMED=$(grep -E '(^|[[:space:]])(FAIL|❯|×)[[:space:]]|\.test\.ts.*[0-9]+ failed' /tmp/conformance.plain \
-                  | grep -E '\.test\.ts' | sed 's/^[[:space:]]*/  /' | sort -u)
-          [ -n "$NAMED" ] && printf '%s\n' "$NAMED"
-          # Self-check: an empty list is only credible when the summary agrees.
-          # Without this, a broken matcher and a clean run are indistinguishable
-          # — the same "silent on empty" ambiguity that let the header defect
-          # ride for 16 days.
-          FAILED=$(grep -oE '[0-9]+ failed' /tmp/conformance.plain | tail -1 | awk '{print $1}')
+
+          PASSED=$(grep -E '^[[:space:]]*Tests[[:space:]]' /tmp/conformance.plain | tail -1 | grep -oE '[0-9]+ passed' | awk '{print $1}')
+          FAILED=$(grep -E '^[[:space:]]*Tests[[:space:]]' /tmp/conformance.plain | tail -1 | grep -oE '[0-9]+ failed' | awk '{print $1}')
           FAILED=${FAILED:-0}
-          # Scoped to the `Tests` summary line, not a bare tail -1: vitest omits
-          # the `skipped` clause entirely when nothing was skipped, and a loose
-          # match would then silently report the `Test Files` skip count as if
-          # it were a test count.
-          SKIPPED=$(grep -E '^[[:space:]]*Tests[[:space:]]' /tmp/conformance.plain \
-                    | tail -1 | grep -oE '[0-9]+ skipped' | awk '{print $1}')
-          SKIPPED=${SKIPPED:-0}
-          NAMED_N=$(printf '%s' "$NAMED" | grep -c . || true)
-          if [ "$FAILED" -gt 0 ] && [ "$NAMED_N" -eq 0 ]; then
-            echo "::warning::vitest reports ${FAILED} failing test(s) but this step named none — the matcher is broken, not the run clean."
-          elif [ "$FAILED" -eq 0 ]; then
-            echo "  (none — vitest summary reports 0 failed)"
-          fi
-          echo "--- end failing scenarios ---"
-
-          # Recorded known-failure set, so a CHANGE in the set is visible as a
-          # change and not just as a number that still clears the floor. As of
-          # 2026-09-23 (suite 2.36.1, host openwop-examples@main) it is 8 tests
-          # in 3 files, identical in every run since 2026-09-22T17:01Z:
-          #   era-key-stamped-v1.test.ts  (2) engineVersion / eventLogSchemaVersion
-          #                                   not stamped on a freshly-created run
-          #   interrupt-approval.test.ts  (4) RFC 0183 edit-accept + refine
-          #                                   resolutions not implemented
-          #   pause-resume.test.ts        (2) second-:pause 409 idempotency and
-          #                                   drain-current-node event ordering
-          # These are host gaps against the spec, not suite defects; they are
-          # named above on every run. This check does NOT gate — it asks a human
-          # to look at the list rather than letting the set drift silently under
-          # a rate that happens to stay green.
-          KNOWN_FAILING=8
-          if [ "$FAILED" -ne "$KNOWN_FAILING" ]; then
-            echo "::notice::Failing-test count is ${FAILED}, recorded baseline is ${KNOWN_FAILING}. Diff the named list above against the set recorded in this workflow and update it deliberately — do not absorb the difference into the floor."
-          fi
-
-          # Floor. Drop below = regression. See the header comment for how this
-          # number was chosen and what it was measured against.
-          FLOOR=92
-          RATE=$((PASSED * 100 / TOTAL))
-          # Headroom, stated twice, because a gate that only speaks when it
-          # trips cannot show a slow slide. MIN_PASSED is the integer ceiling
-          # of FLOOR% of TOTAL — the smallest pass count that still clears.
-          MARGIN=$((RATE - FLOOR))
-          MIN_PASSED=$(( (FLOOR * TOTAL + 99) / 100 ))
-          SLACK=$((PASSED - MIN_PASSED))
-          echo "passed=$PASSED failed=$FAILED skipped=$SKIPPED total=$TOTAL pass-rate=${RATE}% floor=${FLOOR}%"
-          echo "margin: ${MARGIN} point(s) above the floor — ${SLACK} further test(s) may fail before it trips"
-          if [ "$RATE" -ge "$FLOOR" ] && [ "$MARGIN" -le 1 ]; then
-            echo "::warning::Postgres host conformance pass-rate is ${RATE}%, only ${MARGIN} point(s) (${SLACK} test(s)) above the ${FLOOR}% floor. Fix the named failures above; the next scenario batch trips this gate."
-          fi
-          if [ "$RATE" -lt "$FLOOR" ]; then
-            echo "::error::Postgres host conformance pass-rate dropped below ${FLOOR}% floor: ${RATE}% (passed=$PASSED total=$TOTAL, $((MIN_PASSED - PASSED)) test(s) short). The failing scenarios are named above — fix them; do not lower the floor."
+          XFAIL=$(grep -oE 'executed-fail [0-9]+' /tmp/conformance.plain | tail -1 | awk '{print $2}')
+          if [ -z "$PASSED" ] || [ -z "$XFAIL" ]; then
+            echo "::error::could not parse the suite summary (Tests line or RFC 0148 dispositions)"
+            tail -30 /tmp/conformance.plain
             exit 1
           fi
+
+          # The failing files, by name, against the recorded set.
+          FILES=$(grep -oE 'FAIL +src/scenarios/[^ ]+\.test\.ts' /tmp/conformance.plain | awk '{print $2}' | sed 's|src/scenarios/||' | sort -u | paste -sd, -)
+          EXPECTED=$(printf '%s' "$KNOWN_FAILING" | tr ',' '\n' | sort -u | paste -sd, -)
+          echo "passed=$PASSED failed=$FAILED executed-fail=$XFAIL failing-files=${FILES:-none} (known: $EXPECTED)"
+
+          STATUS=0
+          if [ "$PASSED" -lt "$MIN_PASSED" ]; then
+            echo "::error::$PASSED tests passed, the floor is $MIN_PASSED (measured on suite $SUITE_VERSION)."; STATUS=1
+          fi
+          if [ "$XFAIL" -gt "$MAX_EXECUTED_FAIL" ]; then
+            echo "::error::$XFAIL requirements executed-fail, at most $MAX_EXECUTED_FAIL were measured."; STATUS=1
+          fi
+          if [ "${FILES:-}" != "$EXPECTED" ]; then
+            echo "::error::failing files [${FILES:-none}] differ from the recorded set [$EXPECTED]. Fix the new failure, or, when a known one is fixed, remove it from KNOWN_FAILING and raise MIN_PASSED."; STATUS=1
+          fi
+          exit $STATUS
 
       - name: Tear down host
         if: always()

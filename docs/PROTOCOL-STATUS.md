@@ -34,7 +34,7 @@
 | CLI `@openwop/cli` | 2.1.0 | openwop-cli `package.json` | speaks the wire directly; negotiates major 2 since 1.0.0 (the v1-only 0.18.x line is frozen on branch `cli-v1-frozen`) |
 | Registry `registryVersion` / `protocolVersion` | 1.0.0 / 1.0 | openwop-registry `.well-known/openwop-registry.json` | RFC 0172 sectionB #18; versioned by tree at v2 (RFC 0177 sectionA.3) |
 | openwop-registry corpus pin | v2.46.36 | openwop-registry `CORPUS_TAG` | as the SDK pin |
-| openwop-app corpus pin / suite pin | v2.49.7 / ^2.49.7 | openwop-app `schemas/CORPUS_TAG`, `backend/typescript/package.json` | tier-1 host; both must agree (RFC 0176 sectionE.1) |
+| openwop-app corpus pin / suite pin | v2.49.9 / ^2.49.9 | openwop-app `schemas/CORPUS_TAG`, `backend/typescript/package.json` | tier-1 host; both must agree (RFC 0176 sectionE.1) |
 | openwop-examples v2-reference host / suite pin | 2.0.0-rc.1 / 2.49.6 | openwop-examples `examples/hosts/v2-reference/package.json` | steward v2 reference host (tier-1 witness) |
 | openwop-examples sqlite host / suite pin | 2.0.0 / 2.49.14 | openwop-examples `examples/hosts/sqlite/package.json` | v2 example host; the Conformance Soak gate boots it |
 
