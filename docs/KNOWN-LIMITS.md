@@ -101,6 +101,8 @@ Several `Accepted` RFCs are provisional: their comment windows were waived and t
 | --- | --- | --- |
 | 0038 (Working Group charter) | `Draft` (parked) | Ratifies when the `GOVERNANCE.md` tripwire fires (at least three organizations and two non-steward hosts). The charter is written; the gate is adoption, not text. |
 | 0121 (Subscription provider auth) | `Active` (parked) | The remaining acceptance criteria hinge on Unresolved Question 1, a legal or terms-of-service citation for at least one named provider. Until that clears, no host advertises `subscription`. A standing decision, not an open action. |
+| 0256 (Tool-turn contract) | `Active` | Spec text, invariants and published scenarios are not all merged yet, and no host has certified every witnessable row on a production tool loop (the RFC's three open acceptance boxes). |
+| 0261 (Multi-region concurrent first write) | `Active` | Normative text and CHANGELOG are merged. No host advertises `idempotency.multiRegion`, so no certified bundle records the `0261.*` rows, and the register sweep is open. Its behavioural simulators run only at major 1 (§"Shape-only conformance coverage").
 
 ---
 
