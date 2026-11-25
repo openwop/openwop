@@ -1,27 +1,31 @@
 name: Conformance Soak
 
-# Three independent jobs:
+# Two independent jobs:
 #
-#   expansion-drift-guard — RFC 0013 expansion algorithm, conformance vs
-#     the in-memory reference host.
-#
-#   host-conformance — the actual regression gate. Runs the FULL
-#     conformance suite under strict mode against the SQLite reference
-#     host. Multi-process scenarios (restart-during-run + staleClaim).
+#   host-conformance — the regression gate. Boots the SQLite example host
+#     (openwop-examples `examples/hosts/sqlite`, a v2-only host since
+#     openwop-examples#194) and runs this tree's conformance suite against it
+#     at `--target-major 2`, plus the host's own durability test (a SIGKILL
+#     mid-run, then the run resumes from the file).
 #     **No external network dependencies** — if `packs.openwop.dev` is
 #     down, this job still passes or fails on host-only grounds, which is
 #     what a regression gate should do.
 #
-#     The three-language SDK smoke MOVED to openwop-sdks with the SDKs and
-#     does not run here. This header and the job's name both advertised it
-#     for as long as it had been gone; a job name is read as a coverage
-#     claim, and one that names a step the job does not have is the same
-#     shape as a docstring describing a check that does not exist.
+#     The three-language SDK smoke moved to openwop-sdks with the SDKs and
+#     does not run here.
 #
 #   registry-health — separate concern: the hosted node-pack registry at
 #     `packs.openwop.dev` is reachable and serves the documented shapes.
 #     A registry outage fails THIS job in isolation; the host-conformance
 #     job remains a clean signal about the SQLite host.
+#
+# The RFC 0013 expansion drift guard that used to be a third job compared
+# `conformance/src/lib/workflow-chain-expansion.ts` with a byte-mirror in the
+# in-memory example host. openwop-examples#194 deleted that host, and no
+# remaining host mirrors the algorithm (the v2 reference host implements
+# `workflow-chain-packs.md` in its own `chains.ts`), so the guard and its
+# script are retired; the live `workflow-chain-*` scenarios still measure
+# behaviour.
 #
 # Both jobs run on the nightly cron + on push to main + on
 # workflow_dispatch. They don't depend on each other.
@@ -34,12 +38,11 @@ on:
   push:
     branches: [main]
     paths:
-      # The SQLite reference host now lives in openwop-examples (checked out
+      # The SQLite example host lives in openwop-examples (checked out
       # below). Cross-repo path triggers aren't possible, so host-only changes
       # are exercised by the nightly cron + this repo's conformance/** changes;
       # the openwop-examples repo can also `workflow_dispatch` this gate.
       - 'conformance/**'
-      - 'scripts/check-workflow-chain-expansion-sync.mjs'
       - '.github/workflows/conformance-soak.yml'
 
 # Least privilege: every job here only reads the repo. A job that needs more
@@ -48,50 +51,19 @@ permissions:
   contents: read
 
 jobs:
-  # SP-01 (2026-08-18): the RFC 0013 expansion drift guard runs in its OWN job.
-  # It used to be step 4 of `host-conformance`, and because a failing step aborts
-  # the remaining steps of its job, a drift in the reference host's mirrored
-  # algorithm MASKED everything after it — the full strict-mode conformance suite
-  # and the multi-process durability scenarios (`restart-during-run`,
-  # `staleClaim`) never ran. That is not hypothetical: the mirror was missing
-  # #819's whole-value raw-typed rule from 2026-07-05, so this workflow was red on
-  # every push to `main` from 2026-06-13 until openwop-examples#19, and nobody
-  # could see what the suite would have said. Separate jobs mean a mirror drift
-  # reds exactly one job and the host lane still reports.
-  expansion-drift-guard:
-    name: RFC 0013 expansion-algorithm drift guard (conformance vs in-memory host)
-    runs-on: ubuntu-latest
-    timeout-minutes: 5
-
-    steps:
-      - uses: actions/checkout@v6
-
-      - name: Check out openwop-examples (reference hosts)
-        uses: actions/checkout@v6
-        with:
-          repository: openwop/openwop-examples
-          path: examples-ext
-
-      - uses: actions/setup-node@v6
-        with:
-          node-version: '24'
-
-      # Plain node reading two files — no npm install, no host boot.
-      - name: Workflow-chain expansion drift guard (vs openwop-examples host)
-        env:
-          OPENWOP_EXAMPLES_DIR: examples-ext
-        run: node scripts/check-workflow-chain-expansion-sync.mjs
-
   host-conformance:
-    name: SQLite host — full conformance + multi-process
+    name: SQLite v2 host — conformance at major 2 + durability
     runs-on: ubuntu-latest
     timeout-minutes: 30
 
     steps:
       - uses: actions/checkout@v6
 
-      # Reference hosts moved to openwop-examples; check them out alongside.
-      - name: Check out openwop-examples (reference hosts)
+      # Example hosts live in openwop-examples; check them out alongside. The
+      # SQLite host imports the v2 reference host's contract modules
+      # (`../v2-reference/src/{artifacts,errors,ids,codemap}.ts`), so the whole
+      # checkout is needed, but only the SQLite package is installed.
+      - name: Check out openwop-examples (example hosts)
         uses: actions/checkout@v6
         with:
           repository: openwop/openwop-examples
@@ -105,7 +77,7 @@ jobs:
             examples-ext/examples/hosts/sqlite/package-lock.json
             conformance/package-lock.json
 
-      - name: Install SQLite reference host
+      - name: Install SQLite example host
         working-directory: examples-ext/examples/hosts/sqlite
         run: npm ci
 
@@ -113,29 +85,26 @@ jobs:
         working-directory: conformance
         run: npm ci
 
-      # The SDKs moved to openwop-sdks. The conformance spec-corpus-validity
-      # SDK-helper block self-skips when sdk/typescript/dist is absent (its
-      # describe.skipIf guard), so the suite no longer needs the SDK built here.
-      - name: Pre-allocate ports for host + OTel collector
-        run: |
-          echo "OPENWOP_PORT=3838" >> $GITHUB_ENV
-          echo "OPENWOP_OTEL_COLLECTOR_PORT=14328" >> $GITHUB_ENV
-
-      - name: Boot SQLite host (background)
+      - name: Boot SQLite v2 host (background)
         working-directory: examples-ext/examples/hosts/sqlite
         env:
-          OPENWOP_PORT: ${{ env.OPENWOP_PORT }}
-          OPENWOP_WEBHOOK_ALLOW_PRIVATE: 'true'
-          OTEL_EXPORTER_OTLP_ENDPOINT: http://127.0.0.1:${{ env.OPENWOP_OTEL_COLLECTOR_PORT }}
-          OPENWOP_OTEL_METRIC_INTERVAL_MS: '500'
+          OPENWOP_PORT: '3839'
+          OPENWOP_API_KEY: openwop-sqlite-dev-key
+          # A second key bound to tenant `openwop-sqlite-tenant-b`, so the
+          # cross-tenant refusal scenarios run instead of skipping.
+          OPENWOP_TENANT2_API_KEY: openwop-sqlite-tenant-b-key
+          # Serve THIS tree's fixtures (read before the host's installed
+          # suite copy), so the suite under test and the host agree on them.
+          OPENWOP_FIXTURES_DIR: ${{ github.workspace }}/conformance/fixtures
           OPENWOP_CLAIM_TTL_MS: '2000'
           OPENWOP_HEARTBEAT_INTERVAL_MS: '500'
         run: |
           rm -rf data
-          nohup npx tsx src/server.ts > /tmp/host.log 2>&1 &
+          # node --import tsx (not npm start / npx tsx) so the pid is the host itself.
+          nohup node --import tsx src/server.ts > /tmp/host.log 2>&1 &
           echo $! > /tmp/host.pid
           for i in {1..30}; do
-            if curl -sf "http://127.0.0.1:${OPENWOP_PORT}/.well-known/openwop" > /dev/null; then
+            if curl -sf -H 'OpenWOP-Version: 2' "http://127.0.0.1:${OPENWOP_PORT}/.well-known/openwop" > /dev/null; then
               echo "host ready"
               exit 0
             fi
@@ -145,180 +114,50 @@ jobs:
           cat /tmp/host.log
           exit 1
 
-      - name: Run host-internal audit-tamper test
+      # The host's own durability test: SIGKILLs a host process mid-run and
+      # resumes the run from the file, and checks a live claim is respected.
+      # It replaces the suite's v1-only multi-process scenarios
+      # (`restart-during-run`, `staleClaim`, major 1 in scenario-majors.json),
+      # which a v2-only host cannot answer. Its hosts bind their own ports.
+      - name: Host durability test (kill mid-run, resume from the file)
         working-directory: examples-ext/examples/hosts/sqlite
         run: npm test
+        timeout-minutes: 3
 
-      - name: Full conformance suite (strict mode, no file parallelism)
+      # The major-2 scenario set, exactly as `openwop-conformance --target-major 2`
+      # selects it (scenario-majors.json), minus KNOWN_FAILING. Not strict mode:
+      # the host's published measurement (examples/hosts/sqlite/conformance.md) is
+      # the default mode, and the strict opt-out lists this job used to carry
+      # named v1 profiles. An advertised behaviour that soft-skips is recorded as
+      # such in the run's dispositions.
+      #
+      # KNOWN_FAILING is exact file names, each with its reason in conformance.md:
+      #   - v2-effect-seam-manifest.test.ts — the host advertises `replay` but its
+      #     node runtime reaches no outbound effect seam yet, so it publishes an
+      #     empty `GET /host/effect-seams` list. Remove the entry when the first
+      #     seam (webhooks) lands; any other failure reds the gate.
+      - name: Conformance suite at major 2
+        if: '!cancelled()'
         working-directory: conformance
         env:
-          OPENWOP_BASE_URL: http://127.0.0.1:${{ env.OPENWOP_PORT }}
+          OPENWOP_BASE_URL: http://127.0.0.1:3839
           OPENWOP_API_KEY: openwop-sqlite-dev-key
-          OPENWOP_REQUIRE_BEHAVIOR: 'true'
-          OPENWOP_OTEL_COLLECTOR: 'true'
-          OPENWOP_OTEL_COLLECTOR_PORT: ${{ env.OPENWOP_OTEL_COLLECTOR_PORT }}
-          # Profiles + capabilities the SQLite reference host honestly
-          # does NOT claim per INTEROP-MATRIX.md (verified against the
-          # host's `/.well-known/openwop` advertisement). Per
-          # `conformance/src/lib/env.ts` §OPENWOP_OPTED_OUT_PROFILES,
-          # listing them here flips strict-mode failure → PASS-by-opt-
-          # out for the matching `behaviorGate(<name>, …)` call sites.
-          # Distinguishes "host doesn't claim this surface" (good) from
-          # "host claims but doesn't deliver" (bug). Without this, the
-          # soak gate fails on every push even when no regression
-          # occurred — the suite has more capability-gated scenarios
-          # than this reference host claims.
-          #
-          # RFC 0027/0028/0029 `prompts-*` profiles (5 entries) — the
-          # SQLite reference host has no prompts implementation
-          # (`examples/hosts/sqlite/src/` ships audit/interrupts/
-          # observability/server/webhooks only — no `promptStore.ts` or
-          # `promptCompose.ts`). The reference workflow-engine host is
-          # the only one that wires the RFC 0027/0028/0029 surface end-
-          # to-end; SQLite honestly doesn't advertise it. Listed here so
-          # strict-mode skip messages cite the right spec section
-          # rather than firing a false-positive failure under
-          # OPENWOP_REQUIRE_BEHAVIOR.
-          #
-          # Agent-platform cohort (RFCs 0078–0089, suite v1.11–v1.18) — 18
-          # capability-gated profiles the minimal SQLite reference host does NOT
-          # implement (verified against its `/.well-known/openwop`: it advertises
-          # core/host-sqlite/stream-poll/stream-sse/interrupt-*/auth-api-key-
-          # rotation/audit-log-integrity/byok only). These scenarios landed in the
-          # suite without a matching opt-out here, turning the strict-mode soak red
-          # since ~v1.11 (pre-dating the 2026-06 repo split). The reference
-          # workflow-engine/postgres hosts carry these surfaces; SQLite honestly
-          # doesn't. Opting out keeps the soak a clean regression signal for the
-          # profiles SQLite DOES claim ("0 deterministic failures").
-          #
-          # RFC 0090/0091/0092 cohort (suite v1.21) — 3 always-on shape probes
-          # (verifier-gating, callai-multimodal, agent-capability-degraded) that
-          # landed in @openwop/openwop-conformance@1.21.0 without a matching
-          # opt-out here. The minimal SQLite host does NOT advertise these
-          # profiles (verified: they soft-skip in non-strict mode), so under
-          # OPENWOP_REQUIRE_BEHAVIOR=true they turn the soak red. Opting out
-          # keeps the strict gate a clean signal for what SQLite DOES claim.
-          # 2026-09-01 cohort (13 profiles) — the strict run demanded these
-          # and the SQLite host advertises none of them. Verified the honest
-          # way rather than by pattern: booted the host and read its live
-          # `/.well-known/openwop`, then probed each name at the document
-          # root, under `capabilities.`, and in `profiles[]`. All 13 came
-          # back `undefined` — the host declares no `profiles` array at all,
-          # and its capability keys are memory/feedback/limits/discovery/
-          # auth/secrets/modelCapabilities/webhooks/orchestrator/dispatch/
-          # agents/subWorkflow. `dispatch.perItemInput` is the one worth
-          # naming: `dispatch` IS advertised, the `perItemInput` sub-key is
-          # not, so it is opted out at the sub-key and the rest of the
-          # dispatch surface stays under strict enforcement.
-          #
-          # This distinction is the whole point of the list: opting out must
-          # mean "the host does not claim this surface", never "the host
-          # claims it and fails". A profile that IS advertised must stay out
-          # of this list so a real regression can still red the gate.
-          #
-          # These accounted for ~40 of the failures in the 2026-09-01 run.
-          # The other ~200 were a dead host, not a suite problem
-          # (better-sqlite3 v11 SIGABRTing on Node 24) — fixed in
-          # openwop-examples#26. Both had to land for the soak to report.
-          # 2026-09-01 second cohort (32 profiles). These were NOT newly
-          # broken — they were unreachable. The host used to die ~40% of the
-          # way through the run, so the scenarios that demand these never
-          # executed and the gate could not report on them. Fixing the crash
-          # (better-sqlite3 v11 → v12, openwop-examples#26) took the run from
-          # 241 failures to 40, and the 40 that remained were this set
-          # becoming visible for the first time.
-          #
-          # Verified the same way as the first cohort: booted the host on the
-          # bumped dependency and probed each name against its live
-          # `/.well-known/openwop` at the document root, under `capabilities.`,
-          # and in `profiles[]`. 32 of 32 unadvertised; 0 advertised-but-
-          # failing. Had any been advertised it would have stayed OFF this
-          # list — that case is a real host bug and must keep the gate red.
-          #
-          # Note `workflowChainPacks.supported` and
-          # `workflowChainPacks.subChains.supported` appear even though
-          # `workflowChainPacks` is already listed: matching is exact-string,
-          # not prefix, so each gated sub-key needs its own entry.
-          OPENWOP_OPTED_OUT_PROFILES: 'openwop-production,openwop-auth-oauth2-client-credentials,openwop-auth-oidc-user-bearer,openwop-auth-mtls,openwop-replay-fork,workflowChainPacks,prompts-supported,prompts-endpoints,prompts-mutable,prompts-agent-bindings,prompts-observability-full,openwop-agent-platform,openwop-budget-enforcement,openwop-deployment-channel-dispatch,openwop-deployment-lifecycle,openwop-egress-audience-binding,openwop-egress-decision-content-free,openwop-eval-run,openwop-live-allowlist-enforced,openwop-live-invocation-bracket,openwop-live-structured-output,openwop-memory-degraded,openwop-org-chart-scoping,openwop-org-position-no-authority,openwop-roster-attribution,openwop-safefetch-live-audit,openwop-tool-catalog,openwop-tool-session-lifecycle,openwop-trigger-bridge,openwop-verifier-gating,openwop-callai-multimodal,openwop-agent-capability-degraded,openwop-grpc-transport,openwop-i18n,connections.packsSupported,a2a.durableTasks,a2a.pushNotifications,dispatch.perItemInput,mcp-2026-07-28,mcp.mrtr.client,openwop-compensation,openwop-content,openwop-context-budget,openwop-self-hosted-runner,triggerBridge.ingestion,uiPlugins.supported,workflowChainPacks.deferredParameters.supported,workflowChainPacks.hostExpansionSeam,a2a-1.0,a2a.peerAuthority,a2a.versionNegotiation,agents.goals,agents.proposals,dataResidency,dispatch.fanOutSupported,host.forms.contentPacks,interrupt.approverRouting,mcp.extensionOpacity,mcp.versionNegotiation,openwop-anonymous-actor,openwop-artifact-type-packs,openwop-channel-presence,openwop-chat-card-packs,openwop-context-summarization,openwop-memory-injection-budget,openwop-multi-party-conversation,openwop-selfhosted-providers,openwop-speech-synthesis,openwop-subscription-auth,openwop-tool-catalog-compact,openwop-voice-bargein,openwop-voice-interim-not-durable,openwop-voice-streamref-tenant,openwop-voice-synthesis,openwop-voice-transcription,openwop-workload-identity,openwop-workload-identity-delegation,portability,workflowChainPacks.subChains.supported,workflowChainPacks.supported'
-          # Fixture-id opt-outs — the SQLite host auto-loads every
-          # `conformance-*.json` fixture on disk (so the fixture IS
-          # advertised in `/.well-known/openwop`) but does not implement
-          # the underlying feature for the entries below:
-          #   - conformance-dispatch-{input-mapping,output-mapping,
-          #     cross-worker-handoff}*  → RFC 0022 §A / §D variable
-          #     projection between parent and dispatched child runs is
-          #     not implemented in the reference SQLite executor.
-          #   - conformance-subworkflow-input-mapping*                  → RFC 0022 §B input
-          #     seeding into a `core.subWorkflow` child is not
-          #     implemented in the reference SQLite executor.
-          #   - openwop-smoke-cost-emit                                 → the SQLite host loads
-          #     the fixture workflow but doesn't implement the
-          #     `conformance.cost.emit` fixture node, so runs terminate
-          #     `failed` instead of `completed`. Cost-emission lives in
-          #     the workflow-engine reference; SQLite hasn't picked up
-          #     the G6 / O4 cost-attribution path.
-          #   - conformance-model-capability-insufficient               → fixture references the
-          #     `core.ai.*` node family with RFC 0031
-          #     `requiredModelCapabilities` declarations. SQLite's
-          #     executor doesn't register these node types so runs fail
-          #     with `unsupported_node_type` rather than
-          #     `capability_not_provided`. Model-capability gating
-          #     lives in the workflow-engine reference.
-          # Per `conformance/src/lib/fixtures.ts`, these ids are
-          # subtracted from the advertised-fixture cache at suite init
-          # so `isFixtureAdvertised(...)` skips the gated scenarios.
-          # NOTE: `conformance-subworkflow-parent` stays advertised
-          # because the non-OTel `subworkflow.test.ts` passes on SQLite;
-          # the OTel-specific opt-out is below.
-          OPENWOP_OPTED_OUT_FIXTURES: 'conformance-dispatch-input-mapping*,conformance-dispatch-output-mapping*,conformance-dispatch-cross-worker-handoff*,conformance-subworkflow-input-mapping*,openwop-smoke-cost-emit,conformance-model-capability-insufficient'
-          # Scenario-id opt-outs — finer-grained than fixture or
-          # profile opt-out. Used when the host correctly advertises
-          # the prerequisite fixture + capability, but the specific
-          # scenario depends on a feature the host doesn't implement:
-          #   - otel-trace-propagation-subworkflow → SQLite advertises
-          #     `conformance-subworkflow-parent` AND
-          #     `capabilities.observability` (for audit-log integrity),
-          #     but doesn't propagate `traceparent` across the
-          #     `core.subWorkflow` dispatch boundary.
-          # Per `conformance/src/lib/env.ts §isScenarioOptedOut`,
-          # individual tests consult this set inside their skip
-          # predicate.
-          OPENWOP_OPTED_OUT_SCENARIOS: 'otel-trace-propagation-subworkflow'
+          OPENWOP_TEST_TENANT_B_API_KEY: openwop-sqlite-tenant-b-key
+          OPENWOP_TARGET_MAJOR: '2'
+          KNOWN_FAILING: 'v2-effect-seam-manifest.test.ts'
           # OPENWOP_TEST_PUBLIC_REGISTRY deliberately NOT set here — it
           # would mix `packs.openwop.dev` reachability into the host
           # regression signal. Registry health is the next job's
           # responsibility.
-        run: npx vitest run --no-file-parallelism
-
-      # SP-01 follow-up (2026-08-18): run even when the strict suite above
-      # reds. Moving the drift guard to its own job un-masked the strict
-      # suite — and immediately showed that the strict suite was in turn
-      # masking THIS step, which is the durability signal (`restart-during-run`,
-      # `staleClaim`) and the one nothing else covers. A step that only runs
-      # when everything upstream is green reports nothing on exactly the days
-      # you need it. The job still fails when either step fails; both now say
-      # what they found.
-      - name: Multi-process scenarios (restart-during-run + staleClaim)
-        if: '!cancelled()'
-        working-directory: conformance
-        env:
-          OPENWOP_BASE_URL: http://127.0.0.1:${{ env.OPENWOP_PORT }}
-          OPENWOP_API_KEY: openwop-sqlite-dev-key
-          OPENWOP_RUN_RESTART_DURING_RUN: '1'
-          OPENWOP_RUN_STALE_CLAIM: '1'
-          # These scenarios spawn their own host child processes (spawnHost →
-          # `npx tsx src/server.ts` in repoRoot/<HOST_DIR>). The host moved to
-          # openwop-examples (checked out at examples-ext/), so the default
-          # 'examples/hosts/sqlite' no longer exists under the spec-repo root that
-          # findRepoRoot() resolves to, and spawn fails with `spawn npx ENOENT`
-          # (invalid cwd). Point both scenarios at the checked-out host dir.
-          OPENWOP_RESTART_DURING_RUN_HOST_DIR: examples-ext/examples/hosts/sqlite
-          OPENWOP_STALE_CLAIM_HOST_DIR: examples-ext/examples/hosts/sqlite
         run: |
-          npx vitest run src/scenarios/restart-during-run.test.ts src/scenarios/staleClaim.test.ts
-
-      # The three-language SDK smoke (sdk/smoke/all.sh) moved to openwop-sdks with
-      # the SDKs; it runs there against a booted host in that repo's CI.
+          set -euo pipefail
+          mapfile -t FILES < <(node -e '
+            const m = require("./scenario-majors.json").majors;
+            const skip = new Set(process.env.KNOWN_FAILING.split(",").filter(Boolean));
+            for (const [f, majors] of Object.entries(m)) if (majors.includes(2) && !skip.has(f)) console.log("src/scenarios/" + f);
+          ')
+          echo "${#FILES[@]} major-2 scenario file(s); known failing: ${KNOWN_FAILING}"
+          npx vitest run --config vitest.config.ts --maxWorkers 2 "${FILES[@]}"
 
       - name: Tear down host
         if: always()

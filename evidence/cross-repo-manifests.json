@@ -283,8 +283,16 @@
       "conformancePin": "^2.49.7"
     },
     "openwop-examples": {
-      "inMemoryHost": "1.1.7",
-      "conformancePin": "^1.152.0"
+      "hosts": {
+        "v2-reference": {
+          "version": "2.0.0-rc.1",
+          "conformancePin": "2.49.6"
+        },
+        "sqlite": {
+          "version": "2.0.0",
+          "conformancePin": "2.49.14"
+        }
+      }
     }
   }
 }
