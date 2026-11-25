@@ -75,6 +75,5 @@
       "description": "True if either run was in-flight and only a prefix was compared."
     }
   },
-  "additionalProperties": false,
-  "x-openwop-seeded-from": "v1"
+  "additionalProperties": false
 }
