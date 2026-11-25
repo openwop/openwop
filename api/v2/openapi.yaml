@@ -1,7 +1,7 @@
 openapi: 3.1.0
 info:
   title: OpenWOP v2 API
-  version: 2.49.11
+  version: 2.49.12
   summary: REST surface for declaring, executing, suspending, resuming, and observing multi-step workflows.
   description: 'The OpenWOP v2 REST API. Paths are unversioned and served at the bare origin; a client selects a version with
     the `OpenWOP-Version` header from the host''s `protocolVersions[]`. Conformance seams and test-mode operations are not
@@ -543,8 +543,8 @@ paths:
           maximum: 5000
         description: 'Optional batching hint. When set, the server accumulates events for up to N ms, or until a forced-flush
           trigger fires (terminal events, suspensions, connection close), and emits a single SSE event with `event: batch`
-          and `data:` as a JSON array of `RunEventDoc`. Range 0..5000; `0` means no buffering. See `stream-modes.md` §Aggregation
-          hint.'
+          and `data:` as a JSON array of `RunEventDoc`. Range 0..5000; `0` means no buffering. See events.md §"Batching and
+          subscribers".'
       - in: query
         name: resumable
         schema:
@@ -928,15 +928,15 @@ paths:
       summary: Deliver a published content page resolved for the negotiated locale.
       description: 'Returns the published page `slug` for the locale negotiated from `Accept-Language`, with its sections
         already merged, in render order. Locale fallback follows i18n.md: q-value order, then language family, then `content.baseLocale`.
-        Sections are merged field by field (`localized-content.md` §C).
+        Sections are merged field by field (i18n.md §Localized content, Delivery).
 
 
         The response sets `Content-Language` to the locale used, `Vary: Accept-Language, Accept-Encoding`, and `Cache-Control:
         public, max-age=300, stale-while-revalidate=3600`. Only `status: "published"` content is served.
 
 
-        The tenant is host-resolved (`localized-content.md` §F): from the credential when authenticated, host-defined (for
-        example by domain) when anonymous. A `slug` absent for the resolved tenant returns the same `404` as a nonexistent
+        The tenant is host-resolved (i18n.md §Localized content, Tenancy): from the credential when authenticated, host-defined
+        (for example by domain) when anonymous. A `slug` absent for the resolved tenant returns the same `404` as a nonexistent
         slug, so tenants cannot be enumerated.'
       operationId: getContentPage
       parameters:
@@ -977,13 +977,13 @@ paths:
       - content
       summary: Delete a content page (admin).
       description: 'Deletes a page with its sections and every locale overlay: the `DELETE …/content/pages/{pageId}` admin
-        operation of `localized-content.md` §D. Tenant-scoped; requires `content.write`.
+        operation of the localized content surface (i18n.md §Localized content). Tenant-scoped; requires `content.write`.
 
 
         The path segment is the page''s `pageId`, not its slug. The operation shares this path item with public delivery,
         which addresses the same segment by `slug`, and OpenAPI 3.1 forbids two templates that differ only in parameter name,
         so the parameter keeps delivery''s name. A `pageId` absent for the caller''s tenant returns the same `404` as a nonexistent
-        one (`localized-content.md` §F), so tenants cannot be enumerated.'
+        one (i18n.md §Localized content, Tenancy), so tenants cannot be enumerated.'
       operationId: deleteContentPage
       security:
       - ApiKeyAuth:
@@ -2571,7 +2571,7 @@ paths:
                   type: array
                   items:
                     type: string
-                  description: Filter to runs carrying these tags (see `run-options.md`).
+                  description: Filter to runs carrying these tags (runs.md §"`tags` and `metadata`").
                 signatureAlgorithms:
                   type: array
                   minItems: 1

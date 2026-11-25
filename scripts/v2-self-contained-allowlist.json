@@ -129,30 +129,12 @@
     },
     {
       "file": "spec/v2/errors.json",
-      "kind": "v1-doc",
-      "target": "node-packs.md",
-      "fingerprint": "286d7ccb4c90",
-      "excerpt": "\"statusSource\": \"v1 convention (node-packs.md)\",",
-      "disposition": "to-rehome",
-      "why": "errors.json statusSource names a v1 doc as the status rule (RFC 0266 §B.1 rewrite); home: spec/v2/core/packs.md §Names and agents (RFC 0266 §B.2)"
-    },
-    {
-      "file": "spec/v2/errors.json",
       "kind": "spec-v1",
       "target": "spec/v1/node-packs.md",
       "fingerprint": "75e8b68a374b",
       "excerpt": "\"source\": \"spec/v1/node-packs.md\"",
       "disposition": "history",
       "why": "errors.json `source` is row provenance (errors.schema: \"the document or decision the row came from\"); the row itself is the v2 rule"
-    },
-    {
-      "file": "spec/v2/errors.json",
-      "kind": "v1-doc",
-      "target": "node-packs.md",
-      "fingerprint": "286d7ccb4c90~2",
-      "excerpt": "\"statusSource\": \"v1 convention (node-packs.md)\",",
-      "disposition": "to-rehome",
-      "why": "errors.json statusSource names a v1 doc as the status rule (RFC 0266 §B.1 rewrite); home: spec/v2/core/packs.md §Names and agents (RFC 0266 §B.2)"
     },
     {
       "file": "spec/v2/errors.json",
@@ -165,30 +147,12 @@
     },
     {
       "file": "spec/v2/errors.json",
-      "kind": "v1-doc",
-      "target": "node-packs.md",
-      "fingerprint": "286d7ccb4c90~3",
-      "excerpt": "\"statusSource\": \"v1 convention (node-packs.md)\",",
-      "disposition": "to-rehome",
-      "why": "errors.json statusSource names a v1 doc as the status rule (RFC 0266 §B.1 rewrite); home: spec/v2/core/packs.md §Names and agents (RFC 0266 §B.2)"
-    },
-    {
-      "file": "spec/v2/errors.json",
       "kind": "spec-v1",
       "target": "spec/v1/node-packs.md",
       "fingerprint": "75e8b68a374b~3",
       "excerpt": "\"source\": \"spec/v1/node-packs.md\"",
       "disposition": "history",
       "why": "errors.json `source` is row provenance (errors.schema: \"the document or decision the row came from\"); the row itself is the v2 rule"
-    },
-    {
-      "file": "spec/v2/errors.json",
-      "kind": "v1-doc",
-      "target": "node-packs.md",
-      "fingerprint": "286d7ccb4c90~4",
-      "excerpt": "\"statusSource\": \"v1 convention (node-packs.md)\",",
-      "disposition": "to-rehome",
-      "why": "errors.json statusSource names a v1 doc as the status rule (RFC 0266 §B.1 rewrite); home: spec/v2/core/packs.md §Names and agents (RFC 0266 §B.2)"
     },
     {
       "file": "spec/v2/errors.json",
@@ -201,30 +165,12 @@
     },
     {
       "file": "spec/v2/errors.json",
-      "kind": "v1-doc",
-      "target": "node-packs.md",
-      "fingerprint": "286d7ccb4c90~5",
-      "excerpt": "\"statusSource\": \"v1 convention (node-packs.md)\",",
-      "disposition": "to-rehome",
-      "why": "errors.json statusSource names a v1 doc as the status rule (RFC 0266 §B.1 rewrite); home: spec/v2/core/packs.md §Names and agents (RFC 0266 §B.2)"
-    },
-    {
-      "file": "spec/v2/errors.json",
       "kind": "spec-v1",
       "target": "spec/v1/node-packs.md",
       "fingerprint": "75e8b68a374b~5",
       "excerpt": "\"source\": \"spec/v1/node-packs.md\"",
       "disposition": "history",
       "why": "errors.json `source` is row provenance (errors.schema: \"the document or decision the row came from\"); the row itself is the v2 rule"
-    },
-    {
-      "file": "spec/v2/errors.json",
-      "kind": "v1-doc",
-      "target": "node-packs.md",
-      "fingerprint": "286d7ccb4c90~6",
-      "excerpt": "\"statusSource\": \"v1 convention (node-packs.md)\",",
-      "disposition": "to-rehome",
-      "why": "errors.json statusSource names a v1 doc as the status rule (RFC 0266 §B.1 rewrite); home: spec/v2/core/packs.md §Names and agents (RFC 0266 §B.2)"
     },
     {
       "file": "spec/v2/errors.json",
@@ -237,15 +183,6 @@
     },
     {
       "file": "spec/v2/errors.json",
-      "kind": "v1-doc",
-      "target": "node-packs.md",
-      "fingerprint": "286d7ccb4c90~7",
-      "excerpt": "\"statusSource\": \"v1 convention (node-packs.md)\",",
-      "disposition": "to-rehome",
-      "why": "errors.json statusSource names a v1 doc as the status rule (RFC 0266 §B.1 rewrite); home: spec/v2/core/packs.md §Names and agents (RFC 0266 §B.2)"
-    },
-    {
-      "file": "spec/v2/errors.json",
       "kind": "spec-v1",
       "target": "spec/v1/node-packs.md",
       "fingerprint": "75e8b68a374b~7",
@@ -255,30 +192,12 @@
     },
     {
       "file": "spec/v2/errors.json",
-      "kind": "v1-doc",
-      "target": "node-packs.md",
-      "fingerprint": "286d7ccb4c90~8",
-      "excerpt": "\"statusSource\": \"v1 convention (node-packs.md)\",",
-      "disposition": "to-rehome",
-      "why": "errors.json statusSource names a v1 doc as the status rule (RFC 0266 §B.1 rewrite); home: spec/v2/core/packs.md §Names and agents (RFC 0266 §B.2)"
-    },
-    {
-      "file": "spec/v2/errors.json",
       "kind": "spec-v1",
       "target": "spec/v1/node-packs.md",
       "fingerprint": "75e8b68a374b~8",
       "excerpt": "\"source\": \"spec/v1/node-packs.md\"",
       "disposition": "history",
       "why": "errors.json `source` is row provenance (errors.schema: \"the document or decision the row came from\"); the row itself is the v2 rule"
-    },
-    {
-      "file": "spec/v2/errors.json",
-      "kind": "v1-doc",
-      "target": "node-packs.md",
-      "fingerprint": "286d7ccb4c90~9",
-      "excerpt": "\"statusSource\": \"v1 convention (node-packs.md)\",",
-      "disposition": "to-rehome",
-      "why": "errors.json statusSource names a v1 doc as the status rule (RFC 0266 §B.1 rewrite); home: spec/v2/core/packs.md §Names and agents (RFC 0266 §B.2)"
     },
     {
       "file": "spec/v2/errors.json",
@@ -399,15 +318,6 @@
     },
     {
       "file": "spec/v2/errors.json",
-      "kind": "v1-doc",
-      "target": "node-packs.md",
-      "fingerprint": "286d7ccb4c90~10",
-      "excerpt": "\"statusSource\": \"v1 convention (node-packs.md)\",",
-      "disposition": "to-rehome",
-      "why": "errors.json statusSource names a v1 doc as the status rule (RFC 0266 §B.1 rewrite); home: spec/v2/core/packs.md §Names and agents (RFC 0266 §B.2)"
-    },
-    {
-      "file": "spec/v2/errors.json",
       "kind": "spec-v1",
       "target": "spec/v1/node-packs.md",
       "fingerprint": "75e8b68a374b~10",
@@ -480,15 +390,6 @@
     },
     {
       "file": "spec/v2/errors.json",
-      "kind": "v1-doc",
-      "target": "node-packs.md",
-      "fingerprint": "286d7ccb4c90~11",
-      "excerpt": "\"statusSource\": \"v1 convention (node-packs.md)\",",
-      "disposition": "to-rehome",
-      "why": "errors.json statusSource names a v1 doc as the status rule (RFC 0266 §B.1 rewrite); home: spec/v2/core/packs.md §Names and agents (RFC 0266 §B.2)"
-    },
-    {
-      "file": "spec/v2/errors.json",
       "kind": "spec-v1",
       "target": "spec/v1/node-packs.md",
       "fingerprint": "75e8b68a374b~11",
@@ -552,30 +453,12 @@
     },
     {
       "file": "spec/v2/errors.json",
-      "kind": "v1-doc",
-      "target": "node-packs.md",
-      "fingerprint": "286d7ccb4c90~12",
-      "excerpt": "\"statusSource\": \"v1 convention (node-packs.md)\",",
-      "disposition": "to-rehome",
-      "why": "errors.json statusSource names a v1 doc as the status rule (RFC 0266 §B.1 rewrite); home: spec/v2/core/packs.md §Names and agents (RFC 0266 §B.2)"
-    },
-    {
-      "file": "spec/v2/errors.json",
       "kind": "spec-v1",
       "target": "spec/v1/node-packs.md",
       "fingerprint": "75e8b68a374b~12",
       "excerpt": "\"source\": \"spec/v1/node-packs.md\"",
       "disposition": "history",
       "why": "errors.json `source` is row provenance (errors.schema: \"the document or decision the row came from\"); the row itself is the v2 rule"
-    },
-    {
-      "file": "spec/v2/errors.json",
-      "kind": "v1-doc",
-      "target": "node-packs.md",
-      "fingerprint": "286d7ccb4c90~13",
-      "excerpt": "\"statusSource\": \"v1 convention (node-packs.md)\",",
-      "disposition": "to-rehome",
-      "why": "errors.json statusSource names a v1 doc as the status rule (RFC 0266 §B.1 rewrite); home: spec/v2/core/packs.md §Names and agents (RFC 0266 §B.2)"
     },
     {
       "file": "spec/v2/errors.json",
@@ -750,15 +633,6 @@
     },
     {
       "file": "spec/v2/errors.json",
-      "kind": "v1-doc",
-      "target": "node-packs.md",
-      "fingerprint": "286d7ccb4c90~14",
-      "excerpt": "\"statusSource\": \"v1 convention (node-packs.md)\",",
-      "disposition": "to-rehome",
-      "why": "errors.json statusSource names a v1 doc as the status rule (RFC 0266 §B.1 rewrite); home: spec/v2/core/packs.md §Names and agents (RFC 0266 §B.2)"
-    },
-    {
-      "file": "spec/v2/errors.json",
       "kind": "spec-v1",
       "target": "spec/v1/node-packs.md",
       "fingerprint": "75e8b68a374b~14",
@@ -840,15 +714,6 @@
     },
     {
       "file": "spec/v2/errors.json",
-      "kind": "v1-doc",
-      "target": "node-packs.md",
-      "fingerprint": "286d7ccb4c90~15",
-      "excerpt": "\"statusSource\": \"v1 convention (node-packs.md)\",",
-      "disposition": "to-rehome",
-      "why": "errors.json statusSource names a v1 doc as the status rule (RFC 0266 §B.1 rewrite); home: spec/v2/core/packs.md §Names and agents (RFC 0266 §B.2)"
-    },
-    {
-      "file": "spec/v2/errors.json",
       "kind": "spec-v1",
       "target": "spec/v1/node-packs.md",
       "fingerprint": "75e8b68a374b~15",
@@ -864,15 +729,6 @@
       "excerpt": "\"source\": \"spec/v1/rest-endpoints.md §Error response shape\"",
       "disposition": "history",
       "why": "errors.json `source` is row provenance (errors.schema: \"the document or decision the row came from\"); the row itself is the v2 rule"
-    },
-    {
-      "file": "spec/v2/errors.json",
-      "kind": "v1-doc",
-      "target": "node-packs.md",
-      "fingerprint": "286d7ccb4c90~16",
-      "excerpt": "\"statusSource\": \"v1 convention (node-packs.md)\",",
-      "disposition": "to-rehome",
-      "why": "errors.json statusSource names a v1 doc as the status rule (RFC 0266 §B.1 rewrite); home: spec/v2/core/packs.md §Names and agents (RFC 0266 §B.2)"
     },
     {
       "file": "spec/v2/errors.json",
@@ -909,33 +765,6 @@
       "excerpt": "\"source\": \"RFC 0228 §C; spec/v1/budget-policy.md §D (measured: MyndHyve `host/budgetPoli",
       "disposition": "history",
       "why": "errors.json `source` is row provenance (errors.schema: \"the document or decision the row came from\"); the row itself is the v2 rule"
-    },
-    {
-      "file": "spec/v2/errors.json",
-      "kind": "v1-doc",
-      "target": "production-profile.md",
-      "fingerprint": "ece364148e20",
-      "excerpt": "\"statusSource\": \"v1 prose (production-profile.md §Backpressure)\",",
-      "disposition": "to-rehome",
-      "why": "errors.json statusSource names a v1 doc as the status rule (RFC 0266 §B.1 rewrite); home: spec/v2/core/runs.md or the schema description — not in the §B.2 table"
-    },
-    {
-      "file": "spec/v2/event-codemap.json",
-      "kind": "flat-schema",
-      "target": "schemas/run-event.schema.json",
-      "fingerprint": "f267ab170e46",
-      "excerpt": "scripts/generate-event-codemap.mjs from schemas/run-event.schema.json + run-event-payloads.schema.json. v2 na",
-      "disposition": "to-rehome",
-      "why": "event codemap is generated from a flat v1 schema; RFC 0266 §C.1 — derive from schemas/v2/run-event.schema.json"
-    },
-    {
-      "file": "spec/v2/event-codemap.schema.json",
-      "kind": "spec-v1",
-      "target": "spec/v1/event-codemap.json",
-      "fingerprint": "71eb385ae5c1",
-      "excerpt": "\"description\": \"Shape of spec/v1/event-codemap.json (v2 charter C.4/C.9, Phase 1 item 9): o",
-      "disposition": "to-rehome",
-      "why": "the v2 schema describes itself as the shape of the v1 file; name spec/v2/event-codemap.json"
     },
     {
       "file": "spec/v2/ext/grpc-transport/openwop.proto",
@@ -1055,15 +884,6 @@
       "why": "v2 gRPC message body defined by the flat v1 schema; cite schemas/v2/audit-verify-result.schema.json"
     },
     {
-      "file": "spec/v2/facets/uiPlugins.schema.json",
-      "kind": "v1-doc",
-      "target": "host-extensions.md",
-      "fingerprint": "027cfdae886d",
-      "excerpt": "advertise `^x-host-<host>-<key>$` per `host-extensions.md`. ALL values denote the SAME mandatory",
-      "disposition": "to-rehome",
-      "why": "v2 artifact cites a v1 doc as the home of a rule it relies on; home: spec/v2/core/capabilities.md §Host extensions (RFC 0266 §B.2)"
-    },
-    {
       "file": "spec/v2/facets/workflowChainPacks.schema.json",
       "kind": "spec-v1",
       "target": "spec/v1/deprecations.json",
@@ -1175,1522 +995,289 @@
       "file": "schemas/v2/a2a-task-state.schema.json",
       "kind": "v1-doc",
       "target": "a2a-integration.md",
-      "fingerprint": "221cd67d0b7e",
-      "excerpt": "nnect. It is the persisted form of the `a2a-integration.md` §\\\"State projection (forward)\\\" mappin",
-      "disposition": "to-rehome",
-      "why": "v2 artifact cites a v1 doc as the home of a rule it relies on; home: spec/v2/core/interop.md (A2A) — not in the §B.2 table"
+      "fingerprint": "81175660c877",
+      "excerpt": "credential material (re-homed from v1 `a2a-integration.md` §\\\"The durable Task projection record\\",
+      "disposition": "history",
+      "why": "provenance note: names the frozen v1 section this rule was re-homed from (RFC 0266 §B.2); the surrounding v2 description is the rule"
     },
     {
       "file": "schemas/v2/a2a-task-state.schema.json",
       "kind": "v1-doc",
       "target": "a2a-integration.md",
-      "fingerprint": "131c7dca821b",
-      "excerpt": "/artifacts/credential material (SR-1 / `a2a-integration.md` trust boundary) — artifacts project to",
-      "disposition": "to-rehome",
-      "why": "v2 artifact cites a v1 doc as the home of a rule it relies on; home: spec/v2/core/interop.md (A2A) — not in the §B.2 table"
-    },
-    {
-      "file": "schemas/v2/a2a-task-state.schema.json",
-      "kind": "v1-doc",
-      "target": "a2a-integration.md",
-      "fingerprint": "b8a2f33d47f7",
-      "excerpt": "MUST equal the backing OpenWOP `runId` (a2a-integration.md §2 — 'the returned runId becomes the A2",
-      "disposition": "to-rehome",
-      "why": "v2 artifact cites a v1 doc as the home of a rule it relies on; home: spec/v2/core/interop.md (A2A) — not in the §B.2 table"
-    },
-    {
-      "file": "schemas/v2/a2a-task-state.schema.json",
-      "kind": "v1-doc",
-      "target": "a2a-integration.md",
-      "fingerprint": "e60b9cd29cf7",
-      "excerpt": "(carried as the run tag `a2a:ctx_*` per a2a-integration.md §2).\"",
-      "disposition": "to-rehome",
-      "why": "v2 artifact cites a v1 doc as the home of a rule it relies on; home: spec/v2/core/interop.md (A2A) — not in the §B.2 table"
-    },
-    {
-      "file": "schemas/v2/a2a-task-state.schema.json",
-      "kind": "v1-doc",
-      "target": "a2a-integration.md",
-      "fingerprint": "7982fb121b70",
-      "excerpt": "elling A2A 0.3's JSON-RPC binding uses (a2a-integration.md §'Wire-shape spelling drift'). An A2A 1",
-      "disposition": "to-rehome",
-      "why": "v2 artifact cites a v1 doc as the home of a rule it relies on; home: spec/v2/core/interop.md (A2A) — not in the §B.2 table"
-    },
-    {
-      "file": "schemas/v2/a2a-task-state.schema.json",
-      "kind": "v1-doc",
-      "target": "a2a-integration.md",
-      "fingerprint": "08bd4b60ffe6",
-      "excerpt": "SK_STATE_*` at the boundary through the a2a-integration.md §D.4 bijection; the stored form does no",
-      "disposition": "to-rehome",
-      "why": "v2 artifact cites a v1 doc as the home of a rule it relies on; home: spec/v2/core/interop.md (A2A) — not in the §B.2 table"
-    },
-    {
-      "file": "schemas/v2/a2a-task-state.schema.json",
-      "kind": "v1-doc",
-      "target": "a2a-integration.md",
-      "fingerprint": "ecab0e7af60a",
-      "excerpt": "change. Projected from `run.status` per a2a-integration.md §'State projection (forward)' and §D.4:",
-      "disposition": "to-rehome",
-      "why": "v2 artifact cites a v1 doc as the home of a rule it relies on; home: spec/v2/core/interop.md (A2A) — not in the §B.2 table"
-    },
-    {
-      "file": "schemas/v2/a2a-task-state.schema.json",
-      "kind": "v1-doc",
-      "target": "a2a-integration.md",
-      "fingerprint": "ae88f8253384",
-      "excerpt": "`credential` interrupt (RFC 0199 §D.1; a2a-integration.md drift point #3 is retired for the forwa",
-      "disposition": "to-rehome",
-      "why": "v2 artifact cites a v1 doc as the home of a rule it relies on; home: spec/v2/core/interop.md (A2A) — not in the §B.2 table"
-    },
-    {
-      "file": "schemas/v2/a2a-task-state.schema.json",
-      "kind": "v1-doc",
-      "target": "a2a-integration.md",
-      "fingerprint": "0c9dbbc1af60",
-      "excerpt": "9 §D.1) — a rule stated in the prose of a2a-integration.md §'The durable Task projection record';",
-      "disposition": "to-rehome",
-      "why": "v2 artifact cites a v1 doc as the home of a rule it relies on; home: spec/v2/core/interop.md (A2A) — not in the §B.2 table"
-    },
-    {
-      "file": "schemas/v2/a2a-task-state.schema.json",
-      "kind": "v1-doc",
-      "target": "a2a-integration.md",
-      "fingerprint": "50861b21e8f2",
-      "excerpt": "there is no conditional). Disambiguates a2a-integration.md drift point #2 (approval and clarificat",
-      "disposition": "to-rehome",
-      "why": "v2 artifact cites a v1 doc as the home of a rule it relies on; home: spec/v2/core/interop.md (A2A) — not in the §B.2 table"
+      "fingerprint": "8406d7096922",
+      "excerpt": "s description states (re-homed from v1 `a2a-integration.md` §\\\"The durable Task projection record\\",
+      "disposition": "history",
+      "why": "provenance note: names the frozen v1 section this rule was re-homed from (RFC 0266 §B.2); the surrounding v2 description is the rule"
     },
     {
       "file": "schemas/v2/agent-manifest.schema.json",
       "kind": "v1-doc",
       "target": "node-packs.md",
-      "fingerprint": "f4f7a6136a72",
-      "excerpt": "external tarball files. See RFC 0003 + `node-packs.md` §`agents[]` extension.\",",
-      "disposition": "to-rehome",
-      "why": "v2 artifact cites a v1 doc as the home of a rule it relies on; home: spec/v2/core/packs.md §Names and agents (RFC 0266 §B.2)"
-    },
-    {
-      "file": "schemas/v2/agent-manifest.schema.json",
-      "kind": "v1-doc",
-      "target": "node-packs.md",
-      "fingerprint": "3da9efb21fdd",
-      "excerpt": "ttern matches the namespace tiers from `node-packs.md` §Naming, MINUS the `host:<id>` slim-ru",
-      "disposition": "to-rehome",
-      "why": "v2 artifact cites a v1 doc as the home of a rule it relies on; home: spec/v2/core/packs.md §Names and agents (RFC 0266 §B.2)"
-    },
-    {
-      "file": "schemas/v2/agent-manifest.schema.json",
-      "kind": "v1-doc",
-      "target": "host-extensions.md",
-      "fingerprint": "86f6c2d40898",
-      "excerpt": "the `<vendor>.<class>` convention from `host-extensions.md` (e.g., `openwop.creative-writing`).\",",
-      "disposition": "to-rehome",
-      "why": "v2 artifact cites a v1 doc as the home of a rule it relies on; home: spec/v2/core/capabilities.md §Host extensions (RFC 0266 §B.2)"
-    },
-    {
-      "file": "schemas/v2/agent-manifest.schema.json",
-      "kind": "v1-doc",
-      "target": "host-capabilities.md",
-      "fingerprint": "90bf9289fbe4",
-      "excerpt": "covery vocabulary (`capabilities.md` / `host-capabilities.md`), e.g. `host.workspace`, `aiProviders.",
-      "disposition": "to-rehome",
-      "why": "v2 artifact cites a v1 doc as the home of a rule it relies on; home: spec/v2/core/host-services.md §modelCapabilities (RFC 0266 §B.2)"
-    },
-    {
-      "file": "schemas/v2/agent-manifest.schema.json",
-      "kind": "v1-doc",
-      "target": "node-packs.md",
-      "fingerprint": "031a5e4e591d",
-      "excerpt": "quiresCapabilities`, or any scope. See `node-packs.md` §`agents[]` (the field) and `agent-mem",
-      "disposition": "to-rehome",
-      "why": "v2 artifact cites a v1 doc as the home of a rule it relies on; home: spec/v2/core/packs.md §Names and agents (RFC 0266 §B.2)"
-    },
-    {
-      "file": "schemas/v2/agent-manifest.schema.json",
-      "kind": "v1-doc",
-      "target": "agent-memory.md",
-      "fingerprint": "b8a588e70d63",
-      "excerpt": "-packs.md` §`agents[]` (the field) and `agent-memory.md` §B (the memoryShape constraint + the §",
-      "disposition": "to-rehome",
-      "why": "v2 artifact cites a v1 doc as the home of a rule it relies on; home: spec/v2/core/host-services.md (memory) — not in the §B.2 table"
-    },
-    {
-      "file": "schemas/v2/agent-manifest.schema.json",
-      "kind": "spec-v1",
-      "target": "spec/v1/prompts.md",
-      "fingerprint": "82a1af46edbb",
-      "excerpt": "y-default` per the resolution chain in `spec/v1/prompts.md` §\\\"Resolution chain (normative)\\\"). NO",
-      "disposition": "to-rehome",
-      "why": "v2 artifact cites a v1 doc as the home of a rule it relies on; home: spec/v2/core/host-services.md §prompts Resolution (RFC 0266 §B.2)"
-    },
-    {
-      "file": "schemas/v2/agent-manifest.schema.json",
-      "kind": "spec-v1",
-      "target": "spec/v1/prompts.md",
-      "fingerprint": "aa8773d8a262",
-      "excerpt": "chain layer 2 (`agent-overrides`) per `spec/v1/prompts.md` §\\\"Resolution chain (normative)\\\". For",
-      "disposition": "to-rehome",
-      "why": "v2 artifact cites a v1 doc as the home of a rule it relies on; home: spec/v2/core/host-services.md §prompts Resolution (RFC 0266 §B.2)"
-    },
-    {
-      "file": "schemas/v2/agent-ref.schema.json",
-      "kind": "v1-doc",
-      "target": "node-packs.md",
-      "fingerprint": "84cb6871b0d7",
-      "excerpt": "identifier. Naming convention mirrors `node-packs.md` §Naming — `<tier>.<org>.<pack>.<agent>",
-      "disposition": "to-rehome",
-      "why": "v2 artifact cites a v1 doc as the home of a rule it relies on; home: spec/v2/core/packs.md §Names and agents (RFC 0266 §B.2)"
-    },
-    {
-      "file": "schemas/v2/agent-ref.schema.json",
-      "kind": "spec-v1",
-      "target": "spec/v1/agent-ref-positioning.md",
-      "fingerprint": "cb88affb1955",
-      "excerpt": "as the `host:<scheme>:<id>` form. See `spec/v1/agent-ref-positioning.md` §\\\"Composition rules\\\" for the recomme",
-      "disposition": "to-rehome",
-      "why": "v2 artifact cites a v1 doc as the home of a rule it relies on; home: spec/v2/core/execution.md or the schema description — not in the §B.2 table"
-    },
-    {
-      "file": "schemas/v2/agent-ref.schema.json",
-      "kind": "v1-doc",
-      "target": "host-extensions.md",
-      "fingerprint": "0389e51e18a0",
-      "excerpt": "ions ship under `<vendor>.<class>` per `host-extensions.md` (e.g., `openwop.creative-writing`) — v",
-      "disposition": "to-rehome",
-      "why": "v2 artifact cites a v1 doc as the home of a rule it relies on; home: spec/v2/core/capabilities.md §Host extensions (RFC 0266 §B.2)"
-    },
-    {
-      "file": "schemas/v2/agent-ref.schema.json",
-      "kind": "v1-doc",
-      "target": "agent-memory.md",
-      "fingerprint": "02b21e76b974",
-      "excerpt": "ved by the host's `MemoryAdapter` (see `agent-memory.md`); the wire-level shape is host-defined",
-      "disposition": "to-rehome",
-      "why": "v2 artifact cites a v1 doc as the home of a rule it relies on; home: spec/v2/core/host-services.md (memory) — not in the §B.2 table"
-    },
-    {
-      "file": "schemas/v2/agent-ref.schema.json",
-      "kind": "v1-doc",
-      "target": "host-extensions.md",
-      "fingerprint": "8c1f82aad055",
-      "excerpt": "efined per the L2 disposition (mirrors `host-extensions.md` namespace conventions). Hosts that don",
-      "disposition": "to-rehome",
-      "why": "v2 artifact cites a v1 doc as the home of a rule it relies on; home: spec/v2/core/capabilities.md §Host extensions (RFC 0266 §B.2)"
-    },
-    {
-      "file": "schemas/v2/artifact-type-pack-manifest.schema.json",
-      "kind": "v1-doc",
-      "target": "node-packs.md",
-      "fingerprint": "1a26dfda8f11",
-      "excerpt": "scription\": \"Reverse-DNS pack name per `node-packs.md` \\u00a7Naming. Reserved scopes are iden",
-      "disposition": "to-rehome",
-      "why": "v2 artifact cites a v1 doc as the home of a rule it relies on; home: spec/v2/core/packs.md §Names and agents (RFC 0266 §B.2)"
-    },
-    {
-      "file": "schemas/v2/artifact-type-pack-manifest.schema.json",
-      "kind": "v1-doc",
-      "target": "rest-endpoints.md",
-      "fingerprint": "edf3ccf6aae1",
-      "excerpt": "l diffing (informs run-diff tooling per rest-endpoints.md \\u00a7:diff). Non-normative.\"",
-      "disposition": "to-rehome",
-      "why": "non-normative pointer to a v1 doc for run-diff tooling; home: spec/v2/core/errors.md and api/v2/openapi.yaml — not in the §B.2 table"
-    },
-    {
-      "file": "schemas/v2/artifact-type-pack-manifest.schema.json",
-      "kind": "v1-doc",
-      "target": "host-extensions.md",
-      "fingerprint": "81c4d296d33a",
-      "excerpt": "he pack. Resolves the contradiction in `host-extensions.md` \\u00a7\\\"Vendor-prefixed namespaces\\\",",
-      "disposition": "to-rehome",
-      "why": "v2 artifact cites a v1 doc as the home of a rule it relies on; home: spec/v2/core/capabilities.md §Host extensions (RFC 0266 §B.2)"
-    },
-    {
-      "file": "schemas/v2/artifact-type-pack-manifest.schema.json",
-      "kind": "v1-doc",
-      "target": "node-packs.md",
-      "fingerprint": "c927038bd6c7",
-      "excerpt": "ntrusted; \\\"ignore\\\" means ignore. See `node-packs.md` \\u00a7\\\"Vendor extensions on pack mani",
-      "disposition": "to-rehome",
-      "why": "v2 artifact cites a v1 doc as the home of a rule it relies on; home: spec/v2/core/packs.md §Names and agents (RFC 0266 §B.2)"
-    },
-    {
-      "file": "schemas/v2/artifact-type-pack-manifest.schema.json",
-      "kind": "v1-doc",
-      "target": "host-extensions.md",
-      "fingerprint": "81c4d296d33a~2",
-      "excerpt": "he pack. Resolves the contradiction in `host-extensions.md` \\u00a7\\\"Vendor-prefixed namespaces\\\",",
-      "disposition": "to-rehome",
-      "why": "v2 artifact cites a v1 doc as the home of a rule it relies on; home: spec/v2/core/capabilities.md §Host extensions (RFC 0266 §B.2)"
-    },
-    {
-      "file": "schemas/v2/artifact-type-pack-manifest.schema.json",
-      "kind": "v1-doc",
-      "target": "node-packs.md",
-      "fingerprint": "c927038bd6c7~2",
-      "excerpt": "ntrusted; \\\"ignore\\\" means ignore. See `node-packs.md` \\u00a7\\\"Vendor extensions on pack mani",
-      "disposition": "to-rehome",
-      "why": "v2 artifact cites a v1 doc as the home of a rule it relies on; home: spec/v2/core/packs.md §Names and agents (RFC 0266 §B.2)"
-    },
-    {
-      "file": "schemas/v2/artifact.schema.json",
-      "kind": "v1-doc",
-      "target": "a2a-integration.md",
-      "fingerprint": "cbe1b04ae26d",
-      "excerpt": "equals the path segment. The same shape a2a-integration.md D.3 projects over A2A, so one decoder r",
-      "disposition": "to-rehome",
-      "why": "v2 artifact cites a v1 doc as the home of a rule it relies on; home: spec/v2/core/interop.md (A2A) — not in the §B.2 table"
-    },
-    {
-      "file": "schemas/v2/audit-verify-result.schema.json",
-      "kind": "spec-v1",
-      "target": "spec/v1/auth-profiles.md",
-      "fingerprint": "e5fbdc66cd02",
-      "excerpt": "se payload from `GET /audit/verify` per spec/v1/auth-profiles.md §`openwop-audit-log-integrity` §4 'Veri",
-      "disposition": "to-rehome",
-      "why": "v2 artifact cites a v1 doc as the home of a rule it relies on; home: spec/v2/core/security-defaults.md / identity.md (audit-log integrity) — not in the §B.2 table"
+      "fingerprint": "cb2daf4f88b3",
+      "excerpt": "l-profile-stateless` (re-homed from v1 `node-packs.md` §\\\"Dependency resolution + lockfile\\\"",
+      "disposition": "history",
+      "why": "provenance note: names the frozen v1 section this rule was re-homed from (RFC 0266 §B.2); the surrounding v2 description is the rule"
     },
     {
       "file": "schemas/v2/audit-verify-result.schema.json",
       "kind": "v1-doc",
       "target": "auth-profiles.md",
-      "fingerprint": "19eb9649aeb3",
-      "excerpt": "a last odd node is promoted unchanged (auth-profiles.md §Audit-log integrity 3, RFC 0218). Veri",
-      "disposition": "to-rehome",
-      "why": "v2 artifact cites a v1 doc as the home of a rule it relies on; home: spec/v2/core/security-defaults.md / identity.md (audit-log integrity) — not in the §B.2 table"
-    },
-    {
-      "file": "schemas/v2/audit-verify-result.schema.json",
-      "kind": "v1-doc",
-      "target": "auth-profiles.md",
-      "fingerprint": "fc3a61b3ceb6",
-      "excerpt": "uence` while a rotating key dual-signs (auth-profiles.md §Key management).\"",
-      "disposition": "to-rehome",
-      "why": "v2 artifact cites a v1 doc as the home of a rule it relies on; home: spec/v2/core/security-defaults.md / identity.md (audit-log integrity) — not in the §B.2 table"
+      "fingerprint": "04eacaef3be2",
+      "excerpt": "nder the retired key (re-homed from v1 `auth-profiles.md` §\\\"Key management\\\" by RFC 0266).\"",
+      "disposition": "history",
+      "why": "provenance note: names the frozen v1 section this rule was re-homed from (RFC 0266 §B.2); the surrounding v2 description is the rule"
     },
     {
       "file": "schemas/v2/capabilities.schema.json",
       "kind": "v1-doc",
       "target": "observability.md",
-      "fingerprint": "4908d09cd12d",
-      "excerpt": "s about emitted spans/metrics/logs. See observability.md.\",",
-      "disposition": "to-rehome",
-      "why": "v2 artifact cites a v1 doc as the home of a rule it relies on; home: spec/v2/core/telemetry.md §Privacy classification (RFC 0266 §B.2)"
-    },
-    {
-      "file": "schemas/v2/capabilities.schema.json",
-      "kind": "spec-v1",
-      "target": "spec/v1/debug-bundle.md",
-      "fingerprint": "58694e4dfcb4",
-      "excerpt": "GET /v1/runs/{runId}/debug-bundle` per `spec/v1/debug-bundle.md`. Conformance verifies the serialized b",
-      "disposition": "to-rehome",
-      "why": "v2 artifact cites a v1 doc as the home of a rule it relies on; home: spec/v2/core/runs.md §Debug bundle, or deleted (RFC 0266 §B.2, UQ 1)"
-    },
-    {
-      "file": "schemas/v2/capabilities.schema.json",
-      "kind": "v1-doc",
-      "target": "observability.md",
-      "fingerprint": "c04d36761da9",
-      "excerpt": "data.complianceConfig.maskingMode`. See observability.md §Privacy classification.\"",
-      "disposition": "to-rehome",
-      "why": "v2 artifact cites a v1 doc as the home of a rule it relies on; home: spec/v2/core/telemetry.md §Privacy classification (RFC 0266 §B.2)"
+      "fingerprint": "b6d09ae62c39",
+      "excerpt": "IVACY CLASSIFICATION (re-homed from v1 `observability.md` §\\\"Privacy classification\\\" by RFC 026",
+      "disposition": "history",
+      "why": "provenance note: names the frozen v1 section this rule was re-homed from (RFC 0266 §B.2); the surrounding v2 description is the rule"
     },
     {
       "file": "schemas/v2/capabilities.schema.json",
       "kind": "v1-doc",
       "target": "capabilities-change-detection.md",
-      "fingerprint": "aff69daefcd0",
-      "excerpt": "description\": \"Discovery advertisement (capabilities-change-detection.md). Optional in v1; absence means the hos",
-      "disposition": "to-rehome",
-      "why": "v2 artifact cites a v1 doc as the home of a rule it relies on; home: spec/v2/core/capabilities.md — not in the §B.2 table"
-    },
-    {
-      "file": "schemas/v2/capabilities.schema.json",
-      "kind": "v1-doc",
-      "target": "capabilities-change-detection.md",
-      "fingerprint": "daf155b49307",
-      "excerpt": ": \"Auth-scoped discovery advertisement (capabilities-change-detection.md §\\\"Scoped capability views\\\"). Hosts th",
-      "disposition": "to-rehome",
-      "why": "v2 artifact cites a v1 doc as the home of a rule it relies on; home: spec/v2/core/capabilities.md — not in the §B.2 table"
-    },
-    {
-      "file": "schemas/v2/capabilities.schema.json",
-      "kind": "spec-v1",
-      "target": "spec/v1/prompts.md",
-      "fingerprint": "4f4f46f1cbfe",
-      "excerpt": "on chain layer 4 (`host-defaults`) per `spec/v1/prompts.md` §\\\"Resolution chain (normative)\\\". Adv",
-      "disposition": "to-rehome",
-      "why": "v2 artifact cites a v1 doc as the home of a rule it relies on; home: spec/v2/core/host-services.md §prompts Resolution (RFC 0266 §B.2)"
-    },
-    {
-      "file": "schemas/v2/capabilities.schema.json",
-      "kind": "spec-v1",
-      "target": "spec/v1/prompts.md",
-      "fingerprint": "3ed5466d12c1",
-      "excerpt": "rrides` / `agent-library-default`) per `spec/v1/prompts.md` §\\\"Resolution chain (normative)\\\". Whe",
-      "disposition": "to-rehome",
-      "why": "v2 artifact cites a v1 doc as the home of a rule it relies on; home: spec/v2/core/host-services.md §prompts Resolution (RFC 0266 §B.2)"
-    },
-    {
-      "file": "schemas/v2/capabilities.schema.json",
-      "kind": "spec-v1",
-      "target": "spec/v1/host-extensions.md",
-      "fingerprint": "2eada0089f5e",
-      "excerpt": "ng `^x-host-<host>-<recipe-name>$` per `spec/v1/host-extensions.md` §\\\"Canonical prefixes\\\"; the matching",
-      "disposition": "to-rehome",
-      "why": "v2 artifact cites a v1 doc as the home of a rule it relies on; home: spec/v2/core/capabilities.md §Host extensions (RFC 0266 §B.2)"
-    },
-    {
-      "file": "schemas/v2/capabilities.schema.json",
-      "kind": "v1-doc",
-      "target": "multi-agent-execution.md",
-      "fingerprint": "d63f56f82756",
-      "excerpt": "teration ORCHESTRATOR-LOOP transcript (`multi-agent-execution.md` §\\\"Per-iteration state inputs\\\" input",
-      "disposition": "to-rehome",
-      "why": "v2 artifact cites a v1 doc as the home of a rule it relies on; home: spec/v2/core/execution.md — not in the §B.2 table"
-    },
-    {
-      "file": "schemas/v2/capabilities.schema.json",
-      "kind": "v1-doc",
-      "target": "multi-agent-execution.md",
-      "fingerprint": "f3d9dbe81729",
-      "excerpt": "eplay reuses (never re-summarizes) per `multi-agent-execution.md` §\\\"Context economy (RFC 0111)\\\".\",",
-      "disposition": "to-rehome",
-      "why": "v2 artifact cites a v1 doc as the home of a rule it relies on; home: spec/v2/core/execution.md — not in the §B.2 table"
-    },
-    {
-      "file": "schemas/v2/capabilities.schema.json",
-      "kind": "v1-doc",
-      "target": "agent-memory.md",
-      "fingerprint": "09b98a42bfac",
-      "excerpt": "dimension) — NEW optional. TTL expiry (`agent-memory.md §TTL`) and/or an explicit forget operat",
-      "disposition": "to-rehome",
-      "why": "v2 artifact cites a v1 doc as the home of a rule it relies on; home: spec/v2/core/host-services.md (memory) — not in the §B.2 table"
-    },
-    {
-      "file": "schemas/v2/capabilities.schema.json",
-      "kind": "v1-doc",
-      "target": "trigger-bridge.md",
-      "fingerprint": "9afa63f15e1f",
-      "excerpt": "content-free record of it is visible (`trigger-bridge.md` §C). **Distinct from the top-level `de",
-      "disposition": "to-rehome",
-      "why": "v2 artifact cites a v1 doc as the home of a rule it relies on; home: spec/v2/core/webhooks.md §Inbound triggers — not in the §B.2 table"
-    },
-    {
-      "file": "schemas/v2/capabilities.schema.json",
-      "kind": "v1-doc",
-      "target": "host-extensions.md",
-      "fingerprint": "027cfdae886d",
-      "excerpt": "advertise `^x-host-<host>-<key>$` per `host-extensions.md`. ALL values denote the SAME mandatory",
-      "disposition": "to-rehome",
-      "why": "v2 artifact cites a v1 doc as the home of a rule it relies on; home: spec/v2/core/capabilities.md §Host extensions (RFC 0266 §B.2)"
-    },
-    {
-      "file": "schemas/v2/capabilities.schema.json",
-      "kind": "v1-doc",
-      "target": "production-profile.md",
-      "fingerprint": "da52c1984f95",
-      "excerpt": ": \"Backpressure envelope advertisement (production-profile.md §Backpressure).\",",
-      "disposition": "to-rehome",
-      "why": "v2 artifact cites a v1 doc as the home of a rule it relies on; home: spec/v2/core/runs.md or the schema description — not in the §B.2 table"
-    },
-    {
-      "file": "schemas/v2/capabilities.schema.json",
-      "kind": "v1-doc",
-      "target": "production-profile.md",
-      "fingerprint": "7b736536a81b",
-      "excerpt": "ption\": \"Event-retention advertisement (production-profile.md §\\\"Event retention\\\").\",",
-      "disposition": "to-rehome",
-      "why": "v2 artifact cites a v1 doc as the home of a rule it relies on; home: spec/v2/core/runs.md or the schema description — not in the §B.2 table"
-    },
-    {
-      "file": "schemas/v2/capabilities.schema.json",
-      "kind": "v1-doc",
-      "target": "production-profile.md",
-      "fingerprint": "3334450e6384",
-      "excerpt": "inimum retention window in seconds. Per production-profile.md §\\\"Event retention\\\", MUST be ≥ 604800",
-      "disposition": "to-rehome",
-      "why": "v2 artifact cites a v1 doc as the home of a rule it relies on; home: spec/v2/core/runs.md or the schema description — not in the §B.2 table"
-    },
-    {
-      "file": "schemas/v2/capabilities.schema.json",
-      "kind": "v1-doc",
-      "target": "production-profile.md",
-      "fingerprint": "4f8c656b6a3e",
-      "excerpt": "\"Debug-bundle truncation advertisement (production-profile.md §\\\"Debug bundle behavior\\\"). Stricter t",
-      "disposition": "to-rehome",
-      "why": "v2 artifact cites a v1 doc as the home of a rule it relies on; home: spec/v2/core/runs.md or the schema description — not in the §B.2 table"
-    },
-    {
-      "file": "schemas/v2/capabilities.schema.json",
-      "kind": "v1-doc",
-      "target": "debug-bundle.md",
-      "fingerprint": "bd1ede547383",
-      "excerpt": "apabilities.debugBundle` advertised per debug-bundle.md — this block adds the production-profil",
-      "disposition": "to-rehome",
-      "why": "v2 artifact cites a v1 doc as the home of a rule it relies on; home: spec/v2/core/runs.md §Debug bundle, or deleted (RFC 0266 §B.2, UQ 1)"
-    },
-    {
-      "file": "schemas/v2/capabilities.schema.json",
-      "kind": "v1-doc",
-      "target": "debug-bundle.md",
-      "fingerprint": "8d7eb0d644ec",
-      "excerpt": "true` + non-empty `truncatedReason` per debug-bundle.md §\\\"Bundle size limits\\\" when caps are r",
-      "disposition": "to-rehome",
-      "why": "v2 artifact cites a v1 doc as the home of a rule it relies on; home: spec/v2/core/runs.md §Debug bundle, or deleted (RFC 0266 §B.2, UQ 1)"
+      "fingerprint": "5b5ba4bb03d5",
+      "excerpt": "t is allowed to use. (Re-homed from v1 `capabilities-change-detection.md` §\\\"Scoped capability views\\\" by RFC 02",
+      "disposition": "history",
+      "why": "provenance note: names the frozen v1 section this rule was re-homed from (RFC 0266 §B.2); the surrounding v2 description is the rule"
     },
     {
       "file": "schemas/v2/channel-written-payload.schema.json",
       "kind": "v1-doc",
       "target": "channels-and-reducers.md",
-      "fingerprint": "ea9d6e0f869a",
-      "excerpt": "vents through the declared reducer. See channels-and-reducers.md §Channel write event.\",",
-      "disposition": "to-rehome",
-      "why": "v2 artifact cites a v1 doc as the home of a rule it relies on; home: spec/v2/core/runs.md §Channels (RFC 0266 §B.2)"
+      "fingerprint": "e3dfdb75a2a2",
+      "excerpt": "ne per channel write (re-homed from v1 `channels-and-reducers.md` §\\\"Channel write event\\\" by RFC 0266);",
+      "disposition": "history",
+      "why": "provenance note: names the frozen v1 section this rule was re-homed from (RFC 0266 §B.2); the surrounding v2 description is the rule"
     },
     {
       "file": "schemas/v2/channel-written-payload.schema.json",
       "kind": "v1-doc",
       "target": "channels-and-reducers.md",
-      "fingerprint": "ba8e2d425548",
-      "excerpt": "ervers that didn't track versions). See channels-and-reducers.md §Channel schema migration. (closes C4)\"",
-      "disposition": "to-rehome",
-      "why": "v2 artifact cites a v1 doc as the home of a rule it relies on; home: spec/v2/core/runs.md §Channels (RFC 0266 §B.2)"
-    },
-    {
-      "file": "schemas/v2/channel-written-payload.schema.json",
-      "kind": "v1-doc",
-      "target": "channels-and-reducers.md",
-      "fingerprint": "e0e385462635",
-      "excerpt": "d references a known child engine). See channels-and-reducers.md §Distributed reducers. (closes C2)\",",
-      "disposition": "to-rehome",
-      "why": "v2 artifact cites a v1 doc as the home of a rule it relies on; home: spec/v2/core/runs.md §Channels (RFC 0266 §B.2)"
+      "fingerprint": "294e12dd06d6",
+      "excerpt": "er the writer's own. (Re-homed from v1 `channels-and-reducers.md` §\\\"Distributed reducers and cross-engi",
+      "disposition": "history",
+      "why": "provenance note: names the frozen v1 section this rule was re-homed from (RFC 0266 §B.2); the surrounding v2 description is the rule"
     },
     {
       "file": "schemas/v2/chat-card-pack-manifest.schema.json",
-      "kind": "spec-v1",
-      "target": "spec/v1/chat-card-packs.md",
-      "fingerprint": "95684a29a194",
-      "excerpt": "oint via the `kind` discriminator. See `spec/v1/chat-card-packs.md` for the canonical contract and RFC 007",
-      "disposition": "to-rehome",
-      "why": "v2 artifact cites a v1 doc as the home of a rule it relies on; home: spec/v2/core/packs.md or the schema description (chat-card packs) — not in the §B.2 table"
-    },
-    {
-      "file": "schemas/v2/chat-card-pack-manifest.schema.json",
-      "kind": "v1-doc",
-      "target": "node-packs.md",
-      "fingerprint": "1a26dfda8f11",
-      "excerpt": "scription\": \"Reverse-DNS pack name per `node-packs.md` \\u00a7Naming. Reserved scopes are iden",
-      "disposition": "to-rehome",
-      "why": "v2 artifact cites a v1 doc as the home of a rule it relies on; home: spec/v2/core/packs.md §Names and agents (RFC 0266 §B.2)"
-    },
-    {
-      "file": "schemas/v2/chat-card-pack-manifest.schema.json",
-      "kind": "v1-doc",
-      "target": "host-capabilities.md",
-      "fingerprint": "c4d6efcd7b7d",
-      "excerpt": "requiredModelCapabilities` registry in `host-capabilities.md` (spec-reserved: `structured-output`, `",
-      "disposition": "to-rehome",
-      "why": "v2 artifact cites a v1 doc as the home of a rule it relies on; home: spec/v2/core/host-services.md §modelCapabilities (RFC 0266 §B.2)"
-    },
-    {
-      "file": "schemas/v2/chat-card-pack-manifest.schema.json",
-      "kind": "v1-doc",
-      "target": "host-extensions.md",
-      "fingerprint": "81c4d296d33a",
-      "excerpt": "he pack. Resolves the contradiction in `host-extensions.md` \\u00a7\\\"Vendor-prefixed namespaces\\\",",
-      "disposition": "to-rehome",
-      "why": "v2 artifact cites a v1 doc as the home of a rule it relies on; home: spec/v2/core/capabilities.md §Host extensions (RFC 0266 §B.2)"
-    },
-    {
-      "file": "schemas/v2/chat-card-pack-manifest.schema.json",
-      "kind": "v1-doc",
-      "target": "node-packs.md",
-      "fingerprint": "c927038bd6c7",
-      "excerpt": "ntrusted; \\\"ignore\\\" means ignore. See `node-packs.md` \\u00a7\\\"Vendor extensions on pack mani",
-      "disposition": "to-rehome",
-      "why": "v2 artifact cites a v1 doc as the home of a rule it relies on; home: spec/v2/core/packs.md §Names and agents (RFC 0266 §B.2)"
-    },
-    {
-      "file": "schemas/v2/chat-card-pack-manifest.schema.json",
-      "kind": "v1-doc",
-      "target": "host-extensions.md",
-      "fingerprint": "81c4d296d33a~2",
-      "excerpt": "he pack. Resolves the contradiction in `host-extensions.md` \\u00a7\\\"Vendor-prefixed namespaces\\\",",
-      "disposition": "to-rehome",
-      "why": "v2 artifact cites a v1 doc as the home of a rule it relies on; home: spec/v2/core/capabilities.md §Host extensions (RFC 0266 §B.2)"
-    },
-    {
-      "file": "schemas/v2/chat-card-pack-manifest.schema.json",
-      "kind": "v1-doc",
-      "target": "node-packs.md",
-      "fingerprint": "c927038bd6c7~2",
-      "excerpt": "ntrusted; \\\"ignore\\\" means ignore. See `node-packs.md` \\u00a7\\\"Vendor extensions on pack mani",
-      "disposition": "to-rehome",
-      "why": "v2 artifact cites a v1 doc as the home of a rule it relies on; home: spec/v2/core/packs.md §Names and agents (RFC 0266 §B.2)"
-    },
-    {
-      "file": "schemas/v2/connection-pack-manifest.schema.json",
-      "kind": "v1-doc",
-      "target": "node-packs.md",
-      "fingerprint": "0954a1938a79",
-      "excerpt": "scription\": \"Reverse-DNS pack name per `node-packs.md` §Naming. Reserved scopes are identical",
-      "disposition": "to-rehome",
-      "why": "v2 artifact cites a v1 doc as the home of a rule it relies on; home: spec/v2/core/packs.md §Names and agents (RFC 0266 §B.2)"
-    },
-    {
-      "file": "schemas/v2/connection-pack-manifest.schema.json",
-      "kind": "v1-doc",
-      "target": "host-extensions.md",
-      "fingerprint": "e35765e39a4b",
-      "excerpt": "he pack. Resolves the contradiction in `host-extensions.md` §\\\"Vendor-prefixed namespaces\\\", which",
-      "disposition": "to-rehome",
-      "why": "v2 artifact cites a v1 doc as the home of a rule it relies on; home: spec/v2/core/capabilities.md §Host extensions (RFC 0266 §B.2)"
-    },
-    {
-      "file": "schemas/v2/connection-pack-manifest.schema.json",
-      "kind": "v1-doc",
-      "target": "node-packs.md",
-      "fingerprint": "185f0b2aac73",
-      "excerpt": "ntrusted; \\\"ignore\\\" means ignore. See `node-packs.md` §\\\"Vendor extensions on pack manifests",
-      "disposition": "to-rehome",
-      "why": "v2 artifact cites a v1 doc as the home of a rule it relies on; home: spec/v2/core/packs.md §Names and agents (RFC 0266 §B.2)"
-    },
-    {
-      "file": "schemas/v2/connection-pack-manifest.schema.json",
-      "kind": "v1-doc",
-      "target": "host-extensions.md",
-      "fingerprint": "e35765e39a4b~2",
-      "excerpt": "he pack. Resolves the contradiction in `host-extensions.md` §\\\"Vendor-prefixed namespaces\\\", which",
-      "disposition": "to-rehome",
-      "why": "v2 artifact cites a v1 doc as the home of a rule it relies on; home: spec/v2/core/capabilities.md §Host extensions (RFC 0266 §B.2)"
-    },
-    {
-      "file": "schemas/v2/connection-pack-manifest.schema.json",
-      "kind": "v1-doc",
-      "target": "node-packs.md",
-      "fingerprint": "185f0b2aac73~2",
-      "excerpt": "ntrusted; \\\"ignore\\\" means ignore. See `node-packs.md` §\\\"Vendor extensions on pack manifests",
-      "disposition": "to-rehome",
-      "why": "v2 artifact cites a v1 doc as the home of a rule it relies on; home: spec/v2/core/packs.md §Names and agents (RFC 0266 §B.2)"
-    },
-    {
-      "file": "schemas/v2/debug-bundle.schema.json",
-      "kind": "spec-v1",
-      "target": "spec/v1/observability.md",
-      "fingerprint": "b171ed58f826",
-      "excerpt": "\"description\": \"OTel-format spans per spec/v1/observability.md. Empty array if host doesn't emit spans",
-      "disposition": "to-rehome",
-      "why": "v2 artifact cites a v1 doc as the home of a rule it relies on; home: spec/v2/core/telemetry.md §Privacy classification (RFC 0266 §B.2)"
-    },
-    {
-      "file": "schemas/v2/dispatch-config.schema.json",
-      "kind": "v1-doc",
-      "target": "interrupt-profiles.md",
-      "fingerprint": "77b9539defe5",
-      "excerpt": "-flight children are cancelled per the `interrupt-profiles.md` parent-child cascade. `'first'` — sati",
-      "disposition": "to-rehome",
-      "why": "v2 artifact cites a v1 doc as the home of a rule it relies on; home: spec/v2/core/interrupt.md — not in the §B.2 table"
-    },
-    {
-      "file": "schemas/v2/form-content-pack-manifest.schema.json",
-      "kind": "v1-doc",
-      "target": "positioning.md",
-      "fingerprint": "222ea3b38a2e",
-      "excerpt": "e, not what sits in a host's database (`positioning.md`).\\n\\n**Field types are the RFC 0071 po",
-      "disposition": "to-rehome",
-      "why": "v2 artifact cites a v1 doc as the home of a rule it relies on; home: none needed — delete the non-normative pointer (not in the §B.2 table)"
-    },
-    {
-      "file": "schemas/v2/form-content-pack-manifest.schema.json",
       "kind": "v1-doc",
       "target": "chat-card-packs.md",
-      "fingerprint": "dfc221af8f7a",
-      "excerpt": "the closed portable subset defined in `chat-card-packs.md` §\\\"Input fields — a closed portable su",
-      "disposition": "to-rehome",
-      "why": "v2 artifact cites a v1 doc as the home of a rule it relies on; home: spec/v2/core/packs.md or the schema description (chat-card packs) — not in the §B.2 table"
-    },
-    {
-      "file": "schemas/v2/form-content-pack-manifest.schema.json",
-      "kind": "v1-doc",
-      "target": "node-packs.md",
-      "fingerprint": "0954a1938a79",
-      "excerpt": "scription\": \"Reverse-DNS pack name per `node-packs.md` §Naming. Reserved scopes are identical",
-      "disposition": "to-rehome",
-      "why": "v2 artifact cites a v1 doc as the home of a rule it relies on; home: spec/v2/core/packs.md §Names and agents (RFC 0266 §B.2)"
-    },
-    {
-      "file": "schemas/v2/form-content-pack-manifest.schema.json",
-      "kind": "v1-doc",
-      "target": "registry-operations.md",
-      "fingerprint": "4dac95eb185b",
-      "excerpt": "a registry denormalizes for discovery (`registry-operations.md` §\\\"Type-ID indexing\\\") and the id a ho",
-      "disposition": "to-rehome",
-      "why": "v2 artifact cites a v1 doc as the home of a rule it relies on; home: spec/v2/core/packs.md (registry) — not in the §B.2 table"
-    },
-    {
-      "file": "schemas/v2/form-content-pack-manifest.schema.json",
-      "kind": "v1-doc",
-      "target": "host-extensions.md",
-      "fingerprint": "e35765e39a4b",
-      "excerpt": "he pack. Resolves the contradiction in `host-extensions.md` §\\\"Vendor-prefixed namespaces\\\", which",
-      "disposition": "to-rehome",
-      "why": "v2 artifact cites a v1 doc as the home of a rule it relies on; home: spec/v2/core/capabilities.md §Host extensions (RFC 0266 §B.2)"
-    },
-    {
-      "file": "schemas/v2/form-content-pack-manifest.schema.json",
-      "kind": "v1-doc",
-      "target": "node-packs.md",
-      "fingerprint": "185f0b2aac73",
-      "excerpt": "ntrusted; \\\"ignore\\\" means ignore. See `node-packs.md` §\\\"Vendor extensions on pack manifests",
-      "disposition": "to-rehome",
-      "why": "v2 artifact cites a v1 doc as the home of a rule it relies on; home: spec/v2/core/packs.md §Names and agents (RFC 0266 §B.2)"
-    },
-    {
-      "file": "schemas/v2/form-content-pack-manifest.schema.json",
-      "kind": "v1-doc",
-      "target": "host-extensions.md",
-      "fingerprint": "e35765e39a4b~2",
-      "excerpt": "he pack. Resolves the contradiction in `host-extensions.md` §\\\"Vendor-prefixed namespaces\\\", which",
-      "disposition": "to-rehome",
-      "why": "v2 artifact cites a v1 doc as the home of a rule it relies on; home: spec/v2/core/capabilities.md §Host extensions (RFC 0266 §B.2)"
-    },
-    {
-      "file": "schemas/v2/form-content-pack-manifest.schema.json",
-      "kind": "v1-doc",
-      "target": "node-packs.md",
-      "fingerprint": "185f0b2aac73~2",
-      "excerpt": "ntrusted; \\\"ignore\\\" means ignore. See `node-packs.md` §\\\"Vendor extensions on pack manifests",
-      "disposition": "to-rehome",
-      "why": "v2 artifact cites a v1 doc as the home of a rule it relies on; home: spec/v2/core/packs.md §Names and agents (RFC 0266 §B.2)"
-    },
-    {
-      "file": "schemas/v2/frontend-plugin-manifest.schema.json",
-      "kind": "spec-v1",
-      "target": "spec/v1/frontend-plugin-packs.md",
-      "fingerprint": "1472fb808988",
-      "excerpt": "es to nothing on hosts without it. See `spec/v1/frontend-plugin-packs.md`.\",",
-      "disposition": "to-rehome",
-      "why": "v2 artifact cites a v1 doc as the home of a rule it relies on; home: spec/v2/core/packs.md §ui plugins or the schema description — not in the §B.2 table"
+      "fingerprint": "7c9dfed91548",
+      "excerpt": "d execution contract (re-homed from v1 `chat-card-packs.md` \\u00a7\\\"Card execution\\\" and \\u00a7\\\"T",
+      "disposition": "history",
+      "why": "provenance note: names the frozen v1 section this rule was re-homed from (RFC 0266 §B.2); the surrounding v2 description is the rule"
     },
     {
       "file": "schemas/v2/frontend-plugin-manifest.schema.json",
       "kind": "v1-doc",
-      "target": "node-packs.md",
-      "fingerprint": "0954a1938a79",
-      "excerpt": "scription\": \"Reverse-DNS pack name per `node-packs.md` §Naming. Reserved scopes are identical",
-      "disposition": "to-rehome",
-      "why": "v2 artifact cites a v1 doc as the home of a rule it relies on; home: spec/v2/core/packs.md §Names and agents (RFC 0266 §B.2)"
+      "target": "frontend-plugin-packs.md",
+      "fingerprint": "64b7f6d199c2",
+      "excerpt": "Api` and the surface (re-homed from v1 `frontend-plugin-packs.md` §Signing by RFC 0266); a host MAY refu",
+      "disposition": "history",
+      "why": "provenance note: names the frozen v1 section this rule was re-homed from (RFC 0266 §B.2); the surrounding v2 description is the rule"
     },
     {
-      "file": "schemas/v2/frontend-plugin-manifest.schema.json",
+      "file": "schemas/v2/ids.schema.json",
       "kind": "v1-doc",
       "target": "host-extensions.md",
-      "fingerprint": "e35765e39a4b",
-      "excerpt": "he pack. Resolves the contradiction in `host-extensions.md` §\\\"Vendor-prefixed namespaces\\\", which",
-      "disposition": "to-rehome",
-      "why": "v2 artifact cites a v1 doc as the home of a rule it relies on; home: spec/v2/core/capabilities.md §Host extensions (RFC 0266 §B.2)"
-    },
-    {
-      "file": "schemas/v2/frontend-plugin-manifest.schema.json",
-      "kind": "v1-doc",
-      "target": "node-packs.md",
-      "fingerprint": "185f0b2aac73",
-      "excerpt": "ntrusted; \\\"ignore\\\" means ignore. See `node-packs.md` §\\\"Vendor extensions on pack manifests",
-      "disposition": "to-rehome",
-      "why": "v2 artifact cites a v1 doc as the home of a rule it relies on; home: spec/v2/core/packs.md §Names and agents (RFC 0266 §B.2)"
-    },
-    {
-      "file": "schemas/v2/frontend-plugin-manifest.schema.json",
-      "kind": "v1-doc",
-      "target": "registry-operations.md",
-      "fingerprint": "26a7d91bcbab",
-      "excerpt": "rt of the front-end-review checkpoint (`registry-operations.md`) a reviewer audits; a host MAY refuse",
-      "disposition": "to-rehome",
-      "why": "v2 artifact cites a v1 doc as the home of a rule it relies on; home: spec/v2/core/packs.md (registry) — not in the §B.2 table"
-    },
-    {
-      "file": "schemas/v2/frontend-plugin-manifest.schema.json",
-      "kind": "v1-doc",
-      "target": "host-extensions.md",
-      "fingerprint": "e35765e39a4b~2",
-      "excerpt": "he pack. Resolves the contradiction in `host-extensions.md` §\\\"Vendor-prefixed namespaces\\\", which",
-      "disposition": "to-rehome",
-      "why": "v2 artifact cites a v1 doc as the home of a rule it relies on; home: spec/v2/core/capabilities.md §Host extensions (RFC 0266 §B.2)"
-    },
-    {
-      "file": "schemas/v2/frontend-plugin-manifest.schema.json",
-      "kind": "v1-doc",
-      "target": "node-packs.md",
-      "fingerprint": "185f0b2aac73~2",
-      "excerpt": "ntrusted; \\\"ignore\\\" means ignore. See `node-packs.md` §\\\"Vendor extensions on pack manifests",
-      "disposition": "to-rehome",
-      "why": "v2 artifact cites a v1 doc as the home of a rule it relies on; home: spec/v2/core/packs.md §Names and agents (RFC 0266 §B.2)"
-    },
-    {
-      "file": "schemas/v2/localized-content-language-settings.schema.json",
-      "kind": "spec-v1",
-      "target": "spec/v1/localized-content.md",
-      "fingerprint": "179b51393762",
-      "excerpt": "\"description\": \"RFC 0103 (spec/v1/localized-content.md §B). Per-tenant authoring configuration",
-      "disposition": "to-rehome",
-      "why": "v2 artifact cites a v1 doc as the home of a rule it relies on; home: spec/v2/core/i18n.md — not in the §B.2 table"
-    },
-    {
-      "file": "schemas/v2/localized-content-page-response.schema.json",
-      "kind": "spec-v1",
-      "target": "spec/v1/localized-content.md",
-      "fingerprint": "316cc04f0c48",
-      "excerpt": "\"description\": \"RFC 0103 (spec/v1/localized-content.md §D). The resolved delivery response for",
-      "disposition": "to-rehome",
-      "why": "v2 artifact cites a v1 doc as the home of a rule it relies on; home: spec/v2/core/i18n.md — not in the §B.2 table"
-    },
-    {
-      "file": "schemas/v2/localized-content-page.schema.json",
-      "kind": "spec-v1",
-      "target": "spec/v1/localized-content.md",
-      "fingerprint": "f4762833a0da",
-      "excerpt": "\"description\": \"RFC 0103 (spec/v1/localized-content.md §B). An authored content page: an order",
-      "disposition": "to-rehome",
-      "why": "v2 artifact cites a v1 doc as the home of a rule it relies on; home: spec/v2/core/i18n.md — not in the §B.2 table"
-    },
-    {
-      "file": "schemas/v2/localized-content-section.schema.json",
-      "kind": "spec-v1",
-      "target": "spec/v1/localized-content.md",
-      "fingerprint": "52ce8b737700",
-      "excerpt": "\"description\": \"RFC 0103 (spec/v1/localized-content.md §B). One section record of an authored",
-      "disposition": "to-rehome",
-      "why": "v2 artifact cites a v1 doc as the home of a rule it relies on; home: spec/v2/core/i18n.md — not in the §B.2 table"
+      "fingerprint": "df422771b68a",
+      "excerpt": "extension convention; re-homed from v1 `host-extensions.md` §\\\"The rule\\\", §\\\"Canonical prefixes\\\"",
+      "disposition": "history",
+      "why": "provenance note: names the frozen v1 section this rule was re-homed from (RFC 0266 §B.2); the surrounding v2 description is the rule"
     },
     {
       "file": "schemas/v2/node-pack-manifest.schema.json",
       "kind": "v1-doc",
       "target": "node-packs.md",
-      "fingerprint": "2429fc9fcb35",
-      "excerpt": "at the pack root. Language-neutral. See node-packs.md for the canonical contract.\",",
-      "disposition": "to-rehome",
-      "why": "v2 artifact cites a v1 doc as the home of a rule it relies on; home: spec/v2/core/packs.md §Names and agents (RFC 0266 §B.2)"
+      "fingerprint": "8911de9ee0cd",
+      "excerpt": "node-runtime failure (re-homed from v1 `node-packs.md` §\\\"Engine integration\\\" by RFC 0266).\"",
+      "disposition": "history",
+      "why": "provenance note: names the frozen v1 section this rule was re-homed from (RFC 0266 §B.2); the surrounding v2 description is the rule"
     },
     {
       "file": "schemas/v2/node-pack-manifest.schema.json",
       "kind": "v1-doc",
       "target": "node-packs.md",
-      "fingerprint": "f970aa17697b",
-      "excerpt": "nd MUST NOT appear in any registry. See node-packs.md \\u00a7Naming for the full reservation t",
-      "disposition": "to-rehome",
-      "why": "v2 artifact cites a v1 doc as the home of a rule it relies on; home: spec/v2/core/packs.md §Names and agents (RFC 0266 §B.2)"
-    },
-    {
-      "file": "schemas/v2/node-pack-manifest.schema.json",
-      "kind": "v1-doc",
-      "target": "observability.md",
-      "fingerprint": "18a324a0a312",
-      "excerpt": "a `WorkflowNode.outputSensitivity`. See observability.md \\u00a7Privacy classification (closes O5",
-      "disposition": "to-rehome",
-      "why": "v2 artifact cites a v1 doc as the home of a rule it relies on; home: spec/v2/core/telemetry.md §Privacy classification (RFC 0266 §B.2)"
-    },
-    {
-      "file": "schemas/v2/node-pack-manifest.schema.json",
-      "kind": "v1-doc",
-      "target": "host-extensions.md",
-      "fingerprint": "bfb9bfc147da",
-      "excerpt": "MUST prefix with `x-host-<host>-` per `host-extensions.md` \\u00a7\\\"Canonical-prefix table\\\". Empt",
-      "disposition": "to-rehome",
-      "why": "v2 artifact cites a v1 doc as the home of a rule it relies on; home: spec/v2/core/capabilities.md §Host extensions (RFC 0266 §B.2)"
-    },
-    {
-      "file": "schemas/v2/node-pack-manifest.schema.json",
-      "kind": "v1-doc",
-      "target": "host-extensions.md",
-      "fingerprint": "81c4d296d33a",
-      "excerpt": "he pack. Resolves the contradiction in `host-extensions.md` \\u00a7\\\"Vendor-prefixed namespaces\\\",",
-      "disposition": "to-rehome",
-      "why": "v2 artifact cites a v1 doc as the home of a rule it relies on; home: spec/v2/core/capabilities.md §Host extensions (RFC 0266 §B.2)"
+      "fingerprint": "82c959afb92c",
+      "excerpt": "ear in any registry. (Re-homed from v1 `node-packs.md` \\u00a7Naming by RFC 0266.)\",",
+      "disposition": "history",
+      "why": "provenance note: names the frozen v1 section this rule was re-homed from (RFC 0266 §B.2); the surrounding v2 description is the rule"
     },
     {
       "file": "schemas/v2/node-pack-manifest.schema.json",
       "kind": "v1-doc",
       "target": "node-packs.md",
-      "fingerprint": "c927038bd6c7",
-      "excerpt": "ntrusted; \\\"ignore\\\" means ignore. See `node-packs.md` \\u00a7\\\"Vendor extensions on pack mani",
-      "disposition": "to-rehome",
-      "why": "v2 artifact cites a v1 doc as the home of a rule it relies on; home: spec/v2/core/packs.md §Names and agents (RFC 0266 §B.2)"
-    },
-    {
-      "file": "schemas/v2/node-pack-manifest.schema.json",
-      "kind": "v1-doc",
-      "target": "node-packs.md",
-      "fingerprint": "bfd99e8fa5fc",
-      "excerpt": "n\": \"How the engine loads the pack. See node-packs.md \\u00a7runtime formats. `wasm` is the co",
-      "disposition": "to-rehome",
-      "why": "v2 artifact cites a v1 doc as the home of a rule it relies on; home: spec/v2/core/packs.md §Names and agents (RFC 0266 §B.2)"
-    },
-    {
-      "file": "schemas/v2/node-pack-manifest.schema.json",
-      "kind": "v1-doc",
-      "target": "node-packs.md",
-      "fingerprint": "d4abb959d3e4",
-      "excerpt": "`) any primitive it will not grant; see node-packs.md \\u00a7\\\"Runtime platform requirements\\\"",
-      "disposition": "to-rehome",
-      "why": "v2 artifact cites a v1 doc as the home of a rule it relies on; home: spec/v2/core/packs.md §Names and agents (RFC 0266 §B.2)"
-    },
-    {
-      "file": "schemas/v2/node-pack-manifest.schema.json",
-      "kind": "v1-doc",
-      "target": "host-extensions.md",
-      "fingerprint": "81c4d296d33a~2",
-      "excerpt": "he pack. Resolves the contradiction in `host-extensions.md` \\u00a7\\\"Vendor-prefixed namespaces\\\",",
-      "disposition": "to-rehome",
-      "why": "v2 artifact cites a v1 doc as the home of a rule it relies on; home: spec/v2/core/capabilities.md §Host extensions (RFC 0266 §B.2)"
-    },
-    {
-      "file": "schemas/v2/node-pack-manifest.schema.json",
-      "kind": "v1-doc",
-      "target": "node-packs.md",
-      "fingerprint": "c927038bd6c7~2",
-      "excerpt": "ntrusted; \\\"ignore\\\" means ignore. See `node-packs.md` \\u00a7\\\"Vendor extensions on pack mani",
-      "disposition": "to-rehome",
-      "why": "v2 artifact cites a v1 doc as the home of a rule it relies on; home: spec/v2/core/packs.md §Names and agents (RFC 0266 §B.2)"
-    },
-    {
-      "file": "schemas/v2/orchestrator-decision.schema.json",
-      "kind": "v1-doc",
-      "target": "host-extensions.md",
-      "fingerprint": "15954f564442",
-      "excerpt": "Y ship under `vendor.<host>.<kind>` per host-extensions.md but conformance MUST validate against t",
-      "disposition": "to-rehome",
-      "why": "v2 artifact cites a v1 doc as the home of a rule it relies on; home: spec/v2/core/capabilities.md §Host extensions (RFC 0266 §B.2)"
+      "fingerprint": "abac9924909d",
+      "excerpt": "schema does not list (re-homed from v1 `node-packs.md` \\u00a7\\\"Runtime platform requirements\\",
+      "disposition": "history",
+      "why": "provenance note: names the frozen v1 section this rule was re-homed from (RFC 0266 §B.2); the surrounding v2 description is the rule"
     },
     {
       "file": "schemas/v2/orchestrator-decision.schema.json",
       "kind": "v1-doc",
       "target": "node-packs.md",
-      "fingerprint": "66bd8329929b",
-      "excerpt": "laintext (use the secret channel). See `node-packs.md` §core.dispatch.\"",
-      "disposition": "to-rehome",
-      "why": "v2 artifact cites a v1 doc as the home of a rule it relies on; home: spec/v2/core/packs.md §Names and agents (RFC 0266 §B.2)"
-    },
-    {
-      "file": "schemas/v2/pack-lockfile.schema.json",
-      "kind": "spec-v1",
-      "target": "spec/v1/node-packs.md",
-      "fingerprint": "842479a48d35",
-      "excerpt": "every pack a workspace depends on. Per spec/v1/node-packs.md §\\\"Dependency resolution + lockfile\\\".",
-      "disposition": "to-rehome",
-      "why": "v2 artifact cites a v1 doc as the home of a rule it relies on; home: spec/v2/core/packs.md §Names and agents (RFC 0266 §B.2)"
+      "fingerprint": "1e674e8cca63",
+      "excerpt": "s the rule's v2 home (re-homed from v1 `node-packs.md` §`core.dispatch` by RFC 0266).\"",
+      "disposition": "history",
+      "why": "provenance note: names the frozen v1 section this rule was re-homed from (RFC 0266 §B.2); the surrounding v2 description is the rule"
     },
     {
       "file": "schemas/v2/pack-lockfile.schema.json",
       "kind": "v1-doc",
       "target": "node-packs.md",
-      "fingerprint": "0b561b70ef6a",
-      "excerpt": "scription\": \"Optional override map per `node-packs.md` §\\\"Transitive dependency resolution\\\"",
-      "disposition": "to-rehome",
-      "why": "v2 artifact cites a v1 doc as the home of a rule it relies on; home: spec/v2/core/packs.md §Names and agents (RFC 0266 §B.2)"
+      "fingerprint": "e591d213e589",
+      "excerpt": "ile resolution rules (re-homed from v1 `node-packs.md` §\\\"Dependency resolution + lockfile\\\"",
+      "disposition": "history",
+      "why": "provenance note: names the frozen v1 section this rule was re-homed from (RFC 0266 §B.2); the surrounding v2 description is the rule"
     },
     {
       "file": "schemas/v2/pack-lockfile.schema.json",
       "kind": "v1-doc",
       "target": "registry-operations.md",
-      "fingerprint": "00459b5fcaec",
-      "excerpt": "ist of fallback registry base URLs per `registry-operations.md` §\\\"Registry mirror + federation\\\". Whe",
-      "disposition": "to-rehome",
-      "why": "v2 artifact cites a v1 doc as the home of a rule it relies on; home: spec/v2/core/packs.md (registry) — not in the §B.2 table"
-    },
-    {
-      "file": "schemas/v2/pack-lockfile.schema.json",
-      "kind": "v1-doc",
-      "target": "node-packs.md",
-      "fingerprint": "e650e8d0b434",
-      "excerpt": "\"description\": \"Pack name per node-packs.md §\\\"Manifest format\\\" `name`. Reverse-DN",
-      "disposition": "to-rehome",
-      "why": "v2 artifact cites a v1 doc as the home of a rule it relies on; home: spec/v2/core/packs.md §Names and agents (RFC 0266 §B.2)"
-    },
-    {
-      "file": "schemas/v2/pack-lockfile.schema.json",
-      "kind": "v1-doc",
-      "target": "node-packs.md",
-      "fingerprint": "9a270ce7ff5c",
-      "excerpt": "al pack signature material (Ed25519 per node-packs.md §Signing). When present, resolvers MUST",
-      "disposition": "to-rehome",
-      "why": "v2 artifact cites a v1 doc as the home of a rule it relies on; home: spec/v2/core/packs.md §Names and agents (RFC 0266 §B.2)"
-    },
-    {
-      "file": "schemas/v2/pack-lockfile.schema.json",
-      "kind": "v1-doc",
-      "target": "host-capabilities.md",
-      "fingerprint": "831a56d68393",
-      "excerpt": "` advertises every key listed here (per host-capabilities.md §\\\"Capability negotiation\\\"). Lockfile",
-      "disposition": "to-rehome",
-      "why": "v2 artifact cites a v1 doc as the home of a rule it relies on; home: spec/v2/core/host-services.md §modelCapabilities (RFC 0266 §B.2)"
+      "fingerprint": "7c886cd3daa5",
+      "excerpt": "irror and federation; re-homed from v1 `registry-operations.md` §\\\"Registry mirror + federation\\\" by R",
+      "disposition": "history",
+      "why": "provenance note: names the frozen v1 section this rule was re-homed from (RFC 0266 §B.2); the surrounding v2 description is the rule"
     },
     {
       "file": "schemas/v2/part.schema.json",
       "kind": "v1-doc",
       "target": "a2a-integration.md",
-      "fingerprint": "d322a245f990",
-      "excerpt": "ase64 string.\\\" Bounded by host policy (a2a-integration.md D.3).\"",
-      "disposition": "to-rehome",
-      "why": "v2 artifact cites a v1 doc as the home of a rule it relies on; home: spec/v2/core/interop.md (A2A) — not in the §B.2 table"
-    },
-    {
-      "file": "schemas/v2/part.schema.json",
-      "kind": "v1-doc",
-      "target": "a2a-integration.md",
-      "fingerprint": "cc4ceb2d4ce4",
-      "excerpt": "caller's authorization (RFC 0205 §A.3; a2a-integration.md D.3); a consumer MUST NOT auto-fetch it",
-      "disposition": "to-rehome",
-      "why": "v2 artifact cites a v1 doc as the home of a rule it relies on; home: spec/v2/core/interop.md (A2A) — not in the §B.2 table"
-    },
-    {
-      "file": "schemas/v2/part.schema.json",
-      "kind": "v1-doc",
-      "target": "a2a-integration.md",
-      "fingerprint": "c159a65751cc",
-      "excerpt": "to-fetch it without an egress decision (a2a-integration.md D.3 inbound).\"",
-      "disposition": "to-rehome",
-      "why": "v2 artifact cites a v1 doc as the home of a rule it relies on; home: spec/v2/core/interop.md (A2A) — not in the §B.2 table"
-    },
-    {
-      "file": "schemas/v2/part.schema.json",
-      "kind": "v1-doc",
-      "target": "a2a-integration.md",
-      "fingerprint": "ce519bfda43e",
-      "excerpt": "fields live under `metadata.openwop.*` (a2a-integration.md).\",",
-      "disposition": "to-rehome",
-      "why": "v2 artifact cites a v1 doc as the home of a rule it relies on; home: spec/v2/core/interop.md (A2A) — not in the §B.2 table"
-    },
-    {
-      "file": "schemas/v2/prompt-kind.schema.json",
-      "kind": "spec-v1",
-      "target": "spec/v1/prompts.md",
-      "fingerprint": "6c67063e4aec",
-      "excerpt": "to introduce one across the corpus. See spec/v1/prompts.md §\\\"PromptKind\\\" for the canonical seman",
-      "disposition": "to-rehome",
-      "why": "v2 artifact cites a v1 doc as the home of a rule it relies on; home: spec/v2/core/host-services.md §prompts Resolution (RFC 0266 §B.2)"
-    },
-    {
-      "file": "schemas/v2/prompt-pack-manifest.schema.json",
-      "kind": "spec-v1",
-      "target": "spec/v1/prompts.md",
-      "fingerprint": "b8f5b2c2d607",
-      "excerpt": "both via the `kind` discriminator. See `spec/v1/prompts.md` §\\\"Discovery & distribution\\\" for the",
-      "disposition": "to-rehome",
-      "why": "v2 artifact cites a v1 doc as the home of a rule it relies on; home: spec/v2/core/host-services.md §prompts Resolution (RFC 0266 §B.2)"
-    },
-    {
-      "file": "schemas/v2/prompt-pack-manifest.schema.json",
-      "kind": "v1-doc",
-      "target": "node-packs.md",
-      "fingerprint": "0954a1938a79",
-      "excerpt": "scription\": \"Reverse-DNS pack name per `node-packs.md` §Naming. Reserved scopes are identical",
-      "disposition": "to-rehome",
-      "why": "v2 artifact cites a v1 doc as the home of a rule it relies on; home: spec/v2/core/packs.md §Names and agents (RFC 0266 §B.2)"
-    },
-    {
-      "file": "schemas/v2/prompt-pack-manifest.schema.json",
-      "kind": "v1-doc",
-      "target": "host-extensions.md",
-      "fingerprint": "e35765e39a4b",
-      "excerpt": "he pack. Resolves the contradiction in `host-extensions.md` §\\\"Vendor-prefixed namespaces\\\", which",
-      "disposition": "to-rehome",
-      "why": "v2 artifact cites a v1 doc as the home of a rule it relies on; home: spec/v2/core/capabilities.md §Host extensions (RFC 0266 §B.2)"
-    },
-    {
-      "file": "schemas/v2/prompt-pack-manifest.schema.json",
-      "kind": "v1-doc",
-      "target": "node-packs.md",
-      "fingerprint": "185f0b2aac73",
-      "excerpt": "ntrusted; \\\"ignore\\\" means ignore. See `node-packs.md` §\\\"Vendor extensions on pack manifests",
-      "disposition": "to-rehome",
-      "why": "v2 artifact cites a v1 doc as the home of a rule it relies on; home: spec/v2/core/packs.md §Names and agents (RFC 0266 §B.2)"
-    },
-    {
-      "file": "schemas/v2/prompt-ref.schema.json",
-      "kind": "spec-v1",
-      "target": "spec/v1/prompts.md",
-      "fingerprint": "6908dabbaaef",
-      "excerpt": "ns need to be expressed explicitly. See spec/v1/prompts.md §\\\"PromptRef\\\" for the canonical contra",
-      "disposition": "to-rehome",
-      "why": "v2 artifact cites a v1 doc as the home of a rule it relies on; home: spec/v2/core/host-services.md §prompts Resolution (RFC 0266 §B.2)"
-    },
-    {
-      "file": "schemas/v2/prompt-template.schema.json",
-      "kind": "spec-v1",
-      "target": "spec/v1/prompts.md",
-      "fingerprint": "5fbb1ef63dc4",
-      "excerpt": "workflow nodes and agent manifests. See spec/v1/prompts.md §\\\"PromptTemplate\\\" for the canonical c",
-      "disposition": "to-rehome",
-      "why": "v2 artifact cites a v1 doc as the home of a rule it relies on; home: spec/v2/core/host-services.md §prompts Resolution (RFC 0266 §B.2)"
-    },
-    {
-      "file": "schemas/v2/prompt-template.schema.json",
-      "kind": "v1-doc",
-      "target": "host-extensions.md",
-      "fingerprint": "2d9ea5784546",
-      "excerpt": "naming discipline as node-pack typeIds (host-extensions.md §\\\"Canonical-prefix table\\\").\"",
-      "disposition": "to-rehome",
-      "why": "v2 artifact cites a v1 doc as the home of a rule it relies on; home: spec/v2/core/capabilities.md §Host extensions (RFC 0266 §B.2)"
+      "fingerprint": "37732aa20b46",
+      "excerpt": "unded by host policy (re-homed from v1 `a2a-integration.md` D.3 by RFC 0266); inbound, the bytes a",
+      "disposition": "history",
+      "why": "provenance note: names the frozen v1 section this rule was re-homed from (RFC 0266 §B.2); the surrounding v2 description is the rule"
     },
     {
       "file": "schemas/v2/registry-version-manifest.schema.json",
       "kind": "v1-doc",
       "target": "registry-operations.md",
-      "fingerprint": "38955a1ba69f",
-      "excerpt": ". The registry's runtime-support check (registry-operations.md §Validation flow #7) is skipped for dec",
-      "disposition": "to-rehome",
-      "why": "v2 artifact cites a v1 doc as the home of a rule it relies on; home: spec/v2/core/packs.md (registry) — not in the §B.2 table"
+      "fingerprint": "294180fad2b7",
+      "excerpt": "**Type-id indexing** (re-homed from v1 `registry-operations.md` §\\\"Type-ID indexing and cross-namespac",
+      "disposition": "history",
+      "why": "provenance note: names the frozen v1 section this rule was re-homed from (RFC 0266 §B.2); the surrounding v2 description is the rule"
+    },
+    {
+      "file": "schemas/v2/registry-version-manifest.schema.json",
+      "kind": "v1-doc",
+      "target": "node-packs.md",
+      "fingerprint": "84fbbd0328f5",
+      "excerpt": "or declarative kinds (re-homed from v1 `node-packs.md` §\\\"Manifest format\\\" and `registry-ope",
+      "disposition": "history",
+      "why": "provenance note: names the frozen v1 section this rule was re-homed from (RFC 0266 §B.2); the surrounding v2 description is the rule"
     },
     {
       "file": "schemas/v2/registry-version-manifest.schema.json",
       "kind": "v1-doc",
       "target": "registry-operations.md",
-      "fingerprint": "fb2e4653ed4e",
-      "excerpt": "into the per-pack index for discovery (`registry-operations.md` §\\\"Type-ID indexing\\\").\",",
-      "disposition": "to-rehome",
-      "why": "v2 artifact cites a v1 doc as the home of a rule it relies on; home: spec/v2/core/packs.md (registry) — not in the §B.2 table"
-    },
-    {
-      "file": "schemas/v2/registry-version-manifest.schema.json",
-      "kind": "v1-doc",
-      "target": "host-extensions.md",
-      "fingerprint": "e35765e39a4b",
-      "excerpt": "he pack. Resolves the contradiction in `host-extensions.md` §\\\"Vendor-prefixed namespaces\\\", which",
-      "disposition": "to-rehome",
-      "why": "v2 artifact cites a v1 doc as the home of a rule it relies on; home: spec/v2/core/capabilities.md §Host extensions (RFC 0266 §B.2)"
-    },
-    {
-      "file": "schemas/v2/registry-version-manifest.schema.json",
-      "kind": "v1-doc",
-      "target": "node-packs.md",
-      "fingerprint": "be048fb72835",
-      "excerpt": "0107 G1), so this covers the root. See `node-packs.md` §\\\"Vendor extensions on pack manifests",
-      "disposition": "to-rehome",
-      "why": "v2 artifact cites a v1 doc as the home of a rule it relies on; home: spec/v2/core/packs.md §Names and agents (RFC 0266 §B.2)"
+      "fingerprint": "298b8c8310df",
+      "excerpt": "ode-packs.md` §\\\"Manifest format\\\" and `registry-operations.md` §\\\"Validation flow\\\" check 7 by RFC 02",
+      "disposition": "history",
+      "why": "provenance note: names the frozen v1 section this rule was re-homed from (RFC 0266 §B.2); the surrounding v2 description is the rule"
     },
     {
       "file": "schemas/v2/run-event-payloads.schema.json",
-      "kind": "spec-v1",
-      "target": "spec/v1/multi-agent-execution.md",
-      "fingerprint": "af79cc74106b",
-      "excerpt": "hine transition this event records. See spec/v1/multi-agent-execution.md \\u00a7'Handoff state machine'.\"",
-      "disposition": "to-rehome",
-      "why": "v2 artifact cites a v1 doc as the home of a rule it relies on; home: spec/v2/core/execution.md — not in the §B.2 table"
+      "kind": "v1-doc",
+      "target": "multi-agent-execution.md",
+      "fingerprint": "1a2988b30625",
+      "excerpt": "patch never surfaces (re-homed from v1 `multi-agent-execution.md` \\u00a7\\\"Handoff state machine\\\" by RFC",
+      "disposition": "history",
+      "why": "provenance note: names the frozen v1 section this rule was re-homed from (RFC 0266 §B.2); the surrounding v2 description is the rule"
     },
     {
       "file": "schemas/v2/run-event-payloads.schema.json",
       "kind": "v1-doc",
       "target": "interrupt-profiles.md",
-      "fingerprint": "301be067aa77",
-      "excerpt": "triggered by a parent-cancel cascade (`interrupt-profiles.md \\u00a7openwop-interrupt-cascade-cancel`",
-      "disposition": "to-rehome",
-      "why": "v2 artifact cites a v1 doc as the home of a rule it relies on; home: spec/v2/core/interrupt.md — not in the §B.2 table"
+      "fingerprint": "1528ee7f5630",
+      "excerpt": "upts are invalidated (re-homed from v1 `interrupt-profiles.md` \\u00a7`openwop-interrupt-cascade-cance",
+      "disposition": "history",
+      "why": "provenance note: names the frozen v1 section this rule was re-homed from (RFC 0266 §B.2); the surrounding v2 description is the rule"
     },
     {
       "file": "schemas/v2/run-event-payloads.schema.json",
       "kind": "v1-doc",
       "target": "stream-modes.md",
-      "fingerprint": "44ca4ba13cac",
-      "excerpt": "t} is the minimum compliant payload per stream-modes.md \\u00a7messages (the prior {nodeId, chun",
-      "disposition": "to-rehome",
-      "why": "v2 artifact cites a v1 doc as the home of a rule it relies on; home: spec/v2/core/events.md §Stream modes (RFC 0266 §B.2)"
-    },
-    {
-      "file": "schemas/v2/run-event-payloads.schema.json",
-      "kind": "v1-doc",
-      "target": "stream-modes.md",
-      "fingerprint": "b499163f2891",
-      "excerpt": "ctive restatement). Tiered metadata per stream-modes.md \\u00a7messages (S2 closure): `meta` add",
-      "disposition": "to-rehome",
-      "why": "v2 artifact cites a v1 doc as the home of a rule it relies on; home: spec/v2/core/events.md §Stream modes (RFC 0266 §B.2)"
-    },
-    {
-      "file": "schemas/v2/run-event-payloads.schema.json",
-      "kind": "v1-doc",
-      "target": "stream-modes.md",
-      "fingerprint": "93a2d4e9ac66",
-      "excerpt": "ssage.chunk / outputChunk payloads. See stream-modes.md \\u00a7messages.\",",
-      "disposition": "to-rehome",
-      "why": "v2 artifact cites a v1 doc as the home of a rule it relies on; home: spec/v2/core/events.md §Stream modes (RFC 0266 §B.2)"
+      "fingerprint": "014eb20f0139",
+      "excerpt": "optional. Tier rules (re-homed from v1 `stream-modes.md` \\u00a7messages by RFC 0266): when the",
+      "disposition": "history",
+      "why": "provenance note: names the frozen v1 section this rule was re-homed from (RFC 0266 §B.2); the surrounding v2 description is the rule"
     },
     {
       "file": "schemas/v2/run-event-payloads.schema.json",
       "kind": "v1-doc",
       "target": "version-negotiation.md",
-      "fingerprint": "ee3444f00224",
-      "excerpt": "Id)` per Temporal-style versioning. See version-negotiation.md.\",",
-      "disposition": "to-rehome",
-      "why": "v2 artifact cites a v1 doc as the home of a rule it relies on; home: spec/v2/core/versioning.md / replay.md — not in the §B.2 table"
-    },
-    {
-      "file": "schemas/v2/run-event-payloads.schema.json",
-      "kind": "spec-v1",
-      "target": "spec/v1/rest-endpoints.md",
-      "fingerprint": "69d34d7440a0",
-      "excerpt": "e: \\\"replay_diverged_at_refusal\\\"` per `spec/v1/rest-endpoints.md` \\u00a7\\\"Common error codes\\\". Capabili",
-      "disposition": "to-rehome",
-      "why": "v2 artifact cites a v1 doc as the home of a rule it relies on; home: spec/v2/core/errors.md and api/v2/openapi.yaml — not in the §B.2 table"
-    },
-    {
-      "file": "schemas/v2/run-event-payloads.schema.json",
-      "kind": "v1-doc",
-      "target": "observability.md",
-      "fingerprint": "25ff1f2a92ff",
-      "excerpt": "`openwop.cost.*` attribute group (per `observability.md \\u00a7\\\"Cost attribution attributes\\\"`)",
-      "disposition": "to-rehome",
-      "why": "v2 artifact cites a v1 doc as the home of a rule it relies on; home: spec/v2/core/telemetry.md §Privacy classification (RFC 0266 §B.2)"
-    },
-    {
-      "file": "schemas/v2/run-event-payloads.schema.json",
-      "kind": "spec-v1",
-      "target": "spec/v1/prompts.md",
-      "fingerprint": "b44c97a6f985",
-      "excerpt": "fs, variableHashes, contentTrust)` per `spec/v1/prompts.md \\u00a7\\\"Replay determinism\\\"`. Secret-s",
-      "disposition": "to-rehome",
-      "why": "v2 artifact cites a v1 doc as the home of a rule it relies on; home: spec/v2/core/host-services.md §prompts Resolution (RFC 0266 §B.2)"
-    },
-    {
-      "file": "schemas/v2/run-event-payloads.schema.json",
-      "kind": "spec-v1",
-      "target": "spec/v1/prompts.md",
-      "fingerprint": "07bbd9d9d795",
-      "excerpt": "es the four-layer resolution chain per `spec/v1/prompts.md` \\u00a7\\\"Resolution chain (normative)\\\"",
-      "disposition": "to-rehome",
-      "why": "v2 artifact cites a v1 doc as the home of a rule it relies on; home: spec/v2/core/host-services.md §prompts Resolution (RFC 0266 §B.2)"
-    },
-    {
-      "file": "schemas/v2/run-event-payloads.schema.json",
-      "kind": "v1-doc",
-      "target": "host-extensions.md",
-      "fingerprint": "1978a1334682",
-      "excerpt": "MUST prefix with `x-host-<host>-` per `host-extensions.md` \\u00a7\\\"Canonical-prefix table\\\"; matc",
-      "disposition": "to-rehome",
-      "why": "v2 artifact cites a v1 doc as the home of a rule it relies on; home: spec/v2/core/capabilities.md §Host extensions (RFC 0266 §B.2)"
-    },
-    {
-      "file": "schemas/v2/run-event-payloads.schema.json",
-      "kind": "v1-doc",
-      "target": "auth.md",
-      "fingerprint": "11332d1dd8cd",
-      "excerpt": "udit-logged with the acting principal (`auth.md`).\",",
-      "disposition": "to-rehome",
-      "why": "v2 artifact cites a v1 doc as the home of a rule it relies on; home: spec/v2/core/identity.md — not in the §B.2 table"
+      "fingerprint": "e32d6e26221d",
+      "excerpt": "a validation error. (Re-homed from v1 `version-negotiation.md` §\\\"Pinned change versions\\\" by RFC 026",
+      "disposition": "history",
+      "why": "provenance note: names the frozen v1 section this rule was re-homed from (RFC 0266 §B.2); the surrounding v2 description is the rule"
     },
     {
       "file": "schemas/v2/run-options.schema.json",
       "kind": "v1-doc",
       "target": "run-options.md",
-      "fingerprint": "95a1df7b5d9d",
-      "excerpt": "ied by the caller in `POST /runs`. See `run-options.md` for full semantics. Reserved keys are",
-      "disposition": "to-rehome",
-      "why": "v2 artifact cites a v1 doc as the home of a rule it relies on; home: spec/v2/core/runs.md §Run options (RFC 0266 §B.2)"
-    },
-    {
-      "file": "schemas/v2/run-options.schema.json",
-      "kind": "v1-api",
-      "target": "api/openapi.yaml",
-      "fingerprint": "a6f409550b72",
-      "excerpt": "e composed `createRun` request body in `api/openapi.yaml`; the closure (`unevaluatedProperties:",
-      "disposition": "to-rehome",
-      "why": "v2 schema names the v1 OpenAPI createRun body as its composition site; cite api/v2/openapi.yaml"
-    },
-    {
-      "file": "schemas/v2/run-options.schema.json",
-      "kind": "v1-doc",
-      "target": "run-options.md",
-      "fingerprint": "21b71479265b",
-      "excerpt": "vider_forbidden on production keys. See run-options.md §Mock provider extension (closes F1).\",",
-      "disposition": "to-rehome",
-      "why": "v2 artifact cites a v1 doc as the home of a rule it relies on; home: spec/v2/core/runs.md §Run options (RFC 0266 §B.2)"
-    },
-    {
-      "file": "schemas/v2/run-options.schema.json",
-      "kind": "v1-doc",
-      "target": "run-options.md",
-      "fingerprint": "24f3ff9dd08f",
-      "excerpt": "ch provider documents its own keys; see run-options.md §Canonical mock provider catalog. Commo",
-      "disposition": "to-rehome",
-      "why": "v2 artifact cites a v1 doc as the home of a rule it relies on; home: spec/v2/core/runs.md §Run options (RFC 0266 §B.2)"
-    },
-    {
-      "file": "schemas/v2/run-snapshot.schema.json",
-      "kind": "v1-doc",
-      "target": "interrupt-profiles.md",
-      "fingerprint": "a4ad10bec0d8",
-      "excerpt": "rrupt's `kind` is `external-event` per `interrupt-profiles.md \\u00a7openwop-interrupt-external-event`",
-      "disposition": "to-rehome",
-      "why": "v2 artifact cites a v1 doc as the home of a rule it relies on; home: spec/v2/core/interrupt.md — not in the §B.2 table"
-    },
-    {
-      "file": "schemas/v2/run-snapshot.schema.json",
-      "kind": "v1-doc",
-      "target": "rest-endpoints.md",
-      "fingerprint": "a9ff1157ae79",
-      "excerpt": "ed and the terminal `cancelled` \\u2014 `rest-endpoints.md` and the OpenAPI cancel responses alrea",
-      "disposition": "to-rehome",
-      "why": "v2 artifact cites a v1 doc as the home of a rule it relies on; home: spec/v2/core/errors.md and api/v2/openapi.yaml — not in the §B.2 table"
-    },
-    {
-      "file": "schemas/v2/run-snapshot.schema.json",
-      "kind": "spec-v1",
-      "target": "spec/v1/compensation.md",
-      "fingerprint": "1eb9de0af25f",
-      "excerpt": "persisted plan, defined normatively in `spec/v1/compensation.md \\u00a7\\\"Run rollup: compensationStatus\\",
-      "disposition": "to-rehome",
-      "why": "v2 artifact cites a v1 doc as the home of a rule it relies on; home: spec/v2/core/runs.md or the schema description (compensation rollup) — not in the §B.2 table"
-    },
-    {
-      "file": "schemas/v2/run-snapshot.schema.json",
-      "kind": "v1-doc",
-      "target": "version-negotiation.md",
-      "fingerprint": "976f31478152",
-      "excerpt": "'t constrain the inner shape \\u2014 see version-negotiation.md \\u00a7node-states.\",",
-      "disposition": "to-rehome",
-      "why": "v2 artifact cites a v1 doc as the home of a rule it relies on; home: spec/v2/core/versioning.md / replay.md — not in the §B.2 table"
-    },
-    {
-      "file": "schemas/v2/run-snapshot.schema.json",
-      "kind": "v1-doc",
-      "target": "channels-and-reducers.md",
-      "fingerprint": "88570b3084af",
-      "excerpt": "n\": \"Optional typed state channels (see channels-and-reducers.md). Present when the workflow declares ch",
-      "disposition": "to-rehome",
-      "why": "v2 artifact cites a v1 doc as the home of a rule it relies on; home: spec/v2/core/runs.md §Channels (RFC 0266 §B.2)"
-    },
-    {
-      "file": "schemas/v2/run-snapshot.schema.json",
-      "kind": "v1-doc",
-      "target": "run-options.md",
-      "fingerprint": "d491659ea1bf",
-      "excerpt": "lay from `RunOptions.configurable` (see run-options.md). Reserved keys: `recursionLimit`, `mod",
-      "disposition": "to-rehome",
-      "why": "v2 artifact cites a v1 doc as the home of a rule it relies on; home: spec/v2/core/runs.md §Run options (RFC 0266 §B.2)"
+      "fingerprint": "995aa4ffabfb",
+      "excerpt": "he canonical catalog (re-homed from v1 `run-options.md` §Canonical mock provider catalog by RF",
+      "disposition": "history",
+      "why": "provenance note: names the frozen v1 section this rule was re-homed from (RFC 0266 §B.2); the surrounding v2 description is the rule"
     },
     {
       "file": "schemas/v2/run-snapshot.schema.json",
       "kind": "v1-doc",
       "target": "observability.md",
-      "fingerprint": "43cb32fad989",
-      "excerpt": ".cost.*` OTel attribute allowlist (see `observability.md` \\u00a7Cost attribution). Named `openwo",
-      "disposition": "to-rehome",
-      "why": "v2 artifact cites a v1 doc as the home of a rule it relies on; home: spec/v2/core/telemetry.md §Privacy classification (RFC 0266 §B.2)"
-    },
-    {
-      "file": "schemas/v2/self-hosted-runner-dispatch-frame.schema.json",
-      "kind": "v1-doc",
-      "target": "self-hosted-runner.md",
-      "fingerprint": "93739699b67b",
-      "excerpt": "d runner over the runner↔host channel (`self-hosted-runner.md`). The host is the sole orchestration/p",
-      "disposition": "to-rehome",
-      "why": "v2 artifact cites a v1 doc as the home of a rule it relies on; home: spec/v2/core/node-pack-runtimes.md or the schema description — not in the §B.2 table"
-    },
-    {
-      "file": "schemas/v2/self-hosted-runner-dispatch-frame.schema.json",
-      "kind": "v1-doc",
-      "target": "stream-modes.md",
-      "fingerprint": "d438522d788c",
-      "excerpt": "dispatch is never redelivered past it (`stream-modes.md §Resumption`).\"",
-      "disposition": "to-rehome",
-      "why": "v2 artifact cites a v1 doc as the home of a rule it relies on; home: spec/v2/core/events.md §Stream modes (RFC 0266 §B.2)"
-    },
-    {
-      "file": "schemas/v2/self-hosted-runner-registration.schema.json",
-      "kind": "v1-doc",
-      "target": "self-hosted-runner.md",
-      "fingerprint": "9b30463270af",
-      "excerpt": "h, SR-1-adjacent — a normative MUST in `self-hosted-runner.md` §Behavior verified by the gated confor",
-      "disposition": "to-rehome",
-      "why": "v2 artifact cites a v1 doc as the home of a rule it relies on; home: spec/v2/core/node-pack-runtimes.md or the schema description — not in the §B.2 table"
-    },
-    {
-      "file": "schemas/v2/suspend-request.schema.json",
-      "kind": "v1-doc",
-      "target": "interrupt-profiles.md",
-      "fingerprint": "7e0d54302d82",
-      "excerpt": ", a configured override principal (per `interrupt-profiles.md` §approval-gate `override.requiredRole`",
-      "disposition": "to-rehome",
-      "why": "v2 artifact cites a v1 doc as the home of a rule it relies on; home: spec/v2/core/interrupt.md — not in the §B.2 table"
-    },
-    {
-      "file": "schemas/v2/ui-plugin-message.schema.json",
-      "kind": "spec-v1",
-      "target": "spec/v1/frontend-plugin-packs.md",
-      "fingerprint": "a11bae670d18",
-      "excerpt": "rkspace` `If-Match`/ETag pattern). See `spec/v1/frontend-plugin-packs.md`.\",",
-      "disposition": "to-rehome",
-      "why": "v2 artifact cites a v1 doc as the home of a rule it relies on; home: spec/v2/core/packs.md §ui plugins or the schema description — not in the §B.2 table"
-    },
-    {
-      "file": "schemas/v2/workflow-chain-pack-manifest.schema.json",
-      "kind": "v1-doc",
-      "target": "node-packs.md",
-      "fingerprint": "4bf9a014474f",
-      "excerpt": "escription\": \"Reverse-DNS pack name per node-packs.md §Naming. Reserved scopes are identical",
-      "disposition": "to-rehome",
-      "why": "v2 artifact cites a v1 doc as the home of a rule it relies on; home: spec/v2/core/packs.md §Names and agents (RFC 0266 §B.2)"
-    },
-    {
-      "file": "schemas/v2/workflow-chain-pack-manifest.schema.json",
-      "kind": "v1-doc",
-      "target": "host-extensions.md",
-      "fingerprint": "e35765e39a4b",
-      "excerpt": "he pack. Resolves the contradiction in `host-extensions.md` §\\\"Vendor-prefixed namespaces\\\", which",
-      "disposition": "to-rehome",
-      "why": "v2 artifact cites a v1 doc as the home of a rule it relies on; home: spec/v2/core/capabilities.md §Host extensions (RFC 0266 §B.2)"
-    },
-    {
-      "file": "schemas/v2/workflow-chain-pack-manifest.schema.json",
-      "kind": "v1-doc",
-      "target": "node-packs.md",
-      "fingerprint": "185f0b2aac73",
-      "excerpt": "ntrusted; \\\"ignore\\\" means ignore. See `node-packs.md` §\\\"Vendor extensions on pack manifests",
-      "disposition": "to-rehome",
-      "why": "v2 artifact cites a v1 doc as the home of a rule it relies on; home: spec/v2/core/packs.md §Names and agents (RFC 0266 §B.2)"
-    },
-    {
-      "file": "schemas/v2/workflow-chain-pack-manifest.schema.json",
-      "kind": "v1-doc",
-      "target": "host-extensions.md",
-      "fingerprint": "e35765e39a4b~2",
-      "excerpt": "he pack. Resolves the contradiction in `host-extensions.md` §\\\"Vendor-prefixed namespaces\\\", which",
-      "disposition": "to-rehome",
-      "why": "v2 artifact cites a v1 doc as the home of a rule it relies on; home: spec/v2/core/capabilities.md §Host extensions (RFC 0266 §B.2)"
-    },
-    {
-      "file": "schemas/v2/workflow-chain-pack-manifest.schema.json",
-      "kind": "v1-doc",
-      "target": "node-packs.md",
-      "fingerprint": "185f0b2aac73~2",
-      "excerpt": "ntrusted; \\\"ignore\\\" means ignore. See `node-packs.md` §\\\"Vendor extensions on pack manifests",
-      "disposition": "to-rehome",
-      "why": "v2 artifact cites a v1 doc as the home of a rule it relies on; home: spec/v2/core/packs.md §Names and agents (RFC 0266 §B.2)"
-    },
-    {
-      "file": "schemas/v2/workflow-definition.schema.json",
-      "kind": "v1-doc",
-      "target": "version-negotiation.md",
-      "fingerprint": "aee114b79321",
-      "excerpt": "ineVersion + eventLogSchemaVersion (see version-negotiation.md).\",",
-      "disposition": "to-rehome",
-      "why": "v2 artifact cites a v1 doc as the home of a rule it relies on; home: spec/v2/core/versioning.md / replay.md — not in the §B.2 table"
+      "fingerprint": "cb9adccb345f",
+      "excerpt": "allowlist-redaction`; re-homed from v1 `observability.md` \\u00a7\\\"Cost attribution attributes\\\"",
+      "disposition": "history",
+      "why": "provenance note: names the frozen v1 section this rule was re-homed from (RFC 0266 §B.2); the surrounding v2 description is the rule"
     },
     {
       "file": "schemas/v2/workflow-definition.schema.json",
       "kind": "v1-doc",
       "target": "channels-and-reducers.md",
-      "fingerprint": "8b24795cdf59",
-      "excerpt": "n\": \"Optional typed state channels (see channels-and-reducers.md). When present, channel-aware mode appl",
-      "disposition": "to-rehome",
-      "why": "v2 artifact cites a v1 doc as the home of a rule it relies on; home: spec/v2/core/runs.md §Channels (RFC 0266 §B.2)"
-    },
-    {
-      "file": "schemas/v2/workflow-definition.schema.json",
-      "kind": "v1-doc",
-      "target": "run-options.md",
-      "fingerprint": "43e765fc82a0",
-      "excerpt": "so clients can pre-flight-validate. See run-options.md §'Per-workflow configurableSchema'. Add",
-      "disposition": "to-rehome",
-      "why": "v2 artifact cites a v1 doc as the home of a rule it relies on; home: spec/v2/core/runs.md §Run options (RFC 0266 §B.2)"
-    },
-    {
-      "file": "schemas/v2/workflow-definition.schema.json",
-      "kind": "spec-v1",
-      "target": "spec/v1/prompts.md",
-      "fingerprint": "f18d619c9d4a",
-      "excerpt": "hain layer 3 (`workflow-defaults`) per `spec/v1/prompts.md` §\\\"Resolution chain (normative)\\\". App",
-      "disposition": "to-rehome",
-      "why": "v2 artifact cites a v1 doc as the home of a rule it relies on; home: spec/v2/core/host-services.md §prompts Resolution (RFC 0266 §B.2)"
-    },
-    {
-      "file": "schemas/v2/workflow-definition.schema.json",
-      "kind": "spec-v1",
-      "target": "spec/v1/prompts.md",
-      "fingerprint": "374c92f331d6",
-      "excerpt": "mptRefs` MAY hold PromptRef values per `spec/v1/prompts.md` §\\\"PromptRef\\\" (RFC 0027). Hosts adver",
-      "disposition": "to-rehome",
-      "why": "v2 artifact cites a v1 doc as the home of a rule it relies on; home: spec/v2/core/host-services.md §prompts Resolution (RFC 0266 §B.2)"
-    },
-    {
-      "file": "schemas/v2/workflow-definition.schema.json",
-      "kind": "v1-doc",
-      "target": "observability.md",
-      "fingerprint": "cfe6466a93f6",
-      "excerpt": "d workflow overrides are explicit). See observability.md §Privacy classification (closes O5).\"",
-      "disposition": "to-rehome",
-      "why": "v2 artifact cites a v1 doc as the home of a rule it relies on; home: spec/v2/core/telemetry.md §Privacy classification (RFC 0266 §B.2)"
+      "fingerprint": "1a3ce49e297b",
+      "excerpt": "yload.schema.json`). (Re-homed from v1 `channels-and-reducers.md` §Channel declaration and §\\\"Channel-aw",
+      "disposition": "history",
+      "why": "provenance note: names the frozen v1 section this rule was re-homed from (RFC 0266 §B.2); the surrounding v2 description is the rule"
     },
     {
       "file": "schemas/v2/workflow-definition.schema.json",
       "kind": "v1-doc",
       "target": "channels-and-reducers.md",
-      "fingerprint": "1cc495b5f5fe",
-      "excerpt": "ent'|'any', debounceMs?: integer}`. See channels-and-reducers.md §Distributed reducers.\"",
-      "disposition": "to-rehome",
-      "why": "v2 artifact cites a v1 doc as the home of a rule it relies on; home: spec/v2/core/runs.md §Channels (RFC 0266 §B.2)"
-    },
-    {
-      "file": "schemas/v2/workflow-definition.schema.json",
-      "kind": "v1-doc",
-      "target": "observability.md",
-      "fingerprint": "44afce340cb8",
-      "excerpt": "rsistence + external surfaces mask. See observability.md §Privacy classification (closes O5).\"",
-      "disposition": "to-rehome",
-      "why": "v2 artifact cites a v1 doc as the home of a rule it relies on; home: spec/v2/core/telemetry.md §Privacy classification (RFC 0266 §B.2)"
+      "fingerprint": "5060366b7959",
+      "excerpt": "ires in event order. (Re-homed from v1 `channels-and-reducers.md` §\\\"Distributed reducers and cross-engi",
+      "disposition": "history",
+      "why": "provenance note: names the frozen v1 section this rule was re-homed from (RFC 0266 §B.2); the surrounding v2 description is the rule"
     },
     {
       "file": "schemas/v2/workflow-definition.schema.json",
       "kind": "v1-doc",
       "target": "channels-and-reducers.md",
-      "fingerprint": "c6ba66d438b7",
-      "excerpt": "al event timestamps for comparison. See channels-and-reducers.md §Channel TTL.\"",
-      "disposition": "to-rehome",
-      "why": "v2 artifact cites a v1 doc as the home of a rule it relies on; home: spec/v2/core/runs.md §Channels (RFC 0266 §B.2)"
+      "fingerprint": "f7de6a4d3e9d",
+      "excerpt": "tlMs` applies first. (Re-homed from v1 `channels-and-reducers.md` §\\\"Channel TTL\\\" by RFC 0266)\"",
+      "disposition": "history",
+      "why": "provenance note: names the frozen v1 section this rule was re-homed from (RFC 0266 §B.2); the surrounding v2 description is the rule"
     },
     {
       "file": "schemas/v2/workflow-definition.schema.json",
       "kind": "v1-doc",
       "target": "channels-and-reducers.md",
-      "fingerprint": "7eb1bb43d317",
-      "excerpt": "a new channel name + a copy node — see channels-and-reducers.md §Channel schema migration.\"",
-      "disposition": "to-rehome",
-      "why": "v2 artifact cites a v1 doc as the home of a rule it relies on; home: spec/v2/core/runs.md §Channels (RFC 0266 §B.2)"
-    },
-    {
-      "file": "schemas/v2/workflow-definition.schema.json",
-      "kind": "v1-doc",
-      "target": "observability.md",
-      "fingerprint": "74dcf4e9a6e5",
-      "excerpt": "ked when read via the REST surface. See observability.md §Privacy classification (closes O5).\"",
-      "disposition": "to-rehome",
-      "why": "v2 artifact cites a v1 doc as the home of a rule it relies on; home: spec/v2/core/telemetry.md §Privacy classification (RFC 0266 §B.2)"
+      "fingerprint": "2011392f05b1",
+      "excerpt": "e folds permissively (re-homed from v1 `channels-and-reducers.md` §\\\"Channel schema migration\\\" by RFC 0",
+      "disposition": "history",
+      "why": "provenance note: names the frozen v1 section this rule was re-homed from (RFC 0266 §B.2); the surrounding v2 description is the rule"
     },
     {
       "file": "schemas/v2/workflow-definition.schema.json",
       "kind": "v1-doc",
       "target": "channels-and-reducers.md",
-      "fingerprint": "85c78645dd9e",
-      "excerpt": "tion\": \"Per-channel access control. See channels-and-reducers.md §Channel access control (closes C1). Th",
-      "disposition": "to-rehome",
-      "why": "v2 artifact cites a v1 doc as the home of a rule it relies on; home: spec/v2/core/runs.md §Channels (RFC 0266 §B.2)"
-    },
-    {
-      "file": "schemas/v2/workflow-definition.schema.json",
-      "kind": "v1-doc",
-      "target": "observability.md",
-      "fingerprint": "3d4cc80f75e5",
-      "excerpt": "policy at observability collectors. See observability.md §Privacy classification (closes O5).\"",
-      "disposition": "to-rehome",
-      "why": "v2 artifact cites a v1 doc as the home of a rule it relies on; home: spec/v2/core/telemetry.md §Privacy classification (RFC 0266 §B.2)"
-    },
-    {
-      "file": "schemas/v2/workload-identity.schema.json",
-      "kind": "v1-doc",
-      "target": "auth.md",
-      "fingerprint": "0983738bf329",
-      "excerpt": "es MUST NOT exceed the previous hop's (`auth.md` §\\\"Bounds\\\" — scope amplification is r",
-      "disposition": "to-rehome",
-      "why": "v2 artifact cites a v1 doc as the home of a rule it relies on; home: spec/v2/core/identity.md — not in the §B.2 table"
+      "fingerprint": "1c6476586dd7",
+      "excerpt": "hannel's name alone. (Re-homed from v1 `channels-and-reducers.md` §\\\"Channel access control\\\" by RFC 026",
+      "disposition": "history",
+      "why": "provenance note: names the frozen v1 section this rule was re-homed from (RFC 0266 §B.2); the surrounding v2 description is the rule"
     },
     {
       "file": "api/v2/asyncapi.yaml",
@@ -2700,15 +1287,6 @@
       "excerpt": "Generated from `api/asyncapi.yaml` by `scripts/derive-v2-api.py`; do not",
       "disposition": "to-rehome",
       "why": "v2 API is generated from the v1 document by derive-v2-api.py; RFC 0266 §C.1 makes api/v2 its own source"
-    },
-    {
-      "file": "api/v2/asyncapi.yaml",
-      "kind": "v1-doc",
-      "target": "stream-modes.md",
-      "fingerprint": "fd50a9370799",
-      "excerpt": "event carries its own `event:` label (`stream-modes.md`).",
-      "disposition": "to-rehome",
-      "why": "v2 artifact cites a v1 doc as the home of a rule it relies on; home: spec/v2/core/events.md §Stream modes (RFC 0266 §B.2)"
     },
     {
       "file": "api/v2/openapi.yaml",
@@ -2736,60 +1314,6 @@
       "excerpt": "url: https://openwop.dev/spec/v1/",
       "disposition": "to-rehome",
       "why": "v2 OpenAPI contact/externalDocs point readers at the v1 corpus; point at spec/v2/"
-    },
-    {
-      "file": "api/v2/openapi.yaml",
-      "kind": "v1-doc",
-      "target": "stream-modes.md",
-      "fingerprint": "0bc0537f3a51",
-      "excerpt": "e 0..5000; `0` means no buffering. See `stream-modes.md` §Aggregation",
-      "disposition": "to-rehome",
-      "why": "v2 artifact cites a v1 doc as the home of a rule it relies on; home: spec/v2/core/events.md §Stream modes (RFC 0266 §B.2)"
-    },
-    {
-      "file": "api/v2/openapi.yaml",
-      "kind": "v1-doc",
-      "target": "localized-content.md",
-      "fingerprint": "476b7b759caf",
-      "excerpt": "Sections are merged field by field (`localized-content.md` §C).",
-      "disposition": "to-rehome",
-      "why": "v2 artifact cites a v1 doc as the home of a rule it relies on; home: spec/v2/core/i18n.md — not in the §B.2 table"
-    },
-    {
-      "file": "api/v2/openapi.yaml",
-      "kind": "v1-doc",
-      "target": "localized-content.md",
-      "fingerprint": "6c0d676d7e84",
-      "excerpt": "The tenant is host-resolved (`localized-content.md` §F): from the credential when authenti",
-      "disposition": "to-rehome",
-      "why": "v2 artifact cites a v1 doc as the home of a rule it relies on; home: spec/v2/core/i18n.md — not in the §B.2 table"
-    },
-    {
-      "file": "api/v2/openapi.yaml",
-      "kind": "v1-doc",
-      "target": "localized-content.md",
-      "fingerprint": "db11012cffbf",
-      "excerpt": "operation of `localized-content.md` §D. Tenant-scoped; requires `content.w",
-      "disposition": "to-rehome",
-      "why": "v2 artifact cites a v1 doc as the home of a rule it relies on; home: spec/v2/core/i18n.md — not in the §B.2 table"
-    },
-    {
-      "file": "api/v2/openapi.yaml",
-      "kind": "v1-doc",
-      "target": "localized-content.md",
-      "fingerprint": "1e14632fb19c",
-      "excerpt": "one (`localized-content.md` §F), so tenants cannot be enumerated.'",
-      "disposition": "to-rehome",
-      "why": "v2 artifact cites a v1 doc as the home of a rule it relies on; home: spec/v2/core/i18n.md — not in the §B.2 table"
-    },
-    {
-      "file": "api/v2/openapi.yaml",
-      "kind": "v1-doc",
-      "target": "run-options.md",
-      "fingerprint": "ae86767089c8",
-      "excerpt": "ilter to runs carrying these tags (see `run-options.md`).",
-      "disposition": "to-rehome",
-      "why": "v2 artifact cites a v1 doc as the home of a rule it relies on; home: spec/v2/core/runs.md §Run options (RFC 0266 §B.2)"
     }
   ]
 }

@@ -2,7 +2,7 @@
   "$schema": "https://json-schema.org/draft/2020-12/schema",
   "$id": "https://openwop.dev/spec/v2/run-options.schema.json",
   "title": "RunOptions",
-  "description": "Per-run parameter overlay supplied by the caller in `POST /runs`. See `run-options.md` for full semantics. Reserved keys are typed; unknown keys in `configurable` pass through to the engine. RFC 0094 §A: this schema is OPEN at its own root (no `additionalProperties: false`) because it participates in the composed `createRun` request body in `api/openapi.yaml`; the closure (`unevaluatedProperties: false`) lives at that composition site, the only place JSON Schema 2020-12 can express closure over an `allOf`.",
+  "description": "Per-run parameter overlay supplied by the caller in `POST /runs`; runs.md §Run options states its semantics. Reserved keys are typed; unknown keys in `configurable` pass through to the engine. RFC 0094 §A: this schema is OPEN at its own root (no `additionalProperties: false`) because it participates in the composed `createRun` request body in `api/v2/openapi.yaml`; the closure (`unevaluatedProperties: false`) lives at that composition site, the only place JSON Schema 2020-12 can express closure over an `allOf`.",
   "type": "object",
   "properties": {
     "configurable": {
@@ -66,7 +66,7 @@
     },
     "MockProvider": {
       "type": "object",
-      "description": "Routes AI activity calls through a deterministic mock provider instead of real LLM APIs. Test-keys-only — server returns 403 mock_provider_forbidden on production keys. See run-options.md §Mock provider extension (closes F1).",
+      "description": "Routes AI activity calls through a deterministic mock provider instead of real LLM APIs. Test-keys-only — server returns 403 mock_provider_forbidden on production keys (runs.md §`ai` section).",
       "required": [
         "id"
       ],
@@ -79,7 +79,7 @@
         },
         "config": {
           "type": "object",
-          "description": "Per-provider parameter shape. Each provider documents its own keys; see run-options.md §Canonical mock provider catalog. Common shapes (informative — not enforced at this schema level since providers are pluggable):\n\n  - stream-text: { tokens: string[], delayMsPerToken?: integer, finishReason?: string, usage?: object, model?: string }\n  - tool-calls: { toolCalls: object[], delayMsPerToken?: integer }\n  - error: { code: string, message: string, retryable?: boolean, failAfterMs?: integer }\n  - usage-only: { usage: object }",
+          "description": "Per-provider parameter shape. Each provider documents its own keys. Common shapes of the canonical catalog (re-homed from v1 `run-options.md` §Canonical mock provider catalog by RFC 0266) (informative — not enforced at this schema level since providers are pluggable):\n\n  - stream-text: { tokens: string[], delayMsPerToken?: integer, finishReason?: string, usage?: object, model?: string }\n  - tool-calls: { toolCalls: object[], delayMsPerToken?: integer }\n  - error: { code: string, message: string, retryable?: boolean, failAfterMs?: integer }\n  - usage-only: { usage: object }",
           "additionalProperties": true
         }
       },

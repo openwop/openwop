@@ -31,6 +31,11 @@ Entries before this file was condensed carried full development detail. That tex
 
 ### Security
 
+## [2.49.12] — 2026-11-25 — RFC 0266 §B.2: v2 owns its rules
+
+- **RFC 0266 §B.2: every rule v2 cited from frozen v1 now lives in v2.** Pack naming, agents[], lockfile, registry, x-host-, A2A, prompts, channels, observability and the rest moved into v2 schema descriptions (the core budget is full); to-rehome fell 212→16, all §C.
+- **Debug bundle.** No v2 operation serves the v1 debug bundle, so its v1 references are deleted; the concept stays as the `production.debugBundle` facet and `debug-bundle.schema.json`. RFC 0266 unresolved questions 1 and 2 are resolved.
+
 ## [2.49.11] — 2026-11-25 — RFC 0266 §B: the v2 citation gate
 
 - **RFC 0266 §B.1: `check-v2-self-contained`.** A new gate lists every v1 reference in `spec/v2`, `schemas/v2` and `api/v2` (323 today: 98 history, 225 to-rehome) and fails on an unlisted one or a stale allow-list row; `--require-zero-rehome` is the acceptance check.

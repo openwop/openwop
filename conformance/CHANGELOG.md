@@ -1,3 +1,7 @@
+## [2.49.12] — 2026-11-25 — No scenario change
+
+- No scenario change. Schema descriptions now carry the rules RFC 0266 moved out of frozen v1; the suite's vendored schemas change accordingly.
+
 ## [2.49.11] — 2026-11-25 — RFC 0266 §B.1 legs in the normative-home gate
 
 - **`v2-normative-home-gate`.** New legs for `openwop.requirement.0266.no-v1-rule-citation`: `check-v2-self-contained` fails on an unlisted v1 citation in `spec/v2`, `schemas/v2` or `api/v2`, and on a stale allow-list row. No host-facing scenario change.

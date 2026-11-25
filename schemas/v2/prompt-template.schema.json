@@ -2,7 +2,7 @@
   "$schema": "https://json-schema.org/draft/2020-12/schema",
   "$id": "https://openwop.dev/spec/v2/prompt-template.schema.json",
   "title": "PromptTemplate",
-  "description": "Canonical wire shape for a named, versioned, variable-bound prompt body referenced by workflow nodes and agent manifests. See spec/v1/prompts.md §\"PromptTemplate\" for the canonical contract, RFC 0027 for the rationale, and prompt-ref.schema.json for the reference type that points at instances of this shape. Variable interpolation MUST use Mustache-compatible `{{varName}}` placeholders; unresolved required variables MUST cause the node to fail with `node_config_invalid`; unresolved optional variables render as the empty string per RFC 0027 §A.\n\nThe `text` field MAY contain `<UNTRUSTED>...</UNTRUSTED>` markers verbatim — hosts MUST preserve them through composition per SECURITY/threat-model-prompt-injection.md. Variables sourced from `secret` MUST be replaced with `[REDACTED:<secretId>]` markers in any observability output (e.g., `prompt.composed` events) per SECURITY/threat-model-secret-leakage.md §SR-1.",
+  "description": "Canonical wire shape for a named, versioned, variable-bound prompt body referenced by workflow nodes and agent manifests. host-services.md §`prompts` (Composition) states the composition contract; see RFC 0027 for the rationale and prompt-ref.schema.json for the reference type that points at instances of this shape. Variable interpolation MUST use Mustache-compatible `{{varName}}` placeholders; unresolved required variables MUST cause the node to fail with `node_config_invalid`; unresolved optional variables render as the empty string per RFC 0027 §A.\n\nThe `text` field MAY contain `<UNTRUSTED>...</UNTRUSTED>` markers verbatim — hosts MUST preserve them through composition per SECURITY/threat-model-prompt-injection.md. Variables sourced from `secret` MUST be replaced with `[REDACTED:<secretId>]` markers in any observability output (e.g., `prompt.composed` events) per SECURITY/threat-model-secret-leakage.md §SR-1.",
   "type": "object",
   "additionalProperties": false,
   "required": [
@@ -14,7 +14,7 @@
   "properties": {
     "templateId": {
       "$ref": "ids.schema.json#/$defs/templateId",
-      "description": "Stable identifier. Convention: vendor-prefixed for portable templates (`vendor.acme.writer.v2`) or unprefixed for host-resident templates (`writer`). Same naming discipline as node-pack typeIds (host-extensions.md §\"Canonical-prefix table\")."
+      "description": "Stable identifier. Convention: vendor-prefixed for portable templates (`vendor.acme.writer.v2`) or unprefixed for host-resident templates (`writer`). Same naming discipline as node-pack typeIds (the canonical prefixes of the host-extension convention, `ids.schema.json` description)."
     },
     "version": {
       "type": "string",

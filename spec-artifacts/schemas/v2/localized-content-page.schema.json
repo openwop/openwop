@@ -2,7 +2,7 @@
   "$schema": "https://json-schema.org/draft/2020-12/schema",
   "$id": "https://openwop.dev/spec/v2/localized-content-page.schema.json",
   "title": "LocalizedContentPage",
-  "description": "RFC 0103 (spec/v1/localized-content.md §B). An authored content page: an ordered composition of sections addressed by a URL `slug`. Publication status is atomic across locales for v1. SEO carries hreflang + og:locale alternates so a renderer can emit per-locale link relations.",
+  "description": "RFC 0103 (i18n.md §Localized content). An authored content page: an ordered composition of sections addressed by a URL `slug`. Publication status is atomic across locales for v1. SEO carries hreflang + og:locale alternates so a renderer can emit per-locale link relations.",
   "type": "object",
   "additionalProperties": false,
   "required": [
@@ -82,6 +82,5 @@
         }
       }
     }
-  },
-  "x-openwop-seeded-from": "v1"
+  }
 }

@@ -2,7 +2,7 @@
   "$schema": "https://json-schema.org/draft/2020-12/schema",
   "$id": "https://openwop.dev/spec/v2/channel-written-payload.schema.json",
   "title": "ChannelWrittenPayload",
-  "description": "Payload of the `channel.written` RunEvent. Carries the WRITE INPUT (pre-reduction), NOT the post-reduction channel state. Replay reconstructs the post-reduction state by folding all `channel.written` events through the declared reducer. See channels-and-reducers.md §Channel write event.",
+  "description": "Payload of the `channel.written` RunEvent. Carries the WRITE INPUT (pre-reduction), NOT the post-reduction channel state. Replay reconstructs the post-reduction state by folding all `channel.written` events through the declared reducer. An engine MUST emit one per channel write (re-homed from v1 `channels-and-reducers.md` §\"Channel write event\" by RFC 0266); the reducer stored on each event is the one replay folds with.",
   "type": "object",
   "required": [
     "channel",
@@ -45,11 +45,11 @@
     "schemaVersion": {
       "type": "integer",
       "minimum": 1,
-      "description": "The `ChannelDeclaration.schemaVersion` that was live at write time. Persisted on the event so replays + later folds can detect breaking schema changes — the engine validates each event's value against the channel's CURRENT schema and refuses with `channel_schema_breaking_change` when the event's version is older than `current` AND not in `compatibleWith`. Defaults to 1 when omitted (back-compat with pre-C4 servers that didn't track versions). See channels-and-reducers.md §Channel schema migration. (closes C4)"
+      "description": "The `ChannelDeclaration.schemaVersion` that was live at write time. Persisted on the event so replays + later folds can detect breaking schema changes — the engine validates each event's value against the channel's CURRENT schema and refuses with `channel_schema_breaking_change` when the event's version is older than `current` AND not in `compatibleWith`. Defaults to 1 when omitted (back-compat with pre-C4 servers that didn't track versions). `WorkflowDefinition` `ChannelDeclaration.compatibleWith` states the migration rule. (closes C4)"
     },
     "sourceEngineId": {
       "type": "string",
-      "description": "Identifier of the engine instance that performed the write. Set when the writing engine differs from the engine that owns the parent run (e.g., a sub-workflow / cross-canvas-invoke writing to a parent's channel). Absent when the parent's own engine wrote. The fold side uses this to disambiguate origins for `channel-write` trigger filtering (`onlyFrom: 'child'` matches when this field is set and references a known child engine). See channels-and-reducers.md §Distributed reducers. (closes C2)",
+      "description": "Identifier of the engine instance that performed the write. Set when the writing engine differs from the engine that owns the parent run (e.g., a sub-workflow / cross-canvas-invoke writing to a parent's channel). Absent when the parent's own engine wrote. The fold side uses this to disambiguate origins for `channel-write` trigger filtering (`onlyFrom: 'child'` matches when this field is set and references a known child engine). A cross-engine write is allowed to an `append`, `votes`, `feedback` or `counter` channel and forbidden to a `replace` or `merge` channel (`400 channel_cross_engine_write_forbidden`); a `vendor.*` reducer declares its own policy, and a server SHOULD reject by default. The owner engine MUST assign each inbound write a new per-run `sequence` when it appends it; that sequence, tie-broken by `eventId`, is the fold order, never the writer's own. (Re-homed from v1 `channels-and-reducers.md` §\"Distributed reducers and cross-engine writes\" by RFC 0266) (closes C2)",
       "minLength": 1,
       "maxLength": 256
     },
@@ -59,6 +59,5 @@
     }
   },
   "additionalProperties": false,
-  "$comment": "Per-reducer expectations on the `value` field (informative — not enforced at this schema level; servers SHOULD validate against `ChannelDeclaration.schema` if declared):\n\n  - `replace`: any value; supersedes prior state.\n  - `append`:  any value; appended to the channel's array. Bounded by `ChannelDeclaration.maxSize` if set.\n  - `merge`:   MUST be a JSON object (`{...}`); shallow-merged into prior state.\n  - `counter`: MUST be a number; added to the running total. Negative allowed.\n  - `votes`:   typically `{voter: string, vote: string|boolean|number, ...}`; the reducer accumulates per-voter latest-wins.\n  - `feedback`: typically `{author: string, text: string, timestamp: string, ...}`; the reducer appends bounded by `maxSize`.\n  - `vendor.*`: implementation-defined; external clients SHOULD treat as `replace` if the reducer name is unknown.",
-  "x-openwop-seeded-from": "v1"
+  "$comment": "Per-reducer expectations on the `value` field (informative — not enforced at this schema level; servers SHOULD validate against `ChannelDeclaration.schema` if declared):\n\n  - `replace`: any value; supersedes prior state.\n  - `append`:  any value; appended to the channel's array. Bounded by `ChannelDeclaration.maxSize` if set.\n  - `merge`:   MUST be a JSON object (`{...}`); shallow-merged into prior state.\n  - `counter`: MUST be a number; added to the running total. Negative allowed.\n  - `votes`:   typically `{voter: string, vote: string|boolean|number, ...}`; the reducer accumulates per-voter latest-wins.\n  - `feedback`: typically `{author: string, text: string, timestamp: string, ...}`; the reducer appends bounded by `maxSize`.\n  - `vendor.*`: implementation-defined; external clients SHOULD treat as `replace` if the reducer name is unknown."
 }
