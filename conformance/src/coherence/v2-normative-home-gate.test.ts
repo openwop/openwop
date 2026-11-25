@@ -11,12 +11,12 @@
  * the gate's predicate is deleted. Where an RFC's falsifiability row says the
  * gate rejects something, this sabotages the tree and asserts the rejection.
  *
- * @see RFCS/0189-normative-home.md · RFCS/0190-kernel-budget-denominator.md · RFCS/0191-normative-home-marker.md
+ * @see RFCS/0189-normative-home.md · RFCS/0190-kernel-budget-denominator.md · RFCS/0191-normative-home-marker.md · RFCS/0266-v2-is-self-contained.md (§B.1 legs at the end)
  */
 
 import { describe, it, expect } from 'vitest';
 import { spawnSync, type SpawnSyncReturns } from 'node:child_process';
-import { readFileSync, writeFileSync, mkdtempSync, cpSync, rmSync, readdirSync, mkdirSync } from 'node:fs';
+import { appendFileSync, readFileSync, writeFileSync, mkdtempSync, cpSync, rmSync, readdirSync, mkdirSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { join, relative } from 'node:path';
 import { SCHEMAS_DIR, V1_DIR } from '../lib/paths.js';
@@ -206,4 +206,80 @@ describe('v2-normative-home-gate (RFC 0189 §A–§D, RFC 0190 §A–§C, RFC 01
         req('openwop.requirement.0191.home-marker', 'RFC 0191 §A', `security-defaults.md carries no "Normative home: production" marker, so it may not home the family however its prose reads — ${tail(r)}`)).toBe(true);
     });
   }, 180_000);
+});
+
+// ─────────────────────────────────────────────────────────────────────
+// RFC 0266 §B.1 — the self-contained gate's witnesses (same family: a v2 rule
+// whose home is frozen v1). scripts/check-v2-self-contained.mjs lists every v1
+// reference in spec/v2, schemas/v2 and api/v2 and fails on one its allow-list
+// (scripts/v2-self-contained-allowlist.json) does not name, on a stale row, and,
+// with --require-zero-rehome, on any to-rehome row. Each sabotage runs on a
+// scratch copy of the gate's inputs and asserts the reason the gate prints.
+// Sabotages run 2026-11-24 (each turned its leg red, then was reverted):
+// `evaluate` skipped unlisted findings, so a planted spec/v1/ citation passed;
+// `evaluate` dropped the stale-row check, so a row with no reference passed.
+// @see RFCS/0266-v2-is-self-contained.md
+
+const s266Absent = (): boolean => V1_DIR === null;
+const S266_ABSENT = 'corpus not present in this layout (published package) — the gate scripts ship only in the spec repo';
+const S266_SPEC = 'RFC 0266 §B.1 · scripts/check-v2-self-contained.mjs';
+const S266_ID = 'openwop.requirement.0266.no-v1-rule-citation';
+const S266_GATE = 'check-v2-self-contained.mjs';
+const S266_ALLOW = 'v2-self-contained-allowlist.json';
+
+interface S266Row { disposition: string; [k: string]: unknown }
+
+/** Copy the gate's inputs to a scratch dir, let `mutate` change it, run the gate there. */
+function s266Scratch(mutate: (dir: string) => void, args: string[] = []): { status: number | null; out: string } {
+  const dir = mkdtempSync(join(tmpdir(), 'owp-0266-'));
+  try {
+    mkdirSync(join(dir, 'scripts'));
+    for (const f of [S266_GATE, S266_ALLOW]) cpSync(join(root, 'scripts', f), join(dir, 'scripts', f));
+    for (const p of ['spec/v1', 'spec/v2', 'schemas/v2', 'api/v2']) cpSync(join(root, p), join(dir, p), { recursive: true });
+    mutate(dir);
+    const r = spawnSync('node', [join(dir, 'scripts', S266_GATE), ...args], { cwd: dir, encoding: 'utf8', maxBuffer: 32 * 1024 * 1024 });
+    return { status: r.status, out: `${r.stdout}${r.stderr}` };
+  } finally { rmSync(dir, { recursive: true, force: true }); }
+}
+
+const s266EditAllow = (dir: string, fn: (rows: S266Row[]) => S266Row[]): void => {
+  const p = join(dir, 'scripts', S266_ALLOW);
+  const doc = JSON.parse(readFileSync(p, 'utf8')) as { rows: S266Row[] };
+  writeFileSync(p, JSON.stringify({ ...doc, rows: fn(doc.rows) }, null, 2));
+};
+
+describe('RFC 0266 §B.1 — no v2 file cites v1 as a rule', () => {
+  it('§B.1 the live tree passes and the gate self-test passes', () => {
+    if (s266Absent()) return softSkip('inapplicable', S266_ABSENT);
+    const live = spawnSync('node', [join(root, 'scripts', S266_GATE)], { encoding: 'utf8' });
+    expect(live.status, req(S266_ID, S266_SPEC, `every v1 reference in the live tree MUST be allow-listed: ${live.stderr}`)).toBe(0);
+    const self = spawnSync('node', [join(root, 'scripts', S266_GATE), '--self-test'], { encoding: 'utf8' });
+    expect(self.status, req(S266_ID, S266_SPEC, `the gate's self-test MUST pass: ${self.stderr}`)).toBe(0);
+  });
+
+  it('§B.1 a new spec/v1/ citation in a v2 document fails the gate', () => {
+    if (s266Absent()) return softSkip('inapplicable', S266_ABSENT);
+    const planted = s266Scratch((dir) => appendFileSync(join(dir, 'spec/v2/core/runs.md'), '\nA run option MUST follow `spec/v1/run-options.md`.\n'));
+    expect(planted.status, req(S266_ID, S266_SPEC, 'an unlisted spec/v1/ citation MUST fail the gate')).toBe(1);
+    expect(planted.out, req(S266_ID, S266_SPEC, 'the refusal MUST name the unlisted reference')).toContain('unlisted v1 reference (RFC 0266 §B.1): spec/v2/core/runs.md');
+    const bare = s266Scratch((dir) => appendFileSync(join(dir, 'spec/v2/core/events.md'), '\nA reducer MUST behave as channels-and-reducers.md says.\n'));
+    expect(bare.status, req(S266_ID, S266_SPEC, 'an unlisted bare v1-only document name MUST fail the gate')).toBe(1);
+    expect(bare.out, req(S266_ID, S266_SPEC, 'the refusal MUST name the v1 document')).toContain('v1-doc → channels-and-reducers.md');
+  });
+
+  it('§B.1 an allow-list row the tree no longer carries fails the gate', () => {
+    if (s266Absent()) return softSkip('inapplicable', S266_ABSENT);
+    const stale = s266Scratch((dir) => s266EditAllow(dir, (rows) => [...rows, { ...rows[0]!, fingerprint: '000000000000' }]));
+    expect(stale.status, req(S266_ID, S266_SPEC, 'a stale allow-list row MUST fail the gate')).toBe(1);
+    expect(stale.out, req(S266_ID, S266_SPEC, 'the refusal MUST name the stale row')).toContain('stale allow-list row');
+  });
+
+  it('§B.1 --require-zero-rehome fails while a to-rehome row remains', () => {
+    if (s266Absent()) return softSkip('inapplicable', S266_ABSENT);
+    const allHistory = (rows: S266Row[]): S266Row[] => rows.map((r) => ({ ...r, disposition: 'history' }));
+    expect(s266Scratch((dir) => s266EditAllow(dir, allHistory), ['--require-zero-rehome']).status, req(S266_ID, S266_SPEC, 'with no to-rehome row --require-zero-rehome MUST pass')).toBe(0);
+    const one = s266Scratch((dir) => s266EditAllow(dir, (rows) => allHistory(rows).map((r, i) => (i === 0 ? { ...r, disposition: 'to-rehome' } : r))), ['--require-zero-rehome']);
+    expect(one.status, req(S266_ID, S266_SPEC, 'one to-rehome row MUST fail --require-zero-rehome')).toBe(1);
+    expect(one.out, req(S266_ID, S266_SPEC, 'the refusal MUST count the to-rehome rows')).toContain('1 `to-rehome` row(s) remain');
+  });
 });

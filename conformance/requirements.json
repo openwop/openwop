@@ -3,10 +3,10 @@
   "generatedFrom": "src/scenarios/*.test.ts",
   "counts": {
     "files": 759,
-    "tests": 2919,
-    "withStableId": 2919,
+    "tests": 2923,
+    "withStableId": 2923,
     "interpolatedTitles": 0,
-    "explicitIds": 2856
+    "explicitIds": 2860
   },
   "records": [
     {
@@ -49474,6 +49474,88 @@
           "section": "RFC 0191 §A",
           "requirement": null,
           "interpolated": true
+        }
+      ]
+    },
+    {
+      "id": "openwop.it.v2-normative-home-gate.b-1-the-live-tree-passes-and-the-gate-self-test-passes",
+      "file": "v2-normative-home-gate.test.ts",
+      "line": 252,
+      "title": "§B.1 the live tree passes and the gate self-test passes",
+      "explicitId": "openwop.requirement.0266.no-v1-rule-citation",
+      "citations": [
+        {
+          "section": "RFC 0266 §B.1 · scripts/check-v2-self-contained.mjs",
+          "requirement": null,
+          "interpolated": true
+        },
+        {
+          "section": "RFC 0266 §B.1 · scripts/check-v2-self-contained.mjs",
+          "requirement": null,
+          "interpolated": true
+        }
+      ]
+    },
+    {
+      "id": "openwop.it.v2-normative-home-gate.b-1-a-new-spec-v1-citation-in-a-v2-document-fails-the-gate",
+      "file": "v2-normative-home-gate.test.ts",
+      "line": 260,
+      "title": "§B.1 a new spec/v1/ citation in a v2 document fails the gate",
+      "explicitId": "openwop.requirement.0266.no-v1-rule-citation",
+      "citations": [
+        {
+          "section": "RFC 0266 §B.1 · scripts/check-v2-self-contained.mjs",
+          "requirement": "an unlisted spec/v1/ citation MUST fail the gate"
+        },
+        {
+          "section": "RFC 0266 §B.1 · scripts/check-v2-self-contained.mjs",
+          "requirement": "the refusal MUST name the unlisted reference"
+        },
+        {
+          "section": "RFC 0266 §B.1 · scripts/check-v2-self-contained.mjs",
+          "requirement": "an unlisted bare v1-only document name MUST fail the gate"
+        },
+        {
+          "section": "RFC 0266 §B.1 · scripts/check-v2-self-contained.mjs",
+          "requirement": "the refusal MUST name the v1 document"
+        }
+      ]
+    },
+    {
+      "id": "openwop.it.v2-normative-home-gate.b-1-an-allow-list-row-the-tree-no-longer-carries-fails-the-gate",
+      "file": "v2-normative-home-gate.test.ts",
+      "line": 270,
+      "title": "§B.1 an allow-list row the tree no longer carries fails the gate",
+      "explicitId": "openwop.requirement.0266.no-v1-rule-citation",
+      "citations": [
+        {
+          "section": "RFC 0266 §B.1 · scripts/check-v2-self-contained.mjs",
+          "requirement": "a stale allow-list row MUST fail the gate"
+        },
+        {
+          "section": "RFC 0266 §B.1 · scripts/check-v2-self-contained.mjs",
+          "requirement": "the refusal MUST name the stale row"
+        }
+      ]
+    },
+    {
+      "id": "openwop.it.v2-normative-home-gate.b-1-require-zero-rehome-fails-while-a-to-rehome-row-remains",
+      "file": "v2-normative-home-gate.test.ts",
+      "line": 277,
+      "title": "§B.1 --require-zero-rehome fails while a to-rehome row remains",
+      "explicitId": "openwop.requirement.0266.no-v1-rule-citation",
+      "citations": [
+        {
+          "section": "RFC 0266 §B.1 · scripts/check-v2-self-contained.mjs",
+          "requirement": "with no to-rehome row --require-zero-rehome MUST pass"
+        },
+        {
+          "section": "RFC 0266 §B.1 · scripts/check-v2-self-contained.mjs",
+          "requirement": "one to-rehome row MUST fail --require-zero-rehome"
+        },
+        {
+          "section": "RFC 0266 §B.1 · scripts/check-v2-self-contained.mjs",
+          "requirement": "the refusal MUST count the to-rehome rows"
         }
       ]
     },
