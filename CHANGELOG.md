@@ -31,6 +31,10 @@ Entries before this file was condensed carried full development detail. That tex
 
 ### Security
 
+## [2.49.16] — 2026-11-25 — The coverage doc names the v2 audit path
+
+- **`conformance/coverage.md` names `GET /audit/verify`.** The audit-log integrity rows said `/v1/audit/verify`; they now give the major-2 path first, with the v1 path as history. Docs only. The frozen `spec/v1/production-profile.md` keeps its dated 2026-05-11 citation.
+
 ## [2.49.15] — 2026-11-25 — Critical security invariants witnessed at v2
 
 - **Critical security invariants run at major 2.** Five new v2 scenarios and 13 re-pointed v2 legs; `report-invariant-majors --check` fails a critical invariant with no major-2 test unless the shrink-only `SECURITY/invariant-v2-gaps.json` lists it.
