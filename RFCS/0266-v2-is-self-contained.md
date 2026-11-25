@@ -93,12 +93,12 @@ These are corpus rules, so most are witnessed by the corpus gate rather than a h
 
 | Requirement | Observable — what an outside party sees | Who can cause the condition | Verdict |
 | --- | --- | --- | --- |
-| §A.1–§A.3 registers in v2 | the four citing sites name `spec/v2/*.json`; the registers validate against their schemas | anyone editing the corpus; `check-v2-self-contained` fails on a v1 register citation | witnessable (corpus gate) |
-| §B.1 no v1 rule citation | `check-v2-self-contained` lists every v1 reference in `spec/v2`, `schemas/v2`, `api/v2`; an unlisted one fails it | the gate, unaided (sabotage: add a `spec/v1/` citation to a v2 doc) | witnessable (corpus gate) |
-| §B.2 prose homes | each concept's v2 home exists; `check-v2-self-contained` finds no v1 doc name for it | the gate | witnessable (corpus gate) |
-| §C.1 v2 generated from v2 | no `x-openwop-seeded-from: v1`; `openwop-check.sh` reads no v1 input | the gate (sabotage: re-add the stamp) | witnessable (corpus gate) |
-| §D.1 package contents | `npm pack` of `@openwop/spec-artifacts` lists no v1 file | anyone, from the published tarball | witnessable |
-| §E.1 registry discovery | `GET packs.openwop.dev/.well-known/openwop-registry.json` names `endpoints.v2` and `protocolVersion: "2.0"`; the alias-key deprecation row exists | anyone, unaided | witnessable |
+| §A.1–§A.3 registers in v2 (`openwop.requirement.0266.registers-v2`) | `check-v2-self-contained` (planned): the four citing sites name `spec/v2/*.json`; the registers validate against their schemas | anyone editing the corpus; `check-v2-self-contained` fails on a v1 register citation | witnessable (corpus gate) |
+| §B.1 no v1 rule citation (`openwop.requirement.0266.no-v1-rule-citation`) | `check-v2-self-contained` (planned) lists every v1 reference in `spec/v2`, `schemas/v2`, `api/v2`; an unlisted one fails it | the gate, unaided (sabotage: add a `spec/v1/` citation to a v2 doc) | witnessable (corpus gate) |
+| §B.2 prose homes (`openwop.requirement.0266.prose-homes`) | `check-v2-self-contained` (planned): each concept's v2 home exists; `check-v2-self-contained` finds no v1 doc name for it | the gate | witnessable (corpus gate) |
+| §C.1 v2 generated from v2 (`openwop.requirement.0266.v2-from-v2`) | `check-v2-self-contained` (planned): no `x-openwop-seeded-from: v1`; `openwop-check.sh` reads no v1 input | the gate (sabotage: re-add the stamp) | witnessable (corpus gate) |
+| §D.1 package contents (`openwop.requirement.0266.package-v2-only`) | `check-v2-self-contained --package` (planned): `npm pack` of `@openwop/spec-artifacts` lists no v1 file | anyone, from the published tarball | witnessable |
+| §E.1 registry discovery (`openwop.requirement.0266.registry-v2-first`) | `check-v2-self-contained --registry` (planned): `GET packs.openwop.dev/.well-known/openwop-registry.json` names `endpoints.v2` and `protocolVersion: "2.0"`; the alias-key deprecation row exists | anyone, unaided | witnessable |
 
 A host-side witness for acceptance: a host's certified major-2 cut on a suite release that carries this RFC, with the host reading no v1 corpus file (below).
 
