@@ -1,3 +1,7 @@
+## [2.49.16] — 2026-11-25 — coverage.md names the v2 audit path
+
+- **Docs only.** `coverage.md`'s audit-log integrity rows name `GET /audit/verify` (major 2), with `/v1/audit/verify` kept as the major-1 path. No scenario changed.
+
 ## [2.49.15] — 2026-11-25 — Critical security invariants at major 2
 
 - **Five new v2 scenarios.** `v2-webhook-tenant-isolation`, `v2-attribution-host-derived`, `v2-exec-not-protocol-tier`, `v2-connection-pack-manifest-guards` and `v2-runner-frame-credential-free` witness critical `SECURITY/invariants.yaml` rules at major 2; 13 invariants re-point to existing v2 legs that already assert them.

@@ -21,9 +21,9 @@
 | Artifact | Version | Source | Cadence |
 |---|---|---|---|
 | Spec corpus (root) | 2.0.0 | `package.json` | names the corpus major (RFC 0266 sectionC.2); changes only at a new major |
-| Conformance suite `@openwop/openwop-conformance` | 2.49.15 | `conformance/package.json` | minor on scenario add/remove |
-| OpenAPI `info.version` | 2.49.15 | `api/v2/openapi.yaml` | the corpus tag (`spec/v2/release.json`, RFC 0172 sectionB #14) |
-| AsyncAPI `info.version` | 2.49.15 | `api/v2/asyncapi.yaml` | as above |
+| Conformance suite `@openwop/openwop-conformance` | 2.49.16 | `conformance/package.json` | minor on scenario add/remove |
+| OpenAPI `info.version` | 2.49.16 | `api/v2/openapi.yaml` | the corpus tag (`spec/v2/release.json`, RFC 0172 sectionB #14) |
+| AsyncAPI `info.version` | 2.49.16 | `api/v2/asyncapi.yaml` | as above |
 | TypeScript SDK `@openwop/openwop` (2.x, current) | 2.10.0 | openwop-sdks `sdk/typescript-v2/package.json` (via `evidence/cross-repo-manifests.json`) | v2-only; npm `latest` |
 | Python SDK `openwop-client` (2.x, current) | 2.10.0 | openwop-sdks `sdk/python-v2/pyproject.toml` | v2-only; `openwop-client>=2,<3` |
 | Go SDK `github.com/openwop/openwop-sdks/go/v2` (2.x, current) | 2.10.0 | openwop-sdks `go/v2/CHANGELOG.md` head (tag-versioned `go/v2.Y.Z`; no version file) | v2-only |
