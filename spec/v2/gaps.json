@@ -16719,7 +16719,7 @@
       "note": "**Open** — the legacy window date is fixed above (2027-03-12); who is on 0.3 is not known and is not something this document can find out.",
       "sources": [
         {
-          "file": "spec/v1/spec-gaps.json",
+          "file": "spec/v2/spec-gaps.json",
           "token": "openwop.gap.spec.a2a-integration.g1"
         }
       ]
@@ -16737,7 +16737,7 @@
       "note": "**Closed** by §D (D.1–D.7).",
       "sources": [
         {
-          "file": "spec/v1/spec-gaps.json",
+          "file": "spec/v2/spec-gaps.json",
           "token": "openwop.gap.spec.a2a-integration.g2"
         }
       ]
@@ -16755,7 +16755,7 @@
       "note": "**Externally gated** — no upstream 1.0 peer is wired; the fake peer is 0.3-shaped.",
       "sources": [
         {
-          "file": "spec/v1/spec-gaps.json",
+          "file": "spec/v2/spec-gaps.json",
           "token": "openwop.gap.spec.a2a-integration.g3"
         }
       ]
@@ -16773,7 +16773,7 @@
       "note": "**Closed** by §C: JSON-RPC at 1.0 is the floor; HTTP+JSON and gRPC optional.",
       "sources": [
         {
-          "file": "spec/v1/spec-gaps.json",
+          "file": "spec/v2/spec-gaps.json",
           "token": "openwop.gap.spec.a2a-integration.g4"
         }
       ]
@@ -16791,7 +16791,7 @@
       "note": "Addressed in §E; RFC 0154 §B is shape-only, so the composition is stated, not witnessed.",
       "sources": [
         {
-          "file": "spec/v1/spec-gaps.json",
+          "file": "spec/v2/spec-gaps.json",
           "token": "openwop.gap.spec.a2a-integration.g5"
         }
       ]
@@ -16809,7 +16809,7 @@
       "note": "**Mostly closed 2026-08-16 (suite 1.112.0):** dual-era peer landed; `a2a-1.0-agent-card`, `a2a-card-runtime-consistency`, `a2a-1.0-task-roundtrip` (host half gated), `a2a-peer-authority` landed. Open: `a2a-1.0-stream-push` (no streaming peer).",
       "sources": [
         {
-          "file": "spec/v1/spec-gaps.json",
+          "file": "spec/v2/spec-gaps.json",
           "token": "openwop.gap.spec.a2a-integration.g6"
         }
       ]
@@ -16827,7 +16827,7 @@
       "note": "**Open** — §B recommends `authorization.decided` as the carrier; a dedicated `RunEventType` member is not minted here.",
       "sources": [
         {
-          "file": "spec/v1/spec-gaps.json",
+          "file": "spec/v2/spec-gaps.json",
           "token": "openwop.gap.spec.a2a-integration.g7"
         }
       ]
@@ -16845,7 +16845,7 @@
       "note": "**Open** — threats stated in §E; no `SECURITY/threat-model-interop.md` exists.",
       "sources": [
         {
-          "file": "spec/v1/spec-gaps.json",
+          "file": "spec/v2/spec-gaps.json",
           "token": "openwop.gap.spec.a2a-integration.g8"
         }
       ]
@@ -16863,7 +16863,7 @@
       "note": "**Open** — unchanged from §\"Future work\".",
       "sources": [
         {
-          "file": "spec/v1/spec-gaps.json",
+          "file": "spec/v2/spec-gaps.json",
           "token": "openwop.gap.spec.a2a-integration.g9"
         }
       ]
@@ -16880,7 +16880,7 @@
       "target": null,
       "sources": [
         {
-          "file": "spec/v1/spec-gaps.json",
+          "file": "spec/v2/spec-gaps.json",
           "token": "openwop.gap.spec.agent-deployment.deploy-1"
         }
       ]
@@ -16897,7 +16897,7 @@
       "target": null,
       "sources": [
         {
-          "file": "spec/v1/spec-gaps.json",
+          "file": "spec/v2/spec-gaps.json",
           "token": "openwop.gap.spec.agent-deployment.deploy-2"
         }
       ]
@@ -16914,7 +16914,7 @@
       "target": null,
       "sources": [
         {
-          "file": "spec/v1/spec-gaps.json",
+          "file": "spec/v2/spec-gaps.json",
           "token": "openwop.gap.spec.agent-deployment.deploy-3"
         }
       ]
@@ -16931,7 +16931,7 @@
       "target": null,
       "sources": [
         {
-          "file": "spec/v1/spec-gaps.json",
+          "file": "spec/v2/spec-gaps.json",
           "token": "openwop.gap.spec.agent-deployment.deploy-4"
         }
       ]
@@ -16948,7 +16948,7 @@
       "target": null,
       "sources": [
         {
-          "file": "spec/v1/spec-gaps.json",
+          "file": "spec/v2/spec-gaps.json",
           "token": "openwop.gap.spec.agent-evaluation.eval-1"
         }
       ]
@@ -16965,7 +16965,7 @@
       "target": null,
       "sources": [
         {
-          "file": "spec/v1/spec-gaps.json",
+          "file": "spec/v2/spec-gaps.json",
           "token": "openwop.gap.spec.agent-evaluation.eval-2"
         }
       ]
@@ -16982,7 +16982,7 @@
       "target": null,
       "sources": [
         {
-          "file": "spec/v1/spec-gaps.json",
+          "file": "spec/v2/spec-gaps.json",
           "token": "openwop.gap.spec.agent-evaluation.eval-3"
         }
       ]
@@ -16999,7 +16999,7 @@
       "target": null,
       "sources": [
         {
-          "file": "spec/v1/spec-gaps.json",
+          "file": "spec/v2/spec-gaps.json",
           "token": "openwop.gap.spec.agent-evaluation.eval-4"
         }
       ]
@@ -17016,7 +17016,7 @@
       "target": null,
       "sources": [
         {
-          "file": "spec/v1/spec-gaps.json",
+          "file": "spec/v2/spec-gaps.json",
           "token": "openwop.gap.spec.agent-memory.r1"
         }
       ]
@@ -17033,7 +17033,7 @@
       "target": null,
       "sources": [
         {
-          "file": "spec/v1/spec-gaps.json",
+          "file": "spec/v2/spec-gaps.json",
           "token": "openwop.gap.spec.agent-memory.r2"
         }
       ]
@@ -17050,7 +17050,7 @@
       "target": null,
       "sources": [
         {
-          "file": "spec/v1/spec-gaps.json",
+          "file": "spec/v2/spec-gaps.json",
           "token": "openwop.gap.spec.agent-memory.r3"
         }
       ]
@@ -17067,7 +17067,7 @@
       "target": null,
       "sources": [
         {
-          "file": "spec/v1/spec-gaps.json",
+          "file": "spec/v2/spec-gaps.json",
           "token": "openwop.gap.spec.agent-memory.r4"
         }
       ]
@@ -17084,7 +17084,7 @@
       "target": null,
       "sources": [
         {
-          "file": "spec/v1/spec-gaps.json",
+          "file": "spec/v2/spec-gaps.json",
           "token": "openwop.gap.spec.agent-memory.r5"
         }
       ]
@@ -17102,7 +17102,7 @@
       "note": "without reopening the SR-1 surface or replay determinism (the event records a write that already happened and is re-read from the log on replay, never regenerated). Reads remain unattributed by design.",
       "sources": [
         {
-          "file": "spec/v1/spec-gaps.json",
+          "file": "spec/v2/spec-gaps.json",
           "token": "openwop.gap.spec.agent-memory.r6"
         }
       ]
@@ -17120,7 +17120,7 @@
       "note": "**Closed (2026-09-02 audit).** `GET /v1/agents/org-chart` and `GET /v1/agents/org-chart/{departmentId}` are in `api/openapi.yaml`; this row had said \"deferred\" after the endpoints landed. Management stays host-private at v1.x.",
       "sources": [
         {
-          "file": "spec/v1/spec-gaps.json",
+          "file": "spec/v2/spec-gaps.json",
           "token": "openwop.gap.spec.agent-org-chart.r1"
         }
       ]
@@ -17138,7 +17138,7 @@
       "note": "Deferred to `Active → Accepted` (gated on `agents.orgChart.supported`); the always-on `agent-org-chart-shape.test.ts` structural assertions (schema rejects an authority field; descriptive-only key set) assert the §B invariant now.",
       "sources": [
         {
-          "file": "spec/v1/spec-gaps.json",
+          "file": "spec/v2/spec-gaps.json",
           "token": "openwop.gap.spec.agent-org-chart.r2"
         }
       ]
@@ -17156,7 +17156,7 @@
       "note": "Demonstrated as a host-extension at `/v1/host/sample/org-chart` (the reference app, `openwop/openwop-app` repo; originally PR #371); the normative `GET /v1/agents/org-chart` reference wiring lands at `Active → Accepted`.",
       "sources": [
         {
-          "file": "spec/v1/spec-gaps.json",
+          "file": "spec/v2/spec-gaps.json",
           "token": "openwop.gap.spec.agent-org-chart.r3"
         }
       ]
@@ -17174,7 +17174,7 @@
       "note": "A member belongs to one department + role per chart at v1.x; `reportsTo` MAY cross departments (only cycles + cross-tenant edges are forbidden). A future minor MAY add `memberships[]`.",
       "sources": [
         {
-          "file": "spec/v1/spec-gaps.json",
+          "file": "spec/v2/spec-gaps.json",
           "token": "openwop.gap.spec.agent-org-chart.r4"
         }
       ]
@@ -17192,7 +17192,7 @@
       "note": "Out of scope — that is delegation-by-RBAC (RFC 0049) with its own threat model, NOT authority-by-position. §B forbids the latter.",
       "sources": [
         {
-          "file": "spec/v1/spec-gaps.json",
+          "file": "spec/v2/spec-gaps.json",
           "token": "openwop.gap.spec.agent-org-chart.r5"
         }
       ]
@@ -17209,7 +17209,7 @@
       "target": null,
       "sources": [
         {
-          "file": "spec/v1/spec-gaps.json",
+          "file": "spec/v2/spec-gaps.json",
           "token": "openwop.gap.spec.agent-platform-profile.r1"
         }
       ]
@@ -17226,7 +17226,7 @@
       "target": null,
       "sources": [
         {
-          "file": "spec/v1/spec-gaps.json",
+          "file": "spec/v2/spec-gaps.json",
           "token": "openwop.gap.spec.agent-platform-profile.r2"
         }
       ]
@@ -17244,7 +17244,7 @@
       "note": "**Closed (2026-09-02 audit).** `GET /v1/agents/roster` and `GET /v1/agents/roster/{rosterId}` are in `api/openapi.yaml`; this row had said \"deferred\" after the endpoints landed. Management stays host-private at v1.x.",
       "sources": [
         {
-          "file": "spec/v1/spec-gaps.json",
+          "file": "spec/v2/spec-gaps.json",
           "token": "openwop.gap.spec.agent-roster.r1"
         }
       ]
@@ -17262,7 +17262,7 @@
       "note": "Deferred to `Active → Accepted` (gated on `agents.roster.supported`); the always-on `agent-roster-shape.test.ts` asserts the wire contract now.",
       "sources": [
         {
-          "file": "spec/v1/spec-gaps.json",
+          "file": "spec/v2/spec-gaps.json",
           "token": "openwop.gap.spec.agent-roster.r2"
         }
       ]
@@ -17280,7 +17280,7 @@
       "note": "Demonstrated as a host-extension at `/v1/host/sample/roster` (the reference app, `openwop/openwop-app` repo); the normative `GET /v1/agents/roster` reference wiring lands at `Active → Accepted`.",
       "sources": [
         {
-          "file": "spec/v1/spec-gaps.json",
+          "file": "spec/v2/spec-gaps.json",
           "token": "openwop.gap.spec.agent-roster.r3"
         }
       ]
@@ -17298,7 +17298,7 @@
       "note": "The reference impl attributes by `agentRef`; executing the portfolio workflow _as_ that agent is deferred.",
       "sources": [
         {
-          "file": "spec/v1/spec-gaps.json",
+          "file": "spec/v2/spec-gaps.json",
           "token": "openwop.gap.spec.agent-roster.r4"
         }
       ]
@@ -17316,7 +17316,7 @@
       "note": "Deferred to a future `host.kanban` RFC iff cross-host demand appears (§E).",
       "sources": [
         {
-          "file": "spec/v1/spec-gaps.json",
+          "file": "spec/v2/spec-gaps.json",
           "token": "openwop.gap.spec.agent-roster.r5"
         }
       ]
@@ -17334,7 +17334,7 @@
       "note": "Deferred to graduation (pre-authored near `Active → Accepted`, per the RFC 0086 precedent). Floor surface is the host-extension seam.",
       "sources": [
         {
-          "file": "spec/v1/spec-gaps.json",
+          "file": "spec/v2/spec-gaps.json",
           "token": "openwop.gap.spec.agent-runtime.r1"
         }
       ]
@@ -17352,7 +17352,7 @@
       "note": "Out of scope by design — host choice. The protocol pins only the object, lifecycle, bound-enforcement, and events.",
       "sources": [
         {
-          "file": "spec/v1/spec-gaps.json",
+          "file": "spec/v2/spec-gaps.json",
           "token": "openwop.gap.spec.agent-runtime.r2"
         }
       ]
@@ -17370,7 +17370,7 @@
       "note": "Tracked in `openwop-sdks`; not part of the spec-corpus floor.",
       "sources": [
         {
-          "file": "spec/v1/spec-gaps.json",
+          "file": "spec/v2/spec-gaps.json",
           "token": "openwop.gap.spec.agent-runtime.r3"
         }
       ]
@@ -17388,7 +17388,7 @@
       "note": "v1.x silent. A workspace minted on host A is NOT guaranteed re-resolvable on host B; `etag` is opaque and host-defined. A portable encoding MAY be normated later if implementer demand surfaces.",
       "sources": [
         {
-          "file": "spec/v1/spec-gaps.json",
+          "file": "spec/v2/spec-gaps.json",
           "token": "openwop.gap.spec.agent-workspace.r1"
         }
       ]
@@ -17406,7 +17406,7 @@
       "note": "Deferred to `storage-adapters.md` at implementation (RFC 0059 §G5) — adapter authors are notified there once the reference wiring lands.",
       "sources": [
         {
-          "file": "spec/v1/spec-gaps.json",
+          "file": "spec/v2/spec-gaps.json",
           "token": "openwop.gap.spec.agent-workspace.r2"
         }
       ]
@@ -17424,7 +17424,7 @@
       "note": "Latest is the MUST; history is best-effort. Hosts MAY purge versions beyond `maxVersions` at any time; a `?version=N` for a purged version returns `404 not_found`.",
       "sources": [
         {
-          "file": "spec/v1/spec-gaps.json",
+          "file": "spec/v2/spec-gaps.json",
           "token": "openwop.gap.spec.agent-workspace.r3"
         }
       ]
@@ -17442,7 +17442,7 @@
       "note": "Silence intentional. WCT-1 is the only normative isolation surface; finer-grained RBAC within a `{tenant, workspace}` is host-internal (composes with RFC 0049 when present).",
       "sources": [
         {
-          "file": "spec/v1/spec-gaps.json",
+          "file": "spec/v2/spec-gaps.json",
           "token": "openwop.gap.spec.agent-workspace.r4"
         }
       ]
@@ -17460,7 +17460,7 @@
       "note": "Out of scope for v1 — the namespace is flat. A \"rename\" is a `PUT` of the new path plus a `DELETE` of the old.",
       "sources": [
         {
-          "file": "spec/v1/spec-gaps.json",
+          "file": "spec/v2/spec-gaps.json",
           "token": "openwop.gap.spec.agent-workspace.r5"
         }
       ]
@@ -17478,7 +17478,7 @@
       "note": "WCT-1's half has landed: `workspace-cross-tenant-isolation` is registered in `SECURITY/invariants.yaml` (protocol tier, critical) and two scenarios back it — the seam one and the black-box one that drives the normative §C endpoints with two operator credentials. Still open: WSR-1, which has neither an `invariants.yaml` entry nor a scenario of its own, plus CRUD/ETag/snapshot conformance; both land at the behavior milestone, not at this DRAFT. Shape-only conformance (`workspace-capability-shape.test.ts`) ships now.",
       "sources": [
         {
-          "file": "spec/v1/spec-gaps.json",
+          "file": "spec/v2/spec-gaps.json",
           "token": "openwop.gap.spec.agent-workspace.r6"
         }
       ]
@@ -17496,7 +17496,7 @@
       "note": "future v1.x",
       "sources": [
         {
-          "file": "spec/v1/spec-gaps.json",
+          "file": "spec/v2/spec-gaps.json",
           "token": "openwop.gap.spec.ai-envelope.e1"
         }
       ]
@@ -17514,7 +17514,7 @@
       "note": "future v1.x",
       "sources": [
         {
-          "file": "spec/v1/spec-gaps.json",
+          "file": "spec/v2/spec-gaps.json",
           "token": "openwop.gap.spec.ai-envelope.e2"
         }
       ]
@@ -17532,7 +17532,7 @@
       "note": "future v1.x",
       "sources": [
         {
-          "file": "spec/v1/spec-gaps.json",
+          "file": "spec/v2/spec-gaps.json",
           "token": "openwop.gap.spec.ai-envelope.e3"
         }
       ]
@@ -17550,7 +17550,7 @@
       "note": "future v1.x",
       "sources": [
         {
-          "file": "spec/v1/spec-gaps.json",
+          "file": "spec/v2/spec-gaps.json",
           "token": "openwop.gap.spec.ai-envelope.e4"
         }
       ]
@@ -17568,7 +17568,7 @@
       "note": "future v1.x",
       "sources": [
         {
-          "file": "spec/v1/spec-gaps.json",
+          "file": "spec/v2/spec-gaps.json",
           "token": "openwop.gap.spec.ai-envelope.e5"
         }
       ]
@@ -17586,7 +17586,7 @@
       "note": "closed",
       "sources": [
         {
-          "file": "spec/v1/spec-gaps.json",
+          "file": "spec/v2/spec-gaps.json",
           "token": "openwop.gap.spec.ai-envelope.e6"
         }
       ]
@@ -17604,7 +17604,7 @@
       "note": "RFC 0071 Phase 2 / `chat-card-packs.md` (pending)",
       "sources": [
         {
-          "file": "spec/v1/spec-gaps.json",
+          "file": "spec/v2/spec-gaps.json",
           "token": "openwop.gap.spec.artifact-type-packs.r1"
         }
       ]
@@ -17622,7 +17622,7 @@
       "note": "artifact schemas (schema-bomb / ReDoS defense) — the protocol-tier invariant + conformance test that gates this surface to `Active`. — RFC 0071 risk R1 / `SECURITY/invariants.yaml`",
       "sources": [
         {
-          "file": "spec/v1/spec-gaps.json",
+          "file": "spec/v2/spec-gaps.json",
           "token": "openwop.gap.spec.artifact-type-packs.r2"
         }
       ]
@@ -17640,7 +17640,7 @@
       "note": "conformance minor",
       "sources": [
         {
-          "file": "spec/v1/spec-gaps.json",
+          "file": "spec/v2/spec-gaps.json",
           "token": "openwop.gap.spec.auth.a1"
         }
       ]
@@ -17658,7 +17658,7 @@
       "note": "conformance minor",
       "sources": [
         {
-          "file": "spec/v1/spec-gaps.json",
+          "file": "spec/v2/spec-gaps.json",
           "token": "openwop.gap.spec.auth.a2"
         }
       ]
@@ -17676,7 +17676,7 @@
       "note": "conformance minor",
       "sources": [
         {
-          "file": "spec/v1/spec-gaps.json",
+          "file": "spec/v2/spec-gaps.json",
           "token": "openwop.gap.spec.auth.a3"
         }
       ]
@@ -17694,7 +17694,7 @@
       "note": "conformance minor",
       "sources": [
         {
-          "file": "spec/v1/spec-gaps.json",
+          "file": "spec/v2/spec-gaps.json",
           "token": "openwop.gap.spec.auth.a4"
         }
       ]
@@ -17712,7 +17712,7 @@
       "note": "conformance minor",
       "sources": [
         {
-          "file": "spec/v1/spec-gaps.json",
+          "file": "spec/v2/spec-gaps.json",
           "token": "openwop.gap.spec.auth.a5"
         }
       ]
@@ -17730,7 +17730,7 @@
       "note": "conformance minor",
       "sources": [
         {
-          "file": "spec/v1/spec-gaps.json",
+          "file": "spec/v2/spec-gaps.json",
           "token": "openwop.gap.spec.auth.a6"
         }
       ]
@@ -17748,7 +17748,7 @@
       "note": "`cap.breached` kinds + capability ship now.",
       "sources": [
         {
-          "file": "spec/v1/spec-gaps.json",
+          "file": "spec/v2/spec-gaps.json",
           "token": "openwop.gap.spec.budget-policy.r1"
         }
       ]
@@ -17766,7 +17766,7 @@
       "note": "v1.x annex",
       "sources": [
         {
-          "file": "spec/v1/spec-gaps.json",
+          "file": "spec/v2/spec-gaps.json",
           "token": "openwop.gap.spec.capabilities.c2"
         }
       ]
@@ -17784,7 +17784,7 @@
       "note": "v1.x annex",
       "sources": [
         {
-          "file": "spec/v1/spec-gaps.json",
+          "file": "spec/v2/spec-gaps.json",
           "token": "openwop.gap.spec.capabilities.c3"
         }
       ]
@@ -17802,7 +17802,7 @@
       "note": "v1.x annex",
       "sources": [
         {
-          "file": "spec/v1/spec-gaps.json",
+          "file": "spec/v2/spec-gaps.json",
           "token": "openwop.gap.spec.capabilities.c5"
         }
       ]
@@ -17820,7 +17820,7 @@
       "note": "✅",
       "sources": [
         {
-          "file": "spec/v1/spec-gaps.json",
+          "file": "spec/v2/spec-gaps.json",
           "token": "openwop.gap.spec.channels-and-reducers.c1"
         }
       ]
@@ -17838,7 +17838,7 @@
       "note": "✅",
       "sources": [
         {
-          "file": "spec/v1/spec-gaps.json",
+          "file": "spec/v2/spec-gaps.json",
           "token": "openwop.gap.spec.channels-and-reducers.c2"
         }
       ]
@@ -17856,7 +17856,7 @@
       "note": "✅",
       "sources": [
         {
-          "file": "spec/v1/spec-gaps.json",
+          "file": "spec/v2/spec-gaps.json",
           "token": "openwop.gap.spec.channels-and-reducers.c3"
         }
       ]
@@ -17874,7 +17874,7 @@
       "note": "✅",
       "sources": [
         {
-          "file": "spec/v1/spec-gaps.json",
+          "file": "spec/v2/spec-gaps.json",
           "token": "openwop.gap.spec.channels-and-reducers.c4"
         }
       ]
@@ -17892,7 +17892,7 @@
       "note": "future v1.x",
       "sources": [
         {
-          "file": "spec/v1/spec-gaps.json",
+          "file": "spec/v2/spec-gaps.json",
           "token": "openwop.gap.spec.channels-and-reducers.c5"
         }
       ]
@@ -17910,7 +17910,7 @@
       "note": "RFC 0071 G9 ✅",
       "sources": [
         {
-          "file": "spec/v1/spec-gaps.json",
+          "file": "spec/v2/spec-gaps.json",
           "token": "openwop.gap.spec.chat-card-packs.r1"
         }
       ]
@@ -17928,7 +17928,7 @@
       "note": "RFC 0071 R2 / `SECURITY/threat-model-prompt-injection.md`",
       "sources": [
         {
-          "file": "spec/v1/spec-gaps.json",
+          "file": "spec/v2/spec-gaps.json",
           "token": "openwop.gap.spec.chat-card-packs.r2"
         }
       ]
@@ -17946,7 +17946,7 @@
       "note": "RFC 0071 (composition)",
       "sources": [
         {
-          "file": "spec/v1/spec-gaps.json",
+          "file": "spec/v2/spec-gaps.json",
           "token": "openwop.gap.spec.chat-card-packs.r3"
         }
       ]
@@ -17964,7 +17964,7 @@
       "note": "**Closed 2026-08-16 (§C above).** Plan contents, `planVersion`, ordering under both models, the identity tuple `(tenantId, runId, forwardLogicalInvocationId, compensationOrdinal, profileVersion)` with `attempt` outside it (RFC 0150 §B parity), retry, crash-resume from the persisted plan, `onParentCancel`, and per-attempt timeouts. **Still carried within it:** how the tuple composes with RFC 0150 §C's semantic-request digest — that digest is not landed.",
       "sources": [
         {
-          "file": "spec/v1/spec-gaps.json",
+          "file": "spec/v2/spec-gaps.json",
           "token": "openwop.gap.spec.compensation.g1"
         }
       ]
@@ -17982,7 +17982,7 @@
       "note": "**Closed 2026-08-16 (§E above)** as *outcomes*: approval-before-effect with the plan entry as `artifactData`, RFC 0049 binding to tenant/principal/action/`planVersion` audited via `authorization.decided`, RFC 0053 routing, and the four operator actions with the recorded outcome and rollup effect each yields; UQ2 decided (substitution is a new `planVersion`). **Still open — G7:** the operator actions have no canonical endpoint in v1.x; they are host-mediated. A `POST /v1/runs/{runId}/compensation:{retry,skip,substitute,terminate}` family is the obvious additive shape and would need OpenAPI + SDK + a seam-driven witness before it is more than a sentence here.",
       "sources": [
         {
-          "file": "spec/v1/spec-gaps.json",
+          "file": "spec/v2/spec-gaps.json",
           "token": "openwop.gap.spec.compensation.g2"
         }
       ]
@@ -18000,7 +18000,7 @@
       "note": "**Closed 2026-08-16.** Landed as `settings.compensation` on `WorkflowDefinition` (§B \"Workflow policy\"): closed `triggers`, ordering model, retry/timeout defaults, `exhaustedDisposition`, escalate-only `approvalScope`, `onParentCancel`. Refusal rule for non-advertising hosts (`capability_required`) stated.",
       "sources": [
         {
-          "file": "spec/v1/spec-gaps.json",
+          "file": "spec/v2/spec-gaps.json",
           "token": "openwop.gap.spec.compensation.g3"
         }
       ]
@@ -18018,7 +18018,7 @@
       "note": "**Closed 2026-08-18** — §\"Forked runs\" above. The fold is over the run's own log, so an inherited **terminal** outcome is reported as the recorded fact it is, and an absent one yields `none`. The case the gap existed for — a plan **non-terminal** at `fromSeq` — is decided rather than derived: the child reports `none` and the source keeps its rollup, because a non-terminal plan is an in-flight obligation the fork never made and cannot discharge, and every other value asserts either activity the child lacks or an outcome that has not happened.",
       "sources": [
         {
-          "file": "spec/v1/spec-gaps.json",
+          "file": "spec/v2/spec-gaps.json",
           "token": "openwop.gap.spec.compensation.g4"
         }
       ]
@@ -18036,7 +18036,7 @@
       "note": "**Open** (RFC 0151 UQ5).",
       "sources": [
         {
-          "file": "spec/v1/spec-gaps.json",
+          "file": "spec/v2/spec-gaps.json",
           "token": "openwop.gap.spec.compensation.g5"
         }
       ]
@@ -18054,7 +18054,7 @@
       "note": "**Open.** Adding `approval-pending` / `parent-cancelled` to the enum is additive for producers but a strict consumer validating the closed enum would reject them; decide with the G7 endpoint family so the event and the action vocabulary move together. Both ar Ordinary additive RFC work.",
       "sources": [
         {
-          "file": "spec/v1/spec-gaps.json",
+          "file": "spec/v2/spec-gaps.json",
           "token": "openwop.gap.spec.compensation.g6"
         }
       ]
@@ -18072,7 +18072,7 @@
       "note": "**Open.** A `POST /v1/runs/{runId}/compensation:{retry,skip,substitute,terminate}` family is new optional wire surface; Until this lands, the §E actions are host-mediated and witnessed only through the §21 `operator` seam (`compensation-recovery.test.ts`).",
       "sources": [
         {
-          "file": "spec/v1/spec-gaps.json",
+          "file": "spec/v2/spec-gaps.json",
           "token": "openwop.gap.spec.compensation.g7"
         }
       ]
@@ -18090,7 +18090,7 @@
       "note": "**Closed 2026-08-16 (§B \"Irreversible effects\").** A sibling boolean `irreversibleEffect` on the node — NOT a variant inside `compensation`, so `required: [nodeTypeId]` is untouched and COMPATIBILITY §2.2 is not engaged; mutual exclusion enforced in the schema (`if irreversibleEffect === true then not required compensation`) and mirrored into RFC 0157 chain fragments. Plan entry `irreversible`, rollup caps at `partial`; no event, no reason code (G6 unchanged).",
       "sources": [
         {
-          "file": "spec/v1/spec-gaps.json",
+          "file": "spec/v2/spec-gaps.json",
           "token": "openwop.gap.spec.compensation.g8"
         }
       ]
@@ -18108,7 +18108,7 @@
       "note": "**Open — measured 2026-08-17.** On the first deployed advertiser (`app.openwop.dev`, `756a9938d`) the advert, §B policy attach, §D rollup ⇄ events, reverse-completion order and replay-no-refire held on the wire (`compensation-behavior` 5/6, `compensation-profile` 19/19), while plan-before-first-inverse, the three recovery legs and RFC 0157 chain expansion resolved `seamAbsent` — structurally, not as a host gap. Closing this needs an observation path that is normative surface, not a seam: a read projection of the plan / attempts / `inverseActions[]` (e.g. on the run snapshot or a `GET /v1/runs/{runId}/compensation`) and the G7 operator family. Both are new optional wire capabilities, and sit with G6/G7 as ordinary additive RFC work; until they land the row in `INTEROP-MATRIX.md` says \"deployed-wire: advert/§B/§D/ordering/replay-no-refire; local-boot: §C/§E/§F/RFC 0157\", which is the truth.",
       "sources": [
         {
-          "file": "spec/v1/spec-gaps.json",
+          "file": "spec/v2/spec-gaps.json",
           "token": "openwop.gap.spec.compensation.g9"
         }
       ]
@@ -18126,7 +18126,7 @@
       "note": "discovery-only profiles marked `discoveryOnly`. `openwop-node-packs` is runtime-derived (claimed only when held). Verifiers evaluate a conditional floor against the bundle's own captured discovery document.",
       "sources": [
         {
-          "file": "spec/v1/spec-gaps.json",
+          "file": "spec/v2/spec-gaps.json",
           "token": "openwop.gap.spec.conformance-certification.r1"
         }
       ]
@@ -18144,7 +18144,7 @@
       "note": "a property this format can assert on a host's behalf.)*",
       "sources": [
         {
-          "file": "spec/v1/spec-gaps.json",
+          "file": "spec/v2/spec-gaps.json",
           "token": "openwop.gap.spec.conformance-certification.r2"
         }
       ]
@@ -18162,7 +18162,7 @@
       "note": "configuration, scored **283 pass / 22 fail** against **303 / 2** for the first build — because its container build ran `npm install` rather than `npm ci`, so two builds resolved different transitive dependency versions. Nothing in the bundle could distinguish the two runs: same `suite.version`, same `host.name`/`version`, same `discovery.sha256`, same `targetConfigurationSha256` — that hash covers the *advertised configuration*, not the dependency closure that executed. — Consequences, stated rather than left to inference: — - A bundle is evidence about **one execution of one build**. It is not evidence about a commit, and re-running \"the same commit\" is not a re-check unless the build is deterministic. — - A host SHOULD populate `host.build` with an identifier that names **what actually executed**, and SHOULD make its builds reproducible (a lockfile-respecting install: `npm ci`, not `npm install`) so that identifier means something. — **Which identifier depends on when the bundle is produced, and the strongest one is not always reachable** *(amended 2026-08-18 after a tier-1 host pointed out the ordering constraint)*. A bundle baked **into** the image at certify time — vendored so it is servable without a runtime recompute, which is what makes it tamper-evident — is written when no image and therefore no digest yet exists. Telling such a host to record an image digest would force it either to certify post-deploy, losing the baking property, or to ship a second revision purely to stamp one. Neither is intended. In rough order of strength, and each is only as good as what it pins: — | Identifier | Available | Pins | — | --- | --- | --- | — | container image digest | after the build | the exact artifact — strongest, but not at bake time | — | builder-assigned build id | during the build | that build, if the builder's ids are unique and retained | — | digest of the **resolved dependency manifest** (e.g. the lockfile, or the resolved tree) | at certify time | the dependency closure — the thing that actually varied in the measurement above | — The last row deserves emphasis, because it is available exactly when a baked bundle is written **and** it addresses the observed failure directly: what differed between the two builds of one commit was the resolved closure, not the image identity per se. A host whose install respects its lockfile has `commit` + lockfile digest jointly determining the closure; a host whose install does not has neither pinning anything, which is the defect. Recording *which* kind of identifier `host.build` holds is more useful than recording the strongest-sounding one. — - **First bundle measured against a reproducibly built image (recorded 2026-08-19).** The same tier-2 host that measured the divergence above made its builds lockfile-respecting and published bundle v2 #15 against the result (`workflow-runtime-00572-noc`, suite `1.136.11`). Two things about the path there are worth recording, because \"just use `npm ci`\" understates it: the switch **failed the build loudly**, naming five packages missing from the lockfile, and a follow-up attempt to filter them out with `--omit=optional` also failed — the installer validates lock/manifest sync *before* honoring omit filters, so that flag can never reach the problem. What worked was pinning the installer to the version that **wrote** the lock. The seam is writer/reader agreement, not the lockfile alone. The host's own stated residual is that the lockfile is still missing entries an older installer expects and was pinned around rather than regenerated, and that its guard test can assert a pin exists but not that the pin is the right one — so this is a build that is now *re-checkable*, not one that is proven closed. — - A verifier re-checking a claim MUST re-run against the **same build**, not merely the same commit, or say which it did. — This is a host-build property, so the spec **requires** nothing here beyond honest reporting; it is recorded because a bundle that cannot name its own build inputs is weaker evidence than its shape suggests, and the format previously implied otherwise. Same family as the dispositions RFC 0148 §A introduced: the artifact must not read as attesting more than it observed.",
       "sources": [
         {
-          "file": "spec/v1/spec-gaps.json",
+          "file": "spec/v2/spec-gaps.json",
           "token": "openwop.gap.spec.conformance-certification.r3"
         }
       ]
@@ -18180,7 +18180,7 @@
       "note": "control** or a setup precondition before soft-skipping the requirement-bearing leg. — **The mechanism is precise and was measured, not inferred** (reported by a tier-1 host calling `resolveFileRecord` directly, no host involved). The file's noted reason is honoured in exactly two branches: when `assertionCount === 0`, and when *every* test called `ctx.skip()`. A `return softSkip(...)` produces a **pass** state, not a skip — so in a file that asserts anything at all and then soft-skips, **neither branch fires, the note is silently discarded, and the row reads `executed-pass`.** `['pass'], assertionCount 1, noted blocked` resolves to `executed-pass` with the reason dropped. — This is the same defect as the one already recorded in that function's own comment — notes written *after* `ctx.skip()` threw, which left seven files carrying notes the ledger never saw. **Note-after-skip was fixed; note-after-assertion was not**, and it hid for the same reason: nothing goes red. — The perverse property is worth stating plainly: **the better the scenario, the more convincingly it mis-certifies.** A positive control is exactly what makes a negative assertion trustworthy, and it is also what supplies the assertion that suppresses the note. A thin scenario with no control trips the vacuity rule and is caught. — Scope, stated as what it is: **36 scenario files carry 75 `softSkip` calls positioned after their first assertion.** That is a count of *positions*, not of wrong rows — the note is only dropped on a run that takes that path, so on a fully-capable host most never fire. **It bites on partially-capable hosts**, which is precisely the population a matrix exists to describe and the one where `blocked` / `inapplicable` / `executed-pass` carries all the meaning. A confirmed instance: `feedback-fork-not-copied.test.ts` asserts a `201` setup precondition and then returns `softSkip('inapplicable', 'fork unsupported')`, so a fork-less host records `executed-pass` for *\"a fork of an annotated run starts with zero annotations\"* — a requirement it cannot attempt. — **This is not an RFC 0148 §A violation on §A's own terms** — §A names \"a plain test return, caught exception converted to a return, or empty assertion body\", and this case has a non-empty assertion body. It is the harm §A exists to prevent, at a granularity §A's zero-assertion test cannot see. — **Durable fix (2026-09-02, suite 1.153.0): per-`it` rows.** Every test now records its own ledger row (`openwop.it.<file>.<title-slug>`, `conformance/requirements.json`), so the requirement's own row carries the soft-skip disposition while the positive control's row carries the pass. The file-level row and its `partial-witness:` marker remain for readers of older bundles. — **Interim (2026-08-19): the note is no longer discarded.** When a file resolves to `executed-pass` and a note exists, the note is retained as `detail` behind a `partial-witness:` marker. This changes no disposition — a conservative choice, because honouring the note unconditionally would downgrade a file that legitimately completed its requirement *and* soft-skipped an optional extra leg, trading a false positive for a false negative. Affected rows are now self-identifying in every bundle (`executed-pass` with a `partial-witness:` detail), which turns a static count of positions into a measured count of real occurrences. The durable fix is per-`it` recording rather than per-file, and it should follow that evidence rather than precede it.",
       "sources": [
         {
-          "file": "spec/v1/spec-gaps.json",
+          "file": "spec/v2/spec-gaps.json",
           "token": "openwop.gap.spec.conformance-certification.r4"
         }
       ]
@@ -18197,7 +18197,7 @@
       "target": null,
       "sources": [
         {
-          "file": "spec/v1/spec-gaps.json",
+          "file": "spec/v2/spec-gaps.json",
           "token": "openwop.gap.spec.conformance-certification.r5"
         }
       ]
@@ -18215,7 +18215,7 @@
       "note": "Validate against the Tier-1 providers during reference-host impl (RFC 0095 UQ2)",
       "sources": [
         {
-          "file": "spec/v1/spec-gaps.json",
+          "file": "spec/v2/spec-gaps.json",
           "token": "openwop.gap.spec.connection-packs.r1"
         }
       ]
@@ -18233,7 +18233,7 @@
       "note": "RFC 0095 UQ3",
       "sources": [
         {
-          "file": "spec/v1/spec-gaps.json",
+          "file": "spec/v2/spec-gaps.json",
           "token": "openwop.gap.spec.connection-packs.r2"
         }
       ]
@@ -18251,7 +18251,7 @@
       "note": "RFC 0095 UQ4",
       "sources": [
         {
-          "file": "spec/v1/spec-gaps.json",
+          "file": "spec/v2/spec-gaps.json",
           "token": "openwop.gap.spec.connection-packs.r3"
         }
       ]
@@ -18269,7 +18269,7 @@
       "note": "RFC 0095 UQ1",
       "sources": [
         {
-          "file": "spec/v1/spec-gaps.json",
+          "file": "spec/v2/spec-gaps.json",
           "token": "openwop.gap.spec.connection-packs.r4"
         }
       ]
@@ -18287,7 +18287,7 @@
       "note": "RFC 0095 UQ5",
       "sources": [
         {
-          "file": "spec/v1/spec-gaps.json",
+          "file": "spec/v2/spec-gaps.json",
           "token": "openwop.gap.spec.connection-packs.r5"
         }
       ]
@@ -18305,7 +18305,7 @@
       "note": "machine-readable certification bundle so every profile claim is mechanically reproducible from a single artifact.",
       "sources": [
         {
-          "file": "spec/v1/spec-gaps.json",
+          "file": "spec/v2/spec-gaps.json",
           "token": "openwop.gap.spec.core-standard-profile.r1"
         }
       ]
@@ -18322,7 +18322,7 @@
       "target": null,
       "sources": [
         {
-          "file": "spec/v1/spec-gaps.json",
+          "file": "spec/v2/spec-gaps.json",
           "token": "openwop.gap.spec.core-standard-profile.r2"
         }
       ]
@@ -18339,7 +18339,7 @@
       "target": null,
       "sources": [
         {
-          "file": "spec/v1/spec-gaps.json",
+          "file": "spec/v2/spec-gaps.json",
           "token": "openwop.gap.spec.debug-bundle.debug-bundle-1"
         }
       ]
@@ -18356,7 +18356,7 @@
       "target": null,
       "sources": [
         {
-          "file": "spec/v1/spec-gaps.json",
+          "file": "spec/v2/spec-gaps.json",
           "token": "openwop.gap.spec.debug-bundle.debug-bundle-2"
         }
       ]
@@ -18373,7 +18373,7 @@
       "target": null,
       "sources": [
         {
-          "file": "spec/v1/spec-gaps.json",
+          "file": "spec/v2/spec-gaps.json",
           "token": "openwop.gap.spec.debug-bundle.debug-bundle-3"
         }
       ]
@@ -18391,7 +18391,7 @@
       "note": "RFC 0137 §Unresolved 1 / G1",
       "sources": [
         {
-          "file": "spec/v1/spec-gaps.json",
+          "file": "spec/v2/spec-gaps.json",
           "token": "openwop.gap.spec.form-content-packs.r1"
         }
       ]
@@ -18409,7 +18409,7 @@
       "note": "RFC 0137 §Unresolved 2 / G2",
       "sources": [
         {
-          "file": "spec/v1/spec-gaps.json",
+          "file": "spec/v2/spec-gaps.json",
           "token": "openwop.gap.spec.form-content-packs.r2"
         }
       ]
@@ -18427,7 +18427,7 @@
       "note": "RFC 0137 §Unresolved 3 / G3",
       "sources": [
         {
-          "file": "spec/v1/spec-gaps.json",
+          "file": "spec/v2/spec-gaps.json",
           "token": "openwop.gap.spec.form-content-packs.r3"
         }
       ]
@@ -18445,7 +18445,7 @@
       "note": "RFC 0137 §Acceptance criteria / R1",
       "sources": [
         {
-          "file": "spec/v1/spec-gaps.json",
+          "file": "spec/v2/spec-gaps.json",
           "token": "openwop.gap.spec.form-content-packs.r4"
         }
       ]
@@ -18463,7 +18463,7 @@
       "note": "RFC 0137 §Unresolved 4 / G4",
       "sources": [
         {
-          "file": "spec/v1/spec-gaps.json",
+          "file": "spec/v2/spec-gaps.json",
           "token": "openwop.gap.spec.form-content-packs.r5"
         }
       ]
@@ -18481,7 +18481,7 @@
       "note": "Out of scope for v1 (RFC 0117 §Resolved Q1); a future additive `hostApi` method under a bumped `ui-plugin/*` vocabulary.",
       "sources": [
         {
-          "file": "spec/v1/spec-gaps.json",
+          "file": "spec/v2/spec-gaps.json",
           "token": "openwop.gap.spec.frontend-plugin-packs.r1"
         }
       ]
@@ -18499,7 +18499,7 @@
       "note": "Forbidden in v1 — one sandbox per surface (RFC 0117 §Resolved Q2).",
       "sources": [
         {
-          "file": "spec/v1/spec-gaps.json",
+          "file": "spec/v2/spec-gaps.json",
           "token": "openwop.gap.spec.frontend-plugin-packs.r2"
         }
       ]
@@ -18517,7 +18517,7 @@
       "note": "Whole-response in v1 (RFC 0117 §Resolved Q4); a future additive method.",
       "sources": [
         {
-          "file": "spec/v1/spec-gaps.json",
+          "file": "spec/v2/spec-gaps.json",
           "token": "openwop.gap.spec.frontend-plugin-packs.r3"
         }
       ]
@@ -18535,7 +18535,7 @@
       "note": "v1.x-silent — opaque, host-defined (§Concurrency), mirroring `agent-workspace.md` `etag`.",
       "sources": [
         {
-          "file": "spec/v1/spec-gaps.json",
+          "file": "spec/v2/spec-gaps.json",
           "token": "openwop.gap.spec.frontend-plugin-packs.r4"
         }
       ]
@@ -18552,7 +18552,7 @@
       "target": null,
       "sources": [
         {
-          "file": "spec/v1/spec-gaps.json",
+          "file": "spec/v2/spec-gaps.json",
           "token": "openwop.gap.spec.frontend-plugin-packs.r5"
         }
       ]
@@ -18569,7 +18569,7 @@
       "target": null,
       "sources": [
         {
-          "file": "spec/v1/spec-gaps.json",
+          "file": "spec/v2/spec-gaps.json",
           "token": "openwop.gap.spec.host-sample-test-seams.r1"
         }
       ]
@@ -18586,7 +18586,7 @@
       "target": null,
       "sources": [
         {
-          "file": "spec/v1/spec-gaps.json",
+          "file": "spec/v2/spec-gaps.json",
           "token": "openwop.gap.spec.host-sample-test-seams.r2"
         }
       ]
@@ -18604,7 +18604,7 @@
       "note": "closed",
       "sources": [
         {
-          "file": "spec/v1/spec-gaps.json",
+          "file": "spec/v2/spec-gaps.json",
           "token": "openwop.gap.spec.idempotency.i1"
         }
       ]
@@ -18622,7 +18622,7 @@
       "note": "future",
       "sources": [
         {
-          "file": "spec/v1/spec-gaps.json",
+          "file": "spec/v2/spec-gaps.json",
           "token": "openwop.gap.spec.idempotency.i2"
         }
       ]
@@ -18640,7 +18640,7 @@
       "note": "P2-F4",
       "sources": [
         {
-          "file": "spec/v1/spec-gaps.json",
+          "file": "spec/v2/spec-gaps.json",
           "token": "openwop.gap.spec.idempotency.i3"
         }
       ]
@@ -18658,7 +18658,7 @@
       "note": "future v1.x",
       "sources": [
         {
-          "file": "spec/v1/spec-gaps.json",
+          "file": "spec/v2/spec-gaps.json",
           "token": "openwop.gap.spec.idempotency.i4"
         }
       ]
@@ -18676,7 +18676,7 @@
       "note": "host-side",
       "sources": [
         {
-          "file": "spec/v1/spec-gaps.json",
+          "file": "spec/v2/spec-gaps.json",
           "token": "openwop.gap.spec.idempotency.i5"
         }
       ]
@@ -18694,7 +18694,7 @@
       "note": "future v1.x",
       "sources": [
         {
-          "file": "spec/v1/spec-gaps.json",
+          "file": "spec/v2/spec-gaps.json",
           "token": "openwop.gap.spec.interrupt.i1"
         }
       ]
@@ -18712,7 +18712,7 @@
       "note": "future",
       "sources": [
         {
-          "file": "spec/v1/spec-gaps.json",
+          "file": "spec/v2/spec-gaps.json",
           "token": "openwop.gap.spec.interrupt.i2"
         }
       ]
@@ -18730,7 +18730,7 @@
       "note": "future v1.x",
       "sources": [
         {
-          "file": "spec/v1/spec-gaps.json",
+          "file": "spec/v2/spec-gaps.json",
           "token": "openwop.gap.spec.interrupt.i3"
         }
       ]
@@ -18748,7 +18748,7 @@
       "note": "future",
       "sources": [
         {
-          "file": "spec/v1/spec-gaps.json",
+          "file": "spec/v2/spec-gaps.json",
           "token": "openwop.gap.spec.interrupt.i4"
         }
       ]
@@ -18766,7 +18766,7 @@
       "note": "**Open** — the window date is fixed above (2027-08-12); who is on 2025-06-18 is unknown.",
       "sources": [
         {
-          "file": "spec/v1/spec-gaps.json",
+          "file": "spec/v2/spec-gaps.json",
           "token": "openwop.gap.spec.mcp-integration.g1"
         }
       ]
@@ -18784,7 +18784,7 @@
       "note": "**Closed** by §C (C.1 client, C.2 server): identity, `requestState`, retry, timeout, cancellation, replay, interrupt composition.",
       "sources": [
         {
-          "file": "spec/v1/spec-gaps.json",
+          "file": "spec/v2/spec-gaps.json",
           "token": "openwop.gap.spec.mcp-integration.g2"
         }
       ]
@@ -18802,7 +18802,7 @@
       "note": "**Externally gated**; the fake server is legacy-shaped.",
       "sources": [
         {
-          "file": "spec/v1/spec-gaps.json",
+          "file": "spec/v2/spec-gaps.json",
           "token": "openwop.gap.spec.mcp-integration.g3"
         }
       ]
@@ -18820,7 +18820,7 @@
       "note": "**Closed** by §D: scope change ⇒ stale regardless of `ttlMs`; `\"private\"` never crosses authorization contexts; key includes tenant/workspace/principal/origin/revision/discovery context.",
       "sources": [
         {
-          "file": "spec/v1/spec-gaps.json",
+          "file": "spec/v2/spec-gaps.json",
           "token": "openwop.gap.spec.mcp-integration.g4"
         }
       ]
@@ -18838,7 +18838,7 @@
       "note": "**Decided: none first-class.** OTel `_meta` keys and `logLevel` are the only named mappings; `io.modelcontextprotocol/tasks` is deliberately unmapped (RFC 0100 owns durable interop).",
       "sources": [
         {
-          "file": "spec/v1/spec-gaps.json",
+          "file": "spec/v2/spec-gaps.json",
           "token": "openwop.gap.spec.mcp-integration.g5"
         }
       ]
@@ -18856,7 +18856,7 @@
       "note": "**Closed 2026-08-16 (suite 1.113.0):** dual-era `McpFakeServer` and all six legs landed, gated; what remains is a host that claims the profile.",
       "sources": [
         {
-          "file": "spec/v1/spec-gaps.json",
+          "file": "spec/v2/spec-gaps.json",
           "token": "openwop.gap.spec.mcp-integration.g6"
         }
       ]
@@ -18874,7 +18874,7 @@
       "note": "**Open** — `authorization.decided` recommended as carrier; shared with RFC 0152 G7.",
       "sources": [
         {
-          "file": "spec/v1/spec-gaps.json",
+          "file": "spec/v2/spec-gaps.json",
           "token": "openwop.gap.spec.mcp-integration.g7"
         }
       ]
@@ -18892,7 +18892,7 @@
       "note": "**Open** — shared with RFC 0152 G8.",
       "sources": [
         {
-          "file": "spec/v1/spec-gaps.json",
+          "file": "spec/v2/spec-gaps.json",
           "token": "openwop.gap.spec.mcp-integration.g8"
         }
       ]
@@ -18910,7 +18910,7 @@
       "note": "**Open** — §C.1 requires a bound and leaves the number to host policy; a normative ceiling may follow evidence.",
       "sources": [
         {
-          "file": "spec/v1/spec-gaps.json",
+          "file": "spec/v2/spec-gaps.json",
           "token": "openwop.gap.spec.mcp-integration.g9"
         }
       ]
@@ -18928,7 +18928,7 @@
       "note": "RFC 0039 (`version: 2`) — OpenWOP WG",
       "sources": [
         {
-          "file": "spec/v1/spec-gaps.json",
+          "file": "spec/v2/spec-gaps.json",
           "token": "openwop.gap.spec.multi-agent-execution.mae-1"
         }
       ]
@@ -18946,7 +18946,7 @@
       "note": "RFC 0039 (`version: 2`) — OpenWOP WG",
       "sources": [
         {
-          "file": "spec/v1/spec-gaps.json",
+          "file": "spec/v2/spec-gaps.json",
           "token": "openwop.gap.spec.multi-agent-execution.mae-2"
         }
       ]
@@ -18964,7 +18964,7 @@
       "note": "RFC 0039 (`version: 2`) — OpenWOP WG",
       "sources": [
         {
-          "file": "spec/v1/spec-gaps.json",
+          "file": "spec/v2/spec-gaps.json",
           "token": "openwop.gap.spec.multi-agent-execution.mae-3"
         }
       ]
@@ -18982,7 +18982,7 @@
       "note": "RFC 0040 (`version: 3`) — OpenWOP WG",
       "sources": [
         {
-          "file": "spec/v1/spec-gaps.json",
+          "file": "spec/v2/spec-gaps.json",
           "token": "openwop.gap.spec.multi-agent-execution.mae-4"
         }
       ]
@@ -19000,7 +19000,7 @@
       "note": "RFC 0040 (`version: 3`) — OpenWOP WG",
       "sources": [
         {
-          "file": "spec/v1/spec-gaps.json",
+          "file": "spec/v2/spec-gaps.json",
           "token": "openwop.gap.spec.multi-agent-execution.mae-5"
         }
       ]
@@ -19018,7 +19018,7 @@
       "note": "RFC 0040 (`version: 3`) — OpenWOP WG",
       "sources": [
         {
-          "file": "spec/v1/spec-gaps.json",
+          "file": "spec/v2/spec-gaps.json",
           "token": "openwop.gap.spec.multi-agent-execution.mae-6"
         }
       ]
@@ -19036,7 +19036,7 @@
       "note": "RFC 0041 (`version: 4`) — OpenWOP WG",
       "sources": [
         {
-          "file": "spec/v1/spec-gaps.json",
+          "file": "spec/v2/spec-gaps.json",
           "token": "openwop.gap.spec.multi-agent-execution.mae-7"
         }
       ]
@@ -19054,7 +19054,7 @@
       "note": "RFC 0041 (`version: 4`) — OpenWOP WG",
       "sources": [
         {
-          "file": "spec/v1/spec-gaps.json",
+          "file": "spec/v2/spec-gaps.json",
           "token": "openwop.gap.spec.multi-agent-execution.mae-8"
         }
       ]
@@ -19072,7 +19072,7 @@
       "note": "RFC 0041 (`version: 4`) — OpenWOP WG",
       "sources": [
         {
-          "file": "spec/v1/spec-gaps.json",
+          "file": "spec/v2/spec-gaps.json",
           "token": "openwop.gap.spec.multi-agent-execution.mae-9"
         }
       ]
@@ -19090,7 +19090,7 @@
       "note": "closed",
       "sources": [
         {
-          "file": "spec/v1/spec-gaps.json",
+          "file": "spec/v2/spec-gaps.json",
           "token": "openwop.gap.spec.node-packs.np1"
         }
       ]
@@ -19108,7 +19108,7 @@
       "note": "✅ closed",
       "sources": [
         {
-          "file": "spec/v1/spec-gaps.json",
+          "file": "spec/v2/spec-gaps.json",
           "token": "openwop.gap.spec.node-packs.np2"
         }
       ]
@@ -19126,7 +19126,7 @@
       "note": "✅ closed",
       "sources": [
         {
-          "file": "spec/v1/spec-gaps.json",
+          "file": "spec/v2/spec-gaps.json",
           "token": "openwop.gap.spec.node-packs.np3"
         }
       ]
@@ -19144,7 +19144,7 @@
       "note": "✅ closed",
       "sources": [
         {
-          "file": "spec/v1/spec-gaps.json",
+          "file": "spec/v2/spec-gaps.json",
           "token": "openwop.gap.spec.node-packs.np4"
         }
       ]
@@ -19162,7 +19162,7 @@
       "note": "✅ closed",
       "sources": [
         {
-          "file": "spec/v1/spec-gaps.json",
+          "file": "spec/v2/spec-gaps.json",
           "token": "openwop.gap.spec.node-packs.np5"
         }
       ]
@@ -19180,7 +19180,7 @@
       "note": "✅",
       "sources": [
         {
-          "file": "spec/v1/spec-gaps.json",
+          "file": "spec/v2/spec-gaps.json",
           "token": "openwop.gap.spec.observability.o1"
         }
       ]
@@ -19198,7 +19198,7 @@
       "note": "✅",
       "sources": [
         {
-          "file": "spec/v1/spec-gaps.json",
+          "file": "spec/v2/spec-gaps.json",
           "token": "openwop.gap.spec.observability.o2"
         }
       ]
@@ -19216,7 +19216,7 @@
       "note": "✅",
       "sources": [
         {
-          "file": "spec/v1/spec-gaps.json",
+          "file": "spec/v2/spec-gaps.json",
           "token": "openwop.gap.spec.observability.o3"
         }
       ]
@@ -19234,7 +19234,7 @@
       "note": "✅",
       "sources": [
         {
-          "file": "spec/v1/spec-gaps.json",
+          "file": "spec/v2/spec-gaps.json",
           "token": "openwop.gap.spec.observability.o4"
         }
       ]
@@ -19252,7 +19252,7 @@
       "note": "✅",
       "sources": [
         {
-          "file": "spec/v1/spec-gaps.json",
+          "file": "spec/v2/spec-gaps.json",
           "token": "openwop.gap.spec.observability.o5"
         }
       ]
@@ -19270,7 +19270,7 @@
       "note": "Deferred to graduation (pre-authored near `Active → Accepted`, per the RFC 0086 precedent). Floor surface is the host-extension seam.",
       "sources": [
         {
-          "file": "spec/v1/spec-gaps.json",
+          "file": "spec/v2/spec-gaps.json",
           "token": "openwop.gap.spec.portability.r1"
         }
       ]
@@ -19288,7 +19288,7 @@
       "note": "Out of scope — host/tooling concern. The protocol pins only the bundle shape + import contract.",
       "sources": [
         {
-          "file": "spec/v1/spec-gaps.json",
+          "file": "spec/v2/spec-gaps.json",
           "token": "openwop.gap.spec.portability.r2"
         }
       ]
@@ -19306,7 +19306,7 @@
       "note": "Tracked in `openwop-sdks`; not part of the spec-corpus floor.",
       "sources": [
         {
-          "file": "spec/v1/spec-gaps.json",
+          "file": "spec/v2/spec-gaps.json",
           "token": "openwop.gap.spec.portability.r3"
         }
       ]
@@ -19323,7 +19323,7 @@
       "target": null,
       "sources": [
         {
-          "file": "spec/v1/spec-gaps.json",
+          "file": "spec/v2/spec-gaps.json",
           "token": "openwop.gap.spec.profiles.profile-1"
         }
       ]
@@ -19340,7 +19340,7 @@
       "target": null,
       "sources": [
         {
-          "file": "spec/v1/spec-gaps.json",
+          "file": "spec/v2/spec-gaps.json",
           "token": "openwop.gap.spec.profiles.profile-2"
         }
       ]
@@ -19357,7 +19357,7 @@
       "target": null,
       "sources": [
         {
-          "file": "spec/v1/spec-gaps.json",
+          "file": "spec/v2/spec-gaps.json",
           "token": "openwop.gap.spec.profiles.profile-3"
         }
       ]
@@ -19375,7 +19375,7 @@
       "note": "Acceptance-gate item per RFC 0029 (wire shape landed in this document §\"Resolution chain (normative)\")",
       "sources": [
         {
-          "file": "spec/v1/spec-gaps.json",
+          "file": "spec/v2/spec-gaps.json",
           "token": "openwop.gap.spec.prompts.p1"
         }
       ]
@@ -19393,7 +19393,7 @@
       "note": "Acceptance-gate item per RFC 0027",
       "sources": [
         {
-          "file": "spec/v1/spec-gaps.json",
+          "file": "spec/v2/spec-gaps.json",
           "token": "openwop.gap.spec.prompts.p2"
         }
       ]
@@ -19411,7 +19411,7 @@
       "note": "Acceptance-gate item per RFC 0027",
       "sources": [
         {
-          "file": "spec/v1/spec-gaps.json",
+          "file": "spec/v2/spec-gaps.json",
           "token": "openwop.gap.spec.prompts.p3"
         }
       ]
@@ -19429,7 +19429,7 @@
       "note": "Acceptance-gate item per RFC 0028",
       "sources": [
         {
-          "file": "spec/v1/spec-gaps.json",
+          "file": "spec/v2/spec-gaps.json",
           "token": "openwop.gap.spec.prompts.p4"
         }
       ]
@@ -19447,7 +19447,7 @@
       "note": "(open)",
       "sources": [
         {
-          "file": "spec/v1/spec-gaps.json",
+          "file": "spec/v2/spec-gaps.json",
           "token": "openwop.gap.spec.prompts.p5"
         }
       ]
@@ -19465,7 +19465,7 @@
       "note": "(open)",
       "sources": [
         {
-          "file": "spec/v1/spec-gaps.json",
+          "file": "spec/v2/spec-gaps.json",
           "token": "openwop.gap.spec.prompts.p6"
         }
       ]
@@ -19483,7 +19483,7 @@
       "note": "RFC 0030 (Draft, parallel track)",
       "sources": [
         {
-          "file": "spec/v1/spec-gaps.json",
+          "file": "spec/v2/spec-gaps.json",
           "token": "openwop.gap.spec.prompts.p7"
         }
       ]
@@ -19501,7 +19501,7 @@
       "note": "RFC follow-up to 0028 (deferred)",
       "sources": [
         {
-          "file": "spec/v1/spec-gaps.json",
+          "file": "spec/v2/spec-gaps.json",
           "token": "openwop.gap.spec.prompts.p8"
         }
       ]
@@ -19519,7 +19519,7 @@
       "note": "future",
       "sources": [
         {
-          "file": "spec/v1/spec-gaps.json",
+          "file": "spec/v2/spec-gaps.json",
           "token": "openwop.gap.spec.replay.rp1"
         }
       ]
@@ -19537,7 +19537,7 @@
       "note": "future v1.x",
       "sources": [
         {
-          "file": "spec/v1/spec-gaps.json",
+          "file": "spec/v2/spec-gaps.json",
           "token": "openwop.gap.spec.replay.rp2"
         }
       ]
@@ -19555,7 +19555,7 @@
       "note": "v1.x annex",
       "sources": [
         {
-          "file": "spec/v1/spec-gaps.json",
+          "file": "spec/v2/spec-gaps.json",
           "token": "openwop.gap.spec.replay.rp3"
         }
       ]
@@ -19573,7 +19573,7 @@
       "note": "v1.x annex",
       "sources": [
         {
-          "file": "spec/v1/spec-gaps.json",
+          "file": "spec/v2/spec-gaps.json",
           "token": "openwop.gap.spec.replay.rp4"
         }
       ]
@@ -19591,7 +19591,7 @@
       "note": "v1.x annex",
       "sources": [
         {
-          "file": "spec/v1/spec-gaps.json",
+          "file": "spec/v2/spec-gaps.json",
           "token": "openwop.gap.spec.replay.rp5"
         }
       ]
@@ -19609,7 +19609,7 @@
       "note": "closed",
       "sources": [
         {
-          "file": "spec/v1/spec-gaps.json",
+          "file": "spec/v2/spec-gaps.json",
           "token": "openwop.gap.spec.rest-endpoints.r1"
         }
       ]
@@ -19627,7 +19627,7 @@
       "note": "closed",
       "sources": [
         {
-          "file": "spec/v1/spec-gaps.json",
+          "file": "spec/v2/spec-gaps.json",
           "token": "openwop.gap.spec.rest-endpoints.r2"
         }
       ]
@@ -19645,7 +19645,7 @@
       "note": "closed",
       "sources": [
         {
-          "file": "spec/v1/spec-gaps.json",
+          "file": "spec/v2/spec-gaps.json",
           "token": "openwop.gap.spec.rest-endpoints.r3"
         }
       ]
@@ -19663,7 +19663,7 @@
       "note": "closed",
       "sources": [
         {
-          "file": "spec/v1/spec-gaps.json",
+          "file": "spec/v2/spec-gaps.json",
           "token": "openwop.gap.spec.rest-endpoints.r4"
         }
       ]
@@ -19681,7 +19681,7 @@
       "note": "conformance minor",
       "sources": [
         {
-          "file": "spec/v1/spec-gaps.json",
+          "file": "spec/v2/spec-gaps.json",
           "token": "openwop.gap.spec.run-options.ro1"
         }
       ]
@@ -19699,7 +19699,7 @@
       "note": "future v1.x",
       "sources": [
         {
-          "file": "spec/v1/spec-gaps.json",
+          "file": "spec/v2/spec-gaps.json",
           "token": "openwop.gap.spec.run-options.ro2"
         }
       ]
@@ -19717,7 +19717,7 @@
       "note": "future v1.x",
       "sources": [
         {
-          "file": "spec/v1/spec-gaps.json",
+          "file": "spec/v2/spec-gaps.json",
           "token": "openwop.gap.spec.run-options.ro3"
         }
       ]
@@ -19735,7 +19735,7 @@
       "note": "future",
       "sources": [
         {
-          "file": "spec/v1/spec-gaps.json",
+          "file": "spec/v2/spec-gaps.json",
           "token": "openwop.gap.spec.run-options.ro4"
         }
       ]
@@ -19752,7 +19752,7 @@
       "target": null,
       "sources": [
         {
-          "file": "spec/v1/spec-gaps.json",
+          "file": "spec/v2/spec-gaps.json",
           "token": "openwop.gap.spec.scale-profiles.scale-1"
         }
       ]
@@ -19769,7 +19769,7 @@
       "target": null,
       "sources": [
         {
-          "file": "spec/v1/spec-gaps.json",
+          "file": "spec/v2/spec-gaps.json",
           "token": "openwop.gap.spec.scale-profiles.scale-2"
         }
       ]
@@ -19786,7 +19786,7 @@
       "target": null,
       "sources": [
         {
-          "file": "spec/v1/spec-gaps.json",
+          "file": "spec/v2/spec-gaps.json",
           "token": "openwop.gap.spec.scale-profiles.scale-3"
         }
       ]
@@ -19804,7 +19804,7 @@
       "note": "Host-internal for v1; the bearer is opaque to the wire. A normative mint/rotate endpoint MAY be added additively if cross-host runner portability is pursued.",
       "sources": [
         {
-          "file": "spec/v1/spec-gaps.json",
+          "file": "spec/v2/spec-gaps.json",
           "token": "openwop.gap.spec.self-hosted-runner.g1"
         }
       ]
@@ -19822,7 +19822,7 @@
       "note": "Implementation-defined. The spec pins only subject-first + capability match; a host MAY pick any matching free runner.",
       "sources": [
         {
-          "file": "spec/v1/spec-gaps.json",
+          "file": "spec/v2/spec-gaps.json",
           "token": "openwop.gap.spec.self-hosted-runner.g2"
         }
       ]
@@ -19840,7 +19840,7 @@
       "note": "The frame shape carries `kind:\"tool\"` from v1; the reference witness lands `model`-dispatch first (openwop-app ADR 0182 Phase 5). Tool-dispatch behavioral coverage graduates when a host routes it non-vacuously.",
       "sources": [
         {
-          "file": "spec/v1/spec-gaps.json",
+          "file": "spec/v2/spec-gaps.json",
           "token": "openwop.gap.spec.self-hosted-runner.g3"
         }
       ]
@@ -19858,7 +19858,7 @@
       "note": "Out of scope for v1; the runner channel is host↔runner, distinct from the client↔host A2A transport.",
       "sources": [
         {
-          "file": "spec/v1/spec-gaps.json",
+          "file": "spec/v2/spec-gaps.json",
           "token": "openwop.gap.spec.self-hosted-runner.g4"
         }
       ]
@@ -19876,7 +19876,7 @@
       "note": "✅",
       "sources": [
         {
-          "file": "spec/v1/spec-gaps.json",
+          "file": "spec/v2/spec-gaps.json",
           "token": "openwop.gap.spec.stream-modes.s1"
         }
       ]
@@ -19894,7 +19894,7 @@
       "note": "✅",
       "sources": [
         {
-          "file": "spec/v1/spec-gaps.json",
+          "file": "spec/v2/spec-gaps.json",
           "token": "openwop.gap.spec.stream-modes.s2"
         }
       ]
@@ -19912,7 +19912,7 @@
       "note": "✅",
       "sources": [
         {
-          "file": "spec/v1/spec-gaps.json",
+          "file": "spec/v2/spec-gaps.json",
           "token": "openwop.gap.spec.stream-modes.s3"
         }
       ]
@@ -19930,7 +19930,7 @@
       "note": "✅",
       "sources": [
         {
-          "file": "spec/v1/spec-gaps.json",
+          "file": "spec/v2/spec-gaps.json",
           "token": "openwop.gap.spec.stream-modes.s4"
         }
       ]
@@ -19947,7 +19947,7 @@
       "target": null,
       "sources": [
         {
-          "file": "spec/v1/spec-gaps.json",
+          "file": "spec/v2/spec-gaps.json",
           "token": "openwop.gap.spec.tool-catalog.r1"
         }
       ]
@@ -19964,7 +19964,7 @@
       "target": null,
       "sources": [
         {
-          "file": "spec/v1/spec-gaps.json",
+          "file": "spec/v2/spec-gaps.json",
           "token": "openwop.gap.spec.tool-catalog.r2"
         }
       ]
@@ -19981,7 +19981,7 @@
       "target": null,
       "sources": [
         {
-          "file": "spec/v1/spec-gaps.json",
+          "file": "spec/v2/spec-gaps.json",
           "token": "openwop.gap.spec.trigger-bridge.r1"
         }
       ]
@@ -19998,7 +19998,7 @@
       "target": null,
       "sources": [
         {
-          "file": "spec/v1/spec-gaps.json",
+          "file": "spec/v2/spec-gaps.json",
           "token": "openwop.gap.spec.trigger-bridge.r2"
         }
       ]
@@ -20016,7 +20016,7 @@
       "note": "future",
       "sources": [
         {
-          "file": "spec/v1/spec-gaps.json",
+          "file": "spec/v2/spec-gaps.json",
           "token": "openwop.gap.spec.version-negotiation.v1"
         }
       ]
@@ -20034,7 +20034,7 @@
       "note": "closed",
       "sources": [
         {
-          "file": "spec/v1/spec-gaps.json",
+          "file": "spec/v2/spec-gaps.json",
           "token": "openwop.gap.spec.version-negotiation.v2"
         }
       ]
@@ -20052,7 +20052,7 @@
       "note": "future v1.x",
       "sources": [
         {
-          "file": "spec/v1/spec-gaps.json",
+          "file": "spec/v2/spec-gaps.json",
           "token": "openwop.gap.spec.version-negotiation.v3"
         }
       ]
@@ -20070,7 +20070,7 @@
       "note": "future",
       "sources": [
         {
-          "file": "spec/v1/spec-gaps.json",
+          "file": "spec/v2/spec-gaps.json",
           "token": "openwop.gap.spec.version-negotiation.v4"
         }
       ]
@@ -20088,7 +20088,7 @@
       "note": "future v1.x",
       "sources": [
         {
-          "file": "spec/v1/spec-gaps.json",
+          "file": "spec/v2/spec-gaps.json",
           "token": "openwop.gap.spec.version-negotiation.v5"
         }
       ]
@@ -20106,7 +20106,7 @@
       "note": "~~Can `dag.nodes[].typeId` reference another chain pack?~~ **Resolved by RFC 0133** (`Active`): a chain composes child chains via `subChains[]` + `config.subChainRef` (RUNTIME child dispatch, not inline typeId reference); recursion is bounded by a cycle check (`sub_chain_cycle`) + `maxSubChainDepth` (default 8). See §\"Sub-chain composition (RFC 0133)\".",
       "sources": [
         {
-          "file": "spec/v1/spec-gaps.json",
+          "file": "spec/v2/spec-gaps.json",
           "token": "openwop.gap.spec.workflow-chain-packs.wcp1"
         }
       ]
@@ -20124,7 +20124,7 @@
       "note": "When a chain references `core.ai.callPrompt@1.0.0`, what happens if a future `core.ai.callPrompt@2.0.0` ships with a breaking config-schema change? **Recommended: chain MUST pin to a specific version per referenced typeId** (config snapshot at chain author-time), with a `min` / `max` range as future enhancement.",
       "sources": [
         {
-          "file": "spec/v1/spec-gaps.json",
+          "file": "spec/v2/spec-gaps.json",
           "token": "openwop.gap.spec.workflow-chain-packs.wcp2"
         }
       ]
@@ -20142,7 +20142,7 @@
       "note": "Phase 3 of RFC 0013 — one openwop reference host (the in-memory host is the natural fit) implements expansion in its workflow editor. Tracked separately; this spec defines the contract whether or not a reference exists yet.",
       "sources": [
         {
-          "file": "spec/v1/spec-gaps.json",
+          "file": "spec/v2/spec-gaps.json",
           "token": "openwop.gap.spec.workflow-chain-packs.wcp3"
         }
       ]
@@ -20160,7 +20160,7 @@
       "note": "Some hosts (e.g., openwop-app, ADR 0237) want chain parameters to stay overridable per-run rather than frozen at drop time. Expansion-time substitution (this spec) forbids leaving `{{params.*}}` tokens in the persisted definition because they are not a spec'd runtime construct and break cross-host portability. A **portable** deferral mode would have expansion materialize the chain's `parameters` into top-level workflow `variables[]` and rewrite `{{params.x}}` into a spec'd runtime binding (for prompt-bearing config, the PromptTemplate `{{varName}}` with `source: \"variable\"` per `prompts.md` §\"Variable interpolation\"), gated behind a new capability with replay/event-log determinism for the run-scoped variable bag. **Recommended: a follow-up additive RFC**, not a relaxation of the expansion-time MUST.",
       "sources": [
         {
-          "file": "spec/v1/spec-gaps.json",
+          "file": "spec/v2/spec-gaps.json",
           "token": "openwop.gap.spec.workflow-chain-packs.wcp4"
         }
       ]
@@ -20178,7 +20178,7 @@
       "note": "When a parent chain is deleted, are co-registered children deleted too, or reference-counted (a child shared by two parents)? **Recommended (RFC 0133 §Unresolved #2, carried forward):** reference-count by deterministic child id — delete a child when its last parent is deleted. Host-side lifecycle, not a wire-shape concern; tracked in [`docs/KNOWN-LIMITS.md`](../../docs/KNOWN-LIMITS.md).",
       "sources": [
         {
-          "file": "spec/v1/spec-gaps.json",
+          "file": "spec/v2/spec-gaps.json",
           "token": "openwop.gap.spec.workflow-chain-packs.wcp5"
         }
       ]
@@ -20196,7 +20196,7 @@
       "note": "✅ Landed 2026-08-16 — `nodes[].compensation` + `chains[].compensation` mirrors, expansion rules 3b/5b/6b/9b, `chain_compensation_policy_conflict`. Open: host adoption (the in-memory reference host's mirrored core does not yet run `carryCompensation`); RFC 0124 deferred mode does not yet defer `inputMapping` tokens (they are frozen at drop time like the RFC 0013 default).",
       "sources": [
         {
-          "file": "spec/v1/spec-gaps.json",
+          "file": "spec/v2/spec-gaps.json",
           "token": "openwop.gap.spec.workflow-chain-packs.wcp6"
         }
       ]

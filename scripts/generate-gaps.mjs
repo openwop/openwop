@@ -4,8 +4,9 @@
  *
  * Written to `spec/v2/` since RFC 0266 §C: the frozen v1 tree holds no live
  * generated file. `spec/v1/gaps.json` is the frozen copy as of 2.49.12 and is
- * not regenerated. The prose gap rows absorbed from `spec/v1/*.md` are still
- * read from `spec/v1/spec-gaps.json`, a hand-classified frozen input.
+ * not regenerated. The prose gap rows absorbed from `spec/v1/*.md` are read
+ * from `spec/v2/spec-gaps.json` (moved from the frozen `spec/v1/spec-gaps.json`
+ * by RFC 0266 §C); this script reads no v1 file.
  *
  * One entry per gap-register row, id `openwop.gap.<rfc>.<n>`. Generated
  * fields (rfc, local, section, surface, disposition, target, sources) are
@@ -55,12 +56,13 @@ export function generate(prev) {
     }
   }
   // RFC 0174 §E.3 (v2 charter Phase 3, P3-D): the 43 prose "Open spec gaps"
-  // tables in spec/v1/*.md were absorbed into spec/v1/spec-gaps.json — one
+  // tables in spec/v1/*.md were absorbed into a spec-gaps register — one
   // hand-classified row per table row (id openwop.gap.spec.<doc>.<local>) —
   // and the tables replaced by a pointer. Those rows join the one namespace
   // here; their witness and disposition come from that file (reviewed), not
   // from the unclassified default.
-  const specGapsPath = join(ROOT, 'spec', 'v1', 'spec-gaps.json');
+  // RFC 0266 §C: the register is spec/v2/spec-gaps.json; the v1 copy is frozen.
+  const specGapsPath = join(ROOT, 'spec', 'v2', 'spec-gaps.json');
   if (existsSync(specGapsPath)) {
     for (const g of JSON.parse(readFileSync(specGapsPath, 'utf8')).entries ?? []) {
       const old = prevById.get(g.id);
