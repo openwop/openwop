@@ -10,7 +10,7 @@ import { existsSync, readFileSync } from 'node:fs';
 import { dirname, join } from 'node:path';
 import { fileURLToPath } from 'node:url';
 const ROOT = join(dirname(fileURLToPath(import.meta.url)), '..');
-const gaps = JSON.parse(readFileSync(join(ROOT, 'spec/v1/gaps.json'), 'utf8')).entries;
+const gaps = JSON.parse(readFileSync(join(ROOT, 'spec/v2/gaps.json'), 'utf8')).entries;
 const openapi = readFileSync(join(ROOT, 'api/openapi.yaml'), 'utf8');
 const failures = []; let checked = 0, unchecked = 0;
 const NEG = /(does not exist|no (such )?(test|scenario)|not (yet )?(landed|in `?api\/openapi|declared)|deferred)/i;

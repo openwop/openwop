@@ -1,7 +1,7 @@
 #!/usr/bin/env node
 /**
  * check-registers — RFC 0166 §A.2: every gap and risk register row carries a
- * disposition token; `carried:` ids exist in spec/v1/gaps.json; an RFC whose
+ * disposition token; `carried:` ids exist in spec/v2/gaps.json; an RFC whose
  * Status is `Accepted` (or terminal) has no `open` GAP row. Open RISK rows are
  * permitted but ratcheted: their count is published and may not grow past
  * the committed baseline (docs/ASSURANCE-STATUS.json reports it).
@@ -17,7 +17,7 @@ import { ROOT, listRegisterFiles, parseRegister, rfcStatus, GAP_TOKENS, RISK_TOK
 
 const failures = [];
 const fail = (m) => failures.push(m);
-const gapsPath = join(ROOT, 'spec', 'v1', 'gaps.json');
+const gapsPath = join(ROOT, 'spec', 'v2', 'gaps.json');
 const gapIds = new Set(existsSync(gapsPath) ? (JSON.parse(readFileSync(gapsPath, 'utf8')).entries ?? []).map((e) => e.id) : []);
 
 const counts = { gaps: {}, risks: {}, files: 0, rows: 0, openRiskRows: 0, acceptedWithOpenGaps: [] };
@@ -36,7 +36,7 @@ for (const file of listRegisterFiles()) {
     }
     if (!allowed.includes(row.token)) fail(`${file.rel} ${row.local}: token '${row.token}' is not valid for a ${file.kind} row (${allowed.join('|')})`);
     if (ARG_TOKENS.has(row.token) && row.arg === null) fail(`${file.rel} ${row.local}: '${row.token}' requires an argument (${row.token}:<target>)`);
-    if (row.token === 'carried' && row.arg && !gapIds.has(row.arg)) fail(`${file.rel} ${row.local}: carried:${row.arg} is not an id in spec/v1/gaps.json`);
+    if (row.token === 'carried' && row.arg && !gapIds.has(row.arg)) fail(`${file.rel} ${row.local}: carried:${row.arg} is not an id in spec/v2/gaps.json`);
     const bucket = file.kind === 'gaps' ? counts.gaps : counts.risks;
     bucket[row.token] = (bucket[row.token] ?? 0) + 1;
     if (file.kind === 'risks' && row.token === 'open') counts.openRiskRows++;

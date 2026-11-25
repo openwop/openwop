@@ -16,7 +16,7 @@
  *      baseline in docs/witness-baseline.json; lowering is allowed and rewrites
  *      the baseline with --update-baseline.
  *
- * The enum is defined in spec/v1/gaps.schema.json (RFC 0166 §C.1).
+ * The enum is defined in spec/v2/gaps.schema.json (RFC 0166 §C.1).
  */
 
 import { readFileSync, writeFileSync, existsSync } from 'node:fs';

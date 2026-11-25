@@ -1,6 +1,11 @@
 #!/usr/bin/env node
 /**
- * generate-gaps — `spec/v1/gaps.json`, the one gap namespace (RFC 0166 §B).
+ * generate-gaps — `spec/v2/gaps.json`, the one gap namespace (RFC 0166 §B).
+ *
+ * Written to `spec/v2/` since RFC 0266 §C: the frozen v1 tree holds no live
+ * generated file. `spec/v1/gaps.json` is the frozen copy as of 2.49.12 and is
+ * not regenerated. The prose gap rows absorbed from `spec/v1/*.md` are still
+ * read from `spec/v1/spec-gaps.json`, a hand-classified frozen input.
  *
  * One entry per gap-register row, id `openwop.gap.<rfc>.<n>`. Generated
  * fields (rfc, local, section, surface, disposition, target, sources) are
@@ -18,7 +23,7 @@ import { readFileSync, writeFileSync, existsSync } from 'node:fs';
 import { join } from 'node:path';
 import { ROOT, listRegisterFiles, parseRegister, gapId } from './registers-lib.mjs';
 
-const OUT = join(ROOT, 'spec', 'v1', 'gaps.json');
+const OUT = join(ROOT, 'spec', 'v2', 'gaps.json');
 const WITNESS = ['witnessable-unaided', 'witnessable-gated', 'seam-gated', 'claims-check', 'negative-existence', 'unwitnessable', 'unclassified'];
 
 function committed() {
@@ -85,14 +90,14 @@ const counts = {
 if (mode === 'write') {
   fresh.updated = new Date().toISOString().slice(0, 10);
   writeFileSync(OUT, stable(fresh));
-  console.log(`wrote spec/v1/gaps.json: ${counts.entries} gaps (${counts.unclassified} unclassified witness); dispositions ${JSON.stringify(counts.byDisposition)}`);
+  console.log(`wrote spec/v2/gaps.json: ${counts.entries} gaps (${counts.unclassified} unclassified witness); dispositions ${JSON.stringify(counts.byDisposition)}`);
 } else if (mode === 'check') {
   const failures = [];
-  if (!existsSync(OUT)) failures.push('spec/v1/gaps.json is missing — run generate-gaps.mjs --write');
+  if (!existsSync(OUT)) failures.push('spec/v2/gaps.json is missing — run generate-gaps.mjs --write');
   else {
     const a = { ...prev, updated: 'x' };
     const b = { ...fresh, updated: 'x' };
-    if (stable(a) !== stable(b)) failures.push('spec/v1/gaps.json is stale against the registers — run generate-gaps.mjs --write');
+    if (stable(a) !== stable(b)) failures.push('spec/v2/gaps.json is stale against the registers — run generate-gaps.mjs --write');
     // requirementId resolves
     const reqPath = join(ROOT, 'conformance', 'requirements.json');
     const aliasPath = join(ROOT, 'conformance', 'requirement-aliases.json');
