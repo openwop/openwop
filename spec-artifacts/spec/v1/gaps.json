@@ -16605,6 +16605,108 @@
       ]
     },
     {
+      "id": "openwop.gap.0266.1",
+      "rfc": "0266",
+      "local": "G1",
+      "section": "§Status",
+      "surface": "**High.** Whether the 7-day comment window may be waived.",
+      "witness": "unclassified",
+      "requirementId": null,
+      "disposition": "closed",
+      "target": null,
+      "sources": [
+        {
+          "file": "RFCS/registers/0266-v2-is-self-contained.gaps.md",
+          "token": "G1"
+        }
+      ]
+    },
+    {
+      "id": "openwop.gap.0266.2",
+      "rfc": "0266",
+      "local": "G2",
+      "section": "§B.2",
+      "surface": "**Medium.** Whether any v2 operation serves the v1 debug bundle (UQ 1).",
+      "witness": "unclassified",
+      "requirementId": null,
+      "disposition": "open",
+      "target": null,
+      "sources": [
+        {
+          "file": "RFCS/registers/0266-v2-is-self-contained.gaps.md",
+          "token": "G2"
+        }
+      ]
+    },
+    {
+      "id": "openwop.gap.0266.3",
+      "rfc": "0266",
+      "local": "G3",
+      "section": "§B.2",
+      "surface": "**Medium.** Whether the core-document homes fit `check-core-budget` (UQ 2).",
+      "witness": "unclassified",
+      "requirementId": null,
+      "disposition": "open",
+      "target": null,
+      "sources": [
+        {
+          "file": "RFCS/registers/0266-v2-is-self-contained.gaps.md",
+          "token": "G3"
+        }
+      ]
+    },
+    {
+      "id": "openwop.gap.0266.4",
+      "rfc": "0266",
+      "local": "G4",
+      "section": "§D",
+      "surface": "**Medium.** openwop-app reads v1 files from `@openwop/spec-artifacts` (CORS header generator, seven flat-schema loaders).",
+      "witness": "unclassified",
+      "requirementId": null,
+      "disposition": "transferred",
+      "target": "openwop-app",
+      "sources": [
+        {
+          "file": "RFCS/registers/0266-v2-is-self-contained.gaps.md",
+          "token": "G4"
+        }
+      ]
+    },
+    {
+      "id": "openwop.gap.0266.5",
+      "rfc": "0266",
+      "local": "G5",
+      "section": "§E",
+      "surface": "**Low.** Registry discovery lives in `openwop-registry`; its deploy is a separate repo's release.",
+      "witness": "unclassified",
+      "requirementId": null,
+      "disposition": "open",
+      "target": null,
+      "sources": [
+        {
+          "file": "RFCS/registers/0266-v2-is-self-contained.gaps.md",
+          "token": "G5"
+        }
+      ]
+    },
+    {
+      "id": "openwop.gap.0266.6",
+      "rfc": "0266",
+      "local": "G6",
+      "section": "§C",
+      "surface": "**Medium.** `scripts/generate-gaps.mjs` writes its aggregate to `spec/v1/gaps.json`, a generated file inside the frozen tree that every RFC register change regenerates.",
+      "witness": "unclassified",
+      "requirementId": null,
+      "disposition": "open",
+      "target": null,
+      "sources": [
+        {
+          "file": "RFCS/registers/0266-v2-is-self-contained.gaps.md",
+          "token": "G6"
+        }
+      ]
+    },
+    {
       "id": "openwop.gap.spec.a2a-integration.g1",
       "rfc": "0152",
       "local": "G1",
