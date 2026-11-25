@@ -1,0 +1,329 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://openwop.dev/spec/v2/deprecations.schema.json",
+  "title": "OpenWOP v2 deprecation register",
+  "description": "Shape of spec/v2/deprecations.json (RFC 0266 §A.1) — the deprecation register for the v2 representation. It carries every row whose removal trigger is a v2 event: `removeIn` a 2.x minor or `3.0`, or `removalTrigger` `v1-installability-floor`. A row moved from the frozen spec/v1/deprecations.json keeps that row verbatim and names it in `movedFrom`; a row born in v2 carries `movedFrom: null`. Readers merge the two registers by id with the v2 row winning (scripts/lib/registers.mjs). It is not a wire artifact and is deliberately kept out of schemas/.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "$schema",
+    "version",
+    "updated",
+    "entries"
+  ],
+  "properties": {
+    "$schema": {
+      "type": "string",
+      "const": "./deprecations.schema.json"
+    },
+    "version": {
+      "type": "integer",
+      "const": 1
+    },
+    "updated": {
+      "type": "string",
+      "pattern": "^[0-9]{4}-[0-9]{2}-[0-9]{2}$"
+    },
+    "entries": {
+      "type": "array",
+      "minItems": 1,
+      "items": {
+        "$ref": "#/$defs/entry"
+      }
+    }
+  },
+  "$defs": {
+    "entry": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "id",
+        "status",
+        "surface",
+        "kind",
+        "deprecatedIn",
+        "authority",
+        "removeIn",
+        "replacement",
+        "codemod",
+        "sources",
+        "movedFrom"
+      ],
+      "properties": {
+        "id": {
+          "type": "string",
+          "pattern": "^openwop\\.deprecation\\.[a-z0-9]+(-[a-z0-9]+)*$"
+        },
+        "movedFrom": {
+          "type": [
+            "string",
+            "null"
+          ],
+          "pattern": "^openwop\\.deprecation\\.[a-z0-9]+(-[a-z0-9]+)*$",
+          "description": "RFC 0266 §A.1: the spec/v1/deprecations.json row id this row was moved from verbatim, or null for a row born in v2. A moved row replaces the v1 row it names when the registers are merged."
+        },
+        "status": {
+          "type": "string",
+          "enum": [
+            "deprecated",
+            "proposed"
+          ]
+        },
+        "surface": {
+          "type": "string",
+          "minLength": 1,
+          "description": "The wire-visible name of the thing: a field path, a header, a profile id, a schema file, a prose convention."
+        },
+        "kind": {
+          "type": "string",
+          "enum": [
+            "discovery-shape",
+            "discovery-field",
+            "profile-id",
+            "header",
+            "schema-field",
+            "prose-convention",
+            "artifact",
+            "error-code",
+            "path"
+          ],
+          "description": "`path` (RFC 0172): an operation path-key surface."
+        },
+        "deprecatedIn": {
+          "type": [
+            "string",
+            "null"
+          ],
+          "description": "Corpus or suite version, or the RFC that deprecated it. null when status is proposed."
+        },
+        "authority": {
+          "type": "string",
+          "minLength": 1,
+          "description": "The RFC section or spec annotation that made (or, for proposed, would make) the deprecation."
+        },
+        "removeIn": {
+          "type": "string",
+          "pattern": "^[0-9]+\\.[0-9]+$",
+          "description": "Protocol major.minor at which the surface is removed. v1.x deprecations remove no earlier than 2.0 (COMPATIBILITY.md §7). A `v2-minor` row (RFC 0197) instead names the 2.x minor at which the v2 surface is removed; `check-removal-dates.mjs` compares it to `spec/v2/release.json` `version` minor-by-minor, not major-by-major. A dated-trigger row (`v1-end-of-support`, `v1-installability-floor`) names the major whose representation drops the surface; its trigger date governs."
+        },
+        "replacement": {
+          "type": "string",
+          "minLength": 1
+        },
+        "codemod": {
+          "type": [
+            "string",
+            "null"
+          ],
+          "description": "Identifier of the codemod that rewrites consumers, once one exists (v2 program C.11)."
+        },
+        "note": {
+          "type": "string"
+        },
+        "sources": {
+          "type": "array",
+          "minItems": 1,
+          "items": {
+            "type": "object",
+            "additionalProperties": false,
+            "required": [
+              "file",
+              "token"
+            ],
+            "properties": {
+              "file": {
+                "type": "string",
+                "minLength": 1,
+                "description": "Repo-relative path that documents the deprecation (or the surface, for proposed rows)."
+              },
+              "token": {
+                "type": "string",
+                "minLength": 1,
+                "description": "A literal substring the file must still contain; the gate fails when it drifts."
+              }
+            }
+          }
+        },
+        "removalTrigger": {
+          "oneOf": [
+            {
+              "type": "string",
+              "enum": [
+                "v2.0-cut",
+                "v1-end-of-support",
+                "v2-minor",
+                "v1-installability-floor"
+              ]
+            },
+            {
+              "type": "array",
+              "items": {
+                "type": "string",
+                "enum": [
+                  "v2.0-cut",
+                  "v1-end-of-support",
+                  "v2-minor",
+                  "v1-installability-floor"
+                ]
+              },
+              "minItems": 1,
+              "uniqueItems": true
+            }
+          ],
+          "description": "RFC 0176 §C.2: the event(s) that remove the surface. `v2.0-cut` — absent from the v2 representation from the cut; `v1-end-of-support` — removed from the v1 representation when every INTEROP-MATRIX host has produced a non-vacuous v2 bundle plus 90 days (charter Phase 0 rule). A SET, because §C.2 gives one row two independent removal events: the wrapper, the dotted mirror and Capabilities-Etag are absent from v2 at the cut AND removed from v1 at end-of-support, and a scalar could express only one. Until 2026-09-04 those rows carried `v1-end-of-support` alone while `v2-well-known-one-resource` asserted the `v2.0-cut` obligation by name — the scenario was right about the effect and the data could not say so. A bare string remains valid for rows with one trigger. Optional; removeIn stays the version. `v2-minor` — RFC 0197 §A.2: removed from the v2 representation at `removeIn` (a 2.N minor, inside the major), admitted only when `scripts/check-v2-retirement.mjs` proves predicates R1–R6 for the row. A `v2-minor` row MUST carry `retirement`. `v1-installability-floor` — RFC 0266 §E: removed when the v1 installability floor passes (2027-09-05, 12 months from the 2.0.0 publish, spec/v2/core/overview.md); the date governs, and `removeIn` names the major in which the removal is permitted."
+        },
+        "retirement": {
+          "type": "object",
+          "additionalProperties": false,
+          "description": "RFC 0197 §A.2 — the machine-readable retirement record. REQUIRED when `removalTrigger` includes `v2-minor`, and meaningless otherwise. `check-v2-retirement.mjs` reads every field: it is the row’s claim about WHAT is being retired, which the gate then falsifies against the committed bundles, the registry census, the declaration and the public history.",
+          "required": [
+            "class",
+            "family",
+            "deprecatedInMinor"
+          ],
+          "properties": {
+            "class": {
+              "enum": [
+                "family",
+                "facet",
+                "enum-member",
+                "envelope-kind"
+              ],
+              "description": "RFC 0197 R4 — the four kinds whose ABSENCE the 2.0 contract already defines. A REQUIRED property, an endpoint, an error code’s meaning and a header are never retirable inside the major."
+            },
+            "persistence": {
+              "enum": [
+                "advertised",
+                "persisted"
+              ],
+              "default": "advertised",
+              "description": "`advertised`: the schema drops the member at `removeIn` (a family, a facet, an advertised enum value). `persisted`: the member STAYS in the reader schema, annotated `x-openwop-retired-in`, and only emission is forbidden (RFC 0197 §A.3)."
+            },
+            "family": {
+              "type": "string",
+              "minLength": 1,
+              "description": "`spec/v2/declaration.json` `families[].key` of the family that ADVERTISES the surface. RFC 0197 R5 reads that row’s `maturity`."
+            },
+            "deprecatedInMinor": {
+              "type": "string",
+              "pattern": "^2\\.[0-9]+$",
+              "description": "The 2.x minor in which the deprecation row was announced. RFC 0197 R2 requires `removeIn` to be at least two minors later; the 30-day leg is read from the public history, never from this field."
+            },
+            "discovery": {
+              "type": "object",
+              "additionalProperties": false,
+              "required": [
+                "path"
+              ],
+              "description": "Where the surface would appear in a host’s v2 discovery document. RFC 0197 R3 scans every committed `evidence/v2-host-bundles/*.json` `discovery.document` at this path.",
+              "properties": {
+                "path": {
+                  "type": "string",
+                  "minLength": 1,
+                  "description": "Dotted path inside `discovery.document`, e.g. `connections.transports` or `packs.testMode`."
+                },
+                "value": {
+                  "description": "When present, only this value at `path` (or this member of an array at `path`) counts as carrying the surface; when absent, presence of the path is enough."
+                }
+              }
+            },
+            "manifest": {
+              "type": "object",
+              "additionalProperties": false,
+              "required": [
+                "kinds",
+                "path"
+              ],
+              "description": "Where the surface would appear in a PUBLISHED registry manifest. RFC 0197 R3’s registry leg reads the `registryManifestCensus` that `generate-cross-repo-evidence.mjs` writes for this row id.",
+              "properties": {
+                "kinds": {
+                  "type": "array",
+                  "minItems": 1,
+                  "items": {
+                    "type": "string",
+                    "minLength": 1
+                  },
+                  "description": "Manifest kinds to census, e.g. `[\"connection-pack\"]`."
+                },
+                "path": {
+                  "type": "string",
+                  "minLength": 1,
+                  "description": "Dotted path inside the manifest."
+                },
+                "value": {
+                  "description": "When present, only this value at `path` counts."
+                }
+              }
+            }
+          }
+        }
+      },
+      "allOf": [
+        {
+          "if": {
+            "properties": {
+              "status": {
+                "const": "deprecated"
+              }
+            }
+          },
+          "then": {
+            "properties": {
+              "deprecatedIn": {
+                "type": "string",
+                "minLength": 1
+              }
+            }
+          }
+        },
+        {
+          "if": {
+            "properties": {
+              "status": {
+                "const": "proposed"
+              }
+            }
+          },
+          "then": {
+            "properties": {
+              "deprecatedIn": {
+                "type": "null"
+              }
+            },
+            "required": [
+              "note"
+            ]
+          }
+        },
+        {
+          "$comment": "RFC 0197 §A.2 — a `v2-minor` trigger without a `retirement` record is a claim the gate cannot falsify, so the schema refuses it.",
+          "if": {
+            "properties": {
+              "removalTrigger": {
+                "anyOf": [
+                  {
+                    "const": "v2-minor"
+                  },
+                  {
+                    "type": "array",
+                    "contains": {
+                      "const": "v2-minor"
+                    }
+                  }
+                ]
+              }
+            },
+            "required": [
+              "removalTrigger"
+            ]
+          },
+          "then": {
+            "required": [
+              "retirement"
+            ]
+          }
+        }
+      ]
+    }
+  }
+}

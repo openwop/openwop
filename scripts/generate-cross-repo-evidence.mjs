@@ -25,6 +25,7 @@ import { createHash } from 'node:crypto';
 import { execFileSync } from 'node:child_process';
 import { join, dirname, resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
+import { V1_DEPRECATIONS, V2_DEPRECATIONS, loadDeprecations } from './lib/registers.mjs';
 
 const ROOT = join(dirname(fileURLToPath(import.meta.url)), '..');
 const OUT = join(ROOT, 'evidence', 'cross-repo-manifests.json');
@@ -114,7 +115,8 @@ function registryCurrentPeerDependencyKeys(dir) {
 function registryManifestCensus(dir, root) {
   if (!dir) return null;
   let entries = [];
-  try { entries = JSON.parse(readFileSync(join(root, 'spec', 'v1', 'deprecations.json'), 'utf8')).entries ?? []; } catch { return null; }
+  // RFC 0266 §A.1: both deprecation registers, merged by id (v2 wins).
+  try { entries = loadDeprecations(root, { v1: join(root, V1_DEPRECATIONS), v2: join(root, V2_DEPRECATIONS) }).entries; } catch { return null; }
   const triggersOf = (e) => (Array.isArray(e.removalTrigger) ? e.removalTrigger : e.removalTrigger ? [e.removalTrigger] : []);
   const rows = entries.filter((e) => triggersOf(e).includes('v2-minor') && e.retirement?.manifest);
   let commit = null, commitDate = null;
